@@ -63,7 +63,7 @@ HRSRC16 FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     }
     return NE_FindResource( hModule, type, name );
 #else
-    return LIBRES_FindResource( hModule, name, type );
+    return LIBRES_FindResource16( hModule, name, type );
 #endif
 }
 
@@ -116,7 +116,7 @@ HRSRC32 FindResourceEx32W(
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
     return PE_FindResourceEx32W(hModule,name,type,lang);
 #else
-    return LIBRES_FindResource( hModule, name, type );
+    return LIBRES_FindResource32( hModule, name, type );
 #endif
 }
 
@@ -661,6 +661,7 @@ LoadString32A(HINSTANCE32 instance,UINT32 resource_id,LPSTR buffer,int buflen)
     LPWSTR buffer2 = buffer?(LPWSTR)xmalloc(buflen*2):NULL;
     INT32 retval = LoadString32W(instance,resource_id,buffer2,buflen);
 
+    if (!retval) return 0;
     if (buffer) {
 	STRING32_UniToAnsi(buffer,buffer2);
 	free(buffer2);

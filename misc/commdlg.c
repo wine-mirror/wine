@@ -263,8 +263,8 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
                   lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
 	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
-	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-	       bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	BitBlt32(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+                 bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
 	SelectObject32(hMemDC, hPrevBitmap);
 	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
@@ -277,7 +277,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
 	hBrush = SelectObject32(lpdis->hDC, GetStockObject32(LTGRAY_BRUSH));
 	SelectObject32(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
-	SendMessage16(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
+	SendMessage16(lpdis->hwndItem, CB_GETLBTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
         switch(DRIVE_GetType( str[2] - 'a' ))
         {
@@ -292,8 +292,8 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int sav
                   lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
 	hPrevBitmap = SelectObject32(hMemDC, hBitmap);
-	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-	       bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	BitBlt32( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+                  bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY );
 	SelectObject32(hMemDC, hPrevBitmap);
 	DeleteDC(hMemDC);
 	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
@@ -351,12 +351,12 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
       while(*pstr)
 	{
 	  dprintf_commdlg(stddeb,"lpstrCustomFilter // add str='%s' ",pstr);
-          i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING, 0,
+          i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING16, 0,
                                    (LPARAM)lpofn->lpstrCustomFilter + n );
           n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
 	  dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
-          SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
+          SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
           n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
 	}
@@ -367,12 +367,12 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	n = 0;
 	while(*pstr) {
 	  dprintf_commdlg(stddeb,"lpstrFilter // add str='%s' ", pstr);
-	  i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING, 0,
+	  i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING16, 0,
 				       (LPARAM)lpofn->lpstrFilter + n );
 	  n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
 	  dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
-	  SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
+	  SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
 	  n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
 	}
@@ -380,7 +380,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
   /* set default filter */
   if (lpofn->nFilterIndex == 0 && lpofn->lpstrCustomFilter == (SEGPTR)NULL)
   	lpofn->nFilterIndex = 1;
-  SendDlgItemMessage16(hWnd, cmb1, CB_SETCURSEL, lpofn->nFilterIndex - 1, 0);    
+  SendDlgItemMessage16(hWnd, cmb1, CB_SETCURSEL16, lpofn->nFilterIndex - 1, 0);    
   strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
   tmpstr[511]=0;
@@ -407,7 +407,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
     fprintf(stderr, "FileDlg: couldn't read initial directory %s!\n", tmpstr);
   /* select current drive in combo 2 */
   n = DRIVE_GetCurrentDrive();
-  SendDlgItemMessage16(hWnd, cmb2, CB_SETCURSEL, n, 0);
+  SendDlgItemMessage16(hWnd, cmb2, CB_SETCURSEL16, n, 0);
   if (!(lpofn->Flags & OFN_SHOWHELP))
     ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
   if (lpofn->Flags & OFN_HIDEREADONLY)
@@ -486,18 +486,18 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
       return TRUE;
     case cmb2: /* disk drop list */
       FILEDLG_StripEditControl(hWnd);
-      lRet = SendDlgItemMessage16(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
+      lRet = SendDlgItemMessage16(hWnd, cmb2, CB_GETCURSEL16, 0, 0L);
       if (lRet == LB_ERR) return 0;
       pstr = SEGPTR_ALLOC(512);
-      SendDlgItemMessage16(hWnd, cmb2, CB_GETLBTEXT, lRet,
+      SendDlgItemMessage16(hWnd, cmb2, CB_GETLBTEXT16, lRet,
                            (LPARAM)SEGPTR_GET(pstr));
       sprintf(tmpstr, "%c:", pstr[2]);
       SEGPTR_FREE(pstr);
     reset_scan:
-      lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL, 0, 0);
+      lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR)
 	return TRUE;
-      pstr = (LPSTR)SendDlgItemMessage16(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
+      pstr = (LPSTR)SendDlgItemMessage16(hWnd, cmb1, CB_GETITEMDATA16, lRet, 0);
       dprintf_commdlg(stddeb,"Selected filter : %s\n", pstr);
       SetDlgItemText32A( hWnd, edt1, pstr );
       FILEDLG_ScanDir(hWnd, tmpstr);
@@ -536,7 +536,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
       pstr2 = tmpstr + strlen(tmpstr);
       if (pstr == NULL || *(pstr+1) != 0)
 	strcat(tmpstr, "\\");
-      lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL, 0, 0);
+      lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
       dprintf_commdlg(stddeb,"commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
@@ -1568,10 +1568,10 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
    point.x=((long)rect.right*(long)x)/(long)MAXHORI;
    point.y=rect.bottom-((long)rect.bottom*(long)y)/(long)MAXVERT;
    if (lpp->oldcross.left!=lpp->oldcross.right)
-     BitBlt(hDC,lpp->oldcross.left,lpp->oldcross.top,
-	     lpp->oldcross.right-lpp->oldcross.left,
-	     lpp->oldcross.bottom-lpp->oldcross.top,
-	     lpp->hdcMem,lpp->oldcross.left,lpp->oldcross.top,SRCCOPY);
+     BitBlt32(hDC,lpp->oldcross.left,lpp->oldcross.top,
+              lpp->oldcross.right-lpp->oldcross.left,
+              lpp->oldcross.bottom-lpp->oldcross.top,
+              lpp->hdcMem,lpp->oldcross.left,lpp->oldcross.top,SRCCOPY);
    lpp->oldcross.left  =point.x-w-1;
    lpp->oldcross.right =point.x+w+1;
    lpp->oldcross.top   =point.y-w-1;
@@ -1652,7 +1652,7 @@ static void CC_PaintColorGraph(HWND hDlg)
   hDC=GetDC32(hwnd);
   GetClientRect16(hwnd,&rect);
   if (lpp->hdcMem)
-    BitBlt(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
+      BitBlt32(hDC,0,0,rect.right,rect.bottom,lpp->hdcMem,0,0,SRCCOPY);
   else
     fprintf(stderr,"choose color: hdcMem is not defined\n");
   ReleaseDC32(hwnd,hDC);
@@ -2285,12 +2285,12 @@ INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
    if (!(nFontType & 0x0004))   /* this means 'TRUETYPE_FONTTYPE' */
      return 1;   
 
-  i=SendMessage16(hwnd,CB_ADDSTRING,0,
+  i=SendMessage16(hwnd,CB_ADDSTRING16,0,
                   (LPARAM)logfont + ((char *)lplf->lfFaceName - (char *)lplf));
   if (i!=CB_ERR)
   {
     w=(lplf->lfCharSet << 8) | lplf->lfPitchAndFamily;
-    SendMessage16(hwnd, CB_SETITEMDATA,i,MAKELONG(nFontType,w));
+    SendMessage16(hwnd, CB_SETITEMDATA16,i,MAKELONG(nFontType,w));
     return 1 ;        /* store some important font information */
   }
   else
@@ -2330,10 +2330,10 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC16 hdc, LPLOGFONT16 lplf,
          lptm->tmItalic==fontstyles[i].italic)    /* font successful created ? */
      {
        char *str = SEGPTR_STRDUP(fontstyles[i].stname);
-       j=SendMessage16(hwnd,CB_ADDSTRING,0,(LPARAM)SEGPTR_GET(str) );
+       j=SendMessage16(hwnd,CB_ADDSTRING16,0,(LPARAM)SEGPTR_GET(str) );
        SEGPTR_FREE(str);
        if (j==CB_ERR) return 1;
-       j=SendMessage16(hwnd, CB_SETITEMDATA, j, 
+       j=SendMessage16(hwnd, CB_SETITEMDATA16, j, 
                                  MAKELONG(fontstyles[i].weight,fontstyles[i].italic));
        if (j==CB_ERR) return 1;                                 
      }
@@ -2359,11 +2359,11 @@ static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
            ((lpcf->Flags & CF_LIMITSIZE) && (h >= lpcf->nSizeMin) && (h <= lpcf->nSizeMax)))
    {
       sprintf(buffer,"%2d",h);
-      j=SendMessage16(hwnd,CB_FINDSTRING,-1,(LPARAM)SEGPTR_GET(buffer));
+      j=SendMessage16(hwnd,CB_FINDSTRING16,-1,(LPARAM)SEGPTR_GET(buffer));
       if (j==CB_ERR)
       {
-        j=SendMessage16(hwnd,CB_ADDSTRING,0,(LPARAM)SEGPTR_GET(buffer));
-        if (j!=CB_ERR) j = SendMessage16(hwnd, CB_SETITEMDATA, j, h); 
+        j=SendMessage16(hwnd,CB_ADDSTRING16,0,(LPARAM)SEGPTR_GET(buffer));
+        if (j!=CB_ERR) j = SendMessage16(hwnd, CB_SETITEMDATA16, j, h); 
         if (j==CB_ERR)
         {
             SEGPTR_FREE(buffer);
@@ -2400,7 +2400,7 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
   if (SetFontSizesToCombo3(hcmb3, lplf ,lpcf))
    return 0;
 
-  if (!SendMessage16(hcmb2,CB_GETCOUNT,0,0))
+  if (!SendMessage16(hcmb2,CB_GETCOUNT16,0,0))
   {
        HDC32 hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
        i=SetFontStylesToCombo2(hcmb2,hdc,lplf,lptm);
@@ -2450,12 +2450,12 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       /* FIXME: load color name from resource:  res=LoadString(...,i+....,buffer,.....); */
       char *name = SEGPTR_ALLOC(20);
       strcpy( name, "[color name]" );
-      j=SendDlgItemMessage16(hDlg,cmb4,CB_ADDSTRING,0,(LPARAM)SEGPTR_GET(name));
+      j=SendDlgItemMessage16(hDlg,cmb4,CB_ADDSTRING16,0,(LPARAM)SEGPTR_GET(name));
       SEGPTR_FREE(name);
-      SendDlgItemMessage16(hDlg,cmb4, CB_SETITEMDATA,j,textcolors[j]);
+      SendDlgItemMessage16(hDlg,cmb4, CB_SETITEMDATA16,j,textcolors[j]);
       /* look for a fitting value in color combobox */
       if (textcolors[j]==lpcf->rgbColors)
-        SendDlgItemMessage16(hDlg,cmb4, CB_SETCURSEL,j,0);
+        SendDlgItemMessage16(hDlg,cmb4, CB_SETCURSEL16,j,0);
     }
   }
   else
@@ -2469,45 +2469,45 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
   if (hdc)
   {
-    if (!EnumFontFamilies (hdc, NULL,FontFamilyEnumProc,(LPARAM)GetDlgItem(hDlg,cmb1)))
+    if (!EnumFontFamilies16(hdc, NULL,FontFamilyEnumProc,(LPARAM)GetDlgItem(hDlg,cmb1)))
       dprintf_commdlg(stddeb,"WM_INITDIALOG: EnumFontFamilies returns 0\n");
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
       /* look for fitting font name in combobox1 */
-      j=SendDlgItemMessage16(hDlg,cmb1,CB_FINDSTRING,-1,(LONG)lpxx->lfFaceName);
+      j=SendDlgItemMessage16(hDlg,cmb1,CB_FINDSTRING16,-1,(LONG)lpxx->lfFaceName);
       if (j!=CB_ERR)
       {
-        SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL,j,0);
+        SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL16,j,0);
 	SendMessage16(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));
         init=1;
         /* look for fitting font style in combobox2 */
         l=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
         for (i=0;i<TEXT_EXTRAS;i++)
         {
-          if (l==SendDlgItemMessage16(hDlg,cmb2, CB_GETITEMDATA,i,0))
-            SendDlgItemMessage16(hDlg,cmb2,CB_SETCURSEL,i,0);
+          if (l==SendDlgItemMessage16(hDlg,cmb2, CB_GETITEMDATA16,i,0))
+            SendDlgItemMessage16(hDlg,cmb2,CB_SETCURSEL16,i,0);
         }
       
         /* look for fitting font size in combobox3 */
-        j=SendDlgItemMessage16(hDlg,cmb3,CB_GETCOUNT,0,0);
+        j=SendDlgItemMessage16(hDlg,cmb3,CB_GETCOUNT16,0,0);
         for (i=0;i<j;i++)
         {
-          if (lpxx->lfHeight==(int)SendDlgItemMessage16(hDlg,cmb3, CB_GETITEMDATA,i,0))
-            SendDlgItemMessage16(hDlg,cmb3,CB_SETCURSEL,i,0);
+          if (lpxx->lfHeight==(int)SendDlgItemMessage16(hDlg,cmb3, CB_GETITEMDATA16,i,0))
+            SendDlgItemMessage16(hDlg,cmb3,CB_SETCURSEL16,i,0);
         }
       }
       if (!init)
       {
-        SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL,0,0);
+        SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL16,0,0);
 	SendMessage16(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));      
       }
     }
     if (lpcf->Flags & CF_USESTYLE && lpcf->lpszStyle)
     {
-      j=SendDlgItemMessage16(hDlg,cmb2,CB_FINDSTRING,-1,(LONG)lpcf->lpszStyle);
+      j=SendDlgItemMessage16(hDlg,cmb2,CB_FINDSTRING16,-1,(LONG)lpcf->lpszStyle);
       if (j!=CB_ERR)
       {
-        j=SendDlgItemMessage16(hDlg,cmb2,CB_SETCURSEL,j,0);
+        j=SendDlgItemMessage16(hDlg,cmb2,CB_SETCURSEL16,j,0);
         SendMessage16(hDlg,WM_COMMAND,cmb2,MAKELONG(GetDlgItem(hDlg,cmb2),CBN_SELCHANGE));
       }
     }
@@ -2580,20 +2580,20 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
    switch (lpdi->CtlID)
    {
     case cmb1:	/* dprintf_commdlg(stddeb,"WM_Drawitem cmb1\n"); */
-		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
 			(LPARAM)SEGPTR_GET(buffer));	          
 		GetObject16( hBitmapTT, sizeof(bm), &bm );
 		TextOut16(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
                           lpdi->rcItem.top, buffer, lstrlen16(buffer));
 #if 0
-		nFontType = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
+		nFontType = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA16, lpdi->itemID,0L);
 		  /* FIXME: draw bitmap if truetype usage */
 		if (nFontType&TRUETYPE_FONTTYPE)
 		{
 		  hMemDC = CreateCompatibleDC(lpdi->hDC);
 		  hBitmap = SelectObject32(hMemDC, hBitmapTT);
-		  BitBlt(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
-			bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+		  BitBlt32(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top,
+                           bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
 		  SelectObject32(hMemDC, hBitmap);
 		  DeleteDC(hMemDC);
 		}
@@ -2601,18 +2601,18 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		break;
     case cmb2:
     case cmb3:	/* dprintf_commdlg(stddeb,"WM_DRAWITEN cmb2,cmb3\n"); */
-		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
 			(LPARAM)SEGPTR_GET(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left,
                           lpdi->rcItem.top, buffer, lstrlen16(buffer));
 		break;
 
     case cmb4:	/* dprintf_commdlg(stddeb,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
-		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
+		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
     		    (LPARAM)SEGPTR_GET(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left +  25+5,
                           lpdi->rcItem.top, buffer, lstrlen16(buffer));
-		cr = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
+		cr = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA16, lpdi->itemID,0L);
 		hBrush = CreateSolidBrush32(cr);
 		if (hBrush)
 		{
@@ -2674,17 +2674,17 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
 		    if (hdc)
 		    {
-                      SendDlgItemMessage16(hDlg,cmb2,CB_RESETCONTENT,0,0); 
-		      SendDlgItemMessage16(hDlg,cmb3,CB_RESETCONTENT,0,0);
-		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL,0,0);
+                      SendDlgItemMessage16(hDlg,cmb2,CB_RESETCONTENT16,0,0); 
+		      SendDlgItemMessage16(hDlg,cmb3,CB_RESETCONTENT16,0,0);
+		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL16,0,0);
 		      if (i!=CB_ERR)
 		      {
 		        HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
                         char *str = SEGPTR_ALLOC(256);
-                        SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT,i,
+                        SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT16,i,
                                              (LPARAM)SEGPTR_GET(str));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",str);
-       		        EnumFontFamilies(hdc,str,FontStyleEnumProc,
+       		        EnumFontFamilies16(hdc,str,FontStyleEnumProc,
 		             MAKELONG(GetDlgItem(hDlg,cmb2),GetDlgItem(hDlg,cmb3)));
 		        SetCursor(hcursor);     
                         SEGPTR_FREE(str);
@@ -2706,14 +2706,14 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 	          {
                     char *str = SEGPTR_ALLOC(256);
                     dprintf_commdlg(stddeb,"WM_COMMAND/cmb2,3 =%08lX\n", lParam);
-		    i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL,0,0);
+		    i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL16,0,0);
 		    if (i==CB_ERR)
                       i=GetDlgItemText32A( hDlg, cmb1, str, 256 );
                     else
                     {
-		      SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT,i,
+		      SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT16,i,
                                            (LPARAM)SEGPTR_GET(str));
-		      l=SendDlgItemMessage16(hDlg,cmb1,CB_GETITEMDATA,i,0);
+		      l=SendDlgItemMessage16(hDlg,cmb1,CB_GETITEMDATA16,i,0);
 		      j=HIWORD(l);
 		      lpcf->nFontType = LOWORD(l);
 		      /* FIXME:   lpcf->nFontType |= ....  SIMULATED_FONTTYPE and so */
@@ -2724,18 +2724,18 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                     }
                     strcpy(lpxx->lfFaceName,str);
                     SEGPTR_FREE(str);
-		    i=SendDlgItemMessage16(hDlg,cmb2,CB_GETCURSEL,0,0);
+		    i=SendDlgItemMessage16(hDlg,cmb2,CB_GETCURSEL16,0,0);
 		    if (i!=CB_ERR)
 		    {
-		      l=SendDlgItemMessage16(hDlg,cmb2,CB_GETITEMDATA,i,0);
+		      l=SendDlgItemMessage16(hDlg,cmb2,CB_GETITEMDATA16,i,0);
 		      if (0!=(lpxx->lfItalic=HIWORD(l)))
 		        lpcf->nFontType |= ITALIC_FONTTYPE;
 		      if ((lpxx->lfWeight=LOWORD(l)) > FW_MEDIUM)
 		        lpcf->nFontType |= BOLD_FONTTYPE;
 		    }
-		    i=SendDlgItemMessage16(hDlg,cmb3,CB_GETCURSEL,0,0);
+		    i=SendDlgItemMessage16(hDlg,cmb3,CB_GETCURSEL16,0,0);
 		    if (i!=CB_ERR)
-		      lpxx->lfHeight=-LOWORD(SendDlgItemMessage16(hDlg,cmb3,CB_GETITEMDATA,i,0));
+		      lpxx->lfHeight=-LOWORD(SendDlgItemMessage16(hDlg,cmb3,CB_GETITEMDATA16,i,0));
 		    else
 		      lpxx->lfHeight=0;
 		    lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
@@ -2753,7 +2753,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                   }
                   break;
 
-	case cmb4:i=SendDlgItemMessage16(hDlg,cmb4,CB_GETCURSEL,0,0);
+	case cmb4:i=SendDlgItemMessage16(hDlg,cmb4,CB_GETCURSEL16,0,0);
 		  if (i!=CB_ERR)
 		  {
 		   lpcf->rgbColors=textcolors[i];

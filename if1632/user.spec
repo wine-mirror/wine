@@ -61,7 +61,7 @@ heap	65520
 58  pascal16 GetClassName(word ptr word) GetClassName16
 59  pascal16 SetActiveWindow(word) SetActiveWindow
 60  pascal16 GetActiveWindow() GetActiveWindow
-61  pascal16 ScrollWindow(word s_word s_word ptr ptr) ScrollWindow
+61  pascal16 ScrollWindow(word s_word s_word ptr ptr) ScrollWindow16
 62  pascal16 SetScrollPos(word word s_word word) SetScrollPos16
 63  pascal16 GetScrollPos(word word) GetScrollPos16
 64  pascal16 SetScrollRange(word word s_word s_word word) SetScrollRange16
@@ -221,7 +221,7 @@ heap	65520
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16
 220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect16
-221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
+221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC16
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask16
@@ -305,8 +305,7 @@ heap	65520
 308 pascal   DefDlgProc(word word word long) DefDlgProc16
 309 pascal16 GetClipCursor(ptr) GetClipCursor16
 314 stub SignalProc
-319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word)
-             ScrollWindowEx
+319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16
 320 stub SysErrorBox
 321 stub SetEventHook
 322 stub WinOldAppHackOMatic
@@ -374,8 +373,8 @@ heap	65520
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps
 420 pascal16 wsprintf() WIN16_wsprintf16
 421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf16
-422 stub DlgDirSelectEx
-423 stub DlgDirSelectComboBoxEx
+422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
+423 pascal16 DlgDirSelectComboBoxEx(word ptr word word) DlgDirSelectComboBoxEx16
 427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows

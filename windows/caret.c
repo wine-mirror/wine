@@ -60,7 +60,7 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
     Caret.on = !Caret.on;
     if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
     hPrevBrush = SelectObject32( hdc, Caret.hBrush );
-    PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
+    PatBlt32( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
     SelectObject32( hdc, hPrevBrush );
     ReleaseDC32( Caret.hwnd, hdc );
 }

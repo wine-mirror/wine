@@ -48,7 +48,7 @@ static HBITMAP32 hRgArrowI = 0;
 #define SCROLL_MIN_RECT  4  
 
   /* Minimum size of the thumb in pixels */
-#define SCROLL_MIN_THUMB 4
+#define SCROLL_MIN_THUMB 6
 
   /* Delay (in ms) before first repetition when holding the button down */
 #define SCROLL_FIRST_DELAY   200
@@ -316,28 +316,28 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
     SetStretchBltMode( hdc, STRETCH_DELETESCANS );
-    StretchBlt( hdc, rect->left, rect->top,
-                vertical ? rect->right-rect->left : arrowSize+1,
-                vertical ? arrowSize+1 : rect->bottom-rect->top,
-                hdcMem, 0, 0,
-                SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
-                SRCCOPY );
+    StretchBlt32( hdc, rect->left, rect->top,
+                  vertical ? rect->right-rect->left : arrowSize+1,
+                  vertical ? arrowSize+1 : rect->bottom-rect->top,
+                  hdcMem, 0, 0,
+                  SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                  SRCCOPY );
 
     SelectObject32( hdcMem, vertical ?
                     BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
                     : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
     if (vertical)
-        StretchBlt( hdc, rect->left, rect->bottom - arrowSize - 1,
-                   rect->right - rect->left, arrowSize + 1,
-                   hdcMem, 0, 0,
-                   SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
-                   SRCCOPY );
+        StretchBlt32( hdc, rect->left, rect->bottom - arrowSize - 1,
+                      rect->right - rect->left, arrowSize + 1,
+                      hdcMem, 0, 0,
+                      SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                      SRCCOPY );
     else
-        StretchBlt( hdc, rect->right - arrowSize - 1, rect->top,
-                   arrowSize + 1, rect->bottom - rect->top,
-                   hdcMem, 0, 0,
-                   SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
-                   SRCCOPY );
+        StretchBlt32( hdc, rect->right - arrowSize - 1, rect->top,
+                      arrowSize + 1, rect->bottom - rect->top,
+                      hdcMem, 0, 0,
+                      SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                      SRCCOPY );
     SelectObject32( hdcMem, hbmpPrev );
     DeleteDC( hdcMem );
 }
@@ -432,35 +432,35 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
     if (!thumbPos)  /* No thumb to draw */
     {
-        PatBlt( hdc, r.left+1, r.top+1, r.right - r.left - 2,
-                r.bottom - r.top - 2, PATCOPY );
+        PatBlt32( hdc, r.left+1, r.top+1, r.right - r.left - 2,
+                  r.bottom - r.top - 2, PATCOPY );
         return;
     }
 
     if (vertical)
     {
-        PatBlt( hdc, r.left + 1, r.top + 1,
-                r.right - r.left - 2,
-                thumbPos - arrowSize,
-                top_selected ? 0x0f0000 : PATCOPY );
+        PatBlt32( hdc, r.left + 1, r.top + 1,
+                  r.right - r.left - 2,
+                  thumbPos - arrowSize,
+                  top_selected ? 0x0f0000 : PATCOPY );
         r.top += thumbPos - arrowSize;
-        PatBlt( hdc, r.left + 1, r.top + thumbSize + 1,
-                r.right - r.left - 2,
-                r.bottom - r.top - thumbSize - 2,
-                bottom_selected ? 0x0f0000 : PATCOPY );
+        PatBlt32( hdc, r.left + 1, r.top + thumbSize + 1,
+                  r.right - r.left - 2,
+                  r.bottom - r.top - thumbSize - 2,
+                  bottom_selected ? 0x0f0000 : PATCOPY );
         r.bottom = r.top + thumbSize + 1;
     }
     else  /* horizontal */
     {
-        PatBlt( hdc, r.left + 1, r.top + 1,
-                thumbPos - arrowSize,
-                r.bottom - r.top - 2,
-                top_selected ? 0x0f0000 : PATCOPY );
+        PatBlt32( hdc, r.left + 1, r.top + 1,
+                  thumbPos - arrowSize,
+                  r.bottom - r.top - 2,
+                  top_selected ? 0x0f0000 : PATCOPY );
         r.left += thumbPos - arrowSize;
-        PatBlt( hdc, r.left + thumbSize + 1, r.top + 1,
-                r.right - r.left - thumbSize - 2,
-                r.bottom - r.top - 2,
-                bottom_selected ? 0x0f0000 : PATCOPY );
+        PatBlt32( hdc, r.left + thumbSize + 1, r.top + 1,
+                  r.right - r.left - thumbSize - 2,
+                  r.bottom - r.top - 2,
+                  bottom_selected ? 0x0f0000 : PATCOPY );
         r.right = r.left + thumbSize + 1;
     }
 

@@ -2176,43 +2176,6 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
 
 
 /**********************************************************************
- *	    DlgDirSelect    (USER.99)
- */
-BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
-{
-    char *buffer;
-    INT i;
-
-    dprintf_listbox( stddeb, "DlgDirSelect: %04x '%s' %d\n", hDlg, lpStr, id );
-    if ((i = SendDlgItemMessage16( hDlg, id, LB_GETCURSEL16, 0, 0 )) == LB_ERR)
-        return FALSE;
-    if (!(buffer = SEGPTR_ALLOC( 20 * sizeof(char) ))) return FALSE;
-    SendDlgItemMessage16(hDlg, id, LB_GETTEXT16, i, (LPARAM)SEGPTR_GET(buffer) );
-    if (buffer[0] == '[')  /* drive or directory */
-    {
-        if (buffer[1] == '-')  /* drive */
-        {
-            lpStr[0] = buffer[2];
-            lpStr[1] = ':';
-            lpStr[2] = '\0';
-            dprintf_listbox( stddeb, "Returning drive '%s'\n", lpStr );
-            SEGPTR_FREE(buffer);
-            return TRUE;
-        }
-        strcpy( lpStr, buffer + 1 );
-        lpStr[strlen(lpStr)-1] = '\\';
-        dprintf_listbox( stddeb, "Returning directory '%s'\n", lpStr );
-        SEGPTR_FREE(buffer);
-        return TRUE;
-    }
-    strcpy( lpStr, buffer );
-    dprintf_listbox( stddeb, "Returning file '%s'\n", lpStr );
-    SEGPTR_FREE(buffer);
-    return FALSE;
-}
-
-
-/**********************************************************************
  *	    DlgDirList    (USER.100)
  */
 INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )

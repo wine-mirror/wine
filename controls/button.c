@@ -284,8 +284,8 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     {
         /* draw button shadow: */
         SelectObject32(hDC, sysColorObjects.hbrushBtnShadow );
-        PatBlt(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
-        PatBlt(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
+        PatBlt32(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
+        PatBlt32(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
         rc.left += 2;  /* To position the text down and right */
         rc.top  += 2;
     }
@@ -352,12 +352,12 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
     SelectObject32( hdcMem, hbmMem);
     hBr = SelectObject32( hdcMem, CreatePatternBrush32(hbm) );
     DeleteObject32( hbm );
-    PatBlt( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
+    PatBlt32( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
     if (hFont) SelectObject32( hdcMem, hFont);
     DrawText32A( hdcMem, text, -1, &rc2, DT_SINGLELINE);  
-    PatBlt( hdcMem,0,0,rect.right,rect.bottom,0xFA0089);
+    PatBlt32( hdcMem,0,0,rect.right,rect.bottom,0xFA0089);
     DeleteObject32( SelectObject32( hdcMem,hBr) );
-    BitBlt( hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,0x990000);
+    BitBlt32(hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,0x990000);
     DeleteDC( hdcMem);
     DeleteObject32( hbmMem );
 }

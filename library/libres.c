@@ -9,6 +9,7 @@
 #include "libres.h"
 #include "windows.h"
 #include "xmalloc.h"
+#include "string32.h"
 
 typedef struct RLE
 {
@@ -30,9 +31,9 @@ void LIBRES_RegisterResources(const struct resource* const * Res)
 }
 
 /**********************************************************************
- *	    LIBRES_FindResource    
+ *	    LIBRES_FindResource16    
  */
-HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
+HRSRC32 LIBRES_FindResource16( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
@@ -57,7 +58,7 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
       typeid=atoi(type+1);
     else
     {
-      WINELIB_UNIMP("LIBRES_FindResource(*,*,type=string)");
+      WINELIB_UNIMP("LIBRES_FindResource16(*,*,type=string)");
       return 0;
     }
   }
@@ -69,6 +70,61 @@ HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
       if(name)
       {
 	if((*Res)->type==typeid && !lstrcmpi32A((*Res)->name,name))
+	  return (HRSRC32)*Res;
+      }
+      else
+	if((*Res)->type==typeid && (*Res)->id==nameid)
+	  return (HRSRC32)*Res;
+  return 0;
+}
+
+/**********************************************************************
+ *	    LIBRES_FindResource32    
+ */
+HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type )
+{
+  int nameid=0,typeid;
+  ResListE* ResBlock;
+  const struct resource* const * Res;
+  LPSTR nameA, typeA;
+
+  if(HIWORD(name))
+  {
+    if(*name=='#')
+    {
+      nameA = STRING32_DupUniToAnsi(name);
+      nameid=atoi(nameA+1);
+      free(nameA);
+      name=NULL;
+    }
+  }
+  else
+  {
+    nameid=LOWORD(name);
+    name=NULL;
+  }
+  if(HIWORD(type))
+  {
+    if(*type=='#')
+    {
+      typeA = STRING32_DupUniToAnsi(type);
+      typeid=atoi(typeA+1);
+      free(typeA);
+    }
+    else
+    {
+      WINELIB_UNIMP("LIBRES_FindResource32(*,*,type=string)");
+      return 0;
+    }
+  }
+  else
+    typeid=LOWORD(type);
+  
+  for(ResBlock=ResourceList; ResBlock; ResBlock=ResBlock->next)
+    for(Res=ResBlock->Resources; *Res; Res++)
+      if(name)
+      {
+	if((*Res)->type==typeid && !lstrcmpi32W((*Res)->name,name))
 	  return (HRSRC32)*Res;
       }
       else

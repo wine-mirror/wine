@@ -43,7 +43,7 @@ static HWND hwndSysModal = 0;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
-extern HCURSOR16 CURSORICON_IconToCursor(HICON16);
+extern HCURSOR16 CURSORICON_IconToCursor(HICON16, BOOL32);
 extern HWND32 CARET_GetHwnd(void);
 extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
 extern void   WINPOS_CheckActive(HWND32);
@@ -310,6 +310,8 @@ static void WIN_DestroyWindow( WND* wndPtr )
 {
     HWND hwnd = wndPtr->hwndSelf;
     WND* pWnd,*pNext;
+
+    dprintf_win( stddeb, "WIN_DestroyWindow: %04x\n", wndPtr->hwndSelf );
 
 #ifdef CONFIG_IPC
     if (main_block)
@@ -659,7 +661,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     if (!(cs->style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
     {
         XSetWindowAttributes win_attr;
-        Atom XA_WM_DELETE_WINDOW;
 
 	if (Options.managed && ((cs->style & (WS_DLGFRAME | WS_THICKFRAME)) ||
             (cs->dwExStyle & WS_EX_DLGMODALFRAME)))
@@ -689,9 +690,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                                         CWEventMask | CWOverrideRedirect |
                                         CWColormap | CWCursor | CWSaveUnder |
                                         CWBackingStore, &win_attr );
-	XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW",
-					   False );
-	XSetWMProtocols( display, wndPtr->window, &XA_WM_DELETE_WINDOW, 1 );
 
         if ((wndPtr->flags & WIN_MANAGED) &&
             (cs->dwExStyle & WS_EX_DLGMODALFRAME))
@@ -2069,13 +2067,13 @@ HWND16 GetSysModalWindow16(void)
  * recursively find a child that contains spDragInfo->pt point 
  * and send WM_QUERYDROPOBJECT
  */
-BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
+BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 {
- BOOL		wParam,bResult = 0;
+ BOOL16		wParam,bResult = 0;
  POINT16        pt;
  LPDRAGINFO	ptrDragInfo = (LPDRAGINFO) PTR_SEG_TO_LIN(spDragInfo);
  WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
- RECT16		tempRect;	/* this sucks */
+ RECT16		tempRect;
 
  if( !ptrQueryWnd || !ptrDragInfo ) return 0;
 
@@ -2112,7 +2110,7 @@ BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
                         ptrWnd->hwndSelf, ptrWnd->rectWindow.left, ptrWnd->rectWindow.top,
 			ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
             if( !(ptrWnd->dwStyle & WS_DISABLED) )
-	        bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo);
+	        bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo, bNoSend);
          }
 
 	 if(bResult) return bResult;
@@ -2125,7 +2123,9 @@ BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
 
  ptrDragInfo->hScope = hQueryWnd;
 
- bResult = SendMessage16( hQueryWnd ,WM_QUERYDROPOBJECT ,
+ bResult = ( bNoSend ) 
+	   ? ptrQueryWnd->dwExStyle & WS_EX_ACCEPTFILES
+	   : SendMessage16( hQueryWnd ,WM_QUERYDROPOBJECT ,
                           (WPARAM16)wParam ,(LPARAM) spDragInfo );
  if( !bResult ) 
       ptrDragInfo->pt = pt;
@@ -2191,7 +2191,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
  short	 	dragDone = 0;
  HCURSOR16	hCurrentCursor = 0;
  HWND		hCurrentWnd = 0;
- WORD	        btemp;
+ BOOL16		b;
 
  lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
  spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
@@ -2208,7 +2208,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
 
  if(hCursor)
    {
-	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor)) )
+	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor, FALSE)) )
 	  {
 	   GlobalFree16(hDragInfo);
 	   return 0L;
@@ -2244,7 +2244,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
     /* update DRAGINFO struct */
     dprintf_msg(stddeb,"drag: lpDI->hScope = %04x\n",lpDragInfo->hScope);
 
-    if( (btemp = (WORD)DRAG_QueryUpdate(hwndScope, spDragInfo)) > 0 )
+    if( (b = DRAG_QueryUpdate(hwndScope, spDragInfo, FALSE)) > 0 )
 	 hCurrentCursor = hCursor;
     else
         {
@@ -2254,7 +2254,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
     if( hCurrentCursor )
         SetCursor(hCurrentCursor);
 
-    dprintf_msg(stddeb,"drag: got %04x\n",btemp);
+    dprintf_msg(stddeb,"drag: got %04x\n", b);
 
     /* send WM_DRAGLOOP */
     SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer) , 

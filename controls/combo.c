@@ -21,7 +21,6 @@
 #include "graphics.h"
 #include "heap.h"
 #include "listbox.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -289,7 +288,7 @@ static LRESULT CBGetDlgCode(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 static LRESULT CBLButtonDown(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 {
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
-  SendMessage16(hwnd,CB_SHOWDROPDOWN,!lphc->DropDownVisible,0);
+  SendMessage16(hwnd,CB_SHOWDROPDOWN16,!lphc->DropDownVisible,0);
   return 0;
 }
 
@@ -774,6 +773,15 @@ static LRESULT CBSetEditSel(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
     return SendMessage16(lphc->hWndEdit, EM_SETSEL, 0, lParam);
 }
 
+/***********************************************************************
+ *           CBGetText
+ */
+static LRESULT CBGetText(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
+{
+    LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
+
+    return SendMessage16(lphc->hWndEdit, WM_GETTEXT, wParam, lParam);   
+}
 
 /***********************************************************************
  *           ComboWndProc
@@ -790,31 +798,32 @@ LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
      case WM_SETFONT: return CBSetFont(hwnd, wParam, lParam);
      case WM_SETREDRAW: return CBSetRedraw(hwnd, wParam, lParam);
      case WM_PAINT: return CBPaint(hwnd, wParam, lParam);
+     case WM_GETTEXT: return CBGetText( hwnd, wParam, lParam);
      case WM_LBUTTONDOWN: return CBLButtonDown(hwnd, wParam, lParam);
      case WM_SETFOCUS: return CBSetFocus(hwnd, wParam, lParam);
      case WM_KILLFOCUS: return CBKillFocus(hwnd, wParam, lParam);
      case WM_SIZE: return CBCheckSize(hwnd);
      case WM_COMMAND: return CBCommand(hwnd, wParam, lParam);
-     case CB_RESETCONTENT: return CBResetContent(hwnd, wParam, lParam);
-     case CB_DIR: return CBDir(hwnd, wParam, lParam);
-     case CB_ADDSTRING: return CBAddString(hwnd, wParam, lParam);
-     case CB_INSERTSTRING: return CBInsertString(hwnd, wParam, lParam);
-     case CB_DELETESTRING: return CBDeleteString(hwnd, wParam, lParam);
-     case CB_FINDSTRING: return CBFindString(hwnd, wParam, lParam);
-     case CB_GETCOUNT: return CBGetCount(hwnd, wParam, lParam);
-     case CB_GETCURSEL: return CBGetCurSel(hwnd, wParam, lParam);
-     case CB_GETITEMDATA: return CBGetItemData(hwnd, wParam, lParam);
-     case CB_GETITEMHEIGHT: return CBGetItemHeight(hwnd, wParam, lParam);
-     case CB_GETLBTEXT: return CBGetLBText(hwnd, wParam, lParam);
-     case CB_GETLBTEXTLEN: return CBGetLBTextLen(hwnd, wParam, lParam);
-     case CB_SELECTSTRING: return CBSelectString(hwnd, wParam, lParam);
-     case CB_SETITEMDATA: return CBSetItemData(hwnd, wParam, lParam);
-     case CB_SETCURSEL: return CBSetCurSel(hwnd, wParam, lParam);
-     case CB_SETITEMHEIGHT: return CBSetItemHeight(hwnd, wParam, lParam);
-     case CB_SHOWDROPDOWN: return CBShowDropDown(hwnd, wParam, lParam);
-     case CB_GETEDITSEL: return CBGetEditSel(hwnd, wParam, lParam);
-     case CB_SETEDITSEL: return CBSetEditSel(hwnd, wParam, lParam);
-     case CB_FINDSTRINGEXACT: return CBFindStringExact(hwnd, wParam, lParam);
+     case CB_RESETCONTENT16: return CBResetContent(hwnd, wParam, lParam);
+     case CB_DIR16: return CBDir(hwnd, wParam, lParam);
+     case CB_ADDSTRING16: return CBAddString(hwnd, wParam, lParam);
+     case CB_INSERTSTRING16: return CBInsertString(hwnd, wParam, lParam);
+     case CB_DELETESTRING16: return CBDeleteString(hwnd, wParam, lParam);
+     case CB_FINDSTRING16: return CBFindString(hwnd, wParam, lParam);
+     case CB_GETCOUNT16: return CBGetCount(hwnd, wParam, lParam);
+     case CB_GETCURSEL16: return CBGetCurSel(hwnd, wParam, lParam);
+     case CB_GETITEMDATA16: return CBGetItemData(hwnd, wParam, lParam);
+     case CB_GETITEMHEIGHT16: return CBGetItemHeight(hwnd, wParam, lParam);
+     case CB_GETLBTEXT16: return CBGetLBText(hwnd, wParam, lParam);
+     case CB_GETLBTEXTLEN16: return CBGetLBTextLen(hwnd, wParam, lParam);
+     case CB_SELECTSTRING16: return CBSelectString(hwnd, wParam, lParam);
+     case CB_SETITEMDATA16: return CBSetItemData(hwnd, wParam, lParam);
+     case CB_SETCURSEL16: return CBSetCurSel(hwnd, wParam, lParam);
+     case CB_SETITEMHEIGHT16: return CBSetItemHeight(hwnd, wParam, lParam);
+     case CB_SHOWDROPDOWN16: return CBShowDropDown(hwnd, wParam, lParam);
+     case CB_GETEDITSEL16: return CBGetEditSel(hwnd, wParam, lParam);
+     case CB_SETEDITSEL16: return CBSetEditSel(hwnd, wParam, lParam);
+     case CB_FINDSTRINGEXACT16: return CBFindStringExact(hwnd, wParam, lParam);
     }
     return DefWindowProc16(hwnd, message, wParam, lParam);
 }
@@ -988,7 +997,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
  */
 static LRESULT CBLKillFocus( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 {
-/*  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);*/
+/*  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN16,0,0);*/
   return 0;
 }
 
@@ -998,7 +1007,7 @@ static LRESULT CBLKillFocus( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 static LRESULT CBLActivate( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 {
   if (wParam == WA_INACTIVE)
-    SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
+    SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN16,0,0);
   return 0;
 }
 
@@ -1042,12 +1051,12 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
      }
   else if (lphl->PrevFocused != lphl->ItemFocused) 
           {
-      		SendMessage16(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
+      		SendMessage16(CLBoxGetCombo(hwnd),CB_SETCURSEL16,lphl->ItemFocused,0);
       		SendMessage16(GetParent16(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
       		ListBoxSendNotification(lphl, CBN_SELCHANGE);
      	  }
 
-  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
+  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN16,0,0);
 
   return 0;
 }
@@ -1225,15 +1234,6 @@ LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam
     return DefWindowProc16(hwnd, message, wParam, lParam);
 }
 
-/************************************************************************
- * 			       	DlgDirSelectComboBox	[USER.194]
- */
-BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, INT nIDLBox)
-{
-	fprintf(stdnimp,"DlgDirSelectComboBox(%04x, '%s', %d) \n",
-				hDlg, lpStr, nIDLBox);
-	return TRUE;
-}
 
 static INT32 COMBO_DlgDirList( HWND32 hDlg, LPARAM path, INT32 idCBox,
                                INT32 idStatic, UINT32 wType, BOOL32 unicode )
@@ -1242,11 +1242,11 @@ static INT32 COMBO_DlgDirList( HWND32 hDlg, LPARAM path, INT32 idCBox,
 
     if (idCBox)
     {
-        SendDlgItemMessage32A( hDlg, idCBox, CB_RESETCONTENT, 0, 0 );
+        SendDlgItemMessage32A( hDlg, idCBox, CB_RESETCONTENT16, 0, 0 );
         if (unicode)
-            res = SendDlgItemMessage32W( hDlg, idCBox, CB_DIR, wType, path );
+            res = SendDlgItemMessage32W( hDlg, idCBox, CB_DIR16, wType, path );
         else
-            res = SendDlgItemMessage32A( hDlg, idCBox, CB_DIR, wType, path );
+            res = SendDlgItemMessage32A( hDlg, idCBox, CB_DIR16, wType, path );
     }
     if (idStatic)
     {

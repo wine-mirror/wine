@@ -55,15 +55,6 @@ BOOL CloseHandle(KERNEL_OBJECT *handle)
 }
 
 /***********************************************************************
- *              GetModuleFileNameA      (KERNEL32.235)
- */
-DWORD GetModuleFileNameA(HMODULE32 hModule, LPSTR lpFilename, DWORD nSize)
-{
-    strcpy(lpFilename, "c:\\dummy");
-    return 8;
-}
-
-/***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
 HMODULE32 WIN32_GetModuleHandle(char *module)
@@ -97,6 +88,26 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
     lpStartupInfo->hStdInput  = (HANDLE32)0;
     lpStartupInfo->hStdOutput = (HANDLE32)1;
     lpStartupInfo->hStdError  = (HANDLE32)2;
+}
+
+/***********************************************************************
+ *              GetStartupInfoA         (KERNEL32.284)
+ * FIXME: perhaps supply better values.
+ */
+VOID
+GetSystemInfo(LPSYSTEM_INFO si) {
+    si->dwOemId		= 0x12345678;
+    si->dwPageSize	= 4096; /* 4K */
+    si->lpMinimumApplicationAddress = 0x40000000;
+    si->lpMaximumApplicationAddress = 0x80000000;
+    si->dwActiveProcessorMask       = 1;
+    si->dwNumberOfProcessors        = 1;
+#ifdef WINELIB
+    si->dwProcessorType             = 3;
+#else
+    si->dwProcessorType             = runtime_cpu();
+#endif
+    si->dwAllocationGranularity     = 8; /* hmm? */
 }
 
 /* Initialize whatever internal data structures we need.

@@ -32,9 +32,9 @@ BOOL32 MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
                    LPCSTR str, short count, const INT16 *lpDx);
 BOOL32 MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count);
 BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
-	       short height, HDC16 hdcSrc, short xSrc, short ySrc, DWORD rop);
+	       short height, DC *dcSrc, short xSrc, short ySrc, DWORD rop);
 BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
-		   short heightDest, HDC16 hdcSrc, short xSrc, short ySrc, 
+		   short heightDest, DC *dcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop);
 
 #endif   /* METAFILE_H */

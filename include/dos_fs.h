@@ -26,12 +26,15 @@ typedef struct
 #define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
 extern void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime );
+extern time_t DOSFS_DosDateTimeToUnixTime(WORD,WORD);
 extern const char *DOSFS_ToDosFCBFormat( const char *name );
 extern const char *DOSFS_ToDosDTAFormat( const char *name );
 extern const char *DOSFS_IsDevice( const char *name );
 extern const char * DOSFS_GetUnixFileName( const char * name, int check_last );
 extern const char * DOSFS_GetDosTrueName( const char *name, int unix_format );
 extern int DOSFS_GetDosFileName( const char *name, char *buffer, int len );
+extern time_t DOSFS_FileTimeToUnixTime(LPFILETIME ft);
+extern void DOSFS_UnixTimeToFileTime(time_t unixtime,LPFILETIME ft);
 extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
                            int skip, DOS_DIRENT *entry );

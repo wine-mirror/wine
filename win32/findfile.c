@@ -188,6 +188,8 @@ BOOL32 FindClose32(HANDLE32 handle)
 {
     FindFileContext32 *context;
 
+	if (handle==(INVALID_HANDLE_VALUE))
+		return TRUE;
     context = (FindFileContext32 *) handle;
     if (context->dir)
 	closedir(context->dir);

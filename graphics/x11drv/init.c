@@ -17,7 +17,7 @@ static BOOL32 X11DRV_DeleteDC( DC *dc );
 static const DC_FUNCTIONS X11DRV_Funcs =
 {
     NULL,                            /* pArc */
-    NULL,                            /* pBitBlt */
+    X11DRV_BitBlt,                   /* pBitBlt */
     NULL,                            /* pChord */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DeleteDC,                 /* pDeleteDC */
@@ -42,7 +42,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pOffsetViewportOrgEx */
     NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
-    NULL,                            /* pPatBlt */
+    X11DRV_PatBlt,                   /* pPatBlt */
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolygon */
@@ -76,7 +76,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetViewportOrgEx */
     NULL,                            /* pSetWindowExtEx */
     NULL,                            /* pSetWindowOrgEx */
-    NULL,                            /* pStretchBlt */
+    X11DRV_StretchBlt,               /* pStretchBlt */
     NULL,                            /* pStretchDIBits */
     NULL                             /* pTextOut */
 };

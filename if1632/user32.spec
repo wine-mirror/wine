@@ -150,10 +150,10 @@ base	1
 0143 stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBox32A
 0144 stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBox32W
 0145 stub DlgDirListW
-0146 stub DlgDirSelectComboBoxExA
-0147 stub DlgDirSelectComboBoxExW
-0148 stub DlgDirSelectExA
-0149 stub DlgDirSelectExW
+0146 stdcall DlgDirSelectComboBoxExA(long ptr long long) DlgDirSelectComboBoxEx32A
+0147 stdcall DlgDirSelectComboBoxExW(long ptr long long) DlgDirSelectComboBoxEx32W
+0148 stdcall DlgDirSelectExA(long ptr long long) DlgDirSelectEx32A
+0149 stdcall DlgDirSelectExW(long ptr long long) DlgDirSelectEx32W
 0150 stub DragDetect
 0151 stub DragObject
 0152 stub DrawAnimatedRects
@@ -162,7 +162,7 @@ base	1
 0155 stdcall DrawFocusRect(long ptr) DrawFocusRect32
 0156 stub DrawFrame
 0157 stdcall DrawFrameControl(long ptr long long) DrawFrameControl32
-0158 stub DrawIcon
+0158 stdcall DrawIcon(long long long long) DrawIcon
 0159 stub DrawIconEx
 0160 stdcall DrawMenuBar(long) DrawMenuBar
 0161 stub DrawStateA
@@ -230,7 +230,7 @@ base	1
 0223 stub GetClipboardFormatNameW
 0224 stub GetClipboardOwner
 0225 stdcall GetClipboardViewer(long) GetClipboardViewer
-0226 stub GetCursor
+0226 stdcall GetCursor() GetCursor
 0227 stub GetCursorInfo
 0228 stdcall GetCursorPos(ptr) GetCursorPos32
 0229 stdcall GetDC(long) GetDC32
@@ -296,7 +296,7 @@ base	1
 0289 stdcall GetSysColorBrush(long) GetSysColorBrush32
 0290 stdcall GetSystemMenu(long long) GetSystemMenu
 0291 stdcall GetSystemMetrics(long) GetSystemMetrics
-0292 stub GetTabbedTextExtentA
+0292 stdcall GetTabbedTextExtentA(long ptr long long ptr) GetTabbedTextExtent
 0293 stub GetTabbedTextExtentW
 0294 stub GetThreadDesktop
 0295 stub GetTopWindow
@@ -452,9 +452,9 @@ base	1
 0445 stub ReuseDDElParam
 0446 stdcall ScreenToClient(long ptr) ScreenToClient32
 0447 stub ScrollChildren
-0448 stub ScrollDC
-0449 stub ScrollWindow
-0450 stub ScrollWindowEx
+0448 stdcall ScrollDC(long long long ptr ptr long ptr) ScrollDC32
+0449 stdcall ScrollWindow(long long long ptr ptr) ScrollWindow32
+0450 stdcall ScrollWindowEx(long long long ptr ptr long ptr long) ScrollWindowEx32
 0451 stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessage32A
 0452 stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessage32W
 0453 stdcall SendMessageA(long long long long) SendMessage32A
@@ -485,7 +485,7 @@ base	1
 0478 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
 0479 stub SetDoubleClickTime
 0480 stdcall SetFocus(long) SetFocus32
-0481 stub SetForegroundWindow
+0481 return SetForegroundWindow 4 0
 0482 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 0483 stub SetKeyboardState
 0484 stdcall SetLastErrorEx(long long) SetLastErrorEx

@@ -105,7 +105,7 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
         return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP ;
     }
    
-    hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
+    hittest = WINPOS_WindowFromPoint( WIN_GetDesktop(), msg->pt, &pWnd );
     if (pWnd->hmemTaskQ != GetTaskQueue(0))
     {
         /* Not for the current task */

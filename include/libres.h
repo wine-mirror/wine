@@ -11,7 +11,8 @@
 
 extern INT32 LIBRES_AccessResource( HINSTANCE32 hModule, HRSRC32 hRsrc );
 extern HGLOBAL32 LIBRES_AllocResource( HINSTANCE32 hModule, HRSRC32 hRsrc, DWORD size );
-extern HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCSTR name, LPCSTR type );
+extern HRSRC32 LIBRES_FindResource16( HINSTANCE32 hModule, LPCSTR name, LPCSTR type );
+extern HRSRC32 LIBRES_FindResource32( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type );
 extern BOOL32 LIBRES_FreeResource( HGLOBAL32 handle );
 extern HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc );
 extern LPVOID LIBRES_LockResource( HGLOBAL32 handle );

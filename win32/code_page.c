@@ -5,11 +5,13 @@
  */
 
 #include <stdio.h>
+#include <malloc.h>
 #include "windows.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "string32.h"
 
 
 /***********************************************************************
@@ -84,4 +86,30 @@ int WideCharToMultiByte(UINT page, DWORD flags, WCHAR *src, int srclen,
 	return count;
 }
 
-		
+/***********************************************************************
+ *              EnumSystemCodePages32A                (KERNEL32.92)
+ */
+BOOL32
+EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags) {
+	dprintf_win32(stddeb,"EnumSystemCodePages32A(%p,%08lx)\n",
+		lpfnCodePageEnum,flags
+	);
+	lpfnCodePageEnum("437");
+	return TRUE;
+}
+
+/***********************************************************************
+ *              EnumSystemCodePages32W                (KERNEL32.93)
+ */
+BOOL32
+EnumSystemCodePages32W(CODEPAGE_ENUMPROC32W lpfnCodePageEnum,DWORD flags) {
+	WCHAR	*cp;
+	dprintf_win32(stddeb,"EnumSystemCodePages32W(%p,%08lx)\n",
+		lpfnCodePageEnum,flags
+	);
+
+	cp=STRING32_DupAnsiToUni("437");
+	lpfnCodePageEnum(cp);
+	free(cp);
+	return TRUE;
+}

@@ -2173,7 +2173,7 @@ INT GetMenuItemCount(HMENU16 hMenu)
 	LPPOPUPMENU	menu;
 	dprintf_menu(stddeb,"GetMenuItemCount(%04x);\n", hMenu);
 	menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
-	if (menu == NULL) return (UINT)-1;
+	if (menu == NULL || menu->wMagic != MENU_MAGIC) return (UINT)-1;
 	dprintf_menu(stddeb,"GetMenuItemCount(%04x) return %d \n", 
 		     hMenu, menu->nItems);
 	return menu->nItems;

@@ -115,8 +115,14 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
      * (because rectClient == rectWindow for WS_MINIMIZE windows).
      */
 
-    lps->hdc = GetDCEx16(hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT |
-                         DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
+    if (wndPtr->class->style & CS_PARENTDC)
+        /* Don't clip the output to the update region for CS_PARENTDC window */
+        lps->hdc = GetDCEx16( hwnd, 0, DCX_WINDOWPAINT | DCX_USESTYLE |
+                              (bIcon ? DCX_WINDOW : 0) );
+    else
+        lps->hdc = GetDCEx16(hwnd, hrgnUpdate, DCX_INTERSECTRGN |
+                             DCX_WINDOWPAINT | DCX_USESTYLE |
+                             (bIcon ? DCX_WINDOW : 0) );
 
     dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
 
@@ -264,13 +270,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                      hwnd, hrgnUpdate, flags);
     }
 
-    if (wndPtr->class->style & CS_PARENTDC)
-    {
-        GetClientRect32( wndPtr->parent->hwndSelf, &rectClient );
-        OffsetRect32( &rectClient, -wndPtr->rectClient.left,
-                      -wndPtr->rectClient.top );
-    }
-    else GetClientRect32( hwnd, &rectClient );
+    GetClientRect32( hwnd, &rectClient );
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
@@ -410,23 +410,16 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
            for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 	     if( wndPtr->dwStyle & WS_VISIBLE )
 	       {
-                   if (wndPtr->class->style & CS_PARENTDC)
-                   {
-                       if (!CombineRgn32( hrgn, hrgnUpdate, 0, RGN_COPY ))
-                           continue;
-                   }
-                   else
-                   {
-                       SetRectRgn( hrgn, wndPtr->rectWindow.left,
-                                   wndPtr->rectWindow.top,
-                                   wndPtr->rectWindow.right,
-                                   wndPtr->rectWindow.bottom );
-                       if (!CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
-                           continue;
-                   }
+                   SetRectRgn( hrgn, wndPtr->rectWindow.left,
+                               wndPtr->rectWindow.top,
+                               wndPtr->rectWindow.right,
+                               wndPtr->rectWindow.bottom );
+                   if (!CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
+                       continue;
                    OffsetRgn32( hrgn, -wndPtr->rectClient.left,
                                       -wndPtr->rectClient.top );
-                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags, RDW_C_USEHRGN );
+                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags,
+                                       RDW_C_USEHRGN );
                }
 	   DeleteObject32( hrgn );
 	   if (control & RDW_C_DELETEHRGN) DeleteObject32( hrgnUpdate );

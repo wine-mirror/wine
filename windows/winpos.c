@@ -253,7 +253,7 @@ void ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
  *
  * Find the window and hittest for a given point.
  */
-INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd )
+INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 {
     WND *wndPtr;
     INT16 hittest = HTERROR;
@@ -262,7 +262,7 @@ INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd )
     *ppWnd = NULL;
     x = pt.x;
     y = pt.y;
-    wndPtr = WIN_GetDesktop()->child;
+    wndPtr = wndScope->child;
     for (;;)
     {
         while (wndPtr)
@@ -298,11 +298,20 @@ INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd )
             else wndPtr = wndPtr->next;
         }
 
-        /* If nothing found, return the desktop window */
+        /* If nothing found, return the scope window */
         if (!*ppWnd)
         {
-            *ppWnd = WIN_GetDesktop();
-            return HTCLIENT;
+            *ppWnd = wndScope;
+            if( pt.x >= (wndScope->rectClient.left - wndScope->rectWindow.left) &&
+                pt.x >= (wndScope->rectClient.top - wndScope->rectWindow.top ) &&
+                pt.x <= (wndScope->rectClient.right - wndScope->rectWindow.left) &&
+                pt.x <= (wndScope->rectClient.bottom - wndScope->rectWindow.top ) )
+                return HTCLIENT;
+	    if( pt.x < 0 || pt.y < 0 || 
+		pt.x > (wndScope->rectWindow.right - wndScope->rectWindow.left) ||
+		pt.y > (wndScope->rectWindow.bottom - wndScope->rectWindow.top ) )
+		return HTNOWHERE;
+	    return HTCAPTION;	/* doesn't matter in this case */
         }
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
@@ -331,7 +340,7 @@ INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd )
 HWND16  WindowFromPoint16( POINT16 pt )
 {
     WND *pWnd;
-    WINPOS_WindowFromPoint( pt, &pWnd );
+    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt, &pWnd );
     return pWnd->hwndSelf;
 }
 
@@ -344,7 +353,7 @@ HWND32 WindowFromPoint32( POINT32 pt )
     WND *pWnd;
     POINT16 pt16;
     CONV_POINT32TO16( &pt, &pt16 );
-    WINPOS_WindowFromPoint( pt16, &pWnd );
+    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt16, &pWnd );
     return (HWND32)pWnd->hwndSelf;
 }
 
@@ -1419,9 +1428,12 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
 
  if( uFlags & SMC_NOCOPY )	/* invalidate Wnd visible region */
    {
-     if (my != NULLREGION)  PAINT_RedrawWindow( Wnd->hwndSelf, NULL, newVisRgn, RDW_INVALIDATE |
-		            RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
-   } 
+     if (my != NULLREGION)
+	 PAINT_RedrawWindow( Wnd->hwndSelf, NULL, newVisRgn, RDW_INVALIDATE |
+	  RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
+     else if(uFlags & SMC_DRAWFRAME)
+	 Wnd->flags |= WIN_NEEDS_NCPAINT;
+   }
  else			/* bitblt old client area */
    { 
      HDC32 hDC;
@@ -1471,9 +1483,8 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
                           DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
                           DCX_CACHE | DCX_CLIPSIBLINGS);
 
-         BitBlt( hDC, xto, yto, width, height, hDC, xfrom, yfrom, SRCCOPY );
-    
-	 ReleaseDC32( Wnd->parent->hwndSelf, hDC); 
+         BitBlt32( hDC, xto, yto, width, height, hDC, xfrom, yfrom, SRCCOPY );
+         ReleaseDC32( Wnd->parent->hwndSelf, hDC); 
        }
 
      if( update != NULLREGION )

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dos_fs.h"
 #include "windows.h"
+#include "dos_fs.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"

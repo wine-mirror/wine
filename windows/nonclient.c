@@ -56,6 +56,8 @@ static HBITMAP16 hbitmapRestoreD = 0;
 #define ON_BOTTOM_BORDER(hit) \
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
+extern HCURSOR16 CURSORICON_IconToCursor( HICON16, BOOL32 );
+
 /***********************************************************************
  *           NC_AdjustRect
  *
@@ -443,9 +445,9 @@ void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL down )
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC( hdc );
       hbitmap = SelectObject32( hdcMem, hbitmapClose );
-      BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-              hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
-              down ? NOTSRCCOPY : SRCCOPY );
+      BitBlt32(hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+               hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
+               down ? NOTSRCCOPY : SRCCOPY );
       SelectObject32( hdcMem, hbitmap );
       DeleteDC( hdcMem );
     }
@@ -517,14 +519,14 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
     }
 
       /* Draw frame */
-    PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, height, PATCOPY );
-    PatBlt( hdc, rect->left, rect->top,
-	    width, rect->bottom - rect->top, PATCOPY );
-    PatBlt( hdc, rect->left, rect->bottom,
-	    rect->right - rect->left, -height, PATCOPY );
-    PatBlt( hdc, rect->right, rect->top,
-	    -width, rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->top,
+              rect->right - rect->left, height, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->top,
+              width, rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->bottom,
+              rect->right - rect->left, -height, PATCOPY );
+    PatBlt32( hdc, rect->right, rect->top,
+              -width, rect->bottom - rect->top, PATCOPY );
 
     if (dlgFrame)
     {
@@ -575,21 +577,8 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
  */
 static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
 {
-    if (thickframe)
-    {
-	SelectObject32( hdc, GetStockObject32( GRAY_BRUSH ) );
-	PatBlt( hdc, rect->left, rect->top,
-	        rect->right - rect->left - SYSMETRICS_CXFRAME,
-	        SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->left, rect->top + SYSMETRICS_CYFRAME,
-	        SYSMETRICS_CXFRAME, 
-	        rect->bottom - rect->top - SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->left + SYSMETRICS_CXFRAME, rect->bottom,
-	        rect->right - rect->left - SYSMETRICS_CXFRAME,
-	        -SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->right, rect->top, -SYSMETRICS_CXFRAME, 
-	        rect->bottom - rect->top - SYSMETRICS_CYFRAME, PATINVERT );
-    }
+    if (thickframe) FastWindowFrame( hdc, rect, SYSMETRICS_CXFRAME,
+                                     SYSMETRICS_CYFRAME, PATINVERT );
     else DrawFocusRect16( hdc, rect );
 }
 
@@ -624,9 +613,9 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
 	HBRUSH32 hbrushOld = SelectObject32(hdc, sysColorObjects.hbrushWindow);
-	PatBlt( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
-	PatBlt( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
-	PatBlt( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
+	PatBlt32( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
+	PatBlt32( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
+	PatBlt32( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
 	r.left++;
 	r.right--;
 	SelectObject32( hdc, hbrushOld );
@@ -992,18 +981,18 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint 
 static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 {
     MSG16 msg;
-    LONG hittest;
     RECT16 sizingRect, mouseRect;
     HDC32 hdc;
-    BOOL thickframe;
-    POINT16 minTrack, maxTrack, capturePoint = pt;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    int moved = 0;
+    LONG hittest = (LONG)(wParam & 0x0f);
+    HCURSOR16 hDragCursor = 0, hOldCursor = 0;
+    POINT16   minTrack, maxTrack, capturePoint = pt;
+    WND *     wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL32    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
+    BOOL32    iconic = wndPtr->dwStyle & WS_MINIMIZE;
+    int       moved = 0;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
-    hittest = wParam & 0x0f;
-    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
@@ -1068,7 +1057,21 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	hdc = GetDC32( 0 );
 	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
-    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+
+    if( iconic )
+    {
+      HICON16 hIcon = (wndPtr->class->hIcon)
+                      ? wndPtr->class->hIcon
+                      : (HICON16)SendMessage16( hwnd, WM_QUERYDRAGICON, 0, 0L);
+      if( hIcon )
+      {
+        hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
+        hOldCursor = SetCursor(hDragCursor);
+        ShowCursor(1);
+      } else iconic = FALSE;
+    }
+
+    if( !iconic ) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     while(1)
     {
@@ -1117,16 +1120,26 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 		else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
 		if (ON_TOP_BORDER(hittest)) newRect.top += dy;
 		else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
-		NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
-		NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		if( !iconic )
+		{
+		  NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+		  NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		}
 		capturePoint = pt;
 		sizingRect = newRect;
 	    }
 	}
     }
 
-    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
     ReleaseCapture();
+    if( iconic )
+    {
+      ShowCursor(0);
+      SetCursor(hOldCursor);
+      if( hDragCursor ) DestroyCursor(hDragCursor);
+    }
+    else
+      NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     if (wndPtr->dwStyle & WS_CHILD)
         ReleaseDC32( wndPtr->parent->hwndSelf, hdc );

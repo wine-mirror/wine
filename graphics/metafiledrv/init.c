@@ -17,7 +17,7 @@ static BOOL32 MFDRV_DeleteDC( DC *dc );
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     NULL,                            /* pArc */
-    NULL,                            /* pBitBlt */
+    MFDRV_BitBlt,                    /* pBitBlt */
     NULL,                            /* pChord */
     NULL,                            /* pCreateDC */
     MFDRV_DeleteDC,                  /* pDeleteDC */
@@ -42,7 +42,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pOffsetViewportOrgEx */
     NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
-    NULL,                            /* pPatBlt */
+    MFDRV_PatBlt,                    /* pPatBlt */
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolygon */
@@ -76,7 +76,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetViewportOrgEx */
     NULL,                            /* pSetWindowExtEx */
     NULL,                            /* pSetWindowOrgEx */
-    NULL,                            /* pStretchBlt */
+    MFDRV_StretchBlt,                /* pStretchBlt */
     NULL,                            /* pStretchDIBits */
     NULL                             /* pTextOut */
 };
@@ -146,7 +146,6 @@ HDC16 CreateMetaFile16( LPCSTR filename )
     METAFILEDRV_PDEVICE *physDev;
     HFILE hFile;
 
-    printf( "CreateMetafile16: '%s'\n", filename );
     dprintf_metafile( stddeb, "CreateMetaFile16: '%s'\n", filename );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;

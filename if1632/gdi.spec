@@ -33,15 +33,15 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 27  pascal16 Rectangle(word s_word s_word s_word s_word) Rectangle16
 28  pascal16 RoundRect(word s_word s_word s_word s_word s_word s_word)
              RoundRect16
-29  pascal16 PatBlt(word s_word s_word s_word s_word long) PatBlt
+29  pascal16 PatBlt(word s_word s_word s_word s_word long) PatBlt16
 30  pascal16 SaveDC(word) SaveDC
 31  pascal   SetPixel(word s_word s_word long) SetPixel16
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn16
 33  pascal16 TextOut(word s_word s_word ptr word) TextOut16
 34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long)
-             BitBlt
+             BitBlt16
 35  pascal16 StretchBlt(word s_word s_word s_word s_word word s_word s_word
-                        s_word s_word long) StretchBlt
+                        s_word s_word long) StretchBlt16
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
 38  pascal Escape(word word word segptr segptr) Escape
@@ -262,7 +262,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 380 stub ENDPAGE
 381 stub SETABORTPROC
 382 stub ABORTDOC
-400 pascal16 FastWindowFrame(word long word word long) FastWindowFrame
+400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2
 404 stub GetTTGlyphIndexMap

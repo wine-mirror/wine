@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "windows.h"
+#include "color.h"
 #include "bitmap.h"
 #include "callback.h"
 #include "cursoricon.h"
@@ -430,34 +431,86 @@ static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
 /***********************************************************************
  *           CURSORICON_IconToCursor
  *
- * Should convert bitmap to mono and truncate if too large
- * FIXME: if icon is passed returns a copy of OCR_DRAGOBJECT cursor
- *	  but should actually convert icon to cursor.
+ * Converts bitmap to mono and truncates if icon is too large
  */
-HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon)
+HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
 {
+ HCURSOR16       hRet = 0;
  CURSORICONINFO *ptr = NULL;
+ HTASK16 	 hTask = GetCurrentTask();
+ TDB*  		 pTask = (TDB *)GlobalLock16(hTask);
 
  if(hIcon)
     if (!(ptr = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
        if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
+           hRet = CURSORICON_Copy( pTask->hInstance, hIcon );
+       else
           {
-            return hIcon; /* assuming it's a cursor */
+           BYTE  pAndBits[128];
+           BYTE  pXorBits[128];
+	   int   x, y, ix, iy, shift; 
+	   int   bpp = (ptr->bBitsPerPixel>=24)?32:ptr->bBitsPerPixel; /* this sucks */
+           BYTE* psPtr = (BYTE *)(ptr + 1) +
+                            ptr->nHeight * BITMAP_WIDTH_BYTES(ptr->nWidth,1);
+           BYTE* pxbPtr = pXorBits;
+           unsigned *psc = NULL, val = 0;
+           unsigned val_base = 0xffffffff >> (32 - bpp);
+           BYTE* pbc = NULL;
+
+           COLORREF       col;
+           CURSORICONINFO cI;
+
+           if(!pTask) return 0;
+
+           memset(pXorBits, 0, 128);
+           cI.bBitsPerPixel = 1; cI.bPlanes = 1;
+           cI.ptHotSpot.x = cI.ptHotSpot.y = 15;
+           cI.nWidth = 32; cI.nHeight = 32;
+           cI.nWidthBytes = 4;	/* 1bpp */
+
+           x = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
+           y = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
+
+           for( iy = 0; iy < y; iy++ )
+           {
+              val = BITMAP_WIDTH_BYTES( ptr->nWidth, 1 );
+              memcpy( pAndBits + iy * 4,
+                     (BYTE *)(ptr + 1) + iy * val, (val>4) ? 4 : val);
+              shift = iy % 2;
+
+              for( ix = 0; ix < x; ix++ )
+              {
+                if( bSemiTransparent && ((ix+shift)%2) )
+                {
+                    pbc = pAndBits + iy * 4 + ix/8;
+                   *pbc |= 0x80 >> (ix%8);
+                }
+                else
+                {
+                  psc = (unsigned*)(psPtr + (ix * bpp)/8);
+                  val = ((*psc) >> (ix * bpp)%8) & val_base;
+                  col = COLOR_ToLogical(val);
+                  if( GetRValue(col) > 0xa0 ||
+                      GetGValue(col) > 0x80 ||
+                      GetBValue(col) > 0xa0 )
+                  {
+                    pbc = pxbPtr + ix/8;
+                   *pbc |= 0x80 >> (ix%8);
+                  }
+                }
+              }
+              psPtr += ptr->nWidthBytes;
+              pxbPtr += 4;
+           }
+           hRet = CreateCursorIconIndirect( pTask->hInstance , &cI, pAndBits, pXorBits);
+
+           if( !hRet ) /* fall back on default drag cursor */
+                hRet = CURSORICON_Copy( pTask->hInstance ,
+                              CURSORICON_Load(0,MAKEINTRESOURCE(OCR_DRAGOBJECT),
+                                         SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE) );
           }
-       else 
-	  {
-	   /* kludge */
-	   TDB* pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-	   if(!pTask) return 0;
-
-           fprintf( stdnimp, "IconToCursor: Icons are not supported, returning default!\n");
-	   return CURSORICON_Copy( pTask->hInstance ,
-				   CURSORICON_Load(0,MAKEINTRESOURCE(OCR_DRAGOBJECT),
-				                   SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE) );
-	  }
-
- return 0;
+ return hRet;
 }
 
 /***********************************************************************
@@ -627,9 +680,9 @@ BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
     if (hXorBits && hAndBits)
     {
         HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
-        BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
+        BitBlt32( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
         SelectObject32( hMemDC, hXorBits );
-        BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCINVERT);
+        BitBlt32(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
         SelectObject32( hMemDC, hBitTemp );
     }
     DeleteDC( hMemDC );
@@ -896,8 +949,8 @@ void GetCursorPos16( POINT16 *pt )
 	pt->x = pt->y = 0;
     else
     {
-	pt->x = rootX + desktopX;
-	pt->y = rootY + desktopY;
+	pt->x = childX;
+	pt->y = childY;
     }
     dprintf_cursor(stddeb, "GetCursorPos: ret=%d,%d\n", pt->x, pt->y );
 }

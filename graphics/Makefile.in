@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = graphics
 
 C_SRCS = \
+	bitblt.c \
 	driver.c
 
 all: $(MODULE).o

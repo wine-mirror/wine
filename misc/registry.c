@@ -20,6 +20,7 @@
 #include "win.h"
 #include "winerror.h"
 #include "file.h"
+#include "dos_fs.h"
 #include "string32.h"	
 #include "stddebug.h"
 #include "debug.h"
@@ -1054,8 +1055,6 @@ _w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key
 	return NULL;
 }
 
-extern time_t FileTimeToUnixTime(FILETIME*);
-
 static void
 _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	/* Disk Key Entry structure (RGKN part) */
@@ -1211,7 +1210,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	if (!GetFileInformationByHandle(hfd,&hfdinfo))
 		return;
 	end		= hfdinfo.nFileSizeLow;
-	lastmodified	= FileTimeToUnixTime(&(hfdinfo.ftLastWriteTime));
+	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfdinfo.ftLastWriteTime));
 
 	if (-1==_llseek(hfd,rgdbsection,SEEK_SET))
 		return;

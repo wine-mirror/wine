@@ -113,7 +113,10 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	}
 	hDest = FindWindow32A( "MS_WINHELP", NULL );
 	if(!hDest)
-		return FALSE;
+		if(wCommand == HELP_QUIT)
+			return TRUE;
+		else
+			return FALSE;
 	switch(wCommand)
 	{
 		case HELP_CONTEXT:

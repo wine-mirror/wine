@@ -672,8 +672,8 @@ HBITMAP16 CreateMDIMenuBitmap(void)
  hbCopy = CreateCompatibleBitmap(hDCSrc,SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE);
  hb_dest = SelectObject32(hDCDest,hbCopy);
 
- BitBlt(hDCDest, 0, 0, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-	hDCSrc, SYSMETRICS_CXSIZE, 0, SRCCOPY);
+ BitBlt32(hDCDest, 0, 0, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+          hDCSrc, SYSMETRICS_CXSIZE, 0, SRCCOPY);
  
  SelectObject32(hDCSrc,hb_src);
  SelectObject32(hDCDest,hb_dest);
@@ -982,7 +982,8 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam
     RECT16		 rect;
     WND                 *w 	  = WIN_FindWndPtr(hwnd);
     WND			*frameWnd = w->parent;
-
+    INT			nItems;
+    
     ci = (MDICLIENTINFO *) w->wExtra;
     
     switch (message)
@@ -1020,12 +1021,12 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam
       
       case WM_DESTROY:
 	if( ci->hwndChildMaximized ) MDI_RestoreFrameMenu(w, frameWnd->hwndSelf);
-	ci->idFirstChild = GetMenuItemCount(ci->hWindowMenu) - 1;
-	ci->nActiveChildren++; 			/* to delete a separator */
-
-	while( ci->nActiveChildren-- )
-	     DeleteMenu(ci->hWindowMenu,MF_BYPOSITION,ci->idFirstChild--);
-
+	if((nItems = GetMenuItemCount(ci->hWindowMenu)) > 0) {
+    	    ci->idFirstChild = nItems - 1;
+	    ci->nActiveChildren++; 		/* to delete a separator */
+	    while( ci->nActiveChildren-- )
+	        DeleteMenu(ci->hWindowMenu,MF_BYPOSITION,ci->idFirstChild--);
+	}
 	return 0;
 
       case WM_MDIACTIVATE:
@@ -1718,8 +1719,8 @@ void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
  SetScrollPos32(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
 
  if( uMsg == WM_VSCROLL )
-     ScrollWindow(hWnd ,0 ,curPos - newPos, NULL, NULL);
+     ScrollWindow32(hWnd ,0 ,curPos - newPos, NULL, NULL);
  else
-     ScrollWindow(hWnd ,curPos - newPos, 0, NULL, NULL);
+     ScrollWindow32(hWnd ,curPos - newPos, 0, NULL, NULL);
 }
 

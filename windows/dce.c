@@ -331,8 +331,8 @@ HRGN32 DCE_GetVisRgn( HWND hwnd, WORD flags )
         wndPtr = wndPtr->parent;
         xoffset -= wndPtr->rectClient.left;
         yoffset -= wndPtr->rectClient.top;
-        hrgn = DCE_ClipWindows( wndPtr->parent->child, wndPtr,
-                                hrgn, xoffset, yoffset );
+        hrgn = DCE_ClipWindows( wndPtr->parent ? wndPtr->parent->child : NULL,
+                                wndPtr, hrgn, xoffset, yoffset );
         if (!hrgn) return 0;
     }
     return hrgn;

@@ -67,8 +67,11 @@ void DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
 	return;
 }
 
-void
-ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit) {
+void ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit) {
+	/* hmm */
+}
+
+void MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit) {
 	/* hmm */
 }
 

@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = objects
 
 C_SRCS = \
-	bitblt.c \
 	bitmap.c \
 	brush.c \
 	clipping.c \

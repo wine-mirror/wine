@@ -1,20 +1,45 @@
-1. Messaging:
+This is intended to be a place where you should look first if
+you want to contribute to Wine development. Add your e-mail
+address to the corresponding entry if you are working on/have 
+done something for one of the problems. You are encouraged to 
+add new entries and, more importantly, remove those for the 
+bugs you fixed ;-)
+------------------------------------------------------------
+As of Nov 8 1996 -
 
-- Message flow is not correct for multiple tasks
-- Dialog Boxes created by WM_CREATE handler aren't visible
-- MDI does not send WM_GETMINMAX message.
-- resizing of MDI child windows sometimes leaves them unrepainted
+General:
 
-2. Controls:
+ * Combobox code is very inadequate (no notification messages,
+   dropdown listboxes often stay visible, etc... ).
 
-- Some features are missing (like VK_SHIFT aided multiple selection in listboxes)
+ * Multicolumn and/or LBS_EXTENDEDSEL style listboxes are still 
+   screwed up. [julliard@lrc.epfl.ch]
 
-3. Miscellaneous:
+ * Winsock asynchronous functions do not work.
 
-- AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple times.
+ * Font mapping is too generic. No soft font loading, no rotated 
+   text support. [alex@amadeus.pharm.sunysb.edu]
 
-4. Where to look in source files:
+ * No thread support in Win32 code. 
 
-- grep for FIXME in the source files.
+ * Very alpha printing code. [john@division.co.uk]
+
+ * No icon titles.
+	- Windows uses a special window class to display icon titles.
+	  Handles to these title windows are stored in the icon window
+	  properties.
+
+Miscellaneous:
+
+ * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
+   times.
+ * ScrollWindowEx() is outdated.
+ * HCBT_CLICKSKIPPED/HCBT_KEYSKIPPED hook actions are not implemented.
+ * Write sometimes segfaults in StretchDIBits() (when inside BITBLT_GetRow)
+   when only lower part of the resulting image is visible.
+
+Where to look in source files:
+
+ * grep for FIXME in the source files.
 
 

@@ -447,17 +447,9 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 
     if (flags & ETO_CLIPPED)
     {
-       if (dc->w.flags & DC_MEMORY)
-       {
-	  hRgnClip = dc->w.hClipRgn;
-	  CLIPPING_IntersectClipRect(dc, rect.left, rect.top, rect.right, rect.bottom,
-					 CLIP_INTERSECT | CLIP_KEEPRGN);
-       }
-       else
-       { 
-          SaveVisRgn( hdc );
-          IntersectVisRect( hdc, rect.left, rect.top, rect.right, rect.bottom );
-       }
+        hRgnClip = dc->w.hClipRgn;
+        CLIPPING_IntersectClipRect( dc, rect.left, rect.top, rect.right,
+                                    rect.bottom, CLIP_INTERSECT|CLIP_KEEPRGN );
     }
 
       /* Draw the text background if necessary */
@@ -565,11 +557,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }
 
-    if (flags & ETO_CLIPPED) 
-    {
-	if (dc->w.flags & DC_MEMORY) SelectClipRgn16( hdc, hRgnClip );
-	else RestoreVisRgn( hdc );
-    }
+    if (flags & ETO_CLIPPED) SelectClipRgn32( hdc, hRgnClip );
     return TRUE;
 }
 

@@ -109,7 +109,7 @@ base	1
 104 stub OleGetClipboard
 105 stub OleGetIconOfClass
 106 stub OleGetIconOfFile
-107 stub OleInitialize
+107 return OleInitialize 4 0
 108 stub OleInitializeWOW
 109 stub OleIsCurrentClipboard
 110 stub OleIsRunning

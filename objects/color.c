@@ -482,9 +482,10 @@ static HPALETTE16 COLOR_InitPalette(void)
     /* Build free list */
 
     if( COLOR_firstFree != -1 )
+    {
 	COLOR_FormatSystemPalette();
-
-    COLOR_FillDefaultColors();
+        COLOR_FillDefaultColors();
+    }
 
     /* create default palette (20 system colors) */
 

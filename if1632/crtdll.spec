@@ -287,7 +287,7 @@ base	1
 282 cdecl _strcmpi(ptr ptr) lstrcmpi32A
 283 stub _strdate
 284 stub _strdec
-285 stub _strdup
+285 cdecl _strdup(ptr) CRTDLL__strdup
 286 stub _strerror
 287 cdecl _stricmp(ptr ptr) lstrcmpi32A
 288 stub _stricoll
@@ -364,7 +364,7 @@ base	1
 359 cdecl exit(long) CRTDLL_exit
 360 cdecl exp(long) CRTDLL_exp
 361 cdecl fabs(long) CRTDLL_fabs
-362 stub fclose
+362 cdecl fclose(ptr) CRTDLL_fclose
 363 stub feof
 364 stub ferror
 365 cdecl fflush(ptr) CRTDLL_fflush
@@ -433,11 +433,11 @@ base	1
 428 stub mblen
 429 stub mbstowcs
 430 stub mbtowc
-431 stub memchr
-432 stub memcmp
-433 stub memcpy
-434 stub memmove
-435 stub memset
+431 cdecl memchr(ptr long long) memchr
+432 cdecl memcmp(ptr ptr long) memcmp
+433 cdecl memcpy(ptr ptr long) memcpy
+434 cdecl memmove(ptr ptr long) memmove
+435 cdecl memset(ptr long long) memset 
 436 stub mktime
 437 stub modf
 438 stub perror
@@ -460,16 +460,16 @@ base	1
 455 stub signal
 456 cdecl sin(long) CRTDLL_sin
 457 cdecl sinh(long) CRTDLL_sinh
-458 stub sprintf
+458 cdecl sprintf() CRTDLL_sprintf
 459 cdecl sqrt(long) CRTDLL_sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 stub sscanf
 462 cdecl strcat(ptr ptr) lstrcat32A
-463 stub strchr
+463 cdecl strchr(ptr long) strchr
 464 cdecl strcmp(ptr ptr) lstrcmp32A
 465 stub strcoll
 466 cdecl strcpy(ptr ptr) lstrcpy32A
-467 stub strcspn
+467 cdecl strcspn(ptr ptr) strcspn
 468 stub strerror
 469 stub strftime
 470 cdecl strlen(ptr) lstrlen32A
@@ -478,11 +478,11 @@ base	1
 473 cdecl strncpy(ptr ptr long) lstrcpyn32A
 474 stub strpbrk
 475 stub strrchr
-476 stub strspn
-477 stub strstr
+476 cdecl strspn(ptr ptr) strspn
+477 cdecl strstr(ptr ptr) strstr
 478 stub strtod
-479 stub strtok
-480 stub strtol
+479 cdecl strtok(ptr ptr) strtok
+480 cdecl strtol(ptr ptr long) strtol
 481 cdecl strtoul(ptr ptr long) strtoul
 482 stub strxfrm
 483 stub swprintf

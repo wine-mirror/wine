@@ -15,10 +15,10 @@
 #include <unistd.h>
 #include <utime.h>
 #include <ctype.h>
+#include "windows.h"
 #include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
-#include "windows.h"
 #include "msdos.h"
 #include "ldt.h"
 #include "task.h"

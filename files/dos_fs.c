@@ -306,6 +306,25 @@ void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
                  + tm->tm_mday;
 }
 
+/***********************************************************************
+ *           DOSFS_DosDateTimeToUnixTime
+ *
+ * Convert from the DOS (FAT) date/time format into Unix time
+ * (borrowed from files/file.c)
+ */
+time_t DOSFS_DosDateTimeToUnixTime( WORD date, WORD time )
+{
+    struct tm newtm;
+
+    newtm.tm_sec  = (time & 0x1f) * 2;
+    newtm.tm_min  = (time >> 5) & 0x3f;
+    newtm.tm_hour = (time >> 11);
+    newtm.tm_mday = (date & 0x1f);
+    newtm.tm_mon  = ((date >> 5) & 0x0f) - 1;
+    newtm.tm_year = (date >> 9) + 80;
+    return mktime( &newtm );
+}
+
 
 /***********************************************************************
  *           DOSFS_UnixTimeToFileTime
@@ -760,7 +779,8 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
                        path, skip, buffer, cur_pos );
         cur_pos = skip;
         if (dir) closedir(dir);
-        if (!(dir = opendir( path ))) return 0;
+        if (!*path) path = "/";
+        if (!(dir = opendir(path))) return 0;
         drive_path = path;
         drive_root = 0;
         if (DRIVE_FindDriveRoot( &drive_path ) != -1)
@@ -875,4 +895,95 @@ DWORD GetFullPathName32A( LPCSTR fn, DWORD buflen, LPSTR buf, LPSTR *lastpart) {
 	if (lastpart)
 		*lastpart=strrchr(buf,'\\');
 	return strlen(fn);
+}
+
+
+/***********************************************************************
+ *           DosDateTimeToFileTime   (KERNEL32.76)
+ */
+BOOL32 DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft )
+{
+    time_t unixtime = DOSFS_DosDateTimeToUnixTime(fatdate,fattime);
+    DOSFS_UnixTimeToFileTime(unixtime,ft);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FileTimeToDosDateTime   (KERNEL32.111)
+ */
+BOOL32 FileTimeToDosDateTime( LPFILETIME ft, LPWORD fatdate, LPWORD fattime)
+{
+    time_t unixtime = DOSFS_FileTimeToUnixTime(ft);
+    DOSFS_ToDosDateTime(unixtime,fatdate,fattime);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           LocalFileTimeToFileTime   (KERNEL32.373)
+ */
+BOOL32 LocalFileTimeToFileTime( LPFILETIME localft, LPFILETIME utcft )
+{
+    struct tm *xtm;
+
+    /* convert from local to UTC. Perhaps not correct. FIXME */
+    xtm = gmtime((time_t*)&(localft->dwLowDateTime));
+    utcft->dwLowDateTime  = mktime(xtm);
+    utcft->dwHighDateTime = 0;
+    return TRUE; 
+}
+
+
+/***********************************************************************
+ *           FileTimeToLocalFileTime   (KERNEL32.112)
+ */
+BOOL32 FileTimeToLocalFileTime( LPFILETIME utcft, LPFILETIME localft )
+{
+    struct tm *xtm;
+
+    /* convert from UTC to local. Perhaps not correct. FIXME */
+    xtm = localtime((time_t*)&(utcft->dwLowDateTime));
+    localft->dwLowDateTime  = mktime(xtm);
+    localft->dwHighDateTime = 0;
+    return TRUE; 
+}
+
+
+/***********************************************************************
+ *           FileTimeToSystemTime   (KERNEL32.113)
+ */
+BOOL32 FileTimeToSystemTime( LPFILETIME ft, LPSYSTEMTIME syst )
+{
+    struct tm *xtm;
+    time_t xtime = DOSFS_FileTimeToUnixTime(ft);
+    xtm = gmtime(&xtime);
+    syst->wYear      = xtm->tm_year;
+    syst->wMonth     = xtm->tm_mon;
+    syst->wDayOfWeek = xtm->tm_wday;
+    syst->wDay	     = xtm->tm_mday;
+    syst->wHour	     = xtm->tm_hour;
+    syst->wMinute    = xtm->tm_min;
+    syst->wSecond    = xtm->tm_sec;
+    syst->wMilliseconds	= 0; /* FIXME */
+    return TRUE; 
+}
+
+
+/***********************************************************************
+ *           SystemTimeToFileTime   (KERNEL32.526)
+ */
+BOOL32 SystemTimeToFileTime( LPSYSTEMTIME syst, LPFILETIME ft )
+{
+    struct tm xtm;
+
+    xtm.tm_year	= syst->wYear;
+    xtm.tm_mon	= syst->wMonth;
+    xtm.tm_wday	= syst->wDayOfWeek;
+    xtm.tm_mday	= syst->wDay;
+    xtm.tm_hour	= syst->wHour;
+    xtm.tm_min	= syst->wMinute;
+    xtm.tm_sec	= syst->wSecond;
+    DOSFS_UnixTimeToFileTime(mktime(&xtm),ft);
+    return TRUE; 
 }

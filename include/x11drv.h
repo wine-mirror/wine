@@ -50,8 +50,17 @@ typedef struct
 
 struct tagDC;
 
+extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
+                             INT32 width, INT32 height, struct tagDC *dcSrc,
+                             INT32 xSrc, INT32 ySrc, DWORD rop );
 extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
                                          INT32 count, LPSIZE32 size );
+extern BOOL32 X11DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
+                             INT32 width, INT32 height, DWORD rop );
 extern VOID X11DRV_SetDeviceClipping(struct tagDC *dc);
+extern BOOL32 X11DRV_StretchBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
+                                 INT32 widthDst, INT32 heightDst,
+                                 struct tagDC *dcSrc, INT32 xSrc, INT32 ySrc,
+                                 INT32 widthSrc, INT32 heightSrc, DWORD rop );
 
 #endif  /* __WINE_X11DRV_H */

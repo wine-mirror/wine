@@ -522,9 +522,9 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_PATBLT:
-	PatBlt(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
-	       *(mr->rdParam + 3), *(mr->rdParam + 2),
-	       MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
+	PatBlt16(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
+                 *(mr->rdParam + 3), *(mr->rdParam + 2),
+                 MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_SAVEDC:
@@ -705,7 +705,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                                       mr->rdParam[14], /*BitsPixel*/
                                       (LPSTR)&mr->rdParam[15]);  /*bits*/
        SelectObject32(hdcSrc,hbitmap);
-       StretchBlt(hdc,mr->rdParam[9],mr->rdParam[8],
+       StretchBlt32(hdc,mr->rdParam[9],mr->rdParam[8],
                     mr->rdParam[7],mr->rdParam[6],
 		    hdcSrc,mr->rdParam[5],mr->rdParam[4],
 		    mr->rdParam[3],mr->rdParam[2],
@@ -721,11 +721,10 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                             mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
                             (LPSTR)&mr->rdParam[12]/*bits*/);
        SelectObject32(hdcSrc,hbitmap);
-       BitBlt(hdc,mr->rdParam[6],mr->rdParam[5],
-                    mr->rdParam[4],mr->rdParam[3],
-		    hdcSrc,
-		    mr->rdParam[2],mr->rdParam[1],
-		    MAKELONG(0,mr->rdParam[0]));
+       BitBlt32(hdc,mr->rdParam[6],mr->rdParam[5],
+                mr->rdParam[4],mr->rdParam[3],
+                hdcSrc, mr->rdParam[2],mr->rdParam[1],
+                MAKELONG(0,mr->rdParam[0]));
        DeleteDC(hdcSrc);		    
       }
       break;
@@ -1157,16 +1156,14 @@ BOOL32 MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
  *         MF_BitBlt
  */
 BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
-                 short height, HDC16 hdcSrc, short xSrc, short ySrc, DWORD rop)
+                 short height, DC *dcSrc, short xSrc, short ySrc, DWORD rop)
 {
     BOOL32 ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
-    DC *dcSrc;
     BITMAP16  BM;
 
-    if (!(dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC ))) return 0;
     GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
     len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
     if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
@@ -1207,20 +1204,18 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 #define STRETCH_VIA_DIB
 #undef  STRETCH_VIA_DIB
 BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
-                     short heightDest, HDC16 hdcSrc, short xSrc, short ySrc, 
+                     short heightDest, DC *dcSrc, short xSrc, short ySrc, 
                      short widthSrc, short heightSrc, DWORD rop)
 {
     BOOL32 ret;
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
-    DC *dcSrc;
     BITMAP16  BM;
 #ifdef STRETCH_VIA_DIB    
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
 #endif  
-    if (!(dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC ))) return 0;
     GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
@@ -1240,8 +1235,8 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     lpBMI->biClrUsed   = nBPP != 24 ? 1 << nBPP : 0;
     lpBMI->biSizeImage = ((lpBMI->biWidth * nBPP + 31) / 32) * 4 * lpBMI->biHeight;
     lpBMI->biCompression = BI_RGB;
-    lpBMI->biXPelsPerMeter = MulDiv32(GetDeviceCaps(hdcSrc,LOGPIXELSX),3937,100);
-    lpBMI->biYPelsPerMeter = MulDiv32(GetDeviceCaps(hdcSrc,LOGPIXELSY),3937,100);
+    lpBMI->biXPelsPerMeter = MulDiv32(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
+    lpBMI->biYPelsPerMeter = MulDiv32(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
     dprintf_metafile(stddeb,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",

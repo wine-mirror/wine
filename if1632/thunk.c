@@ -139,7 +139,29 @@ INT16 THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
                                 FONTENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, CallTo16_word_llwl );
-    return EnumFontFamilies( hdc, lpszFamily, (FONTENUMPROC16)&thunk, lParam );
+    return EnumFontFamilies16(hdc, lpszFamily, (FONTENUMPROC16)&thunk, lParam);
+}
+
+
+/*************************************************************************
+ *           THUNK_EnumFontFamilies32A   (GDI32.80)
+ */
+INT32 THUNK_EnumFontFamilies32A( HDC32 hdc, LPCSTR lpszFamily,
+                                 FONTENUMPROC32A func, LPARAM lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFontFamilies32A(hdc,lpszFamily,(FONTENUMPROC32A)&thunk,lParam);
+}
+
+
+/*************************************************************************
+ *           THUNK_EnumFontFamilies32W   (GDI32.83)
+ */
+INT32 THUNK_EnumFontFamilies32W( HDC32 hdc, LPCWSTR lpszFamily,
+                                 FONTENUMPROC32W func, LPARAM lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFontFamilies32W(hdc,lpszFamily,(FONTENUMPROC32W)&thunk,lParam);
 }
 
 
@@ -276,6 +298,26 @@ INT32 THUNK_EnumPropsEx32W( HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
 {
     DECL_THUNK( thunk, func, CallTo32_4 );
     return EnumPropsEx32W( hwnd, (PROPENUMPROCEX32W)&thunk, lParam );
+}
+
+
+/***********************************************************************
+ *           THUNK_EnumSystemCodePages32A	(KERNEL32.92)
+ */
+BOOL32 THUNK_EnumSystemCodePages32A( CODEPAGE_ENUMPROC32A func, DWORD flags )
+{
+    DECL_THUNK( thunk, func, CallTo32_1 );
+    return EnumSystemCodePages32A( (CODEPAGE_ENUMPROC32A)&thunk, flags );
+}
+
+
+/***********************************************************************
+ *           THUNK_EnumSystemCodePages32W	(KERNEL32.93)
+ */
+BOOL32 THUNK_EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W func, DWORD flags )
+{
+    DECL_THUNK( thunk, func, CallTo32_1 );
+    return EnumSystemCodePages32W( (CODEPAGE_ENUMPROC32W)&thunk, flags );
 }
 
 

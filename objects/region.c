@@ -487,7 +487,7 @@ static INT32 REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
  *
  * Add rectangle to region
  */
-BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, LPRECT16 rc )
+BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, const RECT32 *rc )
 {
   RGNOBJ 	*rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
   XRectangle     rect = { rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top };

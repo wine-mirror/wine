@@ -26,7 +26,6 @@
 #include "debug.h"
 
 
-static void UnixTimeToFileTime(time_t unix_time, FILETIME *filetime);
 static int TranslateCreationFlags(DWORD create_flags);
 static int TranslateAccessFlags(DWORD access_flags);
 int TranslateProtectionFlags(DWORD);
@@ -54,6 +53,9 @@ HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
     HFILE hfile;
     FILEMAP_OBJECT *filemap_obj;
 
+    dprintf_win32(stddeb,"CreateFileMapping32A(%08x,%p,%ld,%ld,%ld,%s)\n",
+    	h,ats,pot,sh,hlow,lpName
+    );
     if (sh) {
         SetLastError(ErrnoToLastError(errno));
         return INVALID_HANDLE_VALUE;
@@ -92,6 +94,16 @@ HANDLE32 CreateFileMapping32W(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
     return res;
 }
 
+
+/***********************************************************************
+ *           MapViewOfFile                  (KERNEL32.385)
+ *
+ */
+LPVOID MapViewOfFile(HANDLE32 handle, DWORD access, DWORD offhi,
+                      DWORD offlo, DWORD size)
+{
+    return MapViewOfFileEx(handle,access,offhi,offlo,size,0);
+}
 
 /***********************************************************************
  *           MapViewOfFileEx                  (KERNEL32.386)
@@ -138,9 +150,9 @@ DWORD GetFileInformationByHandle(HFILE hFile,BY_HANDLE_FILE_INFORMATION *lpfi)
     /* Translate the file times.  Use the last modification time
      * for both the creation time and write time.
      */
-    UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftCreationTime));
-    UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftLastWriteTime));
-    UnixTimeToFileTime(file_stat.st_atime, &(lpfi->ftLastAccessTime));
+    DOSFS_UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftCreationTime));
+    DOSFS_UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftLastWriteTime));
+    DOSFS_UnixTimeToFileTime(file_stat.st_atime, &(lpfi->ftLastAccessTime));
 
     lpfi->nFileSizeLow = file_stat.st_size;
     lpfi->nNumberOfLinks = file_stat.st_nlink;
@@ -155,19 +167,18 @@ DWORD GetFileInformationByHandle(HFILE hFile,BY_HANDLE_FILE_INFORMATION *lpfi)
     return 1;
 }
 
-static void UnixTimeToFileTime(time_t unix_time, FILETIME *filetime)
-{
-    /* This isn't anywhere close to being correct, but should
-     * work for now.
-     */
-    filetime->dwLowDateTime  = (unix_time & 0x0000FFFF) << 16;
-    filetime->dwHighDateTime = (unix_time & 0xFFFF0000) >> 16;
-}
+/***********************************************************************
+ *           GetFileSize             (KERNEL32.220)
+ */
+DWORD GetFileSize(HFILE hf,LPDWORD filesizehigh) {
+    BY_HANDLE_FILE_INFORMATION	fi;
+	DWORD	res = GetFileInformationByHandle(hf,&fi);
 
-time_t FileTimeToUnixTime(FILETIME *filetime)
-{
-    /* reverse of UnixTimeToFileTime */
-    return (filetime->dwLowDateTime>>16)+(filetime->dwHighDateTime<<16);
+	if (!res) 
+		return 0;	/* FIXME: correct ? */
+	if (filesizehigh) 
+		*filesizehigh = fi.nFileSizeHigh;
+	return fi.nFileSizeLow;
 }
 
 /***********************************************************************

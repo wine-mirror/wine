@@ -213,5 +213,4 @@ located in windows/, controls/, and misc/ directories.
        and in this case SendMessage has to build some sort of message 
        queue for sent messages. Another issue is what to do with messages 
        sent to the sender when it is blocked inside its own SendMessage. 
-       At this point Wine addresses very few of these problems.
 

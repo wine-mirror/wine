@@ -1879,7 +1879,7 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		if (wndPtr->hwndSelf == GetFocus32())
 			HideCaret(wndPtr->hwndSelf);
 		if (EDIT_GetRedraw(wndPtr)) 
-			ScrollWindow(wndPtr->hwndSelf, dx, dy, NULL, NULL);
+			ScrollWindow32(wndPtr->hwndSelf, dx, dy, NULL, NULL);
 		es->FirstVisibleLine = nfv;
 		es->XOffset = nxoff;
 		if (IsVScrollBar(wndPtr))

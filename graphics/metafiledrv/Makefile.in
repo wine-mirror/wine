@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = metafiledrv
 
 C_SRCS = \
+	bitblt.c \
 	init.c
 
 all: $(MODULE).o

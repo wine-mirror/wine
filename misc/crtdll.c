@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "module.h"
 #include "xmalloc.h"
+#include "heap.h"
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */
@@ -138,6 +139,14 @@ int CRTDLL_fprintf(DWORD *args)
 int CRTDLL_printf(DWORD *args)
 {
 	return vfprintf(stdout,(LPSTR)(args[0]),args+1);
+}
+
+/*********************************************************************
+ *                  sprintf        (CRTDLL.458)
+ */
+int CRTDLL_sprintf(DWORD *args)
+{
+	return vsprintf((LPSTR)(args[0]),(LPSTR)(args[1]),args+2);
 }
 
 /*********************************************************************
@@ -612,4 +621,21 @@ VOID* CRTDLL_malloc(DWORD size)
 VOID CRTDLL_free(LPVOID ptr)
 {
     HeapFree(GetProcessHeap(),0,ptr);
+}
+
+/*********************************************************************
+ *                  _strdup          (CRTDLL.285)
+ */
+LPSTR CRTDLL__strdup(LPSTR ptr)
+{
+    return HEAP_strdupA(GetProcessHeap(),0,ptr);
+}
+
+/*********************************************************************
+ *                  fclose           (CRTDLL.362)
+ */
+DWORD CRTDLL_fclose(LPVOID x)
+{
+    dprintf_crtdll(stdnimp,"fclose(%p)\n",x);
+    return 0;
 }

@@ -9,8 +9,10 @@
 #include <string.h>
 #include <X11/Xlib.h>
 
+#include "gdi.h"
 #include "color.h"
 #include "palette.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 /* #define DEBUG_PALETTE */
 #include "debug.h"
@@ -120,12 +122,38 @@ WORD SetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
  */
 BOOL ResizePalette(HPALETTE16 hPal, UINT cEntries)
 {
+    PALETTEOBJ * palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
+    UINT	 cPrevEnt, prevVer;
+    int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
+    int*	 mapping = NULL;
 
-    /* should simply realloc memory and zero out
-     * added entries, if any */
+    dprintf_palette(stddeb,"ResizePalette: hpal = %04x, prev = %i, new = %i\n",
+		    hPal, (palPtr)? -1: palPtr->logpalette.palNumEntries, cEntries );
+    if( !palPtr ) return FALSE;
+    cPrevEnt = palPtr->logpalette.palNumEntries;
+    prevVer = palPtr->logpalette.palVersion;
+    prevsize = sizeof(LOGPALETTE) + (cPrevEnt - 1) * sizeof(PALETTEENTRY) +
+	      				sizeof(int*) + sizeof(GDIOBJHDR);
+    size += sizeof(int*) + sizeof(GDIOBJHDR);
+    mapping = palPtr->mapping;
 
-    fprintf(stdnimp,"ResizePalette: empty stub! \n");
-    return FALSE;
+    GDI_HEAP_REALLOC( hPal, size );
+    palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
+    if( !palPtr ) return FALSE;
+
+    if( mapping )
+        palPtr->mapping = (int*) xrealloc( mapping, cEntries * sizeof(int) );
+    if( cEntries > cPrevEnt ) 
+    {
+	if( mapping )
+	    memset(palPtr->mapping + cPrevEnt, 0, (cEntries - cPrevEnt)*sizeof(int));
+	memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
+        PALETTE_ValidateFlags((PALETTEENTRY*)((BYTE*)palPtr + prevsize), 
+						     cEntries - cPrevEnt );
+    }
+    palPtr->logpalette.palNumEntries = cEntries;
+    palPtr->logpalette.palVersion = prevVer;
+    return TRUE;
 }
 
 /***********************************************************************

@@ -45,6 +45,7 @@ DLLS = \
 	version.spec \
 	w32sys.spec \
 	win87em.spec \
+	wing.spec \
 	winmm.spec \
 	winsock.spec \
 	winspool.spec \

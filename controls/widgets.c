@@ -16,6 +16,8 @@
 #include "module.h"
 #include "heap.h"
 
+#define OLD_LISTBOX
+
 typedef struct
 {
     UINT16     style;
@@ -29,8 +31,10 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 {
     { CS_GLOBALCLASS | CS_PARENTDC,
        sizeof(STATICINFO), 0, "StaticWndProc", "STATIC" },
+#ifdef OLD_LISTBOX
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
       8, 0, "ListBoxWndProc", "LISTBOX" },
+#endif
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
       8, 0, "ComboBoxWndProc", "COMBOBOX" },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
@@ -53,6 +57,10 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 {
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "BUTTON" },
+#ifndef OLD_LISTBOX
+    { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
+      ListBoxWndProc32, 0, sizeof(void *), 0, 0, 0, 0, 0, "LISTBOX" },
+#endif
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "SCROLLBAR"},
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),

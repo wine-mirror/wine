@@ -366,8 +366,9 @@ HFILE FILE_Open( LPCSTR path, INT32 mode )
             return HFILE_ERROR;
         }
     }
-    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE )))
-        return HFILE_ERROR;
+    else /* check for filename, don't check for last entry if creating */
+        if (!(unixName = DOSFS_GetUnixFileName( path, !(mode & O_CREAT) )))
+            return HFILE_ERROR;
 
     if (!(file = FILE_OpenUnixFile( unixName, mode ))) return HFILE_ERROR;
     if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
@@ -1405,4 +1406,72 @@ DWORD GetFileType( HFILE hFile )
     	return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
     }
     return file->type;
+}
+
+
+/***********************************************************************
+ *              GetFileTime   (KERNEL32.221)
+ */
+BOOL32 GetFileTime( HFILE hFile, FILETIME *lpCreationTime,
+                    FILETIME *lpLastAccessTime, FILETIME *lpLastWriteTime )
+{
+    DOS_FILE *file = FILE_GetFile(hFile);
+    struct stat stbuf;
+    
+    if (!file) {
+    	SetLastError( ERROR_INVALID_HANDLE );
+	return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
+    }
+    dprintf_file(stddeb,"SetFileTime(%s,%p,%p,%p)\n",
+	file->unix_name,
+	lpCreationTime,
+	lpLastAccessTime,
+	lpLastWriteTime
+    );
+    if (-1==fstat(file->unix_handle,&stbuf)) {
+	FILE_SetDosError();
+	return FALSE;
+    }
+    if (lpLastWriteTime)
+    	DOSFS_UnixTimeToFileTime(stbuf.st_mtime,lpLastWriteTime);
+    if (lpCreationTime)
+	DOSFS_UnixTimeToFileTime(stbuf.st_ctime,lpCreationTime);
+    if (lpLastAccessTime)
+    	DOSFS_UnixTimeToFileTime(stbuf.st_atime,lpLastAccessTime);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              SetFileTime   (KERNEL32.493)
+ */
+BOOL32 SetFileTime( HFILE hFile, FILETIME *lpCreationTime,
+                    FILETIME *lpLastAccessTime, FILETIME *lpLastWriteTime )
+{
+    DOS_FILE *file = FILE_GetFile(hFile);
+    struct utimbuf utimbuf;
+    
+    if (!file) {
+    	SetLastError( ERROR_INVALID_HANDLE );
+    	return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
+    }
+    dprintf_file(stddeb,"SetFileTime(%s,%p,%p,%p)\n",
+	file->unix_name,
+	lpCreationTime,
+	lpLastAccessTime,
+	lpLastWriteTime
+    );
+    if (lpLastAccessTime)
+	utimbuf.actime	= DOSFS_FileTimeToUnixTime(lpLastAccessTime);
+    else
+	utimbuf.actime	= 0; /* FIXME */
+    if (lpLastWriteTime)
+	utimbuf.modtime	= DOSFS_FileTimeToUnixTime(lpLastWriteTime);
+    else
+	utimbuf.modtime	= 0; /* FIXME */
+    if (-1==utime(file->unix_name,&utimbuf)) {
+	FILE_SetDosError();
+	return FALSE;
+    }
+    return TRUE;
 }

@@ -79,11 +79,8 @@ UINT DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 		hDrop,wFile,lpszFile,wLength);
     
     lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop); 
-    if(!lpDropFileStruct)
-    {
-	dprintf_reg(stddeb,"DragQueryFile: unable to lock handle!\n");
-	return 0;
-    } 
+    if(!lpDropFileStruct) return 0;
+
     lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
     
     i = 0;
@@ -100,7 +97,7 @@ UINT DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
     i = (wLength > i) ? i : wLength-1;
     strncpy(lpszFile, lpCurrent, i);
     lpszFile[i] = '\0';
-    
+
     GlobalUnlock16(hDrop);
     return i;
 }
@@ -121,7 +118,7 @@ void DragFinish(HDROP16 h)
 BOOL DragQueryPoint(HDROP16 hDrop, POINT16 *p)
 {
     LPDROPFILESTRUCT lpDropFileStruct;  
-    BOOL             bRet;
+    BOOL16           bRet;
 
     lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop);
 
@@ -807,7 +804,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
  */
 int RegisterShellHook(void *ptr) 
 {
-	dprintf_reg(stdnimp, "RegisterShellHook : Empty Stub !!!\n");
+	fprintf(stdnimp, "RegisterShellHook : Empty Stub !!!\n");
 	return 0;
 }
 
@@ -817,7 +814,7 @@ int RegisterShellHook(void *ptr)
  */
 int ShellHookProc(void) 
 {
-	dprintf_reg(stdnimp, "ShellHookProc : Empty Stub !!!\n");
+	fprintf(stdnimp, "ShellHookProc : Empty Stub !!!\n");
         return 0;
 }
 

@@ -533,8 +533,8 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
      */
 
     if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
-    PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
     SelectObject16( hdc, prevBrush );
     return 1;
 }
@@ -548,8 +548,8 @@ INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
     HBRUSH32 prevBrush;
 
     if (!(prevBrush = SelectObject32( hdc, hbrush ))) return 0;
-    PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    PatBlt32( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
     SelectObject32( hdc, prevBrush );
     return 1;
 }
@@ -560,8 +560,8 @@ INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
  */
 void InvertRect16( HDC16 hdc, const RECT16 *rect )
 {
-    PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+    PatBlt32( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
 
 
@@ -570,8 +570,8 @@ void InvertRect16( HDC16 hdc, const RECT16 *rect )
  */
 void InvertRect32( HDC32 hdc, const RECT32 *rect )
 {
-    PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+    PatBlt32( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
 
 
@@ -596,15 +596,15 @@ INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
     
     if (DC_SetupGCForBrush( dc ))
     {
-   	PatBlt( hdc, rect->left, rect->top, 1,
-	    rect->bottom - rect->top, PATCOPY );
-	PatBlt( hdc, rect->right - 1, rect->top, 1,
-	    rect->bottom - rect->top, PATCOPY );
-	PatBlt( hdc, rect->left, rect->top,
-	    rect->right - rect->left, 1, PATCOPY );
-	PatBlt( hdc, rect->left, rect->bottom - 1,
-	    rect->right - rect->left, 1, PATCOPY );
-	}    
+   	PatBlt32( hdc, rect->left, rect->top, 1,
+                  rect->bottom - rect->top, PATCOPY );
+	PatBlt32( hdc, rect->right - 1, rect->top, 1,
+                  rect->bottom - rect->top, PATCOPY );
+	PatBlt32( hdc, rect->left, rect->top,
+                  rect->right - rect->left, 1, PATCOPY );
+	PatBlt32( hdc, rect->left, rect->bottom - 1,
+                  rect->right - rect->left, 1, PATCOPY );
+    }
     SelectObject16( hdc, prevBrush );
     return 1;
 }
@@ -922,20 +922,20 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 			                  sysColorObjects.hbrushBtnHighlight );
     for (i = 0; i < highlight_size; i++)
     {
-	PatBlt( hdc, rect->left + i, rect->top,
-	        1, rect->bottom - rect->top - i, PATCOPY );
-	PatBlt( hdc, rect->left, rect->top + i,
-	        rect->right - rect->left - i, 1, PATCOPY );
+	PatBlt32( hdc, rect->left + i, rect->top,
+                  1, rect->bottom - rect->top - i, PATCOPY );
+	PatBlt32( hdc, rect->left, rect->top + i,
+                  rect->right - rect->left - i, 1, PATCOPY );
     }
 
     SelectObject32( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
 		                   sysColorObjects.hbrushBtnShadow );
     for (i = 0; i < shadow_size; i++)
     {
-	PatBlt( hdc, rect->right - i - 1, rect->top + i,
-	        1, rect->bottom - rect->top - i, PATCOPY );
-	PatBlt( hdc, rect->left + i, rect->bottom - i - 1,
-	        rect->right - rect->left - i, 1, PATCOPY );
+	PatBlt32( hdc, rect->right - i - 1, rect->top + i,
+                  1, rect->bottom - rect->top - i, PATCOPY );
+	PatBlt32( hdc, rect->left + i, rect->bottom - i - 1,
+                  rect->right - rect->left - i, 1, PATCOPY );
     }
 
     SelectObject32( hdc, hbrushOld );
@@ -1250,31 +1250,31 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
     hbrushOld = SelectObject32( hdc, sysColorObjects.hbrushBtnHighlight );
     if (edge & BDR_RAISEDOUTER)
     {
-        if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
-                                     1, rc->bottom - rc->top - 1, PATCOPY );
-        if (flags & BF_TOP) PatBlt( hdc, rc->left, rc->top,
-                                     rc->right - rc->left - 1, 1, PATCOPY );
+        if (flags & BF_LEFT) PatBlt32( hdc, rc->left, rc->top,
+                                       1, rc->bottom - rc->top - 1, PATCOPY );
+        if (flags & BF_TOP) PatBlt32( hdc, rc->left, rc->top,
+                                      rc->right - rc->left - 1, 1, PATCOPY );
     }
     if (edge & BDR_SUNKENOUTER)
     {
-        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 1, rc->top,
-                                      1, rc->bottom - rc->top, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left, rc->bottom - 1,
-                                       rc->right - rc->left, 1, PATCOPY );
+        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 1, rc->top,
+                                        1, rc->bottom - rc->top, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left, rc->bottom - 1,
+                                         rc->right - rc->left, 1, PATCOPY );
     }
     if (edge & BDR_RAISEDINNER)
     {
-        if (flags & BF_LEFT) PatBlt( hdc, rc->left + 1, rc->top + 1, 
-                                     1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_TOP) PatBlt( hdc, rc->left + 1, rc->top + 1,
-                                     rc->right - rc->left - 2, 1, PATCOPY );
+        if (flags & BF_LEFT) PatBlt32( hdc, rc->left + 1, rc->top + 1, 
+                                       1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_TOP) PatBlt32( hdc, rc->left + 1, rc->top + 1,
+                                      rc->right - rc->left - 2, 1, PATCOPY );
     }
     if (edge & BDR_SUNKENINNER)
     {
-        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 2, rc->top + 1,
-                                     1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left + 1, rc->bottom - 2,
-                                       rc->right - rc->left - 2, 1, PATCOPY );
+        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 2, rc->top + 1,
+                                        1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left + 1, rc->bottom - 2,
+                                         rc->right - rc->left - 2, 1, PATCOPY );
     }
 
     /* Then do all the sunken edges */
@@ -1282,31 +1282,31 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
     SelectObject32( hdc, sysColorObjects.hbrushBtnShadow );
     if (edge & BDR_SUNKENOUTER)
     {
-        if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
-                                     1, rc->bottom - rc->top - 1, PATCOPY );
-        if (flags & BF_TOP) PatBlt( hdc, rc->left, rc->top,
-                                     rc->right - rc->left - 1, 1, PATCOPY );
+        if (flags & BF_LEFT) PatBlt32( hdc, rc->left, rc->top,
+                                       1, rc->bottom - rc->top - 1, PATCOPY );
+        if (flags & BF_TOP) PatBlt32( hdc, rc->left, rc->top,
+                                      rc->right - rc->left - 1, 1, PATCOPY );
     }
     if (edge & BDR_RAISEDOUTER)
     {
-        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 1, rc->top,
-                                      1, rc->bottom - rc->top, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left, rc->bottom - 1,
-                                       rc->right - rc->left, 1, PATCOPY );
+        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 1, rc->top,
+                                        1, rc->bottom - rc->top, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left, rc->bottom - 1,
+                                         rc->right - rc->left, 1, PATCOPY );
     }
     if (edge & BDR_SUNKENINNER)
     {
-        if (flags & BF_LEFT) PatBlt( hdc, rc->left + 1, rc->top + 1, 
-                                     1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_TOP) PatBlt( hdc, rc->left + 1, rc->top + 1,
-                                     rc->right - rc->left - 2, 1, PATCOPY );
+        if (flags & BF_LEFT) PatBlt32( hdc, rc->left + 1, rc->top + 1, 
+                                       1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_TOP) PatBlt32( hdc, rc->left + 1, rc->top + 1,
+                                      rc->right - rc->left - 2, 1, PATCOPY );
     }
     if (edge & BDR_RAISEDINNER)
     {
-        if (flags & BF_RIGHT) PatBlt( hdc, rc->right - 2, rc->top + 1,
-                                     1, rc->bottom - rc->top - 2, PATCOPY );
-        if (flags & BF_BOTTOM) PatBlt( hdc, rc->left + 1, rc->bottom - 2,
-                                       rc->right - rc->left - 2, 1, PATCOPY );
+        if (flags & BF_RIGHT) PatBlt32( hdc, rc->right - 2, rc->top + 1,
+                                        1, rc->bottom - rc->top - 2, PATCOPY );
+        if (flags & BF_BOTTOM) PatBlt32( hdc, rc->left + 1, rc->bottom - 2,
+                                         rc->right - rc->left - 2, 1, PATCOPY );
     }
 
     SelectObject32( hdc, hbrushOld );

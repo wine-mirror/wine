@@ -78,7 +78,7 @@ base	1
 0073 stub DeviceIoControl
 0074 stub DisableThreadLibraryCalls
 0075 stub DisconnectNamedPipe
-0076 stub DosDateTimeToFileTime
+0076 stdcall DosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
 0077 stub DuplicateConsoleHandle
 0078 	stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 0079 stub EndUpdateResourceA
@@ -94,8 +94,8 @@ base	1
 0089 stub EnumResourceNamesW
 0090 stub EnumResourceTypesA
 0091 stub EnumResourceTypesW
-0092 stub EnumSystemCodePagesA
-0093 stub EnumSystemCodePagesW
+0092 stdcall EnumSystemCodePagesA(ptr long) THUNK_EnumSystemCodePages32A
+0093 stdcall EnumSystemCodePagesW(ptr long) THUNK_EnumSystemCodePages32W
 0094 stub EnumSystemLocalesA
 0095 stub EnumSystemLocalesW
 0096 stub EnumTimeFormatsA
@@ -113,9 +113,9 @@ base	1
 0108 stub FatalAppExitA
 0109 stub FatalAppExitW
 0110 stub FatalExit
-0111 stub FileTimeToDosDateTime
-0112 stub FileTimeToLocalFileTime
-0113 stub FileTimeToSystemTime
+0111 stdcall FileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
+0112 stdcall FileTimeToLocalFileTime(ptr ptr) FileTimeToLocalFileTime
+0113 stdcall FileTimeToSystemTime(ptr ptr) FileTimeToSystemTime
 0114 stub FillConsoleOutputAttribute
 0115 stub FillConsoleOutputCharacterA
 0116 stub FillConsoleOutputCharacterW
@@ -222,22 +222,22 @@ base	1
 0217 stdcall GetFileAttributesA(ptr) GetFileAttributes32A
 0218 stdcall GetFileAttributesW(ptr) GetFileAttributes32W
 0219 stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
-0220 stub GetFileSize
-0221 stub GetFileTime
-0222    stdcall GetFileType(long) GetFileType
+0220 stdcall GetFileSize(long ptr ptr) GetFileSize
+0221 stdcall GetFileTime(long ptr ptr ptr) GetFileTime
+0222 stdcall GetFileType(long) GetFileType
 0223 stdcall GetFullPathNameA(ptr long ptr ptr) GetFullPathName32A
 0224 stub GetFullPathNameW
 0225 stub GetHandleInformation
 0226 stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
-0227    stdcall GetLastError() GetLastError
-0228    stdcall GetLocalTime(ptr) GetLocalTime
+0227 stdcall GetLastError() GetLastError
+0228 stdcall GetLocalTime(ptr) GetLocalTime
 0229 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
 0230 stdcall GetLocaleInfoW(long long ptr long) GetLocaleInfo32W
 0231 stdcall GetLogicalDriveStringsA(long ptr) GetLogicalDriveStrings32A
 0232 stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
 0233 stdcall GetLogicalDrives() GetLogicalDrives
 0234 stub GetMailslotInfo
-0235	stdcall GetModuleFileNameA(long ptr long) GetModuleFileNameA
+0235 stdcall GetModuleFileNameA(long ptr long) GetModuleFileName
 0236 stub GetModuleFileNameW
 0237	stdcall GetModuleHandleA(ptr)	WIN32_GetModuleHandle
 0238 stub GetModuleHandleW
@@ -286,7 +286,7 @@ base	1
 0281 stdcall GetSystemDefaultLangID() GetSystemDefaultLangID
 0282 stdcall GetSystemDirectoryA(ptr long) GetSystemDirectory32A
 0283 stdcall GetSystemDirectoryW(ptr long) GetSystemDirectory32W
-0284 stub GetSystemInfo
+0284 stdcall GetSystemInfo(ptr) GetSystemInfo
 0285 	stdcall GetSystemTime(ptr) GetSystemTime
 0286 stub GetSystemTimeAdjustment
 0287 stub GetTapeParameters
@@ -375,7 +375,7 @@ base	1
 0370 stdcall LoadResource(long long) LoadResource32
 0371 stdcall LocalAlloc(long long) LocalAlloc32
 0372 stdcall LocalCompact(long) LocalCompact32
-0373 stub LocalFileTimeToFileTime
+0373 stdcall LocalFileTimeToFileTime(ptr ptr) LocalFileTimeToFileTime
 0374 stdcall LocalFlags(long) LocalFlags32
 0375 stdcall LocalFree(long) LocalFree32
 0376 stdcall LocalHandle(ptr) LocalHandle32
@@ -387,7 +387,7 @@ base	1
 0382 stub LockFile
 0383 stub LockFileEx
 0384 stdcall LockResource(long) LockResource32
-0385 stub MapViewOfFile
+0385 stdcall MapViewOfFile(long long long long long) MapViewOfFile
 0386 stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
 0387 stdcall MoveFileA(ptr ptr) MoveFile32A
 0388 stub MoveFileExA
@@ -494,8 +494,8 @@ base	1
 0489 stub SetFileApisToOEM
 0490 stdcall SetFileAttributesA(ptr long) SetFileAttributes32A
 0491 stdcall SetFileAttributesW(ptr long) SetFileAttributes32W
-0492    stdcall SetFilePointer(long long ptr long) SetFilePointer
-0493 stub SetFileTime
+0492 stdcall SetFilePointer(long long ptr long) SetFilePointer
+0493 stdcall SetFileTime(long ptr ptr ptr) SetFileTime
 0494 stdcall SetHandleCount(long) SetHandleCount32
 0495 stub SetHandleInformation
 0496 stub SetLastConsoleEventActive
@@ -528,7 +528,7 @@ base	1
 0523 	stdcall Sleep(long) Sleep
 0524 stub SleepEx
 0525 stub SuspendThread
-0526 stub SystemTimeToFileTime
+0526 stdcall SystemTimeToFileTime(ptr ptr) SystemTimeToFileTime
 0527 stub SystemTimeToTzSpecificLocalTime
 0528 stub TerminateProcess
 0529 stub TerminateThread
@@ -568,7 +568,7 @@ base	1
 0563 stub WaitNamedPipeA
 0564 stub WaitNamedPipeW
 0565 stdcall WideCharToMultiByte(long long ptr long ptr long ptr ptr)	WideCharToMultiByte
-0566 stub WinExec
+0566 stdcall WinExec(ptr long) WinExec
 0567 stub WriteConsoleA
 0568 stub WriteConsoleInputA
 0569 stub WriteConsoleInputVDMA
@@ -636,7 +636,7 @@ base	1
 0630    stdcall SetSystemPowerState(long long) SetSystemPowerState
 0631 stub WritePrivateProfileStructA
 0632 stub WritePrivateProfileStructW
-0633 stub MakeCriticalSectionGlobal
+0633 stdcall MakeCriticalSectionGlobal(ptr) MakeCriticalSectionGlobal
 #extra late additions
 0634 stdcall ThunkConnect32(ptr ptr ptr ptr ptr ptr) ThunkConnect32
 0636 stub SUnMapLS

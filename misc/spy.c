@@ -215,15 +215,43 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0140 - Win32 Comboboxes */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "CB_GETEDITSEL32",          /* 0x0140 */
+    "CB_LIMITTEXT32",           /* 0x0141 */
+    "CB_SETEDITSEL32",          /* 0x0142 */
+    "CB_ADDSTRING32",           /* 0x0143 */
+    "CB_DELETESTRING32",        /* 0x0144 */
+    "CB_DIR32",                 /* 0x0145 */
+    "CB_GETCOUNT32",            /* 0x0146 */
+    "CB_GETCURSEL32",           /* 0x0147 */
+    "CB_GETLBTEXT32",           /* 0x0148 */
+    "CB_GETLBTEXTLEN32",        /* 0x0149 */
+    "CB_INSERTSTRING32",        /* 0x014a */
+    "CB_RESETCONTENT32",        /* 0x014b */
+    "CB_FINDSTRING32",          /* 0x014c */
+    "CB_SELECTSTRING32",        /* 0x014d */
+    "CB_SETCURSEL32",           /* 0x014e */
+    "CB_SHOWDROPDOWN32",        /* 0x014f */
 
-    /* 0x0150 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "CB_GETITEMDATA32",         /* 0x0150 */
+    "CB_SETITEMDATA32",         /* 0x0151 */
+    "CB_GETDROPPEDCONTROLRECT32",/* 0x0152 */
+    "CB_SETITEMHEIGHT32",       /* 0x0153 */
+    "CB_GETITEMHEIGHT32",       /* 0x0154 */
+    "CB_SETEXTENDEDUI32",       /* 0x0155 */
+    "CB_GETEXTENDEDUI32",       /* 0x0156 */
+    "CB_GETDROPPEDSTATE32",     /* 0x0157 */
+    "CB_FINDSTRINGEXACT32",     /* 0x0158 */
+    "CB_SETLOCALE32",           /* 0x0159 */
+    "CB_GETLOCALE32",           /* 0x015a */
+    "CB_GETTOPINDEX32",         /* 0x015b */
+    "CB_SETTOPINDEX32",         /* 0x015c */
+    "CB_GETHORIZONTALEXTENT32", /* 0x015d */
+    "CB_SETHORIZONTALEXTENT32", /* 0x015e */
+    "CB_GETDROPPEDWIDTH32",     /* 0x015f */
 
-    /* 0x0160 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "CB_SETDROPPEDWIDTH32",     /* 0x0160 */
+    "CB_INITSTORAGE32",         /* 0x0161 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0170 - Win32 Static controls */

@@ -12,7 +12,7 @@ base	1
 0007 stdcall Arc(long long long long long long long long long) Arc32
 0008 stub ArcTo
 0009 stub BeginPath
-0010 stdcall BitBlt(long long long long long long long long long) BitBlt
+0010 stdcall BitBlt(long long long long long long long long long) BitBlt32
 0011 stub CancelDC
 0012 stub CheckColorsInGamut
 0013 stub ChoosePixelFormat
@@ -85,10 +85,10 @@ base	1
 0077 stub EndPage
 0078 stub EndPath
 0079 stub EnumEnhMetaFile
-0080 stub EnumFontFamiliesA
+0080 stdcall EnumFontFamiliesA(long ptr ptr long) THUNK_EnumFontFamilies32A
 0081 stub EnumFontFamiliesExA
 0082 stub EnumFontFamiliesExW
-0083 stub EnumFontFamiliesW
+0083 stdcall EnumFontFamiliesW(long ptr ptr long) THUNK_EnumFontFamilies32W
 0084 stub EnumFontsA
 0085 stub EnumFontsW
 0086 stub EnumICMProfilesA
@@ -265,7 +265,7 @@ base	1
 0257 stdcall OffsetViewportOrgEx(long long long ptr) OffsetViewportOrgEx32
 0258 stdcall OffsetWindowOrgEx(long long long ptr) OffsetWindowOrgEx32
 0259 stdcall PaintRgn(long long) PaintRgn32
-0260 stdcall PatBlt(long long long long long long) PatBlt
+0260 stdcall PatBlt(long long long long long long) PatBlt32
 0261 stub PathToRegion
 0262 stdcall Pie(long long long long long long long long long) Pie32
 0263 stub PlayEnhMetaFile
@@ -356,7 +356,8 @@ base	1
 0347 stub StartDocA
 0348 stub StartDocW
 0349 stub StartPage
-0350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt
+0350 stdcall StretchBlt(long long long long long long long long long long long)
+             StretchBlt32
 0351 stdcall StretchDIBits(long long long long long long long
                                long long long long long long) StretchDIBits
 0352 stub StrokeAndFillPath

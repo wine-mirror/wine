@@ -1,4 +1,109 @@
 ----------------------------------------------------------------------
+Sun Nov 17 15:01:45 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [graphics/bitblt.c] [graphics/x11drv/bitblt.c]
+	Moved BitBlt operations to the new graphics driver
+	interface. Implemented PatBlt32, BitBlt32 and StretchBlt32.
+
+	* [memory/global.c]
+	Unified MemManInfo() and GlobalMemoryStatus().
+
+	* [objects/text.c]
+	Fixed ExtTextOut() to always use physical coords for clip rect.
+
+	* [windows/dialog.c]
+	Implemented DlgDirSelectEx() and Win32 version of DlgDirSelect*.
+
+	* [windows/event.c]
+	Avoid busy-looping in EVENT_WaitXEvent when no timer is pending
+	(thanks to Thomas Koenig).
+
+	* [windows/painting.c]
+	Moved update region clipping for CS_PARENTDC windows to BeginPaint().
+	
+	* [windows/scroll.c]
+	Implemented Win32 version of ScrollWindow() and ScrollDC().
+
+Tue Nov 12 09:52:17 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/*.c] [win32/file.c]
+	Some win32 filetime conversion functions added.
+	Fixed behaviour with DOS drives pointing to UNIX /
+	SetCurrentDirectory() may also get X:\xxx paths.
+	Fixed FILE_Open when called from CreateFile().
+	Added GetFileSize(), MapViewOfFile(), SetFileTime(), GetFileTime().
+
+	* [misc/crtdll.c] [if1632/crtdll.spec]
+	Added some new functions.
+
+	* [if1632/user32.spec]
+	Some thunks into win16 code added.
+
+	* [win32/init.c]
+	Added GetSystemInfo(), removed GetModuleFileName() stub.
+
+	* [win32/code_page.c] [if1632/thunk.c]
+	Added EnumSystemCodePages* (untested).
+
+	* [objects/font.c] [if1632/thunk.c]
+	Added EnumFontFamilies32*.
+	
+Mon Nov 11 14:50:24 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [controls/menu.c] [windows/mdi.c]
+	Don't delete the MDI `windows' menu if it's already been deleted.
+
+	* [misc/exec.c]
+	Notepad always calls WinHelp(.., HELP_QUIT, ...) at termination
+ 	and complains if it returns FALSE.
+
+	* [windows/winpos.c]
+	Get maximized MDI child's nonclient area redrawn after resize.
+
+Thu Nov  7 13:32:34 1996  Lee Jaekil <juria@seodu.co.kr>
+
+	* [memory/global.c]
+	Use /proc filesystem for GlobalMemoryStatus() on Linux.
+
+Mon Nov  4 18:30:00 1996  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/event.c]
+	Added OffiX-style file drop handling. File paths must be
+	DOS-mappable by Wine (via wine.conf).
+
+	* [controls/combo.c]
+        Added WM_GETTEXT handler.
+
+	* [objects/palette.c]
+	Added ResizePalette() (untested).
+
+	* [objects/cursoricon.c]
+	Implemented icon to cursor conversion.
+
+	* [objects/color.c]
+	Fixed crash on startup when no colorcells are writeable.
+
+Mon Nov  4 00:49:41 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [rc/winerc.c]
+	Added support for win32 output.
+
+	* [library/libres.c] [include/libres.h] [loader/resource.c]
+	Renamed LIBRES_FindResource to LIBRES_FindResource16.
+	Added LIBRES_FindResource32.
+
+Sun Nov 3 21:21:45 1996  Robert Pouliot <krynos@clic.net>
+
+	* [loader/builtin.c] [if1632/Makefile.in] [if1632/wing.spec]
+	Added the spec file for WinG, it's only stub for now, but it
+	should be easy to do by someone with Windows programming
+	knowledge. See: ftp.microsoft.com/SoftLib/MSLFILES/wing10.exe.
+
+	* [if1632/crtdll.spec]
+	Added some string and memory functions to make sfxed95.exe (of
+ 	Warcraft 2) almost work.
+
+----------------------------------------------------------------------
 Sat Nov  2 12:50:40 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [files/dos_fs.c]

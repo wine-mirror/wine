@@ -136,7 +136,10 @@ int DRIVE_Init(void)
         {
             p = path + strlen(path) - 1;
             while ((p > path) && ((*p == '/') || (*p == '\\'))) *p-- = '\0';
-            drive->root     = xstrdup( path );
+            if (strlen(path))
+                drive->root = xstrdup( path );
+            else
+                drive->root = xstrdup( "/" );
             drive->dos_cwd  = xstrdup( "" );
             drive->unix_cwd = xstrdup( "" );
             drive->type     = DRIVE_GetDriveType( name );
@@ -681,6 +684,17 @@ UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
  */
 BOOL32 SetCurrentDirectory( LPCSTR dir )
 {
+    if (dir[0] && (dir[1]==':'))
+    {
+        int drive = tolower( *dir ) - 'a';
+        if (!DRIVE_IsValid(drive))
+        {
+            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+            return 0;
+        }
+        dir += 2;
+    }
+    /* FIXME: what about empty strings? Add a \\ ? */
     return DRIVE_Chdir( DRIVE_GetCurrentDrive(), dir );
 }
 

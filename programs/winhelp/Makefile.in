@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+RCFLAGS   = -w32
 
 LANGUAGES   = En De Fr Fi
 

@@ -750,52 +750,23 @@ BOOL16 GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg )
 /***********************************************************************
  *           MemManInfo   (TOOLHELP.72)
  */
-BOOL16 MemManInfo( MEMMANINFO *pInfo )
+BOOL16 MemManInfo( MEMMANINFO *info )
 {
-#ifdef linux
-    /* FIXME: does not take into account the dwSize member
-     * could be corrupting memory therefore
-     */
-    /* shamefully stolen from free */
-    DWORD availmem = 0;
-    DWORD totalmem = 0;
-    FILE *meminfo;
-    char buf[80];
-    int col[5];
-    int n;
+    MEMORYSTATUS status;
 
-    if ((meminfo = fopen("/proc/meminfo", "r")) < 0) {
-        perror("wine: open");
-        return FALSE;
-    }
-
-    fgets(buf, 80, meminfo); /* read first line */
-    while ( fgets(buf, 80, meminfo) ) {
-        n = sscanf( buf, "%*s %d %d %d %d %d", &col[0], &col[1], &col[2], &col[3], &col[4]);
-        if ( n < 1 ) continue; /* escape the loop at the top */
-        totalmem += col[0];
-        availmem += col[2] + col[4];
-    }
-
-    fprintf(stderr,"MemManInfo called with dwSize = %ld\n",pInfo->dwSize);
-    if (pInfo->dwSize) {
-        pInfo->wPageSize = getpagesize();
-        pInfo->dwLargestFreeBlock = availmem;
-        pInfo->dwTotalLinearSpace = totalmem / pInfo->wPageSize;
-        pInfo->dwMaxPagesAvailable = pInfo->dwLargestFreeBlock / pInfo->wPageSize;
-        pInfo->dwMaxPagesLockable = pInfo->dwMaxPagesLockable;
-        /* FIXME: the next three are not quite correct */
-        pInfo->dwTotalUnlockedPages = pInfo->dwMaxPagesAvailable;
-        pInfo->dwFreePages = pInfo->dwMaxPagesAvailable;
-        pInfo->dwTotalPages = pInfo->dwMaxPagesAvailable;
-        /* FIXME: the three above are not quite correct */
-        pInfo->dwFreeLinearSpace = pInfo->dwMaxPagesAvailable;
-        pInfo->dwSwapFilePages = 0L;
-    }
+    if (info->dwSize < sizeof(MEMMANINFO)) return FALSE;
+    GlobalMemoryStatus( &status );
+    info->wPageSize            = getpagesize();
+    info->dwLargestFreeBlock   = status.dwAvailVirtual;
+    info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
+    info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
+    info->dwTotalLinearSpace   = status.dwTotalVirtual / info->wPageSize;
+    info->dwTotalUnlockedPages = info->dwTotalLinearSpace;
+    info->dwFreePages          = info->dwMaxPagesAvailable;
+    info->dwTotalPages         = info->dwTotalLinearSpace;
+    info->dwFreeLinearSpace    = info->dwMaxPagesAvailable;
+    info->dwSwapFilePages      = status.dwTotalPageFile / info->wPageSize;
     return TRUE;
-#else
-    return TRUE;
-#endif
 }
 
 
@@ -897,11 +868,46 @@ BOOL32 GlobalUnlock32( HGLOBAL32 handle )
  */
 VOID GlobalMemoryStatus( LPMEMORYSTATUS lpmem )
 {
-    /* FIXME: should do something like MemManInfo() here */
+#ifdef linux
+    FILE *f = fopen( "/proc/meminfo", "r" );
+    if (f)
+    {
+        char buffer[256];
+        int total, used, free;
+
+        lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
+        lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+            if (sscanf( buffer, "Mem: %d %d %d", &total, &used, &free ))
+            {
+                lpmem->dwTotalPhys += total;
+                lpmem->dwAvailPhys += free;
+            }
+            else if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
+            {
+                lpmem->dwTotalPageFile += total;
+                lpmem->dwAvailPageFile += free;
+            }
+        }
+        fclose( f );
+
+        if (lpmem->dwTotalPhys)
+        {
+            lpmem->dwTotalVirtual = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
+            lpmem->dwAvailVirtual = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
+            lpmem->dwMemoryLoad = (lpmem->dwTotalVirtual-lpmem->dwAvailVirtual)
+                                      * 100 / lpmem->dwTotalVirtual;
+            return;
+        }
+    }
+#endif
+    /* FIXME: should do something for other systems */
     lpmem->dwMemoryLoad    = 0;
     lpmem->dwTotalPhys     = 16*1024*1024;
     lpmem->dwAvailPhys     = 16*1024*1024;
-    lpmem->dwTotalPageFile = 0;
+    lpmem->dwTotalPageFile = 16*1024*1024;
     lpmem->dwAvailPageFile = 16*1024*1024;
-    lpmem->dwAvailVirtual  = 16*1024*1024;
+    lpmem->dwTotalVirtual  = 32*1024*1024;
+    lpmem->dwAvailVirtual  = 32*1024*1024;
 }

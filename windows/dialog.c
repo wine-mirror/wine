@@ -1320,3 +1320,143 @@ HWND32 GetNextDlgTabItem32( HWND32 hwndDlg, HWND32 hwndCtrl, BOOL32 fPrevious )
     }
     return pWndLast->hwndSelf;
 }
+
+
+/**********************************************************************
+ *           DIALOG_DlgDirSelect
+ *
+ * Helper function for DlgDirSelect*
+ */
+static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
+                                   INT32 id, BOOL32 win32, BOOL32 unicode,
+                                   BOOL32 combo )
+{
+    char *buffer, *ptr;
+    INT32 item, size;
+    BOOL32 ret;
+    HWND32 listbox = GetDlgItem( hwnd, id );
+
+    dprintf_dialog( stddeb, "DlgDirSelect: %04x '%s' %d\n", hwnd, str, id );
+    if (!listbox) return FALSE;
+    if (win32)
+    {
+        item = SendMessage32A(listbox, combo ? CB_GETCURSEL32
+                                             : LB_GETCURSEL32, 0, 0 );
+        if (item == LB_ERR) return FALSE;
+        size = SendMessage32A(listbox, combo ? CB_GETLBTEXTLEN32
+                                             : LB_GETTEXTLEN32, 0, 0 );
+        if (size == LB_ERR) return FALSE;
+    }
+    else
+    {
+        item = SendMessage32A(listbox, combo ? CB_GETCURSEL16
+                                             : LB_GETCURSEL16, 0, 0 );
+        if (item == LB_ERR) return FALSE;
+        size = SendMessage32A(listbox, combo ? CB_GETLBTEXTLEN16
+                                             : LB_GETTEXTLEN16, 0, 0 );
+        if (size == LB_ERR) return FALSE;
+    }
+
+    if (!(buffer = SEGPTR_ALLOC( size+1 ))) return FALSE;
+
+    if (win32)
+        SendMessage32A( listbox, combo ? CB_GETLBTEXT32 : LB_GETTEXT32,
+                        item, (LPARAM)buffer );
+    else
+        SendMessage16( listbox, combo ? CB_GETLBTEXT16 : LB_GETTEXT16,
+                       item, (LPARAM)SEGPTR_GET(buffer) );
+
+    if ((ret = (buffer[0] == '[')))  /* drive or directory */
+    {
+        if (buffer[1] == '-')  /* drive */
+        {
+            buffer[3] = ':';
+            buffer[4] = 0;
+            ptr = buffer + 2;
+        }
+        else
+        {
+            buffer[strlen(buffer)-1] = '\\';
+            ptr = buffer + 1;
+        }
+    }
+    else ptr = buffer;
+
+    if (unicode) lstrcpynAtoW( (LPWSTR)str, ptr, len );
+    else lstrcpyn32A( str, ptr, len );
+    SEGPTR_FREE( buffer );
+    dprintf_dialog( stddeb, "Returning %d '%s'\n", ret, str );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	    DlgDirSelect    (USER.99)
+ */
+BOOL16 DlgDirSelect( HWND16 hwnd, LPSTR str, INT16 id )
+{
+    return DlgDirSelectEx16( hwnd, str, 128, id );
+}
+
+
+/**********************************************************************
+ *	    DlgDirSelectComboBox    (USER.194)
+ */
+BOOL16 DlgDirSelectComboBox( HWND16 hwnd, LPSTR str, INT16 id )
+{
+    return DlgDirSelectComboBoxEx16( hwnd, str, 128, id );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectEx16    (USER.422)
+ */
+BOOL16 DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
+{
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE, FALSE );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectEx32A    (USER32.148)
+ */
+BOOL32 DlgDirSelectEx32A( HWND32 hwnd, LPSTR str, INT32 len, INT32 id )
+{
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, FALSE );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectEx32W    (USER32.149)
+ */
+BOOL32 DlgDirSelectEx32W( HWND32 hwnd, LPWSTR str, INT32 len, INT32 id )
+{
+    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, FALSE );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectComboBoxEx16    (USER.423)
+ */
+BOOL16 DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
+{
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, FALSE, FALSE, TRUE );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectComboBoxEx32A    (USER32.146)
+ */
+BOOL32 DlgDirSelectComboBoxEx32A( HWND32 hwnd, LPSTR str, INT32 len, INT32 id )
+{
+    return DIALOG_DlgDirSelect( hwnd, str, len, id, TRUE, FALSE, TRUE );
+}
+
+
+/**********************************************************************
+ *           DlgDirSelectComboBoxEx32W    (USER32.147)
+ */
+BOOL32 DlgDirSelectComboBoxEx32W( HWND32 hwnd, LPWSTR str, INT32 len, INT32 id)
+{
+    return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, TRUE );
+}

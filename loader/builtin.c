@@ -90,6 +90,7 @@ extern const DLL_DESCRIPTOR DDEML_Descriptor;
 extern const DLL_DESCRIPTOR LZEXPAND_Descriptor;
 extern const DLL_DESCRIPTOR VER_Descriptor;
 extern const DLL_DESCRIPTOR W32SYS_Descriptor;
+extern const DLL_DESCRIPTOR WING_Descriptor;
 
 /* 32-bit DLLs */
 
@@ -143,6 +144,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &LZEXPAND_Descriptor, 0 },
     { &VER_Descriptor,      0 },
     { &W32SYS_Descriptor,   0 },
+    { &WING_Descriptor,     0 },
     /* Win32 DLLs */
     { &ADVAPI32_Descriptor, 0 },
     { &COMCTL32_Descriptor, DLL_FLAG_NOT_USED },

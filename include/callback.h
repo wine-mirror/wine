@@ -73,6 +73,7 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
 /* by the build program to generate the file if1632/callto32.S */
 
 extern LONG CallTo32_0( FARPROC32 );
+extern LONG CallTo32_1( FARPROC32, DWORD );
 extern LONG CallTo32_2( FARPROC32, DWORD, DWORD );
 extern LONG CallTo32_3( FARPROC32, DWORD, DWORD, DWORD );
 extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );

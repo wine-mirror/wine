@@ -633,8 +633,8 @@ int StretchDIBits( HDC16 hdc,
                               bits, info, wUsage );
     hdcMem = CreateCompatibleDC( hdc );
     hOldBitmap = SelectObject32( hdcMem, hBitmap );
-    StretchBlt( hdc, xDest, yDest, wDestWidth, wDestHeight,
-                hdcMem, xSrc, ySrc, wSrcWidth, wSrcHeight, dwRop );
+    StretchBlt32( hdc, xDest, yDest, wDestWidth, wDestHeight,
+                  hdcMem, xSrc, ySrc, wSrcWidth, wSrcHeight, dwRop );
     SelectObject32( hdcMem, hOldBitmap );
     DeleteDC( hdcMem );
     DeleteObject32( hBitmap );

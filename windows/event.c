@@ -32,13 +32,29 @@
 #include "options.h"
 #include "queue.h"
 #include "winpos.h"
+#include "drive.h"
+#include "dos_fs.h"
+#include "shell.h"
 #include "registers.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
 
+
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
+
+#define DndNotDnd       -1    /* OffiX drag&drop */
+#define DndUnknown      0
+#define DndRawData      1
+#define DndFile         2
+#define DndFiles        3
+#define DndText         4
+#define DndDir          5
+#define DndLink         6
+#define DndExe          7
+
+#define DndEND          8
 
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
@@ -123,6 +139,11 @@ typedef union
 
 static BOOL KeyDown = FALSE;
 
+static Atom wmProtocols = None;
+static Atom wmDeleteWindow = None;
+static Atom dndProtocol = None;
+static Atom dndSelection = None;
+
 static const char * const event_names[] =
 {
     "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
@@ -154,6 +175,9 @@ static void EVENT_MapNotify( HWND hwnd, XMapEvent *event );
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 */
+
+extern void FOCUS_SetXFocus( HWND32 );
+extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL32 );
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -277,6 +301,15 @@ void EVENT_ProcessEvent( XEvent *event )
  */
 void EVENT_RegisterWindow( WND *pWnd )
 {
+    if (wmProtocols == None)
+        wmProtocols = XInternAtom( display, "WM_PROTOCOLS", True );
+    if (wmDeleteWindow == None)
+        wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", True );
+    if( dndProtocol == None )
+	dndProtocol = XInternAtom( display, "DndProtocol" , False );
+    if( dndSelection == None )
+	dndSelection = XInternAtom( display, "DndSelection" , False );
+
     if (!winContext) winContext = XUniqueContext();
     XSaveContext( display, pWnd->window, winContext, (char *)pWnd );
 }
@@ -291,14 +324,18 @@ void EVENT_RegisterWindow( WND *pWnd )
  */
 BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
 {
-    fd_set read_set;
-    struct timeval timeout;
     XEvent event;
-    int fd = ConnectionNumber(display);
+    LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
 
-    if (!XPending(display))
+    /* Wait for an event or a timeout. If maxWait is -1, we have no timeout;
+     * in this case, we fall through directly to the XNextEvent loop.
+     */
+
+    if ((maxWait != -1) && !XPending(display))
     {
-        LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
+        fd_set read_set;
+        struct timeval timeout;
+        int fd = ConnectionNumber(display);
 
         FD_ZERO( &read_set );
         FD_SET( fd, &read_set );
@@ -824,11 +861,11 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	    /* remove carriage returns */
 
 	    lpstr = (char*)xmalloc(size--);
-	    for(i=0,j=0; i < size; i++ )
+	    for(i=0,j=0; i < size && text[i]; i++ )
 	    {
-	       if( text[i] == '\r' && text[i+1] == '\n' ) continue;
+	       if( text[i] == '\r' && 
+		  (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
 	       lpstr[j++] = text[i];
-	       if( text[i] == '\0' ) break;
 	    }
 	    lpstr[j]='\0';
 
@@ -886,21 +923,121 @@ static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
  */
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 {
-    static Atom wmProtocols = None;
-    static Atom wmDeleteWindow = None;
-
-    if (wmProtocols == None)
-        wmProtocols = XInternAtom( display, "WM_PROTOCOLS", True );
-    if (wmDeleteWindow == None)
-        wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", True );
-
-    if ((event->format != 32) || (event->message_type != wmProtocols) ||
-        (((Atom) event->data.l[0]) != wmDeleteWindow))
+    if (event->message_type != None && event->format == 32)
     {
-	dprintf_event( stddeb, "unrecognized ClientMessage\n" );
-	return;
+       if ((event->message_type == wmProtocols) && 
+           (((Atom) event->data.l[0]) == wmDeleteWindow))
+	  SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
+       else if ( event->message_type == dndProtocol &&
+		(event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
+       {
+	  unsigned long		data_length;
+	  unsigned long		aux_long;
+	  unsigned char*	p_data = NULL;
+	  union {
+		   Atom		atom_aux;
+		   POINT32	pt_aux;
+		   BOOL16	bAccept;
+		   int		i;
+		}		u;
+	  int			x, y;
+	  HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO));
+	  LPDRAGINFO            lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
+	  SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
+	  Window		w_aux_root, w_aux_child;
+	  WND*			pDropWnd;
+	  
+          if( !lpDragInfo || !spDragInfo ) return;
+
+	  XQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
+		 &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
+
+          lpDragInfo->hScope = pWnd->hwndSelf;
+          lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
+
+	  /* find out drop point and drop window */
+	  if( x < 0 || y < 0 ||
+	      x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
+	      y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
+	  {   u.bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
+	  else
+	  {
+	      u.bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
+	      x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
+	  }
+	  pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
+	  GlobalFree16( hDragInfo );
+
+	  if( u.bAccept )
+	  {
+	      XGetWindowProperty( display, DefaultRootWindow(display),
+			      dndSelection, 0, 65535, FALSE,
+                              AnyPropertyType, &u.atom_aux, &u.pt_aux.y,
+		             &data_length, &aux_long, &p_data);
+
+	      if( !aux_long && p_data)	/* don't bother if > 64K */
+	      {
+		char*			p = (char*) p_data;
+		char*			p_filename,*p_drop;
+
+		aux_long = 0; 
+		while( *p )	/* calculate buffer size */
+		{
+		  p_drop = p;
+		  if((u.i = *p) != -1 ) 
+		      u.i = DRIVE_FindDriveRoot( (const char**)&p_drop );
+		  if( u.i == -1 ) *p = -1;	/* mark as "bad" */
+		  else
+		  {
+		      p_filename = (char*) DOSFS_GetDosTrueName( (const char*)p, TRUE );
+		      if( p_filename ) aux_long += strlen(p_filename) + 1;
+		      else *p = -1;
+		  }
+		  p += strlen(p) + 1;
+		}
+		if( aux_long && aux_long < 65535 )
+		{
+		  HDROP16                 hDrop;
+		  LPDROPFILESTRUCT        lpDrop;
+
+		  aux_long += sizeof(DROPFILESTRUCT) + 1; 
+		  hDrop = (HDROP16)GlobalAlloc16( GMEM_SHARE, aux_long );
+		  lpDrop = (LPDROPFILESTRUCT) GlobalLock16( hDrop );
+
+		  if( lpDrop )
+		  {
+		    lpDrop->wSize = sizeof(DROPFILESTRUCT);
+		    lpDrop->ptMousePos.x = (INT16)x;
+		    lpDrop->ptMousePos.y = (INT16)y;
+		    lpDrop->fInNonClientArea = (BOOL16) 
+			( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
+			  y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
+			  x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
+			  y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+		    p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT);
+		    p = p_data;
+		    while(*p)
+		    {
+		      if( *p != -1 )	/* use only "good" entries */
+		      {
+			p_filename = (char*) DOSFS_GetDosTrueName( p, TRUE );
+			strcpy(p_drop, p_filename);
+			p_drop += strlen( p_filename ) + 1;
+		      }
+		      p += strlen(p) + 1;
+		    }
+		    *p_drop = '\0';
+		    PostMessage( pWnd->hwndSelf, WM_DROPFILES, (WPARAM16)hDrop, 0L );
+		  }
+	        }
+	      }
+	      if( p_data ) XFree(p_data);  
+
+	  } /* WS_EX_ACCEPTFILES */
+       } /* dndProtocol */
+       else
+	  dprintf_event( stddeb, "unrecognized ClientMessage\n" );
     }
-    SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
 }
 
 /**********************************************************************
@@ -917,8 +1054,6 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
       XInstallColormap( display, COLOR_GetColormap() );
   }
  */ 
-
-extern void FOCUS_SetXFocus( HWND32 );
 
 /**********************************************************************
  *		EVENT_MapNotify
