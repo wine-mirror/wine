@@ -156,7 +156,7 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, const INPUT_RECORD *buffer,
     BOOL ret;
 
     if (!(recW = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*recW) ))) return FALSE;
-    memcpy( recW, buffer, count );
+    memcpy( recW, buffer, count*sizeof(*recW) );
     input_records_AtoW( recW, count );
     ret = WriteConsoleInputW( handle, recW, count, written );
     HeapFree( GetProcessHeap(), 0, recW );
