@@ -167,21 +167,40 @@ static void do_lib( const char *arg )
 static void parse_options( char *argv[] )
 {
     const struct option *opt;
-    int i;
+    char * const * ptr;
+    const char* arg=NULL;
 
-    for (i = 1; argv[i]; i++)
+    ptr=argv+1;
+    while (*ptr != NULL)
     {
         for (opt = option_table; opt->name; opt++)
-            if (!strcmp( argv[i], opt->name )) break;
+        {
+            if (opt->has_arg && !strncmp( *ptr, opt->name, strlen(opt->name) ))
+            {
+                arg=*ptr+strlen(opt->name);
+                if (*arg=='\0')
+                {
+                    ptr++;
+                    arg=*ptr;
+                }
+                break;
+            }
+            if (!strcmp( *ptr, opt->name ))
+            {
+                arg=NULL;
+                break;
+            }
+        }
 
         if (!opt->name)
         {
-            fprintf( stderr, "Unrecognized option '%s'\n", argv[i] );
+            fprintf( stderr, "Unrecognized option '%s'\n", *ptr );
             do_usage();
         }
 
-        if (opt->has_arg && argv[i+1]) opt->func( argv[++i] );
+        if (opt->has_arg && arg!=NULL) opt->func( arg );
         else opt->func( "" );
+        ptr++;
     }
 }
 
