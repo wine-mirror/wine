@@ -426,6 +426,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
     if (((char *)pFree == (char *)subheap + subheap->headerSize) &&
         (subheap != &subheap->heap->subheap))
     {
+        ULONG size = 0;
         SUBHEAP *pPrev = &subheap->heap->subheap;
         /* Remove the free block from the list */
         pFree->next->prev = pFree->prev;
@@ -435,7 +436,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         if (pPrev) pPrev->next = subheap->next;
         /* Free the memory */
         subheap->magic = 0;
-        VirtualFree( subheap, 0, MEM_RELEASE );
+        NtFreeVirtualMemory( GetCurrentProcess(), (void **)&subheap, &size, MEM_RELEASE );
         return;
     }
 
