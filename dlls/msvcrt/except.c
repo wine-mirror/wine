@@ -370,7 +370,6 @@ void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
     context->Eip = jmp->Eip;
     context->Eax = retval;
 }
-#endif /* i386 */
 
 /*********************************************************************
  *		_seh_longjmp_unwind (MSVCRT.@)
@@ -379,6 +378,7 @@ void __stdcall _seh_longjmp_unwind(_JUMP_BUFFER *jmp)
 {
     _local_unwind2( (MSVCRT_EXCEPTION_FRAME *)jmp->Registration, jmp->TryLevel );
 }
+#endif /* i386 */
 
 /*********************************************************************
  *		signal (MSVCRT.@)

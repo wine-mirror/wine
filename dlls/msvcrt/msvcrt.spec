@@ -423,7 +423,7 @@ init    MSVCRT_Init
 @ cdecl _safe_fprem1() _safe_fprem1
 @ cdecl _scalb( double long) _scalb
 @ cdecl _searchenv(str str str) _searchenv
-@ stdcall _seh_longjmp_unwind(ptr) _seh_longjmp_unwind
+@ stdcall -i386 _seh_longjmp_unwind(ptr) _seh_longjmp_unwind
 @ stub _set_error_mode #(long)
 @ stub _set_sbh_threshold #(long)
 @ stub _seterrormode #(long)
