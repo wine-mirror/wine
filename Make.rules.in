@@ -76,7 +76,7 @@ WINETEST     = $(TOPOBJDIR)/programs/winetest/winetest
 RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
 RUNTESTFLAGS = -q -P wine -M $(MODULE) -T $(TOPOBJDIR)
 TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
-TESTPROGRAM  = tests/$(MODULE)_test
+TESTPROGRAM  = tests/$(MODULE:%.dll=%)_test
 TESTLIST     = tests/testlist.c
 TESTOBJS     = $(TESTMAIN) $(TESTLIST:.c=.o) $(CTESTS:.c=.o)
 TESTMAIN     = $(TOPOBJDIR)/programs/winetest/wtmain.o
