@@ -190,6 +190,7 @@ WINDOWS_VERSION VERSION_GetImageVersion(PDB *pdb)
 						return NT351;
 				}
 			default:
+				if (OPTHD.MajorSubsystemVersion)
 				ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
 					OPTHD.MajorSubsystemVersion,
 					OPTHD.MinorSubsystemVersion );
