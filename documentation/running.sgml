@@ -4,7 +4,59 @@
     <para>
       Written by &name-john-sheets; <email>&email-john-sheets;</email>
     </para>
+    <para>
+      Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>
+    </para>
 
+    <sect1 id="basic-usage">
+      <title>Basic usage: applications and control panel applets</title>
+      <para>
+        Assuming you are using a fake windows installation, you install
+        applications into Wine in the same way you would in Windows:
+        by running the installer. You can just accept the defaults
+        for where to install, most installers will default to "C:\Program Files",
+        which is fine. If the application installer requests it, you may find that
+        Wine creates icons on your desktop and in your app menu. If that happens, you
+        can start the app by clicking on them.
+      </para>
+
+      <para>
+        The standard way to uninstall things is for the application to provide an
+        uninstaller, usually registered with the "Add/Remove Programs" control panel
+        applet. Unfortunately as of the time of writing, Wine doesn't provide an
+        Add/Remove control panel applet, so you'll have to run the uninstall manually, either
+        from the menu or from the command line.
+      </para>
+
+      <para>
+        Some programs install associated control panel applets, examples of this would be
+        Internet Explorer and QuickTime. You can access the Wine control panel by running:
+      </para>
+
+      <screen>
+	 <prompt>$</prompt> <userinput>wine control</userinput>
+      </screen>
+
+      <para>
+	which will open a window with the installed control panel applets in it, as in Windows.
+      </para>
+
+      <para>
+	If the application doesn't install menu or desktop items, you'll need to run the app
+	from the command line. Remembering where you installed to, something like:
+      </para>
+
+      <screen>
+	 <prompt>$</prompt> <userinput>wine "c:\program files\appname\appname.exe"</userinput>
+      </screen>
+
+      <para>
+        will probably do the trick. The path isn't case sensitive, but remember to include the double quotes.
+	Some programs don't always use obvious naming for their directories and EXE files, so you might have
+	to look inside the program files directory to see what it put where
+      </para>
+    </sect1>
+    
     <sect1 id="running-wine">
       <title>How to run Wine</title>
       <para>
