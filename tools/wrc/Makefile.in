@@ -5,8 +5,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
+EXEEXT    = @EXEEXT@
 
-PROGRAMS = wrc
+PROGRAMS = wrc$(EXEEXT)
 MODULE   = none
 
 C_SRCS = \
@@ -29,6 +30,9 @@ all: $(PROGRAMS)
 
 wrc: $(OBJS)
 	$(CC) $(CFLAGS) -o wrc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
+
+wrc.exe: $(OBJS)
+	$(CC) $(CFLAGS) -o wrc.exe $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y

@@ -4,8 +4,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 YACCOPT   = #-v
+EXEEXT    = @EXEEXT@
 
-PROGRAMS = wmc
+PROGRAMS = wmc$(EXEEXT)
 MODULE   = none
 
 C_SRCS = \
@@ -26,6 +27,9 @@ mcl.o: y.tab.h
 
 wmc: $(OBJS)
 	$(CC) $(CFLAGS) -o wmc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
+
+wmc.exe: $(OBJS)
+	$(CC) $(CFLAGS) -o wmc.exe $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
 
 y.tab.c y.tab.h: mcy.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y
