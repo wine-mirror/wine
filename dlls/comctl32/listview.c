@@ -85,13 +85,6 @@ typedef struct tagLV_INTHIT
 } LV_INTHIT, *LPLV_INTHIT;
 
 
-typedef struct tagEDITLABEL_ITEM
-{
-  WNDPROC EditWndProc;
-  INT nEditItem;
-  BOOL bEditLblCb;
-} EDITLABEL_ITEM;
-
 typedef struct tagLISTVIEW_SUBITEM
 {
   LPWSTR pszText;
@@ -151,9 +144,9 @@ typedef struct tagLISTVIEW_INFO
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
-  BOOL Editing;
+  BOOL bEditing;
+  WNDPROC EditWndProc;
   INT nEditLabelItem;
-  EDITLABEL_ITEM pedititem;
   DWORD dwHoverTime;
   INT nColumnCount;            /* the number of columns in this control */
 
@@ -163,6 +156,8 @@ typedef struct tagLISTVIEW_INFO
   WCHAR szSearchParam[ MAX_PATH ]; /* Added */
   BOOL bIsDrawing;
 } LISTVIEW_INFO;
+
+DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
 
 /*
  * constants
@@ -283,7 +278,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, SHORT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, SHORT, HWND);
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
-static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, INT, BOOL);
+static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, BOOL);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
@@ -384,10 +379,9 @@ static inline BOOL notify(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
 		            (WPARAM)pnmh->idFrom, (LPARAM)pnmh);
 }
 
-static inline BOOL hdr_notify(LISTVIEW_INFO *infoPtr, INT code)
+static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
 {
-  NMHDR nmh;
-  return notify(infoPtr, code, &nmh);
+    hwnd_notify(infoPtr->hwndSelf, LVN_ITEMACTIVATE);
 }
 
 static inline BOOL listview_notify(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
@@ -784,7 +778,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     } while (idx != endidx);
 
     if (nItem != -1) {
-        if (LISTVIEW_KeySelection(infoPtr, nItem) != FALSE) {
+        if (LISTVIEW_KeySelection(infoPtr, nItem)) {
             /* refresh client area */
             InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
             UpdateWindow(infoPtr->hwndSelf);
@@ -834,7 +828,7 @@ static VOID LISTVIEW_UpdateHeaderSize(LISTVIEW_INFO *infoPtr, INT nNewScrollPos)
  * the content, size or view changes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * None
@@ -917,7 +911,7 @@ static VOID LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
   {
     RECT rcView;
 
-    if (LISTVIEW_GetViewRect(infoPtr, &rcView) != FALSE)
+    if (LISTVIEW_GetViewRect(infoPtr, &rcView))
     {
       INT nViewWidth = rcView.right - rcView.left;
       INT nViewHeight = rcView.bottom - rcView.top;
@@ -988,7 +982,7 @@ static VOID LISTVIEW_UnsupportedStyles(LONG lStyle)
  * Aligns the items with the top edge of the window.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * None
@@ -1056,7 +1050,7 @@ static VOID LISTVIEW_AlignTop(LISTVIEW_INFO *infoPtr)
  * Aligns the items with the left edge of the window.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * None
@@ -1121,7 +1115,7 @@ static VOID LISTVIEW_AlignLeft(LISTVIEW_INFO *infoPtr)
  * Set the bounding rectangle of all the items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPRECT : bounding rectangle
  *
  * RETURN:
@@ -1152,7 +1146,7 @@ static LRESULT LISTVIEW_SetViewRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
  * Retrieves the bounding rectangle of all the items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [O] LPRECT : bounding rectangle
  *
  * RETURN:
@@ -1169,7 +1163,7 @@ static LRESULT LISTVIEW_GetViewRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
   if (lprcView != NULL)
   {
     bResult = LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
-    if (bResult != FALSE)
+    if (bResult)
     {
       lprcView->left = infoPtr->rcView.left + ptOrigin.x;
       lprcView->top = infoPtr->rcView.top + ptOrigin.y;
@@ -1222,7 +1216,7 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems,
  * Calculates the width of an item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LONG : window style
  *
  * RETURN:
@@ -1306,7 +1300,7 @@ static INT LISTVIEW_GetItemWidth(LISTVIEW_INFO *infoPtr)
  * Calculates the width of a specific item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPSTR : string
  *
  * RETURN:
@@ -1381,7 +1375,7 @@ static INT LISTVIEW_CalculateWidth(LISTVIEW_INFO *infoPtr, INT nItem)
  * Listview font.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  */
 static VOID LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
@@ -1410,7 +1404,7 @@ static VOID LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
  * Calculates the height of an item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Returns item height.
@@ -1487,7 +1481,7 @@ static INT CALLBACK LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2
 * Adds a selection range.
 *
 * PARAMETER(S):
-* [I] HWND : window handle
+* [I] infoPtr : valid pointer to the listview structure
 * [I] INT : lower item index
 * [I] INT : upper item index
 *
@@ -1498,7 +1492,7 @@ static VOID LISTVIEW_AddSelectionRange(LISTVIEW_INFO *infoPtr, INT lItem, INT uI
 {
  LISTVIEW_SELECTION *selection;
  INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
- BOOL lowerzero=FALSE;
+ BOOL lowerzero = FALSE;
 
  selection = (LISTVIEW_SELECTION *)COMCTL32_Alloc(sizeof(LISTVIEW_SELECTION));
  selection->lower = lItem;
@@ -1524,7 +1518,7 @@ static VOID LISTVIEW_AddSelectionRange(LISTVIEW_INFO *infoPtr, INT lItem, INT uI
                       0,0);
    selection->upper --;
    if (lowerzero)
-     lowerzero=FALSE;
+     lowerzero = FALSE;
    else
      selection->lower ++;
 
@@ -1649,7 +1643,7 @@ static VOID LISTVIEW_AddSelectionRange(LISTVIEW_INFO *infoPtr, INT lItem, INT uI
 * check if a specified index is selected.
 *
 * PARAMETER(S):
-* [I] HWND : window handle
+* [I] infoPtr : valid pointer to the listview structure
 * [I] INT : item index
 *
 * RETURN:
@@ -1677,7 +1671,7 @@ static BOOL LISTVIEW_IsSelected(LISTVIEW_INFO *infoPtr, INT nItem)
 * Removes all selection ranges
 *
 * Parameters(s):
-*   HWND: window handle
+* [I] infoPtr : valid pointer to the listview structure
 *
 * RETURNS:
 *   SUCCESS : TRUE
@@ -1716,7 +1710,7 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
 * Removes a range selections.
 *
 * PARAMETER(S):
-* [I] HWND : window handle
+* [I] infoPtr : valid pointer to the listview structure
 * [I] INT : lower item index
 * [I] INT : upper item index
 *
@@ -1812,7 +1806,7 @@ static VOID LISTVIEW_RemoveSelectionRange(LISTVIEW_INFO *infoPtr, INT lItem, INT
 * Updates the various indices after an item has been inserted or deleted.
 *
 * PARAMETER(S):
-* [I] HWND : window handle
+* [I] infoPtr : valid pointer to the listview structure
 * [I] INT : item index
 * [I] INT : Direction of shift, +1 or -1.
 *
@@ -1879,7 +1873,7 @@ static VOID LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT directi
  * Adds a block of selections.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -1912,7 +1906,7 @@ static VOID LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * Adds a single selection.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -1937,7 +1931,7 @@ static VOID LISTVIEW_AddSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * Selects or unselects an item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -1975,7 +1969,7 @@ static BOOL LISTVIEW_ToggleSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * Selects items based on view coordinates.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] RECT : selection rectangle
  *
  * RETURN:
@@ -1994,7 +1988,7 @@ static VOID LISTVIEW_SetSelectionRect(LISTVIEW_INFO *infoPtr, RECT rcSelRect)
   {
     LISTVIEW_GetItemPosition(infoPtr, i, &ptItem);
 
-    if (PtInRect(&rcSelRect, ptItem) != FALSE)
+    if (PtInRect(&rcSelRect, ptItem))
       item.state = LVIS_SELECTED;
     else
       item.state = 0;
@@ -2007,7 +2001,7 @@ static VOID LISTVIEW_SetSelectionRect(LISTVIEW_INFO *infoPtr, RECT rcSelRect)
  * Sets a single group selection.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -2073,7 +2067,7 @@ static VOID LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * Manages the item focus.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -2114,7 +2108,7 @@ static BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
  * Sets a single selection.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -2143,7 +2137,7 @@ static VOID LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * Set selection(s) with keyboard.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -2194,7 +2188,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * amount of time
  *
  * PARAMETER(S):
- * [I] infoPtr : pointer to listview strucure (not NULL)
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] fwKeys : key indicator
  * [I] pts : mouse position
  *
@@ -2223,7 +2217,7 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, POINTS p
  * Called whenever WM_MOUSEMOVE is received.
  *
  * PARAMETER(S):
- * [I] infoPtr : pointer to listview strucure (not NULL)
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] fwKeys : key indicator
  * [I] pts : mouse position
  *
@@ -2261,7 +2255,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, POINTS pt
  * Selects an item based on coordinates.
  *
  * PARAMETER(S):
- * [I] infoPtr : pointer to listview strucure (not NULL)
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] pt : mouse click ccordinates
  *
  * RETURN:
@@ -2317,7 +2311,7 @@ static BOOL LISTVIEW_RemoveColumn(HDPA hdpaItems, INT nSubItem)
     hdpaSubItems = (HDPA)DPA_GetPtr(hdpaItems, i);
     if (hdpaSubItems != NULL)
     {
-      if (LISTVIEW_RemoveSubItem(hdpaSubItems, nSubItem) == FALSE)
+      if (!LISTVIEW_RemoveSubItem(hdpaSubItems, nSubItem))
       {
         bResult = FALSE;
       }
@@ -2460,7 +2454,7 @@ static UINT LISTVIEW_GetItemChangesT(LISTVIEW_ITEM *lpItem, LPLVITEMW lpLVItem, 
  * Initializes item attributes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [O] LISTVIEW_ITEM *: destination item
  * [I] LPLVITEM : source item
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
@@ -2522,7 +2516,7 @@ static BOOL LISTVIEW_InitItemT(LISTVIEW_INFO *infoPtr, LISTVIEW_ITEM *lpItem,
  * tries to set the indent of a subitem.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [O] LISTVIEW_SUBITEM *: destination subitem
  * [I] LPLVITEM : source subitem
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
@@ -2576,7 +2570,7 @@ static BOOL LISTVIEW_InitSubItemT(LISTVIEW_INFO *infoPtr, LISTVIEW_SUBITEM *lpSu
  * Adds a subitem at a given position (column index).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPLVITEM : new subitem atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
@@ -2628,7 +2622,7 @@ static BOOL LISTVIEW_AddSubItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOO
  * Finds the dpa insert position (array index).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : subitem index
  *
  * RETURN:
@@ -2655,7 +2649,7 @@ static INT LISTVIEW_FindInsertPosition(HDPA hdpaSubItems, INT nSubItem)
  * Retrieves a listview subitem at a given position (column index).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : subitem index
  *
  * RETURN:
@@ -2687,7 +2681,7 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItem(HDPA hdpaSubItems, INT nSubItem)
  * Sets item attributes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPLVITEM : new item atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
@@ -2867,7 +2861,7 @@ static BOOL LISTVIEW_SetMainItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BO
  * Sets subitem attributes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPLVITEM : new subitem atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
@@ -2920,7 +2914,7 @@ static BOOL LISTVIEW_SetSubItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOO
  * Sets item attributes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPLVITEM : new item atttributes
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
@@ -2945,7 +2939,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
  * Retrieves the index of the item at coordinate (0, 0) of the client area.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * item index
@@ -2980,7 +2974,7 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
  * Draws a subitem.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  * [I] INT : item index
  * [I] INT : subitem index
@@ -3102,7 +3096,7 @@ static VOID LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT
  * Draws an item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  * [I] INT : item index
  * [I] RECT * : clipping rectangle
@@ -3175,7 +3169,7 @@ static VOID LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   /* small icons */
   if (infoPtr->himlSmall != NULL)
   {
-    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE) &&
+    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) &&
         (lvItem.iImage>=0))
     {
       ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
@@ -3197,10 +3191,10 @@ static VOID LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   }
 
   /* Don't bother painting item being edited */
-  if (infoPtr->Editing && lvItem.state & LVIS_FOCUSED && !FullSelect)
+  if (infoPtr->bEditing && lvItem.state & LVIS_FOCUSED && !FullSelect)
       return;
 
-  if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
+  if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus))
   {
     /* set item colors */
     dwBkColor = SetBkColor(hdc, comctl32_color.clrHighlight);
@@ -3209,7 +3203,7 @@ static VOID LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     nMixMode = SetROP2(hdc, R2_XORPEN);
   }
   else if ((GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & LVS_SHOWSELALWAYS) &&
-           (lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus == FALSE))
+           (lvItem.state & LVIS_SELECTED) && (!infoPtr->bFocus))
   {
     dwBkColor = SetBkColor(hdc, comctl32_color.clr3dFace);
     dwTextColor = SetTextColor(hdc, comctl32_color.clrBtnText);
@@ -3286,7 +3280,7 @@ static VOID LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
  * Draws an item when in large icon display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  * [I] INT : item index
  * [I] RECT : clipping rectangle
@@ -3406,7 +3400,7 @@ static VOID LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   /* Draw the text below the icon */
 
   /* Don't bother painting item being edited */
-  if ((infoPtr->Editing && (lvItem.state & LVIS_FOCUSED)) ||
+  if ((infoPtr->bEditing && (lvItem.state & LVIS_FOCUSED)) ||
       !lstrlenW(lvItem.pszText))
   {
     SetRectEmpty(SuggestedFocus);
@@ -3477,7 +3471,7 @@ static VOID LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
  * Draws listview items when in report display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  *
  * RETURN:
@@ -3657,7 +3651,7 @@ static VOID LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
  * Retrieves the number of items that can fit vertically in the client area.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Number of items per row.
@@ -3686,7 +3680,7 @@ static INT LISTVIEW_GetCountPerRow(LISTVIEW_INFO *infoPtr)
  * area.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Number of items per column.
@@ -3716,7 +3710,7 @@ static INT LISTVIEW_GetCountPerColumn(LISTVIEW_INFO *infoPtr)
  * list display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Number of columns.
@@ -3741,7 +3735,7 @@ static INT LISTVIEW_GetColumnCount(LISTVIEW_INFO *infoPtr)
  * Draws listview items when in list display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  *
  * RETURN:
@@ -3812,7 +3806,7 @@ static VOID LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
  * Draws listview items when in icon or small icon display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  *
  * RETURN:
@@ -3889,7 +3883,7 @@ static VOID LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
  * Draws listview items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  *
  * RETURN:
@@ -3950,7 +3944,7 @@ static VOID LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
  * Calculates the approximate width and height of a given number of items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : number of items
  * [I] INT : width
  * [I] INT : height
@@ -4016,7 +4010,7 @@ static LRESULT LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCou
  * Arranges listview items in icon display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : alignment code
  *
  * RETURN:
@@ -4058,7 +4052,7 @@ static LRESULT LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
  * Removes all listview items and subitems.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  *   SUCCESS : TRUE
@@ -4172,7 +4166,7 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
  * Removes a column from the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : column index
  *
  * RETURN:
@@ -4185,7 +4179,7 @@ static LRESULT LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
   UINT uOwnerData = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & LVS_OWNERDATA;
   BOOL bResult = FALSE;
 
-  if (Header_DeleteItem(infoPtr->hwndHeader, nColumn) != FALSE)
+  if (Header_DeleteItem(infoPtr->hwndHeader, nColumn))
   {
     bResult = uOwnerData ? TRUE : LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
 
@@ -4211,7 +4205,7 @@ static LRESULT LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
  * Removes an item from the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -4315,36 +4309,18 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 
 /***
  * DESCRIPTION:
- * Return edit control handle of current edit label
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- *   SUCCESS : HWND
- *   FAILURE : 0
- */
-static LRESULT LISTVIEW_GetEditControl(LISTVIEW_INFO *infoPtr)
-{
-  return (LRESULT)infoPtr->hwndEdit;
-}
-
-
-/***
- * DESCRIPTION:
  * Callback implementation for editlabel control
  *
  * PARAMETER(S):
- * [I] HWND : window handle
- * [I] LPSTR : modified text
- * [I] DWORD : item index
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] pszText : modified text
  * [I] isW : TRUE if psxText is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, INT nItem, BOOL isW)
+static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL isW)
 {
   LONG lStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
   NMLVDISPINFOW dispInfo;
@@ -4353,9 +4329,11 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, INT n
   LISTVIEW_ITEM lvItemRef;
   LVITEMW item;
   BOOL bResult = TRUE;
+  INT nItem = infoPtr->nEditLabelItem;
 
   TRACE("(pszText=%s, nItem=%d, isW=%d)\n", debugstr_t(pszText, isW), nItem, isW);
 
+  infoPtr->bEditing = FALSE;
   if (!(lStyle & LVS_OWNERDATA))
   {
     if (!(hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
@@ -4387,7 +4365,6 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, INT n
   dispInfo.item.cchTextMax = textlenT(pszText, isW);
   dispInfo.item.iImage = lpItem->iImage;
   dispInfo.item.lParam = lpItem->lParam;
-  infoPtr->Editing = FALSE;
 
   /* Do we need to update the Item Text */
   if(dispinfo_notifyT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW))
@@ -4402,7 +4379,7 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, INT n
  * Begin in place editing of specified list view item
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [I] isW : TRUE if it's a Unicode req, FALSE if ASCII
  *
@@ -4424,6 +4401,8 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 
   if (~GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & LVS_EDITLABELS)
       return FALSE;
+
+  infoPtr->nEditLabelItem = nItem;
 
   TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
@@ -4488,14 +4467,13 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 	  return 0;
 
   if (!(hedit = CreateEditLabelT(infoPtr, szDispText, WS_VISIBLE,
-		 rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2,
-		 nItem, isW)))
+		 rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, isW)))
 	 return 0;
 
   infoPtr->hwndEdit = hedit;
 
   ShowWindow(infoPtr->hwndEdit,SW_NORMAL);
-  infoPtr->Editing = TRUE;
+  infoPtr->bEditing = TRUE;
   SetFocus(infoPtr->hwndEdit);
   SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
   return infoPtr->hwndEdit;
@@ -4507,7 +4485,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
  * Ensures the specified item is visible, scrolling into view if necessary.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [I] BOOL : partially or entirely visible
  *
@@ -4531,11 +4509,11 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
   /* ALWAYS bPartial == FALSE, FOR NOW! */
 
   rcItem.left = LVIR_BOUNDS;
-  if (LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem) != FALSE)
+  if (LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem))
   {
     if (rcItem.left < infoPtr->rcList.left)
     {
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
       {
         /* scroll left */
         bRedraw = TRUE;
@@ -4565,7 +4543,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     }
     else if (rcItem.right > infoPtr->rcList.right)
     {
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
       {
         /* scroll right */
 	bRedraw = TRUE;
@@ -4598,7 +4576,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     {
       /* scroll up */
       bRedraw = TRUE;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
       {
         if (uView == LVS_REPORT)
         {
@@ -4623,7 +4601,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     {
       /* scroll down */
       bRedraw = TRUE;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
       {
         if (uView == LVS_REPORT)
         {
@@ -4656,7 +4634,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
  * Retrieves the nearest item, given a position and a direction.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] POINT : start position
  * [I] UINT : direction
  *
@@ -4674,7 +4652,7 @@ static INT LISTVIEW_GetNearestItem(LISTVIEW_INFO *infoPtr, POINT pt, UINT vkDire
         ((vkDirection == VK_UP) ? "VK_UP" :
         ((vkDirection == VK_LEFT) ? "VK_LEFT" : "VK_RIGHT")));
 
-  if (LISTVIEW_GetViewRect(infoPtr, &rcView) != FALSE)
+  if (LISTVIEW_GetViewRect(infoPtr, &rcView))
   {
     ZeroMemory(&lvIntHit, sizeof(lvIntHit));
     LISTVIEW_GetOrigin(infoPtr, &lvIntHit.ht.pt);
@@ -4690,7 +4668,7 @@ static INT LISTVIEW_GetNearestItem(LISTVIEW_INFO *infoPtr, POINT pt, UINT vkDire
     else if (vkDirection == VK_RIGHT)
       lvIntHit.ht.pt.x += infoPtr->nItemWidth;
 
-    if (PtInRect(&rcView, lvIntHit.ht.pt) == FALSE)
+    if (!PtInRect(&rcView, lvIntHit.ht.pt))
       return -1;
     else
     {
@@ -4761,7 +4739,7 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
           if (nItem != -1)
           {
             /* get position of the new item index */
-            if (ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &ptItem) == FALSE)
+            if (!ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &ptItem))
               return -1;
           }
           else
@@ -4845,25 +4823,10 @@ static LRESULT LISTVIEW_FindItemA(LISTVIEW_INFO *infoPtr, INT nStart,
 
 /***
  * DESCRIPTION:
- * Retrieves the background color of the listview control.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- * COLORREF associated with the background.
- */
-static LRESULT LISTVIEW_GetBkColor(LISTVIEW_INFO *infoPtr)
-{
-  return infoPtr->clrBk;
-}
-
-/***
- * DESCRIPTION:
  * Retrieves the background image of the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [O] LPLVMKBIMAGE : background image attributes
  *
  * RETURN:
@@ -4881,7 +4844,7 @@ static LRESULT LISTVIEW_GetBkColor(LISTVIEW_INFO *infoPtr)
  * Retrieves the callback mask.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  *  Value of mask
@@ -4896,7 +4859,7 @@ static UINT LISTVIEW_GetCallbackMask(LISTVIEW_INFO *infoPtr)
  * Retrieves column attributes.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT :  column index
  * [IO] LPLVCOLUMNW : column information
  * [I] isW : if TRUE, then lpColumn is a LPLVCOLUMNW
@@ -4941,7 +4904,7 @@ static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVCOLUMN
     else
       bResult = Header_GetItemA(infoPtr->hwndHeader, nItem, &hdi);
 
-    if (bResult != FALSE)
+    if (bResult)
     {
       if (lpColumn->mask & LVCF_FMT)
       {
@@ -4999,7 +4962,7 @@ static LRESULT LISTVIEW_GetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
  * Retrieves the column width.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] int : column index
  *
  * RETURN:
@@ -5021,7 +4984,7 @@ static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
     /* get column width from header */
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = HDI_WIDTH;
-    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi) != FALSE)
+    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi))
       nColumnWidth = hdi.cxy;
   }
 
@@ -5035,7 +4998,7 @@ static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
  * retrieves the total number of visible items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Number of fully visible items.
@@ -5065,62 +5028,13 @@ static LRESULT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
   return nItemCount;
 }
 
-/* LISTVIEW_GetEditControl */
-
-/***
- * DESCRIPTION:
- * Retrieves the extended listview style.
- *
- * PARAMETERS:
- * [I] HWND  : window handle
- *
- * RETURN:
- *   SUCCESS : previous style
- *   FAILURE : 0
- */
-static LRESULT LISTVIEW_GetExtendedListViewStyle(LISTVIEW_INFO *infoPtr)
-{
-    return infoPtr->dwExStyle;
-}
-
-/***
- * DESCRIPTION:
- * Retrieves the handle to the header control.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- * Header handle.
- */
-static LRESULT LISTVIEW_GetHeader(LISTVIEW_INFO *infoPtr)
-{
-  return (LRESULT)infoPtr->hwndHeader;
-}
-
-/***
- * DESCRIPTION:
- * Returns the time that the mouse cursor must hover over an item
- * before it is selected.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- *   Returns the previously set hover time or (DWORD)-1 to indicate that the
- *   hover time is set to the default hover time.
- */
-static LRESULT LISTVIEW_GetHoverTime(LISTVIEW_INFO *infoPtr)
-{
-  return infoPtr->dwHoverTime;
-}
 
 /***
  * DESCRIPTION:
  * Retrieves an image list handle.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : image list identifier
  *
  * RETURN:
@@ -5345,45 +5259,13 @@ static LRESULT LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOO
   return TRUE;
 }
 
-/***
- * DESCRIPTION:
- * Retrieves the index of the hot item.
- *
- * PARAMETERS:
- * [I] HWND  : window handle
- *
- * RETURN:
- *   SUCCESS : hot item index
- *   FAILURE : -1 (no hot item)
- */
-static LRESULT LISTVIEW_GetHotItem(LISTVIEW_INFO *infoPtr)
-{
-  return infoPtr->nHotItem;
-}
-
-/* LISTVIEW_GetHoverTime */
-
-/***
- * DESCRIPTION:
- * Retrieves the number of items in the listview control.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- * Number of items.
- */
-static LRESULT LISTVIEW_GetItemCount(LISTVIEW_INFO *infoPtr)
-{
-  return GETITEMCOUNT(infoPtr);
-}
 
 /***
  * DESCRIPTION:
  * Retrieves the rectangle enclosing the item icon and text.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [O] LPRECT : coordinate information
  *
@@ -5476,7 +5358,7 @@ static BOOL LISTVIEW_GetItemBoundBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT l
  * and not the bounding box.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [O] LPPOINT : coordinate information
  *
@@ -5577,7 +5459,7 @@ static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
  * Retrieves the bounding rectangle for a listview control item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [IO] LPRECT : bounding rectangle coordinates
  *     lprc->left specifies the portion of the item for which the bounding
@@ -5641,7 +5523,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         {
           if (infoPtr->himlNormal != NULL)
           {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
             {
               bResult = TRUE;
               lprc->left = ptItem.x + ptOrigin.x;
@@ -5654,7 +5536,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         }
         else if (uView == LVS_SMALLICON)
         {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
           {
             bResult = TRUE;
             lprc->left = ptItem.x + ptOrigin.x;
@@ -5695,7 +5577,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         {
           if (infoPtr->himlNormal != NULL)
           {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
             {
               bResult = TRUE;
               lprc->left = ptItem.x + ptOrigin.x;
@@ -5719,7 +5601,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         }
         else if (uView == LVS_SMALLICON)
         {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
           {
             bResult = TRUE;
             nLeftPos = lprc->left = ptItem.x + ptOrigin.x;
@@ -5780,7 +5662,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         {
           if (infoPtr->himlNormal != NULL)
           {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
             {
               RECT label_rect;
               INT text_left, text_right, icon_left, text_pos_x;
@@ -5829,7 +5711,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         }
         else if (uView == LVS_SMALLICON)
         {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
           {
             bResult = TRUE;
             lprc->left = ptItem.x + ptOrigin.x;
@@ -5893,7 +5775,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         {
           if (infoPtr->himlNormal != NULL)
           {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
             {
               bResult = TRUE;
               lprc->left = ptItem.x + ptOrigin.x;
@@ -5905,7 +5787,7 @@ static LRESULT LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         }
         else if (uView == LVS_SMALLICON)
         {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin) != FALSE)
+          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
           {
             bResult = TRUE;
             nLeftPos= lprc->left = ptItem.x + ptOrigin.x;
@@ -6017,7 +5899,7 @@ flags, LPRECT lprc)
  * Retrieves the width of a label.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  *   SUCCESS : string width (in pixels)
@@ -6047,7 +5929,7 @@ static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *infoPtr, INT nItem)
  * Retrieves the spacing between listview control items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] BOOL : flag for small or large icon
  *
  * RETURN:
@@ -6057,7 +5939,7 @@ static LRESULT LISTVIEW_GetItemSpacing(LISTVIEW_INFO *infoPtr, BOOL bSmall)
 {
   LONG lResult;
 
-  if (bSmall == FALSE)
+  if (!bSmall)
   {
     lResult = MAKELONG(infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
   }
@@ -6077,7 +5959,7 @@ static LRESULT LISTVIEW_GetItemSpacing(LISTVIEW_INFO *infoPtr, BOOL bSmall)
  * Retrieves the state of a listview control item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [I] UINT : state mask
  *
@@ -6139,7 +6021,7 @@ static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
  * Searches for an item based on properties + relationships.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [I] INT : relationship flag
  *
@@ -6288,7 +6170,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
  * Retrieves the origin coordinates when in icon or small icon display mode.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [O] LPPOINT : coordinate information
  *
  * RETURN:
@@ -6313,14 +6195,14 @@ static LRESULT LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
     if (lStyle & WS_HSCROLL)
     {
       scrollInfo.fMask = SIF_POS;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
         lpptOrigin->x = -scrollInfo.nPos;
     }
 
     if (lStyle & WS_VSCROLL)
     {
       scrollInfo.fMask = SIF_POS;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
         lpptOrigin->y = -scrollInfo.nPos;
     }
 
@@ -6338,7 +6220,7 @@ static LRESULT LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
  * Retrieves the number of items that are marked as selected.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Number of items selected.
@@ -6357,22 +6239,6 @@ static LRESULT LISTVIEW_GetSelectedCount(LISTVIEW_INFO *infoPtr)
 
   return nSelectedCount;
 }
-
-/***
- * DESCRIPTION:
- * Retrieves item index that marks the start of a multiple selection.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- * Index number or -1 if there is no selection mark.
- */
-static LRESULT LISTVIEW_GetSelectionMark(LISTVIEW_INFO *infoPtr)
-{
-  return infoPtr->nSelectionMark;
-}
-
 
 /***
  * DESCRIPTION:
@@ -6412,7 +6278,7 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
  * Retrieves the text backgound color.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * COLORREF associated with the the background.
@@ -6427,7 +6293,7 @@ static LRESULT LISTVIEW_GetTextBkColor(LISTVIEW_INFO *infoPtr)
  * Retrieves the text color.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * COLORREF associated with the text.
@@ -6442,7 +6308,7 @@ static LRESULT LISTVIEW_GetTextColor(LISTVIEW_INFO *infoPtr)
  * Determines item if a hit or closest if not
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [IO] LPLV_INTHIT : hit test information
  * [I] subitem : fill out iSubItem.
  *
@@ -6554,7 +6420,7 @@ static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLV_INTHIT lpInt, 
   * Determines which section of the item was selected (if any).
   *
   * PARAMETER(S):
-  * [I] HWND : window handle
+  * [I] infoPtr : valid pointer to the listview structure
   * [IO] LPLVHITTESTINFO : hit test information
   * [I] subitem : fill out iSubItem.
   *
@@ -6581,7 +6447,7 @@ static INT LISTVIEW_HitTestItem(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpHitTes
  * Determines which listview item is located at the specified position.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [IO} LPLVHITTESTINFO : hit test information
  *
  * RETURN:
@@ -6620,7 +6486,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpHitTes
  * Determines which listview subitem is located at the specified position.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [IO} LPLVHITTESTINFO : hit test information
  *
  * RETURN:
@@ -6653,7 +6519,7 @@ static LRESULT LISTVIEW_SubItemHitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO l
  * Inserts a new column.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : column index
  * [I] LPLVCOLUMNW : column information
  *
@@ -6815,7 +6681,7 @@ static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM 
  * Inserts a new item in the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] LPLVITEMW : item information
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  *
@@ -6934,7 +6800,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
  * Redraws a range of items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : first item
  * [I] INT : last item
  *
@@ -6972,7 +6838,7 @@ static LRESULT LISTVIEW_RedrawItems(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLas
  * Scroll the content of a listview.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : horizontal scroll amount in pixels
  * [I] INT : vertical scroll amount in pixels
  *
@@ -7003,7 +6869,6 @@ static LRESULT LISTVIEW_RedrawItems(LISTVIEW_INFO *infoPtr, INT nFirst, INT nLas
 static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
 {
   LONG lStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-  HWND hwnd = infoPtr->hwndSelf;
   UINT uView =  lStyle & LVS_TYPEMASK;
   INT rows, mode, i;
 
@@ -7014,14 +6879,14 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
       {
 	  mode = (dy>0) ? SB_INTERNAL_DOWN : SB_INTERNAL_UP;
 	  for ( i=0; i<rows; i++)
-	      LISTVIEW_VScroll(infoPtr, mode, 0, hwnd);
+	      LISTVIEW_VScroll(infoPtr, mode, 0, 0);
       }
 
       if (dx != 0)
       {
 	  mode = (dx>0) ? SB_INTERNAL_RIGHT : SB_INTERNAL_LEFT;
 	  for ( i=0; i<abs(dx); i++)
-	      LISTVIEW_HScroll(infoPtr, mode, 0, hwnd);
+	      LISTVIEW_HScroll(infoPtr, mode, 0, 0);
       }
       return TRUE;
   }
@@ -7031,7 +6896,7 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
 
       mode = (dy>0) ? SB_INTERNAL_DOWN : SB_INTERNAL_UP;
       for(i=0; i<abs(dy); i++)
-	  LISTVIEW_VScroll(infoPtr, mode, 0, hwnd);
+	  LISTVIEW_VScroll(infoPtr, mode, 0, 0);
       return TRUE;
   }
   else if (uView == LVS_SMALLICON)
@@ -7040,7 +6905,7 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
 
       mode = (dy>0) ? SB_INTERNAL_DOWN : SB_INTERNAL_UP;
       for(i=0; i<abs(dy); i++)
-	  LISTVIEW_VScroll(infoPtr, mode, 0, hwnd);
+	  LISTVIEW_VScroll(infoPtr, mode, 0, 0);
       return TRUE;
   }
   else if (uView == LVS_LIST)
@@ -7048,7 +6913,7 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
       if (dy != 0) return FALSE;
       if (dx == 0) return TRUE;
       mode = (dx>0) ? SB_INTERNAL_RIGHT : SB_INTERNAL_LEFT;
-      LISTVIEW_HScroll(infoPtr, mode, 0, hwnd);
+      LISTVIEW_HScroll(infoPtr, mode, 0, 0);
       return TRUE;
   }
   return FALSE;
@@ -7059,7 +6924,7 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
  * Sets the background color.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] COLORREF : background color
  *
  * RETURN:
@@ -7084,7 +6949,7 @@ static LRESULT LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
  * window stores state information (some or all).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] UINT : state mask
  *
  * RETURN:
@@ -7103,7 +6968,7 @@ static BOOL LISTVIEW_SetCallbackMask(LISTVIEW_INFO *infoPtr, UINT uMask)
  * Sets the attributes of a header item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : column index
  * [I] LPLVCOLUMNW : column attributes
  * [I] isW: if TRUE, the lpColumn is a LPLVCOLUMNW,
@@ -7205,7 +7070,7 @@ static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
  * Sets the column order array
  *
  * PARAMETERS:
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : number of elements in column order array
  * [I] INT : pointer to column order array
  *
@@ -7229,7 +7094,7 @@ static LRESULT LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
  * Sets the width of a column
  *
  * PARAMETERS:
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : column index
  * [I] INT : column width
  *
@@ -7398,7 +7263,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
  * Sets the extended listview style.
  *
  * PARAMETERS:
- * [I] HWND  : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] DWORD : mask
  * [I] DWORD : style
  *
@@ -7424,7 +7289,7 @@ static LRESULT LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD d
  * Sets the new hot cursor used during hot tracking and hover selection.
  *
  * PARAMETER(S):
- * [I] infoPtr : pointer to listview strucure (not NULL)
+ * [I] infoPtr : valid pointer to the listview structure
  * [I} hCurosr : the new hot cursor handle
  *
  * RETURN:
@@ -7443,7 +7308,7 @@ static HCURSOR LISTVIEW_SetHotCursor(LISTVIEW_INFO *infoPtr, HCURSOR hCursor)
  * Sets the hot item index.
  *
  * PARAMETERS:
- * [I] HWND  : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT   : index
  *
  * RETURN:
@@ -7466,7 +7331,7 @@ static LRESULT LISTVIEW_SetHotItem(LISTVIEW_INFO *infoPtr, INT iIndex)
  * Sets the amount of time the cursor must hover over an item before it is selected.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] DWORD : dwHoverTime, if -1 the hover time is set to the default
  *
  * RETURN:
@@ -7486,7 +7351,7 @@ static LRESULT LISTVIEW_SetHoverTime(LISTVIEW_INFO *infoPtr, DWORD dwHoverTime)
  * Sets spacing for icons of LVS_ICON style.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] DWORD : MAKELONG(cx, cy)
  *
  * RETURN:
@@ -7549,7 +7414,7 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
  * Sets image lists.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : image list type
  * [I] HIMAGELIST : image list handle
  *
@@ -7605,7 +7470,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
  * Preallocates memory (does *not* set the actual count of items !)
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT   : item count (projected number of items to allocate)
  * [I] DWORD : update flags
  *
@@ -7675,7 +7540,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
  * Sets the position of an item.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  * [I] LONG : x coordinate
  * [I] LONG : y coordinate
@@ -7767,7 +7632,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
  * Sets the state of one or many items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I]INT : item index
  * [I] LPLVITEM : item or subitem info
  *
@@ -7842,7 +7707,7 @@ static BOOL LISTVIEW_SetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW l
  * Set item index that marks the start of a multiple selection.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT  : index
  *
  * RETURN:
@@ -7864,7 +7729,7 @@ static LRESULT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
  * Sets the text background color.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] COLORREF : text background color
  *
  * RETURN:
@@ -7886,7 +7751,7 @@ static LRESULT LISTVIEW_SetTextBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrTextB
  * Sets the text foreground color.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] COLORREF : text color
  *
  * RETURN:
@@ -7936,7 +7801,7 @@ static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM l
  * Sorts the listview items.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] WPARAM : application-defined value
  * [I] LPARAM : pointer to comparision callback
  *
@@ -8005,7 +7870,7 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
  * Updates an items or rearranges the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : item index
  *
  * RETURN:
@@ -8046,22 +7911,29 @@ static LRESULT LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
  * Creates the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] hwnd : window handle
+ * [I] lpcs : the create parameters
  *
  * RETURN:
- * Zero
+ *   Success: 0
+ *   Failure: -1
  */
 static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
+  LISTVIEW_INFO *infoPtr;
   UINT uView = lpcs->style & LVS_TYPEMASK;
   LOGFONTW logFont;
 
   TRACE("(lpcs=%p)\n", lpcs);
 
   /* initialize info pointer */
+  infoPtr = (LISTVIEW_INFO *)COMCTL32_Alloc(sizeof(LISTVIEW_INFO));
+  if (!infoPtr) return -1;
+
+  SetWindowLongW(hwnd, 0, (LONG)infoPtr);
   ZeroMemory(infoPtr, sizeof(LISTVIEW_INFO));
 
+  infoPtr->hwndSelf = hwnd;
   /* determine the type of structures to use */
   infoPtr->notifyFormat = SendMessageW(GetParent(infoPtr->hwndSelf), WM_NOTIFYFORMAT,
                                        (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
@@ -8072,7 +7944,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->clrTextBk = CLR_DEFAULT;
 
   /* set default values */
-  infoPtr->hwndSelf = hwnd;
   infoPtr->uCallbackMask = 0;
   infoPtr->nFocusedItem = -1;
   infoPtr->nSelectionMark = -1;
@@ -8081,7 +7952,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   ZeroMemory(&infoPtr->rcList, sizeof(RECT));
   infoPtr->hwndEdit = 0;
-  infoPtr->Editing = FALSE;
+  infoPtr->bEditing = FALSE;
   infoPtr->nEditLabelItem = -1;
   infoPtr->bIsDrawing = FALSE;
 
@@ -8156,7 +8027,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
  * Erases the background of the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] WPARAM : device context handle
  * [I] LPARAM : not used
  *
@@ -8203,27 +8074,10 @@ static void LISTVIEW_FillBackground(LISTVIEW_INFO *infoPtr, HDC hdc, LPRECT rc)
 
 /***
  * DESCRIPTION:
- * Retrieves the listview control font.
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- *
- * RETURN:
- * Font handle.
- */
-static LRESULT LISTVIEW_GetFont(LISTVIEW_INFO *infoPtr)
-{
-  TRACE("()\n");
-
-  return infoPtr->hFont;
-}
-
-/***
- * DESCRIPTION:
  * Performs vertical scrolling.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : scroll code
  * [I] SHORT : current scroll position if scroll code is SB_THUMBPOSITION
  *             or SB_THUMBTRACK.
@@ -8257,7 +8111,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode, SHORT n
 
   is_an_icon = ((uView == LVS_ICON) || (uView == LVS_SMALLICON));
 
-  if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+  if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
   {
     INT nOldScrollPos = scrollInfo.nPos;
     switch (nScrollCode)
@@ -8353,7 +8207,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode, SHORT n
  * Performs horizontal scrolling.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : scroll code
  * [I] SHORT : current scroll position if scroll code is SB_THUMBPOSITION
  *             or SB_THUMBTRACK.
@@ -8388,7 +8242,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode, SHORT n
 
   is_a_list = (uView == LVS_LIST);
 
-  if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo) != FALSE)
+  if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
   {
     INT nOldScrollPos = scrollInfo.nPos;
 
@@ -8495,7 +8349,7 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
         *  listview should be scrolled by a multiple of 37 dependently on its dimension or its visible item number
         *  should be fixed in the future.
         */
-        if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+        if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
             LISTVIEW_VScroll(infoPtr, SB_THUMBPOSITION,
 			     scrollInfo.nPos + (gcWheelDelta < 0) ?
 			     LISTVIEW_SCROLL_ICON_LINE_SIZE :
@@ -8505,7 +8359,7 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
     case LVS_REPORT:
         if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
         {
-            if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo) != FALSE)
+            if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
             {
                 int cLineScroll = min(LISTVIEW_GetCountPerColumn(infoPtr), pulScrollLines);
                 cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
@@ -8526,7 +8380,7 @@ static LRESULT LISTVIEW_MouseWheel(LISTVIEW_INFO *infoPtr, INT wheelDelta)
  * ???
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : virtual key
  * [I] LONG : key data
  *
@@ -8551,8 +8405,8 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
   case VK_RETURN:
     if ((GETITEMCOUNT(infoPtr) > 0) && (infoPtr->nFocusedItem != -1))
     {
-      hdr_notify(infoPtr, NM_RETURN);        /* NM_RETURN notification */
-      hdr_notify(infoPtr, LVN_ITEMACTIVATE); /* LVN_ITEMACTIVATE notification */
+      notify_return(infoPtr);
+      notify_itemactivate(infoPtr);
     }
     break;
 
@@ -8615,7 +8469,7 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
  * Kills the focus.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Zero
@@ -8628,7 +8482,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
   TRACE("()\n");
 
   /* send NM_KILLFOCUS notification */
-  hdr_notify(infoPtr, NM_KILLFOCUS);
+  notify_killfocus(infoPtr);
 
   /* set window focus flag */
   infoPtr->bFocus = FALSE;
@@ -8664,7 +8518,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
  * Processes double click messages (left mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -8700,7 +8554,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
 
   /* To send the LVN_ITEMACTIVATE, it must be on an Item */
   if(nmlv.iItem != -1)
-    hdr_notify(infoPtr, LVN_ITEMACTIVATE);
+    notify_itemactivate(infoPtr);
 
   return 0;
 }
@@ -8710,7 +8564,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
  * Processes mouse down messages (left mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -8727,10 +8581,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
 
   /* send NM_RELEASEDCAPTURE notification */
-  hdr_notify(infoPtr, NM_RELEASEDCAPTURE);
+  notify_releasedcapture(infoPtr);
 
-  if (infoPtr->bFocus == FALSE)
-    SetFocus(infoPtr->hwndSelf);
+  if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
 
   /* set left button down flag */
   infoPtr->bLButtonDown = TRUE;
@@ -8793,7 +8646,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  * Processes mouse up messages (left mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -8804,7 +8657,7 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
   TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
 
-  if (infoPtr->bLButtonDown != FALSE)
+  if (infoPtr->bLButtonDown)
   {
     LVHITTESTINFO lvHitTestInfo;
     NMLISTVIEW nmlv;
@@ -8845,41 +8698,10 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 
 /***
  * DESCRIPTION:
- * Creates the listview control (called before WM_CREATE).
- *
- * PARAMETER(S):
- * [I] HWND : window handle
- * [I] WPARAM : unhandled
- * [I] LPARAM : widow creation info
- *
- * RETURN:
- * Zero
- */
-static BOOL LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-  LISTVIEW_INFO *infoPtr;
-
-  TRACE("(wParam=%x, lParam=%lx)\n", wParam, lParam);
-
-  /* allocate memory for info structure */
-  infoPtr = (LISTVIEW_INFO *)COMCTL32_Alloc(sizeof(LISTVIEW_INFO));
-  if (infoPtr == NULL)
-  {
-    ERR("could not allocate info memory!\n");
-    return FALSE;
-  }
-  infoPtr->hwndSelf = hwnd;
-  SetWindowLongW(infoPtr->hwndSelf, 0, (LONG)infoPtr);
-
-  return (BOOL)DefWindowProcW(hwnd, WM_NCCREATE, wParam, lParam);
-}
-
-/***
- * DESCRIPTION:
  * Destroys the listview control (called after WM_DESTROY).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Zero
@@ -8937,7 +8759,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
  * Handles notifications from children.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] INT : control identifier
  * [I] LPNMHDR : notification information
  *
@@ -8989,7 +8811,7 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
  * Determines the type of structure to use.
  *
  * PARAMETER(S):
- * [I] HWND : window handle of the sender
+ * [I] infoPtr : valid pointer to the listview structureof the sender
  * [I] HWND : listview window handle
  * [I] INT : command specifying the nature of the WM_NOTIFYFORMAT
  *
@@ -9011,7 +8833,7 @@ static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT 
  * Paints/Repaints the listview control.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HDC : device context handle
  *
  * RETURN:
@@ -9042,7 +8864,7 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
  * Processes double click messages (right mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -9054,10 +8876,10 @@ static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
   TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
 
   /* send NM_RELEASEDCAPTURE notification */
-  hdr_notify(infoPtr, NM_RELEASEDCAPTURE);
+  notify_releasedcapture(infoPtr);
 
   /* send NM_RDBLCLK notification */
-  hdr_notify(infoPtr, NM_RDBLCLK);
+  notify_rdblclk(infoPtr);
 
   return 0;
 }
@@ -9067,7 +8889,7 @@ static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
  * Processes mouse down messages (right mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -9084,11 +8906,10 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
 
   /* send NM_RELEASEDCAPTURE notification */
-  hdr_notify(infoPtr, NM_RELEASEDCAPTURE);
+  notify_releasedcapture(infoPtr);
 
   /* make sure the listview control window has the focus */
-  if (infoPtr->bFocus == FALSE)
-    SetFocus(infoPtr->hwndSelf);
+  if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
 
   /* set right button down flag */
   infoPtr->bRButtonDown = TRUE;
@@ -9134,7 +8955,7 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  * Processes mouse up messages (right mouse button).
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
  * [I] pts : mouse coordinate
  *
@@ -9169,7 +8990,7 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
  * Sets the cursor.
  *
  * PARAMETER(S):
- * [I] infoPtr : pointer to listview strucure (not NULL)
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] hwnd : window handle of window containing the cursor
  * [I] nHittest : hit-test code
  * [I] wMouseMsg : ideintifier of the mouse message
@@ -9197,8 +9018,8 @@ static BOOL LISTVIEW_SetCursor(LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHittest,
  * Sets the focus.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
- * [I] HWND : window handle of previously focused window
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] infoPtr : valid pointer to the listview structureof previously focused window
  *
  * RETURN:
  * Zero
@@ -9208,7 +9029,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
   TRACE("(hwndLoseFocus=%x)\n", hwndLoseFocus);
 
   /* send NM_SETFOCUS notification */
-  hdr_notify(infoPtr, NM_SETFOCUS);
+  notify_setfocus(infoPtr);
 
   /* set window focus flag */
   infoPtr->bFocus = TRUE;
@@ -9223,7 +9044,7 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
  * Sets the font.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] HFONT : font handle
  * [I] WORD : redraw flag
  *
@@ -9249,8 +9070,7 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
   /* invalidate listview control client area */
   InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
-  if (fRedraw != FALSE)
-    UpdateWindow(infoPtr->hwndSelf);
+  if (fRedraw) UpdateWindow(infoPtr->hwndSelf);
 
   return 0;
 }
@@ -9261,7 +9081,7 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  * For the Listview, it invalidates the entire window (the doc specifies otherwise)
  *
  * PARAMETER(S):
- * [I] HWND   : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] bRedraw: state of redraw flag
  *
  * RETURN:
@@ -9282,7 +9102,7 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
  * messages.  At this time, the width and height are not used.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] WORD : new width
  * [I] WORD : new height
  *
@@ -9320,7 +9140,7 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
  * Sets the size information.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
  * Zero if no size change
@@ -9383,7 +9203,7 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
  * Processes WM_STYLECHANGED messages.
  *
  * PARAMETER(S):
- * [I] HWND : window handle
+ * [I] infoPtr : valid pointer to the listview structure
  * [I] WPARAM : window style type (normal or extended)
  * [I] LPSTYLESTRUCT : window style information
  *
@@ -9504,7 +9324,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
      we will need to kill the control since the redraw will
      misplace the edit control.
    */
-  if (infoPtr->Editing &&
+  if (infoPtr->bEditing &&
         ((uNewView & (LVS_ICON|LVS_LIST|LVS_SMALLICON)) !=
         ((LVS_ICON|LVS_LIST|LVS_SMALLICON) & uOldView)))
   {
@@ -9524,9 +9344,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
-  TRACE("( uMsg=%x wParam=%x lParam=%lx)\n", uMsg, wParam, lParam);
+  TRACE("(uMsg=%x wParam=%x lParam=%lx)\n", uMsg, wParam, lParam);
 
-  if (!infoPtr && (uMsg != WM_NCCREATE))
+  if (!infoPtr && (uMsg != WM_CREATE))
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 
   switch (uMsg)
@@ -9568,7 +9388,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_FindItemA(infoPtr, (INT)wParam, (LPLVFINDINFOA)lParam);
 
   case LVM_GETBKCOLOR:
-    return LISTVIEW_GetBkColor(infoPtr);
+    return infoPtr->clrBk;
 
   /* case LVM_GETBKIMAGE: */
 
@@ -9591,22 +9411,22 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_GetCountPerPage(infoPtr);
 
   case LVM_GETEDITCONTROL:
-    return LISTVIEW_GetEditControl(infoPtr);
+    return (LRESULT)infoPtr->hwndEdit;
 
   case LVM_GETEXTENDEDLISTVIEWSTYLE:
-    return LISTVIEW_GetExtendedListViewStyle(infoPtr);
+    return infoPtr->dwExStyle;
 
   case LVM_GETHEADER:
-    return LISTVIEW_GetHeader(infoPtr);
+    return (LRESULT)infoPtr->hwndHeader;
 
   case LVM_GETHOTCURSOR:
     return infoPtr->hHotCursor;
 
   case LVM_GETHOTITEM:
-    return LISTVIEW_GetHotItem(infoPtr);
+    return infoPtr->nHotItem;
 
   case LVM_GETHOVERTIME:
-    return LISTVIEW_GetHoverTime(infoPtr);
+    return infoPtr->dwHoverTime;
 
   case LVM_GETIMAGELIST:
     return LISTVIEW_GetImageList(infoPtr, (INT)wParam);
@@ -9629,7 +9449,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_GetItemT(infoPtr, (LPLVITEMW)lParam, FALSE, TRUE);
 
   case LVM_GETITEMCOUNT:
-    return LISTVIEW_GetItemCount(infoPtr);
+    return GETITEMCOUNT(infoPtr);
 
   case LVM_GETITEMPOSITION:
     return LISTVIEW_GetItemPosition(infoPtr, (INT)wParam, (LPPOINT)lParam);
@@ -9667,7 +9487,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_GetSelectedCount(infoPtr);
 
   case LVM_GETSELECTIONMARK:
-    return LISTVIEW_GetSelectionMark(infoPtr);
+    return infoPtr->nSelectionMark;
 
   case LVM_GETSTRINGWIDTHA:
     return LISTVIEW_GetStringWidthT(infoPtr, (LPCWSTR)lParam, FALSE);
@@ -9869,7 +9689,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_Command(infoPtr, wParam, lParam);
 
   case WM_CREATE:
-    return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam); //FIXME
+    return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
 
   case WM_ERASEBKGND:
     return LISTVIEW_EraseBackground(infoPtr, wParam, lParam);
@@ -9878,7 +9698,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
   case WM_GETFONT:
-    return LISTVIEW_GetFont(infoPtr);
+    return infoPtr->hFont;
 
   case WM_HSCROLL:
     if (SLOWORD(wParam) < 0) return 0; /* validate not internal codes */
@@ -9905,9 +9725,6 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_MOUSEHOVER:
     return LISTVIEW_MouseHover(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
-
-  case WM_NCCREATE:
-    return LISTVIEW_NCCreate(hwnd, wParam, lParam);
 
   case WM_NCDESTROY:
     return LISTVIEW_NCDestroy(infoPtr);
@@ -10122,8 +9939,8 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 
 	case WM_DESTROY:
 	{
-	    WNDPROC editProc = infoPtr->pedititem.EditWndProc;
-	    infoPtr->pedititem.EditWndProc = 0;
+	    WNDPROC editProc = infoPtr->EditWndProc;
+	    infoPtr->EditWndProc = 0;
 	    SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)editProc);
 	    return CallWindowProcT(editProc, hwnd, uMsg, wParam, lParam, isW);
 	}
@@ -10138,10 +9955,10 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 		break;
 
 	default:
-	    return CallWindowProcT(infoPtr->pedititem.EditWndProc, hwnd, uMsg, wParam, lParam, isW);
+	    return CallWindowProcT(infoPtr->EditWndProc, hwnd, uMsg, wParam, lParam, isW);
     }
 
-    if (infoPtr->pedititem.bEditLblCb)
+    if (infoPtr->bEditing)
     {
 	LPWSTR buffer = NULL;
 
@@ -10161,11 +9978,10 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
         /* Processing LVN_ENDLABELEDIT message could kill the focus       */
         /* eg. Using a messagebox                                         */
         bIgnoreKillFocus = TRUE;
-	LISTVIEW_EndEditLabelT(infoPtr, buffer, infoPtr->pedititem.nEditItem, isW);
+	LISTVIEW_EndEditLabelT(infoPtr, buffer, isW);
 
 	if (buffer) COMCTL32_Free(buffer);
 
-	infoPtr->pedititem.bEditLblCb = FALSE;
         bIgnoreKillFocus = FALSE;
     }
 
@@ -10208,7 +10024,7 @@ LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
  * RETURN:
  */
 static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
-	INT x, INT y, INT width, INT height, INT nItem, BOOL isW)
+	INT x, INT y, INT width, INT height, BOOL isW)
 {
     WCHAR editName[5] = { 'E', 'd', 'i', 't', '\0' };
     HWND hedit;
@@ -10245,9 +10061,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
 
     if (!hedit) return 0;
 
-    infoPtr->pedititem.nEditItem = nItem;
-    infoPtr->pedititem.bEditLblCb = TRUE;
-    infoPtr->pedititem.EditWndProc = (WNDPROC)
+    infoPtr->EditWndProc = (WNDPROC)
 	(isW ? SetWindowLongW(hedit, GWL_WNDPROC, (LONG)EditLblWndProcW) :
                SetWindowLongA(hedit, GWL_WNDPROC, (LONG)EditLblWndProcA) );
 
