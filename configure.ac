@@ -160,6 +160,110 @@ AC_SUBST(GLU32FILES)
 GLU32FILES=""
 AC_SUBST(OPENGL_LIBS)
 OPENGL_LIBS=""
+
+dnl **** Check for header files ****
+
+AC_CHECK_HEADERS(\
+	arpa/inet.h \
+	arpa/nameser.h \
+	cups/cups.h \
+	direct.h \
+	elf.h \
+	float.h \
+	fontconfig/fontconfig.h \
+	getopt.h \
+	gif_lib.h \
+	ieeefp.h \
+	io.h \
+	jack/jack.h \
+	jpeglib.h \
+	lcms.h \
+	libio.h \
+	libutil.h \
+	link.h \
+	linux/cdrom.h \
+	linux/compiler.h \
+	linux/hdreg.h \
+	linux/input.h \
+	linux/ioctl.h \
+	linux/joystick.h \
+	linux/major.h \
+	linux/param.h \
+	linux/serial.h \
+	linux/ucdrom.h \
+	machine/cpu.h \
+	mntent.h \
+	netdb.h \
+	netinet/in.h \
+	netinet/in_systm.h \
+	netinet/tcp.h \
+	netinet/tcp_fsm.h \
+	openssl/des.h \
+	openssl/md2.h \
+	openssl/rc2.h \
+	openssl/rc4.h \
+	openssl/rsa.h \
+	openssl/ssl.h \
+	process.h \
+	pthread.h \
+	pty.h \
+	pwd.h \
+	regex.h \
+	sched.h \
+	scsi/sg.h \
+	scsi/scsi.h \
+	scsi/scsi_ioctl.h \
+	socket.h \
+	stdint.h \
+	strings.h \
+	sys/cdio.h \
+	sys/elf32.h \
+	sys/errno.h \
+	sys/epoll.h \
+	sys/exec_elf.h \
+	sys/file.h \
+	sys/filio.h \
+	sys/inttypes.h \
+	sys/ioctl.h \
+	sys/ipc.h \
+	sys/link.h \
+	sys/lwp.h \
+	sys/mman.h \
+	sys/modem.h \
+	sys/msg.h \
+	sys/param.h \
+	sys/poll.h \
+	sys/ptrace.h \
+	sys/reg.h \
+	sys/scsiio.h \
+	sys/shm.h \
+	sys/signal.h \
+	sys/socket.h \
+	sys/sockio.h \
+	sys/statfs.h \
+	sys/statvfs.h \
+	sys/strtio.h \
+	sys/syscall.h \
+	sys/sysctl.h \
+	sys/time.h \
+	sys/times.h \
+	sys/uio.h \
+	sys/un.h \
+	sys/v86.h \
+	sys/v86intr.h \
+	sys/vfs.h \
+	sys/vm86.h \
+	sys/wait.h \
+	syscall.h \
+	termios.h \
+	unistd.h \
+	utime.h \
+	valgrind/memcheck.h
+)
+AC_HEADER_STAT()
+
+dnl **** Check for X11 ****
+
 if test "$have_x" = "yes"
 then
     XLIB="-lXext -lX11"
@@ -1136,107 +1240,6 @@ AC_CHECK_FUNCS(\
 	wait4 \
 	waitpid \
 )
-
-dnl **** Check for header files ****
-
-AC_CHECK_HEADERS(\
-	arpa/inet.h \
-	arpa/nameser.h \
-	cups/cups.h \
-	direct.h \
-	elf.h \
-	float.h \
-	fontconfig/fontconfig.h \
-	getopt.h \
-	gif_lib.h \
-	ieeefp.h \
-	io.h \
-	jack/jack.h \
-	jpeglib.h \
-	lcms.h \
-	libio.h \
-	libutil.h \
-	link.h \
-	linux/cdrom.h \
-	linux/compiler.h \
-	linux/hdreg.h \
-	linux/input.h \
-	linux/ioctl.h \
-	linux/joystick.h \
-	linux/major.h \
-	linux/param.h \
-	linux/serial.h \
-	linux/ucdrom.h \
-	machine/cpu.h \
-	mntent.h \
-	netdb.h \
-	netinet/in.h \
-	netinet/in_systm.h \
-	netinet/tcp.h \
-	netinet/tcp_fsm.h \
-	openssl/des.h \
-	openssl/md2.h \
-	openssl/rc2.h \
-	openssl/rc4.h \
-	openssl/rsa.h \
-	openssl/ssl.h \
-	process.h \
-	pthread.h \
-	pty.h \
-	pwd.h \
-	regex.h \
-	sched.h \
-	scsi/sg.h \
-	scsi/scsi.h \
-	scsi/scsi_ioctl.h \
-	socket.h \
-	stdint.h \
-	strings.h \
-	sys/cdio.h \
-	sys/elf32.h \
-	sys/errno.h \
-	sys/epoll.h \
-	sys/exec_elf.h \
-	sys/file.h \
-	sys/filio.h \
-	sys/inttypes.h \
-	sys/ioctl.h \
-	sys/ipc.h \
-	sys/link.h \
-	sys/lwp.h \
-	sys/mman.h \
-	sys/modem.h \
-	sys/msg.h \
-	sys/param.h \
-	sys/poll.h \
-	sys/ptrace.h \
-	sys/reg.h \
-	sys/scsiio.h \
-	sys/shm.h \
-	sys/signal.h \
-	sys/socket.h \
-	sys/sockio.h \
-	sys/statfs.h \
-	sys/statvfs.h \
-	sys/strtio.h \
-	sys/syscall.h \
-	sys/sysctl.h \
-	sys/time.h \
-	sys/times.h \
-	sys/uio.h \
-	sys/un.h \
-	sys/v86.h \
-	sys/v86intr.h \
-	sys/vfs.h \
-	sys/vm86.h \
-	sys/wait.h \
-	syscall.h \
-	termios.h \
-	unistd.h \
-	utime.h \
-	valgrind/memcheck.h
-)
-AC_HEADER_STAT()
 
 dnl **** Checks for headers that depend on other ones ****
 
