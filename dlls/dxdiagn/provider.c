@@ -95,6 +95,7 @@ HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDi
     if (FAILED(hr)) {
       return hr;
     }
+    hr = DXDiag_InitRootDXDiagContainer((PDXDIAGCONTAINER)This->pRootContainer);
   }
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
 }
@@ -121,4 +122,32 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
   provider->lpVtbl = &DxDiagProvider_Vtbl;
   provider->ref = 0; /* will be inited with QueryInterface */
   return IDxDiagProviderImpl_QueryInterface ((PDXDIAGPROVIDER)provider, riid, ppobj);
+}
+
+HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
+  static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
+  static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
+  static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
+  static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
+  static const WCHAR szDirectXVersionLetter_v[] = {'c',0};
+
+  IDxDiagContainer* pSubCont = NULL;
+  VARIANT v;
+  HRESULT hr = S_OK;
+  
+  TRACE("(%p)\n", pRootCont);
+
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
+  if (FAILED(hr)) {
+    return hr;
+  }
+  V_VT(&v) = VT_UI4; V_UI4(&v) = 9;
+  hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMajor, &v);
+  V_VT(&v) = VT_UI4; V_UI4(&v) = 0;
+  hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMinor, &v);
+  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLetter_v);
+  hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLetter, &v);
+
+  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_SystemInfo, pSubCont);
+  return hr;
 }

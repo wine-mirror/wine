@@ -77,6 +77,13 @@ typedef struct IDxDiagContainerImpl_SubContainer {
   struct IDxDiagContainerImpl_SubContainer* next;
 } IDxDiagContainerImpl_SubContainer;
 
+typedef struct IDxDiagContainerImpl_Property {
+  LPWSTR vName;
+  VARIANT v;
+  struct IDxDiagContainerImpl_Property* next;
+} IDxDiagContainerImpl_Property;
+
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
@@ -90,7 +97,9 @@ struct IDxDiagContainerImpl {
   IDxDiagContainerVtbl *lpVtbl;
   DWORD       ref;
   /* IDxDiagContainer fields */
+  IDxDiagContainerImpl_Property* properties;  
   IDxDiagContainerImpl_SubContainer* subContainers;
+  DWORD nProperties;
   DWORD nSubContainers;
 };
 
@@ -107,6 +116,10 @@ extern HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER ifa
 extern HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName);
 extern HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp);
 
+/** Internal */
+extern HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp);
+extern HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pszContName, PDXDIAGCONTAINER pSubCont);
+
 /**
  * factories
  */
@@ -114,6 +127,7 @@ extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkO
 
 /** internal factory */
 extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj);
+extern HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont);
 
 
 

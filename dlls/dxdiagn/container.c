@@ -75,9 +75,9 @@ HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfChildContainers(PDXDIAGCONTAINER 
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) {
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_SubContainer* p = NULL;
   DWORD i = 0;
-  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   
   TRACE("(%p, %lu, %s, %lu)\n", iface, dwIndex, debugstr_w(pwszContainer), cchContainer);
 
@@ -104,8 +104,8 @@ HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER ifa
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) {
-  IDxDiagContainerImpl_SubContainer* p = NULL;
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainerImpl_SubContainer* p = NULL;
 
   FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszContainer), ppInstance);
 
@@ -116,7 +116,8 @@ HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LP
   p = This->subContainers;
   while (NULL != p) {
     if (0 == lstrcmpW(p->contName, pwszContainer)) {      
-      IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)p, &IID_IDxDiagContainer, (void**) ppInstance);
+      IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)p->pCont, &IID_IDxDiagContainer, (void**) ppInstance);
+      /*TRACE"(%p) returns %p\n", iface, *ppInstance);*/
       return S_OK;
     }
     p = p->next;
@@ -126,20 +127,128 @@ HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LP
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWORD* pdwCount) {
-  /* IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface; */
-  FIXME("(%p, %p): stub\n", iface, pdwCount);
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  TRACE("(%p)\n", iface);
+  if (NULL == pdwCount) {
+    return E_INVALIDARG;
+  }
+  *pdwCount = This->nProperties;
   return S_OK;
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) {
-  /* IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface; */
-  FIXME("(%p, %lu, %s, %lu): stub\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
-  return S_OK;
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainerImpl_Property* p = NULL;
+  DWORD i = 0;
+  
+  FIXME("(%p, %lu, %s, %lu)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
+
+  if (NULL == pwszPropName) {
+    return E_INVALIDARG;
+  }
+  if (256 > cchPropName) {
+    return DXDIAG_E_INSUFFICIENT_BUFFER;
+  }
+  
+  p = This->properties;
+  while (NULL != p) {
+    if (dwIndex == i) {  
+      if (cchPropName <= lstrlenW(p->vName)) {
+	return DXDIAG_E_INSUFFICIENT_BUFFER;
+      }
+      lstrcpynW(pwszPropName, p->vName, cchPropName);
+      return S_OK;
+    }
+    p = p->next;
+    ++i;
+  }  
+  return E_INVALIDARG;
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp) {
-  /* IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface; */
-  FIXME("(%p, %s, %p): stub\n", iface, debugstr_w(pwszPropName), pvarProp);
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainerImpl_Property* p = NULL;
+  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pvarProp);
+
+  if (NULL == pvarProp || NULL == pwszPropName) {
+    return E_INVALIDARG;
+  }
+
+  p = This->properties;
+  while (NULL != p) {
+    if (0 == lstrcmpW(p->vName, pwszPropName)) {      
+      VariantCopy(pvarProp, &p->v);
+      return S_OK;
+    }
+    p = p->next;
+  }
+  return S_OK;
+}
+
+HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp) {
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainerImpl_Property* p = NULL;
+  IDxDiagContainerImpl_Property* pNew = NULL;
+
+  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pVarProp);
+
+  if (NULL == pVarProp || NULL == pwszPropName) {
+    return E_INVALIDARG;
+  }
+
+  pNew =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagContainerImpl_Property));
+  if (NULL == pNew) {
+    return E_OUTOFMEMORY;
+  }
+  VariantInit(&pNew->v);
+  VariantCopy(&pNew->v, pVarProp);
+  pNew->vName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pwszPropName) * sizeof(WCHAR));
+  lstrcpyW(pNew->vName, pwszPropName);
+  pNew->next = NULL;
+
+  p = This->properties;
+  if (NULL == p) {
+    This->properties = pNew;
+  } else {
+    while (NULL != p->next) {
+      p = p->next;
+    }
+    p->next = pNew;
+  }
+  ++This->nProperties;
+  return S_OK;
+}
+
+HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pszContName, PDXDIAGCONTAINER pSubCont) {
+  IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
+  IDxDiagContainerImpl_SubContainer* p = NULL;
+  IDxDiagContainerImpl_SubContainer* pNew = NULL;
+
+  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pszContName), pSubCont);
+
+  if (NULL == pSubCont || NULL == pszContName) {
+    return E_INVALIDARG;
+  }
+
+  pNew =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagContainerImpl_SubContainer));
+  if (NULL == pNew) {
+    return E_OUTOFMEMORY;
+  }
+  pNew->pCont = pSubCont;
+  pNew->contName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lstrlenW(pszContName) * sizeof(WCHAR));
+  lstrcpyW(pNew->contName, pszContName);
+  pNew->next = NULL;
+
+  p = This->subContainers;
+  if (NULL == p) {
+    This->subContainers = pNew;
+  } else {
+    while (NULL != p->next) {
+      p = p->next;
+    }
+    p->next = pNew;
+  }
+  ++This->nSubContainers;
   return S_OK;
 }
 
