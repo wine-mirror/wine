@@ -120,7 +120,7 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     /* NT40 */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 4, 0, 0x565, VER_PLATFORM_WIN32_NT,
-        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','6',0},
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','6','a',0},
         6, 0, 0, VER_NT_WORKSTATION, 0
     },
     /* NT2K */
@@ -171,7 +171,7 @@ static const char * const debug_names[NB_WINDOWS_VERSIONS] =
     "Windows NT 4.0",    /* NT40 */
     "Windows 2000",      /* NT2K */
     "Windows XP",        /* WINXP */
-    "Windows 2003"       /* WIN2K3 */
+    "Windows Server 2003"/* WIN2K3 */
 };
 
 /* if one of the following dlls is importing ntdll the windows
