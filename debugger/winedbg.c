@@ -377,8 +377,11 @@ static  DWORD	DEBUG_ExceptionEpilog(void)
 
 static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force, LPDWORD cont)
 {
-    BOOL	is_debug = FALSE;
-    BOOL	ret = TRUE;
+    BOOL             is_debug = FALSE;
+    BOOL             ret = TRUE;
+    THREADNAME_INFO *pThreadName;
+    DBG_THREAD      *pThread;
+
 
     *cont = DBG_CONTINUE;
 
@@ -388,6 +391,19 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     case EXCEPTION_SINGLE_STEP:
         is_debug = TRUE;
         break;
+    case EXCEPTION_NAME_THREAD:
+        pThreadName = (THREADNAME_INFO*)(rec->ExceptionInformation);
+        if (pThreadName->dwThreadID == -1)
+            pThread = DEBUG_CurrThread;
+        else
+            pThread = DEBUG_GetThread(DEBUG_CurrProcess, pThreadName->dwThreadID);
+
+        if (ReadProcessMemory(DEBUG_CurrThread->process->handle, pThreadName->szName,
+                              pThread->name, 9, NULL))
+            DEBUG_Printf (DBG_CHN_MESG,
+                          "Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
+                          pThread->tid, pThread->name);
+        return TRUE;
     }
 
     if (first_chance && !force && !DBG_IVAR(BreakOnFirstChance))

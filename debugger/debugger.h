@@ -150,6 +150,23 @@ enum dbg_mode
     MODE_INVALID, MODE_16, MODE_32, MODE_VM86
 };
 
+
+
+/* Wine extension; Windows doesn't have a name for this code.  This is an
+   undocumented exception understood by MS VC debugger, allowing the program
+   to name a particular thread.  Search google.com or deja.com for "0x406d1388"
+   for more info. */
+#define EXCEPTION_NAME_THREAD               0x406D1388
+
+/* Helper structure */
+typedef struct tagTHREADNAME_INFO
+{
+   DWORD   dwType;     /* Must be 0x1000 */
+   LPCTSTR szName;     /* Pointer to name - limited to 9 bytes (8 characters + terminator) */
+   DWORD   dwThreadID; /* Thread ID (-1 = caller thread) */
+   DWORD   dwFlags;    /* Reserved for future use.  Must be zero. */
+} THREADNAME_INFO;
+
 typedef struct tagDBG_THREAD {
     struct tagDBG_PROCESS*	process;
     HANDLE			handle;
@@ -161,6 +178,7 @@ typedef struct tagDBG_THREAD {
     enum exec_mode 		dbg_exec_mode;
     int 			dbg_exec_count;
     DBG_BREAKPOINT		stepOverBP;
+    char                        name[9];
     struct tagDBG_THREAD* 	next;
     struct tagDBG_THREAD* 	prev;
 } DBG_THREAD;
