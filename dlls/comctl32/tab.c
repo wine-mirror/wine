@@ -2538,7 +2538,8 @@ TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
     infoPtr->tabWidth = (INT)LOWORD(lParam);
-    infoPtr->tabHeight = (INT)HIWORD(lParam);
+    /* If requested Height is 0 this means that program wants to use default. */
+    if (HIWORD(lParam)) infoPtr->tabHeight = (INT)HIWORD(lParam);
     TRACE("was h=%d,w=%d, now h=%d,w=%d\n",
 	  HIWORD(lResult), LOWORD(lResult),
 	  infoPtr->tabHeight, infoPtr->tabWidth);
