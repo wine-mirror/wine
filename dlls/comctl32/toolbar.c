@@ -868,12 +868,12 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     /* Center the bitmap horizontally and vertically */
     if (dwStyle & TBSTYLE_LIST)
-        rcBitmap.left += GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
+        rcBitmap.left += GetSystemMetrics(SM_CXEDGE);
     else
         rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2;
 
     if(lpText)
-        rcBitmap.top+= GetSystemMetrics(SM_CYEDGE) + OFFSET_Y;
+        rcBitmap.top+= GetSystemMetrics(SM_CYEDGE);
     else
         rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
 
