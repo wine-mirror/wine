@@ -3335,8 +3335,25 @@ static BOOL EDIT_CheckCombo(WND *wnd, UINT msg, INT key, DWORD key_data)
 {
 	HWND hLBox;
 
-	if (WIDGETS_IsControl(wnd->parent, BIC32_COMBO) &&
-			(hLBox = COMBO_GetLBWindow(wnd->parent))) {
+	/********************************************************************
+	 * This if statement used to check to see if the parent of the
+	 * edit control was a 'combobox' by comparing the ATOM of the parent
+	 * to a table of internal window control ATOMs.  However, this check
+	 * would fail if the parent was a superclassed combobox (Although
+	 * having the same basic functionality of a combobox, it has a 
+	 * different name and ATOM, thus defeating this check.)  
+	 *
+	 * The safe way to determine if the parent is a combobox is to send it
+	 * a message only a combo box would understand.  I send it a message
+	 * CB_GETCOUNT, if I get 0 then the parent is not a combobox - 
+         * return FALSE.  If I get > 0, then the parent IS a combobox 
+         * (or sub/super classed derrivative thereof)
+	 ********************************************************************/
+        if (
+             ((SendMessageA(wnd->parent->hwndSelf, CB_GETCOUNT, 0, 0)) > 0) &&
+             (hLBox = COMBO_GetLBWindow(wnd->parent))
+           )
+        {                  
 		HWND hCombo = wnd->parent->hwndSelf;
 		BOOL bUIFlip = TRUE;
 
