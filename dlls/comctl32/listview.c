@@ -233,8 +233,10 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
 /* Border for the icon caption */
 #define CAPTION_BORDER  2
 
-/* Standard DrawText flags for LISTVIEW_UpdateLargeItemLabelRect and LISTVIEW_DrawLargeItem */
-#define LISTVIEW_DTFLAGS  DT_TOP | DT_CENTER | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL
+/* Standard DrawText flags */
+#define LV_ML_DT_FLAGS  (DT_TOP | DT_NOPREFIX | DT_EDITCONTROL | DT_CENTER | DT_WORDBREAK | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS)
+#define LV_FL_DT_FLAGS  (DT_TOP | DT_NOPREFIX | DT_EDITCONTROL | DT_CENTER | DT_WORDBREAK | DT_NOCLIP)
+#define LV_SL_DT_FLAGS  (DT_TOP | DT_EDITCONTROL | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS)
 
 /* Dump the LISTVIEW_INFO structure to the debug channel */
 #define LISTVIEW_DUMP(iP) do { \
@@ -287,7 +289,6 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *, WPARAM, LPARAM);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT);
 static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *, INT, UINT);
 static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, LPLVITEMW);
-static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *, int, RECT*);
 static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *, INT, LPLVCOLUMNW, BOOL);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
@@ -1247,105 +1248,6 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
 }
 
 /***
- * DESCRIPTION:          [INTERNAL]
- * Update the bounding rectangle around the text under a large icon.
- * This depends on whether it has the focus or not.
- * On entry the rectangle's top, left and right should be set.
- * On return the bottom will also be set and the width may have been
- * modified.
- *
- * PARAMETER
- * [I] infoPtr : pointer to the listview structure
- * [I] nItem : the item for which we are calculating this
- * [I/O] rect : the rectangle to be updated
- *
- * This appears to be weird, even in the Microsoft implementation.
- */
-static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem, RECT *rect)
-{
-    HDC hdc = GetDC (infoPtr->hwndSelf);
-    HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
-    UINT uFormat = LISTVIEW_DTFLAGS | DT_CALCRECT;
-    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    RECT rcText = *rect;
-    RECT rcBack = *rect;
-    BOOL focused, selected;
-    int dx, dy, old_wid, new_wid;
-    LVITEMW lvItem;
-
-    TRACE("%s, focus item=%d, cur item=%d\n",
-	  (infoPtr->bFocus) ? "Window has focus" : "Window not focused",
-	  infoPtr->nFocusedItem, nItem);
-
-
-    focused = infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED); 
-    selected = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
-
-    uFormat |= (focused) ? DT_NOCLIP : DT_WORD_ELLIPSIS | DT_END_ELLIPSIS;
-
-    /* We (aim to) display the full text.  In Windows 95 it appears to
-     * calculate the size assuming the specified font and then it draws
-     * the text in that region with the specified font except scaled to
-     * 10 point (or the height of the system font or ...).  Thus if the
-     * window has 24 point Helvetica the highlit rectangle will be
-     * taller than the text and if it is 7 point Helvetica then the text
-     * will be clipped.
-     * For now we will simply say that it is the correct size to display
-     * the text in the specified font.
-     */
-    lvItem.mask = LVIF_TEXT;
-    lvItem.iItem = nItem;
-    lvItem.iSubItem = 0;
-    lvItem.pszText = szDispText;
-    lvItem.cchTextMax = DISP_TEXT_SIZE;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-
-    InflateRect(&rcText, -2, 0);
-    DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat);
-    /* Microsoft, in their great wisdom, have decided that the rectangle
-     * returned by DrawText on DT_CALCRECT will only guarantee the dimension,
-     * not the location.  So we have to do the centring ourselves (and take
-     * responsibility for agreeing off-by-one consistency with them).
-     */
-
-    old_wid = rcText.right - rcText.left;
-    new_wid = rcBack.right - rcBack.left;
-    dx = rcBack.left - rcText.left + (new_wid-old_wid)/2;
-    dy = rcBack.top - rcText.top;
-    OffsetRect (&rcText, dx, dy);
-
-    if (focused)
-    {
-	rcText.bottom += 2;
-	InflateRect(&rcText, 2, 0);
-    }
-    else /* not focused, may or may not be selected */
-    {
-        /*
-         * We need to have the bottom to be an intergal number of
-         * text lines (ntmHeight) below text top that is less than
-         * or equal to the nItemHeight.
-         */
-        INT lh = infoPtr->nItemHeight - infoPtr->iconSize.cy - 
-		 ICON_TOP_PADDING - ICON_BOTTOM_PADDING;
-        INT ih = (lh / infoPtr->ntmHeight) * infoPtr->ntmHeight;
-        rcText.bottom = min(rcText.bottom, rcText.top + ih);
-        rcText.bottom += 1;
-    }
-    *rect = rcText;
-
-    TRACE("%s and %s, bounding rect=(%d,%d)-(%d,%d)\n",
-	  (focused) ? "focused(full text)" : "not focused",
-	  (selected) ? "selected" : "not selected",
-	  rect->left, rect->top, rect->right, rect->bottom);
-
-    SelectObject (hdc, hOldFont);
-    ReleaseDC (infoPtr->hwndSelf, hdc);
-
-    return TRUE;
-}
-
-/***
  * DESCRIPTION:            [INTERNAL]
  * Compute the rectangles of an item.  This is to localize all
  * the computations in one place. If you are not interested in some
@@ -1384,8 +1286,10 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     BOOL doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     RECT Box, Icon, Label;
     POINT Origin;
+    LVITEMW lvItem;
 
     /* This should be very cheap to compute */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
@@ -1426,6 +1330,21 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     Box.right = Box.left + infoPtr->nItemWidth;
     Box.bottom = Box.top + infoPtr->nItemHeight;
 
+    /* get what we need from the item before hand, so we make
+     * only one request. This can speed up things, if data
+     * is stored on the app side */
+    if (doLabel || (doIcon && uView == LVS_REPORT))
+    {
+	lvItem.mask = 0;
+	if (doIcon) lvItem.mask |= LVIF_INDENT;
+	if (doLabel) lvItem.mask |= LVIF_TEXT;
+	lvItem.iItem = nItem;
+	lvItem.iSubItem = 0;
+    	lvItem.pszText = szDispText;
+    	lvItem.cchTextMax = DISP_TEXT_SIZE;
+	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
+    }
+
     /************************************************************/
     /* compute ICON bounding box (ala LVM_GETITEMRECT)          */
     /************************************************************/
@@ -1449,16 +1368,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	{
 	    /* do indent */
 	    Icon.left = Box.left;
-	    if (uView == LVS_REPORT)
-	    {
-		LVITEMW lvItem;
-
-		lvItem.mask = LVIF_INDENT;
-		lvItem.iItem = nItem;
-		lvItem.iSubItem = 0;
-		if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-		Icon.left += infoPtr->iconSize.cx * lvItem.iIndent;
-	    }
+	    if (uView == LVS_REPORT) Icon.left += infoPtr->iconSize.cx * lvItem.iIndent;
 	    if (infoPtr->himlState) Icon.left += infoPtr->iconStateSize.cx;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
@@ -1474,39 +1384,56 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     /************************************************************/
     if (doLabel)
     {
+	SIZE labelSize = { 0, 0 };
+		
+        if (is_textT(lvItem.pszText, TRUE))
+        {
+    	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
+    	    HDC hdc = GetDC(infoPtr->hwndSelf);
+    	    HFONT hOldFont = SelectObject(hdc, hFont);
+	    UINT uFormat;
+	    RECT rcText;
+
+	    /* compute rough rectangle where the label will go */
+	    SetRectEmpty(&rcText);
+	    rcText.right = infoPtr->nItemWidth - 2;
+	    rcText.bottom = infoPtr->nItemHeight;
+	    if (uView == LVS_ICON) 
+		rcText.bottom -= ICON_TOP_PADDING + infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
+
+	    /* now figure out the flags */
+	    if (uView == LVS_ICON)
+		uFormat = oversizedBox ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
+	    else
+		uFormat = LV_SL_DT_FLAGS;
+	    
+    	    DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat | DT_CALCRECT);
+
+	    labelSize.cx = rcText.right - rcText.left;
+	    labelSize.cy = rcText.bottom - rcText.top;
+
+    	    SelectObject(hdc, hOldFont);
+    	    ReleaseDC(infoPtr->hwndSelf, hdc);
+	}
+
 	if (uView == LVS_ICON)
 	{
-	    INT nLabelWidth;
-
-	    Label.left = Box.left;
+	    if (!oversizedBox && labelSize.cy > infoPtr->ntmHeight)
+		labelSize.cy = (labelSize.cy / infoPtr->ntmHeight) * infoPtr->ntmHeight;
+	    Label.left = Box.left + (infoPtr->iconSpacing.cx - labelSize.cx) / 2;
 	    Label.top  = Box.top + ICON_TOP_PADDING_HITABLE +
 		         infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
-
-	    nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-	    if (infoPtr->iconSpacing.cx - nLabelWidth > 1)
-	    {
-		Label.left += (infoPtr->iconSpacing.cx - nLabelWidth) / 2;
-		Label.right = Label.left + nLabelWidth;
-		Label.bottom = Label.top + infoPtr->ntmHeight + 1;
-		Label.bottom += HEIGHT_PADDING;
-	    }
-	    else
-	    {
-		Label.right = Label.left + infoPtr->nItemWidth;
-		Label.bottom = Label.top + infoPtr->nItemHeight + HEIGHT_PADDING;
-		LISTVIEW_UpdateLargeItemLabelRect (infoPtr, nItem, &Label);
-	    }
+	    Label.right = Label.left + labelSize.cx;
+	    Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
-	    INT nLabelWidth;
-
 	    Label.left = Icon.right;
 	    Label.top = Box.top;
-	    nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-	    nLabelWidth += TRAILING_PADDING;
-	    if (infoPtr->himlSmall) nLabelWidth += IMAGE_PADDING;
-	    Label.right = min(Label.left + nLabelWidth, Box.right);
+	    Label.right = Label.left;
+	    if (infoPtr->himlSmall) Label.right += IMAGE_PADDING;
+	    Label.right += labelSize.cx + TRAILING_PADDING;
+	    if (Label.right > Box.right) Label.right = Box.right;
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
   
@@ -3037,8 +2964,7 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
 
     if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
     
-    DrawTextW(hdc, lvItem.pszText, -1, &rcItem, 
-	      DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | align);
+    DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | align);
 
     return TRUE;
 }
@@ -3131,8 +3057,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
 	if(lprcFocus) *lprcFocus = rcItem;
 	if (lvItem.state & LVIS_SELECTED)
 	    ExtTextOutW(hdc, rcItem.left, rcItem.top, ETO_OPAQUE, &rcItem, 0, 0, 0);
-        DrawTextW(hdc, lvItem.pszText, -1, &rcItem, 
-	          DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CENTER);
+        DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | DT_CENTER);
     }
 
     set_text_attr(hdc, &ta);
@@ -3157,7 +3082,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
 {
   WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
   LVITEMW lvItem;
-  UINT uFormat = LISTVIEW_DTFLAGS;
+  UINT uFormat;
   RECT rcIcon, rcFocus, rcLabel, *lprcFocus;
 
   TRACE("(hdc=%x, nItem=%d, rcItem=%s)\n", hdc, nItem, debugrect(&rcItem));
@@ -3234,7 +3159,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    * wrapping and both word and end ellipsis.  (I don't yet know about path
    * ellipsis)
    */
-  uFormat |= lprcFocus ?  DT_NOCLIP : DT_WORD_ELLIPSIS | DT_END_ELLIPSIS;
+  uFormat = lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
 
   /* state icons */
   if (infoPtr->himlState != NULL)
@@ -5233,7 +5158,6 @@ static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *infoPtr, INT nItem)
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return 0;
   
-    /* FIXME: is this right? What if the label is very long? */ 
     return LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
 }
 
