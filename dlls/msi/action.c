@@ -1120,7 +1120,7 @@ static DWORD WINAPI DllThread(LPVOID info)
      
     stuff = (thread_struct*)info;
 
-    TRACE("Asyncronous start (%s, %s) \n", debugstr_w(stuff->source),
+    TRACE("Asynchronous start (%s, %s) \n", debugstr_w(stuff->source),
           debugstr_w(stuff->target));
 
     DLL = LoadLibraryW(stuff->source);
@@ -1182,7 +1182,7 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source,
         info->package = package;
         strcpyW(info->target,target);
         strcpyW(info->source,tmp_file);
-        TRACE("Start Asyncronous execution\n");
+        TRACE("Start Asynchronous execution\n");
         FIXME("DATABASE NOT THREADSAFE... not starting\n");
         /* CreateThread(NULL,0,DllThread,(LPVOID)&info,0,&ThreadId); */
         /* FIXME: release the package if the CreateThread fails */
@@ -3539,7 +3539,7 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
 static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 {
     /* 
-     * Again I am assuming the words, "Whose key file represents" when refering
+     * Again I am assuming the words, "Whose key file represents" when referring
      * to a Component as to meaning that Components KeyPath file
      *
      * Also there is a very strong connection between ClassInfo and ProgID
@@ -3818,7 +3818,7 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 {
     /* 
      * Sigh, here I am just brute force registering all progids
-     * this needs to be linked to the Classes that have been registerd
+     * this needs to be linked to the Classes that have been registered
      * but the easiest way to do that is to load all these stuff into
      * memory for easy checking.
      *
@@ -4085,7 +4085,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
  * 99% of the work done here is only done for 
  * advertised installs. However this is where the
  * Icon table is processed and written out
- * so that is waht I am going to do here.
+ * so that is what I am going to do here.
  */
 static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {

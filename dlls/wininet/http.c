@@ -793,7 +793,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
  *
  *   This function reconstructs the response header.  It takes an array
  *  of strings in the response buffer, and the count of those strings.
- *  A null pointer in the array represents a seperator.
+ *  A null pointer in the array represents a separator.
  *
  *  RETURNS:
  *    a buffer allocated and initialized with the reconstructed response

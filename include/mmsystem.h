@@ -215,7 +215,7 @@ typedef struct {
 
 
 LRESULT WINAPI DefDriverProc(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
-/* this sounds odd, but it's the way it is. OpenDriverA even disapeared
+/* this sounds odd, but it's the way it is. OpenDriverA even disappeared
  * from latest SDK
  */
 HDRVR 	WINAPI OpenDriverA(LPCSTR szDriverName, LPCSTR szSectionName,
