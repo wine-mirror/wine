@@ -2157,6 +2157,8 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   INT nMixMode;
   DWORD dwBkColor;
   DWORD dwTextColor;
+  /* buffer of two pixels between the icon and the label */
+  const INT ImageBuffer = 2;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d)\n", hwnd, hdc, nItem);
 
@@ -2174,32 +2176,33 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   if (infoPtr->himlState != NULL)
   {
      UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12; 
-     if (uStateImage != 0)
+     if (uStateImage > 0)
      {
        ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcItem.left, 
                       rcItem.top, ILD_NORMAL);
      }
  
-     rcItem.left += infoPtr->iconSize.cx; 
+     rcItem.left += ImageBuffer + infoPtr->iconSize.cx; 
   }
   
   /* small icons */
   if (infoPtr->himlSmall != NULL)
   {
-    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
+    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE) &&
+        (lvItem.iImage>=0))
     {
       ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
       ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcItem.left, 
                      rcItem.top, ILD_SELECTED);
     }
-    else
+    else if (lvItem.iImage>=0)
     {
       ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
       ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcItem.left, 
                      rcItem.top, ILD_NORMAL);
     }
     
-    rcItem.left += infoPtr->iconSize.cx; 
+    rcItem.left += ImageBuffer + infoPtr->iconSize.cx; 
   }
 
   /* Don't bother painting item being edited */
@@ -2312,12 +2315,12 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   {
     rcItem.top += ICON_TOP_PADDING;
     nDrawPosX += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-    if (lvItem.state & LVIS_SELECTED)
+    if ((lvItem.state & LVIS_SELECTED) && (lvItem.iImage>=0))
     {
       ImageList_Draw(infoPtr->himlNormal, lvItem.iImage, hdc, nDrawPosX, 
                      rcItem.top, ILD_SELECTED);
     }
-    else
+    else if (lvItem.iImage>=0)
     {
       ImageList_Draw(infoPtr->himlNormal, lvItem.iImage, hdc, nDrawPosX, 
                      rcItem.top, ILD_NORMAL);
