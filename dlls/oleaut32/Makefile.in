@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleaut32
 ALTNAMES  = ole2disp typelib
-IMPORTS   = ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

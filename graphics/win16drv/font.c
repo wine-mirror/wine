@@ -98,7 +98,7 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
                                   &physDev->lf, 0, 0); 
 
     if( physDev->FontInfo && 
-	HeapSize( SegptrHeap, 0, physDev->FontInfo ) < nSize )
+	HeapSize( GetProcessHeap(), HEAP_WINE_SEGPTR, physDev->FontInfo ) < nSize )
     {
         SEGPTR_FREE( physDev->FontInfo );
 	physDev->FontInfo = NULL;

@@ -217,9 +217,6 @@ static BOOL process_init( char *argv[] )
     /* Copy the parent environment */
     if (!ENV_BuildEnvironment()) return FALSE;
 
-    /* Create the SEGPTR heap */
-    if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
-
     /* Initialize the critical sections */
     InitializeCriticalSection( &current_process.crit_section );
 

@@ -123,7 +123,7 @@ void THUNK_Free( FARPROC thunk )
             || t->magic != CALLTO16_THUNK_MAGIC )
          return;
 
-    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, t ))
+    if (HeapValidate( GetProcessHeap(), 0, t ))
     {
         THUNK **prev = &firstThunk;
         while (*prev && (*prev != t)) prev = &(*prev)->next;

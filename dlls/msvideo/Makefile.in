@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvfw32
 ALTNAMES  = msvideo
-IMPORTS   = ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

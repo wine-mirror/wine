@@ -552,33 +552,6 @@ void WINAPI UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           MapLS   (KERNEL32.522)
- *
- * Maps linear pointer to segmented.
- */
-SEGPTR WINAPI MapLS( LPVOID ptr )
-{
-    if (!HIWORD(ptr))
-        return (SEGPTR)ptr;
-    else
-    {
-        WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, WINE_LDT_FLAGS_DATA );
-        return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-    }
-}
-
-
-/***********************************************************************
- *           UnMapLS   (KERNEL32.700)
- *
- * Free mapped selector.
- */
-void WINAPI UnMapLS( SEGPTR sptr )
-{
-    if (SELECTOROF(sptr)) FreeSelector16( SELECTOROF(sptr) );
-}
-
-/***********************************************************************
  *           GetThreadSelectorEntry   (KERNEL32)
  */
 BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent)

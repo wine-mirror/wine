@@ -1883,7 +1883,7 @@ typedef struct tagSYSLEVEL
 void        WINAPI DisposeLZ32Handle(HANDLE);
 HANDLE      WINAPI DosFileHandleToWin32Handle(HFILE);
 VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
-DWORD       WINAPI MapLS(LPVOID);
+DWORD       WINAPI MapLS(LPCVOID);
 LPVOID      WINAPI MapSL(DWORD);
 VOID        WINAPI ReleaseThunkLock(DWORD*);
 VOID        WINAPI RestoreThunkLock(DWORD);

@@ -156,7 +156,7 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
         if ( !UTGlue16_Segptr ) return NULL;
     }
 
-    ut = HeapAlloc( SegptrHeap, HEAP_ZERO_MEMORY, sizeof(UTINFO) );
+    ut = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY|HEAP_WINE_SEGPTR, sizeof(UTINFO) );
     if ( !ut ) return NULL;
 
     ut->hModule   = hModule;
@@ -196,7 +196,7 @@ static void UTFree( UTINFO *ut )
             break;
         }
 
-    HeapFree( SegptrHeap, 0, ut );
+    HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, ut );
 }
 
 /****************************************************************************

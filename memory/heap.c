@@ -105,17 +105,17 @@ typedef struct tagHEAP
 #define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 
 HANDLE SystemHeap = 0;
-HANDLE SegptrHeap = 0;
 
 SYSTEM_HEAP_DESCR *SystemHeapDescr = 0;
 
 static HEAP *processHeap;  /* main process heap */
+static HEAP *segptrHeap;   /* main segptr heap */
 static HEAP *firstHeap;    /* head of secondary heaps list */
 
 /* address where we try to map the system heap */
 #define SYSTEM_HEAP_BASE  ((void*)0x65430000)
 
-static BOOL HEAP_IsRealArena( HANDLE heap, DWORD flags, LPCVOID block, BOOL quiet );
+static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
 
 #ifdef __GNUC__
 #define GET_EIP()    (__builtin_return_address(0))
@@ -220,7 +220,7 @@ static HEAP *HEAP_GetPtr(
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    if (TRACE_ON(heap) && !HEAP_IsRealArena( heap, 0, NULL, NOISY ))
+    if (TRACE_ON(heap) && !HEAP_IsRealArena( heapPtr, 0, NULL, NOISY ))
     {
         HEAP_Dump( heapPtr );
         assert( FALSE );
@@ -835,39 +835,6 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
 
 
 /***********************************************************************
- *           HEAP_IsInsideHeap
- * Checks whether the pointer points to a block inside a given heap.
- *
- * NOTES
- *	Should this return BOOL32?
- *
- * RETURNS
- *	!0: Success
- *	0: Failure
- */
-int HEAP_IsInsideHeap(
-    HANDLE heap, /* [in] Heap */
-    DWORD flags,   /* [in] Flags */
-    LPCVOID ptr    /* [in] Pointer */
-) {
-    HEAP *heapPtr = HEAP_GetPtr( heap );
-    SUBHEAP *subheap;
-    int ret;
-
-    /* Validate the parameters */
-
-    if (!heapPtr) return 0;
-    flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
-    ret = (((subheap = HEAP_FindSubHeap( heapPtr, ptr )) != NULL) &&
-           (((char *)ptr >= (char *)subheap + subheap->headerSize
-                              + sizeof(ARENA_INUSE))));
-    if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
-    return ret;
-}
-
-
-/***********************************************************************
  *           HEAP_GetSegptr
  *
  * Transform a linear pointer into a SEGPTR. The pointer must have been
@@ -877,7 +844,7 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
-    SEGPTR ret;
+    SEGPTR ret = 0;
 
     /* Validate the parameters */
 
@@ -893,19 +860,58 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 
     /* Get the subheap */
 
-    if (!(subheap = HEAP_FindSubHeap( heapPtr, ptr )))
-    {
-        ERR("%p is not inside heap %08x\n",
-                 ptr, heap );
-        if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
-        return 0;
-    }
+    if ((subheap = HEAP_FindSubHeap( heapPtr, ptr )))
+        ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (char *)ptr - (char *)subheap);
 
-    /* Build the SEGPTR */
-
-    ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (DWORD)ptr-(DWORD)subheap);
     if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
     return ret;
+}
+
+/***********************************************************************
+ *           MapLS   (KERNEL32.522)
+ *
+ * Maps linear pointer to segmented.
+ */
+SEGPTR WINAPI MapLS( LPCVOID ptr )
+{
+    SUBHEAP *subheap;
+    SEGPTR ret = 0;
+
+    if (!HIWORD(ptr)) return (SEGPTR)ptr;
+
+    /* check if the pointer is inside the segptr heap */
+    EnterCriticalSection( &segptrHeap->critSection );
+    if ((subheap = HEAP_FindSubHeap( segptrHeap, ptr )))
+        ret = PTR_SEG_OFF_TO_SEGPTR( subheap->selector, (char *)ptr - (char *)subheap );
+    LeaveCriticalSection( &segptrHeap->critSection );
+
+    /* otherwise, allocate a brand-new selector */
+    if (!ret)
+    {
+        WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, WINE_LDT_FLAGS_DATA );
+        ret = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           UnMapLS   (KERNEL32.700)
+ *
+ * Free mapped selector.
+ */
+void WINAPI UnMapLS( SEGPTR sptr )
+{
+    SUBHEAP *subheap;
+    if (!SELECTOROF(sptr)) return;
+
+    /* check if ptr is inside segptr heap */
+    EnterCriticalSection( &segptrHeap->critSection );
+    subheap = HEAP_FindSubHeap( segptrHeap, PTR_SEG_TO_LIN(sptr) );
+    if (subheap->selector != SELECTOROF(sptr)) subheap = NULL;
+    LeaveCriticalSection( &segptrHeap->critSection );
+    /* if not inside heap, free the selector */
+    if (!subheap) FreeSelector16( SELECTOROF(sptr) );
 }
 
 /***********************************************************************
@@ -916,20 +922,18 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
  *	TRUE: Success
  *	FALSE: Failure
  */
-static BOOL HEAP_IsRealArena(
-              HANDLE heap,   /* [in] Handle to the heap */
+static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
               DWORD flags,   /* [in] Bit flags that control access during operation */
               LPCVOID block, /* [in] Optional pointer to memory block to validate */
-              BOOL quiet     /* [in] Flag - if true, HEAP_ValidateInUseArena
+              BOOL quiet )   /* [in] Flag - if true, HEAP_ValidateInUseArena
                               *             does not complain    */
-) {
+{
     SUBHEAP *subheap;
-    HEAP *heapPtr = (HEAP *)(heap);
     BOOL ret = TRUE;
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        ERR("Invalid heap %08x!\n", heap );
+        ERR("Invalid heap %p!\n", heapPtr );
         return FALSE;
     }
 
@@ -943,18 +947,14 @@ static BOOL HEAP_IsRealArena(
     {
         /* Only check this single memory block */
 
-        /* The following code is really HEAP_IsInsideHeap   *
-         * with serialization already done.                 */
         if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
             ((char *)block < (char *)subheap + subheap->headerSize
                               + sizeof(ARENA_INUSE)))
         {
             if (quiet == NOISY) 
-                ERR("Heap %08lx: block %08lx is not inside heap\n",
-                     (DWORD)heap, (DWORD)block );
+                ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
             else if (WARN_ON(heap)) 
-                WARN("Heap %08lx: block %08lx is not inside heap\n",
-                     (DWORD)heap, (DWORD)block );
+                WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
             ret = FALSE;
         } else
             ret = HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1, quiet );
@@ -1038,9 +1038,16 @@ HANDLE WINAPI HeapCreate(
     }
     else  /* assume the first heap we create is the process main heap */
     {
+        SUBHEAP *segptr;
         processHeap = subheap->heap;
+        /* create the SEGPTR heap */
+        if (!(segptr = HEAP_CreateSubHeap( NULL, flags|HEAP_WINE_SEGPTR|HEAP_GROWABLE, 0, 0 )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+        segptrHeap = segptr->heap;
     }
-
     return (HANDLE)subheap;
 }
 
@@ -1109,6 +1116,7 @@ LPVOID WINAPI HeapAlloc(
 
     /* Validate the parameters */
 
+    if ((flags & HEAP_WINE_SEGPTR) && size < 0x10000) heapPtr = segptrHeap;
     if (!heapPtr) return NULL;
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
@@ -1178,18 +1186,14 @@ BOOL WINAPI HeapFree(
 
     /* Validate the parameters */
 
+    if (!ptr) return TRUE;  /* freeing a NULL ptr is doesn't indicate an error in Win2k */
+    if (flags & HEAP_WINE_SEGPTR) heapPtr = segptrHeap;
     if (!heapPtr) return FALSE;
-    if (!ptr)  /* Freeing a NULL ptr is doesn't indicate an error in Win2k */
-    {
-	WARN("(%08x,%08lx,%08lx): asked to free NULL\n",
-                   heap, flags, (DWORD)ptr );
-	return TRUE;
-    }
 
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
+    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1230,6 +1234,7 @@ LPVOID WINAPI HeapReAlloc(
     SUBHEAP *subheap;
 
     if (!ptr) return HeapAlloc( heap, flags, size );  /* FIXME: correct? */
+    if ((flags & HEAP_WINE_SEGPTR) && size < 0x10000) heapPtr = segptrHeap;
     if (!(heapPtr = HEAP_GetPtr( heap ))) return FALSE;
 
     /* Validate the parameters */
@@ -1241,7 +1246,7 @@ LPVOID WINAPI HeapReAlloc(
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
+    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1395,11 +1400,12 @@ DWORD WINAPI HeapSize(
     DWORD ret;
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
+    if (flags & HEAP_WINE_SEGPTR) heapPtr = segptrHeap;
     if (!heapPtr) return FALSE;
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
-    if (!HEAP_IsRealArena( heap, HEAP_NO_SERIALIZE, ptr, QUIET ))
+    if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         ret = 0xffffffff;
@@ -1433,8 +1439,10 @@ BOOL WINAPI HeapValidate(
               DWORD flags,   /* [in] Bit flags that control access during operation */
               LPCVOID block  /* [in] Optional pointer to memory block to validate */
 ) {
-
-    return HEAP_IsRealArena( heap, flags, block, QUIET );
+    HEAP *heapPtr = HEAP_GetPtr( heap );
+    if (flags & HEAP_WINE_SEGPTR) heapPtr = segptrHeap;
+    if (!heapPtr) return FALSE;
+    return HEAP_IsRealArena( heapPtr, flags, block, QUIET );
 }
 
 

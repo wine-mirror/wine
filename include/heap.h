@@ -15,29 +15,23 @@
 #include "wine/windef16.h"  /* for SEGPTR */
 
 extern HANDLE SystemHeap;
-extern HANDLE SegptrHeap;
 
-extern int HEAP_IsInsideHeap( HANDLE heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
 extern BOOL HEAP_CreateSystemHeap(void);
 
 /* SEGPTR helper macros */
 
 #define SEGPTR_ALLOC(size) \
-         (HeapAlloc( SegptrHeap, 0, (size) ))
+     (HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, (size) ))
 #define SEGPTR_NEW(type) \
-         ((type *)HeapAlloc( SegptrHeap, 0, sizeof(type) ))
+     ((type *)HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, sizeof(type) ))
 #define SEGPTR_STRDUP(str) \
-         (HIWORD(str) ? HEAP_strdupA( SegptrHeap, 0, (str) ) : (LPSTR)(str))
+     (HIWORD(str) ? HEAP_strdupA( GetProcessHeap(), HEAP_WINE_SEGPTR, (str) ) : (LPSTR)(str))
 #define SEGPTR_STRDUP_WtoA(str) \
-         (HIWORD(str) ? HEAP_strdupWtoA( SegptrHeap, 0, (str) ) : (LPSTR)(str))
-	/* define an inline function, a macro won't do */
-static inline SEGPTR WINE_UNUSED SEGPTR_Get(LPCVOID ptr) {
-         return (HIWORD(ptr) ? HEAP_GetSegptr( SegptrHeap, 0, ptr ) : (SEGPTR)ptr);
-}
-#define SEGPTR_GET(ptr) SEGPTR_Get(ptr)
+     (HIWORD(str) ? HEAP_strdupWtoA( GetProcessHeap(), HEAP_WINE_SEGPTR, (str) ) : (LPSTR)(str))
 #define SEGPTR_FREE(ptr) \
-         (HIWORD(ptr) ? HeapFree( SegptrHeap, 0, (ptr) ) : 0)
+     (HIWORD(ptr) ? HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, (ptr) ) : 0)
+#define SEGPTR_GET(ptr) MapLS(ptr)
 
 
 /* strdup macros */
