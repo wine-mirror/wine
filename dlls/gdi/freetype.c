@@ -1726,9 +1726,18 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     }
 
     if(!family) {
-        family = FontList;
-	csi.fs.fsCsb[0] = 0;
-	FIXME("just using first face for now\n");
+        for(family = FontList; family; family = family->next) {
+            if(family->FirstFace->scalable || can_use_bitmap) {
+                csi.fs.fsCsb[0] = 0;
+                break;
+                FIXME("just using first face for now\n");
+            }
+        }
+        if(!family) {
+            FIXME("can't find a single appropriate font - bailing\n");
+            free_font(ret);
+            return NULL;
+        }
     }
 
     it = lf.lfItalic ? 1 : 0;
