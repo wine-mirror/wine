@@ -422,9 +422,10 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section, LPCWSTR section_name,
 
             while (*key)
             {
-                /* If create_always is FALSE then we check if the keyname already exists.
-                 * Otherwise we add it regardless of its existence, to allow
-                 * keys to be added more then once in some cases.
+                /* If create_always is FALSE then we check if the keyname
+                 * already exists. Otherwise we add it regardless of its
+                 * existence, to allow keys to be added more than once in
+                 * some cases.
                  */
                 if(!create_always)
                 {

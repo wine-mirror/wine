@@ -348,7 +348,7 @@ static inline void EDIT_WM_Cut(EDITSTATE *es)
  *         get_app_version
  *
  * Returns the window version in case Wine emulates a later version
- * of windows then the application expects.
+ * of windows than the application expects.
  *
  * In a number of cases when windows runs an application that was
  * designed for an earlier windows version, windows reverts

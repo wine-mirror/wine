@@ -1060,7 +1060,7 @@ DWORD WINAPI GetFreeMemInfo16(void)
 #define POINTER_TO_HANDLE(p) (*(((HGLOBAL *)(p))-2))
 #define ISHANDLE(h)          (((ULONG_PTR)(h)&2)!=0)
 #define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)
-/* allign the storage needed for the HGLOBAL on an 8byte boundary thus
+/* align the storage needed for the HGLOBAL on an 8byte boundary thus
  * GlobalAlloc/GlobalReAlloc'ing with GMEM_MOVEABLE of memory with
  * size = 8*k, where k=1,2,3,... alloc's exactly the given size.
  * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting

@@ -959,13 +959,13 @@ BOOL static do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
 
         /*
          * This is sort of an interesting workaround. You see, calling
-         * GetVersionInfoSize on a builtin dll loads that dll into memory.
+         * GetVersionInfoSize on a builtin dll loads that dll into memory
          * and we do not properly unload builtin dlls.. so we effectively
          * lock into memory all the targets we are replacing. This leads
          * to problems when we try to register the replaced dlls.
          *
-         * So I will test for the existance of the files first so that
-         * we just basically unconditionally replace the builtin versions
+         * So I will test for the existence of the files first so that
+         * we just basically unconditionally replace the builtin versions.
          */
         if ((GetFileAttributesW(target) != INVALID_FILE_ATTRIBUTES) &&
             (GetFileAttributesW(source) != INVALID_FILE_ATTRIBUTES))

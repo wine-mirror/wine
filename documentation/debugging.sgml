@@ -137,7 +137,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xxx);
         </programlisting>
 	</para>
 	<para>
-	  I rare situations there is a need to output to more then one
+	  In rare situations there is a need to output to more than one
 	  debug channel per file. In such cases, you need to declare
 	  all the additional channels at the top of the file, and
 	  use the _-version of the debugging macros:

@@ -79,7 +79,7 @@ void RPCSS_SetMaxLazyTimeout(long mlt)
 {
   /* FIXME: this max ensures that no caller will decrease our wait time,
      but could have other bad results.  fix: Store "next_max_lazy_timeout" 
-     and install it as neccesary next time we "do work"? */
+     and install it as necessary next time we "do work"? */
   max_lazy_timeout = max(RPCSS_GetLazyTimeRemaining(), mlt);
 }
 
