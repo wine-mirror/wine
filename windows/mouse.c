@@ -9,6 +9,7 @@
 #include "mouse.h"
 #include "monitor.h"
 #include "winuser.h"
+#include "win.h"
 
 /**********************************************************************/
 
