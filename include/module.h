@@ -162,7 +162,7 @@ extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
-extern int NE_OpenFile( NE_MODULE *pModule );
+extern HANDLE32 NE_OpenFile( NE_MODULE *pModule );
 extern HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
                                   BOOL32 implicit, BOOL32 lib_only );
 

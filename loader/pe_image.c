@@ -852,7 +852,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
  * due to the PROCESS_Create stuff.
  */
 HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                              LPCSTR env, LPSTARTUPINFO32A startup,
+                              LPCSTR env, BOOL32 inherit, LPSTARTUPINFO32A startup,
                               LPPROCESS_INFORMATION info )
 {
     HMODULE16 hModule16;
@@ -879,7 +879,7 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     /* Create new process */
     hInstance = NE_CreateInstance( pModule, NULL, FALSE );
     process = PROCESS_Create( pModule, cmd_line, env,
-                              hInstance, 0, startup, info );
+                              hInstance, 0, inherit, startup, info );
 
     /* Create 32-bit MODREF */
     if ( !(wm = PE_CreateModule( process, hModule32, &ofs, 0, FALSE )) )

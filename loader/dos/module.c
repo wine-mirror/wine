@@ -411,7 +411,7 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
  return lpDosTask->hModule;
 }
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,
                               LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
@@ -465,7 +465,7 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
   }
 
   hInstance = NE_CreateInstance(pModule, NULL, (cmdline == NULL));
-  PROCESS_Create( pModule, cmdline, env, hInstance, 0, startup, info );
+  PROCESS_Create( pModule, cmdline, env, hInstance, 0, inherit, startup, info );
   return hInstance;
  } else {
   return (err<32) ? err : pTask->hInstance;

@@ -407,7 +407,7 @@ HMODULE32 MODULE_FindModule32(
  *	    NE_CreateProcess
  */
 static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env, 
-                                     LPSTARTUPINFO32A startup, 
+                                     BOOL32 inherit, LPSTARTUPINFO32A startup, 
                                      LPPROCESS_INFORMATION info )
 {
     HINSTANCE16 hInstance, hPrevInstance;
@@ -430,7 +430,7 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
     pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
 
     PROCESS_Create( pModule, cmd_line, env, hInstance,
-                    hPrevInstance, startup, info );
+                    hPrevInstance, inherit, startup, info );
 
     return hInstance;
 }
@@ -488,7 +488,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     }
 
     pdb = PROCESS_Create( pModule, new_cmd_line, env, 
-                          hInstance, hPrevInstance, &startup, &info );
+                          hInstance, hPrevInstance, TRUE, &startup, &info );
 
     CloseHandle( info.hThread );
     CloseHandle( info.hProcess );
@@ -605,8 +605,6 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME(module, "(%s,...): lpProcessAttributes ignored\n", name);
     if (lpThreadAttributes)
         FIXME(module, "(%s,...): lpThreadAttributes ignored\n", name);
-    if (bInheritHandles)
-        FIXME(module, "(%s,...): bInheritHandles ignored\n", name);
     if (dwCreationFlags & DEBUG_PROCESS)
         FIXME(module, "(%s,...): DEBUG_PROCESS ignored\n", name);
     if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS)
@@ -669,17 +667,17 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
 
     /* Try NE module */
-    hInstance = NE_CreateProcess( name, cmdline, lpEnvironment, 
+    hInstance = NE_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
                                   lpStartupInfo, lpProcessInfo );
 
     /* Try PE module */
     if (hInstance == 21)
-        hInstance = PE_CreateProcess( name, cmdline, lpEnvironment, 
+        hInstance = PE_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
                                       lpStartupInfo, lpProcessInfo );
 
     /* Try DOS module */
     if (hInstance == 11)
-        hInstance = MZ_CreateProcess( name, cmdline, lpEnvironment, 
+        hInstance = MZ_CreateProcess( name, cmdline, lpEnvironment, bInheritHandles,
                                       lpStartupInfo, lpProcessInfo );
 
     if (hInstance < 32)

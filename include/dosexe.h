@@ -48,7 +48,7 @@ extern BOOL32 (*instr_emu_call)( SIGCONTEXT* );
 
 extern void MZ_Tick( WORD handle );
 
-extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
+extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 inherit,
                                      LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );
 

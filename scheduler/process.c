@@ -129,7 +129,7 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
  *           PROCESS_InheritEnvDB
  */
 static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
-                                    STARTUPINFO32A *startup )
+                                    BOOL32 inherit_handles, STARTUPINFO32A *startup )
 {
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         return FALSE;
@@ -157,12 +157,13 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
         pdb->env_db->hStdout = pdb->env_db->startup_info->hStdOutput;
         pdb->env_db->hStderr = pdb->env_db->startup_info->hStdError;
     }
-    else
+    else if (inherit_handles)
     {
         pdb->env_db->hStdin  = pdb->parent->env_db->hStdin;
         pdb->env_db->hStdout = pdb->parent->env_db->hStdout;
         pdb->env_db->hStderr = pdb->parent->env_db->hStderr;
     }
+    /* else will be done later on in PROCESS_Create */
 
     return TRUE;
 }
@@ -296,7 +297,7 @@ static void PROCESS_FreePDB( PDB32 *pdb )
  * Allocate and fill a PDB structure.
  * Runs in the context of the parent process.
  */
-static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
+static PDB32 *PROCESS_CreatePDB( PDB32 *parent, BOOL32 inherit )
 {
     PDB32 *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB32) );
 
@@ -315,7 +316,7 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
 
     /* Create the handle table */
 
-    if (!HANDLE_CreateTable( pdb, TRUE )) goto error;
+    if (!HANDLE_CreateTable( pdb, inherit )) goto error;
 
     PROCESS_PDBList_Insert (pdb);
     return pdb;
@@ -356,7 +357,7 @@ BOOL32 PROCESS_Init(void)
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
 
     /* Create the initial process and thread structures */
-    if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
+    if (!(pdb = PROCESS_CreatePDB( NULL, FALSE ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
 
@@ -386,14 +387,15 @@ BOOL32 PROCESS_Init(void)
  */
 PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                        HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                       STARTUPINFO32A *startup, PROCESS_INFORMATION *info )
+                       BOOL32 inherit, STARTUPINFO32A *startup,
+                       PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
     int server_thandle, server_phandle;
     UINT32 cmdShow = 0;
     THDB *thdb = NULL;
     PDB32 *parent = PROCESS_Current();
-    PDB32 *pdb = PROCESS_CreatePDB( parent );
+    PDB32 *pdb = PROCESS_CreatePDB( parent, inherit );
     TDB *pTask;
 
     if (!pdb) return NULL;
@@ -418,7 +420,7 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Inherit the env DB from the parent */
 
-    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, startup )) goto error;
+    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
 
     /* Create the main thread */
 
@@ -445,6 +447,18 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     pTask = (TDB *)GlobalLock16( parent->task );
     thdb->unix_pid = pTask? pTask->thdb->unix_pid : THREAD_Current()->unix_pid;
 #endif
+
+    /* Duplicate the standard handles */
+
+    if ((!(pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)) && !inherit)
+    {
+        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdin,
+                         info->hProcess, &pdb->env_db->hStdin, 0, TRUE, DUPLICATE_SAME_ACCESS );
+        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStdout,
+                         info->hProcess, &pdb->env_db->hStdout, 0, TRUE, DUPLICATE_SAME_ACCESS );
+        DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStderr,
+                         info->hProcess, &pdb->env_db->hStderr, 0, TRUE, DUPLICATE_SAME_ACCESS );
+    }
 
     /* Create a Win16 task for this process */
 

@@ -39,7 +39,7 @@ extern DWORD PE_SizeofResource32(HMODULE32,HRSRC32);
 extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
 extern HGLOBAL32 PE_LoadResource32(struct _wine_modref *wm,HRSRC32);
 extern HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                                     LPCSTR env, LPSTARTUPINFO32A startup,
+                                     LPCSTR env, BOOL32 inherit, LPSTARTUPINFO32A startup,
                                      LPPROCESS_INFORMATION info );
 
 struct _THDB; /* forward definition */
