@@ -56,12 +56,15 @@ HPALETTE16 PALETTE_Init(void)
     hpalette = CreatePalette16( palPtr );
 
     palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
+    if (palObj)
+    {
+        palObj->mapping = xmalloc( sizeof(int) * 20 );
 
-    palObj->mapping = xmalloc( sizeof(int) * 20 );
+        GDI_HEAP_UNLOCK( hpalette );
 
-    GDI_HEAP_UNLOCK( hpalette );
-
-    HeapFree( GetProcessHeap(), 0, palPtr );
+        HeapFree( GetProcessHeap(), 0, palPtr );
+    }
+    	
     return hpalette;
 }
 
@@ -125,12 +128,49 @@ HPALETTE32 WINAPI CreatePalette32(
  * RETURNS
  *    Success: Handle to logical halftone palette
  *    Failure: 0
+ *
+ * FIXME: not truly tested
  */
-HPALETTE32 WINAPI CreateHalftonePalette(
-    HDC32 hdc) /* [in] Handle to device context */
-{
-    FIXME(palette,"(0x%x): stub\n", hdc);
-    return (HPALETTE32)NULL;
+HPALETTE32 WINAPI CreateHalftonePalette(HDC32 hdc) /* [in] Handle to device context */
+{	int r,g,b,i;
+	HPALETTE32 hPalette = 0;
+	int palNumEntries = 216 + NB_RESERVED_COLORS;
+	
+	const PALETTEENTRY* __sysPalTemplate = COLOR_GetSystemPaletteTemplate();
+
+	LOGPALETTE * pLogPal = (LOGPALETTE*) HeapAlloc( GetProcessHeap(), 0,
+             sizeof(LOGPALETTE) + (palNumEntries-1)*sizeof(PALETTEENTRY)); 
+	
+	TRACE(palette,"(0x%x)\n", hdc);
+
+	pLogPal->palVersion = 0x300;
+	pLogPal->palNumEntries = palNumEntries;
+	
+	for( i = 0; i < NB_RESERVED_COLORS; i ++ )
+	{ pLogPal->palPalEntry[i].peRed   = __sysPalTemplate[i].peRed;
+	  pLogPal->palPalEntry[i].peGreen = __sysPalTemplate[i].peGreen;
+	  pLogPal->palPalEntry[i].peBlue  = __sysPalTemplate[i].peBlue;
+	  pLogPal->palPalEntry[i].peFlags = 0;
+	}
+	
+	for (r=0; r<6; r++)
+  	{ for (g=0; g<6; g++)
+	  { for (b=0; b<6; b++) 
+	    { pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peRed   = r*51;
+	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peGreen = g*51;
+	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peBlue  = b*51;
+	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peFlags = 0;
+	    }    
+	  }
+	}
+	hPalette = CreatePalette32 (pLogPal);
+	
+	if (hPalette)
+	{ SelectPalette32 (hdc, hPalette, FALSE);
+	}
+	
+	HeapFree (GetProcessHeap(), 0, pLogPal);
+	return hPalette;
 }
 
 
@@ -325,6 +365,7 @@ BOOL32 WINAPI AnimatePalette32(
     if( hPal != STOCK_DEFAULT_PALETTE ) 
     {
         PALETTEOBJ* palPtr = (PALETTEOBJ *)GDI_GetObjPtr(hPal, PALETTE_MAGIC);
+        if (!palPtr) return FALSE;
 
 	if( (StartIndex + NumEntries) <= palPtr->logpalette.palNumEntries )
 	{
@@ -508,6 +549,7 @@ COLORREF WINAPI GetNearestColor32(
       palObj = (PALETTEOBJ*) 
 	        GDI_GetObjPtr( (dc->w.hPalette)? dc->w.hPalette
 				 	       : STOCK_DEFAULT_PALETTE, PALETTE_MAGIC );
+      if (!palObj) return nearest;
 
       nearest = COLOR_LookupNearestColor( palObj->logpalette.palPalEntry,
 					  palObj->logpalette.palNumEntries, color );
@@ -652,6 +694,7 @@ UINT16 WINAPI RealizeDefaultPalette( HDC16 hdc )
     hLastRealizedPalette = STOCK_DEFAULT_PALETTE;
 
     palPtr = (PALETTEOBJ*)GDI_GetObjPtr(STOCK_DEFAULT_PALETTE, PALETTE_MAGIC );
+    if (!palPtr) return 0;
 
     /* lookup is needed to account for SetSystemPaletteUse() stuff */
 
