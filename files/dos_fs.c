@@ -197,6 +197,8 @@ BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
     LPCWSTR p = name;
     int i;
 
+    TRACE("(%s, %p)\n", debugstr_w(name), buffer);
+
     /* Check for "." and ".." */
     if (*p == '.')
     {
@@ -341,6 +343,8 @@ static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
     LPCWSTR lastjoker = NULL;
     LPCWSTR next_to_retry = NULL;
     static const WCHAR asterisk_dot_asterisk[] = {'*','.','*',0};
+
+    TRACE("(%s, %s, %x)\n", debugstr_w(mask), debugstr_w(name), case_sensitive);
 
     if (!strcmpW( mask, asterisk_dot_asterisk )) return 1;
     while (*name && *mask)
@@ -604,6 +608,9 @@ static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCWSTR *long_name,
     else
         *short_name = NULL;
     dir->used += (strlenW(sn) + 1) * sizeof(WCHAR);
+
+    TRACE("Read: long_name: %s, short_name: %s\n", 
+          debugstr_w(*long_name), debugstr_w(*short_name));
 
     return TRUE;
 }
@@ -1736,7 +1743,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 
         /* Check the long mask */
 
-        if (info->long_mask)
+        if (info->long_mask && *info->long_mask)
         {
             if (!DOSFS_MatchLong( info->long_mask, long_name,
                                   flags & DRIVE_CASE_SENSITIVE )) continue;
@@ -1823,6 +1830,10 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     int count;
     UNICODE_STRING short_maskW, long_maskW;
     WIN32_FIND_DATAW entryW;
+
+    TRACE("(%s, %s, %s, %x, %x, %x, %p)\n", debugstr_a(path),
+          debugstr_a(short_mask), debugstr_a(long_mask), drive, attr, skip,
+          entry);
 
     _EnterWin16Lock();
 
