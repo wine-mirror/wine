@@ -411,6 +411,22 @@ int *__h_errno_location(void)
 
 #endif  /* HAVE_NPTL */
 
+
+#if defined(__linux__) && defined(__i386__)
+static inline void writejump( const char *symbol, void *dest )
+{
+    unsigned char *addr = wine_dlsym( RTLD_NEXT, symbol, NULL, 0 );
+
+    if (!addr) return;
+
+    /* write a relative jump at the function address */
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC|PROT_WRITE);
+    addr[0] = 0xe9;
+    *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
+    mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
+}
+#endif
+
 /***********************************************************************
  *           SYSDEPS_InitErrno
  *
@@ -421,7 +437,12 @@ void SYSDEPS_InitErrno(void)
 #ifndef HAVE_NPTL
     errno_location_ptr = thread_errno_location;
     h_errno_location_ptr = thread_h_errno_location;
-#endif
+
+# if defined(__linux__) && defined(__i386__)
+    writejump( "__errno_location", thread_errno_location );
+    writejump( "__h_errno_location", thread_h_errno_location );
+# endif
+#endif  /* HAVE_NPTL */
 }
 
 
