@@ -53,10 +53,12 @@ typedef struct apartment APARTMENT;
 
 typedef enum ifstub_state
 {
-    IFSTUB_STATE_NORMAL_MARSHALED,
-    IFSTUB_STATE_NORMAL_UNMARSHALED,
-    IFSTUB_STATE_TABLE_MARSHALED
-} IFSTUB_STATE;
+    STUBSTATE_NORMAL_MARSHALED,
+    STUBSTATE_NORMAL_UNMARSHALED,
+    STUBSTATE_TABLE_WEAK_MARSHALED,
+    STUBSTATE_TABLE_WEAK_UNMARSHALED,
+    STUBSTATE_TABLE_STRONG,
+} STUB_STATE;
 
 /* an interface stub */
 struct ifstub   
@@ -66,7 +68,6 @@ struct ifstub
     IID               iid;        /* RO */
     IPID              ipid;       /* RO */
     IUnknown         *iface;      /* RO */
-    IFSTUB_STATE      state;      /* CS stub_manager->lock */
 };
 
 
@@ -78,11 +79,12 @@ struct stub_manager
     CRITICAL_SECTION  lock;
     APARTMENT        *apt;        /* owning apt (RO) */
 
-    ULONG             extrefs;    /* number of 'external' references (LOCK) */
+    ULONG             extrefs;    /* number of 'external' references (CS lock) */
     ULONG             refs;       /* internal reference count (CS apt->cs) */
     OID               oid;        /* apartment-scoped unique identifier (RO) */
     IUnknown         *object;     /* the object we are managing the stub for (RO) */
     ULONG             next_ipid;  /* currently unused (LOCK) */
+    STUB_STATE        state;      /* state machine (CS lock) */
 };
 
 /* imported interface proxy */
@@ -164,15 +166,16 @@ HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
 ULONG stub_manager_int_addref(struct stub_manager *This);
 ULONG stub_manager_int_release(struct stub_manager *This);
-struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
+struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object, MSHLFLAGS mshlflags);
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
 ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
 struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
 void apartment_disconnect_object(APARTMENT *apt, void *object);
-BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
-BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
+BOOL stub_manager_notify_unmarshal(struct stub_manager *m);
+BOOL stub_manager_is_table_marshaled(struct stub_manager *m);
+void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs);
 HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
 HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **stubmgr_ret);
 IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt);

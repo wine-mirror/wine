@@ -117,13 +117,15 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 
     stdobjref->oxid = apt->oxid;
 
+    /* FIXME: what happens if we register an interface twice with different
+     * marshaling flags? */
     if ((manager = get_stub_manager_from_object(apt, obj)))
         TRACE("registering new ifstub on pre-existing manager\n");
     else
     {
         TRACE("constructing new stub manager\n");
 
-        manager = new_stub_manager(apt, obj);
+        manager = new_stub_manager(apt, obj, mshlflags);
         if (!manager)
             return E_OUTOFMEMORY;
     }
@@ -131,7 +133,7 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 
     tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
 
-    ifstub = stub_manager_new_ifstub(manager, stub, obj, riid, tablemarshal);
+    ifstub = stub_manager_new_ifstub(manager, stub, obj, riid);
     if (!ifstub)
     {
         IRpcStubBuffer_Release(stub);
@@ -909,7 +911,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
       hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
       
       /* unref the ifstub. FIXME: only do this on success? */
-      if (!stub_manager_is_table_marshaled(stubmgr, &stdobjref.ipid))
+      if (!stub_manager_is_table_marshaled(stubmgr))
           stub_manager_ext_release(stubmgr, 1);
 
       stub_manager_int_release(stubmgr);
@@ -925,7 +927,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   {
       if ((stubmgr = get_stub_manager(stub_apt, stdobjref.oid)))
       {
-          if (!stub_manager_notify_unmarshal(stubmgr, &stdobjref.ipid))
+          if (!stub_manager_notify_unmarshal(stubmgr))
               hres = CO_E_OBJNOTCONNECTED;
 
           stub_manager_int_release(stubmgr);
@@ -980,9 +982,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
         return RPC_E_INVALID_OBJREF;
     }
 
-    /* FIXME: don't release if table-weak and already unmarshaled an object */
-    /* FIXME: this should also depend on stdobjref.cPublicRefs */
-    stub_manager_ext_release(stubmgr, 1);
+    stub_manager_release_marshal_data(stubmgr, stdobjref.cPublicRefs);
 
     stub_manager_int_release(stubmgr);
     COM_ApartmentRelease(apt);

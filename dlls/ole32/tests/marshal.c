@@ -669,14 +669,14 @@ static void test_tableweak_marshal_releasedata1()
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     release_host_object(tid);
 
-    todo_wine { ok_more_than_one_lock(); }
+    ok_more_than_one_lock();
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
-    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
-    todo_wine { ok_more_than_one_lock(); }
+    ok_more_than_one_lock();
 
     IUnknown_Release(pProxy1);
     if (pProxy2)
@@ -712,20 +712,19 @@ static void test_tableweak_marshal_releasedata2()
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     release_host_object(tid);
 
-    todo_wine
-    {
-
     ok_no_locks();
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    todo_wine
+    {
     ok(hr == CO_E_OBJNOTREG,
        "CoUnmarshalInterface should have failed with CO_E_OBJNOTREG, but returned 0x%08lx instead\n",
        hr);
+    }
     IStream_Release(pStream);
 
     ok_no_locks();
-    }
 
     end_host_object(tid, thread);
 }
