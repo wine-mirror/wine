@@ -35,7 +35,6 @@
 static	struct WINE_LIBAUDIOIO* audioio = NULL;
 
 extern LONG LIBAUDIOIO_WaveInit(void);
-extern BOOL LIBAUDIOIO_MidiInit(void);
 
 /**************************************************************************
  * 				LIBAUDIOIO_drvOpen			[internal]
@@ -77,9 +76,6 @@ LONG CALLBACK	LIBAUDIOIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch(wMsg) {
 #ifdef HAVE_LIBAUDIOIO
     case DRV_LOAD:		LIBAUDIOIO_WaveInit();
-#ifdef HAVE_LIBAUDIOIO_MIDI
-    				LIBAUDIOIO_MidiInit();
-#endif
 				return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return LIBAUDIOIO_drvOpen((LPSTR)dwParam1);
