@@ -20,7 +20,7 @@
 
 
 /*
- * Rebar control    rev 8a
+ * Rebar control    rev 8b
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -88,6 +88,9 @@
  * 15. Implement RBBS_CHILDEDGE, and set each bands "offChild" at _Layout
  *     time.
  * 16. Fix REBARSPACE. It should depend on CCS_NODIVIDER.
+ * rev 8b
+ * 17. Fix determination of whether Gripper is needed in _ValidateBand.
+ * 18. Fix _AdjustBand processing of RBBS_FIXEDSIZE.
  *
  *
  *    Still to do:
@@ -705,7 +708,7 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 	    lpBand->rcBand.left = x + xsep;
 
 	/* compute new width */
-	if (lpBand->hwndChild && extra) {
+	if ((lpBand->hwndChild && extra) && !(lpBand->fStyle & RBBS_FIXEDSIZE)) {
 	    /* set to the "current" band size less the header */
 	    fudge = lpBand->ccx;
 	    last_adjusted = i;
@@ -1853,6 +1856,8 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
     UINT header=0;
     UINT textheight=0;
+    INT i, nonfixed;
+    REBAR_BAND *tBand;
 
     lpBand->fStatus = 0;
     lpBand->lcx = 0;
@@ -1889,10 +1894,18 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     /* Header is where the image, text and gripper exist  */
     /* in the band and preceed the child window.          */
 
+    /* count number of non-FIXEDSIZE and non-Hidden bands */
+    nonfixed = 0;
+    for (i=0; i<infoPtr->uNumBands; i++){
+	tBand = &infoPtr->bands[i];
+	if (!HIDDENBAND(tBand) && !(tBand->fStyle & RBBS_FIXEDSIZE))
+	    nonfixed++;
+    }
+
     /* calculate gripper rectangle */
     if (  (!(lpBand->fStyle & RBBS_NOGRIPPER)) &&
 	  ( (lpBand->fStyle & RBBS_GRIPPERALWAYS) || 
-	    ( !(lpBand->fStyle & RBBS_FIXEDSIZE) && (infoPtr->uNumBands > 1)))
+	    ( !(lpBand->fStyle & RBBS_FIXEDSIZE) && (nonfixed > 1)))
        ) {
 	lpBand->fStatus |= HAS_GRIPPER;
         if (infoPtr->dwStyle & CCS_VERT)
