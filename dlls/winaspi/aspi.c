@@ -40,6 +40,7 @@ HKEY_DYN_DATA
 #include "config.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -52,10 +53,13 @@ HKEY_DYN_DATA
 #include <errno.h>
 #include <string.h>
 
-#include "wine/debug.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "winescsi.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 

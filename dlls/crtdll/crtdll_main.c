@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <sys/stat.h>
 
 #include "windef.h"

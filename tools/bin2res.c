@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H

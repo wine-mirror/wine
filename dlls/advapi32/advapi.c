@@ -24,9 +24,10 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
 
