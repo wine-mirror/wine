@@ -105,13 +105,11 @@ static struct ICOM_VTABLE(IViewObject) vovt;
 
 #define SHV_CHANGE_NOTIFY WM_USER + 0x1111
 
-#define TOOLBAR_ID   (L"SHELLDLL_DefView")
 /*windowsx.h */
 #define GET_WM_COMMAND_ID(wp, lp)               LOWORD(wp)
 #define GET_WM_COMMAND_HWND(wp, lp)             (HWND)(lp)
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
-/* winuser.h */
-#define WM_SETTINGCHANGE                WM_WININICHANGE
+
 extern void WINAPI _InsertMenuItem (HMENU hmenu, UINT indexMenu, BOOL fByPosition, 
 			UINT wID, UINT fType, LPSTR dwTypeData, UINT fState);
 
