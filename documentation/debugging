@@ -113,7 +113,9 @@ relevant developer as feasonable.
  6. If that isn't enough add more debug output for yourself into the
     functions you find relevant.  See documentation/debug-msgs.
     You might also try to run the program in gdb instead of using the
-    WINE-debugger. If you don't use the "-desktop" or "-managed" option,
+    WINE-debugger. If you do that, use "handle SIGSEGV nostop noprint"
+    to disable the handling of seg faults inside gdb (needed for Win16).
+    If you don't use the "-desktop" or "-managed" option,
     start the WINE process with "-sync", or chances are good to get X into
     an unusable state.
   
