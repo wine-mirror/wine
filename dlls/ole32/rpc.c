@@ -280,8 +280,7 @@ static const IRpcChannelBufferVtbl ServerRpcChannelBufferVtbl =
 };
 
 /* returns a channel buffer for proxies */
-/* FIXME: needs renaming and mid removing */
-HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **chan)
+HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **chan)
 {
     ClientRpcChannelBuffer *This;
     WCHAR                   endpoint[200];
@@ -290,7 +289,7 @@ HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **chan)
     LPWSTR                  string_binding;
 
     /* connect to the apartment listener thread */
-    get_rpc_endpoint(endpoint, &mid->oxid);
+    get_rpc_endpoint(endpoint, oxid);
 
     TRACE("proxy pipe: connecting to endpoint: %s\n", debugstr_w(endpoint));
 
@@ -308,7 +307,8 @@ HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **chan)
 
         if (status == RPC_S_OK)
         {
-            status = RpcBindingSetObject(bind, &mid->ipid);
+            IPID ipid2 = *ipid; /* why can't RpcBindingSetObject take a const? */
+            status = RpcBindingSetObject(bind, &ipid2);
             if (status != RPC_S_OK)
                 RpcBindingFree(&bind);
         }
@@ -459,9 +459,9 @@ void RPC_UnregisterInterface(REFIID riid)
 #if 0 /* this is a stub in builtin and spams the console with FIXME's */
                 IID iid = *riid; /* RpcServerUnregisterIf doesn't take const IID */
                 RpcServerUnregisterIf((RPC_IF_HANDLE)&rif->If, &iid, 0);
-#endif
                 list_remove(&rif->entry);
                 HeapFree(GetProcessHeap(), 0, rif);
+#endif
             }
             break;
         }
@@ -469,12 +469,11 @@ void RPC_UnregisterInterface(REFIID riid)
     LeaveCriticalSection(&csRegIf);
 }
 
-/* FIXME: needs renaming */
-void start_apartment_listener_thread()
+/* make the apartment reachable by other threads and processes and create the
+ * IRemUnknown object */
+void RPC_StartRemoting(struct apartment *apt)
 {
-    APARTMENT *apt = COM_CurrentApt(); /* FIXME: pass as parameter */
-
-    if (!apt->listenertid)
+    if (!InterlockedExchange(&apt->remoting_started, TRUE))
     {
         WCHAR endpoint[200];
         RPC_STATUS status;
@@ -488,13 +487,14 @@ void start_apartment_listener_thread()
             NULL);
         if (status != RPC_S_OK)
             ERR("Couldn't register endpoint %s\n", debugstr_w(endpoint));
-        apt->listenertid = TRUE; /* FIXME: don't abuse this field and use remunk_exported, by moving remunk exporting into this function */
+
+        /* FIXME: move remote unknown exporting into this function */
     }
+    start_apartment_remote_unknown();
 }
 
 
-static HRESULT
-create_server(REFCLSID rclsid)
+static HRESULT create_server(REFCLSID rclsid)
 {
     static const WCHAR  embedding[] = { ' ', '-','E','m','b','e','d','d','i','n','g',0 };
     HKEY                key;
@@ -548,8 +548,7 @@ create_server(REFCLSID rclsid)
 /*
  * start_local_service()  - start a service given its name and parameters
  */
-static DWORD
-start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
+static DWORD start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
 {
     SC_HANDLE handle, hsvc;
     DWORD     r = ERROR_FUNCTION_FAILED;
@@ -586,8 +585,7 @@ start_local_service(LPCWSTR name, DWORD num, LPWSTR *params)
  *
  * Note:  Local Services are not supported under Windows 9x
  */
-static HRESULT
-create_local_service(REFCLSID rclsid)
+static HRESULT create_local_service(REFCLSID rclsid)
 {
     HRESULT hres = REGDB_E_READREGDB;
     WCHAR buf[40], keyname[50];
@@ -655,7 +653,7 @@ create_local_service(REFCLSID rclsid)
 #define PIPEPREF "\\\\.\\pipe\\"
 
 /* FIXME: should call to rpcss instead */
-HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     HRESULT        hres;
     HANDLE         hPipe;
@@ -667,7 +665,7 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     ULARGE_INTEGER newpos;
     int            tries = 0;
 
-    static const int MAXTRIES = 10000;
+    static const int MAXTRIES = 30; /* 30 seconds */
 
     TRACE("rclsid=%s, iid=%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 

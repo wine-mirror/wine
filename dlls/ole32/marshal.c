@@ -476,7 +476,7 @@ static HRESULT proxy_manager_query_local_interface(struct proxy_manager * This, 
 }
 
 static HRESULT proxy_manager_create_ifproxy(
-    struct proxy_manager * This, IPID ipid, REFIID riid, ULONG cPublicRefs,
+    struct proxy_manager * This, const IPID *ipid, REFIID riid, ULONG cPublicRefs,
     struct ifproxy ** iif_out)
 {
     HRESULT hr;
@@ -487,7 +487,7 @@ static HRESULT proxy_manager_create_ifproxy(
     list_init(&ifproxy->entry);
 
     ifproxy->parent = This;
-    ifproxy->ipid = ipid;
+    ifproxy->ipid = *ipid;
     ifproxy->iid = *riid;
     ifproxy->refs = cPublicRefs;
     ifproxy->proxy = NULL;
@@ -535,7 +535,7 @@ static HRESULT proxy_manager_create_ifproxy(
 
         *iif_out = ifproxy;
         TRACE("ifproxy %p created for IPID %s, interface %s with %lu public refs\n",
-              ifproxy, debugstr_guid(&ipid), debugstr_guid(riid), cPublicRefs);
+              ifproxy, debugstr_guid(ipid), debugstr_guid(riid), cPublicRefs);
     }
     else
         ifproxy_destroy(ifproxy);
@@ -795,8 +795,8 @@ StdMarshalImpl_MarshalInterface(
       return CO_E_NOTINITIALIZED;
   }
 
-  start_apartment_listener_thread(); /* just to be sure we have one running. */
-  start_apartment_remote_unknown();
+  /* make sure this apartment can be reached from other threads / processes */
+  RPC_StartRemoting(apt);
 
   hres = IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
   if (hres != S_OK)
@@ -843,13 +843,8 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
     if (!find_proxy_manager(apt, stdobjref->oxid, stdobjref->oid, &proxy_manager))
     {
         IRpcChannelBuffer *chanbuf;
-        wine_marshal_id mid;
 
-        mid.oxid = stdobjref->oxid;
-        mid.oid = stdobjref->oid;
-        mid.ipid = stdobjref->ipid;
-
-        hr = PIPE_GetNewPipeBuf(&mid,&chanbuf);
+        hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid, &chanbuf);
         if (hr == S_OK)
             hr = proxy_manager_construct(apt, stdobjref->flags,
                                          stdobjref->oxid, stdobjref->oid,
@@ -863,7 +858,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
         struct ifproxy * ifproxy;
         hr = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
         if (hr == E_NOINTERFACE)
-            hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref->ipid,
+            hr = proxy_manager_create_ifproxy(proxy_manager, &stdobjref->ipid,
                                               riid, stdobjref->cPublicRefs,
                                               &ifproxy);
 

@@ -130,11 +130,10 @@ struct apartment
   struct list proxies;     /* imported objects (CS cs) */
   struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
   BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
+  LONG remoting_started;   /* has the RPC system been started for this apartment? (LOCK) */
 
-  /* FIXME: These should all be removed long term as they leak information that should be encapsulated */
+  /* FIXME: OID's should be given out by RPCSS */
   OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
-  DWORD listenertid;       /* id of apartment_listener_thread */
-  HANDLE shutdown_event;   /* event used to tell the client_dispatch_thread to shut down */
 };
 
 /* this is what is stored in TEB->ReservedForOle */
@@ -146,36 +145,22 @@ struct oletls
     DWORD            inits;        /* number of times CoInitializeEx called */
 };
 
+
+/* Global Interface Table Functions */
+
 extern void* StdGlobalInterfaceTable_Construct(void);
 extern void  StdGlobalInterfaceTable_Destroy(void* self);
 extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
+extern void* StdGlobalInterfaceTableInstance;
 
 /* FIXME: these shouldn't be needed, except for 16-bit functions */
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 
-extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
-
-extern void* StdGlobalInterfaceTableInstance;
-
-/* Standard Marshalling definitions */
-typedef struct _wine_marshal_id {
-    OXID    oxid;       /* id of apartment */
-    OID     oid;        /* id of stub manager */
-    IPID    ipid;       /* id of interface pointer */
-} wine_marshal_id;
-
-inline static BOOL
-MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
-    return
-	(mid1->oxid == mid2->oxid)	&&
-	(mid1->oid == mid2->oid)	&&
-	IsEqualGUID(&(mid1->ipid),&(mid2->ipid))
-    ;
-}
-
 HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
+
+/* Stub Manager */
 
 ULONG stub_manager_int_addref(struct stub_manager *This);
 ULONG stub_manager_int_release(struct stub_manager *This);
@@ -193,15 +178,15 @@ HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub
 IRpcStubBuffer *ipid_to_apt_and_stubbuffer(const IPID *ipid, APARTMENT **stub_apt);
 HRESULT start_apartment_remote_unknown(void);
 
-IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
+/* RPC Backend */
 
-void start_apartment_listener_thread(void);
-
-HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
+void    RPC_StartRemoting(struct apartment *apt);
+HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid, IRpcChannelBuffer **pipebuf);
 HRESULT RPC_ExecuteCall(RPCOLEMESSAGE *msg, IRpcStubBuffer *stub);
 HRESULT RPC_RegisterInterface(REFIID riid);
-void RPC_UnregisterInterface(REFIID riid);
-void RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
+void    RPC_UnregisterInterface(REFIID riid);
+void    RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
+HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
@@ -212,7 +197,9 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
-/* compobj.c */
+
+/* Apartment Functions */
+
 APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
 APARTMENT *COM_ApartmentFromTID(DWORD tid);
 DWORD COM_ApartmentAddRef(struct apartment *apt);

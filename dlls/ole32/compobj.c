@@ -245,8 +245,6 @@ static APARTMENT *apartment_construct(DWORD model)
         apt->oxid = ((OXID)GetCurrentProcessId() << 32) | 0xcafe;
     }
 
-    apt->shutdown_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    
     TRACE("Created apartment on OXID %s\n", wine_dbgstr_longlong(apt->oxid));
 
     /* the locking here is not currently needed for the MTA case, but it
@@ -350,8 +348,6 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
         if (apt->filter) IUnknown_Release(apt->filter);
 
         DeleteCriticalSection(&apt->cs);
-        SetEvent(apt->shutdown_event);
-        CloseHandle(apt->shutdown_event);
         CloseHandle(apt->thread);
         HeapFree(GetProcessHeap(), 0, apt);
     }
@@ -1630,7 +1626,7 @@ HRESULT WINAPI CoGetClassObject(
     /* Next try out of process */
     if (CLSCTX_LOCAL_SERVER & dwClsContext)
     {
-        return create_marshalled_proxy(rclsid,iid,ppv);
+        return RPC_GetLocalClassObject(rclsid,iid,ppv);
     }
 
     /* Finally try remote: this requires networked DCOM (a lot of work) */
