@@ -4135,12 +4135,16 @@ DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
     
     TRACE("(%04x, %u, %ld, %ld)\n", hWaveOut, uMessage, dwParam1, dwParam2);
 
+    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL) {
+	if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) != NULL) {
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	}
+	return MMSYSERR_INVALHANDLE;
+    }
+
     /* from M$ KB */
     if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
 	return MMSYSERR_INVALPARAM;
-
-    if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL) 
-	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }

@@ -23,11 +23,15 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include "windef.h"
 #include "wingdi.h"
+#include "winerror.h"
 #include "wine/winuser16.h"
 #include "driver.h"
 #include "mmddk.h"
+#include "dsound.h"
+#include "dsdriver.h"
 #include "oss.h"
 #include "heap.h"
 #include "ldt.h"
@@ -99,6 +103,10 @@ typedef struct {
     DWORD			dwThreadID;
     HANDLE			hEvent;
     WAVEOUTCAPSA		caps;
+
+    /* DirectSound stuff */
+    LPBYTE			mapping;
+    DWORD			maplen;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -115,6 +123,8 @@ typedef struct {
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV ];
+
+static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 
 /*======================================================================*
  *                  Low level WAVE implemantation			*
@@ -210,11 +220,18 @@ static LONG OSS_Init(void)
 	}
     }
     if (IOCTL(audio, SNDCTL_DSP_GETCAPS, caps) == 0) {
-	if ((caps & DSP_CAP_REALTIME) && !(caps && DSP_CAP_BATCH))
-	    WOutDev[0].caps.dwFormats |= WAVECAPS_SAMPLEACCURATE;
+	TRACE("OSS dsp out caps=%08X\n", caps);
+	if ((caps & DSP_CAP_REALTIME) && !(caps & DSP_CAP_BATCH)) {
+	    WOutDev[0].caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
+
+	    /* well, might as well use the DirectSound cap flag for something */
+	    if ((caps & DSP_CAP_TRIGGER) && (caps & DSP_CAP_MMAP))
+		WOutDev[0].caps.dwSupport |= WAVECAPS_DIRECTSOUND;
+	}
     }
     close(audio);
-    TRACE("out dwFormats = %08lX\n", WOutDev[0].caps.dwFormats);
+    TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
+	  WOutDev[0].caps.dwFormats, WOutDev[0].caps.dwSupport);
 
     /* then do input device */
     samplesize = 16;
@@ -670,10 +687,22 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
+    if (dwFlags & WAVE_DIRECTSOUND) {
+	if (!(WOutDev[wDevID].caps.dwSupport & WAVECAPS_DIRECTSOUND))
+	    /* not supported, ignore it */
+	    dwFlags &= ~WAVE_DIRECTSOUND;
+    }
+
+
     WOutDev[wDevID].unixdev = 0;
     if (access(SOUND_DEV, 0) != 0) 
 	return MMSYSERR_NOTENABLED;
-    audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
+    if (dwFlags & WAVE_DIRECTSOUND)
+	/* we want to be able to mmap() the device, which means it must be opened readable,
+	 * otherwise mmap() will fail (at least under Linux) */
+	audio = open(SOUND_DEV, O_RDWR|O_NDELAY, 0);
+    else
+	audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
     if (audio == -1) {
 	WARN("can't open (%d)!\n", errno);
 	return MMSYSERR_ALLOCATED;
@@ -691,11 +720,17 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    WOutDev[wDevID].format.wf.nChannels;
     }
     
-    /* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
-     * thus leading to 46ms per fragment, and a turnaround time of 185ms
-     */
-    /* 2^10=1024 bytes per fragment, 16 fragments max */
-    audio_fragment = 0x000F000A;
+    if (dwFlags & WAVE_DIRECTSOUND) {
+	/* with DirectSound, fragments are irrelevant, but a large buffer isn't...
+	 * so let's choose a full 64KB for DirectSound */
+	audio_fragment = 0x0020000B;
+    } else {
+	/* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
+	 * thus leading to 46ms per fragment, and a turnaround time of 185ms
+	 */
+	/* 2^10=1024 bytes per fragment, 16 fragments max */
+	audio_fragment = 0x000F000A;
+    }
     sample_rate = WOutDev[wDevID].format.wf.nSamplesPerSec;
     dsp_stereo = (WOutDev[wDevID].format.wf.nChannels > 1) ? 1 : 0;
     format = (WOutDev[wDevID].format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8;
@@ -723,9 +758,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WOutDev[wDevID].unixdev = audio;
     WOutDev[wDevID].dwFragmentSize = fragment_size;
 
-    WOutDev[wDevID].hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(WOutDev[wDevID].dwThreadID));
-    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+    if (!(dwFlags & WAVE_DIRECTSOUND)) {
+	WOutDev[wDevID].hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(WOutDev[wDevID].dwThreadID));
+	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+    } else {
+	WOutDev[wDevID].hEvent = INVALID_HANDLE_VALUE;
+	WOutDev[wDevID].hThread = INVALID_HANDLE_VALUE;
+	WOutDev[wDevID].dwThreadID = 0;
+    }
 
     TRACE("fd=%d fragmentSize=%ld\n", 
 	  WOutDev[wDevID].unixdev, WOutDev[wDevID].dwFragmentSize);
@@ -763,9 +804,15 @@ static DWORD wodClose(WORD wDevID)
 	ret = WAVERR_STILLPLAYING;
     } else {
 	TRACE("imhere[3-close]\n");
-	PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_CLOSING, 0, 0);
-	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
-	CloseHandle(WOutDev[wDevID].hEvent);
+	if (WOutDev[wDevID].hEvent != INVALID_HANDLE_VALUE) {
+	    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_CLOSING, 0, 0);
+	    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+	    CloseHandle(WOutDev[wDevID].hEvent);
+	}
+	if (WOutDev[wDevID].mapping) {
+	    munmap(WOutDev[wDevID].mapping, WOutDev[wDevID].maplen);
+	    WOutDev[wDevID].mapping = NULL;
+	}
 
 	close(WOutDev[wDevID].unixdev);
 	WOutDev[wDevID].unixdev = 0;
@@ -1086,10 +1133,408 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_SETVOLUME:	return wodSetVolume	(wDevID, dwParam1);
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
+    case 0x810:			return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
     return MMSYSERR_NOTSUPPORTED;
+}
+
+/*======================================================================*
+ *                  Low level DSOUND implementation			*
+ *======================================================================*/
+
+typedef struct IDsDriverImpl IDsDriverImpl;
+typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
+
+struct IDsDriverImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriver);
+    DWORD		ref;
+    /* IDsDriverImpl fields */
+    UINT		wDevID;
+    IDsDriverBufferImpl*primary;
+};
+
+struct IDsDriverBufferImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriverBuffer);
+    DWORD		ref;
+    /* IDsDriverBufferImpl fields */
+    IDsDriverImpl*	drv;
+    DWORD		buflen;
+};
+
+static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
+{
+    WINE_WAVEOUT *wwo = &(WOutDev[dsdb->drv->wDevID]);
+    if (!wwo->mapping) {
+	wwo->mapping = mmap(NULL, wwo->maplen, PROT_WRITE, MAP_SHARED,
+			    wwo->unixdev, 0);
+	if (wwo->mapping == (LPBYTE)-1) {
+	    ERR("(%p): Could not map sound device for direct access (errno=%d)\n", dsdb, errno);
+	    return DSERR_GENERIC;
+	}
+	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
+    }
+    return DS_OK;
+}
+
+static HRESULT DSDB_UnmapPrimary(IDsDriverBufferImpl *dsdb)
+{
+    WINE_WAVEOUT *wwo = &(WOutDev[dsdb->drv->wDevID]);
+    if (wwo->mapping) {
+	if (munmap(wwo->mapping, wwo->maplen) < 0) {
+	    ERR("(%p): Could not unmap sound device (errno=%d)\n", dsdb, errno);
+	    return DSERR_GENERIC;
+	}
+	wwo->mapping = NULL;
+	TRACE("(%p): sound device unmapped\n", dsdb);
+    }
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    FIXME("(): stub!\n");
+    return DSERR_UNSUPPORTED;
+}
+
+static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
+{
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    This->ref++;
+    return This->ref;
+}
+
+static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
+{
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    if (--This->ref)
+	return This->ref;
+    if (This == This->drv->primary)
+	This->drv->primary = NULL;
+    DSDB_UnmapPrimary(This);
+    HeapFree(GetProcessHeap(),0,This);
+    return 0;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
+					       LPVOID*ppvAudio1,LPDWORD pdwLen1,
+					       LPVOID*ppvAudio2,LPDWORD pdwLen2,
+					       DWORD dwWritePosition,DWORD dwWriteLen,
+					       DWORD dwFlags)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    /* since we (GetDriverDesc flags) have specified DSDDESC_DONTNEEDPRIMARYLOCK,
+     * and that we don't support secondary buffers, this method will never be called */
+    TRACE("(%p): stub\n",iface);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
+						 LPVOID pvAudio1,DWORD dwLen1,
+						 LPVOID pvAudio2,DWORD dwLen2)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    TRACE("(%p): stub\n",iface);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface,
+						    LPWAVEFORMATEX pwfx)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+
+    TRACE("(%p,%p)\n",iface,pwfx);
+    /* On our request (GetDriverDesc flags), DirectSound has by now used
+     * waveOutClose/waveOutOpen to set the format...
+     * unfortunately, this means our mmap() is now gone...
+     * so we need to somehow signal to our DirectSound implementation
+     * that it should completely recreate this HW buffer...
+     * this unexpected error code should do the trick... */
+    return DSERR_BUFFERLOST;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, DWORD dwFreq)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    TRACE("(%p,%ld): stub\n",iface,dwFreq);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, PDSVOLUMEPAN pVolPan)
+{
+    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
+    FIXME("(%p,%p): stub!\n",iface,pVolPan);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
+{
+    /* ICOM_THIS(IDsDriverImpl,iface); */
+    TRACE("(%p,%ld): stub\n",iface,dwNewPos);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
+						      LPDWORD lpdwPlay, LPDWORD lpdwWrite)
+{
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    count_info info;
+    DWORD ptr;
+
+    TRACE("(%p)\n",iface);
+    if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_GETOPTR, &info) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+    ptr = info.ptr & ~3; /* align the pointer, just in case */
+    if (lpdwPlay) *lpdwPlay = ptr;
+    if (lpdwWrite) {
+	/* add some safety margin (not strictly necessary, but...) */
+	*lpdwWrite = ptr + 32;
+	while (*lpdwWrite > This->buflen)
+	    *lpdwWrite -= This->buflen;
+    }
+    TRACE("playpos=%ld, writepos=%ld\n", lpdwPlay?*lpdwPlay:0, lpdwWrite?*lpdwWrite:0);
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
+{
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    int enable = PCM_ENABLE_OUTPUT;
+    TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
+    if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
+{
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    int enable = 0;
+    TRACE("(%p)\n",iface);
+    /* no more playing */
+    if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+#if 0
+    /* the play position must be reset to the beginning of the buffer */
+    if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_RESET, 0) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+#endif
+    return DS_OK;
+}
+
+static ICOM_VTABLE(IDsDriverBuffer) dsdbvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDsDriverBufferImpl_QueryInterface,
+    IDsDriverBufferImpl_AddRef,
+    IDsDriverBufferImpl_Release,
+    IDsDriverBufferImpl_Lock,
+    IDsDriverBufferImpl_Unlock,
+    IDsDriverBufferImpl_SetFormat,
+    IDsDriverBufferImpl_SetFrequency,
+    IDsDriverBufferImpl_SetVolumePan,
+    IDsDriverBufferImpl_SetPosition,
+    IDsDriverBufferImpl_GetPosition,
+    IDsDriverBufferImpl_Play,
+    IDsDriverBufferImpl_Stop
+};
+
+static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid, LPVOID *ppobj)
+{
+    /* ICOM_THIS(IDsDriverImpl,iface); */
+    FIXME("(%p): stub!\n",iface);
+    return DSERR_UNSUPPORTED;
+}
+
+static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    This->ref++;
+    return This->ref;
+}
+
+static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    if (--This->ref)
+	return This->ref;
+    HeapFree(GetProcessHeap(),0,This);
+    return 0;
+}
+
+static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDESC pDesc)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    TRACE("(%p,%p)\n",iface,pDesc);
+    pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
+	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK;
+    strcpy(pDesc->szDesc,"WineOSS DirectSound Driver");
+    strcpy(pDesc->szDrvName,"wineoss.drv");
+    pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
+    pDesc->wVxdId		= 0; 
+    pDesc->wReserved		= 0;
+    pDesc->ulDeviceNum		= This->wDevID;
+    pDesc->dwHeapType		= DSDHEAP_NOHEAP;
+    pDesc->pvDirectDrawHeap	= NULL;
+    pDesc->dwMemStartAddress	= 0;
+    pDesc->dwMemEndAddress	= 0;
+    pDesc->dwMemAllocExtra	= 0;
+    pDesc->pvReserved1		= NULL;
+    pDesc->pvReserved2		= NULL;
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    int enable;
+
+    TRACE("(%p)\n",iface);
+    /* make sure the card doesn't start playing before we want it to */
+    if (ioctl(WOutDev[This->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverImpl_Close(PIDSDRIVER iface)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    TRACE("(%p)\n",iface);
+    if (This->primary) {
+	ERR("problem with DirectSound: primary not released\n");
+	return DSERR_GENERIC;
+    }
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCaps)
+{
+    /* ICOM_THIS(IDsDriverImpl,iface); */
+    TRACE("(%p,%p)\n",iface,pCaps);
+    memset(pCaps, 0, sizeof(*pCaps));
+    /* FIXME: need to check actual capabilities */
+    pCaps->dwFlags = DSCAPS_PRIMARYMONO | DSCAPS_PRIMARYSTEREO |
+	DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARY16BIT;
+    pCaps->dwPrimaryBuffers = 1;
+    /* the other fields only apply to secondary buffers, which we don't support
+     * (unless we want to mess with wavetable synthesizers and MIDI) */
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
+						      LPWAVEFORMATEX pwfx,
+						      DWORD dwFlags, DWORD dwCardAddress,
+						      LPDWORD pdwcbBufferSize,
+						      LPBYTE *ppbBuffer,
+						      LPVOID *ppvObj)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
+    HRESULT err;
+    audio_buf_info info;
+
+    TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
+    /* we only support primary buffers */
+    if (!(dwFlags & DSBCAPS_PRIMARYBUFFER))
+	return DSERR_UNSUPPORTED;
+    if (This->primary)
+	return DSERR_ALLOCATED;
+    if (dwFlags & (DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN))
+	return DSERR_CONTROLUNAVAIL;
+
+    *ippdsdb = (IDsDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverBufferImpl));
+    if (*ippdsdb == NULL)
+	return DSERR_OUTOFMEMORY;
+    ICOM_VTBL(*ippdsdb) = &dsdbvt;
+    (*ippdsdb)->ref	= 1;
+    (*ippdsdb)->drv	= This;
+
+    /* check how big the DMA buffer is now */
+    if (ioctl(WOutDev[This->wDevID].unixdev, SNDCTL_DSP_GETOSPACE, &info) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	HeapFree(GetProcessHeap(),0,*ippdsdb);
+	*ippdsdb = NULL;
+	return DSERR_GENERIC;
+    }
+    WOutDev[This->wDevID].maplen = (*ippdsdb)->buflen = info.fragstotal * info.fragsize;
+
+    /* map the DMA buffer */
+    err = DSDB_MapPrimary(*ippdsdb);
+    if (err != DS_OK) {
+	HeapFree(GetProcessHeap(),0,*ippdsdb);
+	*ippdsdb = NULL;
+	return err;
+    }
+
+    /* primary buffer is ready to go */
+    *pdwcbBufferSize	= WOutDev[This->wDevID].maplen;
+    *ppbBuffer		= WOutDev[This->wDevID].mapping;
+
+    This->primary = *ippdsdb;
+
+    return DS_OK;
+}
+
+static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
+							 PIDSDRIVERBUFFER pBuffer,
+							 LPVOID *ppvObj)
+{
+    /* ICOM_THIS(IDsDriverImpl,iface); */
+    TRACE("(%p,%p): stub\n",iface,pBuffer);
+    return DSERR_INVALIDCALL;
+}
+
+static ICOM_VTABLE(IDsDriver) dsdvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDsDriverImpl_QueryInterface,
+    IDsDriverImpl_AddRef,
+    IDsDriverImpl_Release,
+    IDsDriverImpl_GetDriverDesc,
+    IDsDriverImpl_Open,
+    IDsDriverImpl_Close,
+    IDsDriverImpl_GetCaps,
+    IDsDriverImpl_CreateSoundBuffer,
+    IDsDriverImpl_DuplicateSoundBuffer
+};
+
+static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
+{
+    IDsDriverImpl** idrv = (IDsDriverImpl**)drv;
+
+    /* the HAL isn't much better than the HEL if we can't do mmap() */
+    if (!(WOutDev[wDevID].caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
+	ERR("DirectSound flag not set\n");
+	MESSAGE("This sound card's driver does not support direct access\n");
+	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
+	return MMSYSERR_NOTSUPPORTED;
+    }
+
+    *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
+    if (!*idrv)
+	return MMSYSERR_NOMEM;
+    ICOM_VTBL(*idrv)	= &dsdvt;
+    (*idrv)->ref	= 1;
+
+    (*idrv)->wDevID	= wDevID;
+    (*idrv)->primary	= NULL;
+    return MMSYSERR_NOERROR;
 }
 
 /*======================================================================*

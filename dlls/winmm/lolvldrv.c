@@ -2143,6 +2143,10 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 	break;
     case 0x805: /* DRV_QUERYMAPPABLE */
 	return (lpDrv->bIsMapper) ? 2 : 0;
+
+    case 0x810: /* Wine-specific: Retrieve DirectSound interface */
+	return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+
     default:
 	WARN("Unknown call %04x\n", uMsg);
 	return MMSYSERR_INVALPARAM;
