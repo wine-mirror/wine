@@ -1866,17 +1866,29 @@ WORD WINAPI SHLWAPI_352 (
 	return ret;
 }
 
-/*************************************************************************
- *      @	[SHLWAPI.356]
+/**************************************************************************
+ *      @       [SHLWAPI.356]
+ *
+ *      mbc - this function is undocumented, The parameters are correct and 
+ *            the calls to InitializeSecurityDescriptor and 
+ *            SetSecurityDescriptorDacl are correct, but apparently some 
+ *            apps call this function with all zero parameters. 
  */
-DWORD WINAPI SHLWAPI_356 (
-	LPVOID x,
-	LPVOID y,
-	LPVOID z)
+
+DWORD WINAPI SHLWAPI_356(PACL pDacl, PSECURITY_DESCRIPTOR pSD, LPCSTR *str)
 {
-	FIXME("(%p %p %p)stub\n", x,y,z);
-	return 0;
+  if(str != 0){
+    *str = 0;
+  }
+
+  if(!pDacl){
+    return 0;
+  }
+
+  if (!InitializeSecurityDescriptor(pSD, 1)) return 0;
+  return SetSecurityDescriptorDacl(pSD, 1, pDacl, 0);
 }
+
 
 /*************************************************************************
  *      @	[SHLWAPI.357]
