@@ -34,6 +34,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dsound.h"
+#include "dxerr8.h"
 
 #include "dsound_test.h"
 
@@ -593,6 +594,49 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a 3D secondary buffer 0x%lx\n",rc);
         if (rc==DS_OK && secondary!=NULL) {
+            if (!has_3d)
+            {
+                DWORD refvol,refpan,vol,pan;
+
+                /* Check the initial secondary buffer's volume and pan */
+                rc=IDirectSoundBuffer_GetVolume(secondary,&vol);
+                ok(rc==DS_OK,"GetVolume(secondary) failed: %s\n",DXGetErrorString8(rc));
+                ok(vol==0,"wrong volume for a new secondary buffer: %ld\n",vol);
+                rc=IDirectSoundBuffer_GetPan(secondary,&pan);
+                ok(rc==DS_OK,"GetPan(secondary) failed: %s\n",DXGetErrorString8(rc));
+                ok(pan==0,"wrong pan for a new secondary buffer: %ld\n",pan);
+
+                /* Check that changing the secondary buffer's volume and pan
+                 * does not impact the primary buffer's volume and pan
+                 */
+                rc=IDirectSoundBuffer_GetVolume(primary,&refvol);
+                ok(rc==DS_OK,"GetVolume(primary) failed: %s\n",DXGetErrorString8(rc));
+                rc=IDirectSoundBuffer_GetPan(primary,&refpan);
+                ok(rc==DS_OK,"GetPan(primary) failed: %s\n",DXGetErrorString8(rc));
+
+                rc=IDirectSoundBuffer_SetVolume(secondary,-1000);
+                ok(rc==DS_OK,"SetVolume(secondary) failed: %s\n",DXGetErrorString8(rc));
+                rc=IDirectSoundBuffer_GetVolume(secondary,&vol);
+                ok(rc==DS_OK,"SetVolume(secondary) failed: %s\n",DXGetErrorString8(rc));
+                ok(vol==-1000,"secondary: wrong volume %ld instead of -1000\n",vol);
+                rc=IDirectSoundBuffer_SetPan(secondary,-1000);
+                ok(rc==DS_OK,"SetPan(secondary) failed: %s\n",DXGetErrorString8(rc));
+                rc=IDirectSoundBuffer_GetPan(secondary,&pan);
+                ok(rc==DS_OK,"SetPan(secondary) failed: %s\n",DXGetErrorString8(rc));
+                ok(vol==-1000,"secondary: wrong pan %ld instead of -1000\n",pan);
+
+                rc=IDirectSoundBuffer_GetVolume(primary,&vol);
+                ok(rc==DS_OK,"GetVolume(primary) failed: %s\n",DXGetErrorString8(rc));
+                ok(vol==refvol,"The primary volume changed from %ld to %ld\n",refvol,vol);
+                rc=IDirectSoundBuffer_GetPan(primary,&pan);
+                ok(rc==DS_OK,"GetPan(primary) failed: %s\n",DXGetErrorString8(rc));
+                ok(pan==refpan,"The primary pan changed from %ld to %ld\n",refpan,pan);
+
+                rc=IDirectSoundBuffer_SetVolume(secondary,0);
+                ok(rc==DS_OK,"SetVolume(secondary) failed: %s\n",DXGetErrorString8(rc));
+                rc=IDirectSoundBuffer_SetPan(secondary,0);
+                ok(rc==DS_OK,"SetPan(secondary) failed: %s\n",DXGetErrorString8(rc));
+            }
             if (has_duplicate) {
                 LPDIRECTSOUNDBUFFER duplicated=NULL;
 
