@@ -177,6 +177,7 @@ static BOOL fEndMenu = FALSE;
 
 static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
 
+DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
 
 /*********************************************************************
  * menu class descriptor
@@ -1515,63 +1516,29 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
                          BOOL suppress_draw)
 {
     LPPOPUPMENU lppop;
-    UINT i,retvalue;
     HFONT hfontOld = 0;
     HMENU hMenu = GetMenu(hwnd);
 
     lppop = MENU_GetMenu( hMenu );
     if (lppop == NULL || lprect == NULL)
     {
-        retvalue = GetSystemMetrics(SM_CYMENU);
-        goto END;
+        return GetSystemMetrics(SM_CYMENU);
     }
-
-    TRACE("(%p, %p, %p)\n", hDC, lprect, lppop);
-
-    hfontOld = SelectObject( hDC, hMenuFont);
-
-    if (lppop->Height == 0)
-        MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
-
-    lprect->bottom = lprect->top + lppop->Height;
 
     if (suppress_draw)
     {
-        retvalue = lppop->Height;
-        goto END;
-    }
+	hfontOld = SelectObject( hDC, hMenuFont);
 
-    FillRect(hDC, lprect, GetSysColorBrush(COLOR_MENU) );
+	if (lppop->Height == 0)
+		MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
 
-    if (TWEAK_WineLook == WIN31_LOOK)
-    {
-	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
-	LineTo( hDC, lprect->right, lprect->bottom );
+	lprect->bottom = lprect->top + lppop->Height;
+
+        if (hfontOld) SelectObject( hDC, hfontOld);
+	return lppop->Height;
     }
     else
-    {
-	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
-	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
-	LineTo( hDC, lprect->right, lprect->bottom );
-    }
-
-    if (lppop->nItems == 0)
-    {
-        retvalue = GetSystemMetrics(SM_CYMENU);
-        goto END;
-    }
-
-    for (i = 0; i < lppop->nItems; i++)
-    {
-        MENU_DrawMenuItem( hwnd, hMenu, hwnd,
-                           hDC, &lppop->items[i], lppop->Height, TRUE, ODA_DRAWENTIRE );
-    }
-    retvalue = lppop->Height;
-
-END:
-    if (hfontOld) SelectObject (hDC, hfontOld);
-    return retvalue;
+        return DrawMenuBarTemp(hwnd, hDC, lprect, hMenu, NULL);
 }
 
 
@@ -3861,10 +3828,65 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
  *
  * Not 100% sure about the param names, but close.
  */
-DWORD WINAPI DrawMenuBarTemp(HWND someHWND, HDC someHDC, LPRECT someRECT, HMENU someHMENU, HFONT someFONT)
+DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont)
 {
-    FIXME("(%p, %p, %p, %p, %p): stub\n", someHWND, someHDC, someRECT, someHMENU, someFONT);
-    return 0;
+    LPPOPUPMENU lppop;
+    UINT i,retvalue;
+    HFONT hfontOld = 0;
+
+    if (!hMenu)
+        hMenu = GetMenu(hwnd);
+
+    if (!hFont)
+        hFont = hMenuFont;
+
+    lppop = MENU_GetMenu( hMenu );
+    if (lppop == NULL || lprect == NULL)
+    {
+        retvalue = GetSystemMetrics(SM_CYMENU);
+        goto END;
+    }
+
+    TRACE("(%p, %p, %p, %p, %p)\n", hwnd, hDC, lprect, hMenu, hFont);
+
+    hfontOld = SelectObject( hDC, hFont);
+
+    if (lppop->Height == 0)
+        MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
+
+    lprect->bottom = lprect->top + lppop->Height;
+
+    FillRect(hDC, lprect, GetSysColorBrush(COLOR_MENU) );
+
+    if (TWEAK_WineLook == WIN31_LOOK)
+    {
+	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
+	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
+	LineTo( hDC, lprect->right, lprect->bottom );
+    }
+    else
+    {
+	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
+	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
+	LineTo( hDC, lprect->right, lprect->bottom );
+    }
+
+    if (lppop->nItems == 0)
+    {
+        retvalue = GetSystemMetrics(SM_CYMENU);
+        goto END;
+    }
+
+    for (i = 0; i < lppop->nItems; i++)
+    {
+        MENU_DrawMenuItem( hwnd, hMenu, hwnd,
+                           hDC, &lppop->items[i], lppop->Height, TRUE, ODA_DRAWENTIRE );
+    }
+    retvalue = lppop->Height;
+
+END:
+    if (hfontOld) SelectObject (hDC, hfontOld);
+    return retvalue;
 }
 
 /***********************************************************************
