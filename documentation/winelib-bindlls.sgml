@@ -4,7 +4,7 @@
       <title id="binary-dlls-intro.title">Introduction</title>
       <para>
         For one reason or another you may find yourself with a Linux shared
-        library that you want to use as if it was a Windows Dll.  There are
+        library that you want to use as if it were a Windows Dll.  There are
         various reasons for this including the following:
         <itemizedlist>
           <listitem>
@@ -21,6 +21,12 @@
 	      (The ODBC interface in WINE)
             </para>
           </listitem>
+          <listitem>
+            <para>
+              You wish to do something that you can do in Linux but Wine does
+              not yet support it.
+            </para>
+          </listitem>
         </itemizedlist>
       </para>
       <para>
@@ -28,8 +34,10 @@
         You need to write a spec file that will describe the library's 
         interface in the same format as a Dll (primarily what functions it
         exports).  Also you will want to write a small wrapper around the
-        library.  We combine these to form a Wine builtin Dll that links to the
-        Linux library.
+        library.  You combine these to form a Wine builtin Dll that links to the
+        Linux library.  Then you modify the Dll Overrides in the wine config
+        file to ensure that this new builtin dll is called rather than any
+        windows version.
       </para>
       <para>
         In this section we will look at two examples.  The first example is
@@ -68,35 +76,35 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
       <title id="bindlls-spec.title">Writing the spec file</title>
       <para>
         Start by writing the spec file.  This file will describe the interface
-        as if it was a dll.  See elsewhere for the details of the format of
-        a spec file.
+        as if it were a dll.  See elsewhere for the details of the format of
+        a spec file (e.g. man winebuild).
       </para>
       <para>
         In the simple example we want a Wine builtin Dll that corresponds to
-        the MyWin Dll.  The spec file is <filename>libMyWin.spec</filename> and
-        looks like this.
+        the MyWin Dll.  The spec file is <filename>MyWin.dll.spec</filename> and
+        looks something like this (depending on changes to the way that the
+        specfile is formatted since this was written).
 <programlisting>
 #
-# File: libMyWin.spec
+# File: MyWin.dll.spec
 #
 # some sort of copyright
 #
-# Wine spec file for the libMyWin builtin library (a minimal wrapper around the
+# Wine spec file for the MyWin.dll builtin library (a minimal wrapper around the
 # linux library libMyLinux)
 #
 # For further details of wine spec files see the Winelib documentation at
 # www.winehq.com
 
-name    MyWin
-type    win32
-mode    dll
-
-2 stdcall _MyWinFunc@32 (long ptr ptr ptr ptr long long ptr) MyProxyWinFunc
+2 stdcall MyWinFunc (long ptr ptr ptr ptr long long ptr) MyProxyWinFunc
 
 # End of file
 </programlisting>
         Notice that the arguments are flagged as long even though they are
         smaller than that.
+        Notice also that we do not specify an initial function.  With this
+        example we will link directly to the Linux shared library whereas 
+        with the ODBC example we will load the Linux shared library dynamically.
       </para>
       <para>
         In the case of the ODBC example you can see this in the file 
@@ -119,7 +127,8 @@ mode    dll
         does not have to be passed to the Linux function and the d parameter
         (theoretically) has to be converted between unsigned long * and
         unsigned short *.  Doing this ensures that the "high" bits of the
-        returned value are set correctly.
+        returned value are set correctly.  Also unlike with the ODBC example we
+        will link directly to the Linux Shared Library.
         <programlisting>
 /*
  * File: MyWin.c
@@ -191,7 +200,7 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
     <sect1 id="bindlls-building">
       <title id="binary-dlls-building.title">Building</title>
       <para>
-        So how dow we actually build the Wine builtin Dll?  The easiest way is
+        So how do we actually build the Wine builtin Dll?  The easiest way is
         to get Winemaker to do the hard work for us.  For the simple example we
         have two source files (the wrapper and the spec file).  We also have
         the 3rd party header and library files of course.
@@ -231,6 +240,64 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
       <para>
         Then simply run the configure and make as normal (described elsewhere).
       </para>
+    </sect1>
+
+    <sect1 id="bindlls-installing">
+      <title id="binary-dlls-installing.title">Installing</title>
+      <para>
+        So how do you install the proxy and ensure that everything connects up
+        correctly?  You have quite a bit of flexibility in this area so what 
+        follows are not the only options available.
+      </para>
+      <para>
+        Ensure that the actual Linux Shared Object is placed somewhere where
+        the Linux system will be able to find it.  Typically this means it 
+        should be in one of the directories mentioned in the /etc/ld.so.conf
+        file or somewhere in the path specified by LD_LIBRARY_PATH.  If you 
+        can link to it from a Linux program it should be OK.
+      </para>
+      <para>
+        Put the proxy shared object (MyWin.dll.so) in the same place as the
+        rest of the builtin dlls.  (If you used winemaker to set up your build
+        environment then running "make install" as root should do that for you)
+        Alternatively ensure that WINEDLLPATH includes the directory containing
+        the proxy shared object.
+      </para>
+      <para>
+        If you have both a Windows dll and a Linux Dll/proxy pair then you will
+        have to ensure that the correct one gets called.  The easiest way is
+        probably simply to rename the windows version so that it doesn't get
+        detected.  Alternatively you could specify in the DllOverrides section
+        (or the AppDefaults\\myprog.exe\\DllOverrides section) of the config
+        file (in your .wine directory) that the builtin version be used.  Note
+        that if the Windows version Dll is present and is in the same
+        directory as the executable (as opposed to being in the Windows
+        directory) then you will currently need to specify the whole path to
+        the dll, not merely its name.
+      </para>
+      <para>
+        Once you have done this you should be using the Linux Shared Object
+        successfully.  If you have problems then use the --debugmsg +module
+        options to wine to see what is actually happening.
+      </para>
+    </sect1>
+
+    <sect1 id="bindlls-advanced">
+      <title id="binary-dlls-advanced.title">Advanced options</title>
+      <para>
+        Here are a few more advanced options.
+      </para>
+      <sect2 id="bindlls-adv-filenames">
+        <title id="binary-dlls-adv-filenames.title">Converting filenames</title>
+        <para>
+          Suppose you want to convert incoming DOS format filenames to their
+          Unix equivalent.  Of course there is no suitable function in the true
+          Microsoft Windows API, but wine provides a function for just this
+          task and exports it from its copy of the kernel32 dll.  The function
+          is wine_get_unix_file_name (defined in winbase.h).  Use the -ikernel32
+          option to winemaker to link to it.
+        </para>
+      </sect2>
     </sect1>
   </chapter>
 
