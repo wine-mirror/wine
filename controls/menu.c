@@ -4237,9 +4237,10 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     }
 
     if (lpmii->fMask & MIIM_STRING ) {
-	/* free the string when used */
-	if (IS_STRING_ITEM(menu->fType) && menu->text) {
-	    HeapFree(GetProcessHeap(), 0, menu->text);
+	if (IS_STRING_ITEM(menu->fType)) {
+            /* free the string when used */
+            if(menu->text)
+                HeapFree(GetProcessHeap(), 0, menu->text);
             set_menu_item_text( menu, lpmii->dwTypeData, unicode );
 	}
     }
