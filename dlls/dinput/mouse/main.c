@@ -630,21 +630,19 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 					      DWORD flags
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
+  DWORD	nqpos = 0;
   
   EnterCriticalSection(&(This->crit));
-  TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
-
-  if (flags & DIGDD_PEEK)
-    FIXME("DIGDD_PEEK\n");
+  TRACE("(%p)->(dods=%ld,dod=%p,entries=%ld,fl=0x%08lx)\n",This,dodsize,dod,*entries,flags);
 
   if (dod == NULL) {
     *entries = This->queue_pos;
-    This->queue_pos = 0;
+    nqpos = 0;
   } else {
     /* Check for buffer overflow */
-    if (This->queue_pos > *entries) {
-      WARN("Buffer overflow not handled properly yet...\n");
-      This->queue_pos = *entries;
+    if (This->queue_pos > dodsize) {
+      FIXME("Buffer overflow not handled properly yet...\n");
+      This->queue_pos = dodsize;
     }
     if (dodsize != sizeof(DIDEVICEOBJECTDATA)) {
       ERR("Wrong structure size !\n");
@@ -660,10 +658,15 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     *entries = This->queue_pos;
 
     /* Reset the event queue */
-    This->queue_pos = 0;
+    nqpos = 0;
   }
+  if (!(flags & DIGDD_PEEK))
+    This->queue_pos = nqpos;
+
   LeaveCriticalSection(&(This->crit));
-  
+
+  TRACE("returing *entries = %ld\n",*entries);
+
   /* Check if we need to do a mouse warping */
   if (This->need_warp == WARP_NEEDED) {
     POINT point;
