@@ -729,8 +729,24 @@ BOOL32 WINAPI Polyline32( HDC32 hdc, const POINT32* pt, INT32 count )
  */
 BOOL32 WINAPI PolylineTo32( HDC32 hdc, const POINT32* pt, DWORD cCount )
 {
-        FIXME(gdi,"PolylineTo, stub\n");
-        return 0;
+    POINT32 *pts = HeapAlloc( GetProcessHeap(), 0,
+			      sizeof(POINT32) * (cCount + 1) );
+    if(!pts) return FALSE;
+
+    /* Get the current point */
+    MoveToEx32( hdc, 0, 0, pts);
+
+    /* Add in the other points */
+    memcpy( pts + 1, pt, sizeof(POINT32) * cCount );
+
+    /* Draw the lines */
+    Polyline32( hdc, pts, cCount + 1 );
+
+    /* Move to last point */
+    MoveToEx32( hdc, (pts + cCount)->x, (pts + cCount)->y, NULL );
+
+    HeapFree( GetProcessHeap(), 0, pts );
+    return TRUE;
 }
 
 /**********************************************************************
