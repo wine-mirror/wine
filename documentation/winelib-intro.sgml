@@ -129,7 +129,7 @@
           as just running the three commands below:
         </para>
         <programlisting>
-          $ winemaker --lower-uppercase
+          $ winemaker --lower-uppercase .
           $ ./configure --with-wine=/usr/local/wine
           $ make
         </programlisting>
@@ -287,7 +287,7 @@
               </variablelist>
               <para>
                 So your command may finally look like:
-                <literal>winemaker --lower-uppercase -Imylib/include</literal>
+                <literal>winemaker --lower-uppercase -Imylib/include .</literal>
               </para>
             </listitem>
           </varlistentry>
