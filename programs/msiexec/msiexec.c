@@ -30,7 +30,33 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msiexec);
 
 static const char UsageStr[] =
-"Usage: msiexec ...\n\n"
+"Usage:\n"
+"  Install a product:\n"
+"    msiexec {package|productcode} [property] (UNIMPLEMENTED)\n"
+"    msiexec /i {package|productcode} [property]\n"
+"    msiexec /a package [property]\n"
+"  Repair an installation:\n"
+"    msiexec /f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"  Uninstall a product:\n"
+"    msiexec /x {package|productcode} [property]\n"
+"  Advertise a product:\n"
+"    msiexec /j[u|m] package [/t transform] [/g languageid]\n"
+"    msiexec {u|m} package [/t transform] [/g languageid]\n"
+"  Apply a patch:\n"
+"    msiexec /p patchpackage [property] (UNIMPLEMENTED)\n"
+"    msiexec /p patchpackage /a package [property] (UNIMPLEMENTED)\n"
+"  Modifiers for above operations:\n"
+"    msiexec /l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"    msiexec /q{|n|b|r|f|n+|b+|b-}\n"
+"  Register a module:\n"
+"    msiexec /y module\n"
+"  Unregister a module:\n"
+"    msiexec /z module\n"
+"  Display usage and copyright:\n"
+"    msiexec {/h|/?}\n"
+"NOTE: Properties on commandline unimplemented as of yet\n"
+"NOTE: Product code on commandline unimplemented as of yet\n"
+"\n"
 "Copyright 2004 Vincent Béron\n";
 
 static const char ActionAdmin[] = "ACTION=ADMIN ";
