@@ -37,11 +37,12 @@ extern "C" {
 /* flags to GetLocaleInfo */
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000
 #define	LOCALE_USE_CP_ACP	    0x40000000
+#define	LOCALE_RETURN_NUMBER	    0x20000000
 
 #define LOCALE_LOCALEINFOFLAGSMASK  0xC0000000
 
 /* When adding new defines, don't forget to add an entry to the
- * locale2id map in misc/ole2nls.c
+ * locale_name2id map in ole/ole2nls.c
  */
 #define LOCALE_ILANGUAGE            0x00000001   
 #define LOCALE_SLANGUAGE            0x00000002   
@@ -265,6 +266,9 @@ extern "C" {
 #define MAX_DEFAULTCHAR   2
 
 /* Defines for calendar handling */
+#define CAL_NOUSEROVERRIDE        LOCALE_NOUSEROVERRIDE
+#define CAL_USE_CP_ACP            LOCALE_USE_CP_ACP
+#define CAL_RETURN_NUMBER         LOCALE_RETURN_NUMBER
 #define CAL_ICALINTVALUE          0x00000001
 #define CAL_SCALNAME              0x00000002
 #define CAL_IYEAROFFSETRANGE      0x00000003
@@ -312,6 +316,7 @@ extern "C" {
 #define CAL_SABBREVMONTHNAME12    0x0000002d
 #define CAL_SABBREVMONTHNAME13    0x0000002e
 #define CAL_SYEARMONTH            0x0000002f
+#define CAL_ITWODIGITYEARMAX      0x00000030
 #define CAL_GREGORIAN                  1
 #define CAL_GREGORIAN_US               2
 #define CAL_JAPAN                      3
@@ -490,6 +495,9 @@ BOOL        WINAPI GetCPInfo(UINT,LPCPINFO);
 BOOL        WINAPI GetCPInfoExA(UINT,DWORD,LPCPINFOEXA);
 BOOL        WINAPI GetCPInfoExW(UINT,DWORD,LPCPINFOEXW);
 #define     GetCPInfoEx WINELIB_NAME_AW(GetCPInfoEx)
+int         WINAPI GetCalendarInfoA(LCID,DWORD,DWORD,LPSTR,INT,LPDWORD);
+int         WINAPI GetCalendarInfoW(LCID,DWORD,DWORD,LPWSTR,INT,LPDWORD);
+#define     GetCalendarInfo WINELIB_NAME_AW(GetCalendarInfo)
 INT         WINAPI GetCurrencyFormatA(LCID,DWORD,LPCSTR,const CURRENCYFMTA*,LPSTR,int);
 INT         WINAPI GetCurrencyFormatW(LCID,DWORD,LPCWSTR,const CURRENCYFMTW*,LPWSTR,int);
 #define     GetCurrencyFormat WINELIB_NAME_AW(GetCurrencyFormat)

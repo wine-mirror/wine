@@ -585,75 +585,23 @@ BOOL WINAPI GetProcessTimes(
 int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPSTR lpCalData, int cchData, LPDWORD lpValue)
 {
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): stub\n", 
+    int ret;
+    LPWSTR lpCalDataW = NULL;
+
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n", 
 	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
-    /* dont have the #define values for those */
+    /* FIXME: Should verify if Locale is allowable in ANSI, as per MSDN */
 
-    FIXME("\t");
-    /*
-    if (CalType & CAL_NOUSEROVERRIDE)
-	MESSAGE("CAL_NOUSEROVERRIDE|");
-    if (CalType & CAL_RETURN_NUMBER)
-	MESSAGE("CAL_RETURN_NUMBER|");
-    if (CalType & CAL_USE_CP_ACP)
-	MESSAGE("CAL_USE_CP_ACP|");
-    */
+    if(cchData)
+      if(!(lpCalDataW = HeapAlloc(GetProcessHeap(), 0, cchData*sizeof(WCHAR)))) return 0;
 
-    /*switch (CalType & ~(CAL_NOUSEROVERRIDE|CAL_RETURN_NUMBER|CAL_USE_CP_ACP)) {*/
-    switch (CalType & 0xffff) {
-#define X(x) case x: MESSAGE(#x"\n");break;
-	X(CAL_ICALINTVALUE)
-	X(CAL_SCALNAME)
-	X(CAL_IYEAROFFSETRANGE)
-	X(CAL_SERASTRING)
-	X(CAL_SSHORTDATE)
-	X(CAL_SLONGDATE)
-	X(CAL_SDAYNAME1)
-	X(CAL_SDAYNAME2)
-	X(CAL_SDAYNAME3)
-	X(CAL_SDAYNAME4)
-	X(CAL_SDAYNAME5)
-	X(CAL_SDAYNAME6)
-	X(CAL_SDAYNAME7)
-	X(CAL_SABBREVDAYNAME1)
-	X(CAL_SABBREVDAYNAME2)
-	X(CAL_SABBREVDAYNAME3)
-	X(CAL_SABBREVDAYNAME4)
-	X(CAL_SABBREVDAYNAME5)
-	X(CAL_SABBREVDAYNAME6)
-	X(CAL_SABBREVDAYNAME7)
-	X(CAL_SMONTHNAME1)
-	X(CAL_SMONTHNAME2)
-	X(CAL_SMONTHNAME3)
-	X(CAL_SMONTHNAME4)
-	X(CAL_SMONTHNAME5)
-	X(CAL_SMONTHNAME6)
-	X(CAL_SMONTHNAME7)
-	X(CAL_SMONTHNAME8)
-	X(CAL_SMONTHNAME9)
-	X(CAL_SMONTHNAME10)
-	X(CAL_SMONTHNAME11)
-	X(CAL_SMONTHNAME12)
-	X(CAL_SMONTHNAME13)
-	X(CAL_SABBREVMONTHNAME1)
-	X(CAL_SABBREVMONTHNAME2)
-	X(CAL_SABBREVMONTHNAME3)
-	X(CAL_SABBREVMONTHNAME4)
-	X(CAL_SABBREVMONTHNAME5)
-	X(CAL_SABBREVMONTHNAME6)
-	X(CAL_SABBREVMONTHNAME7)
-	X(CAL_SABBREVMONTHNAME8)
-	X(CAL_SABBREVMONTHNAME9)
-	X(CAL_SABBREVMONTHNAME10)
-	X(CAL_SABBREVMONTHNAME11)
-	X(CAL_SABBREVMONTHNAME12)
-	X(CAL_SABBREVMONTHNAME13)
-	X(CAL_SYEARMONTH)
-#undef X
-	default: MESSAGE("Unknown caltype %ld\n",CalType & 0xffff);
-		 return E_FAIL;
-    }
-    return 0;
+    ret = GetCalendarInfoW(Locale, Calendar, CalType, lpCalDataW, cchData, lpValue);
+    if(ret && lpCalDataW && lpCalData)
+      WideCharToMultiByte(CP_ACP, 0, lpCalDataW, cchData, lpCalData, cchData, NULL, NULL);
+    if(lpCalDataW)
+      HeapFree(GetProcessHeap(), 0, lpCalDataW);
+
+    return ret;
 }
 
 /*********************************************************************
@@ -663,8 +611,131 @@ int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
 {	
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): stub\n", 
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n", 
 	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
+
+    if (CalType & CAL_NOUSEROVERRIDE)
+	FIXME("flag CAL_NOUSEROVERRIDE used, not fully implemented\n");
+    if (CalType & CAL_USE_CP_ACP)
+	FIXME("flag CAL_USE_CP_ACP used, not fully implemented\n");
+
+    if (CalType & CAL_RETURN_NUMBER) {
+	if (lpCalData != NULL)
+	    WARN("lpCalData not NULL (%p) when it should!\n", lpCalData);
+	if (cchData != 0)
+	    WARN("cchData not 0 (%d) when it should!\n", cchData);
+    } else {
+	if (lpValue != NULL)
+	    WARN("lpValue not NULL (%p) when it should!\n", lpValue);
+    }
+
+    /* FIXME: No verification is made yet wrt Locale
+     * for the CALTYPES not requiring GetLocaleInfoA */
+    switch (CalType & ~(CAL_NOUSEROVERRIDE|CAL_RETURN_NUMBER|CAL_USE_CP_ACP)) {
+	case CAL_ICALINTVALUE:
+	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+	    return E_FAIL;
+	case CAL_SCALNAME:
+	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+	    return E_FAIL;
+	case CAL_IYEAROFFSETRANGE:
+	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+	    return E_FAIL;
+	case CAL_SERASTRING:
+	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+	    return E_FAIL;
+	case CAL_SSHORTDATE:
+	    return GetLocaleInfoW(Locale, LOCALE_SSHORTDATE, lpCalData, cchData);
+	case CAL_SLONGDATE:
+	    return GetLocaleInfoW(Locale, LOCALE_SLONGDATE, lpCalData, cchData);
+	case CAL_SDAYNAME1:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME1, lpCalData, cchData);
+	case CAL_SDAYNAME2:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME2, lpCalData, cchData);
+	case CAL_SDAYNAME3:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME3, lpCalData, cchData);
+	case CAL_SDAYNAME4:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME4, lpCalData, cchData);
+	case CAL_SDAYNAME5:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME5, lpCalData, cchData);
+	case CAL_SDAYNAME6:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME6, lpCalData, cchData);
+	case CAL_SDAYNAME7:
+	    return GetLocaleInfoW(Locale, LOCALE_SDAYNAME7, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME1:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME1, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME2:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME2, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME3:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME3, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME4:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME4, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME5:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME5, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME6:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME6, lpCalData, cchData);
+	case CAL_SABBREVDAYNAME7:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVDAYNAME7, lpCalData, cchData);
+	case CAL_SMONTHNAME1:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME1, lpCalData, cchData);
+	case CAL_SMONTHNAME2:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME2, lpCalData, cchData);
+	case CAL_SMONTHNAME3:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME3, lpCalData, cchData);
+	case CAL_SMONTHNAME4:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME4, lpCalData, cchData);
+	case CAL_SMONTHNAME5:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME5, lpCalData, cchData);
+	case CAL_SMONTHNAME6:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME6, lpCalData, cchData);
+	case CAL_SMONTHNAME7:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME7, lpCalData, cchData);
+	case CAL_SMONTHNAME8:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME8, lpCalData, cchData);
+	case CAL_SMONTHNAME9:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME9, lpCalData, cchData);
+	case CAL_SMONTHNAME10:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME10, lpCalData, cchData);
+	case CAL_SMONTHNAME11:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME11, lpCalData, cchData);
+	case CAL_SMONTHNAME12:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME12, lpCalData, cchData);
+	case CAL_SMONTHNAME13:
+	    return GetLocaleInfoW(Locale, LOCALE_SMONTHNAME13, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME1:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME1, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME2:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME2, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME3:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME3, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME4:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME4, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME5:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME5, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME6:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME6, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME7:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME7, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME8:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME8, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME9:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME9, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME10:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME10, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME11:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME11, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME12:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME12, lpCalData, cchData);
+	case CAL_SABBREVMONTHNAME13:
+	    return GetLocaleInfoW(Locale, LOCALE_SABBREVMONTHNAME13, lpCalData, cchData);
+	case CAL_SYEARMONTH:
+	    return GetLocaleInfoW(Locale, LOCALE_SYEARMONTH, lpCalData, cchData);
+	case CAL_ITWODIGITYEARMAX:
+	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
+	    return E_FAIL;
+	default: MESSAGE("Unknown caltype %ld\n",CalType & 0xffff);
+		 return E_FAIL;
+    }
     return 0;
 }
 
