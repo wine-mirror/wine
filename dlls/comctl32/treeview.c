@@ -194,7 +194,7 @@ static LRESULT TREEVIEW_RButtonUp(TREEVIEW_INFO *, LPPOINT);
 static LRESULT TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel);
 static VOID TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr);
 static LRESULT TREEVIEW_HScroll(TREEVIEW_INFO *, WPARAM);
-static LRESULT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
+static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND wParam, UINT lParam);
 
 
 /* Random Utilities *****************************************************/
@@ -436,12 +436,8 @@ static INT get_notifycode(TREEVIEW_INFO *infoPtr, INT code)
 static LRESULT
 TREEVIEW_SendRealNotify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    if (infoPtr->bNtfUnicode)
-	return (BOOL)SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
-				  wParam, lParam);
-    else
-	return (BOOL)SendMessageA(infoPtr->hwndNotify, WM_NOTIFY,
-				  wParam, lParam);
+    TRACE("wParam=%d, lParam=%ld\n", wParam, lParam);
+    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, wParam, lParam);
 }
 
 static BOOL
@@ -1455,8 +1451,8 @@ TREEVIEW_RemoveItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
 {
     TRACE("%p, (%s)\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_DELETEITEMW,
-				TVIF_HANDLE | TVIF_PARAM, 0, wineItem, 0);
+    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_DELETEITEMW, TVC_UNKNOWN,
+				TVIF_HANDLE | TVIF_PARAM, wineItem, 0);
 
     if (wineItem->firstChild)
 	TREEVIEW_RemoveAllChildren(infoPtr, wineItem);
@@ -3935,8 +3931,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
             /*
              * Send the notification
              */
-            TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVIF_HANDLE | TVIF_PARAM,
-                                0, ht.hItem, 0);
+            TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVC_UNKNOWN, TVIF_HANDLE | TVIF_PARAM, ht.hItem, 0);
 
             /*
              * Close the previous selection all the way to the root
@@ -4778,7 +4773,7 @@ TREEVIEW_Create(HWND hwnd)
 
     /* Determine what type of notify should be issued */
     /* sets infoPtr->bNtfUnicode */
-    TREEVIEW_NotifyFormat(infoPtr, 0, NF_REQUERY);
+    TREEVIEW_NotifyFormat(infoPtr, infoPtr->hwndNotify, NF_REQUERY);
 
     if (!(infoPtr->dwStyle & TVS_NOTOOLTIPS))
 	infoPtr->hwndToolTip = COMCTL32_CreateToolTip(hwnd);
@@ -5032,26 +5027,24 @@ TREEVIEW_Notify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     return DefWindowProcA(infoPtr->hwnd, WM_NOTIFY, wParam, lParam);
 }
 
-static LRESULT
-TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)
 {
-    INT i;
+    INT format;
+    
+    TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
 
-    if (lParam == NF_REQUERY) {
-	i = SendMessageA(GetParent (infoPtr->hwnd),
-			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
-	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
-	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
-		i);
-	    i = NFR_ANSI;
-	}
-	infoPtr->bNtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
-	return (LRESULT)i;
-    }
-    return (LRESULT)((infoPtr->bNtfUnicode) ? NFR_UNICODE : NFR_ANSI);
+    if (nCommand != NF_REQUERY) return 0;
+    
+    format = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
+    TRACE("format=%d\n", format);
+
+    if (format != NFR_ANSI && format != NFR_UNICODE) return 0;
+    
+    infoPtr->bNtfUnicode = (format == NFR_UNICODE);
+    
+    return format;
 }
-
-
+    
 static LRESULT
 TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -5336,7 +5329,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_Notify(infoPtr, wParam, lParam);
 
     case WM_NOTIFYFORMAT:
-	return TREEVIEW_NotifyFormat(infoPtr, wParam, lParam);
+	return TREEVIEW_NotifyFormat(infoPtr, (HWND)wParam, (UINT)lParam);
 
     case WM_PAINT:
 	return TREEVIEW_Paint(infoPtr, wParam);
