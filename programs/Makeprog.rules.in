@@ -41,7 +41,7 @@ debug_channels: dummy
 install:: $(MODULE).so
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
-	cd $(bindir) && $(LN_S) wine $(MODULE)
+	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) wine $(MODULE)
 
 uninstall::
 	cd $(bindir) && $(RM) $(MODULE) $(MODULE).so
