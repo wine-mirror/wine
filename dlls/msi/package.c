@@ -180,6 +180,22 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'P','r','o','g','r','a','m','F','i','l','e','s','F','o','l','d','e','r',0};
     static const WCHAR CADF[] = 
 {'C','o','m','m','o','n','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
+    static const WCHAR FaF[] = 
+{'F','a','v','o','r','i','t','e','s','F','o','l','d','e','r',0};
+    static const WCHAR FoF[] = 
+{'F','o','n','t','s','F','o','l','d','e','r',0};
+    static const WCHAR SendTF[] = 
+{'S','e','n','d','T','o','F','o','l','d','e','r',0};
+    static const WCHAR SMF[] = 
+{'S','t','a','r','t','M','e','n','u','F','o','l','d','e','r',0};
+    static const WCHAR StF[] = 
+{'S','t','a','r','t','u','p','F','o','l','d','e','r',0};
+    static const WCHAR TemplF[] = 
+{'T','e','m','p','l','a','t','e','F','o','l','d','e','r',0};
+    static const WCHAR DF[] = 
+{'D','e','s','k','t','o','p','F','o','l','d','e','r',0};
+    static const WCHAR PMF[] = 
+{'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
     static const WCHAR ATF[] = 
 {'A','d','m','i','n','T','o','o','l','s','F','o','l','d','e','r',0};
     static const WCHAR ADF[] = 
@@ -213,48 +229,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
     static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
-
-/* these need to be dynamically discovered sometime */
-
-    static const WCHAR ProgramMenuFolder[] = 
-{'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
-    static const WCHAR PMFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ',
-'M','e','n','u','\\','P','r','o','g','r','a','m','s','\\',0};
-    static const WCHAR FavoritesFolder[] = 
-{'F','a','v','o','r','i','t','e','s','F','o','l','d','e','r',0};
-    static const WCHAR FFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\',
-'F','a','v','o','r','i','t','e','s','\\',0};
-    static const WCHAR FontsFolder[] = 
-{'F','o','n','t','s','F','o','l','d','e','r',0};
-    static const WCHAR FoFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\','F','o','n','t','s','\\',0};
-    static const WCHAR SendToFolder[] = 
-{'S','e','n','d','T','o','F','o','l','d','e','r',0};
-    static const WCHAR STFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\','S','e','n','d','T','o','\\',0};
-    static const WCHAR StartMenuFolder[] = 
-{'S','t','a','r','t','M','e','n','u','F','o','l','d','e','r',0};
-    static const WCHAR SMFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ',
-'M','e','n','u','\\',0};
-    static const WCHAR StartupFolder[] = 
-{'S','t','a','r','t','u','p','F','o','l','d','e','r',0};
-    static const WCHAR SFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ',
-'M','e','n','u','\\','P','r','o','g','r','a','m','s','\\',
-'S','t','a','r','t','u','p','\\',0};
-    static const WCHAR TemplateFolder[] = 
-{'T','e','m','p','l','a','t','e','F','o','l','d','e','r',0};
-    static const WCHAR TFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\',
-'S','h','e','l','l','N','e','w','\\',0};
-    static const WCHAR DesktopFolder[] = 
-{'D','e','s','k','t','o','p','F','o','l','d','e','r',0};
-    static const WCHAR DFPath[] = 
-{'C',':','\\','W','i','n','d','o','w','s','\\',
-'D','e','s','k','t','o','p','\\',0};
 
 /*
  * Other things I notice set
@@ -295,6 +269,38 @@ Privileged
     SHGetFolderPathW(NULL,CSIDL_COMMON_APPDATA,NULL,0,pth);
     strcatW(pth,cszbs);
     MSI_SetPropertyW(package, CADF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_FAVORITES,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, FaF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_FONTS,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, FoF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_SENDTO,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, SendTF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_STARTMENU,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, SMF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_STARTUP,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, StF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_TEMPLATES,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, TemplF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_DESKTOP,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, DF, pth);
+
+    SHGetFolderPathW(NULL,CSIDL_PROGRAMS,NULL,0,pth);
+    strcatW(pth,cszbs);
+    MSI_SetPropertyW(package, PMF, pth);
 
     SHGetFolderPathW(NULL,CSIDL_ADMINTOOLS,NULL,0,pth);
     strcatW(pth,cszbs);
@@ -353,17 +359,6 @@ Privileged
 
     sprintfW( msiver, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
     MSI_SetPropertyW( package, szVersionMsi, msiver );
-
-    /* FIXME: these need to be set properly */
-
-    MSI_SetPropertyW(package,ProgramMenuFolder,PMFPath);
-    MSI_SetPropertyW(package,FavoritesFolder,FFPath);
-    MSI_SetPropertyW(package,FontsFolder,FoFPath);
-    MSI_SetPropertyW(package,SendToFolder,STFPath);
-    MSI_SetPropertyW(package,StartMenuFolder,SMFPath);
-    MSI_SetPropertyW(package,StartupFolder,SFPath);
-    MSI_SetPropertyW(package,TemplateFolder,TFPath);
-    MSI_SetPropertyW(package,DesktopFolder,DFPath);
 }
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)

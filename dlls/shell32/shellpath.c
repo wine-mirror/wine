@@ -732,9 +732,9 @@ static const CSIDL_DATA CSIDL_Data[] =
 	NULL,
     },
     { /* CSIDL_PROGRAMS */
-	0, HKEY_DISALLOWED,
-	NULL,
-	NULL,
+	9, HKCU,
+	"Programs",
+	"Start Menu\\Programs",
     },
     { /* CSIDL_CONTROLS (.CPL files) */
 	10, HKLM,
