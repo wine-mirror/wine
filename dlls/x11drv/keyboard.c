@@ -1013,7 +1013,8 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
        predefined group index and find it dynamically
 
        Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
-    AltGrMask = event->state & 0x6000;
+    /* Save also all possible modifier states. */
+    AltGrMask = event->state & (0x6000 | Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask);
 
     Str[ascii_chars] = '\0';
     if (TRACE_ON(key)){
