@@ -736,6 +736,7 @@ static void processQueryValue(LPSTR cmdline)
       strncpy(lpsRes, lpsData, lLen);
       lpsRes[lLen-1]='\0';
     }
+    HeapFree(GetProcessHeap(), 0, lpsData);
   }
   else
   {

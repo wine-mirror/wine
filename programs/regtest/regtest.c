@@ -228,6 +228,8 @@ void TestEnumKey()
 
     lSts = RegEnumKey(HKEY_CURRENT_USER,0,sVal,lVal);
     if (lSts != ERROR_MORE_DATA) xERROR(3,lSts);
+
+    free(sVal);
 }
 
 /******************************************************************************
@@ -255,6 +257,9 @@ void TestEnumKeyEx()
 
     lSts = RegEnumKeyEx(HKEY_LOCAL_MACHINE,0,sVal,&lLen1,0,sClass,&lLen2,&ft);
     if (lSts != ERROR_MORE_DATA) xERROR(3,lSts);
+
+    free(sVal);
+    free(sClass);
 }
 
 /******************************************************************************
@@ -288,6 +293,9 @@ void TestEnumValue()
 
     lSts = RegEnumValue(HKEY_LOCAL_MACHINE,1,sVal,&lVal,0,&lType,bVal,&lLen1);
     if (lSts != ERROR_NO_MORE_ITEMS) xERROR(5,lSts);
+
+    free(sVal);
+    free(bVal);
 }
 
 /******************************************************************************
@@ -448,6 +456,8 @@ void TestQueryInfoKey()
                            &lMaxSubLen,&lMaxClassLen,&lValues,&lMaxValNameLen,
                            &lMaxValLen,&lSecDescLen, &ft);
     if (lSts != ERROR_SUCCESS) xERROR(2,lSts);
+
+    free(sClass);
 }
 
 /******************************************************************************
@@ -473,6 +483,8 @@ void TestQueryValue()
 
     lSts = RegQueryValue(HKEY_CURRENT_USER,"",sVal,&lLen);
     if (lSts != ERROR_SUCCESS) xERROR(4,lSts);
+
+    free(sVal);
 }
 
 /******************************************************************************
@@ -496,6 +508,8 @@ void TestQueryValueEx()
 
     lSts = RegQueryValueEx(HKEY_LOCAL_MACHINE,"",0,&lType,sVal,&lLen);
     if (lSts != ERROR_SUCCESS) xERROR(3,lSts);
+
+    free(sVal);
 }
 
 /******************************************************************************

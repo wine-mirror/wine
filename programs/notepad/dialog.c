@@ -491,6 +491,7 @@ VOID DIALOG_FilePrint(VOID)
 
     EndDoc(printer.hDC);
     DeleteDC(printer.hDC);
+    HeapFree(GetProcessHeap(), 0, pTemp);
 }
 
 VOID DIALOG_FilePrinterSetup(VOID)
