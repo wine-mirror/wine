@@ -166,7 +166,7 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
         MsgWaitForMultipleObjectsEx( 0, NULL, 1, 0, MWMO_ALERTABLE );
     if (!PeekMessageW( &msg, hwnd, first, last, flags )) return FALSE;
 
-    msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
+    msg16->msg.hwnd    = HWND_16( msg.hwnd );
     msg16->msg.lParam  = msg.lParam;
     msg16->msg.time    = msg.time;
     msg16->msg.pt.x    = (INT16)msg.pt.x;
@@ -203,7 +203,7 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
         if(USER16_AlertableWait)
             MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, 0, MWMO_ALERTABLE );
         GetMessageW( &msg, hwnd, first, last );
-        msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
+        msg16->msg.hwnd    = HWND_16( msg.hwnd );
         msg16->msg.lParam  = msg.lParam;
         msg16->msg.time    = msg.time;
         msg16->msg.pt.x    = (INT16)msg.pt.x;
@@ -281,14 +281,14 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         }
     }
 
-    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
+    if (!(wndPtr = WIN_GetPtr( HWND_32(msg->hwnd) )))
     {
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (IsWindow( msg->hwnd ))
+        if (IsWindow16( msg->hwnd ))
             ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;

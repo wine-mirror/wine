@@ -1254,7 +1254,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_Handle16( WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 ));
+    return HWND_16( WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 ));
 }
 
 
@@ -2528,7 +2528,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     }
 
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
-        return SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
+        return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 
     hwnd = full_handle;
 
@@ -3167,12 +3167,13 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
     }
     else wParam = 1;
 
-    ScreenToClient16(hQueryWnd,&ptrDragInfo->pt);
+    ScreenToClient16(HWND_16(hQueryWnd),&ptrDragInfo->pt);
 
-    ptrDragInfo->hScope = hQueryWnd;
+    ptrDragInfo->hScope = HWND_16(hQueryWnd);
 
     if (bNoSend) bResult = (GetWindowLongA( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
-    else bResult = SendMessage16( hQueryWnd, WM_QUERYDROPOBJECT, (WPARAM16)wParam, spDragInfo );
+    else bResult = SendMessage16( HWND_16(hQueryWnd), WM_QUERYDROPOBJECT,
+				  (WPARAM16)wParam, spDragInfo );
 
     if( !bResult ) CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
 
@@ -3256,7 +3257,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     lpDragInfo->hOfStruct = hOfStruct;
     lpDragInfo->l = 0L;
 
-    SetCapture(hWnd);
+    SetCapture(WIN_Handle32(hWnd));
     ShowCursor( TRUE );
 
     do
@@ -3271,7 +3272,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	/* update DRAGINFO struct */
 	TRACE_(msg)("lpDI->hScope = %04x\n",lpDragInfo->hScope);
 
-	if( DRAG_QueryUpdate(hwndScope, spDragInfo, FALSE) > 0 )
+	if( DRAG_QueryUpdate(WIN_Handle32(hwndScope), spDragInfo, FALSE) > 0 )
 	    hCurrentCursor = hCursor;
 	else
         {

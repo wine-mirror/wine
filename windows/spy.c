@@ -2256,7 +2256,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     {
     case SPY_DISPATCHMESSAGE16:
         TRACE("%*s(%04x) %-16s message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
-              indent, "", WIN_Handle16(hWnd),
+              indent, "", HWND_16(hWnd),
               debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name, wParam, lParam);
         break;
 
@@ -2270,7 +2270,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_SENDMESSAGE:
         {
             char taskName[30];
-            HTASK16 hTask = GetWindowTask16( WIN_Handle16(hWnd) );
+            HTASK16 hTask = GetWindowTask16( HWND_16(hWnd) );
 
             if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
             else if (!hTask) strcpy( taskName, "Wine" );
@@ -2282,7 +2282,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
             if (iFlag == SPY_SENDMESSAGE16)
                 TRACE("%*s(%04x) %-16s message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
-                      indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
+                      indent, "", HWND_16(hWnd), debugstr_w(sp_e.wnd_name), msg,
                       sp_e.msg_name, taskName, wParam, lParam );
             else
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
@@ -2296,7 +2296,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
-              indent, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, wParam, lParam );
+              indent, "", HWND_16(hWnd), sp_e.msg_name, msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC:
@@ -2340,7 +2340,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     {
     case SPY_RESULT_DEFWND16:
 	TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
-              indent, "", WIN_Handle16(hWnd), sp_e.msg_name, msg, lReturn );
+              indent, "", HWND_16(hWnd), sp_e.msg_name, msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND:
@@ -2350,7 +2350,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 
     case SPY_RESULT_OK16:
         TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
-              indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg,
+              indent, "", HWND_16(hWnd), debugstr_w(sp_e.wnd_name), msg,
               sp_e.msg_name, lReturn );
         break;
 
@@ -2363,7 +2363,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 
     case SPY_RESULT_INVALIDHWND16:
         WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
-             indent, "", WIN_Handle16(hWnd), debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name );
+             indent, "", HWND_16(hWnd), debugstr_w(sp_e.wnd_name), msg, sp_e.msg_name );
         break;
 
     case SPY_RESULT_INVALIDHWND:

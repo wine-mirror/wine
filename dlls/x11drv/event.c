@@ -1058,7 +1058,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
 
-  lpDragInfo->hScope = hWnd;
+  lpDragInfo->hScope = HWND_16(hWnd);
   lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
 
   /* find out drop point and drop window */
@@ -1110,7 +1110,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
             if( lpDrop )
             {
-                WND *pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
+                WND *pDropWnd = WIN_FindWndPtr( HWND_32(lpDragInfo->hScope) );
                 lpDrop->pFiles = sizeof(DROPFILES);
                 lpDrop->pt.x = x;
                 lpDrop->pt.y = y;

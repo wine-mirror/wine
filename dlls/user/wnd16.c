@@ -40,7 +40,7 @@ struct wnd_enum_info
 static BOOL CALLBACK wnd_enum_callback( HWND hwnd, LPARAM param )
 {
     const struct wnd_enum_info *info = (struct wnd_enum_info *)param;
-    return WIN_CallTo16_word_wl( info->proc, hwnd, info->param );
+    return WIN_CallTo16_word_wl( info->proc, HWND_16(hwnd), info->param );
 }
 
 /* convert insert after window handle to 32-bit */
@@ -74,7 +74,7 @@ BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
  */
 HWND16 WINAPI SetCapture16( HWND16 hwnd )
 {
-    return WIN_Handle16( SetCapture( WIN_Handle32(hwnd) ));
+    return HWND_16( SetCapture( WIN_Handle32(hwnd) ));
 }
 
 
@@ -92,7 +92,7 @@ BOOL16 WINAPI ReleaseCapture16(void)
  */
 HWND16 WINAPI SetFocus16( HWND16 hwnd )
 {
-    return WIN_Handle16( SetFocus( WIN_Handle32(hwnd) ));
+    return HWND_16( SetFocus( WIN_Handle32(hwnd) ));
 }
 
 
@@ -101,7 +101,7 @@ HWND16 WINAPI SetFocus16( HWND16 hwnd )
  */
 HWND16 WINAPI GetFocus16(void)
 {
-    return WIN_Handle16( GetFocus() );
+    return HWND_16( GetFocus() );
 }
 
 
@@ -158,7 +158,7 @@ HWND16 WINAPI WindowFromPoint16( POINT16 pt )
     POINT pt32;
 
     CONV_POINT16TO32( &pt, &pt32 );
-    return WIN_Handle16( WindowFromPoint( pt32 ) );
+    return HWND_16( WindowFromPoint( pt32 ) );
 }
 
 
@@ -319,7 +319,7 @@ BOOL16 WINAPI BringWindowToTop16( HWND16 hwnd )
  */
 HWND16 WINAPI GetParent16( HWND16 hwnd )
 {
-    return WIN_Handle16( GetParent( WIN_Handle32(hwnd) ));
+    return HWND_16( GetParent( WIN_Handle32(hwnd) ));
 }
 
 
@@ -357,7 +357,7 @@ BOOL16 WINAPI IsWindowVisible16( HWND16 hwnd )
  */
 HWND16 WINAPI FindWindow16( LPCSTR className, LPCSTR title )
 {
-    return WIN_Handle16( FindWindowA( className, title ));
+    return HWND_16( FindWindowA( className, title ));
 }
 
 
@@ -419,7 +419,7 @@ INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
  */
 HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
 {
-    return WIN_Handle16( SetActiveWindow( WIN_Handle32(hwnd) ));
+    return HWND_16( SetActiveWindow( WIN_Handle32(hwnd) ));
 }
 
 
@@ -428,7 +428,7 @@ HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
  */
 HWND16 WINAPI GetActiveWindow16(void)
 {
-    return WIN_Handle16( GetActiveWindow() );
+    return HWND_16( GetActiveWindow() );
 }
 
 
@@ -530,7 +530,7 @@ BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
  */
 HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 {
-    return WIN_Handle16( GetDlgItem( WIN_Handle32(hwndDlg), (UINT16) id ));
+    return HWND_16( GetDlgItem( WIN_Handle32(hwndDlg), (UINT16) id ));
 }
 
 
@@ -679,7 +679,7 @@ BOOL16 WINAPI FlashWindow16( HWND16 hwnd, BOOL16 bInvert )
  */
 HWND16 WINAPI WindowFromDC16( HDC16 hDC )
 {
-    return WIN_Handle16( WindowFromDC( hDC ) );
+    return HWND_16( WindowFromDC( hDC ) );
 }
 
 
@@ -778,7 +778,7 @@ BOOL16 WINAPI OpenClipboard16( HWND16 hwnd )
  */
 HWND16 WINAPI GetClipboardOwner16(void)
 {
-    return WIN_Handle16( GetClipboardOwner() );
+    return HWND_16( GetClipboardOwner() );
 }
 
 
@@ -787,7 +787,7 @@ HWND16 WINAPI GetClipboardOwner16(void)
  */
 HWND16 WINAPI SetClipboardViewer16( HWND16 hwnd )
 {
-    return WIN_Handle16( SetClipboardViewer( WIN_Handle32(hwnd) ));
+    return HWND_16( SetClipboardViewer( WIN_Handle32(hwnd) ));
 }
 
 
@@ -796,7 +796,7 @@ HWND16 WINAPI SetClipboardViewer16( HWND16 hwnd )
  */
 HWND16 WINAPI GetClipboardViewer16(void)
 {
-    return WIN_Handle16( GetClipboardViewer() );
+    return HWND_16( GetClipboardViewer() );
 }
 
 
@@ -950,7 +950,7 @@ HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 {
     POINT pt32;
     CONV_POINT16TO32( &pt, &pt32 );
-    return WIN_Handle16( ChildWindowFromPoint( WIN_Handle32(hwndParent), pt32 ));
+    return HWND_16( ChildWindowFromPoint( WIN_Handle32(hwndParent), pt32 ));
 }
 
 
@@ -994,7 +994,7 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lPara
 HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                      BOOL16 fPrevious )
 {
-    return WIN_Handle16( GetNextDlgGroupItem( WIN_Handle32(hwndDlg),
+    return HWND_16( GetNextDlgGroupItem( WIN_Handle32(hwndDlg),
                                               WIN_Handle32(hwndCtrl), fPrevious ));
 }
 
@@ -1005,7 +1005,7 @@ HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                    BOOL16 fPrevious )
 {
-    return WIN_Handle16( GetNextDlgTabItem( WIN_Handle32(hwndDlg),
+    return HWND_16( GetNextDlgTabItem( WIN_Handle32(hwndDlg),
                                             WIN_Handle32(hwndCtrl), fPrevious ));
 }
 
@@ -1015,7 +1015,7 @@ HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
  */
 HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
 {
-    return WIN_Handle16( GetTopWindow( WIN_Handle32(hwnd) ));
+    return HWND_16( GetTopWindow( WIN_Handle32(hwnd) ));
 }
 
 
@@ -1045,7 +1045,7 @@ BOOL16 WINAPI SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter,
  */
 HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 {
-    return WIN_Handle16( SetParent( WIN_Handle32(hwndChild), WIN_Handle32(hwndNewParent) ));
+    return HWND_16( SetParent( WIN_Handle32(hwndChild), WIN_Handle32(hwndNewParent) ));
 }
 
 
@@ -1054,7 +1054,7 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
  */
 HWND16 WINAPI GetCapture16(void)
 {
-    return WIN_Handle16( GetCapture() );
+    return HWND_16( GetCapture() );
 }
 
 
@@ -1081,7 +1081,7 @@ INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
  */
 HWND16 WINAPI GetOpenClipboardWindow16(void)
 {
-    return WIN_Handle16( GetOpenClipboardWindow() );
+    return HWND_16( GetOpenClipboardWindow() );
 }
 
 
@@ -1120,7 +1120,7 @@ BOOL16 WINAPI EndDeferWindowPos16( HDWP16 hdwp )
  */
 HWND16 WINAPI GetWindow16( HWND16 hwnd, WORD rel )
 {
-    return WIN_Handle16( GetWindow( WIN_Handle32(hwnd), rel ) );
+    return HWND_16( GetWindow( WIN_Handle32(hwnd), rel ) );
 }
 
 
@@ -1186,7 +1186,7 @@ BOOL16 WINAPI SetSystemMenu16( HWND16 hwnd, HMENU16 hMenu )
  */
 HWND16 WINAPI GetDesktopWindow16(void)
 {
-    return WIN_Handle16( GetDesktopWindow() );
+    return HWND_16( GetDesktopWindow() );
 }
 
 
@@ -1195,7 +1195,7 @@ HWND16 WINAPI GetDesktopWindow16(void)
  */
 HWND16 WINAPI GetLastActivePopup16( HWND16 hwnd )
 {
-    return WIN_Handle16( GetLastActivePopup( WIN_Handle32(hwnd) ));
+    return HWND_16( GetLastActivePopup( WIN_Handle32(hwnd) ));
 }
 
 
@@ -1353,7 +1353,7 @@ HWND16 WINAPI ChildWindowFromPointEx16( HWND16 hwndParent, POINT16 pt, UINT16 uF
 {
     POINT pt32;
     CONV_POINT16TO32( &pt, &pt32 );
-    return WIN_Handle16( ChildWindowFromPointEx( WIN_Handle32(hwndParent), pt32, uFlags ));
+    return HWND_16( ChildWindowFromPointEx( WIN_Handle32(hwndParent), pt32, uFlags ));
 }
 
 
@@ -1407,7 +1407,7 @@ BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
  */
 HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child, LPCSTR className, LPCSTR title )
 {
-    return WIN_Handle16( FindWindowExA( WIN_Handle32(parent), WIN_Handle32(child),
+    return HWND_16( FindWindowExA( WIN_Handle32(parent), WIN_Handle32(child),
                                         className, title ));
 }
 
@@ -1517,7 +1517,7 @@ BOOL16 WINAPI EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
  */
 HWND16 WINAPI GetShellWindow16(void)
 {
-    return WIN_Handle16( GetShellWindow() );
+    return HWND_16( GetShellWindow() );
 }
 
 
@@ -1526,7 +1526,7 @@ HWND16 WINAPI GetShellWindow16(void)
  */
 HWND16 WINAPI GetForegroundWindow16(void)
 {
-    return WIN_Handle16( GetForegroundWindow() );
+    return HWND_16( GetForegroundWindow() );
 }
 
 

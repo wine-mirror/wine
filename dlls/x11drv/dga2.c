@@ -143,7 +143,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
 			  KeyPressMask|KeyReleaseMask|
 			  ButtonPressMask|ButtonReleaseMask|
 			  PointerMotionMask);
-	X11DRV_EVENT_SetDGAStatus(ddlocal->hWnd, dga_event);
+	X11DRV_EVENT_SetDGAStatus((HWND)ddlocal->hWnd, dga_event);
 	X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
       }
       dga_dev = new_dev;

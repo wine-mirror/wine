@@ -156,7 +156,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	} else
 		lpwh->ofsData = 0;
 	GlobalUnlock16(hwh);
-	return SendMessage16(hDest,WM_WINHELP,hWnd,hwh);
+	return SendMessage16(HWND_16(hDest),WM_WINHELP,HWND_16(hWnd),hwh);
 }
 
 

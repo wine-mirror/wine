@@ -499,7 +499,8 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
     if ((hittest == HTERROR) || (hittest == HTNOWHERE))
     {
-        SendMessageA( msg->hwnd, WM_SETCURSOR, msg->hwnd, MAKELONG( hittest, raw_message ));
+        SendMessageA( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
+		      MAKELONG( hittest, raw_message ));
         return FALSE;
     }
 
@@ -523,7 +524,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
         if (msg->hwnd != GetActiveWindow() && hwndTop != GetDesktopWindow())
         {
-            LONG ret = SendMessageA( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+            LONG ret = SendMessageA( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
                                      MAKELONG( hittest, raw_message ) );
 
             switch(ret)
@@ -555,7 +556,8 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
     /* Windows sends the normal mouse message as the message parameter
        in the WM_SETCURSOR message even if it's non-client mouse message */
-    SendMessageA( msg->hwnd, WM_SETCURSOR, msg->hwnd, MAKELONG( hittest, raw_message ));
+    SendMessageA( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
+		  MAKELONG( hittest, raw_message ));
 
     return !eatMsg;
 }

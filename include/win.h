@@ -121,10 +121,8 @@ inline static HWND WIN_GetFullHandle( HWND hwnd )
     return hwnd;
 }
 
-inline static HWND16 WIN_Handle16( HWND hwnd )
-{
-    return LOWORD(hwnd);
-}
+#define HWND_16(hwnd32)   (LOWORD(hwnd32))
+#define HWND_32(hwnd16)   ((HWND)(ULONG_PTR)(hwnd16))
 
 inline static WND *WIN_FindWndPtr16( HWND16 hwnd )
 {

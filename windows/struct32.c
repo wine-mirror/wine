@@ -35,7 +35,7 @@ void STRUCT32_MSG16to32(const MSG16 *msg16,MSG *msg32)
 
 void STRUCT32_MSG32to16(const MSG *msg32,MSG16 *msg16)
 {
-	msg16->hwnd = WIN_Handle16(msg32->hwnd);
+	msg16->hwnd = HWND_16(msg32->hwnd);
 	msg16->message=msg32->message;
 	msg16->wParam=msg32->wParam;
 	msg16->lParam=msg32->lParam;
@@ -64,8 +64,8 @@ void STRUCT32_MINMAXINFO16to32( const MINMAXINFO16 *from, MINMAXINFO *to )
 
 void STRUCT32_WINDOWPOS32to16( const WINDOWPOS* from, WINDOWPOS16* to )
 {
-    to->hwnd            = WIN_Handle16(from->hwnd);
-    to->hwndInsertAfter = WIN_Handle16(from->hwndInsertAfter);
+    to->hwnd            = HWND_16(from->hwnd);
+    to->hwndInsertAfter = HWND_16(from->hwndInsertAfter);
     to->x               = from->x;
     to->y               = from->y;
     to->cx              = from->cx;
@@ -92,7 +92,7 @@ void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCTA* from,
     to->lpCreateParams = from->lpCreateParams;
     to->hInstance      = (HINSTANCE16)from->hInstance;
     to->hMenu          = (HMENU16)from->hMenu;
-    to->hwndParent     = WIN_Handle16(from->hwndParent);
+    to->hwndParent     = HWND_16(from->hwndParent);
     to->cy             = from->cy;
     to->cx             = from->cx;
     to->y              = from->y;

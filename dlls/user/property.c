@@ -24,6 +24,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
+#include "win.h"
 
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
@@ -298,7 +299,7 @@ INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
 INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 {
     int ret = -1, i, count;
-    property_data_t *list = get_properties( hwnd, &count );
+    property_data_t *list = get_properties( HWND_32(hwnd), &count );
 
     if (list)
     {

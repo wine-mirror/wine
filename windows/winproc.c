@@ -1364,7 +1364,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
-	*pwparam32 = WIN_Handle32(wParam16);
+	*pwparam32 = (WPARAM)WIN_Handle32(wParam16);
 	return 0;
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
@@ -1374,7 +1374,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
 	    ATOM	hi;
 	    HANDLE	lo32 = 0;
 
-	    *pwparam32 = WIN_Handle32(wParam16);
+	    *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
 	    lo16 = LOWORD(*plparam);
 	    hi = HIWORD(*plparam);
 	    if (lo16 && !(lo32 = convert_handle_16_to_32(lo16, GMEM_DDESHARE)))
@@ -1388,7 +1388,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
 	    int		flag = 0;
 	    char	buf[2];
 
-	    *pwparam32 = WIN_Handle32(wParam16);
+	    *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
 
 	    lo = LOWORD(*plparam);
 	    hi = HIWORD(*plparam);
@@ -1522,7 +1522,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_NEXTMENU:
         {
             MDINEXTMENU *next = (MDINEXTMENU *)lParam;
-            result = MAKELONG( next->hmenuNext, WIN_Handle16(next->hwndNext) );
+            result = MAKELONG( next->hmenuNext, HWND_16(next->hwndNext) );
             HeapFree( GetProcessHeap(), 0, next );
         }
         break;
@@ -1923,7 +1923,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             if (!cis) return -1;
             cis->CtlType    = (UINT16)cis32->CtlType;
             cis->CtlID      = (UINT16)cis32->CtlID;
-            cis->hwndItem   = WIN_Handle16( cis32->hwndItem );
+            cis->hwndItem   = HWND_16( cis32->hwndItem );
             cis->itemID1    = (UINT16)cis32->itemID1;
             cis->itemData1  = cis32->itemData1;
             cis->itemID2    = (UINT16)cis32->itemID2;
@@ -1940,7 +1940,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             dis->CtlID    = (UINT16)dis32->CtlID;
             dis->itemID   = (UINT16)dis32->itemID;
             dis->hwndItem = (dis->CtlType == ODT_MENU) ? (HWND16)LOWORD(dis32->hwndItem)
-                                                       : WIN_Handle16( dis32->hwndItem );
+                                                       : HWND_16( dis32->hwndItem );
             dis->itemData = dis32->itemData;
             *plparam = MapLS( dis );
         }
@@ -1955,7 +1955,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             dis->itemID     = (UINT16)dis32->itemID;
             dis->itemAction = (UINT16)dis32->itemAction;
             dis->itemState  = (UINT16)dis32->itemState;
-            dis->hwndItem   = WIN_Handle16( dis32->hwndItem );
+            dis->hwndItem   = HWND_16( dis32->hwndItem );
             dis->hDC        = (HDC16)dis32->hDC;
             dis->itemData   = dis32->itemData;
             CONV_RECT32TO16( &dis32->rcItem, &dis->rcItem );
@@ -2038,7 +2038,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         }
         else
         {
-            *pwparam16 = WIN_Handle16( (HWND)wParam32 );
+            *pwparam16 = HWND_16( (HWND)wParam32 );
             *plparam = 0;
         }
         return 0;
@@ -2108,7 +2108,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             LPMSG16 msg16 = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG16) );
 
             if (!msg16) return -1;
-            msg16->hwnd = WIN_Handle16( msg32->hwnd );
+            msg16->hwnd = HWND_16( msg32->hwnd );
             msg16->lParam = msg32->lParam;
             msg16->time = msg32->time;
             CONV_POINT32TO16(&msg32->pt,&msg16->pt);
@@ -2148,7 +2148,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
-	*pwparam16 = WIN_Handle16(wParam32);
+	*pwparam16 = HWND_16((HWND)wParam32);
 	return 0;
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
@@ -2157,7 +2157,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 	    unsigned    lo32, hi;
 	    HANDLE16	lo16 = 0;
 
-	    *pwparam16 = WIN_Handle16(wParam32);
+	    *pwparam16 = HWND_16((HWND)wParam32);
             UnpackDDElParam(msg32, *plparam, &lo32, &hi);
 	    if (lo32 && !(lo16 = convert_handle_32_to_16(lo32, GMEM_DDESHARE)))
 		return -1;
@@ -2170,7 +2170,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 	    int		flag = 0;
 	    char	buf[2];
 
-	    *pwparam16 = WIN_Handle16(wParam32);
+	    *pwparam16 = HWND_16((HWND)wParam32);
 
             UnpackDDElParam(msg32, *plparam, &lo, &hi);
 
@@ -2672,7 +2672,7 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = WINPROC_CallWndProc16( func, WIN_Handle16(hwnd), msg16,
+    mp16.lResult = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16,
                                           mp16.wParam, mp16.lParam );
     WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, &mp16 );
     return mp16.lResult;
@@ -2698,7 +2698,7 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
     if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam,
                                &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = WINPROC_CallWndProc16( func, WIN_Handle16(hwnd), msg16,
+    mp16.lResult = WINPROC_CallWndProc16( func, HWND_16(hwnd), msg16,
                                           mp16.wParam, mp16.lParam );
     WINPROC_UnmapMsg32WTo16( hwnd, msg, wParam, lParam, &mp16 );
     return mp16.lResult;

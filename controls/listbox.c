@@ -32,6 +32,7 @@
 #include "user.h"
 #include "controls.h"
 #include "wine/debug.h"
+#include "win.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 WINE_DECLARE_DEBUG_CHANNEL(combo);
@@ -106,7 +107,7 @@ typedef struct
 
 #define SEND_NOTIFICATION(hwnd,descr,code) \
     (SendMessageW( (descr)->owner, WM_COMMAND, \
-     MAKEWPARAM( GetWindowLongA((hwnd),GWL_ID), (code)), (hwnd) ))
+     MAKEWPARAM( GetWindowLongA((hwnd),GWL_ID), (code)), (LPARAM)(hwnd) ))
 
 #define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
 
@@ -2351,7 +2352,7 @@ static LRESULT LISTBOX_HandleChar( HWND hwnd, LB_DESCR *descr, WCHAR charW )
     {
         caret = SendMessageW( descr->owner, WM_CHARTOITEM,
                                 MAKEWPARAM(charW, descr->focus_item),
-                                hwnd );
+                                (LPARAM)hwnd );
         if (caret == -2) return 0;
     }
     if (caret == -1)
@@ -3012,7 +3013,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             LPDRAGINFO16 dragInfo = MapSL( lParam );
             dragInfo->l = LISTBOX_GetItemFromPoint( descr, dragInfo->pt.x,
                                                 dragInfo->pt.y );
-            return SendMessage16( descr->owner, msg, wParam, lParam );
+            return SendMessage16( HWND_16(descr->owner), msg, wParam, lParam );
         }
 	break;
 

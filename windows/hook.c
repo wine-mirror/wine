@@ -189,7 +189,7 @@ static LRESULT call_hook_16_to_32( HOOKPROC proc, INT id, INT code, WPARAM wpara
                     cs32.lpszClass = MapSL( cs16->lpszClass );
                     ret = proc( code, wparam, (LPARAM)&cbtcw32 );
                 }
-                cbtcw16->hwndInsertAfter = WIN_Handle16( cbtcw32.hwndInsertAfter );
+                cbtcw16->hwndInsertAfter = HWND_16( cbtcw32.hwndInsertAfter );
                 break;
             }
         case HCBT_ACTIVATE:
@@ -338,7 +338,7 @@ static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wpa
         CWPSTRUCT16 cwp16;
         MSGPARAM16 mp16;
 
-        cwp16.hwnd   = WIN_Handle16(cwp32->hwnd);
+        cwp16.hwnd   = HWND_16(cwp32->hwnd);
         cwp16.lParam = cwp32->lParam;
 
         if (unicode)
@@ -375,7 +375,7 @@ static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wpa
 
                 STRUCT32_CREATESTRUCT32Ato16( cbtcw32->lpcs, &cs16 );
                 cbtcw16.lpcs = (CREATESTRUCT16 *)MapLS( &cs16 );
-                cbtcw16.hwndInsertAfter = WIN_Handle16( cbtcw32->hwndInsertAfter );
+                cbtcw16.hwndInsertAfter = HWND_16( cbtcw32->hwndInsertAfter );
                 lparam = MapLS( &cbtcw16 );
 
                 if (unicode)
@@ -406,7 +406,7 @@ static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wpa
                 CBTACTIVATESTRUCT16 cas16;
 
                 cas16.fMouse     = cas32->fMouse;
-                cas16.hWndActive = WIN_Handle16( cas32->hWndActive );
+                cas16.hWndActive = HWND_16( cas32->hWndActive );
 
                 lparam = MapLS( &cas16 );
                 ret = call_hook_16( proc, id, code, wparam, lparam );
@@ -420,7 +420,7 @@ static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wpa
 
                 ms16.pt.x         = ms32->pt.x;
                 ms16.pt.y         = ms32->pt.y;
-                ms16.hwnd         = WIN_Handle16( ms32->hwnd );
+                ms16.hwnd         = HWND_16( ms32->hwnd );
                 ms16.wHitTestCode = ms32->wHitTestCode;
                 ms16.dwExtraInfo  = ms32->dwExtraInfo;
 
@@ -450,7 +450,7 @@ static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wpa
 
         ms16.pt.x         = ms32->pt.x;
         ms16.pt.y         = ms32->pt.y;
-        ms16.hwnd         = WIN_Handle16( ms32->hwnd );
+        ms16.hwnd         = HWND_16( ms32->hwnd );
         ms16.wHitTestCode = ms32->wHitTestCode;
         ms16.dwExtraInfo  = ms32->dwExtraInfo;
 
@@ -1099,7 +1099,7 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
 
         ret = (BOOL16)CallMsgFilterA(&msg32, (INT)code);
 
-        lpmsg16_32->msg.hwnd    = WIN_Handle16( msg32.hwnd );
+        lpmsg16_32->msg.hwnd    = HWND_16( msg32.hwnd );
         lpmsg16_32->msg.message = msg32.message;
         lpmsg16_32->msg.wParam  = LOWORD(msg32.wParam);
         lpmsg16_32->msg.lParam  = msg32.lParam;

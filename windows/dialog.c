@@ -452,7 +452,7 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
                                                        MulDiv(info.y, dlgInfo->yBaseUnit, 8),
                                                        MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
                                                        MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
-                                                       WIN_Handle16(hwnd), (HMENU16)info.id,
+                                                       HWND_16(hwnd), (HMENU16)info.id,
                                                        instance, (LPVOID)segptr ));
             UnMapLS( segptr );
         }
@@ -812,7 +812,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         hwnd = WIN_Handle32( CreateWindowEx16(template.exStyle, template.className,
                                               template.caption, template.style & ~WS_VISIBLE,
                                               rect.left, rect.top, rect.right, rect.bottom,
-                                              WIN_Handle16(owner), dlgInfo->hMenu, hInst, NULL ));
+                                              HWND_16(owner), dlgInfo->hMenu, hInst, NULL ));
     else
         hwnd = CreateWindowExW(template.exStyle, (LPCWSTR)template.className,
                                  (LPCWSTR)template.caption,
@@ -836,7 +836,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, (LONG)dlgInfo );
     switch(procType)
     {
-    case WIN_PROC_16: SetWindowLong16( WIN_Handle16(hwnd), DWL_DLGPROC, (LONG)dlgProc ); break;
+    case WIN_PROC_16: SetWindowLong16( HWND_16(hwnd), DWL_DLGPROC, (LONG)dlgProc ); break;
     case WIN_PROC_32A: SetWindowLongA( hwnd, DWL_DLGPROC, (LONG)dlgProc ); break;
     case WIN_PROC_32W: SetWindowLongW( hwnd, DWL_DLGPROC, (LONG)dlgProc ); break;
     default: break;
@@ -973,7 +973,7 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
                                            HWND16 owner, DLGPROC16 dlgProc,
                                            LPARAM param )
 {
-    return WIN_Handle16( DIALOG_CreateIndirect( hInst, dlgTemplate, WIN_Handle32(owner),
+    return HWND_16( DIALOG_CreateIndirect( hInst, dlgTemplate, WIN_Handle32(owner),
                                                 (DLGPROC)dlgProc, param, WIN_PROC_16, FALSE ));
 }
 

@@ -417,7 +417,7 @@ static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
   dis.itemData   = 0;
   GetClientRect( hwnd, &dis.rcItem );
 
-  SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
+  SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hwnd );
   SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
 }
 
@@ -465,9 +465,11 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     if ((style & SS_NOPREFIX) || ((style & SS_TYPEMASK) != SS_SIMPLE))
     {
-        hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
+        hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc,
+			       (LPARAM)hwnd );
         if (!hBrush) /* did the app forget to call defwindowproc ? */
-            hBrush = DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd);
+            hBrush = DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC, hdc,
+				    (LPARAM)hwnd);
         FillRect( hdc, &rc, hBrush );
     }
     if (!IsWindowEnabled(hwnd)) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
@@ -526,7 +528,7 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
     HICON hIcon;
 
     GetClientRect( hwnd, &rc );
-    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
+    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hwnd );
     FillRect( hdc, &rc, hbrush );
     if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
         DrawIcon( hdc, rc.left, rc.top, hIcon );
@@ -541,7 +543,7 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
     HBITMAP oldbitmap;
 
     GetClientRect( hwnd, &rc );
-    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
+    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hwnd );
     FillRect( hdc, &rc, hbrush );
 
     if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
