@@ -245,7 +245,7 @@ static int      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
     if ((fd = open(ossdev->dev_name, ossdev->open_access|O_NDELAY, 0)) == -1)
     {
         WARN("Couldn't open out %s (%s)\n", ossdev->dev_name, strerror(errno));
-        return (errno == EBUSY) ? MMSYSERR_ALLOCATED : MMSYSERR_ERROR;
+        return -1;
     }
     fcntl(fd, F_SETFD, 1); /* set close on exec flag */
     /* turn full duplex on if it has been requested */
@@ -373,7 +373,7 @@ static int     OSS_ResetDevice(OSS_DEVICE* ossdev)
     }
     TRACE("Changing fd from %d to ", ossdev->fd);
     close(ossdev->fd);
-    OSS_RawOpenDevice(ossdev, &ossdev->audio_fragment);
+    ossdev->fd = OSS_RawOpenDevice(ossdev, &ossdev->audio_fragment);
     TRACE("%d\n", ossdev->fd);
     return ossdev->fd;
 }
