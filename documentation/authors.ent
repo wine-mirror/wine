@@ -16,6 +16,9 @@
 <!entity name-web-admin "WineHQ Web-Admin">
 <!entity email-web-admin "web-admin@winehq.com">
 
+<!entity name-wine-devel "wine-devel Mailing List">
+<!entity email-wine-devel "wine-devel@winehq.com">
+
 <!entity name-jonathan-buzzard "Jonathan Buzzard">
 <!entity email-jonathan-buzzard "jab@hex.prestel.co.uk">
 
@@ -49,6 +52,9 @@
 <!entity name-marcus-meissner "Marcus Meissner">
 <!-- <!entity email-marcus-meissner "msmeissn@cip.informatik.uni-erlangen.de"> -->
 <!entity email-marcus-meissner "Marcus.Meissner@caldera.de">
+
+<!entity name-dustin-navea "Dustin Navea">
+<!entity email-dustin-navea "Speeddymon@yahoo.com">
 
 <!entity name-bruce-milner "Bruce Milner">
 <!entity email-bruce-milner "">
