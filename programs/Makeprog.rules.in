@@ -1,0 +1,50 @@
+# Global rules for building a Winelib program     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# MODULE       : name of the main module being built
+# EXTRALIBS    : extra libraries to link in (optional)
+# EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DEFS       = @DLLFLAGS@ $(EXTRADEFS)
+LDDLLFLAGS = @LDDLLFLAGS@
+ALL_OBJS   = $(OBJS) $(MODULE).spec.o
+ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS)
+SYMBOLFILE = $(MODULE).tmp.o
+
+all: $(MODULE)
+
+@MAKE_RULES@
+
+# Rules for main module
+
+$(MODULE).so: $(ALL_OBJS) Makefile.in
+	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ $(ALL_LIBS)
+
+$(MODULE): $(MODULE).so
+	$(RM) $(MODULE) && $(LN_S) $(TOPOBJDIR)/wine $(MODULE)
+
+# Rules for checking that no imports are missing
+
+checklink:: $(MODULE).so
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE).so $(ALL_LIBS) && $(RM) checklink
+
+# Rules for debug channels
+
+debug_channels: dummy
+	$(TOPSRCDIR)/tools/make_debug $(MODULE).spec $(C_SRCS)
+
+# Rules for installation
+
+install:: $(MODULE).so
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
+	cd $(bindir) && $(LN_S) wine $(MODULE)
+
+uninstall::
+	cd $(bindir) && $(RM) $(MODULE) $(MODULE).so
+
+clean::
+	$(RM) $(MODULE)

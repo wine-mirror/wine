@@ -25,10 +25,13 @@ all: $(SUBDIRS)
 
 @MAKE_RULES@
 
-install::
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) install) || exit 1; done
+$(SUBDIRS:%=%/__checklink__): dummy
+	@cd `dirname $@` && $(MAKE) checklink
 
-uninstall::
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) uninstall) || exit 1; done
+install:: $(SUBDIRS:%=%/__install__)
+
+uninstall:: $(SUBDIRS:%=%/__uninstall__)
+
+checklink:: $(SUBDIRS:%=%/__checklink__)
 
 ### Dependencies:

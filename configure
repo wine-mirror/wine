@@ -6371,6 +6371,9 @@ MAKE_RULES=Make.rules
 MAKE_DLL_RULES=dlls/Makedll.rules
 
 
+MAKE_PROG_RULES=programs/Makeprog.rules
+
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -6474,11 +6477,12 @@ ac_given_INSTALL="$INSTALL"
 
 trap 'rm -fr `echo "
 Make.rules
+dlls/Makedll.rules
+programs/Makeprog.rules
 Makefile
 console/Makefile
 controls/Makefile
 debugger/Makefile
-dlls/Makedll.rules
 dlls/Makefile
 dlls/advapi32/Makefile
 dlls/avifil32/Makefile
@@ -6667,6 +6671,8 @@ s%@GCC_NO_BUILTIN@%$GCC_NO_BUILTIN%g
 s%@MAKE_RULES@%%g
 /@MAKE_DLL_RULES@/r $MAKE_DLL_RULES
 s%@MAKE_DLL_RULES@%%g
+/@MAKE_PROG_RULES@/r $MAKE_PROG_RULES
+s%@MAKE_PROG_RULES@%%g
 
 CEOF
 EOF
@@ -6709,11 +6715,12 @@ EOF
 cat >> $CONFIG_STATUS <<EOF
 
 CONFIG_FILES=\${CONFIG_FILES-"Make.rules
+dlls/Makedll.rules
+programs/Makeprog.rules
 Makefile
 console/Makefile
 controls/Makefile
 debugger/Makefile
-dlls/Makedll.rules
 dlls/Makefile
 dlls/advapi32/Makefile
 dlls/avifil32/Makefile
