@@ -259,7 +259,7 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
         /* If we got a 32-bit hRsrc, we don't need to convert it */
 
-        size = NE_AccessResource( pModule, hRsrc );
+        size = NE_SizeofResource( pModule, hRsrc );
     }
 
     return size;
