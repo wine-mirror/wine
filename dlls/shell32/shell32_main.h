@@ -86,7 +86,11 @@ extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
 extern LPSHELLLINK	IShellLink_Constructor(void);
 extern LPSHELLLINKW	IShellLinkW_Constructor(void);
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
-extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
+extern LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
+
+/* fixme: rename the functions when the shell32.dll has it's own exports namespace */
+HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI  SHELL32_DllCanUnloadNow(void);
 
 /* elements of this structure are accessed directly from within shell32 */
 typedef struct 

@@ -752,13 +752,13 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 
 	  pObj = (LPUNKNOWN)IDataObject_Constructor (hwndOwner, (IShellFolder *)This, apidl, cidl);
 	}
-	else if(IsEqualIID(riid, &IID_IExtractIcon))
+	else if(IsEqualIID(riid, &IID_IExtractIconA))
 	{ 
 	  if (cidl != 1)
 	    return(E_INVALIDARG);
 
 	  pidl = ILCombine(This->pMyPidl,apidl[0]);
-	  pObj = (LPUNKNOWN)IExtractIcon_Constructor( pidl );
+	  pObj = (LPUNKNOWN)IExtractIconA_Constructor( pidl );
 	  SHFree(pidl);
 	} 
 	else if (IsEqualIID(riid, &IID_IDropTarget))

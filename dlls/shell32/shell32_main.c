@@ -1089,9 +1089,9 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      { pdesktopfolder->lpvtbl->fnRelease(pdesktopfolder);
 	      }
 
-	      /* this one is here ot check if AddRef/Release is balanced */
+	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
-	      { FIXME(shell,"%u objects left\n", shell32_ObjCount);
+	      { WARN(shell,"leaving with %u objects left (memory leak)\n", shell32_ObjCount);
 	      }
 	    }
 	    TRACE(shell, "refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);

@@ -1,11 +1,18 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
-#include "windef.h"
-#include "winbase.h"	/* WIN32_FIND_* */
 #include "wine/obj_base.h"
 #include "wine/obj_shelllink.h"
 #include "wine/obj_shellfolder.h"
+#include "wine/obj_shellbrowser.h"
+#include "wine/obj_contextmenu.h"
+#include "wine/obj_shellextinit.h"
+#include "wine/obj_extracticon.h"
+#include "wine/obj_commdlgbrowser.h"
+#include "wine/obj_dockingwindowframe.h"
+
+#include "windef.h"
+#include "winbase.h"	/* WIN32_FIND_* */
 #include "ole2.h"
 #include "shell.h"
 #include "commctrl.h"
@@ -17,142 +24,14 @@
 #define FAR
 #define THIS_ THIS,
 
-/****************************************************************************
-*  DllGetClassObject
-*/
-DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID,REFIID,LPVOID*);
-
-
-
 /* foreward declaration of the objects*/
-typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
-typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
-typedef struct tagSHELLVIEW	*LPSHELLVIEW,	IShellView;
-typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
 typedef struct tagSHELLICON	*LPSHELLICON,	IShellIcon;
-typedef struct tagDOCKINGWINDOWFRAME	*LPDOCKINGWINDOWFRAME,	IDockingWindowFrame;
-typedef struct tagCOMMDLGBROWSER	*LPCOMMDLGBROWSER,	ICommDlgBrowser;
- 
+
 
 /*****************************************************************************
  * IContextMenu interface
  */
-#define THIS LPCONTEXTMENU me
 
-/* default menu items*/
-#define IDM_EXPLORE  0
-#define IDM_OPEN     1
-#define IDM_RENAME   2
-#define IDM_LAST     IDM_RENAME
-
-/* QueryContextMenu uFlags */
-#define CMF_NORMAL              0x00000000
-#define CMF_DEFAULTONLY         0x00000001
-#define CMF_VERBSONLY           0x00000002
-#define CMF_EXPLORE             0x00000004
-#define CMF_NOVERBS             0x00000008
-#define CMF_CANRENAME           0x00000010
-#define CMF_NODEFAULT           0x00000020
-#define CMF_INCLUDESTATIC       0x00000040
-#define CMF_RESERVED            0xffff0000      /* View specific */
-
-/* GetCommandString uFlags */
-#define GCS_VERBA        0x00000000     /* canonical verb */
-#define GCS_HELPTEXTA    0x00000001     /* help text (for status bar) */
-#define GCS_VALIDATEA    0x00000002     /* validate command exists */
-#define GCS_VERBW        0x00000004     /* canonical verb (unicode) */
-#define GCS_HELPTEXTW    0x00000005     /* help text (unicode version) */
-#define GCS_VALIDATEW    0x00000006     /* validate command exists (unicode) */
-#define GCS_UNICODE      0x00000004     /* for bit testing - Unicode string */
-
-#define GCS_VERB        GCS_VERBA
-#define GCS_HELPTEXT    GCS_HELPTEXTA
-#define GCS_VALIDATE    GCS_VALIDATEA
-
-#define CMDSTR_NEWFOLDERA   "NewFolder"
-#define CMDSTR_VIEWLISTA    "ViewList"
-#define CMDSTR_VIEWDETAILSA "ViewDetails"
-#define CMDSTR_NEWFOLDERW   L"NewFolder"
-#define CMDSTR_VIEWLISTW    L"ViewList"
-#define CMDSTR_VIEWDETAILSW L"ViewDetails"
-
-#define CMDSTR_NEWFOLDER    CMDSTR_NEWFOLDERA
-#define CMDSTR_VIEWLIST     CMDSTR_VIEWLISTA
-#define CMDSTR_VIEWDETAILS  CMDSTR_VIEWDETAILSA
-
-#define CMIC_MASK_HOTKEY        SEE_MASK_HOTKEY
-#define CMIC_MASK_ICON          SEE_MASK_ICON
-#define CMIC_MASK_FLAG_NO_UI    SEE_MASK_FLAG_NO_UI
-#define CMIC_MASK_UNICODE       SEE_MASK_UNICODE
-#define CMIC_MASK_NO_CONSOLE    SEE_MASK_NO_CONSOLE
-#define CMIC_MASK_HASLINKNAME   SEE_MASK_HASLINKNAME
-#define CMIC_MASK_FLAG_SEP_VDM  SEE_MASK_FLAG_SEPVDM
-#define CMIC_MASK_HASTITLE      SEE_MASK_HASTITLE
-#define CMIC_MASK_ASYNCOK       SEE_MASK_ASYNCOK
-
-#define CMIC_MASK_PTINVOKE      0x20000000
-
-/*NOTE: When SEE_MASK_HMONITOR is set, hIcon is treated as hMonitor */
-typedef struct tagCMINVOKECOMMANDINFO 
-{   DWORD cbSize;        /* sizeof(CMINVOKECOMMANDINFO) */
-    DWORD fMask;         /* any combination of CMIC_MASK_* */
-    HWND hwnd;         /* might be NULL (indicating no owner window) */
-    LPCSTR lpVerb;       /* either a string or MAKEINTRESOURCE(idOffset) */
-    LPCSTR lpParameters; /* might be NULL (indicating no parameter) */
-    LPCSTR lpDirectory;  /* might be NULL (indicating no specific directory) */
-   INT nShow;           /* one of SW_ values for ShowWindow() API */
-
-    DWORD dwHotKey;
-    HANDLE hIcon;
-} CMINVOKECOMMANDINFO,  *LPCMINVOKECOMMANDINFO;
-
-typedef struct tagCMInvokeCommandInfoEx 
-{   DWORD cbSize;        /* must be sizeof(CMINVOKECOMMANDINFOEX) */
-    DWORD fMask;         /* any combination of CMIC_MASK_* */
-    HWND hwnd;         /* might be NULL (indicating no owner window) */
-    LPCSTR lpVerb;       /* either a string or MAKEINTRESOURCE(idOffset) */
-    LPCSTR lpParameters; /* might be NULL (indicating no parameter) */
-    LPCSTR lpDirectory;  /* might be NULL (indicating no specific directory) */
-	INT nShow;           /* one of SW_ values for ShowWindow() API */
-
-    DWORD dwHotKey;
-    
-    HANDLE hIcon;
-    LPCSTR lpTitle;        /* For CreateProcess-StartupInfo.lpTitle */
-    LPCWSTR lpVerbW;       /* Unicode verb (for those who can use it) */
-    LPCWSTR lpParametersW; /* Unicode parameters (for those who can use it) */
-    LPCWSTR lpDirectoryW;  /* Unicode directory (for those who can use it) */
-    LPCWSTR lpTitleW;      /* Unicode title (for those who can use it) */
-    POINT ptInvoke;      /* Point where it's invoked */
-
-} CMINVOKECOMMANDINFOEX,  *LPCMINVOKECOMMANDINFOEX;
-#undef THIS
-
-
-#define ICOM_INTERFACE IContextMenu
-#define IContextMenu_METHODS \
-    ICOM_METHOD5(HRESULT,QueryContextMenu,       HMENU,hmenu, UINT,indexMenu, UINT,idCmdFirst, UINT,idCmdLast, UINT,uFlags) \
-    ICOM_METHOD1(HRESULT,InvokeCommand,       LPCMINVOKECOMMANDINFO,lpici) \
-    ICOM_METHOD5(HRESULT,GetCommandString,       UINT,idCmd, UINT,uType, UINT*,pwReserved, LPSTR,pszName, UINT,cchMax) \
-    ICOM_METHOD3(HRESULT,HandleMenuMsg,        UINT,uMsg,WPARAM,wParam,LPARAM,lParam) \
-    void * guard;   /*possibly another nasty entry from ContextMenu3 ?*/
-#define IContextMenu_IMETHODS \
-		IUnknown_IMETHODS \
-    IContextMenu_METHODS
-ICOM_DEFINE(IContextMenu, IUnknown)
-#undef ICOM_INTERFACE
-
-#ifdef ICOM_CINTERFACE
-// *** IUnknown methods *** //
-#define IContextMenu_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IContextMenu_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IContextMenu_Release(p)            ICOM_CALL (Release,p)
-// *** IContextMenu methods *** //
-#define IContextMenu_QueryContextMenu(p,a,b,c,d,e)     ICOM_CALL5(QueryContextMenu,p,a,b,c,d,e)
-#define IContextMenu_InvokeCommand(p,a)                ICOM_CALL1(InvokeCommand,p,a)
-#define IContextMenu_GetCommandString(p,a,b,c,d,e)     ICOM_CALL5(GetCommandString,p,a,b,c,d,e)
-#define IContextMenu_HandleMenuMsg(p,a,b,c)            ICOM_CALL3(HandleMenuMsg,p,a,b,c)
-#endif
 
 /* DATAOBJECT_InitShellIDList*/
 #define CFSTR_SHELLIDLIST       "Shell IDList Array"      /* CF_IDLIST */
@@ -225,356 +104,14 @@ extern void IDLList_Destructor(LPIDLLIST me);
 #undef THIS
 
 
-/*****************************************************************************
- * IShellExtInit interface
- */
-#define THIS LPSHELLEXTINIT me
-
-typedef struct IShellExtInit_VTable 
-{   /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* *** IShellExtInit methods *** */
-    STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidlFolder, LPDATAOBJECT lpdobj, HKEY hkeyProgID) PURE;
-} IShellExtInit_VTable,*LPSHELLEXTINIT_VTABLE;
-
-struct tagSHELLEXTINIT
-{ LPSHELLEXTINIT_VTABLE	lpvtbl;
-  DWORD			 ref;
-};
-
-#undef THIS
-
-/*-------------------------------------------------------------------------- */
-/* */
-/* FOLDERSETTINGS */
-/* */
-/*  FOLDERSETTINGS is a data structure that explorer passes from one folder */
-/* view to another, when the user is browsing. It calls ISV::GetCurrentInfo */
-/* member to get the current settings and pass it to ISV::CreateViewWindow */
-/* to allow the next folder view "inherit" it. These settings assumes a */
-/* particular UI (which the shell's folder view has), and shell extensions */
-/* may or may not use those settings. */
-/* */
-/*-------------------------------------------------------------------------- */
-
-typedef LPBYTE LPVIEWSETTINGS;
-
-/* NB Bitfields. */
-/* FWF_DESKTOP implies FWF_TRANSPARENT/NOCLIENTEDGE/NOSCROLL */
-typedef enum
-{ FWF_AUTOARRANGE =       0x0001,
-  FWF_ABBREVIATEDNAMES =  0x0002,
-  FWF_SNAPTOGRID =        0x0004,
-  FWF_OWNERDATA =         0x0008,
-  FWF_BESTFITWINDOW =     0x0010,
-  FWF_DESKTOP =           0x0020,
-  FWF_SINGLESEL =         0x0040,
-  FWF_NOSUBFOLDERS =      0x0080,
-  FWF_TRANSPARENT  =      0x0100,
-  FWF_NOCLIENTEDGE =      0x0200,
-  FWF_NOSCROLL     =      0x0400,
-  FWF_ALIGNLEFT    =      0x0800,
-  FWF_SINGLECLICKACTIVATE=0x8000  /* TEMPORARY -- NO UI FOR THIS */
-} FOLDERFLAGS;
-
-typedef enum
-{ FVM_ICON =              1,
-  FVM_SMALLICON =         2,
-  FVM_LIST =              3,
-  FVM_DETAILS =           4
-} FOLDERVIEWMODE;
-
-typedef struct
-{ UINT ViewMode;       /* View mode (FOLDERVIEWMODE values) */
-  UINT fFlags;         /* View options (FOLDERFLAGS bits) */
-} FOLDERSETTINGS, *LPFOLDERSETTINGS;
-
-typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
-
-
-/************************************************************************
-* IShellBrowser interface
-*/
-#define THIS LPSHELLBROWSER me
-/* targets for GetWindow/SendControlMsg */
-#define FCW_STATUS		0x0001
-#define FCW_TOOLBAR		0x0002
-#define FCW_TREE		0x0003
-#define FCW_INTERNETBAR		0x0006
-#define FCW_PROGRESS		0x0008
-
-/* wFlags for BrowseObject*/
-#define SBSP_DEFBROWSER		0x0000
-#define SBSP_SAMEBROWSER	0x0001
-#define SBSP_NEWBROWSER		0x0002
-
-#define SBSP_DEFMODE		0x0000
-#define SBSP_OPENMODE		0x0010
-#define SBSP_EXPLOREMODE	0x0020
-
-#define SBSP_ABSOLUTE		0x0000
-#define SBSP_RELATIVE		0x1000
-#define SBSP_PARENT		0x2000
-#define SBSP_NAVIGATEBACK	0x4000
-#define SBSP_NAVIGATEFORWARD	0x8000
-
-#define SBSP_ALLOW_AUTONAVIGATE		0x10000
-
-#define SBSP_INITIATEDBYHLINKFRAME	0x80000000
-#define SBSP_REDIRECT			0x40000000
-#define SBSP_WRITENOHISTORY		0x08000000
-
-/* uFlage for SetToolbarItems */
-#define FCT_MERGE       0x0001
-#define FCT_CONFIGABLE  0x0002
-#define FCT_ADDTOEND    0x0004
-
-/* undocumented, found in the web posted by Chris Becke */ 
-#define CWM_SETPATH	(WM_USER+2)
-#define CWM_WANTIDLE	(WM_USER+3)
-#define CWM_GETSETCURRENTINFO	(WM_USER+4)
-#define CWM_SELECTITEM	(WM_USER+5)
-#define CWM_STOPWAITING	(WM_USER+6)
-#define CWM_GETISHELLBROWSER (WM_USER+7)
-
-typedef struct IShellBrowser_VTable 
-{    /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* *** IOleWindow methods *** */
-    STDMETHOD(GetWindow) (THIS_ HWND * lphwnd) PURE;
-    STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL fEnterMode) PURE;
-
-    /* *** IShellBrowser methods *** (same as IOleInPlaceFrame) */
-    STDMETHOD(InsertMenusSB) (THIS_ HMENU hmenuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths) PURE;
-    STDMETHOD(SetMenuSB) (THIS_ HMENU hmenuShared, HOLEMENU holemenuReserved, HWND hwndActiveObject) PURE;
-    STDMETHOD(RemoveMenusSB) (THIS_ HMENU hmenuShared) PURE;
-    STDMETHOD(SetStatusTextSB) (THIS_ LPCOLESTR lpszStatusText) PURE;
-    STDMETHOD(EnableModelessSB) (THIS_ BOOL fEnable) PURE;
-    STDMETHOD(TranslateAcceleratorSB) (THIS_ LPMSG lpmsg, WORD wID) PURE;
-
-    /* *** IShellBrowser methods *** */
-    STDMETHOD(BrowseObject)(THIS_ LPCITEMIDLIST pidl, UINT wFlags) PURE;
-    STDMETHOD(GetViewStateStream)(THIS_ DWORD grfMode, LPSTREAM  *ppStrm) PURE;
-    STDMETHOD(GetControlWindow)(THIS_ UINT id, HWND * lphwnd) PURE;
-    STDMETHOD(SendControlMsg)(THIS_ UINT id, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT * pret) PURE;
-    STDMETHOD(QueryActiveShellView)(THIS_ IShellView ** ppshv) PURE;
-    STDMETHOD(OnViewWindowActive)(THIS_ IShellView * ppshv) PURE;
-    STDMETHOD(SetToolbarItems)(THIS_ LPTBBUTTON lpButtons, UINT nButtons, UINT uFlags) PURE;
-} *LPSHELLBROWSER_VTABLE,IShellBrowser_VTable;
-
-struct tagSHELLBROWSER 
-{ LPSHELLBROWSER_VTABLE	lpvtbl;
-  DWORD	ref;
-};
-
-#undef THIS
-
 /************************************************************************
 * IShellView interface
 */
-#define THIS LPSHELLVIEW me
-
-/* shellview select item flags*/
-#define SVSI_DESELECT   0x0000
-#define SVSI_SELECT     0x0001
-#define SVSI_EDIT       0x0003  /* includes select */
-#define SVSI_DESELECTOTHERS 0x0004
-#define SVSI_ENSUREVISIBLE  0x0008
-#define SVSI_FOCUSED        0x0010
-
-/* shellview get item object flags */
-#define SVGIO_BACKGROUND    0x00000000
-#define SVGIO_SELECTION     0x00000001
-#define SVGIO_ALLVIEW       0x00000002
-
-/* The explorer dispatches WM_COMMAND messages based on the range of
- command/menuitem IDs. All the IDs of menuitems that the view (right
- pane) inserts must be in FCIDM_SHVIEWFIRST/LAST (otherwise, the explorer
- won't dispatch them). The view should not deal with any menuitems
- in FCIDM_BROWSERFIRST/LAST (otherwise, it won't work with the future
- version of the shell).
-
-  FCIDM_SHVIEWFIRST/LAST      for the right pane (IShellView)
-  FCIDM_BROWSERFIRST/LAST     for the explorer frame (IShellBrowser)
-  FCIDM_GLOBAL/LAST           for the explorer's submenu IDs
-*/
-#define FCIDM_SHVIEWFIRST	0x0000
-/* undocumented */
-#define FCIDM_SHVIEW_ARRANGE	0x7001
-#define FCIDM_SHVIEW_DELETE	0x7011
-#define FCIDM_SHVIEW_PROPERTIES	0x7013
-#define FCIDM_SHVIEW_CUT	0x7018
-#define FCIDM_SHVIEW_COPY	0x7019
-#define FCIDM_SHVIEW_INSERT	0x701A
-#define FCIDM_SHVIEW_UNDO	0x701B
-#define FCIDM_SHVIEW_INSERTLINK	0x701C
-#define FCIDM_SHVIEW_SELECTALL	0x7021
-#define FCIDM_SHVIEW_INVERTSELECTION	0x7022
-#define FCIDM_SHVIEW_BIGICON	0x7029
-#define FCIDM_SHVIEW_SMALLICON	0x702A
-#define FCIDM_SHVIEW_LISTVIEW	0x702B	
-#define FCIDM_SHVIEW_REPORTVIEW	0x702C
-#define FCIDM_SHVIEW_AUTOARRANGE	0x7031  
-#define FCIDM_SHVIEW_SNAPTOGRID	0x7032
-#define FCIDM_SHVIEW_HELP	0x7041
-
-#define FCIDM_SHVIEWLAST	0x7fff
-#define FCIDM_BROWSERFIRST	0xA000
-/* undocumented toolbar items from stddlg's*/
-#define FCIDM_TB_SMALLICON	0xA003
-#define FCIDM_TB_REPORTVIEW	0xA004
-
-#define FCIDM_BROWSERLAST	0xbf00
-#define FCIDM_GLOBALFIRST	0x8000
-#define FCIDM_GLOBALLAST	0x9fff
-
-/*
-* Global submenu IDs and separator IDs
-*/
-#define FCIDM_MENU_FILE             (FCIDM_GLOBALFIRST+0x0000)
-#define FCIDM_MENU_EDIT             (FCIDM_GLOBALFIRST+0x0040)
-#define FCIDM_MENU_VIEW             (FCIDM_GLOBALFIRST+0x0080)
-#define FCIDM_MENU_VIEW_SEP_OPTIONS (FCIDM_GLOBALFIRST+0x0081)
-#define FCIDM_MENU_TOOLS            (FCIDM_GLOBALFIRST+0x00c0)
-#define FCIDM_MENU_TOOLS_SEP_GOTO   (FCIDM_GLOBALFIRST+0x00c1)
-#define FCIDM_MENU_HELP             (FCIDM_GLOBALFIRST+0x0100)
-#define FCIDM_MENU_FIND             (FCIDM_GLOBALFIRST+0x0140)
-#define FCIDM_MENU_EXPLORE          (FCIDM_GLOBALFIRST+0x0150)
-#define FCIDM_MENU_FAVORITES        (FCIDM_GLOBALFIRST+0x0170)
-
-/* control IDs known to the view */
-#define FCIDM_TOOLBAR      (FCIDM_BROWSERFIRST + 0)
-#define FCIDM_STATUS       (FCIDM_BROWSERFIRST + 1)
-
-/* uState values for IShellView::UIActivate */
-typedef enum 
-{ SVUIA_DEACTIVATE       = 0,
-  SVUIA_ACTIVATE_NOFOCUS = 1,
-  SVUIA_ACTIVATE_FOCUS   = 2,
-  SVUIA_INPLACEACTIVATE  = 3          /* new flag for IShellView2 */
-} SVUIA_STATUS;
 
 
-
-typedef struct IShellView_VTable
-{   /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* *** IOleWindow methods *** */
-    STDMETHOD(GetWindow) (THIS_ HWND * lphwnd) PURE;
-    STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL fEnterMode) PURE;
-
-    /* *** IShellView methods *** */
-    STDMETHOD(TranslateAccelerator) (THIS_ LPMSG lpmsg) PURE;
-    STDMETHOD(EnableModeless) (THIS_ BOOL fEnable) PURE;
-    STDMETHOD(UIActivate) (THIS_ UINT uState) PURE;
-    STDMETHOD(Refresh) (THIS) PURE;
-    STDMETHOD(CreateViewWindow)(THIS_ IShellView *lpPrevView,LPCFOLDERSETTINGS lpfs, IShellBrowser * psb,RECT * prcView, HWND  *phWnd) PURE;
-    STDMETHOD(DestroyViewWindow)(THIS) PURE;
-    STDMETHOD(GetCurrentInfo)(THIS_ LPFOLDERSETTINGS lpfs) PURE;
-    STDMETHOD(AddPropertySheetPages)(THIS_ DWORD dwReserved,LPFNADDPROPSHEETPAGE lpfn, LPARAM lparam) PURE;
-    STDMETHOD(SaveViewState)(THIS) PURE;
-    STDMETHOD(SelectItem)(THIS_ LPCITEMIDLIST pidlItem, UINT uFlags) PURE;
-    STDMETHOD(GetItemObject)(THIS_ UINT uItem, REFIID riid,LPVOID *ppv) PURE;
-} IShellView_VTable,*LPSHELLVIEW_VTABLE;
-
-struct tagSHELLVIEW 
-{ LPSHELLVIEW_VTABLE lpvtbl;
-  DWORD		ref;
-  LPITEMIDLIST	mpidl;
-  LPSHELLFOLDER	pSFParent;
-  LPSHELLBROWSER	pShellBrowser;
-  LPCOMMDLGBROWSER	pCommDlgBrowser;
-  HWND	hWnd;
-  HWND	hWndList;
-  HWND	hWndParent;
-  FOLDERSETTINGS	FolderSettings;
-  HMENU	hMenu;
-  UINT	uState;
-  UINT	uSelected;
-  LPITEMIDLIST	*aSelectedItems;
-};
 
 typedef GUID SHELLVIEWID;
 #define SV_CLASS_NAME   ("SHELLDLL_DefView")
-
-#undef THIS
-/****************************************************************************
- * ICommDlgBrowser interface
- */
-#define THIS LPCOMMDLGBROWSER me
-
-/* for OnStateChange*/
-#define CDBOSC_SETFOCUS     0x00000000
-#define CDBOSC_KILLFOCUS    0x00000001
-#define CDBOSC_SELCHANGE    0x00000002
-#define CDBOSC_RENAME       0x00000003
-
-typedef struct ICommDlgBrowser_VTable
-{   /* IUnknown methods */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /* ICommDlgBrowser methods */
-    STDMETHOD(OnDefaultCommand) (THIS_  LPSHELLVIEW ppshv) PURE;
-    STDMETHOD(OnStateChange) (THIS_ LPSHELLVIEW ppshv, ULONG uChange) PURE;
-    STDMETHOD(IncludeObject) (THIS_ LPSHELLVIEW ppshv, LPCITEMIDLIST pidl) PURE;
-} ICommDlgBrowser_VTable,*LPCOMMDLGBROWSER_VTABLE;
-
-struct tagCOMMDLGBROWSER
-{ LPCOMMDLGBROWSER_VTABLE lpvtbl;
-  DWORD			     ref;
-};
-#undef THIS
-
-/****************************************************************************
- * IExtractIconinterface
- *
- * FIXME
- *  Is the ExtractIconA interface
- */
-#define THIS LPEXTRACTICON me
-
-/* GetIconLocation() input flags*/
-#define GIL_OPENICON     0x0001      /* allows containers to specify an "open" look */
-#define GIL_FORSHELL     0x0002      /* icon is to be displayed in a ShellFolder */
-#define GIL_ASYNC        0x0020      /* this is an async extract, return E_ASYNC */
-
-/* GetIconLocation() return flags */
-#define GIL_SIMULATEDOC  0x0001      /* simulate this document icon for this */
-#define GIL_PERINSTANCE  0x0002      /* icons from this class are per instance (each file has its own) */
-#define GIL_PERCLASS     0x0004      /* icons from this class per class (shared for all files of this type) */
-#define GIL_NOTFILENAME  0x0008      /* location is not a filename, must call ::ExtractIcon */
-#define GIL_DONTCACHE    0x0010      /* this icon should not be cached */
-
-typedef struct IExtractIcon IExtractIcon,*LPEXTRACTICON;
-typedef struct IExtractIcon_VTable
-{ /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-  STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-  /*** IExtractIcon methods ***/
-  STDMETHOD(GetIconLocation)(THIS_ UINT uFlags, LPSTR szIconFile, UINT cchMax,INT * piIndex, UINT * pwFlags) PURE;
-  STDMETHOD(Extract)(THIS_ LPCSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize) PURE;
-}IExtractIcon_VTable,*LPEXTRACTICON_VTABLE;
-
-struct IExtractIcon 
-{ LPEXTRACTICON_VTABLE lpvtbl;
-  DWORD ref;
-  LPITEMIDLIST pidl;
-};
-
-#undef THIS
 
 DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z);
 
@@ -599,36 +136,7 @@ struct tagSHELLICON
   DWORD ref;
 };
 #undef THIS
-/****************************************************************************
- * IDockingWindowFrame interface
- */
-#define THIS LPDOCKINGWINDOWFRAME me
 
-#define DWFRF_NORMAL		0x0000  /* femove toolbar flags*/
-#define DWFRF_DELETECONFIGDATA	0x0001
-#define DWFAF_HIDDEN		0x0001   /* add tolbar*/
-
-typedef struct IDockingWindowFrame_VTable
-{   STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    /*** IOleWindow methods ***/
-    STDMETHOD(GetWindow) (THIS_ HWND * lphwnd) PURE;
-    STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL fEnterMode) PURE;
-
-    /*** IDockingWindowFrame methods ***/
-    STDMETHOD(AddToolbar) (THIS_ IUnknown* punkSrc, LPCWSTR pwszItem, DWORD dwAddFlags) PURE;
-    STDMETHOD(RemoveToolbar) (THIS_ IUnknown* punkSrc, DWORD dwRemoveFlags) PURE;
-    STDMETHOD(FindToolbar) (THIS_ LPCWSTR pwszItem, REFIID riid, LPVOID* ppvObj) PURE;
-} IDockingWindowFrame_VTable, *LPDOCKINGWINDOWFRAME_VTABLE;
-
-struct tagDOCKINGWINDOWFRAME
-{ LPDOCKINGWINDOWFRAME_VTABLE lpvtbl;
-  DWORD ref;
-};
-
-#undef THIS
 /****************************************************************************
  * Shell Execute API
  */

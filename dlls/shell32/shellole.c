@@ -8,16 +8,22 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "winreg.h"
-#include "winerror.h"
+
 #include "wine/obj_base.h"
-#include "winversion.h"
+#include "wine/obj_shelllink.h"
+#include "wine/obj_shellfolder.h"
+#include "wine/obj_shellbrowser.h"
+#include "wine/obj_contextmenu.h"
+#include "wine/obj_shellextinit.h"
+#include "wine/obj_extracticon.h"
 
 #include "shlguid.h"
-#include "shlobj.h"
-#include "shell32_main.h"
-
+#include "winversion.h"
+#include "winreg.h"
+#include "winerror.h"
 #include "debug.h"
+
+#include "shell32_main.h"
 
 /*************************************************************************
  *
@@ -149,12 +155,9 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
  * With this pointer it's possible to call the IClassFactory_CreateInstance
  * method to get a instance of the requested Class.
  * This function does NOT instantiate the Class!!!
- * 
- * RETURNS
- *   HRESULT
  *
  */
-DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
+HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 {	HRESULT	hres = E_OUTOFMEMORY;
 	LPCLASSFACTORY lpclf;
 
@@ -317,16 +320,16 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 	} 
 	else if (IsEqualIID(riid, &IID_IShellView))
 	{ pObj = (IUnknown *)IShellView_Constructor(NULL,NULL);
- 	} 
-	else if (IsEqualIID(riid, &IID_IExtractIcon))
-	{ pObj = (IUnknown *)IExtractIcon_Constructor(NULL);
+	} 
+	else if (IsEqualIID(riid, &IID_IExtractIconA))
+	{ pObj = (IUnknown *)IExtractIconA_Constructor(NULL);
 	} 
 	else if (IsEqualIID(riid, &IID_IContextMenu))
 	{ pObj = (IUnknown *)IContextMenu_Constructor(NULL, NULL, 0);
- 	} 
+	} 
 	else if (IsEqualIID(riid, &IID_IDataObject))
 	{ pObj = (IUnknown *)IDataObject_Constructor(0,NULL,NULL,0);
- 	} 
+	} 
 	else
 	{ ERR(shell,"unknown IID requested\n\tIID:\t%s\n",xriid);
 	  return(E_NOINTERFACE);

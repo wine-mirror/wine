@@ -15,14 +15,13 @@
 #include "commctrl.h"
 #include "spy.h"
 
-#include "shlobj.h"
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
 #include "wine/obj_shellfolder.h"
+
 #include "shell.h"
 #include "pidl.h"
 #include "shell32_main.h"
-#include "shlguid.h"
 
 #define		IDD_TREEVIEW 99
 

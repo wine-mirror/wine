@@ -88,6 +88,45 @@ typedef enum tagSHCONTF
 #define SFGAO_REMOVABLE		0x02000000L	/* is this removeable media? */
 
 /************************************************************************
+ *
+ * FOLDERSETTINGS
+*/
+
+typedef LPBYTE LPVIEWSETTINGS;
+
+/* NB Bitfields. */
+/* FWF_DESKTOP implies FWF_TRANSPARENT/NOCLIENTEDGE/NOSCROLL */
+typedef enum
+{ FWF_AUTOARRANGE =       0x0001,
+  FWF_ABBREVIATEDNAMES =  0x0002,
+  FWF_SNAPTOGRID =        0x0004,
+  FWF_OWNERDATA =         0x0008,
+  FWF_BESTFITWINDOW =     0x0010,
+  FWF_DESKTOP =           0x0020,
+  FWF_SINGLESEL =         0x0040,
+  FWF_NOSUBFOLDERS =      0x0080,
+  FWF_TRANSPARENT  =      0x0100,
+  FWF_NOCLIENTEDGE =      0x0200,
+  FWF_NOSCROLL     =      0x0400,
+  FWF_ALIGNLEFT    =      0x0800,
+  FWF_SINGLECLICKACTIVATE=0x8000  /* TEMPORARY -- NO UI FOR THIS */
+} FOLDERFLAGS;
+
+typedef enum
+{ FVM_ICON =              1,
+  FVM_SMALLICON =         2,
+  FVM_LIST =              3,
+  FVM_DETAILS =           4
+} FOLDERVIEWMODE;
+
+typedef struct
+{ UINT ViewMode;       /* View mode (FOLDERVIEWMODE values) */
+  UINT fFlags;         /* View options (FOLDERFLAGS bits) */
+} FOLDERSETTINGS, *LPFOLDERSETTINGS;
+
+typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
+
+/************************************************************************
  * Desktopfolder
  */
 
@@ -133,7 +172,7 @@ ICOM_DEFINE(IShellFolder,IUnknown)
 #define IShellFolder_GetUIObjectOf(p,a,b,c,d,e,f)	ICOM_CALL6(GetUIObjectOf,p,a,b,c,d,e,f)
 #define IShellFolder_GetDisplayNameOf(p,a,b,c)		ICOM_CALL3(GetDisplayNameOf,p,a,b,c)
 #define IShellFolder_SetNameOf(p,a,b,c,d,e)		ICOM_CALL5(SetNameOf,p,a,b,c,d,e)
-#define IShellFolder_GetFolderPath(p,a,b)		ICOM_CALL2(GetDisplayNameOf,p,a,b)
+#define IShellFolder_GetFolderPath(p,a,b)		ICOM_CALL2(GetFolderPath,p,a,b)
 #endif
 
 /*****************************************************************************

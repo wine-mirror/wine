@@ -854,6 +854,12 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsC
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
 
 /*****************************************************************************
+ *	COM Server dll - exports
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI DllCanUnloadNow(void);
+
+/*****************************************************************************
  * Internal WINE API
  */
 #ifdef __WINE__
