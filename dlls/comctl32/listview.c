@@ -549,6 +549,38 @@ static inline char* debugrect(const RECT* rect)
     } else return "(null)";
 }
 
+static char * debugscrollinfo(const SCROLLINFO *pScrollInfo)
+{
+    char* buf = debug_getbuf(), *text = buf;
+    int len, size = DEBUG_BUFFER_SIZE;
+    
+    if (pScrollInfo == NULL) return "(null)";
+    len = snprintf(buf, size, "{cbSize=%d, ", pScrollInfo->cbSize);
+    if (len == -1) goto end; buf += len; size -= len;
+    if (pScrollInfo->fMask & SIF_RANGE)
+	len = snprintf(buf, size, "nMin=%d, nMax=%d, ", pScrollInfo->nMin, pScrollInfo->nMax);
+    else len = 0;
+    if (len == -1) goto end; buf += len; size -= len;
+    if (pScrollInfo->fMask & SIF_PAGE)
+	len = snprintf(buf, size, "nPage=%u, ", pScrollInfo->nPage);
+    else len = 0;
+    if (len == -1) goto end; buf += len; size -= len;
+    if (pScrollInfo->fMask & SIF_POS)
+	len = snprintf(buf, size, "nPos=%d, ", pScrollInfo->nPos);
+    else len = 0;
+    if (len == -1) goto end; buf += len; size -= len;
+    if (pScrollInfo->fMask & SIF_TRACKPOS)
+	len = snprintf(buf, size, "nTrackPos=%d, ", pScrollInfo->nTrackPos);
+    else len = 0;
+    if (len == -1) goto end; buf += len; size -= len;
+    goto undo;
+end:
+    buf = text + strlen(text);
+undo:
+    if (buf - text > 2) { buf[-2] = '}'; buf[-1] = 0; }
+    return text;
+} 
+
 static char* debugnmlistview(LPNMLISTVIEW plvnm)
 {
     if (plvnm)
@@ -594,7 +626,7 @@ static char* debuglvitem_t(LPLVITEMW lpLVItem, BOOL isW)
 end:
     buf = text + strlen(text);
 undo:
-    if (buf - text > 2) buf[-2] = '}'; buf[-1] = 0;
+    if (buf - text > 2) { buf[-2] = '}'; buf[-1] = 0; }
     return text;
 }
 
@@ -634,7 +666,7 @@ static char* debuglvcolumn_t(LPLVCOLUMNW lpColumn, BOOL isW)
 end:
     buf = text + strlen(text);
 undo:
-    if (buf - text > 2) buf[-2] = '}'; buf[-1] = 0;
+    if (buf - text > 2) { buf[-2] = '}'; buf[-1] = 0; }
     return text;
 }
 
@@ -1423,103 +1455,61 @@ static void LISTVIEW_UpdateHeaderSize(LISTVIEW_INFO *infoPtr, INT nNewScrollPos)
  */
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 {
-  UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
-  INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
-  INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
-  SCROLLINFO scrollInfo;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    SCROLLINFO horzInfo, vertInfo;
 
-  if (infoPtr->dwStyle & LVS_NOSCROLL) return;
-  /*if (!is_redrawing(infoPtr)) return;*/
+    if (infoPtr->dwStyle & LVS_NOSCROLL) return;
+    /*if (!is_redrawing(infoPtr)) return;*/
 
-  scrollInfo.cbSize = sizeof(SCROLLINFO);
+    ZeroMemory(&horzInfo, sizeof(SCROLLINFO));
+    horzInfo.cbSize = sizeof(SCROLLINFO);
+    horzInfo.nPage = infoPtr->rcList.right - infoPtr->rcList.left;
 
-  if (uView == LVS_LIST)
-  {
-    /* update horizontal scrollbar */
-    INT nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
-    INT nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
+    ZeroMemory(&vertInfo, sizeof(SCROLLINFO));
+    vertInfo.cbSize = sizeof(SCROLLINFO);
+    vertInfo.nPage = infoPtr->rcList.bottom - infoPtr->rcList.top;
 
-    TRACE("items=%d, perColumn=%d, perRow=%d\n",
-	  infoPtr->nItemCount, nCountPerColumn, nCountPerRow);
-   
-    scrollInfo.nMin = 0; 
-    scrollInfo.nMax = infoPtr->nItemCount / nCountPerColumn;
-    if((infoPtr->nItemCount % nCountPerColumn) == 0)
-        scrollInfo.nMax--;
-    if (scrollInfo.nMax < 0) scrollInfo.nMax = 0;
-    scrollInfo.nPos = ListView_GetTopIndex(infoPtr->hwndSelf) / nCountPerColumn;
-    scrollInfo.nPage = nCountPerRow;
-    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
-    SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
-    ShowScrollBar(infoPtr->hwndSelf, SB_VERT, FALSE);
-  }
-  else if (uView == LVS_REPORT)
-  {
-    BOOL test;
+    /* for now, we'll set info.nMax to the _count_, and adjust it later */
+    if (uView == LVS_LIST)
+    {
+	INT nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
+	horzInfo.nMax = (infoPtr->nItemCount + nPerCol - 1) / nPerCol;
+	horzInfo.nPage /= infoPtr->nItemWidth;
+    }
+    else if (uView == LVS_REPORT)
+    {
+	horzInfo.nMax = infoPtr->nItemWidth;
+	vertInfo.nMax = infoPtr->nItemCount;
+	vertInfo.nPage /= infoPtr->nItemHeight;
+    }
+    else /* LVS_ICON, or LVS_SMALLICON */
+    {
+	RECT rcView;
 
-    /* update vertical scrollbar */
-    scrollInfo.nMin = 0;
-    scrollInfo.nMax = infoPtr->nItemCount - 1;
-    scrollInfo.nPos = ListView_GetTopIndex(infoPtr->hwndSelf);
-    scrollInfo.nPage = LISTVIEW_GetCountPerColumn(infoPtr);
-    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
-    test = (scrollInfo.nMin >= scrollInfo.nMax - max((INT)scrollInfo.nPage - 1, 0));
-    TRACE("LVS_REPORT Vert. nMax=%d, nPage=%d, test=%d\n",
-	  scrollInfo.nMax, scrollInfo.nPage, test);
-    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
-    ShowScrollBar(infoPtr->hwndSelf, SB_VERT, (test) ? FALSE : TRUE);
+	if (LISTVIEW_GetViewRect(infoPtr, &rcView))
+	{
+	    horzInfo.nMax = rcView.right - rcView.left;
+	    vertInfo.nMax = rcView.bottom - rcView.top;
+	}
+    }
+  
+    horzInfo.fMask = SIF_RANGE | SIF_PAGE;
+    horzInfo.nMax = max(horzInfo.nMax - 1, 0);
+    SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo, TRUE);
+    TRACE("horzInfo=%s\n", debugscrollinfo(&horzInfo));
 
-    /* update horizontal scrollbar */
-    scrollInfo.fMask = SIF_POS;
-    if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
-      scrollInfo.nPos = 0;
-    scrollInfo.nMin = 0;
-    scrollInfo.nMax = max(infoPtr->nItemWidth, 0)-1;
-    scrollInfo.nPage = nListWidth;
-    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE  ;
-    test = (scrollInfo.nMin >= scrollInfo.nMax - max((INT)scrollInfo.nPage - 1, 0));
-    TRACE("LVS_REPORT Horz. nMax=%d, nPage=%d, test=%d\n",
-	  scrollInfo.nMax, scrollInfo.nPage, test);
-    SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
-    ShowScrollBar(infoPtr->hwndSelf, SB_HORZ, (test) ? FALSE : TRUE);
+    vertInfo.fMask = SIF_RANGE | SIF_PAGE;
+    vertInfo.nMax = max(vertInfo.nMax - 1, 0);
+    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &vertInfo, TRUE);
+    TRACE("vertInfo=%s\n", debugscrollinfo(&vertInfo));
 
     /* Update the Header Control */
-    scrollInfo.fMask = SIF_POS;
-    GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo);
-    LISTVIEW_UpdateHeaderSize(infoPtr, scrollInfo.nPos);
-
-  }
-  else
-  {
-    RECT rcView;
-
-    if (LISTVIEW_GetViewRect(infoPtr, &rcView))
+    if (uView == LVS_REPORT)
     {
-      TRACE("rcView=%s, rcList=%s\n", debugrect(&rcView), debugrect(&infoPtr->rcList));
-
-      /* Update Horizontal Scrollbar */
-      scrollInfo.fMask = SIF_POS;
-      if (!GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
-        scrollInfo.nPos = 0;
-      scrollInfo.nMin = 0;
-      scrollInfo.nMax = max(rcView.right - rcView.left - 1, 0);
-      scrollInfo.nPage = nListWidth;
-      scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
-      TRACE("LVS_ICON/SMALLICON Horz.\n");
-      SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
-
-      /* Update Vertical Scrollbar */
-      scrollInfo.fMask = SIF_POS;
-      if (!GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-        scrollInfo.nPos = 0;
-      scrollInfo.nMin = 0;
-      scrollInfo.nMax = max(rcView.bottom - rcView.top - 1, 0);
-      scrollInfo.nPage = nListHeight;
-      scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
-      TRACE("LVS_ICON/SMALLICON Vert.\n");
-      SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	horzInfo.fMask = SIF_POS;
+	GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo);
+	LISTVIEW_UpdateHeaderSize(infoPtr, horzInfo.nPos);
     }
-  }
 }
 
 
