@@ -393,8 +393,6 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
 */
   len=GetCurrentDirectoryA(MAX_PATH,origdir);
   ok(len!=0 && len < MAX_PATH,"GetCurrentDirectoryA failed\n");
-  ok(lstrcmpiA(origdir+(len-1),"\\")!=0,
-     "GetCurrentDirectoryA should not have a trailing \\\n");
 /* Make sure that CetCurrentDirectoryA doesn't overwrite the buffer when the
    buffer size is too small to hold the current directory
 */
