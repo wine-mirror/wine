@@ -157,6 +157,12 @@ typedef struct
 #define BWA_SKIPOWNED		0x0004
 #define BWA_SKIPICONIC		0x0008
 
+  /* WIN_UpdateNCRgn() flags */
+#define UNC_CHECK		0x0001
+#define UNC_ENTIRE		0x0002
+#define UNC_REGION		0x0004
+#define UNC_UPDATE		0x0008
+
   /* Window functions */
 extern void   WIN_Init( void );
 extern void   WIN_LockWnds();
@@ -195,8 +201,7 @@ extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/propert
 extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                                   HRGN hrgnUpdate, UINT flags,
                                   UINT control );		      /* windows/painting.c */
-extern HRGN WIN_UpdateNCRgn(WND* wnd, BOOL bUpdate, BOOL bForce);     /* windows/painting.c */
-
+extern HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT flags);     /* windows/painting.c */
 
 /* controls/widgets.c */
 extern BOOL WIDGETS_Init( void );

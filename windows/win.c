@@ -658,7 +658,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->pProp             = NULL;
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->helpContext       = 0;
-    pWndDesktop->flags             = 0;
+    pWndDesktop->flags             = Options.desktopGeometry ? WIN_NATIVE : 0; 
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
     pWndDesktop->winproc = (WNDPROC16)class->winproc;

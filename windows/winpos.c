@@ -50,6 +50,7 @@ DEFAULT_DEBUG_CHANNEL(win)
 
 #define SWP_EX_NOCOPY		0x0001
 #define SWP_EX_PAINTSELF	0x0002
+#define SWP_EX_NONCLIENT	0x0004
 
 #define MINMAX_NOSWP		0x00010000
 
@@ -1148,15 +1149,12 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
 UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 {
     UINT swpFlags = 0;
-    POINT pt;
-    POINT size;
+    POINT pt, size;
     LPINTERNALPOS lpPos;
 
     TRACE(win,"0x%04x %u\n", wndPtr->hwndSelf, cmd );
 
-    size.x = wndPtr->rectWindow.left;
-    size.y = wndPtr->rectWindow.top;
-
+    size.x = wndPtr->rectWindow.left; size.y = wndPtr->rectWindow.top;
     lpPos = WINPOS_InitInternalPos( wndPtr, size, &wndPtr->rectWindow );
 
     if (lpPos && !HOOK_CallHooks16(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
@@ -1702,8 +1700,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
          * (global active queue may have changed)
          */
         pTempActiveQueue = QUEUE_Lock( hActiveQueue );
-        if(!pTempActiveQueue)
-            goto CLEANUP_END;
+	if(!pTempActiveQueue)
+	    goto CLEANUP_END;
 
         hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
         QUEUE_Unlock( pTempActiveQueue );
@@ -2172,7 +2170,7 @@ nocopy:
      nch = Wnd->rectClient.bottom  - Wnd->rectClient.top;
 
      if(  (ocw != ncw) || (och != nch) ||
-	  ( ow !=  nw) || ( oh !=  nw) ||
+	  ( ow !=  nw) || ( oh !=  nh) ||
 	  ((lpOldClientRect->top - lpOldWndRect->top)   != 
 	   (Wnd->rectClient.top - Wnd->rectWindow.top)) ||
           ((lpOldClientRect->left - lpOldWndRect->left) !=
@@ -2223,18 +2221,35 @@ nocopy:
 
      if( dx || dy )
      {
+	 RECT rClip;
+	 HDC hDC;
 	 DC* dc;
-         HDC hDC = ( uFlags & SWP_EX_PAINTSELF)
-		   ? GetDCEx( Wnd->hwndSelf, hrgnValid, DCX_WINDOW | DCX_CACHE |
-			      DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS )
-		   : GetDCEx( Wnd->parent->hwndSelf, hrgnValid, DCX_CACHE |
-			      DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS );
+
+	 /* get DC and clip rect with drawable rect to avoid superfluous expose events
+	    from copying clipped areas */
+
+	 if( uFlags & SWP_EX_PAINTSELF )
+	 {
+	     hDC = GetDCEx( Wnd->hwndSelf, hrgnValid, DCX_WINDOW | DCX_CACHE |
+			    DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS );
+	     rClip.right = nw; rClip.bottom = nh;
+	 }
+	 else
+	 {
+	     hDC = GetDCEx( Wnd->parent->hwndSelf, hrgnValid, DCX_CACHE |
+			    DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS );
+	     rClip.right = Wnd->parent->rectClient.right - Wnd->parent->rectClient.left;
+	     rClip.bottom = Wnd->parent->rectClient.bottom - Wnd->parent->rectClient.top;
+	 }
+	 rClip.left = rClip.top = 0;    
+
 	 if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
 	 {
 	    if( oh > nh ) r.bottom = r.top  + nh;
 	    if( ow < nw ) r.right = r.left  + nw;
 
-	    Wnd->pDriver->pSurfaceCopy( Wnd->parent, dc, dx, dy, &r, TRUE );
+	    if( IntersectRect( &r, &r, &rClip ) )
+	        Wnd->pDriver->pSurfaceCopy( Wnd->parent, dc, dx, dy, &r, TRUE );
 
 	    GDI_HEAP_UNLOCK( hDC );
 	 }
@@ -2264,7 +2279,11 @@ static void SWP_DoSimpleFrameChanged( WND* wndPtr, RECT* pOldClientRect, WORD sw
 
     if( !(swpFlags & SWP_NOCLIENTSIZE) )
     {
-	/* FIXME: WVR alignment flags */
+	/* Client rect changed its position/size, most likely a scrollar
+	 * was added/removed.
+	 *
+	 * FIXME: WVR alignment flags 
+	 */
 
 	if( wndPtr->rectClient.right >  pOldClientRect->right ) /* right edge */
 	{
@@ -2312,7 +2331,9 @@ redraw:
 			    RDW_ERASENOW | RDW_ALLCHILDREN, RDW_EX_TOPFRAME | RDW_EX_USEHRGN );
     }
     else
-	hrgn = WIN_UpdateNCRgn(wndPtr, TRUE, TRUE);
+    {
+	WIN_UpdateNCRgn(wndPtr, 0, UNC_UPDATE | UNC_ENTIRE);
+    }
 
     if( hrgn > 1 )
 	DeleteObject( hrgn );
@@ -2526,7 +2547,7 @@ Pos:  /* -----------------------------------------------------------------------
 	   if( GetWindow(hwndInsertAfter, GW_HWNDNEXT) == wndPtr->hwndSelf )
 	       winpos.flags |= SWP_NOZORDER;
 
-	if( !(winpos.flags & SWP_NOREDRAW) &&
+	if( !(winpos.flags & (SWP_NOREDRAW | SWP_SHOWWINDOW)) &&
 	    ((winpos.flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_FRAMECHANGED))
 			  != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER)) )
 	{
@@ -2542,13 +2563,8 @@ Pos:  /* -----------------------------------------------------------------------
 
     if(!(winpos.flags & SWP_NOZORDER))
     {
-       /* upon window creation (while processing WM_NCCREATE), wndPtr->parent is set correctly
-	* 	but wndPtr is not yet in wndPtr->parent->child list
-	* in those cases (SetWindowPos called while processing WM_NCCREATE),
-	*	do not unlink/link winPtr in parent->child
-	*/
-       if ( WIN_UnlinkWindow( winpos.hwnd ) )
-	  WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
+        WIN_UnlinkWindow( winpos.hwnd );
+        WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
     }
 
     /* Reset active DCEs */
@@ -2574,9 +2590,17 @@ Pos:  /* -----------------------------------------------------------------------
     if( oldClientRect.right - oldClientRect.left ==
         newClientRect.right - newClientRect.left ) wvrFlags &= ~WVR_HREDRAW;
 
-    uFlags |=  ((winpos.flags & SWP_NOCOPYBITS) ||
-                (!(winpos.flags & SWP_NOCLIENTSIZE) && 
-		  (wvrFlags >= WVR_HREDRAW) && (wvrFlags < WVR_VALIDRECTS))) ? SWP_EX_NOCOPY : 0;
+    if( (winpos.flags & SWP_NOCOPYBITS) || (!(winpos.flags & SWP_NOCLIENTSIZE) &&
+	   (wvrFlags >= WVR_HREDRAW) && (wvrFlags < WVR_VALIDRECTS)) )
+    {
+	uFlags |= SWP_EX_NOCOPY;
+    }
+/* 
+ *  Use this later in CopyValidBits()
+ *
+    else if( 0  )
+	uFlags |= SWP_EX_NONCLIENT; 
+ */
 
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
@@ -2596,66 +2620,63 @@ Pos:  /* -----------------------------------------------------------------------
 	     of windows created by the host window system, all other cases go through the
 	     expose event handling */
 
-	    if( (winpos.flags & SWP_FRAMECHANGED) )
+	    if( (winpos.flags & (SWP_NOSIZE | SWP_FRAMECHANGED)) == (SWP_NOSIZE | SWP_FRAMECHANGED) )
 	    {
-		INT x, y;
+		cx = newWindowRect.right - newWindowRect.left;
+		cy = newWindowRect.bottom - newWindowRect.top;
 
-		if( (x = (newWindowRect.right - newWindowRect.left)) == (oldWindowRect.right - oldWindowRect.left) &&
-		    (y = (newWindowRect.bottom - newWindowRect.top)) == (oldWindowRect.bottom - oldWindowRect.top) )
+		wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
+		winpos.hwndInsertAfter = tempInsertAfter;
+		bCallDriver = FALSE;
+
+		if( winpos.flags & SWP_NOCLIENTMOVE )
+		    SWP_DoSimpleFrameChanged(wndPtr, &oldClientRect, winpos.flags, uFlags );
+		else
 		{
+		    /* client area moved but window extents remained the same, copy valid bits */
 
-		    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
-		    winpos.hwndInsertAfter = tempInsertAfter;
-		    bCallDriver = FALSE;
-
-		    if( winpos.flags & SWP_NOCLIENTMOVE )
-			SWP_DoSimpleFrameChanged(wndPtr, &oldClientRect, winpos.flags, uFlags );
-		    else
-		    {
-		        /* client area moved but window extents remained the same, copy valid bits */
-
-		        visRgn = CreateRectRgn( 0, 0, x, y );
-		        uFlags = SWP_CopyValidBits( wndPtr, &visRgn, &oldWindowRect, &oldClientRect, 
-						    uFlags | SWP_EX_PAINTSELF );
-		    }
+		    visRgn = CreateRectRgn( 0, 0, cx, cy );
+		    uFlags = SWP_CopyValidBits( wndPtr, &visRgn, &oldWindowRect, &oldClientRect, 
+						uFlags | SWP_EX_PAINTSELF );
 		}
 	    }
 	}
 
 	if( bCallDriver )
 	{
-	  if( !(winpos.flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
-	  {
-	    if( (oldClientRect.left - oldWindowRect.left == newClientRect.left - newWindowRect.left) &&
-		(oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top) &&
-		!(uFlags & SWP_EX_NOCOPY) )
+	    if( !(winpos.flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
 	    {
-		/* The origin of the client rect didn't move so we can try to repaint
-		 * only the nonclient area by setting bit gravity hint for the host window system.
-		 */
-
-		if( !(wndPtr->flags & WIN_MANAGED) )
+		if( (oldClientRect.left - oldWindowRect.left == newClientRect.left - newWindowRect.left) &&
+		    (oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top) &&
+		   !(uFlags & SWP_EX_NOCOPY) )
 		{
-		    HRGN hrgn = CreateRectRgn( 0, 0, newWindowRect.right - newWindowRect.left,
-						     newWindowRect.bottom - newWindowRect.top);
-		    RECT rcn = newClientRect;
-		    RECT rco = oldClientRect;
+		  /* The origin of the client rect didn't move so we can try to repaint
+		   * only the nonclient area by setting bit gravity hint for the host window system.
+		   */
 
-		    OffsetRect( &rcn, -newWindowRect.left, -newWindowRect.top );
-		    OffsetRect( &rco, -oldWindowRect.left, -oldWindowRect.top );
-		    IntersectRect( &rcn, &rcn, &rco );
-		    visRgn = CreateRectRgnIndirect( &rcn );
-		    CombineRgn( visRgn, hrgn, visRgn, RGN_DIFF );
-		    DeleteObject( hrgn );
-		    uFlags = SWP_EX_PAINTSELF;
-		}
-		wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGNorthWest );
+		    if( !(wndPtr->flags & WIN_MANAGED) )
+		    {
+			HRGN hrgn = CreateRectRgn( 0, 0, newWindowRect.right - newWindowRect.left,
+						     newWindowRect.bottom - newWindowRect.top);
+			RECT rcn = newClientRect;
+			RECT rco = oldClientRect;
+
+			OffsetRect( &rcn, -newWindowRect.left, -newWindowRect.top );
+			OffsetRect( &rco, -oldWindowRect.left, -oldWindowRect.top );
+			IntersectRect( &rcn, &rcn, &rco );
+			visRgn = CreateRectRgnIndirect( &rcn );
+			CombineRgn( visRgn, hrgn, visRgn, RGN_DIFF );
+			DeleteObject( hrgn );
+			uFlags = SWP_EX_PAINTSELF;
+		    }
+		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGNorthWest );
+	 	}
+		else
+		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGForget );
 	    }
-	    else
-		wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGForget );
-	  }
-	  wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
-	  winpos.hwndInsertAfter = tempInsertAfter;
+
+	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, TRUE);
+	    winpos.hwndInsertAfter = tempInsertAfter;
 	}
 
 	if( winpos.flags & SWP_SHOWWINDOW )

@@ -89,7 +89,7 @@ SOFTWARE.
 #include "heap.h"
 #include "dc.h"
 
-DEFAULT_DEBUG_CHANNEL(region)
+DEFAULT_DEBUG_CHANNEL(region) 
 
 typedef void (*voidProcp)();
 
@@ -2588,14 +2588,51 @@ HRGN WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
  */
 static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINEREGION *rgnSrc, WINEREGION* rgnDst)
 {
-    if( IsRectEmpty(rect) || !EXTENTCHECK(rect, &rgnSrc->extents) )
+    if( !rect )	/* just copy and offset */
+    {
+	if( rgnDst == rgnSrc )
+	{
+	    if( off->x || off->y )
+		rect = rgnDst->rects;
+	    else 
+		return TRUE;
+	}
+	else
+	    rect = HeapReAlloc( SystemHeap, 0, rgnDst->rects,
+				rgnSrc->size * sizeof( RECT ));
+	if( rect )
+	{
+	    INT i;
+
+	    if( rgnDst != rgnSrc )
+		memcpy( rgnDst, rgnSrc, sizeof( WINEREGION ));
+
+	    if( off->x || off->y )
+	    {
+		for( i = 0; i < rgnDst->numRects; i++ )
+		{
+		    rect[i].left = rgnSrc->rects[i].left + off->x;
+		    rect[i].right = rgnSrc->rects[i].right + off->x;
+		    rect[i].top = rgnSrc->rects[i].top + off->y;
+		    rect[i].bottom = rgnSrc->rects[i].bottom + off->y;
+		}
+		OffsetRect( &rgnDst->extents, off->x, off->y );
+	    }
+	    else
+		memcpy( rect, rgnSrc->rects, rgnDst->numRects * sizeof( RECT ));
+	    rgnDst->rects = rect;
+	}
+	else
+	    return FALSE;
+    }
+    else if( IsRectEmpty(rect) || !EXTENTCHECK(rect, &rgnSrc->extents) )
     {
 empty:
 	if( !rgnDst->rects )
 	{
-	    rgnDst->rects = HeapAlloc(SystemHeap, 0, sizeof( RECT ));
+	    rgnDst->rects = HeapAlloc(SystemHeap, 0, RGN_DEFAULT_RECTS * sizeof( RECT ));
 	    if( rgnDst->rects )
-		rgnDst->size = 1;
+		rgnDst->size = RGN_DEFAULT_RECTS;
 	    else
 		return FALSE;
 	}
@@ -2695,11 +2732,12 @@ empty:
  *
  *
  * hSrc: 	Region to crop and offset.
- * lpRect: 	Clipping rectangle.
- * lpPt:	Points to offset the cropped region. Can be NULL.
+ * lpRect: 	Clipping rectangle. Can be NULL (no clipping).
+ * lpPt:	Points to offset the cropped region. Can be NULL (no offset).
  *
- * hDst: Region to hold the result (if 0 a new region is created).
- *       Allowed to be the same region as hSrc (in place, no extra memory needed).
+ * hDst: Region to hold the result (a new region is created if it's 0).
+ *       Allowed to be the same region as hSrc in which case everyhting
+ *	 will be done in place, with no memory reallocations.
  *
  * Returns: hDst if success, 0 otherwise.
  */
@@ -2707,9 +2745,17 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 {
 /*  Optimization of the following generic code:
 
-    HRGN h = CreateRectRgn( lpRect->left, lpRect->top, lpRect->right, lpRect->bottom );
+    HRGN h; 
+
+    if( lpRect ) 
+	h = CreateRectRgn( lpRect->left, lpRect->top, lpRect->right, lpRect->bottom );
+    else
+	h = CreateRectRgn( 0, 0, 0, 0 );
     if( hDst == 0 ) hDst = h;
-    CombineRgn( hDst, hSrc, h, RGN_AND );
+    if( lpRect )
+	CombineRgn( hDst, hSrc, h, RGN_AND );
+    else
+	CombineRgn( hDst, hSrc, 0, RGN_COPY );
     if( lpPt )
 	OffsetRgn( hDst, lpPt->x, lpPt->y );
     if( hDst != h )
@@ -2746,8 +2792,11 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 
 	    if( !lpPt ) lpPt = &pt;
 
-	    TRACE(region, "src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
+	    if( lpRect )
+	        TRACE(region, "src %p -> dst %p (%i,%i)-(%i,%i) by (%li,%li)\n", objSrc->rgn, rgnDst,
 			   lpRect->left, lpRect->top, lpRect->right, lpRect->bottom, lpPt->x, lpPt->y );
+	    else
+		TRACE(region, "src %p -> dst %p by (%li,%li)\n", objSrc->rgn, rgnDst, lpPt->x, lpPt->y ); 
 
 	    if( REGION_CropAndOffsetRegion( lpPt, lpRect, objSrc->rgn, rgnDst ) == FALSE )
 	    {

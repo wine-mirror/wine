@@ -1518,7 +1518,8 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
   if (pWnd->flags & WIN_MANAGED)
   {
       EndMenu();
-      pWnd->dwStyle |= WS_MINIMIZE;
+      if( pWnd->dwStyle & WS_VISIBLE )
+	  pWnd->dwStyle |= WS_MINIMIZE;
   }
   WIN_ReleaseWndPtr(pWnd);
 }
