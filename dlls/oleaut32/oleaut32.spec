@@ -250,8 +250,8 @@ type win32
 295 stub LPSAFEARRAY_Size
 296 stub LPSAFEARRAY_Marshal
 297 stub LPSAFEARRAY_Unmarshal
-320 stub DllRegisterServer
-321 stub DllUnregisterServer
+320 stdcall DllRegisterServer() OLEAUT32_DllRegisterServer
+321 stdcall DllUnregisterServer() OLEAUT32_DllUnregisterServer
 330 stub VarDateFromUdate
 331 stub VarUdateFromDate
 332 stub GetAltMonthNames
