@@ -16,6 +16,13 @@ C_SRCS = \
 	mouse.c \
 	wnd.c
 
+PROGRAMS = wineclipsrv
+
+all: $(MODULE).o $(PROGRAMS)
+
+wineclipsrv: wineclipsrv.c
+	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(X_LIBS) $(XLIB) $(LIBS)
+
 all: $(MODULE).o
 
 @MAKE_RULES@
