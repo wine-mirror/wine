@@ -732,8 +732,8 @@ static void MENU_GetBitmapItemSize( UINT id, DWORD data, SIZE *size )
         case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
         case (INT_PTR)HBMMENU_MBAR_CLOSE:
         case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
-            size->cx = GetSystemMetrics( SM_CXSIZE );
-            size->cy = GetSystemMetrics( SM_CYSIZE );
+            size->cx = GetSystemMetrics( SM_CYMENU ) - 4;
+            size->cy = size->cx;
             return;
         case (INT_PTR)HBMMENU_CALLBACK:
         case (INT_PTR)HBMMENU_POPUP_CLOSE:
