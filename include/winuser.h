@@ -1250,7 +1250,7 @@ typedef struct
     HBRUSH    hbrBackground;
     LPCSTR      lpszMenuName;
     LPCSTR      lpszClassName;
-} WNDCLASSA, *LPWNDCLASSA;
+} WNDCLASSA, *LPWNDCLASSA, *PWNDCLASSA;
 
 typedef struct
 {
@@ -1264,10 +1264,11 @@ typedef struct
     HBRUSH    hbrBackground;
     LPCWSTR     lpszMenuName;
     LPCWSTR     lpszClassName;
-} WNDCLASSW, *LPWNDCLASSW;
+} WNDCLASSW, *LPWNDCLASSW, *PWNDCLASSW;
 
 DECL_WINELIB_TYPE_AW(WNDCLASS)
 DECL_WINELIB_TYPE_AW(LPWNDCLASS)
+DECL_WINELIB_TYPE_AW(PWNDCLASS)
 
 typedef struct {
     DWORD dwData;
@@ -3775,6 +3776,7 @@ BOOL      WINAPI UnregisterClassA(LPCSTR,HINSTANCE);
 BOOL      WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
 #define     UnregisterClass WINELIB_NAME_AW(UnregisterClass)
 VOID        WINAPI UpdateWindow(HWND);
+UINT        WINAPI UserRealizePalette(HDC);
 VOID        WINAPI ValidateRect(HWND,const RECT*);
 VOID        WINAPI ValidateRgn(HWND,HRGN);
 WORD        WINAPI VkKeyScanA(CHAR);
