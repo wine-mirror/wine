@@ -166,6 +166,7 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 {
     const BYTE *p;
     DWORD stream_n;
+    DWORD twocc;
 
     if (mmck->ckid == ckidAVIPADDING) return TRUE;
 
@@ -183,7 +184,18 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 
     TRACE("ckid %4.4s (stream #%ld)\n", (LPSTR)&mmck->ckid, stream_n);
 
-    switch (TWOCCFromFOURCC(mmck->ckid)) {
+    /* Some (rare?) AVI files have video streams name XXYY where XX = stream number and YY = TWOCC
+     * of the last 2 characters of the biCompression member of the BITMAPINFOHEADER structure.
+     * Ex: fccHandler = IV32 & biCompression = IV32 => stream name = XX32
+     *     fccHandler = MSVC & biCompression = CRAM => stream name = XXAM
+     * Another possibility is that these TWOCC are simply ignored.
+     * Default to cktypeDIBcompressed when this case happens.
+     */
+    twocc = TWOCCFromFOURCC(mmck->ckid);
+    if (twocc == TWOCCFromFOURCC(wma->inbih->biCompression))
+	twocc = cktypeDIBcompressed;
+    
+    switch (twocc) {
     case cktypeDIBbits:
     case cktypeDIBcompressed:
     case cktypePALchange:
