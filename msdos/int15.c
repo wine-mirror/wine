@@ -12,12 +12,36 @@ DEFAULT_DEBUG_CHANNEL(int)
 /**********************************************************************
  *	    INT_Int15Handler
  *
- * Handler for int 15h (old cassette interrupt).
+ * Handler for int 15h
  */
 void WINAPI INT_Int15Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {
+    case 0x84: /* read joystick information */
+        FIXME("Read joystick information not implemented\n");
+
+        /* FIXME: report status as if no game port exists */
+        switch(DX_reg(context))
+        {
+        case 0x0: /* read joystick switches */
+            AL_reg(context) = 0x0; /* all switches open */
+            break;
+        case 0x1: /* read joystick position */
+            AX_reg(context) = 0x0;
+            BX_reg(context) = 0x0;
+            CX_reg(context) = 0x0;
+            DX_reg(context) = 0x0;
+            break;
+	default:
+            INT_BARF( context, 0x15 );
+            break;
+        }
+
+        RESET_CFLAG(context);
+
+        break;
+
     case 0x88: /* get size of memory above 1 M */
         AX_reg(context) = 64;  /* FIXME: are 64K ok? */
         RESET_CFLAG(context);
