@@ -29,12 +29,10 @@
 #include "shlwapi.h"
 #include "winerror.h"
 #include "objbase.h"
-#include <cpl.h>
 
 #include "pidl.h"
 #include "shlguid.h"
-#include "shell32_main.h"
-#include "cpanel.h"
+#include "enumidlist.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -60,7 +58,7 @@ static struct ICOM_VTABLE(IEnumIDList) eidlvt;
 /**************************************************************************
  *  AddToEnumList()
  */
-static BOOL AddToEnumList(
+BOOL AddToEnumList(
 	IEnumIDList * iface,
 	LPITEMIDLIST pidl)
 {
@@ -69,6 +67,10 @@ static BOOL AddToEnumList(
 	LPENUMLIST  pNew;
 
 	TRACE("(%p)->(pidl=%p)\n",This,pidl);
+
+    if (!iface || !pidl)
+        return FALSE;
+
 	pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
 	if(pNew)
 	{
@@ -167,161 +169,6 @@ static BOOL CreateFolderEnumList(
 	    FindClose (hFile);
 	  }
 	}
-	return TRUE;
-}
-
-BOOL SHELL_RegisterCPanelApp(IEnumIDList* list, LPCSTR path)
-{
-    LPITEMIDLIST pidl;
-    CPlApplet* applet;
-    CPanel panel;
-    CPLINFO info;
-    unsigned i;
-    int iconIdx;
-
-    char displayName[MAX_PATH];
-    char comment[MAX_PATH];
-
-    WCHAR wpath[MAX_PATH];
-
-    MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, MAX_PATH);
-
-    panel.first = NULL;
-    applet = Control_LoadApplet(0, wpath, &panel);
-
-    if (applet) {
-	for(i=0; i<applet->count; ++i) {
-	    WideCharToMultiByte(CP_ACP, 0, applet->info[i].szName, -1, displayName, MAX_PATH, 0, 0);
-	    WideCharToMultiByte(CP_ACP, 0, applet->info[i].szInfo, -1, comment, MAX_PATH, 0, 0);
-
-	    applet->proc(0, CPL_INQUIRE, i, (LPARAM)&info);
-
-	    if (info.idIcon > 0)
-		iconIdx = -info.idIcon;	/* negative icon index instead of icon number */
-	    else
-		iconIdx = 0;
-
-	    pidl = _ILCreateCPanel(path, displayName, comment, iconIdx);
-
-	    if (pidl)
-		AddToEnumList(list, pidl);
-	}
-
-	Control_UnloadApplet(applet);
-    }
-
-    return TRUE;
-}
-
-int SHELL_RegisterRegistryCPanelApps(IEnumIDList* list, HKEY hkey_root, LPCSTR szRepPath)
-{
-  char name[MAX_PATH];
-  char value[MAX_PATH];
-  HKEY hkey;
-
-  int cnt = 0;
-
-  if (RegOpenKeyA(hkey_root, szRepPath, &hkey) == ERROR_SUCCESS)
-  {
-    int idx = 0;
-    for(;; ++idx)
-    {
-      DWORD nameLen = MAX_PATH;
-      DWORD valueLen = MAX_PATH;
-
-      if (RegEnumValueA(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)&value, &valueLen) != ERROR_SUCCESS)
-	break;
-
-      if (SHELL_RegisterCPanelApp(list, value))
-        ++cnt;
-    }
-
-    RegCloseKey(hkey);
-  }
-
-  return cnt;
-}
-
-int SHELL_RegisterCPanelFolders(IEnumIDList* list, HKEY hkey_root, LPCSTR szRepPath)
-{
-  char name[MAX_PATH];
-  HKEY hkey;
-
-  int cnt = 0;
-
-  if (RegOpenKeyA(hkey_root, szRepPath, &hkey) == ERROR_SUCCESS)
-  {
-    int idx = 0;
-    for(;; ++idx)
-    {
-      if (RegEnumKeyA(hkey, idx, name, MAX_PATH) != ERROR_SUCCESS)
-	break;
-
-      if (*name == '{') {
-	LPITEMIDLIST pidl = _ILCreateGuidFromStrA(name);
-
-	if (pidl && AddToEnumList(list, pidl))
-	    ++cnt;
-      }
-    }
-
-    RegCloseKey(hkey);
-  }
-
-  return cnt;
-}
-
-/**************************************************************************
- *  CreateCPanelEnumList()
- */
-static BOOL CreateCPanelEnumList(
-	IEnumIDList * iface,
-	DWORD dwFlags)
-{
-	ICOM_THIS(IEnumIDListImpl,iface);
-
-	CHAR szPath[MAX_PATH];
-	WIN32_FIND_DATAA wfd;
-	HANDLE hFile;
-
-	TRACE("(%p)->(flags=0x%08lx) \n",This,dwFlags);
-
-	/* enumerate control panel folders folders */
-	if (dwFlags & SHCONTF_FOLDERS)
-	  SHELL_RegisterCPanelFolders((IEnumIDList*)This, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace");
-
-	/* enumerate the control panel applets */
-	if (dwFlags & SHCONTF_NONFOLDERS)
-	{
-	  LPSTR p;
-
-	  GetSystemDirectoryA(szPath, MAX_PATH);
-	  p = PathAddBackslashA(szPath);
-	  strcpy(p, "*.cpl");
-
-	  TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",This,debugstr_a(szPath));
-	  hFile = FindFirstFileA(szPath, &wfd);
-
-	  if (hFile != INVALID_HANDLE_VALUE)
-	  {
-	    do
-	    {
-	      if (!(dwFlags & SHCONTF_INCLUDEHIDDEN) && (wfd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN))
-		continue;
-
-	      if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-		strcpy(p, wfd.cFileName);
-	      	SHELL_RegisterCPanelApp((IEnumIDList*)This, szPath);
-	      }
-	    } while(FindNextFileA(hFile, &wfd));
-
-	    FindClose(hFile);
-	  }
-
-	  SHELL_RegisterRegistryCPanelApps((IEnumIDList*)This, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
-	  SHELL_RegisterRegistryCPanelApps((IEnumIDList*)This, HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
-	}
-
 	return TRUE;
 }
 
@@ -470,7 +317,22 @@ static BOOL DeleteList(
  *
  */
 
-IEnumIDList * IEnumIDList_Constructor(
+IEnumIDList * IEnumIDList_Constructor(void)
+{
+    IEnumIDListImpl *lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(),
+     HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
+
+    if (lpeidl)
+    {
+        lpeidl->ref = 1;
+        lpeidl->lpVtbl = &eidlvt;
+    }
+    TRACE("-- (%p)->()\n",lpeidl);
+
+    return (IEnumIDList*)lpeidl;
+}
+
+IEnumIDList * IEnumIDList_BadConstructor(
 	LPCSTR lpszPath,
 	DWORD dwFlags,
 	DWORD dwKind)
@@ -480,13 +342,10 @@ IEnumIDList * IEnumIDList_Constructor(
 
 	TRACE("()->(%s flags=0x%08lx kind=0x%08lx)\n",debugstr_a(lpszPath),dwFlags, dwKind);
 
-	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
+	lpeidl = (IEnumIDListImpl *)IEnumIDList_Constructor();
 
 	if (lpeidl)
 	{
-	  lpeidl->ref = 1;
-	  lpeidl->lpVtbl = &eidlvt;
-
 	  switch (dwKind)
 	  {
 	    case EIDL_DESK:
@@ -499,10 +358,6 @@ IEnumIDList * IEnumIDList_Constructor(
 
 	    case EIDL_FILE:
 	      ret = CreateFolderEnumList((IEnumIDList*)lpeidl, lpszPath, dwFlags);
-	      break;
-
-	    case EIDL_CPANEL:
-	      ret = CreateCPanelEnumList((IEnumIDList*)lpeidl, dwFlags);
 	      break;
 	  }
 

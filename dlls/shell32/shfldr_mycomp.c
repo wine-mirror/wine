@@ -38,7 +38,7 @@
 #include "wingdi.h"
 #include "pidl.h"
 #include "shlguid.h"
-
+#include "enumidlist.h"
 #include "undocshell.h"
 #include "shell32_main.h"
 #include "shresdef.h"
@@ -247,7 +247,7 @@ ISF_MyComputer_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner, DWORD dwFla
 
     TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = IEnumIDList_Constructor (NULL, dwFlags, EIDL_MYCOMP);
+    *ppEnumIDList = IEnumIDList_BadConstructor (NULL, dwFlags, EIDL_MYCOMP);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

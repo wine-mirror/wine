@@ -40,6 +40,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 
+#include "enumidlist.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
@@ -269,15 +270,11 @@ static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
 
     TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = NULL;
-    *ppEnumIDList = IEnumIDList_Constructor (NULL, dwFlags, EIDL_DESK);
+    *ppEnumIDList = IEnumIDList_BadConstructor (NULL, dwFlags, EIDL_DESK);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 
-    if (!*ppEnumIDList)
-	return E_OUTOFMEMORY;
-
-    return S_OK;
+    return *ppEnumIDList ? S_OK : E_OUTOFMEMORY;
 }
 
 /**************************************************************************

@@ -40,6 +40,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 
+#include "enumidlist.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
@@ -391,7 +392,7 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner, DWORD dwFlags
 
     TRACE ("(%p)->(HWND=%p flags=0x%08lx pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = IEnumIDList_Constructor (This->sPathTarget, dwFlags, EIDL_FILE);
+    *ppEnumIDList = IEnumIDList_BadConstructor (This->sPathTarget, dwFlags, EIDL_FILE);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 
