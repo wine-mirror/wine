@@ -859,10 +859,9 @@ void X11DRV_KEYBOARD_Init(void)
 		  
                 if (TRACE_ON(keyboard))
                 {
-		    dbg_decl_str(keyboard, 1024);
-
-                    TRACE_(keyboard)("OEM specific virtual key %X assigned "
-				 "to keycode %X:\n", OEMvkey, e2.keycode);
+                    TRACE_(keyboard)("OEM specific virtual key %X assigned to keycode %X:\n",
+                                     OEMvkey, e2.keycode);
+                    TRACE_(keyboard)("(");
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
                         char	*ksname;
@@ -871,9 +870,9 @@ void X11DRV_KEYBOARD_Init(void)
                         ksname = TSXKeysymToString(keysym);
                         if (!ksname)
 			    ksname = "NoSymbol";
-                        dsprintf(keyboard, "%lX (%s) ", keysym, ksname);
+                        DPRINTF( "%lX (%s) ", keysym, ksname);
                     }
-                    TRACE_(keyboard)("(%s)\n", dbg_str(keyboard));
+                    DPRINTF(")\n");
                 }
             }
         }

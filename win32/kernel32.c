@@ -890,12 +890,12 @@ DWORD WINAPIV SSCall(
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
-    if(TRACE_ON(thunk)){
-      dbg_decl_str(thunk, 256);
+    if(TRACE_ON(thunk))
+    {
+      DPRINTF("(%ld,0x%08lx,%p,[",nr,flags,fun);
       for (i=0;i<nr/4;i++) 
-	dsprintf(thunk,"0x%08lx,",args[i]);
-      TRACE_(thunk)("(%ld,0x%08lx,%p,[%s])\n",
-		    nr,flags,fun,dbg_str(thunk));
+          DPRINTF("0x%08lx,",args[i]);
+      DPRINTF("])\n");
     }
     switch (nr) {
     case 0:	ret = fun();

@@ -182,7 +182,7 @@ static BOOL fEndMenu = FALSE;
   if(!TRACE_ON(menu)) ; else do_debug_print_menuitem(pre, mp, post)
 
 #define MENUOUT(text) \
-  dsprintf(menu, "%s%s", (count++ ? "," : ""), (text))
+  DPRINTF("%s%s", (count++ ? "," : ""), (text))
 
 #define MENUFLAG(bit,text) \
   do { \
@@ -192,17 +192,16 @@ static BOOL fEndMenu = FALSE;
 static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp, 
 				    const char *postfix)
 {
-    dbg_decl_str(menu, 256);
-
+    TRACE("%s ", prefix);
     if (mp) {
 	UINT flags = mp->fType;
 	int typ = MENU_ITEM_TYPE(flags);
-	dsprintf(menu, "{ ID=0x%x", mp->wID);
+	DPRINTF( "{ ID=0x%x", mp->wID);
 	if (flags & MF_POPUP)
-	    dsprintf(menu, ", Sub=0x%x", mp->hSubMenu);
+	    DPRINTF( ", Sub=0x%x", mp->hSubMenu);
 	if (flags) {
 	    int count = 0;
-	    dsprintf(menu, ", Typ=");
+	    DPRINTF( ", Typ=");
 	    if (typ == MFT_STRING)
 		/* Nothing */ ;
 	    else if (typ == MFT_SEPARATOR)
@@ -224,12 +223,12 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");	/* same as MF_HELP */
 
 	    if (flags)
-		dsprintf(menu, "+0x%x", flags);
+		DPRINTF( "+0x%x", flags);
 	}
 	flags = mp->fState;
 	if (flags) {
 	    int count = 0;
-	    dsprintf(menu, ", State=");
+	    DPRINTF( ", State=");
 	    MENUFLAG(MFS_GRAYED, "grey");
 	    MENUFLAG(MFS_DEFAULT, "default");
 	    MENUFLAG(MFS_DISABLED, "dis");
@@ -238,30 +237,30 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    MENUFLAG(MF_USECHECKBITMAPS, "usebit");
 	    MENUFLAG(MF_MOUSESELECT, "mouse");
 	    if (flags)
-		dsprintf(menu, "+0x%x", flags);
+		DPRINTF( "+0x%x", flags);
 	}
 	if (mp->hCheckBit)
-	    dsprintf(menu, ", Chk=0x%x", mp->hCheckBit);
+	    DPRINTF( ", Chk=0x%x", mp->hCheckBit);
 	if (mp->hUnCheckBit)
-	    dsprintf(menu, ", Unc=0x%x", mp->hUnCheckBit);
+	    DPRINTF( ", Unc=0x%x", mp->hUnCheckBit);
 
 	if (typ == MFT_STRING) {
 	    if (mp->text)
-		dsprintf(menu, ", Text=\"%s\"", mp->text);
+		DPRINTF( ", Text=\"%s\"", mp->text);
 	    else
-		dsprintf(menu, ", Text=Null");
+		DPRINTF( ", Text=Null");
 	} else if (mp->text == NULL)
 	    /* Nothing */ ;
 	else
-	    dsprintf(menu, ", Text=%p", mp->text);
+	    DPRINTF( ", Text=%p", mp->text);
 	if (mp->dwItemData)
-	    dsprintf(menu, ", ItemData=0x%08lx", mp->dwItemData);
-	dsprintf(menu, " }");
+	    DPRINTF( ", ItemData=0x%08lx", mp->dwItemData);
+	DPRINTF( " }");
     } else {
-	dsprintf(menu, "NULL");
+	DPRINTF( "NULL");
     }
 
-    TRACE("%s %s %s\n", prefix, dbg_str(menu), postfix);
+    DPRINTF(" %s\n", postfix);
 }
 
 #undef MENUOUT

@@ -31,26 +31,12 @@ extern const char * const debug_ch_name[];
      (dbg_printf("%s:%s:%s ", debug_cl_name[(dbcl)], debug_ch_name[(dbch)], __FUNCTION__),0)) \
     ? 0 : dbg_printf
 
-#define __DUMMY_DPRINTF 1 ? 0 : ((int (*)(char *, ...)) NULL)
+#define __DUMMY_DPRINTF 1 ? (void)0 : (void)((int (*)(char *, ...)) NULL)
 
 
 /* Exported definitions and macros */
 
-
-#define dbg_str(name) debug_str_##name
-#define dbg_buf(name) debug_buf_##name
-
-#define dbg_decl_str(name, size) \
-  char dbg_str(name)[size], *dbg_buf(name)=dbg_str(name)
-
-#define dbg_reset_str(name) \
-  dbg_buf(name)=dbg_str(name)
-
-#define dsprintf(name, format, args...) \
-  dbg_buf(name)+=sprintf(dbg_buf(name), format, ## args)
-
 /* use configure to allow user to compile out debugging messages */
-
 #ifndef NO_TRACE_MSGS
 #define TRACE        __DPRINTF(__DBCL_TRACE,*DBCH_DEFAULT)
 #define TRACE_(ch)   __DPRINTF(__DBCL_TRACE,dbch_##ch)
@@ -91,20 +77,6 @@ extern const char * const debug_ch_name[];
 
 #define DPRINTF dbg_printf
 #define MESSAGE dbg_printf
-
-#ifdef OLD_DEBUG_MACROS
-/* transition macros */
-#undef TRACE
-#undef WARN
-#undef FIXME
-#undef ERR
-#define TRACE(ch, fmt, args...) TRACE_(ch)(fmt, ## args)
-#define WARN(ch, fmt, args...)  WARN_(ch)(fmt, ## args)
-#define FIXME(ch, fmt, args...) FIXME_(ch)(fmt, ## args)
-#define ERR(ch, fmt, args...)   ERR_(ch)(fmt, ## args)
-#define MSG(format, args...)    fprintf(stderr, format, ## args)
-#define DUMP dbg_printf
-#endif
 
 #endif  /* __WINE__ */
 

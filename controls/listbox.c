@@ -636,15 +636,13 @@ static BOOL LISTBOX_SetTabStops( WND *wnd, LB_DESCR *descr, INT count,
     {
         INT i;
         LPINT16 p = (LPINT16)tabs;
-	dbg_decl_str(listbox, 256);
 
+        TRACE("[%04x]: settabstops ", wnd->hwndSelf );
         for (i = 0; i < descr->nb_tabs; i++) {
 	    descr->tabs[i] = *p++<<1; /* FIXME */
-	    if(TRACE_ON(listbox))
-              dsprintf(listbox, "%hd ", descr->tabs[i]);
+            if (TRACE_ON(listbox)) DPRINTF("%hd ", descr->tabs[i]);
 	}
-        TRACE("[%04x]: settabstops %s\n", 
-		     wnd->hwndSelf, dbg_str(listbox));
+        if (TRACE_ON(listbox)) DPRINTF("\n");
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT) );
     /* FIXME: repaint the window? */

@@ -424,7 +424,6 @@ static DWORD RELAY_CallProc32W(int Ex)
         VA_LIST16 valist;
 	int i;
 	int aix;
-	dbg_decl_str(relay, 1024);
 
 	SYSLEVEL_ReleaseWin16Lock();
 
@@ -432,7 +431,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
         proc32      = VA_ARG16( valist, FARPROC );
-	dsprintf(relay, "CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
+        TRACE("CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
 	/* CallProcEx doesn't need its args reversed */
@@ -446,15 +445,15 @@ static DWORD RELAY_CallProc32W(int Ex)
                 {
                     SEGPTR ptr = VA_ARG16( valist, SEGPTR );
                     args[aix] = (DWORD)PTR_SEG_TO_LIN(ptr);
-                    dsprintf(relay,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
+                    if (TRACE_ON(relay)) DPRINTF("%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
 		}
                 else
                 {
                     args[aix] = VA_ARG16( valist, DWORD );
-                    dsprintf(relay,"%ld,",args[aix]);
+                    if (TRACE_ON(relay)) DPRINTF("%ld,",args[aix]);
 		}
 	}
-	dsprintf(relay,"])");
+	if (TRACE_ON(relay)) DPRINTF("])\n");
         VA_END16( valist );
 
         if (!proc32) ret = 0;
@@ -493,7 +492,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
         if (!Ex) stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
 
-	TRACE("%s - returns %08lx\n",dbg_str(relay),ret);
+        TRACE("CallProc32W - returns %08lx\n",ret);
 	HeapFree( GetProcessHeap(), 0, args );
 
 	SYSLEVEL_RestoreWin16Lock();

@@ -97,7 +97,6 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   int	i;
   BYTE *cdb;
   BYTE *lpBuf = 0;
-  dbg_decl_str(aspi, 512);
 
   switch (mode)
   {
@@ -154,11 +153,15 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   TRACE("POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
-  for (i = 0; i < prb->SRB_CDBLen; i++) {
-    if (i != 0) dsprintf(aspi, ",");
-    dsprintf(aspi, "%02x", *cdb++);
+  if (TRACE_ON(aspi))
+  {
+      DPRINTF("CDB buffer[");
+      for (i = 0; i < prb->SRB_CDBLen; i++) {
+          if (i != 0) DPRINTF(",");
+          DPRINTF("%02x", *cdb++);
+      }
+      DPRINTF("]\n");
   }
-  TRACE("CDB buffer[%s]\n", dbg_str(aspi));
 }
 
 static void
@@ -166,14 +169,17 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 {
   int	i;
   BYTE *cdb;
-  dbg_decl_str(aspi, 512);
 
-  cdb = &prb->CDBByte[0];
-  for (i = 0; i < prb->SRB_SenseLen; i++) {
-    if (i) dsprintf(aspi, ",");
-    dsprintf(aspi, "%02x", *cdb++);
+  if (TRACE_ON(aspi))
+  {
+      cdb = &prb->CDBByte[0];
+      DPRINTF("SenseArea[");
+      for (i = 0; i < prb->SRB_SenseLen; i++) {
+          if (i) DPRINTF(",");
+          DPRINTF("%02x", *cdb++);
+      }
+      DPRINTF("]\n");
   }
-  TRACE("SenseArea[%s]\n", dbg_str(aspi));
 }
 
 static void

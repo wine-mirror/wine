@@ -101,18 +101,19 @@ void dump_exports( HMODULE hModule )
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
-      if (TRACE_ON(win32)){
-	dbg_decl_str(win32, 1024);
-
-	dsprintf(win32,"%4ld %08lx %08x",
-		 i + pe_exports->Base, *function, RVA(*function) );
+      if (TRACE_ON(win32))
+      {
+	DPRINTF( "%4ld %08lx %08x", i + pe_exports->Base, *function, RVA(*function) );
 	/* Check if we have a name for it */
 	for (j = 0; j < pe_exports->NumberOfNames; j++)
           if (ordinal[j] == i)
-	    dsprintf(win32, "  %s", (char*)RVA(name[j]) );
+          {
+              DPRINTF( "  %s", (char*)RVA(name[j]) );
+              break;
+          }
 	if ((*function >= rva_start) && (*function <= rva_end))
-	  dsprintf(win32, " (forwarded -> %s)", (char *)RVA(*function));
-	TRACE_(win32)("%s\n", dbg_str(win32));
+	  DPRINTF(" (forwarded -> %s)", (char *)RVA(*function));
+	DPRINTF("\n");
       }
   }
 }

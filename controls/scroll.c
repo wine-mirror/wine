@@ -1277,8 +1277,6 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     SCROLLBAR_INFO *infoPtr;
     UINT new_flags;
 
-    dbg_decl_str(scroll, 256);
-
    *action = 0;
 
     if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
@@ -1286,11 +1284,19 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     if ((info->cbSize != sizeof(*info)) &&
         (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return 0;
 
+    if (TRACE_ON(scroll))
+    {
+        DPRINTF( "hwnd=%04x bar=%d", hwnd, nBar);
+        if (info->fMask & SIF_PAGE) DPRINTF( " page=%d", info->nPage );
+        if (info->fMask & SIF_POS) DPRINTF( " pos=%d", info->nPos );
+        if (info->fMask & SIF_RANGE) DPRINTF( " min=%d max=%d", info->nMin, info->nMax );
+        DPRINTF("\n");
+    }
+
     /* Set the page size */
 
     if (info->fMask & SIF_PAGE)
     {
-        dsprintf(scroll, " page=%d", info->nPage );
 	if( infoPtr->Page != info->nPage )
 	{
             infoPtr->Page = info->nPage;
@@ -1302,7 +1308,6 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (info->fMask & SIF_POS)
     {
-        dsprintf(scroll, " pos=%d", info->nPos );
 	if( infoPtr->CurVal != info->nPos )
 	{
 	    infoPtr->CurVal = info->nPos;
@@ -1314,8 +1319,6 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (info->fMask & SIF_RANGE)
     {
-        dsprintf(scroll, " min=%d max=%d", info->nMin, info->nMax );
-
         /* Invalid range -> range is set to (0,0) */
         if ((info->nMin > info->nMax) ||
             ((UINT)(info->nMax - info->nMin) >= 0x80000000))
@@ -1334,9 +1337,6 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 	    }
         }
     }
-
-    TRACE("hwnd=%04x bar=%d %s\n", 
-		    hwnd, nBar, dbg_str(scroll));
 
     /* Make sure the page size is valid */
 
