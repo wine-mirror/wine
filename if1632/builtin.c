@@ -64,6 +64,7 @@ extern const WIN16_DESCRIPTOR OLE2THK_Descriptor;
 extern const WIN16_DESCRIPTOR OLE2_Descriptor;
 extern const WIN16_DESCRIPTOR OLECLI_Descriptor;
 extern const WIN16_DESCRIPTOR OLESVR_Descriptor;
+extern const WIN16_DESCRIPTOR RASAPI16_Descriptor;
 extern const WIN16_DESCRIPTOR SHELL_Descriptor;
 extern const WIN16_DESCRIPTOR SOUND_Descriptor;
 extern const WIN16_DESCRIPTOR STORAGE_Descriptor;
@@ -109,6 +110,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &OLE2_Descriptor,     DLL_FLAG_NOT_USED },
     { &OLECLI_Descriptor,   DLL_FLAG_NOT_USED },
     { &OLESVR_Descriptor,   DLL_FLAG_NOT_USED },
+    { &RASAPI16_Descriptor, 0 },
     { &SHELL_Descriptor,    0 },
     { &SOUND_Descriptor,    0 },
     { &STORAGE_Descriptor,  DLL_FLAG_NOT_USED },

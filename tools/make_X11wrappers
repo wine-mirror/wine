@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11R6/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga");
 
 # First read list of wanted function names.
 
@@ -44,10 +44,18 @@ foreach $name (@dolist) {
 
     $x11_incl = "";
     $extensions_dir = "";
+    $pre_file = "";
+    $post_file = "";
     if($name eq "Xutil" || $name eq "Xresource" || $name eq "XShm") {
 	$x11_incl = "#include <X11/Xlib.h>\n";
 	# For Xutil, we need X11/Xresource.h for XUniqueContext().
 	$x11_incl .= "#include <X11/Xresource.h>\n" if $name eq "Xutil";
+    }
+    if($name eq "xf86dga")  {
+    	$x11_incl = "#include <X11/Xlib.h>\n";
+	$extensions_dir = "extensions/";
+	$pre_file = "#include \"config.h\"\n#ifdef HAVE_LIBXXF86DGA\n";
+	$post_file = "#endif";
     }
     if($name eq "XShm") {
 	$extensions_dir = "extensions/";
@@ -75,7 +83,7 @@ END
  * This file was generated automatically by tools/make_X11wrappers
  * DO NOT EDIT!
  */
-
+$pre_file
 $x11_incl#include <X11/$extensions_dir$name.h>
 #include "x11drv.h"
 #include "debug.h"
@@ -101,6 +109,52 @@ END
 	output_fn("XShmPutImage", Status,
 		  "Display *, Drawable, GC, XImage *, int, int, int, int, unsigned int, unsigned int, Bool",
 		  "Display *a0, Drawable a1, GC a2, XImage *a3, int a4, int a5, int a6, int a7, unsigned int a8, unsigned int a9, Bool a10", "a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10");
+    } elsif($name eq "xf86dga") {
+    	output_fn("XF86DGAQueryVersion",Bool,
+		"Display*,int*,int*",
+		"Display*a0,int*a1,int*a2",
+		"a0,a1,a2"
+	);
+    	output_fn("XF86DGAQueryExtension",Bool,
+		"Display*,int*,int*",
+		"Display*a0,int*a1,int*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86DGAGetVideo",Status,
+		"Display*,int,char**,int*,int*,int*",
+		"Display*a0,int a1,char**a2,int*a3,int*a4,int*a5",
+		"a0,a1,a2,a3,a4,a5"
+	);
+	output_fn("XF86DGADirectVideo",Status,
+		"Display*,int,int",
+		"Display*a0,int a1,int a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86DGAGetViewPortSize",Status,
+		"Display*,int,int*,int*",
+		"Display*a0,int a1,int *a2,int *a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86DGASetViewPort",Status,
+		"Display*,int,int,int",
+		"Display*a0,int a1,int a2,int a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86DGAInstallColormap",Status,
+		"Display*,int,Colormap",
+		"Display*a0,int a1,Colormap a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86DGAQueryDirectVideo",Status,
+		"Display*,int,int*",
+		"Display*a0,int a1,int *a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86DGAViewPortChanged",Status,
+		"Display*,int,int",
+		"Display*a0,int a1,int a2",
+		"a0,a1,a2"
+	);
     } else {
 	open(IN, "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | gcc -L$X11_include_dir -E - | grep -v '^[ \t]*\$'|") || die "open";
 
@@ -176,6 +230,11 @@ END
 
 #endif /* __WINE_TS$ucname\_H */
 END
+    print OUTC <<END;
+$post_file
+END
+
+
 
 }
 

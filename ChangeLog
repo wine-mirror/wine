@@ -1,4 +1,193 @@
 ----------------------------------------------------------------------
+Sat Jul 25 19:45:45 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [include/shlobj.h][misc/shell.c][misc/shellord.c][ole/folders.c]
+	[shell32.spec]
+	Added SHFILEOPSTRUCT32[A|W] and constants, prototypes.
+	Implemented SHGetSpecialFolderLocation, SHGetPathFromIDList32[A].
+	Many IShellFolder, pidl, shell -related changes.
+
+	SHChangeNotifyRegister, SHChangeNotifyDeregister,
+	SHShellFolderView_Message, SHMapPIDLToSystemImageListIndex,
+	SHAddToRecentDocs32, SHFileOperation, SHChangeNotify, 
+	SHCreateShellFolderViewEx stubs.
+
+Sat Jul 25 17:16:25 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [files/profile.c]
+	Fix return value of PROFILE_GetSection().
+
+Fri Jul 24 22:45:19 1998  Ove Kaaven <ovek@isflak.arcticnet.no>
+
+	* [controls/edit.c]
+	Killed the modified flag on WM_SETTEXT. Eudora should no longer
+	bother asking whether you want to save an unchanged message.
+
+Fri Jul 24 21:21:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [controls/menu.c]
+	Fixed bug in GetMenuState32.
+	Doesn't fix Free Agent 32 :((
+
+	* [documentation/debugging]
+	Hints added.
+
+	* [files/dos_fs.c] [include/msdos.h] [msdos/int21.c]
+	Enhanced DOS device support.
+
+	* [if1632/Makefile.in] [if1632/builtin.c] [if1632/rasapi16.spec]
+	  [relay32/Makefile.in] [relay32/builtin32.c] [relay32/rasapi32.spec]
+	Added RASAPI16/32.DLL.
+
+	* [misc/aspi.c] [relay32/wnaspi32.spec]
+	Implemented GetASPI32SupportInfo.
+
+	* [multimedia/mmsystem.c]
+	Implemented mmTaskCreate.
+
+Fri Jul 24 20:55:31 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [controls/toolbar.c]
+	Fixed some bugs and added new features.
+
+	* [controls/tooltips.c][include/tooltips.h]
+	Added more messages and started display code.
+
+	* [misc/shell.c][misc/shellord.c][relay32/shell.spec]
+	Fixed StrToOleStrN (SHELL32_79) and added OleStrToStrN (SHELL32_78).
+	Added some new stubs.
+
+	* [objects/cursoricon.c][misc/imagelist.c][include/windows.h]
+	Fixed GetIconInfo and removed the GetIconInfo hack from the
+	image list code.
+
+	* [controls/pager.c][include/pager.h][controls/treeview.c]
+	  [include/treeview.h]
+	Added some messages.
+
+	* [misc/tweak.c][winows/nonclient.c][documentation/win95look]
+	Removed unused tweak variables.
+
+	* [documentation/common_controls]
+	Updated.
+
+Fri Jul 24 18:36:32 1998  James Moody <013263m@dragon.acadiau.ca>
+
+	* [objects/font.c]
+	Fixed a bug in GetTextFace.
+
+Fri Jul 24 17:09:33 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [misc/commdlg.c]
+	Fixed stacksmashing bug due to invalid specified function
+	pointers.
+
+	* [files/dos_fs.c]
+	Small change in case handling... be able to create files with
+	uppercase in them (like Program Files/).
+
+	* [graphics/ddraw.c]
+	XF86DGA support made threadsafe, added more Xlib dependent stuff
+	(create Window using CreateWindow(), draw into it). xlib support
+	is not satisfying.
+
+	* [scheduler/critsection.c]
+	Don't recurse on HeapLock with semaphore id 0.
+
+	* [win32/user32.c][windows/message.c][windows/event.c]
+	Moved win32 *Message functions where they belong.
+	Removed some potential races between XPending and XNextEvent by
+	a bit more locking.
+
+Fri Jul 24 13:58:19 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/pe_image.c] [loader/ne/segment.c]
+	Use bogus pointer value instead of NULL for unresolved externals.
+
+	* [memory/selector.c]
+	Clear saved_fs on selector free.
+
+	* [msdos/cdrom.c] [configure.in]
+	Added check for linux/ucdrom.h.
+
+	* [scheduler/client.c] [server/socket.c]
+	Fix for missing struct cmsghdr.
+	Attempt to support msg_accrights fd passing (completely untested).
+
+	* [windows/event.c]
+	Do not grab the pointer in SetCapture (Win32 behavior).
+
+Tue Jul 21 22:28:13 1998  James Juran  <jrj120@psu.edu>
+
+	* [Make.rules.in]
+	Changed $(MKDIR) macro to use -p option (make parent directories
+	if they don't already exist.  This fixes an error in 'make install'
+	if /usr/local/include doesn't already exist.
+
+Tue Jul 21 13:37:04 Rein Klazes <rklazes@casema.net>
+
+	* [include/heap.h]
+	Replaced macro SEGPTR_GET by inline function to avoid *lots*
+	of wrong use of this macro.
+
+	* [relay32/comdlg32.spec]
+	Corrected GetSaveFileNameW entry.
+
+	* [relay32/advapi32.spec] [win32/advapi.c]
+	  [relay32/ole32.spec] [ ole/moniker.c]
+	Added stubs for SetFileSecurity[AW] and CreateFileMoniker32
+
+	* [graphics/x11drv/graphics.c]
+	Finished implementation of bezier drawing code.
+
+Tue Jul 21 11:00:51 1998  Claus Fischer <cfischer@td2cad.intel.com>
+
+	* [files/drive.c]
+	Remove label trailing blanks in GetVolumeInformation32A.
+
+	* [documentation/cdrom-labels]
+	Added documentation on how to find out a CD-ROM label.
+
+Sun Jul 19 23:16:41 1998  Pascal Cuoq <pcuoq@ens-lyon.fr>
+
+	* [include/windows.h]
+	Added some DM_* and DISP_CHANGE_* flags.
+
+	* [relay32/user32.spec] [windows/user.c]
+	Added stub for ChangeDisplaySettingA.
+
+	* [ole/ole2nls.c]
+	is_punctuation: reuse information from another table.
+
+Sun Jul 19 22:04:46 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [Make.rules.in]
+	Updated automatic documentation rules.
+
+	* [graphics/path.c] [misc/aspi.c] [misc/ntdll.c] [misc/winsock_dns.c]
+	[ole/ole2dsp.c] [relay32/user32.spec]
+	Comment format futzing to keep c2man happy.
+
+	* [documentation/README.documentation]
+	Updated description of automatic documentation.
+
+Wed Jul 15 19:10:09 1998   Andrew M. Bishop <amb@gedanken.demon.co.uk>
+
+	* [files/profile.c]
+	Cache the 10 most recently used .ini files.
+
+Tue May 20 19:20:23 1997  Pablo Saratxaga <srtxg@chanae.alphanet.ch>
+
+	* [misc/commdlg.c]
+	Makes PrintDlg32A() return TRUE even if it is an empty
+	stub, so most programs are happy and run anyway instead of
+	aborting at startup.
+
+	* [graphics/x11drv/xfont.c]
+	Increased the maximum font families as (X11) font aliases
+	eated up a lot of families causing wine to stop reading fonts.
+
+----------------------------------------------------------------------
 Sun Jul 12 16:23:36 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [server/*] [scheduler/client.c] (new files)

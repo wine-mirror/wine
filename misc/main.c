@@ -518,6 +518,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
 
       /* Create window */
 
+    win_attr.background_pixel = BlackPixel(display,0);
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
 	                 PointerMotionMask | ButtonPressMask |
 			 ButtonReleaseMask | EnterWindowMask;
@@ -526,7 +527,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     rootWindow = TSXCreateWindow( display, DefaultRootWindow(display),
 			        x, y, width, height, 0,
 			        CopyFromParent, InputOutput, CopyFromParent,
-			        CWEventMask | CWCursor, &win_attr );
+			        CWBackPixel | CWEventMask | CWCursor, &win_attr );
 
       /* Set window manager properties */
 

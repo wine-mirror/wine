@@ -357,3 +357,4 @@ XContext TSXUniqueContext(void)
   TRACE(x11, "Ret XUniqueContext\n");
   return r;
 }
+

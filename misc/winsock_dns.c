@@ -47,7 +47,8 @@
 #define FASYNC FIOASYNC
 #endif
 
-typedef struct          /* async DNS op control struct */
+/* async DNS op control struct */
+typedef struct          
 {
   ws_async_op*  ws_aop;
   char*         buffer;
@@ -263,7 +264,8 @@ HANDLER_DEF(WINSOCK_sigio)
 
 /* ----------------------------------- getXbyY requests */
 
-static	 ws_async_ctl	async_ctl; /* child process control struct */
+/* child process control struct */
+static	 ws_async_ctl	async_ctl; 
 
 static int aop_control(ws_async_op* p_aop, int flag )
 {

@@ -310,22 +310,24 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
 		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
-		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress32(
                         process, hImpModule, (LPCSTR)ordinal
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR(win32,"No implementation for %s.%d, setting to NULL\n",
+			ERR(win32,"No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, ordinal);
+                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		} else {		/* import by name */
 		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
-		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress32(
                         process, hImpModule, pe_name->Name
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR(win32,"No implementation for %s.%d(%s), setting to NULL\n",
+			ERR(win32,"No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
 				name,pe_name->Hint,pe_name->Name);
+                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		}
 		import_list++;
@@ -340,23 +342,25 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
 		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
-		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress32(
                         process, hImpModule, (LPCSTR) ordinal
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR(win32, "No implementation for %s.%d, setting to NULL\n",
+			ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name,ordinal);
+                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		} else {
 		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
-		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
+		    thunk_list->u1.Function=MODULE_GetProcAddress32(
                         process, hImpModule, pe_name->Name
 		    );
 		    if (!thunk_list->u1.Function) {
-		    	ERR(win32, "No implementation for %s.%d, setting to NULL\n",
+		    	ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
 				name, pe_name->Hint);
+                        thunk_list->u1.Function = (FARPROC32)0xdeadbeef;
 		    }
 		}
 		thunk_list++;

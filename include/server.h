@@ -18,6 +18,15 @@ struct header
 /* max msg length (not including the header) */
 #define MAX_MSG_LENGTH (16384 - sizeof(struct header))
 
+/* data structure used to pass an fd with sendmsg/recvmsg */
+struct cmsg_fd
+{
+    int len;   /* sizeof structure */
+    int level; /* SOL_SOCKET */
+    int type;  /* SCM_RIGHTS */
+    int fd;    /* fd to pass */
+};
+
 /* request from client to server */
 
 enum request

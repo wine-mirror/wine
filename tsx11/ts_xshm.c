@@ -63,3 +63,4 @@ Status TSXShmPutImage(Display *a0, Drawable a1, GC a2, XImage *a3, int a4, int a
   TRACE(x11, "Ret XShmPutImage\n");
   return r;
 }
+

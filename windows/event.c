@@ -387,19 +387,22 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 
     /* Process current X event (and possibly others that occurred in the meantime) */
 
-    while (TSXPending( display ))
+    EnterCriticalSection(&X11DRV_CritSection);
+    while (XPending( display ))
     {
 
 #ifdef CONFIG_IPC
         if (DDE_GetRemoteMessage())
         {
+            LeaveCriticalSection(&X11DRV_CritSection);
             while(DDE_GetRemoteMessage()) ;
             return TRUE;
         }
 #endif  /* CONFIG_IPC */
 
-	TSXNextEvent( display, &event );
+	XNextEvent( display, &event );
 
+        LeaveCriticalSection(&X11DRV_CritSection);
         if( peek )
         {
 	  WND*		pWnd;
@@ -433,7 +436,9 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
           }
         }
         else EVENT_ProcessEvent( &event );
+        EnterCriticalSection(&X11DRV_CritSection);
     }
+    LeaveCriticalSection(&X11DRV_CritSection);
     return TRUE;
 }
 
@@ -447,12 +452,20 @@ void EVENT_Synchronize()
 {
     XEvent event;
 
-    TSXSync( display, False );
-    while (TSXPending( display ))
+    /* Use of the X critical section is needed or we have a small
+     * race between XPending() and XNextEvent().
+     */
+    EnterCriticalSection( &X11DRV_CritSection );
+    XSync( display, False );
+    while (XPending( display ))
     {
-	TSXNextEvent( display, &event );
+	XNextEvent( display, &event );
+	/* unlock X critsection for EVENT_ProcessEvent() might switch tasks */
+	LeaveCriticalSection( &X11DRV_CritSection );
 	EVENT_ProcessEvent( &event );
+	EnterCriticalSection( &X11DRV_CritSection );
     }    
+    LeaveCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
@@ -1126,18 +1139,13 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 
     if (!hwnd)
     {
-        TSXUngrabPointer(display, CurrentTime );
-        captureWnd = NULL; captureHT = 0; 
+        captureWnd = NULL;
+        captureHT = 0; 
     }
-    else if ((win = WIN_GetXWindow( hwnd )))
+    else
     {
 	WND* wndPtr = WIN_FindWndPtr( hwnd );
-
-        if ( wndPtr && 
-	     (TSXGrabPointer(display, win, False, 
-			   ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
-                           GrabModeAsync, GrabModeAsync,
-                           None, None, CurrentTime ) == GrabSuccess) )
+        if (wndPtr)
 	{
             TRACE(win, "(0x%04x)\n", hwnd );
             captureWnd   = hwnd;

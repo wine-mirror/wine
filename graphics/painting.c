@@ -1104,8 +1104,8 @@ BOOL32 WINAPI PolyBezier32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
     if(!dc) return FALSE;
     if(dc && PATH_IsPathOpen(dc->w.path))
         FIXME(gdi, "PATH_PolyBezier is not implemented!\n");
-//        if(!PATH_PolyBezier(hdc, x, y))
-//	   return FALSE;
+/*        if(!PATH_PolyBezier(hdc, x, y))
+	   return FALSE; */
     return dc->funcs->pPolyBezier&&
     	   dc->funcs->pPolyBezier(dc, lppt[0], lppt+1, cPoints-1);
 }
@@ -1131,8 +1131,8 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
     pt.y=dc->w.CursPosY;
     if(dc && PATH_IsPathOpen(dc->w.path))
         FIXME(gdi, "PATH_PolyBezierTo is not implemented!\n");
-//        if(!PATH_PolyBezier(hdc, x, y))
-//	   return FALSE;
+/*        if(!PATH_PolyBezier(hdc, x, y))
+	   return FALSE; */
     ret= dc->funcs->pPolyBezier &&
     	   dc->funcs->pPolyBezier(dc, pt, lppt, cPoints);
     if( dc->funcs->pMoveToEx)

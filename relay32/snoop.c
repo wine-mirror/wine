@@ -290,8 +290,10 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 		 */
 		LPBYTE	reteip = (LPBYTE)CALLER1REF;
 
-		if ((reteip[0]==0x83)&&(reteip[1]==0xc4))
-			fun->nrofargs=reteip[2]/4;
+		if (reteip) {
+			if ((reteip[0]==0x83)&&(reteip[1]==0xc4))
+				fun->nrofargs=reteip[2]/4;
+		}
 	}
 
 	while (*rets) {
@@ -334,7 +336,7 @@ REGS_ENTRYPOINT(SNOOP_Entry) {
 		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+8),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)(*rets)->entry[i].origreturn,FS_reg(context));
+	DPRINTF(") ret=%08lx fs=%04lx\n",ret->origreturn,FS_reg(context));
 }
 
 REGS_ENTRYPOINT(SNOOP_Return) {

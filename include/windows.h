@@ -5520,6 +5520,12 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_COLOR		0x00000800L
 #define DM_DUPLEX		0x00001000L
 
+#define DM_BITSPERPEL           0x00040000L
+#define DM_PELSWIDTH            0x00080000L
+#define DM_PELSHEIGHT           0x00100000L
+#define DM_DISPLAYFLAGS         0x00200000L
+#define DM_DISPLAYFREQUENCY     0x00400000L
+
 /* etc.... */
 
 #define DMORIENT_PORTRAIT	1
@@ -5566,6 +5572,16 @@ typedef struct _PRINTER_DEFAULTS32W {
 
 DECL_WINELIB_TYPE_AW(PRINTER_DEFAULTS)
 DECL_WINELIB_TYPE_AW(LPPRINTER_DEFAULTS)
+
+     /* ChangeDisplaySettings return codes */
+
+#define DISP_CHANGE_SUCCESSFUL 0
+#define DISP_CHANGE_RESTART    1
+#define DISP_CHANGE_FAILED     (-1)
+#define DISP_CHANGE_BADMODE    (-2)
+#define DISP_CHANGE_NOTUPDATED (-3)
+#define DISP_CHANGE_BADFLAGS   (-4)
+
 
 typedef struct _SYSTEM_POWER_STATUS
 {
@@ -6520,6 +6536,7 @@ DWORD       WINAPI GetFullPathName32W(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 INT32       WINAPI GetGraphicsMode(HDC32);
 BOOL32      WINAPI GetHandleInformation(HANDLE32,LPDWORD);
+BOOL32      WINAPI GetIconInfo(HICON32,LPICONINFO);
 DWORD       WINAPI GetLargestConsoleWindowSize(HANDLE32);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);

@@ -46,10 +46,24 @@ typedef struct
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
-static const char *DOSFS_Devices[] = {
-"CON","PRN","NUL","AUX","LPT1","LPT2","LPT3","LPT4","COM1","COM2","COM3","COM4","SCSIMGR$"
+static const DOS_DEVICE DOSFS_Devices[] =
+/* name, device flags (see Int 21/AX=0x4400) */
+{
+    { "CON",		0xc0d3 },
+    { "PRN",		0xa0c0 },
+    { "NUL",		0x80c4 },
+    { "AUX",		0x80c0 },
+    { "LPT1",		0xa0c0 },
+    { "LPT2",		0xa0c0 },
+    { "LPT3",		0xa0c0 },
+    { "LPT4",		0xc0d3 },
+    { "COM1",		0x80c0 },
+    { "COM2",		0x80c0 },
+    { "COM3",		0x80c0 },
+    { "COM4",		0x80c0 },
+    { "SCSIMGR$",	0xc0c0 },
+    { "HPSCAN",		0xc0c0 }
 };
-
 
 #define GET_DRIVE(path) \
     (((path)[1] == ':') ? toupper((path)[0]) - 'A' : DOSFS_CurDrive)
@@ -554,11 +568,11 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
 
 
 /***********************************************************************
- *           DOSFS_IsDevice
+ *           DOSFS_GetDevice
  *
- * Check if a DOS file name represents a DOS device.
+ * Check if a DOS file name represents a DOS device and return the device.
  */
-BOOL32 DOSFS_IsDevice( const char *name )
+const DOS_DEVICE *DOSFS_GetDevice( const char *name )
 {
     int	i;
     const char *p;
@@ -568,14 +582,14 @@ BOOL32 DOSFS_IsDevice( const char *name )
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
-        const char *dev = DOSFS_Devices[i];
+        const char *dev = DOSFS_Devices[i].name;
         if (!lstrncmpi32A( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
-            if (!*p || (*p == '.')) return TRUE;
+            if (!*p || (*p == '.')) return &DOSFS_Devices[i];
         }
     }
-    return FALSE;
+    return NULL;
 }
 
 /***********************************************************************
@@ -595,15 +609,15 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
-        const char *dev = DOSFS_Devices[i];
+        const char *dev = DOSFS_Devices[i].name;
         if (!lstrncmpi32A( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) {
 	    	/* got it */
-		if (!strcmp(DOSFS_Devices[i],"NUL"))
+		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
 			return FILE_OpenUnixFile("/dev/null",unixmode);
-		if (!strcmp(DOSFS_Devices[i],"CON")) {
+		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			switch (unixmode) {
 			case O_RDONLY:
 				return GetStdHandle( STD_INPUT_HANDLE );
@@ -617,7 +631,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 				break;
 			}
 		}
-		if (!strcmp(DOSFS_Devices[i],"SCSIMGR$")) {
+		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$")) {
 		        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
 				return HFILE_ERROR32;
 			else {
@@ -625,7 +639,15 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 				return handle;
 			}
 		}
-		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i]);
+                if (!strcmp(DOSFS_Devices[i].name,"HPSCAN")) {
+                        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
+                                return HFILE_ERROR32;
+                        else {
+                                file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
+                                return handle;
+                        }
+                }
+		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR32;
 	    }
         }
@@ -770,7 +792,12 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
                    (p_s < full->short_name + sizeof(full->short_name) - 1) &&
                    (p_l < full->long_name + sizeof(full->long_name) - 1))
             {
-                *p_l++ = *p_s++ = tolower(*name);
+                *p_s++ = tolower(*name);
+                /* If the drive is case-sensitive we want to create new */
+                /* files in lower-case otherwise we can't reopen them   */
+                /* under the same short name. */
+	    	if (flags & DRIVE_CASE_SENSITIVE) *p_l++ = tolower(*name);
+		else *p_l++ = *name;
                 name++;
             }
             *p_l = *p_s = '\0';

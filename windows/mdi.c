@@ -621,9 +621,11 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 	    if( total < ci->nActiveChildren )
 		delta = SYSMETRICS_CYICONSPACING + SYSMETRICS_CYICON;
 
-	    /* walk the list and move windows */
-	    while ( *ppWnd )
+	    /* walk the list (backwards) and move windows */
+            while (*ppWnd) ppWnd++;
+	    while (ppWnd != heapPtr)
 	    {
+                ppWnd--;
 		TRACE(mdi, "move %04x to (%d,%d) size [%d,%d]\n", 
                             (*ppWnd)->hwndSelf, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
 
@@ -631,7 +633,6 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 		SetWindowPos32( (*ppWnd)->hwndSelf, 0, pos[0].x, pos[0].y,
                                 pos[1].x, pos[1].y,
                                 SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
-		ppWnd++;
 	    }
 	}
 	HeapFree( SystemHeap, 0, heapPtr );

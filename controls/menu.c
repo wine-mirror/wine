@@ -2907,14 +2907,14 @@ UINT32 WINAPI GetMenuState32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
     {
 	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( item->hSubMenu );
 	if (!menu) return -1;
-	else return (menu->nItems << 8) | (menu->wFlags & 0xff);
+	else return (menu->nItems << 8) | ((item->fState|item->fType) & 0xff);
     }
     else
     {
-	 /* We used to (from way back then) mask the result to 0xff.  */
-	 /* I don't know why and it seems wrong as the documented */
-	 /* return flag MF_SEPARATOR is outside that mask.  */
-	 return (item->fType | item->fState);
+	/* We used to (from way back then) mask the result to 0xff.  */
+	/* I don't know why and it seems wrong as the documented */
+	/* return flag MF_SEPARATOR is outside that mask.  */
+	return (item->fType | item->fState);
     }
 }
 

@@ -51,6 +51,7 @@ typedef struct tagTOOLBAR_INFO
     HWND32     hwndNotify;      /* handle to the window that gets notifications */
     BOOL32     bTransparent;    /* background transparency flag */
     BOOL32     bAutoSize;
+    DWORD      dwExStyle;       /* extended toolbar style */
 
     COLORREF   clrInsertMark;   /* insert mark color */
 

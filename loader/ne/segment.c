@@ -213,10 +213,13 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                              *((BYTE *)pModule + pModule->name_table),
                              (char *)pModule + pModule->name_table + 1 );
                 else
-                    WARN(module, "No handler for %.*s.%d, setting to 0:0\n",
+                {
+                    ERR(fixup, "No handler for %.*s.%d, setting to 0xdeadbeef\n",
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
+                    address = 0xdeadbeef;
+                }
             }
             if (TRACE_ON(fixup))
             {
@@ -241,10 +244,11 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (ERR_ON(fixup) && !address)
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                ERR(fixup, "Warning: no handler for %.*s.%s, setting to 0:0\n",
+                ERR(fixup, "Warning: no handler for %.*s.%s, setting to 0xdeadbeef\n",
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
+            if (!address) address = 0xdeadbeef;
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = NE_GetPtr( module );

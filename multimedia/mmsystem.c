@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 #include "callback.h"
+#include "module.h"
+#include "selectors.h"
 
 static int	InstalledCount;
 static int	InstalledListLen;
@@ -3708,18 +3710,61 @@ LRESULT WINAPI mmThreadSignal16(WORD hnd) {
 /**************************************************************************
  * 				mmTaskCreate		[MMSYSTEM.900]
  */
-LRESULT WINAPI mmTaskCreate16(LPWORD lphnd,DWORD x1,DWORD x2) {
-	FIXME(mmsys,"(%p,%08lx,%08lx): stub!\n",lphnd,x1,x2);
-	*lphnd = 0xcafe;
-	return 0;
+HINSTANCE16 WINAPI mmTaskCreate16(LPWORD lphnd,HINSTANCE16 *hMmTask,DWORD x2)
+{
+    DWORD showCmd = 0x40002;
+    LPSTR cmdline;
+    WORD sel1, sel2;
+    LOADPARAMS *lp;
+    HINSTANCE16 ret, handle;
+
+    TRACE(mmsys,"(%p,%p,%08lx);\n",lphnd,hMmTask,x2);
+    cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
+    cmdline[0] = 0x0d;
+    (DWORD)cmdline[1] = (DWORD)lphnd;
+    (DWORD)cmdline[5] = x2;
+    (DWORD)cmdline[9] = 0;
+
+    sel1 = SELECTOR_AllocBlock(cmdline, 0x0d, SEGMENT_DATA, FALSE, FALSE);
+    sel2 = SELECTOR_AllocBlock(&showCmd, sizeof(showCmd),
+		SEGMENT_DATA, FALSE, FALSE);
+
+    lp = (LOADPARAMS *)HeapAlloc(GetProcessHeap(), 0, sizeof(LOADPARAMS));
+    lp->hEnvironment = 0;
+    lp->cmdLine = PTR_SEG_OFF_TO_SEGPTR(sel1, 0);
+    lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
+    lp->reserved = 0;
+
+    ret = LoadModule16("c:\\windows\\mmtask.tsk", lp);
+    if (ret < 32) {
+	if (ret)
+	    ret = 1;
+	else
+	    ret = 2;
+	handle = 0;
+    }
+    else {
+	handle = ret;
+	ret = 0;
+    }
+    if (hMmTask)
+	*(HINSTANCE16 *)PTR_SEG_TO_LIN(hMmTask) = handle;
+
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel2, 0));
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel1, 0));
+
+    HeapFree(GetProcessHeap(), 0, lp);
+    HeapFree(GetProcessHeap(), 0, cmdline);
+
+    return ret;
 }
 
 /**************************************************************************
  * 				mmTaskSignal		[MMSYSTEM.903]
  */
 LRESULT WINAPI mmTaskSignal16(HTASK16 ht) {
-	FIXME(mmsys,"(%04x): stub!\n",ht);
-	return PostAppMessage16(ht,0x400,0,0);
+	TRACE(mmsys,"(%04x);\n",ht);
+	return PostAppMessage16(ht,WM_USER,0,0);
 }
 
 /**************************************************************************

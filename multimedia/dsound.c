@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include <assert.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/fcntl.h>
@@ -977,6 +978,8 @@ DSOUND_thread(LPVOID arg) {
 		while (curleft < sizeof(playbuf)) {
 			res = write(audiofd,(LPBYTE)playbuf+curleft,sizeof(playbuf)-curleft);
 			if (res==-1) {
+				if (errno==EINTR)
+					continue;
 				perror("write audiofd");
 				ExitThread(0);
 				break;

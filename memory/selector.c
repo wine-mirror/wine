@@ -179,6 +179,8 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
             WARN(selector, "Freeing %%fs selector (%04x), not good.\n", fs );
             SET_FS( 0 );
         }
+        fs = THREAD_Current()->saved_fs;
+        if ((fs >= sel) && (fs < nextsel)) THREAD_Current()->saved_fs = 0;
         GET_GS(gs);
         if ((gs >= sel) && (gs < nextsel)) SET_GS( 0 );
     }

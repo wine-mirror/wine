@@ -36,8 +36,13 @@ ALLCFLAGS = $(CFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL) $(X_CFLAGS)
 LDCOMBINE = ld -r
 AR        = ar rc
 RM        = rm -f
-MKDIR     = mkdir
+MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
+MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
+	    -w $(TOPSRCDIR)/relay32/user32.spec \
+	    -w $(TOPSRCDIR)/relay32/comctl32.spec \
+	    -w $(TOPSRCDIR)/relay32/comdlg32.spec \
+	    -w $(TOPSRCDIR)/relay32/kernel32.spec 
 LINT      = lclint
 LINTFLAGS = +posixlib +gnuextensions +trytorecover
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
@@ -134,20 +139,20 @@ $(BUILD) checkbuild:
 $(MODULE).o: $(OBJS)
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
 
-# Rule for man pages
+# Rules for auto documentation
 
 man: $(C_SRCS)
-	for i in $(C_SRCS); do $(C2MAN) -L -o$(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) $$i; done
+	for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done
+
+html: $(C_SRCS)
+	for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done
+
+
 
 # Rule for linting
 
 lint:
 	for i in $(C_SRCS); do $(LINT) $(LINTFLAGS) -D__WINE__ $(OPTIONS) $(DIVINCL) $(X_CFLAGS) $$i; done
-
-# Rule for html pages
-
-html: $(C_SRCS)
-	for i in $(C_SRCS); do $(C2MAN) -L -o$(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) $$i; done
 
 # Misc. rules
 

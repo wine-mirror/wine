@@ -12,6 +12,75 @@
 #define FAR
 #define THIS_ THIS,
 
+/* common shell file structures*/
+#define FO_MOVE           0x0001
+#define FO_COPY           0x0002
+#define FO_DELETE         0x0003
+#define FO_RENAME         0x0004
+
+#define FOF_MULTIDESTFILES         0x0001
+#define FOF_CONFIRMMOUSE           0x0002
+#define FOF_SILENT                 0x0004  
+#define FOF_RENAMEONCOLLISION      0x0008
+#define FOF_NOCONFIRMATION         0x0010  
+#define FOF_WANTMAPPINGHANDLE      0x0020  
+#define FOF_ALLOWUNDO              0x0040
+#define FOF_FILESONLY              0x0080  
+#define FOF_SIMPLEPROGRESS         0x0100  
+#define FOF_NOCONFIRMMKDIR         0x0200  
+#define FOF_NOERRORUI              0x0400  
+typedef WORD FILEOP_FLAGS;
+
+#define PO_DELETE       0x0013  
+#define PO_RENAME       0x0014  
+#define PO_PORTCHANGE   0x0020  
+
+typedef WORD PRINTEROP_FLAGS;
+
+typedef struct _SHFILEOPSTRUCTA
+{ HWND32          hwnd;
+  UINT32          wFunc;
+  LPCSTR          pFrom;
+  LPCSTR          pTo;
+  FILEOP_FLAGS    fFlags;
+  BOOL32          fAnyOperationsAborted;
+  LPVOID          hNameMappings;
+  LPCSTR          lpszProgressTitle;
+} SHFILEOPSTRUCT32A, FAR *LPSHFILEOPSTRUCT32A;
+
+typedef struct _SHFILEOPSTRUCTW
+{ HWND32          hwnd;
+  UINT32          wFunc;
+  LPCWSTR         pFrom;
+  LPCWSTR         pTo;
+  FILEOP_FLAGS    fFlags;
+  BOOL32          fAnyOperationsAborted;
+  LPVOID          hNameMappings;
+  LPCWSTR         lpszProgressTitle;
+} SHFILEOPSTRUCT32W, FAR *LPSHFILEOPSTRUCT32W;
+
+typedef SHFILEOPSTRUCT32A SHFILEOPSTRUCT32;
+typedef LPSHFILEOPSTRUCT32A LPSHFILEOPSTRUCT32;
+
+/*common IDList structures*/
+typedef struct {
+	WORD		cb;	/* nr of bytes in this item */
+	BYTE		abID[1];/* first byte in this item */
+} SHITEMID,*LPSHITEMID;
+
+typedef struct {
+	SHITEMID	mkid; /* first itemid in list */
+} ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
+
+/* for SHChangeNotifyRegister*/
+typedef struct {
+   LPITEMIDLIST pidl;
+   DWORD unknown;
+} IDSTRUCT;
+
+/* for SHAddToRecentDocs*/
+#define SHARD_PIDL      0x00000001L
+#define SHARD_PATH      0x00000002L
 
 typedef LPVOID	LPBC; /* *IBindCtx really */
 
@@ -48,16 +117,6 @@ typedef struct _STRRET
   }u;
 } STRRET,*LPSTRRET;
 
-typedef struct {
-	WORD		cb;	/* nr of bytes in this item */
-	BYTE		abID[1];/* first byte in this item */
-} SHITEMID,*LPSHITEMID;
-
-typedef struct {
-	SHITEMID	mkid; /* first itemid in list */
-} ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
-
-
 /****************************************************************************
  * INTERNAL CLASS: PIDL-Manager
  * Source: HOWTO extend the explorer namespace
@@ -66,9 +125,12 @@ typedef struct {
 #define THIS LPPIDLMGR this
 typedef enum tagPIDLTYPE
 { PT_DESKTOP = 0x00000000,
-  PT_DRIVE =   0x00000001,
-  PT_FOLDER =  0x00000002,
-	PT_VALUE =   0x00000004,
+  PT_MYCOMP =  0x00000001,
+	PT_CONTROL = 0x00000002,
+	PT_RECYCLER =0x00000004,
+  PT_DRIVE =   0x00000008,
+  PT_FOLDER =  0x00000010,
+	PT_VALUE =   0x00000020,
   PT_TEXT = PT_FOLDER | PT_VALUE
 } PIDLTYPE;
 
@@ -78,8 +140,9 @@ typedef struct tagPIDLDATA
 }PIDLDATA, FAR *LPPIDLDATA;
 
 typedef struct pidlmgr pidlmgr,*LPPIDLMGR;
-typedef struct PidlMgr_VTable {
-   STDMETHOD_(LPITEMIDLIST, CreateDesktop) (THIS);
+typedef struct PidlMgr_VTable
+{  STDMETHOD_(LPITEMIDLIST, CreateDesktop) (THIS);
+   STDMETHOD_(LPITEMIDLIST, CreateMyComputer) (THIS);
    STDMETHOD_(LPITEMIDLIST, CreateDrive) (THIS_ LPCSTR);
    STDMETHOD_(LPITEMIDLIST, CreateFolder) (THIS_ LPCSTR);
    STDMETHOD_(LPITEMIDLIST, CreateValue) (THIS_ LPCSTR);
@@ -92,6 +155,7 @@ typedef struct PidlMgr_VTable {
 	 STDMETHOD_(LPITEMIDLIST, GetLastItem) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(DWORD, GetItemText) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
    STDMETHOD_(BOOL32, IsDesktop) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, IsMyComputer) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsDrive) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsFolder) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsValue) (THIS_ LPCITEMIDLIST);
@@ -114,8 +178,8 @@ typedef struct PidlMgr_VTable {
 
 } *LPPIDLMGR_VTABLE,PidlMgr_VTable;
 
-struct pidlmgr {
-	LPPIDLMGR_VTABLE	lpvtbl;
+struct pidlmgr 
+{	LPPIDLMGR_VTABLE	lpvtbl;
 };
 #ifdef __WINE__
 extern LPPIDLMGR PidlMgr_Constructor();
@@ -174,18 +238,16 @@ struct IEnumIDList {
 
 /* IShellFolder::GetDisplayNameOf/SetNameOf uFlags */
 typedef enum
-{
-    SHGDN_NORMAL            = 0,        /* default (display purpose) */
-    SHGDN_INFOLDER          = 1,        /* displayed under a folder (relative)*/
-    SHGDN_FORPARSING        = 0x8000    /* for ParseDisplayName or path */
+{ SHGDN_NORMAL            = 0,        /* default (display purpose) */
+  SHGDN_INFOLDER          = 1,        /* displayed under a folder (relative)*/
+  SHGDN_FORPARSING        = 0x8000    /* for ParseDisplayName or path */
 } SHGNO;
 
 /* IShellFolder::EnumObjects */
 typedef enum tagSHCONTF
-{
-    SHCONTF_FOLDERS         = 32,       /* for shell browser */
-    SHCONTF_NONFOLDERS      = 64,       /* for default view */
-    SHCONTF_INCLUDEHIDDEN   = 128       /* for hidden/system objects */
+{ SHCONTF_FOLDERS         = 32,       /* for shell browser */
+  SHCONTF_NONFOLDERS      = 64,       /* for default view */
+  SHCONTF_INCLUDEHIDDEN   = 128       /* for hidden/system objects */
 } SHCONTF;
 
 /* from oleidl.h */
@@ -225,7 +287,7 @@ typedef struct IShellFolder_VTable {
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
     /* *** IPersist Folder methods *** */
-		STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidl) PURE;
+/*		STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidl) PURE; */
     /* *** IShellFolder methods *** */
     STDMETHOD(ParseDisplayName) (THIS_ HWND32 hwndOwner,
         LPBC pbcReserved, LPOLESTR32 lpszDisplayName,
@@ -258,7 +320,7 @@ struct tagSHELLFOLDER {
 	LPITEMIDLIST mpidlNSRoot;
 	LPSHELLFOLDER mpSFParent;
 };
-
+extern LPSHELLFOLDER pdesktopfolder;
 #undef THIS
 
 /****************************************************************************
@@ -333,9 +395,6 @@ extern LPSHELLLINK IShellLink_Constructor();
 extern LPENUMIDLIST IEnumIDList_Constructor(LPCSTR,DWORD,HRESULT*);
 #endif
 
-DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
-
-
 /****************************************************************************
  * SHBrowseForFolder API
  */
@@ -393,10 +452,9 @@ typedef struct tagBROWSEINFO32W {
 #define BFFM_SETSELECTIONW      (WM_USER+103)
 #define BFFM_SETSTATUSTEXTW     (WM_USER+104)
 
-LPITEMIDLIST WINAPI SHBrowseForFolder32A(LPBROWSEINFO32A lpbi);
-/*
-LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);
 
+
+/*
 #ifdef UNICODE
 #define SHBrowseForFolder   SHBrowseForFolderW
 #define BFFM_SETSTATUSTEXT  BFFM_SETSTATUSTEXTW
@@ -411,6 +469,41 @@ LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);
 #define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDA 
 #endif 
 */
+
+/****************************************************************************
+ * shlview structures
+ */
+typedef HRESULT(CALLBACK *SHELLVIEWPROC)(DWORD dwUserParam,LPSHELLFOLDER psf,HWND32 hwnd,UINT32 uMsg,UINT32 wParam,LPARAM lParam);
+
+/* NF valid values for the "viewmode" item of the SHELLTEMPLATE*/
+#define NF_INHERITVIEW    0x0000
+#define NF_LOCALVIEW        0x0001
+
+typedef struct _SHELLVIEWDATA   // idl
+{ DWORD           dwSize;
+  LPSHELLFOLDER   pShellFolder;
+  DWORD           dwUserParam;
+  LPCITEMIDLIST   pidl;
+  DWORD           v3;        // always 0
+  SHELLVIEWPROC   pCallBack;
+  DWORD           viewmode;  // NF_* enum
+} SHELLVIEWDATA, * LPSHELLVIEWDATA;
+
+/****************************************************************************
+ * functions
+ */
+
+DWORD  WINAPI ILGetSize(LPITEMIDLIST iil);
+DWORD  WINAPI SHAddToRecentDocs(UINT32 uFlags, LPCVOID pv);
+LPVOID WINAPI SHAlloc(DWORD len);
+LPITEMIDLIST WINAPI SHBrowseForFolder32A(LPBROWSEINFO32A lpbi);
+/*LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);*/
+DWORD  WINAPI SHChangeNotifyRegister(HWND32 hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
+DWORD  WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
+DWORD  WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32 lpFileOp);
+LPSTR  WINAPI PathAddBackslash(LPSTR path);	
+LPSTR  WINAPI PathRemoveBlanks(LPSTR str);
+
 
 #undef PURE
 #undef FAR

@@ -177,7 +177,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     if (lstrcmpi32A(printerEnabled,"on"))
     {
         MSG("Printing disabled in wine.conf or .winerc file\n");
-        MSG("Use \"printer=on\" in the \"[wine]\" section to enable it.");
+        MSG("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
         return FALSE;
     }
 

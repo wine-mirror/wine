@@ -285,7 +285,7 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
     DOS_FULL_NAME full_name;
 
     TRACE(file, "(%s,%p)\n", path, lpsecattribs );
-    if (DOSFS_IsDevice( path ))
+    if (DOSFS_GetDevice( path ))
     {
         TRACE(file, "cannot use device '%s'!\n",path);
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
@@ -353,7 +353,7 @@ BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
 
     TRACE(file, "'%s'\n", path );
 
-    if (DOSFS_IsDevice( path ))
+    if (DOSFS_GetDevice( path ))
     {
         TRACE(file, "cannot remove device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );

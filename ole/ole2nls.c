@@ -1222,34 +1222,6 @@ DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
 	return langnamelen;
 }
  
-static int is_punctuation(unsigned char c) 
-{
-  /* punctuation characters are :
-     1-8, 14-31, 39, 45, 127-129, 141-144, 150-151, 157-158, 173 
-
-     "punctuation character" in this context is a character which is 
-     considered "less important" during word sort comparison.
-     See LCMapString for the precise definition of "less important". */
-  if (c>=141)
-  {
-    if (c<=151)
-      return (c<=144) || (c>=150);
-    if (c<=158)
-      return (c>=157);
-    return (c==173);
-  }
-  if (c>=127)
-    return (c<=129);
-  if (c>=14)
-    return (c<=31) || (c==39) || (c==45);
-  return (c<=8);
-}
-
-static int identity(int c)
-{
-  return c;
-}
-
 static const unsigned char LCM_Unicode_LUT[] = {
   6      ,   3, /*   -   1 */  
   6      ,   4, /*   -   2 */  
@@ -1639,7 +1611,24 @@ static const unsigned char LCM_Diacritic_LUT[] = {
  19,  /* ÿ - 255 */
 } ;
 
+static int is_punctuation(unsigned char c) 
+{
+  /* "punctuation character" in this context is a character which is 
+     considered "less important" during word sort comparison.
+     See LCMapString implementation for the precise definition 
+     of "less important". */
+
+  return (LCM_Unicode_LUT[-2+2*c]==6);
+}
+
+static int identity(int c)
+{
+  return c;
+}
+
 /*************************************************************************
+ *              LCMapString32A                [KERNEL32.492]
+ *
  * Convert a string, or generate a sort key from it.
  *
  * If (mapflags & LCMAP_SORTKEY), the function will generate

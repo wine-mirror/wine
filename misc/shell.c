@@ -1615,7 +1615,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	  if(IsEqualCLSID(rclsid, &CLSID_ShellLink))         /*debug*/
 	    TRACE(shell,"requested CLSID_ShellLink\n");
 
-    /* fixme: the IClassFactory_Constructor at the moment only 
+    /* fixme: the IClassFactory_Constructor is at the moment only 
 		 for rclsid=CLSID_ShellDesktop, so we get the right Interface (jsch)*/
 	  lpclf = IClassFactory_Constructor();
     if(lpclf)
@@ -1641,6 +1641,8 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
  * RETURNS
  *   the interface to the shell desktop folder.
  *
+ * FIXME
+ *   the pdesktopfolder has to be released at the end (at dll unloading???)
  */
 LPSHELLFOLDER pdesktopfolder=NULL;
 
@@ -1648,23 +1650,28 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
 { HRESULT	hres = E_OUTOFMEMORY;
   LPCLASSFACTORY lpclf;
 	TRACE(shell,"%p->(%p)\n",shellfolder,*shellfolder);
-	
+
   if (pdesktopfolder)
-	{ *shellfolder = pdesktopfolder;
-	  hres = NOERROR;
+	{	hres = NOERROR;
 	}
-  else
-	{ lpclf = IClassFactory_Constructor();
+	else
+  { lpclf = IClassFactory_Constructor();
     /* fixme: the buildin IClassFactory_Constructor is at the moment only 
  		for rclsid=CLSID_ShellDesktop, so we get the right Interface (jsch)*/
     if(lpclf)
     { hres = lpclf->lpvtbl->fnCreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
 	 	  lpclf->lpvtbl->fnRelease(lpclf);
 	  }  
-	}	
-	if (pdesktopfolder)
-	{ *shellfolder = pdesktopfolder;	
+  }
+	
+  if (pdesktopfolder)
+	{ *shellfolder = pdesktopfolder;
+    pdesktopfolder->lpvtbl->fnAddRef(pdesktopfolder);
 	}
+  else
+	{ *shellfolder=NULL;
+	}	
+
   TRACE(shell,"-- %p->(%p)\n",shellfolder, *shellfolder);
 	return hres;
 }
@@ -1686,108 +1693,247 @@ DWORD WINAPI SHGetMalloc(LPMALLOC32 *lpmal)
 
 /*************************************************************************
  *			 SHGetSpecialFolderLocation	[SHELL32.223]
- *  nFolder is a CSIDL_xxxxx.
+ * gets the folder locations from the registry and creates a pidl
+ * creates missing reg keys and directorys
+ * 
+ * PARAMS
+ *   hwndOwner [I]
+ *   nFolder   [I] CSIDL_xxxxx
+ *   ppidl     [O] PIDL of a special folder
  *
  * RETURNS
- *    returns the PIDL of a special folder
+ *    HResult
  *
  * FIXME
- *   the path is every time x:\\windows\\desktop
- *   we should get the path's from the registry
+ *   - look for "User Shell Folder" first
+ *
  */
-HRESULT WINAPI SHGetSpecialFolderLocation(
-    HWND32 hwndOwner,
-		INT32 nFolder,
-    LPITEMIDLIST * ppidl)
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl)
 {	LPSHELLFOLDER shellfolder;
-  DWORD  pchEaten;
-	CHAR   pszTemp[256];
+  DWORD  pchEaten,tpathlen=MAX_PATH,type,dwdisp,res;
+	CHAR   pszTemp[256],buffer[256],tpath[MAX_PATH],npath[MAX_PATH];
 	LPWSTR lpszDisplayName = (LPWSTR)&pszTemp[0];
-	
-  FIXME(shell,"(%04x,%d,%p),stub!\n", hwndOwner,nFolder,ppidl);
+	HKEY	 key;
 
-  LocalToWideChar32(lpszDisplayName, "x:\\windows\\desktop\\", 256);
-  
-	if (SHGetDesktopFolder(&shellfolder)==S_OK)
-	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,hwndOwner,
-	NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
+  enum 
+	{	FT_UNKNOWN= 0x00000000,
+	  FT_DIR=     0x00000001, 
+	  FT_DESKTOP= 0x00000002
+	} tFolder; 
+
+  TRACE(shell,"(%04x,%d,%p)\n", hwndOwner,nFolder,ppidl);
+
+  strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
+
+  res=RegCreateKeyEx32A(HKEY_CURRENT_USER,buffer,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&key,&dwdisp);
+	if (res)
+	{ ERR(shell,"Could not create key %s %08lx \n",buffer,res);
+	  return E_OUTOFMEMORY;
 	}
 
+	tFolder=FT_DIR;	
 	switch (nFolder)
 	{	case CSIDL_BITBUCKET:
-      TRACE (shell,"looking for Recyceler\n");
+			strcpy (buffer,"xxx");			/*not in the registry*/
+			TRACE (shell,"looking for Recycler\n");
+			tFolder=FT_UNKNOWN;
       break;
 		case CSIDL_CONTROLS:
+			strcpy (buffer,"xxx");			/*virtual folder*/
       TRACE (shell,"looking for Control\n");
+			tFolder=FT_UNKNOWN;
       break;
 		case CSIDL_DESKTOP:
-		  TRACE (shell,"looking for Desktop\n");
+			strcpy (buffer,"xxx");			/*virtual folder*/
+			TRACE (shell,"looking for Desktop\n");
+			tFolder=FT_DESKTOP;			
       break;
 		case CSIDL_DESKTOPDIRECTORY:
-      TRACE (shell,"looking for DeskDir\n");
+			strcpy (buffer,"Desktop");
       break;
 		case CSIDL_DRIVES:
+			strcpy (buffer,"xxx");			/*virtual folder*/
       TRACE (shell,"looking for Drives\n");
+			tFolder=FT_UNKNOWN;
       break;
 		case CSIDL_FONTS:
-      TRACE (shell,"looking for Fonts\n");
+			strcpy (buffer,"Fonts");			
       break;
 		case CSIDL_NETHOOD:
-      TRACE (shell,"looking for Nethood\n");
+			strcpy (buffer,"NetHood");			
       break;
 		case CSIDL_NETWORK:
-		  TRACE (shell,"looking for Network\n");
+			strcpy (buffer,"xxx");				/*virtual folder*/
+			TRACE (shell,"looking for Network\n");
+			tFolder=FT_UNKNOWN;
       break;
 		case CSIDL_PERSONAL:
-		  TRACE (shell,"looking for Personal\n");
+			strcpy (buffer,"Personal");			
+      break;
+		case CSIDL_FAVORITES:
+			strcpy (buffer,"Favorites");			
       break;
 		case CSIDL_PRINTERS:
-      TRACE (shell,"looking for Printers\n");
+			strcpy (buffer,"PrintHood");			
       break;
 		case CSIDL_PROGRAMS:
-      TRACE (shell,"looking for Programms\n");
+			strcpy (buffer,"Programs");			
       break;
 		case CSIDL_RECENT:
-      TRACE (shell,"looking for Recent\n");
+			strcpy (buffer,"Recent");
       break;
 		case CSIDL_SENDTO:
-      TRACE (shell,"looking for Sendto\n");
-      break;
+			strcpy (buffer,"SendTo");
+ 		  break;
 		case CSIDL_STARTMENU:
-      TRACE (shell,"looking for Startmenu\n");
+			strcpy (buffer,"Start Menu");
       break;
 		case CSIDL_STARTUP:
-		  TRACE (shell,"looking for Startup\n");
+			strcpy (buffer,"Startup");			
       break;
 		case CSIDL_TEMPLATES:
-		  TRACE (shell,"looking for Templates\n");
+			strcpy (buffer,"Templates");			
       break;
 		default:
       ERR (shell,"unknown CSIDL\n");
+			tFolder=FT_UNKNOWN;			
       break;
 	}
 
-	TRACE(shell, "-- (new pidl %p)\n",*ppidl);
+  TRACE(shell,"Key=%s\n",buffer);
 
+  type=REG_SZ;
+
+  switch (tFolder)
+	{ case FT_DIR:
+	    /* Directory: get the value from the registry, if its not there 
+			create it and the directory*/
+    	if (RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
+  	  { GetWindowsDirectory32A(npath,MAX_PATH);
+	      PathAddBackslash(npath);
+  			switch (nFolder)
+  			{	case CSIDL_DESKTOPDIRECTORY:
+      			strcat (npath,"Desktop");
+            break;
+      		case CSIDL_FONTS:
+      			strcat (npath,"Fonts");			
+            break;
+      		case CSIDL_NETHOOD:
+      			strcat (npath,"NetHood");			
+            break;
+  		    case CSIDL_PERSONAL:
+      			strcpy (npath,"C:\\Personal");			
+            break;
+      		case CSIDL_FAVORITES:
+      			strcat (npath,"Favorites");			
+            break;
+  		    case CSIDL_PRINTERS:
+      			strcat (npath,"PrintHood");			
+            break;
+      		case CSIDL_PROGRAMS:
+      			strcat (npath,"Start Menu");			
+  					CreateDirectory32A(npath,NULL);
+      			strcat (npath,"\\Programs");			
+            break;
+      		case CSIDL_RECENT:
+      			strcat (npath,"Recent");
+            break;
+      		case CSIDL_SENDTO:
+      			strcat (npath,"SendTo");
+      			break;
+      		case CSIDL_STARTMENU:
+      			strcat (npath,"Start Menu");
+            break;
+      		case CSIDL_STARTUP:
+      			strcat (npath,"Start Menu");			
+  					CreateDirectory32A(npath,NULL);
+      			strcat (npath,"\\Startup");			
+            break;
+      		case CSIDL_TEMPLATES:
+      			strcat (npath,"Templates");			
+            break;
+  				default:
+         	  RegCloseKey(key);
+        	  return E_OUTOFMEMORY;
+  			}
+    		if (RegSetValueEx32A(key,buffer,0,REG_SZ,npath,sizeof(npath)+1))
+        {	ERR(shell,"could not create value %s\n",buffer);
+      	  RegCloseKey(key);
+      	  return E_OUTOFMEMORY;
+    		}
+    		TRACE(shell,"value %s=%s created\n",buffer,npath);
+    	  CreateDirectory32A(npath,NULL);
+      }
+			break;
+		case FT_DESKTOP:
+			strcpy (tpath,"Desktop");			
+		  break;
+	  default:
+      RegCloseKey(key);
+      return E_OUTOFMEMORY;
+		  break;
+  }
+
+	RegCloseKey(key);
+
+  TRACE(shell,"Value=%s\n",tpath);
+  LocalToWideChar32(lpszDisplayName, tpath, 256);
+  
+	if (SHGetDesktopFolder(&shellfolder)==S_OK)
+	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,hwndOwner, NULL,lpszDisplayName,&pchEaten,ppidl,NULL);
+	  shellfolder->lpvtbl->fnRelease(shellfolder);
+	}
+
+	TRACE(shell, "-- (new pidl %p)\n",*ppidl);
 	return NOERROR;
 }
 
 /*************************************************************************
- *			 SHGetPathFromIDList		[SHELL32.221]
- * returns the path from a passed PIDL.
+ * SHGetPathFromIDList32A        [SHELL32.261][NT 4.0: SHELL32.220]
+ *
+ * NOTES
+ *     exported by name
+ * FIXME
+ *  fnGetDisplayNameOf can return different types of OLEString
  */
-BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) 
-{ STRRET lpName;
+DWORD WINAPI SHGetPathFromIDList32A (
+    LPCITEMIDLIST pidl, /* [IN] pidl */
+		LPSTR pszPath)      /* [OUT] path */
+{	STRRET lpName;
 	LPSHELLFOLDER shellfolder;
 	TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
 
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	{ shellfolder->lpvtbl->fnGetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&lpName);
+	  shellfolder->lpvtbl->fnRelease(shellfolder);
 	}
-  WideCharToLocal32(pszPath, lpName.u.pOleStr, MAX_PATH);
+  /*WideCharToLocal32(pszPath, lpName.u.pOleStr, MAX_PATH);*/
+	strcpy(pszPath,lpName.u.cStr);
 	/* fixme free the olestring*/
 	TRACE(shell,"-- (%s)\n",pszPath);
 	return NOERROR;
+}
+/*************************************************************************
+ * SHGetPathFromIDList32W [SHELL32.262]
+ *
+ * NOTES
+ *     exported by name
+ */
+DWORD WINAPI SHGetPathFromIDList32W (DWORD dwParam1,DWORD dwParam2)
+{ FIXME (shell,"(0x%08lx,0x%08lx):stub.\n", dwParam1, dwParam2);
+  return 0;
+}
+/*************************************************************************
+ *			 SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
+ *
+ * returns the path from a passed PIDL.
+ */
+BOOL32 WINAPI SHGetPathFromIDList( 
+    LPCITEMIDLIST pidl, /* [IN] pidl */
+		LPSTR pszPath)      /* [OUT] path */
+{ TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
+
+  return SHGetPathFromIDList32A(pidl,pszPath);
 }
 
 /*************************************************************************

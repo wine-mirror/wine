@@ -26,14 +26,9 @@
 #include "options.h"
 
 
-int  NC_CaptionLeftNudge;
-int  NC_CaptionTopNudge;
-int  NC_SysControlNudge;
 int  NC_MaxControlNudge;
 int  NC_MinControlNudge;
 UINT32  NC_CaptionTextFlags;
-HBRUSH32  NC_WinHighlight95;
-HBRUSH32  NC_WinShadow95;
 
 static HBITMAP16 hbitmapClose = 0;
 static HBITMAP16 hbitmapCloseD = 0;
@@ -176,7 +171,6 @@ NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL32 menu, DWORD exStyle)
 		rect->top -= SYSMETRICS_CYSMCAPTION;
 	    else
 		rect->top -= SYSMETRICS_CYCAPTION;
-//            rect->top -= sysMetrics[SM_CYCAPTION];
     }
 
     if (menu)
@@ -570,7 +564,7 @@ LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
  *
  * Handle a WM_NCHITTEST message. Called from NC_HandleNCHitTest().
  *
- * FIXME:  Just a copy of the Win 3.1 version.
+ * FIXME:  Just a modified copy of the Win 3.1 version.
  */
 
 LONG
@@ -828,11 +822,15 @@ NC_DrawSysButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	    hIcon = wndPtr->class->hIconSm;
 	else if (wndPtr->class->hIcon)
 	    hIcon = wndPtr->class->hIcon;
+//	else
+//	    hIcon = LoadIcon32A (0, IDI_APPLICATION);
 
 	if (hIcon)
 	    DrawIconEx32 (hdc, rect.left + 2, rect.top + 1, hIcon,
-			  sysMetrics[SM_CYCAPTION] - 3,
-			  sysMetrics[SM_CYCAPTION] - 3, 0, 0, DI_NORMAL);
+			  sysMetrics[SM_CXSMICON],
+			  sysMetrics[SM_CYSMICON],
+			  0, 0, DI_NORMAL);
+
 	return (hIcon != 0);
     }
     return FALSE;

@@ -29,7 +29,7 @@
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
 
-#define MAX_FONT_FAMILIES	64
+#define MAX_FONT_FAMILIES	128
 #define MAX_LFD_LENGTH		256
 
 #define REMOVE_SUBSETS		1
@@ -575,7 +575,7 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32*
         Atom RAW_CAP_HEIGHT = TSXInternAtom(display, "RAW_CAP_HEIGHT", TRUE);
 	if(TSXGetFontProperty(x_fs, RAW_CAP_HEIGHT, &height))
 	    *pIL = XFT->ascent - 
-                            (INT32)(hypotf(XFT->a, XFT->b) / 1000.0 * height);
+                            (INT32)(XFT->pixelsize / 1000.0 * height);
 	else
 	    *pIL = 0;
 	return bHaveCapHeight && x_fs->per_char;
@@ -2015,7 +2015,7 @@ static BOOL32 XFONT_SetX11Trans( fontObject *pfo )
   XGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
   XGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
 
-  PX->pixelsize = hypotf(PX->a, PX->b);
+  PX->pixelsize = hypot(PX->a, PX->b);
   PX->ascent = PX->pixelsize / 1000.0 * PX->RAW_ASCENT;
   PX->descent = PX->pixelsize / 1000.0 * PX->RAW_DESCENT;
 

@@ -7,32 +7,32 @@ type	win32
 # This list was updated to dll version 4.72
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
-   3 stub CheckEscapesA   # exported by name
-   4 stub SHChangeNotifyDeregister
-   5 stub SHChangeNotifyUpdateEntryList
-   6 stub CheckEscapesW   # exported by name
+   3 stub CheckEscapesA@8   # exported by name
+   4 stdcall SHChangeNotifyDeregister (long long) SHChangeNotifyDeregister
+   5 stub SHChangeNotifyUpdateEntryList@16
+   6 stub CheckEscapesW@8   # exported by name
    7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW   # exported by name
-   8 stub Control_FillCache_RunDLL   # exported by name
-   9 stub PifMgr_OpenProperties
-  10 stub PifMgr_GetProperties
-  11 stub PifMgr_SetProperties
+   8 stub Control_FillCache_RunDLL@16   # exported by name
+   9 stub PifMgr_OpenProperties@16
+  10 stub PifMgr_GetProperties@20
+  11 stub PifMgr_SetProperties@20
   12 stub Control_FillCache_RunDLLA   # exported by name
-  13 stub PifMgr_CloseProperties
-  14 stub Control_FillCache_RunDLLW   # exported by name
+  13 stub PifMgr_CloseProperties@8
+  14 stub Control_FillCache_RunDLLW@16   # exported by name
   15 stdcall ILGetDisplayName(ptr ptr) ILGetDisplayName
   16 stdcall ILFindLastID(ptr) ILFindLastID
-  17 stub ILRemoveLastID
+  17 stub ILRemoveLastID@4
   18 stdcall ILClone(ptr) ILClone
-  19 stub ILCloneFirst
-  20 stub ILGlobalClone
-  21 stub ILIsEqual
+  19 stub ILCloneFirst@4
+  20 stub ILGlobalClone@4
+  21 stub ILIsEqual@8
   22 stdcall Control_RunDLL(long long long long) Control_RunDLL # exported by name
-  23 stub ILIsParent
-  24 stub ILFindChild
+  23 stub ILIsParent@12
+  24 stub ILFindChild@8
   25 stdcall ILCombine(ptr ptr) ILCombine
-  26 stub ILLoadFromStream
-  27 stub ILSaveToStream
-  28 stub SHILCreateFromPath
+  26 stub ILLoadFromStream@8
+  27 stub ILSaveToStream@8
+  28 stub SHILCreateFromPath@12
   29 stdcall PathIsRoot(str) PathIsRoot
   30 stdcall PathBuildRoot(ptr long) PathBuildRoot
   31 stdcall PathFindExtension(str) PathFindExtension
@@ -82,9 +82,8 @@ type	win32
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueName
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
-  78 stub OleStrToStrN@16
-#  79 stub StrToOleStrN@16
-  79 stdcall SHELL32_79(str ptr) SHELL32_79
+  78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
+  79 stdcall StrToOleStrN(wstr long str long) StrToOleStrN
   80 stub DragFinish   # exported by name
   81 stub DragQueryFile   # exported by name
   82 stub DragQueryFileA   # exported by name
@@ -179,7 +178,7 @@ type	win32
  171 stub PathCleanupSpec
  172 stub SHCreateLinks
  173 stub SHValidateUNC
- 174 stub SHCreateShellFolderViewEx
+ 174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx32
  175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
  176 stub SHSetInstanceExplorer
  177 stub DAD_SetDragImageFromListView
@@ -239,15 +238,15 @@ type	win32
  231 stub RealShellExecuteExW   # exported by name
  232 stub RealShellExecuteW   # exported by name
  233 stub RegenerateUserEnvironment@8   # exported by name
- 234 stub SHAddToRecentDocs@8   # exported by name
+ 234 stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs32  # exported by name
  235 stdcall SHAppBarMessage(long ptr) SHAppBarMessage32   # exported by name
- 236 stub SHBrowseForFolder@4   # exported by name
+ 236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolder32A   # exported by name
  237 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolder32A   # exported by name
  238 stub SHBrowseForFolderW@4   # exported by name
- 239 stub SHChangeNotify@16   # exported by name
+ 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify32  # exported by name
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
- 242 stub SHFileOperation@4   # exported by name
+ 242 stdcall SHFileOperation(ptr) SHFileOperation32   # exported by name
  243 stub SHFileOperationA@4   # exported by name
  244 stub SHFileOperationW@4   # exported by name
  245 stub SHFormatDrive@16   # exported by name
@@ -256,7 +255,7 @@ type	win32
  248 stub SHGetDataFromIDListW@20   # exported by name
  249 stub PathParseIconLocation@4
  250 stub PathRemoveExtension@4
- 251 stub PathRemoveArgs@5
+ 251 stub PathRemoveArgs@4
  252 stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder   # exported by name
  253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A   # exported by name
  254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A   # exported by name
@@ -265,9 +264,9 @@ type	win32
  257 stdcall SHGetMalloc(ptr) SHGetMalloc   # exported by name
  258 stub SHGetNewLinkInfo@20   # exported by name
  259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList   # exported by name
- 260 stub SHGetPathFromIDList@8   # exported by name
- 261 stub SHGetPathFromIDListA@8   # exported by name
- 262 stub SHGetPathFromIDListW@8   # exported by name
+ 260 stub SHGetPathFromIDList@8 # exported by name
+ 261 stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDList32A # exported by name
+ 262 stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDList32W # exported by name
  263 stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation   # exported by name
  264 stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL   # exported by name
  265 stub SHHelpShortcuts_RunDLLA@16   # exported by name

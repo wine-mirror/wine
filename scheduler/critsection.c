@@ -123,7 +123,9 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
 {
-    if ((crit->Reserved==-1) && !(crit->LockSemaphore)) {
+    if (	(crit->Reserved==-1) && !(crit->LockSemaphore) &&
+		(crit!=HEAP_SystemLock)
+    ) {
     	FIXME(win32,"entering uninitialized section(%p)?\n",crit);
     	InitializeCriticalSection(crit);
     }

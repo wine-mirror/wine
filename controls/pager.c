@@ -24,6 +24,152 @@
 #define PAGER_GetInfoPtr(wndPtr) ((PAGER_INFO *)wndPtr->wExtra[0])
 
 
+static __inline__ LRESULT
+PAGER_GetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    return (LRESULT)infoPtr->clrBk;
+}
+
+
+static __inline__ LRESULT
+PAGER_GetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    return (LRESULT)infoPtr->iBorder;
+}
+
+
+static __inline__ LRESULT
+PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    return (LRESULT)infoPtr->iButtonSize;
+}
+
+
+
+
+static __inline__ LRESULT
+PAGER_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    COLORREF clrTemp = infoPtr->clrBk;
+
+    infoPtr->clrBk = (COLORREF)lParam;
+
+    /* FIXME: redraw */
+
+    return (LRESULT)clrTemp;
+}
+
+
+static __inline__ LRESULT
+PAGER_SetBorder (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    INT32 nTemp = infoPtr->iBorder;
+
+    infoPtr->iBorder = (INT32)lParam;
+
+    /* FIXME: redraw */
+
+    return (LRESULT)nTemp;
+}
+
+
+static __inline__ LRESULT
+PAGER_SetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    INT32 nTemp = infoPtr->iButtonSize;
+
+    infoPtr->iButtonSize = (INT32)lParam;
+
+    /* FIXME: redraw */
+
+    return (LRESULT)nTemp;
+}
+
+
+static __inline__ LRESULT
+PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    infoPtr->hwndChild = (HWND32)lParam;
+
+    /* FIXME: redraw */
+
+    return 0;
+}
+
+
+
+static LRESULT
+PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr;
+
+    /* allocate memory for info structure */
+    infoPtr = (PAGER_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+                                   sizeof(PAGER_INFO));
+    wndPtr->wExtra[0] = (DWORD)infoPtr;
+
+    if (infoPtr == NULL) {
+	ERR (treeview, "could not allocate info memory!\n");
+	return 0;
+    }
+
+    if ((PAGER_INFO*)wndPtr->wExtra[0] != infoPtr) {
+	ERR (pager, "pointer assignment error!\n");
+	return 0;
+    }
+
+    /* set default settings */
+    infoPtr->hwndChild = 0;
+    infoPtr->clrBk = GetSysColor32 (COLOR_BTNFACE);
+    infoPtr->iBorder = 0;
+    infoPtr->iButtonSize = 0;
+
+
+    return 0;
+}
+
+
+static LRESULT
+PAGER_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+
+
+
+    /* free tree view info data */
+    HeapFree (GetProcessHeap (), 0, infoPtr);
+
+    return 0;
+}
+
+
+static LRESULT
+PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    HBRUSH32 hBrush = CreateSolidBrush32 (infoPtr->clrBk);
+    RECT32 rect;
+
+    GetClientRect32 (wndPtr->hwndSelf, &rect);
+    FillRect32 ((HDC32)wParam, &rect, hBrush);
+    DeleteObject32 (hBrush);
+    return TRUE;
+}
+
+
+
 LRESULT WINAPI
 PagerWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
@@ -31,11 +177,44 @@ PagerWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-//	case WM_CREATE:
-//	    return PAGER_Create (wndPtr, wParam, lParam);
+//	case PGM_FORWARDMOUSE:
 
-//	case WM_DESTROY:
-//	    return PAGER_Destroy (wndPtr, wParam, lParam);
+	case PGM_GETBKCOLOR:
+	    return PAGER_GetBkColor (wndPtr, wParam, lParam);
+
+	case PGM_GETBORDER:
+	    return PAGER_GetBorder (wndPtr, wParam, lParam);
+
+	case PGM_GETBUTTONSIZE:
+	    return PAGER_GetButtonSize (wndPtr, wParam, lParam);
+
+//	case PGM_GETBUTTONSTATE:
+//	case PGM_GETDROPTARGET:
+//	case PGM_GETPOS:
+//	case PGM_RECALCSIZE:
+
+	case PGM_SETBKCOLOR:
+	    return PAGER_SetBkColor (wndPtr, wParam, lParam);
+
+	case PGM_SETBORDER:
+	    return PAGER_SetBorder (wndPtr, wParam, lParam);
+
+	case PGM_SETBUTTONSIZE:
+	    return PAGER_SetButtonSize (wndPtr, wParam, lParam);
+
+	case PGM_SETCHILD:
+	    return PAGER_SetChild (wndPtr, wParam, lParam);
+
+//	case PGM_SETPOS:
+
+	case WM_CREATE:
+	    return PAGER_Create (wndPtr, wParam, lParam);
+
+	case WM_DESTROY:
+	    return PAGER_Destroy (wndPtr, wParam, lParam);
+
+	case WM_ERASEBKGND:
+	    return PAGER_EraseBackground (wndPtr, wParam, lParam);
 
 //	case WM_MOUSEMOVE:
 //	    return PAGER_MouseMove (wndPtr, wParam, lParam);

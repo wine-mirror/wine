@@ -24,6 +24,7 @@ DLLS = \
 	ole2thk.spec \
 	olecli.spec \
 	olesvr.spec \
+	rasapi16.spec \
 	shell.spec \
 	sound.spec \
 	storage.spec \

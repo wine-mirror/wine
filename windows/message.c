@@ -26,6 +26,7 @@
 #include "process.h"
 #include "thread.h"
 #include "options.h"
+#include "struct32.h"
 #include "debug.h"
 
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
@@ -927,6 +928,29 @@ BOOL16 WINAPI PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
     return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
 }
 
+/***********************************************************************
+ *         PeekMessageA
+ */
+BOOL32 WINAPI PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
+                              UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+{
+	MSG16 msg;
+	BOOL32 ret;
+	ret=PeekMessage16(&msg,hwnd,min,max,wRemoveMsg);
+        /* FIXME: should translate the message to Win32 */
+	STRUCT32_MSG16to32(&msg,lpmsg);
+	return ret;
+}
+
+/***********************************************************************
+ *         PeekMessageW
+ */
+BOOL32 WINAPI PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
+                              UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+{
+	/* FIXME: Should perform Unicode translation on specific messages */
+	return PeekMessage32A(lpmsg,hwnd,min,max,wRemoveMsg);
+}
 
 /***********************************************************************
  *           GetMessage16   (USER.108)
@@ -941,6 +965,36 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 		     				                 hwnd, first, last );
     HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
+}
+
+/***********************************************************************
+ *          GetMessage32A   (USER32.270)
+ */
+BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
+{
+    BOOL32 ret;
+    MSG16 *msg = SEGPTR_NEW(MSG16);
+    if (!msg) return 0;
+    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
+    /* FIXME */
+    STRUCT32_MSG16to32(msg,lpmsg);
+    SEGPTR_FREE(msg);
+    return ret;
+}
+
+/***********************************************************************
+ *          GetMessage32W   (USER32.274)
+ */
+BOOL32 WINAPI GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
+{
+    BOOL32 ret;
+    MSG16 *msg = SEGPTR_NEW(MSG16);
+    if (!msg) return 0;
+    ret=GetMessage16(SEGPTR_GET(msg),(HWND16)hwnd,min,max);
+    /* FIXME */
+    STRUCT32_MSG16to32(msg,lpmsg);
+    SEGPTR_FREE(msg);
+    return ret;
 }
 
 

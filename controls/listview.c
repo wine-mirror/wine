@@ -54,8 +54,7 @@ LISTVIEW_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
 
-    fprintf (stderr, "LISTVIEW: SetImageList (0x%08x 0x%08lx)\n",
-	     wParam, lParam);
+    FIXME (listview, "(0x%08x 0x%08lx)\n", wParam, lParam);
 
     return 0;
 }

@@ -659,9 +659,13 @@ INT32 WINAPI GetTextFace32A( HDC32 hdc, INT32 count, LPSTR name )
     if (!dc) return 0;
     if (!(font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
         return 0;
-    lstrcpyn32A( name, font->logfont.lfFaceName, count );
+    if (name) 
+        lstrcpyn32A( name, font->logfont.lfFaceName, count );
     GDI_HEAP_UNLOCK( dc->w.hFont );
-    return strlen(name);
+    if (name)
+        return strlen(name);
+    else
+        return strlen(font->logfont.lfFaceName) + 1;
 }
 
 /***********************************************************************

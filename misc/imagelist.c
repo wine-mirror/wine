@@ -30,9 +30,7 @@
  * an empty structure. It's just to keep compatibility.
  */
 #define __WINE_IMAGELIST_C
- 
-/* This must be defined until "GetIconInfo" is not fully implemented. */
-#define __GET_ICON_INFO_HACK__ 
+
  
 #include "windows.h"
 #include "compobj.h"
@@ -40,10 +38,6 @@
 #include "imagelist.h"
 #include "commctrl.h"
 #include "debug.h"
-
-#ifdef __GET_ICON_INFO_HACK__
-#include "bitmap.h"
-#endif
 
 
 #define _MAX(a,b) (((a)>(b))?(a):(b))
@@ -112,7 +106,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT32 nImageCount)
 
     if (himl->hbmMask) {
         hbmNewBitmap = 
-            CreateBitmap32 (nNewWidth, himl->cy, 1, himl->uBitsPixel, NULL);
+            CreateBitmap32 (nNewWidth, himl->cy, 1, 1, NULL);
 
         if (hbmNewBitmap == 0)
             ERR (imagelist, "creating new mask bitmap!");
@@ -438,7 +432,7 @@ ImageList_Copy (HIMAGELIST himlDst, INT32 iDst,	HIMAGELIST himlSrc,
         hbmTempImage = CreateBitmap32 (himlSrc->cx, himlSrc->cy, 1,
                                        himlSrc->uBitsPixel, NULL);
         hbmTempMask = CreateBitmap32 (himlSrc->cx, himlSrc->cy, 1,
-				      himlSrc->uBitsPixel, NULL);
+				      1, NULL);
 
         /* copy (and stretch) destination to temporary bitmaps.(save) */
         /* image */
@@ -546,6 +540,8 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
         {0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA,
          0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA, 0x5555, 0xAAAA};
 
+    TRACE (imagelist, "(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
+
     himl = (HIMAGELIST)LocalAlloc32 (LMEM_FIXED | LMEM_ZEROINIT,
                                      sizeof(struct _IMAGELIST));
     if (!himl)
@@ -579,7 +575,7 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
 
     if (himl->flags & ILC_MASK) {
         himl->hbmMask = CreateBitmap32 (himl->cx * himl->cMaxImage, himl->cy,
-					1, himl->uBitsPixel, NULL);
+					1, 1, NULL);
         if (himl->hbmMask == 0) {
             ERR(imagelist, "Error creating mask bitmap!\n");
             if (himl->hbmImage)
@@ -1242,7 +1238,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
     ii.xHotspot = 0;
     ii.yHotspot = 0;
     ii.hbmMask  = CreateBitmap32 (nWidth, nHeight, 1, 1, NULL);
-    ii.hbmColor = CreateBitmap32 (nWidth, nHeight, 1, 1, NULL);
+    ii.hbmColor = CreateBitmap32 (nWidth, nHeight, 1, himl->uBitsPixel, NULL);
 
     hdc = CreateCompatibleDC32(0);
 
@@ -1431,36 +1427,16 @@ ImageList_LoadImage32A (HINSTANCE32 hi, LPCSTR lpbmp, INT32 cx,	INT32 cGrow,
         ImageList_AddMasked (himl, (HBITMAP32)handle, clrMask);
     }
     else if ((uType == IMAGE_ICON) || (uType == IMAGE_CURSOR)) {
-#ifdef __GET_ICON_INFO_HACK__
-        HBITMAP32 hbmImage;
-        HBITMAP32 hbmMask;
-        CURSORICONINFO *ptr;
-
-        if (!(ptr = (CURSORICONINFO *)GlobalLock16(handle))) return (NULL);
-        hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
-                                   (char *)(ptr + 1));
-        hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                                   ptr->bBitsPerPixel,
-                                   (char *)(ptr + 1) + ptr->nHeight * 
-                                   BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
-        GlobalUnlock16 (handle);
-        himl = ImageList_Create (ptr->nWidth, ptr->nHeight,
-                                 ILC_MASK | ILC_COLOR, 1, cGrow);
-        ImageList_Add (himl, hbmImage, hbmMask);
-        DeleteObject32 (hbmImage);
-        DeleteObject32 (hbmMask);
-#else
-        ICONINFO32 ii;
+        ICONINFO ii;
         BITMAP32 bmp;
 
-        GetIconInfo (hIcon, &ii);
-        GetObject32A (ii->hbmColor, sizeof(BITMAP32), (LPVOID)&bmp);
+        GetIconInfo (handle, &ii);
+        GetObject32A (ii.hbmColor, sizeof(BITMAP32), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
-        ImageList_Add (himl, ii->hbmColor, ii->hbmMask);
-        DeleteObject32 (ii->hbmColor);
-        DeleteObject32 (ii->hbmMask);
-#endif
+        ImageList_Add (himl, ii.hbmColor, ii.hbmMask);
+        DeleteObject32 (ii.hbmColor);
+        DeleteObject32 (ii.hbmMask);
     }
 
     DeleteObject32 (handle);
@@ -1515,36 +1491,16 @@ ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
         ImageList_AddMasked (himl, (HBITMAP32)handle, clrMask);
     }
     else if ((uType == IMAGE_ICON) || (uType == IMAGE_CURSOR)) {
-#ifdef __GET_ICON_INFO_HACK__
-        HBITMAP32 hbmImage;
-        HBITMAP32 hbmMask;
-        CURSORICONINFO *ptr;
-
-        if (!(ptr = (CURSORICONINFO *)GlobalLock16(handle))) return (NULL);
-        hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
-                                   (char *)(ptr + 1));
-        hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                                   ptr->bBitsPerPixel,
-                                   (char *)(ptr + 1) + ptr->nHeight * 
-                                   BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
-        himl = ImageList_Create (ptr->nWidth, ptr->nHeight,
-                                 ILC_MASK | ILC_COLOR, 1, cGrow);
-        ImageList_Add (himl, hbmImage, hbmMask);
-        DeleteObject32 (hbmImage);
-        DeleteObject32 (hbmMask);
-        GlobalUnlock16 (handle);
-#else
-        ICONINFO32 ii;
+        ICONINFO ii;
         BITMAP32 bmp;
 
-        GetIconInfo (hIcon, &ii);
-        GetObject32A (ii->hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
+        GetIconInfo (handle, &ii);
+        GetObject32A (ii.hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
-        ImageList_Add (himl, ii->hbmColor, ii->hbmMask);
-        DeleteObject32 (ii->hbmColor);
-        DeleteObject32 (ii->hbmMask);
-#endif
+        ImageList_Add (himl, ii.hbmColor, ii.hbmMask);
+        DeleteObject32 (ii.hbmColor);
+        DeleteObject32 (ii.hbmMask);
     }
 
     DeleteObject32 (handle);
@@ -1747,7 +1703,7 @@ ImageList_Remove (HIMAGELIST himl, INT32 i)
             DeleteObject32 (himl->hbmMask);
             himl->hbmMask =
                 CreateBitmap32 (himl->cMaxImage * himl->cx, himl->cy,
-                                1, himl->uBitsPixel, NULL);
+                                1, 1, NULL);
         }
     }
     else {
@@ -1766,7 +1722,7 @@ ImageList_Remove (HIMAGELIST himl, INT32 i)
             CreateBitmap32 (cxNew, himl->cy, 1, himl->uBitsPixel, NULL);
 
         if (himl->hbmMask)
-            hbmNewMask = CreateBitmap32 (cxNew, himl->cy, 1, himl->uBitsPixel, NULL);
+            hbmNewMask = CreateBitmap32 (cxNew, himl->cy, 1, 1, NULL);
         else
             hbmNewMask = 0;  /* Just to keep compiler happy! */
 
@@ -1907,36 +1863,21 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
 {
     HDC32     hdcImageList, hdcImage;
     INT32     nIndex;
-#ifdef __GET_ICON_INFO_HACK__
-    HBITMAP32 hbmImage;
-    HBITMAP32 hbmMask;
-    CURSORICONINFO *ptr;
-#else    
-    ICONINFO32 ii;
+    HBITMAP32 hbmOldSrc, hbmOldDst;
+    ICONINFO ii;
     BITMAP32 bmp;
-#endif
 
-    TRACE (imagelist, "(0x%x 0x%x 0x%x)\n", himl, i, hIcon);
+    TRACE (imagelist, "(0x%lx 0x%x 0x%x)\n", (DWORD)himl, i, hIcon);
 
     if (himl == NULL) return (-1);
     if ((i >= himl->cCurImage) || (i < -1)) return (-1);
 
-#ifdef __GET_ICON_INFO_HACK__
-    if (!(ptr = (CURSORICONINFO *)GlobalLock16(hIcon))) return (-1);
-    hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
-                               (char *)(ptr + 1));
-    if (!(hbmMask))
-	ERR (imagelist, " no mask!\n");
-    hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                               ptr->bBitsPerPixel,
-                               (char *)(ptr + 1) + ptr->nHeight * 
-                               BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
-    if (!(hbmMask))
-	ERR (imagelist, " no image!\n");
-#else
     GetIconInfo (hIcon, &ii);
-    GetObject32A (ii->hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
-#endif
+    if (ii.hbmMask == 0)
+	ERR (imagelist, "no mask!\n");
+    if (ii.hbmColor == 0)
+	ERR (imagelist, "no color!\n");
+    GetObject32A (ii.hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
 
     if (i == -1) {
         if (himl->cCurImage + 1 >= himl->cMaxImage)
@@ -1949,42 +1890,42 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
         nIndex = i;
 
     hdcImageList = CreateCompatibleDC32 (0);
-    hdcImage = CreateCompatibleDC32 (0);
+    TRACE (imagelist, "hdcImageList=0x%x!\n", hdcImageList);
+    if (hdcImageList == 0)
+	ERR (imagelist, "invalid hdcImageList!\n");
 
-#ifdef __GET_ICON_INFO_HACK__
-    SelectObject32 (hdcImageList, himl->hbmImage);
-    SelectObject32 (hdcImage, hbmImage);
-    StretchBlt32 (hdcImageList, nIndex * himl->cx, 0, himl->cx, himl->cy,
-                  hdcImage, 0, 0, ptr->nWidth, ptr->nHeight, SRCCOPY);
-#else
-    SelectObject32 (hdcImage, ii->hbmColor);
+    hdcImage = CreateCompatibleDC32 (0);
+    TRACE (imagelist, "hdcImage=0x%x!\n", hdcImage);
+    if (hdcImage == 0)
+	ERR (imagelist, "invalid hdcImage!\n");
+
+    hbmOldDst = SelectObject32 (hdcImageList, himl->hbmImage);
+    SetTextColor32( hdcImageList, RGB(0,0,0));
+    SetBkColor32( hdcImageList, RGB(255,255,255));
+    hbmOldSrc = SelectObject32 (hdcImage, ii.hbmColor);
     StretchBlt32 (hdcImageList, nIndex * himl->cx, 0, himl->cx, himl->cy,
                   hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-#endif
 
     if (himl->hbmMask) {
-#ifdef __GET_ICON_INFO_HACK__
         SelectObject32 (hdcImageList, himl->hbmMask);
-        SelectObject32 (hdcImage, hbmMask);
-        StretchBlt32 (hdcImageList, nIndex * himl->cx, 0, himl->cx, himl->cy,
-                      hdcImage, 0, 0, ptr->nWidth, ptr->nHeight, SRCCOPY);
-#else
-        SelectObject32 (hdcImage, ii->hbmMask);
+        SelectObject32 (hdcImage, ii.hbmMask);
         StretchBlt32 (hdcImageList, nIndex * himl->cx, 0, himl->cx, himl->cy,
                       hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-#endif
     }
 
-    DeleteDC32 (hdcImageList);
-    DeleteDC32 (hdcImage);
-#ifdef __GET_ICON_INFO_HACK__
-    DeleteObject32 (hbmImage);
-    DeleteObject32 (hbmMask);
-    GlobalUnlock16 (hIcon);
-#else
-    DeleteObject32 (ii->hbmColor);
-    DeleteObject32 (ii->hbmMask);
-#endif
+    SelectObject32 (hdcImage, hbmOldSrc);
+    SelectObject32 (hdcImageList, hbmOldDst);
+
+    if (hdcImageList)
+	DeleteDC32 (hdcImageList);
+    if (hdcImage)
+	DeleteDC32 (hdcImage);
+
+//    FIXME (imagelist, "deleting hbmColor!\n");
+    DeleteObject32 (ii.hbmColor);
+//    FIXME (imagelist, "deleted hbmColor!\n");
+    DeleteObject32 (ii.hbmMask);
+
     return (nIndex);
 }
 
@@ -2084,7 +2025,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT32 iDrag,
 BOOL32 WINAPI
 ImageList_SetFilter (HIMAGELIST himl, INT32 i, DWORD dwFilter)
 {
-    FIXME (imagelist, "(%p 0x%08x 0x%08x):empty stub!\n",
+    FIXME (imagelist, "(%p 0x%x 0x%lx):empty stub!\n",
 	   himl, i, dwFilter);
 
     return FALSE;
@@ -2132,7 +2073,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT32 cx, INT32 cy)
         DeleteObject32 (himl->hbmMask);
         himl->hbmMask =
             CreateBitmap32 (himl->cMaxImage * himl->cx, himl->cy,
-                            1, himl->uBitsPixel, NULL);
+                            1, 1, NULL);
     }
 
     return (TRUE);
@@ -2189,7 +2130,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT32 iImageCount)
     if (himl->hbmMask)
     {
         hbmNewBitmap = CreateBitmap32 (nNewCount * himl->cx, himl->cy,
-                                       1, himl->uBitsPixel, NULL);
+                                       1, 1, NULL);
         if (hbmNewBitmap != 0)
         {
             SelectObject32 (hdcImageList, himl->hbmMask);

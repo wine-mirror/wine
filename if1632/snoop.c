@@ -60,6 +60,7 @@ typedef struct tagSNOOP16_RETURNENTRY {
 	DWORD		ordinal;
 	WORD		origSP;
 	WORD		*args;		/* saved args across a stdcall */
+	BYTE		show;
 } SNOOP16_RETURNENTRY;
 
 typedef struct tagSNOOP16_RETURNENTRIES {
@@ -213,6 +214,8 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	SNOOP16_RETURNENTRIES	**rets = &firstrets;
 	SNOOP16_RETURNENTRY	*ret;
 	int		i,max;
+	/* from relay32/snoop.c */
+	extern int SNOOP_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
 
 	while (dll) {
 		if (xcs == dll->funhandle) {
@@ -266,6 +269,8 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 	IP_reg(context)= LOWORD(fun->origfun);
 	CS_reg(context)= HIWORD(fun->origfun);
 
+	ret->show = SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name);
+	if(!ret->show) return;
 	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
@@ -278,7 +283,7 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(WORD));
 		memcpy(ret->args,(LPBYTE)(PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8),sizeof(WORD)*16);
 	}
-	DPRINTF(") ret=%04x:%04x\n",HIWORD((DWORD)(*rets)->entry[i].origreturn),LOWORD((DWORD)(*rets)->entry[i].origreturn));
+	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
 void WINAPI SNOOP16_Return(CONTEXT *context) {
@@ -293,7 +298,9 @@ void WINAPI SNOOP16_Return(CONTEXT *context) {
 		ret->dll->funs[ret->ordinal].nrofargs=(SP_reg(context)-ret->origSP-4)/2;
 	IP_reg(context) = LOWORD(ret->origreturn);
 	CS_reg(context) = HIWORD(ret->origreturn);
-	if (ret->args) {
+	if(!ret->show) {
+		;
+	} else if (ret->args) {
 		int	i,max;
 
 		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);

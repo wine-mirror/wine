@@ -48,6 +48,7 @@ extern const BUILTIN32_DESCRIPTOR OLE32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLEAUT32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLECLI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR OLESVR32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR RASAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR SHELL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR TAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR USER32_Descriptor;
@@ -81,6 +82,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &OLEAUT32_Descriptor, FALSE },
     { &OLECLI32_Descriptor, FALSE },
     { &OLESVR32_Descriptor, FALSE },
+    { &RASAPI32_Descriptor, FALSE },
     { &SHELL32_Descriptor,  TRUE  },
     { &TAPI32_Descriptor,   FALSE },
     { &USER32_Descriptor,   TRUE  },

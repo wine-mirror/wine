@@ -1,6 +1,7 @@
 /*
  *	OLE2NLS library
  *      Hungarian
+ *	(Hungarian strings in iso-8859-2)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"9")

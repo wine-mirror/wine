@@ -222,7 +222,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         break;
 
       case ICC_INTERNET_CLASSES:
-        TRACE (commctrl, "No internet classes implemented!\n");
+        TRACE (commctrl, "No IPAddress class implemented!\n");
         break;
 
       case ICC_PAGESCROLLER_CLASS:
@@ -320,25 +320,36 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 			(WPARAM32)uStructSize, 0);
 
 	/* set bitmap and button size */
-	SendMessage32A (hwndTB, TB_SETBITMAPSIZE, 0,
-			MAKELPARAM((WORD)dyBitmap, (WORD)dxBitmap));
-#if 0
-	SendMessage32A (hwndTB, TB_SETBUTTONSIZE, 0,
-			MAKELONG((WORD)dyButton, (WORD)dxButton));
-#endif
-
-	/* add bitmaps */
-	if (nBitmaps > 0) {
-	    tbab.hInst = hBMInst;
-	    tbab.nID   = wBMID;
-	    SendMessage32A (hwndTB, TB_ADDBITMAP,
-			    (WPARAM32)nBitmaps, (LPARAM)&tbab);
+	if (hBMInst == HINST_COMMCTRL) {
+	    if (wBMID & 1) {
+		SendMessage32A (hwndTB, TB_SETBITMAPSIZE, 0,
+				MAKELPARAM(26, 25));
+		SendMessage32A (hwndTB, TB_SETBUTTONSIZE, 0,
+				MAKELPARAM(33, 32));
+	    }
+	    else {
+		SendMessage32A (hwndTB, TB_SETBITMAPSIZE, 0,
+				MAKELPARAM(16, 15));
+		SendMessage32A (hwndTB, TB_SETBUTTONSIZE, 0,
+				MAKELPARAM(23, 22));
+	    }
+	}
+	else {
+	    SendMessage32A (hwndTB, TB_SETBITMAPSIZE, 0,
+			    MAKELPARAM((WORD)dyBitmap, (WORD)dxBitmap));
+	    SendMessage32A (hwndTB, TB_SETBUTTONSIZE, 0,
+			    MAKELPARAM((WORD)dyButton, (WORD)dxButton));
 	}
 
+	/* add bitmaps */
+	tbab.hInst = hBMInst;
+	tbab.nID   = wBMID;
+	SendMessage32A (hwndTB, TB_ADDBITMAP,
+			(WPARAM32)nBitmaps, (LPARAM)&tbab);
+
 	/* add buttons */
-	if (iNumButtons > 0)
-	    SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
-			    (WPARAM32)iNumButtons, (LPARAM)lpButtons);
+	SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
+			(WPARAM32)iNumButtons, (LPARAM)lpButtons);
     }
 
     return hwndTB;
@@ -387,20 +398,20 @@ CreateMappedBitmap (HINSTANCE32 hInstance, INT32 idBitmap, UINT32 wFlags,
     }
 
     hRsrc = FindResource32A (hInstance, (LPSTR)idBitmap, RT_BITMAP32A);
-    if (hRsrc == NULL)
-	return NULL;
+    if (hRsrc == 0)
+	return 0;
     hglb = LoadResource32 (hInstance, hRsrc);
-    if (hglb == NULL)
-	return NULL;
+    if (hglb == 0)
+	return 0;
     lpBitmap = (LPBITMAPINFOHEADER)LockResource32 (hglb);
     if (lpBitmap == NULL)
-	return NULL;
+	return 0;
 
     nColorTableSize = (1 << lpBitmap->biBitCount);
     nSize = lpBitmap->biSize + nColorTableSize * sizeof(RGBQUAD);
     lpBitmapInfo = (LPBITMAPINFOHEADER)GlobalAlloc32 (GMEM_FIXED, nSize);
     if (lpBitmapInfo == NULL)
-	return NULL;
+	return 0;
     RtlMoveMemory (lpBitmapInfo, lpBitmap, nSize);
 
     pColorTable = (DWORD*)(((LPBYTE)lpBitmapInfo)+(UINT32)lpBitmapInfo->biSize);
@@ -423,7 +434,7 @@ CreateMappedBitmap (HINSTANCE32 hInstance, INT32 idBitmap, UINT32 wFlags,
 
     nWidth  = (INT32)lpBitmapInfo->biWidth;
     nHeight = (INT32)lpBitmapInfo->biHeight;
-    hdcScreen = GetDC32 (NULL);
+    hdcScreen = GetDC32 ((HWND32)0);
     hbm = CreateCompatibleBitmap32 (hdcScreen, nWidth, nHeight);
     if (hbm) {
 	HDC32 hdcDst = CreateCompatibleDC32 (hdcScreen);
@@ -436,7 +447,7 @@ CreateMappedBitmap (HINSTANCE32 hInstance, INT32 idBitmap, UINT32 wFlags,
 	SelectObject32 (hdcDst, hbmOld);
 	DeleteDC32 (hdcDst);
     }
-    ReleaseDC32 (NULL, hdcScreen);
+    ReleaseDC32 ((HWND32)0, hdcScreen);
     GlobalFree32 ((HGLOBAL32)lpBitmapInfo);
     FreeResource32 (hglb);
 
@@ -495,7 +506,7 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 	if (GetWindowLong32A (hwndCtrl, GWL_STYLE) & WS_VISIBLE) {
 	    TRACE (commctrl, "control id 0x%x\n", *lpRun);
 	    GetWindowRect32 (hwndCtrl, &rcCtrl);
-	    MapWindowPoints32 (NULL, hwnd, (LPPOINT32)&rcCtrl, 2);
+	    MapWindowPoints32 ((HWND32)0, hwnd, (LPPOINT32)&rcCtrl, 2);
 	    SubtractRect32 (lpRect, lpRect, &rcCtrl);
 	}
 	lpRun++;

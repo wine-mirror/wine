@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -17,6 +18,10 @@
 #include "server.h"
 #include "winerror.h"
 
+/* Some versions of glibc don't define this */
+#ifndef SCM_RIGHTS
+#define SCM_RIGHTS 1
+#endif
 
 /***********************************************************************
  *           CLIENT_SendRequest_v
@@ -27,21 +32,16 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
                                   struct iovec *vec, int veclen )
 {
     THDB *thdb = THREAD_Current();
-    struct { struct cmsghdr hdr; int fd; } cmsg =
-                         { { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS }, pass_fd };
-    struct msghdr msghdr;
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, pass_fd };
+#endif
+    struct msghdr msghdr = { NULL, 0, vec, veclen, };
     struct header head;
     int i, ret, len;
 
-    msghdr.msg_name    = NULL;
-    msghdr.msg_namelen = 0;
-
     assert( veclen > 0 );
-
-    vec[0].iov_base   = &head;
-    vec[0].iov_len    = sizeof(head);
-    msghdr.msg_iov    = vec;
-    msghdr.msg_iovlen = veclen;
+    vec[0].iov_base = &head;
+    vec[0].iov_len  = sizeof(head);
     for (i = len = 0; i < veclen; i++) len += vec[i].iov_len;
 
     assert( len <= MAX_MSG_LENGTH );
@@ -49,15 +49,15 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
     head.len  = len;
     head.seq  = thdb->seq++;
 
-    if (pass_fd == -1)  /* no fd to pass */
+    if (pass_fd != -1)  /* we have an fd to send */
     {
-        msghdr.msg_control = NULL;
-        msghdr.msg_controllen = 0;
-    }
-    else
-    {
-        msghdr.msg_control = &cmsg;
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+        msghdr.msg_accrights = (void *)&pass_fd;
+        msghdr.msg_accrightslen = sizeof(pass_fd);
+#else
+        msghdr.msg_control    = &cmsg;
         msghdr.msg_controllen = sizeof(cmsg);
+#endif
     }
 
     if ((ret = sendmsg( thdb->socket, &msghdr, 0 )) < len)
@@ -107,21 +107,19 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
                                         struct iovec *vec, int veclen )
 {
     THDB *thdb = THREAD_Current();
-    struct { struct cmsghdr hdr; int fd; } cmsg =
-                         { { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS }, -1 };
-    struct msghdr msghdr;
+    int pass_fd = -1;
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    struct msghdr msghdr = { NULL, 0, vec, veclen, (void*)&pass_fd, sizeof(int) };
+#else
+    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
+    struct msghdr msghdr = { NULL, 0, vec, veclen, &cmsg, sizeof(cmsg), 0 };
+#endif
     struct header head;
     int ret, remaining;
 
     assert( veclen > 0 );
     vec[0].iov_base       = &head;
     vec[0].iov_len        = sizeof(head);
-    msghdr.msg_name       = NULL;
-    msghdr.msg_namelen    = 0;
-    msghdr.msg_iov        = vec;
-    msghdr.msg_iovlen     = veclen;
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
 
     if ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
     {
@@ -150,18 +148,22 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
         ExitThread(1);
     }
 
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    pass_fd = cmsg.fd;
+#endif
+
     if (head.type != ERROR_SUCCESS)
     {
         SetLastError( head.type );
     }
     else if (passed_fd)
     {
-        *passed_fd = cmsg.fd;
-        cmsg.fd = -1;
+        *passed_fd = pass_fd;
+        pass_fd = -1;
     }
 
     if (len) *len = ret - sizeof(head);
-    if (cmsg.fd != -1) close( cmsg.fd );
+    if (pass_fd != -1) close( pass_fd );
     remaining = head.len - ret;
     while (remaining > 0)  /* drop remaining data */
     {
@@ -216,7 +218,7 @@ static int send_new_thread( THDB *thdb )
     struct new_thread_reply reply;
     int len, fd[2];
 
-    if (socketpair( AF_UNIX, SOCK_STREAM, PF_UNIX, fd ) == -1)
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
     {
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
         return -1;
@@ -254,7 +256,7 @@ int CLIENT_NewThread( THDB *thdb )
         int tmpfd[2];
         char buffer[16];
 
-        if (socketpair( AF_UNIX, SOCK_STREAM, PF_UNIX, tmpfd ) == -1)
+        if (socketpair( AF_UNIX, SOCK_STREAM, 0, tmpfd ) == -1)
         {
             perror("socketpair");
             exit(1);

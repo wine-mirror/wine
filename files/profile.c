@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/stat.h>
+
 #include "windows.h"
 #include "file.h"
 #include "heap.h"
@@ -36,11 +38,16 @@ typedef struct
     char            *dos_name;
     char            *unix_name;
     char            *filename;
+    time_t           mtime;
 } PROFILE;
 
 
-/* Cached profile file */
-static PROFILE CurProfile = { FALSE, NULL, NULL };
+#define N_CACHED_PROFILES 10
+
+/* Cached profile files */
+static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
+
+#define CurProfile (MRUProfile[0])
 
 /* wine.ini profile content */
 static PROFILESECTION *WineProfile;
@@ -205,17 +212,22 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
                 next_section  = &section->next;
                 next_key      = &section->key;
                 prev_key      = NULL;
+
+                TRACE(profile, "New section: '%s'\n",section->name);
+
                 continue;
             }
         }
+
+        p2=p+strlen(p) - 1;
+        while ((p2 > p) && ((*p2 == '\n') || PROFILE_isspace(*p2))) *p2--='\0';
+
         if ((p2 = strchr( p, '=' )) != NULL)
         {
             char *p3 = p2 - 1;
             while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
             *p2++ = '\0';
             while (*p2 && PROFILE_isspace(*p2)) p2++;
-            p3 = p2 + strlen(p2) - 1;
-            while ((p3 > p2) && ((*p3 == '\n') || PROFILE_isspace(*p3))) *p3--='\0';
         }
 
         if(*p || !prev_key || *prev_key->name)
@@ -341,9 +353,16 @@ static BOOL32 PROFILE_FlushFile(void)
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *unix_name;
     FILE *file = NULL;
+    struct stat buf;
 
-    if (!CurProfile.changed || !CurProfile.dos_name) return TRUE;
-    if (!(unix_name = CurProfile.unix_name) || !(file = fopen(unix_name, "w")))
+    if(!CurProfile)
+    {
+        WARN(profile, "No current profile!\n");
+        return FALSE;
+    }
+
+    if (!CurProfile->changed || !CurProfile->dos_name) return TRUE;
+    if (!(unix_name = CurProfile->unix_name) || !(file = fopen(unix_name, "w")))
     {
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
@@ -352,7 +371,7 @@ static BOOL32 PROFILE_FlushFile(void)
             strcpy( buffer, p );
             strcat( buffer, "/.wine/" );
             p = buffer + strlen(buffer);
-            strcpy( p, strrchr( CurProfile.dos_name, '\\' ) + 1 );
+            strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
             CharLower32A( p );
             file = fopen( buffer, "w" );
             unix_name = buffer;
@@ -361,14 +380,16 @@ static BOOL32 PROFILE_FlushFile(void)
     
     if (!file)
     {
-        WARN(profile, "could not save profile file %s\n", CurProfile.dos_name);
+        WARN(profile, "could not save profile file %s\n", CurProfile->dos_name);
         return FALSE;
     }
 
-    TRACE(profile, "Saving '%s' into '%s'\n", CurProfile.dos_name, unix_name );
-    PROFILE_Save( file, CurProfile.section );
+    TRACE(profile, "Saving '%s' into '%s'\n", CurProfile->dos_name, unix_name );
+    PROFILE_Save( file, CurProfile->section );
     fclose( file );
-    CurProfile.changed = FALSE;
+    CurProfile->changed = FALSE;
+    if(!stat(unix_name,&buf))
+       CurProfile->mtime=buf.st_mtime;
     return TRUE;
 }
 
@@ -384,13 +405,25 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
     char buffer[MAX_PATHNAME_LEN];
     char *newdos_name, *p;
     FILE *file = NULL;
+    int i,j;
+    struct stat buf;
+    PROFILE *tempProfile;
 
-    if (CurProfile.filename && !strcmp( filename, CurProfile.filename ))
-    {
-        TRACE(profile, "(%s): already opened\n",
-                         filename );
-        return TRUE;
-    }
+    /* First time around */
+
+    if(!CurProfile)
+       for(i=0;i<N_CACHED_PROFILES;i++)
+         {
+          MRUProfile[i]=HEAP_xalloc( SystemHeap, 0, sizeof(PROFILE) );
+          MRUProfile[i]->changed=FALSE;
+          MRUProfile[i]->section=NULL;
+          MRUProfile[i]->dos_name=NULL;
+          MRUProfile[i]->unix_name=NULL;
+          MRUProfile[i]->filename=NULL;
+          MRUProfile[i]->mtime=0;
+         }
+
+    /* Check for a match */
 
     if (strchr( filename, '/' ) || strchr( filename, '\\' ) || 
         strchr( filename, ':' ))
@@ -404,25 +437,61 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         strcat( buffer, filename );
         if (!DOSFS_GetFullName( buffer, FALSE, &full_name )) return FALSE;
     }
-    if (CurProfile.dos_name &&
-        !strcmp( full_name.short_name, CurProfile.dos_name ))
-    {
-        TRACE(profile, "(%s): already opened\n",
-                         filename );
-        return TRUE;
-    }
 
-    /* Flush the previous profile */
+    for(i=0;i<N_CACHED_PROFILES;i++)
+      {
+       if ((MRUProfile[i]->filename && !strcmp( filename, MRUProfile[i]->filename )) ||
+           (MRUProfile[i]->dos_name && !strcmp( full_name.short_name, MRUProfile[i]->dos_name )))
+         {
+          if(i)
+            {
+             PROFILE_FlushFile();
+             tempProfile=MRUProfile[i];
+             for(j=i;j>0;j--)
+                MRUProfile[j]=MRUProfile[j-1];
+             CurProfile=tempProfile;
+            }
+          if(!stat(CurProfile->unix_name,&buf) && CurProfile->mtime==buf.st_mtime)
+            {
+             TRACE(profile, "(%s): already opened (mru=%d)\n",
+                              filename, i );
+             return TRUE;
+            }
+          TRACE(profile, "(%s): already opened, needs refreshing (mru=%d)\n",
+                           filename, i );
+         }
+      }
+
+    /* Rotate the oldest to the top to be replaced */
+
+    if(i==N_CACHED_PROFILES)
+      {
+       tempProfile=MRUProfile[N_CACHED_PROFILES-1];
+       for(i=N_CACHED_PROFILES-1;i>0;i--)
+          MRUProfile[i]=MRUProfile[i-1];
+       CurProfile=tempProfile;
+      }
+
+    /* Flush the profile */
+
+    if(CurProfile->filename)
+      {
+       PROFILE_FlushFile();
+       PROFILE_Free( CurProfile->section );
+       if (CurProfile->dos_name) HeapFree( SystemHeap, 0, CurProfile->dos_name );
+       if (CurProfile->unix_name) HeapFree( SystemHeap, 0, CurProfile->unix_name );
+       if (CurProfile->filename) HeapFree( SystemHeap, 0, CurProfile->filename );
+       CurProfile->changed=FALSE;
+       CurProfile->section=NULL;
+       CurProfile->dos_name=NULL;
+       CurProfile->unix_name=NULL;
+       CurProfile->filename=NULL;
+       CurProfile->mtime=0;
+      }
 
     newdos_name = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
-    PROFILE_FlushFile();
-    PROFILE_Free( CurProfile.section );
-    if (CurProfile.dos_name) HeapFree( SystemHeap, 0, CurProfile.dos_name );
-    if (CurProfile.unix_name) HeapFree( SystemHeap, 0, CurProfile.unix_name );
-    if (CurProfile.filename) HeapFree( SystemHeap, 0, CurProfile.filename );
-    CurProfile.section   = NULL;
-    CurProfile.dos_name  = newdos_name;
-    CurProfile.filename  = HEAP_strdupA( SystemHeap, 0, filename );
+    CurProfile->dos_name  = newdos_name;
+    CurProfile->filename  = HEAP_strdupA( SystemHeap, 0, filename );
 
     /* Try to open the profile file, first in $HOME/.wine */
 
@@ -438,13 +507,13 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         {
             TRACE(profile, "(%s): found it in %s\n",
                              filename, buffer );
-            CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
+            CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
         }
     }
 
     if (!file)
     {
-        CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0,
+        CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0,
                                              full_name.long_name );
         if ((file = fopen( full_name.long_name, "r" )))
             TRACE(profile, "(%s): found it in %s\n",
@@ -453,8 +522,10 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
 
     if (file)
     {
-        CurProfile.section = PROFILE_Load( file );
+        CurProfile->section = PROFILE_Load( file );
         fclose( file );
+        if(!stat(CurProfile->unix_name,&buf))
+           CurProfile->mtime=buf.st_mtime;
     }
     else
     {
@@ -481,7 +552,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
         if (section->name && !strcasecmp( section->name, section_name ))
         {
             UINT32 oldlen = len;
-            for (key = section->key; key; key = key->next)
+            for (key = section->key; key && *(key->name); key = key->next)
             {
                 if (len <= 2) break;
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
@@ -507,7 +578,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
 		buffer[-1] = '\0';
                 return oldlen - 2;
             }
-            return oldlen - len + 1;
+            return oldlen - len;
         }
         section = section->next;
     }
@@ -529,14 +600,14 @@ static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
     if (!def_val) def_val = "";
     if (key_name && key_name[0])
     {
-        key = PROFILE_Find( &CurProfile.section, section, key_name, FALSE );
+        key = PROFILE_Find( &CurProfile->section, section, key_name, FALSE );
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
                            len, FALSE );
         TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
-    return PROFILE_GetSection(CurProfile.section, section, buffer, len,
+    return PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				FALSE, FALSE);
 }
 
@@ -552,8 +623,8 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     if (!key_name)  /* Delete a whole section */
     {
         TRACE(profile, "('%s')\n", section_name);
-        CurProfile.changed |= PROFILE_DeleteSection( &CurProfile.section,
-                                                     section_name );
+        CurProfile->changed |= PROFILE_DeleteSection( &CurProfile->section,
+                                                      section_name );
         return TRUE;         /* Even if PROFILE_DeleteSection() has failed,
                                 this is not an error on application's level.*/
     }
@@ -561,13 +632,13 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     {
         TRACE(profile, "('%s','%s')\n",
                          section_name, key_name );
-        CurProfile.changed |= PROFILE_DeleteKey( &CurProfile.section,
-                                                 section_name, key_name );
+        CurProfile->changed |= PROFILE_DeleteKey( &CurProfile->section,
+                                                  section_name, key_name );
         return TRUE;          /* same error handling as above */
     }
     else  /* Set the key value */
     {
-        PROFILEKEY *key = PROFILE_Find( &CurProfile.section, section_name,
+        PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section_name,
                                         key_name, TRUE );
         TRACE(profile, "('%s','%s','%s'): \n",
                          section_name, key_name, value );
@@ -584,7 +655,7 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
         }
         else TRACE(profile, "  creating key\n" );
         key->value = HEAP_strdupA( SystemHeap, 0, value );
-        CurProfile.changed = TRUE;
+        CurProfile->changed = TRUE;
     }
     return TRUE;
 }
@@ -1013,7 +1084,7 @@ INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
                                           UINT32 len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
-        return PROFILE_GetSection(CurProfile.section, section, buffer, len,
+        return PROFILE_GetSection(CurProfile->section, section, buffer, len,
                                 FALSE, TRUE);
 
     return 0;
@@ -1092,7 +1163,7 @@ WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
     if (PROFILE_Open( filename )) {
 	buf=buffer;
 	cursize=0;
-	section=CurProfile.section;
+	section=CurProfile->section;
 	for ( ; section; section = section->next) 
             if (section->name) {
 		l=strlen (section->name);
@@ -1122,7 +1193,7 @@ WORD WINAPI GetPrivateProfileStruct32A (LPCSTR section, LPCSTR key,
     PROFILEKEY *k;
 
     if (PROFILE_Open( filename )) {
-        k=PROFILE_Find ( &CurProfile.section, section, key, FALSE);
+        k=PROFILE_Find ( &CurProfile->section, section, key, FALSE);
 	if (!k) return FALSE;
     	lstrcpyn32A( buf, k->value, strlen(k->value));
         return TRUE;

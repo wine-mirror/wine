@@ -108,7 +108,7 @@ type	win32
 169 stub FindMRUData
 
 233 stub Str_GetPtrA
-234 stub Str_SetPtrA
+234 stdcall Str_SetPtrA(long long) COMCTL32_Str_SetPtrA
 235 stub Str_GetPtrW
 236 stub Str_SetPtrW
 

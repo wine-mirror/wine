@@ -712,10 +712,12 @@ CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32);
 #define TOOLTIPS_CLASS32W       L"tooltips_class32"
 #define TOOLTIPS_CLASS32A        "tooltips_class32"
 #define TOOLTIPS_CLASS          WINELIB_NAME_AW(TOOLTIPS_CLASS)
+
+#define INFOTIPSIZE             1024
  
 #define TTS_ALWAYSTIP           0x01
 #define TTS_NOPREFIX            0x02
- 
+
 #define TTF_IDISHWND            0x0001
 #define TTF_CENTERTIP           0x0002
 #define TTF_RTLREADING          0x0004
@@ -781,6 +783,15 @@ CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32);
 #define TTM_POP                 (WM_USER+28)
 #define TTM_UPDATE              (WM_USER+29)
 
+
+#define TTN_FIRST               (0U-520U)
+#define TTN_LAST                (0U-549U)
+#define TTN_GETDISPINFOA        (TTN_FIRST-0)
+#define TTN_GETDISPINFOW        (TTN_FIRST-10)
+#define TTN_SHOW                (TTN_FIRST-1)
+#define TTN_POP                 (TTN_FIRST-2)
+
+
 typedef struct tagTOOLINFOA {
     UINT32 cbSize;
     UINT32 uFlags;
@@ -790,7 +801,7 @@ typedef struct tagTOOLINFOA {
     HINSTANCE32 hinst;
     LPSTR lpszText;
     LPARAM lParam;
-} TOOLINFOA, *PTOOLINFOA, *LPTOOLINFOA;
+} TTTOOLINFOA, *PTOOLINFOA, *LPTTTOOLINFOA;
 
 typedef struct tagTOOLINFOW {
     UINT32 cbSize;
@@ -801,9 +812,41 @@ typedef struct tagTOOLINFOW {
     HINSTANCE32 hinst;
     LPWSTR lpszText;
     LPARAM lParam;
-} TOOLINFOW, *PTOOLINFOW, *LPTOOLINFOW;
+} TTTOOLINFOW, *PTOOLINFOW, *LPTTTOOLINFOW;
 
+typedef struct _TT_HITTESTINFOA
+{
+    HWND32      hwnd;
+    POINT32     pt;
+    TTTOOLINFOA ti;
+} TTHITTESTINFOA, *LPTTHITTESTINFOA;
 
+typedef struct _TT_HITTESTINFOW
+{
+    HWND32      hwnd;
+    POINT32     pt;
+    TTTOOLINFOW ti;
+} TTHITTESTINFOW, *LPTTHITTESTINFOW;
+
+typedef struct tagNMTTDISPINFOA
+{
+    NMHDR hdr;
+    LPSTR lpszText;
+    CHAR  szText[80];
+    HINSTANCE32 hinst;
+    UINT32      uFlags;
+    LPARAM      lParam;
+} NMTTDISPINFOA, *LPNMTTDISPINFOA;
+
+typedef struct tagNMTTDISPINFOW
+{
+    NMHDR       hdr;
+    LPWSTR      lpszText;
+    WCHAR       szText[80];
+    HINSTANCE32 hinst;
+    UINT32      uFlags;
+    LPARAM      lParam;
+} NMTTDISPINFOW, *LPNMTTDISPINFOW;
 
 
 
@@ -863,6 +906,37 @@ typedef struct tagTOOLINFOW {
 #define WC_PAGESCROLLER32W      L"SysPager"
 #define WC_PAGESCROLLER  WINELIB_NAME_AW(WC_PAGESCROLLER)
 
+#define PGS_VERT                0x00000000
+#define PGS_HORZ                0x00000001
+#define PGS_AUTOSCROLL          0x00000002
+#define PGS_DRAGNDROP           0x00000004
+
+#define PGF_INVISIBLE           0
+#define PGF_NORMAL              1
+#define PGF_GRAYED              2
+#define PGF_DEPRESSED           4
+#define PGF_HOT                 8
+
+#define PGB_TOPORLEFT           0
+#define PGB_BOTTOMORRIGHT       1
+
+#define PGM_FIRST               0x1400
+
+#define PGM_SETCHILD            (PGM_FIRST+1)
+#define PGM_RECALCSIZE          (PGM_FIRST+2)
+#define PGM_FORWARDMOUSE        (PGM_FIRST+3)
+#define PGM_SETBKCOLOR          (PGM_FIRST+4)
+#define PGM_GETBKCOLOR          (PGM_FIRST+5)
+#define PGM_SETBORDER           (PGM_FIRST+6)
+#define PGM_GETBORDER           (PGM_FIRST+7)
+#define PGM_SETPOS              (PGM_FIRST+8)
+#define PGM_GETPOS              (PGM_FIRST+9)
+#define PGM_SETBUTTONSIZE       (PGM_FIRST+10)
+#define PGM_GETBUTTONSIZE       (PGM_FIRST+11)
+#define PGM_GETBUTTONSTATE      (PGM_FIRST+12)
+#define PGM_GETDROPTARGET       CCM_GETDROPTARGET
+
+
 
 /* Treeview control */
 
@@ -870,7 +944,15 @@ typedef struct tagTOOLINFOW {
 #define WC_TREEVIEW32W          L"SysTreeView32"
 #define WC_TREEVIEW  WINELIB_NAME_AW(WC_TREEVIEW)
 
-#define TV_FIRST      0x1100
+#define TVSIL_NORMAL            0
+#define TVSIL_STATE             2
+
+#define TV_FIRST                0x1100
+
+
+#define TVM_GETIMAGELIST        (TV_FIRST+8)
+#define TVM_SETIMAGELIST        (TV_FIRST+9)
+
 
 
 /* Listview control */

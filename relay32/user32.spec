@@ -83,10 +83,8 @@ type	win32
  80 stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindowW
  81 stdcall CreateMenu() CreateMenu32
  82 stdcall CreatePopupMenu() CreatePopupMenu32
- 83 stdcall CreateWindowExA(long str str long long long long long 
-                            long long long ptr) CreateWindowEx32A
- 84 stdcall CreateWindowExW(long wstr wstr long long long long long 
-                            long long long ptr) CreateWindowEx32W
+ 83 stdcall CreateWindowExA(long str str long long long long long long long long ptr) CreateWindowEx32A
+ 84 stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr) CreateWindowEx32W
  85 stub CreateWindowStationA
  86 stub CreateWindowStationW
  87 stub DdeAbandonTransaction
@@ -592,7 +590,7 @@ type	win32
 587 stdcall wvsprintfA(ptr str ptr) wvsprintf32A
 588 stdcall wvsprintfW(ptr wstr ptr) wvsprintf32W
 #late additions
-589 stub ChangeDisplaySettingsA
+589 stdcall ChangeDisplaySettingsA(ptr long) ChangeDisplaySettings32A
 590 stub ChangeDisplaySettingsW
 591 stub EnumDesktopWindows
 592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettings32A

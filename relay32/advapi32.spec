@@ -183,8 +183,8 @@ type	win32
 0179 stub ReportEventW
 0180 stub RevertToSelf
 0181 stub SetAclInformation
-0182 stub SetFileSecurityA
-0183 stub SetFileSecurityW
+0182 stdcall SetFileSecurityA(str long ptr ) SetFileSecurity32A
+0183 stdcall SetFileSecurityW(wstr long ptr) SetFileSecurity32W
 0184 stub SetKernelObjectSecurity
 0185 stub SetPrivateObjectSecurity
 0186 stdcall SetSecurityDescriptorDacl(ptr long ptr long) RtlSetDaclSecurityDescriptor

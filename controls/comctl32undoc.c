@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "windows.h"
 #include "heap.h"
 #include "debug.h"
@@ -121,6 +122,44 @@ COMCTL32_GetSize (LPVOID dwParam)
 }
 
 
+
+/**************************************************************************
+ * Str_SetPtrA [COMCTL32.234]
+ *
+ * PARAMS
+ *     dwParam1 [I]
+ *     dwParam2 [I]
+ */
+
+BOOL32 WINAPI
+COMCTL32_Str_SetPtrA (LPSTR lpStr, LPVOID *lpPtr)
+{
+    INT32 len;
+    LPSTR ptr;
+
+    FIXME (commctrl, "(0x%08lx 0x%08lx)\n", (DWORD)lpStr, (DWORD)lpPtr);
+    FIXME (commctrl, "(\"%s\" \"%s\")\n", lpStr, (LPSTR)*lpPtr);
+
+    if (lpStr) {
+	len = lstrlen32A (lpStr);
+	ptr = COMCTL32_ReAlloc (lpPtr, len + 1);
+	if (!(ptr))
+	    return FALSE;
+	lstrcpy32A (ptr, lpStr);
+	*lpPtr = ptr;
+	return TRUE;
+    }
+
+    if (*lpPtr) {
+	COMCTL32_Free (*lpPtr);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+
 /**************************************************************************
  * DSA_Create [COMCTL32.320] Creates a dynamic string array
  *
@@ -145,6 +184,13 @@ DSA_Create (DWORD dwParam1, DWORD dwParam2)
     return (DWORD)dsaPtr;
 }
 
+
+/**************************************************************************
+ * DSA_Destroy [COMCTL32.321] Destroys a dynamic string array
+ *
+ * PARAMS
+ *     dwParam1 [I]
+ */
 
 DWORD WINAPI
 DSA_Destroy (DWORD dwParam1)
@@ -184,9 +230,7 @@ DSA_GetItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 
 //    FIXME (commctrl, "\"%s\"\n", (LPSTR)dsaPtr->ptrs[dwParam2]);
 
-    return lstrcpy32A ((LPSTR)dwParam3, (LPSTR)dsaPtr->ptrs[dwParam2]);
-
-//    return 0;
+    return (DWORD)lstrcpy32A ((LPSTR)dwParam3, (LPSTR)dsaPtr->ptrs[dwParam2]);
 }
 
 
@@ -431,28 +475,47 @@ COMCTL32_SendNotify (DWORD dw1, DWORD dw2, DWORD dw3, DWORD dw4)
  */
 
 LPSTR WINAPI
-COMCTL32_StrChrA (LPSTR lpString, CHAR cChar)
+COMCTL32_StrChrA (LPCSTR lpString, CHAR cChar)
 {
     return strchr (lpString, cChar);
 }
 
 
 /**************************************************************************
- * StrStrIA [COMCTL32.350]
- *
- * BUGS
- *     This implementation is case sensitive, but it mustn't.
+ * StrStrIA [COMCTL32.355]
  */
 
 LPSTR WINAPI
-COMCTL32_StrStrIA (LPSTR lpStr1, LPSTR lpStr2)
+COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 {
-    return strstr (lpStr1, lpStr2);
+    INT32 len1, len2, i;
+    CHAR  first;
+
+    if (*lpStr2 == 0)
+	return ((LPSTR)lpStr1);
+    len1 = 0;
+    while (lpStr1[len1] != 0) ++len1;
+    len2 = 0;
+    while (lpStr2[len2] != 0) ++len2;
+    if (len2 == 0)
+	return ((LPSTR)(lpStr1 + len1));
+    first = tolower (*lpStr2);
+    while (len1 >= len2) {
+	if (tolower(*lpStr1) == first) {
+	    for (i = 1; i < len2; ++i)
+		if (tolower (lpStr1[i]) != tolower(lpStr2[i]))
+		    break;
+	    if (i >= len2)
+		return ((LPSTR)lpStr1);
+        }
+	++lpStr1; --len1;
+    }
+    return (NULL);
 }
 
 
 /**************************************************************************
- * StrToIntA [COMCTL32.357]
+ * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
  */
 
 INT32 WINAPI

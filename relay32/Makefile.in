@@ -26,6 +26,7 @@ DLLS = \
 	oleaut32.spec \
 	olecli32.spec \
 	olesvr32.spec \
+	rasapi32.spec \
 	shell32.spec \
 	tapi32.spec \
 	user32.spec \

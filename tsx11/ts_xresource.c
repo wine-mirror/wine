@@ -70,3 +70,4 @@ void  TSXrmParseCommand(XrmDatabase* a0, XrmOptionDescList a1, int a2, const  ch
   LeaveCriticalSection( &X11DRV_CritSection );
   TRACE(x11, "Ret XrmParseCommand\n");
 }
+

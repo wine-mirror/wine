@@ -18,18 +18,28 @@ typedef struct tagTTTOOL_INFO
     LPSTR  lpszText;
     LPARAM lParam;
 
+
 } TTTOOL_INFO; 
 
 
 typedef struct tagTOOLTIPS_INFO
 {
+    CHAR       szTipText[INFOTIPSIZE];
     BOOL32     bActive;
     UINT32     uNumTools;
     COLORREF   clrBk;
     COLORREF   clrText;
     HFONT32    hFont;
-    INT32      iMaxTipWidth;
-    INT32      iCurrentTool;
+    INT32      nMaxTipWidth;
+    INT32      nTool;
+    INT32      nOldTool;
+    INT32      nCurrentTool;
+
+    INT32      nAutomaticTime;
+    INT32      nReshowTime;
+    INT32      nAutoPopTime;
+    INT32      nInitialTime;
+    RECT32     rcMargin;
 
     TTTOOL_INFO *tools;
 } TOOLTIPS_INFO;

@@ -28,7 +28,7 @@ AC_ARG_ENABLE(dll,
 
 AC_ARG_ENABLE(lib,
 [  --disable-lib           build the Wine without building libwine.a],
-[if test "$enableval" = "no"; then LIB_TARGET="\$LIBOBJS"; fi])
+[if test "$enableval" = "no"; then LIB_TARGET="\$(LIBOBJS)"; fi])
 
 dnl AC_ARG_WITH(ipc,
 dnl [  --enable-ipc            use inter-process communication for DDE],
@@ -213,17 +213,18 @@ AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
     else
 	libX11_ckeck=none
 	for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
-	    if test -e $dir/libX11.so; then
+	    if test -r $dir/libX11.so; then
 		libX11_check="-D $dir/libX11.so"
 		break 1
 	    fi
-	    if test -e $dir/libX11.a; then
+	    if test -r $dir/libX11.a; then
 		libX11_check="$dir/libX11.a"
 		break 1
 	    fi
 	done
 	if test "$libX11_check" != "none"; then
-	    if nm $libX11_check | grep -q __errno_location; then
+	    if nm $libX11_check | grep __errno_location >/dev/null 2>&1
+	    then
 		wine_cv_x_reentrant=yes
 	    else
 		wine_cv_x_reentrant=no
@@ -240,7 +241,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
@@ -431,6 +432,17 @@ then
     AC_DEFINE(HAVE_WORKING_SIGALTSTACK)
 fi
 
+
+dnl *** check for file descriptor passing with msg_accrights
+
+AC_CACHE_CHECK("for msg_accrights in struct msghdr", ac_cv_c_msg_accrights,
+ AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>],[struct msghdr hdr; hdr.msg_accrights=0],
+                ac_cv_c_msg_accrights="yes", ac_cv_c_msg_accrights="no"))
+if test "$ac_cv_c_msg_accrights" = "yes"
+then
+    AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS)
+fi
 
 dnl **** Generate output files ****
 

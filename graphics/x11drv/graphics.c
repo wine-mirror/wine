@@ -920,7 +920,7 @@ X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
     return result;
 }
 
-/****************** WARNING: WORK IN PROGRESS AHEAD !!!! ****************
+/******************************************************************
  * 
  *   *Very* simple bezier drawing code, 
  *
@@ -938,82 +938,71 @@ X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
   * to avoid trucation errors the coordinates are
   * shifted upwards. When used in drawing they are
   * shifted down again, including correct rounding
-  * and avoiding floating points
+  * and avoiding floating point arithmatic
+  * 4 bits should allow 27 bits coordinates which I saw
+  * somewere in the win32 doc's
+  * 
   */
 
 #define BEZIERSHIFTBITS 4
 #define BEZIERSHIFTUP(x)    ((x)<<BEZIERSHIFTBITS)
-#define BEZIERFACTOR        BEZIERSHIFTUP(1)    
+#define BEZIERPIXEL        BEZIERSHIFTUP(1)    
 #define BEZIERSHIFTDOWN(x)  (((x)+(1<<(BEZIERSHIFTBITS-1)))>>BEZIERSHIFTBITS)
 /* maximum depth of recursion */
-#define BEZIERMAXDEPTH  6
+#define BEZIERMAXDEPTH  8
 
 /* size of array to store points on */
 /* enough for one curve */
-#define BEZMAXPOINTS    ((1<<BEZIERMAXDEPTH)+1)
+#define BEZMAXPOINTS    (150)
 
-/* calculate Bezier average, in this case the middle */
+/* calculate Bezier average, in this case the middle 
+ * correctly rounded...
+ * */
 
 #define BEZIERMIDDLE(Mid, P1, P2) \
-    (Mid).x=((P1).x+(P2).x)/2;\
-    (Mid).y=((P1).y+(P2).y)/2;
+    (Mid).x=((P1).x+(P2).x + 1)/2;\
+    (Mid).y=((P1).y+(P2).y + 1)/2;
     
-/* check to terminate recursion */
-static int BezierCheck( int level, POINT32 *Points)
+/**********************************************************
+* BezierCheck helper function to check
+* that recursion can be terminated
+*       Points[0] and Points[3] are begin and endpoint
+*       Points[1] and Points[2] are control points
+*       level is the recursion depth
+*       returns true if the recusion can be terminated
+*/
+static BOOL32 BezierCheck( int level, POINT32 *Points)
 { 
-#if 0
-/* this code works, it just is too much work for
- * the savings that are created. This should be done
- * with integer arithmetic and simpler.
- */
-    double hyp, r1, r2;
-    /* first check that the control points are "near" */
-    if(Points[3].x>Points[0].x)
-        if(Points[1].x > Points[3].x+BEZIERFACTOR || 
-                Points[1].x < Points[0].x-BEZIERFACTOR ||
-                Points[2].x > Points[3].x+BEZIERFACTOR || 
-                Points[2].x < Points[0].x-BEZIERFACTOR)
-        return FALSE;
-    else
-        if(Points[1].x < Points[3].x-BEZIERFACTOR || 
-                Points[1].x > Points[0].x+BEZIERFACTOR ||
-                Points[2].x < Points[3].x-BEZIERFACTOR || 
-                Points[2].x > Points[0].x+BEZIERFACTOR)
-        return FALSE;
-    if(Points[3].y>Points[0].y)
-        if(Points[1].y > Points[3].y+BEZIERFACTOR || 
-                Points[1].y < Points[0].y-BEZIERFACTOR ||
-                Points[2].y > Points[3].y+BEZIERFACTOR || 
-                Points[2].y < Points[0].y-BEZIERFACTOR)
-        return FALSE;
-    else
-        if(Points[1].x < Points[3].x-BEZIERFACTOR || 
-                Points[1].x > Points[0].x+BEZIERFACTOR ||
-                Points[2].x < Points[3].x-BEZIERFACTOR || 
-                Points[2].x > Points[0].x+BEZIERFACTOR)
-        return FALSE;o
-        
-    /* calculate the distance squared of the control point from
-     * the line from begin and endpoint
-     */
-        
-    hyp=((double)(Points[3].x-Points[0].x)*(double)(Points[3].x-Points[0].x)+
-           (double) (Points[3].y-Points[0].y)*(double)(Points[3].y-Points[0].y));
-    r1=((double)(Points[2].y-Points[0].y)*(double)(Points[3].x-Points[0].x)-
-           (double) (Points[3].y-Points[0].y)*(double)(Points[2].x-Points[0].x))
-           /BEZIERFACTOR;
-    r2=((double)(Points[1].y-Points[0].y)*(double)(Points[3].x-Points[0].x)-
-            (double)(Points[3].y-Points[0].y)*(double)(Points[1].x-Points[0].x))
-            /BEZIERFACTOR;
-    r1=r1*r1/hyp;
-    r1=r2*r2/hyp;
-    if( r1<1 && r2 <1){ /* distance less then a pixel */
-//        fprintf(stderr,"level is %d\n", level);
-        return TRUE;
+    INT32 dx, dy;
+    dx=Points[3].x-Points[0].x;
+    dy=Points[3].y-Points[0].y;
+    if(ABS(dy)<ABS(dx)){/* shallow line */
+        /* check that control points are between begin and end */
+        if( (Points[1].x-Points[0].x)*dx < 0 ||
+            (Points[2].x-Points[0].x)*dx < 0 ) return FALSE;
+        dx=BEZIERSHIFTDOWN(dx);
+        if(!dx) return TRUE;
+        if(abs(Points[1].y-Points[0].y-(dy/dx)*
+                BEZIERSHIFTDOWN(Points[1].x-Points[0].x)) > BEZIERPIXEL ||
+           abs(Points[2].y-Points[0].y-(dy/dx)*
+                   BEZIERSHIFTDOWN(Points[2].x-Points[0].x)) > BEZIERPIXEL )
+            return FALSE;
+        else
+            return TRUE;
+    }else{ /* steep line */
+        /* check that control points are between begin and end */
+        if( (Points[1].y-Points[0].y)*dy < 0 ||
+            (Points[2].y-Points[0].y)*dy < 0 ) return FALSE;
+        dy=BEZIERSHIFTDOWN(dy);
+        if(!dy) return TRUE;
+        if(abs(Points[1].x-Points[0].x-(dx/dy)*
+                BEZIERSHIFTDOWN(Points[1].y-Points[0].y)) > BEZIERPIXEL ||
+           abs(Points[2].x-Points[0].x-(dx/dy)*
+                   BEZIERSHIFTDOWN(Points[2].y-Points[0].y)) > BEZIERPIXEL )
+            return FALSE;
+        else
+            return TRUE;
     }
-#endif
-    return FALSE;
-    
 }
     
 /***********************************************************************
@@ -1021,24 +1010,31 @@ static int BezierCheck( int level, POINT32 *Points)
  *   Draw a -what microsoft calls- bezier curve
  *   The routine recursively devides the curve
  *   in two parts until a straight line can be drawn
+ *
+ *   level      recusion depth counted backwards
+ *   dc         device context
+ *   Points     array of begin(0), end(3) and control points(1 and 2)
+ *   XPoints    array with points calculated sofar
+ *   *pIx       nr points calculated sofar
+ *   
  */
 static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points, 
-                          XPoint* xpoints, unsigned int* pix)
+                          XPoint* xpoints, unsigned int* pIx)
 {
-    if(*pix == BEZMAXPOINTS){
+    if(*pIx == BEZMAXPOINTS){
         TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-                    xpoints, *pix, CoordModeOrigin );
-        *pix=0;
+                    xpoints, *pIx, CoordModeOrigin );
+        *pIx=0;
     }
     if(!level || BezierCheck(level, Points)) {
-        if(*pix == 0){
-            xpoints[*pix].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[0].x);
-            xpoints[*pix].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[0].y);
-            *pix=1;
+        if(*pIx == 0){
+            xpoints[*pIx].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[0].x);
+            xpoints[*pIx].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[0].y);
+            *pIx=1;
         }
-        xpoints[*pix].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[3].x);
-        xpoints[*pix].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[3].y);
-        (*pix) ++;
+        xpoints[*pIx].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[3].x);
+        xpoints[*pIx].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[3].y);
+        (*pIx) ++;
     } else {
         POINT32 Points2[4]; /* for the second recursive call */
         Points2[3]=Points[3];
@@ -1053,8 +1049,8 @@ static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points,
         Points2[0]=Points[3];
 
         /* do the two halves */
-        X11DRV_Bezier(level-1, dc, Points, xpoints, pix);
-        X11DRV_Bezier(level-1, dc, Points2, xpoints, pix);
+        X11DRV_Bezier(level-1, dc, Points, xpoints, pIx);
+        X11DRV_Bezier(level-1, dc, Points2, xpoints, pIx);
     }
 }
 
@@ -1081,9 +1077,9 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, POINT32 *BezierPoints, DWORD count)
             (Points+0)->x, (Points+0)->y, 
             (Points+1)->x, (Points+1)->y, 
             (Points+2)->x, (Points+2)->y); 
-    if(!count || count % 3){
+    if(!count || count % 3){/* paranoid */
         WARN(graphics," bad value for count : %ld\n", count);
-        return FALSE; /* paranoid */
+        return FALSE; 
     }
     xpoints=(XPoint*) xmalloc( sizeof(XPoint)*BEZMAXPOINTS);
     Points[3].x=BEZIERSHIFTUP(XLPTODP(dc,start.x));
@@ -1100,8 +1096,6 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, POINT32 *BezierPoints, DWORD count)
     }
     if( ix) TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
                 xpoints, ix, CoordModeOrigin );
-//    fprintf(stderr," ix is %d\n",ix);
     free(xpoints);
     return TRUE;
 }
-/***************************END OF WORK IN PROGRESS ********************/

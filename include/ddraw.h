@@ -817,6 +817,7 @@ struct IDirectDrawPalette {
     LPDIRECTDRAW		ddraw;
     Colormap			cm;
     PALETTEENTRY		palents[256];
+    int				installed;
 };
 #undef THIS
 
@@ -889,6 +890,9 @@ struct _xlib_directdrawdata {
     /* are these needed for anything? (draw_surf is the active surface)
        IDirectDrawSurface	*surfs;
        DWORD		num_surfs, alloc_surfs, draw_surf; */
+
+       ATOM		winclass;
+       HWND32		window;
 };
 
 struct IDirectDraw {
@@ -962,11 +966,11 @@ struct IDirectDraw2 {
 
 #define THIS LPDIRECTDRAWSURFACE this
 struct _common_directdrawsurface {
-    LPDIRECTDRAWPALETTE	palette;
-    LPDIRECTDRAW	ddraw;
-    LPDIRECTDRAWSURFACE	backbuffer;
-    LPVOID		surface;
-    DWORD		lpitch,width,height;
+    LPDIRECTDRAWPALETTE		palette;
+    LPDIRECTDRAW		ddraw;
+    LPDIRECTDRAWSURFACE3	backbuffer;
+    LPVOID			surface;
+    DWORD			lpitch,width,height;
 };
 
 struct _dga_directdrawsurface {
@@ -975,7 +979,6 @@ struct _dga_directdrawsurface {
 
 struct _xshm_directdrawsurface {
     XImage		*image;
-    BOOL32		surface_is_image_data;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif

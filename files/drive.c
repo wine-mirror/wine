@@ -971,6 +971,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
                                        LPSTR fsname, DWORD fsname_len )
 {
     int drive;
+    char *cp;
 
     /* FIXME, SetLastErrors missing */
 
@@ -985,7 +986,13 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
         drive = toupper(root[0]) - 'A';
     }
     if (!DRIVE_IsValid( drive )) return FALSE;
-    if (label) lstrcpyn32A( label, DOSDrives[drive].label, label_len );
+    if (label)
+    {
+       lstrcpyn32A( label, DOSDrives[drive].label, label_len );
+       for (cp = label; *cp; cp++);
+       while (cp != label && *(cp-1) == ' ') cp--;
+       *cp = '\0';
+    }
     if (serial) *serial = DOSDrives[drive].serial;
 
     /* Set the filesystem information */

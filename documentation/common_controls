@@ -100,13 +100,10 @@
 3.10 List View Control
 ----------------------
   Author:
-      Dummy written by Eric Kohl.
+      James Michael Mastros <root@jennifer-unix.dyn.ml.org>
 
   Status:
-      - Dummy control. No functionality.
-
-  Notes:
-      This control is NEEDED in many places. Any volunteers??
+      - Development in progress.
 
 
 3.11 Month Calendar Control
@@ -213,10 +210,10 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Development in progress.
+      - Development in progress. Almost done.
 
   Notes
-      The control does not show.
+      The control does not behave very well. This will be fixed
 
 
 3.20 Trackbar Control
@@ -233,9 +230,14 @@
 
 3.21 Tree View Control
 ----------------------
+  Author:
+      Dummy written by Eric Kohl.
+
   Status:
-      - Nothing done at all.
-      - needed.
+      - Dummy control. No functionality.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.22 Updown Control

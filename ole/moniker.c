@@ -15,6 +15,7 @@
 #include "heap.h"
 #include "compobj.h"
 #include "interfaces.h"
+#include "storage.h"
 #include "shlobj.h"
 #include "local.h"
 #include "module.h"
@@ -29,5 +30,16 @@ CreateFileMoniker16(
 	LPMONIKER * ppmk		/* [out] new moniker object */
 ) {
 	FIXME(ole,"(%s,%p),stub!\n",lpszPathName,ppmk);
+	return E_FAIL;
+}
+/****************************************************************************
+ *		CreateFileMoniker	(OLE32.55)
+ */
+HRESULT WINAPI
+CreateFileMoniker32(
+	LPCOLESTR32 lpszPathName,	/* [in] pathname */
+	LPMONIKER * ppmk		/* [out] new moniker object */
+) {
+	FIXME(ole,"(%s,%p),stub!\n",debugstr_w(lpszPathName),ppmk);
 	return E_FAIL;
 }

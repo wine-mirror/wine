@@ -14,7 +14,7 @@ type	win32
 10 stdcall GetOpenFileNameA(ptr) GetOpenFileName32A
 11 stdcall GetOpenFileNameW(ptr) GetOpenFileName32W
 12 stdcall GetSaveFileNameA(ptr) GetSaveFileName32A
-13 stdcall GetSaveFileNameW(ptr) GetSaveFileName32A
+13 stdcall GetSaveFileNameW(ptr) GetSaveFileName32W
 14 stub LoadAlterBitmap
 15 stdcall PageSetupDlgA(ptr) PageSetupDlg32A
 16 stub PageSetupDlgW

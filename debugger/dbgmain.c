@@ -23,12 +23,6 @@ unsigned char ldt_flags_copy[LDT_SIZE];
 Display * display;
 
 int
-XUngrabPointer( Display * d, Time t)
-{
-  return(0);
-}
-
-int
 XUngrabServer( Display * d )
 {
   return(0);

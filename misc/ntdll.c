@@ -83,7 +83,8 @@ BOOL32 WINAPI RtlFirstFreeAce(LPACL acl,LPACE_HEADER *x)
 /**************************************************************************
  *                 RtlAddAce				[NTDLL]
  */
-DWORD /* NTSTATUS */  WINAPI RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,
+DWORD /* NTSTATUS */  
+WINAPI RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,
                                        LPACE_HEADER acestart,DWORD acelen)
 {
 	LPACE_HEADER	ace,targetace;
@@ -108,7 +109,8 @@ DWORD /* NTSTATUS */  WINAPI RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,
 /**************************************************************************
  *                 RtlCreateSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev)
+DWORD /* NTSTATUS */ 
+WINAPI RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev)
 {
 	if (rev!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
@@ -120,7 +122,8 @@ DWORD /* NTSTATUS */ WINAPI RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lp
 /**************************************************************************
  *                 RtlSetDaclSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlSetDaclSecurityDescriptor ( LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted )
+DWORD /* NTSTATUS */ 
+WINAPI RtlSetDaclSecurityDescriptor ( LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted )
 {
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
@@ -142,7 +145,8 @@ DWORD /* NTSTATUS */ WINAPI RtlSetDaclSecurityDescriptor ( LPSECURITY_DESCRIPTOR
 /**************************************************************************
  *                 RtlSetSaclSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlSetSaclSecurityDescriptor (
+DWORD /* NTSTATUS */ 
+WINAPI RtlSetSaclSecurityDescriptor (
 LPSECURITY_DESCRIPTOR lpsd,BOOL32 saclpresent,LPACL sacl,BOOL32 sacldefaulted
 )
 {
@@ -166,7 +170,8 @@ LPSECURITY_DESCRIPTOR lpsd,BOOL32 saclpresent,LPACL sacl,BOOL32 sacldefaulted
 /**************************************************************************
  *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 ownerdefaulted)
+DWORD /* NTSTATUS */ 
+WINAPI RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 ownerdefaulted)
 {
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
@@ -184,7 +189,8 @@ DWORD /* NTSTATUS */ WINAPI RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR
 /**************************************************************************
  *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 groupdefaulted)
+DWORD /* NTSTATUS */ 
+WINAPI RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 groupdefaulted)
 {
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
@@ -255,7 +261,8 @@ DWORD WINAPI RtlCopySid(DWORD len,LPSID to,LPSID from)
 /**************************************************************************
  *                 RtlAnsiStringToUnicodeString		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LPANSI_STRING ansi,BOOL32 doalloc)
+DWORD /* NTSTATUS */ 
+WINAPI RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LPANSI_STRING ansi,BOOL32 doalloc)
 {
 	DWORD	unilen = (ansi->Length+1)*sizeof(WCHAR);
 
@@ -277,7 +284,8 @@ DWORD /* NTSTATUS */ WINAPI RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LP
 /**************************************************************************
  *                 RtlOemStringToUnicodeString		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc)
+DWORD /* NTSTATUS */ 
+WINAPI RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc)
 {
 	DWORD	unilen = (ansi->Length+1)*sizeof(WCHAR);
 
@@ -299,7 +307,8 @@ DWORD /* NTSTATUS */ WINAPI RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPS
  *                 RtlMultiByteToUnicodeN		[NTDLL]
  * FIXME: multibyte support
  */
-DWORD /* NTSTATUS */ WINAPI RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
+DWORD /* NTSTATUS */ 
+WINAPI RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
 {
 	DWORD	len;
 	LPWSTR	x;
@@ -317,7 +326,8 @@ DWORD /* NTSTATUS */ WINAPI RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LP
 /**************************************************************************
  *                 RtlOemToUnicodeN			[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
+DWORD /* NTSTATUS */ 
+WINAPI RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
 {
 	DWORD	len;
 	LPWSTR	x;
@@ -382,7 +392,8 @@ VOID WINAPI RtlFreeUnicodeString(LPUNICODE_STRING str)
 /**************************************************************************
  *                 RtlUnicodeToOemN			[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD unilen)
+DWORD /* NTSTATUS */ 
+WINAPI RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD unilen)
 {
 	DWORD	len;
 	LPSTR	x;
@@ -400,7 +411,8 @@ DWORD /* NTSTATUS */ WINAPI RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD r
 /**************************************************************************
  *                 RtlUnicodeStringToOemString		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
+DWORD /* NTSTATUS */ 
+WINAPI RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
 {
 	if (alloc) {
 		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
@@ -414,7 +426,8 @@ DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNIC
 /**************************************************************************
  *                 RtlUnicodeStringToAnsiString		[NTDLL]
  */
-DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
+DWORD /* NTSTATUS */ 
+WINAPI RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
 {
 	if (alloc) {
 		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
@@ -671,7 +684,8 @@ INT32 WINAPI RtlExtendedLargeIntegerDivide(
  * Note: This even works, since gcc returns 64bit values in eax/edx just like
  * the caller expects. However... The relay code won't grok this I think.
  */
-long long /*LARGE_INTEGER*/ WINAPI RtlExtendedIntegerMultiply(
+long long /*LARGE_INTEGER*/ 
+WINAPI RtlExtendedIntegerMultiply(
 	LARGE_INTEGER factor1,INT32 factor2
 ) {
 #if SIZEOF_LONG_LONG==8

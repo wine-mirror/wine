@@ -120,7 +120,11 @@ int WINAPI SysStringLen16(BSTR16 str)
 	return strlen(BSTR_GetAddr(str));
 }
 
-OLESTATUS WINAPI CreateDispTypeInfo(INTERFACEDATA * pidata,LCID lcid,LPVOID/*ITypeInfo*/ * * pptinfo) {
+OLESTATUS WINAPI CreateDispTypeInfo(
+	INTERFACEDATA *pidata,
+	LCID lcid,
+	LPVOID **pptinfo /*ITypeInfo*/ 
+) {
 	FIXME(ole,"(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return 0;
 }

@@ -55,7 +55,7 @@ type	win32
  52 stub CreateBindCtx
  53 stub CreateDataAdviseHolder
  54 stub CreateDataCache
- 55 stub CreateFileMoniker
+ 55 stdcall CreateFileMoniker(ptr ptr) CreateFileMoniker32
  56 stub CreateGenericComposite
  57 stub CreateILockBytesOnHGlobal
  58 stub CreateItemMoniker

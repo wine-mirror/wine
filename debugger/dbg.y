@@ -474,7 +474,6 @@ static void DEBUG_Main( int signal )
 
         /* Put the display in a correct state */
 
-        XUngrabPointer( display, CurrentTime );
         XUngrabServer( display );
         XFlush( display );
 

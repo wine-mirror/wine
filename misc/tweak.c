@@ -36,14 +36,9 @@
 #include "windows.h"
 
 /* Parameters for windows/nonclient.c */
-extern int  NC_CaptionLeftNudge;
-extern int  NC_CaptionTopNudge;
-extern int  NC_SysControlNudge;
 extern int  NC_MaxControlNudge;
 extern int  NC_MinControlNudge;
 extern UINT32  NC_CaptionTextFlags;
-extern HBRUSH32  NC_WinHighlight95;
-extern HBRUSH32  NC_WinShadow95;
 
 /* Parameters for controls/menu.c */
 extern UINT32  MENU_BarItemTopNudge;
@@ -125,19 +120,10 @@ static int  TWEAK_NonClientInit()
 {
     char  key_value[2];
 
-    NC_CaptionLeftNudge =
-	PROFILE_GetWineIniInt("Tweak.Layout", "CaptionLeftNudge", 0);
-    NC_CaptionTopNudge =
-	PROFILE_GetWineIniInt("Tweak.Layout", "CaptionTopNudge", 0);
-    NC_SysControlNudge =
-	PROFILE_GetWineIniInt("Tweak.Layout", "SysControlNudge", 0);
     NC_MaxControlNudge =
 	PROFILE_GetWineIniInt("Tweak.Layout", "MaxControlNudge", 0);
     NC_MinControlNudge =
 	PROFILE_GetWineIniInt("Tweak.Layout", "MinControlNudge", 0);
-
-    NC_WinHighlight95 = CreateSolidBrush32(RGB(0xc0, 0xc0, 0xc0));
-    NC_WinShadow95 = CreateSolidBrush32(RGB(0x00, 0x00, 0x00));
 
     NC_CaptionTextFlags = DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX;
 

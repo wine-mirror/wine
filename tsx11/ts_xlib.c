@@ -798,17 +798,6 @@ int   TSXGetWindowAttributes(Display* a0, Window a1, XWindowAttributes* a2)
   return r;
 }
 
-int  TSXGrabPointer(Display* a0, Window a1, int a2, unsigned int a3, int a4, int a5, Window a6, Cursor a7, Time a8)
-{
-  int  r;
-  TRACE(x11, "Call XGrabPointer\n");
-  EnterCriticalSection( &X11DRV_CritSection );
-  r = XGrabPointer(a0, a1, a2, a3, a4, a5, a6, a7, a8);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGrabPointer\n");
-  return r;
-}
-
 int  TSXGrabServer(Display* a0)
 {
   int  r;
@@ -1150,6 +1139,17 @@ int  TSXSetSubwindowMode(Display* a0, GC a1, int a2)
   return r;
 }
 
+int  TSXSetWindowColormap(Display* a0, Window a1, Colormap a2)
+{
+  int  r;
+  TRACE(x11, "Call XSetWindowColormap\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XSetWindowColormap(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XSetWindowColormap\n");
+  return r;
+}
+
 int  TSXStoreColor(Display* a0, Colormap a1, XColor* a2)
 {
   int  r;
@@ -1202,17 +1202,6 @@ int  TSXTextWidth(XFontStruct* a0, const  char* a1, int a2)
   r = XTextWidth(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
   TRACE(x11, "Ret XTextWidth\n");
-  return r;
-}
-
-int  TSXUngrabPointer(Display* a0, Time a1)
-{
-  int  r;
-  TRACE(x11, "Call XUngrabPointer\n");
-  EnterCriticalSection( &X11DRV_CritSection );
-  r = XUngrabPointer(a0, a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XUngrabPointer\n");
   return r;
 }
 
@@ -1281,3 +1270,4 @@ void TS_XInitImageFuncPtrs(XImage *a0)
   LeaveCriticalSection( &X11DRV_CritSection );
   TRACE(x11, "Ret _XInitImageFuncPtrs\n");
 }
+

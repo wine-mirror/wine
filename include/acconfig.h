@@ -12,6 +12,9 @@
 /* Define if union semun is defined in sys/sem.h */
 #undef HAVE_UNION_SEMUN
 
+/* Define if struct msghdr contains msg_accrights */
+#undef HAVE_MSGHDR_ACCRIGHTS
+
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */
 #undef HAVE_LIBXXF86DGA
 

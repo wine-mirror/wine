@@ -246,6 +246,32 @@ BOOL32 WINAPI GetFileSecurity32W( LPCWSTR lpFileName,
 }
 
 /******************************************************************************
+ * SetFileSecurityA [32.182]
+ * Sets the security of a file or directory
+ */
+
+BOOL32 WINAPI SetFileSecurity32A( LPCSTR lpFileName,
+                                SECURITY_INFORMATION RequestedInformation,
+                                LPSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+  FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
+  return TRUE;
+}
+
+/******************************************************************************
+ * SetFileSecurityW [32.183]
+ * Sets the security of a file or directory
+ */
+
+BOOL32 WINAPI SetFileSecurity32W( LPCWSTR lpFileName,
+                                SECURITY_INFORMATION RequestedInformation,
+                                LPSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+  FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
+  return TRUE;
+}
+
+/******************************************************************************
  * OpenService32A [ADVAPI32.112]
  */
 HANDLE32 WINAPI OpenService32A( HANDLE32 hSCManager, LPCSTR lpServiceName,

@@ -33,9 +33,17 @@ typedef struct
 
 #define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
+/* DOS device descriptor */
+typedef struct
+{
+    char *name;
+    int flags;
+} DOS_DEVICE;
+
 
 /* files/file.c */
 extern FILE_OBJECT *FILE_GetFile( HFILE32 handle );
+extern void FILE_ReleaseFile( FILE_OBJECT *file );
 extern HFILE32 FILE_Alloc( FILE_OBJECT **file );
 extern void FILE_SetDosError(void);
 extern HFILE32 FILE_DupUnixHandle( int fd );
@@ -68,7 +76,7 @@ extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
                                       DWORD remainder );
 extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
-extern BOOL32 DOSFS_IsDevice( const char *name );
+extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
 extern HFILE32 DOSFS_OpenDevice( const char *name, INT32 mode );
 extern BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                                   INT32 long_len, LPSTR short_buf,

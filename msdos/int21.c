@@ -209,9 +209,26 @@ static void GetDrivePB( CONTEXT *context, int drive )
 
 static void ioctlGetDeviceInfo( CONTEXT *context )
 {
-    int curr_drive;
+    int curr_drive, i;
+    FILE_OBJECT *file;
+
     TRACE(int21, "(%d)\n", BX_reg(context));
     
+    RESET_CFLAG(context);
+
+    /* DOS device ? */
+    if ((file = FILE_GetFile( BX_reg(context) )))
+    {
+        const DOS_DEVICE *dev = DOSFS_GetDevice( file->unix_name );
+        FILE_ReleaseFile( file );
+        if (dev)
+        {
+	    DX_reg(context) = dev->flags;
+	    return;
+        }
+    }
+
+    /* it seems to be a file */
     curr_drive = DRIVE_GetCurrentDrive();
     DX_reg(context) = 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0); 
     /* no floppy */
@@ -222,7 +239,6 @@ static void ioctlGetDeviceInfo( CONTEXT *context )
      * bit 14 - don't set file date/time on closing
      * bit 15 - file is remote
      */
-    RESET_CFLAG(context);
 }
 
 static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
@@ -1323,8 +1339,9 @@ void WINAPI DOS3Call( CONTEXT *context )
         case 0x02:{
            FILE_OBJECT *file;
            file = FILE_GetFile(BX_reg(context));
-            if (!strcasecmp(file->unix_name, "SCSIMGR$"))
+           if (!strcasecmp(file->unix_name, "SCSIMGR$"))
                         ASPI_DOS_HandleInt(context);
+           FILE_ReleaseFile( file );
            break;
        }
 	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */

@@ -169,6 +169,7 @@ BOOL32 KEYBOARD_Init(void)
     KeyCode *kcp;
     XKeyEvent e2;
     WORD vkey, OEMvkey;
+    int keyc;
 
     TSXDisplayKeycodes(display, &min_keycode, &max_keycode);
     ksp = TSXGetKeyboardMapping(display, min_keycode,
@@ -210,8 +211,9 @@ BOOL32 KEYBOARD_Init(void)
     e2.state = 0;
 
     OEMvkey = VK_OEM_7; /* next is available.  */
-    for (e2.keycode=min_keycode; e2.keycode<=max_keycode; e2.keycode++)
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
+        e2.keycode = (KeyCode)keyc;
         TSXLookupString(&e2, NULL, 0, &keysym, NULL);
         vkey = 0;
         if (keysym)  /* otherwise, keycode not used */
@@ -979,7 +981,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 	switch(wMapType) {
 		case 0:	{ /* vkey-code to scan-code */
 			/* let's do vkey -> keycode -> scan */
-			KeyCode keyc;
+			int keyc;
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++) /* see event.c */
 				if ((keyc2vkey[keyc] & 0xFF)== wCode)
 					returnMVK (keyc - 8);
@@ -1099,7 +1101,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
     KeySym keysym;
     static XComposeStatus cs;
     INT32 ret;
-    WORD keyc;
+    int keyc;
 
     e.display = display;
     e.keycode = 0;

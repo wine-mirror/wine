@@ -29,3 +29,4 @@ int TSXpmAttributesSize(void)
   TRACE(x11, "Ret XpmAttributesSize\n");
   return r;
 }
+

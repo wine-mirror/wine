@@ -257,3 +257,82 @@ Wine-dbg>
 
 Written by Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>,
 additions welcome.
+-------
+
+Here are some useful debugging tips, added by Andreas Mohr:
+
+
+a) If you have a program crashing at such an early loader phase that you can't
+use the Wine debugger normally, but Wine already executes the program's
+start code, then you may use a special trick:
+You should do a
+wine -debugmsg +relay program
+to get a listing of the functions the program calls in its start function.
+Now you do a
+wine -debug winfile.exe
+This way, you get into Wine-dbg. Now you can set a breakpoint on any
+function the program calls in the start function and just type "c" to bypass
+the eventual calls of Winfile to this function until you are finally at the
+place where this function gets called by the crashing start function.
+Now you can proceed with your debugging as usual.
+
+
+b) If you try to run a program and it quits after showing an error messagebox,
+the problem can usually be identified in the return value of one of the
+functions executed before MessageBox().
+That's why you should re-run the program with e.g.
+wine -debugmsg +relay <program name> &>relmsg
+Then do a "more relmsg" and search for the last occurrence of a call to the string "MESSAGEBOX".
+This is a line like
+Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
+
+In my example the lines before the call to MessageBox() look like that:
+
+Call KERNEL.96: FREELIBRARY(0x0347) ret=01cf:1033 ds=01ff
+CallTo16(func=033f:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1033 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x036f) ret=01cf:1043 ds=01ff
+CallTo16(func=0367:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1043 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
+CallTo16(func=0317:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:105c ds=01ff
+Call USER.171: WINHELP(0x02ac,0x01ff05b4 "COMET.HLP",0x0002,0x00000000) ret=01cf:1070 ds=01ff
+CallTo16(func=0117:0080,ds=01ff)
+Call WPROCS.24: TASK_RESCHEDULE() ret=00a7:0a2d ds=002b
+Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=00a7:0a2d ds=002b
+Ret  USER.171: WINHELP() retval=0x0001 ret=01cf:1070 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x01be) ret=01df:3e29 ds=01ff
+Ret  KERNEL.96: FREELIBRARY() retval=0x0000 ret=01df:3e29 ds=01ff
+Call KERNEL.52: FREEPROCINSTANCE(0x02cf00ba) ret=01f7:1460 ds=01ff
+Ret  KERNEL.52: FREEPROCINSTANCE() retval=0x0001 ret=01f7:1460 ds=01ff
+Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
+
+I think that the call to MessageBox() in this example is _not_ caused by a wrong result value of some previously executed function (it's happening quite often like that), but instead the messagebox complains about a runtime error at 0x0004:0x1056.
+As the segment value of the address is only "4", I think that that is only an internal program value. But the offset address reveals something quite interesting:
+Offset 1056 is _very_ close to the return address of FREELIBRARY():
+
+Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
+                                             ^^^^
+Provided that segment 0x0004 is indeed segment 0x1cf, we now we can use IDA (available at ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip) to
+disassemble the part that caused the error. We just have to find the address of
+the call to FreeLibrary(). Some lines before that the runtime error occurred.
+But be careful ! In some cases you don't have to disassemble the main program, but instead some DLL called by it in order to find the correct place where the runtime error occurred. That can be determined by finding the origin of the segment value (in this case 0x1cf).
+
+c) If you have created a relay file of some crashing program and want to set a
+breakpoint at a certain location which is not yet available as the
+program loads the breakpoint's segment during execution,
+you may set a breakpoint to GetVersion16/32 as those functions are called
+very often.
+Then do a "c" until you are able to set this breakpoint without error message.
+
+d) Some useful programs:
+IDA: ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip
+*Very* good DOS disassembler ! It's badly needed for debugging Wine sometimes.
+
+XRAY: ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip
+Traces DOS calls (Int 21h, DPMI, ...). Use it with Windows to correct
+file management problems etc.
+
+pedump: http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip
+Dumps the imports and exports of a PE (Portable Executable) DLL.

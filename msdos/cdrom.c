@@ -7,12 +7,17 @@
 
 #ifdef linux
 
+#include "config.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 /* FIXME - how to make this OS independent ?? */
-#include <linux/cdrom.h>
-#include <linux/ucdrom.h>
+#ifdef HAVE_LINUX_CDROM_H
+# include <linux/cdrom.h>
+#endif
+#ifdef HAVE_LINUX_UCDROM_H
+# include <linux/ucdrom.h>
+#endif
 
 #include "ldt.h"
 #include "drive.h"
@@ -107,7 +112,7 @@ else
 if (!driver_request) 
      {             /* FIXME - to be deleted ?? */
 	ERR(int,"   ES:BX==0 ! SEGFAULT ?\n");
-	ERR(int," -->BX=0x%04X, ES=0x%04X, DS=0x%04X, CX=0x%04X\n\n",
+	ERR(int," -->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n\n",
 		BX_reg(context),
 		ES_reg(context),
 		DS_reg(context),
@@ -155,7 +160,7 @@ else
 	 io_stru[2]=1; /* supports audio channels (?? FIXME ??) */
 	 io_stru[1]=16; /* data read and plays audio racks */
 	 io_stru[1]|=(ioctl(fdcd,CDROM_DRIVE_STATUS,0)==CDS_TRAY_OPEN);
-         TRACE(int," ----> DEVICE STATUS <0x%08X>\n\n",(DWORD)io_stru[1]); 
+         TRACE(int," ----> DEVICE STATUS <0x%08lx>\n\n",(DWORD)io_stru[1]); 
 	 break;
 
 	case 9: /* media changed ? */

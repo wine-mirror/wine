@@ -199,9 +199,10 @@ BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 
 /***********************************************************************
  *           CloseFigure32    (GDI32.16)
+ *
+ * FIXME: Check that SetLastError is being called correctly 
  */
 BOOL32 WINAPI CloseFigure32(HDC32 hdc)
-/* FIXME: Check that SetLastError is being called correctly */
 {
    GdiPath *pPath;
    
@@ -293,12 +294,14 @@ INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
 
 /***********************************************************************
  *           PathToRegion32    (GDI32.261)
- */
-HRGN32 WINAPI PathToRegion32(HDC32 hdc)
-/* FIXME: Check that SetLastError is being called correctly */
-/* The documentation does not state this explicitly, but a test under Windows
+ *
+ * FIXME 
+ *   Check that SetLastError is being called correctly 
+ *
+ * The documentation does not state this explicitly, but a test under Windows
  * shows that the region which is returned should be in device coordinates.
  */
+HRGN32 WINAPI PathToRegion32(HDC32 hdc)
 {
    GdiPath *pPath;
    HRGN32  hrgnRval;
@@ -329,9 +332,11 @@ HRGN32 WINAPI PathToRegion32(HDC32 hdc)
 
 /***********************************************************************
  *           FillPath32    (GDI32.100)
+ *
+ * FIXME
+ *    Check that SetLastError is being called correctly 
  */
 BOOL32 WINAPI FillPath32(HDC32 hdc)
-/* FIXME: Check that SetLastError is being called correctly */
 {
    GdiPath *pPath;
    INT32   mapMode, graphicsMode;
@@ -413,9 +418,10 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 
 /***********************************************************************
  *           SelectClipPath32    (GDI32.296)
+ * FIXME 
+ *  Check that SetLastError is being called correctly 
  */
 BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
-/* FIXME: Check that SetLastError is being called correctly */
 {
    GdiPath *pPath;
    HRGN32  hrgnPath, hrgnClip;

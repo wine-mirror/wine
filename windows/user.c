@@ -304,6 +304,33 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
     return FALSE;
 }
 
+
+/***********************************************************************
+ *           ChangeDisplaySettingA    (USER32.589)
+ */
+LONG WINAPI ChangeDisplaySettings32A( LPDEVMODE32A devmode, DWORD flags )
+{
+  FIXME(system, ": stub\n");
+  if (devmode==NULL)
+    FIXME(system,"   devmode=NULL (return to default mode)\n");
+  else if ( (devmode->dmBitsPerPel != DefaultDepthOfScreen(screen)) 
+	    || (devmode->dmPelsHeight != screenHeight)
+	    || (devmode->dmPelsWidth != screenWidth) )
+
+  {
+
+    if (devmode->dmFields & DM_BITSPERPEL)
+      FIXME(system,"   bpp=%ld\n",devmode->dmBitsPerPel);
+    if (devmode->dmFields & DM_PELSWIDTH)
+      FIXME(system,"   width=%ld\n",devmode->dmPelsWidth);
+    if (devmode->dmFields & DM_PELSHEIGHT)
+      FIXME(system,"   height=%ld\n",devmode->dmPelsHeight);
+    FIXME(system," (Putting X in this mode beforehand might help)\n"); 
+  }
+  return DISP_CHANGE_SUCCESSFUL;
+}
+
+
 /***********************************************************************
  *           EnumDisplaySettingsA   (USER32.592)
  */

@@ -9,7 +9,12 @@
 
 typedef struct tagTREEVIEW_INFO
 {
-    UINT32  uDummy;  /* this is just a dummy to keep the compiler happy */
+    COLORREF clrBk;
+    COLORREF clrText;
+
+    HIMAGELIST himlNormal;
+    HIMAGELIST himlState;
+
 
 } TREEVIEW_INFO;
 

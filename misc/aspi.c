@@ -475,8 +475,9 @@ void WINAPI ASPI_DOS_func(DWORD srb)
        UnMapLS(spSRB);
 }
 
-void ASPI_DOS_HandleInt(CONTEXT *context)
+
 /* returns a real mode call address to ASPI_DOS_func() */
+void ASPI_DOS_HandleInt(CONTEXT *context)
 {
 #ifdef linux
        FARPROC16 DOS_func;
@@ -497,3 +498,19 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
        SET_CFLAG(context);
 #endif
 }
+
+/*******************************************************************
+ *     GetASPI32SupportInfo		[WNASPI32.0]
+ *
+ * Checks if the ASPI subsystem is initialized correctly.
+ *
+ * RETURNS
+ *    HIWORD: 0.
+ *    HIBYTE of LOWORD: status (SS_COMP or SS_FAILED_INIT)
+ *    LOBYTE of LOWORD: # of host adapters.  
+ */
+DWORD WINAPI GetASPI32SupportInfo()
+{
+    return (SS_COMP << 8) | 1; /* FIXME: get # of host adapters installed */
+}
+

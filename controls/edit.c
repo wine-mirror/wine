@@ -3793,8 +3793,8 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, "");
 	}
 	es->x_offset = 0;
-	es->flags |= EF_MODIFIED;
-	es->flags |= EF_UPDATE;
+	es->flags &= ~EF_MODIFIED;
+	es->flags &= ~EF_UPDATE;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }

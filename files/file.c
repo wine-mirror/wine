@@ -197,7 +197,7 @@ FILE_OBJECT *FILE_GetFile( HFILE32 handle )
  *
  * Release a DOS file obtained with FILE_GetFile.
  */
-static void FILE_ReleaseFile( FILE_OBJECT *file )
+void FILE_ReleaseFile( FILE_OBJECT *file )
 {
     K32OBJ_DecCount( &file->header );
 }
@@ -350,7 +350,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
 
     if (!path) return HFILE_ERROR32;
 
-    if (DOSFS_IsDevice( path ))
+    if (DOSFS_GetDevice( path ))
     {
     	HFILE32	ret;
 
@@ -388,7 +388,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 
     if (!path) return INVALID_HANDLE_VALUE32;
 
-    if (DOSFS_IsDevice( path ))
+    if (DOSFS_GetDevice( path ))
     {
         WARN(file, "cannot create DOS device '%s'!\n", path);
         DOS_ERROR( ER_AccessDenied, EC_NotFound, SA_Abort, EL_Disk );
@@ -1278,7 +1278,7 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 
     TRACE(file, "'%s'\n", path );
 
-    if (DOSFS_IsDevice( path ))
+    if (DOSFS_GetDevice( path ))
     {
         WARN(file, "cannot remove DOS device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );

@@ -861,7 +861,9 @@ HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
  */
 BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 {
-    return DestroyIcon32( hIcon );
+    TRACE(icon, "%04x\n", hIcon );
+    /* FIXME: should check for OEM/global heap icon here */
+    return (FreeResource16( hIcon ) == 0);
 }
 
 
@@ -871,8 +873,8 @@ BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
 {
     TRACE(icon, "%04x\n", hIcon );
-    /* FIXME: should check for OEM icon here */
-    return (FreeResource16( hIcon ) == 0);
+    /* FIXME: should check for OEM/global heap icon here */
+    return (FreeResource32( hIcon ) == 0);
 }
 
 
@@ -881,7 +883,9 @@ BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
  */
 BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 {
-    return DestroyCursor32( hCursor );
+    TRACE(cursor, "%04x\n", hCursor );
+    /* FIXME: should check for OEM/global heap cursor here */
+    return (FreeResource16( hCursor ) == 0);
 }
 
 
@@ -891,8 +895,8 @@ BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
 {
     TRACE(cursor, "%04x\n", hCursor );
-    /* FIXME: should check for OEM cursor here */
-    return (FreeResource16( hCursor ) == 0);
+    /* FIXME: should check for OEM/global heap cursor here */
+    return (FreeResource32( hCursor ) == 0);
 }
 
 
@@ -1531,7 +1535,17 @@ BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
     iconinfo->xHotspot = ciconinfo->ptHotSpot.x;
     iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
     iconinfo->fIcon    = TRUE; /* hmm */
-    /* FIXME ... add both bitmaps */
+
+    iconinfo->hbmColor = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
+                                ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
+                                (char *)(ciconinfo + 1)
+                                + ciconinfo->nHeight *
+                                BITMAP_WIDTH_BYTES(ciconinfo->nWidth,1) );
+    iconinfo->hbmMask = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
+                                1, 1, (char *)(ciconinfo + 1));
+
+    GlobalUnlock16(hIcon);
+
     return TRUE;
 }
 

@@ -238,9 +238,9 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 /* Import thunk */
 typedef struct _IMAGE_THUNK_DATA {
 	union {
-		LPBYTE	ForwarderString;
-		LPDWORD	Function;
-		DWORD	Ordinal;
+		LPBYTE    ForwarderString;
+		FARPROC32 Function;
+		DWORD     Ordinal;
 		LPIMAGE_IMPORT_BY_NAME	AddressOfData;
 	} u1;
 } IMAGE_THUNK_DATA,*LPIMAGE_THUNK_DATA;

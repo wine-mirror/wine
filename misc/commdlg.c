@@ -1447,7 +1447,13 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
 {
     FIXME(commdlg, "empty stub\n" );
-    return FALSE;
+    /* Altough returning FALSE is theoricaly the right thing
+     * most programs check for a printer at startup, and if
+     * none is found popup PrintDlg32A(), if it fails the program
+     * terminates; by returning TRUE the programs can still run
+     * as long as no printer related stuff is used
+     */ 
+    return TRUE;
 }
 
 
@@ -3631,7 +3637,7 @@ LRESULT WINAPI FormatCharDlgProc32W(HWND32 hDlg, UINT32 uMsg, WPARAM32 wParam,
 }
 
 
-static BOOL32 Commdlg_GetFileName32A( BOOL16 (*dofunction)(),
+static BOOL32 Commdlg_GetFileName32A( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
                                       LPOPENFILENAME32A ofn )
 {
 	BOOL16 ret;
@@ -3661,8 +3667,8 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (*dofunction)(),
 		s = (LPSTR)ofn->lpstrCustomFilter;
 		while (*s)
 			s = s+strlen(s)+1;
-		x = SEGPTR_ALLOC(s-ofn->lpstrCustomFilter);
 		s++;
+		x = SEGPTR_ALLOC(s-ofn->lpstrCustomFilter);
 		memcpy(x,ofn->lpstrCustomFilter,s-ofn->lpstrCustomFilter);
 		ofn16->lpstrCustomFilter = SEGPTR_GET(x);
 	}
@@ -3721,7 +3727,7 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (*dofunction)(),
 	return ret;
 }
 
-static BOOL32 Commdlg_GetFileName32W( BOOL16 (*dofunction)(), 
+static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x), 
                                       LPOPENFILENAME32W ofn )
 {
 	BOOL16 ret;
@@ -3830,7 +3836,7 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (*dofunction)(),
  */
 BOOL32 WINAPI GetOpenFileName32A( LPOPENFILENAME32A ofn )
 {
-   BOOL16 (WINAPI * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
+   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
    return Commdlg_GetFileName32A(dofunction,ofn);
 }
 
@@ -3839,7 +3845,7 @@ BOOL32 WINAPI GetOpenFileName32A( LPOPENFILENAME32A ofn )
  */
 BOOL32 WINAPI GetOpenFileName32W( LPOPENFILENAME32W ofn )
 {
-   BOOL16 (WINAPI * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
+   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetOpenFileName16;
    return Commdlg_GetFileName32W(dofunction,ofn);
 }
 
@@ -3848,7 +3854,7 @@ BOOL32 WINAPI GetOpenFileName32W( LPOPENFILENAME32W ofn )
  */
 BOOL32 WINAPI GetSaveFileName32A( LPOPENFILENAME32A ofn )
 {
-   BOOL16 (WINAPI * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
+   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
    return Commdlg_GetFileName32A(dofunction,ofn);
 }
 
@@ -3857,7 +3863,7 @@ BOOL32 WINAPI GetSaveFileName32A( LPOPENFILENAME32A ofn )
  */
 BOOL32 WINAPI GetSaveFileName32W( LPOPENFILENAME32W ofn )
 {
-   BOOL16 (WINAPI * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
+   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
    return Commdlg_GetFileName32W(dofunction,ofn);
 }
 

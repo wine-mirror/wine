@@ -18,8 +18,14 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "server.h"
 #include "object.h"
+
+/* Some versions of glibc don't define this */
+#ifndef SCM_RIGHTS
+#define SCM_RIGHTS 1
+#endif
 
 /* client state */
 enum state
@@ -79,9 +85,11 @@ static int do_write( int client_fd )
 {
     struct client *client = clients[client_fd];
     struct iovec vec[2];
-    struct { struct cmsghdr hdr; int fd; } cmsg =
-                 { { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS }, client->pass_fd };
-    struct msghdr msghdr = { NULL, 0, vec, 2, NULL, 0, 0 };
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS,
+                             client->pass_fd };
+#endif
+    struct msghdr msghdr = { NULL, 0, vec, 2, };
     int ret;
 
     /* make sure we have something to send */
@@ -102,11 +110,15 @@ static int do_write( int client_fd )
         vec[0].iov_len  = client->head.len - client->count;
         msghdr.msg_iovlen = 1;
     }
-    if (client->pass_fd != -1)
+    if (client->pass_fd != -1)  /* we have an fd to send */
     {
-        /* we have an fd to send */
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+        msghdr.msg_accrights = (void *)&client->pass_fd;
+        msghdr.msg_accrightslen = sizeof(client->pass_fd);
+#else
         msghdr.msg_control = &cmsg;
         msghdr.msg_controllen = sizeof(cmsg);
+#endif
     }
     ret = sendmsg( client_fd, &msghdr, 0 );
     if (ret == -1)
@@ -138,9 +150,13 @@ static int do_read( int client_fd )
 {
     struct client *client = clients[client_fd];
     struct iovec vec;
-    struct { struct cmsghdr hdr; int fd; } cmsg = { { sizeof(cmsg), SOL_SOCKET,
-                                                      SCM_RIGHTS }, -1 };
+    int pass_fd = -1;
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    struct msghdr msghdr = { NULL, 0, &vec, 1, (void*)&pass_fd, sizeof(int) };
+#else
+    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
     struct msghdr msghdr = { NULL, 0, &vec, 1, &cmsg, sizeof(cmsg), 0 };
+#endif
     int ret;
 
     if (client->state == RUNNING) client->state = SENDING;
@@ -166,11 +182,14 @@ static int do_read( int client_fd )
         perror("recvmsg");
         return -1;
     }
-    if (cmsg.fd != -1)
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    pass_fd = cmsg.fd;
+#endif
+    if (pass_fd != -1)
     {
         /* can only receive one fd per message */
         if (client->pass_fd != -1) close( client->pass_fd );
-        client->pass_fd = cmsg.fd;
+        client->pass_fd = pass_fd;
     }
     else if (!ret) return -1;  /* closed pipe */
 

@@ -190,15 +190,15 @@ SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
 }
 
 
-static LRESULT
-SW_GetBorders(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+__inline__ static LRESULT
+SW_GetBorders (LPARAM lParam)
 {
-    LPINT32	out;
+    LPINT32 out = (LPINT32) lParam;
 
-    out = (LPINT32) lParam;
     out[0] = HORZ_BORDER; /* horizontal border width */
     out[1] = VERT_BORDER; /* vertical border width */
     out[2] = HORZ_GAP; /* width of border between rectangles */
+
     return TRUE;
 }
 
@@ -766,7 +766,7 @@ StatusWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     switch (msg) {
     case SB_GETBORDERS:
-	return SW_GetBorders(self, hwnd, wParam, lParam);
+	return SW_GetBorders (lParam);
     case SB_GETICON:
         return SW_GetIcon(self, hwnd, wParam, lParam);
     case SB_GETPARTS:

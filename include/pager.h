@@ -10,7 +10,11 @@
 
 typedef struct tagPAGER_INFO
 {
-    UINT32  uDummy;  /* this is just a dummy to keep the compiler happy */
+    HWND32   hwndChild;
+    COLORREF clrBk;
+    INT32    iBorder;
+    INT32    iButtonSize;
+
 
 } PAGER_INFO;
 

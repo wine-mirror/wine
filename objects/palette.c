@@ -162,18 +162,22 @@ UINT32 WINAPI GetPaletteEntries32(
     if (!palPtr) return 0;
 
     numEntries = palPtr->logpalette.palNumEntries;
-    if (start >= numEntries) 
-    {
-      GDI_HEAP_UNLOCK( hpalette );
-      return 0;
-    }
     if (start+count > numEntries) count = numEntries - start;
-    memcpy( entries, &palPtr->logpalette.palPalEntry[start],
-	    count * sizeof(PALETTEENTRY) );
-    for( numEntries = 0; numEntries < count ; numEntries++ )
-         if (entries[numEntries].peFlags & 0xF0)
-             entries[numEntries].peFlags = 0;
-    GDI_HEAP_UNLOCK( hpalette );
+    if (entries)
+    { 
+      if (start >= numEntries) 
+      {
+	GDI_HEAP_UNLOCK( hpalette );
+	return 0;
+      }
+      memcpy( entries, &palPtr->logpalette.palPalEntry[start],
+	      count * sizeof(PALETTEENTRY) );
+      for( numEntries = 0; numEntries < count ; numEntries++ )
+	   if (entries[numEntries].peFlags & 0xF0)
+	       entries[numEntries].peFlags = 0;
+      GDI_HEAP_UNLOCK( hpalette );
+    }
+
     return count;
 }
 
