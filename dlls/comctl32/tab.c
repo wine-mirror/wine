@@ -79,7 +79,7 @@ typedef struct
   BOOL       DoRedraw;        /* flag for redrawing when tab contents is changed*/
   BOOL       needsScrolling;  /* TRUE if the size of the tabs is greater than
 			       * the size of the control */
-  BOOL	     fSizeSet;	      /* was the size of the tabs explicitly set? */
+  BOOL       fHeightSet;      /* was the height of the tabs explicitly set? */
   BOOL       bUnicode;        /* Unicode control? */
   HWND       hwndUpDown;      /* Updown control used for scrolling */
 } TAB_INFO;
@@ -1102,7 +1102,7 @@ static void TAB_SetItemBounds (HWND hwnd)
   curItemLeftPos = 0;
   curItemRowCount = infoPtr->uNumItem ? 1 : 0;
 
-  if (!(lStyle & TCS_FIXEDWIDTH) && !((lStyle & TCS_OWNERDRAWFIXED) && infoPtr->fSizeSet) )
+  if (!(infoPtr->fHeightSet))
   {
     int item_height;
     int icon_height = 0;
@@ -1139,7 +1139,7 @@ static void TAB_SetItemBounds (HWND hwnd)
     /* Set the leftmost position of the tab. */
     infoPtr->items[curItem].rect.left = curItemLeftPos;
 
-    if ( (lStyle & TCS_FIXEDWIDTH) || ((lStyle & TCS_OWNERDRAWFIXED) && infoPtr->fSizeSet))
+    if ( lStyle & (TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED) )
     {
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
                                            infoPtr->tabWidth +
@@ -1793,7 +1793,7 @@ static void TAB_DrawItem(
       if (iItem == infoPtr->iSelected)
       {
         /* Background color */
-        if (!((lStyle & TCS_OWNERDRAWFIXED) && infoPtr->fSizeSet))
+        if (!(lStyle & TCS_OWNERDRAWFIXED))
 	{
               DeleteObject(hbr);
               hbr = GetSysColorBrush(COLOR_SCROLLBAR);
@@ -2385,15 +2385,20 @@ TAB_Paint (HWND hwnd, WPARAM wParam)
   HDC hdc;
   PAINTSTRUCT ps;
 
-  hdc = wParam== 0 ? BeginPaint (hwnd, &ps) : (HDC)wParam;
+  if (wParam == 0)
+  {
+    hdc = BeginPaint (hwnd, &ps);
+    TRACE("erase %d, rect=(%ld,%ld)-(%ld,%ld)\n",
+         ps.fErase,
+         ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right,ps.rcPaint.bottom);
 
-  TRACE("erase %d, rect=(%ld,%ld)-(%ld,%ld)\n",
-	ps.fErase,
-	ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right,ps.rcPaint.bottom);
-
-  if (ps.fErase)
+    if (ps.fErase)
       TAB_EraseBackground (hwnd, hdc);
 
+  } else {
+    hdc = (HDC)wParam;
+  }
+    
   TAB_Refresh (hwnd, hdc);
 
   if(!wParam)
@@ -2557,20 +2562,34 @@ TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   LONG lResult = 0;
+  BOOL bNeedPaint = FALSE;
 
-  TRACE("\n");
-  if ((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED))
+  lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
+
+  /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use auto size. */
+  if ((lStyle & (TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED)) &&
+      (infoPtr->tabWidth != (INT)LOWORD(lParam)))
   {
-    lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
-    /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use default. */    
-    if (LOWORD(lParam)) infoPtr->tabWidth = max((INT)LOWORD(lParam), infoPtr->tabMinWidth);
-    if (HIWORD(lParam)) infoPtr->tabHeight = (INT)HIWORD(lParam);
-    TRACE("was h=%d,w=%d, now h=%d,w=%d\n",
-	  HIWORD(lResult), LOWORD(lResult),
-	  infoPtr->tabHeight, infoPtr->tabWidth);
+    infoPtr->tabWidth = max((INT)LOWORD(lParam), infoPtr->tabMinWidth);
+    bNeedPaint = TRUE;
   }
-  infoPtr->fSizeSet = TRUE;
 
+  if (infoPtr->tabHeight != (INT)HIWORD(lParam))
+  {
+    if ((infoPtr->fHeightSet = ((INT)HIWORD(lParam) != 0)))
+      infoPtr->tabHeight = (INT)HIWORD(lParam);
+    else
+      TAB_SetItemBounds(hwnd);
+
+    bNeedPaint = TRUE;
+  }
+  TRACE("was h=%d,w=%d, now h=%d,w=%d\n",
+       HIWORD(lResult), LOWORD(lResult),
+       infoPtr->tabHeight, infoPtr->tabWidth);
+
+  if (bNeedPaint)
+    RedrawWindow(hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+    
   return lResult;
 }
 
@@ -2966,7 +2985,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->needsScrolling  = FALSE;
   infoPtr->hwndUpDown      = 0;
   infoPtr->leftmostVisible = 0;
-  infoPtr->fSizeSet	   = FALSE;
+  infoPtr->fHeightSet     = FALSE;
   infoPtr->bUnicode	   = IsWindowUnicode (hwnd);
 
   TRACE("Created tab control, hwnd [%p]\n", hwnd);
