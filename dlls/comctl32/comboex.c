@@ -395,12 +395,11 @@ COMBOEX_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)himlTemp;
 }
 
-
 static LRESULT
-COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+COMBOEX_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
-    COMBOBOXEXITEMA *cit = (COMBOBOXEXITEMA *) lParam;
+    COMBOBOXEXITEMW *cit = (COMBOBOXEXITEMW *) lParam;
     INT index;
     INT i;
     CBE_ITEMDATA *item;
@@ -430,15 +429,16 @@ COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* add/change stuff to the internal item structure */ 
     item->mask |= cit->mask;
     if (cit->mask & CBEIF_TEXT) {
-        LPSTR str;
+        LPWSTR str;
 	INT len;
+	WCHAR emptystr[1] = {0};
 
         str = cit->pszText;
-        if (!str) str="";
-	len = MultiByteToWideChar (CP_ACP, 0, str, -1, NULL, 0);
+        if (!str) str=emptystr;
+	len = strlenW(str);
 	if (len > 0) {
 	    item->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    MultiByteToWideChar (CP_ACP, 0, str, -1, item->pszText, len);
+	    strcpyW(item->pszText,str);
 	}
         item->cchTextMax   = cit->cchTextMax;
     }
@@ -458,8 +458,33 @@ COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
+static LRESULT
+COMBOEX_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    COMBOBOXEXITEMA	*cit = (COMBOBOXEXITEMA *) lParam;
+    COMBOBOXEXITEMW	citW;
+    LRESULT		ret;
 
-/* << COMBOEX_SetItemW >> */
+    memcpy(&citW,cit,sizeof(COMBOBOXEXITEMA));
+    if (cit->mask & CBEIF_TEXT) {
+        LPSTR str;
+	INT len;
+
+        str = cit->pszText;
+        if (!str) str="";
+	len = MultiByteToWideChar (CP_ACP, 0, str, -1, NULL, 0);
+	if (len > 0) {
+	    citW.pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    MultiByteToWideChar (CP_ACP, 0, str, -1, citW.pszText, len);
+	}
+    }
+    ret = COMBOEX_SetItemW(hwnd,wParam,(LPARAM)&citW);;
+
+    if (cit->mask & CBEIF_TEXT)
+	COMCTL32_Free(citW.pszText);
+    return ret;
+}
+
 
 /* << COMBOEX_SetUniCodeFormat >> */
 
@@ -842,8 +867,10 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CBEM_SETITEMA:
 	    return COMBOEX_SetItemA (hwnd, wParam, lParam);
 
-/*	case CBEM_SETITEMW:
-	case CBEM_SETUNICODEFORMAT:
+	case CBEM_SETITEMW:
+	    return COMBOEX_SetItemW (hwnd, wParam, lParam);
+
+/*	case CBEM_SETUNICODEFORMAT:
 */
 
 	case CB_DELETESTRING:
