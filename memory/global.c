@@ -1623,6 +1623,15 @@ VOID WINAPI GlobalMemoryStatus(
 
     }
 #endif
+    /* Some applications (e.g. QuickTime 6) crash if we tell them there
+     * is more than 2GB of physical memory.
+     */
+    if (lpmem->dwTotalPhys>2U*1024*1024*1024)
+    {
+        lpmem->dwTotalPhys=2U*1024*1024*1024;
+        lpmem->dwAvailPhys=2U*1024*1024*1024;
+    }
+
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
     lpmem->dwTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
