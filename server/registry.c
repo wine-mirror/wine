@@ -85,7 +85,7 @@ static const char * const special_root_names[NB_SPECIAL_ROOT_KEYS] =
     "Machine",                                                       /* HKEY_LOCAL_MACHINE */
     "User",                                                          /* HKEY_USERS */
     "PerfData",                                                      /* HKEY_PERFORMANCE_DATA */
-    "Machine\\System\\CurrentControlSet\\HardwardProfiles\\Current", /* HKEY_CURRENT_CONFIG */
+    "Machine\\System\\CurrentControlSet\\HardwareProfiles\\Current", /* HKEY_CURRENT_CONFIG */
     "DynData"                                                        /* HKEY_DYN_DATA */
 };
 
