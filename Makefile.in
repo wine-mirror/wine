@@ -135,6 +135,9 @@ INSTALLSUBDIRS = $(DOCSUBDIRS) $(INCSUBDIRS)
 # Sub-directories to run make lint into
 LINTSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
+# Extra sub-directories to clean
+CLEANSUBDIRS = dlls include include/bitmaps include/wine
+
 LIBOBJS = \
 	controls/controls.o \
 	console/console.o \
@@ -325,7 +328,7 @@ htmlpages:
 
 clean::
 	for i in $(BUILDSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in include include/bitmaps include/wine; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
+	for i in $(CLEANSUBDIRS); do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
 
 distclean: clean
