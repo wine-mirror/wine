@@ -96,8 +96,8 @@ static	int		numOpenMidiSeq = 0;
 static	UINT		midiInTimerID = 0;
 static	int		numStartedMidiIn = 0;
 
-int port_in;
-int port_out;
+static int port_in;
+static int port_out;
 
 /*======================================================================*
  *                  Low level MIDI implementation			*
@@ -268,15 +268,109 @@ static int midiCloseSeq(void)
 
 static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
 {
+    int npfd;
+    struct pollfd *pfd;
+
     TRACE("(%p, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
 
-    while(snd_seq_event_input_pending(midiSeq, 0) > 0) {
+    npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
+    pfd = (struct pollfd *)HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
+    snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
+    
+    /* Check if a event is present */
+    if (poll(pfd, npfd, 0) <= 0) {
+	HeapFree(GetProcessHeap(), 0, pfd);
+	return;
+    }  
+
+    /* Note: This definitely does not work.  
+     * while(snd_seq_event_input_pending(midiSeq, 0) > 0) {
 	snd_seq_event_t* ev;
-	TRACE("An event is pending\n");
 	snd_seq_event_input(midiSeq, &ev);
-	TRACE("Event received, type = %d\n", ev->type);
+	....................
 	snd_seq_free_event(ev);
-    }
+    }*/
+
+    do {
+	WORD wDevID;
+	snd_seq_event_t* ev;
+	snd_seq_event_input(midiSeq, &ev);
+	/* Find the target device */
+	for (wDevID = 0; wDevID < MIDM_NumDevs; wDevID++)
+	    if ( (ev->source.client == MidiInDev[wDevID].addr.client) && (ev->source.port == MidiInDev[wDevID].addr.port) )
+		break;
+	if (wDevID == MIDM_NumDevs)
+	    FIXME("Unexpected event received, type = %x from %d:%d\n", ev->type, ev->source.client, ev->source.port);
+	else {
+	    DWORD toSend = 0;
+	    TRACE("Event received, type = %x, device = %d\n", ev->type, wDevID);
+	    switch(ev->type)
+	    {
+		case SND_SEQ_EVENT_NOTEOFF:
+		    toSend = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_OFF | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_NOTEON:
+		    toSend = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_ON | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_KEYPRESS:
+		    toSend = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_PRESSURE | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_CONTROLLER: 
+		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CONTROL | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_PITCHBEND:
+		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_BENDER | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_PGMCHANGE:
+		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_PGM_CHANGE | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_CHANPRESS:
+		    toSend = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CHANNEL_PRESSURE | ev->data.control.channel;
+		    break;
+		case SND_SEQ_EVENT_SYSEX:
+		    {
+			int len = ev->data.ext.len;
+			LPBYTE ptr = (BYTE*) ev->data.ext.ptr;
+			LPMIDIHDR lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+
+			/* FIXME: Should handle sysex greater that a single buffer */
+			if (lpMidiHdr) {
+			    if (len <= lpMidiHdr->dwBufferLength) {
+				lpMidiHdr->dwBytesRecorded = len;
+				memcpy(lpMidiHdr->lpData, ptr, len);
+				lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+				lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+				lpMidiHdr->dwFlags |= MHDR_DONE;
+				MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
+				if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR) {
+				    WARN("Couldn't notify client\n");
+				}
+			    } else
+				FIXME("No enough space in the buffer to store sysex!\n");
+			} else
+			    FIXME("Sysex received but no buffer to store it!\n");
+		    }
+		    break;
+		case SND_SEQ_EVENT_SENSING:
+		    /* Noting to do */
+		    break;
+		default:
+		    FIXME("Unhandled event received, type = %x\n", ev->type);
+		    break;
+	    }
+	    if (toSend != 0) {
+		TRACE("Sending event %08lx (from %d %d)\n", toSend, ev->source.client, ev->source.port);
+		/* FIXME: Should use ev->time instead for better accuracy */
+		dwTime -= MidiInDev[wDevID].startTime;
+		if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime) != MMSYSERR_NOERROR) {
+		    WARN("Couldn't notify client\n");
+		}
+	    }
+	}
+	snd_seq_free_event(ev);
+    } while(snd_seq_event_input_pending(midiSeq, 0) > 0);
+	
+    HeapFree(GetProcessHeap(), 0, pfd);
 }
 
 /**************************************************************************
