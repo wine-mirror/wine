@@ -23,7 +23,7 @@
 /* check that the string is NULL-terminated and that the len is correct */
 #define CHECK_STRING(func,str,len) \
   do { if (((str)[(len)-1] || strlen(str) != (len)-1)) \
-         fatal_protocol_error( "%s: invalid string '.*s'\n", (func), (len), (str) ); \
+         fatal_protocol_error( "%s: invalid string '%.*s'\n", (func), (len), (str) ); \
      } while(0)
  
 struct thread *current = NULL;  /* thread handling the current request */
