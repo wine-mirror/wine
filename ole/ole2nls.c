@@ -1,5 +1,5 @@
 /*
- *	OLE2NLS library
+ *	National Language Support library
  *
  *	Copyright 1995	Martin von Loewis
  *      Copyright 1998  David Lee Lambert
@@ -24,274 +24,7 @@
 #include "debugtools.h"
 #include "main.h"
 
-DEFAULT_DEBUG_CHANNEL(ole);
-DECLARE_DEBUG_CHANNEL(string);
-DECLARE_DEBUG_CHANNEL(win32);
-
-struct NLS_langlocale {
-	const int lang;
-	struct NLS_localevar {
-		const int	type;
-		const char	*val;
-	} locvars[120];
-};
-
-#define LANG_BEGIN(l,s)	{	MAKELANGID(l,s), {
-
-#define LOCVAL(type,value)					{type,value},
-
-#define LANG_END					 }},
-
-static const struct NLS_langlocale langlocales[] = {
-/* add languages in numerical order of main language (last two digits)
- * it is much easier to find the missing holes that way */
-
-LANG_BEGIN (LANG_CATALAN, SUBLANG_DEFAULT)	/*0x0403*/
-#include "nls/cat.nls"
-LANG_END
-
-LANG_BEGIN (LANG_CZECH, SUBLANG_DEFAULT)	/*0x0405*/
-#include "nls/cze.nls"
-LANG_END
-
-LANG_BEGIN (LANG_DANISH, SUBLANG_DEFAULT)	/*0x0406*/
-#include "nls/dan.nls"
-LANG_END
-
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN)		/*0x0407*/
-#include "nls/deu.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_SWISS)		/*0x0807*/
-#include "nls/des.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN)	/*0x0C07*/
-#include "nls/dea.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LUXEMBOURG)	/*0x1007*/
-#include "nls/del.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LIECHTENSTEIN)	/*0x1407*/
-#include "nls/dec.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_US)		/*0x0409*/
-#include "nls/enu.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_UK)		/*0x0809*/
-#include "nls/eng.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_AUS)		/*0x0C09*/
-#include "nls/ena.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CAN)		/*0x1009*/
-#include "nls/enc.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_NZ)		/*0x1409*/
-#include "nls/enz.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_EIRE)		/*0x1809*/
-#include "nls/eni.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_SAFRICA)	/*0x1C09*/
-#include "nls/ens.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_JAMAICA)	/*0x2009*/
-#include "nls/enj.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CARRIBEAN)	/*0x2409*/
-#include "nls/enb.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_BELIZE)	/*0x2809*/
-#include "nls/enl.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_TRINIDAD)    	/*0x2C09*/
-#include "nls/ent.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH)		/*0x040a*/
-#include "nls/esp.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MEXICAN)	/*0x080a*/
-#include "nls/esm.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MODERN)	/*0x0C0a*/
-#include "nls/esn.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_GUATEMALA)	/*0x100a*/
-#include "nls/esg.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COSTARICA)	/*0x140a*/
-#include "nls/esc.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PANAMA)	/*0x180a*/
-#include "nls/esa.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_DOMINICAN)	/*0x1C0A*/
-#include "nls/esd.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_VENEZUELA)	/*0x200a*/
-#include "nls/esv.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COLOMBIA)	/*0x240a*/
-#include "nls/eso.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PERU)		/*0x280a*/
-#include "nls/esr.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA)	/*0x2c0a*/
-#include "nls/ess.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ECUADOR)	/*0x300a*/
-#include "nls/esf.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_CHILE)	/*0x340a*/
-#include "nls/esl.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_URUGUAY)	/*0x380a*/
-#include "nls/esy.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PARAGUAY)	/*0x3c0a*/
-#include "nls/esz.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_BOLIVIA)	/*0x400a*/
-#include "nls/esb.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_EL_SALVADOR)	/*0x440a*/
-#include "nls/ese.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_HONDURAS)	/*0x480a*/
-#include "nls/esh.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_NICARAGUA)	/*0x4c0a*/
-#include "nls/esi.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PUERTO_RICO)	/*0x500a*/
-#include "nls/esu.nls"
-LANG_END
-
-LANG_BEGIN (LANG_FINNISH, SUBLANG_DEFAULT)	/*0x040B*/
-#include "nls/fin.nls"
-LANG_END
-
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH)		/*0x040C*/
-#include "nls/fra.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_BELGIAN)	/*0x080C*/
-#include "nls/frb.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_CANADIAN)	/*0x0C0C*/
-#include "nls/frc.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_SWISS)		/*0x100C*/
-#include "nls/frs.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_LUXEMBOURG)	/*0x140C*/
-#include "nls/frl.nls"
-LANG_END
-
-LANG_BEGIN (LANG_HUNGARIAN, SUBLANG_DEFAULT)	/*0x040e*/
-#include "nls/hun.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN)		/*0x0410*/
-#include "nls/ita.nls"
-LANG_END
-LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN_SWISS)	/*0x0810*/
-#include "nls/its.nls"
-LANG_END
-
-LANG_BEGIN (LANG_JAPANESE, SUBLANG_DEFAULT)	/*0x0411*/
-#include "nls/jpn.nls"
-LANG_END
-
-LANG_BEGIN (LANG_KOREAN, SUBLANG_KOREAN)	/*0x0412*/
-#include "nls/kor.nls"
-LANG_END
-
-LANG_BEGIN (LANG_DUTCH, SUBLANG_DUTCH)		/*0x0413*/
-#include "nls/nld.nls"
-LANG_END
-LANG_BEGIN (LANG_DUTCH, SUBLANG_DUTCH_BELGIAN)	/*0x0813*/
-#include "nls/nlb.nls"
-LANG_END
-LANG_BEGIN (LANG_DUTCH, SUBLANG_DUTCH_SURINAM)	/*0x0C13*/
-#include "nls/nls.nls"
-LANG_END
-
-LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL)	/*0x0414*/
-#include "nls/nor.nls"
-LANG_END
-LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_NYNORSK)	/*0x0814*/
-#include "nls/non.nls"
-LANG_END
-
-LANG_BEGIN (LANG_POLISH, SUBLANG_DEFAULT)	/*0x0415*/
-#include "nls/plk.nls"
-LANG_END
-
-LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE_BRAZILIAN)	/*0x0416*/
-#include "nls/ptb.nls"
-LANG_END
-LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE)		/*0x0816*/
-#include "nls/ptg.nls"
-LANG_END
-
-LANG_BEGIN (LANG_RUSSIAN, SUBLANG_DEFAULT)	/*0x419*/
-#include "nls/rus.nls"
-LANG_END
-
-LANG_BEGIN (LANG_CROATIAN, SUBLANG_CROATIAN)	/*0x41a*/
-#include "nls/hrv.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x041b*/
-#include "nls/sky.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH)		/*0x041d*/
-#include "nls/sve.nls"
-LANG_END
-LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH_FINLAND)	/*0x081d*/
-#include "nls/svf.nls"
-LANG_END
-
-LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
-#include "nls/tha.nls"
-LANG_END
-LANG_BEGIN (LANG_GAELIC, SUBLANG_DEFAULT) /* 0x043c */
-#include "nls/gae.nls"
-LANG_END
-
-LANG_BEGIN (LANG_GAELIC, SUBLANG_GAELIC_SCOTTISH)
-#include "nls/gdh.nls"
-LANG_END
-
-LANG_BEGIN (LANG_GAELIC, SUBLANG_GAELIC_MANX)
-#include "nls/gdv.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
-#include "nls/esperanto.nls"
-LANG_END
-
-LANG_BEGIN (LANG_WALON, SUBLANG_DEFAULT)	/*0x0490*/
-#include "nls/wal.nls"
-LANG_END
-
-LANG_BEGIN (LANG_CORNISH, SUBLANG_DEFAULT) /* 0x0491  */
-#include "nls/cor.nls"
-LANG_END
-
-LANG_BEGIN (LANG_WELSH, SUBLANG_DEFAULT) /* 0x0492 */
-#include "nls/cym.nls"
-LANG_END
-
-LANG_BEGIN (LANG_BRETON, SUBLANG_DEFAULT) /* 0x0x93  */
-#include "nls/brf.nls"
-LANG_END
-
-	    };
-
+DEFAULT_DEBUG_CHANNEL(string);
 
 /* Locale name to id map. used by EnumSystemLocales, GetLocaleInfoA 
  * MUST contain all #defines from winnls.h
@@ -300,7 +33,7 @@ LANG_END
 #define LOCALE_ENTRY(x)	{#x,LOCALE_##x}
 static const struct tagLOCALE_NAME2ID {
     const char	*name;
-	DWORD	id;
+    LCTYPE	id;
 } locale_name2id[]= {
 	LOCALE_ENTRY(ILANGUAGE),
 	LOCALE_ENTRY(SLANGUAGE),
@@ -405,242 +138,31 @@ static const struct tagLOCALE_NAME2ID {
 	LOCALE_ENTRY(FONTSIGNATURE),
 	LOCALE_ENTRY(SISO639LANGNAME),
 	LOCALE_ENTRY(SISO3166CTRYNAME),
-	{NULL,0},
-};
-
-const struct map_lcid2str {
-	LCID		langid;
-	const char	*langname;
-} languages[]={
-	{0x0401,"Arabic (Saudi Arabia)"},
-	{0x0801,"Arabic (Iraq)"},
-	{0x0c01,"Arabic (Egypt)"},
-	{0x1001,"Arabic (Libya)"},
-	{0x1401,"Arabic (Algeria)"},
-	{0x1801,"Arabic (Morocco)"},
-	{0x1c01,"Arabic (Tunisia)"},
-	{0x2001,"Arabic (Oman)"},
-	{0x2401,"Arabic (Yemen)"},
-	{0x2801,"Arabic (Syria)"},
-	{0x2c01,"Arabic (Jordan)"},
-	{0x3001,"Arabic (Lebanon)"},
-	{0x3401,"Arabic (Kuwait)"},
-	{0x3801,"Arabic (United Arab Emirates)"},
-	{0x3c01,"Arabic (Bahrain)"},
-	{0x4001,"Arabic (Qatar)"},
-	{0x0402,"Bulgarian"},
-	{0x0403,"Catalan"},
-	{0x0404,"Chinese (Taiwan)"},
-	{0x0804,"Chinese (People's Republic of China)"},
-	{0x0c04,"Chinese (Hong Kong)"},
-	{0x1004,"Chinese (Singapore)"},
-	{0x1404,"Chinese (Macau)"},
-	{0x0405,"Czech"},
-	{0x0406,"Danish"},
-	{0x0407,"German (Germany)"},
-	{0x0807,"German (Switzerland)"},
-	{0x0c07,"German (Austria)"},
-	{0x1007,"German (Luxembourg)"},
-	{0x1407,"German (Liechtenstein)"},
-	{0x0408,"Greek"},
-	{0x0409,"English (United States)"},
-	{0x0809,"English (United Kingdom)"},
-	{0x0c09,"English (Australian)"},
-	{0x1009,"English (Canadian)"},
-	{0x1409,"English (New Zealand)"},
-	{0x1809,"English (Ireland)"},
-	{0x1c09,"English (South Africa)"},
-	{0x2009,"English (Jamaica)"},
-	{0x2409,"English (Caribbean)"},
-	{0x2809,"English (Belize)"},
-	{0x2c09,"English (Trinidad & Tobago)"},
-	{0x3009,"English (Zimbabwe)"},
-	{0x3409,"English (Philippines)"},
-	{0x040a,"Spanish (Spain, traditional sorting)"},
-	{0x080a,"Spanish (Mexico)"},
-	{0x0c0a,"Spanish (Spain, international sorting)"},
-	{0x100a,"Spanish (Guatemala)"},
-	{0x140a,"Spanish (Costa Rica)"},
-	{0x180a,"Spanish (Panama)"},
-	{0x1c0a,"Spanish (Dominican Republic)"},
-	{0x200a,"Spanish (Venezuela)"},
-	{0x240a,"Spanish (Colombia)"},
-	{0x280a,"Spanish (Peru)"},
-	{0x2c0a,"Spanish (Argentina)"},
-	{0x300a,"Spanish (Ecuador)"},
-	{0x340a,"Spanish (Chile)"},
-	{0x380a,"Spanish (Uruguay)"},
-	{0x3c0a,"Spanish (Paraguay)"},
-	{0x400a,"Spanish (Bolivia)"},
-	{0x440a,"Spanish (El Salvador)"},
-	{0x480a,"Spanish (Honduras)"},
-	{0x4c0a,"Spanish (Nicaragua)"},
-	{0x500a,"Spanish (Puerto Rico)"},
-	{0x040b,"Finnish"},
-	{0x040c,"French (France)"},
-	{0x080c,"French (Belgium)"},
-	{0x0c0c,"French (Canada)"},
-	{0x100c,"French (Switzerland)"},
-	{0x140c,"French (Luxembourg)"},
-	{0x180c,"French (Monaco)"},
-	{0x040d,"Hebrew"},
-	{0x040e,"Hungarian"},
-	{0x040f,"Icelandic"},
-	{0x0410,"Italian (Italy)"},
-	{0x0810,"Italian (Switzerland)"},
-	{0x0411,"Japanese"},
-	{0x0412,"Korean (Wansung)"},
-	{0x0812,"Korean (Johab)"},
-	{0x0413,"Dutch (Netherlands)"},
-	{0x0813,"Dutch (Belgium)"},
-	{0x0414,"Norwegian (Bokmal)"},
-	{0x0814,"Norwegian (Nynorsk)"},
-	{0x0415,"Polish"},
-	{0x0416,"Portuguese (Brazil)"},
-	{0x0816,"Portuguese (Portugal)"},
-	{0x0417,"Rhaeto Romanic"},
-	{0x0418,"Romanian"},
-	{0x0818,"Moldavian"},
-	{0x0419,"Russian (Russia)"},
-	{0x0819,"Russian (Moldavia)"},
-	{0x041a,"Croatian"},
-	{0x081a,"Serbian (latin)"},
-	{0x0c1a,"Serbian (cyrillic)"},
-	{0x041b,"Slovak"},
-	{0x041c,"Albanian"},
-	{0x041d,"Swedish (Sweden)"},
-	{0x081d,"Swedish (Finland)"},
-	{0x041e,"Thai"},
-	{0x041f,"Turkish"},
-	{0x0420,"Urdu"},
-	{0x0421,"Indonesian"},
-	{0x0422,"Ukrainian"},
-	{0x0423,"Belarusian"},
-	{0x0424,"Slovene"},
-	{0x0425,"Estonian"},
-	{0x0426,"Latvian"},
-	{0x0427,"Lithuanian (modern)"},
-	{0x0827,"Lithuanian (classic)"},
-	{0x0428,"Maori"},
-	{0x0429,"Farsi"},
-	{0x042a,"Vietnamese"},
-	{0x042b,"Armenian"},
-	{0x042c,"Azeri (latin)"},
-	{0x082c,"Azeri (cyrillic)"},
-	{0x042d,"Basque"},
-	{0x042e,"Sorbian"},
-	{0x042f,"Macedonian"},
-	{0x0430,"Sutu"},
-	{0x0431,"Tsonga"},
-	{0x0432,"Tswana"},
-	{0x0433,"Venda"},
-	{0x0434,"Xhosa"},
-	{0x0435,"Zulu"},
-	{0x0436,"Afrikaans"},
-	{0x0437,"Georgian"},
-	{0x0438,"Faeroese"},
-	{0x0439,"Hindi"},
-	{0x043a,"Maltese"},
-	{0x043b,"Saami"},
-	{0x043c,"Irish gaelic"},
-	{0x083c,"Scottish gaelic"},
-	{0x0c3c,"Manx Gaelic"},
-	{0x043e,"Malay (Malaysia)"},
-	{0x083e,"Malay (Brunei Darussalam)"},
-	{0x043f,"Kazak"},
-	{0x0441,"Swahili"},
-	{0x0443,"Uzbek (latin)"},
-	{0x0843,"Uzbek (cyrillic)"},
-	{0x0444,"Tatar"},
-	{0x0445,"Bengali"},
-	{0x0446,"Punjabi"},
-	{0x0447,"Gujarati"},
-	{0x0448,"Oriya"},
-	{0x0449,"Tamil"},
-	{0x044a,"Telugu"},
-	{0x044b,"Kannada"},
-	{0x044c,"Malayalam"},
-	{0x044d,"Assamese"},
-	{0x044e,"Marathi"},
-	{0x044f,"Sanskrit"},
-	{0x0457,"Konkani"},
-	{0x048f,"Esperanto"}, /* Non official */
-	{0x0490,"Walon"}, /* Non official */
-	{0x0491,"Cornish"},	/* Not official */
-	{0x0492,"Welsh"},	/* Not official */
-	{0x0493,"Breton"},	/* Not official */
-	{0x0000,"Unknown"}
-    }, languages_de[]={
-	{0x0401,"Arabic"},
-	{0x0402,"Bulgarisch"},
-	{0x0403,"Katalanisch"},
-	{0x0404,"Traditionales Chinesisch"},
-	{0x0405,"Tschecisch"},
-	{0x0406,"Dänisch"},
-	{0x0407,"Deutsch"},
-	{0x0408,"Griechisch"},
-	{0x0409,"Amerikanisches Englisch"},
-	{0x040A,"Kastilisches Spanisch"},
-	{0x040B,"Finnisch"},
-	{0x040C,"Franzvsisch"},
-	{0x040D,"Hebrdisch"},
-	{0x040E,"Ungarisch"},
-	{0x040F,"Isldndisch"},
-	{0x0410,"Italienisch"},
-	{0x0411,"Japanisch"},
-	{0x0412,"Koreanisch"},
-	{0x0413,"Niederldndisch"},
-	{0x0414,"Norwegisch-Bokmal"},
-	{0x0415,"Polnisch"},
-	{0x0416,"Brasilianisches Portugiesisch"},
-	{0x0417,"Rdtoromanisch"},
-	{0x0418,"Rumdnisch"},
-	{0x0419,"Russisch"},
-	{0x041A,"Kroatoserbisch (lateinisch)"},
-	{0x041B,"Slowenisch"},
-	{0x041C,"Albanisch"},
-	{0x041D,"Schwedisch"},
-	{0x041E,"Thai"},
-	{0x041F,"Türkisch"},
-	{0x0420,"Urdu"},
-	{0x0421,"Bahasa"},
-	{0x0804,"Vereinfachtes Chinesisch"},
-	{0x0807,"Schweizerdeutsch"},
-	{0x0809,"Britisches Englisch"},
-	{0x080A,"Mexikanisches Spanisch"},
-	{0x080C,"Belgisches Franzvsisch"},
-	{0x0810,"Schweizerisches Italienisch"},
-	{0x0813,"Belgisches Niederldndisch"},
-	{0x0814,"Norgwegisch-Nynorsk"},
-	{0x0816,"Portugiesisch"},
-	{0x081A,"Serbokratisch (kyrillisch)"},
-	{0x0C1C,"Kanadisches Franzvsisch"},
-	{0x100C,"Schweizerisches Franzvsisch"},
-	{0x0000,"Unbekannt"},
+	{NULL,0}
 };
 
 static char *GetLocaleSubkeyName( DWORD lctype );
 
 /***********************************************************************
- *           GetUserDefaultLCID       [KERNEL32.425] [OLE2NLS.1]
+ *           GetUserDefaultLCID       [KERNEL32.425]
  */
-LCID WINAPI GetUserDefaultLCID()
+LCID WINAPI GetUserDefaultLCID(void)
 {
 	return MAKELCID( GetUserDefaultLangID() , SORT_DEFAULT );
 }
 
 /***********************************************************************
- *         GetSystemDefaultLCID       [KERNEL32.400] [OLE2NLS.2]
+ *         GetSystemDefaultLCID       [KERNEL32.400]
  */
-LCID WINAPI GetSystemDefaultLCID()
+LCID WINAPI GetSystemDefaultLCID(void)
 {
 	return GetUserDefaultLCID();
 }
 
 /***********************************************************************
- *         GetUserDefaultLangID       [KERNEL32.426] [OLE2NLS.3]
+ *         GetUserDefaultLangID       [KERNEL32.426]
  */
-LANGID WINAPI GetUserDefaultLangID()
+LANGID WINAPI GetUserDefaultLangID(void)
 {
 	/* caching result, if defined from environment, which should (?) not change during a WINE session */
 	static	LANGID	userLCID = 0;
@@ -685,27 +207,70 @@ LANGID WINAPI GetUserDefaultLangID()
 }
 
 /***********************************************************************
- *         GetSystemDefaultLangID     [KERNEL32.401] [OLE2NLS.4]
+ *         GetSystemDefaultLangID     [KERNEL32.401]
  */
-LANGID WINAPI GetSystemDefaultLangID()
+LANGID WINAPI GetSystemDefaultLangID(void)
 {
 	return GetUserDefaultLangID();
 }
 
 /******************************************************************************
- * ConvertDefaultLocale32 [KERNEL32.147]
+ * ConvertDefaultLocale [KERNEL32.147]
  */
-LCID WINAPI ConvertDefaultLocale32 (LCID lcid)
+LCID WINAPI ConvertDefaultLocale (LCID lcid)
 {	switch (lcid)
 	{  case LOCALE_SYSTEM_DEFAULT:
 	     return GetSystemDefaultLCID();
 	   case LOCALE_USER_DEFAULT:
 	     return GetUserDefaultLCID();
-	   case 0:
+	   case LOCALE_NEUTRAL:
 	     return MAKELCID (LANG_NEUTRAL, SUBLANG_NEUTRAL);
 	}  
 	return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
 }
+
+/* Enhanced version of LoadStringW.
+ * It takes LanguageId to find and load language dependant resources.
+ * Resource is copied as is: "binary" strings are not truncated.
+ * Return: length of resource + 1 to distinguish absent resources
+ * from the resources with zero length.
+ */
+static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWSTR buffer, INT buflen)
+{
+    HRSRC hrsrc;
+    HGLOBAL hmem;
+    WCHAR *p;
+    int string_num;
+    int i;
+
+    hrsrc = FindResourceExW(hModule, RT_STRINGW, (LPCWSTR)((res_id >> 4) + 1), lang_id);
+
+    if(!hrsrc) return 0;
+    hmem = LoadResource(hModule, hrsrc);
+    if(!hmem) return 0;
+    
+    p = LockResource(hmem);
+    string_num = res_id & 0x000f;
+    for(i = 0; i < string_num; i++)
+	p += *p + 1;
+    
+    TRACE("strlen = %d\n", (int)*p );
+    
+    if (buffer == NULL) return *p;
+    i = min(buflen - 1, *p);
+    if (i > 0) {
+	memcpy(buffer, p + 1, i * sizeof (WCHAR));
+	buffer[i] = (WCHAR) 0;
+    } else {
+	if (buflen > 1)
+	    buffer[0] = (WCHAR) 0;
+    }
+
+    FreeResource(hmem);
+    TRACE("\"%s\" loaded!\n", debugstr_w(buffer));
+    return (i + 1);
+}
+
 /******************************************************************************
  * GetLocaleInfoA [KERNEL32.342]
  *
@@ -718,9 +283,8 @@ LCID WINAPI ConvertDefaultLocale32 (LCID lcid)
  */
 INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 {
-  LPCSTR  retString;
-	int	found,i;
-	int	lang=0;
+    LPCSTR  retString = NULL;
+    int	found = 0, i;
     char    *pacKey;
     char    acBuffer[128];
     DWORD   dwBufferSize=128;
@@ -732,7 +296,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 		return 0;
 	}
 
-	if (lcid ==0 || lcid == LANG_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) )	/* 0x00, 0x400 */
+	if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) )
 	{
             lcid = GetSystemDefaultLCID();
 	} 
@@ -742,28 +306,8 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	}
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
 
-	/* As an option, we could obtain the value from win.ini.
-	   This would not match the Wine compile-time option.
-	   Also, not all identifiers are available from win.ini */
-	retString=0;
-	/* If we are through all of this, retLen should not be zero anymore.
-	   If it is, the value is not supported */
-	i=0;
-	while (locale_name2id[i].name!=NULL) {
-		if (LCType == locale_name2id[i].id) {
-			retString = locale_name2id[i].name;
-			break;
-		}
-		i++;
-	}
-	if (!retString) {
-      FIXME("Unkown LC type %lX\n",LCType);
-		return 0;
-	}
-
-    found=0;
-
     /* First, check if it's in the registry. */
+    /* All user customized values are stored in the registry by SetLocaleInfo */
 
     if ( (pacKey = GetLocaleSubkeyName(LCType)) )
     {
@@ -786,46 +330,55 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
     }
 
     /* If not in the registry, get it from the NLS entries. */
+    if(!found) {
+	WCHAR wcBuffer[128];
+	int res_size;
 
-    lang=lcid;
-    for (i=0;(i<3 && !found);i++) {
-      int j;
-
-      for (j=0;j<sizeof(langlocales)/sizeof(langlocales[0]);j++) {
-	if (langlocales[j].lang == lang) {
-	  int k;
-
-	  for (k=0;k<sizeof(langlocales[j].locvars)/sizeof(langlocales[j].locvars[0]) && (langlocales[j].locvars[k].type);k++) {
-	    if (langlocales[j].locvars[k].type == LCType) {
-	      found = 1;
-	      retString = langlocales[j].locvars[k].val;
-	  break;
-	    }
-	  }
-          if (found)
-	    break;
+	/* check if language is registered in the kernel32 resources */
+	if((res_size = NLS_LoadStringExW(GetModuleHandleA("KERNEL32"), LOWORD(lcid),
+		LCType, wcBuffer, sizeof(wcBuffer)/sizeof(wcBuffer[0])))) {
+	    WideCharToMultiByte(CP_ACP, 0, wcBuffer, res_size, acBuffer, dwBufferSize, NULL, NULL);
+	    retString = acBuffer;
+	    found = 1;
 	}
-      }
-	  /* language not found, try without a sublanguage*/
-	  if (i==1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
-	  /* mask the LC Value */
-	  if (i==2) LCType &= 0xfff;
     }
 
+    /* if not found report a most descriptive error */
     if(!found) {
-      ERR("'%s' not supported for your language (%04X).\n",
-			retString,(WORD)lcid);
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;			
+	retString=0;
+	/* If we are through all of this, retLen should not be zero anymore.
+	   If it is, the value is not supported */
+	i=0;
+	while (locale_name2id[i].name!=NULL) {
+	    if (LCType == locale_name2id[i].id) {
+		retString = locale_name2id[i].name;
+		break;
+	    }
+	    i++;
 	}
+	if(!retString)
+	    FIXME("Unkown LC type %lX\n", LCType);
+	else
+	    ERR("'%s' not supported for your language (%04X)\n",
+			retString, LOWORD(lcid));
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;			
+    }
+
     /* a FONTSIGNATURE is not a string, just 6 DWORDs  */
     if (LCType == LOCALE_FONTSIGNATURE) {
-        if (len)
-            memcpy(buf, retString, (len<=sizeof(FONTSIGNATURE))?len:sizeof(FONTSIGNATURE));
+        if (len) {
+	    len = (len < sizeof(FONTSIGNATURE)) ? len : sizeof(FONTSIGNATURE);
+            memcpy(buf, retString, len);
+	    return len;
+	}
         return sizeof(FONTSIGNATURE);
     }
     /* if len=0 return only the length, don't touch the buffer*/
-    if (len) lstrcpynA(buf,retString,len);
+    if (len) {
+	lstrcpynA(buf,retString,len);
+	return strlen(buf) + 1;
+    }
     return strlen(retString)+1;
 }
 
@@ -1020,8 +573,22 @@ BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
  */
 BOOL WINAPI IsValidLocale(LCID lcid,DWORD flags)
 {
-	/* we support ANY language. Well, at least say that...*/
+    /* check if language is registered in the kernel32 resources */
+    if(!FindResourceExW(GetModuleHandleA("KERNEL32"), RT_STRINGW, (LPCWSTR)LOCALE_ILANGUAGE, LOWORD(lcid)))
+	return FALSE;
+    else
 	return TRUE;
+}
+
+static BOOL CALLBACK EnumResourceLanguagesProcW(HMODULE hModule, LPCWSTR type,
+		LPCWSTR name, WORD LangID, LONG lParam)
+{
+    CHAR bufA[20];
+    WCHAR bufW[20];
+    LOCALE_ENUMPROCW lpfnLocaleEnum = (LOCALE_ENUMPROCW)lParam;
+    sprintf(bufA, "%08X", (UINT)LangID);
+    MultiByteToWideChar(CP_ACP, 0, bufA, -1, bufW, sizeof(bufW)/sizeof(bufW[0]));
+    return lpfnLocaleEnum(bufW);
 }
 
 /******************************************************************************
@@ -1030,41 +597,22 @@ BOOL WINAPI IsValidLocale(LCID lcid,DWORD flags)
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum,
                                     DWORD flags )
 {
-	int	i;
-	BOOL	ret;
-	WCHAR	buffer[200];
-	HKEY	xhkey;
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
 
-	TRACE_(win32)("(%p,%08lx)\n",lpfnLocaleEnum,flags );
-	/* see if we can reuse the Win95 registry entries.... */
-	if (ERROR_SUCCESS==RegOpenKeyA(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
-		i=0;
-		while (1) {
-			if (ERROR_SUCCESS!=RegEnumKeyW(xhkey,i,buffer,sizeof(buffer)))
-				break;
-            		if (!lpfnLocaleEnum(buffer))
-				break;
-			i++;
-		}
-		RegCloseKey(xhkey);
-		return TRUE;
-	}
+    EnumResourceLanguagesW(GetModuleHandleA("KERNEL32"), RT_STRINGW,
+	    (LPCWSTR)LOCALE_ILANGUAGE, EnumResourceLanguagesProcW,
+	    (LONG)lpfnLocaleEnum);
 
-	i=0;
-	while (languages[i].langid!=0)
-        {
-            LPWSTR cp;
-	    char   xbuffer[10];
-  	
-	    sprintf(xbuffer,"%08lx",(DWORD)languages[i].langid);
+    return TRUE;
+}
 
-	    cp = HEAP_strdupAtoW( GetProcessHeap(), 0, xbuffer );
-            ret = lpfnLocaleEnum(cp);
-            HeapFree( GetProcessHeap(), 0, cp );
-            if (!ret) break;
-            i++;
-	}
-	return TRUE;
+static BOOL CALLBACK EnumResourceLanguagesProcA(HMODULE hModule, LPCSTR type,
+		LPCSTR name, WORD LangID, LONG lParam)
+{
+    CHAR bufA[20];
+    LOCALE_ENUMPROCA lpfnLocaleEnum = (LOCALE_ENUMPROCA)lParam;
+    sprintf(bufA, "%08X", (UINT)LangID);
+    return lpfnLocaleEnum(bufA);
 }
 
 /******************************************************************************
@@ -1073,38 +621,13 @@ BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum,
 BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
                                    DWORD flags)
 {
-	int	i;
-	CHAR	buffer[200];
-	HKEY	xhkey;
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
 
-	TRACE_(win32)("(%p,%08lx)\n",
-		lpfnLocaleEnum,flags
-	);
+    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+	    (LPCSTR)LOCALE_ILANGUAGE, EnumResourceLanguagesProcA,
+	    (LONG)lpfnLocaleEnum);
 
-	if ( ERROR_SUCCESS==RegOpenKeyA(HKEY_LOCAL_MACHINE,
-                    "System\\CurrentControlSet\\Control\\Nls\\Locale\\",
-                    &xhkey)) {
-            i=0;
-            while (1) {
-                DWORD size=sizeof(buffer);
-                if (ERROR_SUCCESS!=RegEnumValueA(xhkey,i,buffer,&size,NULL,
-                            NULL, NULL,NULL))
-                    break;
-                if (size && !lpfnLocaleEnum(buffer))
-                    break;
-                i++;
-            }
-            RegCloseKey(xhkey);
-            return TRUE;
-	}
-	i=0;
-	while (languages[i].langid!=0) {
-		sprintf(buffer,"%08lx",(DWORD)languages[i].langid);
-		if (!lpfnLocaleEnum(buffer))
-			break;
-		i++;
-	}
-	return TRUE;
+    return TRUE;
 }
 
 static const unsigned char CT_CType2_LUT[] = {
@@ -1744,48 +1267,15 @@ BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
 	return TRUE;
 }
 
-/*****************************************************************
- * WINE_GetLanguageName   [internal] 
- */
-static LPCSTR WINE_GetLanguageName( UINT langid )
-{
-    int i;
-    for ( i = 0; languages[i].langid != 0; i++ )
-        if ( langid == languages[i].langid )
-            break;
-
-    return languages[i].langname;
-}
-
 /***********************************************************************
  *           VerLanguageNameA              [KERNEL32.709][VERSION.9]
  */
 DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 {
-    char    buffer[80];
-    LPCSTR  name;
-    DWORD   result;
+    if(!szLang)
+	return 0;
 
-    /*
-     * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-     * from the registry.
-     */
-
-    sprintf( buffer,
-             "\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
-             wLang );
-
-    result = RegQueryValueA( HKEY_LOCAL_MACHINE, buffer, szLang, (LPDWORD)&nSize );
-    if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA )
-        return nSize;
-
-    /*
-     * If that fails, use the internal table
-     */
-
-    name = WINE_GetLanguageName( wLang );
-    lstrcpynA( szLang, name, nSize );
-    return lstrlenA( name );
+    return GetLocaleInfoA(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
 }
 
 /***********************************************************************
@@ -1793,34 +1283,10 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
  */
 DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 {
-    char    buffer[80];
-    LPWSTR  keyname;
-    LPCSTR  name;
-    DWORD   result;
+    if(!szLang)
+	return 0;
 
-    /*
-     * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-     * from the registry.
-     */
-
-    sprintf( buffer,
-             "\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
-             wLang );
-
-    keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
-    result = RegQueryValueW( HKEY_LOCAL_MACHINE, keyname, szLang, (LPDWORD)&nSize );
-    HeapFree( GetProcessHeap(), 0, keyname );
-
-    if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA )
-        return nSize;
-
-    /*
-     * If that fails, use the internal table
-     */
-
-    name = WINE_GetLanguageName( wLang );
-    lstrcpynAtoW( szLang, name, nSize );
-    return lstrlenA( name );
+    return GetLocaleInfoW(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
 }
 
  
@@ -2294,7 +1760,7 @@ INT WINAPI LCMapStringA(
 {
   int i;
 
-  TRACE_(string)("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+  TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
 	lcid,mapflags,srcstr,srclen,dststr,dstlen);
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
@@ -2319,7 +1785,7 @@ INT WINAPI LCMapStringA(
    */
   if (mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS)
   {
-    FIXME_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d): "
+    FIXME("(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
 	  lcid,
 	  mapflags,
@@ -2444,7 +1910,7 @@ INT WINAPI LCMapStringA(
 #if 0
     /*FIXME the Pointercheck should not be nessesary */
     if (IsBadWritePtr (dststr,room))
-    { ERR_(string)("bad destination buffer (dststr) : %p,%d\n",dststr,dstlen);
+    { ERR("bad destination buffer (dststr) : %p,%d\n",dststr,dstlen);
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
       return 0;
     }
@@ -2533,7 +1999,7 @@ INT WINAPI LCMapStringW(
 {
   int i;
  
-  TRACE_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+  TRACE("(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
                  lcid, mapflags, srcstr, srclen, dststr, dstlen);
   
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
@@ -2637,8 +2103,8 @@ INT WINAPI LCMapStringW(
           return 0;
       }
 
-      TRACE_(string)("lc_collate_default = %s\n", lc_collate_default);
-      TRACE_(string)("lc_collate_env = %s\n", lc_collate_env);
+      TRACE("lc_collate_default = %s\n", lc_collate_default);
+      TRACE("lc_collate_env = %s\n", lc_collate_env);
 
       /* Convert the libc Unicode string to a native multibyte character
        * string. */
@@ -2674,7 +2140,7 @@ INT WINAPI LCMapStringW(
       }
       src_native_len = returned_len;
 
-      TRACE_(string)("src_native = %s  src_native_len = %d\n",
+      TRACE("src_native = %s  src_native_len = %d\n",
              src_native, src_native_len);
 
       /* dst_native seems to contain at most 4 bytes for each byte in
@@ -2721,7 +2187,7 @@ INT WINAPI LCMapStringW(
       }
       dst_native_len = returned_len;
       
-      TRACE_(string)("dst_native = %s  dst_native_len = %d\n",
+      TRACE("dst_native = %s  dst_native_len = %d\n",
              dst_native, dst_native_len);
 
       dststr_libc_len = dst_native_len;
@@ -2777,7 +2243,7 @@ INT WINAPI LCMapStringW(
           {
               dststr[str_idx] = dststr_libc[str_idx];
           }
-          TRACE_(string)("1st 4 int sized chunks of dststr = %x %x %x %x\n",
+          TRACE("1st 4 int sized chunks of dststr = %x %x %x %x\n",
                          *(((int *)dststr) + 0),
                          *(((int *)dststr) + 1),
                          *(((int *)dststr) + 2),
@@ -2787,7 +2253,7 @@ INT WINAPI LCMapStringW(
       {
           dstlen = returned_len;
       }
-      TRACE_(string)("dstlen (return) = %d\n", dstlen);
+      TRACE("dstlen (return) = %d\n", dstlen);
       if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
       if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
       if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
@@ -3035,7 +2501,7 @@ static INT OLE_GetFormatA(LCID locale,
    }
    
    for (inpos = 0;; inpos++) {
-      /* TRACE(ole, "STATE inpos=%2d outpos=%2d count=%d inquote=%d type=%c buf,date = %c,%c\n", inpos, outpos, count, inquote, type, buf[inpos], date[outpos]); */
+      /* TRACE("STATE inpos=%2d outpos=%2d count=%d inquote=%d type=%c buf,date = %c,%c\n", inpos, outpos, count, inquote, type, buf[inpos], date[outpos]); */
       if (inquote) {
 	 if (format[inpos] == '\'') {
 	    if (format[inpos+1] == '\'') {

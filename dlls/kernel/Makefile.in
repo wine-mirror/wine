@@ -9,6 +9,9 @@ ALTNAMES  = comm kernel system toolhelp wprocs
 C_SRCS = \
 	kernel_main.c
 
+RC_SRCS = \
+	locale_rc.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

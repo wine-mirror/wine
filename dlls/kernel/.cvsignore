@@ -3,6 +3,7 @@ comm.spec.c
 kernel.spec.c
 kernel32.spec.c
 libkernel32.so.1.0
+locale_rc.s
 system.spec.c
 toolhelp.spec.c
 wprocs.spec.c

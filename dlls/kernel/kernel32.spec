@@ -1,6 +1,7 @@
 name	kernel32
 type	win32
 init	MAIN_KernelInit
+rsrc	locale_rc
 
 import  ntdll.dll
 
@@ -162,7 +163,7 @@ import  ntdll.dll
 144 stdcall CompareStringW(long long wstr long wstr long) CompareStringW
 145 stub ConnectNamedPipe
 146 stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
-147 stdcall ConvertDefaultLocale (long) ConvertDefaultLocale32
+147 stdcall ConvertDefaultLocale (long) ConvertDefaultLocale
 148 stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
 149 stdcall CopyFileA(str str long) CopyFileA
 150 stdcall CopyFileW(wstr wstr long) CopyFileW
