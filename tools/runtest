@@ -72,10 +72,14 @@ while [ "$#" != 0 ]; do
     ;;
     -T)
 	shift; topobjdir="$1"
-	if [ -d "$topobjdir" ]; then :; else usage; fi
+	if [ ! -d "$topobjdir" ]; then usage; fi
+    ;;
+    --)
+	break
     ;;
     *)
 	infile="$1"
+    ;;
     esac
     shift
 done	    
@@ -90,9 +94,8 @@ fi
 
 # check/detect topobjdir
 if [ -n "$topobjdir" ]; then
-    if [ -f "$topobjdir/server/wineserver" ]
-    then :
-    else
+    if [ ! -f "$topobjdir/server/wineserver" ]
+    then
 	echo "Wrong -T argument, $topobjdir/server/wineserver does not exist" 2>&1
 	usage
     fi
