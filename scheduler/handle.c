@@ -19,6 +19,11 @@ DEFAULT_DEBUG_CHANNEL(win32)
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
     struct close_handle_request *req = get_req_buffer();
+    /* stdio handles need special treatment */
+    if ((handle == STD_INPUT_HANDLE) ||
+        (handle == STD_OUTPUT_HANDLE) ||
+        (handle == STD_ERROR_HANDLE))
+        handle = GetStdHandle( handle );
     req->handle = handle;
     return !server_call( REQ_CLOSE_HANDLE );
 }
