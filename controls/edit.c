@@ -199,7 +199,7 @@ static void	EDIT_ConfinePoint(EDITSTATE *es, LPINT x, LPINT y);
 static void	EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc);
 static void	EDIT_InvalidateText(EDITSTATE *es, INT start, INT end);
 static void	EDIT_LockBuffer(EDITSTATE *es);
-static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit);
+static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size);
 static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
 static void	EDIT_MoveBackward(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend);
@@ -1716,16 +1716,10 @@ static void EDIT_InvalidateText(EDITSTATE *es, INT start, INT end)
  *	EDIT_MakeFit
  *
  * Try to fit size + 1 characters in the buffer.
- * Constrain to limits if honor_limit is TRUE.
  */
-static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit)
+static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size)
 {
 	HLOCAL hNew32W;
-
-	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
-		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
-		return FALSE;
-	}
 
 	if (size <= es->buffer_size)
 		return TRUE;
@@ -2896,6 +2890,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	UINT s;
 	UINT e;
 	UINT i;
+	UINT size;
 	LPWSTR p;
 	HRGN hrgn = 0;
 
@@ -2910,7 +2905,15 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 
 	ORDER_UINT(s, e);
 
-	if (!EDIT_MakeFit(es, tl - (e - s) + strl, honor_limit))
+	/* Issue the EN_MAXTEXT notification and continue with replacing text
+	 * such that buffer limit is honored. */
+	size = tl - (e - s) + strl;
+	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
+		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
+		strl = es->buffer_limit - (tl - (e-s));
+	}
+
+	if (!EDIT_MakeFit(es, tl - (e - s) + strl))
 		return;
 
 	if (e != s) {
