@@ -215,7 +215,8 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
     if(tfActiveTheme)
         MSSTYLES_CloseThemeFile(tfActiveTheme);
     tfActiveTheme = tf;
-    tfActiveTheme->dwRefCount++;
+    if (tfActiveTheme)
+	tfActiveTheme->dwRefCount++;
     return S_OK;
 }
 
