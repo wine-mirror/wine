@@ -21,6 +21,9 @@
  * - proper handling of 16-bit stack and signal stack
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <setjmp.h>
 #include <stdarg.h>
 

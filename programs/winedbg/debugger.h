@@ -27,7 +27,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntstatus.h"
-#include "wine/exception.h"
 
 #ifdef __i386__
 #define STEP_FLAG 0x00000100 /* single step flag */

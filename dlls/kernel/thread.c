@@ -41,6 +41,7 @@
 #include "module.h"
 #include "thread.h"
 #include "wine/winbase16.h"
+#include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/pthread.h"
 #include "wine/server.h"

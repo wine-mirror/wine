@@ -88,7 +88,7 @@ void setDriveValue(char letter, const char *valueName, const char *newValue) {
 
 /* copies a drive configuration branch */
 void copyDrive(char srcLetter, char destLetter) {
-  char *driveSection = alloca(strlen("Drive X")+1);
+  char driveSection[sizeof("Drive X")];
   char *path, *label, *type, *serial, *fs;
   
   WINE_TRACE("srcLetter=%c, destLetter=%c\n", srcLetter, destLetter);
@@ -115,7 +115,7 @@ void copyDrive(char srcLetter, char destLetter) {
 }
 
 void removeDrive(char letter) {
-  char *driveSection = alloca(strlen("Drive X")+1);
+  char driveSection[sizeof("Drive X")];
   sprintf(driveSection, "Drive %c", letter);
   addTransaction(driveSection, NULL, ACTION_REMOVE, NULL);
 }

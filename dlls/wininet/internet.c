@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #define MAXHOSTNAME 100 /* from http.c */
 

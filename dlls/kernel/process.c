@@ -37,6 +37,7 @@
 #include "module.h"
 #include "options.h"
 #include "kernel_private.h"
+#include "wine/exception.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

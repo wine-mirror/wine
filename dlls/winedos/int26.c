@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

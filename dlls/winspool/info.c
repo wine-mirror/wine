@@ -1073,12 +1073,11 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
 /*****************************************************************************
  *          GetPrintProcessorDirectoryA  [WINSPOOL.@]
  */
-BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR environ,
+BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
                                         DWORD level,  LPBYTE Info,
                                         DWORD cbBuf, LPDWORD needed)
 {
-    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", server, environ, level, Info,
-          cbBuf);
+    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", server, env, level, Info, cbBuf);
     return 0;
 }
 

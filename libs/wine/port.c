@@ -169,7 +169,9 @@ void wine_set_pe_load_area( void *base, size_t size )
  */
 void wine_free_pe_load_area(void)
 {
+#ifdef HAVE_MMAP
     if (pe_area) munmap( pe_area, pe_area_size );
+#endif
     pe_area = NULL;
 }
 

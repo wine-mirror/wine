@@ -26,7 +26,6 @@
 #include <winbase.h>
 #include <winreg.h>
 #include <winternl.h>
-#include <wine/exception.h>
 #include <wine/server_protocol.h>
 
 /* client communication functions */

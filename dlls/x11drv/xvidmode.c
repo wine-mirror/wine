@@ -28,8 +28,9 @@
 #define XMD_H
 #include "basetsd.h"
 #include <X11/extensions/xf86vmode.h>
-#include "x11drv.h"
+#endif /* HAVE_LIBXXF86VM */
 
+#include "x11drv.h"
 #include "x11ddraw.h"
 #include "xvidmode.h"
 
@@ -39,6 +40,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xvidmode);
+
+#ifdef HAVE_LIBXXF86VM
 
 extern int usexvidmode;
 

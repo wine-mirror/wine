@@ -19,6 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -31,6 +34,7 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "excpt.h"
+#include "wine/exception.h"
 #include "wine/library.h"
 #include "winnls.h"
 

@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -55,6 +56,7 @@
 #include "file.h"
 #include "winternl.h"
 #include "wine/server.h"
+#include "wine/exception.h"
 #include "excpt.h"
 
 #include "smb.h"
