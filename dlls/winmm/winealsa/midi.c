@@ -93,11 +93,22 @@ static	int 		MIDM_NumDevs = 0;
 
 static	snd_seq_t*      midiSeq = NULL;
 static	int		numOpenMidiSeq = 0;
-static	UINT		midiInTimerID = 0;
 static	int		numStartedMidiIn = 0;
 
 static int port_in;
 static int port_out;
+
+static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffer queues */
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &crit_sect,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": crit_sect") }
+};
+static CRITICAL_SECTION crit_sect = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static int end_thread;
+static HANDLE hThread;
 
 /*======================================================================*
  *                  Low level MIDI implementation			*
@@ -270,46 +281,50 @@ static int midiCloseSeq(void)
     return 0;
 }
 
-static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
+static DWORD WINAPI midRecThread(LPVOID arg)
 {
     int npfd;
     struct pollfd *pfd;
 
-    TRACE("(%p, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
+    TRACE("Thread startup\n");
 
-    npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
-    pfd = (struct pollfd *)HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
-    snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
-    
-    /* Check if a event is present */
-    if (poll(pfd, npfd, 0) <= 0) {
-	HeapFree(GetProcessHeap(), 0, pfd);
-	return;
-    }  
+    while(!end_thread) {
+	TRACE("Thread loop\n");
+	npfd = snd_seq_poll_descriptors_count(midiSeq, POLLIN);
+	pfd = (struct pollfd *)HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
+	snd_seq_poll_descriptors(midiSeq, pfd, npfd, POLLIN);
 
-    /* Note: This definitely does not work.  
-     * while(snd_seq_event_input_pending(midiSeq, 0) > 0) {
-	snd_seq_event_t* ev;
-	snd_seq_event_input(midiSeq, &ev);
-	....................
-	snd_seq_free_event(ev);
-    }*/
+	/* Check if a event is present */
+	if (poll(pfd, npfd, 250) < 0) {
+	    HeapFree(GetProcessHeap(), 0, pfd);
+	    continue;
+	}
 
-    do {
-	WORD wDevID;
-	snd_seq_event_t* ev;
-	snd_seq_event_input(midiSeq, &ev);
-	/* Find the target device */
-	for (wDevID = 0; wDevID < MIDM_NumDevs; wDevID++)
-	    if ( (ev->source.client == MidiInDev[wDevID].addr.client) && (ev->source.port == MidiInDev[wDevID].addr.port) )
-		break;
-	if (wDevID == MIDM_NumDevs)
-	    FIXME("Unexpected event received, type = %x from %d:%d\n", ev->type, ev->source.client, ev->source.port);
-	else {
-	    DWORD toSend = 0;
-	    TRACE("Event received, type = %x, device = %d\n", ev->type, wDevID);
-	    switch(ev->type)
-	    {
+	/* Note: This definitely does not work.  
+	 * while(snd_seq_event_input_pending(midiSeq, 0) > 0) {
+	       snd_seq_event_t* ev;
+	       snd_seq_event_input(midiSeq, &ev);
+	       ....................
+	       snd_seq_free_event(ev);
+	   }*/
+
+	do {
+	    WORD wDevID;
+	    snd_seq_event_t* ev;
+	    snd_seq_event_input(midiSeq, &ev);
+	    /* Find the target device */
+	    for (wDevID = 0; wDevID < MIDM_NumDevs; wDevID++)
+		if ( (ev->source.client == MidiInDev[wDevID].addr.client) && (ev->source.port == MidiInDev[wDevID].addr.port) )
+		    break;
+	    if ((wDevID == MIDM_NumDevs) || (MidiInDev[wDevID].state != 1))
+		FIXME("Unexpected event received, type = %x from %d:%d\n", ev->type, ev->source.client, ev->source.port);
+	    else {
+		DWORD dwTime, toSend = 0;
+		/* FIXME: Should use ev->time instead for better accuracy */
+		dwTime = GetTickCount() - MidiInDev[wDevID].startTime;
+		TRACE("Event received, type = %x, device = %d\n", ev->type, wDevID);
+		switch(ev->type)
+		{
 		case SND_SEQ_EVENT_NOTEOFF:
 		    toSend = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_OFF | ev->data.control.channel;
 		    break;
@@ -335,24 +350,24 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
 		    {
 			int len = ev->data.ext.len;
 			LPBYTE ptr = (BYTE*) ev->data.ext.ptr;
-			LPMIDIHDR lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+			LPMIDIHDR lpMidiHdr;
 
 			/* FIXME: Should handle sysex greater that a single buffer */
-			if (lpMidiHdr) {
+			EnterCriticalSection(&crit_sect);
+			if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
 			    if (len <= lpMidiHdr->dwBufferLength) {
 				lpMidiHdr->dwBytesRecorded = len;
 				memcpy(lpMidiHdr->lpData, ptr, len);
-				lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
 				lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 				lpMidiHdr->dwFlags |= MHDR_DONE;
 				MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
-				if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR) {
+				if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR)
 				    WARN("Couldn't notify client\n");
-				}
 			    } else
 				FIXME("No enough space in the buffer to store sysex!\n");
 			} else
 			    FIXME("Sysex received but no buffer to store it!\n");
+			LeaveCriticalSection(&crit_sect);
 		    }
 		    break;
 		case SND_SEQ_EVENT_SENSING:
@@ -361,19 +376,20 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
 		default:
 		    FIXME("Unhandled event received, type = %x\n", ev->type);
 		    break;
-	    }
-	    if (toSend != 0) {
-		TRACE("Sending event %08lx (from %d %d)\n", toSend, ev->source.client, ev->source.port);
-		/* FIXME: Should use ev->time instead for better accuracy */
-		if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime-MidiInDev[wDevID].startTime) != MMSYSERR_NOERROR) {
-		    WARN("Couldn't notify client\n");
+		}
+		if (toSend != 0) {
+		    TRACE("Sending event %08lx (from %d %d)\n", toSend, ev->source.client, ev->source.port);
+		    if (MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime) != MMSYSERR_NOERROR) {
+			WARN("Couldn't notify client\n");
+		    }
 		}
 	    }
-	}
-	snd_seq_free_event(ev);
-    } while(snd_seq_event_input_pending(midiSeq, 0) > 0);
+	    snd_seq_free_event(ev);
+	} while(snd_seq_event_input_pending(midiSeq, 0) > 0);
 	
-    HeapFree(GetProcessHeap(), 0, pfd);
+	HeapFree(GetProcessHeap(), 0, pfd);
+    }
+    return 0;
 }
 
 /**************************************************************************
@@ -438,15 +454,16 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("input port connected %d %d %d\n",port_in,MidiInDev[wDevID].addr.client,MidiInDev[wDevID].addr.port);
 
-   if (numStartedMidiIn++ == 0) {
-	midiInTimerID = SetTimer(0, 0, 250, midTimeCallback);
-	if (!midiInTimerID) {
+    if (numStartedMidiIn++ == 0) {
+	end_thread = 0;
+	hThread = CreateThread(NULL, 0, midRecThread, NULL, 0, NULL);
+	if (!hThread) {
 	    numStartedMidiIn = 0;
-	    WARN("Couldn't start timer for midi-in\n");
+	    WARN("Couldn't create thread for midi-in\n");
 	    midiCloseSeq();
 	    return MMSYSERR_ERROR;
 	}
-	TRACE("Starting timer (%u) for midi-in\n", midiInTimerID);
+	TRACE("Created thread for midi-in\n");
     }
 
     MidiInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
@@ -492,11 +509,13 @@ static DWORD midClose(WORD wDevID)
 	return MMSYSERR_ERROR;
     }
     if (--numStartedMidiIn == 0) {
-	TRACE("Stopping timer for midi-in\n");
-	if (!KillTimer(0, midiInTimerID)) {
-	    WARN("Couldn't stop timer for midi-in\n");
+	TRACE("Stopping thread for midi-in\n");
+	end_thread = 1;
+	if (WaitForSingleObject(hThread, 5000) != WAIT_OBJECT_0) {
+	    WARN("Thread end not signaled, force termination\n");
+	    TerminateThread(hThread, 0);
 	}
-	midiInTimerID = 0;
+    	TRACE("Stopped thread for midi-in\n");
     }
 
     snd_seq_disconnect_from(midiSeq, port_in, MidiInDev[wDevID].addr.client, MidiInDev[wDevID].addr.port);
@@ -529,6 +548,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
 
+    EnterCriticalSection(&crit_sect);
     if (MidiInDev[wDevID].lpQueueHdr == 0) {
 	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr;
     } else {
@@ -539,6 +559,8 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	     ptr = (LPMIDIHDR)ptr->lpNext);
 	ptr->lpNext = (struct midihdr_tag*)lpMidiHdr;
     }
+    LeaveCriticalSection(&crit_sect);
+
     return MMSYSERR_NOERROR;
 }
 
@@ -595,6 +617,7 @@ static DWORD midReset(WORD wDevID)
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
+    EnterCriticalSection(&crit_sect);
     while (MidiInDev[wDevID].lpQueueHdr) {
 	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
 	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
@@ -605,6 +628,7 @@ static DWORD midReset(WORD wDevID)
 	}
 	MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)MidiInDev[wDevID].lpQueueHdr->lpNext;
     }
+    LeaveCriticalSection(&crit_sect);
 
     return MMSYSERR_NOERROR;
 }
@@ -1240,6 +1264,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg) {
 #if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
     case DRVM_INIT:
+    case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
