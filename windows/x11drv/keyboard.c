@@ -1495,6 +1495,12 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             *(char*)lpChar = 0;
             ret = 0;
         }
+	else if((lpKeyState[VK_SHIFT] & 0x80) /* Shift is pressed */
+		&& (keysym == XK_KP_Decimal))
+        {
+            *(char*)lpChar = 0;
+            ret = 0;
+        }
 
 	/* perform translation to unicode */
 	if(ret)
