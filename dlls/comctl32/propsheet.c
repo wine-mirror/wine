@@ -3077,7 +3077,7 @@ static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID)
 /******************************************************************************
  *            PROPSHEET_Paint
  */
-static LRESULT PROPSHEET_Paint(HWND hwnd)
+static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 {
     PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd, PropSheetInfoStr);
     PAINTSTRUCT ps;
@@ -3092,7 +3092,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
     WCHAR szBuffer[256];
     int nLength;
 
-    hdc = BeginPaint(hwnd, &ps);
+    hdc = hdcParam ? hdcParam : BeginPaint(hwnd, &ps);
     if (!hdc) return 1;
 
     hdcSrc = CreateCompatibleDC(0);
@@ -3266,7 +3266,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 
     DeleteDC(hdcSrc);
 
-    EndPaint(hwnd, &ps);
+    if (!hdcParam) EndPaint(hwnd, &ps);
 
     return 0;
 }
@@ -3396,7 +3396,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_PAINT:
-      PROPSHEET_Paint(hwnd);
+      PROPSHEET_Paint(hwnd, (HDC)wParam);
       return TRUE;
 
     case WM_DESTROY:

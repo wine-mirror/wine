@@ -879,13 +879,14 @@ static LRESULT SYSLINK_Draw (SYSLINK_INFO *infoPtr, HDC hdc)
  * SYSLINK_Paint
  * Handles the WM_PAINT message.
  */
-static LRESULT SYSLINK_Paint (SYSLINK_INFO *infoPtr)
+static LRESULT SYSLINK_Paint (SYSLINK_INFO *infoPtr, HDC hdcParam)
 {
     HDC hdc;
     PAINTSTRUCT ps;
-    hdc = BeginPaint (infoPtr->Self, &ps);
+
+    hdc = hdcParam ? hdcParam : BeginPaint (infoPtr->Self, &ps);
     SYSLINK_Draw (infoPtr, hdc);
-    EndPaint (infoPtr->Self, &ps);
+    if (!hdcParam) EndPaint (infoPtr->Self, &ps);
     return 0;
 }
 
@@ -1466,7 +1467,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     switch(message) {
     case WM_PAINT:
-        return SYSLINK_Paint (infoPtr);
+        return SYSLINK_Paint (infoPtr, (HDC)wParam);
 
     case WM_SETCURSOR:
     {
