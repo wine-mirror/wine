@@ -329,7 +329,7 @@ id	2
 362 stub DCHook
 364 stub LookupIconIDFromDirectoryEx
 368 pascal16 CopyIcon(word word) CopyIcon
-369 stub CopyCursor
+369 pascal16 CopyCursor(word word) CopyCursor
 370 pascal16 GetWindowPlacement(word ptr) GetWindowPlacement
 371 pascal16 SetWindowPlacement(word ptr) SetWindowPlacement
 372 stub GetInternalIconHeader
@@ -358,7 +358,7 @@ id	2
 403 pascal16 UnregisterClass(segptr word) UnregisterClass
 404 pascal16 GetClassInfo(word segptr ptr) GetClassInfo
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor
-407 pascal16 CreateIcon(word word word byte byte ptr ptr) CreateIcon
+407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
 	     CreateCursorIconIndirect
 409 stub InitThreadInput
@@ -401,7 +401,7 @@ id	2
 452 pascal16 CreateWindowEx(long segptr segptr long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
-455 stub GetIconId
+455 pascal16 GetIconID(word long) GetIconID
 456 pascal16 LoadIconHandler(word word) LoadIconHandler
 457 pascal16 DestroyIcon(word) DestroyIcon
 458 pascal16 DestroyCursor(word) DestroyCursor
@@ -410,7 +410,7 @@ id	2
 461 pascal16 SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
 462 pascal16 CalcChildScroll(word word) CalcChildScroll
 463 stub ScrollChildren
-464 stub DragObject
+464 pascal16 DragObject(word word word word word word) DragObject
 465 stub DragDetect
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect
 470 stub StringFunc

@@ -31,6 +31,8 @@ id	10
 210    pascal  MIDIOUTRESET(word) midiOutReset
 211    pascal  MIDIOUTGETVOLUME(word segptr) midiOutGetVolume
 212    pascal  MIDIOUTSETVOLUME(word long) midiOutSetVolume
+213    pascal  MIDIOUTCACHEPATCHES(word word segptr word) midiOutCachePatches
+214    pascal  MIDIOUTCACHEDRUMPATCHES(word word segptr word) midiOutCacheDrumPatches
 215    pascal  MIDIOUTGETID(word ptr) midiOutGetID
 216    pascal  MIDIOUTMESSAGE(word word long long) midiOutMessage
 301    pascal  MIDIINGETNUMDEVS() midiInGetNumDevs
@@ -86,7 +88,7 @@ id	10
 513    pascal  WAVEINGETID(word ptr) waveInGetID
 514    pascal  WAVEINMESSAGE(word word long long) waveInMessage
 601    pascal  timeGetSystemTime(ptr word) timeGetSystemTime
-602    pascal  timeSetEvent(word word ptr long word) timeSetEvent
+602    pascal  timeSetEvent(word word segptr long word) timeSetEvent
 603    pascal  timeKillEvent(word) timeKillEvent
 604    pascal  timeGetDevCaps(ptr word) timeGetDevCaps
 605    pascal  timeBeginPeriod(word) timeBeginPeriod

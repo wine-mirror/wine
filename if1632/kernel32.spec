@@ -149,13 +149,13 @@ base	1
 0145 stub FreeResource
 0146 stub FreeVirtualBuffer
 0147 stub GenerateConsoleCtrlEvent
-0148 stub GetACP
+0148    stdcall GetACP() GetACP
 0149 stub GetAtomNameA
 0150 stub GetAtomNameW
 0151 stub GetBinaryType
 0152 stub GetBinaryTypeA
 0153 stub GetBinaryTypeW
-0154 stub GetCPInfo
+0154    stdcall GetCPInfo(long ptr) GetCPInfo
 0155 stub GetCommConfig
 0156 stub GetCommMask
 0157 stub GetCommModemStatus
@@ -214,7 +214,7 @@ base	1
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
 0211 stub GetEnvironmentStringsA
 0212 stub GetEnvironmentStringsW
-0213 stub GetEnvironmentVariableA
+0213    stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariableA
 0214 stub GetEnvironmentVariableW
 0215 stub GetExitCodeProcess
 0216 stub GetExitCodeThread
@@ -223,12 +223,12 @@ base	1
 0219 stub GetFileInformationByHandle
 0220 stub GetFileSize
 0221 stub GetFileTime
-0222 stub GetFileType
+0222    stdcall GetFileType(long) GetFileType
 0223 stub GetFullPathNameA
 0224 stub GetFullPathNameW
 0225 stub GetHandleInformation
 0226 stub GetLargestConsoleWindowSize
-0227 stub GetLastError
+0227    stdcall GetLastError() GetLastError
 0228 stub GetLocalTime
 0229 stub GetLocaleInfoA
 0230 stub GetLocaleInfoW
@@ -236,7 +236,7 @@ base	1
 0232 stub GetLogicalDriveStringsW
 0233 stub GetLogicalDrives
 0234 stub GetMailslotInfo
-0235	return GetModuleFileNameA 12 0
+0235	stdcall GetModuleFileNameA(long ptr long) GetModuleFileNameA
 0236 stub GetModuleFileNameW
 0237	stdcall GetModuleHandleA(ptr)	GetModuleHandle
 0238 stub GetModuleHandleW
@@ -249,7 +249,7 @@ base	1
 0245 stub GetNumberOfConsoleFonts
 0246 stub GetNumberOfConsoleInputEvents
 0247 stub GetNumberOfConsoleMouseButtons
-0248 stub GetOEMCP
+0248    stdcall GetOEMCP() GetOEMCP
 0249 stub GetOverlappedResult
 0250 stub GetPriorityClass
 0251 stub GetPrivateProfileIntA
@@ -274,7 +274,7 @@ base	1
 0270 stub GetQueuedCompletionStatus
 0271 stub GetShortPathNameA
 0272 stub GetShortPathNameW
-0273	return GetStartupInfoA 4 0
+0273	stdcall GetStartupInfoA(ptr) GetStartupInfoA
 0274 stub GetStartupInfoW
 0275	stdcall GetStdHandle(long)	GetStdHandle
 0276 stub GetStringTypeA
@@ -300,10 +300,10 @@ base	1
 0296 stub GetThreadPriority
 0297 stub GetThreadSelectorEntry
 0298 stub GetThreadTimes
-0299 stub GetTickCount
+0299    stdcall GetTickCount() GetTickCount
 0300 stub GetTimeFormatA
 0301 stub GetTimeFormatW
-0302 stub GetTimeZoneInformation
+0302    stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
 0303 stub GetUserDefaultLCID
 0304 stub GetUserDefaultLangID
 0305 stub GetVDMCurrentDirectories
@@ -486,7 +486,7 @@ base	1
 0481 stub SetDefaultCommConfigA
 0482 stub SetDefaultCommConfigW
 0483 stub SetEndOfFile
-0484 stub SetEnvironmentVariableA
+0484    stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariableA
 0485 stub SetEnvironmentVariableW
 0486 stub SetErrorMode
 0487 stub SetEvent
@@ -494,12 +494,12 @@ base	1
 0489 stub SetFileApisToOEM
 0490 stub SetFileAttributesA
 0491 stub SetFileAttributesW
-0492 stub SetFilePointer
+0492    stdcall SetFilePointer(long long ptr long) SetFilePointer
 0493 stub SetFileTime
 0494 stub SetHandleCount
 0495 stub SetHandleInformation
 0496 stub SetLastConsoleEventActive
-0497 stub SetLastError
+0497    stdcall SetLastError(long) SetLastError
 0498 stub SetLocalTime
 0499 stub SetLocaleInfoA
 0500 stub SetLocaleInfoW
@@ -550,9 +550,9 @@ base	1
 0545 stub VerLanguageNameA
 0546 stub VerLanguageNameW
 0547 stub VerifyConsoleIoHandle
-0548 stub VirtualAlloc
+0548    stdcall VirtualAlloc(ptr long long long) VirtualAlloc
 0549 stub VirtualBufferExceptionHandler
-0550 stub VirtualFree
+0550    stdcall VirtualFree(ptr long long) VirtualFree
 0551 stub VirtualLock
 0552 stub VirtualProtect
 0553 stub VirtualProtectEx
@@ -580,7 +580,7 @@ base	1
 0575 stub WriteConsoleOutputCharacterW
 0576 stub WriteConsoleOutputW
 0577 stub WriteConsoleW
-0578 stub WriteFile
+0578    stdcall WriteFile(long ptr long ptr ptr) WriteFile
 0579 stub WriteFileEx
 0580 stub WritePrivateProfileSectionA
 0581 stub WritePrivateProfileSectionW

@@ -22,7 +22,7 @@ extern int DOS_SetSerialNumber(int drive, unsigned long serialnumber);
 extern char *DOS_GetVolumeLabel(int drive);
 extern int DOS_SetVolumeLabel(int drive, char *label);
 extern int DOS_GetFreeSpace(int drive, long *size, long *available);
-extern char *DOS_FindFile(char *buffer, int buflen, char *rootname, char **extensions, char *path);
+extern char *DOS_FindFile(char *buffer, int buflen, const char *rootname, char **extensions, char *path);
 extern char *WineIniFileName(void);
 extern char *WinIniFileName(void); 
 extern struct dosdirent *DOS_opendir(char *dosdirname); 
@@ -30,6 +30,7 @@ extern struct dosdirent *DOS_readdir(struct dosdirent *de);
 extern void DOS_closedir(struct dosdirent *de);
 extern char *DOS_GetRedirectedDir(int drive);
 extern void errno_to_doserr(void);
+extern int DOS_Error(int extended, int class, int locus);
 
 extern char WindowsPath[256];
 

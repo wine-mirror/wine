@@ -11,10 +11,12 @@
 #include "registers.h"
 
 
+#define STACK_reg(context) \
+   ((GET_SEL_FLAGS(SS_reg(context)) & LDT_FLAGS_32BIT) ? \
+                   ESP_reg(context) : SP_reg(context))
+
 #define STACK_PTR(context) \
-    (PTR_SEG_OFF_TO_LIN( SS_reg(context), \
-        ((GET_SEL_FLAGS(SS_reg(context)) & LDT_FLAGS_32BIT) ? \
-            ESP_reg(context) : SP_reg(context))))
+    (PTR_SEG_OFF_TO_LIN(SS_reg(context),STACK_reg(context)))
 
 /***********************************************************************
  *           INSTR_ReplaceSelector
@@ -250,8 +252,12 @@ static BOOL INSTR_EmulateLDS( struct sigcontext_struct *context,
     case 0x0f: switch(instr[1])
                {
                case 0xb2: SS_reg(context) = seg; break;  /* lss */
+#ifdef FS_reg
                case 0xb4: FS_reg(context) = seg; break;  /* lfs */
+#endif
+#ifdef GS_reg
                case 0xb5: GS_reg(context) = seg; break;  /* lgs */
+#endif
                }
                break;
     }
@@ -298,12 +304,16 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
         case 0x26:
             segprefix = ES_reg(context);
             break;
+#ifdef FS_reg
         case 0x64:
             segprefix = FS_reg(context);
             break;
+#endif
+#ifdef GS_reg
         case 0x65:
             segprefix = GS_reg(context);
             break;
+#endif
         case 0x66:
             long_op = !long_op;  /* opcode size prefix */
             break;
@@ -346,7 +356,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                     case 0x17: SS_reg(context) = seg; break;
                     case 0x1f: DS_reg(context) = seg; break;
                     }
-                    SP_reg(context) += sizeof(WORD);
+                    STACK_reg(context) += long_op ? 4 : 2;
                     EIP_reg(context) += prefixlen + 1;
                     return TRUE;
                 }
@@ -356,27 +366,43 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
         case 0x0f: /* extended instruction */
             switch(instr[1])
             {
+#ifdef FS_reg
             case 0xa1: /* pop fs */
-            case 0xa9: /* pop gs */
                 {
                     WORD seg = *(WORD *)STACK_PTR( context );
                     if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
                     {
-                        switch(instr[1])
-                        {
-                        case 0xa1: FS_reg(context) = seg; break;
-                        case 0xa9: GS_reg(context) = seg; break;
-                        }
-                        SP_reg(context) += sizeof(WORD);
+                        FS_reg(context) = seg;
+                        STACK_reg(context) += long_op ? 4 : 2;
                         EIP_reg(context) += prefixlen + 2;
                         return TRUE;
                     }
                 }
                 break;
+#endif  /* FS_reg */
+
+#ifdef GS_reg
+            case 0xa9: /* pop gs */
+                {
+                    WORD seg = *(WORD *)STACK_PTR( context );
+                    if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
+                    {
+                        GS_reg(context) = seg;
+                        STACK_reg(context) += long_op ? 4 : 2;
+                        EIP_reg(context) += prefixlen + 2;
+                        return TRUE;
+                    }
+                }
+                break;
+#endif  /* GS_reg */
 
             case 0xb2: /* lss addr,reg */
+#ifdef FS_reg
             case 0xb4: /* lfs addr,reg */
+#endif
+#ifdef GS_reg
             case 0xb5: /* lgs addr,reg */
+#endif
                 if (INSTR_EmulateLDS( context, instr, long_op,
                                       long_addr, segprefix, &len ))
                 {
@@ -458,7 +484,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
 	    }
             return TRUE;
 
-        case 0x8e: /* mov reg,segment_reg */
+        case 0x8e: /* mov XX,segment_reg */
             {
                 WORD seg = *(WORD *)INSTR_GetOperandAddr( context, instr + 1,
                                                   long_addr, segprefix, &len );
@@ -482,13 +508,17 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                     EIP_reg(context) += prefixlen + len + 1;
                     return TRUE;
                 case 4:
+#ifdef FS_reg
                     FS_reg(context) = seg;
                     EIP_reg(context) += prefixlen + len + 1;
                     return TRUE;
+#endif
                 case 5:
+#ifdef GS_reg
                     GS_reg(context) = seg;
                     EIP_reg(context) += prefixlen + len + 1;
                     return TRUE;
+#endif
                 case 6:  /* unused */
                 case 7:  /* unused */
                     break;
@@ -520,7 +550,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                 *(--stack) = FL_reg(context);
                 *(--stack) = CS_reg(context);
                 *(--stack) = IP_reg(context) + prefixlen + 2;
-                SP_reg(context) -= 3 * sizeof(WORD);
+                STACK_reg(context) -= 3 * sizeof(WORD);
                 /* Jump to the interrupt handler */
                 CS_reg(context)  = HIWORD(addr);
                 EIP_reg(context) = LOWORD(addr);
@@ -534,7 +564,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                 EIP_reg(context) = *stack++;
                 CS_reg(context)  = *stack++;
                 EFL_reg(context) = *stack;
-                SP_reg(context) += 3*sizeof(DWORD);  /* Pop the return address and flags */
+                STACK_reg(context) += 3*sizeof(DWORD);  /* Pop the return address and flags */
             }
             else
             {
@@ -542,7 +572,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                 EIP_reg(context) = *stack++;
                 CS_reg(context)  = *stack++;
                 FL_reg(context)  = *stack;
-                SP_reg(context) += 3*sizeof(WORD);  /* Pop the return address and flags */
+                STACK_reg(context) += 3*sizeof(WORD);  /* Pop the return address and flags */
             }
             return TRUE;
 

@@ -759,7 +759,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
     switch (logbrush->lbStyle)
     {
     case BS_PATTERN:
-	bmp = (BITMAPOBJ *)GDI_GetObjPtr(logbrush->lbHatch, BITMAP_MAGIC);
+	bmp = (BITMAPOBJ *)GDI_GetObjPtr((HANDLE)logbrush->lbHatch, BITMAP_MAGIC);
 	if (!bmp) return FALSE;
 	len = sizeof(METARECORD) + sizeof(BITMAPINFOHEADER) + 
 	      (bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes) + 6;
@@ -783,7 +783,7 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 	break;
 
     case BS_DIBPATTERN:
-	info = (BITMAPINFO *)GlobalLock(logbrush->lbHatch);
+	info = (BITMAPINFO *)GlobalLock((HANDLE)logbrush->lbHatch);
 	bmSize = info->bmiHeader.biSizeImage;
 	if (!bmSize)
 	    bmSize = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount 

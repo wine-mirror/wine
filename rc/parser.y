@@ -204,5 +204,6 @@ style:		NUMBER {$$=new_style();$$->or=$1;}
 int yyerror(char *s)
 {
 	puts(s);
+	return 0;
 }
 

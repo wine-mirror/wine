@@ -73,7 +73,7 @@ $cs     { yylval.reg = REG_CS;  return REG; }
 $ss     { yylval.reg = REG_SS;  return REG; }
 
 info|inf|in		      { return INFO; }
-segments|segm                 { return SEGMENTS; }
+segments|segment|segm|seg|se  { return SEGMENTS; }
 break|brea|bre|br|b           { return BREAK; }
 enable|enabl|enab|ena         { return ENABLE;}
 disable|disabl|disab|disa|dis { return DISABLE; }

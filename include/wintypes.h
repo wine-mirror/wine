@@ -1,17 +1,40 @@
 #ifndef __WINE_WINTYPES_H
 #define __WINE_WINTYPES_H
 
+#ifdef WINELIB
+# ifdef WINELIB16
+#  undef WINELIB32
+# else
+#  ifndef WINELIB32
+#   define WINELIB32
+#  endif
+# endif
+#endif
+
 typedef short	INT;
 typedef unsigned short UINT;
+#define UIFMT "%hu"
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef unsigned short BOOL;
 typedef unsigned char BYTE;
 typedef long LONG;
+#ifdef WINELIB32
+typedef LONG WPARAM;
+#else
 typedef UINT WPARAM;
+#endif
 typedef LONG LPARAM;
 typedef LONG LRESULT;
+#ifdef WINELIB32
+typedef void* HANDLE;
+typedef void* NPVOID;
+#define NPFMT "%p"
+#else
 typedef WORD HANDLE;
+typedef WORD NPVOID;
+#define NPFMT "%04X"
+#endif
 typedef DWORD HHOOK;
 typedef DWORD SEGPTR;
 typedef char *LPSTR;
@@ -23,17 +46,8 @@ typedef WORD *LPWORD;
 typedef DWORD *LPDWORD;
 typedef LONG *LPLONG;
 typedef void *LPVOID;
-#ifdef WINELIB
-typedef long (*FARPROC)();
-typedef LONG (*WNDPROC)(WORD,WORD,WORD,LONG);
-#else
-typedef SEGPTR FARPROC;
-typedef SEGPTR WNDPROC;
-#endif
-typedef FARPROC DLGPROC;
 typedef WORD CATCHBUF[9];
 typedef WORD *LPCATCHBUF;
-typedef FARPROC HOOKPROC;
 
 #define DECLARE_HANDLE(a) typedef HANDLE a;
 
@@ -60,6 +74,16 @@ DECLARE_HANDLE(HRSRC);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(LOCALHANDLE);
+
+#ifdef WINELIB
+typedef long (*FARPROC)();
+typedef LRESULT (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
+#else
+typedef SEGPTR FARPROC;
+typedef SEGPTR WNDPROC;
+#endif
+typedef FARPROC DLGPROC;
+typedef FARPROC HOOKPROC;
 
 #define TRUE 1
 #define FALSE 0

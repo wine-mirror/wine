@@ -1051,8 +1051,9 @@ UINT midiOutSetVolume(UINT uDeviceID, DWORD dwVolume)
 UINT midiOutCachePatches(HMIDIOUT hMidiOut,
     UINT uBank, WORD FAR* lpwPatchArray, UINT uFlags)
 {
-	dprintf_mmsys(stddeb, "midiOutCachePatches\n");
-	return 0;
+        /* not really necessary to support this */
+	fprintf(stdnimp, "midiOutCachePatches: not supported yet\n");
+	return MMSYSERR_NOTSUPPORTED;
 }
 
 /**************************************************************************
@@ -1061,8 +1062,8 @@ UINT midiOutCachePatches(HMIDIOUT hMidiOut,
 UINT midiOutCacheDrumPatches(HMIDIOUT hMidiOut,
     UINT uPatch, WORD FAR* lpwKeyArray, UINT uFlags)
 {
-	dprintf_mmsys(stddeb, "midiOutCacheDrumPatches\n");
-	return 0;
+	fprintf(stdnimp, "midiOutCacheDrumPatchesi: not supported yet\n");
+	return MMSYSERR_NOTSUPPORTED;
 }
 
 /**************************************************************************

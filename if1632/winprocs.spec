@@ -108,7 +108,7 @@ id	24
 172 register INT_Int48Handler(word) INT_DummyHandler
 173 register INT_Int49Handler(word) INT_DummyHandler
 174 register INT_Int4aHandler(word) INT_DummyHandler
-175 register INT_Int4bHandler(word) INT_DummyHandler
+175 register INT_Int4bHandler(word) INT_Int4bHandler
 176 register INT_Int4cHandler(word) INT_DummyHandler
 177 register INT_Int4dHandler(word) INT_DummyHandler
 178 register INT_Int4eHandler(word) INT_DummyHandler
@@ -289,3 +289,12 @@ id	24
 353 register INT_IntfdHandler(word) INT_DummyHandler
 354 register INT_IntfeHandler(word) INT_DummyHandler
 355 register INT_IntffHandler(word) INT_DummyHandler
+
+# VxDs. The first Vxd is at 400
+#
+#400+VXD_ID register <VxD handler>(word) <VxD handler>
+#
+414 register VXD_Comm(word) VXD_Comm
+#415 register VXD_Printer(word) VXD_Printer
+423 register VXD_Shell(word) VXD_Shell
+433 register VXD_PageFile(word) VXD_PageFile

@@ -358,7 +358,7 @@ BOOL IsBadStringPtr( SEGPTR ptr, WORD size )
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
     if (strlen(PTR_SEG_TO_LIN(ptr)) < size) size = strlen(PTR_SEG_TO_LIN(ptr));
-    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
     return FALSE;
 }
 
@@ -376,7 +376,7 @@ BOOL IsBadHugeReadPtr( SEGPTR ptr, DWORD size )
     if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
-    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
     return FALSE;
 }
 
@@ -394,7 +394,7 @@ BOOL IsBadHugeWritePtr( SEGPTR ptr, DWORD size )
     if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) || entry.read_only) return TRUE;
-    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
     return FALSE;
 }
 

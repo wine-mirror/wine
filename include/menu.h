@@ -17,6 +17,7 @@ extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
 extern HMENU CopySysMenu(); /* menu.c */
 
+extern LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam );
 
 typedef struct tagMENUITEM
 {

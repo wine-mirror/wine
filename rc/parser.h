@@ -77,6 +77,9 @@ gen_res* add_generic_control(gen_res*,gen_res*);
 gen_res* make_dialog(gen_res*,int,int,int,int,gen_res*);
 
 gen_res *hex_to_raw(char*,gen_res*);
+gen_res *int_to_raw(int,gen_res*);
+gen_res *make_font(gen_res*);
+gen_res *make_raw(gen_res*);
 gen_res *make_bitmap(gen_res*);
 gen_res *make_icon(gen_res*);
 gen_res *make_cursor(gen_res*);

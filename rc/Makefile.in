@@ -4,6 +4,8 @@ MODULE = rc
 
 C_SRCS = sysres.c
 
+LANGUAGES = En Es De No Fr Fi Da
+
 all: $(MODULE).o
 
 @MAKE_RULES@
@@ -17,7 +19,7 @@ lex.yy.c: parser.l
 winerc: lex.yy.o winerc.o y.tab.o
 	$(CC) $(ALLCFLAGS) lex.yy.o winerc.o y.tab.o -o winerc $(LEXLIB)
 
-sysres.rct: sysres.rc sysres_En.rc sysres_Es.rc sysres_De.rc sysres_No.rc
+sysres.rct: sysres.rc $(LANGUAGES:%=sysres_%.rc)
 	echo "#include \"windows.h\"" >sysres.rct
 	echo WINDOWS_H_ENDS_HERE >>sysres.rct
 	cat sysres.rc >>sysres.rct

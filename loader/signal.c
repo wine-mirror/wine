@@ -7,7 +7,7 @@
 #include <time.h>
 #include <setjmp.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__)
 #include <sys/syscall.h>
 #include <sys/param.h>
 #else
@@ -45,7 +45,7 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 #endif
 
 
-#ifdef linux
+#if defined(linux) || defined(__svr4__)
 static void win_fault(int signal, struct sigcontext_struct context_struct)
 {
     struct sigcontext_struct *context = &context_struct;

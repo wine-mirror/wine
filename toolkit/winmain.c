@@ -4,33 +4,27 @@
 #include "windows.h"
 #include "wine.h"
 
-_WinMain (int argc, char *argv [])
+extern int MAIN_Init(void);
+extern BOOL WIDGETS_Init(void);
+extern BOOL WIN_CreateDesktopWindow(void);
+extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
+extern void TASK_Reschedule(void);
+extern int USER_InitApp(HINSTANCE);
+
+int _WinMain (int argc, char *argv [])
 {
-    int ret_val;
-    char filename [4096], *module_name, *resource_file;
-    HANDLE hTaskMain, hInstance;
-    
-	/* The libwine resource DLL is temporarily disabled */
-#if 0
-    if ((module_name = strchr (argv [0], '/')) == NULL){
-	printf ("Error: Can't determine base name for resource loading\n");
-	return 0;
-    }
+  HINSTANCE hInstance;
 
-    resource_file = malloc (strlen (++module_name) + 5);
-    strcpy (resource_file, module_name);
-    strcat (resource_file, ".dll");
+  if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
+  hInstance = WinExec( *argv, SW_SHOWNORMAL );
+  TASK_Reschedule();
+  USER_InitApp( hInstance );
+  /* Perform global initialisations that need a task context */
+  if (!WIDGETS_Init()) return -1;
+  if (!WIN_CreateDesktopWindow()) return -1;
 
-    hInstance = LoadImage (resource_file, 0, 0);
-#endif
-    
-    USER_InitApp( hInstance );
-#if 0
-    hTaskMain = CreateNewTask (1); /* This is not correct */
-#endif
-    ret_val = WinMain (hInstance,	/* hInstance */
-		       0,		/* hPrevInstance */
-		       "",		/* lpszCmdParam */
-		       SW_NORMAL); 	/* nCmdShow */
-    return ret_val;
+  return WinMain (hInstance,    /* hInstance */
+		  0,	        /* hPrevInstance */
+		  "",	        /* lpszCmdParam */
+		  SW_NORMAL);   /* nCmdShow */
 }

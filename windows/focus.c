@@ -83,10 +83,12 @@ HWND SetFocus(HWND hwnd)
 
     hWndPrevFocus = hWndFocus;
     hWndFocus = hwnd;    
-    if (hWndPrevFocus) SendMessage( hWndPrevFocus, WM_KILLFOCUS, hwnd, 0 );
+    if (hWndPrevFocus) SendMessage( hWndPrevFocus, WM_KILLFOCUS, 
+				    (WPARAM)hwnd, 0 );
     if (hwnd == hWndFocus)  /* Maybe already changed during WM_KILLFOCUS */
     {
-	if (hwnd) SendMessage( hWndFocus, WM_SETFOCUS, hWndPrevFocus, 0 );
+	if (hwnd) SendMessage( hWndFocus, WM_SETFOCUS, 
+			       (WPARAM)hWndPrevFocus, 0 );
 	FOCUS_SetXFocus( hwnd );
     }
     return hWndPrevFocus;

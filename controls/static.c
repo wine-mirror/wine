@@ -11,7 +11,6 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 #include "win.h"
 #include "user.h"
 #include "static.h"
-#include "icon.h"
 
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
@@ -60,9 +59,8 @@ static void STATIC_SetIcon( HWND hwnd, HICON hicon )
     infoPtr->hIcon = hicon;
     if (hicon)
     {
-        ICONALLOC *icon = (ICONALLOC *) GlobalLock( hicon );
-        SetWindowPos( hwnd, 0, 0, 0,
-                     icon->descriptor.Width, icon->descriptor.Height,
+        CURSORICONINFO *info = (CURSORICONINFO *) GlobalLock( hicon );
+        SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
                      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock( hicon );
     }
@@ -72,7 +70,7 @@ static void STATIC_SetIcon( HWND hwnd, HICON hicon )
 /***********************************************************************
  *           StaticWndProc
  */
-LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
+LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LONG lResult = 0;
 	WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -144,7 +142,7 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 
         case WM_SETFONT:
             if (style == SS_ICON) return 0;
-            infoPtr->hFont = wParam;
+            infoPtr->hFont = (HFONT)wParam;
             if (LOWORD(lParam))
             {
                 InvalidateRect( hWnd, NULL, FALSE );
@@ -153,7 +151,7 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
             break;
 
         case WM_GETFONT:
-            return infoPtr->hFont;
+            return (LONG)infoPtr->hFont;
 
 	case WM_NCHITTEST:
 	    return HTTRANSPARENT;
@@ -162,10 +160,10 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
             return DLGC_STATIC;
 
 	case STM_GETICON:
-	    return infoPtr->hIcon;
+	    return (LONG)infoPtr->hIcon;
 
 	case STM_SETICON:
-            STATIC_SetIcon( hWnd, wParam );
+            STATIC_SetIcon( hWnd, (HICON)wParam );
             InvalidateRect( hWnd, NULL, FALSE );
             UpdateWindow( hWnd );
 	    return 0;
@@ -223,8 +221,13 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
 	wFormat |= DT_NOPREFIX;
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
+#ifdef WINELIB32
+    hBrush = (HBRUSH)SendMessage( wndPtr->hwndParent, WM_CTLCOLORSTATIC,
+				  (WPARAM)hdc, (LPARAM)hwnd );
+#else
     hBrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, (WORD)hdc,
                           MAKELONG(hwnd, CTLCOLOR_STATIC));
+#endif
     if (hBrush == (HBRUSH)NULL) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect(hdc, &rc, hBrush);
     if (text)
@@ -281,8 +284,13 @@ static void PaintIconfn( HWND hwnd, HDC hdc )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect(hwnd, &rc);
+#ifdef WINELIB32
+    hbrush = (HBRUSH)SendMessage( wndPtr->hwndParent, WM_CTLCOLORSTATIC, 
+				  (WPARAM)hdc, (LPARAM)hwnd );
+#else
     hbrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, hdc,
                           MAKELONG(hwnd, CTLCOLOR_STATIC));
+#endif
     FillRect( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
 }

@@ -16,9 +16,9 @@ AC_ARG_WITH(library,
 AC_SUBST(MAIN_TARGET)
 
 AC_ARG_WITH(language,
-[  --with-language=LANG    change the default language (LANG=En/De/No/Es)],
-[LANG="-ALANG\($withval\)"],
-[LANG="-ALANG\(En\)"],)
+[  --with-language=LANG    change the language (LANG=En/De/Fr/Es/No/Fi/Da)],
+[LANG="$withval"],
+[LANG=En],)
 AC_SUBST(LANG)
 
 AC_ARG_WITH(ipc,
@@ -45,7 +45,7 @@ AC_C_CONST()
 AC_TYPE_SIZE_T()
 
 if test -z "${top_srcdir}"; then
-TOP_SRCDIR="."
+TOP_SRCDIR=`pwd`
 else
 TOP_SRCDIR="${top_srcdir}"
 fi
@@ -77,7 +77,7 @@ AC_DEFINE_UNQUOTED(WINE_INI_GLOBAL,$WINE_INI_GLOBAL)
 MAKE_RULES=$TOP_SRCDIR/Make.rules
 AC_SUBST_FILE(MAKE_RULES)
 
-AC_OUTPUT(Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile)
+AC_OUTPUT(Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile win32/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile)
 
 echo
 echo "Configure finished.  Do 'make depend; make' to compile Wine."

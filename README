@@ -22,7 +22,7 @@ it are probably available on the ftp site where you got Wine. They can
 also be found on ftp.x.org and all its mirror sites.
 
 To build Wine, first do a "./configure" and then a "make depend; make".
- The executable "wine" will be built.  "wine" will load and run 16-bit
+The executable "wine" will be built.  "wine" will load and run 16-bit
 Windows executables.
 
 To upgrade to a new release by using a patch file, first cd to the
@@ -104,20 +104,15 @@ Used to specify the devices which are used as lpt1 - lpt8.
 
 * [spy]
 
-format: file = <filename or CON when logging to stdout>
+format: exclude = <message names and/or EXCLUDEALL separated by commas >
 default: none
 
-used to specify the file which will be used as logfile.
+Used to specify which messages will be excluded from the message logging.
 
-format: exclude = <message names separated by semicolons>
+format: include = <message names and/or INCLUDEALL separated by commas >
 default: none
 
-Used to specify which messages will be excluded from the logfile.
-
-format: include = <message names separated by semicolons>
-default: none
-
-Used to specify which messages will be included in the logfile.
+Used to specify which messages will be included in the message logging.
 
 
 4. RUNNING PROGRAMS

@@ -45,7 +45,6 @@ static LPTIMERENTRY lpTimerList = NULL;
  */
 WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 {
-    FARPROC	lpFunc;
     LPTIMERENTRY lpTimer = lpTimerList;
     mmSysTimeMS.u.ms += 33;
     mmSysTimeSMPTE.u.smpte.frame++;
@@ -58,23 +57,25 @@ WORD MMSysTimeCallback(HWND hWnd, WORD wMsg, INT nID, DWORD dwTime)
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%08lx wTimerID=%04X dwUser=%08lX !\n",
 			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
-/*
-		lpFunc = MakeProcInstance(lpTimer->hInstance, lpTimer->lpFunc);
-		dprintf_mmtime(stddeb, "MMSysTimeCallback // MakeProcInstance(lpFunc)=%p %p !\n", 
-			lpFunc, PTR_SEG_TO_LIN(lpFunc));
-*/
-		lpFunc = MODULE_GetEntryPoint( lpTimer->hInstance,
-                      MODULE_GetOrdinal(lpTimer->hInstance,"TimerCallBack" ));
+
+/* This is wrong (lpFunc is NULL all the time)
+
+   	        lpFunc = MODULE_GetEntryPoint( lpTimer->hInstance,
+                         MODULE_GetOrdinal(lpTimer->hInstance,"TimerCallBack" ));
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%08lx !\n", lpFunc);
-		
+*/
+
+
+/*        - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
+ *          during interrupt time,  is allowed to execute very limited number of API calls (like
+ *	    PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
+ *          guess current implementation via SetTimer has to be improved upon.		
+ */
+
 		CallTo16_word_wwlll(lpTimer->lpFunc,
 			lpTimer->hInstance, lpTimer->wTimerID, 
 			0, lpTimer->dwUser, 0, 0);
 
-/*
-		CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID, 
-				0, lpTimer->dwUser, 0, 0);
-*/
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 		fflush(stdout);
 	    }

@@ -14,8 +14,7 @@
 #include "dce.h"
 #include "sysmetrics.h"
 #include "menu.h"
-#include "icon.h"
-#include "cursor.h"
+#include "cursoricon.h"
 #include "event.h"
 #include "message.h"
 #include "nonclient.h"
@@ -140,7 +139,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     for ( ; hwnd != 0; hwnd = wndPtr->hwndNext )
     {
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-	dprintf_win( stddeb, "WIN_FindWinToRepaint: %04x, style %08lx\n",
+	dprintf_win( stddeb, "WIN_FindWinToRepaint: "NPFMT", style %08lx\n",
 		     hwnd, wndPtr->dwStyle );
         if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
             continue;
@@ -165,16 +164,22 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
  * the window has the WS_EX_NOPARENTNOTIFY style.
  */
-void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam )
+void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
     {
         if (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) break;
-	SendMessage( wndPtr->hwndParent, WM_PARENTNOTIFY, event, lParam );
+#ifdef WINELIB32
+	SendMessage( wndPtr->hwndParent, WM_PARENTNOTIFY, 
+		     MAKEWPARAM(event,idChild),
+		     (LPARAM)lValue );
+#else
+	SendMessage( wndPtr->hwndParent, WM_PARENTNOTIFY, event,
+		     MAKELPARAM(LOWORD(lValue), idChild) );
+#endif
         wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
-
     }
 }
 
@@ -269,7 +274,7 @@ BOOL WIN_CreateDesktopWindow(void)
     SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
     if ((hdc = GetDC( hwndDesktop )) != 0)
     {
-        SendMessage( hwndDesktop, WM_ERASEBKGND, hdc, 0 );
+        SendMessage( hwndDesktop, WM_ERASEBKGND, (WPARAM)hdc, 0 );
         ReleaseDC( hwndDesktop, hdc );
     }
     return TRUE;
@@ -315,9 +320,9 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     else
         dprintf_win( stddeb, "%04x ", LOWORD(className) );
 
-    dprintf_win(stddeb, "%08lx %08lx %d,%d %dx%d %04x %04x %04x %08lx\n",
+    dprintf_win(stddeb, "%08lx %08lx %d,%d %dx%d "NPFMT" "NPFMT" "NPFMT" %08lx\n",
 		exStyle, style, x, y, width, height,
-		parent, menu, instance, data);
+		parent, menu, instance, (DWORD)data);
 
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
@@ -332,7 +337,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     {
 	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
-	    dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a window\n", parent);
+	    dprintf_win(stddeb,"CreateWindowEx: Parent "NPFMT" is not a window\n", parent);
 	    return 0;
 	}
     }
@@ -436,11 +441,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 
     if (!(style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
     {
-        CURSORALLOC *cursor;
-        HCURSOR hCursor = classPtr->wc.hCursor;
-        if (!hCursor) hCursor = LoadCursor( 0, IDC_ARROW );
-        cursor = (CURSORALLOC *) GlobalLock(hCursor);
-
         win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
                               PointerMotionMask | ButtonPressMask |
                               ButtonReleaseMask | FocusChangeMask;
@@ -448,7 +448,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
         win_attr.colormap      = COLOR_WinColormap;
         win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
         win_attr.save_under    = ((classPtr->wc.style & CS_SAVEBITS) != 0);
-        win_attr.cursor        = cursor ? cursor->xcursor : None;
+        win_attr.cursor        = CURSORICON_XCursor;
         wndPtr->window = XCreateWindow( display, rootWindow, x, y,
                                         width, height, 0, CopyFromParent,
                                         InputOutput, CopyFromParent,
@@ -457,7 +457,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
                                         CWBackingStore, &win_attr );
         XStoreName( display, wndPtr->window, PTR_SEG_TO_LIN(windowName) );
         EVENT_RegisterWindow( wndPtr->window, hwnd );
-        GlobalUnlock( hCursor );
     }
     
     if ((style & WS_CAPTION) && !(style & WS_CHILD))
@@ -507,7 +506,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
       /* Create a copy of SysMenu */
     if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
-    WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
+    WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LONG)hwnd );
 
     /* Show the window, maximizing or minimizing if needed */
 
@@ -528,7 +527,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     }
     else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
-    dprintf_win(stddeb, "CreateWindowEx: return %04X \n", hwnd);
+    dprintf_win(stddeb, "CreateWindowEx: return "NPFMT" \n", hwnd);
     return hwnd;
 }
 
@@ -541,7 +540,7 @@ BOOL DestroyWindow( HWND hwnd )
     WND * wndPtr;
     CLASS * classPtr;
 
-    dprintf_win(stddeb, "DestroyWindow (%04x)\n", hwnd);
+    dprintf_win(stddeb, "DestroyWindow ("NPFMT")\n", hwnd);
     
       /* Initialisation */
 
@@ -556,7 +555,7 @@ BOOL DestroyWindow( HWND hwnd )
 		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
     if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
 	ReleaseCapture();
-    WIN_SendParentNotify( hwnd, WM_DESTROY, MAKELONG(hwnd, wndPtr->wIDmenu) );
+    WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
 
       /* Recursively destroy owned windows */
 
@@ -620,7 +619,8 @@ HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
 
     if (ClassMatch)
     {
-	hclass = CLASS_FindClassByName( ClassMatch, 0xffff, &classPtr );
+	hclass = CLASS_FindClassByName( ClassMatch, (HINSTANCE)0xffff,
+                                        &classPtr );
 	if (!hclass) return 0;
     }
     else hclass = 0;
@@ -708,10 +708,28 @@ WORD GetWindowWord( HWND hwnd, short offset )
     switch(offset)
     {
 	case GWW_ID:         return wndPtr->wIDmenu;
-	case GWW_HWNDPARENT: return wndPtr->hwndParent;
-	case GWW_HINSTANCE:  return wndPtr->hInstance;
+#ifdef WINELIB32
+        case GWW_HWNDPARENT:
+        case GWW_HINSTANCE: 
+            fprintf(stderr,"GetWindowWord called with offset %d.\n",offset);
+            return 0;
+#else
+	case GWW_HWNDPARENT: return (WORD)wndPtr->hwndParent;
+	case GWW_HINSTANCE:  return (WORD)wndPtr->hInstance;
+#endif
     }
     return 0;
+}
+
+
+/**********************************************************************
+ *	     WIN_GetWindowInstance
+ */
+HINSTANCE WIN_GetWindowInstance(HWND hwnd)
+{
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return (HINSTANCE)0;
+    return wndPtr->hInstance;
 }
 
 
@@ -727,7 +745,13 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
     else switch(offset)
     {
 	case GWW_ID:        ptr = &wndPtr->wIDmenu;   break;
-	case GWW_HINSTANCE: ptr = &wndPtr->hInstance; break;
+#ifdef WINELIB32
+	case GWW_HINSTANCE:
+            fprintf(stderr,"SetWindowWord called with offset %d.\n",offset);
+            return 0;
+#else
+	case GWW_HINSTANCE: ptr = (WORD*)&wndPtr->hInstance; break;
+#endif
 	default: return 0;
     }
     retval = *ptr;
@@ -749,6 +773,10 @@ LONG GetWindowLong( HWND hwnd, short offset )
 	case GWL_STYLE:   return wndPtr->dwStyle;
         case GWL_EXSTYLE: return wndPtr->dwExStyle;
 	case GWL_WNDPROC: return (LONG)wndPtr->lpfnWndProc;
+#ifdef WINELIB32
+	case GWW_HWNDPARENT: return (LONG)wndPtr->hwndParent;
+	case GWW_HINSTANCE:  return (LONG)wndPtr->hInstance;
+#endif
     }
     return 0;
 }
@@ -793,8 +821,8 @@ int GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
       /* We have to allocate a buffer on the USER heap */
       /* to be able to pass its address to 16-bit code */
     if (!(handle = USER_HEAP_ALLOC( nMaxCount ))) return 0;
-    len = (int)SendMessage( hwnd, WM_GETTEXT, (WORD)nMaxCount, 
-                            USER_HEAP_SEG_ADDR(handle) );
+    len = (int)SendMessage( hwnd, WM_GETTEXT, (WPARAM)nMaxCount, 
+                            (LPARAM)USER_HEAP_SEG_ADDR(handle) );
     strncpy( lpString, USER_HEAP_LIN_ADDR(handle), nMaxCount );
     USER_HEAP_FREE( handle );
     return len;
@@ -817,7 +845,7 @@ void SetWindowText( HWND hwnd, LPSTR lpString )
       /* to be able to pass its address to 16-bit code */
     if (!(handle = USER_HEAP_ALLOC( strlen(lpString)+1 ))) return;
     strcpy( USER_HEAP_LIN_ADDR(handle), lpString );
-    SendMessage( hwnd, WM_SETTEXT, 0, USER_HEAP_SEG_ADDR(handle) );
+    SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)USER_HEAP_SEG_ADDR(handle) );
     USER_HEAP_FREE( handle );
 }
 
@@ -1197,7 +1225,7 @@ HWND SetSysModalWindow(HWND hWnd)
 {
 	HWND hWndOldModal = hWndSysModal;
 	hWndSysModal = hWnd;
-	dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
+	dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow("NPFMT") !\n", hWnd);
 	return hWndOldModal;
 }
 

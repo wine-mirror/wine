@@ -57,13 +57,6 @@ files contain tables used by relay.c to translate arguments and transfer
 control to the proper handler.  The format of the *.spec files is
 documented in the file "tools/build-spec.txt".
 
-REGISTER FUNCTIONS:
-
-Some functions are defined as type "register" in the DLL specification files.
-In order to return values in the registers to the WIN16 program, the handler
-function must exit by calling ReturnFromRegisterFunc().  Look at the function
-DOS3Call() for an example of how this works.
-
 DEBUG MESSAGES:
 
 To display a message only during debugging, you normally write something

@@ -72,7 +72,7 @@ void WIN87_fpmath( struct sigcontext_struct context )
         /* IN: AX&0x0C00 rounding protocol */
         /* OUT: DX:AX variable popped */
         {
-            DWORD dw;
+            DWORD dw=0;
             /* I don't know much about asm() programming. This could be 
              * wrong. 
              */
@@ -91,6 +91,7 @@ void WIN87_fpmath( struct sigcontext_struct context )
         break;
 
     case 10: /* dunno. but looks like returning nr. of things on stack in AX */
+	AX_reg(&context) = 0;
         break;
 
     case 11: /* just returns the installed flag in DX:AX */

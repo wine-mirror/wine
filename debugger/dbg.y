@@ -51,7 +51,6 @@ int yyerror(char *);
 	| input line  { issue_prompt(); }
 
  line:		'\n'
-	| infocmd '\n'
 	| error '\n'       { yyerrok; }
 	| QUIT  '\n'       { exit(0); }
 	| HELP  '\n'       { DEBUG_Help(); }
@@ -72,6 +71,7 @@ int yyerror(char *);
                                 }
         | DELETE BREAK NUM '\n' { DEBUG_DelBreakpoint( $3 ); }
 	| BACKTRACE '\n'        { DEBUG_BackTrace(); }
+	| infocmd
 	| x_command
 	| print_command
 	| deposit_command
@@ -113,10 +113,11 @@ x_command:
 	| '(' expr ')'		{ $$ = $2; }
 	| '*' addr		{ $$ = DEBUG_ReadMemory( &$2 ); }
 	
- infocmd: INFO REGS     { DEBUG_InfoRegisters(); }
-	| INFO STACK    { DEBUG_InfoStack(); }
-	| INFO BREAK    { DEBUG_InfoBreakpoints(); }
-	| INFO SEGMENTS { LDT_Print(); }
+ infocmd: INFO REGS '\n'          { DEBUG_InfoRegisters(); }
+	| INFO STACK '\n'         { DEBUG_InfoStack(); }
+	| INFO BREAK '\n'         { DEBUG_InfoBreakpoints(); }
+	| INFO SEGMENTS '\n'      { LDT_Print( 0, -1 ); }
+        | INFO SEGMENTS expr '\n' { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
 
 
 %%
@@ -162,9 +163,9 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
     {
         DBG_ADDR addr;
 
-        addr.seg = (CS_reg(DEBUG_context) == WINE_CODE_SELECTOR) ?
-                    0 : CS_reg(DEBUG_context);
+        addr.seg = CS_reg(DEBUG_context);
         addr.off = EIP_reg(DEBUG_context);
+        DBG_FIX_ADDR_SEG( &addr, 0 );
 
         if (!addr.seg) newmode = 32;
         else newmode = (GET_SEL_FLAGS(addr.seg) & LDT_FLAGS_32BIT) ? 32 : 16;
@@ -175,13 +176,22 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
         /* Show where we crashed */
         DEBUG_PrintAddress( &addr, dbg_mode );
         fprintf(stderr,":  ");
-        DEBUG_Disasm( &addr );
-        fprintf(stderr,"\n");
-        instr_len = addr.off - EIP_reg(DEBUG_context);
-        
-        issue_prompt();
-        yyparse();
-        flush_symbols();
+        if (DBG_CHECK_READ_PTR( &addr, 1 ))
+        {
+            DEBUG_Disasm( &addr );
+            fprintf(stderr,"\n");
+            instr_len = addr.off - EIP_reg(DEBUG_context);
+        }
+
+        do
+        {
+            issue_prompt();
+            yyparse();
+            flush_symbols();
+            addr.seg = CS_reg(DEBUG_context);
+            addr.off = EIP_reg(DEBUG_context);
+            DBG_FIX_ADDR_SEG( &addr, 0 );
+        } while (!DBG_CHECK_READ_PTR( &addr, 1 ));
     }
 
     DEBUG_RestartExecution( regs, dbg_exec_mode, instr_len );

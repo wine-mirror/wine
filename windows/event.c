@@ -118,8 +118,7 @@ typedef union
 
 static BOOL KeyDown = FALSE;
 
-
-static char *event_names[] =
+static const char *event_names[] =
 {
     "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
     "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
@@ -157,7 +156,7 @@ void EVENT_ProcessEvent( XEvent *event )
     XFindContext( display, ((XAnyEvent *)event)->window, winContext, &ptr );
     hwnd = (HWND) (int)ptr;
 
-    dprintf_event(stddeb, "Got event %s for hwnd %d\n", 
+    dprintf_event(stddeb, "Got event %s for hwnd "NPFMT"\n",
 		  event_names[event->type], hwnd );
 
     switch(event->type)
@@ -214,7 +213,7 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     default:    
-	dprintf_event(stddeb, "Unprocessed event %s for hwnd %d\n",
+	dprintf_event(stddeb, "Unprocessed event %s for hwnd "NPFMT"\n",
 	        event_names[event->type], hwnd );
 	break;
     }
@@ -397,6 +396,26 @@ static void EVENT_MotionNotify( XMotionEvent *event )
 
 
 /***********************************************************************
+ *           EVENT_DummyMotionNotify
+ *
+ * Generate a dummy MotionNotify event. Used to force a WM_SETCURSOR message.
+ */
+void EVENT_DummyMotionNotify(void)
+{
+    Window root, child;
+    int rootX, rootY, childX, childY;
+    unsigned int state;
+
+    if (XQueryPointer( display, rootWindow, &root, &child,
+                       &rootX, &rootY, &childX, &childY, &state ))
+    {
+        hardware_event(WM_MOUSEMOVE, EVENT_XStateToKeyState( state ), 0L,
+                       rootX - desktopX, rootY - desktopY, GetTickCount(), 0 );
+    }
+}
+
+
+/***********************************************************************
  *           EVENT_ButtonPress
  */
 static void EVENT_ButtonPress( XButtonEvent *event )
@@ -539,7 +558,7 @@ HWND SetCapture( HWND hwnd )
                      GrabModeAsync, GrabModeAsync,
                      None, None, CurrentTime ) == GrabSuccess)
     {
-	dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
+	dprintf_win(stddeb, "SetCapture: "NPFMT"\n", hwnd);
 	captureWnd   = hwnd;
 	return old_capture_wnd;
     }

@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "windows.h"
 #include "callback.h"
 #include "wine.h"
 #include "arch.h"
 #include "neexe.h"
 
-LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
-		     WORD wParam, LONG lParam)
+LRESULT CallWindowProc (WNDPROC func, HWND hwnd, UINT message,
+			WPARAM wParam, LPARAM lParam)
 {
     return (*func)(hwnd, message, wParam, lParam);
 }
@@ -91,4 +92,5 @@ int load_nameinfo (int fd, struct resource_nameinfo_s *nameinfo)
     LOADSHORT (id);
     LOADSHORT (handle);
     LOADSHORT (usage);
+    return 0;
 }

@@ -170,7 +170,7 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 	pMinMax = (MINMAXINFO *) USER_HEAP_LIN_ADDR( minmaxHandle );
 	memcpy( pMinMax, &MinMax, sizeof(MinMax) );	
 	SendMessage( hwnd, WM_GETMINMAXINFO, 0,
-                     USER_HEAP_SEG_ADDR(minmaxHandle) );
+                     (LPARAM)USER_HEAP_SEG_ADDR(minmaxHandle) );
     }
     else pMinMax = &MinMax;
 
@@ -260,7 +260,7 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
-    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%x pt=%d,%d\n", 
+    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd="NPFMT" pt=%d,%d\n",
 		      hwnd, pt.x, pt.y );
 
     GetWindowRect( hwnd, &rect );
@@ -624,7 +624,7 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "NC_DoNCPaint: %x %d\n", hwnd, active );
+    dprintf_nonclient(stddeb, "NC_DoNCPaint: "NPFMT" %d\n", hwnd, active );
     if (!wndPtr || !(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
@@ -639,7 +639,7 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
         HICON hIcon = WIN_CLASS_INFO(wndPtr).hIcon;
         if (hIcon)  
         {
-            SendMessage(hwnd, WM_ICONERASEBKGND, hdc, 0);
+            SendMessage(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
             DrawIcon(hdc, 0, 0, hIcon);
         }
         ReleaseDC(hwnd, hdc);
@@ -730,9 +730,9 @@ LONG NC_HandleNCPaint( HWND hwnd )
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( HWND hwnd, WORD wParam )
+LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
-    NC_DoNCPaint( hwnd, wParam, FALSE );
+    NC_DoNCPaint( hwnd, (wParam != 0), FALSE );
     return TRUE;
 }
 
@@ -742,9 +742,9 @@ LONG NC_HandleNCActivate( HWND hwnd, WORD wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
+LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    if (hwnd != wParam) return 0;  /* Don't set the cursor for child windows */
+    if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
 
     switch(LOWORD(lParam))
     {
@@ -773,23 +773,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
+	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return SetCursor( LoadCursor( 0, IDC_SIZENS ) );
+	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
+	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
+	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return SetCursor( LoadCursor( 0, IDC_ARROW ) );
+    return (LONG)SetCursor( LoadCursor( 0, IDC_ARROW ) );
 }
 
 
@@ -799,7 +799,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
  * Initialisation of a move or resize, when initiatied from a menu choice.
  * Return hit test code for caption or sizing border.
  */
-static LONG NC_StartSizeMove( HWND hwnd, WORD wParam, POINT *capturePoint )
+static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
 {
     LONG hittest = 0;
     POINT pt;
@@ -1114,7 +1114,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 
     do
     {
-        GetMessage( USER_HEAP_SEG_ADDR(hMsg), 0, 0, 0 );
+        GetMessage( (SEGPTR)USER_HEAP_SEG_ADDR(hMsg), 0, 0, 0 );
 	switch(msg->message)
 	{
 	case WM_LBUTTONUP:
@@ -1174,7 +1174,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
+LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     HDC hdc = GetWindowDC( hwnd );
 
@@ -1230,7 +1230,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam )
+LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
@@ -1262,12 +1262,12 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
+LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
-		      wParam, pt.x, pt.y );
+    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %lx %d,%d\n", 
+		      (DWORD)wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD) ScreenToClient( wndPtr->hwndParent, &pt );
 

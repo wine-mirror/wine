@@ -20,9 +20,16 @@
 #include "debug.h"
 
 
+#ifdef WINELIB32
+#define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
+	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
+		    MAKEWPARAM(GetDlgCtrlID(hWndCntrl),wNotifyCode), \
+		    (LPARAM)hWndCntrl );
+#else
 #define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
 	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
 		 GetDlgCtrlID(hWndCntrl), MAKELPARAM(hWndCntrl, wNotifyCode));
+#endif
 
 #define MAXTEXTLEN 30000   /* maximum text buffer length */
 #define EDITLEN     1024   /* starting length for multi-line control */
@@ -95,12 +102,12 @@ static int ButtonCol;              /* col in text buffer when button pressed */
  *
  *  Allocate the specified number of bytes on the specified local heap.
  */
-static unsigned int EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
+static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
 {
-    unsigned int ret;
+    HLOCAL ret;
 
-    ret = LOCAL_Alloc( GetWindowWord(hwnd,GWW_HINSTANCE), flags, bytes );
-    if (ret == 0)
+    ret = LOCAL_Alloc( WIN_GetWindowInstance(hwnd), flags, bytes );
+    if (!ret)
         printf("EDIT_HeapAlloc: Out of heap-memory\n");
     return ret;
 }
@@ -110,10 +117,10 @@ static unsigned int EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
  *
  *  Return the address of the memory pointed to by the handle.
  */
-static void *EDIT_HeapLock(HWND hwnd, unsigned int handle)
+static void *EDIT_HeapLock(HWND hwnd, HANDLE handle)
 {
-    WORD hinstance = GetWindowWord( hwnd, GWW_HINSTANCE );
-    WORD offs;
+    HINSTANCE hinstance = WIN_GetWindowInstance( hwnd );
+    HANDLE offs;
     
     if (handle == 0) return 0;
     offs = LOCAL_Lock( hinstance, handle );
@@ -123,10 +130,10 @@ static void *EDIT_HeapLock(HWND hwnd, unsigned int handle)
 /*********************************************************************
  *  EDIT_HeapUnlock
  */
-static void EDIT_HeapUnlock(HWND hwnd, unsigned int handle)
+static void EDIT_HeapUnlock(HWND hwnd, HANDLE handle)
 {
     if (handle == 0) return;
-    LOCAL_Unlock( GetWindowWord( hwnd, GWW_HINSTANCE ), handle );
+    LOCAL_Unlock( WIN_GetWindowInstance( hwnd ), handle );
 }
 
 /*********************************************************************
@@ -134,9 +141,9 @@ static void EDIT_HeapUnlock(HWND hwnd, unsigned int handle)
  *
  *  Reallocate the memory pointed to by the handle.
  */
-static unsigned int EDIT_HeapReAlloc(HWND hwnd, unsigned int handle, int bytes)
+static HLOCAL EDIT_HeapReAlloc(HWND hwnd, HANDLE handle, int bytes)
 {
-    return LOCAL_ReAlloc( GetWindowWord(hwnd,GWW_HINSTANCE), handle, bytes, 
+    return LOCAL_ReAlloc( WIN_GetWindowInstance(hwnd), handle, bytes, 
 			  LMEM_FIXED );
 }
 
@@ -146,9 +153,9 @@ static unsigned int EDIT_HeapReAlloc(HWND hwnd, unsigned int handle, int bytes)
  *
  *  Frees the memory pointed to by the handle.
  */
-static void EDIT_HeapFree(HWND hwnd, unsigned int handle)
+static void EDIT_HeapFree(HWND hwnd, HANDLE handle)
 {
-    LOCAL_Free( GetWindowWord(hwnd,GWW_HINSTANCE), handle );
+    LOCAL_Free( WIN_GetWindowInstance(hwnd), handle );
 }
 
 
@@ -157,9 +164,9 @@ static void EDIT_HeapFree(HWND hwnd, unsigned int handle)
  *
  *  Return the size of the given object on the local heap.
  */
-static unsigned int EDIT_HeapSize(HWND hwnd, unsigned int handle)
+static unsigned int EDIT_HeapSize(HWND hwnd, HANDLE handle)
 {
-    return LOCAL_Size( GetWindowWord(hwnd,GWW_HINSTANCE), handle );
+    return LOCAL_Size( WIN_GetWindowInstance(hwnd), handle );
 }
 
 /********************************************************************
@@ -470,8 +477,12 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     else
         oldfont = 0;		/* -Wall does not see the use of if */
 
-    SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
+#ifdef WINELIB32
+    SendMessage(GetParent(hwnd), WM_CTLCOLOREDIT, (WPARAM)hdc, (LPARAM)hwnd);
+#else
+    SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WPARAM)hdc,
 		MAKELPARAM(hwnd, CTLCOLOR_EDIT));
+#endif
 
     if (reverse)
     {
@@ -1840,13 +1851,13 @@ static LONG EDIT_UndoMsg(HWND hwnd)
 /*********************************************************************
  *  EM_SETHANDLE message function
  */
-static void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
+static void EDIT_SetHandleMsg(HWND hwnd, WPARAM wParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     if (IsMultiLine(hwnd))
     {
-	es->hText = wParam;
+	es->hText = (HANDLE)wParam;
 	es->textlen = EDIT_HeapSize(hwnd, es->hText);
 	es->wlines = 0;
 	es->wtop = es->wleft = 0;
@@ -1856,8 +1867,8 @@ static void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
 	es->textwidth = 0;
 	es->SelBegLine = es->SelBegCol = 0;
 	es->SelEndLine = es->SelEndCol = 0;
-	dprintf_edit(stddeb, "EDIT_SetHandleMsg: handle %04x, textlen=%d\n",
-		     wParam, es->textlen);
+	dprintf_edit(stddeb, "EDIT_SetHandleMsg: handle %04lx, textlen=%d\n",
+		     (DWORD)wParam, es->textlen);
 
 	EDIT_BuildTextPointers(hwnd);
 	es->PaintBkgd = TRUE;
@@ -2107,14 +2118,14 @@ static void EDIT_SetSelMsg(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_SETFONT
  */
-static void EDIT_WM_SetFont(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_SetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
     TEXTMETRIC tm;
     HFONT oldfont;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
-    es->hFont = wParam;
+    es->hFont = (HANDLE)wParam;
     hdc = GetDC(hwnd);
     oldfont = (HFONT)SelectObject(hdc, (HANDLE)es->hFont);
     GetCharWidth(hdc, 0, 255, es->CharWidths);
@@ -2174,7 +2185,7 @@ static void EDIT_WM_Paint(HWND hwnd)
 	   rc.right, rc.bottom);
 
     if (es->PaintBkgd)
-	FillWindow(GetParent(hwnd), hwnd, hdc, CTLCOLOR_EDIT);
+	FillWindow(GetParent(hwnd), hwnd, hdc, (HBRUSH)CTLCOLOR_EDIT);
 
     for (y = (rc.top / es->txtht); y <= (rc.bottom / es->txtht); y++)
     {
@@ -2607,7 +2618,7 @@ static LONG EDIT_WM_SetText(HWND hwnd, LONG lParam)
 /*********************************************************************
  * EditWndProc()
  */
-LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
+LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     LONG lResult = 0;
     char *textPtr;
@@ -2616,7 +2627,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 
     switch (uMsg) {
     case EM_CANUNDO:
-	lResult = es->hDeletedText;
+	lResult = (LONG)es->hDeletedText;
 	break;
 	
     case EM_EMPTYUNDOBUFFER:
@@ -2636,7 +2647,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_GETHANDLE:
-	lResult = es->hText;
+	lResult = (LONG)es->hText;
 	break;
 
     case EM_GETLINE:

@@ -392,7 +392,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-    dprintf_dc(stddeb, "GetDCEx(%d,%d,0x%lx): returning %d\n", 
+    dprintf_dc(stddeb, "GetDCEx("NPFMT","NPFMT",0x%lx): returning "NPFMT"\n", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
@@ -432,7 +432,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     HANDLE hdce;
     DCE * dce = NULL;
     
-    dprintf_dc(stddeb, "ReleaseDC: %d %d\n", hwnd, hdc );
+    dprintf_dc(stddeb, "ReleaseDC: "NPFMT" "NPFMT"\n", hwnd, hdc );
         
     for (hdce = firstDCE; (hdce); hdce = dce->hNext)
     {

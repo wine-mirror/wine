@@ -10,7 +10,7 @@ YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 DIVINCL   = -I$(TOPSRC)/include
-ALLCFLAGS = $(CFLAGS) $(DEFS) $(LANG) $(X_CFLAGS) $(DIVINCL) $(EXTRA_DEFS)
+ALLCFLAGS = $(CFLAGS) $(DEFS) -ALANG\($(LANG)\) $(X_CFLAGS) $(DIVINCL) $(EXTRA_DEFS)
 LDCOMBINE = ld -r
 RM        = rm -f
 @SET_MAKE@

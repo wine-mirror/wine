@@ -114,8 +114,8 @@ BOOL TIMER_CheckTimer( LONG *next, MSG *msg, HWND hwnd, BOOL remove )
 	TIMER_RestartTimer( pTimer, curTime );
     }
 
-    dprintf_timer(stddeb, "Timer expired: %p, %04x, %04x, %04x, %08lx\n", 
-		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc);
+    dprintf_timer(stddeb, "Timer expired: %p, "NPFMT", %04x, %04x, %08lx\n", 
+		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
       /* Build the message */
     msg->hwnd    = pTimer->hwnd;
     msg->message = pTimer->msg;
@@ -170,8 +170,8 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     pTimer->timeout = timeout;
     pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = proc;
-    dprintf_timer(stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
-		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc);
+    dprintf_timer(stddeb, "Timer added: %p, "NPFMT", %04x, %04x, %08lx\n", 
+		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
     TIMER_InsertTimer( pTimer );
     MSG_IncTimerCount( GetTaskQueue(0) );
     if (!id)
@@ -217,7 +217,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
  */
 WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-    dprintf_timer(stddeb, "SetTimer: %d %d %d %08lx\n", hwnd, id, timeout, (LONG)proc );
+    dprintf_timer(stddeb, "SetTimer: "NPFMT" %d %d %08lx\n", hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
 }
 
@@ -227,7 +227,7 @@ WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
  */
 WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-    dprintf_timer(stddeb, "SetSystemTimer: %d %d %d %08lx\n", 
+    dprintf_timer(stddeb, "SetSystemTimer: "NPFMT" %d %d %08lx\n", 
 		  hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
 }
@@ -238,7 +238,7 @@ WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
  */
 BOOL KillTimer( HWND hwnd, WORD id )
 {
-    dprintf_timer(stddeb, "KillTimer: %d %d\n", hwnd, id );
+    dprintf_timer(stddeb, "KillTimer: "NPFMT" %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -248,6 +248,6 @@ BOOL KillTimer( HWND hwnd, WORD id )
  */
 BOOL KillSystemTimer( HWND hwnd, WORD id )
 {
-    dprintf_timer(stddeb, "KillSystemTimer: %d %d\n", hwnd, id );
+    dprintf_timer(stddeb, "KillSystemTimer: "NPFMT" %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

@@ -4,8 +4,10 @@
  * Copyright 1995 Martin von Loewis
  */
 
+void RELAY32_Unimplemented(char *dll, int item);
 void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint);
 LONG RELAY32_CallWindowProc(WNDPROC,int,int,int,int);
+void RELAY32_DebugEnter(char *dll,char *name);
 
 typedef struct tagWNDCLASSA{
 	UINT	style;

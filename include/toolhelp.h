@@ -166,14 +166,14 @@ typedef struct {
     HMODULE hModule;
     WORD wcUsage;
     char szExePath[MAX_PATH + 1];
-    WORD wNext;
+    HANDLE wNext;
 } MODULEENTRY;
 typedef MODULEENTRY *LPMODULEENTRY;
 
 BOOL	ModuleFirst(MODULEENTRY *lpModule);
 BOOL	ModuleNext(MODULEENTRY *lpModule);
-HMODULE ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
-HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule);
+BOOL    ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
+BOOL    ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule);
 
 /* tasks */
 
@@ -240,7 +240,7 @@ typedef struct
     DWORD     dwSize;
     HMODULE   hInst;              /* This is really an hModule */
     char      szClassName[MAX_CLASSNAME + 1];
-    WORD      wNext;
+    HANDLE    wNext;
 } CLASSENTRY;
 
 BOOL ClassFirst( CLASSENTRY *pClassEntry );

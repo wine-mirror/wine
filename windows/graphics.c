@@ -693,19 +693,17 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
 BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 		       int xsrc, int ysrc, int width, int height )
 {
-    XGCValues val;
     BITMAPOBJ *bmp;
     DC *dc;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return FALSE;
-    val.function   = GXcopy;
-    val.foreground = dc->w.textPixel;
-    val.background = dc->w.backgroundPixel;
-    XChangeGC(display, dc->u.x.gc, GCFunction|GCForeground|GCBackground, &val);
+    XSetFunction( display, dc->u.x.gc, GXcopy );
     if (bmp->bitmap.bmBitsPixel == 1)
     {
+        XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+        XSetBackground( display, dc->u.x.gc, dc->w.textPixel );
 	XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
 		    xsrc, ysrc, width, height,
 		    dc->w.DCOrgX + xdest, dc->w.DCOrgY + ydest, 1 );
@@ -980,7 +978,7 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
     RECT rect;
     DC *dc;
 
-    dprintf_graphics( stddeb, "ExtFloodFill %x %d,%d %06lx %d\n",
+    dprintf_graphics( stddeb, "ExtFloodFill "NPFMT" %d,%d %06lx %d\n",
                       hdc, x, y, color, fillType );
     dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) 

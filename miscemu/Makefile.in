@@ -2,6 +2,7 @@ TOPSRC = @top_srcdir@
 MODULE = miscemu
 
 C_SRCS = \
+	cpu.c \
 	dosmem.c \
 	dpmi.c \
 	emulate.c \
@@ -14,9 +15,11 @@ C_SRCS = \
 	int26.c \
 	int2a.c \
 	int2f.c \
+	int4b.c \
 	int5c.c \
 	interrupts.c \
-	ioports.c
+	ioports.c \
+	vxd.c
 
 all: $(MODULE).o
 

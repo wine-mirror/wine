@@ -19,7 +19,7 @@
  */
 BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj )
 {
-    dprintf_region(stddeb, "DeleteRegion: %x\n", hrgn );
+    dprintf_region(stddeb, "DeleteRegion: "NPFMT"\n", hrgn );
     if (obj->xrgn) XDestroyRegion( obj->xrgn );
     return GDI_FreeObject( hrgn );
 }
@@ -32,7 +32,7 @@ int OffsetRgn( HRGN hrgn, short x, short y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (!obj) return ERROR;
-    dprintf_region(stddeb, "OffsetRgn: %d %d,%d\n", hrgn, x, y );
+    dprintf_region(stddeb, "OffsetRgn: "NPFMT" %d,%d\n", hrgn, x, y );
     if (!obj->xrgn) return NULLREGION;
     XOffsetRegion( obj->xrgn, x, y );
     return COMPLEXREGION;
@@ -46,7 +46,7 @@ int GetRgnBox( HRGN hrgn, LPRECT rect )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (!obj) return ERROR;
-    dprintf_region(stddeb, "GetRgnBox: %d\n", hrgn );
+    dprintf_region(stddeb, "GetRgnBox: "NPFMT"\n", hrgn );
     if (!obj->xrgn)
     {
         SetRectEmpty( rect );
@@ -84,7 +84,7 @@ HRGN CreateRectRgn( short left, short top, short right, short bottom )
         XUnionRectWithRegion( &rect, obj->xrgn, obj->xrgn );
     }
     else obj->xrgn = 0;
-    dprintf_region( stddeb, "CreateRectRgn(%d,%d-%d,%d): returning %x\n",
+    dprintf_region( stddeb, "CreateRectRgn(%d,%d-%d,%d): returning "NPFMT"\n",
                     left, top, right, bottom, hrgn );
     return hrgn;
 }
@@ -106,7 +106,7 @@ void SetRectRgn( HRGN hrgn, short left, short top, short right, short bottom )
 {
     RGNOBJ * obj;
 
-    dprintf_region(stddeb, "SetRectRgn: %x %d,%d-%d,%d\n", 
+    dprintf_region(stddeb, "SetRectRgn: "NPFMT" %d,%d-%d,%d\n", 
 		   hrgn, left, top, right, bottom );
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return;
@@ -143,7 +143,7 @@ HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
     obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
     obj->xrgn = XCreateRegion();
-    dprintf_region(stddeb,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): return=%x\n",
+    dprintf_region(stddeb,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): return="NPFMT"\n",
                left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
       /* Check parameters */
@@ -276,7 +276,7 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
     }
     obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
     obj->xrgn = 0;
-    dprintf_region(stddeb, "CreatePolyPolygonRgn: %d polygons, returning %x\n",
+    dprintf_region(stddeb, "CreatePolyPolygonRgn: %d polygons, returning "NPFMT"\n",
                    nbpolygons, hrgn );
 
       /* Create X region */
@@ -406,7 +406,7 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
 {
     RGNOBJ *destObj, *src1Obj, *src2Obj;
     
-    dprintf_region(stddeb, "CombineRgn: %x,%x -> %x mode=%x\n", 
+    dprintf_region(stddeb, "CombineRgn: "NPFMT","NPFMT" -> "NPFMT" mode=%x\n", 
 		   hSrc1, hSrc2, hDest, mode );
     
     if (!(destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC )))

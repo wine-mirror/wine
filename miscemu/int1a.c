@@ -23,12 +23,14 @@ DWORD INT1A_GetTicksSinceMidnight(void)
 {
     struct tm *bdtime;
     struct timeval tvs;
+    time_t seconds;
 
     /* This should give us the (approximately) correct
      * 18.206 clock ticks per second since midnight.
      */
     gettimeofday( &tvs, NULL );
-    bdtime = localtime( &tvs.tv_sec );
+    seconds = tvs.tv_sec;
+    bdtime = localtime( &seconds );
     return (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
               bdtime->tm_sec) * 18206) / 1000) +
                   (tvs.tv_usec / 54927);

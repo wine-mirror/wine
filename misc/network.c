@@ -119,7 +119,7 @@ int WNetSetJobCopies(LPSTR szQueue,WORD wJobId,WORD nCopies)
  */
 int WNetWatchQueue(HWND hWnd,LPSTR szLocal,LPSTR szUser,WORD nQueue)
 {
-	printf("EMPTY STUB !!! WNetWatchQueue(%x,'%s','%s',%x)\n",
+	printf("EMPTY STUB !!! WNetWatchQueue("NPFMT",'%s','%s',%x)\n",
 		hWnd,szLocal,szUser,nQueue);
 	return WN_NET_ERROR;
 }
@@ -196,7 +196,7 @@ int WNetGetCaps(WORD capability)
  */
 int WNetDeviceMode(HWND hWndOwner)
 {
-	printf("EMPTY STUB !!! WNetDeviceMode(%x)\n",hWndOwner);
+	printf("EMPTY STUB !!! WNetDeviceMode("NPFMT")\n",hWndOwner);
 	return WN_NET_ERROR;
 }
 
@@ -205,7 +205,7 @@ int WNetDeviceMode(HWND hWndOwner)
  */
 int WNetBrowseDialog(HWND hParent,WORD nType,LPSTR szPath)
 {
-	printf("EMPTY STUB !!! WNetBrowseDialog(%x,%x,'%s')\n",
+	printf("EMPTY STUB !!! WNetBrowseDialog("NPFMT",%x,'%s')\n",
 		hParent,nType,szPath);
 	return WN_NET_ERROR;
 }
@@ -265,7 +265,7 @@ int WNetGetErrorText(WORD nError, LPSTR lpBuffer, LPWORD nBufferSize)
  */
 int WNetRestoreConnection(HWND hwndOwner,LPSTR lpszDevice)
 {
-	printf("EMPTY STUB !!! WNetRestoreConnection(%x,'%s')\n",
+	printf("EMPTY STUB !!! WNetRestoreConnection("NPFMT",'%s')\n",
 		hwndOwner,lpszDevice);
 	return WN_NET_ERROR;
 }
@@ -273,9 +273,9 @@ int WNetRestoreConnection(HWND hwndOwner,LPSTR lpszDevice)
 /**************************************************************************
  *              WNetWriteJob       [USER.524]
  */
-int WNetWriteJob(WORD hJob,void *lpData,LPWORD lpcbData)
+int WNetWriteJob(HANDLE hJob,void *lpData,LPWORD lpcbData)
 {
-	printf("EMPTY STUB !!! WNetWriteJob(%x,%p,%p)\n",
+	printf("EMPTY STUB !!! WNetWriteJob("NPFMT",%p,%p)\n",
 		hJob,lpData,lpcbData);
 	return WN_NET_ERROR;
 }
@@ -285,7 +285,7 @@ int WNetWriteJob(WORD hJob,void *lpData,LPWORD lpcbData)
  */
 UINT WNetConnectDialog(HWND hWndParent, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetConnectDialog(%4X, %4X)\n", hWndParent, iType);
+	printf("EMPTY STUB !!! WNetConnectDialog("NPFMT", %4X)\n", hWndParent, iType);
 	return WN_SUCCESS;
 }
 
@@ -294,7 +294,7 @@ UINT WNetConnectDialog(HWND hWndParent, WORD iType)
  */
 int WNetDisconnectDialog(HWND hwndOwner, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetDisconnectDialog(%x,%x)\n",
+	printf("EMPTY STUB !!! WNetDisconnectDialog("NPFMT",%x)\n",
 		hwndOwner,iType);
 	return WN_NET_ERROR;
 }
@@ -304,7 +304,7 @@ int WNetDisconnectDialog(HWND hwndOwner, WORD iType)
  */
 UINT WNetConnectionDialog(HWND hWndParent, WORD iType)
 {
-	printf("EMPTY STUB !!! WNetConnectionDialog(%4X, %4X)\n", 
+	printf("EMPTY STUB !!! WNetConnectionDialog("NPFMT", %4X)\n", 
 		hWndParent, iType);
 	return WN_SUCCESS;
 }
@@ -314,7 +314,7 @@ UINT WNetConnectionDialog(HWND hWndParent, WORD iType)
  */
 int WNetViewQueueDialog(HWND hwndOwner,LPSTR lpszQueue)
 {
-	printf("EMPTY STUB !!! WNetViewQueueDialog(%x,'%s')\n",
+	printf("EMPTY STUB !!! WNetViewQueueDialog("NPFMT",'%s')\n",
 		hwndOwner,lpszQueue);
 	return WN_NET_ERROR;
 }
@@ -325,7 +325,7 @@ int WNetViewQueueDialog(HWND hwndOwner,LPSTR lpszQueue)
 int WNetPropertyDialog(HWND hwndParent,WORD iButton,
 	WORD nPropSel,LPSTR lpszName,WORD nType)
 {
-	printf("EMPTY STUB !!! WNetPropertyDialog(%x,%x,%x,'%s',%x)\n",
+	printf("EMPTY STUB !!! WNetPropertyDialog("NPFMT",%x,%x,'%s',%x)\n",
 		hwndParent,iButton,nPropSel,lpszName,nType);
 	return WN_NET_ERROR;
 }
@@ -345,7 +345,7 @@ int WNetGetDirectoryType(LPSTR lpName,void *lpType)
  */
 int WNetDirectoryNotify(HWND hwndOwner,void *lpDir,WORD wOper)
 {
-	printf("EMPTY STUB !!! WNetDirectoryNotify(%x,%p,%x)\n",
+	printf("EMPTY STUB !!! WNetDirectoryNotify("NPFMT",%p,%x)\n",
 		hwndOwner,lpDir,wOper);
 	return WN_NET_ERROR;
 }
@@ -356,7 +356,7 @@ int WNetDirectoryNotify(HWND hwndOwner,void *lpDir,WORD wOper)
 int WNetGetPropertyText(HWND hwndParent,WORD iButton,WORD nPropSel,
 	LPSTR lpszName,WORD nType)
 {
-	printf("EMPTY STUB !!! WNetGetPropertyText(%x,%x,%x,'%s',%x)\n",
+	printf("EMPTY STUB !!! WNetGetPropertyText("NPFMT",%x,%x,'%s',%x)\n",
 		hwndParent,iButton,nPropSel,lpszName,nType);
 	return WN_NET_ERROR;
 }
@@ -377,7 +377,7 @@ UINT WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord,
  */
 UINT WNetCloseEnum(HANDLE hEnum)
 {
-	printf("EMPTY STUB !!! WNetCloseEnum(%04X);\n", hEnum);
+	printf("EMPTY STUB !!! WNetCloseEnum("NPFMT");\n", hEnum);
 	return WN_NET_ERROR;
 }
 
@@ -387,7 +387,7 @@ UINT WNetCloseEnum(HANDLE hEnum)
 UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ, 
 				DWORD *lpCount, LPVOID lpBuf)
 {
-	printf("EMPTY STUB !!! WNetEnumResource(%04X, %08lX, %p, %p);\n", 
+	printf("EMPTY STUB !!! WNetEnumResource("NPFMT", %08lX, %p, %p);\n", 
 							hEnum, cRequ, lpCount, lpBuf);
 	return WN_NET_ERROR;
 }

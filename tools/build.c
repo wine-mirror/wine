@@ -13,7 +13,7 @@
 #include "neexe.h"
 
 /* ELF symbols do not have an underscore in front */
-#ifdef __ELF__
+#if defined (__ELF__) || defined (__svr4__)
 #define PREFIX
 #else
 #define PREFIX "_"
@@ -539,7 +539,7 @@ static void BuildModule( int max_code_offset, int max_data_offset )
     pModule->magic = NE_SIGNATURE;
     pModule->count = 1;
     pModule->next = 0;
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_LIBMODULE;
+    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
     pModule->dgroup = 2;
     pModule->heap_size = 0xffff;
     pModule->stack_size = 0;
@@ -718,14 +718,13 @@ static void BuildSpec32Files( char *specname )
 
     printf( "/* File generated automatically, do not edit! */\n" );
     printf( "#include <sys/types.h>\n");
-	printf( "#include \"windows.h\"\n");
+    printf( "#include \"windows.h\"\n");
     printf( "#include \"dlls.h\"\n");
     printf( "#include \"pe_image.h\"\n");
     printf( "#include \"winerror.h\"\n");
-	printf( "#include \"relay32.h\"\n");
+    printf( "#include \"relay32.h\"\n");
     printf( "#include \"stddebug.h\"\n");
     printf( "#include \"debug.h\"\n");
-    printf( "\nextern int RELAY32_Unimplemented();\n\n" );
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
@@ -760,8 +759,13 @@ static void BuildSpec32Files( char *specname )
                 if (argno!=argc-1) putchar( ',' );
             }
             printf( ")\n{\n" );
-            printf( "\tdprintf_relay(stddeb,\"Entering %%s.%%s(");
-            for (argno=0;argno<argc;argno++) printf( "%%x ");
+            printf( "\tdprintf_relay(stddeb,\"Call %%s.%%s(");
+            for (argno=0;argno<argc;argno++)
+            {
+                putchar( '%' );
+                putchar( (fdp->arg_types[argno] == 'p') ? 'p' : 'x' );
+                if (argno < argc-1) putchar( ',' );
+            }
             printf( ")\\n\", \"%s\", \"%s\"", UpperDLLName, odp->export_name);
             for(argno=0;argno<argc;argno++) printf( ",%c", 'a'+argno);
             printf( ");\n\t%s(", fdp->internal_name );
@@ -847,7 +851,11 @@ static void BuildSpec16Files( char *specname )
     printf( "\t.data\n" );
     printf( "\t.globl " PREFIX "%s_Data_Start\n", UpperDLLName );
     printf( PREFIX "%s_Data_Start:\n", UpperDLLName );
+#ifdef __svr4__
+    printf( "\t.4byte 0,0,0,0,0,0,0,0\n" );
+#else
     printf( "\t.word 0,0,0,0,0,0,0,0\n" );
+#endif
     data_offset = 16;
     printf( "\t.text\n" );
     printf( "\t.globl " PREFIX "%s_Code_Start\n", UpperDLLName );
@@ -879,7 +887,11 @@ static void BuildSpec16Files( char *specname )
           case TYPE_WORD:
             printf( "/* %s.%d */\n", UpperDLLName, i);
             odp->offset = data_offset;
+#ifdef __svr4__
+            data_offset += 2 * OutputVariableCode( ".4byte", odp);
+#else
             data_offset += 2 * OutputVariableCode( ".word", odp);
+#endif
             break;
 
           case TYPE_LONG:

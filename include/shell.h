@@ -18,7 +18,11 @@ extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 
 #define HKEY_CLASSES_ROOT       1
 
+#ifdef WINELIB32
+typedef void* HKEY;
+#else
 typedef DWORD HKEY;
+#endif
 typedef HKEY FAR* LPHKEY;
 
 typedef struct tagKEYSTRUCT {
@@ -32,6 +36,13 @@ typedef struct tagKEYSTRUCT {
 	} KEYSTRUCT;
 typedef KEYSTRUCT *LPKEYSTRUCT;
 
+typedef struct tagDROPFILESTRUCT { 	   /* structure for dropped files */ 
+	WORD		wSize;
+	POINT		ptMousePos;   
+	BOOL		fInNonClientArea;
+	/* memory block with filenames follows */     
+        } DROPFILESTRUCT,FAR *LPDROPFILESTRUCT; 
+
 #define SE_ERR_SHARE            26
 #define SE_ERR_ASSOCINCOMPLETE  27
 #define SE_ERR_DDETIMEOUT       28
@@ -39,4 +50,5 @@ typedef KEYSTRUCT *LPKEYSTRUCT;
 #define SE_ERR_DDEBUSY          30
 #define SE_ERR_NOASSOC          31
 
+LRESULT AboutDlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 

@@ -90,14 +90,14 @@ struct WinSockHeap {
 	char scratch[8192];
 };
 static struct WinSockHeap *Heap;
-static int HeapHandle;
+static HANDLE HeapHandle;
 static int ScratchPtr;
 
 #ifndef WINELIB
 #define GET_SEG_PTR(x)	MAKELONG((int)((char*)(x)-(char*)Heap),	\
 							GlobalHandleToSel(HeapHandle))
 #else
-#define GET_SEG_PTR(x)	(x)
+#define GET_SEG_PTR(x)	((SEGPTR)x)
 #endif
 
 #ifndef WINELIB
@@ -196,7 +196,9 @@ static WORD wsaerrno(void)
 	case ESTALE:		return WSAESTALE;
 	case EREMOTE:		return WSAEREMOTE;
 
+#ifdef EDQUOT
         default:
+#endif
 		fprintf(stderr, "winsock: unknown errorno %d!\n", errno);
 		return WSAEOPNOTSUPP;
 	}
@@ -283,7 +285,7 @@ static void CONVERT_HOSTENT(struct WIN_hostent *heapent, struct hostent *host)
 	for(i=0;host->h_addr_list[i];i++)
 		;
 	addr_list=scratch_alloc(sizeof(SEGPTR)*(i+1));
-	heapent->h_addr_list = GET_SEG_PTR(addr_list);
+	heapent->h_addr_list = (char**)GET_SEG_PTR(addr_list);
 	for(i=0;host->h_addr_list[i];i++)
 	{
 		void *addr=scratch_alloc(host->h_length);
@@ -740,17 +742,18 @@ static void recv_message(int sig)
 {
 	struct ipc_packet message;
 
-	if (msgrcv(wine_key, &message, IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1)
+	if (msgrcv(wine_key, (struct msgbuf*)&message, 
+		   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1)
 		perror("wine: msgrcv");
 
 	fprintf(stderr, 
-		"WSA: PostMessage (hwnd %d, wMsg %d, wParam %d, lParam %ld)\n",
+		"WSA: PostMessage (hwnd "NPFMT", wMsg %d, wParam "NPFMT", lParam %ld)\n",
 		message.hWnd,
 		message.wMsg,
 		message.handle,
 		message.lParam);
 
-	PostMessage(message.hWnd, message.wMsg, message.handle, message.lParam);
+	PostMessage(message.hWnd, message.wMsg, (WPARAM)message.handle, message.lParam);
 		
 	signal(SIGUSR1, recv_message);
 }
@@ -767,10 +770,11 @@ static void send_message(HANDLE handle, HWND hWnd, u_int wMsg, long lParam)
 	message.lParam = lParam;
 
 	fprintf(stderr, 
-		"WSA: send (hwnd %d, wMsg %d, handle %d, lParam %ld)\n",
+		"WSA: send (hwnd "NPFMT", wMsg %d, handle "NPFMT", lParam %ld)\n",
 		hWnd, wMsg, handle, lParam);
 	
-	if (msgsnd(wine_key, &message,  IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
+	if (msgsnd(wine_key, (struct msgbuf*)&message,  
+		   IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
 		perror("wine: msgsnd");
 		
 	kill(getppid(), SIGUSR1);
@@ -913,7 +917,7 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
 	long event;
 	fd_set read_fds, write_fds, except_fds;
 
-	dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND %d, wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
+	dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND "NPFMT", wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
 
 	/* remove outstanding asyncselect() processes */
 	/* kill */
@@ -955,7 +959,7 @@ INT WSAFDIsSet(INT fd, fd_set *set)
 
 INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {
-	dprintf_winsock(stddeb, "WSA_AsyncRequest: handle %d\n", hAsyncTaskHandle);
+	dprintf_winsock(stddeb, "WSA_AsyncRequest: handle "NPFMT"\n", hAsyncTaskHandle);
 
 	return 0;
 }

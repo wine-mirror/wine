@@ -10,7 +10,6 @@
 #include "wintypes.h"
 #include "registers.h"
 
-
   /* miscemu/dosmem.c */
 extern BOOL DOSMEM_Init(void);
 extern void DOSMEM_FillBiosSegment(void);

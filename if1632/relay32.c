@@ -13,6 +13,7 @@
 #include "windows.h"
 #include "dlls.h"
 #include "pe_image.h"
+#include "relay32.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
 #include "debug.h"
@@ -110,8 +111,7 @@ LONG RELAY32_CallWindowProc( WNDPROC func, int hwnd, int message,
              int wParam, int lParam )
 {
 	int ret;
-	SpyMessage(hwnd, message, wParam, lParam);
-	__asm__ (
+__asm__ (
 		"push %1;"
 		"push %2;"
 		"push %3;"

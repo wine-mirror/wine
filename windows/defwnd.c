@@ -15,9 +15,11 @@
 #include "stddebug.h"
 /* #define DEBUG_MESSAGE */
 #include "debug.h"
+#include "spy.h"
 
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
+
 
 /***********************************************************************
  *           DEFWND_SetText
@@ -40,15 +42,14 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
 /***********************************************************************
  *           DefWindowProc   (USER.107)
  */
-LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
+LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     CLASS * classPtr;
     LPSTR textPtr;
     int len;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    
-    dprintf_message(stddeb, "DefWindowProc: %d %d %d %08lx\n", 
-		    hwnd, msg, wParam, lParam );
+
+    EnterSpyMessage(SPY_DEFWNDPROC,hwnd,msg,wParam,lParam);
 
     switch(msg)
     {
@@ -120,7 +121,8 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	return MA_ACTIVATE;
 
     case WM_ACTIVATE:
-	if (wParam) SetFocus( hwnd );
+      /* LOWORD() needed for WINELIB32 implementation.  Should be fine. */
+	if (LOWORD(wParam)!=WA_INACTIVE) SetFocus( hwnd );
 	break;
 
     case WM_WINDOWPOSCHANGING:
@@ -145,11 +147,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	{
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
 	    if (!classPtr->wc.hbrBackground) return 0;
-            if (classPtr->wc.hbrBackground <= COLOR_MAX+1)
+            if (classPtr->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))
             {
                  HBRUSH hbrush;
                  hbrush = CreateSolidBrush(
-                     GetSysColor(classPtr->wc.hbrBackground-1));
+                     GetSysColor(((DWORD)classPtr->wc.hbrBackground)-1));
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
@@ -162,6 +164,22 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_GETDLGCODE:
 	return 0;
 
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSTATIC:
+        SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
+        SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
+        return (LONG)sysColorObjects.hbrushWindow;
+
+    case WM_CTLCOLORSCROLLBAR:
+        SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
+        SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
+        UnrealizeObject( sysColorObjects.hbrushScrollbar );
+        return (LONG)sysColorObjects.hbrushScrollbar;
+
     case WM_CTLCOLOR:
 	{
 	    if (HIWORD(lParam) == CTLCOLOR_SCROLLBAR)
@@ -169,13 +187,13 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
 		SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
 		UnrealizeObject( sysColorObjects.hbrushScrollbar );
-		return sysColorObjects.hbrushScrollbar;
+		return (LONG)sysColorObjects.hbrushScrollbar;
 	    }
 	    else
 	    {
 		SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
 		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-		return sysColorObjects.hbrushWindow;
+		return (LONG)sysColorObjects.hbrushWindow;
 	    }
 	}
 	

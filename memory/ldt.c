@@ -7,7 +7,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef __svr4__
+#include <string.h>
+#else
 #include <strings.h>
+#endif
 #include <errno.h>
 #include "ldt.h"
 #include "stddebug.h"
@@ -22,6 +26,10 @@
 
 _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
 #endif  /* linux */
+#ifdef __svr4__
+#include <sys/sysi86.h>
+#include <sys/seg.h>
+#endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <machine/segments.h>
@@ -148,6 +156,35 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         }
     }
 #endif  /* __NetBSD__ || __FreeBSD__ */
+#ifdef __svr4__
+{
+    struct ssd ldt_mod;
+    int i;
+    ldt_mod.sel = ENTRY_TO_SELECTOR(entry) | 4;
+    ldt_mod.bo = content->base;
+    ldt_mod.ls = content->limit;
+    i =   (content->limit & 0xf0000) |
+        (content->type << 10) |
+            (((content->read_only != 0) ^ 1) << 9) |
+                ((content->seg_32bit != 0) << 22) |
+                    ((content->limit_in_pages != 0)<< 23) |
+                        (1<<15) |
+                            0x7000;
+
+    ldt_mod.acc1 = (i & 0xff00) >> 8;
+    ldt_mod.acc2 = (i & 0xf00000) >> 20;
+    
+    
+    if (content->base == 0)
+    {
+        ldt_mod.acc1 =  0;
+        ldt_mod.acc2 = 0;
+    }    
+    if ((i = sysi86(SI86DSCR, &ldt_mod)) == -1)
+        perror("sysi86");
+    
+}    
+#endif
 #endif  /* ifndef WINELIB */
 
     if (ret < 0) return ret;
@@ -168,12 +205,13 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
  *
  * Print the content of the LDT on stdout.
  */
-void LDT_Print()
+void LDT_Print( int start, int length )
 {
     int i;
     char flags[3];
 
-    for (i = 0; i < LDT_SIZE; i++)
+    if (length == -1) length = LDT_SIZE - start;
+    for (i = start; i < start + length; i++)
     {
         if (!ldt_copy[i].base && !ldt_copy[i].limit) continue; /* Free entry */
         if ((ldt_flags_copy[i] & LDT_FLAGS_TYPE) == SEGMENT_CODE)

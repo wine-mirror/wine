@@ -17,6 +17,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "comm.h"
 #include "user.h"
 #include "menu.h"
+#include "kernel32.h"
 #include "atom.h"
 #include "dialog.h"
 #include "message.h"
@@ -29,11 +30,14 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "miscemu.h"
 #include "neexe.h"
 #include "options.h"
+#include "spy.h"
 #include "task.h"
 #include "dce.h"
 #include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
+
+void init_wine_signals(void);
 
 
 /***********************************************************************
@@ -48,11 +52,13 @@ int MAIN_Init(void)
 
     SpyInit();
 
+#ifndef WINELIB
       /* Initialize relay code */
     if (!RELAY_Init()) return 0;
 
       /* Initialize Win32 relay code */
     if (!RELAY32_Init()) return 0;
+#endif
 
       /* Create built-in modules */
     if (!MODULE_Init()) return 0;
@@ -63,6 +69,7 @@ int MAIN_Init(void)
       /* Initialize tasks */
     if (!TASK_Init()) return 0;
 
+#ifndef WINELIB
       /* Initialize interrupt vectors */
     if (!INT_Init()) return 0;
 
@@ -71,6 +78,7 @@ int MAIN_Init(void)
 
       /* Initialize signal handling */
     init_wine_signals();
+#endif
 
       /* Initialize communications */
     COMM_Init();
@@ -101,6 +109,9 @@ int MAIN_Init(void)
 
       /* Initialize menus */
     if (!MENU_Init()) return 0;
+
+      /* Initialize Win32 data structures */
+    if (!KERN32_Init()) return 0;
 
       /* Create system message queue */
     queueSize = GetProfileInt( "windows", "TypeAhead", 120 );

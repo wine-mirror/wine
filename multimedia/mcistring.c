@@ -753,21 +753,21 @@ MCISTR_Set(_MCISTR_PROTO_) {
 			}
 
 			/* <keyword> <integer> */
-#define WII(str,flag,element) \
+#define WII(str,flag,fmt,element) \
 			if (!STRCMP(keywords[i],str) && (i+1<nrofkeywords)) {\
-				sscanf(keywords[i+1],"%d",&(U.wavesetParams. element ));\
+				sscanf(keywords[i+1],fmt,&(U.wavesetParams. element ));\
 				dwFlags |= flag;\
 				i+=2;\
 				continue;\
 			}
-			WII("formattag",MCI_WAVE_SET_FORMATTAG,wFormatTag);
-			WII("channels",MCI_WAVE_SET_CHANNELS,nChannels);
-			WII("bytespersec",MCI_WAVE_SET_AVGBYTESPERSEC,nAvgBytesPerSec);
-			WII("samplespersec",MCI_WAVE_SET_SAMPLESPERSEC,nSamplesPerSec);
-			WII("alignment",MCI_WAVE_SET_BLOCKALIGN,nBlockAlign);
-			WII("bitspersample",MCI_WAVE_SET_BITSPERSAMPLE,wBitsPerSample);
-			WII("input",MCI_WAVE_INPUT,wInput);
-			WII("output",MCI_WAVE_OUTPUT,wOutput);
+			WII("formattag",MCI_WAVE_SET_FORMATTAG,UIFMT,wFormatTag);
+			WII("channels",MCI_WAVE_SET_CHANNELS,UIFMT,nChannels);
+			WII("bytespersec",MCI_WAVE_SET_AVGBYTESPERSEC,"%lu",nAvgBytesPerSec);
+			WII("samplespersec",MCI_WAVE_SET_SAMPLESPERSEC,"%lu",nSamplesPerSec);
+			WII("alignment",MCI_WAVE_SET_BLOCKALIGN,UIFMT,nBlockAlign);
+			WII("bitspersample",MCI_WAVE_SET_BITSPERSAMPLE,UIFMT,wBitsPerSample);
+			WII("input",MCI_WAVE_INPUT,UIFMT,wInput);
+			WII("output",MCI_WAVE_OUTPUT,UIFMT,wOutput);
 #undef WII
 			break;
 		case MCI_DEVTYPE_SEQUENCER:
@@ -921,7 +921,7 @@ MCISTR_Break(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Capability(_MCISTR_PROTO_) {
 	MCI_GETDEVCAPS_PARMS	gdcParams;
-	int	type,i,res;
+	int	type=0,i,res;
 
 	gdcParams.dwCallback = 0;
 	if (!nrofkeywords)
@@ -1316,6 +1316,8 @@ MCISTR_Info(_MCISTR_PROTO_) {
 		_MCI_STR(infoParams.lpstrReturn);
 	return res;
 }
+
+DWORD mciSysInfo(DWORD dwFlags,LPMCI_SYSINFO_PARMS lpParms);
 
 /* query MCI driver itself for information
  * Arguments:
@@ -2080,9 +2082,9 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	UINT uReturnLength, HWND hwndCallback)
 {
 	char	*cmd,*dev,*args,**keywords;
-	WORD	uDevTyp,wDevID;
+	WORD	uDevTyp=0,wDevID=0;
 	DWORD	dwFlags;
-	int	res,i,nrofkeywords;
+	int	res=0,i,nrofkeywords;
 
 	dprintf_mci(stdnimp,"mciSendString('%s', %p, %d, %X)\n", lpstrCommand, 
 		lpstrReturnString, uReturnLength, hwndCallback

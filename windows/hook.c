@@ -52,7 +52,11 @@ BOOL UnhookWindowsHook( short id, FARPROC hproc )
     if (data->proc == hproc) {
       hhook = *prevHook;
       *prevHook = data->next;
+#ifdef WINELIB32
+      USER_HEAP_FREE((HANDLE)hhook);
+#else
       USER_HEAP_FREE(LOWORD(hhook));
+#endif
       return TRUE;
     }
   }
@@ -62,7 +66,11 @@ BOOL UnhookWindowsHook( short id, FARPROC hproc )
     if (data->proc == hproc) {
       hhook = *prevHook;
       *prevHook = data->next;
+#ifdef WINELIB32
+      USER_HEAP_FREE((HANDLE)hhook);
+#else
       USER_HEAP_FREE(LOWORD(hhook));
+#endif
       return TRUE;
     }
   }
@@ -84,8 +92,9 @@ DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
  */
 BOOL CallMsgFilter( SEGPTR msg, short code )
 {
-    if (CALL_SYSTEM_HOOK( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
-    else return CALL_TASK_HOOK( WH_MSGFILTER, code, 0, (LPARAM)msg );
+    if (CALL_TASK_HOOK( WH_MSGFILTER, code, 0, (LPARAM)msg )) 
+	return TRUE;
+    return CALL_SYSTEM_HOOK( WH_SYSMSGFILTER, code, 0, (LPARAM)msg );
 }
 
 
@@ -100,7 +109,8 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
 
     if ((id < FIRST_HOOK) || (id > LAST_HOOK)) return 0;
     if (id != WH_GETMESSAGE && id != WH_CALLWNDPROC) {
-	fprintf( stdnimp, "Unimplemented hook set: %d!\n", id );
+	fprintf( stdnimp, "Unimplemented hook set: (%d,%08lx,%04x,%04x)!\n",
+                 id, (DWORD)proc, hinst, htask );
     }
     if (htask)  /* Task-specific hook */
     {
@@ -121,7 +131,7 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
     data->proc  = proc;
     data->id    = id;
     data->htask = htask;
-    *prevHook   = USER_HEAP_SEG_ADDR(handle);
+    *prevHook   = (HHOOK)USER_HEAP_SEG_ADDR(handle);
     return *prevHook;
 }
 
@@ -141,7 +151,11 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
     }
     if (!*prevHook) return FALSE;
     *prevHook = data->next;
+#ifdef WINELIB32
+    USER_HEAP_FREE( (HANDLE)hhook );
+#else
     USER_HEAP_FREE( hhook & 0xffff );
+#endif
     return TRUE;
 }
 

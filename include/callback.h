@@ -12,8 +12,6 @@
 
 #include "stackframe.h"
 
-#ifndef WINELIB
-
 extern int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 
 
@@ -22,6 +20,9 @@ extern int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 
                                /* func     ds    parameters */
 extern WORD CallTo16_word_     ( FARPROC, WORD );
+
+#ifndef WINELIB
+
 extern WORD CallTo16_word_ww   ( FARPROC, WORD, WORD, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC, WORD, WORD, LONG );
 extern WORD CallTo16_word_ll   ( FARPROC, WORD, LONG, LONG );

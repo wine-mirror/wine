@@ -131,7 +131,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     lphc->hWndEdit = CreateWindow(MAKE_SEGPTR(editName), (SEGPTR)0, 
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, rect.right, lphl->StdItemHeight,
-				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
+				  hwnd, (HMENU)1, WIN_GetWindowInstance(hwnd), 0L);
     break;
    case CBS_DROPDOWN:          /* edit control, dropdown listbox     */
     dprintf_combo(stddeb,"CBS_DROPDOWN\n");
@@ -145,7 +145,7 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
     lphc->hWndEdit = CreateWindow(MAKE_SEGPTR(editName), (SEGPTR)0,
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
 				  0, 0, lphc->RectButton.left, lphl->StdItemHeight,
-				  hwnd, 1, GetWindowWord(hwnd,GWW_HINSTANCE), 0L);
+				  hwnd, (HMENU)1, WIN_GetWindowInstance(hwnd), 0L);
     break;
    case CBS_DROPDOWNLIST:      /* static control, downdown listbox   */
     dprintf_combo(stddeb,"CBS_DROPDOWNLIST\n");
@@ -167,10 +167,10 @@ static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 
 				lboxrect.bottom - lboxrect.top,
-				0, 0, GetWindowWord(hwnd,GWW_HINSTANCE),
-				(SEGPTR)MAKELONG(hwnd, hwnd));
+				0, 0, WIN_GetWindowInstance(hwnd),
+				(SEGPTR)hwnd );
   ShowWindow(lphc->hWndLBox, SW_HIDE);
-  dprintf_combo(stddeb,"Combo Creation LBox=%X!\n", lphc->hWndLBox);
+  dprintf_combo(stddeb,"Combo Creation LBox="NPFMT"!\n", lphc->hWndLBox);
   return 0;
 }
 
@@ -220,8 +220,13 @@ static LONG CBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
+#ifdef WINELIB32
+  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
+				(LPARAM)hwnd);
+#else
   hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
 		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
+#endif
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
   GetClientRect(hwnd, &rect);
@@ -512,14 +517,14 @@ static LONG CBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetFont
  */
-static LONG CBSetFont(HWND hwnd, WORD wParam, LONG lParam)
+static LONG CBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ComboGetListHeader(hwnd);
 
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
-    lphl->hFont = wParam;
+    lphl->hFont = (HFONT)wParam;
 
   return 0;
 }
@@ -588,7 +593,7 @@ static LONG CBShowDropDown(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           ComboWndProc
  */
-LONG ComboBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message) {	
      case WM_NCCREATE: return CBNCCreate(hwnd, wParam, lParam);
@@ -629,7 +634,11 @@ LONG ComboBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 
 HWND CLBoxGetCombo(HWND hwnd)
 {
-  return GetWindowWord(hwnd,0);
+#ifdef WINELIB32
+  return (HWND)GetWindowLong(hwnd,0);
+#else
+  return (HWND)GetWindowWord(hwnd,0);
+#endif
 }
 
 LPHEADLIST CLBoxGetListHeader(HWND hwnd)
@@ -735,8 +744,13 @@ static LONG CBLPaint( HWND hwnd, WORD wParam, LONG lParam )
   }
 
   hOldFont = SelectObject(hdc, lphl->hFont);
+#ifdef WINELIB32
+  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
+				(LPARAM)hwnd);
+#else
   hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
 		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
+#endif
 
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
@@ -835,10 +849,16 @@ static LONG CBLLButtonUp( HWND hwnd, WORD wParam, LONG lParam )
 
   if (GetCapture() == hwnd) ReleaseCapture();
 
-  if (lphl->PrevFocused != lphl->ItemFocused) {
-    SendMessage(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
-    ListBoxSendNotification(lphl, CLBoxGetCombo(hwnd), CBN_SELCHANGE);
-  }
+  if(!lphl)
+     {
+      fprintf(stdnimp,"CBLLButtonUp: CLBoxGetListHeader returned NULL!\n");
+     }
+  else if (lphl->PrevFocused != lphl->ItemFocused) 
+          {
+      		SendMessage(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
+      		ListBoxSendNotification(lphl, CLBoxGetCombo(hwnd), CBN_SELCHANGE);
+     	  }
+
   SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
 
   return 0;
@@ -938,7 +958,7 @@ static LONG CBLVScroll( HWND hwnd, WORD wParam, LONG lParam )
 /***********************************************************************
  *           ComboLBoxWndProc
  */
-LONG ComboLBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message) {	
      case WM_CREATE: return CBLCreate(hwnd, wParam, lParam);
@@ -961,7 +981,7 @@ LONG ComboLBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
  */
 BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
 {
-	fprintf(stdnimp,"DlgDirSelectComboBox(%04X, '%s', %d) \n",	
+	fprintf(stdnimp,"DlgDirSelectComboBox("NPFMT", '%s', %d) \n",
 				hDlg, lpStr, nIDLBox);
 	return TRUE;
 }
@@ -976,8 +996,8 @@ int DlgDirListComboBox(HWND hDlg, SEGPTR PathSpec,
   HWND	hWnd;
   int ret;
   LPSTR lpPathSpec = PTR_SEG_TO_LIN(PathSpec);
-  
-  dprintf_combo(stddeb,"DlgDirListComboBox(%04X, '%s', %d, %d, %04X) \n",
+
+  dprintf_combo(stddeb,"DlgDirListComboBox("NPFMT", '%s', %d, %d, %04X) \n",
 		  hDlg, lpPathSpec, nIDLBox, nIDStat, wType);
   if (nIDLBox) {
     LPHEADLIST lphl;
@@ -1003,13 +1023,13 @@ int DlgDirListComboBox(HWND hDlg, SEGPTR PathSpec,
 	temp[1] = 'A'+drive;
 	temp[2] = ':';
 	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            USER_HEAP_SEG_ADDR(hTemp) + 1 );
+                            (LPARAM)(USER_HEAP_SEG_ADDR(hTemp) + 1) );
       } else {
 	temp[0] = 'A'+drive;
 	temp[1] = ':';
 	temp[2] = '\\';
 	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            USER_HEAP_SEG_ADDR(hTemp) );
+                            (LPARAM)USER_HEAP_SEG_ADDR(hTemp) );
       }
       USER_HEAP_FREE( hTemp );
   } 

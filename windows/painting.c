@@ -47,7 +47,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     DeleteObject( hrgnUpdate );
     if (!lps->hdc)
     {
-        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd=%x\n", hwnd );
+        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd="NPFMT"\n", hwnd );
         return 0;
     }
 
@@ -57,7 +57,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
+        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
     }
     else lps->fErase = TRUE;
 
@@ -93,11 +93,17 @@ void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
 {
       /* Send WM_CTLCOLOR message if needed */
 
-    if (hbrush <= CTLCOLOR_MAX)
+    if ((DWORD)hbrush <= CTLCOLOR_MAX)
     {
 	if (!hwndParent) return;
+#ifdef WINELIB32
+	hbrush = (HBRUSH)SendMessage( hwndParent, 
+				      WM_CTLCOLORMSGBOX+(DWORD)hbrush,
+				      (WPARAM)hdc, (LPARAM)hwnd );
+#else
 	hbrush = (HBRUSH)SendMessage( hwndParent, WM_CTLCOLOR,
 				      hdc, MAKELONG( hwnd, hbrush ) );
+#endif
     }
     if (hbrush) FillRect( hdc, rect, hbrush );
 }
@@ -108,8 +114,13 @@ void PaintRect(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush, LPRECT rect)
  */
 HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 {
+#ifdef WINELIB32
+    return (HBRUSH)SendMessage( GetParent(hwnd), WM_CTLCOLOR+control,
+                                (WPARAM)hdc, (LPARAM)hwnd );
+#else
     return (HBRUSH)SendMessage( GetParent(hwnd), WM_CTLCOLOR,
                                 hdc, MAKELONG( hwnd, control ) );
+#endif
 }
 
 
@@ -129,13 +140,13 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
     if (rectUpdate)
     {
-        dprintf_win( stddeb, "RedrawWindow: %x %d,%d-%d,%d %x flags=%04x\n",
+        dprintf_win( stddeb, "RedrawWindow: "NPFMT" %d,%d-%d,%d "NPFMT" flags=%04x\n",
                      hwnd, rectUpdate->left, rectUpdate->top,
                      rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags);
     }
     else
     {
-        dprintf_win( stddeb, "RedrawWindow: %x NULL %x flags=%04x\n",
+        dprintf_win( stddeb, "RedrawWindow: "NPFMT" NULL "NPFMT" flags=%04x\n",
                      hwnd, hrgnUpdate, flags);
     }
     GetClientRect( hwnd, &rectClient );
@@ -239,7 +250,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
                 if (!(wndPtr->dwStyle & WS_MINIMIZE)
                     || !WIN_CLASS_INFO(wndPtr).hIcon)
                 {
-                    if (SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 ))
+                    if (SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
                         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
                 }
                 ReleaseDC( hwnd, hdc );

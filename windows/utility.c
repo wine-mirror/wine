@@ -423,3 +423,25 @@ int wvsprintf(LPSTR buf, LPSTR format, LPSTR args)
 	free(newargs);
 	return result;
 };
+
+/******************************************************************************
+ *                              DragDetect ( USER.465 )
+ *
+ * Hardly ever called at all
+ */
+
+
+/******************************************************************************
+ *                              DragObject ( USER.464 )
+ *
+ * responsible for generation of WM_QUERYDROPOBJECT, WM_DRAGLOOP, 
+ *                               WM_DRAGMOVE,        WM_DROPOBJECT
+ */
+LONG DragObject(HWND hDesktop, HWND hWnd, UINT Unknown1, WORD Unknown2, WORD Unknown3, HCURSOR hCursor)
+{
+
+ fprintf(stdnimp,"DragObject: EmptyStub!!!\n");
+ return 0;
+}
+ 
+

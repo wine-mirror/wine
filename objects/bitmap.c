@@ -8,11 +8,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
-#include "arch.h"
 #include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
-#include "resource.h"  /* for ConvertCore/InfoBitmap */
 #include "stddebug.h"
 /* #define DEBUG_GDI    */
 /* #define DEBUG_BITMAP */
@@ -126,7 +124,7 @@ HBITMAP CreateBitmap( short width, short height,
 HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
 {
     DC * dc;
-    dprintf_gdi(stddeb, "CreateCompatibleBitmap: %d %dx%d\n", 
+    dprintf_gdi(stddeb, "CreateCompatibleBitmap: "NPFMT" %dx%d\n", 
 		hdc, width, height );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     return CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
@@ -213,17 +211,17 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
     HDC hdc;
     HRSRC hRsrc;
     HGLOBAL handle;
-    int size;
-    long *lp;
+    BITMAPINFO *info;
 
     if (HIWORD(name))
     {
         char *str = (char *)PTR_SEG_TO_LIN( name );
-        dprintf_bitmap( stddeb, "LoadBitmap(%04x,'%s')\n", instance, str );
-        if (str[0] == '#') name = (SEGPTR)atoi( str + 1 );
+        dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",'%s')\n", instance, str );
+        if (str[0] == '#') name = (SEGPTR)(WORD)atoi( str + 1 );
     }
     else
-        dprintf_bitmap(stddeb,"LoadBitmap(%04x,%04x)\n",instance,LOWORD(name));
+        dprintf_bitmap( stddeb, "LoadBitmap("NPFMT",%04x)\n",
+                        instance, LOWORD(name) );
 
     if (!instance)  /* OEM bitmap */
     {
@@ -234,14 +232,12 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
     if (!(hRsrc = FindResource( instance, name, RT_BITMAP ))) return 0;
     if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 
-    lp = (long *)LockResource( handle );
-    size = CONV_LONG(*lp);
+    info = (BITMAPINFO *)LockResource( handle );
     if ((hdc = GetDC(0)) != 0)
     {
-        if (size == sizeof(BITMAPCOREHEADER))
-            hbitmap = ConvertCoreBitmap( hdc, (BITMAPCOREHEADER *) lp );
-        else if (size == sizeof(BITMAPINFOHEADER))
-            hbitmap = ConvertInfoBitmap( hdc, (BITMAPINFO *) lp );
+        char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
+        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
+                                  bits, info, DIB_RGB_COLORS );
         ReleaseDC( 0, hdc );
     }
     FreeResource( handle );
@@ -306,7 +302,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
  */
 HBITMAP CreateDiscardableBitmap(HDC hdc, short width, short height)
 {
-    dprintf_bitmap(stddeb,"CreateDiscardableBitmap(%04X, %d, %d); "
+    dprintf_bitmap(stddeb,"CreateDiscardableBitmap("NPFMT", %d, %d); "
 	   "// call CreateCompatibleBitmap() for now!\n",
 	   hdc, width, height);
     return CreateCompatibleBitmap(hdc, width, height);

@@ -6,10 +6,13 @@
  * All the memory management is being done by the libc malloc and friends.
  */
 
-#ifndef __STDC__
+/* #ifndef __STDC__ */
 #include <malloc.h>
-#endif
+#include <string.h>
+/* #endif */
 #include "windows.h"
+
+#ifdef WINELIB16
 
 /* Controls the blocks per handle table */
 #define MAXBLOCKS 1024
@@ -200,6 +203,114 @@ int HEAP_LocalFindHeap ()
 
 DWORD int GlobalHandle(WORD selector)
 {
+}
+
+#endif
+
+#else /* WINELIB16 */
+HANDLE LocalAlloc (WORD flags, WORD bytes)
+{
+    HANDLE m;
+
+    if (flags & LMEM_WINE_ALIGN)
+	m = memalign (4, bytes);
+    else
+	m = malloc (bytes);
+    if (m){
+	if (flags & LMEM_ZEROINIT)
+	    bzero (m, bytes);
+    }
+    return m;
+}
+
+WORD LocalCompact (WORD min_free)
+{
+    return min_free;
+}
+
+WORD LocalFlags (HANDLE hMem)
+{
+    return 0;
+}
+
+HANDLE LocalFree (HANDLE hMem)
+{
+    free(hMem);
+    return 0;
+}
+
+BOOL LocalInit (HANDLE segment, WORD start, WORD end)
+{
+    return TRUE;
+}
+
+LPVOID LocalLock (HANDLE hMem)
+{
+    return hMem;
+}
+
+HANDLE LocalReAlloc (HANDLE hMem, WORD flags, WORD bytes)
+{
+    realloc(hMem, bytes);
+    return hMem;
+}
+
+WORD LocalSize (HANDLE hMem)
+{
+    /* Not implemented yet */
+  return 0;
+}
+
+
+BOOL LocalUnLock (HANDLE hMem)
+{
+    return 0;
+}
+
+HANDLE GlobalAlloc (WORD flags, DWORD size)
+{
+    return LocalAlloc (flags, size);
+}
+
+HANDLE GlobalFree (HANDLE hMem)
+{
+    return LocalFree (hMem);
+}
+
+LPVOID GlobalLock (HGLOBAL hMem)
+{
+    return LocalLock (hMem);
+}
+
+BOOL GlobalUnlock (HANDLE hMem)
+{
+    return LocalUnLock (hMem);
+}
+
+WORD GlobalFlags (HANDLE hMem)
+{
+    return LocalFlags (hMem);
+}
+
+DWORD GlobalSize (HANDLE hMem)
+{
+    return LocalSize (hMem);
+}
+
+DWORD GlobalCompact(DWORD desired)
+{
+    if (desired)
+	return desired;
+    else
+	return 0x01000000;	/* Should check the available core. */
+}
+
+HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
+{
+    if (!(flags & GMEM_MODIFY))
+      return LocalReAlloc (hMem, new_size, flags);
+    else
+      return hMem;
 }
 
 #endif

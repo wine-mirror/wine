@@ -31,6 +31,9 @@ gen_res* g_start;
 FILE *header,*code;
 char hname[256],sname[256];
 
+int transform_binary_file(void);
+int yyparse(void);
+
 int main(int argc,char *argv[])
 {  
 	extern int yydebug;
@@ -88,6 +91,7 @@ int transform_binary_file()
 		fprintf(code,"%3d,",c);
 	}
 	fprintf(code,"\n0}\nint _Aplication_resources_size=%d;\n",i);
+	return 0;
 }
 
 /* SunOS' memcpy is wrong for overlapping arrays */
@@ -592,19 +596,22 @@ void create_output(gen_res* top)
     fprintf( code, "  0\n};\n" );
 }
 
-void make_font()
+gen_res* make_font(gen_res* res)
 {
 	fprintf(stderr,"Fonts not supported\n");
+	return NULL;
 }
 
-void make_raw()
+gen_res* make_raw(gen_res* res)
 {
 	fprintf(stderr,"RCData not supported\n");
+	return NULL;
 }
 
-void int_to_raw()
+gen_res* int_to_raw(int i,gen_res* res)
 {
 	fprintf(stderr,"IntToRaw not supported\n");
+	return NULL;
 }
 
 /* translate "Hello,\\tworld!\\10" to "Hello,\tworld!\n" */

@@ -64,6 +64,7 @@ typedef WSADATA FAR *LPWSADATA;
 
 #ifndef _SYS_SOCKET_H_
 #ifndef _sys_socket_h
+#ifndef _NET_TRANSPORT_SOCKET_H
 /*
  * Structure used by kernel to pass protocol
  * information in raw sockets.
@@ -74,10 +75,14 @@ struct sockproto {
 };
 #endif
 #endif
+#endif
 
 /*
  * Maximum queue length specifiable by listen.
  */
+#ifdef SOMAXCONN
+#undef SOMAXCONN
+#endif
 #define SOMAXCONN       5
 
 #ifndef MSG_DONTROUTE

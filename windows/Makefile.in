@@ -5,7 +5,6 @@ C_SRCS = \
 	alias.c \
 	caret.c \
 	class.c \
-	cursor.c \
 	dce.c \
 	defdlg.c \
 	defwnd.c \

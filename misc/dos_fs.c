@@ -24,7 +24,9 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #endif
-
+#ifdef __svr4__
+#include <sys/statfs.h>
+#endif
 #include "wine.h"
 #include "windows.h"
 #include "msdos.h"
@@ -60,6 +62,60 @@ struct DosDriveStruct {			/*  eg: */
 static struct DosDriveStruct DosDrives[MAX_DOS_DRIVES];
 static struct dosdirent *DosDirs=NULL;
 
+WORD ExtendedError;
+BYTE ErrorClass, Action, ErrorLocus;
+
+int DOS_Error(int e, int class, int el)
+{
+	ErrorClass = class;
+	Action = SA_Ask4Retry;
+	ErrorLocus = el;
+	ExtendedError = e;
+
+	return e;
+}
+
+void errno_to_doserr(void)
+{
+	switch (errno) {
+		case EAGAIN:
+			DOS_Error (ShareViolation, EC_Temporary, EL_Unknown);
+			break;
+		case EBADF:
+			DOS_Error (InvalidHandle, EC_AppError, EL_Unknown);
+			break;
+		case ENOSPC:
+			DOS_Error (DiskFull, EC_MediaError, EL_Disk);
+			break;				
+		case EACCES:
+		case EPERM:
+		case EROFS:
+			DOS_Error (WriteProtected, EC_AccessDenied, EL_Unknown);
+			break;
+		case EBUSY:
+			DOS_Error (LockViolation, EC_AccessDenied, EL_Unknown);
+			break;		
+		case ENOENT:
+			DOS_Error (FileNotFound, EC_NotFound, EL_Unknown);
+			break;				
+		case EISDIR:
+			DOS_Error (CanNotMakeDir, EC_AccessDenied, EL_Unknown);
+			break;
+		case ENFILE:
+		case EMFILE:
+			DOS_Error (NoMoreFiles, EC_MediaError, EL_Unknown);
+			break;
+		case EEXIST:
+			DOS_Error (FileExists, EC_Exists, EL_Disk);
+			break;				
+		default:
+			dprintf_int(stddeb, "int21: unknown errno %d!\n", errno);
+			DOS_Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
+			break;
+	}
+}
+
+
 static void ExpandTildeString(char *s)
 {
     struct passwd *entry;
@@ -88,7 +144,7 @@ static void ExpandTildeString(char *s)
     *s = 0;
 }
 
-/* Simplify the path in "name" by removing  "//"'s and
+/* Simplify the path in "name" by removing  "//"'s, "/./"'s, and
    ".."'s in names like "/usr/bin/../lib/test" */
 static void DOS_SimplifyPath(char *name)
 {
@@ -107,6 +163,9 @@ static void DOS_SimplifyPath(char *name)
       if (p == NULL) p = name;
       strcpy(p,l+3);
       changed = TRUE;
+    }
+    while ((l = strstr(name, "/./"))) {
+      strcpy(l, l+2); changed = TRUE;
     }
   } while (changed);
   dprintf_dosfs(stddeb,"SimplifyPath: After %s\n",name);
@@ -569,19 +628,27 @@ int DOS_GetFreeSpace(int drive, long *size, long *available)
 	if (!DOS_ValidDrive(drive))
 		return 0;
 
+#ifdef __svr4__
+	if (statfs(DosDrives[drive].rootdir, &info, 0, 0) < 0) {
+#else
 	if (statfs(DosDrives[drive].rootdir, &info) < 0) {
+#endif
 		fprintf(stderr,"dosfs: cannot do statfs(%s)\n",
 			DosDrives[drive].rootdir);
 		return 0;
 	}
 
 	*size = info.f_bsize * info.f_blocks;
+#ifdef __svr4__
+	*available = info.f_bfree * info.f_bsize;
+#else
 	*available = info.f_bavail * info.f_bsize;
+#endif
 
 	return 1;
 }
 
-char *DOS_FindFile(char *buffer, int buflen, char *filename, char **extensions, 
+char *DOS_FindFile(char *buffer, int buflen, const char *filename, char **extensions, 
 		char *path)
 {
     char *workingpath, *dirname, *rootname, **e;

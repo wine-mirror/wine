@@ -15,6 +15,7 @@
 #include "relay32.h"
 #include "../rc/sysres.h"
 #include "dlgs.h"
+#include "win.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -36,7 +37,7 @@ static LONG SHELL_RegCheckForRoot()
         printf("SHELL_RegCheckForRoot: Couldn't allocate root key!\n");
         return ERROR_OUTOFMEMORY;
       }
-      lphRootKey->hKey = 1;
+      lphRootKey->hKey = (HKEY)1;
       lphRootKey->lpSubKey = RootKeyName;
       lphRootKey->dwType = 0;
       lphRootKey->lpValue = NULL;
@@ -60,6 +61,157 @@ static LONG SHELL_RegCheckForRoot()
     return ERROR_SUCCESS;
 }
 
+/* FIXME: the loading and saving of the registry database is rather messy.
+ * bad input (while reading) may crash wine.
+ */
+void
+_DumpLevel(FILE *f,LPKEYSTRUCT lpTKey,int tabs) {
+	LPKEYSTRUCT	lpKey;
+
+	lpKey=lpTKey->lpSubLvl;
+	while (lpKey) {
+		int	i;
+		for (i=0;i<tabs;i++) fprintf(f,"\t");
+		/* implement different dwTypes ... */
+		if (lpKey->lpValue)
+			fprintf(f,"%s=%s\n",lpKey->lpSubKey,lpKey->lpValue);
+		else
+			fprintf(f,"%s\n",lpKey->lpSubKey);
+
+		if (lpKey->lpSubLvl)
+			_DumpLevel(f,lpKey,tabs+1);
+		lpKey=lpKey->lpNextKey;
+	}
+}
+
+static void
+_SaveKey(HKEY hKey,char *where) {
+	FILE		*f;
+	LPKEYSTRUCT	lpKey;
+
+	f=fopen(where,"w");
+	if (f==NULL) {
+		perror("registry-fopen");
+		return;
+	}
+	switch ((DWORD)hKey) {
+	case HKEY_CLASSES_ROOT:
+		lpKey=lphRootKey;
+		break;
+	default:return;
+	}
+	_DumpLevel(f,lpKey,0);
+	fclose(f);
+}
+
+void
+SHELL_SaveRegistry(void) {
+	/* FIXME: 
+	 * -implement win95 additional keytypes here
+	 * (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER or whatever)
+	 * -choose better filename(s)
+	 */
+	_SaveKey(HKEY_CLASSES_ROOT,"/tmp/winereg");
+}
+
+#define BUFSIZE	256
+void
+_LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf) {
+	int		i;
+	char		*s,*t;
+	HKEY		hNewKey;
+	LPKEYSTRUCT	lpNewKey;
+
+	while (1) {
+		if (NULL==fgets(buf,BUFSIZE,f)) {
+			buf[0]=0;
+			return;
+		}
+		for (i=0;buf[i]=='\t';i++) /*empty*/;
+		s=buf+i;
+		if (NULL!=(t=strchr(s,'\n'))) *t='\0';
+		if (NULL!=(t=strchr(s,'\r'))) *t='\0';
+
+		if (i<tabsexp) return;
+
+		if (i>tabsexp) {
+			hNewKey=GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+			lpNewKey=lpKey->lpSubLvl=(LPKEYSTRUCT)GlobalLock(hNewKey);
+			lpNewKey->hKey		= hNewKey;
+			lpNewKey->dwType	= 0;
+			lpNewKey->lpSubKey	=
+			lpNewKey->lpValue	=
+			lpNewKey->lpSubLvl	=
+			lpNewKey->lpNextKey	=
+			lpNewKey->lpPrevKey	= NULL;
+			if (NULL!=(t=strchr(s,'='))) {
+				*t='\0';t++;
+				lpNewKey->dwType	= REG_SZ;
+				lpNewKey->lpSubKey	= strdup(s);
+				lpNewKey->lpValue	= strdup(t);
+			} else {
+				lpNewKey->dwType	= REG_SZ;
+				lpNewKey->lpSubKey	= strdup(s);
+			}
+			_LoadLevel(f,lpNewKey,tabsexp+1,buf);
+		}
+		for (i=0;buf[i]=='\t';i++) /*empty*/;
+		s=buf+i;
+		if (i<tabsexp) return;
+		if (buf[0]=='\0') break; /* marks end of file */
+		/* we have a buf now. even when returning from _LoadLevel */
+		hNewKey		= GlobalAlloc(GMEM_MOVEABLE,sizeof(KEYSTRUCT));
+		lpNewKey	= lpKey->lpNextKey=(LPKEYSTRUCT)GlobalLock(hNewKey);
+		lpNewKey->lpPrevKey	= lpKey;
+		lpNewKey->hKey		= hNewKey;
+		lpNewKey->dwType	= 0;
+		lpNewKey->lpSubKey	=
+		lpNewKey->lpValue	=
+		lpNewKey->lpSubLvl	=
+		lpNewKey->lpNextKey	= NULL;
+		if (NULL!=(t=strchr(s,'='))) {
+			*t='\0';t++;
+			lpNewKey->dwType	= REG_SZ;
+			lpNewKey->lpSubKey	= strdup(s);
+			lpNewKey->lpValue	= strdup(t);
+		} else {
+			lpNewKey->dwType	= REG_SZ;
+			lpNewKey->lpSubKey	= strdup(s);
+		}
+		lpKey=lpNewKey;
+	}
+}
+
+void
+_LoadKey(HKEY hKey,char *from) {
+	FILE		*f;
+	LPKEYSTRUCT	lpKey;
+	char		buf[BUFSIZE]; /* FIXME: long enough? */
+
+	f=fopen(from,"r");
+	if (f==NULL) {
+		perror("fopen-registry-read");
+		return;
+	}
+	switch ((DWORD)hKey) {
+	case HKEY_CLASSES_ROOT:
+		lpKey=lphRootKey;
+		break;
+	default:return;
+	}
+	_LoadLevel(f,lpKey,-1,buf);
+}
+
+void
+SHELL_LoadRegistry(void) {
+	DWORD	dwRet;
+
+	dwRet=SHELL_RegCheckForRoot();
+	if (dwRet!=ERROR_SUCCESS) 
+		return;/*very bad magic, if we can't even allocate the rootkeys*/
+	_LoadKey(HKEY_CLASSES_ROOT,"/tmp/winereg");
+}
+
 /*************************************************************************
  *				RegOpenKey		[SHELL.1]
  */
@@ -73,16 +225,16 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
         dwRet = SHELL_RegCheckForRoot();
         if (dwRet != ERROR_SUCCESS) return dwRet;
 	dprintf_reg(stddeb, "RegOpenKey(%08lX, %p='%s', %p)\n",
-						hKey, lpSubKey, lpSubKey, lphKey);
+				       (DWORD)hKey, lpSubKey, lpSubKey, lphKey);
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
-        switch(hKey) {
+        switch((DWORD)hKey) {
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
-	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", hKey);
+	  dprintf_reg(stddeb,"RegOpenKey // specific key = %08lX !\n", (DWORD)hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
 	if (lpSubKey == NULL || !*lpSubKey)  { 
@@ -127,16 +279,16 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 
 	dwRet = SHELL_RegCheckForRoot();
         if (dwRet != ERROR_SUCCESS) return dwRet;
-	dprintf_reg(stddeb, "RegCreateKey(%08lX, '%s', %p)\n",	hKey, lpSubKey, lphKey);
+	dprintf_reg(stddeb, "RegCreateKey(%08lX, '%s', %p)\n",	(DWORD)hKey, lpSubKey, lphKey);
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
-        switch(hKey) {
+        switch((DWORD)hKey) {
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
-	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", hKey);
+	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", (DWORD)hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
 	if (lpSubKey == NULL || !*lpSubKey)  { 
@@ -179,11 +331,11 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	    lpNewKey->lpValue = NULL;
 	    lpNewKey->lpSubLvl = NULL;
 	    *lphKey = hNewKey;
-	    dprintf_reg(stddeb,"RegCreateKey // successful '%s' key=%08lX !\n", str, hNewKey);
+	    dprintf_reg(stddeb,"RegCreateKey // successful '%s' key=%08lX !\n", str, (DWORD)hNewKey);
 	    lpKey = lpNewKey;
 	  } else {
             *lphKey = lpKey->hKey;
-	    dprintf_reg(stddeb,"RegCreateKey // found '%s', key=%08lX\n", str, *lphKey);
+	    dprintf_reg(stddeb,"RegCreateKey // found '%s', key=%08lX\n", str, (DWORD)*lphKey);
 	  }
 	}
 	return ERROR_SUCCESS;
@@ -195,7 +347,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
  */
 LONG RegCloseKey(HKEY hKey)
 {
-	dprintf_reg(stdnimp, "EMPTY STUB !!! RegCloseKey(%08lX);\n", hKey);
+	dprintf_reg(stdnimp, "EMPTY STUB !!! RegCloseKey(%08lX);\n", (DWORD)hKey);
 	return ERROR_SUCCESS;
 }
 
@@ -205,8 +357,8 @@ LONG RegCloseKey(HKEY hKey)
  */
 LONG RegDeleteKey(HKEY hKey, LPCSTR lpSubKey)
 {
-	dprintf_reg(stdnimp, "EMPTY STUB !!! RegDeleteKey(%08lX, '%s');\n", 
-												hKey, lpSubKey);
+	dprintf_reg(stdnimp, "EMPTY STUB !!! RegDeleteKey(%08lX, '%s');\n",
+                     (DWORD)hKey, lpSubKey);
 	return ERROR_SUCCESS;
 }
 
@@ -221,7 +373,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
     LPKEYSTRUCT	lpKey;
     LONG       	dwRet;
     dprintf_reg(stddeb, "RegSetValue(%08lX, '%s', %08lX, '%s', %08lX);\n",
-		hKey, lpSubKey, dwType, lpVal, dwIgnored);
+		(DWORD)hKey, lpSubKey, dwType, lpVal, dwIgnored);
     /*if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;*/
     if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
     if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
@@ -251,7 +403,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	LONG		dwRet;
 	int			size;
 	dprintf_reg(stddeb, "RegQueryValue(%08lX, '%s', %p, %p);\n",
-							hKey, lpSubKey, lpVal, lpcb);
+                    (DWORD)hKey, lpSubKey, lpVal, lpcb);
 	/*if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;*/
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpcb == NULL) return ERROR_INVALID_PARAMETER;
@@ -291,16 +443,16 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 
 	dwRet = SHELL_RegCheckForRoot();
         if (dwRet != ERROR_SUCCESS) return dwRet;
-	dprintf_reg(stddeb, "RegEnumKey(%08lX, %ld)\n", hKey, dwSubKey);
+	dprintf_reg(stddeb, "RegEnumKey(%08lX, %ld)\n", (DWORD)hKey, dwSubKey);
 	if (lpBuf == NULL) return ERROR_INVALID_PARAMETER;
-        switch(hKey) {
+        switch((DWORD)hKey) {
 	case 0: 
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
           lpKey = lphRootKey; break;
         default: 
-	  dprintf_reg(stddeb,"RegEnumKey // specific key = %08lX !\n", hKey);
+	  dprintf_reg(stddeb,"RegEnumKey // specific key = %08lX !\n", (DWORD)hKey);
 	  lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
         }
         lpKey = lpKey->lpSubLvl;
@@ -319,22 +471,61 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 	return ERROR_INVALID_PARAMETER;
 }
 
+
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
-	fprintf(stdnimp, "DragAcceptFiles : Empty Stub !!!\n");
+ /* flips WS_EX_ACCEPTFILES bit according to the value of b (TRUE or FALSE) */
+
+ dprintf_reg(stddeb,"DragAcceptFiles(%04x, %u) old exStyle %08lx\n",hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
+
+ SetWindowLong(hWnd,GWL_EXSTYLE,GetWindowLong(hWnd,GWL_EXSTYLE) | b*(LONG)WS_EX_ACCEPTFILES); 
 }
 
 
 /*************************************************************************
  *				DragQueryFile		[SHELL.11]
  */
-void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
+UINT DragQueryFile(HDROP hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 {
-	fprintf(stdnimp, "DragQueryFile : Empty Stub !!!\n");
+ /* hDrop is a global memory block allocated with GMEM_SHARE 
+    with DROPFILESTRUCT as a header and filenames following
+    it, zero length filename is in the end */       
 
+ LPDROPFILESTRUCT lpDropFileStruct;
+ LPSTR		  lpCurrent;
+ WORD		  i;
+
+ dprintf_reg(stddeb,"DragQueryFile(%04x, %i, %p, %u)\n",
+                           hDrop,wFile,lpszFile,wLength);
+
+ lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+ if(!lpDropFileStruct)
+    {
+       dprintf_reg(stddeb,"DragQueryFile: unable to lock handle!\n");
+       return 0;
+    } 
+ lpCurrent = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
+
+ i = 0;
+ while(i++ < wFile)
+    {
+       while(*lpCurrent++);  /* skip filename */
+       if(!*lpCurrent) 
+          return (wFile == 0xFFFF)? i : 0;  
+    }
+
+ i = strlen(lpCurrent); 
+ if(!lpszFile) return i+1;   /* needed buffer size */
+
+ i = ( wLength > i)? i : wLength-1;
+ strncpy(lpszFile,lpCurrent,i);
+ lpszFile[i]='\0';
+
+ GlobalUnlock(hDrop);
+ return i;
 }
 
 
@@ -343,17 +534,25 @@ void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
  */
 void DragFinish(HDROP h)
 {
-	fprintf(stdnimp, "DragFinish : Empty Stub !!!\n");
+ GlobalFree((HGLOBAL)h);
 }
 
 
 /*************************************************************************
  *				DragQueryPoint		[SHELL.13]
  */
-BOOL DragQueryPoint(HDROP h, POINT FAR *p)
+BOOL DragQueryPoint(HDROP hDrop, POINT FAR *p)
 {
-	fprintf(stdnimp, "DragQueryPoint : Empty Stub !!!\n");
-        return FALSE;
+ LPDROPFILESTRUCT lpDropFileStruct;  
+ BOOL             bRet;
+
+ lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
+
+ memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
+ bRet = lpDropFileStruct->fInNonClientArea;
+
+ GlobalUnlock(hDrop);
+ return bRet; 
 }
 
 
@@ -371,7 +570,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
      * we have to pass the parameters. If an instance is already running,
      * we might have to send DDE commands.
      */
-    dprintf_exec(stddeb, "ShellExecute(%4X,'%s','%s','%s','%s',%x)\n",
+    dprintf_exec(stddeb, "ShellExecute("NPFMT",'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
 		lpParameters ? lpParameters : "<null>", 
 		lpDirectory ? lpDirectory : "<null>", iShowCmd);
@@ -392,7 +591,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
       }
     } else {
       len=200;
-      if (RegQueryValue(HKEY_CLASSES_ROOT,p,subclass,&len)==ERROR_SUCCESS) {
+      if (RegQueryValue((HKEY)HKEY_CLASSES_ROOT,p,subclass,&len)==ERROR_SUCCESS) {
 	if (len>20)
 	  fprintf(stddeb,"ShellExecute:subclass with len %ld? (%s), please report.\n",len,subclass);
 	subclass[len]='\0';
@@ -401,7 +600,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
 	strcat(subclass,"\\command");
 	dprintf_exec(stddeb,"ShellExecute:looking for %s.\n",subclass);
 	len=400;
-	if (RegQueryValue(HKEY_CLASSES_ROOT,subclass,cmd,&len)==ERROR_SUCCESS) {
+	if (RegQueryValue((HKEY)HKEY_CLASSES_ROOT,subclass,cmd,&len)==ERROR_SUCCESS) {
 	  char *t;
 	  dprintf_exec(stddeb,"ShellExecute:...got %s\n",cmd);
 	  cmd[len]='\0';
@@ -413,6 +612,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
 	    char *s;
 	    s=malloc(len+strlen(lpFile)+10);
 	    strncpy(s,cmd,t-cmd);
+	    s[t-cmd]='\0';
 	    strcat(s,lpFile);
 	    strcat(s,t+2);
 	    strcpy(cmd,s);
@@ -425,13 +625,14 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
 	  }
 	} else {
 	  fprintf(stddeb,"ShellExecute: No %s\\shell\\%s\\command found for \"%s\" suffix.\n",subclass,lpOperation,p);
-	  return 14; /* unknown type */
+	  return (HINSTANCE)14; /* unknown type */
 	}
       } else {
 	fprintf(stddeb,"ShellExecute: No operation found for \"%s\" suffix.\n",p);
-	return 14; /* file not found */
+	return (HINSTANCE)14; /* file not found */
       }
     }
+    dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
     return WinExec(cmd,iShowCmd);
 }
 
@@ -445,18 +646,22 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
         return 0;
 }
 
-static char AppName[512], AppMisc[512];
+static char AppName[128], AppMisc[906];
 
 /*************************************************************************
  *				AboutDlgProc		[SHELL.33]
  */
-INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
+LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   char Template[512], AppTitle[512];
  
   switch(msg) {
    case WM_INITDIALOG:
+#ifdef WINELIB32
+    SendDlgItemMessage(hWnd,stc1,STM_SETICON,lParam,0);
+#else
     SendDlgItemMessage(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
+#endif
     GetWindowText(hWnd, Template, 511);
     sprintf(AppTitle, Template, AppName);
     SetWindowText(hWnd, AppTitle);
@@ -484,11 +689,13 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
     DWORD WineProc,Win16Proc,Win32Proc;
     static int initialized=0;
 
-    if (szApp) strcpy(AppName, szApp);
+    if (szApp) strncpy(AppName, szApp, sizeof(AppName));
     else *AppName = 0;
+    AppName[sizeof(AppName)-1]=0;
 
-    if (szOtherStuff) strcpy(AppMisc, szOtherStuff);
+    if (szOtherStuff) strncpy(AppMisc, szOtherStuff, sizeof(AppMisc));
     else *AppMisc = 0;
+    AppMisc[sizeof(AppMisc)-1]=0;
 
     if (!hIcon) hIcon = LoadIcon(0,MAKEINTRESOURCE(OIC_WINEICON));
     
@@ -507,9 +714,10 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
                                  GetCurrentPDB(), FALSE, FALSE,
                                  TRUE, NULL );
     if (!handle) return FALSE;
-    bRet = DialogBoxIndirectParam( GetWindowWord( hWnd, GWW_HINSTANCE ),
+    bRet = DialogBoxIndirectParam( WIN_GetWindowInstance( hWnd ),
                                    handle, hWnd,
-                                   GetWndProcEntry16("AboutDlgProc"), hIcon );
+                                   GetWndProcEntry16("AboutDlgProc"), 
+				   (LONG)hIcon );
     GLOBAL_FreeBlock( handle );
     return bRet;
 }
@@ -521,7 +729,7 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 {
 	HICON	hIcon = 0;
 	HINSTANCE hInst2 = hInst;
-	dprintf_reg(stddeb, "ExtractIcon(%04X, '%s', %d\n", 
+	dprintf_reg(stddeb, "ExtractIcon("NPFMT", '%s', %d\n", 
 			hInst, lpszExeFileName, nIconIndex);
         return 0;
 	if (lpszExeFileName != NULL) {

@@ -571,7 +571,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
 LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count, 
                     short cTabStops, LPINT lpTabPos, short nTabOrg )
 {
-    dprintf_text( stddeb, "TabbedTextOut: %x %d,%d '%*.*s' %d\n",
+    dprintf_text( stddeb, "TabbedTextOut: "NPFMT" %d,%d '%*.*s' %d\n",
                   hdc, x, y, count, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                lpTabPos, nTabOrg, TRUE );
@@ -584,7 +584,7 @@ LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count,
 DWORD GetTabbedTextExtent( HDC hdc, LPSTR lpstr, int count, 
                           int cTabStops, LPINT lpTabPos )
 {
-    dprintf_text( stddeb, "GetTabbedTextExtent: %x '%*.*s' %d\n",
+    dprintf_text( stddeb, "GetTabbedTextExtent: "NPFMT" '%*.*s' %d\n",
                   hdc, count, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                lpTabPos, 0, FALSE );

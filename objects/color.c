@@ -2,9 +2,8 @@
  * Color functions
  *
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
+
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
@@ -243,7 +242,6 @@ HPALETTE COLOR_Init(void)
 	}
 	COLOR_WinColormap = DefaultColormapOfScreen( screen );
         break;
-	/* Fall through */
     case StaticGray:
 	COLOR_WinColormap = DefaultColormapOfScreen( screen );
 	COLOR_FixedMap = 1;
@@ -303,8 +301,6 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD index = 0;
     WORD *mapping;
 
-    /* if (screenDepth > 8) return color; */
-
     if (dc && (dc->w.bitsPerPixel == 1) && ((color >> 24) == 0))
     {
 	/* monochrome */
@@ -314,53 +310,52 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
         else return 0;  /* black */
     }
 
-    if(COLOR_FixedMap) {
-
+    if (COLOR_FixedMap)
+    {
         /* there is no colormap possible; we are going to have to compute
            the pixel value from the visual information stored earlier */
-
-	unsigned long which = color >> 24;
 
 	unsigned long red, green, blue;
 	unsigned idx;
 	PALETTEOBJ * palPtr;
 
-	switch(which) {
-		case 0: /* RGB */
-		case 2: /* PALETTERGB -- needs some work, but why bother; we've got a REALLY LARGE number of colors...? */
-		default:
+	switch(color >> 24)
+        {
+        case 0: /* RGB */
+        case 2: /* PALETTERGB -- needs some work, but why bother; we've got a REALLY LARGE number of colors...? */
+        default:
+            red = GetRValue(color);
+            green = GetGValue(color);
+            blue = GetBValue(color);
+            break;
 
-		red = GetRValue(color);
-		green = GetGValue(color);
-		blue = GetBValue(color);
-		break;
-
-		case 1: /* PALETTEIDX -- hmm, get the real color from the stock palette */
-		palPtr = (PALETTEOBJ *) GDI_GetObjPtr( STOCK_DEFAULT_PALETTE, PALETTE_MAGIC);
-		idx = color & 0xffff;
-		if(idx >= palPtr->logpalette.palNumEntries) {
-			/* out of bounds */
-			red = green = blue = 0;
-		}
-		else {
-			red = palPtr->logpalette.palPalEntry[idx].peRed;
-			green = palPtr->logpalette.palPalEntry[idx].peGreen;
-			blue = palPtr->logpalette.palPalEntry[idx].peBlue;
-		}
+        case 1: /* PALETTEIDX -- hmm, get the real color from the stock palette */
+            palPtr = (PALETTEOBJ *) GDI_GetObjPtr( STOCK_DEFAULT_PALETTE, PALETTE_MAGIC);
+            idx = color & 0xffff;
+            if (idx >= palPtr->logpalette.palNumEntries)
+            {
+                /* out of bounds */
+                red = green = blue = 0;
+            }
+            else
+            {
+                red = palPtr->logpalette.palPalEntry[idx].peRed;
+                green = palPtr->logpalette.palPalEntry[idx].peGreen;
+                blue = palPtr->logpalette.palPalEntry[idx].peBlue;
+            }
 	}
 
-	if(COLOR_Graymax) {
+	if (COLOR_Graymax)
+        {
 	    /* grayscale only; return scaled value */
             return ( (red * 30 + green * 69 + blue * 11) * COLOR_Graymax) / 25500;
 	}
-	else {
+	else
+        {
 	    /* scale each individually and construct the TrueColor pixel value */
-	    if(COLOR_Redmax != 255)
-                red = (red * COLOR_Redmax) / 255;
-	    if(COLOR_Greenmax != 255)
-                green = (green * COLOR_Greenmax) / 255;
-	    if(COLOR_Bluemax != 255)
-                blue = (blue * COLOR_Bluemax) / 255;
+	    if (COLOR_Redmax != 255) red = (red * COLOR_Redmax) / 255;
+            if (COLOR_Greenmax != 255) green = (green * COLOR_Greenmax) / 255;
+	    if (COLOR_Bluemax != 255) blue = (blue * COLOR_Bluemax) / 255;
 
 	    return (red << COLOR_Redshift) | (green << COLOR_Greenshift) | (blue << COLOR_Blueshift);
         }

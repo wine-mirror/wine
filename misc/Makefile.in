@@ -12,7 +12,6 @@ C_SRCS = \
 	escape.c \
 	file.c \
 	keyboard.c \
-	kernel32.c \
 	lstr.c \
 	main.c \
 	ole2.c \

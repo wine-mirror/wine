@@ -111,7 +111,7 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
 /***********************************************************************
  *           DefDlgProc   (USER.308)
  */
-LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
+LRESULT DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
     BOOL result = FALSE;
@@ -120,8 +120,8 @@ LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
 
-    dprintf_dialog(stddeb, "DefDlgProc: %d %04x %d %08lx\n", 
-		   hwnd, msg, wParam, lParam );
+    dprintf_dialog(stddeb, "DefDlgProc: "NPFMT" %04x %ld %08lx\n", 
+		   hwnd, msg, (DWORD)wParam, lParam );
 
     dlgInfo->msgResult = 0;
     if (dlgInfo->dlgProc)
@@ -197,7 +197,7 @@ LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
 	case WM_NEXTDLGCTL:
 	    {
-                HWND hwndDest = wParam;
+                HWND hwndDest = (HWND)wParam;
                 if (!lParam)
                 {
                     HWND hwndPrev = GetFocus();

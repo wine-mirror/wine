@@ -142,8 +142,15 @@ void DEBUG_SetBreakpoints( BOOL set )
     for (i = 0; i < MAX_BREAKPOINTS; i++)
     {
         if (breakpoints[i].in_use && breakpoints[i].enabled)
-            DEBUG_SetOpcode( &breakpoints[i].addr,
-                             set ? INT3 : breakpoints[i].opcode );
+        {
+            if (DEBUG_IsBadWritePtr( &breakpoints[i].addr, 1 ))
+            {
+                fprintf( stderr, "Invalid address for breakpoint %d, disabling it\n", i );
+                breakpoints[i].enabled = FALSE;
+            }
+            else DEBUG_SetOpcode( &breakpoints[i].addr,
+                                  set ? INT3 : breakpoints[i].opcode );
+        }
     }
 }
 
@@ -193,6 +200,7 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
             return;
         }
     }
+    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
     p = DBG_ADDR_TO_LIN( &addr );
     breakpoints[num].addr    = addr;
     breakpoints[num].addrlen = !addr.seg ? 32 :

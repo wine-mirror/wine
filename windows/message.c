@@ -15,6 +15,7 @@
 #include "sysmetrics.h"
 #include "hook.h"
 #include "event.h"
+#include "spy.h"
 #include "winpos.h"
 #include "atom.h"
 #include "dde.h"
@@ -137,7 +138,7 @@ static int MSG_FindMsg(MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last)
 {
     int i, pos = msgQueue->nextMessage;
 
-    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x%04x\n\n", hwnd );
+    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x"NPFMT"\n\n", hwnd );
 
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;
@@ -310,7 +311,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
         /* Send the WM_PARENTNOTIFY message */
 
-        if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message,
+        if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message, 0,
                                             MAKELONG( msg->pt.x, msg->pt.y ) );
 
         /* Activate the window if needed */
@@ -320,7 +321,8 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
             if (hwndTop != GetActiveWindow())
             {
-                LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+                LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE,
+					(WPARAM)hwndTop,
                                         MAKELONG( hittest, msg->message ) );
                 if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
                     eatMsg = TRUE;
@@ -336,7 +338,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
       /* Send the WM_SETCURSOR message */
 
-    SendMessage( msg->hwnd, WM_SETCURSOR, msg->hwnd,
+    SendMessage( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
                  MAKELONG( hittest, msg->message ));
     if (eatMsg) return FALSE;
 
@@ -954,8 +956,8 @@ BOOL GetMessage( SEGPTR msg, HWND hwnd, WORD first, WORD last )
 {
     MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                      hwnd, first, last, PM_REMOVE, FALSE );
-    CALL_SYSTEM_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
     CALL_TASK_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
+    CALL_SYSTEM_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
     return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
 }
 
@@ -988,7 +990,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
       while (hwnd) {
 	if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
 	if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
-	  dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n",
+	  dprintf_msg(stddeb,"BROADCAST Message to hWnd="NPFMT" m=%04X w=%04X l=%08lX !\n",
 		      hwnd, message, wParam, lParam);
 	  PostMessage(hwnd, message, wParam, lParam);
 	}
@@ -1027,16 +1029,16 @@ BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           SendMessage   (USER.111)
  */
-LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
+LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     WND * wndPtr;
     LONG ret;
     struct
     {
-	LONG lParam;
-	WORD wParam;
-	WORD wMsg;
-	WORD hWnd;
+	LPARAM lParam;
+	WPARAM wParam;
+	UINT wMsg;
+	HWND hWnd;
     } msgstruct = { lParam, wParam, msg, hwnd };
 
 #ifdef CONFIG_IPC
@@ -1053,8 +1055,8 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
             if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n",
-                            hwnd, msg, wParam, lParam);
+                dprintf_msg(stddeb,"BROADCAST Message to hWnd="NPFMT" m=%04X w=%04lX l=%08lX !\n",
+                            hwnd, msg, (DWORD)wParam, lParam);
                  ret |= SendMessage( hwnd, msg, wParam, lParam );
 	    }
             hwnd = wndPtr->hwndNext;
@@ -1063,13 +1065,18 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
         return TRUE;
     }
 
-    CALL_SYSTEM_HOOK( WH_CALLWNDPROC, 0, 0, MAKE_SEGPTR(&msgstruct) );
-    CALL_TASK_HOOK( WH_CALLWNDPROC, 0, 0, MAKE_SEGPTR(&msgstruct) );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+    EnterSpyMessage(SPY_SENDMESSAGE, hwnd, msg, wParam, lParam);
+
+    CALL_TASK_HOOK( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
+    CALL_SYSTEM_HOOK( WH_CALLWNDPROC, HC_ACTION, 1, MAKE_SEGPTR(&msgstruct) );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    {
+        ExitSpyMessage(SPY_RESULT_INVALIDHWND,hwnd,msg,0);
+        return 0;
+    }
     ret = CallWindowProc( wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
                           msgstruct.wParam, msgstruct.lParam );
-    dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
-                 hwnd, msg, wParam, lParam, ret );
+    ExitSpyMessage(SPY_RESULT_OK,hwnd,msg,ret);
     return ret;
 }
 
@@ -1126,17 +1133,16 @@ LONG DispatchMessage( LPMSG msg )
     LONG retval;
     int painting;
     
-    dprintf_msg(stddeb, "Dispatch message hwnd=%04x msg=0x%x w=%d l=%ld time=%lu pt=%d,%d\n",
-	    msg->hwnd, msg->message, msg->wParam, msg->lParam, 
-	    msg->time, msg->pt.x, msg->pt.y );
+    EnterSpyMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
+                     msg->wParam, msg->lParam );
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
 	if (msg->lParam)
         {
-            WORD ds = msg->hwnd ? GetWindowWord( msg->hwnd, GWW_HINSTANCE )
-                                : CURRENT_DS;
+            HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
+                                     : (HINSTANCE)CURRENT_DS;
 	    return CallWndProc( (WNDPROC)msg->lParam, ds, msg->hwnd,
                                 msg->message, msg->wParam, GetTickCount() );
         }
@@ -1152,7 +1158,7 @@ LONG DispatchMessage( LPMSG msg )
     if (painting && IsWindow(msg->hwnd) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT))
     {
-	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %d!\n", 
+	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd "NPFMT"!\n", 
 		msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
     }
@@ -1207,7 +1213,7 @@ WORD RegisterWindowMessage( SEGPTR str )
 
 
 /***********************************************************************
- *           GetTickCount    (USER.13)
+ *           GetTickCount    (USER.13) (KERNEL32.299)
  */
 DWORD GetTickCount(void)
 {

@@ -26,6 +26,18 @@ typedef struct
     ((addr)->seg ? (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off) \
                  : (char *)(addr)->off)
 
+#define DBG_CHECK_READ_PTR(addr,len) \
+    (!DEBUG_IsBadReadPtr((addr),(len)) || \
+     (fprintf(stderr,"*** Invalid address "), \
+      DEBUG_PrintAddress((addr),dbg_mode), \
+      fprintf(stderr,"\n"),0))
+
+#define DBG_CHECK_WRITE_PTR(addr,len) \
+    (!DEBUG_IsBadWritePtr((addr),(len)) || \
+     (fprintf(stderr,"*** Invalid address "), \
+      DEBUG_PrintAddress(addr,dbg_mode), \
+      fprintf(stderr,"\n"),0))
+
 enum debug_regs
 {
     REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_ESI,
@@ -76,6 +88,8 @@ extern void DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen );
 extern void DEBUG_Help(void);
 
   /* debugger/memory.c */
+extern BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
+extern BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
 extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);

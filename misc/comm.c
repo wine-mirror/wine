@@ -358,6 +358,7 @@ LONG EscapeCommFunction(int fd, int nFunction)
 			port.c_cflag &= TIOCM_RTS;
 			break;
 	
+#ifndef __svr4__
 		case SETDTR:
 			port.c_cflag |= CRTSCTS;
 			break;
@@ -365,6 +366,7 @@ LONG EscapeCommFunction(int fd, int nFunction)
 		case SETRTS:
 			port.c_cflag |= CRTSCTS;
 			break;
+#endif
 
 		case SETXOFF:
 			port.c_iflag |= IXOFF;
@@ -618,11 +620,13 @@ int SetCommState(DCB FAR *lpdcb)
 			commerror = IE_BYTESIZE;
 			return -1;
 	}
+#ifndef __svr4__
 
 	if (lpdcb->fDtrflow || lpdcb->fRtsflow || lpdcb->fOutxCtsFlow)
 		port.c_cflag |= CRTSCTS;
 
 	if (lpdcb->fDtrDisable) 
+#endif
 		port.c_cflag &= ~CRTSCTS;
 	
 	if (lpdcb->fInX)
@@ -724,12 +728,14 @@ int GetCommState(int fd, DCB FAR *lpdcb)
 	lpdcb->fChEvt = 0;
 	lpdcb->fBinary = 1;
 
+#ifndef __svr4__
 	lpdcb->fDtrDisable = 0;
 	if (port.c_cflag & CRTSCTS) {
 		lpdcb->fDtrflow = 1;
 		lpdcb->fRtsflow = 1;
 		lpdcb->fOutxCtsFlow = 1;
 		lpdcb->fOutxDsrFlow = 1;
+#endif
 	} else 
 		lpdcb->fDtrDisable = 1;
 

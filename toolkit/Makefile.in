@@ -1,14 +1,27 @@
 TOPSRC = @top_srcdir@
+X_LIBS = @X_LIBS@
+XLIB   = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
 MODULE = toolkit
 
 C_SRCS = \
+	atom.c \
 	arch.c \
 	heap.c \
+	miscstubs.c \
 	sup.c \
 	winmain.c
 
 all: $(MODULE).o
 
+hello: hello.o ../winelib.a
+	gcc -g -o hello hello.o ../winelib.a -lm $(X_LIBS) -lXpm $(XLIB)
+
+hello2: hello2.o ../winelib.a
+	gcc -g -o hello2 hello2.o ../winelib.a -lm $(X_LIBS) -lXpm $(XLIB)
+
 @MAKE_RULES@
+
+clean::
+	$(RM) hello hello2
 
 ### Dependencies:

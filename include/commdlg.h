@@ -290,7 +290,13 @@ typedef DEVNAMES * LPDEVNAMES;
 #define FINDDLG		       		9
 #define REPLACEDLG	       		10
 
-
+LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 #endif 		/* #ifdef COMMDLG_H */
 

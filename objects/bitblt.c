@@ -1236,7 +1236,7 @@ BOOL PatBlt( HDC hdc, short left, short top,
 	return TRUE;
     }
 
-    dprintf_bitblt(stddeb, "PatBlt: %d %d,%d %dx%d %06lx\n",
+    dprintf_bitblt(stddeb, "PatBlt: "NPFMT" %d,%d %dx%d %06lx\n",
 	    hdc, left, top, width, height, rop );
 
     return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
@@ -1263,7 +1263,7 @@ BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
 
     dprintf_bitblt(stddeb,
-                "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+                "BitBlt: "NPFMT" %d,%d %d bpp -> "NPFMT" %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
 
@@ -1293,7 +1293,7 @@ BOOL StretchBlt( HDC hdcDst, short xDst, short yDst,
 
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
     dprintf_bitblt(stddeb,
-          "StretchBlt: %04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+          "StretchBlt: "NPFMT" %d,%d %dx%dx%d -> "NPFMT" %d,%d %dx%dx%d rop=%06lx\n",
                    hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
                    dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
                    widthDst, heightDst, dcDst->w.bitsPerPixel, rop );

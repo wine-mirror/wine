@@ -72,7 +72,7 @@ extern DWORD IF1632_Original32_esp;
 #else
 #define CURRENT_STACK16	error.error
 #define CURRENT_DS		0
-#define MAKE_SEGPTR(ptr)	(ptr)
+#define MAKE_SEGPTR(ptr)	((SEGPTR)ptr)
 #endif
 
 #endif /* WINE_STACKFRAME_H */

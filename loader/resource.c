@@ -15,10 +15,8 @@
 #include "arch.h"
 #include "windows.h"
 #include "gdi.h"
-#include "bitmap.h"
 #include "global.h"
 #include "neexe.h"
-#include "icon.h"
 #include "accel.h"
 #include "dlls.h"
 #include "module.h"
@@ -34,15 +32,6 @@
 
 
 /**********************************************************************
- *	    LoadIconHandler    (USER.456)
- */
-HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
-{
-  return 0;
-}
-
-
-/**********************************************************************
  *	    FindResource    (KERNEL.60)
  */
 HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
@@ -50,7 +39,7 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "FindResource: module=%04x type=", hModule );
+    dprintf_resource(stddeb, "FindResource: module="NPFMT" type=", hModule );
     PrintId( type );
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
@@ -76,7 +65,7 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
+    dprintf_resource(stddeb, "LoadResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -101,7 +90,7 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
+    dprintf_resource(stddeb, "LockResource: handle="NPFMT"\n", handle );
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -122,7 +111,7 @@ LPSTR LockResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
+    dprintf_resource(stddeb, "LockResource: handle="NPFMT"\n", handle );
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -146,7 +135,7 @@ BOOL FreeResource( HGLOBAL handle )
     HMODULE hModule;
     WORD *pModule;
 
-    dprintf_resource(stddeb, "FreeResource: handle=%04x\n", handle );
+    dprintf_resource(stddeb, "FreeResource: handle="NPFMT"\n", handle );
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -165,12 +154,12 @@ BOOL FreeResource( HGLOBAL handle )
 /**********************************************************************
  *	    AccessResource    (KERNEL.64)
  */
-int AccessResource( HMODULE hModule, HRSRC hRsrc )
+INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 {
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
+    dprintf_resource(stddeb, "AccessResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -194,7 +183,7 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "SizeofResource: module=%04x res=%04x\n",
+    dprintf_resource(stddeb, "SizeofResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
     switch(*pModule)
@@ -217,7 +206,7 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
     WORD *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "AllocResource: module=%04x res=%04x size=%ld\n",
+    dprintf_resource(stddeb, "AllocResource: module="NPFMT" res="NPFMT" size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
     if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
@@ -234,263 +223,21 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
 
 /**********************************************************************
  *      DirectResAlloc    (KERNEL.168)
+ *
  * Check Schulman, p. 232 for details
  */
 HANDLE DirectResAlloc(HANDLE hInstance, WORD wType, WORD wSize)
 {
-	HANDLE hModule;
-	dprintf_resource(stddeb,"DirectResAlloc(%x,%x,%x)\n",hInstance,wType,wSize);
-	hModule = GetExePtr(hInstance);
-	if(!hModule)return 0;
-	if(wType != 0x10)	/* 0x10 is the only observed value, passed from
+    dprintf_resource(stddeb,"DirectResAlloc("NPFMT",%x,%x)\n",hInstance,wType,wSize);
+    hInstance = GetExePtr(hInstance);
+    if(!hInstance)return 0;
+    if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
-		fprintf(stderr, "DirectResAlloc: wType = %x\n", wType);
-	/* This hopefully does per-module allocation rather than per-instance */
-	return GLOBAL_Alloc(GMEM_FIXED, wSize, hModule, FALSE, FALSE, FALSE);
+        fprintf(stderr, "DirectResAlloc: wType = %x\n", wType);
+    return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, FALSE, FALSE, FALSE);
 }
 
 
-/**********************************************************************
- *			ConvertCoreBitmap
- */
-HBITMAP ConvertCoreBitmap( HDC hdc, BITMAPCOREHEADER * image )
-{
-    BITMAPINFO * bmpInfo;
-    HBITMAP hbitmap;
-    char * bits;
-    int i, size, n_colors;
-   
-    n_colors = 1 << image->bcBitCount;
-    if (image->bcBitCount < 24)
-    {
-	size = sizeof(BITMAPINFOHEADER) + n_colors * sizeof(RGBQUAD);	
-	bits = (char *) (image + 1) + (n_colors * sizeof(RGBTRIPLE));
-    }
-    else
-    {
-	size = sizeof(BITMAPINFOHEADER);
-	bits = (char *) (image + 1);
-    }
-    bmpInfo = (BITMAPINFO *) malloc( size );
-
-    bmpInfo->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
-    bmpInfo->bmiHeader.biWidth         = image->bcWidth;
-    bmpInfo->bmiHeader.biHeight        = image->bcHeight;
-    bmpInfo->bmiHeader.biPlanes        = image->bcPlanes;
-    bmpInfo->bmiHeader.biBitCount      = image->bcBitCount;
-    bmpInfo->bmiHeader.biCompression   = 0;
-    bmpInfo->bmiHeader.biSizeImage     = 0;
-    bmpInfo->bmiHeader.biXPelsPerMeter = 0;
-    bmpInfo->bmiHeader.biYPelsPerMeter = 0;
-    bmpInfo->bmiHeader.biClrUsed       = 0;
-    bmpInfo->bmiHeader.biClrImportant  = 0;
-
-    if (image->bcBitCount < 24)
-    {
-	RGBTRIPLE * oldMap = (RGBTRIPLE *)(image + 1);
-	RGBQUAD * newMap = bmpInfo->bmiColors;
-	for (i = 0; i < n_colors; i++, oldMap++, newMap++)
-	{
-	    newMap->rgbRed      = oldMap->rgbtRed;
-	    newMap->rgbGreen    = oldMap->rgbtGreen;
-	    newMap->rgbBlue     = oldMap->rgbtBlue;
-	    newMap->rgbReserved = 0;
-	}
-    }
-
-    hbitmap = CreateDIBitmap( hdc, &bmpInfo->bmiHeader, CBM_INIT,
-			      bits, bmpInfo, DIB_RGB_COLORS );
-    free( bmpInfo );
-    return hbitmap;
-}
-
-/**********************************************************************
- *			ConvertInfoBitmap
- */
-HBITMAP	ConvertInfoBitmap( HDC hdc, BITMAPINFO * image )
-{
-    char * bits = ((char *)image) + DIB_BitmapInfoSize(image, DIB_RGB_COLORS);
-    return CreateDIBitmap( hdc, &image->bmiHeader, CBM_INIT,
-			   bits, image, DIB_RGB_COLORS );
-} 
-
-
-/**********************************************************************
- *			LoadIcon [USER.174]
- */
-HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
-{
-    HICON 	hIcon;
-    HRSRC       hRsrc;
-    HANDLE 	rsc_mem;
-    WORD 	*lp;
-    ICONDESCRIP *lpicodesc;
-    ICONALLOC	*lpico;
-    int		width, height;
-    BITMAPINFO 	*bmi;
-    BITMAPINFOHEADER 	*bih;
-    RGBQUAD	*rgbq;
-    HDC 	hdc;
-    BITMAPINFO *pInfo;
-    char *bits;
-    int size;
-
-    if (HIWORD(icon_name))
-        dprintf_resource( stddeb, "LoadIcon: %04x '%s'\n",
-                          instance, (char *)PTR_SEG_TO_LIN( icon_name ) );
-    else
-        dprintf_resource( stddeb, "LoadIcon: %04x %04x\n",
-                          instance, LOWORD(icon_name) );
-    
-    if (!instance)
-    {
-        if (HIWORD((int)icon_name)) return 0; /* FIXME: should handle '#xxx' */
-        return OBM_LoadIcon( LOWORD((int)icon_name) );
-    }
-
-    if (!(hRsrc = FindResource( instance, icon_name, RT_GROUP_ICON))) return 0;
-    rsc_mem = LoadResource( instance, hRsrc );
-    if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadIcon / Icon %08x not Found !\n", (int) icon_name);
-	return 0;
-    }
-    lp = (WORD *)LockResource(rsc_mem);
-    lpicodesc = (ICONDESCRIP *)(lp + 3);
-    hIcon = GlobalAlloc(GMEM_MOVEABLE, sizeof(ICONALLOC) + 1024);
-    if (hIcon == (HICON)NULL) {
-        FreeResource( rsc_mem );
-	return 0;
-    }
-    lpico = (ICONALLOC *)GlobalLock(hIcon);
-    lpico->descriptor = *lpicodesc;
-    width = lpicodesc->Width;
-    height = lpicodesc->Height;
-    FreeResource( rsc_mem );
-    if (!(hRsrc = FindResource( instance,
-                              MAKEINTRESOURCE(lpico->descriptor.icoDIBOffset), 
-                              RT_ICON ))) return 0;
-    if (!(rsc_mem = LoadResource( instance, hRsrc ))) return 0;
-
-    bmi = (BITMAPINFO *)LockResource(rsc_mem);
-    size = DIB_BitmapInfoSize( bmi, DIB_RGB_COLORS );
-    pInfo = (BITMAPINFO *)malloc( size );
-    memcpy( pInfo, bmi, size );
-    bih = &pInfo->bmiHeader;
-    bih->biHeight /= 2;
-
-    if (!(hdc = GetDC( 0 ))) return 0;
-    if (bih->biSize != sizeof(BITMAPINFOHEADER)) return 0;
-    lpico->hBitmap = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
-                                    (char*)bmi + size, pInfo, DIB_RGB_COLORS );
-
-    if (bih->biCompression != BI_RGB)
-    {
-	fprintf(stderr,"Unknown size for compressed Icon bitmap.\n");
-	FreeResource( rsc_mem );
-	ReleaseDC( 0, hdc); 
-	return 0;
-    }
-    bits = (char *)bmi + size +
-      DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount) * bih->biHeight;
-    bih->biBitCount = 1;
-    bih->biClrUsed = bih->biClrImportant = 2;
-    rgbq = &pInfo->bmiColors[0];
-    rgbq[0].rgbBlue = rgbq[0].rgbGreen = rgbq[0].rgbRed = 0x00;
-    rgbq[1].rgbBlue = rgbq[1].rgbGreen = rgbq[1].rgbRed = 0xff;
-    rgbq[0].rgbReserved = rgbq[1].rgbReserved = 0;
-    lpico->hBitMask = CreateDIBitmap(hdc, &pInfo->bmiHeader, CBM_INIT,
-                                     bits, pInfo, DIB_RGB_COLORS );
-    FreeResource( rsc_mem );
-    ReleaseDC( 0, hdc);
-    free( pInfo );
-    GlobalUnlock(hIcon);
-    dprintf_resource(stddeb,"LoadIcon Alloc hIcon=%X\n", hIcon);
-    return hIcon;
-}
-
-
-/**********************************************************************
- *			CreateIcon [USER.407]
- */
-HICON CreateIcon(HANDLE hInstance, int nWidth, int nHeight, 
-                 BYTE nPlanes, BYTE nBitsPixel, LPSTR lpANDbits, 
-                 LPSTR lpXORbits)
-{
-    HICON 	hIcon;
-    ICONALLOC	*lpico;
-
-    dprintf_resource(stddeb, "CreateIcon: hInstance = %04x, nWidth = %08x, nHeight = %08x \n",
-	    hInstance, nWidth, nHeight);
-    dprintf_resource(stddeb, "  nPlanes = %04x, nBitsPixel = %04x,",nPlanes, nBitsPixel);
-    dprintf_resource(stddeb, " lpANDbits= %04x, lpXORbits = %04x, \n", (int)lpANDbits,
-    		(int)lpXORbits);
-
-    if (hInstance == (HANDLE)NULL) { 
-        printf("CreateIcon / hInstance %04x not Found!\n",hInstance);
-        return 0;
-	}
-    hIcon = GlobalAlloc(GMEM_MOVEABLE, sizeof(ICONALLOC) + 1024);
-    if (hIcon == (HICON)NULL) {
-	printf("Can't allocate memory for Icon in CreateIcon\n");
-	return 0;
-	}
-    lpico= (ICONALLOC *)GlobalLock(hIcon);
-
-    lpico->descriptor.Width=nWidth;
-    lpico->descriptor.Height=nHeight;
-    lpico->descriptor.ColorCount=16; /* Dummy Value */ 
-    lpico->descriptor.Reserved1=0;
-    lpico->descriptor.Reserved2=nPlanes;
-    lpico->descriptor.Reserved3=nWidth*nHeight;
-
-    /* either nPlanes and/or nBitCount is set to one */
-    lpico->descriptor.icoDIBSize=nWidth*nHeight*nPlanes*nBitsPixel; 
-    lpico->descriptor.icoDIBOffset=0; 
-
-    if( !(lpico->hBitmap=CreateBitmap(nWidth, nHeight, nPlanes, nBitsPixel, 
-                                 lpXORbits)) ) {
-      printf("CreateIcon: couldn't create the XOR bitmap\n");
-      return(0);
-    }
-    
-    /* the AND BitMask is always monochrome */
-    if( !(lpico->hBitMask=CreateBitmap(nWidth, nHeight, 1, 1, lpANDbits)) ) {
-      printf("CreateIcon: couldn't create the AND bitmap\n");
-      return(0);
-    }
-
-    GlobalUnlock(hIcon);
-    dprintf_resource(stddeb, "CreateIcon Alloc hIcon=%X\n", hIcon);
-    return hIcon;
-}
-
-/**********************************************************************
- *			DestroyIcon [USER.457]
- */
-BOOL DestroyIcon(HICON hIcon)
-{
-    ICONALLOC	*lpico;
-    
-    if (hIcon == (HICON)NULL)
-    	return FALSE;
-    lpico = (ICONALLOC *)GlobalLock(hIcon);
-    if (lpico->hBitmap != (HBITMAP)NULL) 
-    	DeleteObject(lpico->hBitmap);
-    GlobalFree(hIcon);
-    return TRUE;
-}
-
-/**********************************************************************
- *          DumpIcon [USER.459]
- */
-DWORD DumpIcon(void* cursorIconInfo, WORD FAR *lpLen, LPSTR FAR *lpXorBits,
-	LPSTR FAR *lpAndMask)
-{
-	dprintf_resource(stdnimp,"DumpIcon: Empty Stub!!!\n");
-	return 0;
-}
-
-
 /**********************************************************************
  *			LoadAccelerators	[USER.177]
  */
@@ -504,10 +251,10 @@ HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
     int 	i, n;
 
     if (HIWORD(lpTableName))
-        dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
+        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" '%s'\n",
                       instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
     else
-        dprintf_accel( stddeb, "LoadAccelerators: %04x %04x\n",
+        dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource( instance, lpTableName, RT_ACCELERATOR )))
@@ -553,7 +300,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	msg->message != WM_SYSKEYUP &&
     	msg->message != WM_CHAR) return 0;
 
-    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04X !\n", hAccel);
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel="NPFMT" !\n", hAccel);
 
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
@@ -600,7 +347,7 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     int string_num;
     int i;
 
-    dprintf_resource(stddeb, "LoadString: instance = %04x, id = %d, buffer = %08x, "
+    dprintf_resource(stddeb, "LoadString: instance = "NPFMT", id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING );

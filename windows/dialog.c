@@ -218,7 +218,7 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     HGLOBAL hmem;
     SEGPTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: %d,%08lx,%d,%08lx,%ld\n",
+    dprintf_dialog(stddeb, "CreateDialogParam: "NPFMT",%08lx,"NPFMT",%08lx,%ld\n",
 	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
      
     if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
@@ -303,7 +303,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     rect.right = template.header.cx * xUnit / 4;
     rect.bottom = template.header.cy * yUnit / 8;
     if (template.header.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx( &rect, template.header.style, hMenu, exStyle );
+    AdjustWindowRectEx( &rect, template.header.style, 
+			hMenu ? TRUE : FALSE , exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
@@ -393,8 +394,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, header->id, dlgInfo->hDialogHeap,
-                                      (SEGPTR)0 );
+                                      hwnd, (HMENU)header->id,
+                                      dlgInfo->hDialogHeap, (SEGPTR)0 );
 	}
 	else
         {
@@ -404,7 +405,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                                       header->y * yUnit / 8,
                                       header->cx * xUnit / 4,
                                       header->cy * yUnit / 8,
-                                      hwnd, header->id, hInst, (SEGPTR)0 );
+                                      hwnd, (HMENU)header->id,
+                                      hInst, (SEGPTR)0 );
 	}
 
         /* Make the control last one in Z-order, so that controls remain
@@ -413,7 +415,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                       SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
 
             /* Send initialisation messages to the control */
-        if (hFont) SendMessage( hwndCtrl, WM_SETFONT, hFont, 0 );
+        if (hFont) SendMessage( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
         if (SendMessage( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
         {
               /* If there's already a default push-button, set it back */
@@ -439,8 +441,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
       /* Send initialisation messages and set focus */
 
     if (dlgInfo->hUserFont)
-	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0 );
-    if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
+	SendMessage( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+    if (SendMessage( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
     if (template.header.style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
     return hwnd;
@@ -504,7 +506,7 @@ int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: %d,%08lx,%d,%08lx,%ld\n",
+    dprintf_dialog(stddeb, "DialogBoxParam: "NPFMT",%08lx,"NPFMT",%08lx,%ld\n",
 	    hInst, dlgTemplate, owner, (DWORD)dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -531,7 +533,7 @@ int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
     HWND hwnd;
     SEGPTR ptr;
 
-    if (!(ptr = WIN16_GlobalLock( dlgTemplate ))) return -1;
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock( dlgTemplate ))) return -1;
     hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
     GlobalUnlock( dlgTemplate );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -548,7 +550,7 @@ void EndDialog( HWND hwnd, short retval )
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->msgResult = retval;
     dlgInfo->fEnd = TRUE;
-    dprintf_dialog(stddeb, "EndDialog: %d %d\n", hwnd, retval );
+    dprintf_dialog(stddeb, "EndDialog: "NPFMT" %d\n", hwnd, retval );
 }
 
 
@@ -610,20 +612,36 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
             break;
 
         case VK_ESCAPE:
+#ifdef WINELIB32
+            SendMessage( hwndDlg, WM_COMMAND, 
+			 MAKEWPARAM( IDCANCEL, 0 ),
+                         (LPARAM)GetDlgItem(hwndDlg,IDCANCEL) );
+#else
             SendMessage( hwndDlg, WM_COMMAND, IDCANCEL,
                          MAKELPARAM( GetDlgItem(hwndDlg,IDCANCEL), 0 ));
+#endif
             break;
 
         case VK_RETURN:
             {
                 DWORD dw = SendMessage( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
+#ifdef WINELIB32
+                    SendMessage( hwndDlg, WM_COMMAND, 
+				 MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
+                                 (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ) );
+                else
+                    SendMessage( hwndDlg, WM_COMMAND, 
+				 MAKEWPARAM( IDOK, 0 ),
+                                 (LPARAM)GetDlgItem(hwndDlg,IDOK) );
+#else
                     SendMessage( hwndDlg, WM_COMMAND, LOWORD(dw),
                                  MAKELPARAM( GetDlgItem( hwndDlg, LOWORD(dw) ),
                                              BN_CLICKED ));
                 else
                     SendMessage( hwndDlg, WM_COMMAND, IDOK,
                                  MAKELPARAM( GetDlgItem(hwndDlg,IDOK), 0 ));
+#endif
             }
             break;
         }
@@ -681,7 +699,7 @@ HWND GetDlgItem( HWND hwndDlg, WORD id )
 /*******************************************************************
  *           SendDlgItemMessage   (USER.101)
  */
-LONG SendDlgItemMessage(HWND hwnd, WORD id, UINT msg, WORD wParam, LONG lParam)
+LRESULT SendDlgItemMessage(HWND hwnd, INT id, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndCtrl = GetDlgItem( hwnd, id );
     if (hwndCtrl) return SendMessage( hwndCtrl, msg, wParam, lParam );

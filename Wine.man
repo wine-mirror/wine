@@ -319,8 +319,8 @@ Main configuration file for wine.
 Changes in Wine, since the beginning (most recent changes first)
 .TP
 .I configure
-Shell script to automatically generate Makefiles.  Usually followed by make 
-(or gmake on *BSD systems) to compile wine.
+Shell script to automatically generate Makefiles.  Usually followed by
+make to compile wine.
 .TP
 .I Wine newsgroup
 Subscribe to comp.emulators.ms-windows.wine

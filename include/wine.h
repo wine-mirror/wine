@@ -7,7 +7,19 @@ extern char *WinIniFileName(void);
 #define WINE_INI WineIniFileName()
 #define WIN_INI WinIniFileName()
 
-#ifdef linux
+#ifdef i386
+extern int runtime_cpu (void);
+#else
+static inline int runtime_cpu(void) { return 3; }
+#endif
+
+
+#if defined ( linux) || defined(__svr4__)
+/*
+ * SVR4 NOTE:
+ * This is not correct but gets it through the compiler
+ * Must come back and look at this again
+ */
 struct sigcontext_struct {
 	unsigned short sc_gs, __gsh;
 	unsigned short sc_fs, __fsh;
@@ -32,8 +44,14 @@ struct sigcontext_struct {
 	unsigned long oldmask;
 	unsigned long cr2;
 };
+#ifdef linux
 #define WINE_DATA_SELECTOR 0x2b
 #define WINE_CODE_SELECTOR 0x23
+#endif
+#ifdef __svr4__
+#define WINE_DATA_SELECTOR 0x1f
+#define WINE_CODE_SELECTOR 0x17
+#endif
 #endif  /* linux */
 
 #ifdef __NetBSD__

@@ -1,4 +1,218 @@
 ----------------------------------------------------------------------
+Sun Oct  1 15:48:34 1995  Alexandre Julliard  <julliard@sunsite.unc>
+
+	* [controls/menu.c]
+	Fixed GetMenuString() for non-string items.
+
+	* [debugger/*.c]
+	First attempt to check validity of pointers before memory
+	accesses. For now only segmented pointers are checked.
+
+	* [debugger/dbg.y] [memory/ldt.c]
+	Added possibility to dump only one segment with 'info segment'.
+
+	* [include/bitmaps/ocr_*]
+	Added all OEM cursors as XPM bitmaps.
+
+	* [include/cursoricon.h] [objects/cursoricon.c]
+	Rewrote all cursor and icon management to use the same memory
+ 	layout as Windows, and to factor common code between icons and
+	cursors. Implemented icon directory lookup to find the best
+	matching icon (i.e. the color one).
+  	Implemented CopyCursor() and DumpIcon().
+
+	* [loader/module.c]
+	For disabled built-in modules, we now try to load the Windows DLL
+	first, and if this fails we fall back to using the built-in module
+	anyway.
+
+	* [memory/global.c]
+	Fixed GlobalHandle() to return the correct selector in the high
+	word even if we are passed a handle in the first place.
+
+	* [miscemu/instr.c]
+	Take into account the size of the operand and of the stack segment
+	when incrementing the stack pointer.
+	Avoid referencing FS_reg and GS_reg on *BSD.
+
+	* [objects/dib.c]
+	All DIB functions now accept a BITMAPCOREHEADER format bitmap.
+	Monochrome DIBs are created as monochrome bitmap iff they are
+	black and white.
+
+	* [objects/oembitmap.c]
+	Added support for OEM cursors, changed OBM_LoadIcon to use the new
+	icon memory layout.
+
+	* [rc/sysres_Fr.rc]
+	Added French [Fr] language support.
+
+	* [win32/environment.c]
+	Fixed GetCommandLineA() to use current PDB.
+
+	* [windows/event.c] [windows/winpos.c]
+	Simulate a mouse motion event upon SetWindowPos() to force the
+	cursor to be set correctly.
+
+Sat Sep 30 17:49:32  Cameron Heide  (heide@ee.ualberta.ca)
+
+	* [win32/*]
+        New Win32 kernel functions: GetACP, GetCPInfo,
+ 	GetEnvironmentVariableA, GetFileType, GetLastError, GetOEMCP,
+ 	GetStartupInfoA, GetTimeZoneInformation, SetEnvironmentVariable,
+ 	SetFilePointer, SetLastError, VirtualAlloc, VirtualFree,
+ 	WriteFile.  Completed implementations of GetCommandLineA.
+
+	* [include/kernel32.h]
+        New file.
+
+	* [loader/main.c]
+        Call initialization function for Win32 data (doesn't currently do
+ 	anything).
+
+	* [misc/main.c]
+	Implemented GetEnvironmentVariableA, SetEnvironmentVariableA.
+
+Sat Sep 30 00:26:56 1995  Niels de Carpentier  <niels@cindy.et.tudelft.nl>
+
+	* [windows/winpos.c][miscemu/emulate.c][loader/module.c]
+	  [misc/commdlg.c]
+	Misc. bug fixes
+
+Fri Sep 29 16:16:13 1995  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [*/*]
+	For Winelib, explicit casts have been placed where warnings were
+ 	usually generated.
+	printf formats which give the format for printing a handle as
+ 	"%04x" or something similar have been changed to use the NPFMT
+ 	macro defined in include/wintypes.h.  Some times, explicit casts
+ 	were also necessary.
+     	Parameter, field, and variable declarations have been made more
+ 	exact, such as converting 'WORD wParam' to 'WPARAM wParam' or
+ 	'WORD hFont' to 'HFONT hFont'.
+     	Any call of the form GetWindowWord(hwnd,GWW_HINSTANCE) has been
+ 	replaced with a call to WIN_GetWindowInstance(hwnd).
+
+	* [controls/combo.c]
+	Added WINELIB32 support in CLBoxGetCombo().
+
+	* [include/dialog.h]
+	Commented out the '#ifndef WINELIB' around the '#pragma pack(1)'.
+	winelib needs the packing as well (e.g. when accessing resources
+	like sysres_DIALOG_SHELL_ABOUT_MSGBOX).
+
+	* [include/windows.h]
+	Got rid of the F[a-k] macros, which were cluttering up the global
+	namespace.
+
+	* [include/windows.h] [windows/defwnd.c]
+	Added Win32 messages WM_CTLCOLOR*.
+
+	* [include/wintypes.h]
+	Put in preprocessor '#define WINELIB32' if appropriate and changed
+	the types of some typedefs (WPARAM, HANDLE) based on this.
+	
+	* [loader/module.c] [toolkit/miscstubs.c]
+	Added #ifdef'd portion in LoadModule to handle loading a WINElib
+	module (already loaded, just init values).  '#ifdef'ed out the
+	definition for GetWndProcEntry16 and added a new version to
+	toolkit/miscstubs.c.
+
+	* [misc/shell.c]
+	Adjusted the lengths of AppName and AppMisc from 512,512 to 128,906.
+	Same amount of total storage, but much more reasonable.  Also, changed
+	calls to strcpy() in ShellAbout() to calls to strncpy() instead.
+	This was a difficult bug to track down, but the AppMisc field was
+	being initialized with the contributers text, which was much larger
+	than 512 characters.
+
+	* [toolkit/atom.c]
+	New file for atom-handling functions.  Copied from memory/atom.c and
+	then heavily modified.  Right now, it's just a linked list of atoms.
+	Consider it as a hash table with just one entry.  It's easily changed
+	later.
+
+	* [toolkit/heap.c]
+	Commented out the heap functions with a "#ifdef WINELIB16" and put in
+	a Win32 version (which is basically a modified copy).
+
+	* [toolkit/sup.c] [toolkit/miscstubs.c]
+	Moved the stuff I put in toolkit/sup.c into toolkit/miscstubs.c and
+	added quite a few more stubs.
+
+	* [toolkit/winmain.c]
+	Rearranged startup code in _WinMain.  I think this will work.
+
+	* [toolkit/Makefile.in]
+	Added targets for 'hello' and 'hello2' in case anyone cares to try
+	out the sample programs.
+
+Wed Sep 27 23:13:43 1995  Anand Kumria <akumria@ozemail.com.au>
+	
+	* [miscemu/int2f.c] [miscemu/vxd.c] [if1632/winprocs.spec]
+	First attempt at support for some VxDs. Comm, Shell and Pagefile.
+
+Tue Sep 26 21:34:45 1995  Hans de Graaff  <graaff@twi72.twi.tudelft.nl>
+
+	* [misc/dos_fs.c]
+	DOS_SimplifyPath: Also remove "/./" from path. (Happens when
+ 	starting applications like 'wine ./excel.exe')
+
+Sat Sep 23 23:32:40 1995  Morten Welinder  <terra@diku.dk>
+
+	* [configure.in]
+	Avoid relative path for wine.ini.
+
+	* [rc/sysres_Da.rc]
+	Support for Danish [Da] language.
+
+	* [misc/main.c] [miscemu/cpu.c]
+	Return the processor we're running on correctly.
+
+	* [miscemu/int2f.c]
+	Minor stuff in int 0x2f, function 0x16.
+
+Sat Sep 23 1995 17:58:04  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [misc/shell.c] [misc/main.c]
+	Implement saving and loading of the registry database (needed for
+	OLE). Very experimental. Fixed ShellExecute().
+	
+	* [miscemu/int21.c]
+	EEXIST is not a critical error condition for mkdir().
+
+Fri Sep 22 01:33:34 1995  Alex Korobka  <alex@phm6.pharm.sunysb.edu>
+
+	* [include/shell.h] [misc/shell.c]
+	Implemented 4 drag/drop functions with documented functionality.
+
+        * [multimedia/time.c]
+        "Fixed" MMSysTimeCallback kludge so Excel5 loads up without crashing.
+
+	* [*/*] 
+        Added new files, more message definitions, structures, debug info,
+ 	etc.  Rewrote message logging functions to produce output similar
+ 	to WinSight.  Check out -debugmsg +message option.
+
+	* [misc/file.c]
+        Fixed GetDriveType return value.  
+
+        * [windows/message.c] 
+        Hooks are invoked in normal order.
+
+        * [miscemu/*]
+        Added some functions and interrupts.
+
+        * [misc/shell.c]
+        Implemented Drag... functions.
+
+Thu Sep 21 23:50:12 1995  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [rc/sysres_Fi.rc] [rc/sysres.rc]
+	First attempt at Finnish [Fi] language support.
+
+----------------------------------------------------------------------------
 Sun Sep 17 16:47:49 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in] [*/Makefile.in] [Make.rules.in]

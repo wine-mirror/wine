@@ -40,13 +40,11 @@
 #define ES_reg(context)      ((context)->sc_es)
 #define SS_reg(context)      ((context)->sc_ss)
                             
-#ifdef linux                
+#ifdef linux
+/* fs and gs are not supported on *BSD. Hopefully we won't need them. */
 #define FS_reg(context)      ((context)->sc_fs)
 #define GS_reg(context)      ((context)->sc_gs)
-#else  /* FIXME: are fs and gs supported under *BSD? */
-#define FS_reg(context)      0
-#define GS_reg(context)      0
-#endif                      
+#endif
                             
 #ifndef __FreeBSD__         
 #define EFL_reg(context)     ((context)->sc_eflags)

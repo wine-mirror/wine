@@ -78,9 +78,11 @@ extern Window WIN_GetXWindow( HWND hwnd );
 extern BOOL WIN_UnlinkWindow( HWND hwnd );
 extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
-extern void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam );
+extern void WIN_SendParentNotify( HWND hwnd, WORD event,
+                                  WORD idChild, LONG lValue );
 extern BOOL WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
+extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 
 extern Display * display;
 extern Screen * screen;

@@ -67,3 +67,5 @@ extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc,
 			     WORD itemState);
 extern int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y);
 extern void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls);
+
+extern LRESULT ListBoxWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam);

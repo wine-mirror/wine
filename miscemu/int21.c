@@ -25,7 +25,12 @@
 #include "miscemu.h"
 #include "stddebug.h"
 #include "debug.h"
-
+#ifdef __svr4__
+/* SVR4 DOESNTdo locking the same way must implement properly */
+#define LOCK_EX 0
+#define LOCK_SH  1
+#define LOCK_NB  8
+#endif
 /* Define the drive parameter block, as used by int21/1F
  * and int21/32.  This table can be accessed through the
  * global 'dpb' pointer, which points into the local dos
@@ -53,8 +58,7 @@ struct DPB
     WORD free_clusters;     /* Number of free clusters (0xFFFF=unknown) */
 };
 
-WORD ExtendedError, CodePage = 437;
-BYTE ErrorClass, Action, ErrorLocus;
+WORD CodePage = 437;
 struct DPB *dpb;
 DWORD dpbsegptr;
 
@@ -74,53 +78,9 @@ extern char TempDirectory[];
 
 static int Error(int e, int class, int el)
 {
-	ErrorClass = class;
-	Action = SA_Ask4Retry;
-	ErrorLocus = el;
-	ExtendedError = e;
-
-	return e;
+  return DOS_Error(e,class,el);
 }
 
-void errno_to_doserr(void)
-{
-	switch (errno) {
-		case EAGAIN:
-			Error (ShareViolation, EC_Temporary, EL_Unknown);
-			break;
-		case EBADF:
-			Error (InvalidHandle, EC_AppError, EL_Unknown);
-			break;
-		case ENOSPC:
-			Error (DiskFull, EC_MediaError, EL_Disk);
-			break;				
-		case EACCES:
-		case EPERM:
-		case EROFS:
-			Error (WriteProtected, EC_AccessDenied, EL_Unknown);
-			break;
-		case EBUSY:
-			Error (LockViolation, EC_AccessDenied, EL_Unknown);
-			break;		
-		case ENOENT:
-			Error (FileNotFound, EC_NotFound, EL_Unknown);
-			break;				
-		case EISDIR:
-			Error (CanNotMakeDir, EC_AccessDenied, EL_Unknown);
-			break;
-		case ENFILE:
-		case EMFILE:
-			Error (NoMoreFiles, EC_MediaError, EL_Unknown);
-			break;
-		case EEXIST:
-			Error (FileExists, EC_Exists, EL_Disk);
-			break;				
-		default:
-			dprintf_int(stddeb, "int21: unknown errno %d!\n", errno);
-			Error (GeneralFailure, EC_SystemFailure, EL_Unknown);
-			break;
-	}
-}
 
 BYTE *GetCurrentDTA(void)
 {
@@ -488,9 +448,11 @@ static void GetSystemTime(struct sigcontext_struct *context)
 {
 	struct tm *now;
 	struct timeval tv;
+	time_t seconds;
 
 	gettimeofday(&tv,NULL);		/* Note use of gettimeofday(), instead of time() */
-	now = localtime(&tv.tv_sec);
+	seconds = tv.tv_sec;
+	now = localtime(&seconds);
 	 
 	CX_reg(context) = (now->tm_hour<<8) | now->tm_min;
 	DX_reg(context) = (now->tm_sec<<8) | tv.tv_usec/10000;
@@ -591,7 +553,11 @@ void OpenExistingFile(struct sigcontext_struct *context)
 
 	  int result,retries=sharing_retries;
 	  {
+#ifdef __svr4__
+              printf("Should call flock and needs porting to lockf\n");
+#else
 	    result = flock(handle, lock | LOCK_NB);
+#endif
 	    if ( retries && (!result) )
 	    {
               int i;
@@ -668,8 +634,7 @@ static void MakeDir(struct sigcontext_struct *context)
             return;
 	}
 
-	if (mkdir(dirname,0) == -1)
-        {
+	if ((mkdir(dirname,0) == -1)  && errno!=EEXIST) {
             Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
             AX_reg(context) = CanNotMakeDir;
             SET_CFLAG(context);
@@ -1553,6 +1518,7 @@ void DOS3Call( struct sigcontext_struct context )
               case 0x0F:   /* Set logical drive mapping */
                 /* FIXME: Not implemented at the moment, always returns error
                  */
+		fprintf(stdnimp,"Attempt to map drive %02x\n",BL_reg(&context));
                 AX_reg(&context) = 0x0001; /* invalid function */
                 SET_CFLAG(&context);
                 break;
@@ -1763,8 +1729,8 @@ void DOS3Call( struct sigcontext_struct context )
 	    }
 	    break;
     
-      case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
-        break;
+          case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
+            break;
 
 	  case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
 	    break;

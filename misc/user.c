@@ -89,7 +89,7 @@ BOOL USER_HeapInit(void)
 /**********************************************************************
  *					USER_InitApp
  */
-int USER_InitApp(int hInstance)
+int USER_InitApp(HINSTANCE hInstance)
 {
     int queueSize;
 

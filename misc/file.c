@@ -139,7 +139,7 @@ INT _lclose (INT hFile)
 /**************************************************************************
  OpenFile
  **************************************************************************/
-INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
+INT OpenFile (LPCSTR lpFileName, LPOFSTRUCT ofs, UINT wStyle)
 {
     char         filename[MAX_PATH+1];
     int          action;
@@ -149,9 +149,8 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     int          verify_time = 0;
   
     dprintf_file(stddeb,"Openfile(%s,<struct>,%d)\n",lpFileName,wStyle);
-  
+ 
     action = wStyle & 0xff00;
-  
   
     /* OF_CREATE is completly different from all other options, so
        handle it first */
@@ -251,7 +250,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     
 
     if (action & OF_PARSE)
-      return 0;
+        return 0;
 
     if (action & OF_DELETE)
       return unlink(ofs->szPathName);
@@ -355,9 +354,13 @@ UINT GetDriveType(INT drive)
 {
 
     	dprintf_file(stddeb,"GetDriveType %c:\n",'A'+drive);
+ 
+        /* File Damager thinks that only return code 0 is bad enough 
+	 * -Al K
+	 */
 
 	if (!DOS_ValidDrive(drive))
-		return DRIVE_DOESNOTEXIST;
+		return DRIVE_CANNOTDETERMINE;
 
 	if (drive == 0 || drive == 1)
 		return DRIVE_REMOVABLE;

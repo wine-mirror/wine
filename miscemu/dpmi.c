@@ -127,10 +127,24 @@ void INT_Int31Handler( struct sigcontext_struct context )
                        (SEGPTR)MAKELONG( DX_reg(&context), CX_reg(&context) ));
 	break;
 
+    case 0x0300:  /* Simulate real mode interrupt 
+        *  Interrupt number is in BL, flags are in BH
+        *  ES:DI points to real-mode call structure  
+        *  Currently we just print it out and return error.
+        */
+        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES_reg(&context), DI_reg(&context) );
+        fprintf(stdnimp,
+               "RealModeInt %02x: AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x DS=%04x\n",
+                BL_reg(&context),
+              *(WORD*)(ptr+0x1c),*(WORD*)(ptr+0x10),*(WORD*)(ptr+0x18),*(WORD*)(ptr+0x14),
+              *(WORD*)(ptr+0x04),*(WORD*)(ptr+0x00),*(WORD*)(ptr+0x22),*(WORD*)(ptr+0x24));
+        SET_CFLAG(&context);
+        break;
+
     case 0x0400:  /* Get DPMI version */
         AX_reg(&context) = 0x005a;  /* DPMI version 0.90 */
         BX_reg(&context) = 0x0005;  /* Flags: 32-bit, virtual memory */
-        CL_reg(&context) = 3;       /* CPU type: 386 */
+        CL_reg(&context) = runtime_cpu ();
         DX_reg(&context) = 0x0102;  /* Master/slave interrupt controller base*/
         break;
 

@@ -28,7 +28,7 @@ static HCLASS firstClass = 0;
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName( SEGPTR name, WORD hinstance, CLASS **ptr )
+HCLASS CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance, CLASS **ptr )
 {
     ATOM atom;
     HCLASS class;
@@ -43,7 +43,8 @@ HCLASS CLASS_FindClassByName( SEGPTR name, WORD hinstance, CLASS **ptr )
         classPtr = (CLASS *) USER_HEAP_LIN_ADDR(class);
         if (classPtr->wc.style & CS_GLOBALCLASS) continue;
         if ((classPtr->atomName == atom) && 
-            ((hinstance==0xffff )|| (hinstance == classPtr->wc.hInstance)))
+            ( (hinstance==(HINSTANCE)0xffff) ||
+	      (hinstance == classPtr->wc.hInstance) ) )
         {
             if (ptr) *ptr = classPtr;
             return class;
@@ -92,7 +93,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     HCLASS handle, prevClass;
     int classExtra;
 
-    dprintf_class( stddeb, "RegisterClass: wndproc=%08lx hinst=%04x name='%s' background %04x\n",
+    dprintf_class( stddeb, "RegisterClass: wndproc=%08lx hinst="NPFMT" name='%s' background "NPFMT"\n",
                  (DWORD)class->lpfnWndProc, class->hInstance,
                  HIWORD(class->lpszClassName) ?
                   (char *)PTR_SEG_TO_LIN(class->lpszClassName) : "(int)",
@@ -143,7 +144,7 @@ ATOM RegisterClass( LPWNDCLASS class )
 	HANDLE hname = USER_HEAP_ALLOC( strlen(menuname)+1 );
 	if (hname)
 	{
-	    newClass->wc.lpszMenuName = USER_HEAP_SEG_ADDR( hname );
+	    newClass->wc.lpszMenuName = (SEGPTR)USER_HEAP_SEG_ADDR( hname );
 	    strcpy( USER_HEAP_LIN_ADDR( hname ), menuname );
 	}
     }
@@ -191,7 +192,11 @@ BOOL UnregisterClass( SEGPTR className, HANDLE hinstance )
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     if (HIWORD(classPtr->wc.lpszMenuName))
+#ifdef WINELIB32
+	USER_HEAP_FREE( (HANDLE)classPtr->wc.lpszMenuName );
+#else
 	USER_HEAP_FREE( LOWORD(classPtr->wc.lpszMenuName) );
+#endif
     USER_HEAP_FREE( class );
     return TRUE;
 }
@@ -265,7 +270,7 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     CLASS *classPtr;
 
     /* FIXME: We have the find the correct hInstance */
-    dprintf_class(stddeb,"GetClassName(%x,%p,%d)\n",hwnd,lpClassName,maxCount);
+    dprintf_class(stddeb,"GetClassName("NPFMT",%p,%d)\n",hwnd,lpClassName,maxCount);
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
     
@@ -280,7 +285,7 @@ BOOL GetClassInfo( HANDLE hInstance, SEGPTR name, LPWNDCLASS lpWndClass )
 {
     CLASS *classPtr;
 
-    dprintf_class( stddeb, "GetClassInfo: hInstance=%04x className=%s\n",
+    dprintf_class( stddeb, "GetClassInfo: hInstance="NPFMT" className=%s\n",
 		   hInstance,
                    HIWORD(name) ? (char *)PTR_SEG_TO_LIN(name) : "(int)" );
 

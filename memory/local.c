@@ -285,7 +285,7 @@ static void LOCAL_PrintHeap( WORD ds )
 /***********************************************************************
  *           LocalInit   (KERNEL.4)
  */
-HLOCAL LocalInit( WORD selector, WORD start, WORD end )
+BOOL LocalInit( HANDLE selector, WORD start, WORD end )
 {
     char *ptr;
     WORD heapInfoArena, freeArena, lastArena;
@@ -672,7 +672,7 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
  *
  * Implementation of LocalFree().
  */
-HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
+HLOCAL LOCAL_Free( HANDLE ds, HLOCAL handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     WORD arena;
@@ -696,7 +696,7 @@ HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
  *
  * Implementation of LocalAlloc().
  */
-HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
+HLOCAL LOCAL_Alloc( HANDLE ds, WORD flags, WORD size )
 {
     char *ptr;
     HLOCAL handle;
@@ -732,7 +732,7 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
  *
  * Implementation of LocalReAlloc().
  */
-HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
+HLOCAL LOCAL_ReAlloc( HANDLE ds, HLOCAL handle, WORD size, WORD flags )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
@@ -820,7 +820,7 @@ HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
 /***********************************************************************
  *           LOCAL_Lock
  */
-WORD LOCAL_Lock( WORD ds, HLOCAL handle )
+HANDLE LOCAL_Lock( HANDLE ds, HLOCAL handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
 
@@ -922,7 +922,7 @@ HLOCAL LocalFree( HLOCAL handle )
 /***********************************************************************
  *           LocalLock   (KERNEL.8)
  */
-WORD LocalLock( HLOCAL handle )
+NPVOID LocalLock( HLOCAL handle )
 {
     return LOCAL_Lock( CURRENT_DS, handle );
 }

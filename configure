@@ -15,7 +15,7 @@ ac_default_prefix=/usr/local
 ac_help="$ac_help
   --with-library          build Wine as a library instead of an emulator"
 ac_help="$ac_help
-  --with-language=LANG    change the default language (LANG=En/De/No/Es)"
+  --with-language=LANG    change the language (LANG=En/De/Fr/Es/No/Fi/Da)"
 ac_help="$ac_help
   --with-ipc              use inter-process communication for DDE"
 ac_help="$ac_help
@@ -431,9 +431,9 @@ fi
 # Check whether --with-language or --without-language was given.
 withval="$with_language"
 if test -n "$withval"; then
-  LANG="-ALANG\($withval\)"
+  LANG="$withval"
 else
-  LANG="-ALANG\(En\)"
+  LANG=En
 fi
 
 
@@ -1556,7 +1556,7 @@ fi
 
 
 if test -z "${top_srcdir}"; then
-TOP_SRCDIR="."
+TOP_SRCDIR=`pwd`
 else
 TOP_SRCDIR="${top_srcdir}"
 fi
@@ -1689,7 +1689,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile win32/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 
 # Protect against being on the right side of a sed subst in config.status. 
 sed 's/%@/@@/; s/@%/@@/; s/%g$/@g/; /@g$/s/[\\\\&%]/\\\\&/g; 
@@ -1726,7 +1726,7 @@ CEOF
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile"}
+CONFIG_FILES=\${CONFIG_FILES-"Make.rules controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile win32/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile toolkit/Makefile Makefile"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then

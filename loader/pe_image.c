@@ -25,7 +25,7 @@
 #include "task.h"
 #include "ldt.h"
 #include "registers.h"
-
+#include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -54,7 +54,11 @@ char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
   if(r_size)
     v_size=r_size;
   else
+#ifdef __svr4__
+    fprintf(stderr,"xmmap: %s line %d doesn't support MAP_ANON\n",__FILE__, __LINE__);
+#else
     flags |= MAP_ANON;
+#endif
   result = mmap(vaddr, v_size, prot, flags, fd, file_offset);
   if((unsigned int) result != 0xffffffff) return result;
 
@@ -131,7 +135,11 @@ void fixup_imports(struct PE_Import_Directory *pe_imports)
 		exit(0);
 	  }
 	  printf("--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-	  *thunk_list=RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+#ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
+	  *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+#else
+	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
+#endif
 	  if(!*thunk_list)
 	  {
 	  	fprintf(stderr,"No implementation for %s.%d\n",Module, pe_name->Hint);
@@ -197,12 +205,12 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
 	{
 	if(!load_addr) {
-		result = xmmap((char *)0, wpnt->pe->pe_seg[i].Virtual_Size,
+		result = (int)xmmap((char *)0, wpnt->pe->pe_seg[i].Virtual_Size,
 			wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
 			MAP_PRIVATE, wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
 		load_addr = (unsigned int) result -  wpnt->pe->pe_seg[i].Virtual_Address;
 	} else {
-		result = xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
+		result = (int)xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
 			  wpnt->pe->pe_seg[i].Virtual_Size,
 		      wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
 		      wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
@@ -232,9 +240,12 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	if(wpnt->pe->pe_import) fixup_imports(wpnt->pe->pe_import);
 	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export);
   
-	wpnt->hinstance = 0x8000;
+	wpnt->hinstance = (HINSTANCE)0x8000;
 	return (wpnt->hinstance);
 }
+
+HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
+void InitTask(struct sigcontext_struct context);
 
 HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 {
@@ -275,11 +286,11 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 
 	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
 	wpnt->hModule=hModule;
-	if (!hModule) return 11;  /* invalid exe */
+	if (!hModule) return (HINSTANCE)11;  /* invalid exe */
 
 	FarSetOwner( hModule, hModule );
 	
-	pModule = GlobalLock(hModule);
+	pModule = (NE_MODULE*)GlobalLock(hModule);
 
 	/* Set all used entries */
 	pModule->magic=NE_SIGNATURE;
@@ -312,9 +323,14 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	pSegment->minsize=0x1000;
 	pSegment++;
 
-	cts=GetWndProcEntry16("Win32CallToStart");
+	cts=(DWORD)GetWndProcEntry16("Win32CallToStart");
+#ifdef WINELIB32
+	pSegment->selector=(void*)cts;
+	pModule->ip=0;
+#else
 	pSegment->selector=cts>>16;
 	pModule->ip=cts & 0xFFFF;
+#endif
 	pSegment++;
 
 	pStr=(char*)pSegment;
@@ -332,7 +348,7 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	pModule->stack_size=0xE000;
 
 	/* CreateInstance allocates now 64KB */
-	hInstance=MODULE_CreateInstance(hModule);
+	hInstance=MODULE_CreateInstance(hModule,NULL /* FIX: NULL? really? */);
 	wpnt->hinstance=hInstance;
 
 	TASK_CreateTask(hModule,hInstance,0,
@@ -342,11 +358,13 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	return hInstance;
 }
 
+int USER_InitApp(HINSTANCE hInstance);
+
 void PE_Win32CallToStart(struct sigcontext_struct context)
 {
 	int fs;
 	struct w_files *wpnt=wine_files;
-	fs=GlobalAlloc(GHND,0x10000);
+	fs=(int)GlobalAlloc(GHND,0x10000);
 	fprintf(stddeb,"Going to start Win32 program\n");	
 	InitTask(context);
 	USER_InitApp(wpnt->hModule);

@@ -12,7 +12,6 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "palette.h"
-#include "icon.h"
 #include "stackframe.h"
 #include "stddebug.h"
 #include "color.h"
@@ -51,14 +50,23 @@ int DIB_GetImageWidthBytes( int width, int depth )
  */
 int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
 {
-    int size = info->bmiHeader.biClrUsed;
-    if (!size && (info->bmiHeader.biBitCount != 24))
-	size = 1 << info->bmiHeader.biBitCount;
-    if (coloruse == DIB_RGB_COLORS) 
-	size = info->bmiHeader.biSize + size * sizeof(RGBQUAD);
-    else
-	size = info->bmiHeader.biSize + size * sizeof(WORD);
-    return size;
+    int colors;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        colors = (core->bcBitCount != 24) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+             ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors && (info->bmiHeader.biBitCount != 24))
+            colors = 1 << info->bmiHeader.biBitCount;
+        return sizeof(BITMAPINFOHEADER) + colors *
+               ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
 }
 
 
@@ -82,6 +90,103 @@ static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
     image->bitmap_unit = 16;
     _XInitImageFuncPtrs(image);
     return image;
+}
+
+
+/***********************************************************************
+ *           DIB_GetBitmapInfo
+ *
+ * Get the info from a bitmap header.
+ * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
+ */
+static int DIB_GetBitmapInfo( BITMAPINFOHEADER *header, DWORD *width,
+                              DWORD *height, WORD *bpp )
+{
+    if (header->biSize == sizeof(BITMAPINFOHEADER))
+    {
+        *width  = header->biWidth;
+        *height = header->biHeight;
+        *bpp    = header->biBitCount;
+        return 1;
+    }
+    if (header->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        *width  = core->bcWidth;
+        *height = core->bcHeight;
+        *bpp    = core->bcBitCount;
+        return 0;
+    }
+    fprintf( stderr, "DIB_GetBitmapInfo: wrong size (%ld) for header\n",
+             header->biSize );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           DIB_BuildColorMap
+ *
+ * Build the color map from the bitmap palette. Should not be called
+ * for a 24-bit deep bitmap.
+ */
+static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
+                               BITMAPINFO *info )
+{
+    int i, colors;
+    BOOL isInfo;
+    WORD *colorPtr;
+    int *colorMapping;
+
+    if ((isInfo = (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))))
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+        colorPtr = (WORD *)info->bmiColors;
+    }
+    else  /* assume BITMAPCOREINFO */
+    {
+        colors = 1 << ((BITMAPCOREHEADER *)&info->bmiHeader)->bcBitCount;
+        colorPtr = (WORD *)((BITMAPCOREINFO *)info)->bmciColors;
+    }
+    if (!(colorMapping = (int *)malloc( colors * sizeof(int) ))) return NULL;
+
+    if (coloruse == DIB_RGB_COLORS)
+    {
+        if (isInfo)
+        {
+            RGBQUAD * rgb = (RGBQUAD *)colorPtr;
+        
+            if (depth == 1)  /* Monochrome */
+                for (i = 0; i < colors; i++, rgb++)
+                    colorMapping[i] = (rgb->rgbRed + rgb->rgbGreen + 
+                                       rgb->rgbBlue > 255*3/2);
+            else
+                for (i = 0; i < colors; i++, rgb++)
+                    colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgb->rgbRed,
+                                                                rgb->rgbGreen,
+                                                                rgb->rgbBlue));
+        }
+        else
+        {
+            RGBTRIPLE * rgb = (RGBTRIPLE *)colorPtr;
+        
+            if (depth == 1)  /* Monochrome */
+                for (i = 0; i < colors; i++, rgb++)
+                    colorMapping[i] = (rgb->rgbtRed + rgb->rgbtGreen + 
+                                       rgb->rgbtBlue > 255*3/2);
+            else
+                for (i = 0; i < colors; i++, rgb++)
+                    colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgb->rgbtRed,
+                                                               rgb->rgbtGreen,
+                                                               rgb->rgbtBlue));
+        }
+    }
+    else  /* DIB_PAL_COLORS */
+    {
+        for (i = 0; i < colors; i++, colorPtr++)
+            colorMapping[i] = COLOR_ToPhysical( dc, PALETTEINDEX(*colorPtr) );
+    }
+    return colorMapping;
 }
 
 
@@ -454,68 +559,48 @@ static void DIB_SetImageBits_24( WORD lines, BYTE *bits, WORD width,
  * Helper function for SetDIBits() and SetDIBitsToDevice().
  */
 static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
-			     BITMAPINFO *info, WORD coloruse,
+                             DWORD infoWidth, WORD infoBpp, DWORD compression,
+                             BITMAPINFO *info, WORD coloruse,
 			     Drawable drawable, GC gc, int xSrc, int ySrc,
 			     int xDest, int yDest, int width, int height )
 {
     int *colorMapping;
     XImage *bmpImage;
-    int i, colors;
 
       /* Build the color mapping table */
 
-    if (info->bmiHeader.biBitCount == 24) colorMapping = NULL;
+    if (infoBpp == 24) colorMapping = NULL;
     else
-    {
-	colors = info->bmiHeader.biClrUsed;
-	if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-	if (!(colorMapping = (int *)malloc( colors * sizeof(int) )))
-	    return 0;
-	if (coloruse == DIB_RGB_COLORS)
-	{
-	    RGBQUAD * rgbPtr = info->bmiColors;
-            for (i = 0; i < colors; i++, rgbPtr++)
-                colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgbPtr->rgbRed,
-							    rgbPtr->rgbGreen,
-							    rgbPtr->rgbBlue) );
-	}
-	else
-	{
-	    WORD * index = (WORD *)info->bmiColors;
-	    for (i = 0; i < colors; i++, index++)
-		colorMapping[i] = COLOR_ToPhysical( dc, PALETTEINDEX(*index) );
-	}
-    }
+        if (!(colorMapping = DIB_BuildColorMap( dc, coloruse, depth, info )))
+            return 0;
 
       /* Transfer the pixels */
-    XCREATEIMAGE(bmpImage, info->bmiHeader.biWidth, lines, depth );
+    XCREATEIMAGE(bmpImage, infoWidth, lines, depth );
 
-    switch(info->bmiHeader.biBitCount)
+    switch(infoBpp)
     {
     case 1:
-	DIB_SetImageBits_1( lines, bits, info->bmiHeader.biWidth,
+	DIB_SetImageBits_1( lines, bits, infoWidth,
 			    colorMapping, bmpImage );
 	break;
     case 4:
-	if (info->bmiHeader.biCompression)
-		DIB_SetImageBits_RLE4( lines, bits, info->bmiHeader.biWidth,
-			    colorMapping, bmpImage );
-	else	
-		DIB_SetImageBits_4( lines, bits, info->bmiHeader.biWidth,
-			    colorMapping, bmpImage );
+	if (compression) DIB_SetImageBits_RLE4( lines, bits, infoWidth,
+                                                colorMapping, bmpImage );
+	else DIB_SetImageBits_4( lines, bits, infoWidth,
+                                 colorMapping, bmpImage );
 	break;
     case 8:
-	if (info->bmiHeader.biCompression)
-		DIB_SetImageBits_RLE8( lines, bits, info->bmiHeader.biWidth,
-			    colorMapping, bmpImage );
-	else
-		DIB_SetImageBits_8( lines, bits, info->bmiHeader.biWidth,
-			    colorMapping, bmpImage );
+	if (compression) DIB_SetImageBits_RLE8( lines, bits, infoWidth,
+                                                colorMapping, bmpImage );
+	else DIB_SetImageBits_8( lines, bits, infoWidth,
+                                 colorMapping, bmpImage );
 	break;
     case 24:
-	DIB_SetImageBits_24( lines, bits, info->bmiHeader.biWidth,
-			     dc, bmpImage );
+	DIB_SetImageBits_24( lines, bits, infoWidth, dc, bmpImage );
 	break;
+    default:
+        fprintf( stderr, "Invalid depth %d for SetDIBits!\n", infoBpp );
+        break;
     }
     if (colorMapping) free(colorMapping);
     XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
@@ -548,6 +633,7 @@ int StretchDIBits( HDC hdc,
     return wSrcHeight;
 }
 
+
 /***********************************************************************
  *           SetDIBits    (GDI.440)
  */
@@ -556,21 +642,26 @@ int SetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
 {
     DC * dc;
     BITMAPOBJ * bmp;
+    DWORD width, height, compression = 0;
+    WORD bpp;
 
       /* Check parameters */
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
-    if (!lines || (startscan >= (WORD)info->bmiHeader.biHeight)) return 0;
-    if (startscan+lines > info->bmiHeader.biHeight)
-	lines = info->bmiHeader.biHeight - startscan;
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
+        return 0;
+    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+        compression = info->bmiHeader.biCompression;
+    if (!lines || (startscan >= (WORD)height)) return 0;
+    if (startscan + lines > height) lines = height - startscan;
 
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 14,
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 17,
                                 dc, lines, bmp->bitmap.bmBitsPixel,
-                                bits, info, coloruse, bmp->pixmap,
-                                BITMAP_GC(bmp), 0, 0, 0, startscan,
-                                bmp->bitmap.bmWidth, lines );
+                                bits, width, bpp, compression, info,
+                                coloruse, bmp->pixmap, BITMAP_GC(bmp), 0, 0, 0,
+                                startscan, bmp->bitmap.bmWidth, lines );
 }
 
 
@@ -582,25 +673,31 @@ int SetDIBitsToDevice( HDC hdc, short xDest, short yDest, WORD cx, WORD cy,
 		       LPSTR bits, BITMAPINFO * info, WORD coloruse )
 {
     DC * dc;
+    DWORD width, height, compression = 0;
+    WORD bpp;
 
       /* Check parameters */
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    if (!lines || (startscan >= info->bmiHeader.biHeight)) return 0;
-    if (startscan+lines > info->bmiHeader.biHeight)
-	lines = info->bmiHeader.biHeight - startscan;
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
+        return 0;
+    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+        compression = info->bmiHeader.biCompression;
+    if (!lines || (startscan >= height)) return 0;
+    if (startscan + lines > height) lines = height - startscan;
     if (ySrc < startscan) ySrc = startscan;
-    else if (ySrc >= startscan+lines) return 0;
-    if (xSrc >= info->bmiHeader.biWidth) return 0;
-    if (ySrc+cy >= startscan+lines) cy = startscan + lines - ySrc;
-    if (xSrc+cx >= info->bmiHeader.biWidth) cx = info->bmiHeader.biWidth-xSrc;
+    else if (ySrc >= startscan + lines) return 0;
+    if (xSrc >= width) return 0;
+    if (ySrc + cy >= startscan + lines) cy = startscan + lines - ySrc;
+    if (xSrc + cx >= width) cx = width - xSrc;
     if (!cx || !cy) return 0;
 
     DC_SetupGCForText( dc );  /* To have the correct colors */
     XSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 14,
-                                dc, lines, dc->w.bitsPerPixel, bits, info,
-                                coloruse, dc->u.x.drawable, dc->u.x.gc,
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 17,
+                                dc, lines, dc->w.bitsPerPixel, bits, width,
+                                bpp, compression, info, coloruse,
+                                dc->u.x.drawable, dc->u.x.gc,
                                 xSrc, ySrc - startscan,
                                 dc->w.DCOrgX + XLPTODP( dc, xDest ),
                                 dc->w.DCOrgY + YLPTODP( dc, yDest ),
@@ -679,65 +776,61 @@ HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
 		        LPSTR bits, BITMAPINFO * data, WORD coloruse )
 {
     HBITMAP handle;
-    
-	if(header->biSize!=sizeof(BITMAPINFOHEADER))
-	{
-		fprintf(stderr,"CreateDIBitmap: wrong size (%ld) for header\n",
-			header->biSize);
-		return 0;
-	}
-    handle = CreateCompatibleBitmap( hdc, header->biWidth, header->biHeight );
-/*    handle = CreateBitmap( header->biWidth, header->biHeight,
-                           1, header->biBitCount, NULL );
-*/
+    BOOL fColor;
+    DWORD width, height;
+    WORD bpp;
+
+    if (DIB_GetBitmapInfo( header, &width, &height, &bpp ) == -1) return 0;
+
+    /* Check if we should create a monochrome or color bitmap. */
+    /* We create a monochrome bitmap only if it has exactly 2  */
+    /* colors, which are either black or white, nothing else.  */
+    /* In all other cases, we create a color bitmap.           */
+
+    if (bpp != 1) fColor = TRUE;
+    else if ((coloruse != DIB_RGB_COLORS) ||
+             (init != CBM_INIT) || !data) fColor = FALSE;
+    else
+    {
+        if (data->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+        {
+            RGBQUAD *rgb = data->bmiColors;
+            DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
+            if ((col == RGB(0,0,0)) || (col == RGB(0xff,0xff,0xff)))
+            {
+                rgb++;
+                col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
+                fColor = ((col != RGB(0,0,0)) && (col != RGB(0xff,0xff,0xff)));
+            }
+            else fColor = TRUE;
+        }
+        else if (data->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+        {
+            RGBTRIPLE *rgb = ((BITMAPCOREINFO *)data)->bmciColors;
+            DWORD col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
+            if ((col == RGB(0,0,0)) || (col == RGB(0xff,0xff,0xff)))
+            {
+                rgb++;
+                col = RGB( rgb->rgbtRed, rgb->rgbtGreen, rgb->rgbtBlue );
+                fColor = ((col != RGB(0,0,0)) && (col != RGB(0xff,0xff,0xff)));
+            }
+            else fColor = TRUE;
+        }
+        else
+        {
+            fprintf( stderr, "CreateDIBitmap: wrong size (%ld) for data\n",
+                     data->bmiHeader.biSize );
+            return 0;
+        }
+    }
+
+    /* Now create the bitmap */
+
+    handle = fColor ? CreateCompatibleBitmap( hdc, width, height ) :
+                      CreateBitmap( width, height, 1, 1, NULL );
     if (!handle) return 0;
-    if (init == CBM_INIT) SetDIBits( hdc, handle, 0, header->biHeight,
-				    bits, data, coloruse );
+
+    if (init == CBM_INIT)
+        SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
     return handle;
-}
-
-/***********************************************************************
- *           DrawIcon    (USER.84)
- */
-BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
-{
-    ICONALLOC	*lpico;
-    BITMAP	bm;
-    HBITMAP	hBitTemp;
-    HDC		hMemDC;
-    COLORREF    oldFg, oldBg;
-
-    oldFg = SetTextColor( hDC, RGB(0,0,0) );
-    oldBg = SetBkColor( hDC, RGB(255,255,255) );
-    dprintf_icon(stddeb,"DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
-    if (hIcon == (HICON)NULL) return FALSE;
-    lpico = (ICONALLOC *)GlobalLock(hIcon);
-    GetObject(lpico->hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-    hMemDC = CreateCompatibleDC(hDC);
-    if (lpico->hBitMask)
-    {
-        hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
-        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
-        SelectObject(hMemDC, lpico->hBitmap);
-        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCINVERT);
-    }
-    else  /* no mask -> everything is masked; so use SRCCOPY as it's faster */
-    {
-        hBitTemp = SelectObject(hMemDC, lpico->hBitmap);
-        BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-    }
-    SelectObject( hMemDC, hBitTemp );
-    DeleteDC(hMemDC);
-    GlobalUnlock( hIcon );
-    SetTextColor( hDC, oldFg );
-    SetBkColor( hDC, oldBg );
-    return TRUE;
-}
-/***********************************************************************
- *           CopyIcon    (USER.368)
- */
-BOOL CopyIcon(HANDLE handle, HICON hIcon)
-{
-    printf("STUB !!! CopyIcon: %x %x\n",handle,hIcon);
-    return TRUE;
 }

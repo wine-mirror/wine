@@ -27,7 +27,7 @@ void MDIRecreateMenuList(MDICLIENTINFO *ci)
     char buffer[128];
     int id, n, index;
 
-    dprintf_mdi(stddeb, "MDIRecreateMenuList: hWindowMenu %0x\n", 
+    dprintf_mdi(stddeb, "MDIRecreateMenuList: hWindowMenu "NPFMT"\n", 
 	    ci->hWindowMenu);
     
     id = ci->idFirstChild; 
@@ -66,7 +66,7 @@ void MDIRecreateMenuList(MDICLIENTINFO *ci)
  */
 HMENU MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU hmenuFrame, HMENU hmenuWindow)
 {
-    dprintf_mdi(stddeb, "WM_MDISETMENU: %04x %04x %04x %04x\n", hwnd, fRefresh, hmenuFrame, hmenuWindow);
+    dprintf_mdi(stddeb, "WM_MDISETMENU: "NPFMT" %04x "NPFMT" "NPFMT"\n", hwnd, fRefresh, hmenuFrame, hmenuWindow);
     if (!fRefresh) {
 	HWND hwndFrame = GetParent(hwnd);
 	HMENU oldFrameMenu = GetMenu(hwndFrame);
@@ -112,7 +112,7 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
 			  cs->x, cs->y, cs->cx, cs->cy, parent, (HMENU) 0,
-			  w->hInstance, lParam);
+			  w->hInstance, (SEGPTR)lParam);
 
     if (hwnd)
     {
@@ -215,7 +215,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	{
 	    while (hinfo != 0) {
 		chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
-		if (chi->hwnd == id) break;
+		if (chi->hwnd == (HWND)id) break;
 	        hinfo = chi->next;
 	    }
 	}
@@ -223,7 +223,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	if (hinfo == 0)
 	    return;
 
-	dprintf_mdi(stddeb, "MDIBringToTop: child %04x\n", chi->hwnd);
+	dprintf_mdi(stddeb, "MDIBringToTop: child "NPFMT"\n", chi->hwnd);
 	if (hinfo != ci->infoActiveChildren)
 	{
 	    if (ci->flagChildMaximized)
@@ -285,7 +285,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	    SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
 	}
 	
-	dprintf_mdi(stddeb, "MDIBringToTop: pos %04x, hwnd %04x\n", 
+	dprintf_mdi(stddeb, "MDIBringToTop: pos %04x, hwnd "NPFMT"\n", 
 		id, chi->hwnd);
     }
 }
@@ -354,17 +354,17 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
     HWND          act_hwnd;
     LONG          lParam;
 
-    dprintf_mdi(stddeb, "MDIChildActivate: top %04x\n", w->hwndChild);
+    dprintf_mdi(stddeb, "MDIChildActivate: top "NPFMT"\n", w->hwndChild);
 
     hinfo = ci->infoActiveChildren;
     if (hinfo)
     {
 	chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
 	deact_hwnd = ci->hwndActiveChild;
-	act_hwnd   = chi->hwnd;
-	lParam     = ((LONG) deact_hwnd << 16) | act_hwnd;
+	act_hwnd   = chi->hwnd;                /* FIX: Hack */
+	lParam     = ((LONG) deact_hwnd << 16) | (LONG)act_hwnd;
 
-	dprintf_mdi(stddeb, "MDIChildActivate: deact %04x, act %04x\n",
+	dprintf_mdi(stddeb, "MDIChildActivate: deact "NPFMT", act "NPFMT"\n",
 	       deact_hwnd, act_hwnd);
 
 	ci->hwndActiveChild = act_hwnd;
@@ -424,13 +424,13 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
 	hinfo = chi->next;
     }
     
-    dprintf_mdi(stddeb, "MDICascade: last child is %04x\n", chi->hwnd);
+    dprintf_mdi(stddeb, "MDICascade: last child is "NPFMT"\n", chi->hwnd);
     x = 0;
     y = 0;
     while (hinfo != 0)
     {
 	chi = USER_HEAP_LIN_ADDR(hinfo);
-	dprintf_mdi(stddeb, "MDICascade: move %04x to (%d,%d) size [%d,%d]\n", 
+	dprintf_mdi(stddeb, "MDICascade: move "NPFMT" to (%d,%d) size [%d,%d]\n", 
 		chi->hwnd, x, y, xsize, ysize);
         if (IsIconic(chi->hwnd)) continue;
 	SetWindowPos(chi->hwnd, 0, x, y, xsize, ysize, 
@@ -556,7 +556,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
     w  = WIN_FindWndPtr(hwndClient);
     ci = (MDICLIENTINFO *) w->wExtra;
 
-    dprintf_mdi(stddeb, "MDIPaintMaximized: frame %04x,  client %04x"
+    dprintf_mdi(stddeb, "MDIPaintMaximized: frame "NPFMT",  client "NPFMT
 		",  max flag %d,  menu %04x\n", hwndFrame, hwndClient, 
 		ci->flagChildMaximized, wndPtr ? wndPtr->wIDmenu : 0);
 
@@ -576,8 +576,8 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	}
 
 	dprintf_mdi(stddeb, 
-		    "MDIPaintMaximized: hdcMem %04x, close bitmap %04x, "
-		    "maximized bitmap %04x\n",
+		    "MDIPaintMaximized: hdcMem "NPFMT", close bitmap "NPFMT", "
+		    "maximized bitmap "NPFMT"\n",
 		    hdcMem, hbitmapClose, hbitmapMaximized);
 
 	NC_GetInsideRect(hwndFrame, &rect);
@@ -617,7 +617,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
  *
  * This function is the handler for all MDI requests.
  */
-LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     LPCREATESTRUCT       cs;
     LPCLIENTCREATESTRUCT ccs;
@@ -656,7 +656,7 @@ LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	return MDICascade(hwnd, ci);
 
       case WM_MDICREATE:
-	return MDICreateChild(w, ci, hwnd, lParam );
+	return (LONG)MDICreateChild(w, ci, hwnd, lParam );
 
       case WM_MDIDESTROY:
 	return MDIDestroyChild(w, ci, hwnd, wParam, TRUE);
@@ -690,7 +690,11 @@ LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	
       case WM_PARENTNOTIFY:
 	if (wParam == WM_DESTROY)
+#ifdef WINELIB32
+	    return MDIDestroyChild(w, ci, hwnd, lParam, FALSE);
+#else
 	    return MDIDestroyChild(w, ci, hwnd, LOWORD(lParam), FALSE);
+#endif
 	else if (wParam == WM_LBUTTONDOWN)
 	    MDIBringChildToTop(hwnd, ci->hwndHitTest, FALSE, FALSE);
 	break;
@@ -708,8 +712,8 @@ LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
  *					DefFrameProc (USER.445)
  *
  */
-LONG DefFrameProc(HWND hwnd, HWND hwndMDIClient, WORD message, 
-		  WORD wParam, LONG lParam)
+LRESULT DefFrameProc(HWND hwnd, HWND hwndMDIClient, UINT message, 
+		     WPARAM wParam, LPARAM lParam)
 {
     if (hwndMDIClient)
     {
@@ -751,7 +755,11 @@ LONG DefFrameProc(HWND hwnd, HWND hwndMDIClient, WORD message,
  *					DefMDIChildProc (USER.447)
  *
  */
+#ifdef WINELIB32
+LONG DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+#else
 LONG DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+#endif
 {
     MDICLIENTINFO       *ci;
     WND                 *w;
@@ -773,10 +781,10 @@ LONG DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	switch (wParam)
 	{
 	  case SC_MAXIMIZE:
-	    return SendMessage(GetParent(hwnd), WM_MDIMAXIMIZE, hwnd, 0);
+	    return SendMessage(GetParent(hwnd), WM_MDIMAXIMIZE, (WPARAM)hwnd, 0);
 
 	  case SC_RESTORE:
-	    return SendMessage(GetParent(hwnd), WM_MDIRESTORE, hwnd, 0);
+	    return SendMessage(GetParent(hwnd), WM_MDIRESTORE, (WPARAM)hwnd, 0);
 	}
 	break;
 	

@@ -61,7 +61,7 @@ typedef struct
     char    priority;                   /* Task priority, between -32 and 15 */
     BYTE    unused1;
     HGLOBAL hStack32;                   /* Handle to 32-bit stack */
-    WORD    hSelf;                      /* Selector of this TDB */
+    HTASK   hSelf;                      /* Selector of this TDB */
     HANDLE  hPrevInstance;              /* Previous instance of the module */
     DWORD   esp;                        /* 32-bit stack pointer */
     WORD    ctrlword8087;               /* 80x87 control word */

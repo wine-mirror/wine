@@ -68,6 +68,7 @@ struct ne_header_s
  */
 #define NE_FFLAGS_SINGLEDATA	0x0001
 #define NE_FFLAGS_MULTIPLEDATA	0x0002
+#define NE_FFLAGS_BUILTIN       0x0010  /* Wine built-in module */
 #define NE_FFLAGS_SELFLOAD	0x0800
 #define NE_FFLAGS_LINKERROR	0x2000
 #define NE_FFLAGS_LIBMODULE	0x8000
@@ -196,7 +197,7 @@ struct resource_nameinfo_s
     unsigned short length;
     unsigned short flags;
     unsigned short id;
-    unsigned short handle;
+            HANDLE handle;
     unsigned short usage;
 };
 

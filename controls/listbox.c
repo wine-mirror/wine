@@ -118,8 +118,13 @@ static LPHEADLIST ListBoxGetStorageHeader(HWND hwnd)
 void ListBoxSendNotification(LPHEADLIST lphl, HWND hwnd, WORD code)
 {
   if (lphl->dwStyle & LBS_NOTIFY)
+#ifdef WINELIB32
+    SendMessage(lphl->hParent, WM_COMMAND,
+		MAKEWPARAM(lphl->CtlID,code), (LPARAM)hwnd);
+#else
     SendMessage(lphl->hParent, WM_COMMAND,
 		lphl->CtlID, MAKELONG(hwnd, code));
+#endif
 }
 
 
@@ -274,7 +279,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
  
   *lpmeasure = lpls->mis;
   lpmeasure->itemHeight = lphl->StdItemHeight;
-  SendMessage(lphl->hParent, WM_MEASUREITEM, 0, USER_HEAP_SEG_ADDR(hTemp));
+  SendMessage(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     lphl->StdItemHeight = lpmeasure->itemHeight;
@@ -898,8 +903,14 @@ static LONG LBRButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
+#ifdef WINELIB32
+  SendMessage(lphl->hParent, WM_COMMAND, 
+	      MAKEWPARAM(GetWindowWord(hwnd,GWW_ID),LBN_DBLCLK),
+	      (LPARAM)hwnd);
+#else
   SendMessage(lphl->hParent, WM_COMMAND, GetWindowWord(hwnd,GWW_ID),
 		MAKELONG(hwnd, LBN_DBLCLK));
+#endif
 
   return 0;
 }
@@ -1060,7 +1071,8 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
 
-  dprintf_listbox(stddeb,"ListBox WM_SETREDRAW hWnd=%04X w=%04X !\n", hwnd, wParam);
+  dprintf_listbox(stddeb,"ListBox WM_SETREDRAW hWnd="NPFMT" w=%04X !\n",
+		  hwnd, wParam);
   lphl->bRedrawFlag = wParam;
 
   return 0;
@@ -1069,14 +1081,14 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetFont
  */
-static LONG LBSetFont(HWND hwnd, WORD wParam, LONG lParam)
+static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
 
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
-    lphl->hFont = wParam;
+    lphl->hFont = (HFONT) wParam;
 
   return 0;
 }
@@ -1105,8 +1117,13 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
+#ifdef WINELIB32
+  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
+				(LPARAM)hwnd);
+#else
   hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
 		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
+#endif
 
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
@@ -1638,7 +1655,7 @@ static LONG LBSetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           ListBoxWndProc 
  */
-LONG ListBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 { 
     switch (message) {
      case WM_CREATE: return LBCreate(hwnd, wParam, lParam);
@@ -1702,7 +1719,7 @@ BOOL DlgDirSelect(HWND hDlg, LPSTR lpStr, int nIDLBox)
   LPHEADLIST lphl;
   char s[130];
 
-  dprintf_listbox( stddeb, "DlgDirSelect(%04X, '%s', %d) \n", hDlg, lpStr, 
+  dprintf_listbox( stddeb, "DlgDirSelect("NPFMT", '%s', %d) \n", hDlg, lpStr, 
 		  nIDLBox );
 
   hwnd = GetDlgItem(hDlg, nIDLBox);
@@ -1743,7 +1760,7 @@ int DlgDirList(HWND hDlg, LPSTR lpPathSpec,
   HWND	hWnd;
   int ret;
   
-  dprintf_listbox(stddeb,"DlgDirList(%04X, '%s', %d, %d, %04X) \n",
+  dprintf_listbox(stddeb,"DlgDirList("NPFMT", '%s', %d, %d, %04X) \n",
 		  hDlg, lpPathSpec, nIDLBox, nIDStat, wType);
   if (nIDLBox)  {
     LPHEADLIST lphl;
@@ -1767,13 +1784,13 @@ int DlgDirList(HWND hDlg, LPSTR lpPathSpec,
 	temp[1] = 'A'+drive;
 	temp[2] = ':';
 	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            USER_HEAP_SEG_ADDR(hTemp) + 1 );
+                            (LPARAM)(USER_HEAP_SEG_ADDR(hTemp) + 1) );
       } else {
 	temp[0] = 'A'+drive;
 	temp[1] = ':';
 	temp[2] = '\\';
 	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            USER_HEAP_SEG_ADDR(hTemp) );
+                            (LPARAM)USER_HEAP_SEG_ADDR(hTemp) );
       }
       USER_HEAP_FREE( hTemp );
   } 

@@ -63,7 +63,7 @@ BOOL WIDGETS_Init(void)
         DWORD WineProc,Win16Proc,Win32Proc;
         /* currently, there is no way to get the 'real' pointer at run time */
         WineProc=0;
-        Win16Proc = GetWndProcEntry16( (char *)class->lpfnWndProc );
+        Win16Proc = (DWORD)GetWndProcEntry16( (char *)class->lpfnWndProc );
         Win32Proc = (DWORD)RELAY32_GetEntryPoint(
              "WINPROCS32",(char *)class->lpfnWndProc, 0);
         /* Register the alias so we don't pass Win16 pointers to Win32 apps */

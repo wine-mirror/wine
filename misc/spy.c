@@ -1,6 +1,7 @@
 /* SPY.C
  *
  * Copyright 1994, Bob Amstadt
+ *           1995, Alex Korobka  
  */
 
 #include <stdlib.h>
@@ -13,8 +14,10 @@
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "spy.h"
 
-#define SPY_MAX_MSGNUM		0x03e8
+#define SPY_MAX_MSGNUM		WM_USER
+#define SPY_MAX_INDENTLEVEL     64
 
 const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
@@ -27,7 +30,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ACTIVATE",
     "WM_SETFOCUS",
     "WM_KILLFOCUS",
-    "WM_UNUSED1",
+    "WM_SETVISIBLE",
     "WM_ENABLE",
     "WM_SETREDRAW",
     "WM_SETTEXT",
@@ -41,7 +44,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ERASEBKGND",
     "WM_SYSCOLORCHANGE",
     "WM_ENDSESSION",
-    "WM_UNUSED2",
+    "WM_SYSTEMERROR",
     "WM_SHOWWINDOW",
     "WM_CTLCOLOR",
     "WM_WININICHANGE",
@@ -67,17 +70,19 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_VKEYTOITEM",
     "WM_CHARTOITEM",
     "WM_SETFONT",		/* 0x30 */
-    "WM_GETFONT", NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_GETFONT", NULL, NULL, NULL, NULL, NULL, 
+    "WM_QUERYDRAGICON", NULL, 
+    "WM_COMPAREITEM", NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x40 */
-    NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, 		        /* 0x40 */
+    "WM_COMPACTING", NULL, NULL, 
+    "WM_COMMNOTIFY", NULL, 
     "WM_WINDOWPOSCHANGING",	/* 0x0046 */
     "WM_WINDOWPOSCHANGED",	/* 0x0047 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_POWER", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0050 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, 		        /* 0x0050 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0060 */
@@ -96,7 +101,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCPAINT",          	/* 0x0085 */
     "WM_NCACTIVATE",       	/* 0x0086 */
     "WM_GETDLGCODE",		/* 0x0087 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_SYNCPAINT", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0090 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -164,7 +169,9 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0130 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, 
+    "WM_LBTRACKPOINT", 
+    NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0140 */
@@ -244,12 +251,19 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MDIICONARRANGE",        /* 0x0228 */
     "WM_MDIGETACTIVE",          /* 0x0229 */
 
-    NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_DROPOBJECT", 
+    "WM_QUERYDROPOBJECT", 
+    NULL,
+    "WM_DRAGLOOP",
+    "WM_DRAGSELECT",
+    "WM_DRAGMOVE",
+     
     /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */
     "WM_ENTERSIZEMOVE",		/* 0x0231 */
     "WM_EXITSIZEMOVE",		/* 0x0232 */
-    NULL, NULL, NULL, NULL, NULL, 
+    "WM_DROPFILES", 		/* 0x0233 */
+    NULL, NULL, NULL, NULL, 
     /* 0x0238*/
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     
@@ -289,11 +303,27 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0300 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_CUT", 			/* 0x0300 */
+    "WM_COPY", 
+    "WM_PASTE", 
+    "WM_CLEAR", 
+    "WM_UNDO", 
+    "WM_RENDERFORMAT", 
+    "WM_RENDERALLFORMATS", 
+    "WM_DESTROYCLIPBOARD",
+    "WM_DRAWCLIPBOARD", 
+    "WM_PAINTCLIPBOARD", 
+    "WM_VSCROLLCLIPBOARD", 
+    "WM_SIZECLIPBOARD", 
+    "WM_ASKCBFORMATNAME", 
+    "WM_CHANGECBCHAIN",
+    "WM_HSCROLLCLIPBOARD",
+    "WM_QUERYNEWPALETTE",	/* 0x030f*/
+
+    "WM_PALETTEISCHANGING",
+    "WM_PALETTECHANGED", 	/* 0x0311 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -314,7 +344,9 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     /* 0x0380 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_COALESCE_FIRST", 
+    "WM_COALESCE_LAST", 
+                NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -337,35 +369,138 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_DDE_DATA",	/* 0x3E5 */
     "WM_DDE_REQUEST",	/* 0x3E6 */
     "WM_DDE_POKE",	/* 0x3E7 */
-    "WM_DDE_EXECUTE"	/* 0x3E8 */
+    "WM_DDE_EXECUTE",	/* 0x3E8 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    
+    /* 0x03f0 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    "WM_USER"
 };
 
-char SpyFilters[256+1];
-char SpyIncludes[256+1];
+static BOOL  	SpyFilters [SPY_MAX_MSGNUM+1];
+static BOOL 	SpyIncludes[SPY_MAX_MSGNUM+1];
+
+static int      iSpyMessageIndentLevel  = 0;
+static char     lpstrSpyMessageIndent[SPY_MAX_INDENTLEVEL];
+static char    *lpstrSpyMessageFromWine = "Wine";
+static char     lpstrSpyMessageFromTask[10]; 
+static char    *lpstrSpyMessageFromSelf = "self";
+static char    *lpstrSpyMessageFrom     =  NULL;
+
 
 /**********************************************************************
- *					SpyMessage
+ *			      EnterSpyMessage
  */
-void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
+void EnterSpyMessage(int iFlag, HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 {
-    char msg_name[80];
-    
-	if(!debugging_spy)
-		return;
+  HTASK	hTask     = GetWindowTask(hWnd);
+  WORD 	wCheckMsg = (msg > WM_USER)? WM_USER: msg;
 
-    if (msg > SPY_MAX_MSGNUM || MessageTypeNames[msg] == NULL)
-	sprintf(msg_name, "%04x", msg);
-    else
-	strcpy(msg_name, MessageTypeNames[msg]);
-    
-    strcat(msg_name, ";");
-    
-    if ((strlen(SpyIncludes) == 0 || strstr(SpyIncludes, msg_name) != NULL) &&
-	strstr(SpyFilters, msg_name) == NULL)
+  if( !SpyIncludes[wCheckMsg] || SpyFilters[wCheckMsg]) return;
+
+  /* each SPY_SENDMESSAGE must be complemented by call to ExitSpyMessage */
+  switch(iFlag)
+   {
+	case SPY_DISPATCHMESSAGE:
+		    if(msg <= WM_USER)
+		      {
+		       if(MessageTypeNames[msg])
+		          dprintf_message(stddeb,"(%04x) message [%04x] %s dispatched  wp=%04x lp=%08lx\n",
+		                          hWnd, msg, MessageTypeNames[msg], wParam, lParam);
+		       else
+		          dprintf_message(stddeb,"(%04x) message [%04x] dispatched  wp=%04x lp=%08lx\n",
+		                          hWnd, msg, wParam, lParam);
+		      }
+		    else
+		          dprintf_message(stddeb,"(%04x) message [%04x] WM_USER+%04d dispatched  wp=%04x lp=%08lx\n",
+		                          hWnd, msg, msg-WM_USER ,wParam ,lParam);
+		    break;
+	case SPY_SENDMESSAGE:
+		    if(hTask == GetCurrentTask())
+ 		      lpstrSpyMessageFrom = lpstrSpyMessageFromSelf;
+		    else if(hTask == NULL)
+  		      	   lpstrSpyMessageFrom = lpstrSpyMessageFromWine;
+  		    	 else
+  				{
+  				   sprintf(lpstrSpyMessageFromTask, "task %04x", hTask);	
+  				   lpstrSpyMessageFrom = lpstrSpyMessageFromTask;
+  				}
+		     
+	            if(msg <= WM_USER)
+	                {
+	                  if(MessageTypeNames[msg])
+			      dprintf_message(stddeb,"%s(%04x) message [%04x] %s sent from %s wp=%04x lp=%08lx\n",
+                                   	      lpstrSpyMessageIndent,
+                                   	      hWnd, msg, MessageTypeNames[msg],
+                                   	      lpstrSpyMessageFrom,
+                                   	      wParam, lParam);
+	                  else
+	                      dprintf_message(stddeb,"%s(%04x) message [%04x] sent from %s wp=%04x lp=%08lx\n",
+                                   	      lpstrSpyMessageIndent,
+                                   	      hWnd, msg,
+                                   	      lpstrSpyMessageFrom,
+                                   	      wParam, lParam);
+          		}
+        	    else
+             		  dprintf_message(stddeb,"%s(%04x) message [%04x] WM_USER+%04x sent from %s wp=%04x lp=%08lx\n",
+                               		  lpstrSpyMessageIndent,
+                               		  hWnd, msg, msg-WM_USER,
+                               		  lpstrSpyMessageFrom,
+                             		  wParam, lParam);
+
+	            if(SPY_MAX_INDENTLEVEL > iSpyMessageIndentLevel ) 
+		    	{
+			  iSpyMessageIndentLevel++;
+			  lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
+			  lpstrSpyMessageIndent[iSpyMessageIndentLevel-1]  ='\t';
+		      	}
+		    break;   
+	case SPY_DEFWNDPROC:
+		    if(msg <= WM_USER)
+		        if(MessageTypeNames[msg])
+		           dprintf_message(stddeb, "%s(%04x) DefWindowProc: %s [%04x]  wp=%04x lp=%08lx\n",
+		                           lpstrSpyMessageIndent,
+		                           hWnd, MessageTypeNames[msg], msg, wParam, lParam );
+		        else
+		           dprintf_message(stddeb, "%s(%04x) DefWindowProc: [%04x]  wp=%04x lp=%08lx\n",
+		                           lpstrSpyMessageIndent,
+		                           hWnd, msg, wParam, lParam );
+		    else
+		        dprintf_message(stddeb, "%s(%04x) DefWindowProc: WM_USER+%d [%04x] wp=%04x lp=%08lx\n",
+		                        lpstrSpyMessageIndent,
+		                        hWnd, msg - WM_USER, msg, wParam, lParam );
+		    break;
+	default:		    
+   }  
+
+}
+
+/**********************************************************************
+ *			      ExitSpyMessage
+ */
+void ExitSpyMessage(int iFlag, HWND hWnd, WORD msg, LONG lReturn)
+{
+  WORD wCheckMsg = (msg > WM_USER)? WM_USER: msg;
+
+  if( !SpyIncludes[wCheckMsg] || SpyFilters[wCheckMsg]) return;
+
+  iSpyMessageIndentLevel--;
+  lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
+
+  switch(iFlag)
     {
-	msg_name[strlen(msg_name) - 1] = '\0';
-	dprintf_spy(stddeb, "%04x  %20.20s  %04x  %04x  %08lx\n",
-		hwnd, msg_name, msg, wParam, lParam);
+	case SPY_RESULT_INVALIDHWND: 
+		dprintf_message(stddeb,"%s(%04x) message [%04x] HAS INVALID HWND\n",
+                                lpstrSpyMessageIndent, hWnd, msg);
+	        break;
+	case SPY_RESULT_OK:
+		dprintf_message(stddeb,"%s(%04x) message [%04x] returned %08lx\n",
+	                        lpstrSpyMessageIndent, hWnd, msg, lReturn);
+		break;
+	default:
     }
 }
 
@@ -374,15 +509,30 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
  */
 void SpyInit(void)
 {
-    GetPrivateProfileString("spy", "exclude", "", SpyFilters, 
-			    sizeof(SpyFilters)-1, WINE_INI);
-    GetPrivateProfileString("spy", "include", "", SpyIncludes, 
-			    sizeof(SpyIncludes)-1, WINE_INI);
+    int      i;
+    char     lpstrBuffer[512];
 
-    if (*SpyIncludes != 0) {
-      strcat(SpyIncludes, ";");
-    }
-    if (*SpyFilters != 0) {
-      strcat(SpyFilters, ";");
-    }
+    for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyFilters[i] = SpyIncludes[i] = FALSE;
+
+    GetPrivateProfileString("spy", "Exclude", "",lpstrBuffer ,511 , WINE_INI);
+    dprintf_message(stddeb,"SpyInit: Exclude=%s\n",lpstrBuffer);
+    if( *lpstrBuffer != 0 )
+      if(strstr(lpstrBuffer,"EXCLUDEALL"))
+	for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyFilters[i] = TRUE;
+      else
+        for(i=0; i <= SPY_MAX_MSGNUM; i++)
+	    if(MessageTypeNames[i])
+	       if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyFilters[i] = TRUE; 
+
+    GetPrivateProfileString("spy", "Include", "",lpstrBuffer ,511 , WINE_INI);
+    dprintf_message(stddeb,"SpyInit: Include=%s\n",lpstrBuffer);
+    if( *lpstrBuffer != 0 )
+      if(strstr(lpstrBuffer,"INCLUDEALL"))
+        for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyIncludes[i] = TRUE;
+      else 
+        for(i=0; i <= SPY_MAX_MSGNUM; i++)
+            if(MessageTypeNames[i])
+               if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyIncludes[i] = TRUE;
+
 }
+

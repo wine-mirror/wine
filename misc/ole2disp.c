@@ -31,12 +31,20 @@ static BSTR BSTR_AllocBytes(int n)
 	if(!BSTRheapsel)
 		return 0;
 	mem=LOCAL_Alloc(BSTRheapsel,LMEM_FIXED,n);
+#ifdef WINELIB32
+	return (BSTR)mem;
+#else
 	return mem ? MAKELONG(mem,BSTRheapsel) : 0;
+#endif
 }
 
 static void BSTR_Free(BSTR in)
 {
+#ifdef WINELIB32
+	LOCAL_Free(BSTRheapsel, (HANDLE)in);
+#else
 	LOCAL_Free(BSTRheapsel, LOWORD(in));
+#endif
 }
 
 static void* BSTR_GetAddr(BSTR in)

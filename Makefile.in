@@ -28,12 +28,12 @@ RM        = rm -f
 
 MAIN_TARGET = @MAIN_TARGET@
 
-COMMONSUBDIRS = rc controls ipc loader misc multimedia objects windows
+COMMONSUBDIRS = rc controls ipc loader misc multimedia objects win32 windows
 
 EMUSUBDIRS = tools debugger debugger/readline if1632 memory miscemu
 
 LIBSUBDIRS = toolkit
- 
+
 ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS)
 
 COMMONOBJS = \
@@ -44,6 +44,7 @@ COMMONOBJS = \
 	multimedia/multimedia.o \
 	objects/objects.o \
 	rc/rc.o \
+	win32/win32.o \
 	windows/windows.o
 
 EMUOBJS = \
@@ -90,5 +91,5 @@ distclean:
 langclean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) langclean); done
 	$(RM) wine wine.sym winelib.a
-	
+
 dummy:

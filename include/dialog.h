@@ -12,9 +12,7 @@
 extern BOOL DIALOG_Init(void);
 extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
 
-#ifndef WINELIB
 #pragma pack(1)
-#endif
 
   /* Dialog info structure.
    * This structure is stored into the window extra bytes (cbWndExtra).
@@ -70,8 +68,6 @@ typedef struct
     SEGPTR             faceName;
 } DLGTEMPLATE;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 #endif  /* DIALOG_H */

@@ -7,6 +7,7 @@
 #include "sysmetrics.h"
 #include "user.h"
 #include "win.h"
+#include "event.h"
 #include "message.h"
 #include "stackframe.h"
 #include "winpos.h"
@@ -309,7 +310,7 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    dprintf_win(stddeb, "MoveWindow: %d %d,%d %dx%d %d\n", 
+    dprintf_win(stddeb, "MoveWindow: "NPFMT" %d,%d %dx%d %d\n", 
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
@@ -328,7 +329,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
     if (!wndPtr) return FALSE;
 
-    dprintf_win(stddeb,"ShowWindow: hwnd=%04X, cmd=%d\n", hwnd, cmd);
+    dprintf_win(stddeb,"ShowWindow: hwnd="NPFMT", cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -542,8 +543,14 @@ HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
     if (hwndActive)
     {
 	if (!SendMessage( hwndActive, WM_NCACTIVATE, FALSE, 0 )) return 0;
+#ifdef WINELIB32
+	SendMessage( hwndActive, WM_ACTIVATE,
+		     MAKEWPARAM( WA_INACTIVE, IsIconic(hwndActive) ),
+		     (LPARAM)hwnd );
+#else
 	SendMessage( hwndActive, WM_ACTIVATE, WA_INACTIVE,
 		     MAKELONG( IsIconic(hwndActive), hwnd ) );
+#endif
 	/* Send WM_ACTIVATEAPP here */
     }
 
@@ -555,8 +562,15 @@ HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg )
 
 	/* Send WM_ACTIVATEAPP here */
 	SendMessage( hwnd, WM_NCACTIVATE, TRUE, 0 );
+#ifdef WINELIB32
+	SendMessage( hwnd, WM_ACTIVATE,
+		     MAKEWPARAM( mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE, 
+				 IsIconic(hwnd) )
+		     , (LPARAM)prevActive );
+#else
 	SendMessage( hwnd, WM_ACTIVATE, mouseMsg ? WA_CLICKACTIVE : WA_ACTIVE,
 		     MAKELONG( IsIconic(hwnd), prevActive ) );
+#endif
     }
     return prevActive;
 }
@@ -919,6 +933,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Repaint the window */
 
     if (wndPtr->window) MSG_Synchronize();  /* Wait for all expose events */
+    EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
     if ((flags & SWP_FRAMECHANGED) && !(flags & SWP_NOREDRAW))
         RedrawWindow( winpos.hwnd, NULL, 0,
                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
@@ -927,6 +942,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
                       RDW_ALLCHILDREN | RDW_ERASENOW );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
+
+    winpos.flags |= SWP_NOMOVE; /* prevent looping.. window is already moved ??? (FIXME)*/
 
     if (!(winpos.flags & SWP_NOSENDCHANGING))
         SendMessage( winpos.hwnd, WM_WINDOWPOSCHANGED,
@@ -1057,7 +1074,7 @@ BOOL EndDeferWindowPos( HDWP hdwp )
  */
 void TileChildWindows( HWND parent, WORD action )
 {
-    printf("STUB TileChildWindows(%04X, %d)\n", parent, action);
+    printf("STUB TileChildWindows("NPFMT", %d)\n", parent, action);
 }
 
 /***********************************************************************
@@ -1065,5 +1082,5 @@ void TileChildWindows( HWND parent, WORD action )
  */
 void CascadeChildWindows( HWND parent, WORD action )
 {
-    printf("STUB CascadeChildWindows(%04X, %d)\n", parent, action);
+    printf("STUB CascadeChildWindows("NPFMT", %d)\n", parent, action);
 }

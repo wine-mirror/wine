@@ -31,7 +31,7 @@
 const char people[] = "Wine is available thanks to the work of "
 "Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, "
 "Fons Botman, John Brezak, Andrew Bulhak, John Burton, Paul Falstad, "
-"Olaf Flebbe, Peter Galbavy, Ramon Garcia, Hans de Graaf, "
+"Olaf Flebbe, Peter Galbavy, Ramon Garcia, Hans de Graaff, "
 "Charles M. Hannum, Cameron Heide, Jochen Hoenicke, Jeffrey Hsu, "
 "Miguel de Icaza, Alexandre Julliard, Jon Konrath, Scott A. Laird, "
 "Martin von Loewis, Kenneth MacDonald, Peter MacDonald, William Magro, "
@@ -114,7 +114,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
-  "    -spy file       Obsolete. Use -debugmsg +spy for Spy messages\n" \
+  "    -spy file       Obsolete. Use -debugmsg +message for messages\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -dll name       Enable or disable built-in DLLs\n" \
   "    -allowreadonly  Read only files may be opened in write mode\n" \
@@ -483,10 +483,12 @@ static void malloc_error()
 static void called_at_exit(void)
 {
     extern void sync_profiles(void);
+    extern void SHELL_SaveRegistry(void);
 
     sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
+    SHELL_SaveRegistry();
 }
 
 /***********************************************************************
@@ -499,6 +501,7 @@ int main( int argc, char *argv[] )
     int *depth_list;
 
     extern int _WinMain(int argc, char **argv);
+    extern void SHELL_LoadRegistry(void);
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
@@ -524,6 +527,8 @@ int main( int argc, char *argv[] )
       mcheck(malloc_error);
     }
 #endif
+
+    SHELL_LoadRegistry();
 
     screen       = DefaultScreenOfDisplay( display );
     screenWidth  = WidthOfScreen( screen );
@@ -579,10 +584,16 @@ LONG GetVersion(void)
  */
 LONG GetWinFlags(void)
 {
+  static const long cpuflags[5] =
+    { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
+
+  /* There doesn't seem to be any Pentium flag.  */
+  long cpuflag = cpuflags[min (runtime_cpu (), 4)];
+
   if (Options.enhanced)
-    return (WF_ENHANCED | WF_CPU386 | WF_PMODE | WF_80x87 | WF_PAGING);
+    return (WF_ENHANCED | cpuflag | WF_PMODE | WF_80x87 | WF_PAGING);
   else
-    return (WF_STANDARD | WF_CPU386 | WF_PMODE | WF_80x87);
+    return (WF_STANDARD | cpuflag | WF_PMODE | WF_80x87);
 }
 
 /***********************************************************************
@@ -653,6 +664,17 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 }
 
 /***********************************************************************
+ *      SetEnvironmentVariableA (KERNEL32.484)
+ */
+BOOL SetEnvironmentVariableA(LPSTR lpName, LPSTR lpValue)
+{
+    int rc;
+
+    rc = SetEnvironment(lpName, lpValue, strlen(lpValue) + 1);
+    return (rc > 0) ? 1 : 0;
+}
+
+/***********************************************************************
  *	GetEnvironment (GDI.134)
  */
 int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
@@ -672,6 +694,59 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 		}
 	printf("GetEnvironnement() // not found !\n");
 	return 0;
+}
+
+/***********************************************************************
+ *      GetEnvironmentVariableA (KERNEL32.213)
+ */
+DWORD GetEnvironmentVariableA(LPSTR lpName, LPSTR lpValue, DWORD size)
+{
+    return GetEnvironment(lpName, lpValue, size);
+}
+
+/***********************************************************************
+ *      GetEnvironmentStrings (KERNEL32.210)
+ */
+LPVOID GetEnvironmentStrings(void)
+{
+    int count;
+    LPENVENTRY lpEnv;
+    char *envtable, *envptr;
+
+    /* Count the total number of bytes we'll need for the string
+     * table.  Include the trailing nuls and the final double nul.
+     */
+    count = 1;
+    lpEnv = lpEnvList;
+    while(lpEnv != NULL)
+    {
+        if(lpEnv->Name != NULL)
+        {
+            count += strlen(lpEnv->Name) + 1;
+            count += strlen(lpEnv->Value) + 1;
+        }
+        lpEnv = lpEnv->Next;
+    }
+
+    envtable = malloc(count);
+    if(envtable)
+    {
+        lpEnv = lpEnvList;
+        envptr = envtable;
+
+        while(lpEnv != NULL)
+        {
+            if(lpEnv->Name != NULL)
+            {
+                count = sprintf(envptr, "%s=%s", lpEnv->Name, lpEnv->Value);
+                envptr += count + 1;
+            }
+            lpEnv = lpEnv->Next;
+        }
+        *envptr = '\0';
+    }
+
+    return envtable;
 }
 
 /***********************************************************************

@@ -30,7 +30,7 @@ extern void LDT_BytesToEntry( const unsigned long *buffer, ldt_entry *content);
 extern void LDT_EntryToBytes( unsigned long *buffer, const ldt_entry *content);
 extern int LDT_GetEntry( int entry, ldt_entry *content );
 extern int LDT_SetEntry( int entry, const ldt_entry *content );
-extern void LDT_Print();
+extern void LDT_Print( int start, int length );
 
 
   /* This structure is used to build the local copy of the LDT. */
@@ -73,7 +73,7 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
            ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
 #else
 #define PTR_SEG_TO_LIN(ptr)	((void*)(ptr))
-#define PTR_SEG_OFF_TO_LIN(seg,off)	((void*)(off))
+#define PTR_SEG_OFF_TO_LIN(seg,off)	((void*)((char*)(seg)+(int)(off)))
 #endif
 
 

@@ -5,7 +5,7 @@ void Write (HDC dc, int x, int y, char *s)
     TextOut (dc, x, y, s, strlen (s));
 }
 
-LONG WndProc (HANDLE wnd, UINT msg, WORD w, LONG l)
+LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     static short xChar, yChar;
     HDC dc;
@@ -53,7 +53,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor    = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (WHITE_BRUSH);
 	class.lpszMenuName = NULL;
-	class.lpszClassName = "class";
+	class.lpszClassName = (SEGPTR)"class";
     }
     if (!RegisterClass (&class))
 	return FALSE;
@@ -68,4 +68,5 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	TranslateMessage (&msg);
 	DispatchMessage (&msg);
     }
+    return 0;
 }

@@ -19,7 +19,7 @@ typedef struct
     WORD    magic;            /* 'NE' signature */
     WORD    count;            /* Usage count */
     WORD    entry_table;      /* Near ptr to entry table */
-    WORD    next;             /* Selector to next module */
+    HMODULE next;             /* Selector to next module */
     WORD    dgroup_entry;     /* Near ptr to segment entry for DGROUP */
     WORD    fileinfo;         /* Near ptr to file info (LOADEDFILEINFO) */
     WORD    flags;            /* Module flags */
@@ -69,7 +69,7 @@ typedef struct
     WORD    size;      /* Segment size on disk */
     WORD    flags;     /* Segment flags */
     WORD    minsize;   /* Min. size of segment in memory */
-    WORD    selector;  /* Selector of segment in memory */
+    HANDLE  selector;  /* Selector of segment in memory */
 } SEGTABLEENTRY;
 
   /* Self-loading modules contain this structure in their first segment */

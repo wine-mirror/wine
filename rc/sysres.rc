@@ -6,6 +6,12 @@
 #include "sysres_No.rc"
 #elif #LANG(Es)
 #include "sysres_Es.rc"
+#elif #LANG(Fr)
+#include "sysres_Fr.rc"
+#elif #LANG(Fi)
+#include "sysres_Fi.rc"
+#elif #LANG(Da)
+#include "sysres_Da.rc"
 #else
 #error LANG not set to an implemented language.
 #endif

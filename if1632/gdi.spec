@@ -254,7 +254,7 @@ id	3
 374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse
 375 pascal16 GetSystemPaletteEntries(word word word ptr)
              GetSystemPaletteEntries
-376 stub ResetDC
+376 pascal16 ResetDC(word ptr) ResetDC
 377 stub STARTDOC
 378 stub ENDDOC
 379 stub STARTPAGE

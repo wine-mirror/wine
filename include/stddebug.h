@@ -138,10 +138,8 @@
 #undef DEBUG_RESOURCE
 #undef DEBUG_SCROLL
 #undef DEBUG_SELECTOR
-#undef DEBUG_SELECTORS
 #undef DEBUG_SEM
 #undef DEBUG_SHM
-#undef DEBUG_SPY
 #undef DEBUG_STRESS
 #undef DEBUG_SYSCOLOR
 #undef DEBUG_TASK
@@ -149,6 +147,7 @@
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
 #undef DEBUG_UTILITY
+#undef DEBUG_VXD
 #undef DEBUG_WIN
 #undef DEBUG_WINSOCK
 #endif
@@ -216,10 +215,8 @@
 #define DEBUG_RESOURCE
 #define DEBUG_SCROLL
 #define DEBUG_SELECTOR
-#define DEBUG_SELECTORS
 #define DEBUG_SEM
 #define DEBUG_SHM
-#define DEBUG_SPY
 #define DEBUG_STRESS
 #define DEBUG_SYSCOLOR
 #define DEBUG_TASK
@@ -227,6 +224,7 @@
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
 #define DEBUG_UTILITY
+#define DEBUG_VXD
 #define DEBUG_WIN
 #define DEBUG_WINSOCK
 #endif

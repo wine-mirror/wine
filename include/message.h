@@ -20,7 +20,7 @@ typedef struct tagQMSG
 typedef struct tagMESSAGEQUEUE
 {
   WORD      next;
-  WORD      hTask;                  /* hTask owning the queue                */
+  HTASK     hTask;                  /* hTask owning the queue                */
   WORD      msgSize;                /* Size of messages in the queue         */
   WORD      msgCount;               /* Number of waiting messages            */
   WORD      nextMessage;            /* Next message to be retrieved          */
@@ -29,10 +29,10 @@ typedef struct tagMESSAGEQUEUE
   DWORD     GetMessageTimeVal;      /* Value returned by GetMessageTime      */
   DWORD     GetMessagePosVal;       /* Value returned by GetMessagePos       */
   DWORD     GetMessageExtraInfoVal; /* Value returned by GetMessageExtraInfo */
-  DWORD     lParam;                 /* Next four values set by SendMessage   */
-  WORD      wParam;
-  WORD      msg;
-  WORD      hWnd;
+  LPARAM    lParam;                 /* Next four values set by SendMessage   */
+  WPARAM    wParam;
+  UINT      msg;
+  HWND      hWnd;
   WORD      wPostQMsg;              /* PostQuitMessage flag                  */
   WORD      wExitCode;              /* PostQuitMessage exit code             */
   WORD      InSendMessageHandle;    /* Handle of task that sent a message    */

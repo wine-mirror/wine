@@ -39,6 +39,7 @@ struct fcb {
 #define MAX_DOS_DRIVES	26
 
 extern WORD ExtendedError;
+extern BYTE ErrorClass, Action, ErrorLocus;
 extern struct DosDeviceStruct COM[MAX_PORTS];
 extern struct DosDeviceStruct LPT[MAX_PORTS];
 

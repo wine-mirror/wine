@@ -1,4 +1,5 @@
 - EBP and ESP are sometimes corrupted while running 16-bit code.
+- Message flow is not correct for multiple tasks, some messages are not supported.
 - Dialog Boxes created by WM_CREATE handler aren't visible
 - MDI does not send WM_GETMINMAX message.
 - InitializeLoadedDLLs() can't init LZEXPAND.DLL. (cs:ip => 0:0)

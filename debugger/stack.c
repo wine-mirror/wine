@@ -62,40 +62,46 @@ void DEBUG_BackTrace(void)
     DBG_ADDR addr;
     int frameno = 0;
 
-  fprintf(stderr,"Backtrace:\n");
-  if (SS_reg(DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
-  {
-      FRAME32 *frame = (FRAME32 *)EBP_reg(DEBUG_context);
-      addr.seg = 0;
-      while (frame->ip)
-      {
-          fprintf(stderr,"%d ",frameno++);
-          addr.off = frame->ip;
-          DEBUG_PrintAddress( &addr, 32 );
-          fprintf( stderr, "\n" );
-          frame = (FRAME32 *)frame->bp;
-      }
-  }
-  else  /* 16-bit mode */
-  {
-      FRAME16 *frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS_reg(DEBUG_context),
-                                                  BP_reg(DEBUG_context) & ~1 );
-      WORD cs = CS_reg(DEBUG_context);
-      if (GET_SEL_FLAGS(SS_reg(DEBUG_context)) & LDT_FLAGS_32BIT)
+    fprintf(stderr,"Backtrace:\n");
+    if (SS_reg(DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
+    {
+        addr.seg = 0;
+        addr.off = EBP_reg(DEBUG_context);
+        for (;;)
+        {
+            FRAME32 *frame = (FRAME32 *)addr.off;
+            if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME32) )) return;
+            if (!frame->ip) break;
+            fprintf(stderr,"%d ",frameno++);
+            addr.off = frame->ip;
+            DEBUG_PrintAddress( &addr, 32 );
+            fprintf( stderr, "\n" );
+            addr.off = frame->bp;
+        }
+    }
+    else  /* 16-bit mode */
+    {
+      WORD ss = SS_reg(DEBUG_context), cs = CS_reg(DEBUG_context);
+      if (GET_SEL_FLAGS(ss) & LDT_FLAGS_32BIT)
       {
           fprintf( stderr, "Not implemented: 32-bit backtrace on a different stack segment.\n" );
           return;
       }
-      while (frame->bp)
+      addr.seg = SS_reg(DEBUG_context);
+      addr.off = BP_reg(DEBUG_context) & ~1;
+      for (;;)
       {
+          FRAME16 *frame = (FRAME16 *)DBG_ADDR_TO_LIN(&addr);
+          if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME16) )) return;
+          if (!frame->bp) break;
           if (frame->bp & 1) cs = frame->cs;
           fprintf( stderr,"%d ", frameno++ );
           addr.seg = cs;
           addr.off = frame->ip;
           DEBUG_PrintAddress( &addr, 16 );
           fprintf( stderr, "\n" );
-          frame = (FRAME16 *)PTR_SEG_OFF_TO_LIN( SS_reg(DEBUG_context),
-                                                 frame->bp & ~1 );
+          addr.seg = ss;
+          addr.off = frame->bp & ~1;
       }
   }
   fprintf( stderr, "\n" );

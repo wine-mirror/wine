@@ -17,7 +17,7 @@
 /* Structure copy functions */
 static void MSG16to32(MSG *msg16,struct WIN32_MSG *msg32)
 {
-	msg32->hwnd=msg16->hwnd;
+	msg32->hwnd=(DWORD)msg16->hwnd;
 	msg32->message=msg16->message;
 	msg32->wParam=msg16->wParam;
 	msg32->lParam=msg16->lParam;
@@ -28,7 +28,7 @@ static void MSG16to32(MSG *msg16,struct WIN32_MSG *msg32)
 
 static void MSG32to16(struct WIN32_MSG *msg32,MSG *msg16)
 {
-	msg16->hwnd=msg32->hwnd;
+	msg16->hwnd=(HWND)msg32->hwnd;
 	msg16->message=msg32->message;
 	msg16->wParam=msg32->wParam;
 	msg16->lParam=msg32->lParam;
@@ -45,14 +45,14 @@ ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
 	WNDCLASS copy;
 	char *s1,*s2;
 	copy.style=wndclass->style;
-	ALIAS_RegisterAlias(0,0,wndclass->lpfnWndProc);
+	ALIAS_RegisterAlias(0,0,(DWORD)wndclass->lpfnWndProc);
 	copy.lpfnWndProc=wndclass->lpfnWndProc;
 	copy.cbClsExtra=wndclass->cbClsExtra;
 	copy.cbWndExtra=wndclass->cbWndExtra;
-	copy.hInstance=wndclass->hInstance;
-	copy.hIcon=wndclass->hIcon;
-	copy.hCursor=wndclass->hCursor;
-	copy.hbrBackground=wndclass->hbrBackground;
+	copy.hInstance=(HINSTANCE)wndclass->hInstance;
+	copy.hIcon=(HICON)wndclass->hIcon;
+	copy.hCursor=(HCURSOR)wndclass->hCursor;
+	copy.hbrBackground=(HBRUSH)wndclass->hbrBackground;
 	if(wndclass->lpszMenuName)
 	{
 		s1=alloca(strlen(wndclass->lpszMenuName)+1);
@@ -75,7 +75,7 @@ ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
 LRESULT USER32_DefWindowProcA(DWORD hwnd,DWORD msg,DWORD wParam,DWORD lParam)
 {
 	/* some messages certainly need special casing. We come to that later */
-	return DefWindowProc(hwnd,msg,wParam,lParam);
+	return DefWindowProc((HWND)hwnd,msg,wParam,lParam);
 }
 
 /***********************************************************************
@@ -85,7 +85,7 @@ BOOL USER32_GetMessageA(struct WIN32_MSG* lpmsg,DWORD hwnd,DWORD min,DWORD max)
 {
 	BOOL ret;
 	MSG msg;
-	ret=GetMessage(MAKE_SEGPTR(&msg),hwnd,min,max);
+	ret=GetMessage(MAKE_SEGPTR(&msg),(HWND)hwnd,min,max);
 	MSG16to32(&msg,lpmsg);
 	return ret;
 }
@@ -97,8 +97,8 @@ HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 {
 	PAINTSTRUCT ps;
 	HDC ret;
-	ret=BeginPaint(hwnd,&ps);
-	lpps->hdc=ps.hdc;
+	ret=BeginPaint((HWND)hwnd,&ps);
+	lpps->hdc=(DWORD)ps.hdc;
 	lpps->fErase=ps.fErase;
 	lpps->rcPaint.top=ps.rcPaint.top;
 	lpps->rcPaint.left=ps.rcPaint.left;
@@ -123,7 +123,7 @@ BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 	ps.rcPaint.bottom=lpps->rcPaint.bottom;
 	ps.fRestore=lpps->fRestore;
 	ps.fIncUpdate=lpps->fIncUpdate;
-	EndPaint(hwnd,&ps);
+	EndPaint((HWND)hwnd,&ps);
 	return TRUE;
 }
 

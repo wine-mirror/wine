@@ -42,11 +42,14 @@ static HANDLE hDOSEnvironment = 0;
   /* TASK_Reschedule() 16-bit entry point */
 static FARPROC TASK_RescheduleProc;
 
+#ifdef WINELIB
+#define TASK_SCHEDULE()  TASK_Reschedule();
+#else
 #define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc,0)
+#endif
 
 
 static HANDLE TASK_CreateDOSEnvironment(void);
-
 
 /***********************************************************************
  *           TASK_Init
@@ -328,6 +331,10 @@ static void TASK_CallToStart(void)
     cs_reg = pSegTable[pModule->cs - 1].selector;
     ip_reg = pModule->ip;
     ds_reg = pSegTable[pModule->dgroup - 1].selector;
+#ifndef WINELIB
+/* JBP: I doubt a CallTo16_regs_ is possible in libwine.a, and IF1632 is not
+ *      allowed.
+ */
     IF1632_Saved16_ss = pTask->ss;
     IF1632_Saved16_sp = pTask->sp;
     dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
@@ -338,6 +345,11 @@ static void TASK_CallToStart(void)
                    pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
                    pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
                    0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+#else
+    fprintf(stderr, "JBP: Ignoring main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
+                 cs_reg, ip_reg, ds_reg,
+                 pTask->ss, pTask->sp);
+#endif
     /* This should never return */
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
     TASK_KillCurrentTask( 1 );
@@ -356,11 +368,13 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
+    char filename[256];
+#ifndef WINELIB32
     char *stack16Top, *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
     extern DWORD CALL16_RetAddr_word;
-    char filename[256];
+#endif
     
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
     pSegTable = NE_SEG_TABLE( pModule );
@@ -424,9 +438,11 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->pdb.int20 = 0x20cd;
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
     *(DWORD *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
+#ifndef WINELIB
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
+#endif
     pTask->pdb.environment = hEnvironment;
     strncpy( pTask->pdb.cmdLine + 1, cmdLine, 126 );
     pTask->pdb.cmdLine[127] = '\0';
@@ -458,6 +474,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Allocate the 32-bit stack */
 
+#ifndef WINELIB
     pTask->hStack32 = GLOBAL_Alloc( GMEM_FIXED, STACK32_SIZE, pTask->hPDB,
                                     FALSE, FALSE, FALSE );
 
@@ -513,12 +530,13 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
         fprintf( stderr, "Task '%s': ", name );
         DEBUG_AddBreakpoint( &addr );
     }
+#endif
 
       /* Add the task to the linked list */
 
     TASK_LinkTask( hTask );
 
-    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task=%04x\n",
+    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task="NPFMT"\n",
                   name, cmdLine, hTask );
 
     return hTask;
@@ -646,11 +664,12 @@ void TASK_Reschedule(void)
     if (!hTask) return;  /* Do nothing */
 
     pNewTask = (TDB *)GlobalLock( hTask );
-    dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
+    dprintf_task( stddeb, "Switching to task "NPFMT" (%.8s)\n",
                   hTask, pNewTask->module_name );
 
       /* Save the stacks of the previous task (if any) */
 
+#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
     if (pOldTask)
     {
         pOldTask->ss  = IF1632_Saved16_ss;
@@ -658,6 +677,7 @@ void TASK_Reschedule(void)
         pOldTask->esp = IF1632_Saved32_esp;
     }
     else IF1632_Original32_esp = IF1632_Saved32_esp;
+#endif
 
      /* Make the task the last in the linked list (round-robin scheduling) */
 
@@ -669,10 +689,12 @@ void TASK_Reschedule(void)
       /* Switch to the new stack */
 
     hCurrentTask = hTask;
+#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
     IF1632_Saved16_ss   = pNewTask->ss;
     IF1632_Saved16_sp   = pNewTask->sp;
     IF1632_Saved32_esp  = pNewTask->esp;
     IF1632_Stack32_base = WIN16_GlobalLock( pNewTask->hStack32 );
+#endif
 }
 
 
@@ -722,9 +744,9 @@ void InitTask( struct sigcontext_struct context )
     context.sc_ebx = 0x81;
     context.sc_ecx = pModule->stack_size;
     context.sc_edx = pTask->nCmdShow;
-    context.sc_esi = pTask->hPrevInstance;
-    context.sc_edi = pTask->hInstance;
-    context.sc_es  = pTask->hPDB;
+    context.sc_esi = (DWORD)pTask->hPrevInstance;
+    context.sc_edi = (DWORD)pTask->hInstance;
+    context.sc_es  = (WORD)pTask->hPDB;
 
     /* Initialize the local heap */
     if ( pModule->heap_size )
@@ -741,7 +763,9 @@ void InitTask( struct sigcontext_struct context )
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
     pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = stacklow; 
+#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
     pinstance->stackmin    = IF1632_Saved16_sp;
+#endif
 }
 
 
@@ -869,12 +893,14 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
     if (!thunkaddr) return (FARPROC)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
 
-    dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
+    dprintf_task( stddeb, "MakeProcInstance(%08lx,"NPFMT"): got thunk %08lx\n",
                   (SEGPTR)func, hInstance, (SEGPTR)thunkaddr );
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
+#ifndef WINELIB
     *thunk++ = (BYTE)(hInstance & 0xff);
     *thunk++ = (BYTE)(hInstance >> 8);
+#endif
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
     return (FARPROC)thunkaddr;
@@ -908,7 +934,7 @@ HANDLE GetCodeHandle( FARPROC proc )
     else
         handle = GlobalHandle( HIWORD(proc) );
 
-    printf( "STUB: GetCodeHandle(%08lx) returning %04x\n",
+    printf( "STUB: GetCodeHandle(%08lx) returning "NPFMT"\n",
             (DWORD)proc, handle );
     return handle;
 }
@@ -949,14 +975,18 @@ HGLOBAL GetTaskQueue( HANDLE hTask )
 HTASK GetCurrentTask(void)
 {
       /* Undocumented: first task is returned in high word */
+#ifdef WINELIB32
+    return hCurrentTask;
+#else
     return MAKELONG( hCurrentTask, hFirstTask );
+#endif
 }
 
 
 /***********************************************************************
  *           GetCurrentPDB   (KERNEL.37)
  */
-WORD GetCurrentPDB(void)
+HANDLE GetCurrentPDB(void)
 {
     TDB *pTask;
 
@@ -986,7 +1016,7 @@ SEGPTR GetDOSEnvironment(void)
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
-    return WIN16_GlobalLock( pTask->pdb.environment );
+    return (SEGPTR)WIN16_GlobalLock( pTask->pdb.environment );
 }
 
 
@@ -1002,7 +1032,7 @@ WORD GetNumTasks(void)
 /***********************************************************************
  *           GetTaskDS   (KERNEL.155)
  */
-WORD GetTaskDS(void)
+HINSTANCE GetTaskDS(void)
 {
     TDB *pTask;
 
@@ -1040,7 +1070,12 @@ HMODULE GetExePtr( HANDLE handle )
 
       /* Check the owner for module handle */
 
+#ifndef WINELIB
     owner = FarGetOwner( handle );
+#else
+    owner = NULL;
+    fprintf(stderr,"JBP: FarGetOwner() ignored.\n");
+#endif
     if (!(ptr = GlobalLock( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
 
@@ -1082,7 +1117,7 @@ BOOL TaskNext( TASKENTRY *lpte )
     TDB *pTask;
     INSTANCEDATA *pInstData;
 
-    dprintf_toolhelp( stddeb, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
+    dprintf_toolhelp( stddeb, "TaskNext(%p): task="NPFMT"\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
     pTask = (TDB *)GlobalLock( lpte->hNext );
     if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;

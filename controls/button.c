@@ -68,7 +68,7 @@ static HBITMAP hbitmapCheckBoxes = 0;
 static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 
 
-LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
+LRESULT ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
         RECT rect;
 	LONG lResult = 0;
@@ -156,8 +156,14 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
                                      ((infoPtr->state & 3) + 1), 0 );
                         break;
                     }
+#ifdef WINELIB32
+                    SendMessage( GetParent(hWnd), WM_COMMAND,
+                                 MAKEWPARAM(wndPtr->wIDmenu,BN_CLICKED),
+				 (LPARAM) hWnd );
+#else
                     SendMessage( GetParent(hWnd), WM_COMMAND,
                                  wndPtr->wIDmenu, MAKELPARAM(hWnd,BN_CLICKED));
+#endif
                 }
 		break;
 
@@ -182,13 +188,13 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		return 0;
 
         case WM_SETFONT:
-                infoPtr->hFont = wParam;
+                infoPtr->hFont = (HFONT) wParam;
                 if (lParam)
                     PAINT_BUTTON( hWnd, style, ODA_DRAWENTIRE );
                 break;
 
         case WM_GETFONT:
-                return infoPtr->hFont;
+                return (LONG) infoPtr->hFont;
 
 	case WM_SETFOCUS:
                 infoPtr->state |= BUTTON_HASFOCUS;
@@ -269,8 +275,13 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
 
       /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+#ifdef WINELIB32
+    SendMessage( GetParent(hButton), WM_CTLCOLORBTN,
+		 (WPARAM)hDC, (LPARAM)hButton );
+#else
     SendMessage( GetParent(hButton), WM_CTLCOLOR, (WORD)hDC,
                  MAKELPARAM(hButton, CTLCOLOR_BTN) );
+#endif
     hOldPen = (HPEN)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
     hOldBrush = (HBRUSH)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
     SetBkMode(hDC, TRANSPARENT);
@@ -302,7 +313,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
     else GRAPH_DrawReliefRect( hDC, &rc, 2, 2, FALSE );
     
     /* draw button label, if any: */
-    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
+    text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
     if (text[0])
     {
         SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
@@ -347,13 +358,18 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
     GetClientRect(hWnd, &rc);
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+#ifdef WINELIB32 /* JBP: Different in Win32 */
+    hBrush = (HBRUSH) SendMessage(GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC,
+				  (LPARAM)hWnd);
+#else
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));
+#endif
     if (action == ODA_DRAWENTIRE) FillRect(hDC, &rc, hBrush);
 
     GetTextMetrics(hDC, &tm);
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
-    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
+    text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
     textlen = strlen( text );
 
       /* Draw the check-box bitmap */
@@ -421,8 +437,12 @@ static void GB_Paint( HWND hWnd, HDC hDC, WORD action )
     if (action != ODA_DRAWENTIRE) return;
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+#ifdef WINELIB32
+    SendMessage( GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hWnd );
+#else
     SendMessage( GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 		 MAKELPARAM(hWnd, CTLCOLOR_BTN));
+#endif
     SelectObject( hDC, sysColorObjects.hpenWindowFrame );
 
     GetClientRect(hWnd, &rc);
@@ -433,7 +453,7 @@ static void GB_Paint( HWND hWnd, HDC hDC, WORD action )
     LineTo( hDC, rc.left, rc.bottom-1 );
     LineTo( hDC, rc.left, rc.top+2 );
 
-    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
+    text = (char*) USER_HEAP_LIN_ADDR( wndPtr->hText );
     GetTextExtentPoint(hDC, text, strlen(text), &size);
     rc.left  += 10;
     rc.right  = rc.left + size.cx + 1;
@@ -460,8 +480,13 @@ static void UB_Paint( HWND hWnd, HDC hDC, WORD action )
     GetClientRect(hWnd, &rc);
 
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+#ifdef WINELIB32
+    hBrush = (HBRUSH) SendMessage(GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hDC,
+				  (LPARAM)hWnd);
+#else
     hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
 			 MAKELPARAM(hWnd, CTLCOLOR_BTN));
+#endif
     FillRect(hDC, &rc, hBrush);
 
     if ((action == ODA_FOCUS) ||
@@ -491,5 +516,5 @@ static void OB_Paint( HWND hWnd, HDC hDC, WORD action )
     dis.hDC        = hDC;
     GetClientRect( hWnd, &dis.rcItem );
     dis.itemData   = 0;
-    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, MAKE_SEGPTR(&dis) );
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, (LPARAM) MAKE_SEGPTR(&dis) );
 }

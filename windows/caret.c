@@ -2,13 +2,12 @@
  * Caret functions
  *
  * Copyright 1993 David Metcalfe
- *
-static char Copyright[] = "Copyright  David Metcalfe, 1993";
-*/
+ */
 
 #include "windows.h"
 #include "selectors.h"
 #include "alias.h"
+#include "relay32.h"
 #include "stddebug.h"
 /* #define DEBUG_CARET */
 #include "debug.h"
@@ -50,7 +49,7 @@ WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
     {
 	Caret.on = (Caret.on ? FALSE : TRUE);
 	hdc = GetDC(Caret.hwnd);
-	if (Caret.bitmap == 0 || Caret.bitmap == 1)
+	if (Caret.bitmap == (HBITMAP)0 || Caret.bitmap == (HBITMAP)1)
 	    hBrush = CreateSolidBrush(Caret.color);
 	else
 	    hBrush = CreatePatternBrush(Caret.bitmap);
@@ -80,7 +79,7 @@ static void CARET_HideCaret()
 
     Caret.on = FALSE;
     hdc = GetDC(Caret.hwnd);
-    if (Caret.bitmap == 0 || Caret.bitmap == 1)
+    if (Caret.bitmap == (HBITMAP)0 || Caret.bitmap == (HBITMAP)1)
 	hBrush = CreateSolidBrush(Caret.color);
     else
 	hBrush = CreatePatternBrush(Caret.bitmap);
@@ -126,7 +125,7 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 /*    if (Caret.hwnd)
 	DestroyCaret();
 */
-    if (bitmap && bitmap != 1)
+    if (bitmap && bitmap != (HBITMAP)1)
 	Caret.bitmap = bitmap;
 
     if (width)
@@ -144,7 +143,7 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
     Caret.on = FALSE;
     Caret.x = 0;
     Caret.y = 0;
-    if (bitmap == 1)
+    if (bitmap == (HBITMAP)1)
 	Caret.color = GetSysColor(COLOR_GRAYTEXT);
     else
 	Caret.color = GetSysColor(COLOR_WINDOWTEXT);
@@ -156,7 +155,7 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
     Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
                                 (FARPROC)GetWndProcEntry16("CARET_Callback"));
 
-    dprintf_caret(stddeb,"CreateCaret: hwnd=%d, timerid=%d\n", 
+    dprintf_caret(stddeb,"CreateCaret: hwnd="NPFMT", timerid=%d\n", 
 		  hwnd, Caret.timerid);
 }
    

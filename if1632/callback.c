@@ -26,7 +26,6 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return 0;
-    SpyMessage(hwnd, message, wParam, lParam);
 
     /* check if we have something better than 16 bit relays */
     if(!ALIAS_UseAliases || !(a=ALIAS_LookupAlias((DWORD)func)) ||

@@ -11,6 +11,7 @@
 #include "selectors.h"
 #include "alias.h"
 #include "relay32.h"
+#include "win.h"
 #include "../rc/sysres.h"
 #include "task.h"
 
@@ -20,7 +21,7 @@ typedef struct {
   WORD  type;
 } MSGBOX, *LPMSGBOX;
 
-LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 {
   LPMSGBOX lpmb;
   RECT rect, textrect;
@@ -68,17 +69,21 @@ LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
     /* Set the icon */
     switch(lpmb->type & MB_ICONMASK) {
      case MB_ICONEXCLAMATION:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_EXCLAMATION), 0);
+      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
+			 (WPARAM)LoadIcon(0, IDI_EXCLAMATION), 0);
       break;
      case MB_ICONQUESTION:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_QUESTION), 0);
+      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
+			 (WPARAM)LoadIcon(0, IDI_QUESTION), 0);
       break;
      case MB_ICONASTERISK:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_ASTERISK), 0);
+      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
+			 (WPARAM)LoadIcon(0, IDI_ASTERISK), 0);
       break;
      case MB_ICONHAND:
      default:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_HAND), 0);
+      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
+			 (WPARAM)LoadIcon(0, IDI_HAND), 0);
       break;
     }
     
@@ -200,7 +205,7 @@ int MessageBox(HWND hWnd, LPSTR text, LPSTR title, WORD type)
                                  sysres_DIALOG_MSGBOX.size, GetCurrentPDB(),
                                  FALSE, FALSE, TRUE, NULL );
     if (!handle) return 0;
-    ret = DialogBoxIndirectParam( GetWindowWord(hWnd, GWW_HINSTANCE),
+    ret = DialogBoxIndirectParam( WIN_GetWindowInstance(hWnd),
                                   handle, hWnd,
                                   GetWndProcEntry16("SystemMessageBoxProc"),
                                   (LONG)&mbox );

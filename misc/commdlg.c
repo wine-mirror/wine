@@ -83,7 +83,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
         return FALSE;
     }
 
-    hInst = GetWindowWord( lpofn->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
                                    GetWndProcEntry16("FileOpenDlgProc"),
                                    (DWORD)lpofn );
@@ -130,7 +130,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
                                         TRUE, NULL );
 
 
-    hInst = GetWindowWord( lpofn->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpofn->hwndOwner,
                                    GetWndProcEntry16("FileSaveDlgProc"),
                                    (DWORD)lpofn); 
@@ -513,7 +513,13 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2);
       }
       lpofn->nFileOffset = 0;
-      lpofn->nFileExtension = strlen(PTR_SEG_TO_LIN(lpofn->lpstrFile)) - 3;
+      lpofn->nFileExtension = 0;
+      while(tmpstr2[lpofn->nFileExtension] != '.' && tmpstr2[lpofn->nFileExtension] != '\0')
+        lpofn->nFileExtension++;
+      if (lpofn->nFileExtension == '\0')
+	lpofn->nFileExtension = 0;
+      else
+	lpofn->nFileExtension++;
       if (PTR_SEG_TO_LIN(lpofn->lpstrFileTitle) != NULL) 
 	{
 	  lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
@@ -534,7 +540,7 @@ static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {  
   switch (wMsg)
     {
@@ -568,7 +574,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg) {
    case WM_INITDIALOG:
@@ -614,7 +620,7 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
     hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_CHOOSE_COLOR.bytes,
                                   sysres_DIALOG_CHOOSE_COLOR.size,
                                   GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
-    hInst = GetWindowWord( lpChCol->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpChCol->hwndOwner,
                                    GetWndProcEntry16("ColorDlgProc"), 
                                    (DWORD)lpChCol );
@@ -626,7 +632,7 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-BOOL ColorDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg) 
     {
@@ -661,7 +667,7 @@ BOOL FindText(LPFINDREPLACE lpFind)
     hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_FIND_TEXT.bytes,
                                   sysres_DIALOG_FIND_TEXT.size,
                                   GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
-    hInst = GetWindowWord( lpFind->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
                                    GetWndProcEntry16("FindTextDlgProc"), 
                                    (DWORD)lpFind );
@@ -681,7 +687,7 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
     hDlgTmpl = GLOBAL_CreateBlock(GMEM_FIXED, sysres_DIALOG_REPLACE_TEXT.bytes,
                                   sysres_DIALOG_REPLACE_TEXT.size,
                                   GetCurrentPDB(), FALSE, FALSE, TRUE, NULL );
-    hInst = GetWindowWord( lpFind->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
                                    GetWndProcEntry16("ReplaceTextDlgProc"), 
                                    (DWORD)lpFind );
@@ -693,7 +699,7 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -720,7 +726,7 @@ BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-BOOL ReplaceTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -754,6 +760,10 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
 
     printf("PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
+    if (lpPrint->Flags & PD_RETURNDEFAULT)
+        /* FIXME: should fill lpPrint->hDevMode and lpPrint->hDevNames here */
+        return TRUE;
+
     if (lpPrint->Flags & PD_PRINTSETUP)
         hDlgTmpl = GLOBAL_CreateBlock( GMEM_FIXED,
                                        sysres_DIALOG_PRINT_SETUP.bytes,
@@ -766,7 +776,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
                                        GetCurrentPDB(), FALSE,
                                        FALSE, TRUE, NULL );
 
-    hInst = GetWindowWord( lpPrint->hwndOwner, GWW_HINSTANCE );
+    hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
     bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpPrint->hwndOwner,
                                    (lpPrint->Flags & PD_PRINTSETUP) ?
                                        GetWndProcEntry16("PrintSetupDlgProc") :
@@ -780,7 +790,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -807,7 +817,7 @@ BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-BOOL PrintSetupDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (wMsg)
     {

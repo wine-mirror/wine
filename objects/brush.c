@@ -171,14 +171,18 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
 
-    dprintf_gdi(stddeb, "CreatePatternBrush: %d\n", hbitmap );
+    dprintf_gdi(stddeb, "CreatePatternBrush: "NPFMT"\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
-    logbrush.lbHatch = CreateBitmapIndirect( &bmp->bitmap );
-    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( logbrush.lbHatch, BITMAP_MAGIC );
+#ifdef WINELIB32
+    logbrush.lbHatch = (LONG)CreateBitmapIndirect( &bmp->bitmap );
+#else
+    logbrush.lbHatch = (INT)CreateBitmapIndirect( &bmp->bitmap );
+#endif
+    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HANDLE)logbrush.lbHatch, BITMAP_MAGIC );
     if (!newbmp) return 0;
     XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
 	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
@@ -195,7 +199,7 @@ HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
     BITMAPINFO *info, *newInfo;
     int size;
     
-    dprintf_gdi(stddeb, "CreateDIBPatternBrush: %d\n", hbitmap );
+    dprintf_gdi(stddeb, "CreateDIBPatternBrush: "NPFMT"\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -207,14 +211,18 @@ HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
 	         * 8 * info->bmiHeader.biHeight;
     size += DIB_BitmapInfoSize( info, coloruse );
 
-    if (!(logbrush.lbHatch = GlobalAlloc( GMEM_MOVEABLE, size )))
+#ifdef WINELIB32
+    if (!(logbrush.lbHatch = (LONG)GlobalAlloc( GMEM_MOVEABLE, size )))
+#else
+    if (!(logbrush.lbHatch = (INT)GlobalAlloc( GMEM_MOVEABLE, size )))
+#endif
     {
 	GlobalUnlock( hbitmap );
 	return 0;
     }
-    newInfo = (BITMAPINFO *) GlobalLock( logbrush.lbHatch );
+    newInfo = (BITMAPINFO *) GlobalLock( (HANDLE)logbrush.lbHatch );
     memcpy( newInfo, info, size );
-    GlobalUnlock( logbrush.lbHatch );
+    GlobalUnlock( (HANDLE)logbrush.lbHatch );
     GlobalUnlock( hbitmap );
     return CreateBrushIndirect( &logbrush );
 }
@@ -248,7 +256,7 @@ DWORD SetBrushOrg( HDC hdc, short x, short y )
 /***********************************************************************
  *           GetSysColorBrush    (USER.281)
  */
-WORD GetSysColorBrush(WORD x)
+HBRUSH GetSysColorBrush(WORD x)
 {
 	return GetStockObject(GRAY_BRUSH);
 }
@@ -261,10 +269,10 @@ BOOL BRUSH_DeleteObject( HBRUSH hbrush, BRUSHOBJ * brush )
     switch(brush->logbrush.lbStyle)
     {
       case BS_PATTERN:
-	  DeleteObject( brush->logbrush.lbHatch );
+	  DeleteObject( (HANDLE)brush->logbrush.lbHatch );
 	  break;
       case BS_DIBPATTERN:
-	  GlobalFree( brush->logbrush.lbHatch );
+	  GlobalFree( (HANDLE)brush->logbrush.lbHatch );
 	  break;
     }
     return GDI_FreeObject( hbrush );
@@ -339,7 +347,7 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     BITMAPINFO * bmpInfo;
     HBRUSH prevHandle = dc->w.hBrush;
 
-    dprintf_gdi(stddeb, "Brush_SelectObject   hdc=%04x  hbrush=%04x\n",
+    dprintf_gdi(stddeb, "Brush_SelectObject   hdc="NPFMT"  hbrush="NPFMT"\n",
 		hdc,hbrush);
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
     {
@@ -349,16 +357,16 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	case BS_HATCHED:
 	case BS_HOLLOW:
 	    if (!MF_CreateBrushIndirect(dc, hbrush, &(brush->logbrush)))
-		return 0;
+		return (HBRUSH)0;
 	    break;
 
 	case BS_PATTERN:
 	case BS_DIBPATTERN:
 	    if (!MF_CreatePatternBrush(dc, hbrush, &(brush->logbrush)))
-		return 0;
+		return (HBRUSH)0;
 	    break;
 	}
-	return 1;
+	return (HBRUSH)1;
     }
     
     dc->w.hBrush = hbrush;
@@ -391,12 +399,12 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	
       case BS_PATTERN:
 	dprintf_gdi( stddeb, "BS_PATTERN\n");
-	BRUSH_SelectPatternBrush( dc, brush->logbrush.lbHatch );
+	BRUSH_SelectPatternBrush( dc, (HBRUSH)brush->logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
 	dprintf_gdi( stddeb, "BS_DIBPATTERN\n");
-	if ((bmpInfo = (BITMAPINFO *) GlobalLock( brush->logbrush.lbHatch )))
+	if ((bmpInfo = (BITMAPINFO *) GlobalLock( (HANDLE)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
 	    hBitmap = CreateDIBitmap( hdc, &bmpInfo->bmiHeader, CBM_INIT,
@@ -404,7 +412,7 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 				      (WORD) brush->logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );
 	    DeleteObject( hBitmap );
-	    GlobalUnlock( brush->logbrush.lbHatch );	    
+	    GlobalUnlock( (HANDLE)brush->logbrush.lbHatch );	    
 	}
 	
 	break;

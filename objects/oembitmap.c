@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/xpm.h>
@@ -13,7 +14,7 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "color.h"
-#include "icon.h"
+#include "cursoricon.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -154,6 +155,51 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 };
 
 
+  /* Include OEM cursors */
+#include "bitmaps/ocr_normal"
+#include "bitmaps/ocr_ibeam"
+#include "bitmaps/ocr_wait"
+#include "bitmaps/ocr_cross"
+#include "bitmaps/ocr_up"
+#include "bitmaps/ocr_size"
+#include "bitmaps/ocr_icon"
+#include "bitmaps/ocr_sizenwse"
+#include "bitmaps/ocr_sizenesw"
+#include "bitmaps/ocr_sizewe"
+#include "bitmaps/ocr_sizens"
+#if 0
+#include "bitmaps/ocr_sizeall"
+#include "bitmaps/ocr_icocur"
+#endif
+
+/* Cursor are not all contiguous (go figure...) */
+#define OCR_FIRST1 OCR_NORMAL
+#define OCR_LAST1  OCR_UP
+#define OCR_FIRST2 OCR_SIZE
+#define OCR_LAST2  OCR_SIZENS  /* OCR_ICOCUR */
+#define NB_CURSORS (OCR_LAST2 - OCR_FIRST2 + 1 + OCR_LAST1 - OCR_FIRST1 + 1)
+static char **OBM_Cursors_Data[NB_CURSORS] = 
+{
+    ocr_normal,    /* OCR_NORMAL */
+    ocr_ibeam,     /* OCR_IBEAM */
+    ocr_wait,      /* OCR_WAIT */
+    ocr_cross,     /* OCR_CROSS */
+    ocr_up,        /* OCR_UP */
+    ocr_size,      /* OCR_SIZE */
+    ocr_icon,      /* OCR_ICON */
+    ocr_sizenwse,  /* OCR_SIZENWSE */
+    ocr_sizenesw,  /* OCR_SIZENESW */
+    ocr_sizewe,    /* OCR_SIZEWE */
+    ocr_sizens     /* OCR_SIZENS */
+#if 0
+    ocr_sizeall,   /* OCR_SIZEALL */
+    ocr_icocur     /* OCR_ICOCUR */
+#endif
+};
+
+static HCURSOR OBM_Cursors[NB_CURSORS] = { 0, };
+
+
   /* All the colors used in the xpm files must be included in this   */
   /* list, to make sure that the loaded bitmaps only use colors from */
   /* the Windows colormap. Note: the PALETTEINDEX() are not really   */
@@ -166,7 +212,6 @@ static const struct
     COLORREF color;
 } OBM_SymbolicColors[] =
 {
-      /* Black & white must always be the first 2 colors */
     { "black",            RGB(0,0,0) },
     { "white",            RGB(255,255,255) },
     { "red",              RGB(255,0,0) },
@@ -189,6 +234,16 @@ static const struct
 
 #define NB_COLOR_SYMBOLS \
             (sizeof(OBM_SymbolicColors)/sizeof(OBM_SymbolicColors[0]))
+
+  /* These are the symbolic colors for monochrome bitmaps   */
+  /* This is needed to make sure that black is always 0 and */
+  /* white always 1, as required by Windows.                */
+
+static XpmColorSymbol OBM_BlackAndWhite[2] =
+{
+    { "black", NULL, 0 },
+    { "white", NULL, 0xffffffff }
+};
 
 static XpmColorSymbol *OBM_Colors = NULL;
 
@@ -243,7 +298,7 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmType       = 0;
     bmpObjPtr->bitmap.bmWidth      = width;
     bmpObjPtr->bitmap.bmHeight     = height;
-    bmpObjPtr->bitmap.bmWidthBytes = (width + 15) / 16 * 2;
+    bmpObjPtr->bitmap.bmWidthBytes = (width * bpp + 15) / 16 * 2;
     bmpObjPtr->bitmap.bmPlanes     = 1;
     bmpObjPtr->bitmap.bmBitsPixel  = bpp;
     bmpObjPtr->bitmap.bmBits       = NULL;
@@ -257,22 +312,28 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
  * Create the 2 bitmaps from XPM data.
  */
 static BOOL OBM_CreateBitmaps( char **data, BOOL color, BOOL mask,
-                               HBITMAP *hBitmap, HBITMAP *hBitmapMask )
+                               HBITMAP *hBitmap, HBITMAP *hBitmapMask,
+                               POINT *hotspot )
 {
     Pixmap pixmap, pixmask;
     XpmAttributes attrs;
     int err;
 
-    attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols;
+    attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
     attrs.colormap     = COLOR_WinColormap;
     attrs.depth        = color ? screenDepth : 1;
-    attrs.colorsymbols = OBM_Colors;
+    attrs.colorsymbols = (attrs.depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs.numsymbols   = (attrs.depth > 1) ? NB_COLOR_SYMBOLS : 2;
         
     err = XpmCreatePixmapFromData( display, rootWindow, data,
                                    &pixmap, &pixmask, &attrs );
 
     if (err != XpmSuccess) return FALSE;
+    if (hotspot)
+    {
+        hotspot->x = attrs.x_hotspot;
+        hotspot->y = attrs.y_hotspot;
+    }
     *hBitmap = OBM_MakeBitmap( attrs.width, attrs.height,
                                attrs.depth, pixmap );
     if (mask) *hBitmapMask = OBM_MakeBitmap( attrs.width, attrs.height,
@@ -301,10 +362,10 @@ HBITMAP OBM_LoadBitmap( WORD id )
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 6,
                               OBM_Pixmaps_Data[id].data,
                               OBM_Pixmaps_Data[id].color,
-                              FALSE, &hbitmap, &hbitmask ))
+                              FALSE, &hbitmap, &hbitmask, NULL, NULL ))
     {
         fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
@@ -314,60 +375,95 @@ HBITMAP OBM_LoadBitmap( WORD id )
 
 
 /***********************************************************************
- *           OBM_LoadIcon
+ *           OBM_LoadCursorIcon
  */
-HICON OBM_LoadIcon( WORD id )
+HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 {
-    HICON hicon;
-    ICONALLOC *pIcon;
-    BITMAPOBJ *bmp;
+    HANDLE handle;
+    CURSORICONINFO *pInfo;
+    BITMAPOBJ *bmpXor, *bmpAnd;
+    HBITMAP hXorBits, hAndBits;
+    POINT hotspot;
+    int sizeXor, sizeAnd;
 
-    if ((id < OIC_FIRST) || (id > OIC_LAST)) return 0;
-    id -= OIC_FIRST;
+    if (fCursor)
+    {
+        if ((id >= OCR_FIRST1) && (id <= OCR_LAST1))
+            id -= OCR_FIRST1;
+        else if ((id >= OCR_FIRST2) && (id <= OCR_LAST2))
+            id += (OCR_LAST1 - OCR_FIRST1 + 1) - OCR_FIRST2;
+        else return 0;
+        if (OBM_Cursors[id]) return OBM_Cursors[id];
+    }
+    else
+    {
+        if ((id < OIC_FIRST) || (id > OIC_LAST)) return 0;
+        id -= OIC_FIRST;
+    }
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    if (!(hicon = GlobalAlloc( GMEM_MOVEABLE, sizeof(ICONALLOC) ))) return 0;
-    pIcon = (ICONALLOC *)GlobalLock( hicon );
-
-    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
-                              OBM_Icons_Data[id], TRUE, TRUE,
-                              &pIcon->hBitmap, &pIcon->hBitMask ))
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 6,
+                           fCursor ? OBM_Cursors_Data[id] : OBM_Icons_Data[id],
+                           !fCursor, TRUE, &hXorBits, &hAndBits, &hotspot ))
     {
-        fprintf( stderr, "Error creating OEM icon %d\n", OIC_FIRST+id );
-        GlobalFree( hicon );
+        fprintf( stderr, "Error creating OEM cursor/icon %d\n", id );
         return 0;
     }
 
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr( pIcon->hBitmap, BITMAP_MAGIC );
-    pIcon->descriptor.Width = bmp->bitmap.bmWidth;
-    pIcon->descriptor.Height = bmp->bitmap.bmHeight;
-    pIcon->descriptor.ColorCount = bmp->bitmap.bmBitsPixel;
+    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( hXorBits, BITMAP_MAGIC );
+    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( hAndBits, BITMAP_MAGIC );
+    sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
+    sizeAnd = bmpXor->bitmap.bmHeight * ((bmpXor->bitmap.bmWidth+15) / 16 * 2);
 
-    if (pIcon->hBitMask)
+    if (!(handle = GlobalAlloc( GMEM_MOVEABLE,
+                                sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
-        BITMAPOBJ *bmpMask;
+        DeleteObject( hXorBits );
+        DeleteObject( hAndBits );
+        return 0;
+    }
 
+    pInfo = (CURSORICONINFO *)GlobalLock( handle );
+    pInfo->ptHotSpot.x   = hotspot.x;
+    pInfo->ptHotSpot.y   = hotspot.y;
+    pInfo->nWidth        = bmpXor->bitmap.bmWidth;
+    pInfo->nHeight       = bmpXor->bitmap.bmHeight;
+    pInfo->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
+    pInfo->bPlanes       = bmpXor->bitmap.bmPlanes;
+    pInfo->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
+
+    if (hAndBits)
+    {
           /* Invert the mask */
-        bmpMask = (BITMAPOBJ *) GDI_GetObjPtr( pIcon->hBitMask, BITMAP_MAGIC );
+
         XSetFunction( display, BITMAP_monoGC, GXinvert );
-        XFillRectangle( display, bmpMask->pixmap, BITMAP_monoGC, 0, 0,
-                        bmpMask->bitmap.bmWidth, bmpMask->bitmap.bmHeight );
+        XFillRectangle( display, bmpAnd->pixmap, BITMAP_monoGC, 0, 0,
+                        bmpAnd->bitmap.bmWidth, bmpAnd->bitmap.bmHeight );
+        XSetFunction( display, BITMAP_monoGC, GXcopy );
 
           /* Set the masked pixels to black */
-        if (bmp->bitmap.bmBitsPixel != 1)
+
+        if (bmpXor->bitmap.bmBitsPixel != 1)
         {
             XSetForeground( display, BITMAP_colorGC,
                             COLOR_ToPhysical( NULL, RGB(0,0,0) ));
             XSetBackground( display, BITMAP_colorGC, 0 );
             XSetFunction( display, BITMAP_colorGC, GXor );
-            XCopyPlane( display, bmpMask->pixmap, bmp->pixmap, BITMAP_colorGC,
-                        0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-                        0, 0, 1 );
+            XCopyPlane(display, bmpAnd->pixmap, bmpXor->pixmap, BITMAP_colorGC,
+                       0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
+                       0, 0, 1 );
             XSetFunction( display, BITMAP_colorGC, GXcopy );
         }
-        XSetFunction( display, BITMAP_monoGC, GXcopy );
     }
 
-    return hicon;
+    if (hAndBits) GetBitmapBits( hAndBits, sizeAnd, (char *)(pInfo + 1) );
+    else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
+    GetBitmapBits( hXorBits, sizeXor, (char *)(pInfo + 1) + sizeAnd );
+
+    DeleteObject( hXorBits );
+    DeleteObject( hAndBits );
+
+    if (fCursor) OBM_Cursors[id] = handle;
+    return handle;
 }

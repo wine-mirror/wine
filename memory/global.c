@@ -409,7 +409,7 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
  *
  * This is the GlobalLock() function used by 32-bit code.
  */
-LPSTR GlobalLock( HGLOBAL handle )
+LPVOID GlobalLock( HGLOBAL handle )
 {
     if (!handle) return 0;
 #ifdef CONFIG_IPC
@@ -446,7 +446,7 @@ DWORD GlobalSize( HGLOBAL handle )
 DWORD GlobalHandle( WORD sel )
 {
     dprintf_global( stddeb, "GlobalHandle: %04x\n", sel );
-    return MAKELONG( GET_ARENA_PTR(sel)->handle, sel );
+    return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
 }
 
 

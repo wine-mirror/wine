@@ -1,0 +1,18 @@
+TOPSRC = @top_srcdir@
+MODULE = win32
+
+C_SRCS = \
+	code_page.c \
+	environment.c \
+	error.c \
+	file.c \
+	init.c \
+	memory.c \
+	thread.c \
+	time.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

@@ -19,8 +19,8 @@ struct w_files
     char * filename; /* Actual name of the unix file that satisfies this */
     int type;        /* DLL or EXE */
     int fd;
-    unsigned short hinstance;
-    HANDLE hModule;
+    HINSTANCE hinstance;
+    HMODULE hModule;
     int initialised;
     struct mz_header_s *mz_header;
     struct pe_data *pe;

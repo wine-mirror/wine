@@ -25,6 +25,11 @@ typedef struct
 
 #define MAKEPOINT(l) (*((POINT *)&(l)))
 
+#ifdef WINELIB32
+#define MAKEWPARAM(low, high) ((LONG)(((WORD)(low)) | \
+			      (((DWORD)((WORD)(high))) << 16)))
+#endif
+
 #define MAKELPARAM(low, high) ((LONG)(((WORD)(low)) | \
 			      (((DWORD)((WORD)(high))) << 16)))
 
@@ -89,7 +94,7 @@ typedef struct {
   /* Windows */
 
 typedef struct {
-    void *    lpCreateParams;
+    LPVOID    lpCreateParams;
     HINSTANCE hInstance;
     HMENU     hMenu;
     HWND      hwndParent;
@@ -542,7 +547,11 @@ typedef struct tagLOGBRUSH
 { 
     WORD       lbStyle; 
     COLORREF   lbColor WINE_PACKED;
+#ifdef WINELIB32
+    LONG       lbHatch; 
+#else
     INT      lbHatch; 
+#endif
 } LOGBRUSH, *PLOGBRUSH, *NPLOGBRUSH, *LPLOGBRUSH;
 
   /* Brush styles */
@@ -990,7 +999,7 @@ typedef BITMAPINFO *LPBITMAPINFO;
 typedef BITMAPINFO *NPBITMAPINFO;
 typedef BITMAPINFO *PBITMAPINFO;
 
-typedef struct tagBITMAPCOREHEADER
+typedef struct
 {
     unsigned long bcSize;
     UINT bcWidth;
@@ -999,9 +1008,30 @@ typedef struct tagBITMAPCOREHEADER
     UINT bcBitCount;
 } BITMAPCOREHEADER;
 
+typedef struct
+{
+    BITMAPCOREHEADER bmciHeader;
+    RGBTRIPLE        bmciColors[1];
+} BITMAPCOREINFO, *LPBITMAPCOREINFO;
+
 #define DIB_RGB_COLORS   0
 #define DIB_PAL_COLORS   1
 #define CBM_INIT         4
+
+
+  /* Cursors / Icons */
+
+typedef struct
+{
+    POINT   ptHotSpot;
+    WORD    nWidth;
+    WORD    nHeight;
+    WORD    nWidthBytes;
+    BYTE    bPlanes;
+    BYTE    bBitsPerPixel;
+} CURSORICONINFO;
+
+
 
 typedef struct {
 	BYTE i;  /* much more .... */
@@ -1284,12 +1314,12 @@ typedef struct tagCOMSTAT
 #define IDC_WAIT         MAKEINTRESOURCE(32514)
 #define IDC_CROSS        MAKEINTRESOURCE(32515)
 #define IDC_UPARROW      MAKEINTRESOURCE(32516)
-#define IDC_SIZE         MAKEINTRESOURCE(32540)
-#define IDC_ICON         MAKEINTRESOURCE(32541)
-#define IDC_SIZENWSE     MAKEINTRESOURCE(32542)
-#define IDC_SIZENESW     MAKEINTRESOURCE(32543)
-#define IDC_SIZEWE       MAKEINTRESOURCE(32544)
-#define IDC_SIZENS       MAKEINTRESOURCE(32545)
+#define IDC_SIZE         MAKEINTRESOURCE(32640)
+#define IDC_ICON         MAKEINTRESOURCE(32641)
+#define IDC_SIZENWSE     MAKEINTRESOURCE(32642)
+#define IDC_SIZENESW     MAKEINTRESOURCE(32643)
+#define IDC_SIZEWE       MAKEINTRESOURCE(32644)
+#define IDC_SIZENS       MAKEINTRESOURCE(32645)
 
 /* OEM Resource Ordinal Numbers */
 #define OBM_CLOSE           32754
@@ -1378,11 +1408,11 @@ typedef struct tagCOMSTAT
 #define SYSTEM_FIXED_FONT   16
 
 
-enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE,
-	WM_SETFOCUS, WM_KILLFOCUS, WM_UNUSED1, WM_ENABLE, WM_SETREDRAW, 
+enum {  WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE,
+	WM_SETFOCUS, WM_KILLFOCUS, WM_SETVISIBLE, WM_ENABLE, WM_SETREDRAW, 
 	WM_SETTEXT, WM_GETTEXT, WM_GETTEXTLENGTH, WM_PAINT, WM_CLOSE, 
 	WM_QUERYENDSESSION, WM_QUIT, WM_QUERYOPEN, WM_ERASEBKGND, 
-	WM_SYSCOLORCHANGE, WM_ENDSESSION, WM_UNUSED2,
+	WM_SYSCOLORCHANGE, WM_ENDSESSION, WM_SYSTEMERROR,
 	WM_SHOWWINDOW, WM_CTLCOLOR, WM_WININICHANGE, WM_DEVMODECHANGE,
 	WM_ACTIVATEAPP, WM_FONTCHANGE, WM_TIMECHANGE, WM_CANCELMODE, WM_SETCURSOR,
 	WM_MOUSEACTIVATE, WM_CHILDACTIVATE, WM_QUEUESYNC, WM_GETMINMAXINFO,
@@ -1391,8 +1421,16 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 	WM_DELETEITEM, WM_VKEYTOITEM,
 	WM_CHARTOITEM, WM_SETFONT, WM_GETFONT };
 
+#define WM_QUERYDRAGICON    0x0037
+
+#define WM_COMPAREITEM	    0x0039
+
+#define WM_COMPACTING	    0x0041
+
+#define WM_COMMNOTIFY	    0x0044
 #define WM_WINDOWPOSCHANGING 0x0046
-#define WM_WINDOWPOSCHANGED 0x0047
+#define WM_WINDOWPOSCHANGED  0x0047
+#define WM_POWER	    0x0048
 
 #define WM_NCCREATE         0x0081
 #define WM_NCDESTROY        0x0082
@@ -1402,6 +1440,7 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_NCACTIVATE       0x0086
 
 #define WM_GETDLGCODE	    0x0087
+#define WM_SYNCPAINT	    0x0088
 
   /* Non-client mouse messages */
 #define WM_NCMOUSEMOVE      0x00a0
@@ -1437,7 +1476,24 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_HSCROLL          0x0114
 #define WM_VSCROLL          0x0115
 
+/* Menu messages */
+#define WM_INITMENU         0x0116
+#define WM_INITMENUPOPUP    0x0117
+
+#define WM_MENUSELECT       0x011F
+#define WM_MENUCHAR         0x0120
 #define WM_ENTERIDLE        0x0121
+
+#define WM_LBTRACKPOINT     0x0131
+
+  /* Win32 CTLCOLOR messages */
+#define WM_CTLCOLORMSGBOX    0x0132
+#define WM_CTLCOLOREDIT      0x0133
+#define WM_CTLCOLORLISTBOX   0x0134
+#define WM_CTLCOLORBTN       0x0135
+#define WM_CTLCOLORDLG       0x0136
+#define WM_CTLCOLORSCROLLBAR 0x0137
+#define WM_CTLCOLORSTATIC    0x0138
 
   /* Mouse messages */
 #define WM_MOUSEMOVE	    0x0200
@@ -1467,15 +1523,44 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_MDICASCADE	    0x0227
 #define WM_MDIICONARRANGE   0x0228
 #define WM_MDIGETACTIVE     0x0229
+#define WM_DROPOBJECT	    0x022A
+#define WM_QUERYDROPOBJECT  0x022B
+#define WM_DRAGLOOP	    0x022D
+#define WM_DRAGSELECT	    0x022E
+#define WM_DRAGMOVE	    0x022F
 #define WM_MDISETMENU	    0x0230
 
 #define WM_ENTERSIZEMOVE    0x0231
 #define WM_EXITSIZEMOVE     0x0232
+#define WM_DROPFILES	    0x0233
+
+#define WM_CUT               0x0300
+#define WM_COPY              0x0301
+#define WM_PASTE             0x0302
+#define WM_CLEAR             0x0303
+#define WM_UNDO              0x0304
+#define WM_RENDERFORMAT      0x0305
+#define WM_RENDERALLFORMATS  0x0306
+#define WM_DESTROYCLIPBOARD  0x0307
+#define WM_DRAWCLIPBOARD     0x0308
+#define WM_PAINTCLIPBOARD    0x0309
+#define WM_VSCROLLCLIPBOARD  0x030A
+#define WM_SIZECLIPBOARD     0x030B
+#define WM_ASKCBFORMATNAME   0x030C
+#define WM_CHANGECBCHAIN     0x030D
+#define WM_HSCROLLCLIPBOARD  0x030E
+#define WM_QUERYNEWPALETTE   0x030F
+#define WM_PALETTEISCHANGING 0x0310
+#define WM_PALETTECHANGED    0x0311
+
+#define WM_COALESCE_FIRST    0x0390
+#define WM_COALESCE_LAST     0x039F
 
   /* misc messages */
 #define WM_NULL             0x0000
 #define WM_USER             0x0400
-
+#define WM_CPL_LAUNCH       (WM_USER + 1000)
+#define WM_CPL_LAUNCHED     (WM_USER + 1001)
 
   /* Key status flags for mouse events */
 #define MK_LBUTTON	    0x0001
@@ -1559,13 +1644,6 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define TPM_LEFTALIGN   0x0000
 #define TPM_CENTERALIGN 0x0004
 #define TPM_RIGHTALIGN  0x0008
-
-/* Menu messages */
-#define WM_INITMENU         0x0116
-#define WM_INITMENUPOPUP    0x0117
-
-#define WM_MENUSELECT       0x011F
-#define WM_MENUCHAR         0x0120
 
 #define MF_INSERT 0
 #define MF_CHANGE 0x0080
@@ -2372,694 +2450,677 @@ typedef WINDEBUGINFO FAR* LPWINDEBUGINFO;
 #pragma pack(4)
 #endif
 
-
-#define F(ret,name) ret name(void);
-#define Fa(ret,name,t1,a1) ret name(t1);
-#define Fb(ret,name,t1,a1,t2,a2) ret name(t1,t2);
-#define Fc(ret,name,t1,a1,t2,a2,t3,a3) ret name(t1,t2,t3);
-#define Fd(ret,name,t1,a1,t2,a2,t3,a3,t4,a4) ret name(t1,t2,t3,t4);
-#define Fe(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5) ret name(t1,t2,t3,t4,t5);
-#define Ff(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6) ret name(t1,t2,t3,t4,t5,t6);
-#define Fg(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7) ret name(t1,t2,t3,t4,t5,t6,t7);
-#define Fh(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8) ret name(t1,t2,t3,t4,t5,t6,t7,t8);
-#define Fi(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9);
-#define Fj(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10);
-#define Fk(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11);
-#define Fl(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12);
-#define Fm(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13);
-#define Fn(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13,t14,a14) ret name(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14);
-
-int wsprintf(LPSTR a,LPSTR b,...);
-
-/* Implemented functions */
-
-F(BOOL,AnyPopup)
-F(BOOL,CloseClipboard)
-F(BOOL,EmptyClipboard)
-F(BOOL,GetInputState)
-F(BOOL,InSendMessage)
-F(BOOL,SetDeskPattern)
-F(DWORD,GetCurrentTime)
-F(DWORD,GetDialogBaseUnits)
-F(DWORD,GetMenuCheckMarkDimensions)
-F(DWORD,GetMessagePos)
-F(DWORD,GetTickCount)
-F(HANDLE,GetCurrentTask)
-F(HMENU,CreateMenu)
-F(HMENU,CreatePopupMenu)
-F(HWND,GetActiveWindow)
-F(HWND,GetCapture)
-F(HWND,GetClipboardOwner)
-F(HWND,GetClipboardViewer)
-F(HWND,GetDesktopHwnd)
-F(HWND,GetDesktopWindow)
-F(HWND,GetFocus)
-F(HWND,GetOpenClipboardWindow)
-F(HWND,GetSysModalWindow)
-F(LONG,GetMessageExtraInfo)
-F(LONG,GetMessageTime)
-F(LONG,GetVersion)
-F(LONG,GetWinFlags)
-F(LPINT,GetThresholdEvent)
-F(LPSTR,ValidateFreeSpaces)
-F(SEGPTR,GetDOSEnvironment)
-F(WORD,GetCaretBlinkTime)
-F(WORD,GetCurrentPDB)
-F(WORD,GetDoubleClickTime)
-F(WORD,GetNumTasks)
-F(WORD,GetTaskDS)
-F(int,CountClipboardFormats)
-F(int,GetKBCodePage)
-F(int,GetThresholdStatus)
-F(int,OpenSound)
-F(int,ProfInsChk)
-F(int,StartSound)
-F(int,StopSound)
-F(int,SyncAllVoices)
-F(void,CloseSound)
-F(void,DebugBreak)
-F(void,DestroyCaret)
-F(void,ProfClear)
-F(void,ProfFinish)
-F(void,ProfFlush)
-F(void,ProfStart)
-F(void,ProfStop)
-F(void,ReleaseCapture)
-F(void,SwitchStackBack)
-F(void,ValidateCodeSegments)
-F(void,WaitMessage)
-F(void,Yield)
-Fa(ATOM,AddAtom,SEGPTR,a)
-Fa(ATOM,DeleteAtom,ATOM,a)
-Fa(ATOM,FindAtom,SEGPTR,a)
-Fa(ATOM,GlobalAddAtom,SEGPTR,a)
-Fa(ATOM,GlobalDeleteAtom,ATOM,a)
-Fa(ATOM,GlobalFindAtom,SEGPTR,a)
-Fa(ATOM,RegisterClass,LPWNDCLASS,a) 
-Fa(BOOL,BringWindowToTop,HWND,a)
-Fa(BOOL,DeleteDC,HDC,a)
-Fa(BOOL,DeleteMetaFile,HMETAFILE,a)
-Fa(BOOL,DeleteObject,HANDLE,a)
-Fa(BOOL,DestroyCursor,HCURSOR,a)
-Fa(BOOL,DestroyIcon,HICON,a)
-Fa(BOOL,DestroyMenu,HMENU,a)
-Fa(BOOL,DestroyWindow,HWND,a)
-Fa(BOOL,EnableHardwareInput,BOOL,a)
-Fa(BOOL,EndDeferWindowPos,HDWP,hWinPosInfo)
-Fa(BOOL,FreeModule,HANDLE,a)
-Fa(BOOL,FreeResource,HANDLE,a)
-Fa(BOOL,GlobalUnWire,HGLOBAL,a)
-Fa(BOOL,GlobalUnlock,HGLOBAL,a)
-Fa(BOOL,IsBadCodePtr,SEGPTR,a)
-Fa(BOOL,IsCharAlpha,char,ch)
-Fa(BOOL,IsCharAlphaNumeric,char,ch)
-Fa(BOOL,IsCharLower,char,ch)
-Fa(BOOL,IsCharUpper,char,ch)
-Fa(BOOL,IsClipboardFormatAvailable,WORD,a)
-Fa(BOOL,IsIconic,HWND,a)
-Fa(BOOL,IsRectEmpty,LPRECT,a)
-Fa(BOOL,IsTwoByteCharPrefix,char,a)
-Fa(BOOL,IsWindow,HWND,a)
-Fa(BOOL,IsWindowEnabled,HWND,a)
-Fa(BOOL,IsWindowVisible,HWND,a)
-Fa(BOOL,IsZoomed,HWND,a)
-Fa(BOOL,LocalUnlock,HANDLE,a)
-Fa(BOOL,OpenClipboard,HWND,a)
-Fa(BOOL,OpenIcon,HWND,a)
-Fa(BOOL,RemoveFontResource,LPSTR,a)
-Fa(BOOL,SetDeskWallPaper,LPSTR,a)
-Fa(BOOL,SetErrorMode,WORD,a)
-Fa(BOOL,SetMessageQueue,int,a)
-Fa(BOOL,SetWinDebugInfo,LPWINDEBUGINFO,a)
-Fa(BOOL,SwapMouseButton,BOOL,a)
-Fa(BOOL,TranslateMessage,LPMSG,a)
-Fa(BOOL,UnhookWindowsHookEx,HHOOK,a)
-Fa(BOOL,UnrealizeObject,HBRUSH,a)
-Fa(BYTE,GetTempDrive,BYTE,a)
-Fa(COLORREF,GetBkColor,HDC,a)
-Fa(COLORREF,GetSysColor,short,a)
-Fa(COLORREF,GetTextColor,HDC,a)
-Fa(DWORD,GetAspectRatioFilter,HDC,a)
-Fa(DWORD,GetBitmapDimension,HBITMAP,a)
-Fa(DWORD,GetBrushOrg,HDC,a)
-Fa(DWORD,GetCurrentPosition,HDC,a)
-Fa(DWORD,GetDCOrg,HDC,a)
-Fa(DWORD,GetFreeSpace,WORD,a)
-Fa(DWORD,GetHeapSpaces,HMODULE,a)
-Fa(DWORD,GetSelectorBase,WORD,a)
-Fa(DWORD,GetSelectorLimit,WORD,a)
-Fa(DWORD,GetViewportExt,HDC,a)
-Fa(DWORD,GetViewportOrg,HDC,a)
-Fa(DWORD,GetWindowExt,HDC,a)
-Fa(DWORD,GetWindowOrg,HDC,a)
-Fa(DWORD,GlobalCompact,DWORD,a)
-Fa(DWORD,GlobalDOSAlloc,DWORD,a)
-Fa(DWORD,GlobalHandle,WORD,a)
-Fa(DWORD,GlobalSize,HGLOBAL,a)
-Fa(DWORD,OemKeyScan,WORD,a)
-Fa(FARPROC,LocalNotify,FARPROC,a)
-Fa(HANDLE,CreateMetaFile,LPSTR,a)
-Fa(HANDLE,GetAtomHandle,ATOM,a)
-Fa(HANDLE,GetClipboardData,WORD,a)
-Fa(HANDLE,GetCodeHandle,FARPROC,a)
-Fa(HANDLE,GetMetaFile,LPSTR,a)
-Fa(HANDLE,GetMetaFileBits,HANDLE,a)
-Fa(HANDLE,GetModuleHandle,LPCSTR,a)
-Fa(HANDLE,GetStockObject,int,a)
-Fa(HANDLE,GetWindowTask,HWND,a)
-Fa(HANDLE,LoadLibrary,LPCSTR,a)
-Fa(HANDLE,LocalFree,HANDLE,a)
-Fa(HANDLE,LocalHandle,WORD,a)
-Fa(HANDLE,SetMetaFileBits,HANDLE,a)
-Fa(HBITMAP,CreateBitmapIndirect,BITMAP FAR*,a)
-Fa(HBRUSH,CreateBrushIndirect,LOGBRUSH FAR*,a)
-Fa(HBRUSH,CreatePatternBrush,HBITMAP,a)
-Fa(HBRUSH,CreateSolidBrush,DWORD,a)
-Fa(HCURSOR,SetCursor,HCURSOR,a)
-Fa(HDC,CreateCompatibleDC,HDC,a)
-Fa(HDC,GetDC,HWND,a)
-Fa(HDC,GetDCState,HDC,a)
-Fa(HDC,GetWindowDC,HWND,a)
-Fa(HDWP,BeginDeferWindowPos,INT,nNumWindows)
-Fa(HFONT,CreateFontIndirect,LOGFONT FAR*,a)
-Fa(HGLOBAL,GetTaskQueue,HTASK,a)
-Fa(HGLOBAL,GlobalFree,HGLOBAL,a)
-Fa(HGLOBAL,GlobalLRUNewest,HGLOBAL,a)
-Fa(HGLOBAL,GlobalLRUOldest,HGLOBAL,a)
-Fa(HGLOBAL,LockSegment,HGLOBAL,a)
-Fa(HMENU,GetMenu,HWND,a)
-Fa(HMENU,LoadMenuIndirect,LPSTR,a)
-Fa(HMETAFILE,CloseMetaFile,HANDLE,a)
-Fa(HMODULE, GetExePtr,HANDLE,a)
-Fa(HPALETTE,CreatePalette,LPLOGPALETTE,a)
-Fa(HPEN,CreatePenIndirect,LOGPEN FAR*,a)
-Fa(HRGN,CreateEllipticRgnIndirect,LPRECT,a)
-Fa(HRGN,CreateRectRgnIndirect,LPRECT,a)
-Fa(HRGN,GetClipRgn,HDC,a)
-Fa(HRGN,InquireVisRgn,HDC,a)
-Fa(HRGN,SaveVisRgn,HDC,a)
-Fa(HWND,GetLastActivePopup,HWND,a)
-Fa(HWND,GetParent,HWND,a)
-Fa(HWND,GetTopWindow,HWND,a)
-Fa(HWND,SetActiveWindow,HWND,a)
-Fa(HWND,SetCapture,HWND,a)
-Fa(HWND,SetClipboardViewer,HWND,a)
-Fa(HWND,SetFocus,HWND,a)
-Fa(HWND,SetSysModalWindow,HWND,a)
-Fa(HWND,WindowFromPoint,POINT,a)
-Fa(INT,_lclose,INT,a)
-Fa(INT,lstrlen,LPCSTR,a)
-Fa(LONG,DispatchMessage,LPMSG,msg)
-Fa(LONG,SetSwapAreaSize,WORD,a)
-Fa(LPSTR,AnsiLower,LPSTR,a)
-Fa(LPSTR,AnsiUpper,LPSTR,a)
-Fa(LPSTR,GlobalLock,HGLOBAL,a)
-Fa(LPSTR,LockResource,HANDLE,a)
-Fa(SEGPTR,AnsiNext,SEGPTR,a)
-Fa(SEGPTR,GlobalWire,HGLOBAL,a)
-Fa(SEGPTR,WIN16_GlobalLock,HGLOBAL,a)
-Fa(SEGPTR,WIN16_LockResource,HANDLE,a)
-Fa(UINT,GDIRealizePalette,HDC,a)
-Fa(UINT,RealizePalette,HDC,a)
-Fa(WORD,AllocCStoDSAlias,WORD,a)
-Fa(WORD,AllocDStoCSAlias,WORD,a)
-Fa(WORD,AllocSelector,WORD,a)
-Fa(WORD,AllocSelectorArray,WORD,a)
-Fa(WORD,ArrangeIconicWindows,HWND,a)
-Fa(WORD,EnumClipboardFormats,WORD,a)
-Fa(WORD,FarGetOwner,HANDLE,a)
-Fa(WORD,FreeSelector,WORD,a)
-Fa(WORD,GetBkMode,HDC,a)
-Fa(WORD,GetDriveType,INT,a)
-Fa(WORD,GetMapMode,HDC,a)
-Fa(WORD,GetMenuItemCount,HMENU,a)
-Fa(WORD,GetPolyFillMode,HDC,a)
-Fa(WORD,GetROP2,HDC,a)
-Fa(WORD,GetRelAbs,HDC,a)
-Fa(WORD,GetStretchBltMode,HDC,a)
-Fa(WORD,GetSystemPaletteUse,HDC,a)
-Fa(WORD,GetTextAlign,HDC,a)
-Fa(WORD,GlobalDOSFree,WORD,a)
-Fa(WORD,GlobalFlags,HGLOBAL,a)
-Fa(WORD,GlobalPageLock,HGLOBAL,a)
-Fa(WORD,GlobalPageUnlock,HGLOBAL,a)
-Fa(WORD,InitAtomTable,WORD,a)
-Fa(WORD,LocalCompact,WORD,a)
-Fa(WORD,LocalFlags,HLOCAL,a)
-Fa(WORD,LocalLock,HLOCAL,a)
-Fa(WORD,LocalSize,HLOCAL,a)
-Fa(WORD,RealizeDefaultPalette,HDC,a)
-Fa(WORD,RegisterClipboardFormat,LPCSTR,a)
-Fa(WORD,RegisterWindowMessage,SEGPTR,a)
-Fa(WORD,SetHandleCount,WORD,a)
-Fa(WORD,VkKeyScan,WORD,a)
-Fa(int,AddFontResource,LPSTR,a)
-Fa(int,Catch,LPCATCHBUF,a)
-Fa(int,ClearCommBreak,int,a)
-Fa(int,CloseComm,int,a)
-Fa(int,CountVoiceNotes,int,a)
-Fa(int,GetAsyncKeyState,int,a)
-Fa(int,GetDlgCtrlID,HWND,a)
-Fa(int,GetKeyState,int,a)
-Fa(int,GetKeyboardType,int,a)
-Fa(int,GetModuleUsage,HANDLE,a)
-Fa(int,GetSystemMetrics,WORD,a)
-Fa(int,GetWindowTextLength,HWND,a)
-Fa(int,RestoreVisRgn,HDC,a)
-Fa(int,SaveDC,HDC,a)
-Fa(int,SetCommBreak,int,a)
-Fa(int,SetCommState,DCB*,a)
-Fa(int,ShowCursor,BOOL,a)
-Fa(int,UpdateColors,HDC,a)
-Fa(int,WaitSoundState,int,a)
-Fa(short,GetTextCharacterExtra,HDC,a)
-Fa(void,ClipCursor,LPRECT,a)
-Fa(void,CloseWindow,HWND,a)
-Fa(void,DrawMenuBar,HWND,a)
-Fa(void,FatalExit,int,a)
-Fa(void,FreeLibrary,HANDLE,a)
-Fa(void,FreeProcInstance,FARPROC,a)
-Fa(void,GetCaretPos,LPPOINT,a)
-Fa(void,GetCursorPos,LPPOINT,a)
-Fa(void,GetKeyboardState,BYTE FAR*,a)
-Fa(void,GlobalFix,HGLOBAL,a)
-Fa(void,GlobalFreeAll,HANDLE,a)
-Fa(void,GlobalNotify,FARPROC,a)
-Fa(void,GlobalUnfix,HGLOBAL,a)
-Fa(void,HideCaret,HWND,a)
-Fa(void,LimitEmsPages,DWORD,a)
-Fa(void,MessageBeep,WORD,a)
-Fa(void,OutputDebugString,LPSTR,a)
-Fa(void,PostQuitMessage,int,a)
-Fa(void,ReplyMessage,LONG,a)
-Fa(void,SetCaretBlinkTime,WORD,a)
-Fa(void,SetConvertHook,BOOL,a)
-Fa(void,SetDoubleClickTime,WORD,a)
-Fa(void,SetKeyboardState,BYTE FAR*,a)
-Fa(void,SetRectEmpty,LPRECT,a)
-Fa(void,ShowCaret,HWND,a)
-Fa(void,SwapRecording,WORD,a)
-Fa(void,UnlockSegment,HGLOBAL,a)
-Fa(void,UpdateWindow,HWND,a)
-Fb(BOOL,CallMsgFilter,SEGPTR,a,short,b)
-Fb(BOOL,ChangeClipboardChain,HWND,a,HWND,b)
-Fb(BOOL,EnableWindow,HWND,a,BOOL,b)
-Fb(BOOL,EnumWindows,FARPROC,a,LONG,b)
-Fb(BOOL,EqualRect,LPRECT,a,LPRECT,b)
-Fb(BOOL,EqualRgn,HRGN,a,HRGN,b)
-Fb(BOOL,ExitWindows,DWORD,dwReserved,WORD,wReturnCode)
-Fb(BOOL,FlashWindow,HWND,a,BOOL,b)
-Fb(BOOL,GetBitmapDimensionEx,HBITMAP,a,LPSIZE,b)
-Fb(BOOL,GetBrushOrgEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetCurrentPositionEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetTextMetrics,HDC,a,LPTEXTMETRIC,b)
-Fb(BOOL,GetViewportExtEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetViewportOrgEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetWinDebugInfo,LPWINDEBUGINFO,a,UINT,b)
-Fb(BOOL,GetWindowExtEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetWindowOrgEx,HDC,a,LPPOINT,b)
-Fb(BOOL,GetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)
-Fb(BOOL,InvertRgn,HDC,a,HRGN,b)
-Fb(BOOL,IsBadHugeReadPtr,SEGPTR,a,DWORD,b)
-Fb(BOOL,IsBadHugeWritePtr,SEGPTR,a,DWORD,b)
-Fb(BOOL,IsBadReadPtr,SEGPTR,a,WORD,b)
-Fb(BOOL,IsBadStringPtr,SEGPTR,a,WORD,b)
-Fb(BOOL,IsBadWritePtr,SEGPTR,a,WORD,b)
-Fb(BOOL,IsChild,HWND,a,HWND,b)
-Fb(BOOL,IsDialogMessage,HWND,a,LPMSG,b)
-Fb(BOOL,KillSystemTimer,HWND,a,WORD,b)
-Fb(BOOL,KillTimer,HWND,a,WORD,b)
-Fb(BOOL,OemToAnsi,LPSTR,a,LPSTR,b)
-Fb(BOOL,PaintRgn,HDC,a,HRGN,b)
-Fb(BOOL,PlayMetaFile,HDC,a,HANDLE,b)
-Fb(BOOL,PtInRect,LPRECT,a,POINT,b)
-Fb(BOOL,RectInRegion,HRGN,a,LPRECT,b)
-Fb(BOOL,RectVisible,HDC,a,LPRECT,b)
-Fb(BOOL,ResizePalette,HPALETTE,a,WORD,b)
-Fb(BOOL,RestoreDC,HDC,a,short,b)
-Fb(BOOL,SetConvertParams,int,a,int,b)
-Fb(BOOL,SetMenu,HWND,a,HMENU,b)
-Fb(BOOL,SetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)
-Fb(BOOL,ShowWindow,HWND,a,int,b) 
-Fb(BOOL,TranslateMDISysAccel,HWND,a,LPMSG,b)
-Fb(BOOL,UnhookWindowsHook,short,a,FARPROC,b)
-Fb(BOOL,UnregisterClass,SEGPTR,a,HANDLE,b)
-Fb(DWORD,GetNearestColor,HDC,a,DWORD,b)
-Fb(DWORD,SetBkColor,HDC,a,COLORREF,b)
-Fb(DWORD,SetMapperFlags,HDC,a,DWORD,b)
-Fb(DWORD,SetTextColor,HDC,a,DWORD,b)
-Fb(DWORD,SizeofResource,HANDLE,a,HRSRC,b)
-Fb(FARPROC,GetProcAddress,HANDLE,a,SEGPTR,b)
-Fb(FARPROC,MakeProcInstance,FARPROC,a,HANDLE,b)
-Fb(FARPROC,SetWindowsHook,short,a,FARPROC,b)
-Fb(HANDLE,CopyMetaFile,HANDLE,a,LPSTR,b)
-Fb(HANDLE,GetProp,HWND,a,SEGPTR,b)
-Fb(HANDLE,LoadAccelerators,HANDLE,a,SEGPTR,b)
-Fb(HANDLE,LoadModule,LPCSTR,a,LPVOID,b)
-Fb(HANDLE,LoadResource,HANDLE,a,HANDLE,b)
-Fb(HANDLE,LocalAlloc,WORD,a,WORD,b)
-Fb(HANDLE,RemoveProp,HWND,a,SEGPTR,b)
-Fb(HANDLE,SelectObject,HDC,a,HANDLE,b)
-Fb(HANDLE,SetClipboardData,WORD,a,HANDLE,b)
-Fb(HBITMAP,LoadBitmap,HANDLE,a,SEGPTR,b)
-Fb(HBRUSH,CreateDIBPatternBrush,HANDLE,a,WORD,b)
-Fb(HBRUSH,CreateHatchBrush,short,a,COLORREF,b)
-Fb(HCURSOR,LoadCursor,HANDLE,a,SEGPTR,b)
-Fb(HDC,BeginPaint,HWND,a,LPPAINTSTRUCT,b) 
-Fb(HGLOBAL,GlobalAlloc,WORD,a,DWORD,b)
-Fb(HGLOBAL,SetTaskQueue,HTASK,a,HGLOBAL,b)
-Fb(HICON,LoadIcon,HANDLE,a,SEGPTR,b)
-Fb(HMENU,GetSubMenu,HMENU,a,short,b)
-Fb(HMENU,GetSystemMenu,HWND,a,BOOL,b)
-Fb(HMENU,LoadMenu,HANDLE,a,SEGPTR,b)
-Fb(HMENU,LookupMenuHandle,HMENU,a,INT,b)
-Fb(HPALETTE,GDISelectPalette,HDC,a,HPALETTE,b)
-Fb(HWND,ChildWindowFromPoint,HWND,a,POINT,b)
-Fb(HWND,FindWindow,SEGPTR,a,LPSTR,b)
-Fb(HWND,GetDlgItem,HWND,a,WORD,b)
-Fb(HWND,GetNextWindow,HWND,a,WORD,b)
-Fb(HWND,GetWindow,HWND,a,WORD,b)
-Fb(HWND,SetParent,HWND,a,HWND,b)
-Fb(INT,AnsiToOem,LPSTR,a,LPSTR,b)
-Fb(INT,_lcreat,LPSTR,a,INT,b)
-Fb(INT,_lopen,LPSTR,a,INT,b)
-Fb(INT,lstrcmp,LPCSTR,a,LPCSTR,b )
-Fb(INT,lstrcmpi,LPCSTR,a,LPCSTR,b )
-Fb(LONG,EscapeCommFunction,int,a,int,b)
-Fb(LONG,GetClassLong,HWND,a,short,b)
-Fb(LONG,GetWindowLong,HWND,a,short,b)
-Fb(SEGPTR,AnsiPrev,SEGPTR,a,SEGPTR,b)
-Fb(SEGPTR,lstrcat,SEGPTR,a,SEGPTR,b)
-Fb(SEGPTR,lstrcpy,SEGPTR,a,SEGPTR,b)
-Fb(WORD FAR*,SetCommEventMask,int,a,WORD,b)
-Fb(WORD,AnsiLowerBuff,LPSTR,a,WORD,b)
-Fb(WORD,AnsiUpperBuff,LPSTR,a,WORD,b)
-Fb(WORD,ChangeSelector,WORD,a,WORD,b)
-Fb(WORD,GetClassWord,HWND,a,short,b)
-Fb(WORD,GetCommEventMask,int,a,int,b)
-Fb(WORD,GetMenuItemID,HMENU,a,int,b)
-Fb(WORD,GetNearestPaletteIndex,HPALETTE,a,DWORD,b)
-Fb(WORD,GetSystemDirectory,LPSTR,a,WORD,b)
-Fb(WORD,GetWindowWord,HWND,a,short,b)
-Fb(WORD,GetWindowsDirectory,LPSTR,a,WORD,b)
-Fb(WORD,IsDlgButtonChecked,HWND,a,WORD,b)
-Fb(WORD,LocalShrink,HANDLE,a,WORD,b)
-Fb(WORD,MapVirtualKey,WORD,a,WORD,b)
-Fb(WORD,PrestoChangoSelector,WORD,a,WORD,b)
-Fb(WORD,SetBkMode,HDC,a,WORD,b)
-Fb(WORD,SetMapMode,HDC,a,WORD,b)
-Fb(WORD,SetPolyFillMode,HDC,a,WORD,b)
-Fb(WORD,SetROP2,HDC,a,WORD,b)
-Fb(WORD,SetRelAbs,HDC,a,WORD,b)
-Fb(WORD,SetSelectorBase,WORD,a,DWORD,b)
-Fb(WORD,SetSelectorLimit,WORD,a,DWORD,b)
-Fb(WORD,SetStretchBltMode,HDC,a,WORD,b)
-Fb(WORD,SetSystemPaletteUse,HDC,a,WORD,b)
-Fb(WORD,SetTextAlign,HDC,a,WORD,b)
-Fb(WORD,WinExec,LPSTR,a,WORD,b)
-Fb(int,AccessResource,HANDLE,a,HANDLE,b)
-Fb(int,BuildCommDCB,LPSTR,a,DCB*,b)
-Fb(int,ConvertRequest,HWND,a,LPKANJISTRUCT,b)
-Fb(int,EnumProps,HWND,a,FARPROC,b)
-Fb(int,ExcludeUpdateRgn,HDC,a,HWND,b)
-Fb(int,FlushComm,int,a,int,b)
-Fb(int,GetClipBox,HDC,a,LPRECT,b)
-Fb(int,GetCommError,int,a,COMSTAT*,b)
-Fb(int,GetCommState,int,a,DCB*,b)
-Fb(int,GetDeviceCaps,HDC,a,WORD,b)
-Fb(int,GetPriorityClipboardFormat,WORD FAR*,a,short,b)
-Fb(int,GetRgnBox,HRGN,a,LPRECT,b)
-Fb(int,GetScrollPos,HWND,a,int,b)
-Fb(int,ReleaseDC,HWND,a,HDC,b)
-Fb(int,SelectClipRgn,HDC,a,HRGN,b)
-Fb(int,SelectVisRgn,HDC,a,HRGN,b)
-Fb(int,SetSoundNoise,int,a,int,b)
-Fb(int,SetVoiceQueueSize,int,a,int,b)
-Fb(int,SetVoiceThreshold,int,a,int,b)
-Fb(int,Throw,LPCATCHBUF,a,int,b)
-Fb(int,TransmitCommChar,int,a,char,b)
-Fb(int,UngetCommChar,int,a,char,b)
-Fb(short,SetTextCharacterExtra,HDC,a,short,b)
-Fb(void,ClientToScreen,HWND,a,LPPOINT,b)
-Fb(void,CopyRect,LPRECT,a,LPRECT,b)
-Fb(void,DrawFocusRect,HDC,a,LPRECT,b)
-Fb(void,EndDialog,HWND,a,short,b)
-Fb(void,EndPaint,HWND,a,LPPAINTSTRUCT,b)
-Fb(void,FarSetOwner,HANDLE,a,WORD,b)
-Fb(void,GetClientRect,HWND,a,LPRECT,b)
-Fb(void,GetCodeInfo,FARPROC,lpProc,LPVOID,lpSegInfo)
-Fb(void,GetWindowRect,HWND,a,LPRECT,b)
-Fb(void,InvertRect,HDC,a,LPRECT,b)
-Fb(void,MapDialogRect,HWND,a,LPRECT,b)
-Fb(void,ProfSampRate,int,a,int,b)
-Fb(void,ProfSetup,int,a,int,b)
-Fb(void,ScreenToClient,HWND,a,LPPOINT,b)
-Fb(void,SetCaretPos,short,a,short,b)
-Fb(void,SetCursorPos,short,a,short,b)
-Fb(void,SetDCState,HDC,a,HDC,b)
-Fb(void,SetWindowText,HWND,a,LPSTR,b)
-Fb(void,ShowOwnedPopups,HWND,a,BOOL,b)
-Fb(void,ValidateRect,HWND,a,LPRECT,b)
-Fb(void,ValidateRgn,HWND,a,HRGN,b)
-Fc(BOOL,CheckMenuItem,HMENU,a,WORD,b,WORD,c)
-Fc(BOOL,DPtoLP,HDC,a,LPPOINT,b,int,c)
-Fc(BOOL,DeleteMenu,HMENU,a,WORD,b,WORD,c)
-Fc(BOOL,DlgDirSelect,HWND,a,LPSTR,b,int,c)
-Fc(BOOL,DlgDirSelectComboBox,HWND,a,LPSTR,b,int,c)
-Fc(BOOL,EnableMenuItem,HMENU,a,WORD,b,WORD,c)
-Fc(BOOL,EnableScrollBar,HWND,a,INT,b,UINT,c)
-Fc(BOOL,EnumChildWindows,HWND,a,FARPROC,b,LONG,c)
-Fc(BOOL,EnumTaskWindows,HANDLE,a,FARPROC,b,LONG,c)
-Fc(BOOL,FillRgn,HDC,a,HRGN,b,HBRUSH,c)
-Fc(BOOL,GetClassInfo,HANDLE,a,SEGPTR,b,LPWNDCLASS,c)
-Fc(BOOL,GetUpdateRect,HWND,a,LPRECT,b,BOOL,c)
-Fc(BOOL,IntersectRect,LPRECT,a,LPRECT,b,LPRECT,c)
-Fc(BOOL,LPtoDP,HDC,a,LPPOINT,b,int,c)
-Fc(BOOL,LineTo,HDC,a,short,b,short,c)
-Fc(BOOL,LocalInit,WORD,a,WORD,b,WORD,c)
-Fc(BOOL,Polygon,HDC,a,LPPOINT,b,int,c)
-Fc(BOOL,Polyline,HDC,a,LPPOINT,b,int,c)
-Fc(BOOL,PtInRegion,HRGN,a,short,b,short,c)
-Fc(BOOL,PtVisible,HDC,a,short,b,short,c)
-Fc(BOOL,RemoveMenu,HMENU,a,WORD,b,WORD,c)
-Fc(BOOL,SetProp,HWND,a,SEGPTR,b,HANDLE,c)
-Fc(BOOL,SubtractRect,LPRECT,a,LPRECT,b,LPRECT,c)
-Fc(BOOL,UnionRect,LPRECT,a,LPRECT,b,LPRECT,c)
-Fc(BOOL,WriteProfileString,LPSTR,a,LPSTR,b,LPSTR,c)
-Fc(DWORD,GetPixel,HDC,a,short,b,short,c)
-Fc(DWORD,GetTextExtent,HDC,a,LPSTR,b,short,c)
-Fc(DWORD,MoveTo,HDC,a,short,b,short,c)
-Fc(DWORD,OffsetViewportOrg,HDC,a,short,b,short,c)
-Fc(DWORD,OffsetWindowOrg,HDC,a,short,b,short,c)
-Fc(DWORD,SetBitmapDimension,HBITMAP,a,short,b,short,c)
-Fc(DWORD,SetBrushOrg,HDC,a,short,b,short,c)
-Fc(DWORD,SetViewportExt,HDC,a,short,b,short,c)
-Fc(DWORD,SetViewportOrg,HDC,a,short,b,short,c)
-Fc(DWORD,SetWindowExt,HDC,a,short,b,short,c)
-Fc(DWORD,SetWindowOrg,HDC,a,short,b,short,c)
-Fc(FARPROC,SetResourceHandler,HANDLE,a,LPSTR,b,FARPROC,c)
-Fc(HANDLE,AllocResource,HANDLE,a,HANDLE,b,DWORD,c)
-Fc(HANDLE,FindResource,HANDLE,a,SEGPTR,b,SEGPTR,c)
-Fc(HANDLE,LocalReAlloc,HANDLE,a,WORD,b,WORD,c)
-Fc(HBITMAP,CreateCompatibleBitmap,HDC,a,short,b,short,c)
-Fc(HBITMAP,CreateDiscardableBitmap,HDC,a,short,b,short,c)
-Fc(HBRUSH,GetControlBrush,HWND,a,HDC,b,WORD,c)
-Fc(HDC,GetDCEx,HWND,a,HRGN,b,DWORD,c)
-Fc(HGLOBAL,GlobalReAlloc,HGLOBAL,a,DWORD,b,WORD,c)
-Fc(HPALETTE,SelectPalette,HDC,a,HPALETTE,b,BOOL,c)
-Fc(HPEN,CreatePen,short,a,short,b,COLORREF,c)
-Fc(HRGN,CreatePolygonRgn,LPPOINT,a,short,b,short,c)
-Fc(HWND,GetNextDlgGroupItem,HWND,a,HWND,b,BOOL,c)
-Fc(HWND,GetNextDlgTabItem,HWND,a,HWND,b,BOOL,c)
-Fc(INT,GetTextFace,HDC,a,INT,b,LPSTR,c)
-Fc(INT,OpenFile,LPSTR,a,LPOFSTRUCT,b,WORD,c)
-Fc(INT,_lread,INT,a,LPSTR,b,WORD,c)
-Fc(INT,_lwrite,INT,a,LPCSTR,b,WORD,c)
-Fc(LONG,GetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
-Fc(LONG,SetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
-Fc(LONG,SetClassLong,HWND,a,short,b,LONG,c)
-Fc(LONG,SetWindowLong,HWND,a,short,b,LONG,c)
-Fc(LONG,_hread,INT,a,LPSTR,b,LONG,c)
-Fc(LONG,_hwrite,INT,a,LPCSTR,b,LONG,c)
-Fc(LONG,_llseek,INT,a,LONG,b,INT,c)
-Fc(SEGPTR,lstrcpyn,SEGPTR,a,SEGPTR,b,WORD,c)
-Fc(WORD,GetAtomName,ATOM,a,LPSTR,b,short,c)
-Fc(WORD,GetInternalWindowPos,HWND,a,LPRECT,b,LPPOINT,c)
-Fc(WORD,GetMenuState,HMENU,a,WORD,b,WORD,c)
-Fc(WORD,GetProfileInt,LPSTR,a,LPSTR,b,int,c)
-Fc(WORD,GlobalGetAtomName,ATOM,a,LPSTR,b,short,c)
-Fc(WORD,SelectorAccessRights,WORD,a,WORD,b,WORD,c)
-Fc(WORD,SetClassWord,HWND,a,short,b,WORD,c)
-Fc(WORD,SetWindowWord,HWND,a,short,b,WORD,c)
-Fc(int,FillRect,HDC,a,LPRECT,b,HBRUSH,c)
-Fc(int,FrameRect,HDC,a,LPRECT,b,HBRUSH,c)
-Fc(int,GetClassName,HWND,a,LPSTR,b,short,c)
-Fc(int,GetClipboardFormatName,WORD,a,LPSTR,b,short,c)
-Fc(int,GetEnvironment,LPSTR,a,LPSTR,b,WORD,c)
-Fc(int,GetInstanceData,HANDLE,a,WORD,b,int,c)
-Fc(int,GetKeyNameText,LONG,a,LPSTR,b,int,c)
-Fc(int,GetModuleFileName,HANDLE,a,LPSTR,b,short,c)
-Fc(int,GetObject,HANDLE,a,int,b,LPSTR,c)
-Fc(int,GetUpdateRgn,HWND,a,HRGN,b,BOOL,c)
-Fc(int,GetWindowText,HWND,a,LPSTR,b,int,c)
-Fc(int,MulDiv,int,a,int,b,int,c)
-Fc(int,OffsetClipRgn,HDC,a,short,b,short,c)
-Fc(int,OffsetRgn,HRGN,a,short,b,short,c)
-Fc(int,OpenComm,LPSTR,a,WORD,b,WORD,c)
-Fc(int,ReadComm,int,a,LPSTR,b,int,c)
-Fc(int,SetEnvironment,LPSTR,a,LPSTR,b,WORD,c)
-Fc(int,SetVoiceEnvelope,int,a,int,b,int,c)
-Fc(int,SetVoiceSound,int,a,LONG,b,int,c)
-Fc(int,TranslateAccelerator,HWND,a,HANDLE,b,LPMSG,c)
-Fc(int,WriteComm,int,a,LPSTR,b,int,c)
-Fc(int,wvsprintf,LPSTR,a,LPSTR,b,LPSTR,c)
-Fc(short,SetTextJustification,HDC,a,short,b,short,c)
-Fc(void,AdjustWindowRect,LPRECT,a,DWORD,b,BOOL,c)
-Fc(void,AnsiToOemBuff,LPSTR,a,LPSTR,b,INT,c)
-Fc(void,CheckDlgButton,HWND,a,WORD,b,WORD,c)
-Fc(void,InflateRect,LPRECT,a,short,b,short,c)
-Fc(void,InvalidateRect,HWND,a,LPRECT,b,BOOL,c)
-Fc(void,InvalidateRgn,HWND,a,HRGN,b,BOOL,c)
-Fc(void,OemToAnsiBuff,LPSTR,a,LPSTR,b,INT,c)
-Fc(void,OffsetRect,LPRECT,a,short,b,short,c)
-Fc(void,SetDlgItemText,HWND,a,WORD,b,SEGPTR,c)
-Fc(void,SetSysColors,int,a,LPINT,b,COLORREF*,c)
-Fc(void,ShowScrollBar,HWND,a,WORD,b,BOOL,c)
-Fc(void,SwitchStackTo,WORD,a,WORD,b,WORD,c)
-Fd(BOOL,AppendMenu,HMENU,a,WORD,b,WORD,c,LPSTR,d)
-Fd(BOOL,DrawIcon,HDC,a,short,b,short,c,HICON,d)
-Fd(BOOL,EnumMetaFile,HDC,a,LOCALHANDLE,b,FARPROC,c,BYTE FAR*,d)
-Fd(BOOL,FloodFill,HDC,a,INT,b,INT,c,COLORREF,d)
-Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
-Fd(BOOL,GetMessage,SEGPTR,msg,HWND,b,WORD,c,WORD,d)
-Fd(BOOL,GetTextExtentPoint,HDC,a,LPSTR,b,short,c,LPSIZE,d)
-Fd(BOOL,HiliteMenuItem,HWND,a,HMENU,b,WORD,c,WORD,d)
-Fd(BOOL,MoveToEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,OffsetViewportOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,OffsetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,PolyPolygon,HDC,a,LPPOINT,b,LPINT,c,WORD,d)
-Fd(BOOL,PostAppMessage,HANDLE,a,WORD,b,WORD,c,LONG,d)
-Fd(BOOL,PostMessage,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(BOOL,RedrawWindow,HWND,a,LPRECT,b,HRGN,c,UINT,d)
-Fd(BOOL,SetBitmapDimensionEx,HBITMAP,a,short,b,short,c,LPSIZE,d)
-Fd(BOOL,SetViewportExtEx,HDC,a,short,b,short,c,LPSIZE,d)
-Fd(BOOL,SetViewportOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,SetWindowExtEx,HDC,a,short,b,short,c,LPSIZE,d)
-Fd(BOOL,SetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
-Fd(BOOL,WinHelp,HWND,hwndMain,LPSTR,lpszHelp,WORD,usCommand,DWORD,ulData)
-Fd(BOOL,WritePrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
-Fd(COLORREF,SetPixel,HDC,a,short,b,short,c,COLORREF,d)
-Fd(DWORD,CallNextHookEx,HHOOK,a,short,b,WPARAM,c,LPARAM,d)
-Fd(DWORD,DefHookProc,short,a,WORD,b,DWORD,c,HHOOK FAR*,d)
-Fd(HDC,CreateDC,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
-Fd(HDC,CreateIC,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
-Fd(HHOOK,SetWindowsHookEx,short,a,HOOKPROC,b,HINSTANCE,c,HTASK,d)
-Fd(HRGN,CreateEllipticRgn,short,a,short,b,short,c,short,d)
-Fd(HRGN,CreatePolyPolygonRgn,LPPOINT,a,LPINT,b,short,c,short,d)
-Fd(HRGN,CreateRectRgn,short,a,short,b,short,c,short,d)
-Fd(HWND,CreateDialog,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d)
-Fd(HWND,CreateDialogIndirect,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d)
-Fd(INT,GetTempFileName,BYTE,a,LPCSTR,b,UINT,c,LPSTR,d)
-Fd(LONG,DefDlgProc,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(LONG,DefMDIChildProc,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(LONG,DefWindowProc,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(LONG,SendMessage,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(WORD,GetDlgItemInt,HWND,a,WORD,b,BOOL FAR*,c,BOOL,d)
-Fd(WORD,GetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
-Fd(WORD,GetPrivateProfileInt,LPSTR,a,LPSTR,b,short,c,LPSTR,d)
-Fd(WORD,GetSystemPaletteEntries,HDC,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
-Fd(WORD,SetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
-Fd(WORD,SetSystemTimer,HWND,a,WORD,d,WORD,b,FARPROC,c)
-Fd(WORD,SetTimer,HWND,a,WORD,d,WORD,b,FARPROC,c)
-Fd(int,CombineRgn,HRGN,a,HRGN,b,HRGN,c,short,d)
-Fd(int,DialogBox,HINSTANCE,a,SEGPTR,b,HWND,c,WNDPROC,d)
-Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,WNDPROC,d)
-Fd(int,EnumFonts,HDC,a,LPSTR,b,FARPROC,c,LPSTR,d)
-Fd(int,EnumObjects,HDC,a,int,b,FARPROC,c,LPSTR,d)
-Fd(int,GetDlgItemText,HWND,a,WORD,b,SEGPTR,c,WORD,d)
-Fd(int,LoadString,HANDLE,a,WORD,b,LPSTR,c,int,d)
-Fd(int,MessageBox,HWND,a,LPSTR,b,LPSTR,c,WORD,d)
-Fd(int,SetScrollPos,HWND,a,int,b,int,c,BOOL,d)
-Fd(int,SetVoiceNote,int,a,int,b,int,c,int,d)
-Fd(void,AdjustWindowRectEx,LPRECT,a,DWORD,b,BOOL,c,DWORD,d)
-Fd(void,AnimatePalette,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
-Fd(void,CheckRadioButton,HWND,a,WORD,b,WORD,c,WORD,d)
-Fd(void,CreateCaret,HWND,a,HBITMAP,b,short,c,short,d)
-Fd(void,FillWindow,HWND,a,HWND,b,HDC,c,HBRUSH,d)
-Fd(void,GetScrollRange,HWND,a,int,b,LPINT,c,LPINT,d)
-Fd(void,MapWindowPoints,HWND,a,HWND,b,LPPOINT,c,WORD,d)
-Fd(void,PlayMetaFileRecord,HDC,a,LPHANDLETABLE,b,LPMETARECORD,c,WORD,d)
-Fd(void,SetDlgItemInt,HWND,a,WORD,b,WORD,c,BOOL,d)
-Fd(void,SetInternalWindowPos,HWND,a,WORD,b,LPRECT,c,LPPOINT,d)
-Fe(BOOL,ChangeMenu,HMENU,a,WORD,b,LPSTR,c,WORD,d,WORD,e)
-Fe(BOOL,Ellipse,HDC,a,int,b,int,c,int,d,int,e)
-Fe(BOOL,ExtFloodFill,HDC,a,INT,b,INT,c,COLORREF,d,WORD,e)
-Fe(BOOL,FrameRgn,HDC,a,HRGN,b,HBRUSH,e,int,c,int,d)
-Fe(BOOL,InsertMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
-Fe(BOOL,ModifyMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
-Fe(BOOL,PeekMessage,LPMSG,a,HWND,b,WORD,c,WORD,d,WORD,e)
-Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
-Fe(BOOL,SetMenuItemBitmaps,HMENU,a,WORD,b,WORD,c,HBITMAP,d,HBITMAP,e)
-Fe(BOOL,TextOut,HDC,a,short,b,short,c,LPSTR,d,short,e)
-Fe(DWORD,GetTabbedTextExtent,HDC,a,LPSTR,b,int,c,int,d,LPINT,e)
-Fe(DWORD,ScaleViewportExt,HDC,a,short,b,short,c,short,d,short,e)
-Fe(DWORD,ScaleWindowExt,HDC,a,short,b,short,c,short,d,short,e)
-Fe(HBITMAP,CreateBitmap,short,a,short,b,BYTE,c,BYTE,d,LPSTR,e)
-Fe(HWND,CreateDialogIndirectParam,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d,LPARAM,e)
-Fe(HWND,CreateDialogParam,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d,LPARAM,e)
-Fe(LONG,CallWindowProc,WNDPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
-Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
-Fe(LONG,SendDlgItemMessage,HWND,a,WORD,b,WORD,c,WORD,d,LONG,e)
-Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,WNDPROC,d,LONG,e)
-Fe(int,DialogBoxParam,HANDLE,a,SEGPTR,b,HWND,c,WNDPROC,d,LONG,e)
-Fe(int,DlgDirList,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
-Fe(int,DlgDirListComboBox,HWND,a,SEGPTR,b,int,c,int,d,WORD,e)
-Fe(int,DrawText,HDC,a,LPSTR,str,int,c,LPRECT,d,WORD,flag)
-Fe(int,Escape,HDC,a,int,b,int,c,LPSTR,d,LPSTR,e)
-Fe(int,ExcludeClipRect,HDC,a,short,b,short,c,short,d,short,e)
-Fe(int,ExcludeVisRect,HDC,a,short,b,short,c,short,d,short,e)
-Fe(int,GetMenuString,HMENU,a,WORD,b,LPSTR,c,short,d,WORD,e)
-Fe(int,GetProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d,int,e)
-Fe(int,IntersectClipRect,HDC,a,short,b,short,c,short,d,short,e)
-Fe(int,IntersectVisRect,HDC,a,short,b,short,c,short,d,short,e)
-Fe(int,SetVoiceAccent,int,a,int,b,int,c,int,d,int,e)
-Fe(int,ToAscii,WORD,wVirtKey,WORD,wScanCode,LPSTR,lpKeyState,LPVOID,lpChar,WORD,wFlags)
-Fe(void,PaintRect,HWND,a,HWND,b,HDC,c,HBRUSH,d,LPRECT,e)
-Fe(void,ScrollWindow,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e)
-Fe(void,SetRect,LPRECT,a,short,b,short,c,short,d,short,e)
-Fe(void,SetRectRgn,HRGN,a,short,b,short,c,short,d,short,e)
-Fe(void,SetScrollRange,HWND,a,int,b,int,c,int,d,BOOL,e)
-Ff(BOOL,MoveWindow,HWND,a,short,b,short,c,short,d,short,e,BOOL,f)
-Ff(BOOL,PatBlt,HDC,a,short,b,short,c,short,d,short,e,DWORD,f)
-Ff(BOOL,ScaleViewportExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
-Ff(BOOL,ScaleWindowExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
-Ff(HBITMAP,CreateDIBitmap,HDC,a,LPBITMAPINFOHEADER,b,DWORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
-Ff(HRGN,CreateRoundRectRgn,short,a,short,b,short,c,short,d,short,e,short,f)
-Ff(short,GetPrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d,short,e,LPSTR,f)
-Ff(void,LineDDA,short,a,short,b,short,c,short,d,FARPROC,e,long,f)
-Fg(BOOL,RoundRect,HDC,a,short,b,short,c,short,d,short,e,short,f,short,g)
-Fg(BOOL,ScrollDC,HDC,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g)
-Fg(BOOL,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
-Fg(BOOL,TrackPopupMenu,HMENU,a,WORD,b,short,c,short,d,short,e,HWND,f,LPRECT,g)
-Fg(HCURSOR,CreateCursor,HANDLE,a,short,b,short,c,short,d,short,e,LPSTR,f,LPSTR,g)
-Fg(HICON,CreateIcon,HANDLE,a,int,b,int,c,BYTE,d,BYTE,e,LPSTR,f,LPSTR,g)
-Fg(int,GetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
-Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
-Fh(BOOL,ExtTextOut,HDC,a,short,b,short,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
-Fh(HDWP,DeferWindowPos,HDWP,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,INT,x,INT,y,INT,cx,INT,cy,WORD,wFlags)
-Fh(LONG,TabbedTextOut,HDC,a,short,b,short,c,LPSTR,d,short,e,short,f,LPINT,g,short,h)
-Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,WORD,h)
-Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
-Fi(BOOL,BitBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,DWORD,i)
-Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
-Fi(BOOL,GrayString,HDC,a,HBRUSH,b,FARPROC,gsprc,LPARAM,lParam,INT,cch,INT,x,INT,y,INT,cx,INT,cy)
-Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
-Fk(BOOL,StretchBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,short,i,short,j,DWORD,k)
-Fk(HWND,CreateWindow,SEGPTR,a,SEGPTR,b,DWORD,c,short,d,short,e,short,f,short,g,HWND,h,HMENU,i,HANDLE,j,SEGPTR,k)
-Fl(HWND,CreateWindowEx,DWORD,a,SEGPTR,b,SEGPTR,c,DWORD,d,short,e,short,f,short,g,short,h,HWND,i,HMENU,j,HANDLE,k,SEGPTR,l)
-Fl(int,SetDIBitsToDevice,HDC,a,short,b,short,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
-Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)
-Fn(HFONT,CreateFont,int,a,int,b,int,c,int,d,int,e,BYTE,f,BYTE,g,BYTE,h,BYTE,i,BYTE,j,BYTE,k,BYTE,l,BYTE,m,LPSTR,n)
+ATOM AddAtom(SEGPTR);
+ATOM DeleteAtom(ATOM);
+ATOM FindAtom(SEGPTR);
+ATOM GlobalAddAtom(SEGPTR);
+ATOM GlobalDeleteAtom(ATOM);
+ATOM GlobalFindAtom(SEGPTR);
+ATOM RegisterClass(LPWNDCLASS);
+BOOL AnyPopup(void);
+BOOL AppendMenu(HMENU,WORD,WORD,LPSTR);
+BOOL Arc(HDC,int,int,int,int,int,int,int,int);
+BOOL BitBlt(HDC,short,short,short,short,HDC,short,short,DWORD);
+BOOL BringWindowToTop(HWND);
+BOOL CallMsgFilter(SEGPTR,short);
+BOOL ChangeClipboardChain(HWND,HWND);
+BOOL ChangeMenu(HMENU,WORD,LPSTR,WORD,WORD);
+BOOL CheckMenuItem(HMENU,WORD,WORD);
+BOOL Chord(HDC,int,int,int,int,int,int,int,int);
+BOOL CloseClipboard(void);
+BOOL DPtoLP(HDC,LPPOINT,int);
+BOOL DeleteDC(HDC);
+BOOL DeleteMenu(HMENU,WORD,WORD);
+BOOL DeleteMetaFile(HMETAFILE);
+BOOL DeleteObject(HANDLE);
+BOOL DestroyCursor(HCURSOR);
+BOOL DestroyIcon(HICON);
+BOOL DestroyMenu(HMENU);
+BOOL DestroyWindow(HWND);
+BOOL DlgDirSelect(HWND,LPSTR,int);
+BOOL DlgDirSelectComboBox(HWND,LPSTR,int);
+BOOL DrawIcon(HDC,short,short,HICON);
+BOOL Ellipse(HDC,int,int,int,int);
+BOOL EmptyClipboard(void);
+BOOL EnableHardwareInput(BOOL);
+BOOL EnableMenuItem(HMENU,WORD,WORD);
+BOOL EnableScrollBar(HWND,INT,UINT);
+BOOL EnableWindow(HWND,BOOL);
+BOOL EndDeferWindowPos(HDWP);
+BOOL EnumChildWindows(HWND,FARPROC,LONG);
+BOOL EnumMetaFile(HDC,LOCALHANDLE,FARPROC,BYTE*);
+BOOL EnumTaskWindows(HANDLE,FARPROC,LONG);
+BOOL EnumWindows(FARPROC,LONG);
+BOOL EqualRect(LPRECT,LPRECT);
+BOOL EqualRgn(HRGN,HRGN);
+BOOL ExitWindows(DWORD,WORD);
+BOOL ExtFloodFill(HDC,INT,INT,COLORREF,WORD);
+BOOL ExtTextOut(HDC,short,short,WORD,LPRECT,LPSTR,WORD,LPINT);
+BOOL FillRgn(HDC,HRGN,HBRUSH);
+BOOL FlashWindow(HWND,BOOL);
+BOOL FloodFill(HDC,INT,INT,COLORREF);
+BOOL FrameRgn(HDC,HRGN,HBRUSH,int,int);
+BOOL FreeModule(HANDLE);
+BOOL FreeResource(HANDLE);
+BOOL GetBitmapDimensionEx(HBITMAP,LPSIZE);
+BOOL GetBrushOrgEx(HDC,LPPOINT);
+BOOL GetCharWidth(HDC,WORD,WORD,LPINT);
+BOOL GetClassInfo(HANDLE,SEGPTR,LPWNDCLASS);
+BOOL GetCurrentPositionEx(HDC,LPPOINT);
+BOOL GetInputState(void);
+BOOL GetMessage(SEGPTR,HWND,UINT,UINT);
+BOOL GetTextExtentPoint(HDC,LPSTR,short,LPSIZE);
+BOOL GetTextMetrics(HDC,LPTEXTMETRIC);
+BOOL GetUpdateRect(HWND,LPRECT,BOOL);
+BOOL GetViewportExtEx(HDC,LPPOINT);
+BOOL GetViewportOrgEx(HDC,LPPOINT);
+BOOL GetWinDebugInfo(LPWINDEBUGINFO,UINT);
+BOOL GetWindowExtEx(HDC,LPPOINT);
+BOOL GetWindowOrgEx(HDC,LPPOINT);
+BOOL GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
+BOOL GlobalUnWire(HGLOBAL);
+BOOL GlobalUnlock(HGLOBAL);
+BOOL GrayString(HDC,HBRUSH,FARPROC,LPARAM,INT,INT,INT,INT,INT);
+BOOL HiliteMenuItem(HWND,HMENU,WORD,WORD);
+BOOL InSendMessage(void);
+BOOL InsertMenu(HMENU,WORD,WORD,WORD,LPSTR);
+BOOL IntersectRect(LPRECT,LPRECT,LPRECT);
+BOOL InvertRgn(HDC,HRGN);
+BOOL IsBadCodePtr(SEGPTR);
+BOOL IsBadHugeReadPtr(SEGPTR,DWORD);
+BOOL IsBadHugeWritePtr(SEGPTR,DWORD);
+BOOL IsBadReadPtr(SEGPTR,WORD);
+BOOL IsBadStringPtr(SEGPTR,WORD);
+BOOL IsBadWritePtr(SEGPTR,WORD);
+BOOL IsCharAlpha(char);
+BOOL IsCharAlphaNumeric(char);
+BOOL IsCharLower(char);
+BOOL IsCharUpper(char);
+BOOL IsChild(HWND,HWND);
+BOOL IsClipboardFormatAvailable(WORD);
+BOOL IsDialogMessage(HWND,LPMSG);
+BOOL IsIconic(HWND);
+BOOL IsRectEmpty(LPRECT);
+BOOL IsTwoByteCharPrefix(char);
+BOOL IsWindow(HWND);
+BOOL IsWindowEnabled(HWND);
+BOOL IsWindowVisible(HWND);
+BOOL IsZoomed(HWND);
+BOOL KillSystemTimer(HWND,WORD);
+BOOL KillTimer(HWND,WORD);
+BOOL LPtoDP(HDC,LPPOINT,int);
+BOOL LineTo(HDC,short,short);
+BOOL LocalInit(HANDLE,WORD,WORD);
+BOOL LocalUnlock(HANDLE);
+BOOL ModifyMenu(HMENU,WORD,WORD,WORD,LPSTR);
+BOOL MoveToEx(HDC,short,short,LPPOINT);
+BOOL MoveWindow(HWND,short,short,short,short,BOOL);
+BOOL OemToAnsi(LPSTR,LPSTR);
+BOOL OffsetViewportOrgEx(HDC,short,short,LPPOINT);
+BOOL OffsetWindowOrgEx(HDC,short,short,LPPOINT);
+BOOL OpenClipboard(HWND);
+BOOL OpenIcon(HWND);
+BOOL PaintRgn(HDC,HRGN);
+BOOL PatBlt(HDC,short,short,short,short,DWORD);
+BOOL PeekMessage(LPMSG,HWND,WORD,WORD,WORD);
+BOOL Pie(HDC,int,int,int,int,int,int,int,int);
+BOOL PlayMetaFile(HDC,HANDLE);
+BOOL PolyPolygon(HDC,LPPOINT,LPINT,WORD);
+BOOL Polygon(HDC,LPPOINT,int);
+BOOL Polyline(HDC,LPPOINT,int);
+BOOL PostAppMessage(HANDLE,WORD,WORD,LONG);
+BOOL PostMessage(HWND,WORD,WORD,LONG);
+BOOL PtInRect(LPRECT,POINT);
+BOOL PtInRegion(HRGN,short,short);
+BOOL PtVisible(HDC,short,short);
+BOOL RectInRegion(HRGN,LPRECT);
+BOOL RectVisible(HDC,LPRECT);
+BOOL Rectangle(HDC,int,int,int,int);
+BOOL RedrawWindow(HWND,LPRECT,HRGN,UINT);
+BOOL RemoveFontResource(LPSTR);
+BOOL RemoveMenu(HMENU,WORD,WORD);
+BOOL ResizePalette(HPALETTE,WORD);
+BOOL RestoreDC(HDC,short);
+BOOL RoundRect(HDC,short,short,short,short,short,short);
+BOOL ScaleViewportExtEx(HDC,short,short,short,short,LPSIZE);
+BOOL ScaleWindowExtEx(HDC,short,short,short,short,LPSIZE);
+BOOL ScrollDC(HDC,short,short,LPRECT,LPRECT,HRGN,LPRECT);
+BOOL SetBitmapDimensionEx(HBITMAP,short,short,LPSIZE);
+BOOL SetConvertParams(int,int);
+BOOL SetDeskPattern(void);
+BOOL SetDeskWallPaper(LPSTR);
+BOOL SetErrorMode(WORD);
+BOOL SetMenu(HWND,HMENU);
+BOOL SetMenuItemBitmaps(HMENU,WORD,WORD,HBITMAP,HBITMAP);
+BOOL SetMessageQueue(int);
+BOOL SetProp(HWND,SEGPTR,HANDLE);
+BOOL SetViewportExtEx(HDC,short,short,LPSIZE);
+BOOL SetViewportOrgEx(HDC,short,short,LPPOINT);
+BOOL SetWinDebugInfo(LPWINDEBUGINFO);
+BOOL SetWindowExtEx(HDC,short,short,LPSIZE);
+BOOL SetWindowOrgEx(HDC,short,short,LPPOINT);
+BOOL SetWindowPlacement(HWND,LPWINDOWPLACEMENT);
+BOOL SetWindowPos(HWND,HWND,short,short,short,short,WORD);
+BOOL ShowWindow(HWND,int);
+BOOL StretchBlt(HDC,short,short,short,short,HDC,short,short,short,short,DWORD);
+BOOL SubtractRect(LPRECT,LPRECT,LPRECT);
+BOOL SwapMouseButton(BOOL);
+BOOL TextOut(HDC,short,short,LPSTR,short);
+BOOL TrackPopupMenu(HMENU,WORD,short,short,short,HWND,LPRECT);
+BOOL TranslateMDISysAccel(HWND,LPMSG);
+BOOL TranslateMessage(LPMSG);
+BOOL UnhookWindowsHook(short,FARPROC);
+BOOL UnhookWindowsHookEx(HHOOK);
+BOOL UnionRect(LPRECT,LPRECT,LPRECT);
+BOOL UnrealizeObject(HBRUSH);
+BOOL UnregisterClass(SEGPTR,HANDLE);
+BOOL WinHelp(HWND,LPSTR,WORD,DWORD);
+BOOL WritePrivateProfileString(LPSTR,LPSTR,LPSTR,LPSTR);
+BOOL WriteProfileString(LPSTR,LPSTR,LPSTR);
+BYTE GetTempDrive(BYTE);
+COLORREF GetBkColor(HDC);
+COLORREF GetSysColor(short);
+COLORREF GetTextColor(HDC);
+COLORREF SetPixel(HDC,short,short,COLORREF);
+DWORD CallNextHookEx(HHOOK,short,WPARAM,LPARAM);
+DWORD DefHookProc(short,WORD,DWORD,HHOOK*);
+DWORD GetAspectRatioFilter(HDC);
+DWORD GetBitmapDimension(HBITMAP);
+DWORD GetBrushOrg(HDC);
+DWORD GetCurrentPosition(HDC);
+DWORD GetCurrentTime(void);
+DWORD GetDCOrg(HDC);
+DWORD GetDialogBaseUnits(void);
+DWORD GetFreeSpace(WORD);
+DWORD GetHeapSpaces(HMODULE);
+DWORD GetMenuCheckMarkDimensions(void);
+DWORD GetMessagePos(void);
+DWORD GetNearestColor(HDC,DWORD);
+DWORD GetPixel(HDC,short,short);
+DWORD GetSelectorBase(WORD);
+DWORD GetSelectorLimit(WORD);
+DWORD GetTabbedTextExtent(HDC,LPSTR,int,int,LPINT);
+DWORD GetTextExtent(HDC,LPSTR,short);
+DWORD GetTickCount(void);
+DWORD GetViewportExt(HDC);
+DWORD GetViewportOrg(HDC);
+DWORD GetWindowExt(HDC);
+DWORD GetWindowOrg(HDC);
+DWORD GlobalCompact(DWORD);
+DWORD GlobalDOSAlloc(DWORD);
+DWORD GlobalHandle(WORD);
+DWORD GlobalSize(HGLOBAL);
+DWORD MoveTo(HDC,short,short);
+DWORD OemKeyScan(WORD);
+DWORD OffsetViewportOrg(HDC,short,short);
+DWORD OffsetWindowOrg(HDC,short,short);
+DWORD ScaleViewportExt(HDC,short,short,short,short);
+DWORD ScaleWindowExt(HDC,short,short,short,short);
+DWORD SetBitmapDimension(HBITMAP,short,short);
+DWORD SetBkColor(HDC,COLORREF);
+DWORD SetBrushOrg(HDC,short,short);
+DWORD SetMapperFlags(HDC,DWORD);
+DWORD SetTextColor(HDC,DWORD);
+DWORD SetViewportExt(HDC,short,short);
+DWORD SetViewportOrg(HDC,short,short);
+DWORD SetWindowExt(HDC,short,short);
+DWORD SetWindowOrg(HDC,short,short);
+DWORD SizeofResource(HANDLE,HRSRC);
+FARPROC GetProcAddress(HANDLE,SEGPTR);
+FARPROC LocalNotify(FARPROC);
+FARPROC MakeProcInstance(FARPROC,HANDLE);
+FARPROC SetResourceHandler(HANDLE,LPSTR,FARPROC);
+FARPROC SetWindowsHook(short,FARPROC);
+HANDLE CopyMetaFile(HANDLE,LPSTR);
+HANDLE CreateCursorIconIndirect(HANDLE,CURSORICONINFO*,LPSTR,LPSTR);
+HANDLE CreateMetaFile(LPSTR);
+HANDLE DirectResAlloc(HANDLE,WORD,WORD);
+HANDLE FindResource(HANDLE,SEGPTR,SEGPTR);
+HANDLE GetAtomHandle(ATOM);
+HANDLE GetClipboardData(WORD);
+HANDLE GetCodeHandle(FARPROC);
+HANDLE GetCurrentPDB(void);
+HANDLE GetCurrentTask(void);
+HANDLE GetMetaFile(LPSTR);
+HANDLE GetMetaFileBits(HANDLE);
+HANDLE GetModuleHandle(LPCSTR);
+HANDLE GetProp(HWND,SEGPTR);
+HANDLE GetStockObject(int);
+HANDLE GetWindowTask(HWND);
+HANDLE LoadAccelerators(HANDLE,SEGPTR);
+HANDLE LoadLibrary(LPCSTR);
+HANDLE LoadModule(LPCSTR,LPVOID);
+HANDLE LoadResource(HANDLE,HANDLE);
+HANDLE LocalAlloc(WORD,WORD);
+HANDLE LocalFree(HANDLE);
+HANDLE LocalHandle(WORD);
+HANDLE LocalReAlloc(HANDLE,WORD,WORD);
+HANDLE RemoveProp(HWND,SEGPTR);
+HANDLE SelectObject(HDC,HANDLE);
+HANDLE SetClipboardData(WORD,HANDLE);
+HANDLE SetMetaFileBits(HANDLE);
+HANDLE WinExec(LPSTR,WORD);
+HBITMAP CreateBitmap(short,short,BYTE,BYTE,LPSTR);
+HBITMAP CreateBitmapIndirect(BITMAP*);
+HBITMAP CreateCompatibleBitmap(HDC,short,short);
+HBITMAP CreateDIBitmap(HDC,LPBITMAPINFOHEADER,DWORD,LPSTR,LPBITMAPINFO,WORD);
+HBITMAP CreateDiscardableBitmap(HDC,short,short);
+HBITMAP LoadBitmap(HANDLE,SEGPTR);
+HBRUSH CreateBrushIndirect(LOGBRUSH*);
+HBRUSH CreateDIBPatternBrush(HANDLE,WORD);
+HBRUSH CreateHatchBrush(short,COLORREF);
+HBRUSH CreatePatternBrush(HBITMAP);
+HBRUSH CreateSolidBrush(DWORD);
+HBRUSH GetControlBrush(HWND,HDC,WORD);
+HCURSOR CreateCursor(HANDLE,INT,INT,INT,INT,LPSTR,LPSTR);
+HCURSOR GetCursor(void);
+HCURSOR LoadCursor(HANDLE,SEGPTR);
+HCURSOR SetCursor(HCURSOR);
+HDC BeginPaint(HWND,LPPAINTSTRUCT);
+HDC CreateCompatibleDC(HDC);
+HDC CreateDC(LPSTR,LPSTR,LPSTR,LPSTR);
+HDC CreateIC(LPSTR,LPSTR,LPSTR,LPSTR);
+HDC GetDC(HWND);
+HDC GetDCEx(HWND,HRGN,DWORD);
+HDC GetDCState(HDC);
+HDC GetWindowDC(HWND);
+HDWP BeginDeferWindowPos(INT);
+HDWP DeferWindowPos(HDWP,HWND,HWND,INT,INT,INT,INT,WORD);
+HFONT CreateFont(int,int,int,int,int,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,LPSTR);
+HFONT CreateFontIndirect(LOGFONT*);
+HGLOBAL AllocResource(HINSTANCE,HRSRC,DWORD);
+HGLOBAL GetTaskQueue(HTASK);
+HGLOBAL GlobalAlloc(WORD,DWORD);
+HGLOBAL GlobalFree(HGLOBAL);
+HGLOBAL GlobalLRUNewest(HGLOBAL);
+HGLOBAL GlobalLRUOldest(HGLOBAL);
+HGLOBAL GlobalReAlloc(HGLOBAL,DWORD,WORD);
+HGLOBAL LockSegment(HGLOBAL);
+HGLOBAL SetTaskQueue(HTASK,HGLOBAL);
+HHOOK SetWindowsHookEx(short,HOOKPROC,HINSTANCE,HTASK);
+HICON CreateIcon(HANDLE,INT,INT,BYTE,BYTE,LPSTR,LPSTR);
+HICON LoadIcon(HANDLE,SEGPTR);
+HINSTANCE GetTaskDS(void);
+HMENU CreateMenu(void);
+HMENU CreatePopupMenu(void);
+HMENU GetMenu(HWND);
+HMENU GetSubMenu(HMENU,short);
+HMENU GetSystemMenu(HWND,BOOL);
+HMENU LoadMenu(HANDLE,SEGPTR);
+HMENU LoadMenuIndirect(LPSTR);
+HMENU LookupMenuHandle(HMENU,INT);
+HMETAFILE CloseMetaFile(HANDLE);
+HMODULE GetExePtr(HANDLE);
+HPALETTE CreatePalette(LPLOGPALETTE);
+HPALETTE GDISelectPalette(HDC,HPALETTE);
+HPALETTE SelectPalette(HDC,HPALETTE,BOOL);
+HPEN CreatePen(short,short,COLORREF);
+HPEN CreatePenIndirect(LOGPEN*);
+HRGN CreateEllipticRgn(short,short,short,short);
+HRGN CreateEllipticRgnIndirect(LPRECT);
+HRGN CreatePolyPolygonRgn(LPPOINT,LPINT,short,short);
+HRGN CreatePolygonRgn(LPPOINT,short,short);
+HRGN CreateRectRgn(short,short,short,short);
+HRGN CreateRectRgnIndirect(LPRECT);
+HRGN CreateRoundRectRgn(short,short,short,short,short,short);
+HRGN GetClipRgn(HDC);
+HRGN InquireVisRgn(HDC);
+HRGN SaveVisRgn(HDC);
+HWND ChildWindowFromPoint(HWND,POINT);
+HWND CreateDialog(HANDLE,SEGPTR,HWND,WNDPROC);
+HWND CreateDialogIndirect(HANDLE,SEGPTR,HWND,WNDPROC);
+HWND CreateDialogIndirectParam(HANDLE,SEGPTR,HWND,WNDPROC,LPARAM);
+HWND CreateDialogParam(HANDLE,SEGPTR,HWND,WNDPROC,LPARAM);
+HWND CreateWindow(SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
+HWND CreateWindowEx(DWORD,SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
+HWND FindWindow(SEGPTR,LPSTR);
+HWND GetActiveWindow(void);
+HWND GetCapture(void);
+HWND GetClipboardOwner(void);
+HWND GetClipboardViewer(void);
+HWND GetDesktopHwnd(void);
+HWND GetDesktopWindow(void);
+HWND GetDlgItem(HWND,WORD);
+HWND GetFocus(void);
+HWND GetLastActivePopup(HWND);
+HWND GetNextDlgGroupItem(HWND,HWND,BOOL);
+HWND GetNextDlgTabItem(HWND,HWND,BOOL);
+HWND GetNextWindow(HWND,WORD);
+HWND GetOpenClipboardWindow(void);
+HWND GetParent(HWND);
+HWND GetSysModalWindow(void);
+HWND GetTopWindow(HWND);
+HWND GetWindow(HWND,WORD);
+HWND SetActiveWindow(HWND);
+HWND SetCapture(HWND);
+HWND SetClipboardViewer(HWND);
+HWND SetFocus(HWND);
+HWND SetParent(HWND,HWND);
+HWND SetSysModalWindow(HWND);
+HWND WindowFromPoint(POINT);
+INT AccessResource(HINSTANCE,HRSRC);
+INT AddFontResource(LPCSTR);
+INT AnsiToOem(LPSTR,LPSTR);
+INT GetTempFileName(BYTE,LPCSTR,UINT,LPSTR);
+INT GetTextFace(HDC,INT,LPSTR);
+INT OpenFile(LPCSTR,LPOFSTRUCT,UINT);
+INT _lclose(INT);
+INT _lcreat(LPSTR,INT);
+INT _lopen(LPSTR,INT);
+INT _lread(INT,LPSTR,WORD);
+INT _lwrite(INT,LPCSTR,WORD);
+INT lstrcmp(LPCSTR,LPCSTR);
+INT lstrcmpi(LPCSTR,LPCSTR);
+INT lstrlen(LPCSTR);
+LONG CallWindowProc(WNDPROC,HWND,UINT,WPARAM,LPARAM);
+LONG DefDlgProc(HWND,UINT,WPARAM,LPARAM);
+LONG DefFrameProc(HWND,HWND,UINT,WPARAM,LPARAM);
+LONG DefMDIChildProc(HWND,UINT,WPARAM,LPARAM);
+LONG DispatchMessage(LPMSG);
+LONG EscapeCommFunction(int,int);
+LONG GetBitmapBits(HBITMAP,LONG,LPSTR);
+LONG GetClassLong(HWND,short);
+LONG GetMessageExtraInfo(void);
+LONG GetMessageTime(void);
+LONG GetVersion(void);
+LONG GetWinFlags(void);
+LONG GetWindowLong(HWND,short);
+LONG SendDlgItemMessage(HWND,INT,UINT,WPARAM,LPARAM);
+LONG SetBitmapBits(HBITMAP,LONG,LPSTR);
+LONG SetClassLong(HWND,short,LONG);
+LONG SetSwapAreaSize(WORD);
+LONG SetWindowLong(HWND,short,LONG);
+LONG TabbedTextOut(HDC,short,short,LPSTR,short,short,LPINT,short);
+LONG _hread(INT,LPSTR,LONG);
+LONG _hwrite(INT,LPCSTR,LONG);
+LONG _llseek(INT,LONG,INT);
+LPINT GetThresholdEvent(void);
+LPSTR AnsiLower(LPSTR);
+LPSTR AnsiUpper(LPSTR);
+LPSTR LockResource(HANDLE);
+LPSTR ValidateFreeSpaces(void);
+LPVOID GlobalLock(HGLOBAL);
+LRESULT DefWindowProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT SendMessage(HWND,UINT,WPARAM,LPARAM);
+NPVOID LocalLock(HLOCAL);
+SEGPTR AnsiNext(SEGPTR);
+SEGPTR AnsiPrev(SEGPTR,SEGPTR);
+SEGPTR GetDOSEnvironment(void);
+SEGPTR GlobalWire(HGLOBAL);
+SEGPTR WIN16_GlobalLock(HGLOBAL);
+SEGPTR WIN16_LockResource(HANDLE);
+SEGPTR lstrcat(SEGPTR,SEGPTR);
+SEGPTR lstrcpy(SEGPTR,SEGPTR);
+SEGPTR lstrcpyn(SEGPTR,SEGPTR,WORD);
+UINT AnsiLowerBuff(LPSTR,UINT);
+UINT AnsiUpperBuff(LPSTR,UINT);
+UINT GDIRealizePalette(HDC);
+UINT RealizePalette(HDC);
+WORD AllocCStoDSAlias(WORD);
+WORD AllocDStoCSAlias(WORD);
+WORD AllocSelector(WORD);
+WORD AllocSelectorArray(WORD);
+WORD ArrangeIconicWindows(HWND);
+WORD ChangeSelector(WORD,WORD);
+WORD EnumClipboardFormats(WORD);
+WORD FarGetOwner(HANDLE);
+WORD FreeSelector(WORD);
+WORD GetAtomName(ATOM,LPSTR,short);
+WORD GetBkMode(HDC);
+WORD GetCaretBlinkTime(void);
+WORD GetClassWord(HWND,short);
+WORD GetCommEventMask(int,int);
+WORD GetDlgItemInt(HWND,WORD,BOOL*,BOOL);
+WORD GetDoubleClickTime(void);
+WORD GetDriveType(INT);
+WORD GetInternalWindowPos(HWND,LPRECT,LPPOINT);
+WORD GetMapMode(HDC);
+WORD GetMenuItemCount(HMENU);
+WORD GetMenuItemID(HMENU,int);
+WORD GetMenuState(HMENU,WORD,WORD);
+WORD GetNearestPaletteIndex(HPALETTE,DWORD);
+WORD GetNumTasks(void);
+WORD GetPaletteEntries(HPALETTE,WORD,WORD,LPPALETTEENTRY);
+WORD GetPolyFillMode(HDC);
+WORD GetPrivateProfileInt(LPSTR,LPSTR,short,LPSTR);
+WORD GetProfileInt(LPSTR,LPSTR,int);
+WORD GetROP2(HDC);
+WORD GetRelAbs(HDC);
+WORD GetStretchBltMode(HDC);
+WORD GetSystemDirectory(LPSTR,WORD);
+WORD GetSystemPaletteEntries(HDC,WORD,WORD,LPPALETTEENTRY);
+WORD GetSystemPaletteUse(HDC);
+WORD GetTextAlign(HDC);
+WORD GetWindowWord(HWND,short);
+WORD GetWindowsDirectory(LPSTR,WORD);
+WORD GlobalDOSFree(WORD);
+WORD GlobalFlags(HGLOBAL);
+WORD GlobalGetAtomName(ATOM,LPSTR,short);
+WORD GlobalPageLock(HGLOBAL);
+WORD GlobalPageUnlock(HGLOBAL);
+WORD InitAtomTable(WORD);
+WORD IsDlgButtonChecked(HWND,WORD);
+WORD LocalCompact(WORD);
+WORD LocalFlags(HLOCAL);
+WORD LocalShrink(HANDLE,WORD);
+WORD LocalSize(HLOCAL);
+WORD MapVirtualKey(WORD,WORD);
+WORD PrestoChangoSelector(WORD,WORD);
+WORD RealizeDefaultPalette(HDC);
+WORD RegisterClipboardFormat(LPCSTR);
+WORD RegisterWindowMessage(SEGPTR);
+WORD SelectorAccessRights(WORD,WORD,WORD);
+WORD SetBkMode(HDC,WORD);
+WORD SetClassWord(HWND,short,WORD);
+WORD SetHandleCount(WORD);
+WORD SetMapMode(HDC,WORD);
+WORD SetPaletteEntries(HPALETTE,WORD,WORD,LPPALETTEENTRY);
+WORD SetPolyFillMode(HDC,WORD);
+WORD SetROP2(HDC,WORD);
+WORD SetRelAbs(HDC,WORD);
+WORD SetSelectorBase(WORD,DWORD);
+WORD SetSelectorLimit(WORD,DWORD);
+WORD SetStretchBltMode(HDC,WORD);
+WORD SetSystemPaletteUse(HDC,WORD);
+WORD SetSystemTimer(HWND,WORD,WORD,FARPROC);
+WORD SetTextAlign(HDC,WORD);
+WORD SetTimer(HWND,WORD,WORD,FARPROC);
+WORD SetWindowWord(HWND,short,WORD);
+WORD VkKeyScan(WORD);
+WORD* SetCommEventMask(int,WORD);
+int BuildCommDCB(LPSTR,DCB*);
+int Catch(LPCATCHBUF);
+int ClearCommBreak(int);
+int CloseComm(int);
+int CombineRgn(HRGN,HRGN,HRGN,short);
+int ConvertRequest(HWND,LPKANJISTRUCT);
+int CountClipboardFormats(void);
+int CountVoiceNotes(int);
+int DialogBox(HINSTANCE,SEGPTR,HWND,WNDPROC);
+int DialogBoxIndirect(HANDLE,HANDLE,HWND,WNDPROC);
+int DialogBoxIndirectParam(HANDLE,HANDLE,HWND,WNDPROC,LONG);
+int DialogBoxParam(HANDLE,SEGPTR,HWND,WNDPROC,LONG);
+int DlgDirList(HWND,LPSTR,int,int,WORD);
+int DlgDirListComboBox(HWND,SEGPTR,int,int,WORD);
+int DrawText(HDC,LPSTR,int,LPRECT,WORD);
+int EnumFonts(HDC,LPSTR,FARPROC,LPSTR);
+int EnumObjects(HDC,int,FARPROC,LPSTR);
+int EnumProps(HWND,FARPROC);
+int Escape(HDC,int,int,LPSTR,LPSTR);
+int ExcludeClipRect(HDC,short,short,short,short);
+int ExcludeUpdateRgn(HDC,HWND);
+int ExcludeVisRect(HDC,short,short,short,short);
+int FillRect(HDC,LPRECT,HBRUSH);
+int FlushComm(int,int);
+int FrameRect(HDC,LPRECT,HBRUSH);
+int GetAsyncKeyState(int);
+int GetClassName(HWND,LPSTR,short);
+int GetClipBox(HDC,LPRECT);
+int GetClipboardFormatName(WORD,LPSTR,short);
+int GetCommError(int,COMSTAT*);
+int GetCommState(int,DCB*);
+int GetDIBits(HDC,HANDLE,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
+int GetDeviceCaps(HDC,WORD);
+int GetDlgCtrlID(HWND);
+int GetDlgItemText(HWND,WORD,SEGPTR,WORD);
+int GetEnvironment(LPSTR,LPSTR,WORD);
+int GetInstanceData(HANDLE,WORD,int);
+int GetKBCodePage(void);
+int GetKeyNameText(LONG,LPSTR,int);
+int GetKeyState(int);
+int GetKeyboardType(int);
+int GetMenuString(HMENU,WORD,LPSTR,short,WORD);
+int GetModuleFileName(HANDLE,LPSTR,short);
+int GetModuleUsage(HANDLE);
+int GetObject(HANDLE,int,LPSTR);
+int GetPriorityClipboardFormat(WORD*,short);
+int GetProfileString(LPSTR,LPSTR,LPSTR,LPSTR,int);
+int GetRgnBox(HRGN,LPRECT);
+int GetScrollPos(HWND,int);
+int GetSystemMetrics(WORD);
+int GetThresholdStatus(void);
+int GetUpdateRgn(HWND,HRGN,BOOL);
+int GetWindowText(HWND,LPSTR,int);
+int GetWindowTextLength(HWND);
+int IntersectClipRect(HDC,short,short,short,short);
+int IntersectVisRect(HDC,short,short,short,short);
+int LoadString(HANDLE,WORD,LPSTR,int);
+int MessageBox(HWND,LPSTR,LPSTR,WORD);
+int MulDiv(int,int,int);
+int OffsetClipRgn(HDC,short,short);
+int OffsetRgn(HRGN,short,short);
+int OpenComm(LPSTR,WORD,WORD);
+int OpenSound(void);
+int ProfInsChk(void);
+int ReadComm(int,LPSTR,int);
+int ReleaseDC(HWND,HDC);
+int RestoreVisRgn(HDC);
+int SaveDC(HDC);
+int ScrollWindowEx(HWND,short,short,LPRECT,LPRECT,HRGN,LPRECT,WORD);
+int SelectClipRgn(HDC,HRGN);
+int SelectVisRgn(HDC,HRGN);
+int SetCommBreak(int);
+int SetCommState(DCB*);
+int SetDIBits(HDC,HANDLE,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
+int SetDIBitsToDevice(HDC,short,short,WORD,WORD,WORD,WORD,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
+int SetEnvironment(LPSTR,LPSTR,WORD);
+int SetScrollPos(HWND,int,int,BOOL);
+int SetSoundNoise(int,int);
+int SetVoiceAccent(int,int,int,int,int);
+int SetVoiceEnvelope(int,int,int);
+int SetVoiceNote(int,int,int,int);
+int SetVoiceQueueSize(int,int);
+int SetVoiceSound(int,LONG,int);
+int SetVoiceThreshold(int,int);
+int ShowCursor(BOOL);
+int StartSound(void);
+int StopSound(void);
+int StretchDIBits(HDC,WORD,WORD,WORD,WORD,WORD,WORD,WORD,WORD,LPSTR,LPBITMAPINFO,WORD,DWORD);
+int SyncAllVoices(void);
+int Throw(LPCATCHBUF,int);
+int ToAscii(WORD,WORD,LPSTR,LPVOID,WORD);
+int TranslateAccelerator(HWND,HANDLE,LPMSG);
+int TransmitCommChar(int,char);
+int UngetCommChar(int,char);
+int UpdateColors(HDC);
+int WaitSoundState(int);
+int WriteComm(int,LPSTR,int);
+int wvsprintf(LPSTR,LPSTR,LPSTR);
+short GetPrivateProfileString(LPSTR,LPSTR,LPSTR,LPSTR,short,LPSTR);
+short GetTextCharacterExtra(HDC);
+short SetTextCharacterExtra(HDC,short);
+short SetTextJustification(HDC,short,short);
+void AdjustWindowRect(LPRECT,DWORD,BOOL);
+void AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+void AnimatePalette(HPALETTE,UINT,UINT,LPPALETTEENTRY);
+void AnsiToOemBuff(LPSTR,LPSTR,INT);
+void CheckDlgButton(HWND,WORD,WORD);
+void CheckRadioButton(HWND,WORD,WORD,WORD);
+void ClientToScreen(HWND,LPPOINT);
+void ClipCursor(LPRECT);
+void CloseSound(void);
+void CloseWindow(HWND);
+void CopyRect(LPRECT,LPRECT);
+void CreateCaret(HWND,HBITMAP,short,short);
+void DebugBreak(void);
+void DestroyCaret(void);
+void DirectedYield(HTASK);
+void DrawFocusRect(HDC,LPRECT);
+void DrawMenuBar(HWND);
+void EndDialog(HWND,short);
+void EndPaint(HWND,LPPAINTSTRUCT);
+void FarSetOwner(HANDLE,WORD);
+void FatalExit(int);
+void FillWindow(HWND,HWND,HDC,HBRUSH);
+void FreeLibrary(HANDLE);
+void FreeProcInstance(FARPROC);
+void GetCaretPos(LPPOINT);
+void GetClientRect(HWND,LPRECT);
+void GetCodeInfo(FARPROC,LPVOID);
+void GetCursorPos(LPPOINT);
+void GetKeyboardState(BYTE*);
+void GetScrollRange(HWND,int,LPINT,LPINT);
+void GetWindowRect(HWND,LPRECT);
+void GlobalFix(HGLOBAL);
+void GlobalFreeAll(HANDLE);
+void GlobalNotify(FARPROC);
+void GlobalUnfix(HGLOBAL);
+void HideCaret(HWND);
+void InflateRect(LPRECT,short,short);
+void InvalidateRect(HWND,LPRECT,BOOL);
+void InvalidateRgn(HWND,HRGN,BOOL);
+void InvertRect(HDC,LPRECT);
+void LimitEmsPages(DWORD);
+void LineDDA(short,short,short,short,FARPROC,long);
+void MapDialogRect(HWND,LPRECT);
+void MapWindowPoints(HWND,HWND,LPPOINT,WORD);
+void MessageBeep(WORD);
+void OemToAnsiBuff(LPSTR,LPSTR,INT);
+void OffsetRect(LPRECT,short,short);
+void OutputDebugString(LPSTR);
+void PaintRect(HWND,HWND,HDC,HBRUSH,LPRECT);
+void PlayMetaFileRecord(HDC,LPHANDLETABLE,LPMETARECORD,WORD);
+void PostQuitMessage(int);
+void ProfClear(void);
+void ProfFinish(void);
+void ProfFlush(void);
+void ProfSampRate(int,int);
+void ProfSetup(int,int);
+void ProfStart(void);
+void ProfStop(void);
+void ReleaseCapture(void);
+void ReplyMessage(LONG);
+void ScreenToClient(HWND,LPPOINT);
+void ScrollWindow(HWND,short,short,LPRECT,LPRECT);
+void SetCaretBlinkTime(WORD);
+void SetCaretPos(short,short);
+void SetConvertHook(BOOL);
+void SetCursorPos(short,short);
+void SetDCState(HDC,HDC);
+void SetDlgItemInt(HWND,WORD,WORD,BOOL);
+void SetDlgItemText(HWND,WORD,SEGPTR);
+void SetDoubleClickTime(WORD);
+void SetInternalWindowPos(HWND,WORD,LPRECT,LPPOINT);
+void SetKeyboardState(BYTE*);
+void SetRect(LPRECT,short,short,short,short);
+void SetRectEmpty(LPRECT);
+void SetRectRgn(HRGN,short,short,short,short);
+void SetScrollRange(HWND,int,int,int,BOOL);
+void SetSysColors(int,LPINT,COLORREF*);
+void SetWindowText(HWND,LPSTR);
+void ShowCaret(HWND);
+void ShowOwnedPopups(HWND,BOOL);
+void ShowScrollBar(HWND,WORD,BOOL);
+void SwapRecording(WORD);
+void SwitchStackBack(void);
+void SwitchStackTo(WORD,WORD,WORD);
+void UnlockSegment(HGLOBAL);
+void UpdateWindow(HWND);
+void ValidateCodeSegments(void);
+void ValidateRect(HWND,LPRECT);
+void ValidateRgn(HWND,HRGN);
+void WaitMessage(void);
+void Yield(void);
 
 #ifdef WINELIB
 #define WINELIB_UNIMP(x) fprintf (stderr, "WineLib: Unimplemented %s\n", x)

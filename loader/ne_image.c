@@ -34,7 +34,8 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable, *pSeg;
     WORD *pModuleTable;
-    WORD count, i, module, offset;
+    WORD count, i, offset;
+    HMODULE module;
     DWORD address;
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
@@ -54,12 +55,13 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
     fd = MODULE_OpenFile( hModule );
-    dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
+    dprintf_module( stddeb, "Loading segment %d, selector="NPFMT"\n",
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     size = pSeg->size ? pSeg->size : 0x10000;
     mem = GlobalLock(pSeg->selector);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1) {	
+#ifndef WINELIB
  	/* Implement self loading segments */
  	SELFLOADHEADER *selfloadheader;
  	WORD oldss, oldsp, oldselector, newselector;
@@ -92,6 +94,9 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  	
  	IF1632_Saved16_ss = oldss;
  	IF1632_Saved16_sp = oldsp;
+#else
+	fprintf(stderr,"JBP: Ignoring self loading segments in NE_LoadSegment.\n");
+#endif
      }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
       read(fd, mem, size);
@@ -126,7 +131,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
 
-    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector %04x\n",
+    dprintf_fixup( stddeb, "Fixups for %*.*s, segment %d, selector "NPFMT"\n",
                    *((BYTE *)pModule + pModule->name_table),
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
@@ -165,7 +170,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
             {
                 NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
                 if (!pTarget)
-                    fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
+                    fprintf( stderr, "Module not found: "NPFMT", reference %d of module %*.*s\n",
                              module, rep->target1, 
                              *((BYTE *)pModule + pModule->name_table),
                              *((BYTE *)pModule + pModule->name_table),
@@ -266,7 +271,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_LOWBYTE:
             do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-                dprintf_fixup(stddeb,"    %04x:%04x:%04x BYTE%s\n",
+                dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x BYTE%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive":"");
                 offset = *sp;
 		if(additive)
@@ -280,7 +285,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_OFFSET16:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16%s\n",
+		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x OFFSET16%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp = LOWORD(address);
@@ -292,7 +297,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_POINTER32:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32%s\n",
+		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x POINTER32%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = LOWORD(address);
@@ -305,7 +310,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 	  case NE_RADDR_SELECTOR:
 	    do {
                 sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR%s\n",
+		dprintf_fixup(stddeb,"    "NPFMT":%04x:%04x SELECTOR%s\n",
                               pSeg->selector, offset, *sp, additive ? " additive" : "" );
 		offset = *sp;
 		*sp    = HIWORD(address);
@@ -434,6 +439,7 @@ void NE_FixupPrologs( HMODULE hModule )
  */
 static BOOL NE_InitDLL( HMODULE hModule )
 {
+#ifndef WINELIB
     int cs_reg, ds_reg, ip_reg, cx_reg, di_reg, bp_reg;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -482,6 +488,10 @@ static BOOL NE_InitDLL( HMODULE hModule )
     return CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
                            0 /*es*/, 0 /*bp*/, 0 /*ax*/, 0 /*bx*/,
                            cx_reg, 0 /*dx*/, 0 /*si*/, di_reg );
+#else
+    fprintf( stderr,"JBP: Ignoring call to LibMain\n" );
+    return FALSE;
+#endif
 }
 
 
@@ -493,14 +503,14 @@ static BOOL NE_InitDLL( HMODULE hModule )
 void NE_InitializeDLLs( HMODULE hModule )
 {
     NE_MODULE *pModule;
-    WORD *pDLL;
+    HMODULE *pDLL;
 
     pModule = (NE_MODULE *)GlobalLock( hModule );
     if (pModule->dlls_to_init)
     {
 	HANDLE to_init = pModule->dlls_to_init;
 	pModule->dlls_to_init = 0;
-        for (pDLL = (WORD *)GlobalLock( to_init ); *pDLL; pDLL++)
+        for (pDLL = (HMODULE *)GlobalLock( to_init ); *pDLL; pDLL++)
         {
             NE_InitializeDLLs( *pDLL );
             NE_InitDLL( *pDLL );

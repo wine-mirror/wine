@@ -80,6 +80,14 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
     return count;
 }
 
+/***********************************************************************
+ *           ResizePalette          (GDI.368)
+ */
+BOOL ResizePalette(HPALETTE hPal, UINT cEntries)
+{
+ fprintf(stdnimp,"ResizePalette: empty stub! \n");
+ return FALSE;
+}
 
 /***********************************************************************
  *           SetSystemPaletteUse    (GDI.373)
@@ -90,7 +98,7 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 WORD SetSystemPaletteUse( HDC hdc, WORD use)
 {
 	 WORD old=SystemPaletteUse;
-	 printf("SetSystemPaletteUse(%04X,%04X) // empty stub !!!\n", hdc, use);
+	 printf("SetSystemPaletteUse("NPFMT",%04X) // empty stub !!!\n", hdc, use);
 	 SystemPaletteUse=use;
 	 return old;
 }
@@ -100,7 +108,7 @@ WORD SetSystemPaletteUse( HDC hdc, WORD use)
  */
 WORD GetSystemPaletteUse( HDC hdc )
 {
-	printf("GetSystemPaletteUse(%04X) // empty stub !!!\n", hdc);
+	printf("GetSystemPaletteUse("NPFMT") // empty stub !!!\n", hdc);
 	return SystemPaletteUse;
 }
 
@@ -175,7 +183,7 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 	}
 	entry++;
     }
-    dprintf_palette(stddeb,"GetNearestPaletteIndex(%x,%06lx): returning %d\n", 
+    dprintf_palette(stddeb,"GetNearestPaletteIndex("NPFMT",%06lx): returning %d\n", 
 	     hpalette, color, index );
     return index;
 }
@@ -200,7 +208,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
     HPALETTE prev;
     DC *dc;
 
-    dprintf_palette(stddeb, "GDISelectPalette: %d %d\n", hdc, hpal );
+    dprintf_palette(stddeb, "GDISelectPalette: "NPFMT" "NPFMT"\n", hdc, hpal );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
@@ -215,7 +223,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
  */
 UINT GDIRealizePalette( HDC hdc )
 {
-    dprintf_palette(stdnimp, "GDIRealizePalette: %d\n", hdc );
+    dprintf_palette(stdnimp, "GDIRealizePalette: "NPFMT"\n", hdc );
     return 0;
 }
 
