@@ -787,7 +787,7 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
         itemlen = strlenW(*listitem);
         if((itemlen == len && !strncmpiAW( buf, *listitem, len)) ||
            (itemlen == len2 && !strncmpiAW(buf, *listitem, len2)) ||
-           !strcmpAW(fname, *listitem))
+           (fname && !strcmpAW(fname, *listitem)))
             return !show;
     }
     return show;
