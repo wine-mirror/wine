@@ -999,6 +999,16 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	rsrc->bottom = sdesc.dwHeight;
     }
 
+    /* Check source rect for validity. Copied from normal Blt. Fixes Baldur's Gate.*/
+    if ((rsrc->bottom > sdesc.dwHeight) || (rsrc->bottom < 0) ||
+	(rsrc->top > sdesc.dwHeight) || (rsrc->top < 0) ||
+	(rsrc->left > sdesc.dwWidth) || (rsrc->left < 0) ||
+	(rsrc->right > sdesc.dwWidth) || (rsrc->right < 0) ||
+	(rsrc->right < rsrc->left) || (rsrc->bottom < rsrc->top)) {
+        WARN("Application gave us bad source rectangle for BltFast.\n");
+	return DDERR_INVALIDRECT;
+    }
+ 
     h=rsrc->bottom-rsrc->top;
     if (h>ddesc.dwHeight-dsty) h=ddesc.dwHeight-dsty;
     if (h>sdesc.dwHeight-rsrc->top) h=sdesc.dwHeight-rsrc->top;
