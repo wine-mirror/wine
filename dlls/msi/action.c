@@ -62,7 +62,6 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
 
 static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq);
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
 
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package);
 static UINT ACTION_CostInitialize(MSIPACKAGE *package);
@@ -712,12 +711,22 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
     else
         rc = ACTION_ProcessExecSequence(package,FALSE);
+    
+    if (rc == -1)
+    {
+        /* install was halted but should be considered a success */
+        rc = ERROR_SUCCESS;
+    }
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
         rc = ACTION_PerformActionSequence(package,-1);
+    else if (rc == ERROR_INSTALL_USEREXIT) 
+        rc = ACTION_PerformActionSequence(package,-2);
     else if (rc == ERROR_FUNCTION_FAILED) 
         rc = ACTION_PerformActionSequence(package,-3);
+    else if (rc == ERROR_INSTALL_SUSPEND) 
+        rc = ACTION_PerformActionSequence(package,-4);
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
@@ -1106,6 +1115,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
         rc = ERROR_FUNCTION_NOT_CALLED;
      }
 
+    package->CurrentInstallState = rc;
     ui_actioninfo(package, action, FALSE, rc);
     return rc;
 }
@@ -1815,6 +1825,57 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         HeapFree(GetProcessHeap(),0,p);
     }
     return path;
+}
+
+/* update compoennt state based on a feature change */
+void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
+{
+    int i;
+    INSTALLSTATE newstate;
+    MSIFEATURE *feature;
+
+    i = get_loaded_feature(package,szFeature);
+    if (i < 0)
+        return;
+
+    feature = &package->features[i];
+    newstate = feature->ActionRequest;
+
+    for( i = 0; i < feature->ComponentCount; i++)
+    {
+        MSICOMPONENT* component = &package->components[feature->Components[i]];
+
+        if (!component->Enabled)
+            continue;
+        else
+        {
+            if (newstate == INSTALLSTATE_LOCAL)
+                component->ActionRequest = INSTALLSTATE_LOCAL;
+            else 
+            {
+                int j,k;
+
+                component->ActionRequest = newstate;
+
+                /*if any other feature wants is local we need to set it local*/
+                for (j = 0; 
+                     j < package->loaded_features &&
+                     component->ActionRequest != INSTALLSTATE_LOCAL; 
+                     j++)
+                {
+                    for (k = 0; k < package->features[j].ComponentCount; k++)
+                        if ( package->features[j].Components[k] ==
+                             feature->Components[i] )
+                        {
+                            if (package->features[j].ActionRequest == 
+                                INSTALLSTATE_LOCAL)
+                                component->ActionRequest = INSTALLSTATE_LOCAL;
+                            break;
+                        }
+                }
+            }
+        }
+    } 
 }
 
 static UINT SetFeatureStates(MSIPACKAGE *package)
@@ -5259,6 +5320,7 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
         return ERROR_UNKNOWN_FEATURE;
 
     package->features[index].ActionRequest= iState;
+    ACTION_UpdateComponentStates(package,szFeature);
 
     return ERROR_SUCCESS;
 }

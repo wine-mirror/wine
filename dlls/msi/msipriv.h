@@ -207,6 +207,8 @@ typedef struct tagMSIPACKAGE
     UINT RunningActionCount;
 
     LPWSTR PackagePath;
+
+    UINT CurrentInstallState;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW
