@@ -1429,6 +1429,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
     if (GetGUIThreadInfo( GetCurrentThreadId(), &info ))
     {
         if (hwnd == info.hwndCaret) DestroyCaret();
+        if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
     }
     if (USER_Driver.pResetSelectionOwner)
         USER_Driver.pResetSelectionOwner( hwnd, TRUE );
@@ -1505,10 +1506,13 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Hide the window */
 
-    if (!ShowWindow( hwnd, SW_HIDE ))
-    {
-        if (hwnd == GetActiveWindow()) WINPOS_ActivateOtherWindow( hwnd );
-    }
+    /* Only child windows receive WM_SHOWWINDOW in DestroyWindow() */
+    if (is_child)
+        ShowWindow( hwnd, SW_HIDE );
+    else
+        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
+
     if (!IsWindow(hwnd)) return TRUE;
 
       /* Recursively destroy owned windows */
