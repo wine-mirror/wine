@@ -168,4 +168,11 @@ REFIID		_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
 void	pdump	(LPCITEMIDLIST pidl);
 BOOL	pcheck	(LPCITEMIDLIST pidl);
 
+/*
+ * aPidl helper
+ */
+void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl);
+LPITEMIDLIST * _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl);
+LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPCIDA cida);
+
 #endif

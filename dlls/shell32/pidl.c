@@ -732,7 +732,7 @@ LPITEMIDLIST WINAPI ILCreateFromPathAW (LPCVOID path)
 /*************************************************************************
  *  SHSimpleIDListFromPath [SHELL32.162]
  */
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPSTR lpszPath)
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPCSTR lpszPath)
 {
 	LPITEMIDLIST	pidl=NULL;
 	HANDLE	hFile;
@@ -758,7 +758,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathA (LPSTR lpszPath)
 	}
 	return pidl;
 }
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPWSTR lpszPath)
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPCWSTR lpszPath)
 {
 	char	lpszTemp[MAX_PATH];
 	TRACE("path=%s\n",debugstr_w(lpszPath));
@@ -768,7 +768,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathW (LPWSTR lpszPath)
 	return SHSimpleIDListFromPathA (lpszTemp);
 }
 
-LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPVOID lpszPath)
+LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPCVOID lpszPath)
 {
 	if ( VERSION_OsIsUnicode())
 	  return SHSimpleIDListFromPathW (lpszPath);
@@ -1724,3 +1724,56 @@ DWORD _ILGetFileAttributes(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	return wAttrib;
 }
 
+/*************************************************************************
+* ILFreeaPidl
+*
+* free a aPidl struct
+*/
+void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl)
+{
+	int   i;
+
+	if(apidl)
+	{
+	  for(i = 0; i < cidl; i++) SHFree(apidl[i]);
+	  SHFree(apidl);
+	}
+}
+
+/*************************************************************************
+* ILCopyaPidl
+*
+* copys a aPidl struct
+*/
+LPITEMIDLIST *  _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl)
+{
+	int i;
+	LPITEMIDLIST * apidldest = (LPITEMIDLIST*)SHAlloc(cidl * sizeof(LPITEMIDLIST));
+	if(!apidlsrc) return NULL;
+
+	for(i = 0; i < cidl; i++)
+	  apidldest[i] = ILClone(apidlsrc[i]);
+
+	return apidldest;
+}
+
+/*************************************************************************
+* _ILCopyCidaToaPidl
+*
+* creates aPidl from CIDA
+*/
+LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPCIDA cida)
+{
+	int i;
+	LPITEMIDLIST * dst = (LPITEMIDLIST*)SHAlloc(cida->cidl * sizeof(LPITEMIDLIST));
+
+	if(!dst) return NULL;
+
+	if (pidl)
+	  *pidl = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[0]]));
+
+	for(i = 0; i < cida->cidl; i++)
+	  dst[i] = ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[i + 1]]));
+
+	return dst;
+}
