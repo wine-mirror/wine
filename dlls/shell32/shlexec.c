@@ -523,6 +523,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     UINT  retval = 31;       /* default - 'No association was found' */
     WCHAR *tok;              /* token pointer */
     WCHAR xlpFile[256];      /* result of SearchPath */
+    DWORD attribs;           /* file attributes */
 
     TRACE("%s\n", (lpFile != NULL) ? debugstr_w(lpFile) : "-");
 
@@ -551,67 +552,76 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
         /* Hey, isn't this value ignored?  Why make this call?  Shouldn't we return here?  --dank*/
     }
 
-    /* First thing we need is the file's extension */
-    extension = strrchrW(xlpFile, '.'); /* Assume last "." is the one; */
-                                       /* File->Run in progman uses */
-                                       /* .\FILE.EXE :( */
-    TRACE("xlpFile=%s,extension=%s\n", debugstr_w(xlpFile), debugstr_w(extension));
-
-    if (extension == NULL || extension[1]==0)
+    attribs = GetFileAttributesW(lpFile);
+    if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))
     {
-        WARN("Returning 31 - No association\n");
-        return 31; /* no association */
+       strcpyW(filetype, wszFolder);
+       filetypelen = 6;    /* strlen("Folder") */
     }
-
-    /* Three places to check: */
-    /* 1. win.ini, [windows], programs (NB no leading '.') */
-    /* 2. Registry, HKEY_CLASS_ROOT\<filetype>\shell\open\command */
-    /* 3. win.ini, [extensions], extension (NB no leading '.' */
-    /* All I know of the order is that registry is checked before */
-    /* extensions; however, it'd make sense to check the programs */
-    /* section first, so that's what happens here. */
-
-    /* See if it's a program - if GetProfileString fails, we skip this
-     * section. Actually, if GetProfileString fails, we've probably
-     * got a lot more to worry about than running a program... */
-    if (GetProfileStringW(wWindows, wPrograms, wExtensions, wBuffer, sizeof(wBuffer)/sizeof(WCHAR)) > 0)
+    else
     {
-        CharLowerW(wBuffer);
-        tok = wBuffer;
-        while (*tok)
+        /* First thing we need is the file's extension */
+        extension = strrchrW(xlpFile, '.'); /* Assume last "." is the one; */
+        /* File->Run in progman uses */
+        /* .\FILE.EXE :( */
+        TRACE("xlpFile=%s,extension=%s\n", debugstr_w(xlpFile), debugstr_w(extension));
+
+        if (extension == NULL || extension[1]==0)
         {
-            WCHAR *p = tok;
-            while (*p && *p != ' ' && *p != '\t') p++;
-            if (*p)
-            {
-                *p++ = 0;
-                while (*p == ' ' || *p == '\t') p++;
-            }
-
-            if (strcmpiW(tok, &extension[1]) == 0) /* have to skip the leading "." */
-            {
-                strcpyW(lpResult, xlpFile);
-                /* Need to perhaps check that the file has a path
-                 * attached */
-                TRACE("found %s\n", debugstr_w(lpResult));
-                return 33;
-
-		/* Greater than 32 to indicate success FIXME According to the
-		 * docs, I should be returning a handle for the
-		 * executable. Does this mean I'm supposed to open the
-		 * executable file or something? More RTFM, I guess... */
-            }
-            tok = p;
+            WARN("Returning 31 - No association\n");
+            return 31; /* no association */
         }
-    }
 
-    /* Check registry */
-    if (RegQueryValueW(HKEY_CLASSES_ROOT, extension, filetype, 
-			&filetypelen) == ERROR_SUCCESS)
-    {
-	filetypelen /= sizeof(WCHAR);
-	filetype[filetypelen] = '\0';
-	TRACE("File type: %s\n", debugstr_w(filetype));
+        /* Three places to check: */
+        /* 1. win.ini, [windows], programs (NB no leading '.') */
+        /* 2. Registry, HKEY_CLASS_ROOT\<filetype>\shell\open\command */
+        /* 3. win.ini, [extensions], extension (NB no leading '.' */
+        /* All I know of the order is that registry is checked before */
+        /* extensions; however, it'd make sense to check the programs */
+        /* section first, so that's what happens here. */
+
+        /* See if it's a program - if GetProfileString fails, we skip this
+         * section. Actually, if GetProfileString fails, we've probably
+         * got a lot more to worry about than running a program... */
+        if (GetProfileStringW(wWindows, wPrograms, wExtensions, wBuffer, sizeof(wBuffer)/sizeof(WCHAR)) > 0)
+        {
+            CharLowerW(wBuffer);
+            tok = wBuffer;
+            while (*tok)
+            {
+                WCHAR *p = tok;
+                while (*p && *p != ' ' && *p != '\t') p++;
+                if (*p)
+                {
+                    *p++ = 0;
+                    while (*p == ' ' || *p == '\t') p++;
+                }
+
+                if (strcmpiW(tok, &extension[1]) == 0) /* have to skip the leading "." */
+                {
+                    strcpyW(lpResult, xlpFile);
+                    /* Need to perhaps check that the file has a path
+                     * attached */
+                    TRACE("found %s\n", debugstr_w(lpResult));
+                    return 33;
+
+                    /* Greater than 32 to indicate success FIXME According to the
+                     * docs, I should be returning a handle for the
+                     * executable. Does this mean I'm supposed to open the
+                     * executable file or something? More RTFM, I guess... */
+                }
+                tok = p;
+            }
+        }
+
+        /* Check registry */
+        if (RegQueryValueW(HKEY_CLASSES_ROOT, extension, filetype,
+                           &filetypelen) == ERROR_SUCCESS)
+        {
+            filetypelen /= sizeof(WCHAR);
+            filetype[filetypelen] = '\0';
+            TRACE("File type: %s\n", debugstr_w(filetype));
+        }
     }
 
     if (*filetype)
