@@ -670,6 +670,17 @@ undo:
 }
 
 
+static char* debuglvhittestinfo(LPLVHITTESTINFO lpht)
+{
+    if (lpht) 
+    {
+	char* buf = debug_getbuf();
+	snprintf(buf, DEBUG_BUFFER_SIZE, "{pt=%s, flags=0x%x, iItem=%d, iSubItem=%d}",
+		 debugpoint(&lpht->pt), lpht->flags, lpht->iItem, lpht->iSubItem);
+    	return buf;
+    } else return "(null)";
+}
+
 /******** Notification functions i************************************/
 
 static LRESULT notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
@@ -709,7 +720,8 @@ static inline LRESULT notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLIST
 static LRESULT notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
 {
     NMLISTVIEW nmlv;
-    
+   
+    TRACE("code=%d, lvht=%s\n", code, debuglvhittestinfo(lvht)); 
     ZeroMemory(&nmlv, sizeof(nmlv));
     nmlv.iItem = lvht->iItem;
     nmlv.iSubItem = lvht->iSubItem;
