@@ -132,7 +132,9 @@
 @ stdcall InternetSetOptionW(ptr long ptr long)
 @ stub InternetSetOptionExA
 @ stub InternetSetOptionExW
-@ stdcall InternetSetStatusCallback(ptr ptr)
+@ stdcall InternetSetStatusCallback(ptr ptr) InternetSetStatusCallbackA
+@ stdcall InternetSetStatusCallbackA(ptr ptr)
+@ stub InternetSetStatusCallbackW
 @ stub InternetShowSecurityInfoByURL
 @ stub InternetTimeFromSystemTime
 @ stub InternetTimeToSystemTime

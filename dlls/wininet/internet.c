@@ -1128,7 +1128,7 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
 
 
 /***********************************************************************
- *           InternetSetStatusCallback (WININET.@)
+ *           InternetSetStatusCallbackA (WININET.@)
  *
  * Sets up a callback function which is called as progress is made
  * during an operation.
@@ -1138,7 +1138,7 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
  *    INTERNET_INVALID_STATUS_CALLBACK  on failure
  *
  */
-INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
+INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
