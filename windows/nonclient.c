@@ -2208,7 +2208,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
 {
     HBITMAP hMaskBmp;
-    HDC hdcMask = CreateCompatibleDC (0);
+    HDC hdcMask;
     HBRUSH hOldBrush;
 
     hMaskBmp = CreateBitmap (12, 10, 1, 1, lpGrayMask);
@@ -2216,6 +2216,7 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
     if(hMaskBmp == 0)
 	return FALSE;
 
+    hdcMask = CreateCompatibleDC (0);
     SelectObject (hdcMask, hMaskBmp);
 
     /* Draw the grayed bitmap using the mask */

@@ -2773,13 +2773,13 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
           strcpyW(sPath, szEllipses);
           strcpyW(sPath+3, buff);
         }
-        if (hdc)
-          ReleaseDC(0, hdc);
-        return TRUE;
+        bRet = TRUE;
+        goto end;
       }
       strcpyW(lpszPath, szEllipses);
       strcpyW(lpszPath+3, buff);
-      return FALSE;
+      bRet = FALSE;
+      goto end;
     }
 
     /* Trim the path by adding ellipses to the end, e.g:
@@ -2819,6 +2819,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
     }
   }
 
+end:
   if (hdc)
     ReleaseDC(0, hdc);
 

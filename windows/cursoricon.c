@@ -1725,7 +1725,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                             HBRUSH hbr, UINT flags )
 {
     CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon));
-    HDC hDC_off = 0, hMemDC = CreateCompatibleDC (hdc);
+    HDC hDC_off = 0, hMemDC;
     BOOL result = FALSE, DoOffscreen;
     HBITMAP hB_off = 0, hOld = 0;
 
@@ -1734,6 +1734,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 	    hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags
     );
 
+    hMemDC = CreateCompatibleDC (hdc);
     if (istep)
         FIXME_(icon)("Ignoring istep=%d\n", istep);
     if (flags & DI_COMPAT)
