@@ -613,7 +613,7 @@ LPWSTR SHFileStrCpyCatW(LPWSTR pTo, LPCWSTR pFrom, LPCWSTR pCatStr)
 	    lstrcpyW(&pTo[i_len+1], pCatStr);
 	  }
 	  pToFile = StrRChrW(pTo,NULL,'\\');
-/* !! termination of the new string-group */
+	  /* termination of the new string-group */
 	  pTo[(lstrlenW(pTo)) + 1] = '\0';
 	}
 	return pToFile;
@@ -644,9 +644,9 @@ BOOL SHELL_FileNamesMatch(LPCWSTR pszFiles1, LPCWSTR pszFiles2, BOOL bOnlySrc)
 
 /*************************************************************************
  *
- * SHName(s)Translate HelperFunction for SHFileOperationA
+ * SHNameTranslate HelperFunction for SHFileOperationA
  *
- * Translates a list of 0 terminated ASCI strings into Unicode. If *wString
+ * Translates a list of 0 terminated ASCII strings into Unicode. If *wString
  * is NULL, only the necessary size of the string is determined and returned,
  * otherwise the ASCII strings are copied into it and the buffer is increased
  * to point to the location after the final 0 termination char.
@@ -690,42 +690,38 @@ DWORD SHNameTranslate(LPWSTR* wString, LPCWSTR* pWToFrom, BOOL more)
 DWORD WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 {
 	SHFILEOPSTRUCTW nFileOp = *((LPSHFILEOPSTRUCTW)lpFileOp);
-	DWORD retCode = 0, size = 0;
-	LPWSTR wString = NULL; /* we change this in SHNameTranslate */
+	DWORD retCode = 0, size;
+	LPWSTR ForFree = NULL, /* we change wString in SHNameTranslate and can't use it for freeing */
+	       wString = NULL; /* we change this in SHNameTranslate */
 
 	TRACE("SHFileOperationA");
 	if (FO_DELETE == (nFileOp.wFunc & FO_MASK))
 	  nFileOp.pTo = NULL; /* we need a NULL or a valid pointer for translation */
 	if (!(nFileOp.fFlags & FOF_SIMPLEPROGRESS))
 	  nFileOp.lpszProgressTitle = NULL; /* we need a NULL or a valid pointer for translation */
-	do
+	while (1) /* every loop calculate size, second translate also, if we have storage for this */
 	{
-	  if (size)
-	  {
-	    wString =  HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-	    if (!wString)
-	    {
-	      retCode = ERROR_OUTOFMEMORY;
-	      nFileOp.fAnyOperationsAborted = TRUE;
-	      SetLastError(retCode);
-	      return retCode;
-	    }
-	  }
 	  size = SHNameTranslate(&wString, &nFileOp.lpszProgressTitle, FALSE); /* no loop */
 	  size += SHNameTranslate(&wString, &nFileOp.pFrom, TRUE); /* internal loop */
 	  size += SHNameTranslate(&wString, &nFileOp.pTo, TRUE); /* internal loop */
-	   /* first loop only for calculate size, no translation, we hav a NULL-pointer */
-	} while (!wString); /* second loop calculate size, also translation. We have a valid pointer */
 
-	retCode = SHFileOperationW(&nFileOp);
-
-	if (wString)
-	  HeapFree(GetProcessHeap(), 0, wString);
-
-	if (retCode)
-	{
-	  nFileOp.fAnyOperationsAborted = TRUE;
+	  if (ForFree)
+	  {
+	    retCode = SHFileOperationW(&nFileOp);
+	    HeapFree(GetProcessHeap(), 0, ForFree); /* we can not use wString, it was changed */
+	    break;
+	  }
+	  else
+	  {
+	    wString = ForFree = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+	    if (ForFree) continue;
+	    retCode = ERROR_OUTOFMEMORY;
+	    nFileOp.fAnyOperationsAborted = TRUE;
+	    SetLastError(retCode);
+	    return retCode;
+	  }
 	}
+
 	lpFileOp->hNameMappings = nFileOp.hNameMappings;
 	lpFileOp->fAnyOperationsAborted = nFileOp.fAnyOperationsAborted;
 	return retCode;
