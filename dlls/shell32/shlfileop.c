@@ -158,32 +158,96 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
 	LPSTR pFrom = (LPSTR)lpFileOp->pFrom;
 	LPSTR pTo = (LPSTR)lpFileOp->pTo;
 	LPSTR pTempTo;
-	
+        TRACE("flags (0x%04x) : %s%s%s%s%s%s%s%s%s%s%s%s \n", lpFileOp->fFlags, 
+                lpFileOp->fFlags & FOF_MULTIDESTFILES ? "FOF_MULTIDESTFILES " : "",
+                lpFileOp->fFlags & FOF_CONFIRMMOUSE ? "FOF_CONFIRMMOUSE " : "",
+                lpFileOp->fFlags & FOF_SILENT ? "FOF_SILENT " : "",
+                lpFileOp->fFlags & FOF_RENAMEONCOLLISION ? "FOF_RENAMEONCOLLISION " : "",
+                lpFileOp->fFlags & FOF_NOCONFIRMATION ? "FOF_NOCONFIRMATION " : "",
+                lpFileOp->fFlags & FOF_WANTMAPPINGHANDLE ? "FOF_WANTMAPPINGHANDLE " : "",
+                lpFileOp->fFlags & FOF_ALLOWUNDO ? "FOF_ALLOWUNDO " : "",
+                lpFileOp->fFlags & FOF_FILESONLY ? "FOF_FILESONLY " : "",
+                lpFileOp->fFlags & FOF_SIMPLEPROGRESS ? "FOF_SIMPLEPROGRESS " : "",
+                lpFileOp->fFlags & FOF_NOCONFIRMMKDIR ? "FOF_NOCONFIRMMKDIR " : "",
+                lpFileOp->fFlags & FOF_NOERRORUI ? "FOF_NOERRORUI " : "",
+                lpFileOp->fFlags & 0xf800 ? "MORE-UNKNOWN-Flags" : "");
 	switch(lpFileOp->wFunc) {
-	case FO_COPY:
+	case FO_COPY: {
+                /* establish when pTo is interpreted as the name of the destination file
+                 * or the directory where the Fromfile should be copied to.
+                 * This depends on:
+                 * (1) pTo points to the name of an existing directory;
+                 * (2) the flag FOF_MULTIDESTFILES is present;
+                 * (3) whether pFrom point to multiple filenames.
+                 *
+                 * Some experiments:
+                 *
+                 * destisdir               1 1 1 1 0 0 0 0
+                 * FOF_MULTIDESTFILES      1 1 0 0 1 1 0 0
+                 * multiple from filenames 1 0 1 0 1 0 1 0
+                 *                         ---------------
+                 * copy files to dir       1 0 1 1 0 0 1 0
+                 * create dir              0 0 0 0 0 0 1 0 
+                 */
+                int multifrom = pFrom[strlen(pFrom) + 1] != '\0';
+                int destisdir = PathIsDirectoryA( pTo ); 
+                int copytodir = 0;
 		TRACE("File Copy:\n");
-		while(1) {
-			if(!pFrom[0]) break;
-			if(!pTo[0]) break;
-			TRACE("   From='%s' To='%s'\n", pFrom, pTo);
-
-                        pTempTo = HeapAlloc(GetProcessHeap(), 0, strlen(pTo)+1);
-                        if (pTempTo)
-                        {
-                            strcpy( pTempTo, pTo );
-                            PathRemoveFileSpecA(pTempTo);
-                            TRACE("   Creating Directory '%s'\n", pTempTo);
-                            SHCreateDirectory(NULL,pTempTo);
+                if( destisdir ) {
+                    if ( !((lpFileOp->fFlags & FOF_MULTIDESTFILES) && !multifrom))
+                        copytodir = 1;
+                } else {
+                    if ( !(lpFileOp->fFlags & FOF_MULTIDESTFILES) && multifrom)
+                        copytodir = 1;
+                }
+                if ( copytodir ) {
+                    char *fromfile;
+                    int lenPTo;
+                    if ( ! destisdir) {
+                        TRACE("   creating directory %s\n",pTo);
+                        SHCreateDirectory(NULL,pTo);
+                    }
+                    lenPTo = strlen(pTo);
+                    while(1) {
+                        if(!pFrom[0]) break;
+                        fromfile = PathFindFileNameA( pFrom);
+                        pTempTo = HeapAlloc(GetProcessHeap(), 0, lenPTo + strlen(fromfile) + 2);
+                        if (pTempTo) {
+                            strcpy(pTempTo,pTo);
+                            if(lenPTo && pTo[lenPTo] != '\\')
+                                strcat(pTempTo,"\\");
+                            strcat(pTempTo,fromfile);
+                            TRACE("   From='%s' To='%s'\n", pFrom, pTempTo);
+                            CopyFileA(pFrom, pTempTo, FALSE);
                             HeapFree(GetProcessHeap(), 0, pTempTo);
                         }
-                        CopyFileA(pFrom, pTo, FALSE);
+                        pFrom += strlen(pFrom) + 1;
+                    }
+                } else {
+                    while(1) {
+                            if(!pFrom[0]) break;
+                            if(!pTo[0]) break;
+                            TRACE("   From='%s' To='%s'\n", pFrom, pTo);
 
-			pFrom += strlen(pFrom) + 1;
-			pTo += strlen(pTo) + 1;
-		}
+                            pTempTo = HeapAlloc(GetProcessHeap(), 0, strlen(pTo)+1);
+                            if (pTempTo)
+                            {
+                                strcpy( pTempTo, pTo );
+                                PathRemoveFileSpecA(pTempTo);
+                                TRACE("   Creating Directory '%s'\n", pTempTo);
+                                SHCreateDirectory(NULL,pTempTo);
+                                HeapFree(GetProcessHeap(), 0, pTempTo);
+                            }
+                            CopyFileA(pFrom, pTo, FALSE);
+
+                            pFrom += strlen(pFrom) + 1;
+                            pTo += strlen(pTo) + 1;
+                    }
+                }
 		TRACE("Setting AnyOpsAborted=FALSE\n");
 		lpFileOp->fAnyOperationsAborted=FALSE;
 		return 0;
+        }
 
 	case FO_DELETE:
 		TRACE("File Delete:\n");
