@@ -60,6 +60,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    while(isspace(*value))
 	        value++;
 	    cp = endpos = strchr(value, ';');
+	    if (!cp) { ERR("missing ;, failed.\n"); return; }
 	    while(isspace(*--cp))
 	        ;
 	    memcpy(valbuf, value, cp - value + 1);
