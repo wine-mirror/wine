@@ -1968,7 +1968,19 @@ INT WINAPI WSAIoctl (SOCKET s,
             DWORD size, numInt, apiReturn;
 
             TRACE ("-> SIO_GET_INTERFACE_LIST request\n");
-            /* FIXME: length of output buffer not checked */
+
+            if (!lpbOutBuffer)
+            {
+               close(fd);
+               WSASetLastError(WSAEFAULT);
+               return SOCKET_ERROR;
+            }
+            if (!lpcbBytesReturned)
+            {
+               close(fd);
+               WSASetLastError(WSAEFAULT);
+               return SOCKET_ERROR;
+            }
 
             apiReturn = GetAdaptersInfo(NULL, &size);
             if (apiReturn == ERROR_NO_DATA)
@@ -1985,6 +1997,13 @@ INT WINAPI WSAIoctl (SOCKET s,
                   {
                      PIP_ADAPTER_INFO ptr;
 
+                     if (size > cbOutBuffer)
+                     {
+                        HeapFree(GetProcessHeap(),0,table);
+                        close(fd);
+                        WSASetLastError(WSAEFAULT);
+                        return (SOCKET_ERROR);
+                     }
                      for (ptr = table, numInt = 0; ptr;
                       ptr = ptr->Next, intArray++, numInt++)
                      {
@@ -2035,7 +2054,6 @@ INT WINAPI WSAIoctl (SOCKET s,
                         intArray->iiBroadcastAddress.AddressIn.sin_addr.
                          WS_s_addr = bcast;
                      }
-                     HeapFree(GetProcessHeap(),0,table);
                   }
                   else
                   {
@@ -2045,6 +2063,7 @@ INT WINAPI WSAIoctl (SOCKET s,
                      WSASetLastError(WSAEINVAL);
                      return (SOCKET_ERROR);
                   }
+                  HeapFree(GetProcessHeap(),0,table);
                }
                else
                {
@@ -2413,6 +2432,12 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     if ( fd == -1 )
     {
         err = WSAGetLastError ();
+        goto error;
+    }
+
+    if ( !lpNumberOfBytesSent )
+    {
+        err = WSAEFAULT;
         goto error;
     }
 
