@@ -83,6 +83,8 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package);
 static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package);
 static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
 static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
+static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
+static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
 static UINT ACTION_CreateShortcuts(MSIPACKAGE *package);
 static UINT ACTION_PublishProduct(MSIPACKAGE *package);
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package);
@@ -303,9 +305,9 @@ struct _actions StandardActions[] = {
     { szPublishProduct, ACTION_PublishProduct },
     { szRegisterClassInfo, ACTION_RegisterClassInfo },
     { szRegisterComPlus, NULL},
-    { szRegisterExtensionInfo, NULL},
+    { szRegisterExtensionInfo, ACTION_RegisterExtensionInfo },
     { szRegisterFonts, NULL},
-    { szRegisterMIMEInfo, NULL},
+    { szRegisterMIMEInfo, ACTION_RegisterMIMEInfo },
     { szRegisterProduct, ACTION_RegisterProduct },
     { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo },
     { szRegisterTypeLibraries, ACTION_RegisterTypeLibraries },
@@ -5350,6 +5352,214 @@ UINT ACTION_ResolveSource(MSIPACKAGE* package)
      * however for Adminastrative and uninstalls this step will be needed
      */
     return ERROR_SUCCESS;
+}
+
+
+static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] = {
+        'S','E','L','E','C','T',' ','*',' ',
+        'f','r','o','m',' ','E','x','t','e','n','s','i','o','n',0};
+    static const WCHAR szContentType[] = 
+{ 'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
+    HKEY hkey;
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+    {
+        rc = ERROR_SUCCESS;
+        goto end;
+    }
+
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        goto end;
+    }
+
+    while (1)
+    {
+        WCHAR buffer[0x100];
+        WCHAR extension[257];
+        LPWSTR exten;
+        DWORD sz;
+        INT index;
+     
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        sz=0x100;
+        MSI_RecordGetStringW(row,2,buffer,&sz);
+
+        index = get_loaded_component(package,buffer);
+
+        if (index < 0)
+        {
+            msiobj_release(&row->hdr);
+            continue;
+        }
+
+        if (package->components[index].ActionRequest != INSTALLSTATE_LOCAL)
+        {
+            TRACE("Skipping extension reg due to disabled component\n");
+            msiobj_release(&row->hdr);
+
+            package->components[index].Action =
+                package->components[index].Installed;
+
+            continue;
+        }
+
+        package->components[index].Action = INSTALLSTATE_LOCAL;
+        package->components[index].Installed = INSTALLSTATE_LOCAL;
+
+        exten = load_dynamic_stringW(row,1);
+        extension[0] = '.';
+        extension[1] = 0;
+        strcatW(extension,exten);
+        HeapFree(GetProcessHeap(),0,exten);
+
+        RegCreateKeyW(HKEY_CLASSES_ROOT,extension,&hkey);
+
+        if (!MSI_RecordIsNull(row,4))
+        {
+            LPWSTR mime = load_dynamic_stringW(row,4);
+            RegSetValueExW(hkey,szContentType,0,REG_SZ,(LPVOID)mime,
+                           (strlenW(mime)+1)*sizeof(WCHAR));
+            HeapFree(GetProcessHeap(),0,mime);
+        }
+
+        if (!MSI_RecordIsNull(row,3))
+        {
+            static const WCHAR szSN[] = 
+            {'\\','S','h','e','l','l','N','e','w',0};
+            HKEY hkey2;
+            LPWSTR newkey;
+            LPWSTR progid= load_dynamic_stringW(row,3);
+
+            RegSetValueExW(hkey,NULL,0,REG_SZ,(LPVOID)progid,
+                           (strlenW(progid)+1)*sizeof(WCHAR));
+
+            newkey = HeapAlloc(GetProcessHeap(),0,
+                           (strlenW(progid)+strlenW(szSN)+1) * sizeof(WCHAR)); 
+
+            strcpyW(newkey,progid);
+            strcatW(newkey,szSN);
+            RegCreateKeyW(hkey,newkey,&hkey2);
+            RegCloseKey(hkey2);
+
+            HeapFree(GetProcessHeap(),0,progid);
+            HeapFree(GetProcessHeap(),0,newkey);
+        }
+
+
+        RegCloseKey(hkey);
+
+        ui_actiondata(package,szRegisterExtensionInfo,row);
+
+        msiobj_release(&row->hdr);
+    }
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+
+end:
+    return rc;
+}
+
+static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] = {
+        'S','E','L','E','C','T',' ','*',' ',
+        'f','r','o','m',' ','M','I','M','E',0};
+    static const WCHAR szExten[] = 
+{ 'E','x','t','e','n','s','i','o','n',0 };
+    HKEY hkey;
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+    {
+        rc = ERROR_SUCCESS;
+        goto end;
+    }
+
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        goto end;
+    }
+
+    while (1)
+    {
+        WCHAR extension[257];
+        LPWSTR exten;
+        LPWSTR mime;
+        static const WCHAR fmt[] = 
+{'M','I','M','E','\\',
+'D','a','t','a','b','a','s','e','\\',
+'C','o','n','t','e','n','t',' ','T','y','p','e','\\',
+'%','s',0};
+        LPWSTR key;
+     
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        mime = load_dynamic_stringW(row,1);
+        exten = load_dynamic_stringW(row,2);
+        extension[0] = '.';
+        extension[1] = 0;
+        strcatW(extension,exten);
+        HeapFree(GetProcessHeap(),0,exten);
+
+        key = HeapAlloc(GetProcessHeap(),0,(strlenW(mime)+strlenW(fmt)+1) *
+                                            sizeof(WCHAR));
+        sprintfW(key,fmt,mime);
+        RegCreateKeyW(HKEY_CLASSES_ROOT,key,&hkey);
+        RegSetValueExW(hkey,szExten,0,REG_SZ,(LPVOID)extension,
+                           (strlenW(extension)+1)*sizeof(WCHAR));
+
+        HeapFree(GetProcessHeap(),0,mime);
+        HeapFree(GetProcessHeap(),0,key);
+
+        if (!MSI_RecordIsNull(row,3))
+        {
+            FIXME("Handle non null for field 3\n");
+        }
+
+        RegCloseKey(hkey);
+
+        ui_actiondata(package,szRegisterMIMEInfo,row);
+
+        msiobj_release(&row->hdr);
+    }
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+
+end:
+    return rc;
 }
 
 /* Msi functions that seem appropriate here */
