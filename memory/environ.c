@@ -536,9 +536,10 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 
     if (!name || !*name)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_ENVVAR_NOT_FOUND );
         return 0;
     }
+
     RtlAcquirePebLock();
     if ((p = ENV_FindVariable( current_envdb.env, name, strlen(name) )))
     {
@@ -546,9 +547,8 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         if (size <= ret)
         {
             /* If not enough room, include the terminating null
-             * in the returned size and return an empty string */
+             * in the returned size */
             ret++;
-            if (value) *value = '\0';
         }
         else if (value) strcpy( value, p );
     }
@@ -564,17 +564,26 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
  */
 DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
 {
-    LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
-    LPSTR val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
-    DWORD res  = GetEnvironmentVariableA( name, val, size );
-    HeapFree( GetProcessHeap(), 0, name );
-    if (val)
+    LPSTR name, val;
+    DWORD ret;
+
+    if (!nameW || !*nameW)
     {
-        if (size > 0 && !MultiByteToWideChar( CP_ACP, 0, val, -1, valW, size ))
-            valW[size-1] = 0;
-        HeapFree( GetProcessHeap(), 0, val );
+        SetLastError( ERROR_ENVVAR_NOT_FOUND );
+        return 0;
     }
-    return res;
+
+    name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
+    val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
+    ret  = GetEnvironmentVariableA( name, val, size );
+    if (ret && val)
+    {
+        if (size && !MultiByteToWideChar( CP_ACP, 0, val, -1, valW, size ))
+            valW[size-1] = 0;
+    }
+    HeapFree( GetProcessHeap(), 0, name );
+    if (val) HeapFree( GetProcessHeap(), 0, val );
+    return ret;
 }
 
 
@@ -586,6 +595,12 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     INT old_size, len, res;
     LPSTR p, env, new_env;
     BOOL ret = FALSE;
+
+    if (!name || !*name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     RtlAcquirePebLock();
     env = p = current_envdb.env;

@@ -9,6 +9,7 @@ CTESTS = \
 	alloc.c \
 	atom.c \
 	directory.c \
+	environ.c \
 	file.c \
 	locale.c \
 	path.c \

@@ -2,6 +2,7 @@ Makefile
 alloc.ok
 atom.ok
 directory.ok
+environ.ok
 file.ok
 kernel32_test.exe.spec.c
 locale.ok
