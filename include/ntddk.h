@@ -572,7 +572,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 /*
  *	misc
  */
-void __cdecl DbgPrint(LPCSTR fmt,LPVOID args);
+void WINAPIV DbgPrint(LPCSTR fmt, ...);
 DWORD WINAPI NtRaiseException(PEXCEPTION_RECORD,PCONTEXT,BOOL);
 void WINAPI RtlRaiseException(PEXCEPTION_RECORD);
 void WINAPI RtlRaiseStatus(NTSTATUS);

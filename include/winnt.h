@@ -560,16 +560,31 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 
 #include "pshpack1.h"
 
+typedef DWORD ACCESS_MASK, *PACCESS_MASK;
+
+typedef struct _GENERIC_MAPPING {
+    ACCESS_MASK GenericRead;
+    ACCESS_MASK GenericWrite;
+    ACCESS_MASK GenericExecute;
+    ACCESS_MASK GenericAll;
+} GENERIC_MAPPING, *PGENERIC_MAPPING;
+
+#ifndef SID_IDENTIFIER_AUTHORITY_DEFINED
+#define SID_IDENTIFIER_AUTHORITY_DEFINED
 typedef struct {
     BYTE Value[6];
 } SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+#endif /* !defined(SID_IDENTIFIER_AUTHORITY_DEFINED) */
 
+#ifndef SID_DEFINED
+#define SID_DEFINED
 typedef struct _SID {
     BYTE Revision;
     BYTE SubAuthorityCount;
     SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
     DWORD SubAuthority[1];
 } SID,*PSID;
+#endif /* !defined(SID_DEFINED) */
 
 #define	SID_REVISION			(1)	/* Current revision */
 #define	SID_MAX_SUB_AUTHORITIES		(15)	/* current max subauths */
@@ -601,8 +616,8 @@ typedef struct _ACL {
 #define	SE_SACL_DEFAULTED	0x0020
 #define	SE_SELF_RELATIVE	0x8000
 
-typedef DWORD SECURITY_INFORMATION;
-typedef WORD SECURITY_DESCRIPTOR_CONTROL;
+typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
+typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
 
 /* The security descriptor structure */
 typedef struct {
@@ -677,6 +692,16 @@ typedef struct _LUID_AND_ATTRIBUTES {
 } LUID_AND_ATTRIBUTES; 
 
 /*
+ * PRIVILEGE_SET
+ */
+
+typedef struct _PRIVILEGE_SET {
+    DWORD PrivilegeCount;
+    DWORD Control;
+    LUID_AND_ATTRIBUTES Privilege[ANYSIZE_ARRAY];
+} PRIVILEGE_SET, *PPRIVILEGE_SET;
+
+/*
  * TOKEN_PRIVILEGES
  */
 
@@ -737,7 +762,7 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL {
   SecurityIdentification, 
   SecurityImpersonation, 
   SecurityDelegation 
-} SECURITY_IMPERSONATION_LEVEL; 
+} SECURITY_IMPERSONATION_LEVEL, *PSECURITY_IMPERSONATION_LEVEL; 
 
 
 typedef BOOLEAN SECURITY_CONTEXT_TRACKING_MODE,

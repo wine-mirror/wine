@@ -5,10 +5,10 @@
 #include <string.h>
 
 #include "windef.h"
-#include "winreg.h"
 #include "winerror.h"
 #include "heap.h"
 #include "ntddk.h"
+#include "ntsecapi.h"
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(advapi)
@@ -21,20 +21,6 @@ DECLARE_DEBUG_CHANNEL(security)
 	  { SetLastError (RtlNtStatusToDosError(ret)); return FALSE; } \
 	  return TRUE; \
 	}
-
-/* FIXME: move it to a header */
-BOOL WINAPI IsValidSid (PSID pSid);
-BOOL WINAPI EqualSid (PSID pSid1, PSID pSid2);
-BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2);
-DWORD  WINAPI GetSidLengthRequired (BYTE nSubAuthorityCount);
-BOOL WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2, DWORD nSubAuthority3,    DWORD nSubAuthority4, DWORD nSubAuthority5, DWORD nSubAuthority6, DWORD nSubAuthority7, PSID *pSid);
-VOID*  WINAPI FreeSid(PSID pSid);
-BOOL WINAPI InitializeSid (PSID pSid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount);
-PSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(PSID pSid);
-DWORD* WINAPI GetSidSubAuthority(PSID pSid, DWORD nSubAuthority);
-BYTE*  WINAPI GetSidSubAuthorityCount(PSID pSid);
-DWORD  WINAPI GetLengthSid(PSID pSid);
-BOOL WINAPI CopySid(DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid);
 
 /*	##############################
 	######	TOKEN FUNCTIONS ######
@@ -177,7 +163,7 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
  * PARAMS
  *   pSid []
  */
-VOID* WINAPI
+PVOID WINAPI
 FreeSid( PSID pSid )
 {
     HeapFree( GetProcessHeap(), 0, pSid );
@@ -316,7 +302,7 @@ GetSidIdentifierAuthority( PSID pSid )
  *   pSid          []
  *   nSubAuthority []
  */
-DWORD * WINAPI
+PDWORD WINAPI
 GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 {
     return &pSid->SubAuthority[nSubAuthority];
@@ -328,7 +314,7 @@ GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
  * PARAMS
  *   pSid []
  */
-BYTE * WINAPI
+PUCHAR WINAPI
 GetSidSubAuthorityCount (PSID pSid)
 {
     return &pSid->SubAuthorityCount;
@@ -391,7 +377,7 @@ GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, PSID *pOwner,
  *
  * PARAMS
  */
-BOOL SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor, 
+BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor, 
 				   PSID pOwner, BOOL bOwnerDefaulted)
 {
 	CallWin32ToNt (RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
@@ -496,8 +482,8 @@ MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
  * GetSecurityDescriptorControl32			[ADVAPI32]
  */
 
-BOOL GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
-		 /* fixme: PSECURITY_DESCRIPTOR_CONTROL*/ LPVOID pControl, LPDWORD lpdwRevision)
+BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
+		 PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
 {	FIXME_(advapi)("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
 	return 1;
 }		
@@ -691,10 +677,15 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
  *   x3 []
  *   x4 []
  */
-BOOL WINAPI
-LsaOpenPolicy( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
+NTSTATUS WINAPI
+LsaOpenPolicy(PLSA_UNICODE_STRING SystemName,
+	      PLSA_OBJECT_ATTRIBUTES ObjectAttributes,
+	      ACCESS_MASK DesiredAccess,
+	      PLSA_HANDLE PolicyHandle)
 {
-	FIXME_(advapi)("(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
+	FIXME_(advapi)("(%p,%p,0x%08lx,%p):stub\n",
+		       SystemName, ObjectAttributes,
+		       DesiredAccess, PolicyHandle);
 	return 0xc0000000; /* generic error */
 }
 
@@ -728,9 +719,9 @@ RevertToSelf( void )
  * ImpersonateSelf [ADVAPI32.71]
  */
 BOOL WINAPI
-ImpersonateSelf(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
+ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
-    FIXME_(advapi)("(%08lx), stub\n", ImpersonationLevel);
+    FIXME_(advapi)("(%08x), stub\n", ImpersonationLevel);
     return TRUE;
 }
 
@@ -738,9 +729,13 @@ ImpersonateSelf(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
  * AccessCheck32 [ADVAPI32.71]
  */
 BOOL WINAPI
-AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess, LPVOID/*LPGENERIC_MAPPING*/ GenericMapping, LPVOID/*LPPRIVILEGE_SET*/ PrivilegeSet, LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL AccessStatus)
+AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken,
+	    DWORD DesiredAccess, PGENERIC_MAPPING GenericMapping, PPRIVILEGE_SET PrivilegeSet,
+	    LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL AccessStatus)
 {
-    FIXME_(advapi)("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n", pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
+    FIXME_(advapi)("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n",
+		   pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, 
+		   PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
     *AccessStatus = TRUE;
     return TRUE;
 }

@@ -146,8 +146,6 @@ typedef LONG            LRESULT;
 typedef WORD            ATOM;
 typedef WORD            CATCHBUF[9];
 typedef WORD           *LPCATCHBUF;
-typedef DWORD           ACCESS_MASK;
-typedef ACCESS_MASK     REGSAM;
 typedef HANDLE          HHOOK;
 typedef HANDLE          HMONITOR;
 typedef DWORD           LCID;

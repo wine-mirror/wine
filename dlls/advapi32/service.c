@@ -5,25 +5,21 @@
  */
 
 #include <time.h>
+
 #include "windef.h"
-#include "winreg.h"
+#include "winsvc.h"
 #include "winerror.h"
 #include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 
-/* FIXME: Where do these belong? */
-typedef DWORD	SERVICE_STATUS_HANDLE;
-typedef VOID (WINAPI *LPHANDLER_FUNCTION)( DWORD dwControl);
-
-
 /******************************************************************************
  * EnumServicesStatus32A [ADVAPI32.38]
  */
 BOOL WINAPI
-EnumServicesStatusA( HANDLE hSCManager, DWORD dwServiceType,
-                       DWORD dwServiceState, LPVOID lpServices,
+EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
+                       DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
                        DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                        LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
 {	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
@@ -71,7 +67,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
  * RegisterServiceCtrlHandlerA [ADVAPI32.176]
  */
 SERVICE_STATUS_HANDLE WINAPI
-RegisterServiceCtrlHandlerA( LPSTR lpServiceName,
+RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
 {	FIXME("%s %p\n", lpServiceName, lpfHandler);
 	return 0xcacacafe;	
@@ -85,7 +81,7 @@ RegisterServiceCtrlHandlerA( LPSTR lpServiceName,
  *   lpfHandler    []
  */
 SERVICE_STATUS_HANDLE WINAPI
-RegisterServiceCtrlHandlerW( LPWSTR lpServiceName, 
+RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName, 
                              LPHANDLER_FUNCTION lpfHandler )
 {	FIXME("%s %p\n", debugstr_w(lpServiceName), lpfHandler);
 	return 0xcacacafe;	
@@ -114,7 +110,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 /******************************************************************************
  * OpenSCManager32A [ADVAPI32.110]
  */
-HANDLE WINAPI
+SC_HANDLE WINAPI
 OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {   
@@ -143,7 +139,7 @@ OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
  *   Success: Handle to service control manager database
  *   Failure: NULL
  */
-HANDLE WINAPI
+SC_HANDLE WINAPI
 OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
@@ -177,13 +173,10 @@ AllocateLocallyUniqueId( PLUID lpluid )
  *   dwControl       []
  *   lpServiceStatus []
  *
- * NOTES
- *    hService should be SC_HANDLE
- *
  * RETURNS STD
  */
 BOOL WINAPI
-ControlService( HANDLE hService, DWORD dwControl, 
+ControlService( SC_HANDLE hService, DWORD dwControl, 
                 LPSERVICE_STATUS lpServiceStatus )
 {
     FIXME("(%d,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
@@ -198,13 +191,10 @@ ControlService( HANDLE hService, DWORD dwControl,
  * PARAMS
  *   hSCObject [I] Handle to service or service control manager database
  *
- * NOTES
- *   hSCObject should be SC_HANDLE
- *
  * RETURNS STD
  */
 BOOL WINAPI
-CloseServiceHandle( HANDLE hSCObject )
+CloseServiceHandle( SC_HANDLE hSCObject )
 {
     FIXME("(%d): stub\n", hSCObject);
     return TRUE;
@@ -214,8 +204,8 @@ CloseServiceHandle( HANDLE hSCObject )
 /******************************************************************************
  * OpenService32A [ADVAPI32.112]
  */
-HANDLE WINAPI
-OpenServiceA( HANDLE hSCManager, LPCSTR lpServiceName, 
+SC_HANDLE WINAPI
+OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName, 
                 DWORD dwDesiredAccess )
 {
     LPWSTR lpServiceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpServiceName);
@@ -234,16 +224,12 @@ OpenServiceA( HANDLE hSCManager, LPCSTR lpServiceName,
  *   lpServiceName   []
  *   dwDesiredAccess []
  *
- * NOTES
- *    The return value should be SC_HANDLE
- *    hSCManager should be SC_HANDLE
- *
  * RETURNS
  *    Success: Handle to the service
  *    Failure: NULL
  */
-HANDLE WINAPI
-OpenServiceW(HANDLE hSCManager, LPCWSTR lpServiceName,
+SC_HANDLE WINAPI
+OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                DWORD dwDesiredAccess)
 {
     FIXME("(%d,%p,%ld): stub\n",hSCManager, lpServiceName,
@@ -255,7 +241,7 @@ OpenServiceW(HANDLE hSCManager, LPCWSTR lpServiceName,
 /******************************************************************************
  * CreateService32A [ADVAPI32.29]
  */
-DWORD WINAPI
+SC_HANDLE WINAPI
 CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
                   LPCSTR lpDisplayName, DWORD dwDesiredAccess, 
                   DWORD dwServiceType, DWORD dwStartType, 
@@ -278,11 +264,9 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
  *
  * RETURNS STD
  *
- * NOTES
- *    hService should be SC_HANDLE
  */
 BOOL WINAPI
-DeleteService( HANDLE hService )
+DeleteService( SC_HANDLE hService )
 {
     FIXME("(%d): stub\n",hService);
     return TRUE;
@@ -296,7 +280,7 @@ DeleteService( HANDLE hService )
  *    How do we convert lpServiceArgVectors to use the 32W version?
  */
 BOOL WINAPI
-StartServiceA( HANDLE hService, DWORD dwNumServiceArgs,
+StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCSTR *lpServiceArgVectors )
 {
     FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,lpServiceArgVectors);
@@ -315,11 +299,9 @@ StartServiceA( HANDLE hService, DWORD dwNumServiceArgs,
  *
  * RETURNS STD
  *
- * NOTES
- *   hService should be SC_HANDLE
  */
 BOOL WINAPI
-StartServiceW( HANDLE hService, DWORD dwNumServiceArgs,
+StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
     FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,
@@ -334,12 +316,9 @@ StartServiceW( HANDLE hService, DWORD dwNumServiceArgs,
  *   hService        []
  *   lpservicestatus []
  *   
- * FIXME
- *   hService should be SC_HANDLE
- *   lpservicestatus should be LPSERVICE_STATUS
  */
 BOOL WINAPI
-QueryServiceStatus( HANDLE hService, LPVOID lpservicestatus )
+QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 {
 	FIXME("(%d,%p),stub!\n",hService,lpservicestatus);
 	return TRUE;

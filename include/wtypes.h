@@ -218,7 +218,10 @@ typedef struct _ACL {
 } ACL, *PACL;
 
 typedef DWORD SECURITY_INFORMATION;
-typedef WORD SECURITY_DESCRIPTOR_CONTROL;
+typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
+typedef DWORD ACCESS_MASK, *PACCESS_MASK;
+
+typedef PVOID PGENERIC_MAPPING;
 
 /* The security descriptor structure */
 typedef struct {

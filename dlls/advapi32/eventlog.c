@@ -6,7 +6,6 @@
 
 #include "winbase.h"
 #include "windef.h"
-#include "winreg.h"
 #include "winerror.h"
 #include "heap.h"
 
