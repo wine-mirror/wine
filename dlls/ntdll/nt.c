@@ -467,14 +467,19 @@ NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
 
 /******************************************************************************
  *  NtQueryPerformanceCounter	[NTDLL.@]
+ *
+ *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz.
+ *  
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter(
-	IN PLARGE_INTEGER Counter,
-	IN PLARGE_INTEGER Frequency)
+	OUT PLARGE_INTEGER Counter,
+	OUT PLARGE_INTEGER Frequency)
 {
-	FIXME("(%p, 0%p) stub\n",
-	Counter, Frequency);
-	return 0;
+    LARGE_INTEGER time;
+    NtQuerySystemTime( &time );
+    Counter->QuadPart = time.QuadPart;
+    Frequency->QuadPart = 10000000;
+    return 0;
 }
 
 /******************************************************************************

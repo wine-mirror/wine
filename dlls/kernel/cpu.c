@@ -181,22 +181,8 @@ static void create_registry_keys( const SYSTEM_INFO *info )
  */
 BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
-    LARGE_INTEGER time;
-
-#if defined(__i386__) && defined(__GNUC__)
-    if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
-	/* i586 optimized version */
-	__asm__ __volatile__ ( "rdtsc"
-			       : "=a" (counter->u.LowPart), "=d" (counter->u.HighPart) );
-        /* see below */
-	counter->QuadPart = counter->QuadPart / ( cpuHz / 1193182 ) ;
-	return TRUE;
-    }
-#endif
-
-    /* fall back to generic routine (ie, for i386, i486) */
-    NtQuerySystemTime( &time );
-    counter->QuadPart = time.QuadPart;
+    LARGE_INTEGER frequency;
+    NtQueryPerformanceCounter( counter, &frequency );
     return TRUE;
 }
 
@@ -218,19 +204,8 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
  */
 BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
-#if defined(__i386__) && defined(__GNUC__)
-    if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
-        /* On a standard PC, Windows returns the clock frequency for the
-         * 8253 Programmable Interrupt Timer, which has been 1193182 Hz
-         * since the first IBM PC (cpuHz/4). There are applications that
-         * crash when the returned frequency is much higher or lower, so
-         * do not try to be smart */
-        frequency->QuadPart = 1193182;
-        return TRUE;
-    }
-#endif
-    frequency->u.LowPart  = 10000000;
-    frequency->u.HighPart = 0;
+    LARGE_INTEGER counter;
+    NtQueryPerformanceCounter( &counter, frequency );
     return TRUE;
 }
 

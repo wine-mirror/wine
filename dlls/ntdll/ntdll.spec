@@ -179,7 +179,7 @@
 @ stdcall NtQueryMutant(long long ptr long ptr)
 @ stdcall NtQueryObject(long long long long long)
 @ stub NtQueryOpenSubKeys
-@ stdcall NtQueryPerformanceCounter (long long)
+@ stdcall NtQueryPerformanceCounter(ptr ptr)
 @ stdcall NtQuerySection (long long long long long)
 @ stdcall NtQuerySecurityObject (long long long long long)
 @ stdcall NtQuerySemaphore (long long long long long)
