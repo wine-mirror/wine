@@ -22,16 +22,10 @@
 #include <string.h>
 #include <time.h>
 #include <windows.h>
+#include <windowsx.h>
 #include "main.h"
 #include "dialog.h"
 #include "resource.h"
-
-/* Work around a Wine bug which defines handles as UINT rather than LPVOID */
-#ifdef WINE_STRICT
-#define NULL_HANDLE NULL
-#else
-#define NULL_HANDLE 0
-#endif
 
 #ifdef DUMB_DEBUG
 #include <stdio.h>
@@ -40,13 +34,17 @@
 #define DEBUG(x)
 #endif
 
+static const DWORD wnd_style = WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX;
+static const char* registry_key = "Software\\Wine\\WineMine";
+
+
 int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 {
     MSG msg;
     WNDCLASS wc;
     HWND hWnd;
     HACCEL haccel;
-    char appname[9];
+    char appname[20];
 
     LoadString( hInst, IDS_APPNAME, appname, sizeof(appname));
 
@@ -55,17 +53,17 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
-    wc.hIcon = LoadIcon( hInst, appname );
-    wc.hCursor = LoadCursor( NULL_HANDLE, IDI_APPLICATION );
+    wc.hIcon = LoadIcon( hInst, "WINEMINE" );
+    wc.hCursor = LoadCursor( 0, IDI_APPLICATION );
     wc.hbrBackground = (HBRUSH) GetStockObject( BLACK_BRUSH );
     wc.lpszMenuName = "MENU_WINEMINE";
     wc.lpszClassName = appname;
 
     if (!RegisterClass(&wc)) exit(1);
     hWnd = CreateWindow( appname, appname,
-        WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
+	wnd_style,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        NULL_HANDLE, NULL_HANDLE, hInst, NULL );
+        0, 0, hInst, NULL );
 
     if (!hWnd) exit(1);
 
@@ -75,7 +73,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     haccel = LoadAccelerators( hInst, MAKEINTRESOURCE(IDA_WINEMINE) );
     SetTimer( hWnd, ID_TIMER, 1000, NULL );
 
-    while( GetMessage(&msg, NULL_HANDLE, 0, 0) ) {
+    while( GetMessage(&msg, 0, 0, 0) ) {
         if (!TranslateAccelerator( hWnd, haccel, &msg ))
             TranslateMessage( &msg );
 
@@ -117,8 +115,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOVE:
         DEBUG("WM_MOVE\n");
-        board.pos.x = (unsigned) LOWORD(lParam);
-        board.pos.y = (unsigned) HIWORD(lParam);
+	board.pos.x = GET_X_LPARAM(lParam);
+	board.pos.y = GET_Y_LPARAM(lParam);
         return 0;
 
     case WM_DESTROY:
@@ -130,8 +128,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_TIMER:
         if( board.status == PLAYING ) {
             board.time++;
-                  RedrawWindow( hWnd, &board.timer_rect, NULL_HANDLE,
-                    RDW_INVALIDATE | RDW_UPDATENOW );
+	    RedrawWindow( hWnd, &board.timer_rect, 0,
+			  RDW_INVALIDATE | RDW_UPDATENOW );
         }
         return 0;
 
@@ -260,29 +258,6 @@ void InitBoard( BOARD *p_board )
 
     LoadBoard( p_board );
 
-    if( p_board->pos.x < GetSystemMetrics( SM_CXFIXEDFRAME ))
-        p_board->pos.x = GetSystemMetrics( SM_CXFIXEDFRAME );
-
-    if( p_board->pos.x > (GetSystemMetrics( SM_CXSCREEN )
-    - GetSystemMetrics( SM_CXFIXEDFRAME ))) {
-        p_board->pos.x = GetSystemMetrics( SM_CXSCREEN )
-        - GetSystemMetrics( SM_CXFIXEDFRAME );
-    }
-
-    if( p_board->pos.y < (GetSystemMetrics( SM_CYMENU )
-    + GetSystemMetrics( SM_CYCAPTION )
-    + GetSystemMetrics( SM_CYFIXEDFRAME ))) {
-        p_board->pos.y = GetSystemMetrics( SM_CYMENU ) +
-        GetSystemMetrics( SM_CYCAPTION ) +
-        GetSystemMetrics( SM_CYFIXEDFRAME );
-    }
-
-    if( p_board->pos.y > (GetSystemMetrics( SM_CYSCREEN )
-    - GetSystemMetrics( SM_CYFIXEDFRAME ))) {
-        p_board->pos.y = GetSystemMetrics( SM_CYSCREEN )
-        - GetSystemMetrics( SM_CYFIXEDFRAME );
-    }
-
     hMenu = GetMenu( p_board->hWnd );
     CheckMenuItem( hMenu, IDM_BEGINNER + (unsigned) p_board->difficulty,
             MF_CHECKED );
@@ -302,8 +277,7 @@ void LoadBoard( BOARD *p_board )
     char key_name[8];
     unsigned i;
 
-
-    RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Wine\\WineMine",
+    RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
             0, KEY_QUERY_VALUE, &hkey );
 
     size = sizeof( data );
@@ -312,16 +286,14 @@ void LoadBoard( BOARD *p_board )
         p_board->pos.x = atoi( data );
     }
     else
-        p_board->pos.x = GetSystemMetrics( SM_CXFIXEDFRAME );
+	p_board->pos.x = 0;
 
     size = sizeof( data );
     if( RegQueryValueEx( hkey, "Ypos", NULL, (LPDWORD) &type,
             (LPBYTE) data, (LPDWORD) &size ) == ERROR_SUCCESS )
         p_board->pos.y = atoi( data );
     else
-        p_board->pos.y = GetSystemMetrics( SM_CYMENU )
-        + GetSystemMetrics( SM_CYCAPTION )
-        + GetSystemMetrics( SM_CYFIXEDFRAME );
+        p_board->pos.y = 0;
 
     size = sizeof( data );
     if( RegQueryValueEx( hkey, "Rows", NULL, (LPDWORD) &type,
@@ -389,8 +361,8 @@ void SaveBoard( BOARD *p_board )
     char data[16];
     char key_name[8];
 
-    if( RegCreateKeyEx( HKEY_LOCAL_MACHINE,
-                "Software\\Wine\\WineMine", 0, NULL,
+    if( RegCreateKeyEx( HKEY_CURRENT_USER, registry_key,
+	        0, NULL,
                 REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
                 &hkey, NULL ) != ERROR_SUCCESS)
         return;
@@ -398,7 +370,7 @@ void SaveBoard( BOARD *p_board )
     wsprintf( data, "%d", p_board->pos.x );
     RegSetValueEx( hkey, "Xpos", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
-    wsprintf( data, "%d", p_board->pos.x );
+    wsprintf( data, "%d", p_board->pos.y );
     RegSetValueEx( hkey, "Ypos", 0, REG_SZ, (LPBYTE) data, strlen(data)+1 );
 
     wsprintf( data, "%d", (int) p_board->difficulty );
@@ -467,6 +439,7 @@ void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
     case EXPERT:
         p_board->cols = EXPERT_COLS;
         p_board->rows = EXPERT_ROWS;
+
         p_board->mines = EXPERT_MINES;
         break;
 
@@ -475,9 +448,37 @@ void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
     }
 }
 
+void ShiftBetween(LONG* x, LONG* y, LONG a, LONG b)
+{
+    if (*x < a) {
+	*y += a - *x;
+	*x = a;
+    }
+    else if (*y > b) {
+	*x -= *y - b;
+	*y = b;
+    }
+}
+void MoveOnScreen(RECT* rect)
+{
+    HMONITOR hMonitor;
+    MONITORINFO mi;
+
+    /* find the nearest monitor ... */
+    hMonitor = MonitorFromRect(rect, MONITOR_DEFAULTTONEAREST);
+
+    /* ... and move it into the work area (ie excluding task bar)*/
+    mi.cbSize = sizeof(mi);
+    GetMonitorInfo(hMonitor, &mi);
+
+    ShiftBetween(&rect->left, &rect->right, mi.rcWork.left, mi.rcWork.right);
+    ShiftBetween(&rect->top, &rect->bottom, mi.rcWork.top, mi.rcWork.bottom);
+}
+
 void CreateBoard( BOARD *p_board )
 {
-    int left, top, bottom, right, wnd_x, wnd_y, wnd_width, wnd_height;
+    int left, top, bottom, right;
+    RECT wnd_rect;
 
     p_board->mb = MB_NONE;
     p_board->boxes_left = p_board->cols * p_board->rows - p_board->mines;
@@ -489,17 +490,6 @@ void CreateBoard( BOARD *p_board )
 
     p_board->height = p_board->rows * MINE_HEIGHT + LED_HEIGHT
         + BOARD_HMARGIN * 3;
-
-    wnd_x = p_board->pos.x - GetSystemMetrics( SM_CXFIXEDFRAME );
-    wnd_y = p_board->pos.y - GetSystemMetrics( SM_CYMENU )
-        - GetSystemMetrics( SM_CYCAPTION )
-        - GetSystemMetrics( SM_CYFIXEDFRAME );
-    wnd_width = p_board->width
-        + GetSystemMetrics( SM_CXFIXEDFRAME ) * 2;
-    wnd_height = p_board->height
-        + GetSystemMetrics( SM_CYMENU )
-        + GetSystemMetrics( SM_CYCAPTION )
-        + GetSystemMetrics( SM_CYFIXEDFRAME ) * 2;
 
     /* setting the mines rectangle boundary */
     left = BOARD_WMARGIN;
@@ -533,9 +523,20 @@ void CreateBoard( BOARD *p_board )
     p_board->face_bmp = SMILE_BMP;
     p_board->time = 0;
 
-    MoveWindow( p_board->hWnd, wnd_x, wnd_y, wnd_width, wnd_height, TRUE );
-    RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE,
-            RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE );
+    wnd_rect.left   = p_board->pos.x;
+    wnd_rect.right  = p_board->pos.x + p_board->width;
+    wnd_rect.top    = p_board->pos.y;
+    wnd_rect.bottom = p_board->pos.y + p_board->height;
+    AdjustWindowRect(&wnd_rect, wnd_style, TRUE);
+
+    /* Make sure the window is completely on the screen */
+    MoveOnScreen(&wnd_rect);
+    MoveWindow( p_board->hWnd, wnd_rect.left, wnd_rect.top,
+		wnd_rect.right - wnd_rect.left,
+		wnd_rect.bottom - wnd_rect.top,
+		TRUE );
+    RedrawWindow( p_board->hWnd, NULL, 0,
+		  RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE);
 }
 
 
@@ -583,9 +584,9 @@ void CreateBoxes( BOARD *p_board )
 
     /* create mines */
     i = 0;
-     while( (unsigned) i < p_board->mines ) {
-          col = (int) (p_board->cols * (float) rand() / RAND_MAX + 1);
-          row = (int) (p_board->rows * (float) rand() / RAND_MAX + 1);
+    while( (unsigned) i < p_board->mines ) {
+        col = (int) (p_board->cols * (float) rand() / RAND_MAX + 1);
+        row = (int) (p_board->rows * (float) rand() / RAND_MAX + 1);
 
         if( !p_board->box[col][row].IsMine ) {
             i++;
@@ -819,7 +820,7 @@ void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
 
             p_board->num_flags = p_board->mines;
 
-            RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE,
+            RedrawWindow( p_board->hWnd, NULL, 0,
                 RDW_INVALIDATE | RDW_UPDATENOW );
         }
 
@@ -893,7 +894,7 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
 
     if( draw )
     {
-        RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE,
+        RedrawWindow( p_board->hWnd, NULL, 0,
             RDW_INVALIDATE | RDW_UPDATENOW );
     }
 }
@@ -919,7 +920,7 @@ void TestFace( BOARD *p_board, POINT pt, int msg )
             CreateBoard( p_board );
     }
 
-    RedrawWindow( p_board->hWnd, &p_board->face_rect, NULL_HANDLE,
+    RedrawWindow( p_board->hWnd, &p_board->face_rect, 0,
         RDW_INVALIDATE | RDW_UPDATENOW );
 }
 

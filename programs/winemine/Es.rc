@@ -96,7 +96,7 @@ CAPTION "Acerca de"
 {
     LTEXT                               "Winemine", IDIGNORE,  10,  10,  50,  10
     LTEXT         "Copyright 2000, Joshua Thielen", IDIGNORE,  35,  25, 115,  10
-    LTEXT               "bajo la licencia de Wine", IDIGNORE,  35,  35, 115,  10
+    LTEXT               "bajo la licencia LGPL", IDIGNORE,  35,  35, 115,  10
     ICON                                "WINEMINE", IDIGNORE,  10,  25,  20,  20
     DEFPUSHBUTTON                        "Aceptar", IDOK,      50,  60,  60,  15
 }
