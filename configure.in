@@ -1224,6 +1224,7 @@ dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
+dlls/devenum/Makefile
 dlls/dinput/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
@@ -1238,6 +1239,7 @@ dlls/lzexpand/Makefile
 dlls/mapi32/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
+dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msnet32/Makefile
 dlls/msvcrt/Makefile
@@ -1252,6 +1254,7 @@ dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/opengl32/Makefile
 dlls/psapi/Makefile
+dlls/qcap/Makefile
 dlls/quartz/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile

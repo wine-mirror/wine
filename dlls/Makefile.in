@@ -23,6 +23,7 @@ SUBDIRS = \
 	commdlg \
 	crtdll \
 	dciman32 \
+	devenum \
 	dinput \
 	dplay \
 	dplayx \
@@ -36,6 +37,7 @@ SUBDIRS = \
 	mapi32 \
 	mpr \
 	msacm \
+	msdmo \
 	msimg32 \
 	msnet32 \
 	msvcrt \
@@ -49,6 +51,7 @@ SUBDIRS = \
 	olepro32 \
 	olesvr \
 	psapi \
+	qcap \
 	quartz \
 	rasapi32 \
 	richedit \
@@ -103,6 +106,7 @@ all: \
 	libcrtdll.$(LIBEXT) \
 	libdciman32.$(LIBEXT) \
 	libddeml.$(LIBEXT) \
+	libdevenum.$(LIBEXT) \
 	libdinput.$(LIBEXT) \
 	libdispdib.$(LIBEXT) \
 	libdisplay.$(LIBEXT) \
@@ -134,6 +138,7 @@ all: \
 	libmsacm.$(LIBEXT) \
 	libmsacm.drv.$(LIBEXT) \
 	libmsacm32.$(LIBEXT) \
+	libmsdmo.$(LIBEXT) \
 	libmsimg32.$(LIBEXT) \
 	libmsnet32.$(LIBEXT) \
 	libmsvcrt.$(LIBEXT) \
@@ -156,6 +161,7 @@ all: \
 	libolesvr.$(LIBEXT) \
 	libolesvr32.$(LIBEXT) \
 	libpsapi.$(LIBEXT) \
+	libqcap.$(LIBEXT) \
 	libquartz.$(LIBEXT) \
 	librasapi16.$(LIBEXT) \
 	librasapi32.$(LIBEXT) \
@@ -233,6 +239,9 @@ libdciman32.$(LIBEXT): dciman32/libdciman32.$(LIBEXT)
 libddraw.$(LIBEXT): ddraw/libddraw.$(LIBEXT)
 	$(RM) $@ && $(LN_S) ddraw/libddraw.$(LIBEXT) $@
 
+libdevenum.$(LIBEXT): devenum/libdevenum.$(LIBEXT)
+	$(RM) $@ && $(LN_S) devenum/libdevenum.$(LIBEXT) $@
+
 libdinput.$(LIBEXT): dinput/libdinput.$(LIBEXT)
 	$(RM) $@ && $(LN_S) dinput/libdinput.$(LIBEXT) $@
 
@@ -302,6 +311,9 @@ libmsacm.drv.$(LIBEXT): winmm/wavemap/libmsacm.drv.$(LIBEXT)
 libmsacm32.$(LIBEXT) libmsacm.$(LIBEXT): msacm/libmsacm32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msacm/libmsacm32.$(LIBEXT) $@
 
+libmsdmo.$(LIBEXT): msdmo/libmsdmo.$(LIBEXT)
+	$(RM) $@ && $(LN_S) msdmo/libmsdmo.$(LIBEXT) $@
+
 libmsimg32.$(LIBEXT): msimg32/libmsimg32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msimg32/libmsimg32.$(LIBEXT) $@
 
@@ -345,6 +357,9 @@ libopengl32.$(LIBEXT): opengl32/libopengl32.$(LIBEXT)
 
 libpsapi.$(LIBEXT): psapi/libpsapi.$(LIBEXT)
 	$(RM) $@ && $(LN_S) psapi/libpsapi.$(LIBEXT) $@
+
+libqcap.$(LIBEXT): qcap/libqcap.$(LIBEXT)
+	$(RM) $@ && $(LN_S) qcap/libqcap.$(LIBEXT) $@
 
 libquartz.$(LIBEXT): quartz/libquartz.$(LIBEXT)
 	$(RM) $@ && $(LN_S) quartz/libquartz.$(LIBEXT) $@
@@ -469,6 +484,9 @@ ddraw/libddraw.$(LIBEXT): dummy libuser32.$(LIBEXT) libgdi32.$(LIBEXT) \
   libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd ddraw && $(MAKE) libddraw.$(LIBEXT)
 
+devenum/libdevenum.$(LIBEXT): dummy libntdll.$(LIBEXT)
+	@cd devenum && $(MAKE) libdevenum.$(LIBEXT)
+
 dinput/libdinput.$(LIBEXT): dummy libuser32.$(LIBEXT) libkernel32.$(LIBEXT) \
   libntdll.$(LIBEXT)
 	@cd dinput && $(MAKE) libdinput.$(LIBEXT)
@@ -516,6 +534,9 @@ mpr/libmpr.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 msacm/libmsacm32.$(LIBEXT): dummy libwinmm.$(LIBEXT) libuser32.$(LIBEXT) \
   libadvapi32.$(LIBEXT) libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd msacm && $(MAKE) libmsacm32.$(LIBEXT)
+
+msdmo/libmsdmo.$(LIBEXT): dummy libntdll.$(LIBEXT)
+	@cd msdmo && $(MAKE) libmsdmo.$(LIBEXT)
 
 msimg32/libmsimg32.$(LIBEXT): dummy libntdll.$(LIBEXT)
 	@cd msimg32 && $(MAKE) libmsimg32.$(LIBEXT)
@@ -565,6 +586,9 @@ opengl32/libopengl32.$(LIBEXT): dummy libuser32.$(LIBEXT) libx11drv.$(LIBEXT) \
 
 psapi/libpsapi.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd psapi && $(MAKE) libpsapi.$(LIBEXT)
+
+qcap/libqcap.$(LIBEXT): dummy libntdll.$(LIBEXT)
+	@cd qcap && $(MAKE) libqcap.$(LIBEXT)
 
 quartz/libquartz.$(LIBEXT): dummy liboleaut32.$(LIBEXT) libole32.$(LIBEXT) \
   libmsvfw32.$(LIBEXT) libwinmm.$(LIBEXT) libuser32.$(LIBEXT) libgdi32.$(LIBEXT) \
