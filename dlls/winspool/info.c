@@ -120,8 +120,19 @@ static LPOPENEDPRINTERA WINSPOOL_GetOpenedPrinterA(int printerHandle)
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDeivce,LPCSTR pPort, WORD cap,
 			       LPSTR pOutput, LPDEVMODEA lpdm)
 {
-    return GDI_CallDeviceCapabilities16(pDeivce, pPort, cap, pOutput, lpdm);
+    INT ret;
+    ret = GDI_CallDeviceCapabilities16(pDeivce, pPort, cap, pOutput, lpdm);
 
+    /* If DC_PAPERSIZE map POINT16s to POINTs */
+    if(ret != -1 && cap == DC_PAPERSIZE && pOutput) {
+        POINT16 *tmp = HeapAlloc( GetProcessHeap(), 0, ret * sizeof(POINT16) );
+	INT i;
+	memcpy(tmp, pOutput, ret * sizeof(POINT16));
+	for(i = 0; i < ret; i++)
+	    CONV_POINT16TO32(tmp + i, (POINT*)pOutput + i);
+	HeapFree( GetProcessHeap(), 0, tmp );
+    }
+    return ret;
 }
 
 
@@ -193,48 +204,61 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
      the access rights to the printer */
 
     LPOPENEDPRINTERA lpOpenedPrinter;
+    HKEY hkeyPrinters, hkeyPrinter;
 
     TRACE("(printerName: %s, pDefault %p\n", lpPrinterName, pDefault);
 
-    /* Get a place in the opened printer buffer*/
-    lpOpenedPrinter = WINSPOOL_GetOpenedPrinterEntryA();
-
-    if((lpOpenedPrinter != NULL) && (lpPrinterName !=NULL) && 
-       (phPrinter != NULL))
-    {
-	/* Get the name of the printer */
-	lpOpenedPrinter->lpsPrinterName = 
-	  HeapAlloc(GetProcessHeap(), 0, lstrlenA(lpPrinterName));
-	lstrcpyA(lpOpenedPrinter->lpsPrinterName, lpPrinterName);
-
-	/* Get the unique handle of the printer*/
-	*phPrinter = lpOpenedPrinter->hPrinter;
-
-	if (pDefault != NULL)
-	{
-	    /* Allocate enough memory for the lpDefault structure */
-	    lpOpenedPrinter->lpDefault = 
-	      HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTER_DEFAULTSA));
-	    lpOpenedPrinter->lpDefault->pDevMode =
-	      HeapAlloc(GetProcessHeap(), 0, sizeof(DEVMODEA));
-	    lpOpenedPrinter->lpDefault->pDatatype = 
-	      HeapAlloc(GetProcessHeap(), 0, lstrlenA(pDefault->pDatatype));
-
-	    /*Copy the information from incoming parameter*/
-	    memcpy(lpOpenedPrinter->lpDefault->pDevMode, pDefault->pDevMode,
-		   sizeof(DEVMODEA));
-	    lstrcpyA(lpOpenedPrinter->lpDefault->pDatatype,
-		     pDefault->pDatatype);
-	    lpOpenedPrinter->lpDefault->DesiredAccess =
-	      pDefault->DesiredAccess;
-	}
-
-	return TRUE;
+    /* Check Printer exists */
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Printers key\n");
+	SetLastError(ERROR_FILE_NOT_FOUND); /* ?? */
+	return FALSE;
     }
 
-    if(lpOpenedPrinter == NULL)
-	FIXME("Reach the OpenedPrinterTable maximum, augment this max.\n");
-     return FALSE;
+    if(RegOpenKeyA(hkeyPrinters, lpPrinterName, &hkeyPrinter)
+       != ERROR_SUCCESS) {
+        WARN("Can't find printer `%s' in registry\n", lpPrinterName);
+	RegCloseKey(hkeyPrinters);
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    RegCloseKey(hkeyPrinter);
+    RegCloseKey(hkeyPrinters);
+
+    if(!phPrinter) /* This seems to be what win95 does anyway */
+        return TRUE;
+
+    /* Get a place in the opened printer buffer*/
+    lpOpenedPrinter = WINSPOOL_GetOpenedPrinterEntryA();
+    if(!lpOpenedPrinter) {
+        ERR("Can't allocate printer slot\n");
+	SetLastError(ERROR_OUTOFMEMORY);
+	return FALSE;
+    }
+
+    /* Get the name of the printer */
+    lpOpenedPrinter->lpsPrinterName = 
+      HEAP_strdupA( GetProcessHeap(), 0, lpPrinterName );
+
+    /* Get the unique handle of the printer*/
+    *phPrinter = lpOpenedPrinter->hPrinter;
+
+    if (pDefault != NULL) {
+        lpOpenedPrinter->lpDefault = 
+	  HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTER_DEFAULTSA));
+	lpOpenedPrinter->lpDefault->pDevMode =
+	  HeapAlloc(GetProcessHeap(), 0, sizeof(DEVMODEA));
+	memcpy(lpOpenedPrinter->lpDefault->pDevMode, pDefault->pDevMode,
+	       sizeof(DEVMODEA));
+	lpOpenedPrinter->lpDefault->pDatatype = 
+	  HEAP_strdupA( GetProcessHeap(), 0, pDefault->pDatatype );
+	lpOpenedPrinter->lpDefault->DesiredAccess =
+	  pDefault->DesiredAccess;
+    }
+    
+    return TRUE;
+
 }
 
 /******************************************************************
@@ -300,32 +324,36 @@ BOOL ENUMPRINTERS_AddStringFromRegistryA(
                 BOOL   bCalcSpaceOnly   /* TRUE if out-of-space in buffer */
 ){                   
  DWORD DataSize=34;
- DWORD DataType;
+ DWORD DataType, ret;
  LPSTR Data = (LPSTR) malloc(DataSize*sizeof(char));
 
- while(RegQueryValueExA(hPrinterSettings, KeyName, NULL, &DataType,
-  					Data, &DataSize)==ERROR_MORE_DATA)
+ TRACE("Reading '%s'\n", KeyName);
+ while((ret = RegQueryValueExA(hPrinterSettings, KeyName, NULL, &DataType,
+  					Data, &DataSize))==ERROR_MORE_DATA)
     {
      Data = (LPSTR) realloc(Data, DataSize+2);
     }
-
- if (DataType == REG_SZ)
- 	{                   
+ if (ret != ERROR_SUCCESS) {
+   if(!bCalcSpaceOnly)
+     *Dest = NULL;
+ }
+ else if (DataType == REG_SZ)
+   {                   
 	 if (bCalcSpaceOnly==FALSE)
-	 *Dest = &lpbPrinters[*dwNextStringPos];
+	   *Dest = &lpbPrinters[*dwNextStringPos];
 	 *dwNextStringPos += DataSize+1;
 	 if (*dwNextStringPos > dwBufSize)
 	 	bCalcSpaceOnly=TRUE;
 	 if (bCalcSpaceOnly==FALSE)
-        {
+	   {
          if (DataSize==0)		/* DataSize = 0 means empty string, even though*/
          	*Dest[0]=0;			/* the data itself needs not to be empty */
          else
 	         strcpy(*Dest, Data);
-        }
- 	}
+	   }
+   }
  else
- 	WARN("Expected string setting, got something else from registry");
+ 	WARN("Expected string setting, got %lx\n", DataType);
     
  if (Data)
     free(Data);
@@ -680,7 +708,7 @@ BOOL  WINAPI EnumPrintersA(
      case 5:
      	 break;
      default:
-     SetLastError(ERROR_INVALID_PARAMETER);
+     SetLastError(ERROR_INVALID_LEVEL);
 	     return(FALSE);
     } 	
 
@@ -745,6 +773,7 @@ BOOL  WINAPI EnumPrintersA(
      if (RegEnumKeyExA(hPrinterListKey, dwIndex, PrinterName, &PrinterNameLength,
                    NULL, NULL, NULL, &FileTime)!=ERROR_SUCCESS)
      	break;	/* exit for loop*/
+     TRACE("Got printer '%s'\n", PrinterName);
         
      /* check whether this printer is allowed in the list
       * by comparing name to lpszName 
@@ -776,19 +805,21 @@ BOOL  WINAPI EnumPrintersA(
         }     	
     }
  RegCloseKey(hPrinterListKey);
- *lpdwNeeded = dwNextStringPos;
+ LeaveCriticalSection(&PRINT32_RegistryBlocker); 
+ *lpdwNeeded = dwNextStringPos + 10; /*Hack*/
  
  if (bCalcSpaceOnly==TRUE)
- 	{
-    if  (lpbPrinters!=NULL)
- 		{
-	  int i;
-	  for (i=0; i<cbBuf; i++)
-	  	  lpbPrinters[i]=0;
-	    } 
-     *lpdwReturned=0;    
+   {
+     if  (lpbPrinters!=NULL)
+       {
+	 int i;
+	 for (i=0; i<cbBuf; i++)
+	   lpbPrinters[i]=0;
+       } 
+     *lpdwReturned=0;
+     SetLastError(ERROR_INSUFFICIENT_BUFFER);
+     return FALSE;
     } 
- LeaveCriticalSection(&PRINT32_RegistryBlocker); 
  return(TRUE);
 }
 
@@ -1228,9 +1259,144 @@ static BOOL WINSPOOL_GetStringFromRegA(HKEY hkey, LPCSTR ValueName, LPSTR ptr,
     return TRUE;
 }
 
+/*********************************************************************
+ *    WINSPOOL_GetPrinter_2A
+ *
+ * Fills out a PRINTER_INFO_2A struct storing the strings in buf.
+ */
+static BOOL WINSPOOL_GetPrinter_2A(HKEY hkeyPrinter, PRINTER_INFO_2A *pi2,
+				   LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, left, &size);
+    if(space && size <= left) {
+        pi2->pPrinterName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, left, &size);
+    if(space && size <= left) {
+        pi2->pPortName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Printer Driver", ptr, left,
+			       &size);
+    if(space && size <= left) {
+        pi2->pDriverName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Default DevMode", ptr, left,
+			       &size);
+    if(space && size <= left) {
+        pi2->pDevMode = (LPDEVMODEA)ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Print Processor", ptr, left,
+			       &size);
+    if(space && size <= left) {
+        pi2->pPrintProcessor = ptr;
+	ptr += size;
+	left -= size;
+    } else
+	space = FALSE;
+    *pcbNeeded += size;
+
+    if(!space && pi2) /* zero out pi2 if we can't completely fill buf */
+        memset(pi2, 0, sizeof(*pi2));
+
+    return space;
+}
+
+/*********************************************************************
+ *    WINSPOOL_GetPrinter_4A
+ *
+ * Fills out a PRINTER_INFO_4A struct storing the strings in buf.
+ */
+static BOOL WINSPOOL_GetPrinter_4A(HKEY hkeyPrinter, PRINTER_INFO_4A *pi4,
+				   LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, left, &size);
+    if(space && size <= left) {
+        pi4->pPrinterName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+
+    *pcbNeeded += size;
+
+    if(!space && pi4) /* zero out pi4 if we can't completely fill buf */
+        memset(pi4, 0, sizeof(*pi4));
+
+    return space;
+}
+
+/*********************************************************************
+ *    WINSPOOL_GetPrinter_5A
+ *
+ * Fills out a PRINTER_INFO_5A struct storing the strings in buf.
+ */
+static BOOL WINSPOOL_GetPrinter_5A(HKEY hkeyPrinter, PRINTER_INFO_5A *pi5,
+				   LPBYTE buf, DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, left, &size);
+    if(space && size <= left) {
+        pi5->pPrinterName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, left, &size);
+    if(space && size <= left) {
+        pi5->pPortName = ptr;
+	ptr += size;
+	left -= size;
+    } else
+	space = FALSE;
+    *pcbNeeded += size;
+
+    if(!space && pi5) /* zero out pi5 if we can't completely fill buf */
+        memset(pi5, 0, sizeof(*pi5));
+
+    return space;
+}
 
 /*****************************************************************************
- *          GetPrinter32A  [WINSPOOL.187]
+ *          GetPrinterA  [WINSPOOL.187]
  */
 BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 			DWORD cbBuf, LPDWORD pcbNeeded)
@@ -1239,7 +1405,8 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     DWORD size, needed = 0;
     LPBYTE ptr = NULL;
     HKEY hkeyPrinter, hkeyPrinters;
-    
+    BOOL ret;
+
     TRACE("(%d,%ld,%p,%ld,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
 
     lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
@@ -1271,56 +1438,34 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    ptr = pPrinter + size;
 	    cbBuf -= size;
 	    memset(pPrinter, 0, size);
-	} else
+	} else {
+	    pi2 = NULL;
 	    cbBuf = 0;
-	needed = size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi2->pPrinterName = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
+	}
+	ret = WINSPOOL_GetPrinter_2A(hkeyPrinter, pi2, ptr, cbBuf, &needed);
 	needed += size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi2->pPortName = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
-	needed += size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Printer Driver", ptr, cbBuf,
-				   &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi2->pDriverName = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
-	needed += size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Default DevMode", ptr, cbBuf,
-				   &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi2->pDevMode = (LPDEVMODEA)ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
-	needed += size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Print Processor", ptr, cbBuf,
-				   &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi2->pPrintProcessor = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
-	needed += size;
-
 	break;
       }
       
+    case 4:
+      {
+	PRINTER_INFO_4A *pi4 = (PRINTER_INFO_4A *)pPrinter;
+	
+        size = sizeof(PRINTER_INFO_4A);
+	if(size <= cbBuf) {
+	    ptr = pPrinter + size;
+	    cbBuf -= size;
+	    memset(pPrinter, 0, size);
+	} else {
+	    pi4 = NULL;
+	    cbBuf = 0;
+	}
+	ret = WINSPOOL_GetPrinter_4A(hkeyPrinter, pi4, ptr, cbBuf, &needed);
+	needed += size;
+	break;
+      }
+
+
     case 5:
       {
         PRINTER_INFO_5A *pi5 = (PRINTER_INFO_5A *)pPrinter;
@@ -1330,26 +1475,13 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	    ptr = pPrinter + size;
 	    cbBuf -= size;
 	    memset(pPrinter, 0, size);
-	} else
+	} else {
+	    pi5 = NULL;
 	    cbBuf = 0;
-	needed = size;
+	}
 
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Name", ptr, cbBuf, &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi5->pPrinterName = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
+	ret = WINSPOOL_GetPrinter_5A(hkeyPrinter, pi5, ptr, cbBuf, &needed);
 	needed += size;
-
-	WINSPOOL_GetStringFromRegA(hkeyPrinter, "Port", ptr, cbBuf, &size);
-	if(cbBuf && size <= cbBuf) {
-	    pi5->pPortName = ptr;
-	    ptr += size;
-	} else
-	    cbBuf = 0;
-	needed += size;
-
 	break;
       }
 
@@ -1365,14 +1497,14 @@ BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     RegCloseKey(hkeyPrinters);
 
     if(pcbNeeded) *pcbNeeded = needed;
-    if(cbBuf) return TRUE;
-    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-    return FALSE;
+    if(!ret)
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return ret;
 }
 
 
 /*****************************************************************************
- *          GetPrinter32W  [WINSPOOL.194]
+ *          GetPrinterW  [WINSPOOL.194]
  */
 BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
                     DWORD cbBuf, LPDWORD pcbNeeded)
