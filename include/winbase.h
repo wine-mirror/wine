@@ -1748,6 +1748,7 @@ VOID        WINAPI GlobalUnfix(HGLOBAL);
 BOOL        WINAPI GlobalUnlock(HGLOBAL);
 BOOL        WINAPI GlobalUnWire(HGLOBAL);
 LPVOID      WINAPI GlobalWire(HGLOBAL);
+#define   HasOverlappedCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
 BOOL      WINAPI InitAtomTable(DWORD);
 BOOL      WINAPI IsBadCodePtr(FARPROC);
 BOOL      WINAPI IsBadHugeReadPtr(LPCVOID,UINT);
