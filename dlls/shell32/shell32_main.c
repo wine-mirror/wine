@@ -416,7 +416,7 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
 	{ hres = NOERROR;
 	}
 	else 
-	{ lpclf = IClassFactory_Constructor();
+	{ lpclf = IClassFactory_Constructor(&CLSID_ShellDesktop);
 	  if(lpclf) 
 	  { hres = IClassFactory_CreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
 	    IClassFactory_Release(lpclf);
@@ -1058,6 +1058,7 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 /*************************************************************************
  * global variables of the shell32.dll
+ * all are once per process
  *
  */
 void	(WINAPI* pDLLInitComctl)(LPVOID);
@@ -1089,6 +1090,11 @@ static INT		shell32_RefCount = 0;
 
 INT		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance; 
+
+HIMAGELIST	ShellSmallIconList = 0;
+HIMAGELIST	ShellBigIconList = 0;
+HDPA		sic_hdpa = 0;
+
 /*************************************************************************
  * SHELL32 LibMain
  *
@@ -1102,12 +1108,16 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	shell32_hInstance = hinstDLL;
 
 	switch (fdwReason)
-	{ case DLL_PROCESS_ATTACH:
+	{
+	  case DLL_PROCESS_ATTACH:
 	    if (!bShell32IsInitialized)
-	    { hComctl32 = LoadLibraryA("COMCTL32.DLL");	
+	    {
+	      hComctl32 = LoadLibraryA("COMCTL32.DLL");	
 	      hUser32 = GetModuleHandleA("USER32");
+
 	      if (hComctl32 && hUser32)
-	      { pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
+	      {
+	        pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
 	        if (pDLLInitComctl)
 	        { pDLLInitComctl(NULL);
 	        }
@@ -1158,10 +1168,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	      if (pdesktopfolder) 
 	      { IShellFolder_Release(pdesktopfolder);
+	        pdesktopfolder = NULL;
 	      }
 
 	      SIC_Destroy();
-              FreeLibrary(hComctl32);
+	      FreeLibrary(hComctl32);
 
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)

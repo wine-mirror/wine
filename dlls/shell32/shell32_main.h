@@ -22,8 +22,9 @@
 */
 extern HINSTANCE shell32_hInstance;
 extern INT	  shell32_ObjCount;
-extern HIMAGELIST ShellSmallIconList;
-extern HIMAGELIST ShellBigIconList;
+extern HIMAGELIST	ShellSmallIconList;
+extern HIMAGELIST	ShellBigIconList;
+extern HDPA		sic_hdpa;
 
 /*******************************************
 * pointer to functions dynamically loaded
@@ -95,16 +96,13 @@ HANDLE	WINAPI SHFreeShared(HANDLE hmem, DWORD procID);
 extern LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT cidl);
 extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
 
-extern LPCLASSFACTORY IShellLink_CF_Constructor(void);
-extern LPCLASSFACTORY IShellLinkW_CF_Constructor(void);
-
-extern LPCLASSFACTORY	IClassFactory_Constructor(void);
+extern LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
 extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT);
 extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
-extern LPSHELLLINK	IShellLink_Constructor(void);
-extern LPSHELLLINKW	IShellLinkW_Constructor(void);
+extern LPSHELLLINK	IShellLink_Constructor(BOOL);
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
+extern HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
 
 /* fixme: rename the functions when the shell32.dll has it's own exports namespace */
 HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);

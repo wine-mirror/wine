@@ -446,9 +446,6 @@ end_1:	_lclose( hFile);
 }
 
 /********************** THE ICON CACHE ********************************/
-HIMAGELIST ShellSmallIconList = 0;
-HIMAGELIST ShellBigIconList = 0;
-HDPA	hdpa=0;
 
 #define INVALID_INDEX -1
 
@@ -494,7 +491,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(), 0, PathFindFilenameA(sSourceFile));
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
-	index = pDPA_InsertPtr(hdpa, 0x7fff, lpsice);
+	index = pDPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
 	{ SHFree(lpsice);
 	  return INVALID_INDEX;
@@ -551,8 +548,8 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 	sice.sSourceFile = PathFindFilenameA(sSourceFile);
 	sice.dwSourceIndex = dwSourceIndex;
 	
-	if (NULL != pDPA_GetPtr (hdpa, 0))
-	{ index = pDPA_Search (hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
+	if (NULL != pDPA_GetPtr (sic_hdpa, 0))
+	{ index = pDPA_Search (sic_hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
 	}
 
 	if ( INVALID_INDEX == index )
@@ -560,7 +557,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 	}
 	
 	TRACE("-- found\n");
-	return ((LPSIC_ENTRY)pDPA_GetPtr(hdpa, index))->dwListIndex;
+	return ((LPSIC_ENTRY)pDPA_GetPtr(sic_hdpa, index))->dwListIndex;
 }
 /****************************************************************************
  * SIC_LoadIcon				[internal]
@@ -598,12 +595,12 @@ BOOL SIC_Initialize(void)
 
 	TRACE("\n");
 
-	if (hdpa)	/* already initialized?*/
+	if (sic_hdpa)	/* already initialized?*/
 	  return TRUE;
 	  
-	hdpa = pDPA_Create(16);
+	sic_hdpa = pDPA_Create(16);
 
-	if (!hdpa)
+	if (!sic_hdpa)
 	{ return(FALSE);
 	}
 
@@ -652,13 +649,19 @@ void SIC_Destroy(void)
 	LPSIC_ENTRY lpsice;
 	int i;
 
-	if (hdpa && NULL != pDPA_GetPtr (hdpa, 0))
-	{ for (i=0; i < pDPA_GetPtrCount(hdpa); ++i)
-	  { lpsice = pDPA_GetPtr(hdpa, i); 
+	TRACE("\n");
+
+	if (sic_hdpa && NULL != pDPA_GetPtr (sic_hdpa, 0))
+	{
+	  for (i=0; i < pDPA_GetPtrCount(sic_hdpa); ++i)
+	  {
+	    lpsice = pDPA_GetPtr(sic_hdpa, i); 
 	    SHFree(lpsice);
 	  }
-	  pDPA_Destroy(hdpa);
+	  pDPA_Destroy(sic_hdpa);
 	}
+
+	sic_hdpa = NULL;
 }
 /*************************************************************************
  * Shell_GetImageList			[SHELL32.71]
