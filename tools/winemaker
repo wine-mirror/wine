@@ -416,9 +416,11 @@ sub source_set_options
       @$target[$T_FLAGS]&=~$TF_MFC;
       #@$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
     } else {
-      print STDERR "warning: unknown option \"$option\", ignoring it\n";
+      print STDERR "error: unknown option \"$option\"\n";
+      return 0;
     }
   }
+  return 1;
 }
 
 ##
@@ -674,20 +676,25 @@ sub source_scan_directory
       }
       $flag_desc.="wrapped";
     }
-    print "* Type any project-wide options (-D/-I/-L/-l/--mfc/--wrap),\n";
+    print "* Type any project-wide options (-D/-I/-L/-i/-l/--mfc/--wrap),\n";
     if (defined $flag_desc) {
       print "* (currently $flag_desc)\n";
     }
     print "* or 'skip' to skip the target specific options,\n";
     print "* or 'never' to not be asked this question again:\n";
-    my $options=<STDIN>;
-    chomp $options;
-    if ($options eq "skip") {
-      $opt_ask_target_options=$OPT_ASK_SKIP;
-    } elsif ($options eq "never") {
-      $opt_ask_project_options="never";
-    } else {
-      source_set_options($project_settings,$options);
+    while (1) {
+      my $options=<STDIN>;
+      chomp $options;
+      if ($options eq "skip") {
+        $opt_ask_target_options=$OPT_ASK_SKIP;
+        last;
+      } elsif ($options eq "never") {
+        $opt_ask_project_options=$OPT_ASK_NO;
+        last;
+      } elsif (source_set_options($project_settings,$options)) {
+        last;
+      }
+      print "Please re-enter the options:\n";
     }
   }
 
@@ -742,14 +749,18 @@ sub source_scan_directory
       if ($flag_desc ne "") {
 	$flag_desc.=")";
       }
-      print "* Specify any link option (-L/-l/--mfc/--wrap) specific to the target\n";
+      print "* Specify any link option (-L/-i/-l/--mfc/--wrap) specific to the target\n";
       print "* \"$target_name\"$flag_desc or 'never' to not be asked this question again:\n";
-      my $options=<STDIN>;
-      chomp $options;
-      if ($options eq "never") {
-	$opt_ask_target_options=$OPT_ASK_NO;
-      } else {
-	source_set_options($target,$options);
+      while (1) {
+        my $options=<STDIN>;
+        chomp $options;
+        if ($options eq "never") {
+          $opt_ask_target_options=$OPT_ASK_NO;
+          last;
+        } elsif (source_set_options($target,$options)) {
+          last;
+        }
+        print "Please re-enter the options:\n";
       }
     }
     if (@$target[$T_FLAGS] & $TF_MFC) {
@@ -957,16 +968,19 @@ sub fix_file_and_directory_names
       my $new_name=$dentry;
       $new_name =~ s/[ \$]/_/g;
 
-      # Our Make.rules supports all-uppercase and all-lowercase extensions.
-      # The others must be fixed.
+      # Only all lowercase extensions are supported (because of the 
+      # transformations ':.c=.o') .
       if (-f "$dirname/$new_name") {
-	if ($new_name =~ /\.cpp/i and $new_name !~ /\.(cpp|CPP)/) {
+	if ($new_name =~ /\.C$/) {
+	  $new_name =~ s/\.C$/.c/;
+	}
+	if ($new_name =~ /\.cpp$/i) {
 	  $new_name =~ s/\.cpp$/.cpp/i;
 	}
 	if ($new_name =~ s/\.cxx$/.cpp/i) {
 	  $warn=1;
 	}
-	if ($new_name =~ /\.rc/i and $new_name !~ /\.(rc|RC)/) {
+	if ($new_name =~ /\.rc$/i) {
 	  $new_name =~ s/\.rc$/.rc/i;
 	}
 	# And this last one is to avoid confusion then running make
@@ -2681,8 +2695,10 @@ MFC_LIBRARY_PATH = @MFC_LIBRARY_PATH@
 SHELL     = /bin/sh
 CC        = @CC@
 CPP       = @CPP@
+WRC       = @WRC@
 CFLAGS    = @CFLAGS@
 CXXFLAGS  = @CXXFLAGS@
+WRCFLAGS  = -r -L
 OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
@@ -2693,9 +2709,10 @@ YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 LN_S      = @LN_S@
-DIVINCL   = -I$(SRCDIR) $(WINE_INCLUDE_PATH) $(INCLUDE_PATH)
-ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
-ALLCXXFLAGS = $(DIVINCL) $(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
+ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(WINE_INCLUDE_PATH) $(INCLUDE_PATH)
+ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
+ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
+ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
@@ -2706,8 +2723,6 @@ MV        = mv
 MKDIR     = mkdir -p
 WINE      = @WINE@
 WINEBUILD = @WINEBUILD@
-WRC       = @WRC@
-WRCFLAGS  = -r -L
 @SET_MAKE@
 
 # Installation infos
@@ -2723,38 +2738,28 @@ infodir         = @infodir@
 mandir          = @mandir@
 prog_manext     = 1
 conf_manext     = 5
-CLEAN_FILES     = *.o *.a *.so \\\#*\\\# *~ *% .\\\#* *.orig *.rej \
-                  *.spec.c y.tab.c y.tab.h lex.yy.c core
 
-OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o)
+OBJS            = $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o) \
+                  $(SPEC_SRCS:.spec=.spec.o) 
+CLEAN_FILES     = *.spec.c y.tab.c y.tab.h lex.yy.c \
+                  core *.orig *.rej \
+                  \\\#*\\\# *~ *% .\\\#*
 
 # Implicit rules
 
-.SUFFIXES: .C .cpp .CPP .cxx .CXX .rc .RC .res .tmp.o .spec .spec.c .spec.o
+.SUFFIXES: .cpp .rc .res .tmp.o .spec .spec.c .spec.o
 
 .c.o:
-	$(CC) -c $(ALLCFLAGS) -o $@ $<
-
-.C.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
 
 .cpp.o:
 	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
 
-.CPP.o:
-	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
-
 .cxx.o:
 	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
 
-.CXX.o:
-	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
-
 .rc.res:
-	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -o $@ $<
-
-.RC.res:
-	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) -o $@ $<
+	$(WRC) $(ALLWRCFLAGS) -o $@ $<
 
 .PHONY: all install uninstall clean distclean depend dummy
 
@@ -2777,7 +2782,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(EXES) $(EXES:%=%.so) $(DLLS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(EXES) $(EXES:%=%.so) $(DLLS)
 
 # Rules for installing
 
