@@ -2,6 +2,7 @@
  * IFilterMapper & IFilterMapper2 Implementations
  *
  * Copyright 2003 Robert Shearman
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,6 +57,7 @@ static struct ICOM_VTABLE(IFilterMapper) fmvtbl;
 
 static const WCHAR wszClsidSlash[] = {'C','L','S','I','D','\\',0};
 static const WCHAR wszSlashInstance[] = {'\\','I','n','s','t','a','n','c','e','\\',0};
+static const WCHAR wszSlash[] = {'\\',0};
 
 /* CLSID property in media category Moniker */
 static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
@@ -65,6 +67,18 @@ static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a',
 static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
 /* FilterData property in media category Moniker (not CLSID_ActiveMovieCategories) */
 static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
+/* For filters registered with IFilterMapper */
+static const WCHAR wszFilterSlash[] = {'F','i','l','t','e','r','\\',0};
+static const WCHAR wszFilter[] = {'F','i','l','t','e','r',0};
+/* For pins registered with IFilterMapper */
+static const WCHAR wszPins[] = {'P','i','n','s',0};
+static const WCHAR wszAllowedMany[] = {'A','l','l','o','w','e','d','M','a','n','y',0};
+static const WCHAR wszAllowedZero[] = {'A','l','l','o','w','e','d','Z','e','r','o',0};
+static const WCHAR wszDirection[] = {'D','i','r','e','c','t','i','o','n',0};
+static const WCHAR wszIsRendered[] = {'I','s','R','e','n','d','e','r','e','d',0};
+/* For types registered with IFilterMapper */
+static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
+
 
 /* registry format for REGFILTER2 */
 struct REG_RF
@@ -197,7 +211,7 @@ static ULONG WINAPI FilterMapper2_AddRef(IFilterMapper2 * iface)
 {
     ICOM_THIS(FilterMapper2Impl, iface);
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     return InterlockedIncrement(&This->refCount);
 }
@@ -206,7 +220,7 @@ static ULONG WINAPI FilterMapper2_Release(IFilterMapper2 * iface)
 {
     ICOM_THIS(FilterMapper2Impl, iface);
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     if (InterlockedDecrement(&This->refCount) == 0)
     {
@@ -879,7 +893,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
             if (SUCCEEDED(hrSub))
                 hrSub = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &clsidCat, &pEnum, 0);
 
-            if (SUCCEEDED(hrSub))
+            if (hrSub == S_OK)
             {
                 while (IEnumMoniker_Next(pEnum, 1, &pMoniker, NULL) == S_OK)
                 {
@@ -940,7 +954,6 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
             IPropertyBag_Release(pPropBagCat);
         IMoniker_Release(pMonikerCat);
     }
-
 
     if (SUCCEEDED(hr))
     {
@@ -1024,20 +1037,183 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     CLSID clsOutMaj,
     CLSID clsOutSub)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ICOM_THIS_From_IFilterMapper(FilterMapper2Impl, iface);
+    GUID InputType[2];
+    GUID OutputType[2];
+    IEnumMoniker* ppEnumMoniker;
+    IMoniker* IMon;
+    ULONG nb;
+    ULONG idx = 0, nb_mon = 0;
+    REGFILTER* regfilters;
+    HRESULT hr;
+
+    TRACE("(%p/%p)->(%p, %lx, %s, %s, %s, %s, %s, %s, %s) stub!\n",
+        iface,This,
+        ppEnum,
+        dwMerit,
+        bInputNeeded ? "true" : "false",
+        debugstr_guid(&clsInMaj),
+        debugstr_guid(&clsInSub),
+        bRender ? "true" : "false",
+        bOutputNeeded ? "true" : "false",
+        debugstr_guid(&clsOutMaj),
+        debugstr_guid(&clsOutSub));
+
+    InputType[0] = clsInMaj;
+    InputType[1] = clsInSub;
+    OutputType[0] = clsOutMaj;
+    OutputType[1] = clsOutSub;
+
+    hr = IFilterMapper2_EnumMatchingFilters((IFilterMapper2*)This,
+                                       &ppEnumMoniker,
+                                       0,
+                                       TRUE,
+                                       dwMerit,
+                                       bInputNeeded,
+                                       1,
+                                       InputType,
+                                       NULL,
+                                       &GUID_NULL,
+                                       bRender,
+                                       bOutputNeeded,
+                                       1,
+                                       OutputType,
+                                       NULL,
+                                       &GUID_NULL);
+
+    if (!SUCCEEDED(hr))
+        return hr;
+    
+    while(IEnumMoniker_Next(ppEnumMoniker, 1, &IMon, &nb) == S_OK)
+    {
+        IMoniker_Release(IMon);
+        nb_mon++;
+    }
+
+    *ppEnum = NULL;
+    if (!nb_mon)
+    {
+        IEnumMoniker_Release(ppEnumMoniker);
+        return IEnumRegFiltersImpl_Create(NULL, 0, ppEnum);
+    }
+
+    regfilters = CoTaskMemAlloc(nb_mon * sizeof(REGFILTER));
+    if (!regfilters)
+    {
+        IEnumMoniker_Release(ppEnumMoniker);
+        return E_OUTOFMEMORY;
+    }
+    
+    IEnumMoniker_Reset(ppEnumMoniker);
+    while(IEnumMoniker_Next(ppEnumMoniker, 1, &IMon, &nb) == S_OK)
+    {
+        IPropertyBag * pPropBagCat = NULL;
+        VARIANT var;
+        HRESULT hrSub;
+        GUID clsid;
+        int len;
+
+        VariantInit(&var);
+        V_VT(&var) = VT_BSTR;
+
+        hrSub = IMoniker_BindToStorage(IMon, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
+
+        if (SUCCEEDED(hrSub))
+            hrSub = IPropertyBag_Read(pPropBagCat, wszClsidName, &var, NULL);
+
+        if (SUCCEEDED(hrSub))
+        {
+            CLSIDFromString(V_UNION(&var, bstrVal), &clsid);
+        }
+
+        if (SUCCEEDED(hrSub))
+            hrSub = IPropertyBag_Read(pPropBagCat, wszFriendlyName, &var, NULL);
+
+        if (SUCCEEDED(hrSub))
+        {
+            len = (strlenW((WCHAR*)&V_UNION(&var, bstrVal))+1) * sizeof(WCHAR);
+            if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
+                hr = E_OUTOFMEMORY;
+        }
+
+        if (SUCCEEDED(hrSub))
+        {
+            memcpy(regfilters[idx].Name, &V_UNION(&var, bstrVal), len);
+            regfilters[idx].Clsid = clsid;
+            idx++;
+        }
+
+        if (pPropBagCat)
+            IPropertyBag_Release(pPropBagCat);
+        IMoniker_Release(IMon);
+    }
+
+    /* In case of release all resources */
+    if (!SUCCEEDED(hr))
+    {
+        for (idx = 0; idx < nb_mon; idx++)
+            CoTaskMemFree(regfilters[idx].Name);
+        CoTaskMemFree(regfilters);
+        IEnumMoniker_Release(ppEnumMoniker);
+        return hr;
+    }
+
+    hr = IEnumRegFiltersImpl_Create(regfilters, nb_mon, ppEnum);
+    CoTaskMemFree(regfilters);
+    IEnumMoniker_Release(ppEnumMoniker);
+    
+    return hr;
 }
 
 
 static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID clsid, LPCWSTR szName, DWORD dwMerit)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR wszClsid = NULL;
+    HKEY hKey;
+    WCHAR wszKeyName[strlenW(wszFilterSlash) + (CHARS_IN_GUID-1) + 1];
+
+    TRACE("(%p)->(%s, %s, %lx)\n", iface, debugstr_guid(&clsid), debugstr_w(szName), dwMerit);
+
+    hr = StringFromCLSID(&clsid, &wszClsid);
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszFilterSlash);
+        strcatW(wszKeyName, wszClsid);
+    
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, NULL, 0, REG_SZ, (LPBYTE)szName, strlenW(szName) + 1));
+        CloseHandle(hKey);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszClsidSlash);
+        strcatW(wszKeyName, wszClsid);
+    
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszMeritName, 0, REG_DWORD, (LPBYTE)&dwMerit, sizeof(dwMerit)));
+        CloseHandle(hKey);
+    }
+    
+    return hr;
 }
 
 static HRESULT WINAPI FilterMapper_RegisterFilterInstance(IFilterMapper * iface, CLSID clsid, LPCWSTR szName, CLSID *MRId)
 {
-    FIXME("stub\n");
+    TRACE("(%p)->(%s, %s, %p)\n", iface, debugstr_guid(&clsid), debugstr_w(szName), MRId);
+
+    /* Not implemented in Windows (tested on Win2k) */
+
     return E_NOTIMPL;
 }
 
@@ -1052,8 +1228,76 @@ static HRESULT WINAPI FilterMapper_RegisterPin(
     CLSID ConnectsToFilter,
     LPCWSTR ConnectsToPin)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR wszClsid = NULL;
+    HKEY hKey = NULL;
+    HKEY hPinsKey = NULL;
+    WCHAR * wszPinsKeyName;
+    WCHAR wszKeyName[strlenW(wszClsidSlash) + (CHARS_IN_GUID-1) + 1];
+
+    TRACE("(%p)->(%s, %s, %d, %d, %d, %d, %s, %s)\n", iface, debugstr_guid(&Filter), debugstr_w(szName), bRendered,
+                bOutput, bZero, bMany, debugstr_guid(&ConnectsToFilter), debugstr_w(ConnectsToPin));
+
+    hr = StringFromCLSID(&Filter, &wszClsid);
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszClsidSlash);
+        strcatW(wszKeyName, wszClsid);
+
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        wszPinsKeyName = CoTaskMemAlloc((strlenW(wszPins) + 1 + strlenW(szName) + 1) * 2);
+        if (!wszPinsKeyName)
+             hr = E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszPinsKeyName, wszPins);
+        strcatW(wszPinsKeyName, wszSlash);
+        strcatW(wszPinsKeyName, szName);
+    
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(hKey, wszPinsKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hPinsKey, NULL));
+        CoTaskMemFree(wszPinsKeyName);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hPinsKey, wszAllowedMany, 0, REG_DWORD, (LPBYTE)&bMany, sizeof(bMany)));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hPinsKey, wszAllowedZero, 0, REG_DWORD, (LPBYTE)&bZero, sizeof(bZero)));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hPinsKey, wszDirection, 0, REG_DWORD, (LPBYTE)&bOutput, sizeof(bOutput)));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hPinsKey, wszIsRendered, 0, REG_DWORD, (LPBYTE)&bRendered, sizeof(bRendered)));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(hPinsKey, wszTypes, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, NULL, NULL));
+    }
+
+    if (wszClsid)
+        CoTaskMemFree(wszClsid);
+    if (hKey)
+        CloseHandle(hKey);
+    if (hPinsKey)
+        CloseHandle(hPinsKey);
+
+    return hr;
 }
 
 
@@ -1064,26 +1308,169 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
     CLSID clsMajorType,
     CLSID clsSubType)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR wszClsid = NULL;
+    LPWSTR wszClsidMajorType = NULL;
+    LPWSTR wszClsidSubType = NULL;
+    HKEY hKey = NULL;
+    WCHAR * wszTypesKey;
+    WCHAR wszKeyName[strlenW(wszClsidSlash) + (CHARS_IN_GUID-1) + 1];
+
+    TRACE("(%p)->(%s, %s, %s, %s)\n", iface, debugstr_guid(&clsFilter), debugstr_w(szName),
+                    debugstr_guid(&clsMajorType), debugstr_guid(&clsSubType));
+
+    hr = StringFromCLSID(&clsFilter, &wszClsid);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = StringFromCLSID(&clsMajorType, &wszClsidMajorType);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = StringFromCLSID(&clsSubType, &wszClsidSubType);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        wszTypesKey = CoTaskMemAlloc((strlenW(wszClsidSlash) + strlenW(wszClsid) + strlenW(wszPins) +
+                        strlenW(szName) + strlenW(wszTypes) + 3 + 1) * 2);
+        if (!wszTypesKey)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszTypesKey, wszClsidSlash);
+        strcatW(wszTypesKey, wszClsid);
+        strcatW(wszTypesKey, wszSlash);
+        strcatW(wszTypesKey, wszPins);
+        strcatW(wszTypesKey, wszSlash);
+        strcatW(wszTypesKey, szName);
+        strcatW(wszTypesKey, wszSlash);
+        strcatW(wszTypesKey, wszTypes);
+
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszTypesKey, 0, KEY_WRITE, &hKey));
+        CoTaskMemFree(wszTypesKey);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszClsidMajorType);
+        strcatW(wszKeyName, wszSlash);
+        strcatW(wszKeyName, wszClsidSubType);
+
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(hKey, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, NULL, NULL));
+        CloseHandle(hKey);
+    }
+
+    if (wszClsid)
+        CoTaskMemFree(wszClsid);
+    if (wszClsidMajorType)
+        CoTaskMemFree(wszClsidMajorType);
+    if (wszClsidSubType)
+        CoTaskMemFree(wszClsidSubType);
+
+    return hr;
 }
 
 static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper * iface, CLSID Filter)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR wszClsid = NULL;
+    HKEY hKey;
+    WCHAR wszKeyName[strlenW(wszClsidSlash) + (CHARS_IN_GUID-1) + 1];
+
+    TRACE("(%p)->(%s)\n", iface, debugstr_guid(&Filter));
+
+    hr = StringFromCLSID(&Filter, &wszClsid);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFilter, 0, KEY_WRITE, &hKey));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyW(hKey, wszClsid));
+        CloseHandle(hKey);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszClsidSlash);
+        strcatW(wszKeyName, wszClsid);
+
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyW(hKey, wszMeritName));
+        CloseHandle(hKey);
+    }
+
+    if (wszClsid)
+        CoTaskMemFree(wszClsid);
+
+    return hr;
 }
 
 static HRESULT WINAPI FilterMapper_UnregisterFilterInstance(IFilterMapper * iface, CLSID MRId)
 {
-    FIXME("stub\n");
+    TRACE("(%p)->(%s)\n", iface, debugstr_guid(&MRId));
+
+    /* Not implemented in Windows (tested on Win2k) */
+
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Filter, LPCWSTR Name)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    LPWSTR wszClsid = NULL;
+    HKEY hKey = NULL;
+    WCHAR * wszPinNameKey;
+    WCHAR wszKeyName[strlenW(wszClsidSlash) + (CHARS_IN_GUID-1) + 1];
+
+    TRACE("(%p)->(%s, %s)\n", iface, debugstr_guid(&Filter), debugstr_w(Name));
+
+    if (!Name)
+        return E_INVALIDARG;
+
+    hr = StringFromCLSID(&Filter, &wszClsid);
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszKeyName, wszClsidSlash);
+        strcatW(wszKeyName, wszClsid);
+
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey));
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        wszPinNameKey = CoTaskMemAlloc((strlenW(wszPins) + 1 + strlenW(Name) + 1) * 2);
+        if (!wszPinNameKey)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        strcpyW(wszPinNameKey, wszPins);
+        strcatW(wszPinNameKey, wszSlash);
+        strcatW(wszPinNameKey, Name);
+
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyW(hKey, wszPinNameKey));
+        CoTaskMemFree(wszPinNameKey);
+    }
+
+    if (wszClsid)
+        CoTaskMemFree(wszClsid);
+    if (hKey)
+        CloseHandle(hKey);
+
+    return hr;
 }
 
 static ICOM_VTABLE(IFilterMapper) fmvtbl =
@@ -1103,3 +1490,4 @@ static ICOM_VTABLE(IFilterMapper) fmvtbl =
     FilterMapper_UnregisterPin,
     FilterMapper_EnumMatchingFilters
 };
+
