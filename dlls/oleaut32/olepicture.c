@@ -22,6 +22,8 @@
  *
  */
 
+#include "config.h"
+
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +45,9 @@
 #ifdef HAVE_LIBJPEG
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
 #define XMD_H 
-#include <jpeglib.h>
+#ifdef HAVE_JPEGLIB_H
+# include <jpeglib.h>
+#endif
 #endif
 
 DEFAULT_DEBUG_CHANNEL(ole);
