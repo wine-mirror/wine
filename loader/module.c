@@ -1400,8 +1400,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 		case MODULE_LOADORDER_SO:
 			TRACE("Trying so-library '%s'\n", filename);
-			if (!(pwm = BUILTIN32_LoadLibraryExA(filename, flags)))
-                            pwm = ELF_LoadLibraryExA(filename, flags);
+                        pwm = ELF_LoadLibraryExA(filename, flags);
 			break;
 
 		case MODULE_LOADORDER_BI:
