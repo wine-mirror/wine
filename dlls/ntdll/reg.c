@@ -1,14 +1,123 @@
 /*
  *	registry functions
+ *
+ * NOTES:
+ * 	HKEY_LOCAL_MACHINE	\\REGISTRY\\MACHINE
+ *	HKEY_USERS		\\REGISTRY\\USER
+ *	HKEY_CURRENT_CONFIG	\\REGISTRY\\MACHINE\\SYSTEM\\CURRENTCONTROLSET\\HARDWARE PROFILES\\CURRENT
+  *	HKEY_CLASSES		\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES
  */
 
 #include "debugtools.h"
 #include "winreg.h"
-
+#include "winerror.h"
+#include "file.h"
+#include "server.h"
 #include "ntddk.h"
+#include "crtdll.h"
+#include "ntdll_misc.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll)
 
+
+/* helper to make the server functions return STATUS_ codes */
+static NTSTATUS ErrorCodeToStatus (DWORD Error)
+{
+	TRACE("err=%lu\n", Error);
+	switch (Error)
+	{
+	  case NO_ERROR:			return STATUS_SUCCESS;
+
+	  case ERROR_INSUFFICIENT_BUFFER:	return STATUS_BUFFER_TOO_SMALL;
+	  case ERROR_FILE_NOT_FOUND:		return STATUS_OBJECT_NAME_NOT_FOUND;
+	  case ERROR_NO_MORE_ITEMS:		return STATUS_NO_MORE_ENTRIES;
+/*
+	return STATUS_INVALID_PARAMETER;
+	return STATUS_INVALID_HANDLE 
+	return STATUS_ACCESS_DENIED
+*/
+/*	  case ERROR_MORE_DATA:			return STATUS_BUFFER_OVERFLOW;
+	  case ERROR_KEY_DELETED:		return STATUS_KEY_DELETED;
+	  case ERROR_CHILD_MUST_BE_VOLATILE:	return STATUS_CHILD_MUST_BE_VOLATILE;
+	  case ERROR_ACCESS_DENIED:		return STATUS_ACCESS_DENIED;
+	  case ERROR_NOT_REGISTRY_FILE:		return STATUS_NOT_REGISTRY_FILE;
+*/
+	  default:
+	    FIXME("Error code %lu not implemented\n", Error);
+	}
+	return STATUS_UNSUCCESSFUL;
+}
+
+#define nt_server_call(kind) (ret=ErrorCodeToStatus(server_call_noerr(kind)))
+
+/* copy a key name into the request buffer */
+static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name, UINT Offset )
+{
+	if (Name->Buffer) 
+	{
+	  if ((Name->Length-Offset) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
+	  lstrcpyW( Dest, Name->Buffer+Offset );
+	}
+	else Dest[0] = 0;
+	return STATUS_SUCCESS;
+}
+
+/* translates predefined paths to HKEY_ constants */
+static BOOLEAN _NtKeyToWinKey(
+	IN POBJECT_ATTRIBUTES ObjectAttributes,
+	OUT UINT * Offset,	/* offset within ObjectName */
+	OUT HKEY * KeyHandle)	/* translated handle */
+{
+	static const WCHAR KeyPath_HKLM[] = {
+		'\\','R','E','G','I','S','T','R','Y',
+		'\\','M','A','C','H','I','N','E',0};
+	static const WCHAR KeyPath_HKU [] = {
+		'\\','R','E','G','I','S','T','R','Y',
+		'\\','U','S','E','R',0};
+	static const WCHAR KeyPath_HCC [] = {
+		'\\','R','E','G','I','S','T','R','Y',
+		'\\','M','A','C','H','I','N','E',
+		'\\','S','Y','S','T','E','M',
+		'\\','C','U','R','R','E','N','T','C','O','N','T','R','O','L','S','E','T',
+		'\\','H','A','R','D','W','A','R','E','P','R','O','F','I','L','E','S',
+		'\\','C','U','R','R','E','N','T',0};
+	static const WCHAR KeyPath_HCR [] = {
+		'\\','R','E','G','I','S','T','R','Y',
+		'\\','M','A','C','H','I','N','E',
+		'\\','S','O','F','T','W','A','R','E',
+		'\\','C','L','A','S','S','E','S',0};
+	int len;
+	PUNICODE_STRING ObjectName = ObjectAttributes->ObjectName;
+	
+	if((ObjectName->Length > (len=lstrlenW(KeyPath_HKLM)))
+	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HKLM,len)))
+	{  *KeyHandle = HKEY_LOCAL_MACHINE;
+	}
+	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKU)))
+	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HKU,len)))
+	{  *KeyHandle = HKEY_USERS;
+	}
+	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCR)))
+	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HCR,len)))
+	{  *KeyHandle = HKEY_CLASSES_ROOT;
+	}
+	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCC)))
+	&& (0==CRTDLL_wcsncmp(ObjectName->Buffer,KeyPath_HCC,len)))
+	{  *KeyHandle = HKEY_CURRENT_CONFIG;
+	}
+	else
+	{
+	  *KeyHandle = ObjectAttributes->RootDirectory;
+	  *Offset = 0;
+	  return FALSE;
+	}
+
+	if (ObjectName->Buffer[len] == (WCHAR)'\\') len++;
+	*Offset = len;
+
+	TRACE("off=%u hkey=0x%08x\n", *Offset, *KeyHandle);
+	return TRUE;
+}
 
 /******************************************************************************
  * NtCreateKey [NTDLL]
@@ -23,10 +132,81 @@ NTSTATUS WINAPI NtCreateKey(
 	ULONG CreateOptions,
 	PULONG Disposition)
 {
-	FIXME("(%p,0x%08lx,%p (%s),0x%08lx, %p(%s),0x%08lx,%p),stub!\n",
-	KeyHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
-	TitleIndex, Class, debugstr_w(Class->Buffer), CreateOptions, Disposition);
-	return 0;
+	struct create_key_request *req = get_req_buffer();
+	UINT ObjectNameOffset;
+	HKEY RootDirectory;
+	NTSTATUS ret;
+
+	TRACE("(%p,0x%08lx,0x%08lx,%p(%s),0x%08lx,%p)\n",
+	KeyHandle, DesiredAccess, TitleIndex, Class, debugstr_us(Class), CreateOptions, Disposition);
+	dump_ObjectAttributes(ObjectAttributes);
+
+	if (!KeyHandle)
+	  return STATUS_INVALID_PARAMETER;
+
+	_NtKeyToWinKey(ObjectAttributes, &ObjectNameOffset, &RootDirectory);
+
+	req->parent  = RootDirectory;
+	req->access  = DesiredAccess;
+	req->options = CreateOptions;
+	req->modif   = time(NULL);
+
+	if (copy_nameU( req->name, ObjectAttributes->ObjectName, ObjectNameOffset ) != STATUS_SUCCESS) 
+	  return STATUS_INVALID_PARAMETER;
+
+	if (Class)
+	{
+	  int ClassLen = Class->Length+1;
+	  if ( ClassLen*sizeof(WCHAR) > server_remaining(req->class)) return STATUS_BUFFER_OVERFLOW;
+	  lstrcpynW( req->class, Class->Buffer, ClassLen);
+	}
+	else
+	  req->class[0] = 0x0000;
+
+	if (nt_server_call(REQ_CREATE_KEY) == STATUS_SUCCESS)
+	{
+	  *KeyHandle = req->hkey;
+	  if (Disposition) *Disposition = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+	}
+	return ret;
+}
+
+/******************************************************************************
+ * NtOpenKey [NTDLL.129]
+ * ZwOpenKey
+ *   OUT	PHANDLE			KeyHandle (returns 0 when failure)
+ *   IN		ACCESS_MASK		DesiredAccess
+ *   IN		POBJECT_ATTRIBUTES 	ObjectAttributes 
+ */
+NTSTATUS WINAPI NtOpenKey(
+	PHANDLE KeyHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes) 
+{
+	struct open_key_request *req = get_req_buffer();
+	UINT ObjectNameOffset;
+	HKEY RootDirectory;
+	NTSTATUS ret;
+
+	TRACE("(%p,0x%08lx)\n", KeyHandle, DesiredAccess);
+	dump_ObjectAttributes(ObjectAttributes);
+
+	if (!KeyHandle) return STATUS_INVALID_PARAMETER;
+	*KeyHandle = 0;
+
+	_NtKeyToWinKey(ObjectAttributes, &ObjectNameOffset, &RootDirectory);
+
+	req->parent = RootDirectory;
+	req->access = DesiredAccess;
+
+	if (copy_nameU( req->name, ObjectAttributes->ObjectName, ObjectNameOffset ) != STATUS_SUCCESS) 
+	  return STATUS_INVALID_PARAMETER;
+
+	if (nt_server_call(REQ_OPEN_KEY) == STATUS_SUCCESS)
+	{
+	  *KeyHandle = req->hkey;
+	}
+	return ret;
 }
 
 /******************************************************************************
@@ -37,7 +217,7 @@ NTSTATUS WINAPI NtDeleteKey(HANDLE KeyHandle)
 {
 	FIXME("(0x%08x) stub!\n",
 	KeyHandle);
-	return 1;
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -49,13 +229,16 @@ NTSTATUS WINAPI NtDeleteValueKey(
 	IN PUNICODE_STRING ValueName)
 {
 	FIXME("(0x%08x,%p(%s)) stub!\n",
-	KeyHandle, ValueName,debugstr_w(ValueName->Buffer));
-	return 1;
-
+	KeyHandle, ValueName,debugstr_us(ValueName));
+	return STATUS_SUCCESS;
 }
+
 /******************************************************************************
  * NtEnumerateKey [NTDLL]
  * ZwEnumerateKey
+ *
+ * NOTES
+ *  the name copied into the buffer is NOT 0-terminated 
  */
 NTSTATUS WINAPI NtEnumerateKey(
 	HANDLE KeyHandle,
@@ -65,9 +248,156 @@ NTSTATUS WINAPI NtEnumerateKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub\n",
+	struct enum_key_request *req = get_req_buffer();
+	NTSTATUS ret;
+
+	TRACE("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p)\n",
 	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
-	return 1;
+
+	req->hkey = KeyHandle;
+	req->index = Index;
+	if (nt_server_call(REQ_ENUM_KEY) != STATUS_SUCCESS) return ret;
+
+	switch (KeyInformationClass)
+	{
+	  case KeyBasicInformation:
+	    {
+	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
+	      UINT NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kbi->LastWriteTime, 0);
+	      kbi->TitleIndex = 0;
+	      kbi->NameLength = NameLength;
+	      memcpy (kbi->Name, req->name, NameLength);
+	    }
+	    break;
+	  case KeyFullInformation:
+	    {
+	      PKEY_FULL_INFORMATION kfi = KeyInformation;
+	      kfi->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kfi->ClassOffset = (kfi->ClassLength) ?
+	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
+	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kfi->LastWriteTime, 0);
+	      kfi->TitleIndex = 0;
+/*	      kfi->SubKeys = req->subkeys;
+	      kfi->MaxNameLength = req->max_subkey;
+	      kfi->MaxClassLength = req->max_class;
+	      kfi->Values = req->values;
+	      kfi->MaxValueNameLen = req->max_value;
+	      kfi->MaxValueDataLen = req->max_data;
+*/
+	      FIXME("incomplete\n");
+	      if (kfi->ClassLength) memcpy (kfi->Class, req->class, kfi->ClassLength);
+	    }
+	    break;
+	  case KeyNodeInformation:
+	    {
+	      PKEY_NODE_INFORMATION kni = KeyInformation;
+	      kni->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kni->NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      kni->ClassOffset = (kni->ClassLength) ?
+	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
+
+	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
+	      kni->TitleIndex = 0;
+	      memcpy (kni->Name, req->name, kni->NameLength);
+	      if (kni->ClassLength) memcpy (KeyInformation+kni->ClassOffset, req->class, kni->ClassLength);
+	    }
+	    break;
+	  default:
+	    FIXME("KeyInformationClass not implemented\n");
+	    return STATUS_UNSUCCESSFUL;
+	}
+	TRACE("buf=%lu len=%lu\n", Length, *ResultLength);
+	return ret;
+}
+
+/******************************************************************************
+ * NtQueryKey [NTDLL]
+ * ZwQueryKey
+ */
+NTSTATUS WINAPI NtQueryKey(
+	HANDLE KeyHandle,
+	KEY_INFORMATION_CLASS KeyInformationClass,
+	PVOID KeyInformation,
+	ULONG Length,
+	PULONG ResultLength)
+{
+	struct query_key_info_request *req = get_req_buffer();
+	NTSTATUS ret;
+	
+	TRACE("(0x%08x,0x%08x,%p,0x%08lx,%p) stub\n",
+	KeyHandle, KeyInformationClass, KeyInformation, Length, ResultLength);
+	
+	req->hkey = KeyHandle;
+	if ((ret=nt_server_call(REQ_QUERY_KEY_INFO)) != STATUS_SUCCESS) return ret;
+	
+	switch (KeyInformationClass)
+	{
+	  case KeyBasicInformation:
+	    {
+	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
+	      UINT NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kbi->LastWriteTime, 0);
+	      kbi->TitleIndex = 0;
+	      kbi->NameLength = NameLength;
+	      memcpy (kbi->Name, req->name, NameLength);
+	    }
+	    break;
+	  case KeyFullInformation:
+	    {
+	      PKEY_FULL_INFORMATION kfi = KeyInformation;
+	      kfi->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kfi->ClassOffset = (kfi->ClassLength) ?
+	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
+
+	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kfi->LastWriteTime, 0);
+	      kfi->TitleIndex = 0;
+	      kfi->SubKeys = req->subkeys;
+	      kfi->MaxNameLen = req->max_subkey;
+	      kfi->MaxClassLen = req->max_class;
+	      kfi->Values = req->values;
+	      kfi->MaxValueNameLen = req->max_value;
+	      kfi->MaxValueDataLen = req->max_data;
+	      if(kfi->ClassLength) memcpy (KeyInformation+kfi->ClassOffset, req->class, kfi->ClassLength);
+	    }
+	    break;
+	  case KeyNodeInformation:
+	    {
+	      PKEY_NODE_INFORMATION kni = KeyInformation;
+	      kni->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kni->NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      kni->ClassOffset = (kni->ClassLength) ?
+	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
+
+	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
+	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
+	      kni->TitleIndex = 0;
+	      memcpy (kni->Name, req->name, kni->NameLength);
+	      if(kni->ClassLength) memcpy (KeyInformation+kni->ClassOffset, req->class, kni->ClassLength);
+	    }
+	    break;
+	  default:
+	    FIXME("KeyInformationClass not implemented\n");
+	    return STATUS_UNSUCCESSFUL;
+	}
+	return ret;
 }
 
 /******************************************************************************
@@ -82,9 +412,71 @@ NTSTATUS WINAPI NtEnumerateValueKey(
 	ULONG Length,
 	PULONG ResultLength)
 {
-	FIXME("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p) stub!\n",
+	struct enum_key_value_request *req = get_req_buffer();
+	UINT NameLength;
+	NTSTATUS ret;
+	
+	TRACE("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p)\n",
 	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
-	return 1;
+
+	req->hkey = KeyHandle;
+	req->index = Index;
+	if (nt_server_call(REQ_ENUM_KEY_VALUE) != STATUS_SUCCESS) return ret;
+
+ 	switch (KeyInformationClass)
+	{
+	  case KeyBasicInformation:
+	    {
+	      PKEY_VALUE_BASIC_INFORMATION kbi = KeyInformation;
+	      
+	      NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      *ResultLength = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
+	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+
+	      kbi->TitleIndex = 0;
+	      kbi->Type = req->type;
+	      kbi->NameLength = NameLength;
+	      memcpy(kbi->Name, req->name, kbi->NameLength);
+	    }
+	    break;
+	  case KeyValueFullInformation:
+	    {
+	      PKEY_VALUE_FULL_INFORMATION kbi = KeyInformation;
+	      UINT DataOffset;
+
+	      NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      DataOffset = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR) + NameLength;
+	      *ResultLength = DataOffset + req->len;
+
+	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+
+	      kbi->TitleIndex = 0;
+	      kbi->Type = req->type;
+	      kbi->DataOffset = DataOffset;
+	      kbi->DataLength = req->len;
+	      kbi->NameLength = NameLength;
+	      memcpy(kbi->Name, req->name, kbi->NameLength);
+	      memcpy(((LPBYTE)kbi) + DataOffset, req->data, req->len);
+	    }
+	    break;
+	  case KeyValuePartialInformation:
+	    {
+	      PKEY_VALUE_PARTIAL_INFORMATION kbi = KeyInformation;
+	      
+	      *ResultLength = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(WCHAR) + req->len;
+
+	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
+
+	      kbi->TitleIndex = 0;
+	      kbi->Type = req->type;
+	      kbi->DataLength = req->len;
+	      memcpy(kbi->Data, req->data, req->len);
+	    }
+	    break;
+	  default:
+	    FIXME("not implemented\n");
+	}
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -106,10 +498,9 @@ NTSTATUS WINAPI NtLoadKey(
 	PHANDLE KeyHandle,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,%p (%s)),stub!\n",
-	KeyHandle, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
-	return 0;
-
+	FIXME("(%p),stub!\n", KeyHandle);
+	dump_ObjectAttributes(ObjectAttributes);
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -131,41 +522,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 	FIXME("(0x%08x,0x%08x,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
 	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
 	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
-	return 0;
-}
-
-
-/******************************************************************************
- * NtOpenKey [NTDLL.129]
- * ZwOpenKey
- *   OUT	PHANDLE			KeyHandle,
- *   IN		ACCESS_MASK		DesiredAccess,
- *   IN		POBJECT_ATTRIBUTES 	ObjectAttributes 
- */
-NTSTATUS WINAPI NtOpenKey(
-	PHANDLE KeyHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes) 
-{
-	FIXME("(%p,0x%08lx,%p (%s)),stub!\n",
-	KeyHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
-	return 0;
-}
-
-/******************************************************************************
- * NtQueryKey [NTDLL]
- * ZwQueryKey
- */
-NTSTATUS WINAPI NtQueryKey(
-	HANDLE KeyHandle,
-	KEY_INFORMATION_CLASS KeyInformationClass,
-	PVOID KeyInformation,
-	ULONG Length,
-	PULONG ResultLength)
-{
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p) stub\n",
-	KeyHandle, KeyInformationClass, KeyInformation, Length, ResultLength);
-	return 0;
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -184,24 +541,80 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 	FIXME("(0x%08x,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
 	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
 	Length,ReturnLength);
-	return 0;
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
  * NtQueryValueKey [NTDLL]
  * ZwQueryValueKey
+ *
+ * NOTES
+ *  the name in the KeyValueInformation is never set
  */
 NTSTATUS WINAPI NtQueryValueKey(
-	HANDLE KeyHandle,
-	PUNICODE_STRING ValueName,
-	KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-	PVOID KeyValueInformation,
-	ULONG Length,
-	PULONG ResultLength)
+	IN HANDLE KeyHandle,
+	IN PUNICODE_STRING ValueName,
+	IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+	OUT PVOID KeyValueInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
 {
-	FIXME("(0x%08x,%p,0x%08x,%p,0x%08lx,%p) stub\n",
-	KeyHandle, ValueName, KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
-	return 0;
+	struct get_key_value_request *req = get_req_buffer();
+	NTSTATUS ret;
+
+	TRACE("(0x%08x,%s,0x%08x,%p,0x%08lx,%p)\n",
+	KeyHandle, debugstr_us(ValueName), KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
+
+	req->hkey = KeyHandle;
+	if (copy_nameU(req->name, ValueName, 0) != STATUS_SUCCESS) return STATUS_BUFFER_OVERFLOW;
+	if (nt_server_call(REQ_GET_KEY_VALUE) != STATUS_SUCCESS) return ret;
+
+	switch(KeyValueInformationClass)
+	{
+	  case KeyValueBasicInformation:
+	    {
+	      PKEY_VALUE_BASIC_INFORMATION kbi = (PKEY_VALUE_BASIC_INFORMATION) KeyValueInformation;
+	      kbi->Type = req->type;
+
+	      *ResultLength = sizeof(KEY_VALUE_BASIC_INFORMATION)-sizeof(WCHAR);
+	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
+	      kbi->NameLength = 0;
+	    }  
+	    break;
+	  case KeyValueFullInformation:
+	    {
+	      PKEY_VALUE_FULL_INFORMATION  kfi = (PKEY_VALUE_FULL_INFORMATION) KeyValueInformation;
+	      ULONG DataOffset;
+	      kfi->Type = req->type;
+
+	      DataOffset = sizeof(KEY_VALUE_FULL_INFORMATION)-sizeof(WCHAR);
+	      *ResultLength = DataOffset + req->len;
+	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      kfi->NameLength = 0;
+	      kfi->DataOffset = DataOffset;
+	      kfi->DataLength = req->len;
+	      memcpy(KeyValueInformation+DataOffset, req->data, req->len);
+	    }  
+	    break;
+	  case KeyValuePartialInformation:
+	    {
+	      PKEY_VALUE_PARTIAL_INFORMATION kpi = (PKEY_VALUE_PARTIAL_INFORMATION) KeyValueInformation;
+	      kpi->Type = req->type;
+
+	      *ResultLength = sizeof(KEY_VALUE_FULL_INFORMATION)-sizeof(UCHAR)+req->len;
+	      if (Length <= *ResultLength) return STATUS_BUFFER_OVERFLOW;
+
+	      kpi->DataLength = req->len;
+	      memcpy(kpi->Data, req->data, req->len);
+	    }  
+	    break;
+	  default:
+	    FIXME("KeyValueInformationClass not implemented\n");
+	    return STATUS_UNSUCCESSFUL;
+	  
+	}
+	return ret;
 }
 
 /******************************************************************************
@@ -213,11 +626,10 @@ NTSTATUS WINAPI NtReplaceKey(
 	IN HANDLE Key,
 	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes)
 {
-	FIXME("(%p(%s),0x%08x,%p (%s)),stub!\n",
-	ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),Key,
-	ReplacedObjectAttributes,debugstr_w(ReplacedObjectAttributes->ObjectName->Buffer));
-	return 0;
-
+	FIXME("(0x%08x),stub!\n", Key);
+	dump_ObjectAttributes(ObjectAttributes);
+	dump_ObjectAttributes(ReplacedObjectAttributes);
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  * NtRestoreKey [NTDLL]
@@ -230,8 +642,7 @@ NTSTATUS WINAPI NtRestoreKey(
 {
 	FIXME("(0x%08x,0x%08x,0x%08lx) stub\n",
 	KeyHandle, FileHandle, RestoreFlags);
-	return 0;
-
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  * NtSaveKey [NTDLL]
@@ -243,7 +654,7 @@ NTSTATUS WINAPI NtSaveKey(
 {
 	FIXME("(0x%08x,0x%08x) stub\n",
 	KeyHandle, FileHandle);
-	return 0;
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  * NtSetInformationKey [NTDLL]
@@ -257,7 +668,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 {
 	FIXME("(0x%08x,0x%08x,%p,0x%08lx) stub\n",
 	KeyHandle, KeyInformationClass, KeyInformation, KeyInformationLength);
-	return 0;
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  * NtSetValueKey [NTDLL]
@@ -272,8 +683,8 @@ NTSTATUS WINAPI NtSetValueKey(
 	ULONG DataSize)
 {
 	FIXME("(0x%08x,%p(%s), 0x%08lx, 0x%08lx, %p, 0x%08lx) stub!\n",
-	KeyHandle, ValueName,debugstr_w(ValueName->Buffer), TitleIndex, Type, Data, DataSize);
-	return 1;
+	KeyHandle, ValueName,debugstr_us(ValueName), TitleIndex, Type, Data, DataSize);
+	return STATUS_SUCCESS;
 
 }
 
@@ -286,5 +697,44 @@ NTSTATUS WINAPI NtUnloadKey(
 {
 	FIXME("(0x%08x) stub\n",
 	KeyHandle);
-	return 0;
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
+ */
+NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
+	IN OUT PUNICODE_STRING KeyPath)
+{
+/*	LPSTR Path = "\\REGISTRY\\USER\\S-1-5-21-0000000000-000000000-0000000000-500";*/
+	LPSTR Path = "\\REGISTRY\\USER\\.DEFAULT";
+	ANSI_STRING AnsiPath;
+
+	FIXME("(%p) stub\n",KeyPath);
+	RtlInitAnsiString(&AnsiPath, Path);
+	return RtlAnsiStringToUnicodeString(KeyPath, &AnsiPath, TRUE);
+}
+
+/******************************************************************************
+ *  RtlOpenCurrentUser		[NTDLL] 
+ *
+ * if we return just HKEY_CURRENT_USER the advapi try's to find a remote
+ * registry (odd handle) and fails
+ *
+ */
+DWORD WINAPI RtlOpenCurrentUser(
+	IN ACCESS_MASK DesiredAccess,
+	OUT PHANDLE KeyHandle)	/* handle of HKEY_CURRENT_USER */
+{
+	OBJECT_ATTRIBUTES ObjectAttributes;
+	UNICODE_STRING ObjectName;
+	NTSTATUS ret;
+
+	TRACE("(0x%08lx, %p) stub\n",DesiredAccess, KeyHandle);
+
+	RtlFormatCurrentUserKeyPath(&ObjectName);
+	InitializeObjectAttributes(&ObjectAttributes,&ObjectName,OBJ_CASE_INSENSITIVE,0, NULL);
+	ret = NtOpenKey(KeyHandle, DesiredAccess, &ObjectAttributes);
+	RtlFreeUnicodeString(&ObjectName);
+	return ret;
 }

@@ -10,6 +10,7 @@ SPEC_SRCS = ntdll.spec
 C_SRCS = \
 	exception.c \
 	file.c \
+	misc.c \
 	nt.c \
 	om.c \
 	reg.c \

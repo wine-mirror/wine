@@ -1374,12 +1374,15 @@ LONG        WINAPI InterlockedDecrement(LPLONG);
 LONG        WINAPI InterlockedExchange(LPLONG,LONG);
 LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
 LONG        WINAPI InterlockedIncrement(LPLONG);
-BOOL      WINAPI IsDBCSLeadByteEx(UINT,BYTE);
-BOOL      WINAPI IsProcessorFeaturePresent(DWORD);
-BOOL      WINAPI IsValidLocale(DWORD,DWORD);
-BOOL      WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
-BOOL      WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
-BOOL      WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);    
+BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
+BOOL        WINAPI IsProcessorFeaturePresent(DWORD);
+BOOL        WINAPI IsValidLocale(DWORD,DWORD);
+BOOL        WINAPI LookupAccountSidA(LPCSTR,PSID,LPSTR,LPDWORD,LPSTR,LPDWORD,PSID_NAME_USE);
+BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDWORD,PSID_NAME_USE);
+#define     LookupAccountSid WINELIB_NAME_AW(LookupAccountSidW)
+BOOL        WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
+BOOL        WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
+BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);    
 BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,LPVOID);
 BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,LPVOID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)

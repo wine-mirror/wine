@@ -15,6 +15,7 @@
 #include "debugtools.h"
 
 #include "ntddk.h"
+#include "ntdll_misc.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll)
 
@@ -31,10 +32,9 @@ NTSTATUS WINAPI NtCreateTimer(
 	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
 	IN TIMER_TYPE TimerType)
 {
-	FIXME("(%p,0x%08lx,%p(%s),0x%08x) stub\n",
-	TimerHandle,DesiredAccess,ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
-	TimerType);
+	FIXME("(%p,0x%08lx,%p,0x%08x) stub\n",
+	TimerHandle,DesiredAccess,ObjectAttributes, TimerType);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 /**************************************************************************
@@ -192,8 +192,9 @@ NTSTATUS WINAPI NtDuplicateToken(
         OUT PHANDLE NewToken)
 {
 	FIXME("(0x%08x,0x%08lx,%p,0x%08x,0x%08x,%p),stub!\n",
-	ExistingToken, DesiredAccess, ObjectAttributes, ImpersonationLevel,
-	TokenType, NewToken);
+	ExistingToken, DesiredAccess, ObjectAttributes,
+	ImpersonationLevel, TokenType, NewToken);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -247,6 +248,11 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 /******************************************************************************
 *  NtQueryInformationToken		[NTDLL.156] 
 *
+* NOTES
+*  Buffer for TokenUser:
+*   0x00 TOKEN_USER the PSID field points to the SID
+*   0x08 SID
+*
 */
 NTSTATUS WINAPI NtQueryInformationToken(
 	HANDLE token,
@@ -263,7 +269,20 @@ NTSTATUS WINAPI NtQueryInformationToken(
 		*retlen = sizeof (TOKEN_GROUPS);
 		break;
 	  case TokenUser:	/* 1 */
-		*retlen = sizeof (TOKEN_USER);
+		{
+		  int len = sizeof (TOKEN_USER)+ sizeof(SID);
+		  *retlen = len;
+		  if ( len <= tokeninfolength)
+		  if( tokeninfo )
+		  {
+		    TOKEN_USER * tuser = tokeninfo;
+		    PSID sid = (PSID) &((LPBYTE)tokeninfo)[sizeof(TOKEN_USER)];
+		    SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+		    RtlInitializeSid(sid, &localSidAuthority, 1);
+		    *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
+		    tuser->User.Sid = sid;
+		  }
+		}
 		break;
 	  case TokenPrivileges:
 		*retlen = sizeof (TOKEN_PRIVILEGES);
@@ -308,10 +327,10 @@ NTSTATUS WINAPI NtCreateSection(
 	IN ULONG AllocationAttributes,
 	IN HANDLE FileHandle OPTIONAL)
 {
-	FIXME("(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx,0x%08x) stub\n",
-	SectionHandle,DesiredAccess,ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
+	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx,0x%08x) stub\n",
+	SectionHandle,DesiredAccess, ObjectAttributes,
 	MaximumSize,SectionPageProtection,AllocationAttributes,FileHandle);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -323,9 +342,9 @@ NTSTATUS WINAPI NtOpenSection(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p(%s)),stub!\n",
-	SectionHandle,DesiredAccess,ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
+	FIXME("(%p,0x%08lx,%p),stub!\n",
+	SectionHandle,DesiredAccess,ObjectAttributes);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -549,6 +568,35 @@ NTSTATUS WINAPI NtDisplayString (
 }
 
 /******************************************************************************
+ *  _alldiv					[NTDLL.937] 
+ * 
+ *
+ */
+long long WINAPI _alldiv(LARGE_INTEGER a,  LARGE_INTEGER b)
+{
+#if SIZEOF_LONG_LONG==8
+	return (*(long long*)&a / *(long long*)&b);
+#else
+	FIXME(ntdll,"stub\n");
+	retrun 0;
+#endif
+}
+/******************************************************************************
+ *  _allmul					[NTDLL.938] 
+ * 
+ *
+ */
+long long WINAPI _allmul(LARGE_INTEGER a,  LARGE_INTEGER b)
+{
+#if SIZEOF_LONG_LONG==8
+	return (*(long long*)&a * *(long long*)&b);
+#else
+	FIXME(ntdll,"stub\n");
+	retrun 0;
+#endif
+}
+
+/******************************************************************************
  *  NtPowerInformation				[NTDLL] 
  * 
  */
@@ -556,4 +604,21 @@ NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4,x5);
 	return 0;
+}
+
+/******************************************************************************
+ *  NtAllocateLocallyUniqueId
+ *
+ * FIXME: the server should do that
+ */
+NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
+{
+	static LUID luid;
+
+	FIXME("%p (0x%08lx%08lx)\n", Luid, luid.DUMMYSTRUCTNAME.HighPart, luid.DUMMYSTRUCTNAME.LowPart);
+
+	luid.QuadPart++;
+	
+	Luid->QuadPart = luid.QuadPart;
+	return STATUS_SUCCESS;
 }

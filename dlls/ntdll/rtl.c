@@ -239,7 +239,7 @@ PVOID WINAPI RtlAllocateHeap(
 	ULONG Flags,
 	ULONG Size)
 {
-	FIXME("(0x%08x, 0x%08lx, 0x%08lx) semi stub\n",
+	TRACE("(0x%08x, 0x%08lx, 0x%08lx) semi stub\n",
 	Heap, Flags, Size);
 	return HeapAlloc(Heap, Flags, Size);
 }
@@ -252,7 +252,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 	ULONG Flags,
 	PVOID Address)
 {
-	FIXME("(0x%08x, 0x%08lx, %p) semi stub\n",
+	TRACE("(0x%08x, 0x%08lx, %p) semi stub\n",
 	Heap, Flags, Address);
 	return HeapFree(Heap, Flags, Address);
 }
@@ -265,7 +265,7 @@ BOOLEAN WINAPI RtlFreeHeap(
 BOOLEAN WINAPI RtlDestroyHeap(
 	HANDLE Heap)
 {
-	FIXME("(0x%08x) semi stub\n", Heap);
+	TRACE("(0x%08x) semi stub\n", Heap);
 	return HeapDestroy(Heap);
 }
 	
@@ -347,20 +347,72 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 /**************************************************************************
  *                 RtlNtStatusToDosError			[NTDLL.442]
  */
-DWORD WINAPI RtlNtStatusToDosError(DWORD error)
+DWORD WINAPI RtlNtStatusToDosError(DWORD Status)
 {
-	FIXME("(%lx): map STATUS_ to ERROR_\n",error);
-	switch (error)
-	{ case STATUS_SUCCESS:			return ERROR_SUCCESS;
-	  case STATUS_INVALID_PARAMETER:	return ERROR_BAD_ARGUMENTS;
-	  case STATUS_BUFFER_TOO_SMALL:		return ERROR_INSUFFICIENT_BUFFER;
-/*	  case STATUS_INVALID_SECURITY_DESCR:	return ERROR_INVALID_SECURITY_DESCR;*/
-	  case STATUS_NO_MEMORY:		return ERROR_NOT_ENOUGH_MEMORY;
-/*	  case STATUS_UNKNOWN_REVISION:
-	  case STATUS_BUFFER_OVERFLOW:*/
+	TRACE("(0x%08lx)\n",Status);
+
+	switch (Status & 0xC0000000)
+	{
+	  case 0x00000000:
+	    switch (Status)
+	    {
+/*00*/	      case STATUS_SUCCESS:			return ERROR_SUCCESS;
+	    }
+	    break;
+	  case 0x40000000:
+	    switch (Status)
+	    {
+	    }
+	    break;
+	  case 0x80000000:
+	    switch (Status)
+	    {
+	      case  STATUS_GUARD_PAGE_VIOLATION:	return STATUS_GUARD_PAGE_VIOLATION;
+	      case  STATUS_DATATYPE_MISALIGNMENT:	return ERROR_NOACCESS;
+	      case  STATUS_BREAKPOINT:			return STATUS_BREAKPOINT;
+	      case  STATUS_SINGLE_STEP:			return STATUS_SINGLE_STEP;
+	      case  STATUS_BUFFER_OVERFLOW:		return ERROR_MORE_DATA;
+	      case  STATUS_NO_MORE_FILES:		return ERROR_NO_MORE_FILES;
+/*	      case  STATUS_NO_INHERITANCE:		return ERROR_NO_INHERITANCE;*/
+	      case  STATUS_PARTIAL_COPY:		return ERROR_PARTIAL_COPY;
+/*	      case  STATUS_DEVICE_PAPER_EMPTY:		return ERROR_OUT_OF_PAPER;*/
+	      case  STATUS_DEVICE_POWERED_OFF:		return ERROR_NOT_READY;
+	      case  STATUS_DEVICE_OFF_LINE:		return ERROR_NOT_READY;
+	      case  STATUS_DEVICE_BUSY:			return ERROR_BUSY;
+	      case  STATUS_NO_MORE_EAS:			return ERROR_NO_MORE_ITEMS;
+	      case  STATUS_INVALID_EA_NAME:		return ERROR_INVALID_EA_NAME;
+	      case  STATUS_EA_LIST_INCONSISTENT:	return ERROR_EA_LIST_INCONSISTENT;
+	      case  STATUS_INVALID_EA_FLAG:		return ERROR_EA_LIST_INCONSISTENT;
+/*	      case  STATUS_VERIFY_REQUIRED:		return ERROR_MEDIA_CHANGED;*/
+	      case  STATUS_NO_MORE_ENTRIES:		return ERROR_NO_MORE_ITEMS;
+/*	      case  STATUS_FILEMARK_DETECTED:		return ERROR_FILEMARK_DETECTED;*/
+/*	      case  STATUS_MEDIA_CHANGED:		return ERROR_MEDIA_CHANGED;*/
+/*	      case  STATUS_BUS_RESET:			return ERROR_BUS_RESET;*/
+/*	      case  STATUS_END_OF_MEDIA:		return ERROR_END_OF_MEDIA;*/
+/*	      case  STATUS_BEGINNING_OF_MEDIA:		return ERROR_BEGINNING_OF_MEDIA;*/
+/*	      case  STATUS_SETMARK_DETECTED:		return ERROR_SETMARK_DETECTED;*/
+/*	      case  STATUS_NO_DATA_DETECTED:		return ERROR_NO_DATA_DETECTED;*/
+	      case  STATUS_ALREADY_DISCONNECTED:	return ERROR_ACTIVE_CONNECTIONS;
+	    }
+	    break;
+	  case 0xC0000000:
+	    switch (Status)
+	    {
+/*01*/	      case STATUS_UNSUCCESSFUL:			return ERROR_GEN_FAILURE;
+/*08*/	      case STATUS_NO_MEMORY:			return ERROR_NOT_ENOUGH_MEMORY;
+/*0d*/	      case STATUS_INVALID_PARAMETER:		return ERROR_INVALID_PARAMETER;
+/*22*/	      case STATUS_ACCESS_DENIED:		return ERROR_ACCESS_DENIED;
+/*23*/	      case STATUS_BUFFER_TOO_SMALL:		return ERROR_INSUFFICIENT_BUFFER;
+/*34*/	      case STATUS_OBJECT_NAME_NOT_FOUND:	return ERROR_FILE_NOT_FOUND;
+/*15c*/	      case STATUS_NOT_REGISTRY_FILE:		return ERROR_NOT_REGISTRY_FILE;
+/*17c*/	      case STATUS_KEY_DELETED:			return ERROR_KEY_DELETED;
+/*181*/	      case STATUS_CHILD_MUST_BE_VOLATILE:	return ERROR_CHILD_MUST_BE_VOLATILE;
+	    }
+	    break;
 	}
-	FIXME("unknown status (%lx)\n",error);
-	return ERROR_SUCCESS;
+	FIXME("unknown status (%lx)\n",Status);
+	return ERROR_MR_MID_NOT_FOUND; /*317*/
+	
 }
 
 /**************************************************************************
@@ -430,30 +482,6 @@ LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(
 #endif
 }
 
-/******************************************************************************
- *  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
- */
-DWORD WINAPI RtlFormatCurrentUserKeyPath(PUNICODE_STRING String)
-{
-    FIXME("(%p): stub\n",String);
-    return 1;
-}
-
-/******************************************************************************
- *  RtlOpenCurrentUser		[NTDLL] 
- */
-DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2)
-{
-/* Note: this is not the correct solution, 
- * But this works pretty good on wine and NT4.0 binaries
- */
-	if  ( x1 == 0x2000000 )  {
-		*x2 = HKEY_CURRENT_USER; 
-		return TRUE;
-	}
-		
-	return FALSE;
-}
 /**************************************************************************
  *                 RtlDosPathNameToNtPathName_U		[NTDLL.338]
  *
@@ -494,3 +522,52 @@ DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,PUNICODE_STRING key,PUNICODE
 	FIXME("(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
 	return 0;
 }
+/******************************************************************************
+ *  RtlInitializeGenericTable		[NTDLL] 
+ */
+DWORD WINAPI RtlInitializeGenericTable(void)
+{
+	FIXME("\n");
+	return 0;
+}
+
+/******************************************************************************
+ *  RtlInitializeBitMap			[NTDLL] 
+ * 
+ */
+NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
+{
+	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
+	return 0;
+}
+
+/******************************************************************************
+ *  RtlSetBits				[NTDLL] 
+ * 
+ */
+NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
+{
+	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
+	return 0;
+}
+
+/******************************************************************************
+ *  RtlFindClearBits			[NTDLL] 
+ * 
+ */
+NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
+{
+	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
+	return 0;
+}
+
+/******************************************************************************
+ *  RtlClearBits			[NTDLL] 
+ * 
+ */
+NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
+{
+	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
+	return 0;
+}
+

@@ -7,6 +7,7 @@
 #include "debugtools.h"
 
 #include "ntddk.h"
+#include "ntdll_misc.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll)
 
@@ -34,11 +35,157 @@ NTSTATUS WINAPI NtQueryObject(
 
 /******************************************************************************
  *  NtQuerySecurityObject	[NTDLL] 
+ *
+ * analogue to GetKernelObjectSecurity
+ *
+ * NOTES
+ *  only the lowest 4 bit of SecurityObjectInformationClass are used
+ *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system priviledges) 
+ *
+ * FIXME: we are constructing a fake sid 
+ *  (Administrators:Full, System:Full, Everyone:Read)
  */
-NTSTATUS WINAPI NtQuerySecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
+NTSTATUS WINAPI 
+NtQuerySecurityObject(
+	IN HANDLE Object,
+	IN SECURITY_INFORMATION RequestedInformation,
+	OUT PSECURITY_DESCRIPTOR pSecurityDesriptor,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
-	return 0;
+	static SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+	static SID_IDENTIFIER_AUTHORITY worldSidAuthority = {SECURITY_WORLD_SID_AUTHORITY};
+	BYTE Buffer[256];
+	PISECURITY_DESCRIPTOR_RELATIVE psd = (PISECURITY_DESCRIPTOR_RELATIVE)Buffer;
+	UINT BufferIndex = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+	
+	FIXME("(0x%08x,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	Object, RequestedInformation, pSecurityDesriptor, Length, ResultLength);
+
+	RequestedInformation &= 0x0000000f;
+
+	if (RequestedInformation & SACL_SECURITY_INFORMATION) return STATUS_ACCESS_DENIED;
+
+	ZeroMemory(Buffer, 256);
+	RtlCreateSecurityDescriptor((PSECURITY_DESCRIPTOR)psd, SECURITY_DESCRIPTOR_REVISION);
+	psd->Control = SE_SELF_RELATIVE | 
+	  ((RequestedInformation & DACL_SECURITY_INFORMATION) ? SE_DACL_PRESENT:0);
+
+	/* owner: administrator S-1-5-20-220*/
+	if (OWNER_SECURITY_INFORMATION & RequestedInformation)
+	{
+	  PSID psid = (PSID)&(Buffer[BufferIndex]);
+
+	  psd->Owner = BufferIndex;
+	  BufferIndex += RtlLengthRequiredSid(2);
+
+	  psid->Revision = SID_REVISION;
+	  psid->SubAuthorityCount = 2;
+	  psid->IdentifierAuthority = localSidAuthority;
+	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
+	}
+	
+	/* group: built in domain S-1-5-12 */
+	if (GROUP_SECURITY_INFORMATION & RequestedInformation)
+	{
+	  PSID psid = (PSID) &(Buffer[BufferIndex]);
+
+	  psd->Group = BufferIndex;
+	  BufferIndex += RtlLengthRequiredSid(1);
+
+	  psid->Revision = SID_REVISION;
+	  psid->SubAuthorityCount = 1;
+	  psid->IdentifierAuthority = localSidAuthority;
+	  psid->SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
+	}
+
+	/* discretionary ACL */
+	if (DACL_SECURITY_INFORMATION & RequestedInformation)
+	{
+	  /* acl header */
+	  PACL pacl = (PACL)&(Buffer[BufferIndex]);
+	  PACCESS_ALLOWED_ACE pace;
+	  PSID psid;
+	  	  	  
+	  psd->Dacl = BufferIndex;
+
+	  pacl->AclRevision = MIN_ACL_REVISION;
+	  pacl->AceCount = 3;
+	  pacl->AclSize = BufferIndex; /* storing the start index temporary */
+
+	  BufferIndex += sizeof(ACL);
+	  
+	  /* ACE System - full access */
+	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
+	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
+
+	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
+	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(1);
+	  pace->Mask = DELETE | READ_CONTROL | WRITE_DAC | WRITE_OWNER  | 0x3f;
+	  pace->SidStart = BufferIndex;
+
+	  /* SID S-1-5-12 (System) */
+	  psid = (PSID)&(Buffer[BufferIndex]);
+
+	  BufferIndex += RtlLengthRequiredSid(1);
+
+	  psid->Revision = SID_REVISION;
+	  psid->SubAuthorityCount = 1;
+	  psid->IdentifierAuthority = localSidAuthority;
+	  psid->SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
+	  
+	  /* ACE Administrators - full access*/
+	  pace = (PACCESS_ALLOWED_ACE) &(Buffer[BufferIndex]);
+	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
+
+	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
+	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(2);
+	  pace->Mask = DELETE | READ_CONTROL | WRITE_DAC | WRITE_OWNER  | 0x3f;
+	  pace->SidStart = BufferIndex;
+
+	  /* S-1-5-12 (Administrators) */
+	  psid = (PSID)&(Buffer[BufferIndex]);
+
+	  BufferIndex += RtlLengthRequiredSid(2);
+
+	  psid->Revision = SID_REVISION;
+	  psid->SubAuthorityCount = 2;
+	  psid->IdentifierAuthority = localSidAuthority;
+	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
+	 
+	  /* ACE Everyone - read access */
+	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
+	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
+
+	  pace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+	  pace->Header.AceFlags = CONTAINER_INHERIT_ACE;
+	  pace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + RtlLengthRequiredSid(1);
+	  pace->Mask = READ_CONTROL| 0x19;
+	  pace->SidStart = BufferIndex;
+
+	  /* SID S-1-1-0 (Everyone) */
+	  psid = (PSID)&(Buffer[BufferIndex]);
+
+	  BufferIndex += RtlLengthRequiredSid(1);
+
+	  psid->Revision = SID_REVISION;
+	  psid->SubAuthorityCount = 1;
+	  psid->IdentifierAuthority = worldSidAuthority;
+	  psid->SubAuthority[0] = 0;
+
+	  /* calculate used bytes */
+	  pacl->AclSize = BufferIndex - pacl->AclSize;
+	}
+	*ResultLength = BufferIndex;
+	TRACE("len=%lu\n", *ResultLength);
+	if (Length < *ResultLength) return STATUS_BUFFER_TOO_SMALL;
+	memcpy(pSecurityDesriptor, Buffer, *ResultLength);
+
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  *  NtDuplicateObject		[NTDLL] 
@@ -68,8 +215,10 @@ NTSTATUS WINAPI NtDuplicateObject(
 NTSTATUS WINAPI NtClose(
 	HANDLE Handle) 
 {
-	FIXME("(0x%08x),stub!\n",Handle);
-	return 1;
+	TRACE("(0x%08x)\n",Handle);
+	if (CloseHandle(Handle))
+	  return STATUS_SUCCESS;
+	return STATUS_UNSUCCESSFUL; /*fixme*/
 }
 
 /******************************************************************************
@@ -102,10 +251,10 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-    FIXME("(%p,0x%08lx,%p(%s)): stub\n", 
-    DirectoryHandle, DesiredAccess, ObjectAttributes,
-    ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
-    return 0;
+	FIXME("(%p,0x%08lx,%p): stub\n", 
+	DirectoryHandle, DesiredAccess, ObjectAttributes);
+	dump_ObjectAttributes(ObjectAttributes);
+	return 0;
 }
 
 /******************************************************************************
@@ -116,9 +265,9 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes) 
 {
-	FIXME("(%p,0x%08lx,%p(%s)),stub!\n",
-	DirectoryHandle,DesiredAccess,ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
+	FIXME("(%p,0x%08lx,%p),stub!\n",
+	DirectoryHandle,DesiredAccess,ObjectAttributes);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -162,9 +311,9 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 	IN ACCESS_MASK DesiredAccess,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p(%s)) stub\n",
-	LinkHandle, DesiredAccess, ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL);
+	FIXME("(%p,0x%08lx,%p) stub\n",
+	LinkHandle, DesiredAccess, ObjectAttributes);
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -177,10 +326,9 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
 	IN PUNICODE_STRING Name)
 {
-	FIXME("(%p,0x%08lx,%p(%s), %p) stub\n",
-	SymbolicLinkHandle, DesiredAccess, ObjectAttributes, 
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
-	debugstr_w(Name->Buffer));
+	FIXME("(%p,0x%08lx,%p, %p) stub\n",
+	SymbolicLinkHandle, DesiredAccess, ObjectAttributes, debugstr_us(Name));
+	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
 }
 
@@ -193,7 +341,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 	OUT PULONG ReturnedLength OPTIONAL)
 {
 	FIXME("(0x%08x,%p,%p) stub\n",
-	LinkHandle, debugstr_w(LinkTarget->Buffer), ReturnedLength);
+	LinkHandle, debugstr_us(LinkTarget), ReturnedLength);
 
 	return 0;
 }

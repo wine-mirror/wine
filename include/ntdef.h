@@ -4,6 +4,8 @@
 #include "basetsd.h"
 #include "windef.h"
 
+#include "pshpack1.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,8 +82,20 @@ typedef struct _OBJECT_ATTRIBUTES
 
 typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
 
+#define InitializeObjectAttributes(p,n,a,r,s) \
+{	(p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+	(p)->RootDirectory = r; \
+	(p)->Attributes = a; \
+	(p)->ObjectName = n; \
+	(p)->SecurityDescriptor = s; \
+	(p)->SecurityQualityOfService = NULL; \
+}
+
+
 #ifdef __cplusplus
 }
 #endif
+
+#include "poppack.h"
 
 #endif

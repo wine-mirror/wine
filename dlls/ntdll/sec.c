@@ -26,6 +26,8 @@
 
 DEFAULT_DEBUG_CHANNEL(ntdll)
 
+#define NT_SUCCESS(status) (status == STATUS_SUCCESS)
+
 /*
  *	SID FUNCTIONS
  */
@@ -34,95 +36,212 @@ DEFAULT_DEBUG_CHANNEL(ntdll)
  *  RtlAllocateAndInitializeSid		[NTDLL.265] 
  *
  */
-BOOLEAN WINAPI RtlAllocateAndInitializeSid (PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-	DWORD nSubAuthorityCount,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8,DWORD x9,DWORD x10, PSID pSid) 
+BOOLEAN WINAPI RtlAllocateAndInitializeSid (
+	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+	BYTE nSubAuthorityCount,
+	DWORD nSubAuthority0, DWORD nSubAuthority1,
+	DWORD nSubAuthority2, DWORD nSubAuthority3,
+	DWORD nSubAuthority4, DWORD nSubAuthority5,
+	DWORD nSubAuthority6, DWORD nSubAuthority7,
+	PSID *pSid )
 {
-	FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p),stub!\n",
-		pIdentifierAuthority,nSubAuthorityCount,x3,x4,x5,x6,x7,x8,x9,x10,pSid);
-	return 0;
+	TRACE("(%p, 0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+		pIdentifierAuthority,nSubAuthorityCount,
+		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
+		nSubAuthority4, nSubAuthority5,	nSubAuthority6, nSubAuthority7, pSid);
+
+	if (!(*pSid = HeapAlloc( GetProcessHeap(), 0, RtlLengthRequiredSid(nSubAuthorityCount))))
+	  return FALSE;
+
+	(*pSid)->Revision = SID_REVISION;
+
+	if (pIdentifierAuthority)
+	  memcpy(&(*pSid)->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
+	*GetSidSubAuthorityCount(*pSid) = nSubAuthorityCount;
+
+	if (nSubAuthorityCount > 0)
+          *GetSidSubAuthority(*pSid, 0) = nSubAuthority0;
+	if (nSubAuthorityCount > 1)
+          *GetSidSubAuthority(*pSid, 1) = nSubAuthority1;
+	if (nSubAuthorityCount > 2)
+          *GetSidSubAuthority(*pSid, 2) = nSubAuthority2;
+	if (nSubAuthorityCount > 3)
+          *GetSidSubAuthority(*pSid, 3) = nSubAuthority3;
+	if (nSubAuthorityCount > 4)
+          *GetSidSubAuthority(*pSid, 4) = nSubAuthority4;
+	if (nSubAuthorityCount > 5)
+          *GetSidSubAuthority(*pSid, 5) = nSubAuthority5;
+        if (nSubAuthorityCount > 6)
+	  *GetSidSubAuthority(*pSid, 6) = nSubAuthority6;
+	if (nSubAuthorityCount > 7)
+          *GetSidSubAuthority(*pSid, 7) = nSubAuthority7;
+
+	return STATUS_SUCCESS;
 }
 /******************************************************************************
  *  RtlEqualSid		[NTDLL.352] 
  *
  */
-DWORD WINAPI RtlEqualSid(DWORD x1,DWORD x2) 
-{	
-	FIXME("(0x%08lx,0x%08lx),stub!\n", x1,x2);
-	return TRUE;
+BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
+{
+    if (!RtlValidSid(pSid1) || !RtlValidSid(pSid2))
+        return FALSE;
+
+    if (*RtlSubAuthorityCountSid(pSid1) != *RtlSubAuthorityCountSid(pSid2))
+        return FALSE;
+
+    if (memcmp(pSid1, pSid2, GetLengthSid(pSid1)) != 0)
+        return FALSE;
+
+    return TRUE;
 }
+
+/******************************************************************************
+ * RtlEqualPrefixSid	[ntdll.]
+ */
+BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2) 
+{
+    if (!RtlValidSid(pSid1) || !RtlValidSid(pSid2))
+        return FALSE;
+
+    if (*RtlSubAuthorityCountSid(pSid1) != *RtlSubAuthorityCountSid(pSid2))
+        return FALSE;
+
+    if (memcmp(pSid1, pSid2, RtlLengthRequiredSid(pSid1->SubAuthorityCount - 1)) != 0)
+        return FALSE;
+
+    return TRUE;
+}
+
 
 /******************************************************************************
  *  RtlFreeSid		[NTDLL.376] 
  */
-DWORD WINAPI RtlFreeSid(DWORD x1) 
+DWORD WINAPI RtlFreeSid(PSID pSid) 
 {
-	FIXME("(0x%08lx),stub!\n", x1);
-	return TRUE;
+	TRACE("(%p)\n", pSid);
+	HeapFree( GetProcessHeap(), 0, pSid );
+	return STATUS_SUCCESS;
 }
 
 /**************************************************************************
- *                 RtlLengthRequiredSid			[NTDLL.427]
+ * RtlLengthRequiredSid	[NTDLL.427]
+ *
+ * PARAMS
+ *   nSubAuthorityCount []
  */
 DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
 {
-	return sizeof(DWORD)*nrofsubauths+sizeof(SID);
+	return (nrofsubauths-1)*sizeof(DWORD) + sizeof(SID);
 }
 
 /**************************************************************************
  *                 RtlLengthSid				[NTDLL.429]
  */
-DWORD WINAPI RtlLengthSid(PSID sid)
+DWORD WINAPI RtlLengthSid(PSID pSid)
 {
-	TRACE("sid=%p\n",sid);
-	if (!sid)
-	  return FALSE; 
-	return sizeof(DWORD)*sid->SubAuthorityCount+sizeof(SID);
+	TRACE("sid=%p\n",pSid);
+	if (!pSid) return 0; 
+	return RtlLengthRequiredSid(*RtlSubAuthorityCountSid(pSid));
 }
 
 /**************************************************************************
  *                 RtlInitializeSid			[NTDLL.410]
  */
-DWORD WINAPI RtlInitializeSid(PSID PSID,PSID_IDENTIFIER_AUTHORITY PSIDauth,
-                              DWORD c)
+BOOL WINAPI RtlInitializeSid(
+	PSID pSid,
+	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+	BYTE nSubAuthorityCount)
 {
-	BYTE	a = c&0xff;
+	int i;
+	if (nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
+	  return FALSE;
 
-	if (a>=SID_MAX_SUB_AUTHORITIES)
-		return a;
-	PSID->SubAuthorityCount = a;
-	PSID->Revision		 = SID_REVISION;
-	memcpy(&(PSID->IdentifierAuthority),PSIDauth,sizeof(SID_IDENTIFIER_AUTHORITY));
-	return STATUS_SUCCESS;
+	pSid->Revision = SID_REVISION;
+	pSid->SubAuthorityCount = nSubAuthorityCount;
+	if (pIdentifierAuthority)
+	  memcpy(&pSid->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
+
+	for (i = 0; i < nSubAuthorityCount; i++)
+	  *GetSidSubAuthority(pSid, i) = 0;
+
+	return TRUE;
 }
 
 /**************************************************************************
  *                 RtlSubAuthoritySid			[NTDLL.497]
+ *
+ * PARAMS
+ *   pSid          []
+ *   nSubAuthority []
  */
-LPDWORD WINAPI RtlSubAuthoritySid(PSID PSID,DWORD nr)
+LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
 {
-	return &(PSID->SubAuthority[nr]);
+	return &(pSid->SubAuthority[nSubAuthority]);
+}
+
+/**************************************************************************
+ * RtlIdentifierAuthoritySid	[NTDLL.395]
+ *
+ * PARAMS
+ *   pSid []
+ */
+PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
+{
+	return &(pSid->IdentifierAuthority);
 }
 
 /**************************************************************************
  *                 RtlSubAuthorityCountSid		[NTDLL.496]
+ *
+ * PARAMS
+ *   pSid          []
+ *   nSubAuthority []
  */
-
-LPBYTE WINAPI RtlSubAuthorityCountSid(PSID PSID)
+LPBYTE WINAPI RtlSubAuthorityCountSid(PSID pSid)
 {
-	return ((LPBYTE)PSID)+1;
+	return &(pSid->SubAuthorityCount);
 }
 
 /**************************************************************************
  *                 RtlCopySid				[NTDLL.302]
  */
-DWORD WINAPI RtlCopySid(DWORD len,PSID to,PSID from)
-{	if (!from)
-		return 0;
-	if (len<(from->SubAuthorityCount*4+8))
-		return STATUS_BUFFER_TOO_SMALL;
-	memmove(to,from,from->SubAuthorityCount*4+8);
-	return STATUS_SUCCESS;
+DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
+{
+	if (!pSourceSid || !RtlValidSid(pSourceSid) ||
+	    (nDestinationSidLength < RtlLengthSid(pSourceSid)))
+          return FALSE;
+
+	if (nDestinationSidLength < (pSourceSid->SubAuthorityCount*4+8))
+	  return FALSE;
+
+	memmove(pDestinationSid, pSourceSid, pSourceSid->SubAuthorityCount*4+8);
+	return TRUE;
 }
+/******************************************************************************
+ * RtlValidSid [NTDLL.532]
+ *
+ * PARAMS
+ *   pSid []
+ */
+BOOL WINAPI
+RtlValidSid( PSID pSid )
+{
+    if (IsBadReadPtr(pSid, 4))
+    {
+        WARN("(%p): invalid pointer!\n", pSid);
+        return FALSE;
+    }
+
+    if (pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+        return FALSE;
+
+    if (!pSid || pSid->Revision != SID_REVISION)
+        return FALSE;
+
+    return TRUE;
+}
+
 
 /*
  *	security descriptor functions
@@ -387,6 +506,19 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 	return STATUS_SUCCESS;
 } 
 
+/**************************************************************************
+ *                 RtlMakeSelfRelativeSD		[NTDLL]
+ */
+NTSTATUS WINAPI RtlMakeSelfRelativeSD(
+	IN PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
+	IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
+	IN OUT LPDWORD lpdwBufferLength)
+{
+	FIXME("(%p,%p,%p(%lu))\n", pAbsoluteSecurityDescriptor,
+	pSelfRelativeSecurityDescriptor, lpdwBufferLength,*lpdwBufferLength);
+	return STATUS_SUCCESS;
+}
+
 /*
  *	access control list's
  */
@@ -397,8 +529,10 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
  * NOTES
  *    This should return NTSTATUS
  */
-DWORD WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
+NTSTATUS WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
 {
+	TRACE("%p 0x%08lx 0x%08lx\n", acl, size, rev);
+
 	if (rev!=ACL_REVISION)
 		return STATUS_INVALID_PARAMETER;
 	if (size<sizeof(ACL))
@@ -470,9 +604,14 @@ NTSTATUS WINAPI RtlAddAce(
 /******************************************************************************
  *  RtlAddAccessAllowedAce		[NTDLL] 
  */
-DWORD WINAPI RtlAddAccessAllowedAce(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
+BOOL WINAPI RtlAddAccessAllowedAce(
+	IN OUT PACL pAcl,
+	IN DWORD dwAceRevision,
+	IN DWORD AccessMask,
+	IN PSID pSid)
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME("(%p,0x%08lx,0x%08lx,%p),stub!\n",
+	pAcl, dwAceRevision, AccessMask, pSid);
 	return 0;
 }
 
@@ -498,3 +637,53 @@ DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
 	return 0;
 }
 
+/******************************************************************************
+ *  RtlImpersonateSelf		[NTDLL] 
+ */
+BOOL WINAPI
+RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
+{
+	FIXME("(%08x), stub\n", ImpersonationLevel);
+	return TRUE;
+}
+
+NTSTATUS WINAPI 
+NtAccessCheck(
+	IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+	IN HANDLE ClientToken,
+	IN ACCESS_MASK DesiredAccess,
+	IN PGENERIC_MAPPING GenericMapping,
+	OUT PPRIVILEGE_SET PrivilegeSet,
+	OUT PULONG ReturnLength,
+	OUT PULONG GrantedAccess,
+	OUT PBOOLEAN AccessStatus)
+{
+	FIXME("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n",
+          SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, 
+          PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
+	*AccessStatus = TRUE;
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI
+NtSetSecurityObject(
+        IN HANDLE Handle,
+        IN SECURITY_INFORMATION SecurityInformation,
+        IN PSECURITY_DESCRIPTOR SecurityDescriptor) 
+{
+	FIXME("0x%08x 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * RtlGetControlSecurityDescriptor
+ */
+
+NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
+	PSECURITY_DESCRIPTOR  pSecurityDescriptor,
+	PSECURITY_DESCRIPTOR_CONTROL pControl,
+	LPDWORD lpdwRevision)
+{
+	FIXME("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
+	return STATUS_SUCCESS;
+}		

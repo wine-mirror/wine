@@ -10,23 +10,10 @@
 #include "ntddk.h"
 #include "ntsecapi.h"
 #include "debugtools.h"
+#include "winversion.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 DECLARE_DEBUG_CHANNEL(security)
-
-
-static BOOL Wine_HasSecurity(void)
-{
-    OSVERSIONINFOA osi;
-    osi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA); 
-    GetVersionExA(&osi);
-    if (osi.dwPlatformId != VER_PLATFORM_WIN32_NT) { 
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-        return FALSE;
-    }
-    return TRUE;
-}  
-
 
 #define CallWin32ToNt(func) \
 	{ NTSTATUS ret; \
@@ -35,6 +22,17 @@ static BOOL Wine_HasSecurity(void)
 	  { SetLastError (RtlNtStatusToDosError(ret)); return FALSE; } \
 	  return TRUE; \
 	}
+
+static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
+{
+	if (oa)
+	{
+	  TRACE("\n\tlength=%lu, rootdir=0x%08x, objectname=%s\n\tattr=0x%08lx, sid=%p qos=%p\n",
+		oa->Length, oa->RootDirectory,
+		oa->ObjectName?debugstr_w(oa->ObjectName->Buffer):"null",
+     		oa->Attributes, oa->SecurityDescriptor, oa->SecurityQualityOfService);
+	}
+}
 
 /*	##############################
 	######	TOKEN FUNCTIONS ######
@@ -56,7 +54,6 @@ BOOL WINAPI
 OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess, 
                   HANDLE *TokenHandle )
 {
-        if (!Wine_HasSecurity()) return FALSE;
 	CallWin32ToNt(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
 }
 
@@ -73,7 +70,6 @@ BOOL WINAPI
 OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess, 
 		 BOOL OpenAsSelf, HANDLE *TokenHandle)
 {
-        if (!Wine_HasSecurity()) return FALSE;
 	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
 }
 
@@ -114,6 +110,25 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 	CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
 }
 
+/*************************************************************************
+ * SetThreadToken [ADVAPI32.231]
+ *
+ * Assigns an "impersonation token" to a thread so it can assume the
+ * security privledges of another thread or process.  Can also remove
+ * a previously assigned token.  Only supported on NT - it's a stub 
+ * exactly like this one on Win9X.
+ *
+ */
+
+BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
+{
+    FIXME("(%p, %x): stub\n", thread, token);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
+}
+
 /*	##############################
 	######	SID FUNCTIONS	######
 	##############################
@@ -144,33 +159,11 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                           DWORD nSubAuthority6, DWORD nSubAuthority7,
                           PSID *pSid )
 {
-    if (!(*pSid = HeapAlloc( GetProcessHeap(), 0,
-                             GetSidLengthRequired(nSubAuthorityCount))))
-        return FALSE;
-    (*pSid)->Revision = SID_REVISION;
-    if (pIdentifierAuthority)
-        memcpy(&(*pSid)->IdentifierAuthority, pIdentifierAuthority,
-               sizeof (SID_IDENTIFIER_AUTHORITY));
-    *GetSidSubAuthorityCount(*pSid) = nSubAuthorityCount;
-
-    if (nSubAuthorityCount > 0)
-        *GetSidSubAuthority(*pSid, 0) = nSubAuthority0;
-    if (nSubAuthorityCount > 1)
-        *GetSidSubAuthority(*pSid, 1) = nSubAuthority1;
-    if (nSubAuthorityCount > 2)
-        *GetSidSubAuthority(*pSid, 2) = nSubAuthority2;
-    if (nSubAuthorityCount > 3)
-        *GetSidSubAuthority(*pSid, 3) = nSubAuthority3;
-    if (nSubAuthorityCount > 4)
-        *GetSidSubAuthority(*pSid, 4) = nSubAuthority4;
-    if (nSubAuthorityCount > 5)
-        *GetSidSubAuthority(*pSid, 5) = nSubAuthority5;
-    if (nSubAuthorityCount > 6)
-        *GetSidSubAuthority(*pSid, 6) = nSubAuthority6;
-    if (nSubAuthorityCount > 7)
-        *GetSidSubAuthority(*pSid, 7) = nSubAuthority7;
-
-    return TRUE;
+	CallWin32ToNt (RtlAllocateAndInitializeSid(
+		pIdentifierAuthority, nSubAuthorityCount, 
+		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
+		nSubAuthority4, nSubAuthority5, nSubAuthority6, nSubAuthority7,
+		pSid ));
 }
 
 /******************************************************************************
@@ -182,8 +175,8 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 PVOID WINAPI
 FreeSid( PSID pSid )
 {
-    HeapFree( GetProcessHeap(), 0, pSid );
-    return NULL;
+    	RtlFreeSid(pSid); 
+	return NULL; /* is documented like this */
 }
 
 /******************************************************************************
@@ -197,16 +190,7 @@ FreeSid( PSID pSid )
 BOOL WINAPI
 CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 {
-
-    if (!IsValidSid(pSourceSid))
-        return FALSE;
-
-    if (nDestinationSidLength < GetLengthSid(pSourceSid))
-        return FALSE;
-
-    memcpy(pDestinationSid, pSourceSid, GetLengthSid(pSourceSid));
-
-    return TRUE;
+	return RtlCopySid(nDestinationSidLength, pDestinationSid, pSourceSid);
 }
 
 /******************************************************************************
@@ -218,19 +202,7 @@ CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 BOOL WINAPI
 IsValidSid( PSID pSid )
 {
-    if (IsBadReadPtr(pSid, 4))
-    {
-        WARN_(security)("(%p): invalid pointer!", pSid);
-        return FALSE;
-    }
-
-    if (pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
-        return FALSE;
-
-    if (!pSid || pSid->Revision != SID_REVISION)
-        return FALSE;
-
-    return TRUE;
+	return RtlValidSid( pSid );
 }
 
 /******************************************************************************
@@ -243,33 +215,15 @@ IsValidSid( PSID pSid )
 BOOL WINAPI
 EqualSid( PSID pSid1, PSID pSid2 )
 {
-    if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
-        return FALSE;
-
-    if (*GetSidSubAuthorityCount(pSid1) != *GetSidSubAuthorityCount(pSid2))
-        return FALSE;
-
-    if (memcmp(pSid1, pSid2, GetLengthSid(pSid1)) != 0)
-        return FALSE;
-
-    return TRUE;
+	return RtlEqualSid( pSid1, pSid2 );
 }
 
 /******************************************************************************
  * EqualPrefixSid [ADVAPI32.39]
  */
-BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) {
-    if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
-        return FALSE;
-
-    if (*GetSidSubAuthorityCount(pSid1) != *GetSidSubAuthorityCount(pSid2))
-        return FALSE;
-
-    if (memcmp(pSid1, pSid2, GetSidLengthRequired(pSid1->SubAuthorityCount - 1))
- != 0)
-        return FALSE;
-
-    return TRUE;
+BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) 
+{
+	return RtlEqualPrefixSid(pSid1, pSid2);
 }
 
 /******************************************************************************
@@ -281,7 +235,7 @@ BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) {
 DWORD WINAPI
 GetSidLengthRequired( BYTE nSubAuthorityCount )
 {
-    return sizeof (SID) + (nSubAuthorityCount - 1) * sizeof (DWORD);
+	return RtlLengthRequiredSid(nSubAuthorityCount);
 }
 
 /******************************************************************************
@@ -291,21 +245,12 @@ GetSidLengthRequired( BYTE nSubAuthorityCount )
  *   pIdentifierAuthority []
  */
 BOOL WINAPI
-InitializeSid (PSID pSid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-                    BYTE nSubAuthorityCount)
+InitializeSid (
+	PSID pSid,
+	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+	BYTE nSubAuthorityCount)
 {
-    int i;
-
-    pSid->Revision = SID_REVISION;
-    if (pIdentifierAuthority)
-        memcpy(&pSid->IdentifierAuthority, pIdentifierAuthority,
-               sizeof (SID_IDENTIFIER_AUTHORITY));
-    *GetSidSubAuthorityCount(pSid) = nSubAuthorityCount;
-
-    for (i = 0; i < nSubAuthorityCount; i++)
-        *GetSidSubAuthority(pSid, i) = 0;
-
-    return TRUE;
+	return RtlInitializeSid(pSid, pIdentifierAuthority, nSubAuthorityCount);
 }
 
 /******************************************************************************
@@ -317,7 +262,7 @@ InitializeSid (PSID pSid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 PSID_IDENTIFIER_AUTHORITY WINAPI
 GetSidIdentifierAuthority( PSID pSid )
 {
-    return &pSid->IdentifierAuthority;
+	return RtlIdentifierAuthoritySid(pSid);
 }
 
 /******************************************************************************
@@ -330,7 +275,7 @@ GetSidIdentifierAuthority( PSID pSid )
 PDWORD WINAPI
 GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 {
-    return &pSid->SubAuthority[nSubAuthority];
+	return RtlSubAuthoritySid(pSid, nSubAuthority);
 }
 
 /******************************************************************************
@@ -342,7 +287,7 @@ GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 PUCHAR WINAPI
 GetSidSubAuthorityCount (PSID pSid)
 {
-    return &pSid->SubAuthorityCount;
+	return RtlSubAuthorityCountSid(pSid);
 }
 
 /******************************************************************************
@@ -354,7 +299,7 @@ GetSidSubAuthorityCount (PSID pSid)
 DWORD WINAPI
 GetLengthSid (PSID pSid)
 {
-    return GetSidLengthRequired( * GetSidSubAuthorityCount(pSid) );
+	return RtlLengthSid(pSid);
 }
 
 /*	##############################################
@@ -472,14 +417,14 @@ BOOL WINAPI GetSecurityDescriptorSacl(
 	OUT PACL *pSacl,
 	OUT LPBOOL lpbSaclDefaulted)
 {
-	CallWin32ToNt (RtlGetSaclSecurityDescriptor(lpsd, (PBOOLEAN)lpbSaclPresent,
-					       pSacl, (PBOOLEAN)lpbSaclDefaulted));
+	CallWin32ToNt (RtlGetSaclSecurityDescriptor(lpsd,
+	   (PBOOLEAN)lpbSaclPresent, pSacl, (PBOOLEAN)lpbSaclDefaulted));
 }	
 
 /**************************************************************************
  * SetSecurityDescriptorSacl			[NTDLL.488]
  */
-BOOL  WINAPI SetSecurityDescriptorSacl (
+BOOL WINAPI SetSecurityDescriptorSacl (
 	PSECURITY_DESCRIPTOR lpsd,
 	BOOL saclpresent,
 	PACL lpsacl,
@@ -496,11 +441,12 @@ BOOL  WINAPI SetSecurityDescriptorSacl (
  *   lpbuflen      []
  */
 BOOL WINAPI
-MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
-                    PSECURITY_DESCRIPTOR lpselfsecdesc, LPDWORD lpbuflen )
+MakeSelfRelativeSD(
+	IN PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
+	IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
+	IN OUT LPDWORD lpdwBufferLength)
 {
-	FIXME("(%p,%p,%p),stub!\n",lpabssecdesc,lpselfsecdesc,lpbuflen);
-	return TRUE;
+	CallWin32ToNt (RtlMakeSelfRelativeSD(pAbsoluteSecurityDescriptor,pSelfRelativeSecurityDescriptor, lpdwBufferLength));
 }
 
 /******************************************************************************
@@ -509,9 +455,22 @@ MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
 
 BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
 		 PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
-{	FIXME("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
-	return 1;
+{
+	CallWin32ToNt (RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
 }		
+
+/*	##############################
+	######	ACL FUNCTIONS	######
+	##############################
+*/
+
+/*************************************************************************
+ * InitializeAcl [ADVAPI32.111]
+ */
+DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
+{
+	CallWin32ToNt (RtlCreateAcl(acl, size, rev));
+}
 
 /*	##############################
 	######	MISC FUNCTIONS	######
@@ -536,7 +495,7 @@ BOOL WINAPI
 LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 {
     FIXME("(%s,%s,%p): stub\n",debugstr_w(lpSystemName), 
-          debugstr_w(lpName), lpLuid);
+        debugstr_w(lpName), lpLuid);
     return TRUE;
 }
 
@@ -548,7 +507,9 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
 {
     LPWSTR lpSystemNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpSystemName);
     LPWSTR lpNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpName);
-    BOOL ret = LookupPrivilegeValueW( lpSystemNameW, lpNameW, lpLuid);
+    BOOL ret;
+
+    ret = LookupPrivilegeValueW( lpSystemNameW, lpNameW, lpLuid);
     HeapFree(GetProcessHeap(), 0, lpNameW);
     HeapFree(GetProcessHeap(), 0, lpSystemNameW);
     return ret;
@@ -600,14 +561,33 @@ GetFileSecurityW( LPCWSTR lpFileName,
  * LookupAccountSid32A [ADVAPI32.86]
  */
 BOOL WINAPI
-LookupAccountSidA( LPCSTR system, PSID sid, LPCSTR account,
-                     LPDWORD accountSize, LPCSTR domain, LPDWORD domainSize,
-                     PSID_NAME_USE name_use )
+LookupAccountSidA(
+	IN LPCSTR system,
+	IN PSID sid,
+	OUT LPSTR account,
+	IN OUT LPDWORD accountSize,
+	OUT LPSTR domain,
+	IN OUT LPDWORD domainSize,
+	OUT PSID_NAME_USE name_use )
 {
-	FIXME_(security)("(%s,%p,%p,%p,%p,%p,%p): stub\n",
-	      system,sid,account,accountSize,domain,domainSize,name_use);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+	char * ac = "Administrator";
+	char * dm = "DOMAIN";
+	FIXME_(security)("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
+	      debugstr_a(system),sid,
+	      account,accountSize,accountSize?*accountSize:0,
+	      domain,domainSize,domainSize?*domainSize:0,
+	      name_use);
+
+	if (accountSize) *accountSize = strlen(ac)+1;
+	if (account && (*accountSize > strlen(ac)))
+	  strcpy(account, ac);
+
+	if (domainSize) *domainSize = strlen(dm)+1;
+	if (domain && (*domainSize > strlen(dm)))
+	  strcpy(domain,dm);
+
+	if (name_use) *name_use = SidTypeUser;
+	return TRUE;
 }
 
 /******************************************************************************
@@ -623,14 +603,33 @@ LookupAccountSidA( LPCSTR system, PSID sid, LPCSTR account,
  *   name_use    []
  */
 BOOL WINAPI
-LookupAccountSidW( LPCWSTR system, PSID sid, LPCWSTR account, 
-                     LPDWORD accountSize, LPCWSTR domain, LPDWORD domainSize,
-                     PSID_NAME_USE name_use )
+LookupAccountSidW(
+	IN LPCWSTR system,
+	IN PSID sid,
+	OUT LPWSTR account,
+	IN OUT LPDWORD accountSize,
+	OUT LPWSTR domain,
+	IN OUT LPDWORD domainSize,
+	OUT PSID_NAME_USE name_use )
 {
-	FIXME_(security)("(%p,%p,%p,%p,%p,%p,%p): stub\n",
-	      system,sid,account,accountSize,domain,domainSize,name_use);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+	char * ac = "Administrator";
+	char * dm = "DOMAIN";
+	FIXME_(security)("(%s,sid=%p,%p,%p(%lu),%p,%p(%lu),%p): semi-stub\n",
+	      debugstr_w(system),sid,
+	      account,accountSize,accountSize?*accountSize:0,
+	      domain,domainSize,domainSize?*domainSize:0,
+	      name_use);
+
+	if (accountSize) *accountSize = strlen(ac)+1;
+	if (account && (*accountSize > strlen(ac)))
+	  lstrcpyAtoW(account, ac);
+
+	if (domainSize) *domainSize = strlen(dm)+1;
+	if (domain && (*domainSize > strlen(dm)))
+	  lstrcpyAtoW(domain,dm);
+
+	if (name_use) *name_use = SidTypeUser;
+	return TRUE;
 }
 
 /******************************************************************************
@@ -703,28 +702,112 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
  *   x4 []
  */
 NTSTATUS WINAPI
-LsaOpenPolicy(PLSA_UNICODE_STRING SystemName,
-	      PLSA_OBJECT_ATTRIBUTES ObjectAttributes,
-	      ACCESS_MASK DesiredAccess,
-	      PLSA_HANDLE PolicyHandle)
+LsaOpenPolicy(
+	IN PLSA_UNICODE_STRING SystemName,
+	IN PLSA_OBJECT_ATTRIBUTES ObjectAttributes,
+	IN ACCESS_MASK DesiredAccess,
+	IN OUT PLSA_HANDLE PolicyHandle)
 {
-	FIXME("(%p,%p,0x%08lx,%p):stub\n",
-              SystemName, ObjectAttributes, DesiredAccess, PolicyHandle);
-	return 0xc0000000; /* generic error */
+	FIXME("(%s,%p,0x%08lx,%p):stub\n",
+              SystemName?debugstr_w(SystemName->Buffer):"null",
+	      ObjectAttributes, DesiredAccess, PolicyHandle);
+	dumpLsaAttributes(ObjectAttributes);
+	if(PolicyHandle) *PolicyHandle = (LSA_HANDLE)0xcafe;
+	return TRUE;
 }
 
 /******************************************************************************
  * LsaQueryInformationPolicy [ADVAPI32.242]
  */
 NTSTATUS WINAPI
-LsaQueryInformationPolicy( IN LSA_HANDLE PolicyHandle,
-                           IN POLICY_INFORMATION_CLASS InformationClass,
-                           OUT PVOID *Buffer)
+LsaQueryInformationPolicy( 
+	IN LSA_HANDLE PolicyHandle,
+        IN POLICY_INFORMATION_CLASS InformationClass,
+	OUT PVOID *Buffer)
 {
 	FIXME("(%p,0x%08x,%p):stub\n",
               PolicyHandle, InformationClass, Buffer);
-	return 0xc0000000; /* generic error */
+
+	if(!Buffer) return FALSE;
+	switch (InformationClass)
+	{
+	  case PolicyAuditEventsInformation: /* 2 */
+	    {
+	      PPOLICY_AUDIT_EVENTS_INFO p = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, sizeof(POLICY_AUDIT_EVENTS_INFO));
+	      p->AuditingMode = FALSE; /* no auditing */
+	      *Buffer = p;
+	    }
+	    break;
+	  case PolicyPrimaryDomainInformation: /* 3 */
+	  case PolicyAccountDomainInformation: /* 5 */
+	    {
+	      struct di
+	      { POLICY_PRIMARY_DOMAIN_INFO ppdi;
+		SID sid;
+	      };
+	      SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+		
+	      struct di * xdi = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, sizeof(xdi));
+	      RtlInitUnicodeString(&(xdi->ppdi.Name), HEAP_strdupAtoW(GetProcessHeap(),0,"DOMAIN"));
+	      xdi->ppdi.Sid = &(xdi->sid);
+	      xdi->sid.Revision = SID_REVISION;
+	      xdi->sid.SubAuthorityCount = 1;
+	      xdi->sid.IdentifierAuthority = localSidAuthority;
+	      xdi->sid.SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
+	      *Buffer = xdi;
+	    }
+	    break;
+	  case 	PolicyAuditLogInformation:	
+	  case 	PolicyPdAccountInformation:	
+	  case 	PolicyLsaServerRoleInformation:
+	  case 	PolicyReplicaSourceInformation:
+	  case 	PolicyDefaultQuotaInformation:
+	  case 	PolicyModificationInformation:
+	  case 	PolicyAuditFullSetInformation:
+	  case 	PolicyAuditFullQueryInformation:
+	  case 	PolicyDnsDomainInformation:
+	    {
+	      FIXME("category not implemented\n");
+	      return FALSE;
+	    }
+	}
+	return TRUE; 
 }			  
+
+/******************************************************************************
+ * LsaLookupSids [ADVAPI32.240]
+ */
+typedef struct
+{
+	SID_NAME_USE Use;
+	LSA_UNICODE_STRING Name;
+	LONG DomainIndex;
+} LSA_TRANSLATED_NAME, *PLSA_TRANSLATED_NAME;
+
+typedef struct 
+{
+	LSA_UNICODE_STRING Name;
+	PSID Sid;
+} LSA_TRUST_INFORMATION, *PLSA_TRUST_INFORMATION;
+
+typedef struct 
+{
+	ULONG Entries;
+	PLSA_TRUST_INFORMATION Domains;
+} LSA_REFERENCED_DOMAIN_LIST, *PLSA_REFERENCED_DOMAIN_LIST;
+
+NTSTATUS WINAPI
+LsaLookupSids(
+	IN LSA_HANDLE PolicyHandle,
+	IN ULONG Count,
+	IN PSID *Sids,
+	OUT PLSA_REFERENCED_DOMAIN_LIST *ReferencedDomains,
+	OUT PLSA_TRANSLATED_NAME *Names )
+{
+	FIXME("%p %lu %p %p %p\n",
+	  PolicyHandle, Count, Sids, ReferencedDomains, Names);
+	return FALSE;
+}
 
 /******************************************************************************
  * LsaFreeMemory [ADVAPI32.241]
@@ -732,8 +815,8 @@ LsaQueryInformationPolicy( IN LSA_HANDLE PolicyHandle,
 NTSTATUS WINAPI
 LsaFreeMemory(IN PVOID Buffer)
 {
-	FIXME("(%p):stub\n",Buffer);
-	return 0xc0000000;
+	TRACE("(%p)\n",Buffer);
+	return HeapFree(SystemHeap, 0, Buffer);
 }
 /******************************************************************************
  * LsaClose [ADVAPI32.243]
@@ -776,44 +859,37 @@ RevertToSelf( void )
 BOOL WINAPI
 ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
-    FIXME("(%08x), stub\n", ImpersonationLevel);
-    return TRUE;
+	return RtlImpersonateSelf(ImpersonationLevel);
 }
 
 /******************************************************************************
  * AccessCheck32 [ADVAPI32.71]
+ *
+ * FIXME check cast LPBOOL to PBOOLEAN
  */
 BOOL WINAPI
-AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken,
-	    DWORD DesiredAccess, PGENERIC_MAPPING GenericMapping, PPRIVILEGE_SET PrivilegeSet,
-	    LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL AccessStatus)
+AccessCheck(
+	PSECURITY_DESCRIPTOR SecurityDescriptor,
+	HANDLE ClientToken,
+	DWORD DesiredAccess,
+	PGENERIC_MAPPING GenericMapping,
+	PPRIVILEGE_SET PrivilegeSet,
+	LPDWORD PrivilegeSetLength,
+	LPDWORD GrantedAccess,
+	LPBOOL AccessStatus)
 {
-    FIXME("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n",
-          pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, 
-          PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
-    *AccessStatus = TRUE;
-    return TRUE;
+	CallWin32ToNt (NtAccessCheck(SecurityDescriptor, ClientToken, DesiredAccess,
+	  GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, (PBOOLEAN)AccessStatus));
 }
 
 /*************************************************************************
- * SetThreadToken [ADVAPI32.231]
- *
- * Assigns an "impersonation token" to a thread so it can assume the
- * security privledges of another thread or process.  Can also remove
- * a previously assigned token.  Only supported on NT - it's a stub 
- * exactly like this one on Win9X.
- *
+ * SetKernelObjectSecurity [ADVAPI32.223]
  */
-
-BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
+BOOL WINAPI SetKernelObjectSecurity (
+	IN HANDLE Handle,
+	IN SECURITY_INFORMATION SecurityInformation,
+	IN PSECURITY_DESCRIPTOR SecurityDescriptor )
 {
-    FIXME("(%p, %x): stub\n", thread, token);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    return FALSE;
+	CallWin32ToNt (NtSetSecurityObject (Handle, SecurityInformation, SecurityDescriptor));
 }
-
-
-
 

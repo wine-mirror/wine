@@ -57,19 +57,19 @@ type	win32
 @ stub NlsMbCodePageTag
 @ stub NlsMbOemCodePageTag
 @ stdcall NtAcceptConnectPort(long long long long long long) NtAcceptConnectPort
-@ stub NtAccessCheck
+@ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub NtAccessCheckAndAuditAlarm
 @ stub NtAdjustGroupsToken
 @ stdcall NtAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 @ stub NtAlertResumeThread
 @ stub NtAlertThread
-@ stub NtAllocateLocallyUniqueId
+@ stdcall NtAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 @ stub NtAllocateUuids
 @ stub NtAllocateVirtualMemory
 @ stub NtCallbackReturn
 @ stub NtCancelIoFile
 @ stub NtCancelTimer
-@ stub NtClearEvent
+@ stdcall NtClearEvent(long) NtClearEvent
 @ stdcall NtClose(long) NtClose
 @ stub NtCloseObjectAuditAlarm
 @ stdcall NtCompleteConnectPort(long) NtCompleteConnectPort
@@ -150,13 +150,13 @@ type	win32
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
 @ stub NtProtectVirtualMemory
-@ stub NtPulseEvent
+@ stdcall NtPulseEvent(long ptr) NtPulseEvent
 @ stub NtQueryAttributesFile
 @ stub NtQueryDefaultLocale
 @ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 @ stdcall NtQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 @ stub NtQueryEaFile
-@ stub NtQueryEvent
+@ stdcall NtQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall NtQueryInformationFile(long long long long long) NtQueryInformationFile
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long long long long) NtQueryInformationProcess
@@ -179,7 +179,6 @@ type	win32
 @ stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 @ stub NtQueryVirtualMemory
-@ stub NtQueryVolumeInformationFile
 @ stdcall NtRaiseException(ptr ptr long) NtRaiseException
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long) NtReadFile
@@ -197,7 +196,7 @@ type	win32
 @ stub NtReplyWaitReplyPort
 @ stub NtRequestPort
 @ stdcall NtRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
-@ stub NtResetEvent
+@ stdcall NtResetEvent(long ptr) NtResetEvent
 @ stdcall NtRestoreKey(long long long) NtRestoreKey
 @ stdcall NtResumeThread(long long) NtResumeThread
 @ stdcall NtSaveKey(long long) NtSaveKey
@@ -221,7 +220,7 @@ type	win32
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
 @ stub NtSetLowWaitHighThread
-@ stub NtSetSecurityObject
+@ stdcall NtSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub NtSetSystemEnvironmentValue
 @ stub NtSetSystemInformation
 @ stub NtSetSystemPowerState
@@ -290,7 +289,7 @@ type	win32
 @ stub RtlCharToInteger
 @ stub RtlCheckRegistryKey
 @ stub RtlClearAllBits
-@ stub RtlClearBits
+@ stdcall RtlClearBits(long long long) RtlClearBits
 @ stub RtlCompactHeap
 @ stub RtlCompareMemory
 @ stub RtlCompareMemoryUlong
@@ -356,7 +355,7 @@ type	win32
 @ stub RtlEqualComputerName
 @ stub RtlEqualDomainName
 @ stub RtlEqualLuid
-@ stub RtlEqualPrefixSid
+@ stdcall RtlEqualPrefixSid(ptr ptr) RtlEqualPrefixSid
 @ stdcall RtlEqualSid (long long) RtlEqualSid
 @ stub RtlEqualString
 @ stdcall RtlEqualUnicodeString(long long long) RtlEqualUnicodeString
@@ -368,7 +367,7 @@ type	win32
 @ stub RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) RtlFillMemory
 @ stub RtlFillMemoryUlong
-@ stub RtlFindClearBits
+@ stdcall RtlFindClearBits(long long long) RtlFindClearBits
 @ stub RtlFindClearBitsAndSet
 @ stub RtlFindLongestRunClear
 @ stub RtlFindLongestRunSet
@@ -376,7 +375,7 @@ type	win32
 @ stub RtlFindSetBits
 @ stub RtlFindSetBitsAndClear
 @ stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
-@ stdcall RtlFormatCurrentUserKeyPath(wstr) RtlFormatCurrentUserKeyPath
+@ stdcall RtlFormatCurrentUserKeyPath(ptr) RtlFormatCurrentUserKeyPath
 @ stub RtlFormatMessage
 @ stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 @ stdcall RtlFreeHeap(long long long) RtlFreeHeap
@@ -387,7 +386,7 @@ type	win32
 @ stdcall RtlGetAce(ptr long ptr) RtlGetAce
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
-@ stub RtlGetControlSecurityDescriptor
+@ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr) RtlGetControlSecurityDescriptor
 @ stub RtlGetCurrentDirectory_U
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr) RtlGetDaclSecurityDescriptor
 @ stub RtlGetElementGenericTable
@@ -400,19 +399,19 @@ type	win32
 @ stub RtlGetProcessHeaps
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)RtlGetSaclSecurityDescriptor
 @ stub RtlGetUserInfoHeap
-@ stub RtlIdentifierAuthoritySid
+@ stdcall RtlIdentifierAuthoritySid(ptr) RtlIdentifierAuthoritySid
 @ stub RtlImageDirectoryEntryToData
 @ stdcall RtlImageNtHeader(long) RtlImageNtHeader
-@ stub RtlImpersonateSelf
+@ stdcall RtlImpersonateSelf(long) RtlImpersonateSelf
 @ stdcall RtlInitAnsiString(ptr str) RtlInitAnsiString
 @ stub RtlInitCodePageTable
 @ stub RtlInitNlsTables
 @ stdcall RtlInitString(ptr str) RtlInitString
 @ stdcall RtlInitUnicodeString(ptr wstr) RtlInitUnicodeString
-@ stub RtlInitializeBitMap
+@ stdcall RtlInitializeBitMap(long long long) RtlInitializeBitMap
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection
-@ stub RtlInitializeGenericTable
+@ stdcall RtlInitializeGenericTable() RtlInitializeGenericTable
 @ stub RtlInitializeRXact
 @ stdcall RtlInitializeResource(ptr) RtlInitializeResource
 @ stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
@@ -438,7 +437,7 @@ type	win32
 @ stub RtlLocalTimeToSystemTime
 @ stub RtlLockHeap
 @ stub RtlLookupElementGenericTable
-@ stub RtlMakeSelfRelativeSD
+@ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr) RtlMakeSelfRelativeSD
 @ stub RtlMapGenericMask
 @ stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
 @ stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long) RtlMultiByteToUnicodeN
@@ -457,7 +456,7 @@ type	win32
 @ stdcall RtlOpenCurrentUser(long ptr) RtlOpenCurrentUser
 @ stub RtlPcToFileHeader
 @ stub RtlPrefixString
-@ stub RtlPrefixUnicodeString
+@ stdcall RtlPrefixUnicodeString(ptr ptr long) RtlPrefixUnicodeString
 @ stub RtlProtectHeap
 @ stdcall RtlQueryEnvironmentVariable_U(long long long) RtlQueryEnvironmentVariable_U
 @ stub RtlQueryInformationAcl
@@ -485,7 +484,7 @@ type	win32
 @ stub RtlSecondsSince1980ToTime
 @ stub RtlSelfRelativeToAbsoluteSD
 @ stub RtlSetAllBits
-@ stub RtlSetBits
+@ stdcall RtlSetBits(long long long) RtlSetBits
 @ stub RtlSetCurrentDirectory_U
 @ stub RtlSetCurrentEnvironment
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long) RtlSetDaclSecurityDescriptor
@@ -518,7 +517,7 @@ type	win32
 @ stub RtlUnicodeStringToOemSize
 @ stdcall RtlUnicodeStringToOemString(ptr ptr long) RtlUnicodeStringToOemString
 @ stub RtlUnicodeToCustomCPN
-@ stub RtlUnicodeToMultiByteN
+@ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long) RtlUnicodeToMultiByteN
 @ stub RtlUnicodeToMultiByteSize
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 @ stub RtlUniform
@@ -528,16 +527,16 @@ type	win32
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
 @ stub RtlUpcaseUnicodeStringToAnsiString
 @ stub RtlUpcaseUnicodeStringToCountedOemString
-@ stub RtlUpcaseUnicodeStringToOemString
+@ stdcall RtlUpcaseUnicodeStringToOemString(ptr ptr long) RtlUpcaseUnicodeStringToOemString
 @ stub RtlUpcaseUnicodeToCustomCPN
 @ stub RtlUpcaseUnicodeToMultiByteN
-@ stub RtlUpcaseUnicodeToOemN
+@ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long) RtlUpcaseUnicodeToOemN
 @ stub RtlUpperChar
 @ stub RtlUpperString
 @ stub RtlUsageHeap
 @ stub RtlValidAcl
 @ stdcall RtlValidSecurityDescriptor(ptr) RtlValidSecurityDescriptor
-@ stub RtlValidSid
+@ stdcall RtlValidSid(ptr) RtlValidSid
 @ stub RtlValidateHeap
 @ stub RtlValidateProcessHeaps
 @ stub RtlWalkHeap
@@ -556,7 +555,7 @@ type	win32
 @ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlxAnsiStringToUnicodeSize
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlxOemStringToUnicodeSize
 @ stub RtlxUnicodeStringToAnsiSize
-@ stub RtlxUnicodeStringToOemSize
+@ stdcall RtlxUnicodeStringToOemSize(ptr) RtlxUnicodeStringToOemSize
 @ stub SaveEm87Context
 @ stdcall ZwAcceptConnectPort(long long long long long long) NtAcceptConnectPort
 @ stub ZwAccessCheck
@@ -956,8 +955,6 @@ type	win32
 @ cdecl wcstol(wstr ptr long) CRTDLL_wcstol
 @ cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 @ stub wcstoul
-
-# NT 4 additions
 @ stub NtAddAtom
 @ stub NtDeleteAtom
 @ stub NtFindAtom

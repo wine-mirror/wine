@@ -112,7 +112,7 @@ type	win32
 @ stub ImpersonateLoggedOnUser
 @ stub ImpersonateNamedPipeClient
 @ stdcall ImpersonateSelf(long) ImpersonateSelf
-@ stub InitializeAcl
+@ stdcall InitializeAcl(ptr long long) InitializeAcl
 @ stdcall InitializeSecurityDescriptor(ptr long) InitializeSecurityDescriptor
 @ stdcall InitializeSid(ptr ptr long) InitializeSid
 @ stub InitiateSystemShutdownA
@@ -224,7 +224,7 @@ type	win32
 @ stub SetAclInformation
 @ stdcall SetFileSecurityA(str long ptr ) SetFileSecurityA
 @ stdcall SetFileSecurityW(wstr long ptr) SetFileSecurityW
-@ stub SetKernelObjectSecurity
+@ stdcall SetKernelObjectSecurity(long long ptr) SetKernelObjectSecurity
 @ stub SetPrivateObjectSecurity
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long) SetSecurityDescriptorDacl
 @ stdcall SetSecurityDescriptorGroup (ptr ptr long) SetSecurityDescriptorGroup
@@ -241,7 +241,7 @@ type	win32
 @ stdcall StartServiceW(long long ptr) StartServiceW
 @ stub UnlockServiceDatabase
 @ stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
-@ stub LsaLookupSids
+@ stdcall LsaLookupSids(ptr long ptr ptr ptr) LsaLookupSids
 @ stdcall LsaFreeMemory(ptr)LsaFreeMemory
 @ stdcall LsaQueryInformationPolicy(ptr long ptr)LsaQueryInformationPolicy
 @ stdcall LsaClose(ptr)LsaClose

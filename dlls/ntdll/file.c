@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debugtools.h"
+#include "ntdll_misc.h"
 
 #include "ntddk.h"
 
@@ -25,10 +26,10 @@ NTSTATUS WINAPI NtOpenFile(
 	ULONG ShareAccess,
 	ULONG OpenOptions)
 {
-	FIXME("(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx) stub\n",
+	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) stub\n",
 	FileHandle, DesiredAccess, ObjectAttributes, 
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	IoStatusBlock, ShareAccess, OpenOptions);
+	dump_ObjectAttributes (ObjectAttributes);
 	return 0;
 }
 
@@ -64,11 +65,11 @@ NTSTATUS WINAPI NtCreateFile(
 	PVOID EaBuffer,
 	ULONG EaLength)  
 {
-	FIXME("(%p,0x%08lx,%p(%s),%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
+	FIXME("(%p,0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
 	FileHandle,DesiredAccess,ObjectAttributes,
-	ObjectAttributes ? debugstr_w(ObjectAttributes->ObjectName->Buffer) : NULL,
 	IoStatusBlock,AllocateSize,FileAttributes,
 	ShareAccess,CreateDisposition,CreateOptions,EaBuffer,EaLength);
+	dump_ObjectAttributes (ObjectAttributes);
 	return 0;
 }
 
@@ -210,6 +211,21 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 	FIXME("(0x%08x 0x%08x %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
 	FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation,
 	Length, FileInformationClass, ReturnSingleEntry, 
-	debugstr_w(FileName->Buffer),RestartScan);
+	debugstr_us(FileName),RestartScan);
 	return 0;
+}
+
+/******************************************************************************
+ *  NtQueryVolumeInformationFile		[NTDLL] 
+ */
+NTSTATUS WINAPI NtQueryVolumeInformationFile (
+	IN HANDLE FileHandle,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	OUT PVOID FSInformation,
+	IN ULONG Length,
+	IN FS_INFORMATION_CLASS FSInformationClass)
+{
+	TRACE("(0x%08x %p %p 0x%08lx 0x%08x) stub\n",
+	FileHandle, IoStatusBlock, FSInformation, Length, FSInformationClass);
+	return STATUS_SUCCESS;
 }
