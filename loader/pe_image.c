@@ -48,11 +48,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
-WINE_DECLARE_DEBUG_CHANNEL(delayhlp);
-WINE_DECLARE_DEBUG_CHANNEL(fixup);
 WINE_DECLARE_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(segment);
 
 
 /* convert PE image VirtualAddress to Real Address */
@@ -462,14 +459,14 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         {
             ImgDelayDescr *pe_delay = NULL;
             pe_delay = get_rva(hModule, dir->VirtualAddress);
-            TRACE_(delayhlp)("pe_delay->grAttrs = %08x\n", pe_delay->grAttrs);
-            TRACE_(delayhlp)("pe_delay->szName = %s\n", pe_delay->szName);
-            TRACE_(delayhlp)("pe_delay->phmod = %08x\n", pe_delay->phmod);
-            TRACE_(delayhlp)("pe_delay->pIAT = %08x\n", pe_delay->pIAT);
-            TRACE_(delayhlp)("pe_delay->pINT = %08x\n", pe_delay->pINT);
-            TRACE_(delayhlp)("pe_delay->pBoundIAT = %08x\n", pe_delay->pBoundIAT);
-            TRACE_(delayhlp)("pe_delay->pUnloadIAT = %08x\n", pe_delay->pUnloadIAT);
-            TRACE_(delayhlp)("pe_delay->dwTimeStamp = %08x\n", pe_delay->dwTimeStamp);
+            TRACE("pe_delay->grAttrs = %08x\n", pe_delay->grAttrs);
+            TRACE("pe_delay->szName = %s\n", pe_delay->szName);
+            TRACE("pe_delay->phmod = %08x\n", pe_delay->phmod);
+            TRACE("pe_delay->pIAT = %08x\n", pe_delay->pIAT);
+            TRACE("pe_delay->pINT = %08x\n", pe_delay->pINT);
+            TRACE("pe_delay->pBoundIAT = %08x\n", pe_delay->pBoundIAT);
+            TRACE("pe_delay->pUnloadIAT = %08x\n", pe_delay->pUnloadIAT);
+            TRACE("pe_delay->dwTimeStamp = %08x\n", pe_delay->dwTimeStamp);
         }
 #endif /* ImgDelayDescr */
     }

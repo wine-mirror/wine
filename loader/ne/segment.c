@@ -43,10 +43,9 @@
 #include "builtin16.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(fixup);
 WINE_DECLARE_DEBUG_CHANNEL(dll);
-WINE_DECLARE_DEBUG_CHANNEL(fixup);
 WINE_DECLARE_DEBUG_CHANNEL(module);
-WINE_DECLARE_DEBUG_CHANNEL(segment);
 
 /*
  * Relocation table entry
@@ -219,24 +218,20 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     ReadFile(hf, &count, sizeof(count), &res, NULL);
     if (!count) goto succeed;
 
-    TRACE_(fixup)("Fixups for %.*s, segment %d, hSeg %04x\n",
-                   *((BYTE *)pModule + pModule->name_table),
-                   (char *)pModule + pModule->name_table + 1,
-                   segnum, pSeg->hSeg );
-    TRACE_(segment)("Fixups for %.*s, segment %d, hSeg %04x\n",
+    TRACE("Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->hSeg );
 
     reloc_entries = (struct relocation_entry_s *)HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
     if(reloc_entries == NULL) {
-        WARN_(fixup)("Not enough memory for relocation entries!");
+        WARN("Not enough memory for relocation entries!");
         goto fail;
     }
     if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
         (res != count * sizeof(struct relocation_entry_s)))
     {
-        WARN_(fixup)("Unable to read relocation information\n" );
+        WARN("Unable to read relocation information\n" );
         goto fail;
     }
 
@@ -272,7 +267,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                              (char *)pModule + pModule->name_table + 1 );
                 else
                 {
-                    ERR_(fixup)("No implementation for %.*s.%d, setting to 0xdeadbeef\n",
+                    ERR("No implementation for %.*s.%d, setting to 0xdeadbeef\n",
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
@@ -282,7 +277,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE_(fixup)("%d: %.*s.%d=%04x:%04x %s\n", i + 1,
+                TRACE("%d: %.*s.%d=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        ordinal, HIWORD(address), LOWORD(address),
@@ -302,7 +297,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (ERR_ON(fixup) && !address)
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                ERR_(fixup)("No implementation for %.*s.%s, setting to 0xdeadbeef\n",
+                ERR("No implementation for %.*s.%s, setting to 0xdeadbeef\n",
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
@@ -310,7 +305,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE_(fixup)("%d: %.*s.%s=%04x:%04x %s\n", i + 1,
+                TRACE("%d: %.*s.%s=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        func_name, HIWORD(address), LOWORD(address),
@@ -328,7 +323,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 address = (FARPROC16)MAKESEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
 	    }
 
-	    TRACE_(fixup)("%d: %04x:%04x %s\n",
+	    TRACE("%d: %04x:%04x %s\n",
                    i + 1, HIWORD(address), LOWORD(address),
                    NE_GetRelocAddrName( rep->address_type, additive ) );
 	    break;
@@ -342,7 +337,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	     * successfully emulate the coprocessor if it doesn't
 	     * exist.
 	     */
-	    TRACE_(fixup)("%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
+	    TRACE("%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
                    i + 1, rep->relocation_type, rep->offset,
                    rep->target1, rep->target2,
                    NE_GetRelocAddrName( rep->address_type, additive ) );
@@ -357,14 +352,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         {
             char module[10];
             GetModuleName16( pModule->self, module, sizeof(module) );
-            ERR_(fixup)("WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
+            ERR("WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
                  module, rep->address_type );
         }
 
         if (additive)
         {
             sp = MapSL( MAKESEGPTR( SEL(pSeg->hSeg), offset ) );
-            TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
+            TRACE("    %04x:%04x\n", offset, *sp );
             switch (rep->address_type & 0x7f)
             {
             case NE_RADDR_LOWBYTE:
@@ -380,7 +375,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             case NE_RADDR_SELECTOR:
 		/* Borland creates additive records with offset zero. Strange, but OK */
                 if (*sp)
-                    ERR_(fixup)("Additive selector to %04x.Please report\n",*sp);
+                    ERR("Additive selector to %04x.Please report\n",*sp);
 		else
                     *sp = HIWORD(address);
                 break;
@@ -394,7 +389,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             {
                 sp = MapSL( MAKESEGPTR( SEL(pSeg->hSeg), offset ) );
                 next_offset = *sp;
-                TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
+                TRACE("    %04x:%04x\n", offset, *sp );
                 switch (rep->address_type & 0x7f)
                 {
                 case NE_RADDR_LOWBYTE:
@@ -426,7 +421,7 @@ succeed:
     return TRUE;
 
 unknown:
-    WARN_(fixup)("WARNING: %d: unknown ADDR TYPE %d,  "
+    WARN("WARNING: %d: unknown ADDR TYPE %d,  "
          "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
          i + 1, rep->address_type, rep->relocation_type,
          rep->offset, rep->target1, rep->target2);
@@ -505,7 +500,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     WORD dgroup, num_entries, sel = SEL(pSegTable[segnum-1].hSeg);
     BYTE *pSeg, *pFunc;
 
-    TRACE_(module)("(%d);\n", segnum);
+    TRACE("(%d);\n", segnum);
 
     if (pSegTable[segnum-1].flags & NE_SEGFLAGS_DATA)
     {
@@ -522,22 +517,22 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
 
     do {
-	TRACE_(module)("num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
+	TRACE("num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
 	if (!(num_entries = bundle->last - bundle->first))
 	    return;
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	while (num_entries--)
     {
-	    /*TRACE_(module)("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
+	    /*TRACE("entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
 	    if (entry->segnum == segnum)
         {
 		pFunc = ((BYTE *)pSeg+entry->offs);
-		TRACE_(module)("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
+		TRACE("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
 		if (*(pFunc+2) == 0x90)
         {
 		    if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
 		    {
-			TRACE_(module)("patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
+			TRACE("patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
 			*(WORD *)pFunc = 0xd88c; /* mov ax, ds */
         }
 
@@ -545,7 +540,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
                         {
 			if ((entry->flags & 2)) /* public data ? */
                         {
-			    TRACE_(module)("patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
+			    TRACE("patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
 			    *pFunc = 0xb8; /* mov ax, */
 			    *(WORD *)(pFunc+1) = dgroup;
                     }
@@ -553,7 +548,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 			if ((pModule->flags & NE_FFLAGS_MULTIPLEDATA)
 			&& (entry->flags & 1)) /* exported ? */
                     {
-			    TRACE_(module)("patch %04x:%04x -> nop, nop\n", sel, entry->offs);
+			    TRACE("patch %04x:%04x -> nop, nop\n", sel, entry->offs);
 			    *(WORD *)pFunc = 0x9090; /* nop, nop */
 			}
                     }
