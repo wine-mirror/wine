@@ -430,8 +430,7 @@ TRACKBAR_Refresh (HWND hwnd, HDC hdc)
             FillRect (hdc, &thumb, hbr);
             DrawEdge (hdc, &thumb, EDGE_RAISED, BF_TOPLEFT);
         } else {
-
-            POINT points[6];
+            POINT points[5];
 
             /* first, fill the thumb */
             /* FIXME: revamp. check for TBS_VERT */
@@ -443,32 +442,16 @@ TRACKBAR_Refresh (HWND hwnd, HDC hdc)
             points[1].y=thumb.top;
             points[2].x=thumb.right - 1;
             points[2].y=thumb.bottom -2;
-            points[3].x=(thumb.right + thumb.left-1)/2;
-            points[3].y=thumb.bottom+4;
-            points[4].x=thumb.left;
-            points[4].y=thumb.bottom -2;
-            points[5].x=points[0].x;
-            points[5].y=points[0].y;
-            Polygon (hdc, points, 6);
+            points[3].x=thumb.left;
+            points[3].y=thumb.bottom -2;
+            points[4].x=points[0].x;
+            points[4].y=points[0].y;
+            Polygon (hdc, points, 5);
 
             if (dwStyle & TBS_VERT) {
                 /*   draw edge  */
             } else {
-                RECT triangle;	/* for correct shadows of thumb */
                 DrawEdge (hdc, &thumb, EDGE_RAISED, BF_TOPLEFT);
-
-                /* draw notch */
-
-                triangle.right = thumb.right+5;
-                triangle.left  = points[3].x+5;
-                triangle.top   = thumb.bottom +5;
-                triangle.bottom= thumb.bottom +1;
-                DrawEdge (hdc, &triangle, EDGE_SUNKEN, 
-                          BF_DIAGONAL | BF_TOP | BF_RIGHT);
-                triangle.left  = thumb.left+6;
-                triangle.right = points[3].x+6;
-                DrawEdge (hdc, &triangle, EDGE_RAISED, 
-                          BF_DIAGONAL | BF_TOP | BF_LEFT);
             }
         }
         DeleteObject (hbr);
@@ -1352,7 +1335,7 @@ TRACKBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->dragPos = dragPos;
 
     infoPtr->flags |= TB_DRAGPOSVALID;
-    TRACKBAR_SendNotify (hwnd, TB_THUMBTRACK | (infoPtr->nPos>>16));
+    TRACKBAR_SendNotify (hwnd, TB_THUMBTRACK | (infoPtr->nPos<<16));
 
     if (infoPtr->flags & TB_SHOW_TOOLTIP) {
         POINT pt;
