@@ -77,6 +77,9 @@
 /* Define to 1 if you have the <elf.h> header file. */
 #undef HAVE_ELF_H
 
+/* Define to 1 if you have the `fcvt' function. */
+#undef HAVE_FCVT
+
 /* Define to 1 if you have the `finite' function. */
 #undef HAVE_FINITE
 
@@ -121,6 +124,9 @@
 
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
+
+/* Define to 1 if you have the `gcvt' function. */
+#undef HAVE_GCVT
 
 /* Define to 1 if you have the `getbkgd' function. */
 #undef HAVE_GETBKGD

@@ -620,11 +620,6 @@ unsigned short* wine_rewrite_s4tos2(const wchar_t* str4 )
 }
 
 #ifndef HAVE_ECVT
-/*
- * NetBSD 1.5 doesn't have ecvt, fcvt, gcvt. We just check for ecvt, though.
- * Fix/verify these implementations !
- */
-
 /***********************************************************************
  *		ecvt
  */
@@ -638,7 +633,9 @@ char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
     *decpt = (dec) ? (int)dec - (int)buf : -1;
     return buf;
 }
+#endif /* HAVE_ECVT */
 
+#ifndef HAVE_FCVT
 /***********************************************************************
  *		fcvt
  */
@@ -652,7 +649,9 @@ char *fcvt (double number, int  ndigits,  int  *decpt,  int *sign)
     *decpt = (dec) ? (int)dec - (int)buf : -1;
     return buf;
 }
+#endif /* HAVE_FCVT */
 
+#ifndef HAVE_GCVT
 /***********************************************************************
  *		gcvt
  *
@@ -663,7 +662,7 @@ char *gcvt (double number, size_t  ndigit,  char *buff)
     sprintf(buff, "%.*E", (int)ndigit, number);
     return buff;
 }
-#endif /* HAVE_ECVT */
+#endif /* HAVE_GCVT */
 
 
 #ifndef wine_memcpy_unaligned

@@ -11647,6 +11647,8 @@ fi
 
 
 
+
+
 for ac_func in \
 	_lwp_create \
 	_pclose \
@@ -11657,10 +11659,12 @@ for ac_func in \
 	chsize \
 	clone \
 	ecvt \
+	fcvt \
 	finite \
 	fpclass \
 	ftruncate \
 	ftruncate64 \
+	gcvt \
 	getnetbyaddr \
 	getnetbyname \
 	getopt_long \
