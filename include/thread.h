@@ -11,22 +11,6 @@
 #include "winbase.h"
 #include "selectors.h"  /* for SET_FS */
 
-#ifdef linux
-#define HAVE_CLONE_SYSCALL
-#endif
-
-/* This is what we will use on *BSD, once threads using rfork() get
- * implemented:
- *
- * #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
- * #define HAVE_RFORK
- * #endif
- */
-
-#if (defined(HAVE_CLONE_SYSCALL) || defined(HAVE_RFORK)) && !defined(NO_REENTRANT_LIBC)
-#define USE_THREADS
-#endif
-
 struct _PDB;
 
 /* Thread exception block */

@@ -19,11 +19,20 @@ static int *ph_errno = &h_errno;
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_LWP_H
+# include <sys/lwp.h>
+#endif
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
 #include "thread.h"
 #include "server.h"
 #include "winbase.h"
 #include "debug.h"
 
+#ifdef linux
+#define HAVE_CLONE_SYSCALL
+#endif
 
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };
@@ -44,14 +53,22 @@ extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 #endif  /* HAVE_CLONE_SYSCALL */
 
 
-#ifdef USE_THREADS
-#ifdef linux
+#ifndef NO_REENTRANT_LIBC
+
 /***********************************************************************
- *           __errno_location
+ *           __errno_location/__error/___errno
  *
  * Get the per-thread errno location.
  */
+#ifdef HAVE__ERRNO_LOCATION
 int *__errno_location()
+#endif
+#ifdef HAVE__ERROR
+int *__error()
+#endif
+#ifdef HAVE___ERRNO
+int *___errno()
+#endif
 {
     THDB *thdb = THREAD_Current();
     if (!thdb) return perrno;
@@ -79,20 +96,8 @@ int *__h_errno_location()
 #endif
     return &thdb->thread_h_errno;
 }
-#endif
 
-#ifdef __FreeBSD__
-int *__error() {
-    THDB *thdb = THREAD_Current();
-    if (!thdb) return perrno;
-#ifdef NO_REENTRANT_X11
-    /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
-        return perrno;
-#endif
-    return &thdb->thread_errno;
-}
-#endif
+#endif /* NO_REENTRANT_LIBC */
 
 /***********************************************************************
  *           SYSDEPS_StartThread
@@ -106,7 +111,6 @@ static void SYSDEPS_StartThread( THDB *thdb )
     thdb->startup();
     _exit(0);  /* should never get here */
 }
-#endif  /* USE_THREADS */
 
 
 /***********************************************************************
@@ -117,7 +121,7 @@ static void SYSDEPS_StartThread( THDB *thdb )
  */
 int SYSDEPS_SpawnThread( THDB *thread )
 {
-#ifdef USE_THREADS
+#ifndef NO_REENTRANT_LIBC
 
 #ifdef HAVE_CLONE_SYSCALL
     if (clone( (int (*)(void *))SYSDEPS_StartThread, thread->teb.stack_top,
@@ -125,6 +129,7 @@ int SYSDEPS_SpawnThread( THDB *thread )
         return -1;
     /* FIXME: close the child socket in the parent process */
 /*    close( thread->socket );*/
+    return 0;
 #endif
 
 #ifdef HAVE_RFORK
@@ -145,13 +150,24 @@ int SYSDEPS_SpawnThread( THDB *thread )
     "addl $8,%%esp" :
     : "r" (sp), "g" (SYS_rfork), "g" (RFPROC|RFMEM)
     : "eax", "edx");
+    return 0;
 #endif
 
-#else  /* !USE_THREADS */
+#ifdef HAVE__LWP_CREATE
+    ucontext_t context;
+    _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, thread,
+                      NULL, thread->stack_base, thread->teb.stack_top - thread->stack_base );
+    if ( _lwp_create( &context, 0, NULL ) )
+        return -1;
+    return 0;
+#endif
+
+#endif /* NO_REENTRANT_LIBC */
+
     FIXME(thread, "CreateThread: stub\n" );
-#endif  /* USE_THREADS */
     return 0;
 }
+
 
 
 /***********************************************************************
@@ -163,6 +179,10 @@ int SYSDEPS_SpawnThread( THDB *thread )
  */
 void SYSDEPS_ExitThread(void)
 {
+#ifdef HAVE__LWP_CREATE
+    _lwp_exit();
+#endif
+
     _exit( 0 );
 }
 
