@@ -299,7 +299,7 @@ typedef struct tagClipboardWindowInfo
  *---------------------------------------------------------------------*/
 
 /***********************************************************************
- *           OleSetClipboard     [OLE32.127]
+ *           OleSetClipboard     [OLE32.@]
  *  Places a pointer to the specified data object onto the clipboard,
  *  making the data object accessible to the OleGetClipboard function.
  *
@@ -454,7 +454,7 @@ CLEANUP:
 
 
 /***********************************************************************
- * OleGetClipboard [OLE32.105]
+ * OleGetClipboard [OLE32.@]
  * Returns a pointer to our internal IDataObject which represents the conceptual
  * state of the Windows clipboard. If the current clipboard already contains
  * an IDataObject, our internal IDataObject will delegate to this object.
@@ -489,7 +489,7 @@ HRESULT WINAPI OleFlushClipboard16(void)
 
 
 /******************************************************************************
- *              OleFlushClipboard        [OLE32.103]
+ *              OleFlushClipboard        [OLE32.@]
  *  Renders the data from the source IDataObject into the windows clipboard
  *
  *  TODO: OleFlushClipboard needs to additionally handle TYMED_IStorage media
@@ -585,7 +585,7 @@ CLEANUP:
 
 
 /***********************************************************************
- *           OleIsCurrentClipboard [OLE32.110]
+ *           OleIsCurrentClipboard [OLE32.@]
  */
 HRESULT WINAPI OleIsCurrentClipboard (  IDataObject *pDataObject)
 {

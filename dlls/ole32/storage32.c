@@ -5406,7 +5406,7 @@ ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 }
 
 /******************************************************************************
- *    StgCreateDocfile  [OLE32.144]
+ *    StgCreateDocfile  [OLE32.@]
  */
 HRESULT WINAPI StgCreateDocfile(
   LPCOLESTR pwcsName,
@@ -5537,7 +5537,7 @@ HRESULT WINAPI StgCreateDocfile(
 }
 
 /******************************************************************************
- *              StgOpenStorage        [OLE32.148]
+ *              StgOpenStorage        [OLE32.@]
  */
 HRESULT WINAPI StgOpenStorage(
   const OLECHAR *pwcsName,
@@ -5681,7 +5681,7 @@ end:
 }
 
 /******************************************************************************
- *    StgCreateDocfileOnILockBytes    [OLE32.145]
+ *    StgCreateDocfileOnILockBytes    [OLE32.@]
  */
 HRESULT WINAPI StgCreateDocfileOnILockBytes(
       ILockBytes *plkbyt,
@@ -5733,7 +5733,7 @@ HRESULT WINAPI StgCreateDocfileOnILockBytes(
 }
 
 /******************************************************************************
- *    StgOpenStorageOnILockBytes    [OLE32.149]
+ *    StgOpenStorageOnILockBytes    [OLE32.@]
  */
 HRESULT WINAPI StgOpenStorageOnILockBytes(
       ILockBytes *plkbyt,
@@ -5798,8 +5798,8 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
 }
 
 /******************************************************************************
- *              StgSetTimes [ole32.150]
- *              StgSetTimes [OLE32.150]
+ *              StgSetTimes [ole32.@]
+ *              StgSetTimes [OLE32.@]
  *
  *
  */
@@ -5810,7 +5810,7 @@ HRESULT WINAPI StgSetTimes(OLECHAR *str, FILETIME *a, FILETIME *b, FILETIME *c )
 }
 
 /******************************************************************************
- *              StgIsStorageILockBytes        [OLE32.147]
+ *              StgIsStorageILockBytes        [OLE32.@]
  *
  * Determines if the ILockBytes contains a storage object.
  */
@@ -5831,7 +5831,7 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
 }
 
 /******************************************************************************
- *              WriteClassStg        [OLE32.158]
+ *              WriteClassStg        [OLE32.@]
  *
  * This method will store the specified CLSID in the specified storage object
  */
@@ -5847,7 +5847,7 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 }
 
 /***********************************************************************
- *    ReadClassStg (OLE32.134)
+ *    ReadClassStg (OLE32.@)
  *
  * This method reads the CLSID previously written to a storage object with the WriteClassStg.
  */
@@ -5872,7 +5872,7 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
 }
 
 /***********************************************************************
- *    OleLoadFromStream (OLE32.113)
+ *    OleLoadFromStream (OLE32.@)
  *
  * This function loads an object from stream
  */
@@ -5906,7 +5906,7 @@ HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvOb
 }
 
 /***********************************************************************
- *    OleSaveToStream (OLE32.125)
+ *    OleSaveToStream (OLE32.@)
  *
  * This function saves an object with the IPersistStream interface on it
  * to the specified stream.
@@ -6709,7 +6709,7 @@ end:
 
 
 /***********************************************************************
- *               WriteFmtUserTypeStg (OLE32.160)
+ *               WriteFmtUserTypeStg (OLE32.@)
  */
 HRESULT WINAPI WriteFmtUserTypeStg(
 	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
@@ -6763,7 +6763,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 
 
 /******************************************************************************
- *              ReadFmtUserTypeStg        [OLE32.136]
+ *              ReadFmtUserTypeStg        [OLE32.@]
  */
 HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
 {
@@ -7266,7 +7266,7 @@ void OLECONVERT_GetOle20PresData(LPSTORAGE pStorage, OLECONVERT_OLESTREAM_DATA *
 }
 
 /*************************************************************************
- * OleConvertOLESTREAMToIStorage [OLE32.87]
+ * OleConvertOLESTREAMToIStorage [OLE32.@]
  *
  * Read info on MSDN
  *
@@ -7360,7 +7360,7 @@ HRESULT WINAPI OleConvertOLESTREAMToIStorage (
 }
 
 /*************************************************************************
- * OleConvertIStorageToOLESTREAM [OLE32.85]
+ * OleConvertIStorageToOLESTREAM [OLE32.@]
  *
  * Read info on MSDN
  *
@@ -7433,7 +7433,7 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
 }
 
 /***********************************************************************
- *		GetConvertStg (OLE32.68)
+ *		GetConvertStg (OLE32.@)
  */
 HRESULT WINAPI GetConvertStg(LPGUID guid) {
     FIXME("(%s), unimplemented stub!\n",debugstr_guid(guid));
@@ -7441,7 +7441,7 @@ HRESULT WINAPI GetConvertStg(LPGUID guid) {
 }
 
 /******************************************************************************
- * StgIsStorageFile [OLE32.146]
+ * StgIsStorageFile [OLE32.@]
  */
 HRESULT WINAPI
 StgIsStorageFile(LPCOLESTR fn)

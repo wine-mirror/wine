@@ -391,7 +391,7 @@ static ICOM_VTABLE(IRunnableObject) DefaultHandler_IRunnableObject_VTable =
 };
 
 /******************************************************************************
- * OleCreateDefaultHandler [OLE32.90]
+ * OleCreateDefaultHandler [OLE32.@]
  */
 HRESULT WINAPI OleCreateDefaultHandler(
   REFCLSID  clsid,

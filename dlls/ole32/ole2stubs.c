@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /******************************************************************************
- *               OleCreateLinkToFile        [OLE32.96]
+ *               OleCreateLinkToFile        [OLE32.@]
  */
 HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 	  		DWORD renderopt, LPFORMATETC lpFormatEtc,
@@ -45,7 +45,7 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 
 
 /******************************************************************************
- *              OleDuplicateData        [OLE32.102]
+ *              OleDuplicateData        [OLE32.@]
  */
 HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 	                          UINT uiFlags)
@@ -56,7 +56,7 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 
 
 /***********************************************************************
- *             OleTranslateAccelerator [OLE32.130]
+ *             OleTranslateAccelerator [OLE32.@]
  */
 HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
                    LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg)
@@ -66,7 +66,7 @@ HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
 }
 
 /******************************************************************************
- *              SetConvertStg        [OLE32.142]
+ *              SetConvertStg        [OLE32.@]
  */
 HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 {
@@ -75,7 +75,7 @@ HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 }
 
 /******************************************************************************
- *              OleCreate        [OLE32.89]
+ *              OleCreate        [OLE32.@]
  *
  */
 HRESULT WINAPI OleCreate(
@@ -122,7 +122,7 @@ HRESULT WINAPI OleCreate(
 }
 
 /******************************************************************************
- *              OleCreateLink        [OLE32.94]
+ *              OleCreateLink        [OLE32.@]
  */
 HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt, LPFORMATETC lpFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
@@ -132,7 +132,7 @@ HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt,
 }
 
 /******************************************************************************
- *              OleCreateFromFile        [OLE32.93]
+ *              OleCreateFromFile        [OLE32.@]
  */
 HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID riid,
             DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
@@ -143,7 +143,7 @@ HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID
 
 
 /******************************************************************************
- *              OleGetIconOfClass        [OLE32.106]
+ *              OleGetIconOfClass        [OLE32.@]
  */
 HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseTypeAsLabel)
 {
@@ -153,7 +153,7 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
 
 
 /******************************************************************************
- *              OleCreateStaticFromData        [OLE32.98]
+ *              OleCreateStaticFromData        [OLE32.@]
  */
 HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
                 DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
@@ -164,7 +164,7 @@ HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
 }
 
 /******************************************************************************
- *              OleCreateLinkFromData        [OLE32.95]
+ *              OleCreateLinkFromData        [OLE32.@]
  */
 
 HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
@@ -177,7 +177,7 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
 }
 
 /******************************************************************************
- *              OleIsRunning        [OLE32.111]
+ *              OleIsRunning        [OLE32.@]
  */
 BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 {
@@ -186,7 +186,7 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 }
 
 /***********************************************************************
- *           OleRegEnumVerbs    [OLE32.120]
+ *           OleRegEnumVerbs    [OLE32.@]
  */
 HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 {
@@ -195,7 +195,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 }
 
 /***********************************************************************
- *           OleRegEnumFormatEtc    [OLE32.119]
+ *           OleRegEnumFormatEtc    [OLE32.@]
  */
 HRESULT     WINAPI OleRegEnumFormatEtc (
   REFCLSID clsid,
@@ -228,7 +228,7 @@ static void OLE_FreeClipDataArray(ULONG count, CLIPDATA * pClipDataArray)
 HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);
 
 /***********************************************************************
- *           PropVariantClear			    [OLE32.166]
+ *           PropVariantClear			    [OLE32.@]
  */
 HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
 {
@@ -296,7 +296,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
 }
 
 /***********************************************************************
- *           PropVariantCopy			    [OLE32.246]
+ *           PropVariantCopy			    [OLE32.@]
  */
 HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] FIXME: PROPVARIANT * */
 			       const PROPVARIANT *pvarSrc) /* [in] FIXME: const PROPVARIANT * */
@@ -452,7 +452,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] FIXME: PROPV
 }
 
 /***********************************************************************
- *           FreePropVariantArray			    [OLE32.195]
+ *           FreePropVariantArray			    [OLE32.@]
  */
 HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 				    PROPVARIANT *rgvars)    /* [in/out] */
@@ -468,7 +468,7 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 }
 
 /***********************************************************************
- *           CoIsOle1Class                              [OLE32.29]
+ *           CoIsOle1Class                              [OLE32.@]
  */
 BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
 {

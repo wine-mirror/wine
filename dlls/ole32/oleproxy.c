@@ -499,7 +499,7 @@ static ICOM_VTABLE(IPSFactoryBuffer) psfacbufvtbl = {
 static ICOM_VTABLE(IPSFactoryBuffer) *lppsfac = &psfacbufvtbl;
 
 /***********************************************************************
- *           DllGetClassObject [OLE32.63]
+ *           DllGetClassObject [OLE32.@]
  */
 HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {

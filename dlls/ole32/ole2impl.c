@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define MAX_CLIPFORMAT_NAME   80
 
 /******************************************************************************
- *		OleQueryCreateFromData [OLE32.117]
+ *		OleQueryCreateFromData [OLE32.@]
  *
  * Author   : Abey George
  * Checks whether an object can become an embedded object.
@@ -85,7 +85,7 @@ HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 }
 
 /******************************************************************************
- *		OleCreateFromData        [OLE32.92]
+ *		OleCreateFromData        [OLE32.@]
  *
  * Author   : Abey George
  * Creates an embedded object from data transfer object retrieved from
@@ -193,4 +193,3 @@ HRESULT WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObject, REFIID riid,
 
   return DV_E_FORMATETC;
 }
-

@@ -717,7 +717,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
  */
 
 /***********************************************************************
- * CreateOleAdviseHolder [OLE32.59]
+ * CreateOleAdviseHolder [OLE32.@]
  */
 HRESULT WINAPI CreateOleAdviseHolder(
   LPOLEADVISEHOLDER *ppOAHolder)
@@ -739,7 +739,7 @@ HRESULT WINAPI CreateOleAdviseHolder(
 }
 
 /******************************************************************************
- *              CreateDataAdviseHolder        [OLE32.53]
+ *              CreateDataAdviseHolder        [OLE32.@]
  */
 HRESULT WINAPI CreateDataAdviseHolder(
   LPDATAADVISEHOLDER* ppDAHolder)

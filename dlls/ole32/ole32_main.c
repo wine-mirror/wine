@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 HINSTANCE OLE32_hInstance = 0;
 
 /***********************************************************************
- *		OleMetafilePictFromIconAndLabel (OLE32.115)
+ *		OleMetafilePictFromIconAndLabel (OLE32.@)
  */
 HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
                                                LPOLESTR lpszSourceFile, UINT iIconIndex)

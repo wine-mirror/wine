@@ -467,7 +467,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
 }
 
 /******************************************************************************
- *		GetRunningObjectTable	[OLE2.30]
+ *		GetRunningObjectTable	[OLE2.@]
  */
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
@@ -476,7 +476,7 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *ppr
 }
 
 /***********************************************************************
- *           GetRunningObjectTable (OLE32.73)
+ *           GetRunningObjectTable (OLE32.@)
  */
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
@@ -497,7 +497,7 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
 }
 
 /******************************************************************************
- *              OleRun        [OLE32.123]
+ *              OleRun        [OLE32.@]
  */
 HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 {
@@ -514,7 +514,7 @@ HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 }
 
 /******************************************************************************
- *              MkParseDisplayName        [OLE32.81]
+ *              MkParseDisplayName        [OLE32.@]
  */
 HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)

@@ -1339,7 +1339,7 @@ HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName,LPMONIKER* ppmk)
 }
 
 /******************************************************************************
- *        CreateFileMoniker (OLE32.55)
+ *        CreateFileMoniker (OLE32.@)
  ******************************************************************************/
 HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER * ppmk)
 {

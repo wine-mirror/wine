@@ -464,7 +464,7 @@ static ICOM_VTABLE(ISupportErrorInfo) ISupportErrorInfoImpl_VTable =
   ISupportErrorInfoImpl_InterfaceSupportsErrorInfo
 };
 /***********************************************************************
- *		CreateErrorInfo (OLE32.192)
+ *		CreateErrorInfo (OLE32.@)
  */
 HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
 {
@@ -480,7 +480,7 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
 }
 
 /***********************************************************************
- *		GetErrorInfo (OLE32.196)
+ *		GetErrorInfo (OLE32.@)
  */
 HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
@@ -495,7 +495,7 @@ HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 }
 
 /***********************************************************************
- *		SetErrorInfo (OLE32.255)
+ *		SetErrorInfo (OLE32.@)
  */
 HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo)
 {

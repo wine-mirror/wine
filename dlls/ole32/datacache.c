@@ -454,7 +454,7 @@ static ICOM_VTABLE(IOleCacheControl) DataCache_IOleCacheControl_VTable =
 };
 
 /******************************************************************************
- *              CreateDataCache        [OLE32.54]
+ *              CreateDataCache        [OLE32.@]
  */
 HRESULT WINAPI CreateDataCache(
   LPUNKNOWN pUnkOuter,

@@ -351,7 +351,7 @@ ICOM_VTABLE(IMarshal) stdmvtbl = {
 };
 
 /***********************************************************************
- *		CoGetStandardMarshal	[OLE32.23]
+ *		CoGetStandardMarshal	[OLE32.@]
  *
  * When the COM library in the client process receives a marshalled
  * interface pointer, it looks for a CLSID to be used in creating a proxy
@@ -407,7 +407,7 @@ _GetMarshaller(REFIID riid, IUnknown *pUnk,DWORD dwDestContext,
 }
 
 /***********************************************************************
- *		CoGetMarshalSizeMax	[OLE32.21]
+ *		CoGetMarshalSizeMax	[OLE32.@]
  */
 HRESULT WINAPI
 CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
@@ -427,7 +427,7 @@ CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 
 
 /***********************************************************************
- *		CoMarshalInterface	[OLE32.34]
+ *		CoMarshalInterface	[OLE32.@]
  */
 HRESULT WINAPI
 CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
@@ -493,7 +493,7 @@ release_marshal:
 
 
 /***********************************************************************
- *		CoUnmarshalInterface	[OLE32.50]
+ *		CoUnmarshalInterface	[OLE32.@]
  */
 HRESULT WINAPI
 CoUnmarshalInterface(IStream *pStm, REFIID riid, LPVOID *ppv) {
@@ -543,7 +543,7 @@ release_marshal:
 }
 
 /***********************************************************************
- *		CoMarshalInterThreadInterfaceInStream	[OLE32.33]
+ *		CoMarshalInterThreadInterfaceInStream	[OLE32.@]
  *
  * Marshal interfaces across threads. We don't have a thread distinction,
  * meaning most interfaces just work across different threads, the RPC
@@ -570,7 +570,7 @@ CoMarshalInterThreadInterfaceInStream(
 }
 
 /***********************************************************************
- *		CoGetInterfaceAndReleaseStream	[OLE32.19]
+ *		CoGetInterfaceAndReleaseStream	[OLE32.@]
  */
 HRESULT WINAPI
 CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv) {

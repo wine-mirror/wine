@@ -173,7 +173,7 @@ static DWORD OLEDD_GetButtonState();
 
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]
- *		OleBuildVersion [OLE32.84]
+ *		OleBuildVersion [OLE32.@]
  */
 DWORD WINAPI OleBuildVersion(void)
 {
@@ -183,7 +183,7 @@ DWORD WINAPI OleBuildVersion(void)
 
 /***********************************************************************
  *           OleInitialize       (OLE2.2)
- *           OleInitialize       (OLE32.108)
+ *           OleInitialize       (OLE32.@)
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
@@ -244,7 +244,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
 
 /******************************************************************************
  *		CoGetCurrentProcess	[COMPOBJ.34]
- *		CoGetCurrentProcess	[OLE32.18]
+ *		CoGetCurrentProcess	[OLE32.@]
  *
  * NOTES
  *   Is DWORD really the correct return type for this function?
@@ -256,7 +256,7 @@ DWORD WINAPI CoGetCurrentProcess(void)
 
 /******************************************************************************
  *		OleUninitialize	[OLE2.3]
- *		OleUninitialize	[OLE32.131]
+ *		OleUninitialize	[OLE32.@]
  */
 void WINAPI OleUninitialize(void)
 {
@@ -300,7 +300,7 @@ void WINAPI OleUninitialize(void)
 }
 
 /******************************************************************************
- *		CoRegisterMessageFilter	[OLE32.38]
+ *		CoRegisterMessageFilter	[OLE32.@]
  */
 HRESULT WINAPI CoRegisterMessageFilter(
     LPMESSAGEFILTER lpMessageFilter,	/* [in] Pointer to interface */
@@ -314,7 +314,7 @@ HRESULT WINAPI CoRegisterMessageFilter(
 }
 
 /******************************************************************************
- *		OleInitializeWOW	[OLE32.109]
+ *		OleInitializeWOW	[OLE32.@]
  */
 HRESULT WINAPI OleInitializeWOW(DWORD x) {
         FIXME("(0x%08lx),stub!\n",x);
@@ -322,7 +322,7 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
 }
 
 /***********************************************************************
- *           RegisterDragDrop (OLE32.139)
+ *           RegisterDragDrop (OLE32.@)
  */
 HRESULT WINAPI RegisterDragDrop(
 	HWND hwnd,
@@ -365,7 +365,7 @@ HRESULT WINAPI RegisterDragDrop(
 }
 
 /***********************************************************************
- *           RevokeDragDrop (OLE32.141)
+ *           RevokeDragDrop (OLE32.@)
  */
 HRESULT WINAPI RevokeDragDrop(
 	HWND hwnd)
@@ -396,7 +396,7 @@ HRESULT WINAPI RevokeDragDrop(
 }
 
 /***********************************************************************
- *           OleRegGetUserType (OLE32.122)
+ *           OleRegGetUserType (OLE32.@)
  *
  * This implementation of OleRegGetUserType ignores the dwFormOfType
  * parameter and always returns the full name of the object. This is
@@ -507,7 +507,7 @@ HRESULT WINAPI OleRegGetUserType(
 }
 
 /***********************************************************************
- * DoDragDrop [OLE32.65]
+ * DoDragDrop [OLE32.@]
  */
 HRESULT WINAPI DoDragDrop (
   IDataObject *pDataObject,  /* [in] ptr to the data obj           */
@@ -602,7 +602,7 @@ HRESULT WINAPI DoDragDrop (
 }
 
 /***********************************************************************
- * OleQueryLinkFromData [OLE32.118]
+ * OleQueryLinkFromData [OLE32.@]
  */
 HRESULT WINAPI OleQueryLinkFromData(
   IDataObject* pSrcDataObject)
@@ -612,7 +612,7 @@ HRESULT WINAPI OleQueryLinkFromData(
 }
 
 /***********************************************************************
- * OleRegGetMiscStatus [OLE32.121]
+ * OleRegGetMiscStatus [OLE32.@]
  */
 HRESULT WINAPI OleRegGetMiscStatus(
   REFCLSID clsid,
@@ -694,7 +694,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
 }
 
 /******************************************************************************
- *              OleSetContainedObject        [OLE32.128]
+ *              OleSetContainedObject        [OLE32.@]
  */
 HRESULT WINAPI OleSetContainedObject(
   LPUNKNOWN pUnknown,
@@ -722,7 +722,7 @@ HRESULT WINAPI OleSetContainedObject(
 }
 
 /******************************************************************************
- *              OleLoad        [OLE32.112]
+ *              OleLoad        [OLE32.@]
  */
 HRESULT WINAPI OleLoad(
   LPSTORAGE       pStg,
@@ -807,7 +807,7 @@ HRESULT WINAPI OleLoad(
 }
 
 /***********************************************************************
- *           OleSave     [OLE32.124]
+ *           OleSave     [OLE32.@]
  */
 HRESULT WINAPI OleSave(
   LPPERSISTSTORAGE pPS,
@@ -846,7 +846,7 @@ HRESULT WINAPI OleSave(
 
 
 /******************************************************************************
- *              OleLockRunning        [OLE32.114]
+ *              OleLockRunning        [OLE32.@]
  */
 HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses)
 {
@@ -1274,7 +1274,7 @@ NEXTHOOK:
 }
 
 /***********************************************************************
- * OleCreateMenuDescriptor [OLE32.97]
+ * OleCreateMenuDescriptor [OLE32.@]
  * Creates an OLE menu descriptor for OLE to use when dispatching
  * menu messages and commands.
  *
@@ -1315,7 +1315,7 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(
 }
 
 /***********************************************************************
- * OleDestroyMenuDescriptor [OLE32.99]
+ * OleDestroyMenuDescriptor [OLE32.@]
  * Destroy the shared menu descriptor
  */
 HRESULT WINAPI OleDestroyMenuDescriptor(
@@ -1327,7 +1327,7 @@ HRESULT WINAPI OleDestroyMenuDescriptor(
 }
 
 /***********************************************************************
- * OleSetMenuDescriptor [OLE32.129]
+ * OleSetMenuDescriptor [OLE32.@]
  * Installs or removes OLE dispatching code for the containers frame window
  * FIXME: The lpFrame and lpActiveObject parameters are currently ignored
  * OLE should install context sensitive help F1 filtering for the app when
@@ -1414,7 +1414,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
 }
 
 /******************************************************************************
- *              IsAccelerator        [OLE32.75]
+ *              IsAccelerator        [OLE32.@]
  * Mostly copied from controls/menu.c TranslateAccelerator implementation
  */
 BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)
@@ -1488,7 +1488,7 @@ found:
 }
 
 /***********************************************************************
- * ReleaseStgMedium [OLE32.140]
+ * ReleaseStgMedium [OLE32.@]
  */
 void WINAPI ReleaseStgMedium(
   STGMEDIUM* pmedium)
@@ -2197,7 +2197,7 @@ static void OLEUTL_ReadRegistryDWORDValue(
 }
 
 /******************************************************************************
- * OleDraw (OLE32.101)
+ * OleDraw (OLE32.@)
  *
  * The operation of this function is documented literally in the WinAPI
  * documentation to involve a QueryInterface for the IViewObject interface,
@@ -2236,7 +2236,7 @@ HRESULT WINAPI OleDraw(
 }
 
 /******************************************************************************
- * DllDebugObjectRPCHook (OLE32.62)
+ * DllDebugObjectRPCHook (OLE32.@)
  * turns on and off internal debugging,  pointer is only used on macintosh
  */
 

@@ -1671,7 +1671,7 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
 }
 
 /******************************************************************************
- *        CreateGenericComposite	[OLE32.56]
+ *        CreateGenericComposite	[OLE32.@]
  ******************************************************************************/
 HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite)
 {
@@ -1720,7 +1720,7 @@ HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPM
 }
 
 /******************************************************************************
- *        MonikerCommonPrefixWith	[OLE32.82]
+ *        MonikerCommonPrefixWith	[OLE32.@]
  ******************************************************************************/
 HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon)
 {

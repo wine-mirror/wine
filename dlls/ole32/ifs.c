@@ -504,7 +504,7 @@ static ICOM_VTABLE(IMallocSpy) VT_IMallocSpy =
 };
 
 /******************************************************************************
- *		CoGetMalloc	[OLE32.20]
+ *		CoGetMalloc	[OLE32.@]
  *
  * RETURNS
  *	The win32 IMalloc
@@ -516,7 +516,7 @@ HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC *lpMalloc)
 }
 
 /***********************************************************************
- *           CoTaskMemAlloc     [OLE32.43]
+ *           CoTaskMemAlloc     [OLE32.@]
  * RETURNS
  * 	pointer to newly allocated block
  */
@@ -525,7 +525,7 @@ LPVOID WINAPI CoTaskMemAlloc(ULONG size)
         return IMalloc_Alloc((LPMALLOC)&Malloc32,size);
 }
 /***********************************************************************
- *           CoTaskMemFree      [OLE32.44]
+ *           CoTaskMemFree      [OLE32.@]
  */
 VOID WINAPI CoTaskMemFree(LPVOID ptr)
 {
@@ -533,7 +533,7 @@ VOID WINAPI CoTaskMemFree(LPVOID ptr)
 }
 
 /***********************************************************************
- *           CoTaskMemRealloc   [OLE32.45]
+ *           CoTaskMemRealloc   [OLE32.@]
  * RETURNS
  * 	pointer to newly allocated block
  */
@@ -543,7 +543,7 @@ LPVOID WINAPI CoTaskMemRealloc(LPVOID pvOld, ULONG size)
 }
 
 /***********************************************************************
- *           CoRegisterMallocSpy        [OLE32.37]
+ *           CoRegisterMallocSpy        [OLE32.@]
  *
  * NOTES
  *  if a mallocspy is already registered, we cant do it again since
@@ -574,7 +574,7 @@ HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy)
 }
 
 /***********************************************************************
- *           CoRevokeMallocSpy  [OLE32.41]
+ *           CoRevokeMallocSpy  [OLE32.@]
  *
  * NOTES
  *  we can't rewoke a malloc spy as long as memory blocks allocated with
@@ -606,7 +606,7 @@ HRESULT WINAPI CoRevokeMallocSpy(void)
 }
 
 /******************************************************************************
- *		IsValidInterface	[OLE32.78]
+ *		IsValidInterface	[OLE32.@]
  *
  * RETURNS
  *  True, if the passed pointer is a valid interface

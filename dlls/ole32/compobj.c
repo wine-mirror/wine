@@ -324,7 +324,7 @@ static void COMPOBJ_DllList_FreeUnused(int Timeout)
 
 /******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
- *           CoBuildVersion [OLE32.4]
+ *           CoBuildVersion [OLE32.@]
  *
  * RETURNS
  *	Current build version, hiword is majornumber, loword is minornumber
@@ -336,7 +336,7 @@ DWORD WINAPI CoBuildVersion(void)
 }
 
 /******************************************************************************
- *		CoInitialize	[OLE32.26]
+ *		CoInitialize	[OLE32.@]
  *
  * Initializes the COM libraries.
  *
@@ -354,7 +354,7 @@ HRESULT WINAPI CoInitialize(
 }
 
 /******************************************************************************
- *		CoInitializeEx	[OLE32.163]
+ *		CoInitializeEx	[OLE32.@]
  *
  * Initializes the COM libraries. The behavior used to set the win32 IMalloc
  * used for memory management is obsolete.
@@ -412,7 +412,7 @@ HRESULT WINAPI CoInitializeEx(
 }
 
 /***********************************************************************
- *           CoUninitialize   [OLE32.47]
+ *           CoUninitialize   [OLE32.@]
  *
  * This method will release the COM libraries.
  *
@@ -472,7 +472,7 @@ void WINAPI CoUninitialize(void)
 
 /******************************************************************************
  *		CoDisconnectObject	[COMPOBJ.15]
- *		CoDisconnectObject	[OLE32.8]
+ *		CoDisconnectObject	[OLE32.@]
  */
 HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
@@ -481,7 +481,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 }
 
 /******************************************************************************
- *		CoCreateGuid[OLE32.6]
+ *		CoCreateGuid[OLE32.@]
  *
  */
 HRESULT WINAPI CoCreateGuid(
@@ -491,8 +491,8 @@ HRESULT WINAPI CoCreateGuid(
 }
 
 /******************************************************************************
- *		CLSIDFromString	[OLE32.3]
- *		IIDFromString   [OLE32.74]
+ *		CLSIDFromString	[OLE32.@]
+ *		IIDFromString   [OLE32.@]
  * Converts a unique identifier from its string representation into
  * the GUID struct.
  *
@@ -626,8 +626,8 @@ HRESULT WINE_StringFromCLSID(
 
 
 /******************************************************************************
- *		StringFromCLSID	[OLE32.151]
- *		StringFromIID   [OLE32.153]
+ *		StringFromCLSID	[OLE32.@]
+ *		StringFromIID   [OLE32.@]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -655,7 +655,7 @@ HRESULT WINAPI StringFromCLSID(
 
 /******************************************************************************
  *		StringFromGUID2	[COMPOBJ.76]
- *		StringFromGUID2	[OLE32.152]
+ *		StringFromGUID2	[OLE32.@]
  *
  * Converts a global unique identifier into a string of an API-
  * specified fixed format. (The usual {.....} stuff.)
@@ -675,7 +675,7 @@ StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
 }
 
 /******************************************************************************
- * ProgIDFromCLSID [OLE32.133]
+ * ProgIDFromCLSID [OLE32.@]
  * Converts a class id into the respective Program ID. (By using a registry lookup)
  * RETURNS S_OK on success
  * riid associated with the progid
@@ -758,7 +758,7 @@ HRESULT WINAPI CLSIDFromProgID16(
 }
 
 /******************************************************************************
- *		CLSIDFromProgID	[OLE32.2]
+ *		CLSIDFromProgID	[OLE32.@]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
  *	riid associated with the progid
@@ -794,7 +794,7 @@ HRESULT WINAPI CLSIDFromProgID(
 
 
 /*****************************************************************************
- *             CoGetPSClsid [OLE32.22]
+ *             CoGetPSClsid [OLE32.@]
  *
  * This function returns the CLSID of the DLL that implements the proxy and stub
  * for the specified interface.
@@ -860,7 +860,7 @@ HRESULT WINAPI CoGetPSClsid(
 
 
 /***********************************************************************
- *		WriteClassStm (OLE32.159)
+ *		WriteClassStm (OLE32.@)
  *
  * This function write a CLSID on stream
  */
@@ -875,7 +875,7 @@ HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
 }
 
 /***********************************************************************
- *		ReadClassStm (OLE32.135)
+ *		ReadClassStm (OLE32.@)
  *
  * This function read a CLSID from a stream
  */
@@ -1049,7 +1049,7 @@ _LocalServerThread(LPVOID param) {
 }
 
 /******************************************************************************
- *		CoRegisterClassObject	[OLE32.36]
+ *		CoRegisterClassObject	[OLE32.@]
  *
  * This method will register the class object for a given class ID.
  *
@@ -1123,7 +1123,7 @@ HRESULT WINAPI CoRegisterClassObject(
 }
 
 /***********************************************************************
- *           CoRevokeClassObject [OLE32.40]
+ *           CoRevokeClassObject [OLE32.@]
  *
  * This method will remove a class object from the class registry
  *
@@ -1215,7 +1215,7 @@ HRESULT compobj_RegReadPath(char * keyname, char * valuename, char * dst, int ds
 
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
- *           CoGetClassObject [OLE32.16]
+ *           CoGetClassObject [OLE32.@]
  *
  * FIXME.  If request allows of several options and there is a failure
  *         with one (other than not being registered) do we try the
@@ -1308,7 +1308,7 @@ HRESULT WINAPI CoGetClassObject(
     return hres;
 }
 /***********************************************************************
- *        CoResumeClassObjects (OLE32.173)
+ *        CoResumeClassObjects (OLE32.@)
  *
  * Resumes classobjects registered with REGCLS suspended
  */
@@ -1319,7 +1319,7 @@ HRESULT WINAPI CoResumeClassObjects(void)
 }
 
 /***********************************************************************
- *        GetClassFile (OLE32.67)
+ *        GetClassFile (OLE32.@)
  *
  * This function supplies the CLSID associated with the given filename.
  */
@@ -1413,7 +1413,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 }
 /***********************************************************************
  *           CoCreateInstance [COMPOBJ.13]
- *           CoCreateInstance [OLE32.7]
+ *           CoCreateInstance [OLE32.@]
  */
 HRESULT WINAPI CoCreateInstance(
 	REFCLSID rclsid,
@@ -1478,7 +1478,7 @@ HRESULT WINAPI CoCreateInstance(
 }
 
 /***********************************************************************
- *           CoCreateInstanceEx [OLE32.165]
+ *           CoCreateInstanceEx [OLE32.@]
  */
 HRESULT WINAPI CoCreateInstanceEx(
   REFCLSID      rclsid,
@@ -1551,7 +1551,7 @@ HRESULT WINAPI CoCreateInstanceEx(
 }
 
 /***********************************************************************
- *           CoLoadLibrary (OLE32.30)
+ *           CoLoadLibrary (OLE32.@)
  */
 HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree)
 {
@@ -1561,7 +1561,7 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree)
 }
 
 /***********************************************************************
- *           CoFreeLibrary [OLE32.13]
+ *           CoFreeLibrary [OLE32.@]
  *
  * NOTES: don't belive the docu
  */
@@ -1572,7 +1572,7 @@ void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
 
 
 /***********************************************************************
- *           CoFreeAllLibraries [OLE32.12]
+ *           CoFreeAllLibraries [OLE32.@]
  *
  * NOTES: don't belive the docu
  */
@@ -1584,7 +1584,7 @@ void WINAPI CoFreeAllLibraries(void)
 
 /***********************************************************************
  *           CoFreeUnusedLibraries [COMPOBJ.17]
- *           CoFreeUnusedLibraries [OLE32.14]
+ *           CoFreeUnusedLibraries [OLE32.@]
  *
  * FIXME: Calls to CoFreeUnusedLibraries from any thread always route
  * through the main apartment's thread to call DllCanUnloadNow
@@ -1596,7 +1596,7 @@ void WINAPI CoFreeUnusedLibraries(void)
 
 /***********************************************************************
  *           CoFileTimeNow [COMPOBJ.82]
- *           CoFileTimeNow [OLE32.10]
+ *           CoFileTimeNow [OLE32.@]
  *
  * RETURNS
  *	the current system time in lpFileTime
@@ -1608,7 +1608,7 @@ HRESULT WINAPI CoFileTimeNow( FILETIME *lpFileTime ) /* [out] the current time *
 }
 
 /***********************************************************************
- *           CoLoadLibrary (OLE32.30)
+ *           CoLoadLibrary (OLE32.@)
  */
 static void COM_RevokeAllClasses()
 {
@@ -1826,7 +1826,7 @@ void COM_ExternalLockDump()
 }
 
 /******************************************************************************
- *		CoLockObjectExternal	[OLE32.31]
+ *		CoLockObjectExternal	[OLE32.@]
  */
 HRESULT WINAPI CoLockObjectExternal(
     LPUNKNOWN pUnk,		/* [in] object to be locked */
@@ -1852,7 +1852,7 @@ HRESULT WINAPI CoLockObjectExternal(
 }
 
 /***********************************************************************
- *           CoInitializeWOW (OLE32.27)
+ *           CoInitializeWOW (OLE32.@)
  */
 HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
     FIXME("(0x%08lx,0x%08lx),stub!\n",x,y);
@@ -1864,7 +1864,7 @@ static int nStatCounter = 0;	 /* global */
 static HMODULE hOleAut32 = 0;	 /* global */
 
 /***********************************************************************
- *           CoGetState [OLE32.24]
+ *           CoGetState [OLE32.@]
  *
  * NOTES: might be incomplete
  */
@@ -1884,7 +1884,7 @@ HRESULT WINAPI CoGetState(IUnknown ** ppv)
 }
 
 /***********************************************************************
- *           CoSetState [OLE32.42]
+ *           CoSetState [OLE32.@]
  *
  * NOTES: FIXME: protect this with a crst
  */
@@ -1910,7 +1910,7 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
 
 
 /******************************************************************************
- *              OleGetAutoConvert        [OLE32.104]
+ *              OleGetAutoConvert        [OLE32.@]
  */
 HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
 {
@@ -1942,7 +1942,7 @@ done:
 }
 
 /******************************************************************************
- *              OleSetAutoConvert        [OLE32.126]
+ *              OleSetAutoConvert        [OLE32.@]
  */
 HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
 {
@@ -1970,7 +1970,7 @@ done:
 }
 
 /******************************************************************************
- *              OleDoAutoConvert        [OLE32.100]
+ *              OleDoAutoConvert        [OLE32.@]
  */
 HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
 {
@@ -1979,7 +1979,7 @@ HRESULT WINAPI OleDoAutoConvert(IStorage *pStg, LPCLSID pClsidNew)
 }
 
 /******************************************************************************
- *              CoTreatAsClass        [OLE32.46]
+ *              CoTreatAsClass        [OLE32.@]
  */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 {
@@ -2007,7 +2007,7 @@ done:
 }
 
 /******************************************************************************
- *              CoGetTreatAsClass        [OLE32.25]
+ *              CoGetTreatAsClass        [OLE32.@]
  *
  * Reads the TreatAs value from a class.
  */
@@ -2042,7 +2042,7 @@ done:
 }
 
 /***********************************************************************
- *           IsEqualGUID [OLE32.76]
+ *           IsEqualGUID [OLE32.@]
  *
  * Compares two Unique Identifiers.
  *
@@ -2059,7 +2059,7 @@ BOOL WINAPI IsEqualGUID(
 }
 
 /***********************************************************************
- *           CoInitializeSecurity [OLE32.164]
+ *           CoInitializeSecurity [OLE32.@]
  */
 HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc,
                                     SOLE_AUTHENTICATION_SERVICE* asAuthSvc,

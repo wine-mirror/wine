@@ -838,7 +838,7 @@ static struct regsvr_interface const interface_list[] = {
 };
 
 /***********************************************************************
- *		DllRegisterServer (OLE32.194)
+ *		DllRegisterServer (OLE32.@)
  */
 HRESULT WINAPI OLE32_DllRegisterServer()
 {

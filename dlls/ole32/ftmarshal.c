@@ -216,7 +216,7 @@ ICOM_VTABLE (IMarshal) ftmvtbl =
 };
 
 /***********************************************************************
- *          CoCreateFreeThreadedMarshaler [OLE32.5]
+ *          CoCreateFreeThreadedMarshaler [OLE32.@]
  *
  */
 HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN * ppunkMarshal)

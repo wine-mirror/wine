@@ -189,7 +189,7 @@ static ICOM_VTABLE(IStream) HGLOBALStreamImpl_Vtbl =
 };
 
 /***********************************************************************
- *           CreateStreamOnHGlobal     [OLE32.61]
+ *           CreateStreamOnHGlobal     [OLE32.@]
  */
 HRESULT WINAPI CreateStreamOnHGlobal(
 		HGLOBAL   hGlobal,
@@ -212,7 +212,7 @@ HRESULT WINAPI CreateStreamOnHGlobal(
 }
 
 /***********************************************************************
- *           GetHGlobalFromStream     [OLE32.71]
+ *           GetHGlobalFromStream     [OLE32.@]
  */
 HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
 {

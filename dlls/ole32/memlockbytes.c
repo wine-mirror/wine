@@ -156,7 +156,7 @@ static ICOM_VTABLE(ILockBytes) HGLOBALLockBytesImpl_Vtbl =
 };
 
 /******************************************************************************
- *           CreateILockBytesOnHGlobal     [OLE32.57]
+ *           CreateILockBytesOnHGlobal     [OLE32.@]
  */
 HRESULT WINAPI CreateILockBytesOnHGlobal(HGLOBAL      hGlobal,
                                          BOOL         fDeleteOnRelease,
@@ -177,7 +177,7 @@ HRESULT WINAPI CreateILockBytesOnHGlobal(HGLOBAL      hGlobal,
 }
 
 /******************************************************************************
- *           GetHGlobalFromILockBytes     [OLE32.70]
+ *           GetHGlobalFromILockBytes     [OLE32.@]
  */
 HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
 {

@@ -548,7 +548,7 @@ HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc)
 }
 
 /******************************************************************************
- *        CreateBindCtx (OLE32.52)
+ *        CreateBindCtx (OLE32.@)
  ******************************************************************************/
 HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
 {
