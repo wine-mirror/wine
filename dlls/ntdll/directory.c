@@ -68,9 +68,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-/* Define the VFAT ioctl to get both short and long file names */
-/* FIXME: is it possible to get this to work on other systems? */
+/* just in case... */
+#undef VFAT_IOCTL_READDIR_BOTH
+#undef USE_GETDENTS
+
 #ifdef linux
+
 /* We want the real kernel dirent structure, not the libc one */
 typedef struct
 {
@@ -80,21 +83,42 @@ typedef struct
     char d_name[256];
 } KERNEL_DIRENT;
 
+/* Define the VFAT ioctl to get both short and long file names */
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
 #ifndef O_DIRECTORY
 # define O_DIRECTORY 0200000 /* must be directory */
 #endif
 
-/* Using the same seekdir value across multiple directories is not portable,  */
-/* but it works on Linux, and it's a major performance gain so we want to use */
-/* it if possible. */
-/* FIXME: do some sort of runtime check instead */
-#define USE_SEEKDIR
+#ifdef __i386__
 
-#else   /* linux */
-#undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
-#undef USE_SEEKDIR
+typedef struct
+{
+    ULONG64        d_ino;
+    LONG64         d_off;
+    unsigned short d_reclen;
+    unsigned char  d_type;
+    char           d_name[256];
+} KERNEL_DIRENT64;
+
+static inline int getdents64( int fd, KERNEL_DIRENT64 *de, unsigned int size )
+{
+    int ret;
+    __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
+             : "=a" (ret)
+             : "0" (220 /*NR_getdents64*/), "r" (fd), "c" (de), "d" (size)
+             : "memory" );
+    if (ret < 0)
+    {
+        errno = -ret;
+        ret = -1;
+    }
+    return ret;
+}
+#define USE_GETDENTS
+
+#endif  /* i386 */
+
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
@@ -119,35 +143,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { 0, (DWORD)(__FILE__ ": dir_section") }
 };
 static CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-
-/***********************************************************************
- *           seekdir_wrapper
- *
- * Wrapper for supporting seekdir across multiple directory objects.
- */
-static inline void seekdir_wrapper( DIR *dir, off_t pos )
-{
-#ifdef USE_SEEKDIR
-    seekdir( dir, pos );
-#else
-    while (pos-- > 0) if (!readdir( dir )) break;
-#endif
-}
-
-/***********************************************************************
- *           telldir_wrapper
- *
- * Wrapper for supporting telldir across multiple directory objects.
- */
-static inline off_t telldir_wrapper( DIR *dir, off_t pos, int count )
-{
-#ifdef USE_SEEKDIR
-    return telldir( dir );
-#else
-    return pos + count;
-#endif
-}
 
 
 /***********************************************************************
@@ -644,6 +639,238 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG *pos, ULON
 }
 
 
+/***********************************************************************
+ *           read_directory_vfat
+ *
+ * Read a directory using the VFAT ioctl; helper for NtQueryDirectoryFile.
+ */
+#ifdef VFAT_IOCTL_READDIR_BOTH
+static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                BOOLEAN restart_scan )
+
+{
+    int res;
+    KERNEL_DIRENT de[2];
+    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
+
+    io->u.Status = STATUS_SUCCESS;
+
+    if (restart_scan) lseek( fd, 0, SEEK_SET );
+
+    if (length < max_dir_info_size)  /* we may have to return a partial entry here */
+    {
+        off_t old_pos = lseek( fd, 0, SEEK_CUR );
+
+        res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+        if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
+
+        while (res != -1)
+        {
+            if (!de[0].d_reclen) break;
+            if (de[1].d_name[0])
+                info = append_entry( buffer, &io->Information, length,
+                                     de[1].d_name, de[0].d_name, mask );
+            else
+                info = append_entry( buffer, &io->Information, length,
+                                     de[0].d_name, NULL, mask );
+            if (info)
+            {
+                last_info = info;
+                if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+                {
+                    io->u.Status = STATUS_BUFFER_OVERFLOW;
+                    lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
+                }
+                break;
+            }
+            old_pos = lseek( fd, 0, SEEK_CUR );
+            res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+        }
+    }
+    else  /* we'll only return full entries, no need to worry about overflow */
+    {
+        res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+        if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
+
+        while (res != -1)
+        {
+            if (!de[0].d_reclen) break;
+            if (de[1].d_name[0])
+                info = append_entry( buffer, &io->Information, length,
+                                     de[1].d_name, de[0].d_name, mask );
+            else
+                info = append_entry( buffer, &io->Information, length,
+                                     de[0].d_name, NULL, mask );
+            if (info)
+            {
+                last_info = info;
+                if (single_entry) break;
+                /* check if we still have enough space for the largest possible entry */
+                if (io->Information + max_dir_info_size > length) break;
+            }
+            res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+        }
+    }
+
+    if (last_info) last_info->NextEntryOffset = 0;
+    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
+    return 0;
+}
+#endif /* VFAT_IOCTL_READDIR_BOTH */
+
+
+/***********************************************************************
+ *           read_directory_getdents
+ *
+ * Read a directory using the Linux getdents64 system call; helper for NtQueryDirectoryFile.
+ */
+#ifdef USE_GETDENTS
+static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                    BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                    BOOLEAN restart_scan )
+{
+    off_t old_pos = 0;
+    size_t size = length;
+    int res;
+    char local_buffer[8192];
+    KERNEL_DIRENT64 *data, *de;
+    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
+
+    if (size <= sizeof(local_buffer) || !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+    {
+        size = sizeof(local_buffer);
+        data = (KERNEL_DIRENT64 *)local_buffer;
+    }
+
+    if (restart_scan) lseek( fd, 0, SEEK_SET );
+    else if (length < max_dir_info_size)  /* we may have to return a partial entry here */
+    {
+        old_pos = lseek( fd, 0, SEEK_CUR );
+        if (old_pos == -1 && errno == ENOENT)
+        {
+            io->u.Status = STATUS_NO_MORE_FILES;
+            res = 0;
+            goto done;
+        }
+    }
+
+    io->u.Status = STATUS_SUCCESS;
+
+    res = getdents64( fd, data, size );
+    if (res == -1)
+    {
+        if (errno != ENOSYS)
+        {
+            io->u.Status = FILE_GetNtStatus();
+            res = 0;
+        }
+        goto done;
+    }
+
+    de = data;
+
+    while (res > 0)
+    {
+        res -= de->d_reclen;
+        info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
+        if (info)
+        {
+            last_info = info;
+            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            {
+                io->u.Status = STATUS_BUFFER_OVERFLOW;
+                lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
+                break;
+            }
+            /* check if we still have enough space for the largest possible entry */
+            if (single_entry || io->Information + max_dir_info_size > length)
+            {
+                if (res > 0) lseek( fd, de->d_off, SEEK_SET );  /* set pos to next entry */
+                break;
+            }
+        }
+        old_pos = de->d_off;
+        /* move on to the next entry */
+        de = (KERNEL_DIRENT64 *)((char *)de + de->d_reclen);
+    }
+
+    if (last_info) last_info->NextEntryOffset = 0;
+    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
+    res = 0;
+done:
+    if ((char *)data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
+    return res;
+}
+#endif  /* USE_GETDENTS */
+
+
+/***********************************************************************
+ *           read_directory_readdir
+ *
+ * Read a directory using the POSIX readdir interface; helper for NtQueryDirectoryFile.
+ */
+static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                    BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                    BOOLEAN restart_scan )
+{
+    DIR *dir;
+    off_t i, old_pos = 0;
+    struct dirent *de;
+    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
+    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
+
+    if (!(dir = opendir( "." )))
+    {
+        io->u.Status = FILE_GetNtStatus();
+        return;
+    }
+
+    if (!restart_scan)
+    {
+        old_pos = lseek( fd, 0, SEEK_CUR );
+        /* skip the right number of entries */
+        for (i = 0; i < old_pos; i++)
+        {
+            if (!readdir( dir ))
+            {
+                closedir( dir );
+                io->u.Status = STATUS_NO_MORE_FILES;
+                return;
+            }
+        }
+    }
+    io->u.Status = STATUS_SUCCESS;
+
+    while ((de = readdir( dir )))
+    {
+        old_pos++;
+        info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
+        if (info)
+        {
+            last_info = info;
+            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            {
+                io->u.Status = STATUS_BUFFER_OVERFLOW;
+                old_pos--;  /* restore pos to previous entry */
+                break;
+            }
+            if (single_entry) break;
+            /* check if we still have enough space for the largest possible entry */
+            if (io->Information + max_dir_info_size > length) break;
+        }
+    }
+
+    lseek( fd, old_pos, SEEK_SET );  /* store dir offset as filepos for fd */
+    closedir( dir );
+
+    if (last_info) last_info->NextEntryOffset = 0;
+    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
+}
+
+
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]
@@ -658,15 +885,13 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       BOOLEAN restart_scan )
 {
     int cwd, fd;
-    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
-    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
     TRACE("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
           length, info_class, single_entry, debugstr_us(mask),
           restart_scan);
 
-    if (length < sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (length < sizeof(FILE_BOTH_DIR_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
 
     if (event || apc_routine)
     {
@@ -690,127 +915,15 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
-        off_t old_pos = 0;
-
 #ifdef VFAT_IOCTL_READDIR_BOTH
-        KERNEL_DIRENT de[2];
-
-        io->u.Status = STATUS_SUCCESS;
-
-        /* Check if the VFAT ioctl is supported on this directory */
-
-        if (restart_scan) lseek( fd, 0, SEEK_SET );
-        else old_pos = lseek( fd, 0, SEEK_CUR );
-
-        if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1)
-        {
-            if (length < max_dir_info_size)  /* we may have to return a partial entry here */
-            {
-                for (;;)
-                {
-                    if (!de[0].d_reclen) break;
-                    if (de[1].d_name[0])
-                        info = append_entry( buffer, &io->Information, length,
-                                             de[1].d_name, de[0].d_name, mask );
-                    else
-                        info = append_entry( buffer, &io->Information, length,
-                                             de[0].d_name, NULL, mask );
-                    if (info)
-                    {
-                        last_info = info;
-                        if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
-                        {
-                            io->u.Status = STATUS_BUFFER_OVERFLOW;
-                            lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
-                        }
-                        break;
-                    }
-                    old_pos = lseek( fd, 0, SEEK_CUR );
-                    if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
-                }
-            }
-            else  /* we'll only return full entries, no need to worry about overflow */
-            {
-                for (;;)
-                {
-                    if (!de[0].d_reclen) break;
-                    if (de[1].d_name[0])
-                        info = append_entry( buffer, &io->Information, length,
-                                             de[1].d_name, de[0].d_name, mask );
-                    else
-                        info = append_entry( buffer, &io->Information, length,
-                                             de[0].d_name, NULL, mask );
-                    if (info)
-                    {
-                        last_info = info;
-                        if (single_entry) break;
-                        /* check if we still have enough space for the largest possible entry */
-                        if (io->Information + max_dir_info_size > length) break;
-                    }
-                    if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
-                }
-            }
-        }
-        else if (errno != ENOENT)
-#endif  /* VFAT_IOCTL_READDIR_BOTH */
-        {
-            DIR *dir;
-            struct dirent *de;
-
-            if (!(dir = opendir( "." )))
-            {
-                io->u.Status = FILE_GetNtStatus();
-                goto done;
-            }
-            if (!restart_scan)
-            {
-                old_pos = lseek( fd, 0, SEEK_CUR );
-                seekdir_wrapper( dir, old_pos );
-            }
-            io->u.Status = STATUS_SUCCESS;
-
-            if (length < max_dir_info_size)  /* we may have to return a partial entry here */
-            {
-                while ((de = readdir( dir )))
-                {
-                    info = append_entry( buffer, &io->Information, length,
-                                         de->d_name, NULL, mask );
-                    if (info)
-                    {
-                        last_info = info;
-                        if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
-                            io->u.Status = STATUS_BUFFER_OVERFLOW;
-                        else
-                            old_pos = telldir_wrapper( dir, old_pos, 1 );
-                        break;
-                    }
-                    old_pos = telldir_wrapper( dir, old_pos, 1 );
-                }
-            }
-            else  /* we'll only return full entries, no need to worry about overflow */
-            {
-                int count = 0;
-                while ((de = readdir( dir )))
-                {
-                    count++;
-                    info = append_entry( buffer, &io->Information, length,
-                                         de->d_name, NULL, mask );
-                    if (info)
-                    {
-                        last_info = info;
-                        if (single_entry) break;
-                        /* check if we still have enough space for the largest possible entry */
-                        if (io->Information + max_dir_info_size > length) break;
-                    }
-                }
-                old_pos = telldir_wrapper( dir, old_pos, count );
-            }
-            lseek( fd, old_pos, SEEK_SET );  /* store dir offset as filepos for fd */
-            closedir( dir );
-        }
-
-        if (last_info) last_info->NextEntryOffset = 0;
-        else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
+        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
+            goto done;
+#endif
+#ifdef USE_GETDENTS
+        if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
+            goto done;
+#endif
+        read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
 
     done:
         if (fchdir( cwd ) == -1) chdir( "/" );
