@@ -218,6 +218,15 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define DISPID_Delete                   (-801)
 #define DISPID_Object                   (-802)
 #define DISPID_Parent                   (-803)
+
+#define DISPID_FONT_NAME 0
+#define DISPID_FONT_SIZE 2
+#define DISPID_FONT_BOLD 3
+#define DISPID_FONT_ITALIC 4
+#define DISPID_FONT_UNDER 5
+#define DISPID_FONT_STRIKE 6
+#define DISPID_FONT_WEIGHT 7
+#define DISPID_FONT_CHARSET 8
  
 /* Reflected Window Message IDs */
 #define OCM__BASE           (WM_USER+0x1c00)
