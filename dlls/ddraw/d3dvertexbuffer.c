@@ -117,14 +117,14 @@ Main_IDirect3DVertexBufferImpl_7_1T_Unlock(LPDIRECT3DVERTEXBUFFER7 iface)
 }
 
 HRESULT WINAPI
-Main_IDirect3DVertexBufferImpl_7_ProcessVertices(LPDIRECT3DVERTEXBUFFER7 iface,
-                                                 DWORD dwVertexOp,
-                                                 DWORD dwDestIndex,
-                                                 DWORD dwCount,
-                                                 LPDIRECT3DVERTEXBUFFER7 lpSrcBuffer,
-                                                 DWORD dwSrcIndex,
-                                                 LPDIRECT3DDEVICE7 lpD3DDevice,
-                                                 DWORD dwFlags)
+Main_IDirect3DVertexBufferImpl_7_1T_ProcessVertices(LPDIRECT3DVERTEXBUFFER7 iface,
+						    DWORD dwVertexOp,
+						    DWORD dwDestIndex,
+						    DWORD dwCount,
+						    LPDIRECT3DVERTEXBUFFER7 lpSrcBuffer,
+						    DWORD dwSrcIndex,
+						    LPDIRECT3DDEVICE7 lpD3DDevice,
+						    DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     FIXME("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx): stub!\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);    
@@ -149,9 +149,9 @@ Main_IDirect3DVertexBufferImpl_7_1T_GetVertexBufferDesc(LPDIRECT3DVERTEXBUFFER7 
 }
 
 HRESULT WINAPI
-Main_IDirect3DVertexBufferImpl_7_Optimize(LPDIRECT3DVERTEXBUFFER7 iface,
-                                          LPDIRECT3DDEVICE7 lpD3DDevice,
-                                          DWORD dwFlags)
+Main_IDirect3DVertexBufferImpl_7_1T_Optimize(LPDIRECT3DVERTEXBUFFER7 iface,
+					     LPDIRECT3DDEVICE7 lpD3DDevice,
+					     DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     FIXME("(%p/%p)->(%p,%08lx): stub!\n", This, iface, lpD3DDevice, dwFlags);
@@ -177,28 +177,36 @@ Main_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided(LPDIRECT3DVERTEXBUFFER7 
 }
 
 HRESULT WINAPI
-Main_IDirect3DVertexBufferImpl_1_ProcessVertices(LPDIRECT3DVERTEXBUFFER iface,
-                                                 DWORD dwVertexOp,
-                                                 DWORD dwDestIndex,
-                                                 DWORD dwCount,
-                                                 LPDIRECT3DVERTEXBUFFER lpSrcBuffer,
-                                                 DWORD dwSrcIndex,
-                                                 LPDIRECT3DDEVICE3 lpD3DDevice,
-                                                 DWORD dwFlags)
+Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices(LPDIRECT3DVERTEXBUFFER iface,
+						  DWORD dwVertexOp,
+						  DWORD dwDestIndex,
+						  DWORD dwCount,
+						  LPDIRECT3DVERTEXBUFFER lpSrcBuffer,
+						  DWORD dwSrcIndex,
+						  LPDIRECT3DDEVICE3 lpD3DDevice,
+						  DWORD dwFlags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
-    FIXME("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx): stub!\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);
-    return DD_OK;
+    TRACE("(%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx) thunking to IDirect3DVertexBuffer7 interface.\n", iface,
+	  dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);
+    return IDirect3DVertexBuffer7_ProcessVertices(COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, IDirect3DVertexBuffer7, iface),
+						  dwVertexOp,
+						  dwDestIndex,
+						  dwCount,
+						  COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, IDirect3DVertexBuffer7, lpSrcBuffer),
+						  dwSrcIndex,
+						  COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, lpD3DDevice),
+						  dwFlags);
 }
 
 HRESULT WINAPI
-Main_IDirect3DVertexBufferImpl_1_Optimize(LPDIRECT3DVERTEXBUFFER iface,
-                                          LPDIRECT3DDEVICE3 lpD3DDevice,
-                                          DWORD dwFlags)
+Thunk_IDirect3DVertexBufferImpl_1_Optimize(LPDIRECT3DVERTEXBUFFER iface,
+					   LPDIRECT3DDEVICE3 lpD3DDevice,
+					   DWORD dwFlags)
 {
-    ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, iface);
-    FIXME("(%p/%p)->(%p,%08lx): stub!\n", This, iface, lpD3DDevice, dwFlags);
-    return DD_OK;
+    TRACE("(%p)->(%p,%08lx) thunking to IDirect3DVertexBuffer7 interface.\n", iface, lpD3DDevice, dwFlags);
+    return IDirect3DVertexBuffer7_Optimize(COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, IDirect3DVertexBuffer7, iface),
+					   COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, lpD3DDevice),
+					   dwFlags);
 }
 
 HRESULT WINAPI
@@ -269,9 +277,9 @@ ICOM_VTABLE(IDirect3DVertexBuffer7) VTABLE_IDirect3DVertexBuffer7 =
     XCAST(Release) Main_IDirect3DVertexBufferImpl_7_1T_Release,
     XCAST(Lock) Main_IDirect3DVertexBufferImpl_7_1T_Lock,
     XCAST(Unlock) Main_IDirect3DVertexBufferImpl_7_1T_Unlock,
-    XCAST(ProcessVertices) Main_IDirect3DVertexBufferImpl_7_ProcessVertices,
+    XCAST(ProcessVertices) Main_IDirect3DVertexBufferImpl_7_1T_ProcessVertices,
     XCAST(GetVertexBufferDesc) Main_IDirect3DVertexBufferImpl_7_1T_GetVertexBufferDesc,
-    XCAST(Optimize) Main_IDirect3DVertexBufferImpl_7_Optimize,
+    XCAST(Optimize) Main_IDirect3DVertexBufferImpl_7_1T_Optimize,
     XCAST(ProcessVerticesStrided) Main_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided
 };
 
@@ -294,9 +302,9 @@ ICOM_VTABLE(IDirect3DVertexBuffer) VTABLE_IDirect3DVertexBuffer =
     XCAST(Release) Thunk_IDirect3DVertexBufferImpl_1_Release,
     XCAST(Lock) Thunk_IDirect3DVertexBufferImpl_1_Lock,
     XCAST(Unlock) Thunk_IDirect3DVertexBufferImpl_1_Unlock,
-    XCAST(ProcessVertices) Main_IDirect3DVertexBufferImpl_1_ProcessVertices,
+    XCAST(ProcessVertices) Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices,
     XCAST(GetVertexBufferDesc) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(Optimize) Main_IDirect3DVertexBufferImpl_1_Optimize
+    XCAST(Optimize) Thunk_IDirect3DVertexBufferImpl_1_Optimize
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

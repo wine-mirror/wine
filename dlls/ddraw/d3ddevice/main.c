@@ -684,7 +684,18 @@ Main_IDirect3DDeviceImpl_7_GetInfo(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     FIXME("(%p/%p)->(%08lx,%p,%08lx): stub!\n", This, iface, dwDevInfoID, pDevInfoStruct, dwSize);
-    return DD_OK;
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" info requested : ");
+	switch (dwDevInfoID) {
+	    case D3DDEVINFOID_TEXTUREMANAGER: DPRINTF("D3DDEVINFOID_TEXTUREMANAGER\n"); break;
+	    case D3DDEVINFOID_D3DTEXTUREMANAGER: DPRINTF("D3DDEVINFOID_D3DTEXTUREMANAGER\n"); break;
+	    case D3DDEVINFOID_TEXTURING: DPRINTF("D3DDEVINFOID_TEXTURING\n"); break;
+	    default: ERR(" invalid flag !!!\n"); return DDERR_INVALIDPARAMS;
+	}
+    }
+
+    return S_FALSE; /* According to MSDN, this is valid for a non-debug driver */
 }
 
 HRESULT WINAPI
