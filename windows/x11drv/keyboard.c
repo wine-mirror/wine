@@ -1535,8 +1535,8 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     else {  /* ret != 0 */
         /* We have a special case to handle : Shift + arrow, shift + home, ...
            X returns a char for it, but Windows doesn't. Let's eat it. */
-        if (!(lpKeyState[VK_NUMLOCK] & 0x01)  /* NumLock is off */
-            && (lpKeyState[VK_SHIFT] & 0x80) /* Shift is pressed */
+        if (!(e.state & NumLockMask)  /* NumLock is off */
+            && (e.state & ShiftMask) /* Shift is pressed */
             && (keysym>=XK_KP_0) && (keysym<=XK_KP_9))
         {
             *(char*)lpChar = 0;
@@ -1545,7 +1545,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
         /* more areas where X returns characters but Windows does not 
            CTRL + number or CTRL + symbol*/
-        if (lpKeyState[VK_CONTROL] & 0x80)
+        if (e.state & ControlMask)
         {
             if (((keysym>=33) && (keysym < 'A')) ||
                 ((keysym > 'Z') && (keysym < 'a')))
