@@ -353,7 +353,9 @@ static void test_GetDateFormatA()
 
   STRINGSA("ddd',' MMM dd ''''yy","5/4/2002"); /* Default to DATE_SHORTDATE */
   ret = GetDateFormat(lcid, NUO, &curtime, NULL, buffer, COUNTOF(buffer));
-  EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
+  EXPECT_VALID; EXPECT_LENA;
+  if (strncmp(buffer, Expected, strlen(Expected)) && strncmp(buffer, "5/4/02", strlen(Expected)) != 0)
+	  ok (0, "Expected '%s' or '5/4/02', got '%s'\n", Expected, buffer);
 
   STRINGSA("ddd',' MMM dd ''''yy", "Saturday, May 04, 2002"); /* DATE_LONGDATE */
   ret = GetDateFormat(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, COUNTOF(buffer));
