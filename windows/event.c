@@ -29,9 +29,9 @@ BOOL EVENT_Init(void)
  *
  * Synchronize with the X server. Should not be used too often.
  */
-void EVENT_Synchronize( BOOL bProcessEvents )
+void EVENT_Synchronize( void )
 {
-    EVENT_Driver->pSynchronize( bProcessEvents );
+    EVENT_Driver->pSynchronize();
 }
 
 /**********************************************************************

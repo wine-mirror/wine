@@ -103,20 +103,6 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         return WAIT_FAILED;
     }
 
-    /* FIXME: This is extremely ugly, but needed to avoid endless
-     *        recursion due to EVENT_Synchronize itself using 
-     *        EnterCriticalSection( &X11DRV_CritSection ) ...
-     */ 
-    if ( count == 0 || handles[0] != X11DRV_CritSection.LockSemaphore )
-    {
-        /* Before we might possibly block, we need to push outstanding
-         * graphics output to the X server ...  This needs to be done
-         * here so that it also works with native USER.
-         */
-        if ( timeout != 0 )
-            EVENT_Synchronize( FALSE );
-    }
-
     req->count   = count;
     req->flags   = 0;
     req->timeout = timeout;

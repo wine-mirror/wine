@@ -621,7 +621,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
     TSXInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
   
-  EVENT_Synchronize( TRUE );
+  EVENT_Synchronize();
 }
 
 /*****************************************************************
@@ -670,7 +670,7 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
 	TSXSetGraphicsExposures( display, physDev->gc, False );
 
     if (bUpdate) /* Make sure exposure events have been processed */
-	EVENT_Synchronize( TRUE );
+	EVENT_Synchronize();
 }
 
 /***********************************************************************

@@ -17,7 +17,7 @@ BOOL TTYDRV_EVENT_Init(void)
 /***********************************************************************
  *		TTYDRV_EVENT_Synchronize
  */
-void TTYDRV_EVENT_Synchronize( BOOL bProcessEvents )
+void TTYDRV_EVENT_Synchronize( void )
 {
 }
 

@@ -166,8 +166,6 @@ void X11DRV_MONITOR_Initialize(MONITOR *pMonitor)
   else
     pX11Monitor->depth  = DefaultDepthOfScreen( pX11Monitor->screen );
 
-  if (Options.synchronous) TSXSynchronize( display, True );
-
   if (Options.desktopGeometry)
     X11DRV_MONITOR_CreateDesktop(pMonitor);
   else 

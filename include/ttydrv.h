@@ -93,7 +93,7 @@ extern int TTYDRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 extern struct tagEVENT_DRIVER TTYDRV_EVENT_Driver;
 
 extern BOOL TTYDRV_EVENT_Init(void);
-extern void TTYDRV_EVENT_Synchronize(BOOL bProcessEvents);
+extern void TTYDRV_EVENT_Synchronize(void);
 extern BOOL TTYDRV_EVENT_CheckFocus(void);
 extern BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);

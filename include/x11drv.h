@@ -343,7 +343,7 @@ extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 extern struct tagEVENT_DRIVER X11DRV_EVENT_Driver;
 
 extern BOOL X11DRV_EVENT_Init(void);
-extern void X11DRV_EVENT_Synchronize( BOOL bProcessEvents );
+extern void X11DRV_EVENT_Synchronize( void );
 extern BOOL X11DRV_EVENT_CheckFocus( void );
 extern BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_UserRepaintDisable( BOOL bDisable );

@@ -2791,7 +2791,7 @@ Pos:  /* -----------------------------------------------------------------------
     /* ------------------------------------------------------------------------ FINAL */
 
     if (wndPtr->flags & WIN_NATIVE)
-        EVENT_Synchronize( TRUE );  /* Synchronize with the host window system */
+        EVENT_Synchronize();  /* Synchronize with the host window system */
 
     if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
     { 
@@ -2877,7 +2877,7 @@ Pos:  /* -----------------------------------------------------------------------
          !(winpos.flags & SWP_NOSENDCHANGING)) )
     {
         SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
-        if (resync) EVENT_Synchronize ( TRUE );
+        if (resync) EVENT_Synchronize();
     }
 
     retvalue = TRUE;

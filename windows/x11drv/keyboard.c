@@ -1374,8 +1374,6 @@ BOOL X11DRV_KEYBOARD_GetDIData(
     
   /* FIXME !!! */
   
-  EVENT_Synchronize( FALSE );
-  
   if (entries)
     xentries = *entries; 
   else

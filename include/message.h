@@ -27,7 +27,7 @@ extern BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
 /* event.c */
 typedef struct tagEVENT_DRIVER {
   BOOL   (*pInit)(void);
-  void   (*pSynchronize)(BOOL);
+  void   (*pSynchronize)(void);
   BOOL   (*pCheckFocus)(void);
   BOOL   (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
   void   (*pUserRepaintDisable)(BOOL);
@@ -36,7 +36,7 @@ typedef struct tagEVENT_DRIVER {
 extern EVENT_DRIVER *EVENT_Driver;
 
 extern BOOL EVENT_Init( void );
-extern void EVENT_Synchronize( BOOL bProcessEvents );
+extern void EVENT_Synchronize( void );
 extern BOOL EVENT_CheckFocus( void );
 extern BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 

@@ -78,6 +78,7 @@ static const char * const event_names[] =
   "ClientMessage", "MappingNotify"
 };
 
+static void CALLBACK EVENT_Flush( ULONG_PTR arg );
 static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg );
 static void EVENT_ProcessEvent( XEvent *event );
 
@@ -117,7 +118,22 @@ BOOL X11DRV_EVENT_Init(void)
     SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), 
                                            GENERIC_READ | SYNCHRONIZE ),
                        EVENT_ProcessAllEvents, 0 );
+
+    /* Install the XFlush timer callback */
+    if ( Options.synchronous ) 
+        TSXSynchronize( display, True );
+    else
+        SERVICE_AddTimer( 200000L, EVENT_Flush, 0 );
+
     return TRUE;
+}
+
+/***********************************************************************
+ *           EVENT_Flush
+ */
+static void CALLBACK EVENT_Flush( ULONG_PTR arg )
+{
+    TSXFlush( display );
 }
 
 /***********************************************************************
@@ -146,12 +162,10 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
  *
  * Synchronize with the X server. Should not be used too often.
  */
-void X11DRV_EVENT_Synchronize( BOOL bProcessEvents )
+void X11DRV_EVENT_Synchronize( void )
 {
     TSXSync( display, False );
-
-    if ( bProcessEvents )
-        EVENT_ProcessAllEvents( 0 );
+    EVENT_ProcessAllEvents( 0 );
 }
 
 /***********************************************************************
