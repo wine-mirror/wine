@@ -763,7 +763,7 @@ typedef struct
   int nNumberOfLinks;
   int nFileIndexHigh;
   int nFileIndexLow;
-} BY_HANDLE_FILE_INFORMATION ;
+} BY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION ;
 
 
 typedef struct _SYSTEM_POWER_STATUS

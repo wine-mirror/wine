@@ -2759,6 +2759,19 @@ typedef struct tagNMLVCACHEHINT
 #define PNM_CACHEHINT  LPNMLVCACHEHINT
 #define NM_CACHEHINT   NMLVCACHEHINT
 
+
+#define ListView_SetTextBkColor(hwnd,clrBk) \
+    (BOOL)SendMessageA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+#define ListView_SetTextColor(hwnd,clrBk) \
+    (BOOL)SendMessageA((hwnd),LVM_SETTEXTCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+#define ListView_DeleteColumn(hwnd,col)\
+    (LRESULT)SendMessageA((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
+#define ListView_GetColumnA(hwnd,x,col)\
+    (LRESULT)SendMessageA((hwnd),LVM_GETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+#define ListView_SetColumnA(hwnd,x,col)\
+    (LRESULT)SendMessageA((hwnd),LVM_SETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+
+
 #define ListView_GetNextItem(hwnd,nItem,flags) \
     (INT)SendMessageA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
 #define ListView_FindItem(hwnd,nItem,plvfi) \

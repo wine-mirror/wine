@@ -1528,6 +1528,7 @@ typedef BOOL CALLBACK (*DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
 #define BN_UNHILITE            3
 #define BN_DISABLE             4
 #define BN_DOUBLECLICKED       5
+#define BN_DBLCLK              BN_DOUBLECLICKED
 
 /* Button states */
 #define BST_UNCHECKED        0x0000
