@@ -186,50 +186,22 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
     return ret;
 }
 
-
-/*******************************************************************
- *         UnhandledExceptionFilter   (KERNEL32.@)
+/******************************************************************
+ *		start_debugger
+ *
+ * Does the effective debugger startup according to 'format'
  */
-DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
+static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 {
-    char 		format[256];
-    char 		buffer[256];
     HKEY		hDbgConf;
     DWORD		bAuto = FALSE;
-    DWORD		ret = EXCEPTION_EXECUTE_HANDLER;
-    int status;
-
-    /* send a last chance event to the debugger */
-    status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
-    switch (status)
-    {
-    case DBG_CONTINUE: 
-        return EXCEPTION_CONTINUE_EXECUTION;
-    case DBG_EXCEPTION_NOT_HANDLED: 
-        TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
-        break; /* not reached */
-    case 0: /* no debugger is present */
-        if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
-        {
-            /* do not launch the debugger on ^C, simply terminate the process */
-            TerminateProcess( GetCurrentProcess(), 1 );
-        }
-        break;
-    default: 	
-        FIXME("Unsupported yet debug continue value %d (please report)\n", status);
-    }
-
-    if (top_filter)
-    {
-        DWORD ret = top_filter( epointers );
-        if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
-    }
-
-    /* FIXME: Should check the current error mode */
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    char		buffer[256];
+    char 		format[256];
 
     if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
-		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", 
-		     &hDbgConf)) {
+		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", &hDbgConf)) {
        DWORD 	type;
        DWORD 	count;
 
@@ -249,61 +221,150 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        }
        RegCloseKey(hDbgConf);
     } else {
-       /* format[0] = 0; */
-       strcpy(format, "debugger/winedbg %ld %ld");
+	/* try a default setup... */
+	strcpy( format, "debugger/winedbg %ld %ld" );
     }
 
     if (!bAuto)
     {
-        HMODULE mod = GetModuleHandleA( "user32.dll" );
-        MessageBoxA_funcptr pMessageBoxA = NULL;
-        if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
-        if (pMessageBoxA)
-        {
-            format_exception_msg( epointers, buffer, sizeof(buffer) );
-            if (pMessageBoxA( 0, buffer, "Exception raised", MB_YESNO | MB_ICONHAND ) == IDNO)
-            {
-                TRACE("Killing process\n");
-                return EXCEPTION_EXECUTE_HANDLER;
-            }
-        }
+	HMODULE			mod = GetModuleHandleA( "user32.dll" );
+	MessageBoxA_funcptr	pMessageBoxA = NULL;
+
+	if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
+	if (pMessageBoxA)
+	{
+	    format_exception_msg( epointers, buffer, sizeof(buffer) );
+	    if (pMessageBoxA( 0, buffer, "Exception raised", MB_YESNO | MB_ICONHAND ) == IDNO)
+	    {
+		TRACE("Killing process\n");
+		return FALSE;
+	    }
+	}
     }
 
-    if (format[0]) {
-       HANDLE			hEvent;
-       PROCESS_INFORMATION	info;
-       STARTUPINFOA		startup;
-       OBJECT_ATTRIBUTES	attr;
-
-       attr.Length                   = sizeof(attr);
-       attr.RootDirectory            = 0;
-       attr.Attributes               = OBJ_INHERIT;
-       attr.ObjectName               = NULL;
-       attr.SecurityDescriptor       = NULL;
-       attr.SecurityQualityOfService = NULL;
-
-       TRACE("Starting debugger (fmt=%s)\n", format);
-       NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, FALSE, FALSE );
-       sprintf(buffer, format, GetCurrentProcessId(), hEvent);
-       memset(&startup, 0, sizeof(startup));
-       startup.cb = sizeof(startup);
-       startup.dwFlags = STARTF_USESHOWWINDOW;
-       startup.wShowWindow = SW_SHOWNORMAL;
-       if (CreateProcessA(NULL, buffer, NULL, NULL, 
-			  TRUE, 0, NULL, NULL, &startup, &info)) {
-	  WaitForSingleObject(hEvent, INFINITE);
-	  ret = EXCEPTION_CONTINUE_SEARCH;
-       } else {
-           ERR("Couldn't start debugger (%s) (%ld)\n"
-               "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
-               buffer, GetLastError());
-       }
-       CloseHandle(hEvent);
-    } else {
-       ERR("No standard debugger defined in the registry => no debugging session\n");
+    TRACE("Starting debugger (fmt=%s)\n", format);
+    sprintf(buffer, format, GetCurrentProcessId(), hEvent);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info)) {
+	/* wait for debugger to come up... */
+	WaitForSingleObject(hEvent, INFINITE);
+	return TRUE;
     }
-    
-    return ret;
+    ERR("Couldn't start debugger (%s) (%ld)\n"
+	"Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
+	buffer, GetLastError());
+    return FALSE;
+}
+
+/******************************************************************
+ *		start_debugger_atomic
+ *
+ * starts the debugger is an atomic way:
+ *	- either the debugger is not started and it is started
+ *	- either the debugger has already been started by an other thread
+ *	- either the debugger couldn't be started
+ *
+ * returns TRUE for the two first condition, FALSE for the last
+ */
+static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
+{
+    static HANDLE	hRunOnce /* = 0 */;
+
+    if (hRunOnce == 0)
+    {
+	OBJECT_ATTRIBUTES	attr;
+	HANDLE			hEvent;
+
+	attr.Length                   = sizeof(attr);
+	attr.RootDirectory            = 0;
+	attr.Attributes               = OBJ_INHERIT;
+	attr.ObjectName               = NULL;
+	attr.SecurityDescriptor       = NULL;
+	attr.SecurityQualityOfService = NULL;
+
+	/* ask for manual reset, so that once the debugger is started, every thread will be
+	 * know it
+	 */
+	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE );
+	if (InterlockedCompareExchange( (LPLONG)&hRunOnce, hEvent, 0 ) == 0)
+	{
+	    /* ok, our event has been set... we're the winning thread */
+	    BOOL	ret = start_debugger( epointers, hRunOnce );
+	    DWORD	tmp;
+
+	    if (!ret)
+	    {
+		/* so that the other threads won't be stuck */
+		NtSetEvent( hRunOnce, &tmp );
+	    }
+	    return ret;
+	}
+	
+	/* someone beat us here... */
+	CloseHandle( hEvent );
+    }
+	
+    /* and wait for the winner to have actually created the debugger */
+    WaitForSingleObject( hRunOnce, INFINITE );
+    /* in fact, here, we only know that someone has tried to start the debugger, we'll know
+     * by reposting the exception if it has actually attached to the current process
+     */
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *         UnhandledExceptionFilter   (KERNEL32.@)
+ */
+DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
+{
+    int 		status;
+    int			loop = 0;
+
+    for (loop = 0; loop <= 1; loop++)
+    {
+	/* send a last chance event to the debugger */
+	status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
+	switch (status)
+	{
+	case DBG_CONTINUE: 
+	    return EXCEPTION_CONTINUE_EXECUTION;
+	case DBG_EXCEPTION_NOT_HANDLED: 
+	    TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
+	    break; /* not reached */
+	case 0: /* no debugger is present */
+	    if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
+	    {
+		/* do not launch the debugger on ^C, simply terminate the process */
+		TerminateProcess( GetCurrentProcess(), 1 );
+	    }
+	    /* second try, the debugger isn't present... */
+	    if (loop == 1) return EXCEPTION_EXECUTE_HANDLER;
+	    break;
+	default: 	
+	    FIXME("Unsupported yet debug continue value %d (please report)\n", status);
+	    return EXCEPTION_EXECUTE_HANDLER;
+	}
+
+	/* should only be there when loop == 0 */
+
+	if (top_filter)
+	{
+	    DWORD ret = top_filter( epointers );
+	    if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
+	}
+	
+	/* FIXME: Should check the current error mode */
+	
+	if (!start_debugger_atomic( epointers ))
+	    return EXCEPTION_EXECUTE_HANDLER;
+	/* now that we should have a debugger attached, try to resend event */
+    }	
+	
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 
 
