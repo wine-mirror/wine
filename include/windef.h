@@ -179,8 +179,6 @@ typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
 typedef float           FLOAT,      *PFLOAT;
 
-#include <winnt.h>
-
 /* Macros to map Winelib names to the correct implementation name */
 /* Note that Winelib is purely Win32.                             */
 
@@ -202,6 +200,7 @@ typedef float           FLOAT,      *PFLOAT;
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
 #endif  /* __WINESRC__ */
 
+#include <winnt.h>
 
 /* Polymorphic types */
 

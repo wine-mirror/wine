@@ -1061,7 +1061,7 @@ static DWORD CDROM_Data_GetSerial(int drive)
     if (offs)
     {
         BYTE buf[2048];
-        OSVERSIONINFOA ovi;
+        RTL_OSVERSIONINFOEXW ovi;
         int i;
 
         lseek(dev, offs, SEEK_SET);
@@ -1071,8 +1071,8 @@ static DWORD CDROM_Data_GetSerial(int drive)
          * Me$$ysoft chose to reverse the serial number in NT4/W2K.
          * It's true and nobody will ever be able to change it.
          */
-        ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-        GetVersionExA(&ovi);
+        ovi.dwOSVersionInfoSize = sizeof(ovi);
+        RtlGetVersion(&ovi);
         if ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) &&  (ovi.dwMajorVersion >= 4))
         {
             b0 = 3; b1 = 2; b2 = 1; b3 = 0;
@@ -1674,9 +1674,9 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root,
 	       FIXME messages, so don't print the FIXME unless Wine is
 	       actually masquerading as Windows2000. */
 
-            OSVERSIONINFOA ovi;
-	    ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-	    if (GetVersionExA(&ovi))
+            RTL_OSVERSIONINFOEXW ovi;
+	    ovi.dwOSVersionInfoSize = sizeof(ovi);
+	    if (RtlGetVersion(&ovi))
 	    {
 	      if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT && ovi.dwMajorVersion > 4)
                   FIXME("no per-user quota support yet\n");

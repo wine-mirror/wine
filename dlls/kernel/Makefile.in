@@ -64,6 +64,7 @@ C_SRCS = \
 	time.c \
 	toolhelp.c \
 	utthunk.c \
+	version.c \
 	vxd.c \
 	win87em.c \
 	windebug.c \

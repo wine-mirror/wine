@@ -45,17 +45,6 @@ at a later date. */
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
 
-/****************************************************************************
- *		FlushInstructionCache (KERNEL32.@)
- */
-BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
-{
-    if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
-    FIXME("(%p,%p,0x%08lx): stub\n",hProcess, lpBaseAddress, dwSize);
-    return TRUE;
-}
-
-
 /******************************************************************************
  * GetCompressedFileSizeA [KERNEL32.@]
  *

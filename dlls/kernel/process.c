@@ -2074,10 +2074,20 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZ
     return !status;
 }
 
+
+/****************************************************************************
+ *		FlushInstructionCache (KERNEL32.@)
+ */
+BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
+{
+    if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
+    FIXME("(%p,%p,0x%08lx): stub\n",hProcess, lpBaseAddress, dwSize);
+    return TRUE;
+}
+
+
 /******************************************************************
  *		GetProcessIoCounters (KERNEL32.@)
- *
- *
  */
 BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
 {

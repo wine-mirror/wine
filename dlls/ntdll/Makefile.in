@@ -25,7 +25,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/cpu.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
-	$(TOPOBJDIR)/misc/version.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/process.c \
@@ -62,6 +61,7 @@ C_SRCS = \
 	string.c \
 	sync.c \
 	sysdeps.c \
+	version.c \
 	thread.c \
 	time.c \
 	virtual.c \

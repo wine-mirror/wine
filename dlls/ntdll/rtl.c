@@ -500,49 +500,6 @@ void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
 	FIXME("(%p,%p,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4);
 }
 
-/******************************************************************************
- *  RtlGetNtVersionNumbers       [NTDLL.@]
- *
- * Get the version numbers of the run time library.
- *
- * PARAMS
- *  major [O] Destination for the Major version
- *  minor [O] Destination for the Minor version
- *  build [O] Destination for the Build version
- *
- * RETURNS
- *  Nothing.
- *
- * NOTES
- * Introduced in Windows XP (NT5.1)
- */
-void WINAPI RtlGetNtVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
-{
-	OSVERSIONINFOEXW versionInfo;
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
-	GetVersionExW((OSVERSIONINFOW*)&versionInfo);
-
-	if (major)
-	{
-		/* msvcrt.dll as released with XP Home fails in DLLMain() if the
-		 * major version is not 5. So, we should never set a version < 5 ...
-		 * This makes sense since this call didn't exist before XP anyway.
-		 */
-		*major = versionInfo.dwMajorVersion < 5 ? 5 : versionInfo.dwMajorVersion;
-	}
-
-	if (minor)
-	{
-		*minor = versionInfo.dwMinorVersion;
-	}
-
-	if (build)
-	{
-		/* FIXME: Does anybody know the real formula? */
-		*build = (0xF0000000 | versionInfo.dwBuildNumber);
-	}
-}
-
 /*************************************************************************
  * RtlFillMemoryUlong   [NTDLL.@]
  *
