@@ -249,283 +249,376 @@ all: \
 	ws2_32.dll$(DLLEXT) \
 	wsock32.dll$(DLLEXT)
 
-# Map library name to directory
+# Map symlink name to the corresponding library
 
-advapi32.dll$(DLLEXT): advapi32
+advapi32.dll$(DLLEXT): advapi32/advapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) advapi32/advapi32.dll$(DLLEXT) $@
 
-avicap32.dll$(DLLEXT): avicap32
+avicap32.dll$(DLLEXT): avicap32/avicap32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) avicap32/avicap32.dll$(DLLEXT) $@
 
-avifil32.dll$(DLLEXT) avifile.dll$(DLLEXT): avifil32
+avifil32.dll$(DLLEXT) avifile.dll$(DLLEXT): avifil32/avifil32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) avifil32/avifil32.dll$(DLLEXT) $@
 
-comcat.dll$(DLLEXT): comcat
+comcat.dll$(DLLEXT): comcat/comcat.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) comcat/comcat.dll$(DLLEXT) $@
 
-comctl32.dll$(DLLEXT): comctl32
+comctl32.dll$(DLLEXT): comctl32/comctl32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) comctl32/comctl32.dll$(DLLEXT) $@
 
-comdlg32.dll$(DLLEXT) commdlg.dll$(DLLEXT): commdlg
+comdlg32.dll$(DLLEXT) commdlg.dll$(DLLEXT): commdlg/comdlg32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) commdlg/comdlg32.dll$(DLLEXT) $@
 
-crtdll.dll$(DLLEXT): crtdll
+crtdll.dll$(DLLEXT): crtdll/crtdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) crtdll/crtdll.dll$(DLLEXT) $@
 
-crypt32.dll$(DLLEXT): crypt32
+crypt32.dll$(DLLEXT): crypt32/crypt32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) crypt32/crypt32.dll$(DLLEXT) $@
 
-dciman32.dll$(DLLEXT): dciman32
+dciman32.dll$(DLLEXT): dciman32/dciman32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dciman32/dciman32.dll$(DLLEXT) $@
 
-ddraw.dll$(DLLEXT): ddraw
+ddraw.dll$(DLLEXT): ddraw/ddraw.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ddraw/ddraw.dll$(DLLEXT) $@
 
-devenum.dll$(DLLEXT): devenum
+devenum.dll$(DLLEXT): devenum/devenum.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) devenum/devenum.dll$(DLLEXT) $@
 
-dinput.dll$(DLLEXT): dinput
+dinput.dll$(DLLEXT): dinput/dinput.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dinput/dinput.dll$(DLLEXT) $@
 
-dplay.dll$(DLLEXT): dplay
+dplay.dll$(DLLEXT): dplay/dplay.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplay/dplay.dll$(DLLEXT) $@
 
-dplayx.dll$(DLLEXT): dplayx
+dplayx.dll$(DLLEXT): dplayx/dplayx.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplayx/dplayx.dll$(DLLEXT) $@
 
-dsound.dll$(DLLEXT): dsound
+dsound.dll$(DLLEXT): dsound/dsound.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dsound/dsound.dll$(DLLEXT) $@
 
 gdi32.dll$(DLLEXT) dispdib.dll$(DLLEXT) gdi.exe$(DLLEXT) \
-  wing.dll$(DLLEXT): gdi
+  wing.dll$(DLLEXT): gdi/gdi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) gdi/gdi32.dll$(DLLEXT) $@
 
-glu32.dll$(DLLEXT): glu32
+glu32.dll$(DLLEXT): glu32/glu32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) glu32/glu32.dll$(DLLEXT) $@
 
-icmp.dll$(DLLEXT): icmp
+icmp.dll$(DLLEXT): icmp/icmp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) icmp/icmp.dll$(DLLEXT) $@
 
-imaadp32.acm$(DLLEXT): msacm/imaadp32
+imaadp32.acm$(DLLEXT): msacm/imaadp32/imaadp32.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/imaadp32/imaadp32.acm$(DLLEXT) $@
 
-imagehlp.dll$(DLLEXT): imagehlp
+imagehlp.dll$(DLLEXT): imagehlp/imagehlp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) imagehlp/imagehlp.dll$(DLLEXT) $@
 
-imm32.dll$(DLLEXT) imm.dll$(DLLEXT): imm32
+imm32.dll$(DLLEXT) imm.dll$(DLLEXT): imm32/imm32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) imm32/imm32.dll$(DLLEXT) $@
 
-joystick.drv$(DLLEXT): winmm/joystick
+joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv$(DLLEXT) $@
 
 kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) krnl386.exe$(DLLEXT) \
   stress.dll$(DLLEXT) system.dll$(DLLEXT) toolhelp.dll$(DLLEXT) \
-  win87em.dll$(DLLEXT) windebug.dll$(DLLEXT) wprocs.dll$(DLLEXT): kernel
+  win87em.dll$(DLLEXT) windebug.dll$(DLLEXT) wprocs.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 
-lz32.dll$(DLLEXT) lzexpand.dll$(DLLEXT): lzexpand
+lz32.dll$(DLLEXT) lzexpand.dll$(DLLEXT): lzexpand/lz32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) lzexpand/lz32.dll$(DLLEXT) $@
 
-mapi32.dll$(DLLEXT): mapi32
+mapi32.dll$(DLLEXT): mapi32/mapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) mapi32/mapi32.dll$(DLLEXT) $@
 
-mcianim.drv$(DLLEXT): winmm/mcianim
+mcianim.drv$(DLLEXT): winmm/mcianim/mcianim.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/mcianim/mcianim.drv$(DLLEXT) $@
 
-mciavi.drv$(DLLEXT): winmm/mciavi
+mciavi.drv$(DLLEXT): winmm/mciavi/mciavi.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/mciavi/mciavi.drv$(DLLEXT) $@
 
-mcicda.drv$(DLLEXT): winmm/mcicda
+mcicda.drv$(DLLEXT): winmm/mcicda/mcicda.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/mcicda/mcicda.drv$(DLLEXT) $@
 
-mciseq.drv$(DLLEXT): winmm/mciseq
+mciseq.drv$(DLLEXT): winmm/mciseq/mciseq.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/mciseq/mciseq.drv$(DLLEXT) $@
 
-mciwave.drv$(DLLEXT): winmm/mciwave
+mciwave.drv$(DLLEXT): winmm/mciwave/mciwave.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/mciwave/mciwave.drv$(DLLEXT) $@
 
-midimap.drv$(DLLEXT): winmm/midimap
+midimap.drv$(DLLEXT): winmm/midimap/midimap.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/midimap/midimap.drv$(DLLEXT) $@
 
-mpr.dll$(DLLEXT): mpr
+mpr.dll$(DLLEXT): mpr/mpr.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) mpr/mpr.dll$(DLLEXT) $@
 
-msacm.drv$(DLLEXT): winmm/wavemap
+msacm.drv$(DLLEXT): winmm/wavemap/msacm.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wavemap/msacm.drv$(DLLEXT) $@
 
-msacm32.dll$(DLLEXT) msacm.dll$(DLLEXT): msacm
+msacm32.dll$(DLLEXT) msacm.dll$(DLLEXT): msacm/msacm32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/msacm32.dll$(DLLEXT) $@
 
-msadp32.acm$(DLLEXT): msacm/msadp32
+msadp32.acm$(DLLEXT): msacm/msadp32/msadp32.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/msadp32/msadp32.acm$(DLLEXT) $@
 
-msdmo.dll$(DLLEXT): msdmo
+msdmo.dll$(DLLEXT): msdmo/msdmo.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msdmo/msdmo.dll$(DLLEXT) $@
 
-msg711.acm$(DLLEXT): msacm/msg711
+msg711.acm$(DLLEXT): msacm/msg711/msg711.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm$(DLLEXT) $@
 
-msimg32.dll$(DLLEXT): msimg32
+msimg32.dll$(DLLEXT): msimg32/msimg32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msimg32/msimg32.dll$(DLLEXT) $@
 
-msisys.ocx$(DLLEXT): msisys
+msisys.ocx$(DLLEXT): msisys/msisys.ocx$(DLLEXT)
 	$(RM) $@ && $(LN_S) msisys/msisys.ocx$(DLLEXT) $@
 
-msnet32.dll$(DLLEXT): msnet32
+msnet32.dll$(DLLEXT): msnet32/msnet32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msnet32/msnet32.dll$(DLLEXT) $@
 
-msrle32.dll$(DLLEXT): msrle32
+msrle32.dll$(DLLEXT): msrle32/msrle32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msrle32/msrle32.dll$(DLLEXT) $@
 
-msvcrt.dll$(DLLEXT): msvcrt
+msvcrt.dll$(DLLEXT): msvcrt/msvcrt.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt/msvcrt.dll$(DLLEXT) $@
 
-msvcrt20.dll$(DLLEXT): msvcrt20
+msvcrt20.dll$(DLLEXT): msvcrt20/msvcrt20.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.dll$(DLLEXT) $@
 
-msvfw32.dll$(DLLEXT) msvideo.dll$(DLLEXT): msvideo
+msvfw32.dll$(DLLEXT) msvideo.dll$(DLLEXT): msvideo/msvfw32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvideo/msvfw32.dll$(DLLEXT) $@
 
-netapi32.dll$(DLLEXT): netapi32
+netapi32.dll$(DLLEXT): netapi32/netapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) netapi32/netapi32.dll$(DLLEXT) $@
 
-ntdll.dll$(DLLEXT): ntdll
+ntdll.dll$(DLLEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
-odbc32.dll$(DLLEXT): odbc32
+odbc32.dll$(DLLEXT): odbc32/odbc32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) odbc32/odbc32.dll$(DLLEXT) $@
 
 ole32.dll$(DLLEXT) compobj.dll$(DLLEXT) ole2.dll$(DLLEXT) \
   ole2conv.dll$(DLLEXT) ole2nls.dll$(DLLEXT) ole2prox.dll$(DLLEXT) \
-  ole2thk.dll$(DLLEXT) storage.dll$(DLLEXT): ole32
+  ole2thk.dll$(DLLEXT) storage.dll$(DLLEXT): ole32/ole32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ole32/ole32.dll$(DLLEXT) $@
 
-oleaut32.dll$(DLLEXT) ole2disp.dll$(DLLEXT) typelib.dll$(DLLEXT): oleaut32
+oleaut32.dll$(DLLEXT) ole2disp.dll$(DLLEXT) typelib.dll$(DLLEXT): oleaut32/oleaut32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) oleaut32/oleaut32.dll$(DLLEXT) $@
 
-olecli32.dll$(DLLEXT) olecli.dll$(DLLEXT): olecli
+olecli32.dll$(DLLEXT) olecli.dll$(DLLEXT): olecli/olecli32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) olecli/olecli32.dll$(DLLEXT) $@
 
-oledlg.dll$(DLLEXT): oledlg
+oledlg.dll$(DLLEXT): oledlg/oledlg.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) oledlg/oledlg.dll$(DLLEXT) $@
 
-olepro32.dll$(DLLEXT): olepro32
+olepro32.dll$(DLLEXT): olepro32/olepro32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) olepro32/olepro32.dll$(DLLEXT) $@
 
-olesvr32.dll$(DLLEXT) olesvr.dll$(DLLEXT): olesvr
+olesvr32.dll$(DLLEXT) olesvr.dll$(DLLEXT): olesvr/olesvr32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) olesvr/olesvr32.dll$(DLLEXT) $@
 
-opengl32.dll$(DLLEXT): opengl32
+opengl32.dll$(DLLEXT): opengl32/opengl32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) opengl32/opengl32.dll$(DLLEXT) $@
 
-psapi.dll$(DLLEXT): psapi
+psapi.dll$(DLLEXT): psapi/psapi.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) psapi/psapi.dll$(DLLEXT) $@
 
-qcap.dll$(DLLEXT): qcap
+qcap.dll$(DLLEXT): qcap/qcap.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) qcap/qcap.dll$(DLLEXT) $@
 
-quartz.dll$(DLLEXT): quartz
+quartz.dll$(DLLEXT): quartz/quartz.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) quartz/quartz.dll$(DLLEXT) $@
 
-rasapi32.dll$(DLLEXT) rasapi16.dll$(DLLEXT): rasapi32
+rasapi32.dll$(DLLEXT) rasapi16.dll$(DLLEXT): rasapi32/rasapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) rasapi32/rasapi32.dll$(DLLEXT) $@
 
-riched32.dll$(DLLEXT): richedit
+riched32.dll$(DLLEXT): richedit/riched32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) richedit/riched32.dll$(DLLEXT) $@
 
-rpcrt4.dll$(DLLEXT): rpcrt4
+rpcrt4.dll$(DLLEXT): rpcrt4/rpcrt4.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) rpcrt4/rpcrt4.dll$(DLLEXT) $@
 
-serialui.dll$(DLLEXT): serialui
+serialui.dll$(DLLEXT): serialui/serialui.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) serialui/serialui.dll$(DLLEXT) $@
 
-setupapi.dll$(DLLEXT) setupx.dll$(DLLEXT): setupapi
+setupapi.dll$(DLLEXT) setupx.dll$(DLLEXT): setupapi/setupapi.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) setupapi/setupapi.dll$(DLLEXT) $@
 
-shdocvw.dll$(DLLEXT): shdocvw
+shdocvw.dll$(DLLEXT): shdocvw/shdocvw.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) shdocvw/shdocvw.dll$(DLLEXT) $@
 
-shell32.dll$(DLLEXT) shell.dll$(DLLEXT): shell32
+shell32.dll$(DLLEXT) shell.dll$(DLLEXT): shell32/shell32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) shell32/shell32.dll$(DLLEXT) $@
 
-shfolder.dll$(DLLEXT): shfolder
+shfolder.dll$(DLLEXT): shfolder/shfolder.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) shfolder/shfolder.dll$(DLLEXT) $@
 
-shlwapi.dll$(DLLEXT): shlwapi
+shlwapi.dll$(DLLEXT): shlwapi/shlwapi.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) shlwapi/shlwapi.dll$(DLLEXT) $@
 
-snmpapi.dll$(DLLEXT): snmpapi
+snmpapi.dll$(DLLEXT): snmpapi/snmpapi.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) snmpapi/snmpapi.dll$(DLLEXT) $@
 
-sti.dll$(DLLEXT): sti
+sti.dll$(DLLEXT): sti/sti.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) sti/sti.dll$(DLLEXT) $@
 
-tapi32.dll$(DLLEXT): tapi32
+tapi32.dll$(DLLEXT): tapi32/tapi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) tapi32/tapi32.dll$(DLLEXT) $@
 
-ttydrv.dll$(DLLEXT): ttydrv
+ttydrv.dll$(DLLEXT): ttydrv/ttydrv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ttydrv/ttydrv.dll$(DLLEXT) $@
 
-twain_32.dll$(DLLEXT): twain
+twain_32.dll$(DLLEXT): twain/twain_32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) twain/twain_32.dll$(DLLEXT) $@
 
-url.dll$(DLLEXT): url
+url.dll$(DLLEXT): url/url.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) url/url.dll$(DLLEXT) $@
 
-urlmon.dll$(DLLEXT): urlmon
+urlmon.dll$(DLLEXT): urlmon/urlmon.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) urlmon/urlmon.dll$(DLLEXT) $@
 
 user32.dll$(DLLEXT) ddeml.dll$(DLLEXT) display.dll$(DLLEXT) \
-  keyboard.dll$(DLLEXT) mouse.dll$(DLLEXT) user.exe$(DLLEXT): user
+  keyboard.dll$(DLLEXT) mouse.dll$(DLLEXT) user.exe$(DLLEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
 
-version.dll$(DLLEXT) ver.dll$(DLLEXT): version
+version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) version/version.dll$(DLLEXT) $@
 
-w32skrnl.dll$(DLLEXT) w32sys.dll$(DLLEXT) win32s16.dll$(DLLEXT): win32s
+w32skrnl.dll$(DLLEXT) w32sys.dll$(DLLEXT) win32s16.dll$(DLLEXT): win32s/w32skrnl.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) win32s/w32skrnl.dll$(DLLEXT) $@
 
-winearts.drv$(DLLEXT): winmm/winearts
+winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/winearts/winearts.drv$(DLLEXT) $@
 
-winedos.dll$(DLLEXT): winedos
+winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
-wineoss.drv$(DLLEXT): winmm/wineoss
+wineoss.drv$(DLLEXT): winmm/wineoss/wineoss.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv$(DLLEXT) $@
 
-wineps.dll$(DLLEXT) wineps16.dll$(DLLEXT): wineps
+wineps.dll$(DLLEXT) wineps16.dll$(DLLEXT): wineps/wineps.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wineps/wineps.dll$(DLLEXT) $@
 
-wininet.dll$(DLLEXT): wininet
+wininet.dll$(DLLEXT): wininet/wininet.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wininet/wininet.dll$(DLLEXT) $@
 
-winmm.dll$(DLLEXT) mmsystem.dll$(DLLEXT) sound.dll$(DLLEXT): winmm
+winmm.dll$(DLLEXT) mmsystem.dll$(DLLEXT) sound.dll$(DLLEXT): winmm/winmm.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/winmm.dll$(DLLEXT) $@
 
-winnls32.dll$(DLLEXT) winnls.dll$(DLLEXT): winnls
+winnls32.dll$(DLLEXT) winnls.dll$(DLLEXT): winnls/winnls32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winnls/winnls32.dll$(DLLEXT) $@
 
-winspool.drv$(DLLEXT): winspool
+winspool.drv$(DLLEXT): winspool/winspool.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winspool/winspool.drv$(DLLEXT) $@
 
-wintrust.dll$(DLLEXT): wintrust
+wintrust.dll$(DLLEXT): wintrust/wintrust.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wintrust/wintrust.dll$(DLLEXT) $@
 
-wnaspi32.dll$(DLLEXT) winaspi.dll$(DLLEXT): winaspi
+wnaspi32.dll$(DLLEXT) winaspi.dll$(DLLEXT): winaspi/wnaspi32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winaspi/wnaspi32.dll$(DLLEXT) $@
 
-wow32.dll$(DLLEXT): wow32
+wow32.dll$(DLLEXT): wow32/wow32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wow32/wow32.dll$(DLLEXT) $@
 
-ws2_32.dll$(DLLEXT) winsock.dll$(DLLEXT): winsock
+ws2_32.dll$(DLLEXT) winsock.dll$(DLLEXT): winsock/ws2_32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winsock/ws2_32.dll$(DLLEXT) $@
 
-wsock32.dll$(DLLEXT): wsock32
+wsock32.dll$(DLLEXT): wsock32/wsock32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wsock32/wsock32.dll$(DLLEXT) $@
 
-x11drv.dll$(DLLEXT): x11drv
+x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) x11drv/x11drv.dll$(DLLEXT) $@
+
+# Map library name to the corresponding directory
+
+advapi32/advapi32.dll$(DLLEXT): advapi32
+avicap32/avicap32.dll$(DLLEXT): avicap32
+avifil32/avifil32.dll$(DLLEXT): avifil32
+comcat/comcat.dll$(DLLEXT): comcat
+comctl32/comctl32.dll$(DLLEXT): comctl32
+commdlg/comdlg32.dll$(DLLEXT): commdlg
+crtdll/crtdll.dll$(DLLEXT): crtdll
+crypt32/crypt32.dll$(DLLEXT): crypt32
+dciman32/dciman32.dll$(DLLEXT): dciman32
+ddraw/ddraw.dll$(DLLEXT): ddraw
+devenum/devenum.dll$(DLLEXT): devenum
+dinput/dinput.dll$(DLLEXT): dinput
+dplay/dplay.dll$(DLLEXT): dplay
+dplayx/dplayx.dll$(DLLEXT): dplayx
+dsound/dsound.dll$(DLLEXT): dsound
+gdi/gdi32.dll$(DLLEXT): gdi
+glu32/glu32.dll$(DLLEXT): glu32
+icmp/icmp.dll$(DLLEXT): icmp
+msacm/imaadp32/imaadp32.acm$(DLLEXT): msacm/imaadp32
+imagehlp/imagehlp.dll$(DLLEXT): imagehlp
+imm32/imm32.dll$(DLLEXT): imm32
+winmm/joystick/joystick.drv$(DLLEXT): winmm/joystick
+kernel/kernel32.dll$(DLLEXT): kernel
+lzexpand/lz32.dll$(DLLEXT): lzexpand
+mapi32/mapi32.dll$(DLLEXT): mapi32
+winmm/mcianim/mcianim.drv$(DLLEXT): winmm/mcianim
+winmm/mciavi/mciavi.drv$(DLLEXT): winmm/mciavi
+winmm/mcicda/mcicda.drv$(DLLEXT): winmm/mcicda
+winmm/mciseq/mciseq.drv$(DLLEXT): winmm/mciseq
+winmm/mciwave/mciwave.drv$(DLLEXT): winmm/mciwave
+winmm/midimap/midimap.drv$(DLLEXT): winmm/midimap
+mpr/mpr.dll$(DLLEXT): mpr
+winmm/wavemap/msacm.drv$(DLLEXT): winmm/wavemap
+msacm/msacm32.dll$(DLLEXT): msacm
+msacm/msadp32/msadp32.acm$(DLLEXT): msacm/msadp32
+msdmo/msdmo.dll$(DLLEXT): msdmo
+msacm/msg711/msg711.acm$(DLLEXT): msacm/msg711
+msimg32/msimg32.dll$(DLLEXT): msimg32
+msisys/msisys.ocx$(DLLEXT): msisys
+msnet32/msnet32.dll$(DLLEXT): msnet32
+msrle32/msrle32.dll$(DLLEXT): msrle32
+msvcrt/msvcrt.dll$(DLLEXT): msvcrt
+msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
+msvideo/msvfw32.dll$(DLLEXT): msvideo
+netapi32/netapi32.dll$(DLLEXT): netapi32
+ntdll/ntdll.dll$(DLLEXT): ntdll
+odbc32/odbc32.dll$(DLLEXT): odbc32
+ole32/ole32.dll$(DLLEXT): ole32
+oleaut32/oleaut32.dll$(DLLEXT): oleaut32
+olecli/olecli32.dll$(DLLEXT): olecli
+oledlg/oledlg.dll$(DLLEXT): oledlg
+olepro32/olepro32.dll$(DLLEXT): olepro32
+olesvr/olesvr32.dll$(DLLEXT): olesvr
+opengl32/opengl32.dll$(DLLEXT): opengl32
+psapi/psapi.dll$(DLLEXT): psapi
+qcap/qcap.dll$(DLLEXT): qcap
+quartz/quartz.dll$(DLLEXT): quartz
+rasapi32/rasapi32.dll$(DLLEXT): rasapi32
+richedit/riched32.dll$(DLLEXT): richedit
+rpcrt4/rpcrt4.dll$(DLLEXT): rpcrt4
+serialui/serialui.dll$(DLLEXT): serialui
+setupapi/setupapi.dll$(DLLEXT): setupapi
+shdocvw/shdocvw.dll$(DLLEXT): shdocvw
+shell32/shell32.dll$(DLLEXT): shell32
+shfolder/shfolder.dll$(DLLEXT): shfolder
+shlwapi/shlwapi.dll$(DLLEXT): shlwapi
+snmpapi/snmpapi.dll$(DLLEXT): snmpapi
+sti/sti.dll$(DLLEXT): sti
+tapi32/tapi32.dll$(DLLEXT): tapi32
+ttydrv/ttydrv.dll$(DLLEXT): ttydrv
+twain/twain_32.dll$(DLLEXT): twain
+url/url.dll$(DLLEXT): url
+urlmon/urlmon.dll$(DLLEXT): urlmon
+user/user32.dll$(DLLEXT): user
+version/version.dll$(DLLEXT): version
+win32s/w32skrnl.dll$(DLLEXT): win32s
+winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
+winedos/winedos.dll$(DLLEXT): winedos
+winmm/wineoss/wineoss.drv$(DLLEXT): winmm/wineoss
+wineps/wineps.dll$(DLLEXT): wineps
+wininet/wininet.dll$(DLLEXT): wininet
+winmm/winmm.dll$(DLLEXT): winmm
+winnls/winnls32.dll$(DLLEXT): winnls
+winspool/winspool.drv$(DLLEXT): winspool
+wintrust/wintrust.dll$(DLLEXT): wintrust
+winaspi/wnaspi32.dll$(DLLEXT): winaspi
+wow32/wow32.dll$(DLLEXT): wow32
+winsock/ws2_32.dll$(DLLEXT): winsock
+wsock32/wsock32.dll$(DLLEXT): wsock32
+x11drv/x11drv.dll$(DLLEXT): x11drv
 
 # Inter-dll dependencies
 
@@ -571,7 +664,6 @@ msvcrt:   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 msvideo:  winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) version.dll$(DLLEXT) user32.dll$(DLLEXT) \
           gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 netapi32: kernel32.dll$(DLLEXT)
-ntdll:   
 odbc32:   kernel32.dll$(DLLEXT)
 ole32:    advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) rpcrt4.dll$(DLLEXT) \
           kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)

@@ -167,7 +167,7 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
 
 print NEWMAKE <<EOF;
 
-# Map library name to directory
+# Map symlink name to the corresponding library
 
 EOF
 
@@ -183,7 +183,7 @@ foreach my $mod (sort keys %directories)
             printf NEWMAKE " %s\$(DLLEXT)", $i;
         }
     }
-    printf NEWMAKE ": %s\n", $directories{$mod};
+    printf NEWMAKE ": %s/%s\$(DLLEXT)\n", $directories{$mod}, $mod;
     printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
 }
 
@@ -191,11 +191,19 @@ foreach my $mod (sort keys %directories)
 ################################################################
 # output the inter-dll dependencies and rules
 
-print NEWMAKE "# Inter-dll dependencies\n\n";
+print NEWMAKE "# Map library name to the corresponding directory\n\n";
+
+foreach my $mod (sort keys %directories)
+{
+    printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
+}
+
+print NEWMAKE "\n# Inter-dll dependencies\n\n";
 
 my @depends = ();
 foreach my $mod (sort keys %imports)
 {
+    next unless @{$imports{$mod}};
     my $count = 0;
     my $dep = sprintf("%s:", $directories{$mod});
     $dep .= " " x (8-length($directories{$mod}));
