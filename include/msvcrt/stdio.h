@@ -79,6 +79,10 @@
 
 #else
 
+#define MSVCRT_STDIN_FILENO  0
+#define MSVCRT_STDOUT_FILENO 1
+#define MSVCRT_STDERR_FILENO 2
+
 /* more file._flag flags, but these conflict with Unix */
 #define MSVCRT__IOFBF    0x0000
 #define MSVCRT__IONBF    0x0004
@@ -144,6 +148,10 @@ MSVCRT(FILE)*        MSVCRT(__p__iob)(void);
 #define stdin              (_iob+STDIN_FILENO)
 #define stdout             (_iob+STDOUT_FILENO)
 #define stderr             (_iob+STDERR_FILENO)
+#else
+#define MSVCRT_stdin       (MSVCRT__iob+MSVCRT_STDIN_FILENO)
+#define MSVCRT_stdout      (MSVCRT__iob+MSVCRT_STDOUT_FILENO)
+#define MSVCRT_stderr      (MSVCRT__iob+MSVCRT_STDERR_FILENO)
 #endif /* USE_MSVCRT_PREFIX */
 
 #ifndef MSVCRT_STDIO_DEFINED

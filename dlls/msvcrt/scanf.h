@@ -48,7 +48,7 @@
 #ifdef CONSOLE
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
-#define _FUNCTION_ _cscanf(const _CHAR_ *format, ...)
+#define _FUNCTION_ static int MSVCRT_vcscanf(const char *format, va_list ap)
 #else
 #ifdef STRING
 #undef _EOF_
@@ -56,19 +56,19 @@
 #define _GETC_(file) (consumed++, *file++)
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #ifdef WIDE_SCANF
-#define _FUNCTION_ MSVCRT_swscanf(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, ...)
+#define _FUNCTION_ static int MSVCRT_vswscanf(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, va_list ap)
 #else /* WIDE_SCANF */
-#define _FUNCTION_ MSVCRT_sscanf(const char *file, const char *format, ...)
+#define _FUNCTION_ static int MSVCRT_vsscanf(const char *file, const char *format, va_list ap)
 #endif /* WIDE_SCANF */
 #else /* STRING */
 #ifdef WIDE_SCANF
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
-#define _FUNCTION_ MSVCRT_fwscanf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
+#define _FUNCTION_ static int MSVCRT_vfwscanf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, va_list ap)
 #else /* WIDE_SCANF */
 #define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
 #define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
-#define _FUNCTION_ MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
+#define _FUNCTION_ static int MSVCRT_vfscanf(MSVCRT_FILE* file, const char *format, va_list ap)
 #endif /* WIDE_SCANF */
 #endif /* STRING */
 #endif /* CONSOLE */
@@ -79,10 +79,9 @@
  * Extended by C. Scott Ananian <cananian@alumni.princeton.edu> to handle
  * more types of format spec.
  */
-int _FUNCTION_ {
+_FUNCTION_ {
     int rd = 0, consumed = 0;
     int nch;
-    va_list ap;
     if (!*format) return 0;
 #ifndef WIDE_SCANF
 #ifdef CONSOLE
@@ -98,7 +97,6 @@ int _FUNCTION_ {
     nch = _GETC_(file);
     if (nch == _EOF_) return _EOF_RET;
 
-    va_start(ap, format);
     while (*format) {
 	/* a whitespace character in the format string causes scanf to read,
 	 * but not store, all consecutive white-space characters in the input
@@ -512,7 +510,6 @@ int _FUNCTION_ {
     if (nch!=_EOF_) {
 	_UNGETC_(nch, file);
     }
-    va_end(ap);
     TRACE("returning %d\n", rd);
     return rd;
 }

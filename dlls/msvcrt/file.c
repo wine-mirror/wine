@@ -73,9 +73,6 @@ MSVCRT_FILE* MSVCRT_files[MSVCRT_MAX_FILES];
 int  MSVCRT_flags[MSVCRT_MAX_FILES];
 char *MSVCRT_tempfiles[MSVCRT_MAX_FILES];
 MSVCRT_FILE MSVCRT__iob[3];
-#define MSVCRT_stdin       (MSVCRT__iob+STDIN_FILENO)
-#define MSVCRT_stdout      (MSVCRT__iob+STDOUT_FILENO)
-#define MSVCRT_stderr      (MSVCRT__iob+STDERR_FILENO)
 
 static int MSVCRT_fdstart = 3; /* first unallocated fd */
 static int MSVCRT_fdend = 3; /* highest allocated fd */
@@ -2372,34 +2369,6 @@ int _wremove(const MSVCRT_wchar_t *path)
   TRACE(":failed (%ld)\n",GetLastError());
   MSVCRT__set_errno(GetLastError());
   return -1;
-}
-
-/*********************************************************************
- *		scanf (MSVCRT.@)
- */
-int MSVCRT_scanf(const char *format, ...)
-{
-  va_list valist;
-  int res;
-
-  va_start(valist, format);
-  res = MSVCRT_fscanf(MSVCRT_stdin, format, valist);
-  va_end(valist);
-  return res;
-}
-
-/*********************************************************************
- *		wscanf (MSVCRT.@)
- */
-int MSVCRT_wscanf(const MSVCRT_wchar_t *format, ...)
-{
-  va_list valist;
-  int res;
-
-  va_start(valist, format);
-  res = MSVCRT_fwscanf(MSVCRT_stdin, format, valist);
-  va_end(valist);
-  return res;
 }
 
 /*********************************************************************
