@@ -116,9 +116,9 @@ static FILE *wine_openpty(FILE **master, FILE **slave, char *name,
                         *slave = fds;
 
                         if (term != NULL)
-                                tcsetattr((*slave)->_fileno, TCSANOW, term);
+                                tcsetattr(fileno(*slave), TCSANOW, term);
                         if (winsize != NULL)
-                                ioctl((*slave)->_fileno, TIOCSWINSZ, winsize);
+                                ioctl(fileno(*slave), TIOCSWINSZ, winsize);
 
                         if (name != NULL)
                                 strcpy(name, pts_name);
@@ -143,10 +143,10 @@ static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
            return FALSE;
 
         if ((*pid=fork()) == 0) {
-                tcsetattr((*slave)->_fileno, TCSADRAIN, &term);
-                sprintf(buf, "-Sxx%d", (*master)->_fileno);
+                tcsetattr(fileno(*slave), TCSADRAIN, &term);
+                sprintf(buf, "-Sxx%d", fileno(*master));
                 execlp("xterm", "xterm", buf, NULL);
-                ERR(console, "error creating AllocConsole xterm\n");
+                ERR(console, "error creating xterm\n");
                 exit(1);
         }
 
@@ -168,7 +168,7 @@ static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
                 }
         }
         term.c_lflag |= ECHO;
-        tcsetattr((*master)->_fileno, TCSADRAIN, &term);
+        tcsetattr(fileno(*master), TCSADRAIN, &term);
 
         return TRUE;
 }
