@@ -6,6 +6,8 @@
 ##hunt you down and kill you like the savage animal I am.
 ##Released under the WINE licence
 ##Changelog: 
+##April 4, 1999 - Sanity check for file locations/wine strippedness
+##              - Various code cleanups/fixes
 ##March 21, 1999 - Bash 2.0 STDERR workaround (Thanks Ryan Cumming!)
 ##March 1, 1999 - Check for stripped build
 ##February 3, 1999 - Fix to chdir to the program's directory
@@ -71,9 +73,22 @@ if ($debuglevel < 3) {
 print "Enter the filename for this debug report (The first file):\n";
 $outfile=<STDIN>;
 chomp $outfile;
+$var23 = qq{
+I don't think you typed in the right filename. Let's try again.
+};
+while ($outfile =~ /^(\s)*$/) {
+	print do_var($var23);
+	$outfile=<STDIN>;
+	chomp $outfile;
+}
 print "Enter the file for the debug output (The second file):\n";
 $dbgoutfile=<STDIN>;
 chomp $dbgoutfile;
+while ($dbgoutfile =~ /^(\s)*$/) {
+	print do_var($var23);
+	$dbgoutfile=<STDIN>;
+	chomp $dbgoutfile;
+}
 if ($debuglevel =~ 1) {
 	print "Looking for wine...\n";
 	$wineloc=`which wine`;
@@ -106,14 +121,30 @@ if ($debuglevel > 1) {
 	$wineloc=<STDIN>;
 	chomp $wineloc; 
 }
+while ($wineloc =~ /^(\s)*$/) {
+	print do_var($var23);
+	$wineloc=<STDIN>;
+	chomp $wineloc;
+}
 print "Checking if $wineloc is stripped...\n";
 $ifstrip = `nm $wineloc 2>&1`;
-if ($ifstrip =~ /no symbols/) {
-	print "Your wine is stripped! Please re-download an unstripped version!\n";
-	exit;
-}
-else {
-	print "$wineloc is unstripped\n";
+while ($ifstrip =~ /no symbols/) {
+	$var24 = qq{
+	Your wine is stripped! You probably downloaded it off of the internet.
+	If you have another location of wine that may be used, enter it now.
+	Otherwise, hit control-c and download an unstripped version, then re-run
+	this script. Note: stripped versions make useless debug reports
+	};
+	print do_var($var24);
+	print "Enter the full path to wine:\n";
+	$wineloc=<STDIN>;
+	chomp $wineloc;
+	while ($wineloc =~ /^(\s)*$/) {
+		print do_var($var23);
+		$wineloc=<STDIN>;
+		chomp $wineloc;
+	}
+	$ifstrip = `nm $wineloc 2>&1`;
 }
 $var5 = qq{
 What version of windows are you using with wine? 0-None, 1-Win3.x,
@@ -167,6 +198,12 @@ if ($debuglevel =~ 3) {
 } 
 $program=<STDIN>;
 chomp $program;
+while ($program =~ /^(\s)*$/) {
+	print do_var($var23);
+	$program=<STDIN>;
+	chomp $program;
+}
+$program =~ s/\"//g;
 $var9 = qq{
 Enter the name, version, and manufacturer of the program (Example:
 Netscape Navigator 4.5):
@@ -211,10 +248,10 @@ if ($debuglevel > 1) {
 	}
 	$debugopts=<STDIN>;
 	chomp $debugopts;
-	if ($debugopts=~/-debugmsg /) {
-		($crap, $debugopts) = / /,$debugopts; 
+	if ($debugopts =~ /-debugmsg /) {
+		($crap, $debugopts) = split / /,$debugopts; 
 	}
-	if ($debugopts=~/^\s*$/) { 
+	if ($debugopts =~ /^\s*$/) { 
 		$debugopts="+relay"; 
 	} 
 } elsif ($debuglevel =~ 1) {
@@ -238,7 +275,7 @@ if ($debuglevel > 1) {
 	}
 	$lastnlines=<STDIN>;
 	chomp $lastnlines;
-	if ($lastnlines=~/^\s*$/) { 
+	if ($lastnlines =~ /^\s*$/) { 
 	$lastnlines=100; 
 	} 
 } elsif ($debuglevel =~ 1) {
@@ -275,7 +312,7 @@ if ($debuglevel > 1) {
 	}
 	$configopts=<STDIN>;
 	chomp $configopts;
-	if ($configopts=~/\s*/) { 
+	if ($configopts =~ /^\s*$/) { 
 	$configopts="None"; 
 	} 
 } elsif ($debuglevel =~ 1) {
@@ -300,8 +337,7 @@ if ($debuglevel > 1) {
 	}
 	$winever=<STDIN>;
 	chomp $winever;
-	$winever=~s/ //g;
-	if ($winever=~/[0-9]+/) {  
+	if ($winever =~ /[0-9]+/) {  
 		$winever .= " CVS";
 	}
 	else {
@@ -381,8 +417,9 @@ $outfile
 The filename for the compressed full debug is:
 $dbgoutfile.gz
 Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
-C Ya!
-Adam the Jazz Guy
+
+Having problems with the script? Tell the wine newsgroup
+(comp.emulators.ms-windows.wine).
 };
 print do_var($var22);
 
