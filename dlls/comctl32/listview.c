@@ -1091,11 +1091,8 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 
 static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
 {
-    COLUMN_INFO *columnInfo;
     assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
-    columnInfo = (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
-    assert (columnInfo);
-    return columnInfo;
+    return (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 }
 	
 static inline void LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
@@ -2055,8 +2052,8 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
     /* we should binary search here if need be */
     for (i = 1; i < hdpaSubItems->nItemCount; i++)
     {
-	lpSubItem = (LISTVIEW_SUBITEM *) DPA_GetPtr(hdpaSubItems, i);
-	if (lpSubItem && (lpSubItem->iSubItem == nSubItem))
+	lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
+	if (lpSubItem->iSubItem == nSubItem)
 	    return lpSubItem;
     }
 
@@ -2283,7 +2280,7 @@ static RANGES ranges_clone(RANGES ranges)
         RANGE *newrng = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
 	if (!newrng) goto fail;
 	*newrng = *((RANGE*)DPA_GetPtr(ranges->hdpa, i));
-	DPA_InsertPtr(clone->hdpa, i, newrng);
+	DPA_SetPtr(clone->hdpa, i, newrng);
     }
     return clone;
     
@@ -2956,8 +2953,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isNew
     else
     {
 	HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-	if (!hdpaSubItems) return FALSE;
-	if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0))) return FALSE;
+	lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
+	assert (lpItem);
     }
 
     /* we need to get the lParam and state of the item */
@@ -3085,7 +3082,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, B
    
     /* get the subitem structure, and create it if not there */
     hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-    if (!hdpaSubItems) return FALSE;
+    assert (hdpaSubItems);
     
     lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
     if (!lpSubItem)
@@ -3099,7 +3096,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, B
   	for (i = 1; i < hdpaSubItems->nItemCount; i++)
   	{
 	    tmpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-	    if (tmpSubItem && tmpSubItem->iSubItem > lpLVItem->iSubItem) break;
+	    if (tmpSubItem->iSubItem > lpLVItem->iSubItem) break;
   	}
 	if (DPA_InsertPtr(hdpaSubItems, i, lpSubItem) == -1)
 	{
@@ -3805,44 +3802,35 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
     for (i = 0; i < infoPtr->nItemCount; i++)
     {
-      hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
-      if (hdpaSubItems != NULL)
-      {
+        hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
         for (j = 1; j < hdpaSubItems->nItemCount; j++)
         {
-          lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, j);
-          if (lpSubItem != NULL)
-          {
+            lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, j);
             /* free subitem string */
             if (is_textW(lpSubItem->hdr.pszText))
               COMCTL32_Free(lpSubItem->hdr.pszText);
 
             /* free subitem */
             COMCTL32_Free(lpSubItem);
-          }
         }
 
         lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-        if (lpItem != NULL)
+        if (!bSuppress)
         {
-          if (!bSuppress)
-          {
             /* send LVN_DELETEITEM notification */
             nmlv.iItem = i;
             nmlv.lParam = lpItem->lParam;
             notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
-          }
-
-          /* free item string */
-          if (is_textW(lpItem->hdr.pszText))
-            COMCTL32_Free(lpItem->hdr.pszText);
-
-          /* free item */
-          COMCTL32_Free(lpItem);
         }
 
+        /* free item string */
+        if (is_textW(lpItem->hdr.pszText))
+            COMCTL32_Free(lpItem->hdr.pszText);
+
+        /* free item */
+        COMCTL32_Free(lpItem);
+
         DPA_Destroy(hdpaSubItems);
-      }
     }
 
     /* reinitialize listview memory */
@@ -3960,13 +3948,11 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-	    if (!hdpaSubItems) continue;
 	    nSubItem = 0;
 	    lpDelItem = 0;
 	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
 	    {
 		lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-		if (!lpSubItem) break;
 		if (lpSubItem->iSubItem == nColumn)
 		{
 		    nSubItem = i;
@@ -4054,28 +4040,22 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
       infoPtr->nItemCount--;
       for (i = 1; i < hdpaSubItems->nItemCount; i++)
       {
-        lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-        if (lpSubItem != NULL)
-        {
+          lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
           /* free item string */
           if (is_textW(lpSubItem->hdr.pszText))
             COMCTL32_Free(lpSubItem->hdr.pszText);
 
           /* free item */
           COMCTL32_Free(lpSubItem);
-        }
       }
 
       lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-      if (lpItem != NULL)
-      {
-        /* free item string */
-        if (is_textW(lpItem->hdr.pszText))
+      /* free item string */
+      if (is_textW(lpItem->hdr.pszText))
           COMCTL32_Free(lpItem->hdr.pszText);
 
-        /* free item */
-        COMCTL32_Free(lpItem);
-      }
+      /* free item */
+      COMCTL32_Free(lpItem);
 
       bResult = DPA_Destroy(hdpaSubItems);
       DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
@@ -4749,10 +4729,8 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 
     /* find the item and subitem structures before we proceed */
     hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-    if (hdpaSubItems == NULL) return FALSE;
-
-    if ( !(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)) )
-        return FALSE;
+    lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
+    assert (lpItem);
 
     if (lpLVItem->iSubItem)
     {
@@ -5640,7 +5618,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 {
     LONG lStyle = infoPtr->dwStyle;
     UINT uView = lStyle & LVS_TYPEMASK;
-    INT nItem = -1;
+    INT nItem;
     HDPA hdpaSubItems;
     NMLISTVIEW nmlv;
     LISTVIEW_ITEM *lpItem;
@@ -5660,9 +5638,8 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	return -1;
     
     /* insert item in listview control data structure */
-    if ( (hdpaSubItems = DPA_Create(8)) )
-	nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem);
-    if (nItem == -1) goto fail;
+    if ( !(hdpaSubItems = DPA_Create(8)) ) goto fail;
+    if ( !DPA_SetPtr(hdpaSubItems, 0, lpItem) ) assert (FALSE);
 
     /* FIXME: is the handling of this LVS_OWNERDRAWFIXED correct? */
     is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
@@ -5943,7 +5920,7 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 
     TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
 
-    if (!lpColumn) return -1;
+    if (!lpColumn || nColumn < 0 || nColumn > infoPtr->hdpaColumns->nItemCount) return -1;
     
     ZeroMemory(&hdi, sizeof(HDITEMW));
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
@@ -5953,6 +5930,7 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 		              isW ? HDM_INSERTITEMW : HDM_INSERTITEMA,
                               (WPARAM)nColumn, (LPARAM)&hdi);
     if (nNewColumn == -1) return -1;
+    if (nNewColumn != nColumn) ERR("nColumn=%d, nNewColumn=%d\n", nColumn, nNewColumn);
    
     /* create our own column info */ 
     if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
@@ -5986,16 +5964,14 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-	    if (!hdpaSubItems) continue;
 	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
 	    {
 		lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-		if (!lpSubItem) break;
 		if (lpSubItem->iSubItem >= nNewColumn)
 		    lpSubItem->iSubItem++;
 	    }
 
-	    /* if we found our subitem, zapp it */	
+	    /* for inserting column 0, we have to special-case the main item */	
 	    if (nNewColumn == 0)
 	    {
 		lpMainItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, 0);
