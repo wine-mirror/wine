@@ -1873,9 +1873,6 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case WM_SETTEXT:
 	case WM_GETTEXTLENGTH:
 	case WM_CLEAR:
-	case WM_CUT:
-        case WM_PASTE:
-	case WM_COPY:
                 if ((message == WM_GETTEXTLENGTH) && !ISWIN31 && !(lphc->wState & CBF_EDIT))
                 {
                 int j = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
@@ -1890,6 +1887,12 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		    lphc->wState &= ~CBF_NOEDITNOTIFY;
 		    return ret;
 		}
+		else return  CB_ERR;
+	case WM_CUT:
+        case WM_PASTE:
+	case WM_COPY:
+		if( lphc->wState & CBF_EDIT ) 
+		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		else return  CB_ERR;
 
 	case WM_DRAWITEM:
