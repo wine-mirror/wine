@@ -1743,7 +1743,7 @@ static enum packet_return packet_set_breakpoint(struct gdb_context* gdbctx)
         }
     }
     /* no more entries... eech */
-    fprintf(stderr, "Running out of spot for {break|watcgh}points\n");
+    fprintf(stderr, "Running out of spots for {break|watch}points\n");
     return packet_error;
 }
 
@@ -1858,10 +1858,11 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
              */
             gdbctx->out_len = 0;
         }
-        else if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
+        else
         {
             write(gdbctx->sock, "+", 1);
-            fprintf(stderr, "dropping packet, invalid checksum %d <> %d\n", in_cksum, loc_cksum);
+            if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
+                fprintf(stderr, "dropping packet, invalid checksum %d <> %d\n", in_cksum, loc_cksum);
         }
         gdbctx->in_len -= plen + 4;
         memmove(gdbctx->in_buf, end + 3, gdbctx->in_len);
@@ -1938,7 +1939,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         case 0: /* in child... and alive */
             {
                 char    buf[MAX_PATH];
-		int fd;
+		int     fd;
                 char*   gdb_path;
                 FILE*   f;
 
@@ -1951,6 +1952,8 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
                 fprintf(f, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
                 fprintf(f, "monitor trace=0\n");
                 fprintf(f, "set prompt Wine-gdb>\\ \n");
+                /* gdb 5.1 seems to require it, won't hurt anyway */
+                fprintf(f, "sharedlibrary\n");
                 /* tell gdb to delete this file when done handling it... */
                 fprintf(f, "shell rm -f \"%s\"\n", buf);
                 fclose(f);
