@@ -3895,13 +3895,18 @@ UINT32 WINAPI GetMenuDefaultItem32(HMENU32 hmenu, UINT32 bypos, UINT32 flags)
 {
     POPUPMENU *menu;
 
-    if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hmenu))) return 0; /*FIXME*/
+    if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hmenu)))
+	return -1;
 
     FIXME(menu, "(0x%x,%d,%d), stub!\n", hmenu, bypos, flags);
     if (bypos & MF_BYPOSITION)
     	return menu->defitem;
-    else
-    	return menu->items[menu->defitem].wID;
+    else {
+	FIXME (menu, "default item 0x%x\n", menu->defitem);
+	if ((menu->defitem > 0) && (menu->defitem < menu->nItems))
+	    return menu->items[menu->defitem].wID;
+    }
+    return -1;
 }
 
 /*******************************************************************
