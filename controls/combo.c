@@ -1518,101 +1518,101 @@ static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg, LPARAM lParam )
    return SendMessageW(lphc->owner, msg, id, lParam);
 }
 
+
 /***********************************************************************
- *           COMBO_GetText
+ *           COMBO_GetTextW
+ */
+static LRESULT COMBO_GetTextW( LPHEADCOMBO lphc, INT count, LPWSTR buf )
+{
+    INT length;
+
+    if( lphc->wState & CBF_EDIT )
+        return SendMessageW( lphc->hWndEdit, WM_GETTEXT, count, (LPARAM)buf );
+
+    /* get it from the listbox */
+
+    if (!count || !buf) return 0;
+    if( lphc->hWndLBox )
+    {
+        INT idx = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
+        if (idx == LB_ERR) goto error;
+        length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, idx, 0 );
+        if (length == LB_ERR) goto error;
+
+        /* 'length' is without the terminating character */
+        if (length >= count)
+        {
+            LPWSTR lpBuffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
+            if (!lpBuffer) goto error;
+            length = SendMessageW(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)lpBuffer);
+
+            /* truncate if buffer is too short */
+            if (length != LB_ERR)
+            {
+                lstrcpynW( buf, lpBuffer, count );
+                length = count;
+            }
+            HeapFree( GetProcessHeap(), 0, lpBuffer );
+        }
+        else length = SendMessageW(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)buf);
+
+        if (length == LB_ERR) return 0;
+        return length;
+    }
+
+ error:  /* error - truncate string, return zero */
+    buf[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *           COMBO_GetTextA
  *
  * NOTE! LB_GETTEXT does not count terminating \0, WM_GETTEXT does.
  *       also LB_GETTEXT might return values < 0, WM_GETTEXT doesn't.
  */
-static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unicode)
+static LRESULT COMBO_GetTextA( LPHEADCOMBO lphc, INT count, LPSTR buf )
 {
-   if( lphc->wState & CBF_EDIT )
-       return unicode ? SendMessageW(lphc->hWndEdit, WM_GETTEXT, (WPARAM)N, lParam) :
-                        SendMessageA(lphc->hWndEdit, WM_GETTEXT, (WPARAM)N, lParam);
+    INT length;
 
-   /* get it from the listbox */
+    if( lphc->wState & CBF_EDIT )
+        return SendMessageA( lphc->hWndEdit, WM_GETTEXT, count, (LPARAM)buf );
 
-   if( lphc->hWndLBox )
-   {
-       INT idx = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
-       if( idx != LB_ERR )
-       {
-	   INT n = 0;
-           INT length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN,
-					        (WPARAM)idx, 0 );
-	   if(length == LB_ERR)
-	     FIXME("LB_ERR probably not handled yet\n");
-	    if(unicode)
-	    {
-		LPWSTR lpBuffer, lpText = (LPWSTR)lParam;
+    /* get it from the listbox */
 
-		/* 'length' is without the terminating character */
-		if(length >= N)
-		    lpBuffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
-		else
-		    lpBuffer = lpText;
+    if (!count || !buf) return 0;
+    if( lphc->hWndLBox )
+    {
+        INT idx = SendMessageA(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
+        if (idx == LB_ERR) goto error;
+        length = SendMessageA(lphc->hWndLBox, LB_GETTEXTLEN, idx, 0 );
+        if (length == LB_ERR) goto error;
 
-		if(lpBuffer)
-		{
-		    n = SendMessageW(lphc->hWndLBox, LB_GETTEXT, (WPARAM)idx, (LPARAM)lpBuffer);
+        /* 'length' is without the terminating character */
+        if (length >= count)
+        {
+            LPSTR lpBuffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) );
+            if (!lpBuffer) goto error;
+            length = SendMessageA(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)lpBuffer);
 
-		    /* truncate if buffer is too short */
-		    if(length >= N)
-		    {
-			if(N && lpText)
-			{
-			    if(n != LB_ERR)
-				strncpyW(lpText, lpBuffer, (N > n) ? n+1 : N-1);
-			    lpText[N - 1] = '\0';
-			}
-	                HeapFree( GetProcessHeap(), 0, lpBuffer );
-                   }
-	       }
-	   }
-	   else
-	   {
-		LPSTR lpBuffer, lpText = (LPSTR)lParam;
+            /* truncate if buffer is too short */
+            if (length != LB_ERR)
+            {
+                lstrcpynA( buf, lpBuffer, count );
+                length = count;
+            }
+            HeapFree( GetProcessHeap(), 0, lpBuffer );
+        }
+        else length = SendMessageA(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)buf);
 
-		/* 'length' is without the terminating character */
-		if(length >= N)
-		    lpBuffer = HeapAlloc(GetProcessHeap(), 0, length + 1);
-		else
-		    lpBuffer = lpText;
+        if (length == LB_ERR) return 0;
+        return length;
+    }
 
-		if(lpBuffer)
-		{
-		    n = SendMessageA(lphc->hWndLBox, LB_GETTEXT, (WPARAM)idx, (LPARAM)lpBuffer);
-
-		    /* truncate if buffer is too short */
-		    if(length >= N)
-		    {
-			if(N && lpText)
-			{
-			    if(n != LB_ERR)
-				strncpy(lpText, lpBuffer, (N > n) ? n+1 : N-1);
-			    lpText[N - 1] = '\0';
-			}
-	                HeapFree( GetProcessHeap(), 0, lpBuffer );
-                   }
-	       }
-	   }
-	   if (n<0)
-	       n=0;
-	   else
-	       n++;
-	   return (LRESULT)n;
-       }
-   }
-   /* LB_GETCURSEL returned LB_ERR - truncate string, return zero */
-   if (unicode)
-   {
-	   LPWSTR lpText = (LPWSTR)lParam;
-	   lpText[0] = '\0';
-   } else {
-	   LPSTR lpText = (LPSTR)lParam;
-	   lpText[0] = '\0';
-   }
-   return 0;
+ error:  /* error - truncate string, return zero */
+    buf[0] = 0;
+    return 0;
 }
 
 
@@ -1991,7 +1991,8 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 	case WM_COMMAND:
 		return  COMBO_Command( lphc, wParam, WIN_GetFullHandle( (HWND)lParam ) );
 	case WM_GETTEXT:
-		return COMBO_GetText( lphc, (INT)wParam, lParam, unicode );
+            return unicode ? COMBO_GetTextW( lphc, wParam, (LPWSTR)lParam )
+                           : COMBO_GetTextA( lphc, wParam, (LPSTR)lParam );
 	case WM_SETTEXT:
 	case WM_GETTEXTLENGTH:
 	case WM_CLEAR:
