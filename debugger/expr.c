@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include "winbase.h"
 #include "wine/winbase16.h"
 #include "task.h"
 #include "debugger.h"
