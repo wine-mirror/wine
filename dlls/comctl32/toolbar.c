@@ -5386,6 +5386,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     POINT pt;
     INT   nHit;
     NMTOOLBARA nmtb;
+    NMMOUSE nmmouse;
     BOOL bDragKeyPressed;
 
     TRACE("\n");
@@ -5505,6 +5506,23 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
         nmtb.pszText = 0;  /* !!! not correct */
         TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_BEGINDRAG);
     }
+
+    nmmouse.dwHitInfo = nHit;
+
+    /* !!! Undocumented - sends NM_LDOWN with the NMMOUSE structure. */
+    if (nmmouse.dwHitInfo < 0)
+        nmmouse.dwItemSpec = -1;
+    else
+    {
+        nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
+        nmmouse.dwItemData = infoPtr->buttons[nmmouse.dwHitInfo].dwData;
+    }
+
+    ClientToScreen(hwnd, &pt); 
+    nmmouse.pt = pt;
+
+    if (!TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_LDOWN))
+        return DefWindowProcW(hwnd, WM_LBUTTONDOWN, wParam, lParam);
 
     return 0;
 }
@@ -5653,16 +5671,27 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	{
 	    SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
 	      MAKEWPARAM(infoPtr->buttons[nHit].idCommand, 0), (LPARAM)hwnd);
-
-	    /* !!! Undocumented - toolbar at 4.71 level and above sends
-	    * either NM_RCLICK or NM_CLICK with the NMMOUSE structure.
-	    * Only NM_RCLICK is documented.
-	    */
-	    nmmouse.dwItemSpec = btnPtr->idCommand;
-	    nmmouse.dwItemData = btnPtr->dwData;
-	    TOOLBAR_SendNotify ((NMHDR *) &nmmouse, infoPtr, NM_CLICK);
-	}
+        }
     }
+
+    /* !!! Undocumented - toolbar at 4.71 level and above sends
+    * NM_CLICK with the NMMOUSE structure. */
+    nmmouse.dwHitInfo = nHit;
+
+    if (nmmouse.dwHitInfo < 0)
+        nmmouse.dwItemSpec = -1;
+    else
+    {
+        nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
+        nmmouse.dwItemData = infoPtr->buttons[nmmouse.dwHitInfo].dwData;
+    }
+
+    ClientToScreen(hwnd, &pt); 
+    nmmouse.pt = pt;
+
+    if (!TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_CLICK))
+        return DefWindowProcW(hwnd, WM_LBUTTONUP, wParam, lParam);
+
     return 0;
 }
 
@@ -5687,9 +5716,10 @@ TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     ClientToScreen(hwnd, &pt); 
-    memcpy(&nmmouse.pt, &pt, sizeof(POINT));
+    nmmouse.pt = pt;
 
-    TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RCLICK);
+    if (!TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RCLICK))
+        return DefWindowProcW(hwnd, WM_RBUTTONUP, wParam, lParam);
 
     return 0;
 }
@@ -5698,26 +5728,10 @@ static LRESULT
 TOOLBAR_RButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    NMHDR nmhdr;
 
-    NMMOUSE nmmouse;
-    POINT pt;
-
-    pt.x = LOWORD(lParam);
-    pt.y = HIWORD(lParam);
-
-    nmmouse.dwHitInfo = TOOLBAR_InternalHitTest(hwnd, &pt);
-
-    if (nmmouse.dwHitInfo < 0)
-	nmmouse.dwItemSpec = -1;
-    else {
-	nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
-	nmmouse.dwItemData = infoPtr->buttons[nmmouse.dwHitInfo].dwData;
-    }
-
-    ClientToScreen(hwnd, &pt); 
-    memcpy(&nmmouse.pt, &pt, sizeof(POINT));
-
-    TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RDBLCLK);
+    if (!TOOLBAR_SendNotify(&nmhdr, infoPtr, NM_RDBLCLK))
+        return DefWindowProcW(hwnd, WM_RBUTTONDBLCLK, wParam, lParam);
 
     return 0;
 }
