@@ -105,7 +105,7 @@ type	win32
 097 stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
 098 stub NtEnumerateBus
 099 stub NtEnumerateKey
-100 stub NtEnumerateValueKey
+100 stdcall NtEnumerateValueKey (long long long long long long) NtEnumerateValueKey
 101 stub NtExtendSection
 102 stub NtFlushBuffersFile
 103 stub NtFlushInstructionCache
@@ -167,10 +167,10 @@ type	win32
 159 stub NtQueryKey
 160 stub NtQueryMutant
 161 stdcall NtQueryObject(long long long long long) NtQueryObject
-162 stub NtQueryPerformanceCounter
-163 stub NtQuerySection
-164 stub NtQuerySecurityObject
-165 stub NtQuerySemaphore
+162 stdcall NtQueryPerformanceCounter (long long) NtQueryPerformanceCounter
+163 stdcall NtQuerySection (long long long long long) NtQuerySection
+164 stdcall NtQuerySecurityObject (long long long long long) NtQuerySecurityObject
+165 stdcall NtQuerySemaphore (long long long long long) NtQuerySemaphore
 166 stub NtQuerySymbolicLinkObject
 167 stub NtQuerySystemEnvironmentValue
 168 stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
@@ -295,7 +295,7 @@ type	win32
 287 stub RtlCompareMemory
 288 stub RtlCompareMemoryUlong
 289 stub RtlCompareString
-290 stub RtlCompareUnicodeString
+290 stdcall RtlCompareUnicodeString (ptr ptr long) RtlCompareUnicodeString
 291 stub RtlCompressBuffer
 292 stub RtlConsoleMultiByteToUnicodeN
 293 stub RtlConvertExclusiveToShared
@@ -414,7 +414,7 @@ type	win32
 406 stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection
 407 stub RtlInitializeGenericTable
 408 stub RtlInitializeRXact
-409 stub RtlInitializeResource
+409 stdcall RtlInitializeResource(long) RtlInitializeResource
 410 stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
 411 stub RtlInsertElementGenericTable
 412 stdcall RtlIntegerToChar(long long long long) RtlIntegerToChar

@@ -482,4 +482,41 @@ NTSTATUS WINAPI NtOpenSection(DWORD x1,DWORD x2,DWORD x3) {
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
 	return 0;
 }
+/******************************************************************************
+ *  NtQueryPerformanceCounter	[NTDLL] 
+ */
+BOOL32 WINAPI NtQueryPerformanceCounter(DWORD x1,DWORD x2) {
+	FIXME(ntdll,"(0x%08lx, 0x%08lx) stub!\n",x1,x2);
+	return 0;
+}
+/******************************************************************************
+ *  NtQuerySection	[NTDLL] 
+ */
+NTSTATUS WINAPI NtQuerySection(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+	return 0;
+}
+
+/******************************************************************************
+ *  NtQuerySecurityObject	[NTDLL] 
+ */
+NTSTATUS WINAPI NtQuerySecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+	return 0;
+}
+/******************************************************************************
+ *  NtQuerySemaphore	[NTDLL] 
+ */
+NTSTATUS WINAPI NtQuerySemaphore(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+	return 0;
+}
+
+/******************************************************************************
+ *  NtEnumerateValueKey	[NTDLL] 
+ */
+NTSTATUS WINAPI NtEnumerateValueKey(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5, DWORD x6) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5, x6);
+	return 1;
+}
 
