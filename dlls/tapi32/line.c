@@ -393,7 +393,8 @@ DWORD WINAPI lineInitialize(
   LPCSTR lpszAppName,
   LPDWORD lpdwNumDevs)
 {
-    FIXME("(...): stub.\n");
+    FIXME("(%p, %04x, %p, %s, %p): stub.\n", lphLineApp, hInstance,
+	  lpfnCallback, debugstr_a(lpszAppName), lpdwNumDevs);
     return 0;
 }
 
@@ -445,8 +446,8 @@ DWORD WINAPI lineNegotiateAPIVersion(
   LPLINEEXTENSIONID lpExtensionID
 )
 {
-    FIXME("(%4x, %ld, %ld, %ld, ...): stub.\n", hLineApp, dwDeviceID, 
-		    dwAPILowVersion, dwAPIHighVersion);
+    FIXME("(%04x, %ld, %ld, %ld, %p, %p): stub.\n", hLineApp, dwDeviceID, 
+	  dwAPILowVersion, dwAPIHighVersion, lpdwAPIVersion, lpExtensionID);
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
 }
@@ -612,7 +613,7 @@ DWORD WINAPI lineSetCurrentLocation(HLINEAPP hLineApp, DWORD dwLocation)
  */
 DWORD WINAPI lineSetDevConfig(DWORD dwDeviceID, LPVOID lpDeviceConfig, DWORD dwSize, LPCSTR lpszDeviceClass)
 {
-    FIXME("(%0lx, %p, %08lx, %s): stub.\n", dwDeviceID, lpDeviceConfig, dwSize, lpszDeviceClass);
+    FIXME("(%08lx, %p, %08lx, %s): stub.\n", dwDeviceID, lpDeviceConfig, dwSize, lpszDeviceClass);
     return 0;
 }
 

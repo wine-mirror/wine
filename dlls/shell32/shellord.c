@@ -1340,7 +1340,7 @@ HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
  */
 HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
 {
-	FIXME("(%p %s, %p %s) stub\n", x, debugstr_a(x), y, debugstr_a(y));
+	FIXME("(%s, %s) stub\n", debugstr_a(x), debugstr_a(y));
 	return 0;
 }
 
@@ -1350,7 +1350,7 @@ HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
  */
 HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)
 {
-	FIXME("(%p %s, %p %s) stub\n", x, debugstr_w(x), y, debugstr_w(y));
+	FIXME("(%s, %s): stub\n", debugstr_w(x), debugstr_w(y));
 	return 0;
 }
 

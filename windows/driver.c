@@ -831,7 +831,7 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
     HDRVR 		hDriver = 0;
     char 		drvName[128];
 
-    TRACE("('%s', '%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
+    TRACE("(%s, %s, 0x%08lx);\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam);
     
     if (lpSectionName == NULL) {
 	lstrcpynA(drvName, lpDriverName, sizeof(drvName));

@@ -275,7 +275,7 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
-	TRACE("(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
+	TRACE("(%p{lpszTitle=%s})\n", lpbi, debugstr_a(lpbi->lpszTitle));
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
 			"SHBRSFORFOLDER_MSGBOX",  lpbi->hwndOwner,

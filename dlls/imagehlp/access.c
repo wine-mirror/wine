@@ -95,7 +95,7 @@ DWORD WINAPI GetImageUnusedHeaderBytes(
 PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size)
 {
-  FIXME("(%p, %d, %d, %p): stub\n",
+  FIXME("(%p, %d, %hd, %p): stub\n",
     Base, MappedAsImage, DirectoryEntry, Size
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

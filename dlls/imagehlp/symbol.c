@@ -44,8 +44,8 @@ BOOL WINAPI SymEnumerateSymbols(
   HANDLE hProcess, DWORD BaseOfDll,
   PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext)
 {
-  FIXME("(0x%08x, %p, %p): stub\n",
-    hProcess, EnumSymbolsCallback, UserContext
+  FIXME("(0x%08x, 0x%08lx, %p, %p): stub\n",
+    hProcess, BaseOfDll, EnumSymbolsCallback, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
@@ -204,7 +204,7 @@ BOOL WINAPI SymRegisterCallback(
  */
 DWORD WINAPI SymSetOptions(DWORD SymOptions)
 {
-  FIXME("(%lx): stub\n", SymOptions);
+  FIXME("(0x%08lx): stub\n", SymOptions);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }

@@ -75,7 +75,7 @@ BOOL WINAPI ImageGetDigestStream(
   HANDLE FileHandle, DWORD DigestLevel,
   DIGEST_FUNCTION DigestFunction, DIGEST_HANDLE DigestHandle)
 {
-  FIXME("(%0x08x, %ld, %p, %p): stub\n",
+  FIXME("(0x%08x, %ld, %p, %p): stub\n",
     FileHandle, DigestLevel, DigestFunction, DigestHandle
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

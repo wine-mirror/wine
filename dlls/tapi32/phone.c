@@ -258,7 +258,7 @@ DWORD WINAPI phoneSetLamp(HPHONE hPhone, DWORD dwButtonLampID, DWORD lpdwLampMod
  */
 DWORD WINAPI phoneSetRing(HPHONE hPhone, DWORD dwRingMode, DWORD dwVolume)
 {
-    FIXME("(%04x, %08lx, %08ld): stub.\n", hPhone, dwRingMode, dwVolume);
+    FIXME("(%04x, %08lx, %08lx): stub.\n", hPhone, dwRingMode, dwVolume);
     return 1;
 }
 
@@ -276,7 +276,7 @@ DWORD WINAPI phoneSetStatusMessages(HPHONE hPhone, DWORD dwPhoneStates, DWORD dw
  */
 DWORD WINAPI phoneSetVolume(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwVolume)
 {
-    FIXME("(%04x, %08lx, %08ld): stub.\n", hPhone, dwHookSwitchDev, dwVolume);
+    FIXME("(%04x, %08lx, %08lx): stub.\n", hPhone, dwHookSwitchDev, dwVolume);
     return 1;
 }
 
