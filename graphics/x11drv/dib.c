@@ -2701,9 +2701,9 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             return lines;
         }                                                                           }
 
-    XGetSubImage( display, descr->drawable, descr->xSrc, descr->ySrc,
-                  descr->width, lines, AllPlanes, ZPixmap,
-                  bmpImage, descr->xDest, descr->yDest );
+    XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
+                  descr->width, descr->height, AllPlanes, ZPixmap,
+                  bmpImage, descr->xSrc, descr->ySrc );
 
       /* Transfer the pixels */
     switch(descr->infoBpp)
@@ -3013,21 +3013,13 @@ INT X11DRV_DIB_GetDIBits(
   descr.depth     = bmp->bitmap.bmBitsPixel;
   descr.drawable  = (Pixmap)bmp->physBitmap;
   descr.gc        = BITMAP_GC(bmp);
+  descr.xSrc      = 0;
+  descr.ySrc      = startscan;
+  descr.xDest     = 0;
+  descr.yDest     = 0;
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = bmp->bitmap.bmHeight;
   descr.colorMap  = info->bmiColors;
-  descr.xDest     = 0;
-  descr.yDest     = 0;
-  descr.xSrc      = 0;
-  
-  if (descr.lines > 0)
-  {
-     descr.ySrc = descr.height - startscan - 1;
-  }
-  else
-  {
-     descr.ySrc = startscan;
-  }
 
   if (dib)
     descr.useShm = (dib->shminfo.shmid != -1);
