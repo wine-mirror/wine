@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "ntstatus.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
 #include "controls.h"
@@ -172,10 +173,10 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 {
     int nRet = ERROR;
+    NTSTATUS status;
     HRGN win_rgn = 0;
     RGNDATA *data;
     size_t size = 256;
-    BOOL retry = FALSE;
 
     do
     {
@@ -188,31 +189,26 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
         {
             req->window = hwnd;
             wine_server_set_reply( req, data->Buffer, size );
-            if (!wine_server_call_err( req ))
+            if (!(status = wine_server_call( req )))
             {
-                if (!reply->total_size) retry = FALSE;  /* no region at all */
-                else if (reply->total_size <= size)
+                size_t reply_size = wine_server_reply_size( reply );
+                if (reply_size)
                 {
-                    size_t reply_size = wine_server_reply_size( reply );
                     data->rdh.dwSize   = sizeof(data->rdh);
                     data->rdh.iType    = RDH_RECTANGLES;
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
                     win_rgn = ExtCreateRegion( NULL, size, data );
-                    retry = FALSE;
-                }
-                else
-                {
-                    size = reply->total_size;
-                    retry = TRUE;
                 }
             }
+            else size = reply->total_size;
         }
         SERVER_END_REQ;
         HeapFree( GetProcessHeap(), 0, data );
-    } while (retry);
+    } while (status == STATUS_BUFFER_OVERFLOW);
 
-    if (win_rgn)
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    else if (win_rgn)
     {
         nRet = CombineRgn( hrgn, win_rgn, 0, RGN_COPY );
         DeleteObject( win_rgn );

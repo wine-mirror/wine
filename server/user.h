@@ -71,8 +71,10 @@ extern struct region *create_region( const rectangle_t *rects, unsigned int nb_r
 extern struct region *create_region_from_req_data( const void *data, size_t size );
 extern void free_region( struct region *region );
 extern void set_region_rect( struct region *region, const rectangle_t *rect );
-extern rectangle_t *get_region_data( const struct region *region, size_t *total_size );
-extern rectangle_t *get_region_data_and_free( struct region *region, size_t *total_size );
+extern rectangle_t *get_region_data( const struct region *region, size_t max_size,
+                                     size_t *total_size );
+extern rectangle_t *get_region_data_and_free( struct region *region, size_t max_size,
+                                              size_t *total_size );
 extern int is_region_empty( const struct region *region );
 extern void get_region_extents( const struct region *region, rectangle_t *rect );
 extern void offset_region( struct region *region, int x, int y );

@@ -33,6 +33,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "ntstatus.h"
 #include "wownt32.h"
 #include "wine/wingdi16.h"
 
@@ -138,9 +139,9 @@ static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
 static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
 {
     RGNDATA *data;
+    NTSTATUS status;
     HRGN ret = 0;
     size_t size = 256;
-    BOOL retry = FALSE;
 
     do
     {
@@ -151,28 +152,22 @@ static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
             req->top_win = top;
             req->flags   = flags;
             wine_server_set_reply( req, data->Buffer, size );
-            if (!wine_server_call_err( req ))
+            if (!(status = wine_server_call( req )))
             {
-                if (reply->total_size <= size)
-                {
-                    size_t reply_size = wine_server_reply_size( reply );
-                    data->rdh.dwSize   = sizeof(data->rdh);
-                    data->rdh.iType    = RDH_RECTANGLES;
-                    data->rdh.nCount   = reply_size / sizeof(RECT);
-                    data->rdh.nRgnSize = reply_size;
-                    ret = ExtCreateRegion( NULL, size, data );
-                    retry = FALSE;
-                }
-                else
-                {
-                    size = reply->total_size;
-                    retry = TRUE;
-                }
+                size_t reply_size = wine_server_reply_size( reply );
+                data->rdh.dwSize   = sizeof(data->rdh);
+                data->rdh.iType    = RDH_RECTANGLES;
+                data->rdh.nCount   = reply_size / sizeof(RECT);
+                data->rdh.nRgnSize = reply_size;
+                ret = ExtCreateRegion( NULL, size, data );
             }
+            else size = reply->total_size;
         }
         SERVER_END_REQ;
         HeapFree( GetProcessHeap(), 0, data );
-    } while (retry);
+    } while (status == STATUS_BUFFER_OVERFLOW);
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 

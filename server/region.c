@@ -618,19 +618,23 @@ void set_region_rect( struct region *region, const rectangle_t *rect )
 }
 
 /* retrieve the region data for sending to the client */
-rectangle_t *get_region_data( const struct region *region, size_t *total_size )
+rectangle_t *get_region_data( const struct region *region, size_t max_size, size_t *total_size )
 {
+    const rectangle_t *data = region->rects;
+
     if (!(*total_size = region->num_rects * sizeof(rectangle_t)))
     {
         /* return a single empty rect for empty regions */
         *total_size = sizeof(empty_rect);
-        return memdup( &empty_rect, sizeof(empty_rect) );
+        data = &empty_rect;
     }
-    return memdup( region->rects, *total_size );
+    if (max_size >= *total_size) return memdup( data, *total_size );
+    set_error( STATUS_BUFFER_OVERFLOW );
+    return NULL;
 }
 
 /* retrieve the region data for sending to the client and free the region at the same time */
-rectangle_t *get_region_data_and_free( struct region *region, size_t *total_size )
+rectangle_t *get_region_data_and_free( struct region *region, size_t max_size, size_t *total_size )
 {
     rectangle_t *ret = region->rects;
 
@@ -638,7 +642,18 @@ rectangle_t *get_region_data_and_free( struct region *region, size_t *total_size
     {
         /* return a single empty rect for empty regions */
         *total_size = sizeof(empty_rect);
-        ret = memdup( &empty_rect, sizeof(empty_rect) );
+        if (max_size >= sizeof(empty_rect))
+        {
+            ret = memdup( &empty_rect, sizeof(empty_rect) );
+            free( region->rects );
+        }
+    }
+
+    if (max_size < *total_size)
+    {
+        free( region->rects );
+        set_error( STATUS_BUFFER_OVERFLOW );
+        ret = NULL;
     }
     free( region );
     return ret;

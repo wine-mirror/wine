@@ -1084,8 +1084,8 @@ DECL_HANDLER(get_visible_region)
 
     if ((region = get_visible_region( win, top, req->flags )))
     {
-        rectangle_t *data = get_region_data_and_free( region, &reply->total_size );
-        set_reply_data_ptr( data, min(reply->total_size,get_reply_max_size()) );
+        rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
+        if (data) set_reply_data_ptr( data, reply->total_size );
     }
 }
 
@@ -1097,11 +1097,10 @@ DECL_HANDLER(get_window_region)
 
     if (!win) return;
 
-    reply->total_size = 0;
     if (win->win_region)
     {
-        rectangle_t *data = get_region_data( win->win_region, &reply->total_size );
-        set_reply_data_ptr( data, min( reply->total_size, get_reply_max_size() ) );
+        rectangle_t *data = get_region_data( win->win_region, get_reply_max_size(), &reply->total_size );
+        if (data) set_reply_data_ptr( data, reply->total_size );
     }
 }
 
