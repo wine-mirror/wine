@@ -80,6 +80,15 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
         if (This->dmusic || This->dsound)
 	  return DMUS_E_ALREADY_INITED;
 	
+	if (NULL != pDirectSound) {
+	  This->dsound = (IDirectSound*) pDirectSound;
+	  IDirectSound_AddRef((LPDIRECTSOUND) This->dsound);
+	} else {
+	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->dsound, NULL);
+	  if (!This->dsound)
+	    return DSERR_NODRIVER;
+	}
+
 	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
 	  /* app creates it's own dmusic object and gives it to performance */
 	  This->dmusic = (IDirectMusic8*) *ppDirectMusic;
@@ -94,12 +103,6 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 	  }
 	}
 
-	if (NULL != pDirectSound) {
-	  This->dsound = (IDirectSound*) pDirectSound;
-	  IDirectSound_AddRef((LPDIRECTSOUND) This->dsound);
-	} else {
-	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->dsound, NULL);
-	}
 	
 	return S_OK;
 }
@@ -532,6 +535,8 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 						      DWORD dwFlags, 
 						      DMUS_AUDIOPARAMS* pParams)
 {
+	IDirectSound* dsound;
+	
         ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %p, %p, %lx, %lu, %lx, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
@@ -539,14 +544,16 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 	  return DMUS_E_ALREADY_INITED;
 
 	if (NULL != ppDirectSound && NULL != *ppDirectSound) {
-	  This->dsound = *ppDirectSound;
+	  dsound = *ppDirectSound;
 	} else {
-	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->dsound, NULL);
+	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &dsound, NULL);
+	  if (!dsound)
+	    return DSERR_NODRIVER;
 	  if (ppDirectSound)
-	    *ppDirectSound = This->dsound;  
+	    *ppDirectSound = dsound;  
 	}
 	
-	IDirectMusicPerformance8Impl_Init(iface, ppDirectMusic, This->dsound, hWnd);
+	IDirectMusicPerformance8Impl_Init(iface, ppDirectMusic, dsound, hWnd);
 
 	/* Init increases the ref count of the dsound object. Decremente it if the app don't want a pointer to the object. */
 	if (!ppDirectSound)
