@@ -90,13 +90,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETKEYBOARDDELAY_VALNAME            "KeyboardDelay"
 #define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop\\WindowMetrics"
 #define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
-#define SPI_SETICONTITLEWRAP_REGKEY             "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETICONTITLEWRAP_REGKEY1            "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETICONTITLEWRAP_REGKEY2            "Control Panel\\Desktop"
 #define SPI_SETICONTITLEWRAP_VALNAME            "IconTitleWrap"
-#define SPI_SETMENUDROPALIGNMENT_REGKEY         "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+#define SPI_SETMENUDROPALIGNMENT_REGKEY1        "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+#define SPI_SETMENUDROPALIGNMENT_REGKEY2        "Control Panel\\Desktop"
 #define SPI_SETMENUDROPALIGNMENT_VALNAME        "MenuDropAlignment"
-#define SPI_SETDOUBLECLKWIDTH_REGKEY            "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKWIDTH_REGKEY1           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKWIDTH_REGKEY2           "Control Panel\\Desktop"
 #define SPI_SETDOUBLECLKWIDTH_VALNAME           "DoubleClickWidth"
-#define SPI_SETDOUBLECLKHEIGHT_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKHEIGHT_REGKEY1          "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKHEIGHT_REGKEY2          "Control Panel\\Desktop"
 #define SPI_SETDOUBLECLKHEIGHT_VALNAME          "DoubleClickHeight"
 #define SPI_SETDOUBLECLICKTIME_REGKEY           "Control Panel\\Mouse"
 #define SPI_SETDOUBLECLICKTIME_VALNAME          "DoubleClickSpeed"
@@ -438,7 +442,7 @@ void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
     {
         char buf[10];
 
-        if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY,
+        if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY1,
                             SPI_SETDOUBLECLKWIDTH_VALNAME, buf ))
         {
             SYSMETRICS_Set( SM_CXDOUBLECLK, atoi( buf ) );
@@ -447,7 +451,7 @@ void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
     }
     if (!spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX])
     {
-        if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY,
+        if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
                             SPI_SETDOUBLECLKHEIGHT_VALNAME, buf ))
         {
             SYSMETRICS_Set( SM_CYDOUBLECLK, atoi( buf ) );
@@ -937,7 +941,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         {
             char buf[5];
 
-            if (SYSPARAMS_Load( SPI_SETICONTITLEWRAP_REGKEY,
+            if (SYSPARAMS_Load( SPI_SETICONTITLEWRAP_REGKEY1,
                                 SPI_SETICONTITLEWRAP_VALNAME, buf ))
                 icon_title_wrap  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
@@ -952,10 +956,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
         spi_idx = SPI_SETICONTITLEWRAP_IDX;
         sprintf(buf, "%u", uiParam);
-        if (SYSPARAMS_Save( SPI_SETICONTITLEWRAP_REGKEY,
+        if (SYSPARAMS_Save( SPI_SETICONTITLEWRAP_REGKEY1,
                             SPI_SETICONTITLEWRAP_VALNAME,
                             buf, fWinIni ))
         {
+            SYSPARAMS_Save( SPI_SETICONTITLEWRAP_REGKEY2,
+                            SPI_SETICONTITLEWRAP_VALNAME,
+                            buf, fWinIni );
             icon_title_wrap = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
@@ -971,7 +978,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         {
             char buf[5];
 
-            if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY,
+            if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY1,
                                 SPI_SETMENUDROPALIGNMENT_VALNAME, buf ))
             {
                 SYSMETRICS_Set( SM_MENUDROPALIGNMENT, atoi( buf ) );
@@ -989,10 +996,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETMENUDROPALIGNMENT_IDX;
 
         sprintf(buf, "%u", uiParam);
-        if (SYSPARAMS_Save( SPI_SETMENUDROPALIGNMENT_REGKEY,
+        if (SYSPARAMS_Save( SPI_SETMENUDROPALIGNMENT_REGKEY1,
                             SPI_SETMENUDROPALIGNMENT_VALNAME,
                             buf, fWinIni ))
         {
+            SYSPARAMS_Save( SPI_SETMENUDROPALIGNMENT_REGKEY2,
+                            SPI_SETMENUDROPALIGNMENT_VALNAME,
+                            buf, fWinIni );
             SYSMETRICS_Set( SM_MENUDROPALIGNMENT, uiParam );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1007,10 +1017,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETDOUBLECLKWIDTH_IDX;
 
         sprintf(buf, "%u", uiParam);
-        if (SYSPARAMS_Save( SPI_SETDOUBLECLKWIDTH_REGKEY,
+        if (SYSPARAMS_Save( SPI_SETDOUBLECLKWIDTH_REGKEY1,
                             SPI_SETDOUBLECLKWIDTH_VALNAME,
                             buf, fWinIni ))
         {
+            SYSPARAMS_Save( SPI_SETDOUBLECLKWIDTH_REGKEY2,
+                            SPI_SETDOUBLECLKWIDTH_VALNAME,
+                            buf, fWinIni );
             SYSMETRICS_Set( SM_CXDOUBLECLK, uiParam );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1025,10 +1038,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETDOUBLECLKHEIGHT_IDX;
 
         sprintf(buf, "%u", uiParam);
-        if (SYSPARAMS_Save( SPI_SETDOUBLECLKHEIGHT_REGKEY,
+        if (SYSPARAMS_Save( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
                             SPI_SETDOUBLECLKHEIGHT_VALNAME,
                             buf, fWinIni ))
         {
+            SYSPARAMS_Save( SPI_SETDOUBLECLKHEIGHT_REGKEY2,
+                            SPI_SETDOUBLECLKHEIGHT_VALNAME,
+                            buf, fWinIni );
             SYSMETRICS_Set( SM_CYDOUBLECLK, uiParam );
             spi_loaded[spi_idx] = TRUE;
         }
