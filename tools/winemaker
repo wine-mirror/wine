@@ -650,8 +650,6 @@ sub source_scan_directory
       $opt_ask_project_options="never";
     } else {
       source_set_options($project_settings,$options);
-      print "project_settings: defines=@{@$project_settings[$T_DEFINES]}\n";
-      print "project_settings: includes=@{@$project_settings[$T_INCLUDE_PATH]}\n";
     }
   }
 
@@ -1006,7 +1004,7 @@ sub search_from
   }
 
   foreach $component (@$path) {
-    #print "  looking for $component in \"$dirname\"\n";
+    #print "    looking for $component in \"$dirname\"\n";
     if ($component eq ".") {
       # Pass it as is
       $real_path.="./";
@@ -1027,13 +1025,13 @@ sub search_from
       }
       if (!defined $found) {
 	# Give up
-	#print "  could not find $component in $dirname\n";
+	#print "    could not find $component in $dirname\n";
 	return;
       }
     }
   }
   $real_path=~ s+/$++;
-  #print "  ->found $real_path\n";
+  #print "    -> found $real_path\n";
   return $real_path;
 }
 
@@ -1070,19 +1068,27 @@ sub get_real_include_name
     #     the next directory in the include path
     #   - otherwise, rejoice, our quest is over.
     my @file_components=split /[\/\\]+/, $filename;
-    #print "Searching for $filename from @$project[$P_PATH]\n";
+    #print "  Searching for $filename from @$project[$P_PATH]\n";
 
     my $real_filename;
     if ($dirname ne "") {
-      #print "  in $dirname (include \"\")\n";
+      # This is an 'include ""' -> look in dirname first.
+      #print "    in $dirname (include \"\")\n";
       $real_filename=search_from($dirname,\@file_components);
       if (defined $real_filename) {
 	return $real_filename;
       }
     }
     my $project_settings=@$project[$P_SETTINGS];
-    foreach $dirname (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
-      #print "  in $dirname\n";
+    foreach $include (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
+      my $dirname=$include;
+      $dirname=~ s+^-I++;
+      if (!is_absolute($dirname)) {
+	$dirname="@$project[$P_PATH]$dirname";
+      } else {
+	$dirname=~ s+^\$\(TOPSRCDIR\)/++;
+      }
+      #print "    in $dirname\n";
       $real_filename=search_from("$dirname",\@file_components);
       if (defined $real_filename) {
 	return $real_filename;
@@ -1090,14 +1096,11 @@ sub get_real_include_name
     }
     my $dotdotpath=@$project[$P_PATH];
     $dotdotpath =~ s/[^\/]+/../g;
-    foreach $dirname (@{$global_settings[$T_INCLUDE_PATH]}) {
-      my $ipath;
-      if (!is_absolute($dirname)) {
-	$ipath="$dotdotpath$dirname";
-      } else {
-	$ipath=$dirname;
-      }
-      #print "  in $ipath  (global setting)\n";
+    foreach $include (@{$global_settings[$T_INCLUDE_PATH]}) {
+      my $dirname=$include;
+      $dirname=~ s+^-I++;
+      $dirname=~ s+^\$\(TOPSRCDIR\)\/++;
+      #print "    in $dirname  (global setting)\n";
       $real_filename=search_from("$dirname",\@file_components);
       if (defined $real_filename) {
 	return $real_filename;
@@ -1120,6 +1123,8 @@ sub get_real_include_name
 # and path separator of '#include' directives. This requires that each 
 # source file be associated to a project & target so that the proper 
 # include path is used.
+# Also note that the include path is relative to the directory in which the 
+# compiler is run, i.e. that of the project, not to that of the file.
 sub fix_file
 {
   my $filename=$_[0];
@@ -2367,11 +2372,11 @@ then
   then
     if test -f "$ATL_INCLUDE_ROOT/atl/atlbase.h"
     then
-      ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/mfc"
+      ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/atl"
     else
       if test -f "$ATL_INCLUDE_ROOT/atl/include/atlbase.h"
       then
-        ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/mfc/include"
+        ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/atl/include"
       else
         AC_MSG_ERROR([Could not find the ATL includes])
       fi
@@ -2397,7 +2402,7 @@ then
       fi
     fi
   fi
-  MFC_INCLUDE_PATH="-D_DLL -D_MT -I$MFC_INCLUDE_ROOT -I\$(WINELIB_INCLUDE_ROOT)/mixedcrt"
+  MFC_INCLUDE_PATH="-D_DLL -D_MT -I$ATL_INCLUDE_ROOT -I$MFC_INCLUDE_ROOT -I\$(WINELIB_INCLUDE_ROOT)/mixedcrt"
 
   if test -z "$MFC_LIBRARY_ROOT"
   then
