@@ -512,31 +512,23 @@ void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
 
 /* DPMI Raw Mode Switch handler */
 
-#if 0
-void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
+void WINAPI DOSVM_RawModeSwitch( CONTEXT86 *context )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   CONTEXT86 rm_ctx;
   int ret;
 
-  if (!lpDosTask) {
-    /* we could probably start a DPMI-only dosmod task here, but I doubt
-       anything other than real DOS apps want to call raw mode switch */
-    ERR("attempting raw mode switch without DOS task!\n");
-    ExitProcess(1);
-  }
   /* initialize real-mode context as per spec */
   memset(&rm_ctx, 0, sizeof(rm_ctx));
-  rm_ctx.SegDs  = AX_sig(context);
-  rm_ctx.SegEs  = CX_sig(context);
-  rm_ctx.SegSs  = DX_sig(context);
-  rm_ctx.Esp    = EBX_sig(context);
-  rm_ctx.SegCs  = SI_sig(context);
-  rm_ctx.Eip    = EDI_sig(context);
-  rm_ctx.Ebp    = EBP_sig(context);
+  rm_ctx.SegDs  = AX_reg(context);
+  rm_ctx.SegEs  = CX_reg(context);
+  rm_ctx.SegSs  = DX_reg(context);
+  rm_ctx.Esp    = context->Ebx;
+  rm_ctx.SegCs  = SI_reg(context);
+  rm_ctx.Eip    = context->Edi;
+  rm_ctx.Ebp    = context->Ebp;
   rm_ctx.SegFs  = 0;
   rm_ctx.SegGs  = 0;
-  rm_ctx.EFlags = EFL_sig(context); /* at least we need the IF flag */
+  rm_ctx.EFlags = context->EFlags; /* at least we need the IF flag */
 
   /* enter real mode again */
   TRACE("re-entering real mode at %04lx:%04lx\n",rm_ctx.SegCs,rm_ctx.Eip);
@@ -545,26 +537,26 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
      DOSVM_Enter will return and we will continue here */
 
   if (ret<0) {
+    ERR("Sync lost!\n");
     /* if the sync was lost, there's no way to recover */
     ExitProcess(1);
   }
 
   /* alter protected-mode context as per spec */
-  DS_sig(context)  = LOWORD(rm_ctx.Eax);
-  ES_sig(context)  = LOWORD(rm_ctx.Ecx);
-  SS_sig(context)  = LOWORD(rm_ctx.Edx);
-  ESP_sig(context) = rm_ctx.Ebx;
-  CS_sig(context)  = LOWORD(rm_ctx.Esi);
-  EIP_sig(context) = rm_ctx.Edi;
-  EBP_sig(context) = rm_ctx.Ebp;
-  FS_sig(context) = 0;
-  GS_sig(context) = 0;
+  context->SegDs   = LOWORD(rm_ctx.Eax);
+  context->SegEs   = LOWORD(rm_ctx.Ecx);
+  context->SegSs   = LOWORD(rm_ctx.Edx);
+  context->Esp     = rm_ctx.Ebx;
+  context->SegCs   = LOWORD(rm_ctx.Esi);
+  context->Eip     = rm_ctx.Edi;
+  context->Ebp     = rm_ctx.Ebp;
+  context->SegFs   = 0;
+  context->SegGs   = 0;
 
   /* Return to new address and hope that we didn't mess up */
-  TRACE("re-entering protected mode at %04x:%08lx\n",
-	CS_sig(context), EIP_sig(context));
+  TRACE("re-entering protected mode at %04lx:%08lx\n",
+      context->SegCs, context->Eip);
 }
-#endif
 
 
 /**********************************************************************

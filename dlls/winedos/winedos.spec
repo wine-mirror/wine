@@ -15,6 +15,7 @@ debug_channels (aspi console ddraw int int21 int31 module relay)
 @ stdcall CallRMProc(ptr long) DOSVM_CallRMProc
 @ stdcall AllocRMCB(ptr) DOSVM_AllocRMCB
 @ stdcall FreeRMCB(ptr) DOSVM_FreeRMCB
+@ stdcall RawModeSwitch(ptr) DOSVM_RawModeSwitch
 
 # I/O functions
 @ stdcall SetTimer(long) DOSVM_SetTimer
