@@ -565,17 +565,12 @@ START_TEST(console)
      * the curses backend
      */
 
+    /* first, we detach and open a fresh console to play with */
+    FreeConsole();
+    AllocConsole();
     hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 
-    /* first, we need to be sure we're attached to a console */
-    if (hConIn == INVALID_HANDLE_VALUE || hConOut == INVALID_HANDLE_VALUE)
-    {
-        /* we're not attached to a console, let's do it */
-        AllocConsole();
-        hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-        hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    }
     /* now verify everything's ok */
     ok(hConIn != INVALID_HANDLE_VALUE, "Opening ConIn\n");
     ok(hConOut != INVALID_HANDLE_VALUE, "Opening ConOut\n");
