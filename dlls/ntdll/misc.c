@@ -72,7 +72,7 @@ LONG __cdecl NTDLL__ftol(void)
  * VERSION
  *	[!GNUC && i386]
  */
-#if !defined(__GNUC__) & defined(__i386__)
+#if !defined(__GNUC__) && defined(__i386__)
 LONG __cdecl NTDLL__ftol(double fl)
 {
 	FIXME("should be register function\n");
