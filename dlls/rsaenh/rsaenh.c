@@ -2679,9 +2679,6 @@ BOOL WINAPI RSAENH_CPSetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
- *
- * NOTES
- *  FIXME: sDescription is currently ignored.
  */
 BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpec, 
                               LPCWSTR sDescription, DWORD dwFlags, BYTE *pbSignature, 
@@ -2711,12 +2708,6 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
         return FALSE;
     }
 
-    dwHashLen = sizeof(DWORD);
-    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_ALGID, (BYTE*)&aiAlgid, &dwHashLen, 0)) return FALSE;
-    
-    dwHashLen = RSAENH_MAX_HASH_SIZE;
-    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, abHashValue, &dwHashLen, 0)) return FALSE;
- 
     if (!pbSignature) {
         *pdwSigLen = pCryptKey->dwKeyLen;
         return TRUE;
@@ -2728,6 +2719,21 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
         return FALSE;
     }
     *pdwSigLen = pCryptKey->dwKeyLen;
+
+    if (sDescription) {
+        if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
+                                (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
+        {
+            return FALSE;
+        }
+    }
+    
+    dwHashLen = sizeof(DWORD);
+    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_ALGID, (BYTE*)&aiAlgid, &dwHashLen, 0)) return FALSE;
+    
+    dwHashLen = RSAENH_MAX_HASH_SIZE;
+    if (!RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, abHashValue, &dwHashLen, 0)) return FALSE;
+ 
 
     if (!build_hash_signature(pbSignature, *pdwSigLen, aiAlgid, abHashValue, dwHashLen, dwFlags)) {
         return FALSE;
@@ -2753,9 +2759,6 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
  * RETURNS
  *  Success: TRUE  (Signature is valid)
  *  Failure: FALSE (GetLastError() == NTE_BAD_SIGNATURE, if signature is invalid)
- *  
- * NOTES
- *  FIXME: sDescription is currently ignored.
  */
 BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pbSignature, 
                                      DWORD dwSigLen, HCRYPTKEY hPubKey, LPCWSTR sDescription, 
@@ -2790,6 +2793,14 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
         return FALSE;
     }
 
+    if (sDescription) {
+        if (!RSAENH_CPHashData(hProv, hHash, (CONST BYTE*)sDescription, 
+                                (DWORD)lstrlenW(sDescription)*sizeof(WCHAR), 0))
+        {
+            return FALSE;
+        }
+    }
+    
     dwHashLen = sizeof(DWORD);
     if (!RSAENH_CPGetHashParam(hProv, hHash, HP_ALGID, (BYTE*)&aiAlgid, &dwHashLen, 0)) return FALSE;
     
