@@ -157,6 +157,7 @@ typedef struct
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 #define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0800 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
+#define WIN_NEEDS_INTERNALSOP  0x1000 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
   /* BuildWinArray() flags */
 #define BWA_SKIPDISABLED	0x0001
@@ -196,6 +197,7 @@ extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
 extern void   WIN_ReleaseWinArray(WND **wndArray);
+extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 
 extern HICON16 NC_IconForWindow( WND *wndPtr );
 

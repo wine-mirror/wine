@@ -2633,6 +2633,66 @@ HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
     return GetWindow16( hwnd, flag );
 }
 
+/***********************************************************************
+ *           WIN_InternalShowOwnedPopups 
+ *
+ * Internal version of ShowOwnedPopups; Wine functions should use this
+ * to avoid interfering with application calls to ShowOwnedPopups
+ * and to make sure the application can't prevent showing/hiding.
+ *
+ * Set unmanagedOnly to TRUE to show/hide unmanaged windows only. 
+ *
+ */
+
+BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
+{
+    INT totalChild=0, count=0;
+
+    WND **pWnd = WIN_BuildWinArray(WIN_GetDesktop(), 0, &totalChild);
+
+    if (!pWnd) return TRUE;
+
+    /*
+     * Show windows Lowest first, Highest last to preserve Z-Order
+     */
+    for (count = totalChild-1 ; count >=0; count--)
+    {
+        if (pWnd[count]->owner && (pWnd[count]->owner->hwndSelf == owner) && (pWnd[count]->dwStyle & WS_POPUP))
+        {
+            if (fShow)
+            {
+                /* check in window was flagged for showing in previous WIN_InternalShowOwnedPopups call */
+                if (pWnd[count]->flags & WIN_NEEDS_INTERNALSOP) 
+                {
+                    /*
+                     * Call ShowWindow directly because an application can intercept WM_SHOWWINDOW messages
+                     */
+                    ShowWindow(pWnd[count]->hwndSelf,SW_SHOW);
+                    pWnd[count]->flags &= ~WIN_NEEDS_INTERNALSOP; /* remove the flag */
+                }
+            }
+            else
+            {
+                if ( IsWindowVisible(pWnd[count]->hwndSelf) &&                   /* hide only if window is visible */
+                     !( pWnd[count]->flags & WIN_NEEDS_INTERNALSOP ) &&          /* don't hide if previous call already did it */
+                     !( unmanagedOnly && (pWnd[count]->flags & WIN_MANAGED ) ) ) /* don't hide managed windows if unmanagedOnly is TRUE */
+                {
+                    /*
+                     * Call ShowWindow directly because an application can intercept WM_SHOWWINDOW messages
+                     */
+                    ShowWindow(pWnd[count]->hwndSelf,SW_HIDE);
+                    /* flag the window for showing on next WIN_InternalShowOwnedPopups call */
+                    pWnd[count]->flags |= WIN_NEEDS_INTERNALSOP;
+                }
+            }
+        }
+    }
+    WIN_ReleaseDesktop();    
+    WIN_ReleaseWinArray(pWnd);
+    
+    return TRUE;
+}
+
 /*******************************************************************
  *         ShowOwnedPopups16  (USER.265)
  */
@@ -2661,7 +2721,11 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
             {
                 if (pWnd[count]->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
                 {
-                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_SHOW, IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
+                    /*
+                     * In Windows, ShowOwnedPopups(TRUE) generates WM_SHOWWINDOW messages with SW_PARENTOPENING, 
+                     * regardless of the state of the owner
+                     */
+                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
                     pWnd[count]->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
                 }
             }
@@ -2669,7 +2733,11 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
             {
                 if (IsWindowVisible(pWnd[count]->hwndSelf))
                 {
-                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_HIDE, IsIconic(owner) ? SW_PARENTOPENING : SW_PARENTCLOSING);
+                    /*
+                     * In Windows, ShowOwnedPopups(FALSE) generates WM_SHOWWINDOW messages with SW_PARENTCLOSING, 
+                     * regardless of the state of the owner
+                     */
+                    SendMessageA(pWnd[count]->hwndSelf, WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
                     pWnd[count]->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
                 }
             }
