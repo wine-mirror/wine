@@ -1195,7 +1195,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    unsigned int x, y;
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    DWORD *dst;
-	    
+
 	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(DWORD));
@@ -1205,7 +1205,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 		for (x = 0; x < width; x++) {
 		    DWORD color = *((DWORD *) src) & 0x00FFFFFF;
 		    src += 3;
-		    *dst = *src++ << 8;
+		    *dst = color << 8;
 		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
 			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
 			*dst |= 0xFF;

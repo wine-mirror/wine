@@ -658,6 +658,12 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
         pDDSD->dwFlags &= ~DDSD_LPSURFACE;
     }
 
+    if ((pDDSD->dwFlags & DDSD_LPSURFACE) && (pDDSD->lpSurface == NULL)) {
+        /* Frank Herbert's Dune specifies a null pointer for the surface, ignore the LPSURFACE field */
+        WARN("Null surface pointer specified, ignore it!\n");
+        pDDSD->dwFlags &= ~DDSD_LPSURFACE;
+    }
+
     if (ppSurf == NULL) {
 	FIXME("You want to get back a surface? Don't give NULL ptrs!\n");
 	return E_POINTER; /* unchecked */
