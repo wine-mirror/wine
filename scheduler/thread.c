@@ -385,16 +385,17 @@ BOOL WINAPI GetExitCodeThread(
     HANDLE hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
-    BOOL ret;
-    SERVER_START_REQ( get_thread_info )
+    THREAD_BASIC_INFORMATION info;
+    NTSTATUS status = NtQueryInformationThread( hthread, ThreadBasicInformation,
+                                                &info, sizeof(info), NULL );
+
+    if (status)
     {
-        req->handle = hthread;
-        req->tid_in = 0;
-        ret = !wine_server_call_err( req );
-        if (ret && exitcode) *exitcode = reply->exit_code;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    if (exitcode) *exitcode = info.ExitStatus;
+    return TRUE;
 }
 
 
