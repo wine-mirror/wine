@@ -44,6 +44,7 @@
 #include "stackframe.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "callback.h"
 
 /* int 13 stuff */
 #ifdef HAVE_SYS_IOCTL_H
@@ -1573,9 +1574,13 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 
 		if(dwIoControlCode==IFS_IOCTL_21)
 		{
-			DOS3Call(&cxt); /* Call int 21h */
-		} else {
-			INT_Int2fHandler(&cxt); /* Call int 2Fh */
+                    if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+                        Dosvm.CallBuiltinHandler( &cxt, 0x21 );
+               } 
+                else 
+                {
+                    if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+                        Dosvm.CallBuiltinHandler( &cxt, 0x2f );
 		}
 
 		CONTEXT_2_win32apieq(&cxt,pOut);
@@ -1640,7 +1645,8 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 
 	SET_AX( context, callnum );
         SET_CX( context, parm );
-	INT_Int31Handler(context);
+        if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+            Dosvm.CallBuiltinHandler( context, 0x31 );
 
 	return LOWORD(context->Eax);
     }
@@ -1983,6 +1989,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
         CONTEXT86 cxt;
         DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
         DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
+        BYTE intnum = 0;
 
         TRACE( "Control '%s': "
                "eax=0x%08lx, ebx=0x%08lx, ecx=0x%08lx, "
@@ -1998,16 +2005,24 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 
         switch (dwIoControlCode)
         {
-        case VWIN32_DIOC_DOS_IOCTL: DOS3Call( &cxt ); break; /* Call int 21h */
-        case VWIN32_DIOC_DOS_INT13: INT_Int13Handler( &cxt ); break;
+        case VWIN32_DIOC_DOS_IOCTL: /* Call int 21h */
         case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
-				    DOS3Call( &cxt ); break;
-        case VWIN32_DIOC_DOS_INT25: INT_Int25Handler( &cxt ); break;
-        case VWIN32_DIOC_DOS_INT26: INT_Int26Handler( &cxt ); break;
+        case VWIN32_DIOC_DOS_DRIVEINFO:        /* Call int 21h 730x */
+            intnum = 0x21;
+            break;
+        case VWIN32_DIOC_DOS_INT25: 
+            intnum = 0x25;
+            break;
+        case VWIN32_DIOC_DOS_INT26:
+            intnum = 0x26;
+            break;
         case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
-				    INT_Int31Handler( &cxt ); break;
-        case VWIN32_DIOC_DOS_DRIVEINFO:	DOS3Call( &cxt ); break; /* Call int 21h 730x */
+            intnum = 0x31;
+            break;
         }
+
+        if(Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+            Dosvm.CallBuiltinHandler( &cxt, intnum );
 
         CONTEXT_2_DIOCRegs( &cxt, pOut );
     }

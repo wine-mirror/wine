@@ -27,6 +27,7 @@
 typedef struct {
     void (WINAPI *LoadDosExe)( LPCSTR filename, HANDLE hFile );
     void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
 
     /* DPMI functions */
     void (WINAPI *CallRMInt)( CONTEXT86 *context );

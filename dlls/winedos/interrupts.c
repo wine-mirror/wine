@@ -103,6 +103,8 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
 
   if(context->SegCs == DOSVM_dpmi_segments->int48_sel) 
     islong = FALSE;
+  else if(context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
+    islong = FALSE;
   else if(DOSVM_IsDos32())
     islong = TRUE;
   else if(IS_SELECTOR_32BIT(context->SegCs)) {
@@ -255,4 +257,15 @@ INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
 
   WARN("int%x not implemented, returning dummy handler\n", intnum );
   return DOSVM_DefaultHandler;
+}
+
+/**********************************************************************
+ *         DOSVM_CallBuiltinHandler
+ *
+ * Execute Wine interrupt handler procedure.
+ */
+void WINAPI DOSVM_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum ) 
+{
+  INTPROC proc = DOSVM_GetBuiltinHandler( intnum );
+  proc( context );
 }
