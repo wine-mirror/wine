@@ -56,6 +56,7 @@ struct cond_str {
 };
 
 static LPWSTR COND_GetString( struct cond_str *str );
+static LPWSTR COND_GetLiteral( struct cond_str *str );
 static int COND_lex( void *COND_lval, COND_input *info);
 
 typedef INT (*comp_int)(INT a, INT b);
@@ -115,9 +116,9 @@ static INT comp_ge_m2(INT a, LPWSTR b);
 %token COND_SPACE COND_EOF COND_SPACE
 %token COND_OR COND_AND COND_NOT
 %token COND_LT COND_GT COND_EQ 
-%token COND_LPAR COND_RPAR COND_DBLQ COND_TILDA
+%token COND_LPAR COND_RPAR COND_TILDA
 %token COND_PERCENT COND_DOLLARS COND_QUESTION COND_AMPER COND_EXCLAM
-%token <str> COND_IDENT <str> COND_NUMBER
+%token <str> COND_IDENT <str> COND_NUMBER <str> COND_LITER
 
 %nonassoc COND_EOF COND_ERROR
 
@@ -395,15 +396,12 @@ value_s:
     ;
 
 literal:
-    COND_DBLQ identifier COND_DBLQ
-    {
-        $$ = $2;
-    }
-    | COND_DBLQ integer COND_DBLQ
-    {
-        static const WCHAR pi[] = {'%','i',0};
-        sprintfW($$,pi,$2);
-    }
+    COND_LITER
+        {
+            $$ = COND_GetLiteral(&$1);
+            if( !$$ )
+                YYABORT;
+        }
     ;
 
 symbol_i:
@@ -617,10 +615,26 @@ static int COND_GetOne( struct cond_str *str, COND_input *cond )
     case '%': rc = COND_PERCENT; break;
     case ' ': rc = COND_SPACE; break;
     case '=': rc = COND_EQ; break;
-    case '"': rc = COND_DBLQ; break;
     case '~': rc = COND_TILDA; break;
     case '<': rc = COND_LT; break;
     case '>': rc = COND_GT; break;
+    case '"':
+	{
+	    const WCHAR *ch2 = str->data + 1;
+
+
+	    while ( *ch2 && *ch2 != '"' )
+	    	++ch2;
+	    if (*ch2 == '"')
+	    {
+	        len = ch2 - str->data + 1;
+		rc = COND_LITER;
+		break;
+	    }
+	}
+	ERR("Unterminated string\n");
+	rc = COND_ERROR;
+    	break;
     default: 
         if( COND_IsAlpha( ch ) )
         {
@@ -683,6 +697,20 @@ static LPWSTR COND_GetString( struct cond_str *str )
         ret[str->len]=0;
     }
     TRACE("Got identifier %s\n",debugstr_w(ret));
+    return ret;
+}
+
+static LPWSTR COND_GetLiteral( struct cond_str *str )
+{
+    LPWSTR ret;
+
+    ret = HeapAlloc( GetProcessHeap(), 0, (str->len-1) * sizeof (WCHAR) );
+    if( ret )
+    {
+        memcpy( ret, str->data+1, (str->len-2) * sizeof(WCHAR) );
+        ret[str->len - 2]=0;
+    }
+    TRACE("Got literal %s\n",debugstr_w(ret));
     return ret;
 }
 
