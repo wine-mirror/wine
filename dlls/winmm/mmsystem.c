@@ -11,6 +11,7 @@
  * 	98/9	added Win32 MCI support
  *  	99/4	added mmTask and mmThread functions support
  *		added midiStream support
+ *      99/9	added support for loadable low level drivers
  */
 
 /* FIXME: I think there are some segmented vs. linear pointer weirdnesses 
@@ -253,8 +254,13 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCSTR lpszName)
 static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 {
     BOOL		bRet = FALSE;
-    HMMIO		hmmio;
+    HMMIO		hmmio = 0;
     MMCKINFO		ckMainRIFF;
+    MMCKINFO        	mmckInfo;
+    LPWAVEFORMATEX      lpWaveFormat = NULL;
+    HWAVE		hWave = 0;
+    WAVEHDR		waveHdr;
+    INT			count, bufsize, left;
     
     TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
     if (lpszSoundName == NULL) {
@@ -280,115 +286,103 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 	
 	if (PlaySound_SearchMode == 1) {
 	    PlaySound_SearchMode = 0;
-	    if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0) 
-		if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
-		    return FALSE;
+	    if ((hmmio = get_mmioFromFile(lpszSoundName)) == 0) 
+		hmmio = get_mmioFromProfile(uFlags, lpszSoundName);
 	}
 	
 	if (PlaySound_SearchMode == 2) {
 	    PlaySound_SearchMode = 0;
-	    if ((hmmio=get_mmioFromProfile(uFlags | SND_NODEFAULT, lpszSoundName)) == 0) 
-		if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0)	
-		    if ((hmmio=get_mmioFromProfile(uFlags, lpszSoundName)) == 0) return FALSE;
+	    if ((hmmio = get_mmioFromProfile(uFlags | SND_NODEFAULT, lpszSoundName)) == 0) 
+		if ((hmmio = get_mmioFromFile(lpszSoundName)) == 0)	
+		    hmmio = get_mmioFromProfile(uFlags, lpszSoundName);
 	}
     }
-    
-    if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) == 0) {
-	DWORD	dwPos = mmioSeek(hmmio, 0, SEEK_CUR);
-        do {
-	    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
-		  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, 
-		  ckMainRIFF.cksize);
+    if (hmmio == 0) return FALSE;
 
-	    mmioSeek(hmmio, dwPos, SEEK_SET);
+    if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0))
+	goto errCleanUp;
 
-	    if ((ckMainRIFF.ckid == FOURCC_RIFF) &&
-	    	(ckMainRIFF.fccType == mmioFOURCC('W', 'A', 'V', 'E'))) {
-		MMCKINFO        mmckInfo;
-		
-		mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
-		
-		if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
-		    PCMWAVEFORMAT           pcmWaveFormat;
-		    
-		    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-			  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
-		    
-		    if (mmioRead(hmmio, (HPSTR)&pcmWaveFormat,
-				 (long) sizeof(PCMWAVEFORMAT)) == (long) sizeof(PCMWAVEFORMAT)) {
-			TRACE("wFormatTag=%04X !\n", pcmWaveFormat.wf.wFormatTag);
-			TRACE("nChannels=%d \n", pcmWaveFormat.wf.nChannels);
-			TRACE("nSamplesPerSec=%ld\n", pcmWaveFormat.wf.nSamplesPerSec);
-			TRACE("nAvgBytesPerSec=%ld\n", pcmWaveFormat.wf.nAvgBytesPerSec);
-			TRACE("nBlockAlign=%d \n", pcmWaveFormat.wf.nBlockAlign);
-			TRACE("wBitsPerSample=%u !\n", pcmWaveFormat.wBitsPerSample);
-			
-			mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
-			/* move to end of 'fmt ' chunk */
-			mmioSeek(hmmio, mmckInfo.dwDataOffset + ((mmckInfo.cksize + 1) & ~1), SEEK_SET);
+    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+	  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
-			if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
-			    DWORD		dwRet;
-			    HWAVE		hWave;
+    if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
+	(ckMainRIFF.fccType != mmioFOURCC('W', 'A', 'V', 'E')))
+	goto errCleanUp;
 
-			    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n", 
-				  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
-			    
-			    pcmWaveFormat.wf.nAvgBytesPerSec = pcmWaveFormat.wf.nSamplesPerSec * 
-				pcmWaveFormat.wf.nBlockAlign;
-			    
-			    dwRet = waveOutOpen(&hWave, WAVE_MAPPER, (LPWAVEFORMATEX)&pcmWaveFormat, 0L, 0L, CALLBACK_NULL);
-			    if (dwRet == MMSYSERR_NOERROR) {
-				WAVEHDR		waveHdr;
-				HGLOBAL16	hData;
-				INT		count, bufsize, left = mmckInfo.cksize;
-				
-				bufsize = 64000;
-				hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
-				waveHdr.lpData = (LPSTR)GlobalLock16(hData);
-				waveHdr.dwBufferLength = bufsize;
-				waveHdr.dwUser = 0L;
-				waveHdr.dwFlags = 0L;
-				waveHdr.dwLoops = 0L;
-				
-				dwRet = waveOutPrepareHeader(hWave, &waveHdr, sizeof(WAVEHDR));
-				if (dwRet == MMSYSERR_NOERROR) {
-				    while (left) {
-                                        if (PlaySound_Stop) {
-					    PlaySound_Stop = FALSE;
-					    PlaySound_Loop = FALSE;
-					    break;
-					}
-					if (bufsize > left) bufsize = left;
-					count = mmioRead(hmmio, waveHdr.lpData, bufsize);
-					if (count < 1) break;
-					left -= count;
-					waveHdr.dwBufferLength = count;
-				        /* waveHdr.dwBytesRecorded = count; */
-					/* FIXME: doesn't expect async ops */ 
-					waveOutWrite(hWave, &waveHdr, sizeof(WAVEHDR));
-					while (!(waveHdr.dwFlags & WHDR_DONE))
-					    Sleep(10);
-				    }
-				    waveOutUnprepareHeader(hWave, &waveHdr, sizeof(WAVEHDR));
-				    while (waveOutClose(hWave) == WAVERR_STILLPLAYING)
-					Sleep(100);
-				    
-				    bRet = TRUE;
-				} else 
-				    WARN("can't prepare WaveOut device !\n");
-				
-				GlobalUnlock16(hData);
-				GlobalFree16(hData);
-			    }
-			}
-		    }
+    mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
+    if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
+	goto errCleanUp;
+
+    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+
+    lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
+    if (mmioRead(hmmio, (HPSTR)lpWaveFormat, mmckInfo.cksize) < sizeof(WAVEFORMAT))
+	goto errCleanUp;
+
+    TRACE("wFormatTag=%04X !\n", 	lpWaveFormat->wFormatTag);
+    TRACE("nChannels=%d \n", 		lpWaveFormat->nChannels);
+    TRACE("nSamplesPerSec=%ld\n", 	lpWaveFormat->nSamplesPerSec);
+    TRACE("nAvgBytesPerSec=%ld\n", 	lpWaveFormat->nAvgBytesPerSec);
+    TRACE("nBlockAlign=%d \n", 		lpWaveFormat->nBlockAlign);
+    TRACE("wBitsPerSample=%u !\n", 	lpWaveFormat->wBitsPerSample);
+
+    /* move to end of 'fmt ' chunk */
+    mmioAscend(hmmio, &mmckInfo, 0);
+
+    mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+    if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
+	goto errCleanUp;
+
+    TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX\n", 
+	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
+
+    if (waveOutOpen(&hWave, WAVE_MAPPER, lpWaveFormat, 0L, 0L, CALLBACK_NULL) != MMSYSERR_NOERROR)
+	goto errCleanUp;
+
+    /* make it so that 3 buffers per second are needed */
+    bufsize = (((lpWaveFormat->nAvgBytesPerSec / 3) - 1) / lpWaveFormat->nBlockAlign + 1) *
+	lpWaveFormat->nBlockAlign;
+    waveHdr.lpData = HeapAlloc(GetProcessHeap(), 0, bufsize);
+
+    do {
+	waveHdr.dwUser = 0L;
+	waveHdr.dwFlags = 0L;
+	waveHdr.dwLoops = 0L;
+	
+	left = mmckInfo.cksize;
+	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
+	while (left) {
+	    waveHdr.dwBufferLength = bufsize;
+	    if (waveOutPrepareHeader(hWave, &waveHdr, sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
+		if (PlaySound_Stop) {
+		    PlaySound_Stop = FALSE;
+		    PlaySound_Loop = FALSE;
+		    break;
 		}
-	    }
-	} while (PlaySound_Loop);
-    }
+		if (bufsize > left) bufsize = left;
+		count = mmioRead(hmmio, waveHdr.lpData, bufsize);
+		if (count < 1) break;
+		left -= count;
+		waveHdr.dwBufferLength = count;
+		/* waveHdr.dwBytesRecorded = count; */
+		/* FIXME: doesn't expect async ops */ 
+		waveOutWrite(hWave, &waveHdr, sizeof(WAVEHDR));
+		while (!(waveHdr.dwFlags & WHDR_DONE))
+		    Sleep(10);
+		waveOutUnprepareHeader(hWave, &waveHdr, sizeof(WAVEHDR));
+		bRet = TRUE;
+	    } else 
+		WARN("can't prepare WaveOut device !\n");
+	}
+    } while (PlaySound_Loop);
 
-    if (hmmio != 0) mmioClose(hmmio, 0);
+errCleanUp:
+    HeapFree(GetProcessHeap(), 0, waveHdr.lpData);
+    HeapFree(GetProcessHeap(), 0, lpWaveFormat);
+    if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
+    if (hmmio) 		mmioClose(hmmio, 0);
+
     return bRet;
 }
 
