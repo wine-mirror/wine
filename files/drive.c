@@ -755,7 +755,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
     LPCSTR path;
     DWORD cluster_sec;
 
-    if ((!root) || (root == "\\"))
+    if ((!root) || (strcmp(root,"\\") == 0))
 	drive = DRIVE_GetCurrentDrive();
     else
     if ( (strlen(root) >= 2) && (root[1] == ':')) /* root contains drive tag */
