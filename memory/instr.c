@@ -44,7 +44,7 @@ inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long
     if (ISV86(context)) return PTR_REAL_TO_LIN( seg, off );
     if (IS_SELECTOR_SYSTEM(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
-    return MapSL( MAKESEGPTR( seg, off ) );
+    return MapSL( MAKESEGPTR( seg, 0 ) ) + off;
 }
 
 inline static void *get_stack( CONTEXT86 *context )
@@ -54,7 +54,7 @@ inline static void *get_stack( CONTEXT86 *context )
     if (IS_SELECTOR_SYSTEM(context->SegSs))
         return (void *)context->Esp;
     if (IS_SELECTOR_32BIT(context->SegSs))
-        return MapSL( MAKESEGPTR( context->SegSs, context->Esp ) );
+        return MapSL( MAKESEGPTR( context->SegSs, 0 ) ) + context->Esp;
     return MapSL( MAKESEGPTR( context->SegSs, LOWORD(context->Esp) ) );
 }
 
@@ -249,7 +249,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
     if (IS_SELECTOR_SYSTEM(seg)) return (BYTE *)(base + (index << ss));
     if (((seg & 7) != 7) || IS_SELECTOR_FREE(seg)) return NULL;
     if (wine_ldt_copy.limit[seg >> 3] < (base + (index << ss))) return NULL;
-    return MapSL( MAKESEGPTR( seg, (base + (index << ss))) );
+    return MapSL( MAKESEGPTR( seg, 0 ) ) + base + (index << ss);
 #undef GET_VAL
 }
 
