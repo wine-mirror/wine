@@ -521,6 +521,7 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 #define DRIVE_SUPER 96
     int fd;
     off_t offs;
+    int ret = 0;
 
     if (memset(buff,0,DRIVE_SUPER)!=buff) return -1;
     if ((fd=open(DOSDrives[drive].device,O_RDONLY)) == -1)
@@ -551,8 +552,16 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
             break;
     }
 
-    if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs)) return -4;
-    if (read(fd,buff,DRIVE_SUPER)!=DRIVE_SUPER) return -2;
+    if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs)) 
+    {
+        ret = -4;
+        goto the_end;
+    }
+    if (read(fd,buff,DRIVE_SUPER)!=DRIVE_SUPER) 
+    {
+        ret = -2;
+        goto the_end;
+    }
 
     switch(DOSDrives[drive].type)
     {
@@ -565,20 +574,27 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
             {
                 ERR("The filesystem is not FAT !! (device=%s)\n",
                     DOSDrives[drive].device);
-                return -3;
+                ret = -3;
+                goto the_end;
             }
             break;
 	case DRIVE_CDROM:
 	    if (strncmp(&buff[1],"CD001",5)) /* Check for iso9660 present */
-		return -3;
+            {
+		ret = -3;
+                goto the_end;
+            }
 	    /* FIXME: do we need to check for "CDROM", too ? (high sierra) */
-		break;
+            break;
 	default:
-		return -3;
-		break;
+            ret = -3;
+            goto the_end;
     }
 
     return close(fd);
+ the_end:
+    close(fd);
+    return ret;
 }
 
 
