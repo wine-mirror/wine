@@ -84,11 +84,12 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
     /* destination is always PCM, so the formulas below apply */
     lpwfx->nBlockAlign = (lpwfx->nChannels * lpwfx->wBitsPerSample) / 8;
     lpwfx->nAvgBytesPerSec = lpwfx->nSamplesPerSec * lpwfx->nBlockAlign;
-    ret = wom->acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 0L);
+    ret = wom->acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 
+			     (dwFlags & WAVE_FORMAT_QUERY) ? ACM_STREAMOPENF_QUERY : 0L);
     if (ret != MMSYSERR_NOERROR)
 	return ret;
     return waveOutOpen(&wom->hWave, idx, lpwfx, (DWORD)WAVEMAP_DstCallback, 
-		       (DWORD)wom, (dwFlags & CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+		       (DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
 }
 
 static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
@@ -157,8 +158,14 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     HeapFree(GetProcessHeap(), 0, wom);
     return MMSYSERR_ALLOCATED;
 found:
-    lpDesc->hWave = wom->hWave;
-    *lpdwUser = (DWORD)wom;
+    if (dwFlags & WAVE_FORMAT_QUERY) {
+	lpDesc->hWave = 0;
+	*lpdwUser = 0L;
+	HeapFree(GetProcessHeap(), 0, wom);
+    } else {
+	lpDesc->hWave = wom->hWave;
+	*lpdwUser = (DWORD)wom;
+    }
     return MMSYSERR_NOERROR;
 }
 
