@@ -53,7 +53,7 @@ static void test_VirtualAlloc(void)
     ok(info.Protect == 0 /* NT */ ||
        info.Protect == PAGE_NOACCESS, /* Win9x */
         "%lx != PAGE_NOACCESS\n", info.Protect);
-    ok(info.Type == MEM_PRIVATE, "%lx != MEM_RESERVE\n", info.Type);
+    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
     ok(!VirtualProtect(addr1, 0xFFFC, PAGE_READONLY, &old_prot),
@@ -75,7 +75,7 @@ static void test_VirtualAlloc(void)
     ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
     /* this time NT reports PAGE_NOACCESS as well */
     ok(info.Protect == PAGE_NOACCESS, "%lx != PAGE_NOACCESS\n", info.Protect);
-    ok(info.Type == MEM_PRIVATE, "%lx != MEM_RESERVE\n", info.Type);
+    ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
 
     /* this should fail, since not the whole range is committed yet */
     SetLastError(0xdeadbeef);
