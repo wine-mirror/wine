@@ -841,7 +841,7 @@ static LPKEYSTRUCT _find_or_add_key( LPKEYSTRUCT lpkey, LPWSTR keyname )
 	lplpkey= &(lpkey->nextsub);
 	lpxkey	= *lplpkey;
 	while (lpxkey) {
-		if (	(lpxkey->keyname[0]==keyname[0]) && 
+		if (	tolower(lpxkey->keyname[0])==tolower(keyname[0]) && 
 			!lstrcmpiW(lpxkey->keyname,keyname)
 		)
 			break;
@@ -878,8 +878,8 @@ static void _find_or_add_value( LPKEYSTRUCT lpkey, LPWSTR name, DWORD type,
 			if (val->name==NULL)
 				break;
 		} else {
-			if (	val->name!=NULL && 
-				val->name[0]==name[0] &&
+			if (	val->name!=NULL &&
+				tolower(val->name[0])==tolower(name[0]) &&
 				!lstrcmpiW(val->name,name)
 			)
 				break;
