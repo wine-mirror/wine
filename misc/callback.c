@@ -9,6 +9,7 @@
 #include "windows.h"
 #include "callback.h"
 #include "task.h"
+#include "syslevel.h"
 
 
 /**********************************************************************
@@ -232,6 +233,17 @@ static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex(
 }
 
 /**********************************************************************
+ *	     CALLBACK_CallTaskRescheduleProc
+ */
+static void WINAPI CALLBACK_CallTaskRescheduleProc( void )
+{
+    SYSLEVEL_EnterWin16Lock();
+    TASK_Reschedule();
+    SYSLEVEL_LeaveWin16Lock();
+}
+
+
+/**********************************************************************
  *	     CALLBACK_WinelibTable
  *
  * The callbacks function table for Winelib
@@ -240,7 +252,7 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 {
     CALLBACK_CallRegisterProc,        /* CallRegisterShortProc */
     CALLBACK_CallRegisterProc,        /* CallRegisterLongProc */
-    TASK_Reschedule,                  /* CallTaskRescheduleProc */
+    CALLBACK_CallTaskRescheduleProc,  /* CallTaskRescheduleProc */
     NULL,                             /* CallFrom16WndProc */
     CALLBACK_CallWndProc,             /* CallWndProc */
     CALLBACK_CallDriverProc,          /* CallDriverProc */

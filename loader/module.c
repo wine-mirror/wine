@@ -407,29 +407,19 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
                                      LPSTARTUPINFO32A startup, 
                                      LPPROCESS_INFORMATION info )
 {
-    HMODULE16 hModule;
     HINSTANCE16 hInstance, hPrevInstance;
     NE_MODULE *pModule;
 
-    if (__winelib)
-    {
-        OFSTRUCT ofs;
-        lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
-        if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
-        pModule = (NE_MODULE *)GlobalLock16( hModule );
-        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
-    }
-    else
-    {
-        hInstance = NE_LoadModule( name, &hPrevInstance, TRUE, FALSE );
-        if (hInstance < 32) return hInstance;
+    /* Load module */
 
-        if (   !(pModule = NE_GetPtr(hInstance)) 
-            ||  (pModule->flags & NE_FFLAGS_LIBMODULE))
-        {
-            /* FIXME: cleanup */
-            return 11;
-        }
+    hInstance = NE_LoadModule( name, &hPrevInstance, TRUE, FALSE );
+    if (hInstance < 32) return hInstance;
+
+    if (   !(pModule = NE_GetPtr(hInstance)) 
+        ||  (pModule->flags & NE_FFLAGS_LIBMODULE))
+    {
+        /* FIXME: cleanup */
+        return 11;
     }
 
     /* Create a task for this instance */
@@ -534,8 +524,13 @@ HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock )
     
     /* Get hInstance from process */
     pdb = PROCESS_IdToPDB( info.dwProcessId );
-    tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
-    hInstance = tdb? tdb->hInstance : 0;
+    if ( pdb->exe_modref )
+        hInstance = pdb->exe_modref->module;
+    else
+    {
+        tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
+        hInstance = tdb? tdb->hInstance : 0;
+    }
 
     /* Close off the handles */
     CloseHandle( info.hThread );
@@ -676,7 +671,7 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME(module, "(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
 
-    /* Try NE (or winelib) module */
+    /* Try NE module */
     hInstance = NE_CreateProcess( name, cmdline, lpEnvironment, 
                                   lpStartupInfo, lpProcessInfo );
 
@@ -902,7 +897,6 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 {
     HINSTANCE32 handle = 2;
     char *p, filename[256];
-    static int use_load_module = 1;
     int  spacelimit = 0, exhausted = 0;
     LOADPARAMS32 params;
     UINT16 paramCmdShow[2];
@@ -954,10 +948,8 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 
 	/* Now load the executable file */
 
-	if (use_load_module)
+	if (!__winelib)
 	{
-	    /* Winelib: Use LoadModule() only for the program itself */
-	    if (__winelib) use_load_module = 0;
             handle = LoadModule32( filename, &params );
 	    if (handle == 2)  /* file not found */
 	    {

@@ -25,67 +25,24 @@
 #include "module.h"
 #include "debug.h"
 
-#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
-
-#define UNIX_DLL_ENDING		"so"
-
-#define	STUBSIZE		4095
-
-#include <dlfcn.h>
-
-HMODULE32
-ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
-	WINE_MODREF	*wm;
-	char		*modname,*s,*t,*x;
-	LPVOID		*dlhandle;
+WINE_MODREF *
+ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname, PDB32 *process )
+{
 	PIMAGE_DOS_HEADER	dh;
 	PIMAGE_NT_HEADERS	nth;
 	PIMAGE_SECTION_HEADER	sh;
-	HMODULE32		hmod; 
+	WINE_MODREF *wm;
+	HMODULE32 hmod;
 
-	t = HeapAlloc(process->heap,HEAP_ZERO_MEMORY,strlen(libname)+strlen("lib.so")+1);
-	*t = '\0';
-	/* copy path to tempvar ... */
-	s=strrchr(libname,'/');
-	if (!s)
-		s=strrchr(libname,'\\');
-	if (s) {
-		strncpy(t,libname,s-libname+1);
-		t[s-libname+1]= '\0';
-	} else
-		s = (LPSTR)libname;
-	modname = s;
-	/* append "lib" foo ".so" */
-	strcat(t,"lib");
-	x = t+strlen(t);
-	strcat(t,s);
-	s = strchr(x,'.');
-	while (s) {
-		if (!strcasecmp(s,".dll")) {
-			strcpy(s+1,UNIX_DLL_ENDING);
-			break;
-		}
-		s=strchr(s+1,'.');
-	}
-
-	/* FIXME: make UNIX filename from DOS fn? */
-
-	/* ... and open it */
-	dlhandle = dlopen(t,RTLD_NOW);
-	if (!dlhandle) {
-		HeapFree(process->heap,0,t);
-		return 0;
-	}
 	wm=(WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(*wm));
 	wm->type = MODULE32_ELF;
-	wm->binfmt.elf.dlhandle = dlhandle;
 
 	/* FIXME: hmm, order? */
 	wm->next = process->modref_list;
 	process->modref_list = wm;
 
 	wm->modname = HEAP_strdupA(process->heap,0,modname);
-	wm->longname = HEAP_strdupA(process->heap,0,t);
+	wm->longname = HEAP_strdupA(process->heap,0,libname);
 
 	hmod = (HMODULE32)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(IMAGE_DOS_HEADER)+sizeof(IMAGE_NT_HEADERS)+sizeof(IMAGE_SECTION_HEADER)+100);
 	dh = (PIMAGE_DOS_HEADER)hmod;
@@ -125,8 +82,63 @@ ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
 	sh->PointerToRawData	= 0;
 	sh->Characteristics	= IMAGE_SCN_CNT_CODE|IMAGE_SCN_CNT_INITIALIZED_DATA|IMAGE_SCN_MEM_EXECUTE|IMAGE_SCN_MEM_READ;
 	wm->module = hmod;
-	SNOOP_RegisterDLL(hmod,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
-	return hmod;
+	return wm;
+}
+
+
+#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
+
+#define UNIX_DLL_ENDING		"so"
+
+#define	STUBSIZE		4095
+
+#include <dlfcn.h>
+
+HMODULE32
+ELF_LoadLibraryEx32A(LPCSTR libname,PDB32 *process,HANDLE32 hf,DWORD flags) {
+	WINE_MODREF	*wm;
+	char		*modname,*s,*t,*x;
+	LPVOID		*dlhandle;
+
+	t = HeapAlloc(process->heap,HEAP_ZERO_MEMORY,strlen(libname)+strlen("lib.so")+1);
+	*t = '\0';
+	/* copy path to tempvar ... */
+	s=strrchr(libname,'/');
+	if (!s)
+		s=strrchr(libname,'\\');
+	if (s) {
+		strncpy(t,libname,s-libname+1);
+		t[s-libname+1]= '\0';
+	} else
+		s = (LPSTR)libname;
+	modname = s;
+	/* append "lib" foo ".so" */
+	strcat(t,"lib");
+	x = t+strlen(t);
+	strcat(t,s);
+	s = strchr(x,'.');
+	while (s) {
+		if (!strcasecmp(s,".dll")) {
+			strcpy(s+1,UNIX_DLL_ENDING);
+			break;
+		}
+		s=strchr(s+1,'.');
+	}
+
+	/* FIXME: make UNIX filename from DOS fn? */
+
+	/* ... and open it */
+	dlhandle = dlopen(t,RTLD_NOW);
+	if (!dlhandle) {
+		HeapFree(process->heap,0,t);
+		return 0;
+	}
+
+	wm = ELF_CreateDummyModule( t, modname, process );
+	wm->binfmt.elf.dlhandle = dlhandle;
+
+	SNOOP_RegisterDLL(wm->module,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
+	return wm->module;
 }
 
 FARPROC32

@@ -66,7 +66,7 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
  */
 HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
                                   LPCWSTR name, WORD lang )
-{	HRSRC32 ret;
+{
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
     HRSRC32	hrsrc;
 
@@ -75,24 +75,27 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
 	  debugres_w (type),
 	  debugres_w (name));
 
-    if (__winelib) {
-    	hrsrc = LIBRES_FindResource( hModule, name, type );
-	if (hrsrc)
-	    return hrsrc;
+    if (!wm) return (HRSRC32)0;
+
+    switch (wm->type) 
+    {
+    case MODULE32_PE:
+        hrsrc = PE_FindResourceEx32W(wm,name,type,lang);
+        break;
+
+    case MODULE32_ELF:
+        hrsrc = LIBRES_FindResource( hModule, name, type );
+        break;
+	
+    default:
+        ERR(module,"unknown module type %d\n",wm->type);
+        return (HRSRC32)0;
     }
-    if (wm) {
-    	switch (wm->type) {
-	case MODULE32_PE:
-	    ret =  PE_FindResourceEx32W(wm,name,type,lang);
-        if ( ret==0 )
-          ERR(resource,"0x%08x(%s) %s(%s) not found!\n", hModule,wm->modname, debugres_w (name), debugres_w (type));
-	    return ret;
-	default:
-	    ERR(module,"unknown module type %d\n",wm->type);
-	    break;
-	}
-    }
-    return (HRSRC32)0;
+
+    if ( !hrsrc )
+        ERR(resource,"0x%08x(%s) %s(%s) not found!\n", hModule,wm->modname, debugres_w (name), debugres_w (type));
+
+    return hrsrc;
 }
 
 
@@ -124,16 +127,20 @@ HGLOBAL32 WINAPI LoadResource32(
     	ERR(resource,"hRsrc is 0, return 0.\n");
 	return 0;
     }
-    if (wm)
-    	switch (wm->type) {
-	case MODULE32_PE:
-            return PE_LoadResource32(wm,hRsrc);
-	default:
-	    ERR(resource,"unknown module type %d\n",wm->type);
-	    break;
-	}
-    if (__winelib)
-    	return LIBRES_LoadResource( hModule, hRsrc );
+    if (!wm) return 0;
+
+    switch (wm->type) 
+    {
+    case MODULE32_PE:
+        return PE_LoadResource32(wm,hRsrc);
+
+    case MODULE32_ELF:
+        return LIBRES_LoadResource( hModule, hRsrc );
+
+    default:
+        ERR(resource,"unknown module type %d\n",wm->type);
+        break;
+    }
     return 0;
 }
 
@@ -175,23 +182,21 @@ DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
 
     TRACE(resource, "module=%08x res=%08x\n", hModule, hRsrc );
-    if (wm)
-        switch (wm->type)
-        {
-	case MODULE32_PE:
-            {
-                DWORD ret;
-                ret = PE_SizeofResource32(hModule,hRsrc);
-                if (ret) 
-                    return ret;
-                break;
-            }
-	default:
-	    ERR(module,"unknown module type %d\n",wm->type);
-	    break;
-	}
-    if (__winelib)
-        FIXME(module,"Not implemented for WINELIB\n");
+    if (!wm) return 0;
+
+    switch (wm->type)
+    {
+    case MODULE32_PE:
+        return PE_SizeofResource32(hModule,hRsrc);
+
+    case MODULE32_ELF:
+        FIXME(module,"Not implemented for ELF modules\n");
+        break;
+
+    default:
+        ERR(module,"unknown module type %d\n",wm->type);
+        break;
+    }
     return 0;
 }
 

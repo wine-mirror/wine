@@ -665,11 +665,9 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	    SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
             if (menuName)
             {
-                /* hInstance is still 16-bit in 980215 winelib */
-                if (HIWORD(cs->hInstance) || __winelib)
+                if (HIWORD(cs->hInstance))
                     cs->hMenu = LoadMenu32A(cs->hInstance,PTR_SEG_TO_LIN(menuName));
                 else
-                    /* doesn't work for winelib, since resources are unicode */
                     cs->hMenu = LoadMenu16(cs->hInstance,menuName);
 
                 if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );

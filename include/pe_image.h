@@ -72,6 +72,7 @@ typedef struct {
 	ELF_STDCALL_STUB	*stubs;
 } ELF_MODREF;
 
+extern struct _wine_modref *ELF_CreateDummyModule(LPCSTR,LPCSTR,struct _PDB32 *);
 extern HMODULE32 ELF_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
 extern FARPROC32 ELF_FindExportedFunction(struct _PDB32 *process,struct _wine_modref *wm, LPCSTR funcName);
 

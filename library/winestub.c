@@ -5,8 +5,9 @@
 #include "xmalloc.h"
 
 extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
-extern BOOL32 MAIN_WinelibInit( int *argc, char *argv[] );
-extern void TASK_Reschedule(void);
+
+/* external declaration here because we don't want to depend on Wine headers */
+extern HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] );
 
 /* Most Windows C/C++ compilers use something like this to */
 /* access argc and argv globally: */
@@ -21,7 +22,7 @@ int main( int argc, char *argv [] )
   _ARGC = argc;
   _ARGV = (char **)argv;
 
-  if (!MAIN_WinelibInit( &argc, argv )) return 0;
+  if (!(hInstance = MAIN_WinelibInit( &argc, argv ))) return 0;
 
   /* Alloc szCmdParam */
   for (i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
@@ -30,10 +31,6 @@ int main( int argc, char *argv [] )
   if (argc > 1) strcpy(lpszCmdParam, argv[1]);
   else lpszCmdParam[0] = '\0';
   for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
-
-  hInstance = WinExec32( *argv, SW_SHOWNORMAL );
-  TASK_Reschedule();
-  InitApp( hInstance );
 
   return WinMain (hInstance,    /* hInstance */
 		  0,	        /* hPrevInstance */
