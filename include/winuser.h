@@ -2385,31 +2385,23 @@ typedef struct tagMONITORINFO
     DWORD dwFlags;
 } MONITORINFO, *LPMONITORINFO;
 
-#ifdef __cplusplus
-typedef struct tagMONITORINFOEXA : public tagMONITORINFO
-{
-  CHAR szDevice[CCHDEVICENAME];
-} MONITORINFOEXA, *LPMONITORINFOEXA;
-#else
 typedef struct tagMONITORINFOEXA
-{
-    MONITORINFO DUMMYSTRUCTNAME;
+{   /* the 4 first entries are the same as MONITORINFO */
+    DWORD	cbSize;	
+    RECT	rcMonitor;
+    RECT	rcWork;
+    DWORD	dwFlags;
     CHAR        szDevice[CCHDEVICENAME];
 } MONITORINFOEXA, *LPMONITORINFOEXA;
-#endif
 
-#ifdef __cplusplus
-typedef struct tagMONITORINFOEXW : public tagMONITORINFO
-{
-  WCHAR szDevice[CCHDEVICENAME];
-} MONITORINFOEXW, *LPMONITORINFOEXW;
-#else
 typedef struct tagMONITORINFOEXW
-{
-    MONITORINFO DUMMYSTRUCTNAME;
+{   /* the 4 first entries are the same as MONITORINFO */
+    DWORD	cbSize;
+    RECT	rcMonitor;
+    RECT	rcWork;
+    DWORD	dwFlags;
     WCHAR       szDevice[CCHDEVICENAME];
 } MONITORINFOEXW, *LPMONITORINFOEXW;
-#endif
 
 DECL_WINELIB_TYPE_AW(MONITORINFOEX)
 DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
