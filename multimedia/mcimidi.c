@@ -1471,10 +1471,10 @@ static DWORD MIDI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
  *======================================================================*/
 
 /**************************************************************************
- * 				MCIMIDI_DriverProc32	[sample driver]
+ * 				MCIMIDI_DriverProc	     [sample driver]
  */
 LONG MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-				 DWORD dwParam1, DWORD dwParam2)
+			DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
     case DRV_LOAD:		return 1;
@@ -1488,7 +1488,7 @@ LONG MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 #ifdef SNDCTL_MIDI_INFO
-    case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)   dwParam2);
+    case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
     case MCI_RECORD:		return MIDI_mciRecord    (dwDevID, dwParam1, (LPMCI_RECORD_PARMS)    dwParam2);
@@ -1498,7 +1498,7 @@ LONG MCIMIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_RESUME:		return MIDI_mciResume    (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_STATUS:		return MIDI_mciStatus    (dwDevID, dwParam1, (LPMCI_STATUS_PARMS)    dwParam2);
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)   dwParam2);
+    case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)     dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
 #else
     case MCI_OPEN_DRIVER:

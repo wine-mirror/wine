@@ -761,7 +761,7 @@ UINT WINAPI mmioAdvance(HMMIO hmmio,MMIOINFO*lpmmioinfo,UINT uFlags)
 	            mmioSendMessage(hmmio, MMIOM_READ,
 	                (LPARAM) lpmmioinfo->pchBuffer,
 	                (LPARAM) lpmmioinfo->cchBuffer);
-#if 0   /* mmioFlush32 already did the writing */
+#if 0   /* mmioFlush already did the writing */
 	if (uFlags == MMIO_WRITE)
 	            mmioSendMessage(hmmio, MMIOM_WRITE,
 	                (LPARAM) lpmmioinfo->pchBuffer,
@@ -795,7 +795,7 @@ UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio,MMIOINFO16*lpmmioinfo,UINT16 uFlags)
 	            mmioSendMessage(hmmio, MMIOM_READ,
 	                (LPARAM) lpmmioinfo->pchBuffer,
 	                (LPARAM) lpmmioinfo->cchBuffer);
-#if 0   /* mmioFlush32 already did the writing */
+#if 0   /* mmioFlush already did the writing */
 	if (uFlags == MMIO_WRITE)
 	            mmioSendMessage(hmmio, MMIOM_WRITE,
 	                (LPARAM) lpmmioinfo->pchBuffer,
@@ -866,7 +866,7 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc,
 }
 
 /**************************************************************************
- * 				mmioInstallIOProc32A   [WINMM.120]
+ * 				mmioInstallIOProcA								   [WINMM.120]
  */
 LPMMIOPROC WINAPI mmioInstallIOProcA(FOURCC fccIOProc, 
                                          LPMMIOPROC pIOProc, DWORD dwFlags)
@@ -1090,7 +1090,7 @@ UINT16 WINAPI mmioCreateChunk16(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 	lpck->dwFlags = MMIO_DIRTY;
 
 	ix = mmioWrite(hmmio, (LPSTR)lpck, lpck->dwDataOffset - dwOldPos);
-	TRACE(mmio, "after _lwrite32 ix = %ld req = %ld, errno = %d\n",ix,lpck->dwDataOffset - dwOldPos,errno);
+	TRACE(mmio, "after mmioWrite ix = %ld req = %ld, errno = %d\n",ix,lpck->dwDataOffset - dwOldPos,errno);
 	if (ix < lpck->dwDataOffset - dwOldPos) {
 
 		mmioSeek(hmmio, dwOldPos, SEEK_SET);
