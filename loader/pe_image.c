@@ -566,8 +566,8 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
     if ( nt->OptionalHeader.ImageBase & 0x80000000 )
     {
         HMODULE sharedMod = (HMODULE)nt->OptionalHeader.ImageBase; 
-        IMAGE_NT_HEADERS *sharedNt = (LPBYTE)sharedMod 
-                                   + ((LPBYTE)nt - (LPBYTE)hModule);
+        IMAGE_NT_HEADERS *sharedNt = (PIMAGE_NT_HEADERS)
+               ( (LPBYTE)sharedMod + ((LPBYTE)nt - (LPBYTE)hModule) );
 
         /* Well, this check is not really comprehensive, 
            but should be good enough for now ... */
