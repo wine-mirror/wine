@@ -615,7 +615,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
 					pTemplate,
 					hwndParent,
 					ppshpage->pfnDlgProc,
-					ppshpage);
+					(LPARAM)ppshpage);
 
   ppInfo[index].hwndPage = hwndPage;
 
