@@ -973,6 +973,7 @@ int PROFILE_LoadWineIni(void)
         ERR("Cannot create config registry key\n" );
         return 0;
     }
+    wine_profile_key = ConvertToGlobalHandle( wine_profile_key );
 
     InitializeCriticalSection( &PROFILE_CritSect );
     MakeCriticalSectionGlobal( &PROFILE_CritSect );
