@@ -167,12 +167,10 @@ static void DOSVM_SendQueuedEvents(PCONTEXT context, LPDOSTASK lpDosTask)
 
 void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data)
 {
-  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+  LPDOSTASK lpDosTask = MZ_Current();
   LPDOSEVENT event, cur, prev;
 
-  GlobalUnlock16( GetCurrentTask() );
-  if (pModule && pModule->lpDosTask) {
+  if (lpDosTask) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR_(int)("out of memory allocating event entry\n");
@@ -183,20 +181,20 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,v
 
     /* insert event into linked list, in order *after*
      * all earlier events of higher or equal priority */
-    cur = pModule->lpDosTask->pending; prev = NULL;
+    cur = lpDosTask->pending; prev = NULL;
     while (cur && cur->priority<=priority) {
       prev = cur;
       cur = cur->next;
     }
     event->next = cur;
     if (prev) prev->next = event;
-    else pModule->lpDosTask->pending = event;
+    else lpDosTask->pending = event;
     
     /* get dosmod's attention to the new event, except for irq==0 where we already have it */
-    if (irq && !pModule->lpDosTask->sig_sent) {
+    if (irq && !lpDosTask->sig_sent) {
       TRACE_(int)("new event queued, signalling dosmod\n");
-      kill(pModule->lpDosTask->task,SIGUSR2);
-      pModule->lpDosTask->sig_sent++;
+      kill(lpDosTask->task,SIGUSR2);
+      lpDosTask->sig_sent++;
     } else {
       TRACE_(int)("new event queued\n");
     }
@@ -222,6 +220,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
   CV;
 #undef CP
   if (fnINSTR_EmulateInstruction) ret=fnINSTR_EmulateInstruction(&sigcontext);
+  else ERR_(module)("fnINSTR_EmulateInstruction is not initialized!\n");
 #define CP(x,y) VM86->regs.x = y##_sig(&sigcontext)
   CV;
 #undef CP
@@ -334,24 +333,53 @@ void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
   }
 }
 
+void DOSVM_Wait( int read_pipe, HANDLE hObject )
+{
+  LPDOSTASK lpDosTask = MZ_Current();
+  MSG msg;
+  DWORD waitret;
+  BOOL got_msg = FALSE;
+
+  do {
+    /* check for messages (waste time before the response check below) */
+    while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
+      /* got a message */
+      DOSVM_ProcessMessage(lpDosTask,&msg);
+      /* we don't need a TranslateMessage here */
+      DispatchMessageA(&msg);
+      got_msg = TRUE;
+    }
+    if (read_pipe == -1) {
+      if (got_msg) break;
+    } else {
+      fd_set readfds;
+      struct timeval timeout={0,0};
+      /* quick check for response from dosmod
+       * (faster than doing the full blocking wait, if data already available) */
+      FD_ZERO(&readfds); FD_SET(read_pipe,&readfds);
+      if (select(read_pipe+1,&readfds,NULL,NULL,&timeout)>0)
+	break;
+    }
+    /* check for data from win32 console device */
+
+    /* nothing yet, block while waiting for something to do */
+    waitret=MsgWaitForMultipleObjects(1,&hObject,FALSE,INFINITE,QS_ALLINPUT);
+    if (waitret==(DWORD)-1) {
+      ERR_(module)("dosvm wait error=%ld\n",GetLastError());
+    }
+    if (read_pipe != -1) {
+      if (waitret==WAIT_OBJECT_0) break;
+    }
+  } while (TRUE);
+}
+
 int DOSVM_Enter( PCONTEXT context )
 {
- TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
- NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
- LPDOSTASK lpDosTask;
+ LPDOSTASK lpDosTask = MZ_Current();
  struct vm86plus_struct VM86;
  int stat,len,sig;
- DWORD waitret;
- MSG msg;
- fd_set readfds;
- struct timeval timeout={0,0};
 
- GlobalUnlock16( GetCurrentTask() );
- if (!pModule) {
-  ERR_(module)("No task is currently active!\n");
-  return -1;
- }
- if (!(lpDosTask=pModule->lpDosTask)) {
+ if (!lpDosTask) {
   /* MZ_CreateProcess or MZ_AllocDPMITask should have been called first */
   ERR_(module)("dosmod has not been initialized!");
   return -1;
@@ -390,25 +418,8 @@ int DOSVM_Enter( PCONTEXT context )
    ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return -1;
   }
-  do {
-    /* check for messages (waste time before the response check below) */
-    while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
-      /* got a message */
-      DOSVM_ProcessMessage(lpDosTask,&msg);
-      /* we don't need a TranslateMessage here */
-      DispatchMessageA(&msg);
-    }
-    /* quick check for response from dosmod
-     * (faster than doing the full blocking wait, if data already available) */
-    FD_ZERO(&readfds); FD_SET(lpDosTask->read_pipe,&readfds);
-    if (select(lpDosTask->read_pipe+1,&readfds,NULL,NULL,&timeout)>0)
-      break;
-    /* nothing yet, block while waiting for something to do */
-    waitret=MsgWaitForMultipleObjects(1,&(lpDosTask->hReadPipe),FALSE,INFINITE,QS_ALLINPUT);
-    if (waitret==(DWORD)-1) {
-      ERR_(module)("dosvm wait error=%ld\n",GetLastError());
-    }
-  } while (waitret!=WAIT_OBJECT_0);
+  /* wait for response, doing other things in the meantime */
+  DOSVM_Wait(lpDosTask->read_pipe, lpDosTask->hReadPipe);
   /* read response */
   while (1) {
     if ((len=read(lpDosTask->read_pipe,&stat,sizeof(stat)))==sizeof(stat)) break;
@@ -453,29 +464,27 @@ int DOSVM_Enter( PCONTEXT context )
 
 void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
-  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+  LPDOSTASK lpDosTask = MZ_Current();
   LPDOSEVENT event;
 
-  GlobalUnlock16( GetCurrentTask() );
-  if (pModule && pModule->lpDosTask) {
+  if (lpDosTask) {
     if ((port==0x20) && (val==0x20)) {
-      if (pModule->lpDosTask->current) {
+      if (lpDosTask->current) {
 	/* EOI (End Of Interrupt) */
 	TRACE_(int)("received EOI for current IRQ, clearing\n");
-	event = pModule->lpDosTask->current;
-	pModule->lpDosTask->current = event->next;
+	event = lpDosTask->current;
+	lpDosTask->current = event->next;
 	if (event->relay)
-	(*event->relay)(pModule->lpDosTask,NULL,event->data);
+	(*event->relay)(lpDosTask,NULL,event->data);
 	free(event);
 
-	if (pModule->lpDosTask->pending &&
-	    !pModule->lpDosTask->sig_sent) {
+	if (lpDosTask->pending &&
+	    !lpDosTask->sig_sent) {
 	  /* another event is pending, which we should probably
 	   * be able to process now, so tell dosmod about it */
 	  TRACE_(int)("another event pending, signalling dosmod\n");
-	  kill(pModule->lpDosTask->task,SIGUSR2);
-	  pModule->lpDosTask->sig_sent++;
+	  kill(lpDosTask->task,SIGUSR2);
+	  lpDosTask->sig_sent++;
 	}
       } else {
 	WARN_(int)("EOI without active IRQ\n");
@@ -488,65 +497,59 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 
 void DOSVM_SetTimer( unsigned ticks )
 {
- TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
- NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
- int stat=DOSMOD_SET_TIMER;
- struct timeval tim;
+  LPDOSTASK lpDosTask = MZ_Current();
+  int stat=DOSMOD_SET_TIMER;
+  struct timeval tim;
 
- GlobalUnlock16( GetCurrentTask() );
- if (pModule&&pModule->lpDosTask) {
-  /* the PC clocks ticks at 1193180 Hz */
-  tim.tv_sec=0;
-  tim.tv_usec=((unsigned long long)ticks*1000000)/1193180;
-  /* sanity check */
-  if (!tim.tv_usec) tim.tv_usec=1;
+  if (lpDosTask) {
+    /* the PC clocks ticks at 1193180 Hz */
+    tim.tv_sec=0;
+    tim.tv_usec=((unsigned long long)ticks*1000000)/1193180;
+    /* sanity check */
+    if (!tim.tv_usec) tim.tv_usec=1;
 
-  if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-   return;
+    if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
+      return;
+    }
+    if (write(lpDosTask->write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
+      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
+      return;
+    }
+    /* there's no return */
   }
-  if (write(pModule->lpDosTask->write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
-   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-   return;
-  }
-  /* there's no return */
- }
 }
 
 unsigned DOSVM_GetTimer( void )
 {
- TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
- NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
- int stat=DOSMOD_GET_TIMER;
- struct timeval tim;
+  LPDOSTASK lpDosTask = MZ_Current();
+  int stat=DOSMOD_GET_TIMER;
+  struct timeval tim;
 
- GlobalUnlock16( GetCurrentTask() );
- if (pModule&&pModule->lpDosTask) {
-  if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-   return 0;
+  if (lpDosTask) {
+    if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
+      return 0;
+    }
+    /* read response */
+    while (1) {
+      if (read(lpDosTask->read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
+      if ((errno==EINTR)||(errno==EAGAIN)) continue;
+      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
+      return 0;
+    }
+    return ((unsigned long long)tim.tv_usec*1193180)/1000000;
   }
-  /* read response */
-  while (1) {
-    if (read(pModule->lpDosTask->read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
-    if ((errno==EINTR)||(errno==EAGAIN)) continue;
-    ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-    return 0;
-  }
-  return ((unsigned long long)tim.tv_usec*1193180)/1000000;
- }
- return 0;
+  return 0;
 }
 
 void DOSVM_SetSystemData( int id, void *data )
 {
-  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+  LPDOSTASK lpDosTask = MZ_Current();
   DOSSYSTEM *sys, *prev;
 
-  GlobalUnlock16( GetCurrentTask() );
-  if (pModule && pModule->lpDosTask) {
-    sys = pModule->lpDosTask->sys;
+  if (lpDosTask) {
+    sys = lpDosTask->sys;
     prev = NULL;
     while (sys && (sys->id != id)) {
       prev = sys;
@@ -561,20 +564,18 @@ void DOSVM_SetSystemData( int id, void *data )
       sys->data = data;
       sys->next = NULL;
       if (prev) prev->next = sys;
-      else pModule->lpDosTask->sys = sys;
+      else lpDosTask->sys = sys;
     }
   } else free(data);
 }
 
 void* DOSVM_GetSystemData( int id )
 {
-  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+  LPDOSTASK lpDosTask = MZ_Current();
   DOSSYSTEM *sys;
 
-  GlobalUnlock16( GetCurrentTask() );
-  if (pModule && pModule->lpDosTask) {
-    sys = pModule->lpDosTask->sys;
+  if (lpDosTask) {
+    sys = lpDosTask->sys;
     while (sys && (sys->id != id))
       sys = sys->next;
     if (sys)
@@ -591,11 +592,12 @@ int DOSVM_Enter( PCONTEXT context )
  return -1;
 }
 
+void DOSVM_Wait( int read_pipe, HANDLE hObject) {}
 void DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
 void DOSVM_SetTimer( unsigned ticks ) {}
 unsigned DOSVM_GetTimer( void ) { return 0; }
 void DOSVM_SetSystemData( int id, void *data ) { free(data); }
 void* DOSVM_GetSystemData( int id ) { return NULL; }
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data) { /* EMPTY */ }
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data) {}
 
 #endif

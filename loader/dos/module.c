@@ -182,7 +182,7 @@ static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
  int x;
 
- if (lpDosTask->img_ofs) return TRUE; /* already allocated */
+ if (lpDosTask->img) return TRUE; /* already allocated */
 
  /* allocate 1MB+64K shared memory */
  lpDosTask->img_ofs=START_OFFSET;
@@ -330,7 +330,7 @@ static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
   int func;
   struct timeval tim;
 
-  /* start dosmod timer at 55Hz */
+  /* start dosmod timer at 55ms (18.2Hz) */
   func=DOSMOD_SET_TIMER;
   tim.tv_sec=0; tim.tv_usec=54925;
   write(lpDosTask->write_pipe,&func,sizeof(func));
@@ -370,14 +370,17 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 
   lpDosTask->write_pipe=write_fd[1];
 
- /* if we have a mapping file, use it */
- fname=lpDosTask->mm_name; farg=NULL;
- if (!fname[0]) {
-  /* otherwise, map our own memory image */
-  sprintf(fproc,"/proc/%d/mem",getpid());
-  sprintf(arg,"%ld",(unsigned long)lpDosTask->img);
-  fname=fproc; farg=arg;
- }
+  lpDosTask->hConInput=GetStdHandle(STD_INPUT_HANDLE);
+  lpDosTask->hConOutput=GetStdHandle(STD_OUTPUT_HANDLE);
+
+  /* if we have a mapping file, use it */
+  fname=lpDosTask->mm_name; farg=NULL;
+  if (!fname[0]) {
+    /* otherwise, map our own memory image */
+    sprintf(fproc,"/proc/%d/mem",getpid());
+    sprintf(arg,"%ld",(unsigned long)lpDosTask->img);
+    fname=fproc; farg=arg;
+  }
 
   TRACE(module,"Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
   if ((child=fork())<0) {
@@ -541,6 +544,19 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 #endif
 }
 
+LPDOSTASK MZ_Current( void )
+{
+  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+  NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+
+  GlobalUnlock16( GetCurrentTask() );
+
+  if (pModule)
+    return pModule->lpDosTask;
+
+  return NULL;
+}
+
 #else /* !MZ_SUPPORTED */
 
 BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
@@ -551,6 +567,11 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
  WARN(module,"DOS executables not supported on this architecture\n");
  SetLastError(ERROR_BAD_FORMAT);
  return FALSE;
+}
+
+LPDOSTASK *MZ_Current( void )
+{
+  return NULL;
 }
 
 #endif

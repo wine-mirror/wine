@@ -30,7 +30,7 @@ typedef struct _DOSTASK {
  HMODULE16 hModule;
  char mm_name[128];
  int mm_fd;
- HANDLE hReadPipe,hXPipe;
+ HANDLE hReadPipe,hXPipe,hConInput,hConOutput;
  int read_pipe,write_pipe;
  pid_t task;
  int sig_sent;
@@ -67,7 +67,9 @@ extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                               BOOL inherit, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
+extern LPDOSTASK MZ_Current( void );
 extern int DOSVM_Enter( PCONTEXT context );
+extern void DOSVM_Wait( int read_pipe, HANDLE hObject );
 extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data );
 extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void DOSVM_SetTimer( unsigned ticks );
