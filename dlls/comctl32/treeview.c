@@ -1470,7 +1470,7 @@ TREEVIEW_KeyDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  int prevSelect;
 
 
- TRACE (treeview,"%x %lx",wParam, lParam);
+ TRACE (treeview,"%x %lx\n",wParam, lParam);
  prevSelect=infoPtr->selectedItem;
  if (!prevSelect) return FALSE;
 

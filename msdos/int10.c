@@ -250,7 +250,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x12: /* ALTERNATE FUNCTION SELECT */
         switch BL_reg(context) {
         case 0x10: /* GET EGA INFO */
-            TRACE(int10, "EGA Info Requested");
+            TRACE(int10, "EGA Info Requested\n");
             BX_reg(context) = 0x0003;
             CX_reg(context) = 0x0009;
             break;
@@ -290,7 +290,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x1a: 
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
-            TRACE(int10, "Get Display Combination Code");
+            TRACE(int10, "Get Display Combination Code\n");
             /* Why are we saying this? */
             /* Do we need to check if we are in a windows or text app? */
             BX_reg(context) = 0x0008; /* VGA w/ color analog display */

@@ -891,7 +891,7 @@ INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN(accel, "couldn't translate accelerator key");
+    WARN(accel, "couldn't translate accelerator key\n");
     return 0;
 }
 
@@ -927,7 +927,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN(accel, "couldn't translate accelerator key");
+    WARN(accel, "couldn't translate accelerator key\n");
     return 0;
 }
 

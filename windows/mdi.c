@@ -259,7 +259,7 @@ static LRESULT MDIRefreshMenu( HWND32 hwnd, HMENU32 hmenuFrame,
     TRACE(mdi, "%04x %04x %04x\n",
                 hwnd, hmenuFrame, hmenuWindow);
 
-    FIXME(mdi,"partially function stub");
+    FIXME(mdi,"partially function stub\n");
 
     return oldFrameMenu;
 }

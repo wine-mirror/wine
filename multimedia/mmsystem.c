@@ -1553,7 +1553,7 @@ static DWORD mciSysInfo16(DWORD dwFlags, LPMCI_SYSINFO_PARMS16 lpParms)
 	    strcpy(lpstrReturn, lpmciInstallNames);
 	return 0;
     case MCI_SYSINFO_NAME:
-	TRACE(mci, "MCI_SYSINFO_NAME");
+	TRACE(mci, "MCI_SYSINFO_NAME\n");
 	if (lpParms->dwNumber > mciInstalledCount)
 	    return MMSYSERR_INVALPARAM;
 	{
