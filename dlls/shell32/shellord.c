@@ -1035,15 +1035,18 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 
 	TRACE("execute:'%s','%s'\n",szApplicationName, szCommandline);
 
-	strcat(szApplicationName, " ");
-	strcat(szApplicationName, szCommandline);
+	if (szCommandline[0]) {
+	  strcat(szApplicationName, " ");
+	  strcat(szApplicationName, szCommandline);
+	}
 
 	ZeroMemory(&startup,sizeof(STARTUPINFOA));
 	startup.cb = sizeof(STARTUPINFOA);
 
 	if (! CreateProcessA(NULL, szApplicationName,
 			 NULL, NULL, FALSE, 0, 
-			 NULL, NULL, &startup, &info))
+			 NULL, sei->lpDirectory,
+			 &startup, &info))
 	{
 	  sei->hInstApp = GetLastError();
 	  return FALSE;
