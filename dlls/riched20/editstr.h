@@ -108,8 +108,8 @@ typedef enum {
 /******************************** para flags *************************/
 
 /* this paragraph was already wrapped and hasn't changed, every change resets that flag */
-#define MEPF_WRAPPED 1
-#define MEPF_REDRAW 2
+#define MEPF_REWRAP 1
+#define MEPF_REPAINT 2
 
 /******************************** structures *************************/
 
@@ -139,6 +139,7 @@ typedef struct tagME_Paragraph
   int nCharOfs;
   int nFlags;
   int nYPos, nHeight;
+  int nLastPaintYPos, nLastPaintHeight;
   struct tagME_DisplayItem *prev_para, *next_para, *document;
 } ME_Paragraph;
 
@@ -221,6 +222,7 @@ typedef struct tagME_TextEditor
   ME_DisplayItem *pUndoStack, *pRedoStack;
   ME_UndoMode nUndoMode;
   int nParagraphs;
+  int nLastSelStart, nLastSelEnd;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
 } ME_TextEditor;
 

@@ -170,7 +170,7 @@ void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs,
       int i;
       int loc = c.nOffset;
       
-      ME_FindItemBack(c.pRun, diParagraph)->member.para.nFlags &= ~MEPF_WRAPPED;
+      ME_FindItemBack(c.pRun, diParagraph)->member.para.nFlags |= MEPF_REWRAP;
       
       cursor = c;
       ME_StrRelPos(run->strText, loc, &nChars);

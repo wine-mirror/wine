@@ -34,10 +34,10 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew) {
   c.pt.y=-GetScrollPos(editor->hWnd, SB_VERT);
   while(item != editor->pBuffer->pLast) {
     assert(item->type == diParagraph);
-    if (!bOnlyNew || (item->member.para.nFlags & MEPF_REDRAW))
+    if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
       ME_DrawParagraph(&c, item);
-      item->member.para.nFlags &= ~MEPF_REDRAW;
+      item->member.para.nFlags &= ~MEPF_REPAINT;
     }
     c.pt.y += item->member.para.nHeight;
     item = item->member.para.next_para;
@@ -60,6 +60,51 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew) {
   ME_DestroyContext(&c);
 }
 
+void ME_MarkParagraphRange(ME_TextEditor *editor, ME_DisplayItem *p1,
+                           ME_DisplayItem *p2, int nFlags)
+{
+  ME_DisplayItem *p3;  
+  if (p1 == p2)
+  {
+    p1->member.para.nFlags |= nFlags;
+    return;
+  }
+  if (p1->member.para.nCharOfs > p2->member.para.nCharOfs)
+    p3 = p1, p1 = p2, p2 = p3;
+    
+  p1->member.para.nFlags |= nFlags;
+  do {
+    p1 = p1->member.para.next_para;
+    p1->member.para.nFlags |= nFlags;
+  } while (p1 != p2);
+}
+
+void ME_MarkOffsetRange(ME_TextEditor *editor, int from, int to, int nFlags)
+{
+  ME_Cursor c1, c2;
+  ME_CursorFromCharOfs(editor, from, &c1);
+  ME_CursorFromCharOfs(editor, to, &c2);
+  
+  ME_MarkParagraphRange(editor, ME_GetParagraph(c1.pRun), ME_GetParagraph(c2.pRun), nFlags);
+}
+
+void ME_MarkSelectionForRepaint(ME_TextEditor *editor)
+{
+  int from, to, from2, to2, end;
+  
+  end = ME_GetTextLength(editor);
+  ME_GetSelection(editor, &from, &to);
+  from2 = editor->nLastSelStart;
+  to2 = editor->nLastSelEnd;
+  if (from<from2) ME_MarkOffsetRange(editor, from, from2, MEPF_REPAINT);
+  if (from>from2) ME_MarkOffsetRange(editor, from2, from, MEPF_REPAINT);
+  if (to<to2) ME_MarkOffsetRange(editor, to, to2, MEPF_REPAINT);
+  if (to>to2) ME_MarkOffsetRange(editor, to2, to, MEPF_REPAINT);
+
+  editor->nLastSelStart = from;
+  editor->nLastSelEnd = to;
+}
+
 void ME_Repaint(ME_TextEditor *editor)
 {
   ME_Cursor *pCursor = &editor->pCursors[0];
@@ -71,7 +116,8 @@ void ME_Repaint(ME_TextEditor *editor)
   ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
   assert(pRun == pCursor->pRun);
   assert(nOffset == pCursor->nOffset);
-  DoWrap(editor);
+  ME_MarkSelectionForRepaint(editor);
+  ME_WrapMarkedParagraphs(editor);
   hDC = GetDC(editor->hWnd);
   ME_HideCaret(editor);
   ME_PaintContent(editor, hDC, TRUE);
@@ -81,7 +127,9 @@ void ME_Repaint(ME_TextEditor *editor)
 
 void ME_UpdateRepaint(ME_TextEditor *editor)
 {
+/*
   InvalidateRect(editor->hWnd, NULL, TRUE);
+  */
   ME_SendOldNotify(editor, EN_CHANGE);
   ME_Repaint(editor);
   ME_SendOldNotify(editor, EN_UPDATE);

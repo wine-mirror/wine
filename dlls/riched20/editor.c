@@ -216,74 +216,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 int me_debug = 0;
 HANDLE me_heap = NULL;
 
-void DoWrap(ME_TextEditor *editor) {
-  HDC hDC = GetDC(editor->hWnd);
-  ME_DisplayItem *item;
-  ME_Context c;
-  HWND hWnd = editor->hWnd;
-  int yLength = editor->nTotalLength;
-  int nSelFrom, nSelTo;
-  int nMinSel, nMaxSel;
-  
-  ME_GetSelection(editor, &nSelFrom, &nSelTo);
-  
-  nMinSel = nSelFrom < editor->nOldSelFrom ? nSelFrom : editor->nOldSelFrom;
-  nMaxSel = nSelTo > editor->nOldSelTo ? nSelTo : editor->nOldSelTo;
-  
-  ME_InitContext(&c, editor, hDC);
-  c.pt.x = 0;
-  c.pt.y = 0;
-  item = editor->pBuffer->pFirst->next;
-  while(item != editor->pBuffer->pLast) {
-    int para_from, para_to;
-    BOOL bRedraw = FALSE;
-    
-    para_from = item->member.para.nCharOfs;
-    para_to = item->member.para.next_para->member.para.nCharOfs;
-    
-    if (para_from <= nMaxSel && para_to >= nMinSel && nMinSel != nMaxSel)
-      bRedraw = TRUE;
-    
-    assert(item->type == diParagraph);
-    if (!(item->member.para.nFlags & MEPF_WRAPPED)
-     || (item->member.para.nYPos != c.pt.y))
-      bRedraw = TRUE;
-    item->member.para.nYPos = c.pt.y;
-    
-    ME_WrapTextParagraph(&c, item);
-
-    if (bRedraw) {
-      item->member.para.nFlags |= MEPF_REDRAW;
-    }
-    c.pt.y = item->member.para.nYPos + item->member.para.nHeight;
-    item = item->member.para.next_para;
-  }
-  editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
-  editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
-  editor->nTotalLength = c.pt.y-c.rcView.top;
-  
-  ME_UpdateScrollBar(editor, -1);
-  ME_EnsureVisible(editor, editor->pCursors[0].pRun);
-  
-  /* FIXME this should be marked for update too somehow, so that painting happens in ME_PaintContent */
-  if (yLength != c.pt.y-c.rcView.top) {
-    RECT rc;
-    rc.left = c.rcView.left;
-    rc.right = c.rcView.right;
-    rc.top = c.pt.y;
-    rc.bottom = c.rcView.bottom;
-    InvalidateRect(editor->hWnd, &rc, FALSE);
-    UpdateWindow(editor->hWnd);
-  }
-  
-  editor->nOldSelFrom = nSelFrom;
-  editor->nOldSelTo = nSelTo;
-  /* PatBlt(hDC, 0, c.pt.y, c.rcView.right, c.rcView.bottom, BLACKNESS);*/
-
-  ME_DestroyContext(&c);
-  ReleaseDC(hWnd, hDC);
-}
-
 ME_TextBuffer *ME_MakeText() {
   
   ME_TextBuffer *buf = ALLOC_OBJ(ME_TextBuffer);
@@ -419,6 +351,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pUndoStack = ed->pRedoStack = NULL;
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
+  ed->nLastSelStart = ed->nLastSelEnd = 0;
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -771,7 +704,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_CREATE:
     ME_CommitUndo(editor);
 /*    ME_InsertTextFromCursor(editor, 0, (WCHAR *)L"x", 1, editor->pBuffer->pDefaultStyle); */
-    DoWrap(editor);
+    ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
     return 0;
   case WM_DESTROY:
@@ -882,17 +815,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_SIZE:
   {
-    ME_DisplayItem *tp = editor->pBuffer->pFirst;
-    while(tp)
-    {
-      if (tp->type == diParagraph)
-      {
-        tp->member.para.nFlags &= ~MEPF_WRAPPED;
-        tp = tp->member.para.next_para;
-      }
-      else
-        tp = tp->next;
-    }
+    ME_MarkAllForWrapping(editor);
     ME_Repaint(editor);
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   }

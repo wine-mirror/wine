@@ -265,7 +265,7 @@ ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_DisplayItem *item, i
       editor->pCursors[i].nOffset -= nVChar;
     }
   }
-  ME_GetParagraph(item)->member.para.nFlags &= ~MEPF_WRAPPED;
+  ME_GetParagraph(item)->member.para.nFlags |= MEPF_REWRAP;
   return item2;
 }
 
@@ -313,7 +313,7 @@ ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem
   ME_InsertBefore(tmp.pRun, pDI);
   TRACE("Shift length:%d\n", pDI->member.run.strText->nLen);
   ME_PropagateCharOffset(tmp.pRun, pDI->member.run.strText->nLen);
-  ME_GetParagraph(tmp.pRun)->member.para.nFlags &= ~MEPF_WRAPPED;
+  ME_GetParagraph(tmp.pRun)->member.para.nFlags |= MEPF_REWRAP;
   
   return pDI;
 }
@@ -526,7 +526,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W 
     tmp2.pRun = ME_SplitRunSimple(editor, tmp2.pRun, tmp2.nOffset);
 
   para = ME_GetParagraph(tmp.pRun);
-  para->member.para.nFlags &= ~MEPF_WRAPPED;
+  para->member.para.nFlags |= MEPF_REWRAP;
     
   while(tmp.pRun != tmp2.pRun)
   {
@@ -550,7 +550,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W 
       para = tmp.pRun;
       tmp.pRun = ME_FindItemFwd(tmp.pRun, diRun);
       if (tmp.pRun != tmp2.pRun)
-        para->member.para.nFlags &= ~MEPF_WRAPPED;
+        para->member.para.nFlags |= MEPF_REWRAP;
     }
     assert(tmp.pRun);
   }

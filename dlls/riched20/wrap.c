@@ -345,7 +345,7 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   ME_WrapContext wc;
 
   assert(tp->type == diParagraph);  
-  if (tp->member.para.nFlags & MEPF_WRAPPED) {
+  if (!(tp->member.para.nFlags & MEPF_REWRAP)) {
     return;
   }
   ME_PrepareParagraphForWrapping(c, tp);
@@ -373,7 +373,7 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
     p = p->next;
   }
   ME_WrapEndParagraph(&wc, p);
-  tp->member.para.nFlags |= MEPF_WRAPPED;
+  tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
 }
 
@@ -411,4 +411,39 @@ void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
         break;
     }
   }
+}
+
+void ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
+  HWND hWnd = editor->hWnd;
+  HDC hDC = GetDC(hWnd);
+  ME_DisplayItem *item;
+  ME_Context c;
+  
+  ME_InitContext(&c, editor, hDC);
+  c.pt.x = 0;
+  c.pt.y = 0;
+  item = editor->pBuffer->pFirst->next;
+  while(item != editor->pBuffer->pLast) {
+    BOOL bRedraw = FALSE;
+    
+    assert(item->type == diParagraph);
+    if ((item->member.para.nFlags & MEPF_REWRAP)
+     || (item->member.para.nYPos != c.pt.y))
+      bRedraw = TRUE;
+    item->member.para.nYPos = c.pt.y;
+    
+    ME_WrapTextParagraph(&c, item);
+
+    if (bRedraw)
+      item->member.para.nFlags |= MEPF_REPAINT;
+
+    c.pt.y += item->member.para.nHeight;
+    item = item->member.para.next_para;
+  }
+  editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
+  editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
+  editor->nTotalLength = c.pt.y-c.rcView.top;
+  
+  ME_DestroyContext(&c);
+  ReleaseDC(hWnd, hDC);
 }

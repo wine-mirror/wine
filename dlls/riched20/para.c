@@ -86,7 +86,7 @@ void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, ME_Display
 {
   while(first != last)
   {
-    first->member.para.nFlags &= ~MEPF_WRAPPED;
+    first->member.para.nFlags |= MEPF_REWRAP;
     first = first->member.para.next_para;
   }
 }
@@ -124,7 +124,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   new_para->member.para.nCharOfs = ME_GetParagraph(run)->member.para.nCharOfs+ofs;
   new_para->member.para.nCharOfs += 1;
   
-  new_para->member.para.nFlags = 0; /* FIXME copy flags (if applicable) */
+  new_para->member.para.nFlags = MEPF_REWRAP; /* FIXME copy flags (if applicable) */
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   CopyMemory(new_para->member.para.pFmt, run_para->member.para.pFmt, sizeof(PARAFORMAT2));
   
@@ -144,8 +144,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   ME_InsertBefore(new_para, end_run);
 
   /* force rewrap of the */
-  run_para->member.para.prev_para->member.para.nFlags &= ~MEPF_WRAPPED;
-  new_para->member.para.prev_para->member.para.nFlags &= ~MEPF_WRAPPED;
+  run_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
+  new_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
   
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
   ME_PropagateCharOffset(next_para, 1);
@@ -223,7 +223,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp)
   ME_CheckCharOffsets(editor);
   
   editor->nParagraphs--;
-  tp->member.para.nFlags &= ~MEPF_WRAPPED;
+  tp->member.para.nFlags |= MEPF_REWRAP;
   return tp;
 }
 
@@ -286,7 +286,7 @@ void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *
   /* FIXME to be continued (indents, bulleting and such) */
 
   if (memcmp(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2)))
-    para->member.para.nFlags &= ~MEPF_WRAPPED;
+    para->member.para.nFlags |= MEPF_REWRAP;
 }
 
 void ME_SetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)

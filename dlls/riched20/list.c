@@ -132,6 +132,7 @@ ME_DisplayItem *ME_MakeDI(ME_DIType type) {
     item->member.para.pFmt = ALLOC_OBJ(PARAFORMAT2);
     item->member.para.pFmt->cbSize = sizeof(PARAFORMAT2);
     item->member.para.pFmt->dwMask = 0;
+    item->member.para.nFlags = MEPF_REWRAP;
   }
     
   return item;
