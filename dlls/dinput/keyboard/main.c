@@ -78,6 +78,8 @@ HHOOK keyboard_hook;
 
 LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 {
+  TRACE("(%d,%d,%ld)\n", code, wparam, lparam);
+
   if (code == HC_ACTION)
     {
       BYTE dik_code;
@@ -111,6 +113,9 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
               current->buffer[n].dwData = down ? 0x80 : 0;
               current->buffer[n].dwTimeStamp = timestamp;
               current->buffer[n].dwSequence = current->dinput->evsequence++;
+
+	      TRACE("Adding event at offset %d : %ld - %ld - %ld - %ld\n", n,
+		    current->buffer[n].dwOfs, current->buffer[n].dwData, current->buffer[n].dwTimeStamp, current->buffer[n].dwSequence);
 
               if (current->count == current->buffersize)
                 {
@@ -246,6 +251,9 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 	TRACE("(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
 	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
+	if (This->acquired == 0)
+	  return DIERR_NOTACQUIRED;
+
         if (This->buffer == NULL)
           return DIERR_NOTBUFFERED;
 
@@ -284,6 +292,8 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
           }
 
         LeaveCriticalSection(&(This->crit));
+
+	TRACE("Returning %ld events queued\n", *entries);
 
         return ret;
 }
