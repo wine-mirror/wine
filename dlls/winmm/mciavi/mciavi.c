@@ -140,6 +140,8 @@ static	DWORD	MCIAVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
     /* session instance */
     if (!modp) return 0xFFFFFFFF;
 
+    if (!MCIAVI_RegisterClass()) return 0;
+
     wma = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIAVI));
     if (!wma)
 	return 0;
@@ -169,6 +171,8 @@ static	DWORD	MCIAVI_drvClose(DWORD dwDevID)
     wma = (WINE_MCIAVI*)mciGetDriverData(dwDevID);
 
     if (wma) {
+        MCIAVI_UnregisterClass();
+
         EnterCriticalSection(&wma->cs);
 
 	mciSetDriverData(dwDevID, 0);

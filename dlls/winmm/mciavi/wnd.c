@@ -86,9 +86,29 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     return 0;
 }
 
-BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms)
+BOOL MCIAVI_UnregisterClass(void)
+{
+    return UnregisterClassA("MCIAVI", MCIAVI_hInstance);
+}
+
+BOOL MCIAVI_RegisterClass(void)
 {
     WNDCLASSA 	wndClass;
+
+    ZeroMemory(&wndClass, sizeof(WNDCLASSA));
+    wndClass.style         = CS_DBLCLKS;
+    wndClass.lpfnWndProc   = (WNDPROC)MCIAVI_WindowProc;
+    wndClass.cbWndExtra    = sizeof(MCIDEVICEID);
+    wndClass.hInstance     = MCIAVI_hInstance;
+    wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+    wndClass.lpszClassName = "MCIAVI";
+
+    return RegisterClassA(&wndClass);
+}
+
+BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms)
+{
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
     int		p = CW_USEDEFAULT;
@@ -96,18 +116,6 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
 
     /* what should be done ? */
     if (wma->hWnd) return TRUE;
-
-    ZeroMemory(&wndClass, sizeof(WNDCLASSA));
-    wndClass.style         = CS_DBLCLKS;
-    wndClass.lpfnWndProc   = (WNDPROC)MCIAVI_WindowProc;
-    wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof(MCIDEVICEID);
-    wndClass.hInstance     = MCIAVI_hInstance;
-    wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-    wndClass.lpszClassName = "MCIAVI";
-
-    if (!RegisterClassA(&wndClass)) return FALSE;
 
     if (dwFlags & MCI_DGV_OPEN_PARENT)	hParent = lpOpenParms->hWndParent;
     if (dwFlags & MCI_DGV_OPEN_WS)	dwStyle = lpOpenParms->dwStyle;

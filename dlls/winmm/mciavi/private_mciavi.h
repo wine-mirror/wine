@@ -103,7 +103,9 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC);
 WINE_MCIAVI*	MCIAVI_mciGetOpenDev(UINT wDevID);
 DWORD MCIAVI_mciClose(UINT, DWORD, LPMCI_GENERIC_PARMS);
 
-/* window.c */
+/* wnd.c */
+BOOL    MCIAVI_RegisterClass(void);
+BOOL    MCIAVI_UnregisterClass(void);
 BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms);
 DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms);
 DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms);
