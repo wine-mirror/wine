@@ -948,7 +948,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
      */
     if (lpData[0] != 0xF0 || lpData[lpMidiHdr->dwBufferLength - 1] != 0xF7) {
 	WARN("Alledged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
-	lpNewData = HeapAlloc(GetProcessHeap, 0, lpMidiHdr->dwBufferLength + 2);
+	lpNewData = HeapAlloc(GetProcessHeap(), 0, lpMidiHdr->dwBufferLength + 2);
     }
 
     TRACE("dwBufferLength=%lu !\n", lpMidiHdr->dwBufferLength);
