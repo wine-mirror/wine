@@ -19,9 +19,7 @@
  */
 #include <string.h>
 
-#include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "objbase.h"
 #include "wine/debug.h"
 
@@ -31,14 +29,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct tagSHLWAPI_CLIST
 {
   ULONG ulSize;        /* Size of this list element and its data */
-  ULONG ulId;          /* If -1, The real element follows        */
+  ULONG ulId;          /* If 0xFFFFFFFF, The real element follows        */
   /* Item data (or a contained SHLWAPI_CLIST) follows...         */
 } SHLWAPI_CLIST, *LPSHLWAPI_CLIST;
 
 typedef const SHLWAPI_CLIST* LPCSHLWAPI_CLIST;
 
 /* ulId for contained SHLWAPI_CLIST items */
-static const ULONG CLIST_ID_CONTAINER = -1u;
+#define CLIST_ID_CONTAINER (~0UL)
 
 HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
 
@@ -91,7 +89,7 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
  *
  *  Elements are aligned on DWORD boundaries. If an elements data size is not
  *  a DWORD size multiple, the element is wrapped by inserting a surrounding
- *  element with an Id of -1, and size sufficient to pad to a DWORD boundary.
+ *  element with an Id of 0xFFFFFFFF, and size sufficient to pad to a DWORD boundary.
  *
  *  These functions are slow for large objects and long lists.
  */
