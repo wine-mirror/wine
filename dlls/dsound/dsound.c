@@ -285,6 +285,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
             IDsDriver_Release(This->driver);
 
 	HeapFree(GetProcessHeap(),0,This->tmp_buffer);
+	HeapFree(GetProcessHeap(),0,This->buffer);
         RtlDeleteResource(&This->buffer_list_lock);
         This->mixlock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection(&This->mixlock);
