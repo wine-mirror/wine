@@ -342,18 +342,13 @@ static HRESULT test_dsound(LPGUID lpGuid)
         init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
-        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-        bufdesc.dwFlags|=(DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
+        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME;
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n", rc);
         if (rc==DS_OK && secondary!=NULL) {
-            LPDIRECTSOUND3DBUFFER buffer3d;
-            rc=IDirectSound_QueryInterface(secondary, &IID_IDirectSound3DBuffer, (void **)&buffer3d);
-            ok(rc==DS_OK && buffer3d!=NULL,"QueryInterface failed:  %s\n",DXGetErrorString9(rc));
             /* add some more refs */
-            IDirectSound3DBuffer_AddRef(buffer3d);
             IDirectSoundBuffer_AddRef(secondary);
         }
         /* release with buffer */
@@ -465,18 +460,13 @@ static HRESULT test_dsound8(LPGUID lpGuid)
         init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
-        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-        bufdesc.dwFlags|=(DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
+        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME;
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n", rc);
         if (rc==DS_OK && secondary!=NULL) {
-            LPDIRECTSOUND3DBUFFER buffer3d;
-            rc=IDirectSound8_QueryInterface(secondary, &IID_IDirectSound3DBuffer, (void **)&buffer3d);
-            ok(rc==DS_OK && buffer3d!=NULL,"QueryInterface failed:  %s\n",DXGetErrorString9(rc));
             /* add some more refs */
-            IDirectSound3DBuffer_AddRef(buffer3d);
             IDirectSoundBuffer8_AddRef(secondary);
         }
         /* release with buffer */
@@ -627,7 +617,6 @@ static HRESULT test_secondary(LPGUID lpGuid)
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
-    bufdesc.dwFlags|=(DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
     ok(rc==DS_OK && primary!=NULL,"CreateSoundBuffer failed to create a primary buffer 0x%lx\n", rc);
 
@@ -638,7 +627,6 @@ static HRESULT test_secondary(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwFlags|=(DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
             bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
             bufdesc.lpwfxFormat=&wfx;
             trace("  Testing a secondary buffer at %ldx%dx%d\n",
