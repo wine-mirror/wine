@@ -130,15 +130,28 @@ static void get_server_startup(void)
 
 
 /***********************************************************************
+ *		get_config_key
+ *
+ * Get a config key from either the app-specific or the default config
+ */
+inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
+                                    char *buffer, DWORD size )
+{
+    if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, buffer, &size )) return 0;
+    return RegQueryValueExA( defkey, name, 0, NULL, buffer, &size );
+}
+
+
+/***********************************************************************
  *		setup_options
  *
  * Setup the x11drv options.
  */
 static void setup_options(void)
 {
-    char buffer[256];
-    HKEY hkey;
-    DWORD type, count;
+    char buffer[MAX_PATH+16];
+    HKEY hkey, appkey = 0;
+    DWORD count;
 
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
@@ -147,11 +160,28 @@ static void setup_options(void)
         ExitProcess(1);
     }
 
-    /* --display option */
+    /* open the app-specific key */
+
+    if (GetModuleFileName16( GetCurrentTask(), buffer, MAX_PATH ) ||
+        GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    {
+        HKEY tmpkey;
+        char *p, *appname = buffer;
+        if ((p = strrchr( appname, '/' ))) appname = p + 1;
+        if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+        strcat( appname, "\\x11drv" );
+        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
+        {
+            if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+            RegCloseKey( tmpkey );
+        }
+    }
+
+    /* get the display name */
 
     strcpy( buffer, "DISPLAY=" );
     count = sizeof(buffer) - 8;
-    if (!RegQueryValueExA( hkey, "display", 0, &type, buffer + 8, &count ))
+    if (!RegQueryValueExA( hkey, "display", 0, NULL, buffer + 8, &count ))
     {
         const char *display_name = getenv( "DISPLAY" );
         if (display_name && strcmp( buffer, display_name ))
@@ -160,19 +190,15 @@ static void setup_options(void)
         putenv( strdup(buffer) );
     }
 
-    /* check and set --managed option in wine config file if it was not set on command line */
+    /* check --managed option in wine config file if it was not set on command line */
 
     if (!Options.managed)
     {
-        count = sizeof(buffer);
-        if (!RegQueryValueExA( hkey, "managed", 0, &type, buffer, &count ))
+        if (!get_config_key( hkey, appkey, "Managed", buffer, sizeof(buffer) ))
             Options.managed = IS_OPTION_TRUE( buffer[0] );
     }
-    if (Options.managed)
-	RegSetValueExA( hkey, "managed", 0, REG_SZ, "y", 2 );
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "Desktop", 0, &type, buffer, &count ))
+    if (!get_config_key( hkey, appkey, "Desktop", buffer, sizeof(buffer) ))
     {
         /* Imperfect validation:  If Desktop=N, then we don't turn on
         ** the --desktop option.  We should really validate for a correct
@@ -180,18 +206,18 @@ static void setup_options(void)
         if (!IS_OPTION_FALSE(buffer[0])) desktop_geometry = strdup(buffer);
     }
 
-    count = sizeof(buffer);
     screen_depth = 0;
-    if (!RegQueryValueExA( hkey, "ScreenDepth", 0, &type, buffer, &count ))
+    if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
         screen_depth = atoi(buffer);
 
-    if (!RegQueryValueExA( hkey, "Synchronous", 0, &type, buffer, &count ))
+    if (!get_config_key( hkey, appkey, "Synchronous", buffer, sizeof(buffer) ))
         synchronous = IS_OPTION_TRUE( buffer[0] );
 
+    if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 }
 
-   
+
 /***********************************************************************
  *		setup_opengl_visual
  *
