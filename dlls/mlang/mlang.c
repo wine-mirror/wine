@@ -148,9 +148,11 @@ static const MIME_CP_INFO cyrillic_cp[] =
            MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 |
            MIMECONTF_MIME_LATEST,
       "cp866", "cp866", "cp866" },
+#if 0 /* Windows has 20866 as an official code page for KOI8-R */
     { 878, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
       "koi8-r", "koi8-r", "koi8-r" },
+#endif
     { 1251, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
@@ -845,6 +847,8 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
         PMIMECPINFO rgelt,
         ULONG* pceltFetched)
 {
+    ULONG i;
+
     ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
     TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
 
@@ -862,6 +866,19 @@ static  HRESULT WINAPI fnIEnumCodePage_Next(
     *pceltFetched = celt;
     This->pos += celt;
 
+    for (i = 0; i < celt; i++)
+    {
+        TRACE("#%lu: %08lx %u %u %s %s %s %s %s %s %d\n",
+              i, rgelt[i].dwFlags, rgelt[i].uiCodePage,
+              rgelt[i].uiFamilyCodePage,
+              wine_dbgstr_w(rgelt[i].wszDescription),
+              wine_dbgstr_w(rgelt[i].wszWebCharset),
+              wine_dbgstr_w(rgelt[i].wszHeaderCharset),
+              wine_dbgstr_w(rgelt[i].wszBodyCharset),
+              wine_dbgstr_w(rgelt[i].wszFixedWidthFont),
+              wine_dbgstr_w(rgelt[i].wszProportionalFont),
+              rgelt[i].bGDICharset);
+    }
     return S_OK;
 }
 
@@ -1483,6 +1500,17 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
     /* FIXME */
     GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(lf), &lf);
     strcpyW(mime_cp_info->wszProportionalFont, lf.lfFaceName);
+
+    TRACE("%08lx %u %u %s %s %s %s %s %s %d\n",
+          mime_cp_info->dwFlags, mime_cp_info->uiCodePage,
+          mime_cp_info->uiFamilyCodePage,
+          wine_dbgstr_w(mime_cp_info->wszDescription),
+          wine_dbgstr_w(mime_cp_info->wszWebCharset),
+          wine_dbgstr_w(mime_cp_info->wszHeaderCharset),
+          wine_dbgstr_w(mime_cp_info->wszBodyCharset),
+          wine_dbgstr_w(mime_cp_info->wszFixedWidthFont),
+          wine_dbgstr_w(mime_cp_info->wszProportionalFont),
+          mime_cp_info->bGDICharset);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_GetCodePageInfo(
@@ -1536,9 +1564,53 @@ static HRESULT WINAPI fnIMultiLanguage2_GetCharsetInfo(
     BSTR Charset,
     PMIMECSETINFO pCharsetInfo)
 {
+    UINT i, n;
+
     ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
-    FIXME("%p %s %p\n", This, debugstr_w(Charset), pCharsetInfo);
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", This, debugstr_w(Charset), pCharsetInfo);
+
+    if (!pCharsetInfo) return E_FAIL;
+
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            WCHAR csetW[MAX_MIMECSET_NAME];
+
+            MultiByteToWideChar(CP_ACP, 0, mlang_data[i].mime_cp_info[n].web_charset, -1, csetW, MAX_MIMECSET_NAME);
+            if (!lstrcmpiW(Charset, csetW))
+            {
+                pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
+                pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
+                strcpyW(pCharsetInfo->wszCharset, csetW);
+                return S_OK;
+            }
+        }
+    }
+
+    /* FIXME:
+     * Since we do not support charsets like iso-2022-jp and do not have
+     * them in our database as a primary (web_charset) encoding this loop
+     * does an attempt to 'approximate' charset name by header_charset.
+     */
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            WCHAR csetW[MAX_MIMECSET_NAME];
+
+            MultiByteToWideChar(CP_ACP, 0, mlang_data[i].mime_cp_info[n].header_charset, -1, csetW, MAX_MIMECSET_NAME);
+            if (!lstrcmpiW(Charset, csetW))
+            {
+                pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
+                pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
+                strcpyW(pCharsetInfo->wszCharset, csetW);
+                return S_OK;
+            }
+        }
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_IsConvertible(

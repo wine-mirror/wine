@@ -310,6 +310,9 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     {
 	CPINFOEXA cpinfoex;
 	CHARSETINFO csi;
+	MIMECSETINFO mcsi;
+	static const WCHAR autoW[] = {'_','a','u','t','o',0};
+
 #ifdef DUMP_CP_INFO
 	trace("MIMECPINFO #%lu:\n"
 	      "dwFlags %08lx %s\n"
@@ -377,6 +380,78 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	}
 	else
 	    trace("IsValidCodePage failed for cp %u\n", cpinfo[i].uiCodePage);
+
+	ret = IMultiLanguage2_GetCharsetInfo(iML2, cpinfo[i].wszWebCharset, &mcsi);
+	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
+	if (memcmp(cpinfo[i].wszWebCharset, autoW, 5 * sizeof(WCHAR)))
+	{
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+#ifdef DUMP_CP_INFO
+	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszWebCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
+#endif
+	    ok(!lstrcmpiW(cpinfo[i].wszWebCharset, mcsi.wszCharset),
+#ifdef DUMP_CP_INFO
+                "%s != %s\n",
+		wine_dbgstr_w(cpinfo[i].wszWebCharset), wine_dbgstr_w(mcsi.wszCharset));
+#else
+                "wszWebCharset mismatch");
+#endif
+
+#if 0 /* native mlang returns completely messed up encodings in some cases */
+	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+#endif
+	}
+
+	ret = IMultiLanguage2_GetCharsetInfo(iML2, cpinfo[i].wszHeaderCharset, &mcsi);
+	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
+	if (memcmp(cpinfo[i].wszHeaderCharset, autoW, 5 * sizeof(WCHAR)))
+	{
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+#ifdef DUMP_CP_INFO
+	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszHeaderCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
+#endif
+	    ok(!lstrcmpiW(cpinfo[i].wszHeaderCharset, mcsi.wszCharset),
+#ifdef DUMP_CP_INFO
+                "%s != %s\n",
+		wine_dbgstr_w(cpinfo[i].wszHeaderCharset), wine_dbgstr_w(mcsi.wszCharset));
+#else
+                "wszHeaderCharset mismatch");
+#endif
+
+#if 0 /* native mlang returns completely messed up encodings in some cases */
+	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+#endif
+	}
+
+	ret = IMultiLanguage2_GetCharsetInfo(iML2, cpinfo[i].wszBodyCharset, &mcsi);
+	/* _autoxxx charsets are a fake and GetCharsetInfo fails for them */
+	if (memcmp(cpinfo[i].wszBodyCharset, autoW, 5 * sizeof(WCHAR)))
+	{
+	    ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08lx\n", ret);
+#ifdef DUMP_CP_INFO
+	    trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszBodyCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
+#endif
+	    ok(!lstrcmpiW(cpinfo[i].wszBodyCharset, mcsi.wszCharset),
+#ifdef DUMP_CP_INFO
+                "%s != %s\n",
+		wine_dbgstr_w(cpinfo[i].wszBodyCharset), wine_dbgstr_w(mcsi.wszCharset));
+#else
+                "wszBodyCharset mismatch");
+#endif
+
+#if 0 /* native mlang returns completely messed up encodings in some cases */
+	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
+		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
+#endif
+	}
 
 	trace("---\n");
     }
