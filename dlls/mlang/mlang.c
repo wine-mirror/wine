@@ -1911,6 +1911,9 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("Creating MultiLanguage object\n");
 
+    if( pUnkOuter )
+        return CLASS_E_NOAGGREGATION;
+
     mlang = HeapAlloc( GetProcessHeap(), 0, sizeof (MLang_impl) );
     mlang->vtbl_IMLangFontLink = &IMLangFontLink_vtbl;
     mlang->vtbl_IMultiLanguage = &IMultiLanguage_vtbl;
