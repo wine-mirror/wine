@@ -482,10 +482,14 @@ static void INT21_FillCountryInformation( BYTE *buffer )
  *           INT21_FillHeap
  *
  * Initialize DOS heap.
+ *
+ * Filename Terminator Table of w2k DE NTVDM:
+ * 16 00 01 00 FF 00 00 20-02 0E 2E 22 2F 5C 5B 5D  ....... ..."/\[]
+ * 3A 7C 3C 3E 2B 3D 3B 2C-00                       :|<>+=;,
  */
 static void INT21_FillHeap( INT21_HEAP *heap )
 {
-    static const char terminators[] = "\"\\./[]:|<>+=;,";
+    static const char terminators[] = ".\"/\\[]:|<>+=;,";
     int i;
 
     /*
@@ -517,11 +521,11 @@ static void INT21_FillHeap( INT21_HEAP *heap )
     strcpy( heap->filename_illegal_table, terminators );
 
     heap->filename_reserved1 = 0x01;
-    heap->filename_lowest = 0;           /* FIXME: correct value? */
-    heap->filename_highest = 0xff;       /* FIXME: correct value? */
+    heap->filename_lowest = 0x00;
+    heap->filename_highest = 0xff;
     heap->filename_reserved2 = 0x00;    
-    heap->filename_exclude_first = 0x00; /* FIXME: correct value? */
-    heap->filename_exclude_last = 0x00;  /* FIXME: correct value? */
+    heap->filename_exclude_first = 0x00;
+    heap->filename_exclude_last = 0x20;
     heap->filename_reserved3 = 0x02;
 
     /*
