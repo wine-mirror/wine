@@ -224,5 +224,5 @@ void  fatal (const char *message)
     perror (message);
   else
     puts (message);
-  do_usage ();
+  exit(1);
 }

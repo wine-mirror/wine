@@ -42,6 +42,10 @@
 #include "winedump.h"
 #include "pe.h"
 
+#ifndef O_BINARY
+# define O_BINARY 0
+#endif
+
 static void*			base;
 static unsigned long		total_len;
 static IMAGE_NT_HEADERS*	nt_headers;
@@ -649,7 +653,7 @@ static const char *get_resource_type( int id )
 
 static void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
 {
-    int i, j;
+    unsigned int i, j;
 
     printf( "%s", prefix );
     for (i = 0; i < size; i++)
@@ -822,7 +826,7 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 
     setbuf(stdout, NULL);
 
-    fd = open(name, O_RDONLY);
+    fd = open(name, O_RDONLY | O_BINARY);
     if (fd == -1) fatal("Can't open file");
 
     if (fstat(fd, &s) < 0) fatal("Can't get size");
