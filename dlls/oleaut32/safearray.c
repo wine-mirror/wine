@@ -785,6 +785,8 @@ HRESULT WINAPI SafeArrayRedim(
     /* delta in number of spot implied by modifying the last dimension */
     lDelta *= psa->rgsabound[cDims].cElements;
 
+  TRACE("elements=%ld, Lbound=%ld (delta=%ld)\n", psaboundNew->cElements, psaboundNew->lLbound, lDelta);
+
   if (lDelta == 0) { ;/* same size, maybe a change of lLbound, just set it */
 
   } else /* need to enlarge (lDelta +) reduce (lDelta -) */
@@ -882,7 +884,7 @@ static BOOL resizeSafeArray(
        optional but we do it anyway becuase the benefit is that we are 
        releasing to the system the unused memory */
 
-    if((pvNewBlock = HeapReAlloc(GetProcessHeap(), 0, psa->pvData, 
+    if((pvNewBlock = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, psa->pvData, 
        (ulWholeArraySize + lDelta) * psa->cbElements)) == NULL) 
         return FALSE; /* TODO If we get here it means:
                          SHRINK situation :  we've deleted the undesired
@@ -895,7 +897,7 @@ static BOOL resizeSafeArray(
     /* Allocate a new block, because the previous data has been allocated with 
        the descriptor in SafeArrayCreateVector function. */
 
-    if((pvNewBlock = HeapAlloc(GetProcessHeap(), 0,
+    if((pvNewBlock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
        ulWholeArraySize * psa->cbElements)) == NULL) 
         return FALSE;
 
@@ -992,21 +994,21 @@ static BOOL validCoordinate(
   LONG    lLBound;
   HRESULT hRes;
 
+  if (!psa->cDims) return FALSE;
   for(; iter<psa->cDims; iter++) {
+    TRACE("coor[%d]=%ld\n", iter, coor[iter]);
     if((hRes = SafeArrayGetLBound(psa, (iter+1), &lLBound)) != S_OK)
       return FALSE;
     if((hRes = SafeArrayGetUBound(psa, (iter+1), &lUBound)) != S_OK)
       return FALSE;
  
-    if(lLBound == lUBound) 
+    if(lLBound > lUBound) 
       return FALSE; 
-   
-    if((coor[iter] >= lLBound) && (coor[iter] <= lUBound))
-      return TRUE;
-    else
+
+    if((coor[iter] < lLBound) || (coor[iter] > lUBound))
       return FALSE;
   }
-  return FALSE;
+  return TRUE;
 }  
 
 /************************************************************************ 
