@@ -166,7 +166,13 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetRenderTarget(LPDIRECT3DDEVICE7 iface,
 						 LPDIRECTDRAWSURFACE7* lplpRenderTarget)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lplpRenderTarget);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lplpRenderTarget);
+
+    *lplpRenderTarget = ICOM_INTERFACE(This->surface, IDirectDrawSurface7);
+    IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This->surface, IDirectDrawSurface7));
+    
+    TRACE(" returning surface at %p.\n", *lplpRenderTarget);
+    
     return DD_OK;
 }
 
