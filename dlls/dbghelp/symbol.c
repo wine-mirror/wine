@@ -53,16 +53,16 @@ struct line_info
     } u;
 };
 
-inline static int cmp_addr(DWORD a1, DWORD a2)
+inline static int cmp_addr(ULONG64 a1, ULONG64 a2)
 {
     if (a1 > a2) return 1;
     if (a1 < a2) return -1;
     return 0;
 }
 
-inline static int cmp_sorttab_addr(const struct module* module, int idx, DWORD addr)
+inline static int cmp_sorttab_addr(const struct module* module, int idx, ULONG64 addr)
 {
-    DWORD       ref;
+    ULONG64     ref;
 
     symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &ref);
     return cmp_addr(ref, addr);
@@ -72,7 +72,7 @@ int symt_cmp_addr(const void* p1, const void* p2)
 {
     const struct symt*  sym1 = *(const struct symt* const *)p1;
     const struct symt*  sym2 = *(const struct symt* const *)p2;
-    DWORD               a1, a2;
+    ULONG64     a1, a2;
 
     symt_get_info(sym1, TI_GET_ADDRESS, &a1);
     symt_get_info(sym2, TI_GET_ADDRESS, &a2);
@@ -614,7 +614,8 @@ static BOOL resort_symbols(struct module* module)
 int symt_find_nearest(struct module* module, DWORD addr)
 {
     int         mid, high, low;
-    DWORD       ref_addr, ref_size;
+    ULONG64     ref_addr;
+    DWORD       ref_size;
 
     if (!module->sortlist_valid || !module->addr_sorttab)
     {

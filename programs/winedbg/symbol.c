@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, DWORD* start)
+static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, ULONG64* start)
 {
     DWORD                       count, tag;
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
@@ -85,7 +85,7 @@ struct sgv_data
 static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     struct sgv_data*    sgv = (struct sgv_data*)ctx;
-    DWORD               addr;
+    ULONG64             addr;
     IMAGEHLP_LINE       il;
     unsigned            cookie = DLV_TARGET, insp;
 
@@ -106,7 +106,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
                        sym->Name, sym->Register);
             return TRUE;
         }
-        addr = (DWORD)div->pval;
+        addr = (ULONG64)(DWORD_PTR)div->pval;
         cookie = DLV_HOST;
     }
     else if (sym->Flags & SYMFLAG_FRAMEREL)
@@ -424,7 +424,8 @@ void symbol_read_symtable(const char* filename, unsigned long offset)
 enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 {
     IMAGEHLP_LINE       il;
-    DWORD               disp, start, size;
+    DWORD               disp, size;
+    ULONG64             start;
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;

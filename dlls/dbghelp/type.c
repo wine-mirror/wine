@@ -459,25 +459,25 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             {
             case DataIsGlobal:
             case DataIsFileStatic:
-                X(DWORD) = ((const struct symt_data*)type)->u.address;
+                X(ULONG64) = ((const struct symt_data*)type)->u.address;
                 break;
             default: return FALSE;
             }
             break;
         case SymTagFunction:
-            X(DWORD) = ((const struct symt_function*)type)->address;
+            X(ULONG64) = ((const struct symt_function*)type)->address;
             break;
         case SymTagPublicSymbol:
-            X(DWORD) = ((const struct symt_public*)type)->address;
+            X(ULONG64) = ((const struct symt_public*)type)->address;
             break;
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagLabel:
-            X(DWORD) = ((const struct symt_function_point*)type)->parent->address + 
+            X(ULONG64) = ((const struct symt_function_point*)type)->parent->address + 
                 ((const struct symt_function_point*)type)->offset;
             break;
         case SymTagThunk:
-            X(DWORD) = ((const struct symt_thunk*)type)->address;
+            X(ULONG64) = ((const struct symt_thunk*)type)->address;
             break;
         default:
             FIXME("Unsupported sym-tag %s for get-address\n", 
