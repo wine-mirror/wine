@@ -262,6 +262,11 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " entry=%p", req->entry );
 }
 
+static void dump_init_process_done_reply( const struct init_process_done_request *req )
+{
+    fprintf( stderr, " debugged=%d", req->debugged );
+}
+
 static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
@@ -300,6 +305,7 @@ static void dump_get_process_info_request( const struct get_process_info_request
 static void dump_get_process_info_reply( const struct get_process_info_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " debugged=%d,", req->debugged );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " process_affinity=%d,", req->process_affinity );
@@ -1329,7 +1335,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_reply,
     (dump_func)0,
     (dump_func)dump_init_process_reply,
-    (dump_func)0,
+    (dump_func)dump_init_process_done_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_buffer_reply,
     (dump_func)0,

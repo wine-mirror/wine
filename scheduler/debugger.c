@@ -195,16 +195,12 @@ BOOL WINAPI DebugActiveProcess( DWORD pid )
  */
 void WINAPI OutputDebugStringA( LPCSTR str )
 {
-    if (PROCESS_Current()->flags & PDB32_DEBUGGED)
-    {
-        struct send_debug_event_request *req = get_req_buffer();
-        req->event.code = OUTPUT_DEBUG_STRING_EVENT;
-        req->event.info.output_string.string  = (void *)str;
-        req->event.info.output_string.unicode = 0;
-        req->event.info.output_string.length  = strlen(str) + 1;
-        server_call( REQ_SEND_DEBUG_EVENT );
-    }
-
+    struct send_debug_event_request *req = get_req_buffer();
+    req->event.code = OUTPUT_DEBUG_STRING_EVENT;
+    req->event.info.output_string.string  = (void *)str;
+    req->event.info.output_string.unicode = 0;
+    req->event.info.output_string.length  = strlen(str) + 1;
+    server_call_noerr( REQ_SEND_DEBUG_EVENT );
     TRACE("%s\n", str);
 }
 
@@ -214,16 +210,12 @@ void WINAPI OutputDebugStringA( LPCSTR str )
  */
 void WINAPI OutputDebugStringW( LPCWSTR str )
 {
-    if (PROCESS_Current()->flags & PDB32_DEBUGGED)
-    {
-        struct send_debug_event_request *req = get_req_buffer();
-        req->event.code = OUTPUT_DEBUG_STRING_EVENT;
-        req->event.info.output_string.string  = (void *)str;
-        req->event.info.output_string.unicode = 1;
-        req->event.info.output_string.length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        server_call( REQ_SEND_DEBUG_EVENT );
-    }
-
+    struct send_debug_event_request *req = get_req_buffer();
+    req->event.code = OUTPUT_DEBUG_STRING_EVENT;
+    req->event.info.output_string.string  = (void *)str;
+    req->event.info.output_string.unicode = 1;
+    req->event.info.output_string.length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
+    server_call_noerr( REQ_SEND_DEBUG_EVENT );
     TRACE("%s\n", debugstr_w(str));
 }
 
@@ -234,4 +226,44 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
 void WINAPI OutputDebugString16( LPCSTR str )
 {
     OutputDebugStringA( str );
+}
+
+
+/***********************************************************************
+ *           DebugBreak   (KERNEL32.181)
+ */
+void WINAPI DebugBreak(void)
+{
+    DbgBreakPoint();
+}
+
+
+/***********************************************************************
+ *           DebugBreak16   (KERNEL.203)
+ */
+void WINAPI DebugBreak16( CONTEXT86 *context )
+{
+#ifdef __i386__
+    EXCEPTION_RECORD rec;
+
+    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
+    rec.ExceptionFlags   = 0;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = GET_IP(context); 
+    rec.NumberParameters = 0;
+    NtRaiseException( &rec, context, TRUE );
+#endif  /* defined(__i386__) */
+}
+
+
+/***********************************************************************
+ *           IsDebuggerPresent   (KERNEL32)
+ */
+BOOL WINAPI IsDebuggerPresent(void)
+{
+    BOOL ret = FALSE;
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = GetCurrentProcess();
+    if (!server_call( REQ_GET_PROCESS_INFO )) ret = req->debugged;
+    return ret;
 }

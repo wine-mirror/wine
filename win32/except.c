@@ -34,7 +34,6 @@
 #include "process.h"
 #include "thread.h"
 #include "stackframe.h"
-#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
@@ -73,18 +72,15 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     char message[80];
     PDB *pdb = PROCESS_Current();
 
-    if (pdb->flags & PDB32_DEBUGGED) return EXCEPTION_CONTINUE_SEARCH;
+    if (DEBUG_SendExceptionEvent( epointers->ExceptionRecord, FALSE,
+                                  epointers->ContextRecord ) == DBG_CONTINUE)
+        return EXCEPTION_CONTINUE_EXECUTION;
 
     if (pdb->top_filter)
     {
         DWORD ret = pdb->top_filter( epointers );
         if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
     }
-
-    /* FIXME: does not belong here */
-    if (wine_debugger( epointers->ExceptionRecord,
-                       epointers->ContextRecord, FALSE ) == DBG_CONTINUE)
-        return EXCEPTION_CONTINUE_EXECUTION;
 
     /* FIXME: Should check the current error mode */
 

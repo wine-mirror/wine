@@ -371,6 +371,7 @@ BOOL PROCESS_Init( BOOL win32 )
 void PROCESS_Start(void)
 {
     struct init_process_done_request *req = get_req_buffer();
+    int debugged;
     UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry = NULL;
     PDB *pdb = PROCESS_Current();
@@ -455,9 +456,10 @@ void PROCESS_Start(void)
     req->module = (void *)pModule->module32;
     req->entry  = entry;
     server_call( REQ_INIT_PROCESS_DONE );
+    debugged = req->debugged;
 
     /* Send all required start-up debugger events */
-    if ( type == PROC_WIN32 && (pdb->flags & PDB32_DEBUGGED) )
+    if (type == PROC_WIN32 && debugged)
     {
         EnterCriticalSection( &pdb->crit_section );
         MODULE_SendLoadDLLEvents();
@@ -498,7 +500,7 @@ void PROCESS_Start(void)
 
     case PROC_WIN32:
         TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
-        if (pdb->flags & PDB32_DEBUGGED) DebugBreak();
+        if (debugged) DbgBreakPoint();
 	/* FIXME: should use _PEB as parameter for NT 3.5 programs !
 	 * Dunno about other OSs */
         ExitProcess( entry(NULL) );
@@ -562,10 +564,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     info->dwProcessId = (DWORD)req->pid;
     info->hThread     = req->thandle;
     info->dwThreadId  = (DWORD)req->tid;
-
-    if ((flags & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)) ||
-        ((parent->flags & PDB32_DEBUGGED) && !(flags & DEBUG_ONLY_THIS_PROCESS)))
-        pdb->flags |= PDB32_DEBUGGED;
 
     if (pModule->module32)   /* Win32 process */
     {

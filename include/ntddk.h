@@ -961,7 +961,13 @@ NTSTATUS WINAPI NtClose(
 
 /*	misc */
 
+#if defined(__i386__) && defined(__GNUC__)
+static inline void WINAPI DbgBreakPoint(void) { __asm__ __volatile__("int3"); }
+static inline void WINAPI DbgUserBreakPoint(void) { __asm__ __volatile__("int3"); }
+#else  /* __i386__ && __GNUC__ */
 void WINAPI DbgBreakPoint(void);
+void WINAPI DbgUserBreakPoint(void);
+#endif  /* __i386__ && __GNUC__ */
 void WINAPIV DbgPrint(LPCSTR fmt, ...);
 
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4);

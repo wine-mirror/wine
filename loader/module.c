@@ -1351,8 +1351,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
 	if ( wm )
 	{
-		if ( PROCESS_Current()->flags & PDB32_DEBUGGED )
-			MODULE_SendLoadDLLEvents();
+                MODULE_SendLoadDLLEvents();
                         
 		if ( !MODULE_DllProcessAttach( wm, NULL ) )
 		{
@@ -1611,8 +1610,7 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     if ( PROCESS_Current()->free_lib_count <= 1 )
     {
         MODULE_DllProcessDetach( FALSE, NULL );
-        if (PROCESS_Current()->flags & PDB32_DEBUGGED)
-            DEBUG_SendUnloadDLLEvent( wm->module );
+        DEBUG_SendUnloadDLLEvent( wm->module );
     }
 
     TRACE("(%s) - END\n", wm->modname );

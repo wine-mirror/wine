@@ -294,15 +294,6 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD
 }
 
 /******************************************************************************
- * IsDebuggerPresent [KERNEL32.827]
- *
- */
-BOOL WINAPI IsDebuggerPresent() {
-	FIXME(" ... no debuggers yet, returning FALSE.\n");
-	return FALSE; 
-}
-
-/******************************************************************************
  * OpenDesktop32A [USER32.408]
  *
  * NOTES

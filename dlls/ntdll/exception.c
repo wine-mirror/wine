@@ -13,7 +13,6 @@
 #include "wine/exception.h"
 #include "stackframe.h"
 #include "miscemu.h"
-#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
@@ -92,11 +91,7 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
  */
 static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
-        (DEBUG_SendExceptionEvent( rec, FALSE, context ) == DBG_CONTINUE))
-        return;  /* continue execution */
-
-    if (wine_debugger( rec, context, FALSE ) == DBG_CONTINUE)
+    if (DEBUG_SendExceptionEvent( rec, FALSE, context ) == DBG_CONTINUE)
         return;  /* continue execution */
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
@@ -122,11 +117,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     TRACE( "code=%lx flags=%lx\n", rec->ExceptionCode, rec->ExceptionFlags );
 
-    if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
-        (DEBUG_SendExceptionEvent( rec, TRUE, context ) == DBG_CONTINUE))
-        return;  /* continue execution */
-
-    if (wine_debugger( rec, context, TRUE ) == DBG_CONTINUE)
+    if (DEBUG_SendExceptionEvent( rec, TRUE, context ) == DBG_CONTINUE)
         return;  /* continue execution */
 
     frame = NtCurrentTeb()->except;
@@ -285,31 +276,4 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
     ExceptionRec.ExceptionRecord  = NULL;
     ExceptionRec.NumberParameters = 0;
     RtlRaiseException( &ExceptionRec );
-}
-
-
-/***********************************************************************
- *           DebugBreak (KERNEL32.181)
- */
-void WINAPI DebugBreak(void)
-{
-    DbgBreakPoint();
-}
-
-
-/***********************************************************************
- *           DebugBreak16   (KERNEL.203)
- */
-void WINAPI DebugBreak16( CONTEXT86 *context )
-{
-#ifdef __i386__
-    EXCEPTION_RECORD rec;
-
-    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
-    rec.ExceptionFlags   = 0;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = GET_IP(context); 
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, context );
-#endif  /* defined(__i386__) */
 }

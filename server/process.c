@@ -366,6 +366,7 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
 static void get_process_info( struct process *process, struct get_process_info_request *req )
 {
     req->pid              = process;
+    req->debugged         = (process->debugger != 0);
     req->exit_code        = process->exit_code;
     req->priority         = process->priority;
     req->process_affinity = process->affinity;
@@ -396,6 +397,11 @@ static void read_process_memory( struct process *process, const int *addr,
     if ((unsigned int)addr % sizeof(int))  /* address must be aligned */
     {
         set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (!thread)  /* process is dead */
+    {
+        set_error( STATUS_ACCESS_DENIED );
         return;
     }
     suspend_thread( thread, 0 );
@@ -437,6 +443,11 @@ static void write_process_memory( struct process *process, int *addr, size_t len
     if (!len || ((unsigned int)addr % sizeof(int)))  /* address must be aligned */
     {
         set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (!thread)  /* process is dead */
+    {
+        set_error( STATUS_ACCESS_DENIED );
         return;
     }
     suspend_thread( thread, 0 );
@@ -591,6 +602,7 @@ DECL_HANDLER(init_process_done)
     release_object( process->init_event );
     process->init_event = NULL;
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
+    req->debugged = (current->process->debugger != 0);
 }
 
 /* open a handle to a process */

@@ -167,6 +167,7 @@ struct init_process_done_request
 {
     IN  void*        module;       /* main module base address */
     IN  void*        entry;        /* process entry point */
+    OUT int          debugged;     /* being debugged? */
 };
 
 
@@ -209,8 +210,9 @@ struct terminate_thread_request
 /* Retrieve information about a process */
 struct get_process_info_request
 {
-    IN  int          handle;       /* process handle */
+    IN  int          handle;           /* process handle */
     OUT void*        pid;              /* server process id */
+    OUT int          debugged;         /* debugged? */
     OUT int          exit_code;        /* process exit code */
     OUT int          priority;         /* priority class */
     OUT int          process_affinity; /* process affinity mask */

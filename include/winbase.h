@@ -1659,8 +1659,9 @@ BOOL      WINAPI IsBadReadPtr(LPCVOID,UINT);
 BOOL      WINAPI IsBadStringPtrA(LPCSTR,UINT);
 BOOL      WINAPI IsBadStringPtrW(LPCWSTR,UINT);
 #define     IsBadStringPtr WINELIB_NAME_AW(IsBadStringPtr)
-BOOL      WINAPI IsBadWritePtr(LPVOID,UINT);
-BOOL      WINAPI IsDBCSLeadByte(BYTE);
+BOOL        WINAPI IsBadWritePtr(LPVOID,UINT);
+BOOL        WINAPI IsDBCSLeadByte(BYTE);
+BOOL        WINAPI IsDebuggerPresent(void);
 HINSTANCE16 WINAPI LoadLibrary16(LPCSTR);
 HMODULE   WINAPI LoadLibraryA(LPCSTR);
 HMODULE   WINAPI LoadLibraryW(LPCWSTR);
@@ -1689,8 +1690,9 @@ HFILE     WINAPI OpenFile(LPCSTR,OFSTRUCT*,UINT);
 VOID        WINAPI OutputDebugStringA(LPCSTR);
 VOID        WINAPI OutputDebugStringW(LPCWSTR);
 #define     OutputDebugString WINELIB_NAME_AW(OutputDebugString)
-BOOL      WINAPI RemoveDirectoryA(LPCSTR);
-BOOL      WINAPI RemoveDirectoryW(LPCWSTR);
+BOOL        WINAPI ReadProcessMemory(HANDLE, LPCVOID, LPVOID, DWORD, LPDWORD);
+BOOL        WINAPI RemoveDirectoryA(LPCSTR);
+BOOL        WINAPI RemoveDirectoryW(LPCWSTR);
 #define     RemoveDirectory WINELIB_NAME_AW(RemoveDirectory)
 BOOL      WINAPI SetCurrentDirectoryA(LPCSTR);
 BOOL      WINAPI SetCurrentDirectoryW(LPCWSTR);
@@ -1718,8 +1720,9 @@ BOOL	     WINAPI WriteProfileSectionW(LPCWSTR,LPCWSTR);
 BOOL      WINAPI WritePrivateProfileStructA(LPCSTR,LPCSTR,LPVOID,UINT,LPCSTR);
 BOOL      WINAPI WritePrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,UINT,LPCWSTR);
 #define     WritePrivateProfileStruct WINELIB_NAME_AW(WritePrivateProfileStruct)
-BOOL      WINAPI WriteProfileStringA(LPCSTR,LPCSTR,LPCSTR);
-BOOL      WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
+BOOL        WINAPI WriteProcessMemory(HANDLE, LPVOID, LPVOID, DWORD, LPDWORD);
+BOOL        WINAPI WriteProfileStringA(LPCSTR,LPCSTR,LPCSTR);
+BOOL        WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WriteProfileString WINELIB_NAME_AW(WriteProfileString)
 #define     Yield32()
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
