@@ -30,12 +30,21 @@
 #include <windowsx.h>
 #include "main.h"
 
+typedef struct tagLINE_INFO
+{
+    DWORD dwValType;
+    LPTSTR name;
+    void* val;
+    size_t val_len;
+} LINE_INFO;
 
 /*******************************************************************************
  * Global and Local Variables:
  */
 
 static WNDPROC g_orgListWndProc;
+static DWORD g_columnToSort = ~0UL;
+static BOOL  g_invertSort = FALSE;
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
@@ -47,8 +56,15 @@ static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCF
  */
 static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValBuf, DWORD dwCount)
 {
+    LINE_INFO* linfo;
     LVITEM item;
     int index;
+
+    linfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LINE_INFO) + dwCount);
+    linfo->dwValType = dwValType;
+    linfo->val_len = dwCount;
+    memcpy(&linfo[1], ValBuf, dwCount);
+    linfo->name = _tcsdup(Name);
 
     item.mask = LVIF_TEXT | LVIF_PARAM;
     item.iItem = 0;/*idx;  */
@@ -60,7 +76,8 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType, void* ValB
     if (item.cchTextMax == 0)
         item.pszText = LPSTR_TEXTCALLBACK;
     item.iImage = 0;
-    item.lParam = (LPARAM)dwValType;
+    item.lParam = (LPARAM)linfo;
+
     /*    item.lParam = (LPARAM)ValBuf; */
 #if (_WIN32_IE >= 0x0300)
     item.iIndent = 0;
@@ -138,7 +155,7 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
         plvdi->item.pszText = _T("(Default)");
         break;
     case 1:
-        switch (plvdi->item.lParam) {
+        switch (((LINE_INFO*)plvdi->item.lParam)->dwValType) {
         case REG_SZ:
             plvdi->item.pszText = _T("REG_SZ");
             break;
@@ -184,17 +201,23 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
     }
 }
 
-#if 0
 static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-    TCHAR buf1[1000];
-    TCHAR buf2[1000];
-
-    ListView_GetItemText((HWND)lParamSort, lParam1, 0, buf1, sizeof(buf1));
-    ListView_GetItemText((HWND)lParamSort, lParam2, 0, buf2, sizeof(buf2));
-    return _tcscmp(buf1, buf2);
+    LINE_INFO*l, *r;
+    l = (LINE_INFO*)lParam1;
+    r = (LINE_INFO*)lParam2;
+        
+    if (g_columnToSort == ~0UL) 
+        g_columnToSort = 0;
+    
+    if (g_columnToSort == 1 && l->dwValType != r->dwValType)
+        return g_invertSort ? (int)r->dwValType - (int)l->dwValType : (int)l->dwValType - (int)r->dwValType;
+    if (g_columnToSort == 2)
+    {
+        /* FIXME: Sort on value */
+    }
+    return g_invertSort ? _tcscmp(r->name, l->name) : _tcscmp(l->name, r->name);
 }
-#endif
 
 static void ListViewPopUpMenu(HWND hWnd, POINT pt)
 {}
@@ -222,6 +245,17 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         switch (((LPNMHDR)lParam)->code) {
         case LVN_GETDISPINFO:
             OnGetDispInfo((NMLVDISPINFO*)lParam);
+            break;
+        case LVN_COLUMNCLICK:
+            if (g_columnToSort == ((LPNMLISTVIEW)lParam)->iSubItem)
+                g_invertSort = !g_invertSort;
+            else
+            {
+                g_columnToSort = ((LPNMLISTVIEW)lParam)->iSubItem;
+                g_invertSort = FALSE;
+            }
+                    
+            ListView_SortItems(hWnd, CompareFunc, hWnd);
             break;
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
@@ -316,6 +350,18 @@ HWND CreateListView(HWND hwndParent, int id)
 BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPTSTR keyPath)
 {
     if (hwndLV != NULL) {
+        INT count, i;
+        count = ListView_GetItemCount(hwndLV);
+        for (i = 0; i < count; i++)
+        {
+            LVITEM item;
+            item.mask = LVIF_PARAM;
+            item.iItem = i;
+            ListView_GetItem(hwndLV, &item);
+            free(((LINE_INFO*)item.lParam)->name);
+            HeapFree(GetProcessHeap(), 0, (void*)item.lParam);
+        }
+        g_columnToSort = ~0UL;
         ListView_DeleteAllItems(hwndLV);
     }
 
@@ -356,8 +402,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPTSTR keyPath)
                 HeapFree(GetProcessHeap(), 0, ValBuf);
                 HeapFree(GetProcessHeap(), 0, ValName);
             }
-            /*ListView_SortItemsEx(hwndLV, CompareFunc, hwndLV); */
-            /*            SendMessage(hwndLV, LVM_SORTITEMSEX, (WPARAM)CompareFunc, (LPARAM)hwndLV); */
+            ListView_SortItems(hwndLV, CompareFunc, hwndLV); 
             ShowWindow(hwndLV, SW_SHOW);
             RegCloseKey(hNewKey);
         }
