@@ -149,7 +149,7 @@ extract_test (struct wine_test *test, const char *dir, int id)
     }
     if (!strlen) report (R_FATAL, "Can't read name of test %d.", id);
     test->exename = strmake (NULL, "%s/%s", dir, test->name);
-    exepos = strstr (test->name, ".exe");
+    exepos = strstr (test->name, "_test.exe");
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
     test->name = xrealloc (test->name, exepos - test->name + 1);
@@ -294,11 +294,12 @@ run_tests (char *logname, const char *tag)
     xprintf ("Version 2\n");
     i = LoadStringA (GetModuleHandle (NULL), 0,
                      build_tag, sizeof build_tag);
-    if (i == 0) report (R_FATAL, "Build descriptor not found.");
+    if (i == 0) report (R_FATAL, "Build descriptor not found: %d",
+                        GetLastError ());
     if (i >= sizeof build_tag)
         report (R_FATAL, "Build descriptor too long.");
     xprintf ("Tests from build %s\n", build_tag);
-    xprintf ("Tag: %s", tag?tag:"");
+    xprintf ("Tag: %s\n", tag?tag:"");
     xprintf ("Operating system version:\n");
     print_version ();
     xprintf ("Test output:\n" );
@@ -325,7 +326,7 @@ run_tests (char *logname, const char *tag)
         int j;
 
 	for (j = 0; j < test->subtest_count; j++) {
-            report (R_STEP, "Running: %s: %s", test->name,
+            report (R_STEP, "Running: %s:%s", test->name,
                     test->subtests[j]);
 	    run_test (test, test->subtests[j]);
         }
@@ -354,6 +355,30 @@ Usage: winetest [OPTION]...\n\n\
   -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
+/* One can't nest strtok()-s, so here is a replacement. */
+char *
+mystrtok (char *newstr)
+{
+    static char *start, *end;
+    static int finish = 1;
+
+    if (newstr) {
+        start = newstr;
+        finish = 0;
+    } else start = end;
+    if (finish) return NULL;
+    while (*start == ' ') start++;
+    if (*start == 0) return NULL;
+    end = start;
+    while (*end != ' ')
+        if (*end == 0) {
+            finish = 1;
+            return start;
+        } else end++;
+    *end++ = 0;
+    return start;
+}
+
 int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
@@ -361,7 +386,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     char *tag = NULL, *cp;
     const char *submit = NULL;
 
-    cmdLine = strtok (cmdLine, " ");
+    cmdLine = mystrtok (cmdLine);
     while (cmdLine) {
         if (*cmdLine == '-')
             if (cmdLine[2]) {
@@ -382,17 +407,17 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                 report (R_QUIET);
                 break;
             case 's':
-                submit = strtok (NULL, " ");
+                submit = mystrtok (NULL);
                 if (tag)
                     report (R_WARNING, "ignoring tag for submit");
                 send_file (submit);
                 break;
             case 'o':
-                logname = strtok (NULL, " ");
+                logname = mystrtok (NULL);
                 run_tests (logname, tag);
                 break;
             case 't':
-                tag = strtok (NULL, " ");
+                tag = mystrtok (NULL);
                 cp = badtagchar (tag);
                 if (cp) {
                     report (R_ERROR, "invalid char in tag: %c", *cp);
@@ -405,7 +430,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                 usage ();
                 exit (2);
             }
-        cmdLine = strtok (NULL, " ");
+        cmdLine = mystrtok (NULL);
     }
     if (!logname && !submit) {
         report (R_STATUS, "Starting up");

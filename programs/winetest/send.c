@@ -111,7 +111,7 @@ send_file (const char *name)
 #define SEP "-"
     const char head[] = "POST /submit HTTP/1.0\r\n"
         "Host: afavant\r\n"
-        "User-Agent: Winetests Shell\r\n"
+        "User-Agent: Winetest Shell\r\n"
         "Content-Type: multipart/form-data; boundary=" SEP "\r\n"
         "Content-Length: %u\r\n\r\n";
     const char body1[] = "--" SEP "\r\n"

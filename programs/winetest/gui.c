@@ -94,6 +94,7 @@ guiStatus (va_list ap)
 int
 textProgress (va_list ap)
 {
+    progressGroup = va_arg (ap, int);
     progressMax = va_arg (ap, int);
     progressCurr = 0;
     return 0;
@@ -402,13 +403,16 @@ report (enum report_type t, ...)
     int ret = 0;
     static r_fun_t * const text_funcs[] =
         {textStatus, textProgress, textStep, textDelta,
-         textDir, textOut, textFatal, textWarning, textAsk};
+         textDir, textOut,
+         textWarning, textError, textFatal, textAsk};
     static r_fun_t * const GUI_funcs[] =
         {guiStatus, guiProgress, guiStep, guiDelta,
-         guiDir, guiOut, guiFatal, guiWarning, guiAsk};
+         guiDir, guiOut,
+         guiWarning, guiError, guiFatal, guiAsk};
     static r_fun_t * const quiet_funcs[] =
         {qNoOp, qNoOp, qNoOp, qNoOp,
-         qNoOp, qNoOp, qFatal, qNoOp, qAsk};
+         qNoOp, qNoOp,
+         qNoOp, qNoOp, qFatal, qAsk};
     static r_fun_t * const * funcs = NULL;
 
     switch (t) {
