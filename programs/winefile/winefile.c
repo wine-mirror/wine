@@ -125,7 +125,7 @@ typedef struct {
 	HWND	hwnd;
 	Pane	left;
 	Pane	right;
-        int		focus_pane;		/* 0: left  1: right */
+	int		focus_pane;		/* 0: left  1: right */
 	WINDOWPLACEMENT pos;
 	int		split_pos;
 	BOOL	header_wdths_ok;
@@ -1139,8 +1139,12 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 				case ID_EXECUTE: {
 					struct ExecuteDialog dlg = {{0}};
-					if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_EXECUTE), hwnd, ExecuteDialogWndProg, (LPARAM)&dlg) == IDOK)
-						ShellExecute(hwnd, _T("open")/*operation*/, dlg.cmd/*file*/, NULL/*parameters*/, NULL/*dir*/, dlg.cmdshow);
+					if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_EXECUTE), hwnd, ExecuteDialogWndProg, (LPARAM)&dlg) == IDOK) {
+						HINSTANCE hinst = ShellExecute(hwnd, NULL/*operation*/, dlg.cmd/*file*/, NULL/*parameters*/, NULL/*dir*/, dlg.cmdshow);
+
+						if ((int)hinst <= 32)
+							display_error(hwnd, GetLastError());
+					}
 					break;}
 
 				case ID_HELP:
@@ -1222,7 +1226,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 
 const static LPTSTR g_pos_names[COLUMNS] = {
-        _T(""),			/* symbol */
+	_T(""),			/* symbol */
 	_T("Name"),
 	_T("Size"),
 	_T("CDate"),
@@ -2387,9 +2391,16 @@ static void activate_entry(ChildWnd* child, Pane* pane)
 #endif
 		}
 	} else {
+		TCHAR cmd[MAX_PATH];
+		HINSTANCE hinst;
 
-	        /*TODO: start program, open document... */
+		get_path(entry, cmd);
 
+		 /* start program, open document... */
+		hinst = ShellExecute(child->hwnd, NULL/*operation*/, cmd, NULL/*parameters*/, NULL/*dir*/, SW_SHOWNORMAL);
+
+		if ((int)hinst <= 32)
+			display_error(child->hwnd, GetLastError());
 	}
 }
 
