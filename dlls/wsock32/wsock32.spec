@@ -62,8 +62,8 @@
 1108 stdcall s_perror(str)
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
-1111 stdcall EnumProtocolsA(ptr ptr ptr)
-1112 stdcall EnumProtocolsW(ptr ptr ptr)
+1111 stdcall EnumProtocolsA(ptr ptr ptr) ws2_32.WSAEnumProtocolsA
+1112 stdcall EnumProtocolsW(ptr ptr ptr) ws2_32.WSAEnumProtocolsW
 1113 stdcall GetTypeByNameA(str ptr)
 1114 stdcall GetTypeByNameW(wstr ptr)
 #1115 stub GetNameByTypeA

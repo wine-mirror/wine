@@ -8,6 +8,7 @@ IMPORTS   = user32 iphlpapi kernel32 ntdll
 
 C_SRCS = \
 	async.c \
+	protocol.c \
 	socket.c
 
 C_SRCS16 = socket16.c

@@ -1343,7 +1343,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
  */
 int WINAPI WS_closesocket(SOCKET s)
 {
-    TRACE("socket %08x\n", s);
+    TRACE("socket %04x\n", s);
     if (CloseHandle(SOCKET2HANDLE(s))) return 0;
     return SOCKET_ERROR;
 }
@@ -1440,7 +1440,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
+    TRACE("socket: %04x, ptr %p, len %08x\n", s, name, *namelen);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
@@ -2669,7 +2669,7 @@ BOOL WINAPI WSAGetOverlappedResult ( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 {
     DWORD r;
 
-    TRACE ( "socket %d ovl %p trans %p, wait %d flags %p\n",
+    TRACE ( "socket %04x ovl %p trans %p, wait %d flags %p\n",
             s, lpOverlapped, lpcbTransfer, fWait, lpdwFlags );
 
     if ( !(lpOverlapped && lpOverlapped->hEvent) )
@@ -3339,7 +3339,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket  %u, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
+       TRACE("Socket  %04x, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
 
@@ -3391,24 +3391,6 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                        SetLastError(WSAENOTSOCK);
                        return SOCKET_ERROR;
                }
-}
-
-/***********************************************************************
- *              WSAEnumProtocolsA                        (WS2_32.37)
- */
-int WINAPI WSAEnumProtocolsA(LPINT lpiProtocols, LPWSAPROTOCOL_INFOA lpProtocolBuffer, LPDWORD lpdwBufferLength)
-{
-    FIXME("(%p,%p,%p): stub\n", lpiProtocols,lpProtocolBuffer, lpdwBufferLength);
-    return 0;
-}
-
-/***********************************************************************
- *              WSAEnumProtocolsW                        (WS2_32.38)
- */
-int WINAPI WSAEnumProtocolsW(LPINT lpiProtocols, LPWSAPROTOCOL_INFOW lpProtocolBuffer, LPDWORD lpdwBufferLength)
-{
-    FIXME("(%p,%p,%p): stub\n", lpiProtocols,lpProtocolBuffer, lpdwBufferLength);
-    return 0;
 }
 
 /***********************************************************************

@@ -1,6 +1,6 @@
 @ stdcall AcceptEx(long long ptr long long long ptr ptr)
-@ stub EnumProtocolsA
-@ stub EnumProtocolsW
+@ stdcall EnumProtocolsA(ptr ptr ptr) ws2_32.WSAEnumProtocolsA
+@ stdcall EnumProtocolsW(ptr ptr ptr) ws2_32.WSAEnumProtocolsW
 @ stub GetAcceptExSockaddrs
 @ stub GetAddressByNameA
 @ stub GetAddressByNameW
