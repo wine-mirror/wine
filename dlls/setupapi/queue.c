@@ -25,6 +25,7 @@
 #include "setupapi.h"
 #include "wine/unicode.h"
 #include "setupapi_private.h"
+#include "ver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -937,6 +938,132 @@ static BOOL create_full_pathW(const WCHAR *path)
     return ret;
 }
 
+BOOL static do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
+{
+    BOOL rc = FALSE;
+    BOOL docopy = TRUE;
+
+    TRACE("copy %s to %s style 0x%lx\n",debugstr_w(source),debugstr_w(target),style);
+
+    /* before copy processing */
+    if (style & SP_COPY_REPLACEONLY)
+    {
+        if (GetFileAttributesW(target) == INVALID_FILE_ATTRIBUTES)
+            docopy = FALSE;
+    }
+    if (style & (SP_COPY_NEWER_OR_SAME | SP_COPY_NEWER_ONLY | SP_COPY_FORCE_NEWER))
+    {
+        DWORD VersionSizeSource=0;
+        DWORD VersionSizeTarget=0;
+        DWORD zero=0;
+
+        /*
+         * This is sort of an interesting workaround. You see, calling
+         * GetVersionInfoSize on a builtin dll loads that dll into memory.
+         * and we do not properly unload builtin dlls.. so we effectively
+         * lock into memory all the targets we are replacing. This leads
+         * to problems when we try to register the replaced dlls.
+         *
+         * So I will test for the existance of the files first so that
+         * we just basically unconditionally replace the builtin versions
+         */
+        if ((GetFileAttributesW(target) != INVALID_FILE_ATTRIBUTES) &&
+            (GetFileAttributesW(source) != INVALID_FILE_ATTRIBUTES))
+        {
+            VersionSizeSource = GetFileVersionInfoSizeW(source,&zero);
+            VersionSizeTarget = GetFileVersionInfoSizeW(target,&zero);
+        }
+
+        TRACE("SizeTarget %li ... SizeSource %li\n",VersionSizeTarget,
+                VersionSizeSource);
+
+        if (VersionSizeSource && VersionSizeTarget)
+        {
+            LPVOID VersionSource;
+            LPVOID VersionTarget;
+            VS_FIXEDFILEINFO *TargetInfo;
+            VS_FIXEDFILEINFO *SourceInfo;
+            INT length;
+            WCHAR  SubBlock[2]={'\\',0};
+            DWORD  ret;
+
+            VersionSource = HeapAlloc(GetProcessHeap(),0,VersionSizeSource);
+            VersionTarget = HeapAlloc(GetProcessHeap(),0,VersionSizeTarget);
+
+            ret = GetFileVersionInfoW(source,0,VersionSizeSource,VersionSource);
+            if (ret)
+              ret = GetFileVersionInfoW(target, 0, VersionSizeTarget,
+                    VersionTarget);
+
+            if (ret)
+            {
+                ret = VerQueryValueW(VersionSource, SubBlock,
+                                    (LPVOID*)&SourceInfo, &length);
+                if (ret)
+                    ret = VerQueryValueW(VersionTarget, SubBlock,
+                                         (LPVOID*)&TargetInfo, &length);
+
+                if (ret)
+                {
+                    TRACE("Versions: Source %li.%li target %li.%li\n",
+                      SourceInfo->dwFileVersionMS, SourceInfo->dwFileVersionLS,
+                      TargetInfo->dwFileVersionMS, TargetInfo->dwFileVersionLS);
+
+                    if (TargetInfo->dwFileVersionMS > SourceInfo->dwFileVersionMS)
+                    {
+                        FIXME("Notify that target version is greater..\n");
+                        docopy = FALSE;
+                    }
+                    else if ((TargetInfo->dwFileVersionMS == SourceInfo->dwFileVersionMS)
+                             && (TargetInfo->dwFileVersionLS > SourceInfo->dwFileVersionLS))
+                    {
+                        FIXME("Notify that target version is greater..\n");
+                        docopy = FALSE;
+                    }
+                    else if ((style & SP_COPY_NEWER_ONLY) &&
+                        (TargetInfo->dwFileVersionMS ==
+                         SourceInfo->dwFileVersionMS)
+                        &&(TargetInfo->dwFileVersionLS ==
+                        SourceInfo->dwFileVersionLS))
+                    {
+                        FIXME("Notify that target version is greater..\n");
+                        docopy = FALSE;
+                    }
+                }
+                HeapFree(GetProcessHeap(),0,VersionSource);
+                HeapFree(GetProcessHeap(),0,VersionTarget);
+            }
+        }
+    }
+    if (style & (SP_COPY_NOOVERWRITE | SP_COPY_FORCE_NOOVERWRITE))
+    {
+        if (GetFileAttributesW(target) != INVALID_FILE_ATTRIBUTES)
+        {
+            FIXME("Notify user target file exists\n");
+            docopy = FALSE;
+        }
+    }
+    if (style & (SP_COPY_NODECOMP | SP_COPY_LANGUAGEAWARE | SP_COPY_FORCE_IN_USE |
+                 SP_COPY_IN_USE_NEEDS_REBOOT | SP_COPY_NOSKIP | SP_COPY_WARNIFSKIP))
+    {
+        ERR("Unsupported style(s) 0x%lx\n",style);
+    }
+
+    if (docopy)
+    {
+        rc = CopyFileW(source,target,FALSE);
+        TRACE("Did copy... rc was %i\n",rc);
+    }
+
+    /* after copy processing */
+    if (style & SP_COPY_DELETESOURCE)
+    {
+       if (rc)
+            DeleteFileW(source);
+    }
+
+    return rc;
+}
 
 /***********************************************************************
  *            SetupCommitFileQueueW   (SETUPAPI.@)
@@ -1035,8 +1162,8 @@ BOOL WINAPI SetupCommitFileQueueW( HWND owner, HSPFILEQ handle, PSP_FILE_CALLBAC
 			if (op_result == FILEOP_ABORT) goto done;
 		    }
 		}
-                if (CopyFileW( op_result == FILEOP_NEWPATH ? newpath : paths.Source,
-                               paths.Target, FALSE /*FIXME*/ )) break;  /* success */
+                if (do_file_copyW( op_result == FILEOP_NEWPATH ? newpath : paths.Source,
+                               paths.Target, op->style )) break;  /* success */
                 /* try to extract it from the cabinet file */
                 if (op->src_tag)
                 {

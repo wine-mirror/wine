@@ -183,8 +183,9 @@ RETERR16 WINAPI GenInstall16( HINF16 hinf16, LPCSTR section, WORD genflags )
     if (genflags & GENINSTALL_DO_PERUSER) FIXME( "unsupported flag: GENINSTALL_DO_PERUSER\n" );
 
     context = SetupInitDefaultQueueCallback( 0 );
-    if (!SetupInstallFromInfSectionA( 0, hinf, section, flags, 0, NULL, 0,
-                                      SetupDefaultQueueCallbackA, context, 0, 0 ))
+    if (!SetupInstallFromInfSectionA( 0, hinf, section, flags, 0, NULL,
+                                      SP_COPY_NEWER_OR_SAME, SetupDefaultQueueCallbackA,
+                                      context, 0, 0 ))
         ret = get_last_error();
 
     SetupTermDefaultQueueCallback( context );
