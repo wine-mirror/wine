@@ -34,12 +34,20 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #include "wine/wine_common_ver.rc"
 
-LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
-
 STRINGTABLE DISCARDABLE
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 {
 	7  "Default DirectSound"
 	8  "DirectSound: %s"
 	9  "Default WaveOut Device"
 	10 "Default MidiOut Device"
+}
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+{
+	7  "DirectSound di Default"
+	8  "DirectSound: %s"
+	9  "Dispositivo WaveOut di Default"
+	10 "Dispositivo MidiOut di Default"
 }
