@@ -35,10 +35,11 @@
 
 HANDLE32 COMCTL32_hHeap = (HANDLE32)NULL;
 DWORD    COMCTL32_dwProcessesAttached = 0;
+LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
 
 
 /***********************************************************************
- * ComCtl32LibMain [Internal] Initializes the internal 'COMCTL32.DLL'.
+ * COMCTL32_LibMain [Internal] Initializes the internal 'COMCTL32.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the 'dlls' instance
@@ -51,7 +52,7 @@ DWORD    COMCTL32_dwProcessesAttached = 0;
  */
 
 BOOL32 WINAPI
-ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE (commctrl, "%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
@@ -61,6 +62,11 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		/* create private heap */
 		COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
 		TRACE (commctrl, "Heap created: 0x%x\n", COMCTL32_hHeap);
+
+		/* add global subclassing atom (used by 'tooltip' and 'updown') */
+		COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtom32A ("CC32SubclassInfo");
+		TRACE (commctrl, "Subclassing atom added: %p\n",
+		       COMCTL32_aSubclass);
 
 		/* register all Win95 common control classes */
 		ANIMATE_Register ();
@@ -102,6 +108,12 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		TRACKBAR_Unregister ();
 		TREEVIEW_Unregister ();
 		UPDOWN_Unregister ();
+
+		/* delete global subclassing atom */
+		GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
+		TRACE (commctrl, "Subclassing atom deleted: %p\n",
+		       COMCTL32_aSubclass);
+		COMCTL32_aSubclass = (LPSTR)NULL;
 
 		/* destroy private heap */
 		HeapDestroy (COMCTL32_hHeap);
@@ -845,3 +857,4 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 
     return S_OK;
 }
+
