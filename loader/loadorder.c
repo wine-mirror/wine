@@ -44,7 +44,7 @@ static struct tagDllOverride {
 	{"commctrl,comctl32",		"builtin,native"},
 	{"wsock32,winsock",		"builtin"},
 	{"advapi32,crtdll,ntdll",	"builtin,native"},
-	{"mpr,winspool",		"builtin,native"},
+	{"mpr,winspool.drv",		"builtin,native"},
 	{"ddraw,dinput,dsound",		"builtin,native"},
 	{"winmm, mmsystem",		"builtin"},
 	{"msvideo, msvfw32",		"builtin, native"},
