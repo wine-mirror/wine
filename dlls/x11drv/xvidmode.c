@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include <string.h>
 
 /* FIXME: ChangeDisplaySettings ought to be able to use this */
 

@@ -4,6 +4,7 @@
  * Copyright 2001 TransGaming Technologies, Inc.
  */
 
+#include <string.h>
 #include "ts_xlib.h"
 #include "x11drv.h"
 #include "x11ddraw.h"

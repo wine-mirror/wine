@@ -63,6 +63,7 @@
  *
  */
 
+#include <string.h>
 #include "winbase.h"
 #include "commctrl.h"
 #include "debugtools.h"
