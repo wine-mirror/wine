@@ -618,10 +618,6 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     else if (classPtr->style & CS_CLASSDC) wndPtr->dce = classPtr->dce;
     else wndPtr->dce = NULL;
 
-    /* Insert the window in the linked list */
-
-    WIN_LinkWindow( hwnd, hwndLinkAfter );
-
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
@@ -750,6 +746,10 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     localSend32 = unicode ? SendMessage32W : SendMessage32A;
     if( (*localSend32)( hwnd, WM_NCCREATE, 0, (LPARAM)cs) )
     {
+        /* Insert the window in the linked list */
+
+        WIN_LinkWindow( hwnd, hwndLinkAfter );
+
         WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
                                NULL, NULL, 0, &wndPtr->rectClient );
         OffsetRect32(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
@@ -806,12 +806,12 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             TRACE(win, "created window %04x\n", hwnd);
             return hwnd;
         }
+        WIN_UnlinkWindow( hwnd );
     }
 
     /* Abort window creation */
 
     WARN(win, "aborted by WM_xxCREATE!\n");
-    WIN_UnlinkWindow( hwnd );
     WIN_DestroyWindow( wndPtr );
     return 0;
 }
