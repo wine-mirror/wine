@@ -2158,14 +2158,19 @@ LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
  */
 LONG WINPOS_HandleWindowPosChanging( WND *wndPtr, WINDOWPOS *winpos )
 {
-    POINT maxSize;
+    POINT maxSize, minTrack;
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, NULL, NULL );
+	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, &minTrack, NULL );
 	winpos->cx = min( winpos->cx, maxSize.x );
 	winpos->cy = min( winpos->cy, maxSize.y );
+	if (!(wndPtr->dwStyle & WS_MINIMIZE))
+	{
+	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
+	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;
+	}
     }
     return 0;
 }
