@@ -1115,8 +1115,8 @@ FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
     return proc;
 }
 
-FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports,
-                              DWORD exp_size, FARPROC origfun, DWORD ordinal )
+FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
+                              FARPROC origfun, DWORD ordinal, const WCHAR *user )
 {
     return origfun;
 }
