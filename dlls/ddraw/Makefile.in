@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw
 EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = user32 gdi32 kernel32 ntdll
 
 OPENGLFILES = \
 	d3dcommon.c \
