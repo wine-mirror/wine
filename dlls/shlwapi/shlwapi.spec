@@ -266,8 +266,8 @@
 266 stdcall @(long wstr ptr ptr) SHLWAPI_266
 267 stdcall @(long long long long) SHLWAPI_267
 268 stdcall @(long long) SHLWAPI_268
-269 stub @
-270 stub @
+269 stdcall @(str ptr) SHLWAPI_269
+270 stdcall @(wstr ptr) SHLWAPI_270
 271 stdcall @(wstr wstr wstr) SHLWAPI_271
 272 stub @
 273 stub @

@@ -43,6 +43,8 @@ typedef struct {
 
 DWORD WINAPI SHLWAPI_2(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y);
 
+HRESULT WINAPI SHLWAPI_436(LPCWSTR idstr, CLSID *id);
+
 /* Macro to get function pointer for a module*/
 #define GET_FUNC(func, module, name, fail) \
   do { \

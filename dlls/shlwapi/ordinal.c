@@ -2705,45 +2705,78 @@ DWORD WINAPI SHLWAPI_431 (DWORD x)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.269]
+ *
+ * Convert an ASCII string CLSID into a CLSID.
+ */
+BOOL WINAPI SHLWAPI_269(LPCSTR idstr, CLSID *id)
+{
+	WCHAR wClsid[40];
+	MultiByteToWideChar(CP_ACP, 0, idstr, -1, wClsid, sizeof(wClsid)/sizeof(WCHAR));
+	return SUCCEEDED(SHLWAPI_436(wClsid, id));
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.270]
+ *
+ * Convert an Unicode string CLSID into a CLSID.
+ */
+BOOL WINAPI SHLWAPI_270(LPCWSTR idstr, CLSID *id)
+{
+	return SUCCEEDED(SHLWAPI_436(idstr, id));
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.436]
  *
+ * Convert an Unicode string CLSID into a CLSID.
+ *
+ * PARAMS
+ *  idstr      [I]   string containing a CLSID in text form
+ *  id         [O]   CLSID extracted from the string
+ *
+ * RETURNS
+ *  S_OK on success or E_INVALIDARG on failure
+ *
+ * NOTES
  *  This is really CLSIDFromString which is exported by ole32.dll,
  *  however the native shlwapi.dll does *not* import ole32. Nor does
  *  ole32.dll import this ordinal from shlwapi. Therefore we must conclude
- *  that MS duplicated the code for CLSIDFromString.
- *
+ *  that MS duplicated the code for CLSIDFromString, and yes they did, only
+ *  it returns an E_INVALIDARG error code on failure.
  *  This is a duplicate (with changes for UNICODE) of CLSIDFromString16
  *  in dlls/ole32/compobj.c
  */
-DWORD WINAPI SHLWAPI_436 (LPWSTR idstr, CLSID *id)
+HRESULT WINAPI SHLWAPI_436(LPCWSTR idstr, CLSID *id)
 {
-    LPWSTR s = idstr;
-    BYTE *p;
-    INT i;
-    WCHAR table[256];
+	LPCWSTR s = idstr;
+	BYTE *p;
+	INT i;
+	WCHAR table[256];
 
-    if (!s) {
-	memset(s, 0, sizeof(CLSID));
-	return S_OK;
-    }
-    else {  /* validate the CLSID string */
+	if (!s) {
+	  memset(id, 0, sizeof(CLSID));
+	  return S_OK;
+	}
+	else {  /* validate the CLSID string */
 
-	if (strlenW(s) != 38)
-	    return CO_E_CLASSSTRING;
+	  if (strlenW(s) != 38)
+	    return E_INVALIDARG;
 
-	if ((s[0]!=L'{') || (s[9]!=L'-') || (s[14]!=L'-') || (s[19]!=L'-') || (s[24]!=L'-') || (s[37]!=L'}'))
-	    return CO_E_CLASSSTRING;
+	  if ((s[0]!=L'{') || (s[9]!=L'-') || (s[14]!=L'-') || (s[19]!=L'-') || (s[24]!=L'-') || (s[37]!=L'}'))
+	    return E_INVALIDARG;
 
-	for (i=1; i<37; i++)
-	    {
-		if ((i == 9)||(i == 14)||(i == 19)||(i == 24)) continue;
-		if (!(((s[i] >= L'0') && (s[i] <= L'9'))  ||
-		      ((s[i] >= L'a') && (s[i] <= L'f'))  ||
-		      ((s[i] >= L'A') && (s[i] <= L'F')))
-		    )
-		    return CO_E_CLASSSTRING;
-	    }
-    }
+	  for (i=1; i<37; i++)
+	  {
+	    if ((i == 9)||(i == 14)||(i == 19)||(i == 24))
+	      continue;
+	    if (!(((s[i] >= L'0') && (s[i] <= L'9'))  ||
+	        ((s[i] >= L'a') && (s[i] <= L'f'))  ||
+	        ((s[i] >= L'A') && (s[i] <= L'F')))
+	       )
+	      return E_INVALIDARG;
+	  }
+	}
 
     TRACE("%s -> %p\n", debugstr_w(s), id);
 
