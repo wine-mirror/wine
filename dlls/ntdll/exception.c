@@ -190,7 +190,8 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     TRACE( "code=%lx flags=%lx addr=%p\n", rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
     for (c=0; c<rec->NumberParameters; c++) TRACE(" info[%ld]=%08lx\n", c, rec->ExceptionInformation[c]);
-    if (rec->ExceptionCode == EXCEPTION_WINE_STUB) TRACE(" stub=%s\n", (char*)rec->ExceptionInformation[1]);
+    if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
+        FIXME( "call to unimplemented function %s\n", (char*)rec->ExceptionInformation[1] );
 
     if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
