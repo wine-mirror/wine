@@ -2370,6 +2370,7 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    ti.uId      = btnPtr->idCommand;
 	    ti.hinst    = 0;
 	    ti.lpszText = LPSTR_TEXTCALLBACKW;
+	    ti.lParam   = lParam;
 
 	    SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW,
 			    0, (LPARAM)&ti);
