@@ -75,6 +75,7 @@ typedef struct {
     HBRUSH	hbrBack;	/* brush for menu background */
     DWORD	dwContextHelpID;
     DWORD	dwMenuData;	/* application defined value */
+    HMENU       hSysMenuOwner;  /* Handle to the dummy sys menu holder */
 } POPUPMENU, *LPPOPUPMENU;
 
 /* internal flags for menu tracking */
@@ -460,7 +461,10 @@ static void MENU_InitSysMenuPopup( HMENU hmenu, DWORD style, DWORD clsStyle )
     gray = !(style & (WS_MAXIMIZE | WS_MINIMIZE));
     EnableMenuItem( hmenu, SC_RESTORE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = (clsStyle & CS_NOCLOSE) != 0;
-    EnableMenuItem( hmenu, SC_CLOSE, (gray ? MF_GRAYED : MF_ENABLED) );
+
+    /* The menu item must keep its state if it's disabled */
+    if(gray)
+	EnableMenuItem( hmenu, SC_CLOSE, MF_GRAYED);
 }
 
 
@@ -3191,15 +3195,39 @@ UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
 {
     UINT    oldflags;
     MENUITEM *item;
+    POPUPMENU *menu;
 
     TRACE("(%04x, %04X, %04X) !\n", 
 		 hMenu, wItemID, wFlags);
+
+    /* Get the Popupmenu to access the owner menu */
+    if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu))) 
+	return (UINT)-1;
 
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags )))
 	return (UINT)-1;
 
     oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
     item->fState ^= (oldflags ^ wFlags) & (MF_GRAYED | MF_DISABLED);
+
+    /* In win95 if the close item in the system menu change update the close button */
+    if (TWEAK_WineLook == WIN95_LOOK)    
+	if((item->wID == SC_CLOSE) && (oldflags != wFlags))
+	{
+	    if (menu->hSysMenuOwner != 0)
+	    {
+		POPUPMENU* parentMenu;
+
+		/* Get the parent menu to access*/
+		if (!(parentMenu = (POPUPMENU *) USER_HEAP_LIN_ADDR(menu->hSysMenuOwner))) 
+		    return (UINT)-1;
+
+		/* Refresh the frame to reflect the change*/
+		SetWindowPos(parentMenu->hWnd, 0, 0, 0, 0, 0,
+			     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+	    }
+	}
+	   
     return oldflags;
 }
 
@@ -3777,6 +3805,12 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 	if( wndPtr->hSysMenu )
         {
             HMENU retvalue = GetSubMenu16(wndPtr->hSysMenu, 0);
+
+	    /* Store the dummy sysmenu handle to facilitate the refresh */
+	    /* of the close button if the SC_CLOSE item change */
+	    POPUPMENU *menu = (POPUPMENU*) USER_HEAP_LIN_ADDR(retvalue);
+	    menu->hSysMenuOwner = wndPtr->hSysMenu;
+
             WIN_ReleaseWndPtr(wndPtr);
             return retvalue;
         }

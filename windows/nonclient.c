@@ -26,9 +26,12 @@
 #include "options.h"
 #include "shellapi.h"
 #include "cache.h"
+#include "bitmap.h"
 
 DECLARE_DEBUG_CHANNEL(nonclient)
 DECLARE_DEBUG_CHANNEL(shell)
+
+BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 
 static HBITMAP16 hbitmapClose = 0;
 static HBITMAP16 hbitmapCloseD = 0;
@@ -38,6 +41,17 @@ static HBITMAP16 hbitmapMaximize = 0;
 static HBITMAP16 hbitmapMaximizeD = 0;
 static HBITMAP16 hbitmapRestore = 0;
 static HBITMAP16 hbitmapRestoreD = 0;
+
+BYTE lpGrayMask[] = { 0xAA, 0xA0,
+		      0x55, 0x50,  
+		      0xAA, 0xA0,
+		      0x55, 0x50,  
+		      0xAA, 0xA0,
+		      0x55, 0x50,  
+		      0xAA, 0xA0,
+		      0x55, 0x50,  
+		      0xAA, 0xA0,
+		      0x55, 0x50};
 
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
 #define SC_PUTMARK     		(SC_SCREENSAVE+2)
@@ -711,9 +725,11 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
                 if (wndPtr->dwStyle & WS_SYSMENU)
                     rect.left += GetSystemMetrics(SM_CXSIZE);
                 if (pt.x <= rect.left) return HTSYSMENU;
+
                 /* Check maximize box */
                 if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
                     rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+
                 if (pt.x >= rect.right) return HTMAXBUTTON;
                 /* Check minimize box */
                 if (wndPtr->dwStyle & WS_MINIMIZEBOX)
@@ -857,13 +873,16 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
                 if (pt.x > rect.right) return HTCLOSE;
 
                 /* Check maximize box */
-                if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+		/* In win95 there is automatically a Maximize button when there is a minimize one*/
+                if ((wndPtr->dwStyle & WS_MAXIMIZEBOX)|| (wndPtr->dwStyle & WS_MINIMIZEBOX))
                     rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
                 if (pt.x > rect.right) return HTMAXBUTTON;
 
                 /* Check minimize box */
-                if (wndPtr->dwStyle & WS_MINIMIZEBOX)
+		/* In win95 there is automatically a Maximize button when there is a Maximize one*/
+                if ((wndPtr->dwStyle & WS_MINIMIZEBOX)||(wndPtr->dwStyle & WS_MAXIMIZEBOX))
                     rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+
                 if (pt.x > rect.right) return HTMINBUTTON;
                 return HTCAPTION;
             }
@@ -1061,9 +1080,12 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
  *   void  NC_DrawCloseButton95(
  *      HWND32  hwnd,
  *      HDC32  hdc,
- *      BOOL32  down )
+ *      BOOL32  down,
+ *      BOOL    bGrayed )
  *
  *   Draws the Win95 close button.
+ *
+ *   If bGrayed is true, then draw a disabled Close button
  *
  *   Revision history
  *        11-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
@@ -1071,7 +1093,7 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
  *
  *****************************************************************************/
 
-static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
+static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
 {
     RECT rect;
     HDC hdcMem;
@@ -1088,9 +1110,14 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
 	hBmp = down ? hbitmapCloseD : hbitmapClose;
 	hOldBmp = SelectObject (hdcMem, hBmp);
 	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
+
 	BitBlt (hdc, rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2,
 		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
+
+	if(bGrayed)
+	    NC_DrawGrayButton(hdc,rect.right - (GetSystemMetrics(SM_CYCAPTION) + 1 + bmp.bmWidth) / 2 + 2,
+			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
 
 	SelectObject (hdcMem, hOldBmp);
 	DeleteDC (hdcMem);
@@ -1103,9 +1130,12 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
  *   NC_DrawMaxButton95(
  *      HWND32  hwnd,
  *      HDC16  hdc,
- *      BOOL32  down )
+ *      BOOL32  down 
+ *      BOOL    bGrayed )
  *
  *   Draws the maximize button for Win95 style windows.
+ *
+ *   If bGrayed is true, then draw a disabled Maximize button
  *
  *   Bugs
  *        Many.  Spacing might still be incorrect.  Need to fit a close
@@ -1118,7 +1148,7 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
  *
  *****************************************************************************/
 
-static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
+static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
     HDC hdcMem;
@@ -1131,18 +1161,24 @@ static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
 
 	NC_GetInsideRect95( hwnd, &rect );
 	hdcMem = CreateCompatibleDC( hdc );
-       hBmp = IsZoomed(hwnd) ?
-				(down ? hbitmapRestoreD : hbitmapRestore ) :
-                               (down ? hbitmapMaximizeD: hbitmapMaximize);
+	hBmp = IsZoomed(hwnd) ?
+	    (down ? hbitmapRestoreD : hbitmapRestore ) :
+	    (down ? hbitmapMaximizeD: hbitmapMaximize);
 	hOldBmp=SelectObject( hdcMem, hBmp );
 	GetObjectA (hBmp, sizeof(BITMAP), &bmp);
-
+	
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= GetSystemMetrics(SM_CYCAPTION) + 1;
 	
 	BitBlt( hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2,
 		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
+	
+	if(bGrayed)
+	    NC_DrawGrayButton(hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2 + 2,
+			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
+	    
+	
 	SelectObject (hdcMem, hOldBmp);
 	DeleteDC( hdcMem );
     }
@@ -1154,9 +1190,12 @@ static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
  *   NC_DrawMinButton95(
  *      HWND32  hwnd,
  *      HDC16  hdc,
- *      BOOL32  down )
+ *      BOOL32  down,
+ *      BOOL    bGrayed )
  *
  *   Draws the minimize button for Win95 style windows.
+ *
+ *   If bGrayed is true, then draw a disabled Minimize button
  *
  *   Bugs
  *        Many.  Spacing is still incorrect.  Should scale the image with the
@@ -1168,7 +1207,7 @@ static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
  *
  *****************************************************************************/
 
-static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down )
+static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
     HDC hdcMem;
@@ -1190,15 +1229,21 @@ static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down )
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= GetSystemMetrics(SM_CYCAPTION) + 1;
 
-	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+	/* In win 95 there is always a Maximize box when there is a Minimize one */
+	if ((wndPtr->dwStyle & WS_MAXIMIZEBOX) || (wndPtr->dwStyle & WS_MINIMIZEBOX)) 
 	    rect.right += -1 - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2;
 
 	BitBlt( hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2,
 		  rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2,
 		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY );
 
+	if(bGrayed)
+	    NC_DrawGrayButton(hdc, rect.right - (GetSystemMetrics(SM_CXSIZE) + bmp.bmWidth) / 2 + 2,
+			      rect.top + (GetSystemMetrics(SM_CYCAPTION) - 1 - bmp.bmHeight) / 2 + 2);
+			  
+	
        SelectObject (hdcMem, hOldBmp);
-	DeleteDC( hdcMem );
+       DeleteDC( hdcMem );
     }
     WIN_ReleaseWndPtr(wndPtr);
 }
@@ -1486,6 +1531,7 @@ static void  NC_DrawCaption95(
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
     char    buffer[256];
     HPEN  hPrevPen;
+    HMENU hSysMenu;
 
     if (wndPtr->flags & WIN_MANAGED)
     {
@@ -1514,22 +1560,36 @@ static void  NC_DrawCaption95(
 	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
 	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
     }
-
+    
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
 	if (NC_DrawSysButton95 (hwnd, hdc, FALSE))
 	    r.left += GetSystemMetrics(SM_CYCAPTION) - 1;
     }
-    if (style & WS_SYSMENU) {
-	NC_DrawCloseButton95 (hwnd, hdc, FALSE);
+
+    if (style & WS_SYSMENU) 
+    {
+	UINT state;
+
+	/* Go get the sysmenu */
+	hSysMenu = GetSystemMenu(hwnd, FALSE);
+	state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+
+	/* Draw a grayed close button if disabled and a normal one if SC_CLOSE is not there */
+	NC_DrawCloseButton95 (hwnd, hdc, FALSE, 
+			      ((((state & MF_DISABLED) || (state & MF_GRAYED))) && (state != 0xFFFFFFFF)));
 	r.right -= GetSystemMetrics(SM_CYCAPTION) - 1;
-    }
-    if (style & WS_MAXIMIZEBOX) {
-	NC_DrawMaxButton95( hwnd, hdc, FALSE );
-	r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
-    }
-    if (style & WS_MINIMIZEBOX) {
-	NC_DrawMinButton95( hwnd, hdc, FALSE );
-	r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+
+	if ((style & WS_MAXIMIZEBOX) || (style & WS_MINIMIZEBOX))
+	{
+	    /* In win95 the two buttons are always there */
+	    /* But if the menu item is not in the menu they're disabled*/
+
+	    NC_DrawMaxButton95( hwnd, hdc, FALSE, (!(style & WS_MAXIMIZEBOX)));
+	    r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+	    
+	    NC_DrawMinButton95( hwnd, hdc, FALSE,  (!(style & WS_MINIMIZEBOX)));
+	    r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+	}
     }
 
     if (GetWindowTextA( hwnd, buffer, sizeof(buffer) )) {
@@ -2281,6 +2341,83 @@ END:
 
 
 /***********************************************************************
+ *           NC_TrackMinMaxBox95
+ *
+ * Track a mouse button press on the minimize or maximize box.
+ *
+ * The big difference between 3.1 and 95 is the disabled button state.
+ * In win95 the system button can be disabled, so it can ignore the mouse
+ * event.
+ *
+ */
+static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
+{
+    MSG msg;
+    POINT16 pt16;
+    HDC hdc = GetWindowDC( hwnd );
+    BOOL pressed = TRUE;
+    UINT state;
+    DWORD wndStyle = GetWindowLongA( hwnd, GWL_STYLE);
+    HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
+
+    void  (*paintButton)(HWND, HDC16, BOOL, BOOL);
+
+    if (wParam == HTMINBUTTON)
+    {
+	/* If the style is not present, do nothing */
+	if (!(wndStyle & WS_MINIMIZEBOX))
+	    return;
+
+	/* Check if the sysmenu item for minimize is there  */
+	state = GetMenuState(hSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
+	
+	paintButton = &NC_DrawMinButton95;
+    }
+    else
+    {
+	/* If the style is not present, do nothing */
+	if (!(wndStyle & WS_MAXIMIZEBOX))
+	    return;
+
+	/* Check if the sysmenu item for maximize is there  */
+	state = GetMenuState(hSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
+	
+	paintButton = &NC_DrawMaxButton95;
+    }
+
+    SetCapture( hwnd );
+
+    (*paintButton)( hwnd, hdc, TRUE, FALSE);
+
+    do
+    {
+	BOOL oldstate = pressed;
+        MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
+        CONV_POINT32TO16( &msg.pt, &pt16 );
+
+	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
+	if (pressed != oldstate)
+	   (*paintButton)( hwnd, hdc, pressed, FALSE);
+    } while (msg.message != WM_LBUTTONUP);
+
+    (*paintButton)( hwnd, hdc, FALSE, FALSE);
+
+    ReleaseCapture();
+    ReleaseDC( hwnd, hdc );
+
+    /* If the item minimize or maximize of the sysmenu are not there */
+    /* or if the style is not present, do nothing */
+    if ((!pressed) || (state == 0xFFFFFFFF))
+	return;
+
+    if (wParam == HTMINBUTTON) 
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&pt16 );
+    else
+	SendMessage16( hwnd, WM_SYSCOMMAND, 
+		  IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
+}
+
+/***********************************************************************
  *           NC_TrackMinMaxBox
  *
  * Track a mouse button press on the minimize or maximize box.
@@ -2294,14 +2431,13 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     void  (*paintButton)(HWND, HDC16, BOOL);
 
     SetCapture( hwnd );
-    if (wParam == HTMINBUTTON)
-	paintButton =
-	    (TWEAK_WineLook == WIN31_LOOK) ? &NC_DrawMinButton : &NC_DrawMinButton95;
-    else
-	paintButton =
-	    (TWEAK_WineLook == WIN31_LOOK) ? &NC_DrawMaxButton : &NC_DrawMaxButton95;
 
-    (*paintButton)( hwnd, hdc, TRUE );
+    if (wParam == HTMINBUTTON)
+	paintButton = &NC_DrawMinButton;
+    else
+	paintButton = &NC_DrawMaxButton;
+
+    (*paintButton)( hwnd, hdc, TRUE);
 
     do
     {
@@ -2311,13 +2447,14 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 
 	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
 	if (pressed != oldstate)
-	   (*paintButton)( hwnd, hdc, pressed );
+	   (*paintButton)( hwnd, hdc, pressed);
     } while (msg.message != WM_LBUTTONUP);
 
-    (*paintButton)( hwnd, hdc, FALSE );
+    (*paintButton)( hwnd, hdc, FALSE);
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
+
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
@@ -2338,12 +2475,25 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 {
     MSG msg;
     POINT16 pt16;
-    HDC hdc = GetWindowDC( hwnd );
+    HDC hdc;
     BOOL pressed = TRUE;
+    HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
+    UINT state;
+
+    if(hSysMenu == 0)
+	return;
+
+    state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+	    
+    /* If the item close of the sysmenu is disabled or not there do nothing */
+    if((state & MF_DISABLED) || (state & MF_GRAYED) || (state == 0xFFFFFFFF))
+	return;
+
+    hdc = GetWindowDC( hwnd );
 
     SetCapture( hwnd );
 
-    NC_DrawCloseButton95 (hwnd, hdc, TRUE);
+    NC_DrawCloseButton95 (hwnd, hdc, TRUE, FALSE);
 
     do
     {
@@ -2353,10 +2503,10 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 
 	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
 	if (pressed != oldstate)
-	   NC_DrawCloseButton95 (hwnd, hdc, pressed);
+	   NC_DrawCloseButton95 (hwnd, hdc, pressed, FALSE);
     } while (msg.message != WM_LBUTTONUP);
 
-    NC_DrawCloseButton95 (hwnd, hdc, FALSE);
+    NC_DrawCloseButton95 (hwnd, hdc, FALSE, FALSE);
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
@@ -2472,14 +2622,17 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTMINBUTTON:
     case HTMAXBUTTON:
-	NC_TrackMinMaxBox( hwnd, wParam );
+	if (TWEAK_WineLook == WIN31_LOOK)
+	    NC_TrackMinMaxBox( hwnd, wParam );
+	else
+	    NC_TrackMinMaxBox95( hwnd, wParam );	    
 	break;
 
     case HTCLOSE:
 	if (TWEAK_WineLook >= WIN95_LOOK)
 	    NC_TrackCloseButton95 (hwnd, wParam);
 	break;
-
+	
     case HTLEFT:
     case HTRIGHT:
     case HTTOP:
@@ -2621,4 +2774,37 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
     }
     WIN_ReleaseWndPtr(wndPtr);
     return 0;
+}
+
+/*************************************************************
+*  NC_DrawGrayButton
+*
+* Stub for the grayed button of the caption
+*
+*************************************************************/
+
+BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
+{
+    HBITMAP hMaskBmp;
+    HDC hdcMask = CreateCompatibleDC (0);
+    HBRUSH hOldBrush;
+
+    hMaskBmp = CreateBitmap (12, 10, 1, 1, lpGrayMask);
+    
+    if(hMaskBmp == 0)
+	return FALSE;
+    
+    SelectObject (hdcMask, hMaskBmp);
+    
+    /* Draw the grayed bitmap using the mask */
+    hOldBrush = SelectObject (hdc, RGB(128, 128, 128));
+    BitBlt (hdc, x, y, 12, 10,
+	    hdcMask, 0, 0, 0xB8074A);
+    
+    /* Clean up */
+    SelectObject (hdc, hOldBrush);
+    DeleteObject(hMaskBmp);
+    DeleteDC (hdcMask);
+    
+    return TRUE;
 }
