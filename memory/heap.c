@@ -1652,24 +1652,6 @@ LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size )
 
 
 /***********************************************************************
- *           HEAP_xrealloc
- *
- * Same as HeapReAlloc(), but die on failure.
- */
-LPVOID HEAP_xrealloc( HANDLE heap, DWORD flags, LPVOID lpMem, DWORD size )
-{
-    LPVOID p = HeapReAlloc( heap, flags, lpMem, size );
-    if (!p)
-    {
-        MESSAGE("Virtual memory exhausted.\n" );
-        exit(1);
-    }
-    SET_EIP(p);
-    return p;
-}
-
-
-/***********************************************************************
  *           HEAP_strdupA
  */
 LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )

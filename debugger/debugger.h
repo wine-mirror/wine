@@ -451,8 +451,8 @@ extern char*	DEBUG_XStrDup(const char *str);
    work, etc... if someone could make optimized routines so it wouldn't
    take so long to load, it could be made default) */
 #include "heap.h"
-#define DBG_alloc(x) HEAP_xalloc(dbg_heap,0,x)
-#define DBG_realloc(x,y) HEAP_xrealloc(dbg_heap,0,x,y)
+#define DBG_alloc(x) HeapAlloc(dbg_heap,0,x)
+#define DBG_realloc(x,y) HeapRealloc(dbg_heap,0,x,y)
 #define DBG_free(x) HeapFree(dbg_heap,0,x)
 #define DBG_strdup(x) HEAP_strdupA(dbg_heap,0,x)
 #define DBG_need_heap

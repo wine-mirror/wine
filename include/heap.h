@@ -17,7 +17,6 @@ extern HANDLE SegptrHeap;
 extern int HEAP_IsInsideHeap( HANDLE heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
 extern LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size );
-extern LPVOID HEAP_xrealloc( HANDLE heap, DWORD flags, LPVOID lpMem, DWORD size );
 extern LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str );
 extern LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str );
 extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
