@@ -297,9 +297,11 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
         {
             retvalue = MAKELONG((INT16)SYSQ_MSG_SKIP, hittest);
             goto END;
-    }
+        }
     }
 
+    if (message >= WM_NCMOUSEFIRST && message <= WM_NCMOUSELAST)
+        message += WM_MOUSEFIRST - WM_NCMOUSEFIRST;
 
     if ((hittest == HTERROR) || (hittest == HTNOWHERE)) 
 	eatMsg = sendSC = 1;
@@ -314,7 +316,7 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
 	     * notification message is still WM_L/M/RBUTTONDOWN.
 	     */
 
-            MSG_SendParentNotify( pWnd, msg->message & 0xffff, 0, MAKELPARAM(screen_pt.x, screen_pt.y) );
+            MSG_SendParentNotify( pWnd, message, 0, MAKELPARAM(screen_pt.x, screen_pt.y) );
 
             /* Activate the window if needed */
 
@@ -340,15 +342,10 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
 
     if (sendSC)
     {
-        UINT uSCMessage = message;
-
         /* Windows sends the normal mouse message as the message parameter
            in the WM_SETCURSOR message even if it's non-client mouse message */
-
-        if (uSCMessage >= WM_NCMOUSEFIRST && uSCMessage <= WM_NCMOUSELAST)
-	        uSCMessage += WM_MOUSEFIRST - WM_NCMOUSEFIRST;
         SendMessageA( hWnd, WM_SETCURSOR, hWnd,
-                       MAKELONG( hittest, uSCMessage));
+                       MAKELONG( hittest, message ));
     }
     if (eatMsg)
     {
