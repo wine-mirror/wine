@@ -234,7 +234,7 @@ htmlpages:
 
 clean::
 	for i in $(BUILDSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in include; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
+	for i in include include/wine; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
 
 distclean: clean
