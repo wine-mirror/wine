@@ -64,7 +64,7 @@ typedef struct tagCRYPTHASH
  * CRYPTKEY - key objects
  */
 #define RSAENH_MAGIC_KEY           0x73620457u
-#define RSAENH_MAX_KEY_SIZE        24
+#define RSAENH_MAX_KEY_SIZE        48
 #define RSAENH_MAX_BLOCK_SIZE      24
 #define RSAENH_KEYSTATE_IDLE       0
 #define RSAENH_KEYSTATE_ENCRYPTING 1
@@ -125,6 +125,10 @@ typedef struct tagKEYCONTAINER
 #define RSAENH_MAGIC_RSA2        0x32415352
 #define RSAENH_MAGIC_RSA1        0x31415352
 #define RSAENH_PKC_BLOCKTYPE           0x02
+#define RSAENH_SSL3_VERSION_MAJOR         3
+#define RSAENH_SSL3_VERSION_MINOR         0
+#define RSAENH_TLS1_VERSION_MAJOR         3
+#define RSAENH_TLS1_VERSION_MINOR         1
 #define RSAENH_REGKEY "Software\\Wine\\Crypto\\RSA\\%s"
 
 #define RSAENH_MIN(a,b) ((a)<(b)?(a):(b))
@@ -675,6 +679,10 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             
         switch(aiAlgid)
         {
+            case CALG_PCT1_MASTER:
+            case CALG_SSL2_MASTER:
+            case CALG_SSL3_MASTER:
+            case CALG_TLS1_MASTER:
             case CALG_RC4:
                 pCryptKey->dwBlockLen = 0;
                 pCryptKey->dwMode = 0;
@@ -1398,6 +1406,11 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
+    if (GET_ALG_CLASS(pCryptKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT) {
+        SetLastError(NTE_BAD_TYPE);
+        return FALSE;
+    }    
+    
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
         pCryptKey->dwState = RSAENH_KEYSTATE_ENCRYPTING;
 
@@ -1519,6 +1532,11 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
+    if (GET_ALG_CLASS(pCryptKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT) {
+        SetLastError(NTE_BAD_TYPE);
+        return FALSE;
+    }    
+    
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
         pCryptKey->dwState = RSAENH_KEYSTATE_DECRYPTING;
 
@@ -1619,6 +1637,13 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
         return FALSE;
     }
 
+    if (dwFlags & CRYPT_SSL2_FALLBACK) {
+        if (pCryptKey->aiAlgid != CALG_SSL2_MASTER) {
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
+    }
+    
     switch ((BYTE)dwBlobType)
     {
         case SIMPLEBLOB:
@@ -1627,7 +1652,7 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 return FALSE;
             }
 
-            if (GET_ALG_CLASS(pCryptKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT) {
+            if (!(GET_ALG_CLASS(pCryptKey->aiAlgid)&(ALG_CLASS_DATA_ENCRYPT|ALG_CLASS_MSG_ENCRYPT))) {
                 SetLastError(NTE_BAD_KEY); /* FIXME: error code? */
                 return FALSE;
             }
@@ -1652,6 +1677,9 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 pbRawData[1] = RSAENH_PKC_BLOCKTYPE; 
                 for (i=2; i < pPubKey->dwBlockLen - pCryptKey->dwKeyLen - 1; i++) 
                     do gen_rand_impl(&pbRawData[i], 1); while (!pbRawData[i]);
+                if (dwFlags & CRYPT_SSL2_FALLBACK) 
+                    for (i-=8; i < pPubKey->dwBlockLen - pCryptKey->dwKeyLen - 1; i++) 
+                        pbRawData[i] = 0x03;
                 pbRawData[i] = 0x00;
                 for (i=0; i<pCryptKey->dwKeyLen; i++) 
                     pbRawData[pPubKey->dwBlockLen - pCryptKey->dwKeyLen + i] = 
@@ -1929,9 +1957,24 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
         case CALG_DES:
         case CALG_3DES_112:
         case CALG_3DES:
+        case CALG_PCT1_MASTER:
+        case CALG_SSL2_MASTER:
+        case CALG_SSL3_MASTER:
+        case CALG_TLS1_MASTER:
             *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
             if (pCryptKey) {
                 gen_rand_impl(pCryptKey->abKeyValue, RSAENH_MAX_KEY_SIZE);
+                switch (Algid) {
+                    case CALG_SSL3_MASTER:
+                        pCryptKey->abKeyValue[0] = RSAENH_SSL3_VERSION_MAJOR;
+                        pCryptKey->abKeyValue[1] = RSAENH_SSL3_VERSION_MINOR;
+                        break;
+
+                    case CALG_TLS1_MASTER:
+                        pCryptKey->abKeyValue[0] = RSAENH_TLS1_VERSION_MAJOR;
+                        pCryptKey->abKeyValue[1] = RSAENH_TLS1_VERSION_MINOR;
+                        break;
+                }
                 setup_key(pCryptKey);
             }
             break;
@@ -2414,6 +2457,12 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
         return FALSE;
     }
 
+    if (GET_ALG_CLASS(Algid) != ALG_CLASS_DATA_ENCRYPT) 
+    {
+        SetLastError(NTE_BAD_KEY);
+        return FALSE;
+    }
+    
     *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
 
