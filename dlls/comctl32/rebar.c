@@ -682,7 +682,7 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
         else
 	  dobreak = (x + cx + cxsep > adjcx);
 	/* This is the check for whether we need to start a new row */
-	if ( (lpBand->fStyle & RBBS_BREAK) ||
+	if ( ( (lpBand->fStyle & RBBS_BREAK) && (i != 0) ) ||
 	     ( ((dwStyle & CCS_VERT) ? (y != 0) : (x != 0)) && dobreak)) {
 	  TRACE("Spliting to new row %d on band %u\n", row+1, i);
 
