@@ -262,11 +262,10 @@ static void test__lcreat( void )
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 
     filehandle=_lcreat (slashname, 0); /* illegal name */
-    if (HFILE_ERROR != filehandle || GetLastError() != ERROR_INVALID_NAME)
+    if (HFILE_ERROR != filehandle || (GetLastError() != ERROR_INVALID_NAME && GetLastError() != ERROR_PATH_NOT_FOUND))
     {
-
       todo_wine {
-        ok (0, "creating file \"%s\" should fail with error 123, (err=%ld)", slashname, GetLastError ());
+        ok (0, "creating file \"%s\" should fail with error 123 or 3, (err=%ld)", slashname, GetLastError ());
       }
 
       _lclose(filehandle);
