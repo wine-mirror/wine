@@ -21,33 +21,12 @@
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
 #include <windows.h>
 #include <commctrl.h>
-#include <stdlib.h>
+#include <shellapi.h>
 #include <tchar.h>
-#include <process.h>
-#include <stdio.h>
 
 #include "main.h"
 
-static INT_PTR CALLBACK AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    TCHAR   strLicense[0x1000];
-
-    switch (message) {
-    case WM_INITDIALOG:
-        LoadString(hInst, IDS_LICENSE, strLicense, COUNT_OF(strLicense));
-        SetDlgItemText(hDlg, IDC_LICENSE_EDIT, strLicense);
-        return TRUE;
-    case WM_COMMAND:
-        if ((LOWORD(wParam) == IDOK) || (LOWORD(wParam) == IDCANCEL)) {
-            EndDialog(hDlg, LOWORD(wParam));
-            return TRUE;
-        }
-        break;
-    }
-    return 0;
-}
-
 void ShowAboutBox(HWND hWnd)
 {
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, AboutDialogWndProc);
+    ShellAbout(hWnd, _T("Registry Explorer"), _T(""), LoadIcon(hInst, MAKEINTRESOURCE(IDI_REGEDIT)));
 }
