@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "November 1, 2000" "Version 0.5.1" "Windows On Unix"
+.TH WINEMAKER 1 "September 27, 2001" "Version 0.5.8" "Windows On Unix"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
 .B "winemaker "
 [
-.IR               "--nobanner " "] [ " "--backup " "| " "--nobackup "
+.IR               "--nobanner " "] [ " "--backup " "| " "--nobackup " "] [ "--nosource-fix "
 ]
 .br
   [
@@ -33,7 +33,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "--generated-files " "] [ " "--nogenerated-files "
+.IR               "--generated-files " "] [ " "--nogenerated-files " "] [ " "--nogenerated-specs "
 ]
 
 .SH DESCRIPTION
@@ -80,6 +80,10 @@ makes changes. This is the default.
 .TP
 .I --nobackup
 Tells winemaker not to backup modified source files.
+.TP
+.I --nosource-fix
+Directs winemaker not to try fixing the source files (e.g. Dos to Unix
+conversion). This prevents complaints if the files are readonly.
 .TP
 .I --lower-all
 Tells winemaker to rename all files and directories to lowercase.
@@ -166,6 +170,11 @@ configure.in file and the configure script. This is the default.
 .TP
 .I --nogenerated-files
 Tells winemaker not to generate any of the above files.
+.TP
+.I --nogenerated-specs
+Tells winemaker not to generate the spec files when generating files.  This is
+particularly useful when using winemaker to generate a build environment and
+you already have a spec file.
 
 .SH EXAMPLES
 .PP
