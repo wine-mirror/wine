@@ -302,9 +302,6 @@
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 
-/* Define if you have the Xxf86dga library version 1 */
-#undef HAVE_LIBXXF86DGA
-
 /* Define if you have the Xxf86dga library version 2 */
 #undef HAVE_LIBXXF86DGA2
 

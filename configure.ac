@@ -316,21 +316,10 @@ then
         if test "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
         then
               AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
-                [ dnl *** If found...
-                  AC_DEFINE(HAVE_LIBXXF86DGA2, 1,
+                [ AC_DEFINE(HAVE_LIBXXF86DGA2, 1,
                             [Define if you have the Xxf86dga library version 2])
                   X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-               ],
-                [ dnl *** If not found, look for XF86DGAQueryExtension()
-                  dnl *** instead (DGA 2.0 not found)...
-                  AC_CHECK_LIB(Xxf86dga, XF86DGAQueryExtension,
-                    [ AC_DEFINE(HAVE_LIBXXF86DGA, 1,
-                                [Define if you have the Xxf86dga library version 1])
-                      X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-                    ],,
-                    $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                  )
-                ],
+                ],,
                 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
