@@ -285,6 +285,23 @@ BOOL				DEBUG_Attach(DWORD pid, BOOL cofe)
     return TRUE;
 }
 
+BOOL				DEBUG_Detach(void)
+{
+    /* remove all set breakpoints in debuggee code */
+    DEBUG_SetBreakpoints(FALSE);
+    /* needed for single stepping (ugly). 
+     * should this be handled inside the server ??? */
+#ifdef __i386__
+    DEBUG_context.EFlags &= ~STEP_FLAG;
+#endif
+    SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
+    DebugActiveProcessStop(DEBUG_CurrProcess->pid);
+    DEBUG_DelProcess(DEBUG_CurrProcess);
+    DEBUG_CurrProcess = NULL;
+    /* FIXME: should zero out the symbol table too */
+    return TRUE;
+}
+
 static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 {
     DBG_ADDR	addr;
@@ -387,10 +404,10 @@ static  DWORD	DEBUG_ExceptionEpilog(void)
     return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE;
 }
 
-static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force, LPDWORD cont)
+static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force, LPDWORD cont)
 {
     BOOL             is_debug = FALSE;
-    BOOL             ret = TRUE;
+    enum exit_mode   ret = EXIT_CONT;
     THREADNAME_INFO *pThreadName;
     DBG_THREAD      *pThread;
 
@@ -415,14 +432,14 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf (DBG_CHN_MESG,
                           "Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
                           pThread->tid, pThread->name);
-        return TRUE;
+        return EXIT_CONT;
     }
 
     if (first_chance && !is_debug && !force && !DBG_IVAR(BreakOnFirstChance))
     {
         /* pass exception to program except for debug exceptions */
         *cont = is_debug ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED;
-        return TRUE;
+        return EXIT_CONT;
     }
 
     if (!is_debug)
@@ -480,7 +497,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
 	    {
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
-		return TRUE;
+		return EXIT_CONT;
 	    }
             break;
         case EXCEPTION_WINE_STUB:
@@ -523,12 +540,12 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     if (automatic_mode)
     {
         DEBUG_ExceptionProlog(is_debug, FALSE, rec->ExceptionCode);
-        return FALSE;  /* terminate execution */
+        return EXIT_QUIT;  /* terminate execution */
     }
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
 	DEBUG_interactiveP = TRUE;
-	while ((ret = DEBUG_Parser())) {
+	while ((ret = DEBUG_Parser()) == EXIT_CONT) {
 	    if (DEBUG_ValidateRegisters()) {
 		if (DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
 		    break;
@@ -556,13 +573,13 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 {
     char		buffer[256];
-    BOOL		ret;
+    enum exit_mode      ret;
 
     DEBUG_CurrPid = de->dwProcessId;
     DEBUG_CurrTid = de->dwThreadId;
 
     __TRY {
-	ret = TRUE;
+	ret = EXIT_CONT;
 	*cont = 0L;
 	
 	if ((DEBUG_CurrProcess = DEBUG_GetProcess(de->dwProcessId)) != NULL)
@@ -799,7 +816,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	
     } __EXCEPT(wine_dbg) {
 	*cont = 0;
-	ret = TRUE;
+	ret = EXIT_CONT;
     }
     __ENDTRY;
     return ret;
@@ -809,20 +826,29 @@ static	DWORD	DEBUG_MainLoop(void)
 {
     DEBUG_EVENT		de;
     DWORD		cont;
-    BOOL		ret;
+    enum exit_mode      ret = EXIT_CONT;
 
     DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
     
-    for (ret = TRUE; ret; ) {
+    while (ret == EXIT_CONT) 
+    {
 	/* wait until we get at least one loaded process */
-	while (!DEBUG_ProcessList && (ret = DEBUG_Parser()));
-	if (!ret) break;
+	while (!DEBUG_ProcessList && (ret = DEBUG_Parser()) == EXIT_CONT);
+	if (ret != EXIT_CONT) break;
 
-	while (ret && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE)) {
+	while (ret == EXIT_CONT && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE)) {
 	    ret = DEBUG_HandleDebugEvent(&de, &cont);
 	    ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
 	}
-    };
+        if (ret == EXIT_DETACH && DEBUG_Detach())
+        {
+            /* ret = EXIT_CONT; */
+            /* FIXME: as we don't have a simple way to zero out the process symbol table
+             * we simply quit the debugger on detach...
+             */
+            ret = EXIT_QUIT;
+        }
+    }
     
     DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
 
@@ -833,11 +859,11 @@ static DWORD DEBUG_AutoMode(void)
 {
     DEBUG_EVENT de;
     DWORD cont;
-    BOOL ret = TRUE;
+    enum exit_mode ret = EXIT_CONT;
 
     DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
 
-    while (ret && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE))
+    while (ret == EXIT_CONT && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE))
     {
         ret = DEBUG_HandleDebugEvent(&de, &cont);
         ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
@@ -903,6 +929,7 @@ static void DEBUG_InitConsole(void)
 	FreeConsole();
 	AllocConsole();
     }
+
     /* this would be nicer for output */
     c.X = 132;
     c.Y = 500;

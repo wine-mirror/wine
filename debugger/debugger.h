@@ -157,6 +157,10 @@ enum dbg_mode
 };
 
 
+enum exit_mode
+{
+    EXIT_CONT, EXIT_QUIT, EXIT_DETACH
+};
 
 /* Wine extension; Windows doesn't have a name for this code.  This is an
    undocumented exception understood by MS VC debugger, allowing the program
@@ -287,7 +291,7 @@ extern int  DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
 
   /* debugger/dbg.y */
-extern BOOL DEBUG_Parser(void);
+extern enum exit_mode DEBUG_Parser(void);
 extern void DEBUG_Exit( DWORD );
 
   /* debugger/debug.l */
@@ -502,6 +506,7 @@ extern int	DEBUG_Printf(int chn, const char* format, ...);
 #endif
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
 extern BOOL DEBUG_Attach(DWORD pid, BOOL cofe);
+extern BOOL DEBUG_Detach(void);
 extern void DEBUG_Run(const char* args);
 extern DBG_PROCESS* 	DEBUG_GetProcess(DWORD pid);
 extern DBG_THREAD* 	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid);

@@ -1010,7 +1010,8 @@ wine -debug myprog.exe
         <note>
           <title>Note 2</title>
           <para>
-            <command>wineinstall</command> sets up this correctly.
+            <command>wineinstall</command> (available in Wine source)
+	    sets up this correctly.
             However, due to some limitation of the registry installed,
             if a previous Wine installation exists, it's safer to
             remove the whole
@@ -1281,6 +1282,8 @@ quit		exits the debugger
 
 attach N	attach to a W-process (N is its ID). IDs can be
 		obtained using the walk process command
+detach          detach from a W-process. WineDbg will exit (this may
+                be changed later on)
         </screen>
         <screen>
 help		prints some help on the commands
