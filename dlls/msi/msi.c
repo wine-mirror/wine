@@ -476,7 +476,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
      * ok 1, we need to find the msi file for this product.
      *    2, find the source dir for the files
      *    3, do the configure/install.
-          4, cleanupany runonce entry. 
+     *    4, cleanupany runonce entry. 
      */
 
     rc = MsiOpenProductW(szProduct,&handle);
@@ -485,7 +485,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
   
-     sz = strlenW(szInstalled);
+    sz = strlenW(szInstalled);
 
     if (szCommandLine)
         sz += strlenW(szCommandLine);
@@ -501,6 +501,8 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         strcatW(commandline,szInstalled);
 
     rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline);
+
+    msiobj_release( &package->hdr );
 
     HeapFree(GetProcessHeap(),0,commandline);
 end:
