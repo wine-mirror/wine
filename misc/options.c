@@ -330,6 +330,7 @@ void OPTIONS_ParseOptions( char *argv[] )
 
     if (GetEnvironmentVariableA( "WINEOPTIONS", buffer, sizeof(buffer) ) && buffer[0])
         inherit_options( buffer );
+    if (!argv) return;
 
     parse_options( argv + 1 );
 

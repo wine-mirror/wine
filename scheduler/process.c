@@ -316,7 +316,7 @@ static BOOL process_init( char *argv[] )
         return FALSE;
 
     /* Parse command line arguments */
-    if (!info) OPTIONS_ParseOptions( argv );
+    OPTIONS_ParseOptions( info ? argv : NULL );
     app_argc = 0;
     while (argv[app_argc]) app_argc++;
 
