@@ -323,6 +323,11 @@ int wine_dbg_log( int cls, const char *channel, const char *func, const char *fo
     return 1;
 }
 
+const char *wine_dbgstr_a( const char *s )
+{
+    return NULL;
+}
+
 HBITMAP WINAPI CreateDIBitmap(HDC hdc, CONST BITMAPINFOHEADER* bih, DWORD a, CONST void* ptr, CONST BITMAPINFO* bi, UINT c)
 {
     return 0;

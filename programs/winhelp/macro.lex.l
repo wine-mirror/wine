@@ -144,7 +144,7 @@ static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret);
 static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
 {
     int         t;
-    int         idx = 0;
+    int         len = 0, idx = 0;
 
     WINE_TRACE("Checking %s\n", args);
 
@@ -152,6 +152,7 @@ static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
 
     if (*args)
     {
+        len = strlen(args);
         for (;;)
         {
             t = yylex();
@@ -182,11 +183,16 @@ static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
             }
             idx++;
             if (*++args == '\0') break;
-            if (yylex() != ',') {WINE_WARN("missing ,\n");return -1;}
-            if (idx == max) {WINE_FIXME("stack overflow (%d)\n", max);return -1;}
+            t = yylex();
+            if (t == ')') goto CheckArgs_end;
+            if (t != ',') {WINE_WARN("missing ,\n");return -1;}
+            if (idx >= max) {WINE_FIXME("stack overflow (%d)\n", max);return -1;}
         }
     }
     if (yylex() != ')') {WINE_WARN("missing )\n");return -1;}
+
+CheckArgs_end:
+    while (len > idx) pa[--len] = NULL;
     return idx;
 }
 
@@ -201,12 +207,12 @@ static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret)
     void*       pa[2];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
 
-    if (idx == -1) return 0;
-    if (!fn)       return 1;
+    if (idx < 0) return 0;
+    if (!fn)     return 1;
 
     WINE_TRACE("calling with %u pmts\n", idx);
 
-    switch (idx)
+    switch (strlen(args))
     {
     case 0: *ret = (void*)(fn)();          break;
     case 1: *ret = (void*)(fn)(pa[0]);     break;
@@ -226,12 +232,12 @@ static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
     void*       pa[6];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
 
-    if (idx == -1) return 0;
-    if (!fn)       return 1;
+    if (idx < 0) return 0;
+    if (!fn)     return 1;
 
     WINE_TRACE("calling %p with %u pmts\n", fn, idx);
 
-    switch (idx)
+    switch (strlen(args))
     {
     case 0: (fn)();                                     break;
     case 1: (fn)(pa[0]);                                break;
