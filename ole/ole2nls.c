@@ -1898,13 +1898,64 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 			      LPCWSTR format,
 			      LPWSTR date, INT datelen)
 {
-   unsigned short datearr[] = {'1','9','9','4','-','1','-','1',0};
-
-   FIXME("STUB (should call OLE_GetFormatW)\n");
-   lstrcpynW(date, datearr, datelen);
-   return (  datelen < 9) ? datelen : 9;
-
-
+    WCHAR format_buf[40];
+    LPCWSTR thisformat;
+    SYSTEMTIME t;
+    LPSYSTEMTIME thistime;
+    LCID thislocale;
+    INT ret;
+    FILETIME ft;
+    BOOL res;
+    
+    TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
+	  locale,flags,xtime,debugstr_w(format),date,datelen);
+    
+    if (!locale) {
+	locale = LOCALE_SYSTEM_DEFAULT;
+    };
+    
+    if (locale == LOCALE_SYSTEM_DEFAULT) {
+	thislocale = GetSystemDefaultLCID();
+    } else if (locale == LOCALE_USER_DEFAULT) {
+	thislocale = GetUserDefaultLCID();
+    } else {
+	thislocale = locale;
+    };
+    
+    if (xtime == NULL) {
+	GetSystemTime(&t);
+    } else {
+	/* Silently correct wDayOfWeek by transforming to FileTime and back again */
+	res=SystemTimeToFileTime(xtime,&ft);
+	/* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
+	/*FIXME: SystemTimeToFileTime doesn't yet do that check */
+	if(!res) {
+	    SetLastError(ERROR_INVALID_PARAMETER);
+	    return 0;
+	}
+	FileTimeToSystemTime(&ft,&t);
+	
+    };
+    thistime = &t;
+    
+    if (format == NULL) {
+	GetLocaleInfoW(thislocale, ((flags&DATE_LONGDATE)
+				    ? LOCALE_SLONGDATE
+				    : LOCALE_SSHORTDATE),
+		       format_buf, sizeof(format_buf)/sizeof(*format_buf));
+	thisformat = format_buf;
+    } else {
+	thisformat = format;
+    };
+    
+    
+    ret = OLE_GetFormatW(thislocale, flags, 0, thistime, thisformat,
+			 date, datelen);
+    
+    
+    TRACE("GetDateFormatW() returning %d, with data=%s\n",
+	  ret, debugstr_w(date));
+    return ret;
 }
 
 /**************************************************************************
