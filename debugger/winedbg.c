@@ -24,6 +24,8 @@ HANDLE dbg_heap = 0;
 
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
+DWORD		DEBUG_CurrTid;
+DWORD		DEBUG_CurrPid;
 CONTEXT		DEBUG_context;
 
 static DBG_PROCESS* proc = NULL;
@@ -74,8 +76,7 @@ static	BOOL DEBUG_IntVarsRW(int read)
 #undef   INTERNAL_VAR
     }
 
-    if (RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey) &&
-	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
+    if (RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
 	/* since the IVars are not yet setup, DEBUG_Printf doesn't work,
 	 * so don't use it */
 	fprintf(stderr, "Cannot create WineDbg key in registry\n");
@@ -343,6 +344,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
     char		buffer[256];
     BOOL		ret;
     
+    DEBUG_CurrPid = de->dwProcessId;
+    DEBUG_CurrTid = de->dwThreadId;
+
     __TRY {
 	ret = TRUE;
 	*cont = 0L;
@@ -390,8 +394,8 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    break;
 	    
 	case CREATE_THREAD_DEBUG_EVENT:
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread D @%p\n", de->dwProcessId, de->dwThreadId, 
-			 de->u.CreateThread.lpStartAddress);
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread D @%08lx\n", de->dwProcessId, de->dwThreadId, 
+			 (unsigned long)(LPVOID)de->u.CreateThread.lpStartAddress);
 	    
 	    if (DEBUG_CurrProcess == NULL) {
 		DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
@@ -420,10 +424,10 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
                                            de->u.CreateProcessInfo.lpImageName);
 	    
 	    /* FIXME unicode ? de->u.CreateProcessInfo.fUnicode */
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process %s @%p (%ld<%ld>)\n", 
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process %s @%08lx (%ld<%ld>)\n", 
 			 de->dwProcessId, de->dwThreadId, 
 			 buffer,
-			 de->u.CreateProcessInfo.lpStartAddress,
+			 (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress,
 			 de->u.CreateProcessInfo.dwDebugInfoFileOffset,
 			 de->u.CreateProcessInfo.nDebugInfoSize);
 	    
@@ -442,9 +446,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		}
 	    }
 	    
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread I @%p\n", 
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread I @%08lx\n", 
 			 de->dwProcessId, de->dwThreadId, 
-			 de->u.CreateProcessInfo.lpStartAddress);
+			 (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress);
 	    
 	    DEBUG_CurrThread = DEBUG_AddThread(DEBUG_CurrProcess, 	
 					       de->dwThreadId, 
@@ -501,9 +505,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
                                            de->u.LoadDll.lpImageName);
 	    
 	    /* FIXME unicode: de->u.LoadDll.fUnicode */
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: loads DLL %s @%p (%ld<%ld>)\n", 
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n", 
 			 de->dwProcessId, de->dwThreadId, 
-			 buffer, de->u.LoadDll.lpBaseOfDll,
+			 buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
 			 de->u.LoadDll.dwDebugInfoFileOffset,
 			 de->u.LoadDll.nDebugInfoSize);
 	    CharUpper(buffer);
@@ -511,8 +515,8 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    break;
 	    
 	case UNLOAD_DLL_DEBUG_EVENT:
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: unload DLL @%p\n", de->dwProcessId, de->dwThreadId, 
-			 de->u.UnloadDll.lpBaseOfDll);
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: unload DLL @%08lx\n", de->dwProcessId, de->dwThreadId, 
+			 (unsigned long)de->u.UnloadDll.lpBaseOfDll);
 	    break;
 	    
 	case OUTPUT_DEBUG_STRING_EVENT:
@@ -614,7 +618,25 @@ int DEBUG_main(int argc, char** argv)
 	    pid = 0;
 	}
     }
+    if (argc == 1) {
+	LPSTR	org, ptr;
 
+	DEBUG_Printf(DBG_CHN_MESG, "\n");
+	DEBUG_WalkProcess();
+	pid = strtol(org = readline("Enter pid to debug: "), &ptr, 0);
+	if (pid && ptr && ptr != org && *ptr == '\0') {
+	    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) goto leave;
+
+	    if (!DebugActiveProcess(pid)) {
+		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
+			     pid, GetLastError());
+		goto leave;
+	    }
+	} else {
+	    pid = 0;
+	}
+    }
+	
     if (pid == 0) {
 	PROCESS_INFORMATION	info;
 	STARTUPINFOA		startup;

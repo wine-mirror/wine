@@ -273,8 +273,8 @@ void DEBUG_BackTrace(BOOL noisy)
 
     if (is16) {
         if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
-				     (STACK32FRAME*)next_switch );
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+				     (unsigned long)(STACK32FRAME*)next_switch );
 	    return;
 	}
 	cur_switch = (DWORD)frame32.frame16;
@@ -286,7 +286,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	p = DEBUG_ToLinear(&tmp);
 	
 	if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", (STACK16FRAME*)p );
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+				     (unsigned long)(STACK16FRAME*)p );
 	    return;
 	}
 	cur_switch = (DWORD)frame16.frame32;
@@ -306,7 +307,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	   if (is16) {
 	      
 	       if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+					   (unsigned long)(STACK32FRAME*)next_switch );
 		  return;
 	       }
 
@@ -324,8 +326,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	       p = DEBUG_ToLinear(&tmp);
 	       
 	       if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
-					    (STACK16FRAME*)p );
+		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+					    (unsigned long)(STACK16FRAME*)p );
 		   return;
 	       }
 	       cur_switch = (DWORD)frame16.frame32;
@@ -339,8 +341,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	      p = DEBUG_ToLinear(&tmp);
 	      
 	      if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n",
-					   (STACK16FRAME*)p );
+		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
+					   (unsigned long)(STACK16FRAME*)p );
 		  return;
 	      }
 	      
@@ -354,8 +356,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	      
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
-					  (STACK32FRAME*)next_switch );
+		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+					  (unsigned long)(STACK32FRAME*)next_switch );
 		 return;
 	      }
 	      cur_switch = (DWORD)frame32.frame16;

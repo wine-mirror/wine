@@ -177,6 +177,8 @@ typedef struct tagDBG_PROCESS {
 
 extern	DBG_PROCESS*	DEBUG_CurrProcess;
 extern	DBG_THREAD*	DEBUG_CurrThread;
+extern	DWORD		DEBUG_CurrTid;
+extern	DWORD		DEBUG_CurrPid;
 extern  CONTEXT		DEBUG_context;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
@@ -434,7 +436,11 @@ extern void DEBUG_Disassemble( const DBG_VALUE *, const DBG_VALUE*, int offset )
 #define DBG_CHN_FIXME	8
 #define DBG_CHN_TRACE	16
 extern void	DEBUG_Output(int chn, const char* buffer, int len);
+#ifdef __GNUC__
+extern int	DEBUG_Printf(int chn, const char* format, ...) __attribute__((format (printf,2,3)));           
+#else
 extern int	DEBUG_Printf(int chn, const char* format, ...);
+#endif
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
 
   /* Choose your allocator! */

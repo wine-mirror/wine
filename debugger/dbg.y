@@ -451,7 +451,7 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
             DEBUG_Printf( DBG_CHN_MESG, " in 16-bit code (%04x:%04lx).\n",
 			  (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
 #else
-        DEBUG_Printf( DBG_CHN_MESG, " (%p).\n", GET_IP(&DEBUG_context) );
+        DEBUG_Printf( DBG_CHN_MESG, " (0x%08lx).\n", GET_IP(&DEBUG_context) );
 #endif
     }
 

@@ -444,14 +444,17 @@ void DEBUG_WalkProcess(void)
     {
         PROCESSENTRY32 entry;
         DWORD current = DEBUG_CurrProcess ? DEBUG_CurrProcess->pid : 0;
-        BOOL ok = Process32First( snap, &entry );
+        BOOL ok;
+
+		  entry.dwSize = sizeof(entry);
+		  ok = Process32First( snap, &entry );
 
         DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %-8.8s %s\n",
                      "pid", "threads", "parent", "exe" );
         while (ok)
         {
             if (entry.th32ProcessID != GetCurrentProcessId())
-                DEBUG_Printf(DBG_CHN_MESG, "%08lx %8d %08lx '%s'%s\n",
+                DEBUG_Printf(DBG_CHN_MESG, "%08lx %8ld %08lx '%s'%s\n",
                              entry.th32ProcessID, entry.cntThreads,
                              entry.th32ParentProcessID, entry.szExeFile,
                              (entry.th32ProcessID == current) ? " <==" : "" );
@@ -468,7 +471,10 @@ void DEBUG_WalkThreads(void)
     {
         THREADENTRY32 entry;
         DWORD current = DEBUG_CurrThread ? DEBUG_CurrThread->tid : 0;
-        BOOL ok = Thread32First( snap, &entry );
+        BOOL ok;
+
+		  entry.dwSize = sizeof(entry);
+		  ok = Thread32First( snap, &entry );
 
         DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %s\n",
                      "tid", "process", "prio" );

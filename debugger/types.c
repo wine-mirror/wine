@@ -933,12 +933,12 @@ DEBUG_DumpTypes(void)
 	  switch(dt->type)
 	    {
 	    case DT_BASIC:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - BASIC(%s)\n",
-		      dt, name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BASIC(%s)\n",
+			   (unsigned long)dt, name);
 	      break;
 	    case DT_POINTER:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - POINTER(%s)(%p)\n",
-		      dt, name, dt->un.pointer.pointsto);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - POINTER(%s)(%08lx)\n",
+			   (unsigned long)dt, name, (unsigned long)dt->un.pointer.pointsto);
 	      break;
 	    case DT_STRUCT:
 	      member_name = "none";
@@ -952,22 +952,24 @@ DEBUG_DumpTypes(void)
 		      nm++;
 		    }
 		}
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - STRUCT(%s) %d %d %s\n", dt, name,
-			   dt->un.structure.size, nm, member_name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - STRUCT(%s) %d %d %s\n", 
+			   (unsigned long)dt, name, dt->un.structure.size, nm, member_name);
 	      break;
 	    case DT_ARRAY:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - ARRAY(%s)(%p)\n",
-			   dt, name, dt->un.array.basictype);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ARRAY(%s)(%08lx)\n",
+			   (unsigned long)dt, name, (unsigned long)dt->un.array.basictype);
 	      break;
 	    case DT_ENUM:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - ENUM(%s)\n", dt, name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ENUM(%s)\n", 
+			   (unsigned long)dt, name);
 	      break;
 	    case DT_BITFIELD:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - BITFIELD(%s)\n", dt, name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BITFIELD(%s)\n", 
+			   (unsigned long)dt, name);
 	      break;
 	    case DT_FUNC:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - FUNC(%s)(%p)\n",
-			   dt, name, dt->un.funct.rettype);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - FUNC(%s)(%08lx)\n",
+			   (unsigned long)dt, name, (unsigned long)dt->un.funct.rettype);
 	      break;
 	    case DT_CONST:
 	    case DT_TYPEDEF:

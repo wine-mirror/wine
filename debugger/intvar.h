@@ -18,6 +18,10 @@ INTERNAL_VAR(UseXTerm,			TRUE,		NULL,  			DEBUG_TypeIntConst)
    /* debugging debugger */
 INTERNAL_VAR(ExtDbgOnInvalidAddress,	FALSE,		NULL,  			DEBUG_TypeIntConst)
 
+   /* current process/thread */
+INTERNAL_VAR(ThreadId,			FALSE,		&DEBUG_CurrTid,		DEBUG_TypeIntConst)
+INTERNAL_VAR(ProcessId,			FALSE,		&DEBUG_CurrPid,		DEBUG_TypeIntConst)
+
    /* context manipulation */
 #ifdef __i386__
 /* FIXME: 16 bit registers use imply that CPU is little endian, which is

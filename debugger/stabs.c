@@ -599,7 +599,8 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	    } 
 	  else 
 	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %p %p (%s)\n", *dt, *dt2, ptr);
+	      DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n", 
+			   (unsigned long)*dt, (unsigned long)*dt2, ptr);
 	    }
 	  if( *tc == '\0' )
 	    *c = '\0';
@@ -1229,7 +1230,7 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
   if (DEBUG_FindModuleByName(filename, DM_TYPE_ELF))
     goto leave;
 
-  DEBUG_Printf(DBG_CHN_MESG, "Loading stabs debug symbols from %s (0x%08lx)\n", 
+  DEBUG_Printf(DBG_CHN_MESG, "Loading stabs debug symbols from %s (0x%08x)\n", 
 	       filename, load_offset);
 
   /*
@@ -1404,7 +1405,7 @@ DEBUG_ReadExecutableDbgInfo(const char* exe_name)
     DBG_VALUE	value;
 
     DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
-		 dbg_hdr.r_brk);
+		 (unsigned long)dbg_hdr.r_brk);
 
     DEBUG_SetBreakpoints(FALSE);
     value.type = NULL;
