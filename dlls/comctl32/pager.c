@@ -59,7 +59,7 @@ typedef struct
     INT    direction;  /* direction of the scroll, (e.g. PGF_SCROLLUP) */
 } PAGER_INFO;
 
-#define PAGER_GetInfoPtr(hwnd) ((PAGER_INFO *)GetWindowLongA(hwnd, 0))
+#define PAGER_GetInfoPtr(hwnd) ((PAGER_INFO *)GetWindowLongPtrW(hwnd, 0))
 #define PAGER_IsHorizontal(hwnd) ((GetWindowLongA (hwnd, GWL_STYLE) & PGS_HORZ))
 
 #define MIN_ARROW_WIDTH  8
@@ -330,7 +330,7 @@ PAGER_CalcSize (HWND hwnd, INT* size, BOOL getWidth)
     NMPGCALCSIZE nmpgcs;
     ZeroMemory (&nmpgcs, sizeof (NMPGCALCSIZE));
     nmpgcs.hdr.hwndFrom = hwnd;
-    nmpgcs.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+    nmpgcs.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
     nmpgcs.hdr.code = PGN_CALCSIZE;
     nmpgcs.dwFlag = getWidth ? PGF_CALCWIDTH : PGF_CALCHEIGHT;
     nmpgcs.iWidth = getWidth ? *size : 0;
@@ -777,7 +777,7 @@ PAGER_Scroll(HWND hwnd, INT dir)
     {
         ZeroMemory (&nmpgScroll, sizeof (NMPGSCROLL));
         nmpgScroll.hdr.hwndFrom = hwnd;
-        nmpgScroll.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+        nmpgScroll.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
         nmpgScroll.hdr.code = PGN_SCROLL;
 
         GetWindowRect(hwnd, &rcWnd);
@@ -841,7 +841,7 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* allocate memory for info structure */
     infoPtr = (PAGER_INFO *)Alloc (sizeof(PAGER_INFO));
-    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
+    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* set default settings */
     infoPtr->hwndChild = NULL;
@@ -882,7 +882,7 @@ PAGER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     /* free pager info data */
     Free (infoPtr);
-    SetWindowLongA (hwnd, 0, 0);
+    SetWindowLongPtrW (hwnd, 0, 0);
     return 0;
 }
 
@@ -1178,7 +1178,7 @@ PAGER_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
         NMHDR nmhdr;
         ZeroMemory (&nmhdr, sizeof (NMHDR));
         nmhdr.hwndFrom = hwnd;
-        nmhdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+        nmhdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
         nmhdr.code = NM_RELEASEDCAPTURE;
         SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
                         (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
@@ -1268,7 +1268,7 @@ PAGER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		NMHDR nmhdr;
 		ZeroMemory (&nmhdr, sizeof (NMHDR));
 		nmhdr.hwndFrom = hwnd;
-		nmhdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+		nmhdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
 		nmhdr.code = NM_RELEASEDCAPTURE;
 		SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 			      (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);

@@ -1116,11 +1116,11 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
 
       /* set window procedure to our own and save the current one */
       if (IsWindowUnicode (hWnd))
-         stack->origproc = (WNDPROC)SetWindowLongW (hWnd, GWL_WNDPROC,
-                                                   (LONG)COMCTL32_SubclassProc);
+         stack->origproc = (WNDPROC)SetWindowLongPtrW (hWnd, GWLP_WNDPROC,
+                                                   (DWORD_PTR)COMCTL32_SubclassProc);
       else
-         stack->origproc = (WNDPROC)SetWindowLongA (hWnd, GWL_WNDPROC,
-                                                   (LONG)COMCTL32_SubclassProc);
+         stack->origproc = (WNDPROC)SetWindowLongPtrA (hWnd, GWLP_WNDPROC,
+                                                   (DWORD_PTR)COMCTL32_SubclassProc);
    }
    else {
       /* Check to see if we have called this function with the same uIDSubClass
@@ -1140,9 +1140,9 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    if (!proc) {
       ERR ("Failed to allocate subclass entry in stack\n");
       if (IsWindowUnicode (hWnd))
-         SetWindowLongW (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
-         SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       HeapFree (GetProcessHeap (), 0, stack);
       RemovePropA( hWnd, COMCTL32_aSubclass );
       return FALSE;
@@ -1255,9 +1255,9 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the origional window procedure */
       if (IsWindowUnicode (hWnd))
-         SetWindowLongW (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
-         SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       HeapFree (GetProcessHeap (), 0, stack);
       RemovePropA( hWnd, COMCTL32_aSubclass );
    }
@@ -1297,9 +1297,9 @@ LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the origional window procedure */
       if (IsWindowUnicode (hWnd))
-         SetWindowLongW (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
-         SetWindowLongA (hWnd, GWL_WNDPROC, (LONG)stack->origproc);
+         SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       HeapFree (GetProcessHeap (), 0, stack);
       RemovePropA( hWnd, COMCTL32_aSubclass );
    }
@@ -1387,12 +1387,12 @@ COMCTL32_CreateToolTip(HWND hwndOwner)
         /* true owner can be different if hwndOwner is a child window */
         HWND hwndTrueOwner = GetWindow(hwndToolTip, GW_OWNER);
         nmttc.hdr.hwndFrom = hwndTrueOwner;
-        nmttc.hdr.idFrom = GetWindowLongA(hwndTrueOwner, GWL_ID);
+        nmttc.hdr.idFrom = GetWindowLongPtrW(hwndTrueOwner, GWLP_ID);
 	nmttc.hdr.code = NM_TOOLTIPSCREATED;
 	nmttc.hwndToolTips = hwndToolTip;
 
        SendMessageA(GetParent(hwndTrueOwner), WM_NOTIFY,
-                    (WPARAM)GetWindowLongA(hwndTrueOwner, GWL_ID),
+                    (WPARAM)GetWindowLongPtrW(hwndTrueOwner, GWLP_ID),
 		     (LPARAM)&nmttc);
     }
 

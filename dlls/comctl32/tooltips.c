@@ -129,7 +129,7 @@ typedef struct
 #define ID_TIMERLEAVE  3    /* tool leave timer */
 
 
-#define TOOLTIPS_GetInfoPtr(hWindow) ((TOOLTIPS_INFO *)GetWindowLongA (hWindow, 0))
+#define TOOLTIPS_GetInfoPtr(hWindow) ((TOOLTIPS_INFO *)GetWindowLongPtrW (hWindow, 0))
 
 /* offsets from window edge to start of text */
 #define NORMAL_TEXT_MARGIN 2
@@ -2138,7 +2138,7 @@ TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 
     /* allocate memory for info structure */
     infoPtr = (TOOLTIPS_INFO *)Alloc (sizeof(TOOLTIPS_INFO));
-    SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
+    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */
     infoPtr->bActive = TRUE;
@@ -2201,7 +2201,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free tool tips info data */
     Free (infoPtr);
-    SetWindowLongA(hwnd, 0, 0);
+    SetWindowLongPtrW(hwnd, 0, 0);
     return 0;
 }
 

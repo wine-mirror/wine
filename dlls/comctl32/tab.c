@@ -112,7 +112,7 @@ typedef struct
 #define FLAT_BTN_SPACINGX       8
 #define DEFAULT_TAB_WIDTH       96
 
-#define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongA(hwnd,0))
+#define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongPtrW(hwnd,0))
 
 /******************************************************************************
  * Hot-tracking timer constants
@@ -136,7 +136,7 @@ TAB_SendSimpleNotify (HWND hwnd, UINT code)
     NMHDR nmhdr;
 
     nmhdr.hwndFrom = hwnd;
-    nmhdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
+    nmhdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
     nmhdr.code = code;
 
     return (BOOL) SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
@@ -1648,7 +1648,7 @@ TAB_DrawItemInterior
     /*
      * get the control id
      */
-    id = GetWindowLongA( hwnd, GWL_ID );
+    id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
     /*
      * put together the DRAWITEMSTRUCT
@@ -3130,12 +3130,12 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
       NMTOOLTIPSCREATED nmttc;
 
       nmttc.hdr.hwndFrom = hwnd;
-      nmttc.hdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
+      nmttc.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
       nmttc.hdr.code = NM_TOOLTIPSCREATED;
       nmttc.hwndToolTips = infoPtr->hwndToolTip;
 
       SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
-		    (WPARAM)GetWindowLongA(hwnd, GWL_ID), (LPARAM)&nmttc);
+		    (WPARAM)GetWindowLongPtrW(hwnd, GWLP_ID), (LPARAM)&nmttc);
     }
   }
 

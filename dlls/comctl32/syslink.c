@@ -1223,7 +1223,7 @@ static LRESULT SYSLINK_SendParentNotify (SYSLINK_INFO *infoPtr, UINT code, PDOC_
     NMLINK nml;
 
     nml.hdr.hwndFrom = infoPtr->Self;
-    nml.hdr.idFrom = GetWindowLongW(infoPtr->Self, GWL_ID);
+    nml.hdr.idFrom = GetWindowLongPtrW(infoPtr->Self, GWLP_ID);
     nml.hdr.code = code;
 
     nml.item.mask = 0;
@@ -1465,7 +1465,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     TRACE("hwnd=%p msg=%04x wparam=%x lParam=%lx\n", hwnd, message, wParam, lParam);
 
-    infoPtr = (SYSLINK_INFO *)GetWindowLongW(hwnd, 0);
+    infoPtr = (SYSLINK_INFO *)GetWindowLongPtrW(hwnd, 0);
 
     if (!infoPtr && message != WM_CREATE)
         return DefWindowProcW( hwnd, message, wParam, lParam );
@@ -1618,7 +1618,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         /* allocate memory for info struct */
         infoPtr = (SYSLINK_INFO *)SYSLINK_Alloc (sizeof(SYSLINK_INFO));
         if (!infoPtr) return -1;
-        SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
+        SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
         /* initialize the info struct */
         infoPtr->Self = hwnd;
@@ -1639,7 +1639,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         TRACE("SysLink Ctrl destruction, hwnd=%p\n", hwnd);
         SYSLINK_ClearDoc(infoPtr);
         SYSLINK_Free (infoPtr);
-        SetWindowLongW(hwnd, 0, 0);
+        SetWindowLongPtrW(hwnd, 0, 0);
         return 0;
 
     default:

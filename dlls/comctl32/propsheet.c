@@ -3244,11 +3244,11 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       /*
        * psInfo->hwnd is not being used by WINE code - it exists
        * for compatibility with "real" Windoze. The same about
-       * SetWindowLong - WINE is only using the PropSheetInfoStr
+       * SetWindowLongPtr - WINE is only using the PropSheetInfoStr
        * property.
        */
       psInfo->hwnd = hwnd;
-      SetWindowLongW(hwnd,DWL_USER,(LONG)psInfo);
+      SetWindowLongPtrW(hwnd, DWLP_USER, (DWORD_PTR)psInfo);
 
       /* set up the Next and Back buttons by default */
       PROPSHEET_SetWizButtons(hwnd, PSWIZB_BACK|PSWIZB_NEXT);
@@ -3382,7 +3382,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(pnmh->code == TCN_SELCHANGING)
       {
         BOOL bRet = PROPSHEET_CanSetCurSel(hwnd);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, !bRet);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, !bRet);
         return TRUE;
       }
 
@@ -3398,7 +3398,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (psInfo->activeValid && psInfo->active_page != -1)
         hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, (LONG)hwndPage);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, (DWORD_PTR)hwndPage);
 
       return TRUE;
     }
@@ -3415,7 +3415,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       HWND hwndTabCtrl = GetDlgItem(hwnd, IDC_TABCONTROL);
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, (LONG)hwndTabCtrl);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, (DWORD_PTR)hwndTabCtrl);
 
       return TRUE;
     }
@@ -3433,7 +3433,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                        (HPROPSHEETPAGE)lParam);
       }
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
 
       return TRUE;
     }
@@ -3481,7 +3481,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       BOOL msgResult = PROPSHEET_Apply(hwnd, 0);
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
 
       return TRUE;
     }
@@ -3490,7 +3490,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       LRESULT msgResult = PROPSHEET_QuerySiblings(hwnd, wParam, lParam);
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
 
       return TRUE;
     }
@@ -3507,7 +3507,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       BOOL msgResult = PROPSHEET_AddPage(hwnd, (HPROPSHEETPAGE)lParam);
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+      SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
 
       return TRUE;
     }
@@ -3519,7 +3519,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case PSM_ISDIALOGMESSAGE:
     {
        BOOL msgResult = PROPSHEET_IsDialogMessage(hwnd, (LPMSG)lParam);
-       SetWindowLongA(hwnd, DWL_MSGRESULT, msgResult);
+       SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
        return TRUE;
     }
 
@@ -3546,7 +3546,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case PSM_INSERTPAGE:
     {
         BOOL msgResult = PROPSHEET_InsertPage(hwnd, (HPROPSHEETPAGE)wParam, (HPROPSHEETPAGE)lParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
@@ -3569,56 +3569,56 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case PSM_HWNDTOINDEX:
     {
         LRESULT msgResult = PROPSHEET_HwndToIndex(hwnd, (HWND)wParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_INDEXTOHWND:
     {
         LRESULT msgResult = PROPSHEET_IndexToHwnd(hwnd, (int)wParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_PAGETOINDEX:
     {
         LRESULT msgResult = PROPSHEET_PageToIndex(hwnd, (HPROPSHEETPAGE)wParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_INDEXTOPAGE:
     {
         LRESULT msgResult = PROPSHEET_IndexToPage(hwnd, (int)wParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_IDTOINDEX:
     {
         LRESULT msgResult = PROPSHEET_IdToIndex(hwnd, (int)lParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_INDEXTOID:
     {
         LRESULT msgResult = PROPSHEET_IndexToId(hwnd, (int)wParam);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_GETRESULT:
     {
         LRESULT msgResult = PROPSHEET_GetResult(hwnd);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
     case PSM_RECALCPAGESIZES:
     {
         LRESULT msgResult = PROPSHEET_RecalcPageSizes(hwnd);
-        SetWindowLongW(hwnd, DWL_MSGRESULT, msgResult);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, msgResult);
         return TRUE;
     }
 
