@@ -1,11 +1,12 @@
 name dsound
 type win32
 
-0 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate
-1 stdcall DirectSoundEnumerateA(ptr ptr) DirectSoundEnumerate32A
-2 stub DirectSoundEnumerateW
-3 stdcall DllCanUnloadNow() DSOUND_DllCanUnloadNow
-4 stdcall DllGetClassObject(ptr ptr ptr) DSOUND_DllGetClassObject
-5 stub DirectSoundCaptureCreate
-6 stub DirectSoundCaptureEnumerateA
-7 stub DirectSoundCaptureEnumerateW
+0 stub DirectSoundUnknown
+1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate
+2 stdcall DirectSoundEnumerateA(ptr ptr) DirectSoundEnumerate32A
+3 stub DirectSoundEnumerateW
+4 stdcall DllCanUnloadNow() DSOUND_DllCanUnloadNow
+5 stdcall DllGetClassObject(ptr ptr ptr) DSOUND_DllGetClassObject
+6 stub DirectSoundCaptureCreate
+7 stub DirectSoundCaptureEnumerateA
+8 stub DirectSoundCaptureEnumerateW
