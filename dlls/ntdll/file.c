@@ -665,24 +665,12 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
                                       PVOID OutputBuffer,
                                       ULONG OutputBufferSize)
 {
-    DWORD               clientID = 0;
-
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
           DeviceHandle, hEvent, UserApcRoutine, UserApcContext,
           IoStatusBlock, IoControlCode, 
           InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 
-    /* FIXME: clientID hack should disappear */
-    SERVER_START_REQ( get_device_id )
-    {
-        req->handle = DeviceHandle;
-        if (!wine_server_call( req )) clientID = reply->id;
-    }
-    SERVER_END_REQ;
-
-    if (!clientID) return STATUS_INVALID_PARAMETER;
-
-    if (CDROM_DeviceIoControl(clientID, DeviceHandle, hEvent,
+    if (CDROM_DeviceIoControl(DeviceHandle, hEvent,
                               UserApcRoutine, UserApcContext,
                               IoStatusBlock, IoControlCode,
                               InputBuffer, InputBufferSize,

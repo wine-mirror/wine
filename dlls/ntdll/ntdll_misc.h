@@ -89,7 +89,7 @@ extern HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD shar
 
 /* Device IO */
 /* ntdll/cdrom.c.c */
-extern NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, 
+extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice, 
                                       HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
                                       PVOID UserApcContext, 
                                       PIO_STATUS_BLOCK piosb, 

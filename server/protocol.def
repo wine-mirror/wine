@@ -1106,24 +1106,6 @@ enum char_info_mode
 @END
 
 
-/* Create a device */
-@REQ(create_device)
-    unsigned int access;        /* wanted access rights */
-    int          inherit;       /* inherit flag */
-    int          id;            /* client private id */
-@REPLY
-    obj_handle_t handle;        /* handle to the device */
-@END
-
-
-/* Retrieve the client private id for a device */
-@REQ(get_device_id)
-    obj_handle_t handle;        /* handle to the device */
-@REPLY
-    int          id;            /* client private id */
-@END
-
-
 #define SNAP_HEAPLIST   0x00000001
 #define SNAP_PROCESS    0x00000002
 #define SNAP_THREAD     0x00000004

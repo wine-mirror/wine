@@ -141,7 +141,7 @@ inline static char *heap_strdup( const char *str )
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
-extern void CDROM_InitRegistry(int dev, int id, const char *device);
+extern void CDROM_InitRegistry(int dev);
 
 /***********************************************************************
  *           DRIVE_GetDriveType
@@ -334,7 +334,7 @@ int DRIVE_Init(void)
                     int cd_fd;
                     if ((cd_fd = open(drive->device, O_RDONLY|O_NONBLOCK)) != -1)
                     {
-                        CDROM_InitRegistry(cd_fd, i, drive->device);
+                        CDROM_InitRegistry(cd_fd);
                         close(cd_fd);
                     }
                 }

@@ -16,7 +16,6 @@ C_SRCS = \
 	context_powerpc.c \
 	context_sparc.c \
 	debugger.c \
-	device.c \
 	event.c \
 	fd.c \
 	file.c \

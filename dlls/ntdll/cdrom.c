@@ -2,7 +2,7 @@
 /* Main file for CD-ROM support
  *
  * Copyright 1994 Martin Ayotte
- * Copyright 1999, 2001 Eric Pouech
+ * Copyright 1999, 2001, 2003 Eric Pouech
  * Copyright 2000 Andreas Mohr
  *
  * This library is free software; you can redistribute it and/or
@@ -83,6 +83,9 @@
 #include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "ntddscsi.h"
+#include "ntdll_misc.h"
+#include "wine/server.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 /* Non-Linux systems do not have linux/cdrom.h and the like, and thus
@@ -182,14 +185,19 @@ struct linux_cdrom_generic_command
  * for toc inquiries.
  */
 struct cdrom_cache {
-    int fd;
-    int count;
-    char toc_good; /* if false, will reread TOC from disk */
-    CDROM_TOC toc;
+    int         fd;
+    dev_t       device;
+    ino_t       inode;
+    char        toc_good; /* if false, will reread TOC from disk */
+    CDROM_TOC   toc;
     SUB_Q_CURRENT_POSITION CurrentPosition;
-    const char *device;
 };
-static struct cdrom_cache cdrom_cache[26];
+/* who has more than 5 cdroms on his/her machine ?? */
+/* FIXME: this should grow depending on the number of cdroms we install/configure 
+ * at startup
+ */
+#define MAX_CACHE_ENTRIES       5
+static struct cdrom_cache cdrom_cache[MAX_CACHE_ENTRIES];
 
 /* Proposed media change function: not really needed at this time */
 /* This is a 1 or 0 type of function */
@@ -201,7 +209,7 @@ static int CDROM_MediaChanged(int dev)
    struct cdrom_tochdr	hdr;
    struct cdrom_tocentry entry;
 
-   if (dev < 0 || dev >= 26)
+   if (dev < 0 || dev >= MAX_CACHE_ENTRIES)
       return 0;
    if ( ioctl(cdrom_cache[dev].fd, CDROMREADTOCHDR, &hdr) == -1 )
       return 0;
@@ -365,71 +373,70 @@ static void CDROM_ClearCacheEntry(int dev)
 static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int* lun)
 {
 #if defined(linux)
+    struct stat st;
+    if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode))
     {
-        struct stat st;
-        if ( fstat(fd, &st) == -1 || ! S_ISBLK(st.st_mode)) {
-            FIXME("cdrom not a block device!!!\n");
+        FIXME("cdrom not a block device!!!\n");
+        return 0;
+    }
+    *port = 0;
+    *iface = 0;
+    *device = 0;
+    *lun = 0;
+    switch (major(st.st_rdev)) {
+    case IDE0_MAJOR: *iface = 0; break;
+    case IDE1_MAJOR: *iface = 1; break;
+    case IDE2_MAJOR: *iface = 2; break;
+    case IDE3_MAJOR: *iface = 3; break;
+    case IDE4_MAJOR: *iface = 4; break;
+    case IDE5_MAJOR: *iface = 5; break;
+    case IDE6_MAJOR: *iface = 6; break;
+    case IDE7_MAJOR: *iface = 7; break;
+    default: *port = 1; break;
+    }
+
+    if (*port == 0)
+        *device = (minor(st.st_rdev) >> 6);
+    else
+    {
+#ifdef SCSI_IOCTL_GET_IDLUN
+        UINT32 idlun[2];
+        if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun) != -1)
+        {
+            *port = ((idlun[0] >> 24) & 0xff) + 1;
+            *iface = (idlun[0] >> 16) & 0xff;
+            *device = idlun[0] & 0xff;
+            *lun = (idlun[0] >> 8) & 0xff;
+        }
+        else
+#endif
+        {
+            FIXME("CD-ROM device (%d, %d) not supported\n",
+                  major(st.st_rdev), minor(st.st_rdev));
             return 0;
         }
-        *port = 0;
-        *iface = 0;
-        *device = 0;
-        *lun = 0;
-        switch (major(st.st_rdev)) {
-            case IDE0_MAJOR: *iface = 0; break;
-            case IDE1_MAJOR: *iface = 1; break;
-            case IDE2_MAJOR: *iface = 2; break;
-            case IDE3_MAJOR: *iface = 3; break;
-            case IDE4_MAJOR: *iface = 4; break;
-            case IDE5_MAJOR: *iface = 5; break;
-            case IDE6_MAJOR: *iface = 6; break;
-            case IDE7_MAJOR: *iface = 7; break;
-            default: *port = 1; break;
-        }
-
-        if (*port == 0)
-                *device = (minor(st.st_rdev) >> 6);
-        else
+    }
+    return 1;
+#elif defined(__NetBSD__)
+    struct scsi_addr addr;
+    if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1)
+    {
+        switch (addr.type) 
         {
-#ifdef SCSI_IOCTL_GET_IDLUN
-                UINT32 idlun[2];
-                if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun) != -1)
-                {
-                        *port = ((idlun[0] >> 24) & 0xff) + 1;
-                        *iface = (idlun[0] >> 16) & 0xff;
-                        *device = idlun[0] & 0xff;
-                        *lun = (idlun[0] >> 8) & 0xff;
-                }
-                else
-#endif
-                {
-                        FIXME("CD-ROM device (%d, %d) not supported\n",
-                              major(st.st_rdev), minor(st.st_rdev));
-                        return 0;
-                }
+        case TYPE_SCSI:  *port = 1;
+            *iface = addr.addr.scsi.scbus;
+            *device = addr.addr.scsi.target;
+            *lun = addr.addr.scsi.lun;
+            break;
+        case TYPE_ATAPI: *port = 0;
+            *iface = addr.addr.atapi.atbus;
+            *device = addr.addr.atapi.drive;
+            *lun = 0;
+            break;
         }
         return 1;
     }
-#elif defined(__NetBSD__)
-    {
-       struct scsi_addr addr;
-       if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1) {
-            switch (addr.type) {
-                case TYPE_SCSI:  *port = 1;
-                                 *iface = addr.addr.scsi.scbus;
-                                 *device = addr.addr.scsi.target;
-                                 *lun = addr.addr.scsi.lun;
-                                 break;
-                case TYPE_ATAPI: *port = 0;
-                                 *iface = addr.addr.atapi.atbus;
-                                 *device = addr.addr.atapi.drive;
-                                 *lun = 0;
-                                 break;
-            }
-            return 1;
-       }
-       return 0;
-    }
+    return 0;
 #elif defined(__FreeBSD__)
     FIXME("not implemented for BSD\n");
     return 0;
@@ -449,7 +456,7 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
  * NOTE: programs usually read these registry entries after sending the
  *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
  */
-void CDROM_InitRegistry(int fd, int device_id, const char *device )
+void CDROM_InitRegistry(int fd)
 {
     int portnum, busid, targetid, lun;
     OBJECT_ATTRIBUTES attr;
@@ -465,8 +472,6 @@ void CDROM_InitRegistry(int fd, int device_id, const char *device )
     HKEY targetKey;
     DWORD disp;
 
-    cdrom_cache[device_id].device = device;
-
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -474,7 +479,7 @@ void CDROM_InitRegistry(int fd, int device_id, const char *device )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if ( ! CDROM_GetInterfaceInfo(fd, &portnum, &busid, &targetid, &lun))
+    if (!CDROM_GetInterfaceInfo(fd, &portnum, &busid, &targetid, &lun))
         return;
 
     /* Ensure there is Scsi key */
@@ -583,45 +588,33 @@ void CDROM_InitRegistry(int fd, int device_id, const char *device )
  *		CDROM_Open
  *
  */
-static NTSTATUS CDROM_Open(HANDLE hDevice, DWORD clientID, int* dev)
+static NTSTATUS CDROM_Open(int fd, int* dev)
 {
-    *dev = LOWORD(clientID);
+    struct stat st;
+    int         empty = -1;
 
-    if (*dev >= 26) return STATUS_NO_SUCH_DEVICE;
+    fstat(fd, &st);
 
-    if (!cdrom_cache[*dev].count)
+    for (*dev = 0; *dev < MAX_CACHE_ENTRIES; (*dev)++)
     {
-        const char *device;
-
-        if (!(device = cdrom_cache[*dev].device)) return STATUS_NO_SUCH_DEVICE;
-        cdrom_cache[*dev].fd = open(device, O_RDONLY|O_NONBLOCK);
-        if (cdrom_cache[*dev].fd == -1)
-        {
-            FIXME("Can't open configured CD-ROM drive %c: (device %s): %s\n",
-                  'A' + *dev, device, strerror(errno));
-            return STATUS_NO_SUCH_DEVICE;
-        }
+        if (empty == -1 &&
+            cdrom_cache[*dev].device == 0 &&
+            cdrom_cache[*dev].inode == 0)
+            empty = *dev;
+        else if (cdrom_cache[*dev].device == st.st_dev &&
+                 cdrom_cache[*dev].inode == st.st_ino)
+            break;
     }
-    cdrom_cache[*dev].count++;
-    TRACE("%d, %d, %d\n", *dev, cdrom_cache[*dev].fd, cdrom_cache[*dev].count);
+    if (*dev == MAX_CACHE_ENTRIES)
+    {
+        if (empty == -1) return STATUS_NOT_IMPLEMENTED;
+        *dev = empty;
+        cdrom_cache[*dev].device  = st.st_dev;
+        cdrom_cache[*dev].inode   = st.st_ino;
+    }
+    cdrom_cache[*dev].fd = fd;
+    TRACE("%d, %d\n", *dev, cdrom_cache[*dev].fd);
     return STATUS_SUCCESS;
-}
-
-/******************************************************************
- *		CDROM_Close
- *
- *
- */
-static void CDROM_Close(DWORD clientID)
-{
-    int dev = LOWORD(clientID);
-
-    if (dev >= 26 /*|| fd != cdrom_cache[dev].fd*/) FIXME("how come\n");
-    if (--cdrom_cache[dev].count == 0) 
-    {
-        close(cdrom_cache[dev].fd);
-        cdrom_cache[dev].fd = -1;
-    }
 }
 
 /******************************************************************
@@ -752,13 +745,11 @@ static NTSTATUS CDROM_ReadTOC(int dev, CDROM_TOC* toc)
 {
     NTSTATUS       ret = STATUS_NOT_SUPPORTED;
 
-    if (dev < 0 || dev >= 26)
-       return STATUS_INVALID_PARAMETER;
-    if ( !cdrom_cache[dev].toc_good ) {
-       ret = CDROM_SyncCache(dev);
-       if ( ret )
-	  return ret;
-    }
+    if (dev < 0 || dev >= MAX_CACHE_ENTRIES)
+        return STATUS_INVALID_PARAMETER;
+    if ( !cdrom_cache[dev].toc_good && (ret = CDROM_SyncCache(dev))) 
+        return ret;
+
     *toc = cdrom_cache[dev].toc;
     return STATUS_SUCCESS;
 }
@@ -1686,7 +1677,7 @@ static NTSTATUS CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
  *
  *
  */
-NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, 
+NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice, 
                                HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
                                PVOID UserApcContext, 
                                PIO_STATUS_BLOCK piosb, 
@@ -1696,15 +1687,20 @@ NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice,
 {
     DWORD       sz = 0;
     NTSTATUS    status = STATUS_SUCCESS;
-    int         dev;
+    int fd, dev;
 
-    TRACE("%lx[%c] %s %lx %ld %lx %ld %p\n",
-          (DWORD)hDevice, 'A' + LOWORD(clientID), iocodex(dwIoControlCode), (DWORD)lpInBuffer, nInBufferSize,
+    TRACE("%lx %s %lx %ld %lx %ld %p\n",
+          (DWORD)hDevice, iocodex(dwIoControlCode), (DWORD)lpInBuffer, nInBufferSize,
           (DWORD)lpOutBuffer, nOutBufferSize, piosb);
 
     piosb->Information = 0;
 
-    if ((status = CDROM_Open(hDevice, clientID, &dev))) goto error;
+    if ((status = wine_server_handle_to_fd( hDevice, GENERIC_READ, &fd, NULL, NULL ))) goto error;
+    if ((status = CDROM_Open(fd, &dev)))
+    {
+        wine_server_release_fd( hDevice, fd );
+        goto error;
+    }
 
     switch (dwIoControlCode)
     {
@@ -1893,7 +1889,7 @@ NTSTATUS CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice,
         status = STATUS_INVALID_PARAMETER;
         break;
     }
-    CDROM_Close(clientID);
+    wine_server_release_fd( hDevice, fd );
  error:
     piosb->u.Status = status;
     piosb->Information = sz;

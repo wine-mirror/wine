@@ -264,28 +264,6 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 }
 
 
-/***********************************************************************
- *           FILE_CreateDevice
- *
- * Same as FILE_CreateFile but for a device
- * Returns 0 on failure.
- */
-HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
-{
-    HANDLE ret;
-    SERVER_START_REQ( create_device )
-    {
-        req->access  = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        req->id      = client_id;
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
 static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
@@ -392,7 +370,17 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         }
         else if (isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0')
         {
-            ret = FILE_CreateDevice( (toupperW(filename[4]) - 'A') | 0x20000, access, sa );
+            const char *device = DRIVE_GetDevice( toupperW(filename[4]) - 'A' );
+            if (device)
+            {
+                ret = FILE_CreateFile( device, access, sharing, sa, creation,
+                                       attributes, template, TRUE, DRIVE_FIXED );
+            }
+            else
+            {
+                SetLastError( ERROR_ACCESS_DENIED );
+                ret = INVALID_HANDLE_VALUE;
+            }
             goto done;
         }
         else if (!RtlIsDosDeviceName_U( filename ))
