@@ -10,6 +10,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	protocol.c \
+	service.c \
 	socket.c
 
 @MAKE_DLL_RULES@

@@ -21,8 +21,6 @@
 #ifndef _WINE_NSPAPI_
 #define _WINE_NSPAPI_
 
-#include "windef.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -57,7 +55,7 @@ typedef  struct _PROTOCOL_INFOA
          INT     iProtocol;
          DWORD   dwMessageSize;
          LPSTR   lpProtocol;
-} PROTOCOL_INFOA;
+} PROTOCOL_INFOA, *PPROTOCOL_INFOA, *LPPROTOCOL_INFOA;
 
 typedef  struct _PROTOCOL_INFOW
 {
@@ -69,14 +67,120 @@ typedef  struct _PROTOCOL_INFOW
          INT     iProtocol;
          DWORD   dwMessageSize;
          LPWSTR  lpProtocol;
-} PROTOCOL_INFOW;
+} PROTOCOL_INFOW, *PPROTOCOL_INFOW, *LPPROTOCOL_INFOW;
 
+DECL_WINELIB_TYPE_AW(PROTOCOL_INFO)
+DECL_WINELIB_TYPE_AW(PPROTOCOL_INFO)
+DECL_WINELIB_TYPE_AW(LPPROTOCOL_INFO)
+
+typedef struct _SERVICE_ADDRESS
+{
+        DWORD   dwAddressType;
+        DWORD   dwAddressFlags;
+        DWORD   dwAddressLength;
+        DWORD   dwPrincipalLength;
+        BYTE*   lpAddress;
+        BYTE*   lpPrincipal;
+} SERVICE_ADDRESS, *PSERVICE_ADDRESS, *LPSERVICE_ADDRESS;
+
+typedef struct _SERVICE_ADDRESSES
+{
+        DWORD           dwAddressCount;
+        SERVICE_ADDRESS Addresses[1];
+} SERVICE_ADDRESSES, *PSERVICE_ADDRESSES, *LPSERVICE_ADDRESSES;
+
+typedef struct _SERVICE_INFOA
+{
+        LPGUID              lpServiceType;
+        LPSTR               lpServiceName;
+        LPSTR               lpComment;
+        LPSTR               lpLocale;
+        DWORD               dwDisplayHint;
+        DWORD               dwVersion;
+        DWORD               dwTime;
+        LPSTR               lpMachineName;
+        LPSERVICE_ADDRESSES lpServiceAddress;
+        BLOB                ServiceSpecificInfo;
+} SERVICE_INFOA, *PSERVICE_INFOA, *LPSERVICE_INFOA;
+
+typedef struct _SERVICE_INFOW
+{
+        LPGUID              lpServiceType;
+        LPWSTR              lpServiceName;
+        LPWSTR              lpComment;
+        LPWSTR              lpLocale;
+        DWORD               dwDisplayHint;
+        DWORD               dwVersion;
+        DWORD               dwTime;
+        LPSTR               lpMachineName;
+        LPSERVICE_ADDRESSES lpServiceAddress;
+        BLOB                ServiceSpecificInfo; /* May point to SERVICE_TYPE_INFO_ABS */
+} SERVICE_INFOW, *PSERVICE_INFOW, *LPSERVICE_INFOW;
+
+DECL_WINELIB_TYPE_AW(SERVICE_INFO)
+DECL_WINELIB_TYPE_AW(PSERVICE_INFO)
+DECL_WINELIB_TYPE_AW(LPSERVICE_INFO)
+
+typedef struct _SERVICE_TYPE_VALUE_ABSA
+{
+        DWORD   dwNameSpace; /* Name space or set of name spaces */
+        DWORD   dwValueType; /* Type of the value data */
+        DWORD   dwValueSize; /* Size of the value data */
+        LPSTR   lpValueName; /* Name of the value */
+        PVOID   lpValue;     /* Pointer to the value data */
+} SERVICE_TYPE_VALUE_ABSA, *PSERVICE_TYPE_VALUE_ABSA, *LPSERVICE_TYPE_VALUE_ABSA;
+
+typedef struct _SERVICE_TYPE_VALUE_ABSW
+{
+        DWORD   dwNameSpace; /* Name space or set of name spaces */
+        DWORD   dwValueType; /* Type of the value data */
+        DWORD   dwValueSize; /* Size of the value data */
+        LPWSTR  lpValueName; /* Name of the value */
+        PVOID   lpValue;     /* Pointer to the value data */
+} SERVICE_TYPE_VALUE_ABSW, *PSERVICE_TYPE_VALUE_ABSW, *LPSERVICE_TYPE_VALUE_ABSW;
+
+DECL_WINELIB_TYPE_AW(SERVICE_TYPE_VALUE_ABS)
+DECL_WINELIB_TYPE_AW(PSERVICE_TYPE_VALUE_ABS)
+DECL_WINELIB_TYPE_AW(LPSERVICE_TYPE_VALUE_ABS)
+
+typedef struct _SERVICE_TYPE_INFO_ABSA
+{
+        LPSTR                   lpTypeName;     /* Name of the network service type */
+        DWORD                   dwValueCount;   /* Number of SERVICE_TYPE_VALUE_ABS structures */
+        SERVICE_TYPE_VALUE_ABSA Values[1];      /* Array of SERVICE_TYPE_VALUE_ABS structures */
+} SERVICE_TYPE_INFO_ABSA, *PSERVICE_TYPE_INFO_ABSA, *LPSERVICE_TYPE_INFO_ABSA;
+
+typedef struct _SERVICE_TYPE_INFO_ABSW
+{
+        LPWSTR                  lpTypeName;     /* Name of the network service type */
+        DWORD                   dwValueCount;   /* Number of SERVICE_TYPE_VALUE_ABS structures */
+        SERVICE_TYPE_VALUE_ABSW Values[1];      /* Array of SERVICE_TYPE_VALUE_ABS structures */
+} SERVICE_TYPE_INFO_ABSW, *PSERVICE_TYPE_INFO_ABSW, *LPSERVICE_TYPE_INFO_ABSW;
+
+DECL_WINELIB_TYPE_AW(SERVICE_TYPE_INFO_ABS)
+DECL_WINELIB_TYPE_AW(PSERVICE_TYPE_INFO_ABS)
+DECL_WINELIB_TYPE_AW(LPSERVICE_TYPE_INFO_ABS)
+
+typedef void (*LPSERVICE_CALLBACK_PROC)(LPARAM lParam, HANDLE hAsyncTaskHandle);
+
+typedef struct _SERVICE_ASYNC_INFO
+{
+    LPSERVICE_CALLBACK_PROC lpServiceCallbackProc;
+    LPARAM                  lParam;
+    HANDLE                  hAsyncTaskHandle;
+} SERVICE_ASYNC_INFO, *PSERVICE_ASYNC_INFO, *LPSERVICE_ASYNC_INFO;
 
 /*
  * function prototypes
  */
-
-
+INT WINAPI GetTypeByNameA(LPSTR lpServiceName, LPGUID lpServiceType);
+INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType);
+#define GetTypeByName WINELIB_NAME_AW(GetTypeByName)
+INT WINAPI SetServiceA(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSERVICE_INFOA lpServiceInfo,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags);
+INT WINAPI SetServiceW(DWORD dwNameSpace, DWORD dwOperation, DWORD dwFlags, LPSERVICE_INFOW lpServiceInfo,
+                       LPSERVICE_ASYNC_INFO lpServiceAsyncInfo, LPDWORD lpdwStatusFlags);
+#define SetService WINELIB_NAME_AW(SetService)
 
 #ifdef __cplusplus
 }      /* extern "C" */

@@ -64,12 +64,12 @@
 1110 stub GetAddressByNameW
 1111 stdcall EnumProtocolsA(ptr ptr ptr) EnumProtocolsA
 1112 stdcall EnumProtocolsW(ptr ptr ptr) EnumProtocolsW
-#1113 stub GetTypeByNameA
-#1114 stub GetTypeByNameW
+1113 stdcall GetTypeByNameA(str ptr) GetTypeByNameA
+1114 stdcall GetTypeByNameW(wstr ptr) GetTypeByNameW
 #1115 stub GetNameByTypeA
 #1116 stub GetNameByTypeW
-#1117 stub SetServiceA
-#1118 stub SetServiceW
+1117 stdcall SetServiceA(long long long ptr ptr ptr) SetServiceA
+1118 stdcall SetServiceW(long long long ptr ptr ptr) SetServiceW
 #1119 stub GetServiceA
 #1120 stub GetServiceW
 #1130 stub NPLoadNameSpaces

@@ -44,12 +44,13 @@
 
 #include "winbase.h"
 #include "winnls.h"
-#include "wine/unicode.h"
+#include "wtypes.h"
 #include "nspapi.h"
 #include "winsock2.h"
 #include "wsipx.h"
 #include "wshisotp.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
