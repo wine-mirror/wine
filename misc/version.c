@@ -124,32 +124,81 @@ void VERSION_ParseDosVersion( const char *arg )
 
 /**********************************************************************
  *         VERSION_GetVersion
+ *
+ * Some version data:
+ * linker/OS/image/subsys	Name			Intended for
+ *
+ * 2.39/1.00/0.00/3.10		freecell.exe	Win32s (any version)
+ * 2.55/1.00/0.00/4.00		acrord32.exe	Win32s, Win95 supported (?)
+ * 
+ * 2.50/1.00/4.00/4.00		winhlp32.exe	Win32s 1.30
+ * 4.20/4.00/1.00/4.00		Asuslm.exe		Win95 (Aaargh !)
+ * 5.12/4.00/1.07/4.00      clikfixi.exe    NT 4 (service pack files)
+ * 3.10/4.00/4.00/4.00		PLUMBING.EXE	NT
+ * ?.??/4.00/97.01/4.00		sse.exe			huh ?? (damn crackerz ;)
+ * 6.00/5.00/5.00/4.00						NT 4 driver update (strange numbers)
+ * 
+ * Common versions:
+ * x.xx/1.00/0.00/3.10						Win32s (any version ?)
+ * 2.xx/1.00/0.00/4.00						Win95 (Microsoft/system files) 
+ * x.xx/4.00/0.00/4.00						Win95 (most applications !)
+ * x.xx/4.00/4.00/4.00						NT 4 (most apps)
+ * x.xx/5.00/5.00/4.00						NT 4 newer files / NT 5 ??
  */
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
     PIMAGE_NT_HEADERS peheader;	
+    PDB *pdb = PROCESS_Current();
 
     if (versionForced) /* user has overridden any sensible checks */
         return defaultWinVersion;
-    if (!PROCESS_Current()->exe_modref)
+    if (!pdb->exe_modref)
     {
         /* HACK: if we have loaded a PE image into this address space,
          * we are probably using thunks, so Win95 is our best bet
          */
-        if (PROCESS_Current()->modref_list) return WIN95;
-        return WIN31; /* FIXME: hmm, look at DDB.version ? */
+        if (pdb->modref_list) return WIN95;
+
+        /* FIXME: hmm, do anything else ?
+           TDB.version doesn't help here
+           as it always holds version 3.10 */
+        return WIN31;
     }
-    peheader = PE_HEADER(PROCESS_Current()->exe_modref->module);
-    if (peheader->OptionalHeader.MajorSubsystemVersion == 4) {
-        /* FIXME: check probably not 100% good, verify with win98 too */
+    peheader = PE_HEADER(pdb->exe_modref->module);
+
+    TRACE(ver, "%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+          peheader->OptionalHeader.MajorLinkerVersion,
+          peheader->OptionalHeader.MinorLinkerVersion,
+          peheader->OptionalHeader.MajorOperatingSystemVersion,
+          peheader->OptionalHeader.MinorOperatingSystemVersion,
+          peheader->OptionalHeader.MajorImageVersion,
+          peheader->OptionalHeader.MinorImageVersion,
+          peheader->OptionalHeader.MajorSubsystemVersion,
+          peheader->OptionalHeader.MinorSubsystemVersion);
+
+    if (peheader->OptionalHeader.MajorSubsystemVersion == 4)
+    {
 	if (peheader->OptionalHeader.MajorOperatingSystemVersion == 4)
+        {
+            if ((peheader->OptionalHeader.MajorImageVersion == 0) &&
+                (peheader->OptionalHeader.SectionAlignment == 4096))
+                return WIN95;
 	    return NT40;
-        return WIN95;
+        }
+        if (peheader->OptionalHeader.MajorOperatingSystemVersion == 1) return WIN95;
+        if (peheader->OptionalHeader.MajorOperatingSystemVersion == 5)
+            return NT40; /* FIXME: this is NT 5, isn't it ? */
     }
     if (peheader->OptionalHeader.MajorSubsystemVersion == 3)
     {
-        /* Win3.10 */
-        if (peheader->OptionalHeader.MinorSubsystemVersion <= 11) return WIN31;
+        /* 3.1x versions */
+        if (peheader->OptionalHeader.MinorSubsystemVersion <= 11)
+        {
+            if (peheader->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+                return NT351; /* FIXME: NT 3.1 */
+            else
+		  return WIN31;
+        }
         /* NT 3.51 */
         if (peheader->OptionalHeader.MinorSubsystemVersion == 50) return NT351;
         if (peheader->OptionalHeader.MinorSubsystemVersion == 51) return NT351;
