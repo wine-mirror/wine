@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winnls.h"
 
 #define HAS_TRAIL_SLASH_A(string) (string[lstrlenA(string)-1]=='\\')
 
@@ -41,11 +42,11 @@
    in Win98.  I don't know if this is a FAT thing, or if it is an OS thing
    but I don't test these characters now.
    NOTE: Win2k allows GetFullPathNameA to work with them though
-      |<>
+      |<>"
 */
-static const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`\"";
-static const CHAR is_char_ok[] ="111111101111111110110";
-static const CHAR wine_todo[]  ="111111101100110000110";
+static const CHAR funny_chars[]="!@#$%^&*()=+{}[],?'`";
+static const CHAR is_char_ok[] ="11111110111111111011";
+static const CHAR wine_todo[]  ="00000000000000000000";
 
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR,LPSTR,DWORD);
 
@@ -233,45 +234,41 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
 */
 static void test_FunnyChars(CHAR *curdir,CHAR *filename,
                              INT valid,INT todo,CHAR *errstr) {
-  CHAR tmpstr[MAX_PATH];
+  CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH];
   SLpassfail passfail;
 
   test_ValidPathA(curdir,"",filename,tmpstr,&passfail,errstr);
-  if(todo) {
-    todo_wine {
-      ok(passfail.shortlen==0,
-         "%s: GetShortPathNameA passed when it shouldn't have",errstr);
-    }
-  } else {
-    ok(passfail.shortlen==0,
-       "%s: GetShortPathNameA passed when it shouldn't have",errstr);
-  }
   if(valid) {
+    sprintf(tmpstr1,"%s\\%s",curdir,filename);
     if(todo) {
       todo_wine {
-        ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
-           "%s: GetShortPathA returned %ld and not %d",
-           errstr,passfail.shorterror,ERROR_FILE_NOT_FOUND);
+        ok((passfail.shortlen==0 &&
+            (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND)) ||
+           (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
+           "%s: GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+           errstr,passfail.shortlen,passfail.shorterror,tmpstr);
       }
     } else {
-      ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
-         "%s: GetShortPathA returned %ld and not %d",
-          errstr,passfail.shorterror,ERROR_FILE_NOT_FOUND);
+      ok((passfail.shortlen==0 &&
+          (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND)) ||
+         (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
+         "%s: GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+         errstr,passfail.shortlen,passfail.shorterror,tmpstr);
     }
   } else {
     if(todo) {
       todo_wine {
 /* Win2k returns ERROR_INVALID_NAME, Win98, wine return ERROR_FILE_NOT_FOUND */
-        ok(passfail.shorterror==ERROR_INVALID_NAME ||
-           passfail.shorterror==ERROR_FILE_NOT_FOUND,
-           "%s: GetShortPathA returned %ld and not %d or %d",
-           errstr,passfail.shorterror,ERROR_INVALID_NAME,ERROR_FILE_NOT_FOUND);
+        ok(passfail.shortlen==0 &&
+           (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND),
+           "%s: GetShortPathA should have failed len=%ld, error=%ld",
+           errstr,passfail.shortlen,passfail.shorterror);
       }
     } else {
-      ok(passfail.shorterror==ERROR_INVALID_NAME ||
-         passfail.shorterror==ERROR_FILE_NOT_FOUND,
-         "%s: GetShortPathA returned %ld and not %d or %d",
-         errstr,passfail.shorterror,ERROR_INVALID_NAME,ERROR_FILE_NOT_FOUND);
+      ok(passfail.shortlen==0 &&
+         (passfail.shorterror==ERROR_INVALID_NAME || passfail.shorterror==ERROR_FILE_NOT_FOUND),
+         "%s: GetShortPathA should have failed len=%ld, error=%ld",
+         errstr,passfail.shortlen,passfail.shorterror);
     }
   }
   if(pGetLongPathNameA) {
@@ -357,12 +354,12 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
    it behaves correctly when 'unique' is non zero)
 */
   ok((id=GetTempFileNameA(tmppath,"path",0,newdir)),"GetTempFileNameA failed");
-  sprintf(tmpstr,"pat%.4x.tmp",id);
-  sprintf(tmpstr1,"pat%x.tmp",id);
-  ok(lstrcmpiA(newdir+(lstrlenA(newdir)-lstrlenA(tmpstr)),tmpstr)==0 ||
-     lstrcmpiA(newdir+(lstrlenA(newdir)-lstrlenA(tmpstr1)),tmpstr1)==0,
-     "GetTempPath returned '%s' which doesn't match '%s' or '%s'",
-     newdir,tmpstr,tmpstr1);
+  sprintf(tmpstr,"pat%.4x.tmp",id & 0xffff);
+  sprintf(tmpstr1,"pat%x.tmp",id & 0xffff);
+  ok(lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr)==0 ||
+     lstrcmpiA(newdir+lstrlenA(tmppath),tmpstr1)==0,
+     "GetTempPath returned '%s' which doesn't match '%s' or '%s'. id=%x",
+     newdir,tmpstr,tmpstr1,id);
 
 /* Find first valid drive letter that is neither newdir[0] nor curDrive */
   drives = GetLogicalDrives() & ~(1<<(newdir[0]-'A'));
@@ -491,7 +488,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 {
   CHAR curdir_short[MAX_PATH],
        longdir_short[MAX_PATH];
-  CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH];
+  CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH],tmpstr2[MAX_PATH];
   LPSTR strptr;                 /*ptr to the filename portion of the path */
   DWORD len;
   INT i;
@@ -509,6 +506,15 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
      "GetShortPathNameA failed");
   ok(lstrcmpiA(longdir_short+(len-1),"\\")!=0,
      "GetShortPathNameA should not have a trailing \\");
+
+  if (pGetLongPathNameA) {
+    DWORD rc;
+    sprintf(tmpstr,"%s\\%s\\%s",curdir,LONGDIR,LONGFILE);
+    rc=(*pGetLongPathNameA)(tmpstr,NULL,0);
+    ok(rc==strlen(tmpstr)+1,
+       "GetLongPathNameA: wrong return code, %ld instead of %d",
+       rc, strlen(curdir)+1);
+  }
 
 /* Check the cases where both file and directory exist first */
 /* Start with a 8.3 directory, 8.3 filename */
@@ -532,11 +538,13 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Now check all of the invalid file w/ valid directory combinations */
 /* Start with a 8.3 directory, 8.3 filename */
   test_ValidPathA(curdir,SHORTDIR,NONFILE_SHORT,tmpstr,&passfail,"test5");
-  todo_wine {
-    ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-    ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
-       "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
-  }
+  sprintf(tmpstr1,"%s\\%s\\%s",curdir_short,SHORTDIR,NONFILE_SHORT);
+  ok((passfail.shortlen==0 &&
+      (passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+       passfail.shorterror==ERROR_FILE_NOT_FOUND)) ||
+     (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
+     "GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+     passfail.shortlen,passfail.shorterror,tmpstr);
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -545,7 +553,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Now try a 8.3 directory, long file name */
   test_ValidPathA(curdir,SHORTDIR,NONFILE_LONG,tmpstr,&passfail,"test6");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+     passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
@@ -554,11 +563,15 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   }
 /* Next is a long directory, 8.3 file */
   test_ValidPathA(curdir,LONGDIR,NONFILE_SHORT,tmpstr,&passfail,"test7");
-  todo_wine {
-    ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-    ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
-       "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
-  }
+  sprintf(tmpstr2,"%s\\%s",curdir_short,LONGDIR);
+  GetShortPathNameA(tmpstr2,tmpstr1,MAX_PATH);
+  strcat(tmpstr1,"\\" NONFILE_SHORT);
+  ok((passfail.shortlen==0 &&
+      (passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+       passfail.shorterror==ERROR_FILE_NOT_FOUND)) ||
+     (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
+     "GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+     passfail.shortlen,passfail.shorterror,tmpstr);
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -567,7 +580,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /*Lastly a long directory, long file */
   test_ValidPathA(curdir,LONGDIR,NONFILE_LONG,tmpstr,&passfail,"test8");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+     passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA should have returned 'ERROR_FILE_NOT_FOUND'");
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
@@ -577,13 +591,13 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Now try again with directories that don't exist */
 /* 8.3 directory, 8.3 filename */
   test_ValidPathA(curdir,NONDIR_SHORT,SHORTFILE,tmpstr,&passfail,"test9");
-  todo_wine {
-    ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-    ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
-       passfail.shorterror==ERROR_FILE_NOT_FOUND,
-       "GetShortPathA returned %ld and not 'ERROR_PATH_NOT_FOUND'",
-        passfail.shorterror);
-  }
+  sprintf(tmpstr1,"%s\\%s\\%s",curdir_short,NONDIR_SHORT,SHORTFILE);
+  ok((passfail.shortlen==0 &&
+      (passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+       passfail.shorterror==ERROR_FILE_NOT_FOUND)) ||
+     (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
+     "GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+     passfail.shortlen,passfail.shorterror,tmpstr);
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_PATH_NOT_FOUND ||
@@ -642,12 +656,13 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Non-existant directories */
   sprintf(tmpstr,"%s\\",NONDIR_SHORT);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test15");
-  todo_wine {
-    ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-    ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
-     "GetShortPathA returned %ld and not 'ERROR_FILE_NOT_FOUND'",
-      passfail.shorterror);
-  }
+  sprintf(tmpstr2,"%s\\%s",curdir,tmpstr);
+  ok((passfail.shortlen==0 &&
+      (passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+       passfail.shorterror==ERROR_FILE_NOT_FOUND)) ||
+     (passfail.shortlen==strlen(tmpstr2) && lstrcmpiA(tmpstr1,tmpstr2)==0),
+     "GetShortPathNameA error: len=%ld error=%ld tmpstr=[%s]",
+     passfail.shortlen,passfail.shorterror,tmpstr);
   if(pGetLongPathNameA) {
     ok(passfail.longlen==0,"GetLongPathNameA passed when it shouldn't have");
     ok(passfail.longerror==ERROR_FILE_NOT_FOUND,
@@ -657,7 +672,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   sprintf(tmpstr,"%s\\",NONDIR_LONG);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test16");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_FILE_NOT_FOUND,
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
+     passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %ld and not 'ERROR_FILE_NOT_FOUND'",
       passfail.shorterror);
   if(pGetLongPathNameA) {
@@ -740,7 +756,8 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   sprintf(tmpstr,".\\%s",LONGDIR);
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
   test_SplitShortPathA(tmpstr1,dir,eight,three);
-  ok(lstrcmpiA(dir,".")==0,"GetShortPathNameA did not keep relative directory");
+  ok(lstrcmpiA(dir,".")==0 || dir[0]=='\0',
+     "GetShortPathNameA did not keep relative directory [%s]",tmpstr1);
   if(pGetLongPathNameA) {
     ok(pGetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
     todo_wine {
@@ -776,133 +793,88 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     test_FunnyChars(curdir,tmpstr,valid,0,tmpstr1);
   }
 /* ':' is a special case and is allowed only in certain cases */
-    test_FunnyChars(curdir,"file:000.ext",1,1,"check-1");
-    test_FunnyChars(curdir,"file000.e:t" ,1,1,"check-2");
+    test_FunnyChars(curdir,"file:000.ext",1,0,"check-1");
+    test_FunnyChars(curdir,"file000.e:t" ,1,0,"check-2");
     test_FunnyChars(curdir,":file000.ext",0,1,"check-3");
-    test_FunnyChars(curdir,"file000:.ext",1,1,"check-4");
+    test_FunnyChars(curdir,"file000:.ext",1,0,"check-4");
     test_FunnyChars(curdir,"Long : File" ,1,0,"check-5");
     test_FunnyChars(curdir,": Long File" ,0,0,"check-6");
     test_FunnyChars(curdir,"Long File :" ,0,0,"check-7");
 }
 
-static void test_GetTempPathA(void)
+static void test_GetTempPathA(char* tmp_dir)
 {
-    UINT len, len_with_null;
+    DWORD len, len_with_null;
     char buf[MAX_PATH];
+
+    len_with_null = strlen(tmp_dir) + 1;
 
     lstrcpyA(buf, "foo");
     len = GetTempPathA(MAX_PATH, buf);
     ok(len <= MAX_PATH, "should fit into MAX_PATH");
-    ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
+    ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]",tmp_dir,buf);
     ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
-    ok(buf[len - 1] == '\\', "should add back slash");
 
-    len_with_null = lstrlenA(buf) + 1;
-
-    /* this one is different from unicode version: ANSI version doesn't
-     * touch the buffer, unicode version truncates the buffer to zero size
+    /* Some versions of Windows touch the buffer, some don't so we don't
+     * test that. Also, NT sometimes exagerates the required buffer size
+     * so we cannot test for an exact match. Finally, the
+     * 'len_with_null - 1' case is so buggy on Windows it's not testable.
+     * For instance in some cases Win98 returns len_with_null - 1 instead
+     * of len_with_null.
      */
-    lstrcpyA(buf, "foo");
     len = GetTempPathA(1, buf);
-    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
-     */
-    /* FIXME: replace ok by xfail below when it's implemeted */
-    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
-
-    /* this one is different from unicode version: ANSI version doesn't
-     * touch the buffer, unicode version returns path without backslash
-     */
-    lstrcpyA(buf, "foo");
-    len = GetTempPathA(len_with_null - 1, buf);
-    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
-     */
-    /* FIXME: replace ok by xfail below when it's implemeted */
-    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
-
-    lstrcpyA(buf, "foo");
-    len = GetTempPathA(len_with_null, buf);
-    ok(lstrcmpA(buf, "foo") != 0, "should touch the buffer");
-    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
-    ok(buf[len - 1] == '\\', "should add back slash");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len >= len_with_null, "Expected >= %lu, got %lu", len_with_null, len);
 
     len = GetTempPathA(0, NULL);
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
+    ok(len >= len_with_null, "Expected >= %lu, got %lu", len_with_null, len);
+
+    /* The call above gave us the buffer size that Windows thinks is needed
+     * so the next call should work
      */
-    /* FIXME: replace ok by xfail below when it's implemeted */
-    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
+    lstrcpyA(buf, "foo");
+    len = GetTempPathA(len, buf);
+    ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]",tmp_dir,buf);
+    ok(len == lstrlenA(buf), "returned length should be equal to the length of string");
 }
 
-static void test_GetTempPathW(void)
+static void test_GetTempPathW(char* tmp_dir)
 {
-    UINT len, len_with_null;
+    DWORD len, len_with_null;
     WCHAR buf[MAX_PATH];
-    WCHAR sample[MAX_PATH];
+    WCHAR tmp_dirW[MAX_PATH];
     static const WCHAR fooW[] = {'f','o','o',0};
+
+    MultiByteToWideChar(CP_ACP,0,tmp_dir,-1,tmp_dirW,sizeof(tmp_dirW)/sizeof(*tmp_dirW));
+    len_with_null = lstrlenW(tmp_dirW) + 1;
+
+    /* This one is different from ANSI version: ANSI version doesn't
+     * touch the buffer, unicode version usually truncates the buffer
+     * to zero size. NT still exagerates the required buffer size
+     * sometimes so we cannot test for an exact match. Finally, the
+     * 'len_with_null - 1' case is so buggy on Windows it's not testable.
+     * For instance on NT4 it will sometimes return a path without the
+     * trailing '\\' and sometimes return an error.
+     */
 
     lstrcpyW(buf, fooW);
     len = GetTempPathW(MAX_PATH, buf);
-    ok(len <= MAX_PATH, "should fit into MAX_PATH");
-    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
+    if (len==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+    ok(lstrcmpiW(buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path");
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
-    ok(buf[len - 1] == '\\', "should add back slash");
 
-    len_with_null = lstrlenW(buf) + 1;
-    lstrcpyW(sample, buf);
-    sample[len_with_null - 2] = 0;
-
-    /* this one is different from ANSI version: ANSI version doesn't
-     * touch the buffer, unicode version truncates the buffer to zero size
-     */
     lstrcpyW(buf, fooW);
     len = GetTempPathW(1, buf);
-    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
-     */
-    /* FIXME: replace ok by xfail below when it's implemeted */
-    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
     ok(buf[0] == 0, "unicode version should truncate the buffer to zero size");
-
-    /* this one is different from ANSI version: ANSI version doesn't
-     * touch the buffer, unicode version returns path without backslash
-     */
-    lstrcpyW(buf, fooW);
-    len = GetTempPathW(len_with_null - 1, buf);
-    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
-     */
-    /* FIXME: replace ok by xfail below when it's implemeted */
-    ok(len == len_with_null, "win2000 BUG: expected %u, got %u", len_with_null, len);
-    /* win2000 fails here when TMP variable does not specify full path,
-     * but buffer is large enough to hold path without backslash.
-     */
-    if(len_with_null > 4) /* not the drive root: just do not add backslash */
-        /* FIXME: replace ok by xfail below when it's implemeted */
-	ok(lstrcmpW(sample, buf) == 0, "win2000 BUG: should return path without terminating back slash");
-    else /* drive root: truncate, to avoid returning ambiguous "X:" */
-        /* FIXME: replace ok by xfail below when it's implemeted */
-	ok(buf[0] == 0, "should truncate the buffer to zero size");
-
-    lstrcpyW(buf, fooW);
-    len = GetTempPathW(len_with_null, buf);
-    ok(lstrcmpW(buf, fooW) != 0, "should touch the buffer");
-    ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
-    ok(buf[len - 1] == '\\', "should add back slash");
-    ok(len == (len_with_null - 1), "should return length without terminating 0");
+    ok(len >= len_with_null, "Expected >= %lu, got %lu", len_with_null, len);
 
     len = GetTempPathW(0, NULL);
-    /* win2000 adds excessive 0 when TMP variable does not specify full path,
-     * and buffer is not large enough to hold path with backslash.
-     * Therefore simple (len == len_with_null) fails.
-     */
-    ok(len >= len_with_null, "should reserve space for terminating 0");
+    ok(len >= len_with_null, "Expected >= %lu, got %lu", len_with_null, len);
+
+    lstrcpyW(buf, fooW);
+    len = GetTempPathW(len, buf);
+    ok(lstrcmpiW(buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path");
+    ok(len == lstrlenW(buf), "returned length should be equal to the length of string");
 }
 
 static void test_GetTempPath(void)
@@ -915,16 +887,20 @@ static void test_GetTempPath(void)
 
     /* test default configuration */
     trace("TMP=%s\n", save_TMP);
-    test_GetTempPathA();
-    test_GetTempPathW();
+    strcpy(buf,save_TMP);
+    if (buf[strlen(buf)-1]!='\\')
+        strcat(buf,"\\");
+    test_GetTempPathA(buf);
+    test_GetTempPathW(buf);
 
     /* TMP=C:\WINDOWS */
     GetWindowsDirectoryA(windir, sizeof(windir));
     SetEnvironmentVariableA("TMP", windir);
     GetEnvironmentVariableA("TMP", buf, sizeof(buf));
     trace("TMP=%s\n", buf);
-    test_GetTempPathA();
-    test_GetTempPathW();
+    strcat(windir,"\\");
+    test_GetTempPathA(windir);
+    test_GetTempPathW(windir);
 
     /* TMP=C:\ */
     GetWindowsDirectoryA(windir, sizeof(windir));
@@ -932,8 +908,8 @@ static void test_GetTempPath(void)
     SetEnvironmentVariableA("TMP", windir);
     GetEnvironmentVariableA("TMP", buf, sizeof(buf));
     trace("TMP=%s\n", buf);
-    test_GetTempPathA();
-    test_GetTempPathW();
+    test_GetTempPathA(windir);
+    test_GetTempPathW(windir);
 
     /* TMP=C: i.e. use current working directory of the specified drive */
     GetWindowsDirectoryA(windir, sizeof(windir));
@@ -942,8 +918,10 @@ static void test_GetTempPath(void)
     SetEnvironmentVariableA("TMP", windir);
     GetEnvironmentVariableA("TMP", buf, sizeof(buf));
     trace("TMP=%s\n", buf);
-    test_GetTempPathA();
-    test_GetTempPathW();
+    GetWindowsDirectoryA(windir, sizeof(windir));
+    strcat(windir,"\\");
+    test_GetTempPathA(windir);
+    test_GetTempPathW(windir);
 
     SetEnvironmentVariableA("TMP", save_TMP);
 }
