@@ -591,6 +591,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
 
     case WM_CANCELMODE:
+        iMenuSysKey = 0;
         if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) EndMenu();
 	if (GetCapture() == hwnd) ReleaseCapture();
 	break;
