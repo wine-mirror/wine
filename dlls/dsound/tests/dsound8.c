@@ -103,8 +103,10 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
            DXGetErrorString8(rc));
 
         rc=IDirectSound8_Initialize(dso,lpGuid);
-        ok(rc==DS_OK,"IDirectSound8_Initialize() failed: %s\n",
+        ok(rc==DS_OK||rc==DSERR_NODRIVER,"IDirectSound8_Initialize() failed: %s\n",
            DXGetErrorString8(rc));
+        if (rc==DSERR_NODRIVER)
+            return;
     }
 
     /* DSOUND: Error: Invalid caps buffer */
@@ -255,7 +257,8 @@ static HRESULT test_dsound8(LPGUID lpGuid)
 
     /* Create the DirectSound8 object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -365,7 +368,8 @@ static HRESULT test_primary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -506,7 +510,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -642,7 +647,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 

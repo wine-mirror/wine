@@ -636,7 +636,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -877,7 +878,8 @@ static HRESULT test_primary(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -959,7 +961,8 @@ static HRESULT test_primary_3d(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
@@ -1031,7 +1034,8 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
 
