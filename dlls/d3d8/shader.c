@@ -306,7 +306,7 @@ void vshader_m4x3(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DMATRIX43 mat) {
 
 void vshader_m3x4(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
   d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
-  d->y = mat[2][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
+  d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
   d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
   d->w = mat[3][0] * s0->x + mat[3][1] * s0->y + mat[3][2] * s0->z;
   VSTRACE(("executing m3x4(1): mat=(%f, %f, %f)    s0=(%f)     d=(%f) \n", mat[0][0], mat[0][1], mat[0][2], s0->x, d->x));
@@ -316,8 +316,8 @@ void vshader_m3x4(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DMATRIX34 mat) {
 }
 
 void vshader_m3x3(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DMATRIX33 mat) {
-  d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[2][2] * s0->z;
-  d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[2][2] * s0->z;
+  d->x = mat[0][0] * s0->x + mat[0][1] * s0->y + mat[0][2] * s0->z;
+  d->y = mat[1][0] * s0->x + mat[1][1] * s0->y + mat[1][2] * s0->z;
   d->z = mat[2][0] * s0->x + mat[2][1] * s0->y + mat[2][2] * s0->z;
   d->w = 1.0f;
   VSTRACE(("executing m3x3(1): mat=(%f, %f, %f)    s0=(%f)     d=(%f) \n", mat[0][0], mat[0][1], mat[0][2], s0->x, d->x));

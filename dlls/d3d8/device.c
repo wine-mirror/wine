@@ -990,8 +990,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
         dst->myDesc.Format = src->myDesc.Format;
 
         /* Convert container as well */
-        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, &IID_IDirect3DBaseTexture8, (void**) &texture); /* FIXME: Which refid? */
-        if (texture != NULL) {
+        rc = IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, &IID_IDirect3DBaseTexture8, (void**) &texture); /* FIXME: Which refid? */
+        if (SUCCEEDED(rc) && NULL != texture) {
             ((IDirect3DBaseTexture8Impl*) texture)->format = src->myDesc.Format;
 	    /** Releasing texture after GetContainer */
 	    IDirect3DBaseTexture8_Release(texture);
@@ -1000,38 +1000,39 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
     }
 
     /* Quick if complete copy ... */
-    if (rc == D3D_OK && cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
+    if (SUCCEEDED(rc)) {
+      if (cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
 
-      if (src->myDesc.Width == dst->myDesc.Width && src->myDesc.Height == dst->myDesc.Height) {
-
-        D3DLOCKED_RECT lrSrc;
-        D3DLOCKED_RECT lrDst;
-        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, NULL, D3DLOCK_READONLY);
-	IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, NULL, 0L);
-        TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
-
-	memcpy(lrDst.pBits, lrSrc.pBits, src->myDesc.Size);
- 
-        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
-        rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
-        TRACE("Unlocked src and dst\n");
+	if (src->myDesc.Width == dst->myDesc.Width && src->myDesc.Height == dst->myDesc.Height) {
+	  
+	  D3DLOCKED_RECT lrSrc;
+	  D3DLOCKED_RECT lrDst;
+	  IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, NULL, D3DLOCK_READONLY);
+	  IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, NULL, 0L);
+	  TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
+	  
+	  memcpy(lrDst.pBits, lrSrc.pBits, src->myDesc.Size);
+	  
+	  IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
+	  rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
+	  TRACE("Unlocked src and dst\n");
+	  
+	} else {
+	  
+	  FIXME("Wanted to copy all surfaces but size not compatible\n");
+	  rc = D3DERR_INVALIDCALL;
+	  
+	}
 
       } else {
+	
+	if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
 
-	FIXME("Wanted to copy all surfaces but size not compatible\n");
-        rc = D3DERR_INVALIDCALL;
+	  int bytesPerPixel = ((IDirect3DSurface8Impl*) pSourceSurface)->bytesPerPixel;
+	  int i;
 
-      }
-
-    } else {
-
-      if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
-
-        int bytesPerPixel = ((IDirect3DSurface8Impl*) pSourceSurface)->bytesPerPixel;
-        int i;
-
-        /* Copy rect by rect */
-        for (i = 0; i < cRects; i++) {
+	  /* Copy rect by rect */
+	  for (i = 0; i < cRects; i++) {
             CONST RECT*  r = &pSourceRectsArray[i];
             CONST POINT* p = &pDestPointsArray[i];
             int copyperline;
@@ -1040,10 +1041,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
             D3DLOCKED_RECT lrDst;
             RECT dest_rect;
  
-
             TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);
             if (src->myDesc.Format == D3DFMT_DXT1) { 
-                copyperline = ((r->right - r->left) * bytesPerPixel)/2; /* DXT1 is half byte per pixel */
+	      copyperline = ((r->right - r->left) * bytesPerPixel)/2; /* DXT1 is half byte per pixel */
             } else {
                 copyperline = ((r->right - r->left) * bytesPerPixel);
             }
@@ -1057,19 +1057,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
 
             /* Find where to start */
             for (j = 0; j < (r->bottom - r->top - 1); j++) {
-               memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
+	      memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
             }
-
             IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
             rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
             TRACE("Unlocked src and dst\n");
-        }
-      
-      } else {
-      
-	FIXME("Wanted to copy partial surfaces not implemented\n");
-        rc = D3DERR_INVALIDCALL;	
-	
+	  }
+	} else {
+	  FIXME("Wanted to copy partial surfaces not implemented\n");
+	  rc = D3DERR_INVALIDCALL;		  
+	}
       }
     }
 
