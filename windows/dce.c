@@ -24,7 +24,6 @@
 #include "gdi.h"
 #include "region.h"
 #include "heap.h"
-#include "local.h"
 #include "user.h"
 #include "debugtools.h"
 #include "windef.h"

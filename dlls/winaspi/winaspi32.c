@@ -17,7 +17,6 @@
 #include "options.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "ldt.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);
 

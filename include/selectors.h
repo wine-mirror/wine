@@ -8,35 +8,25 @@
 #define __WINE_SELECTORS_H
 
 #include "windef.h"
-#include "ldt.h"
+#include "wine/library.h"
 
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
 
-#ifdef __i386__
-# ifdef __GNUC__
-#  define __DEFINE_GET_SEG(seg) \
-    extern inline unsigned short __get_##seg(void) \
-    { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
-#  define __DEFINE_SET_SEG(seg) \
-    extern inline void __set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
-# else  /* __GNUC__ */
-#  define __DEFINE_GET_SEG(seg) extern unsigned short __get_##seg(void);
-#  define __DEFINE_SET_SEG(seg) extern void __set_##seg(unsigned int);
-# endif /* __GNUC__ */
-#else  /* __i386__ */
-# define __DEFINE_GET_SEG(seg) static inline unsigned short __get_##seg(void) { return 0; }
-# define __DEFINE_SET_SEG(seg) /* nothing */
-#endif  /* __i386__ */
+extern UINT W32S_offset;
 
-__DEFINE_GET_SEG(cs)
-__DEFINE_GET_SEG(ds)
-__DEFINE_GET_SEG(es)
-__DEFINE_GET_SEG(fs)
-__DEFINE_GET_SEG(gs)
-__DEFINE_GET_SEG(ss)
-__DEFINE_SET_SEG(fs)
-__DEFINE_SET_SEG(gs)
+#define W32S_APP2WINE(addr) ((addr)? (DWORD)(addr) + W32S_offset : 0)
+#define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
+
+#define FIRST_LDT_ENTRY_TO_ALLOC  17
+
+#define IS_SELECTOR_FREE(sel) (!(wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_ALLOCATED))
+
+/* Determine if sel is a system selector (i.e. not managed by Wine) */
+#define IS_SELECTOR_SYSTEM(sel) \
+   (!((sel) & 4) || ((LOWORD(sel) >> 3) < FIRST_LDT_ENTRY_TO_ALLOC))
+#define IS_SELECTOR_32BIT(sel) \
+   (IS_SELECTOR_SYSTEM(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
 #endif /* __WINE_SELECTORS_H */

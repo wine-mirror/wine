@@ -25,7 +25,6 @@
 #include "oss.h"
 #include "debugtools.h"
 #include "heap.h"
-#include "ldt.h"
 
 DEFAULT_DEBUG_CHANNEL(midi);
 

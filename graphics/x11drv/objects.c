@@ -13,7 +13,6 @@
 #include "brush.h"
 #include "font.h"
 #include "pen.h"
-#include "local.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);

@@ -14,7 +14,6 @@
 #include "color.h"
 #include "x11drv.h"
 #include "debugtools.h"
-#include "local.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 

@@ -37,7 +37,6 @@
 #include "dsdriver.h"
 #include "oss.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(wave);

@@ -6,7 +6,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "msdos.h"
-#include "ldt.h"
 #include "miscemu.h"
 #include "drive.h"
 #include "debugtools.h"

@@ -13,7 +13,6 @@
 #include "winnt.h"
 #include "heap.h"
 #include "snoop.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"
 #include "wine/exception.h"

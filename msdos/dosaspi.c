@@ -5,7 +5,6 @@
 #include "wine/winaspi.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "selectors.h"
 #include "miscemu.h" /* DOSMEM_* */
 #include "callback.h"
 #include "winerror.h"

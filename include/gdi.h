@@ -12,8 +12,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
-#include "ldt.h"
-#include "local.h"
 #include "path.h"
 #include <math.h>
 

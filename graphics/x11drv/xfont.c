@@ -31,7 +31,6 @@
 #include "options.h"
 #include "font.h"
 #include "debugtools.h"
-#include "ldt.h"
 #include "tweak.h"
 #include "x11font.h"
 #include "server.h"

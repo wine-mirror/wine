@@ -19,6 +19,7 @@
 #include "brush.h"
 #include "font.h"
 #include "heap.h"
+#include "local.h"
 #include "options.h"
 #include "palette.h"
 #include "pen.h"

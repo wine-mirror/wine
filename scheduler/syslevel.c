@@ -9,7 +9,6 @@
 #include "ntddk.h"
 #include "syslevel.h"
 #include "heap.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"
 

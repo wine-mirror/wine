@@ -8,7 +8,7 @@
 #define __WINE_MISCEMU_H
 
 #include "winnt.h"
-#include "ldt.h"
+#include "selectors.h"
 #include "wine/windef16.h"
 
 /* msdos/dosconf.c */
@@ -248,6 +248,9 @@ extern void WINAPI XMS_Handler(CONTEXT86*);
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
 
+#define PTR_REAL_TO_LIN(seg,off) \
+   ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
+
 /* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and 
  *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer 
  *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
@@ -265,7 +268,7 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
  */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
     (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : \
-     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(off) : PTR_SEG_OFF_TO_LIN((seg),LOWORD(off)))
+     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(off) : MapSL(MAKESEGPTR((seg),(off))))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \

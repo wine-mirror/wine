@@ -21,7 +21,6 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "global.h"
 #include "module.h"
 #include "file.h"
 #include "heap.h"

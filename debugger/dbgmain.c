@@ -6,7 +6,6 @@
 #include <signal.h>
 #include <X11/Xlib.h>
 #include "config.h"
-#include "ldt.h"
 #include "windows.h"
 #include "toolhelp.h"
 #include "debugger.h"

@@ -801,7 +801,6 @@ void BuildGlue( FILE *outfile, FILE *infile )
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
-    fprintf( outfile, "#include \"builtin16.h\"\n" );
     fprintf( outfile, "#include \"stackframe.h\"\n\n" );
 
     fprintf( outfile, "extern WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );\n" );

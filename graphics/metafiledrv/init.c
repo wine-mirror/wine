@@ -8,7 +8,6 @@
 #include "wine/winbase16.h"
 #include "gdi.h"
 #include "heap.h"
-#include "global.h"
 #include "metafile.h"
 #include "metafiledrv.h"
 #include "debugtools.h"

@@ -20,7 +20,6 @@
 #include "hook.h"
 #include "nonclient.h"
 #include "queue.h"
-#include "selectors.h"
 #include "tweak.h"
 #include "debugtools.h"
 #include "options.h"

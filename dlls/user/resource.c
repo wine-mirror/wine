@@ -13,7 +13,6 @@
 #include "wine/winuser16.h"
 
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);

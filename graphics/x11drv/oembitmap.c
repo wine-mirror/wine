@@ -26,7 +26,6 @@ typedef unsigned long Pixel;
 #include "debugtools.h"
 #include "gdi.h"
 #include "heap.h"
-#include "local.h"
 #include "tweak.h"
 #include "x11drv.h"
 

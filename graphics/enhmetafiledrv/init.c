@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"
-#include "global.h"
 #include "enhmetafile.h"
 #include "enhmetafiledrv.h"
 #include "debugtools.h"

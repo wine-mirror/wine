@@ -41,7 +41,6 @@
 #include "winbase.h"
 #include "ntddk.h"
 #include "winnls.h"
-#include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"

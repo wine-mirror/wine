@@ -27,7 +27,6 @@
 #include "winerror.h"
 #include "ntddk.h"
 #include "wine/exception.h"
-#include "selectors.h"
 #include "callback.h"
 #include "thread.h"
 #include "stackframe.h"

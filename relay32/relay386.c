@@ -11,7 +11,6 @@
 
 #include "config.h"
 #include "winnt.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "syslevel.h"
 #include "module.h"
