@@ -21,13 +21,12 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -38,9 +37,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "heap.h"
 #include "thread.h"
-#include "file.h"
 #include "module.h"
 
 #include "wine/debug.h"
@@ -48,7 +45,6 @@
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
-WINE_DECLARE_DEBUG_CHANNEL(win32);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 
@@ -252,8 +248,7 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
 }
 
 /***********************************************************************
- *             GetBinaryTypeA                     [KERNEL32.@]
- *             GetBinaryType                      [KERNEL32.@]
+ *             GetBinaryTypeW                     [KERNEL32.@]
  *
  * Determine whether a file is executable, and if so, what kind.
  *
@@ -285,13 +280,12 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
  *  ".com" and ".pif" files are only recognized by their file name extension,
  *  as per native Windows.
  */
-BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
+BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     BOOL ret = FALSE;
     HANDLE hfile;
-    char *ptr;
 
-    TRACE_(win32)("%s\n", lpApplicationName );
+    TRACE("%s\n", debugstr_w(lpApplicationName) );
 
     /* Sanity check.
      */
@@ -300,7 +294,7 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Open the file indicated by lpApplicationName for reading.
      */
-    hfile = CreateFileA( lpApplicationName, GENERIC_READ, FILE_SHARE_READ,
+    hfile = CreateFileW( lpApplicationName, GENERIC_READ, FILE_SHARE_READ,
                          NULL, OPEN_EXISTING, 0, 0 );
     if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
@@ -310,20 +304,26 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
     switch(MODULE_GetBinaryType( hfile ))
     {
     case BINARY_UNKNOWN:
+    {
+        static const WCHAR comW[] = { '.','C','O','M',0 };
+        static const WCHAR pifW[] = { '.','P','I','F',0 };
+        const WCHAR *ptr;
+
         /* try to determine from file name */
-        ptr = strrchr( lpApplicationName, '.' );
+        ptr = strrchrW( lpApplicationName, '.' );
         if (!ptr) break;
-        if (!FILE_strcasecmp( ptr, ".COM" ))
+        if (!strcmpiW( ptr, comW ))
         {
             *lpBinaryType = SCS_DOS_BINARY;
             ret = TRUE;
         }
-        else if (!FILE_strcasecmp( ptr, ".PIF" ))
+        else if (!strcmpiW( ptr, pifW ))
         {
             *lpBinaryType = SCS_PIF_BINARY;
             ret = TRUE;
         }
         break;
+    }
     case BINARY_PE_EXE:
     case BINARY_PE_DLL:
         *lpBinaryType = SCS_32BIT_BINARY;
@@ -352,36 +352,29 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 }
 
 /***********************************************************************
- *             GetBinaryTypeW                      [KERNEL32.@]
- *
- * Unicode version of GetBinaryTypeA.
+ *             GetBinaryTypeA                     [KERNEL32.@]
+ *             GetBinaryType                      [KERNEL32.@]
  */
-BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
+BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
-    BOOL ret = FALSE;
-    LPSTR strNew = NULL;
+    ANSI_STRING app_nameA;
+    NTSTATUS status;
 
-    TRACE_(win32)("%s\n", debugstr_w(lpApplicationName) );
+    TRACE("%s\n", debugstr_a(lpApplicationName));
 
     /* Sanity check.
      */
     if ( lpApplicationName == NULL || lpBinaryType == NULL )
         return FALSE;
 
-    /* Convert the wide string to a ascii string.
-     */
-    strNew = HEAP_strdupWtoA( GetProcessHeap(), 0, lpApplicationName );
+    RtlInitAnsiString(&app_nameA, lpApplicationName);
+    status = RtlAnsiStringToUnicodeString(&NtCurrentTeb()->StaticUnicodeString,
+                                          &app_nameA, FALSE);
+    if (!status)
+        return GetBinaryTypeW(NtCurrentTeb()->StaticUnicodeString.Buffer, lpBinaryType);
 
-    if ( strNew != NULL )
-    {
-        ret = GetBinaryTypeA( strNew, lpBinaryType );
-
-        /* Free the allocated string.
-         */
-        HeapFree( GetProcessHeap(), 0, strNew );
-    }
-
-    return ret;
+    SetLastError(RtlNtStatusToDosError(status));
+    return FALSE;
 }
 
 
