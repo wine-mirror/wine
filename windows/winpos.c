@@ -1393,6 +1393,30 @@ void WINAPI SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd,
     }
 }
 
+/***********************************************************************
+ *		AnimateWindow (USER32.@)
+ *		Shows/Hides a window with an animation
+ *		NO ANIMATION YET
+ */
+BOOL WINAPI AnimateWindow(HWND hwnd, DWORD dwTime, DWORD dwFlags)
+{
+	FIXME("partial stub\n");
+
+	/* If trying to show/hide and it's already   *
+	 * shown/hidden or invalid window, fail with *
+	 * invalid parameter                         */
+	if(!IsWindow(hwnd) ||
+	   (IsWindowVisible(hwnd) && !(dwFlags & AW_HIDE)) ||
+	   (!IsWindowVisible(hwnd) && (dwFlags & AW_HIDE)))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	ShowWindow(hwnd, (dwFlags & AW_HIDE) ? SW_HIDE : ((dwFlags & AW_ACTIVATE) ? SW_SHOW : SW_SHOWNA));
+
+	return TRUE;
+}
 
 /***********************************************************************
  *		SetInternalWindowPos (USER32.@)

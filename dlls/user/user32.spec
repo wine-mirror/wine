@@ -651,15 +651,17 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
 @ stub    RegisterDeviceNotificationW
 @ stub    UnregisterDeviceNotification
+
 # win98/win2k
-@ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
-@ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
+@ stdcall AnimateWindow(long long long) AnimateWindow
 @ stdcall DrawMenuBarTemp(long long) DrawMenuBarTemp
 @ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW
+@ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
 @ stdcall GetWindowModuleFileNameA(long ptr long) GetWindowModuleFileNameA
 @ stdcall GetWindowModuleFileNameW(long ptr long) GetWindowModuleFileNameW
+@ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

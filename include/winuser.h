@@ -2525,6 +2525,17 @@ DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 #define PM_REMOVE	0x0001
 #define PM_NOYIELD	0x0002
 
+/* AnimateWindow() flags */
+#define AW_SLIDE        0x00040000
+#define AW_ACTIVATE     0x00020000
+#define AW_BLEND        0x00080000
+#define AW_HIDE         0x00010000
+#define AW_CENTER       0x00000010
+#define AW_HOR_POSITIVE 0x00000001
+#define AW_HOR_NEGATIVE 0x00000002
+#define AW_VER_POSITIVE 0x00000004
+#define AW_VER_NEGATIVE 0x00000008
+
 /* WM_SHOWWINDOW wParam codes */
 #define SW_PARENTCLOSING    1
 #define SW_OTHERMAXIMIZED   2
@@ -3247,8 +3258,9 @@ BOOL        WINAPI SetKeyboardState(LPBYTE);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
-BOOL      WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
-BOOL      WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+BOOL        WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
+BOOL        WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+BOOL        WINAPI AnimateWindow(HWND,DWORD,DWORD);
 #define     AnsiLowerA CharLowerA
 #define     AnsiLowerW CharLowerW
 #define     AnsiLower WINELIB_NAME_AW(AnsiLower)
