@@ -4633,3 +4633,10 @@
 [HKEY_CLASSES_ROOT\CLSID\{E436EBB3-524F-11CE-9F53-0020AF0BA770}\InprocServer32]
 @="quartz.dll"
 "ThreadingModel"="Both"
+
+#
+# crypto config
+#
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Cryptography\Defaults\Provider\Microsoft Base Cryptographic Provider v1.0]
+"Image Path"="rsabase.dll"
+"Type"=dword:00000001
