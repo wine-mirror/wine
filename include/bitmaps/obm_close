@@ -3,7 +3,7 @@ static char * obm_close[] = {
 "36 18 4 1",
 " 	s button_face	c grey75",
 ".	s window_frame	c black",
-"X	c white",
+"X	s white		c white",
 "o	s button_shadow	c grey50",
 "                                    ",
 "                                    ",

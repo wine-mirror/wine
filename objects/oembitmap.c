@@ -22,19 +22,42 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 #ifdef USE_XPM
 
-  /* Known symbolic names for colors. Use these whenever possible. */
-struct sys_colors_symbols
+
+#define NB_COLOR_SYMBOLS  5
+
+  /* This is the list of the symbolic colors. All the colors used */
+  /* in the xpm files must be included in this list. If you need  */
+  /* to add new colors, add them just before "black", and add the */
+  /* color identifier in OBM_Sys_Colors_Symbols below.            */
+  /* Warning: black and white must always be the last 2 colors.   */
+
+static XpmColorSymbol OBM_Color_Symbols[NB_COLOR_SYMBOLS+2] =
 {
-    char *symbol;
-    WORD  syscolor;
+    { "button_face", NULL, 0 },       /* COLOR_BTNFACE */
+    { "button_shadow", NULL, 0 },     /* COLOR_BTNSHADOW */
+    { "button_highlight", NULL, 0 },  /* COLOR_BTNHIGHLIGHT */
+    { "button_text", NULL, 0 },       /* COLOR_BTNTEXT */
+    { "window_frame", NULL, 0 },      /* COLOR_WINDOWFRAME */
+    { "black", NULL, 0 },
+    { "white", NULL, 0 }
 };
 
-static const struct sys_colors_symbols OBM_Color_Symbols[] =
+static const int OBM_Sys_Colors_Symbols[NB_COLOR_SYMBOLS] =
 {
-    { "button_face", COLOR_BTNFACE },
-    { "button_shadow", COLOR_BTNSHADOW },
-    { "button_highlight", COLOR_BTNHIGHLIGHT }
+    COLOR_BTNFACE,
+    COLOR_BTNSHADOW,
+    COLOR_BTNHIGHLIGHT,
+    COLOR_BTNTEXT,
+    COLOR_WINDOWFRAME
 };
+
+  /* Don't change this list! */
+static XpmColorSymbol OBM_BW_Symbols[2] =
+{
+    { "white", NULL, 0 },
+    { "black", NULL, 1 }
+};
+
 
   /* Include OEM pixmaps */
 #include "bitmaps/obm_lfarrowi"
@@ -165,9 +188,34 @@ static const struct
 
 #endif /* USE_XPM */
 
+extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );  /* color.c */
 
 extern Colormap COLOR_WinColormap;
 
+
+/***********************************************************************
+ *           OBM_InitColorSymbols
+ */
+#ifdef USE_XPM
+static void OBM_InitColorSymbols()
+{
+    int i;
+    static int already_done = 0;
+
+    if (already_done) return;
+
+      /* Init the system colors */
+    for (i = 0; i < NB_COLOR_SYMBOLS; i++)
+    {
+        OBM_Color_Symbols[i].pixel = COLOR_ToPhysical( NULL,
+                                       GetSysColor(OBM_Sys_Colors_Symbols[i]));
+    }
+      /* Init black and white */
+    OBM_Color_Symbols[i++].pixel = COLOR_ToPhysical( NULL, RGB(0,0,0) );
+    OBM_Color_Symbols[i++].pixel = COLOR_ToPhysical( NULL, RGB(255,255,255) );
+    already_done = 1;
+}
+#endif  /* USE_XPM */
 
 /***********************************************************************
  *           OBM_LoadOEMBitmap
@@ -181,21 +229,28 @@ HBITMAP OBM_LoadOEMBitmap( WORD id )
 
     if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
     id -= OBM_FIRST;
+
 #ifdef USE_XPM
     if (!OBM_Pixmaps_Data[id].data) return 0;
     {
         XpmAttributes attrs;
+        int err;
 
-        attrs.valuemask = XpmColormap | XpmDepth;
-        attrs.colormap = COLOR_WinColormap;
+        OBM_InitColorSymbols();
+        attrs.valuemask    = XpmColormap | XpmDepth | XpmColorSymbols;
+        attrs.colormap     = COLOR_WinColormap;
         if (OBM_Pixmaps_Data[id].color) attrs.depth = bpp = screenDepth;
         else attrs.depth = bpp = 1;
+        attrs.colorsymbols = (bpp > 1) ? OBM_Color_Symbols : OBM_BW_Symbols;
+        attrs.numsymbols   = (bpp > 1) ? NB_COLOR_SYMBOLS + 2 : 2;
         
-        if (XpmCreatePixmapFromData( display, rootWindow,
-                                     OBM_Pixmaps_Data[id].data,
-                                     &pixmap, NULL, &attrs ) != XpmSuccess)
+        if ((err = XpmCreatePixmapFromData( display, rootWindow,
+                                            OBM_Pixmaps_Data[id].data,
+                                            &pixmap, NULL,
+                                            &attrs )) != XpmSuccess)
         {
-            fprintf( stderr, "Error creating pixmap\n" );
+            fprintf( stderr, "Error %d creating pixmap %d\n",
+                     err, OBM_FIRST+id );
             pixmap = 0;
         }
         else

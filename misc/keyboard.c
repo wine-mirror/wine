@@ -117,7 +117,7 @@ int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
 {
 	int i;
 	
-    	dprintf_keyboard(stddeb,"GetKeyNameText(%d,<ptr>, %d)\n",lParam,nSize);
+    	dprintf_keyboard(stddeb,"GetKeyNameText(%ld,<ptr>,%d)\n",lParam,nSize);
 
 	lParam >>= 16;
 	lParam &= 0xff;

@@ -175,6 +175,9 @@ else
 	fi
 fi
 
+prompt "Language (En/De)" LANG En
+ALLDEFINES="$ALLDEFINES -ALANG\($LANG\)"
+
 NEWBUILD=''
 if [ "`(domainname)`" = 'amscons.com' ]
 then

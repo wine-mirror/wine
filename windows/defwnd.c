@@ -14,8 +14,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "syscolor.h"
 #include "stddebug.h"
-/* #define DEBUG_MESSAGE /* */
-/* #undef  DEBUG_MESSAGE /* */
+/* #define DEBUG_MESSAGE */
+/* #undef  DEBUG_MESSAGE */
 #include "debug.h"
 
 
@@ -62,7 +62,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	int len;
 	WND * wndPtr = WIN_FindWndPtr( hwnd );
     
-    dprintf_message(stddeb, "DefWindowProc: %d %d %d %08x\n", 
+    dprintf_message(stddeb, "DefWindowProc: %d %d %d %08lx\n", 
 		    hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -72,8 +72,6 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	    CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
 	    if (createStruct->lpszName)
 		DEFWND_SetText( hwnd, createStruct->lpszName );
-	    if ((createStruct->style & WS_VSCROLL) ||
-		(createStruct->style & WS_HSCROLL)) NC_CreateScrollBars(hwnd);
 	    return 1;
 	}
 
@@ -99,9 +97,9 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     case WM_NCDESTROY:
 	if (wndPtr->hText) USER_HEAP_FREE(wndPtr->hText);
-	wndPtr->hText = 0;
-	if (wndPtr->VScroll) free(wndPtr->VScroll);
-	if (wndPtr->HScroll) free(wndPtr->HScroll);
+	if (wndPtr->hVScroll) USER_HEAP_FREE(wndPtr->hVScroll);
+	if (wndPtr->hHScroll) USER_HEAP_FREE(wndPtr->hHScroll);
+	wndPtr->hText = wndPtr->hVScroll = wndPtr->hHScroll = 0;
 	return 0;
 	
     case WM_PAINT:

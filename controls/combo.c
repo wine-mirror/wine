@@ -24,8 +24,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "debug.h"
 
   /* windows/graphics.c */
-extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect,
-                                 int thickness, BOOL pressed );
+extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
+                                  int shadow_size, BOOL pressed );
 extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
                           int xsrc, int ysrc, int width, int height, int rop );
 
@@ -95,6 +95,8 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 			dwStyle = WS_POPUP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY;
 			if ((wndPtr->dwStyle & CBS_HASSTRINGS) == CBS_HASSTRINGS)
 				dwStyle |= LBS_HASSTRINGS;
+			if ((wndPtr->dwStyle & CBS_SORT) == CBS_SORT)
+				dwStyle |= LBS_SORT;
 			if ((wndPtr->dwStyle & CBS_OWNERDRAWFIXED) == CBS_OWNERDRAWFIXED)
 				dwStyle |= LBS_OWNERDRAWFIXED;
 			if ((wndPtr->dwStyle & CBS_OWNERDRAWVARIABLE) == CBS_OWNERDRAWVARIABLE)
@@ -163,7 +165,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		rect.left = rect.right - (rect.bottom - rect.top); 
 		hDC = GetDC(hwnd);
 		InflateRect(&rect, -1, -1);
-		GRAPH_DrawReliefRect(hDC, &rect, 1, 1);
+		GRAPH_DrawReliefRect(hDC, &rect, 1, 1, TRUE);
 		ReleaseDC(hwnd, hDC);
 		wndPtr = WIN_FindWndPtr(hwnd);
 		lphc = ComboGetStorageHeader(hwnd);
@@ -194,7 +196,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		rect.left = rect.right - (rect.bottom - rect.top); 
 		hDC = GetDC(hwnd);
 		InflateRect(&rect, -1, -1);
-		GRAPH_DrawReliefRect(hDC, &rect, 1, 0);
+		GRAPH_DrawReliefRect(hDC, &rect, 1, 1, FALSE);
 		ReleaseDC(hwnd, hDC);
 		break;
    case WM_KEYDOWN:

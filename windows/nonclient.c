@@ -9,12 +9,13 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "win.h"
 #include "class.h"
 #include "message.h"
+#include "scroll.h"
 #include "sysmetrics.h"
 #include "user.h"
 #include "syscolor.h"
 #include "stddebug.h"
-/* #define DEBUG_NONCLIENT /* */
-/* #undef  DEBUG_NONCLIENT /* */
+/* #define DEBUG_NONCLIENT */
+/* #undef  DEBUG_NONCLIENT */
 #include "debug.h"
 
 
@@ -40,7 +41,9 @@ extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
 extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
 extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-			      HWND hwnd, BOOL suppress_draw ); /* menu.c */
+			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
+extern void SCROLL_HandleScrollEvent( HWND hwnd, int nBar,
+                                      WORD msg, POINT pt);       /* scroll.c */
 
 
   /* Some useful macros */
@@ -545,7 +548,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 {
     HDC hdc;
-    RECT rect, rect2;
+    RECT rect;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -631,33 +634,19 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
 
-    if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
- 	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->VScroll != NULL) &&
-	    (wndPtr->scroll_flags & 0x0001)) {
- 	    int bottom = rect.bottom;
- 	    if ((wndPtr->dwStyle & WS_HSCROLL) && (wndPtr->scroll_flags & 0x0001))
-			bottom -= SYSMETRICS_CYHSCROLL;
-	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, 
-	    	rect.top, rect.right+1, bottom+1); 
- 	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, wndPtr->VScroll);
- 	    }
- 	if ((wndPtr->dwStyle & WS_HSCROLL) && wndPtr->HScroll != NULL &&
-	    (wndPtr->scroll_flags & 0x0002)) {
-	    int right = rect.right;
-	    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->scroll_flags & 0x0001))
-			right -= SYSMETRICS_CYVSCROLL;
-	    SetRect(&rect2, rect.left-1, rect.bottom - SYSMETRICS_CYHSCROLL,
-		    right+1, rect.bottom+1);
-	    StdDrawScrollBar(hwnd, hdc, SB_HORZ, &rect2, wndPtr->HScroll);
-	    }
+      /* Draw the scroll-bars */
 
-	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL) &&
-	    (wndPtr->scroll_flags & 0x0003) == 0x0003) {
-		RECT r = rect;
-		r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
-		r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
-		FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
-		}
+    if (wndPtr->dwStyle & WS_VSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_VERT);
+    if (wndPtr->dwStyle & WS_HSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_HORZ);
+
+      /* Draw the "size-box" */
+
+    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
+    {
+        RECT r = rect;
+        r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
+        r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
+        FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
     }    
 
     ReleaseDC( hwnd, hdc );
@@ -1041,8 +1030,10 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  */
 static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 {
-    MSG 	msg;
-    WORD 	scrollbar;
+    MSG msg;
+    WORD scrollbar;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
     if ((wParam & 0xfff0) == SC_HSCROLL)
     {
 	if ((wParam & 0x0f) != HTHSCROLL) return;
@@ -1054,25 +1045,35 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 	scrollbar = SB_VERT;
     }
 
-    ScreenToClient( hwnd, &pt );
-    ScrollBarButtonDown( hwnd, scrollbar, pt.x, pt.y );
+    pt.x -= wndPtr->rectWindow.left;
+    pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );
+    SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
 
     do
     {
-	MSG_GetHardwareMessage( &msg );
-	ScreenToClient( hwnd, &msg.pt );
+        GetMessage( &msg, 0, 0, 0 );
 	switch(msg.message)
 	{
 	case WM_LBUTTONUP:
-	    ScrollBarButtonUp( hwnd, scrollbar, msg.pt.x, msg.pt.y );
-	    break;
 	case WM_MOUSEMOVE:
-	    ScrollBarMouseMove(hwnd, scrollbar, msg.wParam, msg.pt.x,msg.pt.y);
+        case WM_SYSTIMER:
+            pt = MAKEPOINT(msg.lParam);
+            pt.x += wndPtr->rectClient.left - wndPtr->rectWindow.left;
+            pt.y += wndPtr->rectClient.top - wndPtr->rectWindow.top;
+            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
 	    break;
+        default:
+            TranslateMessage( &msg );
+            DispatchMessage( &msg );
+            break;
 	}
+        if (!IsWindow( hwnd ))
+        {
+            ReleaseCapture();
+            break;
+        }
     } while (msg.message != WM_LBUTTONUP);
-    ReleaseCapture();
 }
 
 /***********************************************************************
@@ -1234,7 +1235,6 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-    if (wndPtr->dwStyle & WS_CHILD) ClientToScreen(wndPtr->hwndParent, &pt);
 	NC_TrackScrollBar( hwnd, wParam, pt );
 	break;
 

@@ -12,8 +12,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "prototypes.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI /* */
-/* #undef  DEBUG_GDI /* */
+/* #define DEBUG_GDI */
+/* #undef  DEBUG_GDI */
 #include "debug.h"
 
 MDESC *GDI_Heap = NULL;
@@ -345,7 +345,7 @@ HANDLE GetStockObject( int obj )
 int GetObject( HANDLE handle, int count, LPSTR buffer )
 {
     GDIOBJHDR * ptr = NULL;
-    dprintf_gdi(stddeb, "GetObject: %04x %d %08x\n", handle, count, buffer );
+    dprintf_gdi(stddeb, "GetObject: %04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if (handle >= FIRST_STOCK_HANDLE)

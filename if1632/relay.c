@@ -80,7 +80,6 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 {
     struct dll_table_entry_s *dll_p;
     unsigned short *saved_Stack16Frame;
-    unsigned int segment;
     unsigned int offset;
     unsigned int dll_id;
     unsigned int ordinal;
@@ -116,7 +115,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	       dll_builtin_table[dll_id].dll_name, ordinal,
 	       seg_off >> 16, seg_off & 0xffff);
 	printf("ret=%08x", *ret_addr);
-	printf("  ESP=%08x, EBP=%08x, SS=%04x\n", 
+	printf("  ESP=%08lx, EBP=%08lx, SS=%04x\n", 
 	       IF1632_Saved16_esp, IF1632_Saved16_ebp,
 	       IF1632_Saved16_ss);
 
@@ -210,7 +209,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 #ifdef DEBUG_RELAY
     if (Options.relay_debug)
     {
-	printf("Returning %08.8x from %s (%s.%d)\n",
+	printf("Returning %08x from %s (%s.%d)\n",
 	       ret_val,
 	       dll_p->export_name,
 	       dll_builtin_table[dll_id].dll_name, ordinal);

@@ -42,9 +42,8 @@ typedef struct tagWND
     DWORD        dwStyle;        /* Window style (from CreateWindow) */
     DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    void         *VScroll;       /* Vertical ScrollBar Struct Pointer */
-    void         *HScroll;       /* Horizontal ScrollBar Struct Pointer */
-    WORD         scroll_flags;   /* scrolls flags (vert & horz visible) */
+    HANDLE       hVScroll;       /* Vertical scroll-bar info */
+    HANDLE       hHScroll;       /* Horizontal scroll-bar info */
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags (see below) */

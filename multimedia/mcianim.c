@@ -22,8 +22,9 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "driver.h"
 #include "mmsystem.h"
 #include "stddebug.h"
-/* #define DEBUG_ANIM /* */
-/* #undef  DEBUG_ANIM /* */
+/* #define DEBUG_MCIANIM /* */
+/* #undef  DEBUG_MCIANIM /* */
+#define DEBUG_MCIANIM
 #include "debug.h"
 
 #define MAX_ANIMDRV 		2
@@ -69,6 +70,7 @@ DWORD ANIM_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 	int		cdrom;
 	dprintf_mcianim(stddeb,"ANIM_mciOpen(%08X, %08X);\n", 
 						dwFlags, lpParms);
+	printf("ANIM_mciOpen(%08X, %08X);\n", dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	wDevID = lpParms->wDeviceID;
 	if (AnimDev[wDevID].nUseCount > 0) {
@@ -86,6 +88,7 @@ DWORD ANIM_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 		}
     if (dwFlags & MCI_OPEN_ELEMENT) {
         dprintf_mcianim(stddeb,"ANIM_mciOpen // MCI_OPEN_ELEMENT !\n");
+        printf("ANIM_mciOpen // MCI_OPEN_ELEMENT !\n");
 /*		return MCIERR_NO_ELEMENT_ALLOWED; */
 		}
 	memcpy(&AnimDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
@@ -416,6 +419,7 @@ DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	int 	start, end;
 	dprintf_mcianim(stddeb,"ANIM_mciPlay(%u, %08X, %08X);\n", 
 		wDevID, dwFlags, lpParms);
+	printf("ANIM_mciPlay(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	start = 0; 		end = AnimDev[wDevID].dwTotalLen;
 	AnimDev[wDevID].nCurTrack = 1;

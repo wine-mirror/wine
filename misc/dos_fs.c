@@ -1,6 +1,6 @@
 /*
  * DOS-FS
- * NOV 1993 Erik Bos (erik@(trashcan.)hacktic.nl)
+ * NOV 1993 Erik Bos <erik@xs4all.nl>
  *
  * FindFile by Bob, hacked for dos & unixpaths by Erik.
  *
@@ -31,8 +31,6 @@
 #include "autoconf.h"
 #include "comm.h"
 #include "stddebug.h"
-/* #define DEBUG_DOSFS /* */
-/* #undef  DEBIG_DOSFS /* */
 #include "debug.h"
 
 #define WINE_INI_USER "~/.winerc"
@@ -141,6 +139,12 @@ void DOS_InitFS(void)
 		strcat(DosDrives[x].label, drive);
 		DosDrives[x].disabled = 0;
 	}
+	DosDrives[25].rootdir = "/";
+	strcpy(DosDrives[25].cwd, "/");
+	strcpy(DosDrives[25].label, "UNIX-FS");
+	DosDrives[25].serialnumber = 0x12345678;
+	DosDrives[25].disabled = 0;
+
 	DOS_SetDefaultDrive(2);
 
 	for (x=0; x!=MAX_DOS_DRIVES; x++) {
@@ -431,7 +435,7 @@ char *GetDosFileName(char *unixfilename)
 			}	
 		}
 	}
-	sprintf(temp, "UNIX:%s", unixfilename);
+	sprintf(temp, "Z:%s", unixfilename);
 	ToDos(temp);
 	return(temp);
 }
@@ -547,7 +551,7 @@ int DOS_GetFreeSpace(int drive, long *size, long *available)
 
 	*size = info.f_bsize * info.f_blocks;
 	*available = info.f_bavail * info.f_bsize;
-	
+
 	return 1;
 }
 
@@ -578,14 +582,9 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 
     dprintf_dosfs(stddeb,"FindFile: looking for %s\n", filename);
     rootnamelen = strlen(filename);
-    if ((rootname = malloc(rootnamelen + 1)) == NULL)
-    	return NULL;
-    strcpy(rootname, filename);
+    rootname = strdup(filename);
     ToUnix(rootname);
-
-    if ((workingpath = malloc(strlen(path) + 1)) == NULL)
-	return NULL;
-    strcpy(workingpath, path);
+    workingpath = strdup(path);
 
     for(dirname = strtok(workingpath, ";"); 
 	dirname != NULL;
@@ -649,7 +648,7 @@ char *WineIniFileName(void)
 {
 	int fd;
 	static char *filename = NULL;
-	char name[256];
+	static char name[256];
 
 	if (filename)
 		return filename;
@@ -658,14 +657,12 @@ char *WineIniFileName(void)
 	ExpandTildeString(name);
 	if ((fd = open(name, O_RDONLY)) != -1) {
 		close(fd);
-		filename = malloc(strlen(name) + 1);
-		strcpy(filename, name);
+		filename = name;
 		return(filename);
 	}
 	if ((fd = open(WINE_INI_GLOBAL, O_RDONLY)) != -1) {
 		close(fd);
-		filename = malloc(strlen(WINE_INI_GLOBAL) + 1);
-		strcpy(filename, WINE_INI_GLOBAL);
+		filename = WINE_INI_GLOBAL;
 		return(filename);
 	}
 	fprintf(stderr,"wine: can't open configuration file %s or %s !\n", 

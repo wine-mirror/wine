@@ -5,12 +5,10 @@
  *
  * WARNING : Many options of OpenFile are not yet implemeted.
  *
- * NOV 93 Erik Bos (erik@(trashcan.)hacktic.nl
+ * NOV 93 Erik Bos (erik@xs4all.nl)
  *		- removed ParseDosFileName, and DosDrive structures.
  *		- structures dynamically configured at runtime.
  *		- _lopen modified to use GetUnixFileName.
- *
- * DEC 93 Erik Bos (erik@(trashcan.)hacktic.nl)
  *		- Existing functions modified to use dosfs functions.
  *		- Added _llseek, _lcreat, GetDriveType, GetTempDrive, 
  *		  GetWindowsDirectory, GetSystemDirectory, GetTempFileName.
@@ -79,7 +77,7 @@ INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
   int result;
 
   dprintf_file(stddeb, "_lread: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, (int) lpBuffer, wBytes);
+	  		hFile, (long) lpBuffer, wBytes);
   
   result = read (hFile, lpBuffer, wBytes);
 
@@ -97,7 +95,7 @@ INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
 	int result;
 
   dprintf_file(stddeb, "_lwrite: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, (int) lpBuffer, wBytes);
+	  		hFile, (long) lpBuffer, wBytes);
 
     result = write (hFile, lpBuffer, wBytes);
 

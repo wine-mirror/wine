@@ -13,8 +13,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "gdi.h"
 #include "stddebug.h"
-/* #define DEBUG_FONT /* */
-/* #undef  DEBUG_FONT /* */
+/* #define DEBUG_FONT */
+/* #undef  DEBUG_FONT */
 #include "debug.h"
 
 #define MAX_FONTS	256
@@ -157,7 +157,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
       family = FONT_TranslateName( "decorative" );
       break;
     default:
-      family = FontNames[0].x11;
+      family = "*-*";
       break;
     }
     
@@ -248,7 +248,7 @@ HFONT CreateFontIndirect( LOGFONT * font )
     fontPtr = (FONTOBJ *) GDI_HEAP_ADDR( hfont );
     memcpy( &fontPtr->logfont, font, sizeof(LOGFONT) );
     AnsiLower( fontPtr->logfont.lfFaceName );
-    dprintf_font(stddeb,"CreateFontIndirect(%08X); return %04X\n",font,hfont);
+    dprintf_font(stddeb,"CreateFontIndirect(%p); return %04x\n",font,hfont);
     return hfont;
 }
 
@@ -288,7 +288,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     X_PHYSFONT * stockPtr;
     HFONT prevHandle = dc->w.hFont;
     XFontStruct * fontStruct;
-    dprintf_font(stddeb,"FONT_SelectObject(%04X, %04X, %08X); !\n", 
+    dprintf_font(stddeb,"FONT_SelectObject(%p, %04x, %p)\n", 
 		     dc, hfont, font);
       /* Load font if necessary */
 
@@ -487,7 +487,7 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
  */
 DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 {
-    dprintf_font(stdnimp,"SetmapperFlags(%04X, %08X) // Empty Stub !\n", 
+    dprintf_font(stdnimp,"SetmapperFlags(%04X, %08lX) // Empty Stub !\n", 
 		 hDC, dwFlag); 
     return 0L;
 }
@@ -555,8 +555,8 @@ BOOL RemoveFontResource( LPSTR str )
  */
 int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 {
-	int 	i, j;
-	dprintf_font(stddeb,"ParseFontParms('%s', %d, %08X, %d);\n", 
+	int 	i;
+	dprintf_font(stddeb,"ParseFontParms('%s', %d, %p, %d);\n", 
 			lpFont, wParmsNo, lpRetStr, wMaxSiz);
 	if (lpFont == NULL) return 0;
 	if (lpRetStr == NULL) return 0;
@@ -589,7 +589,7 @@ void InitFontsList()
     char 	*family, *weight, *charset;
 	char 	**names;
     char 	slant, spacing;
-    int 	i, width, count;
+    int 	i, count;
 	LPLOGFONT	lpNewFont;
     weight = "medium";
     slant = 'r';

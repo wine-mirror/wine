@@ -15,19 +15,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dlls.h"
 #include "resource.h"
 #include "stddebug.h"
-/* #define DEBUG_RESOURCE */
-/* #undef  DEBUG_RESOURCE */
 #include "debug.h"
-
-
-static int ResourceFd = -1;
-static HANDLE ResourceInst = 0;
-static struct w_files *ResourceFileInfo;
 
 /**********************************************************************
- *			RSC_LoadNameTable
+ *			NE_LoadNameTable
  */
-void RSC_LoadNameTable(void)
+static void NE_LoadNameTable(struct w_files *wpnt)
 {
     struct resource_typeinfo_s typeinfo;
     struct resource_nameinfo_s nameinfo;
@@ -37,26 +30,21 @@ void RSC_LoadNameTable(void)
     char                      *p;
     int                        i;
     unsigned short             len;
-    off_t                      rtoff;
     off_t		       saved_pos;
     
     top = NULL;
-
     /*
      * Move to beginning of resource table.
      */
-    rtoff = (ResourceFileInfo->mz_header->ne_offset +
-	     ResourceFileInfo->ne->ne_header->resource_tab_offset);
-    lseek(ResourceFd, rtoff, SEEK_SET);
-    
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+	    	wpnt->ne->ne_header->resource_tab_offset, SEEK_SET);
+
     /*
      * Read block size.
      */
-    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
-	sizeof(size_shift))
-    {
+    if (read(wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift))
 	return;
-    }
+
     size_shift = CONV_SHORT(size_shift);
 
     /*
@@ -65,97 +53,48 @@ void RSC_LoadNameTable(void)
     typeinfo.type_id = 0xffff;
     while (typeinfo.type_id != 0) 
     {
-	if (!load_typeinfo (ResourceFd, &typeinfo))
+	if (read(wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo))
 	    break;
 
 	if (typeinfo.type_id == 0) 
 	    break;
+
 	if (typeinfo.type_id == 0x800f) 
 	{
 	    for (i = 0; i < typeinfo.count; i++) 
 	    {
-		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
-		    sizeof(nameinfo))
-		{
+		if (read(wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
 		    break;
-		}
 		
-		saved_pos = lseek(ResourceFd, 0, SEEK_CUR);
-		lseek(ResourceFd, (long) nameinfo.offset << size_shift, 
+		saved_pos = lseek(wpnt->fd, 0, SEEK_CUR);
+		lseek(wpnt->fd, (long) nameinfo.offset << size_shift, 
 		      SEEK_SET);
-		read(ResourceFd, &len, sizeof(len));
+		read(wpnt->fd, &len, sizeof(len));
 		while (len)
 		{
 		    new = (RESNAMTAB *) GlobalQuickAlloc(sizeof(*new));
 		    new->next = top;
 		    top = new;
 
-		    read(ResourceFd, &new->type_ord, 2);
-		    read(ResourceFd, &new->id_ord, 2);
-		    read(ResourceFd, read_buf, len - 6);
+		    read(wpnt->fd, &new->type_ord, 2);
+		    read(wpnt->fd, &new->id_ord, 2);
+		    read(wpnt->fd, read_buf, len - 6);
 		    
 		    p = read_buf + strlen(read_buf) + 1;
 		    strncpy(new->id, p, MAX_NAME_LENGTH);
 		    new->id[MAX_NAME_LENGTH - 1] = '\0';
 
-		    read(ResourceFd, &len, sizeof(len));
+		    read(wpnt->fd, &len, sizeof(len));
 		}
-
-		lseek(ResourceFd, saved_pos, SEEK_SET);
+		lseek(wpnt->fd, saved_pos, SEEK_SET);
 	    }
-	    break;
-	}
-	else 
-	{
-	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-	}
+	} else 
+		lseek(wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
     }
-    ResourceFileInfo->ne->resnamtab = top;
+    wpnt->ne->resnamtab = top;
 }
 
-/**********************************************************************
- *					OpenResourceFile
- */
-int
-OpenResourceFile(HANDLE instance)
-{
-    struct w_files *w;
-    char   *res_file;
-    
-    if (ResourceInst == instance)
-	return ResourceFd;
-
-    w = GetFileInfo(instance);
-    if (w == NULL)
-	return -1;
-    ResourceFileInfo = w;
-    res_file = w->filename;
-    
-    if (ResourceFd >= 0)
-	close(ResourceFd);
-    
-    ResourceInst = instance;
-    ResourceFd   = open (res_file, O_RDONLY);
-#if 1
-#ifndef WINELIB
-    if (w->ne->resnamtab == (RESNAMTAB *) -1)
-    {
-	RSC_LoadNameTable();
-    }
-#endif
-#endif
-
-    dprintf_resource(stddeb, "OpenResourceFile(%04X) // file='%s' hFile=%04X !\n", 
-		instance, w->filename, ResourceFd);
-    return ResourceFd;
-}
-
-int load_typeinfo (int fd, struct resource_typeinfo_s *typeinfo)
-{
-    return read (fd, typeinfo, sizeof (*typeinfo)) == sizeof (*typeinfo);
-}
-
-int type_match(int type_id1, int type_id2, int fd, off_t off)
+static int type_match(int type_id1, int type_id2, int fd, off_t off)
 {
 	off_t old_pos;
 	unsigned char c;
@@ -172,10 +111,12 @@ int type_match(int type_id1, int type_id2, int fd, off_t off)
 	if ((type_id2 & 0x8000) != 0)
 		return 0;
 	dprintf_resource(stddeb, "type_compare: type_id2=%04X !\n", type_id2);
+
 	old_pos = lseek(fd, 0, SEEK_CUR);
 	lseek(fd, off + type_id2, SEEK_SET);
 	read(fd, &c, 1);
-	nbytes = CONV_CHAR_TO_LONG (c);
+	nbytes = CONV_CHAR_TO_LONG(c);
+
 	dprintf_resource(stddeb, "type_compare: namesize=%d\n", nbytes);
 	read(fd, name, nbytes);
 	lseek(fd, old_pos, SEEK_SET);
@@ -187,9 +128,7 @@ int type_match(int type_id1, int type_id2, int fd, off_t off)
 /**********************************************************************
  *					FindResourceByNumber
  */
-int
-FindResourceByNumber(struct resource_nameinfo_s *result_p,
-		     int type_id, int resource_id)
+static int FindResourceByNumber(RESOURCE *r, int type_id, int resource_id)
 {
     struct resource_typeinfo_s typeinfo;
     struct resource_nameinfo_s nameinfo;
@@ -197,58 +136,54 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     int i;
     off_t rtoff;
 
-    /*
-     * Move to beginning of resource table.
-     */
-    rtoff = (ResourceFileInfo->mz_header->ne_offset +
-	     ResourceFileInfo->ne->ne_header->resource_tab_offset);
-    lseek(ResourceFd, rtoff, SEEK_SET);
-    
-    /*
-     * Read block size.
-     */
-    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
-	sizeof(size_shift))
-    {
+    dprintf_resource(stddeb, "FindResourceByNumber: type_id =%x,m res_id = %x\n",
+		type_id, resource_id);
+
+    /* Move to beginning of resource table */
+    rtoff = (r->wpnt->mz_header->ne_offset +
+	     r->wpnt->ne->ne_header->resource_tab_offset);
+    lseek(r->wpnt->fd, rtoff, SEEK_SET);
+
+    /* Read block size */
+    if (read(r->wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
     	printf("FindResourceByNumber (%d) bad block size !\n",(int) resource_id);
 	return -1;
     }
     size_shift = CONV_SHORT(size_shift);
-    /*
-     * Find resource.
-     */
+
+    /* Find resource */
     for (;;) {
-	if (!load_typeinfo (ResourceFd, &typeinfo)){
+	if (read(r->wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
 	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
 	    return -1;
-	    }
+	}
 	dprintf_resource(stddeb, "FindResourceByNumber type=%X count=%d ?=%ld searched=%08X\n", 
 		typeinfo.type_id, typeinfo.count, typeinfo.reserved, type_id);
-	if (typeinfo.type_id == 0) break;
-	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
+	if (typeinfo.type_id == 0)
+		break;
+	if (type_match(type_id, typeinfo.type_id, r->wpnt->fd, rtoff)) {
 
 	    for (i = 0; i < typeinfo.count; i++) {
 #ifndef WINELIB
-		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
-		    sizeof(nameinfo))
+		if (read(r->wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
 #else
-		if (!load_nameinfo (ResourceFd, &nameinfo))
+		if (!load_nameinfo(r->wpnt->fd, &nameinfo))
 #endif
 		{
 		    printf("FindResourceByNumber (%X) bad nameinfo size !\n", resource_id);
 		    return -1;
-		    }
+		}
 		dprintf_resource(stddeb, "FindResource: search type=%X id=%X // type=%X id=%X\n",
 			type_id, resource_id, typeinfo.type_id, nameinfo.id);
 		if (nameinfo.id == resource_id) {
-		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
-		    return size_shift;
+			r->size = nameinfo.length << size_shift;
+			r->offset = nameinfo.offset << size_shift;
+			return size_shift;
 		    }
 	        }
 	    }
-	else {
-	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-	    }
+	else
+	    lseek(r->wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
         }
     return -1;
 }
@@ -256,9 +191,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 /**********************************************************************
  *					FindResourceByName
  */
-int
-FindResourceByName(struct resource_nameinfo_s *result_p,
-		     int type_id, char *resource_name)
+static int FindResourceByName(RESOURCE *r, int type_id, char *resource_name)
 {
     struct resource_typeinfo_s typeinfo;
     struct resource_nameinfo_s nameinfo;
@@ -269,65 +202,51 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     int i;
     off_t rtoff;
 
-    /*
-     * Check for loaded name table.
-     */
-    if (ResourceFileInfo->ne->resnamtab != NULL)
-    {
+    /* Check for loaded name table */
+    if (r->wpnt->ne->resnamtab != NULL) {
 	RESNAMTAB *e;
 
-	for (e = ResourceFileInfo->ne->resnamtab; e != NULL; e = e->next)
-	{
-	    if (e->type_ord == (type_id & 0x000f) &&
-		strcasecmp(e->id, resource_name) == 0)
+	for (e = r->wpnt->ne->resnamtab; e != NULL; e = e->next)
+	    if (e->type_ord == (type_id & 0x000f) && 
+	    	strcasecmp(e->id, resource_name) == 0)
 	    {
-		return FindResourceByNumber(result_p, type_id, e->id_ord);
+		return FindResourceByNumber(r, type_id, e->id_ord);
 	    }
-	}
-
-	return -1;
+	    return -1;
     }
 
-    /*
-     * Move to beginning of resource table.
-     */
-    rtoff = (ResourceFileInfo->mz_header->ne_offset +
-	     ResourceFileInfo->ne->ne_header->resource_tab_offset);
-    lseek(ResourceFd, rtoff, SEEK_SET);
-    
-    /*
-     * Read block size.
-     */
-    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
-	sizeof(size_shift))
+    /* Move to beginning of resource table */
+    rtoff = (r->wpnt->mz_header->ne_offset +
+	     r->wpnt->ne->ne_header->resource_tab_offset);
+    lseek(r->wpnt->fd, rtoff, SEEK_SET);
+
+    /* Read block size */
+    if (read(r->wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift))
     {
     	printf("FindResourceByName (%s) bad block size !\n", resource_name);
 	return -1;
     }
     size_shift = CONV_SHORT (size_shift);
     
-    /*
-     * Find resource.
-     */
+    /* Find resource */
     for (;;)
     {
-	if (!load_typeinfo (ResourceFd, &typeinfo))
-	{
+	if (read(r->wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
 	    printf("FindResourceByName (%s) bad typeinfo size !\n", resource_name);
 	    return -1;
 	}
 	dprintf_resource(stddeb, "FindResourceByName typeinfo.type_id=%X count=%d type_id=%X\n",
 			typeinfo.type_id, typeinfo.count, type_id);
-	if (typeinfo.type_id == 0) break;
-	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff))
+	if (typeinfo.type_id == 0)
+		break;
+	if (type_match(type_id, typeinfo.type_id, r->wpnt->fd, rtoff))
 	{
 	    for (i = 0; i < typeinfo.count; i++)
 	    {
 #ifndef WINELIB
-		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
-		    sizeof(nameinfo))
+		if (read(r->wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
 #else
-		if (!load_nameinfo (ResourceFd, &nameinfo))
+		if (!load_nameinfo (r->wpnt->fd, &nameinfo))
 #endif
 		{
 		    printf("FindResourceByName (%s) bad nameinfo size !\n", resource_name);
@@ -337,28 +256,27 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 		if ((nameinfo.id & 0x8000) != 0) continue;
 */		
 		dprintf_resource(stddeb, "FindResourceByName // nameinfo.id=%04X !\n", nameinfo.id);
-		old_pos = lseek(ResourceFd, 0, SEEK_CUR);
+		old_pos = lseek(r->wpnt->fd, 0, SEEK_CUR);
 		new_pos = rtoff + nameinfo.id;
-		lseek(ResourceFd, new_pos, SEEK_SET);
-		read(ResourceFd, &nbytes, 1);
+		lseek(r->wpnt->fd, new_pos, SEEK_SET);
+		read(r->wpnt->fd, &nbytes, 1);
 		dprintf_resource(stddeb, "FindResourceByName // namesize=%d !\n", nbytes);
  		nbytes = CONV_CHAR_TO_LONG (nbytes);
-		read(ResourceFd, name, nbytes);
-		lseek(ResourceFd, old_pos, SEEK_SET);
+		read(r->wpnt->fd, name, nbytes);
+		lseek(r->wpnt->fd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
 		dprintf_resource(stddeb, "FindResourceByName type_id=%X (%d of %d) name='%s' resource_name='%s'\n", 
 			typeinfo.type_id, i + 1, typeinfo.count, 
 			name, resource_name);
-		if (strcasecmp(name, resource_name) == 0)
-		{
-		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
-		    return size_shift;
+		if (strcasecmp(name, resource_name) == 0) {
+			r->size = nameinfo.length << size_shift;
+			r->offset = nameinfo.offset << size_shift;
+			return size_shift;
 		}
 	    }
 	}
-	else {
-	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-	    }
+	else
+	    lseek(r->wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
     }
     return -1;
 }
@@ -369,109 +287,92 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
  */
 int GetRsrcCount(HINSTANCE hInst, int type_id)
 {
+    struct w_files *wpnt;
     struct resource_typeinfo_s typeinfo;
     struct resource_nameinfo_s nameinfo;
     unsigned short size_shift;
     off_t rtoff;
 
-    if (hInst == 0) return 0;
+    if (hInst == 0)
+    	return 0;
     dprintf_resource(stddeb, "GetRsrcCount hInst=%04X typename=%08X\n", 
 	hInst, type_id);
-    if (OpenResourceFile(hInst) < 0)	return 0;
 
+    if ((wpnt = GetFileInfo(hInst)) == NULL)
+    	return 0;
     /*
      * Move to beginning of resource table.
      */
-    rtoff = (ResourceFileInfo->mz_header->ne_offset +
-	     ResourceFileInfo->ne->ne_header->resource_tab_offset);
-    lseek(ResourceFd, rtoff, SEEK_SET);
+    rtoff = (wpnt->mz_header->ne_offset +
+    		wpnt->ne->ne_header->resource_tab_offset);
+    lseek(wpnt->fd, rtoff, SEEK_SET);
     /*
      * Read block size.
      */
-    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
+    if (read(wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
 		printf("GetRsrcCount // bad block size !\n");
 		return -1;
-		}
+    }
     size_shift = CONV_SHORT (size_shift);
     for (;;) {
-		if (!load_typeinfo (ResourceFd, &typeinfo))	{
-			printf("GetRsrcCount // bad typeinfo size !\n");
-			return 0;
-			}
-		dprintf_resource(stddeb, "GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
+	if (read(wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
+		printf("GetRsrcCount // bad typeinfo size !\n");
+		return 0;
+	}
+	dprintf_resource(stddeb, "GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
 				typeinfo.type_id, typeinfo.count, type_id);
-		if (typeinfo.type_id == 0) break;
-		if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
-			return typeinfo.count;
-			}
-		else {
-			lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-			}
-		}
+	if (typeinfo.type_id == 0)
+		break;
+	if (type_match(type_id, typeinfo.type_id, wpnt->fd, rtoff))
+		return typeinfo.count;
+	else
+		lseek(wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
+    }
     return 0;
 }
 
 /**********************************************************************
  *			NE_FindResource	[KERNEL.60]
  */
-int
-NE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
+int NE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
 		RESOURCE *r)
 {
-    int type;
+    int type, x;
 
     dprintf_resource(stddeb, "NE_FindResource hInst=%04X typename=%p resname=%p\n", 
 			instance, type_name, resource_name);
 
-    ResourceFd = r->fd;
-    ResourceFileInfo = r->wpnt;
+    r->size = r->offset = 0;
 
     /* nametable loaded ? */
     if (r->wpnt->ne->resnamtab == NULL)
-	RSC_LoadNameTable();
+	NE_LoadNameTable(r->wpnt);
 
     if (((int) type_name & 0xffff0000) == 0)
-    {
 	type = (int) type_name;
-    }
-    else if (type_name[0] == '\0')
-    {
-	type = -1;
-    }
-    else if (type_name[0] == '#')
-    {
-	type = atoi(type_name + 1);
-    }
-    else
-    {
-	type = (int) type_name;
-    }
-    if (((int) resource_name & 0xffff0000) == 0)
-    {
-	r->size_shift = FindResourceByNumber(&r->nameinfo, type,
-					     (int) resource_name | 0x8000);
-    }
-    else if (resource_name[0] == '\0')
-    {
-	r->size_shift = FindResourceByNumber(&r->nameinfo, type, -1);
-    }
-    else if (resource_name[0] == '#')
-    {
-	r->size_shift = FindResourceByNumber(&r->nameinfo, type,
-					     atoi(resource_name + 1));
-    }
-    else
-    {
-	r->size_shift = FindResourceByName(&r->nameinfo, type, resource_name);
+    else {
+    	if (type_name[0] == '\0')
+		type = -1;
+    	if (type_name[0] == '#')
+		type = atoi(type_name + 1);
+	    else
+    		type = (int) type_name;
     }
 
-    if (r->size_shift == -1)
-    {
+    if (((int) resource_name & 0xffff0000) == 0)
+	x = FindResourceByNumber(r, type, (int) resource_name | 0x8000);
+    else {
+	if (resource_name[0] == '\0')
+		x = FindResourceByNumber(r, type, -1);
+	if (resource_name[0] == '#')
+		x = FindResourceByNumber(r, type, atoi(resource_name + 1));
+	else
+		x = FindResourceByName(r, type, resource_name);
+    }
+    if (x == -1) {
         printf("NE_FindResource hInst=%04X typename=%08X resname=%08X not found!\n", 
 		instance, (int) type_name, (int) resource_name);
 	return 0;
     }
-    r->size = r->nameinfo.length << r->size_shift;
-    r->offset = r->nameinfo.offset << r->size_shift;
     return 1;
 }

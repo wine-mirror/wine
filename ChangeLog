@@ -1,3 +1,140 @@
+----------------------------------------------------------------------
+Sun Nov 20 18:30:06 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/scroll.c] [include/scroll.h]
+	Rewritten most of scroll-bar code for better Windows look & feel.
+	Implemented EnableScrollBar().
+	Preliminary keyboard support.
+
+	* [objects/bitblt.c]
+	Fixed BadMatch error for BitBlt() and StretchBlt() when reading
+	bits from outside the visible region.
+
+	* [objects/oembitmap.c] [include/bitmaps/obm_*]
+	Use XPM symbolic colors to load bitmaps. This allows the colors
+	of the bitmaps to depend on the system colors.
+
+	* [tools/make_debug]
+	Made the make_debug script more robust.
+
+	* [windows/dialog.c]
+	Fixed CheckRadioButton().
+
+	* [windows/nonclient.c]
+	A few changes to scroll-bar drawing and tracking.
+
+	* [windows/winpos.c]
+	Renamed NextWindowFromPoint() to WINPOS_NextWindowFromPoint() to
+	avoid confusion, and optimized it somewhat.
+
+Nov 19, 94 Martin Ayotte (wine@trgcorp.mksinfo.qc.ca)
+
+	* [misc/audio.c]
+	* [misc/mcianim.c]
+	more coding but nothing spectacular.
+
+	* [misc/mmaux.c]
+	some coding to access '/dev/mixer'.
+
+	* [misc/midi.c]
+	some coding to read .MID files, but it's not playing yet.
+
+Sun Nov 13 19:31:03 1994    James Youngman (mbcstjy@afs.man.ac.uk)
+
+	* [objects/dib.c]
+	Reimplemented DIB_SetImageBits_RLE8() so that it would cope with
+	bitmaps which don't end 0x00, 0x02 (previously it blew up).  This
+	includes some bitmaps output by Paint Shop Pro.  Implementation is
+	possibly now too lax.  Please see the notes on the function about
+	why.
+
+	* [controls/desktop.c]
+	The desktop pattern should be painted if the wallpaper doesn't
+	cover the whole screen width OR the whole screen height.
+
+Sun Nov 13 00:07:11 MET 1994	Erik Bos	<erik@xs4all.nl>
+
+	* [objects/dib.c]
+	Small bug in DIB_SetImageBits() fixed, bitmaps in 16,24 bpp
+	now work.
+
+	* [loader/ne_resource.c] [include/resource.h]
+	Some cleanup.
+
+Thu Nov 10 20:44:58 1994  Martin von Loewis  (martin@cs.csufresno.edu)
+
+	* [Configure]
+	  [rc/sysres.rc]
+	Primitive compile-time support for multiple languages
+
+	* [rc/sysres_De.rc]
+	New file
+
+	* [loader/resource.c]
+	LoadBitmap: Recognize end of sysresbm properly
+
+	* [rc/Imakefile]
+	Rules to compile resources simplified, dependencies changed
+
+	* [rc/sysresbm.rc]
+	Don't use sysresbm if using XPM
+
+	* [windows/dialog.c]
+	CreateDialogIndirectParam: Reverse Z-order of controls
+
+	* [windows/message.c]
+	MSG_TranslateMouseMsg: Fix HTTRANSPARENT handling
+
+	* [windows/winpos.c]
+	NextWindowFromPoint: New function
+
+	* [controls/button.c]
+	WM_NCHITTEST: Group Box is HTTRANSPARENT
+	BUTTON_CheckAutoRadioButton: New function
+	BM_SETCHECK: Added call to BUTTON_CheckAutoRadioButton
+
+Mon Nov  7 11:20:26 1994  Paul Falstad  (pf@zoof.cts.com)
+
+	* [objects/text.c]
+	Fix hang when using DrawText(..., DT_WORDBREAK) with a word that
+	is too long to break.
+
+	* [objects/font.c]
+	Don't assume helvetica if there is no font family; let the other
+	font attributes decide what font to use.
+
+	* [controls/widgets.c]
+	Listboxes and combo boxes need to be notified of double-clicks.
+
+	* [controls/listbox.c]
+	  [include/listbox.h]
+
+	scrolling to bottom of list box should display last item at the
+	bottom, not at the top.
+	
+	list boxes need to allocate a separate heap for their item data,
+	rather than using the user heap.  Otherwise, it's very easy to run
+	out of memory for list box items.
+
+	removed redundant code in ListBoxAddString().  Implemented simple
+	version of LBS_SORT.
+
+	Don't put [.] in the list box when using DDL_DIRECTORY.
+
+	* [controls/combo.c]
+	Combos should pass CBS_SORT onto their list box.
+
+	* [windows/win.c]
+	If window creation is aborted, remove the window from the
+	linked lists.
+
+	* [controls/static.c]
+	static controls with SS_ICON were always returning 0 from
+	WM_NCCREATE.
+
+	Make sure static controls have text to draw before drawing it.
+
+----------------------------------------------------------------------
 Sun Nov  6 18:52:04 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [objects/oembitmap.c]  (New file)

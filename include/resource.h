@@ -6,8 +6,6 @@
 typedef struct resource_s {
 	struct resource_s *next;
 	HANDLE info_mem;	/* this struct */
-	int size_shift;
-	struct resource_nameinfo_s nameinfo;
 	HANDLE rsc_mem;		/* resource data */
 	/* */
 	HANDLE instance;	/* resource instance */

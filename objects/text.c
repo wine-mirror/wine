@@ -158,9 +158,12 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 	    {
 		if (format & DT_WORDBREAK)
 		{
-		    *len = wb_j;
-		    *count = wb_count - 1;
-		    return (&str[wb_i]);
+		    if (wb_j)
+		    {
+			*len = wb_j;
+			*count = wb_count - 1;
+			return (&str[wb_i]);
+		    }
 		}
 		else
 		{

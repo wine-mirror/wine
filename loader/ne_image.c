@@ -25,8 +25,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "arch.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_FIXUP */
-/* #undef DEBUG_FIXUP  */
 #include "debug.h"
 
 extern HANDLE CreateNewTask(HINSTANCE hInst);
@@ -202,7 +200,6 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 int
 FixupSegment(struct w_files * wpnt, int segment_num)
 {
-    int fd =  wpnt->fd;
     struct mz_header_s *mz_header = wpnt->mz_header;
     struct ne_header_s *ne_header =  wpnt->ne->ne_header;
     struct ne_segment_table_entry_s *seg_table = wpnt->ne->seg_table;
@@ -237,14 +234,14 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     if (i == 0)
 	i = 0x10000;
 
-    status = lseek(fd, seg->seg_data_offset * 
+    status = lseek(wpnt->fd, seg->seg_data_offset * 
 		       (1 << ne_header->align_shift_count) + i, SEEK_SET);
     n_entries = 0;
-    read(fd, &n_entries, sizeof(short int));
+    read(wpnt->fd, &n_entries, sizeof(short int));
     rep = (struct relocation_entry_s *)
 	  malloc(n_entries * sizeof(struct relocation_entry_s));
 
-    if (read(fd,rep, n_entries * sizeof(struct relocation_entry_s)) !=
+    if (read(wpnt->fd, rep, n_entries * sizeof(struct relocation_entry_s)) !=
         n_entries * sizeof(struct relocation_entry_s))
     {
 	myerror("Unable to read relocation information");
@@ -300,7 +297,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		return -1;
 	    }
 
-	    if (GetImportedName(fd, mz_header, ne_header, 
+	    if (GetImportedName(wpnt->fd, mz_header, ne_header, 
 				rep->target2, func_name) == NULL)
 	    {
 	      fprintf(stderr,"getimportedname failed");

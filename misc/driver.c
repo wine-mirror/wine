@@ -47,7 +47,7 @@ void LoadStartupDrivers()
  */
 LRESULT WINAPI SendDriverMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2)
 {
-	dprintf_driver(stdnimp,"SendDriverMessage(%04X, %04X, %08X, %08X);\n",
+	dprintf_driver(stdnimp,"SendDriverMessage(%04X, %04X, %08lX, %08lX);\n",
 						hDriver, msg, lParam1, lParam2);
 }
 
@@ -60,7 +60,7 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 	LPDRIVERITEM	lpnewdrv;
 	LPDRIVERITEM	lpdrv = lpDrvItemList;
 	char			DrvName[128];
-    	dprintf_driver(stddeb,"OpenDriver('%s', '%s', %08X);\n",
+    	dprintf_driver(stddeb,"OpenDriver('%s', '%s', %08lX);\n",
 		lpDriverName, lpSectionName, lParam);
 	if (lpSectionName == NULL) lpSectionName = "drivers";
 	GetPrivateProfileString(lpSectionName, lpDriverName,
@@ -106,7 +106,7 @@ LRESULT CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
 	LPDRIVERITEM	lpdrv;
     	dprintf_driver(stddeb,
-		"CloseDriver(%04X, %08X, %08X);\n", hDrvr, lParam1, lParam2);
+		"CloseDriver(%04X, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv != NULL && lpdrv->dis.hDriver == hDrvr) {
 		if (lpdrv->lpPrevItem)
@@ -177,7 +177,7 @@ LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 BOOL GetDriverInfo(HDRVR hDrvr, LPDRIVERINFOSTRUCT lpDrvInfo)
 {
 	LPDRIVERITEM	lpdrv;
-    	dprintf_driver(stddeb,"GetDriverInfo(%04X, %08X);\n", hDrvr, lpDrvInfo);
+    	dprintf_driver(stddeb,"GetDriverInfo(%04X, %p);\n", hDrvr, lpDrvInfo);
 	if (lpDrvInfo == NULL) return FALSE;
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv == NULL) return FALSE;
@@ -193,7 +193,7 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 {
 	LPDRIVERITEM	lpdrv;
 	HDRVR			hRetDrv = 0;
-    	dprintf_driver(stddeb,"GetNextDriver(%04X, %08X);\n", hDrvr, dwFlags);
+    	dprintf_driver(stddeb,"GetNextDriver(%04X, %08lX);\n", hDrvr, dwFlags);
 	if (hDrvr == 0) {
 		if (lpDrvItemList == NULL) {
             		dprintf_driver(stddeb,

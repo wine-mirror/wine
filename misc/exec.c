@@ -147,7 +147,7 @@ HANDLE LoadModule(LPSTR modulefile, LPVOID lpParamBlk)
 {
 	PARAMBLOCK  *pblk = lpParamBlk;
 	WORD 	*lpCmdShow;
-    	dprintf_exec(stddeb,"LoadModule '%s' %08X\n", modulefile, lpParamBlk);
+    	dprintf_exec(stddeb,"LoadModule '%s' %p\n", modulefile, lpParamBlk);
 	if (lpParamBlk == NULL) return 0;
 	lpCmdShow = (WORD *)pblk->lpCmdShow;
 	return WinExec(pblk->lpCmdLine, lpCmdShow[1]);
@@ -162,7 +162,6 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 	int 		c = 0;
 	int 		x, x2;
 	char 		*ArgV[20];
-	LPFNWINMAIN lpfnMain;
 	HINSTANCE	hInst = 0;
 	HANDLE		hTask = 0;
     	dprintf_exec(stddeb,"WinExec('%s', %04X)\n", lpCmdLine, nCmdShow);
@@ -226,7 +225,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
  */
 BOOL ExitWindows(DWORD dwReserved, WORD wRetCode)
 {
-    dprintf_exec(stdnimp,"EMPTY STUB !!! ExitWindows(%08X, %04X) !\n", 
+    dprintf_exec(stdnimp,"EMPTY STUB !!! ExitWindows(%08lX, %04X) !\n", 
 		dwReserved, wRetCode);
 }
 

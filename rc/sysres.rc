@@ -1,3 +1,5 @@
+#if #LANG(En)
+
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE 
 {
  MENUITEM "&Restore", 61728
@@ -260,3 +262,8 @@ FONT 8, "Helv"
  PUSHBUTTON "Cancel", 2, 206, 64, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
+#endif /*LANG=En*/
+
+#if #LANG(De)
+#include "sysres_De.rc"
+#endif

@@ -65,9 +65,9 @@ length	540
 59  pascal SetActiveWindow(word) SetActiveWindow(1)
 60  pascal GetActiveWindow() GetActiveWindow()
 61  pascal ScrollWindow(word s_word s_word ptr ptr) ScrollWindow(1 2 3 4 5)
-62  pascal SetScrollPos(word word word word) SetScrollPos(1 2 3 4)
+62  pascal SetScrollPos(word word s_word word) SetScrollPos(1 2 3 4)
 63  pascal GetScrollPos(word word) GetScrollPos(1 2)
-64  pascal SetScrollRange(word word word word word) SetScrollRange(1 2 3 4 5)
+64  pascal SetScrollRange(word word s_word s_word word) SetScrollRange(1 2 3 4 5)
 65  pascal GetScrollRange(word word ptr ptr) GetScrollRange(1 2 3 4)
 66  pascal GetDC(word) GetDC(1)
 67  pascal GetWindowDC(word) GetWindowDC(1)
@@ -402,7 +402,7 @@ length	540
 473 pascal AnsiPrev(ptr ptr) AnsiPrev(1 2)
 #480 GETUSERLOCALOBJTYPE
 #481 HARDWARE_EVENT
-#482 ENABLESCROLLBAR
+482 pascal16 EnableScrollBar(word word word) EnableScrollBar(1 2 3)
 483 pascal SystemParametersInfo(word word ptr word) SystemParametersInfo(1 2 3 4)
 #484 __GP
 #499 WNETERRORTEXT

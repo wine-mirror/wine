@@ -37,7 +37,7 @@ BOOL DPMI_SetDescriptor(HANDLE pmSel, LPDESCRIPTOR lpDesc);
 int do_int31(struct sigcontext_struct *context)
 {
 	LPDESCRIPTOR lpDesc;
-	dprintf_int(stddeb,"do_int31 // context->sc_eax=%04X\n",
+	dprintf_int(stddeb,"do_int31 // context->sc_eax=%08lX\n",
 		context->sc_eax);
 	switch(context->sc_eax)
 	{
@@ -82,7 +82,7 @@ BOOL DPMI_FreeSelector(HANDLE pmSel)
 
 BOOL DPMI_SetDescriptor(HANDLE pmSel, LPDESCRIPTOR lpDesc)
 {
-	dprintf_int(stdnimp,"DPMI_SetDescriptor(%04X, %08X); !\n", 
+	dprintf_int(stdnimp,"DPMI_SetDescriptor(%04X, %p); !\n", 
 		pmSel, lpDesc);
 	dprintf_int(stdnimp,"DPMI lpDesc->Limit=%u \n", lpDesc->Limit);
 	dprintf_int(stdnimp,"DPMI lpDesc->addr_lo=%04X \n", lpDesc->addr_lo);

@@ -1,8 +1,8 @@
 /* XPM */
 static char * obm_old_reduce[] = {
 "25 19 2 1",
-" 	c white",
-".	c black",
+" 	s white	c white",
+".	s black	c black",
 "                         ",
 "                         ",
 "                         ",

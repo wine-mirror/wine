@@ -304,7 +304,7 @@ DWORD WAVE_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 	MCIWavDev[wDevID].nUseCount--;
 	if (MCIWavDev[wDevID].nUseCount == 0) {
 		if (MCIWavDev[wDevID].hFile != 0) {
-			close(MCIWavDev[wDevID].hFile);
+			mmioClose(MCIWavDev[wDevID].hFile, 0);
 			MCIWavDev[wDevID].hFile = 0;
 			}
 		dwRet = wodMessage(0, WODM_CLOSE, 0, 0L, 0L);
@@ -358,7 +358,7 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 			case 0:
 				break;         
 			default:
-			dprintf_mciwave(stddeb,"WAVE_mciPlay // process started ! return to caller...\n");
+				dprintf_mciwave(stddeb,"WAVE_mciPlay // process started ! return to caller...\n");
 				return 0;
 			}
 		}
@@ -388,6 +388,7 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	  dprintf_mciwave(stddeb,"WAVE_mciPlay // MCI_NOTIFY_SUCCESSFUL %08X !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+		exit(0);
 		}
 	return 0;
 #else
@@ -1136,25 +1137,56 @@ TryAGAIN:
 }
 
 /**************************************************************************
+* 				wodGetVolume			[internal]
+*/
+DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
+{
+#ifdef linux
+	int 	mixer;
+	int		volume;
+	dprintf_mciwave(stddeb,"wodGetVolume(%u, %08X);\n", wDevID, lpdwVol);
+	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
+	if (WOutDev[wDevID].unixdev == 0) {
+		fprintf(stderr,"Linux 'wodGetVolume' // can't read volume !\n");
+		return MMSYSERR_NOTENABLED;
+		}
+	if ((mixer = open("/dev/mixer", O_RDONLY)) < 0) {
+		fprintf(stderr, "Linux 'wodGetVolume' // mixer device not available !\n");
+		return MMSYSERR_NOTENABLED;
+		}
+    if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
+		fprintf(stderr,"Linux 'wodGetVolume' // unable read mixer !\n");
+		return MMSYSERR_NOTENABLED;
+		}
+	close(mixer);
+	*lpdwVol = MAKELONG(volume, volume);
+	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
+}
+
+
+/**************************************************************************
 * 				wodSetVolume			[internal]
 */
 DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
 #ifdef linux
 	int 	mixer;
-	int		volume = 50;
+	int		volume;
 	dprintf_mciwave(stddeb,"wodSetVolume(%u, %08X);\n", wDevID, dwParam);
+	volume = LOWORD(dwParam);
 	if (WOutDev[wDevID].unixdev == 0) {
-                fprintf(stderr,"Linux 'wodSetVolume' // can't set volume !\n");
+		fprintf(stderr,"Linux 'wodSetVolume' // can't set volume !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-	if ((mixer = open("/dev/mixer", O_RDWR)) < 0) {
-                fprintf(stderr,
-		   "Linux 'wodSetVolume' // mixer device not available !\n");
+	if ((mixer = open("/dev/mixer", O_WRONLY)) < 0) {
+		fprintf(stderr,	"Linux 'wodSetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 		}
     if (ioctl(mixer, SOUND_MIXER_WRITE_PCM, &volume) == -1) {
-                fprintf(stderr,"Linux 'wodSetVolume' // unable set mixer !\n");
+		fprintf(stderr,"Linux 'wodSetVolume' // unable set mixer !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	close(mixer);
@@ -1203,7 +1235,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		case WODM_SETPLAYBACKRATE:
 			return 0L;
 		case WODM_GETVOLUME:
-			return 0L;
+			return wodGetVolume(wDevID, (LPDWORD)dwParam1);
 		case WODM_SETVOLUME:
 			return wodSetVolume(wDevID, dwParam1);
 		case WODM_RESTART:
@@ -1459,8 +1491,8 @@ DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
 #ifdef linux
-        dprintf_mciwave(stddeb,
-	      "widPrepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
+	dprintf_mciwave(stddeb,
+		"widPrepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WInDev[wDevID].unixdev == 0) {
 	        fprintf(stderr,"Linux 'widPrepare' // can't prepare !\n");
 		return MMSYSERR_NOTENABLED;
@@ -1489,8 +1521,8 @@ DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
 #ifdef linux
-        dprintf_mciwave(stddeb,
-	    "widUnprepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
+	dprintf_mciwave(stddeb,
+		"widUnprepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WInDev[wDevID].unixdev == 0) {
                 fprintf(stderr,"Linux 'widUnprepare' // can't unprepare !\n");
 		return MMSYSERR_NOTENABLED;

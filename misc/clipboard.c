@@ -258,7 +258,7 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,
-	"GetClipboardFormat(%04X, %08X, %d) !\n", wFormat, retStr, maxlen);
+	"GetClipboardFormat(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -280,8 +280,10 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
  */
 HWND SetClipboardViewer(HWND hWnd)
 {
-    dprintf_clipboard(stddeb,"SetClipboardFormat(%04X) !\n", hWnd);
+    HWND hwndPrev = hWndViewer;
+    dprintf_clipboard(stddeb,"SetClipboardViewer(%04X) !\n", hWnd);
     hWndViewer = hWnd;
+    return hwndPrev;
 }
 
 
@@ -340,7 +342,7 @@ HWND GetOpenClipboardWindow()
 int GetPriorityClipboardFormat(WORD FAR *lpPriorityList, short nCount)
 {
     dprintf_clipboard(stdnimp,
-	"GetPriorityClipboardFormat(%08X, %d) !\n", lpPriorityList, nCount);
+	"GetPriorityClipboardFormat(%p, %d) !\n", lpPriorityList, nCount);
 }
 
 
@@ -354,7 +356,8 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 {
     HANDLE hText;
     LPCLIPFORMAT lpFormat = ClipFormats; 
-    if(prop==None)hText=NULL;
+    if(prop==None)
+        hText=0;
     else{
 	Atom atype=None;
 	int aformat;
@@ -365,11 +368,11 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	if(XGetWindowProperty(display,w,prop,0,0x3FFF,True,XA_STRING,
 	    &atype, &aformat, &nitems, &remain, &val)!=Success)
 		printf("couldn't read property\n");
-        dprintf_clipboard(stddeb,"Type %s,Format %d,nitems %d,value %s\n",
+        dprintf_clipboard(stddeb,"Type %s,Format %d,nitems %ld,value %s\n",
 		XGetAtomName(display,atype),aformat,nitems,val);
 	if(atype!=XA_STRING || aformat!=8){
 	    fprintf(stderr,"Property not set\n");
-	    hText=NULL;
+	    hText=0;
 	} else {
 	    dprintf_clipboard(stddeb,"Selection is %s\n",val);
 	    hText=GlobalAlloc(GMEM_MOVEABLE, nitems);

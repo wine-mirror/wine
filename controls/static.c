@@ -93,7 +93,7 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		if (createStruct->lpszName)
                     STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
                                                     createStruct->lpszName ));
-                break;
+                return 1;
             }
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
@@ -220,7 +220,8 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
                           MAKELONG(hwnd, CTLCOLOR_STATIC));
     if (hBrush == (HBRUSH)NULL) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect(hdc, &rc, hBrush);
-    DrawText(hdc, text, -1, &rc, wFormat);
+    if (text)
+	DrawText(hdc, text, -1, &rc, wFormat);
 }
 
 static void PaintRectfn( HWND hwnd, HDC hdc )

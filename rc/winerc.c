@@ -31,7 +31,7 @@ main(int argc,char *argv[])
 	extern char* optarg;
 	int optc,lose,ret;
 	lose=0;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 	while((optc=getopt(argc,argv,"dp:vo:"))!=EOF)
 #else
 	while((optc=getopt(argc,argv,"dp:vo:",0))!=EOF)

@@ -1,8 +1,8 @@
 /* XPM */
 static char * obm_btsize[] = {
 "15 15 2 1",
-" 	c black",
-".	c white",
+" 	s black	c black",
+".	s white	c white",
 "               ",
 " ....... ..... ",
 " ....... ..... ",

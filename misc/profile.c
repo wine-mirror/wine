@@ -245,7 +245,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 			return (Size - 2);
 			}
 		slen = min(strlen(key->KeyName) + 1, left);
-		dprintf_profile(stddeb,"GetSetProfile // strncpy(%08X, %08X, %d);\n", 
+		dprintf_profile(stddeb,"GetSetProfile // strncpy(%p, %p, %d);\n", 
 				ReturnedString, key->Value, slen);
 		strncpy (p, key->KeyName, slen);
 		dprintf_profile(stddeb,"GetSetProfile // enum '%s' !\n", p);
@@ -302,7 +302,7 @@ short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
 {
     int v;
 
-    dprintf_profile(stddeb,"GetPrivateProfileString ('%s', '%s', '%s', %08X, %d, %s\n", 
+    dprintf_profile(stddeb,"GetPrivateProfileString ('%s', '%s', '%s', %p, %d, %s\n", 
 			AppName, KeyName, Default, ReturnedString, Size, FileName);
     v = GetSetProfile (0,AppName,KeyName,Default,ReturnedString,Size,FileName);
     if (AppName)

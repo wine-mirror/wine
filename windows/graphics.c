@@ -652,14 +652,15 @@ BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 /**********************************************************************
  *          GRAPH_DrawReliefRect  (Not a MSWin Call)
  */
-void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int thickness, BOOL pressed )
+void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
+                           int shadow_size, BOOL pressed )
 {
     HBRUSH hbrushOld;
     int i;
 
     hbrushOld = SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnShadow :
 			                  sysColorObjects.hbrushBtnHighlight );
-    for (i = 0; i < thickness; i++)
+    for (i = 0; i < highlight_size; i++)
     {
 	PatBlt( hdc, rect->left + i, rect->top,
 	        1, rect->bottom - rect->top - i, PATCOPY );
@@ -669,7 +670,7 @@ void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int thickness, BOOL pressed )
 
     SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
 		                 sysColorObjects.hbrushBtnShadow );
-    for (i = 0; i < thickness; i++)
+    for (i = 0; i < shadow_size; i++)
     {
 	PatBlt( hdc, rect->right - i - 1, rect->top + i,
 	        1, rect->bottom - rect->top - i, PATCOPY );
@@ -882,7 +883,7 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
     XImage *image;
     DC *dc;
 
-    dprintf_graphics( stddeb, "ExtFloodFill %x %d,%d %06x %d\n",
+    dprintf_graphics( stddeb, "ExtFloodFill %x %d,%d %06lx %d\n",
                       hdc, x, y, color, fillType );
     dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) 

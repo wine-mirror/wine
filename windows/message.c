@@ -21,8 +21,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "sysmetrics.h"
 #include "hook.h"
 #include "stddebug.h"
-/* #define DEBUG_MSG /* */
-/* #undef  DEBUG_MSG /* */
+/* #define DEBUG_MSG */
+/* #undef  DEBUG_MSG */
 #include "debug.h"
 
 
@@ -240,8 +240,8 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 				  MAKELONG( msg->pt.x, msg->pt.y ) );
     while ((hittest_result == HTTRANSPARENT) && (msg->hwnd))
     {
-	msg->hwnd = GetParent(msg->hwnd);
-	if (!msg->hwnd)
+	msg->hwnd = WINPOS_NextWindowFromPoint( msg->hwnd, msg->pt );
+	if (msg->hwnd)
 	    hittest_result = SendMessage( msg->hwnd, WM_NCHITTEST, 0,
 					  MAKELONG( msg->pt.x, msg->pt.y ) );
     }
@@ -934,7 +934,7 @@ LONG DispatchMessage( LPMSG msg )
     LONG retval;
     int painting;
     
-    dprintf_msg(stddeb, "Dispatch message hwnd=%08x msg=0x%x w=%d l=%d time=%u pt=%d,%d\n",
+    dprintf_msg(stddeb, "Dispatch message hwnd=%04x msg=0x%x w=%d l=%ld time=%lu pt=%d,%d\n",
 	    msg->hwnd, msg->message, msg->wParam, msg->lParam, 
 	    msg->time, msg->pt.x, msg->pt.y );
 

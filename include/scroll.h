@@ -1,35 +1,26 @@
 /*
- *   Scroll Bar definitions
+ * Scroll-bar class extra info
+ *
+ * Copyright 1993 Martin Ayotte
+ * Copyright 1994 Alexandre Julliard
  */
 
+#ifndef SCROLL_H
+#define SCROLL_H
 
-typedef struct tagHEADSSCROLL {
-	short	CurVal;
-	short	MinVal;
-	short	MaxVal;
-	short	MaxPix;
-	short	CurPix;
-	short	ThumbVal;
-	RECT	rect;
-	RECT	rectUp;
-	RECT	rectDown;
-	BOOL	ThumbActive;
-	BOOL	TimerPending;
-	WORD	ButtonDown;
-	WORD	Direction;
-	DWORD	dwStyle;
-	HWND	hWndOwner;
-	BOOL	bRedrawFlag;
-	} HEADSCROLL;
-typedef HEADSCROLL FAR* LPHEADSCROLL;
+#include "windows.h"
 
+typedef struct
+{
+    INT   CurVal;   /* Current scroll-bar value */
+    INT   MinVal;   /* Minimum scroll-bar value */
+    INT   MaxVal;   /* Maximum scroll-bar value */
+    WORD  unused;   /* Unused word, for MS-Windows compatibility */
+    WORD  flags;    /* EnableScrollBar flags */
+} SCROLLINFO;
 
+extern LONG ScrollBarWndProc( HWND hwnd, WORD uMsg, WORD wParam, LONG lParam );
 
-void ScrollBarButtonDown(HWND hWnd, int nBar, int x, int y);
-void ScrollBarButtonUp(HWND hWnd, int nBar, int x, int y);
-void ScrollBarMouseMove(HWND hWnd, int nBar, WORD wParam, int x, int y);
-void StdDrawScrollBar(HWND hWnd, HDC hDC, int nBar, LPRECT lprect, LPHEADSCROLL lphs);
-int CreateScrollBarStruct(HWND hWnd);
-void NC_CreateScrollBars(HWND hWnd);
+extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar );
 
-
+#endif  /* SCROLL_H */

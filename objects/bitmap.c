@@ -13,10 +13,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "bitmap.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI    /* */
-/* #undef  DEBUG_GDI    /* */
-/* #define DEBUG_BITMAP /* */
-/* #define DEBUG_BITMAP /* */
+/* #define DEBUG_GDI    */
+/* #undef  DEBUG_GDI    */
+/* #define DEBUG_BITMAP */
+/* #define DEBUG_BITMAP */
 #include "debug.h"
 
   /* GCs used for B&W and color bitmap operations */

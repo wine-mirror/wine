@@ -9,11 +9,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "button.h"
 #include "static.h"
+#include "scroll.h"
 #include "desktop.h"
 #include "mdi.h"
 #include "gdi.h"
 
-LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG ListBoxWndProc  ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG ComboBoxWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG EditWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
@@ -28,11 +28,11 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
       0, 0, 0, 0, NULL, "BUTTON" },
     { CS_GLOBALCLASS | CS_PARENTDC, StaticWndProc, 0, sizeof(STATICINFO),
       0, 0, 0, 0, NULL, "STATIC" },
-    { CS_GLOBALCLASS | CS_PARENTDC, ScrollBarWndProc, 0, 8,
+    { CS_GLOBALCLASS | CS_PARENTDC, ScrollBarWndProc, 0, sizeof(SCROLLINFO),
       0, 0, 0, 0, NULL, "SCROLLBAR" },
-    { CS_GLOBALCLASS | CS_PARENTDC, ListBoxWndProc, 0, 8,
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, ListBoxWndProc, 0, 8,
       0, 0, 0, 0, NULL, "LISTBOX" },
-    { CS_GLOBALCLASS | CS_PARENTDC, ComboBoxWndProc, 0, 8,
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, ComboBoxWndProc, 0, 8,
       0, 0, 0, 0, NULL, "COMBOBOX" },
     { CS_GLOBALCLASS | CS_PARENTDC, EditWndProc, 0, 4, 
       0, 0, 0, 0, NULL, "EDIT" },

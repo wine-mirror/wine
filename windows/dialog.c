@@ -356,6 +356,11 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
                                 header->cx * xUnit / 4, header->cy * yUnit / 8,
                                 hwnd, header->id, hInst, NULL );
 	}
+        /* Make the control last one in Z-order, so that controls remain
+           in the order in which they were created */
+	SetWindowPos( hwndCtrl, HWND_BOTTOM, 0, 0, 0, 0,
+                      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+
             /* Send initialisation messages to the control */
         if (hFont) SendMessage( hwndCtrl, WM_SETFONT, hFont, 0 );
         if (SendMessage( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
@@ -449,7 +454,7 @@ int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: %d,'%x',%d,%p,%d\n",
+    dprintf_dialog(stddeb, "DialogBoxParam: %d,'%p',%d,%p,%ld\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -554,7 +559,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
             if (!(dlgCode & DLGC_WANTTAB))
             {
                 SendMessage( hwndDlg, WM_NEXTDLGCTL,
-                             !(GetKeyState(VK_SHIFT) & 0x80), 0 );
+                             (GetKeyState(VK_SHIFT) & 0x80), 0 );
                 return TRUE;
             }
             break;
@@ -563,7 +568,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
         case VK_DOWN:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),TRUE));
+                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),FALSE));
                 return TRUE;
             }
             break;
@@ -572,7 +577,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
         case VK_UP:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),FALSE));
+                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),TRUE));
                 return TRUE;
             }
             break;
@@ -752,13 +757,24 @@ WORD IsDlgButtonChecked( HWND hwnd, WORD id )
  */
 void CheckRadioButton( HWND hwndDlg, WORD firstID, WORD lastID, WORD checkID )
 {
-    HWND button = GetDlgItem( hwndDlg, lastID );
-    while (button != 0)
+    HWND button = GetWindow( hwndDlg, GW_CHILD );
+    WND *wndPtr;
+
+    while (button)
     {
-	WND * wndPtr = WIN_FindWndPtr( button );
-	if (!wndPtr) break;
+	if (!(wndPtr = WIN_FindWndPtr( button ))) return;
+        if ((wndPtr->wIDmenu == firstID) || (wndPtr->wIDmenu == lastID)) break;
+	button = wndPtr->hwndNext;
+    }
+    if (!button) return;
+
+    if (wndPtr->wIDmenu == lastID)
+        lastID = firstID;  /* Buttons are in reverse order */
+    while (button)
+    {
+	if (!(wndPtr = WIN_FindWndPtr( button ))) return;
 	SendMessage( button, BM_SETCHECK, (wndPtr->wIDmenu == checkID), 0 );
-        if (wndPtr->wIDmenu == firstID) break;
+        if (wndPtr->wIDmenu == lastID) break;
 	button = wndPtr->hwndNext;
     }
 }
@@ -823,8 +839,7 @@ HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
     
       /* Now we will have to find the start of the group */
 
-    hwndStart = 0;
-    hwnd = dlgPtr->hwndChild;
+    hwndStart = hwnd = dlgPtr->hwndChild;
     while (hwnd)
     {
 	wndPtr = WIN_FindWndPtr( hwnd );

@@ -738,13 +738,13 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 		return hbitmap;
 	/* Load from sysresbm */
 	dprintf_resource(stddeb,"Searching for %d\n",bmp_name);
-	for(it=sysresbmTable;it;it++){
+	for(it=sysresbmTable;it->value;it++){
 	    if(it->type==NE_RSCTYPE_BITMAP)
 	    if((((int)bmp_name & 0xFFFF0000) == 0))
 		{if(it->id==(int)bmp_name)break;}
 	    else if(!strcmp(it->name,bmp_name))break;
 	}
-	if(!it)return 0;
+	if(!it->value)return 0;
 	dprintf_resource(stddeb,"Found %s\n",it->name);
 	lp=it->value;
 	rsc_mem=(HANDLE)NULL;

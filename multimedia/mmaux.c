@@ -119,13 +119,41 @@ DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 #ifdef linux
 	int 	mixer;
 	int		volume;
+	int		cmd;
 	printf("AUX_GetVolume(%u, %08X);\n", wDevID, lpdwVol);
 	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("Linux 'AUX_GetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-    if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1) {
+	switch(wDevID) {
+		case 0:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_PCM !\n");
+			cmd = SOUND_MIXER_READ_PCM;
+			break;
+		case 1:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_SYNTH !\n");
+			cmd = SOUND_MIXER_READ_SYNTH;
+			break;
+		case 2:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_CD !\n");
+			cmd = SOUND_MIXER_READ_CD;
+			break;
+		case 3:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_LINE !\n");
+			cmd = SOUND_MIXER_READ_LINE;
+			break;
+		case 4:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_MIC !\n");
+			cmd = SOUND_MIXER_READ_MIC;
+			break;
+		case 5:
+		default:
+			printf("Linux 'AUX_GetVolume' // SOUND_MIXER_READ_VOLUME !\n");
+			cmd = SOUND_MIXER_READ_VOLUME;
+			break;
+		}
+    if (ioctl(mixer, cmd, &volume) == -1) {
 		printf("Linux 'AUX_GetVolume' // unable read mixer !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -144,13 +172,42 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
 #ifdef linux
 	int 	mixer;
-	int		volume = 50;
+	int		volume;
+	int		cmd;
 	printf("AUX_SetVolume(%u, %08X);\n", wDevID, dwParam);
+	volume = LOWORD(dwParam);
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		printf("Linux 'AUX_SetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 		}
-    if (ioctl(mixer, SOUND_MIXER_WRITE_LINE, &volume) == -1) {
+	switch(wDevID) {
+		case 0:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_PCM !\n");
+			cmd = SOUND_MIXER_WRITE_PCM;
+			break;
+		case 1:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_SYNTH !\n");
+			cmd = SOUND_MIXER_WRITE_SYNTH;
+			break;
+		case 2:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_CD !\n");
+			cmd = SOUND_MIXER_WRITE_CD;
+			break;
+		case 3:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_LINE !\n");
+			cmd = SOUND_MIXER_WRITE_LINE;
+			break;
+		case 4:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_MIC !\n");
+			cmd = SOUND_MIXER_WRITE_MIC;
+			break;
+		case 5:
+		default:
+			printf("Linux 'AUX_SetVolume' // SOUND_MIXER_WRITE_VOLUME !\n");
+			cmd = SOUND_MIXER_WRITE_VOLUME;
+			break;
+		}
+    if (ioctl(mixer, cmd, &volume) == -1) {
 		printf("Linux 'AUX_SetVolume' // unable set mixer !\n");
 		return MMSYSERR_NOTENABLED;
 		}

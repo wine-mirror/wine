@@ -1,0 +1,20 @@
+#include "../Wine.tmpl"
+
+MODULE = multimedia
+
+SRCS = \
+	audio.c \
+	mcianim.c \
+	mcicda.c \
+	midi.c \
+	mmaux.c \
+	mmsystem.c
+
+OBJS = $(SRCS:.c=.o)
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+
+includes::
+
+install::

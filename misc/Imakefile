@@ -3,7 +3,6 @@
 MODULE = misc
 
 SRCS = \
-	audio.c \
 	atom.c \
 	clipboard.c \
 	comm.c \
@@ -16,12 +15,7 @@ SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
-	mcianim.c \
-	mcicda.c \
 	message.c \
-	midi.c \
-	mmaux.c \
-	mmsystem.c \
 	network.c \
 	profile.c \
 	property.c \

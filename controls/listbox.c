@@ -51,12 +51,18 @@ int ListBoxSetItemHeight(HWND hwnd, WORD wIndex, long height);
 int ListBoxDefaultItem(HWND hwnd, WND *wndPtr, 
 	LPHEADLIST lphl, LPLISTSTRUCT lpls);
 int ListBoxFindNextMatch(HWND hwnd, WORD wChar);
+int ListMaxFirstVisible(LPHEADLIST lphl);
 
 #define HasStrings(wndPtr) ( \
   ( ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) != LBS_OWNERDRAWFIXED) && \
     ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) != LBS_OWNERDRAWVARIABLE) ) || \
   ((wndPtr->dwStyle & LBS_HASSTRINGS) == LBS_HASSTRINGS) )
 
+#define LIST_HEAP_ALLOC(lphl,f,size) ((int)HEAP_Alloc(&lphl->Heap,f,size) & 0xffff)
+#define LIST_HEAP_FREE(lphl,handle) (HEAP_Free(&lphl->Heap,LIST_HEAP_ADDR(lphl,handle)))
+#define LIST_HEAP_ADDR(lphl,handle) \
+    ((void *)((handle) ? ((handle) | ((int)lphl->Heap & 0xffff0000)) : 0))
+#define LIST_HEAP_SIZE 0x10000
 
 /***********************************************************************
  *           ListBoxWndProc 
@@ -86,7 +92,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		lphl->hFont = GetStockObject(SYSTEM_FONT);
 		lphl->ColumnsWidth = wndPtr->rectClient.right - wndPtr->rectClient.left;
 		if (wndPtr->dwStyle & WS_VSCROLL) {
-			SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
+			SetScrollRange(hwnd, SB_VERT, 1, ListMaxFirstVisible(lphl), TRUE);
 			ShowScrollBar(hwnd, SB_VERT, FALSE);
 			}
 		if (wndPtr->dwStyle & WS_HSCROLL) {
@@ -100,6 +106,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
 		if (lphl == NULL) return 0;
 		ListBoxResetContent(hwnd);
+		/* XXX need to free lphl->Heap */
 		free(lphl);
 		*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
 		dprintf_listbox(stddeb,"ListBox WM_DESTROY %p !\n", lphl);
@@ -117,7 +124,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					lphl->FirstVisible--;
 				break;
 			case SB_LINEDOWN:
-				if (lphl->FirstVisible < lphl->ItemsCount)
+				if (lphl->FirstVisible < ListMaxFirstVisible(lphl))
 					lphl->FirstVisible++;
 				break;
 			case SB_PAGEUP:
@@ -125,7 +132,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					lphl->FirstVisible -= lphl->ItemsVisible;
 				break;
 			case SB_PAGEDOWN:
-				if (lphl->FirstVisible < lphl->ItemsCount)  
+				if (lphl->FirstVisible < ListMaxFirstVisible(lphl))  
 					lphl->FirstVisible += lphl->ItemsVisible;
 				break;
 			case SB_THUMBTRACK:
@@ -133,8 +140,8 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				break;
 			}
 		if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
-		if (lphl->FirstVisible > lphl->ItemsCount)
-			lphl->FirstVisible = lphl->ItemsCount;
+		if (lphl->FirstVisible > ListMaxFirstVisible(lphl))
+			lphl->FirstVisible = ListMaxFirstVisible(lphl);
 		if (y != lphl->FirstVisible) {
 			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
 			InvalidateRect(hwnd, NULL, TRUE);
@@ -154,7 +161,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					lphl->FirstVisible -= lphl->ItemsPerColumn;
 				break;
 			case SB_LINEDOWN:
-				if (lphl->FirstVisible < lphl->ItemsCount)
+				if (lphl->FirstVisible < ListMaxFirstVisible(lphl))
 					lphl->FirstVisible += lphl->ItemsPerColumn;
 				break;
 			case SB_PAGEUP:
@@ -163,7 +170,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					lphl->ItemsPerColumn * lphl->ItemsPerColumn;
 				break;
 			case SB_PAGEDOWN:
-				if (lphl->FirstVisible < lphl->ItemsCount &&
+				if (lphl->FirstVisible < ListMaxFirstVisible(lphl) &&
 							lphl->ItemsPerColumn != 0)  
 					lphl->FirstVisible += lphl->ItemsVisible /
 					lphl->ItemsPerColumn * lphl->ItemsPerColumn;
@@ -174,8 +181,8 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				break;
 			}
 		if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
-		if (lphl->FirstVisible > lphl->ItemsCount)
-			lphl->FirstVisible = lphl->ItemsCount;
+		if (lphl->FirstVisible > ListMaxFirstVisible(lphl))
+			lphl->FirstVisible = ListMaxFirstVisible(lphl);
 		if (lphl->ItemsPerColumn != 0) {
 			lphl->FirstVisible = lphl->FirstVisible /
 				lphl->ItemsPerColumn * lphl->ItemsPerColumn + 1;
@@ -244,7 +251,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				}
 			GetClientRect(hwnd, &rect);
 			if (y > (rect.bottom - 4)) {
-				if (lphl->FirstVisible < lphl->ItemsCount) {
+				if (lphl->FirstVisible < ListMaxFirstVisible(lphl)) {
 					lphl->FirstVisible++;
 					if (wndPtr->dwStyle & WS_VSCROLL)
 					SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
@@ -752,6 +759,8 @@ int CreateListBoxStruct(HWND hwnd)
 {
 	WND  *wndPtr;
 	LPHEADLIST lphl;
+	int HeapHandle;
+	void *HeapBase;
 	wndPtr = WIN_FindWndPtr(hwnd);
 	lphl = (LPHEADLIST)malloc(sizeof(HEADLIST));
 	lphl->lpFirst = NULL;
@@ -767,6 +776,9 @@ int CreateListBoxStruct(HWND hwnd)
 	lphl->SelCount = 0;
 	lphl->DrawCtlType = ODT_LISTBOX;
 	lphl->bRedrawFlag = TRUE;
+	HeapHandle = GlobalAlloc(GMEM_FIXED, LIST_HEAP_SIZE);
+	HeapBase = GlobalLock(HeapHandle);
+	HEAP_Init(&lphl->Heap, HeapBase, LIST_HEAP_SIZE);
 	return TRUE;
 }
 
@@ -798,122 +810,63 @@ void ListBoxAskMeasure(WND *wndPtr, LPHEADLIST lphl, LPLISTSTRUCT lpls)
 
 int ListBoxAddString(HWND hwnd, LPSTR newstr)
 {
-    WND  	*wndPtr;
-    LPHEADLIST 	lphl;
-    LPLISTSTRUCT lpls, lplsnew;
-    HANDLE 	hItem;
-    HANDLE 	hStr;
-    LPSTR 	str;
+    LPHEADLIST	lphl;
+    UINT	pos = (UINT) -1;
+    WND		*wndPtr;
+    
     lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
     if (lphl == NULL) return LB_ERR;
-    hItem = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
-    lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hItem);
-    if (lplsnew == NULL) {
-		dprintf_listbox(stddeb,"ListBoxAddString() // Bad allocation of new item !\n");
-		return LB_ERRSPACE;
-		}
-    lpls = lphl->lpFirst;
-    if (lpls != NULL) {
-	while(lpls->lpNext != NULL) {
-	    lpls = (LPLISTSTRUCT)lpls->lpNext;
-	    }
-	lpls->lpNext = lplsnew;
- 	}
-    else
-	lphl->lpFirst = lplsnew;
-    lphl->ItemsCount++;
-    dprintf_listbox(stddeb,"Items Count = %u\n", lphl->ItemsCount);
-    hStr = 0;
-
-	ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
-	if (HasStrings(wndPtr)) {
-		hStr = USER_HEAP_ALLOC(GMEM_MOVEABLE, strlen(newstr) + 1);
-		str = (LPSTR)USER_HEAP_ADDR(hStr);
-		if (str == NULL) return LB_ERRSPACE;
-		strcpy(str, newstr);
-		newstr = str;
-		lplsnew->itemText = str;
-		dprintf_listbox(stddeb,"ListBoxAddString // LBS_HASSTRINGS after strcpy '%s'\n", str);
-		}
-    else {
-		lplsnew->itemText = NULL;
-		lplsnew->dis.itemData = (DWORD)newstr;
-		}
-	lplsnew->hMem = hItem;
-	lplsnew->lpNext = NULL;
-	lplsnew->dis.itemID = lphl->ItemsCount;
-	lplsnew->hData = hStr;
-	if (((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) == LBS_OWNERDRAWVARIABLE) ||
-		((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED))
-		ListBoxAskMeasure(wndPtr, lphl, lplsnew);
-	if (wndPtr->dwStyle & WS_VSCROLL)
-		SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
-			(lphl->FirstVisible != 1 && lphl->bRedrawFlag));
-	if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
-		SetScrollRange(hwnd, SB_HORZ, 1, 
-			lphl->ItemsVisible / lphl->ItemsPerColumn + 1, 
-			(lphl->FirstVisible != 1 && lphl->bRedrawFlag));
-	if (lphl->FirstVisible >= (lphl->ItemsCount - lphl->ItemsVisible)) {
-		InvalidateRect(hwnd, NULL, TRUE);
-		UpdateWindow(hwnd);
-		}
-	if ((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) {
-		if (wndPtr->dwStyle & WS_VSCROLL)
-			ShowScrollBar(hwnd, SB_VERT, TRUE);
-		if (wndPtr->dwStyle & WS_HSCROLL)
-			ShowScrollBar(hwnd, SB_HORZ, TRUE);
-		}
-    return (lphl->ItemsCount - 1);
+    if (HasStrings(wndPtr) && (wndPtr->dwStyle & LBS_SORT)) {
+	LPLISTSTRUCT lpls = lphl->lpFirst;
+	for (pos = 0; lpls; lpls = lpls->lpNext, pos++)
+	    if (strcmp(lpls->itemText, newstr) >= 0)
+		break;
+    }
+    return ListBoxInsertString(hwnd, pos, newstr);
 }
-
 
 int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 {
-	WND  	*wndPtr;
-	LPHEADLIST 	lphl;
-	LPLISTSTRUCT lpls, lplsnew;
+    WND  	*wndPtr;
+    LPHEADLIST 	lphl;
+    LPLISTSTRUCT *lppls, lplsnew;
     HANDLE 	hItem;
     HANDLE 	hStr;
-	LPSTR	str;
-	UINT	Count;
-	dprintf_listbox(stddeb,"ListBoxInsertString(%04X, %d, %p);\n", 
+    LPSTR	str;
+    UINT	Count;
+    
+    dprintf_listbox(stddeb,"ListBoxInsertString(%04X, %d, %p);\n", 
 		    hwnd, uIndex, newstr);
-	if (uIndex == (UINT)-1) return ListBoxAddString(hwnd, newstr);
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-	if (lphl == NULL) return LB_ERR;
-	/* The following line will cause problems if the content of the */
-	/* listbox is sorted by the listbox itself */
-	if (uIndex == lphl->ItemsCount) return ListBoxAddString(hwnd, newstr);
-	if (uIndex >= lphl->ItemsCount) return LB_ERR;
-	lpls = lphl->lpFirst;
-	if (lpls == NULL) return LB_ERR;
-	if (uIndex > lphl->ItemsCount) return LB_ERR;
-	for(Count = 1; Count < uIndex; Count++) {
-		if (lpls->lpNext == NULL) return LB_ERR;
-		lpls = (LPLISTSTRUCT)lpls->lpNext;
-		}
-	hItem = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
-	lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hItem);
+    
+    lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+    if (lphl == NULL) return LB_ERR;
+    
+    if (uIndex == (UINT)-1)
+	uIndex = lphl->ItemsCount;
+    if (uIndex > lphl->ItemsCount) return LB_ERR;
+    lppls = (LPLISTSTRUCT *) &lphl->lpFirst;
+    
+    for(Count = 0; Count < uIndex; Count++) {
+	if (*lppls == NULL) return LB_ERR;
+	lppls = (LPLISTSTRUCT *) &(*lppls)->lpNext;
+        }
+    
+	hItem = LIST_HEAP_ALLOC(lphl, GMEM_MOVEABLE, sizeof(LISTSTRUCT));
+	lplsnew = (LPLISTSTRUCT) LIST_HEAP_ADDR(lphl, hItem);
     if (lplsnew == NULL) {
 		printf("ListBoxInsertString() // Bad allocation of new item !\n");
 		return LB_ERRSPACE;
 		}
 	ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
 	lplsnew->hMem = hItem;
-	if (uIndex == 0) {
-		lplsnew->lpNext = lphl->lpFirst;
-		lphl->lpFirst = lplsnew;
-		}
-	else {
-		lplsnew->lpNext = lpls->lpNext;
-		lpls->lpNext = lplsnew;
-		}
+	lplsnew->lpNext = *lppls;
+	*lppls = lplsnew;
 	lphl->ItemsCount++;
 	hStr = 0;
 
 	if (HasStrings(wndPtr)) {
-		hStr = USER_HEAP_ALLOC(GMEM_MOVEABLE, strlen(newstr) + 1);
-		str = (LPSTR)USER_HEAP_ADDR(hStr);
+		hStr = LIST_HEAP_ALLOC(lphl, GMEM_MOVEABLE, strlen(newstr) + 1);
+		str = (LPSTR)LIST_HEAP_ADDR(lphl, hStr);
 		if (str == NULL) return LB_ERRSPACE;
 		strcpy(str, newstr);
 		newstr = str;
@@ -930,11 +883,12 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 		((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED))
 		ListBoxAskMeasure(wndPtr, lphl, lplsnew);
 	if (wndPtr->dwStyle & WS_VSCROLL)
-		SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
-						    (lphl->FirstVisible != 1));
+		SetScrollRange(hwnd, SB_VERT, 1, ListMaxFirstVisible(lphl), 
+		    (lphl->FirstVisible != 1 && lphl->bRedrawFlag));
 	if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 		SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
-			lphl->ItemsPerColumn + 1, (lphl->FirstVisible != 1));
+			lphl->ItemsPerColumn + 1,
+			(lphl->FirstVisible != 1 && lphl->bRedrawFlag));
 	if (((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) && 
 		(lphl->ItemsVisible != 0)) {
 		if (wndPtr->dwStyle & WS_VSCROLL) ShowScrollBar(hwnd, SB_VERT, TRUE);
@@ -946,7 +900,6 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 		UpdateWindow(hwnd);
 		}
         dprintf_listbox(stddeb,"ListBoxInsertString // count=%d\n", lphl->ItemsCount);
-/*	return lphl->ItemsCount; */
 	return uIndex;
 }
 
@@ -1022,10 +975,10 @@ int ListBoxDeleteString(HWND hwnd, UINT uIndex)
     }
     lpls2->lpNext = (LPLISTSTRUCT)lpls->lpNext;
     lphl->ItemsCount--;
-    if (lpls->hData != 0) USER_HEAP_FREE(lpls->hData);
-    if (lpls->hMem != 0) USER_HEAP_FREE(lpls->hMem);
+    if (lpls->hData != 0) LIST_HEAP_FREE(lphl, lpls->hData);
+    if (lpls->hMem != 0) LIST_HEAP_FREE(lphl, lpls->hMem);
     if (wndPtr->dwStyle & WS_VSCROLL)
-	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
+	SetScrollRange(hwnd, SB_VERT, 1, ListMaxFirstVisible(lphl), TRUE);
     if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, TRUE);
@@ -1090,8 +1043,8 @@ int ListBoxResetContent(HWND hwnd)
 	if (i != 0) {
 	    dprintf_listbox(stddeb,"ResetContent #%u\n", i);
 	    if (lpls2->hData != 0 && lpls2->hData != lpls2->hMem)
-		USER_HEAP_FREE(lpls2->hData);
-	    if (lpls2->hMem != 0) USER_HEAP_FREE(lpls2->hMem);
+		LIST_HEAP_FREE(lphl, lpls2->hData);
+	    if (lpls2->hMem != 0) LIST_HEAP_FREE(lphl, lpls2->hMem);
 	    }  
 	if (lpls == NULL)  break;
     }
@@ -1104,7 +1057,7 @@ int ListBoxResetContent(HWND hwnd)
 	SendMessage(lphl->hWndLogicParent, WM_COMMAND, 
     	    wndPtr->wIDmenu, MAKELONG(hwnd, LBN_SELCHANGE));
     if (wndPtr->dwStyle & WS_VSCROLL)
-	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
+	SetScrollRange(hwnd, SB_VERT, 1, ListMaxFirstVisible(lphl), TRUE);
     if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
 	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
 	    lphl->ItemsPerColumn + 1, TRUE);
@@ -1211,7 +1164,8 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 		if (!dp->inuse) break;
 		dprintf_listbox(stddeb,"ListBoxDirectory %p '%s' !\n", dp->filename, dp->filename);
 		if (dp->attribute & FA_DIREC) {
-			if (attrib & DDL_DIRECTORY) {
+			if (attrib & DDL_DIRECTORY &&
+					strcmp(dp->filename, ".")) {
 				sprintf(temp, "[%s]", dp->filename);
 				if ( (wRet = ListBoxAddString(hwnd, temp)) == LB_ERR) break;
 				}
@@ -1427,5 +1381,9 @@ int DlgDirList(HWND hDlg, LPSTR lpPathSpec,
 	return ret;
 }
 
-
-
+/* get the maximum value of lphl->FirstVisible */
+int ListMaxFirstVisible(LPHEADLIST lphl)
+{
+    int m = lphl->ItemsCount-lphl->ItemsVisible+1;
+    return (m < 1) ? 1 : m;
+}

@@ -9,11 +9,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-/*
-#ifdef linux
-#include <values.h>
-#endif
-*/
 
 #if !defined  (MAXINT)
 #include <limits.h>
@@ -23,8 +18,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 #include <X11/Xlib.h>
 #include "gdi.h"
 #include "stddebug.h"
-/* #define DEBUG_PALETTE /* */
-/* #undef  DEBUG_PALETTE /* */
+/* #define DEBUG_PALETTE */
+/* #undef  DEBUG_PALETTE */
 #include "debug.h"
 
 extern void COLOR_SetMapping( DC *dc, HANDLE map, WORD size );  /* color.c */
@@ -160,7 +155,7 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 	}
 	entry++;
     }
-    dprintf_palette(stddeb,"GetNearestPaletteIndex(%x,%06x) : returning %d\n", 
+    dprintf_palette(stddeb,"GetNearestPaletteIndex(%x,%06lx): returning %d\n", 
 	     hpalette, color, index );
     return index;
 }

@@ -6,6 +6,7 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdio.h>
 #include <X11/Xlib.h>
 
 #include "win.h"
@@ -29,15 +30,20 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     if (!hrgnUpdate)    /* Create an empty region */
 	if (!(hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
     
-    if (!(lps->hdc = GetDCEx( hwnd, hrgnUpdate,
-			      DCX_INTERSECTRGN | DCX_USESTYLE ))) return 0;
-    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
-
     if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
 	MSG_DecPaintCount( wndPtr->hmemTaskQ );
 
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
+
+    if (!(lps->hdc = GetDCEx( hwnd, hrgnUpdate,
+			      DCX_INTERSECTRGN | DCX_USESTYLE )))
+    {
+        fprintf( stderr, "GetDCEx() failed in BeginPaint(), hwnd=%d\n", hwnd );
+        DeleteObject( hrgnUpdate );
+        return 0;
+    }
+    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
 
     SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
     DeleteObject( hrgnUpdate );

@@ -27,6 +27,47 @@ extern Colormap COLOR_WinColormap;
 
 
 /***********************************************************************
+ *           BITBLT_GetImage
+ */
+static XImage *BITBLT_GetImage( HDC hdc, int x, int y, int width, int height )
+{
+    XImage *image;
+    RECT rect;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
+    GetClipBox( hdc, &rect );
+    OffsetRect( &rect, dc->w.DCOrgX, dc->w.DCOrgY );
+    if ((x >= rect.left) && (y >= rect.top)
+        && (x+width < rect.right) && (y+height < rect.bottom))
+    {
+        image = XGetImage( display, dc->u.x.drawable, x, y, width, height,
+                           AllPlanes, ZPixmap );
+    }
+    else  /* Get only the visible sub-image */
+    {
+        int width_bytes = ((dc->w.bitsPerPixel == 24 ? 32 : dc->w.bitsPerPixel)
+                           * width + 31) / 32 * 4;
+        char *data = malloc( height * width_bytes );
+        image = XCreateImage( display, DefaultVisualOfScreen(screen),
+                              dc->w.bitsPerPixel, ZPixmap, 0, data,
+                              width, height, 32, width_bytes );
+        if (image && !IsRectEmpty(&rect))
+        {
+            int x1, y1, x2, y2;
+            x1 = max( x, rect.left );
+            y1 = max( y, rect.top );
+            x2 = min( x + width, rect.right );
+            y2 = min( y + height, rect.bottom );
+            if ((x1 < x2) && (y1 < y2))
+                XGetSubImage( display, dc->u.x.drawable, x1, y1, x2-x1, y2-y1,
+                              AllPlanes, ZPixmap, image, x1-x, y1-y );
+        }
+    }
+    return image;
+}
+
+
+/***********************************************************************
  *           PatBlt    (GDI.29)
  */
 BOOL PatBlt( HDC hdc, short left, short top,
@@ -161,17 +202,17 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 	HBRUSH cur_brush=SelectObject(hdcDest, GetStockObject(BLACK_BRUSH));
 	SelectObject(hdcDest, cur_brush);
         /* FillRect(hdcBrush, &r, cur_brush);*/
-        sxi=XGetImage(display, dcSrc->u.x.drawable, min(xs1,xs2), min(ys1,ys2), 
-             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
-        dxi=XGetImage(display, dcDest->u.x.drawable, min(xd1,xd2),min(yd1,yd2), 
-             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
+        sxi = BITBLT_GetImage( hdcSrc, min(xs1,xs2), min(ys1,ys2),
+                               abs(xs2-xs1), abs(ys2-ys1) );
+        dxi = BITBLT_GetImage( hdcDest, min(xd1,xd2), min(yd1,yd2),
+                               abs(xs2-xs1), abs(ys2-ys1) );
         /* dcBrush = (DC *) GDI_GetObjPtr( hdcBrush, DC_MAGIC );*/
         /* bxi=XGetImage(display, dcBrush->u.x.drawable, min(xd1,xd2),min(yd1,yd2),
              abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);*/
 	/* FIXME: It's really not necessary to do this on the visible screen */
         FillRect(hdcDest, &r, cur_brush);
-	bxi=XGetImage(display, dcDest->u.x.drawable, min(xd1,xd2),min(yd1,yd2),
-             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
+        bxi = BITBLT_GetImage( hdcDest, min(xd1,xd2), min(yd1,yd2),
+                               abs(xs2-xs1), abs(ys2-ys1) );
         for (i=0; i<min(256,1<<(dcDest->w.bitsPerPixel)); i++)
 	{
 	  entry.pixel = i;
@@ -507,8 +548,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
      * the pixels
      */
 
-    sxi = XGetImage(display, dcSrc->u.x.drawable, xs1, ys1, 
-	     widthSrc, heightSrc, AllPlanes, ZPixmap);
+    sxi = BITBLT_GetImage( hdcSrc, xs1, ys1, widthSrc, heightSrc );
     dxi = XCreateImage(display, DefaultVisualOfScreen(screen),
 	  		    screenDepth, ZPixmap,
 			    0, NULL, widthDest, heightDest,

@@ -39,8 +39,9 @@
 /* #define DEBUG_MODULE    */
 /* #define DEBUG_LDT       */
 /* #define DEBUG_HEAP      */
+/* #define DEBUG_MCIANIM   */
 /* #define DEBUG_MCIWAVE   */
-/* #define DEBUG_MCIWAVE   */
+/* #define DEBUG_MIDI      */
 /* #define DEBUG_INT       */
 /* #define DEBUG_METAFILE  */
 /* #define DEBUG_GDI       */
@@ -72,8 +73,8 @@
 /* #define DEBUG_CATCH     */
  
 
-# /* Do not remove this line or change anything below this line */
- 
+/* Do not remove this line or change anything below this line */
+
 #ifdef DEBUG_NONE
 #undef DEBUG_ACCEL
 #undef DEBUG_BITMAP
@@ -103,7 +104,6 @@
 #undef DEBUG_GRAPHICS
 #undef DEBUG_HEAP
 #undef DEBUG_ICON
-#undef DEBUG_IF
 #undef DEBUG_INT
 #undef DEBUG_KEY
 #undef DEBUG_KEYBOARD
@@ -117,6 +117,7 @@
 #undef DEBUG_MENUCALC
 #undef DEBUG_MESSAGE
 #undef DEBUG_METAFILE
+#undef DEBUG_MIDI
 #undef DEBUG_MMIO
 #undef DEBUG_MMTIME
 #undef DEBUG_MODULE
@@ -140,8 +141,7 @@
 #undef DEBUG_WIN
 #undef DEBUG_WINSOCK
 #endif
- 
- 
+
 #ifdef DEBUG_ALL
 #define DEBUG_ACCEL
 #define DEBUG_BITMAP
@@ -171,7 +171,6 @@
 #define DEBUG_GRAPHICS
 #define DEBUG_HEAP
 #define DEBUG_ICON
-#define DEBUG_IF
 #define DEBUG_INT
 #define DEBUG_KEY
 #define DEBUG_KEYBOARD
@@ -185,6 +184,7 @@
 #define DEBUG_MENUCALC
 #define DEBUG_MESSAGE
 #define DEBUG_METAFILE
+#define DEBUG_MIDI
 #define DEBUG_MMIO
 #define DEBUG_MMTIME
 #define DEBUG_MODULE

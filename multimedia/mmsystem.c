@@ -53,6 +53,14 @@ UINT WINAPI waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 LRESULT DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2);
 
+LRESULT WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+							DWORD dwParam1, DWORD dwParam2);
+LRESULT MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+							DWORD dwParam1, DWORD dwParam2);
+LRESULT CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+							DWORD dwParam1, DWORD dwParam2);
+LRESULT ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+							DWORD dwParam1, DWORD dwParam2);
 
 /**************************************************************************
 * 				MMSYSTEM_WEP		[MMSYSTEM.1]
@@ -708,6 +716,10 @@ DWORD mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 			dwRet = MIDI_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
 						MCI_CLOSE, dwParam, (DWORD)lpParms);
 			break;
+		case MCI_DEVTYPE_ANIMATION:
+			dwRet = ANIM_DriverProc(mciDrv[wDevID].wDeviceID, 0, 
+						MCI_CLOSE, dwParam, (DWORD)lpParms);
+			break;
 		default:
 			printf("mciClose() // unknown type=%04X !\n", mciDrv[wDevID].wType);
 		}
@@ -755,6 +767,9 @@ DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 											wMsg, dwParam1, dwParam2);
 				case MCI_DEVTYPE_SEQUENCER:
 					return MIDI_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
+											wMsg, dwParam1, dwParam2);
+				case MCI_DEVTYPE_ANIMATION:
+					return ANIM_DriverProc(mciDrv[wDevID].wDeviceID, hDrv, 
 											wMsg, dwParam1, dwParam2);
 				default:
 					printf("mciSendCommand() // unknown type=%04X !\n", 
@@ -1691,6 +1706,7 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn,
 						hWaveIn, lpWaveInHdr, uSize);
 	lpDesc = (LPWAVEOPENDESC) GlobalLock(hWaveIn);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
+	if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
 	USER_HEAP_FREE(HIWORD((DWORD)lpWaveInHdr->lpData));
 	lpWaveInHdr->lpData = NULL;
 	lpWaveInHdr->lpNext = NULL;
@@ -2039,7 +2055,10 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin)
 	LPMMIOINFO	lpmminfo;
 	printf("mmioSeek(%04X, %08X, %d);\n", hmmio, lOffset, iOrigin);
 	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
-	if (lpmminfo == NULL) return 0;
+	if (lpmminfo == NULL) {
+		printf("mmioSeek // can't lock hmmio=%04X !\n", hmmio);
+		return 0;
+		}
 	count = _llseek(LOWORD(lpmminfo->dwReserved2), lOffset, iOrigin);
 	GlobalUnlock(hmmio);
 	return count;

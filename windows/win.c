@@ -199,6 +199,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     CLASS *classPtr = CLASS_FindClassPtr( wndPtr->hClass );
 
     if (!wndPtr || !classPtr) return;
+    WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
@@ -260,9 +261,8 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     wndPtr->dwExStyle         = 0;
     wndPtr->hdce              = 0;
-    wndPtr->VScroll           = NULL;
-    wndPtr->HScroll           = NULL;
-    wndPtr->scroll_flags      = 0;
+    wndPtr->hVScroll          = 0;
+    wndPtr->hHScroll          = 0;
     wndPtr->wIDmenu           = 0;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
@@ -380,15 +380,14 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle           = style;
     wndPtr->dwExStyle         = exStyle;
-	wndPtr->wIDmenu   		  = 0;
+    wndPtr->wIDmenu           = 0;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
-    wndPtr->VScroll           = NULL;
-    wndPtr->HScroll           = NULL;
-    wndPtr->scroll_flags      = 0;
+    wndPtr->hVScroll          = 0;
+    wndPtr->hHScroll          = 0;
     wndPtr->hSysMenu          = 0;
-    wndPtr->hProp	          = 0;
-    wndPtr->hTask	          = 0;
+    wndPtr->hProp             = 0;
+    wndPtr->hTask             = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
@@ -555,9 +554,6 @@ BOOL DestroyWindow( HWND hwnd )
 
       /* Remove the window from current task windows list */
 	RemoveWindowFromTask(GetCurrentTask(), hwnd);
-
-      /* Remove the window from the linked list */
-    WIN_UnlinkWindow( hwnd );
 
       /* Destroy the window */
 

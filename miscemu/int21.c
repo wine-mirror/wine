@@ -1175,7 +1175,7 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x0e: /* SELECT DEFAULT DRIVE */
 		if (!DOS_ValidDrive(DL)) {
 			Error (InvalidDrive, EC_MediaError, EL_Disk);
-			return;
+			break;
 		} else {
 			DOS_SetDefaultDrive(DL);
 			AX = MAX_DOS_DRIVES; 
@@ -1340,7 +1340,7 @@ int do_int21(struct sigcontext_struct * context)
 			errno_to_doserr();
 			AL = ExtendedError;
 			SetCflag;
-			return;
+			break;
 		}		
 		Error(0,0,0);
 		ResetCflag;

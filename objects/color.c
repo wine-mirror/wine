@@ -232,7 +232,7 @@ WORD COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD index = 0;
     WORD *mapping;
 
-    if (!dc->u.x.pal.hMapping) return 0;
+    if (dc && !dc->u.x.pal.hMapping) return 0;
     switch(color >> 24)
     {
     case 0:  /* RGB */
@@ -242,11 +242,20 @@ WORD COLOR_ToPhysical( DC *dc, COLORREF color )
 	index = color & 0xffff;
 	break;
     case 2:  /* PALETTERGB */
-	index = GetNearestPaletteIndex( dc->w.hPalette, color );
+	if (dc) index = GetNearestPaletteIndex( dc->w.hPalette, color );
+        else index = 0;
 	break;
     }
-    if (index >= dc->u.x.pal.mappingSize) return 0;
-    mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
+    if (dc)
+    {
+        if (index >= dc->u.x.pal.mappingSize) return 0;
+        mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
+    }
+    else
+    {
+        if (index >= NB_RESERVED_COLORS) return 0;
+        mapping = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
+    }
     return mapping[index];
 }
 

@@ -7,114 +7,155 @@
 #
 # Michael Patra  <micky@marie.physik.tu-berlin.de>
 #
-makedepend -s"# /* Do not remove this line or change anything below this line */" -finclude/debug.h
-echo " " >> include/debug.h
-grep -h dprintf_ */*.c | tr -d '[:blank:]' | cut -d"(" -f1 | \
-	cut -d"_" -f2 | sort | uniq > temp.$$
-echo " " >> include/debug.h
-echo "#ifdef DEBUG_NONE_EXT" >> include/debug.h
-cat temp.$$ |
+DEBUG_H=include/debug.h
+STDDEBUG_H=include/stddebug.h
+
+mv $DEBUG_H $DEBUG_H.old
+mv $STDDEBUG_H $STDDEBUG_H.old
+
+# Build the list of debug identifiers
+grep -h dprintf_ */*.c | sed 's/.*dprintf_\([A-Za-z0-9_]*\).*/\1/g' | \
+	sort | uniq > temp.$$
+
+# Build debug.h
+
+sed '/^\/\* Do not remove this line or change anything below this line \*\//q'\
+      <$DEBUG_H.old >$DEBUG_H
+cat <<++EOF++ >> $DEBUG_H
+
+#ifdef DEBUG_NONE_EXT
+++EOF++
+
+cat temp.$$ | tr a-z A-Z |
 {
 while read x
 do
-	y=`echo $x | tr a-z A-Z`
-	echo "#undef DEBUG_$y" >> include/debug.h
+	echo "#undef DEBUG_$x" >> $DEBUG_H
 done
 }
-echo "#endif" >> include/debug.h
-echo " " >> include/debug.h
-echo " " >> include/debug.h
-echo "#ifdef DEBUG_ALL_EXT" >> include/debug.h
-cat temp.$$ |
+
+cat <<++EOF++ >>$DEBUG_H
+#endif
+
+#ifdef DEBUG_ALL_EXT
+++EOF++
+
+cat temp.$$ | tr a-z A-Z |
 {
 while read x
 do
-	y=`echo $x | tr a-z A-Z`
-	echo "#define DEBUG_$y" >> include/debug.h
+	echo "#define DEBUG_$x" >> $DEBUG_H
 done
 }
-echo "#endif" >> include/debug.h
-echo " " >> include/debug.h
-echo " " >> include/debug.h
-echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
-echo "#ifdef DEBUG_DEFINE_VARIABLES" >> include/debug.h
-echo "short debug_msg_enabled[]={" >> include/debug.h
-i=0;
-cat temp.$$ |
+
+cat <<++EOF++ >>$DEBUG_H
+#endif
+
+#ifdef DEBUG_RUNTIME
+#ifdef DEBUG_DEFINE_VARIABLES
+short debug_msg_enabled[]={
+++EOF++
+
+cat temp.$$ | tr a-z A-Z |
 {
 while read x
 do
-	y=`echo $x | tr a-z A-Z`
-	echo "#ifdef DEBUG_$y" >> include/debug.h
-	echo "1," >> include/debug.h
-	echo "#else" >> include/debug.h
-	echo "0," >> include/debug.h
-	echo "#endif" >> include/debug.h
+	cat <<++EOF++ >>$DEBUG_H
+#ifdef DEBUG_$x
+    1,
+#else
+    0,
+#endif
+++EOF++
+
 done
 }
-echo "0};" >> include/debug.h
-echo "#else" >> include/debug.h 
-echo "extern short debug_msg_enabled[];" >> include/debug.h
-echo "#endif" >> include/debug.h
-echo "#endif" >> include/debug.h
-echo " " >> include/debug.h
-echo " " >> include/debug.h
+
+cat <<++EOF++ >>$DEBUG_H
+    0
+};
+#else
+extern short debug_msg_enabled[];
+#endif
+#endif
+
+++EOF++
+
 i=0
 cat temp.$$ |
 {
 while read x 
 do
 	y=`echo $x | tr a-z A-Z`
-	echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
-	echo "#define dprintf_$x if(debug_msg_enabled[$i]) fprintf" >> include/debug.h
-	echo "#else" >> include/debug.h
-	echo "#ifdef DEBUG_$y" >> include/debug.h
-	echo "#define dprintf_$x fprintf" >> include/debug.h
-	echo "#else" >> include/debug.h
-	echo "#define dprintf_$x" >> include/debug.h
-	echo "#endif" >> include/debug.h
-	echo "#endif" >> include/debug.h
-	echo " " >> include/debug.h
+	cat <<++EOF++ >>$DEBUG_H
+#ifdef DEBUG_RUNTIME
+#define dprintf_$x if(debug_msg_enabled[$i]) fprintf
+#else
+#ifdef DEBUG_$y
+#define dprintf_$x fprintf
+#else
+#define dprintf_$x
+#endif
+#endif
+
+++EOF++
 	let i=$i+1
 done
 }
-makedepend -s"# /* Do not remove this line or change anything below this line */" -finclude/stddebug.h
-echo " " >> include/stddebug.h
-echo "#ifdef DEBUG_NONE" >> include/stddebug.h
-cat temp.$$ |
+
+cat <<++EOF++ >>$DEBUG_H
+
+#ifdef DEBUG_RUNTIME
+#ifdef DEBUG_DEFINE_VARIABLES
+static char *debug_msg_name[] = {
+++EOF++
+
+cat temp.$$ | 
 {
 while read x
 do
-	y=`echo $x | tr a-z A-Z`
-	echo "#undef DEBUG_$y" >> include/stddebug.h
+	echo "    \"$x\"," >> $DEBUG_H
 done
 }
-echo "#endif" >> include/stddebug.h
-echo " " >> include/stddebug.h
-echo " " >> include/stddebug.h
-echo "#ifdef DEBUG_ALL" >> include/stddebug.h
-cat temp.$$ |
+
+cat <<++EOF++ >>$DEBUG_H
+    ""
+};
+#endif
+#endif
+++EOF++
+
+# Build stddebug.h
+
+sed '/^\/\* Do not remove this line or change anything below this line \*\//q'\
+      <$STDDEBUG_H.old >$STDDEBUG_H
+
+cat <<++EOF++ >>$STDDEBUG_H
+
+#ifdef DEBUG_NONE
+++EOF++
+
+cat temp.$$ | tr a-z A-Z |
 {
 while read x
 do
-	y=`echo $x | tr a-z A-Z`
-	echo "#define DEBUG_$y" >> include/stddebug.h
+	echo "#undef DEBUG_$x" >> $STDDEBUG_H
 done
 }
-echo "#endif" >> include/stddebug.h
-echo " " >> include/debug.h
-echo " " >> include/debug.h
-echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
-echo "#ifdef DEBUG_DEFINE_VARIABLES" >> include/debug.h
-echo "static char *debug_msg_name[] = {" >> include/debug.h
-cat temp.$$ |
+
+cat <<++EOF++ >>$STDDEBUG_H
+#endif
+
+#ifdef DEBUG_ALL
+++EOF++
+
+cat temp.$$ | tr a-z A-Z |
 {
 while read x
 do
-	echo "\"$x\"," >> include/debug.h
+	echo "#define DEBUG_$x" >> $STDDEBUG_H
 done
-} 
-echo "\"\"};" >> include/debug.h
-echo "#endif" >> include/debug.h
-echo "#endif" >> include/debug.h
-rm temp.$$
+}
+echo "#endif" >> $STDDEBUG_H
+
+rm temp.$$ $DEBUG_H.old $STDDEBUG_H.old

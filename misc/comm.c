@@ -1,5 +1,5 @@
 /*
- * DEC 93 Erik Bos (erik@trashcan.hacktic.nl)
+ * DEC 93 Erik Bos <erik@xs4all.nl>
  */
 
 #include <stdio.h>
@@ -20,8 +20,8 @@
 #include "windows.h"
 #include "comm.h"
 #include "stddebug.h"
-/* #define DEBUG_COMM /* */
-/* #undef  DEBUG_COMM /* */
+/* #define DEBUG_COMM */
+/* #undef  DEBUG_COMM */
 #include "debug.h"
 
 int commerror = 0, eventmask = 0;
@@ -151,7 +151,7 @@ int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
 	char *ptr, temp[256];
 
 	dprintf_comm(stddeb,
-		"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
+		"BuildCommDCB: (%s), ptr %p\n", device, lpdcb);
 	commerror = 0;
 
 	if (!strncasecmp(device,"COM",3)) {
@@ -469,7 +469,7 @@ int SetCommState(DCB FAR *lpdcb)
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,
-		"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
+		"SetCommState: fd %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if (tcgetattr(lpdcb->Id, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -661,7 +661,7 @@ int GetCommState(int fd, DCB FAR *lpdcb)
 {
 	struct termios port;
 
-    	dprintf_comm(stddeb,"GetCommState: fd %d, ptr %d\n", fd, (long) lpdcb);
+    	dprintf_comm(stddeb,"GetCommState: fd %d, ptr %p\n", fd, lpdcb);
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -824,7 +824,7 @@ int ReadComm(int fd, LPSTR lpvBuf, int cbRead)
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,
-	    "ReadComm: fd %d, ptr %d, length %d\n", fd, (long) lpvBuf, cbRead);
+	    "ReadComm: fd %d, ptr %p, length %d\n", fd, lpvBuf, cbRead);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -865,8 +865,8 @@ int WriteComm(int fd, LPSTR lpvBuf, int cbWrite)
 	int x, length;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_comm(stddeb,"WriteComm: fd %d, ptr %d, length %d\n", 
-		fd, (long) lpvBuf, cbWrite);
+    	dprintf_comm(stddeb,"WriteComm: fd %d, ptr %p, length %d\n", 
+		fd, lpvBuf, cbWrite);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;

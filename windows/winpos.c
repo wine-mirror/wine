@@ -102,7 +102,6 @@ HWND WindowFromPoint( POINT pt )
     return hwndRet;
 }
 
-
 /*******************************************************************
  *         ChildWindowFromPoint   (USER.191)
  */
@@ -396,6 +395,32 @@ BOOL SetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     wndPtr->rectNormal = wndpl->rcNormalPosition;
     ShowWindow( hwnd, wndpl->showCmd );
     return TRUE;
+}
+
+
+/*******************************************************************
+ *         WINPOS_NextWindowFromPoint
+ *
+ *  Looks for next enabled window that is
+ *  a) sibling of hwnd, later in Z-order and encloses pt, or
+ *  b) parent of hwnd
+ */
+HWND WINPOS_NextWindowFromPoint( HWND hwnd, POINT pt )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr->hwndParent) return hwnd;  /* desktop window */
+    ScreenToClient( wndPtr->hwndParent, &pt ); /* make pt relative to parent */
+    for (;;)
+    {
+        if (!wndPtr->hwndNext) break;  /* No more children */
+        hwnd = wndPtr->hwndNext;
+        wndPtr = WIN_FindWndPtr( hwnd );
+        if ((wndPtr->dwStyle & WS_VISIBLE) &&
+            !(wndPtr->dwStyle & WS_DISABLED) &&
+            PtInRect( &wndPtr->rectWindow, pt )) return hwnd;
+    }
+    return wndPtr->hwndParent;
 }
 
 

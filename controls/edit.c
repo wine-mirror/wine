@@ -516,11 +516,8 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 	EDIT_BuildTextPointers(hwnd);
     }
 
-    if ((createStruct->style & WS_VSCROLL) || 
-	(createStruct->style & WS_HSCROLL)) NC_CreateScrollBars(hwnd);
-
     /* ES_AUTOVSCROLL and ES_AUTOHSCROLL are automatically applied if */
-    /* the corresponding WM_* message is set                          */
+    /* the corresponding WS_* style is set                            */
     if (createStruct->style & WS_VSCROLL)
 	wndPtr->dwStyle |= ES_AUTOVSCROLL;
     if (createStruct->style & WS_HSCROLL)

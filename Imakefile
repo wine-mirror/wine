@@ -30,6 +30,7 @@ COMMONSUBDIRS = \
 	rc \
 	loader \
 	misc \
+	multimedia \
 	objects \
 	test \
 	windows
@@ -50,6 +51,7 @@ COMMONOBJS = \
 	controls.o \
 	loader.o \
 	misc.o \
+	multimedia.o \
 	objects.o \
 	rc.o \
 	windows.o
@@ -114,6 +116,9 @@ depend::
 install::
 
 etags::
-	etags `find . -name '*.[chS]'`
+	etags `find . -name '*.[chS]' -print`
 
-
+distclean: clean
+	$(RM) `find . -name Makefile -print`
+	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
+	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h

@@ -76,8 +76,8 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
     /* Paint desktop pattern (only if wall paper does not cover everything) */
 
     if (!infoPtr->hbitmapWallPaper || 
-	(!infoPtr->fTileWallPaper && (infoPtr->bitmapSize.cx < rect.right) &&
-	 (infoPtr->bitmapSize.cy < rect.bottom)))
+	(!infoPtr->fTileWallPaper && ((infoPtr->bitmapSize.cx < rect.right) ||
+	 (infoPtr->bitmapSize.cy < rect.bottom))))
     {
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );

@@ -8,8 +8,11 @@ MODULE = rc
 	echo "#include \"windows.h\"" >$*.rct
 	echo WINDOWS_H_ENDS_HERE >>$*.rct
 	cat $< >>$*.rct
-	gcc -E -x c $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o $* -v -p $*
+	gcc -E -x c -P $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o $* -v -p $*
 	$(RM) $*.rct
+
+XCOMM This would be nicer, but it breaks gcc (2.5.8 on Linux)  --AJ
+XCOMM gcc -E -x c -P $(CFLAGS) -imacros ../include/windows.h $*.rc | ./winerc -o $* -v -p $*
 
 RCSRCS = sysres.rc sysresbm.rc
 
@@ -17,12 +20,12 @@ RCOBJS = $(RCSRCS:.rc=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(RCOBJS))
 
-sysres.c: winerc $(TOP)/include/windows.h
+$(RCOBJS): winerc $(TOP)/include/windows.h
 
 includes::
 
 clean::
-	$(RM) sysres.c
+	$(RM) $(RCSRCS:.rc=.c)
 
 
 XCOMM Rules to build the winerc program
@@ -34,7 +37,14 @@ SRCS = \
 
 OBJS = $(SRCS:.c=.o)
 
+#ifdef i386BsdArchitecture
+#endif
+#if defined(i386BsdArchitecture) || defined(i386FreeBsd) || defined(FreeBSDArchitecture)
+LOCAL_LIBRARIES = -ll
+#endif
+#ifdef LinuxArchitecture
 LOCAL_LIBRARIES = -lfl
+#endif
 
 depend:: rc.tab.c rc.tab.h lex.yy.c
 
@@ -46,7 +56,7 @@ ComplexProgramTarget(winerc)
 rc.tab.c rc.tab.h: rc.y
 	$(YACC) -b rc -d --debug rc.y
 
-lex.yy.c: rc.l
+lex.yy.c: rc.l rc.tab.h
 	$(LEX) -I rc.l
  
 

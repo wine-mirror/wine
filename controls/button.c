@@ -15,11 +15,11 @@ static char Copyright3[] = "Copyright Alexandre Julliard, 1994";
 #include "syscolor.h"
 
 
+  /* windows/graphics.c */
+extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
+                                  int shadow_size, BOOL pressed );
 extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-			      int xsrc, int ysrc, int width, int height,
-			      int rop );              /* windows/graphics.c */
-extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int thickness,
-                                  BOOL pressed );     /* windows/graphics.c */
+                          int xsrc, int ysrc, int width, int height, int rop );
 
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
@@ -28,6 +28,7 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action );
 static void GB_Paint( HWND hWnd, HDC hDC, WORD action );
 static void UB_Paint( HWND hWnd, HDC hDC, WORD action );
 static void OB_Paint( HWND hWnd, HDC hDC, WORD action );
+static void BUTTON_CheckAutoRadioButton(HWND hWnd);
 
 
 #define MAX_BTN_TYPE  12
@@ -178,6 +179,11 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
                 }
                 break;
 
+        case WM_NCHITTEST:
+                if(style == BS_GROUPBOX) return HTTRANSPARENT;
+                lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
+                break;
+
         case WM_SETTEXT:
 		DEFWND_SetText( hWnd, (LPSTR)lParam );
                 PAINT_BUTTON( hWnd, style, ODA_DRAWENTIRE );
@@ -226,6 +232,8 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
                     infoPtr->state = (infoPtr->state & ~3) | wParam;
                     PAINT_BUTTON( hWnd, style, ODA_SELECT );
                 }
+		if(style == BS_AUTORADIOBUTTON && wParam==BUTTON_CHECKED)
+			BUTTON_CheckAutoRadioButton(hWnd);
                 break;
 
 	case BM_GETSTATE:
@@ -300,7 +308,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
         rc.left += 2;  /* To position the text down and right */
         rc.top  += 2;
     }
-    else GRAPH_DrawReliefRect( hDC, &rc, 2, FALSE );
+    else GRAPH_DrawReliefRect( hDC, &rc, 2, 2, FALSE );
     
     /* draw button label, if any: */
     text = USER_HEAP_ADDR( wndPtr->hText );
@@ -330,7 +338,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
 
 
 /**********************************************************************
- *       Check Box & Radion Button Functions
+ *       Check Box & Radio Button Functions
  */
 
 static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
@@ -384,6 +392,22 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
         rc.right = rc.left + size.cx + 2;
         DrawFocusRect(hDC, &rc);
     }
+}
+
+
+/**********************************************************************
+ *       BUTTON_CheckAutoRadioButton
+ *
+ * hWnd is checked, uncheck everything else in group
+ */
+static void BUTTON_CheckAutoRadioButton(HWND hWnd)
+{
+    HWND parent = GetParent(hWnd);
+    HWND sibling;
+    for(sibling = GetNextDlgGroupItem(parent,hWnd,FALSE);
+        sibling != hWnd;
+        sibling = GetNextDlgGroupItem(parent,sibling,FALSE))
+	    SendMessage(sibling,BM_SETCHECK,BUTTON_UNCHECKED,0);
 }
 
 

@@ -30,6 +30,7 @@ typedef struct tagHEADLIST {
 	HWND	hWndLogicParent;
 	HFONT	hFont;
 	BOOL	bRedrawFlag;
+	MDESC	*Heap;
 } HEADLIST;
 typedef HEADLIST FAR* LPHEADLIST;
 

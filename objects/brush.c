@@ -11,8 +11,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "prototypes.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI /* */
-/* #undef  DEBUG_GDI /* */
+/* #define DEBUG_GDI */
+/* #undef  DEBUG_GDI */
 #include "debug.h"
 
 #define NB_HATCH_STYLES  6
