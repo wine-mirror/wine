@@ -1861,9 +1861,9 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
 }
 
 /**********************************************************************
- *              X11DRV_EVENT_SetInputMehod
+ *              X11DRV_EVENT_SetInputMethod
  */
-INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type)
+INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type)
 {
   INPUT_TYPE prev = current_input_type;
 

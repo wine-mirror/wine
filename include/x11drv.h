@@ -357,7 +357,7 @@ typedef enum {
   X11DRV_INPUT_RELATIVE,
   X11DRV_INPUT_ABSOLUTE
 } INPUT_TYPE;
-extern INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type);
+extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
 
 #ifdef HAVE_LIBXXF86DGA2
 void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;

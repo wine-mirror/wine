@@ -527,7 +527,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 	    TSXDGASetMode(display, DefaultScreen(display), 0);
 
 	    /* Set the input handling back to absolute */
-	    /*X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);*/
+	    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
 
 	    /* Remove the handling of DGA2 events */
 	    X11DRV_EVENT_SetDGAStatus(0, -1);

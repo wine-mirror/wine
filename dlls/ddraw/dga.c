@@ -235,7 +235,7 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
 	/* Initialize the frame buffer */
 	_DGA_Initialize_FrameBuffer(*lplpDD, mode_to_use);
 	/* Set the input handling for relative mouse movements */
-	/*X11DRV_EVENT_SetInputMehod(X11DRV_INPUT_RELATIVE);*/
+	X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
     }
 #endif /* defined(HAVE_LIBXXF86DGA2) */
     return DD_OK;
