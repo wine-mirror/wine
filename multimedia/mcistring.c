@@ -78,7 +78,7 @@ _MCISTR_printtf(char *buf, UINT16 uDevType, DWORD timef, DWORD val)
 		MCI_TMSF_TRACK(val),
 		MCI_TMSF_MINUTE(val),
 		MCI_TMSF_SECOND(val),
-		MCI_TMSF_FRAME(val)		);
+		MCI_TMSF_FRAME(val));
 	break;
     default:
 	FIXME(mci, "missing timeformat for %ld, report.\n",timef);
@@ -2044,7 +2044,7 @@ struct	_MCISTR_cmdtable {
  * it is used. (imagine "close all"). Not implemented yet.
  */
 DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
-                            UINT16 uReturnLength, HWND16 hwndCallback)
+			     UINT16 uReturnLength, HWND16 hwndCallback)
 {
     char	*cmd,*dev,*args,**keywords,*filename;
     WORD	uDevTyp=0,wDevID=0;
@@ -2155,7 +2155,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
  * 				mciSendStringA		[MMSYSTEM.702][WINMM.51]
  */
 DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
-			      UINT uReturnLength, HWND hwndCallback)
+			    UINT uReturnLength, HWND hwndCallback)
 {
     return mciSendString16(lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
 }
@@ -2164,7 +2164,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
  * 				mciSendStringW			[WINMM.52]
  */
 DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString, 
-			      UINT uReturnLength, HWND hwndCallback)
+			    UINT uReturnLength, HWND hwndCallback)
 {
     LPSTR 	lpstrCommand;
     UINT	ret;
@@ -2174,4 +2174,24 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString,
     ret = mciSendString16(lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
     HeapFree(GetProcessHeap(), 0, lpstrCommand);
     return ret;
+}
+
+/**************************************************************************
+ * 				mciExecute			[WINMM.38]
+ */
+DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
+{
+    char	strRet[256];
+    DWORD	ret;
+
+    FIXME(mci, "(%s) stub!\n", lpstrCommand);
+
+    ret = mciSendString16(lpstrCommand, strRet, sizeof(strRet), 0);
+    if (ret != 0) {
+	if (!mciGetErrorString16(ret, strRet, sizeof(strRet))) {
+	    sprintf(strRet, "Unknown MCI Error (%ld)", ret);
+	}
+	MessageBoxA(0, strRet, "Error in mciExecute()", MB_OK); 
+    }
+    return 0;
 }
