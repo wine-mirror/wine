@@ -1270,9 +1270,8 @@ void __wine_enter_vm86( CONTEXT *context )
         case VM86_TRAP: /* return due to DOS-debugger request */
             switch(VM86_ARG(res))
             {
-            case T_TRCTRAP:  /* Single-step exception */
+            case T_TRCTRAP:  /* Single-step exception, single step flag is cleared by raise_trap_exception */
                 rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-                context->EFlags &= ~0x100;  /* clear single-step flag */
                 break;
             case T_BPTFLT:   /* Breakpoint exception */
                 rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */

@@ -557,6 +557,15 @@ static WINE_EXCEPTION_FILTER(exception_handler)
       ERR( "Protected mode STI caught by real mode handler!\n" );
     DOSVM_SendQueuedEvents(context);
     return EXCEPTION_CONTINUE_EXECUTION;
+  
+  case EXCEPTION_SINGLE_STEP:
+    ret = DOSVM_EmulateInterruptRM( context, 1 );
+    return ret ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_EXECUTE_HANDLER;
+  
+  case EXCEPTION_BREAKPOINT:
+    ret = DOSVM_EmulateInterruptRM( context, 3 );
+    return ret ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_EXECUTE_HANDLER;
+  
   }
   return EXCEPTION_CONTINUE_SEARCH;
 }
