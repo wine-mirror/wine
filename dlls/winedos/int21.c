@@ -121,12 +121,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x0b: /* GET STDIN STATUS */
         {
-            char x1,x2;
-
-            if (CONSOLE_CheckForKeystroke(&x1,&x2))
-                AL_reg(context) = 0xff;
-            else
+            BIOSDATA *data = DOSMEM_BiosData();
+            if(data->FirstKbdCharPtr == data->NextKbdCharPtr)
                 AL_reg(context) = 0;
+            else
+                AL_reg(context) = 0xff;
         }
         break;
 
