@@ -589,7 +589,7 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
                 child_width_fixup = rectChild.left - old_left;
             }
             /* move even if stc32 doesn't exist */
-            if (rectChild.top > rectStc32.bottom)
+            if (rectChild.top >= rectStc32.bottom)
             {
                 LONG old_top = rectChild.top;
 
