@@ -3609,10 +3609,12 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem)
                 Str_SetPtrA(&lpItem->pszText, dispInfo.item.pszText);
               }
               strncpy(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
+              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
             }
             else if (lpLVItem->mask & LVIF_TEXT)
             {
               strncpy(lpLVItem->pszText, lpItem->pszText, lpLVItem->cchTextMax);
+              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
             }
             
             if (dispInfo.item.mask & LVIF_STATE)
@@ -3704,10 +3706,12 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem)
                   Str_SetPtrA(&lpSubItem->pszText, dispInfo.item.pszText);
               }
               strncpy(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
+              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
             }
             else if (lpLVItem->mask & LVIF_TEXT)
             {
               strncpy(lpLVItem->pszText, lpSubItem->pszText, lpLVItem->cchTextMax);
+              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
             }
           }
         }
