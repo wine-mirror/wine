@@ -52,7 +52,18 @@ typedef struct _PROV_ENUMALGS_EX {
   CHAR   szLongName[40];
 } PROV_ENUMALGS_EX;
 
-typedef struct HMAC_INFO {
+#define SCHANNEL_MAC_KEY 0
+#define SCHANNEL_ENC_KEY 1
+
+typedef struct _SCHANNEL_ALG {
+  DWORD  dwUse;
+  ALG_ID Algid;
+  DWORD  cBits;
+  DWORD  dwFlags;
+  DWORD  dwReserved;
+} SCHANNEL_ALG, *PSCHANNEL_ALG;
+
+typedef struct _HMAC_INFO {
   ALG_ID HashAlgid;
   BYTE*  pbInnerString;
   DWORD  cbInnerString;
