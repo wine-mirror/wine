@@ -328,9 +328,8 @@ static HMENU get_win_sys_menu( HWND hwnd )
  */
 static HMENU MENU_CopySysPopup(void)
 {
-    static const WCHAR user32W[] = {'U','S','E','R','3','2',0};
     static const WCHAR sysmenuW[] = {'S','Y','S','M','E','N','U',0};
-    HMENU hMenu = LoadMenuW(GetModuleHandleW(user32W), sysmenuW);
+    HMENU hMenu = LoadMenuW(user32_module, sysmenuW);
 
     if( hMenu ) {
         POPUPMENU* menu = MENU_GetMenu(hMenu);

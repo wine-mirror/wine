@@ -3688,7 +3688,7 @@ static void EDIT_WM_Command(EDITSTATE *es, INT code, INT id, HWND control)
  */
 static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 {
-	HMENU menu = LoadMenuA(GetModuleHandleA("USER32"), "EDITMENU");
+	HMENU menu = LoadMenuA(user32_module, "EDITMENU");
 	HMENU popup = GetSubMenu(menu, 0);
 	UINT start = es->selection_start;
 	UINT end = es->selection_end;

@@ -72,7 +72,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
        }
        else
        {
-           if (LoadStringW(GetModuleHandleA("user32.dll"), IDS_ERROR, buf, 256))
+           if (LoadStringW(user32_module, IDS_ERROR, buf, 256))
                SetWindowTextW(hwnd, buf);
        }
     }
@@ -443,14 +443,12 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
     LPVOID tmplate;
     HRSRC hRes;
-    HMODULE hUser32;
-    static const WCHAR user32_res_nameW[] = { 'u','s','e','r','3','2','.','d','l','l',0 };
     static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
 
-    hUser32 = GetModuleHandleW(user32_res_nameW);
-    if (!(hRes = FindResourceExW(hUser32, (LPWSTR)RT_DIALOG, msg_box_res_nameW, msgbox->dwLanguageId)))
+    if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG,
+                                 msg_box_res_nameW, msgbox->dwLanguageId)))
         return 0;
-    if (!(tmplate = (LPVOID)LoadResource(hUser32, hRes)))
+    if (!(tmplate = (LPVOID)LoadResource(user32_module, hRes)))
         return 0;
 
     return DialogBoxIndirectParamW(msgbox->hInstance, tmplate, msgbox->hwndOwner,

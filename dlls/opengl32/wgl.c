@@ -52,6 +52,8 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 static GLXContext default_cx = NULL;
 static Display *default_display;  /* display to use for default context */
 
+static HMODULE opengl32_handle;
+
 static void *(*p_glXGetProcAddressARB)(const GLubyte *);
 
 typedef struct wine_glcontext {
@@ -310,18 +312,13 @@ static int wgl_compar(const void *elt_a, const void *elt_b) {
 
 void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
-  static HMODULE hm = 0;
   OpenGL_extension  ext;
   OpenGL_extension *ext_ret;
 
-
   TRACE("(%s)\n", lpszProc);
 
-  if (hm == 0)
-      hm = GetModuleHandleA("opengl32");
-
   /* First, look if it's not already defined in the 'standard' OpenGL functions */
-  if ((local_func = GetProcAddress(hm, lpszProc)) != NULL) {
+  if ((local_func = GetProcAddress(opengl32_handle, lpszProc)) != NULL) {
     TRACE(" found function in 'standard' OpenGL functions (%p)\n", local_func);
     return local_func;
   }
@@ -397,7 +394,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       buf[strlen(ext_ret->glx_name) - 3] = '\0';
       TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
 
-      ret = GetProcAddress(hm, buf);
+      ret = GetProcAddress(opengl32_handle, buf);
       if (ret != NULL) {
 	TRACE(" found function in main OpenGL library (%p) !\n", ret);
       } else {
@@ -775,6 +772,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        opengl32_handle = hinst;
         DisableThreadLibraryCalls(hinst);
         return process_attach();
     case DLL_PROCESS_DETACH:

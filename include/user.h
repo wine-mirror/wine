@@ -127,6 +127,8 @@ typedef struct tagUSER_DRIVER {
 
 extern USER_DRIVER USER_Driver;
 
+extern HMODULE user32_module;
+
 /* user lock */
 extern void USER_Lock(void);
 extern void USER_Unlock(void);

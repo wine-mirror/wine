@@ -42,6 +42,7 @@ USER_DRIVER USER_Driver;
 WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
+HMODULE user32_module = 0;
 
 extern HPALETTE (WINAPI *pfnGDISelectPalette)(HDC hdc, HPALETTE hpal, WORD bkgnd );
 extern UINT (WINAPI *pfnGDIRealizePalette)(HDC hdc);
@@ -183,7 +184,7 @@ static void tweak_init(void)
 /***********************************************************************
  *           USER initialisation routine
  */
-static BOOL process_attach( HINSTANCE inst )
+static BOOL process_attach(void)
 {
     HINSTANCE16 instance;
 
@@ -207,7 +208,7 @@ static BOOL process_attach( HINSTANCE inst )
     palette_init();
 
     /* Initialize built-in window classes */
-    CLASS_RegisterBuiltinClasses( inst );
+    CLASS_RegisterBuiltinClasses();
 
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
@@ -268,7 +269,8 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        ret = process_attach( inst );
+        user32_module = inst;
+        ret = process_attach();
         break;
     case DLL_THREAD_DETACH:
         thread_detach();

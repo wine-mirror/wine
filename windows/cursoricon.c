@@ -814,10 +814,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         WORD wResId;
         DWORD dwBytesInRes;
 
-        if (!hInstance)  /* Load OEM cursor/icon */
-        {
-            if (!(hInstance = GetModuleHandleA( "user32.dll" ))) return 0;
-        }
+        if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */
 
         /* Normalize hInstance (must be uniquely represented for icon cache) */
 
@@ -1996,7 +1993,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       {
           /* OEM bitmap: try to load the resource from user32.dll */
           if (HIWORD(name)) return 0;
-          if (!(instance = GetModuleHandleA("user32.dll"))) return 0;
+          instance = user32_module;
       }
       if (!(hRsrc = FindResourceW( instance, name, (LPWSTR)RT_BITMAP ))) return 0;
       if (!(handle = LoadResource( instance, hRsrc ))) return 0;

@@ -397,7 +397,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 
         if (visible == MDI_MOREWINDOWSLIMIT)
         {
-            LoadStringW(GetModuleHandleA("USER32"), IDS_MDI_MOREWINDOWS, buf, sizeof(buf)/sizeof(WCHAR));
+            LoadStringW(user32_module, IDS_MDI_MOREWINDOWS, buf, sizeof(buf)/sizeof(WCHAR));
             AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
             break;
         }
@@ -1917,12 +1917,12 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
     HRSRC hRes;
     HANDLE hDlgTmpl;
 
-    hRes = FindResourceA(GetModuleHandleA("USER32"), "MDI_MOREWINDOWS", (LPSTR)RT_DIALOG);
+    hRes = FindResourceA(user32_module, "MDI_MOREWINDOWS", (LPSTR)RT_DIALOG);
 
     if (hRes == 0)
         return 0;
 
-    hDlgTmpl = LoadResource(GetModuleHandleA("USER32"), hRes );
+    hDlgTmpl = LoadResource(user32_module, hRes );
 
     if (hDlgTmpl == 0)
         return 0;
@@ -1932,7 +1932,7 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
     if (template == 0)
         return 0;
 
-    return (HWND) DialogBoxIndirectParamA(GetModuleHandleA("USER32"),
+    return (HWND) DialogBoxIndirectParamA(user32_module,
                                           (LPDLGTEMPLATEA) template,
                                           hwnd, MDI_MoreWindowsDlgProc, (LPARAM) hwnd);
 }

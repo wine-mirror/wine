@@ -68,7 +68,6 @@ typedef struct tagCLASS
 
 static struct list class_list = LIST_INIT( class_list );
 static CLASS *desktop_class;
-static HMODULE user32_module;
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
 
@@ -471,7 +470,7 @@ static CLASS *register_builtin( const struct builtin_class_descr *descr )
 /***********************************************************************
  *           CLASS_RegisterBuiltinClasses
  */
-void CLASS_RegisterBuiltinClasses( HMODULE user32 )
+void CLASS_RegisterBuiltinClasses(void)
 {
     extern const struct builtin_class_descr BUTTON_builtin_class;
     extern const struct builtin_class_descr COMBO_builtin_class;
@@ -486,7 +485,6 @@ void CLASS_RegisterBuiltinClasses( HMODULE user32 )
     extern const struct builtin_class_descr SCROLL_builtin_class;
     extern const struct builtin_class_descr STATIC_builtin_class;
 
-    user32_module = user32;
     desktop_class = register_builtin( &DESKTOP_builtin_class );
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
