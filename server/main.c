@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -49,11 +51,12 @@ static void usage(void)
     fprintf(stderr, "\nusage: %s [options]\n\n", server_argv0);
     fprintf(stderr, "options:\n");
     fprintf(stderr, "   -d<n>  set debug level to <n>\n");
-    fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
     fprintf(stderr, "   -f     remain in the foreground for debugging\n");
-    fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
-    fprintf(stderr, "   -k[n]  kill the current wineserver, optionally with signal n\n");
     fprintf(stderr, "   -h     display this help message\n");
+    fprintf(stderr, "   -k[n]  kill the current wineserver, optionally with signal n\n");
+    fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
+    fprintf(stderr, "   -v     display version information and exit\n");
+    fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
     fprintf(stderr, "\n");
 }
 
@@ -79,17 +82,20 @@ static void parse_args( int argc, char *argv[] )
                 usage();
                 exit(0);
                 break;
-            case 'p':
-                if (isdigit(argv[i][2])) master_socket_timeout = atoi( argv[i] + 2 );
-                else master_socket_timeout = -1;
-                break;
-            case 'w':
-                wait_for_lock();
-                exit(0);
             case 'k':
                 if (isdigit(argv[i][2])) ret = kill_lock_owner( atoi(argv[i] + 2) );
                 else ret = kill_lock_owner(-1);
                 exit( !ret );
+            case 'p':
+                if (isdigit(argv[i][2])) master_socket_timeout = atoi( argv[i] + 2 );
+                else master_socket_timeout = -1;
+                break;
+            case 'v':
+                fprintf( stderr, "%s\n", PACKAGE_STRING );
+                exit(0);
+            case 'w':
+                wait_for_lock();
+                exit(0);
             default:
                 fprintf( stderr, "wineserver: unknown option '%s'\n", argv[i] );
                 usage();
