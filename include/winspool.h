@@ -417,7 +417,7 @@ typedef struct _PRINTER_INFO_5A {
   LPSTR     pPrinterName;
   LPSTR     pPortName;
   DWORD     Attributes;
-  DWORD     DeviceNotSelectedTimeOut;
+  DWORD     DeviceNotSelectedTimeout;
   DWORD     TransmissionRetryTimeout;
 } PRINTER_INFO_5A, *PPRINTER_INFO_5A, *LPPRINTER_INFO_5A;
 
@@ -425,7 +425,7 @@ typedef struct _PRINTER_INFO_5W {
   LPWSTR    pPrinterName;
   LPWSTR    pPortName;
   DWORD     Attributes;
-  DWORD     DeviceNotSelectedTimeOut;
+  DWORD     DeviceNotSelectedTimeout;
   DWORD     TransmissionRetryTimeout;
 } PRINTER_INFO_5W, *PPRINTER_INFO_5W, *LPPRINTER_INFO_5W;
 
