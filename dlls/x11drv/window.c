@@ -836,10 +836,9 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     Display *display = thread_data->display;
-    WND *wndPtr = WIN_GetPtr( hwnd );
     struct x11drv_win_data *data;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) goto done;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
 
     destroy_whole_window( display, data );
     destroy_icon_window( display, data );
@@ -852,8 +851,6 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 
- done:
-    WIN_ReleasePtr( wndPtr );
     return TRUE;
 }
 
