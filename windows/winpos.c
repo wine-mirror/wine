@@ -317,16 +317,15 @@ void WINAPI GetClientRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           GetClientRect32   (USER32.220)
  */
-void WINAPI GetClientRect32( HWND32 hwnd, LPRECT32 rect ) 
+BOOL32 WINAPI GetClientRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
     rect->left = rect->top = rect->right = rect->bottom = 0;
-    if (wndPtr) 
-    {
-	rect->right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-    }
+    if (!wndPtr) return FALSE;
+    rect->right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
+    rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+    return TRUE;
 }
 
 
@@ -361,9 +360,10 @@ void WINAPI ScreenToClient16( HWND16 hwnd, LPPOINT16 lppnt )
 /*******************************************************************
  *         ScreenToClient32   (USER32.447)
  */
-void WINAPI ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
+BOOL32 WINAPI ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
 {
     MapWindowPoints32( 0, hwnd, lppnt, 1 );
+    return TRUE;
 }
 
 
@@ -635,7 +635,7 @@ void WINAPI MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
 /*******************************************************************
  *         MapWindowPoints32   (USER32.386)
  */
-void WINAPI MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
+INT32 WINAPI MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
                                LPPOINT32 lppt, UINT32 count )
 {
     POINT32 offset;
@@ -647,6 +647,7 @@ void WINAPI MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
 	lppt->y += offset.y;
         lppt++;
     }
+    return MAKELONG( LOWORD(offset.x), LOWORD(offset.y) );
 }
 
 

@@ -3123,7 +3123,7 @@ BOOL32      WINAPI DrawCaptionTemp32W(HWND32,HDC32,const RECT32*,HFONT32,HICON32
 #define     DrawCaptionTemp WINELIB_NAME_AW(DrawCaptionTemp)
 BOOL32      WINAPI DrawEdge32(HDC32,LPRECT32,UINT32,UINT32);
 #define     DrawEdge WINELIB_NAME(DrawEdge)
-void        WINAPI DrawFocusRect32(HDC32,const RECT32*);
+BOOL32      WINAPI DrawFocusRect32(HDC32,const RECT32*);
 #define     DrawFocusRect WINELIB_NAME(DrawFocusRect)
 BOOL32      WINAPI DrawFrameControl32(HDC32,LPRECT32,UINT32,UINT32);
 #define     DrawFrameControl WINELIB_NAME(DrawFrameControl)
@@ -3209,7 +3209,7 @@ INT32       WINAPI GetClassName32W(HWND32,LPWSTR,INT32);
 #define     GetClassName WINELIB_NAME_AW(GetClassName)
 WORD        WINAPI GetClassWord32(HWND32,INT32);
 #define     GetClassWord WINELIB_NAME(GetClassWord)
-void        WINAPI GetClientRect32(HWND32,LPRECT32);
+BOOL32      WINAPI GetClientRect32(HWND32,LPRECT32);
 #define     GetClientRect WINELIB_NAME(GetClientRect)
 HANDLE32    WINAPI GetClipboardData32(UINT32);
 #define     GetClipboardData WINELIB_NAME(GetClipboardData)
@@ -3220,7 +3220,7 @@ HWND32      WINAPI GetClipboardOwner32(void);
 #define     GetClipboardOwner WINELIB_NAME(GetClipboardOwner)
 HWND32      WINAPI GetClipboardViewer32(void);
 #define     GetClipboardViewer WINELIB_NAME(GetClipboardViewer)
-void        WINAPI GetClipCursor32(LPRECT32);
+BOOL32      WINAPI GetClipCursor32(LPRECT32);
 #define     GetClipCursor WINELIB_NAME(GetClipCursor)
 #define     GetCurrentTime32() GetTickCount()
 #define     GetCurrentTime WINELIB_NAME(GetCurrentTime)
@@ -3370,7 +3370,7 @@ BOOL32      WINAPI HideCaret32(HWND32);
 #define     HideCaret WINELIB_NAME(HideCaret)
 BOOL32      WINAPI HiliteMenuItem32(HWND32,HMENU32,UINT32,UINT32);
 #define     HiliteMenuItem WINELIB_NAME(HiliteMenuItem)
-void        WINAPI InflateRect32(LPRECT32,INT32,INT32);
+BOOL32      WINAPI InflateRect32(LPRECT32,INT32,INT32);
 #define     InflateRect WINELIB_NAME(InflateRect)
 BOOL32      WINAPI InSendMessage32(void);
 #define     InSendMessage WINELIB_NAME(InSendMessage)
@@ -3382,11 +3382,11 @@ BOOL32      WINAPI InsertMenuItem32W(HMENU32,UINT32,BOOL32,const MENUITEMINFO32W
 #define     InsertMenuItem WINELIB_NAME_AW(InsertMenuItem)
 BOOL32      WINAPI IntersectRect32(LPRECT32,const RECT32*,const RECT32*);
 #define     IntersectRect WINELIB_NAME(IntersectRect)
-void        WINAPI InvalidateRect32(HWND32,const RECT32*,BOOL32);
+BOOL32      WINAPI InvalidateRect32(HWND32,const RECT32*,BOOL32);
 #define     InvalidateRect WINELIB_NAME(InvalidateRect)
-void        WINAPI InvalidateRgn32(HWND32,HRGN32,BOOL32);
+BOOL32      WINAPI InvalidateRgn32(HWND32,HRGN32,BOOL32);
 #define     InvalidateRgn WINELIB_NAME(InvalidateRgn)
-void        WINAPI InvertRect32(HDC32,const RECT32*);
+BOOL32      WINAPI InvertRect32(HDC32,const RECT32*);
 #define     InvertRect WINELIB_NAME(InvertRect)
 BOOL32      WINAPI IsCharAlpha32A(CHAR);
 BOOL32      WINAPI IsCharAlpha32W(WCHAR);
@@ -3465,9 +3465,9 @@ UINT32      WINAPI MapVirtualKey32W(UINT32,UINT32);
 #define     MapVirtualKey WINELIB_NAME_AW(MapVirtualKey)
 UINT32      WINAPI MapVirtualKeyEx32A(UINT32,UINT32,HKL32);
 #define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
-void        WINAPI MapDialogRect32(HWND32,LPRECT32);
+BOOL32      WINAPI MapDialogRect32(HWND32,LPRECT32);
 #define     MapDialogRect WINELIB_NAME(MapDialogRect)
-void        WINAPI MapWindowPoints32(HWND32,HWND32,LPPOINT32,UINT32);
+INT32       WINAPI MapWindowPoints32(HWND32,HWND32,LPPOINT32,UINT32);
 #define     MapWindowPoints WINELIB_NAME(MapWindowPoints)
 BOOL32      WINAPI MessageBeep32(UINT32);
 #define     MessageBeep WINELIB_NAME(MessageBeep)
@@ -3488,7 +3488,7 @@ BOOL32      WINAPI OemToChar32W(LPCSTR,LPWSTR);
 BOOL32      WINAPI OemToCharBuff32A(LPCSTR,LPSTR,DWORD);
 BOOL32      WINAPI OemToCharBuff32W(LPCSTR,LPWSTR,DWORD);
 #define     OemToCharBuff WINELIB_NAME_AW(OemToCharBuff)
-void        WINAPI OffsetRect32(LPRECT32,INT32,INT32);
+BOOL32      WINAPI OffsetRect32(LPRECT32,INT32,INT32);
 #define     OffsetRect WINELIB_NAME(OffsetRect)
 BOOL32      WINAPI OpenClipboard32(HWND32);
 #define     OpenClipboard WINELIB_NAME(OpenClipboard)
@@ -3532,7 +3532,7 @@ HANDLE32    WINAPI RemoveProp32W(HWND32,LPCWSTR);
 #define     RemoveProp WINELIB_NAME_AW(RemoveProp)
 BOOL32      WINAPI ReplyMessage32(LRESULT);
 #define     ReplyMessage WINELIB_NAME(ReplyMessage)
-void        WINAPI ScreenToClient32(HWND32,LPPOINT32);
+BOOL32      WINAPI ScreenToClient32(HWND32,LPPOINT32);
 #define     ScreenToClient WINELIB_NAME(ScreenToClient)
 VOID        WINAPI ScrollChildren32(HWND32,UINT32,WPARAM32,LPARAM);
 #define     ScrollChildren WINELIB_NAME(ScrollChildren)
@@ -3580,7 +3580,7 @@ BOOL32      WINAPI SetCursorPos32(INT32,INT32);
 #define     SetCursorPos WINELIB_NAME(SetCursorPos)
 BOOL32      WINAPI SetDeskWallPaper32(LPCSTR);
 #define     SetDeskWallPaper WINELIB_NAME(SetDeskWallPaper)
-void        WINAPI SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
+BOOL32      WINAPI SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
 #define     SetDlgItemInt WINELIB_NAME(SetDlgItemInt)
 BOOL32      WINAPI SetDlgItemText32A(HWND32,INT32,LPCSTR);
 BOOL32      WINAPI SetDlgItemText32W(HWND32,INT32,LPCWSTR);
@@ -3606,9 +3606,9 @@ HWND32      WINAPI SetParent32(HWND32,HWND32);
 BOOL32      WINAPI SetProp32A(HWND32,LPCSTR,HANDLE32);
 BOOL32      WINAPI SetProp32W(HWND32,LPCWSTR,HANDLE32);
 #define     SetProp WINELIB_NAME_AW(SetProp)
-void        WINAPI SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
+BOOL32      WINAPI SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
 #define     SetRect WINELIB_NAME(SetRect)
-void        WINAPI SetRectEmpty32(LPRECT32);
+BOOL32      WINAPI SetRectEmpty32(LPRECT32);
 #define     SetRectEmpty WINELIB_NAME(SetRectEmpty)
 INT32       WINAPI SetScrollInfo32(HWND32,INT32,const SCROLLINFO*,BOOL32);
 #define     SetScrollInfo WINELIB_NAME(SetScrollInfo)

@@ -345,10 +345,11 @@ void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 /***********************************************************************
  *           InvertRect32    (USER32.330)
  */
-void WINAPI InvertRect32( HDC32 hdc, const RECT32 *rect )
+BOOL32 WINAPI InvertRect32( HDC32 hdc, const RECT32 *rect )
 {
-    PatBlt32( hdc, rect->left, rect->top,
-              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+    return PatBlt32( hdc, rect->left, rect->top,
+		     rect->right - rect->left, rect->bottom - rect->top, 
+		     DSTINVERT );
 }
 
 
@@ -659,7 +660,7 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
  *
  * FIXME: PatBlt(PATINVERT) with background brush.
  */
-void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
+BOOL32 WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 {
     HPEN32 hOldPen, hnewPen;
     INT32 oldDrawMode, oldBkMode;
@@ -667,7 +668,11 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     X11DRV_PDEVICE *physDev;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return;
+    if (!dc) 
+    {
+       SetLastError( ERROR_INVALID_HANDLE );
+       return FALSE;
+    }
     physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     left   = XLPTODP( dc, rc->left );
@@ -675,8 +680,11 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     right  = XLPTODP( dc, rc->right );
     bottom = YLPTODP( dc, rc->bottom );
 
-    if(left == right || top == bottom)
-        return;
+    if(left == right || top == bottom) 
+    {
+       SetLastError( ERROR_INVALID_PARAMETER );
+       return FALSE;
+    }
 
     hnewPen = CreatePen32(PS_DOT, 1, GetSysColor32(COLOR_WINDOWTEXT) );
     hOldPen = SelectObject32( hdc, hnewPen );
@@ -695,6 +703,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     SetROP232(hdc, oldDrawMode);
     SelectObject32(hdc, hOldPen);
     DeleteObject32(hnewPen);
+    return TRUE;
 }
 
 

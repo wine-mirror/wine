@@ -550,9 +550,9 @@ void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 /***********************************************************************
  *           InvalidateRgn32   (USER32.329)
  */
-void WINAPI InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
+BOOL32 WINAPI InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    PAINT_RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
+    return PAINT_RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
 
 
@@ -568,10 +568,10 @@ void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 /***********************************************************************
  *           InvalidateRect32   (USER32.328)
  */
-void WINAPI InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
+BOOL32 WINAPI InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 {
-    PAINT_RedrawWindow( hwnd, rect, 0, 
-			RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
+    return PAINT_RedrawWindow( hwnd, rect, 0, 
+			       RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
 
 

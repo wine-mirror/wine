@@ -1330,9 +1330,14 @@ void WINAPI GetClipCursor16( RECT16 *rect )
 /***********************************************************************
  *           GetClipCursor32    (USER32.221)
  */
-void WINAPI GetClipCursor32( RECT32 *rect )
+BOOL32 WINAPI GetClipCursor32( RECT32 *rect )
 {
-    if (rect) CopyRect32( rect, &CURSOR_ClipRect );
+    if (rect) 
+    {
+       CopyRect32( rect, &CURSOR_ClipRect );
+       return TRUE;
+    }
+    return FALSE;
 }
 
 /**********************************************************************

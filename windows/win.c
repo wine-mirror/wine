@@ -61,16 +61,19 @@ WND * WIN_FindWndPtr( HWND32 hwnd )
 {
     WND * ptr;
     
-    if (!hwnd || HIWORD(hwnd)) return NULL;
+    if (!hwnd || HIWORD(hwnd)) goto error;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
-    if (ptr->dwMagic != WND_MAGIC) return NULL;
+    if (ptr->dwMagic != WND_MAGIC) goto error;
     if (ptr->hwndSelf != hwnd)
     {
         ERR( win, "Can't happen: hwnd %04x self pointer is %04x\n",
-                 hwnd, ptr->hwndSelf );
-        return NULL;
+             hwnd, ptr->hwndSelf );
+        goto error;
     }
     return ptr;
+ error:
+    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    return NULL;
 }
 
 

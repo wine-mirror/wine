@@ -1430,14 +1430,14 @@ INT32 WINAPI GetDlgItemText32W( HWND32 hwnd, INT32 id, LPWSTR str, UINT32 len )
  */
 void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
-    return SetDlgItemInt32( hwnd, (UINT32)(UINT16)id, value, fSigned );
+    SetDlgItemInt32( hwnd, (UINT32)(UINT16)id, value, fSigned );
 }
 
 
 /*******************************************************************
  *           SetDlgItemInt32   (USER32.477)
  */
-void WINAPI SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value,
+BOOL32 WINAPI SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value,
                              BOOL32 fSigned )
 {
     char str[20];
@@ -1445,6 +1445,7 @@ void WINAPI SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value,
     if (fSigned) sprintf( str, "%d", (INT32)value );
     else sprintf( str, "%u", value );
     SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)str );
+    return TRUE;
 }
 
 
@@ -1608,16 +1609,17 @@ void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           MapDialogRect32   (USER32.382)
  */
-void WINAPI MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
+BOOL32 WINAPI MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
 {
     DIALOGINFO * dlgInfo;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
+    if (!wndPtr) return FALSE;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     rect->left   = (rect->left * dlgInfo->xBaseUnit) / 4;
     rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
     rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
     rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+    return TRUE;
 }
 
 

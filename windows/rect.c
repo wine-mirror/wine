@@ -24,13 +24,14 @@ void WINAPI SetRect16( LPRECT16 rect, INT16 left, INT16 top,
 /***********************************************************************
  *           SetRect32    (USER32.499)
  */
-void WINAPI SetRect32( LPRECT32 rect, INT32 left, INT32 top,
+BOOL32 WINAPI SetRect32( LPRECT32 rect, INT32 left, INT32 top,
                        INT32 right, INT32 bottom )
 {
     rect->left   = left;
     rect->right  = right;
     rect->top    = top;
     rect->bottom = bottom;
+    return TRUE;
 }
 
 
@@ -46,9 +47,10 @@ void WINAPI SetRectEmpty16( LPRECT16 rect )
 /***********************************************************************
  *           SetRectEmpty32    (USER32.500)
  */
-void WINAPI SetRectEmpty32( LPRECT32 rect )
+BOOL32 WINAPI SetRectEmpty32( LPRECT32 rect )
 {
     rect->left = rect->right = rect->top = rect->bottom = 0;
+    return TRUE;
 }
 
 
@@ -125,12 +127,13 @@ void WINAPI OffsetRect16( LPRECT16 rect, INT16 x, INT16 y )
 /***********************************************************************
  *           OffsetRect32    (USER32.406)
  */
-void WINAPI OffsetRect32( LPRECT32 rect, INT32 x, INT32 y )
+BOOL32 WINAPI OffsetRect32( LPRECT32 rect, INT32 x, INT32 y )
 {
     rect->left   += x;
     rect->right  += x;
     rect->top    += y;
     rect->bottom += y;    
+    return TRUE;
 }
 
 
@@ -149,12 +152,13 @@ void WINAPI InflateRect16( LPRECT16 rect, INT16 x, INT16 y )
 /***********************************************************************
  *           InflateRect32    (USER32.321)
  */
-void WINAPI InflateRect32( LPRECT32 rect, INT32 x, INT32 y )
+BOOL32 WINAPI InflateRect32( LPRECT32 rect, INT32 x, INT32 y )
 {
     rect->left   -= x;
     rect->top 	 -= y;
     rect->right  += x;
     rect->bottom += y;
+    return TRUE;
 }
 
 
