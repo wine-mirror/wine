@@ -608,7 +608,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
                 rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
                 TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
                       rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-                if (rc==0 && NEAR_MATCH(arg,win_std_rates[r]))
+                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]))
                     ossdev->out_caps.dwFormats|=win_std_formats[f][c][r];
             }
         }
