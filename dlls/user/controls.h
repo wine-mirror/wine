@@ -70,6 +70,9 @@ extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt );
 extern INT SCROLL_SetNCSbState( HWND hwnd, int vMin, int vMax, int vPos,
                                 int hMin, int hMax, int hPos );
 
+/* UI tools */
+extern HBRUSH UITOOLS_GetPattern55AABrush(void);
+
 /* combo box */
 
 #define ID_CB_LISTBOX           1000

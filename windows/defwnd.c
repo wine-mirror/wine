@@ -23,16 +23,19 @@
 #include "wine/port.h"
 
 #include <string.h>
+#include <stdarg.h>
 
-#include "win.h"
-#include "user.h"
-#include "nonclient.h"
-#include "winpos.h"
-#include "dce.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
 #include "imm.h"
+#include "win.h"
+#include "user.h"
+#include "controls.h"
+#include "nonclient.h"
+#include "winpos.h"
+#include "dce.h"
 #include "message.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
@@ -164,7 +167,7 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
          * look different from the window background.
          */
         if (bk == GetSysColor(COLOR_WINDOW))
-            return CACHE_GetPattern55AABrush();
+            return UITOOLS_GetPattern55AABrush();
 
 	UnrealizeObject( hb );
         return hb;

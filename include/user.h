@@ -136,9 +136,6 @@ extern void USER_CheckNotLock(void);
 
 extern BOOL USER_IsExitingThread( DWORD tid );
 
-/* gray brush cache */
-extern HBRUSH CACHE_GetPattern55AABrush(void);
-
 /* hook.c */
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 extern BOOL HOOK_IsHooked( INT id );

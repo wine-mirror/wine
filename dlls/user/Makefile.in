@@ -45,7 +45,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/winpos.c \
 	$(TOPOBJDIR)/windows/winproc.c \
 	button.c \
-	cache.c \
 	caret.c \
 	combo.c \
 	dde/client.c \

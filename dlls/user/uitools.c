@@ -27,12 +27,19 @@
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "user.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
-static const WORD wPattern_AA55[8] = { 0xaaaa, 0x5555, 0xaaaa, 0x5555,
-                                       0xaaaa, 0x5555, 0xaaaa, 0x5555 };
+static const WORD wPattern55AA[] =
+{
+    0x5555, 0xaaaa, 0x5555, 0xaaaa,
+    0x5555, 0xaaaa, 0x5555, 0xaaaa
+};
+
+static HBRUSH  hPattern55AABrush;
+static HBITMAP hPattern55AABitmap;
 
 /* These tables are used in:
  * UITOOLS_DrawDiagEdge()
@@ -110,6 +117,24 @@ static const signed char LTRBInnerFlat[] = {
     -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,
     -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,
 };
+
+/* last COLOR id */
+#define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
+
+
+/*********************************************************************
+ *	UITOOLS_GetPattern55AABrush
+ */
+HBRUSH UITOOLS_GetPattern55AABrush(void)
+{
+    if (!hPattern55AABrush)
+    {
+        hPattern55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
+        hPattern55AABrush = CreatePatternBrush( hPattern55AABitmap );
+    }
+    return hPattern55AABrush;
+}
+
 
 /***********************************************************************
  *           UITOOLS_DrawDiagEdge
@@ -617,19 +642,15 @@ static void UITOOLS_DrawCheckedRect( HDC dc, LPRECT rect )
 {
     if(GetSysColor(COLOR_BTNHIGHLIGHT) == RGB(255, 255, 255))
     {
-      HBITMAP hbm = CreateBitmap(8, 8, 1, 1, wPattern_AA55);
       HBRUSH hbsave;
-      HBRUSH hb = CreatePatternBrush(hbm);
       COLORREF bg;
 
       FillRect(dc, rect, GetSysColorBrush(COLOR_BTNFACE));
       bg = SetBkColor(dc, RGB(255, 255, 255));
-      hbsave = (HBRUSH)SelectObject(dc, hb);
+      hbsave = SelectObject(dc, UITOOLS_GetPattern55AABrush());
       PatBlt(dc, rect->left, rect->top, rect->right-rect->left, rect->bottom-rect->top, 0x00FA0089);
       SelectObject(dc, hbsave);
       SetBkColor(dc, bg);
-      DeleteObject(hb);
-      DeleteObject(hbm);
     }
     else
     {
@@ -1390,4 +1411,336 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
       WARN("(%p,%p,%d,%x), bad type!\n", hdc,rc,uType,uState );
     }
     return FALSE;
+}
+
+
+/***********************************************************************
+ *		FillRect (USER32.@)
+ */
+INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+
+    if (hbrush <= (HBRUSH) (COLOR_MAX + 1)) hbrush = GetSysColorBrush( (INT) hbrush - 1 );
+
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    SelectObject( hdc, prevBrush );
+    return 1;
+}
+
+
+/***********************************************************************
+ *		InvertRect (USER32.@)
+ */
+BOOL WINAPI InvertRect( HDC hdc, const RECT *rect )
+{
+    return PatBlt( hdc, rect->left, rect->top,
+                   rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+}
+
+
+/***********************************************************************
+ *		FrameRect (USER32.@)
+ */
+INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+    RECT r = *rect;
+
+    if ( (r.right <= r.left) || (r.bottom <= r.top) ) return 0;
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+
+    PatBlt( hdc, r.left, r.top, 1, r.bottom - r.top, PATCOPY );
+    PatBlt( hdc, r.right - 1, r.top, 1, r.bottom - r.top, PATCOPY );
+    PatBlt( hdc, r.left, r.top, r.right - r.left, 1, PATCOPY );
+    PatBlt( hdc, r.left, r.bottom - 1, r.right - r.left, 1, PATCOPY );
+
+    SelectObject( hdc, prevBrush );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		DrawFocusRect (USER32.@)
+ *
+ * FIXME: PatBlt(PATINVERT) with background brush.
+ */
+BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
+{
+    HBRUSH hOldBrush;
+    HPEN hOldPen, hNewPen;
+    INT oldDrawMode, oldBkMode;
+
+    hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    hNewPen = CreatePen(PS_ALTERNATE, 1, GetSysColor(COLOR_WINDOWTEXT));
+    hOldPen = SelectObject(hdc, hNewPen);
+    oldDrawMode = SetROP2(hdc, R2_XORPEN);
+    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+
+    Rectangle(hdc, rc->left, rc->top, rc->right, rc->bottom);
+
+    SetBkMode(hdc, oldBkMode);
+    SetROP2(hdc, oldDrawMode);
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hNewPen);
+    SelectObject(hdc, hOldBrush);
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *		DrawAnimatedRects (USER32.@)
+ */
+BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni, const RECT* lprcFrom, const RECT* lprcTo )
+{
+    FIXME("(%p,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          UITOOLS_DrawStateJam
+ *
+ * Jams in the requested type in the dc
+ */
+static BOOL UITOOLS_DrawStateJam( HDC hdc, UINT opcode, DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
+                                  LPRECT rc, UINT dtflags, BOOL unicode )
+{
+    HDC memdc;
+    HBITMAP hbmsave;
+    BOOL retval;
+    INT cx = rc->right - rc->left;
+    INT cy = rc->bottom - rc->top;
+
+    switch(opcode)
+    {
+    case DST_TEXT:
+    case DST_PREFIXTEXT:
+        if(unicode)
+            return DrawTextW(hdc, (LPWSTR)lp, (INT)wp, rc, dtflags);
+        else
+            return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
+
+    case DST_ICON:
+        return DrawIcon(hdc, rc->left, rc->top, (HICON)lp);
+
+    case DST_BITMAP:
+        memdc = CreateCompatibleDC(hdc);
+        if(!memdc) return FALSE;
+        hbmsave = (HBITMAP)SelectObject(memdc, (HBITMAP)lp);
+        if(!hbmsave)
+        {
+            DeleteDC(memdc);
+            return FALSE;
+        }
+        retval = BitBlt(hdc, rc->left, rc->top, cx, cy, memdc, 0, 0, SRCCOPY);
+        SelectObject(memdc, hbmsave);
+        DeleteDC(memdc);
+        return retval;
+
+    case DST_COMPLEX:
+        if(func) {
+            BOOL bRet;
+            /* DRAWSTATEPROC assumes that it draws at the center of coordinates  */
+
+            OffsetViewportOrgEx(hdc, rc->left, rc->top, NULL);
+            bRet = func(hdc, lp, wp, cx, cy);
+            /* Restore origin */
+            OffsetViewportOrgEx(hdc, -rc->left, -rc->top, NULL);
+            return bRet;
+        } else
+            return FALSE;
+    }
+    return FALSE;
+}
+
+/**********************************************************************
+ *      UITOOLS_DrawState()
+ */
+static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
+                              INT x, INT y, INT cx, INT cy, UINT flags, BOOL unicode )
+{
+    HBITMAP hbm, hbmsave;
+    HFONT hfsave;
+    HBRUSH hbsave, hbrtmp = 0;
+    HDC memdc;
+    RECT rc;
+    UINT dtflags = DT_NOCLIP;
+    COLORREF fg, bg;
+    UINT opcode = flags & 0xf;
+    INT len = wp;
+    BOOL retval, tmp;
+
+    if((opcode == DST_TEXT || opcode == DST_PREFIXTEXT) && !len)    /* The string is '\0' terminated */
+    {
+        if(unicode)
+            len = strlenW((LPWSTR)lp);
+        else
+            len = strlen((LPSTR)lp);
+    }
+
+    /* Find out what size the image has if not given by caller */
+    if(!cx || !cy)
+    {
+        SIZE s;
+        CURSORICONINFO *ici;
+        BITMAP bm;
+
+        switch(opcode)
+        {
+        case DST_TEXT:
+        case DST_PREFIXTEXT:
+            if(unicode)
+                retval = GetTextExtentPoint32W(hdc, (LPWSTR)lp, len, &s);
+            else
+                retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
+            if(!retval) return FALSE;
+            break;
+
+        case DST_ICON:
+            ici = (CURSORICONINFO *)GlobalLock16((HGLOBAL16)lp);
+            if(!ici) return FALSE;
+            s.cx = ici->nWidth;
+            s.cy = ici->nHeight;
+            GlobalUnlock16((HGLOBAL16)lp);
+            break;
+
+        case DST_BITMAP:
+            if(!GetObjectA((HBITMAP)lp, sizeof(bm), &bm)) return FALSE;
+            s.cx = bm.bmWidth;
+            s.cy = bm.bmHeight;
+            break;
+
+        case DST_COMPLEX: /* cx and cy must be set in this mode */
+            return FALSE;
+        }
+
+        if(!cx) cx = s.cx;
+        if(!cy) cy = s.cy;
+    }
+
+    rc.left   = x;
+    rc.top    = y;
+    rc.right  = x + cx;
+    rc.bottom = y + cy;
+
+    if(flags & DSS_RIGHT)    /* This one is not documented in the win32.hlp file */
+        dtflags |= DT_RIGHT;
+    if(opcode == DST_TEXT)
+        dtflags |= DT_NOPREFIX;
+
+    /* For DSS_NORMAL we just jam in the image and return */
+    if((flags & 0x7ff0) == DSS_NORMAL)
+    {
+        return UITOOLS_DrawStateJam(hdc, opcode, func, lp, len, &rc, dtflags, unicode);
+    }
+
+    /* For all other states we need to convert the image to B/W in a local bitmap */
+    /* before it is displayed */
+    fg = SetTextColor(hdc, RGB(0, 0, 0));
+    bg = SetBkColor(hdc, RGB(255, 255, 255));
+    hbm = NULL; hbmsave = NULL;
+    memdc = NULL; hbsave = NULL;
+    retval = FALSE; /* assume failure */
+
+    /* From here on we must use "goto cleanup" when something goes wrong */
+    hbm     = CreateBitmap(cx, cy, 1, 1, NULL);
+    if(!hbm) goto cleanup;
+    memdc   = CreateCompatibleDC(hdc);
+    if(!memdc) goto cleanup;
+    hbmsave = (HBITMAP)SelectObject(memdc, hbm);
+    if(!hbmsave) goto cleanup;
+    rc.left = rc.top = 0;
+    rc.right = cx;
+    rc.bottom = cy;
+    if(!FillRect(memdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH))) goto cleanup;
+    SetBkColor(memdc, RGB(255, 255, 255));
+    SetTextColor(memdc, RGB(0, 0, 0));
+    hfsave  = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
+
+    /* DST_COMPLEX may draw text as well,
+     * so we must be sure that correct font is selected
+     */
+    if(!hfsave && (opcode <= DST_PREFIXTEXT)) goto cleanup;
+    tmp = UITOOLS_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode);
+    if(hfsave) SelectObject(memdc, hfsave);
+    if(!tmp) goto cleanup;
+
+    /* This state cause the image to be dithered */
+    if(flags & DSS_UNION)
+    {
+        hbsave = (HBRUSH)SelectObject(memdc, UITOOLS_GetPattern55AABrush());
+        if(!hbsave) goto cleanup;
+        tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
+        SelectObject(memdc, hbsave);
+        if(!tmp) goto cleanup;
+    }
+
+    if (flags & DSS_DISABLED)
+       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));
+    else if (flags & DSS_DEFAULT)
+       hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
+
+    /* Draw light or dark shadow */
+    if (flags & (DSS_DISABLED|DSS_DEFAULT))
+    {
+       if(!hbrtmp) goto cleanup;
+       hbsave = (HBRUSH)SelectObject(hdc, hbrtmp);
+       if(!hbsave) goto cleanup;
+       if(!BitBlt(hdc, x+1, y+1, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
+       SelectObject(hdc, hbsave);
+       DeleteObject(hbrtmp);
+       hbrtmp = 0;
+    }
+
+    if (flags & DSS_DISABLED)
+    {
+       hbr = hbrtmp = CreateSolidBrush(GetSysColor(COLOR_3DSHADOW));
+       if(!hbrtmp) goto cleanup;
+    }
+    else if (!hbr)
+    {
+       hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    }
+
+    hbsave = (HBRUSH)SelectObject(hdc, hbr);
+
+    if(!BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
+
+    retval = TRUE; /* We succeeded */
+
+cleanup:
+    SetTextColor(hdc, fg);
+    SetBkColor(hdc, bg);
+
+    if(hbsave)  SelectObject(hdc, hbsave);
+    if(hbmsave) SelectObject(memdc, hbmsave);
+    if(hbrtmp)  DeleteObject(hbrtmp);
+    if(hbm)     DeleteObject(hbm);
+    if(memdc)   DeleteDC(memdc);
+
+    return retval;
+}
+
+/**********************************************************************
+ *		DrawStateA (USER32.@)
+ */
+BOOL WINAPI DrawStateA(HDC hdc, HBRUSH hbr,
+                   DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
+                   INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    return UITOOLS_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, FALSE);
+}
+
+/**********************************************************************
+ *		DrawStateW (USER32.@)
+ */
+BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
+                   DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
+                   INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    return UITOOLS_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, TRUE);
 }
