@@ -16,10 +16,6 @@ SPEC_SRCS16 = \
 
 C_SRCS = \
 	$(TOPOBJDIR)/graphics/bitblt.c \
-	$(TOPOBJDIR)/graphics/dispdib.c \
-	$(TOPOBJDIR)/graphics/env.c \
-	$(TOPOBJDIR)/graphics/escape.c \
-	$(TOPOBJDIR)/graphics/fontengine.c \
 	$(TOPOBJDIR)/graphics/mapping.c \
 	$(TOPOBJDIR)/graphics/painting.c \
 	$(TOPOBJDIR)/graphics/path.c \
@@ -60,6 +56,8 @@ C_SRCS = \
 
 C_SRCS16 = \
 	bidi16.c \
+	dispdib.c \
+	env.c \
 	gdi16.c \
 	wing.c
 
