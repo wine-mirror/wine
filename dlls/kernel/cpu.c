@@ -181,7 +181,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
  */
 BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
-    struct timeval tv;
+    LARGE_INTEGER time;
 
 #if defined(__i386__) && defined(__GNUC__)
     if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
@@ -194,8 +194,8 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 #endif
 
     /* fall back to generic routine (ie, for i386, i486) */
-    gettimeofday( &tv, NULL );
-    counter->QuadPart = (LONGLONG)tv.tv_usec + (LONGLONG)tv.tv_sec * 1000000;
+    NtQuerySystemTime( &time );
+    counter->QuadPart = time.QuadPart;
     return TRUE;
 }
 
