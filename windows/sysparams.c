@@ -505,7 +505,12 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETWHEELSCROLLLINES:		/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 	*(UINT *)pvParam = 3; /* default for num scroll lines */  
 	break;
+
     WINE_SPI_FIXME(SPI_SETWHEELSCROLLLINES);	/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+
+    case SPI_GETMENUSHOWDELAY:                  /*    106  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        *(UINT *)pvParam = 400; /* Tested against Windows NT 4.0 and Windows 2000 */
+        break;
 
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
