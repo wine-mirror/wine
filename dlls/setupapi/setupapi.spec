@@ -245,7 +245,7 @@
 @ stdcall SetupCloseFileQueue(ptr)
 @ stdcall SetupCloseInfFile(long)
 @ stub SetupCloseLog
-@ stub SetupCommitFileQueue
+@ stdcall SetupCommitFileQueue(long long ptr ptr) SetupCommitFileQueueW
 @ stdcall SetupCommitFileQueueA(long long ptr ptr)
 @ stdcall SetupCommitFileQueueW(long long ptr ptr)
 @ stub SetupCopyErrorA
@@ -263,26 +263,26 @@
 @ stub SetupDeleteErrorW
 @ stdcall SetupDestroyDiskSpaceList(long)
 @ stub SetupDiAskForOEMDisk
-@ stub SetupDiBuildClassInfoList
-@ stub SetupDiBuildClassInfoListExA
+@ stdcall SetupDiBuildClassInfoList(long ptr long ptr)
+@ stdcall SetupDiBuildClassInfoListExA(long ptr long ptr str ptr)
 @ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
 @ stub SetupDiBuildDriverInfoList
 @ stub SetupDiCallClassInstaller
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
-@ stub SetupDiClassGuidsFromNameA
-@ stub SetupDiClassGuidsFromNameExA
+@ stdcall SetupDiClassGuidsFromNameA(str ptr long ptr)
+@ stdcall SetupDiClassGuidsFromNameExA(str ptr long ptr str ptr)
 @ stdcall SetupDiClassGuidsFromNameExW(wstr ptr long ptr wstr ptr)
-@ stub SetupDiClassGuidsFromNameW
-@ stub SetupDiClassNameFromGuidA
-@ stub SetupDiClassNameFromGuidExA
-@ stdcall SetupDiClassNameFromGuidExW(ptr ptr long ptr wstr ptr)
-@ stub SetupDiClassNameFromGuidW
+@ stdcall SetupDiClassGuidsFromNameW(wstr ptr long ptr)
+@ stdcall SetupDiClassNameFromGuidA(ptr str long ptr)
+@ stdcall SetupDiClassNameFromGuidExA(ptr str long ptr wstr ptr)
+@ stdcall SetupDiClassNameFromGuidExW(ptr wstr long ptr wstr ptr)
+@ stdcall SetupDiClassNameFromGuidW(ptr wstr long ptr)
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
 @ stdcall SetupDiCreateDeviceInfoList(ptr ptr)
-@ stub SetupDiCreateDeviceInfoListExA
+@ stdcall SetupDiCreateDeviceInfoListExA(ptr long str ptr)
 @ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
@@ -297,13 +297,13 @@
 @ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr)
 @ stub SetupDiEnumDriverInfoA
 @ stub SetupDiEnumDriverInfoW
-@ stub SetupDiGetActualSectionToInstallA
-@ stub SetupDiGetActualSectionToInstallW
+@ stdcall SetupDiGetActualSectionToInstallA(long str str long ptr ptr)
+@ stdcall SetupDiGetActualSectionToInstallW(long wstr wstr long ptr ptr)
 @ stub SetupDiGetClassBitmapIndex
-@ stub SetupDiGetClassDescriptionA
-@ stub SetupDiGetClassDescriptionExA
-@ stdcall SetupDiGetClassDescriptionExW(ptr ptr long ptr wstr ptr)
-@ stub SetupDiGetClassDescriptionW
+@ stdcall SetupDiGetClassDescriptionA(ptr str long ptr)
+@ stdcall SetupDiGetClassDescriptionExA(ptr str long ptr str ptr)
+@ stdcall SetupDiGetClassDescriptionExW(ptr wstr long ptr wstr ptr)
+@ stdcall SetupDiGetClassDescriptionW(ptr wstr long ptr)
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
 @ stdcall SetupDiGetClassDevsA(ptr ptr long long)
@@ -345,16 +345,16 @@
 @ stub SetupDiGetSelectedDriverA
 @ stub SetupDiGetSelectedDriverW
 @ stub SetupDiGetWizardPage
-@ stub SetupDiInstallClassA
+@ stdcall SetupDiInstallClassA(long str long ptr)
 @ stub SetupDiInstallClassExA
 @ stub SetupDiInstallClassExW
-@ stub SetupDiInstallClassW
+@ stdcall SetupDiInstallClassW(long wstr long ptr)
 @ stub SetupDiInstallDevice
 @ stub SetupDiInstallDriverFiles
 @ stub SetupDiLoadClassIcon
 @ stub SetupDiMoveDuplicateDevice
-@ stub SetupDiOpenClassRegKey
-@ stub SetupDiOpenClassRegKeyExA
+@ stdcall SetupDiOpenClassRegKey(ptr long)
+@ stdcall SetupDiOpenClassRegKeyExA(ptr long long str ptr)
 @ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr)
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
@@ -447,7 +447,7 @@
 @ stdcall SetupOpenFileQueue()
 @ stdcall SetupOpenInfFileA(str str long ptr)
 @ stdcall SetupOpenInfFileW(wstr wstr long ptr)
-@ stub SetupOpenMasterInf
+@ stdcall SetupOpenMasterInf()
 @ stub SetupPromptForDiskA
 @ stub SetupPromptForDiskW
 @ stub SetupPromptReboot

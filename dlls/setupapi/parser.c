@@ -1163,6 +1163,21 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
 
 
 /***********************************************************************
+ *            SetupOpenMasterInf   (SETUPAPI.@)
+ */
+HINF WINAPI SetupOpenMasterInf( VOID )
+{
+    static const WCHAR Layout[] = {'\\','i','n','f','\\', 'l', 'a', 'y', 'o', 'u', 't', '.', 'i', 'n', 'f', 0};
+    WCHAR Buffer[MAX_PATH];
+
+    GetWindowsDirectoryW( Buffer, MAX_PATH );
+    strcatW( Buffer, Layout );
+    return SetupOpenInfFileW( Buffer, NULL, INF_STYLE_WIN4, NULL);
+}
+
+
+
+/***********************************************************************
  *            SetupCloseInfFile   (SETUPAPI.@)
  */
 void WINAPI SetupCloseInfFile( HINF hinf )

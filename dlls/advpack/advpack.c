@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "setupapi.h"
 #include "advpub.h"
 #include "wine/debug.h"
