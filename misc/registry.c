@@ -2442,9 +2442,9 @@ DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
  *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
  * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
  */
-DWORD WINAPI RegQueryValueExW( HKEY hkey, LPWSTR lpValueName,
-                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
-                                 LPBYTE lpbData, LPDWORD lpcbData )
+DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR lpValueName,
+			       LPDWORD lpdwReserved, LPDWORD lpdwType,
+			       LPBYTE lpbData, LPDWORD lpcbData )
 {
 	LPKEYSTRUCT	lpkey;
 	int		i;
@@ -2557,9 +2557,9 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR lpszSubKey, LPWSTR lpszData,
  *
  * FIXME: check returnvalue (len) for an empty key
  */
-DWORD WINAPI RegQueryValueExA( HKEY hkey, LPSTR lpszValueName,
-                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
-                                 LPBYTE lpbData, LPDWORD lpcbData )
+DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR lpszValueName,
+			       LPDWORD lpdwReserved, LPDWORD lpdwType,
+			       LPBYTE lpbData, LPDWORD lpcbData )
 {
 	LPWSTR	lpszValueNameW;
 	LPBYTE	mybuf = NULL;
@@ -2709,9 +2709,9 @@ DWORD WINAPI RegQueryValue16( HKEY hkey, LPSTR lpszSubKey, LPSTR lpszData,
  * NOTES
  *   win95 does not care about cbData for REG_SZ and finds out the len by itself (js) 
  */
-DWORD WINAPI RegSetValueExW( HKEY hkey, LPWSTR lpszValueName, 
-                               DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
-                               DWORD cbData)
+DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR lpszValueName, 
+			     DWORD dwReserved, DWORD dwType,
+			     CONST BYTE *lpbData, DWORD cbData)
 {
 	LPKEYSTRUCT lpkey;
 	int i;
@@ -2773,9 +2773,9 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPWSTR lpszValueName,
  * NOTES
  *   win95 does not care about cbData for REG_SZ and finds out the len by itself (js) 
  */
-DWORD WINAPI RegSetValueExA( HKEY hkey, LPSTR lpszValueName,
-                               DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
-                               DWORD cbData )
+DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR lpszValueName,
+			     DWORD dwReserved, DWORD dwType,
+			     CONST BYTE *lpbData, DWORD cbData )
 {
 	LPBYTE	buf;
 	LPWSTR	lpszValueNameW;
@@ -2796,7 +2796,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPSTR lpszValueName,
 	  cbData=2*cbData;
 	} 
 	else
-	  buf=lpbData;
+	  buf=(LPBYTE)lpbData;
 
 	if (lpszValueName)
 	  lpszValueNameW = strdupA2W(lpszValueName);
@@ -3246,7 +3246,7 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
  *    Success: ERROR_SUCCESS
  *    Failure: Error code
  */
-DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPWSTR lpszSubKey )
+DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR lpszSubKey )
 {
 	LPKEYSTRUCT	*lplpPrevKey,lpNextKey,lpxkey;
 	LPWSTR		*wps;
@@ -3362,7 +3362,7 @@ DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR lpszSubKey )
  *
  * RETURNS
  */
-DWORD WINAPI RegDeleteValueW( HKEY hkey, LPWSTR lpszValue )
+DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR lpszValue )
 {
 	DWORD		i;
 	LPKEYSTRUCT	lpkey;
@@ -3409,7 +3409,7 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPWSTR lpszValue )
 /******************************************************************************
  * RegDeleteValue32A [ADVAPI32.135]
  */
-DWORD WINAPI RegDeleteValueA( HKEY hkey, LPSTR lpszValue )
+DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR lpszValue )
 {
     LPWSTR lpszValueW;
     DWORD  ret;
