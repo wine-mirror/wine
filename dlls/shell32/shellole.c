@@ -197,6 +197,18 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 }
 
 /*************************************************************************
+ * SHCLSIDFromString				[SHELL32.147]
+ *
+ * NOTES
+ *     exported by ordinal
+ */
+DWORD WINAPI SHCLSIDFromString (LPSTR clsid, CLSID *id)
+{
+	TRACE (shell,"(%p(%s) %p)\n", clsid, clsid, id);
+	return CLSIDFromString16(clsid, id); 
+}
+
+/*************************************************************************
  *			 SHGetMalloc			[SHELL32.220]
  * returns the interface to shell malloc.
  *
@@ -363,3 +375,4 @@ static ICOM_VTABLE(IClassFactory) clfvt =
   IClassFactory_fnCreateInstance,
   IClassFactory_fnLockServer
 };
+

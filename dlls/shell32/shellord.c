@@ -331,9 +331,10 @@ LPVOID WINAPI SHAlloc(DWORD len) {
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHRegisterDragDrop(HWND hwnd,DWORD x2) {
-    FIXME (shell, "(0x%08x,0x%08lx):stub.\n", hwnd, x2);
-    return 0;
+DWORD WINAPI SHRegisterDragDrop(HWND hWnd,IDropTarget * pDropTarget) 
+{
+	FIXME (shell, "(0x%08x,0x%08lx):stub.\n", hWnd, pDropTarget);
+	return     RegisterDragDrop(hWnd, pDropTarget);
 }
 
 /*************************************************************************
@@ -387,22 +388,6 @@ ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
 	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5);
     return 0;
 }
-
-/*************************************************************************
- * SHCLSIDFromString				[SHELL32.147]
- *
- * NOTES
- *     exported by ordinal
- */
-DWORD WINAPI
-SHCLSIDFromString (DWORD dwParam1, DWORD dwParam2)
-{
-    FIXME (shell,"(0x%lx 0x%lx):stub.\n", dwParam1, dwParam2);
-    FIXME (shell,"(\"%s\" \"%s\"):stub.\n", (LPSTR)dwParam1, (LPSTR)dwParam2);
-
-    return 0;
-}
-
 
 /*************************************************************************
  * SignalFileOpen				[SHELL32.103]
@@ -493,57 +478,6 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
   LPVOID* ppv)            /*[out] IShellView pointer*/
 { FIXME (shell,"(%p,%p):stub.\n", psvcbi,ppv);
   return 0;
-}
-/*************************************************************************
- * SHFind_InitMenuPopup				[SHELL32.149]
- *
- * NOTES
- *  Registers the menu behind the "Start" button
- *
- * PARAMETERS
- *  hMenu		[in] handel of menu previously created
- *  hWndParent	[in] parent window
- *  w			[in] no pointer
- *  x			[in] no pointer
- */
-HRESULT WINAPI SHFind_InitMenuPopup (HMENU hMenu, HWND hWndParent, DWORD w, DWORD x)
-{	FIXME(shell,"hmenu=0x%08x hwnd=0x%08x 0x%08lx 0x%08lx stub\n",
-		hMenu,hWndParent,w,x);
-	return 0;
-}
-/*************************************************************************
- * FileMenu_InitMenuPopup			[SHELL32.109]
- *
- */
-HRESULT WINAPI FileMenu_InitMenuPopup (DWORD hmenu)
-{	FIXME(shell,"hmenu=0x%lx stub\n",hmenu);
-	return 0;
-}
-/*************************************************************************
- * FileMenu_Create				[SHELL32.114]
- *
- * w retval from LoadBitmapA
- *
- *
- */
-HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
-{ FIXME(shell,"0x%08lx 0x%08lx hbmp=0x%lx 0x%08lx 0x%08lx stub\n",u,v,w,x,z);
-  return 0;
-}
-/*************************************************************************
- * FileMenu_TrackPopupMenuEx			[SHELL32.116]
- *
- * PARAMETERS
- *  uFlags		[in]	according to TrackPopupMenuEx
- *  posX		[in]
- *  posY		[in]
- *  hWndParent		[in]
- *  z	could be rect (trace) or TPMPARAMS (TrackPopupMenuEx)
- */
-HRESULT WINAPI FileMenu_TrackPopupMenuEx (DWORD t, DWORD uFlags, DWORD posX, DWORD posY, HWND hWndParent, DWORD z)
-{	FIXME(shell,"0x%lx flags=0x%lx posx=0x%lx posy=0x%lx hwndp=0x%x 0x%lx stub\n",
-		t,uFlags,posX,posY, hWndParent,z);
-	return 0;
 }
 /*************************************************************************
  *  SHWinHelp					[SHELL32.127]
@@ -732,16 +666,6 @@ HRESULT WINAPI SHFreeUnusedLibraries (void)
  *  exported by name
  */
 HRESULT WINAPI DAD_ShowDragImage (DWORD u)
-{ FIXME(shell,"0x%08lx stub\n",u);
-  return 0;
-}
-/*************************************************************************
- * FileMenu_Destroy				[SHELL32.118]
- *
- * NOTES
- *  exported by name
- */
-HRESULT WINAPI FileMenu_Destroy (DWORD u)
 { FIXME(shell,"0x%08lx stub\n",u);
   return 0;
 }
@@ -991,144 +915,6 @@ HRESULT WINAPI SHLoadOLE(DWORD u)
 	return S_OK;
 }
 /*************************************************************************
- * Shell_MergeMenus				[SHELL32.67]
- *
- */
-BOOL _SHIsMenuSeparator(HMENU hm, int i)
-{
-	MENUITEMINFOA mii;
-
-	mii.cbSize = sizeof(MENUITEMINFOA);
-	mii.fMask = MIIM_TYPE;
-	mii.cch = 0;    /* WARNING: We MUST initialize it to 0*/
-	if (!GetMenuItemInfoA(hm, i, TRUE, &mii))
-	{ return(FALSE);
-	}
-
-	if (mii.fType & MFT_SEPARATOR)
-	{ return(TRUE);
-	}
-
-        return(FALSE);
-}
-#define MM_ADDSEPARATOR         0x00000001L
-#define MM_SUBMENUSHAVEIDS      0x00000002L
-HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags)
-{	int		nItem;
-	HMENU		hmSubMenu;
-	BOOL		bAlreadySeparated;
-	MENUITEMINFOA miiSrc;
-	char		szName[256];
-	UINT		uTemp, uIDMax = uIDAdjust;
-
-	FIXME(shell,"hmenu1=0x%04x hmenu2=0x%04x 0x%04x 0x%04x 0x%04x  0x%04lx stub\n",
-		 hmDst, hmSrc, uInsert, uIDAdjust, uIDAdjustMax, uFlags);
-
-	if (!hmDst || !hmSrc)
-	{ return uIDMax;
-	}
-
-	nItem = GetMenuItemCount(hmDst);
-	if (uInsert >= (UINT)nItem)
-	{ uInsert = (UINT)nItem;
-	  bAlreadySeparated = TRUE;
-	}
-	else
-	{ bAlreadySeparated = _SHIsMenuSeparator(hmDst, uInsert);;
-	}
-	if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
-	{ /* Add a separator between the menus */
-	  InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-	  bAlreadySeparated = TRUE;
-        }
-
-
-        /* Go through the menu items and clone them*/
-        for (nItem = GetMenuItemCount(hmSrc) - 1; nItem >= 0; nItem--)
-        { miiSrc.cbSize = sizeof(MENUITEMINFOA);
-	  miiSrc.fMask = MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_TYPE | MIIM_DATA;
-	  /* We need to reset this every time through the loop in case
-	  menus DON'T have IDs*/
-	  miiSrc.fType = MFT_STRING;
-	  miiSrc.dwTypeData = szName;
-	  miiSrc.dwItemData = 0;
-	  miiSrc.cch = sizeof(szName);
-
-	  if (!GetMenuItemInfoA(hmSrc, nItem, TRUE, &miiSrc))
-	  { continue;
-	  }
-	  if (miiSrc.fType & MFT_SEPARATOR)
-	  { /* This is a separator; don't put two of them in a row*/
-	    if (bAlreadySeparated)
-	    { continue;
-	    }
-	    bAlreadySeparated = TRUE;
-	  }
-	  else if (miiSrc.hSubMenu)
-	  { if (uFlags & MM_SUBMENUSHAVEIDS)
-	    { /* Adjust the ID and check it*/
-	      miiSrc.wID += uIDAdjust;
-	      if (miiSrc.wID > uIDAdjustMax)
-	      { continue;
-	      }
-	      if (uIDMax <= miiSrc.wID)
-	      { uIDMax = miiSrc.wID + 1;
-	      }
-	    }
-	    else
-	    { /* Don't set IDs for submenus that didn't have them already */
-	      miiSrc.fMask &= ~MIIM_ID;
-	    }
-	    hmSubMenu = miiSrc.hSubMenu;
-	    miiSrc.hSubMenu = CreatePopupMenu();
-	    if (!miiSrc.hSubMenu)
-	    { return(uIDMax);
-	    }
-	    uTemp = Shell_MergeMenus(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags&MM_SUBMENUSHAVEIDS);
-	    if (uIDMax <= uTemp)
-	    { uIDMax = uTemp;
-	    }
-	    bAlreadySeparated = FALSE;
-	  }
-	  else
-	  { /* Adjust the ID and check it*/
-	    miiSrc.wID += uIDAdjust;
-	    if (miiSrc.wID > uIDAdjustMax)
-	    { continue;
-	    }
-	    if (uIDMax <= miiSrc.wID)
-	    { uIDMax = miiSrc.wID + 1;
-	    }
-	    bAlreadySeparated = FALSE;
-	  }
-	  if (!InsertMenuItemA(hmDst, uInsert, TRUE, &miiSrc))
-	  { return(uIDMax);
-	  }
-	}
-
-	/* Ensure the correct number of separators at the beginning of the
-        inserted menu items*/
-        if (uInsert == 0)
-        { if (bAlreadySeparated)
-	  { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
-	  }
-	}
-	else
-	{ if (_SHIsMenuSeparator(hmDst, uInsert-1))
-	  { if (bAlreadySeparated)
-	    { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
-	    }
-	  }
-	  else
-	  { if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
-	    { /* Add a separator between the menus*/
-	      InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-	    }
-	  }
-	}
-	return(uIDMax);
-}
-/*************************************************************************
  * DriveType					[SHELL32.64]
  *
  */
@@ -1246,7 +1032,34 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
 	return 0;
 }
 
+/************************************************************************
+ *	shell32_654				[SHELL32.654]
+ *
+ */
 HRESULT shell32_654 (DWORD x, DWORD y)
 {	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,y);
 	return 0;
+}
+
+/************************************************************************
+ *	RLBuildListOfPaths			[SHELL32.146]
+ *
+ * NOTES
+ *   builds a DPA
+ */
+DWORD WINAPI RLBuildListOfPaths ()
+{	FIXME (shell,"stub\n");
+	return 0;
+}
+/************************************************************************
+ *	StrToOleStr			[SHELL32.163]
+ *
+ */
+int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
+{
+	TRACE(shell,"%p %p(%s)\n",
+	lpWideCharStr, lpMultiByteString, lpMultiByteString);
+
+	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
+
 }
