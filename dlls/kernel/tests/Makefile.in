@@ -25,7 +25,8 @@ CTESTS = \
 	pipe.c \
 	process.c \
 	profile.c \
-	thread.c
+	thread.c \
+	virtual.c
 
 @MAKE_TEST_RULES@
 

@@ -21,3 +21,4 @@ process.ok
 profile.ok
 testlist.c
 thread.ok
+virtual.ok

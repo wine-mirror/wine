@@ -1001,6 +1001,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
 
     TRACE("%p %08lx %lx %08lx\n", addr, size, type, protect );
 
+    if (!size) return STATUS_INVALID_PARAMETER;
+
     /* Round parameters to a page boundary */
 
     if (size > 0x7fc00000) return STATUS_WORKING_SET_LIMIT_RANGE; /* 2Gb - 4Mb */
@@ -1130,7 +1132,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
 
     if ((type != MEM_DECOMMIT) && (type != MEM_RELEASE))
     {
-        ERR("called with wrong free type flags (%08lx) !\n", type);
+        WARN("called with wrong free type flags (%08lx) !\n", type);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1193,7 +1195,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
     VIRTUAL_GetWin32Prot( *p, &prot, NULL );
     for (i = size >> page_shift; i; i--, p++)
     {
-        if (!(*p & VPROT_COMMITTED)) return STATUS_INVALID_PARAMETER;
+        if (!(*p & VPROT_COMMITTED)) return STATUS_NOT_COMMITTED;
     }
 
     if (old_prot) *old_prot = prot;
