@@ -86,7 +86,6 @@
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
-	"   -A          Auto register resources (only with gcc 2.7 and better)\n"
 	"   -b          Create an assembly array from a binary .res file\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (win32 only; default is " ENDIAN "-endian)\n"
@@ -109,8 +108,6 @@ static char usage[] =
 	"   -O format	The output format: one of `res', 'asm', 'hdr'.\n"
 	"   -p prefix   Give a prefix for the generated names\n"
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
-	"   -t          Generate indirect loadable resource tables\n"
-	"   -T          Generate only indirect loadable resources tables\n"
 	"   -v          Enable verbose mode.\n"
 	"   -V          Print version and exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
@@ -202,16 +199,6 @@ int create_dir = 0;
 int global = 0;
 
 /*
- * Set when indirect loadable resource tables should be created (-t)
- */
-int indirect = 0;
-
-/*
- * Set when _only_ indirect loadable resource tables should be created (-T)
- */
-int indirect_only = 0;
-
-/*
  * NE segment resource aligment (-a option)
  */
 int alignment = 4;
@@ -231,11 +218,6 @@ DWORD codepage = 0;
  * Set when extra warnings should be generated (-W option)
  */
 int pedantic = 0;
-
-/*
- * Set when autoregister code must be added to the output (-A option)
- */
-int auto_register = 0;
 
 /*
  * The output byte-order of resources (set with -B)
@@ -344,9 +326,6 @@ int main(int argc,char *argv[])
 		case 'a':
 			alignment = atoi(optarg);
 			break;
-		case 'A':
-			auto_register = 1;
-			break;
 		case 'b':
 			binary = 1;
 			break;
@@ -438,12 +417,6 @@ int main(int argc,char *argv[])
 		case 's':
 			create_dir = 1;
 			break;
-		case 'T':
-			indirect_only = 1;
-			/* Fall through */
-		case 't':
-			indirect = 1;
-			break;
 		case 'v':
 			debuglevel = DEBUGLEVEL_CHAT;
 			break;
@@ -528,18 +501,6 @@ int main(int argc,char *argv[])
 			constant = 0;
 		}
 
-		if(indirect)
-		{
-			warning("Option -t ignored with compile to .res\n");
-			indirect = 0;
-		}
-
-		if(indirect_only)
-		{
-			warning("Option -T ignored with compile to .res\n");
-			indirect_only = 0;
-		}
-
 		if(global)
 		{
 			warning("Option -g ignored with compile to .res\n");
@@ -571,17 +532,6 @@ int main(int argc,char *argv[])
 			constant = 0;
 		}
 
-		if(indirect)
-		{
-			warning("Option -t ignored with preprocess only\n");
-			indirect = 0;
-		}
-
-		if(indirect_only)
-		{
-			error("Option -E and -T cannot be used together\n");
-		}
-
 		if(global)
 		{
 			warning("Option -g ignored with preprocess only\n");
@@ -604,14 +554,6 @@ int main(int argc,char *argv[])
 			error("Option -E and -N cannot be used together\n");
 		}
 	}
-
-#if !defined(HAVE_WINE_CONSTRUCTOR)
-	if(auto_register)
-	{
-		warning("Autoregister code non-operable (HAVE_WINE_CONSTRUCTOR not defined)");
-		auto_register = 0;
-	}
-#endif
 
 	/* Set alignment power */
 	a = alignment;

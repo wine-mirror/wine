@@ -48,21 +48,6 @@ static char s_file_tail_str[] =
         "\n"
 	;
 
-static char s_file_autoreg_str[] =
-	"\t.text\n"
-	".LAuto_Register:\n"
-	"\tpushl\t$" __ASM_NAME("%s%s") "\n"
-	"\tcall\t" __ASM_NAME("LIBRES_RegisterResources") "\n"
-	"\taddl\t$4,%%esp\n"
-	"\tret\n\n"
-#ifdef __NetBSD__
-	".stabs \"___CTOR_LIST__\",22,0,0,.LAuto_Register\n\n"
-#else
-	"\t.section .ctors,\"aw\"\n"
-	"\t.long\t.LAuto_Register\n\n"
-#endif
-	;
-
 static char h_file_head_str[] =
 	"/*\n"
 	" * This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
@@ -920,134 +905,49 @@ void write_s_file(char *outname, resource_t *top)
 	if(create_dir)
 		fprintf(fo, ".LResTabEnd:\n");
 
-	if(!indirect_only)
+	/* Write the resource data */
+        fprintf(fo, "\n/* Resource binary data */\n\n");
+	for(rsc = top; rsc; rsc = rsc->next)
 	{
-		/* Write the resource data */
-	        fprintf(fo, "\n/* Resource binary data */\n\n");
-		for(rsc = top; rsc; rsc = rsc->next)
-		{
-			if(!rsc->binres)
-				continue;
+		if(!rsc->binres)
+			continue;
 
-			fprintf(fo, "\t.align\t%d\n", win32 ? 4 : alignment);
-			fprintf(fo, __ASM_NAME("%s%s_data") ":\n", prefix, rsc->c_name);
-			if(global)
-				fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s_data") "\n", prefix, rsc->c_name);
+		fprintf(fo, "\t.align\t%d\n", win32 ? 4 : alignment);
+		fprintf(fo, __ASM_NAME("%s%s_data") ":\n", prefix, rsc->c_name);
+		if(global)
+			fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s_data") "\n", prefix, rsc->c_name);
 
-			write_s_res(fo, rsc->binres);
+		write_s_res(fo, rsc->binres);
 
-			fprintf(fo, "\n");
-		}
-
-		if(create_dir)
-		{
-			/* Add a resource descriptor for built-in and elf-dlls */
-			fprintf(fo, "\t.align\t4\n");
-			fprintf(fo, __ASM_NAME("%s_ResourceDescriptor") ":\n", prefix);
-			fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceDescriptor") "\n", prefix);
-			fprintf(fo, __ASM_NAME("%s_ResourceTable") ":\n", prefix);
-			if(global)
-				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceTable") "\n", prefix);
-			fprintf(fo, "\t.long\t" __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
-			fprintf(fo, __ASM_NAME("%s_NumberOfResources") ":\n", prefix);
-			if(global)
-				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_NumberOfResources") "\n", prefix);
-			fprintf(fo, "\t.long\t%d\n", direntries);
-			fprintf(fo, __ASM_NAME("%s_ResourceSectionSize") ":\n", prefix);
-			if(global)
-				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceSectionSize") "\n", prefix);
-			fprintf(fo, "\t.long\t.LResTabEnd - " __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
-			if(win32)
-			{
-				fprintf(fo, __ASM_NAME("%s_ResourcesEntries") ":\n", prefix);
-				if(global)
-					fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourcesEntries") "\n", prefix);
-				fprintf(fo, "\t.long\t" __ASM_NAME("%s_ResourceDirectory") "\n", prefix);
-			}
-		}
-	}
-
-	if(indirect)
-	{
-		/* Write the indirection structures */
-	        fprintf(fo, "\n/* Resource indirection structures */\n\n");
-		fprintf(fo, "\t.align\t4\n");
-		for(rsc = top; rsc; rsc = rsc->next)
-		{
-			int type;
-			char *type_name = NULL;
-
-			if(!rsc->binres)
-				continue;
-
-			switch(rsc->type)
-			{
-			case res_menex:
-				type = WRC_RT_MENU;
-				break;
-			case res_dlgex:
-				type = WRC_RT_DIALOG;
-				break;
-			case res_usr:
-				assert(rsc->res.usr->type != NULL);
-				type_name = prep_nid_for_label(rsc->res.usr->type);
-				type = 0;
-				break;
-			default:
-				type = rsc->type;
-			}
-
-			/*
-			 * This follows a structure like:
-			 * struct wrc_resource {
-			 * 	INT32	id;
-			 *	RSCNAME	*resname;
-			 *	INT32	restype;
-			 *	RSCNAME	*typename;
-			 *	void	*data;
-			 *	UINT32	datasize;
-			 * };
-			 * The 'RSCNAME' is a pascal-style string where the
-			 * first byte/word denotes the size and the rest the string
-			 * itself.
-			 */
-			fprintf(fo, __ASM_NAME("%s%s") ":\n", prefix, rsc->c_name);
-			if(global)
-				fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, rsc->c_name);
-                        if (rsc->name->type == name_ord)
-                            fprintf(fo, "\t.long\t%d, 0, ", rsc->name->name.i_name );
-                        else
-                            fprintf(fo, "\t.long\t0, " __ASM_NAME("%s%s_name") ", ",
-                                    prefix, rsc->c_name );
-                        if (type)
-                            fprintf(fo, "%d, 0, ", type);
-                        else
-                            fprintf(fo, "0, " __ASM_NAME("%s_%s_typename") ", ",
-                                    prefix, type_name );
-
-                        fprintf(fo, __ASM_NAME("%s%s_data") ", %d\n",
-				prefix,
-				rsc->c_name,
-				rsc->binres->size - rsc->binres->dataidx);
-			fprintf(fo, "\n");
-		}
-		fprintf(fo, "\n");
-
-		/* Write the indirection table */
-		fprintf(fo, "/* Resource indirection table */\n\n");
-		fprintf(fo, "\t.align\t4\n");
-		fprintf(fo, __ASM_NAME("%s%s") ":\n", prefix, _ResTable);
-		fprintf(fo, "\t.globl\t" __ASM_NAME("%s%s") "\n", prefix, _ResTable);
-		for(rsc = top; rsc; rsc = rsc->next)
-		{
-			fprintf(fo, "\t.long\t" __ASM_NAME("%s%s") "\n", prefix, rsc->c_name);
-		}
-		fprintf(fo, "\t.long\t0\n");
 		fprintf(fo, "\n");
 	}
 
-	if(auto_register)
-		fprintf(fo, s_file_autoreg_str, prefix, _ResTable);
+	if(create_dir)
+	{
+		/* Add a resource descriptor for built-in and elf-dlls */
+		fprintf(fo, "\t.align\t4\n");
+		fprintf(fo, __ASM_NAME("%s_ResourceDescriptor") ":\n", prefix);
+		fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceDescriptor") "\n", prefix);
+		fprintf(fo, __ASM_NAME("%s_ResourceTable") ":\n", prefix);
+		if(global)
+			fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceTable") "\n", prefix);
+		fprintf(fo, "\t.long\t" __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
+		fprintf(fo, __ASM_NAME("%s_NumberOfResources") ":\n", prefix);
+		if(global)
+			fprintf(fo, "\t.globl\t" __ASM_NAME("%s_NumberOfResources") "\n", prefix);
+		fprintf(fo, "\t.long\t%d\n", direntries);
+		fprintf(fo, __ASM_NAME("%s_ResourceSectionSize") ":\n", prefix);
+		if(global)
+			fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourceSectionSize") "\n", prefix);
+		fprintf(fo, "\t.long\t.LResTabEnd - " __ASM_NAME("%s%s") "\n", prefix, win32 ? _PEResTab : _NEResTab);
+		if(win32)
+		{
+			fprintf(fo, __ASM_NAME("%s_ResourcesEntries") ":\n", prefix);
+			if(global)
+				fprintf(fo, "\t.globl\t" __ASM_NAME("%s_ResourcesEntries") "\n", prefix);
+			fprintf(fo, "\t.long\t" __ASM_NAME("%s_ResourceDirectory") "\n", prefix);
+		}
+	}
 
 	fprintf(fo, s_file_tail_str);
 	fclose(fo);
@@ -1098,32 +998,6 @@ void write_h_file(char *outname, resource_t *top)
 			constant ? "const " : "",
 			prefix,
 			rsc->c_name);
-	}
-
-	if(indirect)
-	{
-		if(global)
-			fprintf(fo, "\n");
-
-		/* Write the indirection structures */
-		for(rsc = top; global && rsc; rsc = rsc->next)
-		{
-			fprintf(fo, "extern %swrc_resource%d_t %s%s;\n",
-				constant ? "const " : "",
-				win32 ? 32 : 16,
-				prefix,
-				rsc->c_name);
-		}
-
-		if(global)
-			fprintf(fo, "\n");
-
-		/* Write the indirection table */
-		fprintf(fo, "extern %swrc_resource%d_t %s%s[];\n\n",
-			constant ? "const " : "",
-			win32 ? 32 : 16,
-			prefix,
-			_ResTable);
 	}
 
 	fprintf(fo, h_file_tail_str);

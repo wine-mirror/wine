@@ -35,10 +35,6 @@ given.
 Win16 only; set the alignment between resources n.  The alignment must
 be a power of 2. The default is 4.
 .TP
-.I \-A
-Obsolete; include code in the assembly output to auto register resources
-by calling a special wine function (only with gcc 2.7 and better).
-.TP
 .I \-b
 Create an assembly file from a binary \fB.res\fR file.
 .TP
@@ -135,12 +131,6 @@ affected.
 .I \-s
 Add structure with win32/16 (PE/NE) resource directory to outputfile.
 This directory is always in native byteorder.
-.TP
-.I \-t
-Obsolete; generate indirect loadable resource tables.
-.TP
-.I \-T
-Obsolete; generate only indirect loadable resources tables.
 .TP
 .I \-v
 Turns on verbose mode (equivalent to -d 1).
