@@ -266,6 +266,8 @@ static void add_reserved_area( void *addr, size_t size )
         size -= (char *)USER_SPACE_LIMIT - (char *)addr;
         addr = USER_SPACE_LIMIT;
     }
+    /* blow away existing mappings */
+    wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
     wine_mmap_add_reserved_area( addr, size );
 }
 

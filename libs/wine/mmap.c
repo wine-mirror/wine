@@ -201,32 +201,13 @@ static void reserve_area( void *addr, void *end )
 {
     void *ptr;
     size_t size = (char *)end - (char *)addr;
-    struct list *prev;
-    struct reserved_area *area;
 
     if ((ptr = wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE )) != (void *)-1)
     {
         if (ptr == addr)
         {
-            if (!end) size--;  /* avoid wrap-around */
-            /* try to merge it with the previous one */
-            if ((prev = list_tail( &reserved_areas )))
-            {
-                area = LIST_ENTRY( prev, struct reserved_area, entry );
-                if (area && (char *)area->base + area->size == (char *)ptr)
-                {
-                    area->size += size;
-                    return;
-                }
-            }
-            /* create a new area */
-            if ((area = malloc( sizeof(*area) )))
-            {
-                area->base = addr;
-                area->size = size;
-                list_add_tail( &reserved_areas, &area->entry );
-                return;
-            }
+            wine_mmap_add_reserved_area( addr, size );
+            return;
         }
         else munmap( ptr, size );
     }
@@ -286,11 +267,6 @@ void wine_mmap_add_reserved_area( void *addr, size_t size )
     struct list *ptr;
 
     if (!((char *)addr + size)) size--;  /* avoid wrap-around */
-
-#ifdef HAVE_MMAP
-    /* blow away existing mappings */
-    wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
-#endif
 
     LIST_FOR_EACH( ptr, &reserved_areas )
     {
