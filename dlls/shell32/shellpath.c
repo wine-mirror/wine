@@ -9,6 +9,7 @@
 #include "debugtools.h"
 #include "winnls.h"
 #include "winversion.h"
+#include "winreg.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
@@ -522,11 +523,11 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
  */
 
 BOOL WINAPI PathQualifyA(LPCSTR pszPath) 
-{	TRACE("%s\n",pszPath);
+{	FIXME("%s\n",pszPath);
 	return 0;
 }
 BOOL WINAPI PathQualifyW(LPCWSTR pszPath) 
-{	TRACE("%s\n",debugstr_w(pszPath));
+{	FIXME("%s\n",debugstr_w(pszPath));
 	return 0;
 }
 BOOL WINAPI PathQualifyAW(LPCVOID pszPath) 
@@ -763,28 +764,204 @@ HRESULT WINAPI PathProcessCommandAW (LPVOID lpCommand, LPSTR v, DWORD w, DWORD x
  * converts csidl to path
  * 
  */
-BOOL WINAPI SHGetSpecialFolderPathA (DWORD x1,LPSTR szPath,DWORD csidl,DWORD x4) 
-{	LPITEMIDLIST pidl;
+ 
+static char * szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
 
-	WARN("(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+BOOL WINAPI SHGetSpecialFolderPathA (
+	HWND hwndOwner,
+	LPSTR szPath,
+	DWORD csidl,
+	BOOL bCreate)
+{
+	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH];
+	HKEY	hRootKey, hKey;
+	BOOL	bRelative = TRUE;
+	DWORD	dwType, dwDisp, dwPathLen = MAX_PATH;
 
-	SHGetSpecialFolderLocation(0, csidl, &pidl);
-	SHGetPathFromIDListA (pidl, szPath);
-	SHFree (pidl);
+	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+
+	/* build default values */
+	switch(csidl)
+	{
+	  case CSIDL_APPDATA:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy (szValueName, "AppData");
+	    strcpy (szDefaultPath, "AppData");
+	    break;
+
+	  case CSIDL_COOKIES:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy (szValueName, "Cookies");
+	    strcpy(szDefaultPath, "Cookies");
+	    break;
+
+	  case CSIDL_DESKTOPDIRECTORY:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Desktop");
+	    strcpy(szDefaultPath, "Desktop");
+	    break;
+
+	  case CSIDL_COMMON_DESKTOPDIRECTORY:
+	    hRootKey = HKEY_LOCAL_MACHINE;
+	    strcpy(szValueName, "Common Desktop");
+	    strcpy(szDefaultPath, "Desktop");
+	    break;
+
+	  case CSIDL_FAVORITES:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Favorites");
+	    strcpy(szDefaultPath, "Favorites");
+	    break;
+
+	  case CSIDL_FONTS:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Fonts");
+	    strcpy(szDefaultPath, "Fonts");
+	    break;
+
+	  case CSIDL_HISTORY:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "History");
+	    strcpy(szDefaultPath, "History");
+	    break;
+
+	  case CSIDL_NETHOOD:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "NetHood");
+	    strcpy(szDefaultPath, "NetHood");
+	    break;
+
+	  case CSIDL_INTERNET_CACHE:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Cache");
+	    strcpy(szDefaultPath, "Temporary Internet Files");
+	    break;
+
+	  case CSIDL_PERSONAL:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Personal");
+	    strcpy(szDefaultPath, "My Own Files");
+	    bRelative = FALSE;
+	    break;
+
+	  case CSIDL_PRINTHOOD:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "PrintHood");
+	    strcpy(szDefaultPath, "PrintHood");
+	    break;
+
+	  case CSIDL_PROGRAMS:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Programs");
+	    strcpy(szDefaultPath, "StatrMenu\\Programs");
+	    break;
+
+	  case CSIDL_COMMON_PROGRAMS:
+	    hRootKey = HKEY_LOCAL_MACHINE;
+	    strcpy(szValueName, "Common Programs");
+	    strcpy(szDefaultPath, "");
+	    break;
+
+	  case CSIDL_RECENT:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Recent");
+	    strcpy(szDefaultPath, "Recent");
+	    break;
+
+	  case CSIDL_SENDTO:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "SendTo");
+	    strcpy(szDefaultPath, "SendTo");
+	    break;
+
+	  case CSIDL_STARTMENU:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "StartMenu");
+	    strcpy(szDefaultPath, "StartMenu");
+	    break;
+
+	  case CSIDL_COMMON_STARTMENU:
+	    hRootKey = HKEY_LOCAL_MACHINE;
+	    strcpy(szValueName, "Common StartMenu");
+	    strcpy(szDefaultPath, "StartMenu");
+	    break;
+
+	  case CSIDL_STARTUP:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Startup");
+	    strcpy(szDefaultPath, "StartMenu\\Programs\\Startup");
+	    break;
+
+	  case CSIDL_COMMON_STARTUP:
+	    hRootKey = HKEY_LOCAL_MACHINE;
+	    strcpy(szValueName, "Common Startup");
+	    strcpy(szDefaultPath, "StartMenu\\Programs\\Startup");
+	    break;
+
+	  case CSIDL_TEMPLATES:
+	    hRootKey = HKEY_CURRENT_USER;
+	    strcpy(szValueName, "Templates");
+	    strcpy(szDefaultPath, "ShellNew");
+	    break;
+
+	  default:
+	    ERR("folder unknown or not allowed\n");
+	    return FALSE;
+	}
+
+	if (RegCreateKeyExA(hRootKey,szSHFolders,0,NULL,REG_OPTION_NON_VOLATILE,KEY_WRITE,NULL,&hKey,&dwDisp))
+	{
+	  return FALSE;
+	}
+
+	if (RegQueryValueExA(hKey,szValueName,NULL,&dwType,(LPBYTE)szPath,&dwPathLen))
+	{
+	  /* value not existing */
+	  if (bRelative)
+	  {
+	    GetWindowsDirectoryA(szPath, MAX_PATH);
+	    PathAddBackslashA(szPath);
+	    strcat(szPath, szDefaultPath);
+	  }
+	  else
+	  {
+	    strcpy(szPath, szDefaultPath);
+	  }
+	  if (bCreate)
+	  {
+	    CreateDirectoryA(szPath,NULL);
+	  }
+	  RegSetValueExA(hKey,szValueName,0,REG_SZ,(LPBYTE)szPath,strlen(szPath)+1);
+	}
+	RegCloseKey(hKey);
+
 	return TRUE;
 }
-BOOL WINAPI SHGetSpecialFolderPathW (DWORD x1,LPWSTR szPath, DWORD csidl,DWORD x4) 
-{	LPITEMIDLIST pidl;
+BOOL WINAPI SHGetSpecialFolderPathW (
+	HWND hwndOwner,
+	LPWSTR szPath,
+	DWORD csidl,
+	BOOL bCreate)
+{
+	char szTemp[MAX_PATH];
+	
+	if (SHGetSpecialFolderPathA(hwndOwner, szTemp, csidl, bCreate))
+	{
+	  lstrcpynAtoW(szPath, szTemp, MAX_PATH);
+	}
 
-	WARN("(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+	TRACE("0x%04x,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
-	SHGetSpecialFolderLocation(0, csidl, &pidl);
-	SHGetPathFromIDListW (pidl, szPath);
-	SHFree (pidl);
 	return TRUE;
 }
-BOOL WINAPI SHGetSpecialFolderPath (DWORD x1,LPVOID szPath,DWORD csidl,DWORD x4) 
-{	if (VERSION_OsIsUnicode())
-	  return SHGetSpecialFolderPathW ( x1, szPath, csidl, x4);
-	return SHGetSpecialFolderPathA ( x1, szPath, csidl, x4);
+BOOL WINAPI SHGetSpecialFolderPathAW (
+	HWND hwndOwner,
+	LPVOID szPath,
+	DWORD csidl,
+	BOOL bCreate)
+
+{
+	if (VERSION_OsIsUnicode())
+	  return SHGetSpecialFolderPathW (hwndOwner, szPath, csidl, bCreate);
+	return SHGetSpecialFolderPathA (hwndOwner, szPath, csidl, bCreate);
 }
