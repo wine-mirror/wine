@@ -117,6 +117,7 @@ typedef struct _SINGLE_LIST_ENTRY {
 #define HEAP_WINE_SEGPTR                0x01000000  /* Not a Win32 flag */
 #define HEAP_WINE_CODESEG               0x02000000  /* Not a Win32 flag */
 #define HEAP_WINE_CODE16SEG             0x04000000  /* Not a Win32 flag */
+#define HEAP_WINE_SHARED                0x08000000  /* Not a Win32 flag */
 
 /* Processor feature flags.  */
 #define PF_FLOATING_POINT_PRECISION_ERRATA	0

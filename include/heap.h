@@ -22,6 +22,7 @@ extern LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str );
 extern LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str );
 extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
 extern LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str );
+extern BOOL HEAP_CreateSystemHeap(void);
 
 /* SEGPTR helper macros */
 
@@ -41,5 +42,18 @@ static inline SEGPTR WINE_UNUSED SEGPTR_Get(LPCVOID ptr) {
 #define SEGPTR_FREE(ptr) \
          (HIWORD(ptr) ? HeapFree( SegptrHeap, 0, (ptr) ) : 0)
 
+/* system heap private data */
+/* you must lock the system heap before using this structure */
+typedef struct
+{
+    void     *gdi;        /* GDI heap */
+    void     *user;       /* USER handle table */
+    void     *cursor;     /* cursor information */
+    void     *queue;      /* message queues descriptor */
+    void     *win;        /* windows descriptor */
+    void     *root;       /* X11 root window */
+} SYSTEM_HEAP_DESCR;
+
+extern SYSTEM_HEAP_DESCR *SystemHeapDescr;
 
 #endif  /* __WINE_HEAP_H */

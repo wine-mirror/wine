@@ -206,7 +206,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     size = (size + 0x1f) & ~0x1f;
 
     /* Allocate the linear memory */
-    ptr = HeapAlloc( SystemHeap, 0, size );
+    ptr = HeapAlloc( GetProcessHeap(), 0, size );
       /* FIXME: free discardable blocks and try again? */
     if (!ptr) return 0;
 
@@ -216,7 +216,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
 				isCode, is32Bit, isReadOnly, &shmdata);
     if (!handle)
     {
-        HeapFree( SystemHeap, 0, ptr );
+        HeapFree( GetProcessHeap(), 0, ptr );
         return 0;
     }
 
@@ -276,7 +276,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (!(pArena->flags & GA_MOVEABLE) ||
             !(pArena->flags & GA_DISCARDABLE) ||
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
-        HeapFree( SystemHeap, 0, (void *)pArena->base );
+        HeapFree( GetProcessHeap(), 0, (void *)pArena->base );
         pArena->base = 0;
 
         /* Note: we rely on the fact that SELECTOR_ReallocBlock won't 
@@ -314,7 +314,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         ((char *)ptr <= DOSMEM_MemoryBase(0) + 0x100000))
         ptr = DOSMEM_ResizeBlock(0, ptr, size, NULL);
     else
-        ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
+        ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
     if (!ptr)
     {
         SELECTOR_FreeBlock( sel, (oldsize + 0xffff) / 0x10000 );
@@ -327,7 +327,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     sel = SELECTOR_ReallocBlock( sel, ptr, size );
     if (!sel)
     {
-        HeapFree( SystemHeap, 0, ptr );
+        HeapFree( GetProcessHeap(), 0, ptr );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
@@ -335,7 +335,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
     {
-        HeapFree( SystemHeap, 0, ptr );
+        HeapFree( GetProcessHeap(), 0, ptr );
         SELECTOR_FreeBlock( sel, selcount );
         return 0;
     }
@@ -376,7 +376,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 
     TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
-    if (ptr) HeapFree( SystemHeap, 0, ptr );
+    if (ptr) HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
 }
 

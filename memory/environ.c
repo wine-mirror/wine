@@ -78,7 +78,7 @@ static BOOL ENV_BuildEnvironment( PDB *pdb )
 
     /* Now allocate the environment */
 
-    if (!(p = HeapAlloc( SystemHeap, 0, size ))) return FALSE;
+    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
     pdb->env_db->environ = p;
 
     /* And fill it with the Unix environment */
@@ -102,11 +102,12 @@ static BOOL ENV_BuildEnvironment( PDB *pdb )
  * Make a process inherit the environment from its parent or from an
  * explicit environment.
  */
-BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
+BOOL ENV_InheritEnvironment( LPCSTR env )
 {
     DWORD size;
     LPCSTR src;
     LPSTR dst;
+    PDB *pdb = PROCESS_Current();
 
     /* FIXME: should lock the parent environment */
     if (!env)
@@ -131,7 +132,7 @@ BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
 
     /* Copy the environment */
 
-    if (!(pdb->env_db->environ = HeapAlloc( pdb->heap, 0, size )))
+    if (!(pdb->env_db->environ = HeapAlloc( GetProcessHeap(), 0, size )))
         return FALSE;
     pdb->env_db->env_sel = SELECTOR_AllocBlock( pdb->env_db->environ,
                                                 0x10000, SEGMENT_DATA,
@@ -162,7 +163,7 @@ void ENV_FreeEnvironment( PDB *pdb )
     if (!pdb->env_db) return;
     if (pdb->env_db->env_sel) SELECTOR_FreeBlock( pdb->env_db->env_sel, 1 );
     DeleteCriticalSection( &pdb->env_db->section );
-    HeapFree( pdb->heap, 0, pdb->env_db );
+    /* the storage will be deleted when the process heap is destroyed */
 }
 
 
@@ -182,7 +183,7 @@ LPCWSTR WINAPI GetCommandLineW(void)
     PDB *pdb = PROCESS_Current();
     EnterCriticalSection( &pdb->env_db->section );
     if (!pdb->env_db->cmd_lineW)
-        pdb->env_db->cmd_lineW = HEAP_strdupAtoW( pdb->heap, 0,
+        pdb->env_db->cmd_lineW = HEAP_strdupAtoW( GetProcessHeap(), 0,
                                                   pdb->env_db->cmd_line );
     LeaveCriticalSection( &pdb->env_db->section );
     return pdb->env_db->cmd_lineW;
@@ -209,8 +210,8 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
     PDB *pdb = PROCESS_Current();
 
     EnterCriticalSection( &pdb->env_db->section );
-    size = HeapSize( pdb->heap, 0, pdb->env_db->environ );
-    if ((ret = HeapAlloc( pdb->heap, 0, size * sizeof(WCHAR) )) != NULL)
+    size = HeapSize( GetProcessHeap(), 0, pdb->env_db->environ );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )) != NULL)
     {
         LPSTR pA = pdb->env_db->environ;
         LPWSTR pW = ret;
@@ -323,13 +324,13 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
 
     len = value ? strlen(name) + strlen(value) + 2 : 0;
     if (*p) len -= strlen(p) + 1;  /* The name already exists */
-    old_size = HeapSize( pdb->heap, 0, env );
+    old_size = HeapSize( GetProcessHeap(), 0, env );
     if (len < 0)
     {
         LPSTR next = p + strlen(p) + 1;  /* We know there is a next one */
         memmove( next + len, next, old_size - (next - env) );
     }
-    if (!(new_env = HeapReAlloc( pdb->heap, 0, env, old_size + len )))
+    if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, old_size + len )))
         goto done;
     if (pdb->env_db->env_sel)
         SELECTOR_MoveBlock( pdb->env_db->env_sel, new_env );

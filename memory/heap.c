@@ -93,6 +93,7 @@ typedef struct tagHEAP
     CRITICAL_SECTION critSection;   /* Critical section for serialization */
     DWORD            flags;         /* Heap flags */
     DWORD            magic;         /* Magic number */
+    void            *private;       /* Private pointer for the user of the heap */
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -102,6 +103,14 @@ typedef struct tagHEAP
 
 HANDLE SystemHeap = 0;
 HANDLE SegptrHeap = 0;
+
+SYSTEM_HEAP_DESCR *SystemHeapDescr = 0;
+
+static HEAP *processHeap;  /* main process heap */
+static HEAP *firstHeap;    /* head of secondary heaps list */
+
+/* address where we try to map the system heap */
+#define SYSTEM_HEAP_BASE  ((void*)0x65430000)
 
 static BOOL HEAP_IsRealArena( HANDLE heap, DWORD flags, LPCVOID block, BOOL quiet );
 
@@ -419,7 +428,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
     
     /* Decommit the end of the heap */
 
-    HEAP_Decommit( subheap, pFree + 1 );
+    if (!(subheap->heap->flags & HEAP_WINE_SHARED)) HEAP_Decommit( subheap, pFree + 1 );
 }
 
 
@@ -458,6 +467,8 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     /* Commit memory */
 
+    if (flags & HEAP_WINE_SHARED)
+        commitSize = totalSize;  /* always commit everything in a shared heap */
     if (!VirtualAlloc(address, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
         WARN("Could not commit %08lx bytes for sub-heap %08lx\n",
@@ -1001,6 +1012,20 @@ HANDLE WINAPI HeapCreate(
         return 0;
     }
 
+    /* link it into the per-process heap list */
+    if (processHeap)
+    {
+        HEAP *heapPtr = subheap->heap;
+        EnterCriticalSection( &processHeap->critSection );
+        heapPtr->next = firstHeap;
+        firstHeap = heapPtr;
+        LeaveCriticalSection( &processHeap->critSection );
+    }
+    else  /* assume the first heap we create is the process main heap */
+    {
+        processHeap = subheap->heap;
+    }
+
     return (HANDLE)subheap;
 }
 
@@ -1010,14 +1035,28 @@ HANDLE WINAPI HeapCreate(
  *	TRUE: Success
  *	FALSE: Failure
  */
-BOOL WINAPI HeapDestroy(
-              HANDLE heap /* [in] Handle of heap */
-) {
+BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
+{
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
     TRACE("%08x\n", heap );
     if (!heapPtr) return FALSE;
+
+    if (heapPtr == processHeap)  /* cannot delete the main process heap */
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    else /* remove it from the per-process list */
+    {
+        HEAP **pptr;
+        EnterCriticalSection( &processHeap->critSection );
+        pptr = &firstHeap;
+        while (*pptr && *pptr != heapPtr) pptr = &(*pptr)->next;
+        if (*pptr) *pptr = (*pptr)->next;
+        LeaveCriticalSection( &processHeap->critSection );
+    }
 
     DeleteCriticalSection( &heapPtr->critSection );
     subheap = &heapPtr->subheap;
@@ -1387,6 +1426,105 @@ BOOL WINAPI HeapWalk(
 ) {
     FIXME("(%08x): stub.\n", heap );
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           HEAP_CreateSystemHeap
+ *
+ * Create the system heap.
+ */
+BOOL HEAP_CreateSystemHeap(void)
+{
+    SYSTEM_HEAP_DESCR *descr;
+    HANDLE heap;
+    HEAP *heapPtr;
+    int created;
+
+    HANDLE map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
+                                     0, HEAP_DEF_SIZE, "__SystemHeap" );
+    if (!map) return FALSE;
+    created = (GetLastError() != ERROR_ALREADY_EXISTS);
+
+    if (!(heapPtr = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, SYSTEM_HEAP_BASE )))
+    {
+        /* pre-defined address not available, use any one */
+        fprintf( stderr, "Warning: system heap base address %p not available\n",
+                 SYSTEM_HEAP_BASE );
+        if (!(heapPtr = MapViewOfFile( map, FILE_MAP_ALL_ACCESS, 0, 0, 0 )))
+        {
+            CloseHandle( map );
+            return FALSE;
+        }
+    }
+    heap = (HANDLE)heapPtr;
+
+    if (created)  /* newly created heap */
+    {
+        HEAP_InitSubHeap( heapPtr, heapPtr, HEAP_WINE_SHARED, 0, HEAP_DEF_SIZE );
+        HeapLock( heap );
+        descr = heapPtr->private = HeapAlloc( heap, HEAP_ZERO_MEMORY, sizeof(*descr) );
+        assert( descr );
+    }
+    else
+    {
+        /* wait for the heap to be initialized */
+        while (!heapPtr->private) Sleep(1);
+        HeapLock( heap );
+        /* remap it to the right address if necessary */
+        if (heapPtr->subheap.heap != heapPtr)
+        {
+            void *base = heapPtr->subheap.heap;
+            HeapUnlock( heap );
+            UnmapViewOfFile( heapPtr );
+            if (!(heapPtr = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, base )))
+            {
+                fprintf( stderr, "Couldn't map system heap at the correct address (%p)\n", base );
+                CloseHandle( map );
+                return FALSE;
+            }
+            heap = (HANDLE)heapPtr;
+            HeapLock( heap );
+        }
+        descr = heapPtr->private;
+        assert( descr );
+    }
+    SystemHeap = heap;
+    SystemHeapDescr = descr;
+    HeapUnlock( heap );
+    CloseHandle( map );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetProcessHeap    (KERNEL32.259)
+ */
+HANDLE WINAPI GetProcessHeap(void)
+{
+    return (HANDLE)processHeap;
+}
+
+
+/***********************************************************************
+ *           GetProcessHeaps    (KERNEL32.376)
+ */
+DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
+{
+    DWORD total;
+    HEAP *ptr;
+
+    if (!processHeap) return 0;  /* should never happen */
+    total = 1;  /* main heap */
+    EnterCriticalSection( &processHeap->critSection );
+    for (ptr = firstHeap; ptr; ptr = ptr->next) total++;
+    if (total <= count)
+    {
+        *heaps++ = (HANDLE)processHeap;
+        for (ptr = firstHeap; ptr; ptr = ptr->next) *heaps++ = (HANDLE)ptr;
+    }
+    LeaveCriticalSection( &processHeap->critSection );
+    return total;
 }
 
 

@@ -151,7 +151,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
 extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 
 /* scheduler/environ.c */
-extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
+extern BOOL ENV_InheritEnvironment( LPCSTR env );
 extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/process.c */
