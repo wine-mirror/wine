@@ -205,8 +205,8 @@ type win32
 @ stdcall PathGetArgsW (str) PathGetArgsW
 @ stub    PathGetCharTypeA
 @ stub    PathGetCharTypeW
-@ stdcall PathGetDriveNumberA (str) PathGetDriveNumber
-@ stub    PathGetDriveNumberW #(str) PathGetDriveNumber
+@ stdcall PathGetDriveNumberA(str) PathGetDriveNumberA
+@ stdcall PathGetDriveNumberW(str) PathGetDriveNumberW
 @ stub    PathIsContentTypeA
 @ stub    PathIsContentTypeW
 @ stdcall PathIsDirectoryA(str) PathIsDirectoryA

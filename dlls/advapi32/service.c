@@ -19,13 +19,28 @@ static DWORD   start_dwNumServiceArgs;
 static LPWSTR *start_lpServiceArgVectors;
 
 /******************************************************************************
- * EnumServicesStatusA [ADVAPI32.38]
+ * EnumServicesStatusA [ADVAPI32.@]
  */
 BOOL WINAPI
 EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
-                       DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
-                       DWORD cbBufSize, LPDWORD pcbBytesNeeded,
-                       LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+                     DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
+{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
+		dwServiceType, dwServiceState, lpServices, cbBufSize,
+		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
+	SetLastError (ERROR_ACCESS_DENIED);
+	return 0;
+}
+
+/******************************************************************************
+ * EnumServicesStatusW [ADVAPI32.@]
+ */
+BOOL WINAPI
+EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
+                     DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
+                     DWORD cbBufSize, LPDWORD pcbBytesNeeded,
+                     LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
 {	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);

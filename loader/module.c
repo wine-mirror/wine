@@ -1710,7 +1710,7 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 }
 
 /***********************************************************************
- *           WIN16_GetProcAddress32   		(KERNEL.453)
+ *           GetProcAddress32   		(KERNEL.453)
  */
 FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {

@@ -141,7 +141,7 @@ file	gdi.exe
 154 pascal   GetNearestColor(word long) GetNearestColor16
 155 pascal16 QueryAbort(word word) QueryAbort16
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
-158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
+158 pascal16 EnumCallback(ptr ptr word long) EnumCallback16
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits16
 160 pascal16 SetMetaFileBits(word) SetMetaFileBits16
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion16

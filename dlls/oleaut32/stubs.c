@@ -12,7 +12,7 @@
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
-/*****************************************************
+/***********************************************************************
  * OleIconToCursor
  */
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
@@ -21,7 +21,7 @@ HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 	return S_OK;
 }
 
-/*****************************************************
+/***********************************************************************
  * OleCreatePropertyFrameIndirect
  */
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)
@@ -30,7 +30,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)
 	return S_OK;
 }
  
-/*****************************************************
+/***********************************************************************
  * OleCreatePropertyFrame
  */
 HRESULT WINAPI OleCreatePropertyFrame( HWND hwndOwner, UINT x, UINT y,
@@ -44,7 +44,7 @@ HRESULT WINAPI OleCreatePropertyFrame( HWND hwndOwner, UINT x, UINT y,
 	return S_OK;
 }
  
-/*****************************************************
+/***********************************************************************
  * OleLoadPicture
  */
 HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
@@ -56,7 +56,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 	return S_OK;
 }
  
-/*****************************************************
+/***********************************************************************
  * OleCreatePictureIndirect
  */
 HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
@@ -67,3 +67,4 @@ HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 	);
 	return S_OK;
 }
+

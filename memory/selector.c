@@ -691,16 +691,54 @@ x_SMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
     EAX_reg(context) = ptr;
 }
 
+/***********************************************************************
+ *		SMapLS_IP_EBP_8 (KERNEL32.601)
+ */
 void WINAPI SMapLS_IP_EBP_8 (CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context, 8);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_12 (KERNEL32.593)
+ */
 void WINAPI SMapLS_IP_EBP_12(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,12);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_16 (KERNEL32.594)
+ */
 void WINAPI SMapLS_IP_EBP_16(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,16);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_20 (KERNEL32.595)
+ */
 void WINAPI SMapLS_IP_EBP_20(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,20);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_24 (KERNEL32.596)
+ */
 void WINAPI SMapLS_IP_EBP_24(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,24);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_28 (KERNEL32.597)
+ */
 void WINAPI SMapLS_IP_EBP_28(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,28);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_32 (KERNEL32.598)
+ */
 void WINAPI SMapLS_IP_EBP_32(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,32);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_36 (KERNEL32.599)
+ */
 void WINAPI SMapLS_IP_EBP_36(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,36);}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_40 (KERNEL32.600)
+ */
 void WINAPI SMapLS_IP_EBP_40(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,40);}
 
+/***********************************************************************
+ *		SMapLS (KERNEL32.592)
+ */
 void WINAPI SMapLS( CONTEXT86 *context )
 {
     if (EAX_reg(context)>=0x10000) {
@@ -710,6 +748,10 @@ void WINAPI SMapLS( CONTEXT86 *context )
 	EDX_reg(context) = 0;
     }
 }
+
+/***********************************************************************
+ *		SUnMapLS (KERNEL32.602)
+ */
 
 void WINAPI SUnMapLS( CONTEXT86 *context )
 {
@@ -723,14 +765,50 @@ x_SUnMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
 		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
 	*(DWORD*)(EBP_reg(context)+argoff)=0;
 }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_8 (KERNEL32.611)
+ */
 void WINAPI SUnMapLS_IP_EBP_8 (CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context, 8); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_12 (KERNEL32.603)
+ */
 void WINAPI SUnMapLS_IP_EBP_12(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,12); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_16 (KERNEL32.604)
+ */
 void WINAPI SUnMapLS_IP_EBP_16(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,16); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_20 (KERNEL32.605)
+ */
 void WINAPI SUnMapLS_IP_EBP_20(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,20); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_24 (KERNEL32.606)
+ */
 void WINAPI SUnMapLS_IP_EBP_24(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,24); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_28 (KERNEL32.607)
+ */
 void WINAPI SUnMapLS_IP_EBP_28(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,28); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_32 (KERNEL32.608)
+ */
 void WINAPI SUnMapLS_IP_EBP_32(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,32); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_36 (KERNEL32.609)
+ */
 void WINAPI SUnMapLS_IP_EBP_36(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,36); }
+
+/***********************************************************************
+ *		SUnMapLS_IP_EBP_40 (KERNEL32.610)
+ */
 void WINAPI SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,40); }
 
 /**********************************************************************

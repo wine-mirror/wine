@@ -1313,7 +1313,7 @@ UINT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     return 0;
 }
 
-/**********************************************************m****************
+/***********************************************************************
  * 				mmioAdvance    		[MMSYSTEM.1219]
  */
 UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio, MMIOINFO16* lpmmioinfo, UINT16 uFlags)

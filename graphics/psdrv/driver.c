@@ -216,7 +216,7 @@ LRESULT WINAPI PSDRV_AdvancedSetupDlgProc(HWND hWnd, UINT wMsg,
 }
 #endif /* 0 */
 
-/**************************************************************
+/***********************************************************************
  *
  *	PSDRV_AdvancedSetupDialog16	[WINEPS.93]
  *
@@ -239,7 +239,7 @@ WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
 
 }
 
-/***************************************************************
+/***********************************************************************
  *
  *	PSDRV_ExtDeviceMode16	[WINEPS.90]
  *
@@ -288,7 +288,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 				 lpdmInput, lpszProfile, dwMode);
 }
 
-/***************************************************************
+/***********************************************************************
  *
  *	PSDRV_DeviceCapabilities16	[WINEPS.91]
  *

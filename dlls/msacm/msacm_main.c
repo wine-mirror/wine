@@ -12,7 +12,7 @@
 DEFAULT_DEBUG_CHANNEL(msacm)
 
 /***********************************************************************
- *           ACMGETVERSION (MSACM.7)
+ *		acmGetVersion (MSACM.7)
  */
 DWORD WINAPI acmGetVersion16()
 {
@@ -22,7 +22,7 @@ DWORD WINAPI acmGetVersion16()
 }
 
 /***********************************************************************
- *           ACMMETRICS (MSACM.8)
+ *		acmMetrics (MSACM.8)
  */
 
 MMRESULT16 WINAPI acmMetrics16(
@@ -34,7 +34,7 @@ MMRESULT16 WINAPI acmMetrics16(
 }
 
 /***********************************************************************
- *           ACMDRIVERENUM (MSACM.10)
+ *		acmDriverEnum (MSACM.10)
  */
 MMRESULT16 WINAPI acmDriverEnum16(
   ACMDRIVERENUMCB16 fnCallback, DWORD dwInstance, DWORD fdwEnum)
@@ -47,7 +47,7 @@ MMRESULT16 WINAPI acmDriverEnum16(
 }
 
 /***********************************************************************
- *           ACMDRIVERDETAILS (MSACM.11)
+ * 		acmDriverDetails (MSACM.11)
  */
 
 MMRESULT16 WINAPI acmDriverDetails16(
@@ -59,7 +59,7 @@ MMRESULT16 WINAPI acmDriverDetails16(
 }
 
 /***********************************************************************
- *           ACMDRIVERADD (MSACM.12)
+ * 		acmDriverAdd (MSACM.12)
  */
 MMRESULT16 WINAPI acmDriverAdd16(
   LPHACMDRIVERID16 phadid, HINSTANCE16 hinstModule,
@@ -73,7 +73,7 @@ MMRESULT16 WINAPI acmDriverAdd16(
 }
 
 /***********************************************************************
- *           ACMDRIVERREMOVE (MSACM.13)
+ * 		acmDriverRemove (MSACM.13)
  */
 MMRESULT16 WINAPI acmDriverRemove16(
   HACMDRIVERID16 hadid, DWORD fdwRemove)
@@ -84,7 +84,7 @@ MMRESULT16 WINAPI acmDriverRemove16(
 }
 
 /***********************************************************************
- *           ACMDRIVEROPEN (MSACM.14)
+ * 		acmDriverOpen (MSACM.14)
  */
 MMRESULT16 WINAPI acmDriverOpen16(
   LPHACMDRIVER16 phad, HACMDRIVERID16 hadid, DWORD fdwOpen)
@@ -95,7 +95,7 @@ MMRESULT16 WINAPI acmDriverOpen16(
 }
 
 /***********************************************************************
- *           ACMDRIVERCLOSE (MSACM.15)
+ * 		acmDriverClose (MSACM.15)
  */
 MMRESULT16 WINAPI acmDriverClose16(
   HACMDRIVER16 had, DWORD fdwClose)
@@ -106,7 +106,7 @@ MMRESULT16 WINAPI acmDriverClose16(
 }
 
 /***********************************************************************
- *           ACMDRIVERMESSAGE (MSACM.16)
+ * 		acmDriverMessage (MSACM.16)
  */
 LRESULT WINAPI acmDriverMessage16(
   HACMDRIVER16 had, UINT16 uMsg, LPARAM lParam1, LPARAM lParam2)
@@ -119,7 +119,7 @@ LRESULT WINAPI acmDriverMessage16(
 }
 
 /***********************************************************************
- *           ACMDRIVERID (MSACM.17)
+ * 		acmDriverID (MSACM.17)
  */
 MMRESULT16 WINAPI acmDriverID16(
   HACMOBJ16 hao, LPHACMDRIVERID16 phadid, DWORD fdwDriverID)
@@ -130,7 +130,7 @@ MMRESULT16 WINAPI acmDriverID16(
 }
 
 /***********************************************************************
- *           ACMDRIVERPRIORITY (MSACM.18)
+ * 		acmDriverPriority (MSACM.18)
  */
 MMRESULT16 WINAPI acmDriverPriority16(
  HACMDRIVERID16 hadid, DWORD dwPriority, DWORD fdwPriority)
@@ -143,7 +143,7 @@ MMRESULT16 WINAPI acmDriverPriority16(
 }
 
 /***********************************************************************
- *           ACMFORMATTAGDETAILS (MSACM.30)
+ * 		acmFormatTagDetails (MSACM.30)
  */
 MMRESULT16 WINAPI acmFormatTagDetails16(
   HACMDRIVER16 had, LPACMFORMATTAGDETAILS16 paftd, DWORD fdwDetails)
@@ -154,7 +154,7 @@ MMRESULT16 WINAPI acmFormatTagDetails16(
 }
 
 /***********************************************************************
- *           ACMFORMATTAGENUM (MSACM.31)
+ * 		acmFormatTagEnum (MSACM.31)
  */
 MMRESULT16 WINAPI acmFormatTagEnum16(
   HACMDRIVER16 had, LPACMFORMATTAGDETAILS16 paftd,
@@ -168,7 +168,7 @@ MMRESULT16 WINAPI acmFormatTagEnum16(
 }
 
 /***********************************************************************
- *           ACMFORMATCHOOSE (MSACM.40)
+ * 		acmFormatChoose (MSACM.40)
  */
 MMRESULT16 WINAPI acmFormatChoose16(
   LPACMFORMATCHOOSE16 pafmtc)
@@ -179,7 +179,7 @@ MMRESULT16 WINAPI acmFormatChoose16(
 }
 
 /***********************************************************************
- *           ACMFORMATDETAILS (MSACM.41)
+ * 		acmFormatDetails (MSACM.41)
  */
 MMRESULT16 WINAPI acmFormatDetails16(
   HACMDRIVER16 had, LPACMFORMATDETAILS16 pafd, DWORD fdwDetails)
@@ -190,7 +190,7 @@ MMRESULT16 WINAPI acmFormatDetails16(
 }
 
 /***********************************************************************
- *           ACMFORMATENUM (MSACM.42)
+ * 		acmFormatEnum (MSACM.42)
  */
 MMRESULT16 WINAPI acmFormatEnum16(
   HACMDRIVER16 had, LPACMFORMATDETAILS16 pafd,
@@ -204,7 +204,7 @@ MMRESULT16 WINAPI acmFormatEnum16(
 }
 
 /***********************************************************************
- *           ACMFORMATSUGGEST (MSACM.45)
+ * 		acmFormatSuggest (MSACM.45)
  */
 MMRESULT16 WINAPI acmFormatSuggest16(
   HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc, 
@@ -218,7 +218,7 @@ MMRESULT16 WINAPI acmFormatSuggest16(
 }
 
 /***********************************************************************
- *           ACMFILTERTAGDETAILS (MSACM.50)
+ * 		acmFilterTagDetails (MSACM.50)
  */
 MMRESULT16 WINAPI acmFilterTagDetails16(
   HACMDRIVER16 had, LPACMFILTERTAGDETAILS16 paftd, DWORD fdwDetails)
@@ -229,7 +229,7 @@ MMRESULT16 WINAPI acmFilterTagDetails16(
 }
 
 /***********************************************************************
- *           ACMFILTERTAGENUM (MSACM.51)
+ * 		acmFilterTagEnum (MSACM.51)
  */
 MMRESULT16 WINAPI acmFilterTagEnum16(
   HACMDRIVER16 had, LPACMFILTERTAGDETAILS16 paftd,
@@ -243,7 +243,7 @@ MMRESULT16 WINAPI acmFilterTagEnum16(
 }
 
 /***********************************************************************
- *           ACMFILTERCHOOSE (MSACM.60)
+ * 		acmFilterChoose (MSACM.60)
  */
 MMRESULT16 WINAPI acmFilterChoose16(
   LPACMFILTERCHOOSE16 pafltrc)
@@ -254,7 +254,7 @@ MMRESULT16 WINAPI acmFilterChoose16(
 }
 
 /***********************************************************************
- *           ACMFILTERDETAILS (MSACM.61)
+ * 		acmFilterDetails (MSACM.61)
  */
 MMRESULT16 WINAPI acmFilterDetails16(
   HACMDRIVER16 had, LPACMFILTERDETAILS16 pafd, DWORD fdwDetails)
@@ -265,7 +265,7 @@ MMRESULT16 WINAPI acmFilterDetails16(
 }
 
 /***********************************************************************
- *           ACMFILTERENUM (MSACM.62)
+ * 		acmFilterEnum (MSACM.62)
  */
 MMRESULT16 WINAPI acmFilterEnum16(
   HACMDRIVER16 had, LPACMFILTERDETAILS16 pafd,
@@ -279,7 +279,7 @@ MMRESULT16 WINAPI acmFilterEnum16(
 }
 
 /***********************************************************************
- *           ACMSTREAMOPEN (MSACM.70)
+ * 		acmStreamOpen (MSACM.70)
  */
 MMRESULT16 WINAPI acmStreamOpen16(
   LPHACMSTREAM16 phas, HACMDRIVER16 had,
@@ -296,7 +296,7 @@ MMRESULT16 WINAPI acmStreamOpen16(
 }
 
 /***********************************************************************
- *           ACMSTREAMCLOSE (MSACM.71)
+ * 		acmStreamClose (MSACM.71)
  */
 MMRESULT16 WINAPI acmStreamClose16(
   HACMSTREAM16 has, DWORD fdwClose)
@@ -307,7 +307,7 @@ MMRESULT16 WINAPI acmStreamClose16(
 }
 
 /***********************************************************************
- *           ACMSTREAMSIZE (MSACM.72)
+ * 		acmStreamSize (MSACM.72)
  */
 MMRESULT16 WINAPI acmStreamSize16(
   HACMSTREAM16 has, DWORD cbInput, 
@@ -321,7 +321,7 @@ MMRESULT16 WINAPI acmStreamSize16(
 }
 
 /***********************************************************************
- *           ACMSTREAMCONVERT (MSACM.75)
+ * 		acmStreamConvert (MSACM.75)
  */
 MMRESULT16 WINAPI acmStreamConvert16(
   HACMSTREAM16 has, LPACMSTREAMHEADER16 pash, DWORD fdwConvert)
@@ -332,7 +332,7 @@ MMRESULT16 WINAPI acmStreamConvert16(
 }
 
 /***********************************************************************
- *           ACMSTREAMRESET (MSACM.76)
+ * 		acmStreamReset (MSACM.76)
  */
 MMRESULT16 WINAPI acmStreamReset16(
   HACMSTREAM16 has, DWORD fdwReset)
@@ -343,7 +343,7 @@ MMRESULT16 WINAPI acmStreamReset16(
 }
 
 /***********************************************************************
- *           ACMSTREAMPREPAREHEADER (MSACM.77)
+ * 		acmStreamPrepareHeader (MSACM.77)
  */
 MMRESULT16 WINAPI acmStreamPrepareHeader16(
   HACMSTREAM16 has, LPACMSTREAMHEADER16 pash, DWORD fdwPrepare)
@@ -354,7 +354,7 @@ MMRESULT16 WINAPI acmStreamPrepareHeader16(
 }
 
 /***********************************************************************
- *           ACMSTREAMUNPREPAREHEADER (MSACM.78)
+ * 		acmStreamUnprepareHeader (MSACM.78)
  */
 MMRESULT16 WINAPI acmStreamUnprepareHeader16(
   HACMSTREAM16 has, LPACMSTREAMHEADER16 pash, DWORD fdwUnprepare)
@@ -367,43 +367,43 @@ MMRESULT16 WINAPI acmStreamUnprepareHeader16(
 }
 
 /***********************************************************************
- *           ACMAPPLICATIONEXIT (MSACM.150)
+ *		ACMAPPLICATIONEXIT (MSACM.150)
  * FIXME
  *   No documentation found.
  */
 
 /***********************************************************************
- *           ACMHUGEPAGELOCK (MSACM.175)
+ *		ACMHUGEPAGELOCK (MSACM.175)
+ *FIXME
+ *   No documentation found.
+ */
+
+/***********************************************************************
+ *		ACMHUGEPAGEUNLOCK (MSACM.176)
  * FIXME
  *   No documentation found.
  */
 
 /***********************************************************************
- *           ACMHUGEPAGEUNLOCK (MSACM.176)
+ *		ACMOPENCONVERSION (MSACM.200)
  * FIXME
  *   No documentation found.
  */
 
 /***********************************************************************
- *           ACMOPENCONVERSION (MSACM.200)
+ *		ACMCLOSECONVERSION (MSACM.201)
  * FIXME
  *   No documentation found.
  */
 
 /***********************************************************************
- *           ACMCLOSECONVERSION (MSACM.201)
+ *		ACMCONVERT (MSACM.202)
  * FIXME
  *   No documentation found.
  */
 
 /***********************************************************************
- *           ACMCONVERT (MSACM.202)
- * FIXME
- *   No documentation found.
- */
-
-/***********************************************************************
- *           ACMCHOOSEFORMAT (MSACM.203)
+ *		ACMCHOOSEFORMAT (MSACM.203)
  * FIXME
  *   No documentation found.
  */

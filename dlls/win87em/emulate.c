@@ -39,7 +39,7 @@ static WORD StackTop = 175;
 static WORD StackBottom = 0;
 static WORD Inthandler02hVar = 1;
 
-void WIN87_ClearCtrlWord( CONTEXT86 *context )
+static void WIN87_ClearCtrlWord( CONTEXT86 *context )
 {
     AX_reg(context) = 0;
     if (Installed)
@@ -51,7 +51,7 @@ void WIN87_ClearCtrlWord( CONTEXT86 *context )
     StatusWord_3 = StatusWord_2 = 0;
 }
 
-void WIN87_SetCtrlWord( CONTEXT86 *context )
+static void WIN87_SetCtrlWord( CONTEXT86 *context )
 {
     CtrlWord_1 = AX_reg(context);
     AX_reg(context) &= 0xff3c;

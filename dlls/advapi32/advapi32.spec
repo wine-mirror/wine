@@ -78,7 +78,7 @@ type	win32
 @ stub EnumDependentServicesA
 @ stub EnumDependentServicesW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr) EnumServicesStatusA
-@ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr) EnumServicesStatusA
+@ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr) EnumServicesStatusW
 @ stdcall EqualPrefixSid(ptr ptr) EqualPrefixSid
 @ stdcall EqualSid(ptr ptr) EqualSid
 @ stub FindFirstFreeAce

@@ -98,7 +98,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 }
 
 
-/*************************************************************
+/***********************************************************************
  *            SetUnhandledExceptionFilter   (KERNEL32.516)
  */
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(

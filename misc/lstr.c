@@ -81,7 +81,7 @@ BOOL16 WINAPI IsCharAlpha16(CHAR ch)
 }
 
 /***********************************************************************
- *		IsCharAlphanumeric (USER.434)
+ *		IsCharAlphaNumeric (USER.434)
  */
 BOOL16 WINAPI IsCharAlphaNumeric16(CHAR ch)
 {

@@ -182,10 +182,10 @@ rsrc	comctl32
 403 stub EnumMRUListW@16
 404 stub CreateMRUListLazyW@16
 
-410 stdcall COMCTL32_410(long long long long) comctl32_410
-411 stdcall COMCTL32_411(long long long) comctl32_411
-412 stdcall COMCTL32_412(long long long) comctl32_412
-413 stdcall COMCTL32_413(long long long long) comctl32_413
+410 stdcall COMCTL32_410(long long long long) COMCTL32_410
+411 stdcall COMCTL32_411(long long long) COMCTL32_411
+412 stdcall COMCTL32_412(long long long) COMCTL32_412
+413 stdcall COMCTL32_413(long long long long) COMCTL32_413
 
 # this is actually ordinal 70 in COMCTL32 v5.0
 414 stdcall InitMUILanguage(long) InitMUILanguage

@@ -1457,7 +1457,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 }
 
 
-/****************************************************************
+/***********************************************************************
  *         GetDlgCtrlID16   (USER.277)
  */
 INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
@@ -1473,7 +1473,7 @@ INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
 }
  
 
-/****************************************************************
+/***********************************************************************
  *         GetDlgCtrlID   (USER32.234)
  */
 INT WINAPI GetDlgCtrlID( HWND hwnd )

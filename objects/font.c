@@ -1252,10 +1252,10 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
 }
 
 
+/* FIXME: all following APIs ******************************************/
+ 
 
-/* FIXME: all following APIs *******************************************
- *
- *
+/***********************************************************************
  *           SetMapperFlags16    (GDI.349)
  */
 DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )

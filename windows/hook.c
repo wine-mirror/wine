@@ -1302,7 +1302,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 
 
 /***********************************************************************
- *           UnhookWindowHookEx16   (USER.292)
+ *           UnhookWindowsHookEx16   (USER.292)
  */
 BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 {
@@ -1392,7 +1392,7 @@ BOOL16 WINAPI CallMsgFilter16( SEGPTR msg, INT16 code )
 
 
 /***********************************************************************
- *           WIN16_CallMsgFilter32   (USER.823)
+ *           CallMsgFilter32   (USER.823)
  */
 BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParamHigh )
 {

@@ -9,8 +9,8 @@ type	win16
 8      pascal  WMMMIDIRUNONCE() WMMMidiRunOnce16
 30     pascal16 OutputDebugStr(str) OutputDebugString16
 31     pascal  DriverCallback(long word word word long long long) DriverCallback16
-32     pascal  StackEnter() StackEnterLeave16
-33     pascal  StackLeave() StackEnterLeave16
+32     pascal  StackEnter() StackEnter16
+33     pascal  StackLeave() StackLeave16
 34     stub    MMDRVINSTALL
 101    pascal  joyGetNumDevs() joyGetNumDevs16
 102    pascal  joyGetDevCaps(word ptr word) joyGetDevCaps16

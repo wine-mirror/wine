@@ -1874,7 +1874,7 @@ HWND MDI_CreateMDIWindowA(
     return retvalue;
 }
 
-/***************************************
+/***********************************************************************
  * CreateMDIWindowW [USER32.80] Creates a MDI child in new thread
  *
  * RETURNS

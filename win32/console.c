@@ -1402,12 +1402,12 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput,
 
 
 /******************************************************************************
- * ScrollConsoleScreenBuffer [KERNEL32.612]
+ * ScrollConsoleScreenBufferA [KERNEL32.612]
  * 
  * BUGS
  *   Unimplemented
  */
-BOOL WINAPI ScrollConsoleScreenBuffer( HANDLE hConsoleOutput, 
+BOOL WINAPI ScrollConsoleScreenBufferA( HANDLE hConsoleOutput, 
 	      LPSMALL_RECT lpScrollRect, LPSMALL_RECT lpClipRect,
               COORD dwDestOrigin, LPCHAR_INFO lpFill)
 {

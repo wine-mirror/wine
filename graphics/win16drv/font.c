@@ -196,7 +196,7 @@ BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     return wRet;
 }
 
-/*
+/***********************************************************************
  * EnumCallback (GDI.158)
  * 
  * This is the callback function used when EnumDFonts is called. 
@@ -206,13 +206,11 @@ BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
  * structure (WEPFC = WINE_ENUM_PRINTER_FONT_CALLBACK).
  *
  */
-
-
-WORD WINAPI WineEnumDFontCallback(LPENUMLOGFONT16 lpLogFont,
-                                  LPNEWTEXTMETRIC16 lpTextMetrics,
-                                  WORD wFontType, LONG lpClientData) 
+WORD WINAPI EnumCallback16(LPENUMLOGFONT16 lpLogFont,
+                           LPNEWTEXTMETRIC16 lpTextMetrics,
+                           WORD wFontType, LONG lpClientData) 
 {
-    TRACE("In WineEnumDFontCallback plf=%p\n", lpLogFont);
+    TRACE("In EnumCallback16 plf=%p\n", lpLogFont);
     return (*(((WEPFC *)lpClientData)->proc))( lpLogFont, lpTextMetrics, 
 				     wFontType, ((WEPFC *)lpClientData)->lp );
 }

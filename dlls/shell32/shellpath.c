@@ -856,14 +856,33 @@ VOID WINAPI PathUnquoteSpacesAW(LPVOID str)
 	  PathUnquoteSpacesA(str);
 }
 
+/*************************************************************************
+ * PathGetDriveNumberA [SHLWAPI.@]
+ *
+ */
+HRESULT WINAPI PathGetDriveNumberA(LPSTR u)
+{	FIXME("%s stub\n",debugstr_a(u));
+	return 0;
+}
+
+/*************************************************************************
+ * PathGetDriveNumberW [SHLWAPI.@]
+ *
+ */
+HRESULT WINAPI PathGetDriveNumberW(LPWSTR u)
+{	FIXME("%s stub\n",debugstr_w(u));
+	return 0;
+}
 
 /*************************************************************************
  * PathGetDriveNumber [SHELL32.57]
  *
  */
-HRESULT WINAPI PathGetDriveNumber(LPSTR u)
-{	FIXME("%s stub\n",debugstr_a(u));
-	return 0;
+HRESULT WINAPI PathGetDriveNumberAW(LPVOID str)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathGetDriveNumberW(str);
+	return PathGetDriveNumberA(str);
 }
 
 /*************************************************************************

@@ -11,6 +11,6 @@ import oleaut32.dll
 @ forward OleCreateFontIndirect OLEAUT32.OleCreateFontIndirect
 @ forward OleTranslateColor OLEAUT32.OleTranslateColor
 @ stdcall DllCanUnloadNow() OLEPRO32_DllCanUnloadNow
-@ stdcall DllGetClassObjecti( ptr ptr ptr )  OLEPRO32_DllGetClassObject
+@ stdcall DllGetClassObject( ptr ptr ptr )  OLEPRO32_DllGetClassObject
 @ stdcall DllRegisterServer() OLEPRO32_DllRegisterServer
 @ stdcall DllUnregisterServer() OLEPRO32_DllUnregisterServer

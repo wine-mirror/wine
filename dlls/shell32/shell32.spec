@@ -63,7 +63,7 @@ rsrc	shell32
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpacesAW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpacesAW
-  57 stdcall PathGetDriveNumber (str) PathGetDriveNumber
+  57 stdcall PathGetDriveNumber(str) PathGetDriveNumberAW
   58 stdcall ParseField(str long ptr long) ParseFieldA
   59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog

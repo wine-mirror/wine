@@ -2242,7 +2242,7 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 
 
 /***********************************************************************
- *           WIN16_TranslateMessage32   (USER.821)
+ *           TranslateMessage32   (USER.821)
  */
 BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh )
 {
@@ -2321,7 +2321,7 @@ END:
 
 
 /***********************************************************************
- *           WIN16_DispatchMessage32   (USER.822)
+ *           DispatchMessage32   (USER.822)
  */
 LONG WINAPI DispatchMessage32_16( const MSG32_16* lpmsg16_32, BOOL16 wHaveParamHigh )
 {

@@ -3086,7 +3086,7 @@ void WINAPI TileChildWindows16( HWND16 parent, WORD action )
 }
 
 /***********************************************************************
- *           CascageChildWindows   (USER.198)
+ *           CascadeChildWindows   (USER.198)
  */
 void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
 {

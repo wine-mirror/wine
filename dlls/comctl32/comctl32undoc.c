@@ -2216,13 +2216,13 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 }
 
 /**************************************************************************
- * comctl32_410 [COMCTL32.410]
+ * COMCTL32_410 [COMCTL32.410]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
+BOOL WINAPI COMCTL32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 
    FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 
@@ -2230,13 +2230,13 @@ BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 }
 
 /**************************************************************************
- * comctl32_411 [COMCTL32.411]
+ * COMCTL32_411 [COMCTL32.411]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI comctl32_411( HWND hw, DWORD b, DWORD c) {
+BOOL WINAPI COMCTL32_411( HWND hw, DWORD b, DWORD c) {
 
    FIXME("(%x, %lx, %lx): stub!\n", hw, b, c);
 
@@ -2244,13 +2244,13 @@ BOOL WINAPI comctl32_411( HWND hw, DWORD b, DWORD c) {
 }
 
 /**************************************************************************
- * comctl32_412 [COMCTL32.412]
+ * COMCTL32_412 [COMCTL32.412]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI comctl32_412( HWND hwnd, DWORD b, DWORD c)
+BOOL WINAPI COMCTL32_412( HWND hwnd, DWORD b, DWORD c)
 {
     FIXME("(%x, %lx, %lx): stub!\n", hwnd, b, c);
 
@@ -2265,13 +2265,13 @@ BOOL WINAPI comctl32_412( HWND hwnd, DWORD b, DWORD c)
 }
 
 /**************************************************************************
- * comctl32_413 [COMCTL32.413]
+ * COMCTL32_413 [COMCTL32.413]
  *
  * FIXME: What's this supposed to do?
  *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI comctl32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
+BOOL WINAPI COMCTL32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
    FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 

@@ -2414,6 +2414,9 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                  EFL_reg(context));
 }
 
+/***********************************************************************
+ *		GetSetKernelDOSProc
+ */
 FARPROC16 WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc)
 {
 	FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);

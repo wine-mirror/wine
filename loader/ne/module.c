@@ -1421,7 +1421,7 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
 
 
 /**********************************************************************
- *	    GetModuleHandle16    (KERNEL.47)
+ *	    GetModuleHandle    (KERNEL.47)
  *
  * Find a module from a module name.
  *

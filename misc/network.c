@@ -325,7 +325,7 @@ WORD WINAPI WNetBrowseDialog16( HWND16 hParent, WORD nType, LPSTR szPath )
 }
 
 /********************************************************************
- *              WNetConnectDialog16       [USER.525]
+ *              WNetConnectDialog       [USER.525]
  */
 WORD WINAPI WNetConnectDialog( HWND16 hWndParent, WORD iType )
 {
@@ -343,7 +343,7 @@ WORD WINAPI WNetDisconnectDialog16( HWND16 hwndOwner, WORD iType )
 }
 
 /**************************************************************************
- *              WnetConnectionDialog16     [USER.527]
+ *              WNetConnectionDialog16     [USER.527]
  */
 WORD WINAPI WNetConnectionDialog16( HWND16 hWndParent, WORD iType )
 {

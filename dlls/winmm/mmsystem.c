@@ -5028,7 +5028,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 /* ### stop build ### */
 
 /**************************************************************************
- * 				mmThreadGetTask			[internal]
+ * 				WINE_mmThreadEntryPoint		[internal]
  */
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {
@@ -5090,9 +5090,9 @@ BOOL16	WINAPI	mmShowMMCPLPropertySheet16(HWND hWnd, LPCSTR lpStrDevice,
 }
 
 /**************************************************************************
- * 			StackEnter & StackLeave		[MMSYSTEM.32][MMSYSTEM.33]
+ * 			StackEnter		[MMSYSTEM.32]
  */
-void	WINAPI	StackEnterLeave16(void)
+void WINAPI StackEnter16(void)
 {
 #ifdef __i386__
     /* mmsystem.dll from Win 95 does only this: so does Wine */
@@ -5101,7 +5101,18 @@ void	WINAPI	StackEnterLeave16(void)
 }
 
 /**************************************************************************
- * 			WMMMIDIRUNONCE 	[MMSYSTEM.8]
+ * 			StackLeave		[MMSYSTEM.33]
+ */
+void WINAPI StackLeave16(void)
+{
+#ifdef __i386__
+    /* mmsystem.dll from Win 95 does only this: so does Wine */
+    __asm__("stc");
+#endif
+}
+
+/**************************************************************************
+ * 			WMMMidiRunOnce	 	[MMSYSTEM.8]
  */
 void WINAPI WMMMidiRunOnce16(void)
 {
