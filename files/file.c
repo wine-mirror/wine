@@ -623,7 +623,10 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     /* If the name contains a DOS wild card (* or ?), do no create a file */
     if(strchrW(filename, '*') || strchrW(filename, '?'))
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
         return INVALID_HANDLE_VALUE;
+    }
 
     /* Open a console for CONIN$ or CONOUT$ */
     if (!strcmpiW(filename, coninW))
