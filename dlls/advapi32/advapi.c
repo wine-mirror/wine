@@ -4,6 +4,7 @@
  * Copyright 1995 Sven Verdoolaege
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -16,9 +17,13 @@
 
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(advapi);
 
 /******************************************************************************
  * GetUserNameA [ADVAPI32.@]
+ *
+ * NOTE: lpSize returns the total length of the username, including the
+ * terminating null character.
  */
 BOOL WINAPI
 GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
@@ -27,14 +32,24 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
   char *name;
 
   struct passwd *pwd = getpwuid( getuid() );
-  if (!pwd) return 0;
-  name = pwd->pw_name;
-  len = name ? strlen(name) : 0;
-  if (!len || !lpSize || len > *lpSize) {
-    if (lpszName) *lpszName = 0;
+  if (!pwd)
+  {
+    ERR("Username lookup failed: %s\n", strerror(errno));
     return 0;
   }
-  *lpSize=len;
+
+  name = pwd->pw_name;
+
+  /* We need to include the null character when determining the size of the buffer. */
+  len = strlen(name) + 1;
+  if (len > *lpSize)
+  {
+    SetLastError(ERROR_MORE_DATA);
+    *lpSize = len;
+    return 0;
+  }
+
+  *lpSize = len;
   strcpy(lpszName, name);
   return 1;
 }
