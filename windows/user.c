@@ -35,6 +35,7 @@
 #include "sysmetrics.h"
 #include "local.h"
 #include "module.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(hook);
@@ -337,17 +338,17 @@ LONG WINAPI ChangeDisplaySettingsExA(
 }
 
 /***********************************************************************
- *		EnumDisplaySettingsA (USER32.@)
+ *		EnumDisplaySettingsW (USER32.@)
  * FIXME: Currently uses static list of modes.
  *
  * RETURNS
- *	TRUE if nth setting exists found (described in the LPDEVMODEA struct)
+ *	TRUE if nth setting exists found (described in the LPDEVMODEW struct)
  *	FALSE if we do not have the nth setting
  */
-BOOL WINAPI EnumDisplaySettingsA(
-	LPCSTR name,		/* [in] huh? */
+BOOL WINAPI EnumDisplaySettingsW(
+	LPCWSTR name,		/* [in] huh? */
 	DWORD n,		/* [in] nth entry in display settings list*/
-	LPDEVMODEA devmode	/* [out] devmode for that setting */
+	LPDEVMODEW devmode	/* [out] devmode for that setting */
 ) {
 #define NRMODES 5
 #define NRDEPTHS 4
@@ -356,7 +357,7 @@ BOOL WINAPI EnumDisplaySettingsA(
 	} modes[NRMODES]={{512,384},{640,400},{640,480},{800,600},{1024,768}};
 	int depths[4] = {8,16,24,32};
 
-	TRACE_(system)("(%s,%ld,%p)\n",name,n,devmode);
+	TRACE_(system)("(%s,%ld,%p)\n",debugstr_w(name),n,devmode);
 	devmode->dmDisplayFlags = 0;
 	devmode->dmDisplayFrequency = 85;
 	if (n==0 || n == (DWORD)-1 || n == (DWORD)-2) {
@@ -375,27 +376,28 @@ BOOL WINAPI EnumDisplaySettingsA(
 }
 
 /***********************************************************************
- *		EnumDisplaySettingsW (USER32.@)
+ *		EnumDisplaySettingsA (USER32.@)
  */
-BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode)
+BOOL WINAPI EnumDisplaySettingsA(LPCSTR name,DWORD n,LPDEVMODEA devmode)
 {
-    DEVMODEA devmodeA;
+    DEVMODEW devmodeW;
     BOOL ret;
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
-    LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, len );
+    UNICODE_STRING nameW;
 
-    WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
-    ret = EnumDisplaySettingsA(nameA,n,&devmodeA);
+    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+    else nameW.Buffer = NULL;
+
+    ret = EnumDisplaySettingsW(nameW.Buffer,n,&devmodeW);
     if (ret)
     {
-        devmode->dmBitsPerPel       = devmodeA.dmBitsPerPel;
-        devmode->dmPelsHeight       = devmodeA.dmPelsHeight;
-        devmode->dmPelsWidth        = devmodeA.dmPelsWidth;
-        devmode->dmDisplayFlags     = devmodeA.dmDisplayFlags;
-        devmode->dmDisplayFrequency = devmodeA.dmDisplayFrequency;
+        devmode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
+        devmode->dmPelsHeight       = devmodeW.dmPelsHeight;
+        devmode->dmPelsWidth        = devmodeW.dmPelsWidth;
+        devmode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
+        devmode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
         /* FIXME: convert rest too, if they are ever returned */
     }
-    HeapFree(GetProcessHeap(),0,nameA);
+    RtlFreeUnicodeString(&nameW);
     return ret;
 }
 
