@@ -695,12 +695,35 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
   
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+  WORD keystate;
   
   if (buttonNum >= NB_BUTTONS) return;
   
+  /*
+   * Get the compatible keystate
+   */
+  keystate = EVENT_XStateToKeyState( event->state );
+  
+  /*
+   * Make sure that the state of the button that was just 
+   * pressed is "down".
+   */
+  switch (buttonNum)
+  {
+    case 0:
+      keystate |= MK_LBUTTON;
+      break;
+    case 1:
+      keystate |= MK_MBUTTON;
+      break;
+    case 2:
+      keystate |= MK_RBUTTON;
+      break;
+  }
+  
   MOUSE_SendEvent( statusCodes[buttonNum], 
 		   xOffset + event->x, yOffset + event->y,
-		   EVENT_XStateToKeyState( event->state ), 
+		   keystate, 
 		   event->time - MSG_WineStartTicks,
 		   pWnd? pWnd->hwndSelf : 0 );
 }
@@ -717,12 +740,35 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
   
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+  WORD keystate;
   
   if (buttonNum >= NB_BUTTONS) return;    
   
+  /*
+   * Get the compatible keystate
+   */
+  keystate = EVENT_XStateToKeyState( event->state );
+
+  /*
+   * Make sure that the state of the button that was just 
+   * released is "up".
+   */
+  switch (buttonNum)
+  {
+    case 0:
+      keystate &= ~MK_LBUTTON;
+      break;
+    case 1:
+      keystate &= ~MK_MBUTTON;
+      break;
+    case 2:
+      keystate &= ~MK_RBUTTON;
+      break;
+  }
+
   MOUSE_SendEvent( statusCodes[buttonNum], 
 		   xOffset + event->x, yOffset + event->y,
-		   EVENT_XStateToKeyState( event->state ), 
+		   keystate, 
 		   event->time - MSG_WineStartTicks,
 		   pWnd? pWnd->hwndSelf : 0 );
 }
