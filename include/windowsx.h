@@ -15,17 +15,34 @@ extern "C" {
 #endif  /* __cplusplus */
 #endif  /* SNDMSG */
 
+#define GET_WPARAM(wp, lp)                      (wp)
+#define GET_LPARAM(wp, lp)                      (lp)
 
-#define GET_WM_VSCROLL_CODE(wp, lp)         LOWORD(wp)
-#define GET_WM_VSCROLL_POS(wp, lp)          HIWORD(wp)
-#define GET_WM_VSCROLL_HWND(wp, lp)         (HWND)(lp)
-#define GET_WM_VSCROLL_MPS(code, pos, hwnd) (WPARAM)MAKELONG(code, pos), (LONG)(hwnd)
+#define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
 
+#define GET_EM_LINESCROLL_MPS(vert, horz)       (WPARAM)horz, (LONG)vert
 
-#define GET_WM_COMMAND_ID(wp, lp)           LOWORD(wp)
-#define GET_WM_COMMAND_HWND(wp, lp)         (HWND)(lp)
-#define GET_WM_COMMAND_CMD(wp, lp)          HIWORD(wp)
-#define GET_WM_COMMAND_MPS(id, hwnd, cmd)   (WPARAM)MAKELONG(id, cmd), (LONG)(hwnd)
+#define GET_EM_SETSEL_START(wp, lp)             (INT)(wp)
+#define GET_EM_SETSEL_END(wp, lp)               (lp)
+#define GET_EM_SETSEL_MPS(iStart, iEnd)         (WPARAM)(iStart), (LONG)(iEnd)
+
+#define GET_WM_ACTIVATE_STATE(wp, lp)           LOWORD(wp)
+#define GET_WM_ACTIVATE_FMINIMIZED(wp, lp)      (BOOL)HIWORD(wp)
+#define GET_WM_ACTIVATE_HWND(wp, lp)            (HWND)(lp)
+#define GET_WM_ACTIVATE_MPS(s, fmin, hwnd)      (WPARAM)MAKELONG((s), (fmin)), (LONG)(hwnd)
+
+#define GET_WM_CHANGECBCHAIN_HWNDNEXT(wp, lp)   (HWND)(lp)
+
+#define GET_WM_CHARTOITEM_CHAR(wp, lp)          (TCHAR)LOWORD(wp)
+#define GET_WM_CHARTOITEM_POS(wp, lp)           HIWORD(wp)
+#define GET_WM_CHARTOITEM_HWND(wp, lp)          (HWND)(lp)
+#define GET_WM_CHARTOITEM_MPS(ch, pos, hwnd)    (WPARAM)MAKELONG((pos), (ch)), (LONG)(hwnd)
+
+#define GET_WM_COMMAND_ID(wp, lp)               LOWORD(wp)
+#define GET_WM_COMMAND_HWND(wp, lp)             (HWND)(lp)
+#define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
+#define GET_WM_COMMAND_MPS(id, hwnd, cmd)       (WPARAM)MAKELONG(id, cmd), (LONG)(hwnd)
 
 #define WM_CTLCOLOR                             0x0019
 
@@ -35,10 +52,44 @@ extern "C" {
 #define GET_WM_CTLCOLOR_MSG(type)               (WORD)(WM_CTLCOLORMSGBOX+(type))
 #define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type)    (WPARAM)(hdc), (LONG)(hwnd)
 
+#define GET_WM_HSCROLL_CODE(wp, lp)             LOWORD(wp)
+#define GET_WM_HSCROLL_POS(wp, lp)              HIWORD(wp)
+#define GET_WM_HSCROLL_HWND(wp, lp)             (HWND)(lp)
+#define GET_WM_HSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LONG)(hwnd)
+
+#define GET_WM_MENUCHAR_CHAR(wp, lp)            (TCHAR)LOWORD(wp)
+#define GET_WM_MENUCHAR_HMENU(wp, lp)           (HMENU)(lp)
+#define GET_WM_MENUCHAR_FMENU(wp, lp)           (BOOL)HIWORD(wp)
+#define GET_WM_MENUCHAR_MPS(ch, hmenu, f)       (WPARAM)MAKELONG(ch, f), (LONG)(hmenu)
+
+#define GET_WM_MENUSELECT_CMD(wp, lp)           LOWORD(wp)
+#define GET_WM_MENUSELECT_FLAGS(wp, lp)         (UINT)(int)(short)HIWORD(wp)
+#define GET_WM_MENUSELECT_HMENU(wp, lp)         (HMENU)(lp)
+#define GET_WM_MENUSELECT_MPS(cmd, f, hmenu)    (WPARAM)MAKELONG(cmd, f), (LONG)(hmenu)
+
+#define GET_WM_MDIACTIVATE_FACTIVATE(hwnd, wp, lp) (lp == (LONG)hwnd)
+#define GET_WM_MDIACTIVATE_HWNDDEACT(wp, lp)    (HWND)(wp)
+#define GET_WM_MDIACTIVATE_HWNDACTIVATE(wp, lp) (HWND)(lp)
+#define GET_WM_MDIACTIVATE_MPS(f, hwndD, hwndA) (WPARAM)(hwndA), 0
+#define GET_WM_MDISETMENU_MPS(hmenuF, hmenuW)   (WPARAM)hmenuF, (LONG)hmenuW
+
+#define GET_WM_PARENTNOTIFY_MSG(wp, lp)         LOWORD(wp)
+#define GET_WM_PARENTNOTIFY_ID(wp, lp)          HIWORD(wp)
+#define GET_WM_PARENTNOTIFY_HWNDCHILD(wp, lp)   (HWND)(lp)
+#define GET_WM_PARENTNOTIFY_X(wp, lp)           (int)(short)LOWORD(lp)
+#define GET_WM_PARENTNOTIFY_Y(wp, lp)           (int)(short)HIWORD(lp)
+#define GET_WM_PARENTNOTIFY_MPS(msg, id, hwnd)  (WPARAM)MAKELONG(id, msg), (LONG)(hwnd)
+#define GET_WM_PARENTNOTIFY2_MPS(msg, x, y)     (WPARAM)MAKELONG(0, msg), MAKELONG(x, y)
+
 #define GET_WM_VKEYTOITEM_CODE(wp, lp)          (int)(short)LOWORD(wp)
 #define GET_WM_VKEYTOITEM_ITEM(wp, lp)          HIWORD(wp)
 #define GET_WM_VKEYTOITEM_HWND(wp, lp)          (HWND)(lp)
 #define GET_WM_VKEYTOITEM_MPS(code, item, hwnd) (WPARAM)MAKELONG(item, code), (LONG)(hwnd)
+
+#define GET_WM_VSCROLL_CODE(wp, lp)             LOWORD(wp)
+#define GET_WM_VSCROLL_POS(wp, lp)              HIWORD(wp)
+#define GET_WM_VSCROLL_HWND(wp, lp)             (HWND)(lp)
+#define GET_WM_VSCROLL_MPS(code, pos, hwnd)     (WPARAM)MAKELONG(code, pos), (LONG)(hwnd)
 
 /****** KERNEL Macro APIs ******************************************************/
 
@@ -88,6 +139,27 @@ extern "C" {
 #define     IsRButtonDown()  (GetKeyState(VK_RBUTTON) < 0)
 #define     IsMButtonDown()  (GetKeyState(VK_MBUTTON) < 0)
 
+#define     SetDlgMsgResult(hwnd, msg, result) (( \
+        (msg) == WM_CTLCOLORMSGBOX      || \
+        (msg) == WM_CTLCOLOREDIT        || \
+        (msg) == WM_CTLCOLORLISTBOX     || \
+        (msg) == WM_CTLCOLORBTN         || \
+        (msg) == WM_CTLCOLORDLG         || \
+        (msg) == WM_CTLCOLORSCROLLBAR   || \
+        (msg) == WM_CTLCOLORSTATIC      || \
+        (msg) == WM_COMPAREITEM         || \
+        (msg) == WM_VKEYTOITEM          || \
+        (msg) == WM_CHARTOITEM          || \
+        (msg) == WM_QUERYDRAGICON       || \
+        (msg) == WM_INITDIALOG             \
+    ) ? (BOOL)(result) : (SetWindowLong((hwnd), DWL_MSGRESULT, (LPARAM)(LRESULT)(result)), TRUE))
+
+#define     DefDlgProcEx(hwnd, msg, wParam, lParam, pfRecursion) \
+    (*(pfRecursion) = TRUE, DefDlgProc(hwnd, msg, wParam, lParam))
+
+#define     CheckDefDlgRecursion(pfRecursion) \
+    if (*(pfRecursion)) { *(pfRecursion) = FALSE; return FALSE; }
+
 #define     SubclassDialog(hwndDlg, lpfn) \
 		((DLGPROC)SetWindowLong(hwndDlg, DWL_DLGPROC, (LPARAM)(DLGPROC)(lpfn)))
 
@@ -99,6 +171,14 @@ extern "C" {
 #define     SelectBrush(hdc, hbr)   ((HBRUSH)SelectObject((hdc), (HGDIOBJ)(HBRUSH)(hbr)))
 #define     GetStockBrush(i)     ((HBRUSH)GetStockObject(i))
 
+#define     DeleteRgn(hrgn)                         DeleteObject((HGDIOBJ)(HRGN)(hrgn))
+
+#define     CopyRgn(hrgnDst, hrgnSrc)               CombineRgn(hrgnDst, hrgnSrc, 0, RGN_COPY)
+#define     IntersectRgn(hrgnResult, hrgnA, hrgnB)  CombineRgn(hrgnResult, hrgnA, hrgnB, RGN_AND)
+#define     SubtractRgn(hrgnResult, hrgnA, hrgnB)   CombineRgn(hrgnResult, hrgnA, hrgnB, RGN_DIFF)
+#define     UnionRgn(hrgnResult, hrgnA, hrgnB)      CombineRgn(hrgnResult, hrgnA, hrgnB, RGN_OR)
+#define     XorRgn(hrgnResult, hrgnA, hrgnB)        CombineRgn(hrgnResult, hrgnA, hrgnB, RGN_XOR)
+
 #define     DeletePalette(hpal)     DeleteObject((HGDIOBJ)(HPALETTE)(hpal))
 
 #define     DeleteFont(hfont)       DeleteObject((HGDIOBJ)(HFONT)(hfont))
@@ -108,92 +188,395 @@ extern "C" {
 #define     SelectBitmap(hdc, hbm)  ((HBITMAP)SelectObject((hdc), (HGDIOBJ)(HBITMAP)(hbm)))
 #define     InsetRect(lprc, dx, dy) InflateRect((lprc), -(dx), -(dy))
 
-/* COMBOBOX Message APIs */
-#define ComboBox_GetCount(hwndCtl)            \
-		((int)(DWORD)SendMessage((hwndCtl), CB_GETCOUNT, 0L, 0L))
 
-#define ComboBox_GetCurSel(hwndCtl)           \
-		((int)(DWORD)SendMessage((hwndCtl), CB_GETCURSEL, 0L, 0L))
+/* Button Message APIs */
 
-#define ComboBox_SetCurSel(hwndCtl, index)    \
-		((int)(DWORD)SendMessage((hwndCtl), CB_SETCURSEL, (WPARAM)(int)(index), 0L))
+#define Button_Enable(hwndCtl, fEnable) \
+	EnableWindow((hwndCtl), (fEnable))
 
-#define ComboBox_GetLBTextLen(hwndCtl, index) \
-		((int)(DWORD)SendMessage((hwndCtl), CB_GETLBTEXTLEN, (WPARAM)(int)(index), 0L))
+#define Button_GetCheck(hwndCtl) \
+	((int)SendMessage((hwndCtl), BM_GETCHECK, 0L, 0L))
+
+#define Button_GetState(hwndCtl) \
+	((int)SendMessage((hwndCtl), BM_GETSTATE, 0L, 0L))
+
+#define Button_GetText(hwndCtl, lpch, cchMax) \
+	GetWindowText((hwndCtl), (lpch), (cchMax))
+
+#define Button_GetTextLength(hwndCtl) \
+	GetWindowTextLength(hwndCtl)
+
+#define Button_SetCheck(hwndCtl, check) \
+	((void)SendMessage((hwndCtl), BM_SETCHECK, (WPARAM)(int)(check), 0L))
+
+#define Button_SetState(hwndCtl, state) \
+	((UINT)SendMessage((hwndCtl), BM_SETSTATE, (WPARAM)(int)(state), 0L))
+
+#define Button_SetStyle(hwndCtl, style, fRedraw) \
+	((void)SendMessage((hwndCtl), BM_SETSTYLE, (WPARAM)LOWORD(style), MAKELPARAM(((fRedraw) ? TRUE : FALSE), 0)))
+
+#define Button_SetText(hwndCtl, lpsz) \
+	SetWindowText((hwndCtl), (lpsz))
+
+
+/* ComboBox Message APIs */
+
+#define ComboBox_AddItemData(hwndCtl, data) \
+	((int)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(data)))
+
+#define ComboBox_AddString(hwndCtl, lpsz) \
+	((int)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))    
 
 #define ComboBox_DeleteString(hwndCtl, index) \
-		((int)(DWORD)SendMessage((hwndCtl), CB_DELETESTRING, (WPARAM)(int)(index), 0L))
+	((int)SendMessage((hwndCtl), CB_DELETESTRING, (WPARAM)(int)(index), 0L))
+
+#define ComboBox_Dir(hwndCtl, attrs, lpszFileSpec) \
+	((int)SendMessage((hwndCtl), CB_DIR, (WPARAM)(UINT)(attrs), (LPARAM)(LPCTSTR)(lpszFileSpec)))
+
+#define ComboBox_Enable(hwndCtl, fEnable) \
+	EnableWindow((hwndCtl), (fEnable))
+
+#define ComboBox_FindItemData(hwndCtl, indexStart, data) \
+	((int)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(data)))
 
 #define ComboBox_FindString(hwndCtl, indexStart, lpszFind) \
-		((int)(DWORD)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind))) 
+	((int)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind))) 
 
-#define ComboBox_ResetContent(hwndCtl)      \
-		((int)(DWORD)SendMessage((hwndCtl), CB_RESETCONTENT, 0L, 0L))
-		 
-#define ComboBox_AddString(hwndCtl, lpsz)   \
-		((int)(DWORD)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))    
-#define ComboBox_GetLBTextLen(hwndCtl, index)       \
-		((int)(DWORD)SendMessage((hwndCtl), CB_GETLBTEXTLEN, (WPARAM)(int)(index), 0L))
-#define ComboBox_GetLBText(hwndCtl, index, lpszBuffer) \
-		((int)(DWORD)SendMessage((hwndCtl), CB_GETLBTEXT, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpszBuffer)))
+#define ComboBox_FindStringExact(hwndCtl, indexStart, lpszFind) \
+	((int)SendMessage((hwndCtl), CB_FINDSTRINGEXACT, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
 
-#define ComboBox_GetDroppedState(hwndCtl)             \
-           ((BOOL)(DWORD)SendMessage((hwndCtl), CB_GETDROPPEDSTATE, 0L, 0L))
+#define ComboBox_GetCount(hwndCtl) \
+	((int)SendMessage((hwndCtl), CB_GETCOUNT, 0L, 0L))
+
+#define ComboBox_GetCurSel(hwndCtl) \
+	((int)SendMessage((hwndCtl), CB_GETCURSEL, 0L, 0L))
+
 #define ComboBox_GetDroppedControlRect(hwndCtl, lprc) \
-	   ((void)SendMessage((hwndCtl), CB_GETDROPPEDCONTROLRECT, 0L, (LPARAM)(RECT *)(lprc)))
+	((void)SendMessage((hwndCtl), CB_GETDROPPEDCONTROLRECT, 0L, (LPARAM)(RECT *)(lprc)))
 
-/****** ListBox control message APIs *****************************************/
+#define ComboBox_GetDroppedState(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), CB_GETDROPPEDSTATE, 0L, 0L))
 
-#define ListBox_Enable(hwndCtl, fEnable)            EnableWindow((hwndCtl), (fEnable))
-#define ListBox_GetCount(hwndCtl)          \
-	   ((int)(DWORD)SendMessage((hwndCtl), LB_GETCOUNT, 0L, 0L))
-#define ListBox_ResetContent(hwndCtl)      \
-	   ((BOOL)(DWORD)SendMessage((hwndCtl), LB_RESETCONTENT, 0L, 0L))
+#define ComboBox_GetEditSel(hwndCtl) \
+	((DWORD)SendMessage((hwndCtl), CB_GETEDITSEL, 0L, 0L))
 
-#define ListBox_GetItemData(hwndCtl, index)     \
-	((LRESULT)(DWORD)SendMessage((hwndCtl), LB_GETITEMDATA, (WPARAM)(int)(index), 0L))
+#define ComboBox_GetExtendedUI(hwndCtl) \
+	((UINT)SendMessage((hwndCtl), CB_GETEXTENDEDUI, 0L, 0L))
 
-#define ListBox_GetCurSel(hwndCtl)        \
-	((int)(DWORD)SendMessage((hwndCtl), LB_GETCURSEL, 0L, 0L))
-#define ListBox_SetCurSel(hwndCtl, index) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_SETCURSEL, (WPARAM)(int)(index), 0L))
+#define ComboBox_GetItemData(hwndCtl, index) \
+	((LRESULT)SendMessage((hwndCtl), CB_GETITEMDATA, (WPARAM)(int)(index), 0L))
 
-#define ListBox_AddString(hwndCtl, lpsz)           \
-	((int)(DWORD)SendMessage((hwndCtl), LB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))
-#define ListBox_InsertString(hwndCtl, index, lpsz) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpsz)))
-	 
-#define ListBox_AddItemData(hwndCtl, data) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_ADDSTRING, 0L, (LPARAM)(data)))
-#define ListBox_InsertItemData(hwndCtl, index, data) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(data)))
+#define ComboBox_GetItemHeight(hwndCtl) \
+	((int)SendMessage((hwndCtl), CB_GETITEMHEIGHT, 0L, 0L))
 
-#define ListBox_FindString(hwndCtl, indexStart, lpszFind) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
-#define ListBox_FindStringExact(hwndCtl, indexStart, lpszFind) \
-	((int)(DWORD)SendMessage((hwndCtl), LB_FINDSTRINGEXACT, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
+#define ComboBox_GetLBText(hwndCtl, index, lpszBuffer) \
+	((int)SendMessage((hwndCtl), CB_GETLBTEXT, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpszBuffer)))
 
-#define Edit_LineFromChar(hwndCtl, ich)   \
-	((int)(DWORD)SendMessage((hwndCtl), EM_LINEFROMCHAR, (WPARAM)(int)(ich), 0L))
-#define Edit_LineIndex(hwndCtl, line)     \
-	((int)(DWORD)SendMessage((hwndCtl), EM_LINEINDEX, (WPARAM)(int)(line), 0L))
-#define Edit_LineLength(hwndCtl, line)    \
-	((int)(DWORD)SendMessage((hwndCtl), EM_LINELENGTH, (WPARAM)(int)(line), 0L))
-	 
-/****** Edit control message APIs ********************************************/
+#define ComboBox_GetLBTextLen(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), CB_GETLBTEXTLEN, (WPARAM)(int)(index), 0L))
 
-#define Edit_SetSel(hwndCtl, ichStart, ichEnd)   \
-	((void)SendMessage((hwndCtl), EM_SETSEL, (ichStart), (ichEnd)))
+#define ComboBox_InsertItemData(hwndCtl, index, data) \
+	((int)SendMessage((hwndCtl), CB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(data)))
 
-#define Edit_GetText(hwndCtl, lpch, cchMax)     GetWindowText((hwndCtl), (lpch), (cchMax))
-#define Edit_GetTextLength(hwndCtl)             GetWindowTextLength(hwndCtl)
-#define Edit_SetText(hwndCtl, lpsz)             SetWindowText((hwndCtl), (lpsz))
-	 
-#define Edit_GetModify(hwndCtl)            \
-	((BOOL)(DWORD)SendMessage((hwndCtl), EM_GETMODIFY, 0L, 0L))
+#define ComboBox_LimitText(hwndCtl, cchLimit) \
+	((int)SendMessage((hwndCtl), CB_LIMITTEXT, (WPARAM)(int)(cchLimit), 0L))
+
+#define ComboBox_GetText(hwndCtl, lpch, cchMax) \
+	GetWindowText((hwndCtl), (lpch), (cchMax))
+
+#define ComboBox_GetTextLength(hwndCtl) \
+	GetWindowTextLength(hwndCtl)
+
+#define ComboBox_InsertString(hwndCtl, index, lpsz) \
+	((int)SendMessage((hwndCtl), CB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpsz)))
+
+#define ComboBox_LimitText(hwndCtl, cchLimit) \
+	((int)SendMessage((hwndCtl), CB_LIMITTEXT, (WPARAM)(int)(cchLimit), 0L))
+
+#define ComboBox_ResetContent(hwndCtl) \
+	((int)SendMessage((hwndCtl), CB_RESETCONTENT, 0L, 0L))
+
+#define ComboBox_SelectItemData(hwndCtl, indexStart, data) \
+	((int)SendMessage((hwndCtl), CB_SELECTSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(data)))
+
+#define ComboBox_SelectString(hwndCtl, indexStart, lpszSelect) \
+	((int)SendMessage((hwndCtl), CB_SELECTSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszSelect)))
+
+#define ComboBox_SetCurSel(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), CB_SETCURSEL, (WPARAM)(int)(index), 0L))
+
+#define ComboBox_SetEditSel(hwndCtl, ichStart, ichEnd) \
+	((int)SendMessage((hwndCtl), CB_SETEDITSEL, 0L, MAKELPARAM((ichStart), (ichEnd))))
+
+#define ComboBox_SetExtendedUI(hwndCtl, flags) \
+	((int)SendMessage((hwndCtl), CB_SETEXTENDEDUI, (WPARAM)(UINT)(flags), 0L))
+
+#define ComboBox_SetItemData(hwndCtl, index, data) \
+	((int)SendMessage((hwndCtl), CB_SETITEMDATA, (WPARAM)(int)(index), (LPARAM)(DWORD)(data)))
+
+#define ComboBox_SetItemHeight(hwndCtl, index, cyItem) \
+	((int)SendMessage((hwndCtl), CB_SETITEMHEIGHT, (WPARAM)(int)(index), (LPARAM)(int)cyItem))
+
+#define ComboBox_SetText(hwndCtl, lpsz) \
+	SetWindowText((hwndCtl), (lpsz))
+
+#define ComboBox_ShowDropdown(hwndCtl, fShow) \
+	((BOOL)SendMessage((hwndCtl), CB_SHOWDROPDOWN, (WPARAM)(BOOL)(fShow), 0L))
+
+
+/* Edit Message APIs */
+
+#define Edit_CanUndo(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), EM_CANUNDO, 0L, 0L))
+
+#define Edit_EmptyUndoBuffer(hwndCtl) \
+	((void)SendMessage((hwndCtl), EM_EMPTYUNDOBUFFER, 0L, 0L))
+
+#define Edit_Enable(hwndCtl, fEnable) \
+	EnableWindow((hwndCtl), (fEnable))
+
+#define Edit_FmtLines(hwndCtl, fAddEOL) \
+	((BOOL)SendMessage((hwndCtl), EM_FMTLINES, (WPARAM)(BOOL)(fAddEOL), 0L))
+
+#define Edit_GetFirstVisibleLine(hwndCtl) \
+	((int)SendMessage((hwndCtl), EM_GETFIRSTVISIBLELINE, 0L, 0L))
+
+#define Edit_GetHandle(hwndCtl) \
+	((HLOCAL)SendMessage((hwndCtl), EM_GETHANDLE, 0L, 0L))
+
+#define Edit_GetLine(hwndCtl, line, lpch, cchMax) \
+	((*((int *)(lpch)) = (cchMax)), ((int)SendMessage((hwndCtl), EM_GETLINE, (WPARAM)(int)(line), (LPARAM)(LPTSTR)(lpch))))
+
+#define Edit_GetModify(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), EM_GETMODIFY, 0L, 0L))
+
+#define Edit_GetPasswordChar(hwndCtl) \
+	((TCHAR)SendMessage((hwndCtl), EM_GETPASSWORDCHAR, 0L, 0L))
+
+#define Edit_GetRect(hwndCtl, lprc) \
+	((void)SendMessage((hwndCtl), EM_GETRECT, 0L, (LPARAM)(RECT *)(lprc)))
+
+#define Edit_GetSel(hwndCtl) \
+	((DWORD)SendMessage((hwndCtl), EM_GETSEL, 0L, 0L))
+
+#define Edit_GetText(hwndCtl, lpch, cchMax) \
+	GetWindowText((hwndCtl), (lpch), (cchMax))
+
+#define Edit_GetTextLength(hwndCtl) \
+	GetWindowTextLength(hwndCtl)
+
+#define Edit_GetWordBreakProc(hwndCtl) \
+	((EDITWORDBREAKPROC)SendMessage((hwndCtl), EM_GETWORDBREAKPROC, 0L, 0L))
+
+#define Edit_LimitText(hwndCtl, cchMax) \
+	((void)SendMessage((hwndCtl), EM_LIMITTEXT, (WPARAM)(UINT)(cchMax), 0L))
+
+#define Edit_LineFromChar(hwndCtl, ich) \
+	((int)SendMessage((hwndCtl), EM_LINEFROMCHAR, (WPARAM)(int)(ich), 0L))
+
+#define Edit_LineIndex(hwndCtl, line) \
+	((int)SendMessage((hwndCtl), EM_LINEINDEX, (WPARAM)(int)(line), 0L))
+
+#define Edit_GetLineCount(hwndCtl) \
+	((int)SendMessage((hwndCtl), EM_GETLINECOUNT, 0L, 0L))
+
+#define Edit_LineLength(hwndCtl, line) \
+	((int)SendMessage((hwndCtl), EM_LINELENGTH, (WPARAM)(int)(line), 0L))
+
+#define Edit_ReplaceSel(hwndCtl, lpszReplace) \
+	((void)SendMessage((hwndCtl), EM_REPLACESEL, 0L, (LPARAM)(LPCTSTR)(lpszReplace)))
+
+#define Edit_Scroll(hwndCtl, dv, dh) \
+	((void)SendMessage((hwndCtl), EM_LINESCROLL, (WPARAM)(int)(dh), (LPARAM)(int)(dv)))
+
+#define Edit_ScrollCaret(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), EM_SCROLLCARET, 0, 0L))
+
+#define Edit_SetHandle(hwndCtl, h) \
+	((void)SendMessage((hwndCtl), EM_SETHANDLE, (WPARAM)(UINT)(HLOCAL)(h), 0L))
+
 #define Edit_SetModify(hwndCtl, fModified) \
 	((void)SendMessage((hwndCtl), EM_SETMODIFY, (WPARAM)(UINT)(fModified), 0L))
 
+#define Edit_SetPasswordChar(hwndCtl, ch) \
+	((void)SendMessage((hwndCtl), EM_SETPASSWORDCHAR, (WPARAM)(UINT)(ch), 0L))
+
+#define Edit_SetReadOnly(hwndCtl, fReadOnly) \
+	((BOOL)SendMessage((hwndCtl), EM_SETREADONLY, (WPARAM)(BOOL)(fReadOnly), 0L))
+
+#define Edit_SetRect(hwndCtl, lprc) \
+	((void)SendMessage((hwndCtl), EM_SETRECT, 0L, (LPARAM)(const RECT *)(lprc)))
+
+#define Edit_SetRectNoPaint(hwndCtl, lprc) \
+	((void)SendMessage((hwndCtl), EM_SETRECTNP, 0L, (LPARAM)(const RECT *)(lprc)))
+
+#define Edit_SetSel(hwndCtl, ichStart, ichEnd) \
+	((void)SendMessage((hwndCtl), EM_SETSEL, (ichStart), (ichEnd)))
+
+#define Edit_SetTabStops(hwndCtl, cTabs, lpTabs) \
+	((void)SendMessage((hwndCtl), EM_SETTABSTOPS, (WPARAM)(int)(cTabs), (LPARAM)(const int *)(lpTabs)))
+
+#define Edit_SetText(hwndCtl, lpsz) \
+	SetWindowText((hwndCtl), (lpsz))
+
+#define Edit_SetWordBreakProc(hwndCtl, lpfnWordBreak) \
+	((void)SendMessage((hwndCtl), EM_SETWORDBREAKPROC, 0L, (LPARAM)(EDITWORDBREAKPROC)(lpfnWordBreak)))
+
+#define Edit_Undo(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), EM_UNDO, 0L, 0L))
+
+
+/* ListBox Message APIs */
+
+#define ListBox_AddItemData(hwndCtl, data) \
+	((int)SendMessage((hwndCtl), LB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(data)))
+
+#define ListBox_AddString(hwndCtl, lpsz) \
+	((int)SendMessage((hwndCtl), LB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))
+
+#define ListBox_DeleteString(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_DELETESTRING, (WPARAM)(int)(index), 0L))
+
+#define ListBox_Dir(hwndCtl, attrs, lpszFileSpec) \
+	((int)SendMessage((hwndCtl), LB_DIR, (WPARAM)(UINT)(attrs), (LPARAM)(LPCTSTR)(lpszFileSpec)))
+
+#define ListBox_Enable(hwndCtl, fEnable) \
+	EnableWindow((hwndCtl), (fEnable))
+
+#define ListBox_FindItemData(hwndCtl, indexStart, data) \
+	((int)SendMessage((hwndCtl), LB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(data)))
+
+#define ListBox_FindString(hwndCtl, indexStart, lpszFind) \
+	((int)SendMessage((hwndCtl), LB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
+
+#define ListBox_FindStringExact(hwndCtl, indexStart, lpszFind) \
+	((int)SendMessage((hwndCtl), LB_FINDSTRINGEXACT, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
+
+#define ListBox_GetCaretIndex(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETCARETINDEX, 0L, 0L))
+
+#define ListBox_GetCurSel(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETCURSEL, 0L, 0L))
+
+#define ListBox_GetCount(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETCOUNT, 0L, 0L))
+
+#define ListBox_GetHorizontalExtent(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETHORIZONTALEXTENT, 0L, 0L))
+
+#define ListBox_GetItemData(hwndCtl, index) \
+	((LRESULT)SendMessage((hwndCtl), LB_GETITEMDATA, (WPARAM)(int)(index), 0L))
+
+#define ListBox_GetItemHeight(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_GETITEMHEIGHT, (WPARAM)(int)(index), 0L))
+
+#define ListBox_GetItemRect(hwndCtl, index, lprc) \
+	((int)SendMessage((hwndCtl), LB_GETITEMRECT, (WPARAM)(int)(index), (LPARAM)(RECT *)(lprc)))
+
+#define ListBox_GetSel(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_GETSEL, (WPARAM)(int)(index), 0L))
+
+#define ListBox_GetSelCount(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETSELCOUNT, 0L, 0L))
+
+#define ListBox_GetSelItems(hwndCtl, cItems, lpItems) \
+	((int)SendMessage((hwndCtl), LB_GETSELITEMS, (WPARAM)(int)(cItems), (LPARAM)(int *)(lpItems)))
+
+#define ListBox_GetText(hwndCtl, index, lpszBuffer) \
+	((int)SendMessage((hwndCtl), LB_GETTEXT, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpszBuffer)))
+
+#define ListBox_GetTextLen(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_GETTEXTLEN, (WPARAM)(int)(index), 0L))
+
+#define ListBox_GetTopIndex(hwndCtl) \
+	((int)SendMessage((hwndCtl), LB_GETTOPINDEX, 0L, 0L))
+
+#define ListBox_InsertItemData(hwndCtl, index, data) \
+	((int)SendMessage((hwndCtl), LB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(data)))
+
+#define ListBox_InsertString(hwndCtl, index, lpsz) \
+	((int)SendMessage((hwndCtl), LB_INSERTSTRING, (WPARAM)(int)(index), (LPARAM)(LPCTSTR)(lpsz)))
+
+#define ListBox_ResetContent(hwndCtl) \
+	((BOOL)SendMessage((hwndCtl), LB_RESETCONTENT, 0L, 0L))
+
+#define ListBox_SelectItemData(hwndCtl, indexStart, data) \
+	((int)SendMessage((hwndCtl), LB_SELECTSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(data)))
+
+#define ListBox_SelectString(hwndCtl, indexStart, lpszFind) \
+	((int)SendMessage((hwndCtl), LB_SELECTSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
+
+#define ListBox_SelItemRange(hwndCtl, fSelect, first, last) \
+	((int)SendMessage((hwndCtl), LB_SELITEMRANGE, (WPARAM)(BOOL)(fSelect), MAKELPARAM((first), (last))))
+
+#define ListBox_SetCaretIndex(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_SETCARETINDEX, (WPARAM)(int)(index), 0L))
+
+#define ListBox_SetColumnWidth(hwndCtl, cxColumn) \
+	((void)SendMessage((hwndCtl), LB_SETCOLUMNWIDTH, (WPARAM)(int)(cxColumn), 0L))
+
+#define ListBox_SetCurSel(hwndCtl, index) \
+	((int)SendMessage((hwndCtl), LB_SETCURSEL, (WPARAM)(int)(index), 0L))
+
+#define ListBox_SetHorizontalExtent(hwndCtl, cxExtent) \
+	((void)SendMessage((hwndCtl), LB_SETHORIZONTALEXTENT, (WPARAM)(int)(cxExtent), 0L))
+
+#define ListBox_SetItemData(hwndCtl, index, data) \
+	((int)SendMessage((hwndCtl), LB_SETITEMDATA, (WPARAM)(int)(index), (LPARAM)(DWORD)(data)))
+
+#define ListBox_SetItemHeight(hwndCtl, index, cy) \
+	((int)SendMessage((hwndCtl), LB_SETITEMHEIGHT, (WPARAM)(int)(index), MAKELPARAM((cy), 0)))
+
+#define ListBox_SetSel(hwndCtl, fSelect, index) \
+	((int)SendMessage((hwndCtl), LB_SETSEL, (WPARAM)(BOOL)(fSelect), (LPARAM)(UINT)(index)))
+
+#define ListBox_SetTabStops(hwndCtl, cTabs, lpTabs) \
+	((BOOL)SendMessage((hwndCtl), LB_SETTABSTOPS, (WPARAM)(int)(cTabs), (LPARAM)(int *)(lpTabs)))
+
+#define ListBox_SetTopIndex(hwndCtl, indexTop) \
+	((int)SendMessage((hwndCtl), LB_SETTOPINDEX, (WPARAM)(int)(indexTop), 0L))
+
+
+/* Scrollbar Message APIs */
+
+#define ScrollBar_Enable(hwndCtl, flags) \
+	EnableScrollBar((hwndCtl), SB_CTL, (flags))
+
+#define ScrollBar_GetPos(hwndCtl) \
+	GetScrollPos((hwndCtl), SB_CTL)
+
+#define ScrollBar_GetRange(hwndCtl, lpposMin, lpposMax) \
+	GetScrollRange((hwndCtl), SB_CTL, (lpposMin), (lpposMax))
+
+#define ScrollBar_SetPos(hwndCtl, pos, fRedraw) \
+	SetScrollPos((hwndCtl), SB_CTL, (pos), (fRedraw))
+
+#define ScrollBar_SetRange(hwndCtl, posMin, posMax, fRedraw) \
+	SetScrollRange((hwndCtl), SB_CTL, (posMin), (posMax), (fRedraw))
+
+#define ScrollBar_Show(hwndCtl, fShow) \
+	ShowWindow((hwndCtl), (fShow) ? SW_SHOWNORMAL : SW_HIDE)
+
+
+/* Static Message APIs */
+
+#define Static_Enable(hwndCtl, fEnable) \
+	EnableWindow((hwndCtl), (fEnable))
+
+#define Static_GetIcon(hwndCtl, hIcon) \
+	((HICON)SendMessage((hwndCtl), STM_GETICON, 0L, 0L))
+
+#define Static_GetText(hwndCtl, lpch, cchMax) \
+	GetWindowText((hwndCtl), (lpch), (cchMax))
+
+#define Static_GetTextLength(hwndCtl) \
+	GetWindowTextLength(hwndCtl)
+
+#define Static_SetIcon(hwndCtl, hIcon) \
+	((HICON)SendMessage((hwndCtl), STM_SETICON, (WPARAM)(HICON)(hIcon), 0L))
+
+#define Static_SetText(hwndCtl, lpsz) \
+	SetWindowText((hwndCtl), (lpsz))
 
 
 /****** Message crackers ****************************************************/
