@@ -42,7 +42,7 @@ type	win32
  39 stub CoReleaseMarshalData
  40 stub CoRevokeClassObject
  41 stub CoRevokeMallocSpy
- 42 stub CoSetState
+ 42 stdcall CoSetState(ptr) CoSetState32
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
  45 stub CoTaskMemRealloc

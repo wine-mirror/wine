@@ -647,3 +647,12 @@ HRESULT WINAPI CoGetState16(LPDWORD state)
     *state = 0;
     return S_OK;
 }
+/***********************************************************************
+ *           CoSetState32 [COM32.42]
+ */
+HRESULT WINAPI CoSetState32(LPDWORD state)
+{
+    FIXME(ole, "(%p),stub!\n", state);
+    *state = 0;
+    return S_OK;
+}
