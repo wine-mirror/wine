@@ -277,28 +277,40 @@ default: none
 .br
 default: none
 .br
-Used to specify which function will be excluded from a relay debuglog.
+Used to specify which functions will be excluded from a relay debug log.
 .PP
-.I format: """RelayInclude""=""<message names separated by semicolons>"""
+.I format: """RelayInclude""=""<function or dll.functions separated by semicolons>"""
+.br
+default: include all functions
+.br 
+Used to specify which functions will be included in a relay debug log.
+.PP
+.I format: """RelayFromExclude""=""<module names separated by semicolons>"""
 .br
 default: none
+.br
+Used to specify a set of modules whose calls are excluded from a relay debug log.
+.PP
+.I format: """RelayFromInclude""=""<module names separated by semicolons>"""
+.br
+default: include all modules
 .br 
-Used to specify which function will be included in relay debuglog.
+Used to specify the set of modules whose calls are included in a relay debug log.
 .PP
 .I format: """SnoopExclude""=""<message names separated by semicolons>"""
 .br
 default: none
 .br 
-Used to specify which function will be included in snoop debuglog.
+Used to specify which functions will be included in snoop debug log.
 .PP
 .I format: """SnoopInclude""=""<message names separated by semicolons>"""
 .br
-default: none
+default: include all functions
 .br 
-Used to specify which function will be included in snoop debuglog.
+Used to specify which functions will be included in snoop debug log.
 .PP
 For Relay and Snoop <dllname>.* includes or excludes the whole dll. Exclude
-entries overwrite Include Entries.
+entries overwrite Include entries.
 .br
 .PP
 .B [Tweak.Layout]

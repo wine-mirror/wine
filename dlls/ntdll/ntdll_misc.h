@@ -34,6 +34,12 @@ extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *tim
 /* module handling */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
 
+extern FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                                     DWORD exp_size, FARPROC proc, const char *user );
+extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
+                                     FARPROC origfun, DWORD ordinal );
+extern void RELAY_SetupDLL( const char *module );
+
 static inline HANDLE ntdll_get_process_heap(void)
 {
     HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;

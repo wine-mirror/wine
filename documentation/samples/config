@@ -207,6 +207,8 @@ WINE REGISTRY Version 2
 [Debug]
 ;"RelayExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
 ;"RelayInclude" = "user32.CreateWindowA"
+;"RelayFromExclude" = "user32;x11drv"
+;"RelayFromInclude" = "sol.exe"
 ;"SnoopExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
 ;"SpyExclude" = "WM_SIZE;WM_TIMER;"
 

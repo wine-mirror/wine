@@ -62,7 +62,7 @@ typedef	struct tagSNOOP_FUN {
 	/* unreached */
 	int		nrofargs;
 	FARPROC	origfun;
-	char		*name;
+	const char *name;
 } SNOOP_FUN;
 
 typedef struct tagSNOOP_DLL {
@@ -180,8 +180,13 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 	memset((*dll)->funs,0,size);
 }
 
-FARPROC
-SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
+FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
+                              FARPROC origfun, DWORD ordinal )
+{
+        int i;
+        const char *ename;
+        WORD *ordinals;
+        DWORD *names;
 	SNOOP_DLL			*dll = firstdll;
 	SNOOP_FUN			*fun;
         IMAGE_SECTION_HEADER *sec;
@@ -202,14 +207,26 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	}
 	if (!dll)	/* probably internal */
 		return origfun;
-	if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,name))
+
+        /* try to find a name for it */
+        ename = NULL;
+        names = (DWORD *)((char *)hmod + exports->AddressOfNames);
+        ordinals = (WORD *)((char *)hmod + exports->AddressOfNameOrdinals);
+        if (names) for (i = 0; i < exports->NumberOfNames; i++)
+        {
+            if (ordinals[i] == ordinal)
+            {
+                ename = (char *)hmod + names[i];
+                break;
+            }
+        }
+	if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,ename))
 		return origfun;
 	assert(ordinal < dll->nrofordinals);
 	fun = dll->funs+ordinal;
 	if (!fun->name)
 	  {
-	    fun->name = RtlAllocateHeap(ntdll_get_process_heap(),0,strlen(name)+1);
-	    strcpy( fun->name, name );
+	    fun->name = ename;
 	    fun->lcall	= 0xe8;
 	    /* NOTE: origreturn struct member MUST come directly after snoopentry */
 	    fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
@@ -330,7 +347,8 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 
 	context->Eip = (DWORD)fun->origfun;
 
-	DPRINTF("%04lx:CALL %s.%ld: %s(",GetCurrentThreadId(),dll->name,dll->ordbase+ordinal,fun->name);
+	if (fun->name) DPRINTF("%04lx:CALL %s.%s(",GetCurrentThreadId(),dll->name,fun->name);
+	else DPRINTF("%04lx:CALL %s.%ld(",GetCurrentThreadId(),dll->name,dll->ordbase+ordinal);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
@@ -353,6 +371,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(context->Eip - 5);
+        SNOOP_FUN *fun = &ret->dll->funs[ret->ordinal];
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
 	 * function it is too late anyway and we can just set '0' (which
@@ -365,10 +384,13 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 	if (ret->args) {
 		int	i,max;
 
-		DPRINTF("%04lx:RET  %s.%ld: %s(",
-		        GetCurrentThreadId(),
-		        ret->dll->name,ret->dll->ordbase+ret->ordinal,ret->dll->funs[ret->ordinal].name);
-		max = ret->dll->funs[ret->ordinal].nrofargs;
+                if (fun->name)
+                    DPRINTF("%04lx:RET  %s.%s(", GetCurrentThreadId(), ret->dll->name, fun->name);
+                else
+                    DPRINTF("%04lx:RET  %s.%ld(", GetCurrentThreadId(),
+                            ret->dll->name,ret->dll->ordbase+ret->ordinal);
+
+		max = fun->nrofargs;
 		if (max>16) max=16;
 
 		for (i=0;i<max;i++)
@@ -376,15 +398,23 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
                     SNOOP_PrintArg(ret->args[i]);
                     if (i<max-1) DPRINTF(",");
                 }
-		DPRINTF(") retval = %08lx ret=%08lx\n",
+		DPRINTF(") retval=%08lx ret=%08lx\n",
 			context->Eax,(DWORD)ret->origreturn );
 		RtlFreeHeap(ntdll_get_process_heap(),0,ret->args);
 		ret->args = NULL;
-	} else
-		DPRINTF("%04lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx\n",
+	}
+        else
+        {
+            if (fun->name)
+		DPRINTF("%04lx:RET  %s.%s() retval=%08lx ret=%08lx\n",
 			GetCurrentThreadId(),
-			ret->dll->name,ret->dll->ordbase+ret->ordinal,ret->dll->funs[ret->ordinal].name,
+			ret->dll->name, fun->name, context->Eax, (DWORD)ret->origreturn);
+            else
+		DPRINTF("%04lx:RET  %s.%ld() retval=%08lx ret=%08lx\n",
+			GetCurrentThreadId(),
+			ret->dll->name,ret->dll->ordbase+ret->ordinal,
 			context->Eax, (DWORD)ret->origreturn);
+        }
 	ret->origreturn = NULL; /* mark as empty */
 }
 
@@ -402,7 +432,9 @@ void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals, DWORD dw) {
 	FIXME("snooping works only on i386 for now.\n");
 }
 
-FARPROC SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
-	return origfun;
+FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
+                              FARPROC origfun, DWORD ordinal )
+{
+    return origfun;
 }
 #endif	/* !__i386__ */

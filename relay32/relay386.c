@@ -40,6 +40,9 @@ const char **debug_relay_includelist = NULL;
 const char **debug_snoop_excludelist = NULL;
 const char **debug_snoop_includelist = NULL;
 
+static const char **debug_from_relay_excludelist;
+static const char **debug_from_relay_includelist;
+
 /***********************************************************************
  *           build_list
  *
@@ -103,6 +106,8 @@ void RELAY_InitDebugLists(void)
     static const WCHAR RelayExcludeW[] = {'R','e','l','a','y','E','x','c','l','u','d','e',0};
     static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
     static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
+    static const WCHAR RelayFromIncludeW[] = {'R','e','l','a','y','F','r','o','m','I','n','c','l','u','d','e',0};
+    static const WCHAR RelayFromExcludeW[] = {'R','e','l','a','y','F','r','o','m','E','x','c','l','u','d','e',0};
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -141,6 +146,20 @@ void RELAY_InitDebugLists(void)
     {
         TRACE_(snoop)( "SnoopExclude = %s\n", debugstr_w(str) );
         debug_snoop_excludelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, RelayFromIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        TRACE("RelayFromInclude = %s\n", debugstr_w(str) );
+        debug_from_relay_includelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, RelayFromExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        TRACE( "RelayFromExclude = %s\n", debugstr_w(str) );
+        debug_from_relay_excludelist = build_list( str );
     }
 
     NtClose( hkey );
@@ -194,6 +213,40 @@ static BOOL check_relay_include( const char *module, const char *func )
         {
             if (!strcmp( *listitem, func )) return !show;
         }
+    }
+    return show;
+}
+
+
+/***********************************************************************
+ *           check_relay_from_module
+ *
+ * Check if calls from a given module must be included in the relay output.
+ */
+static BOOL check_relay_from_module( const char *module )
+{
+    const char **listitem;
+    BOOL show;
+
+    if (!debug_from_relay_excludelist && !debug_from_relay_includelist) return TRUE;
+    if (debug_from_relay_excludelist)
+    {
+        show = TRUE;
+        listitem = debug_from_relay_excludelist;
+    }
+    else
+    {
+        show = FALSE;
+        listitem = debug_from_relay_includelist;
+    }
+    for(; *listitem; listitem++)
+    {
+        int len;
+
+        if (!strcasecmp( *listitem, module )) return !show;
+        len = strlen( *listitem );
+        if (!strncasecmp( *listitem, module, len ) && !strcasecmp( module + len, ".dll" ))
+            return !show;
     }
     return show;
 }
@@ -548,6 +601,26 @@ static BOOL is_register_entry_point( const BYTE *addr )
 
 
 /***********************************************************************
+ *           RELAY_GetProcAddress
+ *
+ * Return the proc address to use for a given function.
+ */
+FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                              DWORD exp_size, FARPROC proc, const char *user )
+{
+    DEBUG_ENTRY_POINT *debug = (DEBUG_ENTRY_POINT *)proc;
+    DEBUG_ENTRY_POINT *list = (DEBUG_ENTRY_POINT *)((char *)exports + exp_size);
+
+    if (debug < list || debug >= list + exports->NumberOfFunctions) return proc;
+    if (list + (debug - list) != debug) return proc;  /* not a valid address */
+    if (check_relay_from_module( user )) return proc;  /* we want to relay it */
+    if (!debug->call) return proc;  /* not a normal function */
+    if (debug->call != 0xe8 && debug->call != 0xe9) return proc; /* not a debug thunk at all */
+    return debug->orig;
+}
+
+
+/***********************************************************************
  *           RELAY_SetupDLL
  *
  * Setup relay debugging for a built-in dll.
@@ -601,6 +674,12 @@ void RELAY_SetupDLL( const char *module )
 }
 
 #else  /* __i386__ */
+
+FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                              DWORD exp_size, FARPROC proc, const char *user )
+{
+    return proc;
+}
 
 void RELAY_SetupDLL( const char *module )
 {

@@ -57,6 +57,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 
 static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
 static WINE_MODREF *cached_modref;
+static WINE_MODREF *current_modref;
 
 static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm );
 static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
@@ -114,8 +115,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
 
     if (!(wm = MODULE_FindModule( mod_name )))
     {
-        WINE_MODREF *user = get_modref( module );
-        ERR("module not found for forward '%s' used by '%s'\n", forward, user->filename );
+        ERR("module not found for forward '%s' used by '%s'\n", forward, current_modref->filename );
         return NULL;
     }
     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
@@ -124,10 +124,9 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
 
     if (!proc)
     {
-        WINE_MODREF *user = get_modref( module );
         ERR("function not found for forward '%s' used by '%s'."
             " If you are using builtin '%s', try using the native one instead.\n",
-            forward, user->filename, user->modname );
+            forward, current_modref->filename, current_modref->modname );
     }
     return proc;
 }
@@ -144,7 +143,6 @@ static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *expo
                                     DWORD exp_size, int ordinal )
 {
     FARPROC proc;
-    WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
     DWORD *functions = get_rva( module, exports->AddressOfFunctions );
 
     if (ordinal >= exports->NumberOfFunctions)
@@ -162,19 +160,11 @@ static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *expo
 
     if (TRACE_ON(snoop))
     {
-        /* try to find a name for it */
-        int i;
-        char *ename = "@";
-        DWORD *name = get_rva( module, exports->AddressOfNames );
-        if (name) for (i = 0; i < exports->NumberOfNames; i++)
-        {
-            if (ordinals[i] == ordinal)
-            {
-                ename = get_rva( module, name[i] );
-                break;
-            }
-        }
-        proc = SNOOP_GetProcAddress( module, ename, ordinal, proc );
+        proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal );
+    }
+    if (TRACE_ON(relay) && current_modref)
+    {
+        proc = RELAY_GetProcAddress( module, exports, exp_size, proc, current_modref->modname );
     }
     return proc;
 }
@@ -235,12 +225,12 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr )
     status = load_dll( name, 0, &wmImp );
     if (status)
     {
-        WINE_MODREF *user = get_modref( module );
         if (status == STATUS_NO_SUCH_FILE)
-            ERR("Module (file) %s (which is needed by %s) not found\n", name, user->filename);
+            ERR("Module (file) %s (which is needed by %s) not found\n",
+                name, current_modref->filename);
         else
             ERR("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
-                name, user->filename, status);
+                name, current_modref->filename, status);
         return NULL;
     }
 
@@ -266,9 +256,8 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr )
                                                                    ordinal - exports->Base );
             if (!thunk_list->u1.Function)
             {
-                WINE_MODREF *user = get_modref( module );
                 ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
-                    name, ordinal, user->filename );
+                    name, ordinal, current_modref->filename );
                 thunk_list->u1.Function = (PDWORD)0xdeadbeef;
             }
         }
@@ -281,9 +270,8 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr )
                                                                  pe_name->Name, pe_name->Hint );
             if (!thunk_list->u1.Function)
             {
-                WINE_MODREF *user = get_modref( module );
                 ERR("No implementation for %s.%s imported from %s, setting to 0xdeadbeef\n",
-                    name, pe_name->Name, user->filename );
+                    name, pe_name->Name, current_modref->filename );
                 thunk_list->u1.Function = (PDWORD)0xdeadbeef;
             }
         }
@@ -304,6 +292,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 {
     int i, nb_imports;
     IMAGE_IMPORT_DESCRIPTOR *imports;
+    WINE_MODREF *prev;
     DWORD size;
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
@@ -328,11 +317,14 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     /* load the imported modules. They are automatically
      * added to the modref list of the process.
      */
+    prev = current_modref;
+    current_modref = wm;
     for (i = 0; i < nb_imports; i++)
     {
-        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i] ))) return 1;
+        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i] ))) break;
     }
-    return 0;
+    current_modref = prev;
+    return (i < nb_imports);
 }
 
 
@@ -403,6 +395,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 {
     static const char * const typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH",
                                              "THREAD_ATTACH", "THREAD_DETACH" };
+    char mod_name[32];
     BOOL retv = TRUE;
     DLLENTRYPROC entry = wm->ldr.EntryPoint;
     void *module = wm->ldr.BaseAddress;
@@ -412,22 +405,25 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
     if (!entry || !(wm->ldr.Flags & LDR_IMAGE_IS_DLL)) return TRUE;
 
-    TRACE("(%p (%s),%s,%p) - CALL\n", module, wm->modname, typeName[type], lpReserved );
-
     if (TRACE_ON(relay))
-        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p,type=%ld,res=%p)\n",
-                GetCurrentThreadId(), entry, module, type, lpReserved );
+    {
+        size_t len = max( strlen(wm->modname), sizeof(mod_name)-1 );
+        memcpy( mod_name, wm->modname, len );
+        mod_name[len] = 0;
+        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p (%s),type=%ld,res=%p)\n",
+                GetCurrentThreadId(), entry, module, mod_name, type, lpReserved );
+    }
+    else TRACE("(%p (%s),%s,%p) - CALL\n", module, wm->modname, typeName[type], lpReserved );
 
     retv = entry( module, type, lpReserved );
-
-    if (TRACE_ON(relay))
-        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p,type=%ld,res=%p) retval=%x\n",
-                GetCurrentThreadId(), entry, module, type, lpReserved, retv );
 
     /* The state of the module list may have changed due to the call
        to the dll. We cannot assume that this module has not been
        deleted.  */
-    TRACE("(%p,%s,%p) - RETURN %d\n", module, typeName[type], lpReserved, retv );
+    if (TRACE_ON(relay))
+        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p (%s),type=%ld,res=%p) retval=%x\n",
+                GetCurrentThreadId(), entry, module, mod_name, type, lpReserved, retv );
+    else TRACE("(%p,%s,%p) - RETURN %d\n", module, typeName[type], lpReserved, retv );
 
     return retv;
 }
@@ -494,9 +490,11 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     /* Call DLL entry point */
     if ( retv )
     {
+        WINE_MODREF *prev = current_modref;
+        current_modref = wm;
         retv = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
-        if ( retv )
-            wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
+        if (retv) wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
+        current_modref = prev;
     }
 
     /* Re-insert MODREF at head of list */

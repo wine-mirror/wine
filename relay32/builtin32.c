@@ -42,8 +42,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-extern void RELAY_SetupDLL( const char *module );
-
 static HMODULE main_module;
 static NTSTATUS last_status; /* use to gather all errors in callback */
 
