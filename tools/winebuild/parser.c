@@ -460,7 +460,6 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     if (*token == '-' && !(token = parse_spec_flags( odp ))) goto error;
 
     odp->name = xstrdup( token );
-    remove_stdcall_decoration( odp->name );
     odp->lineno = current_line;
     odp->ordinal = ordinal;
 
