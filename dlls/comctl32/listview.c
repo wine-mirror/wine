@@ -2984,7 +2984,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
         LISTVIEW_SetSelection(infoPtr, nItem);
       }
     }
-    ListView_EnsureVisible(infoPtr->hwndSelf, nItem, FALSE);
+    LISTVIEW_EnsureVisible(infoPtr, nItem, FALSE);
   }
 
   UpdateWindow(infoPtr->hwndSelf); /* update client area */
@@ -3088,6 +3088,7 @@ static inline BOOL is_assignable_item(const LVITEMW *lpLVItem, LONG lStyle)
  */
 static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL isNew, BOOL isW, BOOL *bChanged)
 {
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     ITEM_INFO *lpItem;
     NMLISTVIEW nmlv;
     UINT uChanged = 0;
@@ -3190,7 +3191,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	    {
 		LISTVIEW_SetItemFocus(infoPtr, -1);
 		infoPtr->nFocusedItem = lpLVItem->iItem;
-    	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, FALSE);
+    	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, uView == LVS_LIST);
 	    }
 	    else if (infoPtr->nFocusedItem == lpLVItem->iItem)
 		infoPtr->nFocusedItem = -1;
@@ -8126,6 +8127,8 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
+    TRACE("uView=%d, rcList(old)=%s\n", uView, debugrect(&infoPtr->rcList));
+    
     GetClientRect(infoPtr->hwndSelf, &infoPtr->rcList);
 
     if (uView == LVS_LIST)
@@ -8141,7 +8144,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
-    else if (uView == LVS_REPORT)
+    else if (uView == LVS_REPORT && !(infoPtr->dwStyle & LVS_NOCOLUMNHEADER))
     {
 	HDLAYOUT hl;
 	WINDOWPOS wp;
@@ -8152,9 +8155,10 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 
 	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 
-	if (!(infoPtr->dwStyle & LVS_NOCOLUMNHEADER))
-	    infoPtr->rcList.top = max(wp.cy, 0);
+	infoPtr->rcList.top = max(wp.cy, 0);
     }
+
+    TRACE("  rcList=%s\n", debugrect(&infoPtr->rcList));
 }
 
 /***
@@ -8233,7 +8237,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     }
 
     if (uNewView == LVS_REPORT)
-	ShowWindow(infoPtr->hwndHeader, (LVS_NOCOLUMNHEADER & lpss->styleNew) ? SW_HIDE : SW_SHOWNORMAL);
+	ShowWindow(infoPtr->hwndHeader, (lpss->styleNew & LVS_NOCOLUMNHEADER) ? SW_HIDE : SW_SHOWNORMAL);
      
     if ( (uNewView == LVS_ICON || uNewView == LVS_SMALLICON) &&
 	 (uNewView != uOldView || ((lpss->styleNew ^ lpss->styleOld) & LVS_ALIGNMASK)) )
