@@ -3,16 +3,27 @@
  *
  * Copyright 1996 Marcus Meissner
  *
- * Mar 31, 1999. Ove Kåven <ovek@arcticnet.no>
- * - Implemented buffers and EnableCommNotification.
- *
  * Apr 3, 1999.  Lawson Whitney <lawson_whitney@juno.com>
  * - Fixed the modem control part of EscapeCommFunction16.
+ *
+ * Mar 31, 1999. Ove Kåven <ovek@arcticnet.no>
+ * - Implemented buffers and EnableCommNotification.
  *
  * Mar 3, 1999. Ove Kåven <ovek@arcticnet.no>
  * - Use port indices instead of unixfds for win16
  * - Moved things around (separated win16 and win32 routines)
  * - Added some hints on how to implement buffers and EnableCommNotification.
+ *
+ * Oktober 98, Rein Klazes [RHK]
+ * A program that wants to monitor the modem status line (RLSD/DCD) may
+ * poll the modem status register in the commMask structure. I update the bit
+ * in GetCommError, waiting for an implementation of communication events.
+ * 
+ * July 6, 1998. Fixes and comments by Valentijn Sessink
+ *                                     <vsessink@ic.uva.nl> [V]
+ *
+ * August 12, 1997.  Take a bash at SetCommEventMask - Lawson Whitney
+ *                                     <lawson_whitney@juno.com>
  *
  * May 26, 1997.  Fixes and comments by Rick Richardson <rick@dgii.com> [RER]
  * - ptr->fd wasn't getting cleared on close.
@@ -20,16 +31,6 @@
  *   IMHO, they are still wrong, but they at least implement the RXCHAR
  *   event and return I/O queue sizes, which makes the app I'm interested
  *   in (analog devices EZKIT DSP development system) work.
- *
- * August 12, 1997.  Take a bash at SetCommEventMask - Lawson Whitney
- *                                     <lawson_whitney@juno.com>
- * July 6, 1998. Fixes and comments by Valentijn Sessink
- *                                     <vsessink@ic.uva.nl> [V]
- * Oktober 98, Rein Klazes [RHK]
- * A program that wants to monitor the modem status line (RLSD/DCD) may
- * poll the modem status register in the commMask structure. I update the bit
- * in GetCommError, waiting for an implementation of communication events.
- * 
  */
 
 #include "config.h"
@@ -231,7 +232,7 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
  *
  * RETURNS
  *
- *  True on success, false on an malformed control string.
+ *  True on success, false on a malformed control string.
  */
 BOOL WINAPI BuildCommDCBA(
     LPCSTR device, /* [in] The ascii device control string used to update the DCB. */
@@ -244,7 +245,7 @@ BOOL WINAPI BuildCommDCBA(
  *         BuildCommDCBAndTimeoutsA	(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
- *  ascii device control string.  Taking time out values from a time outs
+ *  ascii device control string.  Taking timeout values from a timeouts
  *  struct if desired by the control string.
  *
  * RETURNS
@@ -254,7 +255,7 @@ BOOL WINAPI BuildCommDCBA(
 BOOL WINAPI BuildCommDCBAndTimeoutsA(
     LPCSTR         device,     /* [in] The ascii device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] The time outs to use if asked to set them by the control string. */
+    LPCOMMTIMEOUTS lptimeouts) /* [in] The timeouts to use if asked to set them by the control string. */
 {
 	int	port;
 	char	*ptr,*temp;
@@ -337,7 +338,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
  *         BuildCommDCBAndTimeoutsW		(KERNEL32.@)
  *
  *  Updates a device control block data structure with values from an
- *  unicode device control string.  Taking time out values from a time outs
+ *  unicode device control string.  Taking timeout values from a timeouts
  *  struct if desired by the control string.
  *
  * RETURNS
@@ -347,7 +348,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 BOOL WINAPI BuildCommDCBAndTimeoutsW(
     LPCWSTR        devid,      /* [in] The unicode device control string. */
     LPDCB          lpdcb,      /* [out] The device control block to be updated. */
-    LPCOMMTIMEOUTS lptimeouts) /* [in] The time outs to use if asked to set them by the control string. */
+    LPCOMMTIMEOUTS lptimeouts) /* [in] The timeouts to use if asked to set them by the control string. */
 {
 	BOOL ret = FALSE;
 	LPSTR	devidA;
@@ -740,8 +741,8 @@ BOOL WINAPI SetupComm(
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.@)
  *
- *  Obtain the events associated with a communication device that will cause a call
- *  WaitCommEvent to return.
+ *  Obtain the events associated with a communication device that will cause
+ *  a call WaitCommEvent to return.
  *
  *  RETURNS
  *
@@ -780,7 +781,7 @@ BOOL WINAPI GetCommMask(
  */
 BOOL WINAPI SetCommMask(
     HANDLE handle,  /* [in] The communications device.  */
-    DWORD  evtmask) /* [in] The events that to be monitored. */
+    DWORD  evtmask) /* [in] The events that are to be monitored. */
 {
     BOOL ret;
 
@@ -910,7 +911,7 @@ BOOL WINAPI SetCommState(
 			break;		
 #endif
 #ifdef B460800
-		case 460600:
+		case 460800:
 			port.c_cflag |= B460800;
 			break;		
 #endif
@@ -1348,14 +1349,14 @@ BOOL WINAPI TransmitCommChar(
     HANDLE hComm,      /* [in] The communication device in need of a command character. */
     CHAR   chTransmit) /* [in] The character to transmit. */
 {
-    	FIXME("(%x,'%c'), use win32 handle!\n",hComm,chTransmit);
+    	FIXME("(%x,'%c'), stub ! Use win32 handle!\n",hComm,chTransmit);
 	return TRUE;
 }
 
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.@)
  *
- *  Obtains the request time out values for the communications device.
+ *  Obtains the request timeout values for the communications device.
  *
  * RETURNS
  *
@@ -1364,7 +1365,7 @@ BOOL WINAPI TransmitCommChar(
  */
 BOOL WINAPI GetCommTimeouts(
     HANDLE         hComm,      /* [in] The communications device. */
-    LPCOMMTIMEOUTS lptimeouts) /* [out] The struct of request time outs. */
+    LPCOMMTIMEOUTS lptimeouts) /* [out] The struct of request timeouts. */
 {
     BOOL ret;
 
@@ -1406,7 +1407,7 @@ BOOL WINAPI GetCommTimeouts(
  *
  * RETURNS
  *
- *  True if the time outs were set, false otherwise.
+ *  True if the timeouts were set, false otherwise.
  */
 BOOL WINAPI SetCommTimeouts(
     HANDLE hComm,              /* [in] handle of COMM device */
@@ -1814,9 +1815,6 @@ BOOL WINAPI CommConfigDialogW(
  *
  * BUGS
  *
- *  The signature is missing a the parameter for the size of the COMMCONFIG
- *  structure/buffer it should be
- *  BOOL WINAPI GetCommConfig(HANDLE hFile,LPCOMMCONFIG lpCommConfig,LPDWORD lpdwSize)
  */
 BOOL WINAPI GetCommConfig(
     HANDLE       hFile,        /* [in] The communications device. */
@@ -1851,7 +1849,7 @@ BOOL WINAPI GetCommConfig(
 /***********************************************************************
  *           SetCommConfig     (KERNEL32.@)
  *
- *  Sets the configuration of the commications device.
+ *  Sets the configuration of the communications device.
  *
  * RETURNS
  *
@@ -1971,7 +1969,7 @@ BOOL WINAPI GetDefaultCommConfigA(
      lpCC->dwProviderOffset = 0L;
      lpCC->dwProviderSize = 0L;
 
-     (void) sprintf( temp, "COM%c:38400,n,8,1", lpszName[3]);
+     sprintf( temp, "COM%c:38400,n,8,1", lpszName[3]);
      FIXME("setting %s as default\n", temp);
 
      return BuildCommDCBA( temp, lpdcb);

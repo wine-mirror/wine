@@ -135,7 +135,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     if (!(wm = MODULE_FindModule( path ))) wm = MODULE_FindModule( dllname );
     if (!wm)
     {
-        ERR( "loaded .so but dll %s still not found\n", dllname );
+        ERR( "loaded .so but dll %s still not found - library environment problem or version conflict, check your setup.\n", dllname );
         /* wine_dll_unload( handle );*/
         return NULL;
     }
@@ -151,7 +151,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
  *           BUILTIN32_Init
  *
  * Initialize loading callbacks and return HMODULE of main exe.
- * 'main' is the main exe in case if was already loaded from a PE file.
+ * 'main' is the main exe in case it was already loaded from a PE file.
  */
 HMODULE BUILTIN32_LoadExeModule( HMODULE main )
 {

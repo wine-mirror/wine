@@ -911,7 +911,10 @@ static int _nt_dump_lf(LPSTR key_name, char *base, int subkeys, nt_lf *lf, FILE 
     return TRUE;
 
 error2:
-    ERR("unknown node id 0x%04x, please report!\n", lf->id);
+    if (lf->id == 0x686c)
+        FIXME("unknown Win XP node id 0x686c: do we need to add support for it ?\n");
+    else
+        ERR("unknown node id 0x%04x, please report!\n", lf->id);
     return TRUE;
 
 error1:
