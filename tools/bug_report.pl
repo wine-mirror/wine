@@ -59,17 +59,16 @@ until ($debuglevel >= 1 and $debuglevel <= 3) {
 
 if ($debuglevel < 3) {
 	$var1 = qq{
-	This program will make a debug report for WINE developers. It does this
-	in two files. The first one has everything asked for by the bugreports
-	guide. The second has *all* of the debug output (This can go to
-	thousands of lines). To (hopefully) get the bug fixed, attach the first
-	file to a messsage sent to the comp.emulators.ms-windows.wine newsgroup.
-	The developers might ask you for "the last XX number of lines from the
-	report". If so, run the command:
-	gzip -d (output file)|tail -n (number of lines) > outfile
-	And post outfile.
-	If you do not want to create one of the files, just type in "no file"
-	and hit enter.
+	This program will make a debug report for WINE developers. It generates
+	two files. The first one has everything asked for by the bugreports guide;
+	the second has *all* of the debug output, which can go to thousands of
+	lines.
+	To (hopefully) get the bug fixed, attach the first file to a messsage
+	sent to the comp.emulators.ms-windows.wine newsgroup. The developers
+	might ask you for "the last X lines from the report". If so, just
+	provide the output of the following command:
+	    gzip -d (output file) | tail -n (X) > outfile
+	If you do not want to create one of the files, just specify "no file".
 	};
 	print do_var($var1);
 } elsif ($debuglevel =~ 3) {
@@ -83,7 +82,8 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var2);
 }
-print "Enter filename for the formatted debug output (the first file):\n";
+
+print "\nFilename for the formatted debug report: ";
 $outfile=<STDIN>;
 chomp $outfile;
 $var23 = qq{
@@ -94,7 +94,8 @@ while ($outfile =~ /^(\s)*$/) {
 	$outfile=<STDIN>;
 	chomp $outfile;
 }
-print "Enter the filename for the full debug output (the second file):\n";
+
+print "Filename for full debug output: ";
 $dbgoutfile=<STDIN>;
 chomp $dbgoutfile;
 while ($dbgoutfile =~ /^(\s)*$/) {
@@ -102,6 +103,7 @@ while ($dbgoutfile =~ /^(\s)*$/) {
 	$dbgoutfile=<STDIN>;
 	chomp $dbgoutfile;
 }
+
 $var31 = qq{
 Since you will only be creating the formatted report, I will need a
 temporary place to put the full output.
@@ -135,15 +137,11 @@ print "\n";
 sub select_wineloc {
 	do
 		{
-		print "Enter the number the corresponds to Wine's location: ";
-	$wineloc=<STDIN>;
-	chomp $wineloc;
-		$i=1;
-		foreach $location (@locations) {
-			$yes = 1 if $wineloc eq $i++;
+		print "Enter the number that corresponds to Wine's location: ";
+		$wineloc=<STDIN>;
+		chomp $wineloc;
 		}
-	}
-	while ($yes ne "1");
+	while ( ! ( $wineloc >=1 and $wineloc <= 2+@locations ) );
 	if ($wineloc == 1) {
 		$var25 = qq{
 		Enter the full path to wine (Example: /usr/bin/wine):
@@ -196,21 +194,23 @@ while ($ifstrip =~ /not recognized/) {
 	print "Checking if $wineloc is stripped...\n";
 	$ifstrip = `nm $wineloc 2>&1`;
 }
-$var5 = qq{
-What version of windows are you using with wine? 0-None, 1-Win3.x,
-2-Win95, 3-Win98, 4-WinNT3.5x, 5-WinNT4.x, 6-WinNT5.x, 7-Other (Enter
-0-7):
-};
-print do_var($var5);
-$winver=<STDIN>; 
-until ($winver >= 0 and $winver <= 7) {
-	$var6 = qq{
-	No! Enter a number from 0 to 7 that corresponds to your windows version! 
-	};
-	print do_var($var6);
+
+print "\nWhat version of windows are you using with wine?\n\n".
+      "0 - None\n".
+      "1 - Windows 3.x\n".
+      "2 - Windows 95\n".
+      "3 - Windows 98\n".
+      "4 - Windows NT 3.5x\n".
+      "5 - Windows NT4.x\n".
+      "6 - Windows 2000\n".
+      "7 - Other\n\n";
+do
+	{
+	print "Enter the number that corresponds to your windows version: ";
 	$winver=<STDIN>; 
-}
-chomp $winver; 
+	chomp $winver; 
+	}
+until ($winver >= 0 and $winver <= 7); 
 if ($winver =~ 0) { 
 	$winver="None Installed"; 
 } elsif ($winver =~ 1) { 
@@ -226,7 +226,7 @@ if ($winver =~ 0) {
 } elsif ($winver =~ 6) { 
 	$winver="Windows NT 5.x"; 
 } elsif ($winver =~ 7) { 
-	print "OK. What version of Windows are you using?\n";
+	print "What version of Windows are you using? ";
 	$winver=<STDIN>; 
 	chomp $winver; 
 }
@@ -342,9 +342,11 @@ if ($debuglevel > 1) {
 } elsif ($debuglevel =~ 1) {
 	$extraops="-managed";
 }
-print "Enter your distribution name (Example: Redhat 5.0):\n";
+
+print "\nEnter the name of your distribution (Example: Redhat 6.1): ";
 $dist=<STDIN>;
 chomp $dist;
+
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
 		$var16 = qq{
