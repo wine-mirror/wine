@@ -1,14 +1,12 @@
   <chapter id="patches">
     <title>Submitting Patches</title>
 
-    <para>
-      Written by &name-albert-den-haan; <email>&email-albert-den-haan;</email>
-    </para>
     <sect1 id="patch-format">
       <title>Patch Format</title>
 
       <para>
-        Your patch should include:
+        Patches are submitted via email to the Wine patches mailing list, 
+	<email>wine-patches@winehq.org</email>. Your patch should include:
       </para>
 
       <itemizedlist>
@@ -20,25 +18,24 @@
          <listitem>
           <para>
             A long (paragraph) description of what was wrong and what is now 
-            better (and now broken :). (recommended)
+            better. (recommended)
           </para>
         </listitem>
         <listitem>
           <para>
-            Change Log: A short description of what was changed.
+            A change log entry (short description of what was changed).
           </para>
         </listitem>
         <listitem>
           <para>
-            Your contact information ( Name/Handle and e-mail )
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            The patch in <command>diff -u</command> format (it happens...)
+            The patch in <command>diff -u</command> format
           </para>
         </listitem>
       </itemizedlist>
+
+      <para>
+	
+      </para>
 
       <para>
         <command>cvs diff -u</command> works great for the common case
@@ -47,15 +44,14 @@
         make sure you explicitly take care of this rare case.
       </para>
       <para>
-        For additions: mention that you have some new files and
-        include them by appending the
+        For additions simply include them by appending the
         <command>diff -u /dev/null /my/new/file</command> output of them
 	to any <command>cvs diff -u</command> output you may have.
 	Alternatively, use <command>diff -Nu olddir/ newdir/</command>
 	in case of multiple new files to add.
       </para>
       <para>
-        For removals, list the files.
+        For removals, clearly list the files in the description of the patch.
       </para>
       <para>
         Since wine is constantly changing due to development it is strongly
@@ -182,7 +178,7 @@ code
         <para>
           <quote>The basic rules are: no attachments, no mime crap, no 
           line wrapping, a single patch per mail. Basically if I can't 
-          do <Command>"cat raw_mail | patch -p0"</command> it's in the
+          do <command>"cat raw_mail | patch -p0"</command> it's in the
           wrong format.</quote>
         </para>
       </sect2>
