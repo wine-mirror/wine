@@ -459,7 +459,17 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     if (!strncmp("LPR:",pszOutput,4))
       sprintf(psCmd,"|lpr -P%s",pszOutput+4);
     else
-      PROFILE_GetWineIniString("spooler",pszOutput,"",psCmd,sizeof(psCmd));
+    {
+	HKEY hkey;
+	/* default value */
+	psCmd[0] = 0;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
+	{
+	    DWORD type, count = sizeof(psCmd);
+	    RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
+	    RegCloseKey(hkey);
+	}
+    }
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
     if (!*psCmd)
