@@ -295,10 +295,24 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
     else
     {
         /* Wait until we lose the selection, timing out after a minute */
+        DWORD start_time, timeout, elapsed, ret;
 
         TRACE("Waiting for clipboard server to acquire selection\n");
 
-        if ( MsgWaitForMultipleObjects( 1, &selectionClearEvent, FALSE, 60000, QS_ALLINPUT ) != WAIT_OBJECT_0 )
+        timeout = 60000;
+        start_time = GetTickCount();
+        elapsed=0;
+        do
+        {
+            ret = MsgWaitForMultipleObjects( 1, &selectionClearEvent, FALSE, timeout - elapsed, QS_ALLINPUT );
+            if (ret != WAIT_OBJECT_0+1)
+                break;
+            elapsed = GetTickCount() - start_time;
+            if (elapsed > timeout)
+                break;
+        }
+        while (1);
+        if ( ret != WAIT_OBJECT_0 )
             TRACE("Server could not acquire selection, or a timeout occurred!\n");
         else
             TRACE("Server successfully acquired selection\n");

@@ -415,6 +415,36 @@ int AcquireSelection()
     return g_selectionAcquired;
 }
 
+BOOL GetSelectionEvent(Atom SelectionSrc, XEvent *xe)
+{
+    time_t end_time;
+
+    /* Set up a 10 second time out */
+    end_time=time(NULL)+10;
+
+    do
+    {
+        struct timeval nap;
+
+        if (XCheckTypedWindowEvent(g_display, g_win, SelectionNotify, xe))
+        {
+            if( xe->xselection.selection == SelectionSrc )
+                return TRUE;
+        }
+
+        if (time(NULL)>end_time)
+            break;
+
+        /* Sleep a bit to make this busy wait less brutal */
+        nap.tv_sec = 0;
+        nap.tv_usec = 10;
+        select(0, NULL, NULL, NULL, &nap);
+    }
+    while (TRUE);
+
+    return FALSE;
+}
+
 /**************************************************************************
  *		CacheDataFormats
  *
@@ -457,12 +487,8 @@ int CacheDataFormats( Atom SelectionSrc, PCACHEENTRY *ppCache )
     /*
      * Wait until SelectionNotify is received
      */
-    while( TRUE )
-    {
-       if( XCheckTypedWindowEvent(g_display, g_win, SelectionNotify, &xe) )
-           if( xe.xselection.selection == SelectionSrc )
-               break;
-    }
+    if (!GetSelectionEvent(SelectionSrc, &xe))
+        return 0;
 
     /* Verify that the selection returned a valid TARGETS property */
     if ( (xe.xselection.target != aTargets)
@@ -541,12 +567,8 @@ BOOL FillCacheEntry( Atom SelectionSrc, Atom target, PCACHEENTRY pCacheEntry )
                     g_win, CurrentTime);
 
     /* wait until SelectionNotify is received */
-    while( TRUE )
-    {
-       if( XCheckTypedWindowEvent(g_display, g_win, SelectionNotify, &xe) )
-           if( xe.xselection.selection == SelectionSrc )
-               break;
-    }
+    if (!GetSelectionEvent(SelectionSrc,&xe))
+        return bRet;
 
     /* Now proceed to retrieve the actual converted property from
      * the SELECTION_DATA atom */
