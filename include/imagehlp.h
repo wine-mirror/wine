@@ -104,6 +104,16 @@ typedef enum _ADRESS_MODE {
 
 #define SYMF_OMAP_GENERATED   0x00000001
 #define SYMF_OMAP_MODIFIED    0x00000002
+/* 0x00000004 has been obsoleted */
+#define SYMF_REGISTER         0x00000008
+#define SYMF_REGREL           0x00000010
+#define SYMF_FRAMEREL         0x00000020
+#define SYMF_PARAMETER        0x00000040
+#define SYMF_LOCAL            0x00000080
+#define SYMF_CONSTANT         0x00000100
+#define SYMF_EXPORT           0x00000200
+#define SYMF_FORWARDER        0x00000400
+#define SYMF_FUNCTION         0x00000800
 
 typedef enum {
   SymNone,
@@ -112,7 +122,10 @@ typedef enum {
   SymPdb,
   SymExport,
   SymDeferred,
-  SymSym        /* .sym file */
+  SymSym,
+  SymDia,
+  SymVirtual,
+  NumSymTypes
 } SYM_TYPE;
 
 #define UNDNAME_COMPLETE               0x0000
@@ -244,6 +257,27 @@ typedef struct _STACKFRAME {
   KDHELP  KdHelp;
 } STACKFRAME, *LPSTACKFRAME;
 
+typedef struct _SOURCEFILE {
+    DWORD64                     ModBase;
+    PCHAR                       FileName;
+} SOURCEFILE, *PSOURCEFILE;
+
+typedef struct _IMAGEHLP_STACK_FRAME
+{
+  DWORD InstructionOffset;
+  DWORD ReturnOffset;
+  DWORD FrameOffset;
+  DWORD StackOffset;
+  DWORD BackingStoreOffset;
+  DWORD FuncTableEntry;
+  DWORD Params[4];
+  DWORD Reserved[5];
+  DWORD Virtual;
+  DWORD Reserved2;
+} IMAGEHLP_STACK_FRAME, *PIMAGEHLP_STACK_FRAME;
+
+typedef VOID IMAGEHLP_CONTEXT, *PIMAGEHLP_CONTEXT;
+
 typedef struct _IMAGEHLP_SYMBOL {
   DWORD SizeOfStruct;
   DWORD Address;
@@ -290,6 +324,33 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL {
   ULONG              SelectedSymbol;
 } IMAGEHLP_DUPLICATE_SYMBOL, *PIMAGEHLP_DUPLICATE_SYMBOL;
 
+#define IMAGEHLP_SYMBOL_INFO_VALUEPRESENT          1
+#define IMAGEHLP_SYMBOL_INFO_REGISTER              SYMF_REGISTER
+#define IMAGEHLP_SYMBOL_INFO_REGRELATIVE           SYMF_REGREL
+#define IMAGEHLP_SYMBOL_INFO_FRAMERELATIVE         SYMF_FRAMEREL
+#define IMAGEHLP_SYMBOL_INFO_PARAMETER             SYMF_PARAMETER
+#define IMAGEHLP_SYMBOL_INFO_LOCAL                 SYMF_LOCAL
+#define IMAGEHLP_SYMBOL_INFO_CONSTANT              SYMF_CONSTANT
+#define IMAGEHLP_SYMBOL_FUNCTION                   SYMF_FUNCTION
+
+typedef struct _SYMBOL_INFO {
+    ULONG       SizeOfStruct;
+    ULONG       TypeIndex;
+    ULONG64     Reserved[2];
+    ULONG       info;
+    ULONG       Size;
+    ULONG64     ModBase;
+    ULONG       Flags;
+    ULONG64     Value;
+    ULONG64     Address;
+    ULONG       Register;
+    ULONG       Scope;
+    ULONG       Tag;
+    ULONG       NameLen;
+    ULONG       MaxNameLen;
+    CHAR        Name[1];
+} SYMBOL_INFO, *PSYMBOL_INFO;
+
 /***********************************************************************
  * Callbacks
  */
@@ -297,6 +358,14 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL {
 typedef BOOL (CALLBACK *PIMAGEHLP_STATUS_ROUTINE)(
   IMAGEHLP_STATUS_REASON Reason, LPSTR ImageName, LPSTR DllName,
   ULONG Va, ULONG Parameter
+);
+
+typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(
+  PSYMBOL_INFO pSymInfo, DWORD SymbolSize, PVOID UserContext
+);
+
+typedef BOOL (CALLBACK *PSYM_ENUMSOURCFILES_CALLBACK)(
+  PSOURCEFILE pSourceFile, PVOID UserContext
 );
 
 typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(
@@ -481,6 +550,14 @@ BOOL WINAPI SymEnumerateSymbols(
   HANDLE hProcess, DWORD BaseOfDll,
   PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext
 );
+BOOL WINAPI SymEnumSourceFiles(
+  HANDLE hProcess, DWORD ModBase, LPSTR Mask,
+  PSYM_ENUMSOURCFILES_CALLBACK cbSrcFiles, PVOID UserContext
+);
+BOOL WINAPI SymEnumSymbols(
+  HANDLE hProcess, DWORD BaseOfDll, PCSTR Mask, 
+  PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext
+);
 PVOID WINAPI SymFunctionTableAccess(
   HANDLE hProcess, DWORD AddrBase
 );
@@ -513,13 +590,17 @@ BOOL WINAPI SymGetSymPrev(
 BOOL WINAPI SymInitialize(
   HANDLE hProcess, LPSTR UserSearchPath, BOOL fInvadeProcess
 );
-BOOL WINAPI SymLoadModule(
+DWORD WINAPI SymLoadModule(
   HANDLE hProcess, HANDLE hFile, LPSTR ImageName, LPSTR ModuleName,
   DWORD BaseOfDll, DWORD SizeOfDll
 );
 BOOL WINAPI SymRegisterCallback(
   HANDLE hProcess, PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
   PVOID UserContext
+);
+DWORD WINAPI SymSetContext(
+  HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, 
+  PIMAGEHLP_CONTEXT Context
 );
 DWORD WINAPI SymSetOptions(
   DWORD SymOptions

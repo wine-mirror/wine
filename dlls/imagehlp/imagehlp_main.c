@@ -29,10 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 /**********************************************************************/
-
 HANDLE IMAGEHLP_hHeap = NULL;
-
-static API_VERSION IMAGEHLP_ApiVersion = { 4, 0, 0, 5 };
 
 /***********************************************************************
  *           DllMain (IMAGEHLP.init)
@@ -56,63 +53,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
- *           ImagehlpApiVersion (IMAGEHLP.@)
- */
-LPAPI_VERSION WINAPI ImagehlpApiVersion(VOID)
-{
-  return &IMAGEHLP_ApiVersion;
-}
-
-/***********************************************************************
- *           ImagehlpApiVersionEx (IMAGEHLP.@)
- */
-LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION AppVersion)
-{
-  if(!AppVersion)
-    return NULL;
-
-  AppVersion->MajorVersion = IMAGEHLP_ApiVersion.MajorVersion;
-  AppVersion->MinorVersion = IMAGEHLP_ApiVersion.MinorVersion;
-  AppVersion->Revision = IMAGEHLP_ApiVersion.Revision;
-  AppVersion->Reserved = IMAGEHLP_ApiVersion.Reserved;
-
-  return AppVersion;
-}
-
-/***********************************************************************
- *           MakeSureDirectoryPathExists (IMAGEHLP.@)
- */
-BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
-{
-    if (CreateDirectoryA(DirPath,NULL))
-        return TRUE;
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        SetLastError(ERROR_SUCCESS);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/***********************************************************************
  *           MarkImageAsRunFromSwap (IMAGEHLP.@)
  * FIXME
  *   No documentation available.
  */
-
-/***********************************************************************
- *           SearchTreeForFile (IMAGEHLP.@)
- */
-BOOL WINAPI SearchTreeForFile(
-  LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer)
-{
-  FIXME("(%s, %s, %s): stub\n",
-    debugstr_a(RootPath), debugstr_a(InputPathName),
-    debugstr_a(OutputPathBuffer)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
 
 /***********************************************************************
  *           TouchFileTimes (IMAGEHLP.@)

@@ -56,31 +56,6 @@ static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
 extern HANDLE IMAGEHLP_hHeap;
 
 /***********************************************************************
- *		EnumerateLoadedModules (IMAGEHLP.@)
- */
-BOOL WINAPI EnumerateLoadedModules(
-  HANDLE hProcess,
-  PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
-  PVOID UserContext)
-{
-  FIXME("(%p, %p, %p): stub\n",
-    hProcess, EnumLoadedModulesCallback, UserContext
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-/***********************************************************************
- *		GetTimestampForLoadedLibrary (IMAGEHLP.@)
- */
-DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
-{
-  FIXME("(%p): stub\n", Module);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
-}
-
-/***********************************************************************
  *		GetImageConfigInformation (IMAGEHLP.@)
  */
 BOOL WINAPI GetImageConfigInformation(

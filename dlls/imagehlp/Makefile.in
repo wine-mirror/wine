@@ -4,16 +4,14 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imagehlp.dll
-IMPORTS   = kernel32 ntdll
+IMPORTS   = dbghelp kernel32 ntdll
 
 C_SRCS = \
 	access.c \
-	debug.c \
 	imagehlp_main.c \
 	integrity.c \
 	internal.c \
-	modify.c \
-	symbol.c
+	modify.c
 
 @MAKE_DLL_RULES@
 
