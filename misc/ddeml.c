@@ -1818,10 +1818,7 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
 HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
                 UINT afCmd )
 {
-  UINT	Cmd_flags = afCmd;
   ServiceNode* this_service, *reference_service ;
-  CHAR SNameBuffer[MAX_BUFFER_LEN];
-  UINT rcode;
   DDE_HANDLE_ENTRY *this_instance;
   DDE_HANDLE_ENTRY *reference_inst;
   this_service = NULL;
@@ -1909,100 +1906,55 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
   	return TRUE;
   }
   TRACE("Specific name action detected\n");
-  reference_service = Find_Service_Name(hsz1,reference_inst);
-  if (( Cmd_flags && DNS_REGISTER ) == DNS_REGISTER )
+  if ( afCmd & DNS_REGISTER )
   {
-	/*	Register new service name
+	/* Register new service name
 	 */
 
-	rcode=GlobalGetAtomNameA(hsz1,SNameBuffer,MAX_ATOM_LEN);
-	Cmd_flags = Cmd_flags ^ DNS_REGISTER;
-  	this_service= (ServiceNode*)HeapAlloc( SystemHeap, 0, sizeof(ServiceNode) );
-  	this_service->next = NULL;
-  	this_service->hsz = hsz1;
-  	this_service->FilterOn = TRUE;
-	if ( reference_inst->ServiceNames == NULL )
+	this_service = Find_Service_Name( hsz1, reference_inst );
+	if ( this_service )
+		ERR("Trying to register already registered service!\n");
+	else
 	{
-		/*	easy one - nothing else there
-		 */
-  		TRACE("Adding 1st service name\n");
+		TRACE("Adding service name\n");
+
+		DdeReserveAtom(reference_inst, hsz1);
+
+		this_service = (ServiceNode*)HeapAlloc( SystemHeap, 0, sizeof(ServiceNode) );
+		this_service->hsz = hsz1;
+		this_service->FilterOn = TRUE;
+
+		this_service->next = reference_inst->ServiceNames;
 		reference_inst->ServiceNames = this_service;
-		GlobalAddAtomA(SNameBuffer);
-	} else
-	{
-		/*	more difficult - may have also been registered
-		 */
-		if (reference_service != NULL )
-		{
-			/*	Service name already registered !!
-			 *	 what do we do ? 
-			 */
-        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
-        		FIXME("Trying to register already registered service  !!\n");
-		} else
-		{
-			/*	Add this one into the chain
-			 */
-  			TRACE("Adding subsequent service name\n");
-			this_service->next = reference_inst->ServiceNames;
-			reference_inst->ServiceNames = this_service;
-			GlobalAddAtomA(SNameBuffer);
-		}
 	}
   }
-  if ( (Cmd_flags && DNS_UNREGISTER ) == DNS_UNREGISTER )
+  if ( afCmd & DNS_UNREGISTER )
   {
 	/*	De-register service name
 	 */
-        Cmd_flags = Cmd_flags ^ DNS_UNREGISTER;
-        if ( reference_inst->ServiceNames == NULL )
-        { 
-                /*      easy one - already done
-                 */
-        } else
-        {
-                /*      more difficult - must hook out of sequence
-                 */
-                this_instance = reference_inst;
-                if (this_service == NULL )
-                {
-                        /*      Service name not  registered !!
-                         *       what do we do ?
-                         */
-                        FIXME("Trying to de-register unregistered service  !!\n");
-                } else
-                {
-                        /*      Delete this one from the chain
-                         */
-        		if ( reference_inst->ServiceNames == this_service )
-        		{
-                		/* special case - the first/only entry
-                		*/
-                		reference_inst->ServiceNames = this_service->next;
-        		} else
-        		{
-                		/* general case
-                		*/
-                		reference_service->next= reference_inst->ServiceNames;
-                		while ( reference_service->next!= this_service )
-                		{
-                        		reference_service = reference_service->next;
-                		}
-                		reference_service->next= this_service->next;
-			}
-			DdeReleaseAtom(reference_inst,this_service->hsz);
-        		HeapFree(SystemHeap, 0, this_service); /* finished - release heap space */
-        	}
+
+	ServiceNode **pServiceNode = &reference_inst->ServiceNames;
+	while ( *pServiceNode && (*pServiceNode)->hsz != hsz1 )
+		pServiceNode = &(*pServiceNode)->next;
+
+	this_service = *pServiceNode;
+	if ( !this_service )
+		ERR("Trying to de-register unregistered service!\n");
+	else
+	{
+		*pServiceNode = this_service->next;
+		DdeReleaseAtom(reference_inst,this_service->hsz);
+        	HeapFree(SystemHeap, 0, this_service);
  	}
   }
-  if ( ( Cmd_flags && DNS_FILTEROFF ) != DNS_FILTEROFF )
+  if ( afCmd & DNS_FILTERON )
   {
 	/*	Set filter flags on to hold notifications of connection
 	 *
 	 *	test coded this way as this is the default setting
 	 */
-	Cmd_flags = Cmd_flags ^ DNS_FILTERON;
-	if ( ( reference_inst->ServiceNames == NULL ) || ( this_service == NULL) )
+	this_service = Find_Service_Name( hsz1, reference_inst );
+	if ( !this_service )
 	{
 		/*  trying to filter where no service names !!
 		 */
@@ -2014,12 +1966,12 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 		this_service->FilterOn = TRUE;
 	}
   }
-  if ( ( Cmd_flags && DNS_FILTEROFF ) == DNS_FILTEROFF )
+  if ( afCmd & DNS_FILTEROFF )
   {
 	/*	Set filter flags on to hold notifications of connection
 	 */
-	Cmd_flags = Cmd_flags ^ DNS_FILTEROFF;
-	if ( ( reference_inst->ServiceNames == NULL ) || ( this_service == NULL) )
+	this_service = Find_Service_Name( hsz1, reference_inst );
+	if ( !this_service )
 	{
 		/*  trying to filter where no service names !!
 		 */
