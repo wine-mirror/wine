@@ -42,7 +42,6 @@
 #include "shlobj.h"  /* DROPFILES */
 
 #include "win.h"
-#include "winpos.h"
 #include "winreg.h"
 #include "x11drv.h"
 #include "shellapi.h"
@@ -93,18 +92,6 @@ static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
 static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 
-extern void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event );
-extern void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event );
-extern void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event );
-extern void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event );
-extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
-extern void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event );
-extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
-extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
-extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
-extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
-extern void X11DRV_MappingNotify( XMappingEvent *event );
-
 #ifdef HAVE_LIBXXF86DGA2
 static int DGAMotionEventType;
 static int DGAButtonPressEventType;
@@ -114,10 +101,6 @@ static int DGAKeyReleaseEventType;
 
 static BOOL DGAUsed = FALSE;
 static HWND DGAhwnd = 0;
-
-extern void X11DRV_DGAMotionEvent( HWND hwnd, XDGAMotionEvent *event );
-extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XDGAButtonEvent *event );
-extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XDGAButtonEvent *event );
 #endif
 
 /* Static used for the current input method */

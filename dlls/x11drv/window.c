@@ -47,8 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
-
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 

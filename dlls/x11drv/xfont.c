@@ -1755,7 +1755,7 @@ static LPCSTR XFONT_UnAlias(char* font)
  * set FR_REMOVED flag to delay removal until the resource is not in use
  * any more.
  */
-void XFONT_RemoveFontResource( fontResource** ppfr )
+static void XFONT_RemoveFontResource( fontResource** ppfr )
 {
     fontResource* pfr = *ppfr;
 #if 0

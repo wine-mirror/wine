@@ -34,6 +34,9 @@
 #ifdef HAVE_LIBXXSHM
 # include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
+#ifdef HAVE_LIBXXF86DGA2
+#include <X11/extensions/xf86dga.h>
+#endif
 
 #undef Status  /* avoid conflict with wintrnl.h */
 typedef int Status;
@@ -202,6 +205,7 @@ extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
+extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
 
@@ -499,8 +503,24 @@ typedef enum {
 } INPUT_TYPE;
 extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
 
+extern void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event );
+extern void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event );
+extern void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event );
+extern void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event );
+extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
+extern void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event );
+extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
+extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
+extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
+extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+extern void X11DRV_MappingNotify( XMappingEvent *event );
+
 #ifdef HAVE_LIBXXF86DGA2
 void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
+
+extern void X11DRV_DGAMotionEvent( HWND hwnd, XDGAMotionEvent *event );
+extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XDGAButtonEvent *event );
+extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XDGAButtonEvent *event );
 #endif
 
 extern DWORD EVENT_x11_time_to_win32_time(Time time);
