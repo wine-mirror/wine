@@ -10,10 +10,11 @@
 
 /* checks to include */
 #define LOGGING /* can be undefined under Wine and use -debugmsg +message instead */
-#define MAIN_STYLE WS_OVERLAPPEDWINDOW
+#define MAIN_STYLE WS_OVERLAPPEDWINDOW|WS_HSCROLL
+#define MAIN_EXSTYLE 0
 #undef TEST_DESTROY_MAIN
-#undef SHOW_SUB
-#define TEST_DIALOG
+#define SHOW_SUB
+#undef TEST_DIALOG
 #define RESIZE_DIALOG
 #undef TEST_SUBDIALOG
 #undef TEST_COMMCTL
@@ -108,8 +109,10 @@ MSG(WM_NCMOUSEMOVE)
 MSG(WM_PAINT)
 MSG(WM_LBUTTONDOWN)
 MSG(WM_LBUTTONUP)
+MSG(WM_LBUTTONDBLCLK)
 MSG(WM_NCLBUTTONDOWN)
 MSG(WM_NCLBUTTONUP)
+MSG(WM_NCLBUTTONDBLCLK)
 
 MSG(WM_KEYDOWN)
 MSG(WM_KEYUP)
@@ -137,6 +140,10 @@ MSG(WM_SETFONT)
 MSG(WM_INITDIALOG)
 MSG(WM_GETDLGCODE)
 MSG(WM_ENTERIDLE)
+
+/* scroll bars */
+MSG(WM_HSCROLL)
+MSG(WM_VSCROLL)
 
 /* getting these from Wine but not from Windows */
 MSG2(WM_SETVISIBLE,0x0009) /* unheard of in BC++ 4.52 */
@@ -175,7 +182,7 @@ char*MsgName(UINT msg,HWND hWnd)
  return buffer;
 }
 
-char*WndName(HWND hWnd,int state=State)
+char*WndName(HWND hWnd,int state)
 {
  static char buffer[16];
  if (!hWnd) return "0000";
@@ -220,18 +227,17 @@ void Logf(const char*fmt,...)
 void LogChildOrder(HWND hWnd)
 {
  HWND hWndChild = GetWindow(hWnd,GW_CHILD);
- char*name;
  static char buffer[256];
 
  strcpy(buffer,"child list:");
  while (hWndChild) {
-  strcat(strcat(buffer," "),WndName(hWndChild));
+  strcat(strcat(buffer," "),WndName(hWndChild,State));
   hWndChild=GetWindow(hWndChild,GW_HWNDNEXT);
  }
  Log(buffer);
 }
 
-void LogMessage(int state,HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam,char*name=NULL)
+void LogMessage(int state,HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam,char*name)
 {
  static char buffer[256];
  DWORD tick=GetTickCount()-StartTime;
@@ -242,20 +248,20 @@ void LogMessage(int state,HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam,char*na
   case WM_KILLFOCUS:
   case WM_SETCURSOR:
    Logf("%04d[%s(%d):%s]%s(%s,%08x)",tick,StateName[state],Rec,
-        name,msgname,WndName((HWND)wParam),lParam);
+        name,msgname,WndName((HWND)wParam,State),lParam);
    break;
 #ifdef WIN32
   case WM_ENTERIDLE:
   case WM_CTLCOLORBTN:
   case WM_CTLCOLORDLG:
    Logf("%04d[%s(%d):%s]%s(%08x,%s)",tick,StateName[state],Rec,
-        name,msgname,wParam,WndName((HWND)lParam));
+        name,msgname,wParam,WndName((HWND)lParam,State));
    break;
 #else
   case WM_ENTERIDLE:
   case WM_CTLCOLOR:
    Logf("%04d[%s(%d):%s]%s(%08x,%04x:%s)",tick,StateName[state],Rec,
-        name,msgname,wParam,HIWORD(lParam),WndName((HWND)LOWORD(lParam)));
+        name,msgname,wParam,HIWORD(lParam),WndName((HWND)LOWORD(lParam),State));
    break;
 #endif
   case WM_WINDOWPOSCHANGING:
@@ -263,33 +269,92 @@ void LogMessage(int state,HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam,char*na
    {
     WINDOWPOS*pos=(WINDOWPOS*)lParam;
 #ifdef WIN32
-    Logf("%04d[%s(%d):%s]%s(%08x,%p)",tick,StateName[state],Rec,
-         name,msgname,wParam,pos);
+	 Logf("%04d[%s(%d):%s]%s(%08x,%p)",tick,StateName[state],Rec,
+			name,msgname,wParam,pos);
 #else
-    Logf("%04d[%s(%d):%s]%s(%04x,%p)",tick,StateName[state],Rec,
-         name,msgname,wParam,pos);
+	 Logf("%04d[%s(%d):%s]%s(%04x,%p)",tick,StateName[state],Rec,
+			name,msgname,wParam,pos);
 #endif
-    strcpy(buffer,"FLAGS:");
-    if (pos->flags&SWP_DRAWFRAME) strcat(buffer," DRAWFRAME");
-    if (pos->flags&SWP_HIDEWINDOW) strcat(buffer," HIDEWINDOW");
-    if (pos->flags&SWP_NOACTIVATE) strcat(buffer," NOACTIVATE");
-    if (pos->flags&SWP_NOCOPYBITS) strcat(buffer," NOCOPYBITS");
-    if (pos->flags&SWP_NOMOVE) strcat(buffer," NOMOVE");
-    if (pos->flags&SWP_NOOWNERZORDER) strcat(buffer," NOOWNERZORDER");
-    if (pos->flags&SWP_NOSIZE) strcat(buffer," NOSIZE");
-    if (pos->flags&SWP_NOREDRAW) strcat(buffer," NOREDRAW");
-    if (pos->flags&SWP_NOZORDER) strcat(buffer," NOZORDER");
-    if (pos->flags&SWP_SHOWWINDOW) strcat(buffer," SHOWWINDOW");
-    Log(buffer);
-   }
-   break;
-  default:
+	 strcpy(buffer,"FLAGS:");
+	 if (pos->flags&SWP_DRAWFRAME) strcat(buffer," DRAWFRAME");
+	 if (pos->flags&SWP_HIDEWINDOW) strcat(buffer," HIDEWINDOW");
+	 if (pos->flags&SWP_NOACTIVATE) strcat(buffer," NOACTIVATE");
+	 if (pos->flags&SWP_NOCOPYBITS) strcat(buffer," NOCOPYBITS");
+	 if (pos->flags&SWP_NOMOVE) strcat(buffer," NOMOVE");
+	 if (pos->flags&SWP_NOOWNERZORDER) strcat(buffer," NOOWNERZORDER");
+	 if (pos->flags&SWP_NOSIZE) strcat(buffer," NOSIZE");
+	 if (pos->flags&SWP_NOREDRAW) strcat(buffer," NOREDRAW");
+	 if (pos->flags&SWP_NOZORDER) strcat(buffer," NOZORDER");
+	 if (pos->flags&SWP_SHOWWINDOW) strcat(buffer," SHOWWINDOW");
+	 Log(buffer);
+	}
+	break;
+  case WM_SYSCOMMAND:
+	{
+	 char*cmd=NULL;
+	 switch (wParam&0xFFF0) {
+#define CASE(x) case SC_##x: cmd=#x; break;
+	  CASE(CLOSE)
+	  CASE(DEFAULT)
+	  CASE(HOTKEY)
+	  CASE(HSCROLL)
+	  CASE(KEYMENU)
+	  CASE(MAXIMIZE)
+	  CASE(MINIMIZE)
+	  CASE(MOUSEMENU)
+	  CASE(MOVE)
+	  CASE(NEXTWINDOW)
+	  CASE(PREVWINDOW)
+	  CASE(RESTORE)
+	  CASE(SCREENSAVE)
+	  CASE(SIZE)
+	  CASE(TASKLIST)
+	  CASE(VSCROLL)
+#undef CASE
+	 }
+	 if (cmd) {
+	  Logf("%04d[%s(%d):%s]%s(%s+%x,%08x)",tick,StateName[state],Rec,
+			 name,msgname,cmd,wParam&0xF,lParam);
+	 } else goto GENERIC_MSG;
+	}
+	break;
+  case WM_HSCROLL:
+  case WM_VSCROLL:
+	{
+	 char*cmd=NULL;
+	 switch (LOWORD(wParam)) {
+#define CASE(x) case SB_##x: cmd=#x; break;
+#define CASE2(h,v) case SB_##h: if (msg==WM_HSCROLL) cmd=#h; else cmd=#v; break;
+	  CASE(BOTTOM)
+	  CASE(ENDSCROLL)
+	  CASE2(LINELEFT,LINEUP)
+	  CASE2(LINERIGHT,LINEDOWN)
+	  CASE2(PAGELEFT,PAGEUP)
+	  CASE2(PAGERIGHT,PAGEDOWN)
+	  CASE(THUMBPOSITION)
+	  CASE(THUMBTRACK)
+     CASE(TOP)
+#undef CASE
+	 }
+	 if (cmd) {
 #ifdef WIN32
-   Logf("%04d[%s(%d):%s]%s(%08x,%08x)",tick,StateName[state],Rec,
-        name,msgname,wParam,lParam);
+	  Logf("%04d[%s(%d):%s]%s(%s,%04x,%s)",tick,StateName[state],Rec,
+			 name,msgname,cmd,HIWORD(wParam),WndName((HWND)lParam,State));
 #else
-   Logf("%04d[%s(%d):%s]%s(%04x,%08x)",tick,StateName[state],Rec,
-        name,msgname,wParam,lParam);
+	  Logf("%04d[%s(%d):%s]%s(%04x,%04x,%s)",tick,StateName[state],Rec,
+			 name,msgname,cmd,LOWORD(lParam),WndName((HWND)HIWORD(lParam),State));
+#endif
+	 } else goto GENERIC_MSG;
+	}
+	break;
+  default:
+GENERIC_MSG:
+#ifdef WIN32
+	Logf("%04d[%s(%d):%s]%s(%08x,%08x)",tick,StateName[state],Rec,
+		  name,msgname,wParam,lParam);
+#else
+	Logf("%04d[%s(%d):%s]%s(%04x,%08x)",tick,StateName[state],Rec,
+		  name,msgname,wParam,lParam);
 #endif
  }
 }
@@ -306,17 +371,17 @@ void Paint(HWND hWnd)
  EndPaint(hWnd,&ps);
 }
 
-void FillPattern(HWND hWnd,HDC pdc=0)
+void FillPattern(HWND hWnd,HDC pdc)
 {
  HDC dc=pdc?pdc:GetDC(hWnd);
  HBRUSH oldbrush;
  RECT rect;
  if (!dc) {
-  Logf("failed to acquire DC for window %s",WndName(hWnd));
+  Logf("failed to acquire DC for window %s",WndName(hWnd,State));
   return;
  } else {
   Logf("acquired DC for %s window %s, painting",
-       IsWindowVisible(hWnd)?"visible":"invisible",WndName(hWnd));
+       IsWindowVisible(hWnd)?"visible":"invisible",WndName(hWnd,State));
  }
  GetClientRect(hWnd,&rect);
  oldbrush=SelectObject(dc,GetStockObject(LTGRAY_BRUSH));
@@ -346,7 +411,7 @@ LRESULT FAR CALLBACK _export MainWindowProc(HWND hWnd, UINT msg, WPARAM wParam, 
  int OldState=State;
 
  State=STATE_RECURS; Rec++;
- if (!Clicked) LogMessage(OldState,hWnd,msg,wParam,lParam);
+ if (!Clicked) LogMessage(OldState,hWnd,msg,wParam,lParam,NULL);
  switch (msg) {
   case WM_NCHITTEST:
    lResult=DefWindowProc(hWnd,msg,wParam,lParam);
@@ -390,7 +455,7 @@ LRESULT FAR CALLBACK _export SubWindowProc(HWND hWnd, UINT msg, WPARAM wParam, L
  int OldState=State;
 
  State=STATE_RECURS; Rec++;
- if (!Clicked) LogMessage(OldState,hWnd,msg,wParam,lParam);
+ if (!Clicked) LogMessage(OldState,hWnd,msg,wParam,lParam,NULL);
  switch (msg) {
   case WM_PAINT:
    Paint(hWnd);
@@ -419,7 +484,7 @@ LRESULT FAR CALLBACK _export SubClassWindowProc(HWND hWnd, UINT msg, WPARAM wPar
 
  State=STATE_RECURS; Rec++;
  if (!Clicked) {
-  LogMessage(OldState,hWnd,msg,wParam,lParam);
+  LogMessage(OldState,hWnd,msg,wParam,lParam,NULL);
   if (But!=-1) {
    lResult=CallWindowProc((FARPROC)wndButton[But],hWnd,msg,wParam,lParam);
    if (msg==WM_LBUTTONUP) {
@@ -526,7 +591,7 @@ BOOL FAR CALLBACK _export SubDialogProc(HWND hWndDlg, UINT msg, WPARAM wParam, L
  int But=-1;
 
  State=STATE_RECURS; Rec++;
- if (!Clicked) LogMessage(OldState,hWndDlg,msg,wParam,lParam);
+ if (!Clicked) LogMessage(OldState,hWndDlg,msg,wParam,lParam,NULL);
  switch (msg) {
   case WM_INITDIALOG:
    hSubDlg = hWndDlg;
@@ -588,8 +653,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
  }
 
  State=STATE_CREATE;
- hMainWnd = CreateWindow(wclassname,winname,MAIN_STYLE,
-                         CW_USEDEFAULT,0,400,300,0,0,hInst,0);
+ hMainWnd = CreateWindowEx(MAIN_EXSTYLE,wclassname,winname,MAIN_STYLE,
+                           CW_USEDEFAULT,0,400,300,0,0,hInst,0);
  if (!hMainWnd) return 0;
  State=STATE_SHOW;
  ShowWindow(hMainWnd,nCmdShow);
@@ -604,8 +669,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   State=STATE_DIRECT;
  }
  State=STATE_CREATE;
- hMainWnd = CreateWindow(wclassname,winname,MAIN_STYLE,
-                         CW_USEDEFAULT,0,400,300,0,0,hInst,0);
+ hMainWnd = CreateWindowEx(MAIN_EXSTYLE,wclassname,winname,MAIN_STYLE,
+                           CW_USEDEFAULT,0,400,300,0,0,hInst,0);
  if (!hMainWnd) return 0;
  State=STATE_SHOW;
  ShowWindow(hMainWnd,nCmdShow);
@@ -615,7 +680,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 // UpdateWindow(hMainWnd);
  Ready=TRUE;
 /* fill client area with a pattern */
- FillPattern(hMainWnd);
+ FillPattern(hMainWnd,0);
 /* create subwindow */
  State=STATE_CREATE;
  GetClientRect(hMainWnd,&rect);
@@ -649,14 +714,14 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 /* the button should now be invisible */
  Logf("but1 visible=%d",IsWindowVisible(hButton[0]));
 /* see if we can draw on them */
- FillPattern(hButton[0]);
+ FillPattern(hButton[0],0);
 
 #ifdef SHOW_SUB
  State=STATE_SHOW;
  ShowWindow(hSubWnd,SW_SHOWNORMAL);
  State=STATE_UPDATE;
  UpdateWindow(hSubWnd);
- FillPattern(hSubWnd);
+ FillPattern(hSubWnd,0);
 // InvalidateRect(hMainWnd,NULL,TRUE);
  Logf("but1 visible=%d",IsWindowVisible(hButton[0]));
 #endif
