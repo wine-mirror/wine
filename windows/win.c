@@ -265,7 +265,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     {
         DPRINTF( "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
 
-        GetClassNameA( hwnd, className, sizeof(className) );
+        GetClassNameA( ptr->hwndSelf, className, sizeof(className) );
         DPRINTF( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
                  (UINT)ptr->dwStyle, (UINT)ptr->winproc,
@@ -273,9 +273,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
         
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
         WIN_UpdateWndPtr(&ptr,ptr->next);
-        
     }
-
 }
 
 /***********************************************************************
