@@ -33,7 +33,7 @@ BOOL MFDRV_RestoreDC( PHYSDEV dev, INT level )
 
 UINT MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
 {
-    return MFDRV_MetaParam1( dev, META_SETTEXTALIGN, (WORD)align);
+    return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align));
 }
 
 INT MFDRV_SetBkMode( PHYSDEV dev, INT mode )
