@@ -228,6 +228,7 @@ static INT LISTVIEW_ProcessLetterKeys( HWND hwnd, WPARAM charCode, LPARAM keyDat
 static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem);
 static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask);
 static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem);
+static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       900
@@ -238,6 +239,100 @@ static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem);
                     (item).iSubItem = 0; \
                     (item).pszText = (TEXT); \
                     (item).cchTextMax = MAX_PATH
+
+static BOOL
+LISTVIEW_SendCustomDrawNotify (HWND hwnd, DWORD dwDrawStage, HDC hdc,
+                               RECT rc)
+{
+  LISTVIEW_INFO *infoPtr;
+  NMLVCUSTOMDRAW nmcdhdr;
+  LPNMCUSTOMDRAW nmcd;
+
+  TRACE("drawstage:%lx hdc:%x\n", dwDrawStage, hdc);
+
+  infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+
+  nmcd= & nmcdhdr.nmcd;
+  nmcd->hdr.hwndFrom = hwnd;
+  nmcd->hdr.idFrom =  GetWindowLongA( hwnd, GWL_ID);
+  nmcd->hdr.code   = NM_CUSTOMDRAW;
+  nmcd->dwDrawStage= dwDrawStage;
+  nmcd->hdc        = hdc;
+  nmcd->rc.left    = rc.left;
+  nmcd->rc.right   = rc.right;
+  nmcd->rc.bottom  = rc.bottom;
+  nmcd->rc.top     = rc.top;
+  nmcd->dwItemSpec = 0;
+  nmcd->uItemState = 0;
+  nmcd->lItemlParam= 0;
+  nmcdhdr.clrText  = infoPtr->clrText;
+  nmcdhdr.clrTextBk= infoPtr->clrBk;
+
+  return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+              (WPARAM) GetWindowLongA( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
+}
+
+static BOOL
+LISTVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
+                                   UINT iItem, UINT iSubItem, 
+                                   UINT uItemDrawState)
+{
+ LISTVIEW_INFO *infoPtr;
+ NMLVCUSTOMDRAW nmcdhdr;
+ LPNMCUSTOMDRAW nmcd;
+ DWORD dwDrawStage,dwItemSpec;
+ UINT uItemState;
+ INT retval;
+ RECT itemRect;
+ LVITEMA item;
+
+ infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+
+ ZeroMemory(&item,sizeof(LVITEMA));
+ item.iItem = iItem;
+ item.mask = LVIF_PARAM;
+ ListView_GetItemA(hwnd,&item);
+
+ dwDrawStage=CDDS_ITEM | uItemDrawState;
+ dwItemSpec=iItem;
+ uItemState=0;
+
+ if (LISTVIEW_IsSelected(hwnd,iItem)) uItemState|=CDIS_SELECTED;
+ if (iItem==infoPtr->nFocusedItem)   uItemState|=CDIS_FOCUS;
+ if (iItem==infoPtr->nHotItem)       uItemState|=CDIS_HOT;
+
+ itemRect.left = LVIR_BOUNDS;
+ LISTVIEW_GetItemRect(hwnd, iItem, &itemRect);
+
+ nmcd= & nmcdhdr.nmcd;
+ nmcd->hdr.hwndFrom = hwnd;
+ nmcd->hdr.idFrom =  GetWindowLongA( hwnd, GWL_ID);
+ nmcd->hdr.code   = NM_CUSTOMDRAW;
+ nmcd->dwDrawStage= dwDrawStage;
+ nmcd->hdc                = hdc;
+ nmcd->rc.left    = itemRect.left;
+ nmcd->rc.right   = itemRect.right;
+ nmcd->rc.bottom  = itemRect.bottom;
+ nmcd->rc.top     = itemRect.top;
+ nmcd->dwItemSpec = dwItemSpec;
+ nmcd->uItemState = uItemState;
+ nmcd->lItemlParam= item.lParam;
+ nmcdhdr.clrText  = infoPtr->clrText;
+ nmcdhdr.clrTextBk= infoPtr->clrBk;
+ nmcdhdr.iSubItem   =iSubItem;
+
+ TRACE("drawstage:%lx hdc:%x item:%lx, itemstate:%x, lItemlParam:%lx\n",
+                  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
+          nmcd->uItemState, nmcd->lItemlParam);
+
+ retval=SendMessageA (GetParent (hwnd), WM_NOTIFY,
+                 (WPARAM) GetWindowLongA( hwnd, GWL_ID), (LPARAM)&nmcdhdr);
+
+ infoPtr->clrText=nmcdhdr.clrText;
+ infoPtr->clrBk  =nmcdhdr.clrTextBk;
+ return (BOOL) retval;
+}
+
 
 /*************************************************************************
 * DESCRIPTION:
@@ -3024,7 +3119,7 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
  * RETURN:
  * None
  */
-static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
+static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc, DWORD cdmode)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd,0);
   SCROLLINFO scrollInfo;
@@ -3035,6 +3130,8 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
   INT nItem;
   INT nLast;
   BOOL FullSelected;
+  DWORD cditemmode = CDRF_DODEFAULT;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
@@ -3068,6 +3165,49 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
   {
     RECT SuggestedFocusRect;
 
+    /* Do Owner Draw */
+    if (lStyle & LVS_OWNERDRAWFIXED)
+    {
+        UINT uID = GetWindowLongA( hwnd, GWL_ID);
+        DRAWITEMSTRUCT dis;
+        LVITEMA item;
+        RECT br;
+
+        TRACE("Owner Drawn\n");    
+        dis.CtlType = ODT_LISTVIEW;
+        dis.CtlID = uID;
+        dis.itemID = nItem;
+        dis.itemAction = ODA_DRAWENTIRE;
+        dis.itemState = 0;
+       
+        if (LISTVIEW_IsSelected(hwnd,nItem)) dis.itemState|=ODS_SELECTED;
+        if (nItem==infoPtr->nFocusedItem)   dis.itemState|=ODS_FOCUS;
+
+        dis.hwndItem = hwnd;
+        dis.hDC = hdc;
+
+        Header_GetItemRect(infoPtr->hwndHeader, 0, &dis.rcItem);
+        Header_GetItemRect(infoPtr->hwndHeader, nColumnCount-1, &br);
+
+        dis.rcItem.left =0; 
+        dis.rcItem.right = max(dis.rcItem.left, br.right);
+        dis.rcItem.top = nDrawPosY;
+        dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
+       
+        ZeroMemory(&item,sizeof(LVITEMA));
+        item.iItem = nItem;
+        item.mask = LVIF_PARAM;
+        ListView_GetItemA(hwnd,&item);
+
+        dis.itemData = item.lParam;
+
+        if (SendMessageA(GetParent(hwnd),WM_DRAWITEM,(WPARAM)uID,(LPARAM)&dis))
+        {
+          nDrawPosY += infoPtr->nItemHeight;
+          continue;
+        }
+    }
+
     if (FullSelected)
     {
       RECT ir,br;
@@ -3085,6 +3225,12 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
 
     for (j = 0; j < nColumnCount; j++)
     {
+      if (cdmode & CDRF_NOTIFYITEMDRAW)
+        cditemmode = LISTVIEW_SendCustomDrawItemNotify (hwnd, hdc, nItem, j,
+                                                      CDDS_ITEMPREPAINT);
+      if (cditemmode & CDRF_SKIPDEFAULT)
+        continue;
+
       Header_GetItemRect(infoPtr->hwndHeader, j, &rcItem);
 
       rcItem.left += REPORT_MARGINX;
@@ -3109,6 +3255,10 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
         LISTVIEW_DrawSubItem(hwnd, hdc, nItem, j, rcItem, 
                               FullSelected);
       }
+
+      if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        LISTVIEW_SendCustomDrawItemNotify(hwnd, hdc, nItem, 0, 
+				      CDDS_ITEMPOSTPAINT);
     }
     /*
      * Draw Focus Rect
@@ -3238,7 +3388,7 @@ static INT LISTVIEW_GetColumnCount(HWND hwnd)
  * RETURN:
  * None
  */
-static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
+static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc, DWORD cdmode)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   RECT rcItem,FocusRect;
@@ -3248,6 +3398,7 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
   INT nCountPerColumn;
   INT nItemWidth = infoPtr->nItemWidth;
   INT nItemHeight = infoPtr->nItemHeight;
+  DWORD cditemmode = CDRF_DODEFAULT;
   
   /* get number of fully visible columns */
   nColumnCount = LISTVIEW_GetColumnCount(hwnd);
@@ -3261,6 +3412,12 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
       if (nItem >= GETITEMCOUNT(infoPtr))
         return;
 
+      if (cdmode & CDRF_NOTIFYITEMDRAW)
+        cditemmode = LISTVIEW_SendCustomDrawItemNotify (hwnd, hdc, nItem, 0,
+                                                      CDDS_ITEMPREPAINT);
+      if (cditemmode & CDRF_SKIPDEFAULT)
+        continue;
+
       rcItem.top = j * nItemHeight;
       rcItem.left = i * nItemWidth;
       rcItem.bottom = rcItem.top + nItemHeight;
@@ -3271,7 +3428,12 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
        */
       if (LISTVIEW_GetItemState(hwnd,nItem,LVIS_FOCUSED) && infoPtr->bFocus)
       Rectangle(hdc, FocusRect.left, FocusRect.top, 
-                FocusRect.right,FocusRect.bottom); 
+                FocusRect.right,FocusRect.bottom);
+
+      if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        LISTVIEW_SendCustomDrawItemNotify(hwnd, hdc, nItem, 0, 
+                                          CDDS_ITEMPOSTPAINT);
+ 
     }
   }
 }
@@ -3287,17 +3449,25 @@ static VOID LISTVIEW_RefreshList(HWND hwnd, HDC hdc)
  * RETURN:
  * None
  */
-static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall)
+static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall, DWORD cdmode)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   POINT ptPosition;
   POINT ptOrigin;
   RECT rcItem,SuggestedFocus;
   INT i;
+  DWORD cditemmode = CDRF_DODEFAULT;
+
 
   LISTVIEW_GetOrigin(hwnd, &ptOrigin);
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
   {
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+      cditemmode = LISTVIEW_SendCustomDrawItemNotify (hwnd, hdc, i, 0,
+                                                      CDDS_ITEMPREPAINT);
+    if (cditemmode & CDRF_SKIPDEFAULT)
+        continue;
+
     LISTVIEW_GetItemPosition(hwnd, i, &ptPosition);
     ptPosition.x += ptOrigin.x;
     ptPosition.y += ptOrigin.y;
@@ -3333,6 +3503,9 @@ static VOID LISTVIEW_RefreshIcon(HWND hwnd, HDC hdc, BOOL bSmall)
         }
       }
     }
+    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        LISTVIEW_SendCustomDrawItemNotify(hwnd, hdc, i, 0, 
+                                          CDDS_ITEMPOSTPAINT);
   }
 }
 
@@ -3353,6 +3526,13 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   HFONT hOldFont;
   HPEN hPen, hOldPen;
+  DWORD cdmode;
+  RECT rect;
+
+  GetClientRect(hwnd, &rect);
+  cdmode = LISTVIEW_SendCustomDrawNotify(hwnd,CDDS_PREPAINT,hdc,rect);
+
+  if (cdmode == CDRF_SKIPDEFAULT) return;
 
   /* select font */
   hOldFont = SelectObject(hdc, infoPtr->hFont);
@@ -3366,19 +3546,19 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
 
   if (uView == LVS_LIST)
   {
-    LISTVIEW_RefreshList(hwnd, hdc); 
+    LISTVIEW_RefreshList(hwnd, hdc, cdmode); 
   }
   else if (uView == LVS_REPORT)
   {
-    LISTVIEW_RefreshReport(hwnd, hdc);
+    LISTVIEW_RefreshReport(hwnd, hdc, cdmode);
   }
   else if (uView == LVS_SMALLICON)
   {
-    LISTVIEW_RefreshIcon(hwnd, hdc, TRUE);
+    LISTVIEW_RefreshIcon(hwnd, hdc, TRUE, cdmode);
   }
   else if (uView == LVS_ICON)
   {
-    LISTVIEW_RefreshIcon(hwnd, hdc, FALSE);
+    LISTVIEW_RefreshIcon(hwnd, hdc, FALSE, cdmode);
   }
 
   /* unselect objects */
@@ -3387,6 +3567,9 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   
   /* delete pen */
   DeleteObject(hPen);
+ 
+  if (cdmode & CDRF_NOTIFYPOSTPAINT)
+      LISTVIEW_SendCustomDrawNotify(hwnd, CDDS_POSTPAINT, hdc, rect);
 }
 
 

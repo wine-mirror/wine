@@ -2765,6 +2765,15 @@ typedef struct tagNMLVCACHEHINT
 #define PNM_CACHEHINT  LPNMLVCACHEHINT
 #define NM_CACHEHINT   NMLVCACHEHINT
 
+#define NMLVCUSTOMDRAW_V3_SIZE CCSIZEOF_STRUCT(NMLCUSTOMDRW, clrTextBk)
+
+typedef struct tagNMLVCUSTOMDRAW
+{
+    NMCUSTOMDRAW nmcd;
+    COLORREF clrText;
+    COLORREF clrTextBk;
+    int iSubItem;
+} NMLVCUSTOMDRAW, *LPNMLVCUSTOMDRAW;
 
 #define ListView_SetTextBkColor(hwnd,clrBk) \
     (BOOL)SendMessageA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
