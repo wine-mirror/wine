@@ -11,33 +11,7 @@
 #include "winnt.h"
 #include "thread.h"
 
-/*
- * the function pointer to a exception handler
- */
-
-/* forward definition */
-struct __EXCEPTION_FRAME;
-
-typedef DWORD (CALLBACK *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD pexcrec,
-                                      struct __EXCEPTION_FRAME  *pestframe,
-                                      PCONTEXT                   pcontext,
-                                      struct __EXCEPTION_FRAME **pdispatcher);
-
-/*
- * The exception frame, used for registering exception handlers 
- * Win32 cares only about this, but compilers generally emit 
- * larger exception frames for their own use.
- */
-
-typedef struct __EXCEPTION_FRAME
-{
-  struct __EXCEPTION_FRAME *Prev;
-  PEXCEPTION_HANDLER       Handler;
-} EXCEPTION_FRAME, *PEXCEPTION_FRAME;
-
                         
-void WINAPI RtlUnwind(PEXCEPTION_FRAME,LPVOID,PEXCEPTION_RECORD,DWORD);
-
 static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
 {
     TEB * teb = NtCurrentTeb();

@@ -321,6 +321,24 @@ typedef struct _EXCEPTION_POINTERS
   PCONTEXT           ContextRecord;
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
+
+/*
+ * The exception frame, used for registering exception handlers 
+ * Win32 cares only about this, but compilers generally emit 
+ * larger exception frames for their own use.
+ */
+
+struct __EXCEPTION_FRAME;
+
+typedef DWORD (CALLBACK *PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct __EXCEPTION_FRAME*,
+                                             PCONTEXT,struct __EXCEPTION_FRAME **);
+
+typedef struct __EXCEPTION_FRAME
+{
+  struct __EXCEPTION_FRAME *Prev;
+  PEXCEPTION_HANDLER       Handler;
+} EXCEPTION_FRAME, *PEXCEPTION_FRAME;
+
 #include "poppack.h"
 
 /*

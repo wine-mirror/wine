@@ -6,8 +6,8 @@
 #ifndef __WINE_NTDDK_H
 #define __WINE_NTDDK_H
 
-#include <ntdef.h>
-#include <winnt.h>
+#include "ntdef.h"
+#include "winnt.h"
 #include "winbase.h"	/* fixme: should be taken out sometimes */
 
 #ifdef __cplusplus
@@ -575,6 +575,8 @@ BOOLEAN WINAPI RtlFreeHeap(
 void __cdecl DbgPrint(LPCSTR fmt,LPVOID args);
 DWORD WINAPI NtRaiseException(PEXCEPTION_RECORD,PCONTEXT,BOOL);
 void WINAPI RtlRaiseException(PEXCEPTION_RECORD);
+void WINAPI RtlRaiseStatus(NTSTATUS);
+void WINAPI RtlUnwind(PEXCEPTION_FRAME,LPVOID,PEXCEPTION_RECORD,DWORD);
 VOID WINAPI RtlAcquirePebLock(void);
 VOID WINAPI RtlReleasePebLock(void);
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4);
