@@ -225,11 +225,7 @@ sub _find_align_kind_size {
 	$align = 4;
 	$kind = "unsigned";
 	$size = 4;
-    } elsif (/^LP(?:CSTR|CWSTR|DWORD|STR|VOID|THREAD_START_ROUTINE|WSTR)$/) {
-	$align = 4;
-	$kind = "pointer";
-	$size = 4;
-    } elsif (/^(?:(?:MSGBOX)CALLBACK[AW]?|(?:FAR|WND)PROC[AW]?)$/) {
+    } elsif (/^LP(?:CSTR|CWSTR|DWORD|VOID|WSTR)$/) {
 	$align = 4;
 	$kind = "pointer";
 	$size = 4;
@@ -247,7 +243,10 @@ sub _find_align_kind_size {
 	    $output->write("$type_name: can't parse type\n");
 	    $size_parse_reported{$_} = 1;
 	}
-
+    } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) { 
+	$align = 4;
+	$kind = "pointer";
+	$size = 4;    
     }
 
     my $align2;
@@ -627,17 +626,24 @@ sub output_test_pack_type {
 		if (defined($type2)) {
 		    return $type2;
 		} else {
-		    $output->write("$type_name2: type not found (ignored)\n");
+		    if ($type_name2 !~ /^(?:PVOID|VOID|void)$/) {
+			$output->write("$type_name2: warning: type not found 1\n");
+		    }
 		    return undef;
 		}
-	    } else {
+	    } elsif ($type_name2 =~ /^\w+$/) {
 		my $type2 = $$type_name2type{$type_name2};
 		if (defined($type2)) {
 		    return &$dereference_type($type2);
 		} else {
-		    $output->write("$type_name2: type not found (ignored)\n");
+		    $output->write("$type_name2: warning: type not found\n");
 		    return undef;
 		}
+	    } elsif ($type_name2 =~ /^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
+		return undef;
+	    } else {
+		$output->write("$type_name2: warning: type can't be parsed\n");
+		return undef;
 	    }
 	};
 
@@ -653,7 +659,7 @@ sub output_test_pack_type {
 	    if (!$optional && !scalar(keys(%$optional_fields2)) && defined($type_align2) && defined($type_size2)) {
 		print OUT "    TEST_TYPE_POINTER($type_name, $type_size2, $type_align2);\n";
 	    } else {
-		$output->write("$type_name: type size not found (ignored)\n");
+		# $output->write("$type_name: warning: type size not found\n");
 	    }
 	}
     } elsif ($type_kind eq "signed") {
@@ -715,12 +721,13 @@ sub output_test_pack {
     my $test_dir = shift;
     my $test = shift;
 
+    my $type_names_used = shift;
+
     $output->prefix("$test_dir: $test: ");
 
     my @headers = $tests->get_section($test_dir, $test, "header");
     my @type_names = $tests->get_section($test_dir, $test, "type");
 
-    my %type_name_not_used;
     my %type_name2optional;
     my %type_name2optional_fields;
 
@@ -742,7 +749,6 @@ sub output_test_pack {
 	} 
 
 	$type_name2optional_fields{$type_name} = $optional_fields;
-	$type_name_not_used{$type_name} = 1;
     }
 
     foreach my $header (@headers) {
@@ -751,29 +757,23 @@ sub output_test_pack {
 	foreach my $_type_name (@type_names) {
 	    my $type_name = $_type_name;
 
-	    next if $type_name =~ /^!/;
+	    my $skip = ($type_name =~ s/^!//);
 	    $type_name =~ s/:.*?$//;
-
 	    my $type = $$type_name2type{$type_name};
 	    if (!defined($type)) {
 		next;
 	    }
-	    $type_name_not_used{$type_name} = 0;
-	    
-	    output_test_pack_type(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields, $type_name, $type);
-	    output_test_pack_fields(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields, $type_name, $type, 0);
+	    $$type_names_used{$type_name} = $skip ? -1 : 1;
+	    next if $skip;
+
+	    print OUT "static void test_${test}_$type_name(void)\n";
+	    print OUT "{\n";
+	    output_test_pack_type(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields,
+				  $type_name, $type);
+	    output_test_pack_fields(\*OUT, $type_name2type, \%type_name2optional, \%type_name2optional_fields, 
+				    $type_name, $type, 0);
+	    print OUT "}\n";
 	    print OUT "\n";
-	}
-    }
-
-    foreach my $_type_name (@type_names) {
-	my $type_name = $_type_name;
-
-	next if $type_name =~ /^!/;
-	$type_name =~ s/:.*?$//;
-
-	if ($type_name_not_used{$type_name}) {
-	    # $output->write("$type_name: type not found (ignored)\n");
 	}
     }
 }
@@ -788,18 +788,27 @@ sub output_file {
     my $test_dir = shift;
     my @tests = @{(shift)};
 
+    my $type_names_used = shift;
+
     output_header(\*OUT, $test_dir, \@tests);
 
     foreach my $test (@tests) {
-	print OUT "void test_$test(void)\n";
-	print OUT "{\n";
+	my %type_names_used2;
 
 	if ($test eq "pack") {
-	    output_test_pack(\*OUT, $test_dir, $test);
+	    output_test_pack(\*OUT, $test_dir, $test, \%type_names_used2);
 	} else {
 	    die "no such test ($test)\n";
 	}
 
+	print OUT "static void test_$test(void)\n";
+	print OUT "{\n";
+	foreach my $type_name (sort(keys(%type_names_used2))) {
+	    $$type_names_used{$type_name} = $type_names_used2{$type_name};
+	    if ($type_names_used2{$type_name} > 0) {
+		print OUT "    test_${test}_$type_name();\n";
+	    }
+	}
 	print OUT "}\n";
 	print OUT "\n";
     }
@@ -812,8 +821,38 @@ sub output_file {
 ########################################################################
 # main
 
+my %type_names_used = ();
+
 my @test_dirs = $tests->get_test_dirs();
 foreach my $test_dir (@test_dirs) {
     my $file = "$wine_dir/$test_dir/generated.c";
-    replace_file($file, \&output_file, $test_dir, \@tests);
+    replace_file($file, \&output_file, $test_dir, \@tests, \%type_names_used);
+}
+
+foreach my $header (sort(keys(%file2types))) {
+    $output->prefix("$header: ");
+    $header =~ s%^include/%%;
+    my $type_name2type = $file2types{"include/$header"};
+    foreach my $_type_name (sort(keys(%$type_name2type))) {
+	my $type_name = $_type_name;
+
+	if (!exists($type_names_used{$type_name})) {
+	    $output->write("$type_name: type not used\n");
+	}
+    }
+}
+
+$output->prefix("$winapi_dir/tests.dat: ");
+foreach my $type_name (sort(keys(%type_names_used))) {
+    my $found = 0;
+    foreach my $header (sort(keys(%file2types))) {
+	my $type_name2type = $file2types{"include/$header"};
+	if (exists($type_name2type{$type_name})) {
+	    $found = 1;
+	}
+    }
+
+    if (!$found) {
+	$output->write("$type_name: type not used\n");
+    }
 }
