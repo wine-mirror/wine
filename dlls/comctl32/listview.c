@@ -3565,7 +3565,8 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
         cdsubitemmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (nSubItem == 0) infoPtr->cditemmode = cdsubitemmode;
     if (cdsubitemmode & CDRF_SKIPDEFAULT) goto postpaint;
-    prepaint_setup(infoPtr, hdc, &nmlvcd);
+    if (nSubItem == 0 || (cdmode & CDRF_NOTIFYITEMDRAW))
+        prepaint_setup(infoPtr, hdc, &nmlvcd);
 
     /* in full row select, subitems, will just use main item's colors */
     if (nSubItem && uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
