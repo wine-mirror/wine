@@ -882,7 +882,7 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/voi
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  *
  */
-HRESULT FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer, 
+HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer, 
    DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
    LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {
@@ -968,7 +968,7 @@ HRESULT WINAPI RevokeBindStatusCallback(
  * Releases the resources used by the specified BINDINFO structure   
  *
  */
-void ReleaseBindInfo(BINDINFO* pbindinfo)
+void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
 {
     FIXME("stub\n");
 }

@@ -38,8 +38,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #undef WINAPI
 
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
-#include <GL/gl.h>
-#include <GL/glx.h>
+#ifdef HAVE_GL_GL_H
+# include <GL/gl.h>
+#endif
+#ifdef HAVE_GL_GLX_H
+# include <GL/glx.h>
+#endif
 #ifdef HAVE_GL_GLEXT_H
 # include <GL/glext.h>
 #endif
