@@ -105,6 +105,13 @@ typedef struct
 } FIND_FIRST_INFO;
 
 
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 
 /***********************************************************************
  *           DOSFS_ValidDOSName
@@ -1768,8 +1775,18 @@ BOOL WINAPI FindClose( HANDLE handle )
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (info->dir) DOSFS_CloseDir( info->dir );
-    if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+    __TRY
+    {
+        if (info->dir) DOSFS_CloseDir( info->dir );
+        if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
+    }
+    __EXCEPT(page_fault)
+    {
+        WARN("Illegal handle %x\n", handle);
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    __ENDTRY
     GlobalUnlock( handle );
     GlobalFree( handle );
     return TRUE;
