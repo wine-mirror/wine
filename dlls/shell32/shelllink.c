@@ -581,6 +581,22 @@ static char *extract_icon( const char *path, int index)
     return NULL;
 }
 
+/* This escapes \ in filenames */
+static LPSTR
+escape(LPCSTR arg) {
+    LPSTR      narg, x;
+
+    narg = HeapAlloc(GetProcessHeap(),0,2*strlen(arg)+2);
+    x = narg;
+    while (*arg) {
+	*x++ = *arg;
+	if (*arg == '\\')
+	    *x++='\\'; /* escape \ */
+	arg++;
+    }
+    *x = 0;
+    return narg;
+}
 
 static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFileName, BOOL fRemember)
 {
@@ -591,6 +607,8 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     char *shell_link_app = NULL;
     char *icon_name = NULL;
     char *work_dir = NULL;
+    char *escaped_path = NULL;
+    char *escaped_args = NULL;
     BOOL bDesktop;
     HKEY hkey;
 
@@ -698,6 +716,11 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         This->sDescription ? This->sDescription : "" );
 
     if ((pid = fork()) == -1) goto done;
+
+    escaped_path = escape(This->sPath);
+    if (This->sArgs)
+        escaped_args = escape(This->sArgs);
+
     if (!pid)
     {
         int pos = 0;
@@ -706,12 +729,12 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         argv[pos++] = "--link";
         argv[pos++] = link_name;
         argv[pos++] = "--path";
-        argv[pos++] = This->sPath;
+        argv[pos++] = escaped_path;
         argv[pos++] = bDesktop ? "--desktop" : "--menu";
         if (This->sArgs && strlen(This->sArgs))
         {
             argv[pos++] = "--args";
-            argv[pos++] = This->sArgs;
+            argv[pos++] = escaped_args;
         }
         if (icon_name)
         {
@@ -721,7 +744,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         if (This->sWorkDir && strlen(This->sWorkDir))
         {
             argv[pos++] = "--workdir";
-            argv[pos++] = This->sWorkDir;
+            argv[pos++] = work_dir;
         }
         if (This->sDescription && strlen(This->sDescription))
         {
@@ -749,6 +772,8 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     HeapFree( GetProcessHeap(), 0, filename );
     HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
+    if (escaped_args) HeapFree( GetProcessHeap(), 0, escaped_args );
+    if (escaped_path) HeapFree( GetProcessHeap(), 0, escaped_path );
     return ret;
 }
 
