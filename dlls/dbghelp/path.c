@@ -91,13 +91,26 @@ HANDLE WINAPI FindExecutableImage(PSTR FileName, PSTR SymbolPath, PSTR ImageFile
  */
 BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 {
-    if (CreateDirectoryA(DirPath, NULL)) return TRUE;
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    char path[MAX_PATH];
+    const char *p = DirPath;
+    int  n;
+
+    if (p[0] && p[1] == ':') p += 2;
+    while (*p == '\\') p++; /* skip drive root */
+    while ((p = strchr(p, '\\')) != NULL)
     {
-        SetLastError(ERROR_SUCCESS);
-        return TRUE;
+       n = p - DirPath + 1;
+       memcpy(path, DirPath, n);
+       path[n] = '\0';
+       if( !CreateDirectoryA(path, NULL)            &&
+           (GetLastError() != ERROR_ALREADY_EXISTS))
+           return FALSE;
+       p++;
     }
-    return FALSE;
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+       SetLastError(ERROR_SUCCESS);
+
+    return TRUE;
 }
 
 /******************************************************************
