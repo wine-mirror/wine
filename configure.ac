@@ -1174,6 +1174,11 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	openssl/des.h \
+	openssl/md2.h \
+	openssl/rc2.h \
+	openssl/rc4.h \
+	openssl/rsa.h \
 	openssl/ssl.h \
 	process.h \
 	pthread.h \
@@ -1686,6 +1691,8 @@ dlls/rpcrt4/Makefile
 dlls/rpcrt4/tests/Makefile
 dlls/rsabase/Makefile
 dlls/rsabase/tests/Makefile
+dlls/rsaenh/Makefile
+dlls/rsaenh/tests/Makefile
 dlls/secur32/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile

@@ -110,6 +110,7 @@ BASEDIRS = \
 	richedit \
 	rpcrt4 \
 	rsabase \
+	rsaenh \
 	secur32 \
 	serialui \
 	setupapi \
@@ -348,6 +349,7 @@ SYMLINKS_SO = \
 	riched32.dll.so \
 	rpcrt4.dll.so \
 	rsabase.dll.so \
+	rsaenh.dll.so \
 	secur32.dll.so \
 	serialui.dll.so \
 	setupapi.dll.so \
@@ -777,6 +779,9 @@ rpcrt4.dll.so: rpcrt4/rpcrt4.dll.so
 rsabase.dll.so: rsabase/rsabase.dll.so
 	$(RM) $@ && $(LN_S) rsabase/rsabase.dll.so $@
 
+rsaenh.dll.so: rsaenh/rsaenh.dll.so
+	$(RM) $@ && $(LN_S) rsaenh/rsaenh.dll.so $@
+
 secur32.dll.so: secur32/secur32.dll.so
 	$(RM) $@ && $(LN_S) secur32/secur32.dll.so $@
 
@@ -1069,6 +1074,7 @@ IMPORT_LIBS = \
 	libriched32.$(IMPLIBEXT) \
 	librpcrt4.$(IMPLIBEXT) \
 	librsabase.$(IMPLIBEXT) \
+	librsaenh.$(IMPLIBEXT) \
 	libsecur32.$(IMPLIBEXT) \
 	libserialui.$(IMPLIBEXT) \
 	libsetupapi.$(IMPLIBEXT) \
@@ -1571,6 +1577,11 @@ librsabase.def: rsabase/rsabase.spec.def
 librsabase.a: rsabase/rsabase.spec.def
 	$(DLLTOOL) -k -l $@ -d rsabase/rsabase.spec.def
 
+librsaenh.def: rsaenh/rsaenh.spec.def
+	$(RM) $@ && $(LN_S) rsaenh/rsaenh.spec.def $@
+librsaenh.a: rsaenh/rsaenh.spec.def
+	$(DLLTOOL) -k -l $@ -d rsaenh/rsaenh.spec.def
+
 libsecur32.def: secur32/secur32.spec.def
 	$(RM) $@ && $(LN_S) secur32/secur32.spec.def $@
 libsecur32.a: secur32/secur32.spec.def
@@ -1833,6 +1844,7 @@ rasapi32/rasapi32.spec.def: $(WINEBUILD)
 richedit/riched32.spec.def: $(WINEBUILD)
 rpcrt4/rpcrt4.spec.def: $(WINEBUILD)
 rsabase/rsabase.spec.def: $(WINEBUILD)
+rsaenh/rsaenh.spec.def: $(WINEBUILD)
 secur32/secur32.spec.def: $(WINEBUILD)
 serialui/serialui.spec.def: $(WINEBUILD)
 setupapi/setupapi.spec.def: $(WINEBUILD)
@@ -1981,6 +1993,7 @@ rasapi32/rasapi32.dll.so: rasapi32
 richedit/riched32.dll.so: richedit
 rpcrt4/rpcrt4.dll.so: rpcrt4
 rsabase/rsabase.dll.so: rsabase
+rsaenh/rsaenh.dll.so: rsaenh
 secur32/secur32.dll.so: secur32
 serialui/serialui.dll.so: serialui
 setupapi/setupapi.dll.so: setupapi

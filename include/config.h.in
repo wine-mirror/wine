@@ -431,6 +431,21 @@
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
 
+/* Define to 1 if you have the <openssl/des.h> header file. */
+#undef HAVE_OPENSSL_DES_H
+
+/* Define to 1 if you have the <openssl/md2.h> header file. */
+#undef HAVE_OPENSSL_MD2_H
+
+/* Define to 1 if you have the <openssl/rc2.h> header file. */
+#undef HAVE_OPENSSL_RC2_H
+
+/* Define to 1 if you have the <openssl/rc4.h> header file. */
+#undef HAVE_OPENSSL_RC4_H
+
+/* Define to 1 if you have the <openssl/rsa.h> header file. */
+#undef HAVE_OPENSSL_RSA_H
+
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
