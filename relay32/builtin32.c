@@ -35,7 +35,7 @@
 #include "wine/library.h"
 #include "module.h"
 #include "file.h"
-#include "winerror.h"
+#include "ntdll_misc.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -45,37 +45,37 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 extern void RELAY_SetupDLL( const char *module );
 
 static HMODULE main_module;
+static NTSTATUS last_status; /* use to gather all errors in callback */
 
 /***********************************************************************
  *           BUILTIN32_dlopen
+ *
+ * The loader critical section must be locked while calling this function
  */
-void *BUILTIN32_dlopen( const char *name )
+NTSTATUS BUILTIN32_dlopen( const char *name, void** handle)
 {
-    void *handle;
     char error[256];
 
-    if (!(handle = wine_dll_load( name, error, sizeof(error) )))
+    last_status = STATUS_SUCCESS;
+    /* load_library will modify last_status. Note also that load_library can be
+     * called several times, if the .so file we're loading has dependencies.
+     * last_status will gather all the errors we may get while loading all these
+     * libraries
+     */
+    if (!(*handle = wine_dll_load( name, error, sizeof(error) )))
     {
         if (strstr(error, "cannot open") || strstr(error, "open failed") ||
             (strstr(error, "Shared object") && strstr(error, "not found"))) {
 	    /* The file does not exist -> WARN() */
             WARN("cannot open .so lib for builtin %s: %s\n", name, error);
+            last_status = STATUS_NO_SUCH_FILE;
         } else {
 	    /* ERR() for all other errors (missing functions, ...) */
             ERR("failed to load .so lib for builtin %s: %s\n", name, error );
+            last_status = STATUS_PROCEDURE_NOT_FOUND;
 	}
     }
-    return handle;
-}
-
-/***********************************************************************
- *           BUILTIN32_dlclose
- */
-int BUILTIN32_dlclose( void *handle )
-{
-    /* FIXME: should unregister descriptors first */
-    /* wine_dll_unload( handle ); */
-    return 0;
+    return last_status;
 }
 
 
@@ -86,7 +86,8 @@ int BUILTIN32_dlclose( void *handle )
  */
 static void load_library( void *base, const char *filename )
 {
-    HMODULE module = (HMODULE)base;
+    UNICODE_STRING      wstr;
+    HMODULE module = (HMODULE)base, ret;
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
     char *fullname;
@@ -100,6 +101,7 @@ static void load_library( void *base, const char *filename )
     if (!(nt = RtlImageNtHeader( module )))
     {
         ERR( "bad module for %s\n", filename ? filename : "main exe" );
+        last_status = STATUS_INVALID_IMAGE_FORMAT;
         return;
     }
 
@@ -110,14 +112,17 @@ static void load_library( void *base, const char *filename )
         return; /* don't create the modref here, will be done later on */
     }
 
-    if (GetModuleHandleA( filename ))
-        MESSAGE( "Warning: loading builtin %s, but native version already present. Expect trouble.\n", filename );
+    RtlCreateUnicodeStringFromAsciiz(&wstr, filename);
+    if (LdrGetDllHandle(0, 0, &wstr, &ret) == STATUS_SUCCESS)
+        MESSAGE( "Warning: loading builtin %s, but native version already present. "
+                 "Expect trouble.\n", filename );
+    RtlFreeUnicodeString( &wstr );
 
     len = GetSystemDirectoryA( NULL, 0 );
-    if (!(fullname = HeapAlloc( GetProcessHeap(), 0, len + strlen(filename) + 1 )))
+    if (!(fullname = RtlAllocateHeap( ntdll_get_process_heap(), 0, len + strlen(filename) + 1 )))
     {
         ERR( "can't load %s\n", filename );
-        SetLastError( ERROR_OUTOFMEMORY );
+        last_status = STATUS_NO_MEMORY;
         return;
     }
     GetSystemDirectoryA( fullname, len );
@@ -128,12 +133,12 @@ static void load_library( void *base, const char *filename )
     if (!(wm = PE_CreateModule( module, fullname, 0, 0, TRUE )))
     {
         ERR( "can't load %s\n", filename );
-        HeapFree( GetProcessHeap(), 0, fullname );
-        SetLastError( ERROR_OUTOFMEMORY );
+        RtlFreeHeap( ntdll_get_process_heap(), 0, fullname );
+        last_status = STATUS_NO_MEMORY;
         return;
     }
     TRACE( "loaded %s %p %p\n", fullname, wm, module );
-    HeapFree( GetProcessHeap(), 0, fullname );
+    RtlFreeHeap( ntdll_get_process_heap(), 0, fullname );
 
     /* setup relay debugging entry points */
     if (TRACE_ON(relay)) RELAY_SetupDLL( (void *)module );
@@ -151,6 +156,7 @@ NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
     char dllname[20], *p;
     LPCSTR name;
     void *handle;
+    NTSTATUS nts;
 
     /* Fix the name in case we have a full path and extension */
     name = path;
@@ -164,7 +170,8 @@ NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
     if (!p) strcat( dllname, ".dll" );
     for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
-    if (!(handle = BUILTIN32_dlopen( dllname ))) return STATUS_NO_SUCH_FILE;
+    if ((nts = BUILTIN32_dlopen( dllname, &handle )) != STATUS_SUCCESS)
+        return nts;
 
     if (!((*pwm) = MODULE_FindModule( path ))) *pwm = MODULE_FindModule( dllname );
     if (!*pwm)
@@ -186,20 +193,12 @@ NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
 HMODULE BUILTIN32_LoadExeModule( HMODULE main )
 {
     main_module = main;
+    last_status = STATUS_SUCCESS;
     wine_dll_set_callback( load_library );
     if (!main_module)
         MESSAGE( "No built-in EXE module loaded!  Did you create a .spec file?\n" );
+    if (last_status != STATUS_SUCCESS)
+        MESSAGE( "Error while processing initial modules\n");
+
     return main_module;
-}
-
-
-/***********************************************************************
- *           BUILTIN32_RegisterDLL
- *
- * Register a built-in DLL descriptor.
- */
-void BUILTIN32_RegisterDLL( const IMAGE_NT_HEADERS *header, const char *filename )
-{
-    extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
-    __wine_dll_register( header, filename );
 }

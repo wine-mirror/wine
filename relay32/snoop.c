@@ -24,14 +24,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "winbase.h"
-#include "winnt.h"
 #include "winternl.h"
 #include "snoop.h"
-#include "stackframe.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "excpt.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
@@ -143,6 +141,8 @@ void
 SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 	SNOOP_DLL	**dll = &(firstdll);
 	char		*s;
+        void            *addr;
+        SIZE_T          size;
 
     TRACE("hmod=%p, name=%s, ordbase=%ld, nrofordinals=%ld\n",
 	   hmod, name, ordbase, nrofordinals);
@@ -152,25 +152,32 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 		if ((*dll)->hmod == hmod)
 		{
 		    /* another dll, loaded at the same address */
-		    VirtualFree((*dll)->funs, (*dll)->nrofordinals*sizeof(SNOOP_FUN), MEM_RELEASE);
+                    addr = (*dll)->funs;
+                    size = (*dll)->nrofordinals * sizeof(SNOOP_FUN);
+                    NtFreeVirtualMemory(GetCurrentProcess(), &addr, &size, MEM_RELEASE);
 		    break;
 		}
 		dll = &((*dll)->next);
 	}
-        *dll = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *dll, sizeof(SNOOP_DLL)+strlen(name));
+        *dll = RtlReAllocateHeap(ntdll_get_process_heap(),
+                                 HEAP_ZERO_MEMORY, *dll, 
+                                 sizeof(SNOOP_DLL) + strlen(name));
 	(*dll)->hmod	= hmod;
 	(*dll)->ordbase = ordbase;
 	(*dll)->nrofordinals = nrofordinals;
 	strcpy( (*dll)->name, name );
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
-	(*dll)->funs = VirtualAlloc(NULL,nrofordinals*sizeof(SNOOP_FUN),MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-	memset((*dll)->funs,0,nrofordinals*sizeof(SNOOP_FUN));
-	if (!(*dll)->funs) {
-		HeapFree(GetProcessHeap(),0,*dll);
+        size = nrofordinals * sizeof(SNOOP_FUN);
+        NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size, 
+                                MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	if (!addr) {
+		RtlFreeHeap(ntdll_get_process_heap(),0,*dll);
 		FIXME("out of memory\n");
 		return;
 	}
+        (*dll)->funs = addr;
+	memset((*dll)->funs,0,size);
 }
 
 FARPROC
@@ -201,7 +208,7 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	fun = dll->funs+ordinal;
 	if (!fun->name)
 	  {
-	    fun->name = HeapAlloc(GetProcessHeap(),0,strlen(name)+1);
+	    fun->name = RtlAllocateHeap(ntdll_get_process_heap(),0,strlen(name)+1);
 	    strcpy( fun->name, name );
 	    fun->lcall	= 0xe8;
 	    /* NOTE: origreturn struct member MUST come directly after snoopentry */
@@ -299,7 +306,14 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 		rets = &((*rets)->next);
 	}
 	if (!*rets) {
-		*rets = VirtualAlloc(NULL,4096,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+                SIZE_T size = 4096;
+                VOID* addr;
+
+                NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size, 
+                                        MEM_COMMIT | MEM_RESERVE,
+                                        PAGE_EXECUTE_READWRITE);
+                if (!addr) return;
+                *rets = addr;
 		memset(*rets,0,4096);
 		i = 0;	/* entry 0 is free */
 	}
@@ -328,7 +342,8 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
-		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(DWORD));
+		ret->args = RtlAllocateHeap(ntdll_get_process_heap(),
+                                            0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
 	DPRINTF(") ret=%08lx\n",(DWORD)ret->origreturn);
@@ -363,7 +378,7 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
                 }
 		DPRINTF(") retval = %08lx ret=%08lx\n",
 			context->Eax,(DWORD)ret->origreturn );
-		HeapFree(GetProcessHeap(),0,ret->args);
+		RtlFreeHeap(ntdll_get_process_heap(),0,ret->args);
 		ret->args = NULL;
 	} else
 		DPRINTF("%04lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx\n",

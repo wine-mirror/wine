@@ -202,13 +202,12 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
     if ((descr = find_dll_descr( dllname )))
         return BUILTIN_DoLoadModule16( descr );
 
-    if ((handle = BUILTIN32_dlopen( dllname )))
+    if (BUILTIN32_dlopen( dllname, &handle ) == STATUS_SUCCESS)
     {
         if ((descr = find_dll_descr( dllname )))
             return BUILTIN_DoLoadModule16( descr );
 
         ERR( "loaded .so but dll %s still not found\n", dllname );
-        BUILTIN32_dlclose( handle );
     }
 
     return (HMODULE16)2;

@@ -25,12 +25,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "windef.h"
 #include "winternl.h"
 #include "stackframe.h"
 #include "module.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
@@ -57,11 +57,11 @@ static const char **build_list( const WCHAR *bufferW )
 
     while ((p = strchr( p, ';' )))
     {
-        count++;
+         count++;
         p++;
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(char*) + strlen(buffer) + 1 )))
+    if ((ret = RtlAllocateHeap( ntdll_get_process_heap(), 0, (count+1) * sizeof(char*) + strlen(buffer) + 1 )))
     {
         char *str = (char *)(ret + count + 1);
         char *p = str;
