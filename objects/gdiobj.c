@@ -245,8 +245,10 @@ static void  ReadFontInformation(
  */
 static void GetFontMetrics(HFONT handle, LPTEXTMETRICA lptm)
 {
-  HDC         hdc = GetDC((HWND)0);
+  HDC         hdc;
   HFONT       hOldFont;
+
+  hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
 
   hOldFont = (HFONT)SelectObject(hdc, handle);
 
@@ -254,7 +256,7 @@ static void GetFontMetrics(HFONT handle, LPTEXTMETRICA lptm)
 
   SelectObject(hdc, hOldFont);
 
-  ReleaseDC((HWND)0, hdc);
+  DeleteDC(hdc);
 }
 
 static inline void FixStockFontSize16(
