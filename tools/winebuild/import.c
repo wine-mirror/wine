@@ -529,7 +529,7 @@ static int output_immediate_imports( FILE *outfile )
         }
         pos += 4;
     }
-    fprintf( outfile, "\".previous\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
+    fprintf( outfile, "\".section\\t\\\".text\\\"\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
     return nb_imm;
@@ -735,7 +735,7 @@ static int output_delayed_imports( FILE *outfile )
             fprintf( outfile, "\"\n" );
         }
     }
-    fprintf( outfile, "\".previous\");\n" );
+    fprintf( outfile, "\".section \\\".text\\\"\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );

@@ -118,6 +118,7 @@ static void do_warnings(void);
 static void do_f_flags( const char *arg );
 static void do_define( const char *arg );
 static void do_include( const char *arg );
+static void do_k_flags( const char *arg );
 static void do_exe_mode( const char *arg );
 static void do_module( const char *arg );
 static void do_spec( const char *arg );
@@ -142,6 +143,7 @@ static const struct option_descr option_table[] =
     { "-f",       1, do_f_flags, "-f flags         Compiler flags (only -fPIC is supported)" },
     { "-D",       1, do_define,  "-D sym           Ignored for C flags compatibility" },
     { "-I",       1, do_include, "-I dir           Ignored for C flags compatibility" },
+    { "-K",       1, do_k_flags, "-K flags         Compiler flags (only -KPIC is supported)" },
     { "-m",       1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
     { "-M",       1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
@@ -205,6 +207,13 @@ static void do_define( const char *arg )
 static void do_include( const char *arg )
 {
     /* nothing */
+}
+
+static void do_k_flags( const char *arg )
+{
+    /* Ignored, because cc generates correct code. */
+    /* if (!strcmp( arg, "PIC" )) UsePIC = 1; */
+    /* ignore all other flags */
 }
 
 static void do_spec( const char *arg )

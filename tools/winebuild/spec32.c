@@ -335,6 +335,8 @@ static int output_exports( FILE *outfile, int nr_exports )
         }
     }
 
+    fprintf( outfile, "    \"\\t.text\\n\"\n" );
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
     fprintf( outfile, ");\n\n" );
 
     return total_size;
@@ -439,43 +441,43 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
 #if defined(__i386__)
     if (constructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #elif defined(__sparc__)
     if (constructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", constructor );
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tcall " PREFIX "%s\\n\"\n", destructor );
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #elif defined(__PPC__)
     if (constructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
     if (destructor)
     {
-        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #else
 #error You need to define the DLL constructor for your architecture
@@ -522,9 +524,15 @@ void BuildSpec32File( FILE *outfile )
     /* Reserve some space for the PE header */
 
     fprintf( outfile, "extern char pe_header[];\n" );
-    fprintf( outfile, "asm(\".section .text\\n\\t\"\n" );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy_header(void) {\n" );
+    fprintf( outfile, "#endif\n" );
+    fprintf( outfile, "asm(\".section \\\".text\\\"\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" PREFIX "pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
+    fprintf( outfile, "    \"" PREFIX "pe_header:\\t.skip %ld\\n\\t\");\n", page_size );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif\n" );
 
     fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLFileName );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
@@ -891,28 +899,25 @@ void BuildDebugFile( FILE *outfile )
              prefix, prefix );
 
 #if defined(__i386__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
 #elif defined(__sparc__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "    \"\\t.section\t\\\".text\\\"\\n\");\n" );
 #elif defined(__PPC__)
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_init\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " PREFIX "__wine_dbg_%s_fini\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
