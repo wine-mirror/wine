@@ -832,14 +832,14 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
         {
             BYTE vprot = view->prot[((char *)addr - (char *)view->base) >> page_shift];
             void *page = (void *)((UINT_PTR)addr & ~page_mask);
-            char *stack = (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE + page_mask + 1;
+            char *stack = (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE;
             if (vprot & VPROT_GUARD)
             {
                 VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
                 ret = STATUS_GUARD_PAGE_VIOLATION;
             }
-            /* is it inside the stack guard pages? */
-            if (((char *)addr >= stack) && ((char *)addr < stack + 2*(page_mask+1)))
+            /* is it inside the stack guard page? */
+            if (((char *)addr >= stack) && ((char *)addr < stack + (page_mask+1)))
                 ret = STATUS_STACK_OVERFLOW;
         }
     }

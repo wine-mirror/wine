@@ -1172,15 +1172,15 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     struct sigaction sig_act;
 
 #ifdef linux
-    if (!have_sigaltstack && NtCurrentTeb()->signal_stack)
+    if (!have_sigaltstack)
     {
         struct kernel_sigaction sig_act;
         sig_act.ksa_handler = func;
         sig_act.ksa_flags   = SA_RESTART;
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
                               (1 << (SIGUSR2-1));
-        /* point to the top of the stack */
-        sig_act.ksa_restorer = (char *)NtCurrentTeb()->signal_stack + SIGNAL_STACK_SIZE;
+        /* point to the top of the signal stack */
+        sig_act.ksa_restorer = (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE;
         return wine_sigaction( sig, &sig_act, NULL );
     }
 #endif  /* linux */
@@ -1234,18 +1234,16 @@ BOOL SIGNAL_Init(void)
 
 #ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
-    if ((ss.ss_sp = NtCurrentTeb()->signal_stack))
-    {
-        ss.ss_size  = SIGNAL_STACK_SIZE;
-        ss.ss_flags = 0;
-        if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
+    ss.ss_sp    = NtCurrentTeb()->DeallocationStack;
+    ss.ss_size  = SIGNAL_STACK_SIZE;
+    ss.ss_flags = 0;
+    if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
 #ifdef linux
-        /* sigaltstack may fail because the kernel is too old, or
-           because glibc is brain-dead. In the latter case a
-           direct system call should succeed. */
-        else if (!wine_sigaltstack(&ss, NULL)) have_sigaltstack = 1;
+    /* sigaltstack may fail because the kernel is too old, or
+       because glibc is brain-dead. In the latter case a
+       direct system call should succeed. */
+    else if (!wine_sigaltstack(&ss, NULL)) have_sigaltstack = 1;
 #endif  /* linux */
-    }
 #endif  /* HAVE_SIGALTSTACK */
 
     if (set_handler( SIGINT,  have_sigaltstack, (void (*)())int_handler ) == -1) goto error;

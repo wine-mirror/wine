@@ -77,7 +77,7 @@ typedef struct _TEB
     DWORD        unknown3;       /* --n  48 */
     int          thread_errno;   /* --3  4c Per-thread errno (was: ring0_thread) */
     int          thread_h_errno; /* --3  50 Per-thread h_errno (was: ptr to tdbx structure) */
-    void        *signal_stack;   /* --3  54 Signal stack (was: stack_base) */
+    void        *stack_base;     /* 1-n  54 Stack base (unused) */
     void        *exit_stack;     /* 1-n  58 Exit stack */
     void        *emu_data;       /* --n  5c Related to 80387 emulation */
     DWORD        last_error;     /* 1--  60 Last error code */
@@ -141,7 +141,11 @@ typedef struct _TEB
 #define TEBF_TRAP   0x0002
 
 /* The per-thread signal stack size */
+#ifdef __i386__
 #define SIGNAL_STACK_SIZE  0x100000  /* 1Mb  FIXME: should be much smaller than that */
+#else
+#define SIGNAL_STACK_SIZE  0  /* we don't need a signal stack on non-i386 */
+#endif
 
 
 /* scheduler/thread.c */

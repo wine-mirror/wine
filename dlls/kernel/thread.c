@@ -93,7 +93,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
         else
             stack_size = ((char *)NtCurrentTeb()->Tib.StackBase
                         - (char *)NtCurrentTeb()->DeallocationStack
-                        - SIGNAL_STACK_SIZE - 3 * page_size);
+                        - SIGNAL_STACK_SIZE);
     }
 
     /* FIXME: some Wine functions use a lot of stack, so we add 64Kb here */
@@ -102,16 +102,13 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     /* Memory layout in allocated block:
      *
      *   size                 contents
-     * 1 page              NOACCESS guard page
      * SIGNAL_STACK_SIZE   signal stack
-     * 1 page              NOACCESS guard page
-     * 1 page              PAGE_GUARD guard page
-     * stack_size          normal stack
+     * stack_size          normal stack (including a PAGE_GUARD page at the bottom)
      * 1 page              TEB (except for initial thread)
      */
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
-    total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
+    total_size = stack_size + SIGNAL_STACK_SIZE;
     if (!teb) total_size += page_size;
 
     if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
@@ -128,15 +125,12 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     }
 
     teb->DeallocationStack = base;
-    teb->signal_stack      = (char *)base + page_size;
-    teb->Tib.StackBase     = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
+    teb->Tib.StackBase     = (char *)base + SIGNAL_STACK_SIZE + stack_size;
     teb->Tib.StackLimit    = base;  /* note: limit is lower than base since the stack grows down */
 
     /* Setup guard pages */
 
-    VirtualProtect( base, 1, PAGE_NOACCESS, &old_prot );
-    VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE, 1, PAGE_NOACCESS, &old_prot );
-    VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE + page_size, 1,
+    VirtualProtect( (char *)base + SIGNAL_STACK_SIZE, 1,
                     PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
     return teb;
 }
