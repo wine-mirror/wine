@@ -26,10 +26,8 @@ BOOL WINAPI WINSPOOL_EntryPoint(HINSTANCE hInstance,
   switch (reason)
   {
     case DLL_PROCESS_ATTACH: {
-#ifdef HAVE_CUPS
-      extern void CUPS_LoadPrinters();
-      CUPS_LoadPrinters();
-#endif
+      extern void WINSPOOL_LoadSystemPrinters();
+      WINSPOOL_LoadSystemPrinters();
       break;
     }
     case DLL_PROCESS_DETACH:

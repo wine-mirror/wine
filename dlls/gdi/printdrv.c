@@ -384,7 +384,7 @@ INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key)
 {
     struct hpq *queueItem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hpq));
     if(queueItem == NULL) {
-        ERR("Memory exausted!");
+        ERR("Memory exausted!\n");
         return FALSE;
     }
     queueItem->next = hpqueue;
@@ -456,8 +456,8 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     if (pszOutput == NULL || *pszOutput == '\0')
       return -1;
 
-    if (!strncmp("CUPS:",pszOutput,5))
-      sprintf(psCmd,"|lpr -P%s",pszOutput+5);
+    if (!strncmp("LPR:",pszOutput,4))
+      sprintf(psCmd,"|lpr -P%s",pszOutput+4);
     else
       PROFILE_GetWineIniString("spooler",pszOutput,"",psCmd,sizeof(psCmd));
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
@@ -555,7 +555,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 	{
 	    pPrintJob = HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTJOB));
             if(pPrintJob == NULL) {
-                WARN("Memory exausted!");
+                WARN("Memory exausted!\n");
                 return hHandle;
             }
             

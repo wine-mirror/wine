@@ -522,9 +522,9 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	    strncpy(ppdFileName, ppd, sizeof(ppdFileName));
 	    res = ERROR_SUCCESS;
 	    /* we should unlink() that file later */
-	}
-	else {
-		ERR("Did not find ppd for %s\n",name);
+	} else {
+	    res = ERROR_FILE_NOT_FOUND;
+	    WARN("Did not find ppd for %s\n",name);
 	}
     }
 #endif
@@ -533,7 +533,17 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         res = GetPrinterDataA (hPrinter, "PPD File", NULL, ppdFileName,
 	    	sizeof(ppdFileName), &needed);
     }
-    
+    /* Look for a ppd file for this printer in the config file.
+     * First look for the names of the printer, then for 'generic'
+     */
+    if ((res!=ERROR_SUCCESS) &&
+	!PROFILE_GetWineIniString("ppd",name,"",ppdFileName,sizeof(ppdFileName))	&&
+    	!PROFILE_GetWineIniString("ppd","generic","",ppdFileName,sizeof(ppdFileName))
+    )
+	res = ERROR_FILE_NOT_FOUND;
+    else 
+	res = ERROR_SUCCESS;
+
     if (res != ERROR_SUCCESS) {
 	ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
 	goto closeprinter;

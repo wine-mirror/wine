@@ -76,46 +76,37 @@ static WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
 static WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode);
+static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
+				      DWORD Level, LPBYTE pDriverInfo,
+				      DWORD cbBuf, LPDWORD pcbNeeded,
+				      BOOL unicode);
 
 #ifdef HAVE_CUPS
-void
+BOOL
 CUPS_LoadPrinters(void) {
     cups_dest_t		*dests;
-    int			i,nrofdests;
+    int			i,nrofdests,hadprinter = FALSE;
     PRINTER_INFO_2A	pinfo2a;
-    DRIVER_INFO_3A	di3a;
     const char*		def = cupsGetDefault();
 
     nrofdests = cupsGetDests(&dests);
 
-    di3a.cVersion = 0x400;
-    di3a.pName = "PS Driver";
-    di3a.pEnvironment = NULL;	/* NULL means auto */
-    di3a.pDriverPath = "wineps.drv";
-    di3a.pDataFile = "<datafile?>";
-    di3a.pConfigFile = "wineps.drv";
-    di3a.pHelpFile = "<helpfile?>";
-    di3a.pDependentFiles = "<dependend files?>";
-    di3a.pMonitorName = "<monitor name?>";
-    di3a.pDefaultDataType = "RAW";
-
-
-    if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
-	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
-        return;
-    }
     for (i=0;i<nrofdests;i++) {
 	const char *ppd = cupsGetPPD(dests[i].name);
 	char	*port,*devline;
 
-	if (!ppd)
-		continue;
+	if (!ppd) {
+	    WARN("No ppd file for %s.\n",dests[i].name);
+	    continue;
+	}
 	unlink(ppd);
 
-	if (!strcmp(def,dests[i].name)) {
-		char	*buf = HeapAlloc(GetProcessHeap(),0,2*strlen(dests[i].name)+strlen(",WINEPS,CUPS:")+1);
+	hadprinter = TRUE;
 
-		sprintf(buf,"%s,WINEPS,CUPS:%s",dests[i].name,dests[i].name);
+	if (!strcmp(def,dests[i].name)) {
+		char	*buf = HeapAlloc(GetProcessHeap(),0,2*strlen(dests[i].name)+strlen(",WINEPS,LPR:")+1);
+
+		sprintf(buf,"%s,WINEPS,LPR:%s",dests[i].name,dests[i].name);
 		WriteProfileStringA("windows","device",buf);
 		HeapFree(GetProcessHeap(),0,buf);
 	}
@@ -126,8 +117,8 @@ CUPS_LoadPrinters(void) {
 	pinfo2a.pDriverName	= "PS Driver";
 	pinfo2a.pComment	= "WINEPS Printer using CUPS";
 	pinfo2a.pLocation	= "<physical location of printer>";
-	port = HeapAlloc(GetProcessHeap(),0,strlen("CUPS:")+strlen(dests[i].name)+1);
-	sprintf(port,"CUPS:%s",dests[i].name);
+	port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(dests[i].name)+1);
+	sprintf(port,"LPR:%s",dests[i].name);
 	pinfo2a.pPortName	= port;
 	pinfo2a.pParameters	= "<parameters?>";
 	pinfo2a.pShareName	= "<share name?>";
@@ -144,8 +135,169 @@ CUPS_LoadPrinters(void) {
 	}
 	HeapFree(GetProcessHeap(),0,port);
     }
+    return hadprinter;
 }
 #endif
+
+static BOOL
+PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
+    PRINTER_INFO_2A	pinfo2a;
+    char		*s,*name,*prettyname,*devname;
+    BOOL		isps = FALSE;
+    char		*port,*devline;
+
+    s = strchr(pent,':');
+    if (!s) return FALSE;
+    *s='\0';
+    name = pent;
+    pent = s+1;
+    TRACE("%s\n",name);
+
+    /* Determine whether this is a postscript printer. */
+
+    /* 1. Check if name or aliases contain trigger phrases like 'ps' */
+    if (strstr(name,"ps")		||
+	strstr(name,"pd")		||	/* postscript double page */
+	strstr(name,"postscript")	||
+	strstr(name,"PostScript")
+    ) {
+	TRACE("%s has 'ps' style name, assuming postscript.\n",name);
+	isps = TRUE;
+    }
+    /* 2. Check if this is a remote printer. These usually are postscript
+     *    capable 
+     */
+    if (strstr(pent,":rm")) {
+	isps = TRUE;
+	TRACE("%s is remote, assuming postscript.\n",name);
+    }
+    /* 3. Check if we have an input filter program. If we have one, it 
+     *    most likely is one capable of converting postscript.
+     *    (Could probably check for occurence of 'gs' or 'ghostscript' 
+     *     in the if file itself.)
+     */
+    if (strstr(pent,":if=/")) {
+	isps = TRUE;
+	TRACE("%s has inputfilter program, assuming postscript.\n",name);
+    }
+
+    /* If it is not a postscript printer, we cannot use it. */
+    if (!isps)
+	return FALSE;
+
+    prettyname = name;
+    /* Get longest name, usually the one at the right for later display. */
+    while ((s=strchr(prettyname,'|'))) prettyname = s+1;
+    s=strchr(name,'|');if (s) *s='\0';
+
+    /* prettyname must fit into the dmDeviceName member of DEVMODE struct,
+     * if it is too long, we use it as comment below. */
+    devname = prettyname;
+    if (strlen(devname)>=CCHDEVICENAME-1)
+	 devname = name;
+    if (strlen(devname)>=CCHDEVICENAME-1)
+	return FALSE;
+    if (isfirst) {
+	    char	*buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS,LPR:")+1);
+
+	    sprintf(buf,"%s,WINEPS,LPR:%s",devname,name);
+	    WriteProfileStringA("windows","device",buf);
+	    HeapFree(GetProcessHeap(),0,buf);
+    }
+    memset(&pinfo2a,0,sizeof(pinfo2a));
+    pinfo2a.pPrinterName	= devname;
+    pinfo2a.pDatatype		= "RAW";
+    pinfo2a.pPrintProcessor	= "WinPrint";
+    pinfo2a.pDriverName		= "PS Driver";
+    pinfo2a.pComment		= "WINEPS Printer using LPR";
+    pinfo2a.pLocation		= prettyname;
+    port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
+    sprintf(port,"LPR:%s",name);
+    pinfo2a.pPortName		= port;
+    pinfo2a.pParameters		= "<parameters?>";
+    pinfo2a.pShareName		= "<share name?>";
+    pinfo2a.pSepFile		= "<sep file?>";
+
+    devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
+    sprintf(devline,"WINEPS,%s",port);
+    WriteProfileStringA("devices",devname,devline);
+    HeapFree(GetProcessHeap(),0,devline);
+
+    if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
+	if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
+	    ERR("%s not added by AddPrinterA (%ld)\n",name,GetLastError());
+    }
+    HeapFree(GetProcessHeap(),0,port);
+    return TRUE;
+}
+
+static BOOL
+PRINTCAP_LoadPrinters(void) {
+    BOOL		hadprinter = FALSE, isfirst = TRUE;
+    char		buf[200];
+    FILE		*f;
+
+    f = fopen("/etc/printcap","r");
+    if (!f)
+	return FALSE;
+
+    while (fgets(buf,sizeof(buf),f)) {
+	char	*pent = NULL;
+	do {
+	    char	*s;
+	    s=strchr(buf,'\n'); if (s) *s='\0';
+	    if ((buf[0]=='#') || (buf[0]=='\0'))
+		continue;
+
+	    if (pent) {
+		pent=HeapReAlloc(GetProcessHeap(),0,pent,strlen(pent)+strlen(buf)+2);
+		strcat(pent,buf);
+	    } else {
+		pent=HeapAlloc(GetProcessHeap(),0,strlen(buf)+1);
+		strcpy(pent,buf);
+	    }
+
+	    if (strlen(pent) && (pent[strlen(pent)-1] == '\\'))
+		pent[strlen(pent)-1] = '\0';
+	    else
+		break;
+	} while (fgets(buf,sizeof(buf),f));
+	if (pent)
+	    hadprinter |= PRINTCAP_ParseEntry(pent,isfirst);
+	isfirst = FALSE;
+	if (pent) HeapFree(GetProcessHeap(),0,pent);
+	pent = NULL;
+	if (feof(f)) break;
+    }
+    fclose(f);
+    return hadprinter;
+}
+
+void
+WINSPOOL_LoadSystemPrinters() {
+    DRIVER_INFO_3A	di3a;
+    di3a.cVersion = 0x400;
+    di3a.pName = "PS Driver";
+    di3a.pEnvironment = NULL;	/* NULL means auto */
+    di3a.pDriverPath = "wineps.drv";
+    di3a.pDataFile = "<datafile?>";
+    di3a.pConfigFile = "wineps.drv";
+    di3a.pHelpFile = "<helpfile?>";
+    di3a.pDependentFiles = "<dependend files?>";
+    di3a.pMonitorName = "<monitor name?>";
+    di3a.pDefaultDataType = "RAW";
+
+    if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
+	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
+        return;
+    }
+#ifdef HAVE_CUPS
+    /* If we have any CUPS based printers, skip looking for printcap printers */
+    if (CUPS_LoadPrinters())
+	return;
+#endif
+    PRINTCAP_LoadPrinters();
+}
 
 
 /******************************************************************
@@ -792,6 +944,13 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
+    if (strlenW(pi->pPrinterName) >= CCHDEVICENAME) {
+	ERR("Printername %s must not exceed length of DEVMODE.dmDeviceName !\n",
+		debugstr_w(pi->pPrinterName)
+	);
+	SetLastError(ERROR_INVALID_LEVEL);
+	return 0;
+    }
     if(!pPrinter) {
         SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
@@ -801,12 +960,14 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         ERR("Can't create Printers key\n");
 	return 0;
     }
-    if(RegOpenKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) ==
-       ERROR_SUCCESS) {
-        SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
+    if(!RegOpenKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter)) {
+	if (!RegQueryValueA(hkeyPrinter,"Attributes",NULL,NULL)) {
+	    SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
+	    RegCloseKey(hkeyPrinter);
+	    RegCloseKey(hkeyPrinters);
+	    return 0;
+	}
 	RegCloseKey(hkeyPrinter);
-	RegCloseKey(hkeyPrinters);
-	return 0;
     }
     hkeyDrivers = WINSPOOL_OpenDriverReg( NULL, TRUE);
     if(!hkeyDrivers) {
@@ -832,34 +993,44 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	return 0;
     }
 
-    /* See if we can load the driver.  We may need the devmode structure anyway
-     */
-    size = DocumentPropertiesW(0, -1, pi->pPrinterName, NULL, NULL, 0);
-    if(size < 0) {
-        FIXME("DocumentProperties fails\n");
-	size = sizeof(DEVMODEW);
-    }
-    if(pi->pDevMode) {
-        dmW = pi->pDevMode;
-    } else {
-	dmW = HeapAlloc(GetProcessHeap(), 0, size);
-	dmW->dmSize = size;
-	DocumentPropertiesW(0, -1, pi->pPrinterName, dmW, NULL, DM_OUT_BUFFER);
-    }
-
     if(RegCreateKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) !=
        ERROR_SUCCESS) {
         FIXME("Can't create printer %s\n", debugstr_w(pi->pPrinterName));
 	SetLastError(ERROR_INVALID_PRINTER_NAME);
 	RegCloseKey(hkeyPrinters);
-	if(!pi->pDevMode)
-	    HeapFree(GetProcessHeap(), 0, dmW);
 	return 0;
     }
     RegSetValueExA(hkeyPrinter, "Attributes", 0, REG_DWORD,
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
     RegSetValueExW(hkeyPrinter, DatatypeW, 0, REG_SZ, (LPBYTE)pi->pDatatype,
 		   0);
+
+    /* See if we can load the driver.  We may need the devmode structure anyway
+     *
+     * FIXME:
+     * Note that DocumentPropertiesW will briefly try to open the printer we
+     * just create to find a DEVMODEA struct (it will use the WINEPS default
+     * one in case it is not there, so we are ok).
+     */
+    size = DocumentPropertiesW(0, -1, pi->pPrinterName, NULL, NULL, 0);
+    if(size < 0) {
+        FIXME("DocumentProperties fails\n");
+	size = sizeof(DEVMODEW);
+    }
+    if(pi->pDevMode)
+        dmW = pi->pDevMode;
+    else {
+	dmW = HeapAlloc(GetProcessHeap(), 0, size);
+	dmW->dmSize = size;
+	if (0>DocumentPropertiesW(0,-1,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) {
+	    ERR("DocumentPropertiesW failed!\n");
+	    SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
+	    return 0;
+	}
+	/* set devmode to printer name */
+	strcpyW(dmW->dmDeviceName,pi->pPrinterName);
+    }
+
     /* Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
        and we support these drivers.  NT writes DEVMODEW so somehow
        we'll need to distinguish between these when we support NT
@@ -1165,7 +1336,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if (sz < sizeof(DEVMODEA))
     {
         ERR("corrupted registry for %s ( size %ld)\n",debugstr_w(ValueName),sz);
-        sz = sizeof(DEVMODEA);
+	return FALSE;
     }
     /* ensures that dmSize is not erratically bogus if registry is invalid */
     if (ptr && ((DEVMODEA*)ptr)->dmSize < sizeof(DEVMODEA))
@@ -2123,7 +2294,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 	return FALSE;
     }
     if(!pDriverInfo) {
-        WARN("pDriverInfo == NULL");
+        WARN("pDriverInfo == NULL\n");
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
