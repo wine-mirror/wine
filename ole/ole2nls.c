@@ -2595,9 +2595,9 @@ static INT OLE_GetFormatA(LCID locale,
    const char ** dgfmt = _dgfmt - 1; 
 
    /* report, for debugging */
-   TRACE("(0x%lx,0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
+   TRACE("(0x%lx,0x%lx, 0x%lx, time(y=%d m=%d wd=%d d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
    	 locale, flags, tflags,
-	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
+	 xtime->wYear,xtime->wMonth,xtime->wDayOfWeek,xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 _format, _format, date, datelen);
   
    if(datelen == 0) {
@@ -2658,12 +2658,12 @@ static INT OLE_GetFormatA(LCID locale,
 	       if        (count == 4) {
 		  GetLocaleInfoA(locale,
 				   LOCALE_SDAYNAME1
-				   + xtime->wDayOfWeek - 1,
+				   + (xtime->wDayOfWeek+6)%7,
 				   buf, sizeof(buf));
 	       } else if (count == 3) {
 			   GetLocaleInfoA(locale, 
 					    LOCALE_SABBREVDAYNAME1 
-					    + xtime->wDayOfWeek - 1,
+					    + (xtime->wDayOfWeek+6)%7,
 					    buf, sizeof(buf));
 		      } else {
 		  sprintf(buf, dgfmt[count], xtime->wDay);
@@ -2862,12 +2862,12 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 if        (type == 'd') {
 	    if        (count == 3) {
 	       GetLocaleInfoW(locale,
-			     LOCALE_SDAYNAME1 + xtime->wDayOfWeek -1,
+			     LOCALE_SDAYNAME1 + (xtime->wDayOfWeek +6)%7,
 			     buf, sizeof(buf)/sizeof(WCHAR) );
 	    } else if (count == 3) {
 	       GetLocaleInfoW(locale,
 				LOCALE_SABBREVDAYNAME1 +
-				xtime->wDayOfWeek -1,
+				(xtime->wDayOfWeek +6)%7,
 				buf, sizeof(buf)/sizeof(WCHAR) );
 	    } else {
 	       wsnprintfW(buf, 5, argarr[count], xtime->wDay );
@@ -3023,6 +3023,8 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
   LPSYSTEMTIME thistime;
   LCID thislocale;
   INT ret;
+  FILETIME ft;
+  BOOL res;
 
   TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
 	      locale,flags,xtime,format,date,datelen);
@@ -3041,10 +3043,20 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 
   if (xtime == NULL) {
      GetSystemTime(&t);
-     thistime = &t;
   } else {
-     thistime = xtime;
+      /* Silently correct wDayOfWeek by tranforming to FileTime and back again*/
+      res=SystemTimeToFileTime(xtime,&ft);
+      /* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error*/
+      /*FIXME: SystemTimeToFileTime doesn't yet do that ckeck*/
+      if(!res)
+	{
+	  SetLastError(ERROR_INVALID_PARAMETER);
+	  return 0;
+	}
+      FileTimeToSystemTime(&ft,&t); 
+     
   };
+  thistime = &t;
 
   if (format == NULL) {
      GetLocaleInfoA(thislocale, ((flags&DATE_LONGDATE) 
@@ -4156,6 +4168,7 @@ GetTimeFormatA(LCID locale,        /* in  */
   } 
   else
   { thistime = xtime;
+  /* Check that hour,min and sec is in range */
   }
   ret = OLE_GetFormatA(thislocale, thisflags, flags, thistime, thisformat,
   			 timestr, timelen);
