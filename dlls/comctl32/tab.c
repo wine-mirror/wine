@@ -798,7 +798,10 @@ static void TAB_DrawItem(
          * Background color. 
          */
         if (!(lStyle & TCS_OWNERDRAWFIXED))
+	{
+	  DeleteObject(hbr);
           hbr = CreateSolidBrush(GetSysColor(COLOR_3DHILIGHT));    
+	}
 
         /*
          * Erase the background.
@@ -847,6 +850,7 @@ static void TAB_DrawItem(
       /* 
        * Background color. 
        */
+      DeleteObject(hbr);
       hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));    
 
       /*
@@ -961,6 +965,8 @@ static void TAB_DrawItem(
      */
     SetBkMode(hdc, oldBkMode);
     SelectObject(hdc, holdPen);
+    DeleteObject(hfocusPen);
+    DeleteObject(hbr);
   }
 }
 
@@ -1096,6 +1102,8 @@ static LRESULT TAB_EraseBackground(
 
   if (givenDC==0)
     ReleaseDC(hwnd, hdc);
+
+  DeleteObject(brush);
 
   return 0;
 }
