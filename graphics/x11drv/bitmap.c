@@ -564,7 +564,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
      */
     hBmp = CreateBitmap( width, height, 1, depth, NULL );
 
-    /* Allocate DDBitmap and physBitmap structures in BITMAPOBJ.
+    /* Allocate DDBitmap and physBitmap structures in BITMAPOBJ.
      * The hBmp is just a filled in BITMAPOBJ header at this point.
      */
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
