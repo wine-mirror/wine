@@ -14,6 +14,7 @@ SRCS = \
 	lstr.c \
 	main.c \
 	message.c \
+	mmsystem.c \
 	profile.c \
 	property.c \
 	rect.c \

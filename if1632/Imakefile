@@ -12,6 +12,7 @@ DLLOBJS = \
 	dll_gdi.o \
 	dll_kernel.o \
 	dll_keyboard.o \
+	dll_mmsystem.o \
 	dll_shell.o \
 	dll_sound.o \
 	dll_stress.o \
@@ -35,6 +36,7 @@ MakeDllFromSpec(gdi,$(TOP)/$(MODULE))
 MakeDllFromSpec(kernel,$(TOP)/$(MODULE))
 MakeDllFromSpec(keyboard,$(TOP)/$(MODULE))
 MakeDllFromSpec(shell,$(TOP)/$(MODULE))
+MakeDllFromSpec(mmsystem,$(TOP)/$(MODULE))
 MakeDllFromSpec(sound,$(TOP)/$(MODULE))
 MakeDllFromSpec(stress,$(TOP)/$(MODULE))
 MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))

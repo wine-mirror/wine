@@ -53,23 +53,30 @@ static struct dosdirent DosDirs[MAX_OPEN_DIRS];
 
 static void ExpandTildeString(char *s)
 {
-	struct passwd *entry;
-	char temp[1024], *ptr = temp;
+    struct passwd *entry;
+    char temp[1024], *ptr = temp;
 	
-	strcpy(temp, s);
-	while (*ptr)
-	{
-		if (*ptr != '~') { 
-			*s++ = *ptr++;
-			continue;
-		}
-		ptr++;
-		if ( (entry = getpwuid(getuid())) == NULL) {
-			continue;
-		}
-		strcpy(s, entry->pw_dir);
-		s += strlen(entry->pw_dir);
+    strcpy(temp, s);
+
+    while (*ptr)
+    {
+	if (*ptr != '~') 
+	{ 
+	    *s++ = *ptr++;
+	    continue;
 	}
+
+	ptr++;
+
+	if ( (entry = getpwuid(getuid())) == NULL) 
+	{
+	    continue;
+	}
+
+	strcpy(s, entry->pw_dir);
+	s += strlen(entry->pw_dir);
+    }
+    *s = 0;
 }
 
 void ChopOffSlash(char *path)

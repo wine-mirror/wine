@@ -56,8 +56,15 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 
 	/* First take care of a few preliminaries */
 #ifdef linux
-    if(signal != SIGSEGV) 
+    if(signal != SIGSEGV && signal != SIGTRAP) 
 	exit(1);
+
+    /* And back up over the int3 instruction. */
+    if(signal == SIGTRAP) {
+      scp->sc_eip--;
+      goto oops;
+    };
+
     if((scp->sc_cs & 7) != 7)
     {
 #endif
@@ -168,7 +175,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	XFlush(display);
     fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
 #ifdef linux
-    wine_debug(scp);  /* Enter our debugger */
+    wine_debug(signal, scp);  /* Enter our debugger */
 #else
     fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
     dump = (int*) scp;
@@ -192,6 +199,7 @@ int init_wine_signals(void)
 	segv_act.sa_restorer = 
 		(void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
+	wine_sigaction(SIGTRAP, &segv_act, NULL); /* For breakpoints */
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
         struct sigstack ss;

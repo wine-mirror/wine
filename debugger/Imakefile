@@ -1,11 +1,13 @@
 #include "../Wine.tmpl"
 
 #define IHavSubDirs
-#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)'
+#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'
 
 MODULE = debugger
 
 SUBDIRS = readline
+
+DEFINES = -DUSE_READLINE
 
 /* Quick and dirt hack, since i386 is defined as 1. sigh */
 #define temp i386
@@ -13,6 +15,7 @@ SUBDIRS = readline
 
 SRCS = \
 	dbg.tab.c \
+	break.c \
 	hash.c \
 	lex.yy.c \
 	info.c \
@@ -20,6 +23,7 @@ SRCS = \
 
 OBJS = \
 	dbg.tab.o \
+	break.o \
 	hash.o \
 	lex.yy.o \
 	info.o \

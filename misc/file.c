@@ -27,6 +27,8 @@
 #include <windows.h>
 #include "prototypes.h"
 
+#define DEBUG_FILE
+
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 
 /***************************************************************************
@@ -119,33 +121,38 @@ INT _lclose (INT hFile)
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
-  int base,flags;
+	int 	base,flags;
+	int		handle;
+#ifdef DEBUG_FILE
+	fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
+#endif
+	base=wStyle&0xF;
+	flags=wStyle&0xFFF0;
+  
+	flags&=0xFF0F;  /* strip SHARE bits for now */
+	flags&=0xD7FF;  /* strip PROMPT & CANCEL bits for now */
+	flags&=0x7FFF;  /* strip REOPEN bit for now */
+	flags&=0xFBFF;  /* strib VERIFY bit for now */
+  
+	if(flags&OF_CREATE) { base |=O_CREAT; flags &=0xEFFF; }
 
 #ifdef DEBUG_FILE
-  fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
+	fprintf(stderr,"now %d,%d\n",base,flags);
 #endif
 
-  base=wStyle&0xF;
-  flags=wStyle&0xFFF0;
-  
-  flags&=0xFF0F;  /* strip SHARE bits for now */
-  flags&=0xD7FF;  /* strip PROMPT & CANCEL bits for now */
-  flags&=0x7FFF;  /* strip REOPEN bit for now */
-  flags&=0xFBFF;  /* strib VERIFY bit for now */
-  
-  if(flags&OF_CREATE) { base |=O_CREAT; flags &=0xEFFF; }
-
-  fprintf(stderr,"now %d,%d\n",base,flags);
-
-  if(flags&(OF_DELETE|OF_EXIST))
-    {
-      fprintf(stderr,"Unsupported OpenFile option\n");
-      return -1;
-    }
-  else
-    {
-      return _lopen (lpFileName, wStyle);
-   }
+	if (flags & OF_EXIST) {
+		printf("OpenFile // OF_EXIST '%s' !\n", lpFileName);
+		handle = _lopen (lpFileName, wStyle);
+		close(handle);
+		return handle;
+		}
+	if (flags & OF_DELETE) {
+		printf("OpenFile // OF_DELETE '%s' !\n", lpFileName);
+		return unlink(lpFileName);
+		}
+	else {
+		return _lopen (lpFileName, wStyle);
+		}
 }
 
 /**************************************************************************
@@ -200,11 +207,9 @@ INT _lcreate (LPSTR lpszFilename, INT fnAttribute)
 	fprintf(stderr, "_lcreate: filename %s, attributes %d\n",lpszFilename, 
   			fnAttribute);
 #endif
-
 	if ((UnixFileName = GetUnixFileName(lpszFilename)) == NULL)
   		return HFILE_ERROR;
-
-	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY );
+	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 426);
 
 	if (handle == -1)
 		return HFILE_ERROR;
@@ -282,6 +287,7 @@ UINT GetSystemDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LPSTR lpszTempFileName)
 {
 	int unique;
+	int handle;
 	char tempname[256];
 	
 	if (uUnique == 0)
@@ -301,6 +307,11 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 	fprintf(stderr,"GetTempFilename: %c %s %d => %s\n",bDriveLetter,
 		lpszPrefixString,uUnique,lpszTempFileName);
 #endif
+	if ((handle = _lcreate (lpszTempFileName, 0x0000)) == -1) {
+		fprintf(stderr,"GetTempFilename: can't create temp file '%s' !\n", lpszTempFileName);
+		}
+	else
+		close(handle);
 
 	return unique;
 }

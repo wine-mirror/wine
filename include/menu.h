@@ -12,14 +12,12 @@ typedef struct tagMENUITEM
 {
     struct tagMENUITEM *next;
     struct tagMENUITEM *prev;
-    struct tagMENUITEM *child;
-    struct tagMENUITEM *parent;
+	HANDLE	hItem;	
     WORD	item_flags;
     WORD	item_id;
     WORD	sel_key;
-    char	*shortcut;
     char	*item_text;
-    char	menu_name[10];
+	HANDLE	hText;	
     RECT	rect;
     HBITMAP	hCheckBit;
     HBITMAP	hUnCheckBit;

@@ -24,7 +24,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #define DEBUG_RELAY /* */
 
-#define N_BUILTINS	10
+#define N_BUILTINS	11
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
@@ -37,7 +37,8 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "SOUND",   SOUND_table,    20, 7 },
     { "KEYBOARD",KEYBOARD_table,137, 8 },
     { "WINSOCK", WINSOCK_table, 155, 9 },
-    { "STRESS",  STRESS_table,   15,10 },
+    { "STRESS",  STRESS_table,   15, 10},
+    { "MMSYSTEM",MMSYSTEM_table,1023,11},
 };
 
 unsigned short *Stack16Frame;

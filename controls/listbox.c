@@ -72,6 +72,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 #ifdef DEBUG_LISTBOX
 		printf("ListBox WM_CREATE %lX !\n", lphl);
 #endif
+		if (lphl == NULL) return 0;
 		createStruct = (CREATESTRUCT *)lParam;
 		if (HIWORD(createStruct->lpCreateParams) != 0)
 			lphl->hWndLogicParent = (HWND)HIWORD(createStruct->lpCreateParams);
@@ -91,7 +92,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		return 0;
 	case WM_DESTROY:
 		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-		if (lphl == 0) return 0;
+		if (lphl == NULL) return 0;
 		ListBoxResetContent(hwnd);
 		free(lphl);
 		*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
@@ -189,7 +190,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		SetFocus(hwnd);
 		SetCapture(hwnd);
 		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-	        if (lphl == NULL) return 0;
+		if (lphl == NULL) return 0;
 		lphl->PrevFocused = lphl->ItemFocused;
 	        y = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
 		if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
@@ -225,6 +226,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 			y = HIWORD(lParam);
 			if (y < 4) {
 				lphl = ListBoxGetStorageHeader(hwnd);
+				if (lphl == NULL) return 0;
 				if (lphl->FirstVisible > 1) {
 					lphl->FirstVisible--;
 					if (wndPtr->dwStyle & WS_VSCROLL)
@@ -237,6 +239,7 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 			GetClientRect(hwnd, &rect);
 			if (y > (rect.bottom - 4)) {
 				lphl = ListBoxGetStorageHeader(hwnd);
+				if (lphl == NULL) return 0;
 				if (lphl->FirstVisible < lphl->ItemsCount) {
 					lphl->FirstVisible++;
 					if (wndPtr->dwStyle & WS_VSCROLL)
@@ -248,6 +251,8 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				}
 			if ((y > 0) && (y < (rect.bottom - 4))) {
 				if ((y < rectsel.top) || (y > rectsel.bottom)) {
+					lphl = ListBoxGetStorageHeader(hwnd);
+					if (lphl == NULL) return 0;
 					wRet = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
 					if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
 						lphl->ItemFocused = wRet;
@@ -722,7 +727,10 @@ void ListBoxAskMeasure(WND *wndPtr, LPHEADLIST lphl, LPLISTSTRUCT lpls)
 	MEASUREITEMSTRUCT *measure;
 	HANDLE hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(MEASUREITEMSTRUCT));
 	measure = (MEASUREITEMSTRUCT *) USER_HEAP_ADDR(hTemp);
-	if (measure == NULL) return;
+	if (measure == NULL) {
+		printf("ListBoxAskMeasure() // Bad allocation of Measure struct !\n");
+		return;
+		}
 	measure->CtlType = ODT_LISTBOX;
 	measure->CtlID = wndPtr->wIDmenu;
 	measure->itemID = lpls->dis.itemID;
@@ -747,6 +755,10 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
     if (lphl == NULL) return LB_ERR;
     hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
     lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hTemp);
+    if (lplsnew == NULL) {
+		printf("ListBoxAddString() // Bad allocation of new item !\n");
+		return LB_ERRSPACE;
+		}
     lpls = lphl->lpFirst;
     if (lpls != NULL) {
 	while(lpls->lpNext != NULL) {
@@ -822,6 +834,10 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 		}
 	hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
 	lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hTemp);
+    if (lplsnew == NULL) {
+		printf("ListBoxAddString() // Bad allocation of new item !\n");
+		return LB_ERRSPACE;
+		}
 	ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
 	lplsnew->hMem = hTemp;
 	lpls->lpNext = lplsnew;
@@ -981,9 +997,8 @@ int ListBoxResetContent(HWND hwnd)
     lphl->ItemFocused = 0;
     lphl->PrevFocused = 0;
     if ((wndPtr->dwStyle && LBS_NOTIFY) != 0)
-	SendMessage(wndPtr->hwndParent, WM_COMMAND, 
+	SendMessage(lphl->hWndLogicParent, WM_COMMAND, 
     	    wndPtr->wIDmenu, MAKELONG(hwnd, LBN_SELCHANGE));
-
     if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
     if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
@@ -1007,7 +1022,7 @@ int ListBoxSetCurSel(HWND hwnd, WORD wIndex)
     UINT	i;
     lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
     if (lphl == NULL) return LB_ERR;
-    lphl->ItemFocused = LB_ERR;
+    lphl->ItemFocused = LB_ERR; 
     if (wIndex >= lphl->ItemsCount) return LB_ERR;
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
@@ -1023,7 +1038,7 @@ int ListBoxSetCurSel(HWND hwnd, WORD wIndex)
     }
     lphl->ItemFocused = wIndex;
     if ((wndPtr->dwStyle && LBS_NOTIFY) != 0)
-	SendMessage(wndPtr->hwndParent, WM_COMMAND, 
+	SendMessage(lphl->hWndLogicParent, WM_COMMAND, 
     	    wndPtr->wIDmenu, MAKELONG(hwnd, LBN_SELCHANGE));
     return LB_ERR;
 }
@@ -1183,6 +1198,10 @@ int ListBoxDefaultItem(HWND hwnd, WND *wndPtr,
 	LPHEADLIST lphl, LPLISTSTRUCT lpls)
 {
     RECT	rect;
+	if (wndPtr == NULL || lphl == NULL || lpls == NULL) {
+		printf("ListBoxDefaultItem() // Bad Pointers !\n");
+		return FALSE;
+		}
     GetClientRect(hwnd, &rect);
     SetRect(&lpls->dis.rcItem, 0, 0, rect.right, lphl->StdItemHeight);
     lpls->dis.CtlType = lphl->DrawCtlType;
@@ -1193,6 +1212,7 @@ int ListBoxDefaultItem(HWND hwnd, WND *wndPtr,
     lpls->dis.hwndItem = hwnd;
     lpls->dis.hDC = 0;
     lpls->dis.itemData = 0;
+	return TRUE;
 }
 
 

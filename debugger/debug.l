@@ -58,7 +58,7 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 		}
 
 {DIGIT}+   {
-		sscanf(yytext, "%lx", &yylval);
+		sscanf(yytext, "%ld", &yylval);
 		return NUM;
 		}
 
@@ -74,7 +74,16 @@ $edx		{ yylval = RN_EDX; return REG;}
 $esi		{ yylval = RN_ESI; return REG;}
 $edi		{ yylval = RN_EDI; return REG;}
 
+$es		{ yylval = RN_ES;  return REG;}
+$ds		{ yylval = RN_DS;  return REG;}
+$cs		{ yylval = RN_CS;  return REG;}
+$ss		{ yylval = RN_SS;  return REG;}
+
 info|inf|in		{ return INFO; }
+
+break|brea|bre          { return BREAK; }
+enable|enabl|enab|ena   { return ENABLE;}
+disable|disabl|disab|disa|dis { return DISABLE; }
 
 quit|qui|qu 	{ return QUIT; }
 
@@ -82,12 +91,16 @@ help|hel|he	{ return HELP; }
 
 set|se		{ return SET; }
 
+bt		{ return BACKTRACE; }
+
 cont|con|co		{ return CONT; }
 
 symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return SYMBOLFILE; }
 
 define|defin|defi|def|de        { return DEFINE; }
 print|prin|pri|pr		{ return PRINT; }
+
+mode				{ return MODE; }
 
 regs|reg|re	{ return REGS; }
 

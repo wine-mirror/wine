@@ -50,9 +50,10 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	WND	    	*wndPtr;
 	WNDCLASS  	wndClass;
 	MSG	    	msg;
-	MSGBOX		mb;
+    LPMSGBOX 	lpmb;
 	DWORD		dwStyle;
 	HINSTANCE	hInst;
+	int			nRet;
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
 		hInst = hSysRes;
@@ -66,6 +67,16 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 		printf("MessageBox(%04X, '%s', '%s', %04X)\n", hWnd, str, title, type);
 #endif
 		}
+    lpmb = (LPMSGBOX) malloc(sizeof(MSGBOX));
+	memset(lpmb, 0, sizeof(MSGBOX));
+/*	lpmb->Title = title;*/
+	lpmb->Title = (LPSTR) malloc(strlen(title) + 1);
+	strcpy(lpmb->Title, title);
+/*	lpmb->Str = str;*/
+	lpmb->Str = (LPSTR) malloc(strlen(str) + 1);
+	strcpy(lpmb->Str, str);
+	lpmb->wType = type;
+	lpmb->ActiveFlg = TRUE;
 	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
 	wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
 	wndClass.cbClsExtra      = 0;
@@ -76,29 +87,29 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
 	wndClass.lpszMenuName    = NULL;
 	wndClass.lpszClassName   = "MESSAGEBOX";
+#ifdef DEBUG_MSGBOX
+	printf( "MessageBox // before RegisterClass, '%s' '%s' !\n", str, title);
+#endif
 	if (!RegisterClass(&wndClass)) {
 		printf("Unable to Register class 'MESSAGEBOX' !\n");
+		if (lpmb != NULL) free(lpmb);
 		return 0;
 		}
-	memset(&mb, 0, sizeof(MSGBOX));
-	mb.Title = title;
-	mb.Str = str;
-	mb.wType = type;
-	mb.ActiveFlg = TRUE;
 	dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
 	if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
 	hWndOld = GetFocus();
-	hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
-				(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)&mb);
+	hDlg = CreateWindow("MESSAGEBOX", lpmb->Title, dwStyle, 100, 150, 400, 160,
+				(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)lpmb);
 	if (hDlg == 0) {
 		printf("Unable to create 'MESSAGEBOX' window !\n");
+		if (lpmb != NULL) free(lpmb);
 		return 0;
 		}
 #ifdef DEBUG_MSGBOX
 	printf( "MessageBox // before Msg Loop !\n");
 #endif
 	while(TRUE) {
-		if (!mb.ActiveFlg) break;
+		if (!lpmb->ActiveFlg) break;
 		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
 		TranslateMessage(&msg);
 		if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) != 0 &&
@@ -115,11 +126,13 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 		DispatchMessage(&msg);
 		}
 	SetFocus(hWndOld);
+	nRet = lpmb->wRetVal;
+	if (lpmb != NULL) free(lpmb);
 	if (!UnregisterClass("MESSAGEBOX", hInst)) return 0;
 #ifdef DEBUG_MSGBOX
-	printf( "MessageBox return %04X !\n", mb.wRetVal);
+	printf( "MessageBox return %04X !\n", nRet);
 #endif
-	return(mb.wRetVal);
+	return(nRet);
 }
 
 
@@ -148,7 +161,6 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	DWORD		OldTextColor;
 	RECT		rect;
 	LPMSGBOX	lpmb;
-	LPMSGBOX	lpmbInit;
 	BITMAP		bm;
 	HBITMAP		hBitMap;
 	HDC			hMemDC;
@@ -162,10 +174,13 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 #endif
 		wndPtr = WIN_FindWndPtr(hWnd);
 		createStruct = (CREATESTRUCT *)lParam;
-		lpmbInit = (LPMSGBOX)createStruct->lpCreateParams;
-		if (lpmbInit == 0) break;
-		*((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmbInit;
-		lpmb = MsgBoxGetStorageHeader(hWnd);
+		lpmb = (LPMSGBOX)createStruct->lpCreateParams;
+		if (lpmb == NULL) break;
+		*((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmb;
+#ifdef DEBUG_MSGBOX
+		printf("MessageBox WM_CREATE title='%s' str='%s' !\n", 
+									lpmb->Title, lpmb->Str);
+#endif
 		GetClientRect(hWnd, &rect);
 		CopyRect(&lpmb->rectStr, &rect);
 		lpmb->rectStr.bottom -= 32;
@@ -255,6 +270,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		printf("MessageBox WM_PAINT !\n");
 #endif
 		lpmb = MsgBoxGetStorageHeader(hWnd);
+		if (lpmb == NULL) break;
 		CopyRect(&rect, &lpmb->rectStr);
 		hDC = BeginPaint(hWnd, &ps);
 		OldTextColor = SetTextColor(hDC, 0x00000000);
@@ -278,6 +294,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 #endif
 	    ReleaseCapture();
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
+		if (lpmb == NULL) break;
 	    lpmb->ActiveFlg = FALSE;
 	    if (lpmb->hIcon) DestroyIcon(lpmb->hIcon);
 	    if (lpmb->hWndYes) DestroyWindow(lpmb->hWndYes);
@@ -289,6 +306,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    break;
 	case WM_COMMAND:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
+		if (lpmb == NULL) break;
 	    if (wParam < IDOK || wParam > IDNO) return(0);
 	    lpmb->wRetVal = wParam;
 #ifdef DEBUG_MSGBOX
@@ -298,6 +316,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    break;
 	case WM_CHAR:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
+		if (lpmb == NULL) break;
 		if (wParam >= 'a' || wParam <= 'z') wParam -= 'a' - 'A';
 		switch(wParam) {
 			case 'Y':

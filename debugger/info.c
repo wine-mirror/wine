@@ -16,6 +16,11 @@ extern int print_insn(char * memaddr, char * realaddr, FILE * stream, int addrle
 /* THese three helper functions eliminate the need for patching the
 module from gdb for disassembly of code */
 
+void application_not_running()
+{
+  fprintf(stderr,"Application not running\n");
+}
+
 void read_memory(char * memaddr, char * buffer, int len){
 	memcpy(buffer, memaddr, len);
 }
@@ -36,6 +41,12 @@ void print_address(unsigned int addr, FILE * outfile){
 
 
 void info_reg(){
+
+	  if(!regval) {
+	    application_not_running();
+	    return 0;
+	  }
+
 	fprintf(stderr,"Register dump:\n");
 	/* First get the segment registers out of the way */
 	fprintf(stderr," CS:%4.4x SS:%4.4x DS:%4.4x ES:%4.4x GS:%4.4x FS:%4.4x\n", 
@@ -60,6 +71,10 @@ void info_stack(){
 	unsigned int * dump;
 	int i;
 
+	if(!regval) {
+	  application_not_running();
+	  return 0;
+	}
 
 	fprintf(stderr,"Stack dump:\n");
 	dump = (int*) SC_EIP(dbg_mask);
@@ -192,11 +207,15 @@ char * helptext[] = {
 "The commands accepted by the Wine debugger are a small subset",
 "of the commands that gdb would accept.  The commands currently",
 "are:\n",
-"  info reg",
-"  info stack",
+"  info [reg,stack,break]",
+"  break <addr>",
+"  enable bpnum",
+"  disable bpnum",
 "  help",
 "  quit",
 "  print <expr>",
+"  bt",
+"  mode [16,32]",
 "  symbolfile <filename>",
 "  define <identifier> <expr>",
 "  x <expr>",
@@ -226,5 +245,54 @@ void dbg_help(){
 	int i;
 	i = 0;
 	while(helptext[i]) fprintf(stderr,"%s\n", helptext[i++]);
+}
+
+
+struct frame{
+  union{
+    struct {
+      unsigned short saved_bp;
+      unsigned short saved_ip;
+      unsigned short saved_cs;
+    } win16;
+    struct {
+      unsigned long saved_bp;
+      unsigned long saved_ip;
+      unsigned short saved_cs;
+    } win32;
+  } u;
+};
+
+
+void dbg_bt(){
+  struct frame * frame;
+  unsigned short cs;
+  int frameno = 0;
+
+  if(!regval) {
+    application_not_running();
+    return 0;
+  }
+
+  fprintf(stderr,"Backtrace:\n");
+  fprintf(stderr,"%d: %4.4x:%4.4x\n", frameno++, SC_CS, SC_EIP(dbg_mask));
+  cs = SC_CS;
+
+  frame = (struct frame *) ((SC_EBP(dbg_mask) & ~1) | (SC_SS << 16));
+  while((cs & 3) == 3) {
+    /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
+    if ((cs & 7) != 7) {
+      cs = frame->u.win32.saved_cs;
+      fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, cs, 
+	      frame->u.win32.saved_ip);
+      frame = (struct frame *) frame->u.win32.saved_bp;
+    } else {
+      cs = frame->u.win16.saved_cs;
+      fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, cs, 
+	      frame->u.win16.saved_ip);
+      frame = (struct frame *) ((frame->u.win16.saved_bp & ~1) |
+				(SC_SS << 16));
+    }
+  }
 }
 

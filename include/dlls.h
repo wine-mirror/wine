@@ -59,6 +59,7 @@ extern struct dll_table_entry_s USER_table[];
 extern struct dll_table_entry_s GDI_table[];
 extern struct dll_table_entry_s UNIXLIB_table[];
 extern struct dll_table_entry_s WIN87EM_table[];
+extern struct dll_table_entry_s MMSYSTEM_table[];
 extern struct dll_table_entry_s SHELL_table[];
 extern struct dll_table_entry_s SOUND_table[];
 extern struct dll_table_entry_s KEYBOARD_table[];

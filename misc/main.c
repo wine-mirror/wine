@@ -54,6 +54,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-privatemap",  ".privatemap",  XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous", ".synchronous", XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",         ".spy",         XrmoptionSepArg, (caddr_t)NULL },
+    { "-debug",       ".debug",       XrmoptionNoArg,  (caddr_t)"on" },
     { "-relaydbg",    ".relaydbg",    XrmoptionNoArg,  (caddr_t)"on" }
 };
 
@@ -67,6 +68,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -desktop geom   Use a desktop window of the given geometry\n" \
   "    -display name   Use the specified display\n" \
   "    -iconic         Start as an icon\n" \
+  "    -debug          Enter debugger before starting application\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
@@ -176,6 +178,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.synchronous = TRUE;
     if (MAIN_GetResource( db, ".relaydbg", &value ))
 	Options.relay_debug = TRUE;
+    if (MAIN_GetResource( db, ".debug", &value ))
+	Options.debug = TRUE;
     if (MAIN_GetResource( db, ".spy", &value))
 	Options.spyFilename = value.addr;
     if (MAIN_GetResource( db, ".depth", &value))
@@ -274,6 +278,7 @@ static void called_at_exit(void)
     Comm_DeInit();
     sync_profiles();
     MAIN_RestoreSetup();
+    WSACleanup();
 }
 
 /***********************************************************************
@@ -503,14 +508,6 @@ void hmemcpy(void FAR *hpvDest, const void FAR *hpvSource, long cbCopy)
 void Copy(LPVOID lpSource, LPVOID lpDest, WORD nBytes)
 {
 	memcpy(lpDest, lpSource, nBytes);
-}
-
-/***********************************************************************
-*	YIELD (KERNEL.29)
-*/
-void Yield(void)
-{
-	;
 }
 
 /***********************************************************************

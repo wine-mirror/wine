@@ -1,4 +1,35 @@
 ----------------------------------------------------------------------
+May 9, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/scroll.c]
+	Make thumbtrack button disappear if scroll box ratio < 3:1.
+	Make arrow buttons rectangular if scroll box ratio < 2:1.
+	Add code for SBS_TOPALIGN, SBS_BOTTOMALIGN, 
+				SBS_LEFTALIGN & SBS_RIGHTALIGN.
+	Bug fix in NC_CreateScrollBars(), no more bigbutt in calendar.exe... :-)
+
+	* [loader/library.c] [loader/task.c] [misc/exec.c]
+	Continue playing around trying to get a second task running.
+
+	* [windows/mdi.c]
+	Change OBM_CLOSE for OBM_OLD_CLOSE, a smaller dot button when maximized.
+
+	* [everywhere]
+	Adding previous works of the Apr 25, 94.
+
+Tue May 10 18:09:14 1994 Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [if1632/mmsystem.spec] [misc/mmsystem.c] [include/mmsystem.h]
+	Added Martin's mmsystem.dll stubs.
+
+	* [misc/sound.c]
+	Added remaining stubs for sound.dll.
+
+	* [if1632/shell.spec] [misc/shell.c]
+	Fixed prototypes (I found them in BC 4) and added ShellAbout()
+	and AboutDlgProc().
+
+----------------------------------------------------------------------
 May 1, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
 	* [loader/signal.c]
@@ -39,7 +70,42 @@ Wed Apr 20 23:58:58 1994  Scott A. Laird  (scott@curly)
 	path when given a simple file name.  Fixed GetSetProfile to allow
 	enumerating all key names when KeyName is null.
 
+Apr 25, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [objects/bitblt.c]
+	Add protection to BitBlt() & StretchBlt() for width or height = 0.
+
+	* [windows/nonclient.c]
+	Avoid painting in NC_DoNCPaint() if IsWindowVisible().
+	Simplify NC_TrackMouseMenuBar() because code moved to MenuFocusLoop().
+
+	* [windows/win.c]
+	CreateWindowEx() & DestroyWindow() now call respectively
+		AddWindowToTask() & RemoveWindowFromTask().
+	New empty stub for function AnyPopup().
+
+	* [loader/library.c]
+	Bug Fix : GetModuleFileName() now return full path filename.
+
+	* [include/menu.h] [controls/menu.c]
+	Add hText handle and remove obsolete MENUITEM struct members.
+	Add a ReleaseCapture() in SetMenu() when menubar changed while captured.
+	Add MenuMouseMove() MenuButtonUp() in function MenuFocusLoop().
+
+	* [misc/file.c]
+	GetTempFilename() now create a file.
+	_lcreate() use unix open (name, mode, perm), with perm=O666.
+
+	* [if1632/relay.c]
+	Remove temporarly builtin SHELL.DLL, Add MMSYSTEM.DLL in builtin list.
+
+	* New file [misc/mmsystem.c]
+	* New file [include/mmsystem.h]
+	* New file [if1632/mmsystem.spec]
+	Many, many empty stubs ... :-)
+
 ----------------------------------------------------------------------
+
 Wed Apr 20 14:53:35 1994  Bob Amstadt  (bob@pooh)
 
 	* [tools/build.c] [if1632/call.S] [if1632/Imakefile]
@@ -67,8 +133,6 @@ Apr 18, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 	* New files [loader/task.c] & [include/task.h]
 	Move functions GetWindowTask(), GetNumTask(), EnumTaskWindows()
 		from 'loader/library.c'.
-
-	* [loader/library.c]
 
 	* [if1632/user.c] [if1632/kernel.c]
 	Put Atoms functions entries.

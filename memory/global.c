@@ -163,6 +163,10 @@ GlobalAlloc(unsigned int flags, unsigned long size)
     GDESC *g_prev;
     void *m;
 
+#ifdef DEBUG_HEAP
+	printf("GlobalAlloc flags %4X, size %d\n", flags, size);
+#endif
+
     /*
      * If this block is fixed or very big we need to allocate entire
      * segments.

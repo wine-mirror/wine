@@ -63,7 +63,7 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
     printf( "BitBlt: %d %d,%d %dx%d %d %d,%d %08x\n",
 	   hdcDest, xDest, yDest, width, height, hdcSrc, xSrc, ySrc, rop );
 #endif
-
+	if (width == 0 || height == 0) return FALSE;
     if ((rop & 0xcc0000) == ((rop & 0x330000) << 2))
 	return PatBlt( hdcDest, xDest, yDest, width, height, rop );
 
@@ -311,6 +311,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     DC *dcDest, *dcSrc;
     XImage *sxi, *dxi;
     WORD stretchmode;
+	BOOL	flg;
 
 #ifdef DEBUG_GDI     
     fprintf(stderr, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
@@ -320,6 +321,8 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
            ((DC *)GDI_GetObjPtr(hdcDest, DC_MAGIC))->w.stretchBltMode);	
 #endif 
 
+	if (widthDest == 0 || heightDest == 0) return FALSE;
+	if (widthSrc == 0 || heightSrc == 0) return FALSE;
     if ((rop & 0xcc0000) == ((rop & 0x330000) << 2))
         return PatBlt( hdcDest, xDest, yDest, widthDest, heightDest, rop );
 

@@ -531,7 +531,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 
 	if (hbitmapClose == 0)
 	{
-	    hbitmapClose     = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
+	    hbitmapClose     = LoadBitmap(0, MAKEINTRESOURCE(OBM_OLD_CLOSE));
 	    hbitmapMaximized = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
 	}
 

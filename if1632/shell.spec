@@ -13,6 +13,7 @@ length	103
   2 pascal RegCreateKey() RegCreateKey()
   3 pascal RegCloseKey() RegCloseKey()
   4 pascal RegDeleteKey() RegDeleteKey()
+  9 pascal DragAcceptFiles() DragAcceptFiles()
  20 pascal ShellExecute(ptr) ShellExecute(1) 
 102 pascal RegisterShellHook(ptr) RegisterShellHook(1)
 103 pascal ShellHookProc() ShellHookProc()
@@ -21,7 +22,6 @@ length	103
 # 33   9  0136  ABOUTDLGPROC exported, shared data
 # 34  10  021a  EXTRACTICON exported, shared data
 # 21   4  1154  FINDEXECUTABLE exported, shared data
-#  9   6  0052  DRAGACCEPTFILES exported, shared data
 #100   4  0550  HERETHARBETYGARS exported, shared data
 # 38   5  0000  FINDENVIRONMENTSTRING exported, shared data
 #  7   2  14dc  REGENUMKEY exported, shared data

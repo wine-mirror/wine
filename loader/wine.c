@@ -23,6 +23,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "windows.h"
 #include "wineopts.h"
 #include "arch.h"
+#include "options.h"
 
 /* #define DEBUG_FIXUP */
 
@@ -349,6 +350,8 @@ _WinMain(int argc, char **argv)
     ip_reg = wine_files->ne_header->ip;
     ss_reg = wine_files->selector_table[wine_files->ne_header->ss-1].selector;
     sp_reg = wine_files->ne_header->sp;
+
+    if (Options.debug) wine_debug(0, NULL);
 
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
     printf ("rv = %x\n", rv);

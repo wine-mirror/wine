@@ -3,6 +3,10 @@
  */
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
+/*
+#define DEBUG_TASK
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +18,6 @@ static LPTASKENTRY lpTaskList = NULL;
 static int nTaskCount = 0;
 
 
-
 /**********************************************************************
  *				GetCurrentTask	[KERNEL.36]
  */
@@ -22,15 +25,18 @@ HTASK GetCurrentTask()
 {
 	LPTASKENTRY lpTask = lpTaskList;
 	int pid = getpid();
+#ifdef DEBUG_TASK
 	printf("GetCurrentTask() // unix_pid=%08X !\n", pid);
+#endif
 	if (lpTask == NULL) return 0;
 	while (TRUE) {
-		printf("GetCurrentTask() // searching lpTask->unix_pid=%08 !\n", lpTask->unix_pid);
 		if (lpTask->unix_pid == pid) break;
 		if (lpTask->lpNextTask == NULL) return 0;
 		lpTask = lpTask->lpNextTask;
 		}
+#ifdef DEBUG_TASK
 	printf("GetCurrentTask() returned hTask=%04X !\n", lpTask->hTask);
+#endif
 	return lpTask->hTask;
 }
 
@@ -50,7 +56,27 @@ WORD GetNumTasks()
  */
 HTASK GetWindowTask(HWND hWnd)
 {
+	HWND 	*wptr;
+	int		count;
+	LPTASKENTRY lpTask = lpTaskList;
 	printf("GetWindowTask(%04X) !\n", hWnd);
+	while (lpTask != NULL) {
+		wptr = lpTask->lpWndList;
+		if (wptr != NULL) {
+			count = 0;
+			while (++count < MAXWIN_PER_TASK) {
+				printf("GetWindowTask // searching %04X %04X !\n",
+										lpTask->hTask, *(wptr));
+				if (*(wptr) == hWnd) {
+					printf("GetWindowTask(%04X) found hTask=%04X !\n", 
+												hWnd, lpTask->hTask);
+					return lpTask->hTask;
+					}
+				wptr++;
+				}
+			}
+		lpTask = lpTask->lpNextTask;
+		}
 	return 0;
 }
 
@@ -60,8 +86,34 @@ HTASK GetWindowTask(HWND hWnd)
  */
 BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
 {
+	HWND 	*wptr, hWnd;
+	BOOL	bRet;
+	int		count = 0;
+	LPTASKENTRY lpTask = lpTaskList;
 	printf("EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, lpEnumFunc, lParam);
-	return FALSE;
+	while (TRUE) {
+		if (lpTask->hTask == hTask) break;
+		if (lpTask == NULL) {
+			printf("EnumTaskWindows // hTask=%04X not found !\n", hTask);
+			return FALSE;
+			}
+		lpTask = lpTask->lpNextTask;
+		}
+	printf("EnumTaskWindows // found hTask=%04X !\n", hTask);
+	wptr = lpTask->lpWndList;
+	if (wptr == NULL) return FALSE;
+	while ((hWnd = *(wptr++)) != 0) {
+		if (++count >= MAXWIN_PER_TASK) return FALSE;
+		printf("EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
+#ifdef WINELIB
+		if (lpEnumFunc != NULL)	bRet = (*lpEnumFunc)(hWnd, lParam); 
+#else
+		if (lpEnumFunc != NULL)	
+			bRet = CallBack16(lpEnumFunc, 2, lParam, (int) hWnd);
+#endif
+		if (bRet == 0) break;
+		}
+	return TRUE;
 }
 
 
@@ -96,15 +148,18 @@ HANDLE CreateNewTask(HINSTANCE hInst)
 	lpNewTask->lpNextTask = NULL;
 	lpNewTask->hIcon = 0;
 	lpNewTask->hModule = 0;
+	lpNewTask->hInst = hInst;
 	lpNewTask->hTask = hTask;
+	lpNewTask->unix_pid = getpid();
 	lpNewTask->lpWndList = (HWND *) malloc(MAXWIN_PER_TASK * sizeof(HWND));
 	if (lpNewTask->lpWndList != NULL) 
 		memset((LPSTR)lpNewTask->lpWndList, 0, MAXWIN_PER_TASK * sizeof(HWND));
-	lpNewTask->hInst = hInst;
-	lpNewTask->unix_pid = getpid();
+#ifdef DEBUG_TASK
     printf("CreateNewTask // unix_pid=%08X return hTask=%04X\n", 
 									lpNewTask->unix_pid, hTask);
+#endif
 	GlobalUnlock(hTask);	
+	nTaskCount++;
     return hTask;
 }
 
@@ -117,18 +172,27 @@ BOOL AddWindowToTask(HTASK hTask, HWND hWnd)
 	HWND 	*wptr;
 	int		count = 0;
 	LPTASKENTRY lpTask = lpTaskList;
+#ifdef DEBUG_TASK
 	printf("AddWindowToTask(%04X, %04X); !\n", hTask, hWnd);
+#endif
 	while (TRUE) {
 		if (lpTask->hTask == hTask) break;
-		if (lpTask == NULL) return FALSE;
+		if (lpTask == NULL) {
+			printf("AddWindowToTask // hTask=%04X not found !\n", hTask);
+			return FALSE;
+			}
 		lpTask = lpTask->lpNextTask;
 		}
 	wptr = lpTask->lpWndList;
 	if (wptr == NULL) return FALSE;
-	while (*(wptr++) != 0) {
+	while (*(wptr) != 0) {
 		if (++count >= MAXWIN_PER_TASK) return FALSE;
+		wptr++;
 		}
 	*wptr = hWnd;
+#ifdef DEBUG_TASK
+	printf("AddWindowToTask // window added, count=%d !\n", count);
+#endif
 	return TRUE;
 }
 
@@ -141,18 +205,31 @@ BOOL RemoveWindowFromTask(HTASK hTask, HWND hWnd)
 	HWND 	*wptr;
 	int		count = 0;
 	LPTASKENTRY lpTask = lpTaskList;
-	printf("AddWindowToTask(%04X, %04X); !\n", hTask, hWnd);
+#ifdef DEBUG_TASK
+	printf("RemoveWindowToTask(%04X, %04X); !\n", hTask, hWnd);
+#endif
 	while (TRUE) {
 		if (lpTask->hTask == hTask) break;
-		if (lpTask == NULL) return FALSE;
+		if (lpTask == NULL) {
+			printf("RemoveWindowFromTask // hTask=%04X not found !\n", hTask);
+			return FALSE;
+			}
 		lpTask = lpTask->lpNextTask;
 		}
 	wptr = lpTask->lpWndList;
 	if (wptr == NULL) return FALSE;
-	while (*(wptr++) != hWnd) {
+	while (*(wptr) != hWnd) {
 		if (++count >= MAXWIN_PER_TASK) return FALSE;
+		wptr++;
 		}
-	*wptr = 0;
+	while (*(wptr) != 0) {
+		*(wptr) = *(wptr + 1);
+		if (++count >= MAXWIN_PER_TASK) return FALSE;
+		wptr++;
+		}
+#ifdef DEBUG_TASK
+	printf("RemoveWindowFromTask // window removed, count=%d !\n", --count);
+#endif
 	return TRUE;
 }
 

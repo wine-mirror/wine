@@ -890,9 +890,14 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 	p += *p + 1;
     
     i = MIN(buflen - 1, *p);
-    memcpy(buffer, p + 1, i);
-    buffer[i] = '\0';
-
+	if (i > 0) {
+		memcpy(buffer, p + 1, i);
+		buffer[i] = '\0';
+		}
+	else {
+		printf("LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
+		printf("LoadString // and try to obtain string '%s'\n", p + 1);
+		}
     GlobalFree(hmem);
 
 #ifdef DEBUG_RESOURCE

@@ -54,7 +54,7 @@ length	540
 49  pascal IsWindowVisible(word) IsWindowVisible(1)
 50  pascal FindWindow(ptr ptr) FindWindow(1 2)
 #51 BEAR51
-#52 ANYPOPUP
+52  pascal AnyPopup() AnyPopup()
 53  pascal DestroyWindow(word) DestroyWindow(1)
 54  pascal EnumWindows(ptr long) EnumWindows(1 2)
 55  pascal EnumChildWindows(word ptr long) EnumChildWindows(1 2 3)
@@ -317,7 +317,7 @@ length	540
 325 pascal PaintRect(word word word word ptr) PaintRect(1 2 3 4 5)
 #326 GETCONTROLBRUSH
 #331 ENABLEHARDWAREINPUT
-332 pascal UserYield() Yield()
+332 return UserYield 0 0
 #333 ISUSERIDLE
 334 pascal GetQueueStatus(word) GetQueueStatus(1)
 335 pascal GetInputState() GetInputState()

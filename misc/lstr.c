@@ -18,7 +18,9 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 /* KERNEL.89 */
 LPSTR lstrcat(LPSTR target,LPCSTR source)
 {
+#ifdef DEBUG_STRING
   fprintf(stderr,"lstrcat(%s,%s)\n",target,source);
+#endif
   return strcat(target,source);
 }
 

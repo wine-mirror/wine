@@ -524,9 +524,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
 #ifdef DEBUG_NONCLIENT
-    printf( "NC_HandleNCPaint: %d %d\n", hwnd, hrgn );
+    printf( "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
 #endif
-
+    if (!IsWindowVisible(hwnd)) return;
     if (!wndPtr || !hrgn) return;
     if (!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME)))
 	return;  /* Nothing to do! */
@@ -1058,26 +1058,7 @@ static void NC_TrackMouseMenuBar( HWND hwnd, WORD wParam, POINT pt )
     ScreenToClient(hwnd, &pt);
     pt.y += lppop->rect.bottom;
     SetCapture(hwnd);
-    if (!MenuButtonDown(hwnd, lppop, pt.x, pt.y)) {
-	    do {
-		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
-		ScreenToClient(hwnd, &msg.pt);
-		msg.pt.y += lppop->rect.bottom;
-		switch(msg.message) {
-		case WM_LBUTTONUP:
-		    MenuButtonUp(hwnd, lppop, msg.pt.x, msg.pt.y);
-		    break;
-		case WM_MOUSEMOVE:
-		    MenuMouseMove(hwnd, lppop, msg.wParam, msg.pt.x, msg.pt.y);
-		    break;
-		default:
-		    TranslateMessage(&msg);
-		    DispatchMessage(&msg);
-		    break;
-		}
-	    } while (msg.message != WM_LBUTTONUP);
-	    ReleaseCapture();
-	}
+    MenuButtonDown(hwnd, lppop, pt.x, pt.y);
     GlobalUnlock(wndPtr->wIDmenu);
 }
 

@@ -245,8 +245,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     XSetWindowAttributes win_attr;
 
 #ifdef DEBUG_WIN
-    printf( "CreateWindowEx: %d '%s' '%s' %d,%d %dx%d %08x %x\n",
-	   exStyle, className, windowName, x, y, width, height, style, parent);
+    printf( "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
+				exStyle, className, windowName, style, x, y, width, height, 
+				parent, menu, instance, data);
 #endif
 
     if (x == CW_USEDEFAULT) x = y = 0;
@@ -431,6 +432,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
       /* Create a copy of SysMenu */
     if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
+	/* Register window in current task windows list */
+	AddWindowToTask(GetCurrentTask(), hwnd);
+
       /* Set window cursor */
     if (classPtr->wc.hCursor) CURSOR_SetWinCursor( hwnd, classPtr->wc.hCursor);
     else CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ));
@@ -474,8 +478,10 @@ BOOL DestroyWindow( HWND hwnd )
 	DestroyWindow( wndPtr->hwndChild );
     SendMessage( hwnd, WM_NCDESTROY, 0, 0 );
 
-      /* Remove the window from the linked list */
+      /* Remove the window from current task windows list */
+	RemoveWindowFromTask(GetCurrentTask(), hwnd);
 
+      /* Remove the window from the linked list */
     WIN_UnlinkWindow( hwnd );
 
       /* Destroy the window */
@@ -957,6 +963,16 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 }
 
 /*******************************************************************
+ *			AnyPopup		[USER.52]
+ */
+BOOL AnyPopup()
+{
+	printf("EMPTY STUB !! AnyPopup !\n");
+	return FALSE;
+}
+
+
+/*******************************************************************
  *			SetSysModalWindow		[USER.188]
  */
 HWND SetSysModalWindow(HWND hWnd)
@@ -966,6 +982,7 @@ HWND SetSysModalWindow(HWND hWnd)
 	printf("EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
 	return hWndOldModal;
 }
+
 
 /*******************************************************************
  *			GetSysModalWindow		[USER.189]

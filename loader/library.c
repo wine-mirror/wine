@@ -3,6 +3,10 @@
  */
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
+/*
+#define DEBUG_MODULE
+*/
+
 #ifndef WINELIB
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +35,7 @@ typedef MODULEENTRY *LPMODULEENTRY;
 static LPMODULEENTRY lpModList = NULL;
 
 extern struct  w_files * wine_files;
-#define N_BUILTINS	10
+#define N_BUILTINS	11
 extern struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS];
 
 
@@ -43,6 +47,7 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 	register struct w_files *w = wine_files;
 	int 	i;
  	printf("GetModuleHandle('%s');\n", lpModuleName);
+ 	printf("GetModuleHandle // searching in loaded modules\n");
 	while (w) {
 /*		printf("GetModuleHandle // '%s' \n", w->name);  */
 		if (strcmp(w->name, lpModuleName) == 0) {
@@ -52,7 +57,9 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 			}
 		w = w->next;
 		}
+ 	printf("GetModuleHandle // searching in builtin libraries\n");
     for (i = 0; i < N_BUILTINS; i++) {
+		if (dll_builtin_table[i].dll_name == NULL) break;
 		if (strcmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
 			printf("GetModuleHandle('%s') return %04X \n", 
 							lpModuleName, 0xFF00 + i);
@@ -83,12 +90,17 @@ int GetModuleUsage(HANDLE hModule)
 int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
 {
     struct w_files *w;
+	LPSTR		str;
     printf("GetModuleFileName(%04X, %08X, %d);\n", hModule, lpFileName, nSize);
     if (lpFileName == NULL) return 0;
+	if (nSize < 1) return 0;
     w = GetFileInfo(hModule);
     if (w == NULL) return 0;
-    if (nSize > strlen(w->name)) nSize = strlen(w->name) + 1;
-    strncpy(lpFileName, w->name, nSize);
+	str = w->filename;
+	if (str[0] == '/') str++;
+    if (nSize > strlen(str)) nSize = strlen(str) + 1;
+    strncpy(lpFileName, str, nSize);
+	ToDos(lpFileName);
     printf("GetModuleFileName copied '%s' return %d \n", lpFileName, nSize);
     return nSize - 1;
 }
@@ -100,43 +112,59 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
 HANDLE LoadLibrary(LPSTR libname)
 {
     HANDLE hModule;
-	LPMODULEENTRY lpMod = lpModList;
-	LPMODULEENTRY lpNewMod;
+    LPMODULEENTRY lpMod = lpModList;
+    LPMODULEENTRY lpNewMod;
+
+    if (FindDLLTable(libname))
+    {
+	return WINE_CODE_SELECTOR;
+    }
+
     printf("LoadLibrary '%s'\n", libname);
-	if (lpMod != NULL) {
-		while (TRUE) {
-			if (strcmp(libname, lpMod->FileName) == 0) {
-				lpMod->Count++;
-			    printf("LoadLibrary // already loaded hInst=%04X\n", lpMod->hInst);
-				return lpMod->hInst;
-				}
-			if (lpMod->lpNextModule == NULL) break;
-			lpMod = lpMod->lpNextModule;
-			}
-		}
-	hModule = GlobalAlloc(GMEM_MOVEABLE, sizeof(MODULEENTRY));
-	lpNewMod = (LPMODULEENTRY) GlobalLock(hModule);	
+    if (lpMod != NULL) 
+    {
+	while (TRUE) 
+	{
+	    if (strcmp(libname, lpMod->FileName) == 0) 
+	    {
+		lpMod->Count++;
+		printf("LoadLibrary // already loaded hInst=%04X\n", 
+		       lpMod->hInst);
+		return lpMod->hInst;
+	    }
+	    if (lpMod->lpNextModule == NULL) break;
+	    lpMod = lpMod->lpNextModule;
+	}
+    }
+
+    hModule = GlobalAlloc(GMEM_MOVEABLE, sizeof(MODULEENTRY));
+    lpNewMod = (LPMODULEENTRY) GlobalLock(hModule);	
 #ifdef DEBUG_LIBRARY
     printf("LoadLibrary // creating new module entry %08X\n", lpNewMod);
 #endif
-	if (lpNewMod == NULL) return 0;
-	if (lpModList == NULL) {
-		lpModList = lpNewMod;
-		lpNewMod->lpPrevModule = NULL;
-		}
-	else {
-		lpMod->lpNextModule = lpNewMod;
-		lpNewMod->lpPrevModule = lpMod;
-		}
-	lpNewMod->lpNextModule = NULL;
-	lpNewMod->hModule = hModule;
-	lpNewMod->ModuleName = NULL;
-	lpNewMod->FileName = (LPSTR) malloc(strlen(libname));
-	if (lpNewMod->FileName != NULL)	strcpy(lpNewMod->FileName, libname);
-	lpNewMod->hInst = LoadImage(libname, DLL);
-	lpNewMod->Count = 1;
+    if (lpNewMod == NULL) 
+	return 0;
+    if (lpModList == NULL) 
+    {
+	lpModList = lpNewMod;
+	lpNewMod->lpPrevModule = NULL;
+    }
+    else 
+    {
+	lpMod->lpNextModule = lpNewMod;
+	lpNewMod->lpPrevModule = lpMod;
+    }
+
+    lpNewMod->lpNextModule = NULL;
+    lpNewMod->hModule = hModule;
+    lpNewMod->ModuleName = NULL;
+    lpNewMod->FileName = (LPSTR) malloc(strlen(libname));
+    if (lpNewMod->FileName != NULL)	
+	strcpy(lpNewMod->FileName, libname);
+    lpNewMod->hInst = LoadImage(libname, DLL);
+    lpNewMod->Count = 1;
     printf("LoadLibrary returned Library hInst=%04X\n", lpNewMod->hInst);
-	GlobalUnlock(hModule);	
+    GlobalUnlock(hModule);	
     return lpNewMod->hInst;
 }
 
@@ -219,10 +247,11 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 			strncpy(C, cpnt, len);
 			C[len] = '\0';
 #ifdef DEBUG_MODULE
-			printf("pointing Function '%s' !\n", C);
+			printf("pointing Function '%s' ordinal=%d !\n", 
+				C, *((unsigned short *)(cpnt +  len)));
 #endif
 			if (strncmp(cpnt, proc_name, len) ==  0) {
-				ordinal =  *((unsigned short *)  (cpnt +  len));
+				ordinal =  *((unsigned short *)(cpnt +  len));
 				break;
 				}
 			cpnt += len + 2;

@@ -31,7 +31,7 @@ length	415
 25  pascal GlobalCompact(long) GlobalCompact(1)
 #26 GLOBALFREEALL
 #28 GLOBALMASTERHANDLE
-29  pascal Yield() Yield()
+29  return Yield 0 0
 30  pascal WaitEvent(word) KERNEL_WaitEvent(1)
 #31 POSTEVENT
 #32 SETPRIORITY
@@ -119,7 +119,7 @@ length	415
 #114 __AHINCR
 115 pascal OutputDebugString(ptr) OutputDebugString(1)
 #116 INITLIB
-117 pascal OldYield() Yield()
+117 return OldYield 0 0
 #118 GETTASKQUEUEDS
 #119 GETTASKQUEUEES
 #120 UNDEFDYNLINK
@@ -147,7 +147,7 @@ length	415
 #139 DOSIGNAL
 #140 SETSIGHANDLER
 #141 INITTASK1
-150 pascal DirectedYield() Yield()
+150 return DirectedYield 2 0
 #151 WINOLDAPCALL
 152 pascal GetNumTasks() GetNumTasks()
 154 return GlobalNotify 4 0

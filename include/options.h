@@ -16,6 +16,7 @@ struct options
     int    synchronous;
     short  cmdShow;
     int    relay_debug;
+    int    debug;
 };
 
 extern struct options Options;

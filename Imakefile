@@ -1,7 +1,7 @@
 #include "autoconf.h"
 #include "Wine.tmpl"
 
-#if defined(i386FreeBsd)
+#if defined(i386FreeBsd) || defined(FreeBSDArchitecture)
 MAKE = gmake
 CC = gcc -D__FreeBSD__
 #endif
@@ -77,7 +77,7 @@ OBJS = $(COMMONOBJS) $(LIBOBJS)
 #ifdef i386BsdArchitecture
 SYSLIBS = -ll -lm -li386 -lgnumalloc
 #endif
-#ifdef i386FreeBsd
+#if defined(i386FreeBsd) || defined(FreeBSDArchitecture)
 SYSLIBS = -ll -lm -lgnumalloc
 #endif
 #ifdef LinuxArchitecture

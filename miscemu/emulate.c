@@ -18,8 +18,8 @@ struct Win87EmInfoStruct {
 int
 WIN87_fpmath()
 {
-  printf( "_fpmath: (%d)\n",_BX);
-
+  printf( "_fpmath: (%x:%x %x %x)\n",_CONTEXT->sc_cs, _CONTEXT->sc_eip, 
+	 _CONTEXT->sc_es, _BX);
 
   switch(_BX )
     {
