@@ -212,8 +212,15 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     return argv;
 }
 
+#define SHGFI_KNOWN_FLAGS \
+    (SHGFI_SMALLICON | SHGFI_OPENICON | SHGFI_SHELLICONSIZE | SHGFI_PIDL | \
+     SHGFI_USEFILEATTRIBUTES | SHGFI_ADDOVERLAYS | SHGFI_OVERLAYINDEX | \
+     SHGFI_ICON | SHGFI_DISPLAYNAME | SHGFI_TYPENAME | SHGFI_ATTRIBUTES | \
+     SHGFI_ICONLOCATION | SHGFI_EXETYPE | SHGFI_SYSICONINDEX | \
+     SHGFI_LINKOVERLAY | SHGFI_SELECTED | SHGFI_ATTR_SPECIFIED)
+
 /*************************************************************************
- * SHGetFileInfoA			[SHELL32.@]
+ * SHGetFileInfoW			[SHELL32.@]
  *
  */
 
@@ -230,8 +237,9 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	HRESULT hr = S_OK;
 	BOOL IconNotYetLoaded=TRUE;
 
-	TRACE("(%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x)\n",
-	  (flags & SHGFI_PIDL)? "pidl" : debugstr_w(path), dwFileAttributes, psfi, psfi->dwAttributes, sizeofpsfi, flags);
+	TRACE("%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x\n",
+	  (flags & SHGFI_PIDL)? "pidl" : debugstr_w(path), dwFileAttributes,
+	  psfi, psfi->dwAttributes, sizeofpsfi, flags);
 
 	if ((flags & SHGFI_USEFILEATTRIBUTES) && (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
 	  return FALSE;
@@ -392,6 +400,12 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         }
 
 	/* ### icons ###*/
+	if (flags & SHGFI_ADDOVERLAYS)
+	  FIXME("SHGFI_ADDOVERLAYS unhandled\n");
+
+	if (flags & SHGFI_OVERLAYINDEX)
+	  FIXME("SHGFI_OVERLAYINDEX unhandled\n");
+
 	if (flags & SHGFI_LINKOVERLAY)
 	  FIXME("set icon to link, stub\n");
 
@@ -424,7 +438,6 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	/* get icon index (or load icon)*/
 	if (SUCCEEDED(hr) && (flags & (SHGFI_ICON | SHGFI_SYSICONINDEX)))
 	{
-
 	  if (flags & SHGFI_USEFILEATTRIBUTES)
 	  {
 	    WCHAR sTemp [MAX_PATH];
@@ -481,8 +494,8 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICON) && IconNotYetLoaded)
 	  psfi->hIcon = ImageList_GetIcon((flags & SHGFI_SMALLICON) ? ShellSmallIconList:ShellBigIconList, psfi->iIcon, ILD_NORMAL);
 
-	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
-	  FIXME("unknown attribute!\n");
+	if (flags & ~SHGFI_KNOWN_FLAGS)
+	  FIXME("unknown flags %08x\n", flags & ~SHGFI_KNOWN_FLAGS);
 
 	if (psfParent)
 	  IShellFolder_Release(psfParent);
@@ -499,7 +512,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- * SHGetFileInfoW			[SHELL32.@]
+ * SHGetFileInfoA			[SHELL32.@]
  */
 
 DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,

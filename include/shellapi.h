@@ -115,9 +115,8 @@ UINT    WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
 #define SHGFI_SHELLICONSIZE     0x000000004     /* get shell size icon */
 #define SHGFI_PIDL              0x000000008     /* pszPath is a pidl */
 #define SHGFI_USEFILEATTRIBUTES 0x000000010     /* use passed dwFileAttribute */
-#define SHGFI_UNKNOWN1          0x000000020
-#define SHGFI_UNKNOWN2          0x000000040
-#define SHGFI_UNKNOWN3          0x000000080
+#define SHGFI_ADDOVERLAYS       0x000000020
+#define SHGFI_OVERLAYINDEX      0x000000040
 #define SHGFI_ICON              0x000000100     /* get icon */
 #define SHGFI_DISPLAYNAME       0x000000200     /* get display name */
 #define SHGFI_TYPENAME          0x000000400     /* get type name */
