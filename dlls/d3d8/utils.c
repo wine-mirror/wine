@@ -286,7 +286,6 @@ const char* debug_d3dtexturestate(DWORD state) {
   case 12:
     /* Note D3DTSS are not consecutive, so skip these */
     return "unused";
-    break;
   default:
     FIXME("Unrecognized %lu texture state!\n", state);
     return "unrecognized";
@@ -1336,7 +1335,6 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		*/
 		LEAVE_GL();
 		return;
-		break;	    
 	      }
 	    }
 

@@ -2358,7 +2358,6 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
             SetLastError(NTE_BAD_TYPE);
             return FALSE;
     }
-    return FALSE;
 }
 
 /******************************************************************************

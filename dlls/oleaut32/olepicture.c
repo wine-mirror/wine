@@ -1172,7 +1172,6 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     FIXME("Trying to load GIF, but no support for libgif/libungif compiled in.\n");
     return E_FAIL;
 #endif
-    break;
   }
   case 0xd8ff: { /* JPEG */
 #ifdef HAVE_JPEGLIB_H

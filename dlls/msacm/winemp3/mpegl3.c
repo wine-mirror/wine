@@ -606,5 +606,4 @@ LRESULT CALLBACK	MPEG3_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
-    return 0;
 }

@@ -224,11 +224,9 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXT
     if (Level < This->levels) {
         TRACE("(%p) level (%d)\n", This, Level);
         return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8) This->surfaces[0][Level], pDesc);
-    } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-        return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+    return D3DERR_INVALIDCALL;
 }
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level, IDirect3DSurface8** ppCubeMapSurface) {
     IDirect3DCubeTexture8Impl *This = (IDirect3DCubeTexture8Impl *)iface;

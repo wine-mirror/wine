@@ -1156,7 +1156,6 @@ _get_funcdesc(
 	}
 	i++;
     }
-    return E_FAIL;
 }
 
 static DWORD

@@ -268,7 +268,6 @@ ULONG WINAPI UlPropSize(LPSPropValue lpProp)
                          break;
     case PT_BINARY:      ulRet = lpProp->Value.bin.cb;
                          break;
-        break;
     case PT_OBJECT:
     default:             ulRet = 0u;
                          break;

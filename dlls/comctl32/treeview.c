@@ -5497,7 +5497,6 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 def:
 	return DefWindowProcA(hwnd, uMsg, wParam, lParam);
     }
-    return 0;
 }
 
 

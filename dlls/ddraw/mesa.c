@@ -668,7 +668,6 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	    default:
 		FIXME("FourCC Not supported\n");
 		return DD_OK;
-		break;
 	}
 
 	if (GL_extensions.s3tc_compressed_texture) {
@@ -971,7 +970,6 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    default:
 		FIXME("Not supported\n");
 		return DD_OK;
-		break;
 	}
 
 	if (GL_extensions.s3tc_compressed_texture) {

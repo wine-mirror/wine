@@ -375,7 +375,6 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPD
 					}
 					TRACE_(dmfile)(": StreamCount[0] = 0x%08lX < StreamSize[0] = 0x%08lX\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
-				break;
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
 				liMove.QuadPart = StreamSize;

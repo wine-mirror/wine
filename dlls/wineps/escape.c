@@ -298,7 +298,6 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    FIXME("Unknown CLIP_TO_PATH mode %d\n", mode);
 	    return 0;
 	}
-        return 0;
       }
     default:
         FIXME("Unimplemented code 0x%x\n", nEscape);

@@ -2565,7 +2565,6 @@ INT WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
       lpDstStr[*lpiLen] = '\0';
       return *lpiLen;
     }
-    break;
   default:
     break;
   }

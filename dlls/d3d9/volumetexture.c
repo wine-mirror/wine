@@ -148,11 +148,9 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE9
     if (Level < This->levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
         return IDirect3DVolume9Impl_GetDesc((LPDIRECT3DVOLUME9) This->volumes[Level], pDesc);
-    } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-	return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+    return D3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE9 iface, UINT Level, IDirect3DVolume9** ppVolumeLevel) {

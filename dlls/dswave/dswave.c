@@ -484,7 +484,6 @@ HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (LPDIRECT
 					}
 					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
-				break;
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
 				liMove.QuadPart = StreamSize;
@@ -667,7 +666,6 @@ HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM iface, 
 					}
 					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
-				break;
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
 				liMove.QuadPart = StreamSize;

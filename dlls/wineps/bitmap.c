@@ -146,7 +146,6 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
     default:
         FIXME("Not implemented yet\n");
 	return FALSE;
-	break;
     }
 
     PSDRV_WriteImage(physDev, info->bmiHeader.biBitCount, xDst, yDst,

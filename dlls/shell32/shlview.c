@@ -1380,7 +1380,6 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      }
 	      return TRUE;
 	    }
-	    break;
 
 	  case LVN_ENDLABELEDITA:
 	    {
@@ -1411,7 +1410,6 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      }
 	      return FALSE;
 	    }
-	    break;
 
 	  case LVN_KEYDOWN:
 	    {

@@ -740,7 +740,6 @@ static void test_ScCountProps(void)
             pv.Value.MVft.lpft = (FILETIME*)iid;
             exp = 3 * sizeof(CY) + sizeof(pv);
             break;
-            break;
         case PT_MV_STRING8:
             pv.Value.MVszA.cValues = 3;
             pv.Value.MVszA.lppszA = buffa;

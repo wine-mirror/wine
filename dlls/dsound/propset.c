@@ -615,7 +615,6 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
 			WARN("waveInMessage failed\n");
 			return E_PROP_ID_UNSUPPORTED;
 		    }
-		    break;
 		}
 	}
     } else {
@@ -771,7 +770,6 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
 			WARN("waveInMessage failed\n");
 			return E_PROP_ID_UNSUPPORTED;
 		    }
-		    break;
 		}
 	}
     } else {

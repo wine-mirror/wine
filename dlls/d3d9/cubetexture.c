@@ -150,10 +150,10 @@ HRESULT WINAPI IDirect3DCubeTexture9Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE9 ifa
     if (Level < This->levels) {
         TRACE("(%p) level (%d)\n", This, Level);
         return IDirect3DSurface9Impl_GetDesc((LPDIRECT3DSURFACE9) This->surfaces[0][Level], pDesc);
-    } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-        return D3DERR_INVALIDCALL;
     }
+    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+    return D3DERR_INVALIDCALL;
+
     return D3D_OK;
 }
 

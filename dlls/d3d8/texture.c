@@ -182,11 +182,9 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifa
     if (Level < This->levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
         return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8) This->surfaces[Level], pDesc);
-    } else {
-        FIXME("Levels seems too high?!!\n");
-	return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    FIXME("Levels seems too high?!!\n");
+    return D3DERR_INVALIDCALL;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level, IDirect3DSurface8** ppSurfaceLevel) {
     IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;

@@ -149,11 +149,9 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT
     if (Level < This->levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
         return IDirect3DSurface9Impl_GetDesc((LPDIRECT3DSURFACE9) This->surfaces[Level], pDesc);
-    } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
-	return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+    return D3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IDirect3DTexture9Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE9 iface, UINT Level, IDirect3DSurface9** ppSurfaceLevel) {

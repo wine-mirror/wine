@@ -1743,7 +1743,6 @@ static LPCSTR XFONT_UnAlias(char* font)
 		TRACE("found alias '%s'->%s'\n", font, fa->faTypeFace );
 		strcpy(font, fa->faTypeFace);
 		return fa->faAlias;
-		break;
 	    }
     }
     return NULL;

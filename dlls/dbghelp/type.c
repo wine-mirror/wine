@@ -590,7 +590,6 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             break;
         case SymTagTypedef:
             return symt_get_info(((const struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
-            break;
         case SymTagThunk:
             X(DWORD) = ((const struct symt_thunk*)type)->size;
             break;

@@ -278,11 +278,9 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
       memcpy(di->pi->Devmode, di->dlgdm, sizeof(PSDRV_DEVMODEA));
       SetWindowLongA(hwnd, DWL_MSGRESULT, PSNRET_NOERROR);
       return TRUE;
-      break;
 
     default:
       return FALSE;
-      break;
     }
     break;
    }

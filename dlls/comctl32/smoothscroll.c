@@ -72,7 +72,6 @@ BOOL WINAPI SmoothScrollWindow( SMOOTHSCROLLSTRUCT *smooth ) {
    LPRECT	lpupdaterect = smooth->lpupdaterect;
    HRGN		hrgnupdate = smooth->hrgnupdate;
    RECT		tmprect;
-   BOOL		ret = TRUE;
    DWORD	flags = smooth->flags;
 
    if (smooth->dwSize!=sizeof(SMOOTHSCROLLSTRUCT))
@@ -129,5 +128,4 @@ BOOL WINAPI SmoothScrollWindow( SMOOTHSCROLLSTRUCT *smooth ) {
 	   smooth->lpcliprect,hrgnupdate,lpupdaterect,
 	   flags & 0xffff
        );
-   return ret;
 }

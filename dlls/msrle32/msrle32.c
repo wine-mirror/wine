@@ -1849,7 +1849,6 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD dwDrvID, HDRVR hDrv, UINT uMsg,
     break;
   case ICM_SETQUALITY:
     return SetQuality(pi, *(LPLONG)lParam1);
-    break;
   case ICM_COMPRESS_GET_FORMAT:
     return CompressGetFormat(pi, (LPCBITMAPINFOHEADER)lParam1,
 			     (LPBITMAPINFOHEADER)lParam2);

@@ -1716,8 +1716,6 @@ DirectSoundFullDuplexCreate(
 	    WARN("IDirectSoundFullDuplexImpl_Initialize failed\n");
 	return hres;
     }
-
-    return DSERR_GENERIC;
 }
 
 static HRESULT WINAPI

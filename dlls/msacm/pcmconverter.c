@@ -794,8 +794,8 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
     switch (dwQuery) {
     case ACM_FORMATDETAILSF_FORMAT:
 	if (PCM_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) {
-            return ACMERR_NOTPOSSIBLE;
             WARN("not possible\n");
+            return ACMERR_NOTPOSSIBLE;
         }
 	break;
     case ACM_FORMATDETAILSF_INDEX:
@@ -1084,5 +1084,4 @@ LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
-    return 0;
 }

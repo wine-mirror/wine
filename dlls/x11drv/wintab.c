@@ -780,10 +780,8 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             if (gNumCursors>0)
             {
                 FIXME("Return proper size\n");
-                return 200;
+                rc = 200;
             }
-            else
-                return 0;
             break;
         case WTI_INTERFACE:
             switch (nIndex)

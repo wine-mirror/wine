@@ -149,7 +149,6 @@ outrefresh:
 	case WM_QUIT:
 	case ADVISE_EXIT:
 	  goto outofthread;
-	  break;
 	case ADVISE_ADD_SINGLESHOT:
 	case ADVISE_ADD_PERIODIC:
 	  /** set timeout to 0 to do a rescan now */

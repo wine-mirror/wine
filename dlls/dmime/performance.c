@@ -120,7 +120,6 @@ outrefresh:
 	case WM_QUIT:
 	case PROCESSMSG_EXIT:
 	  goto outofthread;
-	  break;
 	case PROCESSMSG_START:
 	  break;
 	case PROCESSMSG_ADD:
@@ -837,7 +836,6 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	        HeapFree(GetProcessHeap(), 0, default_path); 
 	        *ppNewPath = NULL;
 	        return E_INVALIDARG;
-	        break;
 	}
 
 	/* FIXME: Should we create one secondary buffer for each PChannel? */
