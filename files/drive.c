@@ -476,35 +476,76 @@ int DRIVE_FindDriveRoot( const char **path )
  */
 int DRIVE_FindDriveRootW( LPCWSTR *path )
 {
-    int drive, rootdrive = -1;
-    char buffer[MAX_PATHNAME_LEN];
-    LPCWSTR p = *path;
-    int len, match_len = -1;
+    int drive, level, len;
+    WCHAR buffer[MAX_PATHNAME_LEN];
+    WCHAR *p;
+    struct stat st;
 
-    for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+    strcpyW( buffer, *path );
+    while ((p = strchrW( buffer, '\\' )) != NULL)
+        *p = '/';
+    len = strlenW(buffer);
+
+    /* strip off trailing slashes */
+    while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
+
+    for (;;)
     {
-        if (!DOSDrives[drive].root ||
-            (DOSDrives[drive].flags & DRIVE_DISABLED)) continue;
+        int codepage = -1;
 
-        WideCharToMultiByte(DOSDrives[drive].codepage, 0, *path, -1,
-                            buffer, MAX_PATHNAME_LEN, NULL, NULL);
+        /* Find the drive */
+        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+        {
+            char buffA[MAX_PATHNAME_LEN];
 
-        len = strlen(DOSDrives[drive].root);
-        if(strncmp(DOSDrives[drive].root, buffer, len))
-            continue;
-        if(len <= match_len) continue;
-        match_len = len;
-        rootdrive = drive;
-        p = *path + len;
+            if (!DOSDrives[drive].root ||
+                (DOSDrives[drive].flags & DRIVE_DISABLED))
+                continue;
+
+            if (codepage != DOSDrives[drive].codepage)
+            {
+                WideCharToMultiByte( DOSDrives[drive].codepage, 0, buffer, -1,
+                                     buffA, sizeof(buffA), NULL, NULL );
+                if (stat( buffA, &st ) == -1 || !S_ISDIR( st.st_mode ))
+                {
+                    codepage = -1;
+                    continue;
+                }
+                codepage = DOSDrives[drive].codepage;
+            }
+
+            if ((DOSDrives[drive].dev == st.st_dev) &&
+                (DOSDrives[drive].ino == st.st_ino))
+            {
+                static const WCHAR rootW[] = {'\\',0};
+
+                if (len == 1) len = 0;  /* preserve root slash in returned path */
+                TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                       debugstr_w(*path), 'A' + drive, debugstr_w(buffer), debugstr_w(*path + len));
+                *path += len;
+                if (!**path) *path = rootW;
+                return drive;
+            }
+        }
+        if (len <= 1) return -1;  /* reached root */
+
+        level = 0;
+        while (level < 1)
+        {
+            static const WCHAR dotW[] = {'.',0};
+            static const WCHAR dotdotW[] = {'.','.',0};
+
+            /* find start of the last path component */
+            while (len > 1 && buffer[len - 1] != '/') len--;
+            if (!buffer[len]) break;  /* empty component -> reached root */
+            /* does removing it take us up a level? */
+            if (strcmpW( buffer + len, dotW ) != 0)
+                level += strcmpW( buffer + len, dotdotW ) ? 1 : -1;
+            buffer[len] = 0;
+            /* strip off trailing slashes */
+            while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
+        }
     }
-
-    if (rootdrive != -1)
-    {
-        *path = p;
-        TRACE("%s -> drive %c:, root='%s', name=%s\n",
-              buffer, 'A' + rootdrive, DOSDrives[rootdrive].root, debugstr_w(*path) );
-    }
-    return rootdrive;
 }
 
 
