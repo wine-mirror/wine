@@ -192,12 +192,6 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
          * This will tell us if there is more header information
          * to read or not.
          */
-        /* But before we do we will make sure that header
-         * structure encompasses the "Offset to extended header"
-         * field.
-         */
-        if (header.mz.e_lfanew < sizeof(IMAGE_DOS_HEADER))
-            return BINARY_DOS;
         if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1)
             return BINARY_DOS;
         if (!ReadFile( hfile, magic, sizeof(magic), &len, NULL ) || len != sizeof(magic))
