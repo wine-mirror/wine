@@ -1486,7 +1486,8 @@ lend:
 
 HINTERNET FTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	DWORD dwInternalFlags)
 {
     struct sockaddr_in socketAddr;
     struct hostent *phe = NULL;
@@ -1567,6 +1568,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
         lpwfs->hdr.htype = WH_HFTPSESSION;
         lpwfs->hdr.dwFlags = dwFlags;
         lpwfs->hdr.dwContext = dwContext;
+        lpwfs->hdr.dwInternalFlags = dwInternalFlags;
         lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
         lpwfs->sndSocket = nsocket;
 	lpwfs->download_in_progress = NULL;
@@ -1587,7 +1589,8 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
 
         if (FTP_ConnectToHost(lpwfs))
         {
-            if (hIC->lpfnStatusCB)
+            /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
+            if (hIC->lpfnStatusCB && !(lpwfs->hdr.dwInternalFlags & INET_OPENURL))
             {
                 INTERNET_ASYNC_RESULT iar;
 
@@ -2499,6 +2502,7 @@ BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwh)
 {
     LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) lpwh->hdr.lpwhparent;
     INT nResCode;
+    HINTERNET handle;
 
     TRACE("\n");
 
@@ -2517,7 +2521,15 @@ BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwh)
         close(lpwh->nDataSocket);
 
     HeapFree(GetProcessHeap(), 0, lpwh);
-    
+
+    /* If this handle was opened with InternetOpenUrl, we need to close the parent to prevent
+       a memory leek
+     */
+    if(lpwfs->hdr.dwInternalFlags & INET_OPENURL)
+    {
+        handle = WININET_FindHandle( &lpwfs->hdr );
+        InternetCloseHandle(handle);
+    }
     return TRUE;
 }
 

@@ -1789,7 +1789,8 @@ lend:
  */
 HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	DWORD dwInternalFlags)
 {
     BOOL bSuccess = FALSE;
     LPWININETAPPINFOW hIC = NULL;
@@ -1830,6 +1831,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
     lpwhs->hdr.lpwhparent = &hIC->hdr;
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
+    lpwhs->hdr.dwInternalFlags = dwInternalFlags;
     if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
         if(strchrW(hIC->lpszProxy, ' '))
             FIXME("Several proxies not implemented.\n");
@@ -1842,7 +1844,8 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
         lpwhs->lpszUserName = WININET_strdupW(lpszUserName);
     lpwhs->nServerPort = nServerPort;
 
-    if (hIC->lpfnStatusCB)
+    /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
+    if (hIC->lpfnStatusCB && !(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
     {
         INTERNET_ASYNC_RESULT iar;
 
@@ -2408,6 +2411,15 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr)
 
     HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
     HeapFree(GetProcessHeap(), 0, lpwhr);
+    
+    /* If this handle was opened with InternetOpenUrl, we need to close the parent to prevent
+       a memory leek
+     */
+    if(lpwhs->hdr.dwInternalFlags & INET_OPENURL)
+    {
+        handle = WININET_FindHandle( &lpwhs->hdr );
+        InternetCloseHandle(handle);
+    }
 }
 
 
@@ -2426,10 +2438,14 @@ void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONW lpwhs)
 
     hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
-    handle = WININET_FindHandle( &lpwhs->hdr );
-    SendAsyncCallback(hIC, handle, lpwhs->hdr.dwContext,
-                      INTERNET_STATUS_HANDLE_CLOSING, lpwhs,
-                      sizeof(HINTERNET));
+    /* Don't send a handle closing callback if this handle was created with InternetOpenUrl */
+    if(!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
+    {
+        handle = WININET_FindHandle( &lpwhs->hdr );
+        SendAsyncCallback(hIC, handle, lpwhs->hdr.dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, lpwhs,
+                          sizeof(HINTERNET));
+    }
 
     if (lpwhs->lpszServerName)
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);

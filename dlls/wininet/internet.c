@@ -665,12 +665,12 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     {
         case INTERNET_SERVICE_FTP:
             rc = FTP_Connect(hInternet, lpszServerName, nServerPort,
-            lpszUserName, lpszPassword, dwFlags, dwContext);
+            lpszUserName, lpszPassword, dwFlags, dwContext, 0);
             break;
 
         case INTERNET_SERVICE_HTTP:
 	    rc = HTTP_Connect(hInternet, lpszServerName, nServerPort,
-            lpszUserName, lpszPassword, dwFlags, dwContext);
+            lpszUserName, lpszPassword, dwFlags, dwContext, 0);
             break;
 
         case INTERNET_SERVICE_GOPHER:
@@ -2069,8 +2069,8 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     case INTERNET_SCHEME_FTP:
 	if(urlComponents.nPort == 0)
 	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-	client = InternetConnectW(hInternet, hostName, urlComponents.nPort,
-				  userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
+	client = FTP_Connect(hInternet, hostName, urlComponents.nPort,
+			     userName, password, dwFlags, dwContext, INET_OPENURL);
 	client1 = FtpOpenFileW(client, path, GENERIC_READ, dwFlags, dwContext);
 	break;
 	
@@ -2084,8 +2084,8 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	    else
 		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 	}
-	client = InternetConnectW(hInternet, hostName, urlComponents.nPort, userName,
-				  password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
+	client = HTTP_Connect(hInternet, hostName, urlComponents.nPort,
+			      userName, password, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
 	    break;
 	client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);

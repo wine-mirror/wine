@@ -81,12 +81,15 @@ typedef enum
     WH_HHTTPREQ = INTERNET_HANDLE_TYPE_HTTP_REQUEST,
 } WH_TYPE;
 
+#define INET_OPENURL 0x0001
+
 typedef struct _WININETHANDLEHEADER
 {
     WH_TYPE htype;
     DWORD  dwFlags;
     DWORD  dwContext;
     DWORD  dwError;
+    DWORD  dwInternalFlags;
     struct _WININETHANDLEHEADER *lpwhparent;
 } WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
 
@@ -346,11 +349,13 @@ time_t ConvertTimeString(LPCWSTR asctime);
 
 HINTERNET FTP_Connect(HINTERNET hInterent, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	DWORD dwInternalFlags);
 
 HINTERNET HTTP_Connect(HINTERNET hInterent, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
-	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext,
+	DWORD dwInternalFlags);
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa);
