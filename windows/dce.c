@@ -333,7 +333,7 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT32 *lprect )
 	INT32 xoffset = lprect->left;
 	INT32 yoffset = lprect->top;
 
-	while (wndPtr->parent)
+	while (wndPtr->dwStyle & WS_CHILD)
 	{
 	    wndPtr = wndPtr->parent;
 
