@@ -355,6 +355,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
 
         DWORD size = GlobalSize16( GlobalHandle16( selector ) );
 	start = (WORD)(size > 0xffff ? 0xffff : size) - 1;
+        if ( end > 0xfffe ) end = 0xfffe;
         start -= end;
         end += start;
 
