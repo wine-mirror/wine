@@ -5105,7 +5105,7 @@ fi
 echo "$ac_t""$ac_cv_c_dll_gnuelf" 1>&6
   if test "$ac_cv_c_dll_gnuelf" = "yes"
   then
-    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%) -Wl,-rpath,\$(libdir)"
+    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
     LDDLLFLAGS="-Wl,-Bsymbolic"
   else
     echo $ac_n "checking whether we can build a UnixWare (Solaris) dll""... $ac_c" 1>&6
@@ -5140,7 +5140,7 @@ fi
 echo "$ac_t""$ac_cv_c_dll_unixware" 1>&6
     if test "$ac_cv_c_dll_unixware" = "yes"
     then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
+      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
     fi
   fi

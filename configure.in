@@ -650,7 +650,7 @@ then
   ])
   if test "$ac_cv_c_dll_gnuelf" = "yes"
   then
-    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%) -Wl,-rpath,\$(libdir)"
+    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
     LDDLLFLAGS="-Wl,-Bsymbolic"
   else
     AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
@@ -662,7 +662,7 @@ then
     ])
     if test "$ac_cv_c_dll_unixware" = "yes"
     then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
+      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
     fi
   fi
