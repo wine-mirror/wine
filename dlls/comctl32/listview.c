@@ -734,7 +734,7 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 } while (0)
 
 #define LISTVIEW_InvalidateList(infoPtr)\
-    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcList)
+    LISTVIEW_InvalidateRect(infoPtr, NULL)
 
 static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 {
@@ -5511,19 +5511,14 @@ static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
     lpptOrigin->x = infoPtr->rcList.left;
     lpptOrigin->y = infoPtr->rcList.top;
     if (uView == LVS_LIST)
-    {
-	nHorzPos *= LISTVIEW_GetCountPerColumn(infoPtr);
-	nVertPos = 0;
-    }
+	nHorzPos *= infoPtr->nItemWidth;
     else if (uView == LVS_REPORT)
-    {
 	nVertPos *= infoPtr->nItemHeight;
-    }
     
     lpptOrigin->x -= nHorzPos;
     lpptOrigin->y -= nVertPos;
 
-    TRACE("(pt=(%ld,%ld))\n", lpptOrigin->x, lpptOrigin->y);
+    TRACE(" origin=%s\n", debugpoint(lpptOrigin));
 
     return TRUE;
 }
