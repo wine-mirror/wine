@@ -70,25 +70,26 @@ static char usage[] =
 	"   -U id       Undefine preprocessor identifier id\n"
 	"   -v          Enable verbose mode\n"
 	"The following long options are supported:\n"
-	"   --debug=nn          Set debug level to 'nn'\n"
-	"   --define            Synonym for -D\n"
-	"   --endianess=e       Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
-	"                       (win32 only; default is " ENDIAN "-endian)\n"
-	"   --help              Synonym for -h\n"
-	"   --include-dir       Synonym for -I\n"
-	"   --input             Synonym for -i\n"
-	"   --input-format      Synonym for -J\n"
-	"   --language          Synonym for -l\n"
-	"   --no-use-temp-file  Ignored for compatibility with windres\n"
-	"   --nostdinc          Disables searching the standard include path\n"
-	"   --output -fo        Synonym for -o\n"
-	"   --output-format     Synonym for -O\n"
-	"   --pedantic          Enable pedantic warnings\n"
-	"   --preprocessor      Specifies the preprocessor to use, including arguments\n"
-	"   --target            Synonym for -F\n"
-	"   --undefine          Synonym for -U\n"
-	"   --use-temp-file     Ignored for compatibility with windres\n"
-	"   --version           Print version and exit\n"
+	"   --debug=nn            Set debug level to 'nn'\n"
+	"   --define              Synonym for -D\n"
+	"   --endianess=e         Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
+	"                         (win32 only; default is " ENDIAN "-endian)\n"
+	"   --help                Synonym for -h\n"
+	"   --include-dir         Synonym for -I\n"
+	"   --input               Synonym for -i\n"
+	"   --input-format        Synonym for -J\n"
+	"   --language            Synonym for -l\n"
+	"   --no-use-temp-file    Ignored for compatibility with windres\n"
+	"   --nostdinc            Disables searching the standard include path\n"
+	"   --output -fo          Synonym for -o\n"
+	"   --output-format       Synonym for -O\n"
+	"   --pedantic            Enable pedantic warnings\n"
+	"   --preprocessor        Specifies the preprocessor to use, including arguments\n"
+	"   --target              Synonym for -F\n"
+	"   --undefine            Synonym for -U\n"
+	"   --use-temp-file       Ignored for compatibility with windres\n"
+	"   --verify-translations Check the status of the various translations\n"
+	"   --version             Print version and exit\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -109,6 +110,7 @@ char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
  * External functions
  */
 void write_resfile(char *outname, resource_t *top);
+void verify_translations(resource_t *top);
 
 /*
  * Set if compiling in 32bit mode (default).
@@ -157,6 +159,8 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
+static int verify_translations_mode;
+
 char *output_name = NULL;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
 char *temp_name = NULL;		/* Temporary file for preprocess pipe */
@@ -193,6 +197,7 @@ static struct option long_options[] = {
 	{ "target", 1, 0, 'F' },
 	{ "undefine", 1, 0, 'U' },
 	{ "use-temp-file", 0, 0, 2 },
+	{ "verify-translations", 0, 0, 9 },
 	{ "version", 0, 0, 5 },
 	{ 0, 0, 0, 0 }
 };
@@ -284,6 +289,9 @@ int main(int argc,char *argv[])
 		case 8:
 			pedantic = 1;
 			wpp_set_pedantic(1);
+			break;
+		case 9:
+			verify_translations_mode = 1;
 			break;
 		case 'D':
 			wpp_add_cmdline_define(optarg);
@@ -453,6 +461,12 @@ int main(int argc,char *argv[])
 
 	if(debuglevel & DEBUGLEVEL_DUMP)
 		dump_resources(resource_top);
+
+	if(verify_translations_mode)
+	{
+		verify_translations(resource_top);
+		exit(0);
+	}
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);
