@@ -322,7 +322,7 @@ static int GetCacheEntry(LFANDSIZE *plfsz)
   assert(entry->nrealized == 0);
 
 
-  if(antialias && abs(plfsz->lf.lfHeight * plfsz->xform.eM22) > 16) {
+  if(antialias) {
     pf.depth = 8;
     pf.direct.alphaMask = 0xff;
   } else {
