@@ -70,6 +70,9 @@ typedef struct IDirect3DTextureGLImpl
 
     /* Surface optimization */
     void *surface_ptr;
+
+    /* Used to detect a change in internal format when going from non-CK texture to CK-ed texture */
+    GLenum current_internal_format;
     
     /* This is for now used to override 'standard' surface stuff to be as transparent as possible */
     void (*final_release)(struct IDirectDrawSurfaceImpl *This);
@@ -142,6 +145,12 @@ extern void set_render_state(IDirect3DDeviceImpl* This, D3DRENDERSTATETYPE dwRen
 extern void store_render_state(IDirect3DDeviceImpl *This, D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState, STATEBLOCK* lpStateBlock);
 extern void get_render_state(IDirect3DDeviceImpl *This, D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState, STATEBLOCK* lpStateBlock);
 extern void apply_render_state(IDirect3DDeviceImpl* This, STATEBLOCK* lpStateBlock);
+
+/* Memory to texture conversion code. Split in three functions to do some optimizations. */
+extern HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surface, GLuint level, GLenum *prev_internal_format,
+						 BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck);
+extern HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer);
+extern HRESULT upload_surface_to_tex_memory_release(void);
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */

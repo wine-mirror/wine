@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "objbase.h"
 #include "ddraw.h"
@@ -530,4 +532,558 @@ void apply_render_state(IDirect3DDeviceImpl *This, STATEBLOCK *lpStateBlock)
     for(i = 0; i < HIGHEST_RENDER_STATE; i++)
 	if (lpStateBlock->set_flags.render_state[i])
             set_render_state(This, i + 1, lpStateBlock);
+}
+
+
+/* Texture management code.
+
+    - upload_surface_to_tex_memory_init initialize the code and computes the GL formats 
+      according to the surface description.
+
+    - upload_surface_to_tex_memory does the real upload. If one buffer is split over
+      multiple textures, this can be called multiple times after the '_init' call. 'rect'
+      can be NULL if the whole buffer needs to be upload.
+
+    - upload_surface_to_tex_memory_release does the clean-up.
+
+   These functions are called in the following cases :
+    - texture management (ie to upload a D3D texture to GL when it changes).
+    - flush of the 'in-memory' frame buffer to the GL frame buffer using the texture
+      engine.
+    - use of the texture engine to simulate Blits to the 3D Device.
+*/
+typedef enum {
+    NO_CONVERSION,
+    CONVERT_PALETTED,
+    CONVERT_CK_565,
+    CONVERT_CK_5551,
+    CONVERT_CK_4444,
+    CONVERT_CK_4444_ARGB,
+    CONVERT_CK_1555,
+    CONVERT_555,
+    CONVERT_CK_RGB24,
+    CONVERT_CK_8888,
+    CONVERT_CK_8888_ARGB,
+    CONVERT_RGB32_888
+} CONVERT_TYPES;
+
+/* Note : we suppose that all the code calling this is protected by the GL lock... Otherwise bad things
+   may happen :-) */
+static GLenum current_format;
+static GLenum current_pixel_format;
+static CONVERT_TYPES convert_type;
+static IDirectDrawSurfaceImpl *current_surface;
+static GLuint current_level;
+
+HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLuint level, GLenum *current_internal_format,
+					  BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck)
+{
+    const DDPIXELFORMAT * const src_pf = &(surf_ptr->surface_desc.u4.ddpfPixelFormat);
+    BOOL error = FALSE;
+    BOOL colorkey_active = need_alpha_ck && (surf_ptr->surface_desc.dwFlags & DDSD_CKSRCBLT);
+    GLenum internal_format = GL_LUMINANCE; /* A bogus value to be sure to have a nice Mesa warning :-) */
+
+    current_surface = surf_ptr;
+    current_level = level;
+
+    if (src_pf->dwFlags & DDPF_PALETTEINDEXED8) {
+	/* ****************
+	   Paletted Texture
+	   **************** */
+	current_format = GL_RGBA;
+	internal_format = GL_RGBA;
+	current_pixel_format = GL_UNSIGNED_BYTE;
+	convert_type = CONVERT_PALETTED;
+    } else if (src_pf->dwFlags & DDPF_RGB) {
+	/* ************
+	   RGB Textures
+	   ************ */
+	if (src_pf->u1.dwRGBBitCount == 8) {
+	    if ((src_pf->u2.dwRBitMask == 0xE0) &&
+		(src_pf->u3.dwGBitMask == 0x1C) &&
+		(src_pf->u4.dwBBitMask == 0x03)) {
+		/* **********************
+		   GL_UNSIGNED_BYTE_3_3_2
+		   ********************** */
+		if (colorkey_active) {
+		    /* This texture format will never be used.. So do not care about color keying
+		       up until the point in time it will be needed :-) */
+		    FIXME(" ColorKeying not supported in the RGB 332 format !");
+		}
+		current_format = GL_RGB;
+		internal_format = GL_RGB;
+		current_pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+		convert_type = NO_CONVERSION;
+	    } else {
+		error = TRUE;
+	    }
+	} else if (src_pf->u1.dwRGBBitCount == 16) {
+	    if ((src_pf->u2.dwRBitMask ==        0xF800) &&
+		(src_pf->u3.dwGBitMask ==        0x07E0) &&
+		(src_pf->u4.dwBBitMask ==        0x001F) &&
+		(src_pf->u5.dwRGBAlphaBitMask == 0x0000)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_565;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_RGB;
+		    internal_format = GL_RGB;
+		    current_pixel_format = GL_UNSIGNED_SHORT_5_6_5;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0xF800) &&
+		       (src_pf->u3.dwGBitMask ==        0x07C0) &&
+		       (src_pf->u4.dwBBitMask ==        0x003E) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0x0001)) {
+		current_format = GL_RGBA;
+		internal_format = GL_RGBA;
+		current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_5551;
+		} else {
+		    convert_type = NO_CONVERSION;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0xF000) &&
+		       (src_pf->u3.dwGBitMask ==        0x0F00) &&
+		       (src_pf->u4.dwBBitMask ==        0x00F0) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0x000F)) {
+		current_format = GL_RGBA;
+		internal_format = GL_RGBA;
+		current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_4444;
+		} else {
+		    convert_type = NO_CONVERSION;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0x0F00) &&
+		       (src_pf->u3.dwGBitMask ==        0x00F0) &&
+		       (src_pf->u4.dwBBitMask ==        0x000F) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0xF000)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_4444_ARGB;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_BGRA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0x7C00) &&
+		       (src_pf->u3.dwGBitMask ==        0x03E0) &&
+		       (src_pf->u4.dwBBitMask ==        0x001F) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0x8000)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_1555;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_BGRA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0x7C00) &&
+		       (src_pf->u3.dwGBitMask ==        0x03E0) &&
+		       (src_pf->u4.dwBBitMask ==        0x001F) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0x0000)) {
+		convert_type = CONVERT_555;
+		current_format = GL_RGBA;
+		internal_format = GL_RGBA;
+		current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+	    } else {
+		error = TRUE;
+	    }
+	} else if (src_pf->u1.dwRGBBitCount == 24) {
+	    if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
+		(src_pf->u3.dwGBitMask ==        0x0000FF00) &&
+		(src_pf->u4.dwBBitMask ==        0x000000FF) &&
+		(src_pf->u5.dwRGBAlphaBitMask == 0x00000000)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_RGB24;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_BGR;
+		    internal_format = GL_RGB;
+		    current_pixel_format = GL_UNSIGNED_BYTE;
+		}
+	    } else {
+		error = TRUE;
+	    }
+	} else if (src_pf->u1.dwRGBBitCount == 32) {
+	    if ((src_pf->u2.dwRBitMask ==        0xFF000000) &&
+		(src_pf->u3.dwGBitMask ==        0x00FF0000) &&
+		(src_pf->u4.dwBBitMask ==        0x0000FF00) &&
+		(src_pf->u5.dwRGBAlphaBitMask == 0x000000FF)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_8888;
+		} else {
+		    convert_type = NO_CONVERSION;
+		}
+		current_format = GL_RGBA;
+		internal_format = GL_RGBA;
+		current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+	    } else if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
+		       (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
+		       (src_pf->u4.dwBBitMask ==        0x000000FF) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0xFF000000)) {
+		if (colorkey_active) {
+		    convert_type = CONVERT_CK_8888_ARGB;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_BGRA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		}
+	    } else if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
+		       (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
+		       (src_pf->u4.dwBBitMask ==        0x000000FF) &&
+		       (src_pf->u5.dwRGBAlphaBitMask == 0x00000000)) {
+		if (need_alpha_ck) {
+		    convert_type = CONVERT_RGB32_888;
+		    current_format = GL_RGBA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else {
+		    convert_type = NO_CONVERSION;
+		    current_format = GL_BGRA;
+		    internal_format = GL_RGBA;
+		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		}
+	    } else {
+		error = TRUE;
+	    }
+	} else {
+	    error = TRUE;
+	}
+    } else {
+	error = TRUE;
+    } 
+
+    if (error == TRUE) {
+	if (ERR_ON(ddraw)) {
+	    ERR("  unsupported pixel format for textures : \n");
+	    DDRAW_dump_pixelformat(src_pf);
+	}
+	return DDERR_INVALIDPIXELFORMAT;
+    } else {
+	if ((need_to_alloc) ||
+	    (internal_format != *current_internal_format)) {
+	    glTexImage2D(GL_TEXTURE_2D, level, internal_format,
+			 surf_ptr->surface_desc.dwWidth, surf_ptr->surface_desc.dwHeight, 0,
+			 current_format, current_pixel_format, NULL);
+	    *current_internal_format = internal_format;
+	}
+    }
+
+    return DD_OK;
+}
+
+HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
+{
+    const DDSURFACEDESC * const src_d = (DDSURFACEDESC *)&(current_surface->surface_desc);
+    void *surf_buffer = NULL;
+    
+    switch (convert_type) {
+        case CONVERT_PALETTED: {
+	    IDirectDrawPaletteImpl* pal = current_surface->palette;
+	    BYTE table[256][4];
+	    int i;
+	    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
+	    	    
+	    if (pal == NULL) {
+		/* Upload a black texture. The real one will be uploaded on palette change */
+		WARN("Palettized texture Loading with a NULL palette !\n");
+		memset(table, 0, 256 * 4);
+	    } else {
+		/* Get the surface's palette */
+		for (i = 0; i < 256; i++) {
+		    table[i][0] = pal->palents[i].peRed;
+		    table[i][1] = pal->palents[i].peGreen;
+		    table[i][2] = pal->palents[i].peBlue;
+		    if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
+			(i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
+			(i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			/* We should maybe here put a more 'neutral' color than the standard bright purple
+			   one often used by application to prevent the nice purple borders when bi-linear
+			   filtering is on */
+			table[i][3] = 0x00;
+		    else
+			table[i][3] = 0xFF;
+		}
+	    }
+	    
+	    if (*temp_buffer == NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+	    dst = (BYTE *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		BYTE color = *src++;
+		*dst++ = table[color][0];
+		*dst++ = table[color][1];
+		*dst++ = table[color][2];
+		*dst++ = table[color][3];
+	    }
+	} break;
+
+        case CONVERT_CK_565: {
+	    /* Converting the 565 format in 5551 packed to emulate color-keying.
+	       
+	       Note : in all these conversion, it would be best to average the averaging
+	              pixels to get the color of the pixel that will be color-keyed to
+		      prevent 'color bleeding'. This will be done later on if ever it is
+		      too visible.
+		      
+	       Note2: when using color-keying + alpha, are the alpha bits part of the
+	              color-space or not ?
+	    */
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		WORD color = *src++;
+		*dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= 0x0001;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_CK_5551: {
+	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		WORD color = *src++;
+		*dst = color & 0xFFFE;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= color & 0x0001;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_CK_4444: {
+	    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		WORD color = *src++;
+		*dst = color & 0xFFF0;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= color & 0x000F;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_CK_4444_ARGB: {
+	    /* Move the four Alpha bits... */
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		WORD color = *src++;
+		*dst = (color & 0x0FFF) << 4;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= (color & 0xF000) >> 12;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_CK_1555: {
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		WORD color = *src++;
+		*dst = (color & 0x7FFF) << 1;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= (color & 0x8000) >> 15;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_555: {
+	    /* Converting the 0555 format in 5551 packed */
+	    DWORD i;
+	    WORD *src = (WORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	    dst = (WORD *) *temp_buffer;
+	    
+	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    WORD color = *src++;
+		    *dst = (color & 0x7FFF) << 1;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= 0x0001;
+		    dst++;
+		}
+	    } else {
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    WORD color = *src++;
+		    *dst++ = ((color & 0x7FFF) << 1) | 0x0001;
+		}
+	    }
+	    
+	} break;
+	
+        case CONVERT_CK_RGB24: {
+	    /* This is a pain :-) */
+	    DWORD i;
+	    BYTE *src = (BYTE *) src_d->lpSurface;
+	    DWORD *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+	    dst = (DWORD *) *temp_buffer;
+
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		DWORD color = *((DWORD *) src) & 0x00FFFFFF;
+		src += 3;
+		*dst = *src++ << 8;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= 0xFF;
+		dst++;
+	    }
+	} break;
+
+        case CONVERT_CK_8888: {
+	    /* Just use the alpha component to handle color-keying... */
+	    DWORD i;
+	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+	    dst = (DWORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		DWORD color = *src++;
+		*dst = color & 0xFFFFFF00;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= color & 0x000000FF;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_CK_8888_ARGB: {
+	    DWORD i;
+	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+	    dst = (DWORD *) *temp_buffer;
+	    
+	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		DWORD color = *src++;
+		*dst = (color & 0x00FFFFFF) << 8;
+		if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+		    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    *dst |= (color & 0xFF000000) >> 24;
+		dst++;
+	    }
+	} break;
+	
+        case CONVERT_RGB32_888: {
+	    /* Just add an alpha component and handle color-keying... */
+	    DWORD i;
+	    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	    
+	    if (*temp_buffer != NULL)
+		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					 src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));	    
+	    dst = (DWORD *) *temp_buffer;
+	    
+	    if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    DWORD color = *src++;
+		    *dst = color << 8;
+		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			*dst |= 0xFF;
+		    dst++;
+		}
+	    } else {
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    *dst++ = (*src++ << 8) | 0xFF;
+		}
+	    }
+	} break;
+
+        case NO_CONVERSION:
+	    /* Nothing to do here as the name suggests... This just prevents a compiler warning */
+	    surf_buffer = src_d->lpSurface;
+	    break;
+    }
+
+    if (convert_type != NO_CONVERSION) {
+	surf_buffer = *temp_buffer;
+    }
+    
+    glTexSubImage2D(GL_TEXTURE_2D,
+		    current_level,
+		    0, 0,
+		    src_d->dwWidth, src_d->dwHeight,
+		    current_format,
+		    current_pixel_format,
+		    surf_buffer);
+
+    return DD_OK;
+}
+
+HRESULT upload_surface_to_tex_memory_release(void)
+{
+    current_surface = NULL;
+
+    return DD_OK;
 }
