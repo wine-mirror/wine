@@ -9,6 +9,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	amerror.c \
 	complist.c \
 	fgraph.c \
 	ibasaud.c \

@@ -33,6 +33,7 @@ INSTALLED_INCLUDES = \
 	dplobby.h \
 	dshow.h \
 	dsound.h \
+	errors.h \
 	evcode.h \
 	guiddef.h \
 	imagehlp.h \
@@ -118,6 +119,7 @@ INSTALLED_INCLUDES = \
 	uuids.h \
 	ver.h \
 	vfw.h \
+	vfwmsgs.h \
 	winbase.h \
 	wincon.h \
 	wincrypt.h \

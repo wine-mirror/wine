@@ -8,8 +8,8 @@ import ntdll.dll
 
 debug_channels (quartz)
 
-@ stub AMGetErrorTextA
-@ stub AMGetErrorTextW
+@ stdcall AMGetErrorTextA(long ptr long) AMGetErrorTextA
+@ stdcall AMGetErrorTextW(long ptr long) AMGetErrorTextW
 @ stub AmpFactorToDB
 @ stub DBToAmpFactor
 @ stdcall DllCanUnloadNow() QUARTZ_DllCanUnloadNow
