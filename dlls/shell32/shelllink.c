@@ -650,7 +650,7 @@ static HRESULT Stream_LoadAdvertiseInfo( IStream* stm, LPWSTR *str )
     size = sizeof buffer - sizeof (DWORD);
     if( buffer.size != sizeof buffer )
     {
-        ERR("Ooops.  This structure is different to expected...\n");
+        ERR("Ooops.  This structure is not as expected...\n");
         return E_FAIL;
     }
 
@@ -865,7 +865,7 @@ static HRESULT Stream_WriteString( IStream* stm, LPCWSTR str )
  *
  * FIXME: One day we might want to write the network volume information
  *        and the final path.
- *        Figure out how Windows deals with unicode pathes here.
+ *        Figure out how Windows deals with unicode paths here.
  */
 static HRESULT Stream_WriteLocationInfo( IStream* stm, LPCWSTR path,
                                          volume_info *volume )

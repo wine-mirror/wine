@@ -1215,7 +1215,7 @@ static void db_print_address(const char *seg, int size, struct i_addr *addrp, in
 	else {
 
 	    /* try to get destination of indirect call
-	       does not work for segmented adresses */
+	       does not work for segmented addresses */
 	    if (!seg && byref) {
                void*    a1;
                void*    a2;

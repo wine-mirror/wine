@@ -94,7 +94,7 @@ static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
  *  characters. Literal characters are copied unmodified to the formatted
  *  output at the position they occupy in the format string. Any character
  *  that is not recognised as a token is treated as a literal. A literal can
- *  also be specified by preceeding it with a backslash character
+ *  also be specified by preceding it with a backslash character
  *  (e.g. "\L\i\t\e\r\a\l") or enclosing it in double quotes.
  *
  *  A user-defined format can have up to 4 sections, depending on the type of

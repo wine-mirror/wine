@@ -40,7 +40,7 @@
  *      - a popup window (InstanceClass) is created for each instance.
  *      - this window is used to receive all the DDEML events (server registration,
  *	  conversation confirmation...). See the WM_WDML_???? messages for details
- * + when registring a server (DdeNameService) a WDML_SERVER is created
+ * + when registering a server (DdeNameService) a WDML_SERVER is created
  *	- a popup window (ServerNameClass) is created
  * + a conversation is represented by two WDML_CONV structures:
  *	- one on the client side, the other one on the server side

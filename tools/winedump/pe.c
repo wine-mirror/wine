@@ -355,9 +355,9 @@ static	void	dump_dir_exported_functions(void)
     printf("  Ordinal base:    %lu\n", exportDir->Base);
     printf("  # of functions:  %lu\n", exportDir->NumberOfFunctions);
     printf("  # of Names:      %lu\n", exportDir->NumberOfNames);
-    printf("Adresses of functions: %08lX\n", exportDir->AddressOfFunctions);
-    printf("Adresses of name ordinals: %08lX\n", exportDir->AddressOfNameOrdinals);
-    printf("Adresses of names: %08lX\n", exportDir->AddressOfNames);
+    printf("Addresses of functions: %08lX\n", exportDir->AddressOfFunctions);
+    printf("Addresses of name ordinals: %08lX\n", exportDir->AddressOfNameOrdinals);
+    printf("Addresses of names: %08lX\n", exportDir->AddressOfNames);
     printf("\n");
     printf("  Entry Pt  Ordn  Name\n");
 

@@ -583,8 +583,9 @@ static void test_CopyFileA(void)
     ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
 
     /* make sure that destination has the same filetime */
+    ok(ret = GetFileTime(hfile, NULL, NULL, &ft1), "GetFileTime error %ld\n", GetLastError());
     ok(ret = GetFileTime(hfile, NULL, NULL, &ft2), "GetFileTime error %ld\n", GetLastError());
-    ok(CompareFileTime(&ft1, &ft2) == 0, "destination file has wrong filetime");
+    ok(CompareFileTime(&ft1, &ft2) == 0, "destination file has wrong filetime\n");
 
     SetLastError(0xdeadbeef);
     ret = CopyFileA(source, dest, FALSE);

@@ -1322,7 +1322,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, audio_buf_info* info)
     }
 
     /* GETOSPACE is not always accurate when we're down to the last fragment or two;
-    **   we try to accomodate that here by assuming that the dsp is empty by looking
+    **   we try to accommodate that here by assuming that the dsp is empty by looking
     **   at the clock rather than the result of GETOSPACE */
     notplayed = wwo->dwBufferSize - info->bytes;
     if (notplayed > 0 && notplayed < (info->fragsize * 2))

@@ -1176,7 +1176,7 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     }
     else
     {
-        /* PROBIBLY a file */
+        /* PROBABLY a file */
         if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
             rrc = INSTALLSTATE_LOCAL;
         else

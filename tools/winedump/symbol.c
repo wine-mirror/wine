@@ -46,7 +46,7 @@ static const char *swap_after[] =
 
 
 /* Items containing these substrings are assumed to be wide character
- * strings, unless they contain more that one '*'. A preceeding 'LP'
+ * strings, unless they contain more that one '*'. A preceding 'LP'
  * counts as a '*', so 'LPWCSTR *' is a pointer, not a string
  */
 static const char *wide_strings[] =
@@ -55,7 +55,7 @@ static const char *wide_strings[] =
 };
 
 /* Items containing these substrings are assumed to be wide characters,
- * unless they contain one '*'. A preceeding 'LP' counts as a '*',
+ * unless they contain one '*'. A preceding 'LP' counts as a '*',
  * so 'WCHAR *' is string, while 'LPWCHAR *' is a pointer
  */
 static const char *wide_chars[] =

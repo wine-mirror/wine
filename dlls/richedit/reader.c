@@ -887,8 +887,8 @@ char	buf[rtfBufSiz];
 
 
 /*
- * Convert a CaracterSetMap (caracter_name, caracter) into
- * this form : array[caracter_ident] = caracter;
+ * Convert a CharSetMap (character_name, character) into
+ * this form : array[character_ident] = character;
  */
 
 int RTFReadCharSetMap(RTF_Info *info, int csId)

@@ -4117,7 +4117,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 
     if (ref)   {
       /* We don't release ITypeLib when ref=0 because
-         it means that funtion is called by ITypeLi2_Release */
+         it means that function is called by ITypeLib2_Release */
       ITypeLib2_Release((ITypeLib2*)This->pTypeLib);
     } else   {
       FIXME("destroy child objects\n");

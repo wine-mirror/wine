@@ -59,7 +59,7 @@ static char *build_command_line( char **argv )
                 if (*a==' ' || *a=='\t') {
                     has_space=1;
                 } else if (*a=='"') {
-                    /* doubling of '\' preceeding a '"',
+                    /* doubling of '\' preceding a '"',
                      * plus escaping of said '"'
                      */
                     len+=2*bcount+1;
@@ -117,7 +117,7 @@ static char *build_command_line( char **argv )
                     if (*a=='"') {
                         int i;
 
-                        /* Double all the '\\' preceeding this '"', plus one */
+                        /* Double all the '\\' preceding this '"', plus one */
                         for (i=0;i<=bcount;i++)
                             *p++='\\';
                         *p++='"';

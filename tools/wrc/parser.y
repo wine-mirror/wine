@@ -458,7 +458,7 @@ resources
 	 * for tNL. However, byacc already generates an error upon reading
 	 * the token instead of keeping it as a lookahead. The reason
 	 * lies in the lack of a $default transition in the "expr : xpr . "
-	 * state (currently state 25). It is probably ommitted because tNL
+	 * state (currently state 25). It is probably omitted because tNL
 	 * is a non-terminal and the state contains 2 s/r conflicts. The
 	 * state enumerates all possible transitions instead of using a
 	 * $default transition.

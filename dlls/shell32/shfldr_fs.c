@@ -303,7 +303,7 @@ static ULONG WINAPI IShellFolder_fnRelease (IShellFolder2 * iface)
  *
  *  If the caller bound File System Bind Data, assume it is the 
  *   find data for the path.
- *  This allows binding of pathes that don't exist.
+ *  This allows binding of paths that don't exist.
  */
 LPITEMIDLIST SHELL32_CreatePidlFromBindCtx(IBindCtx *pbc, LPCWSTR path)
 {

@@ -799,7 +799,7 @@ LRESULT CALLBACK OLEClipbrd_WndProc
      * (Recall that in OleSetClipboard, we used SetClipboardData to
      * make all HGLOBAL formats supported by the source IDataObject
      * available using delayed rendering)
-     * On receiving this mesage we must actually render the data in the
+     * On receiving this message we must actually render the data in the
      * specified format and place it on the clipboard by calling the
      * SetClipboardData function.
      */

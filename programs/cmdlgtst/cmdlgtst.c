@@ -728,7 +728,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 			MessageBox(hWnd, "Finding next occurrence.", "Findnext", MB_OK);
 		}
 		else if (lpfr->Flags & FR_REPLACE) {
-			MessageBox(hWnd, "Replacing next occurence.", "Replace", MB_OK);
+			MessageBox(hWnd, "Replacing next occurrence.", "Replace", MB_OK);
 		}
 		else if (lpfr->Flags & FR_REPLACEALL) {
 			MessageBox(hWnd, "Replacing all occurrences.", "Replace All", MB_OK);

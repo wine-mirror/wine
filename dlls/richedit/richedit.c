@@ -149,7 +149,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             newstyle &= ~ES_NUMBER;  /* Reused as ES_DISABLENOSCROLL */
 	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
 
-            /* Note that SetWindowLongA(hwnd,GWL_STYLE...) doesnt update 
+            /* Note that SetWindowLongA(hwnd,GWL_STYLE...) does not update 
                the style field in the text window as the edit structure is
                not initialized until it processes this message. Therefore
                update the style in the message itself                     */

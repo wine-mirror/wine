@@ -195,7 +195,7 @@ static void write_function_stubs(type_t *iface)
         fprintf(client, "\n");
 
 
-        /* send/recieve message */
+        /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
         print_client("NdrSendReceive(\n");
         indent++;

@@ -1956,7 +1956,7 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
 
     /* Header is where the image, text and gripper exist  */
-    /* in the band and preceed the child window.          */
+    /* in the band and precede the child window.          */
 
     /* count number of non-FIXEDSIZE and non-Hidden bands */
     nonfixed = 0;

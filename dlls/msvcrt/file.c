@@ -1971,7 +1971,7 @@ int _write(int fd, const void* buf, unsigned int count)
   {
       unsigned int i, j, nr_lf;
       char *s =(char*)buf, *buf_start=(char*)buf, *p;
-      /* find number of \n ( without preceeding \r */
+      /* find number of \n ( without preceding \r ) */
       for ( nr_lf=0,i = 0; i <count; i++)
       {
           if (s[i]== '\n')

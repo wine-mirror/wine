@@ -98,7 +98,7 @@
  *  - Finally the set of 'IDirect3D_Xxx' macros is a standard set of macros defined to ease access
  *    to the interface methods in C. Unfortunately I don't see any way to avoid having to duplicate
  *    the inherited method definitions there. This time I could have used a trick to use only one
- *    macro whatever the number of parameters but I prefered to have it work the same way as above.
+ *    macro whatever the number of parameters but I preferred to have it work the same way as above.
  *  - You probably have noticed that we don't define the fields we need to actually implement this
  *    interface: reference count, pointer to other resources and miscellaneous fields. That's
  *    because these interfaces are just that: interfaces. They may be implemented more than once, in

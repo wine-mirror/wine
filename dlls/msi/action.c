@@ -2299,8 +2299,8 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
         install_level = 1;
 
     /* ok hereis the _real_ rub
-     * all these activation/deactiontion things happen in order and things later
-     * on the list override things earlier on the list.
+     * all these activation/deactivation things happen in order and things
+     * later on the list override things earlier on the list.
      * 1) INSTALLLEVEL processing
      * 2) ADDLOCAL
      * 3) REMOVE
@@ -2312,13 +2312,13 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
      * 9) FILEADDLOCAL
      * 10) FILEADDSOURCE
      * 11) FILEADDDEFAULT
-     * I have confirmed this if ADDLOCALis stated then the INSTALLLEVEL is
-     * itnored for all the features. seems strange, epsecially since it is not
+     * I have confirmed that if ADDLOCAL is stated then the INSTALLLEVEL is
+     * ignored for all the features. seems strange, especially since it is not
      * documented anywhere, but it is how it works. 
      *
-     * I am still ignoring alot of these. But that is ok for now, ADDLOCAL and
-     * REMOVE are the big ones, since we dont handle administrative installs yet
-     * anyway.
+     * I am still ignoring a lot of these. But that is ok for now, ADDLOCAL and
+     * REMOVE are the big ones, since we don't handle administrative installs
+     * yet anyway.
      */
     override |= process_state_property(package,szAddLocal,INSTALLSTATE_LOCAL);
     override |= process_state_property(package,szRemove,INSTALLSTATE_ABSENT);

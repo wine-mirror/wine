@@ -223,7 +223,7 @@ static BOOL pendingRename()
     }
 
     res=RegQueryValueExW( hSession, ValueName, NULL, NULL /* The value type does not really interest us, as it is not
-                                                             truely a REG_MULTI_SZ anyways */,
+                                                             truly a REG_MULTI_SZ anyways */,
             NULL, &dataLength );
     if( res==ERROR_FILE_NOT_FOUND )
     {

@@ -1207,7 +1207,7 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
  * Create a region that is a frame around another region.
  * Compute the intersection of the region moved in all 4 directions
  * ( +x, -x, +y, -y) and subtract from the original.
- * The result looks slightly better then in Windows :)
+ * The result looks slightly better than in Windows :)
  */
 BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 {
@@ -2170,7 +2170,7 @@ static void REGION_SubtractO (WINEREGION *pReg, RECT *r1, RECT *r1End,
 	else if (r2->left <= left)
 	{
 	    /*
-	     * Subtrahend preceeds minuend: nuke left edge of minuend.
+	     * Subtrahend precedes minuend: nuke left edge of minuend.
 	     */
 	    left = r2->right;
 	    if (left >= r1->right)

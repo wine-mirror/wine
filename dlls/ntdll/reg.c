@@ -1212,7 +1212,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
  *  ValueName  [I] Name of the value to delete
  *
  * RETURNS
- *  STATUS_SUCCESS if the specified key is sucesfully deleted, or an NTSTATUS error code.
+ *  STATUS_SUCCESS if the specified key is successfully deleted, or an NTSTATUS error code.
  */
 NTSTATUS WINAPI RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN PCWSTR ValueName)
 {

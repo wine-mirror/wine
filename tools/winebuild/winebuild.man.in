@@ -356,7 +356,7 @@ specified.
 will be the name available for dynamic
 linking.
 .I data
-can be a decimal number or a hex number preceeded by "0x".  The
+can be a decimal number or a hex number preceded by "0x".  The
 following example defines the variable VariableA at ordinal 2 and
 containing 4 ints:
 .IP
@@ -404,7 +404,7 @@ This declaration defines an ordinal as an absolute value.
 .I exportname
 will be the name available for dynamic linking.
 .I data
-can be a decimal number or a hex number preceeded by "0x".
+can be a decimal number or a hex number preceded by "0x".
 .SH AUTHORS
 .B winebuild
 has been worked on by many people over the years. The main authors are
