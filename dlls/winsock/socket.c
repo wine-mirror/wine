@@ -214,9 +214,20 @@ typedef struct          /* WSAAsyncSelect() control struct */
 #define WS_MAX_UDP_DATAGRAM             1024
 static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
 
-static struct WS_hostent *he_buffer;          /* typecast for Win32 ws_hostent */
-static struct WS_servent *se_buffer;          /* typecast for Win32 ws_servent */
-static struct WS_protoent *pe_buffer;          /* typecast for Win32 ws_protoent */
+/* hostent's, servent's and protent's are stored in one buffer per thread,
+ * as documented on MSDN for the functions that return any of the buffers */
+struct per_thread_data
+{
+    int opentype;
+    struct WS_hostent *he_buffer;
+    struct WS_servent *se_buffer;
+    struct WS_protoent *pe_buffer;
+    int he_len;
+    int se_len;
+    int pe_len;
+};
+
+static DWORD tls_index = TLS_OUT_OF_INDEXES; /* TLS index for per-thread data */
 static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = WSA_DefaultBlockingHook;
 
@@ -278,8 +289,6 @@ static const int ws_ip_map[][2] =
     MAP_OPTION( IP_TTL ),
     { 0, 0 }
 };
-
-static DWORD opentype_tls_index = TLS_OUT_OF_INDEXES;  /* TLS index for SO_OPENTYPE flag */
 
 inline static DWORD NtStatusToWSAError ( const DWORD status )
 {
@@ -399,17 +408,33 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
     return events[bit];
 }
 
-static void WINSOCK_DeleteIData(void)
+static struct per_thread_data *get_per_thread_data(void)
 {
-    /* delete scratch buffers */
+    struct per_thread_data * ptb = TlsGetValue( tls_index );
+    /* lazy initialization */
+    if (!ptb)
+    {
+        ptb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptb) );
+        TlsSetValue( tls_index, ptb );
+    }
+    return ptb;
+}
 
-    if (he_buffer) HeapFree( GetProcessHeap(), 0, he_buffer );
-    if (se_buffer) HeapFree( GetProcessHeap(), 0, se_buffer );
-    if (pe_buffer) HeapFree( GetProcessHeap(), 0, pe_buffer );
-    he_buffer = NULL;
-    se_buffer = NULL;
-    pe_buffer = NULL;
-    num_startup = 0;
+static void free_per_thread_data(void)
+{
+    struct per_thread_data * ptb = TlsGetValue( tls_index );
+
+    if (!ptb) return;
+
+    /* delete scratch buffers */
+    HeapFree( GetProcessHeap(), 0, ptb->he_buffer );
+    HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
+    HeapFree( GetProcessHeap(), 0, ptb->pe_buffer );
+    ptb->he_buffer = NULL;
+    ptb->se_buffer = NULL;
+    ptb->pe_buffer = NULL;
+
+    HeapFree( GetProcessHeap(), 0, ptb );
 }
 
 /***********************************************************************
@@ -420,13 +445,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
-        opentype_tls_index = TlsAlloc();
+        tls_index = TlsAlloc();
         break;
     case DLL_PROCESS_DETACH:
-        TlsFree( opentype_tls_index );
-	WINSOCK_DeleteIData();
-	break;
+        free_per_thread_data();
+        TlsFree( tls_index );
+        num_startup = 0;
+        break;
+    case DLL_THREAD_DETACH:
+        free_per_thread_data();
+        break;
     }
     return TRUE;
 }
@@ -678,11 +706,7 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 INT WINAPI WSACleanup(void)
 {
     if (num_startup)
-    {
-        if (--num_startup > 0) return 0;
-        WINSOCK_DeleteIData();
         return 0;
-    }
     SetLastError(WSANOTINITIALISED);
     return SOCKET_ERROR;
 }
@@ -706,41 +730,41 @@ void WINAPI WSASetLastError(INT iError) {
 
 static struct WS_hostent *check_buffer_he(int size)
 {
-    static int he_len;
-    if (he_buffer)
+    struct per_thread_data * ptb = get_per_thread_data();
+    if (ptb->he_buffer)
     {
-        if (he_len >= size ) return he_buffer;
-        HeapFree( GetProcessHeap(), 0, he_buffer );
+        if (ptb->he_len >= size ) return ptb->he_buffer;
+        HeapFree( GetProcessHeap(), 0, ptb->he_buffer );
     }
-    he_buffer = HeapAlloc( GetProcessHeap(), 0, (he_len = size) );
-    if (!he_buffer) SetLastError(WSAENOBUFS);
-    return he_buffer;
+    ptb->he_buffer = HeapAlloc( GetProcessHeap(), 0, (ptb->he_len = size) );
+    if (!ptb->he_buffer) SetLastError(WSAENOBUFS);
+    return ptb->he_buffer;
 }
 
 static struct WS_servent *check_buffer_se(int size)
 {
-    static int se_len;
-    if (se_buffer)
+    struct per_thread_data * ptb = get_per_thread_data();
+    if (ptb->se_buffer)
     {
-        if (se_len >= size ) return se_buffer;
-        HeapFree( GetProcessHeap(), 0, se_buffer );
+        if (ptb->se_len >= size ) return ptb->se_buffer;
+        HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
     }
-    se_buffer = HeapAlloc( GetProcessHeap(), 0, (se_len = size) );
-    if (!se_buffer) SetLastError(WSAENOBUFS);
-    return se_buffer;
+    ptb->se_buffer = HeapAlloc( GetProcessHeap(), 0, (ptb->se_len = size) );
+    if (!ptb->se_buffer) SetLastError(WSAENOBUFS);
+    return ptb->se_buffer;
 }
 
 static struct WS_protoent *check_buffer_pe(int size)
 {
-    static int pe_len;
-    if (pe_buffer)
+    struct per_thread_data * ptb = get_per_thread_data();
+    if (ptb->pe_buffer)
     {
-        if (pe_len >= size ) return pe_buffer;
-        HeapFree( GetProcessHeap(), 0, pe_buffer );
+        if (ptb->pe_len >= size ) return ptb->pe_buffer;
+        HeapFree( GetProcessHeap(), 0, ptb->pe_buffer );
     }
-    pe_buffer = HeapAlloc( GetProcessHeap(), 0, (pe_len = size) );
-    if (!pe_buffer) SetLastError(WSAENOBUFS);
-    return pe_buffer;
+    ptb->pe_buffer = HeapAlloc( GetProcessHeap(), 0, (ptb->pe_len = size) );
+    if (!ptb->pe_buffer) SetLastError(WSAENOBUFS);
+    return ptb->pe_buffer;
 }
 
 /* ----------------------------------- i/o APIs */
@@ -1600,7 +1624,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             SetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        *(int *)optval = (int)TlsGetValue( opentype_tls_index );
+        *(int *)optval = get_per_thread_data()->opentype;
         *optlen = sizeof(int);
         TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
         return 0;
@@ -2390,7 +2414,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             SetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        TlsSetValue( opentype_tls_index, (LPVOID)*(int *)optval );
+        get_per_thread_data()->opentype = *(int *)optval;
         TRACE("setting global SO_OPENTYPE to 0x%x\n", *(int *)optval );
         return 0;
     }
@@ -2617,7 +2641,7 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
     TRACE("af=%d type=%d protocol=%d\n", af, type, protocol);
 
     return WSASocketA ( af, type, protocol, NULL, 0,
-                        (TlsGetValue(opentype_tls_index) ? 0 : WSA_FLAG_OVERLAPPED) );
+                        get_per_thread_data()->opentype ? 0 : WSA_FLAG_OVERLAPPED );
 }
 
 
