@@ -13,6 +13,7 @@
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellbrowser.h"
 #include "wine/obj_shellextinit.h"
+#include "wine/undocshell.h"
 
 #include "shell32_main.h"
 
@@ -25,7 +26,8 @@ typedef struct
 {	ICOM_VTABLE(IContextMenu)* lpvtbl;
 	DWORD		ref;
 	IShellFolder*	pSFParent;
-	LPITEMIDLIST	*aPidls;
+	LPITEMIDLIST	pidl;		/* root pidl */
+	LPITEMIDLIST	*aPidls;	/* array of child pidls */
 	BOOL		bAllValues;
 } IContextMenuImpl;
 
@@ -114,15 +116,17 @@ BOOL IContextMenu_CanRenameItems(IContextMenuImpl *This)
 /**************************************************************************
 *   IContextMenu_Constructor()
 */
-IContextMenu *IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *aPidls, UINT uItemCount)
+IContextMenu *IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *aPidls, UINT uItemCount)
 {	IContextMenuImpl* cm;
 	UINT  u;
 
 	cm = (IContextMenuImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IContextMenuImpl));
 	cm->lpvtbl=&cmvt;
 	cm->ref = 1;
+	cm->pidl = ILClone(pidl);
 
 	cm->pSFParent = pSFParent;
+
 	if(pSFParent)
 	   IShellFolder_AddRef(pSFParent);
 
@@ -207,6 +211,9 @@ static ULONG WINAPI IContextMenu_fnRelease(IContextMenu *iface)
 	  if(This->pSFParent)
 	    IShellFolder_Release(This->pSFParent);
 
+	  if(This->pidl)
+	    SHFree(This->pidl);
+	  
 	  /*make sure the pidl is freed*/
 	  if(This->aPidls)
 	  { IContextMenu_FreePidlTable(This);
@@ -303,7 +310,7 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	LPITEMIDLIST	pidlTemp,pidlFQ;
+	LPITEMIDLIST	pidlFQ;
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 	HWND	hWndSV;
@@ -311,30 +318,6 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	int   i;
 
 	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
-
-	if(HIWORD(lpcmi->lpVerb))
-	{ /* get the active IShellView */
-	  lpSB = (LPSHELLBROWSER)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0);
-	  IShellBrowser_QueryActiveShellView(lpSB, &lpSV);	/* does AddRef() on lpSV */
-	  IShellView_GetWindow(lpSV, &hWndSV);
-	  
-	  /* these verbs are used by the filedialogs*/
-	  TRACE("%s\n",lpcmi->lpVerb);
-	  if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDER))
-	  { FIXME("%s not implemented\n",lpcmi->lpVerb);
-	  }
-	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLIST))
-	  { SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
-	  }
-	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILS))
-	  { SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
-	  } 
-	  else
-	  { FIXME("please report: unknown verb %s\n",lpcmi->lpVerb);
-	  }
-	  IShellView_Release(lpSV);
-	  return NOERROR;
-	}
 
 	if(LOWORD(lpcmi->lpVerb) > IDM_LAST)
 	  return E_INVALIDARG;
@@ -350,10 +333,8 @@ static HRESULT WINAPI IContextMenu_fnInvokeCommand(
 	         break;
 	    }
 
-	    pidlTemp = ILCombine(((IGenericSFImpl*)(This->pSFParent))->mpidl, This->aPidls[i]);
-	    pidlFQ = ILCombine(((IGenericSFImpl*)(This->pSFParent))->pMyPidl, pidlTemp);
-	    SHFree(pidlTemp);
-	
+	    pidlFQ = ILCombine(This->pidl, This->aPidls[i]);
+
 	    ZeroMemory(&sei, sizeof(sei));
 	    sei.cbSize = sizeof(sei);
 	    sei.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
