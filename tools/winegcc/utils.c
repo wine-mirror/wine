@@ -118,6 +118,14 @@ void strarray_add(strarray* arr, const char* str)
     arr->base[arr->size++] = str;
 }
 
+void strarray_addall(strarray* arr, const strarray* from)
+{
+    int i;
+
+    for (i = 0; i < from->size; i++)
+	strarray_add(arr, from->base[i]);
+}
+
 strarray* strarray_dup(const strarray* arr)
 {
     strarray* dup = strarray_alloc();
@@ -127,6 +135,35 @@ strarray* strarray_dup(const strarray* arr)
 	strarray_add(dup, arr->base[i]);
 
     return dup;
+}
+
+strarray* strarray_fromstring(const char* str, const char* delim)
+{
+    strarray* arr = strarray_alloc();
+    char* buf = strdup(str);
+    const char* tok;
+
+    for(tok = strtok(buf, delim); tok; tok = strtok(0, delim))
+	strarray_add(arr, strdup(tok));
+
+    free(buf);
+    return arr;
+}
+
+char* strarray_tostring(const strarray* arr, const char* sep)
+{
+    char *str, *newstr;
+    int i;
+
+    str = strmake("%s", arr->base[0]);
+    for (i = 1; i < arr->size; i++)
+    {
+	newstr = strmake("%s%s%s", str, sep, arr->base[i]);
+	free(str);
+	str = newstr;
+    }
+
+    return str;
 }
 
 char* get_basename(const char* file)

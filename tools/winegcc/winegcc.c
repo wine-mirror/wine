@@ -24,7 +24,7 @@
  * all options for gcc start with '-' and are for the most part
  * single options (no parameters as separate argument). 
  * There are of course exceptions to this rule, so here is an 
- * exaustive list of options that do take parameters (potentially) 
+ * exhaustive list of options that do take parameters (potentially)
  * as a separate argument:
  *
  * Compiler:
@@ -60,8 +60,8 @@
  *
  * NOTES
  * There is -G option for compatibility with System V that
- * takes no paramters. This makes "-G num" parsing ambiguous.
- * This option is synonimous to -shared, and as such we will
+ * takes no parameters. This makes "-G num" parsing ambiguous.
+ * This option is synonymous to -shared, and as such we will
  * not support it for now.
  *
  * Special interest options 
@@ -80,8 +80,8 @@
  *      Target Options
  *          -b machine  -V version
  *
- * Please note tehat the Target Options are relevant to everything:
- *   compiler, linker, asssembler, preprocessor. 
+ * Please note that the Target Options are relevant to everything:
+ *   compiler, linker, assembler, preprocessor.
  * 
  */ 
 
@@ -161,6 +161,7 @@ struct options
     int nostdinc;
     int nostdlib;
     int nodefaultlibs;
+    int noshortwchar;
     int gui_app;
     int compile_only;
     const char* output_name;
@@ -199,32 +200,47 @@ char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static const char* get_translator(struct options* args)
+static const char* get_translator(struct options* opts)
 {
-    const char* cc = proc_cc; /* keep compiler happy */
-
-    switch(args->processor)
+    switch(opts->processor)
     {
-	case proc_pp:  cc = "cpp"; break;
-	case proc_cc:  cc = "gcc"; break;
-	case proc_cpp: cc = "g++"; break;
-	default: error("Unknown processor");
+        case proc_pp:  return CPP;
+        case proc_cc:  return CC;
+        case proc_cpp: return CXX;
     }
-
-    return cc;
+    error("Unknown processor");
 }
 
 static void compile(struct options* opts)
 {
     strarray *comp_args = strarray_alloc();
-    int j;
+    int j, gcc_defs = 0;
 
+    switch(opts->processor)
+    {
+	case proc_pp:  gcc_defs = 1; break;
+#ifdef __GNUC__
+	/* Note: if the C compiler is gcc we assume the C++ compiler is too */
+	/* mixing different C and C++ compilers isn't supported in configure anyway */
+	case proc_cc:  gcc_defs = 1; break;
+	case proc_cpp: gcc_defs = 1; break;
+#else
+	case proc_cc:  gcc_defs = 0; break;
+	case proc_cpp: gcc_defs = 0; break;
+#endif
+    }
     strarray_add(comp_args, get_translator(opts));
 
     if (opts->processor != proc_pp)
     {
-        strarray_add(comp_args, "-fshort-wchar");
-        strarray_add(comp_args, "-fPIC");
+#ifdef CC_FLAG_SHORT_WCHAR
+	if (!opts->noshortwchar)
+	{
+            strarray_add(comp_args, CC_FLAG_SHORT_WCHAR);
+            strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
+	}
+#endif
+        strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     }
     if (!opts->nostdinc)
     {
@@ -242,33 +258,38 @@ static void compile(struct options* opts)
     strarray_add(comp_args, "-D__WINNT");
     strarray_add(comp_args, "-D__WINNT__");
 
-    strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
-    strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
-    strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
-    strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
-    strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
-    strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
-    strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
-    strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
-    strarray_add(comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
-    strarray_add(comp_args, "-D__declspec_deprecated=__attribute__((deprecated))");
-    strarray_add(comp_args, "-D__declspec_dllimport=__attribute__((dllimport))");
-    strarray_add(comp_args, "-D__declspec_dllexport=__attribute__((dllexport))");
-    strarray_add(comp_args, "-D__declspec_naked=__attribute__((naked))");
-    strarray_add(comp_args, "-D__declspec_noinline=__attribute__((noinline))");
-    strarray_add(comp_args, "-D__declspec_noreturn=__attribute__((noreturn))");
-    strarray_add(comp_args, "-D__declspec_nothrow=__attribute__((nothrow))");
-    strarray_add(comp_args, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
-    strarray_add(comp_args, "-D__declspec_selectany=__attribute__((weak))");
-    strarray_add(comp_args, "-D__declspec_thread=__thread");
+    if (gcc_defs)
+    {
+	strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
+	strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
+	strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
+	strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
+	strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
+	strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
+	strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
+	strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
+	strarray_add(comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
+	strarray_add(comp_args, "-D__declspec_deprecated=__attribute__((deprecated))");
+	strarray_add(comp_args, "-D__declspec_dllimport=__attribute__((dllimport))");
+	strarray_add(comp_args, "-D__declspec_dllexport=__attribute__((dllexport))");
+	strarray_add(comp_args, "-D__declspec_naked=__attribute__((naked))");
+	strarray_add(comp_args, "-D__declspec_noinline=__attribute__((noinline))");
+	strarray_add(comp_args, "-D__declspec_noreturn=__attribute__((noreturn))");
+	strarray_add(comp_args, "-D__declspec_nothrow=__attribute__((nothrow))");
+	strarray_add(comp_args, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
+	strarray_add(comp_args, "-D__declspec_selectany=__attribute__((weak))");
+	strarray_add(comp_args, "-D__declspec_thread=__thread");
+    }
 
     /* Wine specific defines */
     strarray_add(comp_args, "-D__WINE__");
-    strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
     strarray_add(comp_args, "-D__int8=char");
     strarray_add(comp_args, "-D__int16=short");
+    /* FIXME: what about 64-bit platforms? */
     strarray_add(comp_args, "-D__int32=int");
+#ifdef HAVE_LONG_LONG
     strarray_add(comp_args, "-D__int64=long long");
+#endif
 
     /* options we handle explicitly */
     if (opts->compile_only)
@@ -439,8 +460,8 @@ static void build(struct options* opts)
     /* compile the .spec.c file into a .spec.o file */
     comp_args = strarray_alloc();
     spec_o_name = get_temp_file(base_name, ".spec.o");
-    strarray_add(comp_args, "gcc");
-    strarray_add(comp_args, "-fPIC");
+    strarray_add(comp_args, CC);
+    strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(comp_args, "-o");
     strarray_add(comp_args, spec_o_name);
     strarray_add(comp_args, "-c");
@@ -451,12 +472,7 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = strarray_alloc();
     strarray_add(link_args, get_translator(opts));
-    strarray_add(link_args, "-shared");
-#ifdef HAVE_LINKER_INIT_FINI
-    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs,-init,__wine_spec_init,-fini,__wine_spec_fini");
-#else
-    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
-#endif
+    strarray_addall(link_args, strarray_fromstring(LDDLLFLAGS, " "));
 
     strarray_add(link_args, "-o");
     strarray_add(link_args, strmake("%s.exe.so", base_file));
@@ -679,6 +695,10 @@ int main(int argc, char **argv)
                 case 'E':        /* preprocess only */
                     if (argv[i][2] == 0) linking = 0;
                     break;
+		case 'f':
+		    if (strcmp("-fno-short-wchar", argv[i]) == 0)
+                        opts.noshortwchar = 1;
+		    break;
 		case 'l':
 		    strarray_add(opts.lib_names, option_arg);
 		    break;

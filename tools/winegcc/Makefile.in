@@ -1,4 +1,13 @@
-DEFS      = -DINCLUDEDIR="\"$(includedir)\"" -DDLLDIR="\"$(dlldir)\"" -DLIBDIR="\"$(libdir)\""
+DEFS = \
+	-DINCLUDEDIR="\"$(includedir)\"" \
+	-DDLLDIR="\"$(dlldir)\"" \
+	-DLIBDIR="\"$(libdir)\"" \
+	-DDLLFLAGS="\"@DLLFLAGS@\"" \
+	-DLDDLLFLAGS="\"$(LDDLLFLAGS)\"" \
+	-DCC="\"$(CC)\"" \
+	-DCPP="\"$(CPP)\"" \
+	-DCXX="\"$(CXX)\""
+
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

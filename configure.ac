@@ -41,7 +41,9 @@ dnl **** Check for some programs ****
 AC_CANONICAL_HOST
 AC_PROG_MAKE_SET
 AC_PROG_CC
-AC_PROG_CPP
+AC_PROG_CXX
+dnl We can't use AC_PROG_CPP, it uses by default $(CC) -E
+AC_CHECK_PROG(CPP, "cpp", "cpp")
 
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
   [if test -z "$with_wine_tools"; then
@@ -716,6 +718,15 @@ int main(void) {
     EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
+  dnl Check for -fshort-wchar
+  AC_CACHE_CHECK([for gcc -fshort-wchar support], ac_cv_c_gcc_fshort_wchar,
+      [WINE_TRY_CFLAGS([-fshort-wchar],
+                      ac_cv_c_gcc_fshort_wchar="yes",ac_cv_c_gcc_fshort_wchar="no")])
+  if test "$ac_cv_c_gcc_fshort_wchar" = "yes"
+  then
+      AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar", [Specifies the compiler flag that forces a short wchar_t])
+  fi
+
   dnl Check for -mpreferred-stack-boundary
   AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support], ac_cv_c_gcc_stack_boundary,
       [WINE_TRY_CFLAGS([-mpreferred-stack-boundary=2],
@@ -822,7 +833,7 @@ AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(DLLIBS,"")
 AC_SUBST(LDSHARED,"")
-AC_SUBST(LDDLL,"")
+AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LIBEXT,"so")
 AC_SUBST(IMPLIBEXT,"def")
 
@@ -857,13 +868,13 @@ case $host_os in
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-        LDDLL="\$(CC) -shared -Wl,-Bsymbolic"
+        LDDLLFLAGS="-shared -Wl,-Bsymbolic"
         AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
           [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
                            ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
         if test "$ac_cv_c_dll_zdefs" = "yes"
         then
-          LDDLL="$LDDLL,-z,defs"
+          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
         fi
 
         AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
@@ -871,8 +882,7 @@ case $host_os in
                            ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")])
         if test "$ac_cv_c_dll_init_fini" = "yes"
         then
-          AC_DEFINE(HAVE_LINKER_INIT_FINI,1,[Define if the linker supports renaming the init and fini functions])
-          LDDLL="$LDDLL,-init,__wine_spec_init,-fini,__wine_spec_fini"
+          LDDLLFLAGS="$LDDLLFLAGS,-init,__wine_spec_init,-fini,__wine_spec_fini"
         fi
 
         AC_CACHE_CHECK([whether the linker accepts version scripts], ac_cv_c_ld_version_scripts,
@@ -916,7 +926,7 @@ case $host_os in
         if test "$ac_cv_c_dll_unixware" = "yes"
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-          LDDLL="\$(CC) -Wl,-G,-B,symbolic"
+          LDDLLFLAGS="-Wl,-G,-B,symbolic"
 
         else
           AC_CACHE_CHECK(whether we can build a Mach-O (Mac OS X/Darwin) dll, ac_cv_c_dll_macho,
@@ -924,7 +934,7 @@ case $host_os in
           if test "$ac_cv_c_dll_macho" = "yes"
           then
             LIBEXT="dylib"
-            LDDLL="\$(CC) -bundle -flat_namespace -undefined suppress"
+            LDDLLFLAGS="-bundle -flat_namespace -undefined suppress"
             LDSHARED="\$(CC) -dynamiclib"
             CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
           fi
@@ -1226,8 +1236,7 @@ dnl **** Check for types ****
 
 AC_C_CONST
 AC_C_INLINE
-AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t])
-AC_CHECK_SIZEOF(long long,0)
+AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long])
 
 AC_CACHE_CHECK([whether linux/input.h is for real],
 	wine_cv_linux_input_h,

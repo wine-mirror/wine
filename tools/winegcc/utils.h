@@ -21,7 +21,17 @@
  */
 
 
-void error(const char* s, ...);
+#ifndef DECLSPEC_NORETURN
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+#  define DECLSPEC_NORETURN __declspec(noreturn)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NORETURN __attribute__((noreturn))
+# else
+#  define DECLSPEC_NORETURN
+# endif
+#endif
+
+void error(const char* s, ...) DECLSPEC_NORETURN;
 
 void* xmalloc(size_t size);
 void* xrealloc(void* p, size_t size);
@@ -38,6 +48,9 @@ strarray* strarray_alloc(void);
 strarray* strarray_dup(const strarray* arr);
 void strarray_free(strarray* arr);
 void strarray_add(strarray* arr, const char* str);
+void strarray_addall(strarray* arr, const strarray* from);
+strarray* strarray_fromstring(const char* str, const char* delim);
+char* strarray_tostring(const strarray* arr, const char* sep);
 
 typedef enum { 
     file_na, file_other, file_obj, file_res,
