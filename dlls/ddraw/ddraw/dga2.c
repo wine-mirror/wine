@@ -156,6 +156,10 @@ static HRESULT WINAPI DGA2_IDirectDrawImpl_SetDisplayMode(
       /* Re-get (if necessary) the DGA events */
       TSXDGASelectInput(display, DefaultScreen(display),
 			KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
+
+      /* And change the DDraw parameters */
+      This->d->width	= width;
+      This->d->height	= height;
     }
     
     return DD_OK;
