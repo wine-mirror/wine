@@ -88,6 +88,7 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_WORKGRP:
 	    case PT_COMP:
 	    case PT_NETWORK:
+	    case PT_NETPROVIDER:
 	    case PT_SHARE:
 	      return (LPSTR)&(pdata->u.network.szNames);
 	  }

@@ -62,6 +62,7 @@
 *	valueW		0x34		file		(Unicode file name)
 *	workgroup	0x41		network (3)
 *	computer	0x42		network (4)
+*	net provider	0x46		network
 *	whole network	0x47		network (5)
 *	MSITStore	0x61		htmlhlp (7)
 *	history/favorites 0xb1		file
@@ -91,6 +92,7 @@
 #define PT_VALUE	0x32
 #define PT_WORKGRP	0x41
 #define PT_COMP		0x42
+#define PT_NETPROVIDER  0x46
 #define PT_NETWORK	0x47
 #define PT_IESPECIAL1	0x61
 #define PT_IESPECIAL2	0xb1
