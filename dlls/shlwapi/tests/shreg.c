@@ -42,7 +42,28 @@ static unsigned sExpLen2;
 
 static char * sEmptyBuffer ="0123456789";
 
-static void create_test_entrys(void)
+/* delete key and all its subkeys */
+static DWORD delete_key( HKEY hkey )
+{
+    WCHAR name[MAX_PATH];
+    DWORD ret;
+
+    while (!(ret = RegEnumKeyW(hkey, 0, name, sizeof(name))))
+    {
+        HKEY tmp;
+        if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
+        {
+            ret = delete_key( tmp );
+            RegCloseKey( tmp );
+        }
+        if (ret) break;
+    }
+    if (ret != ERROR_NO_MORE_ITEMS) return ret;
+    RegDeleteKeyA( hkey, NULL );
+    return 0;
+}
+
+static HKEY create_test_entries(void)
 {
 	HKEY hKey;
 
@@ -56,7 +77,6 @@ static void create_test_entrys(void)
            ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
            ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
            ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed");
-	   RegCloseKey(hKey);
 	}
 
 	sExpLen1 = ExpandEnvironmentStringsA(sTestpath1, sExpTestpath1, sizeof(sExpTestpath1));
@@ -64,6 +84,7 @@ static void create_test_entrys(void)
 
         ok(sExpLen1 > 0, "Couldn't expand %s\n", sTestpath1);
         ok(sExpLen2 > 0, "Couldn't expand %s\n", sTestpath2);
+        return hKey;
 }
 
 static void test_SHGetValue(void)
@@ -243,9 +264,10 @@ static void test_SHCopyKey(void)
 
 START_TEST(shreg)
 {
-	create_test_entrys();
+	HKEY hkey = create_test_entries();
 	test_SHGetValue();
 	test_SHQUeryValueEx();
 	test_SHGetRegPath();
 	test_SHCopyKey();
+        delete_key( hkey );
 }
