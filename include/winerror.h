@@ -263,6 +263,7 @@ extern int WIN32_LastError;
 #define ERROR_PARTIAL_COPY                                 299
 #define ERROR_OPLOCK_NOT_GRANTED                           300
 #define ERROR_INVALID_OPLOCK_PROTOCOL                      301
+#define ERROR_DISK_TOO_FRAGMENTED                          302
 #define ERROR_MR_MID_NOT_FOUND                             317
 #define ERROR_INVALID_ADDRESS                              487
 #define ERROR_ARITHMETIC_OVERFLOW                          534
@@ -451,6 +452,20 @@ extern int WIN32_LastError;
 #define ERROR_OVERRIDE_NOCHANGES                           1252
 #define ERROR_BAD_USER_PROFILE                             1253
 #define ERROR_NOT_SUPPORTED_ON_SBS                         1254
+#define ERROR_SERVER_SHUTDOWN_IN_PROGRESS                  1255
+#define ERROR_HOST_DOWN                                    1256
+#define ERROR_ACCESS_DISABLED_BY_POLICY                    1260
+#define ERROR_REG_NAT_CONSUMPTION                          1261
+#define ERROR_PKINIT_FAILURE                               1263
+#define ERROR_SMARTCARD_SUBSYSTEM_FAILURE                  1264
+#define ERROR_DOWNGRADE_DETECTED                           1265
+#define SEC_E_SMARTCARD_CERT_REVOKED                       1266
+#define SEC_E_ISSUING_CA_UNTRUSTED                         1267
+#define SEC_E_REVOCATION_OFFLINE_C                         1268
+#define SEC_E_PKINIT_CLIENT_FAILURE                        1269
+#define SEC_E_SMARTCARD_CERT_EXPIRED                       1270
+#define ERROR_DRIVER_BLOCKED                               1275
+#define ERROR_INVALID_IMPORT_OF_NON_DLL                    1276
 #define ERROR_NOT_ALL_ASSIGNED                             1300
 #define ERROR_SOME_NOT_MAPPED                              1301
 #define ERROR_NO_QUOTAS_FOR_ACCOUNT                        1302
@@ -549,6 +564,7 @@ extern int WIN32_LastError;
 #define ERROR_WRONG_TARGET_NAME                            1396
 #define ERROR_MUTUAL_AUTH_FAILED                           1397
 #define ERROR_TIME_SKEW                                    1398
+#define ERROR_CURRENT_DOMAIN_NOT_ALLOWED                   1399
 #define ERROR_INVALID_WINDOW_HANDLE                        1400
 #define ERROR_INVALID_MENU_HANDLE                          1401
 #define ERROR_INVALID_CURSOR_HANDLE                        1402
@@ -817,6 +833,7 @@ extern int WIN32_LastError;
 #define RPC_S_PRF_ELT_NOT_REMOVED                          1927
 #define RPC_S_GRP_ELT_NOT_ADDED                            1928
 #define RPC_S_GRP_ELT_NOT_REMOVED                          1929
+#define ERROR_CONTEXT_EXPIRED                              1931
 #define ERROR_INVALID_PIXEL_FORMAT                         2000
 #define ERROR_BAD_DRIVER                                   2001
 #define ERROR_INVALID_WINDOW_STYLE                         2002
@@ -918,6 +935,7 @@ extern int WIN32_LastError;
 #define ERROR_VOLUME_CONTAINS_SYS_FILES                    4337
 #define ERROR_INDIGENOUS_TYPE                              4338
 #define ERROR_NO_SUPPORTING_DRIVES                         4339
+#define ERROR_CLEANER_CARTRIDGE_INSTALLED                  4340
 #define ERROR_FILE_OFFLINE                                 4350
 #define ERROR_REMOTE_STORAGE_NOT_ACTIVE                    4351
 #define ERROR_REMOTE_STORAGE_MEDIA_ERROR                   4352
@@ -1027,6 +1045,7 @@ extern int WIN32_LastError;
 #define ERROR_FILE_READ_ONLY                               6009
 #define ERROR_DIR_EFS_DISALLOWED                           6010
 #define ERROR_EFS_SERVER_NOT_TRUSTED                       6011
+#define ERROR_EFS_ALG_BLOB_TOO_BIG                         6013
 #define ERROR_NO_BROWSER_SERVERS_FOUND                     6118
 #define SCHED_E_SERVICE_NOT_LOCALSYSTEM                    6200
 #define ERROR_CTX_WINSTATION_NAME_INVALID                  7001
@@ -1066,6 +1085,8 @@ extern int WIN32_LastError;
 #define ERROR_CTX_LICENSE_NOT_AVAILABLE                    7054
 #define ERROR_CTX_LICENSE_CLIENT_INVALID                   7055
 #define ERROR_CTX_LICENSE_EXPIRED                          7056
+#define ERROR_CTX_SHADOW_NOT_RUNNING                       7057
+#define ERROR_CTX_SHADOW_ENDED_BY_MODE_CHANGE              7058
 #define FRS_ERR_INVALID_API_SEQUENCE                       8001
 #define FRS_ERR_STARTING_SERVICE                           8002
 #define FRS_ERR_STOPPING_SERVICE                           8003
@@ -1401,6 +1422,10 @@ extern int WIN32_LastError;
 #define ERROR_DS_MUST_BE_RUN_ON_DST_DC                     8558
 #define ERROR_DS_SRC_DC_MUST_BE_SP4_OR_GREATER             8559
 #define ERROR_DS_CANT_TREE_DELETE_CRITICAL_OBJ             8560
+#define ERROR_DS_INIT_FAILURE_CONSOLE                      8561
+#define ERROR_DS_SAM_INIT_FAILURE_CONSOLE                  8562
+#define ERROR_DS_MACHINE_ACCOUNT_CREATED_PRENT4            8572
+#define ERROR_DS_AG_CANT_HAVE_UNIVERSAL_MEMBER             8578
 #define DNS_ERROR_RCODE_FORMAT_ERROR                       9001
 #define DNS_ERROR_RCODE_SERVER_FAILURE                     9002
 #define DNS_ERROR_RCODE_NAME_ERROR                         9003
@@ -1478,6 +1503,20 @@ extern int WIN32_LastError;
 #define DNS_STATUS_CONTINUE_NEEDED                         9801
 #define DNS_ERROR_NO_TCPIP                                 9851
 #define DNS_ERROR_NO_DNS_SERVERS                           9852
+#define ERROR_SXS_SECTION_NOT_FOUND                        14000
+#define ERROR_SXS_CANT_GEN_ACTCTX                          14001
+#define ERROR_SXS_INVALID_ACTCTXDATA_FORMAT                14002
+#define ERROR_SXS_ASSEMBLY_NOT_FOUND                       14003
+#define ERROR_SXS_MANIFEST_FORMAT_ERROR                    14004
+#define ERROR_SXS_MANIFEST_PARSE_ERROR                     14005
+#define ERROR_SXS_ACTIVATION_CONTEXT_DISABLED              14006
+#define ERROR_SXS_KEY_NOT_FOUND                            14007
+#define ERROR_SXS_WRONG_SECTION_TYPE                       14009
+#define ERROR_SXS_THREAD_QUERIES_DISABLED                  14010
+#define ERROR_SXS_PROCESS_DEFAULT_ALREADY_SET              14011
+
+#define ERROR_AUDITING_DISABLED                            0xC0090001L
+#define ERROR_ALL_SIDS_FILTERED                            0xC0090002L
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 /* the codes 4000-40ff are reserved for OLE */
@@ -1655,6 +1694,14 @@ extern int WIN32_LastError;
 #define STG_E_SHAREREQUIRED                                0x80030106L
 #define STG_E_NOTFILEBASEDSTORAGE                          0x80030107L
 #define STG_E_EXTANTMARSHALLINGS                           0x80030108L
+
+#define STG_E_STATUS_COPY_PROTECTION_FAILURE               0x80030305L
+#define STG_E_CSS_AUTHENTICATION_FAILURE                   0x80030306L
+#define STG_E_CSS_KEY_NOT_PRESENT                          0x80030307L
+#define STG_E_CSS_KEY_NOT_ESTABLISHED                      0x80030308L
+#define STG_E_CSS_SCRAMBLED_SECTOR                         0x80030309L
+#define STG_E_CSS_REGION_MISMATCH                          0x8003030AL
+#define STG_E_RESETS_EXHAUSTED                             0x8003030BL
 
 #define OLE_S_FIRST                                        0x00040000L
 #define OLE_S_USEREG                                       0x00040000L
@@ -1957,5 +2004,69 @@ extern int WIN32_LastError;
 #define NTE_SYS_ERR                                        0x80090021L
 #define NTE_OP_OK                                          0
 
+#define SEC_E_INSUFFICIENT_MEMORY                          0x80090300L
+#define SEC_E_INVALID_HANDLE                               0x80090301L
+#define SEC_E_UNSUPPORTED_FUNCTION                         0x80090302L
+#define SEC_E_TARGET_UNKNOWN                               0x80090303L
+#define SEC_E_INTERNAL_ERROR                               0x80090304L
+#define SEC_E_SECPKG_NOT_FOUND                             0x80090305L
+#define SEC_E_NOT_OWNER                                    0x80090306L
+#define SEC_E_CANNOT_INSTALL                               0x80090307L
+#define SEC_E_INVALID_TOKEN                                0x80090308L
+#define SEC_E_CANNOT_PACK                                  0x80090309L
+#define SEC_E_QOP_NOT_SUPPORTED                            0x8009030AL
+#define SEC_E_NO_IMPERSONATION                             0x8009030BL
+#define SEC_E_LOGON_DENIED                                 0x8009030CL
+#define SEC_E_UNKNOWN_CREDENTIALS                          0x8009030DL
+#define SEC_E_NO_CREDENTIALS                               0x8009030EL
+#define SEC_E_MESSAGE_ALTERED                              0x8009030FL
+#define SEC_E_OUT_OF_SEQUENCE                              0x80090310L
+#define SEC_E_NO_AUTHENTICATING_AUTHORITY                  0x80090311L
+#define SEC_E_BAD_PKGID                                    0x80090316L
+#define SEC_E_CONTEXT_EXPIRED                              0x80090317L
+#define SEC_E_INCOMPLETE_MESSAGE                           0x80090318L
+#define SEC_E_INCOMPLETE_CREDENTIALS                       0x80090320L
+#define SEC_E_BUFFER_TOO_SMALL                             0x80090321L
+#define SEC_E_WRONG_PRINCIPAL                              0x80090322L
+#define SEC_E_UNTRUSTED_ROOT                               0x80090325L
+#define SEC_E_ILLEGAL_MESSAGE                              0x80090326L
+#define SEC_E_CERT_UNKNOWN                                 0x80090327L
+#define SEC_E_CERT_EXPIRED                                 0x80090328L
+#define SEC_E_ENCRYPT_FAILURE                              0x80090329L
+#define SEC_E_DECRYPT_FAILURE                              0x80090330L
+#define SEC_E_ALGORITHM_MISMATCH                           0x80090331L
+#define SEC_E_UNFINISHED_CONTEXT_DELETED                   0x80090333L
+#define SEC_E_NO_TGT_REPLY                                 0x80090334L
+#define SEC_E_NO_IP_ADDRESSES                              0x80090335L
+#define SEC_E_WRONG_CREDENTIAL_HANDLE                      0x80090336L
+#define SEC_E_CRYPTO_SYSTEM_INVALID                        0x80090337L
+#define SEC_E_MAX_REFERRALS_EXCEEDED                       0x80090338L
+#define SEC_E_MUST_BE_KDC                                  0x80090339L
+#define SEC_E_STRONG_CRYPTO_NOT_SUPPORTED                  0x8009033AL
+#define SEC_E_TOO_MANY_PRINCIPALS                          0x8009033BL
+#define SEC_E_NO_PA_DATA                                   0x8009033CL
+#define SEC_E_PKINIT_NAME_MISMATCH                         0x8009033DL
+#define SEC_E_SMARTCARD_LOGON_REQUIRED                     0x8009033EL
+#define SEC_E_KDC_INVALID_REQUEST                          0x80090340L
+#define SEC_E_KDC_UNABLE_TO_REFER                          0x80090341L
+#define SEC_E_KDC_UNKNOWN_ETYPE                            0x80090342L
+#define SEC_E_UNSUPPORTED_PREAUTH                          0x80090343L
+#define SEC_E_BAD_BINDINGS                                 0x80090346L
+#define SEC_E_MULTIPLE_ACCOUNTS                            0x80090347L
+#define SEC_E_NO_KERB_KEY                                  0x80090348L
+
+#define CRYPT_E_REVOKED                                    0x80092010L
+#define CRYPT_E_NO_REVOCATION_CHECK                        0x80092012L
+#define CRYPT_E_REVOCATION_OFFLINE                         0x80092013L
+#define TRUST_E_CERT_SIGNATURE                             0x80096004L
+
+/* Smart card management error codes */
+#define SCARD_E_NO_SMARTCARD                               0x8010000CL
+#define SCARD_E_NO_SUCH_CERTIFICATE                        0x8010002CL
+#define SCARD_E_COMM_DATA_LOST                             0x8010002FL
+
+#define SCARD_W_WRONG_CHV                                  0x8010006BL
+#define SCARD_W_CHV_BLOCKED                                0x8010006CL
+#define SCARD_W_CARD_NOT_AUTHENTICATED                     0x8010006FL
 
 #endif  /* __WINE_WINERROR_H */

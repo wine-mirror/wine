@@ -6,6 +6,7 @@ TESTDLL   = ntdll.dll
 IMPORTS   = ntdll
 
 CTESTS = \
+	error.c \
 	rtlbitmap.c
 
 @MAKE_TEST_RULES@

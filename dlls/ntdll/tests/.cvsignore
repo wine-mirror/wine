@@ -1,4 +1,5 @@
 Makefile
+error.ok
 ntdll_test.exe.spec.c
 rtlbitmap.ok
 testlist.c
