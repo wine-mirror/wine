@@ -25,6 +25,16 @@
 #include "d3d8caps.h"
 
 /*****************************************************************************
+ * Behavior Flags for IDirect3D8::CreateDevice
+ */
+#define D3DCREATE_FPU_PRESERVE                  0x00000002L
+#define D3DCREATE_MULTITHREADED                 0x00000004L
+#define D3DCREATE_PUREDEVICE                    0x00000010L
+#define D3DCREATE_SOFTWARE_VERTEXPROCESSING     0x00000020L
+#define D3DCREATE_HARDWARE_VERTEXPROCESSING     0x00000040L
+#define D3DCREATE_MIXED_VERTEXPROCESSING        0x00000080L
+
+/*****************************************************************************
  * #defines and error codes
  */
 #define D3DADAPTER_DEFAULT           0
