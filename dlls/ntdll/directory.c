@@ -650,7 +650,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
  * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
  */
 static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, int length,
-                                  int is_last, int check_last, int check_case )
+                                  int check_case )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
     UNICODE_STRING str;
@@ -771,19 +771,8 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     goto not_found;  /* avoid warning */
 
 not_found:
-    if (is_last && !check_last)  /* return the name anyway */
-    {
-        int used_default;
-        ret = ntdll_wcstoumbs( 0, name, length, unix_name + pos,
-                               MAX_DIR_ENTRY_LEN, NULL, &used_default );
-        if (ret > 0 && !used_default)
-        {
-            unix_name[pos + ret] = 0;
-            return STATUS_SUCCESS;
-        }
-    }
     unix_name[pos - 1] = 0;
-    return is_last ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_OBJECT_PATH_NOT_FOUND;
+    return STATUS_OBJECT_PATH_NOT_FOUND;
 }
 
 
@@ -809,6 +798,10 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
  *           DIR_nt_to_unix
  *
  * Convert a file name from NT namespace to Unix namespace.
+ *
+ * If check_last is 0, the last path element doesn't have to exist;
+ * in that case STATUS_OBJECT_NAME_NOT_FOUND is returned, but the
+ * unix name is still filled in properly.
  */
 NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                          int check_last, int check_case )
@@ -816,7 +809,7 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
     static const WCHAR uncW[] = {'U','N','C','\\'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
-    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+    NTSTATUS status = STATUS_SUCCESS;
     const char *config_dir = wine_get_config_dir();
     const WCHAR *name, *p;
     struct stat st;
@@ -908,6 +901,7 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
         next = end;
         while (next < name + name_len && IS_SEPARATOR(*next)) next++;
+        name_len -= next - name;
 
         /* grow the buffer if needed */
 
@@ -923,8 +917,25 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
             unix_name = new_name;
         }
 
-        status = find_file_in_dir( unix_name, pos, name, end - name,
-                                   (next - name == name_len), check_last, check_case );
+        status = find_file_in_dir( unix_name, pos, name, end - name, check_case );
+
+        /* if this is the last element, not finding it is not necessarily fatal */
+        if (!name_len && status == STATUS_OBJECT_PATH_NOT_FOUND)
+        {
+            status = STATUS_OBJECT_NAME_NOT_FOUND;
+            if (!check_last)
+            {
+                ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
+                                       MAX_DIR_ENTRY_LEN, NULL, &used_default );
+                if (ret > 0 && !used_default)
+                {
+                    unix_name[pos] = '/';
+                    unix_name[pos + 1 + ret] = 0;
+                    break;
+                }
+            }
+        }
+
         if (status != STATUS_SUCCESS)
         {
             /* couldn't find it at all, fail */
@@ -934,7 +945,6 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         }
 
         pos += strlen( unix_name + pos );
-        name_len -= next - name;
         name = next;
     }
 
@@ -946,7 +956,7 @@ done:
     unix_name_ret->Buffer = unix_name;
     unix_name_ret->Length = strlen(unix_name);
     unix_name_ret->MaximumLength = unix_len;
-    return STATUS_SUCCESS;
+    return status;
 }
 
 
@@ -965,7 +975,7 @@ char *wine_get_unix_file_name( LPCWSTR dosW )
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
     status = DIR_nt_to_unix( &nt_name, &unix_name, FALSE, FALSE );
     RtlFreeUnicodeString( &nt_name );
-    if (status) return NULL;
+    if (status && status != STATUS_OBJECT_NAME_NOT_FOUND) return NULL;
     return unix_name.Buffer;
 }
 

@@ -131,6 +131,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
     ANSI_STRING unix_name;
+    int check_last, created = FALSE;
 
     TRACE("handle=%p access=%08lx name=%s objattr=%08lx root=%p sec=%p io=%p alloc_size=%p\n"
           "attr=%08lx sharing=%08lx disp=%ld options=%08lx ea=%p.0x%08lx\n",
@@ -145,9 +146,18 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     }
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
-    if (!(io->u.Status = DIR_nt_to_unix( attr->ObjectName, &unix_name,
-                                         (disposition == FILE_OPEN || disposition == FILE_OVERWRITE),
-                                         !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    check_last = (disposition == FILE_OPEN || disposition == FILE_OVERWRITE);
+
+    io->u.Status = DIR_nt_to_unix( attr->ObjectName, &unix_name, check_last,
+                                   !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
+
+    if (!check_last && io->u.Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        created = TRUE;
+        io->u.Status = STATUS_SUCCESS;
+    }
+
+    if (io->u.Status == STATUS_SUCCESS)
     {
         SERVER_START_REQ( create_file )
         {
@@ -165,6 +175,29 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         RtlFreeAnsiString( &unix_name );
     }
     else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), io->u.Status );
+
+    if (io->u.Status == STATUS_SUCCESS)
+    {
+        if (created) io->Information = FILE_CREATED;
+        else switch(disposition)
+        {
+        case FILE_SUPERSEDE:
+            io->Information = FILE_SUPERSEDED;
+            break;
+        case FILE_CREATE:
+            io->Information = FILE_CREATED;
+            break;
+        case FILE_OPEN:
+        case FILE_OPEN_IF:
+            io->Information = FILE_OPENED;
+            break;
+        case FILE_OVERWRITE:
+        case FILE_OVERWRITE_IF:
+            io->Information = FILE_OVERWRITTEN;
+            break;
+        }
+    }
+
     return io->u.Status;
 }
 
