@@ -44,10 +44,10 @@ typedef struct _FV
 {
     struct _FV   *next;        /* Next view */
     struct _FV   *prev;        /* Prev view */
-    UINT        base;        /* Base address */
-    UINT        size;        /* Size in bytes */
-    UINT        flags;       /* Allocation flags */
-    HANDLE      mapping;     /* Handle to the file mapping */
+    void         *base;        /* Base address */
+    UINT          size;        /* Size in bytes */
+    UINT          flags;       /* Allocation flags */
+    HANDLE        mapping;     /* Handle to the file mapping */
     HANDLERPROC   handlerProc; /* Fault handler */
     LPVOID        handlerArg;  /* Fault handler argument */
     BYTE          protect;     /* Protection for all pages at allocation time */
@@ -95,11 +95,11 @@ static UINT page_size;
 #endif  /* __i386__ */
 #define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
 
-#define ROUND_ADDR(addr) \
-   ((UINT)(addr) & ~page_mask)
+#define ROUND_ADDR(addr,mask) \
+   ((void *)((UINT_PTR)(addr) & ~(mask)))
 
 #define ROUND_SIZE(addr,size) \
-   (((UINT)(size) + ((UINT)(addr) & page_mask) + page_mask) & ~page_mask)
+   (((UINT)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
@@ -138,11 +138,10 @@ static const char *VIRTUAL_GetProtStr( BYTE prot )
 static void VIRTUAL_DumpView( FILE_VIEW *view )
 {
     UINT i, count;
-    UINT addr = view->base;
+    char *addr = view->base;
     BYTE prot = view->prot[0];
 
-    DPRINTF( "View: %08x - %08x",
-             view->base, view->base + view->size - 1 );
+    DPRINTF( "View: %p - %p", addr, addr + view->size - 1 );
     if (view->flags & VFLAG_SYSTEM)
         DPRINTF( " (system)\n" );
     else if (view->flags & VFLAG_VALLOC)
@@ -155,17 +154,15 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
         if (view->prot[i] == prot) continue;
-        DPRINTF( "      %08x - %08x %s\n",
-	      addr, addr + (count << page_shift) - 1,
-	      VIRTUAL_GetProtStr(prot) );
+        DPRINTF( "      %p - %p %s\n",
+                 addr, addr + (count << page_shift) - 1, VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
         prot = view->prot[i];
         count = 0;
     }
     if (count)
-        DPRINTF( "      %08x - %08x %s\n",
-	      addr, addr + (count << page_shift) - 1,
-	      VIRTUAL_GetProtStr(prot) );
+        DPRINTF( "      %p - %p %s\n",
+                 addr, addr + (count << page_shift) - 1, VIRTUAL_GetProtStr(prot) );
 }
 
 
@@ -196,9 +193,8 @@ void VIRTUAL_Dump(void)
  *	View: Success
  *	NULL: Failure
  */
-static FILE_VIEW *VIRTUAL_FindView(
-                  UINT addr /* [in] Address */
-) {
+static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
+{
     FILE_VIEW *view;
 
     EnterCriticalSection(&csVirtual);
@@ -223,14 +219,14 @@ static FILE_VIEW *VIRTUAL_FindView(
  *
  * Create a new view and add it in the linked list.
  */
-static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT flags,
+static FILE_VIEW *VIRTUAL_CreateView( void *base, UINT size, UINT flags,
                                       BYTE vprot, HANDLE mapping )
 {
     FILE_VIEW *view, *prev;
 
     /* Create the view structure */
 
-    assert( !(base & page_mask) );
+    assert( !((unsigned int)base & page_mask) );
     assert( !(size & page_mask) );
     size >>= page_shift;
     if (!(view = (FILE_VIEW *)malloc( sizeof(*view) + size - 1 ))) return NULL;
@@ -408,22 +404,74 @@ static BYTE VIRTUAL_GetProt(
  *	TRUE: Success
  *	FALSE: Failure
  */
-static BOOL VIRTUAL_SetProt(
-              FILE_VIEW *view, /* [in] Pointer to view */
-              UINT base,     /* [in] Starting address */
-              UINT size,     /* [in] Size in bytes */
-              BYTE vprot       /* [in] Protections to use */
-) {
-    TRACE("%08x-%08x %s\n",
-                     base, base + size - 1, VIRTUAL_GetProtStr( vprot ) );
+static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
+                             void *base,      /* [in] Starting address */
+                             UINT size,       /* [in] Size in bytes */
+                             BYTE vprot )     /* [in] Protections to use */
+{
+    TRACE("%p-%p %s\n",
+          base, (char *)base + size - 1, VIRTUAL_GetProtStr( vprot ) );
 
-    if (mprotect( (void *)base, size, VIRTUAL_GetUnixProt(vprot) ))
+    if (mprotect( base, size, VIRTUAL_GetUnixProt(vprot) ))
         return FALSE;  /* FIXME: last error */
 
-    memset( view->prot + ((base - view->base) >> page_shift),
+    memset( view->prot + (((char *)base - (char *)view->base) >> page_shift),
             vprot, size >> page_shift );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           anon_mmap_aligned
+ *
+ * Create an anonymous mapping aligned to the allocation granularity.
+ */
+static void *anon_mmap_aligned( void *base, unsigned int size, int prot, int flags )
+{
+    void *ptr;
+    unsigned int view_size = size + (base ? 0 : granularity_mask + 1);
+
+    if ((ptr = wine_anon_mmap( base, view_size, prot, flags )) == (void *)-1)
+    {
+        /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
+	 * Platform Differences": 
+	 * Windows NT: ERROR_INVALID_PARAMETER
+	 * Windows 95: ERROR_INVALID_ADDRESS.
+	 */
+        if (errno == ENOMEM) SetLastError( ERROR_OUTOFMEMORY );
+        else
+        {
+            if (GetVersion() & 0x80000000)  /* win95 */
+                SetLastError( ERROR_INVALID_ADDRESS );
+            else
+                SetLastError( ERROR_INVALID_PARAMETER );
+        }
+        return ptr;
+    }
+
+    if (!base)
+    {
+        /* Release the extra memory while keeping the range
+         * starting on the granularity boundary. */
+        if ((unsigned int)ptr & granularity_mask)
+        {
+            unsigned int extra = granularity_mask + 1 - ((unsigned int)ptr & granularity_mask);
+            munmap( ptr, extra );
+            ptr = (char *)ptr + extra;
+            view_size -= extra;
+        }
+        if (view_size > size)
+            munmap( (char *)ptr + size, view_size - size );
+    }
+    else if (ptr != base)
+    {
+        /* We couldn't get the address we wanted */
+        munmap( ptr, view_size );
+        SetLastError( ERROR_INVALID_ADDRESS );
+        ptr = (void *)-1;
+    }
+    return ptr;
 }
 
 
@@ -461,7 +509,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
     }
     TRACE_(module)( "mapped PE file at %p-%p\n", ptr, ptr + total_size );
 
-    if (!(view = VIRTUAL_CreateView( (UINT)ptr, total_size, 0,
+    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
                                      VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
                                      hmapping )))
     {
@@ -530,10 +578,10 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
         {
             size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
             TRACE_(module)( "mapping shared section %.8s at %p off %lx (%x) size %lx (%lx) flags %lx\n",
-                          sec->Name, (char *)ptr + sec->VirtualAddress,
+                          sec->Name, ptr + sec->VirtualAddress,
                           sec->PointerToRawData, pos, sec->SizeOfRawData,
                           size, sec->Characteristics );
-            if (VIRTUAL_mmap( shared_fd, (char *)ptr + sec->VirtualAddress, size,
+            if (VIRTUAL_mmap( shared_fd, ptr + sec->VirtualAddress, size,
                               pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
                               MAP_SHARED|MAP_FIXED ) == (void *)-1)
             {
@@ -548,14 +596,14 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
         if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
 
         TRACE_(module)( "mapping section %.8s at %p off %lx size %lx flags %lx\n",
-                        sec->Name, (char *)ptr + sec->VirtualAddress,
+                        sec->Name, ptr + sec->VirtualAddress,
                         sec->PointerToRawData, sec->SizeOfRawData,
                         sec->Characteristics );
 
         /* Note: if the section is not aligned properly VIRTUAL_mmap will magically
          *       fall back to read(), so we don't need to check anything here.
          */
-        if (VIRTUAL_mmap( fd, (char *)ptr + sec->VirtualAddress, sec->SizeOfRawData,
+        if (VIRTUAL_mmap( fd, ptr + sec->VirtualAddress, sec->SizeOfRawData,
                           sec->PointerToRawData, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
                           MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
         {
@@ -568,9 +616,9 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
             DWORD end = ROUND_SIZE( 0, sec->SizeOfRawData );
             if (end > sec->Misc.VirtualSize) end = sec->Misc.VirtualSize;
             TRACE_(module)("clearing %p - %p\n",
-                           (char *)ptr + sec->VirtualAddress + sec->SizeOfRawData,
-                           (char *)ptr + sec->VirtualAddress + end );
-            memset( (char *)ptr + sec->VirtualAddress + sec->SizeOfRawData, 0,
+                           ptr + sec->VirtualAddress + sec->SizeOfRawData,
+                           ptr + sec->VirtualAddress + end );
+            memset( ptr + sec->VirtualAddress + sec->SizeOfRawData, 0,
                     end - sec->SizeOfRawData );
         }
     }
@@ -612,7 +660,7 @@ BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 {
     FILE_VIEW *view;
 
-    if (!(view = VIRTUAL_FindView((UINT)addr))) return FALSE;
+    if (!(view = VIRTUAL_FindView( addr ))) return FALSE;
     view->handlerProc = proc;
     view->handlerArg  = arg;
     return TRUE;
@@ -623,7 +671,7 @@ BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
  */
 DWORD VIRTUAL_HandleFault( LPCVOID addr )
 {
-    FILE_VIEW *view = VIRTUAL_FindView((UINT)addr);
+    FILE_VIEW *view = VIRTUAL_FindView( addr );
     DWORD ret = EXCEPTION_ACCESS_VIOLATION;
 
     if (view)
@@ -634,8 +682,8 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
         }
         else
         {
-            BYTE vprot = view->prot[((UINT)addr - view->base) >> page_shift];
-            UINT page = (UINT)addr & ~page_mask;
+            BYTE vprot = view->prot[((char *)addr - (char *)view->base) >> page_shift];
+            void *page = (void *)((UINT_PTR)addr & ~page_mask);
             char *stack = (char *)NtCurrentTeb()->stack_base + SIGNAL_STACK_SIZE + page_mask + 1;
             if (vprot & VPROT_GUARD)
             {
@@ -754,14 +802,13 @@ LPVOID WINAPI VirtualAlloc(
               LPVOID addr,  /* [in] Address of region to reserve or commit */
               DWORD size,   /* [in] Size of region */
               DWORD type,   /* [in] Type of allocation */
-              DWORD protect /* [in] Type of access protection */
-) {
+              DWORD protect)/* [in] Type of access protection */
+{
     FILE_VIEW *view;
-    UINT base, ptr, view_size;
+    char *ptr, *base;
     BYTE vprot;
 
-    TRACE("%08x %08lx %lx %08lx\n",
-                     (UINT)addr, size, type, protect );
+    TRACE("%p %08lx %lx %08lx\n", addr, size, type, protect );
 
     /* Round parameters to a page boundary */
 
@@ -773,11 +820,11 @@ LPVOID WINAPI VirtualAlloc(
     if (addr)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = (UINT)addr & ~granularity_mask;
+            base = ROUND_ADDR( addr, granularity_mask );
         else
-            base = ROUND_ADDR( addr );
-        size = (((UINT)addr + size + page_mask) & ~page_mask) - base;
-        if ((base <= granularity_mask) || (base + size < base))
+            base = ROUND_ADDR( addr, page_mask );
+        size = (((UINT_PTR)addr + size + page_mask) & ~page_mask) - (UINT_PTR)base;
+        if ((base <= (char *)granularity_mask) || (base + size < base))
         {
             /* disallow low 64k and wrap-around */
             SetLastError( ERROR_INVALID_PARAMETER );
@@ -823,48 +870,22 @@ LPVOID WINAPI VirtualAlloc(
             }
             return (LPVOID)base;
         }
-        view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT)wine_anon_mmap( (LPVOID)base, view_size, VIRTUAL_GetUnixProt( vprot ), 0 );
-        if (ptr == (UINT)-1)
-        {
-            SetLastError( ERROR_OUTOFMEMORY );
-            return NULL;
-        }
-        if (!base)
-        {
-            /* Release the extra memory while keeping the range */
-            /* starting on a 64k boundary. */
+        ptr = anon_mmap_aligned( base, size, VIRTUAL_GetUnixProt( vprot ), 0 );
+        if (ptr == (void *)-1) return NULL;
 
-            if (ptr & granularity_mask)
-            {
-                UINT extra = granularity_mask + 1 - (ptr & granularity_mask);
-                munmap( (void *)ptr, extra );
-                ptr += extra;
-                view_size -= extra;
-            }
-            if (view_size > size)
-                munmap( (void *)(ptr + size), view_size - size );
-        }
-        else if (ptr != base)
-        {
-            /* We couldn't get the address we wanted */
-            munmap( (void *)ptr, view_size );
-	    SetLastError( ERROR_INVALID_ADDRESS );
-	    return NULL;
-        }
         if (!(view = VIRTUAL_CreateView( ptr, size, VFLAG_VALLOC, vprot, 0 )))
         {
-            munmap( (void *)ptr, size );
+            munmap( ptr, size );
             SetLastError( ERROR_OUTOFMEMORY );
             return NULL;
         }
-        return (LPVOID)ptr;
+        return ptr;
     }
 
     /* Commit the pages */
 
     if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > view->base + view->size))
+        (base + size > (char *)view->base + view->size))
     {
         SetLastError( ERROR_INVALID_ADDRESS );
         return NULL;
@@ -908,18 +929,17 @@ BOOL WINAPI VirtualFree(
               DWORD type   /* [in] Type of operation */
 ) {
     FILE_VIEW *view;
-    UINT base;
+    char *base;
 
-    TRACE("%08x %08lx %lx\n",
-                     (UINT)addr, size, type );
+    TRACE("%p %08lx %lx\n", addr, size, type );
 
     /* Fix the parameters */
 
     size = ROUND_SIZE( addr, size );
-    base = ROUND_ADDR( addr );
+    base = ROUND_ADDR( addr, page_mask );
 
     if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > view->base + view->size) ||
+        (base + size > (char *)view->base + view->size) ||
         !(view->flags & VFLAG_VALLOC))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1009,20 +1029,20 @@ BOOL WINAPI VirtualProtect(
               LPDWORD old_prot /* [out] Address of variable to get old protection */
 ) {
     FILE_VIEW *view;
-    UINT base, i;
+    char *base;
+    UINT i;
     BYTE vprot, *p;
     DWORD prot;
 
-    TRACE("%08x %08lx %08lx\n",
-                     (UINT)addr, size, new_prot );
+    TRACE("%p %08lx %08lx\n", addr, size, new_prot );
 
     /* Fix the parameters */
 
     size = ROUND_SIZE( addr, size );
-    base = ROUND_ADDR( addr );
+    base = ROUND_ADDR( addr, page_mask );
 
     if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > view->base + view->size))
+        (base + size > (char *)view->base + view->size))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -1030,7 +1050,7 @@ BOOL WINAPI VirtualProtect(
 
     /* Make sure all the pages are committed */
 
-    p = view->prot + ((base - view->base) >> page_shift);
+    p = view->prot + ((base - (char *)view->base) >> page_shift);
     VIRTUAL_GetWin32Prot( *p, &prot, NULL );
     for (i = size >> page_shift; i; i--, p++)
     {
@@ -1084,13 +1104,12 @@ DWORD WINAPI VirtualQuery(
              DWORD len                        /* [in]  Size of buffer */
 ) {
     FILE_VIEW *view;
-    UINT base;
-    UINT alloc_base = 0;
+    char *base, *alloc_base = 0;
     UINT size = 0;
 
     if (addr >= (void*)0xc0000000) return 0;
 
-    base = ROUND_ADDR( addr );
+    base = ROUND_ADDR( addr, page_mask );
 
     /* Find the view containing the address */
 
@@ -1100,22 +1119,22 @@ DWORD WINAPI VirtualQuery(
     {
         if (!view)
         {
-            size = 0xffff0000 - alloc_base;
+            size = (char *)0xffff0000 - alloc_base;
             break;
         }
-        if (view->base > base)
+        if ((char *)view->base > base)
         {
-            size = view->base - alloc_base;
+            size = (char *)view->base - alloc_base;
             view = NULL;
             break;
         }
-        if (view->base + view->size > base)
+        if ((char *)view->base + view->size > base)
         {
             alloc_base = view->base;
             size = view->size;
             break;
         }
-        alloc_base = view->base + view->size;
+        alloc_base = (char *)view->base + view->size;
         view = view->next;
     }
     LeaveCriticalSection(&csVirtual);
@@ -1528,18 +1547,18 @@ LPVOID WINAPI MapViewOfFileEx(
               LPVOID addr        /* [in] Suggested starting address for mapped view */
 ) {
     FILE_VIEW *view;
-    UINT ptr = (UINT)-1, size = 0;
+    UINT size = 0;
     int flags = MAP_PRIVATE;
     int unix_handle = -1;
     int prot, res;
-    void *base;
+    void *base, *ptr = (void *)-1, *ret;
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
 
     /* Check parameters */
 
     if ((offset_low & granularity_mask) ||
-        (addr && ((UINT)addr & granularity_mask)))
+        (addr && ((UINT_PTR)addr & granularity_mask)))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -1609,33 +1628,19 @@ LPVOID WINAPI MapViewOfFileEx(
      */
     prot |= VPROT_COMMITTED;
 
+    /* Reserve a properly aligned area */
+
+    if ((ptr = anon_mmap_aligned( addr, size, PROT_NONE, 0 )) == (void *)-1) goto error;
+
     /* Map the file */
 
     TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
 
-    ptr = (UINT)VIRTUAL_mmap( unix_handle, addr, size, offset_low, offset_high,
-                              VIRTUAL_GetUnixProt( prot ), flags );
-    if (ptr == (UINT)-1) {
-        /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
-	 * Platform Differences": 
-	 * Windows NT: ERROR_INVALID_PARAMETER
-	 * Windows 95: ERROR_INVALID_ADDRESS.
-	 */
-	if (errno==ENOMEM)
-	    SetLastError( ERROR_OUTOFMEMORY );
-	else
-        {
-            if (GetVersion() & 0x80000000)  /* win95 */
-            {
-                TRACE("setting ERROR_INVALID_ADDRESS for WinXX\n");
-                SetLastError( ERROR_INVALID_ADDRESS );
-            }
-            else
-            {
-                TRACE("setting ERROR_INVALID_PARAMETER for NTXX\n");
-                SetLastError( ERROR_INVALID_PARAMETER );
-            }
-        }
+    ret = VIRTUAL_mmap( unix_handle, ptr, size, offset_low, offset_high,
+                        VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED );
+    if (ret != ptr)
+    {
+        ERR( "VIRTUAL_mmap %p %x %lx%08lx failed\n", ptr, size, offset_high, offset_low );
         goto error;
     }
 
@@ -1645,11 +1650,11 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
     }
     if (unix_handle != -1) close( unix_handle );
-    return (LPVOID)ptr;
+    return ptr;
 
 error:
     if (unix_handle != -1) close( unix_handle );
-    if (ptr != (UINT)-1) munmap( (void *)ptr, size );
+    if (ptr != (void *)-1) munmap( ptr, size );
     return NULL;
 }
 
@@ -1667,7 +1672,7 @@ BOOL WINAPI FlushViewOfFile(
               DWORD cbFlush /* [in] Number of bytes in range */
 ) {
     FILE_VIEW *view;
-    UINT addr = ROUND_ADDR( base );
+    void *addr = ROUND_ADDR( base, page_mask );
 
     TRACE("FlushViewOfFile at %p for %ld bytes\n",
                      base, cbFlush );
@@ -1678,7 +1683,7 @@ BOOL WINAPI FlushViewOfFile(
         return FALSE;
     }
     if (!cbFlush) cbFlush = view->size;
-    if (!msync( (void *)addr, cbFlush, MS_SYNC )) return TRUE;
+    if (!msync( addr, cbFlush, MS_SYNC )) return TRUE;
     SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
@@ -1699,7 +1704,7 @@ BOOL WINAPI UnmapViewOfFile(
               LPVOID addr /* [in] Address where mapped view begins */
 ) {
     FILE_VIEW *view;
-    UINT base = ROUND_ADDR( addr );
+    void *base = ROUND_ADDR( addr, page_mask );
     if (!(view = VIRTUAL_FindView( base )) || (base != view->base))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
