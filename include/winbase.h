@@ -1919,7 +1919,8 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
-/* Streams */
+/* Stream data structures and defines */
+/*the types of backup data -- WIN32_STREAM_ID.dwStreamID below*/
 #define BACKUP_INVALID        0
 #define BACKUP_DATA           1
 #define BACKUP_EA_DATA        2
@@ -1930,6 +1931,13 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 #define BACKUP_OBJECT_ID      7
 #define BACKUP_REPARSE_DATA   8
 #define BACKUP_SPARSE_BLOCK   9
+
+/*flags for WIN32_STREAM_ID.dwStreamAttributes below*/
+#define STREAM_NORMAL_ATTRIBUTE    0
+#define STREAM_MODIFIED_WHEN_READ  1
+#define STREAM_CONTAINS_SECURITY   2
+#define STREAM_CONTAINS_PROPERTIES 4
+#define STREAM_SPARSE_ATTRIBUTE    8
 
 typedef struct _WIN32_STREAM_ID {
 	DWORD   dwStreamID;
