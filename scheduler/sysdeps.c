@@ -44,6 +44,9 @@
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
 
 #ifdef HAVE_NPTL
 #include <pthread.h>
@@ -424,6 +427,10 @@ static inline void writejump( const char *symbol, void *dest )
     addr[0] = 0xe9;
     *(int *)(addr+1) = (unsigned char *)dest - (addr + 5);
     mprotect((void*)((unsigned int)addr & ~(getpagesize()-1)), 5, PROT_READ|PROT_EXEC);
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+    VALGRIND_DISCARD_TRANSLATIONS( addr, 5 );
+#endif
 }
 #endif
 
