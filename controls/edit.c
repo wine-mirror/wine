@@ -175,7 +175,7 @@ static void	EDIT_MoveUp_ML(WND *wnd, EDITSTATE *es, BOOL extend);
 /*
  *	Helper functions valid for both single line _and_ multi line controls
  */
-static INT	EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT start, INT index, INT count, INT action);
+static INT	EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action);
 static INT	EDIT_CharFromPos(WND *wnd, EDITSTATE *es, INT x, INT y, LPBOOL after_wrap);
 static void	EDIT_ConfinePoint(EDITSTATE *es, LPINT x, LPINT y);
 static void	EDIT_GetLineRect(WND *wnd, EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc);
@@ -200,7 +200,7 @@ static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT actio
  */
 static LRESULT	EDIT_EM_CharFromPos(WND *wnd, EDITSTATE *es, INT x, INT y);
 static BOOL	EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol);
-static HLOCAL	EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es);
+static HLOCAL	EDIT_EM_GetHandle(EDITSTATE *es);
 static HLOCAL16	EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es);
 static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR lpch);
 static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, LPUINT start, LPUINT end);
@@ -562,7 +562,7 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 		break;
 	case EM_GETHANDLE:
 		DPRINTF_EDIT_MSG32("EM_GETHANDLE");
-		result = (LRESULT)EDIT_EM_GetHandle(wnd, es);
+		result = (LRESULT)EDIT_EM_GetHandle(es);
 		break;
 
 	case EM_GETTHUMB16:
@@ -1177,7 +1177,7 @@ static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
 			INT prev;
 			do {
 				prev = next;
-				next = EDIT_CallWordBreakProc(wnd, es, start - es->text,
+				next = EDIT_CallWordBreakProc(es, start - es->text,
 						prev + 1, current_def->net_length, WB_RIGHT);
 				current_def->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
 							start, next, es->tabs_count, es->tabs));
@@ -1238,7 +1238,7 @@ static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
 /* ### start build ### */
 extern WORD CALLBACK EDIT_CallTo16_word_lwww(EDITWORDBREAKPROC16,SEGPTR,WORD,WORD,WORD);
 /* ### stop build ### */
-static INT EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT start, INT index, INT count, INT action)
+static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action)
 {
     INT ret, iWndsLocks;
 
@@ -1446,7 +1446,7 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
 		INT len = strlenW(es->text);
 		LPWSTR text = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
 		text[len] = '\0';
-		while(--len) text[len] = es->password_char;
+		while(len) text[--len] = es->password_char;
 		return text;
 	} else
 		return es->text;
@@ -1913,7 +1913,7 @@ static void EDIT_MoveWordBackward(WND *wnd, EDITSTATE *es, BOOL extend)
 			e = li + EDIT_EM_LineLength(es, li);
 		}
 	} else {
-		e = li + (INT)EDIT_CallWordBreakProc(wnd, es,
+		e = li + (INT)EDIT_CallWordBreakProc(es,
 				li, e - li, ll, WB_LEFT);
 	}
 	if (!extend)
@@ -1943,7 +1943,7 @@ static void EDIT_MoveWordForward(WND *wnd, EDITSTATE *es, BOOL extend)
 		if ((es->style & ES_MULTILINE) && (l != es->line_count - 1))
 			e = EDIT_EM_LineIndex(es, l + 1);
 	} else {
-		e = li + EDIT_CallWordBreakProc(wnd, es,
+		e = li + EDIT_CallWordBreakProc(es,
 				li, e - li + 1, ll, WB_RIGHT);
 	}
 	if (!extend)
@@ -2280,7 +2280,7 @@ static BOOL EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol)
  *	buffer on the local heap.
  *
  */
-static HLOCAL EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
+static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 {
 	HLOCAL hLocal;
 
@@ -3926,8 +3926,8 @@ static LRESULT EDIT_WM_LButtonDblClk(WND *wnd, EDITSTATE *es)
 	l = EDIT_EM_LineFromChar(es, e);
 	li = EDIT_EM_LineIndex(es, l);
 	ll = EDIT_EM_LineLength(es, e);
-	s = li + EDIT_CallWordBreakProc (wnd, es, li, e - li, ll, WB_LEFT);
-	e = li + EDIT_CallWordBreakProc(wnd, es, li, e - li, ll, WB_RIGHT);
+	s = li + EDIT_CallWordBreakProc(es, li, e - li, ll, WB_LEFT);
+	e = li + EDIT_CallWordBreakProc(es, li, e - li, ll, WB_RIGHT);
 	EDIT_EM_SetSel(wnd, es, s, e, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 	return 0;
