@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "wine/test.h"
+#include "winbase.h"
 
 /* debug level */
 int winetest_debug = 1;
@@ -39,18 +40,37 @@ struct test
 
 extern const struct test winetest_testlist[];
 static const struct test *current_test; /* test currently being run */
-/* FIXME: Access to all the following variables must be protected in a 
- * multithread test. Either via thread local storage or via critical sections
- */
-static const char* current_file;        /* file of current check */
-static int current_line;                /* line of current check */
 
-static int successes;         /* number of successful tests */
-static int failures;          /* number of failures */
-static int todo_successes;    /* number of successful tests inside todo block */
-static int todo_failures;     /* number of failures inside todo block */
-static int todo_level;        /* current todo nesting level */
-static int todo_do_loop;
+static LONG successes;       /* number of successful tests */
+static LONG failures;        /* number of failures */
+static LONG todo_successes;  /* number of successful tests inside todo block */
+static LONG todo_failures;   /* number of failures inside todo block */
+
+/* The following data must be kept track of on a per-thread basis */
+typedef struct
+{
+    const char* current_file;        /* file of current check */
+    int current_line;                /* line of current check */
+    int todo_level;                  /* current todo nesting level */
+    int todo_do_loop;
+} tls_data;
+static DWORD tls_index;
+
+static tls_data* get_tls_data(void)
+{
+    tls_data* data;
+    DWORD last_error;
+
+    last_error=GetLastError();
+    data=TlsGetValue(tls_index);
+    if (!data)
+    {
+        data=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(tls_data));
+        TlsSetValue(tls_index,data);
+    }
+    SetLastError(last_error);
+    return data;
+}
 
 /*
  * Checks condition.
@@ -65,13 +85,14 @@ static int todo_do_loop;
 int winetest_ok( int condition, const char *msg, ... )
 {
     va_list valist;
+    tls_data* data=get_tls_data();
 
-    if (todo_level)
+    if (data->todo_level)
     {
         if (condition)
         {
             fprintf( stderr, "%s:%d: Test succeeded inside todo block",
-                     current_file, current_line );
+                     data->current_file, data->current_line );
             if (msg && msg[0])
             {
                 va_start(valist, msg);
@@ -80,17 +101,17 @@ int winetest_ok( int condition, const char *msg, ... )
                 va_end(valist);
             }
             fputc( '\n', stderr );
-            todo_failures++;
+            InterlockedIncrement(&todo_failures);
             return 0;
         }
-        else todo_successes++;
+        else InterlockedIncrement(&todo_successes);
     }
     else
     {
         if (!condition)
         {
             fprintf( stderr, "%s:%d: Test failed",
-                     current_file, current_line );
+                     data->current_file, data->current_line );
             if (msg && msg[0])
             {
                 va_start(valist, msg);
@@ -99,27 +120,30 @@ int winetest_ok( int condition, const char *msg, ... )
                 va_end(valist);
             }
             fputc( '\n', stderr );
-            failures++;
+            InterlockedIncrement(&failures);
             return 0;
         }
-        else successes++;
+        else InterlockedIncrement(&successes);
     }
     return 1;
 }
 
 winetest_ok_funcptr winetest_set_ok_location( const char* file, int line )
 {
-    current_file=file;
-    current_line=line;
+    tls_data* data=get_tls_data();
+    data->current_file=file;
+    data->current_line=line;
     return &winetest_ok;
 }
 
 void winetest_trace( const char *msg, ... )
 {
     va_list valist;
+    tls_data* data=get_tls_data();
 
     if (winetest_debug > 0)
     {
+        fprintf( stderr, "%s:%d:", data->current_file, data->current_line );
         va_start(valist, msg);
         vfprintf(stderr, msg, valist);
         va_end(valist);
@@ -128,29 +152,35 @@ void winetest_trace( const char *msg, ... )
 
 winetest_trace_funcptr winetest_set_trace_location( const char* file, int line )
 {
-    current_file=file;
-    current_line=line;
+    tls_data* data=get_tls_data();
+    data->current_file=file;
+    data->current_line=line;
     return &winetest_trace;
 }
 
 void winetest_start_todo( const char* platform )
 {
+    tls_data* data=get_tls_data();
     if (strcmp(winetest_platform,platform)==0)
-        todo_level++;
-    todo_do_loop=1;
+        data->todo_level++;
+    data->todo_do_loop=1;
 }
 
 int winetest_loop_todo(void)
 {
-    int do_loop=todo_do_loop;
-    todo_do_loop=0;
+    tls_data* data=get_tls_data();
+    int do_loop=data->todo_do_loop;
+    data->todo_do_loop=0;
     return do_loop;
 }
 
 void winetest_end_todo( const char* platform )
 {
     if (strcmp(winetest_platform,platform)==0)
-        todo_level--;
+    {
+        tls_data* data=get_tls_data();
+        data->todo_level--;
+    }
 }
 
 /* Find a test by name */
@@ -185,13 +215,13 @@ static int run_test( const char *name )
         ExitProcess(1);
     }
     successes = failures = todo_successes = todo_failures = 0;
-    todo_level = 0;
+    tls_index=TlsAlloc();
     current_test = test;
     test->func();
 
     if (winetest_debug)
     {
-        fprintf( stderr, "%s: %d tests executed, %d marked as todo, %d %s.\n",
+        fprintf( stderr, "%s: %ld tests executed, %ld marked as todo, %ld %s.\n",
                  name, successes + failures + todo_successes + todo_failures,
                  todo_successes, failures + todo_failures,
                  (failures + todo_failures != 1) ? "failures" : "failure" );
