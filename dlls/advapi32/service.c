@@ -40,12 +40,19 @@ static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
                                    'L','O','C','K',0};
 static const WCHAR  szServiceShmemNameFmtW[] = {'A','D','V','A','P','I','_',
                                                 'S','E','B','_','%','s',0};
+static const WCHAR  szServiceDispEventNameFmtW[] = {'A','D','V','A','P','I','_',
+                                                    'D','I','S','P','_','%','s',0};
 
 struct SEB              /* service environment block */
 {                       /*   resides in service's shared memory object */
     DWORD argc;
     /* variable part of SEB contains service arguments */
 };
+
+static HANDLE dispatcher_event;  /* this is used by service thread to wakeup
+                                  * service control dispatcher when thread terminates */
+
+static struct service_thread_data *service;  /* FIXME: this should be a list */
 
 /******************************************************************************
  * SC_HANDLEs
@@ -280,7 +287,7 @@ static struct SEB* open_seb_shmem( LPWSTR service_name, HANDLE* hServiceShmem )
 /******************************************************************************
  * build_arg_vectors
  *
- * helper function for service control dispatcher
+ * helper function for start_new_service
  *
  * Allocate and initialize array of LPWSTRs to arguments in variable part
  * of service environment block.
@@ -315,6 +322,9 @@ struct service_thread_data
     LPSERVICE_MAIN_FUNCTIONW service_main;
     DWORD argc;
     LPWSTR *argv;
+    HANDLE hServiceShmem;
+    struct SEB *seb;
+    HANDLE thread_handle;
 };
 
 static DWORD WINAPI service_thread( LPVOID arg )
@@ -322,25 +332,37 @@ static DWORD WINAPI service_thread( LPVOID arg )
     struct service_thread_data *data = arg;
 
     data->service_main( data->argc, data->argv );
+    SetEvent( dispatcher_event );
     return 0;
 }
 
 /******************************************************************************
- * service_ctrl_dispatcher
+ * dispose_service_thread_data
  *
- * helper function for StartServiceCtrlDispatcherA/W
+ * helper function for service control dispatcher
  */
-static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii )
+static void dispose_service_thread_data( struct service_thread_data* thread_data )
 {
-    HANDLE hServiceShmem = NULL;
-    struct SEB *seb = NULL;
+    if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
+    if( thread_data->seb ) UnmapViewOfFile( thread_data->seb );
+    if( thread_data->hServiceShmem ) CloseHandle( thread_data->hServiceShmem );
+    HeapFree( GetProcessHeap(), 0, thread_data );
+}
+
+/******************************************************************************
+ * start_new_service
+ *
+ * helper function for service control dispatcher
+ */
+static struct service_thread_data*
+start_new_service( LPSERVICE_MAIN_FUNCTIONW service_main, BOOL ascii )
+{
     struct service_thread_data *thread_data;
     unsigned int i;
-    HANDLE thread;
 
     thread_data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct service_thread_data) );
     if( NULL == thread_data )
-        return FALSE;
+        return NULL;
 
     if( ! read_scm_lock_data( thread_data->service_name ) )
     {
@@ -350,21 +372,21 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
            submitted against revision 1.45 and so preserved here.
          */
         FIXME("should fail with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT\n");
-        servent->lpServiceProc( 0, NULL );
+        service_main( 0, NULL );
         HeapFree( GetProcessHeap(), 0, thread_data );
-        return TRUE;
+        return NULL;
     }
 
-    seb = open_seb_shmem( thread_data->service_name, &hServiceShmem );
-    if( NULL == seb )
+    thread_data->seb = open_seb_shmem( thread_data->service_name, &thread_data->hServiceShmem );
+    if( NULL == thread_data->seb )
         goto error;
 
-    thread_data->argv = build_arg_vectors( seb );
+    thread_data->argv = build_arg_vectors( thread_data->seb );
     if( NULL == thread_data->argv )
         goto error;
 
     thread_data->argv[0] = thread_data->service_name;
-    thread_data->argc = seb->argc + 1;
+    thread_data->argc = thread_data->seb->argc + 1;
 
     if( ascii )
     {
@@ -388,28 +410,79 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
         }
     }
 
-    /* start the service thread */
-    thread_data->service_main = servent->lpServiceProc;
-    thread = CreateThread( NULL, 0, service_thread, thread_data, 0, NULL );
-    if( NULL == thread )
-        goto error;
-
-    /* FIXME: dispatch control requests */
-    WaitForSingleObject( thread, INFINITE );
-    CloseHandle( thread );
-
-    HeapFree( GetProcessHeap(), 0, thread_data->argv );
-    HeapFree( GetProcessHeap(), 0, thread_data );
-    UnmapViewOfFile( seb );
-    CloseHandle( hServiceShmem );
-    return TRUE;
+    /* create service thread in suspended state
+     * to avoid race while caller handles return value */
+    thread_data->service_main = service_main;
+    thread_data->thread_handle = CreateThread( NULL, 0, service_thread,
+                                               thread_data, CREATE_SUSPENDED, NULL );
+    if( thread_data->thread_handle )
+        return thread_data;
 
 error:
-    if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
-    if( seb ) UnmapViewOfFile( seb );
-    if( hServiceShmem ) CloseHandle( hServiceShmem );
-    HeapFree( GetProcessHeap(), 0, thread_data );
+    dispose_service_thread_data( thread_data );
     return FALSE;
+}
+
+/******************************************************************************
+ * service_ctrl_dispatcher
+ */
+static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii )
+{
+    WCHAR object_name[ MAX_PATH ];
+
+    /* FIXME: if shared service, find entry by service name */
+
+    /* FIXME: move this into dispatcher loop */
+    service = start_new_service( servent->lpServiceProc, ascii );
+    if( NULL == service )
+        return FALSE;
+
+    ResumeThread( service->thread_handle );
+
+    /* create dispatcher event object */
+    /* FIXME: object_name should be based on executable image path because
+     * this object is common for all services in the process */
+    snprintfW( object_name, MAX_PATH, szServiceDispEventNameFmtW, service->service_name );
+    dispatcher_event = CreateEventW( NULL, FALSE, FALSE, object_name );
+    if( NULL == dispatcher_event )
+    {
+        dispose_service_thread_data( service );
+        return FALSE;
+    }
+
+    if( ERROR_ALREADY_EXISTS == GetLastError() )
+    {
+        SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
+        CloseHandle( dispatcher_event );
+        return FALSE;
+    }
+
+    /* dispatcher loop */
+    for(;;)
+    {
+        DWORD ret;
+
+        WaitForSingleObject( dispatcher_event, INFINITE );
+
+        /* at first, look for terminated service thread
+         * FIXME: threads, if shared service */
+        if( !GetExitCodeThread( service->thread_handle, &ret ) )
+            ERR("Couldn't get thread exit code\n");
+        else if( ret != STILL_ACTIVE )
+        {
+            CloseHandle( service->thread_handle );
+            dispose_service_thread_data( service );
+            break;
+        }
+
+        /* FIXME: look for control requests */
+
+        /* FIXME: if shared service, check SCM lock object;
+         * if exists, a new service should be started */
+    }
+
+    CloseHandle( dispatcher_event );
+    return TRUE;
 }
 
 /******************************************************************************
