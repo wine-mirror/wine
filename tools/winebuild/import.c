@@ -899,8 +899,8 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
 #elif defined(__powerpc__)
 # if defined(__APPLE__)
-/* On darwin an extra 24 bytes must be allowed for the linkage area */
-#  define extra_stack_storage    24
+/* On darwin an extra 56 bytes must be allowed for the linkage area+param area */
+#  define extra_stack_storage    56
 # else
 #  define extra_stack_storage    0
 # endif
@@ -973,11 +973,27 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
             fprintf( outfile, "    \"\\tb,a __wine_delay_load_asm\\n\"\n" );
 #elif defined(__powerpc__)
-            /* g0 is a function scratch register or so I understand. */
-            /* First load the upper half-word, and then the lower part */
-            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[0], idx);
-            fprintf( outfile, "    \"\\tli %s, %d\\n\"\n", ppc_reg[0], j);
+#ifdef __APPLE__
+            /* On Darwin we can use r0 and r2 */
+            /* Upper part in r2 */
+            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[2], idx);
+            /* Lower part + r2 -> r0, Note we can't use r0 directly */
+            fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[0], ppc_reg[2], j);
             fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+#else /* __APPLE__ */
+            /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
+            /* Save r13 on the stack */
+            fprintf( outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+            fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[13], ppc_reg[1]);
+            /* Upper part in r13 */
+            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[13], idx);
+            /* Lower part + r13 -> r0, Note we can't use r0 directly */
+            fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[0], ppc_reg[13], j);
+            /* Restore r13 */
+            fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[13], ppc_reg[1]);
+            fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+            fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+#endif /* __APPLE__ */
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
