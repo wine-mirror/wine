@@ -122,3 +122,9 @@
 
 /* Define if we have CUPS */
 #undef HAVE_CUPS
+
+/* Define if we have 64 bit file offsets */
+#undef HAVE_OFF64_T
+
+/* Define if we have struct stat64 */
+#undef HAVE_STRUCT_STAT64

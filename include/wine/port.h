@@ -6,9 +6,10 @@
 #ifndef __WINE_WINE_PORT_H
 #define __WINE_WINE_PORT_H
 
+#define _LARGEFILE64_SOURCE	/* for glibc 64 bit file functions */
+
 #include "config.h"
 #include "winnt.h"
-
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -130,6 +131,57 @@ int lstat(const char *file_name, struct stat *buf);
 #ifndef S_ISLNK
 #define S_ISLNK(mod) (0)
 #endif /* S_ISLNK */
+
+#ifndef HAVE_OFF64_T
+# if SIZEOF_LONG_LONG > 0 
+typedef long long off64_t;
+# else
+typedef long off64_t;
+# endif
+#endif
+
+#ifndef HAVE_STRUCT_STAT64
+/* This does not convert all struct members to 64bit, only size. */
+struct stat64 {
+    dev_t         st_dev;      /* device */
+    ino_t         st_ino;      /* inode */
+    mode_t        st_mode;     /* protection */
+    nlink_t       st_nlink;    /* number of hard links */
+    uid_t         st_uid;      /* user ID of owner */
+    gid_t         st_gid;      /* group ID of owner */
+    dev_t         st_rdev;     /* device type (if inode device) */
+    off64_t       st_size;     /* total size, in bytes */
+    unsigned long st_blksize;  /* blocksize for filesystem I/O */
+    unsigned long st_blocks;   /* number of blocks allocated */
+    time_t        st_atime;    /* time of last access */
+    time_t        st_mtime;    /* time of last modification */
+    time_t        st_ctime;    /* time of last change */
+};
+#endif
+
+#ifndef HAVE_LSEEK64
+extern off64_t lseek64(int fildes, off64_t offset, int whence);
+#endif
+
+#ifndef HAVE_STAT64
+extern int stat64(const char *file_name, struct stat64 *buf);
+#endif
+
+#ifndef HAVE_LSTAT64
+extern int lstat64(const char *file_name, struct stat64 *buf);
+#endif
+
+#ifndef HAVE_FSTAT64
+extern int fstat64(int fd, struct stat64 *buf);
+#endif
+
+#ifndef HAVE_FTRUNCATE64
+extern int ftruncate64(int fd, off64_t offset);
+#endif
+
+#ifndef O_LARGEFILE
+# define O_LARGEFILE 0
+#endif
 
 extern void *wine_dlopen( const char *filename, int flag, char *error, int errorsize );
 extern void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize );

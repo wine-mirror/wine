@@ -12,7 +12,6 @@
 # include <sys/file.h>
 #endif
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>

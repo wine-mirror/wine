@@ -21,7 +21,6 @@ asm(".org 0x110000");
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <sys/stat.h>
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif

@@ -22,7 +22,6 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
-#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 #ifdef HAVE_NETINET_IN_SYSTM_H

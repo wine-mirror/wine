@@ -10,6 +10,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -36,7 +37,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/port.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -491,7 +491,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
  *
  * Fill a file information from a struct stat.
  */
-static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
+static void FILE_FillInfo( struct stat64 *st, BY_HANDLE_FILE_INFORMATION *info )
 {
     if (S_ISDIR(st->st_mode))
         info->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
@@ -506,7 +506,11 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
 
     info->dwVolumeSerialNumber = 0;  /* FIXME */
     info->nFileSizeHigh = 0;
-    info->nFileSizeLow  = S_ISDIR(st->st_mode) ? 0 : st->st_size;
+    info->nFileSizeLow  = 0;
+    if (!S_ISDIR(st->st_mode)) {
+	info->nFileSizeHigh = st->st_size >> 32;
+	info->nFileSizeLow  = st->st_size & 0xffffffff;
+    }
     info->nNumberOfLinks = st->st_nlink;
     info->nFileIndexHigh = 0;
     info->nFileIndexLow  = st->st_ino;
@@ -520,9 +524,9 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
  */
 BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
-    struct stat st;
+    struct stat64 st;
 
-    if (lstat( unixName, &st ) == -1)
+    if (lstat64( unixName, &st ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
@@ -532,7 +536,7 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
     {
         /* do a "real" stat to find out
 	   about the type of the symlink destination */
-        if (stat( unixName, &st ) == -1)
+        if (stat64( unixName, &st ) == -1)
         {
             FILE_SetDosError();
             return FALSE;
@@ -1644,17 +1648,8 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 {
     DWORD ret = 0xffffffff;
 
-    if (highword &&
-        ((distance >= 0 && *highword != 0) || (distance < 0 && *highword != -1)))
-    {
-        FIXME("64-bit offsets not supported yet\n"
-              "SetFilePointer(%08x,%08lx,%08lx,%08lx)\n",
-              hFile,distance,*highword,method);
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return ret;
-    }
-    TRACE("handle %d offset %ld origin %ld\n",
-          hFile, distance, method );
+    TRACE("handle %d offset %ld high %ld origin %ld\n",
+          hFile, distance, highword?*highword:0, method );
 
     SERVER_START_REQ( set_file_pointer )
     {
@@ -2015,7 +2010,10 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
 {
     DOS_FULL_NAME full_name1, full_name2;
-    struct stat fstat;
+    /* Even though we do not need the size, stat will fail for large files, 
+     * so we need to use stat64 here. */
+    struct stat64 fstat;
+
 
     TRACE("(%s,%s)\n", fn1, fn2 );
 
@@ -2035,7 +2033,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     }
       else return TRUE;
     else /*copy */ {
-      if (stat(  full_name1.long_name, &fstat ))
+      if (stat64(  full_name1.long_name, &fstat ))
 	{
 	  WARN("Invalid source file %s\n",
 			full_name1.long_name);

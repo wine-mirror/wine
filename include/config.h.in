@@ -154,6 +154,12 @@
 /* Define if we have CUPS */
 #undef HAVE_CUPS
 
+/* Define if we have 64 bit file offsets */
+#undef HAVE_OFF64_T
+
+/* Define if we have struct stat64 */
+#undef HAVE_STRUCT_STAT64
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
@@ -180,6 +186,12 @@
 
 /* Define if you have the fpclass function.  */
 #undef HAVE_FPCLASS
+
+/* Define if you have the fstat64 function.  */
+#undef HAVE_FSTAT64
+
+/* Define if you have the ftruncate64 function.  */
+#undef HAVE_FTRUNCATE64
 
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
@@ -214,8 +226,14 @@
 /* Define if you have the iswalnum function.  */
 #undef HAVE_ISWALNUM
 
+/* Define if you have the lseek64 function.  */
+#undef HAVE_LSEEK64
+
 /* Define if you have the lstat function.  */
 #undef HAVE_LSTAT
+
+/* Define if you have the lstat64 function.  */
+#undef HAVE_LSTAT64
 
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
@@ -240,6 +258,9 @@
 
 /* Define if you have the sigaltstack function.  */
 #undef HAVE_SIGALTSTACK
+
+/* Define if you have the stat64 function.  */
+#undef HAVE_STAT64
 
 /* Define if you have the statfs function.  */
 #undef HAVE_STATFS

@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <errno.h>
 #ifdef HAVE_SYS_ERRNO_H
@@ -56,7 +57,7 @@ BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
  */
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
-    struct stat buf;
+    struct stat64 buf;
     DOS_FULL_NAME full_name;
 
     if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
@@ -69,7 +70,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
         FIXME("(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
 	      lpFileName,attributes);
     }
-    if(stat(full_name.long_name,&buf)==-1)
+    if(stat64(full_name.long_name,&buf)==-1)
     {
         FILE_SetDosError();
         return FALSE;

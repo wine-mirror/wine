@@ -8,7 +8,6 @@
 #include "config.h"
 
 #include <string.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

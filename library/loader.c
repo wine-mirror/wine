@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -18,7 +19,6 @@
 
 #include "winnt.h"
 #include "wine/library.h"
-#include "wine/port.h"
 
 #define MAX_DLLS 100
 

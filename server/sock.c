@@ -18,7 +18,6 @@
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>
 #endif
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H

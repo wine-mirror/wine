@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #ifdef __BEOS__
 #include <be/kernel/fs_info.h>
@@ -43,7 +44,6 @@
 # include <dlfcn.h>
 #endif
 
-#include "wine/port.h"
 
 /***********************************************************************
  *		usleep
@@ -389,7 +389,93 @@ int lstat(const char *file_name, struct stat *buf)
 }
 #endif /* HAVE_LSTAT */
 
+static void
+_convert_stat_stat64(struct stat64 *stto,struct stat *stfrom)
+{
+    stto->st_dev     = stfrom->st_dev;
+    stto->st_ino     = stfrom->st_ino;
+    stto->st_mode    = stfrom->st_mode;
+    stto->st_nlink   = stfrom->st_nlink;
+    stto->st_uid     = stfrom->st_uid;
+    stto->st_gid     = stfrom->st_gid;
+    stto->st_rdev    = stfrom->st_rdev;
+    stto->st_blksize = stfrom->st_blksize;
+    stto->st_blocks  = stfrom->st_blocks;
+    stto->st_atime   = stfrom->st_atime;
+    stto->st_mtime   = stfrom->st_mtime;
+    stto->st_ctime   = stfrom->st_ctime;
+    stto->st_size    = (off64_t)stfrom->st_size;
+}
 
+/***********************************************************************
+ *		stat64
+ */
+#ifndef HAVE_STAT64
+int stat64(const char *file_name, struct stat64 *buf)
+{
+    struct stat stbuf;
+    int res = stat(file_name,&stbuf);
+    _convert_stat_stat64(buf,&stbuf);
+    return res;
+}
+#endif /* HAVE_STAT64 */
+
+/***********************************************************************
+ *		lstat64
+ */
+#ifndef HAVE_LSTAT64
+int lstat64(const char *file_name, struct stat64 *buf)
+{
+    struct stat stbuf;
+    int res = lstat(file_name,&stbuf);
+    _convert_stat_stat64(buf,&stbuf);
+    return res;
+}
+#endif /* HAVE_LSTAT64 */
+
+/***********************************************************************
+ *		fstat64
+ */
+#ifndef HAVE_FSTAT64
+int fstat64(int fd, struct stat64 *buf)
+{
+    struct stat stbuf;
+    int res = fstat(fd,&stbuf);
+    _convert_stat_stat64(buf,&stbuf);
+    return res;
+}
+#endif /* HAVE_FSTAT */
+
+/***********************************************************************
+ *		lseek64
+ */
+#ifndef HAVE_LSEEK64
+off64_t lseek64(int fd, off64_t where, int whence)
+{
+    off_t res;
+    if ((where >= 0x8000000LL)  || ( where <= -0x7fffffffLL)) {
+	errno = EFBIG; /* FIXME: hack */
+	return -1;
+    }
+
+    res = lseek(fd,(off_t)where,whence);
+    return (off64_t)res;
+}
+#endif /* HAVE_LSEEK64 */
+
+/***********************************************************************
+ *		ftruncate64
+ */
+#ifndef HAVE_FTRUNCATE64
+int ftruncate64(int fd, off64_t where)
+{
+    if ((where >= 0x8000000LL)  || ( where <= -0x7fffffffLL)) {
+	errno = EFBIG; /* FIXME: hack */
+	return -1;
+    }
+    return ftruncate(fd,(off_t)where);
+}
+#endif /* HAVE_LSEEK64 */
 /***********************************************************************
  *		getrlimit
  */

@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -152,7 +153,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     }
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
-    if ((fd = open( name, flags | O_NONBLOCK,
+    if ((fd = open( name, flags | O_NONBLOCK | O_LARGEFILE,
                     (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666 )) == -1)
         goto file_error;
     /* refuse to open a directory */
@@ -161,7 +162,7 @@ static struct file *create_file( const char *nameptr, size_t len, unsigned int a
     {
         set_error( STATUS_ACCESS_DENIED );
         goto error;
-    }            
+    }
 
     if (!(file = create_file_for_fd( fd, access, sharing, attrs )))
     {
@@ -258,11 +259,11 @@ static int file_flush( struct object *obj )
 
 static int file_get_info( struct object *obj, struct get_file_info_request *req )
 {
-    struct stat st;
+    struct stat64 st;
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (fstat( file->obj.fd, &st ) == -1)
+    if (fstat64( file->obj.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
@@ -275,8 +276,16 @@ static int file_get_info( struct object *obj, struct get_file_info_request *req 
     if (!(st.st_mode & S_IWUSR)) req->attr |= FILE_ATTRIBUTE_READONLY;
     req->access_time = st.st_atime;
     req->write_time  = st.st_mtime;
-    req->size_high   = 0;
-    req->size_low    = S_ISDIR(st.st_mode) ? 0 : st.st_size;
+    if (S_ISDIR(st.st_mode))
+    {
+        req->size_high = 0;
+        req->size_low  = 0;
+    }
+    else
+    {
+        req->size_high = st.st_size >> 32;
+        req->size_low  = st.st_size & 0xffffffff;
+    }
     req->links       = st.st_nlink;
     req->index_high  = st.st_dev;
     req->index_low   = st.st_ino;
@@ -331,21 +340,15 @@ struct file *get_file_obj( struct process *process, handle_t handle, unsigned in
     return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
-static int set_file_pointer( handle_t handle, int *low, int *high, int whence )
+static int set_file_pointer( handle_t handle, unsigned int *low, int *high, int whence )
 {
     struct file *file;
-    int result;
+    off64_t result,xto;
 
-    if ((*low >= 0 && *high != 0) || (*low < 0 && *high != -1))
-    {
-        fprintf( stderr, "set_file_pointer: offset > 2Gb not supported yet\n" );
-        set_error( STATUS_INVALID_PARAMETER );
-        return 0;
-    }
-
+    xto = *low+((off64_t)*high<<32);
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek( file->obj.fd, *low, whence )) == -1)
+    if ((result = lseek64(file->obj.fd,xto,whence))==-1)
     {
         /* Check for seek before start of file */
 
@@ -358,7 +361,8 @@ static int set_file_pointer( handle_t handle, int *low, int *high, int whence )
         release_object( file );
         return 0;
     }
-    *low = result;
+    *low  = result & 0xffffffff;
+    *high = result >> 32;
     release_object( file );
     return 1;
 }
@@ -366,12 +370,12 @@ static int set_file_pointer( handle_t handle, int *low, int *high, int whence )
 static int truncate_file( handle_t handle )
 {
     struct file *file;
-    int result;
+    off64_t result;
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
-    if (((result = lseek( file->obj.fd, 0, SEEK_CUR )) == -1) ||
-        (ftruncate( file->obj.fd, result ) == -1))
+    if (((result = lseek64( file->obj.fd, 0, SEEK_CUR )) == -1) ||
+        (ftruncate64( file->obj.fd, result ) == -1))
     {
         file_set_error();
         release_object( file );
@@ -384,20 +388,16 @@ static int truncate_file( handle_t handle )
 /* try to grow the file to the specified size */
 int grow_file( struct file *file, int size_high, int size_low )
 {
-    struct stat st;
+    struct stat64 st;
+    off64_t size = size_low + (((off64_t)size_high)<<32);
 
-    if (size_high)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return 0;
-    }
-    if (fstat( file->obj.fd, &st ) == -1)
+    if (fstat64( file->obj.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
-    if (st.st_size >= size_low) return 1;  /* already large enough */
-    if (ftruncate( file->obj.fd, size_low ) != -1) return 1;
+    if (st.st_size >= size) return 1;  /* already large enough */
+    if (ftruncate64( file->obj.fd, size ) != -1) return 1;
     file_set_error();
     return 0;
 }

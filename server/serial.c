@@ -20,7 +20,6 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>

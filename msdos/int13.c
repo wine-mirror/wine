@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #ifdef linux
-#include <linux/fd.h>
+# include <linux/fd.h>
 #endif
 #include "miscemu.h"
 /* #define DEBUG_INT */
