@@ -112,6 +112,7 @@ typedef struct
     LONG  dfBitsPointer;
     LONG  dfBitsOffset;
     CHAR  dfReserved;
+    /* Fields, introduced for Windows 3.x fonts */
     LONG  dfFlags;
     INT16 dfAspace;
     INT16 dfBspace;

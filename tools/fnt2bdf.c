@@ -14,28 +14,24 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "fnt2bdf.h"
 #include "neexe.h"
 #include "module.h"
-
-#define MAP_BEG 118
-
-extern char*   g_lpstrFileName;
-extern char*   g_lpstrCharSet;
 
 #define FILE_ERROR	0
 #define FILE_DLL	1
 #define FILE_FNT	2
 
 /* global options */
+
+int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
+int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer);
 
 char*	g_lpstrFileName = NULL;
 char*	g_lpstrCharSet = NULL;
@@ -63,7 +59,7 @@ void usage(void)
     exit(-1);
 }
 
-/* convert big-endian value to the local format */
+/* convert little-endian value to the local format */
 
 int return_data_value(enum data_types dtype, void * pChr)
 {
@@ -95,13 +91,13 @@ int   ret_val = 0;
 
 int make_bdf_filename(char* name, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
-int     l_nameoffset = return_data_value(dfLong, cpe_font_struct->hdr.dfFace);
+long	l_nameoffset = return_data_value(dfLong, &cpe_font_struct->hdr.fi.dfFace);
 char*   lpChar;
 
   if( !g_lpstrFileName )
   {
     if( !l_nameoffset || 
-         l_nameoffset > return_data_value(dfLong, cpe_font_struct->hdr.dfSize) + 1 )
+         l_nameoffset > return_data_value(dfLong, &cpe_font_struct->hdr.dfSize) + 1 )
          return ERROR_DATA;
     lpChar =  (char*)(file_buffer + l_nameoffset);
   }
@@ -114,13 +110,13 @@ char*   lpChar;
 
   /* construct a filename from the font typeface, slant, weight, and size */
 
-  if( cpe_font_struct->hdr.dfItalic[0] ) strcat(name, "_i" );
+  if( cpe_font_struct->hdr.fi.dfItalic ) strcat(name, "_i" );
   else strcat(name, "_r" );
 
   lpChar = name + strlen( name );
-  sprintf(lpChar, "%d-%d.bdf", return_data_value(dfShort, cpe_font_struct->hdr.dfWeight),
-          (g_outputPoints) ? return_data_value(dfShort, cpe_font_struct->hdr.dfPoints)
-			   : return_data_value(dfShort, cpe_font_struct->hdr.dfPixHeight) );
+  sprintf(lpChar, "%d-%d.bdf", return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfWeight),
+          (g_outputPoints) ? return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints)
+			   : return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPixHeight) );
   return 0;
 }
 
@@ -135,18 +131,23 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 
   /* check font header */
 
-  t = return_data_value(dfShort, cpe_font_struct.hdr.dfVersion);
+  t = return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion);
   if( t != 0x300 && t != 0x200) return ERROR_VERSION;
 
-  t = return_data_value(dfLong, cpe_font_struct.hdr.dfSize);
+  t = return_data_value(dfLong, &cpe_font_struct.hdr.dfSize);
   if( t > length ) return ERROR_SIZE;
   else
   {    	
     /* set up the charWidth/charOffset  structure pairs (dfCharTable)... */
 
-    int l_fchar = return_data_value(dfChar, cpe_font_struct.hdr.dfFirstChar),
-        l_lchar = return_data_value(dfChar, cpe_font_struct.hdr.dfLastChar); 
-    int l_len   = l_lchar - l_fchar + 1, l_ptr = MAP_BEG;
+    int l_fchar = return_data_value(dfChar, &cpe_font_struct.hdr.fi.dfFirstChar),
+	l_lchar = return_data_value(dfChar, &cpe_font_struct.hdr.fi.dfLastChar); 
+    int l_len   = l_lchar - l_fchar + 1;
+    int l_ptr = sizeof(fnt_hdrS);
+
+    /* some fields were introduced for Windows 3.x fonts */
+    if( return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion) == 0x200 )
+	l_ptr -= 30;
 
     /* malloc size = (# chars) * sizeof(WinCharS) */
 
@@ -160,7 +161,7 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 	l_ptr += 2;	/* bump by sizeof(short) */
 
 
-	if( return_data_value(dfShort, cpe_font_struct.hdr.dfVersion) == 0x200) {
+	if( return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion) == 0x200) {
 	    cpe_font_struct.dfCharTable[ic].charOffset = 
 			return_data_value(dfShort, &file_buffer[l_ptr]);
 	    l_ptr += 2;	/* bump by sizeof(long) */
@@ -181,12 +182,12 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
   FILE*   fp;
   int	  ic;
-  int     l_fchar = return_data_value(dfChar, cpe_font_struct->hdr.dfFirstChar), 
-          l_lchar = return_data_value(dfChar, cpe_font_struct->hdr.dfLastChar); 
+  int	  l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar), 
+	  l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar); 
 
   int     l_len = l_lchar-l_fchar + 1,
-          l_hgt = return_data_value(dfChar, cpe_font_struct->hdr.dfPixHeight); 
-  int	  l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
+	  l_hgt = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfPixHeight); 
+  int	  l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
   char    l_filename[256];
 
     if( (ic = make_bdf_filename(l_filename, cpe_font_struct, file_buffer)) )
@@ -288,23 +289,23 @@ return 0;
 
 int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
-int     l_fchar = return_data_value(dfChar, cpe_font_struct->hdr.dfFirstChar), 
-        l_lchar = return_data_value(dfChar, cpe_font_struct->hdr.dfLastChar);
+int	l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar), 
+	l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar);
 int     l_len = l_lchar - l_fchar + 1;
-int     l_nameoffset = return_data_value(dfLong, cpe_font_struct->hdr.dfFace);
-int 	l_cellheight = return_data_value(dfShort, cpe_font_struct->hdr.dfPixHeight);
-int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
+long	l_nameoffset = return_data_value(dfLong, &cpe_font_struct->hdr.fi.dfFace);
+int	l_cellheight = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPixHeight);
+int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
 
     fprintf(fs, "STARTFONT   2.1\n");
 
     /* Compose font name */
 
     if( l_nameoffset && 
-	l_nameoffset < return_data_value(dfLong, cpe_font_struct->hdr.dfSize) )
+	l_nameoffset < return_data_value(dfLong, &cpe_font_struct->hdr.dfSize) )
     {
       int     dpi, point_size;
       char*   lpFace = (char*)(file_buffer + l_nameoffset), *lpChar;
-      short   tmWeight = return_data_value(dfShort, cpe_font_struct->hdr.dfWeight);
+      short   tmWeight = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfWeight);
 
       while((lpChar = strchr(lpFace, '-')) ) 
 	    *lpChar = ' ';
@@ -323,19 +324,19 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 	  fputs("bold-", fs);
       else fputs("black-", fs);
 
-      if( cpe_font_struct->hdr.dfItalic[0] )	/* slant */
+      if( cpe_font_struct->hdr.fi.dfItalic )	/* slant */
 	  fputs("i-", fs);
       else fputs("r-", fs);
 
       /* style */
 
-      if( (cpe_font_struct->hdr.dfPitchAndFamily[0] & 0xF0) == FF_SWISS )
+      if( (cpe_font_struct->hdr.fi.dfPitchAndFamily & 0xF0) == FF_SWISS )
 	  fputs("normal-sans-", fs);
       else fputs("normal--", fs);	/* still can be -sans */
 
       /* y extents */
 
-      point_size = 10 * return_data_value(dfShort, cpe_font_struct->hdr.dfPoints );
+      point_size = 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints );
       dpi = (l_cellheight * 720) / point_size;
 
       fprintf(fs, "%d-%d-%d-%d-", l_cellheight, 10*l_cellheight, 72, 72);
@@ -343,18 +344,18 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
       /* spacing */
 
-      if( return_data_value(dfShort, cpe_font_struct->hdr.dfPixWidth) ) fputs("c-", fs);
+      if( return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPixWidth) ) fputs("c-", fs);
       else fputs("p-", fs);
 	
       /* average width */
 
-      fprintf( fs, "%d-", 10 * return_data_value(dfShort, cpe_font_struct->hdr.dfAvgWidth) );
+      fprintf( fs, "%d-", 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAvgWidth) );
 
       /* charset */
 
      if( g_lpstrCharSet ) fprintf(fs, "%s\n", g_lpstrCharSet);
      else
-      switch( cpe_font_struct->hdr.dfCharSet[0] )
+      switch( cpe_font_struct->hdr.fi.dfCharSet )
       {
 	/* Microsoft just had to invent its own charsets! */
 
@@ -380,12 +381,12 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
     fprintf(fs, "SIZE  %d  %d   %d\n",  
 	l_cellheight,
-	return_data_value(dfShort, cpe_font_struct->hdr.dfHorizRes),
-	return_data_value(dfShort, cpe_font_struct->hdr.dfVertRes));   /* dfVertRes[2] */
+	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
+	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfVertRes));   /* dfVertRes[2] */
 
     fprintf(fs, "FONTBOUNDINGBOX %d  %d  %d  %d\n",
-	return_data_value(dfShort, cpe_font_struct->hdr.dfMaxWidth),
-        return_data_value(dfChar, cpe_font_struct->hdr.dfPixHeight),
+	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfMaxWidth),
+	return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfPixHeight),
    	0, l_ascent - l_cellheight );
 
     fprintf(fs, "STARTPROPERTIES  4\n");
@@ -393,8 +394,8 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
     fprintf(fs, "FONT_ASCENT %d\n", l_ascent );                       /*  dfAscent[2] */
     fprintf(fs, "FONT_DESCENT %d\n", l_cellheight - l_ascent );
     fprintf(fs, "CAP_HEIGHT %d\n", l_ascent -
-                                   return_data_value(dfShort, cpe_font_struct->hdr.dfInternalLeading));
-    fprintf(fs, "DEFAULT_CHAR %d\n", return_data_value(dfShort, cpe_font_struct->hdr.dfDefaultChar));
+                                   return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfInternalLeading));
+    fprintf(fs, "DEFAULT_CHAR %d\n", return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfDefaultChar));
 
     fprintf(fs, "ENDPROPERTIES\n");
 
@@ -457,9 +458,9 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 {
   IMAGE_DOS_HEADER mz_header;
   IMAGE_OS2_HEADER ne_header;
-  short		     s, offset, size, retval;
+  long s, offset, size;
+  int retval;
 
- 
   lseek( fd, 0, SEEK_SET );
 
   if( read(fd, &mz_header, sizeof(mz_header)) != sizeof(mz_header) ) 
@@ -497,7 +498,7 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
   }
   else if( s == 0x300 || s == 0x200 )		/* maybe .fnt ? */
   {
-    size = return_data_value(dfLong, (char*)&mz_header+2);
+    size = return_data_value(dfLong, &((fnt_hdrS *)&mz_header)->dfSize);
 
     if( size != fsize ) return FILE_ERROR;
     offset  = 0;
@@ -550,6 +551,7 @@ int main(int argc, char **argv)
 		  {
 		    count = j;
 		    pFontStorage = (NE_NAMEINFO*)(pTInfo + 1);
+		    break; /* found one */
 		  }
 
 		  pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1) + j*sizeof(NE_NAMEINFO));
