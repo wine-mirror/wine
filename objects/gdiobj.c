@@ -1202,10 +1202,9 @@ static HGDIOBJ select_bitmap( DC *dc, HBITMAP handle )
         dc->totalExtent.top    = 0;
         dc->totalExtent.right  = bitmap->bitmap.bmWidth;
         dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
-        if (dc->hVisRgn)
-            SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
-        else
-            dc->hVisRgn = CreateRectRgn( 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight );
+        dc->flags &= ~DC_DIRTY;
+        SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
+        CLIPPING_UpdateGCRegion( dc );
 
         if (dc->bitsPerPixel != bitmap->bitmap.bmBitsPixel)
         {
