@@ -96,7 +96,8 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
     }
     else
     { /* get resource from (32 bits) own Wine resource; convert it to 16 */
-	HANDLE hResInfo, hDlgTmpl32;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
         HGLOBAL16 hGlobal16;

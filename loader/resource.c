@@ -48,10 +48,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 #define HRSRC_MAP_BLOCKSIZE 16
 
+/* handle conversions */
+#define HRSRC_32(h16)		((HRSRC)(ULONG_PTR)(h16))
+
 typedef struct _HRSRC_ELEM
 {
-    HANDLE hRsrc;
-    WORD     type;
+    HRSRC hRsrc;
+    WORD  type;
 } HRSRC_ELEM;
 
 typedef struct _HRSRC_MAP
@@ -64,7 +67,7 @@ typedef struct _HRSRC_MAP
 /**********************************************************************
  *          MapHRsrc32To16
  */
-static HRSRC MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
+static HRSRC MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     HRSRC_ELEM *newElem;
@@ -385,7 +388,7 @@ HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
  */
 HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    return RES_LoadResource( hModule, hRsrc, TRUE );
+    return RES_LoadResource( hModule, HRSRC_32(hRsrc), TRUE );
 }
 
 /**********************************************************************
@@ -477,7 +480,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
  */
 DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    return RES_SizeofResource( hModule, hRsrc, TRUE );
+    return RES_SizeofResource( hModule, HRSRC_32(hRsrc), TRUE );
 }
 
 /**********************************************************************

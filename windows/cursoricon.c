@@ -735,7 +735,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
                          BOOL fCursor, UINT loadflags )
 {
     HANDLE handle = 0, h = 0;
-    HANDLE hRsrc;
+    HRSRC hRsrc;
     CURSORICONDIR *dir;
     CURSORICONDIRENTRY *dirEntry;
     LPBYTE bits;
@@ -757,7 +757,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
     }
     else  /* Load from resource */
     {
-        HANDLE hGroupRsrc;
+	HRSRC hGroupRsrc;
         WORD wResId;
         DWORD dwBytesInRes;
 

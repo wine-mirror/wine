@@ -931,7 +931,7 @@ HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name,
                                     HWND owner, DLGPROC dlgProc,
                                     LPARAM param )
 {
-    HANDLE hrsrc = FindResourceA( hInst, name, RT_DIALOGA );
+    HRSRC hrsrc = FindResourceA( hInst, name, RT_DIALOGA );
     if (!hrsrc) return 0;
     return CreateDialogIndirectParamA( hInst,
                                          (LPVOID)LoadResource(hInst, hrsrc),
@@ -946,7 +946,7 @@ HWND WINAPI CreateDialogParamW( HINSTANCE hInst, LPCWSTR name,
                                     HWND owner, DLGPROC dlgProc,
                                     LPARAM param )
 {
-    HANDLE hrsrc = FindResourceW( hInst, name, RT_DIALOGW );
+    HRSRC hrsrc = FindResourceW( hInst, name, RT_DIALOGW );
     if (!hrsrc) return 0;
     return CreateDialogIndirectParamW( hInst,
                                          (LPVOID)LoadResource(hInst, hrsrc),
@@ -1100,7 +1100,7 @@ INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
-    HANDLE hrsrc = FindResourceA( hInst, name, RT_DIALOGA );
+    HRSRC hrsrc = FindResourceA( hInst, name, RT_DIALOGA );
     if (!hrsrc) return 0;
     hwnd = DIALOG_CreateIndirect( hInst, (LPVOID)LoadResource(hInst, hrsrc),
                                   owner, dlgProc, param, WIN_PROC_32A, TRUE );
@@ -1116,7 +1116,7 @@ INT WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
-    HANDLE hrsrc = FindResourceW( hInst, name, RT_DIALOGW );
+    HRSRC hrsrc = FindResourceW( hInst, name, RT_DIALOGW );
     if (!hrsrc) return 0;
     hwnd = DIALOG_CreateIndirect( hInst, (LPVOID)LoadResource(hInst, hrsrc),
                                   owner, dlgProc, param, WIN_PROC_32W, TRUE );

@@ -594,7 +594,8 @@ static BOOL CALLBACK VCP_UI_FileCopyDlgProc(HWND hWndDlg, UINT iMsg, WPARAM wPar
 
 BOOL VCP_UI_GetDialogTemplate(LPCVOID *template32)
 {
-    HANDLE hResInfo, hDlgTmpl32;
+    HRSRC hResInfo;
+    HGLOBAL hDlgTmpl32;
 
     if (!(hResInfo = FindResourceA(SETUPAPI_hInstance, MAKEINTRESOURCEA(COPYFILEDLGORD), RT_DIALOGA)))
 	return FALSE;

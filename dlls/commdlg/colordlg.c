@@ -1403,7 +1403,8 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     }
     else
     {
-	HANDLE hResInfo, hDlgTmpl32;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
 	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
@@ -1454,9 +1455,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
  *            ChooseColorW  (COMDLG32.@)
  */
 BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
-
 {
-
     HANDLE hDlgTmpl = 0;
     BOOL bRet = FALSE;
     LPCVOID template;
@@ -1474,7 +1473,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     }
     else if (lpChCol->Flags & CC_ENABLETEMPLATE)
     {
-        HANDLE hResInfo;
+	HRSRC hResInfo;
         if (!(hResInfo = FindResourceW(lpChCol->hInstance,
                                         lpChCol->lpTemplateName,
                                         RT_DIALOGW)))
@@ -1491,7 +1490,8 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     }
     else
     {
-	HANDLE hResInfo, hDlgTmpl;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl;
 	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);

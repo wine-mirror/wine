@@ -183,7 +183,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     }
     else
     {
-        HANDLE hResInfo, hDlgTmpl32;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
         if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
@@ -260,7 +261,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
   LPCVOID template;
-  HANDLE hResInfo, hDlgTmpl;
+  HRSRC hResInfo;
+  HGLOBAL hDlgTmpl;
 
   if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
   {

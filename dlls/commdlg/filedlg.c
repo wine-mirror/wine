@@ -151,7 +151,7 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
     }
     else if (ofnW->Flags & OFN_ENABLETEMPLATE)
     {
-	HANDLE hResInfo;
+	HRSRC hResInfo;
         if (lfs->ofnA)
 	    hResInfo = FindResourceA(lfs->ofnA->hInstance,
 				 lfs->ofnA->lpTemplateName,
@@ -173,7 +173,7 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
 	    return FALSE;
 	}
     } else { /* get it from internal Wine resource */
-	HANDLE hResInfo;
+	HRSRC hResInfo;
 	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
              lfs->open? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
 	{
@@ -225,7 +225,8 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
     }
     else
     { /* get resource from (32 bits) own Wine resource; convert it to 16 */
-	HANDLE hResInfo, hDlgTmpl32;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
 

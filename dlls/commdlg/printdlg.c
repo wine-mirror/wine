@@ -2096,7 +2096,8 @@ BOOL WINAPI PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
  */
 static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
 {
-        HANDLE hResInfo, hDlgTmpl32;
+	HRSRC hResInfo;
+	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
         HGLOBAL16 hGlobal16;
@@ -2142,7 +2143,8 @@ static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
  */
 static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
 {
-    HGLOBAL hDlgTmpl, hResInfo;
+    HRSRC hResInfo;
+    HGLOBAL hDlgTmpl;
 
     if (lppd->Flags & PD_PRINTSETUP) {
 	if(lppd->Flags & PD_ENABLESETUPTEMPLATEHANDLE) {
@@ -2175,7 +2177,8 @@ static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
 
 static HGLOBAL PRINTDLG_GetDlgTemplateW(PRINTDLGW *lppd)
 {
-    HGLOBAL hDlgTmpl, hResInfo;
+    HRSRC hResInfo;
+    HGLOBAL hDlgTmpl;
     const WCHAR xpsetup[] = { 'P','R','I','N','T','3','2','_','S','E','T','U','P',0};
     const WCHAR xprint[] = { 'P','R','I','N','T','3','2',0};
 
@@ -2846,7 +2849,8 @@ typedef struct {
 
 static HGLOBAL PRINTDLG_GetPGSTemplateA(PAGESETUPDLGA *lppd)
 {
-    HGLOBAL hDlgTmpl, hResInfo;
+    HRSRC hResInfo;
+    HGLOBAL hDlgTmpl;
 
     if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATEHANDLE) {
 	hDlgTmpl = lppd->hPageSetupTemplate;
@@ -2863,7 +2867,8 @@ static HGLOBAL PRINTDLG_GetPGSTemplateA(PAGESETUPDLGA *lppd)
 
 static HGLOBAL PRINTDLG_GetPGSTemplateW(PAGESETUPDLGW *lppd)
 {
-    HGLOBAL hDlgTmpl, hResInfo;
+    HRSRC hResInfo;
+    HGLOBAL hDlgTmpl;
 
     if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATEHANDLE) {
 	hDlgTmpl = lppd->hPageSetupTemplate;
