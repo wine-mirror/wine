@@ -1160,6 +1160,7 @@ BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
 BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DeviceIoControl(HANDLE,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);
+BOOL        WINAPI DisconnectNamedPipe(HANDLE);
 BOOL        WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD,BOOL,DWORD);
 BOOL        WINAPI EscapeCommFunction(HANDLE,UINT);
