@@ -338,7 +338,7 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
        * However, under earlier systems, sa_len isn't present, so
        *  the size is just sizeof(struct ifreq)
        */
-#ifdef HAVE_SOCKADDR_SA_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #  ifndef max
 #   define max(a,b) ((a) > (b) ? (a) : (b))
 #  endif
@@ -346,7 +346,7 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
 sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 # else
 #  define ifreq_size(i) sizeof(struct ifreq)
-# endif /* defined(HAVE_SOCKADDR_SA_LEN) */
+# endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
 
       sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
       if (sd < 0) {

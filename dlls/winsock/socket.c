@@ -1150,7 +1150,7 @@ static int WS2_recv ( int fd, struct iovec* iov, int count,
 
     hdr.msg_iov = iov;
     hdr.msg_iovlen = count;
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     hdr.msg_accrights = NULL;
     hdr.msg_accrightslen = 0;
 #else
@@ -1259,7 +1259,7 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
 
     hdr.msg_iov = iov;
     hdr.msg_iovlen = count;
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     hdr.msg_accrights = NULL;
     hdr.msg_accrightslen = 0;
 #else

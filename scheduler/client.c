@@ -64,7 +64,7 @@
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
-#ifndef HAVE_MSGHDR_ACCRIGHTS
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
@@ -73,7 +73,7 @@ struct cmsg_fd
     int type;  /* SCM_RIGHTS */
     int fd;    /* fd to pass */
 };
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 static DWORD boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
@@ -238,7 +238,7 @@ unsigned int wine_server_call( void *req_ptr )
  */
 void wine_server_send_fd( int fd )
 {
-#ifndef HAVE_MSGHDR_ACCRIGHTS
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     struct cmsg_fd cmsg;
 #endif
     struct send_fd data;
@@ -254,10 +254,10 @@ void wine_server_send_fd( int fd )
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
 
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     msghdr.msg_accrights    = (void *)&fd;
     msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
+#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     cmsg.len   = sizeof(cmsg);
     cmsg.level = SOL_SOCKET;
     cmsg.type  = SCM_RIGHTS;
@@ -265,7 +265,7 @@ void wine_server_send_fd( int fd )
     msghdr.msg_control    = &cmsg;
     msghdr.msg_controllen = sizeof(cmsg);
     msghdr.msg_flags      = 0;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     data.tid = GetCurrentThreadId();
     data.fd  = fd;
@@ -291,13 +291,13 @@ static int receive_fd( obj_handle_t *handle )
     struct iovec vec;
     int ret, fd;
 
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     struct msghdr msghdr;
 
     fd = -1;
     msghdr.msg_accrights    = (void *)&fd;
     msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
+#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     struct msghdr msghdr;
     struct cmsg_fd cmsg;
 
@@ -308,7 +308,7 @@ static int receive_fd( obj_handle_t *handle )
     msghdr.msg_control    = &cmsg;
     msghdr.msg_controllen = sizeof(cmsg);
     msghdr.msg_flags      = 0;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
@@ -321,7 +321,7 @@ static int receive_fd( obj_handle_t *handle )
     {
         if ((ret = recvmsg( fd_socket, &msghdr, 0 )) > 0)
         {
-#ifndef HAVE_MSGHDR_ACCRIGHTS
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
             fd = cmsg.fd;
 #endif
             if (fd == -1) server_protocol_error( "no fd received for handle %d\n", *handle );
@@ -586,7 +586,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         addr.sun_family = AF_UNIX;
         strcpy( addr.sun_path, SOCKETNAME );
         slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
-#ifdef HAVE_SOCKADDR_SUN_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
         addr.sun_len = slen;
 #endif
         if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );

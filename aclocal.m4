@@ -50,16 +50,6 @@ then AC_DEFINE_UNQUOTED(AS_TR_CPP(SONAME_LIB$1),"$ac_cv_lib_soname_$1",
                         [Define to the soname of the lib$1 library.])dnl
 fi])
 
-dnl **** Check if a structure contains a specified member ****
-dnl
-dnl Usage: WINE_CHECK_STRUCT_MEMBER(struct,member,[includes,[action-if-found,[action-if-not-found]]])
-dnl
-AC_DEFUN([WINE_CHECK_STRUCT_MEMBER],
-[AC_CACHE_CHECK([for $2 in struct $1], ac_cv_c_$1_$2,
- AC_TRY_COMPILE([$3],[struct $1 s; s.$2 = 0],ac_cv_c_$1_$2="yes",ac_cv_c_$1_$2="no"))
-AS_IF([ test "x$ac_cv_c_$1_$2" = "xyes"],[$4],[$5])
-])
-
 dnl **** Check for reentrant libc ****
 dnl
 dnl Usage: WINE_CHECK_ERRNO(errno-name,[action-if-yes,[action-if-no]])

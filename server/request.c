@@ -113,7 +113,7 @@ static struct master_socket *master_socket;  /* the master socket object */
 /* socket communication static structures */
 static struct iovec myiovec;
 static struct msghdr msghdr;
-#ifndef HAVE_MSGHDR_ACCRIGHTS
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 struct cmsg_fd
 {
     int len;   /* sizeof structure */
@@ -122,7 +122,7 @@ struct cmsg_fd
     int fd;    /* fd to pass */
 };
 static struct cmsg_fd cmsg = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 /* complain about a protocol error and terminate the client connection */
 void fatal_protocol_error( struct thread *thread, const char *err, ... )
@@ -335,20 +335,20 @@ int receive_fd( struct process *process )
     struct send_fd data;
     int fd, ret;
 
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(int);
     msghdr.msg_accrights = (void *)&fd;
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
+#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     msghdr.msg_control    = &cmsg;
     msghdr.msg_controllen = sizeof(cmsg);
     cmsg.fd = -1;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     myiovec.iov_base = (void *)&data;
     myiovec.iov_len  = sizeof(data);
 
     ret = recvmsg( get_unix_fd( process->msg_fd ), &msghdr, 0 );
-#ifndef HAVE_MSGHDR_ACCRIGHTS
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     fd = cmsg.fd;
 #endif
 
@@ -405,14 +405,14 @@ int send_client_fd( struct process *process, int fd, obj_handle_t handle )
         fprintf( stderr, "%04x: *fd* %p -> %d\n",
                  current ? current->id : process->id, handle, fd );
 
-#ifdef HAVE_MSGHDR_ACCRIGHTS
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);
     msghdr.msg_accrights = (void *)&fd;
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
+#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     msghdr.msg_control    = &cmsg;
     msghdr.msg_controllen = sizeof(cmsg);
     cmsg.fd = fd;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     myiovec.iov_base = (void *)&handle;
     myiovec.iov_len  = sizeof(handle);
@@ -678,7 +678,7 @@ static void acquire_lock(void)
     addr.sun_family = AF_UNIX;
     strcpy( addr.sun_path, server_socket_name );
     slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
-#ifdef HAVE_SOCKADDR_SUN_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
     addr.sun_len = slen;
 #endif
     if (bind( fd, (struct sockaddr *)&addr, slen ) == -1)

@@ -63,7 +63,7 @@ typedef int ssize_t;
 
 #ifndef HAVE_STATFS
 # ifdef __BEOS__
-#  define STATFS_HAS_BFREE
+#  define HAVE_STRUCT_STATFS_F_BFREE
 struct statfs {
   long   f_bsize;  /* block_size */
   long   f_blocks; /* total_blocks */

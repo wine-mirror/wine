@@ -320,9 +320,6 @@
 /* Define to 1 if the system has the type `mode_t'. */
 #undef HAVE_MODE_T
 
-/* Define if struct msghdr contains msg_accrights */
-#undef HAVE_MSGHDR_ACCRIGHTS
-
 /* Define if you have NAS including devel headers */
 #undef HAVE_NAS
 
@@ -431,17 +428,14 @@
 /* Define to 1 if you have the `sigaltstack' function. */
 #undef HAVE_SIGALTSTACK
 
+/* Define to 1 if `si_fd' is member of `siginfo_t'. */
+#undef HAVE_SIGINFO_T_SI_FD
+
 /* Define to 1 if the system has the type `size_t'. */
 #undef HAVE_SIZE_T
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
-
-/* Define if struct sockaddr contains sa_len */
-#undef HAVE_SOCKADDR_SA_LEN
-
-/* Define if struct sockaddr_un contains sun_len */
-#undef HAVE_SOCKADDR_SUN_LEN
 
 /* Define to 1 if you have the <socket.h> header file. */
 #undef HAVE_SOCKET_H
@@ -475,6 +469,21 @@
 
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
+
+/* Define to 1 if `msg_accrights' is member of `struct msghdr'. */
+#undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+
+/* Define to 1 if `sa_len' is member of `struct sockaddr'. */
+#undef HAVE_STRUCT_SOCKADDR_SA_LEN
+
+/* Define to 1 if `sun_len' is member of `struct sockaddr_un'. */
+#undef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+
+/* Define to 1 if `f_bavail' is member of `struct statfs'. */
+#undef HAVE_STRUCT_STATFS_F_BAVAIL
+
+/* Define to 1 if `f_bfree' is member of `struct statfs'. */
+#undef HAVE_STRUCT_STATFS_F_BFREE
 
 /* Define to 1 if you have the <syscall.h> header file. */
 #undef HAVE_SYSCALL_H
@@ -750,12 +759,6 @@
 
 /* Define if the struct statfs is defined by <sys/vfs.h> */
 #undef STATFS_DEFINED_BY_SYS_VFS
-
-/* Define if the struct statfs has the member bavail */
-#undef STATFS_HAS_BAVAIL
-
-/* Define if the struct statfs has the member bfree */
-#undef STATFS_HAS_BFREE
 
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 #undef STAT_MACROS_BROKEN

@@ -1314,10 +1314,10 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
     }
 
     size->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bsize, info.f_blocks );
-#ifdef STATFS_HAS_BAVAIL
+#ifdef HAVE_STRUCT_STATFS_F_BAVAIL
     available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bavail, info.f_bsize );
 #else
-# ifdef STATFS_HAS_BFREE
+# ifdef HAVE_STRUCT_STATFS_F_BFREE
     available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bfree, info.f_bsize );
 # else
 #  error "statfs has no bfree/bavail member!"

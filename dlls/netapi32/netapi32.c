@@ -52,7 +52,7 @@
 # include <netinet/in.h>
 #endif
 
-#ifdef HAVE_SOCKADDR_SA_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #  ifndef max
 #   define max(a,b) ((a) > (b) ? (a) : (b))
 #  endif
@@ -60,7 +60,7 @@
 sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 # else
 #  define ifreq_size(i) sizeof(struct ifreq)
-# endif /* defined(HAVE_SOCKADDR_SA_LEN) */
+# endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 

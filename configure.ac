@@ -1294,7 +1294,8 @@ fi
 
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
-WINE_CHECK_STRUCT_MEMBER(statfs,f_bfree,
+dnl Check for statfs members
+AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail],,,
 [#include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -1309,53 +1310,20 @@ WINE_CHECK_STRUCT_MEMBER(statfs,f_bfree,
 #   include <sys/statfs.h>
 #  endif
 # endif
-#endif],
-    [AC_DEFINE(STATFS_HAS_BFREE, 1, [Define if the struct statfs has the member bfree])])
+#endif])
 
-WINE_CHECK_STRUCT_MEMBER(statfs,f_bavail,
-[#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef STATFS_DEFINED_BY_SYS_MOUNT
-# include <sys/mount.h>
-#else
-# ifdef STATFS_DEFINED_BY_SYS_VFS
-#  include <sys/vfs.h>
-# else
-#  ifdef STATFS_DEFINED_BY_SYS_STATFS
-#   include <sys/statfs.h>
-#  endif
-# endif
-#endif],
-    [AC_DEFINE(STATFS_HAS_BAVAIL, 1, [Define if the struct statfs has the member bavail])])
-
-dnl Check for file descriptor passing with msg_accrights
-WINE_CHECK_STRUCT_MEMBER(msghdr,msg_accrights,
-[#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif],
-    [AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS, 1, [Define if struct msghdr contains msg_accrights])])
-
-dnl Check for the sa_len member in struct sockaddr
-WINE_CHECK_STRUCT_MEMBER(sockaddr,sa_len,
-[#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif],
-    [AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if struct sockaddr contains sa_len])])
-
-dnl Check for the sun_len member in struct sockaddr_un
-WINE_CHECK_STRUCT_MEMBER(sockaddr_un,sun_len,
+dnl Check for socket structure members
+AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct sockaddr_un.sun_len],,,
 [#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
-#endif],
-    [AC_DEFINE(HAVE_SOCKADDR_SUN_LEN, 1, [Define if struct sockaddr_un contains sun_len])])
+#endif])
+
+dnl Check for siginfo_t members
+AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 
 dnl *** check for the need to define platform-specific symbols
 

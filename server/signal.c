@@ -198,7 +198,9 @@ static void do_sigchld()
 static void do_sigio( int signum, siginfo_t *si, void *x )
 {
     do_signal( handler_sigio );
+#ifdef HAVE_SIGINFO_T_SI_FD
     do_change_notify( si->si_fd );
+#endif
 }
 
 void init_signals(void)

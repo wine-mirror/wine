@@ -15324,9 +15324,9 @@ _ACEOF
 fi
 
 
-echo "$as_me:$LINENO: checking for f_bfree in struct statfs" >&5
-echo $ECHO_N "checking for f_bfree in struct statfs... $ECHO_C" >&6
-if test "${ac_cv_c_statfs_f_bfree+set}" = set; then
+echo "$as_me:$LINENO: checking for struct statfs.f_bfree" >&5
+echo $ECHO_N "checking for struct statfs.f_bfree... $ECHO_C" >&6
+if test "${ac_cv_member_struct_statfs_f_bfree+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -15351,10 +15351,13 @@ cat >>conftest.$ac_ext <<_ACEOF
 #  endif
 # endif
 #endif
+
 int
 main ()
 {
-struct statfs s; s.f_bfree = 0
+static struct statfs ac_aggr;
+if (ac_aggr.f_bfree)
+return 0;
   ;
   return 0;
 }
@@ -15371,30 +15374,80 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_statfs_f_bfree="yes"
+  ac_cv_member_struct_statfs_f_bfree=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_statfs_f_bfree="no"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+# include <sys/mount.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_VFS
+#  include <sys/vfs.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
+#endif
+
+int
+main ()
+{
+static struct statfs ac_aggr;
+if (sizeof ac_aggr.f_bfree)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_statfs_f_bfree=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_statfs_f_bfree=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_c_statfs_f_bfree" >&5
-echo "${ECHO_T}$ac_cv_c_statfs_f_bfree" >&6
-if  test "x$ac_cv_c_statfs_f_bfree" = "xyes"; then
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_statfs_f_bfree" >&5
+echo "${ECHO_T}$ac_cv_member_struct_statfs_f_bfree" >&6
+if test $ac_cv_member_struct_statfs_f_bfree = yes; then
 
-cat >>confdefs.h <<\_ACEOF
-#define STATFS_HAS_BFREE 1
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STATFS_F_BFREE 1
 _ACEOF
 
+
 fi
-
-
-
-echo "$as_me:$LINENO: checking for f_bavail in struct statfs" >&5
-echo $ECHO_N "checking for f_bavail in struct statfs... $ECHO_C" >&6
-if test "${ac_cv_c_statfs_f_bavail+set}" = set; then
+echo "$as_me:$LINENO: checking for struct statfs.f_bavail" >&5
+echo $ECHO_N "checking for struct statfs.f_bavail... $ECHO_C" >&6
+if test "${ac_cv_member_struct_statfs_f_bavail+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -15419,10 +15472,13 @@ cat >>conftest.$ac_ext <<_ACEOF
 #  endif
 # endif
 #endif
+
 int
 main ()
 {
-struct statfs s; s.f_bavail = 0
+static struct statfs ac_aggr;
+if (ac_aggr.f_bavail)
+return 0;
   ;
   return 0;
 }
@@ -15439,33 +15495,12 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_statfs_f_bavail="yes"
+  ac_cv_member_struct_statfs_f_bavail=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_statfs_f_bavail="no"
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_statfs_f_bavail" >&5
-echo "${ECHO_T}$ac_cv_c_statfs_f_bavail" >&6
-if  test "x$ac_cv_c_statfs_f_bavail" = "xyes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define STATFS_HAS_BAVAIL 1
-_ACEOF
-
-fi
-
-
-
-echo "$as_me:$LINENO: checking for msg_accrights in struct msghdr" >&5
-echo $ECHO_N "checking for msg_accrights in struct msghdr... $ECHO_C" >&6
-if test "${ac_cv_c_msghdr_msg_accrights+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
+cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
 _ACEOF
@@ -15473,13 +15508,27 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
 #endif
+#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+# include <sys/mount.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_VFS
+#  include <sys/vfs.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
+#endif
+
 int
 main ()
 {
-struct msghdr s; s.msg_accrights = 0
+static struct statfs ac_aggr;
+if (sizeof ac_aggr.f_bavail)
+return 0;
   ;
   return 0;
 }
@@ -15496,87 +15545,32 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_msghdr_msg_accrights="yes"
+  ac_cv_member_struct_statfs_f_bavail=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_msghdr_msg_accrights="no"
+ac_cv_member_struct_statfs_f_bavail=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_c_msghdr_msg_accrights" >&5
-echo "${ECHO_T}$ac_cv_c_msghdr_msg_accrights" >&6
-if  test "x$ac_cv_c_msghdr_msg_accrights" = "xyes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_MSGHDR_ACCRIGHTS 1
-_ACEOF
-
-fi
-
-
-
-echo "$as_me:$LINENO: checking for sa_len in struct sockaddr" >&5
-echo $ECHO_N "checking for sa_len in struct sockaddr... $ECHO_C" >&6
-if test "${ac_cv_c_sockaddr_sa_len+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-int
-main ()
-{
-struct sockaddr s; s.sa_len = 0
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_sockaddr_sa_len="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_sockaddr_sa_len="no"
-fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_c_sockaddr_sa_len" >&5
-echo "${ECHO_T}$ac_cv_c_sockaddr_sa_len" >&6
-if  test "x$ac_cv_c_sockaddr_sa_len" = "xyes"; then
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_statfs_f_bavail" >&5
+echo "${ECHO_T}$ac_cv_member_struct_statfs_f_bavail" >&6
+if test $ac_cv_member_struct_statfs_f_bavail = yes; then
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_SOCKADDR_SA_LEN 1
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_STATFS_F_BAVAIL 1
 _ACEOF
+
 
 fi
 
 
-
-echo "$as_me:$LINENO: checking for sun_len in struct sockaddr_un" >&5
-echo $ECHO_N "checking for sun_len in struct sockaddr_un... $ECHO_C" >&6
-if test "${ac_cv_c_sockaddr_un_sun_len+set}" = set; then
+echo "$as_me:$LINENO: checking for struct msghdr.msg_accrights" >&5
+echo $ECHO_N "checking for struct msghdr.msg_accrights... $ECHO_C" >&6
+if test "${ac_cv_member_struct_msghdr_msg_accrights+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -15593,10 +15587,13 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef HAVE_SYS_UN_H
 # include <sys/un.h>
 #endif
+
 int
 main ()
 {
-struct sockaddr_un s; s.sun_len = 0
+static struct msghdr ac_aggr;
+if (ac_aggr.msg_accrights)
+return 0;
   ;
   return 0;
 }
@@ -15613,25 +15610,374 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_sockaddr_un_sun_len="yes"
+  ac_cv_member_struct_msghdr_msg_accrights=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_sockaddr_un_sun_len="no"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
+int
+main ()
+{
+static struct msghdr ac_aggr;
+if (sizeof ac_aggr.msg_accrights)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_msghdr_msg_accrights=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_msghdr_msg_accrights=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_c_sockaddr_un_sun_len" >&5
-echo "${ECHO_T}$ac_cv_c_sockaddr_un_sun_len" >&6
-if  test "x$ac_cv_c_sockaddr_un_sun_len" = "xyes"; then
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_msghdr_msg_accrights" >&5
+echo "${ECHO_T}$ac_cv_member_struct_msghdr_msg_accrights" >&6
+if test $ac_cv_member_struct_msghdr_msg_accrights = yes; then
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_SOCKADDR_SUN_LEN 1
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS 1
 _ACEOF
+
+
+fi
+echo "$as_me:$LINENO: checking for struct sockaddr.sa_len" >&5
+echo $ECHO_N "checking for struct sockaddr.sa_len... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sockaddr_sa_len+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
+int
+main ()
+{
+static struct sockaddr ac_aggr;
+if (ac_aggr.sa_len)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_sa_len=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
+int
+main ()
+{
+static struct sockaddr ac_aggr;
+if (sizeof ac_aggr.sa_len)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_sa_len=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_sockaddr_sa_len=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_sa_len" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sockaddr_sa_len" >&6
+if test $ac_cv_member_struct_sockaddr_sa_len = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_SA_LEN 1
+_ACEOF
+
+
+fi
+echo "$as_me:$LINENO: checking for struct sockaddr_un.sun_len" >&5
+echo $ECHO_N "checking for struct sockaddr_un.sun_len... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sockaddr_un_sun_len+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
+int
+main ()
+{
+static struct sockaddr_un ac_aggr;
+if (ac_aggr.sun_len)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_un_sun_len=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
+int
+main ()
+{
+static struct sockaddr_un ac_aggr;
+if (sizeof ac_aggr.sun_len)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_un_sun_len=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_struct_sockaddr_un_sun_len=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_un_sun_len" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sockaddr_un_sun_len" >&6
+if test $ac_cv_member_struct_sockaddr_un_sun_len = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_UN_SUN_LEN 1
+_ACEOF
+
 
 fi
 
+
+echo "$as_me:$LINENO: checking for siginfo_t.si_fd" >&5
+echo $ECHO_N "checking for siginfo_t.si_fd... $ECHO_C" >&6
+if test "${ac_cv_member_siginfo_t_si_fd+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static siginfo_t ac_aggr;
+if (ac_aggr.si_fd)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_siginfo_t_si_fd=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <signal.h>
+
+int
+main ()
+{
+static siginfo_t ac_aggr;
+if (sizeof ac_aggr.si_fd)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_siginfo_t_si_fd=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_member_siginfo_t_si_fd=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_siginfo_t_si_fd" >&5
+echo "${ECHO_T}$ac_cv_member_siginfo_t_si_fd" >&6
+if test $ac_cv_member_siginfo_t_si_fd = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SIGINFO_T_SI_FD 1
+_ACEOF
+
+
+fi
 
 
 
