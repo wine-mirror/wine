@@ -1587,7 +1587,7 @@ static LRESULT LISTBOX_RemoveItem( WND *wnd, LB_DESCR *descr, INT index )
     LB_ITEMDATA *item;
     INT max_items;
 
-    if (index == -1) index = descr->nb_items - 1;
+    if ((index == -1) && (descr->nb_items > 0)) index = descr->nb_items - 1;
     else if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
 
     /* We need to invalidate the original rect instead of the updated one. */
