@@ -305,8 +305,8 @@ extern HRESULT create_direct3d7(LPVOID *obj,IDirectDrawImpl*);
  * Structure conversion (for thunks)
  */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn, DDSCAPS2* pOut);
-void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER* pIn,
-					     DDDEVICEIDENTIFIER2* pOut);
+void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn,
+					     DDDEVICEIDENTIFIER* pOut);
 
 /******************************************************************************
  * Debugging / Flags output functions

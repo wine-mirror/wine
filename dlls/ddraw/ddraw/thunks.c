@@ -836,7 +836,7 @@ IDirectDraw4Impl_GetAvailableVidMem(LPDIRECTDRAW4 This, LPDDSCAPS2 pCaps,
 				    LPDWORD pdwTotal, LPDWORD pdwFree)
 {
     return IDirectDraw7_GetAvailableVidMem(COM_INTERFACE_CAST(IDirectDrawImpl,
-							      IDirectDraw2,
+							      IDirectDraw4,
 							      IDirectDraw7,
 							      This),
 					   pCaps, pdwTotal, pdwFree);
@@ -884,7 +884,7 @@ IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 This,
 							     This),
 					  &DDDI2, dwFlags);
 
-    DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(pDDDI, &DDDI2);
+    DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(&DDDI2, pDDDI);
 
     return hr;
 }

@@ -19,8 +19,8 @@ void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn, DDSCAPS2* pOut)
     pOut->dwCaps4 = 0;
 }
 
-void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER* pIn,
-					     DDDEVICEIDENTIFIER2* pOut)
+void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn,
+					     DDDEVICEIDENTIFIER* pOut)
 {
     /* 2 adds a dwWHQLLevel field to the end. Both structures are
      * unversioned. */
