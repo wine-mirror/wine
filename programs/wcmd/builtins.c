@@ -57,8 +57,20 @@ extern DWORD errorlevel;
 
 void WCMD_clear_screen () {
 
-  WCMD_output (nyi);
+  /* Emulate by filling the screen from the top left to bottom right with
+        spaces, then moving the cursor to the top left afterwards */
+  COORD topLeft;
+  long screenSize;
+  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+  HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
+  GetConsoleScreenBufferInfo(hStdOut, &consoleInfo);
+  screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
+
+  topLeft.X = 0;
+  topLeft.Y = 0;
+  FillConsoleOutputCharacter(hStdOut, ' ', screenSize, topLeft, &screenSize);
+  SetConsoleCursorPosition(hStdOut, topLeft);
 }
 
 /****************************************************************************
