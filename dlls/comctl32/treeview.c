@@ -3817,13 +3817,6 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 static LRESULT
 TREEVIEW_RButtonUp(TREEVIEW_INFO *infoPtr, LPPOINT pPt)
 {
-    HWND hwnd = infoPtr->hwnd;
-    POINT pt = *pPt;
-
-    /* Change to screen coordinate for WM_CONTEXTMENU */
-    ClientToScreen(hwnd, &pt);
-
-    SendMessageA(hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(pt.x, pt.y));
     return 0;
 }
 
