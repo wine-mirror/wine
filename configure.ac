@@ -1632,6 +1632,7 @@ dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
 dlls/rpcrt4/tests/Makefile
 dlls/rsabase/Makefile
+dlls/rsabase/tests/Makefile
 dlls/secur32/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
