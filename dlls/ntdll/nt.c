@@ -201,7 +201,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         len = sizeof(TOKEN_PRIVILEGES);
         break;
     case TokenOwner:
-        len = sizeof(TOKEN_OWNER);
+        len = sizeof(TOKEN_OWNER) + sizeof(SID);
         break;
     case TokenPrimaryGroup:
         len = sizeof(TOKEN_PRIMARY_GROUP);
@@ -262,6 +262,17 @@ NTSTATUS WINAPI NtQueryInformationToken(
         {
             TOKEN_PRIVILEGES *tpriv = tokeninfo;
             tpriv->PrivilegeCount = 1;
+        }
+        break;
+    case TokenOwner:
+        if (tokeninfo)
+        {
+            TOKEN_OWNER *owner = tokeninfo;
+            PSID sid = (PSID) (owner + 1);
+            SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+            RtlInitializeSid(sid, &localSidAuthority, 1);
+            *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
+            owner->Owner = sid;
         }
         break;
     }
