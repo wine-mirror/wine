@@ -79,6 +79,19 @@ enum __WINE_DEBUG_CLASS {
 
 #define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 
+
+#ifdef NO_TRACE_MSGS
+#define WINE_TRACE(...) do { } while(0)
+#define WINE_TRACE_(ch) WINE_TRACE
+#endif
+
+#ifdef NO_DEBUG_MSGS
+#define WINE_WARN(...) do { } while(0)
+#define WINE_WARN_(ch) WINE_WARN
+#define WINE_FIXME(...) do { } while(0)
+#define WINE_FIXME_(ch) WINE_FIXME
+#endif
+
 #elif defined(__SUNPRO_C)
 
 #define __WINE_DPRINTF(dbcl,dbch) \
@@ -91,6 +104,18 @@ enum __WINE_DEBUG_CLASS {
    wine_dbg_log( __dbcl, __dbch, __func__, __VA_ARGS__); } } while(0)
 
 #define __WINE_PRINTF_ATTR(fmt,args)
+
+#ifdef NO_TRACE_MSGS
+#define WINE_TRACE(...) do { } while(0)
+#define WINE_TRACE_(ch) WINE_TRACE
+#endif
+
+#ifdef NO_DEBUG_MSGS
+#define WINE_WARN(...) do { } while(0)
+#define WINE_WARN_(ch) WINE_WARN
+#define WINE_FIXME(...) do { } while(0)
+#define WINE_FIXME_(ch) WINE_FIXME
+#endif
 
 #else  /* !__GNUC__ && !__SUNPRO_C */
 
@@ -149,16 +174,22 @@ static inline const char *wine_dbgstr_rect( const RECT *rect )
     return wine_dbg_sprintf( "(%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
 }
 
+#ifndef WINE_TRACE
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
 #define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,__wine_dbch_##ch)
+#endif
 #define WINE_TRACE_ON(ch)          __WINE_GET_DEBUGGING(_TRACE,__wine_dbch_##ch)
 
+#ifndef WINE_WARN
 #define WINE_WARN                  __WINE_DPRINTF(_WARN,__wine_dbch___default)
 #define WINE_WARN_(ch)             __WINE_DPRINTF(_WARN,__wine_dbch_##ch)
+#endif
 #define WINE_WARN_ON(ch)           __WINE_GET_DEBUGGING(_WARN,__wine_dbch_##ch)
 
+#ifndef WINE_FIXME
 #define WINE_FIXME                 __WINE_DPRINTF(_FIXME,__wine_dbch___default)
 #define WINE_FIXME_(ch)            __WINE_DPRINTF(_FIXME,__wine_dbch_##ch)
+#endif
 #define WINE_FIXME_ON(ch)          __WINE_GET_DEBUGGING(_FIXME,__wine_dbch_##ch)
 
 #define WINE_ERR                   __WINE_DPRINTF(_ERR,__wine_dbch___default)
