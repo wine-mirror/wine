@@ -2529,7 +2529,13 @@ HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
 HWND WINAPI GetTopWindow( HWND hwnd )
 {
     HWND retval;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    WND * wndPtr = NULL;
+
+    if (hwnd!=0)
+      wndPtr = WIN_FindWndPtr( hwnd );
+    else
+      wndPtr = WIN_GetDesktop();
+
     if (wndPtr && wndPtr->child)
     {
         retval = wndPtr->child->hwndSelf;
