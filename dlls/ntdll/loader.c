@@ -1139,7 +1139,8 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, module, &nt->OptionalHeader.SizeOfImage,
+    addr = module;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
                              MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
 
     /* fixup imports */

@@ -343,12 +343,12 @@ static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
     if (size > subheap->size) size = subheap->size;
     if (size <= subheap->commitSize) return TRUE;
     size -= subheap->commitSize;
-    if (NtAllocateVirtualMemory( GetCurrentProcess(), &ptr, (char *)subheap + subheap->commitSize,
+    ptr = (char *)subheap + subheap->commitSize;
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), &ptr, 0,
                                  &size, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
-        WARN("Could not commit %08lx bytes at %08lx for heap %08lx\n",
-                 size, (DWORD)((char *)subheap + subheap->commitSize),
-                 (DWORD)subheap->heap );
+        WARN("Could not commit %08lx bytes at %p for heap %p\n",
+                 size, ptr, subheap->heap );
         return FALSE;
     }
     subheap->commitSize += size;
@@ -530,7 +530,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     if (flags & HEAP_SHARED)
         commitSize = totalSize;  /* always commit everything in a shared heap */
-    if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, address,
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, 0,
                                  &commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
         WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
@@ -619,7 +619,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
     if (!address)
     {
         /* allocate the memory block */
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, NULL, &totalSize,
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, 0, &totalSize,
                                      MEM_RESERVE, PAGE_EXECUTE_READWRITE ))
         {
             WARN("Could not allocate %08lx bytes\n", totalSize );

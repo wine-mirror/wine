@@ -142,7 +142,8 @@ void thread_init(void)
     server_init_thread( thread_info.pid, thread_info.tid, NULL );
 
     /* create a memory view for the TEB */
-    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, teb, &size,
+    addr = teb;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
 
     /* create the process heap */
@@ -179,7 +180,8 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     /* allocate a memory view for the stack */
     size = info->stack_size;
-    NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, info->stack_base,
+    teb->DeallocationStack = info->stack_base;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, 0,
                              &size, MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
     /* limit is lower than base since the stack grows down */
     teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
@@ -263,7 +265,8 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->wait_fd[1]  = -1;
     teb->htask16     = NtCurrentTeb()->htask16;
 
-    NtAllocateVirtualMemory( GetCurrentProcess(), &info->pthread_info.teb_base, teb, &size,
+    info->pthread_info.teb_base = teb;
+    NtAllocateVirtualMemory( GetCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
     info->pthread_info.teb_size = size;
     info->pthread_info.teb_sel  = teb->teb_sel;

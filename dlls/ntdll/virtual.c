@@ -1153,7 +1153,7 @@ void VIRTUAL_UseLargeAddressSpace(void)
  *             NtAllocateVirtualMemory   (NTDLL.@)
  *             ZwAllocateVirtualMemory   (NTDLL.@)
  */
-NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
+NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_bits,
                                          ULONG *size_ptr, ULONG type, ULONG protect )
 {
     void *base;
@@ -1162,7 +1162,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
 
-    TRACE("%p %p %08lx %lx %08lx\n", process, addr, size, type, protect );
+    TRACE("%p %p %08lx %lx %08lx\n", process, *ret, size, type, protect );
 
     if (!size) return STATUS_INVALID_PARAMETER;
 
@@ -1176,13 +1176,13 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
 
     if (size > 0x7fc00000) return STATUS_WORKING_SET_LIMIT_RANGE; /* 2Gb - 4Mb */
 
-    if (addr)
+    if (*ret)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ROUND_ADDR( addr, granularity_mask );
+            base = ROUND_ADDR( *ret, granularity_mask );
         else
-            base = ROUND_ADDR( addr, page_mask );
-        size = (((UINT_PTR)addr + size + page_mask) & ~page_mask) - (UINT_PTR)base;
+            base = ROUND_ADDR( *ret, page_mask );
+        size = (((UINT_PTR)*ret + size + page_mask) & ~page_mask) - (UINT_PTR)base;
 
         /* disallow low 64k, wrap-around and kernel space */
         if (((char *)base <= (char *)granularity_mask) ||
@@ -1201,6 +1201,9 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
         WARN("MEM_TOP_DOWN ignored\n");
         type &= ~MEM_TOP_DOWN;
     }
+
+    if (zero_bits)
+        WARN("zero_bits %lu ignored\n", zero_bits);
 
     /* Compute the alloc type flags */
 

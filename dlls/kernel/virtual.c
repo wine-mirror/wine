@@ -86,10 +86,10 @@ LPVOID WINAPI VirtualAllocEx(
               DWORD type,      /* [in] Type of allocation */
               DWORD protect )  /* [in] Type of access protection */
 {
-    LPVOID ret;
+    LPVOID ret = addr;
     NTSTATUS status;
 
-    if ((status = NtAllocateVirtualMemory( hProcess, &ret, addr, &size, type, protect )))
+    if ((status = NtAllocateVirtualMemory( hProcess, &ret, 0, &size, type, protect )))
     {
         SetLastError( RtlNtStatusToDosError(status) );
         ret = NULL;

@@ -65,10 +65,10 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
     else 
     {
         ULONG       size = 1;
-        nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)env, 0, &size, 
+        PVOID       addr = NULL;
+        nts = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size,
                                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (nts == STATUS_SUCCESS)
-            memset(*env, 0, size);
+        if (nts == STATUS_SUCCESS) *env = addr;
     }
 
     return nts;
@@ -446,7 +446,8 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
             + RuntimeInfo->MaximumLength);
 
     total_size = size;
-    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &total_size,
+    ptr = NULL;
+    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &total_size,
                                            MEM_COMMIT, PAGE_READWRITE )) == STATUS_SUCCESS)
     {
         RTL_USER_PROCESS_PARAMETERS *params = ptr;

@@ -841,7 +841,8 @@ void SNOOP_SetupDLL(HMODULE hmod)
     if (p > (*dll)->name && !strcasecmp( p, ".dll" )) *p = 0;
 
     size = exports->NumberOfFunctions * sizeof(SNOOP_FUN);
-    NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size,
+    addr = NULL;
+    NtAllocateVirtualMemory(GetCurrentProcess(), &addr, 0, &size,
                             MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!addr) {
         RtlFreeHeap(GetProcessHeap(),0,*dll);
@@ -1006,9 +1007,9 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 	}
 	if (!*rets) {
                 SIZE_T size = 4096;
-                VOID* addr;
+                VOID* addr = NULL;
 
-                NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size, 
+                NtAllocateVirtualMemory(GetCurrentProcess(), &addr, 0, &size, 
                                         MEM_COMMIT | MEM_RESERVE,
                                         PAGE_EXECUTE_READWRITE);
                 if (!addr) return;

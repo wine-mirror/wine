@@ -379,6 +379,7 @@ static BOOL build_initial_environment( char **environ )
     size *= sizeof(WCHAR);
 
     /* Now allocate the environment */
+    ptr = NULL;
     if (NtAllocateVirtualMemory(NtCurrentProcess(), &ptr, 0, &size,
                                 MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE) != STATUS_SUCCESS)
         return FALSE;
@@ -719,7 +720,8 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     RTL_USER_PROCESS_PARAMETERS *params;
 
     size = info_size;
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &size,
+    ptr = NULL;
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &size,
                                  MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
         return NULL;
 
@@ -748,7 +750,8 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     /* environment needs to be a separate memory block */
     env_size = info_size - params->Size;
     if (!env_size) env_size = 1;
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, NULL, &env_size,
+    ptr = NULL;
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &env_size,
                                  MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
         return NULL;
     memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
