@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
+#include "wine/exception.h"
 #include "process.h"
 #include "module.h"
 #include "neexe.h"
@@ -55,7 +56,7 @@ void PROCESS_WalkProcess(void)
         if (pdb == &initial_pdb)
             name = "initial PDB";
         else
-            name = (pdb->exe_modref) ? pdb->exe_modref->shortname : "";
+            name = (pdb->exe_modref) ? pdb->exe_modref->filename : "";
 
         MESSAGE( " %8p %8p %5d  %8p %s\n", pdb->server_pid, pdb,
                pdb->threads, pdb->exe_modref, name);
@@ -389,7 +390,7 @@ void PROCESS_Start(void)
     LPTHREAD_START_ROUTINE entry = NULL;
     PDB *pdb = PROCESS_Current();
     NE_MODULE *pModule = NE_GetPtr( pdb->module );
-    OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
+    LPCSTR filename = ((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName;
     IMAGE_OPTIONAL_HEADER *header = !pModule->module32? NULL :
                                     &PE_HEADER(pModule->module32)->OptionalHeader;
 
@@ -457,7 +458,7 @@ void PROCESS_Start(void)
             DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
 
         /* Create 32-bit MODREF */
-        if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
+        if (!PE_CreateModule( pModule->module32, filename, 0, FALSE )) goto error;
 
         /* Increment EXE refcount */
         assert( pdb->exe_modref );

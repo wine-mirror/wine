@@ -146,9 +146,10 @@ typedef struct _wine_modref
 	int			flags;
 	int			refCount;
 
+	char			*filename;
 	char			*modname;
-	char			*shortname;
-	char 			*longname;
+	char			*short_filename;
+	char			*short_modname;
 } WINE_MODREF;
 
 #define WINE_MODREF_INTERNAL              0x00000001
@@ -183,7 +184,7 @@ extern void MODULE_DllThreadDetach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
-extern HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD version );
+extern HMODULE MODULE_CreateDummyModule( LPCSTR filename, WORD version );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
@@ -201,7 +202,7 @@ extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
 extern HANDLE NE_OpenFile( NE_MODULE *pModule );
-extern BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+extern BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                               BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info );
@@ -231,7 +232,6 @@ extern void NE_InitializeDLLs( HMODULE16 hModule );
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
 
 /* relay32/builtin.c */
-extern HMODULE BUILTIN32_LoadImage(LPCSTR name, OFSTRUCT *ofs);
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, DWORD *err);
 extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 

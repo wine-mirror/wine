@@ -411,106 +411,77 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 }
 
 /***********************************************************************
- *           BUILTIN32_LoadImage
- *
- * Load a built-in module.
- */
-HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs)
-{
-    BUILTIN32_DLL *table;
-    char dllname[16], *p;
-
-    /* Fix the name in case we have a full path and extension */
-
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpynA( dllname, name, sizeof(dllname) );
-
-    p = strrchr( dllname, '.' );
-	 
-    if (!p) strcat( dllname, ".dll" );
-
-    for (table = BuiltinDLLs; table->descr; table++)
-    {
-       if (!lstrcmpiA( table->descr->filename, dllname )) break;
-    }
-
-    if (!table->descr) return 0;
-
-    if ( (table->flags & BI32_INSTANTIATED) && (table->flags & BI32_DANGER) )
-    {
-	ERR_(module)("Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
-		     table->descr->name);
-    }
-
-    strcpy( ofs->szPathName, table->descr->filename );
-
-    if ( !table->hModule )
-        table->hModule = BUILTIN32_DoLoadImage( table );
-
-    if ( table->hModule )
-    	table->flags |= BI32_INSTANTIATED;
-
-    return table->hModule;
-}
-
-
-/***********************************************************************
  *           BUILTIN32_LoadLibraryExA
  *
  * Partly copied from the original PE_ version.
  *
- * Note: This implementation is not very nice and should be one with
- * the BUILTIN32_LoadImage function. But, we don't care too much
- * because this code will obsolete itself shortly when we get the
- * modularization of wine implemented (BS 05-Mar-1999).
  */
 WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 {
-	LPCSTR		modName = NULL;
-	OFSTRUCT	ofs;
-	HMODULE		hModule32;
-	HMODULE16	hModule16;
-	NE_MODULE	*pModule;
-	WINE_MODREF	*wm;
-	char		dllname[256], *p;
+    BUILTIN32_DLL *table;
+    HMODULE16      hModule16;
+    NE_MODULE     *pModule;
+    WINE_MODREF   *wm;
+    char           dllname[256], *p;
 
-	/* Append .DLL to name if no extension present */
-	strcpy( dllname, path );
-	if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-		strcat( dllname, ".DLL" );
+    /* Fix the name in case we have a full path and extension */
+    if ((p = strrchr( path, '\\' ))) path = p + 1;
+    lstrcpynA( dllname, path, sizeof(dllname) );
 
-	hModule32 = BUILTIN32_LoadImage(path, &ofs);
-	if(!hModule32)
-	{
-		*err = ERROR_FILE_NOT_FOUND;
-		return NULL;
-	}
+    p = strrchr( dllname, '.' );
+    if (!p) strcat( dllname, ".dll" );
 
-	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName, 0 )) < 32)
-	{
-		*err = (DWORD)hModule16;
-		return NULL;	/* FIXME: Should unload the builtin module */
-	}
+    /* Search built-in descriptor */
+    for ( table = BuiltinDLLs; table->descr; table++ )
+        if (!lstrcmpiA( table->descr->filename, dllname )) break;
 
-	pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-	pModule->flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
-	pModule->module32 = hModule32;
+    if ( !table->descr )
+    {
+        *err = ERROR_FILE_NOT_FOUND;
+        return NULL;
+    }
 
-	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, TRUE )) )
-	{
-		ERR_(win32)("can't load %s\n",ofs.szPathName);
-		FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
-		*err = ERROR_OUTOFMEMORY;
-		return NULL;
-	}
+    /* Load built-in module */
+    if ( (table->flags & BI32_INSTANTIATED) && (table->flags & BI32_DANGER) )
+        ERR_(module)( "Attempt to instantiate built-in dll '%s' twice "
+                      "in the same address-space. Expect trouble!\n",
+                      table->descr->name );
 
-	if (wm->binfmt.pe.pe_export)
-		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
+    if ( !table->hModule )
+        table->hModule = BUILTIN32_DoLoadImage( table );
+    if ( table->hModule )
+        table->flags |= BI32_INSTANTIATED;
+    else
+    {
+        *err = ERROR_FILE_NOT_FOUND;
+        return NULL;
+    }
 
-	*err = 0;
-	return wm;
+    /* Create 16-bit dummy module */
+    if ((hModule16 = MODULE_CreateDummyModule( dllname, 0 )) < 32)
+    {
+        *err = (DWORD)hModule16;
+        return NULL;	/* FIXME: Should unload the builtin module */
+    }
+
+    pModule = (NE_MODULE *)GlobalLock16( hModule16 );
+    pModule->flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
+    pModule->module32 = table->hModule;
+
+    /* Create 32-bit MODREF */
+    if ( !(wm = PE_CreateModule( table->hModule, dllname, flags, TRUE )) )
+    {
+        ERR_(win32)( "can't load %s\n", path );
+        FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
+        *err = ERROR_OUTOFMEMORY;
+        return NULL;
+    }
+
+    if (wm->binfmt.pe.pe_export)
+        SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
+
+    *err = 0;
+    return wm;
 }
 
 

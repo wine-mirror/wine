@@ -333,7 +333,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD version )
+HMODULE MODULE_CreateDummyModule( LPCSTR filename, WORD version )
 {
     HMODULE hModule;
     NE_MODULE *pModule;
@@ -341,16 +341,26 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD vers
     char *pStr,*s;
     int len;
     const char* basename;
+    OFSTRUCT *ofs;
+    int of_size, size;
 
-    INT of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
-                    + strlen(ofs->szPathName) + 1;
-    INT size = sizeof(NE_MODULE) +
+    /* Extract base filename */
+    basename = strrchr(filename, '\\');
+    if (!basename) basename = filename;
+    else basename++;
+    len = strlen(basename);
+    if ((s = strchr(basename, '.'))) len = s - basename;
+
+    /* Allocate module */
+    of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
+                    + strlen(filename) + 1;
+    size = sizeof(NE_MODULE) +
                  /* loaded file info */
                  of_size +
                  /* segment table: DS,CS */
                  2 * sizeof(SEGTABLEENTRY) +
                  /* name table */
-                 9 +
+                 len + 2 +
                  /* several empty tables */
                  8;
 
@@ -379,8 +389,10 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD vers
     pModule->self             = hModule;
 
     /* Set loaded file information */
-    memcpy( pModule + 1, ofs, of_size );
-    ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
+    ofs = (OFSTRUCT *)(pModule + 1);
+    memset( ofs, 0, of_size );
+    ofs->cBytes = of_size < 256 ? of_size : 255;   /* FIXME */
+    strcpy( ofs->szPathName, filename );
 
     pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
     pModule->seg_table = (int)pSegment - (int)pModule;
@@ -396,21 +408,10 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD vers
     /* Module name */
     pStr = (char *)pSegment;
     pModule->name_table = (int)pStr - (int)pModule;
-    if ( modName )
-        basename = modName;
-    else
-    {
-        basename = strrchr(ofs->szPathName,'\\');
-        if (!basename) basename = ofs->szPathName;
-        else basename++;
-    }
-    len = strlen(basename);
-    if ((s = strchr(basename,'.'))) len = s - basename;
-    if (len > 8) len = 8;
     *pStr = len;
     strncpy( pStr+1, basename, len );
-    if (len < 8) pStr[len+1] = 0;
-    pStr += 9;
+    pStr[len+1] = 0;
+    pStr += len+2;
 
     /* All tables zero terminated */
     pModule->res_table = pModule->import_table = pModule->entry_table =
@@ -425,9 +426,6 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD vers
  *	    MODULE_FindModule32
  *
  * Find a (loaded) win32 module depending on path
- * The handling of '.' is a bit weird, but we need it that way, 
- * for sometimes the programs use '<name>.exe' and '<name>.dll' and
- * this is the only way to differentiate. (mainly hypertrm.exe)
  *
  * RETURNS
  *	the module handle if found
@@ -436,66 +434,27 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD vers
 WINE_MODREF *MODULE_FindModule(
 	LPCSTR path	/* [in] pathname of module/library to be found */
 ) {
-    LPSTR	filename;
-    LPSTR	dotptr;
     WINE_MODREF	*wm;
+    char dllname[260], *p;
 
-    if (!(filename = strrchr( path, '\\' )))
-    	filename = HEAP_strdupA( GetProcessHeap(), 0, path );
-    else 
-    	filename = HEAP_strdupA( GetProcessHeap(), 0, filename+1 );
-    dotptr=strrchr(filename,'.');
+    /* Append .DLL to name if no extension present */
+    strcpy( dllname, path );
+    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+            strcat( dllname, ".DLL" );
 
-    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
-    	LPSTR	xmodname,xdotptr;
-
-	assert (wm->modname);
-	xmodname = HEAP_strdupA( GetProcessHeap(), 0, wm->modname );
-	xdotptr=strrchr(xmodname,'.');
-	if (	(xdotptr && !dotptr) ||
-		(!xdotptr && dotptr)
-	) {
-	    if (dotptr)	*dotptr		= '\0';
-	    if (xdotptr) *xdotptr	= '\0';
-	}
-	if (!strcasecmp( filename, xmodname)) {
-	    HeapFree( GetProcessHeap(), 0, filename );
-	    HeapFree( GetProcessHeap(), 0, xmodname );
-	    return wm;
-	}
-	if (dotptr) *dotptr='.';
-	/* FIXME: add paths, shortname */
-	HeapFree( GetProcessHeap(), 0, xmodname );
+    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    {
+        if ( !strcasecmp( dllname, wm->modname ) )
+            break;
+        if ( !strcasecmp( dllname, wm->filename ) )
+            break;
+        if ( !strcasecmp( dllname, wm->short_modname ) )
+            break;
+        if ( !strcasecmp( dllname, wm->short_filename ) )
+            break;
     }
-    /* if that fails, try looking for the filename... */
-    for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next ) {
-    	LPSTR	xlname,xdotptr;
 
-	assert (wm->longname);
-	xlname = strrchr(wm->longname,'\\');
-	if (!xlname) 
-	    xlname = wm->longname;
-	else
-	    xlname++;
-	xlname = HEAP_strdupA( GetProcessHeap(), 0, xlname );
-	xdotptr=strrchr(xlname,'.');
-	if (	(xdotptr && !dotptr) ||
-		(!xdotptr && dotptr)
-	) {
-	    if (dotptr)	*dotptr		= '\0';
-	    if (xdotptr) *xdotptr	= '\0';
-	}
-	if (!strcasecmp( filename, xlname)) {
-	    HeapFree( GetProcessHeap(), 0, filename );
-	    HeapFree( GetProcessHeap(), 0, xlname );
-	    return wm;
-	}
-	if (dotptr) *dotptr='.';
-	/* FIXME: add paths, shortname */
-	HeapFree( GetProcessHeap(), 0, xlname );
-    }
-    HeapFree( GetProcessHeap(), 0, filename );
-    return NULL;
+    return wm;
 }
 
 /***********************************************************************
@@ -528,16 +487,18 @@ WINE_MODREF *MODULE_FindModule(
  * Note that .COM and .PIF files are only recognized by their
  * file name extension; but Windows does it the same way ...
  */
-static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs, 
+static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename,
                                   LPDWORD lpBinaryType )
 {
     IMAGE_DOS_HEADER mz_header;
     char magic[4], *ptr;
+    DWORD len;
 
     /* Seek to the start of the file and read the DOS header information.
      */
-    if ( _llseek( hfile, 0, SEEK_SET ) >= 0  &&
-         _lread( hfile, &mz_header, sizeof(mz_header) ) == sizeof(mz_header) )
+    if (    SetFilePointer( hfile, 0, NULL, SEEK_SET ) != -1  
+         && ReadFile( hfile, &mz_header, sizeof(mz_header), &len, NULL )
+         && len == sizeof(mz_header) )
     {
         /* Now that we have the header check the e_magic field
          * to see if this is a dos image.
@@ -559,9 +520,10 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
             if ( (mz_header.e_cparhdr<<4) >= sizeof(IMAGE_DOS_HEADER) )
                 if ( ( mz_header.e_crlc == 0 ) ||
                      ( mz_header.e_lfarlc >= sizeof(IMAGE_DOS_HEADER) ) )
-                    if ( mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER) &&
-                         _llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
-                         _lread( hfile, magic, sizeof(magic) ) == sizeof(magic) )
+                    if (    mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER)
+                         && SetFilePointer( hfile, mz_header.e_lfanew, NULL, SEEK_SET ) != -1  
+                         && ReadFile( hfile, magic, sizeof(magic), &len, NULL )
+                         && len == sizeof(magic) )
                         lfanewValid = TRUE;
 
             if ( !lfanewValid )
@@ -595,8 +557,9 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
                      */
 
                      IMAGE_OS2_HEADER ne;
-                     if ( _llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
-                          _lread( hfile, &ne, sizeof(ne) ) == sizeof(ne) )
+                     if (    SetFilePointer( hfile, mz_header.e_lfanew, NULL, SEEK_SET ) != -1  
+                          && ReadFile( hfile, &ne, sizeof(ne), &len, NULL )
+                          && len == sizeof(ne) )
                      {
                          switch ( ne.operating_system )
                          {
@@ -621,7 +584,7 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
     /* If we get here, we don't even have a correct MZ header.
      * Try to check the file extension for known types ...
      */
-    ptr = strrchr( ofs->szPathName, '.' );
+    ptr = strrchr( filename, '.' );
     if ( ptr && !strchr( ptr, '\\' ) && !strchr( ptr, '/' ) )
     {
         if ( !lstrcmpiA( ptr, ".COM" ) )
@@ -646,8 +609,7 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     BOOL ret = FALSE;
-    HFILE hfile;
-    OFSTRUCT ofs;
+    HANDLE hfile;
 
     TRACE_(win32)("%s\n", lpApplicationName );
 
@@ -658,12 +620,14 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Open the file indicated by lpApplicationName for reading.
      */
-    if ( (hfile = OpenFile( lpApplicationName, &ofs, OF_READ )) == HFILE_ERROR )
+    hfile = CreateFileA( lpApplicationName, GENERIC_READ, 0,
+                         NULL, OPEN_EXISTING, 0, -1 );
+    if ( hfile == INVALID_HANDLE_VALUE )
         return FALSE;
 
     /* Check binary type
      */
-    ret = MODULE_GetBinaryType( hfile, &ofs, lpBinaryType );
+    ret = MODULE_GetBinaryType( hfile, lpApplicationName, lpBinaryType );
 
     /* Close the file.
      */
@@ -997,10 +961,10 @@ static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
 {
     LPCSTR from;
     LPSTR to, to_end, to_old;
-    DOS_FULL_NAME  full_name;
+    char  buffer[260];
 
-    to = name;
-    to_end = to + namelen - 1;
+    to = buffer;
+    to_end = to + sizeof(buffer) - 1;
     to_old = to;
     
     while ( *line == ' ' ) line++;  /* point to beginning of string */
@@ -1037,17 +1001,10 @@ static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
 	  break;    /* exit if out of input string */
     } while (1);
 
-    if (!DOSFS_GetFullName(name, TRUE, &full_name)) {
-        TRACE_(module)("file not found '%s'\n", name );
+    if (!SearchPathA( NULL, buffer, ".exe", namelen, name, NULL )) {
+        TRACE_(module)("file not found '%s'\n", buffer );
         return FALSE;
-      }
-
-    if (strlen(full_name.long_name) >= namelen ) {
-       FIXME_(module)("name longer than buffer (len=%d), file=%s\n",
-           namelen, full_name.long_name);
-       return FALSE;
     }
-    strcpy(name, full_name.long_name); 
 
     TRACE_(module)("selected as file name '%s'\n", name );
     return TRUE;
@@ -1066,8 +1023,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 {
     BOOL retv = FALSE;
     BOOL found_file = FALSE;
-    HFILE hFile;
-    OFSTRUCT ofs;
+    HANDLE hFile;
     DWORD type;
     char name[256], dummy[256];
     LPCSTR cmdline = NULL;
@@ -1167,13 +1123,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
         FIXME_(module)("(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
-    /* Check for special case: second instance of NE module */
-
-    lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
-    retv = NE_CreateProcess( HFILE_ERROR, &ofs, tidy_cmdline, lpEnvironment, 
-                             lpProcessAttributes, lpThreadAttributes,
-                             bInheritHandles, dwCreationFlags,
-                             lpStartupInfo, lpProcessInfo );
 
     /* Load file and create process */
 
@@ -1181,14 +1130,16 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     {
         /* Open file and determine executable type */
 
-        if ( (hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR )
+        hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+                             NULL, OPEN_EXISTING, 0, -1 );
+        if ( hFile == INVALID_HANDLE_VALUE )
         {
             SetLastError( ERROR_FILE_NOT_FOUND );
             HeapFree( GetProcessHeap(), 0, tidy_cmdline );
             return FALSE;
         }
 
-        if ( !MODULE_GetBinaryType( hFile, &ofs, &type ) )
+        if ( !MODULE_GetBinaryType( hFile, name, &type ) )
         {
             CloseHandle( hFile );
 
@@ -1210,21 +1161,21 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         switch ( type )
         {
         case SCS_32BIT_BINARY:
-            retv = PE_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
+            retv = PE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
             break;
     
         case SCS_DOS_BINARY:
-            retv = MZ_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
+            retv = MZ_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
             break;
 
         case SCS_WOW_BINARY:
-            retv = NE_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
+            retv = NE_CreateProcess( hFile, name, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
@@ -1329,9 +1280,9 @@ DWORD WINAPI GetModuleFileNameA(
     	return 0;
 
     if (PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion >= 4.0)
-      lstrcpynA( lpFileName, wm->longname, size );
+      lstrcpynA( lpFileName, wm->filename, size );
     else
-      lstrcpynA( lpFileName, wm->shortname, size );
+      lstrcpynA( lpFileName, wm->short_filename, size );
        
     TRACE_(module)("%s\n", lpFileName );
     return strlen(lpFileName);

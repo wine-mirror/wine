@@ -36,6 +36,7 @@ DEFAULT_DEBUG_CHANNEL(module)
 
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
+static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
@@ -394,7 +395,7 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
 /***********************************************************************
  *           NE_LoadExeHeader
  */
-static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
+static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 {
     IMAGE_DOS_HEADER mz_header;
     IMAGE_OS2_HEADER ne_header;
@@ -406,6 +407,12 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     int fastload_offset = 0, fastload_length = 0;
     ET_ENTRY *entry;
     ET_BUNDLE *bundle, *oldbundle;
+    HFILE16 hFile;
+    OFSTRUCT ofs;
+
+    /* Open file */
+    if ((hFile = OpenFile16( filename, &ofs, OF_READ )) == HFILE_ERROR16)
+        return (HMODULE16)2;  /* File not found */
 
   /* Read a block from either the file or the fast-load area. */
 #define READ(offset,size,buffer) \
@@ -418,17 +425,24 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     _llseek16( hFile, 0, SEEK_SET );
     if ((_hread16(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
         (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
+    {
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
+    }
 
     _llseek16( hFile, mz_header.e_lfanew, SEEK_SET );
     if (_hread16( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+    {
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
+    }
 
     if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
     if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
       MESSAGE("Sorry, this is an OS/2 linear executable (LX) file !\n");
+      _lclose16( hFile );
       return (HMODULE16)12;
     }
 
@@ -451,10 +465,15 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
 	   sizeof(ET_BUNDLE) +
 	   2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6) +
              /* loaded file info */
-           sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
+           sizeof(OFSTRUCT)-sizeof(ofs.szPathName)+strlen(ofs.szPathName)+1;
 
     hModule = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE16)11;  /* invalid exe */
+    if (!hModule) 
+    {
+        _lclose16( hFile );
+        return (HMODULE16)11;  /* invalid exe */
+    }
+
     FarSetOwner16( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     memcpy( pModule, &ne_header, sizeof(ne_header) );
@@ -510,6 +529,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
             if (fastload)
 		HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
+            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         pSeg = (struct ne_segment_table_entry_s *)buffer;
@@ -525,6 +545,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         if (fastload)
 	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -535,7 +556,11 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         pModule->res_table = (int)pData - (int)pModule;
         if (!READ(mz_header.e_lfanew + ne_header.resource_tab_offset,
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
-                  pData )) return (HMODULE16)11;  /* invalid exe */
+                  pData )) 
+        {
+            _lclose16( hFile );
+            return (HMODULE16)11;  /* invalid exe */
+        }
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
 	NE_InitResourceHandler( hModule );
     }
@@ -551,6 +576,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         if (fastload)
 	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.moduleref_tab_offset - ne_header.rname_tab_offset;
@@ -567,6 +593,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
             if (fastload)
 		HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
+            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         pData += ne_header.n_mod_ref_tab * sizeof(WORD);
@@ -583,6 +610,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         if (fastload)
 	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_offset - ne_header.iname_tab_offset;
@@ -602,6 +630,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
             if (fastload)
 		HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -667,6 +696,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         if (fastload)
 	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
+        _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
 
@@ -679,9 +709,9 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     /* Store the filename information */
 
     pModule->fileinfo = (int)pData - (int)pModule;
-    size = sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
-    memcpy( pData, ofs, size );
-    ((OFSTRUCT *)pData)->cBytes = size - 1;
+    size = sizeof(OFSTRUCT)-sizeof(ofs.szPathName)+strlen(ofs.szPathName)+1;
+    ofs.cBytes = size - 1;
+    memcpy( pData, &ofs, size );
     pData += size;
 
     /* Free the fast-load area */
@@ -699,6 +729,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
+            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
         buffer = GlobalLock16( pModule->nrname_handle );
@@ -708,6 +739,7 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
+            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
     }
@@ -724,14 +756,16 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
+            _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
     }
     else pModule->dlls_to_init = 0;
 
     NE_RegisterModule( pModule );
-    SNOOP16_RegisterDLL(pModule,ofs->szPathName);
+    SNOOP16_RegisterDLL(pModule,ofs.szPathName);
 
+    _lclose16( hFile );
     return hModule;
 }
 
@@ -749,10 +783,10 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
 
     for (i = 0; i < pModule->modref_count; i++, pModRef++)
     {
-        char buffer[260];
+        char buffer[260], *p;
         BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
         memcpy( buffer, pstr + 1, *pstr );
-       *(buffer + *pstr) = 0; /* terminate it */
+        *(buffer + *pstr) = 0; /* terminate it */
 
         TRACE("Loading '%s'\n", buffer );
         if (!(*pModRef = GetModuleHandle16( buffer )))
@@ -760,6 +794,10 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* If the DLL is not loaded yet, load it and store */
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
+
+            /* Append .DLL to name if no extension present */
+            if (!(p = strrchr( buffer, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+                    strcat( buffer, ".DLL" );
 
             if ((hDLL = MODULE_LoadModule16( buffer, TRUE, TRUE )) < 32)
             {
@@ -833,32 +871,15 @@ static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
  * like a DLL module, even if it is an executable module.
  * 
  */
-HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit, BOOL lib_only )
+static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
-    HFILE16 hFile;
-    OFSTRUCT ofs;
 
-    if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
-    {
-        char	buffer[260];
-
-	if(implicit)
-	{
-	    /* 4 == strlen(".dll") */
-	    strncpy(buffer, name, sizeof(buffer) - 1 - 4);
-	    strcat(buffer, ".dll");
-	    if ((hFile = OpenFile16( buffer, &ofs, OF_READ )) == HFILE_ERROR16)
-		return 2;  /* File not found */
-	}
-    }
-
-    hModule = NE_LoadExeHeader( hFile, &ofs );
-    _lclose16( hFile );
-
+    hModule = NE_LoadExeHeader( name );
     if (hModule < 32) return hModule;
+
     pModule = NE_GetPtr( hModule );
     if ( !pModule ) return hModule;
 
@@ -897,12 +918,12 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 		{
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", libname);
-			hinst = NE_LoadModule(libname, implicit, lib_only);
+			hinst = NE_LoadModule(libname, lib_only);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
 			TRACE("Trying elfdll '%s'\n", libname);
-			hinst = ELFDLL_LoadModule16(libname, implicit);
+			hinst = ELFDLL_LoadModule16(libname);
 			break;
 
 		case MODULE_LOADORDER_BI:
@@ -1064,20 +1085,19 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *          NE_CreateProcess
  */
-BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
+BOOL NE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    HFILE16 hFile16;
 
     SYSLEVEL_EnterWin16Lock();
 
     /* Special case: second instance of an already loaded NE module */
 
-    if ( ( hModule = NE_GetModuleByFilename( ofs->szPathName ) ) != 0 )
+    if ( ( hModule = NE_GetModuleByFilename( filename ) ) != 0 )
     {
         if (   !( pModule = NE_GetPtr( hModule) )
             ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
@@ -1093,27 +1113,9 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
     /* Main case: load first instance of NE module */
     else
     {
-        /* If we didn't get a file handle, return */
-
-        if ( hFile == HFILE_ERROR )
-            goto error;
-
-        /* Allocate temporary HFILE16 for NE_LoadFileModule */
-
-        if (!DuplicateHandle( GetCurrentProcess(), hFile,
-                              GetCurrentProcess(), &hFile,
-                              0, FALSE, DUPLICATE_SAME_ACCESS ))
-        {
-            SetLastError( ERROR_INVALID_HANDLE );
-            goto error;
-        }
-        hFile16 = FILE_AllocDosHandle( hFile );
-
         /* Load module */
 
-        hModule = NE_LoadExeHeader( hFile16, ofs );
-        _lclose16( hFile16 );
-
+        hModule = NE_LoadExeHeader( filename );
         if ( hModule < 32 )
         {
             SetLastError( hModule );

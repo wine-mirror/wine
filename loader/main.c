@@ -291,7 +291,6 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
 {
     WINE_MODREF *wm;
     NE_MODULE *pModule;
-    OFSTRUCT ofs;
     HMODULE16 hModule;
 
     /* Main initialization */
@@ -302,8 +301,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
         return 0;
     PROCESS_Current()->exe_modref = wm;
 
-    strcpy( ofs.szPathName, wm->modname );
-    if ((hModule = MODULE_CreateDummyModule( &ofs, NULL, 0 )) < 32) return 0;
+    if ((hModule = MODULE_CreateDummyModule( wm->filename, 0 )) < 32) return 0;
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->flags = NE_FFLAGS_WIN32;
     pModule->module32 = wm->module;

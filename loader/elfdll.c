@@ -190,57 +190,67 @@ static WINE_MODREF *ELFDLL_CreateModref(HMODULE hModule, LPCSTR path)
 	if(dir->Size)
 		wm->binfmt.pe.pe_resource = (PIMAGE_RESOURCE_DIRECTORY)RVA(hModule, dir->VirtualAddress);
 
-	wm->modname = HEAP_strdupA(procheap, 0, (char *)RVA(hModule, wm->binfmt.pe.pe_export->Name));
 
-	len = GetLongPathNameA(path, NULL, 0);
-	wm->longname = (char *)HeapAlloc(procheap, 0, len+1);
-	GetLongPathNameA(path, wm->longname, len+1);
+	wm->filename = HEAP_strdupA( procheap, 0, path );
+	wm->modname = strrchr( wm->filename, '\\' );
+	if (!wm->modname) wm->modname = wm->filename;
+	else wm->modname++;
 
-	wm->shortname = HEAP_strdupA(procheap, 0, path);
+	len = GetShortPathNameA( wm->filename, NULL, 0 );
+	wm->short_filename = (char *)HeapAlloc( procheap, 0, len+1 );
+	GetShortPathNameA( wm->filename, wm->short_filename, len+1 );
+	wm->short_modname = strrchr( wm->short_filename, '\\' );
+	if (!wm->short_modname) wm->short_modname = wm->short_filename;
+	else wm->short_modname++;
 
 	/* Link MODREF into process list */
+
+	EnterCriticalSection( &PROCESS_Current()->crit_section );
+
 	wm->next = PROCESS_Current()->modref_list;
 	PROCESS_Current()->modref_list = wm;
+	if ( wm->next ) wm->next->prev = wm;
 
-	if(!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+	if (    !( nt->FileHeader.Characteristics & IMAGE_FILE_DLL )
+	     && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
+
 	{
-		if(PROCESS_Current()->exe_modref)
-			FIXME_(elfdll)("overwriting old exe_modref... arrgh\n");
-		PROCESS_Current()->exe_modref = wm;
+		if ( PROCESS_Current()->exe_modref )
+			FIXME_(elfdll)( "Trying to load second .EXE file: %s\n", path );
+		else
+			PROCESS_Current()->exe_modref = wm;
 	}
 
-	/* Fixup Imports */
-	if(pe_import && fixup_imports(wm)) 
-	{
-		/* Error in this module or its dependencies
-		 * remove entry from modref chain
-		 */
-		WINE_MODREF **xwm;
-		for(xwm = &(PROCESS_Current()->modref_list); *xwm; xwm = &((*xwm)->next))
-		{
-			if ( *xwm == wm )
-			{
-				*xwm = wm->next;
-				break;
-			}
-		}
-		if(wm == PROCESS_Current()->exe_modref)
-			ERR_(elfdll)("Have to delete current exe_modref. Expect crash now\n");
-		HeapFree(procheap, 0, wm->shortname);
-		HeapFree(procheap, 0, wm->longname);
-		HeapFree(procheap, 0, wm->modname);
-		HeapFree(procheap, 0, wm);
-		return NULL;
+	LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
-		/* FIXME: We should traverse back in the recursion
-		 * with an error to unload everything that got loaded
-		 * before this error occurred.
-		 * Too dificult for now though and we don't care at the 
-		 * moment. But, it *MUST* be implemented someday because
-		 * we won't be able to map the elf-dll twice in this
-		 * address-space which can cause some unexpected and
-		 * weird problems later on.
+	/* Fixup Imports */
+
+	if (    pe_import
+	     && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE )
+	     && !( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
+	     && fixup_imports( wm ) )
+	{
+		/* remove entry from modref chain */
+		EnterCriticalSection( &PROCESS_Current()->crit_section );
+
+		if ( !wm->prev )
+			PROCESS_Current()->modref_list = wm->next;
+		else
+			wm->prev->next = wm->next;
+
+		if ( wm->next ) wm->next->prev = wm->prev;
+		wm->next = wm->prev = NULL;
+
+		LeaveCriticalSection( &PROCESS_Current()->crit_section );
+
+		/* FIXME: there are several more dangling references
+		 * left. Including dlls loaded by this dll before the
+		 * failed one. Unrolling is rather difficult with the
+		 * current structure and we can leave it them lying
+		 * around with no problems, so we don't care.
+		 * As these might reference our wm, we don't free it.
 		 */
+		return NULL;
 	}
 
 	return wm;
@@ -352,7 +362,7 @@ void ELFDLL_UnloadLibrary(WINE_MODREF *wm)
  *
  * Implementation of elf-dll loading for NE modules
  */
-HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname, BOOL implicit)
+HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname)
 {
 	return (HINSTANCE16)ERROR_FILE_NOT_FOUND;
 }
@@ -374,7 +384,7 @@ void ELFDLL_UnloadLibrary(WINE_MODREF *wm)
 {
 }
 
-HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname, BOOL implicit)
+HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname)
 {
 	return (HINSTANCE16)ERROR_FILE_NOT_FOUND;
 }

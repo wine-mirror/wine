@@ -45,7 +45,9 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	PROCESS_Current()->modref_list = wm;
 
 	wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
-	wm->longname = HEAP_strdupA( GetProcessHeap(), 0, libname );
+	wm->filename = HEAP_strdupA( GetProcessHeap(), 0, libname );
+	wm->short_modname = wm->modname;
+	wm->short_filename = wm->filename;
 
 	hmod = (HMODULE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                      sizeof(IMAGE_DOS_HEADER) + 

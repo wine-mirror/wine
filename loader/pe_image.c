@@ -278,18 +278,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 	if (characteristics_detection && !pe_imp->u.Characteristics)
 		break;
 
-	/* don't use MODULE_Load, Win32 creates new task differently */
 	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
-	if (!wmImp) {
-	    char *p,buffer[2000];
-	    
-	    /* GetModuleFileName would use the wrong process, so don't use it */
-	    strcpy(buffer,wm->shortname);
-	    if (!(p = strrchr (buffer, '\\')))
-		p = buffer;
-	    strcpy (p + 1, name);
-	    wmImp = MODULE_LoadLibraryExA( buffer, 0, 0 );
-	}
 	if (!wmImp) {
 	    ERR_(module)("Module %s not found\n", name);
 	    return 1;
@@ -459,7 +448,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version )
+HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
 {
     HMODULE	hModule;
     HANDLE	mapping;
@@ -549,7 +538,7 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version
         FIXME_(win32)("WARNING: '%s' has an invalid entrypoint (0x%08lx) "
                       "below the first virtual address (0x%08x) "
                       "(possible Virus Infection or broken binary)!\n",
-                       ofs->szPathName, aoep, lowest_va );
+                       filename, aoep, lowest_va );
 
 
     /* FIXME:  Hack!  While we don't really support shared sections yet,
@@ -598,7 +587,7 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version
         {
             FIXME_(win32)(
                    "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
-                   ofs->szPathName,
+                   filename,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
                    "stripped during link" : "unknown reason" );
             goto error;
@@ -619,7 +608,7 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version
     TRACE_(win32)("Load addr is %lx (base %lx), range %x\n",
                   load_addr, nt->OptionalHeader.ImageBase, vma_size );
     TRACE_(segment)("Loading %s at %lx, range %x\n",
-                    ofs->szPathName, load_addr, vma_size );
+                    filename, load_addr, vma_size );
 
     /* Store the NT header at the load addr */
     *(PIMAGE_DOS_HEADER)load_addr = *(PIMAGE_DOS_HEADER)hModule;
@@ -658,11 +647,6 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version
     if ( reloc )
         do_relocations( load_addr, (IMAGE_BASE_RELOCATION *)RVA(reloc) );
 
-    /* Get module name */
-    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
-    if (dir->Size)
-        *modName = (LPCSTR)RVA(((PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress))->Name);
-
     /* Get expected OS / Subsystem version */
     *version =   ( (nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 )
                |   (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
@@ -690,7 +674,7 @@ error:
  *       process that is to own the module to be created.
  */
 WINE_MODREF *PE_CreateModule( HMODULE hModule, 
-                              OFSTRUCT *ofs, DWORD flags, BOOL builtin )
+                              LPCSTR filename, DWORD flags, BOOL builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);
@@ -700,7 +684,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     IMAGE_RESOURCE_DIRECTORY *pe_resource = NULL;
     WINE_MODREF *wm;
     int	result;
-    char *modname;
 
 
     /* Retrieve DataDirectory entries */
@@ -799,22 +782,17 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     wm->binfmt.pe.pe_resource = pe_resource;
     wm->binfmt.pe.tlsindex = -1;
 
-    if ( pe_export ) 
-        modname = (char *)RVA( pe_export->Name );
-    else 
-    {
-        /* try to find out the name from the OFSTRUCT */
-        char *s;
-        modname = ofs->szPathName;
-        if ((s=strrchr(modname,'\\'))) modname = s+1;
-    }
-    wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
+    wm->filename = HEAP_strdupA( GetProcessHeap(), 0, filename );
+    wm->modname = strrchr( wm->filename, '\\' );
+    if (!wm->modname) wm->modname = wm->filename;
+    else wm->modname++;
 
-    result = GetLongPathNameA( ofs->szPathName, NULL, 0 );
-    wm->longname = (char *)HeapAlloc( GetProcessHeap(), 0, result+1 );
-    GetLongPathNameA( ofs->szPathName, wm->longname, result+1 );
-
-    wm->shortname = HEAP_strdupA( GetProcessHeap(), 0, ofs->szPathName );
+    result = GetShortPathNameA( wm->filename, NULL, 0 );
+    wm->short_filename = (char *)HeapAlloc( GetProcessHeap(), 0, result+1 );
+    GetShortPathNameA( wm->filename, wm->short_filename, result+1 );
+    wm->short_modname = strrchr( wm->short_filename, '\\' );
+    if (!wm->short_modname) wm->short_modname = wm->short_filename;
+    else wm->short_modname++;
 
     /* Link MODREF into process list */
 
@@ -824,11 +802,14 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     PROCESS_Current()->modref_list = wm;
     if ( wm->next ) wm->next->prev = wm;
 
-    if ( !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) )
+    if (    !( nt->FileHeader.Characteristics & IMAGE_FILE_DLL )
+         && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
+
     {
         if ( PROCESS_Current()->exe_modref )
-            FIXME_(win32)("overwriting old exe_modref... arrgh\n" );
-        PROCESS_Current()->exe_modref = wm;
+            FIXME_(win32)( "Trying to load second .EXE file: %s\n", filename );
+        else
+            PROCESS_Current()->exe_modref = wm;
     }
 
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
@@ -878,41 +859,41 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
  */
 WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 {
-	LPCSTR		modName = NULL;
-	OFSTRUCT	ofs;
 	HMODULE		hModule32;
 	HMODULE16	hModule16;
 	NE_MODULE	*pModule;
 	WINE_MODREF	*wm;
-	char        	dllname[256], *p;
-	HFILE		hFile;
+	char        	filename[256];
+	HANDLE		hFile;
 	WORD		version = 0;
 
-	/* Append .DLL to name if no extension present */
-	strcpy( dllname, name );
-	if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-		strcat( dllname, ".DLL" );
-
-	/* Load PE module */
-	hFile = OpenFile( dllname, &ofs, OF_READ | OF_SHARE_DENY_WRITE );
-	if ( hFile != HFILE_ERROR )
-	{
-		hModule32 = PE_LoadImage( hFile, &ofs, &modName, &version );
-		CloseHandle( hFile );
-		if(!hModule32)
-		{
-			*err = ERROR_OUTOFMEMORY;	/* Not entirely right, but good enough */
-			return NULL;
-		}
-	}
-	else
+	/* Search for and open PE file */
+	if ( SearchPathA( NULL, name, ".DLL", 
+	                  sizeof(filename), filename, NULL ) == 0 )
 	{
 		*err = ERROR_FILE_NOT_FOUND;
 		return NULL;
 	}
+       
+	hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+                             NULL, OPEN_EXISTING, 0, -1 );
+	if ( hFile == INVALID_HANDLE_VALUE )
+	{
+		*err = ERROR_FILE_NOT_FOUND;
+		return NULL;
+	}
+	
+	/* Load PE module */
+	hModule32 = PE_LoadImage( hFile, filename, &version );
+	CloseHandle( hFile );
+	if (!hModule32)
+	{
+		*err = ERROR_OUTOFMEMORY;	/* Not entirely right, but good enough */
+		return NULL;
+	}
 
 	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName, version )) < 32)
+	if ((hModule16 = MODULE_CreateDummyModule( filename, version )) < 32)
 	{
 		*err = (DWORD)hModule16;	/* This should give the correct error */
 		return NULL;
@@ -922,9 +903,9 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	pModule->module32 = hModule32;
 
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, FALSE )) )
+	if ( !(wm = PE_CreateModule( hModule32, filename, flags, FALSE )) )
 	{
-		ERR_(win32)("can't load %s\n",ofs.szPathName);
+		ERR_(win32)( "can't load %s\n", filename );
 		FreeLibrary16( hModule16 );
 		*err = ERROR_OUTOFMEMORY;
 		return NULL;
@@ -953,19 +934,18 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
  * FIXME: this function should use PE_LoadLibraryExA, but currently can't
  * due to the PROCESS_Create stuff.
  */
-BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
+BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
-    LPCSTR modName = NULL;
     WORD version = 0;
     HMODULE16 hModule16;
     HMODULE hModule32;
     NE_MODULE *pModule;
 
     /* Load file */
-    if ( (hModule32 = PE_LoadImage( hFile, ofs, &modName, &version )) < 32 )
+    if ( (hModule32 = PE_LoadImage( hFile, filename, &version )) < 32 )
     {
         SetLastError( hModule32 );
         return FALSE;
@@ -979,7 +959,7 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 #endif
 
     /* Create 16-bit dummy module */
-    if ( (hModule16 = MODULE_CreateDummyModule( ofs, modName, version )) < 32 ) 
+    if ( (hModule16 = MODULE_CreateDummyModule( filename, version )) < 32 ) 
     {
         SetLastError( hModule16 );
         return FALSE;

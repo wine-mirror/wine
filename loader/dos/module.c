@@ -221,7 +221,7 @@ static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  return TRUE;
 }
 
-static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
+static BOOL MZ_LoadImage( HANDLE hFile, LPCSTR filename, LPCSTR cmdline,
                           LPCSTR env, LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
  IMAGE_DOS_HEADER mz_header;
@@ -230,10 +230,12 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
  int x,old_com=0;
  SEGPTR reloc;
  WORD env_seg;
+ DWORD len;
 
- _llseek(hFile,0,FILE_BEGIN);
- if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-     (mz_header.e_magic != IMAGE_DOS_SIGNATURE)) {
+ SetFilePointer(hFile,0,NULL,FILE_BEGIN);
+ if (   !ReadFile(hFile,&mz_header,sizeof(mz_header),&len,NULL)
+     || len != sizeof(mz_header) 
+     || mz_header.e_magic != IMAGE_DOS_SIGNATURE) {
   old_com=1; /* assume .COM file */
   image_start=0;
   image_size=GetFileSize(hFile,NULL);
@@ -254,7 +256,7 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
  MZ_InitMemory(lpDosTask,pModule);
 
  /* allocate environment block */
- env_seg=MZ_InitEnvironment(lpDosTask,env,ofs->szPathName);
+ env_seg=MZ_InitEnvironment(lpDosTask,env,filename);
 
  /* allocate memory for the executable */
  TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
@@ -277,8 +279,8 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
 
  /* load executable image */
  TRACE("loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
- _llseek(hFile,image_start,FILE_BEGIN);
- if ((_lread(hFile,load_start,image_size)) != image_size) {
+ SetFilePointer(hFile,image_start,NULL,FILE_BEGIN);
+ if (!ReadFile(hFile,load_start,image_size,&len,NULL) || len != image_size) {
   SetLastError(ERROR_BAD_FORMAT);
   return FALSE;
  }
@@ -287,9 +289,9 @@ static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
   /* load relocation table */
   TRACE("loading DOS EXE relocation table, %d entries\n",mz_header.e_crlc);
   /* FIXME: is this too slow without read buffering? */
-  _llseek(hFile,mz_header.e_lfarlc,FILE_BEGIN);
+  SetFilePointer(hFile,mz_header.e_lfarlc,NULL,FILE_BEGIN);
   for (x=0; x<mz_header.e_crlc; x++) {
-   if (_lread(hFile,&reloc,sizeof(reloc)) != sizeof(reloc)) {
+   if (!ReadFile(hFile,&reloc,sizeof(reloc),&len,NULL) || len != sizeof(reloc)) {
     SetLastError(ERROR_BAD_FORMAT);
     return FALSE;
    }
@@ -450,7 +452,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
  return TRUE;
 }
 
-BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env, 
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
                        LPPROCESS_INFORMATION info )
@@ -469,7 +471,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
 
  if ((!env)&&pdb) env = pdb->env_db->environ;
  if (alloc) {
-  if ((hModule = MODULE_CreateDummyModule(ofs, NULL, 0)) < 32) {
+  if ((hModule = MODULE_CreateDummyModule(filename, 0)) < 32) {
    SetLastError(hModule);
    return FALSE;
   }
@@ -480,7 +482,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
  
   lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
  } else lpDosTask=pModule->lpDosTask;
- if (!MZ_LoadImage( hFile, ofs, cmdline, env, lpDosTask, pModule )) {
+ if (!MZ_LoadImage( hFile, filename, cmdline, env, lpDosTask, pModule )) {
   if (alloc) {
    if (lpDosTask->mm_name[0]!=0) {
     if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
@@ -558,7 +560,7 @@ LPDOSTASK MZ_Current( void )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
+BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env,
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )

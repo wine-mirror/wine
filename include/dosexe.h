@@ -62,7 +62,7 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 #define V86_FLAG 0x00020000
 
-extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+extern BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env, 
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                               BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
