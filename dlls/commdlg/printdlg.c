@@ -2049,16 +2049,17 @@ INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 			  LPARAM lParam)
 {
+    static const WCHAR propW[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
     PRINT_PTRW* PrintStructures;
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-	PrintStructures = (PRINT_PTRW*) GetPropW(hDlg, "__WINE_PRINTDLGDATA");
+	PrintStructures = (PRINT_PTRW*) GetPropW(hDlg, propW);
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRW*) lParam;
-	SetPropW(hDlg, "__WINE_PRINTDLGDATA", PrintStructures);
+	SetPropW(hDlg, propW, PrintStructures);
 	res = PRINTDLG_WMInitDialogW(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
