@@ -123,6 +123,10 @@ typedef struct
 #define GRIPPER_HEIGHT  16
 #define SEP_WIDTH       3
 
+/* This is the increment that is used over the band height */
+/* Determined by experiment.                               */ 
+#define REBARSPACE      4
+
 #define REBAR_GetInfoPtr(wndPtr) ((REBAR_INFO *)GetWindowLongA (hwnd, 0))
 
 static VOID
@@ -678,9 +682,8 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
         else
 	  dobreak = (x + cx + cxsep > adjcx);
 	/* This is the check for whether we need to start a new row */
-	if (((dwStyle & CCS_VERT) ? (y != 0) : (x != 0)) && 
-            ((lpBand->fStyle & RBBS_BREAK) ||
-	     dobreak)) {
+	if ( (lpBand->fStyle & RBBS_BREAK) ||
+	     ( ((dwStyle & CCS_VERT) ? (y != 0) : (x != 0)) && dobreak)) {
 	  TRACE("Spliting to new row %d on band %u\n", row+1, i);
 
 	  if (dwStyle & CCS_VERT) {
@@ -714,7 +717,7 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	  lpBand->iRow = row;
 	}
 
-	if (mcy < lpBand->lcy) mcy = lpBand->lcy;
+	if (mcy < lpBand->lcy + REBARSPACE) mcy = lpBand->lcy + REBARSPACE;
 
 	/* if boundary rect specified then limit mcy */
 	if (lpRect) {
@@ -740,7 +743,7 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	  rightx = clientcx;
 	  bottomy = (lpRect) ? min(clientcy, y+cxsep+cx) : y+cxsep+cx;
 	  lpBand->rcBand.left   = x;
-	  lpBand->rcBand.right  = y + min(mcy, lpBand->lcy);
+	  lpBand->rcBand.right  = y + min(mcy, lpBand->lcy+REBARSPACE);
 	  lpBand->rcBand.top    = min(bottomy, y + cxsep);
 	  lpBand->rcBand.bottom = bottomy;
 	  lpBand->uMinHeight = lpBand->lcy;
@@ -754,7 +757,7 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	  lpBand->rcBand.left   = min(rightx, x + cxsep);
 	  lpBand->rcBand.right  = rightx;
 	  lpBand->rcBand.top    = y;
-	  lpBand->rcBand.bottom = y + min(mcy, lpBand->lcy);
+	  lpBand->rcBand.bottom = y + min(mcy, lpBand->lcy+REBARSPACE);
 	  lpBand->uMinHeight = lpBand->lcy;
 	  x = rightx;
 	}
@@ -977,7 +980,8 @@ REBAR_ValidateBand (HWND hwnd, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
         lpBand->lcy = lpBand->cyMinChild;
         lpBand->hcy = lpBand->lcy;
         if (lpBand->fStyle & RBBS_VARIABLEHEIGHT) {
-	    lpBand->lcy = max (lpBand->cyChild, lpBand->lcy);
+	    if (lpBand->cyChild != 0xffffffff)
+	        lpBand->lcy = max (lpBand->cyChild, lpBand->lcy);
 	    lpBand->hcy = lpBand->cyMaxChild;
         }
         TRACE("_CHILDSIZE\n");
@@ -1029,14 +1033,6 @@ REBAR_CommonSetupBand (HWND hwnd, LPREBARBANDINFOA lprbbi, REBAR_BAND *lpBand)
 	lpBand->cyMaxChild = lprbbi->cyMaxChild;
 	lpBand->cyChild    = lprbbi->cyChild;
 	lpBand->cyIntegral = lprbbi->cyIntegral;
-
-        /* FUDGE FUDGE GetWindowRect wrong for comboboxex FUDGE */
-	/*  fix for rebar.exe                                   */
-        if (lpBand->cyMinChild == 150) lpBand->cyMinChild = 25;
-        /* FUDGE FUDGE GetWindowRect wrong for comboboxex FUDGE */
-	/*  fix for iexplore.exe                                */
-        if (lpBand->cyMinChild == 250) lpBand->cyMinChild = 25;
-
     }
 
     if (lprbbi->fMask & RBBIM_SIZE)
