@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 #include "winuser.h"
-#include "class.h"
 #include "dc.h"
 #include "win.h"
 #include "gdi.h"

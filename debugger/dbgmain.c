@@ -11,7 +11,7 @@
 #include "toolhelp.h"
 #include "module.h"
 #include "debugger.h"
-#include "class.h"
+#include "win.h"
 
 #include "debugger.h"
 #include "peexe.h"
@@ -51,7 +51,7 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
 }
 
 
-void CLASS_DumpClass( CLASS *class )
+void CLASS_DumpClass( struct tagCLASS *class )
 {
   exit(0);
 }

@@ -647,7 +647,7 @@ const char *SPY_GetWndName( HWND hwnd )
 	    INT len;
 
 	    *(p++)='{';
-	    GlobalGetAtomNameA( pWnd->class->atomName, p, n + 1);
+	    GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), p, n + 1);
 	    src = p += (len = lstrlenA(p));
 	    if( len >= n ) src = wnd_buffer;	/* something nonzero */
 	    postfix = '}';

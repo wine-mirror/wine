@@ -170,7 +170,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
-    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
+    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && GetClassWord(wndPtr->hwndSelf, GCW_HICON));
 
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
@@ -187,7 +187,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     TRACE_(win)("hrgnUpdate = %04x, \n", hrgnUpdate);
 
-    if (wndPtr->class->style & CS_PARENTDC)
+    if (GetClassWord16(wndPtr->hwndSelf, GCW_STYLE) & CS_PARENTDC)
     {
         /* Don't clip the output to the update region for CS_PARENTDC window */
 	if( hrgnUpdate ) 
@@ -545,7 +545,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
  */
     HDC  hDC;
     HWND hWnd = wndPtr->hwndSelf;
-    BOOL bIcon = ((wndPtr->dwStyle & WS_MINIMIZE) && wndPtr->class->hIcon); 
+    BOOL bIcon = ((wndPtr->dwStyle & WS_MINIMIZE) && GetClassWord(wndPtr->hwndSelf, GCW_HICON)); 
 
       /* Erase/update the window itself ... */
 
@@ -913,7 +913,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
             }
 	    GetRgnBox( hrgn, rect );
 	    DeleteObject( hrgn );
-	    if (wndPtr->class->style & CS_OWNDC)
+	    if (GetClassLongA(wndPtr->hwndSelf, GCL_STYLE) & CS_OWNDC)
 	    {
 		if (GetMapMode(wndPtr->dce->hDC) != MM_TEXT)
 		{

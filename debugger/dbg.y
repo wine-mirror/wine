@@ -19,7 +19,6 @@
 #endif
 
 #include "winbase.h"
-#include "class.h"
 #include "module.h"
 #include "task.h"
 #include "options.h"
@@ -290,7 +289,7 @@ break_command:
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS expr_value tEOL    { CLASS_DumpClass( (CLASS *)$3 ); 
+    | tINFO tCLASS expr_value tEOL    { CLASS_DumpClass( (struct tagCLASS *)$3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
     | tINFO tMODULE expr_value tEOL   { NE_DumpModule( $3 ); 

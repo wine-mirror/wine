@@ -180,7 +180,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	 * note that ...MOUSEMOVEs can slip in between
 	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
 
-	if( pWnd->class->style & CS_DBLCLKS || ht != HTCLIENT )
+	if(GetClassLongA(hWnd, GCL_STYLE) & CS_DBLCLKS || ht != HTCLIENT )
 	{
            if ((message == clk_message) && (hWnd == clk_hwnd) &&
                (msg->time - dblclk_time_limit < doubleClickSpeed) &&
@@ -1091,7 +1091,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
 	    if ((wndPtr = WIN_FindWndPtr(msg->hwnd)))
 	    {
                 if( wndPtr->dwStyle & WS_MINIMIZE &&
-                    wndPtr->class->hIcon )
+                    (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON) )
                 {
                     msg->message = WM_PAINTICON;
                     msg->wParam = 1;

@@ -14,7 +14,6 @@
 #include "wine/winbase16.h"
 #include "windef.h"
 #include "winerror.h"
-#include "class.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"

@@ -25,7 +25,6 @@
 #include "shell.h"
 #include "callback.h"
 #include "local.h"
-#include "class.h"
 #include "desktop.h"
 #include "process.h"
 #include "debugtools.h"

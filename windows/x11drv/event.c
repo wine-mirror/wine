@@ -17,7 +17,6 @@
 #include <assert.h>
 #include <string.h>
 #include "callback.h"
-#include "class.h"
 #include "clipboard.h"
 #include "dce.h"
 #include "dde_proc.h"

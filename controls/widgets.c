@@ -115,5 +115,5 @@ BOOL WIDGETS_Init(void)
 BOOL	WIDGETS_IsControl( WND* pWnd, BUILTIN_CLASS32 cls )
 {
     assert( cls < BIC32_NB_CLASSES );
-    return (pWnd->class->atomName == bicAtomTable[cls]);
+    return (GetClassWord(pWnd->hwndSelf, GCW_ATOM) == bicAtomTable[cls]);
 }

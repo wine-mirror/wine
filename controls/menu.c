@@ -2053,7 +2053,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 
     if (IS_SYSTEM_MENU(menu))
     {
-	MENU_InitSysMenuPopup(item->hSubMenu, wndPtr->dwStyle, wndPtr->class->style);
+	MENU_InitSysMenuPopup(item->hSubMenu, wndPtr->dwStyle, GetClassLongA(wndPtr->hwndSelf, GCL_STYLE));
 
 	NC_GetSysPopupPos( wndPtr, &rect );
 	rect.top = rect.bottom;
