@@ -171,7 +171,7 @@ static const char * wave_open_flags(DWORD flags)
     return msg;
 }
 
-static void wave_out_test_deviceOut(int device, int format, DWORD flags)
+static void wave_out_test_deviceOut(int device, int format, DWORD flags, LPWAVEOUTCAPS pcaps)
 {
     WAVEFORMATEX wfx;
     HWAVEOUT wout;
@@ -197,6 +197,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags)
     rc=waveOutOpen(&wout,device,&wfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       (rc==WAVERR_BADFORMAT && (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & win_formats[format][0])) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
        "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
@@ -305,8 +306,8 @@ static void wave_out_tests()
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
             if (caps.dwFormats & win_formats[f][0]) {
-                wave_out_test_deviceOut(d,f,0);
-                wave_out_test_deviceOut(d,f,WAVE_FORMAT_DIRECT);
+                wave_out_test_deviceOut(d,f,0,&caps);
+                wave_out_test_deviceOut(d,f,WAVE_FORMAT_DIRECT,&caps);
             }
         }
 
@@ -364,7 +365,7 @@ static const char * wave_in_error(MMRESULT error)
     return msg;
 }
 
-static void wave_in_test_deviceIn(int device, int format, DWORD flags)
+static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINCAPS pcaps)
 {
     WAVEFORMATEX wfx;
     HWAVEIN win;
@@ -390,6 +391,7 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
     rc=waveInOpen(&win,device,&wfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       (rc==WAVERR_BADFORMAT && (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & win_formats[format][0])) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
        "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
@@ -411,11 +413,15 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
 
     frag.lpData=malloc(wfx.nAvgBytesPerSec);
     frag.dwBufferLength=wfx.nAvgBytesPerSec;
+    frag.dwBytesRecorded=0;
+    frag.dwUser=0;
     frag.dwFlags=0;
     frag.dwLoops=0;
+    frag.lpNext=0;
 
     rc=waveInPrepareHeader(win, &frag, sizeof(frag));
-    ok(rc==MMSYSERR_NOERROR, "waveOutPrepareHeader: device=%d rc=%d\n",device,rc);
+    ok(rc==MMSYSERR_NOERROR, "waveInPrepareHeader: device=%d rc=%d\n",device,rc);
+    ok(frag.dwFlags&WHDR_PREPARED,"waveInPrepareHeader: prepared flag not set\n");
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
         trace("Recording at %ldx%2dx%d %04lx\n",
@@ -501,8 +507,8 @@ static void wave_in_tests()
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
             if (caps.dwFormats & win_formats[f][0]) {
-                wave_in_test_deviceIn(d,f,0);
-                wave_in_test_deviceIn(d,f,WAVE_FORMAT_DIRECT);
+                wave_in_test_deviceIn(d,f,0, &caps);
+                wave_in_test_deviceIn(d,f,WAVE_FORMAT_DIRECT, &caps);
             }
         }
 
