@@ -223,15 +223,15 @@ void computeInternalFrame(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn, LPBYTE lpIn
 
     switch (lpbiIn->biBitCount) {
     case 1:
-      for (x = 0; x < lpbiIn->biWidth; x += 8) {
+      for (x = 0; x < lpbiIn->biWidth / 8; x++) {
 	for (i = 0; i < 7; i++)
-	  lpOut[x + i] = wIntensityTbl[(lpIn[x] >> (7 - i)) & 1];
+	  lpOut[8 * x + i] = wIntensityTbl[(lpIn[x] >> (7 - i)) & 1];
       }
       break;
     case 4:
-      for (x = 0; x < lpbiIn->biWidth; x += 2) {
-	lpOut[x + 0] = wIntensityTbl[(lpIn[x] >> 4)];
-	lpOut[x + 1] = wIntensityTbl[(lpIn[x] & 0x0F)];
+      for (x = 0; x < lpbiIn->biWidth / 2; x++) {
+	lpOut[2 * x + 0] = wIntensityTbl[(lpIn[x] >> 4)];
+	lpOut[2 * x + 1] = wIntensityTbl[(lpIn[x] & 0x0F)];
       }
       break;
     case 8:
@@ -299,13 +299,13 @@ static INT countDiffRLE4(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
       /* FIXME */
 
       return count;
-    } else if (lpP && ColorCmp(lpP[pos], lpB[pos]) <= lDist) {
+    } else if (lpP != NULL && ColorCmp(lpP[pos], lpB[pos]) <= lDist) {
       /* 'compare' with previous frame for end of diff */
       INT count2 = 0;
 
       /* FIXME */
 
-      if (count2 >= 4)
+      if (count2 >= 8)
 	return count;
 
       pos -= count2;
@@ -388,9 +388,9 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     while (count > 2) {
       INT  i;
       INT  size       = min(count, 254);
-      BOOL extra_byte = size % 2;
+      BOOL extra_byte = (size/2) % 2;
 
-      *lpSizeImage += 2 + size + extra_byte;
+      *lpSizeImage += 2 + size/2 + extra_byte;
       count -= size;
       *lpOut++ = 0;
       *lpOut++ = size;
@@ -1413,7 +1413,6 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
      * No need to recompute internal framedata, because we only swapped buffers */
     LPWORD pTmp = pi->pPrevFrame;
 
-    FIXME(": prev=%ld cur=%ld swap\n",pi->nPrevFrame,lpic->lFrameNum);
     pi->pPrevFrame = pi->pCurFrame;
     pi->pCurFrame  = pTmp;
   } else if ((lpic->dwFlags & ICCOMPRESS_KEYFRAME) == 0) {
