@@ -39,17 +39,66 @@
 #define NOTIFICATIONS    5
 
 
+static const char * get_format_str(WORD format)
+{
+    static char msg[32];
+#define WAVE_FORMAT(f) case f: return #f
+    switch (format) {
+    WAVE_FORMAT(WAVE_FORMAT_PCM);
+    WAVE_FORMAT(WAVE_FORMAT_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_IBM_CVSD);
+    WAVE_FORMAT(WAVE_FORMAT_ALAW);
+    WAVE_FORMAT(WAVE_FORMAT_MULAW);
+    WAVE_FORMAT(WAVE_FORMAT_OKI_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_IMA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_MEDIASPACE_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_SIERRA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_G723_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_DIGISTD);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIFIX);
+    WAVE_FORMAT(WAVE_FORMAT_DIALOGIC_OKI_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_YAMAHA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_SONARC);
+    WAVE_FORMAT(WAVE_FORMAT_DSPGROUP_TRUESPEECH);
+    WAVE_FORMAT(WAVE_FORMAT_ECHOSC1);
+    WAVE_FORMAT(WAVE_FORMAT_AUDIOFILE_AF36);
+    WAVE_FORMAT(WAVE_FORMAT_APTX);
+    WAVE_FORMAT(WAVE_FORMAT_AUDIOFILE_AF10);
+    WAVE_FORMAT(WAVE_FORMAT_DOLBY_AC2);
+    WAVE_FORMAT(WAVE_FORMAT_GSM610);
+    WAVE_FORMAT(WAVE_FORMAT_ANTEX_ADPCME);
+    WAVE_FORMAT(WAVE_FORMAT_CONTROL_RES_VQLPC);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIREAL);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_CONTROL_RES_CR10);
+    WAVE_FORMAT(WAVE_FORMAT_NMS_VBXADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_G721_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_MPEG);
+    WAVE_FORMAT(WAVE_FORMAT_MPEGLAYER3);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_FASTSPEECH8);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_FASTSPEECH10);
+    WAVE_FORMAT(WAVE_FORMAT_FM_TOWNS_SND);
+    WAVE_FORMAT(WAVE_FORMAT_OLIGSM);
+    WAVE_FORMAT(WAVE_FORMAT_OLIADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_OLICELP);
+    WAVE_FORMAT(WAVE_FORMAT_OLISBC);
+    WAVE_FORMAT(WAVE_FORMAT_OLIOPR);
+    WAVE_FORMAT(WAVE_FORMAT_DEVELOPMENT);
+    WAVE_FORMAT(WAVE_FORMAT_EXTENSIBLE);
+    }
+#undef WAVE_FORMAT
+    sprintf(msg, "Unknown(0x%04x)", format);
+    return msg;
+}
+
 static char * format_string(WAVEFORMATEX* wfx)
 {
     static char str[64];
 
-    sprintf(str, "%ldx%dx%d %s",
+    sprintf(str, "%5ldx%2dx%d %s",
 	wfx->nSamplesPerSec, wfx->wBitsPerSample, wfx->nChannels,
-	wfx->wFormatTag == WAVE_FORMAT_PCM ? "WAVE_FORMAT_PCM" :
-	wfx->wFormatTag == WAVE_FORMAT_MULAW ? "WAVE_FORMAT_MULAW" :
-	wfx->wFormatTag == WAVE_FORMAT_IMA_ADPCM ? "WAVE_FORMAT_IMA_ADPCM" : 
-	wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE ? "WAVE_FORMAT_EXTENSIBLE" : 
-        "Unknown");
+        get_format_str(wfx->wFormatTag));
 
     return str;
 }
@@ -104,7 +153,7 @@ static int capture_buffer_service(capture_state_t* state)
     return 1;
 }
 
-static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, 
+static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 				LPDIRECTSOUNDCAPTUREBUFFER dscbo, int record)
 {
     HRESULT rc;
@@ -131,13 +180,14 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundCaptureBuffer_GetCaps(dscbo,&dscbcaps);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCaps() failed: %s\n",
        DXGetErrorString8(rc));
-    if (rc==DS_OK) {
+    if (rc==DS_OK && winetest_debug > 1) {
 	trace("    Caps: size = %ld flags=0x%08lx buffer size=%ld\n",
 	    dscbcaps.dwSize,dscbcaps.dwFlags,dscbcaps.dwBufferBytes);
     }
 
     /* Query the format size. Note that it may not match sizeof(wfx) */
-    /* Private dsound.dll: Error: Either pwfxFormat or pdwSizeWritten must be non-NULL */
+    /* Private dsound.dll: Error: Either pwfxFormat or pdwSizeWritten must
+     * be non-NULL */
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,NULL,0,NULL);
     ok(rc==DSERR_INVALIDPARAM,"IDirectSoundCaptureBuffer_GetFormat() should "
        "have returned DSERR_INVALIDPARAM, returned: %s\n",
@@ -152,7 +202,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundCaptureBuffer_GetFormat(dscbo,&wfx,sizeof(wfx),NULL);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetFormat() failed: %s\n",
        DXGetErrorString8(rc));
-    if (rc==DS_OK) {
+    if (rc==DS_OK && winetest_debug > 1) {
 	trace("    Format: tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
 	      wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
 	      wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
@@ -167,8 +217,8 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
     rc=IDirectSoundCaptureBuffer_GetStatus(dscbo,&status);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetStatus() failed: %s\n",
        DXGetErrorString8(rc));
-    if (rc==DS_OK) {
-	trace("    status=0x%04lx\n",status);
+    if (rc==DS_OK && winetest_debug > 1) {
+	trace("    Status=0x%04lx\n",status);
     }
 
     ZeroMemory(&state, sizeof(state));
@@ -222,13 +272,13 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,
 
 	/* wait for the notifications */
 	for (i = 0; i < (NOTIFICATIONS * 2); i++) {
-	    rc=MsgWaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE, 
+	    rc=MsgWaitForMultipleObjects(NOTIFICATIONS,state.event,FALSE,
                                          3000,QS_ALLEVENTS);
 	    ok(rc==(WAIT_OBJECT_0+(i%NOTIFICATIONS)),
                "MsgWaitForMultipleObjects failed: 0x%lx\n",rc);
 	    if (rc!=(WAIT_OBJECT_0+(i%NOTIFICATIONS))) {
 		ok((rc==WAIT_TIMEOUT)||(rc==WAIT_FAILED),
-                   "Wrong notification: should be %d, got %ld\n", 
+                   "Wrong notification: should be %d, got %ld\n",
 		    i%NOTIFICATIONS,rc-WAIT_OBJECT_0);
 	    }
 	    if (!capture_buffer_service(&state))
@@ -256,7 +306,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     int ref;
 
     /* Private dsound.dll: Error: Invalid interface buffer */
-    trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
+    trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
     rc=DirectSoundCaptureCreate(lpGuid,NULL,NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate() should have "
        "returned DSERR_INVALIDPARAM, returned: %s\n",DXGetErrorString8(rc));
@@ -287,7 +337,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
     ok(rc==DS_OK,"IDirectSoundCapture_GetCaps() failed: %s\n",
        DXGetErrorString8(rc));
-    if (rc==DS_OK) {
+    if (rc==DS_OK && winetest_debug > 1) {
 	trace("  Caps: size=%ld flags=0x%08lx formats=%05lx channels=%ld\n",
 	      dsccaps.dwSize,dsccaps.dwFlags,dsccaps.dwFormats,
               dsccaps.dwChannels);
@@ -377,7 +427,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
 	bufdesc.dwReserved=0;
 	bufdesc.lpwfxFormat=&wfx;
-	trace("  Testing the capture buffer at %s\n", format_string(&wfx));
+        if (winetest_interactive)
+	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
 	ok((rc==DS_OK)&&(dscbo!=NULL),
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
@@ -399,7 +450,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
     bufdesc.dwReserved=0;
     bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
+    if (winetest_interactive)
+        trace("  Testing the capture buffer at %s\n", format_string(&wfx));
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok((rc==DS_OK)&&(dscbo!=NULL),"IDirectSoundCapture_CreateCaptureBuffer() "
        "failed to create a capture buffer: %s\n",DXGetErrorString8(rc));
@@ -420,7 +472,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
     bufdesc.dwReserved=0;
     bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
+    if (winetest_interactive)
+        trace("  Testing the capture buffer at %s\n", format_string(&wfx));
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc!=DS_OK,"IDirectSoundCapture_CreateCaptureBuffer() should have failed "
        "at 2 MHz %s\n",DXGetErrorString8(rc));

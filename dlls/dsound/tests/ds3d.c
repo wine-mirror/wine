@@ -373,8 +373,10 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 
         if (is_primary) {
             /* We must call SetCooperativeLevel to be allowed to call Lock */
-            /* DSOUND: Setting DirectSound cooperative level to DSSCL_WRITEPRIMARY */
-            rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_WRITEPRIMARY);
+            /* DSOUND: Setting DirectSound cooperative level to
+             * DSSCL_WRITEPRIMARY */
+            rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),
+                                                DSSCL_WRITEPRIMARY);
             ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel(DSSCL_WRITEPRIMARY) "
                "failed: %s\n",DXGetErrorString8(rc));
             if (rc!=DS_OK)
@@ -403,7 +405,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
                "should have 1\n",ref);
 
             temp_buffer=NULL;
-            rc=IDirectSound3DBuffer_QueryInterface(dsbo, &IID_IDirectSoundBuffer,
+            rc=IDirectSound3DBuffer_QueryInterface(dsbo,
+                                                   &IID_IDirectSoundBuffer,
                                                    (LPVOID *)&temp_buffer);
             ok(rc==DS_OK && temp_buffer!=NULL,
                "IDirectSound3DBuffer_QueryInterface() failed: %s\n",
@@ -503,7 +506,8 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         if (listener) {
             ZeroMemory(&listener_param,sizeof(listener_param));
             listener_param.dwSize=sizeof(listener_param);
-            rc=IDirectSound3DListener_GetAllParameters(listener,&listener_param);
+            rc=IDirectSound3DListener_GetAllParameters(listener,
+                                                       &listener_param);
             ok(rc==DS_OK,"IDirectSound3dListener_GetAllParameters() "
                "failed: %s\n",DXGetErrorString8(rc));
             if (move_listener) {
@@ -783,7 +787,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                             listener,move_listener,move_sound);
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() %s has %d references, "
-                   "should have 0\n",has_duplicate?"duplicated":"secondary",ref);
+                   "should have 0\n",has_duplicate?"duplicated":"secondary",
+                   ref);
             }
         }
     }
@@ -1070,7 +1075,7 @@ return DSERR_GENERIC;
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
-    trace("*** Testing %s - %s\n",lpcstrDescription,lpcstrModule);
+    trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
 
     trace("  Testing the primary buffer\n");
     test_primary(lpGuid);
