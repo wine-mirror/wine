@@ -2,94 +2,10 @@
   <title> Address space management </title>
 
   <para>
-    Every Win32 process in Wine has its own dedicated native process on the host system, and
-    therefore its own address space. This section explores the layout of the Windows address space
-    and how it is emulated.
+    A good understanding of memory layout in Unix and Windows is
+    required before reading the next section (<xref
+      linkend="arch-mem"> gives some basic insight).  
   </para>
-
-  <para>
-    Firstly, a quick recap of how virtual memory works. Physical memory in RAM chips is split
-    into <emphasis>frames</emphasis>, and the memory that each process sees is split
-    into <emphasis>pages</emphasis>. Each process has its own 4 gigabytes of address space (4gig
-    being the maximum space addressable with a 32 bit pointer). Pages can be mapped or unmapped:
-    attempts to access an unmapped page cause an EXCEPTION_ACCESS_VIOLATION which has the
-    easily recognizable code of 0xC0000005.  Any page can be mapped to any frame, therefore you can
-    have multiple addresses which actually "contain" the same memory. Pages can also be mapped to
-    things like files or swap space, in which case accessing that page will cause a disk access to
-    read the contents into a free frame.
-  </para>
-
-  <sect1>
-    <title>Initial layout</title>
-  
-    <para>
-      When a Win32 process starts, it does not have a clear address space to use as it pleases. Many pages
-      are already mapped by the operating system. In particular, the EXE file itself and any DLLs it
-      needs are mapped into memory, and space has been reserved for the stack and a couple of heaps
-      (zones used to allocate memory to the app from). Some of these things need to be at a fixed
-      address, and others can be placed anywhere.
-    </para>
-
-    <para>
-      The EXE file itself is usually mapped at address 0x400000 and up: indeed, most EXEs have
-      their relocation records stripped which means they must be loaded at their base address and
-      cannot be loaded at any other address.
-    </para>
-
-    <para>
-      DLLs are internally much the same as EXE files but they have relocation records, which means
-      that they can be mapped at any address in the address space. Remember we are not dealing with
-      physical memory here, but rather virtual memory which is different for each
-      process. Therefore OLEAUT32.DLL may be loaded at one address in one process, and a totally
-      different one in another. Ensuring all the functions loaded into memory can find each other
-      is the job of the Windows dynamic linker, which is a part of NTDLL.
-    </para>
-
-    <para>
-      So, we have the EXE and its DLLs mapped into memory. Two other very important regions also
-      exist: the stack and the process heap. The process heap is simply the equivalent of the libc
-      malloc arena on UNIX: it's a region of memory managed by the OS which malloc/HeapAlloc
-      partitions and hands out to the application. Windows applications can create several heaps but
-      the process heap always exists. It's created as part of process initialization in
-      dlls/ntdll/thread.c:thread_init().
-    </para>
-
-    <para>
-      There is another heap created as part of process startup, the so-called shared or system
-      heap. This is an undocumented service that exists only on Windows 9x: it is implemented in
-      Wine so native win9x DLLs can be used. The shared heap is unusual in that anything allocated
-      from it will be visible in every other process. This heap is always created at the
-      SYSTEM_HEAP_BASE address or 0x80000000 and defaults to 16 megabytes in size.
-    </para>
-
-    <para>
-      So far we've assumed the entire 4 gigs of address space is available for the application. In
-      fact that's not so: only the lower 2 gigs are available, the upper 2 gigs are on Windows NT
-      used by the operating system and hold the kernel (from 0x80000000). Why is the kernel mapped
-      into every address space?  Mostly for performance: while it's possible to give the kernel its
-      own address space too - this is what Ingo Molnars 4G/4G VM split patch does for Linux - it
-      requires that every system call into the kernel switches address space. As that is a fairly
-      expensive operation (requires flushing the translation lookaside buffers etc) and syscalls are
-      made frequently it's best avoided by keeping the kernel mapped at a constant position in every
-      processes address space.
-    </para>
-
-    <para>
-      On Windows 9x, in fact only the upper gigabyte (0xC0000000 and up) is used by the kernel, the
-      region from 2 to 3 gigs is a shared area used for loading system DLLs and for file
-      mappings. The bottom 2 gigs on both NT and 9x are available for the programs memory allocation
-      and stack.
-    </para>
-
-    <para>
-      There are a few other magic locations. The bottom 64k of memory is deliberately left unmapped
-      to catch null pointer dereferences. The region from 64k to 1mb+64k are reserved for DOS
-      compatibility and contain various DOS data structures. Finally, the address space also
-      contains mappings for the Wine binary itself, any native libaries Wine is using, the glibc
-      malloc arena and so on.
-    </para>
-    
-  </sect1>
 
   <sect1>
     <title> Laying out the address space </title>
@@ -130,8 +46,8 @@
       The 4G VM split patch was developed by Ingo Molnar. It gives the Linux kernel its own address
       space, thereby allowing processes to access the maximum addressable amount of memory on a
       32-bit machine: 4 gigabytes. It allows people with lots of RAM to fully utilise that in any
-      given process at the cost of performance: as mentioned previously the reason behind giving
-      the kernel a part of each processes address space was to avoid the overhead of switching on
+      given process at the cost of performance: the reason behind
+      giving the kernel a part of each processes address space was to avoid the overhead of switching on
       each syscall.
     </para>
 

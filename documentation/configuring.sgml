@@ -1801,7 +1801,7 @@ And here is a setup for Drive A, a generic floppy drive:
       <varlistentry>
 	<term>so</term>
 	<listitem><para>
-	    Native ELF libraries. Has been deprecated, ignored.
+	    Native ELF libraries. Has became obsolete, ignored.
 	  </para></listitem>
       </varlistentry>
       <varlistentry>
