@@ -1167,7 +1167,9 @@ static BOOL Commdlg_GetFileNameA( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 
 	if (ofn16->lpstrFileTitle) 
 	  {
-	    strcpy(ofn->lpstrFileTitle,PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
+	    if (ofn->lpstrFileTitle)
+		strcpy(ofn->lpstrFileTitle,
+			PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
 	    SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
 	  }
 	SEGPTR_FREE(ofn16);
@@ -1270,8 +1272,10 @@ static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	}
 
 	if (ofn16->lpstrFileTitle) {
-                lstrcpyAtoW(ofn->lpstrFileTitle,PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
-		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
+	    if (ofn->lpstrFileTitle)
+                lstrcpyAtoW(ofn->lpstrFileTitle,
+			PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
+	    SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));
 	}
 	SEGPTR_FREE(ofn16);
 	return ret;
