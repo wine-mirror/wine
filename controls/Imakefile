@@ -4,23 +4,15 @@ MODULE = controls
 
 SRCS = \
 	button.c \
-	caption.c \
 	combo.c \
 	listbox.c \
 	menu.c \
 	scroll.c \
 	static.c \
+	desktop.c \
 	widgets.c
 
-OBJS = \
-	button.o \
-	caption.o \
-	combo.o \
-	listbox.o \
-	menu.o \
-	scroll.o \
-	static.o \
-	widgets.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

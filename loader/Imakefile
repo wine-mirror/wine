@@ -3,32 +3,15 @@
 MODULE = loader
 
 SRCS = \
-	int1a.c \
-	int21.c \
 	dump.c \
-	files.c \
 	ldt.c \
 	ldtlib.c \
-	resource.c \
 	selector.c \
 	signal.c \
 	library.c \
-	wine.c \
-	cursor.c
+	wine.c
 
-OBJS = \
-	int1a.o \
-	int21.o \
-	dump.o \
-	files.o \
-	ldt.o \
-	ldtlib.o \
-	resource.o \
-	selector.o \
-	signal.o \
-	library.o \
-	wine.o \
-	cursor.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

@@ -1,3 +1,4 @@
+#include "../autoconf.h"
 #include "../Wine.tmpl"
 
 MODULE = if1632
@@ -28,6 +29,7 @@ MakeDllFromSpec(sound,$(TOP)/$(MODULE))
 MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))
 MakeDllFromSpec(user,$(TOP)/$(MODULE))
 MakeDllFromSpec(win87em,$(TOP)/$(MODULE))
+MakeDllFromSpec(winsock,$(TOP)/$(MODULE))
 
 /*
  * Yes I know *.o is not very clever, but can you do it cleaner ?
@@ -37,7 +39,7 @@ WineRelocatableTarget($(TOP)/$(MODULE),*.o,)
 $(TOP)/$(MODULE).o: $(OBJS)
 
 clean::
-	$(RM) dll*
+	$(RM) dll* dtb*
 
 depend::
 

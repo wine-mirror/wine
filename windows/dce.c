@@ -87,6 +87,37 @@ void DCE_Init()
 
 
 /***********************************************************************
+ *           DCE_GetVisRect
+ *
+ * Return the visible rectangle of a window, i.e. the client or
+ * window area clipped by the client area of all ancestors.
+ */
+static void DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
+{
+    int xoffset, yoffset;
+
+    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
+    xoffset = lprect->left;
+    yoffset = lprect->top;
+
+    while (wndPtr->dwStyle & WS_CHILD)
+    {
+	WND *parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+	xoffset += parentPtr->rectClient.left;
+	yoffset += parentPtr->rectClient.top;
+	OffsetRect( lprect, parentPtr->rectClient.left,
+		    parentPtr->rectClient.top );
+
+	  /* Warning!! we assume that IntersectRect() handles the case */
+	  /* where the destination is the same as one of the sources.  */
+	IntersectRect( lprect, lprect, &parentPtr->rectClient );
+	wndPtr = parentPtr;
+    }
+    OffsetRect( lprect, -xoffset, -yoffset );
+}
+
+
+/***********************************************************************
  *           GetDCEx    (USER.359)
  */
 /* Unimplemented flags: DCX_CLIPSIBLINGS, DCX_LOCKWINDOWUPDATE, DCX_PARENTCLIP
@@ -94,6 +125,7 @@ void DCE_Init()
 HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
     HANDLE hdce;
+    RECT clipRect;
     HDC hdc = 0;
     DCE * dce;
     DC * dc;
@@ -155,8 +187,11 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    dc->w.DCOrgY  = wndPtr->rectClient.top - wndPtr->rectWindow.top;
 	    dc->w.DCSizeX = wndPtr->rectClient.right - wndPtr->rectClient.left;
 	    dc->w.DCSizeY = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-	    IntersectVisRect( hdc, 0, 0, dc->w.DCSizeX, dc->w.DCSizeY );
 	}	
+
+	DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &clipRect );
+	IntersectVisRect( hdc, clipRect.left, clipRect.top,
+			  clipRect.right, clipRect.bottom );
     }
     else dc->u.x.drawable = DefaultRootWindow( display );
 

@@ -3,7 +3,7 @@
 *
 */
 
-#include "win.h"
+#include "windows.h"
 
 #define HELP_CONTEXT      0x0001
 #define HELP_QUIT         0x0002
@@ -25,7 +25,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 {
    int X, X2, C;
    char *ArgV[20];
-   printf("WinExec(%s, %u)\n", lpCmdLine, nCmdShow);
+   printf("WinExec('%s', %04X)\n", lpCmdLine, nCmdShow);
    for (X = X2 = C = 0; X < strlen(lpCmdLine) + 1; X++) {
       if ((lpCmdLine[X] == ' ') || (lpCmdLine[X] == '\0')) {
           ArgV[C] = (char *)malloc(X - X2 + 1);

@@ -102,11 +102,11 @@ _CallToInit16:
 	movw	%ax,%ss
 	movl	%esp,%eax
 	movl	%eax,%ebp
-#if 1
 	movw	$UDATASEL,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
-#endif	
+	movw	%ds,%ax
+
 	/*
 	 * Call entry point
 	 */

@@ -163,26 +163,18 @@ static int MSG_FindMsg(MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last)
  */
 static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 {
-    QMSG * qmsg;
-    
-    if (!msgQueue) return;
-    qmsg = &msgQueue->messages[pos];
-
     if (pos >= msgQueue->nextMessage)
     {
-	int count = pos - msgQueue->nextMessage;
-	if (count) memmove( &msgQueue->messages[msgQueue->nextMessage+1],
-			    &msgQueue->messages[msgQueue->nextMessage],
-			    count * sizeof(QMSG) );
+	for ( ; pos > msgQueue->nextMessage; pos--)
+	    msgQueue->messages[pos] = msgQueue->messages[pos-1];
 	msgQueue->nextMessage++;
 	if (msgQueue->nextMessage >= msgQueue->queueSize)
 	    msgQueue->nextMessage = 0;
     }
     else
     {
-	int count = msgQueue->nextFreeMessage - pos;
-	if (count) memmove( &msgQueue->messages[pos],
-			    &msgQueue->messages[pos+1], count * sizeof(QMSG) );
+	for ( ; pos < msgQueue->nextFreeMessage; pos++)
+	    msgQueue->messages[pos] = msgQueue->messages[pos+1];
 	if (msgQueue->nextFreeMessage) msgQueue->nextFreeMessage--;
 	else msgQueue->nextFreeMessage = msgQueue->queueSize-1;
     }

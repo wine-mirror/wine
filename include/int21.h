@@ -7,6 +7,7 @@ struct dosdirent {
 	DIR *ds;
 	char unixpath[256];
 	char filename[256];
+	char filemask[12];
 	char attribute;
 	long filesize;
 	long filetime;
@@ -35,17 +36,21 @@ struct diskinfo {
 #define CX (context->sc_ecx & 0x0000ffffL)
 #define DX (context->sc_edx & 0x0000ffffL)
 
-#define ES context->sc_es
+#define CS context->sc_cs
 #define DS context->sc_ds
+#define ES context->sc_es
+
 #define DI context->sc_edi
 #define SI context->sc_esi
+
+#define EFL context->sc_efl
 
 #define pointer(a,b) 	(((unsigned int) a << 16) | b)
 #define segment(a) 	(a >> 16)
 #define offset(a)	(a & 0xffff)
 
-#define SetCflag	(context->sc_efl |= 0x00000001L)
-#define ResetCflag	(context->sc_efl &= 0xfffffffeL)
+#define SetCflag	(EFL |= 0x00000001L)
+#define ResetCflag	(EFL &= 0xfffffffeL)
 
 /* extended error codes */
 

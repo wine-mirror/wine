@@ -17,6 +17,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "heap.h"
 #include "win.h"
 
+extern HINSTANCE hSysRes;
+extern HBITMAP hUpArrow;
 
 typedef struct tagMSGBOX {
     LPSTR	Title;
@@ -39,7 +41,7 @@ LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
  *			MessageBox  [USER.1]
  */
 
-int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
+int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 {
     HWND    	hDlg;
     WND	    	*wndPtr;
@@ -47,15 +49,20 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     MSG	    	msg;
     MSGBOX	mb;
     DWORD	dwStyle;
+    HINSTANCE	hInst;
     wndPtr = WIN_FindWndPtr(hWnd);
 #ifdef DEBUG_MSGBOX
     printf( "MessageBox: '%s'\n", str );
 #endif
+    if (wndPtr == NULL)
+	hInst = hSysRes;
+    else
+	hInst = wndPtr->hInstance;
     wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
     wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
     wndClass.cbClsExtra      = 0;
     wndClass.cbWndExtra      = 0;
-    wndClass.hInstance       = wndPtr->hInstance;
+    wndClass.hInstance       = hInst;
     wndClass.hIcon           = (HICON)NULL;
     wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW); 
     wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
@@ -70,7 +77,7 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
     if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
     hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
-    	(HWND)NULL, (HMENU)NULL, wndPtr->hInstance, (LPSTR)&mb);
+    	(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)&mb);
     if (hDlg == 0) return 0;
     while(TRUE) {
 	if (!mb.ActiveFlg) break;
@@ -78,14 +85,12 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
 	TranslateMessage(&msg);
 	DispatchMessage(&msg);
 	}
-    if (!UnregisterClass("MESSAGEBOX", wndPtr->hInstance)) return 0;
+    if (!UnregisterClass("MESSAGEBOX", hInst)) return 0;
 #ifdef DEBUG_MSGBOX
     printf( "MessageBox return %04X !\n", mb.wRetVal);
 #endif
     return(mb.wRetVal);
 }
-
-
 
 LPMSGBOX MsgBoxGetStorageHeader(HWND hwnd)
 {
@@ -286,17 +291,13 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
 	CreditMode = FALSE;
 	strcpy(str, "WINELOGO");
 	hBitMap = LoadBitmap((HINSTANCE)NULL, (LPSTR)str);
-/*	getcwd(str, 256);
-	strcat(str, ";");
-	strcat(str, getenv("HOME"));
-	strcat(str, ";");
-	strcat(str, getenv("WINEPATH")); */
+
 	strcpy(str, "PROPOSED_LICENSE");
 	printf("str = '%s'\n", str);
-	hFile = KERNEL_OpenFile((LPSTR)str, &ofstruct, OF_READ);
+	hFile = OpenFile((LPSTR)str, &ofstruct, OF_READ);
 	ptr = (LPSTR)malloc(2048);
 	lseek(hFile, 0L, SEEK_SET);
-	KERNEL__lread(hFile, ptr, 2000L);
+	_lread(hFile, ptr, 2000L);
 	close(hFile);
 	return TRUE;
     case WM_PAINT:
@@ -353,3 +354,12 @@ return FALSE;
 }
 
 
+/**************************************************************************
+ *			FatalAppExit  [USER.137]
+ */
+
+void FatalAppExit(WORD wAction, LPSTR str)
+{
+MessageBox((HWND)NULL, str, NULL, MB_SYSTEMMODAL | MB_OK);
+exit(1);
+}

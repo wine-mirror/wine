@@ -12,8 +12,6 @@
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 #include <stdio.h>
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -87,14 +85,11 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	    SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
 	    ShowScrollBar(hwnd, SB_HORZ, FALSE);
 	    }
-	if (wndPtr->hCursor == (HCURSOR)NULL)
-	    wndPtr->hCursor = LoadCursor((HINSTANCE)NULL, IDC_ARROW);
 	return 0;
     case WM_DESTROY:
 	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
         if (lphl == 0) return 0;
 	ListBoxResetContent(hwnd);
-	DestroyCursor(wndPtr->hCursor);
 	free(lphl);
 	*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
 #ifdef DEBUG_LISTBOX
@@ -496,6 +491,19 @@ void StdDrawListBox(HWND hwnd)
 	lphl->ItemsPerColumn = ipc = 0;
 	for(i = 1; i <= lphl->ItemsCount; i++) {
 	    if (i >= lphl->FirstVisible) {
+	        if (lpls == NULL) break;
+		if ((h + lpls->dis.rcItem.bottom - lpls->dis.rcItem.top) > rect.bottom) {
+		    if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
+			lphl->ItemsPerColumn = max(lphl->ItemsPerColumn, ipc);
+			ipc = 0;
+			h = 0;
+			rect.left += lphl->ColumnsWidth;
+			rect.right += lphl->ColumnsWidth;
+			if (rect.left > maxwidth) break;
+			}
+		    else 
+			break;
+		    }
 		h2 = lpls->dis.rcItem.bottom - lpls->dis.rcItem.top;
 		lpls->dis.rcItem.top = h;
 		lpls->dis.rcItem.bottom = h + h2;
@@ -512,18 +520,6 @@ void StdDrawListBox(HWND hwnd)
 		h += h2;
 		lphl->ItemsVisible++;
 		ipc++;
-		if (h > rect.bottom) {
-		    if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
-			lphl->ItemsPerColumn = max(lphl->ItemsPerColumn, ipc);
-			ipc = 0;
-			h = 0;
-			rect.left += lphl->ColumnsWidth;
-			rect.right += lphl->ColumnsWidth;
-			if (rect.left > maxwidth) break;
-			}
-		    else 
-			break;
-		    }
 		}
 	    if (lpls->lpNext == NULL) goto EndOfPaint;
 	    lpls = (LPLISTSTRUCT)lpls->lpNext;
@@ -624,7 +620,7 @@ EndOfPaint:
 
 int ListBoxFindMouse(HWND hwnd, int X, int Y)
 {
-	WND 	*wndPtr;
+    WND 		*wndPtr;
     LPHEADLIST 		lphl;
     LPLISTSTRUCT	lpls;
     RECT 		rect;

@@ -3,46 +3,26 @@
 MODULE = misc
 
 SRCS = \
+	atom.c \
+	clipboard.c \
 	comm.c \
-	dos.c \
+	cursor.c \
 	dos_fs.c \
-	emulate.c \
 	exec.c \
 	file.c \
-	int1a.c \
-	int21.c \
-	kernel.c \
 	keyboard.c \
 	lstr.c \
 	main.c \
 	message.c \
 	profile.c \
 	rect.c \
+	resource.c \
 	sound.c \
 	spy.c \
 	user.c \
-	xt.c
+	winsocket.c
 
-OBJS = \
-	comm.o \
-	dos.o \
-	dos_fs.o \
-	emulate.o \
-	exec.o \
-	file.o \
-	int1a.o \
-	int21.o \
-	kernel.o \
-	keyboard.o \
-	lstr.o \
-	main.o \
-	message.o \
-	profile.o \
-	rect.o \
-	sound.o \
-	spy.o \
-	user.o \
-	xt.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

@@ -744,7 +744,11 @@ main(int argc, char **argv)
 
     fclose(fp);
 
+#ifndef SHORTNAMES
     sprintf(filename, "dll_%s_tab.c", LowerDLLName);
+#else
+    sprintf(filename, "dtb_%s.c", LowerDLLName);
+#endif
     fp = fopen(filename, "w");
 
     fprintf(fp, "#include <stdio.h>\n");

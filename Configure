@@ -1,0 +1,30 @@
+#! /bin/sh
+
+ALLDEFINES=''
+
+echo -n 'Build Wine as emulator or library (E/L) [E]? '
+read input
+if [ "$input" = 'l' -o "$input" = 'L' ]
+then
+    WINELIB='#define WineLib -DWINELIB'
+    ALLDEFINES=$ALLDEFINES -DWINELIB
+else
+    WINELIB=''
+fi
+
+echo -n 'Short filenames (Y/N) [N]? '
+read input
+if [ "$input" = 'y' -o "$input" = 'Y' ]
+then
+    SHORTNAMES='#define ShortNames -DSHORTNAMES'
+    ALLDEFINES=$ALLDEFINES -DSHORTNAMES
+else
+    SHORTNAMES=''
+fi
+
+echo '/* autoconf.h generated automatically.  Run Configure. */' > autoconf.h
+echo $WINELIB >> autoconf.h
+echo $SHORTNAMES >> autoconf.h
+echo "#define AutoDefines  $ALLDEFINES" >> autoconf.h
+
+xmkmf -a

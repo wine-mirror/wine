@@ -1,0 +1,18 @@
+#include "../Wine.tmpl"
+
+MODULE = toolkit
+
+SRCS = \
+	heap.c \
+	sup.c \
+	winmain.c
+
+OBJS = $(SRCS:.c=.o)
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

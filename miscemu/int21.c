@@ -22,7 +22,7 @@ static char Copyright[] = "copyright Erik Bos, 1993";
 WORD ExtendedError, CodePage = 437;
 BYTE ErrorClass, Action, ErrorLocus;
 
-extern char *TempDirectory;
+extern char TempDirectory[];
 
 void Error(int e, int class, int el)
 {
@@ -749,11 +749,12 @@ void SetDiskSerialNumber(struct sigcontext_struct *context)
 
 /************************************************************************/
 
-int do_int21(struct sigcontext_struct * context){
+int do_int21(struct sigcontext_struct * context)
+{
 	int ah;
 
-	fprintf(stderr,"int21: doing AX=%04x BX=%04x CX=%04x DX=%04x\n",
-		EAX & 0xffffL,EBX & 0xffffL,ECX & 0xffffL,EDX & 0xffffL);
+	fprintf(stderr, "int21: AX %04x, BX %04x, CX %04x, DX %04x, SI %04x, DI %04x, DS %04x, ES %04x\n",
+				AX, BX, CX, DX, SI, DI, DS, ES);
 
 	ah = (EAX >> 8) & 0xffL;
 
@@ -834,7 +835,7 @@ int do_int21(struct sigcontext_struct * context){
 	case 0x19: /* GET CURRENT DEFAULT DRIVE */
 		GetDefaultDrive(context);
 		break;
-		
+
 	case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
 		GetDefDriveAllocInfo(context);
 		break;
@@ -1159,71 +1160,42 @@ int do_int21(struct sigcontext_struct * context){
 	return 1;
 }
 
-/********************************************************************/
-
-static void
-GetTimeDate(int time_flag)
-{
-    struct tm *now;
-    time_t ltime;
-    
-    ltime = time(NULL);
-    now = localtime(&ltime);
-    if (time_flag)
-    {
-	_CX = (now->tm_hour << 8) | now->tm_min;
-	_DX = now->tm_sec << 8;
-    }
-    else
-    {
-	_CX = now->tm_year + 1900;
-	_DX = ((now->tm_mon + 1) << 8) | now->tm_mday;
-	_AX &= 0xff00;
-	_AX |= now->tm_wday;
-    }
-#ifdef DEBUG_DOS
-    printf("GetTimeDate: AX = %04x, CX = %04x, DX = %04x\n", _AX, _CX, _DX);
-#endif
-    
-    ReturnFromRegisterFunc();
-    /* Function does not return */
-}
-
 /**********************************************************************
- *					KERNEL_DOS3Call
+ *			DOS3Call
  */
-int KERNEL_DOS3Call()
+int DOS3Call()
 {
-    switch ((_AX >> 8) & 0xff)
-    {
-      case 0x30:
-	_AX = 0x0303;
-	ReturnFromRegisterFunc();
-	/* Function does not return */
+	static struct sigcontext_struct *context = NULL;
 	
-      case 0x25:
-      case 0x35:
+	if (!context) 
+		context = malloc(sizeof(struct sigcontext_struct));
+
+/*	fprintf(stderr, "DOS3: AX %04x, BX %04x, CX %04x, DX %04x, SI %04x, DI %04x, DS %04x, ES %04x\n",
+				_AX, _BX, _CX, _DX, _SI, _DI, _DS, _ES);
+*/
+	EAX = _AX;
+	EBX = _BX;
+	ECX = _CX;
+	EDX = _DX;
+	DS = _DS;
+	ES = _ES;
+	DI = _DI;
+	SI = _SI;
+/*	EFL = _FL;
+*/
+	do_int21(context);
+
+	_AX = AX;
+	_BX = BX;
+	_CX = CX;
+	_DX = DX;
+	
+	_DS = DS;
+	_ES = ES;
+
+	_DI = DI;
+	_SI = SI;
+/*	_FL = EFL;
+ */
 	return 0;
-
-      case 0x2a:
-	GetTimeDate(0);
-	/* Function does not return */
-	
-      case 0x2c:
-	GetTimeDate(1);
-	/* Function does not return */
-
-      case 0x4c:
-	exit(_AX & 0xff);
-
-      default:
-	fprintf(stderr, "DOS: AX %04x, BX %04x, CX %04x, DX %04x\n",
-		_AX, _BX, _CX, _DX);
-	fprintf(stderr, "     SP %04x, BP %04x, SI %04x, DI %04x\n",
-		_SP, _BP, _SI, _DI);
-	fprintf(stderr, "     DS %04x, ES %04x\n",
-		_DS, _ES);
-    }
-    
-    return 0;
 }

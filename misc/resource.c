@@ -1,16 +1,17 @@
+#ifndef WINELIB
 static char RCSId[] = "$Id: resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+#endif
 
-#include <X11/Intrinsic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "arch.h"
 #include "prototypes.h"
 #include "windows.h"
-#include "win.h"
 #include "gdi.h"
 #include "wine.h"
 #include "icon.h"
@@ -35,6 +36,16 @@ extern HINSTANCE hSysRes;
 
 HANDLE RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret);
 
+extern char *ProgramName;
+
+/*****************************************************************************
+  * Super Patch, I promise to arrange things as soon as I can.
+  *
+******************************************************************************/
+#ifdef WINELIB
+#include "../loader/wine.c"
+#endif
+
 
 /**********************************************************************
  *					OpenResourceFile
@@ -43,21 +54,28 @@ int
 OpenResourceFile(HANDLE instance)
 {
     struct w_files *w;
+    char   *res_file;
     
     if (ResourceInst == instance)
 	return ResourceFd;
-    
+
     w = GetFileInfo(instance);
     if (w == NULL)
 	return -1;
+    ResourceFileInfo = w;
+    res_file = w->filename;
     
     if (ResourceFd >= 0)
 	close(ResourceFd);
     
     ResourceInst = instance;
-    ResourceFileInfo = w;
-    ResourceFd = open(w->filename, O_RDONLY);
-    
+
+    ResourceFd = open (res_file, O_RDONLY);
+
+#ifdef DEBUG_RESOURCE
+    printf("OpenResourceFile(%04X) // file='%s' hFile=%04X !\n", 
+		instance, w->filename, ResourceFd);
+#endif
     return ResourceFd;
 }
 
@@ -128,6 +146,12 @@ ConvertInfoBitmap( HDC hdc, BITMAPINFO * image )
 			   bits, image, DIB_RGB_COLORS );
 } 
 
+#ifndef WINELIB
+load_typeinfo (int fd, struct resource_typeinfo_s *typeinfo)
+{
+    return read (fd, typeinfo, sizeof (*typeinfo)) == sizeof (*typeinfo);
+}
+#endif
 /**********************************************************************
  *					FindResourceByNumber
  */
@@ -157,26 +181,30 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     	printf("FindResourceByNumber (%s) bad block size !\n", resource_id);
 	return -1;
     }
-    
+    size_shift = CONV_SHORT(size_shift);
     /*
      * Find resource.
      */
     typeinfo.type_id = 0xffff;
     while (typeinfo.type_id != 0) {
-	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
-	    sizeof(typeinfo)) {
+	if (!load_typeinfo (ResourceFd, &typeinfo)){
 	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
 	    return -1;
 	    }
 #ifdef DEBUG_RESOURCE
-	printf("FindResourceByNumber type=%X count=%d\n", 
-			typeinfo.type_id, typeinfo.count);
+	printf("FindResourceByNumber type=%X count=%d searched=%d \n", 
+			typeinfo.type_id, typeinfo.count, type_id);
 #endif
 	if (typeinfo.type_id == 0) break;
 	if (typeinfo.type_id == type_id || type_id == -1) {
 	    for (i = 0; i < typeinfo.count; i++) {
+#ifndef WINELIB
 		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
-		    sizeof(nameinfo)) {
+		    sizeof(nameinfo))
+#else
+		if (!load_nameinfo (ResourceFd, &nameinfo))
+#endif
+		{
 		    printf("FindResourceByNumber (%X) bad nameinfo size !\n", resource_id);
 		    return -1;
 		    }
@@ -229,6 +257,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     	printf("FindResourceByName (%s) bad block size !\n", resource_name);
 	return -1;
     }
+    size_shift = CONV_SHORT (size_shift);
     
     /*
      * Find resource.
@@ -236,43 +265,55 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     typeinfo.type_id = 0xffff;
     while (typeinfo.type_id != 0)
     {
-	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
-	    sizeof(typeinfo))
+	if (!load_typeinfo (ResourceFd, &typeinfo))
 	{
 	    printf("FindResourceByName (%s) bad typeinfo size !\n", resource_name);
 	    return -1;
 	}
 #ifdef DEBUG_RESOURCE
-	printf("FindResourceByName typeinfo.type_id=%X type_id=%X\n",
-			typeinfo.type_id, type_id);
+	printf("FindResourceByName typeinfo.type_id=%X count=%d type_id=%X\n",
+			typeinfo.type_id, typeinfo.count, type_id);
 #endif
 	if (typeinfo.type_id == 0) break;
 	if (typeinfo.type_id == type_id || type_id == -1)
 	{
 	    for (i = 0; i < typeinfo.count; i++)
 	    {
+#ifndef WINELIB
 		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
 		    sizeof(nameinfo))
+#else
+		if (!load_nameinfo (ResourceFd, &nameinfo))
+#endif
 		{
 		    printf("FindResourceByName (%s) bad nameinfo size !\n", resource_name);
 		    return -1;
 		}
-
-		if (nameinfo.id & 0x8000)
-		    continue;
-		
+/*
+		if ((nameinfo.id & 0x8000) != 0) continue;
+*/		
+#ifdef DEBUG_RESOURCE
+		printf("FindResourceByName // nameinfo.id=%04X !\n", nameinfo.id);
+#endif
 		old_pos = lseek(ResourceFd, 0, SEEK_CUR);
 		new_pos = rtoff + nameinfo.id;
 		lseek(ResourceFd, new_pos, SEEK_SET);
 		read(ResourceFd, &nbytes, 1);
+#ifdef DEBUG_RESOURCE
+		printf("FindResourceByName // namesize=%d !\n", nbytes);
+#endif
+ 		nbytes = CONV_CHAR_TO_LONG (nbytes);
 		read(ResourceFd, name, nbytes);
 		lseek(ResourceFd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
 #ifdef DEBUG_RESOURCE
-		printf("FindResourceByName type_id=%X name='%s' resource_name='%s'\n", 
-				typeinfo.type_id, name, resource_name);
+		printf("FindResourceByName type_id=%X (%d of %d) name='%s' resource_name='%s'\n", 
+			typeinfo.type_id, i + 1, typeinfo.count, 
+			name, resource_name);
 #endif
-		if (strcasecmp(name, resource_name) == 0)
+/*		if (strcasecmp(name, resource_name) == 0) */
+		if (strcasecmp(name, resource_name) == 0 ||
+		(nameinfo.id == 0x8001 && type_id == NE_RSCTYPE_MENU))
 		{
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
 		    return size_shift;
@@ -333,7 +374,6 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
-    printf("LoadIcon Alloc hIcon=%X\n", hIcon);
     lpico = (ICONALLOC *)GlobalLock(hIcon);
     lpico->descriptor = *lpicodesc;
     width = lpicodesc->Width;
@@ -390,6 +430,9 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     DeleteDC(hMemDC2);
     ReleaseDC(GetDesktopWindow(), hdc);
     GlobalUnlock(hIcon);
+#ifdef DEBUG_RESOURCE
+    printf("LoadIcon Alloc hIcon=%X\n", hIcon);
+#endif
     return hIcon;
 }
 
@@ -679,7 +722,10 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
 	size_shift = FindResourceByName(&nameinfo, type, rsc_name);
     }
     if (size_shift == -1) {
-    	printf("RSC_LoadResource / Resource '%X' not Found !\n", rsc_name);
+    	if ((LONG)rsc_name >= 0x00010000L)
+	    printf("RSC_LoadResource / Resource '%s' not Found !\n", rsc_name);
+	else
+	    printf("RSC_LoadResource / Resource '%X' not Found !\n", rsc_name);
 	return 0;
 	}
     /*

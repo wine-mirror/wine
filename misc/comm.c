@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <errno.h>
@@ -53,12 +54,12 @@ void Comm_Init(void)
 			if (!S_ISCHR(st.st_mode)) 
 				fprintf(stderr,"comm: can 't use `%s' as COM%d !\n", temp, x);
 			else
-				if ((ptr = malloc(strlen(temp)+1)) == NULL) 
+				if ((COM[serial].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
 				else {
 					COM[serial].fd = 0;
-					COM[serial].devicename = ptr;
-					strcpy(COM[serial++].devicename, temp);
+					strcpy(COM[serial].devicename, temp);
+					serial++;
 				}
 		}
 
@@ -74,17 +75,16 @@ void Comm_Init(void)
 			if (!S_ISCHR(st.st_mode)) 
 				fprintf(stderr,"comm: can 't use `%s' as LPT%d !\n", temp, x);
 			else 
-				if ((ptr = malloc(strlen(temp)+1)) == NULL) 
+				if ((LPT[parallel].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
 				else {
-					LPT[serial].fd = 0;
-					LPT[serial].devicename = ptr;
-					strcpy(LPT[serial++].devicename, temp);
+					LPT[parallel].fd = 0;
+					strcpy(LPT[parallel].devicename, temp);
+					parallel++;
 				}
 		}
 
 	}
-	atexit(Comm_DeInit);
 }
 
 void Comm_DeInit(void)
@@ -155,6 +155,12 @@ fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, lpdcb);
 	if (!strncmp(device,"COM",3)) {
 		port = device[3] - '0';
 	
+
+		if (port-- == 0) {
+			fprintf(stderr, "comm: BUG ! COM0 can't exists!.\n");
+			commerror = IE_BADID;
+		}
+
 		if (!ValidCOMPort(port)) {
 			commerror = IE_BADID;
 			return -1;
@@ -240,6 +246,11 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	if (!strncmp(device,"COM",3)) {
 		port = device[3] - '0';
 
+		if (port-- == 0) {
+			fprintf(stderr, "comm: BUG ! COM0 doesn't exists!.\n");
+			commerror = IE_BADID;
+		}
+
 		if (!ValidCOMPort(port)) {
 			commerror = IE_BADID;
 			return -1;
@@ -252,7 +263,7 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK, 0);
 		if (fd == -1) {
 			commerror = WinError();
-			return -1;	
+			return -1;
 		} else {
 			COM[port].fd = fd;	
 			return fd;
@@ -473,9 +484,20 @@ fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, lpdcb);
 		commerror = WinError();	
 		return -1;
 	}
-	cfmakeraw(&port);
+
 	port.c_cc[VMIN] = 0;
-	port.c_cc[VTIME] = 0;
+	port.c_cc[VTIME] = 1;
+
+	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
+	port.c_iflag |= (IGNBRK);
+
+	port.c_oflag &= ~(OPOST);
+
+	port.c_cflag &= ~(HUPCL);
+	port.c_cflag |= CLOCAL | CREAD;
+
+	port.c_lflag &= ~(ICANON|ECHO|ISIG);
+	port.c_lflag |= NOFLSH;
 
 	fprintf(stderr,"SetCommState: baudrate %d\n",lpdcb->BaudRate);
 #ifdef CBAUD

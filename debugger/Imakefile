@@ -5,8 +5,6 @@
 
 MODULE = debugger
 
-DEFINES = -DUSE_READLINE
-
 SUBDIRS = readline
 
 /* Quick and dirt hack, since i386 is defined as 1. sigh */

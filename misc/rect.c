@@ -90,7 +90,8 @@ void InflateRect( LPRECT rect, short x, short y )
  */
 BOOL IntersectRect( LPRECT dest, LPRECT src1, LPRECT src2 )
 {
-    if ((src1->left >= src2->right) || (src2->left >= src1->right) ||
+    if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
+	(src1->left >= src2->right) || (src2->left >= src1->right) ||
 	(src1->top >= src2->bottom) || (src2->top >= src1->bottom))
     {
 	SetRectEmpty( dest );

@@ -6,10 +6,7 @@
 
 static char Copyright[] = "Copyright  David Metcalfe, 1993";
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
 #include "win.h"
-#include "gdi.h"
 
 HWND hWndFocus = 0;
 

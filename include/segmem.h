@@ -12,6 +12,15 @@
 #include <sys/shm.h>
 #endif
 
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+#define HAVE_IPC
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#define SHMSEG 32     /* XXX SEMMNI /usr/src/sys/conf/param.h */
+#define SHM_RANGE_START       0x40000000
+#endif
+
 /*
  * Array to track selector allocation.
  */

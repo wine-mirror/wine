@@ -359,6 +359,16 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
 
 
 /***********************************************************************
+ *           SetMapperFlags    (GDI.349)
+ */
+DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
+{
+    printf("SetmapperFlags(%04X, %08X) // Empty Stub !\n", hDC, dwFlag); 
+    return 0L;
+}
+
+ 
+/***********************************************************************
  *           GetCharWidth    (GDI.350)
  */
 BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)

@@ -5,12 +5,9 @@ MODULE = memory
 SRCS = \
 	global.c \
 	heap.c \
-	atom.c
+	linear.c
 
-OBJS = \
-	global.o \
-	heap.o \
-	atom.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

@@ -7,7 +7,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #define DEBUG_CURSOR
 */
 
-#include <X11/Intrinsic.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
@@ -289,6 +288,30 @@ BOOL DestroyCursor(HCURSOR hCursor)
     GlobalUnlock(hCursor);
     GlobalFree(hCursor);
     return TRUE;
+}
+
+
+/**********************************************************************
+ *			CURSOR_SetWinCursor
+ *
+ * Set the cursor for a given window. To be used instead of SetCursor()
+ * wherever possible.
+ */
+HCURSOR CURSOR_SetWinCursor( HWND hwnd, HCURSOR hCursor )
+{
+    CURSORALLOC	*lpcur;
+    HCURSOR	hOldCursor;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr || !hCursor) return 0;
+    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
+    hOldCursor = hActiveCursor;
+    if (hActiveCursor != hCursor) ShowCursCount = 0;
+    if (ShowCursCount >= 0)
+	XDefineCursor( display, wndPtr->window, lpcur->xcursor );
+    GlobalUnlock(hCursor);
+    hActiveCursor = hCursor;
+    return hOldCursor;
 }
 
 

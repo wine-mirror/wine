@@ -45,25 +45,25 @@ typedef struct tagGDIOBJHDR
 typedef struct tagBRUSHOBJ
 {
     GDIOBJHDR   header;
-    LOGBRUSH    logbrush __attribute__ ((packed));
+    LOGBRUSH    logbrush WINE_PACKED;
 } BRUSHOBJ;
 
 typedef struct tagPENOBJ
 {
     GDIOBJHDR   header;
-    LOGPEN      logpen __attribute__ ((packed));
+    LOGPEN      logpen WINE_PACKED;
 } PENOBJ;
 
 typedef struct tagPALETTEOBJ
 {
     GDIOBJHDR   header;
-    LOGPALETTE  logpalette __attribute__ ((packed));
+    LOGPALETTE  logpalette WINE_PACKED;
 } PALETTEOBJ;
 
 typedef struct tagFONTOBJ
 {
     GDIOBJHDR   header;
-    LOGFONT     logfont __attribute__ ((packed));
+    LOGFONT     logfont WINE_PACKED;
 } FONTOBJ;
 
 typedef struct tagBITMAPOBJ
@@ -271,12 +271,21 @@ typedef struct tagDC
 
   /* GDI local heap */
 
+#ifdef WINELIB
+
+#define GDI_HEAP_ALLOC(f,size) LocalAlloc (f,size)
+#define GDI_HEAP_ADDR(handle)  LocalLock (handle)
+#define GDI_HEAP_FREE(handle)  LocalFree (handle)
+
+#else
+
 extern MDESC *GDI_Heap;
 
 #define GDI_HEAP_ALLOC(f,size) ((int)HEAP_Alloc(&GDI_Heap,f,size) & 0xffff)
 #define GDI_HEAP_ADDR(handle) ((void *)(handle | ((int)GDI_Heap & 0xffff0000)))
 #define GDI_HEAP_FREE(handle) (HEAP_Free(&GDI_Heap,GDI_HEAP_ADDR(handle)))
 
+#endif
 
 extern HANDLE GDI_AllocObject( WORD, WORD );
 extern BOOL GDI_FreeObject( HANDLE );

@@ -27,9 +27,9 @@ struct ne_header_s
     u_char  linker_version;	/* Linker version number		*/
     u_char  linker_revision;	/* Linker revision number		*/
     u_short entry_tab_offset;	/* Offset to entry table relative to NE */
-    u_short entry_tab_length;	/* Length of etnry table in bytes	*/
+    u_short entry_tab_length;	/* Length of entry table in bytes	*/
     u_long  reserved1;		/* Reserved by Microsoft		*/
-    u_short format_flags;	/* Flags that segments in this file	*/
+    u_short format_flags;	/* Flags about segments in this file	*/
     u_short auto_data_seg;	/* Automatic data segment number	*/
     u_short local_heap_length;	/* Initial size of local heap		*/
     u_short stack_length;	/* Initial size of stack		*/

@@ -9,8 +9,6 @@
 
 #include "windows.h"
 
-#define DIALOG_CLASS_NAME    "#32770"  /* Integer atom */
-
 
   /* Dialog info structure.
    * This structure is stored into the window extra bytes (cbWndExtra).
@@ -34,11 +32,11 @@ typedef struct
 typedef struct
 {
     DWORD     style;    
-    BYTE      nbItems __attribute__ ((packed));
-    WORD      x __attribute__ ((packed));
-    WORD      y __attribute__ ((packed));
-    WORD      cx __attribute__ ((packed));
-    WORD      cy __attribute__ ((packed));
+    BYTE      nbItems WINE_PACKED;
+    WORD      x WINE_PACKED;
+    WORD      y WINE_PACKED;
+    WORD      cx WINE_PACKED;
+    WORD      cy WINE_PACKED;
 } DLGTEMPLATEHEADER;
 
 
@@ -50,7 +48,7 @@ typedef struct
     WORD       cx;
     WORD       cy;
     WORD       id;
-    DWORD      style __attribute__ ((packed));
+    DWORD      style WINE_PACKED;
 } DLGCONTROLHEADER;
 
 

@@ -13,6 +13,9 @@ typedef struct dll_arg_relocation_s
     unsigned char src_type;	/* Argument type			*/
 } DLL_ARG;
 
+#define DLL	0
+#define EXE	1
+
 #define DLL_ARGTYPE_SIGNEDWORD	0
 #define DLL_ARGTYPE_WORD	1
 #define DLL_ARGTYPE_LONG	2
@@ -59,5 +62,6 @@ extern struct dll_table_entry_s WIN87EM_table[];
 extern struct dll_table_entry_s SHELL_table[];
 extern struct dll_table_entry_s SOUND_table[];
 extern struct dll_table_entry_s KEYBOARD_table[];
+extern struct dll_table_entry_s WINSOCK_table[];
 
 #endif /* DLLS_H */

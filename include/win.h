@@ -10,10 +10,15 @@
 #include <X11/Xlib.h>
 
 #include "windows.h"
-#include "menu.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
+  /* Built-in class names (see _Undocumented_Windows_ p.418) */
+#define POPUPMENU_CLASS_NAME "#32768"  /* PopupMenu */
+#define DESKTOP_CLASS_NAME   "#32769"  /* Desktop */
+#define DIALOG_CLASS_NAME    "#32770"  /* Dialog */
+#define WINSWITCH_CLASS_NAME "#32771"  /* WinSwitch */
+#define ICONTITLE_CLASS_NAME "#32772"  /* IconTitle */
 
 typedef struct tagWND
 {
@@ -37,16 +42,13 @@ typedef struct tagWND
     DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HMENU        hmenuSystem;    /* System menu */
-    HCURSOR      hCursor;    	 /* Window Current Cursor */
     void	 *VScroll;	 /* Vertical ScrollBar Struct Pointer */
     void	 *HScroll;	 /* Horizontal ScrollBar Struct Pointer */
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
-    WORD         flags;          /* Misc. flags */
+    WORD         flags;          /* Misc. flags (see below) */
     Window       window;         /* X window */
-    LPMENUBAR	 menuBarPtr;	 /* Menu bar */
     HMENU	 hSysMenu;	 /* window's copy of System Menu */
-    HWND	 hWndMenuBar;	 /* Menu bar */
     WORD         wExtra[1];      /* Window extra bytes */
 } WND;
 
@@ -58,9 +60,7 @@ typedef struct tagWND
 #define WIN_CLASS_DC            0x10  /* Win class has style CS_CLASSDC */
 #define WIN_DOUBLE_CLICKS       0x20  /* Win class has style CS_DBLCLKS */
 #define WIN_RESTORE_MAX         0x40  /* Maximize when restoring */
-
-  /* First top-level window */
-extern HWND firstWindow;
+#define WIN_INTERNAL_PAINT      0x80  /* Internal WM_PAINT message pending */
 
   /* Window functions */
 WND *WIN_FindWndPtr( HWND hwnd );
@@ -68,5 +68,7 @@ BOOL WIN_UnlinkWindow( HWND hwnd );
 BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 HWND WIN_FindWinToRepaint( HWND hwnd );
 
+extern Display * display;
+extern Screen * screen;
 
 #endif  /* WIN_H */

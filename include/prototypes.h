@@ -7,11 +7,13 @@
 #define PROTOTYPES_H
 
 #include <sys/types.h>
+
 #include "neexe.h"
 #include "segmem.h"
 #include "wine.h"
 #include "int21.h"
 
+#ifndef WINELIB
 extern struct segment_descriptor_s *
     CreateSelectors(struct w_files *);
 
@@ -48,5 +50,7 @@ extern char *WinIniFileName(void);
 extern struct dosdirent *DOS_opendir(char *dosdirname);
 extern struct dosdirent *DOS_readdir(struct dosdirent *de);
 extern void DOS_closedir(struct dosdirent *de);
+
+#endif /* WINELIB */
 
 #endif /* PROTOTYPES_H */

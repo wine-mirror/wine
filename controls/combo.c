@@ -11,8 +11,6 @@
 
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
 #include "windows.h"
 #include "combo.h"
 #include "heap.h"
@@ -39,8 +37,7 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     int		AltState;
     WND  	*wndPtr;
     LPHEADCOMBO lphc;
-    LPDRAWITEMSTRUCT lpdis;
-    HDC		hMemDC;
+    HDC		hDC, hMemDC;
     BITMAP	bm;
     char	str[128];
     PAINTSTRUCT paintstruct;
@@ -48,47 +45,48 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     switch(message)
     {
     case WM_CREATE:
-	ShowScrollBar(hwnd, SB_BOTH, FALSE);
-	GetClientRect(hwnd, &rect);
-	width = rect.right - rect.left;
-	height = rect.bottom - rect.top;
-/*	SetWindowPos(hwnd, 0, 0, 0, width, 16, 
-		SWP_NOMOVE | SWP_NOZORDER); */
-	CreateComboStruct(hwnd);
 	wndPtr = WIN_FindWndPtr(hwnd);
-	lphc = ComboGetStorageHeader(hwnd);
-	if (lphc == NULL) return 0;
+	if (wndPtr == NULL) return 0;
 #ifdef DEBUG_COMBO
         printf("Combo WM_CREATE %lX !\n", lphc);
 #endif
 	if (hComboBit == (HBITMAP)NULL) 
 	    hComboBit = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_COMBO));
-	lphc->hWndDrop = CreateWindow("BUTTON", "", 
-        	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_OWNERDRAW,
-        	width - 16, 0, 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
+	GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
+	wndPtr->dwStyle &= 0xFFFFFFFFL ^ (WS_VSCROLL | WS_HSCROLL);
+	GetWindowRect(hwnd, &rect);
+	width = rect.right - rect.left;
+	height = rect.bottom - rect.top;
+	SetWindowPos(hwnd, 0, 0, 0, width + bm.bmHeight, bm.bmHeight, 
+		SWP_NOMOVE | SWP_NOZORDER); 
+	CreateComboStruct(hwnd);
+	lphc = ComboGetStorageHeader(hwnd);
+	if (lphc == NULL) return 0;
         if (wndPtr->dwStyle & CBS_SIMPLE)
 /*	    lphc->hWndEdit = CreateWindow("EDIT", "", */
 	    lphc->hWndEdit = CreateWindow("STATIC", "", 
 		WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-		0, 0, width - 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
+		0, 0, width - bm.bmHeight, bm.bmHeight, 
+		hwnd, 1, wndPtr->hInstance, 0L);
 	else
 	    lphc->hWndEdit = CreateWindow("STATIC", "", 
 		WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-		0, 0, width - 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
+		0, 0, width - bm.bmHeight, bm.bmHeight, 
+		hwnd, 1, wndPtr->hInstance, 0L);
 	lphc->hWndLBox = CreateWindow("LISTBOX", "", 
         	WS_CHILD | WS_CLIPCHILDREN | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-        	wndPtr->rectClient.left, wndPtr->rectClient.top + 16, width, height, 
-        	wndPtr->hwndParent, 1, wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
+        	wndPtr->rectClient.left, wndPtr->rectClient.top + bm.bmHeight, 
+        	width, height, wndPtr->hwndParent, 1, 
+        	wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
         ShowWindow(lphc->hWndLBox, SW_HIDE);
 #ifdef DEBUG_COMBO
-        printf("Combo Creation Drop=%X LBox=%X!\n", lphc->hWndDrop, lphc->hWndLBox);
+        printf("Combo Creation LBox=%X!\n", lphc->hWndLBox);
 #endif
 	return 0;
     case WM_DESTROY:
 	lphc = ComboGetStorageHeader(hwnd);
 	if (lphc == 0) return 0;
 /*
-	DestroyWindow(lphc->hWndDrop);
 	DestroyWindow(lphc->hWndEdit);
 */
 	DestroyWindow(lphc->hWndLBox);
@@ -106,30 +104,6 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	wndPtr = WIN_FindWndPtr(hwnd);
 	lphc = ComboGetStorageHeader(hwnd);
 	if (lphc == NULL) return 0;
-        if (LOWORD(lParam) == lphc->hWndDrop) {
-	    if (HIWORD(lParam) != BN_CLICKED) return 0;
-#ifdef DEBUG_COMBO
-	    printf("CB_SHOWDROPDOWN !\n");
-#endif
-	    lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
-	    if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
-		ShowWindow(lphc->hWndLBox, SW_SHOW);
-/*
-		SetFocus(lphc->hWndLBox);
-*/
-		}
-	    else {
-/*
-		SetFocus(lphc->hWndEdit);
-*/
-		ShowWindow(lphc->hWndLBox, SW_HIDE);
-		y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
-		if (y != LB_ERR) {
-		    SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-		    SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
-		    }
-		}
-            }
         if (LOWORD(lParam) == lphc->hWndLBox) {
             switch(HIWORD(lParam))
         	{
@@ -153,13 +127,39 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	break;
     case WM_LBUTTONDOWN:
         printf("Combo WM_LBUTTONDOWN wParam=%x lParam=%lX !\n", wParam, lParam);
+	GetClientRect(hwnd, &rect);
+	rect.left = rect.right - (rect.bottom - rect.top); 
+	hDC = GetDC(hwnd);
+	InflateRect(&rect, -1, -1);
+	DrawReliefRect(hDC, rect, 1, 1);
+	ReleaseDC(hwnd, hDC);
 	wndPtr = WIN_FindWndPtr(hwnd);
 	lphc = ComboGetStorageHeader(hwnd);
 	lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
 	if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN)
 	    ShowWindow(lphc->hWndLBox, SW_SHOW);
+	else {
+/*
+	    SetFocus(lphc->hWndEdit);
+*/
+	    ShowWindow(lphc->hWndLBox, SW_HIDE);
+	    y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
+	    if (y != LB_ERR) {
+		SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+		SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+		}
+	    }
 	break;
-    case WM_KEYDOWN:
+    case WM_LBUTTONUP:
+        printf("Combo WM_LBUTTONUP wParam=%x lParam=%lX !\n", wParam, lParam);
+	GetClientRect(hwnd, &rect);
+	rect.left = rect.right - (rect.bottom - rect.top); 
+	hDC = GetDC(hwnd);
+	InflateRect(&rect, -1, -1);
+	DrawReliefRect(hDC, rect, 1, 0);
+	ReleaseDC(hwnd, hDC);
+	break;
+   case WM_KEYDOWN:
 	wndPtr = WIN_FindWndPtr(hwnd);
 	lphc = ComboGetStorageHeader(hwnd);
 	y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
@@ -206,32 +206,19 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	break;
     case WM_CTLCOLOR:
     	return(SendMessage(GetParent(hwnd), WM_CTLCOLOR, wParam, lParam));
-    case WM_DRAWITEM:
-#ifdef DEBUG_SCROLL
-	    printf("ComboBox WM_DRAWITEM w=%04X l=%08X\n", wParam, lParam);
-#endif
-        lpdis = (LPDRAWITEMSTRUCT)lParam;
-	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_DRAWENTIRE) {
-	    hMemDC = CreateCompatibleDC(lpdis->hDC);
-	    GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
-	    SelectObject(hMemDC, hComboBit);
-	    BitBlt(lpdis->hDC, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-	    DeleteDC(hMemDC);
-	    }
-	if (lpdis->CtlType == ODT_BUTTON && lpdis->itemAction == ODA_SELECT) {
-	    CopyRect(&rect, &lpdis->rcItem);
-	    InflateRect(&rect, -1, -1);
-	    DrawReliefRect(lpdis->hDC, rect, 1, 1);
-	    }
-	break;
     case WM_PAINT:
-	BeginPaint( hwnd, &paintstruct );
-	EndPaint( hwnd, &paintstruct );
+	GetClientRect(hwnd, &rect);
+	hDC = BeginPaint(hwnd, &paintstruct);
+	hMemDC = CreateCompatibleDC(hDC);
+	GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
+	SelectObject(hMemDC, hComboBit);
+	BitBlt(hDC, rect.right - bm.bmWidth, 0, 
+		bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	DeleteDC(hMemDC);
+	EndPaint(hwnd, &paintstruct);
 	lphc = ComboGetStorageHeader(hwnd);
         InvalidateRect(lphc->hWndEdit, NULL, TRUE);
         UpdateWindow(lphc->hWndEdit);
-        InvalidateRect(lphc->hWndDrop, NULL, TRUE);
-        UpdateWindow(lphc->hWndDrop);
         if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
 	    InvalidateRect(lphc->hWndLBox, NULL, TRUE);
 	    UpdateWindow(lphc->hWndLBox);

@@ -1,4 +1,12 @@
+#include "autoconf.h"
 #include "Wine.tmpl"
+
+#if defined(i386FreeBsd)
+MAKE = gmake
+CC = gcc -D__FreeBSD__
+#endif
+
+DEFINES = AutoDefines -DUSE_READLINE -DWINESTAT
 
 /*
  * This is the second try at using Imakefiles. There are probably many
@@ -12,66 +20,76 @@
  */
 
 #define IHaveSubdirs
-#define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)'
+#define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)' 'MAKE=$(MAKE)'\
+			'DEFINES=$(DEFINES)'
 
-SUBDIRS = \
-	tools \
+COMMONSUBDIRS = \
 	controls \
 	etc \
-	if1632 \
 	include \
-	loader \
-	memory \
 	misc \
 	objects \
 	test \
 	windows
 
-/*
- * due to me not having the time and resources to test this, debugging
- * has been left out by for now of the Imakefiles. To put it back you have
- * to add:
- *	debugger
- * to the SUBDIRS list and:
- *	debugger
- *	readline.o
- * to the OBJS list.
- *
- * Not doing this will make the build fail in loader/signal.c, with an
- * unresolved reference to wine_debug. Comment out the line for now...
- * sigh. Fixed soon.
- */
+EMUSUBDIRS = \
+	tools \
+	debugger \
+	if1632 \
+	loader \
+	memory \
+	miscemu
+
+LIBSUBDIRS = \
+	toolkit
 
 WINEDIR = $(LIBDIR)/wine
 
-OBJS = \
-	if1632.o \
+COMMONOBJS = \
 	controls.o \
-	loader.o \
-	memory.o \
 	misc.o \
 	objects.o \
 	windows.o
 
-#ifdef i386BsdArchitecture
-SYSLIBS = -ll -lm -li386 -lgnumalloc
+/*
+ * WARNING: if1632.o must be the first object file because its code must be
+ *          linked at the lowest possible addresses.
+ */
+EMUOBJS = \
+	if1632.o \
+	debugger.o \
+	loader.o \
+	memory.o \
+	miscemu.o \
+	readline.o
+
+LIBOBJS = \
+	toolkit.o
+
+#ifndef WINELIB
+SUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS)
+OBJS = $(COMMONOBJS) $(EMUOBJS)
 #else
-#ifdef LinuxArchitecture
-SYSLIBS = -lm
+SUBDIRS = $(COMMONSUBDIRS) $(LIBSUBDIRS)
+OBJS = $(COMMONOBJS) $(LIBOBJS)
 #endif
+
+#if defined(i386BsdArchitecture)
+SYSLIBS = -ll -lm -li386 -lgnumalloc
+#elif defined(i386FreeBsd)
+SYSLIBS = -ll -lm -lgnumalloc
+#elif defined(LinuxArchitecture)
+SYSLIBS = -lm -lg
 #endif
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-
-#ifdef i386BsdArchitecture
 AllTarget(wine)
-#endif
 
-NormalProgramTarget(wine,$(OBJS),XawClientDepLibs,XawClientLibs,$(SYSLIBS))
-
-#ifdef LinuxArchitecture
-AllTarget(wine)
+#ifndef WINELIB
+NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XLIB),$(SYSLIBS))
+#else
+NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
 #endif
 
 depend::

@@ -18,6 +18,7 @@ typedef struct
     short         width;
     short         height;
     COLORREF      color;
+    HBITMAP       bitmap;
     WORD          timeout;
     WORD          timerid;
 } CARET;
@@ -47,7 +48,10 @@ static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
     {
 	Caret.on = (Caret.on ? FALSE : TRUE);
 	hdc = GetDC(Caret.hwnd);
-	hBrush = CreateSolidBrush(Caret.color);
+	if (Caret.bitmap == 0 || Caret.bitmap == 1)
+	    hBrush = CreateSolidBrush(Caret.color);
+	else
+	    hBrush = CreatePatternBrush(Caret.bitmap);
 	SelectObject(hdc, (HANDLE)hBrush);
 	SetROP2(hdc, R2_XORPEN);
 	rgn = CreateRectRgn(Caret.x, Caret.y, 
@@ -74,7 +78,10 @@ static void CARET_HideCaret()
 
     Caret.on = FALSE;
     hdc = GetDC(Caret.hwnd);
-    hBrush = CreateSolidBrush(Caret.color);
+    if (Caret.bitmap == 0 || Caret.bitmap == 1)
+	hBrush = CreateSolidBrush(Caret.color);
+    else
+	hBrush = CreatePatternBrush(Caret.bitmap);
     SelectObject(hdc, (HANDLE)hBrush);
     SetROP2(hdc, R2_XORPEN);
     rgn = CreateRectRgn(Caret.x, Caret.y, 
@@ -100,28 +107,28 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 /*    if (Caret.hwnd)
 	DestroyCaret();
 */
-    if (bitmap)
-    {
-	printf("CreateCaret: Bitmaps are currently not supported\n");
-	return;
-    }
+    if (bitmap && bitmap != 1)
+	Caret.bitmap = bitmap;
 
     if (width)
 	Caret.width = width;
     else
-	Caret.width = 3;              /* should be SM_CXBORDER */
+	Caret.width = GetSystemMetrics(SM_CXBORDER);
 
     if (height)
 	Caret.height = height;
     else
-	Caret.height = 3;             /* should be SM_CYBORDER */
+	Caret.height = GetSystemMetrics(SM_CYBORDER);
 
     Caret.hwnd = hwnd;
     Caret.hidden = 1;
     Caret.on = FALSE;
     Caret.x = 0;
     Caret.y = 0;
-    Caret.color = GetSysColor(COLOR_WINDOWTEXT);
+    if (bitmap == 1)
+	Caret.color = GetSysColor(COLOR_GRAYTEXT);
+    else
+	Caret.color = GetSysColor(COLOR_WINDOWTEXT);
     Caret.timeout = 750;
     LockCaret = FALSE;
 

@@ -19,7 +19,7 @@ typedef struct tagCLASS
     ATOM         atomName;      /* Name of the class */
     HANDLE       hdce;          /* Class DCE (if CS_CLASSDC) */
     WORD         cWindows;      /* Count of existing windows of this class */
-    WNDCLASS     wc __attribute__ ((packed));  /* Class information */
+    WNDCLASS     wc WINE_PACKED;  /* Class information */
     WORD         wExtra[1];     /* Class extra bytes */
 } CLASS;
 

@@ -7,12 +7,17 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <X11/Xlib.h>
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
 
 #include "windows.h"
 #include "win.h"
 #include "class.h"
 #include "message.h"
 
+#ifndef FamilyAmoeba
+typedef char *XPointer;
+#endif
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
@@ -228,8 +233,9 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
     winHasCursor = event->window;
-    
-    InvalidateRect( hwnd, &rect, TRUE );
+
+    RedrawWindow( hwnd, &rect, 0,
+		  RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_NOCHILDREN );
 }
 
 

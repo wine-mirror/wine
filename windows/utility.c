@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "windows.h"
 
 static char Copyright[] = "Copyright Andrew C. Bulhak, 1993";
@@ -44,6 +45,16 @@ void UTILITY_strip015(char *dest) {
 	};
 	*dest = '\0';	/* Add null terminator */
 };
+
+/**********************************************************************
+ *					DebugPrintString
+ */
+int
+DebugPrintString(char *str)
+{
+    printf("%s", str);
+    return 0;
+}
 
 /*
  *	OutputDebugString strips CRs from its (string) parameter and

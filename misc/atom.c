@@ -22,12 +22,19 @@
  * because they can't generally be differentiated from string constants
  * located below 0x10000 in the emulation library.  If you need
  * integer atoms, use the "#1234" form.
+ *
+ * 13/Feb, miguel
+ * Changed the calls to LocalAlloc to LocalAlign. When compiling WINELIB
+ * you call a special version of LocalAlloc that would do the alignement.
+ * When compiling the emulator we depend on LocalAlloc returning the
+ * aligned block. Needed to test the Library.
  */
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "user.h"
 #include "atom.h"
 
 
@@ -50,7 +57,7 @@ static BOOL ATOM_InitTable( ATOMTABLE ** table, WORD entries )
     int i;
     HANDLE handle;
     
-    handle = LocalAlloc( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
+    handle = LocalAlign ( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
 			 (entries-1) * sizeof(HANDLE) );
     if (!handle) return FALSE;
     *table = (ATOMTABLE *) LocalLock( handle );
@@ -126,7 +133,7 @@ static ATOM ATOM_AddAtom( ATOMTABLE * table, LPCSTR str )
 	entry = entryPtr->next;
     }
     
-    entry = (int)LocalAlloc( LMEM_MOVEABLE, sizeof(ATOMENTRY)+len-1 ) & 0xffff;
+    entry = (int)LocalAlign( LMEM_MOVEABLE, sizeof(ATOMENTRY)+len-1 ) & 0xffff;
     if (!entry) return 0;
     entryPtr = ATOM_MakePtr( table, entry );
     entryPtr->next = table->entries[hash];
@@ -166,7 +173,7 @@ static ATOM ATOM_DeleteAtom( ATOMTABLE * table, ATOM atom )
     if (--entryPtr->refCount == 0)
     {
 	*prevEntry = entryPtr->next;	
-	LocalFree( entry );
+	USER_HEAP_FREE( entry );
     }    
     return 0;
 }

@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Intrinsic.h>
 #ifndef PI
 #define PI M_PI
 #endif
@@ -203,6 +204,75 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
 	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           RoundRect    (GDI.28)
+ */
+BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
+					short ell_width, short ell_height)
+{
+    int		x1, y1, x2, y2;
+    DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
+    if (!dc) return FALSE;
+/*
+    printf("RoundRect(%d %d %d %d  %d %d\n", 
+    	left, top, right, bottom, ell_width, ell_height);
+*/
+    x1 = XLPTODP(dc, left);
+    y1 = YLPTODP(dc, top);
+    x2 = XLPTODP(dc, right - ell_width);
+    y2 = YLPTODP(dc, bottom - ell_height);
+    if (DC_SetupGCForBrush(dc)) {
+	XFillArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y1,
+		        ell_width, ell_height, 90 * 64, 90 * 64);
+	XFillArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y2,
+		        ell_width, ell_height, 180 * 64, 90 * 64);
+	XFillArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y2,
+		        ell_width, ell_height, 270 * 64, 90 * 64);
+	XFillArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y1,
+		        ell_width, ell_height, 0, 90 * 64);
+	ell_width /= 2;  ell_height /= 2;
+	XFillRectangle(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		dc->w.DCOrgX + left + ell_width, dc->w.DCOrgY + top,
+		right - left - 2 * ell_width, bottom - top);
+	XFillRectangle(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		dc->w.DCOrgX + left, dc->w.DCOrgY + top + ell_height,
+		ell_width, bottom - top - 2 * ell_height);
+	XFillRectangle(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top + ell_height,
+		ell_width, bottom - top - 2 * ell_height);
+	ell_width *= 2;  ell_height *= 2;
+	}    	
+    if (DC_SetupGCForPen(dc)) {
+	XDrawArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y1,
+		        ell_width, ell_height, 90 * 64, 90 * 64);
+	XDrawArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y2,
+		        ell_width, ell_height, 180 * 64, 90 * 64);
+	XDrawArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y2,
+		        ell_width, ell_height, 270 * 64, 90 * 64);
+	XDrawArc(XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y1,
+		        ell_width, ell_height, 0, 90 * 64);
+	}
+    ell_width /= 2;  ell_height /= 2;
+    MoveTo(hDC, left, top + ell_height);
+    LineTo(hDC, left, bottom - ell_height);
+    MoveTo(hDC, left + ell_width, bottom);
+    LineTo(hDC, right - ell_width, bottom);
+    MoveTo(hDC, right, bottom - ell_height);
+    LineTo(hDC, right, top + ell_height);
+    MoveTo(hDC, right - ell_width, top);
+    LineTo(hDC, left + ell_width, top);
     return TRUE;
 }
 
@@ -511,5 +581,95 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
     	free ((void *) points);
 	return (TRUE);
 }
+
+/**********************************************************************
+ *          FloodFill_rec -- FloodFill helper function
+ *
+ * Just does a recursive flood fill:
+ * this is /not/ efficent -- a better way would be to draw
+ * an entire line at a time, but this will do for now.
+ */
+static BOOL FloodFill_rec(XImage *image, int x, int y, 
+		int orgx, int orgy, int endx, int endy, 
+		Pixel borderp, Pixel fillp)
+{
+	Pixel testp;
+
+	if (x > endx || x < orgx || y > endy || y < orgy)
+		return FALSE;
+	XPutPixel(image, x, y, fillp);
+
+	testp = XGetPixel(image, x+1, y+1);
+	if (testp != borderp && testp != fillp)
+		FloodFill_rec(image, x+1, y+1, orgx, orgy, 
+				endx, endy, borderp, fillp);
+
+	testp = XGetPixel(image, x+1, y-1);
+	if (testp != borderp && testp != fillp)
+		FloodFill_rec(image, x+1, y-1, orgx, orgy, 
+				endx, endy, borderp, fillp);
+	testp = XGetPixel(image, x-1, y+1); 
+	if (testp != borderp && testp != fillp)
+		FloodFill_rec(image, x-1, y+1, orgx, orgy,
+				endx, endy, borderp, fillp);
+	testp = XGetPixel(image, x-1, y-1);
+ 	if (testp != borderp && testp != fillp) 
+		FloodFill_rec(image, x-1, y-1, orgx, orgy, 
+				endx, endy, borderp, fillp);
+	return TRUE;
+}
+
  
+/**********************************************************************
+ *          FloodFill (GDI.25)
+ */
+BOOL FloodFill(HDC hdc, short x, short y, DWORD crColor)
+{
+	Pixel boundrypixel;
+	int imagex, imagey;
+	XImage *image;
+    	DC *dc;
+
+#ifdef DEBUG_GRAPHICS
+	printf("FloodFill %x %d,%d %x\n", hdc, x, y, crColor);
+#endif
+    	dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+
+	if (!dc) return 0;
+
+	x = dc->w.DCOrgX + XLPTODP(dc, x);
+	y = dc->w.DCOrgY + YLPTODP(dc, y);
+
+	if (x < dc->w.DCOrgX || x > dc->w.DCOrgX + dc->w.DCSizeX ||
+	    y < dc->w.DCOrgY || y > dc->w.DCOrgY + dc->w.DCSizeY)
+		return 0;
+
+    	if (!DC_SetupGCForBrush(dc)) 
+		return FALSE;
+
+	boundrypixel = GetNearestPaletteIndex( dc->w.hPalette, crColor );	
+
+	image = XGetImage(display, dc->u.x.drawable,  
+			dc->w.DCOrgX, dc->w.DCOrgY,
+			dc->w.DCSizeX, dc->w.DCSizeY, AllPlanes, ZPixmap);
+	if (XGetPixel(image, x, y) == boundrypixel) 
+		return FALSE;
+	if (!FloodFill_rec(image, x, y, 
+				0,0, 
+				dc->w.DCOrgX + dc->w.DCSizeX, 
+				dc->w.DCOrgY + dc->w.DCSizeY, 
+				boundrypixel, dc->u.x.brush.pixel)) {
+		XDestroyImage(image);
+		return 0;
+	}
+
+	XPutImage(display, dc->u.x.drawable, dc->u.x.gc, image,
+			0, 0,
+			dc->w.DCOrgX, dc->w.DCOrgY,
+                        dc->w.DCSizeX, dc->w.DCSizeY);
+	XDestroyImage(image);
+
+	return TRUE;
+}
+
 

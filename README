@@ -4,23 +4,16 @@ LICENSE unless explicitly stated in the individual source file.
 
 INSTALLATION:
 
-Linux:
+You must have one of:
 
-    Uncompress and untar this archive into the directory of your
-choice.  This release requires a Linux version 0.99 pl13 kernel
-or above.
+	Linux version 0.99.13 or above
+	NetBSD-current
+	FreeBSD-current or FreeBSD 1.1
 
-NetBSD:
-
-    If you use BSD make rather than GNU make, you must apply the patches
-in the file "bsdmake.patch".  This release requires NetBSD-current.
-
-All:
-
-To build Wine, first do a "make depend" and then a "make".  The
+To build Wine, first do a "./Configure" and then a "make".  The
 executable "wine" will be built.  "wine" will load and run Windows'
 executables.  You must have a file "wine.ini" in the current directory,
-your homedirectory, or in the path specified by the environment 
+your home directory, or in the path specified by the environment 
 variable WINEPATH. Multiple directories in WINEPATH should be seperated
 by semi-colons and NOT by colons!
 
@@ -40,6 +33,31 @@ For example: to run Windows' solitaire:
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
+
+WHAT'S NEW with Wine-940301: (see ChangeLog for details)
+	- NEW Configure script to set compile time options!
+	- Support for filesystems with short (less than 14 chars) filenames.
+	- Clipboard functions!
+	- and more...
+
+WHAT'S NEW with Wine-940223: (see ChangeLog for details)
+	- FreeBSD support
+	- FloodFill()
+	- Desktop window support
+	- Menu fixes
+	- and more...
+
+WHAT'S NEW with Wine-940216: (see ChangeLog for details)
+	- Many many bug fixes
+	- Switched to using Imakefile's instead of Makefile's.
+	- Lot's of changes for libwine.a
+
+WHAT'S NEW with Wine-940209: (see ChangeLog for details)
+	- Many many bug fixes
+	- Minor directory structure reorganization
+	- New GetModule*() functions.
+	- WINSOCK DLL
+	- First stab at Wine as a library
 
 WHAT'S NEW with Wine-940201: (see ChangeLog for details)
 	- Support for huge data structures.

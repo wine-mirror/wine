@@ -5,7 +5,6 @@ MODULE = windows
 SRCS = \
 	caret.c \
 	class.c \
-	clipping.c \
 	dc.c \
 	dce.c \
 	defdlg.c \
@@ -27,30 +26,7 @@ SRCS = \
 	win.c \
 	winpos.c
 
-OBJS = \
-	caret.o \
-	class.o \
-	clipping.o \
-	dc.o \
-	dce.o \
-	defdlg.o \
-	defwnd.o \
-	dialog.o \
-	event.o \
-	focus.o \
-	graphics.o \
-	keyboard.o \
-	mapping.o \
-	message.o \
-	nonclient.o \
-	painting.o \
-	scroll.o \
-	syscolor.o \
-	sysmetrics.o \
-	timer.o \
-	utility.o \
-	win.o \
-	winpos.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

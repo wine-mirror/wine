@@ -79,9 +79,13 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
 
     sd = make_sd(base, limit, contents, read_only_flag, seg_32bit_flag, limit_in_pages_flag);
     ret = i386_set_ldt(entry, (union descriptor *)sd, 1);
-    if (ret < 0)
+    if (ret < 0) {
             perror("i386_set_ldt");
-    
+            fprintf(stderr,
+		"Did you reconfigure the kernel with \"options USER_LDT\"?\n");
+    	    exit(1);
+    }
+
     return ret;
     
 #endif

@@ -6,8 +6,7 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#include "windows.h"
-#include "dialog.h"
+#include "win.h"
 
 
 LONG ButtonWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
@@ -16,6 +15,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG ListBoxWndProc  ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG ComboBoxWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG PopupMenuWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
+LONG DesktopWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 
 
 static WNDCLASS WIDGETS_BuiltinClasses[] =
@@ -32,6 +32,8 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
       0, 0, 0, 0, NULL, "COMBOBOX" },
     { CS_GLOBALCLASS, (LONG(*)())PopupMenuWndProc, 0, 8,
       0, 0, 0, 0, NULL, "POPUPMENU" },
+    { CS_GLOBALCLASS, (LONG(*)())DesktopWndProc, 0, 0,
+      0, 0, 0, 0, NULL, DESKTOP_CLASS_NAME },
     { CS_GLOBALCLASS, (LONG(*)())DefDlgProc, 0, DLGWINDOWEXTRA,
       0, 0, 0, 0, NULL, DIALOG_CLASS_NAME }
 };

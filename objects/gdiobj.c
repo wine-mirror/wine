@@ -146,12 +146,14 @@ BOOL GDI_Init()
 {
     struct segment_descriptor_s * s;
 
-      /* Create GDI heap */
+#ifndef WINELIB
+    /* Create GDI heap */
 
     s = (struct segment_descriptor_s *)GetNextSegment( 0, 0x10000 );
     if (s == NULL) return FALSE;
     HEAP_Init( &GDI_Heap, s->base_addr, GDI_HEAP_SIZE );
-
+#endif
+    
       /* Create default palette */
 
     COLOR_Init();

@@ -1,3 +1,455 @@
+----------------------------------------------------------------------
+Tue Mar  1 11:30:21 1994  Bob Amstadt  (bob@pooh)
+
+	* [Configure] [*/Imakefile]
+	Created configure script to handle different types of Wine builds.
+
+	* [Configure] [tools/build.c] [if1632/Imakefile] [Wine.tmpl]
+	Added ability to compile Wine on systems with 14-char filename limit.
+
+	* [if1632/relay.c] [include/options.h] [misc/main.c]
+	Added -relaydbg option to command line if DEBUG_RELAY is defined.
+
+	* [loader/selector.c]
+	Fixed bug in GetEntryDLLName() that caused Wine to seg fault.
+
+	* [memory/heap.c]
+	Fixed LocalInit() to work correctly.
+
+	* [misc/user.c]
+	Added code to call loaded DLLs' initialization routines.
+
+Tue Mar  1 01:01:17 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [windows/dce.c]
+	Added clipping of child windows by their parent's client area.
+
+	* [windows/nonclient.c]
+	Bug fix in NC_DoNCPaint().
+
+	* [windows/painting.c]
+	Bug fix in RedrawWindow().
+
+Feb 27, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [mem/atom.c]
+	Bug fix again in ATOM_DeleteAtom() : 
+		change LocalFree() by USER_HEAP_FREE().
+	(Previous patch done Feb 13th had been lost)
+
+	* [controls/scroll.c]
+	Move bitmaps loading in AllocScrollBar() instead of in WM_CREATE.
+
+	* [windows/class.c] (sorry Alex ...)
+	There was no bug there "in RegisterClass() : 
+                WNDCLASS->lpszClassName was reset to NULL."
+                              ^^^^^
+
+	* [misc/clipboard.c]	--- New File ---
+	New function EnumClipboardFormats().
+	New function OpenClipboard().
+	New function CloseClipboard().
+	New function EmptyClipboard().
+	New function GetClipboardOwner().
+	New function GetClipboardViewer().
+	New function CountClipboardFormats().
+	New function IsClipboardFormatAvailable().
+	New function OpenClipboard().
+	New function GetClipboardData().
+	New function SetClipboardViewer().
+	New function EnumClipboardFormats().
+	New function RegisterClipboardFormat().
+	New function ChangeClipboardChain().
+	New function SetClipboardData().
+	New function GetOpenClipboardWindow().
+	New function GetPriorityClipboardFormat().
+	New function GetClipboardFormatName().
+
+Tue Mar  1 20:15:45 1994  Erik Bos <erik@trashcan.hacktic.nl>
+
+	* [misc/comm.c]
+	bugfix in OpenComm().
+
+----------------------------------------------------------------------
+Tue Feb 22 18:04:02 1994  Jeffrey Hsu <hsu@freefall.cdrom.com>
+
+	* [include/winsock.h]
+	The sockproto struct is already defined in <sys/socket.h>
+
+	* [misc/winsock.c]
+	Need to include <netinet/in.h> for struct in-addr.
+	Use sys_errlist[] instead of strerror[].
+
+	*[toolkit/heap.c]
+	ANSI C specifies that the malloc functions are defined in stdlib.h,
+	  so we don't need to include malloc.h.
+
+	*[loader/ldtlib.c]
+	Print informative error message about probable cause of i386_set_ldt()
+	  failure and then exit.
+
+	*[Imakefile]
+	For systems that don't use gmake by default, set the MAKE variable
+	  to gmake and propagate it on recursive makes.
+	Take out -li386 for FreeBSD systems and define __FreeBSD__ so Wine
+	  can be built with the FreeBSD 1.0.2 compiler.
+
+Tue Feb 22 02:52:19 EST 1994    jrichard@cs.uml.edu (John Richardson)
+
+        * [objects/bitblt.c]
+        Added in three functions to do stretching and compression
+        for WHITEONBLACK, BLACKONWHITE, and color copies.
+
+Tue Feb 22 15:01:31 EST 1994    jrichard@cs.uml.edu (John Richardson)
+
+        * [windows/graphics.c]
+        Added FloodFill and FloodFill_rec.  FloodFill_rec is pretty
+        inefficent, but should suffice for now.
+
+        * [include/windows.h]
+        Changed the x,y paramaters for the FloodFill prototype 
+        from ints to shorts
+
+Tue Feb 22 00:58:28 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [windows/widgets.c]
+	Added desktop window class.
+
+	* [windows/painting.c]
+	Bug fix in RedrawWindow().
+	Implemented ExcludeUpdateRgn().
+
+	* [windows/win.c] [windows/winpos.c]
+	Implemented desktop window.
+
+	* [controls/desktop.c]
+	Preliminary desktop window procedure.
+
+Feb 20, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/menu.c]
+	New function LoadMenuIndirect().
+	New function GetMenuCheckMarkDimensions().
+
+	* [if1632/user.spec]
+	Entry for DefDlgProc().
+
+	* [windows/class.c]
+	Fix bug in RegisterClass() : 
+		WNDCLASS->lpszMenuName was reset to NULL.
+
+	* [windows/win.c]
+	In CreateWindowEx(), if hMenu == 0 then use 
+		wndclass->lpszMenuName to load Menu from resource;
+
+Mon Feb 21 22:38:28 1994 Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [loader/library.c] [loader/wine.c]
+	Fixed runing DLL's as main executable problem.
+
+	* [misc/dos_fs.c]
+	Added wildcard support in DOS_readdir().
+
+	* [misc/winsocket.c]
+	Added proper error handling of BSD winsocket functions.
+
+	* [miscemu/int21.c]
+	KERNEL_DOS3Call renamed to DOS3Call and modified to use do_int21().
+
+	* [main/main.c]
+	Added functions for GetVersion, GetWinFlags and GetTimerResolution
+	for libwine.a, SystemParametersInfo() partly implemented.
+
+Tue Feb 22 19:00:02 1994  Miguel de Icaza  (miguel@xochitl.nuclecu.unam.mx)
+
+	* [toolkit/winmain.c]
+	Added _WinMain function. Setups the library (calls USER_InitApp).
+
+	* [toolkit/sup.c]
+	Added load_mz_header, load_ne_header, load_type_info and
+	load_name_info functions.
+
+	* [toolkit/heap.c] 
+	Code cleanup. 
+
+	* [misc/user.c]
+	Moved from loader/misc.c. I hope to put back all the loader
+	functions in the ~loader subdirectory in the future. CUrrently is
+	needed since it has USER_InitApp.
+
+	* [misc/resource.c]
+	Since WineLib will probably need DLLs (currently it needs
+	Sysres.dll). WineLib will be using much code of the loader again.
+	So I removed some ifdefs that were used by WineLib.
+
+	Added load_typeinfo and load_nameinfo (and the corresponding
+	functions in [toolkit/sup.c]
+
+	Added integer convertion functions in the needed places.
+
+	Added very ugly patch (includes wine.c). In the next release I
+	plan to move back all the loader routines to ~/loader. In the
+	meantime I needed this patch. It doesn't affect any of the
+	emulator code (its ifdefed for WineLib).
+
+	* [misc/main.c]
+	Cleaned up call to WinMain (now uses [toolkit/winmain.c]
+	Ifdefed argument number checking when compiling the library.
+
+	* [loader/wine.c]
+	Modified to use load_(mz|ne)_header instead of doing a direct
+	read.  When compiling the emulator it still uses the direct read
+	for performance. 
+
+	* [include/wine.h]
+	Prototypes for loading routines.
+
+	* [include/class.h]
+	Added WINE_PACKED macro instead of __attribute__ ((packed))
+
+	* [include/arch.h]
+	Macros for converting integers (Little endian to big-endian).
+	Needed in the Sun to allow loading of DLL files.
+
+----------------------------------------------------------------------
+Mon Feb 14 23:48:09 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [windows/clipping.c]
+	Moved everything into windows/painting.c and removed this file.
+
+	* [windows/message.c]
+	Removed calls to memmove() in MSG_RemoveMsg().
+
+	* [windows/nonclient.c]
+	Added WM_GETMINMAXINFO support for window resizing.
+
+	* [windows/painting.c]
+	Implemented RedrawWindow().
+
+	* [windows/scroll.c]
+	Bug fix in ScrollWindowEx().
+
+	* [windows/win.c]
+	Moved UpdateWindow() to windows/painting.c.
+
+Fri Feb 11 12:41:28 1994  Erik Bos (erik@trashcan.hacktic.nl)
+	
+	* [loader/wine.c] [misc/dos_fs.c]
+	getenv() eq NULL bugfixes.
+
+	* [misc/comm.c]
+	cfmakeraw changed for SunOS.
+
+Feb 13, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [mem/atom.c]
+	Bug fix in ATOM_DeleteAtom() : 
+		change LocalFree() by USER_HEAP_FREE().
+
+	* [misc/message.c]
+	New function FatalAppExit().
+
+	* [objects/font.c]
+	New empty stub SetMapperFlags().
+
+	* [controls/menu.c]
+	Better CheckMark & other bitmaps placement.
+
+	* [windows/graphics.c]
+	New function RoundRect() : calc.exe now working...
+
+Tue Feb 15 14:29:37 1994  John Richardson
+
+        * [objects/bitblt.c]
+        Fixed StretchBlt so it works quicker and faster.  It still doesn't
+        use the StretchMode bits for bitmap compression, but that will
+        come soon.
+
+Mon Feb 14 13:21:04 1994  Miguel de Icaza  (miguel@roxanne.nuclecu.unam.mx)
+
+	* [include/windows.h,dialog.h,gdi.h]
+	Changed __atribute__ ((packed)) for WINE_PACKED. 
+	When compiling the library this is defined as nothing. This gets
+	rid with all the problems compiling under SunOS. Also 
+
+	* [windows/utility.c]
+	Added DebugPrintString.
+
+	* [toolkit/sup.c]
+	Added hSysRes = 1 definition to resolve externals.
+	Added CallLineDDAProc function (toolkit version).
+	Added toy, and hi ineficient memmove until code in message.c get
+	rewritten.
+
+	* [objects/gdiobj.c]
+	Ifdefed linux/emulator-dependent code to allow compilation of
+	WineLib.
+
+	* [misc/winsocket.c]
+	Added ifdef to allow compilation under SunOS.
+
+	* [misc/resource.c]
+	When compiling the library, the resource file is expected to be in
+	a file called $argv[0].Res. Also the information of the resource
+	is expected to be at offset 0 of the .Res file.
+
+	* [misc/main.c]
+	Call WinMain with arguments if compiling WineLib.
+	Call shutdown functions (Comm_DeInit, DOS_DeInitFS).
+	Call sync_profiles to preserve changes to .INI files.
+
+	* [misc/comm.c,dos_fs.c]
+	removed call to atexit(Comm_DeInit)
+	removed call to atexit(DOS_DeInitFS)
+	Shutdown functions are now called from the return of WinMain
+
+	* removed memorylib subdirectory
+
+	* moved memory/atom.c    to misc/atom.c
+	  moved memorylib/heap.c to toolkit/heap.c
+
+	* [loader/wine.c]
+	Moved DebugPrintString to windows/utility.c
+
+	* [include/winsock.h]
+	Define SO_DONTLINGER only if it has not been previously defined.
+
+	* [include/windows.h]
+	added definition for DLGPROC.
+	added definition for LMEM_WINE_ALIGN and other LMEM_* constants.
+	When compiling WineLib WNDPROC is defined with all the parameters
+	to avoid compilation problems.
+
+	* [include/user.h]
+	When compiling WineLib USER_HEAP_(ALLOC|REALLOC|ADDR|FREE) the
+	calls are translated to the library allocation routines.
+
+	* [include/gdi.h,user.h]
+	When compiling WineLib GDI_HEAP_(ALLOC|ADDR|FREE) the calls are
+	translated to the library allocation routines.
+
+	* [include/atom.h]
+	Defined LocalAlign. When compiling the emulator it's translated as
+	a call to LocalAlloc (the original code), when compiling WineLib
+	as a call to LocalAlloc with a WINE-flag called LMEM_WINE_ALIGN
+	(atom.c needs aligned data on a 4 byte boundary).
+
+	* [misc/file.c]
+	Renamed KERNEL_* functions and fixed prototypes.
+
+	* [if1632/kernel.spec]
+	Renamed KERNEL_* functions in order to be used by applications
+	using Wine as a library (OpeFile, _lclose, _lread, _lcreate,
+	_llseek, _lopen, _lwrite).
+
+	* [Makefile]
+	Create library instead of executable when building target
+	libwine.a 
+
+----------------------------------------------------------------------
+Tue Feb  8 13:52:11 1994  Miguel de Icaza  (miguel@roxanne)
+
+	* [Makefiles]
+	Use $(CC) instead of cc.
+	Added libwine target.
+
+	* [include/prototypes]
+	#ifdefed section for WineLib
+
+	* moved loader/cursor.c   to misc/cursor.c
+	  moved loader/resource.c to misc/resource.c
+	  moved misc/emulate.c    to miscemu/emulate.c
+	  moved misc/int1a.c      to miscemu/int1a.c
+	  moved misc/int21.c	  to miscemu/int21.c
+	  moved	misc/kernel.c	  to miscemu/kernel.c
+	  moved misc/user.c       to miscemu/user.c
+
+	* [memorylib/heap.c]
+	Heap management for WineLib
+
+	* [misc/comm.c]
+	Modified to allow compilation under SunOS (#include errno, SunOS
+	doesn't have atexit ()).
+
+	* [misc/dos_fs.c]
+	Modified to allow compilation under SunOS (#include vfs.h)
+
+	* [misc/file.c]
+	Modified to allow compilation under SunOS (OPEN_MAX constant,
+	#include unistd.h)
+
+	* [objects/palette.c]
+	Modified to allow compilation under SunOS (#include limits)
+
+	* [toolkit/sup.c]
+	WineLib version of CallWindowProc.
+
+	* [windows/event.c]
+	Typedef XPointer under X11R4 (OpenWindows).
+
+	* [windows/win.c]
+	When compiling WineLib, use direct callbacks instead of the
+	windows supplied callbacks.
+
+Mon Feb  7 22:37:34 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [loader/cursor.c]
+	New function CURSOR_SetWinCursor(), for internal use, to set
+	the cursor of a specific window more reliably than with SetCursor().
+
+	* [windows/nonclient.c]
+	Better window management. Moving and resizing from the system
+	menu should work now.
+	Added scroll-bar mouse tracking.
+
+	* [windows/win.c]
+	Moved scroll-bar creation and destruction to defwnd.c.
+
+Feb 5, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/nonclient.c]
+	Call to StdDrawMenuBar() during NC's drawing.
+	New NC_TrackMouseMenuBar() function which call 
+		MenuButtonDown(), MenuButtonUp() & MenuMouseMove().
+
+	* [controls/menu.c]
+	New ChangeMenu() function.
+	Remove permanently old Xt menu code.
+	Make common functions MenuButtonDown(), MenuButtonUp()
+		& MenuMouseMove() for both popups & menubar.
+	
+	* [controls/combo.c]
+	Paint OBM_COMBO directly in combo client.
+
+	* [controls/listbox.c]
+	Fix bug in multicolumns calculations.
+
+	* [controls/Makefile]
+	Remove rules for old file 'caption.c'.
+
+	* [misc/kernel.c]
+	Remove empty stub GetModuleFileName().
+
+	* [loader/library.c]
+	New GetModuleHandle() function.
+	New GetModuleUsage() function.
+	New GetModuleFileName() function.
+
+	* [loader/resource.c]
+	Try to find the bug a missing menu loading ... Not found yet !
+
+	* [windows/win.c]
+	Remove old menubar creation.
+
+Thu Feb  3 22:30:11 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [misc/winsocket.c]
+	More functions added.
+
+	* [if1632/winsock.spec] [misc/winsocket.c]
+	Added John Brezak's winsock.dll stuff.
+
+----------------------------------------------------------------------
 Tue Feb  1 21:14:47 1994  Bob Amstadt  (bob@pooh)
 
 	* [loader/selector.c]
@@ -58,7 +510,7 @@ Jan 31, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 	New GetSubMenu() function.
 	Move GetMenu() & SetMenu() functions from 'windows/win.c'.
 
-	* [controls/combo.c]
+	* [controls/listbox.c]
 	Start changes to satisfy recent changes in scrollbars/windows.
 
 	* [loader/resource.c]

@@ -6,12 +6,6 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-#include <X11/Core.h>
-#include <X11/Xaw/Form.h>
-#include <X11/Xaw/Command.h>
-#include <X11/Xaw/Box.h>
 
 
 typedef struct tagMENUITEM
@@ -25,24 +19,12 @@ typedef struct tagMENUITEM
     WORD	sel_key;
     char	*shortcut;
     char	*item_text;
-    Widget	w;
-    Widget	menu_w;
     char	menu_name[10];
     RECT	rect;
     HBITMAP	hCheckBit;
     HBITMAP	hUnCheckBit;
 } MENUITEM, *LPMENUITEM;
 
-typedef struct tagMENUBAR
-{
-    struct tagMENUBAR *next;
-    HANDLE	menuDescription;	/* Memory containing menu desc.   */
-    HWND	ownerWnd;		/* Owner window			  */
-    int		nItems;    		/* Number of items on menu	  */
-    Widget	parentWidget;		/* Parent of menu widget	  */
-    Widget	menuBarWidget;		/* Widget to contain menu options */
-    MENUITEM   *firstItem;
-} MENUBAR, *LPMENUBAR;
 
 typedef struct tagPOPUPMENU
 {
@@ -57,6 +39,9 @@ typedef struct tagPOPUPMENU
     BOOL	SysFlag;
     WORD	Width;
     WORD	Height;
+    WORD	CheckWidth;
+    WORD	PopWidth;
+    RECT	rect;
 } POPUPMENU, *LPPOPUPMENU;
 
 typedef struct
@@ -76,11 +61,12 @@ typedef struct
     WORD	item_flags;		/* See windows.h		  */
     WORD	item_id;		/* Control Id for menu item	  */
     char	item_text[1];		/* Text for menu item		  */
-} MENU_NORMALITEM;
+} MENUITEMTEMPLATE;
 
-extern LPMENUBAR MENU_CreateMenuBar(Widget parent, HANDLE instance, 
-				    HWND wnd, char *menu_name, int width);
-extern LPMENUBAR MENU_UseMenu(Widget parent, HANDLE instance, 
-			      HWND wnd, HMENU hmenu, int width);
+void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop);
+void MenuButtonDown(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
+void MenuButtonUp(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
+void MenuMouseMove(HWND hWnd, LPPOPUPMENU lppop, WORD wParam, int x, int y);
+extern void NC_TrackSysMenu(HWND hwnd);
 
 #endif /* MENU_H */

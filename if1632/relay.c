@@ -18,10 +18,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
+#include "options.h"
 
-/* #define DEBUG_RELAY /* */
+#define DEBUG_RELAY /* */
 
-#define N_BUILTINS	8
+#define N_BUILTINS	9
 
 struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
@@ -33,6 +34,7 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "SHELL",   SHELL_table,   256, 6 },
     { "SOUND",   SOUND_table,    20, 7 },
     { "KEYBOARD",KEYBOARD_table,137, 8 },
+    { "WINSOCK", WINSOCK_table, 155, 9 },
 };
 
 unsigned short *Stack16Frame;
@@ -87,6 +89,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     dll_p   = &dll_builtin_table[dll_id].dll_table[ordinal];
 
 #ifdef DEBUG_RELAY
+    if (Options.relay_debug)
     {
 	unsigned int *ret_addr;
 	unsigned short *stack_p;
@@ -185,10 +188,13 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 			  arg_table[15]);
 
 #ifdef DEBUG_RELAY
-    printf("Returning %08.8x from %s (%s.%d)\n",
-	   ret_val,
-	   dll_p->export_name,
-	   dll_builtin_table[dll_id].dll_name, ordinal);
+    if (Options.relay_debug)
+    {
+	printf("Returning %08.8x from %s (%s.%d)\n",
+	       ret_val,
+	       dll_p->export_name,
+	       dll_builtin_table[dll_id].dll_name, ordinal);
+    }
 #endif
 
     return ret_val;

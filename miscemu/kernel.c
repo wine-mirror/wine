@@ -66,18 +66,3 @@ KERNEL_WaitEvent(int task)
 #endif
     return 0;
 }
-/**********************************************************************
- *					KERNEL_GetModuleFileName
- */
-int
-KERNEL_GetModuleFileName(int module, char *filename, int bytes)
-{
-#ifdef DEBUG_RELAY
-    printf("GetModuleFileName: module %d, filename %x, bytes %d\n", 
-	    module, filename, bytes);
-#endif
-    
-    strcpy(filename, "TEST.EXE");
-    
-    return strlen(filename);
-}

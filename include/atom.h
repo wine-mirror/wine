@@ -24,4 +24,10 @@ typedef struct
     HANDLE      entries[1];
 } ATOMTABLE;
 
+#ifdef WINELIB
+#define LocalAlign(flags,bytes) LocalAlloc (flags|LMEM_WINE_ALIGN,bytes)
+#else
+#define LocalAlign(flags,bytes) LocalAlloc (flags,bytes)
+#endif
+
 #endif  /* ATOM_H */

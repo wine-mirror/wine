@@ -113,6 +113,10 @@ c		{ return 'c'; }
 
 %%
 
+#ifndef yywrap
+int yywrap(void) { return 1; }
+#endif
+
 #ifdef USE_READLINE
 #ifndef whitespace
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))

@@ -13,6 +13,7 @@ struct options
     int    usePrivateMap;
     int    synchronous;
     short  cmdShow;
+    int    relay_debug;
 };
 
 extern struct options Options;

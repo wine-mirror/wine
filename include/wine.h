@@ -63,4 +63,9 @@ struct sigcontext_struct {
 #define HZ 100
 #endif
 
+void load_mz_header (int, struct mz_header_s *);
+void load_ne_header (int, struct ne_header_s *);
+int  load_typeinfo  (int, struct resource_typeinfo_s *);
+int  load_nameinfo  (int, struct resource_nameinfo_s *);
+
 #endif /* WINE_H */

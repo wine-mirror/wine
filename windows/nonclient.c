@@ -7,11 +7,12 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 #include "win.h"
+#include "class.h"
 #include "message.h"
 #include "sysmetrics.h"
 #include "user.h"
 #include "scroll.h"
-
+#include "menu.h"
 
 static HBITMAP hbitmapClose = 0;
 static HBITMAP hbitmapMinimize = 0;
@@ -21,11 +22,9 @@ static HBITMAP hbitmapMaximizeD = 0;
 static HBITMAP hbitmapRestore = 0;
 static HBITMAP hbitmapRestoreD = 0;
 
-extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
-
-extern Display * display;
+extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
 
 
   /* Some useful macros */
@@ -38,6 +37,15 @@ extern Display * display;
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
 #define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
+
+#define ON_LEFT_BORDER(hit) \
+ (((hit) == HTLEFT) || ((hit) == HTTOPLEFT) || ((hit) == HTBOTTOMLEFT))
+#define ON_RIGHT_BORDER(hit) \
+ (((hit) == HTRIGHT) || ((hit) == HTTOPRIGHT) || ((hit) == HTBOTTOMRIGHT))
+#define ON_TOP_BORDER(hit) \
+ (((hit) == HTTOP) || ((hit) == HTTOPLEFT) || ((hit) == HTTOPRIGHT))
+#define ON_BOTTOM_BORDER(hit) \
+ (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
 /***********************************************************************
  *           NC_AdjustRect
@@ -512,6 +520,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
  *           NC_DoNCPaint
  *
  * Paint the non-client area.
+ * 'hrgn' is the update rgn to use (in client coords) or 1 if no update rgn.
  */
 static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
 {
@@ -531,7 +540,15 @@ static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
 	return;  /* Nothing to do! */
 
     if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-    else hdc = GetDCEx( hwnd, hrgn, DCX_CACHE | DCX_WINDOW | DCX_INTERSECTRGN);
+    else
+    {
+	  /* Make region relative to window area */
+	int xoffset = wndPtr->rectWindow.left - wndPtr->rectClient.left;
+	int yoffset = wndPtr->rectWindow.top - wndPtr->rectClient.top;
+	OffsetRgn( hrgn, -xoffset, -yoffset );
+	hdc = GetDCEx( hwnd, hrgn, DCX_CACHE | DCX_WINDOW | DCX_INTERSECTRGN);
+	OffsetRgn( hrgn, xoffset, yoffset );  /* Restore region */
+    }
     if (!hdc) return;
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
@@ -577,15 +594,29 @@ static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
 	NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
     }
 
-    if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL))
-    {
-	if (wndPtr->dwStyle & WS_VSCROLL) {
-	    int bottom = rect.bottom;
-	    if (wndPtr->dwStyle & WS_HSCROLL) bottom -= SYSMETRICS_CYHSCROLL;
-	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, rect.top,
-		    rect.right, bottom); 
-	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
-	    }
+    if (wndPtr->wIDmenu != 0 &&
+	(wndPtr->dwStyle & WS_CHILD) != WS_CHILD) {
+	int oldbottom;
+	CopyRect(&rect2, &rect);
+	/* Default MenuBar height */
+	oldbottom = rect2.bottom = rect2.top + SYSMETRICS_CYMENU; 
+	StdDrawMenuBar(hdc, &rect2, (LPPOPUPMENU)GlobalLock(wndPtr->wIDmenu));
+	GlobalUnlock(wndPtr->wIDmenu);
+	/* Reduce ClientRect according to MenuBar height */
+	rect.top += rect2.bottom - oldbottom;
+	}
+
+    if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
+ 	if (wndPtr->dwStyle & WS_VSCROLL) {
+ 	    int bottom = rect.bottom;
+ 	    if (wndPtr->dwStyle & WS_HSCROLL) bottom -= SYSMETRICS_CYHSCROLL;
+	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, 
+	    	rect.top, rect.right, bottom); 
+	    if (wndPtr->dwStyle & WS_CAPTION) rect.top += SYSMETRICS_CYSIZE;
+	    if (wndPtr->wIDmenu != 0 && (wndPtr->dwStyle & WS_CHILD) != WS_CHILD) 
+	    	rect2.top += SYSMETRICS_CYMENU;
+ 	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
+ 	    }
 	if (wndPtr->dwStyle & WS_HSCROLL) {
 	    int right = rect.right;
 	    if (wndPtr->dwStyle & WS_VSCROLL) right -= SYSMETRICS_CYVSCROLL;
@@ -593,18 +624,15 @@ static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
 		    right, rect.bottom);
 	    StdDrawScrollBar(hwnd, hdc, SB_HORZ, &rect2, (LPHEADSCROLL)wndPtr->HScroll);
 	    }
-/*
-	HBRUSH hbrushScroll = CreateSolidBrush( GetSysColor(COLOR_SCROLLBAR) );
-	HBRUSH hbrushOld = SelectObject( hdc, hbrushScroll );
-	if (wndPtr->dwStyle & WS_VSCROLL)
-	    PatBlt( hdc, rect.right - SYSMETRICS_CXVSCROLL, rect.top,
-		    SYSMETRICS_CXVSCROLL, rect.bottom-rect.top, PATCOPY );
-	if (wndPtr->dwStyle & WS_HSCROLL)
-	    PatBlt( hdc, rect.left, rect.bottom - SYSMETRICS_CYHSCROLL,
-		    rect.right-rect.left, SYSMETRICS_CYHSCROLL, PATCOPY );
-	SelectObject( hdc, hbrushOld );
-	DeleteObject( hbrushScroll );
-*/
+
+	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
+	{
+	    HBRUSH hbrushScroll = CreateSolidBrush( GetSysColor(COLOR_SCROLLBAR) );
+	    RECT r = rect;
+	    r.left = r.right - SYSMETRICS_CXVSCROLL;
+	    r.top  = r.bottom - SYSMETRICS_CYHSCROLL;
+	    FillRect( hdc, &r, hbrushScroll );
+	}
     }    
 
     ReleaseDC( hwnd, hdc );
@@ -638,6 +666,151 @@ LONG NC_HandleNCActivate( HWND hwnd, WORD wParam )
 
 
 /***********************************************************************
+ *           NC_HandleSetCursor
+ *
+ * Handle a WM_SETCURSOR message. Called from DefWindowProc().
+ */
+LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
+{
+    if (hwnd != wParam) return 0;  /* Don't set the cursor for child windows */
+
+    switch(LOWORD(lParam))
+    {
+    case HTERROR:
+	{
+	    WORD msg = HIWORD( lParam );
+	    if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
+		(msg == WM_RBUTTONDOWN))
+		MessageBeep(0);
+	}
+	break;
+
+    case HTCLIENT:
+	{
+	    WND *wndPtr;
+	    CLASS *classPtr;
+	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
+	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) break;
+	    if (classPtr->wc.hCursor)
+	    {
+		CURSOR_SetWinCursor( hwnd, classPtr->wc.hCursor );
+		return TRUE;
+	    }
+	}
+	break;
+
+    case HTLEFT:
+    case HTRIGHT:
+	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZEWE ) );
+	return TRUE;
+
+    case HTTOP:
+    case HTBOTTOM:
+	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENS ) );
+	return TRUE;
+
+    case HTTOPLEFT:
+    case HTBOTTOMRIGHT:	
+	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENWSE ) );
+	return TRUE;
+
+    case HTTOPRIGHT:
+    case HTBOTTOMLEFT:
+	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENESW ) );
+	return TRUE;
+    }
+
+    /* Default cursor: arrow */
+    CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ) );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           NC_StartSizeMove
+ *
+ * Initialisation of a move or resize, when initiatied from a menu choice.
+ * Return hit test code for caption or sizing border.
+ */
+static LONG NC_StartSizeMove( HWND hwnd, WORD wParam, POINT *capturePoint )
+{
+    LONG hittest = 0;
+    POINT pt;
+    MSG msg;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if ((wParam & 0xfff0) == SC_MOVE)
+    {
+	  /* Move pointer at the center of the caption */
+	RECT rect;
+	NC_GetInsideRect( hwnd, &rect );
+	if (wndPtr->dwStyle & WS_SYSMENU)
+	    rect.left += SYSMETRICS_CXSIZE + 1;
+	if (wndPtr->dwStyle & WS_MINIMIZEBOX)
+	    rect.right -= SYSMETRICS_CXSIZE + 1;
+	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+	    rect.right -= SYSMETRICS_CXSIZE + 1;
+	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
+	pt.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
+	if (wndPtr->dwStyle & WS_CHILD)
+	    ClientToScreen( wndPtr->hwndParent, &pt );
+	hittest = HTCAPTION;
+    }
+    else  /* SC_SIZE */
+    {
+	SetCapture(hwnd);
+	while(!hittest)
+	{
+	    MSG_GetHardwareMessage( &msg );
+	    switch(msg.message)
+	    {
+	    case WM_MOUSEMOVE:
+		hittest = NC_InternalNCHitTest( hwnd, msg.pt );
+		pt = msg.pt;
+		if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
+		    hittest = 0;
+		break;
+
+	    case WM_LBUTTONUP:
+		return 0;
+
+	    case WM_KEYDOWN:
+		switch(msg.wParam)
+		{
+		case VK_UP:
+		    hittest = HTTOP;
+		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
+		    pt.y = wndPtr->rectWindow.top + SYSMETRICS_CYFRAME / 2;
+		    break;
+		case VK_DOWN:
+		    hittest = HTBOTTOM;
+		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
+		    pt.y = wndPtr->rectWindow.bottom - SYSMETRICS_CYFRAME / 2;
+		    break;
+		case VK_LEFT:
+		    hittest = HTLEFT;
+		    pt.x = wndPtr->rectWindow.left + SYSMETRICS_CXFRAME / 2;
+		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
+		    break;
+		case VK_RIGHT:
+		    hittest = HTRIGHT;
+		    pt.x = wndPtr->rectWindow.right - SYSMETRICS_CXFRAME / 2;
+		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
+		    break;
+		case VK_RETURN:
+		case VK_ESCAPE: return 0;
+		}
+	    }
+	}
+    }
+    *capturePoint = pt;
+    SetCursorPos( capturePoint->x, capturePoint->y );
+    NC_HandleSetCursor( hwnd, hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    return hittest;
+}
+
+
+/***********************************************************************
  *           NC_DoSizeMove
  *
  * Perform SC_MOVE and SC_SIZE commands.
@@ -645,8 +818,8 @@ LONG NC_HandleNCActivate( HWND hwnd, WORD wParam )
 static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 {
     MSG msg;
-    WORD hittest;
-    RECT sizingRect;
+    LONG hittest;
+    RECT sizingRect, mouseRect;
     HDC hdc;
     BOOL thickframe;
     POINT minTrack, maxTrack, capturePoint = pt;
@@ -659,35 +832,55 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     if ((wParam & 0xfff0) == SC_MOVE)
     {
 	if (!(wndPtr->dwStyle & WS_CAPTION)) return;
-	if (!hittest)
-	{
-	      /* Move pointer at the center of the caption */
-	    RECT rect;
-	    POINT point;
-	    NC_GetInsideRect( hwnd, &rect );
-	    if (wndPtr->dwStyle & WS_SYSMENU)
-		rect.left += SYSMETRICS_CXSIZE + 1;
-	    if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-		rect.right -= SYSMETRICS_CXSIZE + 1;
-	    if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-		rect.right -= SYSMETRICS_CXSIZE + 1;
-	    point.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
-	    point.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
-	    if (wndPtr->dwStyle & WS_CHILD)
-		ClientToScreen( wndPtr->hwndParent, &point );
-	    SetCursorPos( point.x, point.y );
-	    hittest = HTCAPTION;
-	    capturePoint = point;
-	}
+	if (!hittest) hittest = NC_StartSizeMove( hwnd, wParam, &capturePoint );
+	if (!hittest) return;
     }
     else  /* SC_SIZE */
     {
 	if (!thickframe) return;
 	if (hittest) hittest += HTLEFT-1;
+	else
+	{
+	    SetCapture(hwnd);
+	    hittest = NC_StartSizeMove( hwnd, wParam, &capturePoint );
+	    if (!hittest)
+	    {
+		ReleaseCapture();
+		return;
+	    }
+	}
     }
 
+      /* Get min/max info */
+
     WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+    sizingRect = wndPtr->rectWindow;
+    if (wndPtr->dwStyle & WS_CHILD)
+	GetClientRect( wndPtr->hwndParent, &mouseRect );
+    else SetRect( &mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN );
+    if (ON_LEFT_BORDER(hittest))
+    {
+	mouseRect.left  = max( mouseRect.left, sizingRect.right-maxTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.right-minTrack.x );
+    }
+    else if (ON_RIGHT_BORDER(hittest))
+    {
+	mouseRect.left  = max( mouseRect.left, sizingRect.left+minTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.left+maxTrack.x );
+    }
+    if (ON_TOP_BORDER(hittest))
+    {
+	mouseRect.top    = max( mouseRect.top, sizingRect.bottom-maxTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minTrack.y);
+    }
+    else if (ON_BOTTOM_BORDER(hittest))
+    {
+	mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y );
+    }
     SendMessage( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+
+    if (GetCapture() != hwnd) SetCapture( hwnd );    
 
     if (wndPtr->dwStyle & WS_CHILD) hdc = GetDC( wndPtr->hwndParent );
     else
@@ -695,8 +888,6 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 	hdc = GetDC( 0 );
 	XGrabServer( display );
     }
-    SetCapture( hwnd );    
-    sizingRect = wndPtr->rectWindow;
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     while(1)
@@ -710,69 +901,47 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 	    ((msg.message == WM_KEYDOWN) && 
 	     ((msg.wParam == VK_RETURN) || (msg.wParam == VK_ESCAPE)))) break;
 
+	if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
+	    continue;  /* We are not interested in other messages */
+
+	pt = msg.pt;
 	if (wndPtr->dwStyle & WS_CHILD)
-	    ScreenToClient( wndPtr->hwndParent, &msg.pt );
+	    ScreenToClient( wndPtr->hwndParent, &pt );
 
-	switch(msg.message)
+	
+	if (msg.message == WM_KEYDOWN) switch(msg.wParam)
 	{
-	case WM_MOUSEMOVE:
-	    dx = msg.pt.x - capturePoint.x;
-	    dy = msg.pt.y - capturePoint.y;
-	    break;
+	    case VK_UP:    pt.y -= 8; break;
+	    case VK_DOWN:  pt.y += 8; break;
+	    case VK_LEFT:  pt.x -= 8; break;
+	    case VK_RIGHT: pt.x += 8; break;		
+	}
 
-	case WM_KEYDOWN:
-	    switch(msg.wParam)
-	    {
-	        case VK_UP:    msg.pt.y -= 8; break;
-		case VK_DOWN:  msg.pt.y += 8; break;
-		case VK_LEFT:  msg.pt.x -= 8; break;
-		case VK_RIGHT: msg.pt.x += 8; break;		
-	    }
-	    SetCursorPos( msg.pt.x, msg.pt.y );
-	    break;
-	}	
+	pt.x = max( pt.x, mouseRect.left );
+	pt.x = min( pt.x, mouseRect.right );
+	pt.y = max( pt.y, mouseRect.top );
+	pt.y = min( pt.y, mouseRect.bottom );
+
+	dx = pt.x - capturePoint.x;
+	dy = pt.y - capturePoint.y;
 
 	if (dx || dy)
 	{
-	    RECT newRect = sizingRect;
-	    switch(hittest)
+	    if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
+	    else
 	    {
-	    case HTCAPTION:
-		OffsetRect( &newRect, dx, dy );
-		break;
-	    case HTLEFT:
-		newRect.left += dx;
-		break;
-	    case HTRIGHT:
-		newRect.right += dx;
-		break;
-	    case HTTOP:
-		newRect.top += dy;
-		break;
-	    case HTTOPLEFT:
-		newRect.left += dx;
-		newRect.top  += dy;
-		break;
-	    case HTTOPRIGHT:
-		newRect.right += dx;
-		newRect.top   += dy;
-		break;
-	    case HTBOTTOM:
-		newRect.bottom += dy;
-		break;
-	    case HTBOTTOMLEFT:
-		newRect.left   += dx;
-		newRect.bottom += dy;
-		break;
-	    case HTBOTTOMRIGHT:
-		newRect.right  += dx;
-		newRect.bottom += dy;
-		break; 
-	    }	    
-	    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
-	    NC_DrawMovingFrame( hdc, &newRect, thickframe );
-	    capturePoint = msg.pt;
-	    sizingRect = newRect;
+		RECT newRect = sizingRect;
+
+		if (hittest == HTCAPTION) OffsetRect( &newRect, dx, dy );
+		if (ON_LEFT_BORDER(hittest)) newRect.left += dx;
+		else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
+		if (ON_TOP_BORDER(hittest)) newRect.top += dy;
+		else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
+		NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+		NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		capturePoint = pt;
+		sizingRect = newRect;
+	    }
 	}
     }
 
@@ -843,6 +1012,90 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 
 
 /***********************************************************************
+ *           NC_TrackScrollBar
+ *
+ * Track a mouse button press on the horizontal or vertical scroll-bar.
+ */
+static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
+{
+    MSG msg;
+    WORD scrollbar;
+
+    if ((wParam & 0xfff0) == SC_HSCROLL)
+    {
+	if ((wParam & 0x0f) != HTHSCROLL) return;
+	scrollbar = SB_HORZ;
+    }
+    else  /* SC_VSCROLL */
+    {
+	if ((wParam & 0x0f) != HTVSCROLL) return;
+	scrollbar = SB_VERT;
+    }
+
+    ScreenToClient( hwnd, &pt );
+    ScrollBarButtonDown( hwnd, scrollbar, pt.x, pt.y );
+    SetCapture( hwnd );
+
+    do
+    {
+	MSG_GetHardwareMessage( &msg );
+	ScreenToClient( msg.hwnd, &msg.pt );
+	switch(msg.message)
+	{
+	case WM_LBUTTONUP:
+	    ScrollBarButtonUp( hwnd, scrollbar, msg.pt.x, msg.pt.y );
+	    break;
+	case WM_MOUSEMOVE:
+	    ScrollBarMouseMove(hwnd, scrollbar, msg.wParam, msg.pt.x,msg.pt.y);
+	    break;
+	}
+    } while (msg.message != WM_LBUTTONUP);
+    ReleaseCapture();
+}
+
+
+/***********************************************************************
+ *           NC_TrackMouseMenuBar
+ *
+ * Track a mouse events for the MenuBar.
+ */
+static void NC_TrackMouseMenuBar( HWND hwnd, WORD wParam, POINT pt )
+{
+    WND		*wndPtr;
+    LPPOPUPMENU lppop;
+    MSG 	msg;
+    wndPtr = WIN_FindWndPtr(hwnd);
+    lppop = (LPPOPUPMENU)GlobalLock(wndPtr->wIDmenu);
+#ifdef DEBUG_MENU
+    printf("NC_TrackMouseMenuBar // wndPtr=%08X lppop=%08X !\n", wndPtr, lppop);
+#endif
+    ScreenToClient(hwnd, &pt);
+    pt.y += lppop->rect.bottom;
+    MenuButtonDown(hwnd, lppop, pt.x, pt.y);
+    SetCapture(hwnd);
+    do {
+	if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
+	ScreenToClient(hwnd, &msg.pt);
+	msg.pt.y += lppop->rect.bottom;
+	switch(msg.message) {
+	case WM_LBUTTONUP:
+	    MenuButtonUp(hwnd, lppop, msg.pt.x, msg.pt.y);
+	    break;
+	case WM_MOUSEMOVE:
+	    MenuMouseMove(hwnd, lppop, msg.wParam, msg.pt.x, msg.pt.y);
+	    break;
+	default:
+	    TranslateMessage(&msg);
+	    DispatchMessage(&msg);
+	    break;
+	}
+    } while (msg.message != WM_LBUTTONUP);
+    ReleaseCapture();
+    GlobalUnlock(wndPtr->wIDmenu);
+}
+
+
+/***********************************************************************
  *           NC_HandleNCLButtonDown
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
@@ -863,14 +1116,15 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
 	break;
 
     case HTMENU:
+	SendMessage( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
 	break;
 
     case HTHSCROLL:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_HSCROLL, lParam );
+	SendMessage( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
 	break;
 
     case HTVSCROLL:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_VSCROLL, lParam );
+	SendMessage( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
 	break;
 
     case HTMINBUTTON:
@@ -962,9 +1216,17 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
+	NC_TrackScrollBar( hwnd, wParam, pt );
 	break;
+
     case SC_MOUSEMENU:
+	NC_TrackMouseMenuBar( hwnd, wParam, pt );
+	break;
+
     case SC_KEYMENU:
+/*	NC_KeyMenuBar( hwnd, wParam, pt ); */
+	break;
+	
     case SC_ARRANGE:
 	break;
 
@@ -974,64 +1236,6 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
     }
     return 0;
-}
-
-
-/***********************************************************************
- *           NC_HandleSetCursor
- *
- * Handle a WM_SETCURSOR message. Called from DefWindowProc().
- */
-LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
-{
-    if (hwnd != wParam) return 0;  /* Don't set the cursor for child windows */
-
-    switch(LOWORD(lParam))
-    {
-    case HTERROR:
-	{
-	    WORD msg = HIWORD( lParam );
-	    if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
-		(msg == WM_RBUTTONDOWN))
-		MessageBeep(0);
-	}
-	break;
-
-    case HTCLIENT:
-	{
-	    WND *wndPtr = WIN_FindWndPtr( hwnd );
-	    if (wndPtr && wndPtr->hCursor)
-	    {
-		SetCursor( wndPtr->hCursor );
-		return TRUE;
-	    }
-	}
-	break;
-
-    case HTLEFT:
-    case HTRIGHT:
-	SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
-	return TRUE;
-
-    case HTTOP:
-    case HTBOTTOM:
-	SetCursor( LoadCursor( 0, IDC_SIZENS ) );
-	return TRUE;
-
-    case HTTOPLEFT:
-    case HTBOTTOMRIGHT:	
-	SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
-	return TRUE;
-
-    case HTTOPRIGHT:
-    case HTBOTTOMLEFT:
-	SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
-	return TRUE;
-    }
-
-    /* Default cursor: arrow */
-    SetCursor( LoadCursor( 0, IDC_ARROW ) );
-    return TRUE;
 }
 
 

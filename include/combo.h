@@ -6,7 +6,6 @@
 typedef struct tagHEADCOMBO {
     DWORD	dwStyle;
     DWORD	dwState;
-    HWND	hWndDrop;
     HWND	hWndEdit;
     HWND	hWndLBox;
 } HEADCOMBO;

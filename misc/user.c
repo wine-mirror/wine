@@ -18,6 +18,7 @@ extern BOOL ATOM_Init();
 extern BOOL GDI_Init();
 extern void SYSMETRICS_Init();
 
+#ifndef WINELIB
 /***********************************************************************
  *           USER_HeapInit
  */
@@ -29,7 +30,7 @@ static BOOL USER_HeapInit()
     HEAP_Init( &USER_Heap, s->base_addr, USER_HEAP_SIZE );
     return TRUE;
 }
-
+#endif
 
 /**********************************************************************
  *					USER_InitApp
@@ -52,9 +53,11 @@ USER_InitApp(int hInstance)
       /* Initialize system colors and metrics*/
     SYSMETRICS_Init();
     SYSCOLOR_Init();
-    
+
+#ifndef WINELIB    
       /* Create USER heap */
     if (!USER_HeapInit()) return 0;
+#endif
     
       /* Create the DCEs */
     DCE_Init();
@@ -72,6 +75,11 @@ USER_InitApp(int hInstance)
       /* Create task message queue */
     queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue( queueSize )) return 0;
+
+#ifndef WINELIB
+    /* Initialize DLLs */
+    InitializeLoadedDLLs();
+#endif
         
     return 1;
 }

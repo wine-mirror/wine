@@ -123,7 +123,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     else newClass->hdce = 0;
 
       /* Menu name should also be set to zero. */
-    newClass->wc.lpszClassName = NULL;
+    newClass->wc.lpszClassName = NULL; 
     
     if (class->cbClsExtra) memset( newClass->wExtra, 0, class->cbClsExtra );
     firstClass = handle;

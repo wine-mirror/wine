@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef __linux__
+#if defined(__linux__) || defined(sun)
 #include <sys/vfs.h>
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
@@ -73,15 +73,6 @@ void DOS_InitFS(void)
 	ToDos(TempDirectory);
 	ToDos(WindowsPath);
 
-#ifdef DEBUG
-	fprintf(stderr,"wine.ini = %s\n",WINE_INI);
-	fprintf(stderr,"win.ini = %s\n",WIN_INI);
-	fprintf(stderr,"windir = %s\n",WindowsDirectory);
-	fprintf(stderr,"sysdir = %s\n",SystemDirectory);
-	fprintf(stderr,"tempdir = %s\n",TempDirectory);
-	fprintf(stderr,"path = %s\n",WindowsPath);
-#endif
-
 	for (x=0; x!=MAX_DOS_DRIVES; x++) {
 		DosDrives[x].serialnumber = (0xEB0500L | x);
 		
@@ -104,14 +95,11 @@ void DOS_InitFS(void)
 				temp[strlen(temp)] = '\0';
 			DosDrives[x].rootdir = ptr;
 			strcpy(DosDrives[x].rootdir, temp);
-			strcpy(DosDrives[x].cwd, "/windows/");
+			strcpy(DosDrives[x].cwd, "/");
 			strcpy(DosDrives[x].label, "DRIVE-");
 			strcat(DosDrives[x].label, drive);
 			DosDrives[x].disabled = 0;
 	}
-
-	atexit(DOS_DeInitFS);
-
 	DOS_SetDefaultDrive(2);
 
 	for (x=0; x!=MAX_DOS_DRIVES; x++) {
@@ -132,6 +120,14 @@ void DOS_InitFS(void)
 	for (x=0; x!=MAX_OPEN_DIRS ; x++)
 		DosDirs[x].inuse = 0;
 
+#ifdef DEBUG
+	fprintf(stderr,"wine.ini = %s\n",WINE_INI);
+	fprintf(stderr,"win.ini = %s\n",WIN_INI);
+	fprintf(stderr,"windir = %s\n",WindowsDirectory);
+	fprintf(stderr,"sysdir = %s\n",SystemDirectory);
+	fprintf(stderr,"tempdir = %s\n",TempDirectory);
+	fprintf(stderr,"path = %s\n",WindowsPath);
+#endif
 }
 
 void DOS_DeInitFS(void)
@@ -187,7 +183,7 @@ WORD DOS_GetEquipment(void)
 	if (diskdrives)
 		diskdrives--;
 
-	equipment = diskdrives << 6;
+	equipment = (diskdrives << 6) || 0x02;
 
 	return (equipment);
 }
@@ -633,17 +629,23 @@ fprintf(stderr,"FindFile: looking for %s\n",rootname);
  */
 char *WineIniFileName(void)
 {
-    static char *IniName = NULL;
+    static char *IniName = NULL, *env;
+
     char inipath[256];
     
     if (IniName)
 	return IniName;
 
     getcwd(inipath, 256);
-    strcat(inipath, ";");
-    strcat(inipath, getenv("HOME"));
-    strcat(inipath, ";");
-    strcat(inipath, getenv("WINEPATH"));
+    
+    if ((env = getenv("HOME")) !=NULL) {
+	    strcat(inipath, ";");
+	    strcat(inipath, env);
+    }
+    if ((env = getenv("WINEPATH")) !=NULL) {
+	    strcat(inipath, ";");
+	    strcat(inipath, env);
+    }
 
     IniName = malloc(1024);
     if (FindFile(IniName, 1024, "wine.ini", NULL, inipath) == NULL)
@@ -672,6 +674,43 @@ char *WinIniFileName()
 	return name;
 }
 
+int match(char *filename, char *filemask)
+{
+	int x, masklength = strlen(filemask);
+
+#ifdef DEBUG
+	fprintf(stderr, "match: %s, %s\n", filename, filemask);
+#endif
+
+	for (x = 0; x != masklength ; x++) {
+#ifdef DEBUG
+		printf("(%c%c) ", *filename, filemask[x]); 
+#endif
+
+		if (!*filename)
+			/* stop if EOFname */
+			return 1;
+
+		if (filemask[x] == '?') {
+			/* skip the next char */
+			filename++;
+			continue;
+		}
+
+		if (filemask[x] == '*') {
+			/* skip each char until '.' or EOFname */
+			while (*filename && *filename !='.')
+				filename++;
+			continue;
+		}
+		if (filemask[x] != *filename)
+			return 0;
+
+		filename++;
+	}
+	return 1;
+}
+
 struct dosdirent *DOS_opendir(char *dosdirname)
 {
 	int x,y;
@@ -687,21 +726,24 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	if ((unixdirname = GetDirectUnixFileName(dosdirname)) == NULL)
 		return NULL;
 
-	strcpy(temp,unixdirname);
+	strcpy(temp, unixdirname);
 
 
 	y = strlen(temp);
-
 	while (y--)
 	{
 		if (temp[y] == '/') 
 		{
-			temp[y] = '\0';
+			temp[y++] = '\0';
+			strcpy(DosDirs[x].filemask, temp +y);
+			ToDos(DosDirs[x].filemask);
 			break;
 		}
 	}
 
-	fprintf(stderr,"%s -> %s\n",unixdirname,temp);
+#ifdef DEBUG
+	fprintf(stderr,"DOS_opendir: %s -> %s\n", unixdirname, temp);
+#endif
 
 	DosDirs[x].inuse = 1;
 	strcpy(DosDirs[x].unixpath, temp);
@@ -722,17 +764,20 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	if (!de->inuse)
 		return NULL;
 	
-	if ((d = readdir(de->ds)) == NULL) 
-	{
-		closedir(de->ds);
-		de->inuse = 0;
-		return de;
-	}
+	do {
+		if ((d = readdir(de->ds)) == NULL) 
+		{
+			closedir(de->ds);
+			de->inuse = 0;
+			return de;
+		}
 
-	strcpy(de->filename, d->d_name);
-	if (d->d_reclen > 12)
-		de->filename[12] = '\0';
-	ToDos (de->filename);
+		strcpy(de->filename, d->d_name);
+		if (d->d_reclen > 12)
+			de->filename[12] = '\0';
+		
+		ToDos(de->filename);
+	} while ( !match(de->filename, de->filemask) );
 
 	de->attribute = 0x0;
 

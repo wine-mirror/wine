@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <unistd.h>
 #include "prototypes.h"
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
@@ -33,7 +34,7 @@ char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 
  Emulate the _lopen windows call
  ***************************************************************************/
-WORD KERNEL__lopen (LPSTR lpPathName, WORD iReadWrite)
+int _lopen (LPSTR lpPathName, int iReadWrite)
 {
   int  handle;
   char *UnixFileName;
@@ -60,7 +61,7 @@ WORD KERNEL__lopen (LPSTR lpPathName, WORD iReadWrite)
 /***************************************************************************
  _lread
  ***************************************************************************/
-WORD KERNEL__lread (WORD hFile, LPSTR lpBuffer, WORD wBytes)
+WORD _lread (int hFile, LPSTR lpBuffer, int wBytes)
 {
   int result;
 
@@ -80,7 +81,7 @@ WORD KERNEL__lread (WORD hFile, LPSTR lpBuffer, WORD wBytes)
 /****************************************************************************
  _lwrite
 ****************************************************************************/
-WORD KERNEL__lwrite (WORD hFile, LPSTR lpBuffer, WORD wBytes)
+WORD _lwrite (int hFile, LPSTR lpBuffer, int wBytes)
 {
 	int result;
 
@@ -99,7 +100,7 @@ WORD KERNEL__lwrite (WORD hFile, LPSTR lpBuffer, WORD wBytes)
 /***************************************************************************
  _lclose
  ***************************************************************************/
-WORD KERNEL__lclose (WORD hFile)
+int _lclose (int hFile)
 {
 #ifdef DEBUG_FILE
   fprintf(stderr, "_lclose: handle %d\n", hFile);
@@ -114,7 +115,7 @@ WORD KERNEL__lclose (WORD hFile)
  Warning:  This is nearly totally untested.  It compiles, that's it...
                                             -SL 9/13/93
  **************************************************************************/
-WORD KERNEL_OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
+int OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
   int base,flags;
 
@@ -141,7 +142,7 @@ WORD KERNEL_OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     }
   else
     {
-      return KERNEL__lopen (lpFileName, wStyle);
+      return _lopen (lpFileName, wStyle);
    }
 }
 
@@ -152,6 +153,10 @@ WORD KERNEL_OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
  Linux isn't limited to 20 files, this one's easy. - SL
  **************************************************************************/
 
+#if !defined (OPEN_MAX)
+/* This one is for the Sun */
+#define OPEN_MAX _POSIX_OPEN_MAX
+#endif
 WORD SetHandleCount (WORD wNumber)
 {
   printf("SetHandleCount(%d)\n",wNumber);
@@ -161,7 +166,7 @@ WORD SetHandleCount (WORD wNumber)
 /***************************************************************************
  _llseek
  ***************************************************************************/
-LONG KERNEL__llseek (WORD hFile, LONG lOffset, int nOrigin)
+LONG _llseek (int hFile, LONG lOffset, int nOrigin)
 {
 	int origin;
 	
@@ -184,7 +189,7 @@ LONG KERNEL__llseek (WORD hFile, LONG lOffset, int nOrigin)
 /***************************************************************************
  _lcreate
  ***************************************************************************/
-LONG KERNEL__lcreate (LPSTR lpszFilename, int fnAttribute)
+LONG _lcreate (LPSTR lpszFilename, int fnAttribute)
 {
 	int handle;
 	char *UnixFileName;

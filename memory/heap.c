@@ -138,8 +138,8 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
     if (new_size > m->length)
     {
 	m_free = m + 1 + m->length / sizeof(MDESC);
-	if (m_free->next != m_free || 
-	    m_free->prev != m_free ||
+	if (m_free->next == m_free || 
+	    m_free->prev == m_free ||
 	    m_free->length + sizeof(MDESC) < new_size)
 	{
 	    void *new_p = HEAP_Alloc(free_list, flags, new_size);
@@ -284,7 +284,7 @@ HEAP_Free(MDESC **free_list, void *block)
 /**********************************************************************
  *					HEAP_LocalFindHeap
  */
-MDESC **
+LHEAP *
 HEAP_LocalFindHeap(unsigned short owner)
 {
     LHEAP *lh;
@@ -296,13 +296,13 @@ HEAP_LocalFindHeap(unsigned short owner)
     for (lh = LocalHeaps; lh != NULL; lh = lh->next)
     {
 	if (lh->selector == owner)
-	    return &lh->free_list;
+	    return lh;
     }
 
     return NULL;
 }
 
-#define LOCALHEAP() HEAP_LocalFindHeap(Segments[Stack16Frame[11] >> 3].owner)
+#define LOCALHEAP() (&HEAP_LocalFindHeap(Segments[Stack16Frame[11] >> 3].owner)->free_list)
 
 /**********************************************************************
  *					HEAP_LocalInit
@@ -402,8 +402,25 @@ LocalFree(unsigned int handle)
 unsigned int
 LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 {
-    HEAP_Init(LOCALHEAP(), 
-	      (void *) ((segment << 16) | start), end - start + 1);
+    unsigned short owner = Segments[Stack16Frame[11] >> 3].owner;
+    LHEAP *lh = HEAP_LocalFindHeap(owner);
+    
+    if (segment == 0)
+    {
+	/* Get current DS */
+	segment = Stack16Frame[6];
+    }
+
+    if (lh == NULL)
+    {
+	HEAP_LocalInit(owner, 
+		       (void *) ((segment << 16) | start), end - start + 1);
+    }
+    else
+    {
+	HEAP_Init(&lh->free_list,
+		  (void *) ((segment << 16) | start), end - start + 1);
+    }
 
     return segment;
 }

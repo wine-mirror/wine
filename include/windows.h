@@ -42,6 +42,7 @@ typedef char *NPSTR;
 typedef short *LPINT;
 typedef void *LPVOID;
 typedef long (*FARPROC)();
+typedef FARPROC DLGPROC;
 typedef int CATCHBUF[9];
 typedef int *LPCATCHBUF;
 
@@ -144,21 +145,35 @@ typedef PAINTSTRUCT *PPAINTSTRUCT;
 typedef PAINTSTRUCT *NPPAINTSTRUCT;
 typedef PAINTSTRUCT *LPPAINTSTRUCT;
 
+#ifdef WINELIB
+#define WINE_PACKED
+#else
+#define WINE_PACKED __attribute__ ((packed))
+#endif
+
   /* Window classes */
+
+#ifdef WINELIB
+typedef LONG (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+#else
+typedef LONG	(* WNDPROC)() WINE_PACKED;
+#endif
 
 typedef struct {
 	WORD	style;
-	LONG	(*lpfnWndProc)() __attribute__ ((packed));
+#ifdef WINELIB
+	WNDPROC lpfnWndProc;
+#else
+	LONG	(*lpfnWndProc)() WINE_PACKED;
+#endif
 	short	cbClsExtra, cbWndExtra;
 	HANDLE	hInstance;
 	HICON	hIcon;
 	HCURSOR	hCursor;
 	HBRUSH	hbrBackground;
-	LPSTR	lpszMenuName __attribute__ ((packed));
-	LPSTR   lpszClassName __attribute__ ((packed));
+	LPSTR	lpszMenuName WINE_PACKED;
+	LPSTR   lpszClassName WINE_PACKED;
 } WNDCLASS, *LPWNDCLASS;
-
-typedef LONG	(* WNDPROC)() __attribute__ ((packed));
 
 #define CS_VREDRAW          0x0001
 #define CS_HREDRAW          0x0002
@@ -197,10 +212,10 @@ typedef struct {
     short     cx;
     short     y;
     short     x;
-    LONG      style __attribute__ ((packed));
-    char *    lpszName __attribute__ ((packed));
-    char *    lpszClass __attribute__ ((packed));
-    DWORD     dwExStyle __attribute__ ((packed));
+    LONG      style WINE_PACKED;
+    char *    lpszName WINE_PACKED;
+    char *    lpszClass WINE_PACKED;
+    DWORD     dwExStyle WINE_PACKED;
 } CREATESTRUCT, *LPCREATESTRUCT;
 
   /* Offsets for GetWindowLong() and GetWindowWord() */
@@ -232,6 +247,19 @@ typedef struct
     POINT   ptMaxTrackSize;
 } MINMAXINFO;
 
+  /* RedrawWindow() flags */
+#define RDW_INVALIDATE       0x0001
+#define RDW_INTERNALPAINT    0x0002
+#define RDW_ERASE            0x0004
+#define RDW_VALIDATE         0x0008
+#define RDW_NOINTERNALPAINT  0x0010
+#define RDW_NOERASE          0x0020
+#define RDW_NOCHILDREN       0x0040
+#define RDW_ALLCHILDREN      0x0080
+#define RDW_UPDATENOW        0x0100
+#define RDW_ERASENOW         0x0200
+#define RDW_FRAME            0x0400
+#define RDW_NOFRAME          0x0800
 
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
 typedef struct
@@ -251,9 +279,9 @@ typedef struct
     UINT   length;
     UINT   flags;
     UINT   showCmd;
-    POINT  ptMinPosition __attribute__ ((packed));
-    POINT  ptMaxPosition __attribute__ ((packed));
-    RECT   rcNormalPosition __attribute__ ((packed));
+    POINT  ptMinPosition WINE_PACKED;
+    POINT  ptMaxPosition WINE_PACKED;
+    RECT   rcNormalPosition WINE_PACKED;
 } WINDOWPLACEMENT, *LPWINDOWPLACEMENT;
 
   /* WINDOWPLACEMENT flags */
@@ -379,9 +407,9 @@ typedef struct tagMSG
   HWND    hwnd;
   WORD    message;
   WORD    wParam;
-  DWORD   lParam __attribute__ ((packed));
-  DWORD   time __attribute__ ((packed));
-  POINT	  pt __attribute__ ((packed));
+  DWORD   lParam WINE_PACKED;
+  DWORD   time WINE_PACKED;
+  POINT	  pt WINE_PACKED;
 } MSG, *LPMSG;
 	
 typedef WORD ATOM;
@@ -485,7 +513,7 @@ typedef struct tagBITMAP
     short  bmWidthBytes;
     BYTE   bmPlanes;
     BYTE   bmBitsPixel;
-    void * bmBits __attribute__ ((packed));
+    void * bmBits WINE_PACKED;
 } BITMAP;
 
 typedef BITMAP *PBITMAP;
@@ -497,7 +525,7 @@ typedef BITMAP *LPBITMAP;
 typedef struct tagLOGBRUSH
 { 
     WORD       lbStyle; 
-    COLORREF   lbColor __attribute__ ((packed));
+    COLORREF   lbColor WINE_PACKED;
     short      lbHatch; 
 } LOGBRUSH, *PLOGBRUSH, *NPLOGBRUSH, *LPLOGBRUSH;
 
@@ -526,7 +554,7 @@ typedef struct tagLOGFONT
     short lfHeight, lfWidth, lfEscapement, lfOrientation, lfWeight;
     BYTE lfItalic, lfUnderline, lfStrikeOut, lfCharSet;
     BYTE lfOutPrecision, lfClipPrecision, lfQuality, lfPitchAndFamily;
-    BYTE lfFaceName[LF_FACESIZE] __attribute__ ((packed));
+    BYTE lfFaceName[LF_FACESIZE] WINE_PACKED;
 } LOGFONT, *PLOGFONT, *NPLOGFONT, *LPLOGFONT;
 
   /* lfWeight values */
@@ -638,7 +666,7 @@ typedef struct tagLOGPALETTE
 { 
     WORD           palVersion;
     WORD           palNumEntries;
-    PALETTEENTRY   palPalEntry[1] __attribute__ ((packed));
+    PALETTEENTRY   palPalEntry[1] WINE_PACKED;
 } LOGPALETTE, *PLOGPALETTE, *NPLOGPALETTE, *LPLOGPALETTE;
 
 
@@ -647,8 +675,8 @@ typedef struct tagLOGPALETTE
 typedef struct tagLOGPEN
 {
     WORD     lopnStyle; 
-    POINT    lopnWidth __attribute__ ((packed));
-    COLORREF lopnColor __attribute__ ((packed));
+    POINT    lopnWidth WINE_PACKED;
+    COLORREF lopnColor WINE_PACKED;
 } LOGPEN, *PLOGPEN, *NPLOGPEN, *LPLOGPEN;
 
 #define PS_SOLID	  0
@@ -1112,7 +1140,64 @@ typedef struct tagCOMSTAT
 #define CSTF_EOF	0x20
 #define CSTF_TXIM	0x40
 
-/* */
+/* SystemParametersInfo */
+
+#define	SPI_GETBEEP			1
+#define	SPI_SETBEEP			2
+#define	SPI_GETMOUSE			3
+#define	SPI_SETMOUSE			4
+#define	SPI_GETBORDER			5
+#define	SPI_SETBORDER			6
+#define	SPI_GETKEYBOARDSPEED		10
+#define	SPI_SETKEYBOARDSPEED		11
+#define	SPI_LANGDRIVER			12
+#define SPI_ICONHORIZONTALSPACING	13
+#define SPI_GETSCREENSAVETIMEOUT	14
+#define SPI_SETSCREENSAVETIMEOUT	15
+#define SPI_GETSCREENSAVEACTIVE		16
+#define SPI_SETSCREENSAVEACTIVE		17
+#define SPI_GETGRIDGRANULARITY		18
+#define SPI_SETGRIDGRANULARITY		19
+#define SPI_SETDESKWALLPAPER		20
+#define SPI_SETDESKPATTERN		21
+#define SPI_GETKEYBOARDDELAY		22
+#define SPI_SETKEYBOARDDELAY		23
+#define SPI_ICONVERTICALSPACING		24
+#define SPI_GETICONTITLEWRAP		25
+#define SPI_SETICONTITLEWRAP		26
+#define SPI_GETMENUDROPALIGNMENT	27
+#define SPI_SETMENUDROPALIGNMENT	28
+#define SPI_SETDOUBLECLKWIDTH		29
+#define SPI_SETDOUBLECLKHEIGHT		30
+#define SPI_GETICONTITLELOGFONT		31
+#define SPI_SETDOUBLECLICKTIME		32
+#define SPI_SETMOUSEBUTTONSWAP		33
+#define SPI_SETICONTITLELOGFONT		34
+#define SPI_GETFASTTASKSWITCH		35
+#define SPI_SETFASTTASKSWITCH		36
+
+/* SystemParametersInfo flags */
+
+#define SPIF_UPDATEINIFILE		1
+#define SPIF_SENDWININICHANGE		2
+
+/* GetWinFlags */
+
+#define WF_PMODE 	0x0001
+#define WF_CPU286 	0x0002
+#define	WF_CPU386	0x0004
+#define	WF_CPU486 	0x0008
+#define	WF_STANDARD	0x0010
+#define	WF_WIN286 	0x0010
+#define	WF_ENHANCED	0x0020
+#define	WF_WIN386	0x0020
+#define	WF_CPU086	0x0040
+#define	WF_CPU186	0x0080
+#define	WF_LARGEFRAME	0x0100
+#define	WF_SMALLFRAME	0x0200
+#define	WF_80x87	0x0400
+#define	WF_PAGING	0x0800
+#define	WF_WLO          0x8000
 
 typedef struct 
 {
@@ -1937,7 +2022,11 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 #define VK_SCROLL           0x91
 
   
-#define LMEM_MOVEABLE   0x0002
+#define LMEM_FIXED          0   
+#define LMEM_MOVEABLE       0x0002
+#define LMEM_ZEROINIT       0x0040
+#define LMEM_DISCARDABLE    0x0F00
+#define LMEM_WINE_ALIGN     0x1000
 
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002
@@ -1954,6 +2043,55 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
+
+
+/* Predefined Clipboard Formats */
+#define CF_TEXT              1
+#define CF_BITMAP            2
+#define CF_METAFILEPICT      3
+#define CF_SYLK              4
+#define CF_DIF               5
+#define CF_TIFF              6
+#define CF_OEMTEXT           7
+#define CF_DIB               8
+#define CF_PALETTE           9
+#define CF_PENDATA          10
+#define CF_RIFF             11
+#define CF_WAVE             12
+
+#define CF_OWNERDISPLAY     0x0080
+#define CF_DSPTEXT          0x0081
+#define CF_DSPBITMAP        0x0082
+#define CF_DSPMETAFILEPICT  0x0083
+
+/* "Private" formats don't get GlobalFree()'d */
+#define CF_PRIVATEFIRST     0x0200
+#define CF_PRIVATELAST      0x02FF
+
+/* "GDIOBJ" formats do get DeleteObject()'d */
+#define CF_GDIOBJFIRST      0x0300
+#define CF_GDIOBJLAST       0x03FF
+
+/* Clipboard command messages */
+#define WM_CUT              0x0300
+#define WM_COPY             0x0301
+#define WM_PASTE            0x0302
+#define WM_CLEAR            0x0303
+#define WM_UNDO             0x0304
+
+/* Clipboard owner messages */
+#define WM_RENDERFORMAT     0x0305
+#define WM_RENDERALLFORMATS 0x0306
+#define WM_DESTROYCLIPBOARD 0x0307
+
+/* Clipboard viewer messages */
+#define WM_DRAWCLIPBOARD    0x0308
+#define WM_PAINTCLIPBOARD   0x0309
+#define WM_SIZECLIPBOARD    0x030B
+#define WM_VSCROLLCLIPBOARD 0x030A
+#define WM_HSCROLLCLIPBOARD 0x030E
+#define WM_ASKCBFORMATNAME  0x030C
+#define WM_CHANGECBCHAIN    0x030D
 
 
 #define F(ret,name) ret name(void);
@@ -1995,12 +2133,13 @@ F(HMENU,CreatePopupMenu)
 F(HWND,GetActiveWindow)
 F(HWND,GetCapture)
 F(HWND,GetClipboardOwner)
+F(HWND,GetOpenClipboardWindow)
 F(HWND,GetClipboardViewer)
 F(HWND,GetDesktopHwnd)
 F(HWND,GetDesktopWindow)
 F(HWND,GetFocus)
 F(HWND,GetSysModalWindow)
-F(LONG,GetMenuCheckMarkDimensions)
+F(DWORD,GetMenuCheckMarkDimensions)
 F(LONG,GetWinFlags)
 F(LPINT,GetThresholdEvent)
 F(LPSTR,ValidateFreeSpaces)
@@ -2009,7 +2148,7 @@ F(WORD,GetCaretBlinkTime)
 F(WORD,GetCurrentPDB)
 F(WORD,GetDoubleClickTime)
 F(WORD,GetNumTasks)
-F(WORD,GetVersion)
+F(LONG,GetVersion)
 F(int,CountClipboardFormats)
 F(int,GetKBCodePage)
 F(int,GetThresholdStatus)
@@ -2342,7 +2481,7 @@ Fb(int,GetClipBox,HDC,a,LPRECT,b)
 Fb(int,GetCommError,int,a,COMSTAT*,b)
 Fb(int,GetCommState,int,a,DCB*,b)
 Fb(int,GetDeviceCaps,HDC,a,WORD,b)
-Fb(int,GetPriorityClipboardFormat,WORD FAR*,a,int,b)
+Fb(int,GetPriorityClipboardFormat,WORD FAR*,a,short,b)
 Fb(int,GetRgnBox,HRGN,a,LPRECT,b)
 Fb(int,GetScrollPos,HWND,a,int,b)
 Fb(int,ReleaseDC,HWND,a,HDC,b)
@@ -2436,11 +2575,11 @@ Fc(WORD,SetClassWord,HWND,a,short,b,WORD,c)
 Fc(WORD,SetWindowWord,HWND,a,short,b,WORD,c)
 Fc(int,FrameRect,HDC,a,LPRECT,b,HBRUSH,c)
 Fc(int,GetClassName,HWND,a,LPSTR,b,short,c)
-Fc(int,GetClipboardFormatName,WORD,a,LPSTR,b,int,c)
+Fc(int,GetClipboardFormatName,WORD,a,LPSTR,b,short,c)
 Fc(int,GetEnvironment,LPSTR,a,LPSTR,b,WORD,c)
 Fc(int,GetInstanceData,HANDLE,a,NPSTR,b,int,c)
 Fc(int,GetKeyNameText,LONG,a,LPSTR,b,int,c)
-Fc(int,GetModuleFileName,HANDLE,a,LPSTR,b,int,c)
+Fc(int,GetModuleFileName,HANDLE,a,LPSTR,b,short,c)
 Fc(int,GetObject,HANDLE,a,int,b,LPSTR,c)
 Fc(int,GetTextFace,HDC,a,int,b,LPSTR,c)
 Fc(int,GetUpdateRgn,HWND,a,HRGN,b,BOOL,c)
@@ -2477,12 +2616,13 @@ Fd(BOOL,GetMessage,LPMSG,msg,HWND,b,WORD,c,WORD,d)
 Fd(BOOL,GetTextExtentPoint,HDC,a,LPSTR,b,short,c,LPSIZE,d)
 Fd(BOOL,DrawIcon,HDC,a,short,b,short,c,HICON,d)
 Fd(BOOL,EnumMetaFile,HDC,a,LOCALHANDLE,b,FARPROC,c,BYTE FAR*,d)
-Fd(BOOL,FloodFill,HDC,a,int,b,int,c,DWORD,d)
+Fd(BOOL,FloodFill,HDC,a,short,b,short,c,DWORD,d)
 Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
 Fd(BOOL,HiliteMenuItem,HWND,a,HMENU,b,WORD,c,WORD,d)
 Fd(BOOL,MoveToEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(BOOL,PolyPolygon,HDC,a,LPPOINT,b,LPINT,c,int,d)
 Fd(BOOL,PostAppMessage,HANDLE,a,WORD,b,WORD,c,LONG,d)
+Fd(BOOL,RedrawWindow,HWND,a,LPRECT,b,HRGN,c,UINT,d)
 Fd(BOOL,SetBitmapDimensionEx,HBITMAP,a,short,b,short,c,LPSIZE,d)
 Fd(BOOL,WinHelp,HWND,hwndMain,LPSTR,lpszHelp,WORD,usCommand,DWORD,ulData)
 Fd(BOOL,WritePrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)

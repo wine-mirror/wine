@@ -585,7 +585,7 @@ unsigned int GetEntryDLLName(char * dll_name, char * function, int * sel,
 		j = GetEntryPointFromOrdinal(wpnt, ordinal);		
 		*addr  = j & 0xffff;
 		j = j >> 16;
-		*sel = wpnt->selector_table[j].selector;
+		*sel = j;
 		return 0;
 	};
 	return 1;
@@ -615,12 +615,7 @@ unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, int * sel,
 		j = GetEntryPointFromOrdinal(wpnt, ordinal);
 		*addr  = j & 0xffff;
 		j = j >> 16;
-#if 0
-		/* This seems like it would never work */
-		*sel = wpnt->selector_table[j].selector;
-#else
-		*sel = j;  /* Is there any reason this will ever fail?? */
-#endif
+		*sel = j;
 		return 0;
 	};
 	return 1;

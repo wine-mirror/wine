@@ -24,7 +24,7 @@ void GetWindowRect( HWND hwnd, LPRECT rect )
     if (!wndPtr) return;
     
     *rect = wndPtr->rectWindow;
-    if (wndPtr->hwndParent)
+    if (wndPtr->dwStyle & WS_CHILD)
 	MapWindowPoints( wndPtr->hwndParent, 0, (POINT *)rect, 2 );
 }
 
@@ -69,7 +69,7 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
 HWND WindowFromPoint( POINT pt )
 {
     RECT rect;
-    HWND hwnd = firstWindow;
+    HWND hwnd = GetTopWindow( GetDesktopWindow() );
     while (hwnd)
     {
 	GetWindowRect( hwnd, &rect );
@@ -117,7 +117,7 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
 	wndPtr = WIN_FindWndPtr( hwndFrom );
 	origin.x += wndPtr->rectClient.left;
 	origin.y += wndPtr->rectClient.top;
-	hwndFrom = wndPtr->hwndParent;
+	hwndFrom = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
     }
 
       /* Translate origin to destination window coords */
@@ -126,7 +126,7 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
 	wndPtr = WIN_FindWndPtr( hwndTo );
 	origin.x -= wndPtr->rectClient.left;
 	origin.y -= wndPtr->rectClient.top;
-	hwndTo = wndPtr->hwndParent;
+	hwndTo = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->hwndParent : 0;
     }    
 
       /* Translate points */
@@ -375,6 +375,13 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     }
     else pMinMax = &MinMax;
 
+      /* Some sanity checks */
+
+    pMinMax->ptMaxTrackSize.x = max( pMinMax->ptMaxTrackSize.x,
+				     pMinMax->ptMinTrackSize.x );
+    pMinMax->ptMaxTrackSize.y = max( pMinMax->ptMaxTrackSize.y,
+				     pMinMax->ptMinTrackSize.y );
+    
     if (maxSize) *maxSize = pMinMax->ptMaxSize;
     if (maxPos) *maxPos = pMinMax->ptMaxPosition;
     if (minTrack) *minTrack = pMinMax->ptMinTrackSize;
@@ -486,7 +493,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 
 	  /* Make sure hwndInsertAfter is a sibling of hwnd */
 	if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM))
-	    if (wndPtr->hwndParent != GetParent(hwndInsertAfter)) goto Abort;
+	    if (GetParent(hwnd) != GetParent(hwndInsertAfter)) goto Abort;
 
 	WIN_UnlinkWindow( hwnd );
 	WIN_LinkWindow( hwnd, hwndInsertAfter );
@@ -531,7 +538,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	WND * parentPtr;
 	winChanges.x = newWindowRect.left;
 	winChanges.y = newWindowRect.top;
-	if (wndPtr->hwndParent)
+	if (wndPtr->dwStyle & WS_CHILD)
 	{
 	    parentPtr = WIN_FindWndPtr(wndPtr->hwndParent);
 	    winChanges.x += parentPtr->rectClient.left-parentPtr->rectWindow.left;

@@ -10,10 +10,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #ifdef linux
 #include <values.h>
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if !defined  (MAXINT)
 #include <limits.h>
 #define MAXINT INT_MAX
 #endif
+
 #include <X11/Xlib.h>
 
 #include "gdi.h"
