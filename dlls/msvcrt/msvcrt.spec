@@ -392,7 +392,7 @@ debug_channels (msvcrt)
 @ cdecl _mbsstr(str str) strstr
 @ stub _mbstok #(str str)
 @ cdecl _mbstrlen(str) _mbstrlen
-@ stub _mbsupr #(str)
+@ cdecl _mbsupr(str) _mbsupr
 @ cdecl _memccpy(ptr ptr long long) memccpy
 @ forward -noimport _memicmp ntdll._memicmp
 @ cdecl _mkdir(str) _mkdir

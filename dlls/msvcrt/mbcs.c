@@ -572,6 +572,28 @@ unsigned char * _mbslwr(  unsigned char *string    )
 
 
 /*********************************************************************
+ *              _mbsupr(MSVCRT.@)
+ */
+unsigned char * _mbsupr( unsigned char *string )
+{
+  unsigned char *p;
+
+  if(MSVCRT___mb_cur_max > 1)
+    {
+      FIXME("%s\n",string);
+      return string;
+    }
+  p = string;
+  while (*p)
+    {
+      *p= toupper(*p);
+      p++;
+    }
+  return string;
+}
+
+
+/*********************************************************************
  *              _mbsnbcpy(MSVCRT.@)
  */
 unsigned char * _mbsnbcpy(unsigned char *dest,const unsigned char *src,MSVCRT_size_t n)
