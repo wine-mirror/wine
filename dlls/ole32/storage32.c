@@ -4064,44 +4064,46 @@ ULONG IEnumSTATSTGImpl_PopSearchNode(
 
 /******************************************************************************
 ** StorageUtl implementation
+* FIXME: these should read and write in little-endian order on all
+* architectures, but right now just assume the host is little-endian.
 */
 
-void StorageUtl_ReadWord(void* buffer, ULONG offset, WORD* value)
+void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value)
 {
-  memcpy(value, (BYTE*)buffer+offset, sizeof(WORD));
+  memcpy(value, buffer+offset, sizeof(WORD));
 }
 
-void StorageUtl_WriteWord(void* buffer, ULONG offset, WORD value)
+void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value)
 {
-  memcpy((BYTE*)buffer+offset, &value, sizeof(WORD));
+  memcpy(buffer+offset, &value, sizeof(WORD));
 }
 
-void StorageUtl_ReadDWord(void* buffer, ULONG offset, DWORD* value)
+void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)
 {
-  memcpy(value, (BYTE*)buffer+offset, sizeof(DWORD));
+  memcpy(value, buffer+offset, sizeof(DWORD));
 }
 
-void StorageUtl_WriteDWord(void* buffer, ULONG offset, DWORD value)
+void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value)
 {
-  memcpy((BYTE*)buffer+offset, &value, sizeof(DWORD));
+  memcpy(buffer+offset, &value, sizeof(DWORD));
 }
 
-void StorageUtl_ReadGUID(void* buffer, ULONG offset, GUID* value)
+void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value)
 {
   StorageUtl_ReadDWord(buffer, offset,   &(value->Data1));
   StorageUtl_ReadWord(buffer,  offset+4, &(value->Data2));
   StorageUtl_ReadWord(buffer,  offset+6, &(value->Data3));
 
-  memcpy(value->Data4, (BYTE*)buffer+offset+8, sizeof(value->Data4));
+  memcpy(value->Data4, buffer+offset+8, sizeof(value->Data4));
 }
 
-void StorageUtl_WriteGUID(void* buffer, ULONG offset, GUID* value)
+void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value)
 {
   StorageUtl_WriteDWord(buffer, offset,   value->Data1);
   StorageUtl_WriteWord(buffer,  offset+4, value->Data2);
   StorageUtl_WriteWord(buffer,  offset+6, value->Data3);
 
-  memcpy((BYTE*)buffer+offset+8, value->Data4, sizeof(value->Data4));
+  memcpy(buffer+offset+8, value->Data4, sizeof(value->Data4));
 }
 
 void StorageUtl_CopyPropertyToSTATSTG(
@@ -4789,7 +4791,7 @@ HRESULT SmallBlockChainStream_GetNextBlockInChain(
 
   if (success)
   {
-    StorageUtl_ReadDWord(&buffer, 0, nextBlockInChain);
+    StorageUtl_ReadDWord((BYTE *)&buffer, 0, nextBlockInChain);
     return S_OK;
   }
 
@@ -4816,7 +4818,7 @@ void SmallBlockChainStream_SetNextBlockInChain(
   offsetOfBlockInDepot.u.HighPart = 0;
   offsetOfBlockInDepot.u.LowPart  = blockIndex * sizeof(ULONG);
 
-  StorageUtl_WriteDWord(&buffer, 0, nextBlock);
+  StorageUtl_WriteDWord((BYTE *)&buffer, 0, nextBlock);
 
   /*
    * Read those bytes in the buffer from the small block file.
@@ -4880,7 +4882,7 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
      */
     if (success)
     {
-      StorageUtl_ReadDWord(&buffer, 0, &nextBlockIndex);
+      StorageUtl_ReadDWord((BYTE *)&buffer, 0, &nextBlockIndex);
 
       if (nextBlockIndex != BLOCK_UNUSED)
         blockIndex++;

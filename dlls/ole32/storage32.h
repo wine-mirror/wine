@@ -747,12 +747,12 @@ HRESULT WINAPI StgStreamImpl_Clone(
  * abstractions used to read values from file buffers without having to worry
  * about bit order
  */
-void StorageUtl_ReadWord(void* buffer, ULONG offset, WORD* value);
-void StorageUtl_WriteWord(void* buffer, ULONG offset, WORD value);
-void StorageUtl_ReadDWord(void* buffer, ULONG offset, DWORD* value);
-void StorageUtl_WriteDWord(void* buffer, ULONG offset, DWORD value);
-void StorageUtl_ReadGUID(void* buffer, ULONG offset, GUID* value);
-void StorageUtl_WriteGUID(void* buffer, ULONG offset, GUID* value);
+void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value);
+void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value);
+void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value);
+void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value);
+void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value);
+void StorageUtl_WriteGUID(BYTE* buffer, ULONG offset, const GUID* value);
 void StorageUtl_CopyPropertyToSTATSTG(STATSTG*     destination,
 					     StgProperty* source,
 					     int          statFlags);
