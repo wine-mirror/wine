@@ -86,19 +86,58 @@ static HGLOBAL16 dib_copy(BITMAPINFO *info, UINT coloruse)
 /***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
  *
- * BUGS
- *      As for Windows 95 and Windows 98:
- *      Creating brushes from bitmaps or DIBs larger than 8x8 pixels
- *      is not supported. If a larger bitmap is given, only a portion
- *      of the bitmap is used.
+ * Create a logical brush with a given style, color or pattern.
+ *
+ * PARAMS
+ *  brush [I] Pointer to a LOGBRUSH structure describing the desired brush.
+ *
+ * RETURNS
+ *  A handle to the created brush, or a NULL handle if the brush cannot be 
+ *  created.
+ *
+ * NOTES
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
+ * - Windows 95 and earlier cannot create brushes from bitmaps or DIBs larger
+ *   than 8x8 pixels. If a larger bitmap is given, only a portion of the bitmap
+ *   is used.
+ * - If the brush to be created matches a stock brush, a stock brush will be
+ *   returned. This behaviour is undocumented.
  */
 HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
+    static const DWORD stockMap[] = { /* Map of RGB colors of stock brushes */
+        RGB(255,255,255), WHITE_BRUSH,
+        RGB(192,192,192), LTGRAY_BRUSH,
+        RGB(128,128,128), GRAY_BRUSH,
+        RGB(0,0,0),       BLACK_BRUSH
+    };
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
+    if (brush->lbStyle == BS_SOLID)
+    {
+        size_t i;
+
+        /* If a solid brush is created in a color matching one of the 
+         * stock brushes, native returns the stock object (GDI heap 
+         * optimisation). Some apps rely on this as they otherwise
+         * would leak their brushes.
+         */
+        for (i = 0; i < (sizeof(stockMap)/sizeof(stockMap[0])) / 2; i += 2)
+        {
+            if (brush->lbColor == stockMap[i])
+            {
+                HBRUSH hBr = GetStockObject(stockMap[i + 1]);
+                if (hBr)
+                    return hBr; /* Return stock brush */
+                break; /* Being called to create a stock brush, fall through */
+            }
+        }
+    }
+    
     if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC,
-				 (HGDIOBJ *)&hbrush, &brush_funcs ))) return 0;
+                                (HGDIOBJ *)&hbrush, &brush_funcs ))) return 0;
     ptr->logbrush.lbStyle = brush->lbStyle;
     ptr->logbrush.lbColor = brush->lbColor;
     ptr->logbrush.lbHatch = brush->lbHatch;
@@ -151,6 +190,21 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
 /***********************************************************************
  *           CreateHatchBrush    (GDI32.@)
+ *
+ * Create a logical brush with a hatched pattern.
+ *
+ * PARAMS
+ *  style [I] Direction of lines for the hatch pattern (HS_* values from "wingdi.h")
+ *  color [I] Colour of the hatched pattern
+ *
+ * RETURNS
+ *  A handle to the created brush, or a NULL handle if the brush cannot
+ *  be created.
+ *
+ * NOTES
+ * - This function uses CreateBrushIndirect() to create the brush.
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
@@ -168,6 +222,20 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 
 /***********************************************************************
  *           CreatePatternBrush    (GDI32.@)
+ *
+ * Create a logical brush with a pattern from a bitmap.
+ *
+ * PARAMS
+ *  hbitmap  [I] Bitmap containing pattern for the brush
+ *
+ * RETURNS
+ *  A handle to the created brush, or a NULL handle if the brush cannot 
+ *  be created.
+ *
+ * NOTES
+ * - This function uses CreateBrushIndirect() to create the brush.
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
  */
 HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 {
@@ -182,21 +250,24 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
 /***********************************************************************
  *           CreateDIBPatternBrush    (GDI32.@)
  *
- *	Create a logical brush which has the pattern specified by the DIB
+ * Create a logical brush with a pattern from a DIB.
  *
- *	Function call is for compatibility only.  CreateDIBPatternBrushPt should be used.
+ * PARAMS
+ *  hbitmap  [I] Global object containing BITMAPINFO structure for the pattern
+ *  coloruse [I] Specifies color format, if provided
  *
  * RETURNS
+ *  A handle to the created brush, or a NULL handle if the brush cannot 
+ *  be created.
  *
- *	Handle to a logical brush on success, NULL on failure.
- *
- * BUGS
- *
+ * NOTES
+ * - This function uses CreateBrushIndirect() to create the brush.
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
+ * - This function is for compatibility only. CreateDIBPatternBrushPt() should 
+ *   be used instead.
  */
-HBRUSH WINAPI CreateDIBPatternBrush(
-		HGLOBAL hbitmap, /* [in] Global object containg BITMAPINFO structure */
-		UINT coloruse 	 /* [in] Specifies color format, if provided */
-)
+HBRUSH WINAPI CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
 {
     LOGBRUSH logbrush;
 
@@ -214,19 +285,22 @@ HBRUSH WINAPI CreateDIBPatternBrush(
 /***********************************************************************
  *           CreateDIBPatternBrushPt    (GDI32.@)
  *
- *	Create a logical brush which has the pattern specified by the DIB
+ * Create a logical brush with a pattern from a DIB.
+ *
+ * PARAMS
+ *  data     [I] Pointer to a BITMAPINFO structure and image data  for the pattern
+ *  coloruse [I] Specifies color format, if provided
  *
  * RETURNS
+ *  A handle to the created brush, or a NULL handle if the brush cannot
+ *  be created.
  *
- *	Handle to a logical brush on success, NULL on failure.
- *
- * BUGS
- *
+ * NOTES
+ * - This function uses CreateBrushIndirect() to create the brush.
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
  */
-HBRUSH WINAPI CreateDIBPatternBrushPt(
-		const void* data, /* [in] Pointer to a BITMAPINFO structure followed by more data */
-		UINT coloruse 	  /* [in] Specifies color format, if provided */
-)
+HBRUSH WINAPI CreateDIBPatternBrushPt( const void* data, UINT coloruse )
 {
     BITMAPINFO *info=(BITMAPINFO*)data;
     LOGBRUSH logbrush;
@@ -247,6 +321,20 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
 
 /***********************************************************************
  *           CreateSolidBrush    (GDI32.@)
+ *
+ * Create a logical brush consisting of a single colour.
+ *
+ * PARAMS
+ *  color [I] Colour to make the solid brush
+ *
+ * RETURNS
+ *  A handle to the newly created brush, or a NULL handle if the brush cannot
+ *  be created.
+ *
+ * NOTES
+ * - This function uses CreateBrushIndirect() to create the brush.
+ * - The brush returned should be freed by the caller using DeleteObject()
+ *   when it is no longer required.
  */
 HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
@@ -264,6 +352,17 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 
 /***********************************************************************
  *           SetBrushOrgEx    (GDI32.@)
+ *
+ * Set the brush origin for a device context.
+ *
+ * PARAMS
+ *  hdc    [I] Device context to set the brush origin for 
+ *  x      [I] New x origin
+ *  y      [I] Ney y origin
+ *  oldorg [O] If non NULL, destination for previously set brush origin.
+ *
+ * RETURNS
+ *  Success: TRUE. The origin is set to (x,y), and oldorg is updated if given.
  */
 BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
@@ -283,7 +382,12 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 
 /***********************************************************************
  *           FixBrushOrgEx    (GDI32.@)
- * SDK says discontinued, but in Win95 GDI32 this is the same as SetBrushOrgEx
+ *
+ * See SetBrushOrgEx.
+ *
+ * NOTES
+ *  This function is no longer documented by MSDN, but in Win95 GDI32 it
+ *  is the same as SetBrushOrgEx().
  */
 BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
@@ -370,12 +474,19 @@ static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer 
 /***********************************************************************
  *           SetSolidBrush   (GDI.604)
  *
- *  If hBrush is a solid brush, change its color to newColor.
+ * Change the color of a solid brush.
  *
- *  RETURNS
- *           TRUE on success, FALSE on failure.
+ * PARAMS
+ *  hBrush   [I] Brush to change the color of
+ *  newColor [I] New color for hBrush
  *
- *  FIXME: untested, not sure if correct.
+ * RETURNS
+ *  Success: TRUE. The color of hBrush is set to newColor.
+ *  Failure: FALSE.
+ *
+ * FIXME
+ *  This function is undocumented and untested. The implementation may
+ *  not be correct.
  */
 BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 {
