@@ -25,9 +25,10 @@ static int	COMDLG32_Attach = 0;
 HINSTANCE	COMCTL32_hInstance = 0;
 HINSTANCE	SHELL32_hInstance = 0;
 HINSTANCE       SHLWAPI_hInstance = 0;
+HINSTANCE	SHFOLDER_hInstance = 0;
 
 /* IMAGELIST */
-BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
+BOOL (WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 
 /* ITEMIDLIST */
 LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILClone) (LPCITEMIDLIST);
@@ -46,7 +47,7 @@ DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 HRESULT (WINAPI *COMDLG32_SHGetDataFromIDListA)(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len);
 HRESULT (WINAPI *COMDLG32_StrRetToBufA)(LPSTRRET,LPITEMIDLIST,LPSTR,DWORD);
 HRESULT (WINAPI *COMDLG32_StrRetToBufW)(LPSTRRET,LPITEMIDLIST,LPWSTR,DWORD);
-BOOL (WINAPI *COMDLG32_SHGetSpecialFolderPathA)(HWND hwndOwner,LPSTR szPath,DWORD csidl,BOOL bCreate);
+BOOL (WINAPI *COMDLG32_SHGetFolderPathA)(HWND,int,HANDLE,DWORD,LPSTR);
 
 /* PATH */
 BOOL (WINAPI *COMDLG32_PathIsRootA)(LPCSTR x);
@@ -71,6 +72,14 @@ BOOL (WINAPI *COMDLG32_PathAddExtensionA)(LPSTR  pszPath,LPCSTR pszExtension);
  *	FALSE if sibling could not be loaded or instantiated twice, TRUE
  *	otherwise.
  */
+static char * GPA_string = "Failed to get entry point %s for hinst = 0x%08x\n";
+#define GPA(dest, hinst, name) \
+	if(!(dest = (void*)GetProcAddress(hinst,name)))\
+	{ \
+	  ERR(GPA_string, debugres_a(name), hinst); \
+	  return FALSE; \
+	}
+
 BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
 	TRACE("(%08x, %08lx, %p)\n", hInstance, Reason, Reserved);
@@ -115,28 +124,32 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		}
 
 		/* IMAGELIST */
-		COMDLG32_ImageList_Draw=(void*)GetProcAddress(COMCTL32_hInstance,"ImageList_Draw");
+		GPA(COMDLG32_ImageList_Draw, COMCTL32_hInstance,"ImageList_Draw");
 		
-		/* ITEMISLIST */
-		
-		COMDLG32_PIDL_ILIsEqual =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)21L);
-		COMDLG32_PIDL_ILCombine =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)25L);
-		COMDLG32_PIDL_ILGetNext =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)153L);
-		COMDLG32_PIDL_ILClone =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)18L);
-		COMDLG32_PIDL_ILRemoveLastID =(void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)17L);
+		/* ITEMIDLIST */
+		GPA(COMDLG32_PIDL_ILIsEqual, SHELL32_hInstance, (LPCSTR)21L);
+		GPA(COMDLG32_PIDL_ILCombine, SHELL32_hInstance, (LPCSTR)25L);
+		GPA(COMDLG32_PIDL_ILGetNext, SHELL32_hInstance, (LPCSTR)153L);
+		GPA(COMDLG32_PIDL_ILClone, SHELL32_hInstance, (LPCSTR)18L);
+		GPA(COMDLG32_PIDL_ILRemoveLastID, SHELL32_hInstance, (LPCSTR)17L);
 		
 		/* SHELL */
 		
-		COMDLG32_SHAlloc = (void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)196L);
-		COMDLG32_SHFree = (void*)GetProcAddress(SHELL32_hInstance, (LPCSTR)195L);
-		COMDLG32_SHGetSpecialFolderLocation = (void*)GetProcAddress(SHELL32_hInstance,"SHGetSpecialFolderLocation");
-		COMDLG32_SHGetPathFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetPathFromIDListA");
-		COMDLG32_SHGetDesktopFolder = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDesktopFolder");
-		COMDLG32_SHGetFileInfoA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFileInfoA");
-	        COMDLG32_SHGetDataFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDataFromIDListA");
+		GPA(COMDLG32_SHAlloc, SHELL32_hInstance, (LPCSTR)196L);
+		GPA(COMDLG32_SHFree, SHELL32_hInstance, (LPCSTR)195L);
+		GPA(COMDLG32_SHGetSpecialFolderLocation, SHELL32_hInstance,"SHGetSpecialFolderLocation");
+		GPA(COMDLG32_SHGetPathFromIDListA, SHELL32_hInstance,"SHGetPathFromIDListA");
+		GPA(COMDLG32_SHGetDesktopFolder, SHELL32_hInstance,"SHGetDesktopFolder");
+		GPA(COMDLG32_SHGetFileInfoA, SHELL32_hInstance,"SHGetFileInfoA");
+		GPA(COMDLG32_SHGetDataFromIDListA, SHELL32_hInstance,"SHGetDataFromIDListA");
 
-		/* FIXME: we cant import SHGetSpecialFolderPathA from all versions of shell32 */
-		COMDLG32_SHGetSpecialFolderPathA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetSpecialFolderPathA");
+		/* for the first versions of shell32 SHGetFolderPathA is in SHFOLDER.DLL */
+		COMDLG32_SHGetFolderPathA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFolderPathA");
+		if (!COMDLG32_SHGetFolderPathA)
+		{
+		  SHFOLDER_hInstance = LoadLibraryA("SHFOLDER.DLL");
+		  GPA(COMDLG32_SHGetFolderPathA, SHFOLDER_hInstance,"SHGetFolderPathA");
+		}
 
 		/* ### WARINIG ### 
 		We can't do a GetProcAddress to link to  StrRetToBuf[A|W] sine not all 
@@ -146,18 +159,18 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		so it won't break the use of any combination of native and buildin dll's (jsch) */
 
 		/* PATH */
-		COMDLG32_PathMatchSpecW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathMatchSpecW");
-		COMDLG32_PathIsRootA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRootA");
-		COMDLG32_PathRemoveFileSpecA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathRemoveFileSpecA");
-		COMDLG32_PathFindFileNameA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindFileNameA");
-		COMDLG32_PathAddBackslashA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddBackslashA");
-		COMDLG32_PathCanonicalizeA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathCanonicalizeA");
-		COMDLG32_PathGetDriveNumberA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathGetDriveNumberA");
-		COMDLG32_PathIsRelativeA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRelativeA");
-		COMDLG32_PathFindNextComponentA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindNextComponentA");
-		COMDLG32_PathAddBackslashW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddBackslashW");
-		COMDLG32_PathFindExtensionA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindExtensionA");
-	        COMDLG32_PathAddExtensionA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddExtensionA");
+		GPA(COMDLG32_PathMatchSpecW, SHLWAPI_hInstance,"PathMatchSpecW");
+		GPA(COMDLG32_PathIsRootA, SHLWAPI_hInstance,"PathIsRootA");
+		GPA(COMDLG32_PathRemoveFileSpecA, SHLWAPI_hInstance,"PathRemoveFileSpecA");
+		GPA(COMDLG32_PathFindFileNameA, SHLWAPI_hInstance,"PathFindFileNameA");
+		GPA(COMDLG32_PathAddBackslashA, SHLWAPI_hInstance,"PathAddBackslashA");
+		GPA(COMDLG32_PathCanonicalizeA, SHLWAPI_hInstance,"PathCanonicalizeA");
+		GPA(COMDLG32_PathGetDriveNumberA, SHLWAPI_hInstance,"PathGetDriveNumberA");
+		GPA(COMDLG32_PathIsRelativeA, SHLWAPI_hInstance,"PathIsRelativeA");
+		GPA(COMDLG32_PathFindNextComponentA, SHLWAPI_hInstance,"PathFindNextComponentA");
+		GPA(COMDLG32_PathAddBackslashW, SHLWAPI_hInstance,"PathAddBackslashW");
+		GPA(COMDLG32_PathFindExtensionA, SHLWAPI_hInstance,"PathFindExtensionA");
+		GPA(COMDLG32_PathAddExtensionA, SHLWAPI_hInstance,"PathAddExtensionA");
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -169,13 +182,15 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 			COMDLG32_hInstance = 0;
 			if(COMDLG32_hInstance16)
 				FreeLibrary16(COMDLG32_hInstance16);
+			if(SHFOLDER_hInstance)
+				FreeLibrary(SHFOLDER_hInstance);
 
 		}
 		break;
 	}
 	return TRUE;
 }
-
+#undef GPA
 
 /***********************************************************************
  *	COMDLG32_AllocMem 			(internal)

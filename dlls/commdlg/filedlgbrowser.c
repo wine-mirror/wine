@@ -108,8 +108,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     sb->lpVtbl = &IShellBrowserImpl_Vtbl;
     sb->lpVtbl2 = &IShellBrowserImpl_ICommDlgBrowser_Vtbl;
 
-    COMDLG32_SHGetSpecialFolderLocation(hwndOwner,
-                               CSIDL_DESKTOP,
+    COMDLG32_SHGetSpecialFolderLocation(hwndOwner, CSIDL_DESKTOP,
                                &fodInfos->ShellInfos.pidlAbsCurrent);
 
     TRACE("%p\n", sb);
@@ -257,6 +256,9 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     IShellView *psvTmp;
     FileOpenDlgInfos *fodInfos;
     LPITEMIDLIST pidlTmp;
+    HWND hwndView;
+    HWND hDlgWnd;
+    BOOL bViewHasFocus;
 
     ICOM_THIS(IShellBrowserImpl, iface);
 
@@ -269,24 +271,19 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     {
         
         /* SBSP_RELATIVE  A relative pidl (relative from the current folder) */
-        hRes = IShellFolder_BindToObject(fodInfos->Shell.FOIShellFolder,
-                                     pidl,
-                                     NULL,
-                                     &IID_IShellFolder,
-                                     (LPVOID *)&psfTmp);
-        if(FAILED(hRes))
+        if(FAILED(hRes = IShellFolder_BindToObject(fodInfos->Shell.FOIShellFolder,
+             pidl, NULL, &IID_IShellFolder, (LPVOID *)&psfTmp)))
         {
-            return hRes;
+            ERR("bind to object failed\n");
+	    return hRes;
         }
         /* create an absolute pidl */
         pidlTmp = COMDLG32_PIDL_ILCombine(fodInfos->ShellInfos.pidlAbsCurrent,
                                                         (LPITEMIDLIST)pidl);
-        
     }
     else if(wFlags & SBSP_PARENT)
     {
         /* Browse the parent folder (ignores the pidl) */
-        
         pidlTmp = GetParentPidl(fodInfos->ShellInfos.pidlAbsCurrent);
         psfTmp = GetShellFolderFromPidl(pidlTmp);
 
@@ -298,11 +295,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
     
-
-    
-    /* Retrieve the IShellFolder interface of the pidl specified folder */
-    if(!psfTmp)
-        return E_FAIL;
+    if(!psfTmp) return E_FAIL;
 
     /* If the pidl to browse to is equal to the actual pidl ... 
        do nothing and pretend you did it*/
@@ -320,82 +313,55 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
       fodInfos->Shell.FOIDataObject = NULL;
     }
 
-    /* Release the current fodInfos->Shell.FOIShellFolder and update its value */
+    /* Create the associated view */
+    if(FAILED(hRes = IShellFolder_CreateViewObject(psfTmp, fodInfos->ShellInfos.hwndOwner,
+           &IID_IShellView, (LPVOID *)&psvTmp))) return hRes;
+
+    /* Check if listview has focus */
+    bViewHasFocus = IsChild(fodInfos->ShellInfos.hwndView,GetFocus());
+
+    /* Get the foldersettings from the old view */
+    if(fodInfos->Shell.FOIShellView)
+      IShellView_GetCurrentInfo(fodInfos->Shell.FOIShellView, &fodInfos->ShellInfos.folderSettings);
+
+    /* Release the old fodInfos->Shell.FOIShellView and update its value.
+    We have to update this early since ShellView_CreateViewWindow of native
+    shell32 calls OnStateChange and needs the correct view here.*/
+    if(fodInfos->Shell.FOIShellView)
+    {
+      IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
+      IShellView_Release(fodInfos->Shell.FOIShellView);
+    }
+    fodInfos->Shell.FOIShellView = psvTmp;
+
+    /* Release old FOIShellFolder and update its value */
     if (fodInfos->Shell.FOIShellFolder)
       IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
     fodInfos->Shell.FOIShellFolder = psfTmp;
 
-    /* Create the associated view */
-    if(SUCCEEDED(hRes = IShellFolder_CreateViewObject(psfTmp,
-                                                      fodInfos->ShellInfos.hwndOwner,
-                                                      &IID_IShellView,
-                                                      (LPVOID *)&psvTmp)))
-    {
-        HWND hwndView;
-        HWND hDlgWnd;
-	BOOL bViewHasFocus;
+    /* Release old pidlAbsCurrent and update its value */
+    COMDLG32_SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
+    fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
 
-	/* Check if listview has focus */
-	bViewHasFocus = IsChild(fodInfos->ShellInfos.hwndView,GetFocus());
+    /* Create the window */
+    TRACE("create view window\n");
+    if(FAILED(hRes = IShellView_CreateViewWindow(psvTmp, NULL,
+         &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
+         &fodInfos->ShellInfos.rectView, &hwndView))) return hRes;
 
-        /* Get the foldersettings from the old view */
-        if(fodInfos->Shell.FOIShellView)
-        { 
-          IShellView_GetCurrentInfo(fodInfos->Shell.FOIShellView, 
-                                  &fodInfos->ShellInfos.folderSettings);
-        }
+    fodInfos->ShellInfos.hwndView = hwndView;
 
-        /* Create the window */
-        if(SUCCEEDED(hRes = IShellView_CreateViewWindow(psvTmp,
-                                          NULL,
-                                          &fodInfos->ShellInfos.folderSettings,
-                                          fodInfos->Shell.FOIShellBrowser,
-                                          &fodInfos->ShellInfos.rectView,
-                                          &hwndView)))
-        {
-            /* Fit the created view in the appropriate RECT */
-            MoveWindow(hwndView,
-                       fodInfos->ShellInfos.rectView.left,
-                       fodInfos->ShellInfos.rectView.top,
-                       fodInfos->ShellInfos.rectView.right-fodInfos->ShellInfos.rectView.left,
-                       fodInfos->ShellInfos.rectView.bottom-fodInfos->ShellInfos.rectView.top,
-                       FALSE);
-
-            /* Select the new folder in the Look In combo box of the Open file dialog */
-            
-            FILEDLG95_LOOKIN_SelectItem(fodInfos->DlgInfos.hwndLookInCB,pidlTmp);
-
-            /* Release old pidlAbsCurrent memory and update its value */
-            COMDLG32_SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
-            fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
-
-            /* Release the current fodInfos->Shell.FOIShellView and update its value */
-            if(fodInfos->Shell.FOIShellView)
-            {
-                IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
-                IShellView_Release(fodInfos->Shell.FOIShellView);
-            }
-#if 0
-            ShowWindow(fodInfos->ShellInfos.hwndView,SW_HIDE);
-#endif
-            fodInfos->Shell.FOIShellView = psvTmp;
-
-            fodInfos->ShellInfos.hwndView = hwndView;
-            
-            /* changes the tab order of the ListView to reflect the window's File Dialog */
-            hDlgWnd = GetDlgItem(GetParent(hwndView), IDC_LOOKIN); 
-            SetWindowPos(hwndView, hDlgWnd, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
-
-            /* Since we destroyed the old view if it had focus set focus 
-               to the newly created view */
-	    if (bViewHasFocus)
-                SetFocus(fodInfos->ShellInfos.hwndView);
-            
-            return NOERROR;
-        }
-    }
-
+    /* Select the new folder in the Look In combo box of the Open file dialog */
     FILEDLG95_LOOKIN_SelectItem(fodInfos->DlgInfos.hwndLookInCB,fodInfos->ShellInfos.pidlAbsCurrent);
+
+    /* changes the tab order of the ListView to reflect the window's File Dialog */
+    hDlgWnd = GetDlgItem(GetParent(hwndView), IDC_LOOKIN); 
+    SetWindowPos(hwndView, hDlgWnd, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
+
+    /* Since we destroyed the old view if it had focus set focus to the newly created view */
+    if (bViewHasFocus)
+      SetFocus(fodInfos->ShellInfos.hwndView);
+
     return hRes; 
 }
 
@@ -693,7 +659,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
 
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowserImpl,iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p shv=%p)\n", This, ppshv);
 
     switch (uChange)
     {
@@ -809,8 +775,8 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowserImpl,iface);
 
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
-    TRACE("(%p)\n", This);
-
+    TRACE("(%p do=%p view=%p)\n", This, fodInfos->Shell.FOIDataObject, fodInfos->Shell.FOIShellView);
+    
     /* release old selections */
     if (fodInfos->Shell.FOIDataObject)
       IDataObject_Release(fodInfos->Shell.FOIDataObject);
@@ -822,12 +788,6 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
 					  
     FILEDLG95_FILENAME_FillFromSelection(This->hwndOwner);
 
-    if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
-      SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
-    else
-      SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Open");
-
-/*      fodInfos->DlgInfos.dwDlgProp |= FODPROP_USEVIEW; */
     SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
     return S_OK;
 }

@@ -1036,7 +1036,7 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
   /* change Open to Save FIXME: use resources */
   if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
-      SetDlgItemTextA(hwnd,IDOK,"Save");
+      SetDlgItemTextA(hwnd,IDOK,"&Save");
       SetDlgItemTextA(hwnd,IDC_LOOKINSTATIC,"Save &in");
   }
   return 0;
@@ -1178,8 +1178,11 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   if (!COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathAndFile))
   {
     /* we are in a special folder, default to desktop */
-    COMDLG32_SHGetSpecialFolderPathA(hwnd, lpstrPathAndFile, CSIDL_DESKTOPDIRECTORY, FALSE);
-    FIXME("special folder not handled, use desktop\n");
+    if(FAILED(COMDLG32_SHGetFolderPathA(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0, lpstrPathAndFile)))
+    {
+      /* last fallback */
+      GetCurrentDirectoryA(MAX_PATH, lpstrPathAndFile);
+    }
   }
   COMDLG32_PathAddBackslashA(lpstrPathAndFile);
 
