@@ -809,38 +809,34 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
     switch (cap)
     {
     case PHYSICALWIDTH:
-        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.x;
+        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
+        break;
     case PHYSICALHEIGHT:
-	if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.y;
+        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
+        break;
     case PHYSICALOFFSETX:
-	if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.x;
+        if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
+        break;
     case PHYSICALOFFSETY:
-	if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.y;
+        if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
+        break;
     case SCALINGFACTORX:
-	if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.x;
+        if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0) ret = pt.x;
+        break;
     case SCALINGFACTORY:
-	if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0)
-	    return pt.y;
+        if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
+        break;
+    default:
+        if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD))) break;
+
+        if (((cap>=46) && (cap<88)) || ((cap>=92) && (cap<104)))
+            FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
+                  hdc,cap );
+        ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
+        break;
     }
 
-    if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD)))
-    {
-      GDI_ReleaseObj( hdc );
-      return 0;
-    }
-
-    if (((cap>=46) && (cap<88)) || ((cap>=92) && (cap<104)))
-	FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
-		hdc,cap
-	);
-    TRACE("(%04x,%d): returning %d\n",
-	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
-    ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
+    TRACE("(%04x,%d): returning %d\n", hdc, cap, ret );
     GDI_ReleaseObj( hdc );
     return ret;
 }
