@@ -326,8 +326,6 @@ static void process_attach(void)
 
     /* Open display */
 
-    if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
-
     if (!(display = XOpenDisplay( NULL )))
     {
         MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
