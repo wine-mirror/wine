@@ -44,6 +44,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmio);
 
+LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM) /* = NULL */;
+
 /**************************************************************************
  *               	mmioDosIOProc           		[internal]
  */
@@ -71,9 +73,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	    }
 
 	    /* if filename NULL, assume open file handle in adwInfo[0] */
-	    if (!szFileName) {
-                lpmmioinfo->adwInfo[0] = DosFileHandleToWin32Handle(lpmmioinfo->adwInfo[0]);
-	    } else {
+	    if (szFileName) {
                 OFSTRUCT    ofs;
                 lpmmioinfo->adwInfo[0] = (DWORD)OpenFile(szFileName, &ofs, lpmmioinfo->dwFlags & 0xFFFF);
             }
@@ -352,9 +352,9 @@ static LRESULT	send_message(struct IOProcList* ioProc, LPMMIOINFO mmioinfo,
 
     switch (ioProc->type) {
     case MMIO_PROC_16:
-        if (WINMM_IData && WINMM_IData->pFnMmioCallback16)
-            result = WINMM_IData->pFnMmioCallback16((SEGPTR)ioProc->pIOProc,
-                                                    mmioinfo, wMsg, lp1, lp2);
+        if (pFnMmioCallback16)
+            result = pFnMmioCallback16((SEGPTR)ioProc->pIOProc,
+                                       mmioinfo, wMsg, lp1, lp2);
         break;
     case MMIO_PROC_32A:
     case MMIO_PROC_32W:
@@ -578,9 +578,6 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     } else {
 	wm->info.pchBuffer = NULL;
     }
-
-    if (wm->ioProc->type == MMIO_PROC_16)
-        wm->info.dwReserved1 = MapLS(wm->info.pchBuffer);
 
     wm->info.cchBuffer = cchBuffer;
     wm->info.pchNext = wm->info.pchBuffer;

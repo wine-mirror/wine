@@ -217,7 +217,6 @@ typedef struct tagWINE_MM_IDATA {
     /* LPWINE_MIXER		lpMixer; */
     /* mmio part */
     LPWINE_MMIO			lpMMIO;
-    LRESULT (CALLBACK*          pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
     /* playsound and sndPlaySound */
     WINE_PLAYSOUND*             lpPlaySound;
     HANDLE                      psLastEvent;
@@ -340,6 +339,11 @@ BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen);
 
 /* Global variables */
 extern LPWINE_MM_IDATA		WINMM_IData;
+
+/* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
+ * NULL otherwise
+ */
+extern LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
 
 /* HANDLE16 -> HANDLE conversions */
 #define HDRVR_32(h16)		((HDRVR)(ULONG_PTR)(h16))

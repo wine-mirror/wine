@@ -49,9 +49,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 extern LONG CALLBACK MMSYSTEM_CallTo16_long_lwll (LPMMIOPROC16,LONG,WORD,LONG,LONG);
 /* ### stop build ### */
 
-static LRESULT CALLBACK mmioCallback16(SEGPTR cb16,
-                                       LPMMIOINFO lpmmioinfo, UINT uMessage,
-                                       LPARAM lParam1, LPARAM lParam2);
+static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -85,10 +83,12 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	}
 	WINMM_IData->hWinMM16Instance = hinstDLL;
 	WINMM_IData->h16Module32 = hndl;
-        WINMM_IData->pFnMmioCallback16 = mmioCallback16;
+        /* hook in our 16 bit function pointers */
+        pFnMmioCallback16 = MMIO_Callback16;
 	break;
     case DLL_PROCESS_DETACH:
 	FreeLibrary(WINMM_IData->h16Module32);
+        pFnMmioCallback16 = NULL;
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -2511,13 +2511,12 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 }
 
 /******************************************************************
- *		mmioCallback16
+ *		MMIO_Callback16
  *
  *
  */
-static LRESULT CALLBACK mmioCallback16(SEGPTR cb16,
-                                       LPMMIOINFO lpmmioinfo, UINT uMessage,
-                                       LPARAM lParam1, LPARAM lParam2)
+static LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage,
+                               LPARAM lParam1, LPARAM lParam2)
 {
     LRESULT 		result;
     MMIOINFO16          mmioInfo16;
@@ -2552,8 +2551,6 @@ static LRESULT CALLBACK mmioCallback16(SEGPTR cb16,
 /******************************************************************
  *             MMIO_ResetSegmentedData
  *
- * 
- * 
  */
 static LRESULT     MMIO_SetSegmentedBuffer(HMMIO hmmio, SEGPTR ptr)
 {
@@ -2583,7 +2580,10 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 	mmioinfo.pIOProc     = (LPMMIOPROC)lpmmioinfo16->pIOProc;
 	mmioinfo.cchBuffer   = lpmmioinfo16->cchBuffer;
 	mmioinfo.pchBuffer   = MapSL((DWORD)lpmmioinfo16->pchBuffer);
-	mmioinfo.adwInfo[0]  = lpmmioinfo16->adwInfo[0];
+        mmioinfo.adwInfo[0]  = lpmmioinfo16->adwInfo[0];
+        /* if we don't have a file name, it's likely a passed open file descriptor */
+        if (!szFileName) 
+            mmioinfo.adwInfo[0] = DosFileHandleToWin32Handle(mmioinfo.adwInfo[0]);
 	mmioinfo.adwInfo[1]  = lpmmioinfo16->adwInfo[1];
 	mmioinfo.adwInfo[2]  = lpmmioinfo16->adwInfo[2];
 	mmioinfo.adwInfo[3]  = lpmmioinfo16->adwInfo[3];
