@@ -97,10 +97,10 @@ XPM_LIB =
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-AllTarget(wine.sym)
 
 #ifndef WINELIB
 NormalProgramTarget(wine,$(OBJS),$(DEPXLIB),$(XPM_LIB) $(XLIB),$(SYSLIBS))
+AllTarget(wine.sym)
 #else
 NormalLibraryTarget(wine,$(OBJS))
 #endif

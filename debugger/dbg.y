@@ -179,7 +179,7 @@ wine_debug(int signal, int * regs)
 
 	/* This is intended to read the entry points from the Windows image, and
 	   insert them in the hash table.  It does not work yet, so it is commented out. */
-	if(!loaded_symbols){
+	if(dbg_mode == 32 && !loaded_symbols){
 		loaded_symbols++;
 		read_symboltable("wine.sym");
 #if 0

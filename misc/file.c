@@ -113,6 +113,9 @@ INT _lclose (INT hFile)
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
+#ifdef WINELIB
+    dprintf_file(stdnimp, "OpenFile: not implemented\n");
+#else
 #ifndef PROCEMU
     struct sigcontext_struct  ccontext;
                               /* To make macros like EAX happy */
@@ -256,6 +259,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
       }
 
     return AX;
+#endif /*WINELIB*/
 }
 
 /**************************************************************************

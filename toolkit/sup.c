@@ -7,7 +7,7 @@
 
 /* HANDLE hSysRes = 1; */
 
-LONG CallWindowProc (FARPROC func, HWND hwnd, WORD message,
+LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam)
 {
     (*func)(hwnd, message, wParam, lParam);

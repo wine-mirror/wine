@@ -20,7 +20,7 @@ int
 KERNEL_LockSegment(int segment)
 {
     if (segment == -1)
-	segment = *(Stack16Frame + 6);
+	segment = pStack16Frame->ds;
 
     if (debugging_relay)
 	fprintf(stddeb,"LockSegment: segment %x\n", segment);
@@ -35,7 +35,7 @@ int
 KERNEL_UnlockSegment(int segment)
 {
     if (segment == -1)
-	segment = *(Stack16Frame + 6);
+	segment = pStack16Frame->ds;
 
     if (debugging_relay)
     	fprintf(stddeb,"UnlockSegment: segment %x\n", segment);

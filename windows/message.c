@@ -19,7 +19,6 @@
 #include "wineopts.h"
 #include "sysmetrics.h"
 #include "hook.h"
-#include "win.h"
 #include "event.h"
 #include "winpos.h"
 #include "stddebug.h"

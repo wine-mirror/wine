@@ -508,7 +508,7 @@ GlobalCompact(unsigned int desired)
 	 */
 	if (g->sequence == -1)
 	{
-	    free_map[g->handle >> 3] = 1;
+	    free_map[g->handle >> __AHSHIFT] = 1;
 	    if (g->handle > max_selector_used)
 		max_selector_used = g->handle;
 	}
@@ -519,7 +519,7 @@ GlobalCompact(unsigned int desired)
 	else if (g->handle == 0)
 	{
 	    selector = (unsigned int) g->addr >> 16;
-	    free_map[selector >> 3] = 0;
+	    free_map[selector >> __AHSHIFT] = 0;
 	    if (selector > max_selector_used)
 		max_selector_used = selector;
 	}
@@ -528,7 +528,7 @@ GlobalCompact(unsigned int desired)
     /*
      * All segments past the biggest selector used are free.
      */
-    for (i = (max_selector_used >> 3) + 1; i < 512; i++)
+    for (i = (max_selector_used >> __AHSHIFT) + 1; i < 512; i++)
 	free_map[i] = 1;
 
     /*
@@ -792,7 +792,7 @@ DWORD GetFreeSpace(UINT wFlags)
 	 */
 	if (g->sequence == -1)
 	{
-	    free_map[g->handle >> 3] = 1;
+	    free_map[g->handle >> __AHSHIFT] = 1;
 	    if (g->handle > max_selector_used)
 		max_selector_used = g->handle;
 	}
@@ -803,7 +803,7 @@ DWORD GetFreeSpace(UINT wFlags)
 	else if (g->handle == 0)
 	{
 	    selector = (unsigned int) g->addr >> 16;
-	    free_map[selector >> 3] = 0;
+	    free_map[selector >> __AHSHIFT] = 0;
 	    if (selector > max_selector_used)
 		max_selector_used = selector;
 	}
@@ -812,7 +812,7 @@ DWORD GetFreeSpace(UINT wFlags)
     /*
      * All segments past the biggest selector used are free.
      */
-    for (i = (max_selector_used >> 3) + 1; i < 512; i++)
+    for (i = (max_selector_used >> __AHSHIFT) + 1; i < 512; i++)
 	free_map[i] = 1;
 
     /*

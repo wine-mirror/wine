@@ -17,7 +17,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "library.h"
 #include "windows.h"
 #include "wineopts.h"
-#include "dos_fs.h"
 #include "task.h"
 #include "prototypes.h"
 #include "options.h"

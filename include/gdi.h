@@ -27,7 +27,9 @@
 #define METAFILE_MAGIC        0x4f50
 #define METAFILE_DC_MAGIC     0x4f51
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
 typedef struct tagGDIOBJHDR
 {
@@ -72,7 +74,9 @@ typedef struct
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 
   /* Device independent DC information */

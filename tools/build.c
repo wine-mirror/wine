@@ -706,6 +706,10 @@ int main(int argc, char **argv)
     FILE *fp;
     char filename[80];
     int i, ci, add_count;
+    int prev_index;      /* Index to previous #define (-1 if none) */
+
+    /* the difference between last #define and the current */
+    int prev_n_args;
     
     if (argc < 2)
     {
@@ -761,11 +765,11 @@ int main(int argc, char **argv)
     fprintf (fp, "#define __ASSEMBLY__\n");
     fprintf (fp, "#include <asm/segment.h>\n");
 #endif
+#if 0
     fprintf(fp, "\t.globl " PREFIX "%s_Dispatch\n", UpperDLLName);
     fprintf(fp, PREFIX "%s_Dispatch:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-    fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
 #ifdef __ELF__
     fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
 #else
@@ -776,11 +780,11 @@ int main(int argc, char **argv)
     fprintf(fp, PREFIX "%s_Dispatch_16:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-    fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
 #ifdef __ELF__
     fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32_16\n\n");
 #else
     fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
+#endif
 #endif
 
     odp = OrdinalDefinitions;
@@ -791,9 +795,13 @@ int main(int argc, char **argv)
 	if (!odp->valid)
 	{
 	    fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
-	    fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+	    fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
 	    fprintf(fp, "\tpushw\t$0\n");
-	    fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
+#ifdef __ELF__
+            fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
+#else
+            fprintf(fp, "\tjmp\t_CallTo32\n\n");
+#endif
 	}
 	else
 	{
@@ -847,32 +855,48 @@ int main(int argc, char **argv)
 		fprintf(fp, "\tpushl\t%d(%%ebp)\n",
 			sizeof(struct sigcontext_struct));
 		fprintf(fp, "\tmovl\t%%eax,%%ebp\n");
-		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+                fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
 		fprintf(fp, "\tpushw\t$%d\n", 
 			sizeof(struct sigcontext_struct) + 4);
-		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
+#ifdef __ELF__
+                fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
+#else
+                fprintf(fp, "\tjmp\t_CallTo32\n\n");
+#endif
 		break;
 
 	      case FUNCTYPE_PASCAL:
 		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
-		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+                fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
-		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
-		break;
+#ifdef __ELF__
+                fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
+#else
+                fprintf(fp, "\tjmp\t_CallTo32\n\n");
+#endif
+                break;
 		
 	      case FUNCTYPE_PASCAL_16:
 		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
-		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+                fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
-		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch_16\n\n", UpperDLLName);
+#ifdef __ELF__
+                fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32_16\n\n");
+#else
+                fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
+#endif
 		break;
 		
 	      case FUNCTYPE_C:
 	      default:
 		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
-		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+                fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
 		fprintf(fp, "\tpushw\t$0\n");
-		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
+#ifdef __ELF__
+                fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
+#else
+                fprintf(fp, "\tjmp\t_CallTo32\n\n");
+#endif
 		break;
 	    }
 	}
@@ -907,7 +931,71 @@ int main(int argc, char **argv)
 	    fprintf(fp, "extern int %s();\n", fdp->internal_name);
 	}
     }
+    /******* Michael Veksler 95-2-3 (pointers instead of fixed data) ****/
+    fprintf(fp,"unsigned short  %s_offsets[]={\n" , UpperDLLName);
+    prev_index=-1;  /* Index to previous #define (-1 if none) */
+
+    /* the difference between last #define and the current */
+    prev_n_args= 0;
     
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+	int argnum;
+	fdp = odp->additional_data;
+
+	switch (odp->type)
+	{
+	  case FUNCTYPE_PASCAL:
+	  case FUNCTYPE_PASCAL_16:
+	  case FUNCTYPE_REG:
+	    if (!odp->valid || fdp->n_args_32 <=0 )
+	       continue;
+	    if (prev_index<0) 
+		fprintf(fp,"#\tdefine %s_ref_%d   0\n\t", UpperDLLName, i);
+	    else
+		fprintf(fp,"#\tdefine %s_ref_%d   %s_ref_%d+%d\n\t",
+			UpperDLLName,i, UpperDLLName,prev_index ,prev_n_args);
+	    for (argnum = 0; argnum < fdp->n_args_32; argnum++)
+		 fprintf(fp, "%d, ",
+		         fdp->arg_16_offsets[fdp->arg_indices_32[argnum]-1]);
+	    fprintf(fp,"\n");
+	    
+	    prev_n_args=fdp->n_args_32;
+	    prev_index=i;
+	}
+    }    
+    fprintf(fp,"};\n");
+
+
+    fprintf(fp,"unsigned char  %s_types[]={\n" , UpperDLLName);
+
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++)
+    {
+	int argnum;
+
+	fdp = odp->additional_data;
+
+	switch (odp->type)
+	{
+	  case FUNCTYPE_PASCAL:
+	  case FUNCTYPE_PASCAL_16:
+	  case FUNCTYPE_REG:
+	    if (!odp->valid || fdp->n_args_32 <=0 )
+	       continue;
+	    
+	    fprintf(fp,"/* %s_%d */\n\t", UpperDLLName, i);
+	    
+	    for (argnum = 0; argnum < fdp->n_args_32; argnum++)
+		fprintf(fp, "%d, ", fdp->arg_types_16[argnum]);
+	    fprintf(fp,"\n");
+	}
+    }    
+    fprintf(fp,"};\n");
+
+
+    /**************************************************/
     fprintf(fp, "\nstruct dll_table_entry_s %s_table[%d] =\n", 
 	    UpperDLLName, Limit + 1);
     fprintf(fp, "{\n");
@@ -927,23 +1015,15 @@ int main(int argc, char **argv)
 	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
 	    fprintf(fp, "\042%s\042, ", odp->export_name);
 	    fprintf(fp, "%s, DLL_HANDLERTYPE_PASCAL, ", fdp->internal_name);
-#ifdef WINESTAT
-	    fprintf(fp, "0, ");
-#endif	    
 	    fprintf(fp, "%d, ", fdp->n_args_32);
 	    if (fdp->n_args_32 > 0)
-	    {
-		int argnum;
-		
-		fprintf(fp, "\n      {\n");
-		for (argnum = 0; argnum < fdp->n_args_32; argnum++)
-		{
-		    fprintf(fp, "        { %d, %d },\n",
-			    fdp->arg_16_offsets[fdp->arg_indices_32[argnum]-1],
-			    fdp->arg_types_16[argnum]);
-		}
-		fprintf(fp, "      }\n    ");
-	    }
+	       fprintf(fp,"%s_ref_%d", UpperDLLName, i);
+	    else
+	       fprintf(fp,"      0    ");
+	       
+#ifdef WINESTAT
+	    fprintf(fp, ",0 ");
+#endif	    
 	    fprintf(fp, "}, \n");
 	    break;
 		

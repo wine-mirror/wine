@@ -14,8 +14,8 @@ static char Copyright[] = "Copyright Martin von Loewis, 1994";
 #include <string.h>
 #include <windows.h>
 #include <neexe.h>
-#include "rc.h"
-#include "rc.tab.h"
+#include "parser.h"
+#include "y.tab.h"
 
 char usage[]="winerc -dvc -p prefix -o outfile < infile \n";
 

@@ -5,10 +5,9 @@
 #define REGFUNC_H
 
 #include "wine.h"
+#include "stackframe.h"
 
-extern unsigned short *Stack16Frame;
-
-#define _CONTEXT ((struct sigcontext_struct *) &Stack16Frame[12])
+#define _CONTEXT ((struct sigcontext_struct *) pStack16Frame->args)
 #define _AX	(_CONTEXT->sc_eax)
 #define _BX	(_CONTEXT->sc_ebx)
 #define _CX	(_CONTEXT->sc_ecx)

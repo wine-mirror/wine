@@ -28,7 +28,7 @@
 #include "wine.h"
 #include "windows.h"
 #include "msdos.h"
-/* #include "dos_fs.h" */
+#include "dos_fs.h"
 #include "autoconf.h"
 #include "comm.h"
 #include "stddebug.h"
@@ -183,7 +183,25 @@ void DOS_InitFS(void)
 	DosDrives[25].serialnumber = 0x12345678;
 	DosDrives[25].disabled = 0;
 
-	DOS_SetDefaultDrive(2);
+        /* Get the startup directory and try to map it to a DOS drive
+         * and directory.  (i.e., if we start in /dos/windows/word and
+         * drive C is defined as /dos, the starting wd for C will be
+         * /windows/word)  Also set the default drive to whatever drive
+         * corresponds to the directory we started in.
+         */
+        getcwd(temp, 254);
+        strcat(temp, "/");      /* For DOS_GetDosFileName */
+        strcpy(temp, DOS_GetDosFileName(temp));
+        if(temp[0] != 'Z')
+        {
+            ToUnix(&temp[2]);
+            strcpy(DosDrives[temp[0] - 'A'].cwd, &temp[2]);
+            DOS_SetDefaultDrive(temp[0] - 'A');
+        }
+        else
+        {
+	    DOS_SetDefaultDrive(2);
+        }
 
 	for (x=0; x!=MAX_DOS_DRIVES; x++) {
 		if (DosDrives[x].rootdir != NULL) {
@@ -409,6 +427,11 @@ char *DOS_GetUnixFileName(char *dosfilename)
 	} else
 		drive = CurrentDrive;
 
+        /* Expand the filename to it's full path if it doesn't
+         * start from the root.
+         */
+        DOS_ExpandToFullPath(dosfilename, drive);
+
 	strcpy(temp, DosDrives[drive].rootdir);
 	strcat(temp, DosDrives[drive].cwd);
 	GetUnixDirName(temp + strlen(DosDrives[drive].rootdir), dosfilename);
@@ -417,12 +440,19 @@ char *DOS_GetUnixFileName(char *dosfilename)
 	return(temp);
 }
 
+/* Note: This function works on directories as well as long as
+ * the directory ends in a slash.
+ */
 char *DOS_GetDosFileName(char *unixfilename)
 { 
 	int i;
 	static char temp[256], rootdir[256];
 	/*   /dos/windows/system.ini => c:\windows\system.ini */
 	
+        /* Expand it if it's a relative name.
+         */
+        DOS_ExpandToFullUnixPath(unixfilename);
+
 	for (i = 0 ; i != MAX_DOS_DRIVES; i++) {
 		if (DosDrives[i].rootdir != NULL) {
  			strcpy(rootdir, DosDrives[i].rootdir);
@@ -498,6 +528,53 @@ int DOS_MakeDir(int drive, char *dirname)
     	dprintf_dosfs(stddeb,
 		"DOS_MakeDir: %c:\%s => %s",'A'+drive, dirname, temp);
 	return 1;
+}
+
+/* DOS_ExpandToFullPath takes a dos-style filename and converts it
+ * into a full path based on the current working directory.
+ * (e.g., "foo.bar" => "d:\\moo\\foo.bar")
+ */
+void DOS_ExpandToFullPath(char *filename, int drive)
+{
+        char temp[256];
+
+        dprintf_dosfs(stddeb, "DOS_ExpandToFullPath: Original = %s\n", filename);
+
+        /* If the filename starts with '/' or '\',
+         * don't bother -- we're already at the root.
+         */
+        if(filename[0] == '/' || filename[0] == '\\')
+            return;
+
+        strcpy(temp, DosDrives[drive].cwd);
+        strcat(temp, filename);
+        strcpy(filename, temp);
+
+        dprintf_dosfs(stddeb, "                      Expanded = %s\n", temp); 
+}
+
+/* DOS_ExpandToFullUnixPath takes a unix filename and converts it
+ * into a full path based on the current working directory.  Thus,
+ * it's probably not a good idea to get a relative name, change the
+ * working directory, and then convert it...
+ */
+void DOS_ExpandToFullUnixPath(char *filename)
+{
+        char temp[256];
+
+        if(filename[0] == '/')
+            return;
+
+        getcwd(temp, 255);
+        if(strncmp(filename, "./", 2))
+                strcat(temp, filename + 1);
+        else
+        {
+                strcat(temp, "/");
+                strcat(temp, filename);
+        }
+        dprintf_dosfs(stddeb, "DOS_ExpandToFullUnixPath: %s => %s\n", filename, temp);
+        strcpy(filename, temp);
 }
 
 int DOS_GetSerialNumber(int drive, unsigned long *serialnumber)

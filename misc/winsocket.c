@@ -219,9 +219,9 @@ static void CONVERT_SERVENT(struct WIN_servent *heap, struct servent *serv)
 
 }
 #else
-#define CONVERT_HOSTENT(a,b)	memcpy(&a, &b, sizeof(a))
-#define CONVERT_PROTOENT(a,b)	memcpy(&a, &b, sizeof(a))
-#define CONVERT_SERVENT(a,b)	memcpy(&a, &b, sizeof(a))
+#define CONVERT_HOSTENT(a,b)	memcpy(a, &b, sizeof(a))
+#define CONVERT_PROTOENT(a,b)	memcpy(a, &b, sizeof(a))
+#define CONVERT_SERVENT(a,b)	memcpy(a, &b, sizeof(a))
 #endif
 
 SOCKET WINSOCK_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)

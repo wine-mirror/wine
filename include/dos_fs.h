@@ -29,6 +29,8 @@ extern char *WinIniFileName(void);
 extern struct dosdirent *DOS_opendir(char *dosdirname); 
 extern struct dosdirent *DOS_readdir(struct dosdirent *de);
 extern void DOS_closedir(struct dosdirent *de);
+extern void DOS_ExpandToFullPath(char *filename, int drive);
+extern void DOS_ExpandToFullUnixPath(char *filename);
 
 extern char WindowsPath[256];
 

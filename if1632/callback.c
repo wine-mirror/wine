@@ -11,15 +11,15 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "segmem.h"
 #include <setjmp.h>
+#include "stackframe.h"
 #include "dlls.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "if1632.h"
 
-extern SEGDESC Segments[];
 extern unsigned short IF1632_Saved16_ss;
-extern unsigned long  IF1632_Saved16_ebp;
-extern unsigned long  IF1632_Saved16_esp;
+extern unsigned short IF1632_Saved16_bp;
+extern unsigned short IF1632_Saved16_sp;
 extern unsigned short IF1632_Saved32_ss;
 extern unsigned long  IF1632_Saved32_ebp;
 extern unsigned long  IF1632_Saved32_esp;
@@ -40,34 +40,23 @@ static void
 PushOn16(int size, unsigned int value)
 {
     char *p = (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
-			(IF1632_Saved16_esp & 0xffff));
+			IF1632_Saved16_sp);
     if (size)
     {
 	unsigned long *lp = (unsigned long *) p - 1;
 	
 	*lp = value;
-	IF1632_Saved16_esp -= 4;
+	IF1632_Saved16_sp -= 4;
     }
     else
     {
 	unsigned short *sp = (unsigned short *) p - 1;
 	
 	*sp = value;
-	IF1632_Saved16_esp -= 2;
+	IF1632_Saved16_sp -= 2;
     }
 }
 
-/**********************************************************************
- *					FindDataSegmentForCode
- */
-static unsigned short
-FindDataSegmentForCode(unsigned long csip)
-{
-    unsigned int seg_idx;
-    
-    seg_idx = (unsigned short) (csip >> 19);
-    return Segments[seg_idx].owner;
-}
 
 /**********************************************************************
  *					CallBack16
@@ -90,8 +79,7 @@ CallBack16(void *func, int n_args, ...)
 
     va_end(ap);
 
-    return CallTo16((unsigned int) func, 
-		    FindDataSegmentForCode((unsigned long) func));
+    return CallTo16((unsigned int) func, pStack16Frame->ds );
 }
 
 /**********************************************************************
@@ -201,8 +189,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	return CallTo16((unsigned int) func, 
-			FindDataSegmentForCode((unsigned long) func));   
+	return CallTo16((unsigned int) func, pStack16Frame->ds );
     }
     else
     {
@@ -222,8 +209,7 @@ void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
 	PushOn16( CALLBACK_SIZE_WORD, xPos );
 	PushOn16( CALLBACK_SIZE_WORD, yPos );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	CallTo16((unsigned int) func, 
-		 FindDataSegmentForCode((unsigned long) func));   
+	CallTo16((unsigned int) func, pStack16Frame->ds );
     }
     else
     {
@@ -241,8 +227,7 @@ DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
 	PushOn16( CALLBACK_SIZE_WORD, code );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	return CallTo16((unsigned int) func, 
-			FindDataSegmentForCode((unsigned long) func));   
+	return CallTo16((unsigned int) func, pStack16Frame->ds );
     }
     else
     {
@@ -260,8 +245,7 @@ BOOL CallGrayStringProc(FARPROC func, HDC hdc, LPARAM lParam, INT cch )
 	PushOn16( CALLBACK_SIZE_WORD, hdc );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
 	PushOn16( CALLBACK_SIZE_WORD, cch );
-	return CallTo16((unsigned int) func, 
-			FindDataSegmentForCode((unsigned long) func));   
+	return CallTo16((unsigned int) func, pStack16Frame->ds );
     }
     else
     {
@@ -295,12 +279,12 @@ int Catch (LPCATCHBUF cbuf)
 	WORD retval;
 	jmp_buf *tmp_jmp;
 	char *stack16 =  (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
-		(IF1632_Saved16_esp & 0xffff));
+                                   IF1632_Saved16_sp);
 
 	sb = malloc (sizeof (struct special_buffer));
 	
-	sb -> regs [0] = IF1632_Saved16_esp;
-	sb -> regs [1] = IF1632_Saved16_ebp;
+	sb -> regs [0] = IF1632_Saved16_sp & 0xffff;
+	sb -> regs [1] = IF1632_Saved16_bp & 0xffff;
 	sb -> regs [2] = IF1632_Saved16_ss & 0xffff;
 	sb -> regs [3] = IF1632_Saved32_esp;
 	sb -> regs [4] = IF1632_Saved32_ebp;
@@ -311,14 +295,14 @@ int Catch (LPCATCHBUF cbuf)
 	
 	if ((retval = setjmp (*tmp_jmp)))
 	{
-		IF1632_Saved16_esp = sb -> regs [0];
-		IF1632_Saved16_ebp = sb -> regs [1];
+		IF1632_Saved16_sp = sb -> regs [0] & 0xffff;
+		IF1632_Saved16_bp = sb -> regs [1] & 0xffff;
 		IF1632_Saved16_ss = sb -> regs [2] & 0xffff;
 		IF1632_Saved32_esp = sb -> regs [3];
 		IF1632_Saved32_ebp = sb -> regs [4];
 		IF1632_Saved32_ss = sb -> regs [5] & 0xffff;
 		stack16 = (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
-				(IF1632_Saved16_esp & 0xffff));
+                                    IF1632_Saved16_sp);
 
 		memcpy (stack16, sb -> stack_part, STACK_DEPTH_16);
 		dprintf_catch (stddeb, "Been thrown here: %d, retval = %d\n", 

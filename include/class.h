@@ -11,7 +11,9 @@
 
 #define CLASS_MAGIC   0x4b4e      /* 'NK' */
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
   /* !! Don't change this structure (see GetClassLong()) */
 typedef struct tagCLASS
@@ -25,7 +27,9 @@ typedef struct tagCLASS
     WORD         wExtra[1];     /* Class extra bytes */
 } CLASS;
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 
 HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr );

@@ -1,14 +1,5 @@
 This is intend to be a document to help new developers get started.
-Existing developers should feel free to add there comments.
-
-SUBMITTING YOUR WORK:
-
-Submissions of code for inclussion into Wine should be sent to
-wine-new@amscons.com (Bob Amstadt).  You MUST provide a suitable
-ChangeLog entry for any work that you submit.  I prefer new code
-to be submitted as unified diffs (diff -u) off of the latest release.  
-Releases are every Tuesday evening (approximately 17:00 PST or 
-Wednesday 01:00 GMT).
+Existing developers should feel free to add their comments.
 
 MEMORY AND SEGMENTS:
 

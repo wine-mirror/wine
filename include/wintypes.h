@@ -70,8 +70,6 @@ DECLARE_HANDLE(HDROP);
 #define WINE_PACKED __attribute__ ((packed))
 #endif
 
-#pragma pack(1)
-
 #define LOBYTE(w)           ((BYTE)(w))
 #define HIBYTE(w)           ((BYTE)((UINT)(w) >> 8))
 

@@ -221,8 +221,8 @@ length	415
 #328 _DEBUGOUTPUT
 #329 K329
 #332 THHOOK
-334 pascal IsBadReadPtr(ptr long) IsBadReadPtr(1 2)
-335 pascal IsBadWritePtr(ptr long) IsBadWritePtr(1 2)
+334 pascal IsBadReadPtr(ptr word) IsBadReadPtr(1 2)
+335 pascal IsBadWritePtr(ptr word) IsBadWritePtr(1 2)
 336 pascal IsBadCodePtr(ptr) IsBadCodePtr(1)
 337 pascal IsBadStringPtr(ptr word) IsBadStringPtr(1 2)
 #338 HASGPHANDLER

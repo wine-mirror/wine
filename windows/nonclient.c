@@ -8,7 +8,6 @@
 #include "win.h"
 #include "class.h"
 #include "message.h"
-#include "scroll.h"
 #include "sysmetrics.h"
 #include "user.h"
 #include "dialog.h"

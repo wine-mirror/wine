@@ -14,7 +14,9 @@ extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
 extern int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
                           HWND owner, WNDPROC dlgProc);
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
   /* Dialog info structure.
    * This structure is stored into the window extra bytes (cbWndExtra).
@@ -70,6 +72,8 @@ typedef struct
     LPSTR               faceName;
 } DLGTEMPLATE;
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 #endif  /* DIALOG_H */

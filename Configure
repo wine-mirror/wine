@@ -8,7 +8,7 @@
 WINELIB=''
 SHORTNAMES=''
 XPM=''
-LANG=not_matching
+LANGUAGE=not_matching
 NEWBUILD=''
 ALLDEFINES=''
 
@@ -57,15 +57,15 @@ else
 fi
 
 LANGS=`echo En rc/sysres_*.rc | sed -e 's/rc\/sysres_//g' -e 's/\.rc//g' -e 's/ /\//g;'`
-while	expr "$LANGS" : ".*$LANG" = 0 > /dev/null
+while	expr "$LANGS" : ".*$LANGUAGE" = 0 > /dev/null
 do
-	prompt "Language ($LANGS)" LANG En
-	if	expr "$LANGS" : ".*$LANG" = 0 > /dev/null
+	prompt "Language ($LANGS)" LANGUAGE En
+	if	expr "$LANGS" : ".*$LANGUAGE" = 0 > /dev/null
 	then
-		echo "\"$LANG\" is not a supported language."
+		echo "\"$LANGUAGE\" is not a supported language."
 	fi
 done
-ALLDEFINES="$ALLDEFINES -ALANG\($LANG\)"
+ALLDEFINES="$ALLDEFINES -ALANG\($LANGUAGE\)"
 
 if [ "`(domainname)`" = 'amscons.com' ]
 then

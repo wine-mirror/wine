@@ -5,7 +5,9 @@
 
 #include <wintypes.h>
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
 typedef struct { 
 	INT x;
@@ -2260,7 +2262,9 @@ typedef METAFILEPICT *LPMETAFILEPICT;
 #define META_CREATEBITMAP            0x06FE
 #define META_CREATEREGION            0x06FF
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 
 #define F(ret,name) ret name(void);

@@ -59,8 +59,11 @@ unsigned short PSPSelector;
 unsigned char ran_out = 0;
 int LastUsedSelector = FIRST_SELECTOR - 1;
 
-unsigned short SelectorMap[MAX_SELECTORS];
-SEGDESC Segments[MAX_SELECTORS];
+#define MAX_SELECTORS (512 * 2)
+
+int max_selectors = 0;
+unsigned short* SelectorMap;
+SEGDESC* Segments;
 
 #ifdef DEV_ZERO
     static FILE *zfile = NULL;
@@ -82,15 +85,19 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal);
  *					InitSelectors
  */
 void
-InitSelectors(void) {
+InitSelectors(void) 
+{
     int i;
-    for (i = 0; i < MAX_SELECTORS; i++) {
+    max_selectors = MAX_SELECTORS;
+    SelectorMap = malloc(max_selectors * sizeof(unsigned short));
+    Segments    = malloc(max_selectors * sizeof(SEGDESC));
+    for (i = 0; i < max_selectors; i++) {
 	if (i < FIRST_SELECTOR) {
 	    SelectorMap[i] = SELECTOR_IS32BIT;
 #ifdef __ELF__
 	    /* quick hack, just reserves 4 meg for wine. */
-	} else if ((i << 19) >= 0x8000000 &&
-		   (i << 19) <= 0x8400000) {
+	} else if ((i << (16 + __AHSHIFT)) >= 0x8000000 &&
+		   (i << (16 + __AHSHIFT)) <= 0x8400000) {
 	    SelectorMap[i]= SELECTOR_IS32BIT;
 #endif
 	} else {
@@ -118,10 +125,23 @@ FindUnusedSelectors(int n_selectors)
     n_found = 0;
     for (i = LastUsedSelector + 1; i != LastUsedSelector; i++)
     {
-	if (i >= MAX_SELECTORS)
+	if (i >= max_selectors)
 	{
-	    n_found = 0;
-	    i = FIRST_SELECTOR;
+	    int j;
+	    max_selectors += MAX_SELECTORS;
+	    dprintf_selectors(stddeb, "Expanding no of segments to %d.\n", 
+			      max_selectors);
+            SelectorMap =
+	      realloc(SelectorMap, max_selectors * sizeof(unsigned short));
+            Segments = realloc(Segments, max_selectors * sizeof(SEGDESC));
+	    if (!SelectorMap || !Segments)
+	      {
+		fprintf(stderr,
+			"FindUnusedSelectors: Out of memory! Exiting\n");
+		exit (-1);
+	      }
+            for (j = max_selectors - MAX_SELECTORS; j < max_selectors; j++)
+	      SelectorMap[j] = 0;
 	}
 
 	if (SelectorMap[i] && n_found) n_found=0;
@@ -174,7 +194,7 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
 
 	SelectorMap[i_new] = i_new;
     
-	s_new->selector  = (i_new << 3) | 0x0007;
+	s_new->selector  = (i_new << __AHSHIFT) | 0x0007;
 	s_new->base_addr = (void *) ((long) s_new->selector << 16);
 	s_new->length    = s_old->length;
 	s_new->flags     = s_old->flags;
@@ -280,7 +300,7 @@ WORD AllocSelector(WORD old_selector)
     
     if (old_selector)
     {
-	i_old = (old_selector >> 3);
+	i_old = (old_selector >> __AHSHIFT);
 #ifdef HAVE_IPC
 	selector = IPCCopySelector(i_old, i_new, 0);
 	if (selector < 0)
@@ -289,7 +309,7 @@ WORD AllocSelector(WORD old_selector)
 	    return selector;
 #else
 	s_old = &Segments[i_old];
-	s_new->selector = (i_new << 3) | 0x0007;
+	s_new->selector = (i_new << __AHSHIFT) | 0x0007;
 	*s_new = *s_old;
 	SelectorMap[i_new] = SelectorMap[i_old];
 
@@ -310,7 +330,7 @@ WORD AllocSelector(WORD old_selector)
 	SelectorMap[i_new] = i_new;
     }
 
-    return (i_new << 3) | 0x0007;
+    return (i_new << __AHSHIFT) | 0x0007;
 }
 
 /**********************************************************************
@@ -325,8 +345,8 @@ unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
     SEGDESC *src_s;
     int src_idx, dst_idx;
 
-    src_idx = src_selector >> 3;
-    dst_idx = dst_selector >> 3;
+    src_idx = src_selector >> __AHSHIFT;
+    dst_idx = dst_selector >> __AHSHIFT;
 
     if (src_idx == dst_idx)
     {
@@ -356,13 +376,13 @@ unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
     int alias_count;
     int i;
 
-    src_idx = (SelectorMap[src_selector >> 3]);
-    dst_idx = dst_selector >> 3;
+    src_idx = (SelectorMap[src_selector >> __AHSHIFT]);
+    dst_idx = dst_selector >> __AHSHIFT;
     src_s = &Segments[src_idx];
     dst_s = &Segments[dst_idx];
 
     alias_count = 0;
-    for (i = FIRST_SELECTOR; i < MAX_SELECTORS; i++)
+    for (i = FIRST_SELECTOR; i < max_selectors; i++)
 	if (SelectorMap[i] == src_idx)
 	    alias_count++;
     
@@ -392,7 +412,7 @@ unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
 	 */
 	SelectorMap[dst_idx] = dst_idx;
 	*dst_s = *src_s;
-	dst_s->selector  = (dst_idx << 3) | 0x0007;
+	dst_s->selector  = (dst_idx << __AHSHIFT) | 0x0007;
 	dst_s->base_addr = (void *) ((unsigned int) dst_s->selector << 16);
 	dst_s->type      = MODIFY_LDT_CONTENTS_DATA;
 #ifdef DEV_ZERO
@@ -458,9 +478,9 @@ void CleanupSelectors(void)
 {
     int sel_idx;
 
-    for (sel_idx = FIRST_SELECTOR; sel_idx < MAX_SELECTORS; sel_idx++)
+    for (sel_idx = FIRST_SELECTOR; sel_idx < max_selectors; sel_idx++)
 	if (SelectorMap[sel_idx])
-	    FreeSelector((sel_idx << 3) | 7);
+	    FreeSelector((sel_idx << __AHSHIFT) | 7);
 }
 
 /**********************************************************************
@@ -474,9 +494,9 @@ WORD FreeSelector(WORD sel)
     int i;
 
 #ifdef HAVE_IPC
-    sel_idx = sel >> 3;
+    sel_idx = sel >> __AHSHIFT;
 
-    if (sel_idx < FIRST_SELECTOR || sel_idx >= MAX_SELECTORS)
+    if (sel_idx < FIRST_SELECTOR || sel_idx >= max_selectors)
 	return 0;
     
     s = &Segments[sel_idx];
@@ -492,7 +512,7 @@ WORD FreeSelector(WORD sel)
 	shmdt(s->base_addr);
 
 	alias_count = 0;
-	for (i = FIRST_SELECTOR; i < MAX_SELECTORS; i++)
+	for (i = FIRST_SELECTOR; i < max_selectors; i++)
 	    if (SelectorMap[i] && Segments[i].shm_key == s->shm_key)
 		alias_count++;
 	
@@ -505,19 +525,19 @@ WORD FreeSelector(WORD sel)
     }
     
 #else /* HAVE_IPC */
-    sel_idx = SelectorMap[sel >> 3];
+    sel_idx = SelectorMap[sel >> __AHSHIFT];
 
-    if (sel_idx < FIRST_SELECTOR || sel_idx >= MAX_SELECTORS)
+    if (sel_idx < FIRST_SELECTOR || sel_idx >= max_selectors)
 	return 0;
     
-    if (sel_idx != (sel >> 3))
+    if (sel_idx != (sel >> __AHSHIFT))
     {
-	SelectorMap[sel >> 3] = 0;
+	SelectorMap[sel >> __AHSHIFT] = 0;
 	return 0;
     }
     
     alias_count = 0;
-    for (i = FIRST_SELECTOR; i < MAX_SELECTORS; i++)
+    for (i = FIRST_SELECTOR; i < max_selectors; i++)
 	if (SelectorMap[i] == sel_idx)
 	    alias_count++;
 
@@ -526,7 +546,7 @@ WORD FreeSelector(WORD sel)
 	s = &Segments[sel_idx];
 	munmap(s->base_addr, ((s->length + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
 	memset(s, 0, sizeof(*s));
-	SelectorMap[sel >> 3] = 0;
+	SelectorMap[sel >> __AHSHIFT] = 0;
     }
 #endif /* HAVE_IPC */
 
@@ -565,7 +585,7 @@ CreateNewSegments(int code_flag, int read_only, int length, int n_segments)
 	    s->flags = NE_SEGFLAGS_DATA;
 	}
 	
-	s->selector = (i << 3) | 0x0007;
+	s->selector = (i << __AHSHIFT) | 0x0007;
 	s->length = length;
 #ifdef DEV_ZERO
 	if (zfile == NULL)
@@ -886,8 +906,8 @@ CreateSelectors(struct  w_files * wpnt)
     int SelectorTableLength;
     int i;
     int status;
-    int old_length, file_image_length;
-    int saved_old_length;
+    int old_length, file_image_length = 0;
+    int saved_old_length = 0;
 
     auto_data_sel=0;
     /*
@@ -1006,7 +1026,7 @@ CreateSelectors(struct  w_files * wpnt)
     s = selectors;
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
     {
-	Segments[s->selector >> 3].owner = auto_data_sel;
+	Segments[s->selector >> __AHSHIFT].owner = auto_data_sel;
 	if (s->selector == auto_data_sel)
 	    HEAP_LocalInit(auto_data_sel, s->base_addr + saved_old_length, 
 			   0x10000 - 2 - saved_old_length 

@@ -9,7 +9,9 @@
 
 #include "gdi.h"
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
   /* GDI logical palette object */
 typedef struct
@@ -18,7 +20,9 @@ typedef struct
     LOGPALETTE  logpalette WINE_PACKED;
 } PALETTEOBJ;
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 extern int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer );
      

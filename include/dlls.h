@@ -51,12 +51,6 @@ struct w_files
 
 extern struct  w_files *wine_files;
 
-typedef struct dll_arg_relocation_s
-{
-    unsigned short dst_arg;	/* Offset to argument on stack		*/
-    unsigned char src_type;	/* Argument type			*/
-} DLL_ARG;
-
 #define DLL	0
 #define EXE	1
 
@@ -82,12 +76,13 @@ struct dll_table_entry_s
      */
     char *export_name;
     void *handler;		/* Address of function to process request */
-    int handler_type;		/* C or PASCAL calling convention	  */
+    char handler_type;		/* C or PASCAL calling convention	  */
+    char n_args;			/* Number of arguments passed to function */
+    short conv_reference ; /* reference to Argument conversion data  */
 #ifdef WINESTAT
     int used;			/* Number of times this function referenced */
 #endif
-    int n_args;			/* Number of arguments passed to function */
-    DLL_ARG args[DLL_MAX_ARGS]; /* Argument conversion data		  */
+    
 };
 
 struct dll_name_table_entry_s
@@ -114,6 +109,43 @@ extern struct dll_table_entry_s TOOLHELP_table[];
 extern struct dll_table_entry_s MOUSE_table[];
 extern struct dll_table_entry_s COMMDLG_table[];
 
+
+extern unsigned short KERNEL_offsets[];
+extern unsigned short USER_offsets[];
+extern unsigned short GDI_offsets[];
+extern unsigned short UNIXLIB_offsets[];
+extern unsigned short WIN87EM_offsets[];
+extern unsigned short MMSYSTEM_offsets[];
+extern unsigned short SHELL_offsets[];
+extern unsigned short SOUND_offsets[];
+extern unsigned short KEYBOARD_offsets[];
+extern unsigned short WINSOCK_offsets[];
+extern unsigned short STRESS_offsets[];
+extern unsigned short SYSTEM_offsets[];
+extern unsigned short TOOLHELP_offsets[];
+extern unsigned short MOUSE_offsets[];
+extern unsigned short COMMDLG_offsets[];
+
+
+extern unsigned char KERNEL_types[];
+extern unsigned char USER_types[];
+extern unsigned char GDI_types[];
+extern unsigned char UNIXLIB_types[];
+extern unsigned char WIN87EM_types[];
+extern unsigned char MMSYSTEM_types[];
+extern unsigned char SHELL_types[];
+extern unsigned char SOUND_types[];
+extern unsigned char KEYBOARD_types[];
+extern unsigned char WINSOCK_types[];
+extern unsigned char STRESS_types[];
+extern unsigned char SYSTEM_types[];
+extern unsigned char TOOLHELP_types[];
+extern unsigned char MOUSE_types[];
+extern unsigned char COMMDLG_types[];
+
+
 #define N_BUILTINS	15
 
 #endif /* DLLS_H */
+
+

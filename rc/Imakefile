@@ -33,12 +33,15 @@ XCOMM Rules to build the winerc program
 
 SRCS = \
 	lex.yy.c \
-	rc.tab.c \
-	winerc.c
+	winerc.c \
+	y.tab.c
 
 OBJS = $(SRCS:.c=.o)
 
-#ifdef i386BsdArchitecture
+#ifdef SunArchitecture
+YACC=bison -y
+LEX=flex
+LOCAL_LIBRARIES = -ly -ll
 #endif
 #if defined(i386BsdArchitecture) || defined(i386FreeBsd) || defined(FreeBSDArchitecture)
 LOCAL_LIBRARIES = -ll
@@ -47,17 +50,17 @@ LOCAL_LIBRARIES = -ll
 LOCAL_LIBRARIES = -lfl
 #endif
 
-depend:: rc.tab.c rc.tab.h lex.yy.c
+depend:: y.tab.c y.tab.h lex.yy.c
 
 clean::
-	$(RM) lex.yy.c rc.tab* y.tab.c
+	$(RM) lex.yy.c y.tab.*
 
 ComplexProgramTarget(winerc)
 
-rc.tab.c rc.tab.h: rc.y
-	$(YACC) -b rc -d --debug rc.y
+y.tab.c y.tab.h: parser.y
+	$(YACC) -d -t parser.y
 
-lex.yy.c: rc.l rc.tab.h
-	$(LEX) -I rc.l
+lex.yy.c: parser.l y.tab.h
+	$(LEX) -I parser.l
  
 

@@ -36,11 +36,11 @@ A(IF1632_ELF_KLUDGE:)
 /**********************************************************************
  *	Places to keep info about the current 16-bit stack frame.
  */
-	.globl A(IF1632_Saved16_esp),A(IF1632_Saved16_ebp),A(IF1632_Saved16_ss)
-A(IF1632_Saved16_esp:)
-	.long	0
-A(IF1632_Saved16_ebp:)
-	.long	0
+	.globl A(IF1632_Saved16_sp),A(IF1632_Saved16_bp),A(IF1632_Saved16_ss)
+A(IF1632_Saved16_sp:)
+	.word	0
+A(IF1632_Saved16_bp:)
+	.word	0
 A(IF1632_Saved16_ss:)
 	.word	0
 
@@ -236,13 +236,13 @@ L2:
 	movl	%ebp,A(IF1632_Saved32_ebp)
 
 	movw	A(IF1632_Saved16_ss),%ss
-	movl	A(IF1632_Saved16_esp),%esp
-	movl	A(IF1632_Saved16_ebp),%ebp
+	movw	A(IF1632_Saved16_sp),%sp
+	movw	A(IF1632_Saved16_bp),%bp
 
 	/*
 	 * Call entry point
 	 */
-	movw	%ax,%ds
+ 	movw	%ax,%ds
 	movw	%ax,%di
 	.byte	0x66
 	lcall	%fs:(%edx)
@@ -267,8 +267,8 @@ L2:
 	popl	%eax
 
 	movw	%ss,A(IF1632_Saved16_ss)
-	movl	%esp,A(IF1632_Saved16_esp)
-	movl	%ebp,A(IF1632_Saved16_ebp)
+	movw	%esp,A(IF1632_Saved16_sp)
+	movw	%ebp,A(IF1632_Saved16_bp)
 
 	movw	A(IF1632_Saved32_ss),%ss
 	movl	A(IF1632_Saved32_esp),%esp
@@ -313,7 +313,8 @@ L3:
 	.align	4
 	.globl A(CallTo32)
 A(CallTo32:)
-	pushl	%ebp
+	andl	$0x0000ffff,%esp
+	pushw	%bp
 	movl	%esp,%ebp
 
 	/*
@@ -335,13 +336,13 @@ A(CallTo32:)
 	 * Save old stack save variables, save stack registers, reload
 	 * stack registers.
 	 */
-	pushl	A(IF1632_Saved16_esp)
-	pushl	A(IF1632_Saved16_ebp)
+	pushw	A(IF1632_Saved16_sp)
+	pushw	A(IF1632_Saved16_bp)
 	pushw	A(IF1632_Saved16_ss)
 
 	movw	%ss,A(IF1632_Saved16_ss)
-	movl	%esp,A(IF1632_Saved16_esp)
-	movl	%ebp,A(IF1632_Saved16_ebp)
+	movw	%sp,A(IF1632_Saved16_sp)
+	movw	%bp,A(IF1632_Saved16_bp)
 
 	movw	A(IF1632_Saved32_ss),%ss
 	movl	A(IF1632_Saved32_esp),%esp
@@ -352,7 +353,7 @@ A(CallTo32:)
 	 */
 	pushl	%edx
 	pushw	A(IF1632_Saved16_ss)
-	pushw	A(IF1632_Saved16_esp)
+	pushw	A(IF1632_Saved16_sp)
 	pushl	%eax
 	call	A(DLLRelay)
 
@@ -364,18 +365,17 @@ A(CallTo32:)
  	 * Restore registers, but do not destroy return value.
 	 */
 	movw	A(IF1632_Saved16_ss),%ss
-	movl	A(IF1632_Saved16_esp),%esp
-	movl	A(IF1632_Saved16_ebp),%ebp
+	movw	A(IF1632_Saved16_sp),%sp
+	movw	A(IF1632_Saved16_bp),%bp
 
 	popw	A(IF1632_Saved16_ss)
-	popl	A(IF1632_Saved16_ebp)
-	popl	A(IF1632_Saved16_esp)
+	popw	A(IF1632_Saved16_bp)
+	popw	A(IF1632_Saved16_sp)
 
 	popw	%es
 	popw	%ds
+	popw	%bp
 
-	.align	2,0x90
-	leave
 	/*
 	 * Now we need to ditch the parameter bytes that were left on the
 	 * stack. We do this by effectively popping the number of bytes,
@@ -415,7 +415,8 @@ noargs:
 	.align	4
 	.globl A(CallTo32_16)
 A(CallTo32_16:)
-	pushl	%ebp
+	andl	$0x0000ffff,%esp
+	pushw	%bp
 	movl	%esp,%ebp
 
 	/*
@@ -437,13 +438,13 @@ A(CallTo32_16:)
 	 * Save old stack save variables, save stack registers, reload
 	 * stack registers.
 	 */
-	pushl	A(IF1632_Saved16_esp)
-	pushl	A(IF1632_Saved16_ebp)
+	pushw	A(IF1632_Saved16_sp)
+	pushw	A(IF1632_Saved16_bp)
 	pushw	A(IF1632_Saved16_ss)
 
 	movw	%ss,A(IF1632_Saved16_ss)
-	movl	%esp,A(IF1632_Saved16_esp)
-	movl	%ebp,A(IF1632_Saved16_ebp)
+	movw	%esp,A(IF1632_Saved16_sp)
+	movw	%ebp,A(IF1632_Saved16_bp)
 
 	movw	A(IF1632_Saved32_ss),%ss
 	movl	A(IF1632_Saved32_esp),%esp
@@ -454,7 +455,7 @@ A(CallTo32_16:)
 	 */
 	pushl	%edx
 	pushw	A(IF1632_Saved16_ss)
-	pushw	A(IF1632_Saved16_esp)
+	pushw	A(IF1632_Saved16_sp)
 	pushl	%eax
 	call	A(DLLRelay)
 
@@ -466,18 +467,17 @@ A(CallTo32_16:)
  	 * Restore registers, but do not destroy return value.
 	 */
 	movw	A(IF1632_Saved16_ss),%ss
-	movl	A(IF1632_Saved16_esp),%esp
-	movl	A(IF1632_Saved16_ebp),%ebp
+	movw	A(IF1632_Saved16_sp),%sp
+	movw	A(IF1632_Saved16_bp),%bp
 
 	popw	A(IF1632_Saved16_ss)
-	popl	A(IF1632_Saved16_ebp)
-	popl	A(IF1632_Saved16_esp)
+	popw	A(IF1632_Saved16_bp)
+	popw	A(IF1632_Saved16_sp)
 
 	popw	%es
 	popw	%ds
+	popw	%bp
 
-	.align	2,0x90
-	leave
 	/*
 	 * Now we need to ditch the parameter bytes that were left on the
 	 * stack. We do this by effectively popping the number of bytes,
@@ -508,18 +508,17 @@ A(ReturnFromRegisterFunc:)
  	 * Restore 16-bit stack
 	 */
 	movw	A(IF1632_Saved16_ss),%ss
-	movl	A(IF1632_Saved16_esp),%esp
-	movl	A(IF1632_Saved16_ebp),%ebp
+	movw	A(IF1632_Saved16_sp),%sp
+	movw	A(IF1632_Saved16_bp),%bp
 
 	popw	A(IF1632_Saved16_ss)
-	popl	A(IF1632_Saved16_ebp)
-	popl	A(IF1632_Saved16_esp)
+	popw	A(IF1632_Saved16_bp)
+	popw	A(IF1632_Saved16_sp)
 
 	popw	%es
 	popw	%ds
+	popw	%bp
 
-	.align	2,0x90
-	leave
 	/*
 	 * This leaves us with a stack that has number of arguments,
 	 * the return address, the saved registers, and the return 

@@ -26,22 +26,27 @@
 /*
  * Array to track selector allocation.
  */
-#define MAX_SELECTORS		512
 #define SELECTOR_ISFREE		0x8000
 #define SELECTOR_IS32BIT        0x4000
 #define SELECTOR_INDEXMASK	0x0fff
 
-extern unsigned short SelectorMap[MAX_SELECTORS];
+#define __AHSHIFT 3
+#define __AHINCR  (1 << __AHSHIFT)
+
+extern unsigned short* SelectorMap;
 
 #ifdef HAVE_IPC
 #define SAFEMAKEPTR(s, o) ((void *)(((int) (s) << 16) | ((o) & 0xffff)))
 #define FIXPTR(p)	  (p)
 #else
 #define SAFEMAKEPTR(s, o) \
-    ((void *)(((int)SelectorMap[SelectorMap[(s) >> 3] & SELECTOR_INDEXMASK] \
-                    << 19) | 0x70000 | ((o) & 0xffff)))
+  ((void*)(((int)SelectorMap[SelectorMap[(s)>>__AHSHIFT] & SELECTOR_INDEXMASK]\
+	    << (16 + __AHSHIFT)) | 0x70000 | ((o) & 0xffff)))
 #define FIXPTR(p)	  SAFEMAKEPTR((unsigned long) (p) >> 16, (p))
 #endif
+
+#define MAKESELECTOR(fp) ((unsigned short) (fp >> (16 + __AHSHIFT)))
+ 
 
 /*
  * Structure to hold info about each selector we create.
@@ -79,14 +84,14 @@ extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
 #ifdef __ELF__
 #define FIRST_SELECTOR 2
 #define IS_16_BIT_ADDRESS(addr)  \
-     (!(SelectorMap[(unsigned int)(addr)>>19]& SELECTOR_IS32BIT))
+  (!(SelectorMap[(unsigned int)(addr) >> (16+__AHSHIFT)]& SELECTOR_IS32BIT))
 #else
 #define FIRST_SELECTOR	8
 #define IS_16_BIT_ADDRESS(addr)  \
-     ((unsigned int)(addr) >= (((FIRST_SELECTOR << 3) | 0x0007) << 16))
+     ((unsigned int)(addr) >= (((FIRST_SELECTOR << __AHSHIFT) | 7) << 16))
 #endif
 
 
-extern SEGDESC Segments[];
+extern SEGDESC* Segments;
 
 #endif /* SEGMEM_H */

@@ -9,7 +9,9 @@
 
 #include "gdi.h"
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
   /* GDI logical pen object */
 typedef struct
@@ -18,7 +20,9 @@ typedef struct
     LOGPEN      logpen WINE_PACKED;
 } PENOBJ;
 
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 extern int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer );
 extern HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen );

@@ -426,7 +426,7 @@ WIN16_LocalAlloc(int flags, int bytes)
     void *m;
     
     dprintf_heap(stddeb,"WIN16_LocalAlloc: flags %x, bytes %d\n", flags,bytes);
-    dprintf_heap(stddeb,"    called from segment %04x, ds=%04x\n", Stack16Frame[11],Stack16Frame[6]);
+    dprintf_heap(stddeb,"    called from segment %04x, ds=%04x\n", pStack16Frame->cs,pStack16Frame->ds);
 
     m = HEAP_Alloc(LOCALHEAP(), flags, bytes);
 	
@@ -494,7 +494,7 @@ WIN16_LocalInit(unsigned int segment, unsigned int start, unsigned int end)
     if (segment == 0)
     {
 	/* Get current DS */
-	segment = Stack16Frame[6];
+	segment = pStack16Frame->ds;
     }
 
     dprintf_heap(stddeb, "WIN16_LocalInit   segment=%04x  start=%04x  end=%04x\n", segment, start, end);
@@ -504,11 +504,11 @@ WIN16_LocalInit(unsigned int segment, unsigned int start, unsigned int end)
        data (and the stack if there is one). As we don't know the length
        of the data and stack right now, we simply put the local heap at the
        end of the segment */
-    if ((start==0)&&(Segments[segment>>3].owner==segment))
+    if ((start==0)&&(Segments[segment>>__AHSHIFT].owner==segment))
     {
         return;
-        start = Segments[segment>>3].length-end-2;
-        end   = Segments[segment>>3].length-1;  
+        start = Segments[segment>>__AHSHIFT].length-end-2;
+        end   = Segments[segment>>__AHSHIFT].length-1;  
         dprintf_heap(stddeb, "Changed to  start=%04x  end=%04x\n",start,end);
     }
 

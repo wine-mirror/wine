@@ -31,9 +31,11 @@ typedef char *XPointer;
 #endif
 #endif
 
+#ifdef WHO_NEEDS_DIRTY_HACKS
 #ifdef sparc
 /* Dirty hack to compile with Sun's OpenWindows */
 typedef char *XPointer;
+#endif
 #endif
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */

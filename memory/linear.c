@@ -100,7 +100,8 @@ GlobalLinearLock(unsigned int block)
 	 i < loc_idx + g_first->length; 
 	 i++, addr += 0x10000, g = g->next)
     {
-	if ((MemoryKeys[i] = IPCCopySelector(g->handle >> 3, addr, 0)) < 0)
+	if ((MemoryKeys[i] = IPCCopySelector(g->handle >> __AHSHIFT,
+					     addr, 0)) < 0)
 	    return NULL;
 	g->linear_addr = (void *) addr;
 	g->linear_count = 1;

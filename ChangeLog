@@ -1,4 +1,78 @@
 ----------------------------------------------------------------------
+Thu Feb 16 18:57:31 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [if1632/call.S]
+	Only save the lower 16-bits of SP and BP.
+
+	* [if1632/callback.c]
+	When calling to 16-bit code, restore DS from its previous value on
+	entry to the 32-bit code, instead of from the code segment owner.
+
+	* [if1632/relay.c] [include/stackframe.h]
+	Use a structure to represent the 16-bit stack frame layout
+	instead of hard-coded offsets.
+	
+	* [rc/Imakefile]
+	Use y.tab.c for bison output file for compatibility with yacc.
+
+	* [tools/build.c]
+	Small optimization for calls to 32-bit code.
+
+Sun Feb 12 03:19:47 1995  Michael Veksler (s1678223@t2.technion.ac.il)
+
+	* [tools/build.c]
+	Fixed bug (inflicted by previous change) - SEGV on ZMAGIC file format.
+
+Sun Feb 11 20:00:00 1995  Göran Thyni  (goran@norrsken.bildbasen.se)
+
+	* [debugger/dbg.y]
+	Remove unnecessary sym-table loading when stopped in 16-bit mode.
+
+	* [include/segmem.h] [loader/selector.c]
+        Added dynamic alloction of selectors.
+        Fixed some problems with large programs SIGSEGV-ing while
+        running out of selectors.
+
+	* [include/segmem.h] [loader/selector.c] [if1632/callback.c] 
+          [memory/global.c] [memory/heap.c] [memory/linear.c]
+	Use __AHSHIFT and __AHINCR instead of 3 and 8.
+
+Mon Feb  6 18:07:38 1995  Cameron Heide  (heide@ee.ualberta.ca)
+
+        * [misc/dos_fs.c]
+        Better relative path handling when converting filenames between
+        dos and unix, allowing '.' to be used in the Windows path.
+        Startup working dir is now based on current working dir.
+
+Sat Feb  4 21:21:13 1995  Michael Veksler (s1678223@t2.technion.ac.il)
+
+	* [if1632/relay.c] [include/dlls.h] [tools/build.c]
+	Squeezed data structure that references internal dll's (mostly
+	"struct dll_table_entry_s"). Caused 20% reduction in executable
+	code size.
+
+Fri Feb  3 18:53:15 1995  Martin v. Loewis  (loewis@marie)
+
+	* [Imakefile]
+	make wine.sym only when making emulator
+
+	* [misc/file.c]
+	OpenFile(): report as not implemented for WINELIB
+
+	* [misc/winsock.c]
+	Fix CONVERT_HOSTENT and friends for use with WINELIB
+
+	* [rc/Imakefile][rc/rc.y][rc/parser.c]
+	Rename rc.y to parser.y
+	Use flex and bison on Sun
+
+	* [toolkit/sup.c]
+	CallWindowProc: fix parameter type
+
+	* [windows/event.c]
+	Commented #ifdef sparc
+
+----------------------------------------------------------------------
 Wed Feb  1 19:27:55 1995  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [windows/nonclient.c] [windows/winpos.c]

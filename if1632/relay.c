@@ -22,6 +22,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "dlls.h"
 #include "options.h"
+#include "stackframe.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
 /* #define DEBUG_STACK */
@@ -59,11 +60,34 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 };
 /* don't forget to increase N_BUILTINS in dll.h if you add a dll */
 
-#ifndef WINELIB
-unsigned short *Stack16Frame;
+/* the argument conversion tables for each dll */
+struct dll_conversions {
+	unsigned short *dst_args;   /*  Offsets to arguments on stack */
+	unsigned char *src_types;   /* Argument types              */
+} dll_conversion_table[N_BUILTINS]= {
+  KERNEL_offsets,   KERNEL_types,   /* KERNEL     */
+  USER_offsets,     USER_types,     /* USER       */
+  GDI_offsets,      GDI_types,      /* GDI        */
+  UNIXLIB_offsets,  UNIXLIB_types,  /* UNIXLIB    */
+  WIN87EM_offsets,  WIN87EM_types,  /* WIN87EM    */
+  SHELL_offsets,    SHELL_types,    /* SHELL      */
+  SOUND_offsets,    SOUND_types,    /* SOUND      */
+  KEYBOARD_offsets, KEYBOARD_types, /* KEYBOARD   */
+  WINSOCK_offsets,  WINSOCK_types,  /* WINSOCK    */
+  STRESS_offsets,   STRESS_types,   /* STRESS,     */
+  MMSYSTEM_offsets, MMSYSTEM_types, /* MMSYSTEM   */
+  SYSTEM_offsets,   SYSTEM_types,   /* SYSTEM     */
+  TOOLHELP_offsets, TOOLHELP_types, /* TOOLHELP   */
+  MOUSE_offsets,    MOUSE_types,    /* MOUSE      */
+  COMMDLG_offsets,  COMMDLG_types   /* EMUCOMMDLG */
+};
 
-extern unsigned long  IF1632_Saved16_esp;
-extern unsigned long  IF1632_Saved16_ebp;
+
+#ifndef WINELIB
+STACK16FRAME *pStack16Frame;
+
+extern unsigned short IF1632_Saved16_sp;
+extern unsigned short IF1632_Saved16_bp;
 extern unsigned short IF1632_Saved16_ss;
 
 /**********************************************************************
@@ -88,7 +112,7 @@ int
 DLLRelay(unsigned int func_num, unsigned int seg_off)
 {
     struct dll_table_entry_s *dll_p;
-    unsigned short *saved_Stack16Frame;
+    STACK16FRAME *pOldStack16Frame;
     unsigned int offset;
     unsigned int dll_id;
     unsigned int ordinal;
@@ -97,13 +121,16 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     int (*func_ptr)();
     int i;
     int ret_val;
+    int conv_ref;
+    unsigned char *type_conv;
+    unsigned short *offset_conv;
     
     /*
      * Determine address of arguments.
      */
-    saved_Stack16Frame = Stack16Frame;
-    Stack16Frame = (unsigned short *) seg_off;
-    arg_ptr = (void *) (seg_off + 0x18);
+    pOldStack16Frame = pStack16Frame;
+    pStack16Frame = (STACK16FRAME *) seg_off;
+    arg_ptr = (void *)pStack16Frame->args;
 
     /*
      * Extract the DLL number and ordinal number.
@@ -122,8 +149,8 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	       dll_builtin_table[dll_id].dll_name, ordinal,
 	       seg_off >> 16, seg_off & 0xffff);
 	printf("ret=%08x", *ret_addr);
-	printf("  ESP=%08lx, EBP=%08lx, SS=%04x\n", 
-	       IF1632_Saved16_esp, IF1632_Saved16_ebp,
+	printf("  ESP=%04x, EBP=%04x, SS=%04x\n", 
+	       IF1632_Saved16_sp, IF1632_Saved16_bp,
 	       IF1632_Saved16_ss);
 
 	if(debugging_stack)
@@ -164,21 +191,24 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     if (dll_p->n_args == 0)
     {
 	ret_val = (*func_ptr)(arg_ptr);
-	Stack16Frame = saved_Stack16Frame;
+        pStack16Frame = pOldStack16Frame;
 	return ret_val;
     }
 
     /*
      * Getting this far means we need to convert the 16-bit argument stack.
      */
-    for (i = 0; i < dll_p->n_args; i++)
+    conv_ref= dll_p->conv_reference;
+    type_conv= dll_conversion_table[dll_id].src_types + conv_ref;
+    offset_conv= dll_conversion_table[dll_id].dst_args + conv_ref;
+    for (i = 0; i < dll_p->n_args; i++,type_conv++,offset_conv++)
     {
 	short *sp;
 	int *ip;
 	
-	offset = dll_p->args[i].dst_arg;
+	offset = *offset_conv;
 
-	switch (dll_p->args[i].src_type)
+	switch (*type_conv)
 	{
 	  case DLL_ARGTYPE_SIGNEDWORD:
 	    sp = (short *) ((char *) arg_ptr + offset);
@@ -223,7 +253,7 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	       dll_builtin_table[dll_id].dll_name, ordinal);
     }
 
-    Stack16Frame = saved_Stack16Frame;
+    pStack16Frame = pOldStack16Frame;
     return ret_val;
 }
 #endif

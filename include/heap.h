@@ -7,8 +7,8 @@
 #define HEAP_H
 
 #include "segmem.h"
-#include "regfunc.h"
 #include "atom.h"
+#include "stackframe.h"
 
 /**********************************************************************
  * LOCAL HEAP STRUCTURES AND FUNCTIONS
@@ -48,11 +48,8 @@ extern void *WIN16_LocalLock(unsigned int handle);
 extern void *WIN16_LocalReAlloc(unsigned int handle, int flags, int bytes);
 extern unsigned int WIN16_LocalUnlock(unsigned int handle);
 
-#if 0
-#define HEAP_OWNER	(Segments[Stack16Frame[11] >> 3].owner)
-#endif
 /* Use ds instead of owner of cs */
-#define HEAP_OWNER	Stack16Frame[6]
+#define HEAP_OWNER	(pStack16Frame->ds)
 #define LOCALHEAP()	(&HEAP_LocalFindHeap(HEAP_OWNER)->free_list)
 #define LOCALATOMTABLE() (&HEAP_LocalFindHeap(HEAP_OWNER)->local_table)
 

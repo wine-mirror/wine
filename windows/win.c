@@ -733,7 +733,7 @@ LONG GetWindowLong( HWND hwnd, short offset )
 		      adresses.
                       FIXME: There should be a jump table somewhere in if1632
 		   */
-		   long x=Stack16Frame[11]<<16 | 0x0010;
+		   long x=pStack16Frame->cs<<16 | 0x0010;
 		   /* Just to make Borland's OWL happy */
 		   return x;
 		}

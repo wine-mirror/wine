@@ -597,7 +597,6 @@ void OwnerDrawListBox(HWND hwnd)
 	LPLISTSTRUCT lpls;
 	PAINTSTRUCT ps;
 	HBRUSH 	hBrush;
-	HWND	hWndParent;
 	DWORD   itemData;
 	HDC 	hdc;
 	RECT 	rect;
@@ -647,8 +646,8 @@ void OwnerDrawListBox(HWND hwnd)
 		dprintf_listbox(stddeb,"LBOX WM_DRAWITEM #%d left=%d top=%d right=%d bottom=%d !\n", 
 			i-1, lpls->dis.rcItem.left, lpls->dis.rcItem.top, 
 			lpls->dis.rcItem.right, lpls->dis.rcItem.bottom);
-		dprintf_listbox(stddeb,"LBOX WM_DRAWITEM Parent=%X &dis=%lX CtlID=%u !\n", 
-			hWndParent, (LONG)&lpls->dis, lpls->dis.CtlID);
+		dprintf_listbox(stddeb,"LBOX WM_DRAWITEM &dis=%lX CtlID=%u !\n", 
+			(LONG)&lpls->dis, lpls->dis.CtlID);
 		dprintf_listbox(stddeb,"LBOX WM_DRAWITEM %08lX!\n",lpls->dis.itemData);
 		if (HasStrings(wndPtr))
 		  dprintf_listbox(stddeb,"  '%s'\n",lpls->itemText);
