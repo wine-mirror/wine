@@ -2175,9 +2175,15 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
     /* check the socket type */
     switch(type) 
     {
-	case SOCK_STREAM:
-	case SOCK_DGRAM:
-	case SOCK_RAW:  break;
+	case WS_SOCK_STREAM:
+	    type=SOCK_STREAM;
+	    break;
+	case WS_SOCK_DGRAM:
+	    type=SOCK_STREAM;
+	    break;
+	case WS_SOCK_RAW:
+	    type=SOCK_STREAM;
+	    break;
 	default:        SetLastError(WSAESOCKTNOSUPPORT); 
 			return INVALID_SOCKET;
     }
