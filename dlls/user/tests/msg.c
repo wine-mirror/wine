@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #define _WIN32_WINNT 0x0500 /* For WM_CHANGEUISTATE */
 
@@ -44,9 +45,16 @@ Window Edge Styles (Win31/Win95/98 look), in order of precedence:
  none (default for child (and popup?) windows): no border
 */
 
-typedef enum { 
-    sent=0x1, posted=0x2, parent=0x4, wparam=0x8, lparam=0x10,
-    defwinproc=0x20, optional=0x40, hook=0x80
+typedef enum {
+    sent=0x1,
+    posted=0x2,
+    parent=0x4,
+    wparam=0x8,
+    lparam=0x10,
+    defwinproc=0x20,
+    beginpaint=0x40,
+    optional=0x80,
+    hook=0x100
 } msg_flags_t;
 
 struct message {
@@ -749,6 +757,9 @@ static void ok_sequence(const struct message *expected, const char *context, int
 	    ok ((expected->flags & defwinproc) == (actual->flags & defwinproc),
 		"%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
 		context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
+	    ok ((expected->flags & beginpaint) == (actual->flags & beginpaint),
+		"%s: the msg 0x%04x should %shave been sent by BeginPaint\n",
+		context, expected->message, (expected->flags & beginpaint) ? "" : "NOT ");
 	    ok ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
 		"%s: the msg 0x%04x should have been %s\n",
 		context, expected->message, (expected->flags & posted) ? "posted" : "sent");
@@ -1744,11 +1755,203 @@ static void test_button_messages(void)
 	DestroyWindow(hwnd);
     }
 }
-/************* end of button message test ********************/
+
+/************* painting message test ********************/
+
+static void dump_region(HRGN hrgn)
+{
+    DWORD i, size;
+    RGNDATA *data = NULL;
+    RECT *rect;
+
+    if (!hrgn)
+    {
+        printf( "null region\n" );
+        return;
+    }
+    if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
+    GetRegionData( hrgn, size, data );
+    printf("%ld rects:", data->rdh.nCount );
+    for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
+        printf( " (%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
+    printf("\n");
+    HeapFree( GetProcessHeap(), 0, data );
+}
+
+static void check_update_rgn( HWND hwnd, HRGN hrgn )
+{
+    INT ret;
+    RECT r1, r2;
+    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN update = CreateRectRgn( 0, 0, 0, 0 );
+
+    ret = GetUpdateRgn( hwnd, update, FALSE );
+    ok( ret != ERROR, "GetUpdateRgn failed\n" );
+    if (ret == NULLREGION)
+    {
+        ok( !hrgn, "Update region shouldn't be empty\n" );
+    }
+    else
+    {
+        if (CombineRgn( tmp, hrgn, update, RGN_XOR ) != NULLREGION)
+        {
+            ok( 0, "Regions are different\n" );
+            if (winetest_debug > 0)
+            {
+                printf( "Update region: " );
+                dump_region( update );
+                printf( "Wanted region: " );
+                dump_region( hrgn );
+            }
+        }
+    }
+    GetRgnBox( update, &r1 );
+    GetUpdateRect( hwnd, &r2, FALSE );
+    ok( r1.left == r2.left && r1.top == r2.top && r1.right == r2.right && r1.bottom == r2.bottom,
+        "Rectangles are different: %ld,%ld-%ld,%ld / %ld,%ld-%ld,%ld\n",
+        r1.left, r1.top, r1.right, r1.bottom, r2.left, r2.top, r2.right, r2.bottom );
+
+    DeleteObject( tmp );
+    DeleteObject( update );
+}
+
+static const struct message WmInvalidateRgn[] = {
+    { WM_NCPAINT, sent },
+    { 0 }
+};
+
+static const struct message WmInvalidateFull[] = {
+    { WM_NCPAINT, sent|wparam, 1 },
+    { 0 }
+};
+
+static const struct message WmInvalidateErase[] = {
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
+static const struct message WmInvalidatePaint[] = {
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|wparam|beginpaint, 1 },
+    { 0 }
+};
+
+static const struct message WmInvalidateErasePaint[] = {
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|wparam|beginpaint, 1 },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+static const struct message WmErase[] = {
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
+static const struct message WmPaint[] = {
+    { WM_PAINT, sent },
+    { 0 }
+};
+
+static void test_paint_messages(void)
+{
+    RECT rect;
+    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn2 = CreateRectRgn( 0, 0, 0, 0 );
+    HWND hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
+                                100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    ShowWindow( hwnd, SW_SHOW );
+    UpdateWindow( hwnd );
+    check_update_rgn( hwnd, 0 );
+    SetRectRgn( hrgn, 10, 10, 20, 20 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
+    check_update_rgn( hwnd, hrgn );
+    SetRectRgn( hrgn2, 20, 20, 30, 30 );
+    RedrawWindow( hwnd, NULL, hrgn2, RDW_INVALIDATE );
+    CombineRgn( hrgn, hrgn, hrgn2, RGN_OR );
+    check_update_rgn( hwnd, hrgn );
+    /* validate everything */
+    RedrawWindow( hwnd, NULL, NULL, RDW_VALIDATE );
+    check_update_rgn( hwnd, 0 );
+    /* now with frame */
+    SetRectRgn( hrgn, -5, -5, 20, 20 );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
+    ok_sequence( WmEmptySeq, "EmptySeq", FALSE );
+
+    SetRectRgn( hrgn, 0, 0, 20, 20 );  /* GetUpdateRgn clips to client area */
+    check_update_rgn( hwnd, hrgn );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW );
+    ok_sequence( WmInvalidateRgn, "InvalidateRgn", FALSE );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW );
+    ok_sequence( WmInvalidateFull, "InvalidateFull", FALSE );
+
+    GetClientRect( hwnd, &rect );
+    SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+    check_update_rgn( hwnd, hrgn );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW );
+    ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW );
+    ok_sequence( WmInvalidatePaint, "InvalidatePaint", TRUE );
+    check_update_rgn( hwnd, 0 );
+
+    flush_sequence();
+    RedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_UPDATENOW );
+    ok_sequence( WmInvalidateErasePaint, "InvalidateErasePaint", FALSE );
+    check_update_rgn( hwnd, 0 );
+
+    flush_sequence();
+    SetRectRgn( hrgn, 0, 0, 100, 100 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
+    SetRectRgn( hrgn, 0, 0, 50, 100 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
+    SetRectRgn( hrgn, 50, 0, 100, 100 );
+    check_update_rgn( hwnd, hrgn );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_ERASENOW );
+    ok_sequence( WmEmptySeq, "EmptySeq", FALSE );  /* must not generate messages, everything is valid */
+    check_update_rgn( hwnd, 0 );
+
+    flush_sequence();
+    SetRectRgn( hrgn, 0, 0, 100, 100 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
+    SetRectRgn( hrgn, 0, 0, 100, 50 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_ERASENOW );
+    ok_sequence( WmErase, "Erase", FALSE );
+    SetRectRgn( hrgn, 0, 50, 100, 100 );
+    check_update_rgn( hwnd, hrgn );
+
+    flush_sequence();
+    SetRectRgn( hrgn, 0, 0, 100, 100 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
+    SetRectRgn( hrgn, 0, 0, 50, 50 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOERASE | RDW_UPDATENOW );
+    ok_sequence( WmPaint, "Paint", FALSE );
+
+    DeleteObject( hrgn );
+    DeleteObject( hrgn2 );
+    DestroyWindow( hwnd );
+}
+
+
+/************* window procedures ********************/
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
+    static long beginpaint_counter = 0;
     LRESULT ret;
     struct message msg;
 
@@ -1757,6 +1960,7 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
+    if (beginpaint_counter) msg.flags |= beginpaint;
     msg.wParam = wParam;
     msg.lParam = lParam;
     add_message(&msg);
@@ -1785,6 +1989,16 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	   minmax->ptMaxSize.x, rc.right);
 	ok(minmax->ptMaxSize.y == rc.bottom, "default height of maximized child %ld != %ld\n",
 	   minmax->ptMaxSize.y, rc.bottom);
+    }
+
+    if (message == WM_PAINT)
+    {
+        PAINTSTRUCT ps;
+        beginpaint_counter++;
+        BeginPaint( hwnd, &ps );
+        beginpaint_counter--;
+        EndPaint( hwnd, &ps );
+        return 0;
     }
 
     defwndproc_counter++;
@@ -1961,6 +2175,7 @@ START_TEST(msg)
     test_messages();
     test_mdi_messages();
     test_button_messages();
+    test_paint_messages();
 
     UnhookWindowsHookEx(hCBT_hook);
 }
