@@ -944,7 +944,7 @@ typedef struct IExtractIcon_VTable
   /*** IExtractIcon methods ***/
   STDMETHOD(GetIconLocation)(THIS_ UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax,INT32 * piIndex, UINT32 * pwFlags) PURE;
   STDMETHOD(Extract)(THIS_ LPCSTR pszFile, UINT32 nIconIndex, HICON32 *phiconLarge, HICON32 *phiconSmall, UINT32 nIconSize) PURE;
-}IExtractIccon_VTable,*LPEXTRACTICON_VTABLE;
+}IExtractIcon_VTable,*LPEXTRACTICON_VTABLE;
 
 struct IExtractIcon 
 { LPEXTRACTICON_VTABLE lpvtbl;
