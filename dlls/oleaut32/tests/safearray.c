@@ -36,6 +36,12 @@
 #include "wtypes.h"
 #include "oleauto.h"
 
+static HRESULT (WINAPI *pSafeArrayAllocDescriptorEx)(VARTYPE,UINT,struct tagSAFEARRAY**)=NULL;
+static HRESULT (WINAPI *pSafeArrayCopyData)(struct tagSAFEARRAY*,struct tagSAFEARRAY*)=NULL;
+static HRESULT (WINAPI *pSafeArrayGetIID)(struct tagSAFEARRAY*,GUID*)=NULL;
+static HRESULT (WINAPI *pSafeArraySetIID)(struct tagSAFEARRAY*,REFGUID)=NULL;
+static HRESULT (WINAPI *pSafeArrayGetVartype)(struct tagSAFEARRAY*,VARTYPE*)=NULL;
+
 #define VARTYPE_NOT_SUPPORTED 0
 static struct {
 	VARTYPE vt;    /* VT */
@@ -89,6 +95,7 @@ static struct {
 
 START_TEST(safearray)
 {
+	HMODULE hdll;
 	SAFEARRAY 	*a, b, *c;
 	unsigned int 	i;
 	HRESULT 	hres;
@@ -97,6 +104,13 @@ START_TEST(safearray)
 	LPVOID		data;
 	IID		iid;
 	VARTYPE		vt;
+
+    hdll=LoadLibraryA("oleaut32.dll");
+    pSafeArrayAllocDescriptorEx=(void*)GetProcAddress(hdll,"SafeArrayAllocDescriptorEx");
+    pSafeArrayCopyData=(void*)GetProcAddress(hdll,"SafeArrayCopyData");
+    pSafeArrayGetIID=(void*)GetProcAddress(hdll,"SafeArrayGetIID");
+    pSafeArraySetIID=(void*)GetProcAddress(hdll,"SafeArraySetIID");
+    pSafeArrayGetVartype=(void*)GetProcAddress(hdll,"SafeArrayGetVartype");
 
 	hres = SafeArrayAllocDescriptor(0,&a);
 	ok(E_INVALIDARG == hres,"SAAD(0) failed with hres %lx",hres);
@@ -123,9 +137,7 @@ START_TEST(safearray)
 	hres=SafeArrayAllocDescriptor(65536,&a);
 	ok(E_INVALIDARG == hres,"SAAD(65536) failed with %lx",hres);
 
-	hres=SafeArrayAllocDescriptor(1,NULL);
-	ok(E_POINTER == hres,"SAAD(1,NULL) failed with %lx",hres);
-
+	/* Crashes on Win95: SafeArrayAllocDescriptor(xxx,NULL) */
 	
 	bound.cElements	= 1;
 	bound.lLbound	= 0;
@@ -138,20 +150,28 @@ START_TEST(safearray)
 			((a != NULL) && (vttypes[i].elemsize == a->cbElements)),
 		"SAC(%d,1,[1,0]), result %ld, expected %d",vttypes[i].vt,(a?a->cbElements:0),vttypes[i].elemsize
 		);
-		if (a!=NULL)
-			ok(a->fFeatures == (vttypes[i].expflags | vttypes[i].addflags),"SAC of %d returned feature flags %x, expected %x", vttypes[i].vt, a->fFeatures, vttypes[i].expflags|vttypes[i].addflags);
-		ok(SafeArrayGetElemsize(a) == vttypes[i].elemsize,"SAGE for vt %d returned elemsize %d instead of expected %d",vttypes[i].vt, SafeArrayGetElemsize(a),vttypes[i].elemsize);
+        if (a!=NULL) {
+			ok(a->fFeatures == (vttypes[i].expflags | vttypes[i].addflags),
+               "SAC of %d returned feature flags %x, expected %x",
+               vttypes[i].vt, a->fFeatures,
+               vttypes[i].expflags|vttypes[i].addflags);
+    		ok(SafeArrayGetElemsize(a) == vttypes[i].elemsize,
+               "SAGE for vt %d returned elemsize %d instead of expected %d",
+               vttypes[i].vt, SafeArrayGetElemsize(a),vttypes[i].elemsize);
+        }
 
 		if (!a) continue;
 
-		hres = SafeArrayGetVartype(a, &vt);
-		ok(hres == S_OK, "SAGVT of array with vt %d failed with %lx", vttypes[i].vt, hres);
-		if (vttypes[i].vt == VT_DISPATCH) {
-			/* Special case. Checked against Windows. */
-			ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d", vt);
-		} else {
-			ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d", vttypes[i].vt, vt);
-		}
+        if (pSafeArrayGetVartype) {
+            hres = pSafeArrayGetVartype(a, &vt);
+            ok(hres == S_OK, "SAGVT of arra y with vt %d failed with %lx", vttypes[i].vt, hres);
+            if (vttypes[i].vt == VT_DISPATCH) {
+        		/* Special case. Checked against Windows. */
+		        ok(vt == VT_UNKNOWN, "SAGVT of a        rray with VT_DISPATCH returned not VT_UNKNOWN, but %d", vt);
+            } else {
+		        ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d", vttypes[i].vt, vt);
+            }
+        }
 
 		hres = SafeArrayCopy(a, &c);
 		ok(hres == S_OK, "failed to copy safearray of vt %d with hres %lx", vttypes[i].vt, hres);
@@ -161,19 +181,24 @@ START_TEST(safearray)
 		ok(c->fFeatures == (vttypes[i].expflags | vttypes[i].addflags),"SAC of %d returned feature flags %x, expected %x", vttypes[i].vt, c->fFeatures, vttypes[i].expflags|vttypes[i].addflags);
 		ok(SafeArrayGetElemsize(c) == vttypes[i].elemsize,"SAGE for vt %d returned elemsize %d instead of expected %d",vttypes[i].vt, SafeArrayGetElemsize(c),vttypes[i].elemsize);
 
-		hres = SafeArrayGetVartype(c, &vt);
-		ok(hres == S_OK, "SAGVT of array with vt %d failed with %lx", vttypes[i].vt, hres);
-		if (vttypes[i].vt == VT_DISPATCH) {
-			/* Special case. Checked against Windows. */
-			ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d", vt);
-		} else {
-			ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d", vttypes[i].vt, vt);
-		}
-		hres = SafeArrayCopyData(a, c);
-		ok(hres == S_OK, "failed to copy safearray data of vt %d with hres %lx", vttypes[i].vt, hres);
+        if (pSafeArrayGetVartype) {
+            hres = pSafeArrayGetVartype(c, &vt);
+            ok(hres == S_OK, "SAGVT of array with vt %d failed with %lx", vttypes[i].vt, hres);
+            if (vttypes[i].vt == VT_DISPATCH) {
+                /* Special case. Checked against Windows. */
+                ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d", vt);
+            } else {
+                ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d", vttypes[i].vt, vt);
+            }
+        }
 
-		hres = SafeArrayDestroyData(c);
-		ok(hres == S_OK,"SADD of copy of array with vt %d failed with hres %lx", vttypes[i].vt, hres);
+        if (pSafeArrayCopyData) {
+            hres = pSafeArrayCopyData(a, c);
+            ok(hres == S_OK, "failed to copy safearray data of vt %d with hres %lx", vttypes[i].vt, hres);
+
+            hres = SafeArrayDestroyData(c);
+            ok(hres == S_OK,"SADD of copy of array with vt %d failed with hres %lx", vttypes[i].vt, hres);
+        }
 
 		hres = SafeArrayDestroy(a);
 		ok(hres == S_OK,"SAD of array with vt %d failed with hres %lx", vttypes[i].vt, hres);
@@ -225,22 +250,27 @@ START_TEST(safearray)
 
 	/* IID functions */
 	/* init a small stack safearray */
-	memset(&b, 0, sizeof(b));
-	b.cDims = 1;
-	memset(&iid, 0x42, sizeof(IID));
-	hres = SafeArraySetIID(&b,&iid);
-	ok(hres == E_INVALIDARG,"SafeArraySetIID of non IID capable safearray did not return E_INVALIDARG, but %lx",hres);
+    if (pSafeArraySetIID) {
+        memset(&b, 0, sizeof(b));
+        b.cDims = 1;
+        memset(&iid, 0x42, sizeof(IID));
+        hres = pSafeArraySetIID(&b,&iid);
+        ok(hres == E_INVALIDARG,"SafeArraySetIID of non IID capable safearray did not return E_INVALIDARG, but %lx",hres);
 
-	hres = SafeArrayAllocDescriptor(1,&a);
-	ok((a->fFeatures & FADF_HAVEIID) == 0,"newly allocated descriptor with SAAD should not have FADF_HAVEIID");
-	hres = SafeArraySetIID(a,&iid);
-	ok(hres == E_INVALIDARG,"SafeArraySetIID of newly allocated descriptor with SAAD should return E_INVALIDARG, but %lx",hres);
+        hres = SafeArrayAllocDescriptor(1,&a);
+        ok((a->fFeatures & FADF_HAVEIID) == 0,"newly allocated descriptor with SAAD should not have FADF_HAVEIID");
+        hres = pSafeArraySetIID(a,&iid);
+        ok(hres == E_INVALIDARG,"SafeArraySetIID of newly allocated descriptor with SAAD should return E_INVALIDARG, but %lx",hres);
+    }
+
+    if (!pSafeArrayAllocDescriptorEx)
+        return;
 
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
-		hres = SafeArrayAllocDescriptorEx(vttypes[i].vt,1,&a);
+		hres = pSafeArrayAllocDescriptorEx(vttypes[i].vt,1,&a);
 		ok(a->fFeatures == vttypes[i].expflags,"SAADE(%d) resulted with flags %x, expected %x\n", vttypes[i].vt, a->fFeatures, vttypes[i].expflags);
 		if (a->fFeatures & FADF_HAVEIID) {
-			hres = SafeArrayGetIID(a, &iid);
+			hres = pSafeArrayGetIID(a, &iid);
 			ok(hres == S_OK,"SAGIID failed for vt %d with hres %lx", vttypes[i].vt,hres);
 			switch (vttypes[i].vt) {
 			case VT_UNKNOWN:
@@ -256,7 +286,7 @@ START_TEST(safearray)
 				break;
 			}
 		} else {
-			hres = SafeArrayGetIID(a, &iid);
+			hres = pSafeArrayGetIID(a, &iid);
 			ok(hres == E_INVALIDARG,"SAGIID did not fail for vt %d with hres %lx", vttypes[i].vt,hres);
 		}
 		if (a->fFeatures & FADF_RECORD) {
@@ -266,7 +296,7 @@ START_TEST(safearray)
 			ok(vttypes[i].vt == ((DWORD*)a)[-1], "FADF_HAVEVARTYPE set, but vt %d mismatch stored %ld",vttypes[i].vt,((DWORD*)a)[-1]);
 		}
 
-		hres = SafeArrayGetVartype(a, &vt);
+		hres = pSafeArrayGetVartype(a, &vt);
 		ok(hres == S_OK, "SAGVT of array with vt %d failed with %lx", vttypes[i].vt, hres);
 
 		if (vttypes[i].vt == VT_DISPATCH) {
@@ -277,13 +307,13 @@ START_TEST(safearray)
 		}
 
 		if (a->fFeatures & FADF_HAVEIID) {
-			hres = SafeArraySetIID(a, &IID_IStorage); /* random IID */
+			hres = pSafeArraySetIID(a, &IID_IStorage); /* random IID */
 			ok(hres == S_OK,"SASIID failed with FADF_HAVEIID set for vt %d with %lx", vttypes[i].vt, hres);
-			hres = SafeArrayGetIID(a, &iid);
+			hres = pSafeArrayGetIID(a, &iid);
 			ok(hres == S_OK,"SAGIID failed with FADF_HAVEIID set for vt %d with %lx", vttypes[i].vt, hres);
 			ok(IsEqualGUID(&iid, &IID_IStorage),"returned iid is not IID_IStorage");
 		} else {
-			hres = SafeArraySetIID(a, &IID_IStorage); /* random IID */
+			hres = pSafeArraySetIID(a, &IID_IStorage); /* random IID */
 			ok(hres == E_INVALIDARG,"SASIID did not failed with !FADF_HAVEIID set for vt %d with %lx", vttypes[i].vt, hres);
 		}
 		hres = SafeArrayDestroyDescriptor(a);

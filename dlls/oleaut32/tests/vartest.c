@@ -75,6 +75,30 @@
 #include "oleauto.h"
 
 
+static HRESULT (WINAPI *pVarBstrFromI1)(CHAR,LCID,ULONG,BSTR*)=NULL;
+
+static HRESULT (WINAPI *pVarI1FromBool)(VARIANT_BOOL,CHAR*)=NULL;
+static HRESULT (WINAPI *pVarI1FromDate)(DATE,CHAR*)=NULL;
+static HRESULT (WINAPI *pVarI1FromI4)(LONG,CHAR*)=NULL;
+static HRESULT (WINAPI *pVarI1FromR8)(double,CHAR*)=NULL;
+static HRESULT (WINAPI *pVarI1FromStr)(OLECHAR*,LCID,ULONG,CHAR*);
+static HRESULT (WINAPI *pVarI1FromUI1)(BYTE,CHAR*)=NULL;
+
+static HRESULT (WINAPI *pVarI2FromUI2)(USHORT,short*)=NULL;
+
+static HRESULT (WINAPI *pVarUI2FromBool)(VARIANT_BOOL,USHORT*)=NULL;
+static HRESULT (WINAPI *pVarUI2FromDate)(DATE,USHORT*)=NULL;
+static HRESULT (WINAPI *pVarUI2FromI2)(short,USHORT*)=NULL;
+static HRESULT (WINAPI *pVarUI2FromI4)(LONG,USHORT*);
+static HRESULT (WINAPI *pVarUI2FromR8)(double,USHORT*)=NULL;
+static HRESULT (WINAPI *pVarUI2FromStr)(OLECHAR*,LCID,ULONG,USHORT*)=NULL;
+
+static HRESULT (WINAPI *pVarUI4FromBool)(VARIANT_BOOL,ULONG*)=NULL;
+static HRESULT (WINAPI *pVarUI4FromDate)(DATE,ULONG*)=NULL;
+static HRESULT (WINAPI *pVarUI4FromI2)(short,ULONG*)=NULL;
+static HRESULT (WINAPI *pVarUI4FromR8)(double,ULONG*)=NULL;
+static HRESULT (WINAPI *pVarUI4FromStr)(OLECHAR*,LCID,ULONG,ULONG*)=NULL;
+
 #define MAX_BUFFER  1024
 
 static char* WtoA( OLECHAR* p )
@@ -1662,6 +1686,7 @@ static const struct _strret_U4 {
 
 START_TEST(vartest)
 {
+	HMODULE hdll;
 	VARIANTARG va;
 	VARIANTARG vb;
 	VARIANTARG vc;
@@ -1700,7 +1725,28 @@ START_TEST(vartest)
 
 	/* Start testing the Low-Level API ( the coercions )
 	 */
+    hdll=LoadLibraryA("netapi32.dll");
+    pVarI1FromBool=(void*)GetProcAddress(hdll,"VarI1FromBool");
+    pVarI1FromDate=(void*)GetProcAddress(hdll,"VarI1FromDate");
+    pVarI1FromI4=(void*)GetProcAddress(hdll,"VarI1FromI4");
+    pVarI1FromR8=(void*)GetProcAddress(hdll,"VarI1FromR8");
+    pVarI1FromStr=(void*)GetProcAddress(hdll,"VarI1FromStr");
+    pVarI1FromUI1=(void*)GetProcAddress(hdll,"VarI1FromUI1");
 
+    pVarI2FromUI2=(void*)GetProcAddress(hdll,"VarI2FromUI2");
+
+    pVarUI2FromBool=(void*)GetProcAddress(hdll,"VarUI2FromBool");
+    pVarUI2FromDate=(void*)GetProcAddress(hdll,"VarUI2FromDate");
+    pVarUI2FromI2=(void*)GetProcAddress(hdll,"VarUI2FromI2");
+    pVarUI2FromI4=(void*)GetProcAddress(hdll,"VarUI2FromI4");
+    pVarUI2FromR8=(void*)GetProcAddress(hdll,"VarUI2FromR8");
+    pVarUI2FromStr=(void*)GetProcAddress(hdll,"VarUI2FromStr");
+
+    pVarUI4FromBool=(void*)GetProcAddress(hdll,"VarUI4FromBool");
+    pVarUI4FromDate=(void*)GetProcAddress(hdll,"VarUI4FromDate");
+    pVarUI4FromI2=(void*)GetProcAddress(hdll,"VarUI4FromI2");
+    pVarUI4FromR8=(void*)GetProcAddress(hdll,"VarUI4FromR8");
+    pVarUI4FromStr=(void*)GetProcAddress(hdll,"VarUI4FromStr");
 
 	/* unsigned char from...
 	 */
@@ -1708,9 +1754,7 @@ START_TEST(vartest)
 
 #define XOK "should return S_OK"
 #define XOV "should return DISP_E_OVERFLOW"
-	/* ok(S_OK == VarUI1FromI2( 0, NULL ), XOK);
-	 */
-	trace( "VarUI1FromI2: passing in NULL as return val makes it crash, need to write proper test.\n" );
+	/* Crashes on Win95: VarUI1FromI2( 0, NULL ) */
 
 	ok(VarUI1FromStr(NULL,0,0,pByte) == DISP_E_TYPEMISMATCH,"should return DISP_E_TYPEMISMATCH");
 	ok(S_OK == VarUI1FromI2( 0, pByte ), XOK);
@@ -1796,68 +1840,78 @@ START_TEST(vartest)
 	/* unsigned short from ... */
 	trace( "\n\n======== Testing VarUI2FromXXX ========\n");
 
-	ok(DISP_E_OVERFLOW == VarUI2FromI2( -1, pUShort ), XOV);
-	/* ok(S_OK == VarUI2FromI2( 0, NULL ), XOK);
-	 */
-	trace("VarUI2FromI2: passing in NULL as return val makes it crash, needs to be fixed.\n");
+    if (pVarUI2FromI2) {
+        ok(DISP_E_OVERFLOW == pVarUI2FromI2( -1, pUShort ), XOV);
+        ok(S_OK == pVarUI2FromI2( 0, NULL ), XOK);
 
-	ok(DISP_E_TYPEMISMATCH == VarUI2FromStr( NULL, 0, 0, pUShort ), "should return DISP_E_TYPEMISMATCH");
+        ok(S_OK == pVarUI2FromI2( 0, pUShort ), XOK);
+        ok(*pUShort == 0,"0 should be 0");
+        ok(S_OK == pVarUI2FromI2( 69, pUShort ), XOK);
+        ok(*pUShort == 69,"69 should be 69");
+        ok(S_OK == pVarUI2FromI2( 70, pUShort ), XOK);
+        ok(*pUShort == 70,"70 should be 70");
 
-	ok(S_OK == VarUI2FromI2( 0, pUShort ), XOK);
-	ok(*pUShort == 0,"0 should be 0");
-	ok(S_OK == VarUI2FromI2( 69, pUShort ), XOK);
-	ok(*pUShort == 69,"69 should be 69");
-	ok(S_OK == VarUI2FromI2( 70, pUShort ), XOK);
-	ok(*pUShort == 70,"70 should be 70");
+        ok(S_OK == pVarUI2FromI2( 128, pUShort ), XOK);
+        ok(*pUShort == 128,"128 should be 128");
+    }
 
-	ok(S_OK == VarUI2FromI2( 128, pUShort ), XOK);
-	ok(*pUShort == 128,"128 should be 128");
+    if (pVarUI2FromI4) {
+        ok(S_OK == pVarUI2FromI4( 65535, pUShort ), XOK);
+        ok(*pUShort == 65535,"65535 should be 65535");
+        ok(DISP_E_OVERFLOW == pVarUI2FromI4( 65536, pUShort ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI2FromI4( 65537, pUShort ), XOV);
+    }
 
-	ok(S_OK == VarUI2FromI4( 65535, pUShort ), XOK);
-	ok(*pUShort == 65535,"65535 should be 65535");
-	ok(DISP_E_OVERFLOW == VarUI2FromI4( 65536, pUShort ), XOV);
-	ok(DISP_E_OVERFLOW == VarUI2FromI4( 65537, pUShort ), XOV);
-	ok(S_OK == VarUI2FromR8( 0.0, pUShort ), XOK);
-	ok(*pUShort == 0,"0.0 should be 0");
-	ok(S_OK == VarUI2FromR8( 69.33, pUShort ), XOK);
-	ok(*pUShort == 69,"69.33 should be 69");
-	ok(S_OK == VarUI2FromR8( 69.66, pUShort ), XOK);
-	ok(*pUShort == 70,"69.66 should be 70");
+    if (pVarUI2FromR8) {
+        ok(S_OK == pVarUI2FromR8( 0.0, pUShort ), XOK);
+        ok(*pUShort == 0,"0.0 should be 0");
+        ok(S_OK == pVarUI2FromR8( 69.33, pUShort ), XOK);
+        ok(*pUShort == 69,"69.33 should be 69");
+        ok(S_OK == pVarUI2FromR8( 69.66, pUShort ), XOK);
+        ok(*pUShort == 70,"69.66 should be 70");
 
-	ok(DISP_E_OVERFLOW == VarUI2FromR8( -69.33, pUShort ), XOV);
-	ok(DISP_E_OVERFLOW == VarUI2FromR8( -69.66, pUShort ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI2FromR8( -69.33, pUShort ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI2FromR8( -69.66, pUShort ), XOV);
 
-	ok(S_OK == VarUI2FromR8( -0.5, pUShort ), XOK);
-	ok(*pUShort == 0, "-0.5 -> 0");
-	ok(DISP_E_OVERFLOW == VarUI2FromR8( -0.51, pUShort ), XOV);
-	ok(S_OK == VarUI2FromR8( -0.49, pUShort ), XOK);
-	ok(*pUShort == 0, "-0.49 -> 0");
+        ok(S_OK == pVarUI2FromR8( -0.5, pUShort ), XOK);
+        ok(*pUShort == 0, "-0.5 -> 0");
+        ok(DISP_E_OVERFLOW == pVarUI2FromR8( -0.51, pUShort ), XOV);
+        ok(S_OK == pVarUI2FromR8( -0.49, pUShort ), XOK);
+        ok(*pUShort == 0, "-0.49 -> 0");
 
-	ok(S_OK == VarUI2FromR8( 0.5, pUShort ), XOK);
-	ok(*pUShort == 0,"0.5 should be 0");
-	ok(S_OK == VarUI2FromR8( 0.51, pUShort ), XOK);
-	ok(*pUShort == 1,"0.51 should be 1");
-	ok(S_OK == VarUI2FromR8( 0.49, pUShort ), XOK);
-	ok(*pUShort == 0,"0.49 should be 0");
+        ok(S_OK == pVarUI2FromR8( 0.5, pUShort ), XOK);
+        ok(*pUShort == 0,"0.5 should be 0");
+        ok(S_OK == pVarUI2FromR8( 0.51, pUShort ), XOK);
+        ok(*pUShort == 1,"0.51 should be 1");
+        ok(S_OK == pVarUI2FromR8( 0.49, pUShort ), XOK);
+        ok(*pUShort == 0,"0.49 should be 0");
+    }
 
-	ok(S_OK == VarUI2FromDate( 0.0, pUShort ), XOK);
-	ok(*pUShort == 0,"0.0 should be 0");
-	ok(S_OK == VarUI2FromDate( 69.33, pUShort ), XOK);
-	ok(*pUShort == 69,"69.33 should be 69");
-	ok(S_OK == VarUI2FromDate( 69.66, pUShort ), XOK);
-	ok(*pUShort == 70,"69.66 should be 70");
-	ok(DISP_E_OVERFLOW == VarUI2FromDate( -69.33, pUShort ), XOV);
-	ok(DISP_E_OVERFLOW == VarUI2FromDate( -69.66, pUShort ), XOV);
+    if (pVarUI2FromDate) {
+        ok(S_OK == pVarUI2FromDate( 0.0, pUShort ), XOK);
+        ok(*pUShort == 0,"0.0 should be 0");
+        ok(S_OK == pVarUI2FromDate( 69.33, pUShort ), XOK);
+        ok(*pUShort == 69,"69.33 should be 69");
+        ok(S_OK == pVarUI2FromDate( 69.66, pUShort ), XOK);
+        ok(*pUShort == 70,"69.66 should be 70");
+        ok(DISP_E_OVERFLOW == pVarUI2FromDate( -69.33, pUShort ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI2FromDate( -69.66, pUShort ), XOV);
+    }
 
-	ok(S_OK == VarUI2FromBool( VARIANT_TRUE, pUShort ), XOK);
-	ok(*pUShort == 65535,"TRUE should be 65535");
-	ok(S_OK == VarUI2FromBool( VARIANT_FALSE, pUShort ), XOK);
-	ok(*pUShort == 0,"FALSE should be 0");
+    if (pVarUI2FromBool) {
+        ok(S_OK == pVarUI2FromBool( VARIANT_TRUE, pUShort ), XOK);
+        ok(*pUShort == 65535,"TRUE should be 65535");
+        ok(S_OK == pVarUI2FromBool( VARIANT_FALSE, pUShort ), XOK);
+        ok(*pUShort == 0,"FALSE should be 0");
+    }
 
-	for (i = 0; i < NB_OLE_STRINGS; i++)
-	{
+    if (pVarUI2FromStr) {
+        ok(DISP_E_TYPEMISMATCH == pVarUI2FromStr( NULL, 0, 0, pUShort ), "should return DISP_E_TYPEMISMATCH");
+
+        for (i = 0; i < NB_OLE_STRINGS; i++)
+        {
             *pUShort=42;
-            rc=VarUI2FromStr( pOleChar[i], 0, 0, pUShort );
+            rc=pVarUI2FromStr( pOleChar[i], 0, 0, pUShort );
             ok(rc == strrets_U2[i].error,
                "VarUI2FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_U2[i].error);
@@ -1866,76 +1920,84 @@ START_TEST(vartest)
                    "VarUI2FromStr([%d]=\"%s\") got %u instead of %u",
                    i,_pTestStrA[i],*pUShort,strrets_U2[i].retval);
             }
-	}
+        }
+    }
 
 	/* unsigned long from ...
 	 */
 	trace( "\n\n======== Testing VarUI4FromXXX ========\n");
-	/*ok(S_OK == VarUI4FromI2( 0, NULL ), XOK);
-	 */
-	trace( "VarUI4FromI2: passing in NULL as return val makes it crash, implement me.\n");
 
-	ok(DISP_E_TYPEMISMATCH == VarUI4FromStr( NULL, 0, 0, pULong ), "should erturn DISP_E_TYPEMISMATCH");
+    if (pVarUI4FromI2) {
+        ok(S_OK == pVarUI4FromI2( 0, NULL ), XOK);
 
-	ok(S_OK == VarUI4FromI2( 0, pULong ), XOK);
-	ok(*pULong == 0,"0 should be 0");
-	ok(S_OK == VarUI4FromI2( 69, pULong ), XOK);
-	ok(*pULong == 69,"69 should be 69");
+        ok(S_OK == pVarUI4FromI2( 0, pULong ), XOK);
+        ok(*pULong == 0,"0 should be 0");
+        ok(S_OK == pVarUI4FromI2( 69, pULong ), XOK);
+        ok(*pULong == 69,"69 should be 69");
 
-	ok(S_OK == VarUI4FromI2( 70, pULong ), XOK);
-	ok(*pULong == 70,"70 should be 70");
+        ok(S_OK == pVarUI4FromI2( 70, pULong ), XOK);
+        ok(*pULong == 70,"70 should be 70");
 
-	ok(S_OK == VarUI4FromI2( 128, pULong ), XOK);
-	ok(*pULong == 128,"128 should be 128");
-	ok(S_OK == VarUI4FromI2( 255, pULong ), XOK);
-	ok(*pULong == 255,"255 should be 255");
+        ok(S_OK == pVarUI4FromI2( 128, pULong ), XOK);
+        ok(*pULong == 128,"128 should be 128");
+        ok(S_OK == pVarUI4FromI2( 255, pULong ), XOK);
+        ok(*pULong == 255,"255 should be 255");
+    }
 
-	ok(S_OK == VarUI4FromR8( 4294967295.0, pULong ), XOK);
-	ok(*pULong == 4294967295U,"4294967295.0 should be 4294967295");
-	ok(DISP_E_OVERFLOW == VarUI4FromR8( 4294967296.0, pULong ), XOV);
+    if (pVarUI4FromR8) {
+        ok(S_OK == pVarUI4FromR8( 4294967295.0, pULong ), XOK);
+        ok(*pULong == 4294967295U,"4294967295.0 should be 4294967295");
+        ok(DISP_E_OVERFLOW == pVarUI4FromR8( 4294967296.0, pULong ), XOV);
 
-	ok(S_OK == VarUI4FromR8( 0.0, pULong ), XOK);
-	ok(*pULong == 0,"0 should be 0");
-	ok(S_OK == VarUI4FromR8( 69.33, pULong ), XOK);
-	ok(*pULong == 69,"69.33 should be 69");
-	ok(S_OK == VarUI4FromR8( 69.66, pULong ), XOK);
-	ok(*pULong == 70,"69.66 should be 70");
-	ok(DISP_E_OVERFLOW == VarUI4FromR8( -69.33, pULong ), XOV);
-	ok(DISP_E_OVERFLOW == VarUI4FromR8( -69.66, pULong ), XOV);
+        ok(S_OK == pVarUI4FromR8( 0.0, pULong ), XOK);
+        ok(*pULong == 0,"0 should be 0");
+        ok(S_OK == pVarUI4FromR8( 69.33, pULong ), XOK);
+        ok(*pULong == 69,"69.33 should be 69");
+        ok(S_OK == pVarUI4FromR8( 69.66, pULong ), XOK);
+        ok(*pULong == 70,"69.66 should be 70");
+        ok(DISP_E_OVERFLOW == pVarUI4FromR8( -69.33, pULong ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI4FromR8( -69.66, pULong ), XOV);
 
-	ok(S_OK == VarUI4FromR8( -0.5, pULong ), XOK);
-	ok(*pULong == 0,"-0.5 should be 0");
+        ok(S_OK == pVarUI4FromR8( -0.5, pULong ), XOK);
+        ok(*pULong == 0,"-0.5 should be 0");
 
-	ok(DISP_E_OVERFLOW == VarUI4FromR8( -0.51, pULong ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI4FromR8( -0.51, pULong ), XOV);
 
-	ok(S_OK == VarUI4FromR8( -0.49, pULong ), XOK);
-	ok(*pULong == 0,"-0.49 should be 0");
+        ok(S_OK == pVarUI4FromR8( -0.49, pULong ), XOK);
+        ok(*pULong == 0,"-0.49 should be 0");
 
-	ok(S_OK == VarUI4FromR8( 0.5, pULong ), XOK);
-	ok(*pULong == 0,"0.5 should be 0");
-	ok(S_OK == VarUI4FromR8( 0.51, pULong ), XOK);
-	ok(*pULong == 1,"0.51 should be 1");
-	ok(S_OK == VarUI4FromR8( 0.49, pULong ), XOK);
-	ok(*pULong == 0,"0.49 should be 0");
+        ok(S_OK == pVarUI4FromR8( 0.5, pULong ), XOK);
+        ok(*pULong == 0,"0.5 should be 0");
+        ok(S_OK == pVarUI4FromR8( 0.51, pULong ), XOK);
+        ok(*pULong == 1,"0.51 should be 1");
+        ok(S_OK == pVarUI4FromR8( 0.49, pULong ), XOK);
+        ok(*pULong == 0,"0.49 should be 0");
+    }
 
-	ok(S_OK == VarUI4FromDate( 0.0, pULong ), XOK);
-	ok(*pULong == 0,"0.0 should be 0");
-	ok(S_OK == VarUI4FromDate( 69.33, pULong ), XOK);
-	ok(*pULong == 69,"69.33 should be 69");
-	ok(S_OK == VarUI4FromDate( 69.66, pULong ), XOK);
-	ok(*pULong == 70,"69.66 should be 70");
-	ok(DISP_E_OVERFLOW == VarUI4FromDate( -69.33, pULong ), XOV);
-	ok(DISP_E_OVERFLOW == VarUI4FromDate( -69.66, pULong ), XOV);
+    if (pVarUI4FromDate) {
+        ok(S_OK == pVarUI4FromDate( 0.0, pULong ), XOK);
+        ok(*pULong == 0,"0.0 should be 0");
+        ok(S_OK == pVarUI4FromDate( 69.33, pULong ), XOK);
+        ok(*pULong == 69,"69.33 should be 69");
+        ok(S_OK == pVarUI4FromDate( 69.66, pULong ), XOK);
+        ok(*pULong == 70,"69.66 should be 70");
+        ok(DISP_E_OVERFLOW == pVarUI4FromDate( -69.33, pULong ), XOV);
+        ok(DISP_E_OVERFLOW == pVarUI4FromDate( -69.66, pULong ), XOV);
+    }
 
-	ok(S_OK == VarUI4FromBool( VARIANT_TRUE, pULong ), XOK);
-	ok(*pULong == 4294967295U, "TRUE should be 4294967295");
-	ok(S_OK == VarUI4FromBool( VARIANT_FALSE, pULong ), XOK);
-	ok(*pULong == 0, "FALSE should be 0");
+    if (pVarUI4FromBool) {
+        ok(S_OK == pVarUI4FromBool( VARIANT_TRUE, pULong ), XOK);
+        ok(*pULong == 4294967295U, "TRUE should be 4294967295");
+        ok(S_OK == pVarUI4FromBool( VARIANT_FALSE, pULong ), XOK);
+        ok(*pULong == 0, "FALSE should be 0");
+    }
 
-	for (i = 0; i < NB_OLE_STRINGS; i++)
-	{
+    if (pVarUI4FromStr) {
+        ok(DISP_E_TYPEMISMATCH == pVarUI4FromStr( NULL, 0, 0, pULong ), "should erturn DISP_E_TYPEMISMATCH");
+        for (i = 0; i < NB_OLE_STRINGS; i++)
+        {
             *pULong=42;
-            rc=VarUI4FromStr( pOleChar[i], 0, 0, pULong );
+            rc=pVarUI4FromStr( pOleChar[i], 0, 0, pULong );
             ok(rc == strrets_U4[i].error,
                "VarUI4FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_U4[i].error);
@@ -1944,51 +2006,64 @@ START_TEST(vartest)
                    "VarUI4FromStr([%d]=\"%s\") got %lu instead of %lu",
                    i,_pTestStrA[i],*pULong,strrets_U4[i].retval);
             }
-	}
+        }
+    }
 
 	/* CHAR from ...
 	 */
 	trace( "\n\n======== Testing VarI1FromXXX ========\n");
 
-	ok(S_OK == VarI1FromBool( VARIANT_TRUE, pByte ), XOK);
-	ok(*pByte == 255, " TRUE should be 255");
+    if (pVarI1FromBool) {
+        ok(S_OK == pVarI1FromBool( VARIANT_TRUE, pByte ), XOK);
+        ok(*pByte == 0xff,"true should be 0xff");
 
-	ok(S_OK == VarI1FromBool( VARIANT_TRUE, pChar ), XOK);
-	ok(*pChar == -1, "TRUE should be -1");
+        ok(S_OK == pVarI1FromBool( VARIANT_TRUE, pChar ), XOK);
+        ok(*pChar == -1, "TRUE should be -1");
 
-	ok(S_OK == VarI1FromBool( VARIANT_FALSE, pChar ), XOK);
-	ok(*pChar == 0, "FALSE should be 0");
+        ok(S_OK == pVarI1FromBool( VARIANT_FALSE, pChar ), XOK);
+        ok(*pChar == 0, "FALSE should be 0");
+    }
 
-	ok(DISP_E_OVERFLOW == VarI1FromUI1( (unsigned char)32767, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
-	ok(DISP_E_OVERFLOW == VarI1FromUI1( (unsigned char)65535, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
+    if (pVarI1FromUI1) {
+        ok(DISP_E_OVERFLOW == pVarI1FromUI1( (unsigned char)32767, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+        ok(DISP_E_OVERFLOW == pVarI1FromUI1( (unsigned char)65535, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+    }
 
-	ok(DISP_E_OVERFLOW == VarI1FromI4( 32767, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
-	ok(DISP_E_OVERFLOW == VarI1FromI4( 32768, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
-	ok(DISP_E_OVERFLOW == VarI1FromI4( -32768, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
-	ok(DISP_E_OVERFLOW == VarI1FromI4( -32769, pChar ), XOV);
-	ok(*pChar == 0, "should still be 0");
+    if (pVarI1FromI4) {
+        ok(DISP_E_OVERFLOW == pVarI1FromI4( 32767, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+        ok(DISP_E_OVERFLOW == pVarI1FromI4( 32768, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+        ok(DISP_E_OVERFLOW == pVarI1FromI4( -32768, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+        ok(DISP_E_OVERFLOW == pVarI1FromI4( -32769, pChar ), XOV);
+        ok(*pChar == 0, "should still be 0");
+    }
 
-	ok(S_OK == VarI1FromR8( 69.33, pChar ), XOK);
-	ok(*pChar == 69, "69.33 should be 69");
-	ok(S_OK == VarI1FromR8( 69.66, pChar ), XOK);
-	ok(*pChar == 70, "69.66 should be 70");
+    if (pVarI1FromR8) {
+        ok(S_OK == pVarI1FromR8( 69.33, pChar ), XOK);
+        ok(*pChar == 69, "69.33 should be 69");
+        ok(S_OK == pVarI1FromR8( 69.66, pChar ), XOK);
+        ok(*pChar == 70, "69.66 should be 70");
 
-	ok(S_OK == VarI1FromR8( -69.33, pChar ), XOK);
-	ok(*pChar == -69, "-69.33 should be -69");
-	ok(S_OK == VarI1FromR8( -69.66, pChar ), XOK);
-	ok(*pChar == -70, "-69.66 should be -70");
-	ok(S_OK == VarI1FromDate( -69.66, pChar ), XOK);
-	ok(*pChar == -70, "-69.66 should be -70");
+        ok(S_OK == pVarI1FromR8( -69.33, pChar ), XOK);
+        ok(*pChar == -69, "-69.33 should be -69");
+        ok(S_OK == pVarI1FromR8( -69.66, pChar ), XOK);
+        ok(*pChar == -70, "-69.66 should be -70");
+    }
 
-	for (i = 0; i < NB_OLE_STRINGS; i++)
-	{
+    if (pVarI1FromDate) {
+        ok(S_OK == pVarI1FromDate( -69.66, pChar ), XOK);
+        ok(*pChar == -70, "-69.66 should be -70");
+    }
+
+    if (pVarI1FromStr) {
+        for (i = 0; i < NB_OLE_STRINGS; i++)
+        {
             *pChar=42;
-            rc=VarI1FromStr( pOleChar[i], 0, 0, pChar );
+            rc=pVarI1FromStr( pOleChar[i], 0, 0, pChar );
             ok(rc == strrets_I1[i].error,
                "VarI1FromStr([%d]=\"%s\") rc=%lx instead of %lx",
                i,_pTestStrA[i],rc,strrets_I1[i].error);
@@ -1997,16 +2072,19 @@ START_TEST(vartest)
                    "VarI1FromStr([%d]=\"%s\") got %d instead of %d",
                    i,_pTestStrA[i],*pChar,strrets_I1[i].retval);
             }
-	}
+        }
+    }
 
 	/* short from ...
 	 */
 	trace( "\n\n======== Testing VarI2FromXXX ========\n");
 
-	ok(S_OK == VarI2FromUI2( 32767, pShort ), XOK);
-	ok(*pShort == 32767, "should be 32767");
-	ok(DISP_E_OVERFLOW == VarI2FromUI2( 65535, pShort ), XOV);
-	ok(*pShort == 32767, "pShort should be unchanged");
+    if (pVarI2FromUI2) {
+        ok(S_OK == pVarI2FromUI2( 32767, pShort ), XOK);
+        ok(*pShort == 32767, "should be 32767");
+        ok(DISP_E_OVERFLOW == pVarI2FromUI2( 65535, pShort ), XOV);
+        ok(*pShort == 32767, "pShort should be unchanged");
+    }
 
 	ok(S_OK == VarI2FromI4( 32767, pShort ), XOK);
 	ok(*pShort == 32767, "should be 32767");
@@ -2274,18 +2352,16 @@ START_TEST(vartest)
             }
 	}
 
-	ok(S_OK == VarI1FromBool( VARIANT_TRUE, pByte ), XOK);
-	ok(*pByte == 0xff,"true should be 0xff");
-	ok(DISP_E_OVERFLOW == VarUI2FromI2( -1, pUShort ), XOV);
-
 	/* BSTR from ...
 	 */
 	trace( "\n\n======== Testing VarBSTRFromXXX ========\n");
 
 	/* integers...
 	 */
-	ok(S_OK == VarBstrFromI1( -100, 0, 0, &bstr ), XOK);
-	ok(!strcmp(WtoA(bstr),"\"-100\""),"should be string -100");
+    if (pVarBstrFromI1) {
+        ok(S_OK == pVarBstrFromI1( -100, 0, 0, &bstr ), XOK);
+        ok(!strcmp(WtoA(bstr),"\"-100\""),"should be string -100");
+    }
 
 	ok(S_OK == VarBstrFromUI1( 0x5A, 0, 0, &bstr ), XOK);
 	ok(!strcmp(WtoA(bstr),"\"90\""),"should be string 90");
