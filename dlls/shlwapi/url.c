@@ -1172,10 +1172,10 @@ HRESULT WINAPI UrlUnescapeW(
 	} else if(*src == L'%' && isxdigitW(*(src + 1)) && isxdigitW(*(src + 2))
 		  && stop_unescaping == FALSE) {
 	    INT ih;
-	    WCHAR buf[3];
-	    memcpy(buf, src + 1, 2*sizeof(WCHAR));
-	    buf[2] = L'\0';
-	    ih = StrToIntW(buf);
+	    WCHAR buf[5] = {'0','x',0};
+	    memcpy(buf + 2, src + 1, 2*sizeof(WCHAR));
+	    buf[4] = 0;
+	    StrToIntExW(buf, STIF_SUPPORT_HEX, &ih);
 	    next = (WCHAR) ih;
 	    src += 2; /* Advance to end of escape */
 	} else
