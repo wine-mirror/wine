@@ -138,7 +138,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tDLLNAME tDOUBLE tDUAL
 %token tENDPOINT
 %token tENTRY tENUM tERRORSTATUST
-%token tEXTERN
+%token tEXPLICITHANDLE tEXTERN
 %token tFLOAT
 %token tHANDLE
 %token tHANDLET
@@ -147,6 +147,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tHIDDEN
 %token tHYPER tID tIDEMPOTENT
 %token tIIDIS
+%token tIMPLICITHANDLE
 %token tIMPORT tIMPORTLIB
 %token tIN tINCLUDE tINLINE
 %token tINPUTSYNC
@@ -224,7 +225,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 
 %%
 
-input:	  gbl_statements			{ write_proxies($1); }
+input:   gbl_statements                        { write_proxies($1); write_client($1); write_server($1); }
 	;
 
 gbl_statements:					{ $$ = NULL; }
@@ -333,6 +334,7 @@ attrib_list: attribute
 
 attribute:
 	  tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
+	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
 	| tCASE '(' expr_list_const ')'		{ $$ = make_attrp(ATTR_CASE, $3); }
 	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
@@ -347,6 +349,7 @@ attribute:
 	| tENDPOINT '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
 	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
+	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
 	| tHELPCONTEXT '(' expr_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
 	| tHELPFILE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPFILE, $3); }
@@ -357,6 +360,7 @@ attribute:
 	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
+	| tIMPLICITHANDLE '(' tHANDLET aIDENTIFIER ')'	{ $$ = make_attrp(ATTR_IMPLICIT_HANDLE, $4); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
@@ -490,7 +494,8 @@ expr_list_const: expr_const
 	;
 
 expr_const: expr				{ $$ = $1;
-						  if (!$$->is_const) yyerror("expression is not constant\n");
+						  if (!$$->is_const)
+						      yyerror("expression is not constant\n");
 						}
 	;
 

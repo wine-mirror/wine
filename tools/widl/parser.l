@@ -218,7 +218,7 @@ static struct keyword {
 	{"entry",			tENTRY},
 	{"enum",			tENUM},
 	{"error_status_t",		tERRORSTATUST},
-/* ... */
+	{"explicit_handle",		tEXPLICITHANDLE},
 	{"extern",			tEXTERN},
 /* ... */
 	{"float",			tFLOAT},
@@ -239,6 +239,7 @@ static struct keyword {
 /* ... */
 	{"iid_is",			tIIDIS},
 /* ... */
+	{"implicit_handle",		tIMPLICITHANDLE},
 	{"import",			tIMPORT},
 	{"importlib",			tIMPORTLIB},
 	{"in",				tIN},
