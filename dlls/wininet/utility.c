@@ -113,9 +113,28 @@ time_t ConvertTimeString(LPCSTR asctime)
 BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa)
 {
+    char *found;
+
     TRACE("%s\n", lpszServerName);
 
-    *phe = gethostbyname(lpszServerName);
+    /* Validate server name first
+     * Check if there is sth. like
+     * pinger.macromedia.com:80
+     * if yes, eliminate the :80....
+     */
+    found = strchr(lpszServerName, ':');
+    if (found)
+    {
+        int len = found - lpszServerName;
+        char *new = HeapAlloc(GetProcessHeap(), 0, len + 1);
+        memcpy( new, lpszServerName, len );
+        new[len] = '\0';
+        TRACE("Found a ':' inside the server name, reparsed name: %s\n", new);
+        *phe = gethostbyname(new);
+        HeapFree( GetProcessHeap(), 0, new );
+    }
+    else *phe = gethostbyname(lpszServerName);
+
     if (NULL == *phe)
     {
         TRACE("Failed to get hostname: (%s)\n", lpszServerName);

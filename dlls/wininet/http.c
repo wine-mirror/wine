@@ -605,6 +605,15 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     if (NULL == lpwhr->lpszPath)
         lpwhr->lpszPath = HTTP_strdup("/");
 
+    if(lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
+    {
+        char *fixurl = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszPath) + 2);
+        *fixurl = '/';
+        strcpy(fixurl + 1, lpwhr->lpszPath);
+        HeapFree( GetProcessHeap(), 0, lpwhr->lpszPath );
+        lpwhr->lpszPath = fixurl;
+    }
+
     /* Calculate length of request string */
     requestStringLen = 
         strlen(lpwhr->lpszVerb) +
