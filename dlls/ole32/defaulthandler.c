@@ -532,7 +532,7 @@ static void DefaultHandler_Destroy(
    */
   if (ptrToDestroy->oleAdviseHolder!=NULL)
   {
-    IOleClientSite_Release(ptrToDestroy->oleAdviseHolder);
+    IOleAdviseHolder_Release(ptrToDestroy->oleAdviseHolder);
     ptrToDestroy->oleAdviseHolder = NULL;
   }
 
@@ -541,7 +541,7 @@ static void DefaultHandler_Destroy(
    */
   if (ptrToDestroy->dataAdviseHolder!=NULL)
   {
-    IOleClientSite_Release(ptrToDestroy->dataAdviseHolder);
+    IDataAdviseHolder_Release(ptrToDestroy->dataAdviseHolder);
     ptrToDestroy->dataAdviseHolder = NULL;
   }
 
@@ -607,7 +607,8 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
     /*
      * Blind aggregate the data cache to "inherit" it's interfaces.
      */
-    IUnknown_QueryInterface(this->dataCache, riid, ppvObject);
+    if (IUnknown_QueryInterface(this->dataCache, riid, ppvObject) == S_OK)
+	return S_OK;
   }
   
   /*
@@ -780,9 +781,9 @@ static HRESULT WINAPI DefaultHandler_GetClientSite(
 
   *ppClientSite = this->clientSite;
 
-  if (*ppClientSite!=NULL)
+  if (this->clientSite != NULL)
   {
-    IOleClientSite_Release(*ppClientSite);
+    IOleClientSite_AddRef(this->clientSite);
   }
 
   return S_OK;
