@@ -6,6 +6,7 @@
  * Copyright 1997,2000 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
  * Copyright 2004 Eric Pouech
+ * Copyright 2004 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -96,9 +97,16 @@ static const ULONGLONG WCBAT = TOUL('b') << 32 | TOUL('a') << 16 | TOUL('t');
 static const ULONGLONG WCCMD = TOUL('c') << 32 | TOUL('m') << 16 | TOUL('d');
 static const ULONGLONG WCCOM = TOUL('c') << 32 | TOUL('o') << 16 | TOUL('m');
 
-extern CRITICAL_SECTION MSVCRT_file_cs;
-#define LOCK_FILES     EnterCriticalSection(&MSVCRT_file_cs)
-#define UNLOCK_FILES   LeaveCriticalSection(&MSVCRT_file_cs)
+/* This critical section protects the tables MSVCRT_fdesc and MSVCRT_fstreams,
+ * and their related indexes, MSVCRT_fdstart, MSVCRT_fdend,
+ * and MSVCRT_stream_idx, from race conditions.
+ * It doesn't protect against race conditions manipulating the underlying files
+ * or flags; doing so would probably be better accomplished with per-file
+ * protection, rather than locking the whole table for every change.
+ */
+static CRITICAL_SECTION MSVCRT_file_cs;
+#define LOCK_FILES()    do { EnterCriticalSection(&MSVCRT_file_cs); } while (0)
+#define UNLOCK_FILES()  do { LeaveCriticalSection(&MSVCRT_file_cs); } while (0)
 
 static void msvcrt_cp_from_stati64(const struct MSVCRT__stati64 *bufi64, struct MSVCRT__stat *buf)
 {
@@ -120,7 +128,12 @@ static inline BOOL msvcrt_is_valid_fd(int fd)
   return fd >= 0 && fd < MSVCRT_fdend && (MSVCRT_fdesc[fd].wxflag & WX_OPEN);
 }
 
-/* INTERNAL: Get the HANDLE for a fd */
+/* INTERNAL: Get the HANDLE for a fd
+ * This doesn't lock the table, because a failure will result in
+ * INVALID_HANDLE_VALUE being returned, which should be handled correctly.  If
+ * it returns a valid handle which is about to be closed, a subsequent call
+ * will fail, most likely in a sane way.
+ */
 static HANDLE msvcrt_fdtoh(int fd)
 {
   if (!msvcrt_is_valid_fd(fd))
@@ -128,7 +141,7 @@ static HANDLE msvcrt_fdtoh(int fd)
     WARN(":fd (%d) - no handle!\n",fd);
     *MSVCRT___doserrno() = 0;
     *MSVCRT__errno() = MSVCRT_EBADF;
-   return INVALID_HANDLE_VALUE;
+    return INVALID_HANDLE_VALUE;
   }
   if (MSVCRT_fdesc[fd].handle == INVALID_HANDLE_VALUE) FIXME("wtf\n");
   return MSVCRT_fdesc[fd].handle;
@@ -137,6 +150,7 @@ static HANDLE msvcrt_fdtoh(int fd)
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
+  LOCK_FILES();
   MSVCRT_fdesc[fd].handle = INVALID_HANDLE_VALUE;
   MSVCRT_fdesc[fd].wxflag = 0;
   TRACE(":fd (%d) freed\n",fd);
@@ -156,9 +170,11 @@ static void msvcrt_free_fd(int fd)
     if (fd < MSVCRT_fdstart)
       MSVCRT_fdstart = fd;
   }
+  UNLOCK_FILES();
 }
 
 /* INTERNAL: Allocate an fd slot from a Win32 HANDLE, starting from fd */
+/* caller must hold the files lock */
 static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
 {
   if (fd >= MSVCRT_MAX_FILES)
@@ -194,12 +210,17 @@ static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
 /* INTERNAL: Allocate an fd slot from a Win32 HANDLE */
 static int msvcrt_alloc_fd(HANDLE hand, int flag)
 {
+  int ret;
+
+  LOCK_FILES();
   TRACE(":handle (%p) allocating fd (%d)\n",hand,MSVCRT_fdstart);
-  return msvcrt_alloc_fd_from(hand, flag, MSVCRT_fdstart);
+  ret = msvcrt_alloc_fd_from(hand, flag, MSVCRT_fdstart);
+  UNLOCK_FILES();
+  return ret;
 }
 
-/* INTERNAL: Allocate a FILE* for an fd slot
- */
+/* INTERNAL: Allocate a FILE* for an fd slot */
+/* caller must hold the files lock */
 static MSVCRT_FILE* msvcrt_alloc_fp(void)
 {
   unsigned int i;
@@ -288,6 +309,7 @@ void msvcrt_init_io(void)
   STARTUPINFOA  si;
   int           i;
 
+  InitializeCriticalSection(&MSVCRT_file_cs);
   GetStartupInfoA(&si);
   if (si.cbReserved2 != 0 && si.lpReserved2 != NULL)
   {
@@ -544,6 +566,7 @@ int _flushall(void)
 {
   int i, num_flushed = 0;
 
+  LOCK_FILES();
   for (i = 3; i < MSVCRT_stream_idx; i++)
     if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_flag)
     {
@@ -558,6 +581,7 @@ int _flushall(void)
         num_flushed++;
       }
     }
+  UNLOCK_FILES();
 
   TRACE(":flushed (%d) handles\n",num_flushed);
   return num_flushed;
@@ -582,21 +606,28 @@ int MSVCRT_fflush(MSVCRT_FILE* file)
  */
 int _close(int fd)
 {
-  HANDLE hand = msvcrt_fdtoh(fd);
+  HANDLE hand;
+  int ret;
 
+  LOCK_FILES();
+  hand = msvcrt_fdtoh(fd);
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
   if (hand == INVALID_HANDLE_VALUE)
-    return -1;
-
-  if (!CloseHandle(hand))
+    ret = -1;
+  else if (!CloseHandle(hand))
   {
     WARN(":failed-last error (%ld)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
-    return -1;
+    ret = -1;
   }
-  msvcrt_free_fd(fd);
+  else
+  {
+    msvcrt_free_fd(fd);
+    ret = 0;
+  }
+  UNLOCK_FILES();
   TRACE(":ok\n");
-  return 0;
+  return ret;
 }
 
 /*********************************************************************
@@ -640,6 +671,7 @@ int _dup2(int od, int nd)
   int ret;
 
   TRACE("(od=%d, nd=%d)\n", od, nd);
+  LOCK_FILES();
   if (nd < MSVCRT_MAX_FILES && msvcrt_is_valid_fd(od))
   {
     HANDLE handle;
@@ -674,6 +706,7 @@ int _dup2(int od, int nd)
     *MSVCRT__errno() = MSVCRT_EBADF;
     ret = -1;
   }
+  UNLOCK_FILES();
   return ret;
 }
 
@@ -682,11 +715,16 @@ int _dup2(int od, int nd)
  */
 int _dup(int od)
 {
-  int fd = MSVCRT_fdstart;
-
+  int fd, ret;
+ 
+  LOCK_FILES();
+  fd = MSVCRT_fdstart;
   if (_dup2(od, fd) == 0)
-    return fd;
-  return -1;
+    ret = fd;
+  else
+    ret = -1;
+  UNLOCK_FILES();
+  return ret;
 }
 
 /*********************************************************************
@@ -710,7 +748,10 @@ int _eof(int fd)
   endpos = SetFilePointer(hand, 0, &hendpos, FILE_END);
 
   if (curpos == endpos && hcurpos == hendpos)
+  {
+    /* FIXME: shouldn't WX_ATEOF be set here? */
     return TRUE;
+  }
 
   SetFilePointer(hand, curpos, &hcurpos, FILE_BEGIN);
   return FALSE;
@@ -723,10 +764,12 @@ int MSVCRT__fcloseall(void)
 {
   int num_closed = 0, i;
 
+  LOCK_FILES();
   for (i = 3; i < MSVCRT_stream_idx; i++)
     if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_flag &&
         MSVCRT_fclose(MSVCRT_fstreams[i]))
       num_closed++;
+  UNLOCK_FILES();
 
   TRACE(":closed (%d) handles\n",num_closed);
   return num_closed;
@@ -739,6 +782,7 @@ void msvcrt_free_io(void)
     _close(0);
     _close(1);
     _close(2);
+    DeleteCriticalSection(&MSVCRT_file_cs);
 }
 
 /*********************************************************************
@@ -932,13 +976,16 @@ MSVCRT_FILE* MSVCRT__fdopen(int fd, const char *mode)
 
   if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1) return NULL;
 
-  if (!(file = msvcrt_alloc_fp())) return NULL;
-  if (msvcrt_init_fp(file, fd, stream_flags) == -1)
+  LOCK_FILES();
+  if (!(file = msvcrt_alloc_fp()))
+    file = NULL;
+  else if (msvcrt_init_fp(file, fd, stream_flags) == -1)
   {
     file->_flag = 0;
     file = NULL;
   }
   else TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,mode,file);
+  UNLOCK_FILES();
 
   return file;
 }
@@ -957,8 +1004,10 @@ MSVCRT_FILE* MSVCRT__wfdopen(int fd, const MSVCRT_wchar_t *mode)
       WideCharToMultiByte(CP_ACP,0,mode,mlen,modea,mlen,NULL,NULL))
   {
       if (msvcrt_get_flags(modea, &open_flags, &stream_flags) == -1) return NULL;
-      if (!(file = msvcrt_alloc_fp())) return NULL;
-      if (msvcrt_init_fp(file, fd, stream_flags) == -1)
+      LOCK_FILES();
+      if (!(file = msvcrt_alloc_fp()))
+        file = NULL;
+      else if (msvcrt_init_fp(file, fd, stream_flags) == -1)
       {
         file->_flag = 0;
         file = NULL;
@@ -969,6 +1018,7 @@ MSVCRT_FILE* MSVCRT__wfdopen(int fd, const MSVCRT_wchar_t *mode)
           MSVCRT_rewind(file); /* FIXME: is this needed ??? */
         TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,debugstr_w(mode),file);
       }
+      UNLOCK_FILES();
   }
   return file;
 }
@@ -1265,6 +1315,7 @@ int _pipe(int *pfds, unsigned int psize, int textmode)
     unsigned int wxflags = split_oflags(textmode);
     int fd;
 
+    LOCK_FILES();
     fd = msvcrt_alloc_fd(readHandle, wxflags);
     if (fd != -1)
     {
@@ -1288,6 +1339,7 @@ int _pipe(int *pfds, unsigned int psize, int textmode)
       CloseHandle(writeHandle);
       *MSVCRT__errno() = MSVCRT_EMFILE;
     }
+    UNLOCK_FILES();
   }
   else
     msvcrt_set_errno(GetLastError());
@@ -1515,12 +1567,14 @@ int _rmtmp(void)
 {
   int num_removed = 0, i;
 
+  LOCK_FILES();
   for (i = 3; i < MSVCRT_stream_idx; i++)
     if (MSVCRT_fstreams[i] && MSVCRT_fstreams[i]->_tmpfname)
     {
       MSVCRT_fclose(MSVCRT_fstreams[i]);
       num_removed++;
     }
+  UNLOCK_FILES();
 
   if (num_removed)
     TRACE(":removed (%d) temp files\n",num_removed);
@@ -1618,9 +1672,9 @@ int _setmode(int fd,int mode)
   if (mode & (~(MSVCRT__O_TEXT|MSVCRT__O_BINARY)))
     FIXME("fd (%d) mode (0x%08x) unknown\n",fd,mode);
   if ((mode & MSVCRT__O_TEXT) == MSVCRT__O_TEXT)
-      MSVCRT_fdesc[fd].wxflag |= WX_TEXT;
+    MSVCRT_fdesc[fd].wxflag |= WX_TEXT;
   else
-      MSVCRT_fdesc[fd].wxflag &= ~WX_TEXT;
+    MSVCRT_fdesc[fd].wxflag &= ~WX_TEXT;
   return ret;
 }
 
@@ -1901,7 +1955,8 @@ int _write(int fd, const void* buf, unsigned int count)
       if (WriteFile(hand, buf, count, &num_written, NULL)
 	  &&  (num_written == count))
 	return num_written;
-      TRACE(":failed-last error (%ld)\n",GetLastError());
+      TRACE("WriteFile (fd %d, hand %p) failed-last error (%ld)\n", fd,
+       hand, GetLastError());
       *MSVCRT__errno() = MSVCRT_ENOSPC;
     }
   else
@@ -1943,7 +1998,8 @@ int _write(int fd, const void* buf, unsigned int count)
 
       if ((WriteFile(hand, p, count+nr_lf, &num_written, NULL) == 0 ) || (num_written != count+nr_lf))
       {
-          TRACE(":failed-last error (%ld) num_written %ld\n",GetLastError(),num_written);
+          TRACE("WriteFile (fd %d, hand %p) failed-last error (%ld), num_written %ld\n",
+           fd, hand, GetLastError(), num_written);
           *MSVCRT__errno() = MSVCRT_ENOSPC;
           if(nr_lf)
               MSVCRT_free(p);
@@ -2255,12 +2311,12 @@ MSVCRT_FILE* MSVCRT_fopen(const char *path, const char *mode)
   if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
       return NULL;
 
+  LOCK_FILES();
   fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
-
   if (fd < 0)
-    return NULL;
-
-  if ((file = msvcrt_alloc_fp()) && msvcrt_init_fp(file, fd, stream_flags) != -1)
+    file = NULL;
+  else if ((file = msvcrt_alloc_fp()) && msvcrt_init_fp(file, fd, stream_flags)
+   != -1)
     TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,mode,file);
   else if (file)
   {
@@ -2271,6 +2327,7 @@ MSVCRT_FILE* MSVCRT_fopen(const char *path, const char *mode)
   TRACE(":got (%p)\n",file);
   if (!file)
     _close(fd);
+  UNLOCK_FILES();
   return file;
 }
 
@@ -2428,26 +2485,31 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
   int open_flags, stream_flags, fd;
 
   TRACE(":path (%p) mode (%s) file (%p) fd (%d)\n",path,mode,file,file->_file);
+
+  LOCK_FILES();
   if (!file || ((fd = file->_file) < 0) || fd > MSVCRT_fdend)
-    return NULL;
-
-  MSVCRT_fclose(file);
-
-  /* map mode string to open() flags. "man fopen" for possibilities. */
-  if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
-      return NULL;
-
-  fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
-
-  if (fd < 0)
-    return NULL;
-  if (msvcrt_init_fp(file, fd, stream_flags) == -1)
+    file = NULL;
+  else
   {
-      file->_flag = 0;
-      WARN(":failed-last error (%ld)\n",GetLastError());
-      msvcrt_set_errno(GetLastError());
-      return NULL;
+    MSVCRT_fclose(file);
+    /* map mode string to open() flags. "man fopen" for possibilities. */
+    if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
+      file = NULL;
+    else
+    {
+      fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
+      if (fd < 0)
+        file = NULL;
+      else if (msvcrt_init_fp(file, fd, stream_flags) == -1)
+      {
+          file->_flag = 0;
+          WARN(":failed-last error (%ld)\n",GetLastError());
+          msvcrt_set_errno(GetLastError());
+          file = NULL;
+      }
+    }
   }
+  UNLOCK_FILES();
   return file;
 }
 
@@ -2726,6 +2788,7 @@ MSVCRT_FILE* MSVCRT_tmpfile(void)
   int fd;
   MSVCRT_FILE* file = NULL;
 
+  LOCK_FILES();
   fd = _open(filename, MSVCRT__O_CREAT | MSVCRT__O_BINARY | MSVCRT__O_RDWR | MSVCRT__O_TEMPORARY);
   if (fd != -1 && (file = msvcrt_alloc_fp()))
   {
@@ -2736,6 +2799,7 @@ MSVCRT_FILE* MSVCRT_tmpfile(void)
     }
     else file->_tmpfname = _strdup(filename);
   }
+  UNLOCK_FILES();
   return file;
 }
 
