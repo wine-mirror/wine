@@ -273,7 +273,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 	TRACE("BS_DIBPATTERN\n");
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch )))
 	{
-	    int size = DIB_BitmapInfoSize( bmpInfo, logbrush.lbColor );
+	    int size = X11DRV_DIB_BitmapInfoSize( bmpInfo, logbrush.lbColor );
 	    hBitmap = CreateDIBitmap( physDev->hdc, &bmpInfo->bmiHeader,
                                         CBM_INIT, ((char *)bmpInfo) + size,
                                         bmpInfo,

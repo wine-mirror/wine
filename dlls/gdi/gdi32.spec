@@ -442,10 +442,6 @@
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl DC_GetDCPtr(long)
-@ cdecl DIB_BitmapInfoSize(ptr long)
-@ cdecl DIB_CreateDIBFromBitmap(long long)
 @ cdecl DIB_CreateDIBSection(long ptr long ptr long long long)
-@ cdecl DIB_GetDIBImageBytes(long long long)
-@ cdecl DIB_GetDIBWidthBytes(long long)
 @ cdecl GDI_GetObjPtr(long long)
 @ cdecl GDI_ReleaseObj(long)

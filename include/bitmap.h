@@ -23,9 +23,6 @@
 
 #include <gdi.h>
 
-/* DIB Section sync state */
-enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
-
   /* GDI logical bitmap object */
 typedef struct tagBITMAPOBJ
 {
@@ -51,6 +48,5 @@ extern HBITMAP DIB_CreateDIBSection( HDC hdc, BITMAPINFO *bmi, UINT usage, LPVOI
                                      HANDLE section, DWORD offset, DWORD ovr_pitch );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
-extern HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 
 #endif  /* __WINE_BITMAP_H */

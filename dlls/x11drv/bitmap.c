@@ -537,7 +537,7 @@ Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc )
      * A packed DIB contains a BITMAPINFO structure followed immediately by
      * an optional color palette and the pixel data.
      */
-    hPackedDIB = DIB_CreateDIBFromBitmap(hdc, hBmp);
+    hPackedDIB = X11DRV_DIB_CreateDIBFromBitmap(hdc, hBmp);
 
     /* Create a Pixmap from the packed DIB */
     pixmap = X11DRV_DIB_CreatePixmapFromDIB( hPackedDIB, hdc );

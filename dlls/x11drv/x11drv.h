@@ -194,9 +194,11 @@ extern BOOL X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
 
 struct tagBITMAPOBJ;
+extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
 extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
+extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
@@ -267,6 +269,9 @@ typedef struct
     CRITICAL_SECTION lock;
 
 } X11DRV_DIBSECTION;
+
+/* DIB Section sync state */
+enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
 
 extern int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,

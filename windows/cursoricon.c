@@ -60,7 +60,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
-#include "bitmap.h"
 #include "cursoricon.h"
 #include "module.h"
 #include "wine/debug.h"
@@ -168,6 +167,60 @@ static int get_bitmap_width_bytes( int width, int bpp )
         WARN("Unknown depth %d, please report.\n", bpp );
     }
     return -1;
+}
+
+
+/***********************************************************************
+ *          get_dib_width_bytes
+ *
+ * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
+ */
+static int get_dib_width_bytes( int width, int depth )
+{
+    int words;
+
+    switch(depth)
+    {
+    case 1:  words = (width + 31) / 32; break;
+    case 4:  words = (width + 7) / 8; break;
+    case 8:  words = (width + 3) / 4; break;
+    case 15:
+    case 16: words = (width + 1) / 2; break;
+    case 24: words = (width * 3 + 3)/4; break;
+    default:
+        WARN("(%d): Unsupported depth\n", depth );
+        /* fall through */
+    case 32:
+        words = width;
+    }
+    return 4 * words;
+}
+
+
+/***********************************************************************
+ *           bitmap_info_size
+ *
+ * Return the size of the bitmap info structure including color table.
+ */
+static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
+{
+    int colors;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+             ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
+            colors = 1 << info->bmiHeader.biBitCount;
+        return sizeof(BITMAPINFOHEADER) + colors *
+               ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
 }
 
 
@@ -539,7 +592,7 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
         hotspot = *pt;
         bmi = (BITMAPINFO *)(pt + 1);
     }
-    size = DIB_BitmapInfoSize( bmi, DIB_RGB_COLORS );
+    size = bitmap_info_size( bmi, DIB_RGB_COLORS );
 
     if (!width) width = bmi->bmiHeader.biWidth;
     if (!height) height = bmi->bmiHeader.biHeight/2;
@@ -609,9 +662,8 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
 	    if( hXorBits )
 	    {
 		char* xbits = (char *)bmi + size +
-			DIB_GetDIBImageBytes(bmi->bmiHeader.biWidth,
-					     bmi->bmiHeader.biHeight,
-					     bmi->bmiHeader.biBitCount) / 2;
+                    get_dib_width_bytes( bmi->bmiHeader.biWidth,
+                                         bmi->bmiHeader.biBitCount ) * abs( bmi->bmiHeader.biHeight ) / 2;
 
 		pInfo->bmiHeader.biBitCount = 1;
 	        if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
@@ -1956,13 +2008,13 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
         if (!(ptr = map_fileW( name ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
     }
-    size = DIB_BitmapInfoSize(info, DIB_RGB_COLORS);
+    size = bitmap_info_size(info, DIB_RGB_COLORS);
     if ((hFix = GlobalAlloc(0, size))) fix_info=GlobalLock(hFix);
     if (fix_info) {
       BYTE pix;
 
       memcpy(fix_info, info, size);
-      pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
+      pix = *((LPBYTE)info + size);
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
       if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
       if (screen_dc)

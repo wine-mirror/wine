@@ -113,6 +113,60 @@ inline static int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 
 
 /***********************************************************************
+ *           X11DRV_DIB_GetDIBWidthBytes
+ *
+ * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
+ */
+static int X11DRV_DIB_GetDIBWidthBytes( int width, int depth )
+{
+    int words;
+
+    switch(depth)
+    {
+    case 1:  words = (width + 31) / 32; break;
+    case 4:  words = (width + 7) / 8; break;
+    case 8:  words = (width + 3) / 4; break;
+    case 15:
+    case 16: words = (width + 1) / 2; break;
+    case 24: words = (width * 3 + 3) / 4; break;
+    default:
+        WARN("(%d): Unsupported depth\n", depth );
+        /* fall through */
+    case 32:
+        words = width;
+    }
+    return 4 * words;
+}
+
+
+/***********************************************************************
+ *           X11DRV_DIB_BitmapInfoSize
+ *
+ * Return the size of the bitmap info structure including color table.
+ */
+int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
+{
+    int colors;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+             ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
+            colors = 1 << info->bmiHeader.biBitCount;
+        return sizeof(BITMAPINFOHEADER) + colors *
+               ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
+}
+
+
+/***********************************************************************
  *           X11DRV_DIB_CreateXImage
  *
  * Create an X image.
@@ -3829,10 +3883,9 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   X11DRV_DIB_Unlock(bmp, TRUE);
 
   if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-      info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
-					 info->bmiHeader.biWidth,
-					 info->bmiHeader.biHeight,
-					 info->bmiHeader.biBitCount );
+      info->bmiHeader.biSizeImage = X11DRV_DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
+                                                                 info->bmiHeader.biBitCount )
+                                    * abs( info->bmiHeader.biHeight );
 
   if (descr.compression == BI_BITFIELDS)
   {
@@ -4475,8 +4528,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   bm.bmType = 0;
   bm.bmWidth = bi->biWidth;
   bm.bmHeight = effHeight;
-  bm.bmWidthBytes = ovr_pitch ? ovr_pitch
-			      : DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
+  bm.bmWidthBytes = ovr_pitch ? ovr_pitch : X11DRV_DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
   bm.bmPlanes = bi->biPlanes;
   bm.bmBitsPixel = bi->biBitCount;
   bm.bmBits = NULL;
@@ -4711,6 +4763,84 @@ UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, R
 }
 
 
+
+/***********************************************************************
+ *           X11DRV_DIB_CreateDIBFromBitmap
+ *
+ *  Allocates a packed DIB and copies the bitmap data into it.
+ */
+HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
+{
+    BITMAP bmp;
+    HGLOBAL hPackedDIB;
+    LPBYTE pPackedDIB;
+    LPBITMAPINFOHEADER pbmiHeader;
+    unsigned int cDataSize, cPackedSize, OffsetBits, nLinesCopied;
+
+    if (!GetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
+
+    /*
+     * A packed DIB contains a BITMAPINFO structure followed immediately by
+     * an optional color palette and the pixel data.
+     */
+
+    /* Calculate the size of the packed DIB */
+    cDataSize = X11DRV_DIB_GetDIBWidthBytes( bmp.bmWidth, bmp.bmBitsPixel ) * abs( bmp.bmHeight );
+    cPackedSize = sizeof(BITMAPINFOHEADER)
+                  + ( (bmp.bmBitsPixel <= 8) ? (sizeof(RGBQUAD) * (1 << bmp.bmBitsPixel)) : 0 )
+                  + cDataSize;
+    /* Get the offset to the bits */
+    OffsetBits = cPackedSize - cDataSize;
+
+    /* Allocate the packed DIB */
+    TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
+    hPackedDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE /*| GMEM_ZEROINIT*/,
+                             cPackedSize );
+    if ( !hPackedDIB )
+    {
+        WARN("Could not allocate packed DIB!\n");
+        return 0;
+    }
+
+    /* A packed DIB starts with a BITMAPINFOHEADER */
+    pPackedDIB = GlobalLock(hPackedDIB);
+    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
+
+    /* Init the BITMAPINFOHEADER */
+    pbmiHeader->biSize = sizeof(BITMAPINFOHEADER);
+    pbmiHeader->biWidth = bmp.bmWidth;
+    pbmiHeader->biHeight = bmp.bmHeight;
+    pbmiHeader->biPlanes = 1;
+    pbmiHeader->biBitCount = bmp.bmBitsPixel;
+    pbmiHeader->biCompression = BI_RGB;
+    pbmiHeader->biSizeImage = 0;
+    pbmiHeader->biXPelsPerMeter = pbmiHeader->biYPelsPerMeter = 0;
+    pbmiHeader->biClrUsed = 0;
+    pbmiHeader->biClrImportant = 0;
+
+    /* Retrieve the DIB bits from the bitmap and fill in the
+     * DIB color table if present */
+
+    nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
+                             hBmp,                      /* Handle to bitmap */
+                             0,                         /* First scan line to set in dest bitmap */
+                             bmp.bmHeight,              /* Number of scan lines to copy */
+                             pPackedDIB + OffsetBits,   /* [out] Address of array for bitmap bits */
+                             (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
+                             0);                        /* RGB or palette index */
+    GlobalUnlock(hPackedDIB);
+
+    /* Cleanup if GetDIBits failed */
+    if (nLinesCopied != bmp.bmHeight)
+    {
+        TRACE("\tGetDIBits returned %d. Actual lines=%d\n", nLinesCopied, bmp.bmHeight);
+        GlobalFree(hPackedDIB);
+        hPackedDIB = 0;
+    }
+    return hPackedDIB;
+}
+
+
 /**************************************************************************
  *	        X11DRV_DIB_CreateDIBFromPixmap
  *
@@ -4736,7 +4866,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
      * A packed DIB contains a BITMAPINFO structure followed immediately by
      * an optional color palette and the pixel data.
      */
-    hPackedDIB = DIB_CreateDIBFromBitmap(hdc, hBmp);
+    hPackedDIB = X11DRV_DIB_CreateDIBFromBitmap(hdc, hBmp);
 
     /* Get a pointer to the BITMAPOBJ structure */
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
@@ -4779,7 +4909,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
     pbmi = (LPBITMAPINFO)pPackedDIB;
     pbits = (LPBYTE)(pPackedDIB
-                     + DIB_BitmapInfoSize( (LPBITMAPINFO)pbmiHeader, DIB_RGB_COLORS ));
+                     + X11DRV_DIB_BitmapInfoSize( (LPBITMAPINFO)pbmiHeader, DIB_RGB_COLORS ));
 
     /* Create a DDB from the DIB */
 
