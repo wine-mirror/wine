@@ -254,7 +254,7 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
 
 
 /***********************************************************************
- * DrawCaption16 [USER.660] Draws a caption bar
+ *		DrawCaption (USER.660) Draws a caption bar
  *
  * PARAMS
  *     hwnd   [I]
@@ -281,7 +281,7 @@ DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 uFlags)
 
 
 /***********************************************************************
- * DrawCaption [USER32.154] Draws a caption bar
+ *		DrawCaption (USER32.@) Draws a caption bar
  *
  * PARAMS
  *     hwnd   [I]
@@ -302,7 +302,7 @@ DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
 
 
 /***********************************************************************
- * DrawCaptionTemp16 [USER.657]
+ *		DrawCaptionTemp (USER.657)
  *
  * PARAMS
  *
@@ -326,7 +326,7 @@ DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
 
 
 /***********************************************************************
- * DrawCaptionTempA [USER32.599]
+ *		DrawCaptionTempA (USER32.@)
  *
  * PARAMS
  *
@@ -434,7 +434,7 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
 
 /***********************************************************************
- * DrawCaptionTempW [USER32.602]
+ *		DrawCaptionTempW (USER32.@)
  *
  * PARAMS
  *
@@ -455,7 +455,7 @@ DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
 
 /***********************************************************************
- *           AdjustWindowRect16    (USER.102)
+ *		AdjustWindowRect (USER.102)
  */
 BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 {
@@ -464,7 +464,7 @@ BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 
 
 /***********************************************************************
- *           AdjustWindowRect    (USER32.2)
+ *		AdjustWindowRect (USER32.@)
  */
 BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
@@ -473,7 +473,7 @@ BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 
 
 /***********************************************************************
- *           AdjustWindowRectEx16    (USER.454)
+ *		AdjustWindowRectEx (USER.454)
  */
 BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
                                     BOOL16 menu, DWORD exStyle )
@@ -503,7 +503,7 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 
 
 /***********************************************************************
- *           AdjustWindowRectEx    (USER32.3)
+ *		AdjustWindowRectEx (USER32.@)
  */
 BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style,
                                     BOOL menu, DWORD exStyle )

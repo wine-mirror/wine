@@ -178,7 +178,7 @@ void SYSMETRICS_Init(void)
 
 
 /***********************************************************************
- *           GetSystemMetrics16    (USER.179)
+ *		GetSystemMetrics (USER.179)
  */
 INT16 WINAPI GetSystemMetrics16( INT16 index )
 {
@@ -187,7 +187,7 @@ INT16 WINAPI GetSystemMetrics16( INT16 index )
 
 
 /***********************************************************************
- *           GetSystemMetrics    (USER32.292)
+ *		GetSystemMetrics (USER32.@)
  */
 INT WINAPI GetSystemMetrics( INT index )
 {

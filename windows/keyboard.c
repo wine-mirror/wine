@@ -37,7 +37,7 @@ static LPKEYBD_EVENT_PROC DefKeybEventProc = NULL;
 LPBYTE pKeyStateTable = NULL;
 
 /***********************************************************************
- *           KEYBOARD_Inquire			(KEYBOARD.1)
+ *		Inquire (KEYBOARD.1)
  */
 WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo) 
 {
@@ -51,7 +51,7 @@ WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
 }
 
 /***********************************************************************
- *           KEYBOARD_Enable			(KEYBOARD.2)
+ *		Enable (KEYBOARD.2)
  */
 VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc, 
                              LPBYTE lpKeyState )
@@ -100,7 +100,7 @@ VOID WINAPI WIN16_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 }
 
 /***********************************************************************
- *           KEYBOARD_Disable			(KEYBOARD.3)
+ *		Disable (KEYBOARD.3)
  */
 VOID WINAPI KEYBOARD_Disable(VOID)
 {
@@ -136,7 +136,7 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
 }
 
 /**********************************************************************
- *           SetSpeed16      (KEYBOARD.7)
+ *		SetSpeed (KEYBOARD.7)
  */
 WORD WINAPI SetSpeed16(WORD unused)
 {
@@ -145,7 +145,7 @@ WORD WINAPI SetSpeed16(WORD unused)
 }
 
 /**********************************************************************
- *           ScreenSwitchEnable      (KEYBOARD.100)
+ *		ScreenSwitchEnable (KEYBOARD.100)
  */
 VOID WINAPI ScreenSwitchEnable16(WORD unused)
 {
@@ -153,7 +153,7 @@ VOID WINAPI ScreenSwitchEnable16(WORD unused)
 }
 
 /**********************************************************************
- *           OemKeyScan      (KEYBOARD.128)(USER32.401)
+ *		OemKeyScan (KEYBOARD.128) (USER32.@)
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
@@ -163,7 +163,7 @@ DWORD WINAPI OemKeyScan(WORD wOemChar)
 }
 
 /**********************************************************************
- *    	VkKeyScan			[KEYBOARD.129]
+ *		VkKeyScan (KEYBOARD.129)
  *
  * VkKeyScan translates an ANSI character to a virtual-key and shift code
  * for the current keyboard.
@@ -186,7 +186,7 @@ WORD WINAPI VkKeyScan16(CHAR cChar)
 }
 
 /******************************************************************************
- *    	GetKeyboardType16      (KEYBOARD.130)
+ *		GetKeyboardType (KEYBOARD.130)
  */
 INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
 {
@@ -209,7 +209,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
 }
 
 /******************************************************************************
- *    	MapVirtualKey16      (KEYBOARD.131)
+ *		MapVirtualKey (KEYBOARD.131)
  *
  * MapVirtualKey translates keycodes from one format to another
  */
@@ -219,7 +219,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 }
 
 /****************************************************************************
- *	GetKBCodePage16   (KEYBOARD.132)
+ *		GetKBCodePage (KEYBOARD.132)
  */
 INT16 WINAPI GetKBCodePage16(void)
 {
@@ -228,7 +228,7 @@ INT16 WINAPI GetKBCodePage16(void)
 }
 
 /****************************************************************************
- *	GetKeyNameText16   (KEYBOARD.133)
+ *		GetKeyNameText (KEYBOARD.133)
  */
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
@@ -236,7 +236,7 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 }
 
 /****************************************************************************
- *	ToAscii   (KEYBOARD.4)
+ *		ToAscii (KEYBOARD.4)
  *
  * The ToAscii function translates the specified virtual-key code and keyboard
  * state to the corresponding Windows character or characters.
@@ -276,7 +276,7 @@ void KEYBOARD_SetBeepActive(BOOL bActivate)
 }
 
 /***********************************************************************
- *           MessageBeep16   (USER.104)
+ *		MessageBeep (USER.104)
  */
 void WINAPI MessageBeep16( UINT16 i )
 {
@@ -284,7 +284,7 @@ void WINAPI MessageBeep16( UINT16 i )
 }
 
 /***********************************************************************
- *           MessageBeep   (USER32.390)
+ *		MessageBeep (USER32.@)
  */
 BOOL WINAPI MessageBeep( UINT i )
 {

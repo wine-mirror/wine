@@ -112,7 +112,7 @@ static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT16 msg,
 }
 
 /**************************************************************************
- *				SendDriverMessage		[USER.251]
+ *		SendDriverMessage (USER.251)
  */
 LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
                                    LPARAM lParam2)
@@ -251,7 +251,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
 }
 
 /**************************************************************************
- *				OpenDriver16		        [USER.252]
+ *		OpenDriver16 (USER.252)
  */
 HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
 {
@@ -284,7 +284,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 }
 
 /**************************************************************************
- *			CloseDriver16				[USER.253]
+ *		CloseDriver (USER.253)
  */
 LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
@@ -305,7 +305,7 @@ LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 }
 
 /**************************************************************************
- *				GetDriverModuleHandle	[USER.254]
+ *		GetDriverModuleHandle (USER.254)
  */
 HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 {
@@ -322,7 +322,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 }
 
 /**************************************************************************
- *				DefDriverProc16			[USER.255]
+ *		DefDriverProc (USER.255)
  */
 LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
                                LPARAM lParam1, LPARAM lParam2)
@@ -352,7 +352,7 @@ LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 }
 
 /**************************************************************************
- *				GetDriverInfo			[USER.256]
+ *		GetDriverInfo (USER.256)
  */
 BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 {
@@ -375,7 +375,7 @@ BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 }
 
 /**************************************************************************
- *				GetNextDriver			[USER.257]
+ *		GetNextDriver (USER.257)
  */
 HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
 {

@@ -15,7 +15,7 @@
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
 /***********************************************************************
- *		MonitorFromPoint
+ *		MonitorFromPoint (USER32.@)
  */
 HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
 {
@@ -31,7 +31,7 @@ HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
 }
 
 /***********************************************************************
- *		MonitorFromRect
+ *		MonitorFromRect (USER32.@)
  */
 HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
 {
@@ -47,7 +47,7 @@ HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
 }
 
 /***********************************************************************
- *		MonitorFromWindow
+ *		MonitorFromWindow (USER32.@)
  */
 HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
@@ -67,7 +67,7 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 }
 
 /***********************************************************************
- *		GetMonitorInfoA
+ *		GetMonitorInfoA (USER32.@)
  */
 BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
@@ -94,7 +94,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 }
 
 /***********************************************************************
- *		GetMonitorInfoW
+ *		GetMonitorInfoW (USER32.@)
  */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
@@ -121,7 +121,7 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 }
 
 /***********************************************************************
- *		EnumDisplayMonitors
+ *		EnumDisplayMonitors (USER32.@)
  */
 BOOL WINAPI EnumDisplayMonitors(
         HDC             hdcOptionalForPainting,

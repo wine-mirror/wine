@@ -1324,7 +1324,7 @@ void QUEUE_DecTimerCount( HQUEUE16 hQueue )
 
 
 /***********************************************************************
- *           PostQuitMessage16   (USER.6)
+ *		PostQuitMessage (USER.6)
  */
 void WINAPI PostQuitMessage16( INT16 exitCode )
 {
@@ -1333,7 +1333,7 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
 
 
 /***********************************************************************
- *           PostQuitMessage   (USER32.421)
+ *		PostQuitMessage (USER32.@)
  *
  * PostQuitMessage() posts a message to the system requesting an
  * application to terminate execution. As a result of this function,
@@ -1358,7 +1358,7 @@ void WINAPI PostQuitMessage( INT exitCode )
 
 
 /***********************************************************************
- *           GetWindowTask16   (USER.224)
+ *		GetWindowTask (USER.224)
  */
 HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 {
@@ -1372,7 +1372,7 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 }
 
 /***********************************************************************
- *           GetWindowThreadProcessId   (USER32.313)
+ *		GetWindowThreadProcessId (USER32.@)
  */
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
@@ -1396,7 +1396,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 
 
 /***********************************************************************
- *           SetMessageQueue16   (USER.266)
+ *		SetMessageQueue (USER.266)
  */
 BOOL16 WINAPI SetMessageQueue16( INT16 size )
 {
@@ -1405,7 +1405,7 @@ BOOL16 WINAPI SetMessageQueue16( INT16 size )
 
 
 /***********************************************************************
- *           SetMessageQueue   (USER32.494)
+ *		SetMessageQueue (USER32.@)
  */
 BOOL WINAPI SetMessageQueue( INT size )
 {
@@ -1419,7 +1419,7 @@ BOOL WINAPI SetMessageQueue( INT size )
 }
 
 /***********************************************************************
- *           InitThreadInput16   (USER.409)
+ *		InitThreadInput (USER.409)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {
@@ -1461,7 +1461,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 }
 
 /***********************************************************************
- *           GetQueueStatus16   (USER.334)
+ *		GetQueueStatus (USER.334)
  */
 DWORD WINAPI GetQueueStatus16( UINT16 flags )
 {
@@ -1477,7 +1477,7 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
 }
 
 /***********************************************************************
- *           GetQueueStatus   (USER32.283)
+ *		GetQueueStatus (USER32.@)
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
 {
@@ -1494,7 +1494,7 @@ DWORD WINAPI GetQueueStatus( UINT flags )
 
 
 /***********************************************************************
- *           GetInputState16   (USER.335)
+ *		GetInputState (USER.335)
  */
 BOOL16 WINAPI GetInputState16(void)
 {
@@ -1502,7 +1502,7 @@ BOOL16 WINAPI GetInputState16(void)
 }
 
 /***********************************************************************
- *           WaitForInputIdle   (USER32.577)
+ *		WaitForInputIdle (USER32.@)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
@@ -1547,7 +1547,7 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 }
 
 /***********************************************************************
- *           GetInputState   (USER32.244)
+ *		GetInputState (USER32.@)
  */
 BOOL WINAPI GetInputState(void)
 {
@@ -1563,7 +1563,7 @@ BOOL WINAPI GetInputState(void)
 }
 
 /***********************************************************************
- *           UserYield  (USER.332)
+ *		UserYield (USER.332)
  */
 void WINAPI UserYield16(void)
 {
@@ -1593,7 +1593,7 @@ void WINAPI UserYield16(void)
 }
 
 /***********************************************************************
- *           GetMessagePos   (USER.119) (USER32.272)
+ *		GetMessagePos (USER.119) (USER32.@)
  * 
  * The GetMessagePos() function returns a long value representing a
  * cursor position, in screen coordinates, when the last message
@@ -1627,7 +1627,7 @@ DWORD WINAPI GetMessagePos(void)
 
 
 /***********************************************************************
- *           GetMessageTime   (USER.120) (USER32.273)
+ *		GetMessageTime (USER.120) (USER32.@)
  *
  * GetMessageTime() returns the message time for the last message
  * retrieved by the function. The time is measured in milliseconds with
@@ -1659,7 +1659,7 @@ LONG WINAPI GetMessageTime(void)
 
 
 /***********************************************************************
- *           GetMessageExtraInfo   (USER.288) (USER32.271)
+ *		GetMessageExtraInfo (USER.288) (USER32.@)
  */
 LONG WINAPI GetMessageExtraInfo(void)
 {
@@ -1675,7 +1675,7 @@ LONG WINAPI GetMessageExtraInfo(void)
 
 
 /**********************************************************************
- * AttachThreadInput [USER32.8]  Attaches input of 1 thread to other
+ *		AttachThreadInput (USER32.@) Attaches input of 1 thread to other
  *
  * Attaches the input processing mechanism of one thread to that of
  * another thread.

@@ -161,7 +161,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 }
 
 /***********************************************************************
- *		X11DRV_SetCursor
+ *		X11DRV_SetCursor (X11DRV.@)
  */
 void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
@@ -199,7 +199,7 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 }
 
 /***********************************************************************
- *		X11DRV_MoveCursor
+ *		X11DRV_MoveCursor (X11DRV.@)
  */
 void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
 {
@@ -241,7 +241,7 @@ void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY)
 }
 
 /***********************************************************************
- *           X11DRV_InitMouse
+ *		X11DRV_InitMouse (X11DRV.@)
  */
 void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
 {
@@ -268,7 +268,7 @@ void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
 
 
 /***********************************************************************
- *           X11DRV_SendEvent
+ *		X11DRV_SendEvent (internal)
  */
 void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                              DWORD keyState, DWORD time, HWND hWnd )

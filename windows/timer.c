@@ -291,7 +291,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
 
 
 /***********************************************************************
- *           SetTimer16   (USER.10)
+ *		SetTimer (USER.10)
  */
 UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                           TIMERPROC16 proc )
@@ -304,7 +304,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 
 
 /***********************************************************************
- *           SetTimer   (USER32.511)
+ *		SetTimer (USER32.@)
  */
 UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
                           TIMERPROC proc )
@@ -341,7 +341,7 @@ BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc )
 
 
 /***********************************************************************
- *           SetSystemTimer16   (USER.11)
+ *		SetSystemTimer (USER.11)
  */
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                                 TIMERPROC16 proc )
@@ -354,7 +354,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 
 
 /***********************************************************************
- *           SetSystemTimer   (USER32.509)
+ *		SetSystemTimer (USER32.@)
  */
 UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
                                 TIMERPROC proc )
@@ -367,7 +367,7 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
 
 
 /***********************************************************************
- *           KillTimer16   (USER.12)
+ *		KillTimer (USER.12)
  */
 BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
 {
@@ -377,7 +377,7 @@ BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
 
 
 /***********************************************************************
- *           KillTimer   (USER32.354)
+ *		KillTimer (USER32.@)
  */
 BOOL WINAPI KillTimer( HWND hwnd, UINT id )
 {
@@ -387,7 +387,7 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT id )
 
 
 /***********************************************************************
- *           KillSystemTimer16   (USER.182)
+ *		KillSystemTimer (USER.182)
  */
 BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 {
@@ -397,7 +397,7 @@ BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 
 
 /***********************************************************************
- *           KillSystemTimer   (USER32.353)
+ *		KillSystemTimer (USER32.@)
  */
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT id )
 {

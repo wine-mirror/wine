@@ -744,7 +744,7 @@ END:
 
 
 /**********************************************************************
- *           SetDoubleClickTime16   (USER.20)
+ *		SetDoubleClickTime (USER.20)
  */
 void WINAPI SetDoubleClickTime16( UINT16 interval )
 {
@@ -753,7 +753,7 @@ void WINAPI SetDoubleClickTime16( UINT16 interval )
 
 
 /**********************************************************************
- *           SetDoubleClickTime   (USER32.480)
+ *		SetDoubleClickTime (USER32.@)
  */
 BOOL WINAPI SetDoubleClickTime( UINT interval )
 {
@@ -763,7 +763,7 @@ BOOL WINAPI SetDoubleClickTime( UINT interval )
 
 
 /**********************************************************************
- *           GetDoubleClickTime16   (USER.21)
+ *		GetDoubleClickTime (USER.21)
  */
 UINT16 WINAPI GetDoubleClickTime16(void)
 {
@@ -772,7 +772,7 @@ UINT16 WINAPI GetDoubleClickTime16(void)
 
 
 /**********************************************************************
- *           GetDoubleClickTime   (USER32.239)
+ *		GetDoubleClickTime (USER32.@)
  */
 UINT WINAPI GetDoubleClickTime(void)
 {
@@ -922,7 +922,7 @@ CLEANUP:
 
 
 /***********************************************************************
- *           ReplyMessage16   (USER.115)
+ *		ReplyMessage (USER.115)
  */
 void WINAPI ReplyMessage16( LRESULT result )
 {
@@ -930,7 +930,7 @@ void WINAPI ReplyMessage16( LRESULT result )
 }
 
 /***********************************************************************
- *           ReplyMessage   (USER.115)
+ *		ReplyMessage (USER32.@)
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
@@ -1378,7 +1378,7 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
 
 
 /***********************************************************************
- *         PeekMessage32_16   (USER.819)
+ *		PeekMessage32 (USER.819)
  */
 BOOL16 WINAPI PeekMessage32_16( SEGPTR msg16_32, HWND16 hwnd,
                                 UINT16 first, UINT16 last, UINT16 flags, 
@@ -1406,7 +1406,7 @@ BOOL16 WINAPI PeekMessage32_16( SEGPTR msg16_32, HWND16 hwnd,
 }
 
 /***********************************************************************
- *           PeekMessage16   (USER.109)
+ *		PeekMessage (USER.109)
  */
 BOOL16 WINAPI PeekMessage16( SEGPTR msg, HWND16 hwnd,
                              UINT16 first, UINT16 last, UINT16 flags )
@@ -1415,7 +1415,7 @@ BOOL16 WINAPI PeekMessage16( SEGPTR msg, HWND16 hwnd,
 }
 
 /***********************************************************************
- *         PeekMessageA
+ *		PeekMessageA (USER32.@)
  */
 BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
                           UINT min, UINT max, UINT wRemoveMsg)
@@ -1431,7 +1431,7 @@ BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
 }
 
 /***********************************************************************
- *         PeekMessageW             Check queue for messages
+ *		PeekMessageW (USER32.@) Check queue for messages
  *
  * Checks for a message in the thread's queue, filtered as for
  * GetMessage(). Returns immediately whether a message is available
@@ -1473,7 +1473,7 @@ BOOL WINAPI PeekMessageW(
 
 
 /***********************************************************************
- *          GetMessage32_16   (USER.820)
+ *		GetMessage32_16 (USER.820)
  */
 BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
                                UINT16 last, BOOL16 wHaveParamHigh )
@@ -1502,7 +1502,7 @@ BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
 }
 
 /***********************************************************************
- *           GetMessage16   (USER.108)
+ *		GetMessage (USER.108)
  */
 BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 {
@@ -1510,7 +1510,7 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 }
 
 /***********************************************************************
- *          GetMessageA   (USER32.270)
+ *		GetMessageA (USER32.@)
  */
 BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
 {
@@ -1524,7 +1524,7 @@ BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
 }
 
 /***********************************************************************
- *          GetMessageW   (USER32.274) Retrieve next message
+ *		GetMessageW (USER32.@) Retrieve next message
  *
  * GetMessage retrieves the next event from the calling thread's
  * queue and deposits it in *lpmsg.
@@ -1623,7 +1623,7 @@ static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message,
 }
 
 /***********************************************************************
- *           PostMessage16   (USER.110)
+ *		PostMessage (USER.110)
  */
 BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
                              LPARAM lParam )
@@ -1632,7 +1632,7 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 }
 
 /***********************************************************************
- *           PostMessageA   (USER32.419)
+ *		PostMessageA (USER32.@)
  */
 BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
                           LPARAM lParam )
@@ -1641,7 +1641,7 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
 }
 
 /***********************************************************************
- *           PostMessageW   (USER32.420)
+ *		PostMessageW (USER32.@)
  */
 BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
                           LPARAM lParam )
@@ -1650,7 +1650,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
 }
 
 /***********************************************************************
- *           PostAppMessage16   (USER.116)
+ *		PostAppMessage16 (USER.116)
  */
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, 
                                 WPARAM16 wParam, LPARAM lParam )
@@ -1660,7 +1660,7 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message,
 }
 
 /**********************************************************************
- *           PostThreadMessageA    (USER32.422)
+ *		PostThreadMessageA (USER32.@)
  */
 BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
                                 WPARAM wParam, LPARAM lParam )
@@ -1670,7 +1670,7 @@ BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
 }
 
 /**********************************************************************
- *           PostThreadMessageW    (USER32.423)
+ *		PostThreadMessageW (USER32.@)
  */
 BOOL WINAPI PostThreadMessageW( DWORD idThread, UINT message,
                                  WPARAM wParam, LPARAM lParam )
@@ -1822,7 +1822,7 @@ END:
 
 
 /***********************************************************************
- *           SendMessage16   (USER.111)
+ *		SendMessage (USER.111)
  */
 LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                               LPARAM lParam)
@@ -1834,7 +1834,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           SendMessageA   (USER32.454)
+ *		SendMessageA (USER32.@)
  */
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
                                LPARAM lParam )
@@ -1849,7 +1849,7 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *           SendMessageW   (USER32.459)  Send Window Message
+ *		SendMessageW (USER32.@) Send Window Message
  *
  *  Sends a message to the window procedure of the specified window.
  *  SendMessage() will not return until the called window procedure
@@ -1885,7 +1885,7 @@ LRESULT WINAPI SendMessageW(
 
 
 /***********************************************************************
- *           SendMessageTimeout16    (not a WINAPI)
+ *		SendMessageTimeout (not a WINAPI)
  */
 LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 				     LPARAM lParam, UINT16 flags,
@@ -1903,7 +1903,7 @@ LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           SendMessageTimeoutA   (USER32.457)
+ *		SendMessageTimeoutA (USER32.@)
  */
 LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wParam,
 				      LPARAM lParam, UINT flags,
@@ -1923,7 +1923,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *           SendMessageTimeoutW   (USER32.458)
+ *		SendMessageTimeoutW (USER32.@)
  */
 LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
 				      LPARAM lParam, UINT flags,
@@ -1943,7 +1943,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *  WaitMessage    (USER.112) (USER32.578)  Suspend thread pending messages
+ *		WaitMessage (USER.112) (USER32.@) Suspend thread pending messages
  *
  * WaitMessage() suspends a thread until events appear in the thread's
  * queue.
@@ -1965,7 +1965,7 @@ void WINAPI WaitMessage( void )
 }
 
 /***********************************************************************
- *           MsgWaitForMultipleObjects    (USER32.400)
+ *		MsgWaitForMultipleObjects (USER32.@)
  */
 DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
                                         BOOL fWaitAll, DWORD dwMilliseconds,
@@ -2241,7 +2241,7 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
 
 
 /***********************************************************************
- *           TranslateMessage16   (USER.113)
+ *		TranslateMessage (USER.113)
  */
 BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 {
@@ -2251,7 +2251,7 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 
 
 /***********************************************************************
- *           TranslateMessage32   (USER.821)
+ *		TranslateMessage32 (USER.821)
  */
 BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh )
 {
@@ -2267,7 +2267,7 @@ BOOL16 WINAPI TranslateMessage32_16( const MSG32_16 *msg, BOOL16 wHaveParamHigh 
 }
 
 /***********************************************************************
- *           TranslateMessage   (USER32.556)
+ *		TranslateMessage (USER32.@)
  */
 BOOL WINAPI TranslateMessage( const MSG *msg )
 {
@@ -2277,7 +2277,7 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
 
 
 /***********************************************************************
- *           DispatchMessage16   (USER.114)
+ *		DispatchMessage (USER.114)
  */
 LONG WINAPI DispatchMessage16( const MSG16* msg )
 {
@@ -2337,7 +2337,7 @@ END:
 
 
 /***********************************************************************
- *           DispatchMessage32   (USER.822)
+ *		DispatchMessage32 (USER.822)
  */
 LONG WINAPI DispatchMessage32_16( const MSG32_16* lpmsg16_32, BOOL16 wHaveParamHigh )
 {
@@ -2359,7 +2359,7 @@ LONG WINAPI DispatchMessage32_16( const MSG32_16* lpmsg16_32, BOOL16 wHaveParamH
 }
 
 /***********************************************************************
- *           DispatchMessageA   (USER32.141)
+ *		DispatchMessageA (USER32.@)
  */
 LONG WINAPI DispatchMessageA( const MSG* msg )
 {
@@ -2424,7 +2424,7 @@ END:
 
 
 /***********************************************************************
- *           DispatchMessageW   (USER32.142)     Process Message
+ *		DispatchMessageW (USER32.@) Process Message
  *
  * Process the message specified in the structure *_msg_.
  *
@@ -2506,7 +2506,8 @@ END:
 
 
 /***********************************************************************
- *           RegisterWindowMessageA   (USER.118) (USER32.437)
+ *		RegisterWindowMessage (USER.118)
+ *		RegisterWindowMessageA (USER32.@)
  */
 WORD WINAPI RegisterWindowMessageA( LPCSTR str )
 {
@@ -2516,7 +2517,7 @@ WORD WINAPI RegisterWindowMessageA( LPCSTR str )
 
 
 /***********************************************************************
- *           RegisterWindowMessageW   (USER32.438)
+ *		RegisterWindowMessageW (USER32.@)
  */
 WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 {
@@ -2526,7 +2527,7 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 
 
 /***********************************************************************
- *           GetCurrentTime16    (USER.15)
+ *		GetCurrentTime (USER.15)
  *
  * (effectively identical to GetTickCount)
  */
@@ -2537,7 +2538,7 @@ DWORD WINAPI GetCurrentTime16(void)
 
 
 /***********************************************************************
- *           InSendMessage16    (USER.192)
+ *		InSendMessage (USER.192)
  */
 BOOL16 WINAPI InSendMessage16(void)
 {
@@ -2546,7 +2547,7 @@ BOOL16 WINAPI InSendMessage16(void)
 
 
 /***********************************************************************
- *           InSendMessage    (USER32.320)
+ *		InSendMessage (USER32.@)
  */
 BOOL WINAPI InSendMessage(void)
 {
@@ -2562,7 +2563,7 @@ BOOL WINAPI InSendMessage(void)
 }
 
 /***********************************************************************
- *           BroadcastSystemMessage    (USER32.12)
+ *		BroadcastSystemMessage (USER32.@)
  */
 LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,
@@ -2575,7 +2576,7 @@ LONG WINAPI BroadcastSystemMessage(
 }
 
 /***********************************************************************
- *           SendNotifyMessageA    (USER32.460)
+ *		SendNotifyMessageA (USER32.@)
  */
 BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -2584,7 +2585,7 @@ BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 }
 
 /***********************************************************************
- *           SendNotifyMessageW    (USER32.461)
+ *		SendNotifyMessageW (USER32.@)
  */
 BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -2593,7 +2594,7 @@ BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 }
 
 /***********************************************************************
- *           SendMessageCallbackA
+ *		SendMessageCallbackA (USER32.@)
  * FIXME: It's like PostMessage. The callback gets called when the message
  * is processed. We have to modify the message processing for an exact
  * implementation...
@@ -2615,7 +2616,7 @@ BOOL WINAPI SendMessageCallbackA(
 		return TRUE;
 }
 /***********************************************************************
- *           SendMessageCallbackW
+ *		SendMessageCallbackW (USER32.@)
  * FIXME: see SendMessageCallbackA.
  */
 BOOL WINAPI SendMessageCallbackW(

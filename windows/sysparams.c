@@ -24,7 +24,7 @@
 DEFAULT_DEBUG_CHANNEL(system);
 
 /***********************************************************************
- *	GetTimerResolution (USER.14)
+ *		GetTimerResolution (USER.14)
  */
 LONG WINAPI GetTimerResolution16(void)
 {
@@ -32,7 +32,7 @@ LONG WINAPI GetTimerResolution16(void)
 }
 
 /***********************************************************************
- *	ControlPanelInfo16   (USER.273)
+ *		ControlPanelInfo (USER.273)
  */
 void WINAPI ControlPanelInfo16( INT16 nInfoType, WORD wData, LPSTR lpBuffer )
 {
@@ -114,7 +114,7 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
 }
 
 /***********************************************************************
- *	SystemParametersInfoA   (USER32.540)
+ *		SystemParametersInfoA (USER32.@)
  */
 BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 				   PVOID pvParam, UINT fWinIni )
@@ -523,7 +523,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
 
 /***********************************************************************
- *	SystemParametersInfo16   (USER.483)
+ *		SystemParametersInfo (USER.483)
  */
 BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                                       LPVOID lpvParam, UINT16 fuWinIni )
@@ -624,7 +624,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 }
 
 /***********************************************************************
- *	SystemParametersInfoW   (USER32.541)
+ *		SystemParametersInfoW (USER32.@)
  */
 BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 				   PVOID pvParam, UINT fuWinIni )

@@ -60,7 +60,7 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 
 
 /*****************************************************************
- *               SetFocus16   (USER.22)
+ *		SetFocus (USER.22)
  */
 HWND16 WINAPI SetFocus16( HWND16 hwnd )
 {
@@ -69,7 +69,7 @@ HWND16 WINAPI SetFocus16( HWND16 hwnd )
 
 
 /*****************************************************************
- *               SetFocus   (USER32.481)
+ *		SetFocus (USER32.@)
  */
 HWND WINAPI SetFocus( HWND hwnd )
 {
@@ -174,7 +174,7 @@ CLEANUP:
 
 
 /*****************************************************************
- *               GetFocus16   (USER.23)
+ *		GetFocus (USER.23)
  */
 HWND16 WINAPI GetFocus16(void)
 {
@@ -183,7 +183,7 @@ HWND16 WINAPI GetFocus16(void)
 
 
 /*****************************************************************
- *               GetFocus   (USER32.240)
+ *		GetFocus (USER32.@)
  */
 HWND WINAPI GetFocus(void)
 {

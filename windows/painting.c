@@ -265,7 +265,7 @@ copyrgn:
 
 
 /***********************************************************************
- *           BeginPaint16    (USER.39)
+ *		BeginPaint (USER.39)
  */
 HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
@@ -285,7 +285,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
 
 /***********************************************************************
- *           BeginPaint    (USER32.10)
+ *		BeginPaint (USER32.@)
  */
 HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 {
@@ -379,7 +379,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 
 
 /***********************************************************************
- *           EndPaint16    (USER.40)
+ *		EndPaint (USER.40)
  */
 BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
@@ -390,7 +390,7 @@ BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 
 
 /***********************************************************************
- *           EndPaint    (USER32.176)
+ *		EndPaint (USER32.@)
  */
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 {
@@ -401,7 +401,7 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 
 
 /***********************************************************************
- *           FillWindow    (USER.324)
+ *		FillWindow (USER.324)
  */
 void WINAPI FillWindow16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
 {
@@ -428,7 +428,7 @@ static HBRUSH16 PAINT_GetControlBrush( HWND hParent, HWND hWnd, HDC16 hDC, UINT1
 
 
 /***********************************************************************
- *           PaintRect    (USER.325)
+ *		PaintRect (USER.325)
  */
 void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
                        HBRUSH16 hbrush, const RECT16 *rect)
@@ -446,7 +446,7 @@ void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 
 
 /***********************************************************************
- *           GetControlBrush    (USER.326)
+ *		GetControlBrush (USER.326)
  */
 HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
 {
@@ -966,7 +966,7 @@ END:
 
 
 /***********************************************************************
- *           RedrawWindow    (USER32.426)
+ *		RedrawWindow (USER32.@)
  */
 BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                               HRGN hrgnUpdate, UINT flags )
@@ -976,7 +976,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 
 
 /***********************************************************************
- *           RedrawWindow16    (USER.290)
+ *		RedrawWindow (USER.290)
  */
 BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
                               HRGN16 hrgnUpdate, UINT16 flags )
@@ -993,7 +993,7 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
 
 
 /***********************************************************************
- *           UpdateWindow16   (USER.124)
+ *		UpdateWindow (USER.124)
  */
 void WINAPI UpdateWindow16( HWND16 hwnd )
 {
@@ -1001,7 +1001,7 @@ void WINAPI UpdateWindow16( HWND16 hwnd )
 }
 
 /***********************************************************************
- *           UpdateWindow   (USER32.567)
+ *		UpdateWindow (USER32.@)
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
@@ -1009,7 +1009,7 @@ void WINAPI UpdateWindow( HWND hwnd )
 }
 
 /***********************************************************************
- *           InvalidateRgn16   (USER.126)
+ *		InvalidateRgn (USER.126)
  */
 void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
@@ -1019,7 +1019,7 @@ void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 
 
 /***********************************************************************
- *           InvalidateRgn   (USER32.329)
+ *		InvalidateRgn (USER32.@)
  */
 BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
@@ -1028,7 +1028,7 @@ BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 
 
 /***********************************************************************
- *           InvalidateRect16   (USER.125)
+ *		InvalidateRect (USER.125)
  */
 void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 {
@@ -1037,7 +1037,7 @@ void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 
 
 /***********************************************************************
- *           InvalidateRect   (USER32.328)
+ *		InvalidateRect (USER32.@)
  */
 BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 {
@@ -1047,7 +1047,7 @@ BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 
 
 /***********************************************************************
- *           ValidateRgn16   (USER.128)
+ *		ValidateRgn (USER.128)
  */
 void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 {
@@ -1057,7 +1057,7 @@ void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           ValidateRgn   (USER32.572)
+ *		ValidateRgn (USER32.@)
  */
 void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
@@ -1066,7 +1066,7 @@ void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 
 
 /***********************************************************************
- *           ValidateRect16   (USER.127)
+ *		ValidateRect (USER.127)
  */
 void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
 {
@@ -1075,7 +1075,7 @@ void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
 
 
 /***********************************************************************
- *           ValidateRect   (USER32.571)
+ *		ValidateRect (USER32.@)
  */
 void WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 {
@@ -1084,7 +1084,7 @@ void WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 
 
 /***********************************************************************
- *           GetUpdateRect16   (USER.190)
+ *		GetUpdateRect (USER.190)
  */
 BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 {
@@ -1099,7 +1099,7 @@ BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 
 
 /***********************************************************************
- *           GetUpdateRect   (USER32.297)
+ *		GetUpdateRect (USER32.@)
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
@@ -1144,7 +1144,7 @@ END:
 
 
 /***********************************************************************
- *           GetUpdateRgn16   (USER.237)
+ *		GetUpdateRgn (USER.237)
  */
 INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
@@ -1153,7 +1153,7 @@ INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 
 
 /***********************************************************************
- *           GetUpdateRgn    (USER32.298)
+ *		GetUpdateRgn (USER32.@)
  */
 INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
@@ -1188,7 +1188,7 @@ END:
 
 
 /***********************************************************************
- *           ExcludeUpdateRgn16   (USER.238)
+ *		ExcludeUpdateRgn (USER.238)
  */
 INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 {
@@ -1197,7 +1197,7 @@ INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 
 
 /***********************************************************************
- *           ExcludeUpdateRgn   (USER32.195)
+ *		ExcludeUpdateRgn (USER32.@)
  */
 INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 {
@@ -1234,7 +1234,7 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
 
 /***********************************************************************
- *           FillRect16    (USER.81)
+ *		FillRect (USER.81)
  * NOTE
  *   The Win16 variant doesn't support special color brushes like
  *   the Win32 one, despite the fact that Win16, as well as Win32,
@@ -1257,7 +1257,7 @@ INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 
 
 /***********************************************************************
- *           FillRect    (USER32.197)
+ *		FillRect (USER32.@)
  */
 INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 {
@@ -1276,7 +1276,7 @@ INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 
 
 /***********************************************************************
- *           InvertRect16    (USER.82)
+ *		InvertRect (USER.82)
  */
 void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 {
@@ -1286,7 +1286,7 @@ void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 
 
 /***********************************************************************
- *           InvertRect    (USER32.330)
+ *		InvertRect (USER32.@)
  */
 BOOL WINAPI InvertRect( HDC hdc, const RECT *rect )
 {
@@ -1297,7 +1297,7 @@ BOOL WINAPI InvertRect( HDC hdc, const RECT *rect )
 
 
 /***********************************************************************
- *           FrameRect    (USER32.203)
+ *		FrameRect (USER32.@)
  */
 INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 {
@@ -1322,7 +1322,7 @@ INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 
 
 /***********************************************************************
- *           FrameRect16    (USER.83)
+ *		FrameRect (USER.83)
  */
 INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
 {
@@ -1333,7 +1333,7 @@ INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
 
 
 /***********************************************************************
- *           DrawFocusRect16    (USER.466)
+ *		DrawFocusRect (USER.466)
  */
 void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
@@ -1344,7 +1344,7 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 
 
 /***********************************************************************
- *           DrawFocusRect    (USER32.156)
+ *		DrawFocusRect (USER32.@)
  *
  * FIXME: PatBlt(PATINVERT) with background brush.
  */
@@ -1372,7 +1372,7 @@ BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
 }
 
 /**********************************************************************
- *          DrawAnimatedRects16  (USER.448)
+ *		DrawAnimatedRects (USER.448)
  */
 BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
                                    const RECT16* lprcFrom,
@@ -1395,7 +1395,7 @@ BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
 
 
 /**********************************************************************
- *          DrawAnimatedRects  (USER32.153)
+ *		DrawAnimatedRects (USER32.@)
  */
 BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni,
                                    const RECT* lprcFrom,
@@ -1645,7 +1645,7 @@ cleanup:
 }
 
 /**********************************************************************
- *      DrawStateA()   (USER32.162)
+ *		DrawStateA (USER32.@)
  */
 BOOL WINAPI DrawStateA(HDC hdc, HBRUSH hbr,
                    DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
@@ -1655,7 +1655,7 @@ BOOL WINAPI DrawStateA(HDC hdc, HBRUSH hbr,
 }
 
 /**********************************************************************
- *      DrawStateW()   (USER32.163)
+ *		DrawStateW (USER32.@)
  */
 BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
                    DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
@@ -1665,7 +1665,7 @@ BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
 }
 
 /**********************************************************************
- *      DrawState16()   (USER.449)
+ *		DrawState (USER.449)
  */
 BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
                    DRAWSTATEPROC16 func, LPARAM ldata, WPARAM16 wdata,
@@ -1676,7 +1676,7 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
 
 
 /***********************************************************************
- *           SelectPalette16    (USER.282)
+ *		SelectPalette (USER.282)
  */
 HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
                                    BOOL16 bForceBackground )
@@ -1698,7 +1698,7 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
 
 
 /***********************************************************************
- *           RealizePalette16    (USER.283)
+ *		RealizePalette (USER.283)
  */
 UINT16 WINAPI RealizePalette16( HDC16 hDC )
 {
@@ -1716,7 +1716,7 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
 
 
 /***********************************************************************
- *           UserRealizePalette    (USER32.@)
+ *		UserRealizePalette (USER32.@)
  */
 UINT WINAPI UserRealizePalette( HDC hDC )
 {

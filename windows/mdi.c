@@ -1468,7 +1468,7 @@ END:
 
 
 /***********************************************************************
- *           DefFrameProc16   (USER.445)
+ *		DefFrameProc (USER.445)
  */
 LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
                                UINT16 message, WPARAM16 wParam, LPARAM lParam )
@@ -1593,7 +1593,7 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 
 
 /***********************************************************************
- *           DefFrameProcA   (USER32.122)
+ *		DefFrameProcA (USER32.@)
  */
 LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
                                 UINT message, WPARAM wParam, LPARAM lParam)
@@ -1634,7 +1634,7 @@ LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
 
 
 /***********************************************************************
- *           DefFrameProcW   (USER32.123)
+ *		DefFrameProcW (USER32.@)
  */
 LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                                 UINT message, WPARAM wParam, LPARAM lParam)
@@ -1673,7 +1673,7 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
 
 
 /***********************************************************************
- *           DefMDIChildProc16   (USER.447)
+ *		DefMDIChildProc (USER.447)
  */
 LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
                                   WPARAM16 wParam, LPARAM lParam )
@@ -1873,7 +1873,7 @@ END:
 
 
 /***********************************************************************
- *           DefMDIChildProcA   (USER32.124)
+ *		DefMDIChildProcA (USER32.@)
  */
 LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
                                    WPARAM wParam, LPARAM lParam )
@@ -1951,7 +1951,7 @@ END:
 
 
 /***********************************************************************
- *           DefMDIChildProcW   (USER32.125)
+ *		DefMDIChildProcW (USER32.@)
  */
 LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
                                    WPARAM wParam, LPARAM lParam )
@@ -2016,7 +2016,7 @@ END:
 
 
 /**********************************************************************
- * CreateMDIWindowA [USER32.79] Creates a MDI child in new thread
+ *		CreateMDIWindowA (USER32.@) Creates a MDI child in new thread
  * FIXME: its in the same thread now
  *
  * RETURNS
@@ -2088,7 +2088,7 @@ HWND MDI_CreateMDIWindowA(
 }
 
 /***********************************************************************
- * CreateMDIWindowW [USER32.80] Creates a MDI child in new thread
+ *		CreateMDIWindowW (USER32.@) Creates a MDI child in new thread
  *
  * RETURNS
  *    Success: Handle to created window
@@ -2114,7 +2114,7 @@ HWND WINAPI CreateMDIWindowW(
 
 
 /******************************************************************************
- * CreateMDIWindowW [USER32.80]  Creates a MDI child window
+ *		CreateMDIWindowW (USER32.80) Creates a MDI child window
  * single threaded version of CreateMDIWindow
  * called by CreateWindowExW(). 
  */
@@ -2138,7 +2138,7 @@ HWND MDI_CreateMDIWindowW(
 
 
 /**********************************************************************
- *             TranslateMDISysAccel   (USER32.555)
+ *		TranslateMDISysAccel (USER32.@)
  */
 BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
 {
@@ -2151,7 +2151,7 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
 
 
 /**********************************************************************
- *             TranslateMDISysAccel16   (USER.451)
+ *		TranslateMDISysAccel (USER.451)
  */
 BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
@@ -2202,7 +2202,7 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 
 
 /***********************************************************************
- *           CalcChildScroll   (USER.462)
+ *		CalcChildScroll (USER.462)
  */
 void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
 {
@@ -2254,7 +2254,7 @@ void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
 
 
 /***********************************************************************
- *           ScrollChildren16   (USER.463)
+ *		ScrollChildren (USER.463)
  */
 void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
 {
@@ -2263,7 +2263,7 @@ void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM l
 
 
 /***********************************************************************
- *           ScrollChildren   (USER32.448)
+ *		ScrollChildren (USER32.@)
  */
 void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
                              LPARAM lParam)
@@ -2346,7 +2346,7 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
 
 
 /******************************************************************************
- * CascadeWindows [USER32.21] Cascades MDI child windows
+ *		CascadeWindows (USER32.@) Cascades MDI child windows
  *
  * RETURNS
  *    Success: Number of cascaded windows.
@@ -2364,7 +2364,7 @@ CascadeWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
 
 
 /******************************************************************************
- * TileWindows [USER32.545] Tiles MDI child windows
+ *		TileWindows (USER32.@) Tiles MDI child windows
  *
  * RETURNS
  *    Success: Number of tiled windows.

@@ -650,7 +650,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- *           DefWindowProc16   (USER.107)
+ *		DefWindowProc (USER.107)
  */
 LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                                 LPARAM lParam )
@@ -721,7 +721,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *  DefWindowProcA [USER32.126] 
+ *		DefWindowProcA (USER32.@)
  *
  */
 LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
@@ -828,7 +828,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
- * DefWindowProcW [USER32.127] Calls default window message handler
+ *		DefWindowProcW (USER32.@) Calls default window message handler
  * 
  * Calls default window procedure for messages not processed 
  *  by application.

@@ -414,7 +414,7 @@ void CLASS_RemoveWindow( CLASS *cls )
 
 
 /***********************************************************************
- *           RegisterClass16    (USER.57)
+ *		RegisterClass (USER.57)
  */
 ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 {
@@ -458,7 +458,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 
 
 /***********************************************************************
- *           RegisterClassA      (USER32.427)
+ *		RegisterClassA (USER32.@)
  * RETURNS
  *	>0: Unique identifier
  *	0: Failure
@@ -502,7 +502,7 @@ ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure w
 
 
 /***********************************************************************
- *           RegisterClassW      (USER32.430)
+ *		RegisterClassW (USER32.@)
  */
 ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 {
@@ -542,7 +542,7 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 
 
 /***********************************************************************
- *           RegisterClassEx16    (USER.397)
+ *		RegisterClassEx (USER.397)
  */
 ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 {
@@ -576,7 +576,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 
 
 /***********************************************************************
- *           RegisterClassExA      (USER32.428)
+ *		RegisterClassExA (USER32.@)
  */
 ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 {
@@ -609,7 +609,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 
 
 /***********************************************************************
- *           RegisterClassExW      (USER32.429)
+ *		RegisterClassExW (USER32.@)
  */
 ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 {
@@ -642,7 +642,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 
 
 /***********************************************************************
- *           UnregisterClass16    (USER.403)
+ *		UnregisterClass (USER.403)
  */
 BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
 {
@@ -651,7 +651,7 @@ BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
 
 
 /***********************************************************************
- *           UnregisterClassA    (USER32.563)
+ *		UnregisterClassA (USER32.@)
  *
  */
 BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
@@ -676,7 +676,7 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 }
 
 /***********************************************************************
- *           UnregisterClassW    (USER32.564)
+ *		UnregisterClassW (USER32.@)
  */
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
@@ -700,7 +700,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 }
 
 /***********************************************************************
- *           GetClassWord16    (USER.129)
+ *		GetClassWord (USER.129)
  */
 WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
 {
@@ -709,7 +709,7 @@ WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
 
 
 /***********************************************************************
- *           GetClassWord    (USER32.219)
+ *		GetClassWord (USER32.@)
  */
 WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 {
@@ -755,7 +755,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *           GetClassLong16    (USER.131)
+ *		GetClassLong (USER.131)
  */
 LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
 {
@@ -781,7 +781,7 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
 
 
 /***********************************************************************
- *           GetClassLongA    (USER32.215)
+ *		GetClassLongA (USER32.@)
  */
 LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
@@ -833,7 +833,7 @@ END:
 
 
 /***********************************************************************
- *           GetClassLongW    (USER32.216)
+ *		GetClassLongW (USER32.@)
  */
 LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
@@ -861,7 +861,7 @@ LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *           SetClassWord16    (USER.130)
+ *		SetClassWord (USER.130)
  */
 WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 {
@@ -870,7 +870,7 @@ WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 
 
 /***********************************************************************
- *           SetClassWord    (USER32.469)
+ *		SetClassWord (USER32.@)
  */
 WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 {
@@ -918,7 +918,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 
 
 /***********************************************************************
- *           SetClassLong16    (USER.132)
+ *		SetClassLong (USER.132)
  */
 LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 {
@@ -943,7 +943,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 
 
 /***********************************************************************
- *           SetClassLongA    (USER32.467)
+ *		SetClassLongA (USER32.@)
  */
 LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
@@ -998,7 +998,7 @@ END:
 
 
 /***********************************************************************
- *           SetClassLongW    (USER32.468)
+ *		SetClassLongW (USER32.@)
  */
 LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
@@ -1026,7 +1026,7 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 
 
 /***********************************************************************
- *           GetClassName16      (USER.58)
+ *		GetClassName (USER.58)
  */
 INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 {
@@ -1035,7 +1035,7 @@ INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 
 
 /***********************************************************************
- *           GetClassNameA      (USER32.217)
+ *		GetClassNameA (USER32.@)
  */
 INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
 {   INT ret;
@@ -1051,7 +1051,7 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
 
 
 /***********************************************************************
- *           GetClassNameW      (USER32.218)
+ *		GetClassNameW (USER32.@)
  */
 INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 {   INT ret;
@@ -1067,7 +1067,7 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 
 
 /***********************************************************************
- *           GetClassInfo16      (USER.404)
+ *		GetClassInfo (USER.404)
  */
 BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
 {
@@ -1100,7 +1100,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
 
 
 /***********************************************************************
- *           GetClassInfoA      (USER32.211)
+ *		GetClassInfoA (USER32.@)
  */
 BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
                                WNDCLASSA *wc )
@@ -1141,7 +1141,7 @@ BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
 
 
 /***********************************************************************
- *           GetClassInfoW      (USER32.214)
+ *		GetClassInfoW (USER32.@)
  */
 BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
                                WNDCLASSW *wc )
@@ -1178,7 +1178,7 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
 
 
 /***********************************************************************
- *           GetClassInfoEx16      (USER.398)
+ *		GetClassInfoEx (USER.398)
  *
  * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
  * same in Win16 as in Win32. --AJ
@@ -1215,7 +1215,7 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
 
 
 /***********************************************************************
- *           GetClassInfoExA      (USER32.212)
+ *		GetClassInfoExA (USER32.@)
  */
 BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name,
                                  WNDCLASSEXA *wc )
@@ -1246,7 +1246,7 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name,
 
 
 /***********************************************************************
- *           GetClassInfoExW      (USER32.213)
+ *		GetClassInfoExW (USER32.@)
  */
 BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name,
                                  WNDCLASSEXW *wc )
@@ -1277,7 +1277,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name,
 
 
 /***********************************************************************
- *           ClassFirst      (TOOLHELP.69)
+ *		ClassFirst (TOOLHELP.69)
  */
 BOOL16 WINAPI ClassFirst16( CLASSENTRY *pClassEntry )
 {
@@ -1288,7 +1288,7 @@ BOOL16 WINAPI ClassFirst16( CLASSENTRY *pClassEntry )
 
 
 /***********************************************************************
- *           ClassNext      (TOOLHELP.70)
+ *		ClassNext (TOOLHELP.70)
  */
 BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
 {

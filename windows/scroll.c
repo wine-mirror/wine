@@ -22,7 +22,7 @@
 DEFAULT_DEBUG_CHANNEL(scroll);
 
 /*************************************************************************
- *             ScrollWindow16   (USER.61)
+ *		ScrollWindow16 (USER.61)
  */
 void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
                            const RECT16 *clipRect )
@@ -36,7 +36,7 @@ void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 }
 
 /*************************************************************************
- *             ScrollWindow   (USER32.450)
+ *		ScrollWindow (USER32.@)
  *
  */
 BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
@@ -49,7 +49,7 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
 }
 
 /*************************************************************************
- *             ScrollDC16   (USER.221)
+ *		ScrollDC (USER.221)
  */
 BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
                           const RECT16 *cliprc, HRGN16 hrgnUpdate,
@@ -68,7 +68,7 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
 
 
 /*************************************************************************
- *             ScrollDC   (USER32.449)
+ *		ScrollDC (USER32.@)
  * 
  *   Only the hrgnUpdate is return in device coordinate.
  *   rcUpdate must be returned in logical coordinate to comply with win API.
@@ -185,7 +185,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 
 
 /*************************************************************************
- *             ScrollWindowEx16   (USER.319)
+ *		ScrollWindowEx (USER.319)
  */
 INT16 WINAPI ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy,
                                const RECT16 *rect, const RECT16 *clipRect,
@@ -234,7 +234,7 @@ static BOOL SCROLL_FixCaret(HWND hWnd, LPRECT lprc, UINT flags)
 }
 
 /*************************************************************************
- *             ScrollWindowEx   (USER32.451)
+ *		ScrollWindowEx (USER32.@)
  *
  * NOTE: Use this function instead of ScrollWindow32
  */

@@ -904,7 +904,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
 }
 
 /**********************************************************************
- *		X11DRV_InitKeyboard
+ *		X11DRV_InitKeyboard (X11DRV.@)
  */
 void X11DRV_InitKeyboard(void)
 {
@@ -1120,7 +1120,7 @@ void X11DRV_InitKeyboard(void)
 }
 
 /***********************************************************************
- *		X11DRV_VkKeyScan
+ *		X11DRV_VkKeyScan (X11DRV.@)
  */
 WORD X11DRV_VkKeyScan(CHAR cChar)
 {
@@ -1168,7 +1168,7 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
 }
 
 /***********************************************************************
- *		X11DRV_MapVirtualKey
+ *		X11DRV_MapVirtualKey (X11DRV.@)
  */
 UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 {
@@ -1252,7 +1252,7 @@ UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 }
 
 /***********************************************************************
- *		X11DRV_GetKeyNameText
+ *		X11DRV_GetKeyNameText (X11DRV.@)
  */
 INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
@@ -1424,7 +1424,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 }
 
 /***********************************************************************
- *		X11DRV_ToUnicode
+ *		X11DRV_ToUnicode (X11DRV.@)
  *
  * The ToUnicode function translates the specified virtual-key code and keyboard
  * state to the corresponding Windows character or characters.
@@ -1584,7 +1584,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 }
 
 /***********************************************************************
- *		X11DRV_GetBeepActive
+ *		X11DRV_GetBeepActive (X11DRV.@)
  */
 BOOL X11DRV_GetBeepActive(void)
 {
@@ -1596,7 +1596,7 @@ BOOL X11DRV_GetBeepActive(void)
 }
 
 /***********************************************************************
- *		X11DRV_SetBeepActive
+ *		X11DRV_SetBeepActive (X11DRV.@)
  */
 void X11DRV_SetBeepActive(BOOL bActivate)
 {
@@ -1611,7 +1611,7 @@ void X11DRV_SetBeepActive(BOOL bActivate)
 }
 
 /***********************************************************************
- *		X11DRV_Beep
+ *		X11DRV_Beep (X11DRV.@)
  */
 void X11DRV_Beep(void)
 {
@@ -1619,7 +1619,7 @@ void X11DRV_Beep(void)
 }
 
 /***********************************************************************
- *		X11DRV_GetDIState
+ *		X11DRV_GetDIState (X11DRV.@)
  */
 BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr)
 {
@@ -1644,7 +1644,7 @@ BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr)
 }
 
 /***********************************************************************
- *		X11DRV_GetDIData
+ *		X11DRV_GetDIData (X11DRV.@)
  */
 BOOL X11DRV_GetDIData(
   BYTE *keystate,
@@ -1688,7 +1688,7 @@ BOOL X11DRV_GetDIData(
 }
 
 /***********************************************************************
- *		X11DRV_GetKeyboardConfig
+ *		X11DRV_GetKeyboardConfig (X11DRV.@)
  */
 void X11DRV_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
   XKeyboardState   xks;
@@ -1699,9 +1699,9 @@ void X11DRV_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
 }
 
 /***********************************************************************
- *		X11DRV_SetKeyboardConfig
+ *		X11DRV_SetKeyboardConfig (X11DRV.@)
  */
-extern void X11DRV_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
+void X11DRV_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
   XKeyboardControl xkc;
   unsigned long X_mask = 0;
   

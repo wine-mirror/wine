@@ -28,7 +28,7 @@ typedef struct
 } WINHELP,*LPWINHELP;
 
 /**********************************************************************
- *             WinHelp16   (USER.171)
+ *		WinHelp (USER.171)
  */
 BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
                          DWORD dwData )
@@ -55,7 +55,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 
 
 /**********************************************************************
- *             WinHelpA   (USER32.579)
+ *		WinHelpA (USER32.@)
  */
 BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
                           DWORD dwData )
@@ -141,7 +141,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 
 
 /**********************************************************************
- *             WinHelpW   (USER32.580)
+ *		WinHelpW (USER32.@)
  */
 BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command,
                           DWORD dwData )

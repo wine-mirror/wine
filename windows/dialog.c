@@ -906,7 +906,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
 
 /***********************************************************************
- *           CreateDialog16   (USER.89)
+ *		CreateDialog (USER.89)
  */
 HWND16 WINAPI CreateDialog16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                               HWND16 owner, DLGPROC16 dlgProc )
@@ -916,7 +916,7 @@ HWND16 WINAPI CreateDialog16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
 
 
 /***********************************************************************
- *           CreateDialogParam16   (USER.241)
+ *		CreateDialogParam16 (USER.241)
  */
 HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                                    HWND16 owner, DLGPROC16 dlgProc,
@@ -940,7 +940,7 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
 }
 
 /***********************************************************************
- *           CreateDialogParamA   (USER32.73)
+ *		CreateDialogParamA (USER32.@)
  */
 HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name,
                                     HWND owner, DLGPROC dlgProc,
@@ -955,7 +955,7 @@ HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name,
 
 
 /***********************************************************************
- *           CreateDialogParamW   (USER32.74)
+ *		CreateDialogParamW (USER32.@)
  */
 HWND WINAPI CreateDialogParamW( HINSTANCE hInst, LPCWSTR name,
                                     HWND owner, DLGPROC dlgProc,
@@ -970,7 +970,7 @@ HWND WINAPI CreateDialogParamW( HINSTANCE hInst, LPCWSTR name,
 
 
 /***********************************************************************
- *           CreateDialogIndirect16   (USER.219)
+ *		CreateDialogIndirect (USER.219)
  */
 HWND16 WINAPI CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
                                       HWND16 owner, DLGPROC16 dlgProc )
@@ -980,7 +980,7 @@ HWND16 WINAPI CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
 
 
 /***********************************************************************
- *           CreateDialogIndirectParam16   (USER.242)
+ *		CreateDialogIndirectParam16 (USER.242) (USER32.@)
  */
 HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
                                            LPCVOID dlgTemplate,
@@ -993,7 +993,7 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
 
 
 /***********************************************************************
- *           CreateDialogIndirectParamA   (USER32.69)
+ *		CreateDialogIndirectParamA (USER32.@)
  */
 HWND WINAPI CreateDialogIndirectParamA( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
@@ -1005,7 +1005,7 @@ HWND WINAPI CreateDialogIndirectParamA( HINSTANCE hInst,
 }
 
 /***********************************************************************
- *           CreateDialogIndirectParamAorW   (USER32.71)
+ *		CreateDialogIndirectParamAorW (USER32.@)
  */
 HWND WINAPI CreateDialogIndirectParamAorW( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
@@ -1017,7 +1017,7 @@ HWND WINAPI CreateDialogIndirectParamAorW( HINSTANCE hInst,
 }
 
 /***********************************************************************
- *           CreateDialogIndirectParamW   (USER32.72)
+ *		CreateDialogIndirectParamW (USER32.@)
  */
 HWND WINAPI CreateDialogIndirectParamW( HINSTANCE hInst,
                                             LPCVOID dlgTemplate,
@@ -1066,7 +1066,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 
 
 /***********************************************************************
- *           DialogBox16   (USER.87)
+ *		DialogBox (USER.87)
  */
 INT16 WINAPI DialogBox16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
                           HWND16 owner, DLGPROC16 dlgProc )
@@ -1076,7 +1076,7 @@ INT16 WINAPI DialogBox16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
 
 
 /***********************************************************************
- *           DialogBoxParam16   (USER.239)
+ *		DialogBoxParam (USER.239)
  */
 INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
                                HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
@@ -1101,7 +1101,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
 
 
 /***********************************************************************
- *           DialogBoxParamA   (USER32.139)
+ *		DialogBoxParamA (USER32.@)
  */
 INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
@@ -1118,7 +1118,7 @@ INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
 
 
 /***********************************************************************
- *           DialogBoxParamW   (USER32.140)
+ *		DialogBoxParamW (USER32.@)
  */
 INT WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
@@ -1135,7 +1135,7 @@ INT WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
 
 
 /***********************************************************************
- *           DialogBoxIndirect16   (USER.218)
+ *		DialogBoxIndirect (USER.218)
  */
 INT16 WINAPI DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
                                   HWND16 owner, DLGPROC16 dlgProc )
@@ -1145,7 +1145,7 @@ INT16 WINAPI DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
 
 
 /***********************************************************************
- *           DialogBoxIndirectParam16   (USER.240)
+ *		DialogBoxIndirectParam16 (USER.240) (USER32.@)
  */
 INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
                                        HWND16 owner, DLGPROC16 dlgProc,
@@ -1164,7 +1164,7 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
 
 
 /***********************************************************************
- *           DialogBoxIndirectParamA   (USER32.136)
+ *		DialogBoxIndirectParamA (USER32.@)
  */
 INT WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCVOID template,
                                        HWND owner, DLGPROC dlgProc,
@@ -1178,7 +1178,7 @@ INT WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCVOID template,
 
 
 /***********************************************************************
- *           DialogBoxIndirectParamW   (USER32.138)
+ *		DialogBoxIndirectParamW (USER32.@)
  */
 INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
                                        HWND owner, DLGPROC dlgProc,
@@ -1191,7 +1191,7 @@ INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
 }
 
 /***********************************************************************
- *           DialogBoxIndirectParamAorW   (USER32.138)
+ *		DialogBoxIndirectParamAorW (USER32.@)
  */
 INT WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
                                        HWND owner, DLGPROC dlgProc,
@@ -1207,7 +1207,7 @@ INT WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
 }
 
 /***********************************************************************
- *           EndDialog16   (USER.88)
+ *		EndDialog (USER.88)
  */
 BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 {
@@ -1216,7 +1216,7 @@ BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 
 
 /***********************************************************************
- *           EndDialog   (USER32.173)
+ *		EndDialog (USER32.@)
  */
 BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 {
@@ -1495,7 +1495,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
 
 
 /***********************************************************************
- *           IsDialogMessage16   (USER.90)
+ *		IsDialogMessage (USER.90)
  */
 BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
@@ -1521,7 +1521,7 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 
 
 /***********************************************************************
- *           IsDialogMessageA   (USER32.342)
+ *		IsDialogMessageA (USER32.@)
  */
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
 {
@@ -1546,7 +1546,7 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
 
 
 /***********************************************************************
- *           IsDialogMessageW   (USER32.343)
+ *		IsDialogMessageW (USER32.@)
  */
 BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
@@ -1571,7 +1571,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 
 
 /***********************************************************************
- *         GetDlgCtrlID16   (USER.277)
+ *		GetDlgCtrlID (USER.277)
  */
 INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
 {
@@ -1587,7 +1587,7 @@ INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
  
 
 /***********************************************************************
- *         GetDlgCtrlID   (USER32.234)
+ *		GetDlgCtrlID (USER32.@)
  */
 INT WINAPI GetDlgCtrlID( HWND hwnd )
 {
@@ -1601,7 +1601,7 @@ INT WINAPI GetDlgCtrlID( HWND hwnd )
  
 
 /***********************************************************************
- *           GetDlgItem16   (USER.91)
+ *		GetDlgItem (USER.91)
  */
 HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 {
@@ -1620,7 +1620,7 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 
 
 /***********************************************************************
- *           GetDlgItem   (USER32.235)
+ *		GetDlgItem (USER32.@)
  */
 HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
@@ -1639,7 +1639,7 @@ HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 
 
 /*******************************************************************
- *           SendDlgItemMessage16   (USER.101)
+ *		SendDlgItemMessage (USER.101)
  */
 LRESULT WINAPI SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
                                      WPARAM16 wParam, LPARAM lParam )
@@ -1651,7 +1651,7 @@ LRESULT WINAPI SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
 
 
 /*******************************************************************
- *           SendDlgItemMessageA   (USER32.452)
+ *		SendDlgItemMessageA (USER32.@)
  */
 LRESULT WINAPI SendDlgItemMessageA( HWND hwnd, INT id, UINT msg,
                                       WPARAM wParam, LPARAM lParam )
@@ -1663,7 +1663,7 @@ LRESULT WINAPI SendDlgItemMessageA( HWND hwnd, INT id, UINT msg,
 
 
 /*******************************************************************
- *           SendDlgItemMessageW   (USER32.453)
+ *		SendDlgItemMessageW (USER32.@)
  */
 LRESULT WINAPI SendDlgItemMessageW( HWND hwnd, INT id, UINT msg,
                                       WPARAM wParam, LPARAM lParam )
@@ -1675,7 +1675,7 @@ LRESULT WINAPI SendDlgItemMessageW( HWND hwnd, INT id, UINT msg,
 
 
 /*******************************************************************
- *           SetDlgItemText16   (USER.92)
+ *		SetDlgItemText (USER.92)
  */
 void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
 {
@@ -1684,7 +1684,7 @@ void WINAPI SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
 
 
 /*******************************************************************
- *           SetDlgItemTextA   (USER32.478)
+ *		SetDlgItemTextA (USER32.@)
  */
 BOOL WINAPI SetDlgItemTextA( HWND hwnd, INT id, LPCSTR lpString )
 {
@@ -1693,7 +1693,7 @@ BOOL WINAPI SetDlgItemTextA( HWND hwnd, INT id, LPCSTR lpString )
 
 
 /*******************************************************************
- *           SetDlgItemTextW   (USER32.479)
+ *		SetDlgItemTextW (USER32.@)
  */
 BOOL WINAPI SetDlgItemTextW( HWND hwnd, INT id, LPCWSTR lpString )
 {
@@ -1702,7 +1702,7 @@ BOOL WINAPI SetDlgItemTextW( HWND hwnd, INT id, LPCWSTR lpString )
 
 
 /***********************************************************************
- *           GetDlgItemText16   (USER.93)
+ *		GetDlgItemText (USER.93)
  */
 INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
 {
@@ -1712,7 +1712,7 @@ INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
 
 
 /***********************************************************************
- *           GetDlgItemTextA   (USER32.237)
+ *		GetDlgItemTextA (USER32.@)
  */
 INT WINAPI GetDlgItemTextA( HWND hwnd, INT id, LPSTR str, UINT len )
 {
@@ -1722,7 +1722,7 @@ INT WINAPI GetDlgItemTextA( HWND hwnd, INT id, LPSTR str, UINT len )
 
 
 /***********************************************************************
- *           GetDlgItemTextW   (USER32.238)
+ *		GetDlgItemTextW (USER32.@)
  */
 INT WINAPI GetDlgItemTextW( HWND hwnd, INT id, LPWSTR str, UINT len )
 {
@@ -1732,7 +1732,7 @@ INT WINAPI GetDlgItemTextW( HWND hwnd, INT id, LPWSTR str, UINT len )
 
 
 /*******************************************************************
- *           SetDlgItemInt16   (USER.94)
+ *		SetDlgItemInt (USER.94)
  */
 void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
@@ -1741,7 +1741,7 @@ void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned
 
 
 /*******************************************************************
- *           SetDlgItemInt   (USER32.477)
+ *		SetDlgItemInt (USER32.@)
  */
 BOOL WINAPI SetDlgItemInt( HWND hwnd, INT id, UINT value,
                              BOOL fSigned )
@@ -1756,7 +1756,7 @@ BOOL WINAPI SetDlgItemInt( HWND hwnd, INT id, UINT value,
 
 
 /***********************************************************************
- *           GetDlgItemInt16   (USER.95)
+ *		GetDlgItemInt (USER.95)
  */
 UINT16 WINAPI GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated,
                                BOOL16 fSigned )
@@ -1781,7 +1781,7 @@ UINT16 WINAPI GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated,
 
 
 /***********************************************************************
- *           GetDlgItemInt   (USER32.236)
+ *		GetDlgItemInt (USER32.@)
  */
 UINT WINAPI GetDlgItemInt( HWND hwnd, INT id, BOOL *translated,
                                BOOL fSigned )
@@ -1814,7 +1814,7 @@ UINT WINAPI GetDlgItemInt( HWND hwnd, INT id, BOOL *translated,
 
 
 /***********************************************************************
- *           CheckDlgButton16   (USER.97)
+ *		CheckDlgButton (USER.97)
  */
 BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 {
@@ -1824,7 +1824,7 @@ BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 
 
 /***********************************************************************
- *           CheckDlgButton   (USER32.45)
+ *		CheckDlgButton (USER32.@)
  */
 BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
@@ -1834,7 +1834,7 @@ BOOL WINAPI CheckDlgButton( HWND hwnd, INT id, UINT check )
 
 
 /***********************************************************************
- *           IsDlgButtonChecked16   (USER.98)
+ *		IsDlgButtonChecked (USER.98)
  */
 UINT16 WINAPI IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
 {
@@ -1843,7 +1843,7 @@ UINT16 WINAPI IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
 
 
 /***********************************************************************
- *           IsDlgButtonChecked   (USER32.344)
+ *		IsDlgButtonChecked (USER32.@)
  */
 UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
 {
@@ -1852,7 +1852,7 @@ UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
 
 
 /***********************************************************************
- *           CheckRadioButton16   (USER.96)
+ *		CheckRadioButton (USER.96)
  */
 BOOL16 WINAPI CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID,
                                   UINT16 lastID, UINT16 checkID )
@@ -1890,7 +1890,7 @@ static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
 
 
 /***********************************************************************
- *           CheckRadioButton   (USER32.48)
+ *		CheckRadioButton (USER32.@)
  */
 BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
                               UINT lastID, UINT checkID )
@@ -1908,7 +1908,7 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
 
 
 /***********************************************************************
- *           GetDialogBaseUnits   (USER.243) (USER32.233)
+ *		GetDialogBaseUnits (USER.243) (USER32.@)
  */
 DWORD WINAPI GetDialogBaseUnits(void)
 {
@@ -1917,7 +1917,7 @@ DWORD WINAPI GetDialogBaseUnits(void)
 
 
 /***********************************************************************
- *           MapDialogRect16   (USER.103)
+ *		MapDialogRect (USER.103)
  */
 void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
 {
@@ -1934,7 +1934,7 @@ void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
 
 
 /***********************************************************************
- *           MapDialogRect   (USER32.382)
+ *		MapDialogRect (USER32.@)
  */
 BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
 {
@@ -1952,7 +1952,7 @@ BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
 
 
 /***********************************************************************
- *           GetNextDlgGroupItem16   (USER.227)
+ *		GetNextDlgGroupItem (USER.227)
  */
 HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                      BOOL16 fPrevious )
@@ -1962,7 +1962,7 @@ HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 
 
 /***********************************************************************
- *           GetNextDlgGroupItem   (USER32.275)
+ *		GetNextDlgGroupItem (USER32.@)
  */
 HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
                                      BOOL fPrevious )
@@ -2051,7 +2051,7 @@ END:
 
 
 /***********************************************************************
- *           GetNextDlgTabItem16   (USER.228)
+ *		GetNextDlgTabItem (USER.228)
  */
 HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
                                    BOOL16 fPrevious )
@@ -2150,7 +2150,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
 }
 
 /***********************************************************************
- *           GetNextDlgTabItem   (USER32.276)
+ *		GetNextDlgTabItem (USER32.@)
  */
 HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
                                    BOOL fPrevious )
@@ -2339,7 +2339,7 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
 
 
 /**********************************************************************
- *	    DlgDirSelect    (USER.99)
+ *		DlgDirSelect (USER.99)
  */
 BOOL16 WINAPI DlgDirSelect16( HWND16 hwnd, LPSTR str, INT16 id )
 {
@@ -2348,7 +2348,7 @@ BOOL16 WINAPI DlgDirSelect16( HWND16 hwnd, LPSTR str, INT16 id )
 
 
 /**********************************************************************
- *	    DlgDirSelectComboBox    (USER.194)
+ *		DlgDirSelectComboBox (USER.194)
  */
 BOOL16 WINAPI DlgDirSelectComboBox16( HWND16 hwnd, LPSTR str, INT16 id )
 {
@@ -2357,7 +2357,7 @@ BOOL16 WINAPI DlgDirSelectComboBox16( HWND16 hwnd, LPSTR str, INT16 id )
 
 
 /**********************************************************************
- *           DlgDirSelectEx16    (USER.422)
+ *		DlgDirSelectEx (USER.422)
  */
 BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
 {
@@ -2366,7 +2366,7 @@ BOOL16 WINAPI DlgDirSelectEx16( HWND16 hwnd, LPSTR str, INT16 len, INT16 id )
 
 
 /**********************************************************************
- *           DlgDirSelectExA    (USER32.149)
+ *		DlgDirSelectExA (USER32.@)
  */
 BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
 {
@@ -2375,7 +2375,7 @@ BOOL WINAPI DlgDirSelectExA( HWND hwnd, LPSTR str, INT len, INT id )
 
 
 /**********************************************************************
- *           DlgDirSelectExW    (USER32.150)
+ *		DlgDirSelectExW (USER32.@)
  */
 BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 {
@@ -2384,7 +2384,7 @@ BOOL WINAPI DlgDirSelectExW( HWND hwnd, LPWSTR str, INT len, INT id )
 
 
 /**********************************************************************
- *           DlgDirSelectComboBoxEx16    (USER.423)
+ *		DlgDirSelectComboBoxEx (USER.423)
  */
 BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
                                         INT16 id )
@@ -2394,7 +2394,7 @@ BOOL16 WINAPI DlgDirSelectComboBoxEx16( HWND16 hwnd, LPSTR str, INT16 len,
 
 
 /**********************************************************************
- *           DlgDirSelectComboBoxExA    (USER32.147)
+ *		DlgDirSelectComboBoxExA (USER32.@)
  */
 BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
                                          INT id )
@@ -2404,7 +2404,7 @@ BOOL WINAPI DlgDirSelectComboBoxExA( HWND hwnd, LPSTR str, INT len,
 
 
 /**********************************************************************
- *           DlgDirSelectComboBoxExW    (USER32.148)
+ *		DlgDirSelectComboBoxExW (USER32.@)
  */
 BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
                                          INT id)
@@ -2414,7 +2414,7 @@ BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
 
 
 /**********************************************************************
- *	    DlgDirList16    (USER.100)
+ *		DlgDirList (USER.100)
  */
 INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
                            INT16 idStatic, UINT16 attrib )
@@ -2429,7 +2429,7 @@ INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
 
 
 /**********************************************************************
- *	    DlgDirListA    (USER32.143)
+ *		DlgDirListA (USER32.@)
  */
 INT WINAPI DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
                             INT idStatic, UINT attrib )
@@ -2439,7 +2439,7 @@ INT WINAPI DlgDirListA( HWND hDlg, LPSTR spec, INT idLBox,
 
 
 /**********************************************************************
- *	    DlgDirListW    (USER32.146)
+ *		DlgDirListW (USER32.@)
  */
 INT WINAPI DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
                             INT idStatic, UINT attrib )
@@ -2449,7 +2449,7 @@ INT WINAPI DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
 
 
 /**********************************************************************
- *	    DlgDirListComboBox16    (USER.195)
+ *		DlgDirListComboBox (USER.195)
  */
 INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
                                    INT16 idStatic, UINT16 attrib )
@@ -2459,7 +2459,7 @@ INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
 
 
 /**********************************************************************
- *	    DlgDirListComboBoxA    (USER32.144)
+ *		DlgDirListComboBoxA (USER32.@)
  */
 INT WINAPI DlgDirListComboBoxA( HWND hDlg, LPSTR spec, INT idCBox,
                                     INT idStatic, UINT attrib )
@@ -2469,7 +2469,7 @@ INT WINAPI DlgDirListComboBoxA( HWND hDlg, LPSTR spec, INT idCBox,
 
 
 /**********************************************************************
- *	    DlgDirListComboBoxW    (USER32.145)
+ *		DlgDirListComboBoxW (USER32.@)
  */
 INT WINAPI DlgDirListComboBoxW( HWND hDlg, LPWSTR spec, INT idCBox,
                                     INT idStatic, UINT attrib )

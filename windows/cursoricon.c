@@ -648,7 +648,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 
 
 /**********************************************************************
- *          CreateIconFromResourceEx16          (USER.450)
+ *		CreateIconFromResourceEx (USER.450)
  *
  * FIXME: not sure about exact parameter types
  */
@@ -661,7 +661,7 @@ HICON16 WINAPI CreateIconFromResourceEx16( LPBYTE bits, UINT16 cbSize, BOOL16 bI
 
 
 /**********************************************************************
- *          CreateIconFromResource          (USER32.76)
+ *		CreateIconFromResource (USER32.@)
  */
 HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
                                            BOOL bIcon, DWORD dwVersion)
@@ -671,7 +671,7 @@ HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
 
 
 /**********************************************************************
- *          CreateIconFromResourceEx          (USER32.77)
+ *		CreateIconFromResourceEx (USER32.@)
  */
 HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                            BOOL bIcon, DWORD dwVersion,
@@ -1066,7 +1066,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 
 
 /***********************************************************************
- *           LoadCursor16    (USER.173)
+ *		LoadCursor (USER.173)
  */
 HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, LPCSTR name )
 {
@@ -1075,7 +1075,7 @@ HCURSOR16 WINAPI LoadCursor16( HINSTANCE16 hInstance, LPCSTR name )
 
 
 /***********************************************************************
- *           LoadIcon16    (USER.174)
+ *		LoadIcon (USER.174)
  */
 HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, LPCSTR name )
 {
@@ -1084,7 +1084,7 @@ HICON16 WINAPI LoadIcon16( HINSTANCE16 hInstance, LPCSTR name )
 
 
 /***********************************************************************
- *           CreateCursor16    (USER.406)
+ *		CreateCursor (USER.406)
  */
 HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
                                  INT16 xHotSpot, INT16 yHotSpot,
@@ -1109,7 +1109,7 @@ HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
 
 
 /***********************************************************************
- *           CreateCursor    (USER32.67)
+ *		CreateCursor (USER32.@)
  */
 HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
                                  INT xHotSpot, INT yHotSpot,
@@ -1134,7 +1134,7 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
 
 
 /***********************************************************************
- *           CreateIcon16    (USER.407)
+ *		CreateIcon (USER.407)
  */
 HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
                              INT16 nHeight, BYTE bPlanes, BYTE bBitsPixel,
@@ -1158,7 +1158,7 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
 
 
 /***********************************************************************
- *           CreateIcon    (USER32.75)
+ *		CreateIcon (USER32.@)
  */
 HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
                              INT nHeight, BYTE bPlanes, BYTE bBitsPixel,
@@ -1182,7 +1182,7 @@ HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
 
 
 /***********************************************************************
- *           CreateCursorIconIndirect    (USER.408)
+ *		CreateCursorIconIndirect (USER.408)
  */
 HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
                                            CURSORICONINFO *info,
@@ -1212,7 +1212,7 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
 
 
 /***********************************************************************
- *           CopyIcon16    (USER.368)
+ *		CopyIcon (USER.368)
  */
 HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 {
@@ -1222,7 +1222,7 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 
 
 /***********************************************************************
- *           CopyIcon    (USER32.60)
+ *		CopyIcon (USER32.@)
  */
 HICON WINAPI CopyIcon( HICON hIcon )
 {
@@ -1234,7 +1234,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
 
 
 /***********************************************************************
- *           CopyCursor16    (USER.369)
+ *		CopyCursor (USER.369)
  */
 HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 {
@@ -1243,7 +1243,7 @@ HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 }
 
 /**********************************************************************
- *	    CURSORICON_Destroy   (USER.610)
+ *		DestroyIcon32 (USER.610)
  *
  * This routine is actually exported from Win95 USER under the name
  * DestroyIcon32 ...  The behaviour implemented here should mimic 
@@ -1283,7 +1283,7 @@ WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
 }
 
 /***********************************************************************
- *           DestroyIcon16    (USER.457)
+ *		DestroyIcon16 (USER.457)
  */
 BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 {
@@ -1291,7 +1291,7 @@ BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 }
 
 /***********************************************************************
- *           DestroyIcon      (USER32.133)
+ *		DestroyIcon (USER32.@)
  */
 BOOL WINAPI DestroyIcon( HICON hIcon )
 {
@@ -1299,7 +1299,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
 }
 
 /***********************************************************************
- *           DestroyCursor16  (USER.458)
+ *		DestroyCursor (USER.458)
  */
 BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 {
@@ -1307,7 +1307,7 @@ BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 }
 
 /***********************************************************************
- *           DestroyCursor    (USER32.132)
+ *		DestroyCursor (USER32.@)
  */
 BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
@@ -1316,7 +1316,7 @@ BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 
 
 /***********************************************************************
- *           DrawIcon16    (USER.84)
+ *		DrawIcon (USER.84)
  */
 BOOL16 WINAPI DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
 {
@@ -1325,7 +1325,7 @@ BOOL16 WINAPI DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
 
 
 /***********************************************************************
- *           DrawIcon    (USER32.159)
+ *		DrawIcon (USER32.@)
  */
 BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
@@ -1363,7 +1363,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 
 
 /***********************************************************************
- *           IconSize16    (USER.86)
+ *		IconSize (USER.86)
  *
  * See "Undocumented Windows". Used by W2.0 paint.exe.
  */
@@ -1374,7 +1374,7 @@ DWORD WINAPI IconSize16( void )
 
 
 /***********************************************************************
- *           DumpIcon    (USER.459)
+ *		DumpIcon (USER.459)
  */
 DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
                        SEGPTR *lpXorBits, SEGPTR *lpAndBits )
@@ -1393,7 +1393,7 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
 
 
 /***********************************************************************
- *           SetCursor16    (USER.69)
+ *		SetCursor (USER.69)
  */
 HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
 {
@@ -1402,7 +1402,7 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           SetCursor    (USER32.472)
+ *		SetCursor (USER32.@)
  * RETURNS:
  *	A handle to the previous cursor shape.
  */
@@ -1426,7 +1426,7 @@ HCURSOR WINAPI SetCursor(
 
 
 /***********************************************************************
- *           SetCursorPos16    (USER.70)
+ *		SetCursorPos (USER.70)
  */
 void WINAPI SetCursorPos16( INT16 x, INT16 y )
 {
@@ -1435,7 +1435,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           SetCursorPos    (USER32.474)
+ *		SetCursorPos (USER32.@)
  */
 BOOL WINAPI SetCursorPos( INT x, INT y )
 {
@@ -1445,7 +1445,7 @@ BOOL WINAPI SetCursorPos( INT x, INT y )
 
 
 /***********************************************************************
- *           ShowCursor16    (USER.71)
+ *		ShowCursor (USER.71)
  */
 INT16 WINAPI ShowCursor16( BOOL16 bShow )
 {
@@ -1454,7 +1454,7 @@ INT16 WINAPI ShowCursor16( BOOL16 bShow )
 
 
 /***********************************************************************
- *           ShowCursor    (USER32.530)
+ *		ShowCursor (USER32.@)
  */
 INT WINAPI ShowCursor( BOOL bShow )
 {
@@ -1479,7 +1479,7 @@ INT WINAPI ShowCursor( BOOL bShow )
 
 
 /***********************************************************************
- *           GetCursor16    (USER.247)
+ *		GetCursor (USER.247)
  */
 HCURSOR16 WINAPI GetCursor16(void)
 {
@@ -1488,7 +1488,7 @@ HCURSOR16 WINAPI GetCursor16(void)
 
 
 /***********************************************************************
- *           GetCursor    (USER32.227)
+ *		GetCursor (USER32.@)
  */
 HCURSOR WINAPI GetCursor(void)
 {
@@ -1497,7 +1497,7 @@ HCURSOR WINAPI GetCursor(void)
 
 
 /***********************************************************************
- *           ClipCursor16    (USER.16)
+ *		ClipCursor (USER.16)
  */
 BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 {
@@ -1508,7 +1508,7 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 
 
 /***********************************************************************
- *           ClipCursor    (USER32.53)
+ *		ClipCursor (USER32.@)
  */
 BOOL WINAPI ClipCursor( const RECT *rect )
 {
@@ -1519,7 +1519,7 @@ BOOL WINAPI ClipCursor( const RECT *rect )
 
 
 /***********************************************************************
- *           GetClipCursor16    (USER.309)
+ *		GetClipCursor (USER.309)
  */
 void WINAPI GetClipCursor16( RECT16 *rect )
 {
@@ -1528,7 +1528,7 @@ void WINAPI GetClipCursor16( RECT16 *rect )
 
 
 /***********************************************************************
- *           GetClipCursor    (USER32.221)
+ *		GetClipCursor (USER32.@)
  */
 BOOL WINAPI GetClipCursor( RECT *rect )
 {
@@ -1541,7 +1541,7 @@ BOOL WINAPI GetClipCursor( RECT *rect )
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectoryEx16	(USER.364)
+ *		LookupIconIdFromDirectoryEx (USER.364)
  *
  * FIXME: exact parameter sizes
  */
@@ -1576,7 +1576,7 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectoryEx       (USER32.380)
+ *		LookupIconIdFromDirectoryEx (USER32.@)
  */
 INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
              INT width, INT height, UINT cFlag )
@@ -1585,7 +1585,7 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectory		(USER.???)
+ *		LookupIconIdFromDirectory (USER.???)
  */
 INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 {
@@ -1595,7 +1595,7 @@ INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectory		(USER32.379)
+ *		LookupIconIdFromDirectory (USER32.@)
  */
 INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
 {
@@ -1605,7 +1605,7 @@ INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
 }
 
 /**********************************************************************
- *	    GetIconID    (USER.455)
+ *		GetIconID (USER.455)
  */
 WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
 {
@@ -1629,7 +1629,7 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
 }
 
 /**********************************************************************
- *          LoadCursorIconHandler    (USER.336)
+ *		LoadCursorIconHandler (USER.336)
  *
  * Supposed to load resources of Windows 2.x applications.
  */
@@ -1641,7 +1641,7 @@ HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule
 }
 
 /**********************************************************************
- *          LoadDIBIconHandler    (USER.357)
+ *		LoadDIBIconHandler (USER.357)
  * 
  * RT_ICON resource loader, installed by USER_SignalProc when module
  * is initialized.
@@ -1666,7 +1666,7 @@ HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRS
 }
 
 /**********************************************************************
- *          LoadDIBCursorHandler    (USER.356)
+ *		LoadDIBCursorHandler (USER.356)
  *
  * RT_CURSOR resource loader. Same as above.
  */
@@ -1684,7 +1684,7 @@ HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, H
 }
 
 /**********************************************************************
- *	    LoadIconHandler    (USER.456)
+ *		LoadIconHandler (USER.456)
  */
 HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 {
@@ -1697,7 +1697,7 @@ HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 }
 
 /***********************************************************************
- *           LoadCursorW            (USER32.362)
+ *		LoadCursorW (USER32.@)
  */
 HCURSOR WINAPI LoadCursorW(HINSTANCE hInstance, LPCWSTR name)
 {
@@ -1706,7 +1706,7 @@ HCURSOR WINAPI LoadCursorW(HINSTANCE hInstance, LPCWSTR name)
 }
 
 /***********************************************************************
- *           LoadCursorA            (USER32.359)
+ *		LoadCursorA (USER32.@)
  */
 HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR name)
 {
@@ -1715,8 +1715,8 @@ HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR name)
 }
 
 /***********************************************************************
-*            LoadCursorFromFileW    (USER32.361)
-*/
+ *		LoadCursorFromFileW (USER32.@)
+ */
 HCURSOR WINAPI LoadCursorFromFileW (LPCWSTR name)
 {
     return LoadImageW( 0, name, IMAGE_CURSOR, 0, 0, 
@@ -1724,8 +1724,8 @@ HCURSOR WINAPI LoadCursorFromFileW (LPCWSTR name)
 }
 
 /***********************************************************************
-*            LoadCursorFromFileA    (USER32.360)
-*/
+ *		LoadCursorFromFileA (USER32.@)
+ */
 HCURSOR WINAPI LoadCursorFromFileA (LPCSTR name)
 {
     return LoadImageA( 0, name, IMAGE_CURSOR, 0, 0, 
@@ -1733,7 +1733,7 @@ HCURSOR WINAPI LoadCursorFromFileA (LPCSTR name)
 }
   
 /***********************************************************************
- *           LoadIconW          (USER32.364)
+ *		LoadIconW (USER32.@)
  */
 HICON WINAPI LoadIconW(HINSTANCE hInstance, LPCWSTR name)
 {
@@ -1742,7 +1742,7 @@ HICON WINAPI LoadIconW(HINSTANCE hInstance, LPCWSTR name)
 }
 
 /***********************************************************************
- *           LoadIconA          (USER32.363)
+ *		LoadIconA (USER32.@)
  */
 HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 {
@@ -1751,7 +1751,7 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 }
 
 /**********************************************************************
- *          GetIconInfo16       (USER.395)
+ *		GetIconInfo (USER.395)
  */
 BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 {
@@ -1767,7 +1767,7 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 }
 
 /**********************************************************************
- *          GetIconInfo		(USER32.242)
+ *		GetIconInfo (USER32.@)
  */
 BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;
@@ -1804,7 +1804,7 @@ BOOL WINAPI GetIconInfo(HICON hIcon,PICONINFO iconinfo) {
 }
 
 /**********************************************************************
- *          CreateIconIndirect		(USER32.78)
+ *		CreateIconIndirect (USER32.@)
  */
 HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 {
@@ -1855,8 +1855,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
 
 /**********************************************************************
- *          
- DrawIconEx16		(USER.394)
+ *		DrawIconEx (USER.394)
  */
 BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 			    INT16 cxWidth, INT16 cyWidth, UINT16 istep,
@@ -1868,7 +1867,7 @@ BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
 
 
 /******************************************************************************
- * DrawIconEx [USER32.160]  Draws an icon or cursor on device context
+ *		DrawIconEx (USER32.@) Draws an icon or cursor on device context
  *
  * NOTES
  *    Why is this using SM_CXICON instead of SM_CXCURSOR?
@@ -2137,7 +2136,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
 
 
 /***********************************************************************
- * LoadImage16 [USER.389]
+ *		LoadImage16 (USER.389)
  *
  */
 HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
@@ -2147,7 +2146,7 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 }
 
 /**********************************************************************
- *	    LoadImageA    (USER32.365)
+ *		LoadImageA (USER32.@)
  * 
  * FIXME: implementation lacks some features, see LR_ defines in windows.h
  */
@@ -2167,7 +2166,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
 
 
 /******************************************************************************
- * LoadImageW [USER32.366]  Loads an icon, cursor, or bitmap
+ *		LoadImageW (USER32.@) Loads an icon, cursor, or bitmap
  *
  * PARAMS
  *    hinst     [I] Handle of instance that contains image
@@ -2228,7 +2227,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
 
 
 /******************************************************************************
- * CopyImage16 [USER.390]  Creates new image and copies attributes to it
+ *		CopyImage (USER.390) Creates new image and copies attributes to it
  *
  */
 HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
@@ -2239,7 +2238,7 @@ HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
 }
 
 /******************************************************************************
- * CopyImage [USER32.61]  Creates new image and copies attributes to it
+ *		CopyImage (USER32.@) Creates new image and copies attributes to it
  *
  * PARAMS
  *    hnd      [I] Handle to image to copy
@@ -2275,7 +2274,7 @@ HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 
 
 /******************************************************************************
- * LoadBitmapW [USER32.358]  Loads bitmap from the executable file
+ *		LoadBitmapW (USER32.@) Loads bitmap from the executable file
  *
  * RETURNS
  *    Success: Handle to specified bitmap
@@ -2289,7 +2288,7 @@ HBITMAP WINAPI LoadBitmapW(
 }
 
 /**********************************************************************
- *	    LoadBitmapA   (USER32.357)
+ *		LoadBitmapA (USER32.@)
  */
 HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 {
@@ -2297,7 +2296,7 @@ HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
 }
 
 /**********************************************************************
- *	    LoadBitmap16    (USER.175)
+ *		LoadBitmap (USER.175)
  */
 HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, LPCSTR name )
 {

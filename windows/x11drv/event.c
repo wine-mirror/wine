@@ -203,7 +203,7 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 }
 
 /***********************************************************************
- *           X11DRV_Synchronize
+ *		X11DRV_Synchronize (X11DRV.@)
  *
  * Synchronize with the X server. Should not be used too often.
  */
@@ -214,7 +214,7 @@ void X11DRV_Synchronize( void )
 }
 
 /***********************************************************************
- *           X11DRV_UserRepaintDisable
+ *		X11DRV_UserRepaintDisable (X11DRV.@)
  */
 void X11DRV_UserRepaintDisable( BOOL bDisabled )
 {
@@ -866,7 +866,7 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 }
 
 /**********************************************************************
- *              X11DRV_CheckFocus
+ *		X11DRV_CheckFocus (X11DRV.@)
  */
 BOOL X11DRV_CheckFocus(void)
 {

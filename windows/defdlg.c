@@ -245,7 +245,7 @@ static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT msg, BOOL fResult)
 }
 
 /***********************************************************************
- *           DefDlgProc16   (USER.308)
+ *		DefDlgProc (USER.308)
  */
 LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
@@ -305,7 +305,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           DefDlgProcA   (USER32.120)
+ *		DefDlgProcA (USER32.@)
  */
 LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
                               WPARAM wParam, LPARAM lParam )
@@ -365,7 +365,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
 
 
 /***********************************************************************
- *           DefDlgProcW   (USER32.121)
+ *		DefDlgProcW (USER32.@)
  */
 LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )

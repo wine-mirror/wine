@@ -208,7 +208,7 @@ void SYSCOLOR_Init(void)
 
 
 /*************************************************************************
- *             GetSysColor16   (USER.180)
+ *		GetSysColor (USER.180)
  */
 COLORREF WINAPI GetSysColor16( INT16 nIndex )
 {
@@ -217,7 +217,7 @@ COLORREF WINAPI GetSysColor16( INT16 nIndex )
 
 
 /*************************************************************************
- *             GetSysColor   (USER32.289)
+ *		GetSysColor (USER32.@)
  */
 COLORREF WINAPI GetSysColor( INT nIndex )
 {
@@ -229,7 +229,7 @@ COLORREF WINAPI GetSysColor( INT nIndex )
 
 
 /*************************************************************************
- *             SetSysColors16   (USER.181)
+ *		SetSysColors (USER.181)
  */
 VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 			    const COLORREF *lpColorValues )
@@ -253,7 +253,7 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 
 
 /*************************************************************************
- *             SetSysColors   (USER32.505)
+ *		SetSysColors (USER32.@)
  */
 BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
                               const COLORREF *lpColorValues )
@@ -278,7 +278,7 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
 
 /***********************************************************************
- *           GetSysColorBrush16    (USER.281)
+ *		GetSysColorBrush16 (USER.281)
  */
 HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 {
@@ -287,7 +287,7 @@ HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 
 
 /***********************************************************************
- *           GetSysColorBrush    (USER32.290)
+ *		GetSysColorBrush (USER32.@)
  */
 HBRUSH WINAPI GetSysColorBrush( INT index )
 {
@@ -299,7 +299,7 @@ HBRUSH WINAPI GetSysColorBrush( INT index )
 
 
 /***********************************************************************
- *           GetSysColorPen    (Not a Windows API)
+ *		GetSysColorPen (USER32.@) (Not a Windows API)
  *
  * This function is new to the Wine lib -- it does not exist in 
  * Windows. However, it is a natural complement for GetSysColorBrush

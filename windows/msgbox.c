@@ -248,7 +248,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 
 
 /**************************************************************************
- *           MessageBox16   (USER.1)
+ *		MessageBox (USER.1)
  */
 INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 {
@@ -258,7 +258,7 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 
 
 /**************************************************************************
- *           MessageBoxA   (USER32.391)
+ *		MessageBoxA (USER32.@)
  *
  * NOTES
  *   The WARN is here to help debug erroneous MessageBoxes
@@ -289,7 +289,7 @@ INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
 
 
 /**************************************************************************
- *           MessageBoxW   (USER32.396)
+ *		MessageBoxW (USER32.@)
  */
 INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
                             UINT type )
@@ -308,7 +308,7 @@ INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
 
 
 /**************************************************************************
- *           MessageBoxExA   (USER32.392)
+ *		MessageBoxExA (USER32.@)
  */
 INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
                               UINT type, WORD langid )
@@ -319,7 +319,7 @@ INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
 }
 
 /**************************************************************************
- *           MessageBoxExW   (USER32.393)
+ *		MessageBoxExW (USER32.@)
  */
 INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
                               UINT type, WORD langid )
@@ -330,7 +330,7 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
 }
 
 /**************************************************************************
- *           MessageBoxIndirect16   (USER.827)
+ *		MessageBoxIndirect (USER.827)
  */
 INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 {
@@ -362,7 +362,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 }
 
 /**************************************************************************
- *           MessageBoxIndirectA   (USER32.394)
+ *		MessageBoxIndirectA (USER32.@)
  */
 INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 {
@@ -382,7 +382,7 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 }
 
 /**************************************************************************
- *           MessageBoxIndirectW   (USER32.395)
+ *		MessageBoxIndirectW (USER32.@)
  */
 INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
