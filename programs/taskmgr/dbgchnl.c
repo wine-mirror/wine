@@ -50,6 +50,7 @@
  *        setting for a fixme:s or err:s
  */
 
+static DWORD (WINAPI *pSymSetOptions)(DWORD);
 static BOOL  (WINAPI *pSymInitialize)(HANDLE, PSTR, BOOL);
 static DWORD (WINAPI *pSymLoadModule)(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
 static BOOL  (WINAPI *pSymCleanup)(HANDLE);
@@ -62,11 +63,12 @@ BOOL AreDebugChannelsSupported(void)
     if (hDbgHelp) return TRUE;
 
     if (!(hDbgHelp = LoadLibrary("dbghelp.dll"))) return FALSE;
+    pSymSetOptions = (void*)GetProcAddress(hDbgHelp, "SymSetOptions");
     pSymInitialize = (void*)GetProcAddress(hDbgHelp, "SymInitialize");
     pSymLoadModule = (void*)GetProcAddress(hDbgHelp, "SymLoadModule");
     pSymFromName   = (void*)GetProcAddress(hDbgHelp, "SymFromName");
     pSymCleanup    = (void*)GetProcAddress(hDbgHelp, "SymCleanup");
-    if (!pSymInitialize || !pSymLoadModule || !pSymCleanup || !pSymFromName)
+    if (!pSymSetOptions || !pSymInitialize || !pSymLoadModule || !pSymCleanup || !pSymFromName)
     {
         FreeLibrary(hDbgHelp);
         hDbgHelp = NULL;
@@ -161,7 +163,11 @@ void* get_symbol(HANDLE hProcess, char* name, char* lib)
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
     void*               ret = NULL;
 
-    if (pSymInitialize(hProcess, NULL, FALSE))
+    pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_PUBLICS_ONLY);
+    /* FIXME: the TRUE option is due to the face that dbghelp requires it
+     * when loading an ELF module
+     */
+    if (pSymInitialize(hProcess, NULL, TRUE))
     {
         si->SizeOfStruct = sizeof(*si);
         si->MaxNameLen = sizeof(buffer) - sizeof(IMAGEHLP_SYMBOL);
