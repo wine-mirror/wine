@@ -951,7 +951,8 @@ static void test_WSAAddressToStringA()
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() succeeded unexpectedly: %d\n", WSAGetLastError() );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() succeeded! WSAGetLastError()=%x, ret=%d\n",
+        WSAGetLastError(), ret );
 
     len = sizeof(address);
 
@@ -1018,7 +1019,8 @@ static void test_WSAAddressToStringW()
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( ret == SOCKET_ERROR, "WSAAddressToStringW() succeeded unexpectedly: %x\n", WSAGetLastError() );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringW() succeeded! WSAGetLastError()=%x, ret=%d\n",
+        WSAGetLastError(), ret );
 
     len = sizeof(address);
 
