@@ -1213,7 +1213,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	    }
 
 	    for (tex_stage = 0; tex_stage < num_active_stages; tex_stage++) {
-	        int tex_index = This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXCOORDINDEX - 1] & 0xFFFF000;
+	        int tex_index = This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXCOORDINDEX - 1] & 0xFFFF0000;
 		if (tex_index >= num_tex_index) {
 		    handle_textures((D3DVALUE *) no_index, tex_stage);
 		 } else {
@@ -2479,19 +2479,89 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 {
     if (dwFlags & DDBLT_COLORFILL) {
         /* This is easy to handle for the D3D Device... */
-        DWORD color = lpbltfx->u5.dwFillColor;
-	D3DRECT rect;
+        DWORD color;
+        D3DRECT rect;
+        GLenum prev_draw;
+        BOOL is_front;
+        
+        /* First check if we BLT to the backbuffer... */
+        if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) != 0) {
+            is_front = FALSE;
+        } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+            is_front = TRUE;
+        } else {
+            ERR("Only BLT override to front or back-buffer is supported for now !\n");
+            return DDERR_INVALIDPARAMS;
+        }
 	
+        /* The color as given in the Blt function is in the format of the frame-buffer...
+         * 'clear' expect it in ARGB format => we need to do some conversion :-)
+         */
+        if (This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+            if (This->palette) {
+                color = ((0xFF000000) |
+                         (This->palette->palents[lpbltfx->u5.dwFillColor].peRed << 16) |
+                         (This->palette->palents[lpbltfx->u5.dwFillColor].peGreen << 8) |
+                         (This->palette->palents[lpbltfx->u5.dwFillColor].peBlue));
+            } else {
+                color = 0xFF000000;
+            }
+        } else if ((This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_RGB) &&
+                   (((This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_ALPHAPIXELS) == 0) ||
+                    (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000))) {
+            if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
+                (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0xF800) &&
+                (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x07E0) &&
+                (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x001F)) {
+                if (lpbltfx->u5.dwFillColor == 0xFFFF) {
+                    color = 0xFFFFFFFF;
+                } else {
+                    color = ((0xFF000000) |
+                             ((lpbltfx->u5.dwFillColor & 0xF800) << 8) |
+                             ((lpbltfx->u5.dwFillColor & 0x07E0) << 5) |
+                             ((lpbltfx->u5.dwFillColor & 0x001F) << 3));
+                }
+            } else if (((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) ||
+                        (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 24)) &&
+                       (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0x00FF0000) &&
+                       (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x0000FF00) &&
+                       (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x000000FF)) {
+                color = 0xFF000000 | lpbltfx->u5.dwFillColor;
+            } else {
+                ERR("Wrong surface type for BLT override (unknown RGB format) !\n");
+                return DDERR_INVALIDPARAMS;
+            }
+        } else {
+            ERR("Wrong surface type for BLT override !\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        
         TRACE(" executing D3D Device override.\n");
+	
+        if (rdst) {
+            rect.u1.x1 = rdst->left;
+            rect.u2.y1 = rdst->top;
+            rect.u3.x2 = rdst->right;
+            rect.u4.y2 = rdst->bottom;
+        }
+        
+        ENTER_GL();
 
-	if (rdst) {
-	    rect.u1.x1 = rdst->left;
-	    rect.u2.y1 = rdst->top;
-	    rect.u3.x2 = rdst->right;
-	    rect.u4.y2 = rdst->bottom;
-	}
-	d3ddevice_clear(This->d3ddevice, rdst != NULL ? 1 : 0, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
-	return DD_OK;
+        glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+        if (is_front)
+            glDrawBuffer(GL_FRONT);
+        else
+            glDrawBuffer(GL_BACK);
+        
+        d3ddevice_clear(This->d3ddevice, rdst != NULL ? 1 : 0, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+	
+        if ((( is_front) && (prev_draw == GL_BACK)) ||
+            ((!is_front) && (prev_draw == GL_FRONT)))
+            glDrawBuffer(prev_draw);
+	
+        LEAVE_GL();
+        
+        return DD_OK;
     }
     return DDERR_INVALIDPARAMS;
 }
