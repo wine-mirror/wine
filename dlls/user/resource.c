@@ -417,6 +417,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
 	buffer[retval] = 0;
 	TRACE("%s loaded !\n", debugstr_a(buffer));
     }
+    else buffer[0] = 0;    /* no check of buflen here */
     HeapFree( GetProcessHeap(), 0, wbuf );
 
     return retval;
