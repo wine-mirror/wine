@@ -1421,6 +1421,7 @@ dlls/serialui/Makefile
 dlls/setupapi/Makefile
 dlls/shdocvw/Makefile
 dlls/shell32/Makefile
+dlls/shell32/tests/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
 dlls/shlwapi/tests/Makefile

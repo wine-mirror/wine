@@ -266,16 +266,58 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
         }
 
 	case FO_DELETE:
+	{
+		HANDLE		hFind;
+		WIN32_FIND_DATAA wfd;
+		char		szTemp[MAX_PATH];
+		char		*file_name;
+
 		TRACE("File Delete:\n");
 		while(1) {
 			if(!pFrom[0]) break;
-			TRACE("   File='%s'\n", pFrom);
-			DeleteFileA(pFrom);
+			TRACE("   Pattern='%s'\n", pFrom);
+			if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(pFrom, &wfd)))
+			{
+			  do
+			  {
+			    if(strcasecmp(wfd.cFileName, ".") && strcasecmp(wfd.cFileName, ".."))
+			    {
+			      strcpy(szTemp, pFrom);
+			      file_name = PathFindFileNameA(szTemp);
+			      file_name[0] = '\0';
+			      PathAddBackslashA(szTemp);
+			      strcat(szTemp, wfd.cFileName);
+
+			      TRACE("   File='%s'\n", szTemp);
+			      if(FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
+			      {
+			        if(!(lpFileOp->fFlags & FOF_FILESONLY))
+			            SHELL_DeleteDirectoryA(szTemp, FALSE);
+			      }
+			      else
+			        DeleteFileA(szTemp);
+			    }
+			  } while(FindNextFileA(hFind, &wfd));
+
+			  FindClose(hFind);
+			}
 			pFrom += strlen(pFrom) + 1;
 		}
 		TRACE("Setting AnyOpsAborted=FALSE\n");
 		lpFileOp->fAnyOperationsAborted=FALSE;
 		return 0;
+	}
+
+        case FO_RENAME:
+            TRACE("File Rename:\n");
+            if (pFrom[strlen(pFrom) + 1] != '\0')
+            {
+                WARN("Attempt to rename more than one file\n");
+                return 1;
+            }
+            lpFileOp->fAnyOperationsAborted = FALSE;
+            TRACE("From %s, To %s\n", pFrom, pTo);
+            return !MoveFileA(pFrom, pTo);
 
 	default:
 		FIXME("Unhandled shell file operation %d\n", lpFileOp->wFunc);

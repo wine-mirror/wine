@@ -51,6 +51,8 @@ C_SRCS = \
 RC_SRCS= shres.rc
 RC_SRCS16 = version16.rc
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 install::
