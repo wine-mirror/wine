@@ -323,7 +323,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     SetBkMode(hDC, TRANSPARENT);
     Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
-/*    if (action == ODA_DRAWENTIRE)*/
+    if (TWEAK_WineLook == WIN31_LOOK)
     {
         SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
