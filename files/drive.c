@@ -423,7 +423,9 @@ const char * DRIVE_GetDevice( int drive )
 /***********************************************************************
  *           DRIVE_ReadSuperblock
  *
- * Used in DRIVE_GetLabel
+ * NOTE 
+ *      DRIVE_SetLabel and DRIVE_SetSerialNumber use this in order
+ * to check, that they are writing on a FAT filesystem !
  */
 int DRIVE_ReadSuperblock (int drive, char * buff)
 {
@@ -469,9 +471,16 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
     {
 	case TYPE_FLOPPY:
 	case TYPE_HD:
-	    if (buff[0x26]!=0x29) /* Check for FAT present */
-		return -3;
-		break;
+	    if ((buff[0x26]!=0x29) ||  /* Check for FAT present */
+                /* FIXME: do really all Fat have their name beginning with
+                   "FAT" ? (At least FAT12, FAT16 and FAT32 have :) */
+	    	memcmp( buff+0x36,"FAT",3))
+            {
+                ERR("The filesystem is not FAT !! (device=%s)\n",
+                    DOSDrives[drive].device);
+                return -3;
+            }
+            break;
 	case TYPE_CDROM:
 	    if (strncmp(&buff[1],"CD001",5)) /* Check for iso9660 present */
 		return -3;
@@ -484,6 +493,42 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 
     return close(fd);
 }
+
+
+/***********************************************************************
+ *           DRIVE_WriteSuperblockEntry
+ *
+ * NOTE
+ *	We are writing as little as possible (ie. not the whole SuperBlock)
+ * not to interfere with kernel. The drive can be mounted !
+ */
+int DRIVE_WriteSuperblockEntry (int drive, off_t ofs, size_t len, char * buff)
+{
+    int fd;
+
+    if ((fd=open(DOSDrives[drive].device,O_WRONLY))==-1) 
+    {
+        ERR("Cannot open the device %s (for writing)\n",
+            DOSDrives[drive].device); 
+        return -1;
+    }
+    if (lseek(fd,ofs,SEEK_SET)!=ofs)
+    {
+        ERR("lseek failed on device %s !\n",
+            DOSDrives[drive].device); 
+        close(fd);
+        return -2;
+    }
+    if (write(fd,buff,len)!=len) 
+    {
+        close(fd);
+        ERR("Cannot write on %s !\n",
+            DOSDrives[drive].device); 
+        return -3;
+    }
+    return close (fd);
+}
+
 
 
 /***********************************************************************
@@ -584,10 +629,21 @@ char buff[DRIVE_SUPER];
  */
 int DRIVE_SetSerialNumber( int drive, DWORD serial )
 {
+    char buff[DRIVE_SUPER];
+
     if (!DRIVE_IsValid( drive )) return 0;
-    if ((DOSDrives[drive].read_volinfo) &&
-	(DOSDrives[drive].type != TYPE_CDROM))
-	FIXME("Setting the serial number is useless for drive %c: until writing it is properly implemented, as this drive reads it from the device.\n", 'A'+drive);
+
+    if (DOSDrives[drive].read_volinfo)
+    {
+        if ((DOSDrives[drive].type != TYPE_FLOPPY) &&
+            (DOSDrives[drive].type != TYPE_HD)) return 0;
+        /* check, if the drive has a FAT filesystem */ 
+        if (DRIVE_ReadSuperblock(drive, buff)) return 0;
+        if (DRIVE_WriteSuperblockEntry(drive, 0x27, 4, (char *) &serial)) return 0;
+        return 1;
+    }
+
+    if (DOSDrives[drive].type == TYPE_CDROM) return 0;
     DOSDrives[drive].serial_conf = serial;
     return 1;
 }
