@@ -3178,6 +3178,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
                     checkGLcall("glBindTexture");
                     TRACE("Texture %p (level %d) given name %d\n", pTexture2->surfaces[i], i, pTexture2->surfaces[i]->textureName);
+                    /* No need to walk through all mip-map levels, since already all assigned */
+                    i = pTexture2->levels;
+
                 } else {
                     if (i==0) {
 
@@ -3231,6 +3234,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
                     checkGLcall("glBindTexture");
                     TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
+
+                    /* No need to walk through all mip-map levels, since already all assigned */
+                    i = pTexture2->levels;
                 } else {
                     if (i==0) {
 
