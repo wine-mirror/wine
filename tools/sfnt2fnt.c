@@ -92,7 +92,7 @@ typedef struct {
 
 void usage(char **argv)
 {
-    fprintf(stderr, "%s foo.ttf ppem enc dpi def_char\n", argv[0]);
+    fprintf(stderr, "%s foo.ttf ppem enc dpi def_char avg_width\n", argv[0]);
     return;
 }
 
@@ -150,9 +150,9 @@ int lookup_charset(int enc)
     return OEM_CHARSET;
 }
 
-static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char)
+static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char, int avg_width)
 {
-    int ascent, il, ppem, descent, avg_width, width_bytes = 0, space_size, max_width = 0;
+    int ascent, il, ppem, descent, width_bytes = 0, space_size, max_width = 0;
     FNT_HEADER hdr;
     FONTINFO16 fi;
     BYTE left_byte, right_byte, byte;
@@ -193,12 +193,6 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     /* Hack: Courier has no internal leading, so we do likewise */
     if(!strcmp(face->family_name, "Wine Courier"))
         il = 0;
-
-    if(FT_Load_Char(face, 'X', FT_LOAD_DEFAULT)) {
-        fprintf(stderr, "Can't find X\n");
-        exit(0);
-    }
-    avg_width = face->glyph->metrics.horiAdvance >> 6;
 
     first_char = FT_Get_First_Char(face, &gi);
     if(first_char == 0xd) /* fontforge's first glyph is 0xd, we'll catch this and skip it */
@@ -361,13 +355,13 @@ int main(int argc, char **argv)
     int ppem, enc;
     FT_Face face;
     FT_Library lib;
-    int dpi;
+    int dpi, avg_width;
     unsigned int def_char;
     FILE *fp;
     char output[256];
     char name[256];
     char *cp;
-    if(argc != 6) {
+    if(argc != 7) {
         usage(argv);
         exit(0);
     }
@@ -376,6 +370,8 @@ int main(int argc, char **argv)
     enc = atoi(argv[3]);
     dpi = atoi(argv[4]);
     def_char = atoi(argv[5]);
+    avg_width = atoi(argv[6]);
+
     if(FT_Init_FreeType(&lib)) {
         fprintf(stderr, "ft init failure\n");
         exit(0);
@@ -405,7 +401,7 @@ int main(int argc, char **argv)
 
     fp = fopen(output, "w");
 
-    fill_fontinfo(face, enc, fp, dpi, def_char);
+    fill_fontinfo(face, enc, fp, dpi, def_char, avg_width);
     fclose(fp);
     exit(0);
 }

@@ -3,7 +3,7 @@ FontName: wine_system
 FullName: Wine System
 FamilyName: Wine System
 Weight: Bold
-Copyright: Created by Huw D M Davies with FontForge 1.0 (http://fontforge.sf.net)
+Copyright: Copyright (C) 2004 Huw D M Davies
 Comments: 2004-7-15: Created.
 Version: 001.000
 ItalicAngle: 0
@@ -30,13 +30,13 @@ HheadDOffset: 1
 ScriptLang: 2
  1 latn 1 dflt 
  1 DFLT 1 dflt 
-LangName: 1033 "Copyright (C) 2004 Huw D M Davies" "" "" "" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
+LangName: 1033 "" "" "" "" "" "" "" "" "Created with FontForge 1.0 (http://fontforge.sourceforge.net)" "Huw D M Davies" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoA +AAoA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoA +AAoA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
 Encoding: unicode
 UnicodeInterp: none
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 0 18 12
+WinInfo: 0 18 16
 OnlyBitmaps: 1
 BeginChars: 65536 344
 StartChar: space
