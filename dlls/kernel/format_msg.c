@@ -279,7 +279,6 @@ DWORD WINAPI FormatMessageA(
                             strcpy( fmtstr, "%s" );
                         }
                         if (args) {
-			    int ret;
                             int sz;
                             LPSTR b;
 
@@ -289,18 +288,15 @@ DWORD WINAPI FormatMessageA(
                                 argliststart=(*(DWORD**)args)+insertnr-1;
 
                                 /* FIXME: precision and width components are not handled correctly */
-                            if (strcmp(fmtstr, "%ls") == 0) {
+                            if ( (strcmp(fmtstr, "%ls") == 0) || (strcmp(fmtstr,"%S") == 0) ) {
                                 sz = WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, NULL, 0, NULL, NULL);
                                 b = HeapAlloc(GetProcessHeap(), 0, sz);
                                 WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, b, sz, NULL, NULL);
                             } else {
-                                b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
+                                b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 1000);
                                 /* CMF - This makes a BIG assumption about va_list */
                                 TRACE("A BIG assumption\n");
-                                while ((ret = vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) || (ret >= sz)) {
-				    sz = (ret == -1 ? sz + 100 : ret + 1);
-                                    b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz);
-                                }
+                                vsnprintf(b, sz, fmtstr, (va_list) argliststart);
                             }
                             for (x=b; *x; x++) ADD_TO_T(*x);
 
@@ -334,12 +330,23 @@ DWORD WINAPI FormatMessageA(
                     if (ch == '\r') {
                         if (*f == '\n')
                             f++;
-                        ADD_TO_T(' ');
-                    } else {
-                        if (ch == '\n')
+                        if(width)
+                            ADD_TO_T(' ');
+                        else
                         {
                             ADD_TO_T('\r');
                             ADD_TO_T('\n');
+                        }
+                    } else {
+                        if (ch == '\n')
+                        {
+                            if(width)
+                                ADD_TO_T(' ');
+                            else
+                            {
+                                ADD_TO_T('\r');
+                                ADD_TO_T('\n');
+                            }
                         }
                         else
                             ADD_TO_T(ch);
@@ -520,6 +527,7 @@ DWORD WINAPI FormatMessageW(
 
                             /* CMF - This makes a BIG assumption about va_list */
                             vsprintf(sprintfbuf, fmtstr, (va_list) xarr);
+                            HeapFree(GetProcessHeap(), 0, (LPVOID) xarr[0]);
                         } else {
                             sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 
@@ -552,12 +560,23 @@ DWORD WINAPI FormatMessageW(
                     if (ch == '\r') {
                         if (*f == '\n')
                             f++;
-                        ADD_TO_T(' ');
-                    } else {
-                        if (ch == '\n')
+                        if(width)
+                            ADD_TO_T(' ');
+                        else
                         {
                             ADD_TO_T('\r');
                             ADD_TO_T('\n');
+                        }
+                    } else {
+                        if (ch == '\n')
+                        {
+                            if(width)
+                                ADD_TO_T(' ');
+                            else
+                            {
+                                ADD_TO_T('\r');
+                                ADD_TO_T('\n');
+                            }
                         }
                         else
                             ADD_TO_T(ch);
