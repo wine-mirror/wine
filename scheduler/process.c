@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "drive.h"
@@ -23,7 +24,6 @@
 #include "wincon.h"
 #include "wine/server.h"
 #include "options.h"
-#include "callback.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(process);
@@ -109,8 +109,12 @@ extern STARTUPINFOA current_startupinfo;
 /* scheduler/pthread.c */
 extern void PTHREAD_init_done(void);
 
+/* scheduler/sysdeps.c */
+extern void SYSDEPS_SwitchToThreadStack( void (*func)(void) ) WINE_NORETURN;
+
 extern BOOL MAIN_MainInit(void);
 
+typedef WORD WINAPI (*pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
 
 /***********************************************************************
  *           PROCESS_CallUserSignalProc
@@ -186,37 +190,37 @@ extern BOOL MAIN_MainInit(void);
  */
 void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule )
 {
-    DWORD flags = current_process.flags;
-    DWORD startup_flags = current_startupinfo.dwFlags;
     DWORD dwFlags = 0;
+    HMODULE user;
+    pUserSignalProc proc;
 
-    if (!Callout.UserSignalProc) return;
+    if (!(user = GetModuleHandleA( "user32.dll" ))) return;
+    if (!(proc = (pUserSignalProc)GetProcAddress( user, "UserSignalProc" ))) return;
 
     /* Determine dwFlags */
 
-    if ( !(flags & PDB32_WIN16_PROC) ) dwFlags |= USIG_FLAGS_WIN32;
-
-    if ( !(flags & PDB32_CONSOLE_PROC) ) dwFlags |= USIG_FLAGS_GUI;
+    if ( !(current_process.flags & PDB32_WIN16_PROC) ) dwFlags |= USIG_FLAGS_WIN32;
+    if ( !(current_process.flags & PDB32_CONSOLE_PROC) ) dwFlags |= USIG_FLAGS_GUI;
 
     if ( dwFlags & USIG_FLAGS_GUI )
     {
         /* Feedback defaults to ON */
-        if ( !(startup_flags & STARTF_FORCEOFFFEEDBACK) )
+        if ( !(current_startupinfo.dwFlags & STARTF_FORCEOFFFEEDBACK) )
             dwFlags |= USIG_FLAGS_FEEDBACK;
     }
     else
     {
         /* Feedback defaults to OFF */
-        if (startup_flags & STARTF_FORCEONFEEDBACK)
+        if (current_startupinfo.dwFlags & STARTF_FORCEONFEEDBACK)
             dwFlags |= USIG_FLAGS_FEEDBACK;
     }
 
     /* Call USER signal proc */
 
     if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
-        Callout.UserSignalProc( uCode, GetCurrentThreadId(), dwFlags, hModule );
+        proc( uCode, GetCurrentThreadId(), dwFlags, hModule );
     else
-        Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
+        proc( uCode, GetCurrentProcessId(), dwFlags, hModule );
 }
 
 /***********************************************************************
@@ -370,9 +374,6 @@ static void start_process(void)
     PE_InitTls();
     MODULE_DllProcessAttach( NULL, (LPVOID)1 );
     RtlReleasePebLock();
-
-    /* Get pointers to USER routines called by KERNEL */
-    THUNK_InitCallout();
 
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
      *       context of the parent process.  Actually, the USER signal proc
