@@ -5,14 +5,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-PROGRAMS = \
-	winegcc \
-	winewrap
+PROGRAMS = winegcc
 
 C_SRCS = \
 	utils.c \
-	winegcc.c \
-	winewrap.c
+	winegcc.c
 
 all: $(PROGRAMS)
 
@@ -21,18 +18,13 @@ all: $(PROGRAMS)
 winegcc: winegcc.o utils.o
 	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
 
-winewrap: winewrap.o utils.o
-	$(CC) $(CFLAGS) -o $@ winewrap.o utils.o $(LIBPORT)
-
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
-	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
 	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
 	cd $(bindir) && $(RM) winecpp && $(LN_S) winegcc winecpp
 
 uninstall::
-	$(RM) $(bindir)/winegcc $(bindir)/wineg++ \
-	      $(bindir)/winecpp $(bindir)/winewrap
+	$(RM) $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winecpp
 
 ### Dependencies:

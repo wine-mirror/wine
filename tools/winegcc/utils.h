@@ -21,11 +21,12 @@
  */
 
 
-void error(const char *s, ...);
+void error(const char* s, ...);
 
-void *xmalloc(size_t size);
-void *xrealloc(void* p, size_t size);
-char *strmake(const char *fmt, ...);
+void* xmalloc(size_t size);
+void* xrealloc(void* p, size_t size);
+char* strmake(const char* fmt, ...);
+int strendswith(const char* str, const char* end);
 
 typedef struct {
     size_t maximum;
@@ -33,10 +34,20 @@ typedef struct {
     const char** base;
 } strarray;
 
-strarray *strarray_alloc(void);
+strarray* strarray_alloc(void);
+strarray* strarray_dup(const strarray* arr);
 void strarray_free(strarray* arr);
 void strarray_add(strarray* arr, const char* str);
 
+typedef enum { 
+    file_na, file_other, file_obj, file_res,
+    file_rc, file_arh, file_dll, file_so 
+} file_type;
+
+char* get_basename(const char* file);
+void create_file(const char* name, const char* fmt, ...);
+file_type get_file_type(const char* dir, const char* filename);
+file_type get_lib_type(strarray* path, const char* library);
 void spawn(const strarray* arr);
 
 extern int verbose;

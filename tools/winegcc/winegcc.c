@@ -2,6 +2,7 @@
  * MinGW wrapper: makes gcc behave like MinGW.
  *
  * Copyright 2000 Manuel Novoa III
+ * Copyright 2000 Francois Gouget
  * Copyright 2002 Dimitrie O. Paun
  *
  * This library is free software; you can redistribute it and/or
@@ -95,6 +96,61 @@
 
 #include "utils.h"
 
+static const char *app_loader_template =
+    "#!/bin/sh\n"
+    "\n"
+    "appname=\"%s\"\n"
+    "# determine the application directory\n"
+    "appdir=''\n"
+    "case \"$0\" in\n"
+    "  */*)\n"
+    "    # $0 contains a path, use it\n"
+    "    appdir=`dirname \"$0\"`\n"
+    "    ;;\n"
+    "  *)\n"
+    "    # no directory in $0, search in PATH\n"
+    "    saved_ifs=$IFS\n"
+    "    IFS=:\n"
+    "    for d in $PATH\n"
+    "    do\n"
+    "      IFS=$saved_ifs\n"
+    "      if [ -x \"$d/$appname\" ]; then appdir=\"$d\"; break; fi\n"
+    "    done\n"
+    "    ;;\n"
+    "esac\n"
+    "\n"
+    "while true; do\n"
+    "  case \"$1\" in\n"
+    "    --debugmsg)\n"
+    "      debugmsg=\"$1 $2\"\n"
+    "      shift; shift;\n"
+    "      ;;\n"
+    "    --dll)\n"
+    "      dll=\"$1 $2\"\n"
+    "      shift; shift;\n"
+    "      ;;\n"
+    "    *)\n"
+    "      break\n"
+    "      ;;\n"
+    "  esac\n"
+    "done\n"
+    "\n"
+    "# figure out the full app path\n"
+    "if [ -n \"$appdir\" ]; then\n"
+    "    apppath=\"$appdir/$appname.exe.so\"\n"
+    "    WINEDLLPATH=\"$appdir:$WINEDLLPATH\"\n"
+    "    export WINEDLLPATH\n"
+    "else\n"
+    "    apppath=\"$appname.exe.so\"\n"
+    "fi\n"
+    "\n"
+    "# determine the WINELOADER\n"
+    "if [ ! -x \"$WINELOADER\" ]; then WINELOADER=\"wine\"; fi\n"
+    "\n"
+    "# and try to start the app\n"
+    "exec \"$WINELOADER\" $debugmsg $dll -- \"$apppath\" \"$@\"\n"
+;
+
 static int keep_generated = 0;
 static strarray *tmp_files;
 
@@ -115,36 +171,25 @@ struct options
     strarray* files;
 };
 
-static strarray* build_compile_cmd(struct options* opts);
-
-static int strendswith(const char *str, const char *end)
-{
-    int l = strlen(str);
-    int m = strlen(end);
-   
-    return l >= m && strcmp(str + l - m, end) == 0; 
-}
-
 static void clean_temp_files()
 {
-    if (!keep_generated)
-    {
-        int i;
-	for (i = 0; i < tmp_files->size; i++)
-	    unlink(tmp_files->base[i]);
-    }
-    strarray_free(tmp_files);
+    int i;
+
+    if (keep_generated) return;
+
+    for (i = 0; i < tmp_files->size; i++)
+	unlink(tmp_files->base[i]);
 }
 
-static char *get_temp_file(const char *suffix)
+char* get_temp_file(const char* prefix, const char* suffix)
 {
-    char *tmp = strmake("wgcc.XXXXXX%s", suffix);
+    char *tmp = strmake("%s-XXXXXX%s", prefix, suffix);
     int fd = mkstemps( tmp, strlen(suffix) );
     if (fd == -1)
     {
         /* could not create it in current directory, try in /tmp */
         free(tmp);
-        tmp = strmake("/tmp/wgcc.XXXXXX%s", suffix);
+        tmp = strmake("/tmp/%s-XXXXXX%s", prefix, suffix);
         fd = mkstemps( tmp, strlen(suffix) );
         if (fd == -1) error( "could not create temp file" );
     }
@@ -152,36 +197,6 @@ static char *get_temp_file(const char *suffix)
     strarray_add(tmp_files, tmp);
 
     return tmp;
-}
-
-static int is_object_file(const char* arg)
-{
-    return strendswith(arg, ".o") 
-	|| strendswith(arg, ".a")
-	|| strendswith(arg, ".res");
-}
-
-static const char *get_obj_file(const char* file, struct options* opts)
-{
-    strarray* compargv;
-    struct options copts;
-
-    if (is_object_file(file)) return file;
-    
-    /* make a copy we so don't change any of the initial stuff */
-    /* a shallow copy is exactly what we want in this case */
-    copts = *opts;
-    copts.processor = proc_cc;
-    copts.output_name = get_temp_file(".o");
-    copts.compile_only = 1;
-    copts.files = strarray_alloc();
-    strarray_add(copts.files, file);
-    compargv = build_compile_cmd(&copts);
-    spawn(compargv);
-    strarray_free(copts.files);
-    strarray_free(compargv);
-
-    return copts.output_name;
 }
 
 static const char* get_translator(struct options* args)
@@ -199,134 +214,285 @@ static const char* get_translator(struct options* args)
     return cc;
 }
 
-static strarray* build_compile_cmd(struct options* opts)
+static void compile(struct options* opts)
 {
-    strarray *gcc_argv = strarray_alloc();
+    strarray *comp_args = strarray_alloc();
     int j;
 
-    strarray_add(gcc_argv, get_translator(opts));
+    strarray_add(comp_args, get_translator(opts));
 
     if (opts->processor != proc_pp)
     {
-        strarray_add(gcc_argv, "-fshort-wchar");
-        strarray_add(gcc_argv, "-fPIC");
+        strarray_add(comp_args, "-fshort-wchar");
+        strarray_add(comp_args, "-fPIC");
     }
     if (!opts->nostdinc)
     {
         if (opts->use_msvcrt)
         {
-            strarray_add(gcc_argv, "-I" INCLUDEDIR "/msvcrt");
-            strarray_add(gcc_argv, "-D__MSVCRT__");
+            strarray_add(comp_args, "-I" INCLUDEDIR "/msvcrt");
+            strarray_add(comp_args, "-D__MSVCRT__");
         }
-        strarray_add(gcc_argv, "-I" INCLUDEDIR "/windows");
+        strarray_add(comp_args, "-I" INCLUDEDIR "/windows");
     }
-    strarray_add(gcc_argv, "-DWIN32");
-    strarray_add(gcc_argv, "-D_WIN32");
-    strarray_add(gcc_argv, "-D__WIN32");
-    strarray_add(gcc_argv, "-D__WIN32__");
-    strarray_add(gcc_argv, "-D__WINNT");
-    strarray_add(gcc_argv, "-D__WINNT__");
+    strarray_add(comp_args, "-DWIN32");
+    strarray_add(comp_args, "-D_WIN32");
+    strarray_add(comp_args, "-D__WIN32");
+    strarray_add(comp_args, "-D__WIN32__");
+    strarray_add(comp_args, "-D__WINNT");
+    strarray_add(comp_args, "-D__WINNT__");
 
-    strarray_add(gcc_argv, "-D__stdcall=__attribute__((__stdcall__))");
-    strarray_add(gcc_argv, "-D__cdecl=__attribute__((__cdecl__))");
-    strarray_add(gcc_argv, "-D__fastcall=__attribute__((__fastcall__))");
-    strarray_add(gcc_argv, "-D_stdcall=__attribute__((__stdcall__))");
-    strarray_add(gcc_argv, "-D_cdecl=__attribute__((__cdecl__))");
-    strarray_add(gcc_argv, "-D_fastcall=__attribute__((__fastcall__))");
-    strarray_add(gcc_argv, "-D__declspec(x)=__declspec_##x");
-    strarray_add(gcc_argv, "-D__declspec_align(x)=__attribute__((aligned(x)))");
-    strarray_add(gcc_argv, "-D__declspec_allocate(x)=__attribute__((section(x)))");
-    strarray_add(gcc_argv, "-D__declspec_deprecated=__attribute__((deprecated))");
-    strarray_add(gcc_argv, "-D__declspec_dllimport=__attribute__((dllimport))");
-    strarray_add(gcc_argv, "-D__declspec_dllexport=__attribute__((dllexport))");
-    strarray_add(gcc_argv, "-D__declspec_naked=__attribute__((naked))");
-    strarray_add(gcc_argv, "-D__declspec_noinline=__attribute__((noinline))");
-    strarray_add(gcc_argv, "-D__declspec_noreturn=__attribute__((noreturn))");
-    strarray_add(gcc_argv, "-D__declspec_nothrow=__attribute__((nothrow))");
-    strarray_add(gcc_argv, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
-    strarray_add(gcc_argv, "-D__declspec_selectany=__attribute__((weak))");
-    strarray_add(gcc_argv, "-D__declspec_thread=__thread");
+    strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
+    strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__))");
+    strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
+    strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__))");
+    strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__))");
+    strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
+    strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
+    strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
+    strarray_add(comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
+    strarray_add(comp_args, "-D__declspec_deprecated=__attribute__((deprecated))");
+    strarray_add(comp_args, "-D__declspec_dllimport=__attribute__((dllimport))");
+    strarray_add(comp_args, "-D__declspec_dllexport=__attribute__((dllexport))");
+    strarray_add(comp_args, "-D__declspec_naked=__attribute__((naked))");
+    strarray_add(comp_args, "-D__declspec_noinline=__attribute__((noinline))");
+    strarray_add(comp_args, "-D__declspec_noreturn=__attribute__((noreturn))");
+    strarray_add(comp_args, "-D__declspec_nothrow=__attribute__((nothrow))");
+    strarray_add(comp_args, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
+    strarray_add(comp_args, "-D__declspec_selectany=__attribute__((weak))");
+    strarray_add(comp_args, "-D__declspec_thread=__thread");
 
     /* Wine specific defines */
-    strarray_add(gcc_argv, "-D__WINE__");
-    strarray_add(gcc_argv, "-DWINE_UNICODE_NATIVE");
-    strarray_add(gcc_argv, "-D__int8=char");
-    strarray_add(gcc_argv, "-D__int16=short");
-    strarray_add(gcc_argv, "-D__int32=int");
-    strarray_add(gcc_argv, "-D__int64=long long");
+    strarray_add(comp_args, "-D__WINE__");
+    strarray_add(comp_args, "-DWINE_UNICODE_NATIVE");
+    strarray_add(comp_args, "-D__int8=char");
+    strarray_add(comp_args, "-D__int16=short");
+    strarray_add(comp_args, "-D__int32=int");
+    strarray_add(comp_args, "-D__int64=long long");
 
     /* options we handle explicitly */
     if (opts->compile_only)
-	strarray_add(gcc_argv, "-c");
+	strarray_add(comp_args, "-c");
     if (opts->output_name)
-	strarray_add(gcc_argv, strmake("-o%s", opts->output_name));
+	strarray_add(comp_args, strmake("-o%s", opts->output_name));
 
     /* the rest of the pass-through parameters */
     for ( j = 0 ; j < opts->compiler_args->size ; j++ ) 
-        strarray_add(gcc_argv, opts->compiler_args->base[j]);
+        strarray_add(comp_args, opts->compiler_args->base[j]);
 
     /* last, but not least, the files */
     for ( j = 0; j < opts->files->size; j++ )
-	strarray_add(gcc_argv, opts->files->base[j]);
+	strarray_add(comp_args, opts->files->base[j]);
 
-    return gcc_argv;
+    spawn(comp_args);
 }
 
-
-static strarray* build_link_cmd(struct options* opts)
+static const char* compile_to_object(struct options* opts, const char* file)
 {
-    strarray *gcc_argv = strarray_alloc();
+    struct options copts;
+    char* base_name;
+
+    /* make a copy we so don't change any of the initial stuff */
+    /* a shallow copy is exactly what we want in this case */
+    base_name = get_basename(file);
+    copts = *opts;
+    copts.processor = proc_cc;
+    copts.output_name = get_temp_file(base_name, ".o");
+    copts.compile_only = 1;
+    copts.files = strarray_alloc();
+    strarray_add(copts.files, file);
+    compile(&copts);
+    strarray_free(copts.files);
+    free(base_name);
+
+    return copts.output_name;
+}
+
+static void build(struct options* opts)
+{
+    static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib" };
+    strarray *so_libs, *arh_libs, *dll_libs, *lib_paths, *lib_dirs;
+    strarray *res_files, *obj_files, *spec_args, *comp_args, *link_args;
+    char *spec_c_name, *spec_o_name, *base_file, *base_name;
+    const char* output_name;
     int j;
 
-    strarray_add(gcc_argv, "winewrap");
-    if (opts->gui_app) strarray_add(gcc_argv, "-mgui");
+    so_libs = strarray_alloc();
+    arh_libs = strarray_alloc();
+    dll_libs = strarray_alloc();
+    obj_files = strarray_alloc();
+    res_files = strarray_alloc();
+    lib_paths = strarray_alloc();
 
-    if (opts->processor == proc_cpp) strarray_add(gcc_argv, "-C");
+    output_name = opts->output_name ? opts->output_name : "a.out.exe";
 
-    if (opts->output_name)
-        strarray_add(gcc_argv, strmake("-o%s", opts->output_name));
-    else
-        strarray_add(gcc_argv, "-oa.out");
+    /* get base filename by removing the .exe extension, if present */
+    base_file = strdup(output_name);
+    if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
+    base_name = get_basename(output_name);
 
-    for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
-        strarray_add(gcc_argv, opts->linker_args->base[j]);
+    /* prepare the linking path */
+    lib_dirs = strarray_dup(opts->lib_dirs);
+    for ( j = 0; j < sizeof(stdlibpath)/sizeof(stdlibpath[0]);j++ )
+	strarray_add(lib_dirs, stdlibpath[j]);
 
-    for ( j = 0; j < opts->lib_dirs->size; j++ )
-	strarray_add(gcc_argv, strmake("-L%s", opts->lib_dirs->base[j]));
+    for ( j = 0; j < lib_dirs->size; j++ )
+	strarray_add(lib_paths, strmake("-L%s", lib_dirs->base[j]));
 
+    /* prepare the libraries */    
     for ( j = 0; j < opts->lib_names->size; j++ )
-	strarray_add(gcc_argv, strmake("-l%s", opts->lib_names->base[j]));
+    {
+	const char* name = opts->lib_names->base[j];
+	const char* lib = strmake("-l%s", name);
+	switch(get_lib_type(lib_dirs, name))
+	{
+	    case file_arh:
+		strarray_add(arh_libs, lib);
+		break;
+	    case file_dll:
+		strarray_add(dll_libs, lib);
+		break;
+	    case file_so:
+		strarray_add(so_libs, lib);
+		break;
+	    default:
+		fprintf(stderr, "Can't find library %s, ignoring\n", name);
+	}
+    }
 
     if (!opts->nostdlib) 
     {
-        if (opts->use_msvcrt) strarray_add(gcc_argv, "-lmsvcrt");
+        if (opts->use_msvcrt) strarray_add(dll_libs, "-lmsvcrt");
     }
 
     if (!opts->nodefaultlibs) 
     {
-        if (opts->gui_app) strarray_add(gcc_argv, "-lcomdlg32");
-        strarray_add(gcc_argv, "-ladvapi32");
-        strarray_add(gcc_argv, "-lshell32");
+        if (opts->gui_app) 
+	{
+	    strarray_add(dll_libs, "-lcomdlg32");
+	    strarray_add(dll_libs, "-lgdi32");
+	}
+        strarray_add(dll_libs, "-lshell32");
+        strarray_add(dll_libs, "-ladvapi32");
+        strarray_add(dll_libs, "-luser32");
+        strarray_add(dll_libs, "-lkernel32");
     }
 
+    /* sort object file */
     for ( j = 0; j < opts->files->size; j++ )
-	strarray_add(gcc_argv, get_obj_file(opts->files->base[j], opts));
+    {
+	const char* file = opts->files->base[j];
+	switch(get_file_type(".", file))
+	{
+	    case file_rc:
+		/* FIXME: invoke wrc to build it */
+	        break;
+	    case file_res:
+		strarray_add(res_files, file);
+		break;
+	    case file_obj:
+		strarray_add(obj_files, file);
+		break;
+	    case file_na:
+		error("File does not exist: %s", file);
+		break;
+	    default:
+		file = compile_to_object(opts, file);
+		strarray_add(obj_files, file);
+		break;
+	}
+    }
 
-    return gcc_argv;
+    /* run winebuild to generate the .spec.c file */
+    spec_args = strarray_alloc();
+    spec_c_name = get_temp_file(base_name, ".spec.c");
+    strarray_add(spec_args, "winebuild");
+    strarray_add(spec_args, "-o");
+    strarray_add(spec_args, spec_c_name);
+    strarray_add(spec_args, "--exe");
+    strarray_add(spec_args, strmake("%s.exe", base_name));
+    strarray_add(spec_args, opts->gui_app ? "-mgui" : "-mcui");
+
+    for ( j = 0; j < lib_paths->size; j++ )
+	strarray_add(spec_args, lib_paths->base[j]);
+
+    for ( j = 0; j < dll_libs->size; j++ )
+	strarray_add(spec_args, dll_libs->base[j]);
+
+    for ( j = 0; j < arh_libs->size; j++)
+	strarray_add(spec_args, arh_libs->base[j]);
+
+    for ( j = 0; j < res_files->size; j++ )
+	strarray_add(spec_args, res_files->base[j]);
+
+    for ( j = 0; j < obj_files->size; j++ )
+	strarray_add(spec_args, obj_files->base[j]);
+
+    spawn(spec_args);
+
+    /* compile the .spec.c file into a .spec.o file */
+    comp_args = strarray_alloc();
+    spec_o_name = get_temp_file(base_name, ".spec.o");
+    strarray_add(comp_args, "gcc");
+    strarray_add(comp_args, "-fPIC");
+    strarray_add(comp_args, "-o");
+    strarray_add(comp_args, spec_o_name);
+    strarray_add(comp_args, "-c");
+    strarray_add(comp_args, spec_c_name);
+
+    spawn(comp_args);
+    
+    /* link everything together now */
+    link_args = strarray_alloc();
+    strarray_add(link_args, get_translator(opts));
+    strarray_add(link_args, "-shared");
+#ifdef HAVE_LINKER_INIT_FINI
+    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs,-init,__wine_spec_init,-fini,__wine_spec_fini");
+#else
+    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
+#endif
+
+    strarray_add(link_args, strmake("-o%s.exe.so", base_file));
+
+    for ( j = 0 ; j < opts->linker_args->size ; j++ ) 
+        strarray_add(link_args, opts->linker_args->base[j]);
+
+    for ( j = 0; j < lib_paths->size; j++ )
+	strarray_add(link_args, lib_paths->base[j]);
+
+    strarray_add(link_args, "-lwine");
+    strarray_add(link_args, "-lm");
+
+    for ( j = 0; j < so_libs->size; j++ )
+	strarray_add(link_args, so_libs->base[j]);
+
+    for ( j = 0; j < arh_libs->size; j++ )
+	strarray_add(link_args, arh_libs->base[j]);
+
+    for ( j = 0; j < obj_files->size; j++ )
+	strarray_add(link_args, obj_files->base[j]);
+
+    strarray_add(link_args, spec_o_name);
+
+    spawn(link_args);
+
+    /* create the loader script */
+    create_file(base_file, app_loader_template, base_name);
+    chmod(base_file, 0755);
 }
 
 
-static strarray* build_forward_cmd(int argc, char **argv, struct options* opts)
+static void forward(int argc, char **argv, struct options* opts)
 {
-    strarray *gcc_argv = strarray_alloc();
+    strarray *args = strarray_alloc();
     int j;
 
-    strarray_add(gcc_argv, get_translator(opts));
+    strarray_add(args, get_translator(opts));
 
     for( j = 1; j < argc; j++ ) 
-	strarray_add(gcc_argv, argv[j]);
+	strarray_add(args, argv[j]);
 
-    return gcc_argv;
+    spawn(args);
 }
 
 /*
@@ -406,7 +572,6 @@ int main(int argc, char **argv)
     int raw_compiler_arg, raw_linker_arg;
     const char* option_arg;
     struct options opts;
-    strarray *gcc_argv;
 
     /* setup tmp file removal at exit */
     tmp_files = strarray_alloc();
@@ -537,6 +702,8 @@ int main(int argc, char **argv)
                 case 's':
                     if (strcmp("-static", argv[i]) == 0) 
 			linking = -1;
+		    else if(strcmp("-save-temps", argv[i]) == 0)
+			keep_generated = 1;
                     break;
                 case 'v':
                     if (argv[i][2] == 0) verbose = 1;
@@ -566,13 +733,9 @@ int main(int argc, char **argv)
     if (opts.processor == proc_pp) linking = 0;
     if (linking == -1) error("Static linking is not supported.");
 
-    if (opts.files->size == 0)
-	gcc_argv = build_forward_cmd(argc, argv, &opts);
-    else if (linking)
-	gcc_argv = build_link_cmd(&opts);
-    else
-	gcc_argv = build_compile_cmd(&opts);
-    spawn(gcc_argv);
+    if (opts.files->size == 0) forward(argc, argv, &opts);
+    else if (linking) build(&opts);
+    else compile(&opts);
 
     return 0;
 }
