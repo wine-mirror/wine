@@ -869,17 +869,22 @@ BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
 	TRACE_(win32)("(%p,%08lx)\n",
 		lpfnLocaleEnum,flags
 	);
-	if (ERROR_SUCCESS==RegOpenKeyA(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
-		i=0;
-		while (1) {
-			if (ERROR_SUCCESS!=RegEnumKeyA(xhkey,i,buffer,sizeof(buffer)))
-				break;
-            		if (!lpfnLocaleEnum(buffer))
-				break;
-			i++;
-		}
-		RegCloseKey(xhkey);
-		return TRUE;
+
+	if ( ERROR_SUCCESS==RegOpenKeyA(HKEY_LOCAL_MACHINE,
+                    "System\\CurrentControlSet\\Control\\Nls\\Locale\\",
+                    &xhkey)) {
+            i=0;
+            while (1) {
+                DWORD size=sizeof(buffer);
+                if (ERROR_SUCCESS!=RegEnumValueA(xhkey,i,buffer,&size,NULL,
+                            NULL, NULL,NULL))
+                    break;
+                if (size && !lpfnLocaleEnum(buffer))
+                    break;
+                i++;
+            }
+            RegCloseKey(xhkey);
+            return TRUE;
 	}
 	i=0;
 	while (languages[i].langid!=0) {
