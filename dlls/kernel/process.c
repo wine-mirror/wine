@@ -398,35 +398,19 @@ static BOOL build_initial_environment( char **environ )
 
 
 /***********************************************************************
- *           set_registry_environment
+ *           set_registry_variables
  *
- * Set the environment variables specified in the registry.
+ * Set environment variables by enumerating the values of a key;
+ * helper for set_registry_environment().
  */
-static void set_registry_environment(void)
+static void set_registry_variables( HKEY hkey )
 {
-    static const WCHAR env_keyW[] = {'M','a','c','h','i','n','e','\\',
-                                     'S','y','s','t','e','m','\\',
-                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                     'C','o','n','t','r','o','l','\\',
-                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
-                                     'E','n','v','i','r','o','n','m','e','n','t',0};
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, env_name, env_value;
+    UNICODE_STRING env_name, env_value;
     NTSTATUS status;
-    HKEY hkey;
     DWORD size;
     int index;
     char buffer[1024 + sizeof(KEY_VALUE_FULL_INFORMATION)];
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, env_keyW );
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return;
 
     for (index = 0; ; index++)
     {
@@ -443,7 +427,52 @@ static void set_registry_environment(void)
             env_value.Length--;  /* don't count terminating null if any */
         RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
     }
-    NtClose( hkey );
+}
+
+
+/***********************************************************************
+ *           set_registry_environment
+ *
+ * Set the environment variables specified in the registry.
+ */
+static void set_registry_environment(void)
+{
+    static const WCHAR env_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                     'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    /* first the system environment variables */
+    RtlInitUnicodeString( &nameW, env_keyW );
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
+    {
+        set_registry_variables( hkey );
+        NtClose( hkey );
+    }
+
+    /* then the ones for the current user */
+    if (RtlOpenCurrentUser( KEY_ALL_ACCESS, (HKEY *)&attr.RootDirectory ) != STATUS_SUCCESS) return;
+    RtlInitUnicodeString( &nameW, envW );
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
+    {
+        set_registry_variables( hkey );
+        NtClose( hkey );
+    }
+    NtClose( attr.RootDirectory );
 }
 
 
@@ -693,6 +722,64 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
 
 
 /***********************************************************************
+ *           init_current_directory
+ *
+ * Initialize the current directory from the Unix cwd or the parent info.
+ */
+static void init_current_directory( CURDIR *cur_dir )
+{
+    UNICODE_STRING dir_str;
+    char *cwd;
+    int size;
+
+    /* if we received a cur dir from the parent, try this first */
+
+    if (cur_dir->DosPath.Length)
+    {
+        if (RtlSetCurrentDirectory_U( &cur_dir->DosPath ) == STATUS_SUCCESS) goto done;
+    }
+
+    /* now try to get it from the Unix cwd */
+
+    for (size = 256; ; size *= 2)
+    {
+        if (!(cwd = HeapAlloc( GetProcessHeap(), 0, size ))) break;
+        if (getcwd( cwd, size )) break;
+        HeapFree( GetProcessHeap(), 0, cwd );
+        if (errno == ERANGE) continue;
+        cwd = NULL;
+        break;
+    }
+
+    if (cwd)
+    {
+        WCHAR *dirW;
+        int lenW = MultiByteToWideChar( CP_UNIXCP, 0, cwd, -1, NULL, 0 );
+        if ((dirW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+        {
+            MultiByteToWideChar( CP_UNIXCP, 0, cwd, -1, dirW, lenW );
+            RtlInitUnicodeString( &dir_str, dirW );
+            RtlSetCurrentDirectory_U( &dir_str );
+            RtlFreeUnicodeString( &dir_str );
+        }
+    }
+
+    if (!cur_dir->DosPath.Length)  /* still not initialized */
+    {
+        MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
+                "starting in the Windows directory.\n", cwd ? cwd : "" );
+        RtlInitUnicodeString( &dir_str, DIR_Windows );
+        RtlSetCurrentDirectory_U( &dir_str );
+    }
+    if (cwd) HeapFree( GetProcessHeap(), 0, cwd );
+
+done:
+    if (!cur_dir->Handle) chdir("/"); /* change to root directory so as not to lock cdroms */
+    TRACE( "starting in %s %p\n", debugstr_w( cur_dir->DosPath.Buffer ), cur_dir->Handle );
+}
+
+
+/***********************************************************************
  *           process_init
  *
  * Main process initialisation code
@@ -746,15 +833,9 @@ static BOOL process_init( char *argv[], char **environ )
         wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params->hStdOutput );
         wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params->hStdError );
 
-        /* <hack: to be changed later on> */
-        params->CurrentDirectory.DosPath.Length = 3 * sizeof(WCHAR);
+        params->CurrentDirectory.DosPath.Length = 0;
         params->CurrentDirectory.DosPath.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
         params->CurrentDirectory.DosPath.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, params->CurrentDirectory.DosPath.MaximumLength);
-        params->CurrentDirectory.DosPath.Buffer[0] = 'C';
-        params->CurrentDirectory.DosPath.Buffer[1] = ':';
-        params->CurrentDirectory.DosPath.Buffer[2] = '\\';
-        params->CurrentDirectory.DosPath.Buffer[3] = '\0';
-        /* </hack: to be changed later on> */
     }
     else
     {
@@ -797,6 +878,8 @@ static BOOL process_init( char *argv[], char **environ )
 
     /* initialise DOS directories */
     if (!DIR_Init()) return FALSE;
+
+    init_current_directory( &params->CurrentDirectory );
 
     /* registry initialisation */
     SHELL_LoadRegistry();
@@ -1215,10 +1298,10 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
  *           create_user_params
  */
 static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWSTR cmdline,
-                                                        const STARTUPINFOW *startup )
+                                                        LPCWSTR cur_dir, const STARTUPINFOW *startup )
 {
     RTL_USER_PROCESS_PARAMETERS *params;
-    UNICODE_STRING image_str, cmdline_str, desktop, title;
+    UNICODE_STRING image_str, cmdline_str, curdir_str, desktop, title;
     NTSTATUS status;
     WCHAR buffer[MAX_PATH];
 
@@ -1229,10 +1312,13 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     RtlInitUnicodeString( &image_str, buffer );
 
     RtlInitUnicodeString( &cmdline_str, cmdline );
+    if (cur_dir) RtlInitUnicodeString( &curdir_str, cur_dir );
     if (startup->lpDesktop) RtlInitUnicodeString( &desktop, startup->lpDesktop );
     if (startup->lpTitle) RtlInitUnicodeString( &title, startup->lpTitle );
 
-    status = RtlCreateProcessParameters( &params, &image_str, NULL, NULL, &cmdline_str, NULL,
+    status = RtlCreateProcessParameters( &params, &image_str, NULL,
+                                         cur_dir ? &curdir_str : NULL,
+                                         &cmdline_str, NULL,
                                          startup->lpTitle ? &title : NULL,
                                          startup->lpDesktop ? &desktop : NULL,
                                          NULL, NULL );
@@ -1266,7 +1352,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
  * file, otherwise it is a Winelib app.
  */
 static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
-                            LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                            LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
                             LPPROCESS_INFORMATION info, LPCSTR unixdir )
 {
@@ -1281,7 +1367,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (!env) env = GetEnvironmentStringsW();
 
-    if (!(params = create_user_params( filename, cmd_line, startup )))
+    if (!(params = create_user_params( filename, cmd_line, cur_dir, startup )))
         return FALSE;
 
     /* create the synchronization pipes */
@@ -1449,7 +1535,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
  *
  * Create a new VDM process for a 16-bit or DOS application.
  */
-static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
+static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, LPCWSTR cur_dir,
                                 LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
                                 LPPROCESS_INFORMATION info, LPCSTR unixdir )
@@ -1466,7 +1552,7 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
         return FALSE;
     }
     sprintfW( new_cmd_line, argsW, winevdmW, filename, cmd_line );
-    ret = create_process( 0, winevdmW, new_cmd_line, env, psa, tsa, inherit,
+    ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
                           flags, startup, info, unixdir );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
@@ -1478,10 +1564,10 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
  *
  * Create a new cmd shell process for a .BAT file.
  */
-static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env,
+static BOOL create_cmd_process( LPCWSTR filename, LPWSTR cmd_line, LPVOID env, LPCWSTR cur_dir,
                                 LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
-                                LPPROCESS_INFORMATION info, LPCWSTR cur_dir )
+                                LPPROCESS_INFORMATION info )
 
 {
     static const WCHAR comspecW[] = {'C','O','M','S','P','E','C',0};
@@ -1695,7 +1781,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     if (!hFile)  /* builtin exe */
     {
         TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
-        retv = create_process( 0, name, tidy_cmdline, envW, process_attr, thread_attr,
+        retv = create_process( 0, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir );
         goto done;
     }
@@ -1704,13 +1790,13 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     {
     case BINARY_PE_EXE:
         TRACE( "starting %s as Win32 binary\n", debugstr_w(name) );
-        retv = create_process( hFile, name, tidy_cmdline, envW, process_attr, thread_attr,
+        retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir );
         break;
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        retv = create_vdm_process( name, tidy_cmdline, envW, process_attr, thread_attr,
+        retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                    inherit, flags, startup_info, info, unixdir );
         break;
     case BINARY_OS216:
@@ -1723,7 +1809,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
-        retv = create_process( hFile, name, tidy_cmdline, envW, process_attr, thread_attr,
+        retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir );
         break;
     case BINARY_UNKNOWN:
@@ -1733,15 +1819,15 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
             if (!strcmpiW( p, comW ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
-                retv = create_vdm_process( name, tidy_cmdline, envW, process_attr, thread_attr,
+                retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                            inherit, flags, startup_info, info, unixdir );
                 break;
             }
             if (!strcmpiW( p, batW ))
             {
                 TRACE( "starting %s as batch binary\n", debugstr_w(name) );
-                retv = create_cmd_process( name, tidy_cmdline, envW, process_attr, thread_attr,
-                                           inherit, flags, startup_info, info, cur_dir );
+                retv = create_cmd_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
+                                           inherit, flags, startup_info, info );
                 break;
             }
         }

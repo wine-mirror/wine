@@ -107,7 +107,6 @@ int DIR_Init(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HKEY hkey;
-    char path[MAX_PATHNAME_LEN];
     WCHAR longpath[MAX_PATHNAME_LEN];
     WCHAR *tmp_dir, *profile_dir;
     static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
@@ -151,26 +150,6 @@ int DIR_Init(void)
     {
         if (hkey) NtClose( hkey );
         return 0;
-    }
-
-    if (!getcwd( path, MAX_PATHNAME_LEN ))
-    {
-        MESSAGE("Warning: could not get current Unix working directory, "
-                "starting in the Windows directory.\n" );
-        SetCurrentDirectoryW( DIR_Windows );
-    }
-    else
-    {
-        MultiByteToWideChar( CP_UNIXCP, 0, path, -1, longpath, MAX_PATHNAME_LEN);
-        GetFullPathNameW( longpath, MAX_PATHNAME_LEN, longpath, NULL );
-        if (!SetCurrentDirectoryW( longpath ))
-        {
-            MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
-                    "starting in the Windows directory.\n", path );
-            SetCurrentDirectoryW( DIR_Windows );
-        }
-        else if (!NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.Handle)
-            chdir("/"); /* change to root directory so as not to lock cdroms */
     }
 
     /* Set the environment variables */
