@@ -75,7 +75,9 @@ shell.spec.c: shell.spec version16.res
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --main-module $(MODULE) --res version16.res --spec $(SRCDIR)/shell.spec
 
 authors.c: $(TOPSRCDIR)/AUTHORS
-	sed -e '1,2c const char * const SHELL_Authors[] = {' -e 's/\(.*\)/    \"\1\",/' -e '$$a\    0 };' $(TOPSRCDIR)/AUTHORS >$@ || ($(RM) $@ && false)
+	(echo 'const char * const SHELL_Authors[] = {' && \
+	 sed -e '1,2d' -e 's/\(.*\)/  \"\1\",/' $(TOPSRCDIR)/AUTHORS && \
+	 echo '  0 };') >$@ || ($(RM) $@ && false)
 
 depend: authors.c
 
