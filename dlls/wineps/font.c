@@ -109,7 +109,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     afm = afmle->afm;
 
     physDev->font.afm = afm;
-    physDev->font.tm.tmHeight = YLSTODS(dc, lf->lfHeight);
+    physDev->font.tm.tmHeight = INTERNAL_YWSTODS(dc, lf->lfHeight);
     if(physDev->font.tm.tmHeight < 0) {
         physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
 				       (afm->Ascender - afm->Descender);
@@ -206,7 +206,6 @@ BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
     INT i;
     float width;
 
-    size->cy = YDSTOLS(dc, physDev->font.tm.tmHeight);
     width = 0.0;
 
     for(i = 0; i < count && str[i]; i++) {
@@ -216,7 +215,9 @@ BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
     }
     width *= physDev->font.scale;
     TRACE("Width after scale (%f) is %f\n", physDev->font.scale, width);
-    size->cx = XDSTOLS(dc, width);
+
+    size->cx = GDI_ROUND((FLOAT)width * dc->xformVport2World.eM11);
+    size->cy = GDI_ROUND((FLOAT)physDev->font.tm.tmHeight  * dc->xformVport2World.eM22);
 
     return TRUE;
 }

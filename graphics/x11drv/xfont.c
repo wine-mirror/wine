@@ -3055,20 +3055,13 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
     /* FIXME - check that the other drivers do this correctly */
     if (lf.lfWidth)
     {
-	int vpt = abs(dc->vportExtX);
-	int wnd = abs(dc->wndExtX);
-	lf.lfWidth = (abs(lf.lfWidth) * vpt + (wnd>>1))/wnd;
+	lf.lfWidth = GDI_ROUND((FLOAT)lf.lfWidth * fabs(dc->xformWorld2Vport.eM11));
 	if (lf.lfWidth == 0)
 	    lf.lfWidth = 1; /* Minimum width */
     }
     if (lf.lfHeight)
     {
-	int vpt = abs(dc->vportExtY);
-	int wnd = abs(dc->wndExtY);
-	if (lf.lfHeight > 0)
-	    lf.lfHeight = (lf.lfHeight * vpt + (wnd>>1))/wnd;
-	else
-	    lf.lfHeight = (lf.lfHeight * vpt - (wnd>>1))/wnd;
+	lf.lfHeight = GDI_ROUND((FLOAT)lf.lfHeight * fabs(dc->xformWorld2Vport.eM22));
 
 	if (lf.lfHeight == 0)
 	    lf.lfHeight = MIN_FONT_SIZE;

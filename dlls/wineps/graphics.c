@@ -28,9 +28,10 @@ BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
     TRACE("%d %d\n", x, y);
 
     PSDRV_SetPen(dc);
-    PSDRV_WriteMoveTo(dc, XLPTODP(dc, dc->CursPosX),
-		          YLPTODP(dc, dc->CursPosY));
-    PSDRV_WriteLineTo(dc, XLPTODP(dc, x), YLPTODP(dc, y));
+    PSDRV_WriteMoveTo(dc, INTERNAL_XWPTODP(dc, dc->CursPosX, dc->CursPosY),
+			  INTERNAL_YWPTODP(dc, dc->CursPosX, dc->CursPosY));
+    PSDRV_WriteLineTo(dc, INTERNAL_XWPTODP(dc, x, y),
+			  INTERNAL_YWPTODP(dc, x, y));
     PSDRV_DrawLine(dc);
 
     return TRUE;
@@ -43,15 +44,15 @@ BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
 BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
 		       INT bottom )
 {
-    INT width = XLSTODS(dc, right - left);
-    INT height = YLSTODS(dc, bottom - top);
-
+    INT width;
+    INT height;
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
-
-    PSDRV_WriteRectangle(dc, XLPTODP(dc, left), YLPTODP(dc, top),
+    width = INTERNAL_XWSTODS(dc, right - left);
+    height = INTERNAL_YWSTODS(dc, bottom - top);
+    PSDRV_WriteRectangle(dc, INTERNAL_XWPTODP(dc, left, top),
+			     INTERNAL_YWPTODP(dc, left, top),
 			     width, height);
-
     PSDRV_Brush(dc,0);
     PSDRV_SetPen(dc);
     PSDRV_DrawLine(dc);
@@ -216,10 +217,10 @@ BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 
     pt = pts;
     for(polyline = 0; polyline < polylines; polyline++) {
-        PSDRV_WriteMoveTo(dc, XLPTODP(dc, pt->x), YLPTODP(dc, pt->y));
+	PSDRV_WriteMoveTo(dc, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
 	pt++;
 	for(line = 1; line < counts[polyline]; line++) {
-	    PSDRV_WriteLineTo(dc, XLPTODP(dc, pt->x), YLPTODP(dc, pt->y));
+	    PSDRV_WriteLineTo(dc, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
 	    pt++;
 	}
     }
@@ -250,10 +251,10 @@ BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 
     pt = pts;
     for(polygon = 0; polygon < polygons; polygon++) {
-        PSDRV_WriteMoveTo(dc, XLPTODP(dc, pt->x), YLPTODP(dc, pt->y));
+	PSDRV_WriteMoveTo(dc, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
 	pt++;
 	for(line = 1; line < counts[polygon]; line++) {
-	    PSDRV_WriteLineTo(dc, XLPTODP(dc, pt->x), YLPTODP(dc, pt->y));
+	    PSDRV_WriteLineTo(dc, INTERNAL_XWPTODP(dc, pt->x, pt->y), INTERNAL_YWPTODP(dc, pt->x, pt->y));
 	    pt++;
 	}
 	PSDRV_WriteClosePath(dc);
@@ -286,8 +287,8 @@ COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     PSCOLOR pscolor;
 
-    x = XLPTODP(dc, x);
-    y = YLPTODP(dc, y);
+    x = INTERNAL_XWPTODP(dc, x, y);
+    y = INTERNAL_YWPTODP(dc, x, y);
 
     PSDRV_WriteRectangle( dc, x, y, 0, 0 );
     PSDRV_CreateColor( physDev, &pscolor, color );

@@ -33,8 +33,8 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     physDev->pen.endcap = pen->logpen.lopnStyle & PS_ENDCAP_MASK;
     physDev->pen.linejoin = pen->logpen.lopnStyle & PS_JOIN_MASK;
 
-    physDev->pen.width = (pen->logpen.lopnWidth.x * dc->vportExtX +
-                    dc->wndExtX / 2) / dc->wndExtX;
+    physDev->pen.width = GDI_ROUND((FLOAT)pen->logpen.lopnWidth.x *
+                                   dc->xformWorld2Vport.eM11 * 0.5);
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( dc, pen->logpen.lopnColor );    

@@ -36,10 +36,10 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     /* set clipping and/or draw background */
     if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
-	rect.left = XLPTODP(dc, lprect->left);
-	rect.right = XLPTODP(dc, lprect->right);
-	rect.top = YLPTODP(dc, lprect->top);
-	rect.bottom = YLPTODP(dc, lprect->bottom);
+	rect.left = INTERNAL_XWPTODP(dc, lprect->left, lprect->top);
+	rect.right = INTERNAL_XWPTODP(dc, lprect->right, lprect->bottom);
+	rect.top = INTERNAL_YWPTODP(dc, lprect->left, lprect->top);
+	rect.bottom = INTERNAL_YWPTODP(dc, lprect->right, lprect->bottom);
 
 	PSDRV_WriteGSave(dc);
 	PSDRV_WriteRectangle(dc, rect.left, rect.top, rect.right - rect.left, 
@@ -92,17 +92,17 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 	y = dc->CursPosY;
     }
 
-    x = XLPTODP(dc, x);
-    y = YLPTODP(dc, y);
+    x = INTERNAL_XWPTODP(dc, x, y);
+    y = INTERNAL_YWPTODP(dc, x, y);
 
     GetTextExtentPoint32W(dc->hSelf, str, count, &sz);
-    sz.cx = XLSTODS(dc, sz.cx);
-    sz.cy = YLSTODS(dc, sz.cy);
-
+    sz.cx = INTERNAL_XWSTODS(dc, sz.cx);
+    sz.cy = INTERNAL_YWSTODS(dc, sz.cy);
     switch(dc->textAlign & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
     case TA_LEFT:
-        if(dc->textAlign & TA_UPDATECP)
-	    dc->CursPosX = XDPTOLP(dc, x + sz.cx);
+        if(dc->textAlign & TA_UPDATECP) {
+	    dc->CursPosX = INTERNAL_XDPTOWP(dc, x + sz.cx, y);
+	}
 	break;
 
     case TA_CENTER:
@@ -111,8 +111,9 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 
     case TA_RIGHT:
 	x -= sz.cx;
-	if(dc->textAlign & TA_UPDATECP)
-	    dc->CursPosX = XDPTOLP(dc, x);
+	if(dc->textAlign & TA_UPDATECP) {
+	    dc->CursPosX = INTERNAL_XDPTOWP(dc, x, y);
+	}
 	break;
     }
 
@@ -166,7 +167,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
         /* Get the width of the text */
 
         PSDRV_GetTextExtentPoint(dc, strbuf, lstrlenW(strbuf), &size);
-        size.cx = XLSTODS(dc, size.cx);
+        size.cx = INTERNAL_XWSTODS(dc, size.cx);
 
         /* Do the underline */
 

@@ -87,24 +87,24 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	      return FALSE;
 	    if (!X11DRV_GetTextExtentPoint( dc, wstr, count, &sz ))
 	      return FALSE;
-	    rect.left   = XLPTODP( dc, x );
-	    rect.right  = XLPTODP( dc, x+sz.cx );
-	    rect.top    = YLPTODP( dc, y );
-	    rect.bottom = YLPTODP( dc, y+sz.cy );
+	    rect.left   = INTERNAL_XWPTODP( dc, x, y );
+	    rect.right  = INTERNAL_XWPTODP( dc, x+sz.cx, y+sz.cy );
+	    rect.top    = INTERNAL_YWPTODP( dc, x, y );
+	    rect.bottom = INTERNAL_YWPTODP( dc, x+sz.cx, y+sz.cy );
 	}
 	else
 	{
-	    rect.left   = XLPTODP( dc, lprect->left );
-	    rect.right  = XLPTODP( dc, lprect->right );
-	    rect.top    = YLPTODP( dc, lprect->top );
-	    rect.bottom = YLPTODP( dc, lprect->bottom );
+	    rect.left   = INTERNAL_XWPTODP( dc, lprect->left, lprect->top );
+	    rect.right  = INTERNAL_XWPTODP( dc, lprect->right, lprect->bottom );
+	    rect.top    = INTERNAL_YWPTODP( dc, lprect->left, lprect->top );
+	    rect.bottom = INTERNAL_YWPTODP( dc, lprect->right, lprect->bottom );
 	}
 	if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
 	if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
     }
 
-    x = XLPTODP( dc, x );
-    y = YLPTODP( dc, y );
+    x = INTERNAL_XWPTODP( dc, x, y );
+    y = INTERNAL_YWPTODP( dc, x, y );
 
     TRACE("\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
@@ -126,16 +126,15 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (lpDx) /* have explicit character cell x offsets in logical coordinates */
     {
-	int extra = dc->wndExtX / 2;
         for (i = width = 0; i < count; i++) width += lpDx[i];
-	width = (width * dc->vportExtX + extra ) / dc->wndExtX;
+        width = INTERNAL_XWSTODS(dc, width);
     }
     else
     {
         SIZE sz;
         if (!X11DRV_GetTextExtentPoint( dc, wstr, count, &sz ))
 	    return FALSE;
-	width = XLSTODS(dc, sz.cx);
+	width = INTERNAL_XWSTODS(dc, sz.cx);
     }
     ascent = pfo->lpX11Trans ? pfo->lpX11Trans->ascent : font->ascent;
     descent = pfo->lpX11Trans ? pfo->lpX11Trans->descent : font->descent;
@@ -148,16 +147,16 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     {
       case TA_LEFT:
 	  if (dc->textAlign & TA_UPDATECP) {
-	      dc->CursPosX = XDPTOLP( dc, x + xwidth );
-	      dc->CursPosY = YDPTOLP( dc, y - ywidth );
+	      dc->CursPosX = INTERNAL_XDPTOWP( dc, x + xwidth, y - ywidth );
+	      dc->CursPosY = INTERNAL_YDPTOWP( dc, x + xwidth, y - ywidth );
 	  }
 	  break;
       case TA_RIGHT:
 	  x -= xwidth;
 	  y += ywidth;
 	  if (dc->textAlign & TA_UPDATECP) {
-	      dc->CursPosX = XDPTOLP( dc, x );
-	      dc->CursPosY = YDPTOLP( dc, y );
+	      dc->CursPosX = INTERNAL_XDPTOWP( dc, x, y );
+	      dc->CursPosY = INTERNAL_YDPTOWP( dc, x, y );
 	  }
 	  break;
       case TA_CENTER:
@@ -251,8 +250,10 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
         delta = i = 0;
 	if( lpDx ) /* explicit character widths */
 	{
-	    const long ve_we = dc->vportExtX*0x10000 / dc->wndExtX;
+	    long ve_we;
 	    unsigned short err = 0;
+
+	    ve_we = (LONG)(dc->xformWorld2Vport.eM11 * 0x10000);
 
 	    while (i < count)
 	    {
@@ -329,7 +330,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 		pfo, display, physDev->drawable, physDev->gc,
 		x_i, y_i, &str2b[i], 1);
 	if (lpDx)
-	  offset += XLSTODS(dc, lpDx[i]);
+	{
+	  offset += INTERNAL_XWSTODS(dc, lpDx[i]);
+	}
 	else
 	{
 	  offset += (double) (font->per_char ?
@@ -408,10 +411,11 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    int info_width;
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
 				count, &dir, &ascent, &descent, &info_width );
-	    size->cx = abs((info_width + dc->breakRem + count * 
-			    dc->charExtra) * dc->wndExtX / dc->vportExtX);
-	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
-			   dc->wndExtY / dc->vportExtY);
+
+	   size->cx = abs((info_width + dc->breakRem + count *
+			   dc->charExtra) * (int)dc->xformWorld2Vport.eM11);
+	   size->cy = abs((pfo->fs->ascent + pfo->fs->descent) *
+			  (int)dc->xformWorld2Vport.eM22);
 	} else {
 	    INT i;
 	    float x = 0.0, y = 0.0;
@@ -426,8 +430,8 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
 	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
 	    size->cx = fabs((x + dc->breakRem + count * dc->charExtra) *
-			     dc->wndExtX / dc->vportExtX);
-	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
+			    dc->xformVport2World.eM11);
+	    size->cy = fabs(y * dc->xformVport2World.eM22);
 	}
 	size->cx *= pfo->rescale;
 	size->cy *= pfo->rescale;

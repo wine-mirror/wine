@@ -5,7 +5,7 @@
  */
 
 /*
- * FIXME: none of these functions obey the GM_ADVANCED
+ * FIXME: only some of these functions obey the GM_ADVANCED
  * graphics mode
  */
 
@@ -291,15 +291,26 @@ BOOL
 X11DRV_LineTo( DC *dc, INT x, INT y )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    POINT start;
+    POINT end;
 
     if (X11DRV_SetupGCForPen( dc )) {
 	/* Update the pixmap from the DIB section */
 	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
-	TSXDrawLine(display, physDev->drawable, physDev->gc, 
-		  dc->DCOrgX + XLPTODP( dc, dc->CursPosX ),
-		  dc->DCOrgY + YLPTODP( dc, dc->CursPosY ),
-		  dc->DCOrgX + XLPTODP( dc, x ),
-		  dc->DCOrgY + YLPTODP( dc, y ) );
+
+	start.x = dc->CursPosX;
+	start.y = dc->CursPosY;
+	end.x = x;
+	end.y = y;
+	INTERNAL_LPTODP(dc,&start);
+	INTERNAL_LPTODP(dc,&end);
+
+	TSXDrawLine(display, physDev->drawable, physDev->gc,
+		  dc->DCOrgX + start.x,
+		  dc->DCOrgY + start.y,
+		  dc->DCOrgX + end.x,
+		  dc->DCOrgY + end.y);
+
 	/* Update the DIBSection from the pixmap */
 	X11DRV_UnlockDIBSection(dc, TRUE); 
     }
@@ -581,10 +592,10 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     TRACE("(%d %d %d %d)\n", 
     	left, top, right, bottom);
 
-    left   = XLPTODP( dc, left );
-    top    = YLPTODP( dc, top );
-    right  = XLPTODP( dc, right );
-    bottom = YLPTODP( dc, bottom );
+    left   = INTERNAL_XWPTODP( dc, left, top );
+    top    = INTERNAL_YWPTODP( dc, left, top );
+    right  = INTERNAL_XWPTODP( dc, right, bottom );
+    bottom = INTERNAL_YWPTODP( dc, right, bottom );
 
     if ((left == right) || (top == bottom)) return TRUE;
 
@@ -850,8 +861,8 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     Pixel pixel;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     
-    x = dc->DCOrgX + XLPTODP( dc, x );
-    y = dc->DCOrgY + YLPTODP( dc, y );
+    x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
+    y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
     pixel = X11DRV_PALETTE_ToPhysical( dc, color );
     
     TSXSetForeground( display, physDev->gc, pixel );
@@ -877,8 +888,8 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     int pixel;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    x = dc->DCOrgX + XLPTODP( dc, x );
-    y = dc->DCOrgY + YLPTODP( dc, y );
+    x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
+    y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
     wine_tsx11_lock();
     if (dc->flags & DC_MEMORY)
     {
@@ -973,8 +984,8 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
     }
     for (i = 0; i < count; i++)
     {
-        points[i].x = dc->DCOrgX + XLPTODP( dc, pt[i].x );
-        points[i].y = dc->DCOrgY + YLPTODP( dc, pt[i].y );
+	points[i].x = dc->DCOrgX + INTERNAL_XWPTODP( dc, pt[i].x, pt[i].y );
+	points[i].y = dc->DCOrgY + INTERNAL_YWPTODP( dc, pt[i].x, pt[i].y );
     }
 
     if (X11DRV_SetupGCForPen ( dc ))
@@ -1013,8 +1024,8 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     }
     for (i = 0; i < count; i++)
     {
-	points[i].x = dc->DCOrgX + XLPTODP( dc, pt[i].x );
-	points[i].y = dc->DCOrgY + YLPTODP( dc, pt[i].y );
+	points[i].x = dc->DCOrgX + INTERNAL_XWPTODP( dc, pt[i].x, pt[i].y );
+	points[i].y = dc->DCOrgY + INTERNAL_YWPTODP( dc, pt[i].x, pt[i].y );
     }
     points[count] = points[0];
 
@@ -1078,8 +1089,8 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	{
 	    for (j = 0; j < counts[i]; j++)
 	    {
-		points[j].x = dc->DCOrgX + XLPTODP( dc, pt->x );
-		points[j].y = dc->DCOrgY + YLPTODP( dc, pt->y );
+		points[j].x = dc->DCOrgX + INTERNAL_XWPTODP( dc, pt->x, pt->y );
+		points[j].y = dc->DCOrgY + INTERNAL_YWPTODP( dc, pt->x, pt->y );
 		pt++;
 	    }
 	    points[j] = points[0];
@@ -1122,8 +1133,8 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
         {
             for (j = 0; j < counts[i]; j++)
             {
-                points[j].x = dc->DCOrgX + XLPTODP( dc, pt->x );
-                points[j].y = dc->DCOrgY + YLPTODP( dc, pt->y );
+		points[j].x = dc->DCOrgX + INTERNAL_XWPTODP( dc, pt->x, pt->y );
+		points[j].y = dc->DCOrgY + INTERNAL_YWPTODP( dc, pt->x, pt->y );
                 pt++;
             }
             TSXDrawLines( display, physDev->drawable, physDev->gc,

@@ -413,6 +413,73 @@ static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
     point->y = GDI_ROUND(floatPoint.y);
 }
 
+
+/* Performs a world-to-viewport transformation on the specified point (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_XWPTODP(DC *dc, INT x, INT y)
+{
+    FLOAT_POINT floatPoint;
+
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)x;
+    floatPoint.y=(FLOAT)y;
+    INTERNAL_LPTODP_FLOAT(dc, &floatPoint);
+
+    /* Round to integers */
+    return GDI_ROUND(floatPoint.x);
+}
+
+/* Performs a world-to-viewport transformation on the specified point (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_YWPTODP(DC *dc, INT x, INT y)
+{
+    FLOAT_POINT floatPoint;
+
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)x;
+    floatPoint.y=(FLOAT)y;
+    INTERNAL_LPTODP_FLOAT(dc, &floatPoint);
+
+    /* Round to integers */
+    return GDI_ROUND(floatPoint.y);
+}
+
+
+/* Performs a viewport-to-world transformation on the specified point (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_XDPTOWP(DC *dc, INT x, INT y)
+{
+    FLOAT_POINT floatPoint;
+
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)x;
+    floatPoint.y=(FLOAT)y;
+    INTERNAL_DPTOLP_FLOAT(dc, &floatPoint);
+
+    /* Round to integers */
+    return GDI_ROUND(floatPoint.x);
+}
+
+/* Performs a viewport-to-world transformation on the specified point (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_YDPTOWP(DC *dc, INT x, INT y)
+{
+    FLOAT_POINT floatPoint;
+
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)x;
+    floatPoint.y=(FLOAT)y;
+    INTERNAL_DPTOLP_FLOAT(dc, &floatPoint);
+
+    /* Round to integers */
+    return GDI_ROUND(floatPoint.y);
+}
+
+
 #define XDPTOLP(dc,x) \
     (MulDiv(((x)-(dc)->vportOrgX), (dc)->wndExtX, (dc)->vportExtX) + (dc)->wndOrgX)
 #define YDPTOLP(dc,y) \
@@ -421,6 +488,60 @@ static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
     (MulDiv(((x)-(dc)->wndOrgX), (dc)->vportExtX, (dc)->wndExtX) + (dc)->vportOrgX)
 #define YLPTODP(dc,y) \
     (MulDiv(((y)-(dc)->wndOrgY), (dc)->vportExtY, (dc)->wndExtY) + (dc)->vportOrgY)
+
+
+
+  /* World -> Device size conversion */
+
+/* Performs a world-to-viewport transformation on the specified width (which
+ * is in floating point format).
+ */
+static inline void WINE_UNUSED INTERNAL_XWSTODS_FLOAT(DC *dc, FLOAT *width)
+{
+    /* Perform the transformation */
+    *width = *width * dc->xformWorld2Vport.eM11;
+}
+
+/* Performs a world-to-viewport transformation on the specified width (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_XWSTODS(DC *dc, INT width)
+{
+    FLOAT floatWidth;
+
+    /* Perform operation with floating point */
+    floatWidth = (FLOAT)width;
+    INTERNAL_XWSTODS_FLOAT(dc, &floatWidth);
+
+    /* Round to integers */
+    return GDI_ROUND(floatWidth);
+}
+
+
+/* Performs a world-to-viewport transformation on the specified size (which
+ * is in floating point format).
+ */
+static inline void WINE_UNUSED INTERNAL_YWSTODS_FLOAT(DC *dc, FLOAT *height)
+{
+    /* Perform the transformation */
+    *height = *height * dc->xformWorld2Vport.eM22;
+}
+
+/* Performs a world-to-viewport transformation on the specified size (which
+ * is in integer format).
+ */
+static inline INT WINE_UNUSED INTERNAL_YWSTODS(DC *dc, INT height)
+{
+    FLOAT floatHeight;
+
+    /* Perform operation with floating point */
+    floatHeight = (FLOAT)height;
+    INTERNAL_XWSTODS_FLOAT(dc, &floatHeight);
+
+    /* Round to integers */
+    return GDI_ROUND(floatHeight);
+}
+
 
   /* Device <-> logical size conversion */
 

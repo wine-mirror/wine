@@ -28,7 +28,7 @@ extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     TRACE("hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
     dc->hPen = hpen;
 
-    physDev->pen.width = XLSTODS(dc, pen->logpen.lopnWidth.x);
+    physDev->pen.width = INTERNAL_XWSTODS(dc, pen->logpen.lopnWidth.x);
     if(physDev->pen.width < 0)
         physDev->pen.width = -physDev->pen.width;
 
@@ -90,5 +90,3 @@ BOOL PSDRV_SetPen(DC *dc)
 
     return TRUE;
 }
-
-
