@@ -187,7 +187,7 @@ static void send_request( const struct __server_request_info *req )
 
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
     if (errno == EPIPE) server_abort_thread(0);
-    server_protocol_perror( "sendmsg" );
+    server_protocol_perror( "write" );
 }
 
 
