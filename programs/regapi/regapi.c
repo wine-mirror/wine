@@ -361,26 +361,14 @@ static INT getCommand(LPSTR commandName)
  */
 static DWORD convertHexToDWord(char *str, BYTE *buf)
 {
-  char  *s        = str;  /* Pointer to current */
-  char  *b        = buf;  /* Pointer to result  */
-  ULONG strPos    = 0;    
+  DWORD dw;
+  char xbuf[9];
 
-  memset(buf, 0, 4);
-
-  while (strPos < 4)  /* 8 byte in a DWORD */
-  {
-    char xbuf[3];
-    char wc;
-
-    memcpy(xbuf,s,2); xbuf[2]='\0';
-    sscanf(xbuf,"%02x",(UINT*)&wc);
-    *b++ =(unsigned char)wc;
-
-    s+=2;
-    strPos+=1;
-  }                                   
-
-  return 4; /* always 4 byte for the word */
+  memcpy(xbuf,str,8);
+  xbuf[8]='\0';
+  sscanf(xbuf,"%08lx",&dw);
+  memcpy(buf,&dw,sizeof(DWORD));
+  return sizeof(DWORD);
 }
 
 /******************************************************************************
@@ -420,24 +408,14 @@ static char* convertHexToHexCSV(BYTE *buf, ULONG bufLen)
 static char* convertHexToDWORDStr(BYTE *buf, ULONG bufLen)
 {
   char* str;
-  char* ptrStr;
-  BYTE* ptrBuf;
+  DWORD dw;
 
-  ULONG current = 0;
+  if ( bufLen != sizeof(DWORD) ) return NULL;
 
-  str    = HeapAlloc(GetProcessHeap(), 0, (bufLen*2)+1);
-  memset(str, 0, (bufLen*2)+1);
-  ptrStr = str;  /* Pointer to result  */
-  ptrBuf = buf;  /* Pointer to current */
+  str = HeapAlloc(GetProcessHeap(), 0, (bufLen*2)+1);
 
-  while (current < bufLen)
-  {
-    BYTE bCur = ptrBuf[current++];
-    char res[3];
-
-    sprintf(res, "%02x", (unsigned int)*&bCur);
-    strcat(str, res);
-  }                                   
+  memcpy(&dw,buf,sizeof(DWORD));
+  sprintf(str, "%08lx", dw);
 
   /* Get rid of the last comma */
   return str;
