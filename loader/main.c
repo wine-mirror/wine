@@ -54,8 +54,6 @@
 
 DEFAULT_DEBUG_CHANNEL(server)
 
-int __winelib = 1;  /* Winelib run-time flag */
-
 /***********************************************************************
  *           Main initialisation routine
  */

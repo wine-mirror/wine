@@ -426,12 +426,6 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define HFILE_ERROR16   ((HFILE16)-1)
 #define HFILE_ERROR     ((HFILE)-1)
 
-/* Winelib run-time flag */
-
-#ifdef __WINE__
-extern int __winelib;
-#endif  /* __WINE__ */
-
 /* The SIZE structure */
 
 typedef struct

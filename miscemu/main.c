@@ -109,8 +109,6 @@ int main( int argc, char *argv[] )
     NE_MODULE *pModule;
     extern char * DEBUG_argv0;
 
-    __winelib = 0;  /* First of all, clear the Winelib flag */
-
     /*
      * Save this so that the internal debugger can get a hold of it if
      * it needs to.

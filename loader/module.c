@@ -1169,15 +1169,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
         FIXME_(module)("(%s,...): STARTF_USEHOTKEY ignored\n", name);
 
-    /* When in WineLib, always fork new Unix process */
-
-    if ( __winelib ) {
-        retv = MODULE_CreateUnixProcess( name, tidy_cmdline, 
-                                         lpStartupInfo, lpProcessInfo, TRUE );
-	HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-	return (retv);
-    }
-
     /* Check for special case: second instance of NE module */
 
     lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
