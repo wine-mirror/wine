@@ -505,14 +505,17 @@ INT16 WINAPI OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
 INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+    INT ret;
 
-    if (obj && (x || y))
-    {
-	INT ret;
+    TRACE("%04x %d,%d\n", hrgn, x, y);
+
+    if (!obj)
+        return ERROR;
+
+    if(x || y) {
 	int nbox = obj->rgn->numRects;
 	RECT *pbox = obj->rgn->rects;
 	
-	TRACE(" %04x %d,%d\n", hrgn, x, y );
 	if(nbox) {
 	    while(nbox--) {
 	        pbox->left += x;
@@ -526,11 +529,10 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 	    obj->rgn->extents.top += y;
 	    obj->rgn->extents.bottom += y;
 	}
-	ret = obj->rgn->type;
-	GDI_HEAP_UNLOCK( hrgn );
-	return ret;
     }
-    return ERROR;
+    ret = obj->rgn->type;
+    GDI_HEAP_UNLOCK( hrgn );
+    return ret;
 }
 
 
