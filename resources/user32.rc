@@ -39,6 +39,7 @@
 #include "sysres_Pl.rc"
 #include "sysres_Pt.rc"
 #include "sysres_Ru.rc"
+#include "sysres_Sk.rc"
 #include "sysres_Sv.rc"
 #include "sysres_Wa.rc"
 #include "sysres_Ja.rc"

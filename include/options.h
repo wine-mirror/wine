@@ -30,6 +30,7 @@ typedef enum
     LANG_Hu,  /* Hungarian */
     LANG_Pl,  /* Polish */
     LANG_Pt,  /* Portuguese */
+    LANG_Sk,  /* Slovak */
     LANG_Sv,  /* Swedish */
     LANG_Ca,  /* Catalan */
     LANG_Nl,  /* Dutch */
