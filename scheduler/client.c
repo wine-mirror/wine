@@ -170,17 +170,43 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     if (len) *len = ret - sizeof(head);
     if (pass_fd != -1) close( pass_fd );
     remaining = head.len - ret;
-    while (remaining > 0)  /* drop remaining data */
+    while (remaining > 0)  /* get remaining data */
     {
-        char buffer[1024];
-        int len = remaining < sizeof(buffer) ? remaining : sizeof(buffer);
-        if ((len = recv( thdb->socket, buffer, len, 0 )) == -1)
+        char *bufp, buffer[1024];
+        int addlen, i, iovtot = 0;
+
+	/* see if any iovs are still incomplete, otherwise drop the rest */
+	for (i = 0; i < veclen && remaining > 0; i++)
+	{
+	    if (iovtot + vec[i].iov_len > head.len - remaining)
+	    {
+		addlen = iovtot + vec[i].iov_len - (head.len - remaining);
+		bufp = (char *)vec[i].iov_base + (vec[i].iov_len - addlen);
+		if (addlen > remaining) addlen = remaining;
+		if ((addlen = recv( thdb->socket, bufp, addlen, 0 )) == -1)
+		{
+		    perror( "recv" );
+		    CLIENT_ProtocolError( "recv\n" );
+		}
+		if (!addlen) ExitThread(1); /* the server closed the connection; time to die... */
+		if (len) *len += addlen;
+		remaining -= addlen;
+	    }
+	    iovtot += vec[i].iov_len;
+	}
+
+	if (remaining > 0)
+	    addlen = remaining < sizeof(buffer) ? remaining : sizeof(buffer);
+	else
+	    break;
+
+        if ((addlen = recv( thdb->socket, buffer, addlen, 0 )) == -1)
         {
             perror( "recv" );
             CLIENT_ProtocolError( "recv\n" );
         }
-        if (!len) ExitThread(1); /* the server closed the connection; time to die... */
-        remaining -= len;
+        if (!addlen) ExitThread(1); /* the server closed the connection; time to die... */
+        remaining -= addlen;
     }
 
     SetLastError( head.type );
