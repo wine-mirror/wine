@@ -6582,6 +6582,7 @@ server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
 tools/winebuild/Makefile
+tools/winelauncher
 tools/wmc/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
@@ -6815,6 +6816,7 @@ server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
 tools/winebuild/Makefile
+tools/winelauncher
 tools/wmc/Makefile
 tools/wrc/Makefile
 tsx11/Makefile

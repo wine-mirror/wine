@@ -134,7 +134,7 @@ clean::
 	$(RM) wine
 
 distclean: clean
-	$(RM) config.* TAGS Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man
+	$(RM) config.* TAGS Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man tools/winelauncher
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 # We depend on configure above for checks, so we better don't use this rule.

@@ -1,0 +1,186 @@
+#!/bin/sh
+#------------------------------------------------------------------------------
+#   Winelauncher
+#       This shell script attempts to intelligently manage the process
+#   of launching a program with Wine.  It adds some level of
+#   visual feedback to an end user.
+#  
+#   Usage:
+#       winelauncher [options]  "<windows program> [program arguments]"
+#
+#       This script is meant to be installed to /usr/bin/wine, and
+#   to be used to invoke a Windows executable.
+#       The options are passed through directly to Wine, and are
+#   documented in the Wine man page.
+#
+#   Copyright (c) 2000 by Jeremy White for CodeWeavers
+#       
+#------------------------------------------------------------------------------
+
+
+
+#------------------------------------------------------------------------------
+#  Primary configuration area - change this if you installed Wine to
+#    a location other than @prefix@
+#------------------------------------------------------------------------------
+prefix=@prefix@
+
+#------------------------------------------------------------------------------
+#  Secondary configuration area; change these at your own risk.
+#------------------------------------------------------------------------------
+exec_prefix=@exec_prefix@
+WINEBIN=@bindir@
+WINELIB=@libdir@
+
+export LD_LIBRARY_PATH=$WINELIB:$LD_LIBRARY_PATH
+export PATH=$WINEBIN:$PATH
+
+info_flag=~/.wine/.no_prelaunch_window_flag
+debug_flag=~/.wine/.no_debug_window_flag
+debug_options="-debugmsg warn+all"
+
+if [ -f $info_flag ] ; then 
+    use_info_message=0
+else
+    use_info_message=1
+fi
+
+if [ -f $debug_flag ] ; then 
+    use_debug_message=0
+else
+    use_debug_message=1
+fi
+
+
+#------------------------------------------------------------------------------
+#  Optionally Warn the user we're going to be launching Wine...
+#------------------------------------------------------------------------------
+if [ $use_info_message -ne 0 ] ; then
+    echo "Invoking $WINEBIN/wine $* ..."
+    xmessage -timeout 10 -buttons Dismiss:0,"Never display this message again":3 \
+        "Invoking $WINEBIN/wine $* ..." &
+    info_message_pid=$!
+fi
+
+#------------------------------------------------------------------------------
+#  Generate a temporary log file name
+#------------------------------------------------------------------------------
+use_log_name=0
+log_name=`mktemp /tmp/wine.log.XXXXXX`
+if [ $? -eq 0 ] ; then
+    which tail >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        use_log_name=1
+    fi
+fi
+
+#------------------------------------------------------------------------------
+#  Okay, really launch Wine...
+#------------------------------------------------------------------------------
+if [ $use_log_name -ne 0 ] ; then
+    #------------------------------------------------------------------------------
+    #  Okay, we bend over backwards to run Wine, get that status,
+    #   but still display its output to the screen.
+    #  The obvious thing to do is to run wine and pipe output to tee,
+    #   but then I can't find a way to get the return code of wine;
+    #   I only get the return code of Wine.
+    #------------------------------------------------------------------------------
+    $WINEBIN/wine $* >$log_name 2>&1 &
+    wine_pid=$!
+
+    tail -f $log_name &
+    tail_pid=$!
+
+    wait $wine_pid
+    wine_return=$?
+
+    kill $tail_pid
+else
+    $WINEBIN/wine $*
+    wine_return=$?
+fi
+
+#------------------------------------------------------------------------------
+#  Clean up the info message
+#------------------------------------------------------------------------------
+if [ $use_info_message -ne 0 ] ; then
+
+    #------------------------------------------------------------------------------
+    #  Okay, make sure that the notice window is dead (and kill it if it ain't)
+    #------------------------------------------------------------------------------
+    ps $info_message_pid >/dev/null 2>&1
+    if [ $? -ne 0 ] ; then
+        wait $info_message_pid
+        info_return=$?
+    else
+        info_return=0
+        kill $info_message_pid
+    fi
+
+    #------------------------------------------------------------------------------
+    #  If they didn't like the warning window, turn it off
+    #------------------------------------------------------------------------------
+    if [ $info_return -eq 3 ] ; then
+        echo "Disabling Wine prelaunch Window.  Remove $info_flag to enable"
+        touch $info_flag
+    fi
+fi
+
+#------------------------------------------------------------------------------
+#  Test the return code, and see if it fails
+#------------------------------------------------------------------------------
+if [ $wine_return -eq 0 ] ; then
+    echo "Wine exited with a successful status"
+    if [ $use_log_name -ne 0 ] ; then
+        rm -f $log_name
+    fi
+else
+    echo "Wine failed with return code $wine_return"
+
+    #------------------------------------------------------------------------------
+    #  Gracefully display a debug message if they like...
+    #------------------------------------------------------------------------------
+    while [ $use_debug_message -gt 0 ] ; do
+
+        #------------------------------------------------------------------------------
+        #  If they didn't like the warning window, turn it off
+        #------------------------------------------------------------------------------
+        if [ $use_log_name -ne 0 ] ; then
+            echo "Error log stored in $log_name"
+            xmessage -buttons Ok:0,"View Log ($log_name)":1,"Rerun with debug":2,"Never display this message again":3\
+                "Wine failed with return code $wine_return"
+        else
+            xmessage -buttons Ok:0,"Rerun with debug":2,"Never display this message again":3\
+                "Wine failed with return code $wine_return"
+        fi
+        info_return=$?
+
+        if [ $info_return -eq 1 ] ; then
+            xmessage -file $log_name -buttons Ok:0,"Delete $log_name":1  
+            if [ $? -eq 1 ] ; then
+                echo "Deleting $log_name"
+                rm -f $log_name
+                use_log_name=0
+            fi
+        else
+            use_debug_message=0
+        fi
+
+        #------------------------------------------------------------------------------
+        #  If they didn't like the warning window, turn it off
+        #------------------------------------------------------------------------------
+        if [ $info_return -eq 3 ] ; then
+            echo "Disabling Wine debug window.  Remove $debug_flag to enable"
+            touch $debug_flag
+        fi
+
+        #------------------------------------------------------------------------------
+        #  If they want to retry with debug, let 'em.
+        #------------------------------------------------------------------------------
+        if [ $info_return -eq 2 ] ; then
+            echo "Rerunning $0 $debug_options $*"
+            exec $0 $debug_options $*
+        fi
+    done 
+fi
+
