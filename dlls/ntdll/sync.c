@@ -17,15 +17,15 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /* copy a key name into the request buffer */
-static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name )
+static inline NTSTATUS copy_nameU( LPWSTR Dest, const OBJECT_ATTRIBUTES *attr )
 {
-        if (Name->Buffer)
-        {
-          if ((Name->Length) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-          lstrcpyW( Dest, Name->Buffer );
-        }
-        else Dest[0] = 0;
-        return STATUS_SUCCESS;
+    if (attr && attr->ObjectName && attr->ObjectName->Buffer)
+    {
+        if ((attr->ObjectName->Length) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
+        lstrcpyW( Dest, attr->ObjectName->Buffer );
+    }
+    else Dest[0] = 0;
+    return STATUS_SUCCESS;
 }
 
 /*
@@ -42,48 +42,38 @@ NTSTATUS WINAPI NtCreateSemaphore(
 	IN ULONG InitialCount,
 	IN ULONG MaximumCount) 
 {
-	struct create_semaphore_request *req = get_req_buffer();
-	HRESULT ret;
+    struct create_semaphore_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	FIXME("(%p,0x%08lx,%p,0x%08lx,0x%08lx) stub!\n",
-	SemaphoreHandle, DesiredAccess, ObjectAttributes, InitialCount, MaximumCount);
-	dump_ObjectAttributes(ObjectAttributes);
+    if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
+        return STATUS_INVALID_PARAMETER;
 
-	if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
-	  return STATUS_INVALID_PARAMETER;
-
-	*SemaphoreHandle = 0;
-	req->initial = InitialCount;
-	req->max     = MaximumCount;
-	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
-	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (!(ret = server_call_noerr( REQ_CREATE_SEMAPHORE )))
-            *SemaphoreHandle = req->handle;
-	return ret;
+    *SemaphoreHandle = 0;
+    req->initial = InitialCount;
+    req->max     = MaximumCount;
+    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
+    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
+        !(ret = server_call_noerr( REQ_CREATE_SEMAPHORE ))) *SemaphoreHandle = req->handle;
+    return ret;
 }
 
 /******************************************************************************
  *  NtOpenSemaphore
- *
- * FIXME
  */
 NTSTATUS WINAPI NtOpenSemaphore(
-	IN HANDLE SemaphoreHandle,
+	OUT PHANDLE SemaphoreHandle,
 	IN ACCESS_MASK DesiredAcces,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	struct open_semaphore_request *req = get_req_buffer();
-	HRESULT ret;
+    struct open_semaphore_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	FIXME("(0x%08x,0x%08lx,%p) stub!\n",
-	SemaphoreHandle, DesiredAcces, ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-
-	req->access  = DesiredAcces;
-	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
-	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if ((ret = server_call_noerr( REQ_OPEN_SEMAPHORE )) != STATUS_SUCCESS) return -1;
-	return req->handle;
+    *SemaphoreHandle = 0;
+    req->access  = DesiredAcces;
+    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
+    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
+        !(ret = server_call_noerr( REQ_OPEN_SEMAPHORE ))) *SemaphoreHandle = req->handle;
+    return ret;
 }
 
 /******************************************************************************
@@ -108,21 +98,18 @@ NTSTATUS WINAPI NtReleaseSemaphore(
 	IN ULONG ReleaseCount,
 	IN PULONG PreviousCount)
 {
-	struct release_semaphore_request *req = get_req_buffer();
-	HRESULT ret;
+    struct release_semaphore_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	FIXME("(0x%08x,0x%08lx,%p,) stub!\n",
-	SemaphoreHandle, ReleaseCount, PreviousCount);
+    if (ReleaseCount < 0) return STATUS_INVALID_PARAMETER;
 
-	if (ReleaseCount < 0) return STATUS_INVALID_PARAMETER;
-
-	req->handle = SemaphoreHandle;
-	req->count  = ReleaseCount;
-	if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
-	{
-	  if (PreviousCount) *PreviousCount = req->prev_count;
-	}
-	return ret;
+    req->handle = SemaphoreHandle;
+    req->count  = ReleaseCount;
+    if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
+    {
+        if (PreviousCount) *PreviousCount = req->prev_count;
+    }
+    return ret;
 }
 
 /*
@@ -139,20 +126,16 @@ NTSTATUS WINAPI NtCreateEvent(
 	IN BOOLEAN ManualReset,
 	IN BOOLEAN InitialState)
 {
-	struct create_event_request *req = get_req_buffer();
-	HRESULT ret;
+    struct create_event_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	FIXME("(%p,0x%08lx,%p,%08x,%08x): empty stub\n",
-	EventHandle,DesiredAccess,ObjectAttributes,ManualReset,InitialState);
-	dump_ObjectAttributes(ObjectAttributes);
-
-	*EventHandle = 0;
-	req->manual_reset = ManualReset;
-	req->initial_state = InitialState;
-	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
-	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (!(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
-	return ret;
+    *EventHandle = 0;
+    req->manual_reset = ManualReset;
+    req->initial_state = InitialState;
+    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
+    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
+        !(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
+    return ret;
 }
 
 /******************************************************************************
@@ -163,36 +146,17 @@ NTSTATUS WINAPI NtOpenEvent(
 	IN ACCESS_MASK DesiredAccess,
 	IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	struct open_event_request *req = get_req_buffer();
-	HRESULT ret;
+    struct open_event_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	FIXME("(%p,0x%08lx,%p),stub!\n",
-	EventHandle,DesiredAccess,ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-
-	*EventHandle = 0;
-	req->access  = DesiredAccess;
-	req->inherit = ObjectAttributes->Attributes & OBJ_INHERIT;
-	copy_nameU( req->name, ObjectAttributes->ObjectName );
-	if (!(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
-	return ret;
+    *EventHandle = 0;
+    req->access  = DesiredAccess;
+    req->inherit = ObjectAttributes && (ObjectAttributes->Attributes & OBJ_INHERIT);
+    if (!(ret = copy_nameU( req->name, ObjectAttributes )) &&
+        !(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
+    return ret;
 }
 
-/***********************************************************************
- * EVENT_Operation
- *
- * Execute an event operation (set,reset,pulse).
- */
-static NTSTATUS EVENT_Operation(
-	HANDLE handle,
-	PULONG NumberOfThreadsReleased,
-	enum event_op op )
-{
-	struct event_op_request *req = get_req_buffer();
-	req->handle = handle;
-	req->op     = op;
-	return server_call_noerr( REQ_EVENT_OP );
-}
 
 /******************************************************************************
  *  NtSetEvent
@@ -201,9 +165,11 @@ NTSTATUS WINAPI NtSetEvent(
 	IN HANDLE EventHandle,
 	PULONG NumberOfThreadsReleased)
 {
-	FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
-
-	return EVENT_Operation(EventHandle, NumberOfThreadsReleased, SET_EVENT);
+    struct event_op_request *req = get_req_buffer();
+    FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
+    req->handle = EventHandle;
+    req->op     = SET_EVENT;
+    return server_call_noerr( REQ_EVENT_OP );
 }
 
 /******************************************************************************
@@ -213,9 +179,11 @@ NTSTATUS WINAPI NtResetEvent(
 	IN HANDLE EventHandle,
 	PULONG NumberOfThreadsReleased)
 {
-	FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
-
-	return EVENT_Operation(EventHandle, NumberOfThreadsReleased, RESET_EVENT);
+    struct event_op_request *req = get_req_buffer();
+    FIXME("(0x%08x,%p)\n", EventHandle, NumberOfThreadsReleased);
+    req->handle = EventHandle;
+    req->op     = RESET_EVENT;
+    return server_call_noerr( REQ_EVENT_OP );
 }
 
 /******************************************************************************
@@ -227,8 +195,7 @@ NTSTATUS WINAPI NtResetEvent(
 NTSTATUS WINAPI NtClearEvent (
 	IN HANDLE EventHandle)
 {
-	FIXME("(0x%08x)\n", EventHandle);
-	return EVENT_Operation(EventHandle, NULL, RESET_EVENT);
+    return NtResetEvent( EventHandle, NULL );
 }
 
 /******************************************************************************
@@ -241,9 +208,11 @@ NTSTATUS WINAPI NtPulseEvent(
 	IN HANDLE EventHandle,
 	IN PULONG PulseCount)
 {
-	FIXME("(0x%08x,%p)\n", EventHandle, PulseCount);
-
-	return EVENT_Operation(EventHandle, NULL, PULSE_EVENT);
+    struct event_op_request *req = get_req_buffer();
+    FIXME("(0x%08x,%p)\n", EventHandle, PulseCount);
+    req->handle = EventHandle;
+    req->op     = PULSE_EVENT;
+    return server_call_noerr( REQ_EVENT_OP );
 }
 
 /******************************************************************************
