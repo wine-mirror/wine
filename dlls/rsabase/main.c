@@ -340,8 +340,14 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
               'M','i','c','r','o','s','o','f','t',' ','B','a','s','e',' ','C',
               'r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
               'o','v','i','d','e','r',' ','v','1','.','0',0 };
+            static const WCHAR szTypeName[] = { 'T','y','p','e','N','a','m','e',0 };
+            static const WCHAR szRSATypeName[] = {
+              'R','S','A',' ','F','u','l','l',' ',
+              '(','S','i','g','n','a','t','u','r','e',' ','a','n','d',' ',
+              'K','e','y',' ','E','x','c','h','a','n','g','e',')',0 };
 
             RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName, sizeof(szRSAName));
+            RegSetValueExW(key, szTypeName, 0, REG_SZ, (LPBYTE)szRSATypeName, sizeof(szRSATypeName));
         }
         RegCloseKey(key);
     }
