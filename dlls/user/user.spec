@@ -26,8 +26,8 @@ owner	user32
 22  pascal16 SetFocus(word) SetFocus16
 23  pascal16 GetFocus() GetFocus16
 24  pascal16 RemoveProp(word ptr) RemoveProp16
-25  pascal16 GetProp(word ptr) GetProp16
-26  pascal16 SetProp(word ptr word) SetProp16
+25  pascal16 GetProp(word str) GetProp16
+26  pascal16 SetProp(word str word) SetProp16
 27  pascal16 EnumProps(word segptr) THUNK_EnumProps16
 28  pascal16 ClientToScreen(word ptr) ClientToScreen16
 29  pascal16 ScreenToClient(word ptr) ScreenToClient16
