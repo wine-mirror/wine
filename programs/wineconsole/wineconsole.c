@@ -420,7 +420,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
 /******************************************************************
  *		WINECON_Spawn
  *
- * Spawn the child processus when invoked with wineconsole foo bar
+ * Spawn the child process when invoked with wineconsole foo bar
  */
 static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
 {
@@ -495,19 +495,42 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     /* case of wineconsole <evt>, signal process that created us that we're up and running */
     if (WINECON_HasEvent(lpCmdLine, &evt))
     {
-        if (!(data = WINECON_Init(hInst, 0))) return 0;
+        if (!(data = WINECON_Init(hInst, 0)))
+	{
+	    WINE_ERR("failed to init1 wineconsole.\n");
+	    return 0;
+	}
 	ret = SetEvent((HANDLE)evt);
+	if (!ret)
+	{
+	    WINE_ERR("SetEvent failed.\n");
+	    goto cleanup;
+	}
     }
     else
     {
-        if (!(data = WINECON_Init(hInst, (void*)GetCurrentProcessId()))) return 0;
+        if (!(data = WINECON_Init(hInst, (void*)GetCurrentProcessId())))
+	{
+	    WINE_ERR("failed to init2 wineconsole.\n");
+	    return 0;
+	}
 	ret = WINECON_Spawn(data, lpCmdLine);
+        if (!ret)
+	{
+	    WINE_MESSAGE("wineconsole: spawning client program failed. Invalid/missing command line arguments ?\n");
+	    goto cleanup;
+	}
     }
 
-    if (ret && WCUSER_InitBackend(data))
+    if (WCUSER_InitBackend(data))
     {
+	WINE_TRACE("calling MainLoop.\n");
 	ret = data->fnMainLoop(data);
     }
+    else
+	WINE_ERR("WCUSER_InitBackend failed.\n");
+
+cleanup:
     WINECON_Delete(data);
 
     return ret;
