@@ -1583,15 +1583,34 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
             *plparam = (LPARAM)SEGPTR_GET(wp);
         }
         return 1;
+    case WM_GETDLGCODE:
+         if (*plparam) {
+            LPMSG32 msg32 = (LPMSG32) *plparam;
+            LPMSG16 msg16 = (LPMSG16) SEGPTR_NEW( MSG16 );
+
+            if (!msg16) return -1;
+            msg16->hwnd = msg32->hwnd;
+            msg16->lParam = msg32->lParam;
+            msg16->time = msg32->time;
+            CONV_POINT32TO16(&msg32->pt,&msg16->pt);
+            /* this is right, right? */
+            if (WINPROC_MapMsg32ATo16(msg32->hwnd,msg32->message,msg32->wParam,
+                         &msg16->message,&msg16->wParam, &msg16->lParam)<0) {
+                SEGPTR_FREE( msg16 );
+                return -1;
+            }
+            *plparam = (LPARAM)SEGPTR_GET(msg16);
+            return 1;
+        }
+        return 0;
+
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-    case WM_GETDLGCODE:
         FIXME( msg, "message %04x needs translation\n", msg32 );
         return -1;
-
     default:  /* No translation needed */
         return 0;
     }
@@ -1736,6 +1755,19 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
     case WM_NOTIFY:
 	UnMapLS(p16->lParam);
 	break;
+    case WM_GETDLGCODE:
+        if (p16->lParam)
+        {
+            LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(p16->lParam);
+            MSGPARAM16 msgp16;
+            msgp16.wParam=msg16->wParam;
+            msgp16.lParam=msg16->lParam;
+            WINPROC_UnmapMsg32ATo16(((LPMSG32)lParam)->message,
+                    ((LPMSG32)lParam)->wParam, ((LPMSG32)lParam)->lParam,
+                    &msgp16 );
+            SEGPTR_FREE(msg16);
+        }
+        break;
     }
 }
 
