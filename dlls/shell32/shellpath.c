@@ -720,7 +720,7 @@ LPCVOID WINAPI PathGetExtensionAW(LPCVOID path,DWORD y,DWORD z)
  *
  */
 HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
-{	FIXME(shell,"%s %s stub\n",debugstr_w(u),debugstr_w(v) );
+{	FIXME(shell,"%p %p stub\n",u,v);
 	return 0;
 }
 
