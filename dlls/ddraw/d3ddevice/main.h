@@ -206,9 +206,9 @@ Main_IDirect3DDeviceImpl_7_GetTexture(LPDIRECT3DDEVICE7 iface,
                                       LPDIRECTDRAWSURFACE7* lpTexture);
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_SetTexture(LPDIRECT3DDEVICE7 iface,
-                                      DWORD dwStage,
-                                      LPDIRECTDRAWSURFACE7 lpTexture);
+Main_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
+					 DWORD dwStage,
+					 LPDIRECTDRAWSURFACE7 lpTexture);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState(LPDIRECT3DDEVICE7 iface,
@@ -364,11 +364,6 @@ HRESULT WINAPI
 Main_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
                                       DWORD dwStage,
                                       LPDIRECT3DTEXTURE2* lplpTexture2);
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
-                                      DWORD dwStage,
-                                      LPDIRECT3DTEXTURE2 lpTexture2);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_2_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
@@ -757,3 +752,8 @@ HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_1_EnumTextureFormats(LPDIRECT3DDEVICE iface,
                                                LPD3DENUMTEXTUREFORMATSCALLBACK lpD3DEnumTextureProc,
                                                LPVOID lpArg);
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
+				       DWORD dwStage,
+				       LPDIRECT3DTEXTURE2 lpTexture2);

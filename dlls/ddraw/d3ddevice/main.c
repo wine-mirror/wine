@@ -453,9 +453,9 @@ Main_IDirect3DDeviceImpl_7_GetTexture(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_SetTexture(LPDIRECT3DDEVICE7 iface,
-                                      DWORD dwStage,
-                                      LPDIRECTDRAWSURFACE7 lpTexture)
+Main_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
+					 DWORD dwStage,
+					 LPDIRECTDRAWSURFACE7 lpTexture)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwStage, lpTexture);
@@ -823,16 +823,6 @@ Main_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwStage, lplpTexture2);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
-                                      DWORD dwStage,
-                                      LPDIRECT3DTEXTURE2 lpTexture2)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwStage, lpTexture2);
     return DD_OK;
 }
 
@@ -1727,4 +1717,15 @@ Thunk_IDirect3DDeviceImpl_1_EnumTextureFormats(LPDIRECT3DDEVICE iface,
     return IDirect3DDevice2_EnumTextureFormats(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice2, iface),
                                                lpD3DEnumTextureProc,
                                                lpArg);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
+				       DWORD dwStage,
+				       LPDIRECT3DTEXTURE2 lpTexture2)
+{
+    TRACE("(%p)->(%ld,%p) thunking to IDirect3DDevice7 interface.\n", iface, dwStage, lpTexture2);
+    return IDirect3DDevice7_SetTexture(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
+				       dwStage,
+				       COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture2, IDirectDrawSurface7, lpTexture2));
 }

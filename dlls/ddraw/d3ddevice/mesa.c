@@ -1282,11 +1282,11 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT WINAPI
-GL_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
-				    DWORD dwStage,
-				    LPDIRECT3DTEXTURE2 lpTexture2)
+GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
+				       DWORD dwStage,
+				       LPDIRECTDRAWSURFACE7 lpTexture2)
 {
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture2);
     
@@ -1301,11 +1301,11 @@ GL_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
 	glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
     } else {
-        IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, lpTexture2);
+        IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpTexture2);
 	IDirect3DTextureGLImpl *tex_glimpl = (IDirect3DTextureGLImpl *) tex_impl->tex_private;
 	
 	This->current_texture[dwStage] = tex_impl;
-	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7));
+	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
 
 	TRACE(" activating OpenGL texture %d.\n", tex_glimpl->tex_name);
 	
@@ -1375,7 +1375,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility,
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_7_GetTexture,
-    XCAST(SetTexture) Main_IDirect3DDeviceImpl_7_SetTexture,
+    XCAST(SetTexture) GL_IDirect3DDeviceImpl_7_3T_SetTexture,
     XCAST(GetTextureStageState) Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState,
     XCAST(SetTextureStageState) GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState,
     XCAST(ValidateDevice) Main_IDirect3DDeviceImpl_7_3T_ValidateDevice,
@@ -1443,7 +1443,7 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
     XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_3_GetTexture,
-    XCAST(SetTexture) GL_IDirect3DDeviceImpl_3_SetTexture,
+    XCAST(SetTexture) Thunk_IDirect3DDeviceImpl_3_SetTexture,
     XCAST(GetTextureStageState) Thunk_IDirect3DDeviceImpl_3_GetTextureStageState,
     XCAST(SetTextureStageState) Thunk_IDirect3DDeviceImpl_3_SetTextureStageState,
     XCAST(ValidateDevice) Thunk_IDirect3DDeviceImpl_3_ValidateDevice,
