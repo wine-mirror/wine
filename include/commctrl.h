@@ -2884,8 +2884,10 @@ typedef struct tagNMLVCUSTOMDRAW
     (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \
     (INT)SendMessageA((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
-#define ListView_GetItemRect(hwnd,i,prc) \
-    (INT)SendMessageA((hwnd),LVM_GETITEMRECT,(WPARAM)(INT)(i),(LPARAM)(LPRECT)(prc))
+#define ListView_GetItemRect(hwnd,i,prc,code) \
+	(BOOL)SendMessageA((hwnd), LVM_GETITEMRECT, (WPARAM)(int)(i), \
+	((prc) ? (((RECT*)(prc))->left = (code),(LPARAM)(RECT \
+	*)(prc)) : (LPARAM)(RECT*)NULL))
 #define ListView_SetItemA(hwnd,pitem) \
     (INT)SendMessageA((hwnd),LVM_SETITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
 #define ListView_SetItemW(hwnd,pitem) \

@@ -5348,6 +5348,15 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem,
  * [I] HWND : window handle
  * [I] INT : item index
  * [IO] LPRECT : bounding rectangle coordinates
+ *     lprc->left specifies the portion of the item for which the bounding
+ *     rectangle will be retrieved.
+ *
+ *     LVIR_BOUNDS Returns the bounding rectangle of the entire item,
+ *        including the icon and label.
+ *     LVIR_ICON Returns the bounding rectangle of the icon or small icon.
+ *     LVIR_LABEL Returns the bounding rectangle of the item text.
+ *     LVIR_SELECTBOUNDS Returns the union of the LVIR_ICON and LVIR_LABEL
+ *	rectangles, but excludes columns in report view.
  * 
  * RETURN:
  *   SUCCESS : TRUE
@@ -7515,7 +7524,7 @@ static LRESULT LISTVIEW_Update(HWND hwnd, INT nItem)
     {
       /* get item bounding rectangle */
       rc.left = LVIR_BOUNDS;
-      ListView_GetItemRect(hwnd, nItem, &rc);
+      ListView_GetItemRect(hwnd, nItem, &rc, rc.left);
       InvalidateRect(hwnd, &rc, TRUE);
     }
   }
