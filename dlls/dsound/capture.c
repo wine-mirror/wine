@@ -320,18 +320,14 @@ DSOUND_capture_callback(
 	msg == MM_WIM_DATA ? "MM_WIM_DATA" : "UNKNOWN",dwUser,dw1,dw2,GetTickCount());
 
     if (msg == MM_WIM_DATA) {
+        LPWAVEHDR pHdr = (LPWAVEHDR)dw1;
     	EnterCriticalSection( &(This->lock) );
 	TRACE("DirectSoundCapture msg=MM_WIM_DATA, old This->state=%s, old This->index=%d\n",
 	    captureStateString[This->state],This->index);
 	if (This->state != STATE_STOPPED) {
 	    int index = This->index;
 	    if (This->state == STATE_STARTING) { 
-		MMTIME mtime;
-		mtime.wType = TIME_BYTES;
-		waveInGetPosition(This->hwi, &mtime, sizeof(mtime));
-		TRACE("mtime.u.cb=%ld,This->buflen=%ld\n", mtime.u.cb, This->buflen);
-		mtime.u.cb = mtime.u.cb % This->buflen;
-		This->read_position = mtime.u.cb;
+                This->read_position = pHdr->dwBytesRecorded;
 		This->state = STATE_CAPTURING;
 	    }
 	    waveInUnprepareHeader(hwi,&(This->pwave[This->index]),sizeof(WAVEHDR));
@@ -1376,6 +1372,7 @@ IDirectSoundCaptureBufferImpl_Start(
                             This->notifies[c].dwOffset - 
                             This->notifies[c-1].dwOffset;
                     }
+                    ipDSC->pwave[c].dwBytesRecorded = 0;
                     ipDSC->pwave[c].dwUser = (DWORD)ipDSC;
                     ipDSC->pwave[c].dwFlags = 0;
                     ipDSC->pwave[c].dwLoops = 0;
@@ -1411,6 +1408,7 @@ IDirectSoundCaptureBufferImpl_Start(
 
                 ipDSC->pwave[0].lpData = ipDSC->buffer;
                 ipDSC->pwave[0].dwBufferLength = ipDSC->buflen; 
+                ipDSC->pwave[0].dwBytesRecorded = 0;
                 ipDSC->pwave[0].dwUser = (DWORD)ipDSC;
                 ipDSC->pwave[0].dwFlags = 0;
                 ipDSC->pwave[0].dwLoops = 0;
