@@ -306,12 +306,11 @@ inline static BOOL is_mouse_message( UINT message )
             (message >= WM_MOUSEFIRST && message <= WM_MOUSELAST));
 }
 
-/* check whether message matches the specified filter */
-inline static BOOL check_message_filter( const MSG *msg, HWND hwnd, UINT first, UINT last )
+/* check whether message matches the specified hwnd filter */
+inline static BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
 {
-    if (hwnd && msg->hwnd != hwnd && !IsChild( hwnd, msg->hwnd )) return FALSE;
-    if (first || last) return (msg->message >= first && msg->message <= last);
-    return TRUE;
+    if (!hwnd_filter) return TRUE;
+    return (msg->hwnd == hwnd_filter || IsChild( hwnd_filter, msg->hwnd ));
 }
 
 
@@ -1562,14 +1561,35 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
 
 
 /***********************************************************************
- *          process_raw_keyboard_message
+ *          accept_hardware_message
+ *
+ * Tell the server we have passed the message to the app
+ * (even though we may end up dropping it later on)
+ */
+static void accept_hardware_message( BOOL remove )
+{
+    SERVER_START_REQ( reply_message )
+    {
+        req->type   = MSG_HARDWARE;
+        req->result = 0;
+        req->remove = remove;
+        if (wine_server_call( req ))
+            FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
+    }
+    SERVER_END_REQ;
+}
+
+
+/***********************************************************************
+ *          process_keyboard_message
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_raw_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UINT last )
+static BOOL process_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
     EVENTMSG event;
 
+    /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
     event.hwnd    = msg->hwnd;
     event.time    = msg->time;
@@ -1577,17 +1597,11 @@ static BOOL process_raw_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first
     event.paramH  = msg->lParam & 0x7FFF;
     if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
     HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
-    return check_message_filter( msg, hwnd_filter, first, last );
-}
 
+    /* check message filters */
+    if (msg->message < first || msg->message > last) return FALSE;
+    if (!check_hwnd_filter( msg, hwnd_filter )) return FALSE;
 
-/***********************************************************************
- *          process_cooked_keyboard_message
- *
- * returns TRUE if the contents of 'msg' should be passed to the application
- */
-static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
-{
     if (remove)
     {
         /* Handle F1 key by sending out WM_HELP message */
@@ -1612,17 +1626,21 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
     {
         /* skip this message */
         HOOK_CallHooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
+        accept_hardware_message( TRUE );
         return FALSE;
     }
+    accept_hardware_message( remove );
     return TRUE;
 }
 
 
 /***********************************************************************
- *          process_raw_mouse_message
+ *          process_mouse_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
-                                       UINT last, BOOL remove )
+static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
+                                   UINT first, UINT last, BOOL remove )
 {
     static MSG clk_msg;
 
@@ -1631,6 +1649,8 @@ static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
     INT hittest;
     EVENTMSG event;
     GUITHREADINFO info;
+    MOUSEHOOKSTRUCT hook;
+    BOOL eatMsg;
     HWND hWndScope = msg->hwnd;
 
     /* find the window to dispatch this mouse message to */
@@ -1646,6 +1666,7 @@ static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
             msg->hwnd = GetDesktopWindow();
     }
 
+    /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
     event.time    = msg->time;
     event.hwnd    = msg->hwnd;
@@ -1653,10 +1674,7 @@ static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
     event.paramH  = msg->pt.y;
     HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
 
-    if (hwnd_filter)
-    {
-        if (msg->hwnd != hwnd_filter && !IsChild( hwnd_filter, msg->hwnd )) return FALSE;
-    }
+    if (!check_hwnd_filter( msg, hwnd_filter )) return FALSE;
 
     pt = msg->pt;
     message = msg->message;
@@ -1684,6 +1702,8 @@ static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
         (msg->message == WM_RBUTTONDOWN) ||
         (msg->message == WM_MBUTTONDOWN))
     {
+        BOOL update = remove;
+
         /* translate double clicks -
 	 * note that ...MOUSEMOVEs can slip in between
 	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
@@ -1699,86 +1719,68 @@ static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {
                message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
-               msg->message = 0;  /* to clear the double click conditions */
+               clk_msg.message = 0;  /* clear the double click conditions */
+               update = FALSE;
            }
         }
-        if (first || last)
-        {
-            if (message < first || message > last) remove = FALSE;
-        }
+        if (message < first || message > last) return FALSE;
         /* update static double click conditions */
-        if (remove) clk_msg = *msg;
+        if (update) clk_msg = *msg;
     }
-
-    msg->message = message;
-    if (first || last) return (message >= first && message <= last);
-    return TRUE;
-}
-
-
-/***********************************************************************
- *          process_cooked_mouse_message
- *
- * returns TRUE if the contents of 'msg' should be passed to the application
- */
-static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
-{
-    MOUSEHOOKSTRUCT hook;
-    INT hittest = HTCLIENT;
-    UINT raw_message = msg->message;
-    BOOL eatMsg;
-
-    if (msg->message >= WM_NCMOUSEFIRST && msg->message <= WM_NCMOUSELAST)
+    else
     {
-        raw_message += WM_MOUSEFIRST - WM_NCMOUSEFIRST;
-        hittest = msg->wParam;
+        if (message < first || message > last) return FALSE;
     }
-    if (raw_message == WM_LBUTTONDBLCLK ||
-        raw_message == WM_RBUTTONDBLCLK ||
-        raw_message == WM_MBUTTONDBLCLK)
-    {
-        raw_message += WM_LBUTTONDOWN - WM_LBUTTONDBLCLK;
-    }
+
+    /* message is accepted now (but may still get dropped) */
 
     hook.pt           = msg->pt;
     hook.hwnd         = msg->hwnd;
     hook.wHitTestCode = hittest;
     hook.dwExtraInfo  = extra_info;
     if (HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                        msg->message, (LPARAM)&hook, TRUE ))
+                        message, (LPARAM)&hook, TRUE ))
     {
         hook.pt           = msg->pt;
         hook.hwnd         = msg->hwnd;
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
-        HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, msg->message, (LPARAM)&hook, TRUE );
+        HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, TRUE );
+        accept_hardware_message( TRUE );
         return FALSE;
     }
 
     if ((hittest == HTERROR) || (hittest == HTNOWHERE))
     {
         SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
-                      MAKELONG( hittest, raw_message ));
+                      MAKELONG( hittest, msg->message ));
+        accept_hardware_message( TRUE );
         return FALSE;
     }
 
-    if (!remove || GetCapture()) return TRUE;
+    accept_hardware_message( remove );
+
+    if (!remove || info.hwndCapture)
+    {
+        msg->message = message;
+        return TRUE;
+    }
 
     eatMsg = FALSE;
 
-    if ((raw_message == WM_LBUTTONDOWN) ||
-        (raw_message == WM_RBUTTONDOWN) ||
-        (raw_message == WM_MBUTTONDOWN))
+    if ((msg->message == WM_LBUTTONDOWN) ||
+        (msg->message == WM_RBUTTONDOWN) ||
+        (msg->message == WM_MBUTTONDOWN))
     {
         /* Send the WM_PARENTNOTIFY,
          * note that even for double/nonclient clicks
          * notification message is still WM_L/M/RBUTTONDOWN.
          */
-        send_parent_notify( msg->hwnd, raw_message, 0, msg->pt );
+        send_parent_notify( msg->hwnd, msg->message, 0, msg->pt );
 
         /* Activate the window if needed */
 
-        if (msg->hwnd != GetActiveWindow())
+        if (msg->hwnd != info.hwndActive)
         {
             HWND hwndTop = msg->hwnd;
             while (hwndTop)
@@ -1790,7 +1792,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
             if (hwndTop && hwndTop != GetDesktopWindow())
             {
                 LONG ret = SendMessageW( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
-                                         MAKELONG( hittest, raw_message ) );
+                                         MAKELONG( hittest, msg->message ) );
                 switch(ret)
                 {
                 case MA_NOACTIVATEANDEAT:
@@ -1817,9 +1819,9 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
 
     /* Windows sends the normal mouse message as the message parameter
        in the WM_SETCURSOR message even if it's non-client mouse message */
-    SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
-                  MAKELONG( hittest, raw_message ));
+    SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd, MAKELONG( hittest, msg->message ));
 
+    msg->message = message;
     return !eatMsg;
 }
 
@@ -1829,40 +1831,17 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
  *
  * Process a hardware message; return TRUE if message should be passed on to the app
  */
-static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd,
+static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
                                       UINT first, UINT last, BOOL remove )
 {
-    BOOL ret;
-
     if (is_keyboard_message( msg->message ))
-    {
-        if (!process_raw_keyboard_message( msg, hwnd, first, last )) return FALSE;
-        ret = process_cooked_keyboard_message( msg, remove );
-    }
-    else if (is_mouse_message( msg->message ))
-    {
-        if (!process_raw_mouse_message( msg, hwnd, first, last, remove )) return FALSE;
-        ret = process_cooked_mouse_message( msg, extra_info, remove );
-    }
-    else
-    {
-        ERR( "unknown message type %x\n", msg->message );
-        return FALSE;
-    }
+        return process_keyboard_message( msg, hwnd_filter, first, last, remove );
 
-    /* tell the server we have passed it to the app
-     * (even though we may end up dropping it later on)
-     */
-    SERVER_START_REQ( reply_message )
-    {
-        req->type   = MSG_HARDWARE;
-        req->result = 0;
-        req->remove = remove || !ret;
-        if (wine_server_call( req ))
-            FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (is_mouse_message( msg->message ))
+        return process_mouse_message( msg, extra_info, hwnd_filter, first, last, remove );
+
+    ERR( "unknown message type %x\n", msg->message );
+    return FALSE;
 }
 
 
