@@ -785,7 +785,8 @@ static HSZ WDML_GetSecondaryHSZValue(WDML_INSTANCE* thisInstance, HSZ hsz)
 				wSecondaryString,
 				MAX_BUFFER_LEN, CP_WINUNICODE))
 	    {
-		wsprintfW(wUniqueNum,"(%ld)",
+                static const WCHAR format[] = {'(','%','l','d',')',0};
+		wsprintfW(wUniqueNum, format,
 			  (DWORD)thisInstance->instanceID);
 		lstrcatW(wSecondaryString, wUniqueNum);
 		
