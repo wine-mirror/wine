@@ -115,10 +115,6 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define EM_GETLANGOPTIONS	(WM_USER + 121)
 #define EM_GETIMECOMPMODE	(WM_USER + 122)
 
-#define EM_SETLANGOPTIONS	(WM_USER + 120)
-#define EM_GETLANGOPTIONS	(WM_USER + 121)
-#define EM_GETIMECOMPMODE	(WM_USER + 122)
-
 #define EM_FINDTEXTW		(WM_USER + 123)
 #define EM_FINDTEXTEXW		(WM_USER + 124)
 
