@@ -767,10 +767,11 @@ void write_com_interface(type_t *iface)
   fprintf(header, "};\n");
   fprintf(header, "struct %sVtbl {\n", iface->name);
   indentation++;
-  fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
+  fprintf(header, "    BEGIN_INTERFACE\n");
   fprintf(header, "\n");
   write_c_method_def(iface);
   indentation--;
+  fprintf(header, "    END_INTERFACE\n");
   fprintf(header, "};\n");
   fprintf(header, "\n");
   fprintf(header, "#ifdef COBJMACROS\n");

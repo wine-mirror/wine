@@ -101,7 +101,7 @@ struct IEnumPStoreItems {
     const IEnumPStoreItemsVtbl* lpVtbl;
 };
 struct IEnumPStoreItemsVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -133,6 +133,7 @@ struct IEnumPStoreItemsVtbl {
         IEnumPStoreItems* This,
         DWORD celt);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -232,7 +233,7 @@ struct IEnumPStoreTypes {
     const IEnumPStoreTypesVtbl* lpVtbl;
 };
 struct IEnumPStoreTypesVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -264,6 +265,7 @@ struct IEnumPStoreTypesVtbl {
         IEnumPStoreTypes* This,
         DWORD celt);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -481,7 +483,7 @@ struct IPStore {
     const IPStoreVtbl* lpVtbl;
 };
 struct IPStoreVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -647,6 +649,7 @@ struct IPStoreVtbl {
         DWORD dwFlags,
         IEnumPStoreItems** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

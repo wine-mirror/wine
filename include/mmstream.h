@@ -125,7 +125,7 @@ struct IMultiMediaStream {
     const IMultiMediaStreamVtbl* lpVtbl;
 };
 struct IMultiMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -179,6 +179,7 @@ struct IMultiMediaStreamVtbl {
         IMultiMediaStream* This,
         HANDLE* phEOS);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -335,7 +336,7 @@ struct IMediaStream {
     const IMediaStreamVtbl* lpVtbl;
 };
 struct IMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -379,6 +380,7 @@ struct IMediaStreamVtbl {
         IMediaStream* This,
         DWORD dwFlags);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -506,7 +508,7 @@ struct IStreamSample {
     const IStreamSampleVtbl* lpVtbl;
 };
 struct IStreamSampleVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -548,6 +550,7 @@ struct IStreamSampleVtbl {
         DWORD dwFlags,
         DWORD dwMilliseconds);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

@@ -106,7 +106,7 @@ struct IDispatchEx {
     const IDispatchExVtbl* lpVtbl;
 };
 struct IDispatchExVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -197,6 +197,7 @@ struct IDispatchExVtbl {
         IDispatchEx* This,
         IUnknown** ppunk);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -390,7 +391,7 @@ struct IDispError {
     const IDispErrorVtbl* lpVtbl;
 };
 struct IDispErrorVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -431,6 +432,7 @@ struct IDispErrorVtbl {
         IDispError* This,
         BSTR* pbstrDescription);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -544,7 +546,7 @@ struct IVariantChangeType {
     const IVariantChangeTypeVtbl* lpVtbl;
 };
 struct IVariantChangeTypeVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -566,6 +568,7 @@ struct IVariantChangeTypeVtbl {
         LCID lcid,
         VARTYPE vtNew);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -627,7 +630,7 @@ struct IObjectIdentity {
     const IObjectIdentityVtbl* lpVtbl;
 };
 struct IObjectIdentityVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -646,6 +649,7 @@ struct IObjectIdentityVtbl {
         IObjectIdentity* This,
         IUnknown* punk);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

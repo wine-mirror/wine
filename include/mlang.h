@@ -58,7 +58,7 @@ struct IMLangCodePages {
     const IMLangCodePagesVtbl* lpVtbl;
 };
 struct IMLangCodePagesVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -97,6 +97,7 @@ struct IMLangCodePagesVtbl {
         UINT uDefaultCodePage,
         UINT* puCodePage);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -206,7 +207,7 @@ struct IMLangFontLink {
     const IMLangFontLinkVtbl* lpVtbl;
 };
 struct IMLangFontLinkVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -266,6 +267,7 @@ struct IMLangFontLinkVtbl {
     HRESULT (STDMETHODCALLTYPE *ResetFontMapping)(
         IMLangFontLink* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -454,7 +456,7 @@ struct IEnumScript {
     const IEnumScriptVtbl* lpVtbl;
 };
 struct IEnumScriptVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -486,6 +488,7 @@ struct IEnumScriptVtbl {
         IEnumScript* This,
         ULONG celt);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -624,7 +627,7 @@ struct IEnumCodePage {
     const IEnumCodePageVtbl* lpVtbl;
 };
 struct IEnumCodePageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -656,6 +659,7 @@ struct IEnumCodePageVtbl {
         IEnumCodePage* This,
         ULONG celt);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -773,7 +777,7 @@ struct IMLangConvertCharset {
     const IMLangConvertCharsetVtbl* lpVtbl;
 };
 struct IMLangConvertCharsetVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -827,6 +831,7 @@ struct IMLangConvertCharsetVtbl {
         CHAR* pDstStr,
         UINT* pcDstSize);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -972,7 +977,7 @@ struct IEnumRfc1766 {
     const IEnumRfc1766Vtbl* lpVtbl;
 };
 struct IEnumRfc1766Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1004,6 +1009,7 @@ struct IEnumRfc1766Vtbl {
         IEnumRfc1766* This,
         ULONG celt);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1161,7 +1167,7 @@ struct IMultiLanguage {
     const IMultiLanguageVtbl* lpVtbl;
 };
 struct IMultiLanguageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1262,6 +1268,7 @@ struct IMultiLanguageVtbl {
         DWORD dwProperty,
         IMLangConvertCharset** ppMLangConvertCharset);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1638,7 +1645,7 @@ struct IMultiLanguage2 {
     const IMultiLanguage2Vtbl* lpVtbl;
 };
 struct IMultiLanguage2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1828,6 +1835,7 @@ struct IMultiLanguage2Vtbl {
         HWND hwnd,
         DWORD dwfIODControl);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

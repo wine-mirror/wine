@@ -122,7 +122,7 @@ struct IAMMultiMediaStream {
     const IAMMultiMediaStreamVtbl* lpVtbl;
 };
 struct IAMMultiMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -213,6 +213,7 @@ struct IAMMultiMediaStreamVtbl {
         IAMMultiMediaStream* This,
         DWORD dwFlags);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -369,7 +370,7 @@ struct IAMMediaStream {
     const IAMMediaStreamVtbl* lpVtbl;
 };
 struct IAMMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -437,6 +438,7 @@ struct IAMMediaStreamVtbl {
         IAMMediaStream* This,
         IFilterGraph* pFilterGraph);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -573,7 +575,7 @@ struct IMediaStreamFilter {
     const IMediaStreamFilterVtbl* lpVtbl;
 };
 struct IMediaStreamFilterVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -677,6 +679,7 @@ struct IMediaStreamFilterVtbl {
     HRESULT (STDMETHODCALLTYPE *EndOfStream)(
         IMediaStreamFilter* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -846,7 +849,7 @@ struct IDirectDrawMediaSampleAllocator {
     const IDirectDrawMediaSampleAllocatorVtbl* lpVtbl;
 };
 struct IDirectDrawMediaSampleAllocatorVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -865,6 +868,7 @@ struct IDirectDrawMediaSampleAllocatorVtbl {
         IDirectDrawMediaSampleAllocator* This,
         IDirectDraw** ppDirectDraw);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -927,7 +931,7 @@ struct IDirectDrawMediaSample {
     const IDirectDrawMediaSampleVtbl* lpVtbl;
 };
 struct IDirectDrawMediaSampleVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -950,6 +954,7 @@ struct IDirectDrawMediaSampleVtbl {
     HRESULT (STDMETHODCALLTYPE *LockMediaSamplePointer)(
         IDirectDrawMediaSample* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1031,7 +1036,7 @@ struct IAMMediaTypeStream {
     const IAMMediaTypeStreamVtbl* lpVtbl;
 };
 struct IAMMediaTypeStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1102,6 +1107,7 @@ struct IAMMediaTypeStreamVtbl {
         IAMMediaTypeStream* This,
         ALLOCATOR_PROPERTIES* pProps);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1268,7 +1274,7 @@ struct IAMMediaTypeSample {
     const IAMMediaTypeSampleVtbl* lpVtbl;
 };
 struct IAMMediaTypeSampleVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1379,6 +1385,7 @@ struct IAMMediaTypeSampleVtbl {
         LONGLONG* pTimeStart,
         LONGLONG* pTimeEnd);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

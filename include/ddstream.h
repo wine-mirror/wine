@@ -87,7 +87,7 @@ struct IDirectDrawMediaStream {
     const IDirectDrawMediaStreamVtbl* lpVtbl;
 };
 struct IDirectDrawMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -163,6 +163,7 @@ struct IDirectDrawMediaStreamVtbl {
         IDirectDrawMediaStream* This,
         STREAM_TIME* pFrameTime);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -291,7 +292,7 @@ struct IDirectDrawStreamSample {
     const IDirectDrawStreamSampleVtbl* lpVtbl;
 };
 struct IDirectDrawStreamSampleVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -343,6 +344,7 @@ struct IDirectDrawStreamSampleVtbl {
         IDirectDrawStreamSample* This,
         const RECT* pRect);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

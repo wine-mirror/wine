@@ -58,7 +58,7 @@ struct IEnumGUID {
     const IEnumGUIDVtbl* lpVtbl;
 };
 struct IEnumGUIDVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -90,6 +90,7 @@ struct IEnumGUIDVtbl {
         IEnumGUID* This,
         IEnumGUID** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -198,7 +199,7 @@ struct IEnumCATEGORYINFO {
     const IEnumCATEGORYINFOVtbl* lpVtbl;
 };
 struct IEnumCATEGORYINFOVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -230,6 +231,7 @@ struct IEnumCATEGORYINFOVtbl {
         IEnumCATEGORYINFO* This,
         IEnumCATEGORYINFO** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -349,7 +351,7 @@ struct ICatInformation {
     const ICatInformationVtbl* lpVtbl;
 };
 struct ICatInformationVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -401,6 +403,7 @@ struct ICatInformationVtbl {
         REFCLSID rclsid,
         IEnumGUID** ppenumCatid);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -577,7 +580,7 @@ struct ICatRegister {
     const ICatRegisterVtbl* lpVtbl;
 };
 struct ICatRegisterVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -626,6 +629,7 @@ struct ICatRegisterVtbl {
         ULONG cCategories,
         CATID rgcatid[]);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

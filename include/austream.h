@@ -61,7 +61,7 @@ struct IAudioMediaStream {
     const IAudioMediaStreamVtbl* lpVtbl;
 };
 struct IAudioMediaStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -120,6 +120,7 @@ struct IAudioMediaStreamVtbl {
         DWORD dwFlags,
         IAudioStreamSample** ppSample);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -209,7 +210,7 @@ struct IAudioStreamSample {
     const IAudioStreamSampleVtbl* lpVtbl;
 };
 struct IAudioStreamSampleVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -256,6 +257,7 @@ struct IAudioStreamSampleVtbl {
         IAudioStreamSample* This,
         IAudioData** ppAudio);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -331,7 +333,7 @@ struct IMemoryData {
     const IMemoryDataVtbl* lpVtbl;
 };
 struct IMemoryDataVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -362,6 +364,7 @@ struct IMemoryDataVtbl {
         IMemoryData* This,
         DWORD cbDataValid);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -442,7 +445,7 @@ struct IAudioData {
     const IAudioDataVtbl* lpVtbl;
 };
 struct IAudioDataVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -482,6 +485,7 @@ struct IAudioDataVtbl {
         IAudioData* This,
         const WAVEFORMATEX* lpWaveFormat);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

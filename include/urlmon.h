@@ -55,7 +55,7 @@ struct IBinding {
     const IBindingVtbl* lpVtbl;
 };
 struct IBindingVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -94,6 +94,7 @@ struct IBindingVtbl {
         LPOLESTR* pszResult,
         DWORD* pdwReserved);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -380,7 +381,7 @@ struct IBindStatusCallback {
     const IBindStatusCallbackVtbl* lpVtbl;
 };
 struct IBindStatusCallbackVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -437,6 +438,7 @@ struct IBindStatusCallbackVtbl {
         REFIID riid,
         IUnknown* punk);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -618,7 +620,7 @@ struct IBindHost {
     const IBindHostVtbl* lpVtbl;
 };
 struct IBindHostVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -656,6 +658,7 @@ struct IBindHostVtbl {
         REFIID riid,
         void** ppvObj);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -777,7 +780,7 @@ struct IWinInetInfo {
     const IWinInetInfoVtbl* lpVtbl;
 };
 struct IWinInetInfoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -798,6 +801,7 @@ struct IWinInetInfoVtbl {
         LPVOID pBuffer,
         DWORD* pcbBuf);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -874,7 +878,7 @@ struct IWinInetHttpInfo {
     const IWinInetHttpInfoVtbl* lpVtbl;
 };
 struct IWinInetHttpInfoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -904,6 +908,7 @@ struct IWinInetHttpInfoVtbl {
         DWORD* pdwFlags,
         DWORD* pdwReserved);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1007,7 +1012,7 @@ struct IPersistMoniker {
     const IPersistMonikerVtbl* lpVtbl;
 };
 struct IPersistMonikerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1051,6 +1056,7 @@ struct IPersistMonikerVtbl {
         IPersistMoniker* This,
         IMoniker** ppimkName);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1239,7 +1245,7 @@ struct IInternetProtocolInfo {
     const IInternetProtocolInfoVtbl* lpVtbl;
 };
 struct IInternetProtocolInfoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1290,6 +1296,7 @@ struct IInternetProtocolInfoVtbl {
         DWORD* pcbBuf,
         DWORD dwReserved);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1437,7 +1444,7 @@ struct IInternetSession {
     const IInternetSessionVtbl* lpVtbl;
 };
 struct IInternetSessionVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1493,6 +1500,7 @@ struct IInternetSessionVtbl {
         DWORD dwBufferLength,
         DWORD dwReserved);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

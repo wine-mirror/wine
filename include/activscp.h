@@ -103,7 +103,7 @@ struct IActiveScriptError {
     const IActiveScriptErrorVtbl* lpVtbl;
 };
 struct IActiveScriptErrorVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -132,6 +132,7 @@ struct IActiveScriptErrorVtbl {
         IActiveScriptError* This,
         BSTR* pbstrSourceLine);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -237,7 +238,7 @@ struct IActiveScriptSite {
     const IActiveScriptSiteVtbl* lpVtbl;
 };
 struct IActiveScriptSiteVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -286,6 +287,7 @@ struct IActiveScriptSiteVtbl {
     HRESULT (STDMETHODCALLTYPE *OnLeaveScript)(
         IActiveScriptSite* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -420,7 +422,7 @@ struct IActiveScriptSiteWindow {
     const IActiveScriptSiteWindowVtbl* lpVtbl;
 };
 struct IActiveScriptSiteWindowVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -443,6 +445,7 @@ struct IActiveScriptSiteWindowVtbl {
         IActiveScriptSiteWindow* This,
         BOOL fEnable);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -511,7 +514,7 @@ struct IActiveScriptSiteInterruptPoll {
     const IActiveScriptSiteInterruptPollVtbl* lpVtbl;
 };
 struct IActiveScriptSiteInterruptPollVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -529,6 +532,7 @@ struct IActiveScriptSiteInterruptPollVtbl {
     HRESULT (STDMETHODCALLTYPE *QueryContinue)(
         IActiveScriptSiteInterruptPoll* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -632,7 +636,7 @@ struct IActiveScript {
     const IActiveScriptVtbl* lpVtbl;
 };
 struct IActiveScriptVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -708,6 +712,7 @@ struct IActiveScriptVtbl {
         IActiveScript* This,
         IActiveScript** ppscript);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -920,7 +925,7 @@ struct IActiveScriptParse {
     const IActiveScriptParseVtbl* lpVtbl;
 };
 struct IActiveScriptParseVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -964,6 +969,7 @@ struct IActiveScriptParseVtbl {
         VARIANT* pvarResult,
         EXCEPINFO* pexcepinfo);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1068,7 +1074,7 @@ struct IActiveScriptParseProcedureOld {
     const IActiveScriptParseProcedureOldVtbl* lpVtbl;
 };
 struct IActiveScriptParseProcedureOldVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1095,6 +1101,7 @@ struct IActiveScriptParseProcedureOldVtbl {
         DWORD dwFlags,
         IDispatch** ppdisp);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1170,7 +1177,7 @@ struct IActiveScriptParseProcedure {
     const IActiveScriptParseProcedureVtbl* lpVtbl;
 };
 struct IActiveScriptParseProcedureVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1198,6 +1205,7 @@ struct IActiveScriptParseProcedureVtbl {
         DWORD dwFlags,
         IDispatch** ppdisp);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1266,7 +1274,7 @@ struct IBindEventHandler {
     const IBindEventHandlerVtbl* lpVtbl;
 };
 struct IBindEventHandlerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1286,6 +1294,7 @@ struct IBindEventHandlerVtbl {
         LPCOLESTR pstrEvent,
         IDispatch* pdisp);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1355,7 +1364,7 @@ struct IActiveScriptStats {
     const IActiveScriptStatsVtbl* lpVtbl;
 };
 struct IActiveScriptStatsVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1385,6 +1394,7 @@ struct IActiveScriptStatsVtbl {
     HRESULT (STDMETHODCALLTYPE *ResetStats)(
         IActiveScriptStats* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

@@ -40,7 +40,7 @@ struct IPersistFolder {
     const IPersistFolderVtbl* lpVtbl;
 };
 struct IPersistFolderVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -64,6 +64,7 @@ struct IPersistFolderVtbl {
         IPersistFolder* This,
         LPCITEMIDLIST pidl);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -128,7 +129,7 @@ struct IPersistFolder2 {
     const IPersistFolder2Vtbl* lpVtbl;
 };
 struct IPersistFolder2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -157,6 +158,7 @@ struct IPersistFolder2Vtbl {
         IPersistFolder2* This,
         LPITEMIDLIST* ppidl);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -236,7 +238,7 @@ struct IEnumIDList {
     const IEnumIDListVtbl* lpVtbl;
 };
 struct IEnumIDListVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -268,6 +270,7 @@ struct IEnumIDListVtbl {
         IEnumIDList* This,
         IEnumIDList** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -466,7 +469,7 @@ struct IShellFolder {
     const IShellFolderVtbl* lpVtbl;
 };
 struct IShellFolderVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -551,6 +554,7 @@ struct IShellFolderVtbl {
         SHGDNF uFlags,
         LPITEMIDLIST* ppidlOut);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -748,7 +752,7 @@ struct IEnumExtraSearch {
     const IEnumExtraSearchVtbl* lpVtbl;
 };
 struct IEnumExtraSearchVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -780,6 +784,7 @@ struct IEnumExtraSearchVtbl {
         IEnumExtraSearch* This,
         IEnumExtraSearch** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -917,7 +922,7 @@ struct IShellFolder2 {
     const IShellFolder2Vtbl* lpVtbl;
 };
 struct IShellFolder2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1039,6 +1044,7 @@ struct IShellFolder2Vtbl {
         UINT iColumn,
         SHCOLUMNID* pscid);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1312,7 +1318,7 @@ struct IShellView {
     const IShellViewVtbl* lpVtbl;
 };
 struct IShellViewVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1386,6 +1392,7 @@ struct IShellViewVtbl {
         REFIID riid,
         void** ppv);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1625,7 +1632,7 @@ struct IShellBrowser {
     const IShellBrowserVtbl* lpVtbl;
 };
 struct IShellBrowserVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1714,6 +1721,7 @@ struct IShellBrowserVtbl {
         UINT nButtons,
         UINT uFlags);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1969,7 +1977,7 @@ struct IShellLinkA {
     const IShellLinkAVtbl* lpVtbl;
 };
 struct IShellLinkAVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2067,6 +2075,7 @@ struct IShellLinkAVtbl {
         IShellLinkA* This,
         LPCSTR pszFile);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2368,7 +2377,7 @@ struct IShellLinkW {
     const IShellLinkWVtbl* lpVtbl;
 };
 struct IShellLinkWVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2466,6 +2475,7 @@ struct IShellLinkWVtbl {
         IShellLinkW* This,
         LPCWSTR pszFile);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2710,7 +2720,7 @@ struct IShellExtInit {
     const IShellExtInitVtbl* lpVtbl;
 };
 struct IShellExtInitVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2731,6 +2741,7 @@ struct IShellExtInitVtbl {
         IDataObject* pdtobj,
         HKEY hkeyProgID);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2804,7 +2815,7 @@ struct IPersistFolder3 {
     const IPersistFolder3Vtbl* lpVtbl;
 };
 struct IPersistFolder3Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2844,6 +2855,7 @@ struct IPersistFolder3Vtbl {
         IPersistFolder3* This,
         PERSIST_FOLDER_TARGET_INFO* ppfti);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2949,7 +2961,7 @@ struct IExtractIconA {
     const IExtractIconAVtbl* lpVtbl;
 };
 struct IExtractIconAVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2980,6 +2992,7 @@ struct IExtractIconAVtbl {
         HICON* phiconSmall,
         UINT nIconSize);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3069,7 +3082,7 @@ struct IExtractIconW {
     const IExtractIconWVtbl* lpVtbl;
 };
 struct IExtractIconWVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3100,6 +3113,7 @@ struct IExtractIconWVtbl {
         HICON* phiconSmall,
         UINT nIconSize);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3193,7 +3207,7 @@ struct ICommDlgBrowser {
     const ICommDlgBrowserVtbl* lpVtbl;
 };
 struct ICommDlgBrowserVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3222,6 +3236,7 @@ struct ICommDlgBrowserVtbl {
         IShellView* shv,
         LPCITEMIDLIST pidl);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3316,7 +3331,7 @@ struct IDockingWindowFrame {
     const IDockingWindowFrameVtbl* lpVtbl;
 };
 struct IDockingWindowFrameVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3357,6 +3372,7 @@ struct IDockingWindowFrameVtbl {
         REFIID riid,
         LPVOID* ppvObj);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3459,7 +3475,7 @@ struct IDragSourceHelper {
     const IDragSourceHelperVtbl* lpVtbl;
 };
 struct IDragSourceHelperVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3485,6 +3501,7 @@ struct IDragSourceHelperVtbl {
         POINT* ppt,
         IDataObject* pDataObject);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3574,7 +3591,7 @@ struct IDropTargetHelper {
     const IDropTargetHelperVtbl* lpVtbl;
 };
 struct IDropTargetHelperVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3614,6 +3631,7 @@ struct IDropTargetHelperVtbl {
         IDropTargetHelper* This,
         BOOL fShow);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3816,7 +3834,7 @@ struct IContextMenu {
     const IContextMenuVtbl* lpVtbl;
 };
 struct IContextMenuVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3851,6 +3869,7 @@ struct IContextMenuVtbl {
         LPSTR pszName,
         UINT cchMax);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3941,7 +3960,7 @@ struct IContextMenu2 {
     const IContextMenu2Vtbl* lpVtbl;
 };
 struct IContextMenu2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3983,6 +4002,7 @@ struct IContextMenu2Vtbl {
         WPARAM wParam,
         LPARAM lParam);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4056,7 +4076,7 @@ struct IContextMenu3 {
     const IContextMenu3Vtbl* lpVtbl;
 };
 struct IContextMenu3Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4106,6 +4126,7 @@ struct IContextMenu3Vtbl {
         LPARAM lParam,
         LRESULT* plResult);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4180,7 +4201,7 @@ struct IShellExecuteHookA {
     const IShellExecuteHookAVtbl* lpVtbl;
 };
 struct IShellExecuteHookAVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4199,6 +4220,7 @@ struct IShellExecuteHookAVtbl {
         IShellExecuteHookA* This,
         struct _SHELLEXECUTEINFOA* pei);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4258,7 +4280,7 @@ struct IShellExecuteHookW {
     const IShellExecuteHookWVtbl* lpVtbl;
 };
 struct IShellExecuteHookWVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4277,6 +4299,7 @@ struct IShellExecuteHookWVtbl {
         IShellExecuteHookW* This,
         struct _SHELLEXECUTEINFOW* pei);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

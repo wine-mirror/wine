@@ -127,7 +127,7 @@ struct IWebBrowser {
     const IWebBrowserVtbl* lpVtbl;
 };
 struct IWebBrowserVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -270,6 +270,7 @@ struct IWebBrowserVtbl {
         IWebBrowser* This,
         VARIANT_BOOL* pBool);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -636,7 +637,7 @@ struct IWebBrowserApp {
     const IWebBrowserAppVtbl* lpVtbl;
 };
 struct IWebBrowserAppVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -862,6 +863,7 @@ struct IWebBrowserAppVtbl {
         IWebBrowserApp* This,
         VARIANT_BOOL bFullScreen);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1220,7 +1222,7 @@ struct IShellWindows {
     const IShellWindowsVtbl* lpVtbl;
 };
 struct IShellWindowsVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1325,6 +1327,7 @@ struct IShellWindowsVtbl {
         IShellWindows* This,
         VARIANT_BOOL fAttach);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

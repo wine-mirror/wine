@@ -46,7 +46,7 @@ struct IAutoComplete {
     const IAutoCompleteVtbl* lpVtbl;
 };
 struct IAutoCompleteVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -72,6 +72,7 @@ struct IAutoCompleteVtbl {
         IAutoComplete* This,
         BOOL fEnable);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -159,7 +160,7 @@ struct IAutoComplete2 {
     const IAutoComplete2Vtbl* lpVtbl;
 };
 struct IAutoComplete2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -194,6 +195,7 @@ struct IAutoComplete2Vtbl {
         IAutoComplete2* This,
         DWORD* pdwFlag);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -268,7 +270,7 @@ struct IFolderViewOC {
     const IFolderViewOCVtbl* lpVtbl;
 };
 struct IFolderViewOCVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -317,6 +319,7 @@ struct IFolderViewOCVtbl {
         IFolderViewOC* This,
         IDispatch* pdisp);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

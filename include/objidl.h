@@ -97,7 +97,7 @@ struct IMarshal {
     const IMarshalVtbl* lpVtbl;
 };
 struct IMarshalVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -153,6 +153,7 @@ struct IMarshalVtbl {
         IMarshal* This,
         DWORD dwReserved);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -282,7 +283,7 @@ struct IStdMarshalInfo {
     const IStdMarshalInfoVtbl* lpVtbl;
 };
 struct IStdMarshalInfoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -303,6 +304,7 @@ struct IStdMarshalInfoVtbl {
         void* pvDestContext,
         CLSID* pClsid);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -377,7 +379,7 @@ struct IExternalConnection {
     const IExternalConnectionVtbl* lpVtbl;
 };
 struct IExternalConnectionVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -403,6 +405,7 @@ struct IExternalConnectionVtbl {
         DWORD reserved,
         BOOL fLastReleaseCloses);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -483,7 +486,7 @@ struct IMultiQI {
     const IMultiQIVtbl* lpVtbl;
 };
 struct IMultiQIVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -503,6 +506,7 @@ struct IMultiQIVtbl {
         ULONG cMQIs,
         MULTI_QI* pMQIs);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -580,7 +584,7 @@ struct IMalloc {
     const IMallocVtbl* lpVtbl;
 };
 struct IMallocVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -619,6 +623,7 @@ struct IMallocVtbl {
     void (STDMETHODCALLTYPE *HeapMinimize)(
         IMalloc* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -772,7 +777,7 @@ struct IMallocSpy {
     const IMallocSpyVtbl* lpVtbl;
 };
 struct IMallocSpyVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -843,6 +848,7 @@ struct IMallocSpyVtbl {
     void (STDMETHODCALLTYPE *PostHeapMinimize)(
         IMallocSpy* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1032,7 +1038,7 @@ struct IEnumUnknown {
     const IEnumUnknownVtbl* lpVtbl;
 };
 struct IEnumUnknownVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1064,6 +1070,7 @@ struct IEnumUnknownVtbl {
         IEnumUnknown* This,
         IEnumUnknown** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1168,7 +1175,7 @@ struct ISurrogate {
     const ISurrogateVtbl* lpVtbl;
 };
 struct ISurrogateVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1190,6 +1197,7 @@ struct ISurrogateVtbl {
     HRESULT (STDMETHODCALLTYPE *FreeSurrogate)(
         ISurrogate* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1269,7 +1277,7 @@ struct IGlobalInterfaceTable {
     const IGlobalInterfaceTableVtbl* lpVtbl;
 };
 struct IGlobalInterfaceTableVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1300,6 +1308,7 @@ struct IGlobalInterfaceTableVtbl {
         REFIID riid,
         void** ppv);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1438,7 +1447,7 @@ struct IBindCtx {
     const IBindCtxVtbl* lpVtbl;
 };
 struct IBindCtxVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1494,6 +1503,7 @@ struct IBindCtxVtbl {
         IBindCtx* This,
         LPOLESTR pszKey);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1668,7 +1678,7 @@ struct IEnumMoniker {
     const IEnumMonikerVtbl* lpVtbl;
 };
 struct IEnumMonikerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1700,6 +1710,7 @@ struct IEnumMonikerVtbl {
         IEnumMoniker* This,
         IEnumMoniker** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1814,7 +1825,7 @@ struct IRunnableObject {
     const IRunnableObjectVtbl* lpVtbl;
 };
 struct IRunnableObjectVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1849,6 +1860,7 @@ struct IRunnableObjectVtbl {
         IRunnableObject* This,
         BOOL fContained);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1975,7 +1987,7 @@ struct IRunningObjectTable {
     const IRunningObjectTableVtbl* lpVtbl;
 };
 struct IRunningObjectTableVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2024,6 +2036,7 @@ struct IRunningObjectTableVtbl {
         IRunningObjectTable* This,
         IEnumMoniker** ppenumMoniker);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2150,7 +2163,7 @@ struct IPersist {
     const IPersistVtbl* lpVtbl;
 };
 struct IPersistVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2169,6 +2182,7 @@ struct IPersistVtbl {
         IPersist* This,
         CLSID* pClassID);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2239,7 +2253,7 @@ struct IPersistStream {
     const IPersistStreamVtbl* lpVtbl;
 };
 struct IPersistStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2275,6 +2289,7 @@ struct IPersistStreamVtbl {
         IPersistStream* This,
         ULARGE_INTEGER* pcbSize);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2447,7 +2462,7 @@ struct IMoniker {
     const IMonikerVtbl* lpVtbl;
 };
 struct IMonikerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2568,6 +2583,7 @@ struct IMonikerVtbl {
         IMoniker* This,
         DWORD* pdwMksys);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2830,7 +2846,7 @@ struct IROTData {
     const IROTDataVtbl* lpVtbl;
 };
 struct IROTDataVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2851,6 +2867,7 @@ struct IROTDataVtbl {
         ULONG cbMax,
         ULONG* pcbData);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -2919,7 +2936,7 @@ struct IEnumString {
     const IEnumStringVtbl* lpVtbl;
 };
 struct IEnumStringVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -2951,6 +2968,7 @@ struct IEnumStringVtbl {
         IEnumString* This,
         IEnumString** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3054,7 +3072,7 @@ struct IClassActivator {
     const IClassActivatorVtbl* lpVtbl;
 };
 struct IClassActivatorVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3077,6 +3095,7 @@ struct IClassActivatorVtbl {
         REFIID riid,
         void** ppv);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3146,7 +3165,7 @@ struct ISequentialStream {
     const ISequentialStreamVtbl* lpVtbl;
 };
 struct ISequentialStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3173,6 +3192,7 @@ struct ISequentialStreamVtbl {
         ULONG cb,
         ULONG* pcbWritten);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3333,7 +3353,7 @@ struct IStream {
     const IStreamVtbl* lpVtbl;
 };
 struct IStreamVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3406,6 +3426,7 @@ struct IStreamVtbl {
         IStream* This,
         IStream** ppstm);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3594,7 +3615,7 @@ struct IEnumSTATSTG {
     const IEnumSTATSTGVtbl* lpVtbl;
 };
 struct IEnumSTATSTGVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3626,6 +3647,7 @@ struct IEnumSTATSTGVtbl {
         IEnumSTATSTG* This,
         IEnumSTATSTG** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -3815,7 +3837,7 @@ struct IStorage {
     const IStorageVtbl* lpVtbl;
 };
 struct IStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -3921,6 +3943,7 @@ struct IStorageVtbl {
         STATSTG* pstatstg,
         DWORD grfStatFlag);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4196,7 +4219,7 @@ struct IPersistFile {
     const IPersistFileVtbl* lpVtbl;
 };
 struct IPersistFileVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4237,6 +4260,7 @@ struct IPersistFileVtbl {
         IPersistFile* This,
         LPOLESTR* ppszFileName);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4358,7 +4382,7 @@ struct IPersistStorage {
     const IPersistStorageVtbl* lpVtbl;
 };
 struct IPersistStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4401,6 +4425,7 @@ struct IPersistStorageVtbl {
     HRESULT (STDMETHODCALLTYPE *HandsOffStorage)(
         IPersistStorage* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4514,7 +4539,7 @@ struct IRootStorage {
     const IRootStorageVtbl* lpVtbl;
 };
 struct IRootStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4533,6 +4558,7 @@ struct IRootStorageVtbl {
         IRootStorage* This,
         LPOLESTR pszFile);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4622,7 +4648,7 @@ struct ILockBytes {
     const ILockBytesVtbl* lpVtbl;
 };
 struct ILockBytesVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4675,6 +4701,7 @@ struct ILockBytesVtbl {
         STATSTG* pstatstg,
         DWORD grfStatFlag);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4841,7 +4868,7 @@ struct IFillLockBytes {
     const IFillLockBytesVtbl* lpVtbl;
 };
 struct IFillLockBytesVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -4877,6 +4904,7 @@ struct IFillLockBytesVtbl {
         IFillLockBytes* This,
         BOOL bCanceled);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -4995,7 +5023,7 @@ struct IProgressNotify {
     const IProgressNotifyVtbl* lpVtbl;
 };
 struct IProgressNotifyVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5017,6 +5045,7 @@ struct IProgressNotifyVtbl {
         BOOL fAccurate,
         BOOL fOwner);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5099,7 +5128,7 @@ struct ILayoutStorage {
     const ILayoutStorageVtbl* lpVtbl;
 };
 struct ILayoutStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5134,6 +5163,7 @@ struct ILayoutStorageVtbl {
         ILayoutStorage* This,
         ILockBytes* pILockBytes);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5264,7 +5294,7 @@ struct IEnumFORMATETC {
     const IEnumFORMATETCVtbl* lpVtbl;
 };
 struct IEnumFORMATETCVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5296,6 +5326,7 @@ struct IEnumFORMATETCVtbl {
         IEnumFORMATETC* This,
         IEnumFORMATETC** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5425,7 +5456,7 @@ struct IEnumSTATDATA {
     const IEnumSTATDATAVtbl* lpVtbl;
 };
 struct IEnumSTATDATAVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5457,6 +5488,7 @@ struct IEnumSTATDATAVtbl {
         IEnumSTATDATA* This,
         IEnumSTATDATA** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5662,7 +5694,7 @@ struct IAdviseSink {
     const IAdviseSinkVtbl* lpVtbl;
 };
 struct IAdviseSinkVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5697,6 +5729,7 @@ struct IAdviseSinkVtbl {
     void (STDMETHODCALLTYPE *OnClose)(
         IAdviseSink* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5835,7 +5868,7 @@ struct IAdviseSink2 {
     const IAdviseSink2Vtbl* lpVtbl;
 };
 struct IAdviseSink2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -5875,6 +5908,7 @@ struct IAdviseSink2Vtbl {
         IAdviseSink2* This,
         IMoniker* pmk);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -5993,7 +6027,7 @@ struct IDataObject {
     const IDataObjectVtbl* lpVtbl;
 };
 struct IDataObjectVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6053,6 +6087,7 @@ struct IDataObjectVtbl {
         IDataObject* This,
         IEnumSTATDATA** ppenumAdvise);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -6243,7 +6278,7 @@ struct IDataAdviseHolder {
     const IDataAdviseHolderVtbl* lpVtbl;
 };
 struct IDataAdviseHolderVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6280,6 +6315,7 @@ struct IDataAdviseHolderVtbl {
         DWORD dwReserved,
         DWORD advf);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -6420,7 +6456,7 @@ struct IMessageFilter {
     const IMessageFilterVtbl* lpVtbl;
 };
 struct IMessageFilterVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6454,6 +6490,7 @@ struct IMessageFilterVtbl {
         DWORD dwTickCount,
         DWORD dwPendingType);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -6570,7 +6607,7 @@ struct IRpcChannelBuffer {
     const IRpcChannelBufferVtbl* lpVtbl;
 };
 struct IRpcChannelBufferVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6607,6 +6644,7 @@ struct IRpcChannelBufferVtbl {
     HRESULT (STDMETHODCALLTYPE *IsConnected)(
         IRpcChannelBuffer* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -6709,7 +6747,7 @@ struct IRpcChannelBuffer2 {
     const IRpcChannelBuffer2Vtbl* lpVtbl;
 };
 struct IRpcChannelBuffer2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6751,6 +6789,7 @@ struct IRpcChannelBuffer2Vtbl {
         IRpcChannelBuffer2* This,
         DWORD* pdwVersion);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -6850,7 +6889,7 @@ struct IRpcChannelBuffer3 {
     const IRpcChannelBuffer3Vtbl* lpVtbl;
 };
 struct IRpcChannelBuffer3Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -6930,6 +6969,7 @@ struct IRpcChannelBuffer3Vtbl {
         RPCOLEMESSAGE* pMsg,
         IAsyncManager* pAsyncMgr);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -7078,7 +7118,7 @@ struct IRpcProxyBuffer {
     const IRpcProxyBufferVtbl* lpVtbl;
 };
 struct IRpcProxyBufferVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -7100,6 +7140,7 @@ struct IRpcProxyBufferVtbl {
     void (STDMETHODCALLTYPE *Disconnect)(
         IRpcProxyBuffer* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -7188,7 +7229,7 @@ struct IRpcStubBuffer {
     const IRpcStubBufferVtbl* lpVtbl;
 };
 struct IRpcStubBufferVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -7230,6 +7271,7 @@ struct IRpcStubBufferVtbl {
         IRpcStubBuffer* This,
         void* pv);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -7357,7 +7399,7 @@ struct IPSFactoryBuffer {
     const IPSFactoryBufferVtbl* lpVtbl;
 };
 struct IPSFactoryBufferVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -7385,6 +7427,7 @@ struct IPSFactoryBufferVtbl {
         IUnknown* pUnkServer,
         IRpcStubBuffer** ppStub);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -7505,7 +7548,7 @@ struct IChannelHook {
     const IChannelHookVtbl* lpVtbl;
 };
 struct IChannelHookVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -7565,6 +7608,7 @@ struct IChannelHookVtbl {
         void* pDataBuffer,
         HRESULT hrFault);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -7959,7 +8003,7 @@ struct IPropertyStorage {
     const IPropertyStorageVtbl* lpVtbl;
 };
 struct IPropertyStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8034,6 +8078,7 @@ struct IPropertyStorageVtbl {
         IPropertyStorage* This,
         STATPROPSETSTG* statpsstg);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8231,7 +8276,7 @@ struct IPropertySetStorage {
     const IPropertySetStorageVtbl* lpVtbl;
 };
 struct IPropertySetStorageVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8268,6 +8313,7 @@ struct IPropertySetStorageVtbl {
         IPropertySetStorage* This,
         IEnumSTATPROPSETSTG** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8370,7 +8416,7 @@ struct IEnumSTATPROPSTG {
     const IEnumSTATPROPSTGVtbl* lpVtbl;
 };
 struct IEnumSTATPROPSTGVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8402,6 +8448,7 @@ struct IEnumSTATPROPSTGVtbl {
         IEnumSTATPROPSTG* This,
         IEnumSTATPROPSTG** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8509,7 +8556,7 @@ struct IEnumSTATPROPSETSTG {
     const IEnumSTATPROPSETSTGVtbl* lpVtbl;
 };
 struct IEnumSTATPROPSETSTGVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8541,6 +8588,7 @@ struct IEnumSTATPROPSETSTGVtbl {
         IEnumSTATPROPSETSTG* This,
         IEnumSTATPROPSETSTG** ppenum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8679,7 +8727,7 @@ struct IClientSecurity {
     const IClientSecurityVtbl* lpVtbl;
 };
 struct IClientSecurityVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8721,6 +8769,7 @@ struct IClientSecurityVtbl {
         IUnknown* pProxy,
         IUnknown** ppCopy);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8829,7 +8878,7 @@ struct IServerSecurity {
     const IServerSecurityVtbl* lpVtbl;
 };
 struct IServerSecurityVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8863,6 +8912,7 @@ struct IServerSecurityVtbl {
     BOOL (STDMETHODCALLTYPE *IsImpersonating)(
         IServerSecurity* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -8958,7 +9008,7 @@ struct IAsyncSetup {
     const IAsyncSetupVtbl* lpVtbl;
 };
 struct IAsyncSetupVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -8981,6 +9031,7 @@ struct IAsyncSetupVtbl {
         IUnknown** ppInner,
         IAsyncManager** ppAsyncMgr);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -9051,7 +9102,7 @@ struct IAsyncManager {
     const IAsyncManagerVtbl* lpVtbl;
 };
 struct IAsyncManagerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -9079,6 +9130,7 @@ struct IAsyncManagerVtbl {
         IAsyncManager* This,
         ULONG* pulStateFlags);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

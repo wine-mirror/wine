@@ -37,7 +37,7 @@ struct IServiceProvider {
     const IServiceProviderVtbl* lpVtbl;
 };
 struct IServiceProviderVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -58,6 +58,7 @@ struct IServiceProviderVtbl {
         REFIID riid,
         void** ppvObject);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

@@ -117,7 +117,7 @@ struct IDirectDrawVideo {
     const IDirectDrawVideoVtbl* lpVtbl;
 };
 struct IDirectDrawVideoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -196,6 +196,7 @@ struct IDirectDrawVideoVtbl {
         IDirectDrawVideo* This,
         long* UseWhenFullScreen);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -418,7 +419,7 @@ struct IQualProp {
     const IQualPropVtbl* lpVtbl;
 };
 struct IQualPropVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -457,6 +458,7 @@ struct IQualPropVtbl {
         IQualProp* This,
         int* piDev);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -616,7 +618,7 @@ struct IFullScreenVideo {
     const IFullScreenVideoVtbl* lpVtbl;
 };
 struct IFullScreenVideoVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -701,6 +703,7 @@ struct IFullScreenVideoVtbl {
     HRESULT (STDMETHODCALLTYPE *SetDefault)(
         IFullScreenVideo* This);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -931,7 +934,7 @@ struct IFullScreenVideoEx {
     const IFullScreenVideoExVtbl* lpVtbl;
 };
 struct IFullScreenVideoExVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1035,6 +1038,7 @@ struct IFullScreenVideoExVtbl {
         IFullScreenVideoEx* This,
         long* pKeepAspect);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1178,7 +1182,7 @@ struct IBaseVideoMixer {
     const IBaseVideoMixerVtbl* lpVtbl;
 };
 struct IBaseVideoMixerVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1221,6 +1225,7 @@ struct IBaseVideoMixerVtbl {
         IBaseVideoMixer* This,
         int bValue);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS

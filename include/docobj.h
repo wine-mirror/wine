@@ -66,7 +66,7 @@ struct IOleDocument {
     const IOleDocumentVtbl* lpVtbl;
 };
 struct IOleDocumentVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -97,6 +97,7 @@ struct IOleDocumentVtbl {
         IEnumOleDocumentViews** ppEnum,
         IOleDocumentView** ppView);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -181,7 +182,7 @@ struct IOleDocumentSite {
     const IOleDocumentSiteVtbl* lpVtbl;
 };
 struct IOleDocumentSiteVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -200,6 +201,7 @@ struct IOleDocumentSiteVtbl {
         IOleDocumentSite* This,
         IOleDocumentView* pViewToActivate);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -295,7 +297,7 @@ struct IOleDocumentView {
     const IOleDocumentViewVtbl* lpVtbl;
 };
 struct IOleDocumentViewVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -365,6 +367,7 @@ struct IOleDocumentViewVtbl {
         IOleInPlaceSite* pIPSiteNew,
         IOleDocumentView** ppViewNew);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -554,7 +557,7 @@ struct IEnumOleDocumentViews {
     const IEnumOleDocumentViewsVtbl* lpVtbl;
 };
 struct IEnumOleDocumentViewsVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -586,6 +589,7 @@ struct IEnumOleDocumentViewsVtbl {
         IEnumOleDocumentViews* This,
         IEnumOleDocumentViews** ppEnum);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -786,7 +790,7 @@ struct IOleCommandTarget {
     const IOleCommandTargetVtbl* lpVtbl;
 };
 struct IOleCommandTargetVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -816,6 +820,7 @@ struct IOleCommandTargetVtbl {
         VARIANT* pvaIn,
         VARIANT* pvaOut);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -898,7 +903,7 @@ struct IContinueCallback {
     const IContinueCallbackVtbl* lpVtbl;
 };
 struct IContinueCallbackVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -922,6 +927,7 @@ struct IContinueCallbackVtbl {
         LONG nCurPage,
         WCHAR* pwszPrintStatus);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
@@ -1030,7 +1036,7 @@ struct IPrint {
     const IPrintVtbl* lpVtbl;
 };
 struct IPrintVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -1065,6 +1071,7 @@ struct IPrintVtbl {
         LONG* pcPagesPrinted,
         LONG* pnLastPage);
 
+    END_INTERFACE
 };
 
 #ifdef COBJMACROS
