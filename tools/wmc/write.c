@@ -310,40 +310,31 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 		*cptr++ = '"';
 		for(i = b = 0; i < len; i++, uc++)
 		{
-			int n;
-			if(*uc < 0x100)
-			{
-				if(isprint(*uc))
-				{
-					*cptr++ = *uc;
-					b++;
-				}
-				else
-				{
-					switch(*uc)
-					{
-					case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-					case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-					case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-					case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-					case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-					case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-					case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-					case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-					case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-					default:
-						n = sprintf(cptr, "\\x%04x", *uc & 0xffff);
-						cptr += n;
-						b += n;
-					}
-				}
-			}
-			else
-			{
-				n = sprintf(cptr, "\\x%04x", *uc & 0xffff);
-				cptr += n;
-				b += n;
-			}
+                        switch(*uc)
+                        {
+                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
+                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
+                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
+                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
+                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
+                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
+                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
+                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
+                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
+                        default:
+                            if (*uc < 0x100 && isprint(*uc))
+                            {
+                                *cptr++ = *uc;
+                                b++;
+                            }
+                            else
+                            {
+                                int n = sprintf(cptr, "\\x%04x", *uc & 0xffff);
+                                cptr += n;
+                                b += n;
+                            }
+                            break;
+                        }
 			if(i < len-1 && b >= 72)
 			{
 				*cptr++ = '"';
@@ -381,30 +372,30 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 		*cptr++ = '"';
 		for(i = b = 0; i < len; i++, cc++)
 		{
-			int n;
-			if(isprint(*cc))
-			{
-				*cptr++ = *cc;
-				b++;
-			}
-			else
-			{
-				switch(*cc)
-				{
-				case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
-				case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
-				case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
-				case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
-				case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
-				case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
-				case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
-				case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
-				case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
-				default:
-					n = sprintf(cptr, "\\x%02x", *cc & 0xff);
-					cptr += n;
-					b += n;
-				}
+                        switch(*cc)
+                        {
+                        case '\a': *cptr++ = '\\'; *cptr++ = 'a'; b += 2; break;
+                        case '\b': *cptr++ = '\\'; *cptr++ = 'b'; b += 2; break;
+                        case '\f': *cptr++ = '\\'; *cptr++ = 'f'; b += 2; break;
+                        case '\n': *cptr++ = '\\'; *cptr++ = 'n'; b += 2; break;
+                        case '\r': *cptr++ = '\\'; *cptr++ = 'r'; b += 2; break;
+                        case '\t': *cptr++ = '\\'; *cptr++ = 't'; b += 2; break;
+                        case '\v': *cptr++ = '\\'; *cptr++ = 'v'; b += 2; break;
+                        case '\\': *cptr++ = '\\'; *cptr++ = '\\'; b += 2; break;
+                        case '"':  *cptr++ = '\\'; *cptr++ = '"'; b += 2; break;
+                        default:
+                            if(isprint(*cc))
+                            {
+                                *cptr++ = *cc;
+                                b++;
+                            }
+                            else
+                            {
+                                int n = sprintf(cptr, "\\x%02x", *cc & 0xff);
+                                cptr += n;
+                                b += n;
+                            }
+                            break;
 			}
 			if(i < len-1 && b >= 72)
 			{
