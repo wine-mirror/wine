@@ -488,7 +488,7 @@ DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
  *           SetLogonNotifyWindow   (USER32.486)
  */
 DWORD WINAPI SetLogonNotifyWindow(HWINSTA32 hwinsta,HWND32 hwnd) {
-	FIXME(win32,"(0x%lx,%ld),stub!\n",hwinsta,hwnd);
+	FIXME(win32,"(0x%x,%ld),stub!\n",hwinsta,hwnd);
 	return 1;
 }
 
@@ -498,4 +498,18 @@ DWORD WINAPI SetLogonNotifyWindow(HWINSTA32 hwinsta,HWND32 hwnd) {
 VOID WINAPI LoadLocalFonts(VOID) {
 	/* are loaded. */
 	return;
+}
+/***********************************************************************
+ *           GetUserObjectInformation32A   (USER32.299)
+ */
+BOOL32 WINAPI GetUserObjectInformation32A( HANDLE32 hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+{	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+	return TRUE;
+}
+/***********************************************************************
+ *           GetUserObjectInformation32W   (USER32.300)
+ */
+BOOL32 WINAPI GetUserObjectInformation32W( HANDLE32 hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+{	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+	return TRUE;
 }
