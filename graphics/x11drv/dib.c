@@ -2481,7 +2481,8 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     case 16:
 #if defined(__i386__) && defined(__GNUC__)
 	/* Some X servers might have 32 bit/ 16bit deep pixel */
-	if (lines && dstwidth && (bmpImage->bits_per_pixel == 16))
+	if (lines && dstwidth && (bmpImage->bits_per_pixel == 16) &&
+            (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
 	    dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 	    /* FIXME: Does this really handle all these cases correctly? */
@@ -2515,7 +2516,8 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     case 24:
     case 32:
 #if defined(__i386__) && defined(__GNUC__)
-	if (lines && dstwidth && (bmpImage->bits_per_pixel == 32))
+	if (lines && dstwidth && (bmpImage->bits_per_pixel == 32) &&
+            (ImageByteOrder(gdi_display)==LSBFirst) )
 	{
 	    dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 	    /* FIXME: Does this really handle both cases correctly? */
