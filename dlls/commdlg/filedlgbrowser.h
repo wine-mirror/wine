@@ -49,8 +49,14 @@
 
 typedef struct
 {
-
     LPOPENFILENAMEA ofnInfos;
+    BOOL unicode;
+    LPWSTR initdir;
+    LPWSTR filename;
+    LPCWSTR title;
+    LPCWSTR defext;
+    LPCWSTR filter;
+    LPCWSTR customfilter;
     struct {
         IShellBrowser *FOIShellBrowser;
         IShellFolder *FOIShellFolder;
@@ -149,6 +155,6 @@ BOOL IsPidlFolder (LPSHELLFOLDER psf, LPITEMIDLIST pidl);
 
 /* Functions used by the EDIT box */
 void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd);
-int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPSTR * lpstrFileList, UINT * sizeUsed);
+int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed);
 
 #endif /*SHBROWSER_H*/

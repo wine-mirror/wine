@@ -49,6 +49,7 @@ BOOL (WINAPI *COMDLG32_PIDL_ILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 BOOL (WINAPI *COMDLG32_SHGetFolderPathA)(HWND,int,HANDLE,DWORD,LPSTR);
+BOOL (WINAPI *COMDLG32_SHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
 
 /***********************************************************************
  *	COMDLG32_DllEntryPoint			(COMDLG32.init)
@@ -113,6 +114,14 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		{
 		  SHFOLDER_hInstance = LoadLibraryA("SHFOLDER.DLL");
 		  GPA(COMDLG32_SHGetFolderPathA, SHFOLDER_hInstance,"SHGetFolderPathA");
+		}
+
+		/* for the first versions of shell32 SHGetFolderPathW is in SHFOLDER.DLL */
+		COMDLG32_SHGetFolderPathW = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFolderPathW");
+		if (!COMDLG32_SHGetFolderPathW)
+		{
+		  SHFOLDER_hInstance = LoadLibraryA("SHFOLDER.DLL");
+		  GPA(COMDLG32_SHGetFolderPathW, SHFOLDER_hInstance,"SHGetFolderPathW");
 		}
 
 		break;
