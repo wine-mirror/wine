@@ -416,7 +416,9 @@ inline static Window get_whole_window( WND *wnd )
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 
-extern void X11DRV_expect_error( unsigned char request, unsigned char error, XID id );
+typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
+
+extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
 extern void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data *data );
 extern void X11DRV_set_iconic_state( WND *win );

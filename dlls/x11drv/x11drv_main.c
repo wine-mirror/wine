@@ -21,15 +21,6 @@
 
 #include "config.h"
 
-#ifdef NO_REENTRANT_X11
-/* Get pointers to the static errno and h_errno variables used by Xlib. This
-   must be done before including <errno.h> makes the variables invisible.  */
-extern int errno;
-static int *perrno = &errno;
-extern int h_errno;
-static int *ph_errno = &h_errno;
-#endif  /* NO_REENTRANT_X11 */
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,46 +68,68 @@ static BOOL synchronous;  /* run in synchronous mode? */
 static char *desktop_geometry;
 static XVisualInfo *desktop_vi;
 
+static x11drv_error_callback err_callback;   /* current callback for error */
+static Display *err_callback_display;        /* display callback is set for */
+static void *err_callback_arg;               /* error callback argument */
+static int err_callback_result;              /* error callback result */
+static int (*old_error_handler)( Display *, XErrorEvent * );
+
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-#ifdef NO_REENTRANT_X11
-static int* (*old_errno_location)(void);
-static int* (*old_h_errno_location)(void);
-
 /***********************************************************************
- *           x11_errno_location
+ *		X11DRV_expect_error
  *
- * Get the per-thread errno location.
+ * Setup a callback function that will be called on an X error.  The
+ * callback must return non-zero if the error is the one it expected.
+ * This function acquires the x11 lock; X11DRV_check_error must be
+ * called in all cases to release it.
  */
-static int *x11_errno_location(void)
+void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg )
 {
-    /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId()) return perrno;
-    return old_errno_location();
+    wine_tsx11_lock();
+    XSync( display, False );
+    err_callback         = callback;
+    err_callback_display = display;
+    err_callback_arg     = arg;
+    err_callback_result  = 0;
 }
 
+
 /***********************************************************************
- *           x11_h_errno_location
+ *		X11DRV_check_error
  *
- * Get the per-thread h_errno location.
+ * Check if an expected X11 error occurred; return non-zero if yes.
+ * Also release the x11 lock obtained in X11DRV_expect_error.
  */
-static int *x11_h_errno_location(void)
+int X11DRV_check_error(void)
 {
-    /* Use static libc h_errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId()) return ph_errno;
-    return old_h_errno_location();
+    int ret;
+    XSync( err_callback_display, False );
+    err_callback = NULL;
+    ret = err_callback_result;
+    wine_tsx11_unlock();
+    return ret;
 }
-#endif /* NO_REENTRANT_X11 */
+
 
 /***********************************************************************
  *		error_handler
  */
-static int error_handler(Display *display, XErrorEvent *error_evt)
+static int error_handler( Display *display, XErrorEvent *error_evt )
 {
-    DebugBreak();  /* force an entry in the debugger */
+    if (err_callback && display == err_callback_display)
+    {
+        if ((err_callback_result = err_callback( display, error_evt, err_callback_arg )))
+        {
+            TRACE( "got expected error\n" );
+            return 0;
+        }
+    }
+    if (synchronous) DebugBreak();  /* force an entry in the debugger */
+    old_error_handler( display, error_evt );
     return 0;
 }
 
@@ -289,12 +302,6 @@ static void process_attach(void)
     setup_options();
 
     /* setup TSX11 locking */
-#ifdef NO_REENTRANT_X11
-    old_errno_location = InterlockedExchangePointer( &wine_errno_location,
-                                                     x11_errno_location );
-    old_h_errno_location = InterlockedExchangePointer( &wine_h_errno_location,
-                                                       x11_h_errno_location );
-#endif /* NO_REENTRANT_X11 */
     old_tsx11_lock    = wine_tsx11_lock;
     old_tsx11_unlock  = wine_tsx11_unlock;
     wine_tsx11_lock   = lock_tsx11;
@@ -311,6 +318,7 @@ static void process_attach(void)
     screen = DefaultScreenOfDisplay( display );
     visual = DefaultVisual( display, DefaultScreen(display) );
     root_window = DefaultRootWindow( display );
+    old_error_handler = XSetErrorHandler( error_handler );
 
     /* Initialize screen depth */
 
@@ -342,11 +350,7 @@ static void process_attach(void)
      */
     TSXOpenIM( display, NULL, NULL, NULL);
 
-    if (synchronous)
-    {
-        XSetErrorHandler( error_handler );
-        XSynchronize( display, True );
-    }
+    if (synchronous) XSynchronize( display, True );
 
     screen_width  = WidthOfScreen( screen );
     screen_height = HeightOfScreen( screen );
@@ -427,10 +431,6 @@ static void process_detach(void)
     /* restore TSX11 locking */
     wine_tsx11_lock = old_tsx11_lock;
     wine_tsx11_unlock = old_tsx11_unlock;
-#ifdef NO_REENTRANT_X11
-    wine_errno_location = old_errno_location;
-    wine_h_errno_location = old_h_errno_location;
-#endif /* NO_REENTRANT_X11 */
     RtlDeleteCriticalSection( &X11DRV_CritSection );
 }
 

@@ -47,10 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(x11drv);
 
 static int ximageDepthTable[32];
 
-#ifdef HAVE_LIBXXSHM
-static int XShmErrorFlag = 0;
-#endif
-
 /* This structure holds the arguments for DIB_SetImageBits() */
 typedef struct
 {
@@ -5579,10 +5575,9 @@ void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev, BOOL commit)
  *           X11DRV_XShmErrorHandler
  *
  */
-static int XShmErrorHandler(Display *dpy, XErrorEvent *event) 
+static int XShmErrorHandler( Display *dpy, XErrorEvent *event, void *arg )
 {
-    XShmErrorFlag = 1;
-    return 0;
+    return 1;  /* FIXME: should check event contents */
 }
 
 /***********************************************************************
@@ -5592,7 +5587,6 @@ static int XShmErrorHandler(Display *dpy, XErrorEvent *event)
 static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                                        XShmSegmentInfo* shminfo)
 {
-    int (*WineXHandler)(Display *, XErrorEvent *);
     XImage *image;
 
     wine_tsx11_lock();
@@ -5606,26 +5600,19 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
             shminfo->shmaddr = image->data = shmat(shminfo->shmid, 0, 0);
             if( shminfo->shmaddr != (char*)-1 )
             {
+                BOOL ok;
+
                 shminfo->readOnly = FALSE;
-                if( XShmAttach( gdi_display, shminfo ) != 0)
+                X11DRV_expect_error( gdi_display, XShmErrorHandler, NULL );
+                ok = (XShmAttach( gdi_display, shminfo ) != 0);
+                if (X11DRV_check_error()) ok = FALSE;
+                if (ok)
                 {
-                    /* Reset the error flag */
-                    XShmErrorFlag = 0;
-                    WineXHandler = XSetErrorHandler(XShmErrorHandler);
-                    XSync( gdi_display, 0 );
-
-                    if (!XShmErrorFlag)
-                    {
-			shmctl(shminfo->shmid, IPC_RMID, 0);
-
-                        XSetErrorHandler(WineXHandler);
-                        wine_tsx11_unlock();
-                        return image; /* Success! */
-                    }
-                    /* An error occurred */
-                    XShmErrorFlag = 0;
-                    XSetErrorHandler(WineXHandler);
+                    shmctl(shminfo->shmid, IPC_RMID, 0);
+                    wine_tsx11_unlock();
+                    return image; /* Success! */
                 }
+                /* An error occured */
                 shmdt(shminfo->shmaddr);
             }
             shmctl(shminfo->shmid, IPC_RMID, 0);
