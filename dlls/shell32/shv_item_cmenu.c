@@ -426,34 +426,60 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 	IContextMenu *iface,
 	LPCMINVOKECOMMANDINFO lpcmi)
 {
-	ICOM_THIS(ItemCmImpl, iface);
+    ICOM_THIS(ItemCmImpl, iface);
 
-	TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
+    if (lpcmi->cbSize != sizeof(CMINVOKECOMMANDINFO))
+        FIXME("Is an EX structure\n");
 
-	if(LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)  return E_INVALIDARG;
+    TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
-	switch(LOWORD(lpcmi->lpVerb))
-	{
-	  case FCIDM_SHVIEW_EXPLORE:
-	    DoOpenExplore(iface, lpcmi->hwnd, "explore");
-	    break;
-	  case FCIDM_SHVIEW_OPEN:
-	    DoOpenExplore(iface, lpcmi->hwnd, "open");
-	    break;
-	  case FCIDM_SHVIEW_RENAME:
-	    DoRename(iface, lpcmi->hwnd);
-	    break;
-	  case FCIDM_SHVIEW_DELETE:
-	    DoDelete(iface);
-	    break;
-	  case FCIDM_SHVIEW_COPY:
-	    DoCopyOrCut(iface, lpcmi->hwnd, FALSE);
-	    break;
-	  case FCIDM_SHVIEW_CUT:
-	    DoCopyOrCut(iface, lpcmi->hwnd, TRUE);
-	    break;
-	}
-	return NOERROR;
+    if( HIWORD(lpcmi->lpVerb)==0 && LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)
+    {
+        TRACE("Invalid Verb %x\n",LOWORD(lpcmi->lpVerb));
+        return E_INVALIDARG;
+    }
+
+    if (HIWORD(lpcmi->lpVerb) == 0)
+    {
+        switch(LOWORD(lpcmi->lpVerb))
+        {
+        case FCIDM_SHVIEW_EXPLORE:
+            TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
+            DoOpenExplore(iface, lpcmi->hwnd, "explore");
+            break;
+        case FCIDM_SHVIEW_OPEN:
+            TRACE("Verb FCIDM_SHVIEW_OPEN\n");
+            DoOpenExplore(iface, lpcmi->hwnd, "open");
+            break;
+        case FCIDM_SHVIEW_RENAME:
+            TRACE("Verb FCIDM_SHVIEW_RENAME\n");
+            DoRename(iface, lpcmi->hwnd);
+            break;
+        case FCIDM_SHVIEW_DELETE:
+            TRACE("Verb FCIDM_SHVIEW_DELETE\n");
+            DoDelete(iface);
+            break;
+        case FCIDM_SHVIEW_COPY:
+            TRACE("Verb FCIDM_SHVIEW_COPY\n");
+            DoCopyOrCut(iface, lpcmi->hwnd, FALSE);
+            break;
+        case FCIDM_SHVIEW_CUT:
+            TRACE("Verb FCIDM_SHVIEW_CUT\n");
+            DoCopyOrCut(iface, lpcmi->hwnd, TRUE);
+            break;
+        default:
+            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
+        }
+    }
+    else
+    {
+        TRACE("Verb is %s\n",debugstr_a(lpcmi->lpVerb));
+        if (strcmp(lpcmi->lpVerb,"delete")==0)
+            DoDelete(iface);
+        else
+            FIXME("Unhandled string verb %s\n",debugstr_a(lpcmi->lpVerb));
+    }
+    return NOERROR;
 }
 
 /**************************************************************************
