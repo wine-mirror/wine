@@ -8,6 +8,7 @@ EXTRALIBS = -luuid
 
 CTESTS = \
 	generated.c \
+	shelllink.c \
 	shellpath.c \
 	shlfileop.c \
 	shlfolder.c \
