@@ -1553,8 +1553,23 @@ int MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
   return _lseek(file->_file,*pos,SEEK_SET);
 }
 
+/* helper function for fscanf.  Returns the value of character c in the
+ * given base, or -1 if the given character is not a digit of the base.
+ */
+static int char2digit(char c, int base) {
+    if ((c>='0') && (c<='9') && (c<='0'+base-1)) return (c-'0');
+    if (base<=10) return -1;
+    if ((c>='A') && (c<='Z') && (c<='A'+base-11)) return (c-'A'+10);
+    if ((c>='a') && (c<='z') && (c<='a'+base-11)) return (c-'a'+10);
+    return -1;
+}
+
 /*********************************************************************
  *		fscanf (MSVCRT.@)
+ * Implemented based on 
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/html/_crt_format_specification_fields_.2d_.scanf_and_wscanf_functions.asp
+ * Extended by C. Scott Ananian <cananian@alumni.princeton.edu> to handle
+ * more types of format spec.
  */
 int MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
 {
@@ -1567,99 +1582,224 @@ int MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
     nch = MSVCRT_fgetc(file);
     va_start(ap, format);
     while (*format) {
-        if (*format == ' ') {
+	/* a whitespace character in the format string causes scanf to read,
+	 * but not store, all consecutive white-space characters in the input
+	 * up to the next non-white-space character.  One white space character
+	 * in the input matches any number (including zero) and combination of
+	 * white-space characters in the input. */
+	if (isspace(*format)) {
             /* skip whitespace */
             while ((nch!=MSVCRT_EOF) && isspace(nch))
                 nch = MSVCRT_fgetc(file);
         }
+	/* a format specification causes scanf to read and convert characters
+	 * in the input into values of a specified type.  The value is assigned
+	 * to an argument in the argument list.  Format specifications have
+	 * the form %[*][width][{h | l | I64 | L}]type */
+	/* FIXME: unimplemented: h/l/I64/L modifiers and some type specs. */
         else if (*format == '%') {
-            int st = 0;
+            int st = 0; int suppress = 0; int width = 0;
+	    int base, number_signed;
             format++;
+	    /* look for leading asterisk, which means 'suppress assignment of
+	     * this field'. */
+	    if (*format=='*') {
+		format++;
+		suppress=1;
+	    }
+	    /* look for width specification */
+	    while (isdigit(*format)) {
+		width*=10;
+		width+=*format++ - '0';
+	    }
+	    if (width==0) width=-1; /* no width spec seen */
             switch(*format) {
-            case 'd': { /* read an integer */
-                    int*val = va_arg(ap, int*);
-                    int cur = 0;
+	    case '%': /* read a percent symbol */
+		if (nch!='%') break;
+		nch = MSVCRT_fgetc(file);
+		break;
+	    case 'x':
+	    case 'X': /* hexadecimal integer. */
+		base = 16; number_signed = 0;
+		goto number;
+	    case 'o': /* octal integer */
+		base = 8; number_signed = 0;
+		goto number;
+	    case 'u': /* unsigned decimal integer */
+		base = 10; number_signed = 0;
+		goto number;
+	    case 'd': /* signed decimal integer */
+		base = 10; number_signed = 1;
+		goto number;
+	    case 'i': /* generic integer */
+		base = 0; number_signed = 1;
+	    number: {
+		    /* read an integer */
+                    int*val = suppress ? NULL : va_arg(ap, int*);
+                    int cur = 0; int negative = 0; int seendigit=0;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
                         nch = MSVCRT_fgetc(file);
-                    /* get sign and first digit */
-                    if (nch == '-') {
+                    /* get sign */
+                    if (number_signed && (nch == '-' || nch == '+')) {
+			negative = (nch=='-');
                         nch = MSVCRT_fgetc(file);
-                        if (isdigit(nch))
-                            cur = -(nch - '0');
-                        else break;
-                    } else {
-                        if (isdigit(nch))
-                            cur = nch - '0';
-                        else break;
+			if (width>0) width--;
                     }
-                    nch = MSVCRT_fgetc(file);
+		    /* look for leading indication of base */
+		    if (width!=0 && nch == '0') {
+                        nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
+			seendigit=1;
+			if (width!=0 && (nch=='x' || nch=='X')) {
+			    if (base==0)
+				base=16;
+			    if (base==16) {
+				nch = MSVCRT_fgetc(file);
+				if (width>0) width--;
+				seendigit=0;
+			    }
+			} else if (base==0)
+			    base = 8;
+		    }
+		    if (base==0)
+			base=10;
+		    /* throw away leading zeros */
+		    while (width!=0 && nch=='0') {
+                        nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
+			seendigit=1;
+		    }
+		    /* get first digit.  Keep working copy negative, as the
+		     * range of negative numbers in two's complement notation
+		     * is one larger than the range of positive numbers. */
+		    if (width!=0 && char2digit(nch, base)!=-1) {
+			cur = -char2digit(nch, base);
+			nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
+			seendigit=1;
+		    }
                     /* read until no more digits */
-                    while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
-                        cur = cur*10 + (nch - '0');
+                    while (width!=0 && (nch!=MSVCRT_EOF) && isdigit(nch)) {
+                        cur = cur*base + char2digit(nch, base);
                         nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
+			seendigit=1;
                     }
+		    /* negate parsed number if non-negative */
+		    if (!negative) cur=-cur;
+		    /* okay, done! */
+		    if (!seendigit) break; /* not a valid number */
                     st = 1;
-                    *val = cur;
+                    if (!suppress) *val = cur;
                 }
                 break;
-            case 'f': { /* read a float */
-                    float*val = va_arg(ap, float*);
+	    case 'e':
+	    case 'E':
+	    case 'f':
+	    case 'g':
+            case 'G': { /* read a float */
+                    float*val = suppress ? NULL : va_arg(ap, float*);
                     float cur = 0;
+		    int negative = 0;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
                         nch = MSVCRT_fgetc(file);
-                    /* get sign and first digit */
-                    if (nch == '-') {
+		    /* get sign. */
+                    if (nch == '-' || nch == '+') {
+			negative = (nch=='-');
+			if (width>0) width--;
+			if (width==0) break;
                         nch = MSVCRT_fgetc(file);
-                        if (isdigit(nch))
-                            cur = -(nch - '0');
-                        else break;
-                    } else {
-                        if (isdigit(nch))
-                            cur = nch - '0';
-                        else break;
                     }
+		    /* get first digit. */
+		    if (!isdigit(nch)) break;
+		    cur = (nch - '0') * (negative ? -1 : 1);
+                    nch = MSVCRT_fgetc(file);
+		    if (width>0) width--;
                     /* read until no more digits */
-                    while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
+                    while (width!=0 && (nch!=MSVCRT_EOF) && isdigit(nch)) {
                         cur = cur*10 + (nch - '0');
                         nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
                     }
-                    if (nch == '.') {
-                        /* handle decimals */
+		    /* handle decimals */
+                    if (width!=0 && nch == '.') {
                         float dec = 1;
                         nch = MSVCRT_fgetc(file);
-                        while ((nch!=MSVCRT_EOF) && isdigit(nch)) {
+			if (width>0) width--;
+                        while (width!=0 && (nch!=MSVCRT_EOF) && isdigit(nch)) {
                             dec /= 10;
                             cur += dec * (nch - '0');
                             nch = MSVCRT_fgetc(file);
+			    if (width>0) width--;
                         }
                     }
+		    /* handle exponent */
+		    if (width!=0 && (nch == 'e' || nch == 'E')) {
+			int exponent = 0, negexp = 0;
+			float expcnt;
+                        nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
+			/* possible sign on the exponent */
+			if (width!=0 && (nch=='+' || nch=='-')) {
+			    negexp = (nch=='-');
+                            nch = MSVCRT_fgetc(file);
+			    if (width>0) width--;
+			}
+			/* exponent digits */
+			while (width!=0 && (nch!=MSVCRT_EOF) && isdigit(nch)) {
+			    exponent *= 10;
+			    exponent += (nch - '0');
+                            nch = MSVCRT_fgetc(file);
+			    if (width>0) width--;
+                        }
+			/* update 'cur' with this exponent. */
+			expcnt =  negexp ? .1 : 10;
+			while (exponent!=0) {
+			    if (exponent&1)
+				cur*=expcnt;
+			    exponent/=2;
+			    expcnt=expcnt*expcnt;
+			}
+		    }
                     st = 1;
-                    *val = cur;
+                    if (!suppress) *val = cur;
                 }
                 break;
             case 's': { /* read a word */
-                    char*str = va_arg(ap, char*);
+                    char*str = suppress ? NULL : va_arg(ap, char*);
                     char*sptr = str;
                     /* skip initial whitespace */
                     while ((nch!=MSVCRT_EOF) && isspace(nch))
                         nch = MSVCRT_fgetc(file);
                     /* read until whitespace */
-                    while ((nch!=MSVCRT_EOF) && !isspace(nch)) {
-                        *sptr++ = nch; st++;
+                    while (width!=0 && (nch!=MSVCRT_EOF) && !isspace(nch)) {
+                        if (!suppress) *sptr++ = nch;
+			st++;
                         nch = MSVCRT_fgetc(file);
+			if (width>0) width--;
                     }
                     /* terminate */
-                    *sptr = 0;
+                    if (!suppress) *sptr = 0;
                     TRACE("read word: %s\n", str);
                 }
                 break;
             default: FIXME("unhandled: %%%c\n", *format);
+		/* From spec: "if a percent sign is followed by a character
+		 * that has no meaning as a format-control character, that
+		 * character and the following characters are treated as
+		 * an ordinary sequence of characters, that is, a sequence
+		 * of characters that must match the input.  For example,
+		 * to specify that a percent-sign character is to be input,
+		 * use %%."
+		 * LEAVING AS-IS because we catch bugs better that way. */
             }
-            if (st) rd++;
+            if (st && !suppress) rd++;
             else break;
         }
+	/* a non-white-space character causes scanf to read, but not store,
+	 * a matching non-white-space character. */
         else {
             /* check for character match */
             if (nch == *format)
@@ -1668,10 +1808,10 @@ int MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
         }
         format++;
     }
-    va_end(ap);
     if (nch!=MSVCRT_EOF) {
-        WARN("need ungetch\n");
+        FIXME("need ungetch\n");
     }
+    va_end(ap);
     TRACE("returning %d\n", rd);
     return rd;
 }
