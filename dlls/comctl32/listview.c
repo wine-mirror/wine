@@ -4062,56 +4062,32 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
  */
 static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL isW)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  NMLVDISPINFOW dispInfo;
-  LISTVIEW_ITEM *lpItem;
-  HDPA hdpaSubItems;
-  LISTVIEW_ITEM lvItemRef;
-  LVITEMW item;
-  BOOL bResult = TRUE;
-  INT nItem = infoPtr->nEditLabelItem;
+    NMLVDISPINFOW dispInfo;
 
-  TRACE("(pszText=%s, nItem=%d, isW=%d)\n", debugtext_t(pszText, isW), nItem, isW);
+    TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
-  infoPtr->bEditing = FALSE;
-  if (!(lStyle & LVS_OWNERDATA))
-  {
-    if (!(hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-	  return FALSE;
+    infoPtr->bEditing = FALSE;
 
-    if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
-  	  return FALSE;
-  }
-  else
-  {
-    ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
-    item.iItem = nItem;
-    item.iSubItem = 0;
-    item.mask = LVIF_PARAM | LVIF_STATE;
-    item.stateMask = ~0;
-    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return FALSE;
-    lvItemRef.hdr.iImage = item.iImage;
-    lvItemRef.state = item.state;
-    lvItemRef.lParam = item.lParam;
-    lpItem = &lvItemRef;
-  }
+    ZeroMemory(&dispInfo, sizeof(dispInfo));
+    dispInfo.item.mask = LVIF_PARAM | LVIF_STATE;
+    dispInfo.item.iItem = infoPtr->nEditLabelItem;
+    dispInfo.item.iSubItem = 0;
+    dispInfo.item.stateMask = ~0;
+    if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item, TRUE)) return FALSE;
+    dispInfo.item.pszText = pszText;
+    dispInfo.item.cchTextMax = textlenT(pszText, isW);
 
-  ZeroMemory(&dispInfo, sizeof(dispInfo));
-  dispInfo.item.mask = 0;
-  dispInfo.item.iItem = nItem;
-  dispInfo.item.state = lpItem->state;
-  dispInfo.item.stateMask = 0; /* FIXME: why not copy the state mask in here? */
-  dispInfo.item.pszText = pszText;
-  dispInfo.item.cchTextMax = textlenT(pszText, isW);
-  dispInfo.item.iImage = lpItem->hdr.iImage;
-  dispInfo.item.lParam = lpItem->lParam;
+    /* Do we need to update the Item Text */
+    if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW)) return FALSE;
+    if (!pszText) return TRUE;
 
-  /* Do we need to update the Item Text */
-  if(notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW))
-    if (lpItem->hdr.pszText != LPSTR_TEXTCALLBACKW && !(lStyle & LVS_OWNERDATA))
-      bResult = textsetptrT(&lpItem->hdr.pszText, pszText, isW);
-
-  return bResult;
+    ZeroMemory(&dispInfo, sizeof(dispInfo));
+    dispInfo.item.mask = LVIF_TEXT;
+    dispInfo.item.iItem = infoPtr->nEditLabelItem;
+    dispInfo.item.iSubItem = 0;
+    dispInfo.item.pszText = pszText;
+    dispInfo.item.cchTextMax = textlenT(pszText, isW);
+    return LISTVIEW_SetItemT(infoPtr, &dispInfo.item, isW);
 }
 
 /***
@@ -4129,92 +4105,54 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
  */
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 {
-  NMLVDISPINFOW dispInfo;
-  RECT rect;
-  LISTVIEW_ITEM *lpItem;
-  HWND hedit;
-  HDPA hdpaSubItems;
-  WCHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMW lvItem;
-  LISTVIEW_ITEM lvItemRef;
-  LONG lStyle = infoPtr->dwStyle;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
+    NMLVDISPINFOW dispInfo;
+    RECT rect;
 
-  if (~infoPtr->dwStyle & LVS_EDITLABELS)
-      return FALSE;
+    TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
-  infoPtr->nEditLabelItem = nItem;
+    if (~infoPtr->dwStyle & LVS_EDITLABELS) return 0;
 
-  TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
+    infoPtr->nEditLabelItem = nItem;
 
-  /* Is the EditBox still there, if so remove it */
-  if(infoPtr->hwndEdit != 0)
-  {
-      SetFocus(infoPtr->hwndSelf);
-      infoPtr->hwndEdit = 0;
-  }
+    /* Is the EditBox still there, if so remove it */
+    if(infoPtr->hwndEdit != 0)
+    {
+        SetFocus(infoPtr->hwndSelf);
+        infoPtr->hwndEdit = 0;
+    }
 
-  LISTVIEW_SetSelection(infoPtr, nItem);
-  LISTVIEW_SetItemFocus(infoPtr, nItem);
+    LISTVIEW_SetSelection(infoPtr, nItem);
+    LISTVIEW_SetItemFocus(infoPtr, nItem);
 
-  if (!(lStyle & LVS_OWNERDATA))
-  {
-    if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-  	  return 0;
+    rect.left = LVIR_LABEL;
+    if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rect)) return 0;
+    
+    ZeroMemory(&dispInfo, sizeof(dispInfo));
+    dispInfo.item.mask = LVIF_PARAM | LVIF_STATE | LVIF_TEXT;
+    dispInfo.item.iItem = nItem;
+    dispInfo.item.iSubItem = 0;
+    dispInfo.item.stateMask = ~0;
+    dispInfo.item.pszText = szDispText;
+    dispInfo.item.cchTextMax = DISP_TEXT_SIZE;
+    if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, FALSE, isW)) return 0;
 
-    if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
-  	  return 0;
-  }
-  else
-  {
-    LVITEMW item;
-    item.iItem = nItem;
-    item.iSubItem = 0;
-    item.mask = LVIF_PARAM | LVIF_STATE;
-    item.stateMask = ~0;
-    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return FALSE;
-    lvItemRef.hdr.iImage = item.iImage;
-    lvItemRef.state = item.state;
-    lvItemRef.lParam = item.lParam;
-    lpItem = &lvItemRef;
-  }
+    infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, WS_VISIBLE,
+		    rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, isW);
+    if (!infoPtr->hwndEdit) return 0;
+    
+    if (notify_dispinfoT(infoPtr, LVN_BEGINLABELEDITW, &dispInfo, isW))
+    {
+	SendMessageW(infoPtr->hwndEdit, WM_CLOSE, 0, 0);
+	infoPtr->hwndEdit = 0;
+	return 0;
+    }
 
-  /* get information needed for drawing the item */
-  lvItem.mask = LVIF_TEXT;
-  lvItem.iItem = nItem;
-  lvItem.iSubItem = 0;
-  lvItem.cchTextMax = DISP_TEXT_SIZE;
-  lvItem.pszText = szDispText;
-  *lvItem.pszText = '\0';
-  if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, isW)) return FALSE;
-
-  ZeroMemory(&dispInfo, sizeof(dispInfo));
-  dispInfo.item.mask = 0;
-  dispInfo.item.iItem = nItem;
-  dispInfo.item.state = lpItem->state;
-  dispInfo.item.stateMask = 0; /* FIXME: why not copy the state mask in here? */
-  dispInfo.item.pszText = lvItem.pszText;
-  dispInfo.item.cchTextMax = lstrlenW(lvItem.pszText);
-  dispInfo.item.iImage = lpItem->hdr.iImage;
-  dispInfo.item.lParam = lpItem->lParam;
-
-  if (notify_dispinfoT(infoPtr, LVN_BEGINLABELEDITW, &dispInfo, isW))
-	  return 0;
-
-  rect.left = LVIR_LABEL;
-  if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rect))
-	  return 0;
-
-  if (!(hedit = CreateEditLabelT(infoPtr, szDispText, WS_VISIBLE,
-		 rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, isW)))
-	 return 0;
-
-  infoPtr->hwndEdit = hedit;
-
-  ShowWindow(infoPtr->hwndEdit,SW_NORMAL);
-  infoPtr->bEditing = TRUE;
-  SetFocus(infoPtr->hwndEdit);
-  SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
-  return infoPtr->hwndEdit;
+    infoPtr->bEditing = TRUE;
+    ShowWindow(infoPtr->hwndEdit, SW_NORMAL);
+    SetFocus(infoPtr->hwndEdit);
+    SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
+    return infoPtr->hwndEdit;
 }
 
 
