@@ -53,6 +53,12 @@ static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
+static void MMSYSTEM_Yield(void)
+{
+    DWORD count;
+    ReleaseThunkLock(&count);
+    RestoreThunkLock(count);
+}
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -87,6 +93,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         pFnCloseDriver16  = DRIVER_CloseDriver16;
         pFnSendMessage16  = DRIVER_SendMessage16;
         pFnMmioCallback16 = MMIO_Callback16;
+        pFnYield16        = MMSYSTEM_Yield;
         MMDRV_Init16();
 	break;
     case DLL_PROCESS_DETACH:
