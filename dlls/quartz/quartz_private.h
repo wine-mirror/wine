@@ -59,7 +59,8 @@ typedef struct tagENUMEDIADETAILS
 
 HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum);
 HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMediaTypes ** ppEnum);
-HRESULT IEnumRegFiltersImpl_Create(REGFILTER* pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum);
+HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum);
+HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum);
 
 extern const char * qzdebugstr_guid(const GUID * id);
 extern const char * qzdebugstr_State(FILTER_STATE state);

@@ -288,9 +288,9 @@ static HRESULT WINAPI Graphbuilder_EnumFilters(IGraphBuilder *iface,
 					      IEnumFilters **ppEnum) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, ppEnum);
-
-    return S_OK;
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
+    
+    return IEnumFiltersImpl_Construct(This->ppFiltersInGraph, This->nFilters, ppEnum);
 }
 
 static HRESULT WINAPI Graphbuilder_FindFilterByName(IGraphBuilder *iface,

@@ -1094,7 +1094,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     if (!nb_mon)
     {
         IEnumMoniker_Release(ppEnumMoniker);
-        return IEnumRegFiltersImpl_Create(NULL, 0, ppEnum);
+        return IEnumRegFiltersImpl_Construct(NULL, 0, ppEnum);
     }
 
     regfilters = CoTaskMemAlloc(nb_mon * sizeof(REGFILTER));
@@ -1122,9 +1122,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
             hrSub = IPropertyBag_Read(pPropBagCat, wszClsidName, &var, NULL);
 
         if (SUCCEEDED(hrSub))
-        {
-            CLSIDFromString(V_UNION(&var, bstrVal), &clsid);
-        }
+            hrSub = CLSIDFromString(V_UNION(&var, bstrVal), &clsid);
 
         if (SUCCEEDED(hrSub))
             hrSub = IPropertyBag_Read(pPropBagCat, wszFriendlyName, &var, NULL);
@@ -1158,7 +1156,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         return hr;
     }
 
-    hr = IEnumRegFiltersImpl_Create(regfilters, nb_mon, ppEnum);
+    hr = IEnumRegFiltersImpl_Construct(regfilters, nb_mon, ppEnum);
     CoTaskMemFree(regfilters);
     IEnumMoniker_Release(ppEnumMoniker);
     
@@ -1490,4 +1488,3 @@ static ICOM_VTABLE(IFilterMapper) fmvtbl =
     FilterMapper_UnregisterPin,
     FilterMapper_EnumMatchingFilters
 };
-

@@ -37,7 +37,7 @@ typedef struct IEnumRegFiltersImpl
 
 static const struct IEnumRegFiltersVtbl IEnumRegFiltersImpl_Vtbl;
 
-HRESULT IEnumRegFiltersImpl_Create(REGFILTER* pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum)
+HRESULT IEnumRegFiltersImpl_Construct(REGFILTER* pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum)
 {
     IEnumRegFiltersImpl* pEnumRegFilters;
     REGFILTER* pRegFilters = NULL;
@@ -209,4 +209,3 @@ static const IEnumRegFiltersVtbl IEnumRegFiltersImpl_Vtbl =
     IEnumRegFiltersImpl_Reset,
     IEnumRegFiltersImpl_Clone
 };
-

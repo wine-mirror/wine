@@ -9,6 +9,7 @@ EXTRALIBS = -luuid $(LIBUNICODE)
 C_SRCS = \
 	avisplit.c \
 	control.c \
+	enumfilters.c \
 	enummedia.c \
 	enummoniker.c \
 	enumpins.c \
