@@ -951,6 +951,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall PrivateLoadLibrary(str) PrivateLoadLibrary
 @ stdcall PrivateFreeLibrary(long) PrivateFreeLibrary
 @ stdcall Get16DLLAddress(long str) Get16DLLAddress
+@ stdcall SetThreadExecutionState(long) SetThreadExecutionState
 
 # Windows 2000, Terminal Server 4.0 SP4 functions
 @ stdcall GetSystemWindowsDirectoryA(ptr long) GetSystemWindowsDirectoryA

@@ -1570,6 +1570,7 @@ DWORD       WINAPI SetTapeParameters(HANDLE,DWORD,LPVOID);
 DWORD       WINAPI SetTapePosition(HANDLE,DWORD,DWORD,DWORD,DWORD,BOOL);
 DWORD       WINAPI SetThreadAffinityMask(HANDLE,DWORD);
 BOOL        WINAPI SetThreadContext(HANDLE,const CONTEXT *);
+DWORD       WINAPI SetThreadExecutionState(EXECUTION_STATE);
 BOOL        WINAPI SetThreadLocale(LCID);
 BOOL        WINAPI SetThreadPriority(HANDLE,INT);
 BOOL        WINAPI SetThreadPriorityBoost(HANDLE,BOOL);

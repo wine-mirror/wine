@@ -342,6 +342,7 @@ typedef LPCSTR          PCTSTR,      LPCTSTR;
 typedef LONG            HRESULT;
 typedef DWORD           LCID,       *PLCID;
 typedef WORD            LANGID;
+typedef DWORD		EXECUTION_STATE;
 
 /* Handle type */
 

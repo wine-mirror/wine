@@ -755,6 +755,18 @@ BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
 	return TRUE;
 }
 
+/***********************************************************************
+ * SetThreadExecutionState (KERNEL32.@)
+ *
+ * Informs the system that activity is taking place for
+ * power management purposes.
+ */ 
+EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
+{
+    FIXME("(%ld): stub\n", flags);
+    return 0;
+}
+
 
 #ifdef __i386__
 
