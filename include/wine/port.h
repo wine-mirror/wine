@@ -240,9 +240,12 @@ int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */
 
 #ifdef __i386__
-#define wine_memcpy_unaligned memcpy
+extern inline void *memcpy_unaligned( void *dst, const void *src, size_t size )
+{
+    return memcpy( dst, src, size );
+}
 #else
-extern void *wine_memcpy_unaligned( void *dst, const void *src, size_t size );
+extern void *memcpy_unaligned( void *dst, const void *src, size_t size );
 #endif /* __i386__ */
 
 extern int mkstemps(char *template, int suffix_len);
@@ -314,6 +317,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 #define interlocked_xchg_ptr    __WINE_NOT_PORTABLE(interlocked_xchg_ptr)
 #define interlocked_xchg_add    __WINE_NOT_PORTABLE(interlocked_xchg_add)
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
+#define memcpy_unaligned        __WINE_NOT_PORTABLE(memcpy_unaligned)
 #define memmove                 __WINE_NOT_PORTABLE(memmove)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
