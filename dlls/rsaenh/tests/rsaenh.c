@@ -31,6 +31,8 @@ static const char szContainer[] = "winetest";
 static const unsigned char pbData[] = "Wine rocks totally!";
 static const char szProvider[] = MS_ENHANCED_PROV_A;
 
+static BOOL (WINAPI *pCryptDuplicateHash) (HCRYPTHASH, DWORD*, DWORD, HCRYPTHASH*);
+
 /*
 static void trace_hex(BYTE *pbData, DWORD dwLen) {
     char szTemp[256];
@@ -53,6 +55,8 @@ static int init_environment(void)
 {
     HCRYPTKEY hKey;
     BOOL result;
+        
+    pCryptDuplicateHash = (void *)GetProcAddress(GetModuleHandleA("advapi32.dll"), "CryptDuplicateHash");
         
     hProv = (HCRYPTPROV)INVALID_HANDLE_VALUE;
 
@@ -246,28 +250,30 @@ static void test_hashes(void)
     result = CryptHashData(hHash, (BYTE*)pbData, 5, 0);
     ok(result, "%08lx\n", GetLastError());
 
-    result = CryptDuplicateHash(hHash, 0, 0, &hHashClone);
-    ok(result, "%08lx\n", GetLastError());
-    
-    result = CryptHashData(hHashClone, (BYTE*)pbData+5, sizeof(pbData)-5, 0);
-    ok(result, "%08lx\n", GetLastError());
+    if(pCryptDuplicateHash) {
+        result = pCryptDuplicateHash(hHash, 0, 0, &hHashClone);
+        ok(result, "%08lx\n", GetLastError());
 
-    len = sizeof(DWORD);
-    result = CryptGetHashParam(hHashClone, HP_HASHSIZE, (BYTE*)&hashlen, &len, 0);
-    ok(result && (hashlen == 20), "%08lx, hashlen: %ld\n", GetLastError(), hashlen);
+        result = CryptHashData(hHashClone, (BYTE*)pbData+5, sizeof(pbData)-5, 0);
+        ok(result, "%08lx\n", GetLastError());
 
-    len = 20;
-    result = CryptGetHashParam(hHashClone, HP_HASHVAL, pbHashValue, &len, 0);
-    ok(result, "%08lx\n", GetLastError());
+        len = sizeof(DWORD);
+        result = CryptGetHashParam(hHashClone, HP_HASHSIZE, (BYTE*)&hashlen, &len, 0);
+        ok(result && (hashlen == 20), "%08lx, hashlen: %ld\n", GetLastError(), hashlen);
 
-    ok(!memcmp(pbHashValue, sha1hash, 20), "Wrong SHA1 hash!\n");
+        len = 20;
+        result = CryptGetHashParam(hHashClone, HP_HASHVAL, pbHashValue, &len, 0);
+        ok(result, "%08lx\n", GetLastError());
 
-    result = CryptDestroyHash(hHashClone);
-    ok(result, "%08lx\n", GetLastError());
+        ok(!memcmp(pbHashValue, sha1hash, 20), "Wrong SHA1 hash!\n");
+
+        result = CryptDestroyHash(hHashClone);
+        ok(result, "%08lx\n", GetLastError());
+    }
 
     result = CryptDestroyHash(hHash);
     ok(result, "%08lx\n", GetLastError());
-}    
+}
 
 static void test_block_cipher_modes()
 {
