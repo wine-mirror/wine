@@ -319,6 +319,18 @@ static void do_int2f_16( CONTEXT86 *context )
         break;
 
     case 0x80:  /* Release time-slice */
+	/* Linux sched_yield() still keeps burning CPU cycles
+	 * if the current process is the only one in highest priority list
+	 * (as Linux will immediately return to this process to waste
+	 * more CPU cycles), so sched_yield() is essentially useless for us
+	 * (poor API, if you ask me: its return code should indicate
+	 * whether other processes did run in between, in order for us
+	 * to be able to decide whether to do an additional Sleep() or not...)
+	 * Thus we better unconditionally use a well-balanced Sleep()
+	 * instead to really make sure the process calling int 0x2f/0x1680
+	 * *doesn't* use 100% CPU...
+	 */
+	Sleep(55); /* just wait 55ms (one "timer tick") for now. */
 	AL_reg(context) = 0;
         break;
 
