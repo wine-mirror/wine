@@ -1084,17 +1084,18 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	/* FIXME: check whether any hardware buffers are left */
 	/* FIXME: handle DSDHEAP_CREATEHEAP for hardware buffers */
 
-	/* Allocate system memory if applicable */
-	if ((ds->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
-		dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
-		if (dsb->buffer == NULL) {
-			WARN("out of memory\n");
-			HeapFree(GetProcessHeap(),0,dsb->pwfx);
-			HeapFree(GetProcessHeap(),0,dsb);
-			*pdsb = NULL;
-			return DSERR_OUTOFMEMORY;
-		}
+	/* Allocate an empty buffer */
+	dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
+	if (dsb->buffer == NULL) {
+		WARN("out of memory\n");
+		HeapFree(GetProcessHeap(),0,dsb->pwfx);
+		HeapFree(GetProcessHeap(),0,dsb);
+		*pdsb = NULL;
+		return DSERR_OUTOFMEMORY;
+	}
 
+	/* Allocate system memory for buffer if applicable */
+	if ((ds->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
 		dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 		if (dsb->buffer->memory == NULL) {
 			WARN("out of memory\n");
@@ -1118,15 +1119,6 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 			TRACE("IDsDriver_CreateSoundBuffer failed, falling back to software buffer\n");
 			use_hw = 0;
 			if (ds->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-				dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
-				if (dsb->buffer == NULL) {
-					WARN("out of memory\n");
-					HeapFree(GetProcessHeap(),0,dsb->pwfx);
-					HeapFree(GetProcessHeap(),0,dsb);
-					*pdsb = NULL;
-					return DSERR_OUTOFMEMORY;
-				}
-
 				dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 				if (dsb->buffer->memory == NULL) {
 					WARN("out of memory\n");
