@@ -4,6 +4,9 @@ SRCDIR    = @srcdir@
 VPATH	  = @srcdir@
 MODULE	  = none
 
+IDL_SRCS = \
+	wtypes.idl
+
 WINDOWS_INCLUDES = \
 	audevcod.h \
 	basetsd.h \
@@ -148,8 +151,8 @@ WINDOWS_INCLUDES = \
 	ws2tcpip.h \
 	wshisotp.h \
 	wsipx.h \
-	wtypes.h \
-	zmouse.h
+	zmouse.h \
+	$(IDL_SRCS:.idl=.h)
 
 MSVCRT_INCLUDES = \
 	msvcrt/conio.h \
@@ -229,6 +232,11 @@ WINE_INCLUDES = \
 EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
+
+.SUFFIXES: .idl .h
+
+.idl.h:
+	$(LDPATH) $(WIDL) $(DEFS) -h -H $@ $<
 
 install::
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys

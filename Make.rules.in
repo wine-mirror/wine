@@ -69,6 +69,7 @@ WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
 WMC          = $(TOOLSDIR)/tools/wmc/wmc
+WIDL         = $(TOOLSDIR)/tools/widl/widl
 LDPATH    = @LDPATH@
 DLLDIR    = $(TOPOBJDIR)/dlls
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
