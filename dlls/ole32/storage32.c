@@ -6969,3 +6969,8 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAM (
 
     return hRes;
 }
+
+HRESULT WINAPI GetConvertStg(LPGUID guid) {
+    FIXME("(%s), unimplemented stub!\n",debugstr_guid(guid));
+    return E_FAIL;
+}

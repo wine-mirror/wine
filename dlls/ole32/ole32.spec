@@ -79,7 +79,7 @@ debug_channels (ole relay storage)
  65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
  66 stub EnableHookObject
  67 stdcall GetClassFile(ptr ptr) GetClassFile
- 68 stub GetConvertStg
+ 68 stdcall GetConvertStg(ptr) GetConvertStg
  69 stub GetDocumentBitStg
  70 stdcall GetHGlobalFromILockBytes(ptr ptr) GetHGlobalFromILockBytes
  71 stdcall GetHGlobalFromStream(ptr ptr) GetHGlobalFromStream
