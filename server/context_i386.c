@@ -138,8 +138,9 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct kernel_user_regs_struct regs;
-        if ((flags & CONTEXT_FULL) != CONTEXT_FULL)  /* need to preserve some registers */
+        if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
         {
+            /* need to preserve some registers */
             if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
         }
         if (flags & CONTEXT_INTEGER)
@@ -250,8 +251,9 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct regs regs;
-        if ((flags & CONTEXT_FULL) != CONTEXT_FULL)  /* need to preserve some registers */
+        if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
         {
+            /* need to preserve some registers */
             if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
         }
         if (flags & CONTEXT_INTEGER)
@@ -358,8 +360,9 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct reg regs;
-        if ((flags & CONTEXT_FULL) != CONTEXT_FULL)  /* need to preserve some registers */
+        if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
         {
+            /* need to preserve some registers */
             if (ptrace( PTRACE_GETREGS, pid, 0, (int) &regs ) == -1) goto error;
         }
         if (flags & CONTEXT_INTEGER)
@@ -438,37 +441,30 @@ static void copy_context( CONTEXT *to, CONTEXT *from, int flags )
         to->SegFs = from->SegFs;
         to->SegGs = from->SegGs;
     }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->Dr0 = from->Dr0;
-        to->Dr1 = from->Dr1;
-        to->Dr2 = from->Dr2;
-        to->Dr3 = from->Dr3;
-        to->Dr6 = from->Dr6;
-        to->Dr7 = from->Dr7;
-    }
     if (flags & CONTEXT_FLOATING_POINT)
     {
         to->FloatSave = from->FloatSave;
     }
+    /* we don't bother copying the debug registers, since they */
+    /* always need to be accessed by ptrace anyway */
 }
 
 /* retrieve the current context of a thread */
 DECL_HANDLER(get_thread_context)
 {
     struct thread *thread;
+    int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
     {
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( &req->context, thread->context, req->flags );
+            copy_context( &req->context, thread->context, flags );
+            flags &= CONTEXT_DEBUG_REGISTERS;
         }
-        else
+        if (flags && suspend_for_ptrace( thread ))
         {
-            suspend_thread( thread, 0 );
-            if (thread->attached) get_thread_context( thread, req->flags, &req->context );
-            else set_error( STATUS_ACCESS_DENIED );
+            get_thread_context( thread, flags, &req->context );
             resume_thread( thread );
         }
         release_object( thread );
@@ -480,18 +476,18 @@ DECL_HANDLER(get_thread_context)
 DECL_HANDLER(set_thread_context)
 {
     struct thread *thread;
+    int flags = req->flags & ~CONTEXT_i386;  /* get rid of CPU id */
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( thread->context, &req->context, req->flags );
+            copy_context( thread->context, &req->context, flags );
+            flags &= CONTEXT_DEBUG_REGISTERS;
         }
-        else
+        if (flags && suspend_for_ptrace( thread ))
         {
-            suspend_thread( thread, 0 );
-            if (thread->attached) set_thread_context( thread, req->flags, &req->context );
-            else set_error( STATUS_ACCESS_DENIED );
+            set_thread_context( thread, flags, &req->context );
             resume_thread( thread );
         }
         release_object( thread );
