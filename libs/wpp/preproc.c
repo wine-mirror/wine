@@ -103,10 +103,12 @@ void *pp_xrealloc(void *p, size_t size)
 char *pp_xstrdup(const char *str)
 {
 	char *s;
+	int len;
 
 	assert(str != NULL);
-	s = pp_xmalloc(strlen(str)+1);
-	return strcpy(s, str);
+	len = strlen(str)+1;
+	s = pp_xmalloc(len);
+	return memcpy(s, str, len);
 }
 
 /* Don't comment on the hash, its primitive but functional... */
@@ -328,25 +330,25 @@ void wpp_add_include_path(const char *path)
 	tok = strtok(cpy, INCLUDESEPARATOR);
 	while(tok)
 	{
-		char *dir;
-		char *cptr;
-		if(strlen(tok) == 0)
-			continue;
-		dir = pp_xstrdup(tok);
-		for(cptr = dir; *cptr; cptr++)
-		{
-			/* Convert to forward slash */
-			if(*cptr == '\\')
-				*cptr = '/';
-		}
-		/* Kill eventual trailing '/' */
-		if(*(cptr = dir + strlen(dir)-1) == '/')
-			*cptr = '\0';
+		if(*tok) {
+			char *dir;
+			char *cptr;
+			dir = pp_xstrdup(tok);
+			for(cptr = dir; *cptr; cptr++)
+			{
+				/* Convert to forward slash */
+				if(*cptr == '\\')
+					*cptr = '/';
+			}
+			/* Kill eventual trailing '/' */
+			if(*(cptr = dir + strlen(dir)-1) == '/')
+				*cptr = '\0';
 
-		/* Add to list */
-		nincludepath++;
-		includepath = pp_xrealloc(includepath, nincludepath * sizeof(*includepath));
-		includepath[nincludepath-1] = dir;
+			/* Add to list */
+			nincludepath++;
+			includepath = pp_xrealloc(includepath, nincludepath * sizeof(*includepath));
+			includepath[nincludepath-1] = dir;
+		}
 		tok = strtok(NULL, INCLUDESEPARATOR);
 	}
 	free(cpy);
@@ -354,19 +356,28 @@ void wpp_add_include_path(const char *path)
 
 char *wpp_find_include(const char *name, int search)
 {
-    char *cpy = pp_xstrdup(name);
+    char *cpy;
     char *cptr;
+    const char *ccptr;
     int i, fd;
 
-    for(cptr = cpy; *cptr; cptr++)
+    cpy = pp_xmalloc(strlen(name)+1);
+    cptr = cpy;
+
+    for(ccptr = name; *ccptr; ccptr++)
     {
-        /* kill double backslash */
-        if(*cptr == '\\' && *(cptr+1) == '\\')
-            memmove(cptr, cptr+1, strlen(cptr));
         /* Convert to forward slash */
-        if(*cptr == '\\')
+        if(*ccptr == '\\') {
+            /* kill double backslash */
+            if(ccptr[1] == '\\')
+                ccptr++;
             *cptr = '/';
+        }else {
+            *cptr = *ccptr;
+        }
+        cptr++;
     }
+    *cptr = '\0';
 
     if(search)
     {
