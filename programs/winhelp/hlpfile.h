@@ -23,9 +23,10 @@ struct tagHelpFile;
 
 typedef struct
 {
-    LPCSTR                      lpszPath;
-    LONG                        lHash;
-    BOOL                        bPopup;
+    enum {hlp_link_none, hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
+    LPCSTR    lpszString;
+    LONG      lHash;
+    BOOL      bClrChange;
 } HLPFILE_LINK;
 
 enum para_type {para_normal_text, para_debug_text, para_image};

@@ -56,13 +56,7 @@ typedef struct tagHelpLinePart
             HBITMAP     hBitmap;
         } image;
     } u;
-
-    struct
-    {
-        LPCSTR    lpszPath;
-        LONG      lHash;
-        BOOL      bPopup;
-    } link;
+    HLPFILE_LINK        link;
 
     struct tagHelpLinePart *next;
 } WINHELP_LINE_PART;

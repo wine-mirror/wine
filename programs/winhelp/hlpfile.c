@@ -757,28 +757,31 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     strcpy(paragraph->u.text.lpszText, text);
                 }
 
-                if (attributes.link.lpszPath)
+                if (attributes.link.lpszString)
                 {
                     /* FIXME: should build a string table for the attributes.link.lpszPath
                      * they are reallocated for each link
                      */
                     paragraph->link = HeapAlloc(GetProcessHeap(), 0,
-                                                sizeof(HLPFILE_LINK) + strlen(attributes.link.lpszPath) + 1);
+                                                sizeof(HLPFILE_LINK) + strlen(attributes.link.lpszString) + 1);
                     if (!paragraph->link) return FALSE;
 
-                    paragraph->link->lpszPath = (char*)paragraph->link + sizeof(HLPFILE_LINK);
-                    strcpy((char*)paragraph->link->lpszPath, attributes.link.lpszPath);
-                    paragraph->link->lHash    = attributes.link.lHash;
+                    paragraph->link->cookie     = attributes.link.cookie;
+                    paragraph->link->lpszString = (char*)paragraph->link + sizeof(HLPFILE_LINK);
+                    strcpy((char*)paragraph->link->lpszString, attributes.link.lpszString);
+                    paragraph->link->lHash      = attributes.link.lHash;
+                    paragraph->link->bClrChange = attributes.link.bClrChange;
 
-                    paragraph->link->bPopup   = attributes.link.bPopup;
-                    WINE_TRACE("Link to %s/%08lx\n",
-                               paragraph->link->lpszPath, paragraph->link->lHash);
+                    WINE_TRACE("Link[%d] to %s/%08lx\n",
+                               paragraph->link->cookie, paragraph->link->lpszString, paragraph->link->lHash);
                 }
 #if 0
                 memset(&attributes, 0, sizeof(attributes));
 #else
                 attributes.hBitmap = 0;
-                attributes.link.lpszPath = NULL;
+                attributes.link.lpszString = NULL;
+                attributes.link.bClrChange = FALSE;
+                attributes.link.lHash = 0;
                 attributes.wVSpace = 0;
                 attributes.wHSpace = 0;
                 attributes.wIndent = 0;
@@ -880,53 +883,67 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 
             case 0x8B:
             case 0x8C:
-                WINE_FIXME("NIY\n");
+                WINE_FIXME("NIY non-break space/hyphen\n");
                 format += 1;
                 break;
 
 #if 0
-	    case 0xa9:
+	    case 0xA9:
                 format += 2;
                 break;
 #endif
 
-            case 0xc8:
-            case 0xcc:
-                WINE_FIXME("macro NIY %s\n", format + 3);
-                format += GET_USHORT(format, 1) + 3;
+            case 0xC8:
+            case 0xCC:
+                WINE_TRACE("macro => %s\n", format + 3);
+                attributes.link.bClrChange = !(*format & 4);
+                attributes.link.cookie     = hlp_link_macro;
+                attributes.link.lpszString = format + 3;
+                format += 3 + GET_USHORT(format, 1);
                 break;
 
-            case 0xe0:
-            case 0xe1:
+            case 0xE0:
+            case 0xE1:
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
                 format += 5;
                 break;
 
-	    case 0xe2:
-	    case 0xe3:
-                attributes.link.lpszPath = hlpfile->lpszPath;
-                attributes.link.lHash    = GET_UINT(format, 1);
-                attributes.link.bPopup   = !(*format & 1);
+	    case 0xE2:
+	    case 0xE3:
+                attributes.link.bClrChange = TRUE;
+                /* fall thru */
+            case 0xE6:
+            case 0xE7:
+                attributes.link.cookie     = (*format & 1) ? hlp_link_link : hlp_link_popup;
+                attributes.link.lpszString = hlpfile->lpszPath;
+                attributes.link.lHash      = GET_UINT(format, 1);
                 format += 5;
                 break;
 
-            case 0xe6:
-            case 0xe7:
-                WINE_WARN("jump topic 2 => %u\n", GET_UINT(format, 1));
-                format += 5;
-                break;
-
-	    case 0xea:
-                attributes.link.lpszPath = format + 8;
-                attributes.link.lHash    = GET_UINT(format, 4);
-                attributes.link.bPopup   = !(*format & 1);
-                format += 3 + GET_USHORT(format, 1);
-                break;
-
-            case 0xee:
-            case 0xef:
-            case 0xeb:
-                WINE_WARN("jump to external file\n");
+	    case 0xEA:
+            case 0xEB:
+            case 0xEE:
+            case 0xEF:
+                {
+                    char* ptr = format + 8;
+                    BYTE  type = format[3];
+                    
+                    attributes.link.cookie     = hlp_link_link;
+                    attributes.link.lHash      = GET_UINT(format, 4);
+                    attributes.link.bClrChange = !(*format & 1);
+                    
+                    if (type == 1) 
+                    {WINE_FIXME("Unsupported wnd number %d for link\n", *ptr); ptr++;}
+                    if (type == 4 || type == 6)
+                    {
+                        attributes.link.lpszString = ptr;
+                        ptr += strlen(ptr) + 1;
+                    }
+                    else
+                        attributes.link.lpszString = hlpfile->lpszPath;
+                    if (type == 6)
+                        WINE_FIXME("Unsupported wnd name '%s' for link\n", ptr);
+                }
                 format += 3 + GET_USHORT(format, 1);
                 break;
 
