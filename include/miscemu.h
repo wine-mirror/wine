@@ -124,7 +124,6 @@ extern void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handle
 extern int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
 
 /* msdos/ioports.c */
-extern void IO_port_init (void);
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 

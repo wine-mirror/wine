@@ -63,7 +63,7 @@ static BYTE cmosimage[64] =
 
 extern int iopl(int level);
 
-static char do_direct_port_access = 0;
+static char do_direct_port_access = -1;
 static char port_permissions[0x10000];
 
 #define IO_READ  1
@@ -222,11 +222,12 @@ static inline void outl( DWORD value, WORD port )
 
 #endif  /* DIRECT_IO_ACCESS */
 
-void IO_port_init()
+static void IO_port_init(void)
 {
 #ifdef DIRECT_IO_ACCESS
 	char temp[1024];
 
+        do_direct_port_access = 0;
 	/* Can we do that? */
 	if (!iopl(3)) {
 		iopl(0);
@@ -255,7 +256,8 @@ DWORD IO_inport( int port, int size )
 
     TRACE("%d-byte value from port 0x%02x\n", size, port );
 
-#ifdef DIRECT_IO_ACCESS    
+#ifdef DIRECT_IO_ACCESS
+    if (do_direct_port_access == -1) IO_port_init();
     if ((do_direct_port_access)
         /* Make sure we have access to the port */
         && (port_permissions[port] & IO_READ))
@@ -365,6 +367,7 @@ void IO_outport( int port, int size, DWORD value )
                  value, size, port );
 
 #ifdef DIRECT_IO_ACCESS
+    if (do_direct_port_access == -1) IO_port_init();
     if ((do_direct_port_access)
         /* Make sure we have access to the port */
         && (port_permissions[port] & IO_WRITE))
