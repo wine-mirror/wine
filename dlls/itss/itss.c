@@ -163,7 +163,7 @@ static IClassFactoryVtbl ITSSCF_Vtbl =
 };
 
 
-HRESULT WINAPI ITSS_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     DWORD i;
     IClassFactoryImpl *factory;
@@ -407,13 +407,13 @@ static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 /*****************************************************************************/
 
-HRESULT WINAPI ITSS_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     FIXME("\n");
     return S_OK;
 }
 
-HRESULT WINAPI ITSS_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("dll_count = %lu\n", dll_count);
     return dll_count ? S_FALSE : S_OK;

@@ -1,5 +1,5 @@
-@ stdcall -private DllCanUnloadNow() ITSS_DllCanUnloadNow
-@ stdcall -private DllGetClassObject(ptr ptr ptr) ITSS_DllGetClassObject
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllInstall
-@ stdcall -private DllRegisterServer() ITSS_DllRegisterServer
+@ stdcall -private DllRegisterServer()
 @ stub DllUnregisterServer
