@@ -232,15 +232,3 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
     return S_OK;
 }
 
-/***********************************************************************
- *           OleSave     [OLE32.124]
- */
-HRESULT WINAPI OleSave(
-    LPPERSISTSTORAGE pPS,
-    LPSTORAGE pStg,
-    BOOL fSameAsLoad)
-{
-    FIXME(ole,"(%p,%p,%x), stub!\n", pPS, pStg, fSameAsLoad);
-    return S_OK;
-}
-

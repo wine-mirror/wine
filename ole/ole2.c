@@ -773,6 +773,45 @@ HRESULT WINAPI OleLoad(
 }
 
 /***********************************************************************
+ *           OleSave     [OLE32.124]
+ */
+HRESULT WINAPI OleSave(
+  LPPERSISTSTORAGE pPS,
+  LPSTORAGE        pStg,
+  BOOL             fSameAsLoad)
+{
+  HRESULT hres;
+  CLSID   objectClass;
+
+  TRACE(ole,"(%p,%p,%x)\n", pPS, pStg, fSameAsLoad);
+
+  /*
+   * First, we transfer the class ID (if available)
+   */
+  hres = IPersistStorage_GetClassID(pPS, &objectClass);
+
+  if (SUCCEEDED(hres))
+  {
+    WriteClassStg(pStg, &objectClass);
+  }
+
+  /*
+   * Then, we ask the object to save itself to the
+   * storage. If it is successful, we commit the storage.
+   */
+  hres = IPersistStorage_Save(pPS, pStg, fSameAsLoad);
+
+  if (SUCCEEDED(hres))
+  {
+    IStorage_Commit(pStg,
+		    STGC_DEFAULT);
+  }
+  
+  return hres;
+}
+
+
+/***********************************************************************
  * OleGetClipboard32 [OLE32.105]
  */
 HRESULT WINAPI OleGetClipboard(

@@ -24,10 +24,10 @@
  *   done in this area.
  *
  * - Some functions still return E_NOTIMPL they have to be 
- *   implemented most of those are related to the running of the
+ *   implemented. Most of those are related to the running of the
  *   actual server.
  *
- * - All the methods releated to notification and advise sinks are
+ * - All the methods related to notification and advise sinks are
  *   in place but no notifications are sent to the sinks yet.
  */
 #include <assert.h>

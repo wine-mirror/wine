@@ -241,8 +241,10 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(
 
   /*
    * Return the index as the cookie.
+   * Since 0 is not a valid cookie, we will increment by
+   * 1 the index in the table.
    */
-  *pdwConnection = index;
+  *pdwConnection = index+1;
 
   return S_OK;
 }
@@ -259,9 +261,17 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
   TRACE(ole, "(%p, %lu)\n", This, dwConnection);
 
   /*
+   * So we don't return 0 as a cookie, the index was 
+   * incremented by 1 in OleAdviseHolderImpl_Advise
+   * we have to compensate.
+   */
+  dwConnection--;
+  
+  /*
    * Check for invalid cookies.
    */
-  if (dwConnection >= This->maxSinks)
+  if ( (dwConnection < 0) || 
+       (dwConnection >= This->maxSinks) )
     return OLE_E_NOCONNECTION;
 
   if (This->arrayOfSinks[dwConnection] == NULL)
