@@ -603,8 +603,7 @@ INT16 WINAPI WriteDialog16(HPJOB16 hJob, LPSTR lpMsg, INT16 cchMsg)
 
     TRACE("%04x %04x '%s'\n", hJob,  cchMsg, lpMsg);
 
-    nRet = MessageBox16(0, lpMsg, "Printing Error", MB_OKCANCEL);
-    return nRet;
+    return Callout.MessageBoxA(0, lpMsg, "Printing Error", MB_OKCANCEL);
 }
 
 

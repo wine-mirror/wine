@@ -68,6 +68,7 @@
 #include "process.h"
 #include "winerror.h"
 #include "services.h"
+#include "callback.h"
 #include "file.h"
 
 #include "debugtools.h"
@@ -298,7 +299,7 @@ static void CALLBACK comm_notification( ULONG_PTR private )
   /* send notifications, if any */
   if (ptr->wnd && mask) {
     TRACE("notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
-    PostMessage16(ptr->wnd, WM_COMMNOTIFY, cid, mask);
+    Callout.PostMessage16(ptr->wnd, WM_COMMNOTIFY, cid, mask);
   }
 }
 

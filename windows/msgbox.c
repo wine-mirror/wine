@@ -399,37 +399,3 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 
     return MessageBoxIndirectA(&msgboxa);
 }
-
-
-/**************************************************************************
- *           FatalAppExit16   (KERNEL.137)
- */
-void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
-{
-    WARN("AppExit\n");
-    FatalAppExitA( action, str );
-}
-
-
-/**************************************************************************
- *           FatalAppExit32A   (KERNEL32.108)
- */
-void WINAPI FatalAppExitA( UINT action, LPCSTR str )
-{
-    WARN("AppExit\n");
-    MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    ExitProcess(0);
-}
-
-
-/**************************************************************************
- *           FatalAppExit32W   (KERNEL32.109)
- */
-void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
-{
-    WARN("AppExit\n");
-    MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    ExitProcess(0);
-}
-
-

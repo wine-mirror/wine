@@ -31,6 +31,7 @@
 #include "ntddk.h"
 #include "wine/exception.h"
 #include "ldt.h"
+#include "callback.h"
 #include "process.h"
 #include "thread.h"
 #include "stackframe.h"
@@ -92,7 +93,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     sprintf( message, "Unhandled exception 0x%08lx at address 0x%08lx.",
              epointers->ExceptionRecord->ExceptionCode,
              (DWORD)epointers->ExceptionRecord->ExceptionAddress );
-    MessageBoxA( 0, message, "Error", MB_OK | MB_ICONHAND );
+    Callout.MessageBoxA( 0, message, "Error", MB_OK | MB_ICONHAND );
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -107,6 +108,38 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
     LPTOP_LEVEL_EXCEPTION_FILTER old = pdb->top_filter;
     pdb->top_filter = filter;
     return old;
+}
+
+
+/**************************************************************************
+ *           FatalAppExit16   (KERNEL.137)
+ */
+void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
+{
+    WARN("AppExit\n");
+    FatalAppExitA( action, str );
+}
+
+
+/**************************************************************************
+ *           FatalAppExitA   (KERNEL32.108)
+ */
+void WINAPI FatalAppExitA( UINT action, LPCSTR str )
+{
+    WARN("AppExit\n");
+    Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    ExitProcess(0);
+}
+
+
+/**************************************************************************
+ *           FatalAppExitW   (KERNEL32.109)
+ */
+void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
+{
+    WARN("AppExit\n");
+    Callout.MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    ExitProcess(0);
 }
 
 
