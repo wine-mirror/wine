@@ -3,6 +3,7 @@ SUBDIRS = \
 	clock \
 	cmdlgtst \
 	control \
+	osversioncheck \
 	notepad \
 	progman \
 	regapi \

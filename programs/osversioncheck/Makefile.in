@@ -1,0 +1,30 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = osversioncheck
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+
+C_SRCS = osversioncheck.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+#this line is needed to prevent winestub.o being linked
+WINESTUB = 
+
+osversioncheck: $(OBJS)
+	$(CC) -o osversioncheck $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+
+install: dummy
+	$(INSTALL_PROGRAM) osversioncheck $(bindir)/osversioncheck
+
+uninstall: dummy
+	$(RM) $(bindir)/osversioncheck
+
+dummy:
+
+### Dependencies:

@@ -890,6 +890,7 @@ programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/avitools/Makefile
+programs/osversioncheck/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regtest/Makefile
