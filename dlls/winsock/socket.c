@@ -3832,7 +3832,6 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
 {
     INT size;
     CHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
-    static const CHAR format[] = "%d.%d.%d.%d:%d";
     CHAR *p;
 
     TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
@@ -3842,11 +3841,11 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     /* sin_family is garanteed to be the first u_short */
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
 
-    sprintf( buffer, format,
-             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff,
-             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff,
-             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff,
-             ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff,
+    sprintf( buffer, "%u.%u.%u.%u:%u",
+             (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff),
+             (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff),
+             (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff),
+             (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff),
              ntohs( ((SOCKADDR_IN *)sockaddr)->sin_port ) );
 
     p = strchr( buffer, ':' );
@@ -3892,7 +3891,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
 {
     INT size;
     WCHAR buffer[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
-    static const WCHAR format[] = { '%','d','.','%','d','.','%','d','.','%','d', ':', '%', 'd',0 };
+    static const WCHAR format[] = { '%','u','.','%','u','.','%','u','.','%','u',':','%','u',0 };
     WCHAR *p;
 
     TRACE( "(%p, %lx, %p, %p, %ld)\n", sockaddr, len, info, string, *lenstr );
@@ -3903,10 +3902,10 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
 
     sprintfW( buffer, format,
-              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff,
-              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff,
-              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff,
-              ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff,
+              (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff),
+              (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff),
+              (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff),
+              (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff),
               ntohs( ((SOCKADDR_IN *)sockaddr)->sin_port ) );
 
     p = strchrW( buffer, ':' );
