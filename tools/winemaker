@@ -677,6 +677,8 @@ sub source_scan_directory($$$$)
 	$name =~ s+(/|\.[^.]*)$++;
 	if ($opt_target_type == $TT_DLL) {
 	  $name = "$name.dll";
+	} else {
+	  $name = "$name.exe";
 	}
 	$targets{$name}=1;
       }
@@ -1784,8 +1786,24 @@ sub generate_project_files($)
     # Iterate over all the targets...
     foreach my $target (@{@$project[$P_TARGETS]}) {
       print FILEO "### @$target[$T_NAME] sources and settings\n\n";
+      my $appmode;
+      my $basemodule=@$target[$T_NAME];
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s+_so$++;
+      if (@$target[$T_TYPE] == $TT_CUIEXE) {
+        $appmode = "cui";
+        $basemodule =~ s/\.exe$//;
+      } elsif (@$target[$T_TYPE] == $TT_GUIEXE) {
+        $appmode = "gui";
+        $basemodule =~ s/\.exe$//;
+      } else {
+        $appmode = "";
+        $basemodule =~ s/\.dll$//;
+      }
+
+      generate_list("${canon}_MODULE",1,[@$target[$T_NAME]]);
+      generate_list("${canon}_BASEMODULE",1,[$basemodule]);
+      generate_list("${canon}_APPMODE",1,[$appmode]);
       generate_list("${canon}_C_SRCS",1,@$target[$T_SOURCES_C]);
       generate_list("${canon}_CXX_SRCS",1,@$target[$T_SOURCES_CXX]);
       generate_list("${canon}_RC_SRCS",1,@$target[$T_SOURCES_RC]);
@@ -1862,7 +1880,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(EXES:%.exe=%)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
     print FILEO "\t_list=\"\$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(dlldir); done\n";
   }
   print FILEO "\n";
@@ -1873,7 +1891,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES:%.exe=%)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
     print FILEO "\t_list=\"\$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(dlldir)/\$\$i;done\n";
   }
   print FILEO "\n";
@@ -1883,7 +1901,7 @@ sub generate_project_files($)
       print FILEO " wineapploader";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-      print FILEO " \$(EXES)";
+      print FILEO " \$(EXES:%.exe=%)";
   }
   print FILEO "\n\n";
 
@@ -1896,10 +1914,8 @@ sub generate_project_files($)
       my $all_libs;
 
       $canon =~ s/_so$//;
-      if (@$target[$T_TYPE] == $TT_GUIEXE) {
-	  $mode = "-m gui --exe @$target[$T_NAME]";
-      } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
-	  $mode = "-m cui --exe @$target[$T_NAME]";
+      if ((@$target[$T_TYPE]==$TT_GUIEXE) || (@$target[$T_TYPE]==$TT_CUIEXE)) {
+	  $mode = "--exe \$(${canon}_MODULE) -m\$(${canon}_APPMODE)";
       } else {
 	  $mode = "";
       }
@@ -1912,18 +1928,18 @@ sub generate_project_files($)
         $all_libs="\$(${canon}_LIBRARIES:%=-l%) \$(ALL_LIBRARIES)";
       }
 
-      print FILEO "@$target[$T_NAME].spec.c: \$(${canon}_SPEC_SRCS) \$(${canon}_RC_SRCS:.rc=.res) \$(${canon}_OBJS)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC -o \$\@ \$(${canon}_SPEC_SRCS:%=--spec %) \$(${canon}_RC_SRCS:%.rc=-r %.res) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls $mode \$(${canon}_OBJS)\n";
+      print FILEO "\$(${canon}_MODULE).spec.c: \$(${canon}_SPEC_SRCS) \$(${canon}_RC_SRCS:.rc=.res) \$(${canon}_OBJS)\n";
+      print FILEO "\t\$(LDPATH) \$(WINEBUILD) -fPIC -o \$\@ $mode \$(${canon}_SPEC_SRCS:%=--spec %) \$(${canon}_RC_SRCS:%.rc=%.res) \$(${canon}_OBJS) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls\n";
       print FILEO "\n";
-      print FILEO "@$target[$T_NAME].so: @$target[$T_NAME].spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
+      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_MODULE).spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS)\n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(LDXXSHARED)";
       } else {
         print FILEO "\t\$(LDSHARED)";
       }
-      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) @$target[$T_NAME].spec.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
-      if (@$target[$T_TYPE] ne $TT_DLL) {
-        print FILEO "\ttest -f @$target[$T_NAME] || \$(INSTALL_SCRIPT) wineapploader @$target[$T_NAME]\n";
+      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).spec.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
+      if (@$target[$T_TYPE] != $TT_DLL) {
+        print FILEO "\ttest -f \$(${canon}_BASEMODULE) || \$(INSTALL_SCRIPT) wineapploader \$(${canon}_BASEMODULE)\n";
       }
       print FILEO "\n\n";
     }
@@ -1931,7 +1947,7 @@ sub generate_project_files($)
   close(FILEO);
 
   foreach my $target (@{@$project[$P_TARGETS]}) {
-    if (@$target[$T_TYPE] eq $TT_DLL) {
+    if (@$target[$T_TYPE] == $TT_DLL) {
       generate_spec_file(@$project[$P_PATH],$target,$project_settings);
     }
     if (@$target[$T_FLAGS] & $TF_WRAPPER) {
@@ -2622,7 +2638,7 @@ AC_SUBST($1)
 
 dnl **** Try to find where winelib is located ****
 
-LD_PATH=""
+LDPATH=""
 WINE_INCLUDE_ROOT=""
 WINE_INCLUDE_PATH=""
 WINE_LIBRARY_ROOT=""
@@ -2736,7 +2752,7 @@ AC_PATH_LIBRARY(WINE_LIBRARY_ROOT,[-lwine],[],[
 if test -n "$WINE_LIBRARY_ROOT"
 then
   WINE_LIBRARY_PATH="-L$WINE_LIBRARY_ROOT"
-  LD_PATH="$WINE_LIBRARY_ROOT"
+  LDPATH="$WINE_LIBRARY_ROOT"
 else
   WINE_LIBRARY_PATH=""
 fi
@@ -2756,7 +2772,7 @@ AC_PATH_LIBRARY(WINE_UNICODE_ROOT,[-lwine_unicode],[$WINE_LIBRARY_PATH -lwine],[
 if test -n "$WINE_UNICODE_ROOT" -a "$WINE_UNICODE_ROOT" != "$WINE_LIBRARY_ROOT"
 then
   WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UNICODE_ROOT"
-  LD_PATH="$LD_PATH:$WINE_UNICODE_ROOT"
+  LDPATH="$LDPATH:$WINE_UNICODE_ROOT"
 fi
 
 if test -z "$WINE_UUID_ROOT"
@@ -2774,7 +2790,6 @@ AC_PATH_LIBRARY(WINE_UUID_ROOT,[-lwine_uuid],[$WINE_LIBRARY_PATH -lwine],[
 if test -n "$WINE_UUID_ROOT" -a "$WINE_UUID_ROOT" != "$WINE_LIBRARY_ROOT"
 then
   WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UUID_ROOT"
-  LD_PATH="$LD_PATH:$WINE_UUID_ROOT"
 fi
 
 if test -z "$WINE_DLL_ROOT"
@@ -2795,13 +2810,13 @@ AC_PATH_LIBRARY(WINE_DLL_ROOT,[-lntdll.dll],[$WINE_LIBRARY_PATH -lwine -lwine_un
 ],[$WINE_DLL_ROOT])
 WINE_DLL_PATH="-L$WINE_DLL_ROOT/wine"
 
-if test -n "$LD_PATH"
+if test -n "$LDPATH"
 then
-  LD_PATH="$LD_PATH:$WINE_DLL_ROOT"
+  LDPATH="$LDPATH:$WINE_DLL_ROOT"
 else
-  LD_PATH="$WINE_DLL_ROOT"
+  LDPATH="$WINE_DLL_ROOT"
 fi
-LD_PATH="LD_LIBRARY_PATH=\"$LD_PATH:\$\$LD_LIBRARY_PATH\""
+LDPATH="LD_LIBRARY_PATH=\"$LDPATH:\$\$LD_LIBRARY_PATH\""
 
 if test -z "$WINE_TOOL_PATH"
 then
@@ -2823,7 +2838,7 @@ then
   AC_MSG_ERROR([Could not find Wine's wrc tool])
 fi
 
-AC_SUBST(LD_PATH)
+AC_SUBST(LDPATH)
 AC_SUBST(WINE_INCLUDE_PATH)
 AC_SUBST(WINE_LIBRARY_PATH)
 AC_SUBST(WINE_DLL_PATH)
@@ -3009,7 +3024,7 @@ WINE_LIBRARY_PATH = @WINE_LIBRARY_PATH@
 WINE_DLL_ROOT     = @WINE_DLL_ROOT@
 WINE_DLL_PATH     = @WINE_DLL_PATH@
 
-LD_PATH           = @LD_PATH@
+LDPATH            = @LDPATH@
 
 # Where are the MFC
 
@@ -3036,20 +3051,18 @@ CC        = @CC@
 CPP       = @CPP@
 CXX       = @CXX@
 WRC       = @WRC@
-CFLAGS    = @CFLAGS@
-CXXFLAGS  = @CXXFLAGS@
-WRCFLAGS  = -r -L
-OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB $(GLOBAL_DEFINES) $(GLOBAL_INCLUDE_PATH)
+CFLAGS    = @CFLAGS@ $(CEXTRA)
+CXXFLAGS  = @CXXFLAGS@ $(CXXEXTRA)
+WRCFLAGS  = -J -m $(WRCEXTRA)
+OPTIONS   = @OPTIONS@ -D_REENTRANT
 LIBS      = @LIBS@ $(LIBRARY_PATH)
-ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(INCLUDE_PATH) $(WINE_INCLUDE_PATH)
-ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(ALLFLAGS)
-ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(ALLFLAGS)
-ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
+DIVINCL   = $(GLOBAL_INCLUDE_PATH) -I$(SRCDIR) $(INCLUDE_PATH) $(WINE_INCLUDE_PATH)
+ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(GLOBAL_DEFINES) $(DEFINES) $(OPTIONS)
+ALLCXXFLAGS=$(DIVINCL) $(CXXFLAGS) $(GLOBAL_DEFINES) $(DEFINES) $(OPTIONS)
 ALL_DLL_PATH  = $(DLL_PATH) $(GLOBAL_DLL_PATH) $(WINE_DLL_PATH)
 ALL_LIBRARY_PATH = $(LIBRARY_PATH) $(GLOBAL_LIBRARY_PATH) $(WINE_LIBRARY_PATH)
 WINE_LIBRARIES = -lwine -lwine_unicode -lwine_uuid
 ALL_LIBRARIES = $(LIBRARIES:%=-l%) $(GLOBAL_LIBRARIES:%=-l%) $(WINE_LIBRARIES)
-LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
 LDXXSHARED= @LDXXSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
@@ -3101,7 +3114,7 @@ DISTCLEAN_FILES = config.* Makefile Make.rules
 	$(CXX) -c $(ALLCXXFLAGS) -o $@ $<
 
 .rc.res:
-	$(LD_PATH) $(WRC) $(ALLWRCFLAGS) -o $@ $<
+	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
 
 .PHONY: all install uninstall clean distclean depend dummy
 
