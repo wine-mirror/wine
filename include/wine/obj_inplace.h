@@ -140,7 +140,7 @@ typedef struct IOleContainer IOleContainer, *LPOLECONTAINER;
 DEFINE_OLEGUID(IID_IParseDisplayName,  0x0000011aL, 0, 0);
 typedef struct IParseDisplayName IParseDisplayName, *LPPARSEDISPLAYNAME;
 
-DEFINE_OLEGUID(IID_IOleItemContainer,  0x0000011aL, 0, 0);
+DEFINE_OLEGUID(IID_IOleItemContainer,  0x0000011cL, 0, 0);
 typedef struct IOleItemContainer IOleItemContainer, *LPOLEITEMCONTAINER;
 
 DEFINE_OLEGUID(IID_IOleLink,  0x0000011dL, 0, 0);
