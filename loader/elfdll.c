@@ -119,9 +119,7 @@ static LPSTR get_sobasename(LPCSTR path, LPSTR name)
 	{
 		char *cp = strrchr(cptr+1, '\\');
 		if(cp && cp > cptr)
-			cptr = cp+1;
-		else
-			cptr++;
+			cptr = cp;
 	}
 	else
 		cptr = strrchr(path, '\\');
