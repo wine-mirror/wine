@@ -449,11 +449,9 @@ symbol_s:
             $$ = HeapAlloc( GetProcessHeap(), 0, 0x100*sizeof (WCHAR) );
 
             /* Lookup the identifier */
-            /* This will not really work until we have write access to the table*/
-            /* HACK ALERT HACK ALERT... */
 
             sz=0x100;
-            if (get_property(cond->hInstall,$1,$$,&sz) != ERROR_SUCCESS)
+            if (MsiGetPropertyW(cond->hInstall,$1,$$,&sz) != ERROR_SUCCESS)
             {
                 $$[0]=0;
             }

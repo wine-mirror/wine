@@ -375,32 +375,6 @@ end:
     return r;
 }
 
-UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
-{
-    FIXME("%s %p\n",debugstr_a(szPackage), phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
-{
-    UINT rc;
-    FIXME("%s %p\n",debugstr_w(szPackage), phPackage);
-    rc = MsiOpenDatabaseW(szPackage,MSIDBOPEN_READONLY,phPackage);
-    return rc;
-}
-
-UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
-{
-    FIXME("%s 0x%08lx %p\n",debugstr_a(szPackage), dwOptions, phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
-{
-    FIXME("%s 0x%08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
 UINT WINAPI MsiAdvertiseProductA(LPCSTR szPackagePath, LPCSTR szScriptfilePath, LPCSTR szTransforms, LANGID lgidLanguage)
 {
     FIXME("%s %s %s 0x%08x\n",debugstr_a(szPackagePath), debugstr_a(szScriptfilePath), debugstr_a(szTransforms), lgidLanguage);
@@ -466,7 +440,7 @@ end:
 
 UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 {
-   MSIHANDLE dbhandle;
+   MSIHANDLE packagehandle;
     UINT rc = ERROR_SUCCESS; 
 
     FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
@@ -475,13 +449,13 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MsiOpenDatabaseW(szPackagePath,MSIDBOPEN_READONLY,&dbhandle);
+    rc = MsiOpenPackageW(szPackagePath,&packagehandle);
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    ACTION_DoTopLevelINSTALL(dbhandle, szPackagePath, szCommandLine);
+    ACTION_DoTopLevelINSTALL(packagehandle, szPackagePath, szCommandLine);
 
-    MsiCloseHandle(dbhandle);
+    MsiCloseHandle(packagehandle);
     return rc;
 }
 
@@ -1222,151 +1196,6 @@ HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
   return S_FALSE;
-}
-
-/* property code */
-UINT WINAPI MsiSetPropertyA( MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue)
-{
-    FIXME("STUB until write access is done: (%s %s)\n", szName,
-          szValue);
-
-    if (!hInstall)
-        return ERROR_INVALID_HANDLE;
-
-    return ERROR_SUCCESS;
-}
-
-UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue)
-{
-    FIXME("STUB until write access is done: (%s %s)\n",debugstr_w(szName),
-          debugstr_w(szValue));
-
-    if (!hInstall)
-        return ERROR_INVALID_HANDLE;
-
-    return ERROR_SUCCESS;
-}
-
-UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
-{
-    LPWSTR szwName = NULL, szwValueBuf = NULL;
-    UINT hr = ERROR_INSTALL_FAILURE;
-
-    if (0 == hInstall) {
-      return ERROR_INVALID_HANDLE;
-    }
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
-
-    FIXME("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
-
-    if (NULL != szValueBuf && NULL == pchValueBuf) {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if( szName )
-    {
-        UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
-        szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if( !szwName )
-            goto end;
-        MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
-    } else {
-      return ERROR_INVALID_PARAMETER;
-    }
-    if( szValueBuf )
-    {
-        szwValueBuf = HeapAlloc( GetProcessHeap(), 0, (*pchValueBuf) * sizeof(WCHAR) );
-        if( !szwValueBuf )	 
-            goto end;
-    }
-
-    hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
-
-    if( ERROR_SUCCESS == hr )
-    {
-        WideCharToMultiByte(CP_ACP, 0, szwValueBuf, -1, szValueBuf, *pchValueBuf, NULL, NULL);
-    }
-
-end:
-    if( szwName )
-        HeapFree( GetProcessHeap(), 0, szwName );
-    if( szwValueBuf )
-        HeapFree( GetProcessHeap(), 0, szwValueBuf );
-
-    return hr;
-}
-
-UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, 
-                           LPWSTR szValueBuf, DWORD* pchValueBuf)
-{
-    MSIHANDLE view,row;
-    UINT rc;
-    WCHAR Query[1024]=
-        {'s','e','l','e','c','t',' ','*',' ','f','r','o','m',' '
-         ,'P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' ','`'
-         ,'P','r','o','p','e','r','t','y','`','=','`',0};
-
-    static const WCHAR szEnd[]={'`',0};
-
-    if (0 == hInstall) {
-      return ERROR_INVALID_HANDLE;
-    }
-    if (NULL == szName) {
-      return ERROR_INVALID_PARAMETER;
-    }
-
-    strcatW(Query,szName);
-    strcatW(Query,szEnd);
-    
-    rc = MsiDatabaseOpenViewW(hInstall, Query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        DWORD sz;
-        WCHAR value[0x100];
-
-        rc = MsiViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MsiViewClose(view);
-            MsiCloseHandle(view);
-            return rc;
-        }
-
-        rc = MsiViewFetch(view,&row);
-        if (rc == ERROR_SUCCESS)
-        {
-            sz=0x100;
-            rc = MsiRecordGetStringW(row,2,value,&sz);
-            strncpyW(szValueBuf,value,min(sz+1,*pchValueBuf));
-            *pchValueBuf = sz+1;
-            MsiCloseHandle(row);
-        }
-        MsiViewClose(view);
-        MsiCloseHandle(view);
-    }
-
-    if (rc == ERROR_SUCCESS)
-        TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
-            debugstr_w(szName));
-
-    return rc;
-}
-
-
-INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
-                              MSIHANDLE hRecord)
-{
-    FIXME("STUB: \n");
-    return ERROR_SUCCESS;
-}
-
-
-MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
-{
-    FIXME("Is this correct?\n");
-    msihandle_addref(hInstall);
-    return hInstall;
 }
 
 UINT WINAPI MsiEnumRelatedProductsA (LPCSTR lpUpgradeCode, DWORD dwReserved,
