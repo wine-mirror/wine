@@ -20,7 +20,7 @@
 
 
 /*
- * Rebar control    rev 8d
+ * Rebar control    rev 8e
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -113,6 +113,8 @@
  * 22. Add support for WM_WINDOWPOSCHANGED to save new origin of window.
  * 23. Correct RBN_CHILDSIZE rect value for CCS_VERT rebar.
  * 24. Do UpdateWindow only if doing redraws.
+ * rev 8e
+ * 25. Adjust setting of offChild.cx based on RBBS_CHILDEDGE.
  *
  *
  *    Still to do:
@@ -1432,7 +1434,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	/* Set the offset of the child window */
 	if ((lpBand->fMask & RBBIM_CHILD) &&
 	    !(lpBand->fStyle & RBBS_FIXEDSIZE)) {
-	    lpBand->offChild.cx = 4;   /* ??? */
+	    lpBand->offChild.cx = ((lpBand->fStyle & RBBS_CHILDEDGE) ? 4 : 0);
 	}
 	lpBand->offChild.cy = ((lpBand->fStyle & RBBS_CHILDEDGE) ? 2 : 0);
 
