@@ -364,10 +364,10 @@ static BOOL read_console_input( HANDLE handle, LPINPUT_RECORD buffer, DWORD coun
  * This doesn't yet matter, since these handlers are not yet called...!
  */
 static unsigned int console_ignore_ctrl_c = 0;
-static HANDLER_ROUTINE *handlers[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add )
+static PHANDLER_ROUTINE handlers[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+BOOL WINAPI SetConsoleCtrlHandler( PHANDLER_ROUTINE func, BOOL add )
 {
-  unsigned int alloc_loop = sizeof(handlers)/sizeof(HANDLER_ROUTINE *);
+  unsigned int alloc_loop = sizeof(handlers)/sizeof(PHANDLER_ROUTINE);
   unsigned int done = 0;
   FIXME("(%p,%i) - no error checking or testing yet\n", func, add);
   if (!func)

@@ -18,7 +18,7 @@
 #define ENABLE_WRAP_AT_EOL_OUTPUT 0x02
 
 
-typedef BOOL HANDLER_ROUTINE(WORD);
+typedef BOOL (WINAPI *PHANDLER_ROUTINE)(DWORD);
 
 /* Attributes flags: */
 
@@ -222,7 +222,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW( HANDLE hConsoleOutput, LPSMALL_RECT lpSc
 #define ScrollConsoleScreenBuffer WINELIB_NAME_AW(ScrollConsoleScreenBuffer)
 BOOL WINAPI SetConsoleActiveScreenBuffer( HANDLE hConsoleOutput);
 BOOL WINAPI SetConsoleCP(UINT cp);
-BOOL WINAPI SetConsoleCtrlHandler( HANDLER_ROUTINE *func, BOOL add);
+BOOL WINAPI SetConsoleCtrlHandler( PHANDLER_ROUTINE func, BOOL add);
 BOOL WINAPI SetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo);
 BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode);
 BOOL WINAPI SetConsoleOutputCP(UINT cp);
