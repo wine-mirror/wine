@@ -704,11 +704,11 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         *ppMoniker = NULL;
 
     if (!pclsidCategory)
-        /* MSDN mentions the non existing CLSID_ActiveMovieFilters GUID.
+        /* MSDN mentions the inexistent CLSID_ActiveMovieFilters GUID.
          * In fact this is the CLSID_LegacyAmFilterCategory one */
         pclsidCategory = &CLSID_LegacyAmFilterCategory;
 
-    /* sizeof... will include null terminator and
+    /* sizeof... will include the null terminator and
      * the + 1 is for the separator ('\\'). The -1 is
      * because CHARS_IN_GUID includes the null terminator
      */

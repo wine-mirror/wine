@@ -767,7 +767,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
           strcpy(pIdentifier->Driver, "Display");
           strcpy(pIdentifier->Description, "Direct3D HAL");
 
-          /* Note dx8 doesnt supply a DeviceName */
+          /* Note dx8 doesn't supply a DeviceName */
           if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
           pIdentifier->DriverVersion->u.HighPart = 0xa;
           pIdentifier->DriverVersion->u.LowPart = This->gl_info.gl_driver_version;

@@ -101,7 +101,7 @@ struct OLEFontImpl
 /*
  * Here, I define utility macros to help with the casting of the
  * "this" parameter.
- * There is a version to accomodate all of the VTables implemented
+ * There is a version to accommodate all of the VTables implemented
  * by this object.
  */
 #define _ICOM_THIS_From_IDispatch(class, name) class* this = (class*)(((char*)name)-sizeof(void*))

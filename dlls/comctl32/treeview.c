@@ -1717,23 +1717,23 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
     if (oldWidth != infoPtr->normalImageWidth ||
         oldHeight != infoPtr->normalImageHeight)
     {
-        BOOL bRecalcVisable = FALSE;
+        BOOL bRecalcVisible = FALSE;
 
         if (oldHeight != infoPtr->normalImageHeight &&
             !infoPtr->bHeightSet)
         {
             infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);
-            bRecalcVisable = TRUE;
+            bRecalcVisible = TRUE;
         }
 
         if (infoPtr->normalImageWidth > MINIMUM_INDENT &&
             infoPtr->normalImageWidth != infoPtr->uIndent)
         {
             infoPtr->uIndent = infoPtr->normalImageWidth;
-            bRecalcVisable = TRUE;
+            bRecalcVisible = TRUE;
         }
 
-        if (bRecalcVisable)
+        if (bRecalcVisible)
             TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
 
        TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);

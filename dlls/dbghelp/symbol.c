@@ -480,7 +480,7 @@ static void symt_fill_sym_info(const struct module* module,
                         sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_FRAMEREL;
                     else
                         sym_info->Flags |= SYMFLAG_PARAMETER | SYMFLAG_FRAMEREL;
-                    /* FIXME: needed ? moreover, it's i386 dependant !!! */
+                    /* FIXME: needed ? moreover, it's i386 dependent !!! */
                     sym_info->Register = CV_REG_EBP;
                     sym_info->Address = data->u.s.offset;
                 }
