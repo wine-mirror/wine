@@ -66,7 +66,7 @@ void put_byte(res_t *res, unsigned c)
 {
 	if(res->allocsize - res->size < sizeof(char))
 		grow_res(res, RES_BLOCKSIZE);
-	*(char *)&(res->data[res->size]) = (char)c;
+	res->data[res->size] = (char)c;
 	res->size += sizeof(char);
 }
 
@@ -76,15 +76,20 @@ void put_word(res_t *res, unsigned w)
 		grow_res(res, RES_BLOCKSIZE);
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(WORD *)&(res->data[res->size]) = BYTESWAP_WORD((WORD)w);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(WORD *)&(res->data[res->size]) = (WORD)w;
+#endif
+	case WRC_BO_BIG:
+		res->data[res->size+0] = HIBYTE(w);
+		res->data[res->size+1] = LOBYTE(w);
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		res->data[res->size+1] = HIBYTE(w);
+		res->data[res->size+0] = LOBYTE(w);
 		break;
 	}
 	res->size += sizeof(WORD);
@@ -96,15 +101,24 @@ void put_dword(res_t *res, unsigned d)
 		grow_res(res, RES_BLOCKSIZE);
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(DWORD *)&(res->data[res->size]) = BYTESWAP_DWORD((DWORD)d);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(DWORD *)&(res->data[res->size]) = (DWORD)d;
+#endif
+	case WRC_BO_BIG:
+		res->data[res->size+0] = HIBYTE(HIWORD(d));
+		res->data[res->size+1] = LOBYTE(HIWORD(d));
+		res->data[res->size+2] = HIBYTE(LOWORD(d));
+		res->data[res->size+3] = LOBYTE(LOWORD(d));
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		res->data[res->size+3] = HIBYTE(HIWORD(d));
+		res->data[res->size+2] = LOBYTE(HIWORD(d));
+		res->data[res->size+1] = HIBYTE(LOWORD(d));
+		res->data[res->size+0] = LOBYTE(LOWORD(d));
 		break;
 	}
 	res->size += sizeof(DWORD);
@@ -136,15 +150,20 @@ void set_word(res_t *res, int ofs, unsigned w)
 {
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(WORD *)&(res->data[ofs]) = BYTESWAP_WORD((WORD)w);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(WORD *)&(res->data[ofs]) = (WORD)w;
+#endif
+	case WRC_BO_BIG:
+		res->data[ofs+0] = HIBYTE(w);
+		res->data[ofs+1] = LOBYTE(w);
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		res->data[ofs+1] = HIBYTE(w);
+		res->data[ofs+0] = LOBYTE(w);
 		break;
 	}
 }
@@ -153,15 +172,24 @@ void set_dword(res_t *res, int ofs, unsigned d)
 {
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(DWORD *)&(res->data[ofs]) = BYTESWAP_DWORD((DWORD)d);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(DWORD *)&(res->data[ofs]) = (DWORD)d;
+#endif
+	case WRC_BO_BIG:
+		res->data[ofs+0] = HIBYTE(HIWORD(d));
+		res->data[ofs+1] = LOBYTE(HIWORD(d));
+		res->data[ofs+2] = HIBYTE(LOWORD(d));
+		res->data[ofs+3] = LOBYTE(LOWORD(d));
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		res->data[ofs+3] = HIBYTE(HIWORD(d));
+		res->data[ofs+2] = LOBYTE(HIWORD(d));
+		res->data[ofs+1] = HIBYTE(LOWORD(d));
+		res->data[ofs+0] = LOBYTE(LOWORD(d));
 		break;
 	}
 }
@@ -185,14 +213,19 @@ WORD get_word(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		return BYTESWAP_WORD(*(WORD *)&(res->data[ofs]));
+#ifdef WORDS_BIGENDIAN
 	default:
-		return *(WORD *)&(res->data[ofs]);
+#endif
+	case WRC_BO_BIG:
+		return   (res->data[ofs+0] << 8)
+		       |  res->data[ofs+1];
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		return   (res->data[ofs+1] << 8)
+		       |  res->data[ofs+0];
 	}
 }
 
@@ -200,14 +233,23 @@ DWORD get_dword(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		return BYTESWAP_DWORD(*(DWORD *)&(res->data[ofs]));
+#ifdef WORDS_BIGENDIAN
 	default:
-		return *(DWORD *)&(res->data[ofs]);
+#endif
+	case WRC_BO_BIG:
+		return   (res->data[ofs+0] << 24)
+		       | (res->data[ofs+1] << 16)
+		       | (res->data[ofs+2] <<  8)
+		       |  res->data[ofs+3];
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		return   (res->data[ofs+3] << 24)
+		       | (res->data[ofs+2] << 16)
+		       | (res->data[ofs+1] <<  8)
+		       |  res->data[ofs+0];
 	}
 }
 

@@ -374,7 +374,6 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 {
 	int cnt;
 	int i;
-	icon_dir_entry_t *ide;
 	icon_t *ico;
 	icon_t *list = NULL;
 	icon_header_t *ih = (icon_header_t *)rd->data;
@@ -388,31 +387,34 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 		yyerror("Icon resource data has invalid type id %d", ih->type);
 
 	cnt = swap ? BYTESWAP_WORD(ih->count) : ih->count;
-	ide = (icon_dir_entry_t *)((char *)rd->data + sizeof(icon_header_t));
 	for(i = 0; i < cnt; i++)
 	{
+		icon_dir_entry_t ide;
+		BITMAPINFOHEADER info;
+		memcpy(&ide, rd->data + sizeof(icon_header_t)
+                                      + i*sizeof(icon_dir_entry_t), sizeof(ide));
+
 		ico = new_icon();
 		ico->id = alloc_icon_id(icog->lvc.language);
 		ico->lvc = icog->lvc;
 		if(swap)
 		{
-			ide[i].offset = BYTESWAP_DWORD(ide[i].offset);
-			ide[i].ressize= BYTESWAP_DWORD(ide[i].ressize);
+			ide.offset = BYTESWAP_DWORD(ide.offset);
+			ide.ressize= BYTESWAP_DWORD(ide.ressize);
 		}
-		if(ide[i].offset > rd->size
-		|| ide[i].offset + ide[i].ressize > rd->size)
+		if(ide.offset > rd->size
+		|| ide.offset + ide.ressize > rd->size)
 			yyerror("Icon resource data corrupt");
-		ico->width = ide[i].width;
-		ico->height = ide[i].height;
-		ico->nclr = ide[i].nclr;
-		ico->planes = swap ? BYTESWAP_WORD(ide[i].planes) : ide[i].planes;
-		ico->bits = swap ? BYTESWAP_WORD(ide[i].bits) : ide[i].bits;
-		convert_bitmap((char *)rd->data + ide[i].offset, 0);
+		ico->width = ide.width;
+		ico->height = ide.height;
+		ico->nclr = ide.nclr;
+		ico->planes = swap ? BYTESWAP_WORD(ide.planes) : ide.planes;
+		ico->bits = swap ? BYTESWAP_WORD(ide.bits) : ide.bits;
+		convert_bitmap((char *)rd->data + ide.offset, 0);
+		memcpy(&info, rd->data + ide.offset, sizeof(info));
 		if(!ico->planes)
 		{
-			WORD planes;
 			/* Argh! They did not fill out the resdir structure */
-			planes = ((BITMAPINFOHEADER *)((char *)rd->data + ide[i].offset))->biPlanes;
 			/* The bitmap is in destination byteorder. We want native for our structures */
 			switch(byteorder)
 			{
@@ -421,17 +423,15 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 #else
 			case WRC_BO_BIG:
 #endif
-				ico->planes = BYTESWAP_WORD(planes);
+				ico->planes = BYTESWAP_WORD(info.biPlanes);
 				break;
 			default:
-				ico->planes = planes;
+				ico->planes = info.biPlanes;
 			}
 		}
 		if(!ico->bits)
 		{
-			WORD bits;
 			/* Argh! They did not fill out the resdir structure */
-			bits = ((BITMAPINFOHEADER *)((char *)rd->data + ide[i].offset))->biBitCount;
 			/* The bitmap is in destination byteorder. We want native for our structures */
 			switch(byteorder)
 			{
@@ -440,14 +440,14 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 #else
 			case WRC_BO_BIG:
 #endif
-				ico->bits = BYTESWAP_WORD(bits);
+				ico->bits = BYTESWAP_WORD(info.biBitCount);
 				break;
 			default:
-				ico->bits = bits;
+				ico->bits = info.biBitCount;
 			}
 		}
 		ico->data = new_raw_data();
-		copy_raw_data(ico->data, rd, ide[i].offset, ide[i].ressize);
+		copy_raw_data(ico->data, rd, ide.offset, ide.ressize);
 		if(!list)
 		{
 			list = ico;
@@ -467,7 +467,6 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 {
 	int cnt;
 	int i;
-	cursor_dir_entry_t *cde;
 	cursor_t *cur;
 	cursor_t *list = NULL;
 	cursor_header_t *ch = (cursor_header_t *)rd->data;
@@ -480,29 +479,29 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 	else
 		yyerror("Cursor resource data has invalid type id %d", ch->type);
 	cnt = swap ? BYTESWAP_WORD(ch->count) : ch->count;
-	cde = (cursor_dir_entry_t *)((char *)rd->data + sizeof(cursor_header_t));
 	for(i = 0; i < cnt; i++)
 	{
-		WORD planes;
-		WORD bits;
+		cursor_dir_entry_t cde;
+		BITMAPINFOHEADER info;
+		memcpy(&cde, rd->data + sizeof(cursor_header_t)
+                                      + i*sizeof(cursor_dir_entry_t), sizeof(cde));
+
 		cur = new_cursor();
 		cur->id = alloc_cursor_id(curg->lvc.language);
 		cur->lvc = curg->lvc;
 		if(swap)
 		{
-			cde[i].offset = BYTESWAP_DWORD(cde[i].offset);
-			cde[i].ressize= BYTESWAP_DWORD(cde[i].ressize);
+			cde.offset = BYTESWAP_DWORD(cde.offset);
+			cde.ressize= BYTESWAP_DWORD(cde.ressize);
 		}
-		if(cde[i].offset > rd->size
-		|| cde[i].offset + cde[i].ressize > rd->size)
+		if(cde.offset > rd->size
+		|| cde.offset + cde.ressize > rd->size)
 			yyerror("Cursor resource data corrupt");
-		cur->width = cde[i].width;
-		cur->height = cde[i].height;
-		cur->nclr = cde[i].nclr;
-		convert_bitmap((char *)rd->data + cde[i].offset, 0);
-		/* The next two are to support color cursors */
-		planes = ((BITMAPINFOHEADER *)((char *)rd->data + cde[i].offset))->biPlanes;
-		bits = ((BITMAPINFOHEADER *)((char *)rd->data + cde[i].offset))->biBitCount;
+		cur->width = cde.width;
+		cur->height = cde.height;
+		cur->nclr = cde.nclr;
+		convert_bitmap((char *)rd->data + cde.offset, 0);
+		memcpy(&info, rd->data + cde.offset, sizeof(info));
 		/* The bitmap is in destination byteorder. We want native for our structures */
 		switch(byteorder)
 		{
@@ -511,19 +510,19 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 #else
 		case WRC_BO_BIG:
 #endif
-			cur->planes = BYTESWAP_WORD(planes);
-			cur->bits = BYTESWAP_WORD(bits);
+			cur->planes = BYTESWAP_WORD(info.biPlanes);
+			cur->bits = BYTESWAP_WORD(info.biBitCount);
 			break;
 		default:
-			cur->planes = planes;
-			cur->bits = bits;
+			cur->planes = info.biPlanes;
+			cur->bits = info.biBitCount;
 		}
 		if(!win32 && (cur->planes != 1 || cur->bits != 1))
 			yywarning("Win16 cursor contains colors");
-		cur->xhot = swap ? BYTESWAP_WORD(cde[i].xhot) : cde[i].xhot;
-		cur->yhot = swap ? BYTESWAP_WORD(cde[i].yhot) : cde[i].yhot;
+		cur->xhot = swap ? BYTESWAP_WORD(cde.xhot) : cde.xhot;
+		cur->yhot = swap ? BYTESWAP_WORD(cde.yhot) : cde.yhot;
 		cur->data = new_raw_data();
-		copy_raw_data(cur->data, rd, cde[i].offset, cde[i].ressize);
+		copy_raw_data(cur->data, rd, cde.offset, cde.ressize);
 		if(!list)
 		{
 			list = cur;
@@ -907,6 +906,7 @@ ver_words_t *add_ver_words(ver_words_t *w, int i)
 messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 {
 	messagetable_t *msg = (messagetable_t *)xmalloc(sizeof(messagetable_t));
+ 	msgtab_block_t *mbp;
 	DWORD nblk;
 	DWORD i;
 	WORD lo;
@@ -941,13 +941,62 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 	if(!hi && !lo)
 		yyerror("Invalid messagetable block count 0");
 
-#ifdef WORDS_BIGENDIAN
-	if(!hi && lo && byteorder != WRC_BO_LITTLE)
-#else
-	if(hi && !lo && byteorder != WRC_BO_BIG)
-#endif
+	if(!hi && lo)  /* Messagetable byteorder == native byteorder */
 	{
-		msgtab_block_t *mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
+#ifdef WORDS_BIGENDIAN
+		if(byteorder != WRC_BO_LITTLE) goto out;
+#else
+		if(byteorder != WRC_BO_BIG) goto out;
+#endif
+		/* Resource byteorder != native byteorder */
+
+		mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
+		if(MSGTAB_BAD_PTR(mbp, rd->data, rd->size, nblk * sizeof(*mbp)))
+			yyerror("Messagetable's blocks are outside of defined data");
+		for(i = 0; i < nblk; i++)
+		{
+			msgtab_entry_t *mep, *next_mep;
+			DWORD id;
+
+			mep = (msgtab_entry_t *)(((char *)rd->data) + mbp[i].offset);
+
+			for(id = mbp[i].idlo; id <= mbp[i].idhi; id++)
+			{
+				if(MSGTAB_BAD_PTR(mep, rd->data, rd->size, mep->length))
+					yyerror("Messagetable's data for block %d, ID 0x%08lx is outside of defined data", (int)i, id);
+				if(mep->flags == 1)	/* Docu says 'flags == 0x0001' for unicode */
+				{
+					WORD *wp = (WORD *)&mep[1];
+					int l = mep->length/2 - 2; /* Length included header */
+					int n;
+
+					if(mep->length & 1)
+						yyerror("Message 0x%08lx is unicode (block %d), but has odd length (%d)", id, (int)i, mep->length);
+					for(n = 0; n < l; n++)
+						wp[n] = BYTESWAP_WORD(wp[n]);
+						
+				}
+				next_mep = (msgtab_entry_t *)(((char *)mep) + mep->length);
+				mep->length = BYTESWAP_WORD(mep->length);
+				mep->flags  = BYTESWAP_WORD(mep->flags);
+				mep = next_mep;
+			}
+
+			mbp[i].idlo   = BYTESWAP_DWORD(mbp[i].idlo);
+			mbp[i].idhi   = BYTESWAP_DWORD(mbp[i].idhi);
+			mbp[i].offset = BYTESWAP_DWORD(mbp[i].offset);
+		}
+	}
+	if(hi && !lo)  /* Messagetable byteorder != native byteorder */
+	{
+#ifdef WORDS_BIGENDIAN
+		if(byteorder == WRC_BO_LITTLE) goto out;
+#else
+		if(byteorder == WRC_BO_BIG) goto out;
+#endif
+		/* Resource byteorder == native byteorder */
+
+		mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
 		nblk = BYTESWAP_DWORD(nblk);
 		if(MSGTAB_BAD_PTR(mbp, rd->data, rd->size, nblk * sizeof(*mbp)))
 			yyerror("Messagetable's blocks are outside of defined data");
@@ -960,10 +1009,12 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 			mbp[i].idhi   = BYTESWAP_DWORD(mbp[i].idhi);
 			mbp[i].offset = BYTESWAP_DWORD(mbp[i].offset);
 			mep = (msgtab_entry_t *)(((char *)rd->data) + mbp[i].offset);
+
 			for(id = mbp[i].idlo; id <= mbp[i].idhi; id++)
 			{
 				mep->length = BYTESWAP_WORD(mep->length);
 				mep->flags  = BYTESWAP_WORD(mep->flags);
+
 				if(MSGTAB_BAD_PTR(mep, rd->data, rd->size, mep->length))
 					yyerror("Messagetable's data for block %d, ID 0x%08lx is outside of defined data", (int)i, id);
 				if(mep->flags == 1)	/* Docu says 'flags == 0x0001' for unicode */
@@ -983,6 +1034,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 		}
 	}
 
+ out:
 	return msg;
 }
 #undef MSGTAB_BAD_PTR

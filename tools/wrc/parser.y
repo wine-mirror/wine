@@ -2330,15 +2330,20 @@ static raw_data_t *int2raw_data(int i)
 	rd->data = (char *)xmalloc(rd->size);
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(WORD *)(rd->data) = BYTESWAP_WORD((WORD)i);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(WORD *)(rd->data) = (WORD)i;
+#endif
+	case WRC_BO_BIG:
+		rd->data[0] = HIBYTE(i);
+		rd->data[1] = LOBYTE(i);
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		rd->data[1] = HIBYTE(i);
+		rd->data[0] = LOBYTE(i);
 		break;
 	}
 	return rd;
@@ -2352,15 +2357,24 @@ static raw_data_t *long2raw_data(int i)
 	rd->data = (char *)xmalloc(rd->size);
 	switch(byteorder)
 	{
-#ifndef WORDS_BIGENDIAN
-	case WRC_BO_BIG:
-#else
-	case WRC_BO_LITTLE:
-#endif
-		*(DWORD *)(rd->data) = BYTESWAP_DWORD((DWORD)i);
-		break;
+#ifdef WORDS_BIGENDIAN
 	default:
-		*(DWORD *)(rd->data) = (DWORD)i;
+#endif
+	case WRC_BO_BIG:
+		rd->data[0] = HIBYTE(HIWORD(i));
+		rd->data[1] = LOBYTE(HIWORD(i));
+		rd->data[2] = HIBYTE(LOWORD(i));
+		rd->data[3] = LOBYTE(LOWORD(i));
+		break;
+
+#ifndef WORDS_BIGENDIAN
+	default:
+#endif
+	case WRC_BO_LITTLE:
+		rd->data[3] = HIBYTE(HIWORD(i));
+		rd->data[2] = LOBYTE(HIWORD(i));
+		rd->data[1] = HIBYTE(LOWORD(i));
+		rd->data[0] = LOBYTE(LOWORD(i));
 		break;
 	}
 	return rd;
@@ -2379,17 +2393,25 @@ static raw_data_t *str2raw_data(string_t *str)
 		int i;
 		switch(byteorder)
 		{
-#ifndef WORDS_BIGENDIAN
-		case WRC_BO_BIG:
-#else
-		case WRC_BO_LITTLE:
-#endif
-			for(i = 0; i < str->size; i++)
-				*(WORD *)&(rd->data[2*i]) = BYTESWAP_WORD((WORD)str->str.wstr[i]);
-			break;
+#ifdef WORDS_BIGENDIAN
 		default:
+#endif
+		case WRC_BO_BIG:
 			for(i = 0; i < str->size; i++)
-				*(WORD *)&(rd->data[2*i]) = (WORD)str->str.wstr[i];
+			{
+				rd->data[2*i + 0] = HIBYTE((WORD)str->str.wstr[i]);
+				rd->data[2*i + 1] = LOBYTE((WORD)str->str.wstr[i]);
+			}
+			break;
+#ifndef WORDS_BIGENDIAN
+		default:
+#endif
+		case WRC_BO_LITTLE:
+			for(i = 0; i < str->size; i++)
+			{
+				rd->data[2*i + 1] = HIBYTE((WORD)str->str.wstr[i]);
+				rd->data[2*i + 0] = LOBYTE((WORD)str->str.wstr[i]);
+			}
 			break;
 		}
 	}

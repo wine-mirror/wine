@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------
+Version 1.1.9 (31-Dec-2000)
+
+Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+- Fixed a byteorder conversion problem with message tables.
+- Carefully read and write (possibly) misaligned data elements
+  to avoid crashes on architectures where this is not allowed.
+
+---------------------------------------------------------------------------
 Version 1.1.8 (24-Aug-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>
