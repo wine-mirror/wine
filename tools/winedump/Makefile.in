@@ -12,6 +12,7 @@ C_SRCS = \
 	debug.c \
 	emf.c \
 	le.c \
+	lnk.c \
 	main.c  \
 	misc.c  \
 	msmangle.c  \

@@ -86,6 +86,13 @@ static void do_dumpemf(void)
 }
 
 
+static void do_dumplnk(void)
+{
+    if (globals.mode != NONE) fatal("Only one mode can be specified\n");
+    globals.mode = LNK;
+}
+
+
 static void do_code (void)
 {
   globals.do_code = 1;
@@ -221,6 +228,7 @@ static const struct option option_table[] = {
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls)"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
   {"emf",   EMF,  0, do_dumpemf,  "emf          Dumps an Enhanced Meta File"},
+  {"lnk",   LNK,  0, do_dumplnk,  "lnk          Dumps a shortcut (.lnk) file"},
   {NULL,    NONE, 0, NULL,        NULL}
 };
 
@@ -248,6 +256,10 @@ void do_usage (void)
     printf ("\tWhen used in emf mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == EMF)
+	    printf ("\t   %s\n", opt->usage);
+    printf ("\tWhen used in lnk mode\n");
+    for (opt = option_table; opt->name; opt++)
+	if (opt->mode == LNK)
 	    printf ("\t   %s\n", opt->usage);
 
     puts ("\n");
@@ -485,6 +497,11 @@ int   main (int argc, char *argv[])
         if (globals.input_name == NULL)
             fatal("No file name has been given\n");
         dump_emf(globals.input_name);
+        break;
+    case LNK:
+        if (globals.input_name == NULL)
+            fatal("No file name has been given\n");
+        dump_lnk(globals.input_name);
         break;
     }
 

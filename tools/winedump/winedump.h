@@ -72,7 +72,7 @@
 #define SYM_THISCALL        0x4
 #define SYM_DATA            0x8 /* Data, not a function */
 
-typedef enum {NONE, DMGL, SPEC, DUMP, EMF} Mode;
+typedef enum {NONE, DMGL, SPEC, DUMP, EMF, LNK} Mode;
 
 /* Structure holding a parsed symbol */
 typedef struct __parsed_symbol
@@ -155,6 +155,9 @@ extern _globals globals;
 
 /* EMF functions */
 int   dump_emf (const char *emf);
+
+/* LNK functions */
+int   dump_lnk (const char *lnk);
 
 /* Image functions */
 void	dump_file(const char* name);
