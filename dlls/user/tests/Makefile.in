@@ -8,6 +8,7 @@ IMPORTS   = user32 gdi32 advapi32
 CTESTS = \
 	class.c \
 	clipboard.c \
+	dce.c \
 	dde.c \
 	dialog.c \
 	edit.c \

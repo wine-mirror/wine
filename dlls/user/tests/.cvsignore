@@ -1,6 +1,7 @@
 Makefile
 class.ok
 clipboard.ok
+dce.ok
 dde.ok
 dialog.ok
 edit.ok

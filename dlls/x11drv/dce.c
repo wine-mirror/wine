@@ -51,17 +51,13 @@ struct dce
     HWND        hwnd;
     HRGN        clip_rgn;
     DWORD       flags;
-    int         empty : 1;     /* DCE is uninitialized */
-    int         inuse : 1;     /* DCE is in use */
-    int         dirty : 1;     /* ReleaseDC should wipe instead of caching */
     void       *class_ptr;     /* ptr to identify window class for class DCEs */
-    ULONG       count;         /* reference count for class DCEs */
+    ULONG       count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
+                                  always >= 1 for class DCEs */
 };
 
 static struct list dce_list = LIST_INIT(dce_list);
 
-static void delete_clip_rgn( struct dce * );
-static INT release_dc( struct dce * );
 static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam );
 
 static CRITICAL_SECTION dce_section;
@@ -90,7 +86,7 @@ static void dump_cache(void)
         TRACE("%p: hwnd %p dcx %08lx %s %s\n",
               dce, dce->hwnd, dce->flags,
               (dce->flags & DCX_CACHE) ? "Cache" : "Owned",
-              dce->inuse ? "InUse" : "" );
+              dce->count ? "InUse" : "" );
     }
 
     LeaveCriticalSection( &dce_section );
@@ -155,9 +151,9 @@ static HWND get_top_clipping_window( HWND hwnd )
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
-static void set_drawable( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
+static void set_drawable( struct dce *dce, DWORD flags, BOOL update_visrgn )
 {
-    HWND top = get_top_clipping_window( hwnd );
+    HWND top = get_top_clipping_window( dce->hwnd );
     struct x11drv_escape_set_drawable escape;
     struct x11drv_win_data *data;
 
@@ -165,14 +161,14 @@ static void set_drawable( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
-    if (top != hwnd || !(data = X11DRV_get_win_data( hwnd )))
+    if (top != dce->hwnd || !(data = X11DRV_get_win_data( dce->hwnd )))
     {
         POINT client_offset;
 
         if (flags & DCX_WINDOW)
         {
             RECT rect;
-            GetWindowRect( hwnd, &rect );
+            GetWindowRect( dce->hwnd, &rect );
             escape.org.x = rect.left;
             escape.org.y = rect.top;
             MapWindowPoints( 0, top, &escape.org, 1 );
@@ -183,7 +179,7 @@ static void set_drawable( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         {
             escape.org.x = escape.org.y = 0;
             escape.drawable_org.x = escape.drawable_org.y = 0;
-            MapWindowPoints( hwnd, top, &escape.org, 1 );
+            MapWindowPoints( dce->hwnd, top, &escape.org, 1 );
             MapWindowPoints( top, 0, &escape.drawable_org, 1 );
         }
 
@@ -197,13 +193,13 @@ static void set_drawable( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     }
     else
     {
-        if (IsIconic( hwnd ))
+        if (IsIconic( dce->hwnd ))
         {
             escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
             escape.org.x = 0;
             escape.org.y = 0;
             escape.drawable_org = escape.org;
-            MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
+            MapWindowPoints( dce->hwnd, 0, &escape.drawable_org, 1 );
         }
         else
         {
@@ -224,37 +220,58 @@ static void set_drawable( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     }
 
     escape.code = X11DRV_SET_DRAWABLE;
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
-    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
-        SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
+    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) || update_visrgn)
     {
         /* need to recompute the visible region */
-        HRGN visRgn = get_server_visible_region( hwnd, flags );
+        HRGN visRgn = get_server_visible_region( dce->hwnd, flags );
 
         if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+            CombineRgn( visRgn, visRgn, dce->clip_rgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-        SelectVisRgn16( HDC_16(hdc), HRGN_16(visRgn) );
+        SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(visRgn) );
         DeleteObject( visRgn );
     }
 }
 
 
 /***********************************************************************
- *		release_drawable
+ *		release_dce
  */
-static void release_drawable( HWND hwnd, HDC hdc )
+static void release_dce( struct dce *dce )
 {
     struct x11drv_escape_set_drawable escape;
+
+    if (!dce->hwnd) return;  /* already released */
+
+    if (dce->clip_rgn) DeleteObject( dce->clip_rgn );
+    dce->clip_rgn = 0;
+    dce->hwnd     = 0;
+    dce->flags   &= DCX_CACHE;
 
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
     escape.org.x = escape.org.y = 0;
     escape.drawable_org.x = escape.drawable_org.y = 0;
+    ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+}
 
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+
+/***********************************************************************
+ *   delete_clip_rgn
+ */
+static void delete_clip_rgn( struct dce *dce )
+{
+    if (!dce->clip_rgn) return;  /* nothing to do */
+
+    dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
+    DeleteObject( dce->clip_rgn );
+    dce->clip_rgn = 0;
+
+    /* make it dirty so that the vis rgn gets recomputed next time */
+    SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
 }
 
 
@@ -282,11 +299,8 @@ static struct dce *alloc_cache_dce(void)
     dce->hwnd      = 0;
     dce->clip_rgn  = 0;
     dce->flags     = DCX_CACHE;
-    dce->empty     = 1;
-    dce->inuse     = 0;
-    dce->dirty     = 0;
     dce->class_ptr = NULL;
-    dce->count     = 0;
+    dce->count     = 1;
 
     EnterCriticalSection( &dce_section );
     list_add_head( &dce_list, &dce->entry );
@@ -343,7 +357,6 @@ void alloc_window_dce( struct x11drv_win_data *data )
         HeapFree( GetProcessHeap(), 0, dce );
         return;
     }
-    SaveDC( dce->hdc );
 
     /* store DCE handle in DC hook data field */
 
@@ -352,9 +365,6 @@ void alloc_window_dce( struct x11drv_win_data *data )
     dce->hwnd      = data->hwnd;
     dce->clip_rgn  = 0;
     dce->flags     = 0;
-    dce->empty     = 0;
-    dce->inuse     = 1;
-    dce->dirty     = 0;
     dce->class_ptr = class_ptr;
     dce->count     = 1;
 
@@ -399,12 +409,7 @@ void free_window_dce( struct x11drv_win_data *data )
         }
         else if (dce->hwnd == data->hwnd)
         {
-            if (dce->flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))
-            {
-                release_drawable( dce->hwnd, dce->hdc );
-                delete_clip_rgn( dce );
-                dce->hwnd = 0;
-            }
+            release_dce( dce );
         }
         LeaveCriticalSection( &dce_section );
         data->dce = NULL;
@@ -418,72 +423,11 @@ void free_window_dce( struct x11drv_win_data *data )
         if (dce->hwnd != data->hwnd) continue;
         if (!(dce->flags & DCX_CACHE)) continue;
 
-        if (dce->inuse) /* shared cache DCE */
-        {
-            WARN( "GetDC() without ReleaseDC() for window %p\n", data->hwnd );
-            release_dc( dce );
-        }
-        if (dce->hwnd) release_drawable( dce->hwnd, dce->hdc );
-        dce->hwnd  = 0;
-        dce->flags = DCX_CACHE;
-        dce->inuse = 0;
-        dce->empty = 1;
-        dce->dirty = 0;
+        if (dce->count) WARN( "GetDC() without ReleaseDC() for window %p\n", data->hwnd );
+        release_dce( dce );
+        dce->count = 0;
     }
     LeaveCriticalSection( &dce_section );
-}
-
-
-/***********************************************************************
- *   delete_clip_rgn
- */
-static void delete_clip_rgn( struct dce *dce )
-{
-    dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
-
-    if (dce->clip_rgn) DeleteObject( dce->clip_rgn );
-    dce->clip_rgn = 0;
-
-    /* make it dirty so that the vis rgn gets recomputed next time */
-    dce->dirty = 1;
-    SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
-}
-
-
-/***********************************************************************
- *   release_dc
- */
-static BOOL release_dc( struct dce *dce )
-{
-    if (dce->empty) return FALSE;
-    if (!dce->inuse) return FALSE;
-
-    /* restore previous visible region */
-
-    if ((dce->flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
-        (dce->flags & (DCX_CACHE | DCX_WINDOWPAINT)) )
-        delete_clip_rgn( dce );
-
-    if (dce->flags & DCX_CACHE)
-    {
-        /* make the DC clean so that RestoreDC doesn't try to update the vis rgn */
-        SetHookFlags16( HDC_16(dce->hdc), DCHF_VALIDATEVISRGN );
-        RestoreDC( dce->hdc, 1 );  /* initial save level is always 1 */
-        SaveDC( dce->hdc );  /* save the state again for next time */
-        dce->inuse = 0;
-        if (dce->dirty)
-        {
-            /* don't keep around invalidated entries
-	     * because RestoreDC() disables hVisRgn updates
-	     * by removing dirty bit. */
-            if (dce->hwnd) release_drawable( dce->hwnd, dce->hdc );
-            dce->hwnd  = 0;
-            dce->flags = DCX_CACHE;
-            dce->empty = 1;
-            dce->dirty = 0;
-        }
-    }
-    return TRUE;
 }
 
 
@@ -511,7 +455,7 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
 
         LIST_FOR_EACH_ENTRY( dce, &dce_list, struct dce, entry )
         {
-            if (dce->empty) continue;
+            if (!dce->hwnd) continue;
             if ((dce->hwnd == hwndScope) && !(dce->flags & DCX_CLIPCHILDREN))
                 continue;  /* child window positions don't bother us */
 
@@ -528,23 +472,18 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
                     if (!IntersectRect( &tmp, &tmp, rect )) continue;
 
                 }
-                if (!dce->inuse)
+                if (!dce->count)
                 {
                     /* Don't bother with visible regions of unused DCEs */
 
                     TRACE("\tpurged %p dce [%p]\n", dce, dce->hwnd);
-                    if (dce->hwnd) release_drawable( dce->hwnd, dce->hdc );
-                    dce->hwnd = 0;
-                    dce->flags &= DCX_CACHE;
-                    dce->empty = 1;
-                    dce->dirty = 0;
+                    release_dce( dce );
                 }
                 else
                 {
                     /* Set dirty bits in the hDC and DCE structs */
 
                     TRACE("\tfixed up %p dce [%p]\n", dce, dce->hwnd);
-                    dce->dirty = 1;
                     SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
                 }
             }
@@ -563,13 +502,11 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     struct dce *dce;
     HDC hdc = 0;
-    DWORD dcxFlags = 0;
     BOOL bUpdateVisRgn = TRUE;
     HWND parent;
     LONG window_style = GetWindowLongW( hwnd, GWL_STYLE );
 
     TRACE("hwnd %p, hrgnClip %p, flags %08lx\n", hwnd, hrgnClip, flags);
-
 
     /* fixup flags */
 
@@ -610,12 +547,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         }
     }
 
-    if (!(flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))) hrgnClip = 0;
-
     /* find a suitable DCE */
-
-    dcxFlags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
-                        DCX_CACHE | DCX_WINDOW);
 
     if (flags & DCX_CACHE)
     {
@@ -628,17 +560,17 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         EnterCriticalSection( &dce_section );
         LIST_FOR_EACH_ENTRY( dce, &dce_list, struct dce, entry )
         {
-            if ((dce->flags & DCX_CACHE) && !dce->inuse)
+            if ((dce->flags & DCX_CACHE) && !dce->count)
             {
                 dceUnused = dce;
 
-                if (dce->empty) dceEmpty = dce;
+                if (!dce->hwnd) dceEmpty = dce;
                 else if ((dce->hwnd == hwnd) &&
-                         ((dce->flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
-                                         DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
+                         (!((dce->flags ^ flags) & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
+                                                    DCX_WINDOW | DCX_PARENTCLIP))))
                 {
                     TRACE("\tfound valid %p dce [%p], flags %08lx\n",
-                          dce, hwnd, dcxFlags );
+                          dce, hwnd, dce->flags );
                     bUpdateVisRgn = FALSE;
                     break;
                 }
@@ -648,11 +580,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         if (&dce->entry == &dce_list)  /* nothing found */
             dce = dceEmpty ? dceEmpty : dceUnused;
 
-        if (dce)
-        {
-            dce->empty = 0;
-            dce->inuse = 1;
-        }
+        if (dce) dce->count = 1;
 
         LeaveCriticalSection( &dce_section );
 
@@ -662,6 +590,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else
     {
+        flags |= DCX_NORESETATTRS;
         dce = data->dce;
         if (dce->hwnd == hwnd)
         {
@@ -669,6 +598,9 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
         }
     }
+
+    if (!(flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))) hrgnClip = 0;
+    else if (!hrgnClip) hrgnClip = CreateRectRgn( 0, 0, 0, 0 );
 
     if (((flags ^ dce->flags) & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
         (dce->clip_rgn != hrgnClip))
@@ -682,14 +614,17 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->flags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
                           DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT |
                           DCX_INTERSECTRGN | DCX_EXCLUDERGN);
-    dce->empty = 0;
-    dce->inuse = 1;
-    dce->dirty = 0;
     hdc = dce->hdc;
 
-    if (bUpdateVisRgn) SetHookFlags16( HDC_16(hdc), DCHF_INVALIDATEVISRGN ); /* force update */
+    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN )) bUpdateVisRgn = TRUE;  /* DC was dirty */
 
-    set_drawable( hwnd, hdc, hrgnClip, flags );
+    set_drawable( dce, flags, bUpdateVisRgn );
+
+    if (!(flags & DCX_NORESETATTRS))
+    {
+        RestoreDC( hdc, 1 );  /* initial save level is always 1 */
+        SaveDC( hdc );  /* save the state again for next time */
+    }
 
     TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, hdc);
     return hdc;
@@ -710,7 +645,12 @@ BOOL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     EnterCriticalSection( &dce_section );
     if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
                     sizeof(dce), (LPSTR)&dce )) dce = NULL;
-    if (dce && dce->inuse) ret = release_dc( dce );
+    if (dce && dce->count)
+    {
+        if ((dce->flags & (DCX_CACHE | DCX_WINDOWPAINT))) delete_clip_rgn( dce );
+        if (dce->flags & DCX_CACHE) dce->count = 0;
+        ret = TRUE;
+    }
     LeaveCriticalSection( &dce_section );
     return ret;
 }
@@ -737,13 +677,7 @@ static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam 
          * DC is dirty (usually after SetHookFlags()). This
          * means that we have to recompute the visible region.
          */
-        if (dce->inuse)
-        {
-            /* Dirty bit has been cleared by caller, set it again so that
-             * pGetDC recomputes the visible region. */
-            SetHookFlags16( hDC, DCHF_INVALIDATEVISRGN );
-            set_drawable( dce->hwnd, dce->hdc, dce->clip_rgn, dce->flags );
-        }
+        if (dce->count) set_drawable( dce, dce->flags, TRUE );
         else /* non-fatal but shouldn't happen */
             WARN("DC is not in use!\n");
         break;
@@ -752,9 +686,9 @@ static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam 
          * Windows will not let you delete a DC that is busy
          * (between GetDC and ReleaseDC)
          */
-        if (dce->inuse)
+        if (dce->count)
         {
-            WARN("Application trying to delete a busy DC\n");
+            WARN("Application trying to delete a busy DC %p\n", dce->hdc);
             retv = FALSE;
         }
         else
