@@ -323,7 +323,7 @@ static BOOL ChooseFontWtoA(const CHOOSEFONTW *cfw, CHOOSEFONTA *cfa)
 
     LogFontWtoA(cfw->lpLogFont, lpLogFont);
 
-    if (cfw->lpTemplateName != NULL)
+    if ((cfw->Flags&CF_ENABLETEMPLATE)!=0 && HIWORD(cfw->lpTemplateName)!=0)
     {
     	cfa->lpTemplateName = HEAP_strdupWtoA(GetProcessHeap(), 0,
     	    	cfw->lpTemplateName);
@@ -354,7 +354,7 @@ static VOID ChooseFontAtoW(const CHOOSEFONTA *cfa, CHOOSEFONTW *cfw)
 
     LogFontAtoW(cfa->lpLogFont, lpLogFont);
 
-    if (cfa->lpTemplateName != NULL)
+    if ((cfa->Flags&CF_ENABLETEMPLATE)!=0 && HIWORD(cfa->lpTemplateName) != 0)
     	HeapFree(GetProcessHeap(), 0, (LPSTR)(cfa->lpTemplateName));
 
     if ((cfa->Flags & CF_USESTYLE) != 0 && cfa->lpszStyle != NULL)
@@ -1300,5 +1300,3 @@ LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     }
   return res;
 }
-
-
