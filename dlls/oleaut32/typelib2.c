@@ -3879,3 +3879,33 @@ HRESULT WINAPI CreateTypeLib2(
     *ppctlib = ICreateTypeLib2_Constructor(syskind, szFile);
     return (*ppctlib)? S_OK: E_OUTOFMEMORY;
 }
+
+/******************************************************************************
+ * ClearCustData (OLEAUT32.171)
+ *
+ * Clear a custom data types' data.
+ *
+ * PARAMS
+ *  lpCust [I] The custom data type instance
+ *
+ * RETURNS
+ *  Nothing.
+ */
+void WINAPI ClearCustData(LPCUSTDATA lpCust)
+{
+    if (lpCust && lpCust->cCustData)
+    {
+        if (lpCust->prgCustData)
+        {
+            DWORD i;
+
+            for (i = 0; i < lpCust->cCustData; i++)
+                VariantClear(&lpCust->prgCustData[i].varValue);
+
+            /* FIXME - Should be using a per-thread IMalloc */
+            HeapFree(GetProcessHeap(), 0, lpCust->prgCustData);
+            lpCust->prgCustData = NULL;
+        }
+        lpCust->cCustData = 0;
+    }
+}

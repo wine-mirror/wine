@@ -166,7 +166,7 @@
 168 stdcall VarAbs(ptr ptr)
 169 stdcall VarFix(ptr ptr)
 170 stdcall OaBuildVersion()
-171 stub ClearCustData
+171 stdcall ClearCustData(ptr)
 172 stdcall VarInt(ptr ptr)
 173 stdcall VarNeg(ptr ptr)
 174 stdcall VarNot(ptr ptr)
