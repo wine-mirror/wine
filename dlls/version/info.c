@@ -325,7 +325,9 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD hand
 
     if(data)
     {
-	if(datasize >= len)
+	if(datasize < len)
+	    len = datasize; /* truncate data */
+	if(len)
 	    memcpy(data, buf, len);
 	else
 	    len = 0xFFFFFFFF;
@@ -405,7 +407,9 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD hand
 
     if(data)
     {
-	if(datasize >= len)
+	if(datasize < len)
+	    len = datasize; /* truncate data */
+	if(len)
 	    memcpy(data, buf, len);
 	else
 	    len = 0xFFFFFFFF;
