@@ -128,6 +128,8 @@ STATUSBAR_RefreshPart (HWND hwnd, STATUSWINDOWPART *part, HDC hdc, int itemID)
     if (!IsWindowVisible (hwnd))
         return;
 
+    if (part->bound.right < part->bound.left) return;
+
     if (self->clrBk != CLR_DEFAULT)
 	hbrBk = CreateSolidBrush (self->clrBk);
     else
@@ -327,7 +329,6 @@ STATUSBAR_GetParts (HWND hwnd, WPARAM wParam, LPARAM lParam)
     num_parts = (INT) wParam;
     parts = (LPINT) lParam;
     if (parts) {
-	return (infoPtr->numParts);
 	for (i = 0; i < num_parts; i++) {
 	    parts[i] = infoPtr->parts[i].x;
 	}
