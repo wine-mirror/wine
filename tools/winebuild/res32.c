@@ -64,6 +64,7 @@ struct res_name
     const struct string_id  *name;         /* name */
     const struct resource   *res;          /* resource */
     int                      nb_languages; /* number of languages */
+    unsigned int             name_offset;  /* offset of name in resource dir */
 };
 
 /* type level of the resource tree */
@@ -73,6 +74,7 @@ struct res_type
     struct res_name         *names;        /* names array */
     unsigned int             nb_names;     /* total number of names */
     unsigned int             nb_id_names;  /* number of names that have a numeric id */
+    unsigned int             name_offset;  /* offset of type name in resource dir */
 };
 
 /* top level of the resource tree */
@@ -85,6 +87,9 @@ struct res_tree
 static const unsigned char *file_pos;   /* current position in resource file */
 static const unsigned char *file_end;   /* end of resource file */
 static const char *file_name;  /* current resource file name */
+
+/* size of a resource directory with n entries */
+#define RESDIR_SIZE(n)  ((4 + 2 * (n)) * sizeof(int))
 
 
 inline static struct resource *add_resource( DLLSPEC *spec )
@@ -316,10 +321,10 @@ static void output_string( FILE *outfile, const WCHAR *name )
 void output_resources( FILE *outfile, DLLSPEC *spec )
 {
     int i, j, k, nb_id_types;
-    unsigned int n;
+    unsigned int n, offset, data_offset;
     struct res_tree *tree;
-    const struct res_type *type;
-    const struct res_name *name;
+    struct res_type *type;
+    struct res_name *name;
     const struct resource *res;
 
     if (!spec->nb_resources) return;
@@ -360,17 +365,19 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
 
     /* resource directory definition */
 
-    fprintf( outfile, "#define OFFSETOF(field) ((char*)&((struct res_struct *)0)->field - (char*)((struct res_struct *) 0))\n" );
     fprintf( outfile, "static struct res_struct{\n" );
     fprintf( outfile, "  struct res_dir        type_dir;\n" );
     fprintf( outfile, "  struct res_dir_entry  type_entries[%d];\n", tree->nb_types );
+    offset = RESDIR_SIZE( tree->nb_types );
 
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
+        offset += RESDIR_SIZE( type->nb_names );
         fprintf( outfile, "  struct res_dir        name_%d_dir;\n", i );
         fprintf( outfile, "  struct res_dir_entry  name_%d_entries[%d];\n", i, type->nb_names );
         for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
+            offset += RESDIR_SIZE( name->nb_languages );
             fprintf( outfile, "  struct res_dir        lang_%d_%d_dir;\n", i, n );
             fprintf( outfile, "  struct res_dir_entry  lang_%d_%d_entries[%d];\n",
                      i, n, name->nb_languages );
@@ -378,20 +385,33 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
     }
 
     fprintf( outfile, "  struct res_data_entry data_entries[%d];\n", spec->nb_resources );
+    offset += spec->nb_resources * 4 * sizeof(int);
 
     for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
         if (type->type->str)
+        {
+            type->name_offset = offset | 0x80000000;
+            offset += (strlenW(type->type->str)+1) * sizeof(unsigned short);
             fprintf( outfile, "  unsigned short        type_%d_name[%d];\n",
                      i, strlenW(type->type->str)+1 );
+        }
         else
+        {
+            type->name_offset = type->type->id;
             nb_id_types++;
+        }
 
         for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
             if (name->name->str)
+            {
+                name->name_offset = offset | 0x80000000;
+                offset += (strlenW(name->name->str)+1) * sizeof(unsigned short);
                 fprintf( outfile, "  unsigned short        name_%d_%d_name[%d];\n",
                          i, n, strlenW(name->name->str)+1 );
+            }
+            else name->name_offset = name->name->id;
         }
     }
 
@@ -401,31 +421,30 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "  { 0, 0, 0, 0, %d, %d },\n", tree->nb_types - nb_id_types, nb_id_types );
 
     /* dump the type directory */
+    offset = RESDIR_SIZE( tree->nb_types );
     fprintf( outfile, "  {\n" );
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
-        if (!type->type->str)
-            fprintf( outfile, "    { 0x%04x, OFFSETOF(name_%d_dir) | 0x80000000 },\n",
-                     type->type->id, i );
-        else
-            fprintf( outfile, "    { OFFSETOF(type_%d_name) | 0x80000000, OFFSETOF(name_%d_dir) | 0x80000000 },\n",
-                     i, i );
+        fprintf( outfile, "    { 0x%08x, 0x%08x },\n", type->name_offset, offset | 0x80000000 );
+        offset += RESDIR_SIZE( type->nb_names );
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+            offset += RESDIR_SIZE( name->nb_languages );
     }
     fprintf( outfile, "  },\n" );
+
+    data_offset = offset;
+    offset = RESDIR_SIZE( tree->nb_types );
 
     /* dump the names and languages directories */
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
         fprintf( outfile, "  { 0, 0, 0, 0, %d, %d }, /* name_%d_dir */\n  {\n",
                  type->nb_names - type->nb_id_names, type->nb_id_names, i );
+        offset += RESDIR_SIZE( type->nb_names );
         for (n = 0, name = type->names; n < type->nb_names; n++, name++)
         {
-            if (!name->name->str)
-                fprintf( outfile, "    { 0x%04x, OFFSETOF(lang_%d_%d_dir) | 0x80000000 },\n",
-                         name->name->id, i, n );
-            else
-                fprintf( outfile, "    { OFFSETOF(name_%d_%d_name) | 0x80000000, OFFSETOF(lang_%d_%d_dir) | 0x80000000 },\n",
-                         i, n, i, n );
+            fprintf( outfile, "    { 0x%08x, 0x%08x },\n", name->name_offset, offset | 0x80000000 );
+            offset += RESDIR_SIZE( name->nb_languages );
         }
         fprintf( outfile, "  },\n" );
 
@@ -435,8 +454,8 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
                      name->nb_languages, i, n );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
             {
-                fprintf( outfile, "    { 0x%04x, OFFSETOF(data_entries[%d]) },\n",
-                         res->lang, res - spec->resources );
+                fprintf( outfile, "    { 0x%04x, 0x%08x },\n",
+                         res->lang, data_offset + (res - spec->resources) * 4 * sizeof(int) );
             }
             fprintf( outfile, "  },\n" );
         }
@@ -446,7 +465,8 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "  {\n" );
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
-        fprintf( outfile, "    { res_%d, sizeof(res_%d), 0, 0 },\n", i, i );
+        fprintf( outfile, "    { res_%d, sizeof(res_%d), 0, 0 }, /* %08x */\n", i, i,
+                 data_offset + i * 4 * sizeof(int) );
     }
 
     /* dump the name strings */
@@ -466,6 +486,6 @@ void output_resources( FILE *outfile, DLLSPEC *spec )
             }
         }
     }
-    fprintf( outfile, "  }\n};\n#undef OFFSETOF\n\n" );
+    fprintf( outfile, "  }\n};\n\n" );
     free_resource_tree( tree );
 }
