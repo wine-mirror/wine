@@ -875,7 +875,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       FIXME("Failure while reading picture header (hr is %lx, nread is %ld).\n",hr,xread);
       return hr;
   }
-  if (header[1] > statstg.cbSize.QuadPart) {/* Incorrect header, assume none. */
+  if (header[1] > statstg.cbSize.QuadPart || (header[1]==0)) {/* Incorrect header, assume none. */
     xread = 8;
     xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,statstg.cbSize.QuadPart);
     memcpy(xbuf,&header,8);
