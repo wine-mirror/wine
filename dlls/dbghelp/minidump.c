@@ -1,7 +1,7 @@
 /*
  * File minidump.c - management of dumps (read & write)
  *
- * Copyright (C) 2004, Eric Pouech
+ * Copyright (C) 2004-2005, Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,8 @@ struct dump_module
     unsigned                            is_elf;
     ULONG                               base;
     ULONG                               size;
+    DWORD                               timestamp;
+    DWORD                               checksum;
     char                                name[MAX_PATH];
 };
 
@@ -182,12 +184,15 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
  * Add a module to a dump context
  */
 static BOOL add_module(struct dump_context* dc, const char* name,
-                       DWORD base, DWORD size, BOOL is_elf)
+                       DWORD base, DWORD size, DWORD timestamp, DWORD checksum,
+                       BOOL is_elf)
 {
     if (!dc->module)
-        dc->module = HeapAlloc(GetProcessHeap(), 0, ++dc->num_module * sizeof(*dc->module));
+        dc->module = HeapAlloc(GetProcessHeap(), 0,
+                               ++dc->num_module * sizeof(*dc->module));
     else
-        dc->module = HeapReAlloc(GetProcessHeap(), 0, dc->module, ++dc->num_module * sizeof(*dc->module));
+        dc->module = HeapReAlloc(GetProcessHeap(), 0, dc->module,
+                                 ++dc->num_module * sizeof(*dc->module));
     if (!dc->module) return FALSE;
     if (is_elf ||
         !GetModuleFileNameExA(dc->hProcess, (HMODULE)base, 
@@ -197,6 +202,8 @@ static BOOL add_module(struct dump_context* dc, const char* name,
                   sizeof(dc->module[dc->num_module - 1].name));
     dc->module[dc->num_module - 1].base = base;
     dc->module[dc->num_module - 1].size = size;
+    dc->module[dc->num_module - 1].timestamp = timestamp;
+    dc->module[dc->num_module - 1].checksum = checksum;
     dc->module[dc->num_module - 1].is_elf = is_elf;
 
     return TRUE;
@@ -210,7 +217,14 @@ static BOOL add_module(struct dump_context* dc, const char* name,
 static BOOL WINAPI fetch_pe_module_info_cb(char* name, DWORD base, DWORD size,
                                            void* user)
 {
-    return add_module((struct dump_context*)user, name, base, size, FALSE);
+    struct dump_context*        dc = (struct dump_context*)user;
+    IMAGE_NT_HEADERS            nth;
+
+    if (pe_load_nt_header(dc->hProcess, base, &nth))
+        add_module((struct dump_context*)user, name, base, size, 
+                   nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum,
+                   FALSE);
+    return TRUE;
 }
 
 /******************************************************************
@@ -221,13 +235,22 @@ static BOOL WINAPI fetch_pe_module_info_cb(char* name, DWORD base, DWORD size,
 static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base, 
                                      void* user)
 {
-    return add_module((struct dump_context*)user, name, 
-                      base, 0 /* FIXME */, TRUE);
+    struct dump_context*        dc = (struct dump_context*)user;
+    DWORD size, checksum;
+
+    /* FIXME: there's no relevant timestamp on ELF modules */
+    /* NB: if we have a non-null base from the live-target use it (whenever
+     * the ELF module is relocatable or not). If we have a null base (ELF
+     * module isn't relocatable) then grab its base address from ELF file
+     */
+    if (!elf_fetch_file_info(name, base ? NULL : &base, &size, &checksum))
+        size = checksum = 0;
+    add_module(dc, name, base, size, 0 /* FIXME */, checksum, TRUE);
+    return TRUE;
 }
 
 static void fetch_module_info(struct dump_context* dc)
 {
-    WINE_FIXME("--> %p\n", dc->hProcess);
     EnumerateLoadedModules(dc->hProcess, fetch_pe_module_info_cb, dc);
     /* Since we include ELF modules in a separate stream from the regular PE ones,
      * we can always include those ELF modules (they don't eat lots of space)
@@ -352,7 +375,8 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
 
     for (i = nmod = 0; i < dc->num_module; i++)
     {
-        if ((dc->module[i].is_elf && dump_elf) || (!dc->module[i].is_elf && !dump_elf))
+        if ((dc->module[i].is_elf && dump_elf) ||
+            (!dc->module[i].is_elf && !dump_elf))
             nmod++;
     }
 
@@ -366,7 +390,8 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
     dc->rva += sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
     for (i = 0; i < dc->num_module; i++)
     {
-        if ((dc->module[i].is_elf && !dump_elf) || (!dc->module[i].is_elf && dump_elf))
+        if ((dc->module[i].is_elf && !dump_elf) ||
+            (!dc->module[i].is_elf && dump_elf))
             continue;
 
         flags_out = ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord;
@@ -396,8 +421,8 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
             cbin.u.Module.FullPath = ms->Buffer;
             cbin.u.Module.BaseOfImage = dc->module[i].base;
             cbin.u.Module.SizeOfImage = dc->module[i].size;
-            cbin.u.Module.CheckSum = 0; /* FIXME */
-            cbin.u.Module.TimeDateStamp = 0; /* FIXME */
+            cbin.u.Module.CheckSum = dc->module[i].checksum;
+            cbin.u.Module.TimeDateStamp = dc->module[i].timestamp;
             memset(&cbin.u.Module.VersionInfo, 0, sizeof(cbin.u.Module.VersionInfo));
             cbin.u.Module.CvRecord = NULL;
             cbin.u.Module.SizeOfCvRecord = 0;
@@ -413,8 +438,8 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
         {
             mdModule.BaseOfImage = dc->module[i].base;
             mdModule.SizeOfImage = dc->module[i].size;
-            mdModule.CheckSum = 0; /* FIXME */
-            mdModule.TimeDateStamp = 0; /* FIXME */
+            mdModule.CheckSum = dc->module[i].checksum;
+            mdModule.TimeDateStamp = dc->module[i].timestamp;
             mdModule.ModuleNameRva = dc->rva;
             ms->Length -= sizeof(WCHAR);
             append(dc, ms, sizeof(ULONG) + ms->Length);
@@ -618,7 +643,6 @@ static void dump_misc_info(struct dump_context* dc)
 
 /******************************************************************
  *		MiniDumpWriteDump (DEBUGHLP.@)
- *
  *
  */
 BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,

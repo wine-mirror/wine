@@ -76,6 +76,7 @@ struct module* module_new(struct process* pcs, const char* name,
 {
     struct module*      module;
 
+    assert(type == DMT_ELF || type == DMT_PE);
     if (!(module = HeapAlloc(GetProcessHeap(), 0, sizeof(*module))))
 	return NULL;
 
@@ -93,7 +94,8 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.SizeOfStruct = sizeof(module->module);
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;
-    module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
+    module_fill_module(name, module->module.ModuleName,
+                       sizeof(module->module.ModuleName));
     module->module.ImageName[0] = '\0';
     lstrcpynA(module->module.LoadedImageName, name, sizeof(module->module.LoadedImageName));
     module->module.SymType = SymNone;
@@ -139,13 +141,15 @@ struct module* module_find_by_name(const struct process* pcs,
 
         for (module = pcs->lmodules; module; module = module->next)
         {
-            if (type == module->type && !strcasecmp(name, module->module.LoadedImageName)) 
+            if (type == module->type &&
+                !strcasecmp(name, module->module.LoadedImageName)) 
                 return module;
         }
         module_fill_module(name, modname, sizeof(modname));
         for (module = pcs->lmodules; module; module = module->next)
         {
-            if (type == module->type && !strcasecmp(modname, module->module.ModuleName)) 
+            if (type == module->type &&
+                !strcasecmp(modname, module->module.ModuleName)) 
                 return module;
         }
     }
@@ -258,7 +262,7 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     return module;
 }
 
-static BOOL module_is_elf_container_loaded(struct process* pcs, const char* ImageName, 
+static BOOL module_is_elf_container_loaded(struct process* pcs, const char* ImageName,
                                            const char* ModuleName)
 {
     char                buffer[MAX_PATH];
@@ -281,31 +285,34 @@ static BOOL module_is_elf_container_loaded(struct process* pcs, const char* Imag
     return FALSE;
 }
 
-static BOOL elf_is_shared_by_name(const char* name)
+/******************************************************************
+ *		module_get_type_by_name
+ *
+ * Guesses a filename type from its extension
+ */
+enum module_type module_get_type_by_name(const char* name)
 {
     const char* ptr;
     int         len = strlen(name);
 
-    /* check for terminating .so or .so.[digit]+ */
-    while (len)
+    /* check for terminating .so or .so.[digit] */
+    ptr = strrchr(name, '.');
+    if (ptr)
     {
-        for (ptr = name + len - 1; ptr >= name; ptr--) if (*ptr == '.') break;
-        if (ptr < name) break;
-        if (ptr == name + len - 2 && isdigit(ptr[1]))
-        {
-            len -= 2;
-            continue;
-        }
-        if (ptr == name + len - 3 && ptr[1] == 's' && ptr[2] == 'o')
-            return TRUE;
-        break;
+        if (!strcmp(ptr, ".so") ||
+            (isdigit(ptr[1]) && !ptr[2] && ptr >= name + 3 && !memcmp(ptr - 3, ".so", 3)))
+            return DMT_ELF;
+        else if (!strcasecmp(ptr, ".pdb"))
+            return DMT_PDB;
     }
-    /* wine-[kp]thread is valid too */
-    if (((len > 12 && name[len - 13] == '/') || len == 12) && 
+    /* wine-[kp]thread is also an ELF module */
+    else if (((len > 12 && name[len - 13] == '/') || len == 12) && 
              (!strcasecmp(name + len - 12, "wine-pthread") || 
               !strcasecmp(name + len - 12, "wine-kthread")))
-        return TRUE;
-    return FALSE;
+    {
+        return DMT_ELF;
+    }
+    return DMT_PE;
 }
 
 /***********************************************************************
@@ -333,7 +340,8 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
     if (module_is_elf_container_loaded(pcs, ImageName, ModuleName))
     {
         /* force the loading of DLL as builtin */
-        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
+        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
+                                              BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", ImageName);
         return 0;
@@ -341,12 +349,13 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
     TRACE("Assuming %s as native DLL\n", ImageName);
     if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
     {
-        if (elf_is_shared_by_name(ImageName) &&
+        if (module_get_type_by_name(ImageName) == DMT_ELF &&
             (module = elf_load_module(pcs, ImageName, BaseOfDll)))
             goto done;
         FIXME("Should have successfully loaded debug information for image %s\n",
               ImageName);
-        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
+        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
+                                              BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", ImageName);
         return 0;
@@ -461,7 +470,6 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
             !GetModuleBaseNameA(hProcess, hMods[i], base, sizeof(base)))
             continue;
         module_fill_module(base, mod, sizeof(mod));
-
         EnumLoadedModulesCallback(mod, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage, 
                                   UserContext);
     }

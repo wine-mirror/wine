@@ -249,6 +249,7 @@ enum module_type
     DMT_UNKNOWN,        /* for lookup, not actually used for a module */
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
+    DMT_PDB,            /* PDB file */
 };
 
 struct module
@@ -295,6 +296,7 @@ extern HANDLE hMsvcrt;
 /* elf_module.c */
 typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
+extern BOOL         elf_fetch_file_info(const char* name, DWORD* base, DWORD* size, DWORD* checksum);
 struct elf_file_map;
 extern BOOL         elf_load_debug_info(struct module* module, struct elf_file_map* fmap);
 extern struct module*
@@ -324,6 +326,8 @@ extern struct module*
 extern struct module*
                     module_get_containee(const struct process* pcs,
                                          const struct module* inner);
+extern enum module_type
+                    module_get_type_by_name(const char* name);
 extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs, 
                                   struct module* module);
@@ -334,6 +338,7 @@ extern BOOL         pe_load_debug_directory(const struct process* pcs,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 /* pe_module.c */
+extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
 extern struct module*
                     pe_load_module(struct process* pcs, char* name,
                                    HANDLE hFile, DWORD base, DWORD size);

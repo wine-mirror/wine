@@ -24,6 +24,10 @@
 #include <string.h>
 
 #include "dbghelp_private.h"
+#include "ntstatus.h"
+#include "winnls.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
@@ -140,7 +144,7 @@ BOOL WINAPI SymMatchFileName(char* file, char* match,
     return mptr == match - 1;
 }
 
-static BOOL do_search(const char* file, char* buffer,
+static BOOL do_search(const char* file, char* buffer, BOOL recurse,
                       PENUMDIRTREE_CALLBACK cb, void* user)
 {
     HANDLE              h;
@@ -161,8 +165,8 @@ static BOOL do_search(const char* file, char* buffer,
         if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, "..")) continue;
 
         strcpy(buffer + pos, fd.cFileName);
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            found = do_search(file, buffer, cb, user);
+        if (recurse && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            found = do_search(file, buffer, TRUE, cb, user);
         else if (SymMatchFileName(buffer, (char*)file, NULL, NULL))
         {
             if (!cb || cb(buffer, user)) found = TRUE;
@@ -182,7 +186,7 @@ BOOL WINAPI SearchTreeForFile(LPSTR root, LPSTR file, LPSTR buffer)
     TRACE("(%s, %s, %p)\n", 
           debugstr_a(root), debugstr_a(file), buffer);
     strcpy(buffer, root);
-    return do_search(file, buffer, NULL, NULL);
+    return do_search(file, buffer, TRUE, NULL, NULL);
 }
 
 /******************************************************************
@@ -196,11 +200,19 @@ BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
     TRACE("(%p %s %s %p %p %p)\n", hProcess, root, file, buffer, cb, user);
 
     strcpy(buffer, root);
-    return do_search(file, buffer, cb, user);
+    return do_search(file, buffer, TRUE, cb, user);
 }
 
 struct sffip
 {
+    enum module_type            kind;
+    /* pe:  id  -> DWORD:timestamp
+     *      two -> size of image (from PE header)
+     * pdb: id  -> PDB signature
+     *            I think either DWORD:timestamp or GUID:guid depending on PDB version
+     *      two -> PDB age ???
+     * elf: id  -> DWORD:CRC 32 of ELF image (Wine only)
+     */
     PVOID                       id;
     DWORD                       two;
     DWORD                       three;
@@ -212,11 +224,66 @@ struct sffip
 static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
 {
     struct sffip*       s = (struct sffip*)user;
-
+    DWORD               size, checksum;
+    DWORD_PTR           timestamp;
     /* FIXME: should check that id/two/three match the file pointed
      * by buffer
      */
-    /* yes, EnumDirTree and SymFindFileInPath callbacks use the opposite
+    switch (s->kind)
+    {
+    case DMT_PE:
+        {
+            HANDLE  hFile, hMap;
+            void*   mapping;
+
+            timestamp = ~(DWORD_PTR)s->id;
+            size = ~s->two;
+            hFile = CreateFileA(buffer, GENERIC_READ, FILE_SHARE_READ, NULL, 
+                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (hFile == INVALID_HANDLE_VALUE) return TRUE;
+            if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+            {
+                if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
+                {
+                    IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(mapping);
+                    timestamp = nth->FileHeader.TimeDateStamp;
+                    size = nth->OptionalHeader.SizeOfImage;
+                    UnmapViewOfFile(mapping);
+                }
+                CloseHandle(hMap);
+            }
+            CloseHandle(hFile);
+            if (timestamp != (DWORD_PTR)s->id || size != s->two)
+            {
+                WARN("Found %s, but wrong size or timestamp\n", buffer);
+                return TRUE;
+            }
+        }
+        break;
+    case DMT_ELF:
+        if (elf_fetch_file_info(buffer, 0, &size, &checksum))
+        {
+            if (checksum != (DWORD_PTR)s->id)
+            {
+                WARN("Found %s, but wrong checksums: %08lx %08lx\n",
+                      buffer, checksum, (DWORD_PTR)s->id);
+                return TRUE;
+            }
+        }
+        else
+        {
+            WARN("Couldn't read %s\n", buffer);
+            return TRUE;
+        }
+        break;
+    case DMT_PDB:
+        FIXME("NIY on '%s'\n", buffer);
+        break;
+    default:
+        FIXME("What the heck??\n");
+        return TRUE;
+    }
+    /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
      */
     return !(s->cb)((char*)buffer, s->user);
@@ -226,7 +293,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
  *		SymFindFileInPath (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR file,
+BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR full_path,
                               PVOID id, DWORD two, DWORD three, DWORD flags,
                               LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
                               PVOID user)
@@ -235,9 +302,10 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR file,
     struct process*     pcs = process_find_by_handle(hProcess);
     char                tmp[MAX_PATH];
     char*               ptr;
+    char*               filename;
 
     TRACE("(%p %s %s %p %08lx %08lx %08lx %p %p %p)\n",
-          hProcess, searchPath, file, id, two, three, flags, 
+          hProcess, searchPath, full_path, id, two, three, flags, 
           buffer, cb, user);
 
     if (!pcs) return FALSE;
@@ -250,7 +318,15 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR file,
     s.cb = cb;
     s.user = user;
 
-    file = file_name(file);
+    filename = file_name(full_path);
+    s.kind = module_get_type_by_name(filename);
+
+    /* first check full path to file */
+    if (sffip_cb(full_path, &s))
+    {
+        strcpy(buffer, full_path);
+        return TRUE;
+    }
 
     while (searchPath)
     {
@@ -266,7 +342,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR file,
             strcpy(tmp, searchPath);
             searchPath = NULL;
         }
-        if (EnumDirTree(hProcess, tmp, file, buffer, sffip_cb, &s)) return TRUE;
+        if (do_search(filename, tmp, FALSE, sffip_cb, &s)) return TRUE;
     }
     return FALSE;
 }

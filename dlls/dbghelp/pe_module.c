@@ -341,7 +341,7 @@ struct module* pe_load_module(struct process* pcs, char* name,
             /* FIXME SetLastError */
             return NULL;
         }
-        if ((hFile = FindExecutableImage(name, NULL, loaded_name)) == NULL)
+        if ((hFile = FindExecutableImage(name, pcs->search_path, loaded_name)) == NULL)
             return NULL;
         opened = TRUE;
     }
@@ -381,6 +381,21 @@ struct module* pe_load_module(struct process* pcs, char* name,
 }
 
 /******************************************************************
+ *		pe_load_nt_header
+ *
+ */
+BOOL pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth)
+{
+    IMAGE_DOS_HEADER    dos;
+
+    return ReadProcessMemory(hProc, (char*)base, &dos, sizeof(dos), NULL) &&
+        dos.e_magic == IMAGE_DOS_SIGNATURE &&
+        ReadProcessMemory(hProc, (char*)(base + dos.e_lfanew), 
+                          nth, sizeof(*nth), NULL) &&
+        nth->Signature == IMAGE_NT_SIGNATURE;
+}
+
+/******************************************************************
  *		pe_load_module_from_pcs
  *
  */
@@ -408,14 +423,9 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
     {
         if (pcs->dbg_hdr_addr)
         {
-            IMAGE_DOS_HEADER    dos;
             IMAGE_NT_HEADERS    nth;
 
-            if (ReadProcessMemory(pcs->handle, (char*)base, &dos, sizeof(dos), NULL) &&
-                dos.e_magic == IMAGE_DOS_SIGNATURE &&
-                ReadProcessMemory(pcs->handle, (char*)(base + dos.e_lfanew), 
-                                  &nth, sizeof(nth), NULL) &&
-                nth.Signature == IMAGE_NT_SIGNATURE)
+            if (pe_load_nt_header(pcs->handle, base, &nth))
             {
                 if (!size) size = nth.OptionalHeader.SizeOfImage;
                 module = module_new(pcs, name, DMT_PE, base, size,

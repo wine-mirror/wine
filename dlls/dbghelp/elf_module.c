@@ -81,12 +81,14 @@ struct elf_module_info
 
 #define ELF_INFO_DEBUG_HEADER   0x0001
 #define ELF_INFO_MODULE         0x0002
+#define ELF_INFO_NAME           0x0004
 
 struct elf_info
 {
     unsigned                    flags;          /* IN  one (or several) of the ELF_INFO constants */
     unsigned long               dbg_hdr_addr;   /* OUT address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
     struct module*              module;         /* OUT loaded module (if ELF_INFO_MODULE is set) */
+    const char*                 module_name;    /* OUT found module name (if ELF_INFO_NAME is set) */
 };
 
 #define NO_MAP                  ((const void*)0xffffffff)
@@ -139,7 +141,8 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
         return NO_MAP;
     /* align required information on page size (we assume pagesize is a power of 2) */
     ofst = fmap->sect[sidx].shdr.sh_offset & ~(pgsz - 1);
-    size = (fmap->sect[sidx].shdr.sh_offset + fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1);
+    size = (fmap->sect[sidx].shdr.sh_offset + 
+            fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1);
     fmap->sect[sidx].mapped = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fmap->fd, ofst);
     if (fmap->sect[sidx].mapped == NO_MAP) return NO_MAP;
     return fmap->sect[sidx].mapped + (fmap->sect[sidx].shdr.sh_offset & (pgsz - 1));
@@ -188,7 +191,8 @@ static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
     if (memcmp(fmap->elfhdr.e_ident, 
                elf_signature, sizeof(elf_signature))) return FALSE;
 
-    fmap->sect = HeapAlloc(GetProcessHeap(), 0, fmap->elfhdr.e_shnum * sizeof(fmap->sect[0]));
+    fmap->sect = HeapAlloc(GetProcessHeap(), 0,
+                           fmap->elfhdr.e_shnum * sizeof(fmap->sect[0]));
     if (!fmap->sect) return FALSE;
 
     lseek(fmap->fd, fmap->elfhdr.e_shoff, SEEK_SET);
@@ -800,7 +804,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     shstrtab = elf_map_section(fmap, fmap->elfhdr.e_shstrndx);
     if (shstrtab == NO_MAP) return FALSE;
 
-    symtab_sect = dynsym_sect = stab_sect = stabstr_sect = debug_sect = debuglink_sect = -1;
+    symtab_sect = dynsym_sect = stab_sect = stabstr_sect =
+        debug_sect = debuglink_sect = -1;
 
     for (i = 0; i < fmap->elfhdr.e_shnum; i++)
     {
@@ -867,7 +872,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         else if (debug_sect != -1)
         {
             /* Dwarf 2 debug information */
-            FIXME("Unsupported Dwarf2 information for %s\n", module->module.ModuleName);
+            FIXME("Unsupported Dwarf2 information for %s\n",
+                  module->module.ModuleName);
         }
         else if (debuglink_sect != -1)
         {
@@ -876,7 +882,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
 
             dbg_link = elf_map_section(fmap, debuglink_sect);
             /* The content of a debug link section is:
-             * 1/ a NULL terminated string, containing the file name for the debug info
+             * 1/ a NULL terminated string, containing the file name for the
+             *    debug info
              * 2/ padding on 4 byte boundary
              * 3/ CRC of the linked ELF file
              */
@@ -884,11 +891,14 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             {
                 fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
                 fmap_link.with_crc = 1;
-                ret = elf_load_debug_info_from_map(module, &fmap_link, pool, ht_symtab);
+                ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
+                                                   ht_symtab);
                 if (!ret)
                     WARN("Couldn't load debug information from %s\n", dbg_link);
             }
-            else WARN("Couldn't load linked debug file for %s\n", module->module.ModuleName);
+            else
+                WARN("Couldn't load linked debug file for %s\n",
+                     module->module.ModuleName);
             elf_unmap_file(&fmap_link);
         }
     }
@@ -940,6 +950,22 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
     return ret;
 }
 
+/******************************************************************
+ *		elf_fetch_file_info
+ *
+ * Gathers some more information for an ELF module from a given file
+ */
+BOOL elf_fetch_file_info(const char* name, DWORD* base,
+                         DWORD* size, DWORD* checksum)
+{
+    struct elf_file_map fmap;
+    if (!elf_map_file(name, &fmap)) return FALSE;
+    if (base) *base = fmap.elf_start;
+    *size = fmap.elf_size;
+    *checksum = calc_crc32(&fmap);
+    elf_unmap_file(&fmap);
+    return TRUE;
+}
 
 /******************************************************************
  *		is_dt_flag_valid
@@ -1033,7 +1059,7 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
         if (!elf_module_info) goto leave;
         elf_info->module = module_new(pcs, filename, DMT_ELF, 
                                       (load_offset) ? load_offset : fmap.elf_start, 
-                                      fmap.elf_size, 0, 0);
+                                      fmap.elf_size, 0, calc_crc32(&fmap));
         if (!elf_info->module)
         {
             HeapFree(GetProcessHeap(), 0, elf_module_info);
@@ -1053,6 +1079,11 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
         elf_info->module->elf_info->elf_loader = 0;
     } else ret = TRUE;
 
+    if (elf_info->flags & ELF_INFO_NAME)
+    {
+        elf_info->module_name = strcpy(HeapAlloc(GetProcessHeap(), 0,
+                                                 strlen(filename) + 1), filename);
+    }
 leave:
     elf_unmap_file(&fmap);
 
@@ -1137,6 +1168,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const char* filename,
  * Enumerate ELF modules from a running process
  */
 static BOOL elf_enum_modules_internal(const struct process* pcs,
+                                      const char* main_name,
                                       elf_enum_modules_cb cb, void* user)
 {
     struct r_debug      dbg_hdr;
@@ -1164,7 +1196,8 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
 	    ReadProcessMemory(pcs->handle, lm.l_name, bufstr, sizeof(bufstr), NULL)) 
         {
 	    bufstr[sizeof(bufstr) - 1] = '\0';
-            if (!cb(bufstr, lm.l_addr, user)) break;
+            if (main_name && !bufstr[0]) strcpy(bufstr, main_name);
+            if (!cb(bufstr, (unsigned long)lm.l_addr, user)) break;
 	}
     }
     return TRUE;
@@ -1204,7 +1237,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 
     es.pcs = pcs;
     es.elf_info.flags = ELF_INFO_MODULE;
-    if (!elf_enum_modules_internal(pcs, elf_enum_sync_cb, &es))
+    if (!elf_enum_modules_internal(pcs, NULL, elf_enum_sync_cb, &es))
         return FALSE;
 
     module = pcs->lmodules;
@@ -1277,13 +1310,16 @@ BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
 {
     struct process      pcs;
     struct elf_info     elf_info;
+    BOOL                ret;
 
     memset(&pcs, 0, sizeof(pcs));
     pcs.handle = hProc;
-    elf_info.flags = ELF_INFO_DEBUG_HEADER;
+    elf_info.flags = ELF_INFO_DEBUG_HEADER | ELF_INFO_NAME;
     if (!elf_search_loader(&pcs, &elf_info)) return FALSE;
     pcs.dbg_hdr_addr = elf_info.dbg_hdr_addr;
-    return elf_enum_modules_internal(&pcs, cb, user);
+    ret = elf_enum_modules_internal(&pcs, elf_info.module_name, cb, user);
+    HeapFree(GetProcessHeap(), 0, (char*)elf_info.module_name);
+    return ret;
 }
 
 struct elf_load
@@ -1329,7 +1365,7 @@ struct module*  elf_load_module(struct process* pcs, const char* name, DWORD add
 {
     struct elf_load     el;
 
-    TRACE("(%p %s)\n", pcs, name);
+    TRACE("(%p %s %08lx)\n", pcs, name, addr);
 
     el.elf_info.flags = ELF_INFO_MODULE;
     el.ret = FALSE;
@@ -1337,14 +1373,14 @@ struct module*  elf_load_module(struct process* pcs, const char* name, DWORD add
     if (pcs->dbg_hdr_addr) /* we're debugging a life target */
     {
         el.pcs = pcs;
-        /* do only the lookup from the filename, not the path (as we lookup module name
-         * in the process' loaded module list)
+        /* do only the lookup from the filename, not the path (as we lookup module
+         * name in the process' loaded module list)
          */
         el.name = strrchr(name, '/');
         if (!el.name++) el.name = name;
         el.ret = FALSE;
 
-        if (!elf_enum_modules_internal(pcs, elf_load_cb, &el))
+        if (!elf_enum_modules_internal(pcs, NULL, elf_load_cb, &el))
             return NULL;
     }
     else if (addr)

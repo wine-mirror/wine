@@ -887,6 +887,35 @@ BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION);
 DWORD   WINAPI  SymGetOptions(void);
 DWORD   WINAPI  SymSetOptions(DWORD);
 
+/* Symbol server bits */
+typedef BOOL     (WINAPI* PSYMBOLSERVERPROC)(LPCSTR, LPCSTR, PVOID, DWORD, DWORD, LPSTR);
+typedef BOOL     (WINAPI* PSYMBOLSERVEROPENPROC)(void);
+typedef BOOL     (WINAPI* PSYMBOLSERVERCLOSEPROC)(void);
+typedef BOOL     (WINAPI* PSYMBOLSERVERSETOPTIONSPROC)(UINT_PTR, ULONG64);
+typedef BOOL     (CALLBACK* PSYMBOLSERVERCALLBACKPROC)(UINT_PTR, ULONG64, ULONG64);
+typedef UINT_PTR (WINAPI* PSYMBOLSERVERGETOPTIONSPROC)();
+typedef BOOL     (WINAPI* PSYMBOLSERVERPINGPROC)(LPCSTR);
+
+#define SSRVOPT_CALLBACK            0x0001
+#define SSRVOPT_DWORD               0x0002
+#define SSRVOPT_DWORDPTR            0x0004
+#define SSRVOPT_GUIDPTR             0x0008
+#define SSRVOPT_OLDGUIDPTR          0x0010
+#define SSRVOPT_UNATTENDED          0x0020
+#define SSRVOPT_NOCOPY              0x0040
+#define SSRVOPT_PARENTWIN           0x0080
+#define SSRVOPT_PARAMTYPE           0x0100
+#define SSRVOPT_SECURE              0x0200
+#define SSRVOPT_TRACE               0x0400
+#define SSRVOPT_SETCONTEXT          0x0800
+#define SSRVOPT_PROXY               0x1000
+#define SSRVOPT_DOWNSTREAM_STORE    0x2000
+#define SSRVOPT_RESET               ((ULONG_PTR)-1)
+
+#define SSRVACTION_TRACE        1
+#define SSRVACTION_QUERYCANCEL  2
+#define SSRVACTION_EVENT        3
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
