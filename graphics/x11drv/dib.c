@@ -2827,6 +2827,7 @@ INT X11DRV_DIB_GetDIBits(
 {
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
+  X11DRV_PHYSBITMAP *pbitmap;
   PALETTEOBJ * palette;
   
   TRACE_(bitmap)("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
@@ -2867,12 +2868,17 @@ INT X11DRV_DIB_GetDIBits(
   }
 
   /* Hack for now */
+  if(!bmp->DDBitmap)
+    X11DRV_CreateBitmap(hbitmap);
+
+  pbitmap = bmp->DDBitmap->physBitmap;
+
   descr.dc        = dc;
   descr.palentry  = palette->logpalette.palPalEntry;
   descr.bits      = bits;
   descr.lines     = lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  descr.drawable  = ((X11DRV_PHYSBITMAP *)bmp->DDBitmap->physBitmap)->pixmap;
+  descr.drawable  = pbitmap->pixmap;
   descr.gc        = BITMAP_GC(bmp);
   descr.xSrc      = 0;
   descr.ySrc      = startscan;
