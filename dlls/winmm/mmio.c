@@ -616,7 +616,7 @@ static	LRESULT	MMIO_Flush(WINE_MMIO* wm, UINT uFlags)
     if (wm->info.cchBuffer && (wm->info.fccIOProc != FOURCC_MEM)) {
 	/* not quite sure what to do here, but I'll guess */
 	if (wm->info.dwFlags & MMIO_DIRTY) {
-	    MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset,
+	    MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lBufOffset,
 			     SEEK_SET, MMIO_PROC_32A);
 	    MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)wm->info.pchBuffer,
 			     wm->info.pchNext - wm->info.pchBuffer, MMIO_PROC_32A);
@@ -643,7 +643,7 @@ static LONG	MMIO_GrabNextBuffer(LPWINE_MMIO wm, int for_read)
     wm->info.lBufOffset = wm->info.lDiskOffset;
     wm->info.pchNext = wm->info.pchBuffer;
     wm->info.pchEndRead = wm->info.pchBuffer;
-    wm->info.pchEndWrite = wm->info.pchBuffer;
+    wm->info.pchEndWrite = wm->info.pchBuffer + wm->info.cchBuffer;
 
     if (for_read) {
 	size = MMIO_SendMessage(wm, MMIOM_READ, (LPARAM)wm->info.pchBuffer,
@@ -1014,7 +1014,9 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
                 cch -= count;
                 bytesW+=count;                
 		wm->info.dwFlags |= MMIO_DIRTY;
-	    } else
+	    }
+            else
+            {
 		if (wm->info.fccIOProc == FOURCC_MEM) {
 		    if (wm->info.adwInfo[0]) {
 			/* from where would we get the memory handle? */
@@ -1022,8 +1024,13 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
                         break;
 		    } else break;
 		}
+            }
 
-            if (wm->info.pchNext == wm->info.pchEndWrite) MMIO_Flush(wm, MMIO_EMPTYBUF);
+            if (wm->info.pchNext == wm->info.pchEndWrite)
+            {
+                MMIO_Flush(wm, MMIO_EMPTYBUF);
+                MMIO_GrabNextBuffer(wm, FALSE);
+            }
             else break;
 	}
     } else {
@@ -1588,7 +1595,7 @@ UINT WINAPI mmioAscend(HMMIO hmmio, LPMMCKINFO lpck, UINT uFlags)
 	
 	TRACE("chunk is marked MMIO_DIRTY, correcting chunk size\n");
 	dwOldPos = mmioSeek(hmmio, 0, SEEK_CUR);
-	TRACE("dwOldPos=%ld\n", dwOldPos);
+	TRACE("dwOldPos=%ld lpck->dwDataOffset = %ld\n", dwOldPos, lpck->dwDataOffset);
 	dwNewSize = dwOldPos - lpck->dwDataOffset;
 	if (dwNewSize != lpck->cksize) {
 	    TRACE("dwNewSize=%ld\n", dwNewSize);
