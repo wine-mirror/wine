@@ -1536,8 +1536,8 @@ static void wait_message_reply( UINT flags )
 
         SERVER_START_REQ( set_queue_mask )
         {
-            req->wake_mask    = (flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE;
-            req->changed_mask = QS_SMRESULT | req->wake_mask;
+            req->wake_mask    = QS_SMRESULT | ((flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE);
+            req->changed_mask = req->wake_mask;
             req->skip_wait    = 1;
             if (!wine_server_call( req ))
             {
@@ -1547,7 +1547,7 @@ static void wait_message_reply( UINT flags )
         }
         SERVER_END_REQ;
 
-        if (changed_bits & QS_SMRESULT) return;  /* got a result */
+        if (wake_bits & QS_SMRESULT) return;  /* got a result */
         if (wake_bits & QS_SENDMESSAGE)
         {
             /* Process the sent message immediately */
