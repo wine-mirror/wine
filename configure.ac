@@ -1028,6 +1028,7 @@ then
   WINE_GET_SONAME(curses,waddch)
   WINE_GET_SONAME(jpeg,jpeg_start_decompress)
   WINE_GET_SONAME(ungif,DGifOpen)
+  WINE_GET_SONAME(gif,DGifOpen)
 fi
 
 

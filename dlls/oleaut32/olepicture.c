@@ -50,9 +50,12 @@
  */
 #ifdef HAVE_GIF_LIB_H
 # include <gif_lib.h>
-#ifndef SONAME_LIBUNGIF
-#define SONAME_LIBUNGIF "libungif.so"
-#endif
+# ifndef SONAME_LIBUNGIF
+#  define SONAME_LIBUNGIF "libungif.so"
+# endif
+# ifndef SONAME_LIBGIF
+#  define SONAME_LIBGIF "libgif.so"
+# endif
 #endif
 
 #define NONAMELESSUNION
@@ -903,7 +906,9 @@ struct gifdata {
 
 static void *load_libungif(void)
 {
-    if((libungif_handle = wine_dlopen(SONAME_LIBUNGIF, RTLD_NOW, NULL, 0)) != NULL) {
+    if(((libungif_handle = wine_dlopen(SONAME_LIBUNGIF, RTLD_NOW, NULL, 0)) != NULL) ||
+       ((libungif_handle = wine_dlopen(SONAME_LIBGIF  , RTLD_NOW, NULL, 0)) != NULL)
+    ) {
 
 #define LOAD_FUNCPTR(f) \
     if((p##f = wine_dlsym(libungif_handle, #f, NULL, 0)) == NULL) { \
@@ -1022,7 +1027,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 
     if(!libungif_handle) {
         if(!load_libungif()) {
-            FIXME("Failed reading GIF because unable to find %s\n", SONAME_LIBUNGIF);
+            FIXME("Failed reading GIF because unable to find %s/%s\n", SONAME_LIBUNGIF, SONAME_LIBGIF);
             return E_FAIL;
         }
     }
