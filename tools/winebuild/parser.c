@@ -517,6 +517,11 @@ static int ParseOrdinal(int ordinal)
         if (ordinal > Limit) Limit = ordinal;
         if (ordinal < Base) Base = ordinal;
         odp->ordinal = ordinal;
+        if (Ordinals[ordinal])
+        {
+            error( "Duplicate ordinal %d\n", ordinal );
+            goto error;
+        }
         Ordinals[ordinal] = odp;
     }
 
