@@ -229,6 +229,9 @@ void WINAPI SysFreeString16(BSTR16 in)
 void WINAPI SysFreeString(BSTR in)
 {
     DWORD* bufferPointer;
+    
+    /* NULL is a valid parameter */
+    if(!in) return;
 
     /*
      * We have to be careful when we free a BSTR pointer, it points to
