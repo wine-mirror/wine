@@ -2629,7 +2629,7 @@ UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
     TRACE("(%u %p %u)!\n", uDeviceID, lpCaps, uSize);
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_WAVEIN, TRUE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+	return MMSYSERR_BADDEVICEID;
 
     return MMDRV_Message(wmld, WIDM_GETDEVCAPS, (DWORD)lpCaps, uSize, TRUE);
 }
