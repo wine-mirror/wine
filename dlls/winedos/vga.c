@@ -26,6 +26,10 @@ static DDSURFACEDESC sdesc;
 static LONG vga_polling,vga_refresh;
 static HANDLE poll_timer;
 
+static int vga_width;
+static int vga_height;
+static int vga_depth;
+
 typedef HRESULT WINAPI (*DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
 
@@ -155,9 +159,21 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
     ModeSet par;
-    par.Xres = Xres;
-    par.Yres = Yres;
-    par.Depth = Depth;
+
+    vga_width = Xres;
+    vga_height = Yres;
+    vga_depth = Depth;
+
+    if(Xres >= 640 || Yres >= 480) {
+      par.Xres = Xres;
+      par.Yres = Yres;
+    } else {
+      par.Xres = 640;
+      par.Yres = 480;
+    }
+
+    par.Depth = (Depth < 8) ? 8 : Depth;
+
     MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
 }
@@ -290,26 +306,69 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
 
 /*** CONTROL ***/
 
+static void VGA_Poll_Graphics(void)
+{
+  unsigned int Pitch, Height, Width, X, Y;
+  char *surf;
+  char *dat = DOSMEM_MapDosToLinear(0xa0000);
+
+  surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
+  if (!surf) return;
+
+  if(vga_width == 320 && vga_depth <= 4)
+    for (Y=0; Y<vga_height; Y++,surf+=Pitch*2,dat+=vga_width/8) {
+      for(X=0; X<vga_width; X+=8) {
+       int offset = X/8;
+       int Z;
+       for(Z=0; Z<8; Z++) {
+         int b0 =  (dat[offset] >> Z) & 0x1;
+         int index = 7-Z;
+         surf[(X+index)*2] = b0;
+         surf[(X+index)*2+1] = b0;
+         surf[(X+index)*2+Pitch] = b0;
+         surf[(X+index)*2+Pitch+1] = b0;
+       }
+      }
+    }
+
+  if(vga_width == 320 && vga_depth == 8)
+    for (Y=0; Y<vga_height; Y++,surf+=Pitch*2,dat+=vga_width) {
+      for(X=0; X<vga_width; X++) {
+       int b0 = dat[X];
+       surf[X*2] = b0;
+       surf[X*2+1] = b0;
+       surf[X*2+Pitch] = b0;
+       surf[X*2+Pitch+1] = b0;
+      }
+    }
+
+  if(vga_depth <= 4)
+    for (Y=0; Y<vga_height; Y++,surf+=Pitch,dat+=vga_width/8) {
+      for(X=0; X<vga_width; X+=8) {
+       int offset = X/8;
+       int Z;
+       for(Z=0; Z<8; Z++) {
+         int b0 =  (dat[offset] >> Z) & 0x1;
+         int index = 7-Z;
+         surf[X+index] = b0;
+       }
+      }
+    }
+
+  VGA_Unlock();
+}
+
+
 void CALLBACK VGA_Poll( ULONG_PTR arg )
 {
     char *dat;
-    unsigned int Pitch,Height,Width,Y,X;
-    char *surf;
+    unsigned int Height,Width,Y,X;
 
     if (!InterlockedExchangeAdd(&vga_polling, 1)) {
         /* FIXME: optimize by doing this only if the data has actually changed
          *        (in a way similar to DIBSection, perhaps) */
         if (lpddraw) {
-          /* graphics mode */
-          surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
-          if (!surf) return;
-          dat = DOSMEM_MapDosToLinear(0xa0000);
-          /* copy from virtual VGA frame buffer to DirectDraw surface */
-          for (Y=0; Y<Height; Y++,surf+=Pitch,dat+=Width) {
-              memcpy(surf,dat,Width);
-              /*for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);*/
-          }
-          VGA_Unlock();
+         VGA_Poll_Graphics();
         } else {
           /* text mode */
           CHAR_INFO ch[80];
