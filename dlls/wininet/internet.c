@@ -1155,6 +1155,9 @@ BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWS
 {
     TRACE("%s (%d)\n", debugstr_wn(lpszStart,len), len);
 
+    if ( (*dwComponentLen == 0) && (*lppszComponent == NULL) )
+        return FALSE;
+
     if (*dwComponentLen != 0 || *lppszComponent == NULL)
     {
         if (*lppszComponent == NULL)
@@ -1221,11 +1224,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     lpszParam = strpbrkW(lpszap, lpszSeparators);
     if (lpszParam != NULL)
     {
-        if (!SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
-                                   lpszParam, dwUrlLength-(lpszParam-lpszUrl)))
-        {
-            return FALSE;
-        }
+        SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
+                                   lpszParam, dwUrlLength-(lpszParam-lpszUrl));
     }
 
     if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
@@ -1235,9 +1235,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
         /* Get scheme first. */
         lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
-        if (!SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength,
-                                   lpszUrl, lpszcp - lpszUrl))
-            return FALSE;
+        SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength,
+                                   lpszUrl, lpszcp - lpszUrl);
 
         /* Eat ':' in protocol. */
         lpszcp++;
@@ -1374,7 +1373,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
         /* Only truncate the parameter list if it's already been saved
          * in lpUC->lpszExtraInfo.
          */
-        if (lpszParam && lpUC->dwExtraInfoLength)
+        if (lpszParam && lpUC->dwExtraInfoLength && lpUC->lpszExtraInfo)
             len = lpszParam - lpszcp;
         else
         {
@@ -1388,9 +1387,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
                 len = dwUrlLength-(lpszcp-lpszUrl);
         }
 
-        if (!SetUrlComponentValueW(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength,
-                                   lpszcp, len))
-            return FALSE;
+        SetUrlComponentValueW(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength,
+                                   lpszcp, len);
     }
     else
     {
