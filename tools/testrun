@@ -266,8 +266,8 @@ while ($exe=<FIND>) {
 	alarm(1000);# so it doesn't trigger in the diff, kill or find.
 
 	system("touch $cwd/runs/${runfile}.out");
-	system("$diff $cwd/runs/${runfile}.out $cwd/${runfile}.out|head -$trunclines");
-	system("head -$trunclines $cwd/${runfile}.out >$cwd/runs/${runfile}.out");
+	system("$diff $cwd/runs/${runfile}.out $cwd/${runfile}.out|head -n $trunclines");
+	system("head -n $trunclines $cwd/${runfile}.out >$cwd/runs/${runfile}.out");
 	unlink("$cwd/${runfile}.out");
 	&kill_subprocesses;
 	&cleanup_wine_ipc;

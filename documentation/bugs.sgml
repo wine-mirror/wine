@@ -360,7 +360,7 @@
              <listitem>
              <para>
                Separate the last 100 lines to another file using
-               <command> tail </command>.
+               <command>tail</command>.
              </para>
              </listitem>
            </orderedlist>
@@ -388,7 +388,7 @@
              <listitem>
              <screen>
 <prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name |& tee filename.out;
-<prompt>$ </prompt>tail -100 filename.out > report_file
+<prompt>$ </prompt>tail -n 100 filename.out > report_file
              </screen>
              </listitem>
              </varlistentry>
@@ -397,7 +397,7 @@
              <listitem>
              <screen>
 <prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out;
-<prompt>$ </prompt>tail -100 filename.out > report_file
+<prompt>$ </prompt>tail -n 100 filename.out > report_file
              </screen>
              </listitem>
              </varlistentry>
