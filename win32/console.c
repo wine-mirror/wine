@@ -441,9 +441,12 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.226)
  */
-DWORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
+COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 {
-    return (DWORD)MAKELONG(80,24);
+    COORD c;
+    c.x = 80;
+    c.y = 24;
+    return c;
 }
 
 /***********************************************************************

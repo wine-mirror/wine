@@ -1301,7 +1301,7 @@ DWORD       WINAPI GetFullPathNameA(LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI GetFullPathNameW(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 BOOL      WINAPI GetHandleInformation(HANDLE,LPDWORD);
-DWORD       WINAPI GetLargestConsoleWindowSize(HANDLE);
+COORD       WINAPI GetLargestConsoleWindowSize(HANDLE);
 DWORD       WINAPI GetLengthSid(PSID);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
