@@ -39,7 +39,7 @@ UnicodeInterp: none
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 962 26 12
+WinInfo: 0 26 12
 OnlyBitmaps: 1
 BeginChars: 65536 346
 StartChar: space
@@ -2665,8 +2665,8 @@ BDFChar: 69 9 1 7 0 9
 rd]NLpjdmFJGoNK
 BDFChar: 70 8 1 7 0 9
 rd]NLpjdmFJ:IV"
-BDFChar: 71 10 1 8 0 10
-4@4ULJ:N]3JO2I!
+BDFChar: 71 10 1 8 0 9
+4@4ULJ<,8469G5J
 BDFChar: 72 10 1 8 0 9
 JUrB's+,`PJUme$
 BDFChar: 73 3 1 1 0 9
