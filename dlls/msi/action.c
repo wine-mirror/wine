@@ -1617,23 +1617,78 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
 }
 
 
+/* ok this value is "interperted" and then formated based on the 
+   first few characters */
 static LPSTR parse_value(MSIHANDLE hPackage, WCHAR *value, DWORD *type, 
                          DWORD *size)
 {
     LPSTR data = NULL;
-    if (value[0]=='#' && value[1]!='#')
+    if (value[0]=='#' && value[1]!='#' && value[1]!='%')
     {
-        ERR("UNHANDLED VALUE TYPE\n"); 
+        if (value[1]=='x')
+        {
+            LPWSTR ptr;
+            CHAR byte[5];
+            LPWSTR deformated;
+            int count;
+
+            deformat_string(hPackage, &value[2], &deformated);
+
+            /* binary value type */
+            ptr = deformated; 
+            *type=REG_BINARY;
+            *size = strlenW(ptr)/2;
+            data = HeapAlloc(GetProcessHeap(),0,*size);
+          
+            byte[0] = '0'; 
+            byte[1] = 'x'; 
+            byte[4] = 0; 
+            count = 0;
+            while (*ptr)
+            {
+                byte[2]= *ptr;
+                ptr++;
+                byte[3]= *ptr;
+                ptr++;
+                data[count] = (BYTE)strtol(byte,NULL,0);
+                count ++;
+            }
+            HeapFree(GetProcessHeap(),0,deformated);
+
+            TRACE("Data %li bytes(%i)\n",*size,count);
+        }
+        else
+        {
+            LPWSTR deformated;
+            deformat_string(hPackage, &value[1], &deformated);
+
+            *type=REG_DWORD; 
+            *size = sizeof(DWORD);
+            data = HeapAlloc(GetProcessHeap(),0,*size);
+            *(LPDWORD)data = atoiW(deformated); 
+            TRACE("DWORD %i\n",*data);
+
+            HeapFree(GetProcessHeap(),0,deformated);
+        }
     }
     else
     {
         WCHAR *ptr;
+        *type=REG_SZ;
+
         if (value[0]=='#')
-            ptr = &value[1];
-        else
+        {
+            if (value[1]=='%')
+            {
+                ptr = &value[2];
+                *type=REG_EXPAND_SZ;
+            }
+            else
+                ptr = &value[1];
+         }
+         else
             ptr=value;
 
-        *type=REG_SZ;
         *size = deformat_string(hPackage, ptr,(LPWSTR*)&data);
     }
     return data;
@@ -1666,7 +1721,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
     {
         WCHAR key[0x100];
         WCHAR name[0x100];
-        WCHAR value[0x100];
+        LPWSTR value;
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
         DWORD type,size;
@@ -1699,9 +1754,6 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         else
             MsiRecordGetStringW(row,4,name,&sz);
    
-        sz=0x100; 
-        MsiRecordGetStringW(row,5,value,&sz);
-
 
         /* get the root key */
         switch (root)
@@ -1726,9 +1778,15 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
             ERR("Could not create key %s\n",debugstr_w(key));
             MsiCloseHandle(row);
             continue;
-         }
-      
+        }
+
+        sz = 0;
+        MsiRecordGetStringW(row,5,NULL,&sz);
+        sz++;
+        value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+        MsiRecordGetStringW(row,5,value,&sz);
         value_data = parse_value(hPackage, value, &type, &size); 
+        HeapFree(GetProcessHeap(),0,value);
 
         if (value_data)
         {
@@ -1746,6 +1804,8 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
 
 /*
  * This helper function should probably go alot of places
+ *
+ * thinking about this, maybe this should becaome yet another Bison file
  */
 static DWORD deformat_string(MSIHANDLE hPackage, WCHAR* ptr,WCHAR** data)
 {
@@ -1896,6 +1956,70 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
     return get_property(hInstall,szFolder,szPathBuf,pcchPathBuf);
 }
 
+
+UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder, 
+                               LPSTR szPathBuf, DWORD* pcchPathBuf) 
+{
+    LPWSTR szwFolder;
+    LPWSTR szwPathBuf;
+    UINT len,rc;
+
+    TRACE("getting source %s %p %li\n",szFolder,szPathBuf, *pcchPathBuf);
+
+    if (!szFolder)
+        return ERROR_FUNCTION_FAILED;
+    if (hInstall == 0)
+        return ERROR_FUNCTION_FAILED;
+
+    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
+    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+    if (!szwFolder)
+        return ERROR_FUNCTION_FAILED; 
+
+    szwPathBuf = HeapAlloc( GetProcessHeap(), 0 , *pcchPathBuf * sizeof(WCHAR));
+
+    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
+
+    rc = MsiGetSourcePathW(hInstall, szwFolder, szwPathBuf,pcchPathBuf);
+
+    WideCharToMultiByte( CP_ACP, 0, szwPathBuf, *pcchPathBuf, szPathBuf,
+                         *pcchPathBuf, NULL, NULL );
+
+    HeapFree(GetProcessHeap(),0,szwFolder);
+    HeapFree(GetProcessHeap(),0,szwPathBuf);
+
+    return rc;
+}
+
+UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
+                                szPathBuf, DWORD* pcchPathBuf) 
+{
+    static const WCHAR cszsrc[]={'_','S','o','u','r','c','e',0};
+    LPWSTR newfolder;
+    UINT rc;
+
+    TRACE("(%s %p %li)\n",debugstr_w(szFolder),szPathBuf,*pcchPathBuf);
+
+    if (strcmpW(szFolder, cszSourceDir) != 0)
+    {
+        newfolder = HeapAlloc(GetProcessHeap(),0,
+                    (strlenW(szFolder)+8)*sizeof(WCHAR));
+        strcpyW(newfolder,szFolder);
+        strcatW(newfolder,cszsrc);
+        rc = get_property(hInstall,newfolder,szPathBuf,pcchPathBuf);
+        HeapFree(GetProcessHeap(),0,newfolder);
+    }
+    else
+        rc = get_property(hInstall,szFolder,szPathBuf,pcchPathBuf);
+    return rc;
+}
+
+BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, DWORD iRunMode)
+{
+    FIXME("STUB (%li)\n",iRunMode);
+    return FALSE;
+}
 
 #if 0
 static UINT ACTION_Template(MSIHANDLE hPackage)

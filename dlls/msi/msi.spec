@@ -61,7 +61,7 @@
 61 stub MsiGetFeatureValidStatesA
 62 stub MsiGetFeatureValidStatesW
 63 stub MsiGetLanguage
-64 stub MsiGetMode
+64 stdcall MsiGetMode(long long)
 65 stdcall MsiGetProductCodeA(str str)
 66 stdcall MsiGetProductCodeW(wstr wstr)
 67 stdcall MsiGetProductInfoA(str str str long)
@@ -72,8 +72,8 @@
 72 stdcall MsiGetProductPropertyW(long wstr ptr ptr)
 73 stdcall MsiGetPropertyA(ptr str str ptr)
 74 stdcall MsiGetPropertyW(ptr wstr wstr ptr)
-75 stub MsiGetSourcePathA
-76 stub MsiGetSourcePathW
+75 stdcall MsiGetSourcePathA(long str ptr ptr)
+76 stdcall MsiGetSourcePathW(long wstr ptr ptr)
 77 stdcall MsiGetSummaryInformationA(long str long ptr)
 78 stdcall MsiGetSummaryInformationW(long wstr long ptr)
 79 stdcall MsiGetTargetPathA(long str ptr ptr)
