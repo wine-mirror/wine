@@ -1307,6 +1307,11 @@ sub fix_file
   my $rc_textinclude_state=0;
   my @pack_stack;
   while (<FILEI>) {
+    # Remove any trailing CtrlZ, which isn't strictly in the file
+    if (/\x1A/) {
+      s/\x1A//;
+      last if (/^$/)
+    }
     $line++;
     s/\r\n$/\n/;
     if (!/\n$/) {
