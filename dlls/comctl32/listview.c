@@ -5631,189 +5631,6 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 }
 
 
-/***
- * DESCRIPTION:
- * Inserts a new column.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] nColumn : column index
- * [I] lpColumn : column information
- * [I] isW : TRUE if lpColumn is Unicode, FALSE otherwise
- *
- * RETURN:
- *   SUCCESS : new column index
- *   FAILURE : -1
- */
-static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
-                                      LPLVCOLUMNW lpColumn, BOOL isW)
-{
-    COLUMN_INFO *lpColumnInfo = NULL;
-    RECT rcCol;
-    INT nNewColumn;
-    HDITEMW hdi;
-
-    TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
-
-    if (!lpColumn) return -1;
-
-    hdi.mask = hdi.fmt = 0;
-    if (lpColumn->mask & LVCF_FMT)
-    {
-	/* format member is valid */
-	hdi.mask |= HDI_FORMAT;
-
-	/* set text alignment (leftmost column must be left-aligned) */
-        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT)
-            hdi.fmt |= HDF_LEFT;
-        else if (lpColumn->fmt & LVCFMT_RIGHT)
-            hdi.fmt |= HDF_RIGHT;
-        else if (lpColumn->fmt & LVCFMT_CENTER)
-            hdi.fmt |= HDF_CENTER;
-
-        if (lpColumn->fmt & LVCFMT_BITMAP_ON_RIGHT)
-            hdi.fmt |= HDF_BITMAP_ON_RIGHT;
-
-        if (lpColumn->fmt & LVCFMT_COL_HAS_IMAGES)
-        {
-            hdi.fmt |= HDF_IMAGE;
-            hdi.iImage = I_IMAGECALLBACK;
-        }
-    }
-
-    if (lpColumn->mask & LVCF_WIDTH)
-    {
-        hdi.mask |= HDI_WIDTH;
-        if(lpColumn->cx == LVSCW_AUTOSIZE_USEHEADER)
-        {
-            /* make it fill the remainder of the controls width */
-            RECT rcHeader;
-            INT item_index;
-
-            for(item_index = 0; item_index < (nColumn - 1); item_index++)
-            	if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
-		    hdi.cxy += rcHeader.right - rcHeader.left;
-
-            /* retrieve the layout of the header */
-            GetClientRect(infoPtr->hwndSelf, &rcHeader);
-            TRACE("start cxy=%d rcHeader=%s\n", hdi.cxy, debugrect(&rcHeader));
-
-            hdi.cxy = (rcHeader.right - rcHeader.left) - hdi.cxy;
-        }
-        else
-            hdi.cxy = lpColumn->cx;
-    }
-
-    if (lpColumn->mask & LVCF_TEXT)
-    {
-        hdi.mask |= HDI_TEXT | HDI_FORMAT;
-        hdi.fmt |= HDF_STRING;
-        hdi.pszText = lpColumn->pszText;
-        hdi.cchTextMax = textlenT(lpColumn->pszText, isW);
-    }
-
-    if (lpColumn->mask & LVCF_IMAGE)
-    {
-        hdi.mask |= HDI_IMAGE;
-        hdi.iImage = lpColumn->iImage;
-    }
-
-    if (lpColumn->mask & LVCF_ORDER)
-    {
-	hdi.mask |= HDI_ORDER;
-	hdi.iOrder = lpColumn->iOrder;
-    }
-
-    /* insert item in header control */
-    nNewColumn = SendMessageW(infoPtr->hwndHeader, 
-		              isW ? HDM_INSERTITEMW : HDM_INSERTITEMA,
-                              (WPARAM)nColumn, (LPARAM)&hdi);
-    if (nNewColumn == -1) return -1;
-   
-    /* create our own column info */ 
-    if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
-    if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
-    if (!Header_GetItemRect(infoPtr->hwndHeader, nNewColumn, &rcCol)) goto fail;    
-    lpColumnInfo->rcHeader = rcCol;
-    if (lpColumn->mask & LVCF_FMT)
-    {
-        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT) lpColumnInfo->align = DT_LEFT;
-        else if (lpColumn->fmt & LVCFMT_RIGHT) lpColumnInfo->align = DT_RIGHT;
-        else if (lpColumn->fmt & LVCFMT_CENTER) lpColumnInfo->align = DT_CENTER;
-	
-        if (lpColumn->fmt & LVCFMT_IMAGE) lpColumnInfo->hasImage = TRUE;
-    } 
-    else
-    {
-	lpColumnInfo->align = DT_LEFT;
-	lpColumnInfo->hasImage = (nColumn == 0);
-    }
-   
-    /* now we have to actually adjust the data */
-    if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)
-    {
-	LISTVIEW_SUBITEM *lpSubItem, *lpMainItem, **lpNewItems = 0;
-	HDPA hdpaSubItems;
-	INT nItem, i;
-	
-	/* preallocate memory, so we can fail gracefully */
-	if (nNewColumn == 0)
-	{
-	    lpNewItems = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM *) * infoPtr->nItemCount);
-	    if (!lpNewItems) goto fail;
-	    for (i = 0; i < infoPtr->nItemCount; i++)
-		if (!(lpNewItems[i] = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM)))) break;
-	    if (i != infoPtr->nItemCount)
-	    {
-		for(; i >=0; i--) COMCTL32_Free(lpNewItems[i]);
-		COMCTL32_Free(lpNewItems);
-		goto fail;
-	    }
-	}
-	
-	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
-	{
-	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-	    if (!hdpaSubItems) continue;
-	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
-	    {
-		lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-		if (!lpSubItem) break;
-		if (lpSubItem->iSubItem >= nNewColumn)
-		    lpSubItem->iSubItem++;
-	    }
-
-	    /* if we found our subitem, zapp it */	
-	    if (nNewColumn == 0)
-	    {
-		lpMainItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, 0);
-		lpSubItem = lpNewItems[nItem];
-		lpSubItem->hdr = lpMainItem->hdr;
-		lpSubItem->iSubItem = 1;
-		ZeroMemory(&lpMainItem->hdr, sizeof(lpMainItem->hdr));
-		lpMainItem->iSubItem = 0;
-		DPA_InsertPtr(hdpaSubItems, 1, lpSubItem);
-    	    }
-	}
-
-	COMCTL32_Free(lpNewItems);
-    }
-
-    /* make space for the new column */
-    LISTVIEW_ScrollColumns(infoPtr, nNewColumn + 1, rcCol.right - rcCol.left);
-    
-    return nNewColumn;
-
-fail:
-    if (nNewColumn != -1) SendMessageW(infoPtr->hwndHeader, HDM_DELETEITEM, nNewColumn, 0);
-    if (lpColumnInfo)
-    {
-	DPA_DeletePtr(infoPtr->hdpaColumns, nNewColumn);
-	COMCTL32_Free(lpColumnInfo);
-    }
-    return -1;
-}
-
 /* LISTVIEW_InsertCompare:  callback routine for comparing pszText members of the LV_ITEMS
    in a LISTVIEW on insert.  Passed to DPA_Sort in LISTVIEW_InsertItem.
    This function should only be used for inserting items into a sorted list (LVM_INSERTITEM)
@@ -6066,6 +5883,205 @@ static LRESULT LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 
 /* LISTVIEW_SetBkImage */
 
+/*** Helper for {Insert,Set}ColumnT *only* */
+static void column_fill_hditem(LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColumn, LPLVCOLUMNW lpColumn, BOOL isW)
+{
+    if (lpColumn->mask & LVCF_FMT)
+    {
+	/* format member is valid */
+	lphdi->mask |= HDI_FORMAT;
+
+	/* set text alignment (leftmost column must be left-aligned) */
+        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT)
+            lphdi->fmt |= HDF_LEFT;
+        else if (lpColumn->fmt & LVCFMT_RIGHT)
+            lphdi->fmt |= HDF_RIGHT;
+        else if (lpColumn->fmt & LVCFMT_CENTER)
+            lphdi->fmt |= HDF_CENTER;
+
+        if (lpColumn->fmt & LVCFMT_BITMAP_ON_RIGHT)
+            lphdi->fmt |= HDF_BITMAP_ON_RIGHT;
+
+        if (lpColumn->fmt & LVCFMT_COL_HAS_IMAGES)
+        {
+            lphdi->fmt |= HDF_IMAGE;
+            lphdi->iImage = I_IMAGECALLBACK;
+        }
+    }
+
+    if (lpColumn->mask & LVCF_WIDTH)
+    {
+        lphdi->mask |= HDI_WIDTH;
+        if(lpColumn->cx == LVSCW_AUTOSIZE_USEHEADER)
+        {
+            /* make it fill the remainder of the controls width */
+            RECT rcHeader;
+            INT item_index;
+
+            for(item_index = 0; item_index < (nColumn - 1); item_index++)
+            	if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
+		    lphdi->cxy += rcHeader.right - rcHeader.left;
+
+            /* retrieve the layout of the header */
+            GetClientRect(infoPtr->hwndSelf, &rcHeader);
+            TRACE("start cxy=%d rcHeader=%s\n", lphdi->cxy, debugrect(&rcHeader));
+
+            lphdi->cxy = (rcHeader.right - rcHeader.left) - lphdi->cxy;
+        }
+        else
+            lphdi->cxy = lpColumn->cx;
+    }
+
+    if (lpColumn->mask & LVCF_TEXT)
+    {
+        lphdi->mask |= HDI_TEXT | HDI_FORMAT;
+        lphdi->fmt |= HDF_STRING;
+        lphdi->pszText = lpColumn->pszText;
+        lphdi->cchTextMax = textlenT(lpColumn->pszText, isW);
+    }
+
+    if (lpColumn->mask & LVCF_IMAGE)
+    {
+        lphdi->mask |= HDI_IMAGE;
+        lphdi->iImage = lpColumn->iImage;
+    }
+
+    if (lpColumn->mask & LVCF_ORDER)
+    {
+	lphdi->mask |= HDI_ORDER;
+	lphdi->iOrder = lpColumn->iOrder;
+    }
+}
+
+/*** Helper for {Insert,Set}ColumnT *only* */
+static BOOL column_fill_info(LISTVIEW_INFO *infoPtr, COLUMN_INFO *lpColumnInfo, INT nColumn, LPLVCOLUMNW lpColumn)
+{
+    RECT rcCol;
+
+    if (!Header_GetItemRect(infoPtr->hwndHeader, nColumn, &rcCol)) return FALSE;
+    lpColumnInfo->rcHeader = rcCol;
+    if (lpColumn->mask & LVCF_FMT)
+    {
+        if (nColumn == 0 || lpColumn->fmt & LVCFMT_LEFT) lpColumnInfo->align = DT_LEFT;
+        else if (lpColumn->fmt & LVCFMT_RIGHT) lpColumnInfo->align = DT_RIGHT;
+        else if (lpColumn->fmt & LVCFMT_CENTER) lpColumnInfo->align = DT_CENTER;
+	
+        if (lpColumn->fmt & LVCFMT_IMAGE) lpColumnInfo->hasImage = TRUE;
+    } 
+    else
+    {
+	lpColumnInfo->align = DT_LEFT;
+	lpColumnInfo->hasImage = (nColumn == 0);
+    }
+
+    return TRUE;
+}
+
+/***
+ * DESCRIPTION:
+ * Inserts a new column.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nColumn : column index
+ * [I] lpColumn : column information
+ * [I] isW : TRUE if lpColumn is Unicode, FALSE otherwise
+ *
+ * RETURN:
+ *   SUCCESS : new column index
+ *   FAILURE : -1
+ */
+static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
+                                      LPLVCOLUMNW lpColumn, BOOL isW)
+{
+    COLUMN_INFO *lpColumnInfo;
+    INT nNewColumn;
+    HDITEMW hdi;
+
+    TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
+
+    if (!lpColumn) return -1;
+    
+    ZeroMemory(&hdi, sizeof(HDITEMW));
+    column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
+
+    /* insert item in header control */
+    nNewColumn = SendMessageW(infoPtr->hwndHeader, 
+		              isW ? HDM_INSERTITEMW : HDM_INSERTITEMA,
+                              (WPARAM)nColumn, (LPARAM)&hdi);
+    if (nNewColumn == -1) return -1;
+   
+    /* create our own column info */ 
+    if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
+    if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
+
+    if (!column_fill_info(infoPtr, lpColumnInfo, nNewColumn, lpColumn)) goto fail;
+
+    /* now we have to actually adjust the data */
+    if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)
+    {
+	LISTVIEW_SUBITEM *lpSubItem, *lpMainItem, **lpNewItems = 0;
+	HDPA hdpaSubItems;
+	INT nItem, i;
+	
+	/* preallocate memory, so we can fail gracefully */
+	if (nNewColumn == 0)
+	{
+	    lpNewItems = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM *) * infoPtr->nItemCount);
+	    if (!lpNewItems) goto fail;
+	    for (i = 0; i < infoPtr->nItemCount; i++)
+		if (!(lpNewItems[i] = COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM)))) break;
+	    if (i != infoPtr->nItemCount)
+	    {
+		for(; i >=0; i--) COMCTL32_Free(lpNewItems[i]);
+		COMCTL32_Free(lpNewItems);
+		goto fail;
+	    }
+	}
+	
+	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
+	{
+	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
+	    if (!hdpaSubItems) continue;
+	    for (i = 1; i < hdpaSubItems->nItemCount; i++)
+	    {
+		lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
+		if (!lpSubItem) break;
+		if (lpSubItem->iSubItem >= nNewColumn)
+		    lpSubItem->iSubItem++;
+	    }
+
+	    /* if we found our subitem, zapp it */	
+	    if (nNewColumn == 0)
+	    {
+		lpMainItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, 0);
+		lpSubItem = lpNewItems[nItem];
+		lpSubItem->hdr = lpMainItem->hdr;
+		lpSubItem->iSubItem = 1;
+		ZeroMemory(&lpMainItem->hdr, sizeof(lpMainItem->hdr));
+		lpMainItem->iSubItem = 0;
+		DPA_InsertPtr(hdpaSubItems, 1, lpSubItem);
+    	    }
+	}
+
+	COMCTL32_Free(lpNewItems);
+    }
+
+    /* make space for the new column */
+    LISTVIEW_ScrollColumns(infoPtr, nNewColumn + 1, lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
+    
+    return nNewColumn;
+
+fail:
+    if (nNewColumn != -1) SendMessageW(infoPtr->hwndHeader, HDM_DELETEITEM, nNewColumn, 0);
+    if (lpColumnInfo)
+    {
+	DPA_DeletePtr(infoPtr->hdpaColumns, nNewColumn);
+	COMCTL32_Free(lpColumnInfo);
+    }
+    return -1;
+}
+
 /***
  * DESCRIPTION:
  * Sets the attributes of a header item.
@@ -6083,87 +6099,36 @@ static LRESULT LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
                                    LPLVCOLUMNW lpColumn, BOOL isW)
 {
-  BOOL bResult = FALSE;
-  HDITEMW hdi, hdiget;
+    COLUMN_INFO *lpColumnInfo;
+    HDITEMW hdi, hdiget;
+    BOOL bResult;
 
-  if ((lpColumn != NULL) && (nColumn >= 0) && (nColumn < infoPtr->hdpaColumns->nItemCount))
-  {
-    /* initialize memory */
-    ZeroMemory(&hdi, sizeof(hdi));
+    if (!lpColumn || nColumn < 0 || nColumn < infoPtr->hdpaColumns->nItemCount) return FALSE;
 
+    ZeroMemory(&hdi, sizeof(HDITEMW));
     if (lpColumn->mask & LVCF_FMT)
     {
-      /* format member is valid */
-      hdi.mask |= HDI_FORMAT;
+        /* format member is valid */
+        hdi.mask |= HDI_FORMAT;
 
-      /* get current format first */
-      hdiget.mask = HDI_FORMAT;
-      if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdiget))
+        /* get current format first */
+        hdiget.mask = HDI_FORMAT;
+        if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdiget))
 	      /* preserve HDF_STRING if present */
 	      hdi.fmt = hdiget.fmt & HDF_STRING;
-
-      /* set text alignment (leftmost column must be left-aligned) */
-      if (nColumn == 0)
-      {
-        hdi.fmt |= HDF_LEFT;
-      }
-      else
-      {
-        if (lpColumn->fmt & LVCFMT_LEFT)
-          hdi.fmt |= HDF_LEFT;
-        else if (lpColumn->fmt & LVCFMT_RIGHT)
-          hdi.fmt |= HDF_RIGHT;
-        else if (lpColumn->fmt & LVCFMT_CENTER)
-          hdi.fmt |= HDF_CENTER;
-      }
-
-      if (lpColumn->fmt & LVCFMT_BITMAP_ON_RIGHT)
-        hdi.fmt |= HDF_BITMAP_ON_RIGHT;
-
-      if (lpColumn->fmt & LVCFMT_COL_HAS_IMAGES)
-        hdi.fmt |= HDF_IMAGE;
-
-      if (lpColumn->fmt & LVCFMT_IMAGE)
-      {
-        hdi.fmt |= HDF_IMAGE;
-        hdi.iImage = I_IMAGECALLBACK;
-      }
     }
 
-    if (lpColumn->mask & LVCF_WIDTH)
-    {
-      hdi.mask |= HDI_WIDTH;
-      hdi.cxy = lpColumn->cx;
-    }
+    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn))) return FALSE;
 
-    if (lpColumn->mask & LVCF_TEXT)
-    {
-      hdi.mask |= HDI_TEXT | HDI_FORMAT;
-      hdi.pszText = lpColumn->pszText;
-      hdi.cchTextMax = textlenT(lpColumn->pszText, isW);
-      hdi.fmt |= HDF_STRING;
-    }
-
-    if (lpColumn->mask & LVCF_IMAGE)
-    {
-      hdi.mask |= HDI_IMAGE;
-      hdi.iImage = lpColumn->iImage;
-    }
-
-    if (lpColumn->mask & LVCF_ORDER)
-    {
-      hdi.mask |= HDI_ORDER;
-      hdi.iOrder = lpColumn->iOrder;
-    }
+    column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
 
     /* set header item attributes */
-    if (isW)
-      bResult = Header_SetItemW(infoPtr->hwndHeader, nColumn, &hdi);
-    else
-      bResult = Header_SetItemA(infoPtr->hwndHeader, nColumn, &hdi);
-  }
+    bResult = SendMessageW(infoPtr->hwndHeader, isW ? HDM_SETITEMW : HDM_SETITEMA, (WPARAM)nColumn, (LPARAM)&hdi);
+    if (!bResult) return FALSE;
 
-  return bResult;
+    if (!column_fill_info(infoPtr, lpColumnInfo, nColumn, lpColumn)) return FALSE;
+
+    return TRUE;
 }
 
 /***
