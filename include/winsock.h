@@ -13,11 +13,19 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <netdb.h>
-#ifdef HAVE_LINUX_IPX_H
+#include <sys/socket.h>
+
+#ifdef HAVE_IPX_GNU
+# include <netipx/ipx.h>
+# define HAVE_IPX
+#endif
+
+#ifdef HAVE_IPX_LINUX
 # include <asm/types.h>
 # include <linux/ipx.h>
+# define HAVE_IPX
 #endif
-#include <sys/socket.h>
+
 #include "windows.h"
 #include "task.h"
 

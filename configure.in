@@ -116,6 +116,31 @@ else
     X_LIBS=""
 fi
 
+dnl **** Check for IPX (currently Linux only) ****
+AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
+ AC_TRY_COMPILE(
+   [#include <sys/socket.h>
+    #include <netipx/ipx.h>],
+   [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
+   [AC_DEFINE(HAVE_IPX_GNU)
+    ac_cv_c_ipx_gnu="yes"],
+   [ac_cv_c_ipx_gnu="no"])
+ )
+
+if test "$ac_cv_c_ipx_gnu" = "no"
+then
+ AC_CACHE_CHECK("for linux style IPX support", ac_cv_c_ipx_linux,
+  AC_TRY_COMPILE(
+    [#include <sys/socket.h>
+     #include <asm/types.h>
+     #include <linux/ipx.h>],
+    [((struct sockaddr_ipx *)0)->sipx_family == AF_IPX],
+    [AC_DEFINE(HAVE_IPX_LINUX)
+     ac_cv_c_ipx_linux="yes"],
+    [ac_cv_c_ipx_linux="no"])
+  )
+fi
+
 dnl **** Check for Open Sound System ****
 AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h soundcard.h, break)
 
@@ -311,7 +336,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h linux/ipx.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()

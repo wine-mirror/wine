@@ -59,3 +59,10 @@
 
 /* Define if we want to use ncurses instead of the TTY terminal */
 #undef WINE_NCURSES
+
+/* Define if IPX should use netipx/ipx.h from libc */
+#undef HAVE_IPX_GNU
+
+/* Define if IPX includes are taken from Linux kernel */
+#undef HAVE_IPX_LINUX
+

@@ -72,6 +72,12 @@
 /* Define if we want to use ncurses instead of the TTY terminal */
 #undef WINE_NCURSES
 
+/* Define if IPX should use netipx/ipx.h from libc */
+#undef HAVE_IPX_GNU
+
+/* Define if IPX includes are taken from Linux kernel */
+#undef HAVE_IPX_LINUX
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
@@ -125,9 +131,6 @@
 
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
-
-/* Define if you have the <linux/ipx.h> header file.  */
-#undef HAVE_LINUX_IPX_H
 
 /* Define if you have the <linux/ucdrom.h> header file.  */
 #undef HAVE_LINUX_UCDROM_H
