@@ -93,28 +93,6 @@ BOOL DDRAW_User_Init(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
-/* If you change this function, you probably want to change the enumeration
- * code in EnumDisplayModes. */
-static BOOL
-IsValidDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP,
-		   DWORD dwRefreshRate, DWORD dwFlags)
-{
-    switch (dwBPP)
-    {
-    case 8:
-    case 15:
-    case 16:
-    case 24:
-    case 32:
-	break;
-
-    default:
-	return FALSE;
-    }
-
-    return TRUE;
-}
-
 static const DDPIXELFORMAT* pixelformat_for_depth(DWORD depth)
 {
     switch (depth)
@@ -310,13 +288,11 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 				 LPDDSURFACEDESC2 pDDSD, LPVOID context,
 				 LPDDENUMMODESCALLBACK2 callback)
 {
-    static const int num_pixelformats
-	= sizeof(pixelformats)/sizeof(pixelformats[0]);
-
     DDSURFACEDESC2 callback_sd;
     DEVMODEW DevModeW;
+    const DDPIXELFORMAT* pixelformat;
 
-    int i, j;
+    int i;
 
     TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",iface,dwFlags,pDDSD,context,callback);
 
@@ -336,33 +312,31 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
     {
 	callback_sd.dwHeight = DevModeW.dmPelsHeight;
 	callback_sd.dwWidth = DevModeW.dmPelsWidth;
+        if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
+        {
+            callback_sd.u2.dwRefreshRate = DevModeW.dmDisplayFrequency;
+        }
 
 	TRACE("- mode: %ldx%ld\n", callback_sd.dwWidth, callback_sd.dwHeight);
-	for (j = 0; j < num_pixelformats; j++)
-	{
-	    callback_sd.u1.lPitch
-		= DDRAW_width_bpp_to_pitch(DevModeW.dmPelsWidth,
-					   pixelformats[j].u1.dwRGBBitCount);
+        
+        pixelformat = pixelformat_for_depth(DevModeW.dmBitsPerPel);
+        callback_sd.u1.lPitch
+            = DDRAW_width_bpp_to_pitch(DevModeW.dmPelsWidth,
+                                       pixelformat->u1.dwRGBBitCount);
 
-	    callback_sd.u4.ddpfPixelFormat = pixelformats[j];
+        callback_sd.u4.ddpfPixelFormat = *pixelformat;
 
-	    callback_sd.ddsCaps.dwCaps = 0;
-	    if (pixelformats[j].dwFlags & DDPF_PALETTEINDEXED8) /* ick */
-		callback_sd.ddsCaps.dwCaps |= DDSCAPS_PALETTE;
+        callback_sd.ddsCaps.dwCaps = 0;
+        if (pixelformat->dwFlags & DDPF_PALETTEINDEXED8) /* ick */
+            callback_sd.ddsCaps.dwCaps |= DDSCAPS_PALETTE;
 
-	    assert(IsValidDisplayMode(callback_sd.dwWidth,
-				      callback_sd.dwHeight,
-				      callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
-				      0, 0));
-
-	    TRACE(" - %2ld bpp, R=%08lx G=%08lx B=%08lx\n",
-		  callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
-		  callback_sd.u4.ddpfPixelFormat.u2.dwRBitMask,
-		  callback_sd.u4.ddpfPixelFormat.u3.dwGBitMask,
-		  callback_sd.u4.ddpfPixelFormat.u4.dwBBitMask);
-	    if (callback(&callback_sd, context) == DDENUMRET_CANCEL)
-		return DD_OK;
-	}
+        TRACE(" - %2ld bpp, R=%08lx G=%08lx B=%08lx\n",
+            callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
+            callback_sd.u4.ddpfPixelFormat.u2.dwRBitMask,
+            callback_sd.u4.ddpfPixelFormat.u3.dwGBitMask,
+            callback_sd.u4.ddpfPixelFormat.u4.dwBBitMask);
+        if (callback(&callback_sd, context) == DDENUMRET_CANCEL)
+            return DD_OK;
         i++;
     }
 
@@ -528,8 +502,7 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     LONG pitch;
 
     TRACE("(%p)->(%ldx%ldx%ld,%ld Hz,%08lx)\n",This,dwWidth,dwHeight,dwBPP,dwRefreshRate,dwFlags);
-    devmode.dmFields = /* DM_BITSPERPEL | */ DM_PELSWIDTH | DM_PELSHEIGHT;
-    FIXME("Ignoring requested BPP (%ld)\n", dwBPP);
+    devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
     devmode.dmBitsPerPel = dwBPP;
     devmode.dmPelsWidth  = dwWidth;
     devmode.dmPelsHeight = dwHeight;

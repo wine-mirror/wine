@@ -52,12 +52,13 @@ static int xf86vm_gammaramp_size;
 static BOOL xf86vm_use_gammaramp;
 #endif
 
-static LPDDHALMODEINFO xf86vm_modes;
-static unsigned xf86vm_mode_count;
-static XF86VidModeModeInfo** modes;
+static LPDDHALMODEINFO dd_modes;
+static unsigned int dd_mode_count;
+static XF86VidModeModeInfo** real_xf86vm_modes;
+static unsigned int real_xf86vm_mode_count;
 static unsigned int xf86vm_initial_mode;
 
-static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO info )
+static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO info, unsigned int bpp)
 {
   info->dwWidth      = mode->hdisplay;
   info->dwHeight     = mode->vdisplay;
@@ -67,10 +68,8 @@ static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO i
       info->wRefreshRate = 0;
   TRACE(" width=%ld, height=%ld, refresh=%d\n",
         info->dwWidth, info->dwHeight, info->wRefreshRate);
-  /* XVidMode cannot change display depths... */
-  /* let's not bother with filling out these then... */
   info->lPitch         = 0;
-  info->dwBPP          = 0;
+  info->dwBPP          = bpp;
   info->wFlags         = 0;
   info->dwRBitMask     = 0;
   info->dwGBitMask     = 0;
@@ -78,7 +77,7 @@ static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO i
   info->dwAlphaBitMask = 0;
 }
 
-static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDDHALMODEINFO info)
+static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDDHALMODEINFO info, unsigned int bpp)
 {
   info->dwWidth      = mode->hdisplay;
   info->dwHeight     = mode->vdisplay;
@@ -88,10 +87,8 @@ static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDD
       info->wRefreshRate = 0;
   TRACE(" width=%ld, height=%ld, refresh=%d\n",
         info->dwWidth, info->dwHeight, info->wRefreshRate);
-  /* XVidMode cannot change display depths... */
-  /* let's not bother with filling out these then... */
   info->lPitch         = 0;
-  info->dwBPP          = 0;
+  info->dwBPP          = bpp;
   info->wFlags         = 0;
   info->dwRBitMask     = 0;
   info->dwGBitMask     = 0;
@@ -105,11 +102,16 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 static Bool in_desktop_mode;
+static const unsigned int depths[]  = {8, 16, 32};
 
 void X11DRV_XF86VM_Init(void)
 {
-  int nmodes, i;
   Bool ok;
+  int nmodes, i, j;
+  int max_modes;
+  DWORD dwBpp = screen_depth;
+  if (dwBpp == 24) dwBpp = 32;
+
   in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
 
   if (xf86vm_major) return; /* already initialized? */
@@ -138,7 +140,7 @@ void X11DRV_XF86VM_Init(void)
 #endif
 
       /* retrieve modes */
-      if (!in_desktop_mode) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &modes);
+      if (!in_desktop_mode) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
   }
   wine_tsx11_unlock();
   if (!ok) return;
@@ -148,12 +150,29 @@ void X11DRV_XF86VM_Init(void)
   
   TRACE("XVidMode modes: count=%d\n", nmodes);
 
-  xf86vm_mode_count = nmodes;
-  xf86vm_modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DDHALMODEINFO) * nmodes);
+  real_xf86vm_mode_count = nmodes;
+  max_modes = (3+1)*(nmodes);
+
+  dd_modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DDHALMODEINFO) * max_modes);
 
   /* convert modes to DDHALMODEINFO format */
-  for (i=0; i<nmodes; i++)
-      convert_modeinfo(modes[i], &xf86vm_modes[i]);
+  for (i=0; i<real_xf86vm_mode_count; i++)
+  {
+      convert_modeinfo(real_xf86vm_modes[i], &dd_modes[dd_mode_count++], dwBpp);
+  }
+  /* add modes for different color depths */
+  for (j=0; j<3; j++)
+  {
+      if (depths[j] != dwBpp)
+      {
+          for (i=0; i < real_xf86vm_mode_count; i++)
+          {
+              convert_modeinfo(real_xf86vm_modes[i], &dd_modes[dd_mode_count++], depths[j]);
+          }
+      }
+  }
+
+  TRACE("Available DD modes: count=%d\n", dd_mode_count);
 
   /* store the current mode at the time we started */
   xf86vm_initial_mode = X11DRV_XF86VM_GetCurrentMode();
@@ -163,7 +182,7 @@ void X11DRV_XF86VM_Init(void)
 
 void X11DRV_XF86VM_Cleanup(void)
 {
-  if (modes) TSXFree(modes);
+  if (real_xf86vm_modes) TSXFree(real_xf86vm_modes);
 }
 
 int X11DRV_XF86VM_GetCurrentMode(void)
@@ -171,16 +190,18 @@ int X11DRV_XF86VM_GetCurrentMode(void)
   XF86VidModeModeLine line;
   int dotclock, i;
   DDHALMODEINFO cmode;
+  DWORD dwBpp = screen_depth;
+  if (dwBpp == 24) dwBpp = 32;
 
-  if (!xf86vm_modes) return 0; /* no XVidMode */
+  if (!dd_modes) return 0; /* no XVidMode */
 
   TRACE("Querying XVidMode current mode\n");
   wine_tsx11_lock();
   XF86VidModeGetModeLine(gdi_display, DefaultScreen(gdi_display), &dotclock, &line);
   wine_tsx11_unlock();
-  convert_modeline(dotclock, &line, &cmode);
-  for (i=0; i<xf86vm_mode_count; i++)
-    if (memcmp(&xf86vm_modes[i], &cmode, sizeof(cmode)) == 0) {
+  convert_modeline(dotclock, &line, &cmode, dwBpp);
+  for (i=0; i<dd_mode_count; i++)
+    if (memcmp(&dd_modes[i], &cmode, sizeof(cmode)) == 0) {
       TRACE("mode=%d\n", i);
       return i;
     }
@@ -190,10 +211,22 @@ int X11DRV_XF86VM_GetCurrentMode(void)
 
 void X11DRV_XF86VM_SetCurrentMode(int mode)
 {
-  if (!xf86vm_modes) return; /* no XVidMode */
+  if (!dd_modes) return; /* no XVidMode */
+
+  /* only set modes from the original color depth */
+  mode = mode % real_xf86vm_mode_count;
 
   wine_tsx11_lock();
-  XF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), modes[mode]);
+  TRACE("Resizing X display to %dx%d\n", 
+        real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay);
+  XF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), real_xf86vm_modes[mode]);
+#if 0 /* FIXME */
+  SYSMETRICS_Set( SM_CXSCREEN, real_xf86vm_modes[mode]->hdisplay );
+  SYSMETRICS_Set( SM_CYSCREEN, real_xf86vm_modes[mode]->vdisplay );
+#else
+  FIXME("Need to update SYSMETRICS after resizing display (now %dx%d)\n",
+        real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay);
+#endif
 #if 0 /* it is said that SetViewPort causes problems with some X servers */
   XF86VidModeSetViewPort(gdi_display, DefaultScreen(gdi_display), 0, 0);
 #else
@@ -205,7 +238,7 @@ void X11DRV_XF86VM_SetCurrentMode(int mode)
 
 void X11DRV_XF86VM_SetExclusiveMode(int lock)
 {
-  if (!xf86vm_modes) return; /* no XVidMode */
+  if (!dd_modes) return; /* no XVidMode */
 
   wine_tsx11_lock();
   XF86VidModeLockModeSwitch(gdi_display, DefaultScreen(gdi_display), lock);
@@ -216,6 +249,7 @@ void X11DRV_XF86VM_SetExclusiveMode(int lock)
 
 static DWORD PASCAL X11DRV_XF86VM_SetMode(LPDDHAL_SETMODEDATA data)
 {
+  TRACE("Mode %ld requested by DDHAL\n", data->dwModeIndex);
   X11DRV_XF86VM_SetCurrentMode(data->dwModeIndex);
   X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
   data->ddRVal = DD_OK;
@@ -224,10 +258,11 @@ static DWORD PASCAL X11DRV_XF86VM_SetMode(LPDDHAL_SETMODEDATA data)
 
 int X11DRV_XF86VM_CreateDriver(LPDDHALINFO info)
 {
-  if (!xf86vm_mode_count) return 0; /* no XVidMode */
+  if (!dd_mode_count) return 0; /* no XVidMode */
 
-  info->dwNumModes = xf86vm_mode_count;
-  info->lpModeInfo = xf86vm_modes;
+  TRACE("Setting up XF86VM mode for DDRAW\n");
+  info->dwNumModes = dd_mode_count;
+  info->lpModeInfo = dd_modes;
   X11DRV_DDHAL_SwitchMode(X11DRV_XF86VM_GetCurrentMode(), NULL, NULL);
   info->lpDDCallbacks->SetMode = X11DRV_XF86VM_SetMode;
   return TRUE;
@@ -427,36 +462,38 @@ BOOL X11DRV_XF86VM_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW dev
     devmode->dmDisplayFlags = 0;
     devmode->dmDisplayFrequency = 85;
     devmode->dmSize = sizeof(DEVMODEW);
-    if (n==0 || n == (DWORD)-1 || n == (DWORD)-2)
+    if (n == (DWORD)-1)
+    {
+        TRACE("mode %ld (current) -- getting current mode\n", n);
+        n = X11DRV_XF86VM_GetCurrentMode();
+    }
+    if (n == (DWORD)-2)
     {
         devmode->dmBitsPerPel = dwBpp;
         devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
         devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
         devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL);
-        TRACE("mode %ld -- returning default %ldx%ldx%ldbpp\n", n,
+        TRACE("mode %ld (registry) -- returning default %ldx%ldx%ldbpp\n", n,
               devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel);
         return TRUE;
     }
-#ifdef HAVE_LIBXXF86VM
-    if (n <= xf86vm_mode_count)
+    if (n < dd_mode_count)
     {
-        XF86VidModeModeInfo *mode;
-        mode = modes[n-1];
-        devmode->dmPelsWidth = mode->hdisplay;
-        devmode->dmPelsHeight = mode->vdisplay;
-        devmode->dmBitsPerPel = dwBpp;
-        devmode->dmDisplayFrequency = mode->dotclock * 1000 / (mode->htotal * mode->vtotal);
+        devmode->dmPelsWidth = dd_modes[n].dwWidth;
+        devmode->dmPelsHeight = dd_modes[n].dwHeight;
+        devmode->dmBitsPerPel = dd_modes[n].dwBPP;
+        devmode->dmDisplayFrequency = dd_modes[n].wRefreshRate;
         devmode->dmFields = (DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL|DM_DISPLAYFREQUENCY);
-        TRACE("mode %ld -- %ldx%ldx%ldbpp\n", n,
-              devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel);
+        TRACE("mode %ld -- %ldx%ldx%ldbpp %ld Hz\n", n,
+              devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel,
+              devmode->dmDisplayFrequency);
         return TRUE;
     }
-#endif
     TRACE("mode %ld -- not present\n", n);
     return FALSE;
 }
 
-/* implementation of ChangeDisplaySettings for desktop */
+/* implementation of ChangeDisplaySettings for XF86VM */
 LONG X11DRV_XF86VM_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
                                       HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
@@ -483,31 +520,35 @@ LONG X11DRV_XF86VM_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode
 #endif
 
 #ifdef HAVE_LIBXXF86VM
-    for (i = 0; i < xf86vm_mode_count; i++)
+    for (i = 0; i < dd_mode_count; i++)
     {
-        XF86VidModeModeInfo *mode = modes[i];
         if (devmode->dmFields & DM_BITSPERPEL)
         {
-            if (devmode->dmBitsPerPel != dwBpp)
+            if (devmode->dmBitsPerPel != dd_modes[i].dwBPP)
                 continue;
         }
         if (devmode->dmFields & DM_PELSWIDTH)
         {
-            if (devmode->dmPelsWidth != mode->hdisplay)
+            if (devmode->dmPelsWidth != dd_modes[i].dwWidth)
                 continue;
         }
         if (devmode->dmFields & DM_PELSHEIGHT)
         {
-            if (devmode->dmPelsHeight != mode->vdisplay)
+            if (devmode->dmPelsHeight != dd_modes[i].dwHeight)
+                continue;
+        }
+        if (devmode->dmFields & DM_DISPLAYFREQUENCY)
+        {
+            if (devmode->dmDisplayFrequency != dd_modes[i].wRefreshRate)
                 continue;
         }
         /* we have a valid mode */
-        TRACE("Matches mode %ld\n", i);
+        TRACE("Requested display settings match mode %ld\n", i);
         X11DRV_XF86VM_SetCurrentMode(i);
-#if 0 /* FIXME */
-        SYSMETRICS_Set( SM_CXSCREEN, devmode->dmPelsWidth );
-        SYSMETRICS_Set( SM_CYSCREEN, devmode->dmPelsHeight );
-#endif
+        if (dwBpp != dd_modes[i].dwBPP)
+        {
+            FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[i].dwBPP);
+        }
         return DISP_CHANGE_SUCCESSFUL;
     }
 #endif
@@ -571,7 +612,7 @@ LONG X11DRV_nores_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
  */
 BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
-    if (xf86vm_modes) 
+    if (dd_modes) 
     {
         /* XVidMode */
         return X11DRV_XF86VM_EnumDisplaySettingsExW(name, n, devmode, flags);
@@ -633,7 +674,7 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
     {
         TRACE("Return to original display mode\n");
     }
-    if (xf86vm_modes) 
+    if (dd_modes) 
     {
         /* XVidMode */
         return X11DRV_XF86VM_ChangeDisplaySettingsExW( devname, devmode,
