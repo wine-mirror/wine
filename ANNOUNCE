@@ -1,4 +1,4 @@
-This is release 20010216 of Wine, a free implementation of Windows on
+This is release 20010305 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,10 +6,10 @@ correctly.
 Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20010216: (see ChangeLog for details)
-	- Several PostScript driver improvements.
-	- Improved enhanced metafiles support.
-	- Beginnings of PowerPC support.
+WHAT'S NEW with Wine-20010305: (see ChangeLog for details)
+	- Some improvements to the wineserver protocol.
+	- The usual common controls fixes/improvements.
+	- Version information in builtin dlls.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -18,10 +18,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010216.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010216.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010216.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010216.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010305.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010305.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010305.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010305.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 For more download locations, see http://ftpsearch.lycos.com. These
