@@ -78,6 +78,13 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
+
+static BOOL DeviceIo_HASP (DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
+/*
 /*
  * VxD names are taken from the Win95 DDK
  */
@@ -219,6 +226,7 @@ static const struct VxDInfo VxDList[] =
     { "IRLAMP",   0x04A2, NULL, NULL },
 
     { "PCCARD",   0x097C, NULL, DeviceIo_PCCARD },
+    { "HASP95",   0x3721, NULL, DeviceIo_HASP },
 
     /* WINE additions, ids unknown */
     { "MONODEBG.VXD", 0x4242, NULL, DeviceIo_MONODEBG },
@@ -1222,3 +1230,20 @@ DWORD	WINAPI	OpenVxDHandle(DWORD pmt)
 	FIXME( "(0x%08lx) stub!\n", pmt);
 	return 0;
 }
+
+static BOOL DeviceIo_HASP(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+    BOOL retv = TRUE;
+	FIXME("(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+			dwIoControlCode,
+			lpvInBuffer,cbInBuffer,
+			lpvOutBuffer,cbOutBuffer,
+			lpcbBytesReturned,
+			lpOverlapped);
+
+    return retv;
+}
+
