@@ -322,7 +322,7 @@
 @ cdecl _lock(long)
 @ cdecl _locking(long long long)
 @ cdecl _logb( double )
-@ cdecl -i386 longjmpex(ptr long) MSVCRT_longjmp
+@ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long)
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr long long ptr)
