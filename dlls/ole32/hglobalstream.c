@@ -33,6 +33,7 @@
 #include "ole2.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "ntddk.h"
 
 #include "wine/debug.h"
 
@@ -573,50 +574,23 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
 	dlibMove.s.LowPart, dwOrigin, plibNewPosition);
 
   /*
-   * The caller is allowed to pass in NULL as the new position return value.
-   * If it happens, we assign it to a dynamic variable to avoid special cases
-   * in the code below.
-   */
-  if (plibNewPosition == 0)
-  {
-    plibNewPosition = &newPosition;
-  }
-
-  /*
    * The file pointer is moved depending on the given "function"
    * parameter.
    */
   switch (dwOrigin)
   {
     case STREAM_SEEK_SET:
-      plibNewPosition->s.HighPart = 0;
-      plibNewPosition->s.LowPart  = 0;
+      newPosition.s.HighPart = 0;
+      newPosition.s.LowPart = 0;
       break;
     case STREAM_SEEK_CUR:
-      *plibNewPosition = This->currentPosition;
+      newPosition = This->currentPosition;
       break;
     case STREAM_SEEK_END:
-      *plibNewPosition = This->streamSize;
+      newPosition = This->streamSize;
       break;
     default:
       return STG_E_INVALIDFUNCTION;
-  }
-
-  /*
-   * We don't support files with offsets of 64 bits.
-   */
-  assert(dlibMove.s.HighPart == 0);
-
-  /*
-   * Check if we end-up before the beginning of the file. That should trigger an
-   * error.
-   */
-  if ( (dlibMove.s.LowPart<0) && (plibNewPosition->s.LowPart < (ULONG)(-dlibMove.s.LowPart)) )
-  {
-    /*
-     * I don't know what error to send there.
-     */
-    return E_FAIL;
   }
 
   /*
@@ -624,8 +598,11 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
    * If the file pointer ends-up after the end of the stream, the next Write operation will
    * make the file larger. This is how it is documented.
    */
-  plibNewPosition->s.LowPart += dlibMove.s.LowPart;
-  This->currentPosition = *plibNewPosition;
+  newPosition.QuadPart = RtlLargeIntegerAdd(newPosition.QuadPart, dlibMove.QuadPart);
+  if (newPosition.QuadPart < 0) return STG_E_INVALIDFUNCTION;
+
+  if (plibNewPosition) *plibNewPosition = newPosition;
+  This->currentPosition = newPosition;
 
   return S_OK;
 }

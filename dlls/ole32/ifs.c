@@ -260,14 +260,14 @@ typedef struct
 static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IMalloc32Impl,iface);
 
-	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
-	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
-		!memcmp(&IID_IMalloc,refiid,sizeof(IID_IMalloc))
-	) {
+	TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
+
+	if (IsEqualIID(&IID_IUnknown,refiid) ||
+	    IsEqualIID(&IID_IMalloc,refiid)) {
 		*obj = This;
 		return S_OK;
 	}
-	return OLE_E_ENUM_NOMORE;
+	return E_NOINTERFACE;
 }
 
 /******************************************************************************
