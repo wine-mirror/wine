@@ -1,11 +1,10 @@
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regsvr32.exe
 APPMODE   = cui
-IMPORTS   = msvcrt kernel32
+IMPORTS   = kernel32
 
 C_SRCS = \
 	regsvr32.c
