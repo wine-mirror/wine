@@ -1236,14 +1236,15 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     char driveletter=0;
     int namelen,drive=0;
 
-    if ((strlen(name) >1)&& (name[1]==':'))
-      /* drive letter given */
+    if (!name[0]) return 0;
+
+    if (name[1]==':')
+      /*drive letter given */
       {
 	driveletter = name[0];
       }
-    if ((strlen(name) >2)&& (name[1]==':') &&
-	     ((name[2]=='\\') || (name[2]=='/')))
-      /* absolute path given */
+    if ((name[1]==':') && ((name[2]=='\\') || (name[2]=='/')))
+      /*absolute path given */
       {
 	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
 	drive = (int)FILE_toupper(name[0]) - 'A';
