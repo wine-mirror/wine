@@ -22,6 +22,7 @@
 
 #include "config.h"
 
+#include "initguid.h"
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wine_d3d);

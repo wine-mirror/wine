@@ -32,7 +32,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
-    WARN("(%p)->(%s,%p) should not be called\n",This,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DResource)
+        || IsEqualGUID(riid, &IID_IWineD3DVertexBuffer)){
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
     return E_NOINTERFACE;
 }
 

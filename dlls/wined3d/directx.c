@@ -149,6 +149,50 @@ static void WineD3D_ReleaseFakeGLContext(WineD3D_Context* ctx) {
     }
 }
 
+/**********************************************************
+ * IUnknown parts follows
+ **********************************************************/
+
+HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *ppobj)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    /* FIXME: This needs to extend a IWineD3DBaseObject */
+    
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)        
+        || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
+    
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    return refCount;
+}
+
+ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    ULONG ref;
+    TRACE("(%p) : Releasing from %ld\n", This, This->ref);
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    
+    return ref;
+}
+
+/**********************************************************
+ * IWineD3D parts follows
+ **********************************************************/
+
 static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) {
     const char *GL_Extensions    = NULL;
     const char *GLX_Extensions   = NULL;
@@ -1611,33 +1655,6 @@ HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
     IUnknown_AddRef(This->parent);
     *pParent = This->parent;
     return D3D_OK;
-}
-
-/**********************************************************
- * IUnknown parts follows
- **********************************************************/
-
-HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *ppobj)
-{
-    return E_NOINTERFACE;
-}
-
-ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
-    return refCount;
-}
-
-ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
-
-    if (!refCount) HeapFree(GetProcessHeap(), 0, This);
-    return refCount;
 }
 
 /**********************************************************

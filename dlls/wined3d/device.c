@@ -230,6 +230,17 @@ void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD S
 
 HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID riid,LPVOID *ppobj)
 {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    /* FIXME: This needs to extend a IWineD3DBaseObject */
+    
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)        
+        || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
+    
     return E_NOINTERFACE;
 }
 

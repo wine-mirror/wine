@@ -747,7 +747,13 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclaration *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    WARN("(%p)->(%s,%p) should not be called\n",This,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DVertexDeclaration)){
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
     return E_NOINTERFACE;
 }
 

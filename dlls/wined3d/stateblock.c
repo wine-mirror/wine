@@ -2,7 +2,8 @@
  * state block implementation
  *
  * Copyright 2002 Raphael Junqueira
- *           2004 Jason Edmeades   
+ * Copyright 2004 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +26,46 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->wineD3DDevice)->wineD3D))->gl_info
 
+/**********************************************************
+ * IWineD3DStateBlockImpl IUnknown parts follows
+ **********************************************************/
+HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,REFIID riid,LPVOID *ppobj)
+{
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DStateBlock)){
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
+    ULONG refCount = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
+    return refCount;
+}
+
+ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
+    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
+
+    if (!refCount) {
+        IWineD3DDevice_Release((IWineD3DDevice *)This->wineD3DDevice);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return refCount;
+}
+
+/**********************************************************
+ * IWineD3DStateBlockImpl parts follows
+ **********************************************************/
 HRESULT WINAPI IWineD3DStateBlockImpl_GetParent(IWineD3DStateBlock *iface, IUnknown **pParent) {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
     IUnknown_AddRef(This->parent);
@@ -250,35 +291,6 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
 
     TRACE("-----------------------> Device defaults now set up...\n");
     return D3D_OK;
-}
-
-/**********************************************************
- * IUnknown parts follows
- **********************************************************/
-HRESULT WINAPI IWineD3DStateBlockImpl_QueryInterface(IWineD3DStateBlock *iface,REFIID riid,LPVOID *ppobj)
-{
-    return E_NOINTERFACE;
-}
-
-ULONG WINAPI IWineD3DStateBlockImpl_AddRef(IWineD3DStateBlock *iface) {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) : AddRef increasing from %ld\n", This, refCount - 1);
-    return refCount;
-}
-
-ULONG WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
-
-    if (!refCount) {
-        IWineD3DDevice_Release((IWineD3DDevice *)This->wineD3DDevice);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-    return refCount;
 }
 
 /**********************************************************

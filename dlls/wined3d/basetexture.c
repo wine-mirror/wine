@@ -30,8 +30,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
    ******************************************* */
 HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    WARN("(%p)->(%s,%p) should not be called\n",This,debugstr_guid(riid),ppobj);
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;   
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);        
+    /* FIXME: This needs to extend a IWineD3DBaseObject */        
+    if (IsEqualGUID(riid, &IID_IUnknown)     
+        || IsEqualGUID(riid, &IID_IWineD3DResource)   
+        || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)) {
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }        
     return E_NOINTERFACE;
 }
 

@@ -2,7 +2,8 @@
  * IDirect3DCubeTexture9 implementation
  *
  * Copyright 2002-2005 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2005 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,7 +50,15 @@ static const GLenum cube_targets[6] = {
 HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    WARN("(%p)->(%s,%p) should not be called\n",This,debugstr_guid(riid),ppobj);
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DResource)
+        || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)
+        || IsEqualGUID(riid, &IID_IWineD3DTexture)) {
+        IUnknown_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
     return E_NOINTERFACE;
 }
 
