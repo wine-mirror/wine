@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <string.h>
 #include "wine/winuser16.h"
+#include "shlobj.h"  /* DROPFILES */
 
 #include "clipboard.h"
 #include "dce.h"
@@ -35,7 +36,6 @@
 #include "mouse.h"
 #include "options.h"
 #include "queue.h"
-#include "shell.h"
 #include "win.h"
 #include "winpos.h"
 #include "services.h"
@@ -1587,24 +1587,25 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 	    }
 	  if( aux_long && aux_long < 65535 )
 	    {
-	      HDROP16                 hDrop;
-	      LPDROPFILESTRUCT16        lpDrop;
+	      HDROP                 hDrop;
+	      DROPFILES *lpDrop;
 	      
-	      aux_long += sizeof(DROPFILESTRUCT16) + 1; 
-	      hDrop = (HDROP16)GlobalAlloc16( GMEM_SHARE, aux_long );
-	      lpDrop = (LPDROPFILESTRUCT16) GlobalLock16( hDrop );
+	      aux_long += sizeof(DROPFILES) + 1;
+	      hDrop = GlobalAlloc( GMEM_SHARE, aux_long );
+	      lpDrop = (DROPFILES*)GlobalLock( hDrop );
 	      
 	      if( lpDrop )
 		{
-		  lpDrop->wSize = sizeof(DROPFILESTRUCT16);
-		  lpDrop->ptMousePos.x = (INT16)x;
-		  lpDrop->ptMousePos.y = (INT16)y;
-		  lpDrop->fInNonClientArea = (BOOL16) 
+		  lpDrop->pFiles = sizeof(DROPFILES);
+		  lpDrop->pt.x = x;
+		  lpDrop->pt.y = y;
+		  lpDrop->fNC =
 		    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
 		      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
 		      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
 		      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
-		  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT16);
+                  lpDrop->fWide = FALSE;
+		  p_drop = (char *)(lpDrop + 1);
 		  p = p_data;
 		  while(*p)
 		    {
@@ -1616,8 +1617,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 		      p += strlen(p) + 1;
 		    }
 		  *p_drop = '\0';
-		  PostMessage16( hWnd, WM_DROPFILES,
-				 (WPARAM16)hDrop, 0L );
+		  PostMessageA( hWnd, WM_DROPFILES, hDrop, 0L );
 		}
 	    }
 	}
@@ -1645,19 +1645,16 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   unsigned char	*p_data = NULL; /* property data */
   char		*p_drop = NULL;
   char          *p, *next;
-  int		x, y, drop32 = FALSE ;
+  int		x, y;
+  DROPFILES *lpDrop;
+  HDROP hDrop;
   union {
     Atom	atom_aux;
     int         i;
     Window      w_aux;
   }		u; /* unused */
-  union {
-    HDROP16     h16;
-    HDROP     h32;
-  } hDrop;
 
   pWnd = WIN_FindWndPtr(hWnd);
-  drop32 = pWnd->flags & WIN_ISWIN32;
 
   if (!(pWnd->dwExStyle & WS_EX_ACCEPTFILES))
   {
@@ -1699,43 +1696,23 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
       pDropWnd = WIN_FindWndPtr( hWnd );
       
-      if (drop32) {
-	LPDROPFILESTRUCT        lpDrop;
-	drop_len += sizeof(DROPFILESTRUCT) + 1; 
-	hDrop.h32 = (HDROP)GlobalAlloc( GMEM_SHARE, drop_len );
-	lpDrop = (LPDROPFILESTRUCT) GlobalLock( hDrop.h32 );
-	
-	if( lpDrop ) {
-	  lpDrop->lSize = sizeof(DROPFILESTRUCT);
-	  lpDrop->ptMousePos.x = (INT)x;
-	  lpDrop->ptMousePos.y = (INT)y;
-	  lpDrop->fInNonClientArea = (BOOL) 
+      drop_len += sizeof(DROPFILES) + 1;
+      hDrop = (HDROP)GlobalAlloc( GMEM_SHARE, drop_len );
+      lpDrop = (DROPFILES *) GlobalLock( hDrop );
+
+      if( lpDrop ) {
+	  lpDrop->pFiles = sizeof(DROPFILES);
+	  lpDrop->pt.x = (INT)x;
+	  lpDrop->pt.y = (INT)y;
+	  lpDrop->fNC =
 	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
 	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
 	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
 	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
-	  lpDrop->fWideChar = FALSE;
-	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT);
-	}
-      } else {
-	LPDROPFILESTRUCT16        lpDrop;
-	drop_len += sizeof(DROPFILESTRUCT16) + 1; 
-	hDrop.h16 = (HDROP16)GlobalAlloc16( GMEM_SHARE, drop_len );
-	lpDrop = (LPDROPFILESTRUCT16) GlobalLock16( hDrop.h16 );
-	
-	if( lpDrop ) {
-	  lpDrop->wSize = sizeof(DROPFILESTRUCT16);
-	  lpDrop->ptMousePos.x = (INT16)x;
-	  lpDrop->ptMousePos.y = (INT16)y;
-	  lpDrop->fInNonClientArea = (BOOL16) 
-	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
-	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
-	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
-	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
-	  p_drop = ((char*)lpDrop) + sizeof(DROPFILESTRUCT16);
-	}
+	  lpDrop->fWide = FALSE;
+	  p_drop = (char*)(lpDrop + 1);
       }
-      
+
       /* create message content */
       if (p_drop) {
 	p = p_data;
@@ -1763,18 +1740,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	  *p_drop = '\0';
 	}
 
-	if (drop32) {
-	  /* can not use PostMessage32A because it is currently based on 
-	   * PostMessage16 and WPARAM32 would be truncated to WPARAM16
-	   */
-	  GlobalUnlock(hDrop.h32);
-	  SendMessageA( hWnd, WM_DROPFILES,
-			  (WPARAM)hDrop.h32, 0L );
-	} else {
-	  GlobalUnlock16(hDrop.h16);
-	  PostMessage16( hWnd, WM_DROPFILES,
-			 (WPARAM16)hDrop.h16, 0L );
-	}
+        GlobalUnlock(hDrop);
+        PostMessageA( hWnd, WM_DROPFILES, hDrop, 0L );
       }
       WIN_ReleaseWndPtr(pDropWnd);
     }

@@ -9,16 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/obj_base.h"
-#include "wine/obj_shelllink.h"
-#include "wine/obj_shellfolder.h"
-#include "wine/obj_shellbrowser.h"
-#include "wine/obj_contextmenu.h"
-#include "wine/obj_shellextinit.h"
-#include "wine/obj_extracticon.h"
-
+#include "shlobj.h"
 #include "shlguid.h"
 #include "winreg.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "debugtools.h"
 
@@ -543,15 +537,15 @@ void WINAPI DragFinish(HDROP h)
  */
 BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 {
-	LPDROPFILESTRUCT lpDropFileStruct;  
+        DROPFILES *lpDropFileStruct;
 	BOOL bRet;
 
 	TRACE("\n");
 
-	lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
-  
-	memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
-	bRet = lpDropFileStruct->fInNonClientArea;
+	lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
+
+        *p = lpDropFileStruct->pt;
+	bRet = lpDropFileStruct->fNC;
   
 	GlobalUnlock(hDrop);
 	return bRet;
@@ -568,13 +562,13 @@ UINT WINAPI DragQueryFileA(
 {
 	LPSTR lpDrop;
 	UINT i = 0;
-	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
     
 	TRACE("(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
     
 	if(!lpDropFileStruct) goto end;
 
-	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
 
 	while (i++ < lFile)
 	{
@@ -607,13 +601,13 @@ UINT WINAPI DragQueryFileW(
 {
 	LPWSTR lpwDrop;
 	UINT i = 0;
-	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
     
 	TRACE("(%08x, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
     
 	if(!lpDropFileStruct) goto end;
 
-	lpwDrop = (LPWSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+	lpwDrop = (LPWSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
 
 	i = 0;
 	while (i++ < lFile)
@@ -626,7 +620,7 @@ UINT WINAPI DragQueryFileW(
 	  }
 	}
     
-	i = lstrlenW(lpwDrop);
+	i = strlenW(lpwDrop);
 	i++;
 	if ( !lpszwFile) goto end;   /* needed buffer size */
 

@@ -55,6 +55,13 @@ typedef struct
 
 #include "poppack.h"
 
+typedef struct {     /* structure for dropped files */
+ WORD     wSize;
+ POINT16  ptMousePos;
+ BOOL16   fInNonClientArea;
+ /* memory block with filenames follows */
+} DROPFILESTRUCT16, *LPDROPFILESTRUCT16;
+
 static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
 static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
 static const char*	lpstrMsgShellActivate = "ACTIVATESHELLWINDOW";
@@ -1022,7 +1029,7 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
   l = strlen(entry); 
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
-  { if( lstrncmpiA(lpEnv, entry, l) ) 
+  { if( strncasecmp(lpEnv, entry, l) ) 
       continue;
 	if( !*(lpEnv+l) )
 	    return (lpEnv + l); 		/* empty entry */

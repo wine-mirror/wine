@@ -26,7 +26,6 @@
 #include "pidl.h"
 #include "wine/undocshell.h"
 #include "shell32_main.h"
-#include "shell.h" /* DROPFILESTRUCT */
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
@@ -96,13 +95,13 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	char szRootPath[MAX_PATH];
 	char szFileName[MAX_PATH];
 	HGLOBAL hGlobal;
-	LPDROPFILESTRUCT pDropFiles;
+	DROPFILES *pDropFiles;
 	int offset;
 	
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 
 	/* get the size needed */
-	size = sizeof(DROPFILESTRUCT);
+	size = sizeof(DROPFILES);
 
 	SHGetPathFromIDListA(pidlRoot, szRootPath);
 	PathAddBackslashA(szRootPath);
@@ -120,11 +119,11 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
 
-        pDropFiles = (LPDROPFILESTRUCT)GlobalLock(hGlobal);
-        pDropFiles->lSize = sizeof(DROPFILESTRUCT);
-        pDropFiles->fWideChar = FALSE;
+        pDropFiles = (DROPFILES *)GlobalLock(hGlobal);
+        pDropFiles->pFiles = sizeof(DROPFILES);
+        pDropFiles->fWide = FALSE;
 
-	offset = pDropFiles->lSize;
+	offset = pDropFiles->pFiles;
 	strcpy(szFileName, szRootPath);
 	
 	for (i=0; i<cidl;i++)
