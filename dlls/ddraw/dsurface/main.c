@@ -232,7 +232,12 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	}
     }
     if (src) assert((xsrc.bottom-xsrc.top) <= sdesc.dwHeight);
-    assert((xdst.bottom-xdst.top) <= ddesc.dwHeight);
+
+    /* truncate dst rect to dest surface. */
+    if ((xdst.bottom-xdst.top) > ddesc.dwHeight)
+	xdst.bottom = xdst.top+ddesc.dwHeight;
+    if ((xdst.right-xdst.left) > ddesc.dwWidth)
+	xdst.right = xdst.left+ddesc.dwWidth;
 
     bpp = GET_BPP(ddesc);
     srcheight = xsrc.bottom - xsrc.top;
