@@ -1043,6 +1043,7 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     case VT_UINT: sprintf(szVarType, "VT_UINT"); break;
     case VT_VARIANT: sprintf(szVarType, "VT_VARIANT"); break;
     case VT_VOID: sprintf(szVarType, "VT_VOID"); break;
+    case VT_HRESULT: sprintf(szVarType, "VT_HRESULT"); break;
     case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED ref = %lx",
 				 pTD->u.hreftype); break;
     case VT_PTR: sprintf(szVarType, "ptr to ");
@@ -1101,6 +1102,9 @@ void dump_FUNCDESC(FUNCDESC *funcdesc) {
   MESSAGE(")\n\toVft: %d\n", funcdesc->oVft);
   MESSAGE("\tcParamsOpt: %d\n", funcdesc->cParamsOpt);
   MESSAGE("\twFlags: %x\n", funcdesc->wFuncFlags);
+
+  MESSAGE("\telemdescFunc (return value type):\n");
+  dump_ELEMDESC(&funcdesc->elemdescFunc);
 }
 
 void dump_IDLDESC(IDLDESC *idl) {
