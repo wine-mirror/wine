@@ -422,36 +422,40 @@ HIMAGELIST ShellSmallIconList = 0;
 HIMAGELIST ShellBigIconList = 0;
 HDPA	hdpa=0;
 
+#define INVALID_INDEX -1
+
 typedef struct
-{	LPSTR sSourceFile;	/* file icon is from */
+{	LPCSTR sSourceFile;	/* file icon is from */
 	DWORD dwSourceIndex;	/* index within the file */
 	DWORD dwListIndex;	/* index within the iconlist */
 } SIC_ENTRY, * LPSIC_ENTRY;
 
 /*****************************************************************************
-*	SIC_CompareEntrys (internal)
+*	SIC_CompareEntrys [called by comctl32.dll]
 * NOTES
 *  Callback for DPA_Search
 */
-static INT32 SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
+INT32 CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
 {	TRACE(shell,"%p %p\n", p1, p2);
 
 	if (((LPSIC_ENTRY)p1)->dwSourceIndex != ((LPSIC_ENTRY)p2)->dwSourceIndex) /* first the faster one*/
 	  return 1;
 
-	if (strcmp(((LPSIC_ENTRY)p1)->sSourceFile,((LPSIC_ENTRY)p2)->sSourceFile))
+	if (strcasecmp(((LPSIC_ENTRY)p1)->sSourceFile,((LPSIC_ENTRY)p2)->sSourceFile))
 	  return 1;
 
 	return 0;  
 }
 /*****************************************************************************
-*	SIC_Add (internal)
+*	SIC_IconAppend (internal)
+* NOTES
+*  appends a icon pair to the end of the cache
 */
-INT32 WINAPI SIC_AddIcon (LPSTR sSourceFile, DWORD dwSourceIndex, HICON32 hSmallIcon, HICON32 hBigIcon)
+static INT32 SIC_IconAppend (LPCSTR sSourceFile, INT32 dwSourceIndex, HICON32 hSmallIcon, HICON32 hBigIcon)
 {	LPSIC_ENTRY lpsice;
-	INT32 index;
+	INT32 index, index1;
 	
-	TRACE(shell,"%s %li\n", sSourceFile, dwSourceIndex);
+	TRACE(shell,"%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
@@ -459,77 +463,100 @@ INT32 WINAPI SIC_AddIcon (LPSTR sSourceFile, DWORD dwSourceIndex, HICON32 hSmall
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
 /*	index = pDPA_Search (hdpa, lpsice, -1, SIC_CompareEntrys, 0, 0);
-	if ( -1 != index )
+
+	if ( INVALID_INDEX != index )
 	{ TRACE(shell, "-- allready inserted\n");
 	  SHFree(lpsice);
 	  return index;
 	}
 */
 	index = pDPA_InsertPtr(hdpa, 0x7fff, lpsice);
-	if ( -1 == index )
+	if ( INVALID_INDEX == index )
 	{ SHFree(lpsice);
-	  return -1;
+	  return INVALID_INDEX;
         } 
 
-	lpsice->dwListIndex = pImageList_GetImageCount(ShellSmallIconList)+1;
+	index = pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
+	index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
 
-	pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
-	pImageList_AddIcon (ShellBigIconList, hBigIcon);
+	if (index!=index1)
+	{ FIXME(shell,"iconlists out of sync 0x%x 0x%x\n", index, index1);
+	}
+	lpsice->dwListIndex = index;
 	
-	return index;
+	return lpsice->dwListIndex;
 	
 }
+/****************************************************************************
+*	SIC_LoadIcon	[internal]
+* NOTES
+*  gets small/big icon by number from a file
+*/
+static INT32 SIC_LoadIcon (LPCSTR sSourceFile, INT32 dwSourceIndex)
+{	HICON32	hiconLarge=0;
+	HICON32	hiconSmall=0;
+
+	ICO_ExtractIconEx(sSourceFile, &hiconLarge, dwSourceIndex, 1, 32, 32  );
+	ICO_ExtractIconEx(sSourceFile, &hiconSmall, dwSourceIndex, 1, 16, 16  );
+
+
+	if ( !hiconLarge ||  !hiconSmall)
+	{ FIXME(shell, "*** failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
+	  return -1;
+	}
+	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		
+}
 /*****************************************************************************
-*	SIC_GetIcon (internal)
+*	SIC_GetIconIndex [internal]
 * NOTES
 *  look in the cache for a proper icon. if not available the icon is taken
 *  from the file and cached
 */
-HICON32 WINAPI SIC_GetIcon (LPSTR sSourceFile, DWORD dwSourceIndex, BOOL32 bSmallIcon )
-{	LPSIC_ENTRY lpsice;
+static INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
+{	SIC_ENTRY sice;
 	INT32 index;
-	HICON32 hSmallIcon, hBigIcon;
 		
-	TRACE(shell,"%s %li\n", sSourceFile, dwSourceIndex);
+	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);
 
-	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
-
-	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(),0,sSourceFile);
-	lpsice->dwSourceIndex = dwSourceIndex;
+	sice.sSourceFile = sSourceFile;
+	sice.dwSourceIndex = dwSourceIndex;
 	
-	index = pDPA_Search (hdpa, lpsice, -1, SIC_CompareEntrys, 0, 0);
+	index = pDPA_Search (hdpa, &sice, -1, SIC_CompareEntrys, 0, 0);
 
-	if ( -1 != index )
-	{ TRACE(shell, "-- found\n");
-	  SHFree (lpsice);
-
-	  index = ((LPSIC_ENTRY)pDPA_GetPtr(hdpa, index))->dwListIndex;
-	  if (bSmallIcon)
-	    return pImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
-	  return pImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
+	if ( INVALID_INDEX == index )
+	{  return SIC_LoadIcon (sSourceFile, dwSourceIndex);
 	}
-/*
-	index = pDPA_InsertPtr(hdpa, 0x7fff, lpsice);
-	if ( -1 == index )
-	{ SHFree(lpsice);
-        } 
+	
+	TRACE(shell, "-- found\n");
+	return ((LPSIC_ENTRY)pDPA_GetPtr(hdpa, index))->dwListIndex;
+}
+/****************************************************************************
+*	SIC_LoadIcon	[internal]
+* NOTES
+*  retrives the specified icon from the iconcache. if not found try's to load the icon
+*/
+static HICON32 SIC_GetIcon (LPCSTR sSourceFile, INT32 dwSourceIndex, BOOL32 bSmallIcon )
+{	INT32 index;
 
-	lpsice->hSmallIcon = hSmallIcon;
-	lpsice->hBigIcon = hBigIcon;
+	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);
 
-	pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
-	pImageList_AddIcon (ShellBigIconList, hBigIcon);
-	*/
-	return 0;
+	index = SIC_GetIconIndex(sSourceFile, dwSourceIndex);
+	if (INVALID_INDEX == index)
+	{ return INVALID_INDEX;
+	}
+
+	if (bSmallIcon)
+	  return pImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
+	return pImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
 	
 }
 /*****************************************************************************
-*	SIC_Initialize (internal)
+*	SIC_Initialize [internal]
 * NOTES
 *  hack to load the resources from the shell32.dll under a different dll name 
 *  will be removed when the resource-compiler is ready
 */
-BOOL32 WINAPI SIC_Initialize(void)
+BOOL32 SIC_Initialize(void)
 {	CHAR   		szShellPath[MAX_PATH];
 	HGLOBAL32	hSmRet, hLgRet;
 	HICON32		*pSmRet, *pLgRet;
@@ -568,7 +595,7 @@ BOOL32 WINAPI SIC_Initialize(void)
 	    MSG("*** you can ignore it but you will miss some icons in win95 dialogs\n\n");
 	    break;
 	  }
-	  SIC_AddIcon (szShellPath, index, pSmRet[index], pLgRet[index]);
+	  SIC_IconAppend (szShellPath, index, pSmRet[index], pLgRet[index]);
 	}
 		
 	GlobalUnlock32(hLgRet);
@@ -612,22 +639,47 @@ DWORD WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
  *
  */
 DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,DWORD z)
-{	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
+{	char	sTemp[MAX_PATH];
+	DWORD	dwNr, ret = INVALID_INDEX;
+	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
 
- 	WARN(shell,"(SF=%p,pidl=%p,%08lx):stub.\n",sh,pidl,z);
+ 	WARN(shell,"(SF=%p,pidl=%p,%08lx)\n",sh,pidl,z);
+	pdump(pidl);
 
-	if (_ILIsMyComputer(pidltemp))
-	{ return 20;
+	if (_ILIsDesktop(pidltemp))
+	{ return 34;
+	}
+	else if (_ILIsMyComputer(pidltemp))
+	{ if (HCR_GetDefaultIcon("CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}", sTemp, 64, &dwNr))
+	  { ret = SIC_GetIconIndex(sTemp, dwNr);
+	    return (( INVALID_INDEX == ret) ? 20 : ret);
+	  }
 	}
 	else if (_ILIsDrive (pidltemp))
-	{ return 8;
+	{ if (HCR_GetDefaultIcon("Drive", sTemp, MAX_PATH, &dwNr))
+	  { ret = SIC_GetIconIndex(sTemp, dwNr);
+	    return (( INVALID_INDEX == ret) ? 8 : ret);
+	  }
 	}
 	else if (_ILIsFolder (pidltemp))
-	{ return 3;
+	{ if (HCR_GetDefaultIcon("Folder", sTemp, MAX_PATH, &dwNr))
+	  { ret = SIC_GetIconIndex(sTemp, dwNr);
+	    return (( INVALID_INDEX == ret) ? 3 : ret);
+	  }
 	}
-	else
-	{ return 1;
+
+	if (_ILGetExtension (pidltemp, sTemp, MAX_PATH))		/* object is file */
+	{ if ( HCR_MapTypeToValue(sTemp, sTemp, MAX_PATH))
+	  { if (HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+	    { if (!strcmp("%1",sTemp))					/* icon is in the file */
+	      { _ILGetPidlPath(pidl, sTemp, MAX_PATH);
+	        dwNr = 0;
+	      }
+	      ret = SIC_GetIconIndex(sTemp, dwNr);
+	    }
+	  }
 	}
+	return (( INVALID_INDEX == ret) ? 1 : ret);
 }
 
 /*************************************************************************
