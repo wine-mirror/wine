@@ -56,21 +56,23 @@ typedef struct
 } aliasTemplate;
 
 /* Font alias table - these 2 aliases are always present */
+/* CHANGING THE FIRST TWO WILL BREAK XFONT_BuildDefaultAliases! */
 
 static fontAlias __aliasTable[2] = { 
-			{ "Helvetica", "Helv", &__aliasTable[1] },
-			{ "Times", "Tms Rmn", NULL } 
+			{ NULL, "Helv", &__aliasTable[1] },
+			{ NULL, "Tms Rmn", NULL } 
 			};
 
 static fontAlias *aliasTable = __aliasTable;
 
 /* Optional built-in aliases, they are installed only when X
  * cannot supply us with original MS fonts */
+/* CHANGING THE FIRST TWO WILL BREAK XFONT_BuildDefaultAliases! */
 
 static int	     faTemplateNum = 4;
 static aliasTemplate faTemplate[4] = {
-			  { "-adobe-helvetica-", "MS Sans Serif" },
-			  { "-bitstream-charter-", "MS Serif" },
+			  { NULL, "MS Sans Serif" },
+			  { NULL, "MS Serif" },
 			  { "-adobe-times-", "Times New Roman" },
 			  { "-adobe-helvetica-", "Arial" }
 			  };
@@ -90,6 +92,8 @@ static const char*	INIDefault = "Default";
 static const char*	INIDefaultFixed = "DefaultFixed";
 static const char*	INIResolution = "Resolution";
 static const char*	INIGlobalMetrics = "FontMetrics";
+static const char*	INIDefaultSerif = "DefaultSerif";
+static const char*	INIDefaultSansSerif = "DefaultSansSerif";
 
 static const char*	LFDSeparator = "*-";
 static const char*	MSEncoding = "microsoft-";
@@ -1484,7 +1488,9 @@ static void  XFONT_CheckIniCallback(
        (strcasecmp( key, INIDefault) == 0) ||
        (strcasecmp( key, INIDefaultFixed) == 0) ||
        (strcasecmp( key, INIGlobalMetrics) == 0) ||
-       (strcasecmp( key, INIResolution) == 0) ) 
+       (strcasecmp( key, INIResolution) == 0) ||
+       (strcasecmp( key, INIDefaultSerif) == 0) ||
+       (strcasecmp( key, INIDefaultSansSerif) ==0) )
     {
 	/* Valid key; make sure the value doesn't contain a wildcard */
 	if(strchr(value, '*')) {
@@ -1537,6 +1543,97 @@ static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
     }
     DefResolution = allowed_xfont_resolutions[best];
     return point_resolution;
+}
+
+/***********************************************************************
+ *           XFONT_BuildDefaultAliases
+ *
+ * Alias "Helv", and "Tms Rmn" to the DefaultSansSerif and DefaultSerif
+ * fonts respectively.  Create font alias templates for "MS Sans Serif"
+ * and "MS Serif", also pointing to DefaultSansSerif and DefaultSerif.
+ */
+static int XFONT_BuildDefaultAliases( char** buffer, int* buf_size )
+{
+
+  aliasTemplate fatDefaultSerif = { "-bitstream-charter-", "Charter" };
+  aliasTemplate fatDefaultSansSerif = { "-adobe-helvetica-", "Helvetica" };
+
+  fontResource* fr;
+
+  /* Make sure our buffer is big enough; update calling function's
+	buf_size if we change it. */
+
+  if( *buf_size < 128 )
+  {
+    *buffer = HeapReAlloc( SystemHeap, 0, *buffer, 256 );
+    *buf_size = 256;
+  }
+
+  /* Get the X11 name of the default serif font from the Wine INI file.
+	(-bitstream-charter- is the default.) */
+
+  PROFILE_GetWineIniString( INIFontSection, INIDefaultSerif,
+				fatDefaultSerif.fatResource, *buffer, 128 );
+
+  /* Find the Windows typeface which corresponds to the X11 font. */
+
+  for( fr = fontList; fr; fr = fr->next )
+    if( !strcasecmp( fr->resource, *buffer ) ) break;
+
+  /* Update the Alias Table entry for "Tms Rmn" with the default serif font's
+	typeface.  Update the Alias Template for "MS Serif" with the default
+	serif font's X11 name.  Note that this method leaves us dependant on
+	the order of the Alias Table and the Alias Templates.  Also, we don't
+	check for or handle a situation in which -bitstream-charter- is not
+	available. */
+
+  if( fr )
+  {
+    TRACE(font, "Using \'%s\' as default serif font\n", fr->lfFaceName);
+    aliasTable[1].faTypeFace = fr->lfFaceName;
+    faTemplate[1].fatResource = fr->resource;
+  }
+  else
+  {
+    WARN(font, "No typeface found for \'%s\'; using \'%s\'\n", *buffer,
+						fatDefaultSerif.fatAlias);
+    aliasTable[1].faTypeFace = fatDefaultSerif.fatAlias;	/* Charter */
+    faTemplate[1].fatResource = fatDefaultSerif.fatResource;
+  }
+
+  /* Get the X11 name of the default sans serif font from the Wine INI file.
+	(-adobe-helvetica- is the default.) */
+
+  PROFILE_GetWineIniString (INIFontSection, INIDefaultSansSerif,
+			fatDefaultSansSerif.fatResource, *buffer, 128 );
+
+  /* Find the Windows typeface which corresponds to the X11 font. */
+
+  for( fr = fontList; fr; fr = fr->next )
+    if ( !strcasecmp( fr->resource, *buffer ) ) break;
+
+  /* Update the Alias Table entry for "Helv" with the default sans serif font's
+	typeface.  Update the Alias Template for "MS Sans Serif" with the
+	default sans serif font's X11 name.  Note that this method leaves us
+	dependant on the order of the Alias Table and the Alias Templates.
+	Also, we don't check for or handle a situation in which
+	-adobe-helvetica- is not available. */
+
+  if( fr )
+  {
+    TRACE(font, "Using \'%s\' as default sans serif font\n", fr->lfFaceName);
+    aliasTable[0].faTypeFace = fr->lfFaceName;
+    faTemplate[0].fatResource = fr->resource;
+  }
+  else
+  {
+    WARN(font, "No typeface found for \'%s\'; using \'%s\'\n", *buffer,
+						fatDefaultSansSerif.fatAlias);
+    aliasTable[0].faTypeFace = fatDefaultSansSerif.fatAlias;	/* Helvetica */
+    faTemplate[0].fatResource = fatDefaultSansSerif.fatResource;
+  }
+
+  return 0;
 }
 
 /***********************************************************************
@@ -1709,6 +1806,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   }
 
   XFONT_WindowsNames( buffer );
+  XFONT_BuildDefaultAliases( &buffer, &buf_size );
   XFONT_LoadAliases( &buffer, buf_size );
   HeapFree(SystemHeap, 0, buffer);
 
