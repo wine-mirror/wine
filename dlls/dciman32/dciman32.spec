@@ -12,7 +12,7 @@ import	ntdll.dll
 @ stub    DCIDraw
 @ stub    DCIEndAccess
 @ stub    DCIEnum
-@ stub    DCIOpenProvider
+@ stdcall DCIOpenProvider() DCIOpenProvider
 @ stub    DCISetClipList
 @ stub    DCISetDestination
 @ stub    DCISetSrcDestClip
