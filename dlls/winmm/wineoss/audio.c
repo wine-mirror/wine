@@ -1710,6 +1710,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     DWORD		bytesRead;
 
     audio_buf_info info;
+    int xs;
 	
 	LPVOID		buffer = HeapAlloc(GetProcessHeap(), 
 		                           HEAP_ZERO_MEMORY, 
@@ -1722,6 +1723,11 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     wwi->dwTotalRecorded = 0;
 
     SetEvent(wwi->hEvent);
+
+    /* the soundblaster live needs a micro wake to get its recording started
+     * (or GETISPACE will have 0 frags all the time)
+     */
+    read(wwi->unixdev,&xs,4);
     
 	/* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
