@@ -670,7 +670,7 @@ int _flushall(void)
 /*********************************************************************
  *		_fstat (MSVCRT.@)
  */
-int _fstat(int fd, struct _stat* buf)
+int MSVCRT__fstat(int fd, struct _stat* buf)
 {
   DWORD dw;
   BY_HANDLE_FILE_INFORMATION hfi;
@@ -1135,7 +1135,7 @@ int _setmode(int fd,int mode)
 /*********************************************************************
  *		_stat (MSVCRT.@)
  */
-int _stat(const char* path, struct _stat * buf)
+int MSVCRT__stat(const char* path, struct _stat * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;

@@ -53,7 +53,7 @@ struct crtdll_stat
   short          st_uid;
   short          st_gid;
   crtdll_dev_t   st_rdev;
-  _off_t         st_size;
+  MSVCRT(_off_t) st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
   MSVCRT(time_t) st_ctime;
@@ -114,6 +114,7 @@ void __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards 
  */
 int CRTDLL__fstat(int fd, struct crtdll_stat* buf)
 {
+    extern int _fstat(int,struct _stat*);
     struct _stat st;
     int ret;
 
@@ -127,6 +128,7 @@ int CRTDLL__fstat(int fd, struct crtdll_stat* buf)
  */
 int CRTDLL__stat(const char* path, struct crtdll_stat * buf)
 {
+    extern int _stat(const char*,struct _stat*);
     struct _stat st;
     int ret;
 

@@ -241,7 +241,7 @@ init    MSVCRT_Init
 @ cdecl _fputchar(long) _fputchar
 @ cdecl _fputwchar(long) _fputwchar
 @ cdecl _fsopen(str str long) _fsopen
-@ cdecl _fstat(long ptr) _fstat
+@ cdecl _fstat(long ptr) MSVCRT__fstat
 @ stub _fstati64 #(long ptr)
 @ cdecl _ftime(ptr) _ftime
 @ forward -noimport _ftol ntdll._ftol
@@ -446,7 +446,7 @@ init    MSVCRT_Init
 @ cdecl _spawnvp(long str ptr) _spawnvp
 @ cdecl _spawnvpe(long str ptr ptr) _spawnvpe
 @ forward -noimport _splitpath ntdll._splitpath
-@ cdecl _stat(str ptr) _stat
+@ cdecl _stat(str ptr) MSVCRT__stat
 @ stub _stati64 #(str ptr)
 @ cdecl _statusfp() _statusfp
 @ cdecl _strcmpi(str str) strcasecmp
