@@ -269,8 +269,7 @@ static BOOL process_init( char *argv[] )
     current_process.priority        = 8;  /* Normal */
 
     /* Setup the server connection */
-    NtCurrentTeb()->socket = CLIENT_InitServer();
-    if (CLIENT_InitThread()) return FALSE;
+    CLIENT_InitServer();
 
     /* Retrieve startup info from the server */
     SERVER_START_VAR_REQ( init_process, sizeof(main_exe_name)-1 )

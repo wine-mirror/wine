@@ -208,17 +208,27 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
     int ret, fd = -1;
-    SERVER_START_REQ( get_handle_fd )
+
+    do
     {
-        req->handle = handle;
-        req->access = access;
-        if (!(ret = SERVER_CALL_ERR())) fd = req->fd;
-    }
-    SERVER_END_REQ;
-    if (!ret)
+        SERVER_START_REQ( get_handle_fd )
+        {
+            req->handle = handle;
+            req->access = access;
+            if (!(ret = SERVER_CALL_ERR())) fd = req->fd;
+        }
+        SERVER_END_REQ;
+        if (ret) return -1;
+
+        if (fd == -1)  /* it wasn't in the cache, get it from the server */
+            fd = wine_server_recv_fd( handle );
+
+    } while (fd == -2);  /* -2 means race condition, so restart from scratch */
+
+    if (fd != -1)
     {
-        if (fd == -1) return wine_server_recv_fd( handle, 1 );
-        fd = dup(fd);
+        if ((fd = dup(fd)) == -1)
+            SetLastError( ERROR_TOO_MANY_OPEN_FILES );
     }
     return fd;
 }

@@ -33,12 +33,12 @@ extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 extern int receive_fd( struct process *process );
 extern int send_thread_wakeup( struct thread *thread, int signaled );
-extern int send_client_fd( struct thread *thread, int fd, handle_t handle );
+extern int send_client_fd( struct process *process, int fd, handle_t handle );
+extern void read_request( struct thread *thread );
 extern void send_reply( struct thread *thread, union generic_request *request );
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
-extern struct object *create_request_socket( struct thread *thread );
 
 extern void trace_request( struct thread *thread, const union generic_request *request );
 extern void trace_reply( struct thread *thread, const union generic_request *request );
@@ -71,7 +71,7 @@ DECL_HANDLER(boot_done);
 DECL_HANDLER(init_process);
 DECL_HANDLER(init_process_done);
 DECL_HANDLER(init_thread);
-DECL_HANDLER(get_thread_buffer);
+DECL_HANDLER(set_thread_buffer);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
 DECL_HANDLER(get_process_info);
@@ -186,7 +186,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_init_process,
     (req_handler)req_init_process_done,
     (req_handler)req_init_thread,
-    (req_handler)req_get_thread_buffer,
+    (req_handler)req_set_thread_buffer,
     (req_handler)req_terminate_process,
     (req_handler)req_terminate_thread,
     (req_handler)req_get_process_info,

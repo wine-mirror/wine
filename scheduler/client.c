@@ -93,7 +93,7 @@ void server_protocol_error( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
     SYSDEPS_ExitThread(1);
@@ -105,7 +105,7 @@ void server_protocol_error( const char *err, ... )
  */
 void server_protocol_perror( const char *err )
 {
-    fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
+    fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
     perror( err );
     SYSDEPS_ExitThread(1);
 }
@@ -252,49 +252,14 @@ void wine_server_send_fd( int fd )
 
 
 /***********************************************************************
- *           set_handle_fd
- *
- * Store the fd for a given handle in the server
- */
-static int set_handle_fd( int handle, int fd )
-{
-    SERVER_START_REQ( set_handle_info )
-    {
-        req->handle = handle;
-        req->flags  = 0;
-        req->mask   = 0;
-        req->fd     = fd;
-        if (!SERVER_CALL())
-        {
-            if (req->cur_fd != fd)
-            {
-                /* someone was here before us */
-                close( fd );
-                fd = req->cur_fd;
-            }
-            else fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
-        }
-        else
-        {
-            close( fd );
-            fd = -1;
-        }
-    }
-    SERVER_END_REQ;
-    return fd;
-}
-
-
-/***********************************************************************
- *           wine_server_recv_fd
+ *           receive_fd
  *
  * Receive a file descriptor passed from the server.
- * The file descriptor must be closed after use.
  */
-int wine_server_recv_fd( int handle, int cache )
+static int receive_fd( handle_t *handle )
 {
     struct iovec vec;
-    int ret, fd, server_handle;
+    int ret, fd;
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     struct msghdr msghdr;
@@ -319,24 +284,18 @@ int wine_server_recv_fd( int handle, int cache )
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
-    vec.iov_base = (void *)&server_handle;
-    vec.iov_len  = sizeof(server_handle);
+    vec.iov_base = (void *)handle;
+    vec.iov_len  = sizeof(*handle);
 
     for (;;)
     {
-        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) > 0)
+        if ((ret = recvmsg( fd_socket, &msghdr, 0 )) > 0)
         {
 #ifndef HAVE_MSGHDR_ACCRIGHTS
             fd = cmsg.fd;
 #endif
-            if (handle != server_handle)
-                server_protocol_error( "recv_fd: got handle %d, expected %d\n",
-                                       server_handle, handle );
-            if (cache)
-            {
-                fd = set_handle_fd( handle, fd );
-                if (fd != -1) fd = dup(fd);
-            }
+            if (fd == -1) server_protocol_error( "no fd received for handle %d\n", *handle );
+            fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
             return fd;
         }
         if (!ret) break;
@@ -346,6 +305,50 @@ int wine_server_recv_fd( int handle, int cache )
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
+}
+
+
+/***********************************************************************
+ *           wine_server_recv_fd
+ *
+ * Receive a file descriptor passed from the server.
+ * The file descriptor must be closed after use.
+ * Return -2 if a race condition stole our file descriptor.
+ */
+int wine_server_recv_fd( handle_t handle )
+{
+    handle_t fd_handle;
+
+    int fd = receive_fd( &fd_handle );
+
+    /* now store it in the server fd cache for this handle */
+
+    SERVER_START_REQ( set_handle_info )
+    {
+        req->handle = fd_handle;
+        req->flags  = 0;
+        req->mask   = 0;
+        req->fd     = fd;
+        if (!SERVER_CALL())
+        {
+            if (req->cur_fd != fd)
+            {
+                /* someone was here before us */
+                close( fd );
+                fd = req->cur_fd;
+            }
+        }
+        else
+        {
+            close( fd );
+            fd = -1;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (handle != fd_handle) return -2;  /* not the one we expected */
+    if (fd != -1) fd = dup(fd);
+    return fd;
 }
 
 
@@ -520,12 +523,13 @@ static int server_connect( const char *oldcwd, const char *serverdir )
  *
  * Start the server and create the initial socket pair.
  */
-int CLIENT_InitServer(void)
+void CLIENT_InitServer(void)
 {
-    int fd, size;
+    int size;
     char hostname[64];
     char *oldcwd, *serverdir;
     const char *configdir;
+    handle_t dummy_handle;
 
     /* retrieve the current directory */
     for (size = 512; ; size *= 2)
@@ -562,8 +566,7 @@ int CLIENT_InitServer(void)
     strcat( serverdir, hostname );
 
     /* connect to the server */
-    fd = server_connect( oldcwd, serverdir );
-    fd_socket = dup(fd);
+    fd_socket = server_connect( oldcwd, serverdir );
 
     /* switch back to the starting directory */
     if (oldcwd)
@@ -579,7 +582,51 @@ int CLIENT_InitServer(void)
     sigaddset( &block_set, SIGINT );
     sigaddset( &block_set, SIGHUP );
 
-    return fd;
+    /* receive the first thread request fd on the main socket */
+    NtCurrentTeb()->request_fd = receive_fd( &dummy_handle );
+
+    CLIENT_InitThread();
+}
+
+
+/***********************************************************************
+ *           set_request_buffer
+ */
+inline static void set_request_buffer(void)
+{
+    char *name;
+    int fd, ret;
+    unsigned int offset, size;
+
+    /* create a temporary file */
+    do
+    {
+        if (!(name = tmpnam(NULL))) server_protocol_perror( "tmpnam" );
+        fd = open( name, O_CREAT | O_EXCL | O_RDWR, 0600 );
+    } while ((fd == -1) && (errno == EEXIST));
+
+    if (fd == -1) server_protocol_perror( "create" );
+    unlink( name );
+
+    wine_server_send_fd( fd );
+
+    SERVER_START_REQ( set_thread_buffer )
+    {
+        req->fd = fd;
+        ret = SERVER_CALL();
+        offset = req->offset;
+        size = req->size;
+    }
+    SERVER_END_REQ;
+    if (ret) server_protocol_error( "set_thread_buffer failed with status %x\n", ret );
+
+    if ((NtCurrentTeb()->buffer = mmap( 0, size, PROT_READ | PROT_WRITE,
+                                        MAP_SHARED, fd, offset )) == (void*)-1)
+        server_protocol_perror( "mmap" );
+
+    close( fd );
+    NtCurrentTeb()->buffer_pos  = 0;
+    NtCurrentTeb()->buffer_size = size;
 }
 
 
@@ -588,60 +635,54 @@ int CLIENT_InitServer(void)
  *
  * Send an init thread request. Return 0 if OK.
  */
-int CLIENT_InitThread(void)
+void CLIENT_InitThread(void)
 {
-    struct get_thread_buffer_request *req;
     TEB *teb = NtCurrentTeb();
-    int fd, ret;
+    int version, ret;
+    int reply_pipe[2], wait_pipe[2];
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
 
-    teb->request_fd = wine_server_recv_fd( 0, 0 );
-    if (teb->request_fd == -1) server_protocol_error( "no request fd passed on first request\n" );
-    fcntl( teb->request_fd, F_SETFD, 1 ); /* set close on exec flag */
+    /* create the server->client communication pipes */
+    if (pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
+    if (pipe( wait_pipe ) == -1) server_protocol_perror( "pipe" );
+    wine_server_send_fd( reply_pipe[1] );
+    wine_server_send_fd( wait_pipe[1] );
+    teb->reply_fd = reply_pipe[0];
+    teb->wait_fd = wait_pipe[0];
 
-    teb->reply_fd = wine_server_recv_fd( 0, 0 );
-    if (teb->reply_fd == -1) server_protocol_error( "no reply fd passed on first request\n" );
-    fcntl( teb->reply_fd, F_SETFD, 1 ); /* set close on exec flag */
+    /* set close on exec flag */
+    fcntl( teb->reply_fd, F_SETFD, 1 );
+    fcntl( teb->wait_fd, F_SETFD, 1 );
 
-    teb->wait_fd = wine_server_recv_fd( 0, 0 );
-    if (teb->wait_fd == -1) server_protocol_error( "no wait fd passed on first request\n" );
-    fcntl( teb->wait_fd, F_SETFD, 1 ); /* set close on exec flag */
+    SERVER_START_REQ( init_thread )
+    {
+        req->unix_pid    = getpid();
+        req->teb         = teb;
+        req->entry       = teb->entry_point;
+        req->reply_fd    = reply_pipe[1];
+        req->wait_fd     = wait_pipe[1];
+        ret = SERVER_CALL();
+        teb->pid = req->pid;
+        teb->tid = req->tid;
+        version  = req->version;
+        if (req->boot) boot_thread_id = teb->tid;
+        else if (boot_thread_id == teb->tid) boot_thread_id = 0;
+        close( reply_pipe[1] );
+        close( wait_pipe[1] );
+    }
+    SERVER_END_REQ;
 
-    fd = wine_server_recv_fd( 0, 0 );
-    if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
-
-    if ((teb->buffer_size = lseek( fd, 0, SEEK_END )) == -1) server_protocol_perror( "lseek" );
-    teb->buffer = mmap( 0, teb->buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
-    teb->buffer_pos = 0;
-    close( fd );
-    if (teb->buffer == (void*)-1) server_protocol_perror( "mmap" );
-
-    req = (struct get_thread_buffer_request *)teb->buffer;
-    wait_reply( (union generic_request *)req );
-
-    teb->pid = req->pid;
-    teb->tid = req->tid;
-    if (req->version != SERVER_PROTOCOL_VERSION)
+    if (ret) server_protocol_error( "init_thread failed with status %x\n", ret );
+    if (version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"
                                "Your %s binary was not upgraded correctly,\n"
                                "or you have an older one somewhere in your PATH.\n"
                                "Or maybe the wrong wineserver is still running?\n",
-                               req->version, SERVER_PROTOCOL_VERSION,
-                               (req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
-    if (req->boot) boot_thread_id = teb->tid;
-    else if (boot_thread_id == teb->tid) boot_thread_id = 0;
-
-    SERVER_START_REQ( init_thread )
-    {
-        req->unix_pid = getpid();
-        req->teb      = teb;
-        req->entry    = teb->entry_point;
-        ret = SERVER_CALL();
-    }
-    SERVER_END_REQ;
-    return ret;
+                               version, SERVER_PROTOCOL_VERSION,
+                               (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
+    set_request_buffer();
 }
 
 
@@ -650,16 +691,14 @@ int CLIENT_InitThread(void)
  *
  * Signal that we have finished booting, and set debug level.
  */
-int CLIENT_BootDone( int debug_level )
+void CLIENT_BootDone( int debug_level )
 {
-    int ret;
     SERVER_START_REQ( boot_done )
     {
         req->debug_level = debug_level;
-        ret = SERVER_CALL();
+        SERVER_CALL();
     }
     SERVER_END_REQ;
-    return ret;
 }
 
 

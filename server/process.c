@@ -147,6 +147,7 @@ struct thread *create_process( int fd )
 {
     struct process *process;
     struct thread *thread = NULL;
+    int request_pipe[2];
 
     if (!(process = alloc_object( &process_ops, fd ))) return NULL;
     process->next            = NULL;
@@ -180,7 +181,14 @@ struct thread *create_process( int fd )
     if (!(process->init_event = create_event( NULL, 0, 1, 0 ))) goto error;
 
     /* create the main thread */
-    if (!(thread = create_thread( dup(fd), process ))) goto error;
+    if (pipe( request_pipe ) == -1)
+    {
+        file_set_error();
+        goto error;
+    }
+    send_client_fd( process, request_pipe[1], 0 );
+    close( request_pipe[1] );
+    if (!(thread = create_thread( request_pipe[0], process ))) goto error;
 
     set_select_events( &process->obj, POLLIN );  /* start listening to events */
     release_object( process );

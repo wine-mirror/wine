@@ -89,7 +89,6 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->tibflags  = TEBF_WIN32;
     teb->tls_ptr   = teb->tls_array;
     teb->exit_code = STILL_ACTIVE;
-    teb->socket    = -1;
     teb->request_fd = -1;
     teb->reply_fd   = -1;
     teb->wait_fd    = -1;
@@ -114,7 +113,6 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
 
     /* Free the associated memory */
 
-    if (teb->socket != -1) close( teb->socket );
     close( teb->request_fd );
     close( teb->reply_fd );
     close( teb->wait_fd );
@@ -285,38 +283,46 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
-    int socket = -1;
     HANDLE handle = 0;
     TEB *teb;
     void *tid = 0;
+    int request_pipe[2];
+
+    if (pipe( request_pipe ) == -1)
+    {
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+        return 0;
+    }
+    fcntl( request_pipe[1], F_SETFD, 1 ); /* set close on exec flag */
+    wine_server_send_fd( request_pipe[0] );
 
     SERVER_START_REQ( new_thread )
     {
-        req->suspend = ((flags & CREATE_SUSPENDED) != 0);
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->suspend    = ((flags & CREATE_SUSPENDED) != 0);
+        req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->request_fd = request_pipe[0];
         if (!SERVER_CALL_ERR())
         {
             handle = req->handle;
             tid = req->tid;
-            socket = wine_server_recv_fd( handle, 0 );
         }
+        close( request_pipe[0] );
     }
     SERVER_END_REQ;
-    if (!handle) return 0;
 
-    if (!(teb = THREAD_InitStack( NULL, stack )))
+    if (!handle || !(teb = THREAD_InitStack( NULL, stack )))
     {
-        close( socket );
+        close( request_pipe[1] );
         return 0;
     }
 
     teb->process     = NtCurrentTeb()->process;
-    teb->socket      = socket;
+    teb->tid         = tid;
+    teb->request_fd  = request_pipe[1];
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
-    fcntl( socket, F_SETFD, 1 ); /* set close on exec flag */
 
     if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)

@@ -95,7 +95,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
     const int flags = CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD;
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top, flags, teb ) < 0)
         return -1;
-    if (!(flags & CLONE_FILES)) close( teb->socket );  /* close the child socket in the parent */
+    if (!(flags & CLONE_FILES)) close( teb->request_fd );  /* close the child socket in the parent */
     return 0;
 #endif
 
@@ -118,7 +118,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
     "addl $8,%%esp" :
     : "r" (sp), "g" (SYS_rfork), "g" (flags)
     : "eax", "edx");
-    if (flags & RFFDG) close( teb->socket );  /* close the child socket in the parent */
+    if (flags & RFFDG) close( teb->request_fd );  /* close the child socket in the parent */
     return 0;
 #endif
 
@@ -146,9 +146,9 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_ExitThread( int status )
 {
-    int socket = NtCurrentTeb()->socket;
-    NtCurrentTeb()->socket = -1;
-    close( socket );
+    int fd = NtCurrentTeb()->request_fd;
+    NtCurrentTeb()->request_fd = -1;
+    close( fd );
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif

@@ -487,7 +487,7 @@ DECL_HANDLER(get_handle_fd)
         else if (!get_error())
         {
             if ((fd = obj->ops->get_fd( obj )) != -1)
-                send_client_fd( current, fd, req->handle );
+                send_client_fd( current->process, fd, req->handle );
         }
         release_object( obj );
     }

@@ -17,10 +17,6 @@
 #include <sys/mman.h>
 #endif
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#include <sys/uio.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -84,61 +80,6 @@ static const struct object_ops thread_ops =
 static struct thread *first_thread;
 static struct thread *booting_thread;
 
-/* allocate the buffer for the communication with the client */
-static int alloc_client_buffer( struct thread *thread )
-{
-    union generic_request *req;
-    int fd = -1, fd_pipe[2], wait_pipe[2];
-
-    wait_pipe[0] = wait_pipe[1] = -1;
-    if (pipe( fd_pipe ) == -1)
-    {
-        file_set_error();
-        return 0;
-    }
-    if (pipe( wait_pipe ) == -1) goto error;
-    if ((fd = create_anonymous_file()) == -1) goto error;
-    if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
-    if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
-                                MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
-    if (!(thread->request_fd = create_request_socket( thread ))) goto error;
-    thread->reply_fd = fd_pipe[1];
-    thread->wait_fd  = wait_pipe[1];
-
-    /* make the pipes non-blocking */
-    fcntl( fd_pipe[1], F_SETFL, O_NONBLOCK );
-    fcntl( wait_pipe[1], F_SETFL, O_NONBLOCK );
-
-    /* build the first request into the buffer and send it */
-    req = thread->buffer;
-    req->get_thread_buffer.pid  = get_process_id( thread->process );
-    req->get_thread_buffer.tid  = get_thread_id( thread );
-    req->get_thread_buffer.boot = (thread == booting_thread);
-    req->get_thread_buffer.version = SERVER_PROTOCOL_VERSION;
-
-    /* add it here since send_client_fd may call kill_thread */
-    add_process_thread( thread->process, thread );
-
-    send_client_fd( thread, fd_pipe[0], 0 );
-    send_client_fd( thread, wait_pipe[0], 0 );
-    send_client_fd( thread, fd, 0 );
-    send_reply( thread, req );
-    close( fd_pipe[0] );
-    close( wait_pipe[0] );
-    close( fd );
-
-    return 1;
-
- error:
-    file_set_error();
-    if (fd != -1) close( fd );
-    close( fd_pipe[0] );
-    close( fd_pipe[1] );
-    if (wait_pipe[0] != -1) close( wait_pipe[0] );
-    if (wait_pipe[1] != -1) close( wait_pipe[1] );
-    return 0;
-}
-
 /* initialize the structure for a newly allocated thread */
 inline static void init_thread_structure( struct thread *thread )
 {
@@ -170,7 +111,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->affinity        = 1;
     thread->suspend         = 0;
     thread->buffer          = (void *)-1;
-    thread->last_req        = REQ_get_thread_buffer;
 
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
         thread->inflight[i].server = thread->inflight[i].client = -1;
@@ -180,9 +120,6 @@ inline static void init_thread_structure( struct thread *thread )
 struct thread *create_thread( int fd, struct process *process )
 {
     struct thread *thread;
-
-    int flags = fcntl( fd, F_GETFL, 0 );
-    fcntl( fd, F_SETFL, flags | O_NONBLOCK );
 
     if (!(thread = alloc_object( &thread_ops, fd ))) return NULL;
 
@@ -200,15 +137,10 @@ struct thread *create_thread( int fd, struct process *process )
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
 
-#if 0
+    fcntl( fd, F_SETFL, O_NONBLOCK );
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
-#endif
-    if (!alloc_client_buffer( thread )) goto error;
+    add_process_thread( thread->process, thread );
     return thread;
-
- error:
-    release_object( thread );
-    return NULL;
 }
 
 /* handle a client event */
@@ -218,9 +150,7 @@ static void thread_poll_event( struct object *obj, int event )
     assert( obj->ops == &thread_ops );
 
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
-#if 0
     else if (event & POLLIN) read_request( thread );
-#endif
 }
 
 /* cleanup everything that is no longer needed by a dead thread */
@@ -773,8 +703,6 @@ struct thread_snapshot *thread_snap( int *count )
 DECL_HANDLER(boot_done)
 {
     debug_level = max( debug_level, req->debug_level );
-    /* Make sure last_req is initialized */
-    current->last_req = REQ_boot_done;
     if (current == booting_thread)
     {
         booting_thread = (struct thread *)~0UL;  /* make sure it doesn't match other threads */
@@ -786,48 +714,97 @@ DECL_HANDLER(boot_done)
 DECL_HANDLER(new_thread)
 {
     struct thread *thread;
-    int sock[2];
+    int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
-    if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) != -1)
+    if (request_fd == -1)
     {
-        if ((thread = create_thread( sock[0], current->process )))
-        {
-            if (req->suspend) thread->suspend++;
-            req->tid = thread;
-            if ((req->handle = alloc_handle( current->process, thread,
-                                             THREAD_ALL_ACCESS, req->inherit )))
-            {
-                send_client_fd( current, sock[1], req->handle );
-                close( sock[1] );
-                /* thread object will be released when the thread gets killed */
-                return;
-            }
-            kill_thread( thread, 1 );
-        }
-        close( sock[1] );
+        set_error( STATUS_INVALID_HANDLE );
+        return;
     }
-    else file_set_error();
-}
 
-/* retrieve the thread buffer file descriptor */
-DECL_HANDLER(get_thread_buffer)
-{
-    fatal_protocol_error( current, "get_thread_buffer: should never get called directly\n" );
+    if ((thread = create_thread( request_fd, current->process )))
+    {
+        if (req->suspend) thread->suspend++;
+        req->tid = thread;
+        if ((req->handle = alloc_handle( current->process, thread,
+                                         THREAD_ALL_ACCESS, req->inherit )))
+        {
+            /* thread object will be released when the thread gets killed */
+            return;
+        }
+        kill_thread( thread, 1 );
+        request_fd = -1;
+    }
 }
 
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
+    int reply_fd = thread_get_inflight_fd( current, req->reply_fd );
+    int wait_fd = thread_get_inflight_fd( current, req->wait_fd );
+
     if (current->unix_pid)
     {
         fatal_protocol_error( current, "init_thread: already running\n" );
-        return;
+        goto error;
     }
+    if (reply_fd == -1)
+    {
+        fatal_protocol_error( current, "bad reply fd\n" );
+        goto error;
+    }
+    if (wait_fd == -1)
+    {
+        fatal_protocol_error( current, "bad wait fd\n" );
+        goto error;
+    }
+
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
+    current->reply_fd = reply_fd;
+    current->wait_fd  = wait_fd;
+
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     if (current->process->running_threads > 1)
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
+
+    req->pid     = get_process_id( current->process );
+    req->tid     = get_thread_id( current );
+    req->boot    = (current == booting_thread);
+    req->version = SERVER_PROTOCOL_VERSION;
+    return;
+
+ error:
+    if (reply_fd != -1) close( reply_fd );
+    if (wait_fd != -1) close( wait_fd );
+}
+
+/* set the shared buffer for a thread */
+DECL_HANDLER(set_thread_buffer)
+{
+    unsigned int size = MAX_REQUEST_LENGTH;
+    unsigned int offset = 0;
+    int fd = thread_get_inflight_fd( current, req->fd );
+
+    req->size = size;
+    req->offset = offset;
+
+    if (fd != -1)
+    {
+        if (ftruncate( fd, size ) == -1) file_set_error();
+        else
+        {
+            void *buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset );
+            if (buffer == (void *)-1) file_set_error();
+            else
+            {
+                if (current->buffer != (void *)-1) munmap( current->buffer, size );
+                current->buffer = buffer;
+            }
+        }
+        close( fd );
+    }
+    else set_error( STATUS_INVALID_HANDLE );
 }
 
 /* terminate a thread */

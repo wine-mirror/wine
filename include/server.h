@@ -163,6 +163,7 @@ struct new_thread_request
     REQUEST_HEADER;                /* request header */
     IN  int          suspend;      /* new thread should be suspended on creation */
     IN  int          inherit;      /* inherit flag */
+    IN  int          request_fd;   /* fd for request pipe */
     OUT void*        tid;          /* thread id */
     OUT handle_t     handle;       /* thread handle (in the current process) */
 };
@@ -214,19 +215,22 @@ struct init_thread_request
     IN  int          unix_pid;     /* Unix pid of new thread */
     IN  void*        teb;          /* TEB of new thread (in thread address space) */
     IN  void*        entry;        /* thread entry point (in thread address space) */
-};
-
-
-/* Retrieve the thread buffer file descriptor */
-/* The reply to this request is the first thing a newly */
-/* created thread gets (without having to request it) */
-struct get_thread_buffer_request
-{
-    REQUEST_HEADER;                /* request header */
+    IN  int          reply_fd;     /* fd for reply pipe */
+    IN  int          wait_fd;      /* fd for blocking calls pipe */
     OUT void*        pid;          /* process id of the new thread's process */
     OUT void*        tid;          /* thread id of the new thread */
     OUT int          boot;         /* is this the boot thread? */
     OUT int          version;      /* protocol version */
+};
+
+
+/* Set the shared buffer for a thread */
+struct set_thread_buffer_request
+{
+    REQUEST_HEADER;
+    IN  int          fd;           /* fd to mmap as shared buffer */
+    OUT unsigned int offset;       /* offset of buffer in file */
+    OUT unsigned int size;         /* size of buffer */
 };
 
 
@@ -1379,7 +1383,7 @@ enum request
     REQ_init_process,
     REQ_init_process_done,
     REQ_init_thread,
-    REQ_get_thread_buffer,
+    REQ_set_thread_buffer,
     REQ_terminate_process,
     REQ_terminate_thread,
     REQ_get_process_info,
@@ -1495,7 +1499,7 @@ union generic_request
     struct init_process_request init_process;
     struct init_process_done_request init_process_done;
     struct init_thread_request init_thread;
-    struct get_thread_buffer_request get_thread_buffer;
+    struct set_thread_buffer_request set_thread_buffer;
     struct terminate_process_request terminate_process;
     struct terminate_thread_request terminate_thread;
     struct get_process_info_request get_process_info;
@@ -1599,7 +1603,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 40
+#define SERVER_PROTOCOL_VERSION 41
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1622,7 +1626,7 @@ extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 extern void server_protocol_perror( const char *err ) WINE_NORETURN;
 extern void wine_server_alloc_req( union generic_request *req, size_t size );
 extern void wine_server_send_fd( int fd );
-extern int wine_server_recv_fd( int handle, int cache );
+extern int wine_server_recv_fd( handle_t handle );
 extern const char *get_config_dir(void);
 
 /* do a server call and set the last error code */
@@ -1694,10 +1698,10 @@ struct __server_exception_frame
 #define SERVER_CALL_ERR()  (__server_call_err( &__req, sizeof(*req) ))
 
 
-extern int CLIENT_InitServer(void);
-extern int CLIENT_BootDone( int debug_level );
+extern void CLIENT_InitServer(void);
+extern void CLIENT_InitThread(void);
+extern void CLIENT_BootDone( int debug_level );
 extern int CLIENT_IsBootThread(void);
-extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */
 
 #endif  /* __WINE_SERVER_H */

@@ -299,7 +299,8 @@ static void dump_get_new_process_info_reply( const struct get_new_process_info_r
 static void dump_new_thread_request( const struct new_thread_request *req )
 {
     fprintf( stderr, " suspend=%d,", req->suspend );
-    fprintf( stderr, " inherit=%d", req->inherit );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " request_fd=%d", req->request_fd );
 }
 
 static void dump_new_thread_reply( const struct new_thread_request *req )
@@ -351,19 +352,28 @@ static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " teb=%p,", req->teb );
-    fprintf( stderr, " entry=%p", req->entry );
+    fprintf( stderr, " entry=%p,", req->entry );
+    fprintf( stderr, " reply_fd=%d,", req->reply_fd );
+    fprintf( stderr, " wait_fd=%d", req->wait_fd );
 }
 
-static void dump_get_thread_buffer_request( const struct get_thread_buffer_request *req )
-{
-}
-
-static void dump_get_thread_buffer_reply( const struct get_thread_buffer_request *req )
+static void dump_init_thread_reply( const struct init_thread_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " tid=%p,", req->tid );
     fprintf( stderr, " boot=%d,", req->boot );
     fprintf( stderr, " version=%d", req->version );
+}
+
+static void dump_set_thread_buffer_request( const struct set_thread_buffer_request *req )
+{
+    fprintf( stderr, " fd=%d", req->fd );
+}
+
+static void dump_set_thread_buffer_reply( const struct set_thread_buffer_request *req )
+{
+    fprintf( stderr, " offset=%08x,", req->offset );
+    fprintf( stderr, " size=%08x", req->size );
 }
 
 static void dump_terminate_process_request( const struct terminate_process_request *req )
@@ -1492,7 +1502,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_init_process_request,
     (dump_func)dump_init_process_done_request,
     (dump_func)dump_init_thread_request,
-    (dump_func)dump_get_thread_buffer_request,
+    (dump_func)dump_set_thread_buffer_request,
     (dump_func)dump_terminate_process_request,
     (dump_func)dump_terminate_thread_request,
     (dump_func)dump_get_process_info_request,
@@ -1603,8 +1613,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_init_process_reply,
     (dump_func)dump_init_process_done_reply,
-    (dump_func)0,
-    (dump_func)dump_get_thread_buffer_reply,
+    (dump_func)dump_init_thread_reply,
+    (dump_func)dump_set_thread_buffer_reply,
     (dump_func)dump_terminate_process_reply,
     (dump_func)dump_terminate_thread_reply,
     (dump_func)dump_get_process_info_reply,
@@ -1716,7 +1726,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "init_process",
     "init_process_done",
     "init_thread",
-    "get_thread_buffer",
+    "set_thread_buffer",
     "terminate_process",
     "terminate_thread",
     "get_process_info",
@@ -1884,7 +1894,6 @@ void trace_request( struct thread *thread, const union generic_request *request 
 {
     enum request req = request->header.req;
     cur_pos = 0;
-    current->last_req = req;
     if (req < REQ_NB_REQUESTS)
     {
         fprintf( stderr, "%08x: %s(", (unsigned int)thread, req_names[req] );
@@ -1897,14 +1906,20 @@ void trace_request( struct thread *thread, const union generic_request *request 
 
 void trace_reply( struct thread *thread, const union generic_request *request )
 {
-    fprintf( stderr, "%08x: %s() = %s",
-             (unsigned int)thread, req_names[thread->last_req], get_status_name(thread->error) );
-    if (reply_dumpers[thread->last_req])
+    enum request req = request->header.req;
+    if (req < REQ_NB_REQUESTS)
     {
-        fprintf( stderr, " {" );
-        cur_pos = 0;
-        reply_dumpers[thread->last_req]( request );
-        fprintf( stderr, " }" );
+        fprintf( stderr, "%08x: %s() = %s",
+                 (unsigned int)thread, req_names[req], get_status_name(thread->error) );
+        if (reply_dumpers[req])
+        {
+            fprintf( stderr, " {" );
+            cur_pos = 0;
+            reply_dumpers[req]( request );
+            fprintf( stderr, " }" );
+        }
+        fputc( '\n', stderr );
     }
-    fputc( '\n', stderr );
+    else fprintf( stderr, "%08x: %d() = %s\n",
+                  (unsigned int)thread, req, get_status_name(thread->error) );
 }
