@@ -374,13 +374,6 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     }
 
     if (rdst) {
-	if ((rdst->top < 0) ||
-	    (rdst->left < 0) ||
-	    (rdst->bottom < 0) ||
-	    (rdst->right < 0)) {
-	  ERR(" Negative values in LPRECT !!!\n");
-	  goto release;
-	}
 	memcpy(&xdst,rdst,sizeof(xdst));
     } else {
 	xdst.top	= 0;
@@ -390,13 +383,6 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     }
 
     if (rsrc) {
-	if ((rsrc->top < 0) ||
-	    (rsrc->left < 0) ||
-	    (rsrc->bottom < 0) ||
-	    (rsrc->right < 0)) {
-	  ERR(" Negative values in LPRECT !!!\n");
-	  goto release;
-	}
 	memcpy(&xsrc,rsrc,sizeof(xsrc));
     } else {
 	if (src) {
@@ -408,8 +394,62 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    memset(&xsrc,0,sizeof(xsrc));
 	}
     }
+
     if (src) assert((xsrc.bottom-xsrc.top) <= sdesc.dwHeight);
     assert((xdst.bottom-xdst.top) <= ddesc.dwHeight);
+
+    /* Now handle negative values in the rectangles. Warning: only supported for now
+       in the 'simple' cases (ie not in any stretching / rotation cases).
+
+       First, the case where nothing is to be done.
+    */
+    if (((xdst.bottom <= 0) || (xdst.right <= 0) || (xdst.top >= (int) ddesc.dwHeight) || (xdst.left >= (int) ddesc.dwWidth)) ||
+        ((src != NULL) &&
+         ((xsrc.bottom <= 0) || (xsrc.right <= 0) || (xsrc.top >= (int) sdesc.dwHeight) || (xsrc.left >= (int) sdesc.dwWidth))))
+    {
+        TRACE("Nothing to be done !\n");
+        goto release;
+    }
+
+    /* The easy case : the source-less blits.... */
+    if (src == NULL) {
+        RECT full_rect = { 0, 0, ddesc.dwHeight, ddesc.dwWidth };
+        RECT temp_rect; /* No idea if intersect rect can be the same as one of the source rect */
+        IntersectRect(&temp_rect, &full_rect, &xdst);
+        xdst = temp_rect;
+    } else {
+        /* This is trickier as any update to one rectangle need to be propagated to the other */
+        int clip_horiz = (xdst.left < 0) || (xdst.right  > (int) ddesc.dwWidth ) || (xsrc.left < 0) || (xsrc.right  > (int) sdesc.dwWidth );
+        int clip_vert  = (xdst.top  < 0) || (xdst.bottom > (int) ddesc.dwHeight) || (xsrc.top  < 0) || (xsrc.bottom > (int) sdesc.dwHeight);
+        if (clip_vert || clip_horiz) {
+            /* Now check if this is a special case or not... */
+            if ((((xdst.bottom - xdst.top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
+                (((xdst.right  - xdst.left) != (xsrc.right  - xsrc.left)) && clip_horiz) ||
+                (dwFlags & DDBLT_DDFX)) {
+                WARN("Out of screen rectangle in special case. Not handled right now.\n");
+                goto release;
+            }
+
+            if (clip_horiz) {
+              if (xsrc.left < 0) { xdst.left -= xsrc.left; xsrc.left = 0; }
+              if (xdst.left < 0) { xsrc.left -= xdst.left; xdst.left = 0; }
+              if (xsrc.right > sdesc.dwWidth) { xdst.right -= (xsrc.right - (int) sdesc.dwWidth); xsrc.right = (int) sdesc.dwWidth; }
+              if (xdst.right > ddesc.dwWidth) { xsrc.right -= (xdst.right - (int) ddesc.dwWidth); xdst.right = (int) ddesc.dwWidth; }
+            }
+            if (clip_vert) {
+                if (xsrc.top < 0) { xdst.top -= xsrc.top; xsrc.top = 0; }
+                if (xdst.top < 0) { xsrc.top -= xdst.top; xdst.top = 0; }
+                if (xsrc.bottom > sdesc.dwHeight) { xdst.bottom -= (xsrc.bottom - (int) sdesc.dwHeight); xsrc.bottom = (int) sdesc.dwHeight; }
+                if (xdst.bottom > ddesc.dwHeight) { xsrc.bottom -= (xdst.bottom - (int) ddesc.dwHeight); xdst.bottom = (int) ddesc.dwHeight; }
+            }
+            /* And check if after clipping something is still to be done... */
+            if ((xdst.bottom <= 0) || (xdst.right <= 0) || (xdst.top >= (int) ddesc.dwHeight) || (xdst.left >= (int) ddesc.dwWidth) ||
+                (xsrc.bottom <= 0) || (xsrc.right <= 0) || (xsrc.top >= (int) sdesc.dwHeight) || (xsrc.left >= (int) sdesc.dwWidth)) {
+                TRACE("Nothing to be done after clipping !\n");
+                goto release;
+            }
+        }
+    }
 
     bpp = GET_BPP(ddesc);
     srcheight = xsrc.bottom - xsrc.top;
