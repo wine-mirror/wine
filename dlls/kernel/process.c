@@ -195,7 +195,7 @@ static HANDLE open_exe_file( const WCHAR *name )
 
     TRACE("looking for %s\n", debugstr_w(name) );
 
-    if ((handle = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ,
+    if ((handle = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
     {
         /* file doesn't exist, check for builtin */
@@ -260,7 +260,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
         if (SearchPathW( NULL, name, NULL, buflen, buffer, NULL ))
         {
             TRACE( "Trying native/Unix binary %s\n", debugstr_w(buffer) );
-            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ,
+            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                         NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
                 return TRUE;
         }
@@ -276,7 +276,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
         {
         case LOADORDER_DLL:
             TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
-            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ,
+            if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                         NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
                 return TRUE;
             if (GetLastError() != ERROR_FILE_NOT_FOUND) return TRUE;

@@ -1398,7 +1398,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             attr.ObjectName = &nt_name;
             attr.SecurityDescriptor = NULL;
             attr.SecurityQualityOfService = NULL;
-            if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ, 0 )) *handle = 0;
+            if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, 0 )) *handle = 0;
             RtlFreeUnicodeString( &nt_name );
             return STATUS_SUCCESS;
         }
@@ -1445,7 +1445,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         attr.ObjectName = &nt_name;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
-        if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ, 0 )) *handle = 0;
+        if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, 0 )) *handle = 0;
     }
     RtlFreeUnicodeString( &nt_name );
     return STATUS_SUCCESS;
