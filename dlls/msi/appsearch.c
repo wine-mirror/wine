@@ -403,6 +403,86 @@ static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
     *(dst + copied) = '\0';
 }
 
+/* Sets *matches to whether the file (whose path is filePath) matches the
+ * versions set in sig.
+ * Return ERROR_SUCCESS in case of success (whether or not the file matches),
+ * something else if a install-halting error occurs.
+ */
+static UINT ACTION_FileVersionMatches(MSISIGNATURE *sig, LPCWSTR filePath,
+ BOOL *matches)
+{
+    UINT rc = ERROR_SUCCESS;
+
+    *matches = FALSE;
+    if (sig->Languages)
+    {
+        FIXME(": need to check version for languages %s\n",
+         debugstr_w(sig->Languages));
+    }
+    else
+    {
+        DWORD zero, size = GetFileVersionInfoSizeW(filePath, &zero);
+
+        if (size)
+        {
+            LPVOID buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+            if (buf)
+            {
+                static const WCHAR rootW[] = { '\\',0 };
+                UINT versionLen;
+                LPVOID subBlock = NULL;
+
+                if (GetFileVersionInfoW(filePath, 0, size, buf))
+                    VerQueryValueW(buf, rootW, &subBlock, &versionLen);
+                if (subBlock)
+                {
+                    VS_FIXEDFILEINFO *info =
+                     (VS_FIXEDFILEINFO *)subBlock;
+
+                    TRACE("Comparing file version %d.%d.%d.%d:\n",
+                     HIWORD(info->dwFileVersionMS),
+                     LOWORD(info->dwFileVersionMS),
+                     HIWORD(info->dwFileVersionLS),
+                     LOWORD(info->dwFileVersionLS));
+                    if (info->dwFileVersionMS < sig->MinVersionMS
+                     || (info->dwFileVersionMS == sig->MinVersionMS &&
+                     info->dwFileVersionLS < sig->MinVersionLS))
+                    {
+                        TRACE("Less than minimum version %d.%d.%d.%d\n",
+                         HIWORD(sig->MinVersionMS),
+                         LOWORD(sig->MinVersionMS),
+                         HIWORD(sig->MinVersionLS),
+                         LOWORD(sig->MinVersionLS));
+                    }
+                    else if (info->dwFileVersionMS < sig->MinVersionMS
+                     || (info->dwFileVersionMS == sig->MinVersionMS &&
+                     info->dwFileVersionLS < sig->MinVersionLS))
+                    {
+                        TRACE("Greater than minimum version %d.%d.%d.%d\n",
+                         HIWORD(sig->MaxVersionMS),
+                         LOWORD(sig->MaxVersionMS),
+                         HIWORD(sig->MaxVersionLS),
+                         LOWORD(sig->MaxVersionLS));
+                    }
+                    else
+                        *matches = TRUE;
+                }
+                HeapFree(GetProcessHeap(), 0, buf);
+            }
+            else
+                rc = ERROR_OUTOFMEMORY;
+        }
+    }
+    return rc;
+}
+
+/* Sets *matches to whether the file in findData matches that in sig.
+ * fullFilePath is assumed to be the full path of the file specified in
+ * findData, which may be necessary to compare the version.
+ * Return ERROR_SUCCESS in case of success (whether or not the file matches),
+ * something else if a install-halting error occurs.
+ */
 static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
  LPWIN32_FIND_DATAW findData, LPCWSTR fullFilePath, BOOL *matches)
 {
@@ -436,87 +516,7 @@ static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
         *matches = FALSE;
     if (*matches && (sig->MinVersionMS || sig->MinVersionLS ||
      sig->MaxVersionMS || sig->MaxVersionLS))
-    {
-        DWORD zero, size;
-
-        if (sig->Languages)
-        {
-            FIXME(": need to check version for languages %s\n",
-             debugstr_w(sig->Languages));
-            *matches = FALSE;
-        }
-        else
-        {
-            size = GetFileVersionInfoSizeW(fullFilePath, &zero);
-            if (size)
-            {
-                LPVOID buf = HeapAlloc(GetProcessHeap(), 0, size);
-
-                if (buf)
-                {
-                    static const WCHAR rootW[] = { '\\',0 };
-                    UINT versionLen;
-                    LPVOID subBlock = NULL;
-
-                    if (!GetFileVersionInfoW(fullFilePath, 0, size, buf))
-                    {
-                        *matches = FALSE;
-                        rc = GetLastError();
-                    }
-                    if (*matches && !VerQueryValueW(buf, rootW, &subBlock,
-                     &versionLen))
-                    {
-                        *matches = FALSE;
-                        rc = GetLastError();
-                    }
-                    if (subBlock)
-                    {
-                        VS_FIXEDFILEINFO *info =
-                         (VS_FIXEDFILEINFO *)subBlock;
-
-                        TRACE("Comparing file version %d.%d.%d.%d:\n",
-                         HIWORD(info->dwFileVersionMS),
-                         LOWORD(info->dwFileVersionMS),
-                         HIWORD(info->dwFileVersionLS),
-                         LOWORD(info->dwFileVersionLS));
-                        if (info->dwFileVersionMS < sig->MinVersionMS
-                         || (info->dwFileVersionMS == sig->MinVersionMS &&
-                         info->dwFileVersionLS < sig->MinVersionLS))
-                        {
-                            TRACE("Less than minimum version %d.%d.%d.%d\n",
-                             HIWORD(sig->MinVersionMS),
-                             LOWORD(sig->MinVersionMS),
-                             HIWORD(sig->MinVersionLS),
-                             LOWORD(sig->MinVersionLS));
-                            *matches = FALSE;
-                        }
-                        else if (info->dwFileVersionMS < sig->MinVersionMS
-                         || (info->dwFileVersionMS == sig->MinVersionMS &&
-                         info->dwFileVersionLS < sig->MinVersionLS))
-                        {
-                            TRACE("Greater than minimum version %d.%d.%d.%d\n",
-                             HIWORD(sig->MaxVersionMS),
-                             LOWORD(sig->MaxVersionMS),
-                             HIWORD(sig->MaxVersionLS),
-                             LOWORD(sig->MaxVersionLS));
-                            *matches = FALSE;
-                        }
-                    }
-                    HeapFree(GetProcessHeap(), 0, buf);
-                }
-                else
-                {
-                    *matches = FALSE;
-                    rc = ERROR_OUTOFMEMORY;
-                }
-            }
-            else
-            {
-                *matches = FALSE;
-                rc = GetLastError();
-            }
-        }
-    }
+        rc = ACTION_FileVersionMatches(sig, fullFilePath, matches);
     return rc;
 }
 
@@ -525,6 +525,8 @@ static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
  * (and only dir).  If depth is 1, searches dir and its immediate
  * subdirectories.
  * Assumes sig->File is not NULL.
+ * Returns ERROR_SUCCESS on success (which may include non-critical errors),
+ * something else on failures which should halt the install.
  * FIXME: according to MSDN, FindFirstFile doesn't work on root directories.
  * Is that also true in Wine?
  * FIXME: if dir is not a full path, have to check all fixed drives.
@@ -543,9 +545,10 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     if (depth < 0)
         return ERROR_INVALID_PARAMETER;
 
+    *appFound = FALSE;
     /* We need the buffer in both paths below, so go ahead and allocate it
      * here.  Add two because we might need to add a backslash if the dir name
-     isn't backslash-terminated.
+     * isn't backslash-terminated.
      */
     buf = HeapAlloc(GetProcessHeap(), 0,
      (dirLen + max(fileLen, lstrlenW(starDotStarW)) + 2) * sizeof(WCHAR));
@@ -577,8 +580,6 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
             }
             FindClose(hFind);
         }
-        else
-            rc = GetLastError();
         if (rc == ERROR_SUCCESS && !*appFound && depth > 0)
         {
             HANDLE hFind;
@@ -601,8 +602,6 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
                         rc = ACTION_RecurseSearchDirectory(package, appFound,
                          sig, findData.cFileName, depth - 1);
                 }
-                if (GetLastError() != ERROR_NO_MORE_FILES)
-                    rc = GetLastError();
                 FindClose(hFind);
             }
         }
@@ -611,14 +610,12 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     else
         rc = ERROR_OUTOFMEMORY;
 
-    if (rc != ERROR_OUTOFMEMORY )
-        rc = ERROR_SUCCESS;
     return rc;
 }
 
 /* FIXME: if dir is not a full path, have to check all fixed drives. */
-static UINT ACTION_CheckDirectory(MSIPACKAGE *package, BOOL *appFound,
- MSISIGNATURE *sig, LPCWSTR dir)
+static UINT ACTION_CheckDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
+ LPCWSTR dir)
 {
     UINT rc = ERROR_SUCCESS;
 
@@ -627,13 +624,11 @@ static UINT ACTION_CheckDirectory(MSIPACKAGE *package, BOOL *appFound,
         TRACE("directory exists, setting %s to %s\n",
          debugstr_w(sig->Property), debugstr_w(dir));
         rc = MSI_SetPropertyW(package, sig->Property, dir);
-        *appFound = TRUE;
     }
     return rc;
 }
 
-static UINT ACTION_AppSearchDr(MSIPACKAGE *package, BOOL *appFound,
- MSISIGNATURE *sig)
+static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
 {
     MSIQUERY *view;
     UINT rc;
@@ -644,8 +639,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, BOOL *appFound,
    'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
    '\'','%','s','\'',0};
 
-    TRACE("(package %p, appFound %p, sig %p)\n", package, appFound, sig);
-    *appFound = FALSE;
+    TRACE("(package %p, sig %p)\n", package, sig);
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
     if (rc == ERROR_SUCCESS)
     {
@@ -653,6 +647,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, BOOL *appFound,
         WCHAR buffer[MAX_PATH], expanded[MAX_PATH];
         DWORD sz;
         int depth;
+        BOOL found;
 
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
@@ -699,14 +694,14 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, BOOL *appFound,
         ACTION_ExpandAnyPath(package, buffer, expanded,
          sizeof(expanded) / sizeof(expanded[0]));
         if (sig->File)
-            rc = ACTION_RecurseSearchDirectory(package, appFound, sig,
+            rc = ACTION_RecurseSearchDirectory(package, &found, sig,
              expanded, depth);
         else
         {
             /* Recursively searching a directory makes no sense when the
              * directory to search is the thing you're trying to find.
              */
-            rc = ACTION_CheckDirectory(package, appFound, sig, expanded);
+            rc = ACTION_CheckDirectory(package, sig, expanded);
         }
 
 end:
@@ -794,9 +789,7 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
                     {
                         rc = ACTION_AppSearchIni(package, &appFound, &sig);
                         if (rc == ERROR_SUCCESS && !appFound)
-                        {
-                            rc = ACTION_AppSearchDr(package, &appFound, &sig);
-                        }
+                            rc = ACTION_AppSearchDr(package, &sig);
                     }
                 }
             }
