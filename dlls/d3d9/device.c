@@ -359,7 +359,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE9 i
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     TRACE("(%p)->returning (%p) default is stencilbuffer=(%p)\n", This, This->stencilBufferTarget, This->depthStencilBuffer);
     *ppZStencilSurface = (LPDIRECT3DSURFACE9) This->stencilBufferTarget;
-    IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppZStencilSurface);
+    if (NULL != *ppZStencilSurface) IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppZStencilSurface);
     return D3D_OK;
 }
 
