@@ -146,8 +146,6 @@ WINE REGISTRY Version 2
 ;"GlobalRegistryDir" = "/etc";
 ; Global registries (stored in /etc)
 "LoadGlobalRegistryFiles" = "Y"
-; Load Windows registries from the Windows directory
-"LoadWindowsRegistryFiles" = "Y"
 ; Registry periodic save timeout in seconds
 ; "PeriodicSave" = "600"
 ; Save only modified keys
