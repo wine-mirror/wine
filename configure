@@ -4130,7 +4130,7 @@ else
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in /sbin:/usr/sbin:$PATH
+for as_dir in /sbin /usr/sbin $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.

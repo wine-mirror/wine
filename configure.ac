@@ -57,7 +57,7 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
-AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
+AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
