@@ -167,7 +167,7 @@ int dbch_x11drv = 155;
 
 #define DEBUG_CHANNEL_COUNT 156
 
-char debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},

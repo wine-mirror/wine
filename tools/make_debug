@@ -38,7 +38,7 @@ echo "#define DEBUG_CHANNEL_COUNT $chno"
 
 count=1
 echo
-echo 'char debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {'
+echo 'char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {'
 for ch in $DEBUG_CHANNELS
 do
     if [ "${count}" != "${chno}" ]; then

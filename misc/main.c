@@ -220,7 +220,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
 	  for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	    if(cls == -1 || cls == j)
-	      debug_msg_enabled[i][j]=(*options=='+');
+                __SET_DEBUGGING( i, j, (*options=='+') );
       }
     else if (!lstrncmpiA(options+1, "relay=", 6) ||
 	     !lstrncmpiA(options+1, "snoop=", 6))
@@ -232,7 +232,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	  if (debug_ch_name && (!lstrncmpiA(debug_ch_name[i],options+1,5))){
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
-		debug_msg_enabled[i][j]=TRUE;
+                  __SET_DEBUGGING( i, j, 1 );
 	    break;
 	  }
 	/* should never happen, maybe assert(i!=DEBUG_CHANNEL_COUNT)? */
@@ -272,7 +272,7 @@ BOOL MAIN_ParseDebugOptions(char *options)
 	  if (debug_ch_name && (!lstrncmpiA(options+1,debug_ch_name[i],l-1))){
 	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	      if(cls == -1 || cls == j)
-		debug_msg_enabled[i][j]=(*options=='+');
+                  __SET_DEBUGGING( i, j, (*options=='+') );
 	    break;
 	  }
 	if (i==DEBUG_CHANNEL_COUNT)
