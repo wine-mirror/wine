@@ -765,6 +765,50 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
 
 /***********************************************************************
+ *		set_visible_style
+ *
+ * Set/clear the WS_VISIBLE style of a window and map/unmap the X window.
+ */
+static void set_visible_style( HWND hwnd, BOOL set )
+{
+    WND *win;
+
+    if (!(win = WIN_GetPtr( hwnd ))) return;
+    if (win == WND_OTHER_PROCESS) return;
+
+    TRACE( "hwnd %x (%lx) set %d visible %d empty %d\n",
+           hwnd, get_whole_window(win),
+           set, (win->dwStyle & WS_VISIBLE) != 0, IsRectEmpty(&win->rectWindow) );
+
+    if (set)
+    {
+        if (win->dwStyle & WS_VISIBLE) goto done;
+        WIN_SetStyle( hwnd, win->dwStyle | WS_VISIBLE );
+        if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
+        {
+            Display *display = thread_display();
+            X11DRV_sync_window_style( display, win );
+            X11DRV_set_wm_hints( display, win );
+            TRACE( "mapping win %x\n", hwnd );
+            TSXMapWindow( display, get_whole_window(win) );
+        }
+    }
+    else
+    {
+        if (!(win->dwStyle & WS_VISIBLE)) goto done;
+        WIN_SetStyle( hwnd, win->dwStyle & ~WS_VISIBLE );
+        if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
+        {
+            TRACE( "unmapping win %x\n", hwnd );
+            TSXUnmapWindow( thread_display(), get_whole_window(win) );
+        }
+    }
+ done:
+    WIN_ReleasePtr( win );
+}
+
+
+/***********************************************************************
  *		SetWindowStyle   (X11DRV.@)
  *
  * Update the X state of a window to reflect a style change
@@ -783,7 +827,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
 
     if (changed & WS_VISIBLE)
     {
-        if (!IsRectEmpty( &wndPtr->rectWindow ))
+        if (!IsRectEmpty( &wndPtr->rectWindow ) && !is_window_top_level(wndPtr))
         {
             if (wndPtr->dwStyle & WS_VISIBLE)
             {
@@ -904,7 +948,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             /* clear the update region */
             RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME |
                           RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
-            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+            set_visible_style( winpos->hwnd, FALSE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
                  !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
@@ -933,7 +977,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         }
         if (winpos->flags & SWP_SHOWWINDOW)
         {
-            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
+            set_visible_style( winpos->hwnd, TRUE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
                  IsRectEmpty( &oldWindowRect ) && !IsRectEmpty( &newWindowRect ))
@@ -948,9 +992,9 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     else  /* no X window, simply toggle the window style */
     {
         if (winpos->flags & SWP_SHOWWINDOW)
-            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
+            set_visible_style( winpos->hwnd, TRUE );
         else if (winpos->flags & SWP_HIDEWINDOW)
-            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+            set_visible_style( winpos->hwnd, FALSE );
     }
 
     /* manually expose the areas that X won't expose because they are still covered by something */

@@ -89,17 +89,6 @@ inline static BOOL is_window_managed( WND *win )
 
 
 /***********************************************************************
- *		is_window_top_level
- *
- * Check if a given window is a top level X11 window
- */
-inline static BOOL is_window_top_level( WND *win )
-{
-    return (root_window == DefaultRootWindow(gdi_display) && win->parent == GetDesktopWindow());
-}
-
-
-/***********************************************************************
  *		is_client_window_mapped
  *
  * Check if the X client window should be mapped
@@ -139,11 +128,11 @@ static int get_window_attributes( Display *display, WND *win, XSetWindowAttribut
 
 
 /***********************************************************************
- *              sync_window_style
+ *              X11DRV_sync_window_style
  *
  * Change the X window attributes when the window style has changed.
  */
-static void sync_window_style( Display *display, WND *win )
+void X11DRV_sync_window_style( Display *display, WND *win )
 {
     XSetWindowAttributes attr;
     int mask;
@@ -330,11 +319,11 @@ static void set_size_hints( Display *display, WND *win )
 
 
 /***********************************************************************
- *              set_wm_hints
+ *              X11DRV_set_wm_hints
  *
  * Set the window manager hints for a newly-created window
  */
-static void set_wm_hints( Display *display, WND *win )
+void X11DRV_set_wm_hints( Display *display, WND *win )
 {
     struct x11drv_win_data *data = win->pDriverData;
     Window group_leader;
@@ -711,7 +700,7 @@ static Window create_whole_window( Display *display, WND *win )
 
     wine_tsx11_unlock();
 
-    if (is_top_level) set_wm_hints( display, win );
+    if (is_top_level) X11DRV_set_wm_hints( display, win );
 
     return data->whole_window;
 }
@@ -966,7 +955,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
 
-    sync_window_style( display, wndPtr );
+    X11DRV_sync_window_style( display, wndPtr );
 
     /* send WM_NCCALCSIZE */
     rect = wndPtr->rectWindow;
@@ -1042,6 +1031,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         SetWindowPos( hwnd, 0, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, swFlag );
     }
+
+    /* if the window was made visible set create struct flag so that
+     * we do a proper ShowWindow later on */
+    if (wndPtr->dwStyle & WS_VISIBLE) cs->style |= WS_VISIBLE;
 
     WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
@@ -1132,9 +1125,9 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
             }
         }
 
-        if (is_window_top_level( wndPtr )) set_wm_hints( display, wndPtr );
+        if (is_window_top_level( wndPtr )) X11DRV_set_wm_hints( display, wndPtr );
         wine_tsx11_lock();
-        sync_window_style( display, wndPtr );
+        X11DRV_sync_window_style( display, wndPtr );
         XReparentWindow( display, data->whole_window, X11DRV_get_client_window(parent),
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();
