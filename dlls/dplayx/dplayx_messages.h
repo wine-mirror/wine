@@ -11,6 +11,20 @@
 DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart, 
                                          HANDLE hDeath, HANDLE hConnRead );
 
+HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
+                                    LPDPID lpdipidAllocatedId );
+HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer );
+
+void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId, 
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
+void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
+
+/* Timings -> 1000 ticks/sec */
+#define DPMSG_WAIT_5_SECS   5000
+#define DPMSG_WAIT_30_SECS 30000
+#define DPMSG_WAIT_60_SECS 60000
+#define DPMSG_DEFAULT_WAIT_TIME DPMSG_WAIT_30_SECS
 
 /* Message types etc. */
 #include "pshpack1.h"
@@ -18,12 +32,12 @@ DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
 /* Non provided messages for DPLAY - guess work which may be wrong :( */
 #define DPMSGCMD_ENUMSESSIONSREPLY    1
 #define DPMSGCMD_ENUMSESSIONSREQUEST  2
-
+#define DPMSGCMD_GETNAMETABLEREPLY    3  /* Contains all existing players in session */
 
 #define DPMSGCMD_REQUESTNEWPLAYERID   5
 
 #define DPMSGCMD_NEWPLAYERIDREPLY     7
-#define DPMSGCMD_CREATESESSION        8  
+#define DPMSGCMD_CREATESESSION        8 /* Might be a create nameserver or new player msg */ 
 #define DPMSGCMD_CREATENEWPLAYER      9
 #define DPMSGCMD_SYSTEMMESSAGE        10 
 #define DPMSGCMD_DELETEPLAYER         11
@@ -31,9 +45,9 @@ DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
 
 #define DPMSGCMD_ENUMGROUPS           17
 
-#define DPMSGCMD_GETNAMETABLE         19
+#define DPMSGCMD_FORWARDADDPLAYER     19
 
-#define DPMSGCMD_GETNAMETABLEREPLY    29
+#define DPMSGCMD_FORWARDADDPLAYERNACK 36
 
 /* This is what DP 6 defines it as. Don't know what it means. All messages
  * defined below are DPMSGVER_DP6.
@@ -45,9 +59,8 @@ DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
 
 /* All messages sent from the system are sent with this at the beginning of
  * the message.
+ * Size is 8 bytes
  */
-
-/* Size is 8 bytes */
 typedef struct tagDPMSG_SENDENVELOPE
 {
   DWORD dwMagic;
@@ -56,6 +69,9 @@ typedef struct tagDPMSG_SENDENVELOPE
 } DPMSG_SENDENVELOPE, *LPDPMSG_SENDENVELOPE;
 typedef const DPMSG_SENDENVELOPE* LPCDPMSG_SENDENVELOPE;
 
+/* System messages exchanged between players seems to have this
+ * payload envelope on top of the basic envelope 
+ */
 typedef struct tagDPMSG_SYSMSGENVELOPE
 {
   DWORD dwPlayerFrom;
@@ -63,7 +79,7 @@ typedef struct tagDPMSG_SYSMSGENVELOPE
 } DPMSG_SYSMSGENVELOPE, *LPDPMSG_SYSMSGENVELOPE;
 typedef const DPMSG_SYSMSGENVELOPE* LPCDPMSG_SYSMSGENVELOPE;
 
-
+/* Reply sent in response to an enumsession request */
 typedef struct tagDPMSG_ENUMSESSIONSREPLY
 {
   DPMSG_SENDENVELOPE envelope;
@@ -93,13 +109,14 @@ typedef struct tagDPMSG_ENUMSESSIONSREPLY
 } DPMSG_ENUMSESSIONSREPLY, *LPDPMSG_ENUMSESSIONSREPLY;
 typedef const DPMSG_ENUMSESSIONSREPLY* LPCDPMSG_ENUMSESSIONSREPLY;
 
+/* Msg sent to find out what sessions are available */
 typedef struct tagDPMSG_ENUMSESSIONSREQUEST
 {
   DPMSG_SENDENVELOPE envelope;
 
   GUID  guidApplication;
 
-  DWORD dwPasswordSize; /* A Guess. This is normally 0x00000000. */
+  DWORD dwPasswordSize; /* A Guess. This is 0x00000000. */
                         /* This might be the name server DPID which
                            is needed for the reply */
 
@@ -131,24 +148,50 @@ typedef struct tagDPMSG_NEWPLAYERIDREPLY
   DPMSG_SENDENVELOPE envelope;
 
   DPID dpidNewPlayerId;
-#if 1
+
   /* Assume that this is data that is tacked on to the end of the message
    * that comes from the SP remote data stored that needs to be propagated.
    */
   BYTE unknown[36];     /* This appears to always be 0 - not sure though */
-#endif
-
 } DPMSG_NEWPLAYERIDREPLY, *LPDPMSG_NEWPLAYERIDREPLY;
 typedef const DPMSG_NEWPLAYERIDREPLY* LPCDPMSG_NEWPLAYERIDREPLY;
 
+typedef struct tagDPMSG_FORWARDADDPLAYER
+{
+  DPMSG_SENDENVELOPE envelope;
+
+  DWORD unknown; /* 0 */
+
+  DPID  dpidAppServer; /* Remote application server id */
+  DWORD unknown2[5]; /* ??? */
+#define FORWARDADDPLAYER_UNKNOWN2_INIT { 0x0, 0x1c, 0x6c, 0x50, 0x9 }
+
+  DPID  dpidAppServer2; /* Remote application server id again !? */
+  DWORD unknown3[5]; /* ??? */
+#define FORWARDADDPLAYER_UNKNOWN3_INIT { 0x0, 0x0, 0x20, 0x0, 0x0 }
+
+  DPID  dpidAppServer3; /* Remote application server id again !? */
+
+  DWORD unknown4[12]; /* ??? - Is this a clump of 5 and then 8? */
+                      /* NOTE: 1 byte infront of the two 0x??090002 entries changes! */
+#define FORWARDADDPLAYER_UNKNOWN4_INIT { 0x30, 0xb, 0x0, 0x1e090002, 0x0, 0x0, 0x0, 0x32090002, 0x0, 0x0, 0x0, 0x0 }
+
+  BYTE unknown5[2]; /* 2 bytes at the end. This may be a part of something! */
+#define FORWARDADDPLAYER_UNKNOWN5_INIT { 0x0 }
+
+} DPMSG_FORWARDADDPLAYER, *LPDPMSG_FORWARDADDPLAYER;
+typedef const DPMSG_FORWARDADDPLAYER* LPCDPMSG_FORWARDADDPLAYER;
+
+/* This is an error message that can be received. Not sure if this is 
+ * specifically for a forward add player or for all errors
+ */
+typedef struct tagDPMSG_FORWARDADDPLAYERNACK
+{
+  DPMSG_SENDENVELOPE envelope;
+  HRESULT errorCode;
+} DPMSG_FORWARDADDPLAYERNACK, *LPDPMSG_FORWARDADDPLAYERNACK;
+typedef const DPMSG_FORWARDADDPLAYERNACK* LPCDPMSG_FORWARDADDPLAYERNACK;
+
 #include "poppack.h"
-
-
-HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
-                                    LPDPID lpdipidAllocatedId );
-
-/* FIXME: I don't think that this is a needed method */
-HRESULT DP_MSG_OpenStream( IDirectPlay2AImpl* This );
-
 
 #endif

@@ -77,7 +77,7 @@ static IClassFactoryImpl DP_and_DPL_CF = {&DP_and_DPL_Vtbl, 1 };
 
 
 /*******************************************************************************
- * DPLAYX_DllGetClassObject [DPLAYX.?]
+ * DPLAYX_DllGetClassObject [DPLAYX.11]
  * Retrieves DP or DPL class object from a DLL object
  *
  * NOTES

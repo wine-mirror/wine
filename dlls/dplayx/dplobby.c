@@ -343,15 +343,15 @@ static HRESULT WINAPI DPL_QueryInterface
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
   *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof( IDirectPlayLobbyWImpl ) );
+                       sizeof( *This ) );
 
   if( *ppvObj == NULL )
   {
     return DPERR_OUTOFMEMORY;
   }
 
-  CopyMemory( *ppvObj, iface, sizeof( IDirectPlayLobbyWImpl )  );
-  (*(IDirectPlayLobbyWImpl**)ppvObj)->ulInterfaceRef = 0;
+  CopyMemory( *ppvObj, This, sizeof( *This )  );
+  (*(IDirectPlayLobbyAImpl**)ppvObj)->ulInterfaceRef = 0;
 
   if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
   {

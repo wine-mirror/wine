@@ -27,8 +27,11 @@ typedef struct tagMSGTHREADINFO
   HANDLE hNotifyEvent; 
 } MSGTHREADINFO, *LPMSGTHREADINFO;
 
-
 static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext );
+static LPVOID DP_MSG_ExpectReply( IDirectPlay2AImpl* This, LPDPSP_SENDDATA data, 
+                                  DWORD dwWaitTime, WORD wReplyCommandId,
+                                  LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize );
+
 
 /* Create the message reception thread to allow the application to receive
  * asynchronous message reception
@@ -139,6 +142,42 @@ end_of_thread:
   return 0;
 }
 
+/* DP messageing stuff */
+static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
+                                              LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList, 
+                                              WORD wReplyCommandId );
+static LPVOID DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
+                                       LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize );
+
+
+static
+HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
+                                       LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList, WORD wReplyCommandId )
+{
+  lpReplyStructList->replyExpected.hReceipt       = CreateEventA( NULL, FALSE, FALSE, NULL );
+  lpReplyStructList->replyExpected.wExpectedReply = wReplyCommandId;
+  lpReplyStructList->replyExpected.lpReplyMsg     = NULL;
+  lpReplyStructList->replyExpected.dwMsgBodySize  = 0;
+
+  /* Insert into the message queue while locked */
+  EnterCriticalSection( &This->unk->DP_lock );
+    DPQ_INSERT( This->dp2->replysExpected, lpReplyStructList, replysExpected );
+  LeaveCriticalSection( &This->unk->DP_lock );
+
+  return lpReplyStructList->replyExpected.hReceipt;
+}
+
+static
+LPVOID DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
+                                LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize  )
+{
+  CloseHandle( lpReplyStructList->replyExpected.hReceipt );
+
+  *lplpReplyMsg    = lpReplyStructList->replyExpected.lpReplyMsg;
+  *lpdwMsgBodySize = lpReplyStructList->replyExpected.dwMsgBodySize;
+
+  return lpReplyStructList->replyExpected.lpReplyMsg;
+}
 
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
                                     LPDPID lpdpidAllocatedId )
@@ -146,7 +185,6 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
   LPVOID                     lpMsg;
   LPDPMSG_REQUESTNEWPLAYERID lpMsgBody;
   DWORD                      dwMsgSize;
-  DWORD                      dwWaitReturn;
   HRESULT                    hr = DP_OK;
 
   dwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpMsgBody );
@@ -156,19 +194,16 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
   lpMsgBody = (LPDPMSG_REQUESTNEWPLAYERID)( (BYTE*)lpMsg + 
                                              This->dp2->spData.dwSPHeaderSize );
 
+  /* Compose dplay message envelope */
   lpMsgBody->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
   lpMsgBody->envelope.wCommandId = DPMSGCMD_REQUESTNEWPLAYERID;
   lpMsgBody->envelope.wVersion   = DPMSGVER_DP6;
 
+  /* Compose the body of the message */
   lpMsgBody->dwFlags = dwFlags;
 
-  /* FIXME: Need to have a more advanced queuing system as this needs to
-   *        block on send until we get response. Otherwise we need to be
-   *        able to ensure we can pick out the exact response. Of course,
-   *        with something as non critical as this, would it matter? The
-   *        id has been effectively reserved for this session...
-   */
-  { 
+  /* Send the message */
+  {
     DPSP_SENDDATA data;
 
     data.dwFlags        = DPSEND_GUARANTEED;
@@ -179,37 +214,20 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
     data.bSystemMessage = TRUE; /* Allow reply to be sent */
     data.lpISP          = This->dp2->spData.lpISP;
 
-    /* Setup for receipt */
-    This->dp2->hMsgReceipt = CreateEventA( NULL, FALSE, FALSE, NULL );
+    TRACE( "Asking for player id w/ dwFlags 0x%08lx\n", 
+           lpMsgBody->dwFlags );
 
-    TRACE( "Sending request for player id\n" );
- 
-    hr = (*This->dp2->spData.lpCB->Send)( &data );
 
-    if( FAILED(hr) )
-    {
-      ERR( "Request for new playerID send failed: %s\n",
-           DPLAYX_HresultToString( hr ) );
-      return DPERR_NOCONNECTION;
-    }
+    DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY, 
+                        &lpMsg, &dwMsgSize );
   }
-
-  dwWaitReturn = WaitForSingleObject( This->dp2->hMsgReceipt, 30000 );
-  if( dwWaitReturn != WAIT_OBJECT_0 )
-  {
-    ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
-    hr = DPERR_TIMEOUT;
-  }
-
-  CloseHandle( This->dp2->hMsgReceipt );
-  This->dp2->hMsgReceipt = 0;
 
   /* Need to examine the data and extract the new player id */
   if( !FAILED(hr) )
   {
     LPCDPMSG_NEWPLAYERIDREPLY lpcReply; 
 
-    lpcReply = (LPCDPMSG_NEWPLAYERIDREPLY)This->dp2->lpMsgReceived;
+    lpcReply = (LPCDPMSG_NEWPLAYERIDREPLY)lpMsg;
 
     *lpdpidAllocatedId = lpcReply->dpidNewPlayerId;   
 
@@ -217,47 +235,217 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
 
     /* FIXME: I think that the rest of the message has something to do
      *        with remote data for the player that perhaps I need to setup.
+     *        However, with the information that is passed, all that it could
+     *        be used for is a standardized intialization value, which I'm 
+     *        guessing we can do without. Unless the message content is the same
+     *        for several different messages?
      */
-#if 0
-   /* Set the passed service provider data */
-   IDirectPlaySP_SetSPData( This->dp2->spData.lpISP, data, 
-                            msgsize, DPSET_REMOTE );
 
-#endif
-
-    HeapFree( GetProcessHeap(), 0, This->dp2->lpMsgReceived ); 
-    This->dp2->lpMsgReceived = NULL;
+    HeapFree( GetProcessHeap(), 0, lpMsg ); 
   }
 
   return hr;
 }
 
-
-/* This function seems to cause a trap in the SP. It would seem unnecessary */
-/* FIXME: Remove this method if not required */
-HRESULT DP_MSG_OpenStream( IDirectPlay2AImpl* This )
+HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer )
 {
-  HRESULT       hr;
-  DPSP_SENDDATA data;
+  LPVOID                   lpMsg;
+  LPDPMSG_FORWARDADDPLAYER lpMsgBody;
+  DWORD                    dwMsgSize;
+  HRESULT                  hr = DP_OK;
 
-  data.dwFlags        = DPSEND_OPENSTREAM;
-  data.idPlayerTo     = 0; /* Name server */
-  data.idPlayerFrom   = 0; /* From DP itself */
-  data.lpMessage      = NULL;
-  data.dwMessageSize  = This->dp2->spData.dwSPHeaderSize;
-  data.bSystemMessage = FALSE; /* FIXME? */
-  data.lpISP          = This->dp2->spData.lpISP;
+  dwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpMsgBody );
 
-  hr = (*This->dp2->spData.lpCB->Send)( &data );
+  lpMsg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwMsgSize );
+
+  lpMsgBody = (LPDPMSG_FORWARDADDPLAYER)( (BYTE*)lpMsg +
+                                          This->dp2->spData.dwSPHeaderSize );
+
+  /* Compose dplay message envelope */
+  lpMsgBody->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
+  lpMsgBody->envelope.wCommandId = DPMSGCMD_FORWARDADDPLAYER;
+  lpMsgBody->envelope.wVersion   = DPMSGVER_DP6;
+
+#if 0
+  {
+    LPBYTE lpPData;
+    DWORD  dwDataSize;
+    
+    /* SP Player remote data needs to be propagated at some point - is this the point? */
+    IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, dpidServer, (LPVOID*)&lpPData, &dwDataSize, DPSET_REMOTE );
+    
+    ERR( "Player Data size is 0x%08lx\n"
+         "[%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x]\n"
+         "[%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x]\n", 
+ 
+	 dwDataSize,
+         lpPData[0], lpPData[1], lpPData[2], lpPData[3], lpPData[4],
+	 lpPData[5], lpPData[6], lpPData[7], lpPData[8], lpPData[9],
+         lpPData[10], lpPData[11], lpPData[12], lpPData[13], lpPData[14],
+	 lpPData[15], lpPData[16], lpPData[17], lpPData[18], lpPData[19],
+         lpPData[20], lpPData[21], lpPData[22], lpPData[23], lpPData[24],
+	 lpPData[25], lpPData[26], lpPData[27], lpPData[28], lpPData[29],
+         lpPData[30], lpPData[31]	 	 
+        );
+    DebugBreak();
+  }
+#endif
+
+  /* Compose body of message */
+  lpMsgBody->dpidAppServer = dpidServer;
+  lpMsgBody->unknown2[0] = 0x0;
+  lpMsgBody->unknown2[1] = 0x1c;
+  lpMsgBody->unknown2[2] = 0x6c;
+  lpMsgBody->unknown2[3] = 0x50;
+  lpMsgBody->unknown2[4] = 0x9;
+
+  lpMsgBody->dpidAppServer2 = dpidServer;
+  lpMsgBody->unknown3[0] = 0x0;
+  lpMsgBody->unknown3[0] = 0x0;
+  lpMsgBody->unknown3[0] = 0x20;
+  lpMsgBody->unknown3[0] = 0x0;
+  lpMsgBody->unknown3[0] = 0x0;
+  
+  lpMsgBody->dpidAppServer3 = dpidServer;
+  lpMsgBody->unknown4[0] =  0x30; 
+  lpMsgBody->unknown4[1] =  0xb;
+  lpMsgBody->unknown4[2] =  0x0;
+  lpMsgBody->unknown4[3] =  0x1e090002;
+  lpMsgBody->unknown4[4] =  0x0;
+  lpMsgBody->unknown4[5] =  0x0;
+  lpMsgBody->unknown4[6] =  0x0;
+  lpMsgBody->unknown4[7] =  0x32090002;
+  lpMsgBody->unknown4[8] =  0x0;
+  lpMsgBody->unknown4[9] =  0x0;
+  lpMsgBody->unknown4[10] = 0x0;
+  lpMsgBody->unknown4[11] = 0x0;
+  lpMsgBody->unknown4[12] = 0x0;
+
+  lpMsgBody->unknown5[0] = 0x0;
+  lpMsgBody->unknown5[1] = 0x0;
+
+  /* Send the message */
+  {
+    DPSP_SENDDATA data;
+
+    data.dwFlags        = DPSEND_GUARANTEED;
+    data.idPlayerTo     = 0; /* Name server */
+    data.idPlayerFrom   = dpidServer; /* Sending from session server */
+    data.lpMessage      = lpMsg;
+    data.dwMessageSize  = dwMsgSize;
+    data.bSystemMessage = TRUE; /* Allow reply to be sent */
+    data.lpISP          = This->dp2->spData.lpISP;
+
+    lpMsg = DP_MSG_ExpectReply( This, &data, 
+                                DPMSG_WAIT_60_SECS, 
+                                DPMSGCMD_GETNAMETABLEREPLY,
+                                &lpMsg, &dwMsgSize );
+  }
+
+  /* Need to examine the data and extract the new player id */
+  if( lpMsg != NULL )
+  {
+    FIXME( "Name Table reply received: stub\n" );
+  }
+
+  return hr;
+}
+
+/* Queue up a structure indicating that we want a reply of type wReplyCommandId. DPlay does
+ * not seem to offer any way of uniquely differentiating between replies of the same type
+ * relative to the request sent. There is an implicit assumption that there will be no
+ * ordering issues on sends and receives from the opposite machine. No wonder MS is not
+ * a networking company.
+ */
+static
+LPVOID DP_MSG_ExpectReply( IDirectPlay2AImpl* This, LPDPSP_SENDDATA lpData, 
+                           DWORD dwWaitTime, WORD wReplyCommandId,
+                           LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize )
+{
+  HRESULT                  hr;
+  HANDLE                   hMsgReceipt;
+  DP_MSG_REPLY_STRUCT_LIST replyStructList;
+  DWORD                    dwWaitReturn;
+ 
+  /* Setup for receipt */
+  hMsgReceipt = DP_MSG_BuildAndLinkReplyStruct( This, &replyStructList, 
+                                                wReplyCommandId );
+
+  TRACE( "Sending msg and expecting cmd %u in reply within %lu ticks\n", 
+         wReplyCommandId, dwWaitTime );
+  hr = (*This->dp2->spData.lpCB->Send)( lpData );
 
   if( FAILED(hr) )
   {
-      ERR( "Request for open stream send failed: %s\n",
-           DPLAYX_HresultToString( hr ) );
+    ERR( "Request for new playerID send failed: %s\n",
+         DPLAYX_HresultToString( hr ) );
+    return NULL;
   }
 
-  /* FIXME: hack to give some time for channel to open */
-  SleepEx( 1000 /* 1 sec */, FALSE );
+  dwWaitReturn = WaitForSingleObject( hMsgReceipt, dwWaitTime );
+  if( dwWaitReturn != WAIT_OBJECT_0 )
+  {
+    ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
+    return NULL;
+  }
 
-  return hr;
+  /* Clean Up */
+  return DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
 }
+
+/* Determine if there is a matching request for this incomming message and then copy
+ * all important data. It is quite silly to have to copy the message, but the documents
+ * indicate that a copy is taken. Silly really.
+ */
+void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId, 
+                           LPCVOID lpcMsgBody, DWORD dwMsgBodySize )
+{
+  LPDP_MSG_REPLY_STRUCT_LIST lpReplyList;
+
+#if 0
+  if( wCommandId == DPMSGCMD_FORWARDADDPLAYER )
+  {
+    DebugBreak();
+  }
+#endif
+
+  /* Find, and immediately remove (to avoid double triggering), the appropriate entry. Call locked to 
+   * avoid problems.
+   */
+  EnterCriticalSection( &This->unk->DP_lock );
+    DPQ_REMOVE_ENTRY( This->dp2->replysExpected, replysExpected, replyExpected.wExpectedReply,\
+                     ==, wCommandId, lpReplyList );
+  LeaveCriticalSection( &This->unk->DP_lock );  
+
+  if( lpReplyList != NULL )
+  {
+    lpReplyList->replyExpected.dwMsgBodySize = dwMsgBodySize; 
+    lpReplyList->replyExpected.lpReplyMsg = HeapAlloc( GetProcessHeap(),
+                                                       HEAP_ZERO_MEMORY,
+                                                       dwMsgBodySize );
+    CopyMemory( lpReplyList->replyExpected.lpReplyMsg, 
+                lpcMsgBody, dwMsgBodySize );
+
+    /* Signal the thread which sent the message that it has a reply */
+    SetEvent( lpReplyList->replyExpected.hReceipt );
+  }
+  else
+  {
+    ERR( "No receipt event set - only expecting in reply mode\n" );
+    DebugBreak();
+  }
+ 
+}
+
+void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize )
+{
+  LPCDPMSG_FORWARDADDPLAYERNACK lpcErrorMsg;
+
+  lpcErrorMsg = (LPCDPMSG_FORWARDADDPLAYERNACK)lpMsgBody;
+
+  ERR( "Received error message %u. Error is %s\n", 
+       wCommandId, DPLAYX_HresultToString( lpcErrorMsg->errorCode) );
+  DebugBreak();
+}
+

@@ -35,6 +35,21 @@ typedef struct tagEnumSessionAsyncCallbackData
   HANDLE       hSuicideRequest;
 } EnumSessionAsyncCallbackData;
 
+typedef struct tagDP_MSG_REPLY_STRUCT
+{
+  HANDLE hReceipt;
+  WORD   wExpectedReply;
+  LPVOID lpReplyMsg;
+  DWORD  dwMsgBodySize;
+  /* FIXME: Is the message header required as well? */
+} DP_MSG_REPLY_STRUCT, *LPDP_MSG_REPLY_STRUCT;
+
+typedef struct tagDP_MSG_REPLY_STRUCT_LIST
+{
+  DPQ_ENTRY(tagDP_MSG_REPLY_STRUCT_LIST) replysExpected; 
+  DP_MSG_REPLY_STRUCT replyExpected;
+} DP_MSG_REPLY_STRUCT_LIST, *LPDP_MSG_REPLY_STRUCT_LIST;
+
 struct PlayerData
 {
   /* Individual player information */
@@ -52,6 +67,9 @@ struct PlayerData
   /* View of remote data */
   LPVOID lpRemoteData;
   DWORD  dwRemoteDataSize;
+
+  /* SP data on a per player basis */
+  LPVOID lpSPPlayerData;
 
   DWORD  dwFlags; /* Special remarks about the type of player */
 };
@@ -137,10 +155,8 @@ typedef struct tagDirectPlay2Data
 
   BOOL bConnectionInitialized;
 
-
-  /* proof of concept for message reception */
-  HANDLE hMsgReceipt;
-  LPVOID lpMsgReceived;
+  /* Expected messages queue */
+  DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) replysExpected;
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data
@@ -192,5 +208,11 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
                           WORD wCommandId, WORD wVersion, 
                           LPVOID* lplpReply, LPDWORD lpdwMsgSize );
 
+/* DP SP external interfaces into DirectPlay */
+extern HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID* lplpData );
+extern HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID lpData );
+
+/* DP external interfaces to call into DPSP interface */
+extern LPVOID DPSP_CreateSPPlayerData(void);
 
 #endif /* __WINE_DPLAY_GLOBAL_INCLUDED */
