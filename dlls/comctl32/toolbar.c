@@ -103,9 +103,11 @@ typedef struct
 #define SEPARATOR_WIDTH    8
 #define TOP_BORDER         2
 #define BOTTOM_BORDER      2
+#define DDARROW_WIDTH      11 
 
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
 #define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
+#define TOOLBAR_HasDropDownArrows(exStyle) ((exStyle & TBSTYLE_EX_DRAWDDARROWS) ? TRUE : FALSE)
 
 static LPWSTR
 TOOLBAR_GetText(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr)
@@ -145,6 +147,21 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
     SelectObject ( hdc, GetSysColorPen (COLOR_3DHILIGHT));
     MoveToEx (hdc, x, yBottom, NULL);
     LineTo (hdc, x, yTop);
+}
+
+static void
+TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
+{
+    INT x, y;
+    SelectObject ( hdc, GetSysColorPen (colorRef));
+    x = left + 2;
+    y = top + 8;
+    MoveToEx (hdc, x, y, NULL);
+    LineTo (hdc, x+5, y++); x++;
+    MoveToEx (hdc, x, y, NULL);
+    LineTo (hdc, x+3, y++); x++;
+    MoveToEx (hdc, x, y, NULL);
+    LineTo (hdc, x+1, y++);
 }
 
 /*
@@ -286,13 +303,29 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-    RECT rc;
+    BOOL hasDropDownArrow = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
+	                    (btnPtr->fsStyle & TBSTYLE_DROPDOWN);
+    RECT rc, rcArrow;
     INT xOffset = (infoPtr->nButtonWidth / 2) - (infoPtr->nBitmapWidth / 2);
 
     if (btnPtr->fsState & TBSTATE_HIDDEN)
 	return;
 
     rc = btnPtr->rect;
+    CopyRect (&rcArrow, &rc);
+
+    InflateRect(&rc, -1, -1);
+    FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
+    InflateRect(&rc, 1, 1);
+
+    if (hasDropDownArrow)
+    {
+	if (dwStyle & TBSTYLE_FLAT)
+            rc.right = max(rc.left, rc.right - DDARROW_WIDTH);
+	else
+            rc.right = max(rc.left, rc.right - DDARROW_WIDTH - 2);
+	rcArrow.left = rc.right; 
+    }
 
     TRACE("iBitmap: %d\n", btnPtr->iBitmap);
 
@@ -311,9 +344,20 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     /* disabled */
     if (!(btnPtr->fsState & TBSTATE_ENABLED)) {
 	if (!(dwStyle & TBSTYLE_FLAT))
+	{
 	    DrawEdge (hdc, &rc, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+            if (hasDropDownArrow)
+            DrawEdge (hdc, &rcArrow, EDGE_RAISED,
+		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	}
 	
+        if (hasDropDownArrow)
+	{
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top+1, COLOR_3DHIGHLIGHT);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_3DSHADOW);
+	}
+
 	if (infoPtr->himlDis && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
@@ -328,9 +372,21 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     /* pressed TBSTYLE_BUTTON */
     if (btnPtr->fsState & TBSTATE_PRESSED) {
 	if (dwStyle & TBSTYLE_FLAT)
+	{
 	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
+            if (hasDropDownArrow)
+	    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	}
 	else
+	{
 	    DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+            if (hasDropDownArrow)
+	    DrawEdge (hdc, &rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	}
+
+        if (hasDropDownArrow)
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
+
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
@@ -374,9 +430,20 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (dwStyle & TBSTYLE_FLAT)
     {
 	if (btnPtr->bHot)
+	{
 	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+            if (hasDropDownArrow)
+	    DrawEdge (hdc, &rcArrow, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+	}
         else
+	{
             FrameRect(hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
+            if (hasDropDownArrow)
+            FrameRect(hdc, &rcArrow, GetSysColorBrush(COLOR_BTNFACE));
+	}
+
+        if (hasDropDownArrow)
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top, COLOR_WINDOWFRAME);
 
 	if (btnPtr->bHot && infoPtr->himlHot && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
@@ -390,6 +457,13 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     {
 	DrawEdge (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+
+        if (hasDropDownArrow)
+	{
+	    DrawEdge (hdc, &rcArrow, EDGE_RAISED,
+		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
+	}
 
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
@@ -646,6 +720,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     SIZE  sizeString;
     BOOL bWrap;
     BOOL usesBitmaps = FALSE;
+    BOOL hasDropDownArrows = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle);
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
 
@@ -748,6 +823,9 @@ TOOLBAR_CalcToolbar (HWND hwnd)
             }
             else
 	      cx = infoPtr->nButtonWidth;
+
+	    if (hasDropDownArrows && (btnPtr->fsStyle & TBSTYLE_DROPDOWN))
+	      cx += DDARROW_WIDTH; 
 	}
 	cy = infoPtr->nHeight;
 
@@ -3360,22 +3438,10 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
     if (nHit >= 0) {
+	RECT arrowRect;
 	btnPtr = &infoPtr->buttons[nHit];
 	if (!(btnPtr->fsState & TBSTATE_ENABLED))
 	    return 0;
-
-	if (btnPtr->fsStyle &  TBSTYLE_DROPDOWN)
-	{
-	    NMTOOLBARA nmtb;
-
-	    nmtb.hdr.hwndFrom = hwnd;
-	    nmtb.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
-	    nmtb.hdr.code = TBN_DROPDOWN;
-	    nmtb.iItem = btnPtr->idCommand;
-
-	    SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
-			  (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
-	}
 
 	SetCapture (hwnd);
 	infoPtr->bCaptured = TRUE;
@@ -3385,6 +3451,30 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_PRESSED;
         btnPtr->bHot = FALSE;
 
+	CopyRect(&arrowRect, &btnPtr->rect);
+	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
+	
+	/* if click is in the drop-down arrow rect, tell app to show the listbox */
+	if ((btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
+	     !(TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && !PtInRect(&arrowRect, pt))) 
+	{
+	    NMTOOLBARA nmtb;
+	    /* 
+	     * this time we must force a Redraw, so the btn is
+	     * painted down before CaptureChanged repaints it up
+	     */
+	    RedrawWindow(hwnd,&btnPtr->rect,0,
+			RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+
+	    nmtb.hdr.hwndFrom = hwnd;
+	    nmtb.hdr.idFrom = GetWindowLongA (hwnd, GWL_ID);
+	    nmtb.hdr.code = TBN_DROPDOWN;
+	    nmtb.iItem = btnPtr->idCommand;
+
+	    SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+			  (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
+	}
+	else
         InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
             btnPtr));
     }
@@ -3453,45 +3543,37 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
         InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
             btnPtr));
 
-	if (bSendMessage) {
+	if (bSendMessage)
 	    SendMessageA (GetParent(hwnd), WM_COMMAND,
 			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
-
-//	    if ((GetWindowLongA(hwnd, GWL_STYLE) & TBSTYLE_DROPDOWN) ||
-//		(btnPtr->fsStyle & 0x08/* BTNS_DROPDOWN */)) {
-       /* 
-        * This appears to be an error. Instead of checking the style of the
-        * button in question wine was checking the style of the toolbar 
-        * itself. This caused a number of strange behaviors. In my 
-        * invistigation i think the whole dropdown thing is still fairly
-        * broken. but this helps fix some of the problems.
-        */
-
-	if (btnPtr->fsStyle &  TBSTYLE_DROPDOWN) {
-	       NMTOOLBARW	nmtb;
-
-	       nmtb.hdr.hwndFrom = hwnd;
-	       nmtb.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
-	       nmtb.hdr.code     = TBN_DROPDOWN;
-	       nmtb.iItem        = nHit;
-	       /* nmtb.tbButton not used with TBN_DROPDOWN */
-	       if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings)) {
-		  nmtb.pszText      = infoPtr->strings[btnPtr->iString];
-		  nmtb.cchText      = lstrlenW(nmtb.pszText);
-	       } else {
-		  nmtb.pszText      = NULL;
-		  nmtb.cchText      = 0;
-	       }
-	       nmtb.rcButton     = btnPtr->rect;
-
-	       SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
-			    (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
-	    }
-	}
 	infoPtr->nButtonDown = -1;
 	infoPtr->nOldHit = -1;
     }
 
+    return 0;
+}
+
+static LRESULT
+TOOLBAR_CaptureChanged(HWND hwnd)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBUTTON_INFO *btnPtr;
+
+    ERR("reset CAPTURE, btnDown=%d\n", infoPtr->nButtonDown);
+    infoPtr->bCaptured = FALSE;
+
+    if (infoPtr->nButtonDown >= 0)
+    {
+        btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
+       	btnPtr->fsState &= ~TBSTATE_PRESSED;
+        ERR("reset PRESSED\n");
+
+        infoPtr->nButtonDown = -1;
+        infoPtr->nOldHit = -1;
+
+        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
+            btnPtr));
+    }
     return 0;
 }
 
@@ -4152,6 +4234,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_MOUSELEAVE:
 	    return TOOLBAR_MouseLeave (hwnd, wParam, lParam);	
+
+	case WM_CAPTURECHANGED:
+	    return TOOLBAR_CaptureChanged(hwnd);	
 
 	case WM_NCACTIVATE:
 	    return TOOLBAR_NCActivate (hwnd, wParam, lParam);
