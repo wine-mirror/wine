@@ -331,20 +331,20 @@ sub show_help {
     for my $name (sort(keys(%$options_long))) {
 	my $option = $$options_long{$name};
         my $description = $$option{description};
-	my $default = $$option{default};
+	my $parser = $$option{parser};
 	my $current = ${$self->{$$option{key}}};
 
 	my $value = $current;
 
 	my $command;
-	if(ref($value) ne "HASH") {
+	if(!defined $parser) {
 	    if($value) {
 		$command = "--no-$name";
 	    } else {
 		$command = "--$name";
 	    }
 	} else {
-	    if($value->{active}) {
+	    if(ref($value) eq "HASH" && $value->{active}) {
 		$command = "--[no-]$name\[=<value>]";
 	    } else {
 		$command = "--$name\[=<value>]";
@@ -352,23 +352,24 @@ sub show_help {
 	}
 
 	$output->write($command);
-	for (0..(($maxname - length($name) + 17) - (length($command) - length($name) + 1))) { $output->write(" "); }
-	if(ref($value) ne "HASH") {
+	$output->write(" " x (($maxname - length($name) + 17) - (length($command) - length($name) + 1)));
+	if(!defined $parser) {
 	    if($value) {
 		$output->write("Disable ");
 	    } else {
 		$output->write("Enable ");
 	    }
 	} else {
-	    if($value->{active}) {
-		$output->write("(Disable) ");
-	    } else {
-	        $output->write("Enable ");
-	    }
+	    if(ref($value) eq "HASH")
+            {
+                if ($value->{active}) {
+                    $output->write("(Disable) ");
+                } else {
+                    $output->write("Enable ");
+                }
+            }
 	}
-        if($default == $current) {
-	    $output->write("$description\n");
-	}
+        $output->write("$description\n");
     }
 }
 

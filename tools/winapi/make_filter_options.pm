@@ -39,7 +39,7 @@ my %options_long = (
 
     "make" => { default => "make",
 		parser => \&parse_value,
-		description => "use which make" },
+		description => "Specifies the make command" },
     "pedantic" => { default => 0, description => "be pedantic" },
 );
 
