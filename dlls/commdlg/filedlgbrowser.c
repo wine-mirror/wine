@@ -228,7 +228,7 @@ ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
 
     if (!--(This->ref))
     {
-      HeapFree(GetProcessHeap(),0, This);
+      COMDLG32_SHFree(This);
       TRACE("-- destroyed\n");
       return 0;
     }
@@ -306,7 +306,10 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)(%p,0x%08x)\n", This, pidl, wFlags);
+    TRACE("(%p)(pidl=%p,flags=0x%08x(%s))\n", This, pidl, wFlags,
+	(wFlags & SBSP_RELATIVE) ? "SBSP_RELATIVE" :
+	(wFlags & SBSP_PARENT) ? "SBSP_PARENT" :
+ 	(wFlags & SBSP_ABSOLUTE) ? "SBSP_ABSOLUTE" : "SBPS_????");
 
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
 

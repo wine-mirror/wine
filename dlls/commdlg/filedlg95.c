@@ -2384,7 +2384,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
     tmpFolder->m_iIndent++;
   }
 
-  tmpFolder->pidlItem = COMDLG32_PIDL_ILClone(pidl); /* FIXME: memory leak*/
+  tmpFolder->pidlItem = COMDLG32_PIDL_ILClone(pidl);
 
   if(tmpFolder->m_iIndent > liInfos->iMaxIndentation)
     liInfos->iMaxIndentation = tmpFolder->m_iIndent;
@@ -2420,6 +2420,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
     return iItemID;
   }
 
+  COMDLG32_SHFree( tmpFolder->pidlItem );
   MemFree( tmpFolder );
   return -1;
 
