@@ -114,67 +114,81 @@ typedef CY CURRENCY;
  * * E_OUTOFMEMORY     : Memory could not be allocated for the conversion.
  * DISP_E_ARRAYISLOCKED : The variant contains an array that is locked.
  */
+#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#define __VARIANT_NAME_1 n1
+#define __VARIANT_NAME_2 n2
+#define __VARIANT_NAME_3 n3
+#else
+#define __tagVARIANT
+#define __VARIANT_NAME_1
+#define __VARIANT_NAME_2
+#define __VARIANT_NAME_3
+#endif
 
 typedef struct tagVARIANT VARIANT, *LPVARIANT;
 typedef struct tagVARIANT VARIANTARG, *LPVARIANTARG;
 
-struct tagVARIANT {
-	VARTYPE vt;
-	WORD wReserved1;
-	WORD wReserved2;
-	WORD wReserved3;
-	union /* DUMMYUNIONNAME */
-	{
-	/* By value. */
-		CHAR cVal;
-		USHORT uiVal;
-		ULONG ulVal;
-		INT intVal;
-		UINT uintVal;
-		BYTE bVal;
-		short iVal;
-		long lVal;
-		float fltVal;
-		double dblVal;
-		VARIANT_BOOL boolVal;
-		SCODE scode;
-		DATE date;
-		BSTR bstrVal;
-		CY cyVal;
-		/* FIXME: This is not supposed to be at this level
-		 * See bug #181 in bugzilla
-		 * DECIMAL decVal;
-		 */
-		IUnknown* punkVal;
-		IDispatch* pdispVal;
-	        SAFEARRAY* parray;
+struct tagVARIANT
+{
+    union
+    {
+        struct __tagVARIANT
+        {
+            VARTYPE vt;
+            WORD wReserved1;
+            WORD wReserved2;
+            WORD wReserved3;
+            union /* DUMMYUNIONNAME */
+            {
+                /* B    y value. */
+                CHAR cVal;
+                USHORT uiVal;
+                ULONG ulVal;
+                INT intVal;
+                UINT uintVal;
+                BYTE bVal;
+                short iVal;
+                long lVal;
+                float fltVal;
+                double dblVal;
+                VARIANT_BOOL boolVal;
+                SCODE scode;
+                DATE date;
+                BSTR bstrVal;
+                CY cyVal;
+                IUnknown* punkVal;
+                IDispatch* pdispVal;
+                SAFEARRAY* parray;
 
-	 	/* By reference */
-		CHAR* pcVal;
-		USHORT* puiVal;
-		ULONG* pulVal;
-		INT* pintVal;
-		UINT* puintVal;
-		BYTE* pbVal;
-		short* piVal;
-		long* plVal;
-		float* pfltVal;
-		double* pdblVal;
-		VARIANT_BOOL* pboolVal;
-		SCODE* pscode;
-		DATE* pdate;
-		BSTR* pbstrVal;
-		VARIANT* pvarVal;
-		PVOID byref;
-		CY* pcyVal;
-		DECIMAL* pdecVal;
-		IUnknown** ppunkVal;
-		IDispatch** ppdispVal;
-	        SAFEARRAY** pparray;
-	} DUMMYUNIONNAME;
+                /* By reference */
+                CHAR* pcVal;
+                USHORT* puiVal;
+                ULONG* pulVal;
+                INT* pintVal;
+                UINT* puintVal;
+                BYTE* pbVal;
+                short* piVal;
+                long* plVal;
+                float* pfltVal;
+                double* pdblVal;
+                VARIANT_BOOL* pboolVal;
+                SCODE* pscode;
+                DATE* pdate;
+                BSTR* pbstrVal;
+                VARIANT* pvarVal;
+                PVOID byref;
+                CY* pcyVal;
+                DECIMAL* pdecVal;
+                IUnknown** ppunkVal;
+                IDispatch** ppdispVal;
+                SAFEARRAY** pparray;
+            } __VARIANT_NAME_3;
+        } __VARIANT_NAME_2;
+        DECIMAL decVal;
+    } __VARIANT_NAME_1;
 };
 
-             
+
 typedef LONG DISPID;
 typedef DWORD HREFTYPE;
 typedef DISPID MEMBERID;

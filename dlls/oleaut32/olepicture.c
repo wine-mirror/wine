@@ -1117,8 +1117,8 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
   FIXME("(dispid: %ld):Stub\n",dispIdMember);
 
   VariantInit(pVarResult);
-  pVarResult->vt = VT_BOOL;
-  pVarResult->u.boolVal = FALSE;
+  V_VT(pVarResult) = VT_BOOL;
+  V_UNION(pVarResult,boolVal) = FALSE;
   return S_OK;
 }
 
