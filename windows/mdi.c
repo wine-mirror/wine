@@ -207,7 +207,7 @@ static void MDI_CalcDefaultChildPos( WND* w, WORD n, LPPOINT lpPos,
 static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
                            HMENU hmenuWindow)
 {
-    WND *w = WIN_FindWndPtr(hwnd);
+    WND *w;
     MDICLIENTINFO *ci;
     HWND hwndFrame = GetParent(hwnd);
     HMENU oldFrameMenu = GetMenu(hwndFrame);
@@ -215,6 +215,19 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     TRACE("%04x %04x %04x\n",
                 hwnd, hmenuFrame, hmenuWindow);
 
+    if (hmenuFrame && !IsMenu(hmenuFrame))
+    {
+	WARN("hmenuFrame is not a menu handle\n");
+	return 0L;
+    }
+	
+    if (hmenuWindow && !IsMenu(hmenuWindow))
+    {
+	WARN("hmenuWindow is not a menu handle\n");
+	return 0L;
+    }
+	
+    w = WIN_FindWndPtr(hwnd);
     ci = (MDICLIENTINFO *) w->wExtra;
 
     if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
