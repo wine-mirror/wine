@@ -3,6 +3,7 @@
 BOOL
 CHAR
 DWORD
+INT
 HANDLE
 LONG
 UINT
@@ -30,6 +31,10 @@ struct tagWND *
 
 LPCSTR
 LPSTR
+
+%wstr
+
+LPWSTR
 
 %void
 

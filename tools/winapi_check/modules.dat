@@ -25,7 +25,7 @@ dlls/commdlg
 % dlls/crtdll/crtdll.spec
 
 dlls/crtdll
-misc
+library
 
 % dlls/dciman32/dciman32.spec
 
@@ -441,7 +441,7 @@ dlls/winsock
 
 dlls/winsock
 dlls/wsock32
-misc
+library
 
 % dlls/winspool/winspool.drv.spec
 

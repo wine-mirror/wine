@@ -5,3 +5,4 @@ RPC_STATUS
 %ptr
 
 UUID *
+unsigned char **

@@ -4,6 +4,7 @@ BOOL
 CHAR
 DWORD
 HANDLE
+INT
 LONG
 UINT
 WORD
@@ -30,6 +31,10 @@ WND *
 
 LPCSTR
 LPSTR
+
+%wstr
+
+LPWSTR
 
 %void
 
