@@ -50,7 +50,7 @@ fnt2fon: fnt2fon.o
 	$(CC) $(CFLAGS) -o fnt2fon fnt2fon.o $(LIBPORT)
 
 sfnt2fnt: sfnt2fnt.o
-	$(CC) $(CFLAGS) -o sfnt2fnt sfnt2fnt.o $(FREETYPELIBS) $(LIBUNICODE) $(LIBPORT)
+	$(CC) $(CFLAGS) -o sfnt2fnt sfnt2fnt.o $(LIBUNICODE) $(LIBPORT) $(FREETYPELIBS)
 
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
