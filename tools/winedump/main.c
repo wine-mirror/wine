@@ -203,7 +203,7 @@ static const struct option option_table[] = {
   {"dump",  DUMP, 0, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
-  {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug)"},
+  {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls)"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
   {NULL,    NONE, 0, NULL,        NULL}
 };

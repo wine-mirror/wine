@@ -899,7 +899,7 @@ static	enum FileSig	check_headers(void)
 	    {
 		if (*pdw == IMAGE_NT_SIGNATURE)
 		{
-		    PE_nt_headers = PRD(dh->e_lfanew, sizeof(DWORD));
+		    PE_nt_headers = PRD(dh->e_lfanew, sizeof(DWORD)+sizeof(IMAGE_FILE_HEADER));
 		    sig = SIG_PE;
 		}
                 else if (*(WORD *)pdw == IMAGE_OS2_SIGNATURE)
