@@ -310,6 +310,8 @@ int main(int argc, char **argv)
 	    	; /* ignore this option */
 	    else if (strcmp("-mwindows", argv[j]) == 0)
 	    	; /* ignore this option */
+	    else if (strcmp("-mthreads", argv[j]) == 0)
+	    	; /* ignore this option */
 	    else if (strncmp("-Wl,", argv[j], 4) == 0)
 		; /* do not pass linking options to compiler */
 	    else if (strcmp("-s", argv[j]) == 0)
