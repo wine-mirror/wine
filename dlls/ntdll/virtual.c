@@ -102,6 +102,10 @@ static CRITICAL_SECTION csVirtual = CRITICAL_SECTION_INIT("csVirtual");
 # define page_mask  0xfff
 # define page_shift 12
 # define page_size  0x1000
+/* Note: ADDRESS_SPACE_LIMIT is a Windows limit, you cannot change it.
+ * If you are on Solaris you need to find a way to avoid having the system
+ * allocate things above 0xc000000. Don't touch that define.
+ */
 # define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the user address space */
 #else
 static UINT page_shift;
