@@ -36,6 +36,8 @@
 #include "wine/debug.h"
 #include "excpt.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
@@ -623,36 +625,120 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 }
 
 
-/***********************************************************************
- *          BeginUpdateResourceA                 (KERNEL32.@)
- */
-HANDLE WINAPI BeginUpdateResourceA( LPCSTR pFileName, BOOL bDeleteExistingResources )
+typedef struct
 {
-  FIXME("(%s,%d): stub\n",debugstr_a(pFileName),bDeleteExistingResources);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    LPWSTR pFileName;
+    struct list resources_list;
+} QUEUEDUPDATES;
+
+typedef struct
+{
+    struct list entry;
+    LPWSTR lpType;
+    LPWSTR lpName;
+    WORD wLanguage;
+    LPVOID lpData;
+    DWORD cbData;
+} QUEUEDRESOURCE;
+
+static BOOL CALLBACK enum_resources_languages_delete_all(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLang, LONG_PTR lParam)
+{
+    return UpdateResourceW((HANDLE)lParam, lpType, lpName, wLang, NULL, 0);
 }
 
+static BOOL CALLBACK enum_resources_names_delete_all(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+{
+    return EnumResourceLanguagesW(hModule, lpType, lpName, enum_resources_languages_delete_all, lParam);
+}
+
+static BOOL CALLBACK enum_resources_types_delete_all(HMODULE hModule, LPWSTR lpType, LONG_PTR lParam)
+{
+    return EnumResourceNamesW(hModule, lpType, enum_resources_names_delete_all, lParam);
+}
 
 /***********************************************************************
  *          BeginUpdateResourceW                 (KERNEL32.@)
  */
 HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResources )
 {
-  FIXME("(%s,%d): stub\n",debugstr_w(pFileName),bDeleteExistingResources);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    HANDLE hFile = NULL;
+    WIN32_FIND_DATAW fd;
+    HANDLE hModule = NULL;
+    HANDLE hUpdate = NULL;
+    QUEUEDUPDATES *current_updates = NULL;
+    HANDLE ret = NULL;
+
+    TRACE("%s, %d\n",debugstr_w(pFileName),bDeleteExistingResources);
+
+    hFile = FindFirstFileW(pFileName, &fd);
+    if(hFile == INVALID_HANDLE_VALUE)
+    {
+        hFile = NULL;
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        goto done;
+    }
+    if(fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+    {
+        SetLastError(ERROR_FILE_READ_ONLY);
+        goto done;
+    }
+
+    hModule = LoadLibraryW(pFileName);
+    if(hModule == NULL)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto done;
+    }
+
+    if(!(hUpdate = GlobalAlloc(GHND, sizeof(QUEUEDUPDATES))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    if(!(current_updates = GlobalLock(hUpdate)))
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto done;
+    }
+    if(!(current_updates->pFileName = HeapAlloc(GetProcessHeap(), 0, (strlenW(pFileName)+1)*sizeof(WCHAR))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    strcpyW(current_updates->pFileName, pFileName);
+    list_init(&current_updates->resources_list);
+
+    if(bDeleteExistingResources)
+        if(!EnumResourceTypesW(hModule, enum_resources_types_delete_all, (LONG_PTR)&current_updates))
+            goto done;
+    ret = hUpdate;
+
+done:
+    if(!ret && current_updates)
+    {
+        if(current_updates->pFileName) HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
+        GlobalUnlock(hUpdate);
+        GlobalFree(hUpdate);
+        hUpdate = NULL;
+    }
+    if(hUpdate) GlobalUnlock(hUpdate);
+    if(hModule) FreeLibrary(hModule);
+    if(hFile) FindClose(hFile);
+    return ret;
 }
 
 
 /***********************************************************************
- *          EndUpdateResourceA                 (KERNEL32.@)
+ *          BeginUpdateResourceA                 (KERNEL32.@)
  */
-BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
+HANDLE WINAPI BeginUpdateResourceA( LPCSTR pFileName, BOOL bDeleteExistingResources )
 {
-  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    UNICODE_STRING FileNameW;
+    HANDLE ret;
+    RtlCreateUnicodeStringFromAsciiz(&FileNameW, pFileName);
+    ret = BeginUpdateResourceW(FileNameW.Buffer, bDeleteExistingResources);
+    RtlFreeUnicodeString(&FileNameW);
+    return ret;
 }
 
 
@@ -661,41 +747,146 @@ BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
  */
 BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
 {
-  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    QUEUEDUPDATES *current_updates = NULL;
+    BOOL found = TRUE;
+    BOOL ret = FALSE;
+    struct list *ptr = NULL;
+    QUEUEDRESOURCE *current_resource = NULL;
+
+    FIXME("(%p,%d): stub\n",hUpdate,fDiscard);
+
+    if(!(current_updates = GlobalLock(hUpdate)))
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        found = FALSE;
+        goto done;
+    }
+
+    if(fDiscard)
+        ret = TRUE;
+    else
+    {
+        /* FIXME: This is the only missing part, an actual implementation */
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        ret = FALSE;
+    }
+
+done:
+    if(found)
+    {
+        while ((ptr = list_head(&current_updates->resources_list)) != NULL)
+        {
+            current_resource = LIST_ENTRY(ptr, QUEUEDRESOURCE, entry);
+            list_remove(&current_resource->entry);
+            if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
+            if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
+            if(current_resource->lpData) HeapFree(GetProcessHeap(), 0, current_resource->lpData);
+            HeapFree(GetProcessHeap(), 0, current_resource);
+        }
+        if(current_updates->pFileName) HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
+        GlobalUnlock(hUpdate);
+        GlobalFree(hUpdate);
+    }
+    return ret;
 }
 
 
 /***********************************************************************
- *           UpdateResourceA                 (KERNEL32.@)
+ *          EndUpdateResourceA                 (KERNEL32.@)
  */
-BOOL WINAPI UpdateResourceA(
-  HANDLE  hUpdate,
-  LPCSTR  lpType,
-  LPCSTR  lpName,
-  WORD    wLanguage,
-  LPVOID  lpData,
-  DWORD   cbData)
+BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
 {
-  FIXME(": stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    return EndUpdateResourceW(hUpdate, fDiscard);
 }
 
 
 /***********************************************************************
  *           UpdateResourceW                 (KERNEL32.@)
  */
-BOOL WINAPI UpdateResourceW(
-  HANDLE  hUpdate,
-  LPCWSTR lpType,
-  LPCWSTR lpName,
-  WORD    wLanguage,
-  LPVOID  lpData,
-  DWORD   cbData)
+BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
+                             WORD wLanguage, LPVOID lpData, DWORD cbData)
 {
-  FIXME(": stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    QUEUEDUPDATES *current_updates = NULL;
+    BOOL found = TRUE;
+    QUEUEDRESOURCE *current_resource = NULL;
+    BOOL ret = FALSE;
+
+    TRACE("%p %s %s %08x %p %ld\n",hUpdate,debugstr_w(lpType),debugstr_w(lpName),wLanguage,lpData,cbData);
+
+    if(!(current_updates = GlobalLock(hUpdate)))
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        found = FALSE;
+        goto done;
+    }
+
+    if(!(current_resource = HeapAlloc(GetProcessHeap(), 0, sizeof(QUEUEDRESOURCE))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    if(!HIWORD(lpType))
+        current_resource->lpType = (LPWSTR)lpType;
+    else if((current_resource->lpType = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpType)+1)*sizeof(WCHAR))))
+        strcpyW(current_resource->lpType, lpType);
+    else
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    if(!HIWORD(lpName))
+        current_resource->lpName = (LPWSTR)lpName;
+    else if((current_resource->lpName = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpName)+1)*sizeof(WCHAR))))
+        strcpyW(current_resource->lpName, lpName);
+    else
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    if(!(current_resource->lpData = HeapAlloc(GetProcessHeap(), 0, cbData)))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        goto done;
+    }
+    current_resource->wLanguage = wLanguage;
+    memcpy(current_resource->lpData, lpData, cbData);
+    current_resource->lpData = lpData;
+    current_resource->cbData = cbData;
+    list_add_tail(&current_updates->resources_list, &current_resource->entry);
+    ret = TRUE;
+
+done:
+    if(!ret && current_resource)
+    {
+        if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
+        if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
+        if(current_resource->lpData) HeapFree(GetProcessHeap(), 0, current_resource->lpData);
+        HeapFree(GetProcessHeap(), 0, current_resource);
+    }
+    if(found) GlobalUnlock(hUpdate);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           UpdateResourceA                 (KERNEL32.@)
+ */
+BOOL WINAPI UpdateResourceA( HANDLE hUpdate, LPCSTR lpType, LPCSTR lpName,
+                             WORD wLanguage, LPVOID lpData, DWORD cbData)
+{
+    BOOL ret;
+    UNICODE_STRING TypeW;
+    UNICODE_STRING NameW;
+    if(!HIWORD(lpType))
+        TypeW.Buffer = (LPWSTR)lpType;
+    else
+        RtlCreateUnicodeStringFromAsciiz(&TypeW, lpType);
+    if(!HIWORD(lpName))
+        NameW.Buffer = (LPWSTR)lpName;
+    else
+        RtlCreateUnicodeStringFromAsciiz(&NameW, lpName);
+    ret = UpdateResourceW(hUpdate, TypeW.Buffer, NameW.Buffer, wLanguage, lpData, cbData);
+    if(HIWORD(lpType)) RtlFreeUnicodeString(&TypeW);
+    if(HIWORD(lpName)) RtlFreeUnicodeString(&NameW);
+    return ret;
 }
