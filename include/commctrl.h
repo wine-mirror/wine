@@ -5,9 +5,9 @@
 #ifndef __WINE_COMMCTRL_H
 #define __WINE_COMMCTRL_H
 
-#include "windows.h"
+#include "wintypes.h"
+#include "winuser.h"
 #include "imagelist.h"
-#include "prsht.h" 
 
 /* c++ likes nameless unions whereas c doesnt */
 /* (used in property sheet structures)        */
@@ -1798,7 +1798,6 @@ typedef struct {
 
 #define TVITEM     WINELIB_NAME_AW(TVITEM)
 #define LPTVITEM   WINELIB_NAME_AW(LPTVITEM)
-
 #define TV_ITEM	    TVITEM
 
 typedef struct {
@@ -1832,7 +1831,6 @@ typedef struct {
 #define TVITEMEX   WINELIB_NAME_AW(TVITEMEX)
 #define LPTVITEMEX WINELIB_NAME_AW(LPTVITEMEX)
 
-
 typedef struct tagTVINSERTSTRUCT32A {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
@@ -1857,7 +1855,6 @@ typedef struct tagTVINSERTSTRUCT32W {
 #define TVINSERTSTRUCT_V1_SIZE32A CCSIZEOF_STRUCT(TVINSERTSTRUCT32A, item)
 #define TVINSERTSTRUCT_V1_SIZE32W CCSIZEOF_STRUCT(TVINSERTSTRUCT32W, item)
 #define TVINSERTSTRUCT_V1_SIZE    WINELIB_NAME_AW(TVINSERTSTRUCT_V1_SIZE)
-
 
 
 
@@ -2156,12 +2153,29 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVSIL_SMALL             1
 #define LVSIL_STATE             2
 
+#define LVIS_FOCUSED            0x0001
+#define LVIS_SELECTED           0x0002
+#define LVIS_CUT                0x0004
+#define LVIS_DROPHILITED        0x0008
+#define LVIS_ACTIVATING         0x0020
+
+#define LVFI_PARAM              0X0001
+#define LVFI_STRING             0X0002
+#define LVFI_PARTIAL            0X0008
+#define LVFI_WRAP               0X0020  
+#define LVFI_NEARESTXY          0X0040
+
 #define LVIF_TEXT               0x0001
 #define LVIF_IMAGE              0x0002
 #define LVIF_PARAM              0x0004
 #define LVIF_STATE              0x0008
 #define LVIF_INDENT             0x0010
 #define LVIF_NORECOMPUTE        0x0800
+
+#define LVIR_BOUNDS             0x0000
+#define LVIR_LABEL              0x0002
+#define LVIR_ICON               0x0001
+#define LVIR_SELECTBOUNDS       0x0003 
 
 #define LVIS_FOCUSED            0x0001
 #define LVIS_SELECTED           0x0002
@@ -2331,6 +2345,10 @@ typedef struct tagNMTVGETINFOTIP32W
 #define LVN_SETDISPINFO32W      (LVN_FIRST-78)
 #define LVN_SETDISPINFO WINELIB_NAME_AW(LVN_SETDISPINFO)
 
+#define LVA_ALIGNLEFT           0x0000
+#define LVA_DEFAULT             0x0001
+#define LVA_ALIGNTOP            0x0002
+#define LVA_SNAPTOGRID          0x0005
 
 typedef struct tagLVITEMA
 {

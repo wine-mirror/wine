@@ -27,14 +27,20 @@ typedef struct tagLISTVIEW_INFO
     HIMAGELIST himlNormal;
     HIMAGELIST himlSmall;
     HIMAGELIST himlState;
-    INT32      nItemCount;
+  BOOL32 bLButtonDown;
+  BOOL32 bRButtonDown;
     INT32      nColumnCount;
+  INT32 nFocusedItem;
+  INT32 nItemCount;
+  INT32 nItemHeight;
+  INT32 nColumnWidth;
+  INT32 nSelectionMark;
     HWND32     hwndHeader;
     HFONT32    hDefaultFont;
     HFONT32    hFont;
-    RECT32     rcList;       /* "client" area of the list (without header) */
+  INT32 nWidth;
+  INT32 nHeight;
     BOOL32     bFocus;
-
     DWORD      dwExStyle;    /* extended listview style */
     HDPA       hdpaItems;
 
