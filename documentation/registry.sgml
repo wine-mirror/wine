@@ -57,16 +57,6 @@
 	are a number of configuration settings in the [registry] section
 	(see below) specific to the handling of Windows registry content by Wine.
       </para>
-      <para>
-        Occasionally, Wine may have trouble loading the Windows
-        registry. Usually, this is because the registry is
-        inconsistent or damaged in some way. If that becomes a
-        problem, you may want to download the
-        <filename>regclean.exe</filename> from the MS website and use
-        it to clean up the registry. Alternatively, you can always use
-        <filename>regedit.exe</filename> to export the registry data
-        you want into a text file, and then import it in Wine.
-      </para>
     </sect2>
 
       <sect2>
