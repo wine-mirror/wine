@@ -1508,6 +1508,7 @@ dlls/Makefile
 dlls/advapi32/Makefile
 dlls/advapi32/tests/Makefile
 dlls/amstream/Makefile
+dlls/atl/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/cabinet/Makefile

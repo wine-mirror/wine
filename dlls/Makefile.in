@@ -18,6 +18,7 @@ EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 BASEDIRS = \
 	advapi32 \
 	amstream \
+	atl \
 	avicap32 \
 	avifil32 \
 	cabinet \
@@ -237,6 +238,7 @@ SYMLINKS_SO = \
 	@WIN16_FILES@ \
 	advapi32.dll.so \
 	amstream.dll.so \
+	atl.dll.so \
 	avicap32.dll.so \
 	avifil32.dll.so \
 	cabinet.dll.so \
@@ -399,6 +401,9 @@ advapi32.dll.so: advapi32/advapi32.dll.so
 
 amstream.dll.so: amstream/amstream.dll.so
 	$(RM) $@ && $(LN_S) amstream/amstream.dll.so $@
+
+atl.dll.so: atl/atl.dll.so
+	$(RM) $@ && $(LN_S) atl/atl.dll.so $@
 
 avicap32.dll.so: avicap32/avicap32.dll.so
 	$(RM) $@ && $(LN_S) avicap32/avicap32.dll.so $@
@@ -945,6 +950,7 @@ libuuid.a: uuid/libuuid.a
 IMPORT_LIBS = \
 	libadvapi32 \
 	libamstream \
+	libatl \
 	libavicap32 \
 	libavifil32 \
 	libcabinet \
@@ -1083,6 +1089,11 @@ libamstream.def: amstream/amstream.spec.def
 	$(RM) $@ && $(LN_S) amstream/amstream.spec.def $@
 libamstream.a: amstream/amstream.spec.def
 	$(DLLTOOL) -k -l $@ -d amstream/amstream.spec.def
+
+libatl.def: atl/atl.spec.def
+	$(RM) $@ && $(LN_S) atl/atl.spec.def $@
+libatl.a: atl/atl.spec.def
+	$(DLLTOOL) -k -l $@ -d atl/atl.spec.def
 
 libavicap32.def: avicap32/avicap32.spec.def
 	$(RM) $@ && $(LN_S) avicap32/avicap32.spec.def $@
@@ -1681,6 +1692,7 @@ libx11drv.a: x11drv/x11drv.spec.def
 
 advapi32/advapi32.spec.def: $(WINEBUILD)
 amstream/amstream.spec.def: $(WINEBUILD)
+atl/atl.spec.def: $(WINEBUILD)
 avicap32/avicap32.spec.def: $(WINEBUILD)
 avifil32/avifil32.spec.def: $(WINEBUILD)
 cabinet/cabinet.spec.def: $(WINEBUILD)
@@ -1808,6 +1820,7 @@ $(INSTALLSUBDIRS:%=%/__install__): $(ALL_IMPORT_LIBS)
 
 advapi32/advapi32.dll.so: advapi32
 amstream/amstream.dll.so: amstream
+atl/atl.dll.so: atl
 avicap32/avicap32.dll.so: avicap32
 avifil32/avifil32.dll.so: avifil32
 cabinet/cabinet.dll.so: cabinet
