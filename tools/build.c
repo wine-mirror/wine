@@ -1268,7 +1268,7 @@ static int BuildSpec32File( FILE *outfile )
                  "{\n"
                  "    extern int %s( int argc, char *argv[] );\n"
                  "    extern int _ARGC;\n"
-                 "    extern char *_ARGV[];\n"
+                 "    extern char **_ARGV;\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
         fprintf( outfile,
