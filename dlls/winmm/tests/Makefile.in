@@ -8,6 +8,7 @@ IMPORTS   = winmm kernel32
 CTESTS = \
 	capture.c \
 	mixer.c \
+	timer.c \
 	wave.c
 
 @MAKE_TEST_RULES@
