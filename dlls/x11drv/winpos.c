@@ -416,21 +416,36 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
     if (top != hwnd)
     {
+        /* find the top most parent that doesn't clip siblings */
+        HWND clipping_parent = 0;
+        HWND *list = WIN_ListParents( hwnd );
+        if (list)
+        {
+            int i;
+            for (i = 0; list[i] != top; i++)
+            {
+                LONG style = GetWindowLongW( list[i], GWL_STYLE );
+                if (!(style & WS_CLIPSIBLINGS)) clipping_parent = list[i];
+            }
+            HeapFree( GetProcessHeap(), 0, list );
+        }
+        if (clipping_parent)
+            clipping_parent = GetAncestor( clipping_parent, GA_PARENT );
+        else if (!(flags & DCX_CLIPSIBLINGS) || (flags & DCX_WINDOW))
+            clipping_parent = GetAncestor( hwnd, GA_PARENT );
+        else
+            clipping_parent = hwnd;
+
+        escape.org.x = escape.org.y = 0;
         escape.drawable_org.x = escape.drawable_org.y = 0;
-        if (flags & (DCX_WINDOW|DCX_PARENTCLIP))
+        if (flags & DCX_WINDOW)
         {
             escape.org.x = win->rectWindow.left - win->rectClient.left;
             escape.org.y = win->rectWindow.top - win->rectClient.top;
-            MapWindowPoints( hwnd, top, &escape.org, 1 );
-            MapWindowPoints( top, 0, &escape.drawable_org, 1 );
-            escape.drawable = X11DRV_get_client_window( top );
         }
-        else
-        {
-            escape.org.x = escape.org.y = 0;
-            MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
-            escape.drawable = X11DRV_get_client_window( hwnd );
-        }
+        MapWindowPoints( hwnd, clipping_parent, &escape.org, 1 );
+        MapWindowPoints( clipping_parent, 0, &escape.drawable_org, 1 );
+        escape.drawable = X11DRV_get_client_window( clipping_parent );
     }
     else
     {
