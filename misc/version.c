@@ -179,8 +179,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x08930005,
         {
             sizeof(OSVERSIONINFOA), 5, 0, 0x893,
-            VER_PLATFORM_WIN32_NT, "Service Pack 2",
-	    2, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! Is this correct? */
+            VER_PLATFORM_WIN32_NT, "Service Pack 3",
+            3, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
         }
     },
     /* WINXP */
@@ -190,8 +190,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x0A280105,
         {
             sizeof(OSVERSIONINFOA), 5, 1, 0xA28,
-            VER_PLATFORM_WIN32_NT, "",
-	    0, 0, 0, VER_NT_WORKSTATION, 0 /* FIXME: Verify last 5 values */
+            VER_PLATFORM_WIN32_NT, "Service Pack 1",
+            1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
         }
     }
 };
