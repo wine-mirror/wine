@@ -448,14 +448,22 @@ symbol_s:
         {
             DWORD sz;
             COND_input* cond = (COND_input*) info;
-            $$ = HeapAlloc( GetProcessHeap(), 0, 0x100*sizeof (WCHAR) );
 
-            /* Lookup the identifier */
-
-            sz=0x100;
-            if (MSI_GetPropertyW(cond->package,$1,$$,&sz) != ERROR_SUCCESS)
+            sz = 0;
+            MSI_GetPropertyW(cond->package, $1, NULL, &sz);
+            if (sz == 0)
             {
-                $$[0]=0;
+                $$ = HeapAlloc( GetProcessHeap(), 0 ,sizeof(WCHAR));
+                $$[0] = 0;
+            }
+            else
+            {
+                sz ++;
+                $$ = HeapAlloc( GetProcessHeap(), 0, sz*sizeof (WCHAR) );
+
+                /* Lookup the identifier */
+
+                MSI_GetPropertyW(cond->package,$1,$$,&sz);
             }
             HeapFree( GetProcessHeap(), 0, $1 );
         }
