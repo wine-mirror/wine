@@ -77,10 +77,13 @@ MSIRECORD *MSI_CreateRecord( unsigned int cParams )
 
     TRACE("%d\n", cParams);
 
+    if( cParams>65535 )
+        return NULL;
+
     len = sizeof (MSIRECORD) + sizeof (MSIFIELD)*cParams;
     rec = alloc_msiobject( MSIHANDLETYPE_RECORD, len, MSI_CloseRecord );
     if( rec )
-    rec->count = cParams;
+        rec->count = cParams;
     return rec;
 }
 
@@ -111,10 +114,7 @@ unsigned int WINAPI MsiRecordGetFieldCount( MSIHANDLE handle )
 
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
-    {
-        ERR("Record not found!\n");
-        return 0;
-    }
+        return -1;
 
     msiobj_lock( &rec->hdr );
     ret = MSI_RecordGetFieldCount( rec );
@@ -217,12 +217,12 @@ UINT MSI_RecordSetInteger( MSIRECORD *rec, unsigned int iField, int iVal )
 {
     TRACE("%p %u %d\n", rec, iField, iVal);
 
-    if( iField <= rec->count )
-    {
-        MSI_FreeField( &rec->fields[iField] );
-        rec->fields[iField].type = MSIFIELD_INT;
-        rec->fields[iField].u.iVal = iVal;
-    }
+    if( iField > rec->count )
+        return ERROR_INVALID_PARAMETER;
+ 
+    MSI_FreeField( &rec->fields[iField] );
+    rec->fields[iField].type = MSIFIELD_INT;
+    rec->fields[iField].u.iVal = iVal;
 
     return ERROR_SUCCESS;
 }
@@ -266,7 +266,7 @@ BOOL WINAPI MsiRecordIsNull( MSIHANDLE handle, unsigned int iField )
 
     rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
     if( !rec )
-        return ERROR_INVALID_HANDLE;
+        return 0;
     msiobj_lock( &rec->hdr );
     ret = MSI_RecordIsNull( rec, iField );
     msiobj_unlock( &rec->hdr );
@@ -299,9 +299,12 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, unsigned int iField,
                              NULL, 0 , NULL, NULL);
         WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
                              szValue, *pcchValue, NULL, NULL);
+        if( *pcchValue && len>*pcchValue )
+            szValue[*pcchValue-1] = 0;
+        if( len )
+            len--;
         break;
     case MSIFIELD_NULL:
-        len = 1;
         if( *pcchValue > 0 )
             szValue[0] = 0;
         break;
@@ -404,10 +407,40 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
     return ret;
 }
 
-UINT WINAPI MsiRecordDataSize(MSIHANDLE hRecord, unsigned int iField)
+UINT MSI_RecordDataSize(MSIRECORD *rec, unsigned int iField)
 {
-    FIXME("%ld %d\n", hRecord, iField);
+    TRACE("%p %d\n", rec, iField);
+
+    if( iField > rec->count )
+        return 0;
+
+    switch( rec->fields[iField].type )
+    {
+    case MSIFIELD_INT:
+        return sizeof (INT);
+    case MSIFIELD_WSTR:
+        return lstrlenW( rec->fields[iField].u.szwVal );
+    case MSIFIELD_NULL:
+        break;
+    }
     return 0;
+}
+
+UINT WINAPI MsiRecordDataSize(MSIHANDLE handle, unsigned int iField)
+{
+    MSIRECORD *rec;
+    UINT ret;
+
+    TRACE("%ld %d\n", handle, iField);
+
+    rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
+    if( !rec )
+        return 0;
+    msiobj_lock( &rec->hdr );
+    ret = MSI_RecordDataSize( rec, iField);
+    msiobj_unlock( &rec->hdr );
+    msiobj_release( &rec->hdr );
+    return ret;
 }
 
 UINT MSI_RecordSetStringA( MSIRECORD *rec, unsigned int iField, LPCSTR szValue )
