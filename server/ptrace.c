@@ -206,7 +206,7 @@ int suspend_for_ptrace( struct thread *thread )
     return 0;
 }
 
-/* resume a thread after we have used pthread on it */
+/* resume a thread after we have used ptrace on it */
 void resume_after_ptrace( struct thread *thread )
 {
     if (thread->unix_pid == -1) return;
