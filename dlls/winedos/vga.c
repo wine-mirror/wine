@@ -627,12 +627,17 @@ void VGA_SetCursorPos(unsigned X,unsigned Y)
     SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
 }
 
-void VGA_GetCursorPos(unsigned*X,unsigned*Y)
+BOOL VGA_GetCursorPos(unsigned*X,unsigned*Y)
 {
     CONSOLE_SCREEN_BUFFER_INFO info;
-    GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
-    if (X) *X=info.dwCursorPosition.X;
-    if (Y) *Y=info.dwCursorPosition.Y;
+    if(!GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info))
+    {
+        return FALSE;
+    } else {
+        if (X) *X=info.dwCursorPosition.X;
+        if (Y) *Y=info.dwCursorPosition.Y;
+        return TRUE;
+    }
 }
 
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
@@ -642,6 +647,9 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
     SMALL_RECT dest;
     unsigned XR, YR;
     char *dat;
+
+    if(!VGA_GetAlphaMode(&XR, &YR))
+        return;
 
     EnterCriticalSection(&vga_lock);
 
@@ -654,7 +662,6 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
     dest.Top=Y;
     dest.Bottom=Y;
 
-    VGA_GetAlphaMode(&XR, &YR);
     dat = VGA_AlphaBuffer() + ((XR*Y + X) * 2);
     while (count--) {
         dest.Left = X + count;
@@ -688,9 +695,13 @@ void VGA_PutChar(BYTE ascii)
 {
     unsigned width, height, x, y, nx, ny;
 
+    if(!VGA_GetAlphaMode(&width, &height)) {
+        WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
+        return;
+    }
+
     EnterCriticalSection(&vga_lock);
 
-    VGA_GetAlphaMode(&width, &height);
     VGA_GetCursorPos(&x, &y);
 
     switch(ascii) {
@@ -753,10 +764,7 @@ BOOL VGA_ClearText(unsigned row1, unsigned col1,
 
     /* return if we fail to get the height and width of the window */
     if(!VGA_GetAlphaMode(&width, &height))
-    {
-        ERR("failed\n");
         return FALSE;
-    }
 
     TRACE("dat = %p, width = %d, height = %d\n", dat, width, height);
 
@@ -794,17 +802,20 @@ void VGA_ScrollDownText(unsigned row1, unsigned col1,
     FIXME("not implemented\n");
 }
 
-void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
+BOOL VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 {
     unsigned width, height, x, y;
     char *dat;
 
-    VGA_GetAlphaMode(&width, &height);
-    VGA_GetCursorPos(&x, &y);
+    if(!VGA_GetAlphaMode(&width, &height) || !VGA_GetCursorPos(&x, &y))
+        return FALSE;
+
     dat = VGA_AlphaBuffer() + ((width*y + x) * 2);
 
     *ascii = dat[0];
     *attr = dat[1];
+
+    return TRUE;
 }
 
 

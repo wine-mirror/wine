@@ -489,7 +489,10 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
            {
                 BYTE ascii, attr;
                 TRACE("Read Character and Attribute at Cursor Position\n");
-                VGA_GetCharacterAtCursor(&ascii, &attr);
+                if(!VGA_GetCharacterAtCursor(&ascii, &attr)) {
+                    ascii = 0;
+                    attr = 0;
+                }
                 SET_AL( context, ascii );
                 SET_AH( context, attr );
             }
@@ -845,6 +848,6 @@ void WINAPI DOSVM_PutChar(BYTE ascii)
   TRACE("char: 0x%02x(%c)\n", ascii, ascii);
 
   VGA_PutChar(ascii);
-  VGA_GetCursorPos(&xpos, &ypos);
-  BIOS_SetCursorPos(data, 0, xpos, ypos);
+  if(VGA_GetCursorPos(&xpos, &ypos))
+      BIOS_SetCursorPos(data, 0, xpos, ypos);
 }
