@@ -9,6 +9,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	mciwnd.c \
 	msvideo_main.c \
 	drawdib.c
 

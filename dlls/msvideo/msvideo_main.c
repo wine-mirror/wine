@@ -1182,23 +1182,3 @@ LRESULT WINAPI ICClose16(HIC16 hic) {
 	return ICClose(hic);
 }
 
-/***********************************************************************
- *		MCIWndCreate		[MSVFW32.@]
- *		MCIWndCreateA		[MSVFW32.@]
- */
-HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
-                      DWORD dwStyle,LPCSTR szFile)
-{
-	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
-	return 0;
-}
-
-/***********************************************************************
- *		MCIWndCreateW		[MSVFW32.@]
- */
-HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
-                      DWORD dwStyle,LPCWSTR szFile)
-{
-	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
-	return 0;
-}

@@ -447,7 +447,7 @@ mpr/libmpr.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msacm/libmsacm32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msnet32/libmsnet32.@LIBEXT@: libntdll.@LIBEXT@
 msvcrt/libmsvcrt.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-msvideo/libmsvfw32.@LIBEXT@: libwinmm.@LIBEXT@ libversion.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+msvideo/libmsvfw32.@LIBEXT@: libwinmm.@LIBEXT@ libcomctl32.@LIBEXT@ libversion.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 odbc32/libodbc32.@LIBEXT@: libntdll.@LIBEXT@
 ole32/libole32.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ librpcrt4.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 oleaut32/liboleaut32.@LIBEXT@: libole32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
