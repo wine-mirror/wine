@@ -375,10 +375,26 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 	
     	ossdev->bOutputEnabled = ((trigger & PCM_ENABLE_OUTPUT) == PCM_ENABLE_OUTPUT);
     	ossdev->bInputEnabled  = ((trigger & PCM_ENABLE_INPUT) == PCM_ENABLE_INPUT);
+
+        /* If we do not have full duplex, but they opened RDWR 
+        ** (as you have to in order for an mmap to succeed)
+        ** then we start out with input off
+        */
+        if (ossdev->open_access == O_RDWR && !ossdev->full_duplex && 
+            ossdev->bInputEnabled && ossdev->bOutputEnabled) {
+    	    ossdev->bInputEnabled  = FALSE;
+            trigger &= ~PCM_ENABLE_INPUT;
+	    ioctl(fd, SNDCTL_DSP_SETTRIGGER, &trigger);
+        }
     } else {
     	ossdev->bOutputEnabled = TRUE;	/* OSS enables by default */
     	ossdev->bInputEnabled  = TRUE;	/* OSS enables by default */
     }
+
+    if (ossdev->open_access == O_RDONLY)
+        ossdev->bOutputEnabled = FALSE;
+    if (ossdev->open_access == O_WRONLY)
+        ossdev->bInputEnabled = FALSE;
 
     return MMSYSERR_NOERROR;
 

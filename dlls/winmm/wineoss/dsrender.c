@@ -735,6 +735,7 @@ static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 
     /* make sure the card doesn't start playing before we want it to */
     WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
+    WOutDev[This->wDevID].ossdev->bInputEnabled = FALSE;
     enable = getEnables(WOutDev[This->wDevID].ossdev);
     if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
@@ -815,6 +816,7 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
     *ppbBuffer          = (*ippdsdb)->mapping;
 
     /* some drivers need some extra nudging after mapping */
+    WOutDev[This->wDevID].ossdev->bInputEnabled = FALSE;
     WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
     enable = getEnables(WOutDev[This->wDevID].ossdev);
     if (ioctl((*ippdsdb)->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
