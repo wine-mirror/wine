@@ -483,6 +483,29 @@ INT SYSPARAMS_GetMouseButtonSwap( void )
 }
 
 /***********************************************************************
+ *
+ *	SYSPARAMS_GetGUIFont
+ *
+ *  fills LOGFONT with 'default GUI font'.
+ */
+
+static void SYSPARAMS_GetGUIFont( LOGFONTA* plf )
+{
+	HFONT	hf;
+
+	memset( plf, 0, sizeof(LOGFONTA) );
+	hf = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
+	if ( GetObjectA( hf, sizeof(LOGFONTA), plf ) != sizeof(LOGFONTA) )
+	{
+		/*
+		 * GetObjectA() would be succeeded always
+		 * since this is a stock object
+		 */
+		ERR("GetObjectA() failed\n");
+	}
+}
+
+/***********************************************************************
  *		SystemParametersInfoA (USER32.@)
  *
  *     Each system parameter has flag which shows whether the parameter
@@ -1015,10 +1038,17 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETICONTITLELOGFONT:		/*     31 */
     {
 	LPLOGFONTA lpLogFont = (LPLOGFONTA)pvParam;
+	LOGFONTA	lfDefault;
 
-	/* from now on we always have an alias for MS Sans Serif */
+	/*
+	 * The 'default GDI fonts' seems to be returned.
+	 * If a returned font is not a correct font in your environment,
+	 * please try to fix objects/gdiobj.c at first.
+	 */
+	SYSPARAMS_GetGUIFont( &lfDefault );
 
-	GetProfileStringA( "Desktop", "IconTitleFaceName", "MS Sans Serif", 
+	GetProfileStringA( "Desktop", "IconTitleFaceName",
+			   lfDefault.lfFaceName, 
 			   lpLogFont->lfFaceName, LF_FACESIZE );
 	lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "IconTitleSize", 13 );
 	lpLogFont->lfWidth = 0;
@@ -1027,7 +1057,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	lpLogFont->lfItalic = FALSE;
 	lpLogFont->lfStrikeOut = FALSE;
 	lpLogFont->lfUnderline = FALSE;
-	lpLogFont->lfCharSet = ANSI_CHARSET;
+	lpLogFont->lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
 	lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
 	lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 	lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
@@ -1154,7 +1184,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 						(TWEAK_WineLook > WIN31_LOOK) ? 13 : 27 );
 
 	    GetProfileStringA( "Desktop", "MenuFont", 
-			       (TWEAK_WineLook > WIN31_LOOK) ? "MS Sans Serif": "System", 
+			       (TWEAK_WineLook > WIN31_LOOK) ? lpnm->lfCaptionFont.lfFaceName : "System", 
 			       lpLogFont->lfFaceName, LF_FACESIZE );
 
 	    lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "MenuFontSize", 13 );
@@ -1164,7 +1194,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	    lpLogFont->lfItalic = FALSE;
 	    lpLogFont->lfStrikeOut = FALSE;
 	    lpLogFont->lfUnderline = FALSE;
-	    lpLogFont->lfCharSet = ANSI_CHARSET;
+	    lpLogFont->lfCharSet = lpnm->lfCaptionFont.lfCharSet;
 	    lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
 	    lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 	    lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
