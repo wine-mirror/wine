@@ -275,6 +275,11 @@ NTSTATUS WINAPI NtQueryInformationToken(
             owner->Owner = sid;
         }
         break;
+    default:
+        {
+            ERR("Unhandled Token Information class!\n");
+            return STATUS_NOT_IMPLEMENTED;
+        }
     }
     return 0;
 }
