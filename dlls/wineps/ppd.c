@@ -548,7 +548,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     PPD *ppd;
     PPDTuple tuple;
 
-    TRACE("%s\n", fname);
+    TRACE("file '%s'\n", fname);
 
     if((fp = fopen(fname, "r")) == NULL) {
         WARN("Couldn't open ppd file '%s'\n", fname);

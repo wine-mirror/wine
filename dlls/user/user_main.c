@@ -223,7 +223,7 @@ static BOOL process_attach(void)
     tweak_init();
     if (!load_driver()) return FALSE;
 
-    /* Initialize system colors and metrics*/
+    /* Initialize system colors and metrics */
     SYSMETRICS_Init();
     SYSCOLOR_Init();
 
