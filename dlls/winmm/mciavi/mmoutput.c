@@ -194,9 +194,12 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 	if (wma->lpWaveFormat) {
 	    if (alb->numAudioBlocks >= alb->numAudioAllocated) {
 		alb->numAudioAllocated += 32;
-		wma->lpAudioIndex = HeapReAlloc(GetProcessHeap(), 0,
-						wma->lpAudioIndex,
-						alb->numAudioAllocated * sizeof(struct MMIOPos));
+		if (!wma->lpAudioIndex)
+		    wma->lpAudioIndex = HeapAlloc(GetProcessHeap(), 0,
+						  alb->numAudioAllocated * sizeof(struct MMIOPos));
+		else
+		    wma->lpAudioIndex = HeapReAlloc(GetProcessHeap(), 0, wma->lpAudioIndex,
+						    alb->numAudioAllocated * sizeof(struct MMIOPos));
 		if (!wma->lpAudioIndex) return FALSE;
 	    }
 	    wma->lpAudioIndex[alb->numAudioBlocks].dwOffset = mmck->dwDataOffset;
@@ -298,12 +301,7 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 	return FALSE;
     }
     wma->dwPlayableAudioBlocks = 0;
-    wma->lpAudioIndex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				  wma->dwPlayableVideoFrames * sizeof(struct MMIOPos));
-    if (!wma->lpAudioIndex) {
-	WARN("Can't alloc audio index array\n");
-	return FALSE;
-    }
+    wma->lpAudioIndex = NULL;
 
     alb.numAudioBlocks = alb.numVideoFrames = 0;
     alb.inVideoSize = alb.inAudioSize = 0;
@@ -484,6 +482,8 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
 
 void MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr)
 {
+    if (!wma->lpAudioIndex) 
+        return;
     TRACE("%ld (ec=%lu)\n", wma->lpAudioIndex[wma->dwCurrAudioBlock].dwOffset, wma->dwEventCount);
 
     /* push as many blocks as possible => audio gets priority */
