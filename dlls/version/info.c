@@ -351,6 +351,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, LPDWORD handle,
 	else
 	    len = 0xFFFFFFFF;
     }
+    SetLastError(0);
 END:
     FreeResource(hMem);
     FreeLibrary(hModule);
