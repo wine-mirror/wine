@@ -762,8 +762,6 @@ static void called_at_exit(void)
 #endif /* X_DISPLAY_MISSING */
     COLOR_Cleanup();
     WINSOCK_Shutdown();
-    /* FIXME: should check for other processes or threads */
-    DeleteCriticalSection( HEAP_SystemLock );
     CONSOLE_Close();
 }
 
