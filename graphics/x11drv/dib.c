@@ -3053,7 +3053,11 @@ static void X11DRV_DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
     DIBSECTION *dib = bmp->dib;
     INT effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
                                              : -dib->dsBm.bmHeight;
-    INT totalSize = dib->dsBmih.biSizeImage? dib->dsBmih.biSizeImage
+    /* use the biSizeImage data as the memory size only if we're dealing with a
+       compressed image where the value is set.  Otherwise, calculate based on
+       width * height */
+    INT totalSize = dib->dsBmih.biSizeImage && dib->dsBmih.biCompression != BI_RGB
+                         ? dib->dsBmih.biSizeImage
                          : dib->dsBm.bmWidthBytes * effHeight;
     DWORD old_prot;
 
@@ -3273,8 +3277,12 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 	  DIBSECTION *dib = bmp->dib;
 	  INT height = dib->dsBm.bmHeight >= 0 ?
 	    dib->dsBm.bmHeight : -dib->dsBm.bmHeight;
-	  INT size = dib->dsBmih.biSizeImage ?
-	    dib->dsBmih.biSizeImage : dib->dsBm.bmWidthBytes * height;
+	  /* same as above - only use biSizeImage as the correct size if it a
+	     compressed image and it's currently non-zero.  In other cases, use
+	     width * height as the value. */
+	  INT size = dib->dsBmih.biSizeImage && dib->dsBmih.biCompression != BI_RGB
+	    ? dib->dsBmih.biSizeImage
+	    : dib->dsBm.bmWidthBytes * height;
 	  if ( dib->dsBm.bmBits )
 	    {
 	      ((X11DRV_DIBSECTION *) bmp->dib)->selector = 
@@ -3393,8 +3401,10 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   bm.bmBitsPixel = bi->biBitCount;
   bm.bmBits = NULL;
   
-  /* Get storage location for DIB bits */
-  totalSize = bi->biSizeImage? bi->biSizeImage : bm.bmWidthBytes * effHeight;
+  /* Get storage location for DIB bits.  Only use biSizeImage if it's valid and
+     we're dealing with a compressed bitmap.  Otherwise, use width * height. */
+  totalSize = bi->biSizeImage && bi->biCompression != BI_RGB
+    ? bi->biSizeImage : bm.bmWidthBytes * effHeight;
   
   if (section)
     bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
