@@ -2204,6 +2204,7 @@ struct send_message_request
     struct request_header __header;
     thread_id_t     id;
     int             type;
+    int             flags;
     user_handle_t   win;
     unsigned int    msg;
     unsigned int    wparam;
@@ -2230,6 +2231,7 @@ enum message_type
     MSG_POSTED,
     MSG_HARDWARE
 };
+#define SEND_MSG_ABORT_IF_HUNG  0x01
 
 
 
@@ -3620,6 +3622,6 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 114
+#define SERVER_PROTOCOL_VERSION 115
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

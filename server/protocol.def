@@ -1564,6 +1564,7 @@ enum char_info_mode
 @REQ(send_message)
     thread_id_t     id;        /* thread id */
     int             type;      /* message type (see below) */
+    int             flags;     /* message flags (see below) */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    wparam;    /* parameters */
@@ -1586,6 +1587,7 @@ enum message_type
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
     MSG_HARDWARE        /* hardware message */
 };
+#define SEND_MSG_ABORT_IF_HUNG  0x01
 
 
 /* Get a message from the current queue */

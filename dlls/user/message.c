@@ -1663,12 +1663,14 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
     {
         req->id      = dest_tid;
         req->type    = info->type;
+        req->flags   = 0;
         req->win     = info->hwnd;
         req->msg     = info->msg;
         req->wparam  = info->wparam;
         req->lparam  = info->lparam;
         req->time    = GetCurrentTime();
         req->timeout = timeout;
+        if (info->flags & SMTO_ABORTIFHUNG) req->flags |= SEND_MSG_ABORT_IF_HUNG;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
         if ((res = wine_server_call( req )))
         {
@@ -1720,10 +1722,9 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,
            info->lparam, *result, status );
 
-    if (!status) return 1;
-    if (status == STATUS_TIMEOUT) SetLastError(0);  /* timeout */
-    else SetLastError( RtlNtStatusToDosError(status) );
-    return 0;
+    /* MSDN states that last error is 0 on timeout, but at least NT4 returns ERROR_TIMEOUT */
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

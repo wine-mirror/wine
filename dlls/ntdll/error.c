@@ -69,8 +69,9 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 
 /* conversion tables */
 
-static const DWORD table_00000103[31] =
+static const DWORD table_00000102[32] =
 {
+   ERROR_TIMEOUT,                          /* 00000102 (STATUS_TIMEOUT) */
    ERROR_IO_PENDING,                       /* 00000103 (STATUS_PENDING) */
    ERROR_MR_MID_NOT_FOUND,                 /* 00000104 */
    ERROR_MORE_DATA,                        /* 00000105 (STATUS_MORE_ENTRIES) */
@@ -1333,7 +1334,7 @@ static const DWORD table_c0150001[14] =
 
 static const struct error_table error_table[] =
 {
-    { 0x00000103, 0x00000122, table_00000103 },
+    { 0x00000102, 0x00000122, table_00000102 },
     { 0x40000002, 0x4000000e, table_40000002 },
     { 0x40000370, 0x40000371, table_40000370 },
     { 0x40020056, 0x40020057, table_40020056 },

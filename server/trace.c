@@ -1834,6 +1834,7 @@ static void dump_send_message_request( const struct send_message_request *req )
 {
     fprintf( stderr, " id=%04x,", req->id );
     fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );

@@ -125,6 +125,7 @@ struct msg_queue
     struct timeout_user   *timeout;       /* timeout for next timer to expire */
     struct thread_input   *input;         /* thread input descriptor */
     struct hook_table     *hooks;         /* hook table */
+    struct timeval         last_get_msg;  /* time of last get message call */
 };
 
 static void msg_queue_dump( struct object *obj, int verbose );
@@ -221,6 +222,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->timeout         = NULL;
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
+        gettimeofday( &queue->last_get_msg, NULL );
         for (i = 0; i < NB_MSG_KINDS; i++)
             queue->msg_list[i].first = queue->msg_list[i].last = NULL;
 
@@ -587,6 +589,24 @@ static void cleanup_results( struct msg_queue *queue )
 
     while (queue->recv_result)
         reply_message( queue, 0, STATUS_ACCESS_DENIED /*FIXME*/, 1, NULL, 0 );
+}
+
+/* check if the thread owning the queue is hung (not checking for messages) */
+static int is_queue_hung( struct msg_queue *queue )
+{
+    struct timeval now;
+    struct wait_queue_entry *entry;
+
+    gettimeofday( &now, NULL );
+    if (now.tv_sec - queue->last_get_msg.tv_sec <= 5)
+        return 0;  /* less than 5 seconds since last get message -> not hung */
+
+    for (entry = queue->obj.head; entry; entry = entry->next)
+    {
+        if (entry->thread->queue == queue)
+            return 0;  /* thread is waiting on queue -> not hung */
+    }
+    return 1;
 }
 
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -1253,6 +1273,12 @@ DECL_HANDLER(send_message)
         release_object( thread );
         return;
     }
+    if (recv_queue && (req->flags & SEND_MSG_ABORT_IF_HUNG) && is_queue_hung(recv_queue))
+    {
+        set_error( STATUS_TIMEOUT );
+        release_object( thread );
+        return;
+    }
 
     if ((msg = mem_alloc( sizeof(*msg) )))
     {
@@ -1326,6 +1352,7 @@ DECL_HANDLER(get_message)
     user_handle_t get_win = get_user_full_handle( req->get_win );
 
     if (!queue) return;
+    gettimeofday( &queue->last_get_msg, NULL );
 
     /* first of all release the hardware input lock if we own it */
     /* we'll grab it again if we find a hardware message */
