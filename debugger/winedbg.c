@@ -420,7 +420,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
         return TRUE;
     }
 
-    if (first_chance && !force && !DBG_IVAR(BreakOnFirstChance))
+    if (first_chance && !is_debug && !force && !DBG_IVAR(BreakOnFirstChance))
     {
         /* pass exception to program except for debug exceptions */
         *cont = is_debug ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED;
