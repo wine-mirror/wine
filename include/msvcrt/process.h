@@ -34,12 +34,25 @@ typedef unsigned short MSVCRT(wchar_t);
 #define _WAIT_CHILD      0
 #define _WAIT_GRANDCHILD 1
 
+#ifndef __stdcall
+# ifdef __i386__
+#  ifdef __GNUC__
+#   define __stdcall __attribute__((__stdcall__))
+#  elif defined(_MSC_VER)
+    /* Nothing needs to be done. __stdcall already exists */
+#  else
+#   error You need to define __stdcall for your compiler
+#  endif
+# else  /* __i386__ */
+#  define __stdcall
+# endif  /* __i386__ */
+#endif /* __stdcall */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (__cdecl *_beginthread_start_routine_t)(void *);
+typedef void (*_beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *_beginthreadex_start_routine_t)(void *);
 
 unsigned long _beginthread(_beginthread_start_routine_t,unsigned int,void*);
