@@ -3911,6 +3911,38 @@ VOID WINAPI PathUndecorateW(LPWSTR lpszPath)
 }
 
 /*************************************************************************
+ * PathUnExpandEnvStringsA [SHLWAPI.@]
+ *
+ * Substitute folder names in a path with their corresponding environment
+ * strings.
+ *
+ * PARAMS
+ *  pszPath  [I] Buffer containing the path to unexpand.
+ *  pszBuf   [O] Buffer to receive the unexpanded path.
+ *  cchBuf   [I] Size of pszBuf in characters.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI PathUnExpandEnvStringsA(LPCSTR pszPath, LPSTR pszBuf, UINT cchBuf)
+{
+    FIXME("(%s,%s,0x%08x)\n", debugstr_a(pszPath), debugstr_a(pszBuf), cchBuf);
+    return FALSE;
+}
+
+/*************************************************************************
+ * PathUnExpandEnvStringsW [SHLWAPI.@]
+ *
+ * Unicode version of PathUnExpandEnvStringsA.
+ */
+BOOL WINAPI PathUnExpandEnvStringsW(LPCWSTR pszPath, LPWSTR pszBuf, UINT cchBuf)
+{
+    FIXME("(%s,%s,0x%08x)\n", debugstr_w(pszPath), debugstr_w(pszBuf), cchBuf);
+    return FALSE;
+}
+
+/*************************************************************************
  * @     [SHLWAPI.440]
  *
  * Find localised or default web content in "%WINDOWS%\web\".

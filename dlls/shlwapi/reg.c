@@ -207,6 +207,150 @@ LONG WINAPI SHRegCloseUSKey(
 }
 
 /*************************************************************************
+ * SHRegCreateUSKeyA  [SHLWAPI.@]
+ *
+ * Create or open a user-specific registry key.
+ * 
+ * PARAMS
+ *  pszPath        [I] Key name to create or open.
+ *  samDesired     [I] Wanted security access.
+ *  hRelativeUSKey [I] Base path if pszPath is relative. NULL otherwise.
+ *  phNewUSKey     [O] Receives a handle to the new or openened key.
+ *  dwFlags        [I] Base key under which the key should be opened.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Nonzero error code from winerror.h
+ */
+LONG WINAPI SHRegCreateUSKeyA(LPCSTR pszPath, REGSAM samDesired, HUSKEY hRelativeUSKey,
+                              PHUSKEY phNewUSKey, DWORD dwFlags)
+{
+    FIXME("(%s, 0x%08lx, %p, %p, 0x%08lx) stub\n", debugstr_a(pszPath), samDesired,
+          hRelativeUSKey, phNewUSKey, dwFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegCreateUSKeyW  [SHLWAPI.@]
+ *
+ * See SHRegCreateUSKeyA.
+ */
+LONG WINAPI SHRegCreateUSKeyW(LPCWSTR pszPath, REGSAM samDesired, HUSKEY hRelativeUSKey,
+                              PHUSKEY phNewUSKey, DWORD dwFlags)
+{
+    FIXME("(%s, 0x%08lx, %p, %p, 0x%08lx) stub\n", debugstr_w(pszPath), samDesired,
+          hRelativeUSKey, phNewUSKey, dwFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegDeleteEmptyUSKeyA  [SHLWAPI.@]
+ *
+ * Delete an empty user-specific registry key.
+ *
+ * PARAMS
+ *  hUSKey      [I] Handle to an open registry key.
+ *  pszValue    [I] Empty key name.
+ *  delRegFlags [I] Flag that specifies the base from which to delete 
+ *                  the key.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Nonzero error code from winerror.h
+ */
+LONG WINAPI SHRegDeleteEmptyUSKeyA(HUSKEY hUSKey, LPCSTR pszValue, SHREGDEL_FLAGS delRegFlags)
+{
+    FIXME("(%p, %s, 0x%08x) stub\n", hUSKey, debugstr_a(pszValue), delRegFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegDeleteEmptyUSKeyW  [SHLWAPI.@]
+ *
+ * See SHRegDeleteEmptyUSKeyA.
+ */
+LONG WINAPI SHRegDeleteEmptyUSKeyW(HUSKEY hUSKey, LPCWSTR pszValue, SHREGDEL_FLAGS delRegFlags)
+{
+    FIXME("(%p, %s, 0x%08x) stub\n", hUSKey, debugstr_w(pszValue), delRegFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegDeleteUSValueA  [SHLWAPI.@]
+ *
+ * Delete a user-specific registry value.
+ *
+ * PARAMS
+ *  hUSKey      [I] Handle to an open registry key.
+ *  pszValue    [I] Specifies the value to delete.
+ *  delRegFlags [I] Flag that specifies the base of the key from which to
+ *                  delete the value.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Nonzero error code from winerror.h
+ */
+LONG WINAPI SHRegDeleteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, SHREGDEL_FLAGS delRegFlags)
+{
+    FIXME("(%p, %s, 0x%08x) stub\n", hUSKey, debugstr_a(pszValue), delRegFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegDeleteUSValueW  [SHLWAPI.@]
+ *
+ * See SHRegDeleteUSValueA.
+ */
+LONG WINAPI SHRegDeleteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, SHREGDEL_FLAGS delRegFlags)
+{
+    FIXME("(%p, %s, 0x%08x) stub\n", hUSKey, debugstr_w(pszValue), delRegFlags);
+    return ERROR_SUCCESS;
+}
+
+/*************************************************************************
+ * SHRegEnumUSValueA  [SHLWAPI.@]
+ *
+ * Enumerate values of a specified registry key.
+ *
+ * PARAMS
+ *  hUSKey           [I]   Handle to an open registry key.
+ *  dwIndex          [I]   Index of the value to be retrieved.
+ *  pszValueName     [O]   Buffer to receive the value name.
+ *  pcchValueNameLen [I]   Size of pszValueName in characters.
+ *  pdwType          [O]   Receives data type of the value.
+ *  pvData           [O]   Receives value data. May be NULL.
+ *  pcbData          [I/O] Size of pvData in bytes.
+ *  enumRegFlags     [I]   Flag that specifies the base key under which to
+ *                         enumerate values.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: Nonzero error code from winerror.h
+ */
+LONG WINAPI SHRegEnumUSValueA(HUSKEY hUSKey, DWORD dwIndex, LPSTR pszValueName,
+                              LPDWORD pcchValueNameLen, LPDWORD pdwType, LPVOID pvData,
+                              LPDWORD pcbData, SHREGENUM_FLAGS enumRegFlags)
+{
+    FIXME("(%p, 0x%08lx, %s, %p, %p, %p, %p, 0x%08x) stub\n", hUSKey, dwIndex,
+          debugstr_a(pszValueName), pcchValueNameLen, pdwType, pvData, pcbData, enumRegFlags);
+    return ERROR_INVALID_FUNCTION;
+}
+
+/*************************************************************************
+ * SHRegEnumUSValueW  [SHLWAPI.@]
+ *
+ * See SHRegEnumUSValueA.
+ */
+LONG WINAPI SHRegEnumUSValueW(HUSKEY hUSKey, DWORD dwIndex, LPWSTR pszValueName,
+                              LPDWORD pcchValueNameLen, LPDWORD pdwType, LPVOID pvData,
+                              LPDWORD pcbData, SHREGENUM_FLAGS enumRegFlags)
+{
+    FIXME("(%p, 0x%08lx, %s, %p, %p, %p, %p, 0x%08x) stub\n", hUSKey, dwIndex,
+          debugstr_w(pszValueName), pcchValueNameLen, pdwType, pvData, pcbData, enumRegFlags);
+    return ERROR_INVALID_FUNCTION;
+}
+
+/*************************************************************************
  *      SHRegQueryUSValueA	[SHLWAPI.@]
  *
  * Query a user-specific registry value.
