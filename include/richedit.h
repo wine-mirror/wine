@@ -59,6 +59,12 @@ extern "C" {
 
 typedef DWORD CALLBACK(* EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
 
+typedef struct _charrange
+{
+    LONG    cpMin;
+    LONG    cpMax;
+} CHARRANGE;
+
 typedef struct
 {
     DWORD		dwCookie;
