@@ -23,6 +23,7 @@ HHOOK
 HICON
 HINSTANCE
 HKL
+HPEN
 HMENU
 HMONITOR
 HRESULT
@@ -43,8 +44,17 @@ WPARAM
 
 %long # --forbidden
 
-HMODULE16
 int
+
+%long --extension
+
+INT16
+HANDLE16
+HMODULE16
+HINSTANCE16
+HWND16
+UINT16
+WPARAM16
 
 %longlong
 
@@ -123,6 +133,11 @@ WNDCLASSW *
 WNDENUMPROC
 WNDPROC
 va_list
+
+%ptr --extension
+
+DLGPROC16
+WNDPROC16
 
 %str
 

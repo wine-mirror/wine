@@ -439,6 +439,7 @@ foreach my $file ($options->c_files) {
 	       (defined($module16) || defined($module32)) &&
 	       $linkage ne "extern" && $statements)
 	    {
+		my $external_name;
 		my $name1;
 		my $name2;
 		
@@ -451,9 +452,11 @@ foreach my $file ($options->c_files) {
 			if($name1 =~ s/^$uc_module16\_//) { last; }
 		    }
 
-		    # FIXME: This special case is becuase of a very ugly kludge that should be fixed IMHO
 		    $name2 = $name1;
-		    $name2 = s/^(.*?)16_fn(.*?)$/$116_$2/;
+		    $name2 =~ s/(?:_)?16$//;
+		    $name2 =~ s/16_fn/16_/;
+
+		    $external_name = $external_name16;
 		} elsif(!defined($module16) && defined($module32)) {
 		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
 		    push @uc_modules32, "wine";
@@ -471,6 +474,8 @@ foreach my $file ($options->c_files) {
 
 		    $name2 = $name1;
 		    $name2 =~ s/AW$//;
+
+		    $external_name = $external_name32;
 		} else {
 		    my @uc_modules = split(/\s*\&\s*/, uc($module16));
 		    push @uc_modules, split(/\s*\&\s*/, uc($module32));
@@ -481,9 +486,14 @@ foreach my $file ($options->c_files) {
 		    }
 
 		    $name2 = $name1;
+		    $external_name = $external_name32;
 		}
 
-		if($documentation !~ /\b($internal_name|$name1|$name2)\b/) {
+		if(!defined($external_name)) {
+		    $external_name = $internal_name;
+		}
+
+		if($documentation !~ /\b(\Q$external_name\E|$internal_name|$name1|$name2)\b/) {
 		    $output->write("documentation: \\\n$documentation\n");
 		}
 
@@ -503,7 +513,7 @@ foreach my $file ($options->c_files) {
 		    for my $argument_documentation (@argument_documentations) {
 			$n++;
 			if($argument_documentation ne "") {
-			    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out)\].*?\*\/$/) {
+			    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out|\?\?\?)\].*?\*\/$/s) {
 				$output->write("argument $n documentation: \\\n$argument_documentation\n");
 			    }
 			}

@@ -289,6 +289,9 @@ sub new {
     return $self;
 }
 
+sub DESTROY {
+}
+
 sub options_set {
     my $self = shift;
 

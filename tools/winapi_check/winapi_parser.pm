@@ -123,11 +123,11 @@ sub parse_c_file {
 	}
 
 	my $documentation;
-	my @argument_documentations;
+	my @argument_documentations = ();
 	{
 	    my $n = $#comments;
 	    while($n >= 0 && ($comments[$n] !~ /^\/\*\*/ ||
-			      $comments[$n] =~ /^\/\*\*+\//)) 
+			      $comments[$n] =~ /^\/\*\*+\/$/)) 
 	    {
 		$n--;
 	    }
@@ -135,6 +135,10 @@ sub parse_c_file {
 	    if(defined($comments[$n]) && $n >= 0) {
 		$documentation = $comments[$n];
 		for(my $m=$n+1; $m <= $#comments; $m++) {
+		    if($comments[$m] =~ /^\/\*\*+\/$/) {
+			@argument_documentations = ();
+			next;
+		    }
 		    push @argument_documentations, $comments[$m];
 		}
 	    } else {

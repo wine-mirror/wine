@@ -31,12 +31,17 @@ ULONG_PTR
 
 %long # --forbidden
 
+int
+
+%long --extension
+
 BOOL16
 HGLOBAL16
 HINSTANCE16
 HMODULE16
+HRSRC16
+HTASK16
 UINT16
-int
 
 %ptr
 
@@ -145,11 +150,8 @@ va_list *
 
 %ptr --extension
 
-BUILTIN16_DESCRIPTOR *
-
-%ptr # --forbidden
-
 FARPROC16
+BUILTIN16_DESCRIPTOR *
 SEGPTR
 
 %str

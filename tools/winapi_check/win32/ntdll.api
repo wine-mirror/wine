@@ -107,11 +107,13 @@ void *
 
 %ptr --extension
 
+EXCEPTION_FRAME **
 GUID *
 WCHAR *
 char *
 char ***
 enum __DEBUG_CLASS
+enum request
 va_list
 
 %str
