@@ -83,6 +83,7 @@ static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
+extern void VOLUME_CreateDevices(void);
 extern void VERSION_Init( const WCHAR *appname );
 extern void LOCALE_Init(void);
 
@@ -740,6 +741,9 @@ static BOOL process_init( char *argv[], char **environ )
 
     /* registry initialisation */
     SHELL_LoadRegistry();
+
+    /* Create device symlinks */
+    VOLUME_CreateDevices();
 
     /* global boot finished, the rest is process-local */
     SERVER_START_REQ( boot_done )

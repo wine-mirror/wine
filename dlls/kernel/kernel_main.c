@@ -50,7 +50,6 @@ extern void LOCALE_InitRegistry(void);
 extern void COMPUTERNAME_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
-extern void VOLUME_CreateDevices(void);
 /* memory/environ.c */
 extern void ENV_CopyStartupInformation(void);
 
@@ -126,9 +125,6 @@ static BOOL process_attach(void)
 
     /* Setup computer name */
     COMPUTERNAME_Init();
-
-    /* Create device symlinks */
-    VOLUME_CreateDevices();
 
     /* copy process information from ntdll */
     ENV_CopyStartupInformation();
