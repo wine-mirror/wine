@@ -133,13 +133,16 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
+    static const WCHAR  _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
+                                                'e','r','v','i','c','e','S','t',
+                                                'a','r','t','D','a','t','a',0};
     LPSERVICE_MAIN_FUNCTIONW fpMain;
     HANDLE wait;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpServiceArgVectors ;
 
     TRACE("(%p)\n", servent);
-    wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+    wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
     if(wait == 0)
     {
         ERR("Couldn't find wait semaphore\n");
@@ -603,37 +606,45 @@ BOOL WINAPI
 StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
-    CHAR path[MAX_PATH],str[MAX_PATH];
+    static const WCHAR  _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
+                                                'e','r','v','i','c','e','S','t',
+                                                'a','r','t','D','a','t','a',0};
+                                                
+    static const WCHAR  _WaitServiceStartW[]  = {'A','D','V','A','P','I','_','W',
+                                                'a','i','t','S','e','r','v','i',
+                                                'c','e','S','t','a','r','t',0};
+    static const WCHAR  _ImagePathW[]  = {'I','m','a','g','e','P','a','t','h',0};
+                                                
+    WCHAR path[MAX_PATH],str[MAX_PATH];
     DWORD type,size;
     long r;
     HANDLE data,wait;
     PROCESS_INFORMATION procinfo;
-    STARTUPINFOA startupinfo;
-
+    STARTUPINFOW startupinfo;
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
 
     size = sizeof str;
-    r = RegQueryValueExA(hService, "ImagePath", NULL, &type, (LPVOID)str, &size);
+    r = RegQueryValueExW(hService, _ImagePathW, NULL, &type, (LPVOID)str, &size);
     if (r!=ERROR_SUCCESS)
         return FALSE;
-    ExpandEnvironmentStringsA(str,path,sizeof path);
+    ExpandEnvironmentStringsW(str,path,sizeof path);
 
-    TRACE("Starting service %s\n", debugstr_a(path) );
+    TRACE("Starting service %s\n", debugstr_w(path) );
 
-    data = CreateSemaphoreA(NULL,1,1,"ADVAPI32_ServiceStartData");
+    data = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
     if (!data)
     {
-        data = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+        data = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
         if(data == 0)
         {
             ERR("Couldn't create data semaphore\n");
             return FALSE;
         }
     }
-    wait = CreateSemaphoreA(NULL,0,1,"ADVAPI32_WaitServiceStart");
+    wait = CreateSemaphoreW(NULL,0,1,_WaitServiceStartW);
     {
-        wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
+        wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
         if(wait == 0)
         {
             ERR("Couldn't create wait semaphore\n");
@@ -658,10 +669,10 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     start_dwNumServiceArgs    = dwNumServiceArgs;
     start_lpServiceArgVectors = (LPWSTR *)lpServiceArgVectors;
 
-    ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
-    startupinfo.cb = sizeof(STARTUPINFOA);
+    ZeroMemory(&startupinfo,sizeof(STARTUPINFOW));
+    startupinfo.cb = sizeof(STARTUPINFOW);
 
-    r = CreateProcessA(path,
+    r = CreateProcessW(path,
                    NULL,
                    NULL,  /* process security attribs */
                    NULL,  /* thread security attribs */
