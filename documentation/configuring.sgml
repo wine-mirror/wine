@@ -959,6 +959,22 @@ ln -s /dev/ttyS0 com1
 ln -s /dev/lp0 lpt1
           </programlisting>
         </para>
+        <para>
+          Windows shares can are mapped into the <filename>unc/</filename>
+          directory so anything trying to access
+          <filename>\\machinename\some\dir\and\file</filename> will look in
+          <filename>~/.wine/dosdevices/unc/machinename/some/dir/and/file</filename>. 
+          For example, if you used Samba to mount
+          <filename>\\machinename\some</filename> on
+          <filename>/mnt/smb/machinename/some</filename> then you can do
+
+          <programlisting>
+            ln -s /mnt/smb/machinename/some unc/machinename/some
+          </programlisting>
+
+          to make it available in wine (don't forget to create the unc
+          directory if it doesn't alrady exist).
+         </para>
       </sect2>
 
       <sect2>
