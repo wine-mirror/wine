@@ -1255,13 +1255,36 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
                                inherit, flags, startup_info, info, unixdir );
         break;
     case BINARY_UNKNOWN:
-        /* check for .com extension */
-        if ((p = strrchr( name, '.' )) && !FILE_strcasecmp( p, ".com" ))
+        /* check for .com or .bat extension */
+        if ((p = strrchr( name, '.' )))
         {
-            TRACE( "starting %s as DOS binary\n", debugstr_a(name) );
-            retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
-                                   inherit, flags, startup_info, info, unixdir );
-            break;
+            if (!FILE_strcasecmp( p, ".com" ))
+            {
+                TRACE( "starting %s as DOS binary\n", debugstr_a(name) );
+                retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
+                                       inherit, flags, startup_info, info, unixdir );
+                break;
+            }
+            if (!FILE_strcasecmp( p, ".bat" ))
+            {
+                char comspec[MAX_PATH];
+                if (GetEnvironmentVariableA("COMSPEC", comspec, sizeof(comspec)))
+                {
+                    char *newcmdline, *q = strchr(cmd_line, ' ');
+                    if (!q) q = "";
+                    if ((newcmdline = HeapAlloc( GetProcessHeap(), 0,
+                                                 strlen(comspec) + strlen(name) + strlen(q) + 8)))
+                    {
+                        sprintf( newcmdline, "%s /c %s%s", comspec, name, q );
+                        TRACE( "starting %s as batch binary: %s\n",
+                               debugstr_a(name), debugstr_a(newcmdline) );
+                        retv = CreateProcessA( comspec, newcmdline, process_attr, thread_attr,
+                                               inherit, flags, env, cur_dir, startup_info, info );
+                        HeapFree( GetProcessHeap(), 0, newcmdline );
+                        break;
+                    }
+                }
+            }
         }
         /* fall through */
     case BINARY_UNIX_EXE:
