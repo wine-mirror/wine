@@ -30,6 +30,7 @@
 #include "debugtools.h"
 #include "drive.h"
 #include "heap.h"
+#include "input.h"
 #include "keyboard.h"
 #include "message.h"
 #include "mouse.h"
@@ -270,14 +271,32 @@ static void EVENT_ProcessEvent( XEvent *event )
     }
     if ((event->type == DGAKeyPressEventType) ||
 	(event->type == DGAKeyReleaseEventType)) {
-      /* Out of laziness, use the helper function to do the conversion :-) */
+      /* Fill a XKeyEvent to send to EVENT_Key */
       XKeyEvent ke;
+      XDGAKeyEvent *evt = (XDGAKeyEvent *) event;
 
       TRACE("DGAKeyPress/ReleaseEvent received.\n");
       
-      XDGAKeyEventToXKeyEvent((XDGAKeyEvent *) event, &ke);
+      if (evt->type == DGAKeyReleaseEventType)
+	ke.type = KeyRelease;
+      else
+	ke.type = KeyPress;
+      ke.serial = evt->serial;
+      ke.send_event = FALSE;
+      ke.display = evt->display;
+      ke.window = 0;
+      ke.root = 0;
+      ke.subwindow = 0;
+      ke.time = evt->time;
+      ke.x = PosX;
+      ke.y = PosY;
+      ke.x_root = -1;
+      ke.y_root = -1;
+      ke.state = evt->state;
+      ke.keycode = evt->keycode;
+      ke.same_screen = TRUE;
       
-      EVENT_Key( DGAhwnd, &ke );
+      X11DRV_KEYBOARD_HandleEvent(NULL, &ke);
       return;
     }
   }
