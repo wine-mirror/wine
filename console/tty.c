@@ -31,7 +31,7 @@ void TTY_Write(char output, int fg, int bg, int attribute)
    fprintf(driver.console_out, "%c", output);
 }
 
-void TTY_GetKeystroke(char *ch, char *scan)
+void TTY_GetKeystroke(char *scan, char *ch)
 {
    /* All we have are character input things, nothing for extended */
    /* This is just the TTY driver, after all. We'll cope. */
