@@ -121,12 +121,26 @@ HRESULT WINAPI DispGetParam(
 	VARIANT    *pvarResult,  /* [out] */
 	UINT       *puArgErr)    /* [out] */
 {
-    HRESULT hr = E_FAIL;
+    /* position is counted backwards */
+    UINT pos;
+    HRESULT hr;
 
-    /**
-     * TODO : Call VariantChangeTypeEx with LCID 0 (system)
-     */
+    TRACE("position=%d, cArgs=%d, cNamedArgs=%d\n",
+          position, pdispparams->cArgs, pdispparams->cNamedArgs);
+    if (position < pdispparams->cArgs) {
+      /* positional arg? */
+      pos = pdispparams->cArgs - position - 1;
+    } else {
+      /* FIXME: is this how to handle named args? */
+      for (pos=0; pos<pdispparams->cNamedArgs; pos++)
+        if (pdispparams->rgdispidNamedArgs[pos] == position) break;
 
-    FIXME("Coercion of arguments not implemented\n");
-    return (hr);
+      if (pos==pdispparams->cNamedArgs)
+        return DISP_E_PARAMNOTFOUND;
+    }
+    hr = VariantChangeType(pvarResult,
+                           &pdispparams->rgvarg[pos],
+                           0, vtTarg);
+    if (hr == DISP_E_TYPEMISMATCH) *puArgErr = pos;
+    return hr;
 }
