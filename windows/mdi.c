@@ -2243,7 +2243,8 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
               WIN_ReleaseWndPtr(Wnd);
 	      return;
 	  }
-	  UnionRect( &childRect, &pWnd->rectWindow, &childRect );
+          if( pWnd->dwStyle & WS_VISIBLE )
+              UnionRect( &childRect, &pWnd->rectWindow, &childRect );
     } 
     WIN_ReleaseWndPtr(pWnd);
     UnionRect( &childRect, &clientRect, &childRect );
