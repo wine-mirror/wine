@@ -229,6 +229,7 @@ typedef struct
 
 /* Initialize a process; called from the new process context */
 @REQ(init_process)
+    void*        peb;          /* addr of PEB */
     void*        ldt_copy;     /* addr of LDT copy */
 @REPLY
     int          create_flags; /* creation flags */
@@ -257,8 +258,6 @@ typedef struct
     obj_handle_t exe_file;     /* file handle for main exe */
     int          gui;          /* is it a GUI process? */
     VARARG(filename,unicode_str); /* file name of main exe */
-@REPLY
-    int          debugged;     /* being debugged? */
 @END
 
 
@@ -302,7 +301,6 @@ typedef struct
     obj_handle_t handle;           /* process handle */
 @REPLY
     process_id_t pid;              /* server process id */
-    int          debugged;         /* debugged? */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     int          process_affinity; /* process affinity mask */

@@ -617,7 +617,8 @@ static BOOL process_init( char *argv[], char **environ )
     /* Retrieve startup info from the server */
     SERVER_START_REQ( init_process )
     {
-        req->ldt_copy  = &wine_ldt_copy;
+        req->peb      = peb;
+        req->ldt_copy = &wine_ldt_copy;
         if ((ret = !wine_server_call_err( req )))
         {
             main_exe_file     = reply->exe_file;

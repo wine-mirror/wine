@@ -179,9 +179,9 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
-static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
+static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
-    int ret;
+    NTSTATUS ret;
     HANDLE handle = 0;
 
     SERVER_START_REQ( queue_exception_event )
@@ -189,10 +189,10 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
         req->first   = first_chance;
         wine_server_add_data( req, context, sizeof(*context) );
         wine_server_add_data( req, rec, sizeof(*rec) );
-        if (!wine_server_call(req)) handle = reply->handle;
+        if (!(ret = wine_server_call( req ))) handle = reply->handle;
     }
     SERVER_END_REQ;
-    if (!handle) return 0;  /* no debugger present or other error */
+    if (ret) return ret;
 
     /* No need to wait on the handle since the process gets suspended
      * once the event is passed to the debugger, so when we get back
@@ -433,51 +433,43 @@ inline static BOOL check_resource_write( const EXCEPTION_RECORD *rec )
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-    int 		status;
-    int			loop = 0;
+    NTSTATUS status;
 
     if (check_resource_write( epointers->ExceptionRecord )) return EXCEPTION_CONTINUE_EXECUTION;
 
-    for (loop = 0; loop <= 1; loop++)
+    if (!NtCurrentTeb()->Peb->BeingDebugged)
     {
-	/* send a last chance event to the debugger */
-	status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
-	switch (status)
-	{
-	case DBG_CONTINUE:
-	    return EXCEPTION_CONTINUE_EXECUTION;
-	case DBG_EXCEPTION_NOT_HANDLED:
-	    TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
-	    break; /* not reached */
-	case 0: /* no debugger is present */
-	    if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
-	    {
-		/* do not launch the debugger on ^C, simply terminate the process */
-		TerminateProcess( GetCurrentProcess(), 1 );
-	    }
-	    /* second try, the debugger isn't present... */
-	    if (loop == 1) return EXCEPTION_EXECUTE_HANDLER;
-	    break;
-	default:
-	    FIXME("Unsupported yet debug continue value %d (please report)\n", status);
-	    return EXCEPTION_EXECUTE_HANDLER;
-	}
+        if (epointers->ExceptionRecord->ExceptionCode == CONTROL_C_EXIT)
+        {
+            /* do not launch the debugger on ^C, simply terminate the process */
+            TerminateProcess( GetCurrentProcess(), 1 );
+        }
 
-	/* should only be there when loop == 0 */
+        if (top_filter)
+        {
+            DWORD ret = top_filter( epointers );
+            if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
+        }
 
-	if (top_filter)
-	{
-	    DWORD ret = top_filter( epointers );
-	    if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
-	}
+        /* FIXME: Should check the current error mode */
 
-	/* FIXME: Should check the current error mode */
-
-	if (!start_debugger_atomic( epointers ))
-	    return EXCEPTION_EXECUTE_HANDLER;
-	/* now that we should have a debugger attached, try to resend event */
+        if (!start_debugger_atomic( epointers ) || !NtCurrentTeb()->Peb->BeingDebugged)
+            return EXCEPTION_EXECUTE_HANDLER;
     }
 
+    /* send a last chance event to the debugger */
+    status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
+    switch (status)
+    {
+    case DBG_CONTINUE:
+        return EXCEPTION_CONTINUE_EXECUTION;
+    case DBG_EXCEPTION_NOT_HANDLED:
+        TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
+        break; /* not reached */
+    default:
+        FIXME("Unhandled error on debug event: %lx\n", status);
+        break;
+    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 

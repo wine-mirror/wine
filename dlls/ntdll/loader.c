@@ -1820,7 +1820,6 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
         req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         wine_server_add_data( req, main_exe_name->Buffer, main_exe_name->Length );
         wine_server_call( req );
-        peb->BeingDebugged = reply->debugged;
     }
     SERVER_END_REQ;
 

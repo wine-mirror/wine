@@ -451,6 +451,7 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 
 static void dump_init_process_request( const struct init_process_request *req )
 {
+    fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " ldt_copy=%p", req->ldt_copy );
 }
 
@@ -485,11 +486,6 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " gui=%d,", req->gui );
     fprintf( stderr, " filename=" );
     dump_varargs_unicode_str( cur_size );
-}
-
-static void dump_init_process_done_reply( const struct init_process_done_reply *req )
-{
-    fprintf( stderr, " debugged=%d", req->debugged );
 }
 
 static void dump_init_thread_request( const struct init_thread_request *req )
@@ -541,7 +537,6 @@ static void dump_get_process_info_request( const struct get_process_info_request
 static void dump_get_process_info_reply( const struct get_process_info_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
-    fprintf( stderr, " debugged=%d,", req->debugged );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " process_affinity=%d,", req->process_affinity );
@@ -2738,7 +2733,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_init_process_reply,
     (dump_func)dump_get_startup_info_reply,
-    (dump_func)dump_init_process_done_reply,
+    (dump_func)0,
     (dump_func)dump_init_thread_reply,
     (dump_func)dump_terminate_process_reply,
     (dump_func)dump_terminate_thread_reply,

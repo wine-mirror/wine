@@ -236,6 +236,7 @@ struct boot_done_reply
 struct init_process_request
 {
     struct request_header __header;
+    void*        peb;
     void*        ldt_copy;
 };
 struct init_process_reply
@@ -278,7 +279,6 @@ struct init_process_done_request
 struct init_process_done_reply
 {
     struct reply_header __header;
-    int          debugged;
 };
 
 
@@ -342,7 +342,6 @@ struct get_process_info_reply
 {
     struct reply_header __header;
     process_id_t pid;
-    int          debugged;
     int          exit_code;
     int          priority;
     int          process_affinity;
@@ -3668,6 +3667,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 125
+#define SERVER_PROTOCOL_VERSION 126
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

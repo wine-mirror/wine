@@ -271,6 +271,7 @@ struct thread *create_process( int fd )
     process->idle_event      = NULL;
     process->queue           = NULL;
     process->atom_table      = NULL;
+    process->peb             = NULL;
     process->ldt_copy        = NULL;
     process->exe.next        = NULL;
     process->exe.prev        = NULL;
@@ -720,30 +721,6 @@ void enum_processes( int (*cb)(struct process*, void*), void *user )
 }
 
 
-/* get all information about a process */
-static void get_process_info( struct process *process, struct get_process_info_reply *reply )
-{
-    reply->pid              = get_process_id( process );
-    reply->debugged         = (process->debugger != 0);
-    reply->exit_code        = process->exit_code;
-    reply->priority         = process->priority;
-    reply->process_affinity = process->affinity;
-    reply->system_affinity  = 1;
-}
-
-/* set all information about a process */
-static void set_process_info( struct process *process,
-                              const struct set_process_info_request *req )
-{
-    if (req->mask & SET_PROCESS_INFO_PRIORITY)
-        process->priority = req->priority;
-    if (req->mask & SET_PROCESS_INFO_AFFINITY)
-    {
-        if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
-        else process->affinity = req->affinity;
-    }
-}
-
 /* read data from a process memory space */
 /* len is the total size (in ints) */
 static int read_process_memory( struct process *process, const int *addr, size_t len, int *dest )
@@ -788,17 +765,18 @@ static int check_process_write_access( struct thread *thread, int *addr, size_t 
 /* write data to a process memory space */
 /* len is the total size (in ints), max is the size we can actually read from the input buffer */
 /* we check the total size for write permissions */
-static void write_process_memory( struct process *process, int *addr, size_t len,
-                                  unsigned int first_mask, unsigned int last_mask, const int *src )
+static int write_process_memory( struct process *process, int *addr, size_t len,
+                                 unsigned int first_mask, unsigned int last_mask, const int *src )
 {
     struct thread *thread = process->thread_list;
+    int ret = 0;
 
     assert( !((unsigned int)addr % sizeof(int) ));  /* address must be aligned */
 
     if (!thread)  /* process is dead */
     {
         set_error( STATUS_ACCESS_DENIED );
-        return;
+        return 0;
     }
     if (suspend_for_ptrace( thread ))
     {
@@ -823,10 +801,23 @@ static void write_process_memory( struct process *process, int *addr, size_t len
 
         /* last word is special too */
         if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
+        ret = 1;
 
     done:
         resume_after_ptrace( thread );
     }
+    return ret;
+}
+
+/* set the debugged flag in the process PEB */
+int set_process_debug_flag( struct process *process, int flag )
+{
+    int mask = 0, data = 0;
+
+    /* BeingDebugged flag is the byte at offset 2 in the PEB */
+    memset( (char *)&mask + 2, 0xff, 1 );
+    memset( (char *)&data + 2, flag, 1 );
+    return write_process_memory( process, process->peb, 1, mask, mask, &data );
 }
 
 /* take a snapshot of currently running processes */
@@ -965,7 +956,18 @@ DECL_HANDLER(init_process)
         fatal_protocol_error( current, "init_process: called twice\n" );
         return;
     }
+    if (!req->peb || (unsigned int)req->peb % sizeof(int))
+    {
+        fatal_protocol_error( current, "init_process: bad peb address\n" );
+        return;
+    }
+    if (!req->ldt_copy || (unsigned int)req->ldt_copy % sizeof(int))
+    {
+        fatal_protocol_error( current, "init_process: bad ldt_copy address\n" );
+        return;
+    }
     reply->info_size = 0;
+    current->process->peb = req->peb;
     current->process->ldt_copy = req->ldt_copy;
     current->process->startup_info = init_process( reply );
 }
@@ -1002,7 +1004,7 @@ DECL_HANDLER(init_process_done)
 
     if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
     if (current->suspend + process->suspend > 0) stop_thread( current );
-    reply->debugged = (process->debugger != 0);
+    if (process->debugger) set_process_debug_flag( process, 1 );
 }
 
 /* open a handle to a process */
@@ -1037,7 +1039,11 @@ DECL_HANDLER(get_process_info)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        get_process_info( process, reply );
+        reply->pid              = get_process_id( process );
+        reply->exit_code        = process->exit_code;
+        reply->priority         = process->priority;
+        reply->process_affinity = process->affinity;
+        reply->system_affinity  = 1;
         release_object( process );
     }
 }
@@ -1049,7 +1055,12 @@ DECL_HANDLER(set_process_info)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
     {
-        set_process_info( process, req );
+        if (req->mask & SET_PROCESS_INFO_PRIORITY) process->priority = req->priority;
+        if (req->mask & SET_PROCESS_INFO_AFFINITY)
+        {
+            if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
+            else process->affinity = req->affinity;
+        }
         release_object( process );
     }
 }

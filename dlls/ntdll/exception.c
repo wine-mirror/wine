@@ -130,6 +130,8 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
     int ret;
     HANDLE handle = 0;
 
+    if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
+
     SERVER_START_REQ( queue_exception_event )
     {
         req->first   = first_chance;
@@ -138,7 +140,7 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
         if (!wine_server_call( req )) handle = reply->handle;
     }
     SERVER_END_REQ;
-    if (!handle) return 0;  /* no debugger present or other error */
+    if (!handle) return 0;
 
     /* No need to wait on the handle since the process gets suspended
      * once the event is passed to the debugger, so when we get back

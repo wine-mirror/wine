@@ -436,6 +436,12 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         resume_process( process );
         return 0;
     }
+    if (!set_process_debug_flag( process, 1 ))
+    {
+        process->debugger = NULL;
+        resume_process( process );
+        return 0;
+    }
     return 1;
 
  error:
@@ -480,8 +486,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
 
     /* remove relationships between process and its debugger */
     process->debugger = NULL;
-    release_object( debugger->debug_ctx );
-    debugger->debug_ctx = NULL;
+    if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
     detach_process( process );
 
     /* from this function */

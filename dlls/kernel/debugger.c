@@ -334,14 +334,7 @@ void WINAPI DebugBreak16(
  */
 BOOL WINAPI IsDebuggerPresent(void)
 {
-    BOOL ret = FALSE;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = GetCurrentProcess();
-        if (!wine_server_call_err( req )) ret = reply->debugged;
-    }
-    SERVER_END_REQ;
-    return ret;
+    return NtCurrentTeb()->Peb->BeingDebugged;
 }
 
 

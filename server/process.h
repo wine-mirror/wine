@@ -76,8 +76,8 @@ struct process
     struct atom_table   *atom_table;      /* pointer to local atom table */
     struct token        *token;           /* security token associated with this process */
     struct process_dll   exe;             /* main exe file */
+    void                *peb;             /* PEB address in client address space */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
-    void                *ldt_flags;       /* pointer to LDT flags in client addr space */
 };
 
 struct process_snapshot
@@ -107,6 +107,7 @@ extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
 extern int debugger_detach( struct process* process, struct thread* debugger );
+extern int set_process_debug_flag( struct process *process, int flag );
 
 extern void add_process_thread( struct process *process,
                                 struct thread *thread );
