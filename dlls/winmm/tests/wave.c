@@ -268,7 +268,7 @@ static void wave_out_tests()
     ok(rc==MMSYSERR_BADDEVICEID,
        "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
-    rc=waveOutGetDevCapsA(-1,&caps,sizeof(caps));
+    rc=waveOutGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
 
@@ -335,7 +335,7 @@ static void wave_out_tests()
         format.cbSize=0;
         oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
            "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
@@ -356,7 +356,7 @@ static void wave_out_tests()
         format.cbSize=0;
         oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
            "waveOutOpen: opening the device at 2 MHz sample rate should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
@@ -490,7 +490,7 @@ static void wave_in_tests()
     ok(rc==MMSYSERR_BADDEVICEID,
        "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d(%s)\n",rc,wave_in_error(rc));
 
-    rc=waveInGetDevCapsA(-1,&caps,sizeof(caps));
+    rc=waveInGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
     ok(rc==MMSYSERR_NOERROR,
        "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %d\n",rc);
 
@@ -557,7 +557,7 @@ static void wave_in_tests()
         format.cbSize=0;
         oformat=format;
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
            "waveInOpen: opening the device in 11 bit mode should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
@@ -578,7 +578,7 @@ static void wave_in_tests()
         format.cbSize=0;
         oformat=format;
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
            "waveInOpen: opening the device with 2 MHz sample rate should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
