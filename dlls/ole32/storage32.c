@@ -222,7 +222,7 @@ static IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
     IEnumSTATSTGImpl_Clone
 };
 
-
+extern IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
 
 
 
@@ -265,6 +265,10 @@ HRESULT WINAPI StorageBaseImpl_QueryInterface(
   else if (memcmp(&IID_IStorage, riid, sizeof(IID_IStorage)) == 0)
   {
     *ppvObject = (IStorage*)This;
+  }
+  else if (memcmp(&IID_IPropertySetStorage, riid, sizeof(IID_IPropertySetStorage)) == 0)
+  {
+    *ppvObject = (IStorage*)&This->pssVtbl;
   }
 
   /*
@@ -2214,6 +2218,7 @@ HRESULT StorageImpl_Construct(
    * Initialize the virtual function table.
    */
   This->lpVtbl = &Storage32Impl_Vtbl;
+  This->pssVtbl = &IPropertySetStorage_Vtbl;
   This->v_destructor = &StorageImpl_Destroy;
 
   /*

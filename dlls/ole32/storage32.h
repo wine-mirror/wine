@@ -207,6 +207,8 @@ struct StorageBaseImpl
   IStorageVtbl *lpVtbl;    /* Needs to be the first item in the struct
 			    * since we want to cast this in a Storage32 pointer */
 
+  IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
+
   /*
    * Reference count of this object
    */
@@ -300,6 +302,8 @@ struct StorageImpl
 {
   IStorageVtbl *lpVtbl;  /* Needs to be the first item in the struct
 			  * since we want to cast this in a Storage32 pointer */
+
+  IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
 
   /*
    * Declare the member of the Storage32BaseImpl class to allow

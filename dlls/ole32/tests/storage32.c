@@ -309,10 +309,126 @@ void test_open_storage(void)
     ok(r, "file didn't exist\n");
 }
 
+void test_storage_suminfo(void)
+{
+    static const WCHAR szDot[] = { '.',0 };
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL;
+    IPropertySetStorage *propset = NULL;
+    IPropertyStorage *ps = NULL;
+    HRESULT r;
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    /* create the file */
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | 
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    r = IStorage_QueryInterface( stg, &IID_IPropertySetStorage, (LPVOID) &propset );
+    ok(r == S_OK, "query interface failed\n");
+
+    /* delete it */
+    r = IPropertySetStorage_Delete( propset, &FMTID_SummaryInformation );
+    ok(r == STG_E_FILENOTFOUND, "deleted property set storage\n");
+
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+                                STGM_READ | STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == STG_E_FILENOTFOUND, "opened property set storage\n");
+
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_READ | STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
+
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_READ, &ps );
+    ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
+
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0, 0, &ps );
+    ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
+
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_WRITE|STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
+
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_CREATE|STGM_WRITE|STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
+
+    /* now try really creating a a property set */
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == S_OK, "failed to create property set storage\n");
+
+    if( ps )
+        IPropertyStorage_Release(ps);
+
+    /* now try creating the same thing again */
+    r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
+                                STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps );
+    ok(r == S_OK, "failed to create property set storage\n");
+    if( ps )
+        IPropertyStorage_Release(ps);
+
+    /* should be able to open it */
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
+    ok(r == S_OK, "open failed\n");
+    if(r == S_OK)
+        IPropertyStorage_Release(ps);
+
+    /* delete it */
+    r = IPropertySetStorage_Delete( propset, &FMTID_SummaryInformation );
+    ok(r == S_OK, "failed to delete property set storage\n");
+
+    /* try opening with an invalid FMTID */
+    r = IPropertySetStorage_Open( propset, NULL, 
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
+    ok(r == E_INVALIDARG, "open succeeded\n");
+    if(r == S_OK)
+        IPropertyStorage_Release(ps);
+
+    /* try a bad guid */
+    r = IPropertySetStorage_Open( propset, &IID_IStorage, 
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
+    ok(r == STG_E_FILENOTFOUND, "open succeeded\n");
+    if(r == S_OK)
+        IPropertyStorage_Release(ps);
+    
+
+    /* try some invalid flags */
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+            STGM_CREATE | STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
+    ok(r == STG_E_INVALIDFLAG, "open succeeded\n");
+    if(r == S_OK)
+        IPropertyStorage_Release(ps);
+
+    /* after deleting it, it should be gone */
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
+    ok(r == STG_E_FILENOTFOUND, "open failed\n");
+    if(r == S_OK)
+        IPropertyStorage_Release(ps);
+    printf("r = %08lx\n",r);
+
+    r = IPropertySetStorage_Release( propset );
+    ok(r == 1, "ref count wrong\n");
+
+    r = IStorage_Release(stg);
+    ok(r == 0, "ref count wrong\n");
+
+    DeleteFileW(filename);
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
     test_create_storage_modes();
     test_storage_stream();
     test_open_storage();
+    test_storage_suminfo();
 }
