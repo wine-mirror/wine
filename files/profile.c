@@ -958,7 +958,15 @@ int PROFILE_LoadWineIni(void)
     char buffer[MAX_PATHNAME_LEN];
     const char *p;
     FILE *f;
+    HKEY hKeySW;
 
+    /* make sure HKLM\\Software exists as non-volatile key */
+    if (RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software", &hKeySW ))
+    {
+        ERR("Cannot create config registry key\n" );
+        return 0;
+    }
+    RegCloseKey( hKeySW );
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &wine_profile_key, NULL ))
     {
@@ -1003,7 +1011,7 @@ int PROFILE_LoadWineIni(void)
         goto found;
     }
     MESSAGE( "Can't open configuration file %s or $HOME%s\n",
-	 WINE_INI_GLOBAL, PROFILE_WineIniName );
+	     WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
 
  found:
