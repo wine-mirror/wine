@@ -1,7 +1,3 @@
-EXTRADEFS = `perl -MExtUtils::Embed -e ccflags`
-EXTRALIBS = `perl -MExtUtils::Embed -e ldopts`
-EXTRAINCL = `perl -MExtUtils::Embed -e perl_inc`
-XSUBPPDIR = `perl -MConfig -e 'print $$Config::Config{privlibexp}'`/ExtUtils
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -9,6 +5,11 @@ VPATH     = @srcdir@
 MODULE    = winetest.exe
 APPMODE   = cui
 IMPORTS   = kernel32
+
+EXTRACFLAGS = `perl -MExtUtils::Embed -e ccflags`
+EXTRALIBS   = `perl -MExtUtils::Embed -e ldopts`
+EXTRAINCL   = `perl -MExtUtils::Embed -e perl_inc`
+XSUBPPDIR   = `perl -MConfig -e 'print $$Config::Config{privlibexp}'`/ExtUtils
 
 C_SRCS = winetest.c
 

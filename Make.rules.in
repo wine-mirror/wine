@@ -28,7 +28,7 @@
 SHELL     = /bin/sh
 CC        = @CC@
 CPP       = @CPP@
-CFLAGS    = @CFLAGS@
+CFLAGS    = @CFLAGS@ $(EXTRACFLAGS)
 OPTIONS   = @OPTIONS@ -D_REENTRANT
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
