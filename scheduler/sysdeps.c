@@ -245,6 +245,9 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
 #ifdef __i386__
 __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
 #elif defined(HAVE__LWP_CREATE)
+/***********************************************************************
+ *		NtCurrentTeb (NTDLL.@)
+ */
 struct _TEB * WINAPI NtCurrentTeb(void)
 {
     extern void *_lwp_getprivate(void);

@@ -85,9 +85,9 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 #ifdef __i386__
 
 /***********************************************************************
- *		InterlockCompareExchange (KERNEL32.@)
+ *		InterlockedCompareExchange (KERNEL32.@)
  */
-PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare );
+/* PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare ); */
 __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
                   "movl 12(%esp),%eax\n\t"
                   "movl 8(%esp),%ecx\n\t"
@@ -98,7 +98,7 @@ __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
 /***********************************************************************
  *		InterlockedExchange (KERNEL32.@)
  */
-LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
+/* LONG WINAPI InterlockedExchange( PLONG dest, LONG val ); */
 __ASM_GLOBAL_FUNC(InterlockedExchange,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
@@ -108,7 +108,7 @@ __ASM_GLOBAL_FUNC(InterlockedExchange,
 /***********************************************************************
  *		InterlockedExchangeAdd (KERNEL32.@)
  */
-LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
+/* LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr ); */
 __ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
@@ -118,7 +118,7 @@ __ASM_GLOBAL_FUNC(InterlockedExchangeAdd,
 /***********************************************************************
  *		InterlockedIncrement (KERNEL32.@)
  */
-LONG WINAPI InterlockedIncrement( PLONG dest );
+/* LONG WINAPI InterlockedIncrement( PLONG dest ); */
 __ASM_GLOBAL_FUNC(InterlockedIncrement,
                   "movl 4(%esp),%edx\n\t"
                   "movl $1,%eax\n\t"
@@ -127,9 +127,8 @@ __ASM_GLOBAL_FUNC(InterlockedIncrement,
                   "ret $4");
 
 /***********************************************************************
- *		InterlockDecrement (KERNEL32.@)
+ *		InterlockedDecrement (KERNEL32.@)
  */
-LONG WINAPI InterlockedDecrement( PLONG dest );
 __ASM_GLOBAL_FUNC(InterlockedDecrement,
                   "movl 4(%esp),%edx\n\t"
                   "movl $-1,%eax\n\t"
