@@ -1343,7 +1343,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
    }
    else if( lphc->hWndLBox == hWnd )
    {
-       switch( HIWORD(wParam) )
+       switch( (short)HIWORD(wParam) )
        {
 	   case LBN_ERRSPACE:
 		CB_NOTIFY( lphc, CBN_ERRSPACE );

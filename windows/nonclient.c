@@ -1132,7 +1132,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     hwnd = WIN_GetFullHandle( (HWND)wParam );
 
-    switch(LOWORD(lParam))
+    switch((short)LOWORD(lParam))
     {
     case HTERROR:
 	{
