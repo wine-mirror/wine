@@ -595,7 +595,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 	glNewList(listBase++, GL_COMPILE);
 	if (needed_size != 0) {
 	    glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-		     0 - gm.gmptGlyphOrigin.x, gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
+		     0 - (int) gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - (int) gm.gmptGlyphOrigin.y,
 		     gm.gmCellIncX, gm.gmCellIncY,
 		     gl_bitmap);
 	} else {
