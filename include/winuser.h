@@ -1962,6 +1962,13 @@ typedef const MENUINFO *LPCMENUINFO;
 #define MIM_STYLE		0x00000010
 #define MIM_APPLYTOSUBMENUS	0x80000000
 
+#define MNS_NOCHECK             0x80000000
+#define MNS_MODELESS            0x40000000
+#define MNS_DRAGDROP            0x20000000
+#define MNS_AUTODISMISS         0x10000000
+#define MNS_NOTIFYBYPOS         0x08000000
+#define MNS_CHECKORBMP          0x04000000
+
 typedef struct {
   WORD versionNumber;
   WORD offset;
