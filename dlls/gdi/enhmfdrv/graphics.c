@@ -324,9 +324,23 @@ EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 COLORREF
 EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
-  return TRUE;
-}
+    EMRSETPIXELV emr;
 
+    emr.emr.iType  = EMR_SETPIXELV;
+    emr.emr.nSize  = sizeof(emr);
+    emr.ptlPixel.x = x;
+    emr.ptlPixel.y = y;
+    emr.crColor = color;
+
+    if (EMFDRV_WriteRecord( dev, &emr.emr )) {
+        RECTL bounds;
+        bounds.left = bounds.right = x;
+        bounds.top = bounds.bottom = y;
+        EMFDRV_UpdateBBox( dev, &bounds );
+        return color;
+    }
+    return -1;
+}
 
 /**********************************************************************
  *          EMFDRV_Polylinegon
