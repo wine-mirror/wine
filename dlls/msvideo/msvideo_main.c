@@ -116,14 +116,15 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
     lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &hKey);
     if (lRet == ERROR_SUCCESS) 
     {
-	RegQueryInfoKeyA( hKey, 0, 0, 0, &cnt, 0, 0, 0, 0, 0, 0, 0);
-	for (i = 0; i < cnt; i++) 
+	DWORD numkeys;
+	RegQueryInfoKeyA( hKey, 0, 0, 0, &numkeys, 0, 0, 0, 0, 0, 0, 0);
+	for (i = 0; i < numkeys; i++) 
 	{
 	    bufLen = sizeof(buf) / sizeof(buf[0]);
 	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
 	    if (lRet != ERROR_SUCCESS) continue;
 	    if (strncasecmp(buf, fccTypeStr, 5) || buf[9] != '=') continue;
-	    if ((result = handler(buf, i, param))) break;
+	    if ((result = handler(buf, cnt++, param))) break;
 	}
     	RegCloseKey( hKey );
     }
@@ -132,10 +133,10 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
     /* if that didn't work, go through the values in system.ini */
     if (GetPrivateProfileSectionA("drivers32", buf, sizeof(buf), "system.ini")) 
     {
-	for (s = buf; *s; cnt++, s += strlen(s) + 1)
+	for (s = buf; *s; s += strlen(s) + 1)
 	{
 	    if (strncasecmp(s, fccTypeStr, 5) || s[9] != '=') continue;
-	    if ((result = handler(s, cnt, param))) break;
+	    if ((result = handler(s, cnt++, param))) break;
 	}
     }
 
