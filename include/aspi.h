@@ -57,7 +57,10 @@ struct sg_header
   int result;      /* 0==ok, otherwise refer to errno codes */
   unsigned int twelve_byte:1; /* Force 12 byte command length for group 6 & 7
 commands  */
-  unsigned int other_flags:31;                  /* for future use */
+  unsigned int target_status:5;   /* [o] scsi status from target */
+  unsigned int host_status:8;     /* [o] host status (see "DID" codes) */
+  unsigned int driver_status:8;   /* [o] driver status+suggestion */
+  unsigned int other_flags:10;    /* unused */
   unsigned char sense_buffer[16]; /* used only by reads */
   /* command follows then data for command */
  };

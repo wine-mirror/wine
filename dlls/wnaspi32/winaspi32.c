@@ -19,18 +19,45 @@
 
 DEFAULT_DEBUG_CHANNEL(aspi)
 
-#define malloc(x) HeapAlloc(GetProcessHeap(),0,x)
-#define free(p) HeapFree(GetProcessHeap(),0,p)
-
 /* FIXME!
  * 1) Residual byte length reporting not handled
  * 2) Make this code re-entrant for multithreading
+ *    -- Added CriticalSection to OpenDevices function
  * 3) Only linux supported so far
+ * 4) Leaves sg devices open. This may or may not be okay.  A better solution
+ *    would be to close the file descriptors when the thread/process using
+ *    them no longer needs them.
  */
 
 #ifdef linux
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
+static CRITICAL_SECTION ASPI_CritSection;
+
+BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+	static BOOL	bInitDone=FALSE;
+//	TRACE("0x%x 0x%1x %p\n", hInstDLL, fdwReason, fImpLoad);
+	switch( fdwReason )
+	{
+	case DLL_PROCESS_ATTACH:
+		// Create instance data
+		if(!bInitDone)
+		{
+			// Initialize global stuff just once
+			InitializeCriticalSection(&ASPI_CritSection);
+			bInitDone=TRUE;
+		}
+		break;
+	case DLL_PROCESS_DETACH:
+		// Destroy instance data
+		break;
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+		break;
+	}
+	return TRUE;
+}
 
 static int
 ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
@@ -45,13 +72,16 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
      * keeping a device open won't be a problem.
      */
 
+    EnterCriticalSection(&ASPI_CritSection);
     for (curr = ASPI_open_devices; curr; curr = curr->next) {
 	if (curr->hostId == prb->SRB_HaId &&
 	    curr->target == prb->SRB_Target &&
 	    curr->lun == prb->SRB_Lun) {
+            LeaveCriticalSection(&ASPI_CritSection);
 	    return curr->fd;
 	}
     }
+    LeaveCriticalSection(&ASPI_CritSection);
 
     /* device wasn't cached, go ahead and open it */
     sprintf(idstr, "scsi c%1dt%1dd%1d", prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
@@ -82,8 +112,10 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
     curr->lun = prb->SRB_Lun;
 
     /* insert new record at beginning of open device list */
+    EnterCriticalSection(&ASPI_CritSection);
     curr->next = ASPI_open_devices;
     ASPI_open_devices = curr;
+    LeaveCriticalSection(&ASPI_CritSection);
     return fd;
 }
 
@@ -156,7 +188,7 @@ ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
 
   if (TRACE_ON(aspi))
   {
-      cdb = &prb->CDBByte[0];
+      cdb = &prb->CDBByte[16];
       DPRINTF("SenseArea[");
       for (i = 0; i < prb->SRB_SenseLen; i++) {
           if (i) DPRINTF(",");
@@ -170,6 +202,9 @@ static void
 ASPI_DebugPrintResult(SRB_ExecSCSICmd *prb)
 {
 
+  TRACE("SRB_Status: %x\n", prb->SRB_Status);
+  TRACE("SRB_HaStat: %x\n", prb->SRB_HaStat);
+  TRACE("SRB_TargStat: %x\n", prb->SRB_TargStat);
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
     TRACE("Vendor: '%s'\n", prb->SRB_BufPointer + INQUIRY_VENDOR);
@@ -214,7 +249,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   if (HOST_TO_TARGET(lpPRB)) {
     /* send header, command, and then data */
     in_len = SCSI_OFF + lpPRB->SRB_CDBLen + lpPRB->SRB_BufLen;
-    sg_hd = (struct sg_header *) malloc(in_len);
+    sg_hd = (struct sg_header *) HeapAlloc(GetProcessHeap(), 0, in_len);
     memset(sg_hd, 0, SCSI_OFF);
     memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
     if (lpPRB->SRB_BufLen) {
@@ -224,20 +259,20 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   else {
     /* send header and command - no data */
     in_len = SCSI_OFF + lpPRB->SRB_CDBLen;
-    sg_hd = (struct sg_header *) malloc(in_len);
+    sg_hd = (struct sg_header *) HeapAlloc(GetProcessHeap(), 0, in_len);
     memset(sg_hd, 0, SCSI_OFF);
     memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
   }
 
   if (TARGET_TO_HOST(lpPRB)) {
     out_len = SCSI_OFF + lpPRB->SRB_BufLen;
-    sg_reply_hdr = (struct sg_header *) malloc(out_len);
+    sg_reply_hdr = (struct sg_header *) HeapAlloc(GetProcessHeap(), 0, out_len);
     memset(sg_reply_hdr, 0, SCSI_OFF);
     sg_hd->reply_len = out_len;
   }
   else {
     out_len = SCSI_OFF;
-    sg_reply_hdr = (struct sg_header *) malloc(out_len);
+    sg_reply_hdr = (struct sg_header *) HeapAlloc(GetProcessHeap(), 0, out_len);
     memset(sg_reply_hdr, 0, SCSI_OFF);
     sg_hd->reply_len = out_len;
   }
@@ -281,14 +316,23 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
     int sense_len = lpPRB->SRB_SenseLen;
     if (lpPRB->SRB_SenseLen > 16)
       sense_len = 16;
-    memcpy(SENSE_BUFFER(lpPRB), &sg_reply_hdr->sense_buffer[0], sense_len);
-  }
 
+    /* CDB is fixed in WNASPI32 */
+    memcpy(&lpPRB->CDBByte[16], &sg_reply_hdr->sense_buffer[0], sense_len);
+
+    TRACE("CDB is %d bytes long\n", lpPRB->SRB_CDBLen );
+    ASPI_PrintSenseArea(lpPRB);
+  }
 
   lpPRB->SRB_Status = SS_COMP;
   lpPRB->SRB_HaStat = HASTAT_OK;
-  lpPRB->SRB_TargStat = STATUS_GOOD;
+  lpPRB->SRB_TargStat = sg_reply_hdr->target_status << 1;
 
+  /* FIXME: Should this be != 0 maybe? */
+  if( lpPRB->SRB_TargStat == 2 )
+    lpPRB->SRB_Status = SS_ERR;
+
+  ASPI_DebugPrintResult(lpPRB);
   /* now do posting */
 
   if (lpPRB->SRB_PostProc) {
@@ -302,10 +346,11 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
       SetEvent((HANDLE)lpPRB->SRB_PostProc); /* FIXME: correct ? */
     }
   }
-  free(sg_reply_hdr);
-  free(sg_hd);
-  ASPI_DebugPrintResult(lpPRB);
-  return SS_COMP;
+  HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
+  HeapFree(GetProcessHeap(), 0, sg_hd);
+  return SS_PENDING;
+  /* In real WNASPI32 stuff really is always pending because ASPI does things
+     in the background, but we are not doing that (yet) */
   
 error_exit:
   if (error_code == EBUSY) {
@@ -321,8 +366,8 @@ error_exit:
    * We probably should set lpPRB->SRB_TargStat, SRB_HaStat ?
    */
   WARN("error_exit\n");
-  free(sg_reply_hdr);
-  free(sg_hd);
+  HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
+  HeapFree(GetProcessHeap(), 0, sg_hd);
   return lpPRB->SRB_Status;
 }
 #endif
@@ -362,6 +407,8 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     FIXME("ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
     return SS_COMP;
   case SC_GET_DEV_TYPE: {
+    /* FIXME: We should return SS_NO_DEVICE if the device is not configured */
+    /* FIXME: We should return SS_INVALID_HA if HostAdapter!=0 */
     SRB		tmpsrb;
     char	inqbuf[200];
 
@@ -388,9 +435,18 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd(&lpSRB->cmd);
     break;
+  case SC_ABORT_SRB:
+    FIXME("Not implemented SC_ABORT_SRB\n");
+    break;
   case SC_RESET_DEV:
     FIXME("Not implemented SC_RESET_DEV\n");
     break;
+#ifdef SC_GET_DISK_INFO
+  case SC_GET_DISK_INFO:
+    /* NT Doesn't implement this either.. so don't feel bad */
+    WARN("Not implemented SC_GET_DISK_INFO\n");
+    break;
+#endif
   default:
     WARN("Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
