@@ -11,11 +11,13 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	acmstream.c \
 	api.c \
 	avifile.c \
 	extrachunk.c \
 	factory.c \
 	getframe.c \
+	icmstream.c \
 	wavfile.c
 
 RC_SRCS = \

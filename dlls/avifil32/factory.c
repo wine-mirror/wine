@@ -127,7 +127,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
 {
   ICOM_THIS(IClassFactoryImpl,iface);
 
-  FIXME("(%p,%p,%s,%p): partial stub!\n", iface, pOuter, debugstr_guid(riid),
+  TRACE("(%p,%p,%s,%p)\n", iface, pOuter, debugstr_guid(riid),
 	ppobj);
 
   if (ppobj == NULL || pOuter != NULL)
@@ -136,12 +136,12 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
 
   if (IsEqualGUID(&CLSID_AVIFile, &This->clsid))
     return AVIFILE_CreateAVIFile(riid,ppobj);
-/*   if (IsEqualGUID(&CLSID_ICMStream, &This->clsid)) */
-/*     return AVIFILE_CreateICMStream(riid,ppobj); */
+  if (IsEqualGUID(&CLSID_ICMStream, &This->clsid))
+    return AVIFILE_CreateICMStream(riid,ppobj);
   if (IsEqualGUID(&CLSID_WAVFile, &This->clsid))
     return AVIFILE_CreateWAVFile(riid,ppobj);
-/*   if (IsEqualGUID(&CLSID_ACMStream, &This->clsid)) */
-/*     return AVIFILE_CreateACMStream(riid,ppobj); */
+  if (IsEqualGUID(&CLSID_ACMStream, &This->clsid))
+    return AVIFILE_CreateACMStream(riid,ppobj);
 
   return E_NOINTERFACE;
 }
