@@ -250,7 +250,7 @@ static void test_SHCopyKey(void)
 
 
 	if (pSHCopyKeyA)
-		ok (!(*pSHCopyKeyA)(hKeyDst, NULL, hKeySrc, 0), "failed copy\n");
+		ok (!(*pSHCopyKeyA)(hKeySrc, NULL, hKeyDst, 0), "failed copy\n");
 
 	RegCloseKey(hKeySrc);
 	RegCloseKey(hKeyDst);

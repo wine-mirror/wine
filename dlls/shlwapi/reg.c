@@ -2038,9 +2038,9 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
  * Copy a key and its values/sub keys to another location.
  *
  * PARAMS
- *  hKeyDst    [I] Destination key
- *  lpszSubKey [I] Sub key under hKeyDst, or NULL to use hKeyDst directly
  *  hKeySrc    [I] Source key to copy from
+ *  lpszSubKey [I] Sub key under hKeyDst, or NULL to use hKeyDst directly
+ *  hKeyDst    [I] Destination key
  *  dwReserved [I] Reserved, must be 0
  *
  * RETURNS
@@ -2052,16 +2052,16 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
  *  (It will loop until out of stack, or the registry is full). This
  *  bug is present in Win32 also.
  */
-DWORD WINAPI SHCopyKeyA(HKEY hKeyDst, LPCSTR lpszSubKey, HKEY hKeySrc, DWORD dwReserved)
+DWORD WINAPI SHCopyKeyA(HKEY hKeySrc, LPCSTR lpszSubKey, HKEY hKeyDst, DWORD dwReserved)
 {
   WCHAR szSubKeyW[MAX_PATH];
 
-  TRACE("(hkey=%p,%s,%p08x,%ld)\n", hKeyDst, debugstr_a(lpszSubKey), hKeySrc, dwReserved);
+  TRACE("(hkey=%p,%s,%p08x,%ld)\n", hKeySrc, debugstr_a(lpszSubKey), hKeyDst, dwReserved);
 
   if (lpszSubKey)
     MultiByteToWideChar(0, 0, lpszSubKey, -1, szSubKeyW, MAX_PATH);
 
-  return SHCopyKeyW(hKeyDst, lpszSubKey ? szSubKeyW : NULL, hKeySrc, dwReserved);
+  return SHCopyKeyW(hKeySrc, lpszSubKey ? szSubKeyW : NULL, hKeyDst, dwReserved);
 }
 
 /*************************************************************************
@@ -2069,7 +2069,7 @@ DWORD WINAPI SHCopyKeyA(HKEY hKeyDst, LPCSTR lpszSubKey, HKEY hKeySrc, DWORD dwR
  *
  * See SHCopyKeyA.
  */
-DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dwReserved)
+DWORD WINAPI SHCopyKeyW(HKEY hKeySrc, LPCWSTR lpszSubKey, HKEY hKeyDst, DWORD dwReserved)
 {
   DWORD dwKeyCount = 0, dwValueCount = 0, dwMaxKeyLen = 0;
   DWORD  dwMaxValueLen = 0, dwMaxDataLen = 0, i;
@@ -2078,7 +2078,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
   WCHAR szName[MAX_PATH], *lpszName = szName;
   DWORD dwRet = S_OK;
 
-  TRACE("hkey=%p,%s,%p08x,%ld)\n", hKeyDst, debugstr_w(lpszSubKey), hKeySrc, dwReserved);
+  TRACE("hkey=%p,%s,%p08x,%ld)\n", hKeySrc, debugstr_w(lpszSubKey), hKeyDst, dwReserved);
 
   if(!hKeyDst || !hKeySrc)
     dwRet = ERROR_INVALID_PARAMETER;
@@ -2134,7 +2134,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
         if(!dwRet)
         {
           /* Recursively copy keys and values from the sub key */
-          dwRet = SHCopyKeyW(hSubKeyDst, NULL, hSubKeySrc, 0);
+          dwRet = SHCopyKeyW(hSubKeySrc, NULL, hSubKeyDst, 0);
           RegCloseKey(hSubKeyDst);
         }
       }
