@@ -420,12 +420,15 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
   objc=hObject?2:1;
   do {
     /* check for messages (waste time before the response check below) */
-    while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
-      /* got a message */
-      DOSVM_ProcessMessage(&msg);
-      /* we don't need a TranslateMessage here */
-      Callout.DispatchMessageA(&msg);
-      got_msg = TRUE;
+    if (Callout.PeekMessageA)
+    {
+        while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
+            /* got a message */
+            DOSVM_ProcessMessage(&msg);
+            /* we don't need a TranslateMessage here */
+            Callout.DispatchMessageA(&msg);
+            got_msg = TRUE;
+        }
     }
     if (!got_msg) {
       /* check for console input */
@@ -448,7 +451,11 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
 	break;
     }
     /* nothing yet, block while waiting for something to do */
-    waitret=Callout.MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
+    if (Callout.MsgWaitForMultipleObjects)
+        waitret = Callout.MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
+    else
+        waitret = WaitForMultipleObjects(objc,objs,FALSE,INFINITE);
+
     if (waitret==(DWORD)-1) {
       ERR_(module)("dosvm wait error=%ld\n",GetLastError());
     }

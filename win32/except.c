@@ -282,7 +282,10 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 {
     WARN("AppExit\n");
-    Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    if (Callout.MessageBoxA)
+        Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else
+        ERR( "%s\n", debugstr_a(str) );
     ExitProcess(0);
 }
 
@@ -293,6 +296,9 @@ void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
 {
     WARN("AppExit\n");
-    Callout.MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    if (Callout.MessageBoxW)
+        Callout.MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else
+        ERR( "%s\n", debugstr_w(str) );
     ExitProcess(0);
 }

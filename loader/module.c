@@ -827,7 +827,8 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
                         0, NULL, NULL, &startup, &info ))
     {
         /* Give 30 seconds to the app to come up */
-        if (Callout.WaitForInputIdle ( info.hProcess, 30000 ) == 0xFFFFFFFF)
+        if (Callout.WaitForInputIdle &&
+            Callout.WaitForInputIdle( info.hProcess, 30000 ) == 0xFFFFFFFF)
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         hInstance = 33;
         /* Close off the handles */
@@ -884,7 +885,8 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
                         params->lpEnvAddress, NULL, &startup, &info ))
     {
         /* Give 30 seconds to the app to come up */
-        if ( Callout.WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF ) 
+        if (Callout.WaitForInputIdle &&
+            Callout.WaitForInputIdle( info.hProcess, 30000 ) ==  0xFFFFFFFF )
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         hInstance = 33;
         /* Close off the handles */

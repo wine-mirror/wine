@@ -31,7 +31,6 @@ typedef struct
     BOOL WINAPI     (*GetMessageA)( MSG*, HWND, UINT, UINT );
     LRESULT WINAPI  (*SendMessageA)( HWND, UINT, WPARAM, LPARAM );
     BOOL WINAPI     (*PostMessageA)( HWND, UINT, WPARAM, LPARAM );
-    BOOL16 WINAPI   (*PostAppMessage16)( HTASK16, UINT16, WPARAM16, LPARAM );
     BOOL WINAPI     (*TranslateMessage)( const MSG *msg );
     LONG WINAPI     (*DispatchMessageA)( const MSG* msg );
     BOOL WINAPI     (*RedrawWindow)( HWND, const RECT *, HRGN, UINT );

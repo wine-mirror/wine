@@ -787,14 +787,16 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
     if (!(dc = DC_GetDCPtr( hDC ))) return 0;
     size = dc->devCaps->sizePalette;
     GDI_ReleaseObj( hDC );
-    hWnd = Callout.WindowFromDC( hDC );
+    if (Callout.WindowFromDC)
+    {
+        hWnd = Callout.WindowFromDC( hDC );
 
-    /* Docs say that we have to remap current drawable pixel by pixel
-     * but it would take forever given the speed of XGet/PutPixel.
-     */
-    if (hWnd && size) 
-        Callout.RedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
-
+        /* Docs say that we have to remap current drawable pixel by pixel
+         * but it would take forever given the speed of XGet/PutPixel.
+         */
+        if (hWnd && size)
+            Callout.RedrawWindow( hWnd, NULL, 0, RDW_INVALIDATE );
+    }
     return 0x666;
 }
 

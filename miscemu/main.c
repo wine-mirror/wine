@@ -23,6 +23,13 @@ void wine_initial_task(void)
     HINSTANCE16 instance;
     STARTUPINFOA info;
 
+    if (!LoadLibraryA( "user32.dll" ))
+    {
+        MESSAGE( "Cannot load user32.dll\n" );
+        ExitProcess( GetLastError() );
+    }
+    THUNK_InitCallout();
+
     GetStartupInfoA( &info );
     if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWNORMAL;
 

@@ -43,7 +43,6 @@ CALLOUT_TABLE Callout = {
     /* GetMessageA */ NULL,
     /* SendMessageA */ NULL,
     /* PostMessageA */ NULL,
-    /* PostAppMessage16 */ NULL,
     /* TranslateMessage */ NULL,
     /* DispatchMessageA */ NULL,
     /* RedrawWindow */ NULL,
@@ -168,7 +167,7 @@ void THUNK_InitCallout(void)
     HMODULE hModule;
     NE_MODULE *pModule;
 
-    hModule = LoadLibraryA( "user32.dll" );
+    hModule = GetModuleHandleA( "user32.dll" );
     if ( hModule )
     {
 #define GETADDR( name )  \
@@ -188,21 +187,21 @@ void THUNK_InitCallout(void)
         GETADDR( MessageBoxW );
 #undef GETADDR
     }
+    else WARN("no 32-bit USER\n");
 
-    pModule = NE_GetPtr( LoadLibrary16( "USER.EXE" ) );
+    pModule = NE_GetPtr( GetModuleHandle16( "USER.EXE" ) );
     if ( pModule )
     {
 #define GETADDR( var, name, thk )  \
         *(FARPROC *)&Callout.var = THUNK_GetCalloutThunk( pModule, name, \
                                                (RELAY)THUNK_CallTo16_##thk )
 
-        GETADDR( PostAppMessage16, "PostAppMessage", word_wwwl );
         GETADDR( FinalUserInit16, "FinalUserInit", word_ );
         GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
         GETADDR( UserYield16, "UserYield", word_ );
         GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );
         GETADDR( UserSignalProc, "SignalProc32", word_lllw );
-
 #undef GETADDR
     }
+    else WARN("no 16-bit USER\n");
 }

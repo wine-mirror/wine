@@ -237,39 +237,6 @@ static BOOL process_init( char *argv[] )
 
 
 /***********************************************************************
- *           load_system_dlls
- *
- * Load system DLLs into the initial process (and initialize them)
- */
-static int load_system_dlls(void)
-{
-    /* Load KERNEL */
-    if (!LoadLibraryA( "KERNEL32" )) return 0;
-
-    /* Get pointers to USER routines called by KERNEL */
-    THUNK_InitCallout();
-
-    /* Call FinalUserInit routine */
-    Callout.FinalUserInit16();
-
-    /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
-     *       context of the parent process.  Actually, the USER signal proc
-     *       doesn't really care about that, but it *does* require that the
-     *       startup parameters are correctly set up, so that GetProcessDword
-     *       works.  Furthermore, before calling the USER signal proc the 
-     *       16-bit stack must be set up, which it is only after TASK_Create
-     *       in the case of a 16-bit process. Thus, we send the signal here.
-     */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
-
-    return 1;
-}
-
-
-/***********************************************************************
  *           build_command_line
  *
  * Build the command line of a process from the argv array.
@@ -361,14 +328,29 @@ static void start_process(void)
         goto error;
     wm->refCount++;
 
-    /* Load the system dlls */
-    if (!load_system_dlls()) goto error;
-
     EnterCriticalSection( &current_process.crit_section );
     PE_InitTls();
     MODULE_DllProcessAttach( current_process.exe_modref, (LPVOID)1 );
     LeaveCriticalSection( &current_process.crit_section );
 
+    /* Get pointers to USER routines called by KERNEL */
+    THUNK_InitCallout();
+
+    /* Call FinalUserInit routine */
+    if (Callout.FinalUserInit16) Callout.FinalUserInit16();
+
+    /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
+     *       context of the parent process.  Actually, the USER signal proc
+     *       doesn't really care about that, but it *does* require that the
+     *       startup parameters are correctly set up, so that GetProcessDword
+     *       works.  Furthermore, before calling the USER signal proc the 
+     *       16-bit stack must be set up, which it is only after TASK_Create
+     *       in the case of a 16-bit process. Thus, we send the signal here.
+     */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 

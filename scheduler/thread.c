@@ -374,7 +374,7 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     else
     {
         MODULE_DllThreadDetach( NULL );
-        if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_KillTask( 0 );
+        if (!(NtCurrentTeb()->tibflags & TEBF_WIN32)) TASK_ExitTask();
         SYSDEPS_ExitThread( code );
     }
 }

@@ -379,78 +379,62 @@ static void TASK_DeleteTask( HTASK16 hTask )
 /***********************************************************************
  *           TASK_KillTask
  */
-void TASK_KillTask( HTASK16 hTask )
+void TASK_ExitTask(void)
 {
     TDB *pTask; 
+    DWORD lockCount;
 
     /* Enter the Win16Lock to protect global data structures */
     SYSLEVEL_EnterWin16Lock();
 
-    if ( !hTask ) hTask = GetCurrentTask();
-    pTask = (TDB *)GlobalLock16( hTask );
+    pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if ( !pTask ) 
     {
         SYSLEVEL_LeaveWin16Lock();
         return;
     }
 
-    TRACE("Killing task %04x\n", hTask );
+    TRACE("Killing task %04x\n", pTask->hSelf );
 
     /* Perform USER cleanup */
 
-    TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
+    TASK_CallTaskSignalProc( USIG16_TERMINATION, pTask->hSelf );
     PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
     PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
 
-    if (nTaskCount <= 1)
+    /* Remove the task from the list to be sure we never switch back to it */
+    TASK_UnlinkTask( pTask->hSelf );
+
+    if (!nTaskCount || (nTaskCount == 1 && hFirstTask == initial_task))
     {
         TRACE("this is the last task, exiting\n" );
+        ERR("done\n");
         ExitKernel16();
     }
 
-    /* FIXME: Hack! Send a message to the initial task so that
-     * the GetMessage wakes up and the initial task can check whether
-     * it is the only remaining one and terminate itself ...
-     * The initial task should probably install hooks or something
-     * to get informed about task termination :-/
-     */
-    Callout.PostAppMessage16( initial_task, WM_NULL, 0, 0 );
-
-    /* Remove the task from the list to be sure we never switch back to it */
-    TASK_UnlinkTask( hTask );
     if( nTaskCount )
     {
         TDB* p = (TDB *)GlobalLock16( hFirstTask );
         while( p )
         {
-            if( p->hYieldTo == hTask ) p->hYieldTo = 0;
+            if( p->hYieldTo == pTask->hSelf ) p->hYieldTo = 0;
             p = (TDB *)GlobalLock16( p->hNext );
         }
     }
 
     pTask->nEvents = 0;
 
-    if ( hLockedTask == hTask )
+    if ( hLockedTask == pTask->hSelf )
         hLockedTask = 0;
 
-    TASK_DeleteTask( hTask );
+    TASK_DeleteTask( pTask->hSelf );
 
-    /* When deleting the current task ... */
-    if ( hTask == hCurrentTask )
-    {
-        DWORD lockCount;
+    /* ... schedule another one ... */
+    TASK_Reschedule();
 
-        /* ... schedule another one ... */
-        TASK_Reschedule();
-
-        /* ... and completely release the Win16Lock, just in case. */
-        ReleaseThunkLock( &lockCount );
-
-        return;
-    }
-
-    SYSLEVEL_LeaveWin16Lock();
+    /* ... and completely release the Win16Lock, just in case. */
+    ReleaseThunkLock( &lockCount );
 }
 
 /***********************************************************************
@@ -838,7 +822,7 @@ void WINAPI Yield16(void)
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     if (pCurTask) pCurTask->hYieldTo = 0;
-    if (pCurTask && pCurTask->hQueue) Callout.UserYield16();
+    if (pCurTask && pCurTask->hQueue && Callout.UserYield16) Callout.UserYield16();
     else OldYield16();
 }
 
@@ -1148,7 +1132,7 @@ HANDLE WINAPI GetFastQueue16( void )
     TEB *teb = NtCurrentTeb();
     if (!teb) return 0;
 
-    if (!teb->queue)
+    if (!teb->queue && Callout.InitThreadInput16)
         Callout.InitThreadInput16( 0, THREAD_IsWin16(teb)? 4 : 5 );
 
     if (!teb->queue)

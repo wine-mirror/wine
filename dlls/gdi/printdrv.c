@@ -617,15 +617,26 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
     return nRet;
 }
 
+typedef INT WINAPI (*MSGBOX_PROC)( HWND, LPCSTR, LPCSTR, UINT );
+
 /**********************************************************************
  *           WriteDialog   (GDI.242)
  *
  */
 INT16 WINAPI WriteDialog16(HPJOB16 hJob, LPSTR lpMsg, INT16 cchMsg)
 {
+    HMODULE mod;
+    MSGBOX_PROC pMessageBoxA;
+    INT16 ret = 0;
+
     TRACE("%04x %04x '%s'\n", hJob,  cchMsg, lpMsg);
 
-    return Callout.MessageBoxA(0, lpMsg, "Printing Error", MB_OKCANCEL);
+    if ((mod = GetModuleHandleA("user32.dll")))
+    {
+        if ((pMessageBoxA = (MSGBOX_PROC)GetProcAddress( mod, "MessageBoxA" )))
+            ret = pMessageBoxA(0, lpMsg, "Printing Error", MB_OKCANCEL);
+    }
+    return ret;
 }
 
 
