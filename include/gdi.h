@@ -122,6 +122,7 @@ typedef struct
     short         breakExtra;        /* breakTotalExtra / breakCount */
     short         breakRem;          /* breakTotalExtra % breakCount */
 
+    RECT32        totalExtent;
     BYTE          bitsPerPixel;
 
     INT32         MapMode;

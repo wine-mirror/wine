@@ -528,6 +528,7 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->w.hFirstBitmap     = dc->w.hFirstBitmap;
     newdc->w.hDevice          = dc->w.hDevice;
     newdc->w.hPalette         = dc->w.hPalette;   
+    newdc->w.totalExtent      = dc->w.totalExtent;
     newdc->w.bitsPerPixel     = dc->w.bitsPerPixel;
     newdc->w.ROPmode          = dc->w.ROPmode;
     newdc->w.polyFillMode     = dc->w.polyFillMode;
@@ -613,6 +614,7 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->w.devCaps          = dcs->w.devCaps;
     dc->w.hFirstBitmap     = dcs->w.hFirstBitmap;
     dc->w.hDevice          = dcs->w.hDevice;
+    dc->w.totalExtent      = dcs->w.totalExtent;
     dc->w.ROPmode          = dcs->w.ROPmode;
     dc->w.polyFillMode     = dcs->w.polyFillMode;
     dc->w.stretchBltMode   = dcs->w.stretchBltMode;

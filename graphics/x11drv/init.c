@@ -178,8 +178,13 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         physDev->drawable  = bmp->pixmap;
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
-        dc->w.hVisRgn      = CreateRectRgn32( 0, 0, bmp->bitmap.bmWidth,
-                                              bmp->bitmap.bmHeight );
+
+        dc->w.totalExtent.left   = 0;
+        dc->w.totalExtent.top    = 0;
+        dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
+        dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
+        dc->w.hVisRgn            = CreateRectRgnIndirect32( &dc->w.totalExtent );
+
 	GDI_HEAP_UNLOCK( dc->w.hBitmap );
     }
     else
@@ -187,7 +192,12 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         physDev->drawable  = rootWindow;
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = screenDepth;
-        dc->w.hVisRgn      = CreateRectRgn32( 0, 0, screenWidth, screenHeight);
+
+        dc->w.totalExtent.left   = 0;
+        dc->w.totalExtent.top    = 0;
+        dc->w.totalExtent.right  = screenWidth;
+        dc->w.totalExtent.bottom = screenHeight;
+        dc->w.hVisRgn            = CreateRectRgnIndirect32( &dc->w.totalExtent );
     }
 
     if (!dc->w.hVisRgn)
