@@ -16,7 +16,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 
-#include "callback.h"
 #include "debugtools.h"
 #include "flatthunk.h"
 #include "heap.h"
@@ -1463,13 +1462,14 @@ static SEGPTR    ThunkletCallbackGlueSL = 0;
 /* map a thunk allocated on ThunkletHeap to a 16-bit pointer */
 inline static SEGPTR get_segptr( void *thunk )
 {
+    if (!thunk) return 0;
     return MAKESEGPTR( ThunkletCodeSel, (char *)thunk - (char *)ThunkletHeap );
 }
 
 /***********************************************************************
  *           THUNK_Init
  */
-BOOL THUNK_Init(void)
+static BOOL THUNK_Init(void)
 {
     LPBYTE thunk;
 
@@ -1534,6 +1534,7 @@ FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
     {
         TDB *pTask = TASK_GetPtr( owner );
 
+        if (!ThunkletHeap) THUNK_Init();
         if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )
             return 0;
 
@@ -1567,6 +1568,7 @@ SEGPTR THUNK_AllocSLThunklet( FARPROC target, DWORD relay,
     {
         TDB *pTask = TASK_GetPtr( owner );
 
+        if (!ThunkletHeap) THUNK_Init();
         if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )
             return 0;
 
@@ -1616,6 +1618,7 @@ BOOL16 WINAPI IsSLThunklet16( THUNKLET *thunk )
 FARPROC WINAPI AllocLSThunkletSysthunk16( SEGPTR target, 
                                           FARPROC relay, DWORD dummy )
 {
+    if (!ThunkletSysthunkGlueLS) THUNK_Init();
     return THUNK_AllocLSThunklet( (SEGPTR)relay, (DWORD)target, 
                                   ThunkletSysthunkGlueLS, GetCurrentTask() );
 }
@@ -1626,6 +1629,7 @@ FARPROC WINAPI AllocLSThunkletSysthunk16( SEGPTR target,
 SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target, 
                                        SEGPTR relay, DWORD dummy )
 {
+    if (!ThunkletSysthunkGlueSL) THUNK_Init();
     return THUNK_AllocSLThunklet( (FARPROC)relay, (DWORD)target, 
                                   ThunkletSysthunkGlueSL, GetCurrentTask() );
 }
@@ -1877,6 +1881,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name)
 
     if (!code_sel32)
     {
+        if (!ThunkletHeap) THUNK_Init();
         code_sel32 = SELECTOR_AllocBlock( (void *)ThunkletHeap, 0x10000,
                                           WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
         if (!code_sel32) return 0;

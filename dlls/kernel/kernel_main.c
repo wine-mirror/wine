@@ -11,7 +11,6 @@
 #include "winbase.h"
 
 #include "wine/winbase16.h"
-#include "callback.h"
 #include "global.h"
 #include "miscemu.h"
 #include "module.h"
@@ -19,7 +18,6 @@
 
 extern void CODEPAGE_Init(void);
 extern BOOL RELAY_Init(void);
-extern BOOL THUNK_Init(void);
 
 
 /***********************************************************************
@@ -34,9 +32,6 @@ static BOOL process_attach(void)
 
     /* Initialize relay entry points */
     if (!RELAY_Init()) return FALSE;
-
-    /* Initialize thunking */
-    if (!THUNK_Init()) return FALSE;
 
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;
