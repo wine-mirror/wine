@@ -590,10 +590,11 @@ LANGID WINAPI GetUserDefaultLangID()
 		if (!buf) buf=getenv("LANG");
 		if (!buf) buf=getenv("LC_ALL");
 		if (!buf) buf=getenv("LC_MESSAGES");
-		if (!buf) return userLCID = MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+		if (!buf) buf=getenv("LC_CTYPE");
+		if (!buf) return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 		
 		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C")) {
-			return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+			return MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 		}
 		
 		lang=buf;
@@ -635,6 +636,9 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
 
 /******************************************************************************
  * GetLocaleInfo32A [KERNEL32.342]
+ *
+ * NOTES 
+ *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
  */
 INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
@@ -649,12 +653,14 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 		return 0;
 	}
 
-  if (lcid == LOCALE_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) ) {
-    lcid = GetSystemDefaultLCID();
-  } else 
-    if (lcid == LOCALE_USER_DEFAULT) {
-      lcid = GetUserDefaultLCID();
+	if (lcid ==0 || lcid == LANG_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) )	/* 0x00, 0x400 */
+	{
+            lcid = GetSystemDefaultLCID();
 	} 
+	else if (lcid == LANG_USER_DEFAULT) /*0x800*/
+	{
+            lcid = GetUserDefaultLCID();
+	}
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
 
 	/* As an option, we could obtain the value from win.ini.
@@ -675,13 +681,6 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
       FIXME(ole,"Unkown LC type %lX\n",LCType);
 		return 0;
 	}
-
-
-    if ((lang & 0x3ff) == 0x000) /*LANG_NEUTRAL ==> US English*/ {
-	lang = 0x0409;
-        WARN(ole,"no language set, assume LANG_ENGLISH_US \n");
-    }
-    
 
     found=0;lang=lcid;
     for (i=0;i<3;i++) {

@@ -15,7 +15,7 @@
    * the proper case line
    */
 typedef enum
-{
+{   LANG_Xx,  /* Just to ensure value 0 is not used */  
     LANG_En,  /* English */
     LANG_Es,  /* Spanish */
     LANG_De,  /* German */

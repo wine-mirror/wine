@@ -669,7 +669,7 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 	LANG_ENTRY_BEGIN( "eo", ESPERANTO ) /* not official */
 	LANG_ENTRY_END( ESPERANTO )
 
-	ret = LANG_NEUTRAL;
+	ret = LANG_ENGLISH;
 
 end_MAIN_GetLanguageID:
 	if (Charset) free(charset);
@@ -737,6 +737,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     Options.programName = MAIN_GetProgramName( *argc, argv );
     Options.argv0 = argv[0];
 
+    /* initialise Options.language to 0 to tell "no language choosen yet" */
+    Options.language = 0;
+  
       /* Get display name from command line */
     for (i = 1; i < *argc; i++)
     {
