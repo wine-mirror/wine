@@ -439,7 +439,14 @@ sub source_set_options($$)
     } elsif ($option =~ /^-P/) {
       push @{@$target[$T_DLL_PATH]},"-L$'";
     } elsif ($option =~ /^-i/) {
-      push @{@$target[$T_DLLS]},"$'";
+      my $dllname = $';
+      if ($dllname =~ /^[^.]*$/) {
+        $dllname .= ".dll";
+      }
+      if ($dllname =~ /^msvcrt\.dll$/) {
+        push @{@$target[$T_INCLUDE_PATH]},"-I\$(WINE_INCLUDE_ROOT)/msvcrt";
+      }
+      push @{@$target[$T_DLLS]},$dllname;
     } elsif ($option =~ /^-L/) {
       push @{@$target[$T_LIBRARY_PATH]},$option;
     } elsif ($option =~ /^-l/) {
@@ -2232,7 +2239,14 @@ while (@ARGV>0) {
   } elsif ($arg =~ /^-P/) {
     push @{$global_settings[$T_DLL_PATH]},"-L$'";
   } elsif ($arg =~ /^-i/) {
-    push @{$global_settings[$T_DLLS]},$';
+    my $dllname = $';
+    if ($dllname =~ /^[^.]*$/) {
+      $dllname .= ".dll";
+    }
+    if ($dllname =~ /^msvcrt\.dll$/) {
+      push @{$global_settings[$T_INCLUDE_PATH]},"-I\$(WINE_INCLUDE_ROOT)/msvcrt";
+    }
+    push @{$global_settings[$T_DLLS]},$dllname;
   } elsif ($arg =~ /^-L/) {
     push @{$global_settings[$T_LIBRARY_PATH]},$arg;
   } elsif ($arg =~ /^-l/) {
