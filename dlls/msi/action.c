@@ -129,6 +129,8 @@ static UINT ACTION_ProcessExecSequence(MSIHANDLE hPackage, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIHANDLE hPackage);
 
 UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action);
+
+static UINT ACTION_LaunchConditions(MSIHANDLE hPackage);
 static UINT ACTION_CostInitialize(MSIHANDLE hPackage);
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage);
 static UINT ACTION_CostFinalize(MSIHANDLE hPackage);
@@ -612,11 +614,15 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
 {'I','n','s','t','a','l','l','I','n','i','t','i','a','l','i','z','e',0};
     const static WCHAR szInstallValidate[] = 
 {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
+    const static WCHAR szLaunchConditions[] = 
+{'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
     progress_message(hPackage,2,25,0,0);
 
     /* pre install, setup and configureation block */
+    if (strcmpW(action,szLaunchConditions)==0)
+        return ACTION_LaunchConditions(hPackage);
     if (strcmpW(action,szCostInitialize)==0)
         return ACTION_CostInitialize(hPackage);
     if (strcmpW(action,szFileCost)==0)
@@ -642,7 +648,6 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
      Current called during itunes but unimplemented
 
      AppSearch
-     LaunchConditions
      FindRelatedProducts
      CostInitialize
      MigrateFeatureStates
@@ -2635,17 +2640,29 @@ static UINT ACTION_InstallInitialize(MSIHANDLE hPackage)
     DWORD sz;
     MSIPACKAGE *package; 
     INT i,j;
+    DWORD rc;
+    LPWSTR override = NULL;
+    static const WCHAR addlocal[]={'A','D','D','L','O','C','A','L',0};
+    static const WCHAR all[]={'A','L','L',0};
+
     /* I do not know if this is where it should happen.. but */
 
     TRACE("Checking Install Level\n");
-    FIXME("The Attributes of the feature OVERRIDE THIS... unimplemented\n");
-    FIXME("As does the ALLLOCAL and such propertys\n");
 
     sz = 10000;
     if (MsiGetPropertyA(hPackage,"INSTALLLEVEL",level,&sz)==ERROR_SUCCESS)
         install_level = atoi(level);
     else
         install_level = 1;
+
+    sz = 0;
+    rc = MsiGetPropertyA(hPackage,"ADDLOCAL",NULL,&sz);
+    if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+    {
+        sz++;
+        override = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+        MsiGetPropertyW(hPackage, addlocal,override,&sz);
+    }
    
     package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
     if (!package)
@@ -2659,6 +2676,14 @@ static UINT ACTION_InstallInitialize(MSIHANDLE hPackage)
     {
         BOOL feature_state= ((package->features[i].Level > 0) &&
                              (package->features[i].Level <= install_level));
+
+        if (override && (strcmpiW(override,all)==0 || 
+                         strstrW(override,package->features[i].Feature)))
+        {
+            TRACE("Override of install level found\n");
+            feature_state = TRUE;
+        }
+
         TRACE("Feature %s has a state of %i\n",
                debugstr_w(package->features[i].Feature), feature_state);
         for( j = 0; j < package->features[i].ComponentCount; j++)
@@ -2667,6 +2692,8 @@ static UINT ACTION_InstallInitialize(MSIHANDLE hPackage)
             |= feature_state;
         }
     } 
+    if (override != NULL)
+        HeapFree(GetProcessHeap(),0,override);
     /* 
      * so basically we ONLY want to install a component if its Enabled AND
      * FeatureState are both TRUE 
@@ -2741,9 +2768,71 @@ static UINT ACTION_InstallValidate(MSIHANDLE hPackage)
     return ERROR_SUCCESS;
 }
 
+static UINT ACTION_LaunchConditions(MSIHANDLE hPackage)
+{
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *ExecSeqQuery = "SELECT * from LaunchCondition";
+    MSIHANDLE db;
+    static const WCHAR title[]=
+            {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
 
+    TRACE("Checking launch conditions\n");
 
+    db = MsiGetActiveDatabase(hPackage);
+    rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
+    MsiCloseHandle(db);
 
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    rc = ERROR_SUCCESS;
+    while (rc == ERROR_SUCCESS)
+    {
+        LPWSTR cond = NULL; 
+        LPWSTR message = NULL;
+        DWORD sz;
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+
+        sz = 0;
+        MsiRecordGetStringW(row,1,NULL,&sz);
+        sz++;
+        cond = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+        MsiRecordGetStringW(row,1,cond,&sz);
+
+        if (MsiEvaluateConditionW(hPackage,cond) != MSICONDITION_TRUE)
+        {
+            sz = 0;
+            MsiRecordGetStringW(row,2,NULL,&sz);
+            sz++;
+            message = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
+            MsiRecordGetStringW(row,2,message,&sz);
+            MessageBoxW(NULL,message,title,MB_OK);
+            HeapFree(GetProcessHeap(),0,message);
+            rc = ERROR_FUNCTION_FAILED;
+        }
+        HeapFree(GetProcessHeap(),0,cond);
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    return rc;
+}
 
 /* Msi functions that seem approperate here */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
