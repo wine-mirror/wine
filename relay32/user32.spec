@@ -79,8 +79,8 @@ type	win32
  76 stdcall CreateIconFromResource (ptr long long long) CreateIconFromResource32
  77 stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx32
  78 stdcall CreateIconIndirect(ptr) CreateIconIndirect
- 79 stdcall CreateMDIWindowA(ptr ptr long long long long long long long long) CreateMDIWindowA
- 80 stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindowW
+ 79 stdcall CreateMDIWindowA(ptr ptr long long long long long long long long) CreateMDIWindow32A
+ 80 stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindow32W
  81 stdcall CreateMenu() CreateMenu32
  82 stdcall CreatePopupMenu() CreatePopupMenu32
  83 stdcall CreateWindowExA(long str str long long long long long long long long ptr) CreateWindowEx32A

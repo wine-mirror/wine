@@ -37,5 +37,9 @@ typedef struct
     HWND32      self;
 } MDICLIENTINFO;
 
+extern HWND32  MDI_CreateMDIWindow32A(LPCSTR,LPCSTR,DWORD,INT32,INT32,
+                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
+extern HWND32  MDI_CreateMDIWindow32W(LPCWSTR,LPCWSTR,DWORD,INT32,INT32,
+                                INT32,INT32,HWND32,HINSTANCE32,LPARAM);
 #endif /* __WINE_MDI_H */
 

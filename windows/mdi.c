@@ -1527,9 +1527,36 @@ LRESULT WINAPI DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
 
 
 /**********************************************************************
- * CreateMDIWindowA [USER32.79]
+ * CreateMDIWindowA [USER32.79] Creates a MDI child in new thread
+ * FIXME: its in the same thread now
+ *
+ * RETURNS
+ *    Success: Handle to created window
+ *    Failure: NULL
  */
-HWND32 WINAPI CreateMDIWindowA(
+HWND32 CreateMDIWindow32A(
+    LPCSTR lpClassName,    /* [in] Pointer to registered child class name */
+    LPCSTR lpWindowName,   /* [in] Pointer to window name */
+    DWORD dwStyle,         /* [in] Window style */
+    INT32 X,               /* [in] Horizontal position of window */
+    INT32 Y,               /* [in] Vertical position of window */
+    INT32 nWidth,          /* [in] Width of window */
+    INT32 nHeight,         /* [in] Height of window */
+    HWND32 hWndParent,     /* [in] Handle to parent window */
+    HINSTANCE32 hInstance, /* [in] Handle to application instance */
+    LPARAM lParam)         /* [in] Application-defined value */
+{
+    WARN(mdi,"is only single threaded!\n");
+    return MDI_CreateMDIWindow32A(lpClassName, lpWindowName, dwStyle, X, Y, 
+            nWidth, nHeight, hWndParent, hInstance, lParam);
+}
+ 
+/**********************************************************************
+ * MDI_CreateMDIWindowA 
+ * single threaded version of CreateMDIWindowA
+ * called by CreateWindowEx32A
+ */
+HWND32 MDI_CreateMDIWindow32A(
     LPCSTR lpClassName,
     LPCSTR lpWindowName,
     DWORD dwStyle,
@@ -1541,20 +1568,65 @@ HWND32 WINAPI CreateMDIWindowA(
     HINSTANCE32 hInstance,
     LPARAM lParam)
 {
-    FIXME(mdi, "(%s,%s,%ld,...): stub\n",debugstr_a(lpClassName),
-          debugstr_a(lpWindowName),dwStyle);
-    return (HWND32)NULL;
+    MDICLIENTINFO* pCi;
+    MDICREATESTRUCT32A cs;
+    WND *pWnd=WIN_FindWndPtr(hWndParent);
+
+    TRACE(mdi, "(%s,%s,%ld,%d,%d,%d,%d,%x,%d,%ld)\n",
+          debugstr_a(lpClassName),debugstr_a(lpWindowName),dwStyle,X,Y,
+          nWidth,nHeight,hWndParent,hInstance,lParam);
+
+    if(!pWnd){
+        ERR(mdi," bad hwnd for MDI-client: %d\n",hWndParent);
+        return 0;
+    }
+    cs.szClass=lpClassName;
+    cs.szTitle=lpWindowName;
+    cs.hOwner=hInstance;
+    cs.x=X;
+    cs.y=Y;
+    cs.cx=nWidth;
+    cs.cy=nHeight;
+    cs.style=dwStyle;
+    cs.lParam=lParam;
+
+    pCi=(MDICLIENTINFO *)pWnd->wExtra;
+    
+    return MDICreateChild(pWnd,pCi,hWndParent,&cs);
 }
 
-
-/******************************************************************************
- * CreateMDIWindowW [USER32.80]  Creates a MDI child window
+/***************************************
+ * CreateMDIWindow32W [USER32.80] Creates a MDI child in new thread
  *
  * RETURNS
  *    Success: Handle to created window
  *    Failure: NULL
  */
-HWND32 WINAPI CreateMDIWindowW(
+HWND32 CreateMDIWindow32W(
+    LPCWSTR lpClassName,    /* [in] Pointer to registered child class name */
+    LPCWSTR lpWindowName,   /* [in] Pointer to window name */
+    DWORD dwStyle,         /* [in] Window style */
+    INT32 X,               /* [in] Horizontal position of window */
+    INT32 Y,               /* [in] Vertical position of window */
+    INT32 nWidth,          /* [in] Width of window */
+    INT32 nHeight,         /* [in] Height of window */
+    HWND32 hWndParent,     /* [in] Handle to parent window */
+    HINSTANCE32 hInstance, /* [in] Handle to application instance */
+    LPARAM lParam)         /* [in] Application-defined value */
+{
+    FIXME(mdi, "(%s,%s,%ld,%d,%d,%d,%d,%x,%d,%ld): stub\n",
+          debugstr_w(lpClassName),debugstr_w(lpWindowName),dwStyle,X,Y,
+          nWidth,nHeight,hWndParent,hInstance,lParam);
+    return (HWND32)NULL;
+}
+
+
+/******************************************************************************
+ * CreateMDIWindow32W [USER32.80]  Creates a MDI child window
+ * single threaded version of CreateMDIWindow
+ * called by CreateWindowEx32W(). 
+ */
+HWND32 MDI_CreateMDIWindow32W(
     LPCWSTR lpClassName,   /* [in] Pointer to registered child class name */
     LPCWSTR lpWindowName,  /* [in] Pointer to window name */
     DWORD dwStyle,         /* [in] Window style */

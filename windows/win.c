@@ -32,6 +32,7 @@
 #include "process.h"
 #include "debug.h"
 #include "winerror.h"
+#include "mdi.h"
 
 /* Desktop window */
 static WND *pWndDesktop = NULL;
@@ -885,6 +886,8 @@ HWND32 WINAPI CreateWindowEx32A( DWORD exStyle, LPCSTR className,
     ATOM classAtom;
     CREATESTRUCT32A cs;
 
+    if(exStyle & WS_EX_MDICHILD)
+        return MDI_CreateMDIWindow32A(className, windowName, style, x, y, width, height, parent, instance, data);
     /* Find the class atom */
 
     if (!(classAtom = GlobalFindAtom32A( className )))
@@ -924,6 +927,9 @@ HWND32 WINAPI CreateWindowEx32W( DWORD exStyle, LPCWSTR className,
 {
     ATOM classAtom;
     CREATESTRUCT32W cs;
+
+    if(exStyle & WS_EX_MDICHILD)
+        return MDI_CreateMDIWindow32W(className, windowName, style, x, y, width, height, parent, instance, data);
 
     /* Find the class atom */
 
