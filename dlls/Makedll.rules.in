@@ -18,7 +18,7 @@ WIN16_FILES = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
-all: $(MODULE)$(DLLEXT)
+all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
 @MAKE_RULES@
 
@@ -65,7 +65,7 @@ check test:: $(SUBDIRS:%=%/__test__)
 
 crosstest:: $(SUBDIRS:%=%/__crosstest__)
 
-$(TESTRESULTS): $(MODULE)$(DLLEXT)
+$(TESTRESULTS) $(SUBDIRS): $(MODULE)$(DLLEXT)
 
 # Sanity check
 

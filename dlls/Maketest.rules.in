@@ -27,10 +27,12 @@ CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o)
 
 @MAKE_RULES@
 
+all: $(TESTPROGRAM)
+
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(MODULE) -mcui $(RC_SRCS:%.rc=-r %.res) $(OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(MODULE) -mcui $(RC_SRCS:%.rc=-r %.res) $(OBJS) -L$(DLLDIR) -L.. $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 
