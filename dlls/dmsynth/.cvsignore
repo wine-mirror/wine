@@ -1,0 +1,5 @@
+Makefile
+dmsynth.dll.dbg.c
+dmsynth.spec.c
+dmsynth.spec.def
+version.res

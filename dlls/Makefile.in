@@ -30,9 +30,18 @@ BASEDIRS = \
 	devenum \
 	dinput \
 	dinput8 \
+	dmband \
+	dmcompos \
+	dmime \
+	dmloader \
+	dmscript \
+	dmstyle \
+	dmsynth \
 	dmusic \
+	dmusic32 \
 	dplay \
 	dplayx \
+	dpnhpast \
 	dsound \
 	gdi \
 	icmp \
@@ -199,9 +208,18 @@ all: \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
 	dinput8.dll$(DLLEXT) \
+	dmband.dll$(DLLEXT) \
+	dmcompos.dll$(DLLEXT) \
+	dmime.dll$(DLLEXT) \
+	dmloader.dll$(DLLEXT) \
+	dmscript.dll$(DLLEXT) \
+	dmstyle.dll$(DLLEXT) \
+	dmsynth.dll$(DLLEXT) \
 	dmusic.dll$(DLLEXT) \
+	dmusic32.dll$(DLLEXT) \
 	dplay.dll$(DLLEXT) \
 	dplayx.dll$(DLLEXT) \
+	dpnhpast.dll$(DLLEXT) \
 	dsound.dll$(DLLEXT) \
 	gdi32.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
@@ -339,14 +357,41 @@ dinput.dll$(DLLEXT): dinput/dinput.dll$(DLLEXT)
 dinput8.dll$(DLLEXT): dinput8/dinput8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dinput8/dinput8.dll$(DLLEXT) $@
 
+dmband.dll$(DLLEXT): dmband/dmband.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmband/dmband.dll$(DLLEXT) $@
+
+dmcompos.dll$(DLLEXT): dmcompos/dmcompos.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmcompos/dmcompos.dll$(DLLEXT) $@
+
+dmime.dll$(DLLEXT): dmime/dmime.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmime/dmime.dll$(DLLEXT) $@
+
+dmloader.dll$(DLLEXT): dmloader/dmloader.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmloader/dmloader.dll$(DLLEXT) $@
+
+dmscript.dll$(DLLEXT): dmscript/dmscript.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmscript/dmscript.dll$(DLLEXT) $@
+
+dmstyle.dll$(DLLEXT): dmstyle/dmstyle.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmstyle/dmstyle.dll$(DLLEXT) $@
+
+dmsynth.dll$(DLLEXT): dmsynth/dmsynth.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmsynth/dmsynth.dll$(DLLEXT) $@
+
 dmusic.dll$(DLLEXT): dmusic/dmusic.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dmusic/dmusic.dll$(DLLEXT) $@
+
+dmusic32.dll$(DLLEXT): dmusic32/dmusic32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmusic32/dmusic32.dll$(DLLEXT) $@
 
 dplay.dll$(DLLEXT): dplay/dplay.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplay/dplay.dll$(DLLEXT) $@
 
 dplayx.dll$(DLLEXT): dplayx/dplayx.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplayx/dplayx.dll$(DLLEXT) $@
+
+dpnhpast.dll$(DLLEXT): dpnhpast/dpnhpast.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dpnhpast/dpnhpast.dll$(DLLEXT) $@
 
 dsound.dll$(DLLEXT): dsound/dsound.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dsound/dsound.dll$(DLLEXT) $@
@@ -625,9 +670,18 @@ IMPORT_LIBS = \
 	libdevenum \
 	libdinput \
 	libdinput8 \
+	libdmband \
+	libdmcompos \
+	libdmime \
+	libdmloader \
+	libdmscript \
+	libdmstyle \
+	libdmsynth \
 	libdmusic \
+	libdmusic32 \
 	libdplay \
 	libdplayx \
+	libdpnhpast \
 	libdsound \
 	libgdi32 \
 	libglu32 \
@@ -783,10 +837,50 @@ libdinput8.def: dinput8/dinput8.spec.def
 libdinput8.a: dinput8/dinput8.spec.def
 	$(DLLTOOL) -k -l $@ -d dinput8/dinput8.spec.def
 
+libdmband.def: dmband/dmband.spec.def
+	$(RM) $@ && $(LN_S) dmband/dmband.spec.def $@
+libdmband.a: dmband/dmband.spec.def
+	$(DLLTOOL) -k -l $@ -d dmband/dmband.spec.def
+
+libdmcompos.def: dmcompos/dmcompos.spec.def
+	$(RM) $@ && $(LN_S) dmcompos/dmcompos.spec.def $@
+libdmcompos.a: dmcompos/dmcompos.spec.def
+	$(DLLTOOL) -k -l $@ -d dmcompos/dmcompos.spec.def
+
+libdmime.def: dmime/dmime.spec.def
+	$(RM) $@ && $(LN_S) dmime/dmime.spec.def $@
+libdmime.a: dmime/dmime.spec.def
+	$(DLLTOOL) -k -l $@ -d dmime/dmime.spec.def
+
+libdmloader.def: dmloader/dmloader.spec.def
+	$(RM) $@ && $(LN_S) dmloader/dmloader.spec.def $@
+libdmloader.a: dmloader/dmloader.spec.def
+	$(DLLTOOL) -k -l $@ -d dmloader/dmloader.spec.def
+
+libdmscript.def: dmscript/dmscript.spec.def
+	$(RM) $@ && $(LN_S) dmscript/dmscript.spec.def $@
+libdmscript.a: dmscript/dmscript.spec.def
+	$(DLLTOOL) -k -l $@ -d dmscript/dmscript.spec.def
+
+libdmstyle.def: dmstyle/dmstyle.spec.def
+	$(RM) $@ && $(LN_S) dmstyle/dmstyle.spec.def $@
+libdmstyle.a: dmstyle/dmstyle.spec.def
+	$(DLLTOOL) -k -l $@ -d dmstyle/dmstyle.spec.def
+
+libdmsynth.def: dmsynth/dmsynth.spec.def
+	$(RM) $@ && $(LN_S) dmsynth/dmsynth.spec.def $@
+libdmsynth.a: dmsynth/dmsynth.spec.def
+	$(DLLTOOL) -k -l $@ -d dmsynth/dmsynth.spec.def
+
 libdmusic.def: dmusic/dmusic.spec.def
 	$(RM) $@ && $(LN_S) dmusic/dmusic.spec.def $@
 libdmusic.a: dmusic/dmusic.spec.def
 	$(DLLTOOL) -k -l $@ -d dmusic/dmusic.spec.def
+
+libdmusic32.def: dmusic32/dmusic32.spec.def
+	$(RM) $@ && $(LN_S) dmusic32/dmusic32.spec.def $@
+libdmusic32.a: dmusic32/dmusic32.spec.def
+	$(DLLTOOL) -k -l $@ -d dmusic32/dmusic32.spec.def
 
 libdplay.def: dplay/dplay.spec.def
 	$(RM) $@ && $(LN_S) dplay/dplay.spec.def $@
@@ -797,6 +891,11 @@ libdplayx.def: dplayx/dplayx.spec.def
 	$(RM) $@ && $(LN_S) dplayx/dplayx.spec.def $@
 libdplayx.a: dplayx/dplayx.spec.def
 	$(DLLTOOL) -k -l $@ -d dplayx/dplayx.spec.def
+
+libdpnhpast.def: dpnhpast/dpnhpast.spec.def
+	$(RM) $@ && $(LN_S) dpnhpast/dpnhpast.spec.def $@
+libdpnhpast.a: dpnhpast/dpnhpast.spec.def
+	$(DLLTOOL) -k -l $@ -d dpnhpast/dpnhpast.spec.def
 
 libdsound.def: dsound/dsound.spec.def
 	$(RM) $@ && $(LN_S) dsound/dsound.spec.def $@
@@ -1136,9 +1235,18 @@ ddraw/ddraw.spec.def: $(WINEBUILD)
 devenum/devenum.spec.def: $(WINEBUILD)
 dinput/dinput.spec.def: $(WINEBUILD)
 dinput8/dinput8.spec.def: $(WINEBUILD)
+dmband/dmband.spec.def: $(WINEBUILD)
+dmcompos/dmcompos.spec.def: $(WINEBUILD)
+dmime/dmime.spec.def: $(WINEBUILD)
+dmloader/dmloader.spec.def: $(WINEBUILD)
+dmscript/dmscript.spec.def: $(WINEBUILD)
+dmstyle/dmstyle.spec.def: $(WINEBUILD)
+dmsynth/dmsynth.spec.def: $(WINEBUILD)
 dmusic/dmusic.spec.def: $(WINEBUILD)
+dmusic32/dmusic32.spec.def: $(WINEBUILD)
 dplay/dplay.spec.def: $(WINEBUILD)
 dplayx/dplayx.spec.def: $(WINEBUILD)
+dpnhpast/dpnhpast.spec.def: $(WINEBUILD)
 dsound/dsound.spec.def: $(WINEBUILD)
 gdi/gdi32.spec.def: $(WINEBUILD)
 glu32/glu32.spec.def: $(WINEBUILD)
@@ -1227,9 +1335,18 @@ ddraw/ddraw.dll$(DLLEXT): ddraw
 devenum/devenum.dll$(DLLEXT): devenum
 dinput/dinput.dll$(DLLEXT): dinput
 dinput8/dinput8.dll$(DLLEXT): dinput8
+dmband/dmband.dll$(DLLEXT): dmband
+dmcompos/dmcompos.dll$(DLLEXT): dmcompos
+dmime/dmime.dll$(DLLEXT): dmime
+dmloader/dmloader.dll$(DLLEXT): dmloader
+dmscript/dmscript.dll$(DLLEXT): dmscript
+dmstyle/dmstyle.dll$(DLLEXT): dmstyle
+dmsynth/dmsynth.dll$(DLLEXT): dmsynth
 dmusic/dmusic.dll$(DLLEXT): dmusic
+dmusic32/dmusic32.dll$(DLLEXT): dmusic32
 dplay/dplay.dll$(DLLEXT): dplay
 dplayx/dplayx.dll$(DLLEXT): dplayx
+dpnhpast/dpnhpast.dll$(DLLEXT): dpnhpast
 dsound/dsound.dll$(DLLEXT): dsound
 gdi/gdi32.dll$(DLLEXT): gdi
 glu32/glu32.dll$(DLLEXT): glu32
@@ -1334,9 +1451,18 @@ ddraw/__install__: ddraw.dll$(DLLEXT)
 devenum/__install__: devenum.dll$(DLLEXT)
 dinput/__install__: dinput.dll$(DLLEXT)
 dinput8/__install__: dinput8.dll$(DLLEXT)
+dmband/__install__: dmband.dll$(DLLEXT)
+dmcompos/__install__: dmcompos.dll$(DLLEXT)
+dmime/__install__: dmime.dll$(DLLEXT)
+dmloader/__install__: dmloader.dll$(DLLEXT)
+dmscript/__install__: dmscript.dll$(DLLEXT)
+dmstyle/__install__: dmstyle.dll$(DLLEXT)
+dmsynth/__install__: dmsynth.dll$(DLLEXT)
 dmusic/__install__: dmusic.dll$(DLLEXT)
+dmusic32/__install__: dmusic32.dll$(DLLEXT)
 dplay/__install__: dplay.dll$(DLLEXT)
 dplayx/__install__: dplayx.dll$(DLLEXT)
+dpnhpast/__install__: dpnhpast.dll$(DLLEXT)
 dsound/__install__: dsound.dll$(DLLEXT)
 gdi/__install__: gdi32.dll$(DLLEXT)
 glu32/__install__: glu32.dll$(DLLEXT)

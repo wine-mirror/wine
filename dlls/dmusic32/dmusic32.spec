@@ -1,0 +1,2 @@
+1 stub CreateCDirectMusicEmulatePort
+2 stub EnumLegacyDevices

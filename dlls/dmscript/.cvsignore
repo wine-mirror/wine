@@ -1,0 +1,5 @@
+Makefile
+dmscript.dll.dbg.c
+dmscript.spec.c
+dmscript.spec.def
+version.res

@@ -1,0 +1,5 @@
+Makefile
+dmstyle.dll.dbg.c
+dmstyle.spec.c
+dmstyle.spec.def
+version.res

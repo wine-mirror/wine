@@ -45,8 +45,12 @@ WINDOWS_INCLUDES = \
 	dmo.h \
 	dmoreg.h \
 	dmort.h \
+	dmplugin.h \
 	dmusbuff.h \
 	dmusicc.h \
+	dmusicf.h \
+	dmusici.h \
+	dmusics.h \
 	docobj.h \
 	dplay.h \
 	dplobby.h \

@@ -1,0 +1,5 @@
+Makefile
+dmband.dll.dbg.c
+dmband.spec.c
+dmband.spec.def
+version.res

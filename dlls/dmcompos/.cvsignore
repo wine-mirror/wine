@@ -1,0 +1,5 @@
+Makefile
+dmcompos.dll.dbg.c
+dmcompos.spec.c
+dmcompos.spec.def
+version.res

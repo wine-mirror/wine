@@ -1,0 +1,5 @@
+Makefile
+dmime.dll.dbg.c
+dmime.spec.c
+dmime.spec.def
+version.res

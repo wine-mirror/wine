@@ -1,8 +1,5 @@
 /*
- * DirectX GUID definitions
- *
- * Copyright 2000 Alexandre Julliard
- * Copyright 2000 Francois Gouget
+ * Copyright (C) 2003 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,25 +16,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define COM_NO_WINDOWS_H
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#define WINE_FILEDESCRIPTION_STR "Wine DirectMusic Style Engine"
+#define WINE_FILENAME_STR "dmstyle.dll"
+#define WINE_FILEVERSION 4,8,1,881
+#define WINE_FILEVERSION_STR "4.8.1.881"
+#define WINE_PRODUCTVERSION 4,8,1,881
+#define WINE_PRODUCTVERSION_STR "4.8"
+#define WINE_PRODUCTNAME_STR "DirectX"
 
-#include "objbase.h"
-#include "oleauto.h"
-#include "olectl.h"
-#include "initguid.h"
-
-#include "d3d.h"
-#include "ddraw.h"
-#include "dsound.h"
-#include "dmusicc.h"
-#include "dmusici.h"
-#include "dmusics.h"
-#include "dmplugin.h"
-#include "dplay.h"
-#include "dplobby.h"
-#include "dinput.h"
-#include "ddrawi.h"
+#include "wine/wine_common_ver.rc"
