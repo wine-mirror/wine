@@ -159,6 +159,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #define CR2_sig(context)     ((context)->cr2)
 #define TRAP_sig(context)    ((context)->sc_trapno)
 #define ERROR_sig(context)   ((context)->sc_err)
+#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
 #endif
 
 #ifndef __FreeBSD__
@@ -279,5 +280,8 @@ typedef struct _CONTEXT		/* Note 1 */
 typedef DWORD SIGCONTEXT;
 #define HANDLER_CONTEXT 0
 #endif
+
+/* memory/instr.c */
+extern BOOL INSTR_EmulateInstruction( SIGCONTEXT * );
 
 #endif /* __WINE_SIG_CONTEXT_H */

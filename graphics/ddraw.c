@@ -54,7 +54,7 @@ typedef int INT32;
 #include "heap.h"
 #include "dc.h"
 #include "win.h"
-#include "miscemu.h"
+#include "wine/exception.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "debug.h"
@@ -3384,7 +3384,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
 
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitHandlers();
+	EXC_InitHandlers();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -3816,7 +3816,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 	Sleep(1000);
 	TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitHandlers();
+	EXC_InitHandlers();
 #endif
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -3869,7 +3869,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 #endif
 		
 #ifdef RESTORE_SIGNALS
-		SIGNAL_InitHandlers();
+		EXC_InitHandlers();
 #endif
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
@@ -4765,7 +4765,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 	_common_depth_to_pixelformat(depth, &((*ilplpDD)->d.directdraw_pixelformat), &((*ilplpDD)->d.screen_pixelformat), NULL);
 #ifdef RESTORE_SIGNALS
-	SIGNAL_InitHandlers();
+	EXC_InitHandlers();
 #endif
 
 	return DD_OK;
