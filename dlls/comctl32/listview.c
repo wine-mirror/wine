@@ -9279,7 +9279,7 @@ void LISTVIEW_Register(void)
 
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
-    wndClass.lpfnWndProc = (WNDPROC)LISTVIEW_WindowProc;
+    wndClass.lpfnWndProc = LISTVIEW_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = sizeof(LISTVIEW_INFO *);
     wndClass.hCursor = LoadCursorW(0, (LPWSTR)IDC_ARROW);

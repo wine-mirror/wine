@@ -1662,7 +1662,7 @@ VOID SYSLINK_Register (void)
 
     ZeroMemory (&wndClass, sizeof(wndClass));
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
-    wndClass.lpfnWndProc   = (WNDPROC)SysLinkWindowProc;
+    wndClass.lpfnWndProc   = SysLinkWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof (SYSLINK_INFO *);
     wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);

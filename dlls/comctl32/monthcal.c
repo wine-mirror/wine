@@ -2068,7 +2068,7 @@ MONTHCAL_Register(void)
 
   ZeroMemory(&wndClass, sizeof(WNDCLASSA));
   wndClass.style         = CS_GLOBALCLASS;
-  wndClass.lpfnWndProc   = (WNDPROC)MONTHCAL_WindowProc;
+  wndClass.lpfnWndProc   = MONTHCAL_WindowProc;
   wndClass.cbClsExtra    = 0;
   wndClass.cbWndExtra    = sizeof(MONTHCAL_INFO *);
   wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);

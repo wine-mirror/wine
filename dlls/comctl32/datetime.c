@@ -1037,7 +1037,7 @@ DATETIME_Register (void)
 
     ZeroMemory (&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC)DATETIME_WindowProc;
+    wndClass.lpfnWndProc   = DATETIME_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(DATETIME_INFO *);
     wndClass.hCursor       = LoadCursorW (0, (LPCWSTR)IDC_ARROW);

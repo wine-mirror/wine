@@ -5399,7 +5399,7 @@ TREEVIEW_Register(void)
 
     ZeroMemory(&wndClass, sizeof(WNDCLASSA));
     wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
-    wndClass.lpfnWndProc = (WNDPROC)TREEVIEW_WindowProc;
+    wndClass.lpfnWndProc = TREEVIEW_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = sizeof(TREEVIEW_INFO *);
 
