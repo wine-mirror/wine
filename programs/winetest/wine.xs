@@ -15,6 +15,9 @@
 #include <perl.h>
 #include <XSUB.h>
 
+#undef WORD
+#include "winbase.h"
+
 /* API return type constants */
 enum ret_type
 {

@@ -1,6 +1,7 @@
 EXTRADEFS = -DSTRICT `perl -MExtUtils::Embed -e ccflags`
 EXTRALIBS = `perl -MExtUtils::Embed -e ldopts`
 EXTRAINCL = `perl -MExtUtils::Embed -e perl_inc`
+XSUBPPDIR = `perl -MConfig -e 'print $$Config::Config{privlibexp}'`/ExtUtils
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -11,15 +12,11 @@ C_SRCS = winetest.c
 
 EXTRA_OBJS = wine.o
 
-PERLMAKE = $(MAKE) -fMakefile.perl INC="$(DIVINCL)"
 
 @MAKE_PROG_RULES@
 
-wine.o: wine.xs Makefile.perl
-	$(PERLMAKE) wine.o
-
-Makefile.perl: Makefile.PL
-	perl Makefile.PL
+wine.c: wine.xs
+	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c
 
 install::
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
@@ -28,7 +25,7 @@ install::
 uninstall::
 	cd $(libdir) && $(RM) wine.pm
 
-clean:: Makefile.perl
-	$(PERLMAKE) realclean
+clean::
+	$(RM) wine.c
 
 ### Dependencies:
