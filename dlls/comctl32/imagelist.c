@@ -894,7 +894,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	return FALSE;
     if (pimldp->himl == NULL)
 	return FALSE;
-    if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage))
+    if ((pimldp->i < 0) || (pimldp->i > pimldp->himl->cCurImage))
 	return FALSE;
 
     himlLocal = pimldp->himl;

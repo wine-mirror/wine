@@ -2,6 +2,7 @@
  *
  * Copyright 1998 Eric Kohl <ekohl@abo.rhein-zeitung.de>
  * Copyright 1998,1999 Alex Priem <alexp@sci.kun.nl>
+ * Copyright 1999 Sylvain St-Germain
  *
  *
  * TODO:
@@ -404,12 +405,6 @@ TREEVIEW_GetTextColor (HWND hwnd)
 }
 
 
-
-
-
-/* FIXME: draw background (infoPtr->clrBk) */
-
-
 /* cdmode: custom draw mode as received from app. in first NMCUSTOMDRAW 
            notification */
 
@@ -418,16 +413,13 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
 
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
-  INT  oldBkMode,center,xpos,cx,cy, cditem, drawmode;
-  TREEVIEW_ITEM *parentItem;
-  COLORREF oldBkColor = 0;
-  HFONT hOldFont;
-  UINT uTextJustify = DT_LEFT;
-  HPEN hOldPen, hnewPen;
-  RECT r,upper;
 
-  HIMAGELIST *himlp;
-  
+  INT   center,xpos,cx,cy, cditem, drawmode;
+  HFONT hOldFont;
+  UINT  uTextJustify = DT_LEFT;
+  RECT  r;
+
+ 
   if (wineItem->state & TVIS_BOLD) 
   	hOldFont = SelectObject (hdc, infoPtr->hBoldFont);
   else 
@@ -436,136 +428,258 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   cditem=0;
   if (infoPtr->cdmode & CDRF_NOTIFYITEMDRAW) {
 		drawmode=CDDS_ITEMPREPAINT;
-		if (infoPtr->cdmode & CDRF_NOTIFYSUBITEMDRAW) drawmode|=CDDS_SUBITEM;
+
+		if (infoPtr->cdmode & CDRF_NOTIFYSUBITEMDRAW) 
+      drawmode|=CDDS_SUBITEM;
+
 		cditem=TREEVIEW_SendCustomDrawItemNotify (hwnd, hdc, wineItem, drawmode);
+
 		TRACE (treeview,"cditem:%d\n",cditem);
+
 		if (cditem & CDRF_SKIPDEFAULT) 
 			return;
 	}
- 
+
+  /* 
+   * Set drawing starting points 
+   */
+  r      = wineItem->rect;        /* this item rectangle */
+  center = (r.top+r.bottom)/2;    /* this item vertical center */
+  xpos   = r.left + 8;            /* horizontal starting point */
+
+  /* 
+   * Display the tree hierarchy 
+   */
+  if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES) 
+  {
+    /* 
+     * Write links to parent node 
+     * we draw the L starting from the child to the parent
+     *
+     * points[0] is attached to the current item
+     * points[1] is the L corner
+     * points[2] is attached to the parent or the up sibling
+     */
+    if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_LINESATROOT) 
+    {
+      TREEVIEW_ITEM *upNode    = NULL;
+      TREEVIEW_ITEM *downNode  = NULL;
+     	BOOL  hasParentOrSibling = TRUE;
+      RECT  upRect             = {0,0,0,0};
+      HPEN  hOldPen, hnewPen;
+    	POINT points[3], downLink[2];
+      /* 
+       * determine the target location of the line at root, either be linked
+       * to the up sibling or to the parent node.
+       */
+      if (wineItem->upsibling)
+      	upNode  = TREEVIEW_ValidItem (infoPtr, wineItem->upsibling);
+      else if (wineItem->parent)
+      	upNode  = TREEVIEW_ValidItem (infoPtr, wineItem->parent);
+      else
+        hasParentOrSibling = FALSE;
+
+      if (upNode)
+        upRect = upNode->rect;
+
+      if ( wineItem->iLevel == 0 )
+      {
+        points[2].x = points[1].x = upRect.left+8;
+        points[0].x = points[2].x + 10;
+        points[2].y = upRect.bottom-3;      
+        points[1].y = points[0].y = center;
+      }
+      else
+      {
+        points[2].x = points[1].x = 8 + (20*wineItem->iLevel); 
+        points[2].y = ((upNode->cChildren == 0) ? 
+                         upRect.top :
+                         upRect.bottom-3);    
+        points[1].y = points[0].y = center;
+        points[0].x = points[1].x + 10; 
+      }
+    
+      /* 
+       * Check wheather this item has an invisible sibling.  If so, draw a 
+       * link to the bottom of the treeview otherwise there will not be any...
+       */
+      if (wineItem->sibling)
+      {
+      	downNode = TREEVIEW_ValidItem (infoPtr, wineItem->sibling);
+        if (downNode->visible == FALSE)
+        {
+          downLink[0].x = downLink[1].x = points[2].x;
+          downLink[0].y = points[2].y;
+          downLink[1].y = infoPtr->uTotalHeight - points[2].y;
+        }
+      }
   
-  hnewPen = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
-  hOldPen = SelectObject( hdc, hnewPen );
- 
-  r=wineItem->rect;
-  if (wineItem->parent) {
-	parentItem=TREEVIEW_ValidItem (infoPtr, wineItem->parent);
-	upper=parentItem->rect;
+      /* 
+       * Get a doted pen
+       */ 
+      hnewPen = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
+      hOldPen = SelectObject( hdc, hnewPen );
+  
+      if (hasParentOrSibling)
+        Polyline (hdc,points,3); 
+      else
+        Polyline (hdc,points,2); 
+      
+      /* FIXME: This simple stuff it does not work...
+      if ( downNode  && ( downNode->visible == FALSE ))
+        Polyline (hdc,downLink,2); 
+      */
+
+      DeleteObject(hnewPen);
+      SelectObject(hdc, hOldPen);
+    }
   }
-  else {
-	upper.top=0;
-	upper.left=8;
+
+  /* 
+   * Display the (+/-) signs
+   */
+  wineItem->expandBox.left   = 0; /* Initialize the expandBox */
+  wineItem->expandBox.top    = 0;
+  wineItem->expandBox.right  = 0;
+  wineItem->expandBox.bottom = 0;
+  if (( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASBUTTONS) && 
+      ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES))
+  {
+	  if (wineItem->cChildren)
+    {
+      if (wineItem->parent)
+        xpos+=5;  /* update position only for nodes that have a parent */
+  
+  		Rectangle (hdc, xpos-4, center-4, xpos+5, center+5);
+  		MoveToEx (hdc, xpos-2, center, NULL);
+  		LineTo   (hdc, xpos+3, center);
+  
+  		if (!(wineItem->state & TVIS_EXPANDED)) {
+  			MoveToEx (hdc, xpos,   center-2, NULL);
+  			LineTo   (hdc, xpos,   center+3);
+  	  }
+  
+      /* Setup expand box coordinate to facilitate the LMBClick handling */
+      wineItem->expandBox.left   = xpos-4;
+      wineItem->expandBox.top    = center-4;
+      wineItem->expandBox.right  = xpos+5;
+      wineItem->expandBox.bottom = center+5;
+    }
+    else
+    {
+      xpos+=(5*wineItem->iLevel);
+    }
   }
-  center=(r.top+r.bottom)/2;
-  xpos=r.left+8;
 
-  if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES) {
-	POINT points[3];
-	if (( GetWindowLongA( hwnd, GWL_STYLE) & TVS_LINESATROOT) && (wineItem->iLevel==0)) {
-		points[0].y=points[1].y=center;
-		points[2].y=upper.top;
-		points[1].x=points[2].x=upper.left;
-		points[0].x=upper.left+12;
-		points[2].y+=5;
-
- 		Polyline (hdc,points,3);
-	}
-	else {
-		points[0].y=points[1].y=center;
-                points[2].y=upper.top;
-                points[1].x=points[2].x=upper.left+13;
-                points[0].x=upper.left+25;
-                points[2].y+=5;
- 		Polyline (hdc,points,3);
-	}
- }
-
-  DeleteObject(hnewPen);
-  SelectObject(hdc, hOldPen);
-
-  if (( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASBUTTONS) && ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_HASLINES) && 
-		(wineItem->cChildren)) {
-		Rectangle (hdc, xpos-4, center-4, xpos+5, center+5);
-		MoveToEx (hdc, xpos-2, center, NULL);
-		LineTo   (hdc, xpos+3, center);
-		if (!(wineItem->state & TVIS_EXPANDED)) {
-			MoveToEx (hdc, xpos,   center-2, NULL);
-			LineTo   (hdc, xpos,   center+3);
-	}
-   }
-
-
-  xpos+=13;
-
+  /* 
+   * Display the image assiciated with this item
+   */
   if (wineItem->mask & (TVIF_IMAGE|TVIF_SELECTEDIMAGE)) {
+    INT        imageIndex;
+    HIMAGELIST *himlp = NULL;
+    xpos             += 13; /* update position */
 
-    himlp=NULL;
-	if (infoPtr->himlNormal) himlp=&infoPtr->himlNormal;
+	  if (infoPtr->himlNormal) 
+      himlp=&infoPtr->himlNormal; /* get the image list */
 
-	if ((wineItem->state & TVIS_SELECTED) && (wineItem->iSelectedImage)) {
-		if (infoPtr->himlState) himlp=&infoPtr->himlState;
-		if (wineItem->iSelectedImage==I_IMAGECALLBACK) 
-			TREEVIEW_SendDispInfoNotify (hwnd, wineItem, 
-										TVN_GETDISPINFO, TVIF_SELECTEDIMAGE);
-	} else { /* NOT selected */
-		if (wineItem->iImage==I_IMAGECALLBACK) 
-			TREEVIEW_SendDispInfoNotify (hwnd, wineItem,
-										TVN_GETDISPINFO, TVIF_IMAGE);
+  	if ( (wineItem->state & TVIS_SELECTED) && 
+         (wineItem->iSelectedImage)) { 
+        
+      /* State images are displayed to the left of the Normal image*/
+      if (infoPtr->himlState) 
+        himlp=&infoPtr->himlState;
+
+      /* The item is curently selected */
+		  if (wineItem->iSelectedImage == I_IMAGECALLBACK) 
+  			TREEVIEW_SendDispInfoNotify (
+          hwnd, 
+          wineItem, 
+          TVN_GETDISPINFO, 
+          TVIF_SELECTEDIMAGE);
+
+      imageIndex = wineItem->iSelectedImage;
+
+	  } else { 
+      /* This item is not selected */
+		  if (wineItem->iImage == I_IMAGECALLBACK) 
+			  TREEVIEW_SendDispInfoNotify ( 
+          hwnd, 
+          wineItem, 
+          TVN_GETDISPINFO, 
+          TVIF_IMAGE);
+
+      imageIndex = wineItem->iImage;
   	}
+ 
+    if (himlp)
+    { 
+      /* We found an image to display? Draw it. */
+     	ImageList_Draw (
+        *himlp, 
+        wineItem->iImage,
+        hdc, 
+        xpos-2, 
+        r.top+1, 
+        ILD_NORMAL);
 
- 	if (himlp) {
- 	ImageList_Draw (*himlp, wineItem->iImage, hdc, xpos-2, r.top+1, ILD_NORMAL);
- 	ImageList_GetIconSize (*himlp, &cx, &cy);
- 	xpos+=cx;
- 	}
- }
+   	  ImageList_GetIconSize (*himlp, &cx, &cy);
+   	  xpos+=cx;
+    }
+  }
 
 
   r.left=xpos;
-  if ((wineItem->mask & TVIF_TEXT) && (wineItem->pszText)) {
+  if ((wineItem->mask & TVIF_TEXT) && (wineItem->pszText)) 
+  {
+    COLORREF oldBkColor = 0;
+    COLORREF oldTextColor = 0;
+    INT      oldBkMode;
 
-	    if (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED) ) {
-           	oldBkMode = SetBkMode(hdc, OPAQUE);
-			oldBkColor= SetBkColor (hdc, GetSysColor( COLOR_HIGHLIGHT));
-			SetTextColor (hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
-	    } else {
-            	oldBkMode = SetBkMode(hdc, TRANSPARENT);
-	    }
-        r.left += 3;
-        r.right -= 3;
-		wineItem->text.left=r.left;
-		wineItem->text.right=r.right;
-		if (infoPtr->clrText==-1)
-           	SetTextColor (hdc, COLOR_BTNTEXT);
-		else 
-			SetTextColor (hdc, infoPtr->clrText);  /* FIXME: setback retval */
+    if (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED) ) {
+      oldBkMode    = SetBkMode   (hdc, OPAQUE);
+		  oldBkColor   = SetBkColor  (hdc, GetSysColor( COLOR_HIGHLIGHT));
+		  oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_HIGHLIGHTTEXT));
+    } 
+    else 
+    {
+    	oldBkMode    = SetBkMode(hdc, TRANSPARENT);
+		  oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_WINDOWTEXT));
+    }
 
-		if (wineItem->pszText== LPSTR_TEXTCALLBACKA) {
-			TRACE (treeview,"LPSTR_TEXTCALLBACK\n");
-			TREEVIEW_SendDispInfoNotify (hwnd, wineItem, 
-											TVN_GETDISPINFO, TVIF_TEXT);
-		}
+    r.left += 3;
+    r.right -= 3;
+    wineItem->text.left=r.left;
+    wineItem->text.right=r.right;
 
-       	DrawTextA (hdc, wineItem->pszText, lstrlenA(wineItem->pszText), &r, 
-						uTextJustify|DT_VCENTER|DT_SINGLELINE);
+    if (wineItem->pszText== LPSTR_TEXTCALLBACKA) {
+      TRACE (treeview,"LPSTR_TEXTCALLBACK\n");
+      TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFO, TVIF_TEXT);
+    }
 
-        if (oldBkMode != TRANSPARENT)
-            SetBkMode(hdc, oldBkMode);
-	    if (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED))
-			SetBkColor (hdc, oldBkColor);
-        }
+    DrawTextA (
+      hdc, 
+      wineItem->pszText, 
+      lstrlenA(wineItem->pszText), 
+      &r, 
+      uTextJustify|DT_VCENTER|DT_SINGLELINE);
+
+    /* 
+     * FIXME if not always done, the bmp following the selection are not 
+     * visible ????
+     */
+    SetTextColor( hdc, oldTextColor);
+
+    if (oldBkMode != TRANSPARENT)
+      SetBkMode(hdc, oldBkMode);
+    if (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED))
+      SetBkColor (hdc, oldBkColor);
+  }
 
   if (cditem & CDRF_NOTIFYPOSTPAINT)
-		TREEVIEW_SendCustomDrawItemNotify (hwnd, hdc, wineItem, 
-											CDDS_ITEMPOSTPAINT);
+		TREEVIEW_SendCustomDrawItemNotify (hwnd, hdc, wineItem, CDDS_ITEMPOSTPAINT);
 
   SelectObject (hdc, hOldFont);
 }
-
-
-
-
-
 
 
 static LRESULT
@@ -1822,69 +1936,85 @@ TREEVIEW_SendCustomDrawItemNotify (HWND hwnd, HDC hdc,
 static LRESULT
 TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
- TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
- TREEVIEW_ITEM *wineItem, *parentItem;
- UINT flag;
- INT expand;
- 
- flag= (UINT) wParam;
- expand= (INT) lParam;
- TRACE (treeview,"flags:%x item:%x\n", expand, wParam);
- wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)expand);
- if (!wineItem) return 0;
- if (!wineItem->cChildren) return 0;
+  TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  TREEVIEW_ITEM *wineItem;
+  UINT flag;
+  INT expand;
+  
+  flag = (UINT) wParam;
+  expand = (INT) lParam;
+  TRACE (treeview,"flags:%x item:%x\n", expand, wParam);
+  wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)expand);
 
- if (wineItem->cChildren==I_CHILDRENCALLBACK) {
-		FIXME (treeview,"we don't handle I_CHILDRENCALLBACK yet\n");
-		return 0;
- }
+  if (!wineItem) 
+    return 0;
+  if (!wineItem->cChildren) 
+    return 0;
 
- if (flag & TVE_TOGGLE) {		/* FIXME: check exact behaviour here */
-	flag &= ~TVE_TOGGLE;		/* ie: bitwise ops or 'case' ops */
-	if (wineItem->state & TVIS_EXPANDED) 
-		flag |= TVE_COLLAPSE;
-	else
-		flag |= TVE_EXPAND;
- }
+  if (wineItem->cChildren==I_CHILDRENCALLBACK) {
+    FIXME (treeview,"we don't handle I_CHILDRENCALLBACK yet\n");
+    return 0;
+  }
 
- switch (flag) {
+  if (flag & TVE_TOGGLE) {    /* FIXME: check exact behaviour here */
+   flag &= ~TVE_TOGGLE;    /* ie: bitwise ops or 'case' ops */
+   if (wineItem->state & TVIS_EXPANDED) 
+     flag |= TVE_COLLAPSE;
+   else
+     flag |= TVE_EXPAND;
+  }
+
+  switch (flag) 
+  {
     case TVE_COLLAPSERESET: 
-   		if (!wineItem->state & TVIS_EXPANDED) return 0;
-		wineItem->state &= ~(TVIS_EXPANDEDONCE | TVIS_EXPANDED);
-		TREEVIEW_RemoveAllChildren (hwnd, wineItem);
-		break;
+      if (!wineItem->state & TVIS_EXPANDED) 
+        return 0;
+
+       wineItem->state &= ~(TVIS_EXPANDEDONCE | TVIS_EXPANDED);
+       TREEVIEW_RemoveAllChildren (hwnd, wineItem);
+       break;
 
     case TVE_COLLAPSE: 
-		if (!wineItem->state & TVIS_EXPANDED) return 0;
-		wineItem->state &= ~TVIS_EXPANDED;
-		break;
+      if (!wineItem->state & TVIS_EXPANDED) 
+        return 0;
+
+      wineItem->state &= ~TVIS_EXPANDED;
+      break;
 
     case TVE_EXPAND: 
-		if (wineItem->state & TVIS_EXPANDED) return 0;
-		if (wineItem->parent) {
-				parentItem=TREEVIEW_ValidItem(infoPtr,wineItem->parent);
-				TREEVIEW_Expand (hwnd, wParam, (LPARAM) wineItem->parent);
-		}
-		if (!(wineItem->state & TVIS_EXPANDEDONCE)) {
-    		if (TREEVIEW_SendTreeviewNotify (hwnd, TVN_ITEMEXPANDING, 
-											0, 0, (HTREEITEM)expand))
-					return FALSE; 	/* FIXME: OK? */
-            wineItem->state |= TVIS_EXPANDED | TVIS_EXPANDEDONCE;
-    		TREEVIEW_SendTreeviewNotify (hwnd, TVN_ITEMEXPANDED, 
-                                         0, 0, (HTREEITEM)expand);
-        }
-	wineItem->state |= TVIS_EXPANDED;
-	break;
-   case TVE_EXPANDPARTIAL:
-		FIXME (treeview, "TVE_EXPANDPARTIAL not implemented\n");
-		wineItem->state ^=TVIS_EXPANDED;
-		wineItem->state |=TVIS_EXPANDEDONCE;
-		break;
-  }
- 
- TREEVIEW_QueueRefresh (hwnd);
+      if (wineItem->state & TVIS_EXPANDED) 
+        return 0;
 
- return TRUE;
+      if (!(wineItem->state & TVIS_EXPANDEDONCE)) 
+      {
+        if (TREEVIEW_SendTreeviewNotify (
+              hwnd, 
+              TVN_ITEMEXPANDING, 
+              0, 
+              0, 
+              (HTREEITEM)expand))
+            return FALSE;   /* FIXME: OK? */
+
+        wineItem->state |= TVIS_EXPANDED | TVIS_EXPANDEDONCE;
+        TREEVIEW_SendTreeviewNotify (
+          hwnd, 
+          TVN_ITEMEXPANDED, 
+          0, 
+          0, 
+          (HTREEITEM)expand);
+      }
+      wineItem->state |= TVIS_EXPANDED;
+      break;
+
+    case TVE_EXPANDPARTIAL:
+      FIXME (treeview, "TVE_EXPANDPARTIAL not implemented\n");
+      wineItem->state ^=TVIS_EXPANDED;
+      wineItem->state |=TVIS_EXPANDEDONCE;
+      break;
+  }
+  
+  TREEVIEW_QueueRefresh (hwnd);
+  return TRUE;
 }
 
 
@@ -1932,28 +2062,45 @@ TREEVIEW_HitTest (HWND hwnd, LPARAM lParam)
   if (x > rect.right) status|=TVHT_TORIGHT;
   if (y < rect.top )  status|=TVHT_ABOVE;
   if (y > rect.bottom) status|=TVHT_BELOW;
+
   if (status) {
-	lpht->flags=status;
-	return 0;
+    lpht->flags=status;
+    return 0;
   }
 
   wineItem=TREEVIEW_HitTestPoint (hwnd, lpht->pt);
-  if (!wineItem) {	
-		lpht->flags=TVHT_NOWHERE;
-		return 0;
+  if (!wineItem) {  
+    lpht->flags=TVHT_NOWHERE;
+    return 0;
   }
 
- if (x>wineItem->rect.right) {
-	lpht->flags|=TVHT_ONITEMRIGHT;
-	return (LRESULT) wineItem->hItem;
- }
+  /* FIXME: implement other flags
+   * Assign the appropriate flags depending on the click location 
+   * Intitialize flags before to "|=" it... 
+   */
+  lpht->flags=0;
+
+  if (x < wineItem->expandBox.left) 
+  {
+    lpht->flags |= TVHT_ONITEMINDENT;
+  } 
+  else if ( ( x >= wineItem->expandBox.left) && 
+            ( x <= wineItem->expandBox.right))
+  {
+    lpht->flags |= TVHT_ONITEMBUTTON;
+  }
+  else if (x < wineItem->rect.right) 
+  {
+    lpht->flags |= TVHT_ONITEMLABEL;    
+  } 
+  else
+  {
+    lpht->flags|=TVHT_ONITEMRIGHT;
+  }
  
- if (x<wineItem->rect.left+10) lpht->flags|=TVHT_ONITEMBUTTON;
+  lpht->hItem=wineItem->hItem;
 
- lpht->flags=TVHT_ONITEMLABEL;    /* FIXME: implement other flags */
- lpht->hItem=wineItem->hItem;
-
- return (LRESULT) wineItem->hItem;
+  return (LRESULT) wineItem->hItem;
 }
 
 
