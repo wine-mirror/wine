@@ -10,7 +10,7 @@
 15 stub AtlModuleGetClassObject
 16 stdcall AtlModuleInit(ptr long long)
 17 stdcall AtlModuleRegisterClassObjects(ptr long long)
-18 stub AtlModuleRegisterServer
+18 stdcall AtlModuleRegisterServer(ptr long ptr)
 19 stub AtlModuleRegisterTypeLib
 20 stub AtlModuleRevokeClassObjects
 21 stdcall AtlModuleTerm(ptr)

@@ -179,3 +179,13 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
 
     return S_OK;
 }
+
+/***********************************************************************
+ *           AtlModuleRegisterServer         [ATL.@]
+ *
+ */
+HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* clsid) 
+{
+    FIXME("%p %d %s\n", pM, bRegTypeLib, debugstr_guid(clsid));
+    return S_OK;
+}
