@@ -325,7 +325,7 @@ int __cdecl MSVCRT__fpclass(double num)
 #else
   if (!finite(num))
     return _FPCLASS_QNAN;
-  return num == 0.0 ? _FPCLASS_PZ : (d < 0 ? _FPCLASS_NN : _FPCLASS_PN);
+  return num == 0.0 ? _FPCLASS_PZ : (num < 0 ? _FPCLASS_NN : _FPCLASS_PN);
 #endif
 }
 
