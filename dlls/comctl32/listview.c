@@ -2549,7 +2549,13 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
           if (lpLVItem->stateMask & LVIS_SELECTED)
           {
             if (lpLVItem->state & LVIS_SELECTED)
+            {
+                if (lStyle & LVS_SINGLESEL)
+                {
+                  LISTVIEW_RemoveAllSelections(hwnd);
+                }
               LISTVIEW_AddSelectionRange(hwnd,lpLVItem->iItem,lpLVItem->iItem);
+            }
             else
               LISTVIEW_RemoveSelectionRange(hwnd,lpLVItem->iItem,
                                             lpLVItem->iItem);
