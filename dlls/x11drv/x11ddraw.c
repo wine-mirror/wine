@@ -31,6 +31,8 @@ HBITMAP X11DRV_DD_PrimaryDIB;
 Drawable X11DRV_DD_PrimaryDrawable;
 ATOM X11DRV_DD_UserClass;
 BOOL X11DRV_DD_IsDirect;
+static UINT X11DRV_DD_GrabMessage;
+static WNDPROC X11DRV_DD_GrabOldProcedure;
 
 static void SetPrimaryDIB(HBITMAP hBmp)
 {
@@ -45,20 +47,69 @@ static void SetPrimaryDIB(HBITMAP hBmp)
   }
 }
 
-static void GrabPointer(HWND hWnd)
-{
+static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
+{ 
   Display *display = thread_display();
-  if (hWnd) {
-    /* find the X11 window that ddraw uses */
-    Window win = X11DRV_get_whole_window(hWnd);
-    TRACE("WND: %x win: %ld\n", hWnd, win);
-    if (!win) {
-      TRACE("host off desktop\n");
-      win = root_window;
-    }
-    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
-  }
-  else TSXUngrabPointer(display, CurrentTime);
+
+  if(message != X11DRV_DD_GrabMessage)
+    return CallWindowProcA(X11DRV_DD_GrabOldProcedure, hWnd, message, wParam, lParam);
+ 
+  TRACE("hwnd=%d, grab=%d\n", hWnd, wParam);
+
+  if (wParam) 
+  {  
+    /* find the X11 window that ddraw uses */  
+    Window win = X11DRV_get_whole_window(hWnd);  
+    TRACE("X11 window: %ld\n", win);  
+    if (!win) {  
+      TRACE("host off desktop\n");  
+      win = root_window;  
+    }  
+
+    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);  
+  }  
+  else 
+  {
+    TSXUngrabPointer(display, CurrentTime);  
+  } 
+
+  return 0; 
+} 
+
+static void GrabPointer(BOOL grab)
+{
+  WND*    pWnd;
+
+  if(grab) { 
+    Window window = X11DRV_get_whole_window(GetFocus()); 
+    if(window)
+      XSetInputFocus(thread_display(), window, RevertToParent, CurrentTime); 
+  } 
+
+  if(!X11DRV_DD_GrabMessage)
+    X11DRV_DD_GrabMessage = RegisterWindowMessageA("WINE_X11DRV_GRABPOINTER");
+
+  pWnd = WIN_FindWndPtr(X11DRV_DD_PrimaryWnd);
+  if(!pWnd)
+    return;
+
+  X11DRV_DD_GrabOldProcedure = pWnd->winproc;
+  pWnd->winproc = GrabWndProc;
+
+  WIN_ReleaseWndPtr(pWnd);
+
+  SendMessageA(X11DRV_DD_PrimaryWnd, X11DRV_DD_GrabMessage, grab ? 1 : 0, 0);
+
+  pWnd = WIN_FindWndPtr(X11DRV_DD_PrimaryWnd); 
+  if(!pWnd)
+    return;
+
+  if(pWnd->winproc != GrabWndProc)
+    ERR("Window procedure has been changed!\n");
+  else
+    pWnd->winproc = X11DRV_DD_GrabOldProcedure;
+  
+  WIN_ReleaseWndPtr(pWnd); 
 }
 
 static DWORD PASCAL X11DRV_DDHAL_DestroyDriver(LPDDHAL_DESTROYDRIVERDATA data)
@@ -75,7 +126,7 @@ static DWORD PASCAL X11DRV_DDHAL_CreateSurface(LPDDHAL_CREATESURFACEDATA data)
     X11DRV_DD_PrimaryGbl = X11DRV_DD_Primary->lpGbl;
     SetPrimaryDIB(GET_LPDDRAWSURFACE_GBL_MORE(X11DRV_DD_PrimaryGbl)->hKernelSurface);
     X11DRV_DD_UserClass = GlobalFindAtomA("WINE_DDRAW");
-    if (dxgrab) GrabPointer(X11DRV_DD_PrimaryWnd);
+    if (dxgrab) GrabPointer(TRUE);
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_NOTHANDLED;
@@ -108,12 +159,12 @@ static DDHAL_DDCALLBACKS hal_ddcallbacks = {
 static DWORD PASCAL X11DRV_DDHAL_DestroySurface(LPDDHAL_DESTROYSURFACEDATA data)
 {
   if (data->lpDDSurface == X11DRV_DD_Primary) {
+    if (dxgrab) GrabPointer(FALSE);
     X11DRV_DD_Primary = NULL;
     X11DRV_DD_PrimaryWnd = 0;
     X11DRV_DD_PrimaryGbl = NULL;
     SetPrimaryDIB(0);
     X11DRV_DD_UserClass = 0;
-    if (dxgrab) GrabPointer(0);
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;
