@@ -880,7 +880,7 @@ static	DWORD	DEBUG_MainLoop(void)
     else
     {
         DEBUG_InteractiveP = TRUE;
-        DEBUG_Parser();
+        DEBUG_Parser(NULL);
     }
     DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
 

@@ -243,6 +243,8 @@ extern	DWORD		DEBUG_CurrPid;
 extern  CONTEXT		DEBUG_context;
 extern  BOOL		DEBUG_InteractiveP;
 extern  enum exit_mode  DEBUG_ExitMode;
+extern  HANDLE          DEBUG_hParserInput;
+extern  HANDLE          DEBUG_hParserOutput;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
       (ReadProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
@@ -306,8 +308,8 @@ extern int  DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
 
   /* debugger/dbg.y */
-extern void DEBUG_Parser(void);
-extern void DEBUG_Exit( DWORD );
+extern void DEBUG_Parser(LPCSTR);
+extern void DEBUG_Exit(DWORD);
 
   /* debugger/debug.l */
 extern void DEBUG_FlushSymbols(void);
@@ -320,10 +322,6 @@ extern int DEBUG_AddDisplay(struct expr * exp, int count, char format);
 extern int DEBUG_DoDisplay(void);
 extern int DEBUG_DelDisplay(int displaynum);
 extern int DEBUG_InfoDisplay(void);
-
-  /* debugger/editline.c */
-extern char * readline(const char *);
-extern void add_history(char *);
 
   /* debugger/expr.c */
 extern void DEBUG_FreeExprMem(void);

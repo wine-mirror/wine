@@ -34,8 +34,6 @@
 #include "expr.h"
 #include "msvcrt/excpt.h"
 
-extern FILE * yyin;
-
 static void mode_command(int);
 int yylex(void);
 int yyerror(char *);
@@ -55,9 +53,9 @@ int yyerror(char *);
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
-%token tPROCESS tTHREAD tMODREF tEOL
+%token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
-%token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS
+%token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
 %token <string> tPATH
 %token <string> tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
@@ -101,6 +99,7 @@ input: line
 
 line: command
     | tEOL
+    | tEOF                      { return 1; }
     | error tEOL               	{ yyerrok; }
     ;
 
@@ -145,6 +144,7 @@ command:
     | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
     | tCOND tNUM tEOL          	{ DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
+    | tSOURCE pathname tEOL     { DEBUG_Parser($2); }
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2, 0); }
     | tSYMBOLFILE pathname tNUM tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
@@ -412,30 +412,57 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
    return EXCEPTION_EXECUTE_HANDLER;
 }
 
+static  void set_default_channels(void)
+{
+    DEBUG_hParserOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    DEBUG_hParserInput  = GetStdHandle(STD_INPUT_HANDLE);
+}
+
 /***********************************************************************
  *           DEBUG_Parser
  *
  * Debugger editline parser
  */
-void	DEBUG_Parser(void)
+void	DEBUG_Parser(LPCSTR filename)
 {
     BOOL 	        ret_ok;
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
-    yyin = stdin;
 
     ret_ok = FALSE;
-    do {
-       __TRY {
+
+    if (filename)
+    {
+        DEBUG_hParserOutput = 0;
+        DEBUG_hParserInput  = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
+        if (DEBUG_hParserInput == INVALID_HANDLE_VALUE)
+        {
+            set_default_channels();
+            return;
+        }
+    }
+    else
+        set_default_channels();
+
+    do
+    {
+       __TRY
+           {
 	  ret_ok = TRUE;
 	  yyparse();
-       } __EXCEPT(wine_dbg_cmd) {
+       }
+       __EXCEPT(wine_dbg_cmd)
+       {
 	  ret_ok = FALSE;
        }
        __ENDTRY;
        DEBUG_FlushSymbols();
     } while (!ret_ok);
+
+    if (filename)
+        CloseHandle(DEBUG_hParserInput);
+    set_default_channels();
 }
 
 int yyerror(char* s)

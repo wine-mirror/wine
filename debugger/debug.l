@@ -29,12 +29,14 @@
 
 #undef YY_INPUT
 
+HANDLE DEBUG_hParserInput;
+HANDLE DEBUG_hParserOutput;
+
 static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size);
 
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = DEBUG_FetchFromLine("Wine-dbg>", buf, max_size)) <= 0 ) \
+	if ( (result = DEBUG_FetchFromLine("Wine-dbg>", buf, max_size)) < 0 ) \
 	    YY_FATAL_ERROR( "ReadLine() in flex scanner failed" );
-
 
 #define YY_NO_UNPUT
 
@@ -64,6 +66,7 @@ STRING     \"[^\n"]+\"
                                         /* set to special state when no process is loaded. */
                                         if (!DEBUG_CurrProcess && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
+<<EOF>>                                 { return tEOF; }
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
                                         /* Indicates end of command. Reset state. */
 
@@ -128,6 +131,7 @@ STRING     \"[^\n"]+\"
 
 <INITIAL>mode				{ BEGIN(MODE_CMD); return tMODE; }
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
+<INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
 <INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
@@ -216,12 +220,12 @@ static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* allo
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * consoles
      */
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), NULL, NULL);
+    WriteFile(DEBUG_hParserOutput, pfx, strlen(pfx), NULL, NULL);
 
     len = 0;
     do
     {
-	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line) - 1, &nread, NULL))
+	if (!ReadFile(DEBUG_hParserInput, buf_line, sizeof(buf_line) - 1, &nread, NULL) || nread == 0)
 	    break;
 	buf_line[nread] = '\0';
 
@@ -233,6 +237,14 @@ static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* allo
         {
             *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc += nread + 1);
         }
+        strcpy(*line + len, buf_line);
+        len += nread;
+    } while (nread == 0 || buf_line[nread - 1] != '\n');
+
+    if (!len)
+    {
+        *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc = 1);
+        **line = '\0';
         strcpy(*line + len, buf_line);
         len += nread;
     } while (nread == 0 || buf_line[nread - 1] != '\n');
