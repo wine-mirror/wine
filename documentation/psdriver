@@ -73,6 +73,39 @@ apps such as win98 wordpad, Winword97, Powerpoint2000 with some degree of
 success - you should be able to get something out, it may not be in the right
 place.
 
+If you don't have a PostScript printer here is a short additional description 
+how to get the Wine PostScript Driver running with ghostscript. I had some 
+success with ghostscript 5.10 from the SuSE 6.2 distribution. My ghostscript 
+package contains some AFM files in the directory /usr/share/ghostscript/fonts.
+I have used these for the [afmfiles] section in my wine.conf (or ~/.winerc) 
+file.
+
+There are also two PPD file in my ghostscript package. They are located in the
+directory /usr/share/ghostscript/5.10. I have used the file cbjc600.ppd because
+of the supported papersize. Because my PPD file needed some changes i have 
+copyed it to /usr/local/etc/gs.ppd and enterd it into the [psdrv] section in 
+my wine.conf (or ~/.winerc) file.
+
+When i started wine after this settings i got an error when wine tried to pars 
+the PPD file. There was the ':' missing in the line:
+
+	*CloseUI: *PrintColors
+
+After this fix the PPD file was successfull parsed, but printing was still not 
+possible. The reason is that the PPD file contains no font information. To 
+create the font information I run wine with -debugmsg +font and redirected the
+output into a file. Than I filterd the file for lines containing 'FontName'
+using the grep command and extracted the names of the fonts with the cut 
+command into a new file.
+
+	grep FontName LOGFILE | cut -f 2 -d\' | sort -u > add.ppd
+
+Now '*Font ' needs to be inserted at the beginning of each line of the new 
+file. The end of each line needs to become ': Standard'. The last step is to
+add these line to the PPD file. After this I was able to print some text using 
+wines buildin PostScript driver and ghostscript.
+
+
 TODO / Bugs
 -----------
 
