@@ -226,8 +226,8 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	    memset(&xsrc,0,sizeof(xsrc));
 	}
     }
-    if (src) assert(xsrc.bottom <= sdesc.dwHeight);
-    assert(xdst.bottom <= ddesc.dwHeight);
+    if (src) assert((xsrc.bottom-xsrc.top) <= sdesc.dwHeight);
+    assert((xdst.bottom-xdst.top) <= ddesc.dwHeight);
 
     bpp = GET_BPP(ddesc);
     srcheight = xsrc.bottom - xsrc.top;
