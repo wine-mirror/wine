@@ -223,7 +223,7 @@ sub _check_function {
 	    if(defined($kind) && $kind eq "struct16") {
 		$n+=4;
 		("long", "long", "long", "long");
-	    } elsif(defined($kind) && $kind eq "longlong") {
+	    } elsif(defined($kind) && $kind =~ /^(?:longlong)$/) {
 		$n+=2;
 		("long", "long");
 	    } else {

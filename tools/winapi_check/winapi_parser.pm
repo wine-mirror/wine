@@ -359,7 +359,7 @@ sub parse_c_file {
 	    next;
 	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
             ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
-	    (\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/sx)
+	    (\w+(\(\w+\))?)\s*\((.*?)\)\s*(\{|\;)/sx)
         {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -400,11 +400,15 @@ sub parse_c_file {
 
 	    my @argument_types;
 	    my @argument_names;
-	    my @arguments = split(/,/, $arguments);
-	    foreach my $n (0..$#arguments) {
+	    my @arguments;
+	    my $n = 0;
+	    while ($arguments =~ s/^((?:[^,\(\)]*|(?:\([^\)]*\))?)+)(?:,|$)// && $1) {
+		my $argument = $1;
+		push @arguments, $argument;
+
 		my $argument_type = "";
 		my $argument_name = "";
-		my $argument = $arguments[$n];
+
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		# print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
@@ -413,27 +417,74 @@ sub parse_c_file {
 		    $argument_type = "...";
 		    $argument_name = "...";
 		} elsif($argument =~ /^
-			((?:struct\s+|union\s+|enum\s+|(?:signed\s+|unsigned\s+)
+			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
-			((?:const)?\s*(?:\*\s*?)*)\s*
-			(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL)?/x)
+			((?:__RPC_FAR|const|CONST)?\s*(?:\*\s*(?:__RPC_FAR|const|CONST)?\s*?)*)\s*
+			(?:WINE_UNUSED\s+)?(\w*)\s*(?:\[\]|\s+OPTIONAL|\s+WINE_UNUSED)?$/x)
 		{
-		    $argument_type = "$1";
-		    if($2 ne "") {
+		    $argument_type = $1;
+		    if ($2) {
 			$argument_type .= " $2";
 		    }
 		    $argument_name = $3;
+		} elsif ($argument =~ /^
+			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
+			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
+			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
+			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|WINAPI\s+)?
+			\(\s*(?:__cdecl|__stdcall|CALLBACK|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			\(\s*(.*?)\s*\)$/x) 
+		{
+		    my $return_type = $1;
+		    if($2) {
+			$return_type .= " $2";
+		    }
+		    $argument_name = $3;
+		    my $arguments = $4;
 
-		    $argument_type =~ s/\s*const\s*/ /;
-		    $argument_type =~ s/^\s*(.*?)\s*$/$1/;
+		    $return_type =~ s/\s+/ /g;
+		    $arguments =~ s/\s*,\s*/,/g;
+		    
+		    $argument_type = "$return_type (*)($arguments)";
+		} elsif ($argument =~ /^
+			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
+			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
+			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
+			(\w+)\s*\[\s*(.*?)\s*\](?:\[\s*(.*?)\s*\])?$/x)
+		{
+		    my $return_type = $1;
+		    if($2) {
+			$return_type .= " $2";
+		    }
+		    $argument_name = $3;
 
-		    $argument_name =~ s/^\s*(.*?)\s*$/$1/;
+		    $argument_type = "$return_type\[$4\]";
+
+		    if (defined($5)) {
+			$argument_type .= "\[$5\]";
+		    }
+
+		    # die "$file: $.: syntax error: '$argument_type':'$argument_name'\n";
 		} else {
 		    die "$file: $.: syntax error: '$argument'\n";
 		}
+
+		$argument_type =~ s/\s*const\s*/ /g; # Remove const
+		$argument_type =~ s/([^\*\(\s])\*/$1 \*/g; # Assure whitespace between non-* and *
+		$argument_type =~ s/,([^\s])/, $1/g; # Assure whitespace after ,
+		$argument_type =~ s/\*\s+\*/\*\*/g; # Remove whitespace between * and *
+		$argument_type =~ s/([\(\[])\s+/$1/g; # Remove whitespace after ( and [
+		$argument_type =~ s/\s+([\)\]])/$1/g; # Remove whitespace before ] and )
+		$argument_type =~ s/\s+/ /; # Remove multiple whitespace
+		$argument_type =~ s/^\s*(.*?)\s*$/$1/; # Remove leading and trailing whitespace
+
+		$argument_name =~ s/^\s*(.*?)\s*$/$1/; # Remove leading and trailing whitespace
+
 		$argument_types[$n] = $argument_type;
 		$argument_names[$n] = $argument_name;
 		# print "  " . ($n + 1) . ": '" . $argument_types[$n] . "', '" . $argument_names[$n] . "'\n";
+
+		$n++;
 	    }
 	    if($#argument_types == 0 && $argument_types[0] =~ /^void$/i) {
 		$#argument_types = -1;
