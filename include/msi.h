@@ -46,6 +46,8 @@ typedef enum tagINSTALLUILEVEL
     INSTALLUILEVEL_FULL = 5
 } INSTALLUILEVEL;
 
+#define MAX_FEATURE_CHARS 38
+
 
 UINT WINAPI MsiInstallProductA(LPCSTR, LPCSTR);
 UINT WINAPI MsiInstallProductW(LPCWSTR, LPCWSTR);
@@ -93,6 +95,10 @@ UINT WINAPI MsiCloseAllHandles();
 UINT WINAPI MsiProvideComponentFromDescriptorA(LPCSTR,LPSTR,DWORD*,DWORD*);
 UINT WINAPI MsiProvideComponentFromDescriptorW(LPCWSTR,LPWSTR,DWORD*,DWORD*);
 #define     MsiProvideComponentFromDescriptor WINELIB_NAME_AW(MsiProvideComponentFromDescriptor)
+
+UINT WINAPI MsiGetProductPropertyA(MSIHANDLE,LPCSTR,LPSTR,DWORD*);
+UINT WINAPI MsiGetProductPropertyW(MSIHANDLE,LPCWSTR,LPWSTR,DWORD*);
+#define     MsiGetProductProperty WINELIB_NAME_AW(MsiGetProductProperty)
 
 UINT WINAPI MsiVerifyPackageA(LPCSTR);
 UINT WINAPI MsiVerifyPackageW(LPCWSTR);
