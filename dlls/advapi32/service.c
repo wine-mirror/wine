@@ -1500,8 +1500,41 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
 BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel, 
     LPVOID lpInfo)
 {
-    FIXME("STUB: %p %ld %p\n",hService, dwInfoLevel, lpInfo);
-    return TRUE;
+    BOOL r = FALSE;
+
+    TRACE("%p %ld %p\n",hService, dwInfoLevel, lpInfo);
+
+    if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
+    {
+        LPSERVICE_DESCRIPTIONA sd = (LPSERVICE_DESCRIPTIONA) lpInfo;
+        SERVICE_DESCRIPTIONW sdw;
+
+        sdw.lpDescription = SERV_dup( sd->lpDescription );
+
+        r = ChangeServiceConfig2W( hService, dwInfoLevel, &sdw );
+
+        SERV_free( sdw.lpDescription );
+    }
+    else if (dwInfoLevel == SERVICE_CONFIG_FAILURE_ACTIONS)
+    {
+        LPSERVICE_FAILURE_ACTIONSA fa = (LPSERVICE_FAILURE_ACTIONSA) lpInfo;
+        SERVICE_FAILURE_ACTIONSW faw;
+
+        faw.dwResetPeriod = fa->dwResetPeriod;
+        faw.lpRebootMsg = SERV_dup( fa->lpRebootMsg );
+        faw.lpCommand = SERV_dup( fa->lpCommand );
+        faw.cActions = fa->cActions;
+        faw.lpsaActions = fa->lpsaActions;
+
+        r = ChangeServiceConfig2W( hService, dwInfoLevel, &faw );
+
+        SERV_free( faw.lpRebootMsg );
+        SERV_free( faw.lpCommand );
+    }
+    else
+        SetLastError( ERROR_INVALID_PARAMETER );
+
+    return r;
 }
 
 /******************************************************************************
