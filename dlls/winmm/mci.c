@@ -1027,13 +1027,11 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
      */
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
-#define	STR_OF(_x) (IsBadReadPtr((char*)_x,1)?"?":(char*)(_x))
     TRACE("[%d, %s, %08lx, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
 	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
-	  data[0], STR_OF(data[0]), data[1], STR_OF(data[1]),
-	  data[2], STR_OF(data[2]), data[3], STR_OF(data[3]),
-	  data[4], STR_OF(data[4]), data[5], STR_OF(data[5]));
-#undef STR_OF
+	  data[0], debugstr_a((char *)data[0]), data[1], debugstr_a((char *)data[1]),
+	  data[2], debugstr_a((char *)data[2]), data[3], debugstr_a((char *)data[3]),
+	  data[4], debugstr_a((char *)data[4]), data[5], debugstr_a((char *)data[5]));
 
     if (strcmp(verb, "open") == 0) {
 	if ((dwRet = MCI_FinishOpen(wmd, (LPMCI_OPEN_PARMSA)data, dwFlags)))

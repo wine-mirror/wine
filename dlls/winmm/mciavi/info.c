@@ -82,6 +82,8 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    EnterCriticalSection(&wma->cs);
+
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
@@ -131,12 +133,15 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 	    break;
 	default:
 	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
+           ret = MCIERR_UNRECOGNIZED_COMMAND;
+            break;
 	}
     } else {
 	WARN("No GetDevCaps-Item !\n");
-	return MCIERR_UNRECOGNIZED_COMMAND;
+       ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
+
+    LeaveCriticalSection(&wma->cs);
     return ret;
 }
 
@@ -155,15 +160,18 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
 
     TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
+    EnterCriticalSection(&wma->cs);
+
     switch (dwFlags) {
     case MCI_INFO_PRODUCT:
 	str = "Wine's AVI player";
 	break;
     case MCI_INFO_FILE:
-	str = wma->openParms.lpstrElementName;
+       str = wma->lpFileName;
 	break;
     default:
 	WARN("Don't know this info command (%lu)\n", dwFlags);
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (str) {
@@ -175,6 +183,8 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
     } else {
 	lpParms->lpstrReturn[0] = 0;
     }
+
+    LeaveCriticalSection(&wma->cs);
     return ret;
 }
 
@@ -188,6 +198,8 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    EnterCriticalSection(&wma->cs);
+
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
 	case MCI_FORMAT_MILLISECONDS:
@@ -200,18 +212,22 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	    break;
 	default:
 	    WARN("Bad time format %lu!\n", lpParms->dwTimeFormat);
+            LeaveCriticalSection(&wma->cs);
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
     }
 
     if (dwFlags & MCI_SET_DOOR_OPEN) {
 	TRACE("No support for door open !\n");
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
     if (dwFlags & MCI_SET_DOOR_CLOSED) {
 	TRACE("No support for door close !\n");
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
+
     if (dwFlags & MCI_SET_ON) {
 	char	buffer[256];
 
@@ -302,6 +318,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	FIXME("Setting speed to %ld\n", lpParms->dwSpeed);
     }
 
+    LeaveCriticalSection(&wma->cs);
     return 0;
 }
 
@@ -316,6 +333,8 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    EnterCriticalSection(&wma->cs);
+
     if (dwFlags & MCI_STATUS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_STATUS_CURRENT_TRACK:
@@ -325,6 +344,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	case MCI_STATUS_LENGTH:
 	    if (!wma->hFile) {
 		lpParms->dwReturn = 0;
+                LeaveCriticalSection(&wma->cs);
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	    }
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
@@ -334,7 +354,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	case MCI_STATUS_MODE:
  	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->dwStatus, wma->dwStatus);
 	    ret = MCI_RESOURCE_RETURNED;
-	    TRACE("MCI_STATUS_MODE => %u\n", LOWORD(lpParms->dwReturn));
+           TRACE("MCI_STATUS_MODE => 0x%04x\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
 	    TRACE("MCI_STATUS_MEDIA_PRESENT => TRUE\n");
@@ -348,6 +368,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	case MCI_STATUS_POSITION:
 	    if (!wma->hFile) {
 		lpParms->dwReturn = 0;
+                LeaveCriticalSection(&wma->cs);
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	    }
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
@@ -401,7 +422,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	    TRACE("MCI_DGV_STATUS_HPAL => %lx\n", lpParms->dwReturn);
 	    break;
 	case MCI_DGV_STATUS_HWND:
-           lpParms->dwReturn = (DWORD)wma->hWndPaint;
+           lpParms->dwReturn = (DWORD_PTR)wma->hWndPaint;
            TRACE("MCI_DGV_STATUS_HWND => %p\n", wma->hWndPaint);
 	    break;
 #if 0
@@ -436,17 +457,20 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	default:
 	    FIXME("Unknowm command %08lX !\n", lpParms->dwItem);
 	    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+            LeaveCriticalSection(&wma->cs);
     	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
 	WARN("No Status-Item!\n");
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
+
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
+                       wDevID, MCI_NOTIFY_SUCCESSFUL);
     }
-
+    LeaveCriticalSection(&wma->cs);
     return ret;
 }

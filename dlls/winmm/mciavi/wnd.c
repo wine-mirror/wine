@@ -4,6 +4,7 @@
  * Digital video MCI Wine Driver
  *
  * Copyright 1999, 2000 Eric POUECH
+ * Copyright 2003 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,15 +31,13 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 {
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hWnd, uMsg, wParam, lParam);
 
-    if (!(WINE_MCIAVI*)GetWindowLongA(hWnd, 0) && uMsg != WM_CREATE)
-	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
-
     switch (uMsg) {
     case WM_CREATE:
 	SetWindowLongA(hWnd, 0, (LPARAM)((CREATESTRUCTA*)lParam)->lpCreateParams);
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 
     case WM_DESTROY:
+        MCIAVI_mciClose(GetWindowLongA(hWnd, 0), MCI_WAIT, NULL);
 	SetWindowLongA(hWnd, 0, 0);
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 
@@ -48,32 +47,38 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	    GetClientRect(hWnd, &rect);
 	    FillRect((HDC)wParam, &rect, GetStockObject(BLACK_BRUSH));
 	}
-	break;
+       return 1;
+
     case WM_PAINT:
         {
-            WINE_MCIAVI* wma = (WINE_MCIAVI*)GetWindowLongA(hWnd, 0);
+            WINE_MCIAVI *wma = (WINE_MCIAVI *)mciGetDriverData(GetWindowLongA(hWnd, 0));
+
+            if (!wma)
+                return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+            
+            EnterCriticalSection(&wma->cs);
 
             /* the animation isn't playing, don't paint */
 	    if (wma->dwStatus == MCI_MODE_NOT_READY)
+            {
+                LeaveCriticalSection(&wma->cs);
 		/* default paint handling */
 	    	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+            }
 
-            if (wParam) {
-                EnterCriticalSection(&wma->cs);
+            if (wParam)
                 MCIAVI_PaintFrame(wma, (HDC)wParam);
-                LeaveCriticalSection(&wma->cs);
-            } else {
+            else
+            {
 	        PAINTSTRUCT ps;
  	        HDC hDC = BeginPaint(hWnd, &ps);
-
-                EnterCriticalSection(&wma->cs);
                 MCIAVI_PaintFrame(wma, hDC);
-                LeaveCriticalSection(&wma->cs);
-
 	        EndPaint(hWnd, &ps);
 	    }
+
+            LeaveCriticalSection(&wma->cs);
         }
-	break;
+       return 1;
 
     default:
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
@@ -93,15 +98,16 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     if (wma->hWnd) return TRUE;
 
     ZeroMemory(&wndClass, sizeof(WNDCLASSA));
-    wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
+    wndClass.style         = CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)MCIAVI_WindowProc;
     wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof(WINE_MCIAVI*);
+    wndClass.cbWndExtra    = sizeof(MCIDEVICEID);
+    wndClass.hInstance     = MCIAVI_hInstance;
     wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = "MCIAVI";
 
-    RegisterClassA(&wndClass);
+    if (!RegisterClassA(&wndClass)) return FALSE;
 
     if (dwFlags & MCI_DGV_OPEN_PARENT)	hParent = lpOpenParms->hWndParent;
     if (dwFlags & MCI_DGV_OPEN_WS)	dwStyle = lpOpenParms->dwStyle;
@@ -116,7 +122,8 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     wma->hWnd = CreateWindowA("MCIAVI", "Wine MCI-AVI player",
                              dwStyle, rc.left, rc.top,
                              rc.right, rc.bottom,
-			      hParent, 0, MCIAVI_hInstance, wma);
+                             hParent, 0, MCIAVI_hInstance,
+                              (LPVOID)wma->wDevID);
     wma->hWndPaint = wma->hWnd;
     return (BOOL)wma->hWnd;
 }
@@ -128,40 +135,49 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     RECT		rc;
-    char		buffer[256];
 
-    FIXME("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    EnterCriticalSection(&wma->cs);
+
     if (dwFlags & MCI_DGV_RECT) {
 	rc = lpParms->rc;
     } else {
-	SetRectEmpty(&rc);
+        GetClientRect(wma->hWndPaint, &rc);
     }
 
-    *buffer = 0;
     if (dwFlags & MCI_DGV_PUT_CLIENT) {
-	strncat(buffer, "PUT_CLIENT", sizeof(buffer));
+        FIXME("PUT_CLIENT %s\n", wine_dbgstr_rect(&rc));
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_PUT_DESTINATION) {
-	strncat(buffer, "PUT_DESTINATION", sizeof(buffer));
+        TRACE("PUT_DESTINATION %s\n", wine_dbgstr_rect(&rc));
+        wma->dest = rc;
     }
     if (dwFlags & MCI_DGV_PUT_FRAME) {
-	strncat(buffer, "PUT_FRAME", sizeof(buffer));
+        FIXME("PUT_FRAME %s\n", wine_dbgstr_rect(&rc));
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_PUT_SOURCE) {
-	strncat(buffer, "PUT_SOURCE", sizeof(buffer));
+        TRACE("PUT_SOURCE %s\n", wine_dbgstr_rect(&rc));
+        wma->source = rc;
     }
     if (dwFlags & MCI_DGV_PUT_VIDEO) {
-	strncat(buffer, "PUT_VIDEO", sizeof(buffer));
+        FIXME("PUT_VIDEO %s\n", wine_dbgstr_rect(&rc));
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_PUT_WINDOW) {
-	strncat(buffer, "PUT_WINDOW", sizeof(buffer));
+        FIXME("PUT_WINDOW %s\n", wine_dbgstr_rect(&rc));
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    TRACE("%s (%ld,%ld,%ld,%ld)\n", buffer, rc.left, rc.top, rc.right, rc.bottom);
-
+    LeaveCriticalSection(&wma->cs);
     return 0;
 }
 
@@ -171,40 +187,43 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
 DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
-    LPCSTR		x = "";
 
     TRACE("(%04x, %08lx, %p)\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
-    if (dwFlags & MCI_DGV_WHERE_MAX) FIXME("Max NIY\n");
+    if (dwFlags & MCI_DGV_WHERE_MAX)
+    {
+        FIXME("WHERE_MAX\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    EnterCriticalSection(&wma->cs);
 
     if (dwFlags & MCI_DGV_WHERE_DESTINATION) {
-	x = "Dest";
-	GetClientRect(wma->hWnd, &lpParms->rc);
+        TRACE("WHERE_DESTINATION %s\n", wine_dbgstr_rect(&wma->dest));
+        lpParms->rc = wma->dest;
     }
     if (dwFlags & MCI_DGV_WHERE_FRAME) {
-	FIXME(x = "Frame\n");
+       FIXME("MCI_DGV_WHERE_FRAME\n");
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
-	x = "Source";
-	lpParms->rc.left = lpParms->rc.top = 0;
-	lpParms->rc.right = wma->mah.dwWidth;
-	lpParms->rc.bottom = wma->mah.dwHeight;
+        TRACE("WHERE_SOURCE %s\n", wine_dbgstr_rect(&wma->source));
+        lpParms->rc = wma->source;
     }
     if (dwFlags & MCI_DGV_WHERE_VIDEO) {
-	FIXME(x = "Video\n");
+       FIXME("WHERE_VIDEO\n");
+        LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {
-	x = "Window";
-       GetClientRect(wma->hWndPaint, &lpParms->rc);
+        GetClientRect(wma->hWndPaint, &lpParms->rc);
+        TRACE("WHERE_WINDOW %s\n", wine_dbgstr_rect(&lpParms->rc));
     }
-    TRACE("%s -> (%ld,%ld,%ld,%ld)\n",
-	  x, lpParms->rc.left, lpParms->rc.top, lpParms->rc.right, lpParms->rc.bottom);
-
+    LeaveCriticalSection(&wma->cs);
     return 0;
 }
 
@@ -220,11 +239,16 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
+    EnterCriticalSection(&wma->cs);
+
     if (dwFlags & MCI_DGV_WINDOW_HWND) {
-       TRACE("Setting hWnd to %p\n", lpParms->hWnd);
-       if (wma->hWnd) ShowWindow(wma->hWnd, SW_HIDE);
-       wma->hWndPaint = (lpParms->hWnd == MCI_DGV_WINDOW_DEFAULT) ? wma->hWnd : lpParms->hWnd;
-        InvalidateRect(wma->hWndPaint, NULL, FALSE);
+        if (IsWindow(lpParms->hWnd))
+        {
+            TRACE("Setting hWnd to %p\n", lpParms->hWnd);
+            if (wma->hWnd) ShowWindow(wma->hWnd, SW_HIDE);
+            wma->hWndPaint = (lpParms->hWnd == MCI_DGV_WINDOW_DEFAULT) ? wma->hWnd : lpParms->hWnd;
+            InvalidateRect(wma->hWndPaint, NULL, FALSE);
+        }
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
 	TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
@@ -235,5 +259,6 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
        SetWindowTextA(wma->hWndPaint, lpParms->lpstrText);
     }
 
+    LeaveCriticalSection(&wma->cs);
     return 0;
 }

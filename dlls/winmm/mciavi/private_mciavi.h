@@ -41,12 +41,12 @@ struct MMIOPos {
 };
 
 typedef struct {
-    UINT		wDevID;
+    MCIDEVICEID                wDevID;
     int			nUseCount;          	/* Incremented for each shared open          */
     BOOL  		fShareable;         	/* TRUE if first open was shareable 	     */
     WORD		wCommandTable;		/* custom MCI command table */
-    volatile DWORD	dwStatus;		/* One of MCI_MODE_XXX			     */
-    MCI_OPEN_PARMSA 	openParms;
+    DWORD              dwStatus;               /* One of MCI_MODE_XXX                       */
+    LPSTR              lpFileName;
     DWORD		dwMciTimeFormat;	/* current time format */
     DWORD		dwSet;			/* what's turned on: video & audio l&r */
     /* information on the loaded AVI file */
@@ -75,6 +75,7 @@ typedef struct {
     HWND               hWnd, hWndPaint;
     DWORD		dwCurrVideoFrame;	/* video frame to display and current position */
     DWORD		dwCurrAudioBlock;	/* current audio block being played */
+    RECT                source, dest;
     /* data for the background mechanism */
     CRITICAL_SECTION	cs;
 } WINE_MCIAVI;
@@ -99,6 +100,7 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC);
 
 /* mciavi.c */
 WINE_MCIAVI*	MCIAVI_mciGetOpenDev(UINT wDevID);
+DWORD MCIAVI_mciClose(UINT, DWORD, LPMCI_GENERIC_PARMS);
 
 /* window.c */
 BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms);

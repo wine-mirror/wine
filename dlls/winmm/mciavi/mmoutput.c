@@ -4,6 +4,7 @@
  * Digital video MCI Wine Driver
  *
  * Copyright 1999, 2000 Eric POUECH
+ * Copyright 2003 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,15 +26,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
-static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
+static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCKINFO *mmckStream)
 {
     MMCKINFO	mmckInfo;
-
-    mmckInfo.ckid = ckidSTREAMHEADER;
-    if (mmioDescend(wma->hFile, &mmckInfo, mmckList, MMIO_FINDCHUNK) != 0) {
-	WARN("Can't find 'strh' chunk\n");
-	return FALSE;
-    }
 
     mmioRead(wma->hFile, (LPSTR)&wma->ash_audio, sizeof(wma->ash_audio));
 
@@ -59,11 +54,12 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	wma->ash_audio.rcFrame.top, wma->ash_audio.rcFrame.left,
 	  wma->ash_audio.rcFrame.bottom, wma->ash_audio.rcFrame.right);
 
-    mmioAscend(wma->hFile, &mmckInfo, 0);
+    /* rewind to the start of the stream */
+    mmioAscend(wma->hFile, mmckStream, 0);
 
     mmckInfo.ckid = ckidSTREAMFORMAT;
     if (mmioDescend(wma->hFile, &mmckInfo, mmckList, MMIO_FINDCHUNK) != 0) {
-	WARN("Can't find 'strh' chunk\n");
+       WARN("Can't find 'strf' chunk\n");
 	return FALSE;
     }
     if (mmckInfo.cksize < sizeof(WAVEFORMAT)) {
@@ -87,20 +83,12 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
     if (mmckInfo.cksize >= sizeof(WAVEFORMATEX))
 	TRACE("waveFormat.cbSize=%d\n", 		wma->lpWaveFormat->cbSize);
 
-    mmioAscend(wma->hFile, &mmckInfo, 0);
-
     return TRUE;
 }
 
-static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
+static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCKINFO* mmckStream)
 {
     MMCKINFO	mmckInfo;
-
-    mmckInfo.ckid = ckidSTREAMHEADER;
-    if (mmioDescend(wma->hFile, &mmckInfo, mmckList, MMIO_FINDCHUNK) != 0) {
-	WARN("Can't find 'strh' chunk\n");
-	return FALSE;
-    }
 
     mmioRead(wma->hFile, (LPSTR)&wma->ash_video, sizeof(wma->ash_video));
 
@@ -126,11 +114,12 @@ static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
     TRACE("ash.rcFrame=(%d,%d,%d,%d)\n", 	wma->ash_video.rcFrame.top, wma->ash_video.rcFrame.left,
 	  wma->ash_video.rcFrame.bottom, wma->ash_video.rcFrame.right);
 
-    mmioAscend(wma->hFile, &mmckInfo, 0);
+    /* rewind to the start of the stream */
+    mmioAscend(wma->hFile, mmckStream, 0);
 
     mmckInfo.ckid = ckidSTREAMFORMAT;
     if (mmioDescend(wma->hFile, &mmckInfo, mmckList, MMIO_FINDCHUNK) != 0) {
-	WARN("Can't find 'strh' chunk\n");
+       WARN("Can't find 'strf' chunk\n");
 	return FALSE;
     }
 
@@ -154,7 +143,12 @@ static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList)
     TRACE("bih.biClrUsed=%ld\n", 	wma->inbih->biClrUsed);
     TRACE("bih.biClrImportant=%ld\n", 	wma->inbih->biClrImportant);
 
-    mmioAscend(wma->hFile, &mmckInfo, 0);
+    wma->source.left = 0;
+    wma->source.top = 0;
+    wma->source.right = wma->inbih->biWidth;
+    wma->source.bottom = wma->inbih->biHeight;
+
+    wma->dest = wma->source;
 
     return TRUE;
 }
@@ -178,6 +172,9 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
     case cktypePALchange:
 	TRACE("Adding video frame[%ld]: %ld bytes\n",
 	      alb->numVideoFrames, mmck->cksize);
+        if (!mmck->cksize)
+            TRACE("got a zero sized frame\n");
+
 	if (alb->numVideoFrames < wma->dwPlayableVideoFrames) {
 	    wma->lpVideoIndex[alb->numVideoFrames].dwOffset = mmck->dwDataOffset;
 	    wma->lpVideoIndex[alb->numVideoFrames].dwSize = mmck->cksize;
@@ -263,25 +260,43 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 
     mmioAscend(wma->hFile, &mmckInfo, 0);
 
-    mmckList.fccType = listtypeSTREAMHEADER;
-    if (mmioDescend(wma->hFile, &mmckList, &mmckHead, MMIO_FINDLIST) != 0) {
-	WARN("Can't find 'strl' list\n");
-	return FALSE;
-    }
+    TRACE("Start of streams\n");
+    do
+    {
+        MMCKINFO mmckStream;
 
-    if (!MCIAVI_GetInfoVideo(wma, &mmckList)) {
-	return FALSE;
-    }
+        mmckList.fccType = listtypeSTREAMHEADER;
+        if (mmioDescend(wma->hFile, &mmckList, &mmckHead, MMIO_FINDLIST) != 0)
+            break;
 
-    mmioAscend(wma->hFile, &mmckList, 0);
+        mmckStream.ckid = ckidSTREAMHEADER;
+        if (mmioDescend(wma->hFile, &mmckStream, &mmckList, MMIO_FINDCHUNK) != 0)
+        {
+            WARN("Can't find 'strh' chunk\n");
+            continue;
+        }
 
-    mmckList.fccType = listtypeSTREAMHEADER;
-    if (mmioDescend(wma->hFile, &mmckList, &mmckHead, MMIO_FINDLIST) == 0) {
-	if (!MCIAVI_GetInfoAudio(wma, &mmckList)) {
-	    return FALSE;
-	}
-	mmioAscend(wma->hFile, &mmckList, 0);
-    }
+        TRACE("Stream fccType %4.4s\n", (LPSTR)&mmckStream.fccType);
+
+        if (mmckStream.fccType == streamtypeVIDEO)
+        {
+            TRACE("found video stream\n");
+            if (!MCIAVI_GetInfoVideo(wma, &mmckList, &mmckStream))
+                return FALSE;
+        }
+        else if (mmckStream.fccType == streamtypeAUDIO)
+        {
+            TRACE("found audio stream\n");
+            if (!MCIAVI_GetInfoAudio(wma, &mmckList, &mmckStream))
+                return FALSE;
+        }
+        else
+            TRACE("Unsupported stream type %4.4s\n", (LPSTR)&mmckStream.fccType);
+
+        mmioAscend(wma->hFile, &mmckList, 0);
+    } while(1);
+
+    TRACE("End of streams\n");
 
     mmioAscend(wma->hFile, &mmckHead, 0);
 
@@ -351,6 +366,8 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
     DWORD	outSize;
     FOURCC	fcc = wma->ash_video.fccHandler;
 
+    TRACE("fcc %4.4s\n", (LPSTR)&fcc);
+
     /* check uncompressed AVI */
     if ((fcc == mmioFOURCC('D','I','B',' ')) ||
 	(fcc == mmioFOURCC('R','L','E',' '))) {
@@ -411,10 +428,14 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
     return TRUE;
 }
 
-static void CALLBACK MCIAVI_waveCallback(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
-					 DWORD dwParam1, DWORD dwParam2)
+static void CALLBACK MCIAVI_waveCallback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance,
+                                        DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    WINE_MCIAVI*	wma = (WINE_MCIAVI*)dwInstance;
+    WINE_MCIAVI *wma = (WINE_MCIAVI *)MCIAVI_mciGetOpenDev(dwInstance);
+
+    if (!wma) return;
+
+    EnterCriticalSection(&wma->cs);
 
     switch (uMsg) {
     case WOM_OPEN:
@@ -428,6 +449,8 @@ static void CALLBACK MCIAVI_waveCallback(HWAVEOUT hwo, UINT uMsg, DWORD dwInstan
     default:
 	ERR("Unknown uMsg=%d\n", uMsg);
     }
+
+    LeaveCriticalSection(&wma->cs);
 }
 
 DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
@@ -437,7 +460,7 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
     unsigned	i;
 
     dwRet = waveOutOpen((HWAVEOUT *)&wma->hWave, WAVE_MAPPER, wma->lpWaveFormat,
-			(DWORD)MCIAVI_waveCallback, (DWORD)wma, CALLBACK_FUNCTION);
+                       (DWORD_PTR)MCIAVI_waveCallback, wma->wDevID, CALLBACK_FUNCTION);
     if (dwRet != 0) {
 	TRACE("Can't open low level audio device %ld\n", dwRet);
 	dwRet = MCIERR_DEVICE_OPEN;
@@ -543,7 +566,11 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
     hdcMem = CreateCompatibleDC(hDC);
     hbmOld = SelectObject(hdcMem, wma->hbmFrame);
 
-    BitBlt(hDC, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+    StretchBlt(hDC,
+               wma->dest.left, wma->dest.top, wma->dest.right, wma->dest.bottom,
+               hdcMem,
+               wma->source.left, wma->source.top, wma->source.right, wma->source.bottom,
+               SRCCOPY);
 
     SelectObject(hdcMem, hbmOld);
     DeleteDC(hdcMem);
@@ -559,8 +586,6 @@ LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
     if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset)
 	return FALSE;
 
-    EnterCriticalSection(&wma->cs);
-
     mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
     mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
 
@@ -570,7 +595,6 @@ LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
     if (wma->hic &&
 	ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
 		     wma->outbih, wma->outdata) != ICERR_OK) {
-	LeaveCriticalSection(&wma->cs);
 	WARN("Decompression error\n");
 	return FALSE;
     }
