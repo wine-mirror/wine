@@ -377,9 +377,13 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
 static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 {
     const WORD *p = (const WORD *)template;
+    WORD signature;
+    WORD dlgver;
 
-    result->style = GET_DWORD(p); p += 2;
-    if (result->style == 0xffff0001)  /* DIALOGEX resource */
+    signature = GET_WORD(p); p++;
+    dlgver = GET_WORD(p); p++;
+
+    if (signature == 1 && dlgver == 0xffff)  /* DIALOGEX resource */
     {
         result->dialogEx = TRUE;
         result->helpId   = GET_DWORD(p); p += 2;
@@ -388,6 +392,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     }
     else
     {
+        result->style = GET_DWORD(p - 2);
         result->dialogEx = FALSE;
         result->helpId   = 0;
         result->exStyle  = GET_DWORD(p); p += 2;
