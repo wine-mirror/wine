@@ -42,10 +42,6 @@
 #   pragma warning(disable:4103)
 #  endif
 
-#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC) || defined(_MSC_VER)
-#    pragma pack(1)
-#  elif !defined(RC_INVOKED)
-#    error "Adjusting the alignment is not supported with this compiler"
-#  endif
+#  pragma pack(1)
 
 #endif
