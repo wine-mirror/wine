@@ -48,7 +48,9 @@ struct pipe_user
     struct named_pipe  *pipe;
     struct pipe_user   *next;
     struct pipe_user   *prev;
-    struct event       *event;
+    void               *thread;
+    void               *func;
+    void               *overlapped;
 };
 
 struct named_pipe
@@ -122,18 +124,28 @@ static void named_pipe_destroy( struct object *obj)
     assert( !pipe->users );
 }
 
+static void notify_waiter( struct pipe_user *user, unsigned int status)
+{
+    if(user->thread && user->func && user->overlapped)
+    {
+        /* queue a system APC, to notify a waiting thread */
+        thread_queue_apc(user->thread,NULL,user->func,
+            APC_ASYNC,1,2,user->overlapped,status);
+    }
+    user->thread = NULL;
+    user->func = NULL;
+    user->overlapped=NULL;
+}
+
 static void pipe_user_destroy( struct object *obj)
 {
     struct pipe_user *user = (struct pipe_user *)obj;
 
     assert( obj->ops == &pipe_user_ops );
 
-    if(user->event)
-    {
-        /* FIXME: signal waiter of failure */
-        release_object(user->event);
-        user->event = NULL;
-    }
+    if(user->overlapped)
+        notify_waiter(user,STATUS_HANDLES_CLOSED);
+
     if(user->other)
     {
         close(user->other->obj.fd);
@@ -217,8 +229,10 @@ static struct pipe_user *create_pipe_user( struct named_pipe *pipe, int fd )
 
     user->pipe = pipe;
     user->state = ps_none;
-    user->event = NULL;   /* thread wait on this pipe */
     user->other = NULL;
+    user->thread = NULL;
+    user->func = NULL;
+    user->overlapped = NULL;
 
     /* add to list of pipe users */
     if ((user->next = pipe->users)) user->next->prev = user;
@@ -301,9 +315,7 @@ DECL_HANDLER(open_named_pipe)
                 if( (user = create_pipe_user (pipe, fds[1])) )
                 {
                     partner->obj.fd = fds[0];
-                    set_event(partner->event);
-                    release_object(partner->event);
-                    partner->event = NULL;
+                    notify_waiter(partner,STATUS_SUCCESS);
                     partner->state = ps_connected_server;
                     partner->other = user;
                     user->state = ps_connected_client;
@@ -334,7 +346,6 @@ DECL_HANDLER(open_named_pipe)
 DECL_HANDLER(connect_named_pipe)
 {
     struct pipe_user *user, *partner;
-    struct event *event;
 
     user = get_pipe_user_obj(current->process, req->handle, 0);
     if(!user)
@@ -347,16 +358,14 @@ DECL_HANDLER(connect_named_pipe)
     else
     {
         user->state = ps_wait_open;
-        event = get_event_obj(current->process, req->event, 0);
-        if(event)
-            user->event = event;
+        user->thread = current;
+        user->func = req->func;
+        user->overlapped = req->overlapped;
 
         /* notify all waiters that a pipe just became available */
         while( (partner = find_partner(user->pipe,ps_wait_connect)) )
         {
-            set_event(partner->event);
-            release_object(partner->event);
-            partner->event = NULL;
+            notify_waiter(partner,STATUS_SUCCESS);
             release_object(partner);
             release_object(partner);
         }
@@ -367,12 +376,7 @@ DECL_HANDLER(connect_named_pipe)
 
 DECL_HANDLER(wait_named_pipe)
 {
-    struct event *event;
     struct named_pipe *pipe;
-
-    event = get_event_obj(current->process, req->event, 0);
-    if(!event)
-        return;
 
     pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
     if( pipe )
@@ -385,7 +389,10 @@ DECL_HANDLER(wait_named_pipe)
             set_error(STATUS_SUCCESS);
             if( (partner = find_partner(pipe,ps_wait_open)) )
             {
-                set_event(event);
+                /* this should use notify_waiter, 
+                   but no pipe_user object exists now... */
+                thread_queue_apc(current,NULL,req->func,
+                    APC_ASYNC,1,2,req->overlapped,STATUS_SUCCESS);
                 release_object(partner);
             }
             else
@@ -394,8 +401,10 @@ DECL_HANDLER(wait_named_pipe)
 
                 if( (user = create_pipe_user (pipe, -1)) )
                 {
-                    user->event = (struct event *)grab_object( event );
                     user->state = ps_wait_connect;
+                    user->thread = current;
+                    user->func = req->func;
+                    user->overlapped = req->overlapped;
                     /* don't release it */
                 }
             }
@@ -406,7 +415,6 @@ DECL_HANDLER(wait_named_pipe)
         }
         release_object(pipe);
     }
-    release_object(event);
 }
 
 DECL_HANDLER(disconnect_named_pipe)

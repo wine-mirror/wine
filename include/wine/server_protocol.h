@@ -1552,7 +1552,8 @@ struct connect_named_pipe_request
 {
     struct request_header __header;
     handle_t       handle;
-    handle_t       event;
+    void*          overlapped;
+    void*          func;
 };
 
 
@@ -1561,7 +1562,8 @@ struct wait_named_pipe_request
 {
     struct request_header __header;
     unsigned int   timeout;
-    handle_t       event;
+    void*          overlapped;
+    void*          func;
     /* VARARG(filename,string); */
 };
 
@@ -2056,6 +2058,6 @@ union generic_request
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 62
+#define SERVER_PROTOCOL_VERSION 63
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

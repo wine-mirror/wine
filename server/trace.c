@@ -1661,13 +1661,15 @@ static void dump_open_named_pipe_reply( const struct open_named_pipe_request *re
 static void dump_connect_named_pipe_request( const struct connect_named_pipe_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " event=%d", req->event );
+    fprintf( stderr, " overlapped=%p,", req->overlapped );
+    fprintf( stderr, " func=%p", req->func );
 }
 
 static void dump_wait_named_pipe_request( const struct wait_named_pipe_request *req )
 {
     fprintf( stderr, " timeout=%08x,", req->timeout );
-    fprintf( stderr, " event=%d,", req->event );
+    fprintf( stderr, " overlapped=%p,", req->overlapped );
+    fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " filename=" );
     cur_pos += dump_varargs_string( req );
 }

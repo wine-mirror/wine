@@ -243,6 +243,7 @@ static void call_apcs( BOOL alertable )
         case APC_NONE:
             return;  /* no more APCs */
         case APC_ASYNC:
+            proc( args[0], args[1]);
             break;
         case APC_USER:
             proc( args[0] );

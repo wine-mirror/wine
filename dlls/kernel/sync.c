@@ -601,17 +601,25 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
     return FALSE;
 }
 
+/***********************************************************************
+ *           SYNC_CompletePipeOverlapped   (Internal)
+ */
+static void SYNC_CompletePipeOverlapped (LPOVERLAPPED overlapped, DWORD result)
+{
+    TRACE("for %p result %08lx\n",overlapped,result);
+    if(!overlapped)
+        return;
+    overlapped->Internal = result;
+    SetEvent(overlapped->hEvent);
+}
 
 /***********************************************************************
  *           WaitNamedPipeA   (KERNEL32.@)
  */
-BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
+static BOOL SYNC_WaitNamedPipeA (LPCSTR name, DWORD nTimeOut, LPOVERLAPPED overlapped)
 {
     DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
-    HANDLE event;
     BOOL ret;
-
-    TRACE("%s 0x%08lx\n",debugstr_a(name),nTimeOut);
 
     if (len >= MAX_PATH)
     {
@@ -619,20 +627,46 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
         return FALSE;
     }
 
-    if (!(event = CreateEventA( NULL, 0, 0, NULL ))) return FALSE;
-
     SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
     {
         req->timeout = nTimeOut;
-        req->event = event;
+        req->overlapped = overlapped;
+        req->func = SYNC_CompletePipeOverlapped;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
 
-    if (ret) WaitForSingleObject(event,INFINITE);
+    return ret;
+}
 
-    CloseHandle(event);
+/***********************************************************************
+ *           WaitNamedPipeA   (KERNEL32.@)
+ */
+BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
+{
+    BOOL ret;
+    OVERLAPPED ov;
+
+    TRACE("%s 0x%08lx\n",debugstr_a(name),nTimeOut);
+
+    memset(&ov,0,sizeof ov);
+    ov.hEvent = CreateEventA( NULL, 0, 0, NULL );
+    if (!ov.hEvent)
+        return FALSE;
+
+    /* expect to fail with STATUS_PENDING */
+    ret = SYNC_WaitNamedPipeA(name, nTimeOut, &ov);
+    if(ret)
+    {
+        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
+        {
+            SetLastError(ov.Internal);
+            ret = (ov.Internal==STATUS_SUCCESS);
+        }
+    }
+
+    CloseHandle(ov.hEvent);
     return ret;
 }
 
@@ -640,13 +674,10 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
 /***********************************************************************
  *           WaitNamedPipeW   (KERNEL32.@)
  */
-BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
+static BOOL SYNC_WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut, LPOVERLAPPED overlapped)
 {
     DWORD len = name ? strlenW(name) : 0;
-    HANDLE event;
     BOOL ret;
-
-    TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
 
     if (len >= MAX_PATH)
     {
@@ -654,54 +685,104 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
         return FALSE;
     }
 
-    if (!(event = CreateEventA( NULL, 0, 0, NULL ))) return FALSE;
-
     SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
     {
         req->timeout = nTimeOut;
-        req->event = event;
+        req->overlapped = overlapped;
+        req->func = SYNC_CompletePipeOverlapped;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
 
-    if (ret) WaitForSingleObject(event,INFINITE);
-
-    CloseHandle(event);
     return ret;
 }
 
+/***********************************************************************
+ *           WaitNamedPipeW   (KERNEL32.@)
+ */
+BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
+{
+    BOOL ret;
+    OVERLAPPED ov;
+
+    TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
+
+    memset(&ov,0,sizeof ov);
+    ov.hEvent = CreateEventA( NULL, 0, 0, NULL );
+    if (!ov.hEvent)
+        return FALSE;
+
+    ret = SYNC_WaitNamedPipeW(name, nTimeOut, &ov);
+    if(ret)
+    {
+        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
+        {
+            SetLastError(ov.Internal);
+            ret = (ov.Internal==STATUS_SUCCESS);
+        }
+    }
+
+    CloseHandle(ov.hEvent);
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SYNC_ConnectNamedPipe   (Internal)
+ */
+static BOOL SYNC_ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
+{
+    BOOL ret;
+
+    if(!overlapped)
+        return FALSE;
+
+    overlapped->Internal = STATUS_PENDING;
+
+    SERVER_START_REQ( connect_named_pipe )
+    {
+        req->handle = hPipe;
+        req->overlapped = overlapped;
+        req->func = SYNC_CompletePipeOverlapped;
+        ret = !SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
 
 /***********************************************************************
  *           ConnectNamedPipe   (KERNEL32.@)
  */
 BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
 {
+    OVERLAPPED ov;
     BOOL ret;
-    HANDLE event;
 
     TRACE("(%d,%p)\n",hPipe, overlapped);
 
     if(overlapped)
-    {
-        FIXME("overlapped operation not supported\n");
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return SYNC_ConnectNamedPipe(hPipe,overlapped);
+
+    memset(&ov,0,sizeof ov);
+    ov.hEvent = CreateEventA(NULL,0,0,NULL);
+    if (!ov.hEvent)
         return FALSE;
-    }
 
-    if (!(event = CreateEventA(NULL,0,0,NULL))) return FALSE;
-
-    SERVER_START_REQ( connect_named_pipe )
+    ret=SYNC_ConnectNamedPipe(hPipe, &ov);
+    if(ret)
     {
-        req->handle = hPipe;
-        req->event = event;
-        ret = !SERVER_CALL_ERR();
+        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
+        {
+            SetLastError(ov.Internal);
+            ret = (ov.Internal==STATUS_SUCCESS);
+        }
     }
-    SERVER_END_REQ;
 
-    if (ret) WaitForSingleObject(event,INFINITE);
+    CloseHandle(ov.hEvent);
 
-    CloseHandle(event);
     return ret;
 }
 
