@@ -305,12 +305,17 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
 
   PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
 
-  if (HIWORD(lppsh->pszCaption))
+  if (lppsh->dwFlags & INTRNL_ANY_WIZARD)
+     psInfo->ppshheader.pszCaption = NULL;
+  else
   {
-     int len = strlen(lppsh->pszCaption);
-     psInfo->ppshheader.pszCaption = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof (WCHAR) );
-     MultiByteToWideChar(CP_ACP, 0, lppsh->pszCaption, -1, (LPWSTR) psInfo->ppshheader.pszCaption, len+1);
-     /* strcpy( (char *)psInfo->ppshheader.pszCaption, lppsh->pszCaption ); */
+     if (HIWORD(lppsh->pszCaption))
+     {
+        int len = strlen(lppsh->pszCaption);
+        psInfo->ppshheader.pszCaption = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof (WCHAR) );
+        MultiByteToWideChar(CP_ACP, 0, lppsh->pszCaption, -1, (LPWSTR) psInfo->ppshheader.pszCaption, len+1);
+        /* strcpy( (char *)psInfo->ppshheader.pszCaption, lppsh->pszCaption ); */
+     }
   }
   psInfo->nPages = lppsh->nPages;
 
@@ -355,11 +360,16 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
 
   PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
 
-  if (HIWORD(lppsh->pszCaption))
+  if (lppsh->dwFlags & INTRNL_ANY_WIZARD)
+     psInfo->ppshheader.pszCaption = NULL;
+  else
   {
-     int len = strlenW(lppsh->pszCaption);
-     psInfo->ppshheader.pszCaption = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(WCHAR) );
-     strcpyW( (WCHAR *)psInfo->ppshheader.pszCaption, lppsh->pszCaption );
+     if (!(lppsh->dwFlags & INTRNL_ANY_WIZARD) && HIWORD(lppsh->pszCaption))
+     {
+        int len = strlenW(lppsh->pszCaption);
+        psInfo->ppshheader.pszCaption = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(WCHAR) );
+        strcpyW( (WCHAR *)psInfo->ppshheader.pszCaption, lppsh->pszCaption );
+     }
   }
   psInfo->nPages = lppsh->nPages;
 
@@ -1553,6 +1563,9 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
      ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
   }
+
+  PROPSHEET_SetTitleW(hwndDlg, psInfo->ppshheader.dwFlags,
+                      psInfo->proppage[index].pszText);
 
   if (psInfo->active_page != -1)
      ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
