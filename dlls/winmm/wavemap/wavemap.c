@@ -233,10 +233,18 @@ static	DWORD	wodWrite(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2)
     
     lpWaveHdrSrc->dwFlags |= WHDR_INQUEUE;
     ash = (PACMSTREAMHEADER)lpWaveHdrSrc->reserved;
+    /* acmStreamConvert will actually check that the new size is less than initial size */
+    ash->cbSrcLength = lpWaveHdrSrc->dwBufferLength;
     if (acmStreamConvert(wom->hAcmStream, ash, 0L) != MMSYSERR_NOERROR)
 	return MMSYSERR_ERROR;
     
     lpWaveHdrDst = (LPWAVEHDR)((LPSTR)ash + sizeof(ACMSTREAMHEADER));
+    if (ash->cbDstLengthUsed == 0)
+    {
+        /* something went wrong in decoding */
+        FIXME("Got 0 length\n");
+        return MMSYSERR_ERROR;
+    }
     lpWaveHdrDst->dwBufferLength = ash->cbDstLengthUsed;
     return waveOutWrite(wom->hInnerWave, lpWaveHdrDst, sizeof(*lpWaveHdrDst));
 }
