@@ -83,10 +83,10 @@ owner	kernel32
 75  stub OpenPathName
 76  stub DeletePathName
 # Reserved*: old Win 2.x functions now moved to USER (Win 3.0+)
-77  stub Reserved1 #AnsiNext16
-78  stub Reserved2 #AnsiPrev16
-79  stub Reserved3 #AnsiUpper16
-80  stub Reserved4 #AnsiLower16
+77  pascal Reserved1(segptr) KERNEL_AnsiNext16
+78  pascal Reserved2(segptr segptr) KERNEL_AnsiPrev16
+79  pascal Reserved3(segstr) KERNEL_AnsiUpper16
+80  pascal Reserved4(segstr) KERNEL_AnsiLower16
 81  pascal16 _lclose(word) _lclose16
 82  pascal16 _lread(word segptr word) WIN16_lread
 83  pascal16 _lcreat(str word) _lcreat16

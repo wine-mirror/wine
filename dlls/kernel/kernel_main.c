@@ -3,6 +3,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -111,3 +112,50 @@ BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
  * Entry point for kernel functions that do nothing.
  */
 LONG WINAPI KERNEL_nop(void) { return 0; }
+
+
+/***************************************************************************
+ *
+ * Win 2.x string functions now moved to USER
+ *
+ * We rather want to implement them here instead of doing Callouts
+ */
+SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
+{
+    return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
+}
+	
+SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
+{
+    return (current==start)?start:current-1;
+}
+
+SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
+{
+    /* uppercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+	char *s = PTR_SEG_TO_LIN(strOrChar);
+	while (*s) {
+	    *s = toupper(*s);
+	    s++;
+	}
+        return strOrChar;
+    }
+    else return toupper((char)strOrChar);
+}
+
+SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
+{
+    /* lowercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+        char *s = PTR_SEG_TO_LIN(strOrChar);
+	while (*s) {
+	    *s = tolower(*s);
+	    s++;
+	}
+        return strOrChar;
+    }
+    else return tolower((char)strOrChar);
+}
