@@ -109,69 +109,69 @@ static const WORD main_key_scan_dvorak[MAIN_LEN] =
 static const WORD main_key_vkey_qwerty[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
-   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
-   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
-   VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_3,'1','2','3','4','5','6','7','8','9','0',VK_OEM_MINUS,VK_OEM_PLUS,
+   'Q','W','E','R','T','Y','U','I','O','P',VK_OEM_4,VK_OEM_6,
+   'A','S','D','F','G','H','J','K','L',VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   'Z','X','C','V','B','N','M',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_qwerty_v2[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_5,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_PLUS,VK_OEM_4,
-   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_6,VK_OEM_1,
-   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_3,VK_OEM_7,VK_OEM_2,
-   VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_MINUS,
+   VK_OEM_5,'1','2','3','4','5','6','7','8','9','0',VK_OEM_PLUS,VK_OEM_4,
+   'Q','W','E','R','T','Y','U','I','O','P',VK_OEM_6,VK_OEM_1,
+   'A','S','D','F','G','H','J','K','L',VK_OEM_3,VK_OEM_7,VK_OEM_2,
+   'Z','X','C','V','B','N','M',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_MINUS,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_qwertz[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
-   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Z,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
-   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
-   VK_Y,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_3,'1','2','3','4','5','6','7','8','9','0',VK_OEM_MINUS,VK_OEM_PLUS,
+   'Q','W','E','R','T','Z','U','I','O','P',VK_OEM_4,VK_OEM_6,
+   'A','S','D','F','G','H','J','K','L',VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   'Y','X','C','V','B','N','M',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_qwertz_105[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
-   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Z,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
-   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
-   VK_OEM_102,VK_Y,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2
+   VK_OEM_3,'1','2','3','4','5','6','7','8','9','0',VK_OEM_MINUS,VK_OEM_PLUS,
+   'Q','W','E','R','T','Z','U','I','O','P',VK_OEM_4,VK_OEM_6,
+   'A','S','D','F','G','H','J','K','L',VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   VK_OEM_102,'Y','X','C','V','B','N','M',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2
 };
 
 static const WORD main_key_vkey_abnt_qwerty[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
-   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
-   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_8,VK_OEM_5,
-   VK_OEM_7,VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_3,'1','2','3','4','5','6','7','8','9','0',VK_OEM_MINUS,VK_OEM_PLUS,
+   'Q','W','E','R','T','Y','U','I','O','P',VK_OEM_4,VK_OEM_6,
+   'A','S','D','F','G','H','J','K','L',VK_OEM_1,VK_OEM_8,VK_OEM_5,
+   VK_OEM_7,'Z','X','C','V','B','N','M',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
    VK_OEM_102, /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_azerty[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_7,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_4,VK_OEM_PLUS,
-   VK_A,VK_Z,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_6,VK_OEM_1,
-   VK_Q,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_M,VK_OEM_3,VK_OEM_5,
-   VK_W,VK_X,VK_C,VK_V,VK_B,VK_N,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_8,
+   VK_OEM_7,'1','2','3','4','5','6','7','8','9','0',VK_OEM_4,VK_OEM_PLUS,
+   'A','Z','E','R','T','Y','U','I','O','P',VK_OEM_6,VK_OEM_1,
+   'Q','S','D','F','G','H','J','K','L','M',VK_OEM_3,VK_OEM_5,
+   'W','X','C','V','B','N',VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_8,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
 static const WORD main_key_vkey_dvorak[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
-   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_4,VK_OEM_6,
-   VK_OEM_7,VK_OEM_COMMA,VK_OEM_PERIOD,VK_P,VK_Y,VK_F,VK_G,VK_C,VK_R,VK_L,VK_OEM_2,VK_OEM_PLUS,
-   VK_A,VK_O,VK_E,VK_U,VK_I,VK_D,VK_H,VK_T,VK_N,VK_S,VK_OEM_MINUS,VK_OEM_5,
-   VK_OEM_1,VK_Q,VK_J,VK_K,VK_X,VK_B,VK_M,VK_W,VK_V,VK_Z,
+   VK_OEM_3,'1','2','3','4','5','6','7','8','9','0',VK_OEM_4,VK_OEM_6,
+   VK_OEM_7,VK_OEM_COMMA,VK_OEM_PERIOD,'P','Y','F','G','C','R','L',VK_OEM_2,VK_OEM_PLUS,
+   'A','O','E','U','I','D','H','T','N','S',VK_OEM_MINUS,VK_OEM_5,
+   VK_OEM_1,'Q','J','K','X','B','M','W','V','Z',
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
@@ -736,8 +736,8 @@ static const WORD main_key_scan_vnc[MAIN_LEN] =
 
 static const WORD main_key_vkey_vnc[MAIN_LEN] =
 {
-   VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,VK_OEM_4,VK_OEM_6,VK_OEM_1,VK_OEM_7,VK_OEM_3,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_5,
-   VK_A,VK_B,VK_C,VK_D,VK_E,VK_F,VK_G,VK_H,VK_I,VK_J,VK_K,VK_L,VK_M,VK_N,VK_O,VK_P,VK_Q,VK_R,VK_S,VK_T,VK_U,VK_V,VK_W,VK_X,VK_Y,VK_Z,
+   '1','2','3','4','5','6','7','8','9','0',VK_OEM_MINUS,VK_OEM_PLUS,VK_OEM_4,VK_OEM_6,VK_OEM_1,VK_OEM_7,VK_OEM_3,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_5,
+   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
    VK_OEM_102
 };
 

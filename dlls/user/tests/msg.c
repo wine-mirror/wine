@@ -3030,23 +3030,23 @@ static void test_interthread_messages(void)
 
 
 static const struct message WmVkN[] = {
-    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
-    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 'n', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1002,1), 0 },
-    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
-    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
     { 0 }
 };
 static const struct message WmShiftVkN[] = {
     { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
-    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
-    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 'N', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1001,1), 0 },
-    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
-    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
     { 0 }
@@ -3054,12 +3054,12 @@ static const struct message WmShiftVkN[] = {
 static const struct message WmCtrlVkN[] = {
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
-    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
-    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 0x000e, 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
-    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
-    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
@@ -3067,10 +3067,10 @@ static const struct message WmCtrlVkN[] = {
 static const struct message WmCtrlVkN_2[] = {
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
-    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
-    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
-    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
@@ -3078,8 +3078,8 @@ static const struct message WmCtrlVkN_2[] = {
 static const struct message WmAltVkN[] = {
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
-    { WM_SYSKEYDOWN, wparam|lparam, VK_N, 0x20000001 },
-    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_N, 0x20000001 },
+    { WM_SYSKEYDOWN, wparam|lparam, 'N', 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, 'N', 0x20000001 },
     { WM_SYSCHAR, wparam|lparam, 'n', 0x20000001 },
     { WM_SYSCHAR, sent|wparam|lparam, 'n', 0x20000001 },
     { WM_SYSCOMMAND, sent|defwinproc|wparam|lparam, SC_KEYMENU, 'n' },
@@ -3093,8 +3093,8 @@ static const struct message WmAltVkN[] = {
     { WM_EXITMENULOOP, sent|defwinproc },
     { WM_MENUSELECT, sent|defwinproc|wparam|optional, MAKEWPARAM(0,0xffff) }, /* Win95 bug */
     { WM_EXITMENULOOP, sent|defwinproc|optional }, /* Win95 bug */
-    { WM_SYSKEYUP, wparam|lparam, VK_N, 0xe0000001 },
-    { WM_SYSKEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_SYSKEYUP, wparam|lparam, 'N', 0xe0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
@@ -3102,10 +3102,10 @@ static const struct message WmAltVkN[] = {
 static const struct message WmAltVkN_2[] = {
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
-    { WM_SYSKEYDOWN, wparam|lparam, VK_N, 0x20000001 },
+    { WM_SYSKEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1003,1), 0 },
-    { WM_SYSKEYUP, wparam|lparam, VK_N, 0xe0000001 },
-    { WM_SYSKEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_SYSKEYUP, wparam|lparam, 'N', 0xe0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
@@ -3115,10 +3115,10 @@ static const struct message WmCtrlAltVkN[] = {
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
-    { WM_KEYDOWN, wparam|lparam, VK_N, 0x20000001 },
-    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 0x20000001 },
-    { WM_KEYUP, wparam|lparam, VK_N, 0xe0000001 },
-    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 0x20000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, 'N', 0x20000001 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xe0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
@@ -3171,16 +3171,16 @@ static void test_accelerators(void)
 
     trace("testing VK_N press/release\n");
     flush_sequence();
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmVkN, "VK_N press/release", FALSE);
 
     trace("testing Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_SHIFT, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
@@ -3188,8 +3188,8 @@ static void test_accelerators(void)
     trace("testing Ctrl+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlVkN, "Ctrl+VK_N press/release", FALSE);
@@ -3197,8 +3197,8 @@ static void test_accelerators(void)
     trace("testing Alt+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN, "Alt+VK_N press/release", FALSE);
@@ -3207,8 +3207,8 @@ static void test_accelerators(void)
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
@@ -3221,16 +3221,16 @@ static void test_accelerators(void)
 
     trace("testing VK_N press/release\n");
     flush_sequence();
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmVkN, "VK_N press/release", FALSE);
 
     trace("testing Shift+VK_N press/release\n");
     flush_sequence();
     keybd_event(VK_SHIFT, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
@@ -3238,8 +3238,8 @@ static void test_accelerators(void)
     trace("testing Ctrl+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlVkN_2, "Ctrl+VK_N press/release 2", FALSE);
@@ -3247,8 +3247,8 @@ static void test_accelerators(void)
     trace("testing Alt+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_MENU, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN_2, "Alt+VK_N press/release 2", FALSE);
@@ -3257,8 +3257,8 @@ static void test_accelerators(void)
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
-    keybd_event(VK_N, 0, 0, 0);
-    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
