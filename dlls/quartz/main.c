@@ -69,7 +69,8 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_VideoRenderer, VideoRenderer_create },
     { &CLSID_DSoundRender, DSoundRender_create },
     { &CLSID_AVIDec, AVIDec_create },
-    { &CLSID_SystemClock, &QUARTZ_CreateSystemClock }
+    { &CLSID_SystemClock, &QUARTZ_CreateSystemClock },
+    { &CLSID_ACMWrapper, &ACMWrapper_create }
 };
 
 static HRESULT WINAPI

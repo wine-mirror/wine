@@ -54,9 +54,9 @@ typedef struct AVIDecImpl
     BITMAPINFOHEADER* pBihOut;
 } AVIDecImpl;
 
-static DWORD AVIDec_SendSampleData(TransformFilterImpl* sub, LPBYTE data, DWORD size)
+static DWORD AVIDec_SendSampleData(TransformFilterImpl* pTransformFilter, LPBYTE data, DWORD size)
 {
-    AVIDecImpl* This = (AVIDecImpl*)sub;
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
     VIDEOINFOHEADER* format;
     AM_MEDIA_TYPE amt;
     HRESULT hr;
@@ -65,7 +65,7 @@ static DWORD AVIDec_SendSampleData(TransformFilterImpl* sub, LPBYTE data, DWORD 
     DWORD cbDstStream;
     LPBYTE pbDstStream;
 
-    TRACE("%p %p %ld\n", sub, data, size);
+    TRACE("(%p)->(%p,%ld)\n", This, data, size);
     
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -115,11 +115,11 @@ error:
     return hr;
 }
 
-static HRESULT AVIDec_ConnectInput(TransformFilterImpl* iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const AM_MEDIA_TYPE * pmt)
 {
-    AVIDecImpl* pAVIDec = (AVIDecImpl*)iface;
-    TRACE("%p\n", iface);
-    dump_AM_MEDIA_TYPE(pmt);
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+
+    TRACE("(%p)->(%p)\n", This, pmt);
 
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
         (!memcmp(((char*)&pmt->subtype)+4, ((char*)&MEDIATYPE_Video)+4, sizeof(GUID)-4)) && /* Check root (GUID w/o FOURCC) */
@@ -131,7 +131,7 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* iface, const AM_MEDIA_TY
         drv = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, &format->bmiHeader, NULL, ICMODE_DECOMPRESS);
         if (drv)
         {
-            AM_MEDIA_TYPE* outpmt = &((OutputPin*)pAVIDec->tf.ppPins[1])->pin.mtCurrent;
+            AM_MEDIA_TYPE* outpmt = &((OutputPin*)This->tf.ppPins[1])->pin.mtCurrent;
             const CLSID* outsubtype;
             DWORD bih_size;
 
@@ -148,37 +148,37 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* iface, const AM_MEDIA_TY
             }
             CopyMediaType(outpmt, pmt);
             outpmt->subtype = *outsubtype;
-            pAVIDec->hvid = drv;
+            This->hvid = drv;
 
             /* Copy bitmap header from media type to 1 for input and 1 for output */
-            if (pAVIDec->pBihIn) {
-                CoTaskMemFree(pAVIDec->pBihIn);
-                CoTaskMemFree(pAVIDec->pBihOut);
+            if (This->pBihIn) {
+                CoTaskMemFree(This->pBihIn);
+                CoTaskMemFree(This->pBihOut);
             }
             bih_size = format->bmiHeader.biSize + format->bmiHeader.biClrUsed * 4;
-            pAVIDec->pBihIn = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
-            if (!pAVIDec->pBihIn)
+            This->pBihIn = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            if (!This->pBihIn)
             {
                 ICClose(drv);
                 return E_OUTOFMEMORY;
             }
-            pAVIDec->pBihOut = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
-            if (!pAVIDec->pBihOut)
+            This->pBihOut = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            if (!This->pBihOut)
             {
-                CoTaskMemFree(pAVIDec->pBihIn);
-                pAVIDec->pBihIn = NULL;
+                CoTaskMemFree(This->pBihIn);
+                This->pBihIn = NULL;
                 ICClose(drv);
                 return E_OUTOFMEMORY;
             }
-            memcpy(pAVIDec->pBihIn, &format->bmiHeader, bih_size);
-            memcpy(pAVIDec->pBihOut, &format->bmiHeader, bih_size);
+            memcpy(This->pBihIn, &format->bmiHeader, bih_size);
+            memcpy(This->pBihOut, &format->bmiHeader, bih_size);
 
             /* Update output format as non compressed bitmap */
-            pAVIDec->pBihOut->biCompression = 0;
-            pAVIDec->pBihOut->biSizeImage = pAVIDec->pBihOut->biWidth * pAVIDec->pBihOut->biHeight * pAVIDec->pBihOut->biBitCount / 8;
+            This->pBihOut->biCompression = 0;
+            This->pBihOut->biSizeImage = This->pBihOut->biWidth * This->pBihOut->biHeight * This->pBihOut->biBitCount / 8;
 
             /* Update buffer size of media samples in output */
-            ((OutputPin*)pAVIDec->tf.ppPins[1])->allocProps.cbBuffer = pAVIDec->pBihOut->biSizeImage;
+            ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;
 
             TRACE("Connection accepted\n");
             return S_OK;
@@ -190,20 +190,22 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* iface, const AM_MEDIA_TY
     return S_FALSE;
 }
 
-static HRESULT AVIDec_Cleanup(TransformFilterImpl* This)
+static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter)
 {
-    AVIDecImpl* pAVIDec = (AVIDecImpl*)This;
-	
-    if (pAVIDec->hvid)
-        ICClose(pAVIDec->hvid);
+    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
 
-    if (pAVIDec->pBihIn) {
-        CoTaskMemFree(pAVIDec->pBihIn);
-        CoTaskMemFree(pAVIDec->pBihOut);
+    TRACE("(%p)->()\n", This);
+    
+    if (This->hvid)
+        ICClose(This->hvid);
+
+    if (This->pBihIn) {
+        CoTaskMemFree(This->pBihIn);
+        CoTaskMemFree(This->pBihOut);
     }
 
-    pAVIDec->hvid = NULL;
-    pAVIDec->pBihIn = NULL;
+    This->hvid = NULL;
+    This->pBihIn = NULL;
 
     return S_OK;
 }
@@ -211,7 +213,7 @@ static HRESULT AVIDec_Cleanup(TransformFilterImpl* This)
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
-    AVIDecImpl * pAVIDec;
+    AVIDecImpl * This;
 
     TRACE("(%p, %p)\n", pUnkOuter, ppv);
 
@@ -221,17 +223,17 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return CLASS_E_NOAGGREGATION;
 
     /* Note: This memory is managed by the transform filter once created */
-    pAVIDec = CoTaskMemAlloc(sizeof(AVIDecImpl));
+    This = CoTaskMemAlloc(sizeof(AVIDecImpl));
 
-    pAVIDec->hvid = NULL;
-    pAVIDec->pBihIn = NULL;
+    This->hvid = NULL;
+    This->pBihIn = NULL;
 
-    hr = TransformFilter_Create(&(pAVIDec->tf), &CLSID_AVIDec, AVIDec_SendSampleData, AVIDec_ConnectInput, AVIDec_Cleanup);
+    hr = TransformFilter_Create(&(This->tf), &CLSID_AVIDec, AVIDec_SendSampleData, AVIDec_ConnectInput, AVIDec_Cleanup);
 
     if (FAILED(hr))
         return hr;
 
-    *ppv = (LPVOID)pAVIDec;
+    *ppv = (LPVOID)This;
 
     return hr;
 }

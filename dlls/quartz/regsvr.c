@@ -874,6 +874,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_SeekingPassThru,
+       "Seeking",
+       NULL,
+       "quartz.dll",
+       "Both"
+    },
     {   &CLSID_AsyncReader,
 	"File Source Filter",
 	NULL,
@@ -904,11 +910,11 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
-    {   &CLSID_SeekingPassThru,
-       "Seeking",
-       NULL,
-       "quartz.dll",
-       "Both"
+    {   &CLSID_ACMWrapper,
+	"ACM wrapper",
+	NULL,
+	"quartz.dll",
+	"Both"
     },
     { NULL }			/* list terminator */
 };
@@ -1058,6 +1064,23 @@ static struct regsvr_filter const filter_list[] = {
 	0x400000,
 	{   {   REG_PINFLAG_B_OUTPUT,
 		{   { &MEDIATYPE_Stream, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    { 0xFFFFFFFF },
+	}
+    },
+    {   &CLSID_ACMWrapper,
+	&CLSID_LegacyAmFilterCategory,
+	{'A','C','M',' ','W','r','a','p','p','e','r',0},
+	0x600000,
+	{   {   0,
+		{   { &MEDIATYPE_Audio, &GUID_NULL },
+		    { NULL }
+		},
+	    },
+	    {   REG_PINFLAG_B_OUTPUT,
+		{   { &MEDIATYPE_Audio, &GUID_NULL },
 		    { NULL }
 		},
 	    },
