@@ -271,11 +271,17 @@ typedef struct _async_query {
 
 	HANDLE16	async_handle;
 	int		flags;
-#define AQ_WIN16	0
-#define AQ_WIN32	4
+#define AQ_WIN16	0x00
+#define AQ_WIN32	0x04
 #define HB_WIN32(hb) (hb->flags & AQ_WIN32)
-#define AQ_NUMBER	0
-#define AQ_NAME		8
+#define AQ_NUMBER	0x00
+#define AQ_NAME		0x08
+#define AQ_COPYPTR1	0x10
+#define AQ_DUPLOWPTR1	0x20
+#define AQ_MASKPTR1	0x30
+#define AQ_COPYPTR2	0x40
+#define AQ_DUPLOWPTR2	0x80
+#define AQ_MASKPTR2	0xC0
 
 #define AQ_GETHOST	0
 #define AQ_GETPROTO	1
@@ -387,41 +393,43 @@ static HANDLE16	__WSAsyncDBQuery(
 	void *sbuf, INT sbuflen, UINT flags
 ) 
 {
-	async_query	*aq;
-	HANDLE	hthread;
-
-    int xbuflen=0;
-    /* allocate buffer to copy protocol- and service name to */
-    /* note: this is done in the calling thread so we can return */
-    /* a decent error code if the Alloc fails */
-    
-    if( flags & (AQ_GETPROTO | AQ_GETSERV)) {
-        if(ptr1) xbuflen += strlen(ptr1)+1; 
-        if(ptr2) xbuflen += strlen(ptr2)+1; 
-    }
-    
-    aq = HeapAlloc(GetProcessHeap(),0,sizeof(async_query) + xbuflen);
-    if(!aq) {
-        SetLastError(WSAEWOULDBLOCK); /* insufficient resources */
-        return 0;
-    }
-    /* convert protocol- and service names to lower case */
-    if( flags & (AQ_GETPROTO | AQ_GETSERV)) {
-        const char *pfrom;
-        char *pto=aq->xbuf;
-        if(ptr1) {
-            pfrom=ptr1;
-            ptr1=pto;
-            do *pto++ = tolower(*pfrom);
-            while (*pfrom++);
-        }
-        if(ptr2) {
-            pfrom=ptr2; 
-            ptr2=pto;  
-            do *pto++ = tolower(*pfrom); 
-            while (*pfrom++);
-        }
-    }
+        async_query*	aq;
+	char*		pto;
+	LPCSTR		pfm;
+	int		xbuflen = 0;
+	
+	/* allocate buffer to copy protocol- and service name to */
+	/* note: this is done in the calling thread so we can return */
+	/* a decent error code if the Alloc fails */
+	
+	switch (flags & AQ_MASKPTR1) {
+	case 0:							break;
+	case AQ_COPYPTR1:	xbuflen += int1;		break;
+	case AQ_DUPLOWPTR1:	xbuflen += strlen(ptr1) + 1;	break;
+	}
+	
+	switch (flags & AQ_MASKPTR2) {
+	case 0:							break;
+	case AQ_COPYPTR2:	xbuflen += int2;		break;
+	case AQ_DUPLOWPTR2:	xbuflen += strlen(ptr2) + 1;	break;
+	}
+	
+	if(!(aq = HeapAlloc(GetProcessHeap(),0,sizeof(async_query) + xbuflen))) {
+	        SetLastError(WSAEWOULDBLOCK); /* insufficient resources */
+		return 0;
+	}
+	
+	pto = aq->xbuf;
+	if (ptr1) switch (flags & AQ_MASKPTR1) {
+	case 0:											break;
+	case AQ_COPYPTR1:   memcpy(pto, ptr1, int1); ptr1 = pto; pto += int1; 			break;
+	case AQ_DUPLOWPTR1: pfm = ptr1; ptr1 = pto; do *pto++ = tolower(*pfm); while (*pfm++);	break;
+	}
+	if (ptr2) switch (flags & AQ_MASKPTR2) {
+	case 0:											break;
+	case AQ_COPYPTR2:   memcpy(pto, ptr2, int2); ptr2 = pto; pto += int2;			break;
+	case AQ_DUPLOWPTR2: pfm = ptr2; ptr2 = pto; do *pto++ = tolower(*pfm); while (*pfm++);	break;
+	}
 
 	aq->hWnd	= hWnd;
 	aq->uMsg	= uMsg;
@@ -433,9 +441,9 @@ static HANDLE16	__WSAsyncDBQuery(
 	aq->flags	= flags;
 	aq->sbuf	= (SEGPTR)sbuf;
 	aq->sbuflen	= sbuflen;
+
 #if 1
-	hthread = CreateThread(NULL,0,_async_queryfun,aq,0,NULL);
-	if (hthread==INVALID_HANDLE_VALUE)
+	if (CreateThread(NULL,0,_async_queryfun,aq,0,NULL) == INVALID_HANDLE_VALUE)
 #endif
 		_async_queryfun(aq);
 	return __ws_async_handle;
@@ -450,7 +458,8 @@ HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
 {
 	TRACE("hwnd %04x, msg %04x, addr %08x[%i]\n",
 	       hWnd, uMsg, (unsigned)addr , len );
-	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,(void*)sbuf,buflen,AQ_NUMBER|AQ_WIN16|AQ_GETHOST);
+	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,(void*)sbuf,buflen,
+				AQ_NUMBER|AQ_COPYPTR1|AQ_WIN16|AQ_GETHOST);
 }
 
 /***********************************************************************
@@ -461,7 +470,8 @@ HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 {
 	TRACE("hwnd %04x, msg %04x, addr %08x[%i]\n",
 	       hWnd, uMsg, (unsigned)addr , len );
-	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,sbuf,buflen,AQ_NUMBER|AQ_WIN32|AQ_GETHOST);
+	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,sbuf,buflen,
+				AQ_NUMBER|AQ_COPYPTR1|AQ_WIN32|AQ_GETHOST);
 }
 
 /***********************************************************************
@@ -470,9 +480,10 @@ HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
                                       SEGPTR sbuf, INT16 buflen)
 {
-	TRACE("hwnd %04x, msg %04x, host %s, buffer %i\n", hWnd, uMsg, (name)?name:"<null>", (int)buflen );
-
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,AQ_NAME|AQ_WIN16|AQ_GETHOST);
+	TRACE("hwnd %04x, msg %04x, host %s, buffer %i\n", 
+	      hWnd, uMsg, (name)?name:"<null>", (int)buflen );
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN16|AQ_GETHOST);
 }                     
 
 /***********************************************************************
@@ -483,7 +494,8 @@ HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
 {
 	TRACE("hwnd %04x, msg %08x, host %s, buffer %i\n", 
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>", (int)buflen );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,AQ_NAME|AQ_WIN32|AQ_GETHOST);
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETHOST);
 }
 
 /***********************************************************************
@@ -494,7 +506,8 @@ HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 {
 	TRACE("hwnd %04x, msg %08x, protocol %s\n",
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,AQ_GETPROTO|AQ_NAME|AQ_WIN16);
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,(void*)sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN16|AQ_GETPROTO);
 }
 
 /***********************************************************************
@@ -505,7 +518,8 @@ HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
 {
 	TRACE("hwnd %04x, msg %08x, protocol %s\n",
 	       (HWND16)hWnd, uMsg, (name)?name:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,AQ_GETPROTO|AQ_NAME|AQ_WIN32);
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETPROTO);
 }
 
 
@@ -516,7 +530,8 @@ HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
                                            SEGPTR sbuf, INT16 buflen)
 {
 	TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
-	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,(void*)sbuf,buflen,AQ_GETPROTO|AQ_NUMBER|AQ_WIN16);
+	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,(void*)sbuf,buflen,
+				AQ_GETPROTO|AQ_NUMBER|AQ_WIN16);
 }
 
 /***********************************************************************
@@ -526,8 +541,8 @@ HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
                                            LPSTR sbuf, INT buflen)
 {
 	TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
-
-	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,sbuf,buflen,AQ_GETPROTO|AQ_NUMBER|AQ_WIN32);
+	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,sbuf,buflen,
+				AQ_GETPROTO|AQ_NUMBER|AQ_WIN32);
 }
 
 /***********************************************************************
@@ -537,9 +552,9 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
                                         LPCSTR proto, SEGPTR sbuf, INT16 buflen)
 {
 	TRACE("hwnd %04x, msg %04x, name %s, proto %s\n",
-	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>" );
-
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,(void*)sbuf,buflen,AQ_GETSERV|AQ_NAME|AQ_WIN16);
+	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>");
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,(void*)sbuf,buflen,
+				AQ_GETSERV|AQ_NAME|AQ_DUPLOWPTR1|AQ_DUPLOWPTR2|AQ_WIN16);
 }
 
 /***********************************************************************
@@ -549,8 +564,9 @@ HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
 {
 	TRACE("hwnd %04x, msg %04x, name %s, proto %s\n",
-	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,sbuf,buflen,AQ_GETSERV|AQ_NAME|AQ_WIN32);
+	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>");
+	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,sbuf,buflen,
+				AQ_GETSERV|AQ_NAME|AQ_DUPLOWPTR1|AQ_DUPLOWPTR2|AQ_WIN32);
 }
 
 /***********************************************************************
@@ -561,7 +577,8 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
 {
 	TRACE("hwnd %04x, msg %04x, port %i, proto %s\n",
 	       hWnd, uMsg, port, (proto)?proto:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,(void*)sbuf,buflen,AQ_GETSERV|AQ_NUMBER|AQ_WIN16);
+	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,(void*)sbuf,buflen,
+				AQ_GETSERV|AQ_NUMBER|AQ_DUPLOWPTR2|AQ_WIN16);
 }
 
 /***********************************************************************
@@ -572,7 +589,8 @@ HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
 {
 	TRACE("hwnd %04x, msg %04x, port %i, proto %s\n",
 	       hWnd, uMsg, port, (proto)?proto:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,sbuf,buflen,AQ_GETSERV|AQ_NUMBER|AQ_WIN32);
+	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,sbuf,buflen,
+				AQ_GETSERV|AQ_NUMBER|AQ_DUPLOWPTR2|AQ_WIN32);
 }
 
 /***********************************************************************
