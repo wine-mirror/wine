@@ -463,7 +463,7 @@ HWND WINAPI GetCapture(void)
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
 {
-        TRACE_(win)("GetCapture32:  Current message queue not found. Exiting!\n" );
+        TRACE_(win)("GetCapture: Current message queue not found. Exiting!\n" );
         return 0;
     }
     

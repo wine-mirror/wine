@@ -304,7 +304,7 @@ INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT )
 /***********************************************************************
  *	     QUEUE_Lock
  *
- * Function for getting a 32 bit pointer on queue strcture. For thread
+ * Function for getting a 32 bit pointer on queue structure. For thread
  * safeness programmers should use this function instead of GlobalLock to
  * retrieve a pointer on the structure. QUEUE_Unlock should also be called
  * when access to the queue structure is not required anymore.
@@ -536,7 +536,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 
     if (!hQueue || !msgQueue)
     {
-	WARN_(msg)("invalid argument.\n");
+	ERR_(msg)("invalid argument.\n");
 	return 0;
     }
 
@@ -567,7 +567,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
         if ( !msgQ || (msgQ->magic != QUEUE_MAGIC) )
         {
             /* HQUEUE link list is corrupted, try to exit gracefully */
-            WARN_(msg)("HQUEUE link list corrupted!\n");
+            ERR_(msg)("HQUEUE link list corrupted!\n");
             pPrev = 0;
             break;
         }
@@ -578,7 +578,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 
     HeapUnlock( SystemHeap );
 
-    /* free up resource used by MESSAGEQUEUE strcture */
+    /* free up resource used by MESSAGEQUEUE structure */
     msgQueue->lockCount--;
     QUEUE_Unlock( msgQueue );
     
@@ -791,7 +791,7 @@ BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
         }
 
         default:
-            WARN_(sendmsg)("Invalid list: %d", list);
+            ERR_(sendmsg)("Invalid list: %d", list);
             break;
     }
 
@@ -802,8 +802,8 @@ BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
 /***********************************************************************
  *           QUEUE_RemoveSMSG
  *
- * This routine is called when a SMSG need to be remove from one of the three
- * SM list.  (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST)
+ * This routine is called when a SMSG needs to be removed from one of the three
+ * SM lists (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST).
  * If smsg == 0, remove the first smsg from the specified list
  */
 SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
@@ -864,12 +864,12 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
              receiver thread */
             EnterCriticalSection( &queue->cSection );
     
-            if (!smsg || !queue->smPending)
+            if (!smsg)
                 smsg = queue->smPending;
-            else
+	    if ( (smsg != queue->smPending) || !queue->smPending )
             {
                 ERR_(sendmsg)("should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
-				LeaveCriticalSection( &queue->cSection );
+		LeaveCriticalSection( &queue->cSection );
                 return 0;
             }
             
@@ -887,7 +887,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             return smsg;
 
         default:
-            WARN_(sendmsg)("Invalid list: %d", list);
+            ERR_(sendmsg)("Invalid list: %d", list);
             break;
     }
 
@@ -966,7 +966,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         smsg->flags |= SMSG_SENDING_REPLY;
         ReplyMessage( result );
 
-    TRACE_(sendmsg)("done! \n" );
+    TRACE_(sendmsg)("done!\n" );
 }
 
 
@@ -1196,7 +1196,7 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 
     if (!mergeMsg)
     {
-        /* Should I limit the number of message in
+        /* Should I limit the number of messages in
           the system message queue??? */
 
         /* Don't merge allocate a new msg in the global heap */
@@ -1250,10 +1250,10 @@ HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
     MESSAGEQUEUE *queue = QUEUE_Lock( hQueue );
 
     if (queue)
-{
+    {
         hTask = queue->teb->htask16;
         QUEUE_Unlock( queue );
-}
+    }
 
     return hTask;
 }
@@ -1431,7 +1431,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         /* Create thread message queue */
         if( !(hQueue = QUEUE_CreateMsgQueue( TRUE )))
         {
-            WARN_(msg)("failed!\n");
+            ERR_(msg)("failed!\n");
             return FALSE;
 	}
         

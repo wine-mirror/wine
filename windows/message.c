@@ -837,7 +837,10 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
 
     /* add smsg struct in the pending list of the destination queue */
     if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
-        return 0;
+    {
+        retVal = 0;
+	goto CLEANUP;
+    }
 
     iWndsLocks = WIN_SuspendWndsLock();
 
@@ -905,6 +908,7 @@ got:
         LeaveCriticalSection( &queue->cSection );
 
 
+CLEANUP:
     QUEUE_Unlock( queue );
     QUEUE_Unlock( destQ );
     
