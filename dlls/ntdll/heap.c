@@ -525,6 +525,8 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         /* Initialize critical section */
 
         RtlInitializeCriticalSection( &heap->critSection );
+        if (flags & HEAP_SHARED)
+            MakeCriticalSectionGlobal( &heap->critSection );  /* FIXME: dll separation */
     }
 
     /* Create the first free block */
