@@ -33,6 +33,7 @@
  */
 static const language_t languages[] = {
 
+	{0x0000, 437, 1252, "Neutral", "Neutral"},
 	{0x0402, 866, 1251, "Bulgarian", "Bulgaria"},
 	{0x0403, 850, 1252, "Catalan", "Spain"},
 	{0x0405, 852, 1250, "Czech", "Czech Republic"},
