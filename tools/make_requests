@@ -9,6 +9,7 @@
 %formats =
 (
     "int"          => "%d",
+    "long"         => "%ld",
     "char"         => "%c",
     "char[0]"      => "\\\"%.*s\\\"",
     "unsigned int" => "%08x",
