@@ -316,7 +316,7 @@ static void *DSOUND_tmpbuffer(size_t len)
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT	i, len, ilen, temp, field;
+	INT	i, len, ilen, temp, field, nBlockAlign;
 	INT	advance = dsb->dsound->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
@@ -329,10 +329,11 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 			dsb->nAvgBytesPerSec);
 		len = (len > temp) ? temp : len;
 	}
-	len &= ~3;				/* 4 byte alignment */
+	nBlockAlign = dsb->dsound->wfx.nBlockAlign;
+	len = len / nBlockAlign * nBlockAlign;	/* data alignment */
 
 	if (len == 0) {
-		/* This should only happen if we aren't looping and temp < 4 */
+		/* This should only happen if we aren't looping and temp < nBlockAlign */
 		return 0;
 	}
 
@@ -399,12 +400,13 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len)
 {
-	INT     i, ilen, field;
+	INT     i, ilen, field, nBlockAlign;
 	INT     advance = dsb->dsound->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
 
-	len &= ~3;				/* 4 byte alignment */
+	nBlockAlign = dsb->dsound->wfx.nBlockAlign;
+	len = len / nBlockAlign * nBlockAlign;  /* data alignment */
 
 	TRACE("allocating buffer (size = %ld)\n", len);
 	if ((buf = ibuf = (BYTE *) DSOUND_tmpbuffer(len)) == NULL)
