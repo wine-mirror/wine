@@ -169,6 +169,11 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEA afc)
     affd.mode = WINE_ACMFF_WFX;
     affd.afc = afc;
     affd.ret = MMSYSERR_NOERROR;
+    SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG, 
+			CB_GETLBTEXT,
+			SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG, 
+					    CB_GETCURSEL, 0, 0),
+			(DWORD)affd.szFormatTag);
 
     acmFormatTagEnumA((HACMDRIVER)0, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
     return affd.ret;
