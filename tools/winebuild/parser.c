@@ -513,6 +513,17 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         odp->ordinal = ordinal;
     }
 
+    if (odp->type == TYPE_STDCALL && !(odp->flags & FLAG_PRIVATE))
+    {
+        if (!strcmp( odp->name, "DllRegisterServer" ) ||
+            !strcmp( odp->name, "DllUnregisterServer" ) ||
+            !strcmp( odp->name, "DllGetClassObject" ) ||
+            !strcmp( odp->name, "DllCanUnloadNow" ))
+        {
+            warning( "Function %s should be marked private\n", odp->name );
+        }
+    }
+
     if (!strcmp( odp->name, "@" ) || odp->flags & FLAG_NONAME)
     {
         if (ordinal == -1)
