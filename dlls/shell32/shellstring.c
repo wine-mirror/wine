@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(shell);
 /************************* STRRET functions ****************************/
 
 /*************************************************************************
- * StrRetToStrN					[SHELL32.96]
+ * StrRetToStrN				[SHELL32.96]
  * 
  * converts a STRRET to a normal string
  *
@@ -56,6 +56,8 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 	return S_OK;
 }
 
+/*************************************************************************/
+
 HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
     LPWSTR dest = (LPWSTR) dest1;
@@ -91,6 +93,8 @@ HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMI
 	}
 	return S_OK;
 }
+
+/*************************************************************************/
 
 HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {

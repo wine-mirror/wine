@@ -4404,7 +4404,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
 
 
 /**********************************************************************
- *              VariantTimeToDosDateTime [OLEAUT32.??]
+ *              VariantTimeToDosDateTime [OLEAUT32.13]
  * Convert variant representation of time to the date and time representation
  * stored in dos.
  */
@@ -4430,6 +4430,9 @@ INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosT
 }
 
 
+/***********************************************************************
+ *              SystemTimeToVariantTime [OLEAUT32.184]
+ */
 HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvtime )
 {
     static const BYTE Days_Per_Month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -4478,6 +4481,9 @@ HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvti
     return 0;
 }
 
+/***********************************************************************
+ *              VariantTimeToSystemTime [OLEAUT32.185]
+ */
 HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime )
 {
     double t = 0, timeofday = 0;
@@ -4593,6 +4599,9 @@ HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime
     return 1;
 }
 
+/***********************************************************************
+ *              VarUdateFromDate [OLEAUT32.331]
+ */
 HRESULT WINAPI VarUdateFromDate( DATE datein, ULONG dwFlags, UDATE *pudateout)
 {
     HRESULT i = 0;
@@ -4625,6 +4634,9 @@ HRESULT WINAPI VarUdateFromDate( DATE datein, ULONG dwFlags, UDATE *pudateout)
     return i;
 }
 
+/***********************************************************************
+ *              VarDateFromUdate [OLEAUT32.330]
+ */
 HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
                                 ULONG dwFlags, DATE *datein)
 {

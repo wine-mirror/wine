@@ -34,7 +34,7 @@ static LRESULT WINAPI	MCIWndProc(HWND hWnd, UINT wMsg, WPARAM lParam1, LPARAM lP
 #define CTL_TRACKBAR	0x3202
 
 /***********************************************************************
- *		MCIWndRegisterClass		[MSVFW.@]
+ *		MCIWndRegisterClass		[MSVFW32.@]
  */
 BOOL WINAPI MCIWndRegisterClass(HINSTANCE hInst)
 {
@@ -59,8 +59,8 @@ BOOL WINAPI MCIWndRegisterClass(HINSTANCE hInst)
 }
 
 /***********************************************************************
- *		MCIWndCreate		[MSVFW.@]
- *		MCIWndCreateA		[MSVFW.@]
+ *		MCIWndCreate		[MSVFW32.@]
+ *		MCIWndCreateA		[MSVFW32.@]
  */
 HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 			   DWORD dwStyle, LPCSTR szFile)
@@ -94,7 +94,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 }
 
 /***********************************************************************
- *		MCIWndCreateW				[MSVFW.@]
+ *		MCIWndCreateW				[MSVFW32.@]
  */
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
 			   DWORD dwStyle, LPCWSTR szFile)
