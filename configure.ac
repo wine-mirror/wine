@@ -147,6 +147,15 @@ AC_CHECK_HEADERS(jpeglib.h,
     )
 )
 
+AC_SUBST(GIFLIB,"")
+AC_CHECK_HEADERS(gif_lib.h,
+    AC_CHECK_LIB(ungif,DGifOpen,
+        [AC_DEFINE(HAVE_LIBGIF,1,[Define if you have libgif/libungif including devel headers])
+         GIFLIB="-lungif"],
+        [AC_CHECK_LIB(gif,DGifOpen,
+                      [AC_DEFINE(HAVE_LIBGIF,1)
+                       GIFLIB="-lgif"])]))
+
 
 AC_SUBST(XLIB)
 AC_SUBST(XFILES)

@@ -164,6 +164,9 @@
 /* Define to 1 if you have the `getsockopt' function. */
 #undef HAVE_GETSOCKOPT
 
+/* Define to 1 if you have the <gif_lib.h> header file. */
+#undef HAVE_GIF_LIB_H
+
 /* Define if the OpenGL headers define extension typedefs */
 #undef HAVE_GLEXT_PROTOTYPES
 
@@ -217,6 +220,9 @@
 
 /* Define if you have the curses library (-lcurses) */
 #undef HAVE_LIBCURSES
+
+/* Define if you have libgif/libungif including devel headers */
+#undef HAVE_LIBGIF
 
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386

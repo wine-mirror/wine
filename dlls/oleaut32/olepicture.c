@@ -43,6 +43,13 @@
 #include <stdio.h>
 #include <string.h>
 
+/* Must be before wine includes, the header has things conflicting with
+ * WINE headers.
+ */
+#ifdef HAVE_LIBGIF
+# include <gif_lib.h>
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
@@ -813,6 +820,26 @@ static boolean _jpeg_resync_to_restart(j_decompress_ptr cinfo, int desired) {
 static void _jpeg_term_source(j_decompress_ptr cinfo) { }
 #endif /* HAVE_LIBJPEG */
 
+#ifdef HAVE_LIBGIF
+struct gifdata {
+    unsigned char *data;
+    unsigned int curoff;
+    unsigned int len;
+};
+
+static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
+    struct gifdata *gd = (struct gifdata*)gif->UserData;
+
+    if (len+gd->curoff > gd->len) {
+        FIXME("Trying to read %d bytes, but only %d available.\n",len, gd->len-gd->curoff);
+        len = gd->len - gd->curoff;
+    }
+    memcpy(data, gd->data+gd->curoff, len);
+    gd->curoff += len;
+    return len;
+}
+#endif
+
 /************************************************************************
  * OLEPictureImpl_IPersistStream_Load (IUnknown)
  *
@@ -829,30 +856,134 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   BYTE 		*xbuf;
   DWORD		header[2];
   WORD		magic;
+  STATSTG       statstg;
   ICOM_THIS_From_IPersistStream(OLEPictureImpl, iface);
-
+  
   TRACE("(%p,%p)\n",This,pStm);
 
+  /* Sometimes we have a header, sometimes we don't. Apply some guesses to find
+   * out whether we do.
+   */
+  hr=IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
+  if (hr)
+    FIXME("Stat failed with hres %lx\n",hr);
   hr=IStream_Read(pStm,header,8,&xread);
   if (hr || xread!=8) {
       FIXME("Failure while reading picture header (hr is %lx, nread is %ld).\n",hr,xread);
       return hr;
   }
-  xread = 0;
-  xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,header[1]);
-  This->datalen = header[1];
-  while (xread < header[1]) {
-    ULONG nread;
-    hr = IStream_Read(pStm,xbuf+xread,header[1]-xread,&nread);
-    xread+=nread;
-    if (hr || !nread)
-      break;
+  if (header[1] > statstg.cbSize.QuadPart) {/* Incorrect header, assume none. */
+    xread = 8;
+    xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,statstg.cbSize.QuadPart);
+    memcpy(xbuf,&header,8);
+    This->datalen = statstg.cbSize.QuadPart;
+    while (xread < This->datalen) {
+      ULONG nread;
+      hr = IStream_Read(pStm,xbuf+xread,This->datalen-xread,&nread);
+      xread+=nread;
+      if (hr || !nread)
+	break;
+    }
+    if (xread != This->datalen)
+      FIXME("Could only read %ld of %d bytes in no-header case?\n",xread,This->datalen);
+  } else {
+    xread = 0;
+    xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,header[1]);
+    This->datalen = header[1];
+    while (xread < header[1]) {
+      ULONG nread;
+      hr = IStream_Read(pStm,xbuf+xread,header[1]-xread,&nread);
+      xread+=nread;
+      if (hr || !nread)
+	break;
+    }
+    if (xread != header[1])
+      FIXME("Could only read %ld of %ld bytes?\n",xread,header[1]);
   }
-  if (xread != header[1])
-    FIXME("Could only read %ld of %ld bytes?\n",xread,header[1]);
-
   magic = xbuf[0] + (xbuf[1]<<8);
   switch (magic) {
+  case 0x4947: { /* GIF */
+#ifdef HAVE_LIBGIF
+    struct gifdata 	gd;
+    GifFileType 	*gif;
+    BITMAPINFO		*bmi;
+    HDC			hdcref;
+    LPBYTE              bytes;
+    int                 i,j,ret;
+    GifImageDesc        *gid;
+    SavedImage          *si;
+    ColorMapObject      *cm;
+    
+    gd.data   = xbuf;
+    gd.curoff = 0;
+    gd.len    = xread;
+    gif = DGifOpen((void*)&gd, _gif_inputfunc);
+    ret = DGifSlurp(gif);
+    if (ret == GIF_ERROR) {
+      FIXME("Failed reading GIF using libgif.\n");
+      return E_FAIL;
+    }
+    TRACE("screen height %d, width %d\n", gif->SWidth, gif->SHeight);
+    TRACE("color res %d, backgcolor %d\n", gif->SColorResolution, gif->SBackGroundColor);
+    TRACE("imgcnt %d\n", gif->ImageCount);
+    if (gif->ImageCount<1) {
+      FIXME("GIF stream does not have images inside?\n");
+      return E_FAIL;
+    }
+    TRACE("curimage: %d x %d, on %dx%d, interlace %d\n",
+      gif->Image.Width, gif->Image.Height,
+      gif->Image.Left, gif->Image.Top,
+      gif->Image.Interlace
+    );
+    /* */
+    bmi  = HeapAlloc(GetProcessHeap(),0,sizeof(BITMAPINFOHEADER)+(1<<gif->SColorResolution)*sizeof(RGBQUAD));
+    bytes= HeapAlloc(GetProcessHeap(),0,gif->SWidth*gif->SHeight);
+    si   = gif->SavedImages+0;
+    gid  = &(si->ImageDesc);
+    cm   = gid->ColorMap;
+    if (!cm) cm = gif->SColorMap;
+    for (i=0;i<(1<<gif->SColorResolution);i++) {
+      bmi->bmiColors[i].rgbRed = cm->Colors[i].Red;
+      bmi->bmiColors[i].rgbGreen = cm->Colors[i].Green;
+      bmi->bmiColors[i].rgbBlue = cm->Colors[i].Blue;
+    }
+    /* Map to in picture coordinates */
+    for (i=0;i<gid->Height;i++)
+      for (j=0;j<gid->Width;j++)
+        bytes[(gid->Top+i)*gif->SWidth+gid->Left+j]=si->RasterBits[i*gid->Width+j];
+    bmi->bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
+    bmi->bmiHeader.biWidth		= gif->SWidth;
+    bmi->bmiHeader.biHeight		= gif->SHeight;
+    bmi->bmiHeader.biPlanes		= 1;
+    bmi->bmiHeader.biBitCount		= 8;
+    bmi->bmiHeader.biCompression	= BI_RGB;
+    bmi->bmiHeader.biSizeImage		= gif->SWidth*gif->SHeight;
+    bmi->bmiHeader.biXPelsPerMeter	= 0;
+    bmi->bmiHeader.biYPelsPerMeter	= 0;
+    bmi->bmiHeader.biClrUsed		= 1 << gif->SColorResolution;
+    bmi->bmiHeader.biClrImportant	= 0;
+
+    hdcref = GetDC(0);
+    This->desc.u.bmp.hbitmap=CreateDIBitmap(
+	    hdcref,
+	    &bmi->bmiHeader,
+	    CBM_INIT,
+	    bytes,
+	    bmi,
+	    DIB_PAL_COLORS
+    );
+    DeleteDC(hdcref);
+    This->desc.picType = PICTYPE_BITMAP;
+    OLEPictureImpl_SetBitmap(This);
+    DGifCloseFile(gif);
+    HeapFree(GetProcessHeap(),0,bytes);
+    return S_OK;
+#else
+    FIXME("Trying to load GIF, but no support for libgif/libungif compiled in.\n");
+    return E_FAIL;
+#endif
+    break;
+  }
   case 0xd8ff: { /* JPEG */
 #ifdef HAVE_LIBJPEG
     struct jpeg_decompress_struct	jd;
@@ -1012,9 +1143,18 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     break;
   }
   default:
-    FIXME("Unknown magic %04x\n",magic);
+  {
+    int i;
+    FIXME("Unknown magic %04x, %ld read bytes:\n",magic,xread);
     hr=E_FAIL;
+    for (i=0;i<xread+8;i++) {
+	if (i<8) MESSAGE("%02x ",((unsigned char*)&header)[i]);
+	else MESSAGE("%02x ",xbuf[i-8]);
+        if (i % 10 == 9) MESSAGE("\n");
+    }
+    MESSAGE("\n");
     break;
+  }
   }
 
   /* FIXME: this notify is not really documented */
