@@ -68,6 +68,16 @@ static const char main_key_US[MAIN_LEN][4] =
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
+/*** British keyboard layout */
+static const char main_key_UK[MAIN_LEN][4] =
+{
+ "`","1!","2\"","3£","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'@","#~",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
+ "\\|"
+};
+
 /*** French keyboard layout (contributed by Eric Pouech) */
 static const char main_key_FR[MAIN_LEN][4] =
 {
@@ -114,6 +124,7 @@ static struct {
  const char (*key)[MAIN_LEN][4];
 } main_key_tab[]={
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US), 1252, 437, &main_key_US},
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK), 1252, 850, &main_key_UK},
  {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),     1252, 850, &main_key_FR},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),     1252, 850, &main_key_DE},
  {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &main_key_NO},
