@@ -295,6 +295,9 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     if (!cmdline)
     {
         cmdline = pdb32->env_db->cmd_line;
+        /* remove the first word (program name) */
+        if (*cmdline == '"')
+            if (!(cmdline = strchr( cmdline+1, '"' ))) cmdline = pdb32->env_db->cmd_line;
         while (*cmdline && (*cmdline != ' ') && (*cmdline != '\t')) cmdline++;
         while ((*cmdline == ' ') || (*cmdline == '\t')) cmdline++;
         len = strlen(cmdline);
@@ -303,6 +306,8 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     pTask->pdb.cmdLine[0] = len;
     memcpy( pTask->pdb.cmdLine + 1, cmdline, len );
     /* pTask->pdb.cmdLine[len+1] = 0; */
+
+    TRACE("module='%s' cmdline='%.*s' task=%04x\n", name, len, cmdline, hTask );
 
       /* Get the compatibility flags */
 
@@ -335,8 +340,6 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
  
     teb->htask16 = hTask;
     if (!initial_task) initial_task = hTask;
-
-    TRACE("module='%s' cmdline='%.*s' task=%04x\n", name, *cmdline, cmdline+1, hTask );
 
     /* Add the task to the linked list */
 
