@@ -1924,24 +1924,18 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     memcpy(&resultsW, lpResults, sizeof(resultsW));
 
     lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
-    if( dwFlags&GCP_REORDER )
-    {
-        /* If the REORDER flag is not set, this field is ignored anyways */
-        if(lpResults->lpOutString)
-            resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, uCountW);
-        else
-            resultsW.lpOutString = NULL;
-    }
+    if(lpResults->lpOutString)
+        resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*uCountW);
 
     ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
     if(lpResults->lpOutString) {
         if(font_cp != CP_SYMBOL)
-	    WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
-				lpResults->lpOutString, uCount, NULL, NULL );
-	else
-	    for(i = 0; i < uCount; i++)
-	        lpResults->lpOutString[i] = (CHAR)resultsW.lpOutString[i];
+            WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
+                                lpResults->lpOutString, uCount, NULL, NULL );
+        else
+            for(i = 0; i < uCount; i++)
+                lpResults->lpOutString[i] = (CHAR)resultsW.lpOutString[i];
     }
 
     HeapFree(GetProcessHeap(), 0, lpStringW);
@@ -2002,9 +1996,23 @@ GetCharacterPlacementW(
 	/* return number of initialized fields */
 	lpResults->nGlyphs = nSet;
 
+	if(dwFlags==0)
+	{
+		/* Treat the case where no special handling was requested in a fastpath way */
+		/* copy will do if the GCP_REORDER flag is not set */
+		if(lpResults->lpOutString)
+			for(i=0; i<nSet && lpString[i]!=0; ++i )
+				lpResults->lpOutString[i]=lpString[i];
+
+		if(lpResults->lpOrder)
+		{
+			for(i = 0; i < nSet; i++)
+				lpResults->lpOrder[i] = i;
+		}
+	}
+
 	if((dwFlags&GCP_REORDER)!=0)
 	{
-		/* MSDN says lpOutString and lpOrder are ignored if GCP_REORDER not set */
 		WORD *pwCharType;
 		int run_end;
 		/* Keep a static table that translates the C2 types to something meaningful */
@@ -2027,7 +2035,10 @@ GetCharacterPlacementW(
 
 		/* The complete and correct (at least according to MS) BiDi algorythm is not
 		 * yet implemented here. Instead, we just make sure that consecutive runs of
-		 * the same direction (or neutral) are ordered correctly
+		 * the same direction (or neutral) are ordered correctly. We also assign Neutrals
+		 * that are between runs of opposing directions the base (ok, always LTR) dir.
+		 * While this is a LONG way from a BiDi algorithm, it does produce more or less
+		 * readable results.
 		 */
 		for( i=0; i<uCount; i+=run_end )
 		{
@@ -2057,6 +2068,14 @@ GetCharacterPlacementW(
 			} else
 			{
 				/* A RTL run */
+
+				/* Since, at this stage, the paragraph context is always LTR,
+				 * remove any neutrals from the end of this run.
+				 */
+				if( chardir[pwCharType[i]]!=0 )
+					while( chardir[pwCharType[i+run_end-1]]==0 )
+						--run_end;
+
 				if(lpResults->lpOutString)
 				{
 					int j;
