@@ -671,13 +671,13 @@ LPWSTR WINAPI StrStrIW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
 /*************************************************************************
  * StrToIntA	[SHLWAPI.@]
  *
- * Read an integer from a string.
+ * Read a signed integer from a string.
  *
  * PARAMS
  *  lpszStr [I] String to read integer from
  *
  * RETURNS
- *   The integer value represented by the string, or 0 if no integer is
+ *   The signed integer value represented by the string, or 0 if no integer is
  *   present.
  *
  * NOTES

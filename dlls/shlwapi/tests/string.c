@@ -546,6 +546,46 @@ void test_StrFromTimeIntervalA(void)
   }
 }
 
+void test_StrCmpA(void)
+{
+  static const char str1[] = {'a','b','c','d','e','f'};
+  static const char str2[] = {'a','B','c','d','e','f'};
+  ok(0 != StrCmpNA(str1, str2, 6), "StrCmpNA is case-insensitive\n");
+  ok(0 == StrCmpNIA(str1, str2, 6), "StrCmpNIA is case-sensitive\n");
+  ok(!ChrCmpIA('a', 'a'), "ChrCmpIA doesn't work at all!\n");
+  ok(!ChrCmpIA('b', 'B'), "ChrCmpIA is not case-insensitive\n");
+  ok(ChrCmpIA('a', 'z'), "ChrCmpIA believes that a == z!\n");
+
+  todo_wine
+  {
+    ok(StrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
+  }
+  ok(!StrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
+
+  todo_wine
+  {
+    ok(IntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
+  }
+  ok(!IntlStrEqWorkerA(TRUE, str1, str2, 5), "IntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+}
+
+void test_StrCmpW(void)
+{
+  static const WCHAR str1[] = {'a','b','c','d','e','f'};
+  static const WCHAR str2[] = {'a','B','c','d','e','f'};
+  ok(0 != StrCmpNW(str1, str2, 5), "StrCmpNW is case-insensitive\n");
+  ok(0 == StrCmpNIW(str1, str2, 5), "StrCmpNIW is case-sensitive\n");
+  ok(!ChrCmpIW('a', 'a'), "ChrCmpIW doesn't work at all!\n");
+  ok(!ChrCmpIW('b', 'B'), "ChrCmpIW is not case-insensitive\n");
+  ok(ChrCmpIW('a', 'z'), "ChrCmpIW believes that a == z!\n");
+
+  ok(StrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
+  ok(!StrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
+
+  ok(IntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
+  ok(!IntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
+}
+
 static WCHAR *CoDupStrW(const char* src)
 {
   INT len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
@@ -611,5 +651,7 @@ START_TEST(string)
   test_StrFormatKBSizeA();
   test_StrFormatKBSizeW();
   test_StrFromTimeIntervalA();
+  test_StrCmpA();
+  test_StrCmpW();
   test_StrRetToBSTR();
 }

@@ -561,8 +561,8 @@
 @ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
 @ stdcall GetMenuPosFromID(ptr long)
 @ stdcall HashData (ptr long ptr long)
-@ stub    IntlStrEqWorkerA
-@ stub    IntlStrEqWorkerW
+@ stdcall IntlStrEqWorkerA(long str str long) StrIsIntlEqualA
+@ stdcall IntlStrEqWorkerW(long wstr wstr long) StrIsIntlEqualW
 @ stdcall PathAddBackslashA (str)
 @ stdcall PathAddBackslashW (wstr)
 @ stdcall PathAddExtensionA (str str)
