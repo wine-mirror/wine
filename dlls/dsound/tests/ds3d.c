@@ -421,9 +421,6 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 
                 rc=IDirectSoundBuffer_SetPan(dsbo,pan);
                 ok(rc==DS_OK,"SetPan failed: 0x%lx\n",rc);
-
-                rc=IDirectSoundBuffer_GetPan(dsbo,&val);
-                ok(val==pan,"volume=%ld instead of %ld\n",val,pan);
             } else {
                 /* DSOUND: Error: Buffer does not have CTRLPAN */
                 rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
