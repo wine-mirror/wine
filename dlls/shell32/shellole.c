@@ -67,6 +67,7 @@ LRESULT WINAPI SHCoCreateInstance(
 	}
 	else
 	{
+	  CoInitialize(NULL);
 	  hres = CoCreateInstance(myclsid, unknownouter, CLSCTX_INPROC_SERVER, refiid, ppv);
 	}
 	
