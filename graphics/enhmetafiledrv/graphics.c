@@ -338,7 +338,7 @@ EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
     }
 
     emr->cptl = count;
-    memcpy(emr->aptl, pt, size);
+    memcpy(emr->aptl, pt, count * sizeof(POINTL));
 
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
@@ -409,7 +409,7 @@ EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
     emr->nPolys = polys;
     emr->cptl = cptl;
     memcpy(emr->aPolyCounts, counts, polys * sizeof(DWORD));
-    memcpy(emr->aPolyCounts + polys, pt, cptl * sizeof(POINT));
+    memcpy(emr->aPolyCounts + polys, pt, cptl * sizeof(POINTL));
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
