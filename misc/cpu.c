@@ -198,6 +198,8 @@ VOID WINAPI GetSystemInfo(
 				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 			if (strstr(value,"mmx"))
 				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+			if (strstr(value,"tsc"))
+				PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = TRUE;
 
 		}
 	}
