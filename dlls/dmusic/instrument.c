@@ -58,6 +58,8 @@ ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 
 	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
+	DMUSIC_LockModule();
+
 	return refCount;
 }
 
@@ -70,6 +72,9 @@ ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMUSIC_UnlockModule();
+	
 	return refCount;
 }
 

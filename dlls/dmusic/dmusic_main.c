@@ -23,41 +23,48 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
+LONG DMUSIC_refCount = 0;
+
 typedef struct {
-    /* IUnknown fields */
     IClassFactoryVtbl          *lpVtbl;
-    DWORD                       ref;
 } IClassFactoryImpl;
 
 /******************************************************************
  *		DirectMusic ClassFactory
  */
 static HRESULT WINAPI DirectMusicCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n",This,debugstr_dmguid(riid),ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI DirectMusicCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMUSIC_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI DirectMusicCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMUSIC_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI DirectMusicCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
 	return DMUSIC_CreateDirectMusicImpl (riid, (LPVOID*) ppobj, pOuter);
 }
 
 static HRESULT WINAPI DirectMusicCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMUSIC_LockModule();
+	else
+		DMUSIC_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -69,37 +76,44 @@ static IClassFactoryVtbl DirectMusicCF_Vtbl = {
 	DirectMusicCF_LockServer
 };
 
-static IClassFactoryImpl DirectMusic_CF = {&DirectMusicCF_Vtbl, 1 };
+static IClassFactoryImpl DirectMusic_CF = {&DirectMusicCF_Vtbl};
 
 /******************************************************************
  *		DirectMusicCollection ClassFactory
  */
 static HRESULT WINAPI CollectionCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n",This,debugstr_dmguid(riid),ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI CollectionCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DMUSIC_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI CollectionCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DMUSIC_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI CollectionCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
 	return DMUSIC_CreateDirectMusicCollectionImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI CollectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DMUSIC_LockModule();
+	else
+		DMUSIC_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -111,7 +125,7 @@ static IClassFactoryVtbl CollectionCF_Vtbl = {
 	CollectionCF_LockServer
 };
 
-static IClassFactoryImpl Collection_CF = {&CollectionCF_Vtbl, 1 };
+static IClassFactoryImpl Collection_CF = {&CollectionCF_Vtbl};
 
 /******************************************************************
  *		DllMain
@@ -136,8 +150,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  */
 HRESULT WINAPI DMUSIC_DllCanUnloadNow(void) {
-    FIXME("(void): stub\n");
-    return S_FALSE;
+	return DMUSIC_refCount != 0 ? S_FALSE : S_OK;
 }
 
 

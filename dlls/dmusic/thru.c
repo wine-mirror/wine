@@ -42,6 +42,8 @@ ULONG WINAPI IDirectMusicThruImpl_AddRef (LPDIRECTMUSICTHRU iface) {
 
 	TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
+	DMUSIC_LockModule();
+
 	return refCount;
 }
 
@@ -54,6 +56,9 @@ ULONG WINAPI IDirectMusicThruImpl_Release (LPDIRECTMUSICTHRU iface) {
 	if (!refCount) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+
+	DMUSIC_UnlockModule();
+
 	return refCount;
 }
 
