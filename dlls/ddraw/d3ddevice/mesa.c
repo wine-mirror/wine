@@ -2133,9 +2133,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     TRACE(" current context set\n");
 
     /* Apply default render state values */
-    /* FIXME: disable because our current D3D code does not like it */
-    /* apply_render_state(gl_object, &object->state_block); */
-    
+    apply_render_state(gl_object, &object->state_block);
     /* FIXME: do something similar for ligh_state and texture_stage_state */
     
     glClearColor(0.0, 0.0, 0.0, 0.0);
