@@ -39,6 +39,14 @@ static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'S','e','r','v','i','c','e','s','\\',0 };
 static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
                                    'L','O','C','K',0};
+static const WCHAR  szServiceShmemNameFmtW[] = {'A','D','V','A','P','I','_',
+                                                'S','E','B','_','%','s',0};
+
+struct SEB              /* service environment block */
+{                       /*   resides in service's shared memory object */
+    DWORD argc;
+    /* variable part of SEB contains service arguments */
+};
 
 /******************************************************************************
  * SC_HANDLEs
@@ -210,6 +218,34 @@ static BOOL read_scm_lock_data( LPWSTR buffer )
 }
 
 /******************************************************************************
+ * build_arg_vectors
+ *
+ * helper function for StartServiceCtrlDispatcherA/W
+ *
+ * Allocate and initialize array of LPWSTRs to arguments in variable part
+ * of service environment block.
+ * First entry in the array is reserved for service name and not initialized.
+ */
+static LPWSTR* build_arg_vectors( struct SEB* seb )
+{
+    LPWSTR *ret;
+    LPWSTR argptr;
+    DWORD i;
+
+    ret = HeapAlloc( GetProcessHeap(), 0, (1 + seb->argc) * sizeof(LPWSTR) );
+    if( NULL == ret )
+        return NULL;
+
+    argptr = (LPWSTR) &seb[1];
+    for( i = 0; i < seb->argc; i++ )
+    {
+        ret[ 1 + i ] = argptr;
+        argptr += 1 + strlenW( argptr );
+    }
+    return ret;
+}
+
+/******************************************************************************
  * StartServiceCtrlDispatcherA [ADVAPI32.@]
  */
 BOOL WINAPI
@@ -217,9 +253,11 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {
     LPSERVICE_MAIN_FUNCTIONA fpMain;
     WCHAR service_name[ MAX_SERVICE_NAME ];
-    LPWSTR argv0;
+    WCHAR object_name[ MAX_PATH ];
+    HANDLE hServiceShmem = NULL;
+    struct SEB *seb = NULL;
     DWORD  dwNumServiceArgs ;
-    LPWSTR *lpArgVecW;
+    LPWSTR *lpArgVecW = NULL;
     LPSTR  *lpArgVecA;
     unsigned int i;
 
@@ -238,18 +276,31 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
         goto run_service;
     }
 
-    /* FIXME: other args */
-    dwNumServiceArgs = 1;
-    argv0            = service_name;
-    lpArgVecW        = &argv0;
+    snprintfW( object_name, MAX_PATH, szServiceShmemNameFmtW, service_name );
+    hServiceShmem = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, object_name );
+    if( NULL == hServiceShmem )
+        return FALSE;
+
+    seb = MapViewOfFile( hServiceShmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    if( NULL == seb )
+    {
+        CloseHandle( hServiceShmem );
+        return FALSE;
+    }
+
+    lpArgVecW = build_arg_vectors( seb );
+    if( NULL == lpArgVecW )
+    {
+        UnmapViewOfFile( seb );
+        CloseHandle( hServiceShmem );
+        return FALSE;
+    }
+    lpArgVecW[0] = service_name;
+    dwNumServiceArgs = seb->argc + 1;
 
     /* Convert the Unicode arg vectors back to ASCII */
-    if(dwNumServiceArgs)
-        lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0,
-                                   dwNumServiceArgs*sizeof(LPSTR) );
-    else
-        lpArgVecA = NULL;
-
+    lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0,
+                                    dwNumServiceArgs*sizeof(LPSTR) );
     for(i=0; i<dwNumServiceArgs; i++)
         lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
 
@@ -273,6 +324,9 @@ run_service:
         HeapFree(GetProcessHeap(), 0, lpArgVecA);
     }
 
+    if( lpArgVecW ) HeapFree( GetProcessHeap(), 0, lpArgVecW );
+    if( seb ) UnmapViewOfFile( seb );
+    if( hServiceShmem ) CloseHandle( hServiceShmem );
     return TRUE;
 }
 
@@ -286,8 +340,10 @@ BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
     LPSERVICE_MAIN_FUNCTIONW fpMain;
-    LPWSTR argv0;
     WCHAR service_name[ MAX_SERVICE_NAME ];
+    WCHAR object_name[ MAX_PATH ];
+    HANDLE hServiceShmem;
+    struct SEB *seb;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpServiceArgVectors ;
 
@@ -296,10 +352,27 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
     if( ! read_scm_lock_data( service_name ) )
         return FALSE;
 
-    /* FIXME: other args */
-    dwNumServiceArgs    = 1;
-    argv0               = service_name;
-    lpServiceArgVectors = &argv0;
+    snprintfW( object_name, MAX_PATH, szServiceShmemNameFmtW, service_name );
+    hServiceShmem = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, object_name );
+    if( NULL == hServiceShmem )
+        return FALSE;
+
+    seb = MapViewOfFile( hServiceShmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    if( NULL == seb )
+    {
+        CloseHandle( hServiceShmem );
+        return FALSE;
+    }
+
+    lpServiceArgVectors = build_arg_vectors( seb );
+    if( NULL == lpServiceArgVectors )
+    {
+        UnmapViewOfFile( seb );
+        CloseHandle( hServiceShmem );
+        return FALSE;
+    }
+    lpServiceArgVectors[0] = service_name;
+    dwNumServiceArgs = seb->argc + 1;
 
     /* FIXME: should we blindly start all services? */
     while (servent->lpServiceName) {
@@ -312,6 +385,9 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
         servent++;
     }
 
+    HeapFree( GetProcessHeap(), 0, lpServiceArgVectors );
+    UnmapViewOfFile( seb );
+    CloseHandle( hServiceShmem );
     return TRUE;
 }
 
@@ -904,10 +980,14 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     struct sc_handle *hsvc = hService;
     WCHAR path[MAX_PATH],str[MAX_PATH];
     DWORD type,size;
+    DWORD i;
     long r;
     HANDLE hLock;
+    HANDLE hServiceShmem = NULL;
     HANDLE wait = NULL;
     LPWSTR shmem_lock = NULL;
+    struct SEB *seb = NULL;
+    LPWSTR argptr;
     PROCESS_INFORMATION procinfo;
     STARTUPINFOW startupinfo;
     BOOL ret = FALSE;
@@ -941,17 +1021,46 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     }
     strcpyW( shmem_lock, hsvc->u.service.name );
 
+    /* create service environment block */
+    size = sizeof(struct SEB);
+    for( i = 0; i < dwNumServiceArgs; i++ )
+        size += sizeof(WCHAR) * (1 + strlenW( lpServiceArgVectors[ i ] ));
+
+    snprintfW( str, MAX_PATH, szServiceShmemNameFmtW, hsvc->u.service.name );
+    hServiceShmem = CreateFileMappingW( INVALID_HANDLE_VALUE,
+                                        NULL, PAGE_READWRITE, 0, size, str );
+    if( NULL == hServiceShmem )
+    {
+        ERR("Couldn't create shared memory object\n");
+        goto done;
+    }
+    if( GetLastError() == ERROR_ALREADY_EXISTS )
+    {
+        SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
+        goto done;
+    }
+    seb = MapViewOfFile( hServiceShmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    if( NULL == seb )
+    {
+        ERR("Couldn't map shared memory\n");
+        goto done;
+    }
+
+    /* copy service args to SEB */
+    seb->argc = dwNumServiceArgs;
+    argptr = (LPWSTR) &seb[1];
+    for( i = 0; i < dwNumServiceArgs; i++ )
+    {
+        strcpyW( argptr, lpServiceArgVectors[ i ] );
+        argptr += 1 + strlenW( argptr );
+    }
+
     wait = CreateSemaphoreW(NULL,0,1,_WaitServiceStartW);
     if (!wait)
     {
         ERR("Couldn't create wait semaphore\n");
         goto done;
     }
-
-    /*
-     * FIXME: lpServiceArgsVectors need to be stored and returned to
-     *        the service when it calls StartServiceCtrlDispatcher
-     */
 
     ZeroMemory(&startupinfo,sizeof(STARTUPINFOW));
     startupinfo.cb = sizeof(STARTUPINFOW);
@@ -988,6 +1097,8 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 
 done:
     if( wait ) CloseHandle( wait );
+    if( seb != NULL ) UnmapViewOfFile( seb );
+    if( hServiceShmem != NULL ) CloseHandle( hServiceShmem );
     if( shmem_lock != NULL ) UnmapViewOfFile( shmem_lock );
     UnlockServiceDatabase( hLock );
     return ret;
