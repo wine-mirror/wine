@@ -1810,6 +1810,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
 		}
 
+		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
+
 		/* insert separator button into 'available buttons' list */
 		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
@@ -1873,6 +1875,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         }
 		    }
 		}
+
+		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
 
 		/* select first item in the 'available' list */
 		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETCURSEL, 0, 0);
@@ -2236,10 +2240,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    {
 		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*)lParam;
 
-		if (custInfo && custInfo->tbInfo)
-		    lpmis->itemHeight = custInfo->tbInfo->nBitmapHeight + 8;
-		else
-		    lpmis->itemHeight = 15 + 8; /* default height */
+		lpmis->itemHeight = 15 + 8; /* default height */
 
 		return TRUE;
 	    }
