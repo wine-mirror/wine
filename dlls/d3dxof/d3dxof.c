@@ -80,23 +80,24 @@ static HRESULT WINAPI IDirectXFileImpl_QueryInterface(IDirectXFile* iface, REFII
 static ULONG WINAPI IDirectXFileImpl_AddRef(IDirectXFile* iface)
 {
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileImpl_Release(IDirectXFile* iface)
 {
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFile methods ***/
@@ -190,23 +191,24 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* 
 static ULONG WINAPI IDirectXFileBinaryImpl_AddRef(IDirectXFileBinary* iface)
 {
   IDirectXFileBinaryImpl *This = (IDirectXFileBinaryImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileBinaryImpl_Release(IDirectXFileBinary* iface)
 {
   IDirectXFileBinaryImpl *This = (IDirectXFileBinaryImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFileObject methods ***/
@@ -308,23 +310,24 @@ static HRESULT WINAPI IDirectXFileDataImpl_QueryInterface(IDirectXFileData* ifac
 static ULONG WINAPI IDirectXFileDataImpl_AddRef(IDirectXFileData* iface)
 {
   IDirectXFileDataImpl *This = (IDirectXFileDataImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileDataImpl_Release(IDirectXFileData* iface)
 {
   IDirectXFileDataImpl *This = (IDirectXFileDataImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFileObject methods ***/
@@ -456,23 +459,24 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_QueryInterface(IDirectXFileD
 static ULONG WINAPI IDirectXFileDataReferenceImpl_AddRef(IDirectXFileDataReference* iface)
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileDataReferenceImpl_Release(IDirectXFileDataReference* iface)
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFileObject methods ***/
@@ -552,23 +556,24 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_QueryInterface(IDirectXFileEnum
 static ULONG WINAPI IDirectXFileEnumObjectImpl_AddRef(IDirectXFileEnumObject* iface)
 {
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* iface)
 {
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFileEnumObject methods ***/
@@ -655,23 +660,24 @@ static HRESULT WINAPI IDirectXFileObjectImpl_QueryInterface(IDirectXFileObject* 
 static ULONG WINAPI IDirectXFileObjectImpl_AddRef(IDirectXFileObject* iface)
 {
   IDirectXFileObjectImpl *This = (IDirectXFileObjectImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileObjectImpl_Release(IDirectXFileObject* iface)
 {
   IDirectXFileObjectImpl *This = (IDirectXFileObjectImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 /*** IDirectXFileObject methods ***/
@@ -740,23 +746,24 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_QueryInterface(IDirectXFileSave
 static ULONG WINAPI IDirectXFileSaveObjectImpl_AddRef(IDirectXFileSaveObject* iface)
 {
   IDirectXFileSaveObjectImpl *This = (IDirectXFileSaveObjectImpl *)iface;
+  ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): AddRef from %ld\n", iface, This, ref - 1);
 
-  This->ref++;
-  return S_OK;
+  return ref;
 }
 
 static ULONG WINAPI IDirectXFileSaveObjectImpl_Release(IDirectXFileSaveObject* iface)
 {
   IDirectXFileSaveObjectImpl *This = (IDirectXFileSaveObjectImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p/%p)\n", iface, This); 
+  TRACE("(%p/%p): ReleaseRef to %ld\n", iface, This, ref);
 
-  if (!--This->ref)
+  if (!ref)
     HeapFree(GetProcessHeap(), 0, This);
 
-  return S_OK;
+  return ref;
 }
 
 static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveTemplates(IDirectXFileSaveObject* iface, DWORD cTemplates, const GUID** ppguidTemplates)

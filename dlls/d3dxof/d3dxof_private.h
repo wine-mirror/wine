@@ -35,37 +35,37 @@
 
 typedef struct {
     IDirectXFile lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileImpl;
 
 typedef struct {
     IDirectXFileBinary lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileBinaryImpl;
 
 typedef struct {
     IDirectXFileData lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileDataImpl;
 
 typedef struct {
     IDirectXFileDataReference lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileDataReferenceImpl;
 
 typedef struct {
     IDirectXFileObject lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileObjectImpl;
 
 typedef struct {
     IDirectXFileEnumObject lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {
     IDirectXFileSaveObject lpVtbl;
-    int ref;
+    ULONG ref;
 } IDirectXFileSaveObjectImpl;
 
 HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj);
