@@ -6,6 +6,8 @@
  */
 
 #include <string.h>
+
+#include "config.h"
 #include "windef.h"
 #include "winnls.h"
 #include "wingdi.h"
