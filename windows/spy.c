@@ -1615,21 +1615,47 @@ static const SPY_NOTIFY spnfy_array[] = {
     /* Up/Down        0U-721U  to  0U-740U  */
     SPNFY(UDN_DELTAPOS,          NMHDR),           
     /* Month Calendar 0U-750U  to  0U-759U  */
-    SPNFY(MCN_SELCHANGE,         NMHDR),        
-    SPNFY(MCN_GETDAYSTATE,       NMHDR),        
-    SPNFY(MCN_SELECT,            NMHDR),        
+    /* ******************* WARNING ***************************** */
+    /* The following appear backwards but needs to be this way.  */
+    /* The reason is that MS (and us) define the MCNs as         */
+    /*         MCN_FIRST + n                                     */
+    /* instead of the way ALL other notifications are            */
+    /*         TBN_FIRST - n                                     */
+    /* The only place that this is important is in this list     */
+    /*                                                           */
+    /* Also since the same error was made with the DTN_ items,   */
+    /* they overlay the MCN_ and need to be inserted in the      */
+    /* other section of the table so that it is in order for     */
+    /* the binary search.                                        */
+    /*                                                           */
+    /* Thank you MS for your obvious quality control!!           */
+    /* ******************* WARNING ***************************** */
     /* Date/Time      0U-760U  to  0U-799U  */
-    SPNFY(DTN_DATETIMECHANGE,    NMHDR),      
-    SPNFY(DTN_USERSTRINGA,       NMHDR),      
-    SPNFY(DTN_WMKEYDOWNA,        NMHDR),      
-    SPNFY(DTN_FORMATA,           NMHDR),      
-    SPNFY(DTN_FORMATQUERYA,      NMHDR),       
-    SPNFY(DTN_DROPDOWN,          NMHDR),      
-    SPNFY(DTN_CLOSEUP,           NMHDR),      
-    SPNFY(DTN_USERSTRINGW,       NMHDR),         
-    SPNFY(DTN_WMKEYDOWNW,        NMHDR),        
-    SPNFY(DTN_FORMATW,           NMHDR),      
+    /* SPNFY(MCN_SELECT,            NMHDR), */        
+    /* SPNFY(MCN_GETDAYSTATE,       NMHDR), */        
+    /* SPNFY(MCN_SELCHANGE,         NMHDR), */        
+    /* ******************* WARNING ***************************** */
+    /* The following appear backwards but needs to be this way.  */
+    /* The reason is that MS (and us) define the MCNs as         */
+    /*         DTN_FIRST + n                                     */
+    /* instead of the way ALL other notifications are            */
+    /*         TBN_FIRST - n                                     */
+    /* The only place that this is important is in this list     */
+    /* ******************* WARNING ***************************** */
     SPNFY(DTN_FORMATQUERYW,      NMHDR),      
+    SPNFY(DTN_FORMATW,           NMHDR),      
+    SPNFY(DTN_WMKEYDOWNW,        NMHDR),        
+    SPNFY(DTN_USERSTRINGW,       NMHDR),         
+    SPNFY(MCN_SELECT,            NMHDR),        
+    SPNFY(MCN_GETDAYSTATE,       NMHDR),        
+    SPNFY(MCN_SELCHANGE,         NMHDR),        
+    SPNFY(DTN_CLOSEUP,           NMHDR),      
+    SPNFY(DTN_DROPDOWN,          NMHDR),      
+    SPNFY(DTN_FORMATQUERYA,      NMHDR),       
+    SPNFY(DTN_FORMATA,           NMHDR),      
+    SPNFY(DTN_WMKEYDOWNA,        NMHDR),      
+    SPNFY(DTN_USERSTRINGA,       NMHDR),      
+    SPNFY(DTN_DATETIMECHANGE,    NMHDR),      
     /* ComboBoxEx     0U-800U  to  0U-830U  */
     SPNFY(CBEN_GETDISPINFOA,     NMCOMBOBOXEXA),
     SPNFY(CBEN_INSERTITEM,       NMCOMBOBOXEXA),
