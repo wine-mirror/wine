@@ -548,10 +548,14 @@ dnl **** Check for pthread_rwlock_t ****
 AC_CHECK_TYPES([pthread_rwlock_t, pthread_rwlockattr_t],,,[#define _GNU_SOURCE
 #include <pthread.h>])
 
-dnl **** Check for pthread_getattr_np ****
+dnl **** Check for pthread functions ****
 ac_save_LIBS="$LIBS"
 LIBS="$LIBS $LIBPTHREAD"
-AC_CHECK_FUNCS(pthread_getattr_np)
+AC_CHECK_FUNCS(\
+        pthread_getattr_np \
+        pthread_get_stackaddr_np \
+        pthread_get_stacksize_np \
+)
 LIBS="$ac_save_LIBS"
 
 dnl **** Check for Open Sound System ****

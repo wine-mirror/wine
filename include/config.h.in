@@ -449,6 +449,12 @@
 /* Define to 1 if you have the `pthread_getattr_np' function. */
 #undef HAVE_PTHREAD_GETATTR_NP
 
+/* Define to 1 if you have the `pthread_get_stackaddr_np' function. */
+#undef HAVE_PTHREAD_GET_STACKADDR_NP
+
+/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
+#undef HAVE_PTHREAD_GET_STACKSIZE_NP
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
