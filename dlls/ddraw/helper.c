@@ -216,11 +216,12 @@ void _dump_pixelformat(void *in) {
     DPRINTF("( ");
     _dump_pixelformat_flag(pf->dwFlags);
     if (pf->dwFlags & DDPF_FOURCC) {
-	DPRINTF(", dwFourCC : %c%c%c%c",
-		(unsigned char)((pf->dwFourCC>>24)&0xff),
-		(unsigned char)((pf->dwFourCC>>16)&0xff),
+	DPRINTF(", dwFourCC (%08lx) : %c%c%c%c",
+		pf->dwFourCC,
+		(unsigned char)( pf->dwFourCC     &0xff),
 		(unsigned char)((pf->dwFourCC>> 8)&0xff),
-		(unsigned char)( pf->dwFourCC     &0xff)
+		(unsigned char)((pf->dwFourCC>>16)&0xff),
+		(unsigned char)((pf->dwFourCC>>24)&0xff)
 	);
     }
     if (pf->dwFlags & DDPF_RGB) {
