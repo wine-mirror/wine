@@ -205,7 +205,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	DWORD dwFlags, DWORD dwContext)
 {
     LPWININETHTTPSESSIONA lpwhs;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle = NULL;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08lx)\n", hHttpSession,
@@ -225,7 +225,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
 	return NULL;
     }
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     /*
      * My tests seem to show that the windows version does not
@@ -381,7 +381,7 @@ end:
 /***********************************************************************
  *  HTTP_Base64
  */
-static UINT HTTP_Base64( LPCSTR bin, LPSTR base64 )
+static UINT HTTP_Base64( LPCWSTR bin, LPWSTR base64 )
 {
     UINT n = 0, x;
     static LPSTR HTTP_Base64Enc = 
@@ -426,26 +426,28 @@ static UINT HTTP_Base64( LPCSTR bin, LPSTR base64 )
  *
  *  Encode the basic authentication string for HTTP 1.1
  */
-static LPSTR HTTP_EncodeBasicAuth( LPCSTR username, LPCSTR password)
+static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
 {
     UINT len;
-    LPSTR in, out, szBasic = "Basic ";
+    LPWSTR in, out;
+    WCHAR szBasic[] = {'B','a','s','i','c',' ',0};
+    WCHAR szColon[] = {':',0};
 
-    len = strlen( username ) + 1 + strlen ( password ) + 1;
-    in = HeapAlloc( GetProcessHeap(), 0, len );
+    len = lstrlenW( username ) + 1 + lstrlenW ( password ) + 1;
+    in = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if( !in )
         return NULL;
 
-    len = strlen(szBasic) +
-          (strlen( username ) + 1 + strlen ( password ))*2 + 1 + 1;
+    len = lstrlenW(szBasic) +
+          (lstrlenW( username ) + 1 + lstrlenW ( password ))*2 + 1 + 1;
     out = HeapAlloc( GetProcessHeap(), 0, len );
     if( out )
     {
-        strcpy( in, username );
-        strcat( in, ":" );
-        strcat( in, password );
-        strcpy( out, szBasic );
-        HTTP_Base64( in, &out[strlen(out)] );
+        lstrcpyW( in, username );
+        lstrcatW( in, szColon );
+        lstrcatW( in, password );
+        lstrcpyW( out, szBasic );
+        HTTP_Base64( in, &out[strlenW(out)] );
     }
     HeapFree( GetProcessHeap(), 0, in );
 
@@ -458,13 +460,19 @@ static LPSTR HTTP_EncodeBasicAuth( LPCSTR username, LPCSTR password)
  *   Insert the basic authorization field in the request header
  */
 BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
-                       LPCSTR username, LPCSTR password )
+                       LPCWSTR username, LPCWSTR password )
 {
     HTTPHEADERA hdr;
-    INT index;
+    INT index, len;
+    LPWSTR authW;
+
+    authW = HTTP_EncodeBasicAuth( username, password );
+
+    len = WideCharToMultiByte( CP_ACP, 0, authW, -1, NULL, 0, NULL, NULL);
+    hdr.lpszValue = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, authW, -1, hdr.lpszValue, len, NULL, NULL);
 
     hdr.lpszField = "Proxy-Authorization";
-    hdr.lpszValue = HTTP_EncodeBasicAuth( username, password );
     hdr.wFlags = HDR_ISREQUEST;
     hdr.wCount = 0;
     if( !hdr.lpszValue )
@@ -480,6 +488,7 @@ BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
     
     HTTP_InsertCustomHeader(lpwhr, &hdr);
     HeapFree( GetProcessHeap(), 0, hdr.lpszValue );
+    HeapFree( GetProcessHeap(), 0, authW );
     
     return TRUE;
 }
@@ -487,7 +496,7 @@ BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
 /***********************************************************************
  *           HTTP_DealWithProxy
  */
-static BOOL HTTP_DealWithProxy( LPWININETAPPINFOA hIC,
+static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     LPWININETHTTPSESSIONA lpwhs, LPWININETHTTPREQA lpwhr)
 {
     char buf[MAXHOSTNAME];
@@ -500,10 +509,11 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOA hIC,
     UrlComponents.lpszHostName = buf;
     UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
-    if (strncasecmp(hIC->lpszProxy,"http://",strlen("http://")))
-	sprintf(proxy, "http://%s/", hIC->lpszProxy);
+    WideCharToMultiByte(CP_ACP, 0, hIC->lpszProxy, -1, buf, sizeof buf, NULL, NULL);
+    if (strncasecmp(buf,"http://",strlen("http://")))
+	sprintf(proxy, "http://%s/", buf);
     else
-	strcpy(proxy,hIC->lpszProxy);
+	strcpy(proxy,buf);
     if( !InternetCrackUrlA(proxy, 0, 0, &UrlComponents) )
         return FALSE;
     if( UrlComponents.dwHostNameLength == 0 )
@@ -551,7 +561,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	DWORD dwFlags, DWORD dwContext)
 {
     LPWININETHTTPSESSIONA lpwhs;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPREQA lpwhr;
     LPSTR lpszCookies;
     LPSTR lpszUrl = NULL;
@@ -567,7 +577,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	return NULL;
     }
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPREQA));
     if (NULL == lpwhr)
@@ -641,8 +651,16 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 
     if (hIC->lpszAgent)
     {
-        char *agent_header = HeapAlloc(GetProcessHeap(), 0, strlen(hIC->lpszAgent) + 1 + 14);
-        sprintf(agent_header, "User-Agent: %s\r\n", hIC->lpszAgent);
+        int len = WideCharToMultiByte(CP_ACP, 0, hIC->lpszAgent, -1, NULL, 0, NULL, NULL );
+        char *agent_header, *user_agent = "User-Agent: ";
+
+        agent_header = HeapAlloc( GetProcessHeap(), 0, 
+                                  strlen(user_agent) + len + 3 );
+        strcpy(agent_header, user_agent);
+        WideCharToMultiByte(CP_ACP, 0, hIC->lpszAgent, -1,
+                            agent_header+strlen(user_agent), len, NULL, NULL );
+        strcat(agent_header, "\r\n");
+
         HttpAddRequestHeadersA(handle, agent_header, strlen(agent_header),
                                HTTP_ADDREQ_FLAG_ADD);
         HeapFree(GetProcessHeap(), 0, agent_header);
@@ -1071,7 +1089,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 {
     LPWININETHTTPREQA lpwhr;
     LPWININETHTTPSESSIONA lpwhs = NULL;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
 
     TRACE("%p, %p (%s), %li, %p, %li)\n", hHttpRequest,
             lpszHeaders, debugstr_a(lpszHeaders), dwHeaderLength, lpOptional, dwOptionalLength);
@@ -1090,7 +1108,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	return FALSE;
     }
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1162,7 +1180,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
                                 DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
     LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
-    LPWININETAPPINFOA hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     char path[2048];
     HINTERNET handle;
 
@@ -1295,7 +1313,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     INT headerLength = 0;
     LPWININETHTTPREQA lpwhr;
     LPWININETHTTPSESSIONA lpwhs = NULL;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     BOOL loop_next = FALSE;
     int CustHeaderIndex;
 
@@ -1316,7 +1334,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	return FALSE;
     }
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1689,13 +1707,13 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
 {
     BOOL bSuccess = FALSE;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPSESSIONA lpwhs = NULL;
     HINTERNET handle = NULL;
 
     TRACE("-->\n");
 
-    hIC = (LPWININETAPPINFOA) WININET_GetObject( hInternet );
+    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
         goto lerror;
 
@@ -1728,7 +1746,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
-        if(strchr(hIC->lpszProxy, ' '))
+        if(strchrW(hIC->lpszProxy, ' '))
             FIXME("Several proxies not implemented.\n");
         if(hIC->lpszProxyBypass)
             FIXME("Proxy bypass is ignored.\n");
@@ -1785,7 +1803,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr)
 {
     BOOL bSuccess = FALSE;
     LPWININETHTTPSESSIONA lpwhs;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
 
     TRACE("-->\n");
 
@@ -1798,7 +1816,7 @@ BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr)
 
     lpwhs = (LPWININETHTTPSESSIONA)lpwhr->hdr.lpwhparent;
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CONNECTING_TO_SERVER,
                       &(lpwhs->socketAddress),
@@ -2202,14 +2220,14 @@ VOID HTTP_CloseConnection(LPWININETHTTPREQA lpwhr)
 
 
     LPWININETHTTPSESSIONA lpwhs = NULL;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle;
 
     TRACE("%p\n",lpwhr);
 
     handle = WININET_FindHandle( &lpwhr->hdr );
     lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     SendAsyncCallback(hIC, lpwhr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
@@ -2234,7 +2252,7 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
 {
     int i;
     LPWININETHTTPSESSIONA lpwhs = NULL;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle;
 
     TRACE("\n");
@@ -2244,7 +2262,7 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
 
     handle = WININET_FindHandle( &lpwhr->hdr );
     lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     SendAsyncCallback(hIC, handle, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_HANDLE_CLOSING, lpwhr,
@@ -2286,12 +2304,12 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr)
  */
 void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs)
 {
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle;
 
     TRACE("%p\n", lpwhs);
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     handle = WININET_FindHandle( &lpwhs->hdr );
     SendAsyncCallback(hIC, handle, lpwhs->hdr.dwContext,

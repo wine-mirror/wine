@@ -85,14 +85,14 @@ typedef struct _WININETHANDLEHEADER
 typedef struct
 {
     WININETHANDLEHEADER hdr;
-    LPSTR  lpszAgent;
-    LPSTR  lpszProxy;
-    LPSTR  lpszProxyBypass;
-    LPSTR  lpszProxyUsername;
-    LPSTR  lpszProxyPassword;
+    LPWSTR  lpszAgent;
+    LPWSTR  lpszProxy;
+    LPWSTR  lpszProxyBypass;
+    LPWSTR  lpszProxyUsername;
+    LPWSTR  lpszProxyPassword;
     DWORD   dwAccessType;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
-} WININETAPPINFOA, *LPWININETAPPINFOA;
+} WININETAPPINFOW, *LPWININETAPPINFOW;
 
 
 typedef struct
@@ -382,16 +382,16 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs);
 void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr);
 
-VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
 BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
-                       LPCSTR username, LPCSTR password );
+                       LPCWSTR username, LPCWSTR password );
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);

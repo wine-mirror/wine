@@ -56,12 +56,12 @@ struct WININET_ErrorDlgParams
  *
  *  Determine the name of the proxy server the request is using
  */
-static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
+static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
     LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hRequest;
     LPWININETHTTPSESSIONA lpwhs = NULL;
-    LPWININETAPPINFOA hIC = NULL;
-    LPSTR p;
+    LPWININETAPPINFOW hIC = NULL;
+    LPWSTR p;
 
     if (NULL == lpwhr)
 	return FALSE;
@@ -70,14 +70,14 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
     if (NULL == lpwhs)
 	return FALSE;
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
     if (NULL == hIC)
 	return FALSE;
 
-    strncpy(szBuf, hIC->lpszProxy, sz);
+    strncpyW(szBuf, hIC->lpszProxy, sz);
 
     /* FIXME: perhaps it would be better to use InternetCrackUrl here */
-    p = strchr(szBuf, ':');
+    p = strchrW(szBuf, ':');
     if(*p)
         *p = 0;
 
@@ -89,14 +89,15 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
  *
  *  Determine the name of the (basic) Authentication realm
  */
-static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
+static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
-    LPSTR p, q;
+    LPWSTR p, q;
     DWORD index;
+    WCHAR szRealm[] = { 'r','e','a','l','m','=',0 };
 
     /* extract the Realm from the proxy response and show it */
     index = 0;
-    if( !HttpQueryInfoA( hRequest, HTTP_QUERY_PROXY_AUTHENTICATE,
+    if( !HttpQueryInfoW( hRequest, HTTP_QUERY_PROXY_AUTHENTICATE,
                          szBuf, &sz, &index) )
         return FALSE;
 
@@ -104,21 +105,21 @@ static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
      * FIXME: maybe we should check that we're
      * dealing with 'Basic' Authentication
      */
-    p = strchr( szBuf, ' ' );
-    if( p && !strncmp( p+1, "realm=", 6 ) )
+    p = strchrW( szBuf, ' ' );
+    if( p && !strncmpW( p+1, szRealm, strlenW(szRealm) ) )
     {
         /* remove quotes */
         p += 7;
         if( *p == '"' )
         {
             p++;
-            q = strrchr( p, '"' );
+            q = strrchrW( p, '"' );
             if( q )
                 *q = 0;
         }
     }
 
-    strcpy( szBuf, p );
+    strcpyW( szBuf, p );
 
     return TRUE;
 }
@@ -126,50 +127,62 @@ static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPSTR szBuf, DWORD sz )
 /***********************************************************************
  *         WININET_GetSetPassword
  */
-static BOOL WININET_GetSetPassword( HWND hdlg, LPCSTR szServer, 
-                                    LPCSTR szRealm, BOOL bSet )
+static BOOL WININET_GetSetPassword( HWND hdlg, LPCWSTR szServer, 
+                                    LPCWSTR szRealm, BOOL bSet )
 {
-    CHAR szResource[0x80], szUserPass[0x40];
-    LPSTR p;
+    WCHAR szResource[0x80], szUserPass[0x40];
+    LPWSTR p;
     HWND hUserItem, hPassItem;
     DWORD r, dwMagic = 19;
-    UINT len;
+    UINT r_len, u_len;
     WORD sz;
+    WCHAR szColon[] = { ':',0 }, szbs[] = { '/', 0 };
 
     hUserItem = GetDlgItem( hdlg, IDC_USERNAME );
     hPassItem = GetDlgItem( hdlg, IDC_PASSWORD );
 
     /* now try fetch the username and password */
-    strcpy( szResource, szServer);
-    strcat( szResource, "/");
-    strcat( szResource, szRealm);
+    lstrcpyW( szResource, szServer);
+    lstrcatW( szResource, szbs);
+    lstrcatW( szResource, szRealm);
 
+    /*
+     * WNetCachePassword is only concerned with the length
+     * of the data stored (which we tell it) and it does
+     * not use strlen() internally so we can add WCHAR data
+     * instead of ASCII data and get it back the same way.
+     */
     if( bSet )
     {
         szUserPass[0] = 0;
-        GetWindowTextA( hUserItem, szUserPass, sizeof szUserPass-1 );
-        strcat(szUserPass, ":");
-        len = strlen( szUserPass );
-        GetWindowTextA( hPassItem, szUserPass+len, sizeof szUserPass-len );
+        GetWindowTextW( hUserItem, szUserPass, 
+                        (sizeof szUserPass-1)/sizeof(WCHAR) );
+        lstrcatW(szUserPass, szColon);
+        u_len = strlenW( szUserPass );
+        GetWindowTextW( hPassItem, szUserPass+u_len, 
+                        (sizeof szUserPass)/sizeof(WCHAR)-u_len );
 
-        r = WNetCachePassword( szResource, strlen( szResource ) + 1,
-                            szUserPass, strlen( szUserPass ) + 1, dwMagic, 0 );
+        r_len = (strlenW( szResource ) + 1)*sizeof(WCHAR);
+        u_len = (strlenW( szUserPass ) + 1)*sizeof(WCHAR);
+        r = WNetCachePassword( (CHAR*)szResource, r_len,
+                               (CHAR*)szUserPass, u_len, dwMagic, 0 );
 
         return ( r == WN_SUCCESS );
     }
 
     sz = sizeof szUserPass;
-    r = WNetGetCachedPassword( szResource, strlen( szResource ) + 1,
-                               szUserPass, &sz, dwMagic );
+    r_len = (strlenW( szResource ) + 1)*sizeof(WCHAR);
+    r = WNetGetCachedPassword( (CHAR*)szResource, r_len,
+                               (CHAR*)szUserPass, &sz, dwMagic );
     if( r != WN_SUCCESS )
         return FALSE;
 
-    p = strchr( szUserPass, ':' );
+    p = strchrW( szUserPass, ':' );
     if( p )
     {
         *p = 0;
-        SetWindowTextA( hUserItem, szUserPass );
-        SetWindowTextA( hPassItem, p+1 );
+        SetWindowTextW( hUserItem, szUserPass );
+        SetWindowTextW( hPassItem, p+1 );
     }
 
     return TRUE;
@@ -179,12 +192,12 @@ static BOOL WININET_GetSetPassword( HWND hdlg, LPCSTR szServer,
  *         WININET_SetProxyAuthorization
  */
 static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
-                                         LPSTR username, LPSTR password )
+                                         LPWSTR username, LPWSTR password )
 {
     LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hRequest;
     LPWININETHTTPSESSIONA lpwhs;
-    LPWININETAPPINFOA hIC;
-    LPSTR p;
+    LPWININETAPPINFOW hIC;
+    LPWSTR p;
 
     lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
@@ -193,20 +206,20 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
 	return FALSE;
     }
 
-    hIC = (LPWININETAPPINFOA) lpwhs->hdr.lpwhparent;
+    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
-    p = HeapAlloc( GetProcessHeap(), 0, strlen( username ) + 1 );
+    p = HeapAlloc( GetProcessHeap(), 0, (strlenW( username ) + 1)*sizeof(WCHAR) );
     if( !p )
         return FALSE;
     
-    strcpy( p, username );
+    lstrcpyW( p, username );
     hIC->lpszProxyUsername = p;
 
-    p = HeapAlloc( GetProcessHeap(), 0, strlen( password ) + 1 );
+    p = HeapAlloc( GetProcessHeap(), 0, (strlenW( password ) + 1)*sizeof(WCHAR) );
     if( !p )
         return FALSE;
     
-    strcpy( p, password );
+    lstrcpyW( p, password );
     hIC->lpszProxyPassword = p;
 
     return TRUE;
@@ -220,7 +233,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
 {
     HWND hitem;
     struct WININET_ErrorDlgParams *params;
-    CHAR szRealm[0x80], szServer[0x80];
+    WCHAR szRealm[0x80], szServer[0x80];
 
     if( uMsg == WM_INITDIALOG )
     {
@@ -232,18 +245,18 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
 
         /* extract the Realm from the proxy response and show it */
         if( WININET_GetAuthRealm( params->hRequest,
-                                  szRealm, sizeof szRealm) )
+                                  szRealm, sizeof szRealm/sizeof(WCHAR)) )
         {
             hitem = GetDlgItem( hdlg, IDC_REALM );
-            SetWindowTextA( hitem, szRealm );
+            SetWindowTextW( hitem, szRealm );
         }
 
         /* extract the name of the proxy server */
         if( WININET_GetProxyServer( params->hRequest, 
-                                    szServer, sizeof szServer) )
+                                    szServer, sizeof szServer/sizeof(WCHAR)) )
         {
             hitem = GetDlgItem( hdlg, IDC_PROXY );
-            SetWindowTextA( hitem, szServer );
+            SetWindowTextW( hitem, szServer );
         }
 
         WININET_GetSetPassword( hdlg, szServer, szRealm, FALSE );
@@ -260,25 +273,25 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
         if( wParam == IDOK )
         {
             LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) params->hRequest;
-            CHAR username[0x20], password[0x20];
+            WCHAR username[0x20], password[0x20];
 
             username[0] = 0;
             hitem = GetDlgItem( hdlg, IDC_USERNAME );
             if( hitem )
-                GetWindowTextA( hitem, username, sizeof username );
+                GetWindowTextW( hitem, username, sizeof username/sizeof(WCHAR) );
             
             password[0] = 0;
             hitem = GetDlgItem( hdlg, IDC_PASSWORD );
             if( hitem )
-                GetWindowTextA( hitem, password, sizeof password );
+                GetWindowTextW( hitem, password, sizeof password/sizeof(WCHAR) );
 
             hitem = GetDlgItem( hdlg, IDC_SAVEPASSWORD );
             if( hitem &&
-                SendMessageA( hitem, BM_GETSTATE, 0, 0 ) &&
+                SendMessageW( hitem, BM_GETSTATE, 0, 0 ) &&
                 WININET_GetAuthRealm( params->hRequest,
-                                  szRealm, sizeof szRealm) &&
+                                  szRealm, sizeof szRealm/sizeof(WCHAR)) &&
                 WININET_GetProxyServer( params->hRequest, 
-                                    szServer, sizeof szServer) )
+                                    szServer, sizeof szServer/sizeof(WCHAR)) )
             {
                 WININET_GetSetPassword( hdlg, szServer, szRealm, TRUE );
             }
@@ -302,17 +315,17 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
  */
 static INT WININET_GetConnectionStatus( HINTERNET hRequest )
 {
-    CHAR szStatus[0x20];
+    WCHAR szStatus[0x20];
     DWORD sz, index, dwStatus;
 
     TRACE("%p\n", hRequest );
 
-    sz = sizeof szStatus;
+    sz = sizeof(szStatus) / sizeof(WCHAR);
     index = 0;
-    if( !HttpQueryInfoA( hRequest, HTTP_QUERY_STATUS_CODE,
+    if( !HttpQueryInfoW( hRequest, HTTP_QUERY_STATUS_CODE,
                     szStatus, &sz, &index))
         return -1;
-    dwStatus = atoi( szStatus );
+    dwStatus = atoiW( szStatus );
 
     TRACE("request %p status = %ld\n", hRequest, dwStatus );
 

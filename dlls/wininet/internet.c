@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define RESPONSE_TIMEOUT        30
 
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
-(LPWININETAPPINFOA)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
+(LPWININETAPPINFOW)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
 
 
 typedef struct
@@ -336,12 +336,13 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
  * The proxy may be specified in the form 'http=proxy.my.org'
  * Presumably that means there can be ftp=ftpproxy.my.org too.
  */
-static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOA lpwai )
+static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
 {
     HKEY key;
     DWORD r, keytype, len, enabled;
     LPSTR lpszInternetSettings =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
+    WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 
     r = RegOpenKeyA(HKEY_CURRENT_USER, lpszInternetSettings, &key);
     if ( r != ERROR_SUCCESS )
@@ -355,31 +356,32 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOA lpwai )
         TRACE("Proxy is enabled.\n");
 
         /* figure out how much memory the proxy setting takes */
-        r = RegQueryValueExA( key, "ProxyServer", NULL, &keytype, 
+        r = RegQueryValueExW( key, szProxyServer, NULL, &keytype, 
                               NULL, &len);
         if( (r == ERROR_SUCCESS) && len && (keytype == REG_SZ) )
         {
-            LPSTR szProxy, p, szHttp = "http=";
+            LPWSTR szProxy, p;
+            WCHAR szHttp[] = {'h','t','t','p','=',0};
 
-            szProxy=HeapAlloc( GetProcessHeap(), 0, len+1 );
-            RegQueryValueExA( key, "ProxyServer", NULL, &keytype,
+            szProxy=HeapAlloc( GetProcessHeap(), 0, len );
+            RegQueryValueExW( key, szProxyServer, NULL, &keytype,
                               (BYTE*)szProxy, &len);
 
             /* find the http proxy, and strip away everything else */
-            p = strstr( szProxy, szHttp );
+            p = strstrW( szProxy, szHttp );
             if( p )
             {
-                 p += strlen(szHttp);
-                 strcpy( szProxy, p );
+                 p += lstrlenW(szHttp);
+                 lstrcpyW( szProxy, p );
             }
-            p = strchr( szProxy, ' ' );
+            p = strchrW( szProxy, ' ' );
             if( p )
                 *p = 0;
 
             lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
             lpwai->lpszProxy = szProxy;
 
-            TRACE("http proxy = %s\n", lpwai->lpszProxy);
+            TRACE("http proxy = %s\n", debugstr_w(lpwai->lpszProxy));
         }
         else
             ERR("Couldn't read proxy server settings.\n");
@@ -401,10 +403,10 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOA lpwai )
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
-    LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
+HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
+    LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
-    LPWININETAPPINFOA lpwai = NULL;
+    LPWININETAPPINFOW lpwai = NULL;
     HINTERNET handle = NULL;
 
     if (TRACE_ON(wininet)) {
@@ -425,8 +427,8 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
 	const char *access_type_str = "Unknown";
 	DWORD flag_val = dwFlags;
 	
-	TRACE("(%s, %li, %s, %s, %li)\n", debugstr_a(lpszAgent), dwAccessType,
-	      debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
+	TRACE("(%s, %li, %s, %s, %li)\n", debugstr_w(lpszAgent), dwAccessType,
+	      debugstr_w(lpszProxy), debugstr_w(lpszProxyBypass), dwFlags);
 	for (i = 0; i < (sizeof(access_type) / sizeof(access_type[0])); i++) {
 	    if (access_type[i].val == dwAccessType) {
 		access_type_str = access_type[i].name;
@@ -448,14 +450,14 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    lpwai = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETAPPINFOA));
+    lpwai = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETAPPINFOW));
     if (NULL == lpwai)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
 	goto lend;
     }
  
-    memset(lpwai, 0, sizeof(WININETAPPINFOA));
+    memset(lpwai, 0, sizeof(WININETAPPINFOW));
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.lpwhparent = NULL;
     lpwai->hdr.dwFlags = dwFlags;
@@ -474,26 +476,26 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     if (NULL != lpszAgent)
     {
         lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,
-                                      strlen(lpszAgent)+1);
+                                      (strlenW(lpszAgent)+1)*sizeof(WCHAR));
         if (lpwai->lpszAgent)
-            strcpy( lpwai->lpszAgent, lpszAgent );
+            lstrcpyW( lpwai->lpszAgent, lpszAgent );
     }
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
         INTERNET_ConfigureProxyFromReg( lpwai );
     else if (NULL != lpszProxy)
     {
         lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0,
-                                      strlen(lpszProxy)+1);
+                                      (strlenW(lpszProxy)+1)*sizeof(WCHAR));
         if (lpwai->lpszProxy)
-            strcpy( lpwai->lpszProxy, lpszProxy );
+            lstrcpyW( lpwai->lpszProxy, lpszProxy );
     }
 
     if (NULL != lpszProxyBypass)
     {
         lpwai->lpszProxyBypass = HeapAlloc( GetProcessHeap(), 0,
-                                            strlen(lpszProxyBypass)+1);
+                                     (strlenW(lpszProxyBypass)+1)*sizeof(WCHAR));
         if (lpwai->lpszProxyBypass)
-            strcpy( lpwai->lpszProxyBypass, lpszProxyBypass );
+            lstrcpyW( lpwai->lpszProxyBypass, lpszProxyBypass );
     }
 
  lend:
@@ -513,42 +515,45 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
-    LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
+HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
+    LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
     HINTERNET rc = (HINTERNET)NULL;
-    INT lenAgent = WideCharToMultiByte(CP_ACP, 0, lpszAgent, -1, NULL, 0, NULL, NULL);
-    INT lenProxy = WideCharToMultiByte(CP_ACP, 0, lpszProxy, -1, NULL, 0, NULL, NULL);
-    INT lenBypass = WideCharToMultiByte(CP_ACP, 0, lpszProxyBypass, -1, NULL, 0, NULL, NULL);
-    CHAR *szAgent = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenAgent*sizeof(CHAR));
-    CHAR *szProxy = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenProxy*sizeof(CHAR));
-    CHAR *szBypass = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenBypass*sizeof(CHAR));
+    INT len;
+    WCHAR *szAgent = NULL, *szProxy = NULL, *szBypass = NULL;
 
-    TRACE("(%s, 0x%08lx, %s, %s, 0x%08lx)\n", debugstr_w(lpszAgent), dwAccessType, debugstr_w(lpszProxy), debugstr_w(lpszProxyBypass), dwFlags);
+    TRACE("(%s, 0x%08lx, %s, %s, 0x%08lx)\n", debugstr_a(lpszAgent),
+       dwAccessType, debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
 
-    if (!szAgent || !szProxy || !szBypass)
+    if( lpszAgent )
     {
-        if (szAgent)
-            HeapFree(GetProcessHeap(), 0, szAgent);
-        if (szProxy)
-            HeapFree(GetProcessHeap(), 0, szProxy);
-        if (szBypass)
-            HeapFree(GetProcessHeap(), 0, szBypass);
-        return (HINTERNET)NULL;
+        len = MultiByteToWideChar(CP_ACP, 0, lpszAgent, -1, NULL, 0);
+        szAgent = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszAgent, -1, szAgent, len);
     }
 
-    WideCharToMultiByte(CP_ACP, 0, lpszAgent, -1, szAgent, lenAgent,
-        NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, lpszProxy, -1, szProxy, lenProxy,
-        NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, lpszProxyBypass, -1, szBypass, lenBypass,
-        NULL, NULL);
+    if( lpszProxy )
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszProxy, -1, NULL, 0);
+        szProxy = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszProxy, -1, szProxy, len);
+    }
 
-    rc = InternetOpenA(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
+    if( lpszProxyBypass )
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszProxyBypass, -1, NULL, 0);
+        szBypass = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszProxyBypass, -1, szBypass, len);
+    }
 
-    HeapFree(GetProcessHeap(), 0, szAgent);
-    HeapFree(GetProcessHeap(), 0, szProxy);
-    HeapFree(GetProcessHeap(), 0, szBypass);
+    rc = InternetOpenW(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
+
+    if( szAgent )
+        HeapFree(GetProcessHeap(), 0, szAgent);
+    if( szProxy )
+        HeapFree(GetProcessHeap(), 0, szProxy);
+    if( szBypass )
+        HeapFree(GetProcessHeap(), 0, szBypass);
 
     return rc;
 }
@@ -749,7 +754,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
  */
 BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     LPWININETFINDNEXTA lpwh;
 
     TRACE("\n");
@@ -794,7 +799,7 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
     BOOL bSuccess = TRUE;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
     LPWIN32_FIND_DATAA lpFindFileData;
     LPWININETFINDNEXTA lpwh;
 
@@ -863,7 +868,7 @@ lend:
  *    Void
  *
  */
-VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
+VOID INTERNET_CloseHandle(LPWININETAPPINFOW lpwai)
 {
     TRACE("%p\n",lpwai);
 
@@ -921,7 +926,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 	switch (lpwh->htype)
 	{
 	    case WH_HINIT:
-		INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
+		INTERNET_CloseHandle((LPWININETAPPINFOW) lpwh);
 		retval = TRUE;
 		break;
 
@@ -1461,9 +1466,9 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
-    LPWININETAPPINFOA lpwai;
+    LPWININETAPPINFOW lpwai;
 
-    lpwai = (LPWININETAPPINFOA)WININET_GetObject(hInternet);
+    lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
         return NULL;
 
@@ -2126,12 +2131,12 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET ret = NULL;
-    LPWININETAPPINFOA hIC = NULL;
+    LPWININETAPPINFOW hIC = NULL;
 
     TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
  	  dwHeadersLength, dwFlags, dwContext);
  
-    hIC = (LPWININETAPPINFOA) WININET_GetObject( hInternet );
+    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
 	INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
  	goto lend;

@@ -212,7 +212,7 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
     return "Unknown";
 }
 
-VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo, DWORD dwStatusInfoLength)
 {
@@ -234,7 +234,7 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
 
 
 
-VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
+VOID SendAsyncCallback(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo,  DWORD dwStatusInfoLength)
 {
