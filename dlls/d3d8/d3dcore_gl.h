@@ -294,69 +294,69 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GL
 #define GL_MATRIX29_ARB                   0x88DD
 #define GL_MATRIX30_ARB                   0x88DE
 #define GL_MATRIX31_ARB                   0x88DF
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1DARBPROC) (GLuint index, GLdouble x);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1DVARBPROC) (GLuint index, const GLdouble *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1FARBPROC) (GLuint index, GLfloat x);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1FVARBPROC) (GLuint index, const GLfloat *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1SARBPROC) (GLuint index, GLshort x);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB1SVARBPROC) (GLuint index, const GLshort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2DARBPROC) (GLuint index, GLdouble x, GLdouble y);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2DVARBPROC) (GLuint index, const GLdouble *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2FARBPROC) (GLuint index, GLfloat x, GLfloat y);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2FVARBPROC) (GLuint index, const GLfloat *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2SARBPROC) (GLuint index, GLshort x, GLshort y);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB2SVARBPROC) (GLuint index, const GLshort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3DARBPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3DVARBPROC) (GLuint index, const GLdouble *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3FARBPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3FVARBPROC) (GLuint index, const GLfloat *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3SARBPROC) (GLuint index, GLshort x, GLshort y, GLshort z);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB3SVARBPROC) (GLuint index, const GLshort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NBVARBPROC) (GLuint index, const GLbyte *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NIVARBPROC) (GLuint index, const GLint *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NSVARBPROC) (GLuint index, const GLshort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NUBARBPROC) (GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NUBVARBPROC) (GLuint index, const GLubyte *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NUIVARBPROC) (GLuint index, const GLuint *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4NUSVARBPROC) (GLuint index, const GLushort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4BVARBPROC) (GLuint index, const GLbyte *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4DARBPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4DVARBPROC) (GLuint index, const GLdouble *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4FARBPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4FVARBPROC) (GLuint index, const GLfloat *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4IVARBPROC) (GLuint index, const GLint *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4SARBPROC) (GLuint index, GLshort x, GLshort y, GLshort z, GLshort w);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4SVARBPROC) (GLuint index, const GLshort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4UBVARBPROC) (GLuint index, const GLubyte *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4UIVARBPROC) (GLuint index, const GLuint *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIB4USVARBPROC) (GLuint index, const GLushort *v);
-typedef void (APIENTRY * PFNGLVERTEXATTRIBPOINTERARBPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer);
-typedef void (APIENTRY * PFNGLENABLEVERTEXATTRIBARRAYARBPROC) (GLuint index);
-typedef void (APIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYARBPROC) (GLuint index);
-typedef void (APIENTRY * PFNGLPROGRAMSTRINGARBPROC) (GLenum target, GLenum format, GLsizei len, const GLvoid *string);
-typedef void (APIENTRY * PFNGLBINDPROGRAMARBPROC) (GLenum target, GLuint program);
-typedef void (APIENTRY * PFNGLDELETEPROGRAMSARBPROC) (GLsizei n, const GLuint *programs);
-typedef void (APIENTRY * PFNGLGENPROGRAMSARBPROC) (GLsizei n, GLuint *programs);
-typedef void (APIENTRY * PFNGLPROGRAMENVPARAMETER4DARBPROC) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-typedef void (APIENTRY * PFNGLPROGRAMENVPARAMETER4DVARBPROC) (GLenum target, GLuint index, const GLdouble *params);
-typedef void (APIENTRY * PFNGLPROGRAMENVPARAMETER4FARBPROC) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-typedef void (APIENTRY * PFNGLPROGRAMENVPARAMETER4FVARBPROC) (GLenum target, GLuint index, const GLfloat *params);
-typedef void (APIENTRY * PFNGLPROGRAMLOCALPARAMETER4DARBPROC) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-typedef void (APIENTRY * PFNGLPROGRAMLOCALPARAMETER4DVARBPROC) (GLenum target, GLuint index, const GLdouble *params);
-typedef void (APIENTRY * PFNGLPROGRAMLOCALPARAMETER4FARBPROC) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-typedef void (APIENTRY * PFNGLPROGRAMLOCALPARAMETER4FVARBPROC) (GLenum target, GLuint index, const GLfloat *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMENVPARAMETERDVARBPROC) (GLenum target, GLuint index, GLdouble *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMENVPARAMETERFVARBPROC) (GLenum target, GLuint index, GLfloat *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC) (GLenum target, GLuint index, GLdouble *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC) (GLenum target, GLuint index, GLfloat *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMIVARBPROC) (GLenum target, GLenum pname, GLint *params);
-typedef void (APIENTRY * PFNGLGETPROGRAMSTRINGARBPROC) (GLenum target, GLenum pname, GLvoid *string);
-typedef void (APIENTRY * PFNGLGETVERTEXATTRIBDVARBPROC) (GLuint index, GLenum pname, GLdouble *params);
-typedef void (APIENTRY * PFNGLGETVERTEXATTRIBFVARBPROC) (GLuint index, GLenum pname, GLfloat *params);
-typedef void (APIENTRY * PFNGLGETVERTEXATTRIBIVARBPROC) (GLuint index, GLenum pname, GLint *params);
-typedef void (APIENTRY * PFNGLGETVERTEXATTRIBPOINTERVARBPROC) (GLuint index, GLenum pname, GLvoid* *pointer);
-typedef GLboolean (APIENTRY * PFNGLISPROGRAMARBPROC) (GLuint program);
 #endif
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1DARBPROC) (GLuint index, GLdouble x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1DVARBPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1FARBPROC) (GLuint index, GLfloat x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1FVARBPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1SARBPROC) (GLuint index, GLshort x);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB1SVARBPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2DARBPROC) (GLuint index, GLdouble x, GLdouble y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2DVARBPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2FARBPROC) (GLuint index, GLfloat x, GLfloat y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2FVARBPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2SARBPROC) (GLuint index, GLshort x, GLshort y);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB2SVARBPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3DARBPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3DVARBPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3FARBPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3FVARBPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3SARBPROC) (GLuint index, GLshort x, GLshort y, GLshort z);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB3SVARBPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NBVARBPROC) (GLuint index, const GLbyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NIVARBPROC) (GLuint index, const GLint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NSVARBPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUBARBPROC) (GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUBVARBPROC) (GLuint index, const GLubyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUIVARBPROC) (GLuint index, const GLuint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4NUSVARBPROC) (GLuint index, const GLushort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4BVARBPROC) (GLuint index, const GLbyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4DARBPROC) (GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4DVARBPROC) (GLuint index, const GLdouble *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4FARBPROC) (GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4FVARBPROC) (GLuint index, const GLfloat *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4IVARBPROC) (GLuint index, const GLint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4SARBPROC) (GLuint index, GLshort x, GLshort y, GLshort z, GLshort w);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4SVARBPROC) (GLuint index, const GLshort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4UBVARBPROC) (GLuint index, const GLubyte *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4UIVARBPROC) (GLuint index, const GLuint *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIB4USVARBPROC) (GLuint index, const GLushort *v);
+typedef void (APIENTRY * PGLFNVERTEXATTRIBPOINTERARBPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer);
+typedef void (APIENTRY * PGLFNENABLEVERTEXATTRIBARRAYARBPROC) (GLuint index);
+typedef void (APIENTRY * PGLFNDISABLEVERTEXATTRIBARRAYARBPROC) (GLuint index);
+typedef void (APIENTRY * PGLFNPROGRAMSTRINGARBPROC) (GLenum target, GLenum format, GLsizei len, const GLvoid *string);
+typedef void (APIENTRY * PGLFNBINDPROGRAMARBPROC) (GLenum target, GLuint program);
+typedef void (APIENTRY * PGLFNDELETEPROGRAMSARBPROC) (GLsizei n, const GLuint *programs);
+typedef void (APIENTRY * PGLFNGENPROGRAMSARBPROC) (GLsizei n, GLuint *programs);
+typedef void (APIENTRY * PGLFNPROGRAMENVPARAMETER4DARBPROC) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * PGLFNPROGRAMENVPARAMETER4DVARBPROC) (GLenum target, GLuint index, const GLdouble *params);
+typedef void (APIENTRY * PGLFNPROGRAMENVPARAMETER4FARBPROC) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * PGLFNPROGRAMENVPARAMETER4FVARBPROC) (GLenum target, GLuint index, const GLfloat *params);
+typedef void (APIENTRY * PGLFNPROGRAMLOCALPARAMETER4DARBPROC) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * PGLFNPROGRAMLOCALPARAMETER4DVARBPROC) (GLenum target, GLuint index, const GLdouble *params);
+typedef void (APIENTRY * PGLFNPROGRAMLOCALPARAMETER4FARBPROC) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * PGLFNPROGRAMLOCALPARAMETER4FVARBPROC) (GLenum target, GLuint index, const GLfloat *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMENVPARAMETERDVARBPROC) (GLenum target, GLuint index, GLdouble *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMENVPARAMETERFVARBPROC) (GLenum target, GLuint index, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMLOCALPARAMETERDVARBPROC) (GLenum target, GLuint index, GLdouble *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMLOCALPARAMETERFVARBPROC) (GLenum target, GLuint index, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMIVARBPROC) (GLenum target, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETPROGRAMSTRINGARBPROC) (GLenum target, GLenum pname, GLvoid *string);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBDVARBPROC) (GLuint index, GLenum pname, GLdouble *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBFVARBPROC) (GLuint index, GLenum pname, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBIVARBPROC) (GLuint index, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETVERTEXATTRIBPOINTERVARBPROC) (GLuint index, GLenum pname, GLvoid* *pointer);
+typedef GLboolean (APIENTRY * PGLFNISPROGRAMARBPROC) (GLuint program);
 
 /*******
  * OpenGL Official Version 
@@ -487,14 +487,14 @@ typedef enum _GL_PSVersion {
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,     glSecondaryColor3fvEXT); \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC, glSecondaryColorPointerEXT); \
     /* GL_EXT_secondary_color */ \
-    USE_GL_FUNC(PFNGLGENPROGRAMSARBPROC,              glGenProgramsARB); \
-    USE_GL_FUNC(PFNGLBINDPROGRAMARBPROC,              glBindProgramARB); \
-    USE_GL_FUNC(PFNGLPROGRAMSTRINGARBPROC,            glProgramStringARB); \
-    USE_GL_FUNC(PFNGLDELETEPROGRAMSARBPROC,           glDeleteProgramsARB); \
-    USE_GL_FUNC(PFNGLPROGRAMENVPARAMETER4FVARBPROC,   glProgramEnvParameter4fvARB); \
-    USE_GL_FUNC(PFNGLVERTEXATTRIBPOINTERARBPROC,      glVertexAttribPointerARB); \
-    USE_GL_FUNC(PFNGLENABLEVERTEXATTRIBARRAYARBPROC,  glEnableVertexAttribArrayARB); \
-    USE_GL_FUNC(PFNGLDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
+    USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC,              glGenProgramsARB); \
+    USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC,              glBindProgramARB); \
+    USE_GL_FUNC(PGLFNPROGRAMSTRINGARBPROC,            glProgramStringARB); \
+    USE_GL_FUNC(PGLFNDELETEPROGRAMSARBPROC,           glDeleteProgramsARB); \
+    USE_GL_FUNC(PGLFNPROGRAMENVPARAMETER4FVARBPROC,   glProgramEnvParameter4fvARB); \
+    USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC,      glVertexAttribPointerARB); \
+    USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC,  glEnableVertexAttribArrayARB); \
+    USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC, glDisableVertexAttribArrayARB); \
 
 #define GLX_EXT_FUNCS_GEN \
     /** GLX_VERSION_1_3 **/ \
