@@ -3513,6 +3513,14 @@ BOOL WINAPI MLFreeLibrary(HMODULE hModule)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.419]
+ */
+BOOL WINAPI SHFlushSFCacheWrap(void) {
+  FIXME(": stub\n");
+  return TRUE;
+}
+
+/*************************************************************************
  *      @      [SHLWAPI.429]
  * FIXME I have no idea what this function does or what its arguments are.
  */
