@@ -86,12 +86,49 @@ HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 
 /******************************************************************************
  *              OleCreate        [OLE32.80]
+ *
  */
-HRESULT WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
-                LPSTORAGE pStg, LPVOID* ppvObj)
+HRESULT WINAPI OleCreate(
+	REFCLSID rclsid,
+	REFIID riid,
+	DWORD renderopt,
+	LPFORMATETC pFormatEtc,
+	LPOLECLIENTSITE pClientSite,
+	LPSTORAGE pStg,
+	LPVOID* ppvObj)
 {
-  FIXME("(not shown), stub!\n");
-  return E_OUTOFMEMORY;
+  HRESULT hres, hres1;
+  IUnknown * pUnk = NULL;
+    
+  FIXME("\n\t%s\n\t%s stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
+
+  if (SUCCEEDED((hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&pUnk))))
+  {
+    if (pClientSite)
+    {
+      IOleObject * pOE;
+      IPersistStorage * pPS;
+      if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IOleObject, (LPVOID*)&pOE))))
+      {
+        TRACE("trying to set clientsite %p\n", pClientSite);
+        hres1 = IOleObject_SetClientSite(pOE, pClientSite);
+        TRACE("-- result 0x%08lx\n", hres1);
+	IOleObject_Release(pOE);
+      }
+      if (SUCCEEDED((hres = IUnknown_QueryInterface( pUnk, &IID_IPersistStorage, (LPVOID*)&pPS))))
+      {
+        TRACE("trying to set stg %p\n", pStg);
+	hres1 = IPersistStorage_InitNew(pPS, pStg);
+        TRACE("-- result 0x%08lx\n", hres1);
+	IPersistStorage_Release(pPS);
+      }
+    }
+  }
+
+  *ppvObj = pUnk;
+
+  TRACE("-- %p \n", pUnk);
+  return hres;
 }
 
 /******************************************************************************
