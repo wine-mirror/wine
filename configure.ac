@@ -602,7 +602,13 @@ dnl **** Check for aRts Sound Server ****
 AC_PATH_PROG(ARTSCCONFIG, artsc-config)
 if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
 then
-    ARTSC_CFLAGS=`$ARTSCCONFIG --cflags | sed 's/\-pthread//'`
+    ARTSC_CFLAGS=""
+    for i in `$ARTSCCONFIG --cflags`
+    do
+      case "$i" in
+        -I*) ARTSC_CFLAGS="$ARTSC_CFLAGS $i";;
+      esac
+    done
     ARTSC_LIBS=`$ARTSCCONFIG --libs`
     save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS $ARTSC_CFLAGS"
