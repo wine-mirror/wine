@@ -245,10 +245,13 @@ DWORD WINAPI FormatMessageA(
 						if (NULL!=(x=strchr(f,'!'))) {
 							*x='\0';
 							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
+							/* %ls ? */
+							if (!strcmp(f,"ls")) f++;
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						} else {
 							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
+							if (!strcmp(f,"ls")) f++;
 							sprintf(fmtstr,"%%%s",f);
 							f+=strlen(f); /*at \0*/
 						}
