@@ -40,6 +40,7 @@
 #include "spy.h"
 #include "task.h"
 #include "thread.h"
+#include "dde.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -1078,6 +1079,22 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     }
 }
 
+static HANDLE convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
+{
+    HANDLE	dst;
+    UINT	sz = GlobalSize16(src);
+    LPSTR	ptr16, ptr32;
+
+    if (!(dst = GlobalAlloc(flags, sz)))
+	return 0;
+    ptr16 = GlobalLock16(src);
+    ptr32 = GlobalLock(dst);
+    if (ptr16 != NULL && ptr32 != NULL) memcpy(ptr32, ptr16, sz);
+    GlobalUnlock16(src);
+    GlobalUnlock(dst);
+
+    return dst;
+}
 
 /**********************************************************************
  *	     WINPROC_MapMsg16To32A
@@ -1343,7 +1360,65 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %04x needs translation\n",msg16 );
         return -1;
+    case WM_DDE_INITIATE: 
+    case WM_DDE_TERMINATE:
+    case WM_DDE_UNADVISE:
+    case WM_DDE_REQUEST:
+	*pwparam32 = WIN_Handle32(wParam16);
+	return 0;
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        {
+	    HANDLE16	lo16;
+	    ATOM	hi;
+	    HANDLE	lo32 = 0;
 
+	    *pwparam32 = WIN_Handle32(wParam16);
+	    lo16 = LOWORD(*plparam);
+	    hi = HIWORD(*plparam);
+	    if (lo16 && !(lo32 = convert_handle_16_to_32(lo16, GMEM_DDESHARE)))
+		return -1;
+	    *plparam = PackDDElParam(msg16, lo32, hi);
+	}
+	return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
+    case WM_DDE_ACK:
+        {
+	    UINT	lo, hi;
+	    int		flag = 0;
+	    char	buf[2];
+
+	    *pwparam32 = WIN_Handle32(wParam16);
+
+	    lo = LOWORD(*plparam);
+	    hi = HIWORD(*plparam);
+
+	    if (GlobalGetAtomNameA(hi, buf, 2) > 0) flag |= 1;
+	    if (GlobalSize16(hi) != 0) flag |= 2;
+	    switch (flag)
+	    {
+	    case 0:
+		if (hi) 
+		{
+		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+		    hi = 0;
+		}
+		break;
+	    case 1:
+		break; /* atom, nothing to do */
+	    case 3:
+		MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+		/* fall thru */
+	    case 2:
+		hi = convert_handle_16_to_32(hi, GMEM_DDESHARE);
+		break;
+	    }
+	    *plparam = PackDDElParam(WM_DDE_ACK, lo, hi);
+	}
+	return 0; /* FIXME don't know how to free allocated memory (handle) !! */
+    case WM_DDE_EXECUTE:
+	*plparam = convert_handle_16_to_32(*plparam, GMEM_DDESHARE);
+        return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     default:  /* No translation needed */
         return 0;
     }
@@ -1614,6 +1689,23 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         return WINPROC_UnmapMsg16To32A( hwnd, msg, wParam, lParam, result );
     }
     return result;
+}
+
+static HANDLE16 convert_handle_32_to_16(HANDLE src, unsigned int flags)
+{
+    HANDLE16	dst;
+    UINT	sz = GlobalSize(src);
+    LPSTR	ptr16, ptr32;
+
+    if (!(dst = GlobalAlloc16(flags, sz)))
+	return 0;
+    ptr32 = GlobalLock(src);
+    ptr16 = GlobalLock16(dst);
+    if (ptr16 != NULL && ptr32 != NULL) memcpy(ptr16, ptr32, sz);
+    GlobalUnlock(src);
+    GlobalUnlock16(dst);
+
+    return dst;
 }
 
 
@@ -2052,6 +2144,62 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         return -1;
+    case WM_DDE_INITIATE: 
+    case WM_DDE_TERMINATE:
+    case WM_DDE_UNADVISE:
+    case WM_DDE_REQUEST:
+	*pwparam16 = WIN_Handle16(wParam32);
+	return 0;
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        {
+	    unsigned    lo32, hi;
+	    HANDLE16	lo16 = 0;
+
+	    *pwparam16 = WIN_Handle16(wParam32);
+            UnpackDDElParam(msg32, *plparam, &lo32, &hi);
+	    if (lo32 && !(lo16 = convert_handle_32_to_16(lo32, GMEM_DDESHARE)))
+		return -1;
+	    *plparam = MAKELPARAM(lo16, hi);
+	}
+	return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
+    case WM_DDE_ACK:
+        {
+	    UINT	lo, hi;
+	    int		flag = 0;
+	    char	buf[2];
+
+	    *pwparam16 = WIN_Handle16(wParam32);
+
+            UnpackDDElParam(msg32, *plparam, &lo, &hi);
+
+	    if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
+	    if (GlobalSize(hi) != 0) flag |= 2;
+	    switch (flag)
+	    {
+	    case 0:
+		if (hi) 
+		{
+		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+		    hi = 0;
+		}
+		break;
+	    case 1:
+		break; /* atom, nothing to do */
+	    case 3:
+		MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+		/* fall thru */
+	    case 2:
+		hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);
+		break;
+	    }
+	    *plparam = MAKELPARAM(lo, hi);
+	}
+	return 0; /* FIXME don't know how to free allocated memory (handle) !! */
+    case WM_DDE_EXECUTE:
+	*plparam = convert_handle_32_to_16(*plparam, GMEM_DDESHARE);
+        return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     default:  /* No translation needed */
         return 0;
     }
