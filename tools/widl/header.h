@@ -34,6 +34,8 @@ extern var_t *is_callas(attr_t *a);
 extern void write_args(FILE *h, var_t *arg, char *name, int obj, int do_indent);
 extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
+extern void write_dispinterface(type_t *iface);
+extern void write_coclass(class_t *iface);
 extern void write_typedef(type_t *type, var_t *names);
 extern void write_expr(FILE *h, expr_t *e);
 extern void write_constdef(var_t *v);

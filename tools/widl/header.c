@@ -596,6 +596,11 @@ static void write_c_method_def(type_t *iface)
   do_write_c_method_def(iface, iface->name);
 }
 
+static void write_c_disp_method_def(type_t *iface)
+{
+  do_write_c_method_def(iface->ref, iface->name);
+}
+
 static void write_method_proto(type_t *iface)
 {
   func_t *cur = iface->funcs;
@@ -686,13 +691,30 @@ void write_forward(type_t *iface)
   }
 }
 
-void write_guid(type_t *iface)
+void write_guid(const char *guid_prefix, const char *name, UUID *uuid)
+{
+  if (!uuid) return;
+  fprintf(header, "DEFINE_GUID(%s_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
+          guid_prefix, name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
+          uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
+}
+
+void write_iface_guid(type_t *iface)
 {
   UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
-  if (!uuid) return;
-  fprintf(header, "DEFINE_GUID(IID_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
-          iface->name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
-          uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
+  write_guid("IID", iface->name, uuid);
+} 
+
+void write_dispiface_guid(type_t *iface)
+{
+  UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  write_guid("DIID", iface->name, uuid);
+}
+
+void write_coclass_guid(class_t *cocl)
+{
+  UUID *uuid = get_attrp(cocl->attrs, ATTR_UUID);
+  write_guid("CLSID", cocl->name, uuid);
 }
 
 void write_com_interface(type_t *iface)
@@ -707,7 +729,7 @@ void write_com_interface(type_t *iface)
   fprintf(header, " */\n");
   fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
   fprintf(header,"#define __%s_INTERFACE_DEFINED__\n\n", iface->name);
-  write_guid(iface);
+  write_iface_guid(iface);
   write_forward(iface);
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
@@ -766,7 +788,7 @@ void write_rpc_interface(type_t *iface)
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface (v%d.%d)\n", iface->name, LOWORD(ver), HIWORD(ver));
   fprintf(header, " */\n");
-  write_guid(iface);
+  write_iface_guid(iface);
   fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_c_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
   fprintf(header, "extern RPC_IF_HANDLE %s_v%d_%d_s_ifspec;\n", iface->name, LOWORD(ver), HIWORD(ver));
   write_function_proto(iface);
@@ -781,4 +803,51 @@ void write_interface(type_t *iface)
     write_com_interface(iface);
   else
     write_rpc_interface(iface);
+}
+
+void write_dispinterface(type_t *iface)
+{
+  fprintf(header, "/*****************************************************************************\n");
+  fprintf(header, " * %s dispinterface\n", iface->name);
+  fprintf(header, " */\n");
+  fprintf(header,"#ifndef __%s_DISPINTERFACE_DEFINED__\n", iface->name);
+  fprintf(header,"#define __%s_DISPINTERFACE_DEFINED__\n\n", iface->name);
+  write_dispiface_guid(iface);
+  write_forward(iface);
+  /* C++ interface */
+  fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
+  fprintf(header, "struct %s : public %s\n", iface->name, iface->ref->name);
+  fprintf(header, "{\n");
+  fprintf(header, "};\n");
+  fprintf(header, "#else\n");
+  /* C interface */
+  fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
+  fprintf(header, "struct %s {\n", iface->name);
+  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
+  fprintf(header, "};\n");
+  fprintf(header, "struct %sVtbl {\n", iface->name);
+  indentation++;
+  fprintf(header, "    BEGIN_INTERFACE\n");
+  fprintf(header, "\n");
+  write_c_disp_method_def(iface);
+  indentation--;
+  fprintf(header, "    END_INTERFACE\n");
+  fprintf(header, "};\n");
+  fprintf(header, "\n");
+  fprintf(header, "#ifdef COBJMACROS\n");
+  write_method_macro(iface->ref, iface->name);
+  fprintf(header, "#endif\n");
+  fprintf(header, "\n");
+  fprintf(header, "#endif\n");
+  fprintf(header, "\n");
+  fprintf(header,"#endif  /* __%s_DISPINTERFACE_DEFINED__ */\n\n", iface->name);
+}
+
+void write_coclass(class_t *cocl)
+{
+  fprintf(header, "/*****************************************************************************\n");
+  fprintf(header, " * %s coclass\n", cocl->name);
+  fprintf(header, " */\n\n");
+  write_coclass_guid(cocl);
+  fprintf(header, "\n");
 }

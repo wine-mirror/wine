@@ -571,6 +571,7 @@ coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 
 coclasshdr: attributes coclass			{ $$ = $2;
 						  $$->attrs = $1;
+                                                  if (!parse_only) write_coclass($$);
 						}
 	;
 
@@ -617,7 +618,7 @@ dispinterfacedef: dispinterfacehdr '{'
 	  '}'					{ $$ = $1;
 						  $$->fields = $3;
 						  $$->funcs = $4;
-						  if (!parse_only) write_interface($$);
+						  if (!parse_only) write_dispinterface($$);
 						}
 /* FIXME: not sure how to handle this yet
 	| dispinterfacehdr '{' interface '}'	{ $$ = $1;

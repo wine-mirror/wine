@@ -219,7 +219,8 @@ void start_typelib(char *name, attr_t *attrs)
 {
   in_typelib++;
   if (!do_everything && !typelib_only) return;
-  typelib = fopen(typelib_name, "wb");
+  if(!(typelib = fopen(typelib_name, "wb")))
+    error("Could not open %s for output\n", typelib_name);
 }
 
 void end_typelib(void)
