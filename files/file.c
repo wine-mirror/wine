@@ -1275,7 +1275,23 @@ BOOL FILE_StartAsync(HANDLE hFile, LPOVERLAPPED lpOverlapped, DWORD type, DWORD 
  */
 BOOL WINAPI CancelIo(HANDLE handle)
 {
-    return FILE_StartAsync(handle, NULL, ASYNC_TYPE_NONE, 0, STATUS_CANCELLED);
+    async_private *ovp,*t;
+
+    TRACE("handle = %x\n",handle);
+
+    ovp = NtCurrentTeb()->pending_list;
+    while(ovp)
+    {
+        t = ovp->next;
+        if(FILE_StartAsync(handle, ovp->lpOverlapped, ovp->type, 0, STATUS_CANCELLED))
+        {
+            TRACE("overlapped = %p\n",ovp->lpOverlapped);
+            finish_async(ovp, STATUS_CANCELLED);
+        }
+        ovp = t;
+    }
+    WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
+    return TRUE;
 }
 
 /***********************************************************************

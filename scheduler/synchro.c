@@ -47,7 +47,7 @@ static void CALLBACK call_completion_routine(ULONG_PTR data)
     HeapFree(GetProcessHeap(), 0, ovp);
 }
 
-static void finish_async(async_private *ovp, DWORD status)
+void finish_async(async_private *ovp, DWORD status)
 {
     ovp->lpOverlapped->Internal=status;
 
