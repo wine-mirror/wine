@@ -3930,6 +3930,17 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   LVITEMA item;
 
   TRACE("(hwnd=%x,nItem=%d)\n", hwnd, nItem);
+ 
+  
+  /* First, send LVN_DELETEITEM notification. */
+  memset(&nmlv, 0, sizeof (NMLISTVIEW));
+  nmlv.hdr.hwndFrom = hwnd;
+  nmlv.hdr.idFrom = lCtrlId;
+  nmlv.hdr.code = LVN_DELETEITEM;
+  nmlv.iItem = nItem;
+  SendMessageA(GetParent(hwnd), WM_NOTIFY, (WPARAM)lCtrlId, 
+               (LPARAM)&nmlv);
+
 
   /* remove it from the selection range */
   ZeroMemory(&item,sizeof(LVITEMA));
@@ -3973,15 +3984,6 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
       lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
       if (lpItem != NULL)
       {
-        /* send LVN_DELETEITEM notification */
-        nmlv.hdr.hwndFrom = hwnd;
-        nmlv.hdr.idFrom = lCtrlId;
-        nmlv.hdr.code = LVN_DELETEITEM;
-        nmlv.iItem = nItem;
-        nmlv.lParam = lpItem->lParam;
-        SendMessageA(GetParent(hwnd), WM_NOTIFY, (WPARAM)lCtrlId, 
-                     (LPARAM)&nmlv);
-
         /* free item string */
         if ((lpItem->pszText != NULL) && 
             (lpItem->pszText != LPSTR_TEXTCALLBACKA))
