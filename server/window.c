@@ -405,6 +405,27 @@ int make_window_active( user_handle_t window )
     return 1;
 }
 
+/* check if window and all its ancestors are visible */
+static int is_visible( const struct window *win )
+{
+    while (win && win != top_window)
+    {
+        if (!(win->style & WS_VISIBLE)) return 0;
+        win = win->parent;
+        /* if parent is minimized children are not visible */
+        if (win && (win->style & WS_MINIMIZE)) return 0;
+    }
+    return 1;
+}
+
+/* same as is_visible but takes a window handle */
+int is_window_visible( user_handle_t window )
+{
+    struct window *win = get_user_object( window, USER_WINDOW );
+    if (!win) return 0;
+    return is_visible( win );
+}
+
 /* check if point is inside the window */
 static inline int is_point_in_window( struct window *win, int x, int y )
 {
@@ -601,15 +622,13 @@ static struct region *get_visible_region( struct window *win, struct window *top
                                           unsigned int flags )
 {
     struct region *tmp, *region;
-    struct window *ptr;
     int offset_x, offset_y;
 
     if (!(region = create_empty_region())) return NULL;
 
     /* first check if all ancestors are visible */
 
-    for (ptr = win; ptr != top_window; ptr = ptr->parent)
-        if (!(ptr->style & WS_VISIBLE)) return region;  /* empty region */
+    if (!is_visible( win )) return region;  /* empty region */
 
     /* create a region relative to the window itself */
 
