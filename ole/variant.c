@@ -1986,6 +1986,11 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	 */
 	VariantClear( &varg );
 	
+	/* set the type of the destination
+	 */
+	if ( res == S_OK )
+		pvargDest->vt = vt;
+
 	return res;
 }
 
