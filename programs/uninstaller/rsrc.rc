@@ -24,7 +24,13 @@
 
 #include <windows.h>
 #include "resource.h"
+#include "Cs.rc"
+#include "De.rc"
 #include "En.rc"
+#include "Es.rc"
+#include "Fr.rc"
+#include "It.rc"
+#include "Pt.rc"
 
 /* BINRES uninstaller.ico */
 UNINSTALLER ICON MOVEABLE uninstaller.ico
