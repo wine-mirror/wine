@@ -48,14 +48,15 @@ static void test__hread( void )
     UINT i;
 
     filehandle = _lcreat( filename, 0 );
-
-    ok( HFILE_ERROR != filehandle, "_lcreat complains." );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
 
     filehandle = _lopen( filename, OF_READ );
+
+    ok( HFILE_ERROR != filehandle, "couldn't open file again?");
     
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
     
@@ -89,8 +90,7 @@ static void test__hwrite( void )
     char checksum[1];
 
     filehandle = _lcreat( filename, 0 );
-
-    ok( HFILE_ERROR != filehandle, "_lcreat complains." );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
 
     ok( HFILE_ERROR != _hwrite( filehandle, "", 0 ), "_hwrite complains." );
 
@@ -149,8 +149,7 @@ static void test__hwrite( void )
     while (i < bytes_written - 1);
 
     ok( checksum[0] == contents[i], "stored checksum differ from computed checksum." );
-    return;
-    
+
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains." );
 
     ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
@@ -161,8 +160,7 @@ static void test__lclose( void )
     HFILE filehandle;
 
     filehandle = _lcreat( filename, 0 );
-
-    ok( HFILE_ERROR != filehandle, "_lcreat complains." );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
 
@@ -172,13 +170,156 @@ static void test__lclose( void )
 
     ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this." );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile complains." );
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
 }
 
+
+static void test__lcreat( void )
+{
+    HFILE filehandle;
+    char buffer[10000];
+    WIN32_FIND_DATAA search_results;
+
+    filehandle = _lcreat( filename, 0 );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
+
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+
+    filehandle = _lcreat( filename, 1 );
+    ok( HFILE_ERROR != filehandle, "couldn't create file!?" );
+
+#if 0  /* FIXME: this fails on NT too */
+    ok( HFILE_ERROR == _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't succeed writing." );
+#endif
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
+
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+
+
+    filehandle = _lcreat( filename, 2 );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    todo_wine
+    {
+        ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
+    }
+
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    
+
+    filehandle = _lcreat( filename, 4 );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+
+    ok( 0 == _llseek( filehandle, 0, FILE_BEGIN ), "_llseek complains." );
+
+    ok( _hread( filehandle, buffer, strlen( sillytext ) ) ==  strlen( sillytext ), "erratic _hread return value." );
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    todo_wine
+    {
+        ok( INVALID_HANDLE_VALUE == FindFirstFileA( filename, &search_results ), "should NOT be able to find file" );
+    }
+
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+}
+
+
+void test__llseek( void )
+{
+    INT i;
+    HFILE filehandle;
+    char buffer[1];
+    long bytes_read;
+
+    filehandle = _lcreat( filename, 0 );
+
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    for (i = 0; i < 400; i++)
+    {
+        ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    }
+    ok( HFILE_ERROR != _llseek( filehandle, 400 * strlen( sillytext ), FILE_CURRENT ), "should be able to seek" );
+    ok( HFILE_ERROR != _llseek( filehandle, 27 + 35 * strlen( sillytext ), FILE_BEGIN ), "should be able to seek" );
+
+    bytes_read = _hread( filehandle, buffer, 1);
+    ok( 1 == bytes_read, "file read size error." );
+    ok( buffer[0] == sillytext[27], "_llseek error. It got lost seeking..." );
+    ok( HFILE_ERROR != _llseek( filehandle, -400 * strlen( sillytext ), FILE_END ), "should be able to seek" );
+
+    bytes_read = _hread( filehandle, buffer, 1);
+    ok( 1 == bytes_read, "file read size error." );
+    ok( buffer[0] == sillytext[0], "_llseek error. It got lost seeking..." );
+
+#if 0  /* FIXME: this fails on NT too */
+    ok( HFILE_ERROR == _llseek( filehandle, 1000000, FILE_END ), "should get HFILE_ERROR for trying to seek past end of file" );
+#endif
+
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+}
+
+void test__llopen( void )
+{
+    HFILE filehandle;
+    UINT bytes_read;
+    char buffer[10000];
+
+    filehandle = _lcreat( filename, 0 );
+    ok( HFILE_ERROR != filehandle, "couldn't create file. Wrong permissions on directory?" );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    filehandle = _lopen( filename, OF_READ );
+    ok( HFILE_ERROR == _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write!" );
+    bytes_read = _hread( filehandle, buffer, strlen( sillytext ) );
+    ok( strlen( sillytext )  == bytes_read, "file read size error." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+    
+    filehandle = _lopen( filename, OF_READWRITE );
+    bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
+    ok( strlen( sillytext )  == bytes_read, "file read size error." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    filehandle = _lopen( filename, OF_WRITE );
+    ok( HFILE_ERROR == _hread( filehandle, buffer, 1 ), "you should only be able to write this file..." );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine." );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains." );
+
+    ok( DeleteFileA( filename ) != 0, "DeleteFileA complains." );
+    /* TODO - add tests for the SHARE modes  -  use two processes to pull this off */
+}
 
 START_TEST(file)
 {
     test__hread(  );
     test__hwrite(  );
     test__lclose(  );
+    test__lcreat(  );
+    test__llseek(  );
+    test__llopen(  );
 }
