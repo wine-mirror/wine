@@ -4335,6 +4335,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 ) {
     UINT arglen = _argsize(vt)*sizeof(DWORD);
     VARTYPE	oldvt;
+    VARIANT	va;
 
     if ((vt==VT_PTR) && tdesc && (tdesc->u.lptdesc->vt == VT_VARIANT)) {
 	memcpy(argpos,&arg,sizeof(void*));
@@ -4345,7 +4346,12 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	memcpy(argpos, &V_UNION(arg,lVal), arglen);
 	return S_OK;
     }
-    
+
+    if (V_ISARRAY(arg) && (vt == VT_SAFEARRAY)) {
+	memcpy(argpos, &V_UNION(arg,parray), sizeof(SAFEARRAY*));
+	return S_OK;
+    }
+
     if (vt == VT_VARIANT) {
 	memcpy(argpos, arg, arglen);
 	return S_OK;
@@ -4362,6 +4368,7 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     }
     if ((vt == VT_PTR) && tdesc)
 	return _copy_arg(tinfo, tdesc->u.lptdesc, argpos, arg, tdesc->u.lptdesc->vt);
+
     if ((vt == VT_USERDEFINED) && tdesc && tinfo) {
 	ITypeInfo	*tinfo2;
 	TYPEATTR	*tattr;
@@ -4432,10 +4439,14 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	}
 	return E_FAIL;
     }
+
     oldvt = V_VT(arg);
-    if (VariantChangeType(arg,arg,0,vt)==S_OK) {
-    	FIXME("argument was coerced in-place (0x%x -> 0x%x); source data has been modified!!!\n", oldvt, vt);
-	memcpy(argpos,&V_UNION(arg,lVal), arglen);
+    VariantInit(&va);
+    if (VariantChangeType(&va,arg,0,vt)==S_OK) {
+	memcpy(argpos,&V_UNION(&va,lVal), arglen);
+	FIXME("Should not use VariantChangeType here. (conversion from 0x%x -> 0x%x)\n",
+		V_VT(arg), vt
+	);
 	return S_OK;
     }
     ERR("Set arg to disparg type 0x%x vs 0x%x\n",V_VT(arg),vt);
