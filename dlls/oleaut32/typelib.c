@@ -27,11 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <assert.h>
+#include <ctype.h>
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
-#include "wine/winestring.h"
 #include "ole.h"
 #include "heap.h"
 #include "wine/obj_base.h"
@@ -1158,13 +1157,62 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
     int ret = E_FAIL;
     DWORD dwSignature = 0;
     HFILE hFile;
+	int nStrLen = strlen(pszFileName);
+	int i;
+
+	PCHAR pszTypeLibIndex = NULL;
+    PCHAR pszDllName      = NULL;
 
     TRACE("%s\n", pszFileName);
 
     *ppTypeLib = NULL;
 
+    /* is it a DLL? */
+	for (i=0 ; i < nStrLen ; ++i)
+	{
+	    pszFileName[i] = tolower(pszFileName[i]);
+	}
+    pszTypeLibIndex = strstr(pszFileName, ".dll");
+
+    /* find if there's a back-slash after .DLL (good sign of the presence of a typelib index) */
+    if (pszTypeLibIndex)
+    {
+      pszTypeLibIndex = strstr(pszTypeLibIndex, "\\");
+    }
+
+    /* is there any thing after trailing back-slash  ? */
+    if (pszTypeLibIndex && pszTypeLibIndex < pszFileName + nStrLen)
+    {
+      /* yes -> it's a index! store DLL name, without the trailing back-slash */
+      size_t nMemToAlloc = pszTypeLibIndex - pszFileName;
+      
+      pszDllName = HeapAlloc(GetProcessHeap(),
+                          HEAP_ZERO_MEMORY, 
+                          nMemToAlloc + 1);
+                          
+      strncpy(pszDllName, pszFileName, nMemToAlloc);
+      
+      /* move index string pointer pass the backslash */
+      ++pszTypeLibIndex;
+    }
+    else
+    {
+      /* No index, reset variable to 1 */
+      pszDllName = HeapAlloc(GetProcessHeap(),
+                          HEAP_ZERO_MEMORY, 
+                          nStrLen + 1);
+                          
+      strncpy(pszDllName, pszFileName, nStrLen);
+      
+      pszTypeLibIndex = "1\0";
+    }
+
+    TRACE("File name without index %s\n", pszDllName);
+    TRACE("Index of typelib %s\n",        pszTypeLibIndex);
+
+
     /* check the signature of the file */
-    hFile = CreateFileA( pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
+    hFile = CreateFileA( pszDllName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, -1 );
     if (INVALID_HANDLE_VALUE != hFile)
     {
       HANDLE hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
@@ -1192,11 +1240,11 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
     if( (WORD)dwSignature == IMAGE_DOS_SIGNATURE )
     {
       /* find the typelibrary resource*/
-      HINSTANCE hinstDLL = LoadLibraryExA(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES|
+      HINSTANCE hinstDLL = LoadLibraryExA(pszDllName, 0, DONT_RESOLVE_DLL_REFERENCES|
                                           LOAD_LIBRARY_AS_DATAFILE|LOAD_WITH_ALTERED_SEARCH_PATH);
       if (hinstDLL)
       {
-        HRSRC hrsrc = FindResourceA(hinstDLL, MAKEINTRESOURCEA(1), "TYPELIB");
+        HRSRC hrsrc = FindResourceA(hinstDLL, MAKEINTRESOURCEA(atoi(pszTypeLibIndex)), "TYPELIB");
         if (hrsrc)
         {
           HGLOBAL hGlobal = LoadResource(hinstDLL, hrsrc);
@@ -1220,6 +1268,8 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
         FreeLibrary(hinstDLL);
       }
     }
+
+	HeapFree(GetProcessHeap(), 0, pszDllName);
 
     if(*ppTypeLib)
       ret = S_OK;
