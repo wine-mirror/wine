@@ -2868,77 +2868,6 @@ static inline BOOL is_assignable_item(LPLVITEMW lpLVItem, LONG lStyle)
     return TRUE;
 }
 
-/***
- * DESCRIPTION:
- * Helper for LISTVIEW_SetItemT *only*: sets item attributes.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] lpLVItem : valid pointer to new item atttributes
- * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
- * [O] bChanged : will be set to TRUE if the item really changed
- *
- * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
- */
-static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
-{
-    LONG lStyle = infoPtr->dwStyle;
-    NMLISTVIEW nmlv;
-    INT oldState;
-
-    TRACE("()\n");
-
-    /* a virtual listview stores only the state for the main item */
-    if (lpLVItem->iSubItem || !(lpLVItem->mask & LVIF_STATE)) return FALSE;
-
-    oldState = (LVIS_FOCUSED | LVIS_SELECTED) & ~infoPtr->uCallbackMask;
-    if (oldState) oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, oldState);
-    TRACE("oldState=%x, newState=%x\n", oldState, lpLVItem->state);
-
-    /* we're done if we don't need to change anything we handle */
-    if ( !((oldState ^ lpLVItem->state) & lpLVItem->stateMask &
-           ~infoPtr->uCallbackMask & (LVIS_FOCUSED | LVIS_SELECTED))) return TRUE;
-
-    *bChanged = TRUE;
-
-    /*
-     * As per MSDN LVN_ITEMCHANGING notifications are _NOT_ sent for
-     * by LVS_OWERNDATA list controls
-     */
-
-    /* if we handle the focus, and we're asked to change it, do it now */
-    if ( lpLVItem->stateMask & LVIS_FOCUSED )
-    {
-        if (lpLVItem->state & LVIS_FOCUSED)
-	    infoPtr->nFocusedItem = lpLVItem->iItem;
-        else if (infoPtr->nFocusedItem == lpLVItem->iItem)
-	    infoPtr->nFocusedItem = -1;
-    }
-    
-    /* and the selection is the only other state a virtual list may hold */
-    if (lpLVItem->stateMask & LVIS_SELECTED)
-    {
-        if (lpLVItem->state & LVIS_SELECTED)
-        {
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
-	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
-        }
-        else
-	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
-    }
-
-    /* notify the parent now that things have changed */
-    ZeroMemory(&nmlv, sizeof(nmlv));
-    nmlv.iItem = lpLVItem->iItem;
-    nmlv.uNewState = lpLVItem->state;
-    nmlv.uOldState = oldState;
-    nmlv.uChanged = LVIF_STATE;
-    notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
-
-    return TRUE;
-}
 
 /***
  * DESCRIPTION:
@@ -2956,27 +2885,37 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW,
  */
 static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
 {
-    LONG lStyle = infoPtr->dwStyle;
-    HDPA hdpaSubItems;
     LISTVIEW_ITEM *lpItem;
     NMLISTVIEW nmlv;
-    UINT uChanged = 0, oldState;
+    UINT uChanged = 0;
+    LVITEMW item;
 
     TRACE("()\n");
 
-    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-    if (!hdpaSubItems && hdpaSubItems != (HDPA)-1) return FALSE;
-    
-    lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-    if (!lpItem) return FALSE;
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+	/* a virtual listview we stores only selection and focus */
+	if ((lpLVItem->mask & ~LVIF_STATE) || (lpLVItem->stateMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
+	    return FALSE;
+	lpItem = NULL;
+    }
+    else
+    {
+	HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
+	if (!hdpaSubItems) return FALSE;
+	if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0))) return FALSE;
+    }
 
     /* we need to handle the focus, and selection differently */
-    oldState = (LVIS_FOCUSED | LVIS_SELECTED) & ~infoPtr->uCallbackMask;
-    if (oldState) oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, oldState);
+    item.iItem = lpLVItem->iItem;
+    item.iSubItem = lpLVItem->iSubItem;
+    item.mask = LVIF_STATE | LVIF_PARAM;
+    item.stateMask = ~0;
+    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
 
-    TRACE("oldState=%x, newState=%x\n", oldState, lpLVItem->state);
+    TRACE("oldState=%x, newState=%x\n", item.state, lpLVItem->state);
     /* determine what fields will change */    
-    if ((lpLVItem->mask & LVIF_STATE) && ((oldState ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
+    if ((lpLVItem->mask & LVIF_STATE) && ((item.state ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
 
     if ((lpLVItem->mask & LVIF_IMAGE) && (lpItem->hdr.iImage != lpLVItem->iImage))
@@ -2997,13 +2936,14 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = lpLVItem->iItem;
-    nmlv.uNewState = lpLVItem->state & lpLVItem->stateMask;
-    nmlv.uOldState = lpItem->state & lpLVItem->stateMask;
+    nmlv.uNewState = (item.state & ~lpLVItem->stateMask) | (lpLVItem->state & lpLVItem->stateMask);
+    nmlv.uOldState = item.state;
     nmlv.uChanged = uChanged;
-    nmlv.lParam = lpItem->lParam;
+    nmlv.lParam = item.lParam;
     
     /* send LVN_ITEMCHANGING notification, if the item is not being inserted */
-    if(lpItem->valid && notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv)) 
+    /* and we are _NOT_ virtual (LVS_OWERNDATA) */
+    if(lpItem && lpItem->valid && notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv)) 
 	return FALSE;
 
     /* copy information */
@@ -3021,11 +2961,14 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
 
     if (uChanged & LVIF_STATE)
     {
-	lpItem->state &= ~lpLVItem->stateMask;
-	lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
+	if (lpLVItem->stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED))
+	{
+	    lpItem->state &= ~lpLVItem->stateMask;
+	    lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
+	}
 	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
-	    if (lStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
+	    if (infoPtr->dwStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
 	}
 	else if (lpLVItem->stateMask & LVIS_SELECTED)
@@ -3045,10 +2988,10 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     }
 
     /* if we're inserting the item, we're done */
-    if (!lpItem->valid) return TRUE;
+    if (lpItem && !lpItem->valid) return TRUE;
     
     /* send LVN_ITEMCHANGED notification */
-    nmlv.lParam = lpItem->lParam;
+    if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
     notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
 
     return TRUE;
@@ -3073,6 +3016,9 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, B
     HDPA hdpaSubItems;
     LISTVIEW_SUBITEM *lpSubItem;
 
+    /* we do not support subitems for virtual listviews */
+    if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
+    
     /* set subitem only if column is present */
     if (Header_GetItemCount(infoPtr->hwndHeader) <= lpLVItem->iSubItem) 
 	return FALSE;
@@ -3149,7 +3095,9 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
-   
+
+    if (lpLVItem->mask == 0) return TRUE;   
+
     /* For efficiency, we transform the lpLVItem->pszText to Unicode here */
     if ((lpLVItem->mask & LVIF_TEXT) && is_textW(lpLVItem->pszText))
     {
@@ -3158,18 +3106,12 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
     
     /* actually set the fields */
-    if (infoPtr->dwStyle & LVS_OWNERDATA)
-	bResult = set_owner_item(infoPtr, lpLVItem, TRUE, &bChanged);
-    else
-    {
-	/* sanity checks first */
-	if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return FALSE;
+    if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return FALSE;
     
-	if (lpLVItem->iSubItem)
-	    bResult = set_sub_item(infoPtr, lpLVItem, TRUE, &bChanged);
-	else
-	    bResult = set_main_item(infoPtr, lpLVItem, TRUE, &bChanged);
-    }
+    if (lpLVItem->iSubItem)
+	bResult = set_sub_item(infoPtr, lpLVItem, TRUE, &bChanged);
+    else
+	bResult = set_main_item(infoPtr, lpLVItem, TRUE, &bChanged);
 
     /* redraw item, if necessary */
     if (bChanged && !infoPtr->bIsDrawing)
