@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winerror.h"
 #include "mmddk.h"
