@@ -1395,17 +1395,12 @@ enum message_type
 @END
 
 
-/* Create the desktop window */
-@REQ(create_desktop_window)
-@REPLY
-    user_handle_t  handle;      /* handle to the window */
-@END
-
-
 /* Create a window */
 @REQ(create_window)
+    user_handle_t  parent;      /* parent window */
+    user_handle_t  owner;       /* owner window */
 @REPLY
-    user_handle_t  handle;      /* handle to the window */
+    user_handle_t  handle;      /* created window */
 @END
 
 
@@ -1431,4 +1426,37 @@ enum message_type
     user_handle_t  full_handle; /* full 32-bit handle */
     void*          pid;         /* process owning the window */
     void*          tid;         /* thread owning the window */
+@END
+
+
+/* Get a list of the window parents, up to the root of the tree */
+@REQ(get_window_parents)
+    user_handle_t  handle;        /* handle to the window */
+@REPLY
+    int            count;         /* total count of parents */
+    VARARG(parents,user_handles); /* parent handles */
+@END
+
+
+/* Get a list of the window children */
+@REQ(get_window_children)
+    user_handle_t  parent;        /* parent window */
+@REPLY
+    int            count;         /* total count of children */
+    VARARG(parents,user_handles); /* children handles */
+@END
+
+
+/* Get window tree information from a window handle */
+@REQ(get_window_tree)
+    user_handle_t  handle;        /* handle to the window */
+@REPLY
+    user_handle_t  parent;        /* parent window */
+    user_handle_t  owner;         /* owner window */
+    user_handle_t  next_sibling;  /* next sibling in Z-order */
+    user_handle_t  prev_sibling;  /* prev sibling in Z-order */
+    user_handle_t  first_sibling; /* first sibling in Z-order */
+    user_handle_t  last_sibling;  /* last sibling in Z-order */
+    user_handle_t  first_child;   /* first child */
+    user_handle_t  last_child;    /* last child */
 @END

@@ -833,7 +833,7 @@ inline static struct message *find_matching_message( const struct message_list *
     {
         /* check against the filters */
         if (msg->msg == WM_QUIT) break;  /* WM_QUIT is never filtered */
-        if (win && msg->win && msg->win != win) continue;
+        if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
         if (msg->msg < first) continue;
         if (msg->msg > last) continue;
         break; /* found one */

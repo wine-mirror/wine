@@ -3602,8 +3602,8 @@ INT       WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
 BOOL        WINAPI GetUserObjectInformationA(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 BOOL        WINAPI GetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 #define     GetUserObjectInformation WINELIB_NAME_AW(GetUserObjectInformation)
-HWND      WINAPI GetWindow(HWND,WORD);
-HDC       WINAPI GetWindowDC(HWND);
+HWND        WINAPI GetWindow(HWND,UINT);
+HDC         WINAPI GetWindowDC(HWND);
 LONG        WINAPI GetWindowLongA(HWND,INT);
 LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLong WINELIB_NAME_AW(GetWindowLong)

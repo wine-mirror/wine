@@ -75,7 +75,7 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( BOOL desktop, INT size )
+static WND *create_window_handle( HWND parent, HWND owner, INT size )
 {
     BOOL res;
     user_handle_t handle = 0;
@@ -85,22 +85,13 @@ static WND *create_window_handle( BOOL desktop, INT size )
 
     USER_Lock();
 
-    if (desktop)
+    SERVER_START_REQ( create_window )
     {
-        SERVER_START_REQ( create_desktop_window )
-        {
-            if ((res = !SERVER_CALL_ERR())) handle = req->handle;
-        }
-        SERVER_END_REQ;
+        req->parent = parent;
+        req->owner = owner;
+        if ((res = !SERVER_CALL_ERR())) handle = req->handle;
     }
-    else
-    {
-        SERVER_START_REQ( create_window )
-        {
-            if ((res = !SERVER_CALL_ERR())) handle = req->handle;
-        }
-        SERVER_END_REQ;
-    }
+    SERVER_END_REQ;
 
     if (!res)
     {
@@ -542,7 +533,7 @@ BOOL WIN_CreateDesktopWindow(void)
                                    &wndExtra, &winproc, &clsStyle, &dce )))
         return FALSE;
 
-    pWndDesktop = create_window_handle( TRUE, sizeof(WND) + wndExtra );
+    pWndDesktop = create_window_handle( 0, 0, sizeof(WND) + wndExtra );
     if (!pWndDesktop) return FALSE;
     hwndDesktop = pWndDesktop->hwndSelf;
 
@@ -675,7 +666,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     INT sw = SW_SHOW;
     struct tagCLASS *classPtr;
     WND *wndPtr;
-    HWND hwnd, hwndLinkAfter;
+    HWND hwnd, hwndLinkAfter, parent, owner;
     POINT maxSize, maxPos, minTrack, maxTrack;
     INT wndExtra;
     DWORD clsStyle;
@@ -694,6 +685,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Find the parent window */
 
+    parent = GetDesktopWindow();
+    owner = 0;
     if (cs->hwndParent)
     {
 	/* Make sure parent is valid */
@@ -702,7 +695,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             WARN("Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
-    } else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP)) {
+        if (cs->style & WS_CHILD) parent = cs->hwndParent;
+        else owner = GetAncestor( cs->hwndParent, GA_ROOT );
+    }
+    else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP))
+    {
         WARN("No parent for child window\n" );
         return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
     }
@@ -738,7 +735,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(wndPtr = create_window_handle( FALSE,
+    if (!(wndPtr = create_window_handle( parent, owner,
                                          sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
     {
 	TRACE("out of memory\n" );
@@ -751,22 +748,9 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->tid   = GetCurrentThreadId();
     wndPtr->next  = NULL;
     wndPtr->child = NULL;
-
-    if ((cs->style & WS_CHILD) && cs->hwndParent)
-    {
-        wndPtr->parent = WIN_FindWndPtr( cs->hwndParent );
-        wndPtr->owner  = 0;
-        WIN_ReleaseWndPtr(wndPtr->parent);
-    }
-    else
-    {
-        wndPtr->parent = pWndDesktop;
-        if (!cs->hwndParent || (cs->hwndParent == pWndDesktop->hwndSelf))
-            wndPtr->owner = 0;
-        else
-            wndPtr->owner = GetAncestor( cs->hwndParent, GA_ROOT );
-    }
-
+    wndPtr->owner = owner;
+    wndPtr->parent = WIN_FindWndPtr( parent );
+    WIN_ReleaseWndPtr(wndPtr->parent);
 
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
@@ -916,7 +900,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Call WH_SHELL hook */
 
-    if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
+    if (!(wndPtr->dwStyle & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
         HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0 );
 
     TRACE("created window %04x\n", hwnd);
@@ -1186,7 +1170,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     if( HOOK_CallHooksA( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0L) ) return FALSE;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
+    if (!(wndPtr->dwStyle & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
     {
         HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L );
         /* FIXME: clean up palette - see "Internals" p.352 */
@@ -1210,20 +1194,19 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Hide the window */
 
-    if (wndPtr->dwStyle & WS_VISIBLE)
+    ShowWindow( hwnd, SW_HIDE );
+    if (!IsWindow(hwnd))
     {
-        ShowWindow( hwnd, SW_HIDE );
-        if (!IsWindow(hwnd))
-        {
-            retvalue = TRUE;
-            goto end;
-        }
+        retvalue = TRUE;
+        goto end;
     }
 
       /* Recursively destroy owned windows */
 
     if( !(wndPtr->dwStyle & WS_CHILD) )
     {
+        HWND owner;
+
       for (;;)
       {
           int i, got_one = 0;
@@ -1232,19 +1215,17 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
           {
               for (i = 0; list[i]; i++)
               {
-                  WND *siblingPtr = WIN_FindWndPtr( list[i] );
-                  if (!siblingPtr) continue;
-                  if (siblingPtr->owner == hwnd)
+                  WND *siblingPtr;
+                  if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
+                  if (!(siblingPtr = WIN_FindWndPtr( list[i] ))) continue;
+                  if (siblingPtr->hmemTaskQ == wndPtr->hmemTaskQ)
                   {
-                      if (siblingPtr->hmemTaskQ == wndPtr->hmemTaskQ)
-                      {
-                          WIN_ReleaseWndPtr( siblingPtr );
-                          DestroyWindow( list[i] );
-                          got_one = 1;
-                          continue;
-                      }
-                      else siblingPtr->owner = 0;
+                      WIN_ReleaseWndPtr( siblingPtr );
+                      DestroyWindow( list[i] );
+                      got_one = 1;
+                      continue;
                   }
+                  else siblingPtr->owner = 0;
                   WIN_ReleaseWndPtr( siblingPtr );
               }
               HeapFree( GetProcessHeap(), 0, list );
@@ -1252,13 +1233,16 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
           if (!got_one) break;
       }
 
-      WINPOS_ActivateOtherWindow(wndPtr->hwndSelf);
+      WINPOS_ActivateOtherWindow( hwnd );
 
-      if (wndPtr->owner)
+      if ((owner = GetWindow( hwnd, GW_OWNER )))
       {
-          WND *owner = WIN_FindWndPtr( wndPtr->owner );
-          if (owner->hwndLastActive == hwnd) owner->hwndLastActive = wndPtr->owner;
-          WIN_ReleaseWndPtr( owner );
+          WND *ptr = WIN_FindWndPtr( owner );
+          if (ptr)
+          {
+              if (ptr->hwndLastActive == hwnd) ptr->hwndLastActive = owner;
+              WIN_ReleaseWndPtr( ptr );
+          }
       }
     }
 
@@ -2219,72 +2203,45 @@ HWND WINAPI GetTopWindow( HWND hwnd )
 /*******************************************************************
  *		GetWindow (USER32.@)
  */
-HWND WINAPI GetWindow( HWND hwnd, WORD rel )
+HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 {
-    HWND retval;
+    HWND retval = 0;
 
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    switch(rel)
+    if (rel == GW_OWNER)  /* special case: not fully supported in the server yet */
     {
-    case GW_HWNDFIRST:
-	retval = wndPtr->parent ? wndPtr->parent->child->hwndSelf : 0;
-        goto end;
-
-    case GW_HWNDLAST:
-        if (!wndPtr->parent)
-        {
-            retval = 0;  /* Desktop window */
-            goto end;
-        }
-        while (wndPtr->next)
-        {
-            WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
-        }
-        retval = wndPtr->hwndSelf;
-        goto end;
-
-    case GW_HWNDNEXT:
-	retval = wndPtr->next ? wndPtr->next->hwndSelf : 0;
-        goto end;
-
-    case GW_HWNDPREV:
-        if (!wndPtr->parent)
-        {
-            retval = 0;  /* Desktop window */
-            goto end;
-        }
-        WIN_UpdateWndPtr(&wndPtr,wndPtr->parent->child); /* First sibling */
-        if (wndPtr->hwndSelf == hwnd)
-        {
-            retval = 0;  /* First in list */
-            goto end;
-        }
-        while (wndPtr->next)
-        {
-            if (wndPtr->next->hwndSelf == hwnd)
-            {
-                retval = wndPtr->hwndSelf;
-                goto end;
-            }
-            WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
-        }
-        retval = 0;
-        goto end;
-
-    case GW_OWNER:
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
+        if (!wndPtr) return 0;
         retval = wndPtr->owner;
-        goto end;
-
-    case GW_CHILD:
-        retval = wndPtr->child ? wndPtr->child->hwndSelf : 0;
-        goto end;
+        WIN_ReleaseWndPtr( wndPtr );
+        return retval;
     }
-    retval = 0;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
+
+    SERVER_START_REQ( get_window_tree )
+    {
+        req->handle = hwnd;
+        if (!SERVER_CALL_ERR())
+        {
+            switch(rel)
+            {
+            case GW_HWNDFIRST:
+                retval = req->first_sibling;
+                break;
+            case GW_HWNDLAST:
+                retval = req->last_sibling;
+                break;
+            case GW_HWNDNEXT:
+                retval = req->next_sibling;
+                break;
+            case GW_HWNDPREV:
+                retval = req->prev_sibling;
+                break;
+            case GW_CHILD:
+                retval = req->first_child;
+                break;
+            }
+        }
+    }
+    SERVER_END_REQ;
     return retval;
 }
 
@@ -2428,36 +2385,23 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListParents( HWND hwnd )
 {
-    WND *parent, *wndPtr = WIN_FindWndPtr( hwnd );
     HWND *list = NULL;
-    UINT i, count = 0;
 
-    /* First count the windows */
-
-    if (!wndPtr) return NULL;
-
-    parent = wndPtr->parent;
-    while (parent && parent->hwndSelf != GetDesktopWindow())
+    SERVER_START_VAR_REQ( get_window_parents, REQUEST_MAX_VAR_SIZE )
     {
-        count++;
-        parent = parent->parent;
-    }
-
-    if (count)
-    {
-        if ((list = HeapAlloc( GetProcessHeap(), 0, sizeof(HWND) * (count + 1) )))
+        req->handle = hwnd;
+        if (!SERVER_CALL())
         {
-            parent = wndPtr->parent;
-            for (i = 0; i < count; i++)
+            user_handle_t *data = server_data_ptr(req);
+            int i, count = server_data_size(req) / sizeof(*data);
+            if (count && ((list = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(HWND) ))))
             {
-                list[i] = parent->hwndSelf;
-                parent = parent->parent;
+                for (i = 0; i < count; i++) list[i] = data[i];
+                list[i] = 0;
             }
-            list[i] = 0;
         }
     }
-
-    WIN_ReleaseWndPtr( wndPtr );
+    SERVER_END_VAR_REQ;
     return list;
 }
 
@@ -2470,39 +2414,23 @@ HWND *WIN_ListParents( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
-    WND *pWnd, *wndPtr = WIN_FindWndPtr( hwnd );
-    HWND *list, *phwnd;
-    UINT count = 0;
+    HWND *list = NULL;
 
-    /* First count the windows */
-
-    if (!wndPtr) return NULL;
-
-    pWnd = WIN_LockWndPtr(wndPtr->child);
-    while (pWnd)
+    SERVER_START_VAR_REQ( get_window_children, REQUEST_MAX_VAR_SIZE )
     {
-        count++;
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+        req->parent = hwnd;
+        if (!SERVER_CALL())
+        {
+            user_handle_t *data = server_data_ptr(req);
+            int i, count = server_data_size(req) / sizeof(*data);
+            if (count && ((list = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(HWND) ))))
+            {
+                for (i = 0; i < count; i++) list[i] = data[i];
+                list[i] = 0;
+            }
+        }
     }
-
-    if( count )
-    {
-	/* Now build the list of all windows */
-
-	if ((list = HeapAlloc( GetProcessHeap(), 0, sizeof(HWND) * (count + 1))))
-	{
-	    for (pWnd = WIN_LockWndPtr(wndPtr->child), phwnd = list, count = 0; pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
-	    {
-                *phwnd++ = pWnd->hwndSelf;
-                count++;
-	    }
-            WIN_ReleaseWndPtr(pWnd);
-            *phwnd = 0;
-	}
-	else count = 0;
-    } else list = NULL;
-
-    WIN_ReleaseWndPtr( wndPtr );
+    SERVER_END_VAR_REQ;
     return list;
 }
 

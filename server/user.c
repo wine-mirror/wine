@@ -91,11 +91,7 @@ void *get_user_object( user_handle_t handle, enum user_object type )
 {
     struct user_handle *entry;
 
-    if (!(entry = handle_to_entry( handle )) || entry->type != type)
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return NULL;
-    }
+    if (!(entry = handle_to_entry( handle )) || entry->type != type) return NULL;
     return entry->ptr;
 }
 
@@ -114,11 +110,7 @@ void *get_user_object_handle( user_handle_t *handle, enum user_object type )
 {
     struct user_handle *entry;
 
-    if (!(entry = handle_to_entry( *handle )) || entry->type != type)
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return NULL;
-    }
+    if (!(entry = handle_to_entry( *handle )) || entry->type != type) return NULL;
     *handle = entry_to_handle( entry );
     return entry->ptr;
 }

@@ -1563,17 +1563,11 @@ struct get_named_pipe_info_request
 
 
 
-struct create_desktop_window_request
-{
-    struct request_header __header;
-    user_handle_t  handle;
-};
-
-
-
 struct create_window_request
 {
     struct request_header __header;
+    user_handle_t  parent;
+    user_handle_t  owner;
     user_handle_t  handle;
 };
 
@@ -1604,6 +1598,42 @@ struct get_window_info_request
     user_handle_t  full_handle;
     void*          pid;
     void*          tid;
+};
+
+
+
+struct get_window_parents_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    int            count;
+    /* VARARG(parents,user_handles); */
+};
+
+
+
+struct get_window_children_request
+{
+    struct request_header __header;
+    user_handle_t  parent;
+    int            count;
+    /* VARARG(parents,user_handles); */
+};
+
+
+
+struct get_window_tree_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    user_handle_t  parent;
+    user_handle_t  owner;
+    user_handle_t  next_sibling;
+    user_handle_t  prev_sibling;
+    user_handle_t  first_sibling;
+    user_handle_t  last_sibling;
+    user_handle_t  first_child;
+    user_handle_t  last_child;
 };
 
 
@@ -1732,11 +1762,13 @@ enum request
     REQ_wait_named_pipe,
     REQ_disconnect_named_pipe,
     REQ_get_named_pipe_info,
-    REQ_create_desktop_window,
     REQ_create_window,
     REQ_link_window,
     REQ_destroy_window,
     REQ_get_window_info,
+    REQ_get_window_parents,
+    REQ_get_window_children,
+    REQ_get_window_tree,
     REQ_NB_REQUESTS
 };
 
@@ -1867,13 +1899,15 @@ union generic_request
     struct wait_named_pipe_request wait_named_pipe;
     struct disconnect_named_pipe_request disconnect_named_pipe;
     struct get_named_pipe_info_request get_named_pipe_info;
-    struct create_desktop_window_request create_desktop_window;
     struct create_window_request create_window;
     struct link_window_request link_window;
     struct destroy_window_request destroy_window;
     struct get_window_info_request get_window_info;
+    struct get_window_parents_request get_window_parents;
+    struct get_window_children_request get_window_children;
+    struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 52
+#define SERVER_PROTOCOL_VERSION 53
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

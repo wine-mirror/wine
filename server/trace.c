@@ -119,6 +119,21 @@ static size_t dump_varargs_ptrs( const void *req )
     return get_size(req);
 }
 
+static size_t dump_varargs_user_handles( const void *req )
+{
+    const user_handle_t *data = get_data(req);
+    size_t len = get_size(req) / sizeof(*data);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "%08x", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
 static size_t dump_varargs_bytes( const void *req )
 {
     const unsigned char *data = get_data(req);
@@ -1652,17 +1667,10 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_req
     fprintf( stderr, " insize=%08x", req->insize );
 }
 
-static void dump_create_desktop_window_request( const struct create_desktop_window_request *req )
-{
-}
-
-static void dump_create_desktop_window_reply( const struct create_desktop_window_request *req )
-{
-    fprintf( stderr, " handle=%08x", req->handle );
-}
-
 static void dump_create_window_request( const struct create_window_request *req )
 {
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " owner=%08x", req->owner );
 }
 
 static void dump_create_window_reply( const struct create_window_request *req )
@@ -1692,6 +1700,47 @@ static void dump_get_window_info_reply( const struct get_window_info_request *re
     fprintf( stderr, " full_handle=%08x,", req->full_handle );
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " tid=%p", req->tid );
+}
+
+static void dump_get_window_parents_request( const struct get_window_parents_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_parents_reply( const struct get_window_parents_request *req )
+{
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " parents=" );
+    cur_pos += dump_varargs_user_handles( req );
+}
+
+static void dump_get_window_children_request( const struct get_window_children_request *req )
+{
+    fprintf( stderr, " parent=%08x", req->parent );
+}
+
+static void dump_get_window_children_reply( const struct get_window_children_request *req )
+{
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " parents=" );
+    cur_pos += dump_varargs_user_handles( req );
+}
+
+static void dump_get_window_tree_request( const struct get_window_tree_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_tree_reply( const struct get_window_tree_request *req )
+{
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " owner=%08x,", req->owner );
+    fprintf( stderr, " next_sibling=%08x,", req->next_sibling );
+    fprintf( stderr, " prev_sibling=%08x,", req->prev_sibling );
+    fprintf( stderr, " first_sibling=%08x,", req->first_sibling );
+    fprintf( stderr, " last_sibling=%08x,", req->last_sibling );
+    fprintf( stderr, " first_child=%08x,", req->first_child );
+    fprintf( stderr, " last_child=%08x", req->last_child );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
@@ -1818,11 +1867,13 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_named_pipe_request,
     (dump_func)dump_disconnect_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
-    (dump_func)dump_create_desktop_window_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_link_window_request,
     (dump_func)dump_destroy_window_request,
     (dump_func)dump_get_window_info_request,
+    (dump_func)dump_get_window_parents_request,
+    (dump_func)dump_get_window_children_request,
+    (dump_func)dump_get_window_tree_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1949,11 +2000,13 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
-    (dump_func)dump_create_desktop_window_reply,
     (dump_func)dump_create_window_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_window_info_reply,
+    (dump_func)dump_get_window_parents_reply,
+    (dump_func)dump_get_window_children_reply,
+    (dump_func)dump_get_window_tree_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2080,11 +2133,13 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "wait_named_pipe",
     "disconnect_named_pipe",
     "get_named_pipe_info",
-    "create_desktop_window",
     "create_window",
     "link_window",
     "destroy_window",
     "get_window_info",
+    "get_window_parents",
+    "get_window_children",
+    "get_window_tree",
 };
 
 /* ### make_requests end ### */
