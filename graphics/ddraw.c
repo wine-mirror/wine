@@ -506,6 +506,25 @@ static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
        pf->y.dwRBitMask, pf->z.dwGBitMask, pf->xx.dwBBitMask, pf->xy.dwRGBAlphaBitMask);
 }
 
+static void _dump_colorkeyflag(DWORD ck) {
+	int	i;
+	const struct {
+		DWORD	mask;
+		char	*name;
+	} flags[] = {
+#define FE(x) { x, #x},
+	  FE(DDCKEY_COLORSPACE)
+	  FE(DDCKEY_DESTBLT)
+	  FE(DDCKEY_DESTOVERLAY)
+	  FE(DDCKEY_SRCBLT)
+	  FE(DDCKEY_SRCOVERLAY)
+	};
+	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+		if (flags[i].mask & ck)
+			DUMP("%s ",flags[i].name);
+	DUMP("\n");  
+}
+
 /******************************************************************************
  *		IDirectDrawSurface methods
  *
@@ -1382,6 +1401,18 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_SetColorKey(
 {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
         TRACE(ddraw,"(%p)->(0x%08lx,%p)\n",This,dwFlags,ckey);
+	if (TRACE_ON(ddraw)) {
+	  DUMP("   (0x%08lx <-> 0x%08lx)  -  ",
+	       ckey->dwColorSpaceLowValue,
+	       ckey->dwColorSpaceHighValue);
+	  _dump_colorkeyflag(dwFlags);
+	}
+
+	/* If this surface was loaded as a texture, call also the texture
+	   SetColorKey callback */
+	if (This->s.texture) {
+	  This->s.SetColorKey_cb(This->s.texture, dwFlags, ckey);
+	}
 
         if( dwFlags & DDCKEY_SRCBLT )
         {

@@ -3,7 +3,6 @@
 
 #include "ddraw.h"
 
-
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
@@ -18,6 +17,7 @@ typedef struct IDirectDrawSurface4Impl IDirectDrawSurface3Impl;
 typedef struct IDirectDrawSurface4Impl IDirectDrawSurface4Impl;
 typedef struct IDirectDrawColorControlImpl IDirectDrawColorControlImpl;
 
+#include "d3d_private.h"
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure
@@ -143,6 +143,10 @@ struct _common_directdrawsurface
     IDirectDrawSurface4Impl*    backbuffer;
 
     DDSURFACEDESC               surface_desc;
+
+    /* Callback for loaded textures */
+    IDirect3DTexture2Impl*      texture;
+    HRESULT WINAPI            (*SetColorKey_cb)(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
 };
 
 struct _dga_directdrawsurface

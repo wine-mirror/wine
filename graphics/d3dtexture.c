@@ -23,6 +23,72 @@
    texture memory) */
 #undef TEXTURE_SNOOP
 
+#ifdef TEXTURE_SNOOP
+#define SNOOP_PALETTED() 									\
+      {												\
+	FILE *f;										\
+	char buf[32];										\
+	int x, y;										\
+												\
+	sprintf(buf, "%d.pnm", This->tex_name);							\
+	f = fopen(buf, "wb");									\
+	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
+	for (y = 0; y < src_d->dwHeight; y++) {							\
+	  for (x = 0; x < src_d->dwWidth; x++) {						\
+	    unsigned char c = ((unsigned char *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+	    fputc(table[c][0], f);								\
+	    fputc(table[c][1], f);								\
+	    fputc(table[c][2], f);								\
+	  }											\
+	}											\
+	fclose(f);										\
+      }
+
+#define SNOOP_5650()											\
+	  {												\
+	    FILE *f;											\
+	    char buf[32];										\
+	    int x, y;											\
+	    												\
+	    sprintf(buf, "%d.pnm", This->tex_name);							\
+	    f = fopen(buf, "wb");									\
+	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
+	    for (y = 0; y < src_d->dwHeight; y++) {							\
+	      for (x = 0; x < src_d->dwWidth; x++) {							\
+		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+		fputc((c & 0xF800) >> 8, f);								\
+		fputc((c & 0x07E0) >> 3, f);								\
+		fputc((c & 0x001F) << 3, f);								\
+	      }												\
+	    }												\
+	    fclose(f);											\
+	  }
+
+#define SNOOP_5551()											\
+	  {												\
+	    FILE *f;											\
+	    char buf[32];										\
+	    int x, y;											\
+	    												\
+	    sprintf(buf, "%d.pnm", This->tex_name);							\
+	    f = fopen(buf, "wb");									\
+	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
+	    for (y = 0; y < src_d->dwHeight; y++) {							\
+	      for (x = 0; x < src_d->dwWidth; x++) {							\
+		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];	\
+		fputc((c & 0xF800) >> 8, f);								\
+		fputc((c & 0x07C0) >> 3, f);								\
+		fputc((c & 0x003E) << 2, f);								\
+	      }												\
+	    }												\
+	    fclose(f);											\
+	  }
+#else
+#define SNOOP_PALETTED()
+#define SNOOP_5650()
+#define SNOOP_5551()
+#endif
+
 static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable;
 static ICOM_VTABLE(IDirect3DTexture) texture_vtable;
 
@@ -56,6 +122,91 @@ LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf)
   return (LPDIRECT3DTEXTURE)tex;
 }
 
+/*******************************************************************************
+ *			   IDirectSurface callback methods
+ */
+HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
+{
+  DDSURFACEDESC	*tex_d;
+  int bpp;
+  GLuint current_texture;
+  
+  TRACE(ddraw, "(%p) : colorkey callback\n", texture);
+
+  /* Get the texture description */
+  tex_d = &(texture->surface->s.surface_desc);
+  bpp = (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
+	 1 /* 8 bit of palette index */:
+	 tex_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+  
+  /* Now, save the current texture */
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
+
+  /* If the GetHandle was not done yet, it's an error */
+  if (texture->tex_name == 0) {
+    ERR(ddraw, "Unloaded texture !\n");
+    return DD_OK;
+  }
+  glBindTexture(GL_TEXTURE_2D, texture->tex_name);
+
+  if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+    FIXME(ddraw, "Todo Paletted\n");
+  } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
+    if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 8) {
+      FIXME(ddraw, "Todo 3_3_2_0\n");
+    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
+      if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
+	/* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
+	unsigned short *dest = (unsigned short *) HeapAlloc(GetProcessHeap(),
+							    HEAP_ZERO_MEMORY,
+							    tex_d->dwWidth * tex_d->dwHeight * bpp);
+	unsigned short *src = (unsigned short *) tex_d->y.lpSurface;
+	int x, y;
+
+	for (y = 0; y < tex_d->dwHeight; y++) {
+	  for (x = 0; x < tex_d->dwWidth; x++) {
+	    unsigned short cpixel = src[x + y * tex_d->dwWidth];
+	    
+	    if ((dwFlags & DDCKEY_SRCBLT) &&
+		(cpixel >= ckey->dwColorSpaceLowValue) &&
+		(cpixel <= ckey->dwColorSpaceHighValue)) /* No alpha bit => this pixel is transparent */
+	      dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0000;
+	    else                                         /* Alpha bit is set => this pixel will be seen */
+	      dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0001; 
+	  }
+	}
+
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGBA,
+		     tex_d->dwWidth, tex_d->dwHeight,
+		     0,
+		     GL_RGBA,
+		     GL_UNSIGNED_SHORT_5_5_5_1,
+		     dest);
+
+	/* Frees the temporary surface */
+	HeapFree(GetProcessHeap(),0,dest);
+      } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
+	FIXME(ddraw, "Todo 5_5_5_1\n");
+      } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x0000000F) {
+	FIXME(ddraw, "Todo 4_4_4_4\n");
+      } else {
+	ERR(ddraw, "Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+      }
+    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
+      FIXME(ddraw, "Todo 8_8_8_0\n");
+    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 32) {
+      FIXME(ddraw, "Todo 8_8_8_8\n");
+    } else {
+      ERR(ddraw, "Unhandled texture format (bad RGB count)\n");
+    }
+  } else {
+    ERR(ddraw, "Unhandled texture format (neither RGB nor INDEX)\n");
+  }
+
+  return DD_OK;
+}
 
 /*******************************************************************************
  *				IDirect3DTexture2 methods
@@ -189,7 +340,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
   DDSURFACEDESC	*src_d, *dst_d;
   TRACE(ddraw, "(%p)->(%p)\n", This, ilpD3DTexture2);
 
-  TRACE(ddraw, "Copied to surface %p, surface %p\n", This->surface, ilpD3DTexture2->surface);
+  TRACE(ddraw, "Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
 
   /* Suppress the ALLOCONLOAD flag */
   This->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
@@ -198,6 +349,10 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
   dst_d = &(This->surface->s.surface_desc);
   src_d = &(ilpD3DTexture2->surface->s.surface_desc);
 
+  /* Install the callbacks to the destination surface */
+  This->surface->s.texture = This;
+  This->surface->s.SetColorKey_cb = SetColorKey_cb;
+  
   if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
     /* Should also check for same pixel format, lPitch, ... */
     ERR(ddraw, "Error in surface sizes\n");
@@ -210,7 +365,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 	       src_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
     GLuint current_texture;
 
-    /* Not sure if this is usefull ! */
+    /* Copy the main memry texture into the surface that corresponds to the OpenGL
+       texture object. */
     memcpy(dst_d->y.lpSurface, src_d->y.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
 
     /* Now, load the texture */
@@ -248,26 +404,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 	table[i][3] = 0xFF;
       }
       
-#ifdef TEXTURE_SNOOP
-      {
-	FILE *f;
-	char buf[32];
-	int x, y;
+      /* Texture snooping */
+      SNOOP_PALETTED();
 	
-	sprintf(buf, "%d.pnm", This->tex_name);
-	f = fopen(buf, "wb");
-	fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
-	for (y = 0; y < src_d->dwHeight; y++) {
-	  for (x = 0; x < src_d->dwWidth; x++) {
-	    unsigned char c = ((unsigned char *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
-	    fputc(table[c][0], f);
-	    fputc(table[c][1], f);
-	    fputc(table[c][2], f);
-	  }
-	}
-	fclose(f);
-      }
-#endif 
       /* Use Paletted Texture Extension */
       glColorTableEXT(GL_TEXTURE_2D,    /* target */
 		      GL_RGBA,          /* internal format */
@@ -302,26 +441,10 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		     src_d->y.lpSurface);
       } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
 	if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
-#ifdef TEXTURE_SNOOP
-	  {
-	    FILE *f;
-	    char buf[32];
-	    int x, y;
 	    
-	    sprintf(buf, "%d.pnm", This->tex_name);
-	    f = fopen(buf, "wb");
-	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
-	    for (y = 0; y < src_d->dwHeight; y++) {
-	      for (x = 0; x < src_d->dwWidth; x++) {
-		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
-		fputc((c & 0xF800) >> 8, f);
-		fputc((c & 0x07E0) >> 3, f);
-		fputc((c & 0x001F) << 3, f);
-	      }
-	    }
-	    fclose(f);
-	  }
-#endif
+	  /* Texture snooping */
+	  SNOOP_5650();
+	  
 	  glTexImage2D(GL_TEXTURE_2D,
 		       0,
 		       GL_RGB,
@@ -331,26 +454,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		       GL_UNSIGNED_SHORT_5_6_5,
 		       src_d->y.lpSurface);
 	} else if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
-#ifdef TEXTURE_SNOOP
-	  {
-	    FILE *f;
-	    char buf[32];
-	    int x, y;
-	    
-	    sprintf(buf, "%d.pnm", This->tex_name);
-	    f = fopen(buf, "wb");
-	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
-	    for (y = 0; y < src_d->dwHeight; y++) {
-	      for (x = 0; x < src_d->dwWidth; x++) {
-		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
-		fputc((c & 0xF800) >> 8, f);
-		fputc((c & 0x07C0) >> 3, f);
-		fputc((c & 0x003E) << 2, f);
-	      }
-	    }
-	    fclose(f);
-	  }
-#endif
+	  /* Texture snooping */
+	  SNOOP_5551();
 	  
 	  glTexImage2D(GL_TEXTURE_2D,
 		       0,

@@ -8,11 +8,7 @@
 #define __GRAPHICS_WINE_D3D_PRIVATE_H
 
 #include "wine_gl.h"
-
 #include "d3d.h"
-
-#include "ddraw_private.h"
-
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -27,6 +23,7 @@ typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
 typedef struct IDirect3DDevice2Impl IDirect3DDevice2Impl;
 
+#include "ddraw_private.h"
 
 /*****************************************************************************
  * IDirect3D implementation structure
