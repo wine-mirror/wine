@@ -211,19 +211,22 @@ static const char * wave_time_format(UINT type)
     return msg;
 }
 
-static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFORMATEX pwfx)
+static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATEX pwfx )
 {
     MMTIME mmtime;
+    DWORD samples;
     MMRESULT rc;
+
+    samples=bytes*8/pwfx->wBitsPerSample/pwfx->nChannels;
 
     mmtime.wType = TIME_BYTES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_BYTES)
-        ok(mmtime.u.cb==duration*pwfx->nAvgBytesPerSec+pwfx->wBitsPerSample/8,
+        ok(mmtime.u.cb==bytes,
            "waveOutGetPosition returned %ld bytes, should be %ld\n",
-           mmtime.u.cb, (DWORD)(duration*pwfx->nAvgBytesPerSec)+pwfx->wBitsPerSample/8);
+           mmtime.u.cb, bytes);
     else
         trace("TIME_BYTES not supported, returned %s\n",wave_time_format(mmtime.wType));
 
@@ -232,9 +235,9 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_SAMPLES)
-        ok(mmtime.u.sample==duration*pwfx->nSamplesPerSec+1,
+        ok(mmtime.u.sample==samples,
            "waveOutGetPosition returned %ld samples, should be %ld\n",
-           mmtime.u.sample, (DWORD)(duration*pwfx->nSamplesPerSec)+1);
+           mmtime.u.sample, samples);
     else
         trace("TIME_SAMPLES not supported, returned %s\n",wave_time_format(mmtime.wType));
 
@@ -243,9 +246,9 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_MS)
-        ok(mmtime.u.ms==(DWORD)(duration*1000),
+        ok(mmtime.u.ms==samples*1000/pwfx->nSamplesPerSec,
            "waveOutGetPosition returned %ld ms, should be %ld\n",
-           mmtime.u.ms, (DWORD)(duration*1000));
+           mmtime.u.ms, samples*1000/pwfx->nSamplesPerSec);
     else
         trace("TIME_MS not supported, returned %s\n",wave_time_format(mmtime.wType));
 
@@ -254,18 +257,22 @@ static void check_position(int device, HWAVEOUT wout, double duration, LPWAVEFOR
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_SMPTE)
+    {
+        double duration=((double)samples)/pwfx->nSamplesPerSec;
+        BYTE frames=ceil(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps));
         ok(mmtime.u.smpte.hour==(BYTE)(floor(duration/(60*60))) &&
            mmtime.u.smpte.min==(BYTE)(fmod(floor(duration/60), 60)) &&
            mmtime.u.smpte.sec==(BYTE)(fmod(duration,60)) &&
-           mmtime.u.smpte.frame==(BYTE)(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps)),
+           mmtime.u.smpte.frame==frames,
            "waveOutGetPosition returned %d:%d:%d %d, should be %d:%d:%d %d\n",
            mmtime.u.smpte.hour, mmtime.u.smpte.min, mmtime.u.smpte.sec, mmtime.u.smpte.frame,
            (BYTE)(floor(duration/(60*60))),
            (BYTE)(fmod(floor(duration/60), 60)),
            (BYTE)(fmod(duration,60)),
-           (BYTE)(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps)));
+           frames);
+    }
     else
-        trace("TIME_TIME_SMPTE not supported, returned %s\n",wave_time_format(mmtime.wType));
+        trace("TIME_SMPTE not supported, returned %s\n",wave_time_format(mmtime.wType));
 }
 
 static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEOUTCAPS pcaps)
@@ -357,7 +364,7 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
         rc=waveOutSetVolume(wout,volume);
         ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
 
-        check_position(device, wout, duration, pwfx);
+        check_position(device, wout, frag.dwBufferLength, pwfx);
     }
 
     rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
