@@ -444,7 +444,7 @@ typedef struct rcdata {
 	raw_data_t	*data;
 } rcdata_t;
 
-typedef struct user {
+typedef struct {
 	DWORD		memopt;
 	name_id_t	*type;
 	raw_data_t	*data;
@@ -647,5 +647,3 @@ typedef struct style_pair {
 } style_pair_t;
 
 #endif
-
-
