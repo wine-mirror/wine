@@ -157,70 +157,6 @@ static DWORD GetShareModeFromSTGM(DWORD stgm);
 static DWORD GetAccessModeFromSTGM(DWORD stgm);
 static DWORD GetCreationModeFromSTGM(DWORD stgm);
 
-/*
- * Virtual function table for the IStorage32Impl class.
- */
-static IStorageVtbl Storage32Impl_Vtbl =
-{
-    StorageBaseImpl_QueryInterface,
-    StorageBaseImpl_AddRef,
-    StorageBaseImpl_Release,
-    StorageBaseImpl_CreateStream,
-    StorageBaseImpl_OpenStream,
-    StorageImpl_CreateStorage,
-    StorageBaseImpl_OpenStorage,
-    StorageImpl_CopyTo,
-    StorageImpl_MoveElementTo,
-    StorageImpl_Commit,
-    StorageImpl_Revert,
-    StorageBaseImpl_EnumElements,
-    StorageImpl_DestroyElement,
-    StorageBaseImpl_RenameElement,
-    StorageImpl_SetElementTimes,
-    StorageBaseImpl_SetClass,
-    StorageImpl_SetStateBits,
-    StorageImpl_Stat
-};
-
-/*
- * Virtual function table for the Storage32InternalImpl class.
- */
-static IStorageVtbl Storage32InternalImpl_Vtbl =
-  {
-    StorageBaseImpl_QueryInterface,
-    StorageBaseImpl_AddRef,
-    StorageBaseImpl_Release,
-    StorageBaseImpl_CreateStream,
-    StorageBaseImpl_OpenStream,
-    StorageImpl_CreateStorage,
-    StorageBaseImpl_OpenStorage,
-    StorageImpl_CopyTo,
-    StorageImpl_MoveElementTo,
-    StorageInternalImpl_Commit,
-    StorageInternalImpl_Revert,
-    StorageBaseImpl_EnumElements,
-    StorageImpl_DestroyElement,
-    StorageBaseImpl_RenameElement,
-    StorageImpl_SetElementTimes,
-    StorageBaseImpl_SetClass,
-    StorageImpl_SetStateBits,
-    StorageBaseImpl_Stat
-};
-
-/*
- * Virtual function table for the IEnumSTATSTGImpl class.
- */
-static IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
-{
-    IEnumSTATSTGImpl_QueryInterface,
-    IEnumSTATSTGImpl_AddRef,
-    IEnumSTATSTGImpl_Release,
-    IEnumSTATSTGImpl_Next,
-    IEnumSTATSTGImpl_Skip,
-    IEnumSTATSTGImpl_Reset,
-    IEnumSTATSTGImpl_Clone
-};
-
 extern IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
 
 
@@ -280,7 +216,7 @@ HRESULT WINAPI StorageBaseImpl_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  StorageBaseImpl_AddRef(iface);
+  IStorage_AddRef(iface);
 
   return S_OK;
 }
@@ -435,7 +371,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
        * Since we are returning a pointer to the interface, we have to
        * nail down the reference.
        */
-      StgStreamImpl_AddRef(*ppstm);
+      IStream_AddRef(*ppstm);
 
       res = S_OK;
       goto end;
@@ -622,7 +558,7 @@ HRESULT WINAPI StorageBaseImpl_EnumElements(
      * Don't forget to nail down a reference to the new object before
      * returning it.
      */
-    IEnumSTATSTGImpl_AddRef(*ppenum);
+    IEnumSTATSTG_AddRef(*ppenum);
 
     return S_OK;
   }
@@ -735,7 +671,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
     return STG_E_FILEALREADYEXISTS;
   }
 
-  IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)propertyEnumeration);
+  IEnumSTATSTG_Reset((IEnumSTATSTG*)propertyEnumeration);
 
   /*
    * Search the enumeration for the old property name
@@ -834,7 +770,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
      * Invoke Destroy to get rid of the ole property and automatically redo
      * the linking of it's previous and next members...
      */
-    StorageImpl_DestroyElement((IStorage*)This->ancestorStorage, pwcsOldName);
+    IStorage_DestroyElement((IStorage*)This->ancestorStorage, pwcsOldName);
 
   }
   else
@@ -996,7 +932,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
      * Since we are returning a pointer to the interface, we have to nail down
      * the reference.
      */
-    StgStreamImpl_AddRef(*ppstm);
+    IStream_AddRef(*ppstm);
   }
   else
   {
@@ -2199,6 +2135,31 @@ HRESULT WINAPI StorageImpl_SetStateBits(
   FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
+
+/*
+ * Virtual function table for the IStorage32Impl class.
+ */
+static IStorageVtbl Storage32Impl_Vtbl =
+{
+    StorageBaseImpl_QueryInterface,
+    StorageBaseImpl_AddRef,
+    StorageBaseImpl_Release,
+    StorageBaseImpl_CreateStream,
+    StorageBaseImpl_OpenStream,
+    StorageImpl_CreateStorage,
+    StorageBaseImpl_OpenStorage,
+    StorageImpl_CopyTo,
+    StorageImpl_MoveElementTo,
+    StorageImpl_Commit,
+    StorageImpl_Revert,
+    StorageBaseImpl_EnumElements,
+    StorageImpl_DestroyElement,
+    StorageBaseImpl_RenameElement,
+    StorageImpl_SetElementTimes,
+    StorageBaseImpl_SetClass,
+    StorageImpl_SetStateBits,
+    StorageImpl_Stat
+};
 
 HRESULT StorageImpl_Construct(
   StorageImpl* This,
@@ -3472,48 +3433,6 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   return bigBlockChain;
 }
 
-/******************************************************************************
-** Storage32InternalImpl implementation
-*/
-
-StorageInternalImpl* StorageInternalImpl_Construct(
-  StorageImpl* ancestorStorage,
-  ULONG          rootPropertyIndex)
-{
-  StorageInternalImpl* newStorage;
-
-  /*
-   * Allocate space for the new storage object
-   */
-  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageInternalImpl));
-
-  if (newStorage!=0)
-  {
-    memset(newStorage, 0, sizeof(StorageInternalImpl));
-
-    /*
-     * Initialize the virtual function table.
-     */
-    newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
-    newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
-
-    /*
-     * Keep the ancestor storage pointer and nail a reference to it.
-     */
-    newStorage->base.ancestorStorage = ancestorStorage;
-    StorageBaseImpl_AddRef((IStorage*)(newStorage->base.ancestorStorage));
-
-    /*
-     * Keep the index of the root property set for this storage,
-     */
-    newStorage->base.rootPropertySetIndex = rootPropertyIndex;
-
-    return newStorage;
-  }
-
-  return 0;
-}
-
 void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
@@ -3549,52 +3468,6 @@ HRESULT WINAPI StorageInternalImpl_Revert(
   return S_OK;
 }
 
-/******************************************************************************
-** IEnumSTATSTGImpl implementation
-*/
-
-IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
-  StorageImpl* parentStorage,
-  ULONG          firstPropertyNode)
-{
-  IEnumSTATSTGImpl* newEnumeration;
-
-  newEnumeration = HeapAlloc(GetProcessHeap(), 0, sizeof(IEnumSTATSTGImpl));
-
-  if (newEnumeration!=0)
-  {
-    /*
-     * Set-up the virtual function table and reference count.
-     */
-    newEnumeration->lpVtbl    = &IEnumSTATSTGImpl_Vtbl;
-    newEnumeration->ref       = 0;
-
-    /*
-     * We want to nail-down the reference to the storage in case the
-     * enumeration out-lives the storage in the client application.
-     */
-    newEnumeration->parentStorage = parentStorage;
-    IStorage_AddRef((IStorage*)newEnumeration->parentStorage);
-
-    newEnumeration->firstPropertyNode   = firstPropertyNode;
-
-    /*
-     * Initialize the search stack
-     */
-    newEnumeration->stackSize    = 0;
-    newEnumeration->stackMaxSize = ENUMSTATSGT_SIZE_INCREMENT;
-    newEnumeration->stackToVisit =
-      HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG)*ENUMSTATSGT_SIZE_INCREMENT);
-
-    /*
-     * Make sure the current node of the iterator is the first one.
-     */
-    IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)newEnumeration);
-  }
-
-  return newEnumeration;
-}
-
 void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
 {
   IStorage_Release((IStorage*)This->parentStorage);
@@ -3623,28 +3496,15 @@ HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  if (IsEqualGUID(&IID_IUnknown, riid) ||
+      IsEqualGUID(&IID_IStorage, riid))
   {
     *ppvObject = (IEnumSTATSTG*)This;
-  }
-  else if (memcmp(&IID_IStorage, riid, sizeof(IID_IEnumSTATSTG)) == 0)
-  {
-    *ppvObject = (IEnumSTATSTG*)This;
+    IEnumSTATSTG_AddRef((IEnumSTATSTG*)This);
+    return S_OK;
   }
 
-  /*
-   * Check that we obtained an interface.
-   */
-  if ((*ppvObject)==0)
-    return E_NOINTERFACE;
-
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
-  IEnumSTATSTGImpl_AddRef((IEnumSTATSTG*)This);
-
-  return S_OK;
+  return E_NOINTERFACE;
 }
 
 ULONG   WINAPI IEnumSTATSTGImpl_AddRef(
@@ -4060,6 +3920,133 @@ ULONG IEnumSTATSTGImpl_PopSearchNode(
     This->stackSize--;
 
   return topNode;
+}
+
+/*
+ * Virtual function table for the IEnumSTATSTGImpl class.
+ */
+static IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
+{
+    IEnumSTATSTGImpl_QueryInterface,
+    IEnumSTATSTGImpl_AddRef,
+    IEnumSTATSTGImpl_Release,
+    IEnumSTATSTGImpl_Next,
+    IEnumSTATSTGImpl_Skip,
+    IEnumSTATSTGImpl_Reset,
+    IEnumSTATSTGImpl_Clone
+};
+
+/******************************************************************************
+** IEnumSTATSTGImpl implementation
+*/
+
+IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
+  StorageImpl* parentStorage,
+  ULONG          firstPropertyNode)
+{
+  IEnumSTATSTGImpl* newEnumeration;
+
+  newEnumeration = HeapAlloc(GetProcessHeap(), 0, sizeof(IEnumSTATSTGImpl));
+
+  if (newEnumeration!=0)
+  {
+    /*
+     * Set-up the virtual function table and reference count.
+     */
+    newEnumeration->lpVtbl    = &IEnumSTATSTGImpl_Vtbl;
+    newEnumeration->ref       = 0;
+
+    /*
+     * We want to nail-down the reference to the storage in case the
+     * enumeration out-lives the storage in the client application.
+     */
+    newEnumeration->parentStorage = parentStorage;
+    IStorage_AddRef((IStorage*)newEnumeration->parentStorage);
+
+    newEnumeration->firstPropertyNode   = firstPropertyNode;
+
+    /*
+     * Initialize the search stack
+     */
+    newEnumeration->stackSize    = 0;
+    newEnumeration->stackMaxSize = ENUMSTATSGT_SIZE_INCREMENT;
+    newEnumeration->stackToVisit =
+      HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG)*ENUMSTATSGT_SIZE_INCREMENT);
+
+    /*
+     * Make sure the current node of the iterator is the first one.
+     */
+    IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)newEnumeration);
+  }
+
+  return newEnumeration;
+}
+
+/*
+ * Virtual function table for the Storage32InternalImpl class.
+ */
+static IStorageVtbl Storage32InternalImpl_Vtbl =
+{
+    StorageBaseImpl_QueryInterface,
+    StorageBaseImpl_AddRef,
+    StorageBaseImpl_Release,
+    StorageBaseImpl_CreateStream,
+    StorageBaseImpl_OpenStream,
+    StorageImpl_CreateStorage,
+    StorageBaseImpl_OpenStorage,
+    StorageImpl_CopyTo,
+    StorageImpl_MoveElementTo,
+    StorageInternalImpl_Commit,
+    StorageInternalImpl_Revert,
+    StorageBaseImpl_EnumElements,
+    StorageImpl_DestroyElement,
+    StorageBaseImpl_RenameElement,
+    StorageImpl_SetElementTimes,
+    StorageBaseImpl_SetClass,
+    StorageImpl_SetStateBits,
+    StorageBaseImpl_Stat
+};
+
+/******************************************************************************
+** Storage32InternalImpl implementation
+*/
+
+StorageInternalImpl* StorageInternalImpl_Construct(
+  StorageImpl* ancestorStorage,
+  ULONG          rootPropertyIndex)
+{
+  StorageInternalImpl* newStorage;
+
+  /*
+   * Allocate space for the new storage object
+   */
+  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageInternalImpl));
+
+  if (newStorage!=0)
+  {
+    memset(newStorage, 0, sizeof(StorageInternalImpl));
+
+    /*
+     * Initialize the virtual function table.
+     */
+    newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
+    newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
+
+    /*
+     * Keep the ancestor storage pointer and nail a reference to it.
+     */
+    newStorage->base.ancestorStorage = ancestorStorage;
+    StorageBaseImpl_AddRef((IStorage*)(newStorage->base.ancestorStorage));
+
+    /*
+     * Keep the index of the root property set for this storage,
+     */
+    newStorage->base.rootPropertySetIndex = rootPropertyIndex;
+
+    return newStorage;
+  }
+
+  return 0;
 }
 
 /******************************************************************************

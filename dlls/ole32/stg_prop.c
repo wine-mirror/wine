@@ -1251,7 +1251,7 @@ static HRESULT WINAPI IPropertySetStorage_fnQueryInterface(
     void** ppvObject)
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
-    return StorageBaseImpl_QueryInterface( (IStorage*)This, riid, ppvObject );
+    return IStorage_QueryInterface( (IStorage*)This, riid, ppvObject );
 }
 
 /************************************************************************
@@ -1263,7 +1263,7 @@ static ULONG WINAPI IPropertySetStorage_fnAddRef(
     IPropertySetStorage *ppstg)
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
-    return StorageBaseImpl_AddRef( (IStorage*)This );
+    return IStorage_AddRef( (IStorage*)This );
 }
 
 /************************************************************************
@@ -1275,7 +1275,7 @@ static ULONG WINAPI IPropertySetStorage_fnRelease(
     IPropertySetStorage *ppstg)
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
-    return StorageBaseImpl_Release( (IStorage*)This );
+    return IStorage_Release( (IStorage*)This );
 }
 
 /************************************************************************
