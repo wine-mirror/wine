@@ -1877,7 +1877,8 @@ static BOOL INT21_CreateDirectory( CONTEXT86 *context )
 static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi );
-
+    BYTE buffsize = CX_reg (context);
+    
     TRACE( "GET EXTENDED COUNTRY INFORMATION, subfunction %02x\n",
            AL_reg(context) );
 
@@ -1908,8 +1909,13 @@ static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
         *(WORD*)(dataptr+1) = 38; /* Size of the following info */
         *(WORD*)(dataptr+3) = INT21_GetSystemCountryCode(); /* Country ID */
         *(WORD*)(dataptr+5) = GetOEMCP(); /* Code page */
-        INT21_FillCountryInformation( dataptr + 7 );
-        SET_CX( context, 41 ); /* Size of returned info */
+        /* FIXME: fill buffer partially up to buffsize bytes*/
+        if (buffsize >= 0x29){
+            INT21_FillCountryInformation( dataptr + 7 );
+            SET_CX( context, 0x29 ); /* Size of returned info */
+        }else{
+            SET_CX( context, 0x07 ); /* Size of returned info */        
+        }
         break;
         
     case 0x02: /* GET POINTER TO UPPERCASE TABLE */
