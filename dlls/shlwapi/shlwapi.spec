@@ -252,7 +252,7 @@ init SHLWAPI_LibMain
 250 stub @
 251 stub @
 252 stub @
-253 stdcall AssocCreate(long ptr ptr) AssocCreate
+253 stdcall AssocCreate(long long long long ptr ptr) AssocCreate
 254 stdcall AssocQueryKeyA(long long str ptr ptr) AssocQueryKeyA
 255 stdcall AssocQueryKeyW(long long wstr ptr ptr) AssocQueryKeyW
 256 stub @
