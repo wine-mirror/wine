@@ -1378,6 +1378,14 @@ enum char_info_mode
      int         signaled;      /* was the timer signaled before this calltime ? */
 @END
 
+/* Get information on a waitable timer */
+@REQ(get_timer_info)
+    obj_handle_t handle;        /* handle to the timer */
+@REPLY
+    abs_time_t   when;          /* absolute time when the timer next expires */
+    int          signaled;      /* is the timer signaled? */
+@END
+
 
 /* Retrieve the current context of a thread */
 @REQ(get_thread_context)

@@ -511,6 +511,74 @@ NTSTATUS WINAPI NtCancelTimer(IN HANDLE handle, OUT BOOLEAN* state)
 }
 
 /******************************************************************************
+ *  NtQueryTimer (NTDLL.@)
+ *
+ * Retrieves information about a timer.
+ *
+ * PARAMS
+ *  TimerHandle           [I] The timer to retrieve information about.
+ *  TimerInformationClass [I] The type of information to retrieve.
+ *  TimerInformation      [O] Pointer to buffer to store information in.
+ *  Length                [I] The length of the buffer pointed to by TimerInformation.
+ *  ReturnLength          [O] Optional. The size of buffer actually used.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_INFO_LENGTH_MISMATCH, if Length doesn't match the required data
+ *           size for the class specified.
+ *           STATUS_INVALID_INFO_CLASS, if an invalid TimerInformationClass was specified.
+ *           STATUS_ACCESS_DENIED, if TimerHandle does not have TIMER_QUERY_STATE access
+ *           to the timer.
+ */
+NTSTATUS WINAPI NtQueryTimer(
+    HANDLE TimerHandle,
+    TIMER_INFORMATION_CLASS TimerInformationClass,
+    PVOID TimerInformation,
+    ULONG Length,
+    PULONG ReturnLength)
+{
+    TIMER_BASIC_INFORMATION * basic_info = (TIMER_BASIC_INFORMATION *)TimerInformation;
+    NTSTATUS status;
+    LARGE_INTEGER now;
+
+    TRACE("(%p,%d,%p,0x%08lx,%p)\n", TimerHandle, TimerInformationClass,
+       TimerInformation, Length, ReturnLength);
+
+    switch (TimerInformationClass)
+    {
+    case TimerBasicInformation:
+        if (Length < sizeof(TIMER_BASIC_INFORMATION))
+            return STATUS_INFO_LENGTH_MISMATCH;
+
+        SERVER_START_REQ(get_timer_info)
+        {
+            req->handle = TimerHandle;
+            status = wine_server_call(req);
+
+            /* convert server time to absolute NTDLL time */
+            NTDLL_from_server_timeout(&basic_info->RemainingTime, &reply->when);
+            basic_info->TimerState = reply->signaled;
+        }
+        SERVER_END_REQ;
+
+        /* convert from absolute into relative time */
+        NtQuerySystemTime(&now);
+        if (now.QuadPart > basic_info->RemainingTime.QuadPart)
+            basic_info->RemainingTime.QuadPart = 0;
+        else
+            basic_info->RemainingTime.QuadPart -= now.QuadPart;
+
+        if (ReturnLength) *ReturnLength = sizeof(TIMER_BASIC_INFORMATION);
+
+        return status;
+    }
+
+    FIXME("Unhandled class %d\n", TimerInformationClass);
+    return STATUS_INVALID_INFO_CLASS;
+}
+
+
+/******************************************************************************
  * NtQueryTimerResolution [NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryTimerResolution(OUT ULONG* min_resolution,

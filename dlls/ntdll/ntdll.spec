@@ -187,7 +187,7 @@
 @ stub NtQuerySystemEnvironmentValue
 @ stdcall NtQuerySystemInformation(long long long long)
 @ stdcall NtQuerySystemTime(ptr)
-@ stub NtQueryTimer
+@ stdcall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall NtQueryTimerResolution(long long long)
 @ stdcall NtQueryValueKey(long long long long long long)
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)

@@ -209,6 +209,7 @@ DECL_HANDLER(create_timer);
 DECL_HANDLER(open_timer);
 DECL_HANDLER(set_timer);
 DECL_HANDLER(cancel_timer);
+DECL_HANDLER(get_timer_info);
 DECL_HANDLER(get_thread_context);
 DECL_HANDLER(set_thread_context);
 DECL_HANDLER(get_selector_entry);
@@ -393,6 +394,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_timer,
     (req_handler)req_set_timer,
     (req_handler)req_cancel_timer,
+    (req_handler)req_get_timer_info,
     (req_handler)req_get_thread_context,
     (req_handler)req_set_thread_context,
     (req_handler)req_get_selector_entry,

@@ -241,3 +241,18 @@ DECL_HANDLER(cancel_timer)
         release_object( timer );
     }
 }
+
+/* Get information on a waitable timer */
+DECL_HANDLER(get_timer_info)
+{
+    struct timer *timer;
+
+    if ((timer = (struct timer *)get_handle_obj( current->process, req->handle,
+                                                 TIMER_QUERY_STATE, &timer_ops )))
+    {
+        reply->when.sec  = timer->when.tv_sec;
+        reply->when.usec = timer->when.tv_usec;
+        reply->signaled  = timer->signaled;
+        release_object( timer );
+    }
+}

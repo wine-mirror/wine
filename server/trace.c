@@ -1692,6 +1692,19 @@ static void dump_cancel_timer_reply( const struct cancel_timer_reply *req )
     fprintf( stderr, " signaled=%d", req->signaled );
 }
 
+static void dump_get_timer_info_request( const struct get_timer_info_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_timer_info_reply( const struct get_timer_info_reply *req )
+{
+    fprintf( stderr, " when=" );
+    dump_abs_time( &req->when );
+    fprintf( stderr, "," );
+    fprintf( stderr, " signaled=%d", req->signaled );
+}
+
 static void dump_get_thread_context_request( const struct get_thread_context_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -2695,6 +2708,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_timer_request,
     (dump_func)dump_set_timer_request,
     (dump_func)dump_cancel_timer_request,
+    (dump_func)dump_get_timer_info_request,
     (dump_func)dump_get_thread_context_request,
     (dump_func)dump_set_thread_context_request,
     (dump_func)dump_get_selector_entry_request,
@@ -2876,6 +2890,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_timer_reply,
     (dump_func)dump_set_timer_reply,
     (dump_func)dump_cancel_timer_reply,
+    (dump_func)dump_get_timer_info_reply,
     (dump_func)dump_get_thread_context_reply,
     (dump_func)0,
     (dump_func)dump_get_selector_entry_reply,
@@ -3057,6 +3072,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_timer",
     "set_timer",
     "cancel_timer",
+    "get_timer_info",
     "get_thread_context",
     "set_thread_context",
     "get_selector_entry",

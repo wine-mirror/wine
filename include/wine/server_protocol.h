@@ -1928,6 +1928,19 @@ struct cancel_timer_reply
 };
 
 
+struct get_timer_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_timer_info_reply
+{
+    struct reply_header __header;
+    abs_time_t   when;
+    int          signaled;
+};
+
+
 
 struct get_thread_context_request
 {
@@ -3239,6 +3252,7 @@ enum request
     REQ_open_timer,
     REQ_set_timer,
     REQ_cancel_timer,
+    REQ_get_timer_info,
     REQ_get_thread_context,
     REQ_set_thread_context,
     REQ_get_selector_entry,
@@ -3424,6 +3438,7 @@ union generic_request
     struct open_timer_request open_timer_request;
     struct set_timer_request set_timer_request;
     struct cancel_timer_request cancel_timer_request;
+    struct get_timer_info_request get_timer_info_request;
     struct get_thread_context_request get_thread_context_request;
     struct set_thread_context_request set_thread_context_request;
     struct get_selector_entry_request get_selector_entry_request;
@@ -3607,6 +3622,7 @@ union generic_reply
     struct open_timer_reply open_timer_reply;
     struct set_timer_reply set_timer_reply;
     struct cancel_timer_reply cancel_timer_reply;
+    struct get_timer_info_reply get_timer_info_reply;
     struct get_thread_context_reply get_thread_context_reply;
     struct set_thread_context_reply set_thread_context_reply;
     struct get_selector_entry_reply get_selector_entry_reply;
@@ -3681,6 +3697,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 152
+#define SERVER_PROTOCOL_VERSION 153
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

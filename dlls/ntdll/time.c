@@ -398,6 +398,18 @@ void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
 }
 
 
+/***********************************************************************
+ *              NTDLL_from_server_timeout
+ *
+ * Convert a timeval struct from the server into an NTDLL timeout.
+ */
+void NTDLL_from_server_timeout( LARGE_INTEGER *timeout, const abs_time_t *when )
+{
+    timeout->QuadPart = when->sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    timeout->QuadPart += when->usec * 10;
+}
+
+
 /******************************************************************************
  *       RtlTimeToTimeFields [NTDLL.@]
  *
