@@ -163,8 +163,8 @@
  176 stdcall -noname SHSetInstanceExplorer(long)
  177 stub DAD_SetDragImageFromListView
  178 stdcall -noname SHObjectProperties(long long wstr wstr)
- 179 stdcall SHGetNewLinkInfoA(str str ptr long long)
- 180 stdcall SHGetNewLinkInfoW(wstr wstr ptr long long)
+ 179 stdcall -noname SHGetNewLinkInfoA(str str ptr long long)
+ 180 stdcall -noname SHGetNewLinkInfoW(wstr wstr ptr long long)
  181 stdcall -noname RegisterShellHook(long long)
  182 varargs -noname ShellMessageBoxW(long long long str long)
  183 varargs -noname ShellMessageBoxA(long long long str long)
@@ -249,7 +249,7 @@
 
 # >= NT5
  714 stdcall @(ptr) SHELL32_714 # PathIsTemporaryW
- 730 stdcall RestartDialogEx(long wstr long long)
+ 730 stdcall -noname RestartDialogEx(long wstr long long)
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
