@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll
 SOVERSION = 1.0
+EXTRALIBS = -lwine_unicode
 
 C_SRCS = \
 	critsection.c \

@@ -24,7 +24,7 @@ all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 # Rules for .so files
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine -lwine_unicode $(EXTRALIBS)
+	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(EXTRALIBS)
 
 $(ALLNAMES): lib$(MODULE).so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
@@ -42,7 +42,7 @@ $(ALTNAMES:%=lib%.a): lib$(MODULE).a
 # Rules for checking that no imports are missing
 
 checklink:: lib$(MODULE).$(LIBEXT)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(TOPOBJDIR) -lwine -lwine_unicode $(EXTRALIBS) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(TOPOBJDIR) -lwine $(EXTRALIBS) $(LIBS) && $(RM) checklink
 
 # Rules for debug channels
 
