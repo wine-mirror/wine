@@ -231,7 +231,6 @@ typedef struct tagME_TextEditor
   ME_Cursor *pCursors;
   int nCursors;
   SIZE sizeWindow;
-  int nScrollPos;
   int nTotalLength, nLastTotalLength;
   int nUDArrowX;
   int nSequence;
@@ -247,6 +246,7 @@ typedef struct tagME_TextEditor
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
   ME_OutStream *pStream;
   BOOL bScrollX, bScrollY;
+  int nScrollPosY;
 } ME_TextEditor;
 
 typedef struct tagME_Context

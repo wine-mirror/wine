@@ -191,7 +191,7 @@ void ME_Repaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
 void ME_UpdateScrollBar(ME_TextEditor *editor);
-int ME_GetScrollPos(ME_TextEditor *editor);
+int ME_GetYScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
 void ME_Scroll(ME_TextEditor *editor, int cx, int cy);

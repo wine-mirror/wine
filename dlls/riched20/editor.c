@@ -564,7 +564,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pCursors[1].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
   ed->pCursors[1].nOffset = 0;
   ed->nLastTotalLength = ed->nTotalLength = 0;
-  ed->nScrollPos = 0;
   ed->nUDArrowX = -1;
   ed->nSequence = 0;
   ed->rgbBackColor = -1;
@@ -575,6 +574,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
+  ed->nScrollPosY = 0;
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -1131,16 +1131,40 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_VSCROLL: 
   {
+    int nPos = editor->nScrollPosY;
     si.cbSize = sizeof(SCROLLINFO);
     si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE|SIF_TRACKPOS;
     GetScrollInfo(hWnd, SB_VERT, &si);
     switch(LOWORD(wParam)) {
-    case SB_THUMBTRACK:
-      SetScrollPos(hWnd, SB_VERT, si.nTrackPos, FALSE);
-      ScrollWindow(hWnd, 0, si.nPos-si.nTrackPos, NULL, NULL);
-      /* InvalidateRect(hWnd, NULL, TRUE); */
-      UpdateWindow(hWnd);
+    case SB_LINEUP:
+      nPos -= 24; /* FIXME follow the original */
+      if (nPos<0) nPos = 0;
       break;
+    case SB_LINEDOWN:
+    {
+      int nEnd = editor->nTotalLength - editor->sizeWindow.cy;
+      nPos += 24; /* FIXME follow the original */
+      if (nPos>=nEnd) nPos = nEnd;
+      break;
+    }
+    case SB_PAGEUP:
+      nPos -= editor->sizeWindow.cy;
+      if (nPos<0) nPos = 0;
+      break;
+    case SB_PAGEDOWN:
+      nPos += editor->sizeWindow.cy;
+      if (nPos>=editor->nTotalLength) nPos = editor->nTotalLength-1;
+      break;
+    case SB_THUMBTRACK:
+    case SB_THUMBPOSITION:
+      nPos = si.nTrackPos;
+      break;
+    }
+    if (nPos != editor->nScrollPosY) {
+      ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, FALSE);
+      UpdateWindow(hWnd);
     }
     break;
   }

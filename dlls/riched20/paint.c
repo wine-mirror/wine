@@ -28,7 +28,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpda
   int yoffset;
 
   editor->nSequence++;
-  yoffset = GetScrollPos(editor->hWnd, SB_VERT);
+  yoffset = ME_GetYScrollPos(editor);
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
   ME_MoveCaret(editor);
@@ -386,9 +386,12 @@ void ME_Scroll(ME_TextEditor *editor, int cx, int cy)
   si.cbSize = sizeof(SCROLLINFO);
   si.fMask = SIF_POS;
   GetScrollInfo(hWnd, SB_VERT, &si);
-  si.nPos -= cy;
+  si.nPos = editor->nScrollPosY -= cy;
   SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
-  ScrollWindow(hWnd, cx, cy, NULL, NULL);
+  if (abs(cy) > editor->sizeWindow.cy)
+    InvalidateRect(editor->hWnd, NULL, TRUE);
+  else
+    ScrollWindowEx(hWnd, cx, cy, NULL, NULL, NULL, NULL, SW_ERASE|SW_INVALIDATE);
 }
 
 void ME_UpdateScrollBar(ME_TextEditor *editor)
@@ -436,15 +439,16 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
       si.nPos = 0;
     }
     TRACE("min=%d max=%d page=%d pos=%d shift=%d\n", si.nMin, si.nMax, si.nPage, si.nPos, nScroll);
+    editor->nScrollPosY = si.nPos;
     SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
     if (nScroll)
       ScrollWindow(hWnd, 0, -nScroll, NULL, NULL);
   }
 }
 
-int ME_GetScrollPos(ME_TextEditor *editor)
+int ME_GetYScrollPos(ME_TextEditor *editor)
 {
-  return GetScrollPos(editor->hWnd, SB_VERT);
+  return editor->nScrollPosY;
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
@@ -459,14 +463,16 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
   
   y = pPara->member.para.nYPos+pRow->member.row.nYPos;
   yheight = pRow->member.row.nHeight;
-  yold = ME_GetScrollPos(editor);
+  yold = ME_GetYScrollPos(editor);
   yrel = y - yold;
   if (yrel < 0) {
+    editor->nScrollPosY = y;
     SetScrollPos(hWnd, SB_VERT, y, TRUE);
     ScrollWindow(hWnd, 0, -yrel, NULL, NULL);
     UpdateWindow(hWnd);
   } else if (yrel + yheight > editor->sizeWindow.cy) {
     int newy = y+yheight-editor->sizeWindow.cy;
+    editor->nScrollPosY = newy;
     SetScrollPos(hWnd, SB_VERT, newy, TRUE);
     ScrollWindow(hWnd, 0, -(newy-yold), NULL, NULL);
     UpdateWindow(hWnd);

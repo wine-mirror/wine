@@ -112,7 +112,7 @@ void ME_MoveCaret(ME_TextEditor *editor)
       }
       CreateCaret(editor->hWnd, NULL, 0, pSizeRun->member.run.nAscent+pSizeRun->member.run.nDescent);
       SetCaretPos(run->member.run.pt.x+sz.cx,
-        para->member.para.nYPos+row->member.row.nBaseline+pSizeRun->member.run.pt.y-pSizeRun->member.run.nAscent-GetScrollPos(editor->hWnd, SB_VERT));
+        para->member.para.nYPos+row->member.row.nBaseline+pSizeRun->member.run.pt.y-pSizeRun->member.run.nAscent-ME_GetYScrollPos(editor));
     } else {
       assert(0 == "Wrapped paragraph run without a row?");
       CreateCaret(editor->hWnd, NULL, 0, 10);
@@ -532,7 +532,7 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
   
   editor->nUDArrowX = -1;
   
-  y += GetScrollPos(editor->hWnd, SB_VERT);  
+  y += ME_GetYScrollPos(editor);
 
   tmp_cursor = editor->pCursors[0];
   is_selection = ME_IsSelection(editor);
@@ -563,7 +563,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 {
   ME_Cursor tmp_cursor;
   
-  y += GetScrollPos(editor->hWnd, SB_VERT);  
+  y += ME_GetYScrollPos(editor);
 
   tmp_cursor = editor->pCursors[0];
   if (!ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd))
@@ -697,6 +697,61 @@ void ME_ArrowDown(ME_TextEditor *editor, ME_Cursor *pCursor)
   assert(pCursor->pRun->type == diRun);
 }
 
+void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
+{
+  ME_DisplayItem *pRun = pCursor->pRun;
+  ME_DisplayItem *pLast, *p;
+  int x, y, ys, yd, yp, yprev;
+  ME_Cursor tmp_curs = *pCursor;
+  
+  x = ME_GetXForArrow(editor, pCursor);
+  if (!pCursor->nOffset && editor->bCaretAtEnd)
+    pRun = ME_FindItemBack(pRun, diRun);
+  
+  p = ME_FindItemBack(pRun, diStartRowOrParagraph);
+  assert(p->type == diStartRow);
+  yp = ME_FindItemBack(p, diParagraph)->member.para.nYPos;
+  yprev = ys = y = yp + p->member.row.nYPos;
+  yd = y - editor->sizeWindow.cy;
+  pLast = p;
+  
+  do {
+    p = ME_FindItemBack(p, diStartRowOrParagraph);
+    if (!p)
+      break;
+    if (p->type == diParagraph) { /* crossing paragraphs */
+      if (p->member.para.prev_para == NULL)
+        break;
+      yp = p->member.para.prev_para->member.para.nYPos;
+      continue;
+    }
+    y = yp + p->member.row.nYPos;
+    if (y < yd)
+      break;
+    pLast = p;
+    yprev = y;
+  } while(1);
+  
+  pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset, &editor->bCaretAtEnd);
+  ME_UpdateSelection(editor, &tmp_curs);
+  if (yprev < editor->sizeWindow.cy)
+  {
+    ME_EnsureVisible(editor, ME_FindItemFwd(editor->pBuffer->pFirst, diRun));
+    ME_Repaint(editor);
+  }
+  else {
+    ME_Scroll(editor, 0, ys-yprev);
+    ME_Repaint(editor);
+  }
+  assert(pCursor->pRun);
+  assert(pCursor->pRun->type == diRun);
+}
+
+/* FIXME: in the original RICHEDIT, PageDown always scrolls by the same amount 
+   of pixels, even if it makes the scroll bar position exceed its normal maximum.
+   In such a situation, clicking the scrollbar restores its position back to the
+   normal range (ie. sets it to (doclength-screenheight)). */
+
 void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
@@ -738,8 +793,8 @@ void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
     ME_Repaint(editor);
   }
   else {
-    ME_Repaint(editor);
     ME_Scroll(editor, 0, ys-yprev);
+    ME_Repaint(editor);
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
@@ -865,7 +920,6 @@ BOOL ME_UpdateSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
     {
       editor->pCursors[1] = *pTempCursor;
       return TRUE;
-/*      ME_EnsureVisible(editor, editor->pCursors[0].pRun); */
     }
   }
 
@@ -939,6 +993,11 @@ BOOL ME_ArrowKey(ME_TextEditor *editor, int nVKey, int nCtrl)
       ME_ArrowDown(editor, p);
       ME_ClearTempStyle(editor);
       ME_RepaintSelection(editor, &tmp_curs);
+      ME_SendSelChange(editor);
+      return TRUE;
+    case VK_PRIOR:
+      ME_ArrowPageUp(editor, p);
+      ME_ClearTempStyle(editor);
       ME_SendSelChange(editor);
       return TRUE;
     case VK_NEXT:
