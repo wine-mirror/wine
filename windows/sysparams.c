@@ -171,6 +171,10 @@ static const WCHAR Desktop[]=                                {'D','e','s','k','t
 static const WCHAR Pattern[]=                                {'P','a','t','t','e','r','n',0};
 static const WCHAR MenuFont[]=                               {'M','e','n','u','F','o','n','t',0};
 static const WCHAR MenuFontSize[]=                           {'M','e','n','u','F','o','n','t','S','i','z','e',0};
+static const WCHAR StatusFont[]=                             {'S','t','a','t','u','s','F','o','n','t',0};
+static const WCHAR StatusFontSize[]=                         {'S','t','a','t','u','s','F','o','n','t','S','i','z','e',0};
+static const WCHAR MessageFont[]=                            {'M','e','s','s','a','g','e','F','o','n','t',0};
+static const WCHAR MessageFontSize[]=                        {'M','e','s','s','a','g','e','F','o','n','t','S','i','z','e',0};
 static const WCHAR System[]=                                 {'S','y','s','t','e','m',0};
 static const WCHAR IconTitleSize[]=                          {'I','c','o','n','T','i','t','l','e','S','i','z','e',0};
 static const WCHAR IconTitleFaceName[]=                      {'I','c','o','n','T','i','t','l','e','F','a','c','e','N','a','m','e',0};
@@ -1311,9 +1315,19 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    /* status bar font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
 				   (LPVOID)&(lpnm->lfStatusFont), 0 );
+            GetProfileStringW( Desktop, StatusFont, lpnm->lfCaptionFont.lfFaceName,
+                               lpnm->lfStatusFont.lfFaceName, LF_FACESIZE );
+            lpnm->lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
+            lpnm->lfStatusFont.lfWeight = FW_NORMAL;
+
 	    /* message font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
 				   (LPVOID)&(lpnm->lfMessageFont), 0 );
+            GetProfileStringW( Desktop, MessageFont, lpnm->lfCaptionFont.lfFaceName,
+                               lpnm->lfMessageFont.lfFaceName, LF_FACESIZE );
+            lpnm->lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
+            lpnm->lfMessageFont.lfWeight = FW_NORMAL;
+
 	}
 	else
 	{
