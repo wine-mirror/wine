@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_STRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -15,4 +14,3 @@ C_SRCS = \
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

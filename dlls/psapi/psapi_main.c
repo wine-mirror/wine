@@ -133,7 +133,7 @@ BOOL WINAPI EnumProcessModules(
 	DWORD	count;
 	DWORD	countMax;
 
-	FIXME("(hProcess=0x%08x, %p, %ld, %p)\n",
+	FIXME("(hProcess=%p, %p, %ld, %p)\n",
 		hProcess, lphModule, cb, lpcbNeeded );
 
 	if ( lphModule == NULL )
@@ -144,7 +144,7 @@ BOOL WINAPI EnumProcessModules(
 	pid = get_pid_from_process_handle(hProcess);
 	if ( pid == 0 )
 	{
-		FIXME("no pid for hProcess 0x%08x\n",hProcess);
+		FIXME("no pid for hProcess %p\n",hProcess);
 		return FALSE;
 	}
 
@@ -248,7 +248,7 @@ DWORD WINAPI GetDeviceDriverFileNameW(
 DWORD WINAPI GetMappedFileNameA(
   HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x, %p, %s, %ld): stub\n",
+  FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
     hProcess, lpv, debugstr_a(lpFilename), nSize
   );
 
@@ -264,7 +264,7 @@ DWORD WINAPI GetMappedFileNameA(
 DWORD WINAPI GetMappedFileNameW(
   HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x, %p, %s, %ld): stub\n",
+  FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
     hProcess, lpv, debugstr_w(lpFilename), nSize
   );
 
@@ -280,7 +280,7 @@ DWORD WINAPI GetMappedFileNameW(
 DWORD WINAPI GetModuleBaseNameA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x, hModule=0x%08x, %s, %ld): stub\n",
+  FIXME("(hProcess=%p, hModule=%p, %s, %ld): stub\n",
     hProcess, hModule, debugstr_a(lpBaseName), nSize
   );
 
@@ -296,7 +296,7 @@ DWORD WINAPI GetModuleBaseNameA(
 DWORD WINAPI GetModuleBaseNameW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpBaseName, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x, hModule=0x%08x, %s, %ld): stub\n",
+  FIXME("(hProcess=%p, hModule=%p, %s, %ld): stub\n",
     hProcess, hModule, debugstr_w(lpBaseName), nSize);
 
   if(lpBaseName && nSize)
@@ -311,7 +311,7 @@ DWORD WINAPI GetModuleBaseNameW(
 DWORD WINAPI GetModuleFileNameExA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x,hModule=0x%08x, %s, %ld): stub\n",
+  FIXME("(hProcess=%p,hModule=%p, %s, %ld): stub\n",
     hProcess, hModule, debugstr_a(lpFilename), nSize
   );
 
@@ -330,7 +330,7 @@ DWORD WINAPI GetModuleFileNameExA(
 DWORD WINAPI GetModuleFileNameExW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-  FIXME("(hProcess=0x%08x,hModule=0x%08x, %s, %ld): stub\n",
+  FIXME("(hProcess=%p,hModule=%p, %s, %ld): stub\n",
     hProcess, hModule, debugstr_w(lpFilename), nSize
   );
 
@@ -349,7 +349,7 @@ DWORD WINAPI GetModuleFileNameExW(
 BOOL WINAPI GetModuleInformation(
   HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
 {
-  FIXME("(hProcess=0x%08x, hModule=0x%08x, %p, %ld): stub\n",
+  FIXME("(hProcess=%p, hModule=%p, %p, %ld): stub\n",
     hProcess, hModule, lpmodinfo, cb
   );
 
@@ -364,7 +364,7 @@ BOOL WINAPI GetModuleInformation(
 BOOL WINAPI GetProcessMemoryInfo(
   HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
 {
-  FIXME("(hProcess=0x%08x, %p, %ld): stub\n",
+  FIXME("(hProcess=%p, %p, %ld): stub\n",
     Process, ppsmemCounters, cb
   );
 
@@ -379,7 +379,7 @@ BOOL WINAPI GetProcessMemoryInfo(
 BOOL WINAPI GetWsChanges(
   HANDLE hProcess, PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
 {
-  FIXME("(hProcess=0x%08x, %p, %ld): stub\n",
+  FIXME("(hProcess=%p, %p, %ld): stub\n",
     hProcess, lpWatchInfo, cb
   );
 
@@ -393,7 +393,7 @@ BOOL WINAPI GetWsChanges(
  */
 BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 {
-  FIXME("(hProcess=0x%08x): stub\n", hProcess);
+  FIXME("(hProcess=%p): stub\n", hProcess);
 
   return TRUE;
 }
@@ -406,15 +406,10 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
  */
 BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
 {
-  FIXME("(hProcess=0x%08x, %p, %ld)\n", hProcess, pv, cb);
+  FIXME("(hProcess=%p, %p, %ld)\n", hProcess, pv, cb);
 
   if(pv && cb)
     ((DWORD *) pv)[0] = 0; /* Empty WorkingSet */
 
   return TRUE;
 }
-
-
-
-
-
