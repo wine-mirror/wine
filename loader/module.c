@@ -837,14 +837,15 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
             *p = '\0';
 #endif
     }
-    if (strlen(name)) {
-        get_executable_name(lpCommandLine, cmdline, sizeof(cmdline), &p, TRUE);
-        strcat(cmdline, p);
-	    } else {
-        get_executable_name(lpCommandLine, name, sizeof(name), &p, TRUE);
-        strcpy(cmdline, name);
-        strcat(cmdline, p);
-    }
+    if (lpCommandLine) 
+        if (strlen(name)) {
+            get_executable_name(lpCommandLine, cmdline, sizeof(cmdline), &p, TRUE);
+            strcat(cmdline, p);
+                } else {
+            get_executable_name(lpCommandLine, name, sizeof(name), &p, TRUE);
+            strcpy(cmdline, name);
+            strcat(cmdline, p);
+        }
 
     if (!strchr(name, '\\') && !strchr(name, '.'))
         strcat(name, ".exe");
