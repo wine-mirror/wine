@@ -1919,7 +1919,7 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
 /* DGA2 event handlers */
 static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
 {
-  MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
+  X11DRV_MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
 		   event->dx, event->dy,
 		   X11DRV_EVENT_XStateToKeyState( event->state ), 
 		   event->time, DGAhwnd );
@@ -1950,7 +1950,7 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
       break;
   }
   
-  MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
@@ -1978,7 +1978,7 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
       break;
   }
   
-  MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 #endif
