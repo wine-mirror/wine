@@ -2692,11 +2692,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         return FALSE;
     }
 
-    WIN_RestoreWndsLock( locks );
-
-    if (msg.message == WM_PAINT)  /* clear internal paint flag */
-        RedrawWindow( msg.hwnd, NULL, 0, RDW_NOINTERNALPAINT | RDW_NOCHILDREN );
-
     if ((queue = QUEUE_Current()))
     {
         queue->GetMessageTimeVal = msg.time;
@@ -2705,6 +2700,8 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     }
 
     HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
+
+    WIN_RestoreWndsLock( locks );
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used

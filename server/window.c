@@ -589,20 +589,22 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
 }
 
 
-/* find a window that needs to receive a WM_PAINT */
+/* find a window that needs to receive a WM_PAINT; also clear its internal paint flag */
 user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread )
 {
     struct window *ptr, *win = find_child_to_repaint( top_window, thread );
 
-    if (win)
+    if (win && parent)
     {
-        if (!parent) return win->handle;
         /* check that it is a child of the specified parent */
         for (ptr = win; ptr; ptr = ptr->parent)
-            if (ptr->handle == parent) return win->handle;
+            if (ptr->handle == parent) break;
         /* otherwise don't return any window, we don't repaint a child before its parent */
+        if (!ptr) win = NULL;
     }
-    return 0;
+    if (!win) return 0;
+    win->paint_flags &= ~PAINT_INTERNAL;
+    return win->handle;
 }
 
 
