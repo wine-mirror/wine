@@ -87,7 +87,7 @@ HKLM,Software\Microsoft\Windows NT\CurrentVersion\Fonts,,,""
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009,"Installed",,"1"
 
 [Debugger]
-HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Debugger",,"winedbg --debugmsg -all %ld %ld"
+HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Debugger",,"winedbg %ld %ld"
 HKLM,Software\Microsoft\Windows NT\CurrentVersion\AeDebug,"Auto",,"1"
 
 [Desktop]

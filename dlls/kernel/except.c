@@ -307,7 +307,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     else
     {
         cmdline = HeapAlloc(GetProcessHeap(), 0, 80);
-        sprintf(cmdline, "winedbg --debugmsg -all --auto %ld %ld",
+        sprintf(cmdline, "winedbg --auto %ld %ld",
                 GetCurrentProcessId(), (ULONG_PTR)hEvent);
     }
 
