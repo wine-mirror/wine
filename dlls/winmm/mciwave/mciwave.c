@@ -28,7 +28,7 @@ typedef struct {
     MCI_WAVE_OPEN_PARMSA 	openParms;
     LPWAVEFORMATEX		lpWaveFormat;
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
-    WORD			dwStatus;	/* one from MCI_MODE_xxxx */
+    volatile WORD		dwStatus;	/* one from MCI_MODE_xxxx */
     DWORD			dwMciTimeFormat;/* One of the supported MCI_FORMAT_xxxx */
     DWORD			dwFileOffset;   /* Offset of chunk in mmio file */
     DWORD			dwLength;	/* number of bytes in chunk for playing */
@@ -432,7 +432,7 @@ static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 	    if (oldStat == MCI_MODE_PAUSE)
 		dwRet = (wmw->fInput) ? waveInReset(wmw->hWave) : waveOutReset(wmw->hWave);
 	}
-	while (((volatile WINE_MCIWAVE*)wmw)->dwStatus != MCI_MODE_STOP)
+	while (wmw->dwStatus != MCI_MODE_STOP)
 	    Sleep(10);
 	break;
     }
@@ -550,17 +550,24 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	return MCIERR_FILE_NOT_FOUND;
     }
     
-    if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
-				    (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
-    }
-
-    if (wmw->dwStatus != MCI_MODE_STOP) {
 	if (wmw->dwStatus == MCI_MODE_PAUSE) {
 	    /* FIXME: parameters (start/end) in lpParams may not be used */
 	    return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
 	}
+    
+    /** This function will be called again by a thread when async is used.
+     * We have to set MCI_MODE_PLAY before we do this so that the app can spin
+     * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
+     */
+    if ((wmw->dwStatus != MCI_MODE_STOP) && ((wmw->dwStatus != MCI_MODE_PLAY) && (dwFlags & MCI_WAIT))) {
 	return MCIERR_INTERNAL;
+    }
+
+    wmw->dwStatus = MCI_MODE_PLAY;
+    
+    if (!(dwFlags & MCI_WAIT)) {
+	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
+				    (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     end = 0xFFFFFFFF;
@@ -625,7 +632,6 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Playing (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, left);
-    wmw->dwStatus = MCI_MODE_PLAY;
     
     /* FIXME: this doesn't work if wmw->dwPosition != 0 */
     while (left > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
