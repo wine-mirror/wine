@@ -506,7 +506,7 @@ static int COND_IsAlpha( WCHAR x )
 
 static int COND_IsNumber( WCHAR x )
 {
-    return( (( x >= '0' ) && ( x <= '9' ))  || (x =='-') );
+    return( (( x >= '0' ) && ( x <= '9' ))  || (x =='-') || (x =='.') );
 }
 
 

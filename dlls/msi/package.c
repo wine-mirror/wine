@@ -171,7 +171,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     WCHAR pth[MAX_PATH];
     OSVERSIONINFOA OSVersion;
     DWORD verval;
-    WCHAR verstr[10];
+    WCHAR verstr[10], msiver[10];
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -211,7 +211,10 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'S','e','r','v','i','c','e','P','a','c','k','L','e','v','e','l',0 };
     static const WCHAR szSix[] = {'6',0 };
 
-/* these need to be dynamically descovered sometime */
+    static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
+    static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
+
+/* these need to be dynamically discovered sometime */
 
     static const WCHAR ProgramMenuFolder[] = 
 {'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
@@ -267,7 +270,6 @@ PhysicalMemory
 Intel
 ShellAdvSupport
 DefaultUIFont
-VersionMsi
 VersionDatabase
 PackagecodeChanging
 ProductState
@@ -279,7 +281,7 @@ ColorBits
 RedirectedDllSupport
 Time
 Date
-Privilaged
+Privileged
 */
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
@@ -348,6 +350,9 @@ Privilaged
     MSI_SetPropertyW(package,szWinBuild,verstr);
     /* just fudge this */
     MSI_SetPropertyW(package,szSPL,szSix);
+
+    sprintfW( msiver, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
+    MSI_SetPropertyW( package, szVersionMsi, msiver );
 
     /* FIXME: these need to be set properly */
 
