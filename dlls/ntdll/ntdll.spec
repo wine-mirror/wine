@@ -993,3 +993,4 @@ type	win32
 983 stub _wtoi
 984 stub _wtol
 985 stub RtlSetPropertySetClassId
+986 stdcall NtPowerInformation(long long long long long) NtPowerInformation

@@ -532,3 +532,13 @@ NTSTATUS WINAPI NtDisplayString (
 	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), string->Buffer, string->Length, 0, 0);
 	return 0;
 }
+
+/******************************************************************************
+ *  NtPowerInformation				[NTDLL] 
+ * 
+ */
+NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
+{
+	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4,x5);
+	return 0;
+}
