@@ -29,7 +29,7 @@
 
 DEFAULT_DEBUG_CHANNEL(thread);
 
-#ifdef linux
+#if defined(linux) || defined(HAVE_CLONE)
 # ifdef HAVE_SCHED_H
 #  include <sched.h>
 # endif
@@ -40,7 +40,7 @@ DEFAULT_DEBUG_CHANNEL(thread);
 #  define CLONE_SIGHAND 0x00000800
 #  define CLONE_PID     0x00001000
 # endif  /* CLONE_VM */
-#endif  /* linux */
+#endif  /* linux || HAVE_CLONE */
 
 /***********************************************************************
  *           SYSDEPS_SetCurThread
@@ -91,7 +91,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
 {
 #ifdef ERRNO_LOCATION
 
-#ifdef linux
+#if defined(linux) || defined(HAVE_CLONE)
     const int flags = CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD;
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top, flags, teb ) < 0)
         return -1;
