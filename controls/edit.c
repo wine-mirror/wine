@@ -1699,13 +1699,13 @@ static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit)
 {
 	HLOCAL hNew32W;
 
-	if (size <= es->buffer_size)
-		return TRUE;
-
 	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
 		return FALSE;
 	}
+
+	if (size <= es->buffer_size)
+		return TRUE;
 
 	TRACE("trying to ReAlloc to %d+1 characters\n", size);
 
