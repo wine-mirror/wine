@@ -54,6 +54,7 @@ static void test_Heap(void)
     LPVOID mem1,mem1a,mem3;
     UCHAR *mem2,*mem2a;
     UINT error,i;
+    DWORD dwSize;
 
 /* Retreive the page size for this system */
     sysInfo.dwPageSize=0;
@@ -146,6 +147,26 @@ static void test_Heap(void)
    } else {
      ok(HeapFree(heap,(DWORD)NULL,mem2),"HeapFree failed");
    }
+
+   /* take just freed pointer */
+   if (mem1a)
+       mem1 = mem1a;
+
+   /* try to free it one more time */
+   HeapFree(heap, 0, mem1);
+
+   dwSize = HeapSize(heap, 0, mem1);
+   ok(dwSize == 0xFFFFFFFF, "The size");
+
+   /* 0-length buffer */
+   mem1 = HeapAlloc(heap, 0, 0);
+   ok(mem1 != NULL, "Reserved memory");
+
+   dwSize = HeapSize(heap, 0, mem1);
+   /* should work with 0-length buffer */
+   ok((dwSize >= 0) && (dwSize < 0xFFFFFFFF),
+      "The size of the 0-length buffer");
+   ok(HeapFree(heap, 0, mem1), "Freed the 0-length buffer");
 
 /* Check that HeapDestry works */
    ok(HeapDestroy(heap),"HeapDestroy failed");
