@@ -183,6 +183,21 @@ sub read_spec_files {
 	    $win32api->parse_spec_file("$wine_dir/$file");
 	}
     }
+
+    foreach my $self ($win16api, $win32api) {
+	my $function_forward = \%{$self->{FUNCTION_FORWARD}};
+	my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+	my $function_module = \%{$self->{FUNCTION_MODULE}};
+	
+	foreach my $forward_name (sort(keys(%$function_forward))) {
+	    $$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
+	    (my $from_module, my $to_module, my $external_name) = ($1, $2, $3);
+	    my $internal_name = $$function_internal_name{$external_name};
+	    if(defined($internal_name)) {
+		$$function_module{$internal_name} .= " & $from_module";
+	    }
+	}
+    }
 }
 
 sub read_all_spec_files {
@@ -215,8 +230,10 @@ sub parse_spec_file {
     my $output = \${$self->{OUTPUT}};
     my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
     my $function_stub = \%{$self->{FUNCTION_STUB}};
+    my $function_forward = \%{$self->{FUNCTION_FORWARD}};
     my $function_module = \%{$self->{FUNCTION_MODULE}};
     my $modules = \%{$self->{MODULES}};
     my $module_files = \%{$self->{MODULE_FILES}};
@@ -260,13 +277,19 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    # FIXME: Internal name existing more than once not handled properly
+	    $$function_internal_name{$external_name} = $internal_name;
 	    $$function_external_name{$internal_name} = $external_name;
 	    $$function_arguments{$internal_name} = $arguments;
 	    $$function_calling_convention{$internal_name} = $calling_convention;
 	    if(!$$function_module{$internal_name}) {
 		$$function_module{$internal_name} = "$module";
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
+		if(0) {
+		    $$output->write("$file: $external_name: the internal function ($internal_name) " . 
+				    "already belongs to a module ($$function_module{$internal_name})\n");
+		}
 		$$function_module{$internal_name} .= " & $module";
+
 	    }
 
 	    if(0 && $$options->spec_mismatch) {
@@ -319,6 +342,14 @@ sub parse_spec_file {
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
 		$$function_module{$internal_name} .= " & $module";
 	    }
+	} elsif(/^(\d+|@)\s+forward\s+(\S+)\s+(\S+)\.(\S+)$/) {
+	    $ordinal = $1;
+
+	    my $external_name = $2;
+	    my $forward_module = lc($3);
+	    my $forward_name = $4;
+
+	    $$function_forward{$external_name} = "$module:$forward_module.$forward_name";
 	} elsif(/^(\d+|@)\s+(equate|long|word|extern|forward)/) {
 	    # ignore
 	} else {

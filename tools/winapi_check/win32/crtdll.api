@@ -14,12 +14,12 @@ LONG
 UINT
 WCHAR
 clock_t
+size_t
 time_t
 
 %long # --forbidden
 
 int
-long
 unsigned int
 unsigned long
 
@@ -35,7 +35,6 @@ LPINT
 LPSTR *
 LPSTR **
 LPVOID
-LPWSTR *
 PCONTEXT
 PEXCEPTION_FRAME
 PEXCEPTION_FRAME *

@@ -3,18 +3,46 @@
 BOOL
 DWORD
 GROUP
+HANDLE
+HWND
 INT
 LONG
 SOCKET
 UINT
 WSAEVENT
+int
+u_long
+u_short
 
 %long # --forbidden
 
-int
+SOCKET16
 
 %ptr
 
+FARPROC
+INT *
 LPWSADATA
 LPWSANETWORKEVENTS
 LPWSAPROTOCOL_INFOA
+ULONG *
+char *
+struct WIN_hostent *
+struct WIN_protoent *
+struct WIN_servent *
+struct sockaddr *
+struct timeval *
+ws_fd_set32 *
+
+%str
+
+LPCSTR
+LPSTR
+
+%unknown
+
+struct in_addr
+
+%void
+
+void

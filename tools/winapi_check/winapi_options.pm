@@ -31,7 +31,7 @@ my %options = (
     "shared" =>  { default => 0, description => "show shared functions between Win16 and Win32" },
     "shared-segmented" =>  { default => 0, description => "segmented shared functions between Win16 and Win32 checking" },
 
-    "config" => { default => 1, description => "check configuration include consistancy" },
+    "config" => { default => 1, parent => "local", description => "check configuration include consistancy" },
     "config-unnessary" => { default => 0, parent => "config", description => "check for unnessary #include \"config.h\"" },
 
     "spec-mismatch" => { default => 0, description => "spec file mismatch checking" },
@@ -77,7 +77,7 @@ my %options = (
 
     "global" => { default => 1, description => "global checking" },
     "declared" => { default => 1, parent => "global", description => "declared checking" },
-    "implemented" => { default => 1, parent => "global", description => "implemented checking" },
+    "implemented" => { default => 1, parent => "local", description => "implemented checking" },
     "implemented-win32" => { default => 0, parent => "implemented", description => "implemented as win32 checking" },
     "include" => { default => 1, parent => "global", description => "include checking" },
     "headers" => { default => 0, parent => "global", description => "headers checking" },

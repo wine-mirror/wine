@@ -41,9 +41,9 @@ dlls/ddraw/dclipper
 
 dlls/dinput
 
-% dlls/dplayx/dplay.spec
+% dlls/dplay/dplay.spec
 
-dlls/dplayx
+dlls/dplay
 
 % dlls/dplayx/dplayx.spec
 
@@ -127,10 +127,6 @@ loader
 memory
 misc
 windows
-
-% dlls/kernel/wow32.spec
-
-relay32
 
 % dlls/kernel/wprocs.spec
 
@@ -267,6 +263,10 @@ dlls/rasapi32
 
 dlls/richedit
 
+% dlls/setupapi/setupapi.spec
+
+dlls/setupapi
+
 % dlls/setupx/setupx.spec
 
 dlls/setupx
@@ -281,14 +281,14 @@ misc
 dlls/shell32
 memory
 
-% dlls/shell32/shfolder.spec
+% dlls/shfolder/shfolder.spec
+
+dlls/shfolder
+
+% dlls/shlwapi/shlwapi.spec
 
 dlls/shell32
-
-% dlls/shell32/shlwapi.spec
-
-dlls/shell32
-memory
+dlls/shlwapi
 
 % dlls/sound/sound.spec
 
@@ -461,15 +461,20 @@ dlls/winsock
 
 dlls/winsock
 
-% dlls/winsock/wsock32.spec
+% dlls/wsock32/wsock32.spec
 
 dlls/winsock
+dlls/wsock32
 misc
 
 % dlls/winspool/winspool.drv.spec
 
 dlls/winspool
 win32
+
+% dlls/wow32/wow32.spec
+
+relay32
 
 % dlls/x11drv/x11drv.spec
 

@@ -447,6 +447,12 @@ foreach my $file ($options->c_files) {
 		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
 		    push @uc_modules32, "wine";
 
+		    foreach my $uc_module32 (@uc_modules32) {
+			if($uc_module32 =~ /^WS2_32$/) {
+			    push @uc_modules32, "WSOCK32"; 
+			}
+		    }
+
 		    $name1 = $internal_name;
 		    foreach my $uc_module32 (@uc_modules32) {
 			if($name1 =~ s/^$uc_module32\_//) { last; }

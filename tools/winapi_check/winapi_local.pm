@@ -122,7 +122,7 @@ sub check_function {
 	$#argument_types--;
     }
     
-    if($internal_name =~ /^CRTDLL__ftol|CRTDLL__CIpow$/) { # FIXME: Kludge
+    if($internal_name =~ /^NTDLL__ftol|NTDLL__CIpow$/) { # FIXME: Kludge
 	# ignore
     } else {
 	my $n = 0;

@@ -71,6 +71,7 @@ USHORT *
 VARIANT *
 VARIANTARG *
 VARIANT_BOOL *
+VARTYPE *
 char *
 double *
 short *
@@ -81,6 +82,7 @@ void **
 
 LPCOLESTR
 LPOLESTR
+LPSTR
 
 %void
 

@@ -1,0 +1,15 @@
+%long
+
+BOOL
+DWORD
+
+%ptr
+
+PSP_FILE_CALLBACK_A
+PSP_FILE_CALLBACK_W
+PVOID
+
+%str
+
+PCSTR
+PWSTR

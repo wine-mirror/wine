@@ -31,7 +31,10 @@ WCHAR
 %long # --forbidden
 
 int
+long
+size_t
 unsigned int
+unsigned long
 
 %longlong
 
@@ -90,7 +93,6 @@ PVOID *
 PWCHAR
 VOID *
 struct _TEB *
-va_list
 void *
 
 %str
