@@ -550,7 +550,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen
 /***********************************************************************
  *           GetTempPathA   (KERNEL32.@)
  */
-UINT WINAPI GetTempPathA( UINT count, LPSTR path )
+DWORD WINAPI GetTempPathA( DWORD count, LPSTR path )
 {
     WCHAR pathW[MAX_PATH];
     UINT ret;
@@ -572,14 +572,14 @@ UINT WINAPI GetTempPathA( UINT count, LPSTR path )
 /***********************************************************************
  *           GetTempPathW   (KERNEL32.@)
  */
-UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
+DWORD WINAPI GetTempPathW( DWORD count, LPWSTR path )
 {
     static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
     static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
     WCHAR tmp_path[MAX_PATH];
     UINT ret;
 
-    TRACE("%u,%p\n", count, path);
+    TRACE("%lu,%p\n", count, path);
 
     if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )))
         if (!(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )))

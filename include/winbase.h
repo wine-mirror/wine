@@ -1809,8 +1809,8 @@ DWORD       WINAPI GetTickCount(void);
 UINT        WINAPI GetTempFileNameA(LPCSTR,LPCSTR,UINT,LPSTR);
 UINT        WINAPI GetTempFileNameW(LPCWSTR,LPCWSTR,UINT,LPWSTR);
 #define     GetTempFileName WINELIB_NAME_AW(GetTempFileName)
-UINT        WINAPI GetTempPathA(UINT,LPSTR);
-UINT        WINAPI GetTempPathW(UINT,LPWSTR);
+DWORD       WINAPI GetTempPathA(DWORD,LPSTR);
+DWORD       WINAPI GetTempPathW(DWORD,LPWSTR);
 #define     GetTempPath WINELIB_NAME_AW(GetTempPath)
 DWORD       WINAPI GetVersion(void);
 BOOL        WINAPI GetVersionExA(OSVERSIONINFOA*);
