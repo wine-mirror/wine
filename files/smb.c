@@ -236,7 +236,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     if(len<=0)
         goto err;
 
-    r = sendto(fd, buffer, len, 0, &sin, sizeof sin);
+    r = sendto(fd, buffer, len, 0, (struct sockaddr*)&sin, sizeof sin);
     if(r<0)
     {
         FIXME("Error sending packet\n");
@@ -257,7 +257,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     TRACE("Got response!\n");
 
     fromsize = sizeof (fromaddr);
-    r = recvfrom(fd, buffer, sizeof buffer, 0, &fromaddr, &fromsize);
+    r = recvfrom(fd, buffer, sizeof buffer, 0, (struct sockaddr*)&fromaddr, &fromsize);
     if(r<0)
         goto err;
 
@@ -1327,7 +1327,7 @@ connect:
         unsigned char *x = (unsigned char *)&sin.sin_addr;
         TRACE("Connecting to %d.%d.%d.%d ...\n", x[0],x[1],x[2],x[3]);
     }
-    r = connect(fd, &sin, sizeof sin);
+    r = connect(fd, (struct sockaddr*)&sin, sizeof sin);
 
     if(!NB_SessionReq(fd, "*SMBSERVER", "WINE"))
     {
