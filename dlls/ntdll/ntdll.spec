@@ -66,10 +66,10 @@
 @ stdcall NtAcceptConnectPort(ptr long ptr long long ptr)
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stub NtAccessCheckAndAuditAlarm
-@ stub NtAdjustGroupsToken
+@ stdcall NtAdjustGroupsToken(long long ptr long ptr ptr)
 @ stdcall NtAdjustPrivilegesToken(long long long long long long)
 @ stub NtAlertResumeThread
-@ stub NtAlertThread
+@ stdcall NtAlertThread(long)
 @ stdcall NtAllocateLocallyUniqueId(ptr)
 @ stdcall NtAllocateUuids(ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
@@ -650,15 +650,15 @@
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
-@ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustPrivilegesToken
+@ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustGroupsToken
 @ stdcall ZwAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 @ stub ZwAlertResumeThread
-@ stub ZwAlertThread
+@ stdcall ZwAlertThread(long) NtAlertThread
 @ stdcall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 @ stdcall ZwAllocateUuids(ptr ptr ptr) NtAllocateUuids
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stub ZwCallbackReturn
-@ stub ZwCancelIoFile
+@ stdcall ZwCancelIoFile(long ptr) NtCancelIoFile
 @ stdcall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall ZwClearEvent(long) NtClearEvent
 @ stdcall ZwClose(long) NtClose
@@ -686,7 +686,7 @@
 @ stdcall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 @ stub ZwCreateToken
 @ stdcall ZwDelayExecution(long ptr) NtDelayExecution
-@ stub ZwDeleteFile
+@ stdcall ZwDeleteFile(ptr) NtDeleteFile
 @ stdcall ZwDeleteKey(long) NtDeleteKey
 @ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile

@@ -150,7 +150,7 @@ NTSTATUS WINAPI NtOpenThreadToken(
 
 /******************************************************************************
  *  NtAdjustPrivilegesToken		[NTDLL.@]
- *  ZwAdjustGroupsToken		[NTDLL.@]
+ *  ZwAdjustPrivilegesToken		[NTDLL.@]
  *
  * FIXME: parameters unsafe
  */
@@ -309,6 +309,23 @@ NTSTATUS WINAPI NtSetInformationToken(
 {
     FIXME("%p %d %p %lu\n", TokenHandle, TokenInformationClass,
           TokenInformation, TokenInformationLength);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+*  NtAdjustGroupsToken		[NTDLL.@]
+*  ZwAdjustGroupsToken		[NTDLL.@]
+*/
+NTSTATUS WINAPI NtAdjustGroupsToken(
+        HANDLE TokenHandle,
+        BOOLEAN ResetToDefault,
+        PTOKEN_GROUPS NewState,
+        ULONG BufferLength,
+        PTOKEN_GROUPS PreviousState,
+        PULONG ReturnLength)
+{
+    FIXME("%p %d %p %lu %p %p\n", TokenHandle, ResetToDefault,
+          NewState, BufferLength, PreviousState, ReturnLength);
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -823,4 +840,13 @@ ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBi
     else if (dwTypeBitMask & VER_MINORVERSION)
 	dwlConditionMask |= dwConditionMask << 0*3;
     return dwlConditionMask;
+}
+
+/******************************************************************************
+ *        NtAlertThread   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertThread(HANDLE ThreadHandle)
+{
+    FIXME("%p\n", ThreadHandle);
+    return STATUS_NOT_IMPLEMENTED;
 }
