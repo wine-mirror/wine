@@ -394,24 +394,25 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
         return FALSE;
 
     if (wf->wFormatTag == WAVE_FORMAT_PCM) {
-        if (wf->nChannels==1||wf->nChannels==2) { 
-            if (wf->wBitsPerSample==8||wf->wBitsPerSample==16) {
+        if (wf->nChannels==1||wf->nChannels==2) {
+            if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
                 return TRUE;
-            }
         }
-    }
-    else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-        WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf; 
+    } else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf;
+
         if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-            if (wf->nChannels==1||wf->nChannels==2) { 
-                if ((wf->wBitsPerSample==8||wf->wBitsPerSample==16) &&
-                   (wfex->Samples.wValidBitsPerSample==8||wfex->Samples.wValidBitsPerSample==16)) {
-                    FIXME("WAVE_FORMAT_EXTENSIBLE not fully supported\n");
-                    return TRUE;
-                }
+            if (wf->nChannels==1||wf->nChannels==2) {
+                if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
+                    if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
+                        return TRUE;
+                } else
+                    WARN("wBitsPerSample != wValidBitsPerSample not supported yet\n");
             }
-        }
-    }
+        } else
+            WARN("only KSDATAFORMAT_SUBTYPE_PCM supported\n");
+    } else
+        WARN("only WAVE_FORMAT_PCM and WAVE_FORMAT_EXTENSIBLE supported\n");
 
     return FALSE;
 }
