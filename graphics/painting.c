@@ -695,8 +695,12 @@ BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
 BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
     BOOL ret = FALSE;
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc;
 
+    /* cPoints must be 3 * n + 1 (where n>=1) */
+    if (cPoints == 1 || (cPoints % 3) != 1) return FALSE;
+
+    dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
 
     if(PATH_IsPathOpen(dc->path))
