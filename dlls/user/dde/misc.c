@@ -1141,10 +1141,8 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
 
     pInstance = WDML_GetInstance(idInst);
     if (pInstance)
-    {
-	if (codepage == 0) codepage = CP_WINUNICODE;
-	hsz = WDML_CreateString(pInstance, psz, codepage);
-    }
+        hsz = WDML_CreateString(pInstance, psz, CP_WINUNICODE);
+
     LeaveCriticalSection(&WDML_CritSect);
 
     return hsz;
