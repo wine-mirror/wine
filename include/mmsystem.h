@@ -229,13 +229,6 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT message,
 HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 
 DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
-#ifdef __WINESRC__
-/* this call (GetDriverFlags) is not documented, nor the flags returned.
- * here are Wine only definitions
- */
-#define WINE_GDF_EXIST	0x80000000
-#define WINE_GDF_16BIT	0x10000000
-#endif
 
 typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 

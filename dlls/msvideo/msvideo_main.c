@@ -322,7 +322,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         if (!hdrv) 
             return 0; 
     }
-    bIs16 = GetDriverFlags(hdrv) & WINE_GDF_16BIT;
+    bIs16 = GetDriverFlags(hdrv) & 0x10000000; /* undocumented flag: WINE_GDF_16BIT */
 
     if (bIs16 && !pFnCallTo16)
     {

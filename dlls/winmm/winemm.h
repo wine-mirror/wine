@@ -340,3 +340,9 @@ void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 #define HWAVE_16(h32)		(LOWORD(h32))
 #define HWAVEIN_16(h32)		(LOWORD(h32))
 #define HWAVEOUT_16(h32)	(LOWORD(h32))
+
+/* GetDriverFlags() returned bits is not documented (nor the call itself)
+ * Here are Wine only definitions of the bits
+ */
+#define WINE_GDF_EXIST	0x80000000
+#define WINE_GDF_16BIT	0x10000000
