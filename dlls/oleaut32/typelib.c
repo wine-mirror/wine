@@ -2184,7 +2184,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     /*    pTypeLibImpl->LibAttr.lcid = tlbHeader.lcid;*/
     /* Windows seems to have zero here, is this correct? */
     if(SUBLANGID(tlbHeader.lcid) == SUBLANG_NEUTRAL)
-      pTypeLibImpl->LibAttr.lcid = PRIMARYLANGID(tlbHeader.lcid);
+      pTypeLibImpl->LibAttr.lcid = MAKELCID(MAKELANGID(PRIMARYLANGID(tlbHeader.lcid),0),0);
     else
       pTypeLibImpl->LibAttr.lcid = 0;
 
@@ -2429,7 +2429,10 @@ static DWORD SLTG_ReadLibBlk(LPVOID pLibBlk, ITypeLibImpl *pTypeLibImpl)
     pTypeLibImpl->LibAttr.syskind = *(WORD*)ptr;
     ptr += 2;
 
-    pTypeLibImpl->LibAttr.lcid = *(WORD*)ptr;
+    if(SUBLANGID(*(WORD*)ptr) == SUBLANG_NEUTRAL)
+        pTypeLibImpl->LibAttr.lcid = MAKELCID(MAKELANGID(PRIMARYLANGID(*(WORD*)ptr),0),0);
+    else
+        pTypeLibImpl->LibAttr.lcid = 0;
     ptr += 2;
 
     ptr += 4; /* skip res12 */
