@@ -13,6 +13,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	clist.c \
+	istream.c \
 	ordinal.c \
 	path.c \
 	reg.c \

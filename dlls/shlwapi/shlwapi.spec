@@ -165,7 +165,7 @@ init SHLWAPI_LibMain
 163 stub @
 164 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_164
 165 stdcall @(long long long long) SHLWAPI_165
-166 stub @
+166 stdcall @(ptr) SHLWAPI_166
 167 stub @
 168 stub @
 169 stdcall @(long) SHLWAPI_169
@@ -183,7 +183,7 @@ init SHLWAPI_LibMain
 181 stdcall @(long long long) SHLWAPI_181
 182 stub @
 183 stdcall @(ptr) SHLWAPI_183
-184 stub @
+184 stdcall @(ptr ptr long) SHLWAPI_184
 185 stub @
 186 stub @
 187 stub @
@@ -211,9 +211,9 @@ init SHLWAPI_LibMain
 209 stdcall @(ptr) SHLWAPI_209
 210 stdcall @(ptr long ptr) SHLWAPI_210
 211 stdcall @(ptr long) SHLWAPI_211
-212 stub @
-213 stub @
-214 stub @
+212 stdcall @(ptr ptr long) SHLWAPI_212
+213 stdcall @(ptr) SHLWAPI_213
+214 stdcall @(ptr ptr) SHLWAPI_214
 215 stdcall @(long long long) SHLWAPI_215
 216 stub @
 217 stdcall @(wstr ptr ptr) SHLWAPI_217
@@ -708,8 +708,9 @@ init SHLWAPI_LibMain
 @ stub    SHCopyKeyA
 @ stub    SHCopyKeyW
 @ stub    SHAutoComplete
-@ stub    SHCreateStreamOnFileA
-@ stub    SHCreateStreamOnFileW
+@ stdcall SHCreateStreamOnFileA(str long ptr) SHCreateStreamOnFileA
+@ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW
+@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) SHCreateStreamOnFileEx
 @ stub    SHCreateStreamWrapper
 @ stub    SHCreateThread
 @ stdcall SHGetThreadRef (ptr) SHGetThreadRef
