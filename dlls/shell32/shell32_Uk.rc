@@ -20,10 +20,10 @@ LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&чЕМЙЛ&#1110; &#1030;ЛПОЛЙ",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&нБМ&#1110; &#1030;ЛПОЛЙ",	FCIDM_SHVIEW_SMALLICON
-	MENUITEM "&уРЙУПЛ",		FCIDM_SHVIEW_LISTVIEW
-	MENUITEM "&рПДТПВЙГ&#1110;",		FCIDM_SHVIEW_REPORTVIEW
+	MENUITEM "&Великі Іконки",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Малі Іконки",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Подробиці",		FCIDM_SHVIEW_REPORTVIEW
 END
 
 /*
@@ -33,38 +33,38 @@ MENU_002 MENU DISCARDABLE
 BEGIN
 	POPUP""
 	BEGIN
-	  POPUP "&чЙЗМСД"
+	  POPUP "&Вигляд"
 	  BEGIN
-	    MENUITEM "&чЕМЙЛ&#1110; &#1030;ЛПОЛЙ",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&нБМ&#1110; &#1030;ЛПОЛЙ",	FCIDM_SHVIEW_SMALLICON
-	    MENUITEM "&уРЙУПЛ",		FCIDM_SHVIEW_LISTVIEW
-	    MENUITEM "&рПДТПВЙГ&#1110;",	FCIDM_SHVIEW_REPORTVIEW
+	    MENUITEM "&Великі Іконки",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Малі Іконки",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Подробиці",	FCIDM_SHVIEW_REPORTVIEW
 	  END
 	  MENUITEM SEPARATOR
-	  POPUP "чРПТСДЛХЧБФЙ &&#1030;ЛПОЛЙ"
+	  POPUP "Впорядкувати &Іконки"
 	  BEGIN
-	    MENUITEM "ъБ &оБЪЧПА",	0x30	/* column 0 */
-	    MENUITEM "ъБ &фЙРПН",	0x32	/* column 2 */
-	    MENUITEM "ъБ &тПЪН&#1110;ТПН",	0x31	/* ... */
-	    MENUITEM "ъБ &дБФПА",	0x33
+	    MENUITEM "За &Назвою",	0x30	/* column 0 */
+	    MENUITEM "За &Типом",	0x32	/* column 2 */
+	    MENUITEM "За &Розміром",	0x31	/* ... */
+	    MENUITEM "За &Датою",	0x33
 	    MENUITEM SEPARATOR
-	    MENUITEM "&бЧФПНБФЙЮОП",	FCIDM_SHVIEW_AUTOARRANGE
+	    MENUITEM "&Автоматично",	FCIDM_SHVIEW_AUTOARRANGE
 	  END
-	  MENUITEM "чЙТ&#1110;ЧОСФЙ &#1030;ЛПОЛЙ",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM "Вирівняти Іконки",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
-	  MENUITEM "пОПЧЙФЙ",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM "Оновити",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
-	  MENUITEM "чУФБЧЙФЙ",		FCIDM_SHVIEW_INSERT
-	  MENUITEM "чУФБЧЙФЙ рПУЙМБООС",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Вставити",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Вставити Посилання",	FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
-	  POPUP "уФЧПТЙФЙ"
+	  POPUP "Створити"
 	  BEGIN
-	    MENUITEM "оПЧБ &фЕЛБ",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "оПЧЕ &рПУЙМБООС",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Нова &Тека",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Нове &Посилання",	FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
-	  MENUITEM "чМБУФЙЧПУФ&#1110;",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "Властивості",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
@@ -75,27 +75,27 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP""
 	BEGIN
-	  MENUITEM "&рТПЧ&#1110;ДОЙЛ",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&ч&#1110;ДЛТЙФЙ",		FCIDM_SHVIEW_COPY
+	  MENUITEM "&Провідник",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Відкрити",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "чЙ&Т&#1110;ЪБФЙ",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&лПР&#1110;С",		FCIDM_SHVIEW_COPY
+	  MENUITEM "Ви&різати",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Копія",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "&уФЧПТЙФЙ рПУЙМБООС",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "чЙ&ДБМЙФЙ",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "рЕТЕ&КНЕОХЧБФЙ",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "&Створити Посилання",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Ви&далити",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "Пере&йменувати",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&чМБУФЙЧПУФ&#1110;",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "&Властивості",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "пЗМСД ДП ФЕЛЙ"
+CAPTION "Огляд до теки"
 FONT 8, "Helv"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "ч&#1110;ДН&#1110;ОБ", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Відміна", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
  LTEXT "", IDD_TITLE, 4, 4, 180, 12
  LTEXT "", IDD_STATUS, 4, 25, 180, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
@@ -106,14 +106,14 @@ FONT 8, "Helv"
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "п %s"
+CAPTION "Про %s"
 FONT 10, "Helv"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 130, 50, 12, WS_TABSTOP
  LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", 1088, 189, 10, 14, 16
  LTEXT "", 100, 8, 10, 137, 33
- LTEXT "тПЪТПВОЙЛЙ Wine:", 98, 8, 55, 137, 10
+ LTEXT "Розробники Wine:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -122,12 +122,12 @@ CAPTION ""
 FONT 8, "Helv"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "чЧЕД&#1110;ФШ &#1110;Н'С РТПЗТБНЙ, ФЕЛЙ, ДПЛХНЕОФХ ЮЙ ТЕУХТУ &#1030;ОФЕТОЕФХ, &#1110; Wine Ч&#1110;ДЛТЙ&#1108; &#1111;И.", 12289, 36, 11, 182, 18
- LTEXT "&ч&#1110;ДЛТЙФЙ:", 12305, 7, 39, 24, 10
+ LTEXT "Введіть ім'я програми, теки, документу чи ресурс Інтернету, і Wine відкриє їх.", 12289, 36, 11, 182, 18
+ LTEXT "&Відкрити:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "ч&#1110;ДН&#1110;ОБ", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&пЗМСД...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Відміна", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Огляд...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
 /*
@@ -135,8 +135,8 @@ FONT 8, "Helv"
 */
 STRINGTABLE DISCARDABLE
 {
-	IDS_DESKTOP		"уФ&#1110;МШОЙГС"
-	IDS_MYCOMPUTER		"н&#1110;К лПНР'АФЕТ"
+	IDS_DESKTOP		"Стільниця"
+	IDS_MYCOMPUTER		"Мій Комп'ютер"
 }
 
 /*
@@ -144,34 +144,34 @@ STRINGTABLE DISCARDABLE
 */
 STRINGTABLE DISCARDABLE
 {
-	IDS_VIEW_LARGE		"&чЕМЙЛ&#1110; &#1030;ЛПОЛЙ"
-	IDS_VIEW_SMALL		"&нБМ&#1110; &#1030;ЛПОЛЙ"
-	IDS_VIEW_LIST		"&уРЙУПЛ"
-	IDS_VIEW_DETAILS	"&рПДТПВЙГ&#1110;"
-	IDS_SELECT		"чЙ&ВТБФЙ"
-	IDS_OPEN		"ч&#1110;&ДЛТЙФЙ"
+	IDS_VIEW_LARGE		"&Великі Іконки"
+	IDS_VIEW_SMALL		"&Малі Іконки"
+	IDS_VIEW_LIST		"&Список"
+	IDS_VIEW_DETAILS	"&Подробиці"
+	IDS_SELECT		"Ви&брати"
+	IDS_OPEN		"Ві&дкрити"
 }
 
 STRINGTABLE DISCARDABLE
 {
-	IDS_CREATEFOLDER_DENIED "оЕ ЧДБМПУС УФЧПТЙФЙ ОПЧХ ФЕЛХ: ч&#1110;ДНПЧБ Х ДПУФХР&#1110;."
-	IDS_CREATEFOLDER_CAPTION "рПНЙМЛБ РТЙ УФЧПТЕОО&#1110; ОПЧП&#1111; ФЕЛЙ"
-	IDS_DELETEITEM_CAPTION "р&#1110;ДФЧЕТДЦЕООС ЧЙМХЮЕООС ЖБКМХ"
-	IDS_DELETEFOLDER_CAPTION "р&#1110;ДФЧЕТДЦЕООС ЧЙМХЮЕООС ФЕЛЙ"
-	IDS_DELETEITEM_TEXT "чЙ ЧРЕЧОЕО&#1110;, ЭП ИПЮЕФЕ ЧЙМХЮЙФЙ '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "чЙ ЧРЕЧОЕО&#1110;, ЭП ИПЮЕФЕ ЧЙМХЮЙФЙ Г&#1110; %1 ЕМЕНЕОФЙ(&#1110;Ч)?"
-	IDS_OVERWRITEFILE_TEXT "рЕТЕРЙУБФЙ жБКМ %1?"
-	IDS_OVERWRITEFILE_CAPTION "р&#1110;ДФЧЕТДЦЕООС рЕТЕЪБРЙУХ жБКМХ"
+	IDS_CREATEFOLDER_DENIED "Не вдалося створити нову теку: Відмова у доступі."
+	IDS_CREATEFOLDER_CAPTION "Помилка при створенні нової теки"
+	IDS_DELETEITEM_CAPTION "Підтвердження вилучення файлу"
+	IDS_DELETEFOLDER_CAPTION "Підтвердження вилучення теки"
+	IDS_DELETEITEM_TEXT "Ви впевнені, що хочете вилучити '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Ви впевнені, що хочете вилучити ці %1 елементи(ів)?"
+	IDS_OVERWRITEFILE_TEXT "Переписати Файл %1?"
+	IDS_OVERWRITEFILE_CAPTION "Підтвердження Перезапису Файлу"
 }
 
 /*	columns in the shellview	*/
 STRINGTABLE
 BEGIN
-	IDS_SHV_COLUMN1		"жБКМ"
-	IDS_SHV_COLUMN2		"тПЪН&#1110;Т"
-	IDS_SHV_COLUMN3		"фЙР"
-	IDS_SHV_COLUMN4		"ъН&#1110;ОЕОП"
-	IDS_SHV_COLUMN5		"бФТЙВХФЙ"
-	IDS_SHV_COLUMN6		"тПЪН&#1110;Т"
-	IDS_SHV_COLUMN7		"ч&#1110;МШОЙК тПЪН&#1110;Т"
+	IDS_SHV_COLUMN1		"Файл"
+	IDS_SHV_COLUMN2		"Розмір"
+	IDS_SHV_COLUMN3		"Тип"
+	IDS_SHV_COLUMN4		"Змінено"
+	IDS_SHV_COLUMN5		"Атрибути"
+	IDS_SHV_COLUMN6		"Розмір"
+	IDS_SHV_COLUMN7		"Вільний Розмір"
 END
