@@ -3112,12 +3112,12 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 
 
 /*******************************************************************
- *			DRAG_QueryUpdate
+ *			DRAG_QueryUpdate16
  *
  * recursively find a child that contains spDragInfo->pt point
  * and send WM_QUERYDROPOBJECT
  */
-BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
+static BOOL16 DRAG_QueryUpdate16( HWND hQueryWnd, SEGPTR spDragInfo )
 {
     BOOL16 wParam, bResult = 0;
     POINT pt;
@@ -3157,7 +3157,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
                 if (list[i])
                 {
                     if (IsWindowEnabled( list[i] ))
-                        bResult = DRAG_QueryUpdate( list[i], spDragInfo, bNoSend );
+                        bResult = DRAG_QueryUpdate16( list[i], spDragInfo );
                 }
                 HeapFree( GetProcessHeap(), 0, list );
             }
@@ -3171,9 +3171,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 
     ptrDragInfo->hScope = HWND_16(hQueryWnd);
 
-    if (bNoSend) bResult = (GetWindowLongA( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
-    else bResult = SendMessage16( HWND_16(hQueryWnd), WM_QUERYDROPOBJECT,
-				  (WPARAM16)wParam, spDragInfo );
+    bResult = SendMessage16( HWND_16(hQueryWnd), WM_QUERYDROPOBJECT, (WPARAM16)wParam, spDragInfo );
 
     if( !bResult ) CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
 
@@ -3272,7 +3270,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	/* update DRAGINFO struct */
 	TRACE_(msg)("lpDI->hScope = %04x\n",lpDragInfo->hScope);
 
-	if( DRAG_QueryUpdate(WIN_Handle32(hwndScope), spDragInfo, FALSE) > 0 )
+	if( DRAG_QueryUpdate16(WIN_Handle32(hwndScope), spDragInfo) > 0 )
 	    hCurrentCursor = hCursor;
 	else
         {

@@ -1093,6 +1093,56 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
   }
 }
 
+static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
+{
+    RECT tempRect;
+
+    if (!IsWindowEnabled(hQueryWnd)) return 0;
+    
+    GetWindowRect(hQueryWnd, &tempRect);
+
+    if(!PtInRect(&tempRect, *lpPt)) return 0;
+
+    if (!IsIconic( hQueryWnd ))
+    {
+        GetClientRect( hQueryWnd, &tempRect );
+        MapWindowPoints( hQueryWnd, 0, (LPPOINT)&tempRect, 2 );
+
+        if (PtInRect( &tempRect, *lpPt))
+        {
+            HWND *list = WIN_ListChildren( hQueryWnd );
+    	    HWND bResult = 0;
+
+            if (list)
+            {
+                int i;
+		
+                for (i = 0; list[i]; i++)
+                {
+                    if (GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)
+                    {
+                        GetWindowRect( list[i], &tempRect );
+                        if (PtInRect( &tempRect, *lpPt )) break;
+                    }
+                }
+                if (list[i])
+                {
+                    if (IsWindowEnabled( list[i] ))
+                        bResult = find_drop_window( list[i], lpPt );
+                }
+                HeapFree( GetProcessHeap(), 0, list );
+            }
+            if(bResult) return bResult;
+        }
+    }
+
+    if(!(GetWindowLongA( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return 0;
+    
+    ScreenToClient(hQueryWnd, lpPt);
+
+    return hQueryWnd;
+}
+
 /**********************************************************************
  *           EVENT_DropFromOffix
  *
@@ -1100,49 +1150,55 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
  */
 static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 {
-  unsigned long		data_length;
-  unsigned long		aux_long;
-  unsigned char*	p_data = NULL;
-  union {
-    Atom		atom_aux;
-    struct {
-      int x;
-      int y;
-    } pt_aux;
-    int		i;
-  }		u;
-  int			x, y;
-  BOOL16	        bAccept;
-  HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO16));
-  LPDRAGINFO16          lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
-  SEGPTR		spDragInfo = K32WOWGlobalLock16(hDragInfo);
-  Window		w_aux_root, w_aux_child;
-  WND*                  pWnd;
+    unsigned long	data_length;
+    unsigned long	aux_long;
+    unsigned char*	p_data = NULL;
+    union {
+    	Atom	atom_aux;
+    	struct {
+      	    int x;
+      	    int y;
+    	} 	pt_aux;
+    	int	i;
+    } 			u;
+    int			x, y;
+    BOOL	        bAccept;
+    Window		w_aux_root, w_aux_child;
+    WND*                pWnd;
+    HWND		hScope = hWnd;
 
-  if( !lpDragInfo || !spDragInfo ) return;
+    pWnd = WIN_FindWndPtr(hWnd);
 
-  pWnd = WIN_FindWndPtr(hWnd);
+    TSXQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
+                     &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
+                     (unsigned int*)&aux_long);
 
-  TSXQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
-                   &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
-                   (unsigned int*)&aux_long);
-
-  lpDragInfo->hScope = HWND_16(hWnd);
-  lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
-
-  /* find out drop point and drop window */
-  if( x < 0 || y < 0 ||
-      x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
-      y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
-    {   bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
-  else
-    {
-      bAccept = DRAG_QueryUpdate( hWnd, spDragInfo, TRUE );
-      x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
+    /* find out drop point and drop window */
+    if( x < 0 || y < 0 ||
+        x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
+        y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
+    {   
+	bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; 
+	x = 0;
+	y = 0; 
     }
-  WIN_ReleaseWndPtr(pWnd);
-
-  GlobalFree16( hDragInfo );
+    else
+    {
+    	POINT	pt = { x, y };
+        HWND    hwndDrop = find_drop_window( hWnd, &pt );
+	if (hwndDrop)
+	{
+	    x = pt.x;
+	    y = pt.y;
+	    hScope = hwndDrop;
+	    bAccept = TRUE;
+	}
+	else
+	{
+	    bAccept = FALSE;
+	}
+    }
+    WIN_ReleaseWndPtr(pWnd);
 
     if (!bAccept) return;
 
@@ -1179,7 +1235,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
             if( lpDrop )
             {
-                WND *pDropWnd = WIN_FindWndPtr( HWND_32(lpDragInfo->hScope) );
+                WND *pDropWnd = WIN_FindWndPtr( hScope );
                 lpDrop->pFiles = sizeof(DROPFILES);
                 lpDrop->pt.x = x;
                 lpDrop->pt.y = y;

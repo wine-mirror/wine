@@ -688,7 +688,6 @@ init	UserClientDllInitialize
 @ cdecl CLIPBOARD_LookupFormat(long) CLIPBOARD_LookupFormat
 @ cdecl CLIPBOARD_ReleaseOwner() CLIPBOARD_ReleaseOwner
 @ cdecl DCE_InvalidateDCE(long ptr) DCE_InvalidateDCE
-@ cdecl DRAG_QueryUpdate(long long long) DRAG_QueryUpdate
 @ cdecl HOOK_CallHooksA(long long long long) HOOK_CallHooksA
 @ cdecl HOOK_CallHooksW(long long long long) HOOK_CallHooksW
 @ cdecl HOOK_IsHooked(long) HOOK_IsHooked
