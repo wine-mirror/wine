@@ -124,15 +124,19 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     INT   retVal;
     BOOL  bOwnRgn = TRUE;
     BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
-    HRGN  hrgnClip = CreateRectRgnIndirect(clipRect);
     HRGN  hrgnTemp;
     HDC   hDC;
+    RECT  rc, cliprc;
 
-    TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p rect=(%ld,%ld-%ld,%ld) %04x\n",
-           hwnd, dx, dy, hrgnUpdate, rcUpdate,
-           rect->left, rect->top, rect->right, rect->bottom, flags );
-    TRACE( "clipRect = (%ld,%ld,%ld,%ld)\n",
-           clipRect->left, clipRect->top, clipRect->right, clipRect->bottom );
+    TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p %s %04x\n",
+           hwnd, dx, dy, hrgnUpdate, rcUpdate, wine_dbgstr_rect(rect), flags );
+    TRACE( "clipRect = %s\n", wine_dbgstr_rect(clipRect));
+
+    GetClientRect(hwnd, &rc);
+    if (rect) IntersectRect(&rc, &rc, rect);
+
+    if (clipRect) IntersectRect(&cliprc,&rc,clipRect);
+    else cliprc = rc;
 
     if( hrgnUpdate ) bOwnRgn = FALSE;
     else if( bUpdate ) hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
@@ -142,7 +146,7 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     {
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
         X11DRV_StartGraphicsExposures( hDC );
-        X11DRV_ScrollDC( hDC, dx, dy, rect, clipRect, hrgnUpdate, rcUpdate );
+        X11DRV_ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
         X11DRV_EndGraphicsExposures( hDC, hrgn );
         ReleaseDC( hwnd, hDC );
         if (bUpdate) CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_OR );
@@ -155,9 +159,11 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
     if (retVal != NULLREGION)
     {
+        HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);
         OffsetRgn( hrgnTemp, dx, dy );
         CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
         RedrawWindow( hwnd, NULL, hrgnTemp, RDW_INVALIDATE | RDW_ERASE );
+        DeleteObject( hrgnClip );
     }
     DeleteObject( hrgnTemp );
 
@@ -172,7 +178,7 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
             {
                 GetWindowRect( list[i], &r );
                 MapWindowPoints( 0, hwnd, (POINT *)&r, 2 );
-                if (!rect || IntersectRect(&dummy, &r, rect))
+                if (!rect || IntersectRect(&dummy, &r, &rc))
                     SetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
                                   SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
                                   SWP_NOREDRAW | SWP_DEFERERASE );
@@ -187,7 +193,6 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                       ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
 
     if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
-    DeleteObject( hrgnClip );
     
     return retVal;
 }

@@ -117,7 +117,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         HWND hwndCaret = fix_caret(hwnd, &caretrc, flags);
 
 	if (USER_Driver.pScrollWindowEx)
-            result = USER_Driver.pScrollWindowEx( hwnd, dx, dy, &rc, &cliprc,
+            result = USER_Driver.pScrollWindowEx( hwnd, dx, dy, rect, clipRect,
                                                   hrgnUpdate, rcUpdate, flags );
 	else
 	    result = ERROR; /* FIXME: we should have a fallback implementation */
