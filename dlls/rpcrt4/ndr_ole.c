@@ -46,14 +46,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static HMODULE hOLE;
 
-static HRESULT WINAPI (*COM_GetMarshalSizeMax)(ULONG *,REFIID,LPUNKNOWN,DWORD,LPVOID,DWORD);
-static HRESULT WINAPI (*COM_MarshalInterface)(LPSTREAM,REFIID,LPUNKNOWN,DWORD,LPVOID,DWORD);
-static HRESULT WINAPI (*COM_UnmarshalInterface)(LPSTREAM,REFIID,LPVOID*);
-static HRESULT WINAPI (*COM_ReleaseMarshalData)(LPSTREAM);
-static HRESULT WINAPI (*COM_GetClassObject)(REFCLSID,DWORD,COSERVERINFO *,REFIID,LPVOID *);
-static HRESULT WINAPI (*COM_GetPSClsid)(REFIID,CLSID *);
-static LPVOID WINAPI (*COM_MemAlloc)(ULONG);
-static void WINAPI (*COM_MemFree)(LPVOID);
+static HRESULT (WINAPI *COM_GetMarshalSizeMax)(ULONG *,REFIID,LPUNKNOWN,DWORD,LPVOID,DWORD);
+static HRESULT (WINAPI *COM_MarshalInterface)(LPSTREAM,REFIID,LPUNKNOWN,DWORD,LPVOID,DWORD);
+static HRESULT (WINAPI *COM_UnmarshalInterface)(LPSTREAM,REFIID,LPVOID*);
+static HRESULT (WINAPI *COM_ReleaseMarshalData)(LPSTREAM);
+static HRESULT (WINAPI *COM_GetClassObject)(REFCLSID,DWORD,COSERVERINFO *,REFIID,LPVOID *);
+static HRESULT (WINAPI *COM_GetPSClsid)(REFIID,CLSID *);
+static LPVOID (WINAPI *COM_MemAlloc)(ULONG);
+static void (WINAPI *COM_MemFree)(LPVOID);
 
 static HMODULE LoadCOM(void)
 {
@@ -220,12 +220,14 @@ const IID* get_ip_iid(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORM
   if (!pFormat) return &IID_IUnknown;
   TRACE("format=%02x %02x\n", pFormat[0], pFormat[1]);
   if (pFormat[0] != RPC_FC_IP) FIXME("format=%d\n", pFormat[0]);
-  if (pFormat[1] == RPC_FC_CONSTANT_IID)
-    return (const IID*)&pFormat[2];
-
-  ComputeConformance(pStubMsg, pMemory, pFormat+2, 0);
-  riid = (const IID *)pStubMsg->MaxCount;
+  if (pFormat[1] == RPC_FC_CONSTANT_IID) {
+    riid = (const IID *)&pFormat[2];
+  } else {
+    ComputeConformance(pStubMsg, pMemory, pFormat+2, 0);
+    riid = (const IID *)pStubMsg->MaxCount;
+  }
   if (!riid) riid = &IID_IUnknown;
+  TRACE("got %s\n", debugstr_guid(riid));
   return riid;
 }
 
