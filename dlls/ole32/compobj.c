@@ -1454,7 +1454,8 @@ HRESULT WINAPI CoCreateInstance(
 			  (LPVOID)&lpclf);
 
   if (FAILED(hres)) {
-    FIXME("no instance created for %s, hres is 0x%08lx\n",debugstr_guid(iid),hres);
+    FIXME("no classfactory created for %s, hres is 0x%08lx\n",
+	  debugstr_guid(rclsid),hres);
     return hres;
   }
 
@@ -1463,6 +1464,9 @@ HRESULT WINAPI CoCreateInstance(
    */
 	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
 	IClassFactory_Release(lpclf);
+	if(FAILED(hres))
+	  FIXME("no instance created for interface %s of class %s, hres is 0x%08lx\n",
+		debugstr_guid(iid), debugstr_guid(rclsid),hres);
 
 	return hres;
 }
