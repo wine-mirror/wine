@@ -243,7 +243,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
 
     /* Convert children */
     child16 = VersionInfo16_Children( info16 );
-    while ( (DWORD)child32 < (DWORD)info32 + wLength )
+    while ( (DWORD)child32 < (DWORD)info32 + wLength && child32->wLength != 0 )
     {
         VS_VERSION_INFO_STRUCT32 *nextChild = VersionInfo32_Next( child32 );
 
