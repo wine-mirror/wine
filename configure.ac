@@ -1374,6 +1374,7 @@ programs/view/Makefile
 programs/wcmd/Makefile
 programs/wineconsole/Makefile
 programs/winemine/Makefile
+programs/winepath/Makefile
 programs/winetest/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile

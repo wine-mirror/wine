@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winepath
+
+C_SRCS = winepath.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:
