@@ -30,43 +30,39 @@ void launch(const char *what)
   exit(0);
 }
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, CHAR *szParam, INT argc)
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, INT nCmdShow)
 {
+    char szParams[255];
+    lstrcpy(szParams, lpszCmdLine);
+    CharUpper(szParams);
 
-  char szParams[255];
-  lstrcpy(szParams, szParam);
-  CharUpper(szParams);
+    /* no parameters - pop up whole "Control Panel" by default */
+    if (!*szParams) {
+	launch("");
+	return 0;
+    }
 
-  switch (argc) {
-    case 0:  /* no parameters - pop up whole "Control Panel" by default */
-             launch("");
-             break;
+    /* check for optional parameter */
+    if (!strcmp(szParams,szP_DESKTOP))
+	launch(szC_DESKTOP);
+    if (!strcmp(szParams,szP_COLOR))
+	launch(szC_COLOR);
+    if (!strcmp(szParams,szP_DATETIME))
+	launch(szC_DATETIME);
+    if (!strcmp(szParams,szP_DESKTOP))
+	launch(szC_DESKTOP);
+    if (!strcmp(szParams,szP_INTERNATIONAL))
+	launch(szC_INTERNATIONAL);
+    if (!strcmp(szParams,szP_KEYBOARD))
+	launch(szC_KEYBOARD);
+    if (!strcmp(szParams,szP_MOUSE))
+	launch(szC_MOUSE);
+    if (!strcmp(szParams,szP_PORTS))
+	launch(szC_PORTS);
+    if (!strcmp(szParams,szP_PRINTERS))
+	launch(szC_PRINTERS);
 
-    case 1:  /* check for optional parameter */
-             if (!strcmp(szParams,szP_DESKTOP))
-		 launch(szC_DESKTOP);
-             if (!strcmp(szParams,szP_COLOR))
-		 launch(szC_COLOR);
-             if (!strcmp(szParams,szP_DATETIME))
-		 launch(szC_DATETIME);
-             if (!strcmp(szParams,szP_DESKTOP))
-		 launch(szC_DESKTOP);
-             if (!strcmp(szParams,szP_INTERNATIONAL))
-		 launch(szC_INTERNATIONAL);
-             if (!strcmp(szParams,szP_KEYBOARD))
-		 launch(szC_KEYBOARD);
-             if (!strcmp(szParams,szP_MOUSE))
-		 launch(szC_MOUSE);
-             if (!strcmp(szParams,szP_PORTS))
-		 launch(szC_PORTS);
-             if (!strcmp(szParams,szP_PRINTERS))
-		 launch(szC_PRINTERS);
-
-	     /* try to launch if a .cpl file is given directly */
-	     launch(szParams);
-             break;
-
-    default: printf("Syntax error.");
-  }
-  return 0;
+    /* try to launch if a .cpl file is given directly */
+    launch(szParams);
+    return 0;
 }
