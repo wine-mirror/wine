@@ -218,6 +218,7 @@ typedef struct tagDC
     FLOAT        miterLimit;
 
     int           flags;
+    DWORD         layout;
     HRGN          hClipRgn;     /* Clip region (may be 0) */
     HRGN          hVisRgn;      /* Visible region (must never be 0) */
     HPEN          hPen;

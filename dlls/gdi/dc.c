@@ -77,6 +77,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->vportExtY           = 1;
     dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
     dc->flags               = 0;
+    dc->layout              = 0;
     dc->hClipRgn            = 0;
     dc->hVisRgn             = 0;
     dc->hPen                = GetStockObject( BLACK_PEN );
@@ -290,6 +291,7 @@ HDC WINAPI GetDCState( HDC hdc )
     TRACE("(%p): returning %p\n", hdc, handle );
 
     newdc->flags            = dc->flags | DC_SAVED;
+    newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
     newdc->hFont            = dc->hFont;
@@ -383,6 +385,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     TRACE("%p %p\n", hdc, hdcs );
 
     dc->flags            = dcs->flags & ~(DC_SAVED | DC_DIRTY);
+    dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
     dc->ROPmode          = dcs->ROPmode;
     dc->polyFillMode     = dcs->polyFillMode;
@@ -1872,28 +1875,45 @@ HRGN16 WINAPI GetClipRgn16( HDC16 hdc )
  *           GetLayout    (GDI32.@)
  *
  * Gets left->right or right->left text layout flags of a dc.
- * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
  *
  */
 DWORD WINAPI GetLayout(HDC hdc)
 {
-    FIXME("(%p): stub\n", hdc);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    DWORD layout = GDI_ERROR;
+
+    DC * dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        layout = dc->layout;
+        GDI_ReleaseObj( hdc );
+    }
+
+    TRACE("hdc : %p, layout : %08lx\n", hdc, layout);
+
+    return layout;
 }
 
 /***********************************************************************
  *           SetLayout    (GDI32.@)
  *
  * Sets left->right or right->left text layout flags of a dc.
- * win98 just returns 0 and sets ERROR_CALL_NOT_IMPLEMENTED so we do the same
  *
  */
 DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
 {
-    FIXME("(%p,%08lx): stub\n", hdc, layout);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    DWORD oldlayout = GDI_ERROR;
+
+    DC * dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        oldlayout = dc->layout;
+        dc->layout = layout;
+        GDI_ReleaseObj( hdc );
+    }
+
+    TRACE("hdc : %p, old layout : %08lx, new layout : %08lx\n", hdc, oldlayout, layout);
+
+    return oldlayout;
 }
 
 /***********************************************************************
