@@ -265,12 +265,12 @@ static HRESULT WINAPI FilterMapper2_CreateCategory(
 
     if (SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (LPBYTE)szDescription, strlenW(szDescription) + 1));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (LPBYTE)szDescription, (strlenW(szDescription) + 1) * sizeof(WCHAR)));
     }
 
     if (SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszClsidName, 0, REG_SZ, (LPBYTE)wClsidCategory, strlenW(wClsidCategory) + 1));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, wszClsidName, 0, REG_SZ, (LPBYTE)wClsidCategory, (strlenW(wClsidCategory) + 1) * sizeof(WCHAR)));
     }
 
     if (SUCCEEDED(hr))
