@@ -382,8 +382,8 @@ extern "C" {
 
 int     WINAPI closesocket(SOCKET s);
 
-INT     WINAPI WSAStartup(UINT wVersionRequired, LPWSADATA lpWSAData);
-void      WINAPI WSASetLastError(INT iError);
+int     WINAPI WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
+void    WINAPI WSASetLastError(INT iError);
 INT     WINAPI WSACleanup(void);
 INT     WINAPI WSAGetLastError(void);
 BOOL    WINAPI WSAIsBlocking(void);

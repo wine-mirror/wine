@@ -587,7 +587,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA16 lpWSAData)
 /***********************************************************************
  *      WSAStartup		(WS2_32.115)
  */
-INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
+int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
     static const WSADATA data =
     {
@@ -1769,21 +1769,25 @@ INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 /***********************************************************************
  *		__ws_select
  */
-static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
-			  struct timeval *timeout )
+static INT __ws_select(BOOL b32,
+                       void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
+                       const struct timeval* ws_timeout)
 {
     int         highfd = 0;
     fd_set      readfds, writefds, exceptfds;
     fd_set     *p_read, *p_write, *p_except;
     int         readfd[FD_SETSIZE], writefd[FD_SETSIZE], exceptfd[FD_SETSIZE];
+    struct timeval timeout;
 
     TRACE("read %p, write %p, excp %p\n", ws_readfds, ws_writefds, ws_exceptfds);
 
     p_read = fd_set_import(&readfds, ws_readfds, &highfd, readfd, b32);
     p_write = fd_set_import(&writefds, ws_writefds, &highfd, writefd, b32);
     p_except = fd_set_import(&exceptfds, ws_exceptfds, &highfd, exceptfd, b32);
+    timeout.tv_sec=ws_timeout->tv_sec;
+    timeout.tv_usec=ws_timeout->tv_usec;
 
-    if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeout)) > 0 )
+    if( (highfd = select(highfd + 1, p_read, p_write, p_except, &timeout)) > 0 )
     {
         fd_set_export(&readfds, p_except, ws_readfds, readfd, b32);
         fd_set_export(&writefds, p_except, ws_writefds, writefd, b32);
@@ -1843,7 +1847,7 @@ INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
  */
 INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
                               ws_fd_set32 *ws_writefds, ws_fd_set32 *ws_exceptfds,
-                              struct timeval *timeout)
+                              const struct timeval *timeout)
 {
     /* struct timeval is the same for both 32- and 16-bit code */
     return (INT)__ws_select( TRUE, ws_readfds, ws_writefds, ws_exceptfds, timeout );
