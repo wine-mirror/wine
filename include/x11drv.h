@@ -14,8 +14,9 @@
 #include <X11/Xatom.h>
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#include "winbase.h"
+#include "dinput.h"
 #include "gdi.h"
+#include "winbase.h"
 #include "windef.h"
 
 struct tagBITMAPOBJ;
@@ -359,6 +360,8 @@ extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpK
 extern BOOL X11DRV_KEYBOARD_GetBeepActive(void);
 extern void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void X11DRV_KEYBOARD_Beep(void);
+extern BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
+extern BOOL X11DRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
 
 extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 

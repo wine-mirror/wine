@@ -5,6 +5,8 @@
  *
  */
 
+#include "config.h"
+
 #ifndef X_DISPLAY_MISSING
 #include "ts_xlib.h"
 #include "x11drv.h"

@@ -9,11 +9,11 @@
  * Copyright 1999 Ove Kåven
  */
 
-#include <ctype.h>
 #include "config.h"
 
 #ifndef X_DISPLAY_MISSING
 
+#include <ctype.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include "ts_xlib.h"
@@ -21,15 +21,19 @@
 #include "ts_xutil.h"
 
 #include "wine/winuser16.h"
+#include "dinput.h"
 #include "debugtools.h"
 #include "keyboard.h"
 #include "message.h"
 #include "windef.h"
-#include "x11drv.h"
 #include "winnls.h"
+#include "x11drv.h"
 
 DECLARE_DEBUG_CHANNEL(key)
 DECLARE_DEBUG_CHANNEL(keyboard)
+DECLARE_DEBUG_CHANNEL(x11drv)
+
+extern BYTE InputKeyStateTable[256];
 
 extern LPBYTE pKeyStateTable;
 
@@ -1331,6 +1335,77 @@ void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate)
 void X11DRV_KEYBOARD_Beep()
 {
   TSXBell(display, 0);
+}
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_GetDIState
+ */
+BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr)
+{
+  if (len==256) {
+    int keyc,vkey;
+    
+    memset(ptr,0,256);
+    for (keyc=min_keycode;keyc<max_keycode;keyc++)
+      {
+	/* X keycode to virtual key */
+	vkey = keyc2vkey[keyc] & 0xFF;
+	/* The windows scancode is keyc-min_keycode */
+	if (InputKeyStateTable[vkey]&0x80) {
+	  ((LPBYTE)ptr)[keyc-min_keycode]=0x80;
+	  ((LPBYTE)ptr)[(keyc-min_keycode)|0x80]=0x80;
+	}
+      }
+    return TRUE;
+  }
+  WARN_(x11drv)("whoops, X11DRV_KEYBOARD_GetState got len %ld?\n", len);
+  return TRUE;
+}
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_GetDIData
+ */
+BOOL X11DRV_KEYBOARD_GetDIData(
+  BYTE *keystate,
+  DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
+  LPDWORD entries, DWORD flags)
+{
+  int keyc,n,vkey,xentries;
+    
+  /* FIXME !!! */
+  
+  EVENT_Synchronize( FALSE );
+  
+  if (entries)
+    xentries = *entries; 
+  else
+    xentries = 1;
+  
+  n = 0;
+  
+  for (keyc=min_keycode;(keyc<max_keycode) && (n<*entries);keyc++)
+    {
+      /* X keycode to virtual key */
+      vkey = keyc2vkey[keyc] & 0xFF;
+      if (keystate[vkey] == (InputKeyStateTable[vkey]&0x80))
+	continue;
+      if (dod) {
+	/* add an entry */
+	dod[n].dwOfs		= keyc-min_keycode; /* scancode */
+	dod[n].dwData		= InputKeyStateTable[vkey]&0x80;
+	dod[n].dwTimeStamp	= 0; /* umm */
+	dod[n].dwSequence	= 0; /* umm */
+	n++;
+      }
+      if (!(flags & DIGDD_PEEK))
+	keystate[vkey] = InputKeyStateTable[vkey]&0x80;
+      
+    }
+  
+  if (n) fprintf(stderr,"%d entries\n",n);
+  *entries = n;
+
+  return TRUE;
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

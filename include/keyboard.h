@@ -7,6 +7,7 @@
 #ifndef __WINE_KEYBOARD_H
 #define __WINE_KEYBOARD_H
 
+#include "dinput.h"
 #include "windef.h"
 
 #include "pshpack1.h"
@@ -36,8 +37,10 @@ typedef struct tagKEYBOARD_DRIVER {
   INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
   INT16  (*pToAscii)(UINT16, UINT16, LPBYTE, LPVOID, UINT16);
   BOOL   (*pGetBeepActive)(void);
-  void   (*pSetBeepActive)(BOOL bActivate);
+  void   (*pSetBeepActive)(BOOL);
   void   (*pBeep)(void);
+  BOOL   (*pGetDIState)(DWORD, LPVOID);
+  BOOL   (*pGetDIData)(BYTE *, DWORD, LPDIDEVICEOBJECTDATA, LPDWORD, DWORD);
 } KEYBOARD_DRIVER;
 
 extern KEYBOARD_DRIVER *KEYBOARD_Driver;

@@ -7,6 +7,8 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "dinput.h"
+#include "wine/winuser16.h"
 #include "wine/wingdi16.h"
 
 struct tagBITMAPOBJ;
@@ -108,6 +110,8 @@ extern INT16 TTYDRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpK
 extern BOOL TTYDRV_KEYBOARD_GetBeepActive(void);
 extern void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void TTYDRV_KEYBOARD_Beep(void);
+extern BOOL TTYDRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
+extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
 
 /* TTY monitor driver */
 

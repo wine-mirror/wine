@@ -4,6 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
 #ifndef X_DISPLAY_MISSING
 #include "x11drv.h"
 #else /* !defined(X_DISPLAY_MISSING) */

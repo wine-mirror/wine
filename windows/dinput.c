@@ -24,14 +24,16 @@
 #include <assert.h>
 #include <sys/signal.h>
 
-#include "winuser.h"
-#include "winerror.h"
 #include "wine/obj_base.h"
-#include "dinput.h"
 #include "debug.h"
-#include "message.h"
+#include "dinput.h"
 #include "display.h"
+#include "keyboard.h"
+#include "message.h"
 #include "mouse.h"
+#include "sysmetrics.h"
+#include "winerror.h"
+#include "winuser.h"
 
 DEFAULT_DEBUG_CHANNEL(dinput)
 
@@ -399,24 +401,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 )
 {
-	if (len==256) {
-		int keyc,vkey;
-
-		memset(ptr,0,256);
-		for (keyc=min_keycode;keyc<max_keycode;keyc++)
-                {
-                    /* X keycode to virtual key */
-                    vkey = keyc2vkey[keyc] & 0xFF;
-                    /* The windows scancode is keyc-min_keycode */
-                    if (InputKeyStateTable[vkey]&0x80) {
-                        ((LPBYTE)ptr)[keyc-min_keycode]=0x80;
-                        ((LPBYTE)ptr)[(keyc-min_keycode)|0x80]=0x80;
-                    }
-                }
-		return 0;
-	}
-	WARN(dinput,"whoops, SysKeyboardAImpl_GetDeviceState got len %ld?\n",len);
-	return 0;
+	return KEYBOARD_Driver->pGetDIState(len, ptr)?DI_OK:E_FAIL;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
@@ -425,44 +410,12 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	int			keyc,n,vkey,xentries;
 
-	TRACE(dinput,"(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
-    		This,dodsize,dod,entries,entries?*entries:0,flags);
+	TRACE(dinput, "(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
+	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
-        /* FIXME !!! */
-
-	EVENT_Synchronize( FALSE );
-
-	if (entries)
-		xentries = *entries; 
-	else
-		xentries = 1;
-
-        n = 0;
-
-        for (keyc=min_keycode;(keyc<max_keycode) && (n<*entries);keyc++)
-        {
-                    /* X keycode to virtual key */
-                    vkey = keyc2vkey[keyc] & 0xFF;
-                    if (This->keystate[vkey] == (InputKeyStateTable[vkey]&0x80))
-			continue;
-		if (dod) {
-			/* add an entry */
-                        dod[n].dwOfs		= keyc-min_keycode; /* scancode */
-			dod[n].dwData		= InputKeyStateTable[vkey]&0x80;
-			dod[n].dwTimeStamp	= 0; /* umm */
-			dod[n].dwSequence	= 0; /* umm */
-			n++;
-		}
-		if (!(flags & DIGDD_PEEK))
-			This->keystate[vkey] = InputKeyStateTable[vkey]&0x80;
-                    
-        }
-        
-	if (n) fprintf(stderr,"%d entries\n",n);
-	*entries = n;
-	return 0;
+	return KEYBOARD_Driver->pGetDIData(
+		This->keystate, dodsize, dod, entries, flags)?DI_OK:E_FAIL;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)

@@ -4978,66 +4978,6 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	return DDERR_INVALIDDIRECTDRAWGUID;
 }
 
-
-#else /* !defined(X_DISPLAY_MISSING) */
-
-#include "windef.h"
-
-#define DD_OK 0
-
-typedef void *LPGUID;
-typedef void *LPUNKNOWN;
-typedef void *LPDIRECTDRAW;
-typedef void *LPDIRECTDRAWCLIPPER;
-typedef void *LPDDENUMCALLBACKA;
-typedef void *LPDDENUMCALLBACKEXA;
-typedef void *LPDDENUMCALLBACKEXW;
-typedef void *LPDDENUMCALLBACKW;
-
-HRESULT WINAPI DSoundHelp(DWORD x, DWORD y, DWORD z) 
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawCreate(
-  LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawCreateClipper(
-  DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter)
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawEnumerateA(
-  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawEnumerateExA(
-  LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawEnumerateExW(
-  LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
-{
-  return DD_OK;
-}
-
-HRESULT WINAPI DirectDrawEnumerateW(
-  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
-{
-  return DD_OK;
-}
-
-#endif /* !defined(X_DISPLAY_MISSING) */
-
-
 /*******************************************************************************
  * DirectDraw ClassFactory
  *
@@ -5163,3 +5103,76 @@ DWORD WINAPI DDRAW_DllCanUnloadNow(void)
     FIXME("(void): stub\n");
     return S_FALSE;
 }
+
+#else /* !defined(X_DISPLAY_MISSING) */
+
+#include "windef.h"
+#include "winerror.h"
+#include "wtypes.h"
+
+#define DD_OK 0
+
+typedef void *LPUNKNOWN;
+typedef void *LPDIRECTDRAW;
+typedef void *LPDIRECTDRAWCLIPPER;
+typedef void *LPDDENUMCALLBACKA;
+typedef void *LPDDENUMCALLBACKEXA;
+typedef void *LPDDENUMCALLBACKEXW;
+typedef void *LPDDENUMCALLBACKW;
+
+HRESULT WINAPI DSoundHelp(DWORD x, DWORD y, DWORD z) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawCreate(
+  LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawCreateClipper(
+  DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateA(
+  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateExA(
+  LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateExW(
+  LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateW(
+  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
+{
+  return DD_OK;
+}
+
+DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    return E_NOINTERFACE;
+}
+
+DWORD WINAPI DDRAW_DllCanUnloadNow(void)
+{
+    return DD_OK;
+}
+
+#endif /* !defined(X_DISPLAY_MISSING) */
+
+
+
+
