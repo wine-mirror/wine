@@ -40,6 +40,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
 extern const GUID CLSID_PSOAInterface;
 
+/* IDispatch marshaler */
+extern const GUID CLSID_PSDispatch;
+
 /******************************************************************************
  *             SysStringLen  [OLEAUT32.7]
  *
@@ -519,13 +522,15 @@ HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
     return S_OK;
 }
 
+extern HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+
 extern void _get_STDFONT_CF(LPVOID);
 extern void _get_STDPIC_CF(LPVOID);
 
 /***********************************************************************
  *		DllGetClassObject (OLEAUT32.1)
  */
-HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
+HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualGUID(rclsid,&CLSID_StdFont)) {
@@ -541,6 +546,9 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *pp
 	    IClassFactory_AddRef((IClassFactory*)*ppv);
 	    return S_OK;
 	}
+    }
+    if (IsEqualGUID(rclsid,&CLSID_PSDispatch)) {
+	return OLEAUTPS_DllGetClassObject(rclsid,iid,ppv);
     }
     if (IsEqualGUID(rclsid,&CLSID_PSOAInterface)) {
 	if (S_OK==TypeLibFac_DllGetClassObject(rclsid,iid,ppv))
