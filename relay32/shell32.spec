@@ -58,7 +58,7 @@ init	Shell32LibMain
   50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve
   52 stdcall PathGetArgs(str) PathGetArgsAW
-  53 stub DoEnvironmentSubstW@8
+  53 stdcall DoEnvironmentSubst (long long) DoEnvironmentSubstAW
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpacesAW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpacesAW
@@ -84,7 +84,7 @@ init	Shell32LibMain
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
   78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
-  79 stdcall StrToOleStrN(wstr long str long) StrToOleStrN
+  79 stdcall StrToOleStrN(wstr long str long) StrToOleStrNAW
   80 stdcall DragFinish(long) DragFinish
   81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
   82 stdcall DragQueryFileA(long long ptr long) DragQueryFileA
@@ -168,7 +168,7 @@ init	Shell32LibMain
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
- 163 stdcall StrToOleStr (wstr str) StrToOleStr
+ 163 stdcall StrToOleStr (wstr str) StrToOleStrAW
  164 stub Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
  166 stub CallCPLEntry16
@@ -364,10 +364,15 @@ init	Shell32LibMain
  648 stub SHWaitOp_Operate@8
 
  650 stub PathIsSameRoot@8
+
+# nt40/win98
  651 stdcall ReadCabinetState (long long) ReadCabinetState 
  652 stdcall WriteCabinetState (long) WriteCabinetState
- 653 stdcall PathProcessCommand (long long long long) PathProcessCommand
+ 653 stdcall PathProcessCommand (long long long long) PathProcessCommandAW
+
+# win98
  654 stdcall shell32_654 (long long) shell32_654
+
  660 stdcall FileIconInit (long) FileIconInit
 
  680 stdcall IsUserAdmin () IsUserAdmin
@@ -377,14 +382,8 @@ init	Shell32LibMain
 # later additions ... FIXME: incorrect ordinals
 # win 98 uses 2...330, 505..511, 520..526, 640..654, 660, 680, 700..707, 711
 
-# win98:201
-1220 stdcall DllGetVersion (ptr) SHELL32_DllGetVersion
 
-# win98:292
-1221 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
-
-# win98:293
-1222 stub DoEnvironmentSubstA
-
-# win98:204
-1223 stub DoEnvironmentSubstW
+1220 stdcall DllGetVersion (ptr) SHELL32_DllGetVersion	# win98:201
+1221 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA	# win98:292
+1222 stdcall DoEnvironmentSubstA (str str) DoEnvironmentSubstA		# win98:293
+1223 stdcall DoEnvironmentSubstW (wstr wstr) DoEnvironmentSubstW	# win98:204

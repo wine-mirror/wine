@@ -207,11 +207,29 @@ BOOL WINAPI OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide)
 
 /*************************************************************************
  * StrToOleStrN					[SHELL32.79]
+ *  lpMulti, nMulti, nWide [IN]
+ *  lpWide [OUT]
  */
-BOOL WINAPI StrToOleStrN (LPWSTR lpWide, INT nWide, LPCSTR lpMulti, INT nMulti) 
+BOOL WINAPI StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr) 
 {
-	TRACE("%s %x %s %x\n", debugstr_w(lpWide), nWide, lpMulti, nMulti);
-	return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
+	TRACE("%p %x %s %x\n", lpWide, nWide, lpStrA, nStr);
+	return MultiByteToWideChar (0, 0, lpStrA, nStr, lpWide, nWide);
+}
+BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr) 
+{
+	TRACE("%p %x %s %x\n", lpWide, nWide, debugstr_w(lpStrW), nStr);
+
+	if (lstrcpynW (lpWide, lpStrW, nWide))
+	{ return lstrlenW (lpWide);
+	}
+	return 0;
+}
+
+BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr) 
+{
+	if (VERSION_OsIsUnicode())
+	  return StrToOleStrNW (lpWide, nWide, lpStr, nStr);
+	return StrToOleStrNA (lpWide, nWide, lpStr, nStr);
 }
 
 /*************************************************************************
@@ -577,9 +595,10 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	STARTUPINFOA  startupinfo;
 	PROCESS_INFORMATION processinformation;
 			
-  	WARN("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
+	WARN("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
 		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
-		sei->lpParameters, sei->lpDirectory, sei->nShow, sei->lpClass);
+		sei->lpParameters, sei->lpDirectory, sei->nShow, 
+		(sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass : "not used");
 
 	ZeroMemory(szApplicationName,MAX_PATH);
 	if (sei->lpFile)
@@ -744,8 +763,8 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
  *
  */
 HRESULT WINAPI SHRegOpenKeyA(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
-{	FIXME("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey),
-	      phkResult);
+{
+	TRACE("(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey), phkResult);
 	return RegOpenKeyA(hKey, lpSubKey, phkResult);
 }
 
@@ -761,11 +780,16 @@ HRESULT WINAPI SHRegOpenKeyW (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
  * SHRegQueryValueExA				[SHELL32.509]
  *
  */
-HRESULT WINAPI SHRegQueryValueExA(DWORD u, LPSTR v, DWORD w, DWORD x,
-				  DWORD y, DWORD z)
-{	FIXME("0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",
-		u,debugstr_a(v),w,x,y,z);
-	return 0;
+HRESULT WINAPI SHRegQueryValueExA(
+	HKEY hkey,
+	LPSTR lpValueName,
+	LPDWORD lpReserved,
+	LPDWORD lpType,
+	LPBYTE lpData,
+	LPDWORD lpcbData)
+{
+	TRACE("0x%04x %s %p %p %p %p\n", hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+	return RegQueryValueExA (hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 }
 /*************************************************************************
  * SHRegQueryValueW				[NT4.0:SHELL32.510]
@@ -1097,6 +1121,10 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
 /************************************************************************
  *	shell32_654				[SHELL32.654]
  *
+ * NOTES: first parameter seems to be a pointer (same as passed to WriteCabinetState)
+ * second one could be a size (0x0c). The size is the same as the structure saved to
+ * HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState
+ * I'm (js) guessing: this one is just ReadCabinetState ;-)
  */
 HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
 {	FIXME("0x%08lx 0x%08lx stub\n",x,y);
@@ -1117,7 +1145,7 @@ DWORD WINAPI RLBuildListOfPaths ()
  *	StrToOleStr			[SHELL32.163]
  *
  */
-int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
+int WINAPI StrToOleStrA (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 {
 	TRACE("%p %p(%s)\n",
 	lpWideCharStr, lpMultiByteString, lpMultiByteString);
@@ -1125,11 +1153,53 @@ int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
 	return MultiByteToWideChar(0, 0, lpMultiByteString, -1, lpWideCharStr, MAX_PATH);
 
 }
+int WINAPI StrToOleStrW (LPWSTR lpWideCharStr, LPCWSTR lpWString)
+{
+	TRACE("%p %p(%s)\n",
+	lpWideCharStr, lpWString, debugstr_w(lpWString));
+
+	if (lstrcpyW (lpWideCharStr, lpWString ))
+	{ return lstrlenW (lpWideCharStr);
+	}
+	return 0;
+}
+
+BOOL WINAPI StrToOleStrAW (LPWSTR lpWideCharStr, LPCVOID lpString)
+{
+	if (VERSION_OsIsUnicode())
+	  return StrToOleStrW (lpWideCharStr, lpString);
+	return StrToOleStrA (lpWideCharStr, lpString);
+}
+
 /************************************************************************
  *	SHValidateUNC				[SHELL32.173]
  *
  */
 HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
-{	FIXME("0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
+{
+	FIXME("0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
 	return 0;
+}
+
+/************************************************************************
+ *	DoEnvironmentSubstW			[SHELL32.53]
+ *
+ */
+HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
+{
+	FIXME("%p(%s) %p(%s) stub\n", x, x, y, y);
+	return 0;
+}
+
+HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)
+{
+	FIXME("%p(%s) %p(%s) stub\n", x, debugstr_w(x), y, debugstr_w(y));
+	return 0;
+}
+
+HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
+{
+	if (VERSION_OsIsUnicode())
+	  return DoEnvironmentSubstW(x, y);
+	return DoEnvironmentSubstA(x, y);
 }
