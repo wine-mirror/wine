@@ -5410,16 +5410,18 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
     POINT Position;
     LVITEMW lvItem;
     
-    if (!lprc || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return FALSE;
-    
+    if (!lprc) return FALSE;
+
     TRACE("(nItem=%d, nSubItem=%ld)\n", nItem, lprc->top);
     /* On WinNT, a subitem of '0' calls LISTVIEW_GetItemRect */
     if (lprc->top == 0)
         return LISTVIEW_GetItemRect(infoPtr, nItem, lprc);
 
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return FALSE;
+
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
 
-    lvItem.mask = lprc->top == 0 ? LVIF_INDENT : 0;
+    lvItem.mask = 0;
     lvItem.iItem = nItem;
     lvItem.iSubItem = lprc->top;
     
