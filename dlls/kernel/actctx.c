@@ -167,5 +167,7 @@ BOOL WINAPI QueryActCtxW(DWORD dwFlags, HANDLE hActCtx, PVOID pvSubInst,
                          SIZE_T *pcbLen)
 {
   FIXME("stub!\n");
+  /* this makes Adobe Photoshop 7.0 happy */
+  SetLastError( ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
