@@ -30,6 +30,8 @@
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 
+static HMODULE hmod;
+
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 
@@ -38,6 +40,11 @@ struct sidRef
     SID_IDENTIFIER_AUTHORITY auth;
     const char *refStr;
 };
+
+static void init(void)
+{
+    hmod = GetModuleHandle("advapi32.dll");
+}
 
 void test_sid()
 {
@@ -50,7 +57,6 @@ void test_sid()
      { { {0x00,0x00,0x00,0x00,0x00,0x0c} }, "S-1-12-1"        },
     };
     const char noSubAuthStr[] = "S-1-5";
-    HMODULE hmod = GetModuleHandle("advapi32.dll");
     unsigned int i;
     PSID psid = NULL;
     BOOL r;
@@ -166,8 +172,222 @@ void test_trustee()
     ok( trustee.ptstrName == str, "ptstrName wrong\n" );
 }
  
+/* If the first isn't defined, assume none is */
+#ifndef SE_MIN_WELL_KNOWN_PRIVILEGE
+#define SE_MIN_WELL_KNOWN_PRIVILEGE       2L
+#define SE_CREATE_TOKEN_PRIVILEGE         2L
+#define SE_ASSIGNPRIMARYTOKEN_PRIVILEGE   3L
+#define SE_LOCK_MEMORY_PRIVILEGE          4L
+#define SE_INCREASE_QUOTA_PRIVILEGE       5L
+#define SE_MACHINE_ACCOUNT_PRIVILEGE      6L
+#define SE_TCB_PRIVILEGE                  7L
+#define SE_SECURITY_PRIVILEGE             8L
+#define SE_TAKE_OWNERSHIP_PRIVILEGE       9L
+#define SE_LOAD_DRIVER_PRIVILEGE         10L
+#define SE_SYSTEM_PROFILE_PRIVILEGE      11L
+#define SE_SYSTEMTIME_PRIVILEGE          12L
+#define SE_PROF_SINGLE_PROCESS_PRIVILEGE 13L
+#define SE_INC_BASE_PRIORITY_PRIVILEGE   14L
+#define SE_CREATE_PAGEFILE_PRIVILEGE     15L
+#define SE_CREATE_PERMANENT_PRIVILEGE    16L
+#define SE_BACKUP_PRIVILEGE              17L
+#define SE_RESTORE_PRIVILEGE             18L
+#define SE_SHUTDOWN_PRIVILEGE            19L
+#define SE_DEBUG_PRIVILEGE               20L
+#define SE_AUDIT_PRIVILEGE               21L
+#define SE_SYSTEM_ENVIRONMENT_PRIVILEGE  22L
+#define SE_CHANGE_NOTIFY_PRIVILLEGE      23L
+#define SE_REMOTE_SHUTDOWN_PRIVILEGE     24L
+#define SE_UNDOCK_PRIVILEGE              25L
+#define SE_SYNC_AGENT_PRIVILEGE          26L
+#define SE_ENABLE_DELEGATION_PRIVILEGE   27L
+#define SE_MANAGE_VOLUME_PRIVILEGE       28L
+#define SE_IMPERSONATE_PRIVILEGE         29L
+#define SE_CREATE_GLOBAL_PRIVILEGE       30L
+#define SE_MAX_WELL_KNOWN_PRIVILEGE      SE_CREATE_GLOBAL_PRIVILEGE
+#endif /* ndef SE_MIN_WELL_KNOWN_PRIVILEGE */
+
+static void test_allocateLuid(void)
+{
+    BOOL (WINAPI *pAllocateLocallyUniqueId)(PLUID);
+    LUID luid1, luid2;
+    BOOL ret;
+
+    pAllocateLocallyUniqueId = GetProcAddress(hmod, "AllocateLocallyUniqueId");
+    if (!pAllocateLocallyUniqueId) return;
+
+    ret = pAllocateLocallyUniqueId(&luid1);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+
+    ok(ret,
+     "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
+    ok(pAllocateLocallyUniqueId(&luid2),
+     "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
+    ok(luid1.LowPart > SE_MAX_WELL_KNOWN_PRIVILEGE || luid1.HighPart != 0,
+     "AllocateLocallyUniqueId returned a well-known LUID\n");
+    ok(luid1.LowPart != luid2.LowPart || luid1.HighPart != luid2.HighPart,
+     "AllocateLocallyUniqueId returned non-unique LUIDs\n");
+    ok(!pAllocateLocallyUniqueId(NULL) && GetLastError() == ERROR_NOACCESS,
+     "AllocateLocallyUniqueId(NULL) didn't return ERROR_NOACCESS: %ld\n",
+     GetLastError());
+}
+
+static void test_lookupPrivilegeName(void)
+{
+    BOOL (WINAPI *pLookupPrivilegeNameA)(LPSTR, PLUID, LPSTR, LPDWORD);
+    char buf[MAX_PATH]; /* arbitrary, seems long enough */
+    DWORD cchName = sizeof(buf);
+    LUID luid = { 0, 0 };
+    LONG i;
+    BOOL ret;
+
+    /* check whether it's available first */
+    pLookupPrivilegeNameA = GetProcAddress(hmod, "LookupPrivilegeNameA");
+    if (!pLookupPrivilegeNameA) return;
+    luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
+    ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+
+    /* check with a short buffer */
+    cchName = 0;
+    luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
+    ok(!pLookupPrivilegeNameA(NULL, &luid, NULL, &cchName) &&
+     GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+     "LookupPrivilegeNameA didn't fail with ERROR_INSUFFICIENT_BUFFER: %ld\n",
+     GetLastError());
+    ok(cchName == strlen("SeCreateTokenPrivilege") + 1,
+     "LookupPrivilegeNameA returned an incorrect required length for\n"
+     "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
+     strlen("SeCreateTokenPrivilege") + 1);
+    /* check a known value and its returned length on success */
+    cchName = sizeof(buf);
+    ok(pLookupPrivilegeNameA(NULL, &luid, buf, &cchName) &&
+     cchName == strlen("SeCreateTokenPrivilege"),
+     "LookupPrivilegeNameA returned an incorrect output length for\n"
+     "SeCreateTokenPrivilege (got %ld, expected %d)\n", cchName,
+     strlen("SeCreateTokenPrivilege"));
+    /* check known values */
+    for (i = SE_MIN_WELL_KNOWN_PRIVILEGE; i < SE_MAX_WELL_KNOWN_PRIVILEGE; i++)
+    {
+        luid.LowPart = i;
+        cchName = sizeof(buf);
+        ok(pLookupPrivilegeNameA(NULL, &luid, buf, &cchName),
+         "LookupPrivilegeNameA(0.%ld) failed: %ld\n", i, GetLastError());
+    }
+    /* check a bogus LUID */
+    luid.LowPart = 0xdeadbeef;
+    cchName = sizeof(buf);
+    ok(!pLookupPrivilegeNameA(NULL, &luid, buf, &cchName) &&
+     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+     "LookupPrivilegeNameA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     GetLastError());
+    /* check on a bogus system */
+    luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
+    cchName = sizeof(buf);
+    ok(!pLookupPrivilegeNameA("b0gu5.Nam3", &luid, buf, &cchName) &&
+     GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+     "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
+     GetLastError());
+}
+
+struct NameToLUID
+{
+    const char *name;
+    LONG lowPart;
+};
+
+static void test_lookupPrivilegeValue(void)
+{
+    static const struct NameToLUID privs[] = {
+     { "SeCreateTokenPrivilege", SE_CREATE_TOKEN_PRIVILEGE },
+     { "SeAssignPrimaryTokenPrivilege", SE_ASSIGNPRIMARYTOKEN_PRIVILEGE },
+     { "SeLockMemoryPrivilege", SE_LOCK_MEMORY_PRIVILEGE },
+     { "SeIncreaseQuotaPrivilege", SE_INCREASE_QUOTA_PRIVILEGE },
+     { "SeMachineAccountPrivilege", SE_MACHINE_ACCOUNT_PRIVILEGE },
+     { "SeTcbPrivilege", SE_TCB_PRIVILEGE },
+     { "SeSecurityPrivilege", SE_SECURITY_PRIVILEGE },
+     { "SeTakeOwnershipPrivilege", SE_TAKE_OWNERSHIP_PRIVILEGE },
+     { "SeLoadDriverPrivilege", SE_LOAD_DRIVER_PRIVILEGE },
+     { "SeSystemProfilePrivilege", SE_SYSTEM_PROFILE_PRIVILEGE },
+     { "SeSystemtimePrivilege", SE_SYSTEMTIME_PRIVILEGE },
+     { "SeProfileSingleProcessPrivilege", SE_PROF_SINGLE_PROCESS_PRIVILEGE },
+     { "SeIncreaseBasePriorityPrivilege", SE_INC_BASE_PRIORITY_PRIVILEGE },
+     { "SeCreatePagefilePrivilege", SE_CREATE_PAGEFILE_PRIVILEGE },
+     { "SeCreatePermanentPrivilege", SE_CREATE_PERMANENT_PRIVILEGE },
+     { "SeBackupPrivilege", SE_BACKUP_PRIVILEGE },
+     { "SeRestorePrivilege", SE_RESTORE_PRIVILEGE },
+     { "SeShutdownPrivilege", SE_SHUTDOWN_PRIVILEGE },
+     { "SeDebugPrivilege", SE_DEBUG_PRIVILEGE },
+     { "SeAuditPrivilege", SE_AUDIT_PRIVILEGE },
+     { "SeSystemEnvironmentPrivilege", SE_SYSTEM_ENVIRONMENT_PRIVILEGE },
+     { "SeChangeNotifyPrivilege", SE_CHANGE_NOTIFY_PRIVILLEGE },
+     { "SeRemoteShutdownPrivilege", SE_REMOTE_SHUTDOWN_PRIVILEGE },
+     { "SeUndockPrivilege", SE_UNDOCK_PRIVILEGE },
+     { "SeSyncAgentPrivilege", SE_SYNC_AGENT_PRIVILEGE },
+     { "SeEnableDelegationPrivilege", SE_ENABLE_DELEGATION_PRIVILEGE },
+     { "SeManageVolumePrivilege", SE_MANAGE_VOLUME_PRIVILEGE },
+     { "SeImpersonatePrivilege", SE_IMPERSONATE_PRIVILEGE },
+     { "SeCreateGlobalPrivilege", SE_CREATE_GLOBAL_PRIVILEGE },
+    };
+    BOOL (WINAPI *pLookupPrivilegeValueA)(LPCSTR, LPCSTR, PLUID);
+    int i;
+    LUID luid;
+    BOOL ret;
+
+    /* check whether it's available first */
+    pLookupPrivilegeValueA = GetProcAddress(hmod, "LookupPrivilegeValueA");
+    if (!pLookupPrivilegeValueA) return;
+    ret = pLookupPrivilegeValueA(NULL, "SeCreateTokenPrivilege", &luid);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        return;
+
+    /* check a bogus system name */
+    ok(!pLookupPrivilegeValueA("b0gu5.Nam3", "SeCreateTokenPrivilege", &luid)
+     && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+     "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
+     GetLastError());
+    /* check a NULL string */
+    ok(!pLookupPrivilegeValueA(NULL, 0, &luid) &&
+     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     GetLastError());
+    /* check a bogus privilege name */
+    ok(!pLookupPrivilegeValueA(NULL, "SeBogusPrivilege", &luid) &&
+     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+     "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
+     GetLastError());
+    /* check case insensitive */
+    ok(pLookupPrivilegeValueA(NULL, "sEcREATEtOKENpRIVILEGE", &luid),
+     "LookupPrivilegeValueA(NULL, sEcREATEtOKENpRIVILEGE, &luid) failed: %ld\n",
+     GetLastError());
+    for (i = 0; i < sizeof(privs) / sizeof(privs[0]); i++)
+    {
+        /* Not all privileges are implemented on all Windows versions, so
+         * don't worry if the call fails
+         */
+        if (pLookupPrivilegeValueA(NULL, privs[i].name, &luid))
+        {
+            ok(luid.LowPart == privs[i].lowPart,
+             "LookupPrivilegeValueA returned an invalid LUID for %s\n",
+             privs[i].name);
+        }
+    }
+}
+
+static void test_luid(void)
+{
+    test_allocateLuid();
+    test_lookupPrivilegeName();
+    test_lookupPrivilegeValue();
+}
+
 START_TEST(security)
 {
+    init();
+    if (!hmod) return;
     test_sid();
     test_trustee();
+    test_luid();
 }

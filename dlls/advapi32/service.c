@@ -537,22 +537,6 @@ error:
     return NULL;
 }
 
-
-/******************************************************************************
- * AllocateLocallyUniqueId [ADVAPI32.@]
- *
- * PARAMS
- *   lpluid []
- */
-BOOL WINAPI
-AllocateLocallyUniqueId( PLUID lpluid )
-{
-	lpluid->LowPart = time(NULL);
-	lpluid->HighPart = 0;
-	return TRUE;
-}
-
-
 /******************************************************************************
  * ControlService [ADVAPI32.@]
  *

@@ -808,9 +808,12 @@ NTSTATUS WINAPI NtShutdownSystem(DWORD x1)
  */
 NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
 {
-    static LUID luid;
+    static LUID luid = { SE_MAX_WELL_KNOWN_PRIVILEGE, 0 };
 
-    FIXME("%p (0x%08lx%08lx)\n", Luid, luid.HighPart, luid.LowPart);
+    FIXME("%p\n", Luid);
+
+    if (!Luid)
+        return STATUS_ACCESS_VIOLATION;
 
     luid.LowPart++;
     if (luid.LowPart==0)
