@@ -774,7 +774,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		!strcmp ("True", tuple.option))
 	{
 	    /* FIXME - should check for failure */
-	    PSDRV_AddSlot(ppd, NULL, "Manual Feed", tuple.value, DMBIN_MANUAL);
+	    PSDRV_AddSlot(ppd, "Manual Feed", "Manual Feed", tuple.value, DMBIN_MANUAL);
 	    tuple.value = NULL;
 	}
 
@@ -847,4 +847,3 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     return ppd;
 }
-
