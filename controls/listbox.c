@@ -453,6 +453,14 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
         DRAWITEMSTRUCT32 dis;
 	UINT32		 id = (descr->lphc) ? ID_CB_LISTBOX : wnd->wIDmenu;
 
+	if (!item)
+	{
+	    if (action == ODA_FOCUS) 
+		DrawFocusRect32( hdc, rect );
+	    else
+	        FIXME(listbox,"called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
+	    return;
+	}
         dis.CtlType      = ODT_LISTBOX;
         dis.CtlID        = id;
         dis.hwndItem     = wnd->hwndSelf;
