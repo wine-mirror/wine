@@ -170,7 +170,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->cell_height = 12;
     cfg->cell_width  = 8;
     cfg->font_weight = 0;
-    cfg->history_size = 0;
+    cfg->history_size = 50;
     cfg->history_nodup = 0;
     cfg->menu_mask = 0;
     cfg->quick_edit = 0;
