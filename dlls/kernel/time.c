@@ -350,7 +350,6 @@ static BOOL _GetTimezoneBias(
  *
  * RETURNS
  *
- *  Returns true when the local time was calculated.
  *  Returns TRUE when the local time was calculated.
  *
  */
@@ -385,8 +384,8 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
     if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
         return FALSE;
 
-    bias = lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
-    t += bias;
+    bias = (LONGLONG)lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
+    t -= bias;
 
     ft.dwLowDateTime  = (UINT)t;
     ft.dwHighDateTime = (UINT)(t >> 32);
@@ -435,8 +434,8 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
         return FALSE;
 
-    bias = lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
-    t -= bias;
+    bias = (LONGLONG)lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
+    t += bias;
 
     ft.dwLowDateTime  = (UINT)t;
     ft.dwHighDateTime = (UINT)(t >> 32);
