@@ -241,7 +241,7 @@ extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
 extern BOOL DEBUG_HandleTrap(void);
-extern BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count );
+extern BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int * count );
 extern void DEBUG_SuspendExecution( void );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
 extern BOOL DEBUG_IsFctReturn(void);

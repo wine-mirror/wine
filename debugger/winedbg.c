@@ -296,7 +296,8 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
 
     if (!force && is_debug && 
-	DEBUG_ShouldContinue(code, 
+	DEBUG_ShouldContinue(&addr,
+			     code, 
 			     DEBUG_CurrThread->dbg_exec_mode, 
 			     &DEBUG_CurrThread->dbg_exec_count))
 	return FALSE;

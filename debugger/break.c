@@ -695,9 +695,8 @@ static	BOOL DEBUG_ShallBreak( int bpnum )
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
+BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int * count )
 {
-    DBG_ADDR 	addr;
     int 	bpnum;
     DWORD	oldval;
     int 	wpnum;
@@ -706,12 +705,14 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
 
 #ifdef __i386__
     /* If not single-stepping, back up over the int3 instruction */
-    if (code == EXCEPTION_BREAKPOINT) 
+    if (code == EXCEPTION_BREAKPOINT)
+    {
        DEBUG_context.Eip--;
+       addr->off--;
+    }
 #endif
 
-    DEBUG_GetCurrentAddress( &addr );
-    bpnum = DEBUG_FindBreakpoint( &addr, DBG_BREAK );
+    bpnum = DEBUG_FindBreakpoint( addr, DBG_BREAK );
     breakpoints[0].enabled = FALSE;  /* disable the step-over breakpoint */
 
     if ((bpnum != 0) && (bpnum != -1))
@@ -736,16 +737,16 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
        {
 #ifdef __i386__
 	   DEBUG_context.Eip++;
-	   addr.off++;
+	   addr->off++;
 #endif
        }
        if (!DEBUG_ShallBreak(wpnum)) return TRUE;
        
 #ifdef __i386__
-       if (addr.seg) addrlen = DEBUG_GetSelectorType( addr.seg );
+       if (addr->seg) addrlen = DEBUG_GetSelectorType( addr->seg );
 #endif
        DEBUG_Printf(DBG_CHN_MESG, "Stopped on watchpoint %d at ", wpnum);
-       syminfo = DEBUG_PrintAddress( &addr, addrlen, TRUE );
+       syminfo = DEBUG_PrintAddress( addr, addrlen, TRUE );
        
        DEBUG_Printf(DBG_CHN_MESG, " values: old=%lu new=%lu\n", 
 	       oldval, breakpoints[wpnum].u.w.oldval);
@@ -761,7 +762,7 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
      */
     if( mode == EXEC_STEP_OVER || mode == EXEC_STEP_INSTR )
     {
-	if( DEBUG_CheckLinenoStatus(&addr) == AT_LINENUMBER )
+	if( DEBUG_CheckLinenoStatus(addr) == AT_LINENUMBER )
 	{
 	    (*count)--;
 	}
@@ -785,7 +786,7 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
      */
     if (mode != EXEC_CONT && mode != EXEC_PASS && mode != EXEC_FINISH)
     {
-	DEBUG_FindNearestSymbol( &addr, TRUE, NULL, 0, &syminfo.list);
+	DEBUG_FindNearestSymbol( addr, TRUE, NULL, 0, &syminfo.list);
 	if( syminfo.list.sourcefile != NULL )
 	{
 	    DEBUG_List(&syminfo.list, NULL, 0);
@@ -796,7 +797,10 @@ BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
     /* If there's no breakpoint and we are not single-stepping, then we     */
     /* must have encountered an int3 in the Windows program; let's skip it. */
     if ((bpnum == -1) && code == EXCEPTION_BREAKPOINT)
+    {
         DEBUG_context.Eip++;
+	addr->off++;
+    }
 #endif
 
     /* no breakpoint, continue if in continuous mode */
