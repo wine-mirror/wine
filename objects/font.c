@@ -92,43 +92,75 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
-static void __logfont32to16( INT16* plf16, const INT* plf32 )
-{
-    int  i;
-    for( i = 0; i < 5; i++ ) *plf16++ = *plf32++;
-   *((INT*)plf16)++ = *plf32++;
-   *((INT*)plf16)   = *plf32;
-}
-
-static void __logfont16to32( INT* plf32, const INT16* plf16 )
-{
-    int i;
-    for( i = 0; i < 5; i++ ) *plf32++ = *plf16++;
-   *plf32++ = *((INT*)plf16)++;
-   *plf32   = *((INT*)plf16);
-}
-
 void FONT_LogFont32ATo16( const LOGFONTA* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (const INT*)font32 );
+    font16->lfHeight = font32->lfHeight;
+    font16->lfWidth = font32->lfWidth;
+    font16->lfEscapement = font32->lfEscapement;
+    font16->lfOrientation = font32->lfOrientation;
+    font16->lfWeight = font32->lfWeight;
+    font16->lfItalic = font32->lfItalic;
+    font16->lfUnderline = font32->lfUnderline;
+    font16->lfStrikeOut = font32->lfStrikeOut;
+    font16->lfCharSet = font32->lfCharSet;
+    font16->lfOutPrecision = font32->lfOutPrecision;
+    font16->lfClipPrecision = font32->lfClipPrecision;
+    font16->lfQuality = font32->lfQuality;
+    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
     lstrcpynA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
 void FONT_LogFont32WTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (const INT*)font32 );
+    font16->lfHeight = font32->lfHeight;
+    font16->lfWidth = font32->lfWidth;
+    font16->lfEscapement = font32->lfEscapement;
+    font16->lfOrientation = font32->lfOrientation;
+    font16->lfWeight = font32->lfWeight;
+    font16->lfItalic = font32->lfItalic;
+    font16->lfUnderline = font32->lfUnderline;
+    font16->lfStrikeOut = font32->lfStrikeOut;
+    font16->lfCharSet = font32->lfCharSet;
+    font16->lfOutPrecision = font32->lfOutPrecision;
+    font16->lfClipPrecision = font32->lfClipPrecision;
+    font16->lfQuality = font32->lfQuality;
+    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
     lstrcpynWtoA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
 void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
 {
-  __logfont16to32( (INT*)font32, (const INT16*)font16 );
+    font32->lfHeight = font16->lfHeight;
+    font32->lfWidth = font16->lfWidth;
+    font32->lfEscapement = font16->lfEscapement;
+    font32->lfOrientation = font16->lfOrientation;
+    font32->lfWeight = font16->lfWeight;
+    font32->lfItalic = font16->lfItalic;
+    font32->lfUnderline = font16->lfUnderline;
+    font32->lfStrikeOut = font16->lfStrikeOut;
+    font32->lfCharSet = font16->lfCharSet;
+    font32->lfOutPrecision = font16->lfOutPrecision;
+    font32->lfClipPrecision = font16->lfClipPrecision;
+    font32->lfQuality = font16->lfQuality;
+    font32->lfPitchAndFamily = font16->lfPitchAndFamily;
     lstrcpynA( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 
 void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONTW font32 )
 {
-  __logfont16to32( (INT*)font32, (const INT16*)font16 );
+    font32->lfHeight = font16->lfHeight;
+    font32->lfWidth = font16->lfWidth;
+    font32->lfEscapement = font16->lfEscapement;
+    font32->lfOrientation = font16->lfOrientation;
+    font32->lfWeight = font16->lfWeight;
+    font32->lfItalic = font16->lfItalic;
+    font32->lfUnderline = font16->lfUnderline;
+    font32->lfStrikeOut = font16->lfStrikeOut;
+    font32->lfCharSet = font16->lfCharSet;
+    font32->lfOutPrecision = font16->lfOutPrecision;
+    font32->lfClipPrecision = font16->lfClipPrecision;
+    font32->lfQuality = font16->lfQuality;
+    font32->lfPitchAndFamily = font16->lfPitchAndFamily;
     lstrcpynAtoW( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 

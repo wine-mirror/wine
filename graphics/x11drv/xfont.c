@@ -1072,7 +1072,10 @@ static void XFONT_GetTextMetrics( const fontObject* pfo, const LPTEXTMETRICA pTM
 	pTM->tmWeight += 100;
     } 
 
-    *(INT*)&pTM->tmFirstChar = *(INT*)&pdf->dfFirstChar;
+    pTM->tmFirstChar = pdf->dfFirstChar;
+    pTM->tmLastChar = pdf->dfLastChar;
+    pTM->tmDefaultChar = pdf->dfDefaultChar;
+    pTM->tmBreakChar = pdf->dfBreakChar;
 
     pTM->tmCharSet = pdf->dfCharSet;
     pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
@@ -1122,7 +1125,10 @@ static UINT XFONT_GetFontMetric( const fontInfo* pfi, const LPENUMLOGFONTEX16 pL
     pTM->tmDigitizedAspectX = pfi->df.dfHorizRes;
     pTM->tmDigitizedAspectY = pfi->df.dfVertRes;
 
-    *(INT*)&pTM->tmFirstChar = *(INT*)&pfi->df.dfFirstChar;
+    pTM->tmFirstChar = pfi->df.dfFirstChar;
+    pTM->tmLastChar = pfi->df.dfLastChar;
+    pTM->tmDefaultChar = pfi->df.dfDefaultChar;
+    pTM->tmBreakChar = pfi->df.dfBreakChar;
 
     /* return font type */
 
