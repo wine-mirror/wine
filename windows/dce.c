@@ -362,9 +362,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
           hwnd, hrgnClip, (unsigned)flags);
 
     if (!hwnd) hwnd = GetDesktopWindow();
-    if (!(full = WIN_IsCurrentProcess( hwnd )) && full != GetDesktopWindow())
+    if (!(full = WIN_IsCurrentProcess( hwnd )))
     {
-        FIXME( "not supported yet on other process window %x\n", full );
+        FIXME( "not supported yet on other process window %x\n", hwnd );
         return 0;
     }
     hwnd = full;
