@@ -242,36 +242,65 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
-    case WM_RBUTTONUP:
-    case WM_NCRBUTTONUP:
-        if ((wndPtr->flags & WIN_ISWIN32) || (TWEAK_WineLook > WIN31_LOOK))
+    case WM_NCRBUTTONDOWN:
+        /* in Windows, capture is taken when right-clicking on the caption bar */
+        if (wParam==HTCAPTION)
         {
-	    ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
-            SendMessageA( wndPtr->hwndSelf, WM_CONTEXTMENU,
-			    wndPtr->hwndSelf, lParam);
+            SetCapture(wndPtr->hwndSelf);
         }
         break;
 
+    case WM_RBUTTONUP:
+        if (wndPtr->hwndSelf == GetCapture())
+        {
+            /* release capture if we took it on WM_NCRBUTTONDOWN */
+            ReleaseCapture();
+        }
+        if ((wndPtr->flags & WIN_ISWIN32) || (TWEAK_WineLook > WIN31_LOOK))
+        {
+            ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
+            SendMessageA( wndPtr->hwndSelf, WM_CONTEXTMENU,
+                          wndPtr->hwndSelf, lParam);
+        }
+        break;
+
+    case WM_NCRBUTTONUP:
+        /*
+         * FIXME : we must NOT send WM_CONTEXTMENU on a WM_NCRBUTTONUP (checked 
+         * in Windows), but what _should_ we do? According to MSDN : 
+         * "If it is appropriate to do so, the system sends the WM_SYSCOMMAND 
+         * message to the window". When is it appropriate?
+         */
+        break;
+
     case WM_CONTEXTMENU:
-	if( wndPtr->dwStyle & WS_CHILD )
-	    SendMessageA( wndPtr->parent->hwndSelf, msg, wParam, lParam );
-	else if (wndPtr->hSysMenu)
+        if( wndPtr->dwStyle & WS_CHILD )
+            SendMessageA( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+        else if (wndPtr->hSysMenu)
         {
             LONG hitcode;
             POINT pt;
             pt.x = SLOWORD(lParam);
             pt.y = SHIWORD(lParam);
 
-            ScreenToClient(wndPtr->hwndSelf, &pt);
+            /*
+             * WM_CONTEXTMENU coordinates are relative to screen, but 
+             * NC_HandleNCHitTest expects coordinates relative to the parent's 
+             * client area (to compare with the rectangle returned by 
+             * GetWindowRect)
+             */
+            if (wndPtr->parent)
+                ScreenToClient(wndPtr->parent->hwndSelf, &pt);
+
             hitcode = NC_HandleNCHitTest(wndPtr->hwndSelf, pt);
 
             /* Track system popup if click was in the caption area. */
             if (hitcode==HTCAPTION || hitcode==HTSYSMENU)
-                TrackPopupMenu(GetSystemMenu(wndPtr->hwndSelf, FALSE),
+               TrackPopupMenu(GetSystemMenu(wndPtr->hwndSelf, FALSE),
                                TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
                                pt.x, pt.y, 0, wndPtr->hwndSelf, NULL);
         }
-	break;
+        break;
 
     case WM_NCACTIVATE:
 	return NC_HandleNCActivate( wndPtr, wParam );
