@@ -625,6 +625,7 @@
 # define		rtfNoWidthNonJoiner	56	/* new in 1.10 */
 # define		rtfCurHeadPict		57	/* valid? */
 /*# define		rtfCurAnnot		58*/	/* apparently not used */
+# define		rtfUnicode		58	/* no better category*/
 
 # define	rtfStyleAttr	7
 # define		rtfAdditive		0	/* new in 1.10 */
@@ -1452,6 +1453,9 @@ struct _RTF_Info {
 
     /* edit window to output to */
     HWND hwndEdit;
+    
+    ME_TextEditor *editor;
+    ME_Style *style;
 
     /*
      * These arrays are used to map RTF input character values onto the standard

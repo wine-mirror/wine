@@ -300,12 +300,6 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   assert(style);
   editor->bCaretAtEnd = FALSE;
 
-  /*
-  if (!style)
-    style = ME_GetInsertStyle(editor, nCursor);
-  else
-    ME_AddRefStyle(style);
-    */
   ME_AddRefStyle(style);
   
   /* FIXME really HERE ? */
@@ -800,8 +794,6 @@ BOOL ME_CancelSelection(ME_TextEditor *editor, int dir)
     editor->pCursors[1] = editor->pCursors[0];
   else
     editor->pCursors[0] = editor->pCursors[1];
-  /* FIXME optimize */
-  ME_MarkAllForWrapping(editor);
   ME_Repaint(editor);
   return TRUE;
 }
@@ -809,14 +801,6 @@ BOOL ME_CancelSelection(ME_TextEditor *editor, int dir)
 void ME_RepaintSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
 {
   ME_Cursor old_anchor = editor->pCursors[1];
-  BOOL bRedraw = FALSE;
-  bRedraw = memcmp(&editor->pCursors[0], &editor->pCursors[1], sizeof(ME_Cursor));
-  
-  if (bRedraw)
-  {
-    /* FIXME optimize */
-    ME_MarkAllForWrapping(editor);
-  }
   
   if (GetKeyState(VK_SHIFT)>=0) /* cancelling selection */
   {
@@ -915,6 +899,7 @@ BOOL ME_ArrowKey(ME_TextEditor *editor, int nVKey, int nCtrl)
       }
       if (ME_ArrowLeft(editor, p)) {
         editor->bCaretAtEnd = FALSE; /* FIXME or maybe not */
+        ME_ClearTempStyle(editor);
         ME_MoveCaret(editor);
         ME_DeleteTextAtCursor(editor, nCursor, 1);
         ME_UpdateRepaint(editor);
@@ -928,10 +913,12 @@ BOOL ME_ArrowKey(ME_TextEditor *editor, int nVKey, int nCtrl)
       if (ME_IsSelection(editor))
       {
         ME_DeleteSelection(editor);
+        ME_ClearTempStyle(editor);
         ME_UpdateRepaint(editor);
         return TRUE;
       }
       ME_DeleteTextAtCursor(editor, nCursor, 1);
+      ME_ClearTempStyle(editor);
       ME_UpdateRepaint(editor);
       return TRUE;
     }

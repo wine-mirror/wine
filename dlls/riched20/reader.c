@@ -42,11 +42,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "rtf.h"
-
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
+
+#include "editor.h"
+#include "rtf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -68,6 +69,7 @@ static int	Hash (char*);
 
 static void	CharSetInit (RTF_Info *);
 static void	ReadCharSetMaps (RTF_Info *);
+static void	RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len );
 
 
 /*
@@ -2452,6 +2454,7 @@ static RTFKey	rtfKey[] =
 	{ rtfSpecialChar,	rtfNoWidthNonJoiner,	"zwnj",		0 },
 	/* is this valid? */
 	{ rtfSpecialChar,	rtfCurHeadPict,		"chpict",	0 },
+	{ rtfSpecialChar,	rtfUnicode,		"u",		0 },
 
 	/*
 	 * Character formatting attributes
@@ -3698,7 +3701,6 @@ Destination (RTF_Info *info)
 		RTFSkipGroup (info);    
 }
 
-
 /*
  * The reason these use the rtfSC_xxx thingies instead of just writing
  * out ' ', '-', '"', etc., is so that the mapping for these characters
@@ -3721,6 +3723,22 @@ void SpecialChar (RTF_Info *info)
 		else
 			RTFRouteToken(info); /* "\*" is ignored with known destinations */
 		break;
+	case rtfUnicode:
+	{
+		WCHAR buf[2];
+		buf[0] = info->rtfParam;
+		buf[1] = 0;
+		RTFFlushOutputBuffer(info);
+		RTFOutputUnicodeString(info, buf, 1);
+		
+		RTFGetToken(info);
+		if (info->rtfClass != rtfText && info->rtfMajor != '?')
+		{
+			ERR("The character behind \\u is not a question mark, but (%d,%d,%d)\n",
+				info->rtfClass, info->rtfMajor, info->rtfMinor);
+		}
+		break;
+	}
 	case rtfPage:
 	case rtfSect:
 	case rtfRow:
@@ -3801,10 +3819,32 @@ void PutLitChar (RTF_Info *info, int c)
 	info->OutputBuffer[info->dwOutputCount++] = c;
 }
 
+void RTFOutputANSIStringOrig( RTF_Info *info, char *str, int len )
+{
+	assert(str[len] == '\0');
+	if (len) {
+		SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) str);
+	}
+}
+
 void RTFOutputANSIString( RTF_Info *info, char *str, int len )
 {
 	assert(str[len] == '\0');
-	if (len) SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) str);
+	if (len) {
+		WCHAR *buf = ALLOC_N_OBJ(WCHAR, len);
+
+		len = MultiByteToWideChar(CP_ACP, 0, str, len, buf, len);
+		ME_InsertTextFromCursor( info->editor, 0, buf, len, info->style );	  
+		FREE_OBJ(buf);
+	}
+}
+
+void RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len )
+{
+	assert(str[len] == '\0');
+	if (len) {
+		ME_InsertTextFromCursor( info->editor, 0, str, len, info->style );	  
+	}
 }
 
 void RTFFlushOutputBuffer( RTF_Info *info )

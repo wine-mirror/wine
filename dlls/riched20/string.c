@@ -112,7 +112,7 @@ int ME_IsWhitespaces(ME_String *s)
 {
   /* FIXME multibyte */
   WCHAR *pos = s->szData;
-  while(*pos++ == ' ')
+  while(ME_IsWSpace(*pos++))
     ;
   pos--;
   if (*pos)
@@ -126,12 +126,12 @@ int ME_IsSplitable(ME_String *s)
   /* FIXME multibyte */
   WCHAR *pos = s->szData;
   WCHAR ch;
-  while(*pos++ == L' ')
+  while(ME_IsWSpace(*pos++))
     ;
   pos--;
   while((ch = *pos++) != 0)
   {
-    if (ch == L' ')
+    if (ME_IsWSpace(*pos++))
       return 1;
   }
   return 0;

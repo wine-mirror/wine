@@ -85,6 +85,10 @@ void ME_EndToUnicode(HWND hWnd, LPVOID psz);
 LPSTR ME_ToAnsi(HWND hWnd, LPVOID psz);
 void ME_EndToAnsi(HWND hWnd, LPVOID psz);
 
+static inline int ME_IsWSpace(WCHAR ch)
+{
+  return ch > '\0' && ch <= ' ';
+}
 
 /* note: those two really return the first matching offset (starting from EOS)+1 
  * in other words, an offset of the first trailing white/black */

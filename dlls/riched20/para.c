@@ -310,7 +310,6 @@ void ME_SetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
       break;
     para = para->member.para.next_para;
   } while(1);
-  ME_Repaint(editor);
 }
 
 void ME_GetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, PARAFORMAT2 *pFmt)

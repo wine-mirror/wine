@@ -277,7 +277,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM
 
 void ME_RTFCharAttrHook(RTF_Info *info)
 {
-  CHARFORMAT2A fmt;
+  CHARFORMAT2W fmt;
   fmt.cbSize = sizeof(fmt);
   fmt.dwMask = 0;
   
@@ -334,8 +334,8 @@ void ME_RTFCharAttrHook(RTF_Info *info)
         RTFFont *f = RTFGetFont(info, info->rtfParam);
         if (f)
         {
-          strncpy(fmt.szFaceName, f->rtfFName, sizeof(fmt.szFaceName)-1);
-          fmt.szFaceName[sizeof(fmt.szFaceName)-1] = '\0';
+          MultiByteToWideChar(CP_ACP, 0, f->rtfFName, -1, fmt.szFaceName, sizeof(fmt.szFaceName)/sizeof(WCHAR));
+          fmt.szFaceName[sizeof(fmt.szFaceName)/sizeof(WCHAR)-1] = '\0';
           fmt.dwMask = CFM_FACE;
         }
       }
@@ -347,8 +347,12 @@ void ME_RTFCharAttrHook(RTF_Info *info)
       break;
   }
   if (fmt.dwMask) {
+    ME_Style *style2;
     RTFFlushOutputBuffer(info);
-    SendMessageW(info->hwndEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
+    /* FIXME too slow ? how come ? */
+    style2 = ME_ApplyStyle(info->style, &fmt);
+    ME_ReleaseStyle(info->style);
+    info->style = style2;
   }
 }
 
@@ -380,7 +384,8 @@ void ME_RTFParAttrHook(RTF_Info *info)
   }  
   if (fmt.dwMask) {
     RTFFlushOutputBuffer(info);
-    SendMessageW(info->hwndEdit, EM_SETPARAFORMAT, 0, (LPARAM)&fmt);
+    /* FIXME too slow ? how come ?*/
+    ME_SetSelectionParaFormat(info->editor, &fmt);
   }
 }
 
@@ -393,17 +398,21 @@ void ME_RTFReadHook(RTF_Info *info) {
         case rtfBeginGroup:
           if (info->formatStackTop < maxCharFormatStack) {
             info->formatStack[info->formatStackTop].cbSize = sizeof(info->formatStack[0]);
-            SendMessageW(info->hwndEdit, EM_GETCHARFORMAT, 1, (LPARAM)&info->formatStack[info->formatStackTop]);
+            memcpy(&info->formatStack[info->formatStackTop], &info->style->fmt, sizeof(CHARFORMAT2W));
           }
           info->formatStackTop++;
           break;
         case rtfEndGroup:
+        {
+          ME_Style *s;
           RTFFlushOutputBuffer(info);
           info->formatStackTop--;
-          if (info->formatStackTop < maxCharFormatStack) {
-            SendMessageW(info->hwndEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&info->formatStack[info->formatStackTop]);
-          }
+          /* FIXME too slow ? how come ? */
+          s = ME_ApplyStyle(info->style, &info->formatStack[info->formatStackTop]);
+          ME_ReleaseStyle(info->style);
+          info->style = s;
           break;
+        }
       }
       break;
     case rtfControl:
@@ -426,8 +435,10 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   ME_Style *style;
   int from, to, to2, nUndoMode;
   ME_UndoItem *pUI;
+  int nEventMask = editor->nEventMask;
 
   TRACE("%p %p\n", stream, editor->hWnd);
+  editor->nEventMask = 0;
   
   ME_GetSelection(editor, &from, &to);
   if (format & SFF_SELECTION) {
@@ -442,6 +453,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
     from = to = 0;
     ME_ClearTempStyle(editor);
+    /* FIXME restore default paragraph formatting ! */
   }
   
   nUndoMode = editor->nUndoMode;
@@ -452,6 +464,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     RTFSetEditStream(&parser, stream);
     parser.rtfFormat = format&(SF_TEXT|SF_RTF);
     parser.hwndEdit = editor->hWnd;
+    parser.editor = editor;
+    parser.style = style;
     WriterInit(&parser);
     RTFInit(&parser);
     RTFSetReadHook(&parser, ME_RTFReadHook);
@@ -460,6 +474,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     /* do the parsing */
     RTFRead(&parser);
     RTFFlushOutputBuffer(&parser);
+
+    style = parser.style;
   }
   else if (format & SF_TEXT)
     ME_StreamInText(editor, format, stream, style);
@@ -483,7 +499,15 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     pUI->nLen = to-from;
   }
   ME_CommitUndo(editor);
-  ME_ReleaseStyle(style);
+  ME_ReleaseStyle(style); 
+  editor->nEventMask = nEventMask;
+  ME_UpdateRepaint(editor);
+  if (!(format & SFF_SELECTION)) {
+    ME_ClearTempStyle(editor);
+    ME_EnsureVisible(editor, editor->pCursors[0].pRun);
+  }
+  ME_MoveCaret(editor);
+  ME_SendSelChange(editor);
 
   return 0;
 }
@@ -817,6 +841,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SETCHARFORMAT:
   {
     CHARFORMAT2W buf, *p;
+    BOOL bRepaint = TRUE;
     p = ME_ToCF2W(&buf, (CHARFORMAT2W *)lParam);
     if (!wParam)
       ME_SetDefaultCharFormat(editor, p);
@@ -824,10 +849,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       FIXME("word selection not supported\n");
     else if (wParam == SCF_ALL)
       ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
-    else
+    else {
+      int from, to;
+      ME_GetSelection(editor, &from, &to);
+      bRepaint = (from != to);
       ME_SetSelectionCharFormat(editor, p);
+    }
     ME_CommitUndo(editor);
-    ME_UpdateRepaint(editor);
+    if (bRepaint)
+      ME_UpdateRepaint(editor);
     return 0;
   }
   case EM_GETCHARFORMAT:
@@ -843,6 +873,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_SETPARAFORMAT:
     ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
+    ME_UpdateRepaint(editor);
     ME_CommitUndo(editor);
     return 0;
   case EM_GETPARAFORMAT:

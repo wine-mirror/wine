@@ -274,10 +274,6 @@ ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
         wc->bOverflown = FALSE;
         pp = ME_SplitRun(wc->context, p, black);
         p->member.run.nFlags |= MERF_SKIPPED;
-/*
-        run->pt = wc->pt;
-        wc->pt.x += run->nWidth;
-        */
         ME_InsertRowStart(wc, pp);
         return pp;
       }

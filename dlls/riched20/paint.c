@@ -146,8 +146,8 @@ void ME_Repaint(ME_TextEditor *editor)
   ME_DisplayItem *pRun = NULL;
   int nOffset = -1;
   HDC hDC;
-  
   int nCharOfs = ME_CharOfsFromRunOfs(editor, pCursor->pRun, pCursor->nOffset);
+  
   ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
   assert(pRun == pCursor->pRun);
   assert(nOffset == pCursor->nOffset);
@@ -244,6 +244,9 @@ void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph
   ME_Run *run = &rundi->member.run;
   int runofs = run->nCharOfs+para->nCharOfs;
   
+  /* you can always comment it out if you need visible paragraph marks */
+  if (run->nFlags & MERF_ENDPARA) 
+    return;
   if (run->nFlags & MERF_GRAPHICS) {
     int blfrom, blto;
     ME_GetSelection(c->editor, &blfrom, &blto);

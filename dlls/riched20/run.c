@@ -321,11 +321,6 @@ ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem
   return pDI;
 }
 
-static inline int ME_IsWSpace(WCHAR ch)
-{
-  return ch <= ' ';
-}
-
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 {
   assert(run->nCharOfs != -1);
