@@ -1064,79 +1064,6 @@ BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
 
 
 /***********************************************************************
- *           FILE_GetTempFileName : utility for GetTempFileName
- */
-static UINT FILE_GetTempFileName( LPCWSTR path, LPCWSTR prefix, UINT unique,
-                                  LPWSTR buffer )
-{
-    static UINT unique_temp;
-    DOS_FULL_NAME full_name;
-    int i;
-    LPWSTR p;
-    UINT num;
-    char buf[20];
-
-    if ( !path || !prefix || !buffer )
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (!unique_temp) unique_temp = time(NULL) & 0xffff;
-    num = unique ? (unique & 0xffff) : (unique_temp++ & 0xffff);
-
-    strcpyW( buffer, path );
-    p = buffer + strlenW(buffer);
-
-    /* add a \, if there isn't one and path is more than just the drive letter ... */
-    if ( !((strlenW(buffer) == 2) && (buffer[1] == ':'))
-	&& ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
-
-    for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
-
-    sprintf( buf, "%04x.tmp", num );
-    MultiByteToWideChar(CP_ACP, 0, buf, -1, p, 20);
-
-    /* Now try to create it */
-
-    if (!unique)
-    {
-        do
-        {
-            HANDLE handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
-                                         CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-            if (handle != INVALID_HANDLE_VALUE)
-            {  /* We created it */
-                TRACE("created %s\n", debugstr_w(buffer) );
-                CloseHandle( handle );
-                break;
-            }
-            if (GetLastError() != ERROR_FILE_EXISTS &&
-                GetLastError() != ERROR_SHARING_VIOLATION)
-                break;  /* No need to go on */
-            num++;
-            sprintf( buf, "%04x.tmp", num );
-            MultiByteToWideChar(CP_ACP, 0, buf, -1, p, 20);
-        } while (num != (unique & 0xffff));
-    }
-
-    /* Get the full path name */
-
-    if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
-    {
-        char *slash;
-        /* Check if we have write access in the directory */
-        if ((slash = strrchr( full_name.long_name, '/' ))) *slash = '\0';
-        if (access( full_name.long_name, W_OK ) == -1)
-            WARN("returns %s, which doesn't seem to be writeable.\n",
-                  debugstr_w(buffer) );
-    }
-    TRACE("returning %s\n", debugstr_w(buffer) );
-    return unique ? unique : num;
-}
-
-
-/***********************************************************************
  *           GetTempFileNameA   (KERNEL32.@)
  */
 UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
@@ -1170,7 +1097,69 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
 UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
                                   LPWSTR buffer )
 {
-    return FILE_GetTempFileName( path, prefix, unique, buffer );
+    static const WCHAR formatW[] = {'%','0','4','x','.','t','m','p',0};
+
+    DOS_FULL_NAME full_name;
+    int i;
+    LPWSTR p;
+
+    if ( !path || !prefix || !buffer )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    strcpyW( buffer, path );
+    p = buffer + strlenW(buffer);
+
+    /* add a \, if there isn't one and path is more than just the drive letter ... */
+    if ( !((strlenW(buffer) == 2) && (buffer[1] == ':'))
+       && ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
+
+    for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
+
+    unique &= 0xffff;
+
+    if (unique) sprintfW( p, formatW, unique );
+    else
+    {
+        /* get a "random" unique number and try to create the file */
+        HANDLE handle;
+        UINT num = GetTickCount() & 0xffff;
+
+        if (!num) num = 1;
+        unique = num;
+        do
+        {
+            sprintfW( p, formatW, unique );
+            handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+            if (handle != INVALID_HANDLE_VALUE)
+            {  /* We created it */
+                TRACE("created %s\n", debugstr_w(buffer) );
+                CloseHandle( handle );
+                break;
+            }
+            if (GetLastError() != ERROR_FILE_EXISTS &&
+                GetLastError() != ERROR_SHARING_VIOLATION)
+                break;  /* No need to go on */
+            if (!(++unique & 0xffff)) unique = 1;
+        } while (unique != num);
+    }
+
+    /* Get the full path name */
+
+    if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
+    {
+        char *slash;
+        /* Check if we have write access in the directory */
+        if ((slash = strrchr( full_name.long_name, '/' ))) *slash = '\0';
+        if (access( full_name.long_name, W_OK ) == -1)
+            WARN("returns %s, which doesn't seem to be writeable.\n",
+                  debugstr_w(buffer) );
+    }
+    TRACE("returning %s\n", debugstr_w(buffer) );
+    return unique;
 }
 
 
