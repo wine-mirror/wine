@@ -295,8 +295,8 @@ init	MAIN_KernelInit
 277 stdcall GetAtomNameA(long ptr long) GetAtomName32A
 278 stdcall GetAtomNameW(long ptr long) GetAtomName32W
 279 stub GetBinaryType
-280 stub GetBinaryTypeA
-281 stub GetBinaryTypeW
+280 stdcall GetBinaryTypeA(ptr ptr) GetBinaryType32A
+281 stdcall GetBinaryTypeW(ptr ptr) GetBinaryType32W
 282 stdcall GetCPInfo(long ptr) GetCPInfo
 283 stub GetCommConfig
 284 stdcall GetCommMask(long ptr) GetCommMask

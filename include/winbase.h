@@ -199,6 +199,23 @@ void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 BOOL32    WINAPI TerminateProcess(HANDLE32,DWORD);
 BOOL32    WINAPI TerminateThread(HANDLE32,DWORD);
 
+
+/* GetBinaryType return values.
+ */
+
+#define SCS_32BIT_BINARY    0
+#define SCS_DOS_BINARY      1
+#define SCS_WOW_BINARY      2
+#define SCS_PIF_BINARY      3
+#define SCS_POSIX_BINARY    4
+#define SCS_OS216_BINARY    5
+
+BOOL32 WINAPI GetBinaryType32A( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
+BOOL32 WINAPI GetBinaryType32W( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
+#define GetBinaryType WINELIB_NAME_AW(GetBinaryType)
+
+
+
 #ifdef __cplusplus
 }
 #endif
