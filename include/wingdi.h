@@ -427,7 +427,7 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define GetMValue(cmyk)     ((BYTE) ((cymk) >> 16))
 #define GetCValue(cmyk)     ((BYTE) ((cymk) >> 24))
 
-#define CMYK(c,m,y,k)       ((COLOREF)((((BYTE)(k)|((WORD)((BYTE)(y))<<8))|(((DWORD)(BYTE)(m))<<16))|(((DWORD)(BYTE)(c))<<24)))
+#define CMYK(c,m,y,k)       ((COLORREF)((((BYTE)(k)|((WORD)((BYTE)(y))<<8))|(((DWORD)(BYTE)(m))<<16))|(((DWORD)(BYTE)(c))<<24)))
 
 
 #define ICM_OFF   1

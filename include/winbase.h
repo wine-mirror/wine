@@ -139,7 +139,7 @@ typedef PEXCEPTION_RECORD LPEXCEPTION_RECORD;
 typedef PEXCEPTION_POINTERS LPEXCEPTION_POINTERS;
 
 #define OFS_MAXPATHNAME 128
-typedef struct
+typedef struct _OFSTRUCT
 {
     BYTE cBytes;
     BYTE fFixedDisk;
@@ -202,7 +202,7 @@ typedef struct _SECURITY_ATTRIBUTES
 #ifndef _FILETIME_
 #define _FILETIME_
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
-typedef struct
+typedef struct _FILETIME
 {
 #ifdef WORDS_BIGENDIAN
   DWORD  dwHighDateTime;
@@ -215,7 +215,7 @@ typedef struct
 #endif /* _FILETIME_ */
 
 /* Find* structures */
-typedef struct
+typedef struct _WIN32_FIND_DATAA
 {
     DWORD     dwFileAttributes;
     FILETIME  ftCreationTime;
@@ -229,7 +229,7 @@ typedef struct
     CHAR      cAlternateFileName[14];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 
-typedef struct
+typedef struct _WIN32_FIND_DATAW
 {
     DWORD     dwFileAttributes;
     FILETIME  ftCreationTime;
@@ -261,7 +261,7 @@ typedef enum _FINDEX_SEARCH_OPS
 	FindExSearchMaxSearchOp
 } FINDEX_SEARCH_OPS;
 
-typedef struct
+typedef struct _PROCESS_HEAP_ENTRY
 {
     LPVOID lpData;
     DWORD cbData;
@@ -455,7 +455,7 @@ typedef struct tagMEMORYSTATUS
 } MEMORYSTATUS, *LPMEMORYSTATUS;
 
 
-typedef struct {
+typedef struct _SYSTEMTIME{
         WORD wYear;
         WORD wMonth;
         WORD wDayOfWeek;
@@ -493,7 +493,7 @@ typedef VOID (CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwErrorCode, DWOR
 #define	STARTF_USESTDHANDLES	0x00000100
 #define	STARTF_USEHOTKEY	0x00000200
 
-typedef struct {
+typedef struct _STARTUPINFOA{
         DWORD cb;		/* 00: size of struct */
         LPSTR lpReserved;	/* 04: */
         LPSTR lpDesktop;	/* 08: */
@@ -514,7 +514,7 @@ typedef struct {
         HANDLE hStdError;	/* 40: */
 } STARTUPINFOA, *LPSTARTUPINFOA;
 
-typedef struct {
+typedef struct _STARTUPINFOW{
         DWORD cb;
         LPWSTR lpReserved;
         LPWSTR lpDesktop;
@@ -538,14 +538,14 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(STARTUPINFO)
 DECL_WINELIB_TYPE_AW(LPSTARTUPINFO)
 
-typedef struct {
+typedef struct _PROCESS_INFORMATION{
 	HANDLE	hProcess;
 	HANDLE	hThread;
 	DWORD		dwProcessId;
 	DWORD		dwThreadId;
 } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
-typedef struct {
+typedef struct _TIME_ZONE_INFORMATION{
         LONG Bias;
         WCHAR StandardName[32];
         SYSTEMTIME StandardDate;
@@ -612,7 +612,7 @@ typedef struct {
 #define STD_OUTPUT_HANDLE       ((DWORD) -11)
 #define STD_ERROR_HANDLE        ((DWORD) -12)
 
-typedef struct
+typedef struct _BY_HANDLE_FILE_INFORMATION
 {
   DWORD dwFileAttributes;
   FILETIME ftCreationTime;
