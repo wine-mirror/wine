@@ -22,7 +22,7 @@
 
 DECLARE_DEBUG_CHANNEL(elfdll)
 
-#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
+#if defined(HAVE_DL_API)
 #include <dlfcn.h>
 
 /*------------------ HACKS -----------------*/

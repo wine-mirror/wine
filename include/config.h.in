@@ -93,6 +93,9 @@
 /* Define if Mesa is present on the system or not */
 #undef HAVE_LIBMESAGL
 
+/* Define if the system has dynamic link library support with the dl* API */
+#undef HAVE_DL_API
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
@@ -104,6 +107,9 @@
 
 /* Define if you have the connect function.  */
 #undef HAVE_CONNECT
+
+/* Define if you have the dlopen function.  */
+#undef HAVE_DLOPEN
 
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
@@ -267,23 +273,14 @@
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 
-/* Define if you have the dl library (-ldl).  */
-#undef HAVE_LIBDL
-
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
 
 /* Define if you have the ncurses library (-lncurses).  */
 #undef HAVE_LIBNCURSES
 
-/* Define if you have the nsl library (-lnsl).  */
-#undef HAVE_LIBNSL
-
 /* Define if you have the ossaudio library (-lossaudio).  */
 #undef HAVE_LIBOSSAUDIO
-
-/* Define if you have the socket library (-lsocket).  */
-#undef HAVE_LIBSOCKET
 
 /* Define if you have the w library (-lw).  */
 #undef HAVE_LIBW

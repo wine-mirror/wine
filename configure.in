@@ -84,21 +84,21 @@ AC_CHECK_LIB(ossaudio,_oss_ioctl)
 dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
 dnl Check for -lnsl for Solaris
-AC_CHECK_FUNCS(gethostbyname)
-if test "$ac_cv_func_gethostbyname" = "no"
-then
-    AC_CHECK_LIB(nsl,gethostbyname)
-fi
+AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
-AC_CHECK_FUNCS(connect)
-if test "$ac_cv_func_connect" = "no"
-then
-    AC_CHECK_LIB(socket,connect)
-fi
+AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
-dnl Check for -ldl
-AC_CHECK_LIB(dl,dlopen)
+
+AC_CHECK_HEADERS(dlfcn.h,
+	AC_CHECK_FUNCS(dlopen,
+		AC_DEFINE(HAVE_DL_API),
+    		AC_CHECK_LIB(dl,dlopen,
+			AC_DEFINE(HAVE_DL_API)
+			LIBS="$LIBS -ldl"
+		)
+	)
+)
 AC_SUBST(XLIB)
 if test "$have_x" = "yes"
 then
@@ -459,7 +459,6 @@ dnl **** Check for header files ****
 AC_CHECK_HEADERS(\
 	arpa/nameser.h \
 	curses.h \
-	dlfcn.h \
 	elf.h \
 	float.h \
 	libio.h \

@@ -92,7 +92,7 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 }
 
 
-#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
+#if defined(HAVE_DL_API)
 
 #define UNIX_DLL_ENDING		"so"
 

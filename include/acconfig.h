@@ -89,3 +89,6 @@
 
 /* Define if Mesa is present on the system or not */
 #undef HAVE_LIBMESAGL
+
+/* Define if the system has dynamic link library support with the dl* API */
+#undef HAVE_DL_API

@@ -333,7 +333,7 @@ BOOL MODULE_InitLoadOrder(void)
 	char buffer[BUFFERSIZE];
 	int nbuffer;
 
-#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
+#if defined(HAVE_DL_API)
 	/* Get/set the new LD_LIBRARY_PATH */
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "EXTRA_LD_LIBRARY_PATH", "", buffer, sizeof(buffer));
 
