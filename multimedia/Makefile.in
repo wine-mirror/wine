@@ -4,6 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = multimedia
+WRCEXTRA  = -s -pwinmm
 
 C_SRCS = \
 	audio.c \
@@ -15,7 +16,6 @@ C_SRCS = \
 	mciavi.c \
 	mcicda.c \
 	mcimidi.c \
-	mcistring.c \
 	mciwave.c \
 	midi.c \
 	midipatch.c \
@@ -26,8 +26,13 @@ C_SRCS = \
 	msvideo.c \
 	time.c
 
-all: $(MODULE).o
+RC_SRCS= \
+	winmm.rc
+
+all: check_wrc $ $(MODULE).o
 
 @MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:
