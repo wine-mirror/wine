@@ -505,10 +505,10 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   ME_CommitUndo(editor);
   ME_ReleaseStyle(style); 
   editor->nEventMask = nEventMask;
+  InvalidateRect(editor->hWnd, NULL, TRUE);
   ME_UpdateRepaint(editor);
   if (!(format & SFF_SELECTION)) {
     ME_ClearTempStyle(editor);
-    ME_EnsureVisible(editor, editor->pCursors[0].pRun);
   }
   ME_MoveCaret(editor);
   ME_SendSelChange(editor);
@@ -1147,6 +1147,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_SIZE:
   {
     ME_MarkAllForWrapping(editor);
+    ME_WrapMarkedParagraphs(editor);
+    ME_UpdateScrollBar(editor);
     ME_Repaint(editor);
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   }

@@ -409,11 +409,12 @@ void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
   }
 }
 
-void ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
+BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   HWND hWnd = editor->hWnd;
   HDC hDC = GetDC(hWnd);
   ME_DisplayItem *item;
   ME_Context c;
+  BOOL bModified = FALSE;
   
   ME_InitContext(&c, editor, hDC);
   c.pt.x = 0;
@@ -433,6 +434,8 @@ void ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     if (bRedraw)
       item->member.para.nFlags |= MEPF_REPAINT;
 
+    bModified = bModified | bRedraw;
+
     c.pt.y += item->member.para.nHeight;
     item = item->member.para.next_para;
   }
@@ -442,4 +445,5 @@ void ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   
   ME_DestroyContext(&c);
   ReleaseDC(hWnd, hDC);
+  return bModified;
 }

@@ -246,6 +246,7 @@ typedef struct tagME_TextEditor
   int nLastSelStart, nLastSelEnd;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
   ME_OutStream *pStream;
+  BOOL bScrollX, bScrollY;
 } ME_TextEditor;
 
 typedef struct tagME_Context

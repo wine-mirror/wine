@@ -174,6 +174,8 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   assert(p->member.run.nCharOfs != -1);
   ME_GetParagraph(p)->member.para.nFlags |= MEPF_REWRAP;
 
+  if (editor->bCaretAtEnd && editor->pCursors[0].pRun == pNext)
+    editor->bCaretAtEnd = FALSE;
   for (i=0; i<editor->nCursors; i++) {
     if (editor->pCursors[i].pRun == pNext) {
       editor->pCursors[i].pRun = p;

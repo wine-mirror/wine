@@ -697,6 +697,54 @@ void ME_ArrowDown(ME_TextEditor *editor, ME_Cursor *pCursor)
   assert(pCursor->pRun->type == diRun);
 }
 
+void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
+{
+  ME_DisplayItem *pRun = pCursor->pRun;
+  ME_DisplayItem *pLast, *p;
+  int x, y, ys, yd, yp, yprev;
+  ME_Cursor tmp_curs = *pCursor;
+  
+  x = ME_GetXForArrow(editor, pCursor);
+  if (!pCursor->nOffset && editor->bCaretAtEnd)
+    pRun = ME_FindItemBack(pRun, diRun);
+  
+  p = ME_FindItemBack(pRun, diStartRowOrParagraph);
+  assert(p->type == diStartRow);
+  yp = ME_FindItemBack(p, diParagraph)->member.para.nYPos;
+  yprev = ys = y = yp + p->member.row.nYPos;
+  yd = y + editor->sizeWindow.cy;
+  pLast = p;
+  
+  do {
+    p = ME_FindItemFwd(p, diStartRowOrParagraph);
+    if (!p)
+      break;
+    if (p->type == diParagraph) {
+      yp = p->member.para.nYPos;
+      continue;
+    }
+    y = yp + p->member.row.nYPos;
+    if (y >= yd)
+      break;
+    pLast = p;
+    yprev = y;
+  } while(1);
+  
+  pCursor->pRun = ME_FindRunInRow(editor, pLast, x, &pCursor->nOffset, &editor->bCaretAtEnd);
+  ME_UpdateSelection(editor, &tmp_curs);
+  if (yprev >= editor->nTotalLength-editor->sizeWindow.cy)
+  {
+    ME_EnsureVisible(editor, ME_FindItemBack(editor->pBuffer->pLast, diRun));
+    ME_Repaint(editor);
+  }
+  else {
+    ME_Repaint(editor);
+    ME_Scroll(editor, 0, ys-yprev);
+  }
+  assert(pCursor->pRun);
+  assert(pCursor->pRun->type == diRun);
+}
+
 void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
@@ -798,7 +846,7 @@ BOOL ME_CancelSelection(ME_TextEditor *editor, int dir)
   return TRUE;
 }
 
-void ME_RepaintSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
+BOOL ME_UpdateSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
 {
   ME_Cursor old_anchor = editor->pCursors[1];
   
@@ -807,20 +855,30 @@ void ME_RepaintSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
     /* any selection was present ? if so, it's no more, repaint ! */
     editor->pCursors[1] = editor->pCursors[0];
     if (memcmp(pTempCursor, &old_anchor, sizeof(ME_Cursor))) {
-      ME_Repaint(editor);
-      return;
+      return TRUE;
     }
-    return;
+    return FALSE;
   }
   else
   {
     if (!memcmp(pTempCursor, &editor->pCursors[1], sizeof(ME_Cursor))) /* starting selection */
     {
       editor->pCursors[1] = *pTempCursor;
+      return TRUE;
+/*      ME_EnsureVisible(editor, editor->pCursors[0].pRun); */
     }
   }
 
   ME_Repaint(editor);
+  return TRUE;
+}
+
+void ME_RepaintSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor)
+{
+  if (ME_UpdateSelection(editor, pTempCursor)) {
+    ME_EnsureVisible(editor, editor->pCursors[0].pRun); 
+    ME_Repaint(editor);
+  }
 }
 
 void ME_DeleteSelection(ME_TextEditor *editor)
@@ -881,6 +939,11 @@ BOOL ME_ArrowKey(ME_TextEditor *editor, int nVKey, int nCtrl)
       ME_ArrowDown(editor, p);
       ME_ClearTempStyle(editor);
       ME_RepaintSelection(editor, &tmp_curs);
+      ME_SendSelChange(editor);
+      return TRUE;
+    case VK_NEXT:
+      ME_ArrowPageDown(editor, p);
+      ME_ClearTempStyle(editor);
       ME_SendSelChange(editor);
       return TRUE;
   }

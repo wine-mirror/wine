@@ -161,13 +161,14 @@ void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
 int ME_GetTextLength(ME_TextEditor *editor);
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
+BOOL ME_UpdateSelection(ME_TextEditor *editor, ME_Cursor *pTempCursor);
 
 /* wrap.c */
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
 ME_DisplayItem *ME_MakeRow(int height, int baseline, int width);
 void ME_InsertRowStart(ME_WrapContext *wc, ME_DisplayItem *pEnd);
 void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp);
-void ME_WrapMarkedParagraphs(ME_TextEditor *editor);
+BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
 
 /* para.c */
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
@@ -189,10 +190,11 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpda
 void ME_Repaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
-void ME_UpdateScrollBar(ME_TextEditor *editor, int ypos);
+void ME_UpdateScrollBar(ME_TextEditor *editor);
 int ME_GetScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
+void ME_Scroll(ME_TextEditor *editor, int cx, int cy);
 
 /* richole.c */
 extern LRESULT CreateIRichEditOle(LPVOID *);

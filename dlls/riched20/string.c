@@ -123,7 +123,6 @@ int ME_IsWhitespaces(ME_String *s)
 
 int ME_IsSplitable(ME_String *s)
 {
-  /* FIXME multibyte */
   WCHAR *pos = s->szData;
   WCHAR ch;
   while(ME_IsWSpace(*pos++))
@@ -131,7 +130,7 @@ int ME_IsSplitable(ME_String *s)
   pos--;
   while((ch = *pos++) != 0)
   {
-    if (ME_IsWSpace(*pos++))
+    if (ME_IsWSpace(ch))
       return 1;
   }
   return 0;
@@ -255,7 +254,7 @@ int ME_GetCharBack(ME_String *s, int nPos)
 
 int ME_FindNonWhitespaceV(ME_String *s, int nVChar) {
   int i;
-  for (i = nVChar; isspace(s->szData[i]) && i<s->nLen; i++)
+  for (i = nVChar; i<s->nLen && ME_IsWSpace(s->szData[i]); i++)
     ;
     
   return i;
@@ -264,7 +263,7 @@ int ME_FindNonWhitespaceV(ME_String *s, int nVChar) {
 /* note: returns offset of the first trailing whitespace */
 int ME_ReverseFindNonWhitespaceV(ME_String *s, int nVChar) {
   int i;
-  for (i = nVChar; i>0 && isspace(s->szData[i-1]); i--)
+  for (i = nVChar; i>0 && ME_IsWSpace(s->szData[i-1]); i--)
     ;
     
   return i;
@@ -273,7 +272,7 @@ int ME_ReverseFindNonWhitespaceV(ME_String *s, int nVChar) {
 /* note: returns offset of the first trailing nonwhitespace */
 int ME_ReverseFindWhitespaceV(ME_String *s, int nVChar) {
   int i;
-  for (i = nVChar; i>0 && !isspace(s->szData[i-1]); i--)
+  for (i = nVChar; i>0 && !ME_IsWSpace(s->szData[i-1]); i--)
     ;
     
   return i;
