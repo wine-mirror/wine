@@ -314,7 +314,7 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, char* ImageName,
 
         if (!strcmp(ImageName + len - 3, ".so") &&
             (module = elf_load_module(pcs, ImageName))) goto done;
-        FIXME("should no longer happen\n");
+        FIXME("should have successfully loaded some debug information for image %s\n", ImageName);
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName, BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", ImageName);
