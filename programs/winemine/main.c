@@ -295,9 +295,9 @@ void LoadBoard( BOARD *p_board )
     size = sizeof( data );
     if( RegQueryValueEx( hkey, "Ypos", NULL, (LPDWORD) &type, 
             (LPBYTE) data, (LPDWORD) &size ) == ERROR_SUCCESS )
-        p_board->pos.x = atoi( data );
+        p_board->pos.y = atoi( data );
     else 
-        p_board->pos.x = GetSystemMetrics( SM_CYMENU ) 
+        p_board->pos.y = GetSystemMetrics( SM_CYMENU )
         + GetSystemMetrics( SM_CYCAPTION ) 
         + GetSystemMetrics( SM_CYFIXEDFRAME );
 
@@ -370,7 +370,7 @@ void SaveBoard( BOARD *p_board )
     char key_name[8];
     
     if( RegCreateKeyEx( HKEY_LOCAL_MACHINE, 
-                "Software\\The WINE team\\WineMine", 0, NULL, 
+                "Software\\Wine\\WineMine", 0, NULL,
                 REG_OPTION_NON_VOLATILE, KEY_WRITE, &sa, 
                 &hkey, &disp ) != ERROR_SUCCESS)
         return;    
