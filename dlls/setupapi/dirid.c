@@ -29,6 +29,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "setupapi.h"
+#include "shlobj.h"
 #include "wine/unicode.h"
 #include "setupapi_private.h"
 #include "wine/debug.h"
@@ -36,6 +37,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 #define MAX_SYSTEM_DIRID DIRID_PRINTPROCESSOR
+#define MIN_CSIDL_DIRID 0x4000
+#define MAX_CSIDL_DIRID 0x403f
 
 struct user_dirid
 {
@@ -47,6 +50,7 @@ static int nb_user_dirids;     /* number of user dirids in use */
 static int alloc_user_dirids;  /* number of allocated user dirids */
 static struct user_dirid *user_dirids;
 static const WCHAR *system_dirids[MAX_SYSTEM_DIRID+1];
+static const WCHAR *csidl_dirids[MAX_CSIDL_DIRID-MIN_CSIDL_DIRID+1];
 
 /* retrieve the string for unknown dirids */
 static const WCHAR *get_unknown_dirid(void)
@@ -146,6 +150,21 @@ static const WCHAR *create_system_dirid( int dirid )
     return str;
 }
 
+static const WCHAR *get_csidl_dir( DWORD csidl )
+{
+    WCHAR buffer[MAX_PATH], *str;
+    int len;
+
+    if (!SHGetSpecialFolderPathW( NULL, buffer, csidl, TRUE ))
+    {
+        FIXME( "CSIDL %lx not found\n", csidl );
+        return get_unknown_dirid();
+    }
+    len = (strlenW(buffer) + 1) * sizeof(WCHAR);
+    if ((str = HeapAlloc( GetProcessHeap(), 0, len ))) memcpy( str, buffer, len );
+    return str;
+}
+
 /* retrieve the string corresponding to a dirid, or NULL if none */
 const WCHAR *DIRID_get_string( HINF hinf, int dirid )
 {
@@ -159,6 +178,13 @@ const WCHAR *DIRID_get_string( HINF hinf, int dirid )
             if (user_dirids[i].id == dirid) return user_dirids[i].str;
         ERR("user id %d not found\n", dirid );
         return NULL;
+    }
+    else if (dirid >= MIN_CSIDL_DIRID)
+    {
+        if (dirid > MAX_CSIDL_DIRID) return get_unknown_dirid();
+        dirid -= MIN_CSIDL_DIRID;
+        if (!csidl_dirids[dirid]) csidl_dirids[dirid] = get_csidl_dir( dirid );
+        return csidl_dirids[dirid];
     }
     else
     {
