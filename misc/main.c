@@ -42,7 +42,7 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
-WINE_DECLARE_DEBUG_CHANNEL(file);
+WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 
 /***********************************************************************
@@ -62,6 +62,6 @@ BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 */
 FARPROC16 WINAPI FileCDR16(FARPROC16 x)
 {
-	FIXME_(file)("(0x%8x): stub\n", (int) x);
+	FIXME("(0x%8x): stub\n", (int) x);
 	return (FARPROC16)TRUE;
 }
