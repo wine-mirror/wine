@@ -966,6 +966,16 @@ wine -debug myprog.exe
 		The path to the debugger you chose to use must be reachable
 		via a DOS drive in the Wine config file !
               </para>
+	      <para>
+	        You can also set a shell script to launch the debugger. In
+	        this case, you need to be sure that the invocation in
+	        this shell script is of the form:
+		<programlisting>
+		  WINEPRELOAD=&lt;path_to_winedbg.so&gt; exec wine $*
+		</programlisting>
+	        (Shell script must use exec, and the debugger .so file must
+	        be preloaded to override the shell script information).
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -1115,6 +1125,18 @@ set $BreakAllThreadsStartup = 1
                   both first and last chance execptions (to
                   <literal>FALSE</literal>, it's only entered for last
                   chance exceptions).
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>BreakOnDllLoad</varname></term>
+              <listitem>
+                <para>
+                  Set to <literal>TRUE</literal> if the debugger stops
+                  when a DLL is loaded into memory; when the debugger 
+                  is invoked after a crash, the DLLs already mapped in 
+                  memory will not trigger this break.
+                  <literal>FALSE</literal> by default.
                 </para>
               </listitem>
             </varlistentry>
@@ -1339,7 +1361,7 @@ info local	prints information on local variables for current
 show dir
 dir &lt;pathname&gt;
 dir
-symbolfile &lt;pathname&gt;
+symbolfile &lt;module&gt; &lt;pathname&gt;
         </screen>
         <screen>
 list		lists 10 source lines from current position
