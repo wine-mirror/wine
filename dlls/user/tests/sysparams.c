@@ -77,8 +77,12 @@ static int strict;
 #define SPI_SETMOUSEBUTTONSWAP_VALNAME          "SwapMouseButtons"
 #define SPI_SETWORKAREA_REGKEY                  "Control Panel\\Desktop"
 #define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
-#define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
-#define SPI_SETSHOWSOUNDS_VALNAME    "On"
+#define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
+#define SPI_SETSHOWSOUNDS_VALNAME       "On"
+#define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Accessibility\\Keyboard Preference"
+#define SPI_SETKEYBOARDPREF_VALNAME     "On"
+#define SPI_SETSCREENREADER_REGKEY      "Control Panel\\Accessibility\\Blind Access"
+#define SPI_SETSCREENREADER_VALNAME     "On"
 #define SPI_SETLOWPOWERACTIVE_REGKEY            "Control Panel\\Desktop"
 #define SPI_SETLOWPOWERACTIVE_VALNAME           "LowPowerActive"
 #define SPI_SETPOWEROFFACTIVE_REGKEY            "Control Panel\\Desktop"
@@ -97,11 +101,6 @@ static int strict;
 #define SPI_SETMENUSHOWDELAY_VALNAME            "MenuShowDelay"
 #define SPI_SETDESKWALLPAPER_REGKEY		"Control Panel\\Desktop"
 #define SPI_SETDESKWALLPAPER_VALNAME		"Wallpaper"
-/* FIXME - don't have access to Windows with this action (W95, NT5.0). Set real values */
-#define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Desktop"
-#define SPI_SETKEYBOARDPREF_VALNAME     "WINE_WorkArea"
-#define SPI_SETSCREENREADER_REGKEY      "Control Panel\\Desktop"
-#define SPI_SETSCREENREADER_VALNAME     "???"
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 #define WINE_CURRENT_USER_REGKEY     "Wine"
@@ -696,7 +695,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
 
     trace("testing SPI_{GET,SET}ICONTITLEWRAP\n");
     rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &old_b, 0 );
-    trace("rc=%d err=%ld\n",rc,GetLastError());
+
     if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
     {
         /* SPI_{GET,SET}ICONTITLEWRAP is not implemented on a standard Win98 SE */
@@ -1133,7 +1132,7 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     trace("testing SPI_{GET,SET}SHOWSOUNDS\n");
     SetLastError(0);
     rc=SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &old_b, 0 );
-    if (rc==0 && GetLastError()==0)
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
     {
         /* SPI_{GET,SET}SHOWSOUNDS is completely broken on Win9x */
         trace("SPI_{GET,SET}SHOWSOUNDS not supported on this platform\n");
@@ -1166,12 +1165,78 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
 
 static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
 {
-    /* TODO!!! - don't have version of Windows which has this */
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={TRUE,FALSE};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}KEYBOARDPREF\n");
+    SetLastError(0);
+    rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &old_b, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        trace("SPI_{GET,SET}KEYBOARDPREF not supported on this platform\n");
+        return;
+    }
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        BOOL v;
+
+        rc=SystemParametersInfoA( SPI_SETKEYBOARDPREF, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        test_change_message( SPI_SETKEYBOARDPREF, 0 );
+        test_reg_key( SPI_SETKEYBOARDPREF_REGKEY,
+                      SPI_SETKEYBOARDPREF_VALNAME,
+                      vals[i] ? "1" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_GETKEYBOARDPREF", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETKEYBOARDPREF, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
 static void test_SPI_SETSCREENREADER( void )           /*     71 */
 {
-    /* TODO!!! - don't have version of Windows which has this */
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={TRUE,FALSE};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}SCREENREADER\n");
+    SetLastError(0);
+    rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &old_b, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        trace("SPI_{GET,SET}SCREENREADER not supported on this platform\n");
+        return;
+    }
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        BOOL v;
+
+        rc=SystemParametersInfoA( SPI_SETSCREENREADER, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        test_change_message( SPI_SETSCREENREADER, 0 );
+        test_reg_key( SPI_SETSCREENREADER_REGKEY,
+                      SPI_SETSCREENREADER_VALNAME,
+                      vals[i] ? "1" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_GETSCREENREADER", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETSCREENREADER, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
 static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
@@ -1338,7 +1403,11 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
 {
     BOOL rc;
     UINT old_time;
-    const UINT vals[]={0,32767};
+
+    /* Windows XP accepts 10 as the minimum hover time. Any value below will be
+     * defaulted to a value of 10 automatically.
+     */
+    const UINT vals[]={10,32767};
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERTIME\n");
@@ -1385,6 +1454,12 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
 
     trace("testing SPI_{GET,SET}WHEELSCROLLLINES\n");
     rc=SystemParametersInfoA( SPI_GETWHEELSCROLLLINES, 0, &old_lines, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        /* SPI_{GET,SET}WHEELSCROLLLINES not supported on Windows 95 */
+        trace("SPI_{GET,SET}WHEELSCROLLLINES not supported on this platform\n");
+        return;
+    }
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
@@ -1402,7 +1477,7 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
 
         SystemParametersInfoA( SPI_GETWHEELSCROLLLINES, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
-        eq( v, vals[i], "SPI_{GET,SET}MOUSESCROLLLINES", "%d" );
+        eq( v, vals[i], "SPI_{GET,SET}WHEELSCROLLLINES", "%d" );
     }
 
     rc=SystemParametersInfoA( SPI_SETWHEELSCROLLLINES, old_lines, 0,
@@ -1419,6 +1494,12 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
 
     trace("testing SPI_{GET,SET}MENUSHOWDELAY\n");
     rc=SystemParametersInfoA( SPI_GETMENUSHOWDELAY, 0, &old_delay, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        /* SPI_{GET,SET}MENUSHOWDELAY not supported on Windows 95 */
+        trace("SPI_{GET,SET}MENUSHOWDELAY not supported on this platform\n");
+        return;
+    }
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
