@@ -3010,6 +3010,7 @@ static BOOL WINSPOOL_ComPortExists( LPCSTR name )
                          NULL, OPEN_EXISTING, 0, NULL );
     if (handle == INVALID_HANDLE_VALUE)
         return FALSE;
+    TRACE("Checking %s exists\n", name );
     CloseHandle( handle );
     return TRUE;
 }
@@ -3040,6 +3041,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     DWORD info_size, ofs, i, printer_count, serial_count, count, n, r;
     const LPCSTR szPrinterPortKey = "Software\\Wine\\Wine\\Config\\spooler";
     HKEY hkey_printer;
+    BOOL retval = TRUE;
 
     TRACE("(%s,%ld,%p,%ld,%p,%p)\n",
           name,level,buffer,bufsize,bufneeded,bufreturned);
@@ -3088,6 +3090,8 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
             portname[3] = '1' + i;
             if (!WINSPOOL_ComPortExists( portname ))
                 continue;
+
+            TRACE("Found %s\n", portname );
             vallen = strlen( portname );
         }
         else
@@ -3125,10 +3129,12 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
             /* add the name of the port if we can fit it */
             if ( ofs < bufsize )
                 lstrcpynA(&buffer[ofs],portname,bufsize - ofs);
-        }
 
+            n++;
+        }
+        else
+            retval = FALSE;
         ofs += lstrlenA(portname)+1;
-        n++;
     }
 
     RegCloseKey(hkey_printer);
@@ -3137,9 +3143,9 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
         *bufneeded = ofs;
 
     if(bufreturned)
-        *bufreturned = count;
+        *bufreturned = n;
 
-    return TRUE;
+    return retval;
 }
 
 
