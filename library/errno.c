@@ -18,24 +18,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Get pointers to the static errno and h_errno variables used by Xlib. This
-   must be done before including <errno.h> makes the variables invisible.  */
+#include "config.h"
+
+/* default errno before threading is initialized */
 static int *default_errno_location(void)
 {
-    extern int errno;
+    static int errno;
     return &errno;
 }
 
+/* default h_errno before threading is initialized */
 static int *default_h_errno_location(void)
 {
-    extern int h_errno;
+    static int h_errno;
     return &h_errno;
 }
 
 int* (*wine_errno_location)(void) = default_errno_location;
 int* (*wine_h_errno_location)(void) = default_h_errno_location;
-
-#include "config.h"
 
 /***********************************************************************
  *           __errno_location/__error/___errno
