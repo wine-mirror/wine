@@ -1425,7 +1425,7 @@ UINT WINAPI GetOutlineTextMetricsW(
 BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
                                LPINT buffer )
 {
-    UINT i, extra;
+    UINT i;
     BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -1438,10 +1438,8 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
     if (ret)
     {
         /* convert device units to logical */
-
-        extra = dc->vportExtX >> 1;
         for( i = firstChar; i <= lastChar; i++, buffer++ )
-            *buffer = (*buffer * dc->wndExtX + extra) / dc->vportExtX;
+            *buffer = INTERNAL_XDSTOWS(dc, *buffer);
         ret = TRUE;
     }
     GDI_ReleaseObj( hdc );
