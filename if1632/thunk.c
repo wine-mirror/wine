@@ -1258,7 +1258,9 @@ THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
         if (    thunk->type   == type
              && thunk->target == target
              && thunk->relay  == relay 
-             && thunk->glue   == glue )
+             && ( type == THUNKLET_TYPE_LS ?
+                    ( thunk->glue == glue - (DWORD)&thunk->type )
+                  : ( thunk->glue == glue ) ) )
             return thunk;
 
      return NULL;
@@ -1396,7 +1398,7 @@ SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target,
 {
     THUNKLET *thunk = (THUNKLET *)target;
     if (   IsLSThunklet( thunk ) && thunk->relay == relay 
-        && thunk->glue == (DWORD)ThunkletCallbackGlueLS )
+        && thunk->glue == (DWORD)ThunkletCallbackGlueLS - (DWORD)&thunk->type )
         return (SEGPTR)thunk->target;
 
     return THUNK_AllocSLThunklet( target, relay, 
@@ -1442,7 +1444,7 @@ SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 {
     THUNKLET *thunk = (THUNKLET *)target;
     if (   thunk && IsLSThunklet( thunk ) && thunk->relay == relay 
-        && thunk->glue == (DWORD)ThunkletCallbackGlueLS )
+        && thunk->glue == (DWORD)ThunkletCallbackGlueLS - (DWORD)&thunk->type )
         return (SEGPTR)thunk->target;
 
     thunk = THUNK_FindThunklet( (DWORD)target, relay, 
@@ -1549,12 +1551,12 @@ void WINAPI CBClientGlueSL( CONTEXT *context )
 void WINAPI CBClientThunkSL( CONTEXT *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args );
+    extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
 
-    EAX_reg(context) = CALL32_CBClient( proc, args );
+    EAX_reg(context) = CALL32_CBClient( proc, args, &ESI_reg( context ) );
 }
 
 /***********************************************************************
@@ -1563,15 +1565,15 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
 void WINAPI CBClientThunkSLEx( CONTEXT *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, 
-                                           LPWORD args, INT *nArgs );
+    extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, 
+                                           DWORD *esi, INT *nArgs );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
     INT nArgs;
     LPWORD stackLin;
 
-    EAX_reg(context) = CALL32_CBClientEx( proc, args, &nArgs );
+    EAX_reg(context) = CALL32_CBClientEx( proc, args, &ESI_reg( context ), &nArgs );
 
     /* Restore registers saved by CBClientGlueSL */
     stackLin = (LPWORD)((LPBYTE)CURRENT_STACK16 + sizeof(STACK16FRAME) - 4);

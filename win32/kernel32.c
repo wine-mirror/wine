@@ -397,6 +397,9 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
     EAX_reg(context) = LOWORD(EAX_reg(context));
+
+    /* Copy modified buffers back to 32-bit stack */
+    memcpy( oldstack, newstack, argsize );
 }
 
 /**********************************************************************
