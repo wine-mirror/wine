@@ -17,7 +17,6 @@
 #include "winerror.h"
 
 #include "controls.h"
-#include "keyboard.h"
 #include "user.h"
 #include "debugtools.h"
 #include "sysmetrics.h"

@@ -17,9 +17,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/keyboard16.h"
 #include "win.h"
-#include "keyboard.h"
 #include "user.h"
 #include "message.h"
 #include "callback.h"
@@ -28,12 +26,44 @@
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(keyboard);
-DECLARE_DEBUG_CHANNEL(event);
+
+#include "pshpack1.h"
+typedef struct _KBINFO
+{
+    BYTE Begin_First_Range;
+    BYTE End_First_Range;
+    BYTE Begin_Second_Range;
+    BYTE End_Second_Range;
+    WORD StateSize;
+} KBINFO, *LPKBINFO;
+#include "poppack.h"
 
 /**********************************************************************/
 
-static LPKEYBD_EVENT_PROC DefKeybEventProc = NULL;
-LPBYTE pKeyStateTable = NULL;
+typedef VOID CALLBACK (*LPKEYBD_EVENT_PROC)(BYTE,BYTE,DWORD,DWORD);
+
+static LPKEYBD_EVENT_PROC DefKeybEventProc;
+static LPBYTE pKeyStateTable;
+
+/***********************************************************************
+ *              KEYBOARD_CallKeybdEventProc
+ */
+static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
+                                                BYTE bVk, BYTE bScan,
+                                                DWORD dwFlags, DWORD dwExtraInfo )
+{
+    CONTEXT86 context;
+
+    memset( &context, 0, sizeof(context) );
+    context.SegCs = SELECTOROF( proc );
+    context.Eip   = OFFSETOF( proc );
+    context.Eax   = bVk | ((dwFlags & KEYEVENTF_KEYUP)? 0x8000 : 0);
+    context.Ebx   = bScan | ((dwFlags & KEYEVENTF_EXTENDEDKEY) ? 0x100 : 0);
+    context.Esi   = LOWORD( dwExtraInfo );
+    context.Edi   = HIWORD( dwExtraInfo );
+
+    wine_call_to_16_regs_short( &context, 0 );
+}
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -52,50 +82,13 @@ WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
 /***********************************************************************
  *		Enable (KEYBOARD.2)
  */
-VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc, 
-                             LPBYTE lpKeyState )
+VOID WINAPI KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 {
-  static BOOL initDone = FALSE;
+    if (DefKeybEventProc) THUNK_Free( (FARPROC)DefKeybEventProc );
+    DefKeybEventProc = (LPKEYBD_EVENT_PROC)THUNK_Alloc( proc, (RELAY)KEYBOARD_CallKeybdEventProc );
+    pKeyStateTable = lpKeyState;
 
-  THUNK_Free( (FARPROC)DefKeybEventProc );
-  
-  DefKeybEventProc = lpKeybEventProc;
-  pKeyStateTable = lpKeyState;
-  
-  /* all states to false */
-  memset( lpKeyState, 0, 256 );
-  
-  if (!initDone) USER_Driver.pInitKeyboard();
-  initDone = TRUE;
-}
-
-/**********************************************************************/
-
-static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
-                                                BYTE bVk, BYTE bScan,
-                                                DWORD dwFlags, DWORD dwExtraInfo )
-{
-    CONTEXT86 context;
-
-    memset( &context, 0, sizeof(context) );
-    context.SegCs = SELECTOROF( proc );
-    context.Eip   = OFFSETOF( proc );
-    context.Eax   = bVk | ((dwFlags & KEYEVENTF_KEYUP)? 0x8000 : 0);
-    context.Ebx   = bScan | ((dwFlags & KEYEVENTF_EXTENDEDKEY) ? 0x100 : 0);
-    context.Esi   = LOWORD( dwExtraInfo );
-    context.Edi   = HIWORD( dwExtraInfo );
-
-    wine_call_to_16_regs_short( &context, 0 );
-}
-
-/**********************************************************************/
-
-VOID WINAPI WIN16_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
-{
-    LPKEYBD_EVENT_PROC thunk = 
-      (LPKEYBD_EVENT_PROC)THUNK_Alloc( proc, (RELAY)KEYBOARD_CallKeybdEventProc );
-
-    KEYBOARD_Enable( thunk, lpKeyState );
+    memset( lpKeyState, 0, 256 ); /* all states to false */
 }
 
 /***********************************************************************
@@ -109,30 +102,6 @@ VOID WINAPI KEYBOARD_Disable(VOID)
   pKeyStateTable = NULL;
 }
 
-/***********************************************************************
- *           KEYBOARD_SendEvent
- */
-void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
-                         DWORD posX, DWORD posY, DWORD time )
-{
-  WINE_KEYBDEVENT wke;
-  int iWndsLocks;
-  
-  if ( !DefKeybEventProc ) return;
-  
-  TRACE_(event)("(%d,%d,%04lX)\n", bVk, bScan, dwFlags );
-  
-  wke.magic = WINE_KEYBDEVENT_MAGIC;
-  wke.posX  = posX;
-  wke.posY  = posY;
-  wke.time  = time;
-  
-  /* To avoid deadlocks, we have to suspend all locks on windows structures
-     before the program control is passed to the keyboard driver */
-  iWndsLocks = WIN_SuspendWndsLock();
-  DefKeybEventProc( bVk, bScan, dwFlags, (DWORD)&wke );
-  WIN_RestoreWndsLock(iWndsLocks);
-}
 
 /**********************************************************************
  *		SetSpeed (KEYBOARD.7)
@@ -164,25 +133,10 @@ DWORD WINAPI OemKeyScan(WORD wOemChar)
 
 /**********************************************************************
  *		VkKeyScan (KEYBOARD.129)
- *
- * VkKeyScan translates an ANSI character to a virtual-key and shift code
- * for the current keyboard.
- * high-order byte yields :
- *	0	Unshifted
- *	1	Shift
- *	2	Ctrl
- *	3-5	Shift-key combinations that are not used for characters
- *	6	Ctrl-Alt
- *	7	Ctrl-Alt-Shift
- *	I.e. :	Shift = 1, Ctrl = 2, Alt = 4.
- * FIXME : works ok except for dead chars :
- * VkKeyScan '^'(0x5e, 94) ... got keycode 00 ... returning 00
- * VkKeyScan '`'(0x60, 96) ... got keycode 00 ... returning 00
  */
-
 WORD WINAPI VkKeyScan16(CHAR cChar)
 {
-    return USER_Driver.pVkKeyScan(cChar);
+    return VkKeyScanA( cChar );
 }
 
 /******************************************************************************
@@ -190,22 +144,7 @@ WORD WINAPI VkKeyScan16(CHAR cChar)
  */
 INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
 {
-  TRACE("(%d)\n", nTypeFlag);
-  switch(nTypeFlag)
-    {
-    case 0:      /* Keyboard type */
-      return 4;    /* AT-101 */
-      break;
-    case 1:      /* Keyboard Subtype */
-      return 0;    /* There are no defined subtypes */
-      break;
-    case 2:      /* Number of F-keys */
-      return 12;   /* We're doing an 101 for now, so return 12 F-keys */
-      break;
-    default:     
-      WARN("Unknown type\n");
-      return 0;    /* The book says 0 here, so 0 */
-    }
+    return GetKeyboardType( nTypeFlag );
 }
 
 /******************************************************************************
@@ -215,7 +154,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
  */
 UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 {
-    return USER_Driver.pMapVirtualKey(wCode,wMapType);
+    return MapVirtualKeyA(wCode,wMapType);
 }
 
 /****************************************************************************
@@ -231,7 +170,7 @@ INT16 WINAPI GetKBCodePage16(void)
  */
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
-    return USER_Driver.pGetKeyNameText(lParam, lpBuffer, nSize);
+    return GetKeyNameTextA( lParam, lpBuffer, nSize );
 }
 
 /****************************************************************************

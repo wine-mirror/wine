@@ -26,7 +26,6 @@
 #include "dce.h"
 #include "debugtools.h"
 #include "input.h"
-#include "keyboard.h"
 #include "mouse.h"
 #include "options.h"
 #include "win.h"
@@ -48,7 +47,6 @@ extern Atom dndProtocol;
 extern Atom dndSelection;
 
 extern void X11DRV_KEYBOARD_UpdateState(void);
-extern void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y );
 
 #define NB_BUTTONS      5     /* Windows can handle 3 buttons and the wheel too */
 
@@ -87,7 +85,6 @@ static void EVENT_ProcessEvent( XEvent *event );
 static BOOL X11DRV_CheckFocus(void);
 
   /* Event handlers */
-static void EVENT_Key( HWND hWnd, XKeyEvent *event );
 static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event );
 static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event );
 static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event );
@@ -97,12 +94,13 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
 static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
-static void EVENT_MappingNotify( XMappingEvent *event );
 
+extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
 extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
 extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
 extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
 extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+extern void X11DRV_MappingNotify( XMappingEvent *event );
 
 #ifdef HAVE_LIBXXF86DGA2
 static int DGAMotionEventType;
@@ -231,13 +229,11 @@ static void EVENT_ProcessEvent( XEvent *event )
     if ((event->type == DGAKeyPressEventType) ||
 	(event->type == DGAKeyReleaseEventType)) {
       /* Fill a XKeyEvent to send to EVENT_Key */
-      POINT pt;
       XKeyEvent ke;
       XDGAKeyEvent *evt = (XDGAKeyEvent *) event;
 
       TRACE("DGAKeyPress/ReleaseEvent received.\n");
       
-      GetCursorPos( &pt );
       if (evt->type == DGAKeyReleaseEventType)
 	ke.type = KeyRelease;
       else
@@ -249,15 +245,14 @@ static void EVENT_ProcessEvent( XEvent *event )
       ke.root = 0;
       ke.subwindow = 0;
       ke.time = evt->time;
-      ke.x = pt.x;
-      ke.y = pt.y;
+      ke.x = -1;
+      ke.y = -1;
       ke.x_root = -1;
       ke.y_root = -1;
       ke.state = evt->state;
       ke.keycode = evt->keycode;
       ke.same_screen = TRUE;
-      
-      X11DRV_KEYBOARD_HandleEvent(&ke,pt.x,pt.y);
+      X11DRV_KeyEvent( 0, &ke );
       return;
     }
   }
@@ -279,7 +274,8 @@ static void EVENT_ProcessEvent( XEvent *event )
     {
     case KeyPress:
     case KeyRelease:
-      EVENT_Key( hWnd, (XKeyEvent*)event );
+      /* FIXME: should generate a motion event if event point is different from current pos */
+      X11DRV_KeyEvent( hWnd, (XKeyEvent*)event );
       break;
       
     case ButtonPress:
@@ -342,7 +338,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     case MappingNotify:
-      EVENT_MappingNotify( (XMappingEvent *) event );
+      X11DRV_MappingNotify( (XMappingEvent *) event );
       break;
 
     default:    
@@ -395,19 +391,6 @@ static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
         ClientToScreen( *hwnd, pt );
         *hwnd = GetAncestor( *hwnd, GA_ROOT );
     }
-}
-
-
-/***********************************************************************
- *           EVENT_Key
- *
- * Handle a X key event
- */
-static void EVENT_Key( HWND hWnd, XKeyEvent *event )
-{
-    POINT pt;
-    get_coords( &hWnd, event->window, event->x, event->y, &pt );
-    X11DRV_KEYBOARD_HandleEvent( event, pt.x, pt.y );
 }
 
 
@@ -1451,18 +1434,6 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
       TRACE("unrecognized ClientMessage\n" );
     }
   }
-}
-
-
-/***********************************************************************
- *           EVENT_MappingNotify
- */
-static void EVENT_MappingNotify( XMappingEvent *event )
-{
-    TSXRefreshKeyboardMapping(event);
-
-    /* reinitialize Wine-X11 driver keyboard table */
-    X11DRV_InitKeyboard();
 }
 
 

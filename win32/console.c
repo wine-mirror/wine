@@ -40,7 +40,6 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wine/keyboard16.h"
 #include "thread.h"
 #include "winerror.h"
 #include "wincon.h"

@@ -231,6 +231,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
 	case WH_HARDWARE: 
 	case WH_FOREGROUNDIDLE: 
 	case WH_CALLWNDPROCRET:
+        default:
 	    FIXME("\t[%i] 16to32 translation unimplemented\n", id);
     }
 }
@@ -335,6 +336,7 @@ static void HOOK_UnMap16To32Common(INT id, INT code, WPARAM wParamOrig,
         case WH_HARDWARE:
 	case WH_FOREGROUNDIDLE:
 	case WH_CALLWNDPROCRET:
+        default:
 	    FIXME("\t[%i] skipping unmap\n", id);
   	    break;
     }
@@ -499,6 +501,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
+      default:
 	FIXME("\t[%i] 32to16 translation unimplemented\n", id);
     }
 }
@@ -649,6 +652,7 @@ static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
+      default:
 	FIXME("\t[%i] skipping unmap\n", id);
     }
 }

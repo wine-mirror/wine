@@ -16,7 +16,6 @@
 #include "global.h"
 #include "input.h"
 #include "hook.h"
-#include "keyboard.h"
 #include "message.h"
 #include "queue.h"
 #include "spy.h"
@@ -246,7 +245,7 @@ static BOOL process_attach(void)
     if (!WIN_CreateDesktopWindow()) return FALSE;
 
     /* Initialize keyboard driver */
-    KEYBOARD_Enable( keybd_event, InputKeyStateTable );
+    USER_Driver.pInitKeyboard( InputKeyStateTable );
 
     /* Initialize mouse driver */
     MOUSE_Enable( mouse_event );

@@ -46,10 +46,10 @@ enum wine_internal_message
 
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
-    void   (*pInitKeyboard)(void);
+    void   (*pInitKeyboard)(LPBYTE);
     WORD   (*pVkKeyScan)(CHAR);
-    UINT16 (*pMapVirtualKey)(UINT16, UINT16);
-    INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
+    UINT   (*pMapVirtualKey)(UINT,UINT);
+    INT    (*pGetKeyNameText)(LONG,LPSTR,INT);
     INT    (*pToUnicode)(UINT, UINT, LPBYTE, LPWSTR, int, UINT);
     void   (*pBeep)(void);
     BOOL   (*pGetDIState)(DWORD, LPVOID);

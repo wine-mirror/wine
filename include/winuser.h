@@ -102,6 +102,33 @@ typedef struct
 } EVENTMSG, *PEVENTMSG, *LPEVENTMSG;
 
 
+/* WH_KEYBOARD_LL structure */
+typedef struct tagKBDLLHOOKSTRUCT
+{
+    DWORD   vkCode;
+    DWORD   scanCode;
+    DWORD   flags;
+    DWORD   time;
+    ULONG_PTR dwExtraInfo;
+} KBDLLHOOKSTRUCT, *LPKBDLLHOOKSTRUCT, *PKBDLLHOOKSTRUCT;
+
+#define LLKHF_EXTENDED   (KF_EXTENDED >> 8)
+#define LLKHF_INJECTED   0x00000010
+#define LLKHF_ALTDOWN    (KF_ALTDOWN >> 8)
+#define LLKHF_UP         (KF_UP >> 8)
+
+/* WH_MOUSE_LL structure */
+typedef struct tagMSLLHOOKSTRUCT
+{
+    POINT   pt;
+    DWORD   mouseData;
+    DWORD   flags;
+    DWORD   time;
+    ULONG_PTR dwExtraInfo;
+} MSLLHOOKSTRUCT, *LPMSLLHOOKSTRUCT, *PMSLLHOOKSTRUCT;
+
+#define LLMHF_INJECTED  0x00000001
+
     /* Mouse hook structure */
 
 typedef struct
@@ -1335,11 +1362,12 @@ typedef struct
 #define WH_SHELL            10
 #define WH_FOREGROUNDIDLE   11
 #define WH_CALLWNDPROCRET   12
-#define WH_MAX              12
+#define WH_KEYBOARD_LL      13
+#define WH_MOUSE_LL         14
+#define WH_MAX              14
 
 #define WH_MINHOOK          WH_MIN
 #define WH_MAXHOOK          WH_MAX
-#define WH_NB_HOOKS         (WH_MAXHOOK-WH_MINHOOK+1)
 
   /* Hook action codes */
 #define HC_ACTION           0

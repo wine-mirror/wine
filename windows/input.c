@@ -22,11 +22,10 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/keyboard16.h"
 #include "wine/server.h"
 #include "win.h"
+#include "hook.h"
 #include "input.h"
-#include "keyboard.h"
 #include "mouse.h"
 #include "message.h"
 #include "queue.h"
@@ -78,7 +77,7 @@ typedef union
  * Note: the position is relative to the desktop window.
  */
 static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lParam,
-                                        int xPos, int yPos, DWORD time, DWORD extraInfo )
+                                        int xPos, int yPos, DWORD time, ULONG_PTR extraInfo )
 {
     SERVER_START_REQ( send_message )
     {
@@ -108,6 +107,7 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
 {
     UINT message;
     KEYLP keylp;
+    KBDLLHOOKSTRUCT hook;
 
     keylp.lp2 = 0;
     keylp.lp1.count = 1;
@@ -145,8 +145,34 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
     TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
                 ki->wVk, keylp.lp2, InputKeyStateTable[ki->wVk] );
 
-    queue_raw_hardware_message( message, ki->wVk, keylp.lp2,
-                                PosX, PosY, ki->time, ki->dwExtraInfo );
+    hook.vkCode      = ki->wVk;
+    hook.scanCode    = ki->wScan;
+    hook.flags       = keylp.lp2 >> 24; /* FIXME: LLKHF_INJECTED flag */
+    hook.time        = ki->time;
+    hook.dwExtraInfo = ki->dwExtraInfo;
+    if (!HOOK_CallHooksW( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook ))
+        queue_raw_hardware_message( message, ki->wVk, keylp.lp2,
+                                    PosX, PosY, ki->time, ki->dwExtraInfo );
+}
+
+
+/***********************************************************************
+ *           queue_raw_mouse_message
+ */
+static void queue_raw_mouse_message( UINT message, WPARAM wParam, LPARAM lParam,
+                                     int xPos, int yPos, DWORD time, ULONG_PTR extra_info )
+{
+    MSLLHOOKSTRUCT hook;
+
+    hook.pt.x        = xPos;
+    hook.pt.y        = yPos;
+    hook.mouseData   = wParam;
+    hook.flags       = 0;  /* FIXME: LLMHF_INJECTED flag */
+    hook.time        = time;
+    hook.dwExtraInfo = extra_info;
+
+    if (!HOOK_CallHooksW( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook ))
+        queue_raw_hardware_message( message, wParam, lParam, xPos, yPos, time, extra_info );
 }
 
 
@@ -182,52 +208,52 @@ static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
 
     if (mi->dwFlags & MOUSEEVENTF_MOVE)
     {
-        queue_raw_hardware_message( WM_MOUSEMOVE, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MOUSEMOVE, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN))
     {
         InputKeyStateTable[VK_LBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_LBUTTON] |= 0x80;
-        queue_raw_hardware_message( WM_LBUTTONDOWN, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_LBUTTONDOWN, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP))
     {
         AsyncKeyStateTable[VK_LBUTTON] &= ~0x80;
-        queue_raw_hardware_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN))
     {
         InputKeyStateTable[VK_RBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_RBUTTON] |= 0x80;
-        queue_raw_hardware_message( WM_RBUTTONDOWN, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_RBUTTONDOWN, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP))
     {
         AsyncKeyStateTable[VK_RBUTTON] &= ~0x80;
-        queue_raw_hardware_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEDOWN)
     {
         InputKeyStateTable[VK_MBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_MBUTTON] |= 0x80;
-        queue_raw_hardware_message( WM_MBUTTONDOWN, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MBUTTONDOWN, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEUP)
     {
         AsyncKeyStateTable[VK_MBUTTON] &= ~0x80;
-        queue_raw_hardware_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
-                                    mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
+                                 mi->time, mi->dwExtraInfo );
     }
     if (mi->dwFlags & MOUSEEVENTF_WHEEL)
     {
-        queue_raw_hardware_message( WM_MOUSEWHEEL, MAKELONG( keystate, mi->mouseData), 0,
-                                    PosX, PosY, mi->time, mi->dwExtraInfo );
+        queue_raw_mouse_message( WM_MOUSEWHEEL, MAKELONG( keystate, mi->mouseData), 0,
+                                 PosX, PosY, mi->time, mi->dwExtraInfo );
     }
 }
 
@@ -268,28 +294,12 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
 {
     INPUT input;
 
-    /*
-     * If we are called by the Wine keyboard driver, use the additional
-     * info pointed to by the dwExtraInfo argument.
-     * Otherwise, we need to determine that info ourselves (probably
-     * less accurate, but we can't help that ...).
-     */
-    if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_KEYBDEVENT) )
-        && ((WINE_KEYBDEVENT *)dwExtraInfo)->magic == WINE_KEYBDEVENT_MAGIC )
-    {
-        WINE_KEYBDEVENT *wke = (WINE_KEYBDEVENT *)dwExtraInfo;
-        input.u.ki.time = wke->time;
-        input.u.ki.dwExtraInfo = 0;
-    }
-    else
-    {
-        input.u.ki.time = GetTickCount();
-        input.u.ki.dwExtraInfo = dwExtraInfo;
-    }
     input.type = INPUT_KEYBOARD;
     input.u.ki.wVk = bVk;
     input.u.ki.wScan = bScan;
     input.u.ki.dwFlags = dwFlags;
+    input.u.ki.time = GetTickCount();
+    input.u.ki.dwExtraInfo = dwExtraInfo;
     SendInput( 1, &input, sizeof(input) );
 }
 
@@ -613,10 +623,24 @@ BOOL16 WINAPI IsUserIdle16(void)
 
 /**********************************************************************
  *		VkKeyScanA (USER32.@)
+ *
+ * VkKeyScan translates an ANSI character to a virtual-key and shift code
+ * for the current keyboard.
+ * high-order byte yields :
+ *	0	Unshifted
+ *	1	Shift
+ *	2	Ctrl
+ *	3-5	Shift-key combinations that are not used for characters
+ *	6	Ctrl-Alt
+ *	7	Ctrl-Alt-Shift
+ *	I.e. :	Shift = 1, Ctrl = 2, Alt = 4.
+ * FIXME : works ok except for dead chars :
+ * VkKeyScan '^'(0x5e, 94) ... got keycode 00 ... returning 00
+ * VkKeyScan '`'(0x60, 96) ... got keycode 00 ... returning 00
  */
 WORD WINAPI VkKeyScanA(CHAR cChar)
 {
-	return VkKeyScan16(cChar);
+    return USER_Driver.pVkKeyScan( cChar );
 }
 
 /******************************************************************************
@@ -632,8 +656,8 @@ WORD WINAPI VkKeyScanW(WCHAR cChar)
  */
 WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
 {
-				/* FIXME: complete workaround this is */
-				return VkKeyScan16(cChar);
+    /* FIXME: complete workaround this is */
+    return VkKeyScanA(cChar);
 }
 
 /******************************************************************************
@@ -641,16 +665,28 @@ WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
  */
 WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
 {
-				/* FIXME: complete workaround this is */
-				return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
+    /* FIXME: complete workaround this is */
+    return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
 }
- 
+
 /******************************************************************************
  *		GetKeyboardType (USER32.@)
  */
 INT WINAPI GetKeyboardType(INT nTypeFlag)
 {
-  return GetKeyboardType16(nTypeFlag);
+    TRACE_(keyboard)("(%d)\n", nTypeFlag);
+    switch(nTypeFlag)
+    {
+    case 0:      /* Keyboard type */
+        return 4;    /* AT-101 */
+    case 1:      /* Keyboard Subtype */
+        return 0;    /* There are no defined subtypes */
+    case 2:      /* Number of F-keys */
+        return 12;   /* We're doing an 101 for now, so return 12 F-keys */
+    default:
+        WARN_(keyboard)("Unknown type\n");
+        return 0;    /* The book says 0 here, so 0 */
+    }
 }
 
 /******************************************************************************
@@ -658,7 +694,7 @@ INT WINAPI GetKeyboardType(INT nTypeFlag)
  */
 UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 {
-    return MapVirtualKey16(code,maptype);
+    return USER_Driver.pMapVirtualKey( code, maptype );
 }
 
 /******************************************************************************
@@ -666,7 +702,7 @@ UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
-    return MapVirtualKey16(code,maptype);
+    return MapVirtualKeyA(code,maptype);
 }
 
 /******************************************************************************
@@ -676,7 +712,7 @@ UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
 {
     if (hkl)
     	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
-    return MapVirtualKey16(code,maptype);
+    return MapVirtualKeyA(code,maptype);
 }
 
 /******************************************************************************
@@ -686,7 +722,7 @@ UINT WINAPI MapVirtualKeyExW(UINT code, UINT maptype, HKL hkl)
 {
     if (hkl)
     	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
-    return MapVirtualKey16(code,maptype);
+    return MapVirtualKeyA(code,maptype);
 }
 
 /****************************************************************************
@@ -746,7 +782,7 @@ INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
  */
 INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 {
-	return GetKeyNameText16(lParam,lpBuffer,nSize);
+    return USER_Driver.pGetKeyNameText( lParam, lpBuffer, nSize );
 }
 
 /****************************************************************************

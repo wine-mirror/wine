@@ -361,16 +361,6 @@ extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
 void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
 #endif
 
-
-/* X11 keyboard driver */
-
-extern void X11DRV_InitKeyboard(void);
-extern WORD X11DRV_VkKeyScan(CHAR cChar);
-extern UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
-extern INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
-extern BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr);
-extern BOOL X11DRV_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
-
 /* X11 mouse driver */
 
 extern void X11DRV_InitMouse(LPMOUSE_EVENT_PROC);

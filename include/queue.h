@@ -13,6 +13,7 @@
 #include "winuser.h"
 #include "thread.h"
 
+#define WH_NB_HOOKS (WH_MAXHOOK-WH_MINHOOK+1)
 
 /* Per-queue data for the message queue
  * Note that we currently only store the current values for
