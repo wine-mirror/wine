@@ -164,11 +164,11 @@
 166 stdcall LHashValOfNameSysA(long long str)
 167 stub VarXor # stdcall (ptr ptr ptr)
 168 stdcall VarAbs(ptr ptr)
-169 stub VarFix # stdcall (ptr ptr)
+169 stdcall VarFix(ptr ptr)
 170 stdcall OaBuildVersion()
 171 stub ClearCustData
 172 stdcall VarInt(ptr ptr)
-173 stub VarNeg # stdcall (ptr ptr)
+173 stdcall VarNeg(ptr ptr)
 174 stdcall VarNot(ptr ptr)
 175 stub VarRound # stdcall (ptr long ptr)
 176 stdcall VarCmp(ptr ptr long long)

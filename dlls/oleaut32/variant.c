@@ -30,7 +30,6 @@
 #ifdef HAVE_STDLIB_H
 # include <stdlib.h>
 #endif
-#include <math.h>
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -2626,7 +2625,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             V_UNION(result,fltVal)  = res;
             rc = S_OK;
         } else {
-	    FIXME("Unhandled type pair %d / %d in float addition.\n", 
+	    FIXME("Unhandled type pair %d / %d in float addition.\n",
         	(V_VT(left)&VT_TYPEMASK),
         	(V_VT(right)&VT_TYPEMASK)
 	    );
@@ -3037,6 +3036,283 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
 }
 
 /**********************************************************************
+ *              VarFix [OLEAUT32.169]
+ *
+ * Truncate a variants value to a whole number.
+ *
+ * PARAMS
+ *  pVarIn  [I] Source variant
+ *  pVarOut [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the converted value.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - The type of the value stored in pVarOut depends on the type of pVarIn,
+ *    according to the following table:
+ *| Input Type       Output Type
+ *| ----------       -----------
+ *|  VT_BOOL          VT_I2
+ *|  VT_EMPTY         VT_I2
+ *|  VT_BSTR          VT_R8
+ *|  All Others       Unchanged
+ *  - The difference between this function and VarInt() is that VarInt() rounds
+ *    negative numbers away from 0, while this function rounds them towards zero.
+ */
+HRESULT WINAPI VarFix(LPVARIANT pVarIn, LPVARIANT pVarOut)
+{
+    HRESULT hRet = S_OK;
+
+    TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
+          debugstr_VF(pVarIn), pVarOut);
+
+    V_VT(pVarOut) = V_VT(pVarIn);
+
+    switch (V_VT(pVarIn))
+    {
+    case VT_UI1:
+        V_UI1(pVarOut) = V_UI1(pVarIn);
+        break;
+    case VT_BOOL:
+        V_VT(pVarOut) = VT_I2;
+        /* Fall through */
+     case VT_I2:
+        V_I2(pVarOut) = V_I2(pVarIn);
+        break;
+     case VT_I4:
+        V_I4(pVarOut) = V_I4(pVarIn);
+        break;
+     case VT_I8:
+        V_I8(pVarOut) = V_I8(pVarIn);
+        break;
+    case VT_R4:
+        if (V_R4(pVarIn) < 0.0f)
+            V_R4(pVarOut) = (float)ceil(V_R4(pVarIn));
+        else
+            V_R4(pVarOut) = (float)floor(V_R4(pVarIn));
+        break;
+    case VT_BSTR:
+        V_VT(pVarOut) = VT_R8;
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(pVarOut));
+        pVarIn = pVarOut;
+        /* Fall through */
+    case VT_DATE:
+    case VT_R8:
+        if (V_R8(pVarIn) < 0.0)
+            V_R8(pVarOut) = ceil(V_R8(pVarIn));
+        else
+            V_R8(pVarOut) = floor(V_R8(pVarIn));
+        break;
+    case VT_CY:
+        hRet = VarCyFix(V_CY(pVarIn), &V_CY(pVarOut));
+        break;
+    case VT_DECIMAL:
+        hRet = VarDecFix(&V_DECIMAL(pVarIn), &V_DECIMAL(pVarOut));
+        break;
+    case VT_EMPTY:
+        V_VT(pVarOut) = VT_I2;
+        V_I2(pVarOut) = 0;
+        break;
+    case VT_NULL:
+        /* No-Op */
+        break;
+    default:
+        if (V_TYPE(pVarIn) == VT_CLSID || /* VT_CLSID is a special case */
+            FAILED(VARIANT_ValidateType(V_VT(pVarIn))))
+            hRet = DISP_E_BADVARTYPE;
+        else
+            hRet = DISP_E_TYPEMISMATCH;
+    }
+    if (FAILED(hRet))
+      V_VT(pVarOut) = VT_EMPTY;
+
+    return hRet;
+}
+
+/**********************************************************************
+ *              VarInt [OLEAUT32.172]
+ *
+ * Truncate a variants value to a whole number.
+ *
+ * PARAMS
+ *  pVarIn  [I] Source variant
+ *  pVarOut [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the converted value.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - The type of the value stored in pVarOut depends on the type of pVarIn,
+ *    according to the following table:
+ *| Input Type       Output Type
+ *| ----------       -----------
+ *|  VT_BOOL          VT_I2
+ *|  VT_EMPTY         VT_I2
+ *|  VT_BSTR          VT_R8
+ *|  All Others       Unchanged
+ *  - The difference between this function and VarFix() is that VarFix() rounds
+ *    negative numbers towards 0, while this function rounds them away from zero.
+ */
+HRESULT WINAPI VarInt(LPVARIANT pVarIn, LPVARIANT pVarOut)
+{
+    HRESULT hRet = S_OK;
+
+    TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
+          debugstr_VF(pVarIn), pVarOut);
+
+    V_VT(pVarOut) = V_VT(pVarIn);
+
+    switch (V_VT(pVarIn))
+    {
+    case VT_R4:
+        V_R4(pVarOut) = (float)floor(V_R4(pVarIn));
+        break;
+    case VT_BSTR:
+        V_VT(pVarOut) = VT_R8;
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(pVarOut));
+        pVarIn = pVarOut;
+        /* Fall through */
+    case VT_DATE:
+    case VT_R8:
+        V_R8(pVarOut) = floor(V_R8(pVarIn));
+        break;
+    case VT_CY:
+        hRet = VarCyInt(V_CY(pVarIn), &V_CY(pVarOut));
+        break;
+    case VT_DECIMAL:
+        hRet = VarDecInt(&V_DECIMAL(pVarIn), &V_DECIMAL(pVarOut));
+        break;
+    default:
+        return VarFix(pVarIn, pVarOut);
+    }
+
+    return hRet;
+}
+
+/**********************************************************************
+ *              VarNeg [OLEAUT32.173]
+ *
+ * Negate the value of a variant.
+ *
+ * PARAMS
+ *  pVarIn  [I] Source variant
+ *  pVarOut [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the converted value.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - The type of the value stored in pVarOut depends on the type of pVarIn,
+ *    according to the following table:
+ *| Input Type       Output Type
+ *| ----------       -----------
+ *|  VT_EMPTY         VT_I2
+ *|  VT_UI1           VT_I2
+ *|  VT_BOOL          VT_I2
+ *|  VT_BSTR          VT_R8
+ *|  All Others       Unchanged (unless promoted)
+ *  - Where the negated value of a variant does not fit in its base type, the type
+ *    is promoted according to the following table:
+ *| Input Type       Promoted To
+ *| ----------       -----------
+ *|   VT_I2            VT_I4
+ *|   VT_I4            VT_R8
+ *|   VT_I8            VT_R8
+ *  - The native version of this function returns DISP_E_BADVARTYPE for valid
+ *    variant types that cannot be negated, and returns DISP_E_TYPEMISMATCH
+ *    for types which are not valid. Since this is in contravention of the
+ *    meaning of those error codes and unlikely to be relied on by applications,
+ *    this implementation returns errors consistent with the other high level
+ *    variant math functions.
+ */
+HRESULT WINAPI VarNeg(LPVARIANT pVarIn, LPVARIANT pVarOut)
+{
+    HRESULT hRet = S_OK;
+
+    TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
+          debugstr_VF(pVarIn), pVarOut);
+
+    V_VT(pVarOut) = V_VT(pVarIn);
+
+    switch (V_VT(pVarIn))
+    {
+    case VT_UI1:
+        V_VT(pVarOut) = VT_I2;
+        V_I2(pVarOut) = -V_UI1(pVarIn);
+        break;
+    case VT_BOOL:
+        V_VT(pVarOut) = VT_I2;
+        /* Fall through */
+    case VT_I2:
+        if (V_I2(pVarIn) == I2_MIN)
+        {
+            V_VT(pVarOut) = VT_I4;
+            V_I4(pVarOut) = -(int)V_I2(pVarIn);
+        }
+        else
+            V_I2(pVarOut) = -V_I2(pVarIn);
+        break;
+    case VT_I4:
+        if (V_I4(pVarIn) == I4_MIN)
+        {
+            V_VT(pVarOut) = VT_R8;
+            V_R8(pVarOut) = -(double)V_I4(pVarIn);
+        }
+        else
+            V_I4(pVarOut) = -V_I4(pVarIn);
+        break;
+    case VT_I8:
+        if (V_I8(pVarIn) == I8_MIN)
+        {
+            V_VT(pVarOut) = VT_R8;
+            hRet = VarR8FromI8(V_I8(pVarIn), &V_R8(pVarOut));
+            V_R8(pVarOut) *= -1.0;
+        }
+        else
+            V_I8(pVarOut) = -V_I8(pVarIn);
+        break;
+    case VT_R4:
+        V_R4(pVarOut) = -V_R4(pVarIn);
+        break;
+    case VT_DATE:
+    case VT_R8:
+        V_R8(pVarOut) = -V_R8(pVarIn);
+        break;
+    case VT_CY:
+        hRet = VarCyNeg(V_CY(pVarIn), &V_CY(pVarOut));
+        break;
+    case VT_DECIMAL:
+        hRet = VarDecNeg(&V_DECIMAL(pVarIn), &V_DECIMAL(pVarOut));
+        break;
+    case VT_BSTR:
+        V_VT(pVarOut) = VT_R8;
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(pVarOut));
+        V_R8(pVarOut) = -V_R8(pVarOut);
+        break;
+    case VT_EMPTY:
+        V_VT(pVarOut) = VT_I2;
+        V_I2(pVarOut) = 0;
+        break;
+    case VT_NULL:
+        /* No-Op */
+        break;
+    default:
+        if (V_TYPE(pVarIn) == VT_CLSID || /* VT_CLSID is a special case */
+            FAILED(VARIANT_ValidateType(V_VT(pVarIn))))
+            hRet = DISP_E_BADVARTYPE;
+        else
+            hRet = DISP_E_TYPEMISMATCH;
+    }
+    if (FAILED(hRet))
+      V_VT(pVarOut) = VT_EMPTY;
+
+    return hRet;
+}
+
+/**********************************************************************
  *              VarNot [OLEAUT32.174]
  *
  * Perform a not operation on a variant.
@@ -3161,39 +3437,15 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 
     hr = VariantChangeType(&dl,left,0,VT_R8);
     if (!SUCCEEDED(hr)) {
-	ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
-	return E_FAIL;
+        ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
+        return E_FAIL;
     }
     hr = VariantChangeType(&dr,right,0,VT_R8);
     if (!SUCCEEDED(hr)) {
-	ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
-	return E_FAIL;
+        ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
+        return E_FAIL;
     }
     V_VT(result) = VT_R8;
     V_R8(result) = pow(V_R8(&dl),V_R8(&dr));
-    return S_OK;
-}
-
-/**********************************************************************
- *              VarInt [OLEAUT32.172]
- *
- */
-HRESULT WINAPI VarInt(LPVARIANT var, LPVARIANT result)
-{
-    TRACE("(%p->(%s%s),%p)\n", var, debugstr_VT(var), debugstr_VF(var), result);
-
-    switch(V_VT(var)) {
-    case VT_R4:
-	V_VT(result) = VT_I4;
-	V_I4(result) = floor(V_R4(var));
-	break;
-    case VT_R8:
-	V_VT(result) = VT_I4;
-	V_I4(result) = floor(V_R8(var));
-	break;
-    default:
-	FIXME("Unhandled variant type 0x%x\n", V_VT(var));
-	return DISP_E_TYPEMISMATCH;
-    }
     return S_OK;
 }
