@@ -76,8 +76,10 @@ static const WCHAR *create_system_dirid( int dirid )
     static const WCHAR Viewers[] = {'\\','v','i','e','w','e','r','s',0};
     static const WCHAR System[]  = {'\\','s','y','s','t','e','m',0};
     static const WCHAR Spool[]   = {'\\','s','p','o','o','l',0};
+    static const WCHAR Profile[] = {'\\','p','r','o','f','i','l','e','s','\\','A','d','m','i','n','i','s','t','r','a','t','o','r',0};
+    static const WCHAR UserProfile[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
 
-    WCHAR buffer[MAX_PATH+16], *str;
+    WCHAR buffer[MAX_PATH+32], *str;
     int len;
 
     switch(dirid)
@@ -126,9 +128,13 @@ static const WCHAR *create_system_dirid( int dirid )
         GetWindowsDirectoryW( buffer, MAX_PATH );
         strcatW( buffer, Spool );
         break;
+    case DIRID_USERPROFILE:
+        if (GetEnvironmentVariableW( UserProfile, buffer, MAX_PATH )) break;
+        GetWindowsDirectoryW( buffer, MAX_PATH );
+        strcatW( buffer, Profile );
+        break;
     case DIRID_LOADER:
         return C_Root;  /* FIXME */
-    case DIRID_USERPROFILE:  /* FIXME */
     case DIRID_COLOR:  /* FIXME */
     case DIRID_PRINTPROCESSOR:  /* FIXME */
     default:
