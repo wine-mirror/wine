@@ -326,6 +326,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
         case D3DFMT_DXT3:
         case D3DFMT_DXT5:
             return D3D_OK;
+        default:
+            break; /* Avoid compiler warnings */
         }
     }
 
@@ -397,9 +399,91 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {
+
+    BOOL        gotContext  = FALSE;
+    BOOL        created     = FALSE;
+    GLint       gl_tex_size = 0;    
+    GLXContext  gl_context  = 0;
+    Display    *display     = NULL;
     ICOM_THIS(IDirect3D8Impl,iface);
+
     TRACE("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
+    /* Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
+        ie there is no GL Context - Get a default rendering context to enable the 
+        function query some info from GL                                           */    
+    if (glXGetCurrentContext() == NULL) {
+
+        XVisualInfo  template;
+        XVisualInfo *vis;
+        HDC          device_context;
+        Visual      *visual;
+        Drawable     drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+        XWindowAttributes win_attr;
+        BOOL         failed = FALSE;
+        int          num;
+
+        /* Get the display */
+        device_context = GetDC(0);
+        display = get_display(device_context);
+        ReleaseDC(0, device_context);
+
+        /* Get the X visual */
+        ENTER_GL();
+        if (XGetWindowAttributes(display, drawable, &win_attr)) {
+            visual = win_attr.visual;
+        } else {
+            visual = DefaultVisual(display, DefaultScreen(display));
+        }
+        template.visualid = XVisualIDFromVisual(visual);
+        vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+        if (vis == NULL) {
+            LEAVE_GL();
+            WARN("Error creating visual info for capabilities initialization\n");
+            failed = TRUE;
+        }
+
+        /* Create a GL context */
+        if (!failed) {
+           gl_context = glXCreateContext(display, vis, NULL, GL_TRUE);
+
+           if (gl_context == NULL) {
+              LEAVE_GL();
+              WARN("Error creating default context for capabilities initialization\n");
+              failed = TRUE;
+           }
+        }
+
+        /* Make it the current GL context */
+        if (!failed && glXMakeCurrent(display, drawable, gl_context) == False) {
+            glXDestroyContext(display, gl_context);
+            LEAVE_GL();
+            WARN("Error setting default context as current for capabilities initialization\n");
+            failed = TRUE;	
+        }
+
+        /* It worked! Wow... */
+        if (!failed) {
+           gotContext = TRUE;
+           created = TRUE;
+        }
+    }
+
+    if (gotContext == FALSE) {
+
+        FIXME("GetDeviceCaps called but no GL Context - Returning dummy values\n");
+        gl_tex_size=65535;
+        pCaps->MaxTextureBlendStages = 2;
+        pCaps->MaxSimultaneousTextures = 2;
+        pCaps->MaxUserClipPlanes = 8;
+        pCaps->MaxActiveLights = 8;
+        pCaps->MaxVertexBlendMatrices = 0;
+        pCaps->MaxVertexBlendMatrixIndex = 1;
+        pCaps->MaxAnisotropy = 0;
+        pCaps->MaxPointSize = 255.0;
+    } else {
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
+    }
     pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
     pCaps->AdapterOrdinal = Adapter;
 
@@ -495,12 +579,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 			 D3DLINECAPS_ALPHACMP
 			 D3DLINECAPS_FOG */
 
-    {
-      GLint gl_tex_size;    
-      glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
-      pCaps->MaxTextureWidth = gl_tex_size;
-      pCaps->MaxTextureHeight = gl_tex_size;
-    }
+    pCaps->MaxTextureWidth = gl_tex_size;
+    pCaps->MaxTextureHeight = gl_tex_size;
 
     pCaps->MaxVolumeExtent = 0;
 
@@ -558,10 +638,9 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 			      D3DTEXOPCAPS_MULTIPLYADD 
 			      D3DTEXOPCAPS_PREMODULATE */
 
-    {
+    if (gotContext) {
         GLint gl_max;
 	GLfloat gl_float;
-
 #if defined(GL_VERSION_1_3)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
 #else
@@ -628,6 +707,12 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->MaxPixelShaderValue = 0.0;
 #endif
 
+    /* If we created a dummy context, throw it away */
+    if (created) {
+        glXMakeCurrent(display, None, NULL);
+        glXDestroyContext(display, gl_context);
+        LEAVE_GL();
+    }
     return D3D_OK;
 }
 
