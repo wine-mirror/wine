@@ -656,18 +656,17 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     DWORD nSize;
     BOOL ret;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    int textHeight = 0;
+    int textWidth = 0;
+    const UINT textAlign = GetTextAlign(physDev->hdc);
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
 
     TRACE("%s count %d nSize = %ld\n", debugstr_wn(str, count), count, nSize);
-    pemr = HeapAlloc(GetProcessHeap(), 0, nSize);
+    pemr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nSize);
 
     pemr->emr.iType = EMR_EXTTEXTOUTW;
     pemr->emr.nSize = nSize;
-
-    /* FIXME: Calculation of these requires honouring alignment mode, escapement etc. */
-    pemr->rclBounds.left = pemr->rclBounds.right = x;
-    pemr->rclBounds.top = pemr->rclBounds.bottom = y;
 
     pemr->iGraphicsMode = GetGraphicsMode(physDev->hdc);
     pemr->exScale = pemr->eyScale = 1.0; /* FIXME */
@@ -688,17 +687,65 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         pemr->emrtext.rcl.bottom = lprect->bottom;
     }
 
-    pemr->emrtext.offDx = pemr->emrtext.offString + count * sizeof(WCHAR);
-    if(lpDx)
-	memcpy((char*)pemr + pemr->emrtext.offDx, lpDx, count * sizeof(INT));
-    else
-    {
+    pemr->emrtext.offDx = pemr->emrtext.offString + ((count+1) & ~1) * sizeof(WCHAR);
+    if(lpDx) {
+        UINT i;
+        SIZE strSize;
+        memcpy((char*)pemr + pemr->emrtext.offDx, lpDx, count * sizeof(INT));
+        for (i = 0; i < count; i++) {
+            textWidth += lpDx[i];
+        }
+        GetTextExtentPoint32W(physDev->hdc, str, count, &strSize);
+        textHeight = strSize.cy;
+    }
+    else {
         UINT i;
         INT *dx = (INT *)((char*)pemr + pemr->emrtext.offDx);
-        for (i = 0; i < count; i++)
-        {
-            GetCharWidth32W(physDev->hdc, str[i], str[i], &dx[i]);
+        SIZE charSize;
+        for (i = 0; i < count; i++) {
+            GetTextExtentPoint32W(physDev->hdc, str + i, 1, &charSize);
+            dx[i] = charSize.cx;
+            textWidth += charSize.cx;
+            textHeight = max(textHeight, charSize.cy);
         }
+    }
+
+    switch (textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER)) {
+    case TA_CENTER: {
+        pemr->rclBounds.left  = x - (textWidth / 2) - 1;
+        pemr->rclBounds.right = x + (textWidth / 2) + 1;
+        break;
+    }
+    case TA_RIGHT: {
+        pemr->rclBounds.left  = x - textWidth - 1;
+        pemr->rclBounds.right = x;
+        break;
+    }
+    default: { /* TA_LEFT */
+        pemr->rclBounds.left  = x;
+        pemr->rclBounds.right = x + textWidth + 1;
+    }
+    }
+
+    switch (textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE)) {
+    case TA_BASELINE: {
+        TEXTMETRICW tm;
+        GetTextMetricsW(physDev->hdc, &tm);
+        /* Play safe here... it's better to have a bounding box */
+        /* that is too big than too small. */
+        pemr->rclBounds.top    = y - textHeight - 1;
+        pemr->rclBounds.bottom = y + tm.tmDescent + 1;
+        break;
+    }
+    case TA_BOTTOM: {
+        pemr->rclBounds.top    = y - textHeight - 1;
+        pemr->rclBounds.bottom = y;
+        break;
+    }
+    default: { /* TA_TOP */
+        pemr->rclBounds.top    = y;
+        pemr->rclBounds.bottom = y + textHeight + 1;
+    }
     }
 
     ret = EMFDRV_WriteRecord( dev, &pemr->emr );
