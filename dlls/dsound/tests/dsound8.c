@@ -644,7 +644,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
     LPDIRECTSOUNDBUFFER primary=NULL,secondary=NULL;
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
-    WAVEFORMATEX wfx;
+    WAVEFORMATEX wfx, wfx1;
     DWORD f;
     int ref;
 
@@ -680,6 +680,12 @@ static HRESULT test_secondary8(LPGUID lpGuid)
        "%s\n",DXGetErrorString8(rc));
 
     if (rc==DS_OK && primary!=NULL) {
+        rc=IDirectSoundBuffer_GetFormat(primary,&wfx1,sizeof(wfx1),NULL);
+        ok(rc==DS_OK,"IDirectSoundBuffer8_Getformat() failed: %s\n",
+           DXGetErrorString8(rc));
+        if (rc!=DS_OK)
+            goto EXIT1;
+
         for (f=0;f<NB_FORMATS;f++) {
             init_format(&wfx,WAVE_FORMAT_PCM,formats[f][0],formats[f][1],
                         formats[f][2]);
@@ -702,8 +708,10 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
-                trace("  Testing a secondary buffer at %ldx%dx%d\n",
-                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+                trace("  Testing a secondary buffer at %ldx%dx%d "
+                      "with a primary buffer at %ldx%dx%d\n",
+                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                      wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
             }
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary!=NULL,
@@ -719,7 +727,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                    "should have 0\n",ref);
             }
         }
-
+EXIT1:
         ref=IDirectSoundBuffer_Release(primary);
         ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
            "should have 0\n",ref);

@@ -628,7 +628,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
     LPDIRECTSOUNDBUFFER primary=NULL,secondary=NULL;
     LPDIRECTSOUND3DLISTENER listener=NULL;
     DSBUFFERDESC bufdesc;
-    WAVEFORMATEX wfx;
+    WAVEFORMATEX wfx, wfx1;
     int ref;
 
     /* Create the DirectSound object */
@@ -659,6 +659,12 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         DXGetErrorString8(rc));
 
     if (rc==DS_OK && primary!=NULL) {
+        rc=IDirectSoundBuffer_GetFormat(primary,&wfx1,sizeof(wfx1),NULL);
+        ok(rc==DS_OK,"IDirectSoundBuffer8_Getformat() failed: %s\n",
+           DXGetErrorString8(rc));
+        if (rc!=DS_OK)
+            goto EXIT1;
+
         if (has_listener) {
             rc=IDirectSoundBuffer_QueryInterface(primary,
                                                  &IID_IDirectSound3DListener,
@@ -710,7 +716,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
         if (winetest_interactive) {
-            trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d\n",
+            trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d "
+                  "with a primary buffer at %ldx%dx%d\n",
                   has_3dbuffer?"3D ":"",
                   has_duplicate?"duplicated ":"",
                   listener!=NULL||move_sound?"with ":"",
@@ -718,7 +725,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                   listener!=NULL?"listener ":"",
                   listener&&move_sound?"and moving sound ":move_sound?
                   "moving sound ":"",
-                  wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+                  wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                  wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
         }
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"IDirectSound_CreateSoundBuffer() "
@@ -839,6 +847,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
             }
         }
     }
+EXIT1:
     if (has_listener) {
         ref=IDirectSound3DListener_Release(listener);
         ok(ref==0,"IDirectSound3dListener_Release() listener has %d "
