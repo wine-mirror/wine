@@ -21,7 +21,6 @@
 "Favorites"="C:\WINDOWS\Favorites"
 
 # Same as above, but for HKEY_CURRENT_USER, not HKEY_USERS\.Default
-# (only HKEY_CURRENT_USER will actually be saved yet, so the above has really no effect)
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
 "Favorites"="C:\WINDOWS\Favorites"
@@ -52,4 +51,27 @@
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}\shellex\MayChangeDefaultMenu]
 @=""
+
+# Entries for DirectX. Used by high-performance multimedia applications, like games.
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D7B70EE0-4340-11CF-B063-0020AFC2CD35}]
+@="DirectDraw Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D7B70EE0-4340-11CF-B063-0020AFC2CD35}\InprocServer32]
+@="ddraw.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{593817A0-7DB3-11CF-A2DE-00AA00B93356}]
+@="DirectDraw Clipper Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{593817A0-7DB3-11CF-A2DE-00AA00B93356}\InprocServer32]
+@="ddraw.dll"
+"ThreadingModel"="Both"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11cf-93BC-444553540000}]
+@="DirectSound Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11cf-93BC-444553540000}\InprocServer32]
+@="dsound.dll"
+"ThreadingModel"="Both"
 
