@@ -7,6 +7,8 @@ SUBDIRS = \
 	ntdll \
 	psapi \
 	shell32 \
+	ver \
+	version \
 	winaspi \
 	wnaspi32
 
