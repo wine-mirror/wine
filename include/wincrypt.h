@@ -93,6 +93,12 @@ typedef struct _PUBLICKEYSTRUC {
     ALG_ID aiKeyAlg;
 } BLOBHEADER, PUBLICKEYSTRUC;
 
+typedef struct _RSAPUBKEY {
+    DWORD   magic;
+    DWORD   bitlen;
+    DWORD   pubexp;
+} RSAPUBKEY;
+
 typedef struct _CRYPT_BIT_BLOB {
     DWORD cbData;
     BYTE  *pbData;
@@ -657,6 +663,14 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define CRYPT_NOHASHOID         0x00000001
 #define CRYPT_TYPE2_FORMAT      0x00000002
 #define CRYPT_X931_FORMAT       0x00000004
+
+/* Crypt{Get,Set}HashParam */
+#define HP_ALGID                0x0001
+#define HP_HASHVAL              0x0002
+#define HP_HASHSIZE             0x0004
+#define HP_HMAC_INFO            0x0005
+#define HP_TLS1PRF_LABEL        0x0006
+#define HP_TLS1PRF_SEED         0x0007
 
 /* Crypt*Key */
 #define CRYPT_EXPORTABLE        0x00000001
