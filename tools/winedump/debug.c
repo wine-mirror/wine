@@ -20,13 +20,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 
 #include "winnt.h"
