@@ -174,7 +174,7 @@ HRESULT QUARTZ_MediaSubType_FromBitmap(
 		if ( pbi->biPlanes == 1 && pbi->biHeight > 0 &&
 			 pbi->biBitCount == 8 )
 		{
-			QUARTZ_MediaSubType_FromFourCC( psubtype, mmioFOURCC('M','R','L','E') );
+			QUARTZ_MediaSubType_FromFourCC( psubtype, 1 );
 			hr = S_OK;
 		}
 		break;
@@ -182,7 +182,7 @@ HRESULT QUARTZ_MediaSubType_FromBitmap(
 		if ( pbi->biPlanes == 1 && pbi->biHeight > 0 &&
 			 pbi->biBitCount == 4 )
 		{
-			QUARTZ_MediaSubType_FromFourCC( psubtype, mmioFOURCC('M','R','L','E') );
+			QUARTZ_MediaSubType_FromFourCC( psubtype, 2 );
 			hr = S_OK;
 		}
 		break;

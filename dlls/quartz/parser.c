@@ -1115,7 +1115,7 @@ HRESULT QUARTZ_CreateParserInPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, NULL,
 		&pFilter->basefilter,
 		pwszPinName,
 		FALSE,
@@ -1217,7 +1217,7 @@ HRESULT QUARTZ_CreateParserOutPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, NULL,
 		&pFilter->basefilter,
 		pwszPinName,
 		TRUE,

@@ -129,9 +129,9 @@ VIDREN_WndProc(
 		{
 		case WM_PAINT:
 			TRACE("WM_PAINT begin\n");
-			EnterCriticalSection( &This->m_csSample );
+			EnterCriticalSection( &This->m_csReceive );
 			VIDREN_OnPaint( This, hwnd );
-			LeaveCriticalSection( &This->m_csSample );
+			LeaveCriticalSection( &This->m_csReceive );
 			TRACE("WM_PAINT end\n");
 			return 0;
 		case WM_CLOSE:
@@ -320,9 +320,9 @@ static HRESULT CVideoRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
 
 	FIXME( "(%p)\n", This );
 
-	EnterCriticalSection( &This->m_csSample );
+	EnterCriticalSection( &This->m_csReceive );
 	This->m_bSampleIsValid = FALSE;
-	LeaveCriticalSection( &This->m_csSample );
+	LeaveCriticalSection( &This->m_csReceive );
 
 	return NOERROR;
 }
@@ -485,11 +485,9 @@ static HRESULT CVideoRendererPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSample*
 		return NOERROR;
 	}
 
-	EnterCriticalSection( &This->pRender->m_csSample );
 	memcpy(This->pRender->m_pSampleData,pData,lLength);
 	This->pRender->m_bSampleIsValid = TRUE;
 	PostMessageA( hwnd, VIDRENMSG_UPDATE, 0, 0 );
-	LeaveCriticalSection( &This->pRender->m_csSample );
 
 	return NOERROR;
 }
@@ -525,9 +523,9 @@ static HRESULT CVideoRendererPinImpl_BeginFlush( CPinBaseImpl* pImpl )
 	FIXME( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = TRUE;
-	EnterCriticalSection( &This->pRender->m_csSample );
+	EnterCriticalSection( &This->pRender->m_csReceive );
 	This->pRender->m_bSampleIsValid = FALSE;
-	LeaveCriticalSection( &This->pRender->m_csSample );
+	LeaveCriticalSection( &This->pRender->m_csReceive );
 
 	return NOERROR;
 }
@@ -631,7 +629,7 @@ static void QUARTZ_DestroyVideoRenderer(IUnknown* punk)
 	CVideoRendererImpl_UninitIVideoWindow(This);
 	CBaseFilterImpl_UninitIBaseFilter(&This->basefilter);
 
-	DeleteCriticalSection( &This->m_csSample );
+	DeleteCriticalSection( &This->m_csReceive );
 }
 
 HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
@@ -694,11 +692,12 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 	This->unk.dwEntries = sizeof(FilterIFEntries)/sizeof(FilterIFEntries[0]);
 	This->unk.pOnFinalRelease = QUARTZ_DestroyVideoRenderer;
 
-	InitializeCriticalSection( &This->m_csSample );
+	InitializeCriticalSection( &This->m_csReceive );
 
 	hr = QUARTZ_CreateVideoRendererPin(
 		This,
 		&This->basefilter.csFilter,
+		&This->m_csReceive,
 		&This->pPin );
 	if ( SUCCEEDED(hr) )
 		hr = QUARTZ_CompList_AddComp(
@@ -747,12 +746,13 @@ static void QUARTZ_DestroyVideoRendererPin(IUnknown* punk)
 HRESULT QUARTZ_CreateVideoRendererPin(
         CVideoRendererImpl* pFilter,
         CRITICAL_SECTION* pcsPin,
+        CRITICAL_SECTION* pcsPinReceive,
         CVideoRendererPinImpl** ppPin)
 {
 	CVideoRendererPinImpl*	This = NULL;
 	HRESULT hr;
 
-	TRACE("(%p,%p,%p)\n",pFilter,pcsPin,ppPin);
+	TRACE("(%p,%p,%p,%p)\n",pFilter,pcsPin,pcsPinReceive,ppPin);
 
 	This = (CVideoRendererPinImpl*)
 		QUARTZ_AllocObj( sizeof(CVideoRendererPinImpl) );
@@ -765,7 +765,7 @@ HRESULT QUARTZ_CreateVideoRendererPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, pcsPinReceive,
 		&pFilter->basefilter,
 		QUARTZ_VideoRendererPin_Name,
 		FALSE,

@@ -488,10 +488,10 @@ CPinBaseImpl_fnEndOfStream(IPin* iface)
 	if ( This->bOutput )
 		return E_UNEXPECTED;
 
-	EnterCriticalSection( This->pcsPin );
+	EnterCriticalSection( This->pcsPinReceive );
 	if ( This->pHandlers->pEndOfStream != NULL )
 		hr = This->pHandlers->pEndOfStream(This);
-	LeaveCriticalSection( This->pcsPin );
+	LeaveCriticalSection( This->pcsPinReceive );
 
 	return hr;
 }
@@ -511,6 +511,9 @@ CPinBaseImpl_fnBeginFlush(IPin* iface)
 	if ( This->pHandlers->pBeginFlush != NULL )
 		hr = This->pHandlers->pBeginFlush(This);
 	LeaveCriticalSection( This->pcsPin );
+
+	EnterCriticalSection( This->pcsPinReceive );
+	LeaveCriticalSection( This->pcsPinReceive );
 
 	return hr;
 }
@@ -585,6 +588,7 @@ static ICOM_VTABLE(IPin) ipin =
 HRESULT CPinBaseImpl_InitIPin(
 	CPinBaseImpl* This, IUnknown* punkControl,
 	CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
 	CBaseFilterImpl* pFilter, LPCWSTR pwszId,
 	BOOL bOutput,
 	const CBasePinHandlers*	pHandlers )
@@ -608,6 +612,7 @@ HRESULT CPinBaseImpl_InitIPin(
 	This->pmtAcceptTypes = NULL;
 	This->cAcceptTypes = 0;
 	This->pcsPin = pcsPin;
+	This->pcsPinReceive = pcsPinReceive;
 	This->pFilter = pFilter;
 	This->pPinConnectedTo = NULL;
 	This->pMemInputPinConnectedTo = NULL;
@@ -766,10 +771,10 @@ CMemInputPinBaseImpl_fnReceive(IMemInputPin* iface,IMediaSample* pSample)
 
 	TRACE("(%p)->(%p)\n",This,pSample);
 
-	EnterCriticalSection( This->pPin->pcsPin );
+	EnterCriticalSection( This->pPin->pcsPinReceive );
 	if ( This->pPin->pHandlers->pReceive != NULL )
 		hr = This->pPin->pHandlers->pReceive(This->pPin,pSample);
-	LeaveCriticalSection( This->pPin->pcsPin );
+	LeaveCriticalSection( This->pPin->pcsPinReceive );
 
 	return hr;
 }

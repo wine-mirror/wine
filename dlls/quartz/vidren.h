@@ -42,7 +42,7 @@ struct CVideoRendererImpl
 	HANDLE	m_hEventInit;
 	HANDLE	m_hThread;
 	HWND	m_hwnd;
-	CRITICAL_SECTION	m_csSample;
+	CRITICAL_SECTION	m_csReceive;
 	BOOL	m_bSampleIsValid;
 	BYTE*	m_pSampleData;
 	DWORD	m_cbSampleData;
@@ -71,6 +71,7 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateVideoRendererPin(
         CVideoRendererImpl* pFilter,
         CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
         CVideoRendererPinImpl** ppPin);
 
 

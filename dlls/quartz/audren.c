@@ -663,6 +663,8 @@ static void QUARTZ_DestroyAudioRenderer(IUnknown* punk)
 
 	CAudioRendererImpl_UninitIBasicAudio(This);
 	CBaseFilterImpl_UninitIBaseFilter(&This->basefilter);
+
+	DeleteCriticalSection( &This->m_csReceive );
 }
 
 HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj)
@@ -712,9 +714,12 @@ HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj)
 	This->unk.dwEntries = sizeof(FilterIFEntries)/sizeof(FilterIFEntries[0]);
 	This->unk.pOnFinalRelease = QUARTZ_DestroyAudioRenderer;
 
+	InitializeCriticalSection( &This->m_csReceive );
+
 	hr = QUARTZ_CreateAudioRendererPin(
 		This,
 		&This->basefilter.csFilter,
+		&This->m_csReceive,
 		&This->pPin );
 	if ( SUCCEEDED(hr) )
 		hr = QUARTZ_CompList_AddComp(
@@ -764,12 +769,13 @@ static void QUARTZ_DestroyAudioRendererPin(IUnknown* punk)
 HRESULT QUARTZ_CreateAudioRendererPin(
 	CAudioRendererImpl* pFilter,
 	CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
 	CAudioRendererPinImpl** ppPin)
 {
 	CAudioRendererPinImpl*	This = NULL;
 	HRESULT hr;
 
-	TRACE("(%p,%p,%p)\n",pFilter,pcsPin,ppPin);
+	TRACE("(%p,%p,%p,%p)\n",pFilter,pcsPin,pcsPinReceive,ppPin);
 
 	This = (CAudioRendererPinImpl*)
 		QUARTZ_AllocObj( sizeof(CAudioRendererPinImpl) );
@@ -782,7 +788,7 @@ HRESULT QUARTZ_CreateAudioRendererPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, pcsPinReceive,
 		&pFilter->basefilter,
 		QUARTZ_AudioRenderPin_Name,
 		FALSE,

@@ -35,6 +35,7 @@ struct CAudioRendererImpl
 	CSeekingPassThru*	pSeekPass;
 	CAudioRendererPinImpl* pPin;
 
+	CRITICAL_SECTION	m_csReceive;
 	BOOL	m_fInFlush;
 
 	/* for waveOut */
@@ -66,6 +67,7 @@ HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateAudioRendererPin(
         CAudioRendererImpl* pFilter,
         CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
         CAudioRendererPinImpl** ppPin);
 
 

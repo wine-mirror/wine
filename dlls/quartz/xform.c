@@ -57,7 +57,7 @@ static HRESULT CTransformBaseImpl_OnInactive( CBaseFilterImpl* pImpl )
 		 This->pOutPin->pin.pPinConnectedTo == NULL )
 		return NOERROR;
 
-	EnterCriticalSection( &This->csFilter );
+	EnterCriticalSection( &This->basefilter.csFilter );
 
 	pAllocator = This->m_pOutPinAllocator;
 	if ( pAllocator != NULL &&
@@ -78,7 +78,7 @@ static HRESULT CTransformBaseImpl_OnInactive( CBaseFilterImpl* pImpl )
 
 	hr = NOERROR;
 end:
-	LeaveCriticalSection( &This->csFilter );
+	LeaveCriticalSection( &This->basefilter.csFilter );
 
 	return hr;
 }
@@ -90,7 +90,7 @@ static HRESULT CTransformBaseImpl_OnStop( CBaseFilterImpl* pImpl )
 
 	TRACE( "(%p)\n", This );
 
-	EnterCriticalSection( &This->csFilter );
+	EnterCriticalSection( &This->basefilter.csFilter );
 
 	if ( This->m_bFiltering )
 	{
@@ -110,7 +110,7 @@ static HRESULT CTransformBaseImpl_OnStop( CBaseFilterImpl* pImpl )
 		IMemAllocator_Decommit( pAllocator );
 	}
 
-	LeaveCriticalSection( &This->csFilter );
+	LeaveCriticalSection( &This->basefilter.csFilter );
 
 	return NOERROR;
 }
@@ -135,14 +135,14 @@ static HRESULT CTransformBaseInPinImpl_OnPostConnect( CPinBaseImpl* pImpl, IPin*
 
 	TRACE( "(%p,%p)\n", This, pPin );
 
-	EnterCriticalSection( &This->pFilter->csFilter );
+	EnterCriticalSection( &This->pFilter->basefilter.csFilter );
 	hr = This->pFilter->m_pHandler->pGetOutputTypes( This->pFilter, This->pFilter->pInPin->pin.pmtConn, &This->pFilter->pOutPin->pin.pmtAcceptTypes, &This->pFilter->pOutPin->pin.cAcceptTypes );
 	if ( FAILED(hr) )
 		goto end;
 
 	hr = NOERROR;
 end:
-	LeaveCriticalSection( &This->pFilter->csFilter );
+	LeaveCriticalSection( &This->pFilter->basefilter.csFilter );
 
 	return hr;
 }
@@ -170,9 +170,9 @@ static HRESULT CTransformBaseInPinImpl_CheckMediaType( CPinBaseImpl* pImpl, cons
 
 	TRACE( "(%p,%p)\n", This, pmt );
 
-	EnterCriticalSection( &This->pFilter->csFilter );
+	EnterCriticalSection( &This->pFilter->basefilter.csFilter );
 	hr = This->pFilter->m_pHandler->pCheckMediaType( This->pFilter, pmt, (This->pFilter->pOutPin->pin.pPinConnectedTo != NULL) ? This->pFilter->pOutPin->pin.pmtConn : NULL );
-	LeaveCriticalSection( &This->pFilter->csFilter );
+	LeaveCriticalSection( &This->pFilter->basefilter.csFilter );
 
 	return hr;
 }
@@ -449,9 +449,9 @@ static HRESULT CTransformBaseOutPinImpl_CheckMediaType( CPinBaseImpl* pImpl, con
 	if ( This->pFilter->pInPin->pin.pPinConnectedTo == NULL )
 		return E_FAIL;
 
-	EnterCriticalSection( &This->pFilter->csFilter );
+	EnterCriticalSection( &This->pFilter->basefilter.csFilter );
 	hr = This->pFilter->m_pHandler->pCheckMediaType( This->pFilter, This->pFilter->pInPin->pin.pmtConn, pmt );
-	LeaveCriticalSection( &This->pFilter->csFilter );
+	LeaveCriticalSection( &This->pFilter->basefilter.csFilter );
 
 	return hr;
 }
@@ -512,7 +512,7 @@ static void QUARTZ_DestroyTransformBase(IUnknown* punk)
 
 	CBaseFilterImpl_UninitIBaseFilter(&This->basefilter);
 
-	DeleteCriticalSection( &This->csFilter );
+	DeleteCriticalSection( &This->csReceive );
 }
 
 HRESULT QUARTZ_CreateTransformBase(
@@ -577,11 +577,11 @@ HRESULT QUARTZ_CreateTransformBase(
 	This->unk.pEntries = FilterIFEntries;
 	This->unk.dwEntries = sizeof(FilterIFEntries)/sizeof(FilterIFEntries[0]);
 	This->unk.pOnFinalRelease = QUARTZ_DestroyTransformBase;
-	InitializeCriticalSection( &This->csFilter );
+	InitializeCriticalSection( &This->csReceive );
 
 	/* create pins. */
 	hr = QUARTZ_CreateTransformBaseInPin(
-		This, &This->csFilter,
+		This, &This->basefilter.csFilter, &This->csReceive,
 		&This->pInPin, pwszInPinName );
 	if ( SUCCEEDED(hr) )
 		hr = QUARTZ_CompList_AddComp(
@@ -590,7 +590,7 @@ HRESULT QUARTZ_CreateTransformBase(
 			NULL, 0 );
 	if ( SUCCEEDED(hr) )
 		hr = QUARTZ_CreateTransformBaseOutPin(
-			This, &This->csFilter,
+			This, &This->basefilter.csFilter,
 			&This->pOutPin, pwszOutPinName );
 	if ( SUCCEEDED(hr) )
 		hr = QUARTZ_CompList_AddComp(
@@ -642,6 +642,7 @@ static void QUARTZ_DestroyTransformBaseInPin(IUnknown* punk)
 HRESULT QUARTZ_CreateTransformBaseInPin(
 	CTransformBaseImpl* pFilter,
 	CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
 	CTransformBaseInPinImpl** ppPin,
 	LPCWSTR pwszPinName )
 {
@@ -661,7 +662,7 @@ HRESULT QUARTZ_CreateTransformBaseInPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, pcsPinReceive,
 		&pFilter->basefilter,
 		pwszPinName,
 		FALSE,
@@ -764,7 +765,7 @@ HRESULT QUARTZ_CreateTransformBaseOutPin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, NULL,
 		&pFilter->basefilter,
 		pwszPinName,
 		TRUE,

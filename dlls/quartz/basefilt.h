@@ -85,6 +85,7 @@ typedef struct CPinBaseImpl
 	ULONG	cAcceptTypes;
 
 	CRITICAL_SECTION*	pcsPin;
+	CRITICAL_SECTION*	pcsPinReceive;
 	CBaseFilterImpl*	pFilter;
 	IPin*	pPinConnectedTo;
 	IMemInputPin*	pMemInputPinConnectedTo;
@@ -138,6 +139,7 @@ struct CBasePinHandlers
 HRESULT CPinBaseImpl_InitIPin(
 	CPinBaseImpl* This, IUnknown* punkControl,
 	CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
 	CBaseFilterImpl* pFilter, LPCWSTR pwszId,
 	BOOL bOutput,
 	const CBasePinHandlers*	pHandlers );

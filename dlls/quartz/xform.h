@@ -26,7 +26,7 @@ struct CTransformBaseImpl
 	CTransformBaseOutPinImpl*	pOutPin;
 	CSeekingPassThru*	pSeekPass;
 
-	CRITICAL_SECTION	csFilter;
+	CRITICAL_SECTION	csReceive;
 	IMemAllocator*	m_pOutPinAllocator;
 	BOOL	m_bPreCopy; /* sample must be copied */
 	BOOL	m_bReuseSample; /* sample must be reused */
@@ -94,6 +94,7 @@ HRESULT QUARTZ_CreateTransformBase(
 HRESULT QUARTZ_CreateTransformBaseInPin(
 	CTransformBaseImpl* pFilter,
 	CRITICAL_SECTION* pcsPin,
+	CRITICAL_SECTION* pcsPinReceive,
 	CTransformBaseInPinImpl** ppPin,
 	LPCWSTR pwszPinName );
 HRESULT QUARTZ_CreateTransformBaseOutPin(

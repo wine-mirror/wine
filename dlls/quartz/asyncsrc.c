@@ -1083,7 +1083,7 @@ HRESULT QUARTZ_CreateAsyncSourcePin(
 	hr = CPinBaseImpl_InitIPin(
 		&This->pin,
 		This->unk.punkControl,
-		pcsPin,
+		pcsPin, NULL,
 		&pFilter->basefilter,
 		pwszPinName,
 		TRUE,
