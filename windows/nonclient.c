@@ -730,7 +730,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
-                if (wndPtr->dwStyle & WS_SYSMENU)
+                if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
                     rect.left += GetSystemMetrics(SM_CXSIZE);
                 if (pt.x <= rect.left) return HTSYSMENU;
 
@@ -869,7 +869,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
-		if(wndPtr->dwStyle & WS_SYSMENU)
+                if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
 		{
 		    if (NC_IconForWindow(wndPtr))
 			rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
