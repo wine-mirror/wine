@@ -910,6 +910,14 @@ REBAR_GetUnicodeFormat (HWND hwnd)
 }
 
 
+inline static LRESULT
+REBAR_GetVersion (HWND hwnd)
+{
+    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
+    return infoPtr->iVersion;
+}
+
+
 static LRESULT
 REBAR_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -1523,6 +1531,21 @@ REBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
 
 
 static LRESULT
+REBAR_SetVersion (HWND hwnd, INT iVersion)
+{
+    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
+    INT iOldVersion = infoPtr->iVersion;
+
+    if (iVersion > COMCTL32_VERSION)
+	return -1;
+
+    infoPtr->iVersion = iVersion;
+
+    return iOldVersion;
+}
+
+
+static LRESULT
 REBAR_ShowBand (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -1592,6 +1615,7 @@ REBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* initialize info structure */
+    infoPtr->iVersion = 0;
     infoPtr->clrBk = CLR_NONE;
     infoPtr->clrText = RGB(0, 0, 0);
 
@@ -1919,6 +1943,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case RB_GETUNICODEFORMAT:
 	    return REBAR_GetUnicodeFormat (hwnd);
 
+	case CCM_GETVERSION:
+	    return REBAR_GetVersion (hwnd);
+
 	case RB_HITTEST:
 	    return REBAR_HitTest (hwnd, wParam, lParam);
 
@@ -1966,6 +1993,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case RB_SETUNICODEFORMAT:
 	    return REBAR_SetUnicodeFormat (hwnd, wParam);
+
+	case CCM_SETVERSION:
+	    return REBAR_SetVersion (hwnd, (INT)wParam);
 
 	case RB_SHOWBAND:
 	    return REBAR_ShowBand (hwnd, wParam, lParam);
