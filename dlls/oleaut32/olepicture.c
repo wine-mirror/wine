@@ -219,6 +219,11 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
 	newObject->himetricHeight = pictDesc->u.wmf.yExt;
 	break;
 
+      case PICTYPE_NONE:
+	/* not sure what to do here */
+	newObject->himetricWidth = newObject->himetricHeight = 0;
+	break;
+
       case PICTYPE_ICON:
       case PICTYPE_ENHMETAFILE:
       default:
@@ -997,6 +1002,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     } else {
 	This->desc.picType = PICTYPE_ICON;
 	This->desc.u.icon.hicon = hicon;
+	This->himetricWidth = cifd->idEntries[i].bWidth;
+	This->himetricHeight = cifd->idEntries[i].bHeight;
 	hr = S_OK;
     }
     break;
@@ -1308,3 +1315,63 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   IPicture_Release(newpic);
   return hr;
 }
+
+/*******************************************************************************
+ * StdPic ClassFactory
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IClassFactory);
+    DWORD                       ref;
+} IClassFactoryImpl;
+
+static HRESULT WINAPI
+SPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+SPCF_AddRef(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SPCF_Release(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SPCF_CreateInstance(
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+) {
+	PICTDESC	pd;
+
+	FIXME("(%p,%p,%s,%p), creating stdpic with PICTYPE_NONE.\n",iface,pOuter,debugstr_guid(riid),ppobj);
+	pd.cbSizeofstruct = sizeof(pd);
+	pd.picType = PICTYPE_NONE;
+	return OleCreatePictureIndirect(&pd,riid,TRUE,ppobj);
+
+}
+
+static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n",This,dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SPCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SPCF_QueryInterface,
+	SPCF_AddRef,
+	SPCF_Release,
+	SPCF_CreateInstance,
+	SPCF_LockServer
+};
+static IClassFactoryImpl STDPIC_CF = {&SPCF_Vtbl, 1 };
+
+void _get_STDPIC_CF(LPVOID *ppv) { *ppv = (LPVOID)&STDPIC_CF; }

@@ -507,6 +507,7 @@ HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
 }
 
 extern void _get_STDFONT_CF(LPVOID);
+extern void _get_STDPIC_CF(LPVOID);
 
 /***********************************************************************
  *		DllGetClassObject (OLEAUT32.1)
@@ -517,6 +518,13 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *pp
     if (IsEqualGUID(rclsid,&CLSID_StdFont)) {
 	if (IsEqualGUID(iid,&IID_IClassFactory)) {
 	    _get_STDFONT_CF(ppv);
+	    IClassFactory_AddRef((IClassFactory*)*ppv);
+	    return S_OK;
+	}
+    }
+    if (IsEqualGUID(rclsid,&CLSID_StdPicture)) {
+	if (IsEqualGUID(iid,&IID_IClassFactory)) {
+	    _get_STDPIC_CF(ppv);
 	    IClassFactory_AddRef((IClassFactory*)*ppv);
 	    return S_OK;
 	}
