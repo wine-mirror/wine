@@ -482,11 +482,39 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		    /* No stretching in either direction. This needs to be as
 		     * fast as possible */
 		    sbuf = sbase;
-		    for (y = 0; y < dstheight; y++) {
-			memcpy(dbuf, sbuf, width);
-			sbuf += sdesc.u1.lPitch;
-			dbuf += ddesc.u1.lPitch;
-		    }
+
+                    /* check for overlapping surfaces */
+                    if (src != iface || xdst.top < xsrc.top ||
+                        xdst.right <= xsrc.left || xsrc.right <= xdst.left)
+                    {
+                        /* no overlap, or dst above src, so copy from top downwards */
+                        for (y = 0; y < dstheight; y++)
+                        {
+                            memcpy(dbuf, sbuf, width);
+                            sbuf += sdesc.u1.lPitch;
+                            dbuf += ddesc.u1.lPitch;
+                        }
+                    }
+                    else if (xdst.top > xsrc.top)  /* copy from bottom upwards */
+                    {
+                        sbuf += (sdesc.u1.lPitch*dstheight);
+                        dbuf += (ddesc.u1.lPitch*dstheight);
+                        for (y = 0; y < dstheight; y++)
+                        {
+                            sbuf -= sdesc.u1.lPitch;
+                            dbuf -= ddesc.u1.lPitch;
+                            memcpy(dbuf, sbuf, width);
+                        }
+                    }
+                    else /* src and dst overlapping on the same line, use memmove */
+                    {
+                        for (y = 0; y < dstheight; y++)
+                        {
+                            memmove(dbuf, sbuf, width);
+                            sbuf += sdesc.u1.lPitch;
+                            dbuf += ddesc.u1.lPitch;
+                        }
+                    }
 		} else {
 		    /* Stretching in Y direction only */
 		    for (y = sy = 0; y < dstheight; y++, sy += yinc) {
@@ -559,7 +587,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    } else {
 		keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
 		keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
-	    } 
+	    }
 
 	    for (y = sy = 0; y < dstheight; y++, sy += yinc) {
 		sbuf = sbase + (sy >> 16) * sdesc.u1.lPitch;
