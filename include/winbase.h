@@ -1716,9 +1716,6 @@ BOOL        WINAPI SetVolumeLabelW(LPCWSTR,LPCWSTR);
 #define     SetVolumeLabel WINELIB_NAME_AW(SetVolumeLabel)
 DWORD       WINAPI SizeofResource(HMODULE,HRSRC);
 #define     UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
-DWORD       WINAPI VerLanguageNameA(UINT,LPSTR,UINT);
-DWORD       WINAPI VerLanguageNameW(UINT,LPWSTR,UINT);
-#define     VerLanguageName WINELIB_NAME_AW(VerLanguageName)
 BOOL      WINAPI WritePrivateProfileSectionA(LPCSTR,LPCSTR,LPCSTR);
 BOOL      WINAPI WritePrivateProfileSectionW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WritePrivateProfileSection WINELIB_NAME_AW(WritePrivateProfileSection)

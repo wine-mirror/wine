@@ -11,6 +11,7 @@
 #include "winuser.h"
 #include "heap.h"
 #include "options.h"
+#include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "winerror.h"
@@ -1535,11 +1536,8 @@ BOOL WINAPI GetStringTypeExW(LCID locale,DWORD dwInfoType,LPCWSTR src,
 
 /*****************************************************************
  * WINE_GetLanguageName   [internal] 
- *
- * FIXME:  Windows keeps language names in a string table
- *         resource in VER.DLL ...
  */
-LPCSTR WINE_GetLanguageName( UINT langid )
+static LPCSTR WINE_GetLanguageName( UINT langid )
 {
     int i;
     for ( i = 0; languages[i].langid != 0; i++ )
@@ -1548,6 +1546,73 @@ LPCSTR WINE_GetLanguageName( UINT langid )
 
     return languages[i].langname;
 }
+
+/***********************************************************************
+ *           VerLanguageNameA              [KERNEL32.709][VERSION.9]
+ */
+DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
+{
+    char    buffer[80];
+    LPCSTR  name;
+    DWORD   result;
+
+    /*
+     * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+     * from the registry.
+     */
+
+    sprintf( buffer,
+             "\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
+             wLang );
+
+    result = RegQueryValueA( HKEY_LOCAL_MACHINE, buffer, szLang, (LPDWORD)&nSize );
+    if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA )
+        return nSize;
+
+    /*
+     * If that fails, use the internal table
+     */
+
+    name = WINE_GetLanguageName( wLang );
+    lstrcpynA( szLang, name, nSize );
+    return lstrlenA( name );
+}
+
+/***********************************************************************
+ *           VerLanguageNameW              [KERNEL32.710][VERSION.10]
+ */
+DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
+{
+    char    buffer[80];
+    LPWSTR  keyname;
+    LPCSTR  name;
+    DWORD   result;
+
+    /*
+     * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+     * from the registry.
+     */
+
+    sprintf( buffer,
+             "\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
+             wLang );
+
+    keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
+    result = RegQueryValueW( HKEY_LOCAL_MACHINE, keyname, szLang, (LPDWORD)&nSize );
+    HeapFree( GetProcessHeap(), 0, keyname );
+
+    if ( result == ERROR_SUCCESS || result == ERROR_MORE_DATA )
+        return nSize;
+
+    /*
+     * If that fails, use the internal table
+     */
+
+    name = WINE_GetLanguageName( wLang );
+    lstrcpynAtoW( szLang, name, nSize );
+    return lstrlenA( name );
+}
+
  
 static const unsigned char LCM_Unicode_LUT[] = {
   6      ,   3, /*   -   1 */  
