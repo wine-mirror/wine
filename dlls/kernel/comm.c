@@ -168,16 +168,16 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 
 	TRACE("(%s), ptr %p\n", device, lpdcb);
 
-	if (strncasecmp(device,"COM",3))
-		return FALSE;
+        /* Some applications call this function with "9600,n,8,1"
+         * not sending the "COM1:" parameter at left of string */
+        if (!strncasecmp(device,"COM",3))
+        {
+            if (!device[3]) return FALSE;
+            if (device[4] != ':' && device[4] != ' ') return FALSE;
+            strcpy(temp,device+5);
+        }
+        else strcpy(temp,device);
 
-	if (!*(device+4))
-		return FALSE;
-
-	if ((*(device+4) != ':') && (*(device+4) != ' '))
-		return FALSE;
-	
-	strcpy(temp,device+5);
 	last=temp[strlen(temp)-1];
 	ptr = strtok(temp, ", "); 
 
