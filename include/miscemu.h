@@ -55,8 +55,14 @@ extern void WINAPI INT_Int10Handler(CONTEXT*);
 /* msdos/int11.c */
 extern void WINAPI INT_Int11Handler(CONTEXT*);
 
+/* msdos/int12.c */
+extern void WINAPI INT_Int12Handler(CONTEXT*);
+
 /* msdos/int13.c */
 extern void WINAPI INT_Int13Handler(CONTEXT*);
+
+/* msdos/int15.c */
+extern void WINAPI INT_Int15Handler(CONTEXT*);
 
 /* msdos/int16.c */
 extern void WINAPI INT_Int16Handler(CONTEXT*);

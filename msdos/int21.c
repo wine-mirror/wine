@@ -1155,8 +1155,12 @@ void WINAPI DOS3Call( CONTEXT *context )
 	      DS_reg(context),DX_reg(context) );
         {
             LPSTR data = CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context));
-            LONG length = strchr(data,'$')-data;
-            _hwrite16( 1, data, length);
+            LPSTR p = data;
+            /* do NOT use strchr() to calculate the string length,
+            as '\0' is valid string content, too !
+            Maybe we should check for non-'$' strings, but DOS doesn't. */
+            while (*p != '$') p++;
+            _hwrite16( 1, data, (int)p - (int)data);
             AL_reg(context) = '$'; /* yes, '$' (0x24) gets returned in AL */
         }
         break;

@@ -18,6 +18,8 @@ static void scroll_window(int direction, char lines, char row1,
 
 static int color_pallet[16];
 
+static char dummy; /* dummy var used for unneeded CONSOLE function parameter */
+
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
 
@@ -188,8 +190,13 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
 
     case 0x08: /* READ CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
-        FIXME(int10, 
-          "Read Character and Attribute at Cursor Position - Not Supported\n");
+        {
+        CHAR ch, attr;
+        TRACE(int10, "Read Character and Attribute at Cursor Position\n");
+        CONSOLE_GetCharacterAtCursor(&ch, &dummy, &dummy, &attr);
+        AL_reg(context) = ch;
+        AH_reg(context) = attr; 
+        }
         break;
 
     case 0x09: /* WRITE CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
