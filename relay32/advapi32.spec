@@ -232,7 +232,7 @@ type	win32
 0228 stub SetServiceBits
 0229 stub SetServiceObjectSecurity
 0230 stdcall SetServiceStatus(long long)SetServiceStatus
-0231 stub SetThreadToken
+0231 stdcall SetThreadToken (ptr ptr) SetThreadToken
 0232 stub SetTokenInformation
 0233 stdcall StartServiceA(long long ptr) StartServiceA
 0234 stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcherA

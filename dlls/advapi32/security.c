@@ -739,3 +739,26 @@ AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken,
     *AccessStatus = TRUE;
     return TRUE;
 }
+
+/*************************************************************************
+ * SetThreadToken [ADVAPI32.231]
+ *
+ * Assigns an "impersonation token" to a thread so it can assume the
+ * security privledges of another thread or process.  Can also remove
+ * a previously assigned token.  Only supported on NT - it's a stub 
+ * exactly like this one on Win9X.
+ *
+ */
+
+BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
+{
+    FIXME_(advapi)("(%p, %p): stub\n", thread, token);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
+}
+
+
+
+
