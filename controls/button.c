@@ -20,6 +20,7 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void UB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void OB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void BUTTON_CheckAutoRadioButton( WND *wndPtr );
+static void BUTTON_DrawPushButton( WND *wndPtr, HDC hDC, WORD action, BOOL pushedState);
 
 #define MAX_BTN_TYPE  12
 
@@ -233,12 +234,17 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
 
     case BM_SETIMAGE:
 	oldHbitmap = infoPtr->hImage;
-	if(wndPtr->dwStyle & BS_BITMAP)
+	if ((wndPtr->dwStyle & BS_BITMAP) || (wndPtr->dwStyle & BS_ICON))
 	    infoPtr->hImage = (HANDLE) lParam;
 	return oldHbitmap;
 
     case BM_GETIMAGE:
-        return infoPtr->hImage;
+        if (wParam == IMAGE_BITMAP)
+	    return (HBITMAP)infoPtr->hImage;
+	else if (wParam == IMAGE_ICON)
+	    return (HICON)infoPtr->hImage;
+	else
+	    return NULL;
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
@@ -309,8 +315,30 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 /**********************************************************************
  *       Push Button Functions
  */
-
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
+{
+    BUTTONINFO *infoPtr      = (BUTTONINFO *)wndPtr->wExtra;
+    BOOL        bHighLighted = (infoPtr->state & BUTTON_HIGHLIGHTED);
+
+    /* 
+     * Delegate this to the more generic pushbutton painting
+     * method.
+     */
+    return BUTTON_DrawPushButton(wndPtr,
+				 hDC,
+				 action,
+				 bHighLighted);
+}
+
+/**********************************************************************
+ * This method will actually do the drawing of the pushbutton 
+ * depending on it's state and the pushedState parameter.
+ */
+static void BUTTON_DrawPushButton(
+  WND* wndPtr,
+  HDC  hDC, 
+  WORD action, 
+  BOOL pushedState )
 {
     RECT rc, focus_rect;
     HPEN hOldPen;
@@ -347,7 +375,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
     if (TWEAK_WineLook == WIN31_LOOK)
     {
-        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+        if (pushedState)
 	{
 	    /* draw button shadow: */
 	    SelectObject(hDC, GetSysColorBrush(COLOR_BTNSHADOW));
@@ -370,7 +398,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     {
         UINT uState = DFCS_BUTTONPUSH;
 
-        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+        if (pushedState)
 	{
 	    if ( (wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON )
 	        uState |= DFCS_FLAT;
@@ -383,7 +411,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
 	focus_rect = rc;
 
-        if (infoPtr->state & BUTTON_HIGHLIGHTED)
+        if (pushedState)
 	{
 	    rc.left += 2;  /* To position the text down and right */
 	    rc.top  += 2;
@@ -433,21 +461,39 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
             }
         }   
     }
-
-    if((wndPtr->dwStyle & BS_BITMAP) && (infoPtr->hImage != NULL))
+    if ( ((wndPtr->dwStyle & BS_ICON) || (wndPtr->dwStyle & BS_BITMAP) ) &&
+	 (infoPtr->hImage != NULL) )
     {
-	BITMAP bm;
-	HDC hdcMem;
-	int yOffset, xOffset, imageWidth, imageHeight;
+	int yOffset, xOffset;
+	int imageWidth, imageHeight;
 
-	GetObjectA (infoPtr->hImage, sizeof(BITMAP), &bm);
+	/*
+	 * We extract the size of the image from the handle.
+	 */
+	if (wndPtr->dwStyle & BS_ICON)
+	{
+	    ICONINFO iconInfo;
+	    BITMAP   bm;
+
+	    GetIconInfo((HICON)infoPtr->hImage, &iconInfo);
+	    GetObjectA (iconInfo.hbmColor, sizeof(BITMAP), &bm);
+	    
+	    imageWidth  = bm.bmWidth;
+	    imageHeight = bm.bmHeight;
+	}
+	else
+	{
+	    BITMAP   bm;
+
+	    GetObjectA (infoPtr->hImage, sizeof(BITMAP), &bm);
 	
-	/* Center the bitmap */
-	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - bm.bmWidth ) / 2;
-	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - bm.bmHeight ) / 2;
+	    imageWidth  = bm.bmWidth;
+	    imageHeight = bm.bmHeight;
+	}
 
-	imageWidth = bm.bmWidth;
-	imageHeight = bm.bmHeight;
+	/* Center the bitmap */
+	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - imageWidth ) / 2;
+	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - imageHeight) / 2;
 
 	/* If the image is to big for the button */
 	if (xOffset < 0)
@@ -465,14 +511,30 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
 	/* Let minimum 1 space from border */
 	xOffset++, yOffset++;
 
-	hdcMem = CreateCompatibleDC (hDC);
-	SelectObject (hdcMem, (HBITMAP)infoPtr->hImage);
-	BitBlt(hDC, rc.left + xOffset, 
-	       rc.top + yOffset, 
-	       imageWidth, imageHeight,
-	       hdcMem, 0, 0, SRCCOPY);
+	/*
+	 * Draw the image now.
+	 */
+	if (wndPtr->dwStyle & BS_ICON)
+	{
+  	    DrawIcon(hDC,
+		     rc.left + xOffset, 
+		     rc.top  + yOffset, 
+		     (HICON)infoPtr->hImage);
+	}
+	else
+        {
+	    HDC hdcMem;
 
-	DeleteDC (hdcMem);
+	    hdcMem = CreateCompatibleDC (hDC);
+	    SelectObject (hdcMem, (HBITMAP)infoPtr->hImage);
+	    BitBlt(hDC, 
+		   rc.left + xOffset, 
+		   rc.top + yOffset, 
+		   imageWidth, imageHeight,
+		   hdcMem, 0, 0, SRCCOPY);
+	    
+	    DeleteDC (hdcMem);
+	}
     }
 
     if (TWEAK_WineLook != WIN31_LOOK
@@ -553,6 +615,21 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     HBRUSH hBrush;
     int textlen, delta;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+
+    /* 
+     * if the button has a bitmap/icon, draw a normal pushbutton
+     * instead of a radion button.
+     */
+    if (infoPtr->hImage!=NULL)
+    {
+        BOOL bHighLighted = ((infoPtr->state & BUTTON_HIGHLIGHTED) ||
+			     (infoPtr->state & BUTTON_CHECKED));
+
+        return BUTTON_DrawPushButton(wndPtr,
+				     hDC,
+				     action,
+				     bHighLighted);
+    }
 
     textlen = 0;
     GetClientRect(wndPtr->hwndSelf, &client);
