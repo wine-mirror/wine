@@ -25,6 +25,7 @@ static int *ph_errno = &h_errno;
 #ifdef HAVE_UCONTEXT_H
 # include <ucontext.h>
 #endif
+#include "wine/port.h"
 #include "thread.h"
 #include "server.h"
 #include "winbase.h"
@@ -33,14 +34,10 @@ static int *ph_errno = &h_errno;
 
 DEFAULT_DEBUG_CHANNEL(thread)
 
-#ifdef linux
-#define HAVE_CLONE_SYSCALL
-#endif
-
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };
 
-#ifdef HAVE_CLONE_SYSCALL
+#ifdef linux
 # ifdef HAVE_SCHED_H
 #  include <sched.h>
 # endif
@@ -50,10 +47,8 @@ CRITICAL_SECTION X11DRV_CritSection = { 0, };
 #  define CLONE_FILES   0x00000400
 #  define CLONE_SIGHAND 0x00000800
 #  define CLONE_PID     0x00001000
-/* If we didn't get the flags, we probably didn't get the prototype either */
-extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 # endif  /* CLONE_VM */
-#endif  /* HAVE_CLONE_SYSCALL */
+#endif  /* linux */
 
 static int init_done;
 
@@ -155,7 +150,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
 {
 #ifndef NO_REENTRANT_LIBC
 
-#ifdef HAVE_CLONE_SYSCALL
+#ifdef linux
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;

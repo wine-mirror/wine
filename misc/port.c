@@ -4,8 +4,14 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include "config.h"
+#include "wine/port.h"
 
+#ifdef __BEOS__
+#include <be/kernel/fs_info.h>
+#include <be/kernel/OS.h>
+#endif
+
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,13 +26,22 @@
 #ifdef HAVE_LIBIO_H
 # include <libio.h>
 #endif
+#ifdef HAVE_SYSCALL_H
+# include <syscall.h>
+#endif
 
+/***********************************************************************
+ *		usleep
+ */
 #ifndef HAVE_USLEEP
-#ifdef __EMX__
-unsigned int usleep (unsigned int useconds) { DosSleep(useconds); }
-#else
 unsigned int usleep (unsigned int useconds)
 {
+#if defined(__EMX__)
+    DosSleep(useconds);
+    return 0;
+#elif defined(__BEOS__)
+    return snooze(useconds);
+#elif defined(HAVE_SELECT)
     struct timeval delay;
 
     delay.tv_sec = 0;
@@ -34,10 +49,16 @@ unsigned int usleep (unsigned int useconds)
 
     select( 0, 0, 0, 0, &delay );
     return 0;
+#else /* defined(__EMX__) || defined(__BEOS__) || defined(HAVE_SELECT) */
+    errno = ENOSYS;
+    return -1;
+#endif /* defined(__EMX__) || defined(__BEOS__) || defined(HAVE_SELECT) */
 }
-#endif
 #endif /* HAVE_USLEEP */
 
+/***********************************************************************
+ *		memmove
+ */
 #ifndef HAVE_MEMMOVE
 void *memmove( void *dest, const void *src, unsigned int len )
 {
@@ -63,6 +84,9 @@ void *memmove( void *dest, const void *src, unsigned int len )
 }
 #endif  /* HAVE_MEMMOVE */
 
+/***********************************************************************
+ *		strerror
+ */
 #ifndef HAVE_STRERROR
 const char *strerror( int err )
 {
@@ -71,12 +95,10 @@ const char *strerror( int err )
 }
 #endif  /* HAVE_STRERROR */
 
+/***********************************************************************
+ *		clone
+ */
 #if !defined(HAVE_CLONE) && defined(__linux__)
-#include <assert.h>
-#include <errno.h>
-#ifdef HAVE_SYSCALL_H
-# include <syscall.h>
-#endif
 int clone( int (*fn)(void *), void *stack, int flags, void *arg )
 {
 #ifdef __i386__
@@ -106,7 +128,9 @@ int clone( int (*fn)(void *), void *stack, int flags, void *arg )
 }
 #endif  /* !HAVE_CLONE && __linux__ */
 
-
+/***********************************************************************
+ *		strcasecmp
+ */
 #ifndef HAVE_STRCASECMP
 int strcasecmp( const char *str1, const char *str2 )
 {
@@ -115,6 +139,9 @@ int strcasecmp( const char *str1, const char *str2 )
 }
 #endif /* HAVE_STRCASECMP */
 
+/***********************************************************************
+ *		strncasecmp
+ */
 #ifndef HAVE_STRNCASECMP
 int strncasecmp( const char *str1, const char *str2, size_t n )
 {
@@ -126,13 +153,16 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
 }
 #endif /* HAVE_STRNCASECMP */
 
-/** 
- *  It looks like the openpty that comes with glibc in RedHat 5.0
- *  is buggy (second call returns what looks like a dup of 0 and 1
- *  instead of a new pty), this is a generic replacement.
+/***********************************************************************
+ *		wine_openpty
+ * NOTE
+ *   It looks like the openpty that comes with glibc in RedHat 5.0
+ *   is buggy (second call returns what looks like a dup of 0 and 1
+ *   instead of a new pty), this is a generic replacement.
+ *
+ * FIXME
+ *   We should have a autoconf check for this.
  */
-/** We will have an autoconf check for this soon... */
-
 int wine_openpty(int *master, int *slave, char *name, 
 			struct termios *term, struct winsize *winsize)
 {
@@ -170,3 +200,131 @@ int wine_openpty(int *master, int *slave, char *name,
     return -1;
 }
 
+/***********************************************************************
+ *		getnetbyaddr
+ */
+#ifndef HAVE_GETNETBYADDR
+struct netent *getnetbyaddr(unsigned long net, int type)
+{
+    errno = ENOSYS;
+    return NULL;
+}
+#endif /* defined(HAVE_GETNETBYNAME) */
+
+/***********************************************************************
+ *		getnetbyname
+ */
+#ifndef HAVE_GETNETBYNAME
+struct netent *getnetbyname(const char *name)
+{
+    errno = ENOSYS;
+    return NULL;
+}
+#endif /* defined(HAVE_GETNETBYNAME) */
+
+/***********************************************************************
+ *		getprotobyname
+ */
+#ifndef HAVE_GETPROTOBYNAME
+struct protoent *getprotobyname(const char *name)
+{
+    errno = ENOSYS;
+    return NULL;
+}
+#endif /* !defined(HAVE_GETPROTOBYNAME) */
+
+/***********************************************************************
+ *		getprotobynumber
+ */
+#ifndef HAVE_GETPROTOBYNUMBER
+struct protoent *getprotobynumber(int proto)
+{
+    errno = ENOSYS;
+    return NULL;
+}
+#endif /* !defined(HAVE_GETPROTOBYNUMBER) */
+
+/***********************************************************************
+ *		getservbyport
+ */
+#ifndef HAVE_GETSERVBYPORT
+struct servent *getservbyport(int port, const char *proto)
+{
+    errno = ENOSYS;
+    return NULL;
+}
+#endif /* !defined(HAVE_GETSERVBYPORT) */
+
+/***********************************************************************
+ *		getsockopt
+ */
+#ifndef HAVE_GETSOCKOPT
+int getsockopt(int socket, int level, int option_name,
+	       void *option_value, size_t *option_len)
+{
+    errno = ENOSYS;
+    return -1;
+}
+#endif /* !defined(HAVE_GETSOCKOPT) */
+
+/***********************************************************************
+ *		inet_network
+ */
+#ifndef HAVE_INET_NETWORK
+unsigned long inet_network(const char *cp)
+{
+    errno = ENOSYS;
+    return 0;
+}
+#endif /* defined(HAVE_INET_NETWORK) */
+
+/***********************************************************************
+ *		settimeofday
+ */
+#ifndef HAVE_SETTIMEOFDAY
+int settimeofday(struct timeval *tp, void *reserved)
+{
+    tp->tv_sec = 0;
+    tp->tv_usec = 0;
+
+    errno = ENOSYS;
+    return -1;
+}
+#endif /* HAVE_SETTIMEOFDAY */
+
+/***********************************************************************
+ *		statfs
+ */
+#ifndef HAVE_STATFS
+int statfs(const char *name, struct statfs *info)
+{
+#ifdef __BEOS__
+    dev_t mydev;
+    fs_info fsinfo;
+    
+    if(!info) {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    if ((mydev = dev_for_path(name)) < 0) {
+        errno = ENOSYS;
+	return -1;
+    }
+
+    if (fs_stat_dev(mydev,&fsinfo) < 0) {
+        errno = ENOSYS;
+	return -1;
+    }
+
+    info->f_bsize = fsinfo.block_size;
+    info->f_blocks = fsinfo.total_blocks;
+    info->f_bfree = fsinfo.free_blocks;
+  
+    return 0;
+#else /* defined(__BEOS__) */
+    errno = ENOSYS;
+    return -1;
+#endif /* defined(__BEOS__) */
+}
+#endif /* !defined(HAVE_STATFS) */

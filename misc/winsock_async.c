@@ -83,6 +83,7 @@
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"
+#include "wine/port.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(winsock)

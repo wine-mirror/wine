@@ -41,6 +41,7 @@
 #include "heap.h"
 #include "msdos.h"
 #include "options.h"
+#include "wine/port.h"
 #include "task.h"
 #include "debugtools.h"
 

@@ -151,8 +151,29 @@
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
 
+/* Define if you have the getnetbyaddr function.  */
+#undef HAVE_GETNETBYADDR
+
+/* Define if you have the getnetbyname function.  */
+#undef HAVE_GETNETBYNAME
+
 /* Define if you have the getpagesize function.  */
 #undef HAVE_GETPAGESIZE
+
+/* Define if you have the getprotobyname function.  */
+#undef HAVE_GETPROTOBYNAME
+
+/* Define if you have the getprotobynumber function.  */
+#undef HAVE_GETPROTOBYNUMBER
+
+/* Define if you have the getservbyport function.  */
+#undef HAVE_GETSERVBYPORT
+
+/* Define if you have the getsockopt function.  */
+#undef HAVE_GETSOCKOPT
+
+/* Define if you have the inet_network function.  */
+#undef HAVE_INET_NETWORK
 
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
@@ -160,11 +181,20 @@
 /* Define if you have the rfork function.  */
 #undef HAVE_RFORK
 
+/* Define if you have the select function.  */
+#undef HAVE_SELECT
+
 /* Define if you have the sendmsg function.  */
 #undef HAVE_SENDMSG
 
+/* Define if you have the settimeofday function.  */
+#undef HAVE_SETTIMEOFDAY
+
 /* Define if you have the sigaltstack function.  */
 #undef HAVE_SIGALTSTACK
+
+/* Define if you have the statfs function.  */
+#undef HAVE_STATFS
 
 /* Define if you have the strcasecmp function.  */
 #undef HAVE_STRCASECMP

@@ -513,11 +513,21 @@ AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(\
 	_lwp_create \
 	clone \
+	getnetbyaddr \
+	getnetbyname \
 	getpagesize \
+	getprotobyname \
+	getprotobynumber \
+	getservbyport \
+	getsockopt \
+	inet_network \
 	memmove \
 	rfork \
+	select \
 	sendmsg \
+	settimeofday \
 	sigaltstack \
+	statfs \
 	strcasecmp \
 	strerror \
 	strncasecmp \

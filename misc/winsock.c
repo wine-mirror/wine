@@ -77,6 +77,7 @@
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"
+#include "wine/port.h"
 #include "services.h"
 #include "server.h"
 #include "debugtools.h"
