@@ -3039,9 +3039,12 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 
 	ORDER_UINT(s, e);
 
+	size = tl - (e - s) + strl;
+	if (!size)
+		es->text_width = 0;
+
 	/* Issue the EN_MAXTEXT notification and continue with replacing text
 	 * such that buffer limit is honored. */
-	size = tl - (e - s) + strl;
 	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
 		strl = es->buffer_limit - (tl - (e-s));
