@@ -48,16 +48,12 @@ typedef struct {
     char *key;
     char *descr;
     char *command;
-#ifdef USE_MULTIPLESEL
     int active;
-#endif
 } uninst_entry;
 
 uninst_entry *entries = NULL;
 
 int numentries = 0;
-
-int cursel = -1;
 
 struct {
     DWORD style;
@@ -72,11 +68,71 @@ struct {
 
 #define NUM (sizeof button/sizeof button[0])
 
+int GetUninstallStrings(void);
+void UninstallProgram(void);
+
+void ListUninstallPrograms(void)
+{
+    int i;
+    
+    if (! GetUninstallStrings())
+        exit(1);
+
+    for (i=0; i < numentries; i++)
+        printf("%s|||%s\n", entries[i].key, entries[i].descr);
+}
+
+
+void RemoveSpecificProgram(char *name)
+{
+    int i;
+
+    if (! GetUninstallStrings())
+        exit(1);
+
+    for (i=0; i < numentries; i++)
+    {
+        if (strcmp(entries[i].key, name) == 0)
+        {
+            entries[i].active++;
+            break;
+        }
+    }
+
+    if (i < numentries)
+        UninstallProgram();
+    else
+    {
+        fprintf(stderr, "Error: could not match program [%s]\n", name);
+    }
+}
+
+
 int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 { 
     MSG msg;
     WNDCLASS wc;
     HWND hWnd;
+
+    /*------------------------------------------------------------------------
+    ** Handle requests just to list the programs
+    **----------------------------------------------------------------------*/
+    if (cmdline && strlen(cmdline) >= 6 && memcmp(cmdline, "--list", 6) == 0)
+    {
+        ListUninstallPrograms();
+        return(0);
+    }
+
+    /*------------------------------------------------------------------------
+    ** Handle requests to remove one program
+    **----------------------------------------------------------------------*/
+    if (cmdline && strlen(cmdline) > 9 && memcmp(cmdline, "--remove ", 9) == 0)
+    {
+        RemoveSpecificProgram(cmdline + 9);
+        return(0);
+    }
+
+
 
     LoadString( hInst, IDS_APPNAME, appname, sizeof(appname));
 
@@ -109,7 +165,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     return msg.wParam;
 }
 
-int GetUninstallStrings()
+int GetUninstallStrings(void)
 {
     HKEY hkeyUninst, hkeyApp;
     int i;
@@ -153,9 +209,7 @@ int GetUninstallStrings()
 			    entries[numentries-1].descr, &displen);
 	    entries[numentries-1].command =
 		    HeapAlloc(GetProcessHeap(), 0, uninstlen);
-#ifdef USE_MULTIPLESEL
 	    entries[numentries-1].active = 0;
-#endif
 	    RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE, 0, 0,
 			    entries[numentries-1].command, &uninstlen);
 	}
@@ -165,7 +219,7 @@ int GetUninstallStrings()
     return 1;
 }
 
-void UninstallProgram(HWND hWnd)
+void UninstallProgram(void)
 {
     int i;
     char errormsg[1024];
@@ -177,16 +231,10 @@ void UninstallProgram(HWND hWnd)
     HKEY hkey;
 #endif
 
-#ifdef USE_MULTIPLESEL
     for (i=0; i < numentries; i++)
     {
 	if (!(entries[i].active)) /* don't uninstall this one */
 	    continue;
-#else
-	if (cursel == -1)
-	    return;
-	i = cursel;
-#endif
 	memset(&si, 0, sizeof(STARTUPINFO));
 	si.cb = sizeof(STARTUPINFO);
 	si.wShowWindow = SW_NORMAL;
@@ -205,21 +253,13 @@ void UninstallProgram(HWND hWnd)
 		RegCloseKey(hkey);
 	    }
 #endif
-   
-	    /* update listbox */
-	    numentries = 0;
-	    GetUninstallStrings();
-	    InvalidateRect(hWnd, NULL, TRUE);
-	    UpdateWindow(hWnd);
 	}
 	else
 	{
 	    sprintf(errormsg, "Execution of uninstall command '%s' failed, perhaps due to missing executable.", entries[i].command);
 	    MessageBox(0, errormsg, appname, MB_OK);
 	}
-#ifdef USE_MULTIPLESEL
     }
-#endif
 }
 
 LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -327,17 +367,22 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    {
 		int sel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 		
-#ifdef USE_MULTIPLESEL
 		entries[sel].active ^= 1; /* toggle */
-#else
-		cursel = sel;
-#endif
 		SendMessage(hwndEdit, WM_SETTEXT, 0, (LPARAM)entries[sel].command);
 	    }
 	}
 	else
 	if ((HWND)lParam == button[0].hwnd) /* Uninstall button */
-	    UninstallProgram(hWnd);
+        {
+	    UninstallProgram();
+   
+	    /* update listbox */
+	    numentries = 0;
+	    GetUninstallStrings();
+	    InvalidateRect(hWnd, NULL, TRUE);
+	    UpdateWindow(hWnd);
+
+        }
 	else
 	if ((HWND)lParam == button[1].hwnd) /* About button */
 	    MessageBox(0, about_string, "About", MB_OK);
