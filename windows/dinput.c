@@ -274,14 +274,34 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(
 	return DIERR_ALREADYINITIALIZED;
 }
 
+static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUTA iface,
+							REFGUID rguid) {
+  ICOM_THIS(IDirectInputAImpl,iface);
+  char xbuf[50];
+  
+  WINE_StringFromCLSID(rguid,xbuf);
+  FIXME(dinput,"(%p)->(%s): stub\n",This,xbuf);
+  
+  return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUTA iface,
+							HWND32 hwndOwner,
+							DWORD dwFlags) {
+  ICOM_THIS(IDirectInputAImpl,iface);
+  FIXME(dinput,"(%p)->(%08lx,%08lx): stub\n",This, (DWORD) hwndOwner, dwFlags);
+  
+  return DI_OK;
+}
+
 static ICOM_VTABLE(IDirectInputA) ddiavt= {
 	IDirectInputAImpl_QueryInterface,
 	IDirectInputAImpl_AddRef,
 	IDirectInputAImpl_Release,
 	IDirectInputAImpl_CreateDevice,
 	IDirectInputAImpl_EnumDevices,
-	(void*)6,
-	(void*)7,
+	IDirectInputAImpl_GetDeviceStatus,
+	IDirectInputAImpl_RunControlPanel,
 	IDirectInputAImpl_Initialize
 };
 
@@ -1007,6 +1027,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
       ERR(dinput, "Wrong structure size !\n");
       return DIERR_INVALIDPARAM;
     }
+
+    TRACE(dinput, "Application retrieving %d event(s).\n", This->queue_pos); 
     
     /* Copy the buffered data into the application queue */
     memcpy(dod, This->data_queue, This->queue_pos * dodsize);
