@@ -1,6 +1,7 @@
-This is release 981108 of Wine, the MS Windows emulator.  This is still a
-developers only release.  There are many bugs and many unimplemented API
-features.  Most applications still do not work correctly.
+This is release 981108 of Wine, a free implementation of Windows on
+Unix.  This is still a developers only release.  There are many bugs
+and unimplemented features.  Most applications still do not work
+correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
@@ -26,7 +27,7 @@ from the following locations:
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
 You can also get the current source directly from the CVS tree. Check
-http://www.winehq.com/cvs.html for details.
+http://www.winehq.com/dev.html for details.
 
 If you submitted a patch, please check to make sure it has been
 included in the new release.

@@ -4,8 +4,8 @@
 
 Wine Man Page
 
-  The man page for the wine emulator is in this directory. It is installed 
-by 'make install'.
+  The man page for Wine is in this directory. It is installed by 'make
+install'.
 
 Wine Reference Manual
 

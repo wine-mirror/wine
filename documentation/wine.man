@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
-.TH WINE 1 "October 20, 1998" "Version 981018" "Windows Emulator"
+.TH WINE 1 "October 20, 1998" "Version 981018" "Windows On Unix"
 .SH NAME
-wine \- run Windows programs under Unix
+wine \- run Windows programs on Unix
 .SH SYNOPSIS
 .B wine
 [
@@ -20,7 +20,9 @@ wine \- run Windows programs under Unix
 ]
 .SH DESCRIPTION
 .B wine
-invokes the Windows emulator.
+.I program
+loads and runs the given program, where the program is a DOS, Windows 3.x,
+or Win32 executable.
 .PP
 .B wine 
 currently runs a growing list of applications written for both Win3.1 and 
@@ -441,12 +443,12 @@ or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see
 .I
-http://www.winehq.com/cvs.html
+http://www.winehq.com/dev.html
 .PP
-The
+WineHQ, the
 .B wine
-homepage is at
-.I http://www.winehq.com.
+development headquarters, is at
+.I http://www.winehq.com/.
 This website contains a great deal of information about
 .B wine
 as well as a collection of unofficial patches against the current release.
@@ -460,7 +462,7 @@ All discussions about the project take place in this forum.
 .PD 0
 .TP
 .I /usr/local/bin/wine
-The invoker program.
+The Wine program loader.
 .TP
 .I /usr/local/etc/wine.conf
 Global configuration file for wine.

@@ -1,21 +1,23 @@
-This is intended to be a document to help new developers get started.
-Existing developers should feel free to add their comments.
+This document should help new developers get started. Like all of Wine, it
+is a work in progress.
 
 SOURCE TREE STRUCTURE
 =====================
 
-Source tree is loosely based on the original Windows modules.  Most
-directories are shared between the binary emulator and the library.
+The Wine source tree is loosely based on the original Windows modules. 
+Most of the source is concerned with implementing the Wine API, although
+there are also various tools, documentation, sample Winelib code, and
+code specific to the binary loader.
 
-Shared directories:
--------------------
+Wine API directories:
+---------------------
 
 KERNEL:
 
 	files/			- file I/O
 	loader/			- Win16-, Win32-binary loader
 	memory/			- memory management
-	msdos/			- DOS and BIOS emulation
+	msdos/			- DOS features and BIOS calls (interrupts)
 	scheduler/		- process and thread management
 
 GDI:
@@ -31,34 +33,39 @@ USER:
 	resources/		- built-in dialog resources
 	windows/		- window management
 
+Other DLLs:
+
+	dlls/*/			- Other system DLLs implemented by Wine
+
 Miscellaneous:
 
-	misc/			- shell, registry, winsock, etc...
+	misc/			- shell, registry, winsock, etc.
 	multimedia/		- multimedia driver
-	ipc/			- SysV IPC management
+	ipc/			- SysV IPC based interprocess communication
 	win32/			- misc Win32 functions
 
 Tools:
+------
 
-	rc/			- resource compiler
-	tools/			- relay code builder + misc tools
+	rc/			- old resource compiler
+	tools/			- relay code builder, new rc, etc.
 	documentation/		- some documentation
 
 
-Emulator-specific directories:
-------------------------------
+Binary loader specific directories:
+-----------------------------------
 
 	debugger/		- built-in debugger
 	if1632/			- relay code
 	miscemu/		- hardware instruction emulation
 	graphics/win16drv/	- Win16 printer driver
 
-Winelib-specific directories:
+Winelib specific directories:
 -----------------------------
 
-	library/		- Winelib-specific routines (should disappear)
-	programs/		- utilities (Progman, WinHelp)
-	libtest/		- Winelib test samples
+	library/		- Required code for programs using Winelib
+	libtest/		- Small samples and tests
+	programs/		- Extended samples / system utilities
 
 IMPLEMENTING NEW API CALLS
 ==========================
@@ -184,8 +191,7 @@ NAMING CONVENTIONS FOR API FUNCTIONS AND TYPES
 ==============================================
 
 In order to support both Win16 and Win32 APIs within the same source
-code, as well as share the include files between the emulator and the
-library, the following convention must be used in naming all API
+code, the following convention must be used in naming all API
 functions and types. If the Windows API uses the name 'xxx', the Wine
 code must use:
 
@@ -197,9 +203,9 @@ code must use:
 
 You should then use the macros WINELIB_NAME[_AW](xxx) or
 DECL_WINELIB_TYPE[_AW](xxx) (defined in include/wintypes.h) to define
-the correct 'xxx' function or type for Winelib. When compiling the
-emulator, 'xxx' is _not_ defined, meaning that you must always specify
-explicitly whether you want the 16-bit or 32-bit version.
+the correct 'xxx' function or type for Winelib. When compiling Wine
+itself, 'xxx' is _not_ defined, meaning that code inside of Wine must
+always specify explicitly the 16-bit or 32-bit version.
 
 If 'xxx' is the same in Win16 and Win32, or if 'xxx' is Win16 only,
 you can simply use the same name as Windows, i.e. just 'xxx'.  If

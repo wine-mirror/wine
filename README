@@ -1,17 +1,20 @@
 1. INTRODUCTION
 
-Wine is a program that allows running MS-Windows programs under X11.
-It consists of a program loader, that loads and executes an
-MS-Windows binary, and of an emulation library that translates Windows
-API calls to their Unix/X11 equivalent.
+Wine is a program which allows running Microsoft Windows programs
+(including DOS, Windows 3.x and Win32 executables) on Unix.  It
+consists of a program loader which loads and executes an Microsoft
+Windows binary, and a library that implements Windows API calls using
+their Unix or X11 equivalents. The library may also be used for
+porting Win32 code into native Unix executables.
 
-Wine is free software. See the file LICENSE for the details.
-Basically, you can do anything with it, except claim that you wrote it.
+Wine is free software, and its license (contained in the file LICENSE)
+is BSD style.  Basically, you can do anything with it except claim
+that you wrote it.
 
 
 2. COMPILATION
 
-To compile the emulator, you must have one of:
+To compile Wine, you must have one of:
 
 	Linux version 0.99.13 or above
 	NetBSD-current
@@ -62,24 +65,20 @@ wine.ini contains a config file example.
 When invoking Wine, you must specify the entire path to the executable,
 or a filename only.
 
-For example: to run Windows' solitaire:
+For example: to run Solitaire:
 
 	wine sol		   (using the searchpath to locate the file)
 	wine sol.exe
 
-	wine c:\\windows\\sol.exe  (using a dosfilename)
+	wine c:\\windows\\sol.exe  (using a DOS filename)
 
-	wine /usr/windows/sol.exe  (using a unixfilename)
+	wine /usr/windows/sol.exe  (using a Unix filename)
 
 Note: the path of the file will also be added to the path when
       a full name is supplied on the commandline.
 
-Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
-So, occasionally it may crash.
-
-UPDATE: Windows 95 components are known to cause more crashes compared
-        to the equivalent Windows 3.1 libraries.
-
+Wine is not yet complete, so some programs may crash. You will be dropped
+into a debugger so that you can investigate and fix the problem.
 
 5. GETTING MORE INFORMATION
 
@@ -87,16 +86,17 @@ Usenet:	The best place to get help or to report bugs is the Usenet newsgroup
 	comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
 	month. 
 
-WWW:	Please browse old messages on http://www.dejanews.com to check whether 
+WWW:	Please browse old messages on http://www.dejanews.com/ to check whether 
 	your problem is already fixed before posting a bug report to the 
 	newsgroup. 
 
 	A great deal of information about Wine is available from WineHQ at
-	http://www.winehq.com. Untested patches against the current
-	release are available at http://www.winehq.com/patches.  
+	http://www.winehq.com/. Untested patches against the current release
+	are available on the wine-patches mailing list; see 
+	http://www.winehq.com/dev.html#ml for more information.
 
 CVS:	The current Wine development tree is available through CVS.
-	Go to http://www.winehq.com/cvs.html for more information.
+	Go to http://www.winehq.com/dev.html for more information.
 
 FAQ:	The Wine FAQ is located at http://pw1.netcom.com/~dagar/wine.html.
 

@@ -100,17 +100,17 @@ to include/config.h.in
 
 The next step depends on the nature of the missing function.
 
-Case 1: It's easy to write a complete emulation of the
+Case 1: It's easy to write a complete implementation of the
   function.  (`memmove' belongs to this case.)
 
-  You add your emulation in misc/port.c surrounded by
+  You add your implementation in misc/port.c surrounded by
   "#ifndef HAVE_MEMMOVE" and "#endif".
 
   You might have to add a prototype for your function.  If so,
   include/miscemu.h might be the place.  Don't forget to protect
   that definition by "#ifndef HAVE_MEMMOVE" and "#endif" also!
 
-Case 2: A general emulation is hard, but Wine is only using
+Case 2: A general implementation is hard, but Wine is only using
   a special case.
 
   An example is the various "wait" calls used in SIGNAL_child

@@ -10,7 +10,7 @@
 @ifinfo
 @format
 START-INFO-DIR-ENTRY
-* wine: (wine.info).             The Windows Emulator.
+* wine: (wine.info).             Windows on Unix.
 END-INFO-DIR-ENTRY
 @end format
 @end ifinfo
@@ -20,7 +20,8 @@ END-INFO-DIR-ENTRY
 @end iftex
 
 @ifinfo
-This file documents Wine, the Windows Emulator.
+This file documents Wine, a system providing Microsoft Windows compatibility
+to Unix.
 
 @c 
 Copyright @copyright{} 1997,1998 The Wine authors. @*
@@ -261,11 +262,13 @@ Not yet implemented.
 This is edition @winemanualversion{}, last updated @winemanualdate{},
 of @winemanualtitle{}.
 
-Wine (Wine Is Not an Emulator, or the WINdows Emulator)
-is both an emulator that runs @mswindows{} executables and a library
-that can be used to compile @mswindows{} source code.
+Wine provides both source and binary compatibility with Microsoft Windows.
+The Wine API is designed to be as compatible as possible with various
+implementations of the Windows APIs. The Wine library allows porting
+Windows source to Unix, and a program loader allows unaltered Windows binaries
+to be run on Unix.
 
-Wine is free software. Wine is still in development-only state.
+Wine is free software. Wine is still under development.
 @end ifinfo
 
 @menu
@@ -356,9 +359,9 @@ designed to be as compatible as possible with the
 @item
 A library, called @winelib{}, which implements this API
 @item
-A binary compatibility layer, sometimes referred to as the Wine
-emulator, which acts as a program loader for native Windows binaries.
-The emulator works for both 16 and 32 bit Intel binaries, and
+A binary compatibility layer
+acts as a program loader for native Windows binaries.
+It works for both 16 and 32 bit Intel binaries, and
 provides all the appropriate translation between 16 and 32 bit code
 (thunking). Real mode interrupts are also supported, and their
 functionality is implemented in @winelib{}.
