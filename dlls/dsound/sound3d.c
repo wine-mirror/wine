@@ -3,7 +3,7 @@
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Rob Riggs
  * Copyright 2000-2001 TransGaming Technologies, Inc.
- * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2002-2003 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,9 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
+
+/* default intensity level for human ears */
+#define DEFAULT_INTENSITY 0.000000000001f
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
 
@@ -158,36 +161,31 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	IDirectSound3DListenerImpl *dsl;
 	
 	/* volume, at which the sound will be played after all calcs. */
-	LONG lVolume;
-	/* attuneation (temp variable) */
-	LONG lAttuneation;
-	int iPower;
+	LONG lVolume = 0;
+	/* intensity (used for distance related stuff) */
+	double flIntensity;
+	double flTemp;
 	/* stuff for distance related stuff calc. */
 	D3DVECTOR vDistance;
-	D3DVALUE fDistance;
-	
-	/* stuff for cone angle calc. */
-	DWORD dwAlpha, dwTheta, dwInsideConeAngle, dwOutsideConeAngle;
-	D3DVECTOR vConeOrientation;
-	DWORD dwConstVolAng; /* Volume/Angle constant */
-	
+	D3DVALUE flDistance;
+
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;
 	
 	dsl = ds3db->dsb->dsound->listener;
+
+	/* FIXME: i guess initial volume should be that, but if it's set, sounds get too quiet */
+/*	lVolume = ds3db->lVolume; */
 	
 	switch (ds3db->ds3db.dwMode)
 	{
 		case DS3DMODE_NORMAL:
 		{
-			/* initial volume */
-			lVolume = ds3db->lVolume;
-
 			/* distance attuneation stuff */
 			vDistance = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &dsl->ds3dl.vPosition);
-			fDistance = VectorMagnitude (&vDistance);
+			flDistance = VectorMagnitude (&vDistance);
 			
-			if (fDistance > ds3db->ds3db.flMaxDistance)
+			if (flDistance > ds3db->ds3db.flMaxDistance)
 			{
 				/* some apps don't want you to hear too distant sounds... */
 				if (ds3db->dsb->dsbd.dwFlags & DSBCAPS_MUTE3DATMAXDISTANCE)
@@ -198,51 +196,24 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 					return;
 				}
 				else
-					fDistance = ds3db->ds3db.flMaxDistance;
+					flDistance = ds3db->ds3db.flMaxDistance;
 			}
 			
-			if (fDistance < ds3db->ds3db.flMinDistance)
-				fDistance = ds3db->ds3db.flMinDistance;
-			
-			/* the formula my dad and i have figured out after reading msdn info about min/max distance
-			   ...hope it works */
-			iPower = fDistance/ds3db->ds3db.flMinDistance - 1; /* this sucks, but for unknown reason damn thing works only if you reduce it for 1 */
-			lAttuneation = (((pow(2, iPower) - 1)*DSBVOLUME_MIN) + lVolume)/pow(2, iPower);
-			lAttuneation *= dsl->ds3dl.flRolloffFactor; /* attuneation according to rolloff factor */
-			lAttuneation /= 5; /* i've figured this value wih trying (without it, sound is too quiet */
-			TRACE ("distance att.: distance = %f, min distance = %f => adjusting volume %ld for attuneation %ld\n", fDistance, ds3db->ds3db.flMinDistance, lVolume, lAttuneation);
-			lVolume += lAttuneation;
-			
-			/* conning */
-			/* correct me if I'm wrong, but i believe 'D3DVECTORS' used below are only points
-			   between which vectors are yet to be calculated */
-			vConeOrientation = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &ds3db->ds3db.vConeOrientation);
-			/* I/O ConeAngles are defined in both directions; for comparing, we need only half of their values */
-			dwOutsideConeAngle = ds3db->ds3db.dwOutsideConeAngle / 2;
-			dwInsideConeAngle = ds3db->ds3db.dwInsideConeAngle / 2;
-			dwTheta = AngleBetweenVectorsDeg (&vDistance, &vConeOrientation);
-			/* actual conning */
-			if (dwTheta <= dwInsideConeAngle)
-			{
-				lAttuneation = 0;
-				TRACE("conning: angle (%ld) < InsideConeAngle (%ld), leaving volume at %ld\n", dwTheta, dwInsideConeAngle, lVolume);
-			}
-			if (dwTheta > dwOutsideConeAngle)
-			{
-				/* attuneation is equal to lConeOutsideVolume */
-				lAttuneation = ds3db->ds3db.lConeOutsideVolume;
-				TRACE("conning: angle (%ld) > OutsideConeAngle (%ld), attuneation = %ld, final volume = %ld\n", dwTheta, dwOutsideConeAngle, \
-				      ds3db->ds3db.lConeOutsideVolume, lVolume);
-			}
-			if (dwTheta > dwInsideConeAngle && dwTheta <= dwOutsideConeAngle)
-			{
-				dwAlpha = dwTheta - dwInsideConeAngle;
-				dwConstVolAng = ((lVolume + ds3db->ds3db.lConeOutsideVolume) - lVolume) / (dwOutsideConeAngle - dwInsideConeAngle);
-				lAttuneation = dwAlpha*dwConstVolAng;
-				TRACE("conning: angle = %ld, attuneation = %ld, final Volume = %ld\n", dwTheta, dwAlpha*dwConstVolAng, lVolume);
-			}
-			lVolume += lAttuneation;
-			TRACE("final volume = %ld\n", lVolume);		
+			if (flDistance < ds3db->ds3db.flMinDistance)
+				flDistance = ds3db->ds3db.flMinDistance;
+			/* the following formula is taken from my physics book. I think it's ok for the *real* world...i hope m$ does it that way */
+			lVolume += 10000; /* ms likes working with negative volume...i don't */
+			lVolume /= 1000; /* convert hundreths of dB into B */
+			/* intensity level (loudness) = log10(Intensity/DefaultIntensity)...therefore */
+			flIntensity = pow(10,lVolume)/DEFAULT_INTENSITY;	
+			flTemp = (flDistance/ds3db->ds3db.flMinDistance)*(flDistance/ds3db->ds3db.flMinDistance);
+			flIntensity /= flTemp;
+			lVolume = log10(flIntensity*DEFAULT_INTENSITY);
+			lVolume *= 1000; /* convert back to hundreths of dB */
+			lVolume -= 10000; /* we need to do it in ms way */
+			TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %ld to %ld\n", flDistance, ds3db->ds3db.flMinDistance, ds3db->lVolume, lVolume);
+
+			/* add correct conning here */
 			
 			/* at last, we got the desired volume */
 			ds3db->dsb->volpan.lVolume = lVolume;
