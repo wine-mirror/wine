@@ -91,7 +91,7 @@
 #define SMB_COM_CLOSE_PRINT_FILE       0xC2
 #define SMB_COM_GET_PRINT_QUEUE        0xC3
 
-extern WINAPI BOOL SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped);
+extern BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped);
 extern HANDLE WINAPI SMB_CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template );

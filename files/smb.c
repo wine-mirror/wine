@@ -51,7 +51,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_SYSTM_H
 #include <netinet/in_systm.h>
@@ -1030,7 +1032,7 @@ static BOOL SMB_SetOffset(HANDLE hFile, DWORD offset)
     return !r;
 }
 
-WINAPI BOOL SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped)
+BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped)
 {
     int fd;
     DWORD total, count, offset;

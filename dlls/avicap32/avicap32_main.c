@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(avicap32);
 
 /***********************************************************************
  *
- *		capCreateCaptureWindowA (AVICAP.@)
+ *		capCreateCaptureWindowA (AVICAP32.@)
  *
  */
 HWND WINAPI capCreateCaptureWindowA( LPCSTR pszTitle, DWORD dwStyle, int x, int y, int width, int height, HWND hwndParent, int nID )
@@ -42,7 +42,7 @@ HWND WINAPI capCreateCaptureWindowA( LPCSTR pszTitle, DWORD dwStyle, int x, int 
 
 /***********************************************************************
  *
- *		capCreateCaptureWindowW (AVICAP.@)
+ *		capCreateCaptureWindowW (AVICAP32.@)
  *
  */
 HWND WINAPI capCreateCaptureWindowW( LPCWSTR pwszTitle, DWORD dwStyle, int x, int y, int width, int height, HWND hwndParent, int nID )
@@ -54,7 +54,7 @@ HWND WINAPI capCreateCaptureWindowW( LPCWSTR pwszTitle, DWORD dwStyle, int x, in
 
 /***********************************************************************
  *
- *		capGetDriverDescriptionA (AVICAP.@)
+ *		capGetDriverDescriptionA (AVICAP32.@)
  *
  */
 BOOL WINAPI capGetDriverDescriptionA( UINT uDriverIndex, LPSTR pszName, int cbName, LPSTR pszVersion, int cbVersion )
@@ -66,7 +66,7 @@ BOOL WINAPI capGetDriverDescriptionA( UINT uDriverIndex, LPSTR pszName, int cbNa
 
 /***********************************************************************
  *
- *		capGetDriverDescriptionW (AVICAP.@)
+ *		capGetDriverDescriptionW (AVICAP32.@)
  *
  */
 BOOL WINAPI capGetDriverDescriptionW( UINT uDriverIndex, LPWSTR pwszName, int cbName, LPWSTR pwszVersion, int cbVersion )

@@ -965,7 +965,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
- *           InternetQueryOptionW (WININET.@)
+ *           InternetSetOptionW (WININET.@)
  *
  * Sets an options on the specified handle
  *
@@ -974,7 +974,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
+BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
     LPWININETHANDLEHEADER lpwhh;
@@ -1003,7 +1003,7 @@ BOOLAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
- *           InternetQueryOptionA (WININET.@)
+ *           InternetSetOptionA (WININET.@)
  *
  * Sets an options on the specified handle.
  *
@@ -1012,7 +1012,7 @@ BOOLAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
+BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
     /* FIXME!!! implement if lpBuffer is a string, dwBufferLength is

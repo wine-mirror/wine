@@ -708,8 +708,8 @@ debug_channels (shell)
 @ stdcall PathIsNetworkPathW(wstr) PathIsNetworkPathW
 @ stdcall PathIsLFNFileSpecA(str) PathIsLFNFileSpecA
 @ stdcall PathIsLFNFileSpecW(wstr) PathIsLFNFileSpecW
-@ stdcall PathFindSuffixArrayA(str) PathFindSuffixArrayA
-@ stdcall PathFindSuffixArrayW(wstr) PathFindSuffixArrayW
+@ stdcall PathFindSuffixArrayA(str ptr long) PathFindSuffixArrayA
+@ stdcall PathFindSuffixArrayW(wstr ptr long) PathFindSuffixArrayW
 @ stdcall _SHGetInstanceExplorer@4(ptr) _SHGetInstanceExplorer
 @ stdcall PathUndecorateA(str) PathUndecorateA
 @ stdcall PathUndecorateW(wstr) PathUndecorateW
