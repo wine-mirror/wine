@@ -4,9 +4,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ole32
 SOVERSION = 1.0
-ALTNAMES  = ole2 storage compobj
+ALTNAMES  = ole2 ole2nls storage compobj
 
-SPEC_SRCS = ole32.spec ole2.spec storage.spec compobj.spec
+SPEC_SRCS = ole32.spec ole2.spec ole2nls.spec storage.spec compobj.spec
 
 C_SRCS = \
 	antimoniker.c \
@@ -26,6 +26,7 @@ C_SRCS = \
 	ole2.c \
 	ole2stubs.c \
 	ole2impl.c \
+	ole2nls.c \
 	oleobj.c \
 	stg_bigblockfile.c \
 	stg_stream.c \

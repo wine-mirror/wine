@@ -36,8 +36,6 @@ struct NLS_langlocale {
 	} locvars[120];
 };
 
-static LPVOID lpNLSInfo = NULL;
-
 #define LANG_BEGIN(l,s)	{	MAKELANGID(l,s), {
 
 #define LOCVAL(type,value)					{type,value},
@@ -620,7 +618,7 @@ const struct map_lcid2str {
 static char *GetLocaleSubkeyName( DWORD lctype );
 
 /***********************************************************************
- *           GetUserDefaultLCID       (OLE2NLS.1)
+ *           GetUserDefaultLCID       [KERNEL32.425] [OLE2NLS.1]
  */
 LCID WINAPI GetUserDefaultLCID()
 {
@@ -628,7 +626,7 @@ LCID WINAPI GetUserDefaultLCID()
 }
 
 /***********************************************************************
- *         GetSystemDefaultLCID       (OLE2NLS.2)
+ *         GetSystemDefaultLCID       [KERNEL32.400] [OLE2NLS.2]
  */
 LCID WINAPI GetSystemDefaultLCID()
 {
@@ -636,7 +634,7 @@ LCID WINAPI GetSystemDefaultLCID()
 }
 
 /***********************************************************************
- *         GetUserDefaultLangID       (OLE2NLS.3)
+ *         GetUserDefaultLangID       [KERNEL32.426] [OLE2NLS.3]
  */
 LANGID WINAPI GetUserDefaultLangID()
 {
@@ -683,21 +681,13 @@ LANGID WINAPI GetUserDefaultLangID()
 }
 
 /***********************************************************************
- *         GetSystemDefaultLangID     (OLE2NLS.4)
+ *         GetSystemDefaultLangID     [KERNEL32.401] [OLE2NLS.4]
  */
 LANGID WINAPI GetSystemDefaultLangID()
 {
 	return GetUserDefaultLangID();
 }
 
-/******************************************************************************
- *		GetLocaleInfo16	[OLE2NLS.5]
- * Is the last parameter really WORD for Win16?
- */
-INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
-{
-	return GetLocaleInfoA(lcid,LCType,buf,len);
-}
 /******************************************************************************
  * ConvertDefaultLocale32 [KERNEL32.147]
  */
@@ -1631,14 +1621,6 @@ const WORD OLE2NLS_CT_CType3_LUT[] = {
   0x8003  /* ÿ - 255 */
 };
 
-/******************************************************************************
- *		GetStringType16	[OLE2NLS.7]
- */
-BOOL16 WINAPI GetStringType16(LCID locale,DWORD dwInfoType,LPCSTR src,
-                              INT16 cchSrc,LPWORD chartype)
-{
-	return GetStringTypeExA(locale,dwInfoType,src,cchSrc,chartype);
-}
 /******************************************************************************
  *		GetStringTypeA	[KERNEL32.396]
  */
@@ -2830,14 +2812,6 @@ INT WINAPI LCMapStringW(
   }
 }
 
-/***********************************************************************
- *           CompareString16       (OLE2NLS.8)
- */
-UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
-                              LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)
-{
-	return (UINT16)CompareStringA(lcid,fdwStyle,s1,l1,s2,l2);
-}
 
 /***********************************************************************
  *           OLE2NLS_EstimateMappingLength
@@ -2970,30 +2944,6 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 	/* the longer one is lexically greater */
 	return (l1<l2)? 1 : 3;
 }
-
-/******************************************************************************
- *      RegisterNLSInfoChanged  [OLE2NLS.10]
- */
-BOOL16 WINAPI RegisterNLSInfoChanged16(LPVOID/*FIXME*/ lpNewNLSInfo)
-{
-	FIXME("Fully implemented, but doesn't effect anything.\n");
-
-	if (!lpNewNLSInfo)
-	{
-		lpNLSInfo = NULL;
-		return TRUE;
-	}
-	else
-	{
-		if (!lpNLSInfo)
-		{
-			lpNLSInfo = lpNewNLSInfo;
-			return TRUE;
-		}
-	}
-
-	return FALSE; /* ptr not set */
-} 
 
 /******************************************************************************
  *		OLE_GetFormatA	[Internal]
