@@ -984,10 +984,10 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
 
 /******************************************************************************
- *              NtQueryAttributesFile   (NTDLL.@)
- *              ZwQueryAttributesFile   (NTDLL.@)
+ *              NtQueryFullAttributesFile   (NTDLL.@)
  */
-NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
+NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
+                                           FILE_NETWORK_OPEN_INFORMATION *info )
 {
     ANSI_STRING unix_name;
     NTSTATUS status;
@@ -1003,8 +1003,18 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
             status = STATUS_INVALID_INFO_CLASS;
         else
         {
-            if (S_ISDIR(st.st_mode)) info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-            else info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+            if (S_ISDIR(st.st_mode))
+            {
+                info->FileAttributes          = FILE_ATTRIBUTE_DIRECTORY;
+                info->AllocationSize.QuadPart = 0;
+                info->EndOfFile.QuadPart      = 0;
+            }
+            else
+            {
+                info->FileAttributes          = FILE_ATTRIBUTE_ARCHIVE;
+                info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
+                info->EndOfFile.QuadPart      = st.st_size;
+            }
             if (!(st.st_mode & S_IWUSR)) info->FileAttributes |= FILE_ATTRIBUTE_READONLY;
             RtlSecondsSince1970ToTime( st.st_mtime, &info->CreationTime );
             RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime );
@@ -1016,6 +1026,27 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
         RtlFreeAnsiString( &unix_name );
     }
     else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), status );
+    return status;
+}
+
+
+/******************************************************************************
+ *              NtQueryAttributesFile   (NTDLL.@)
+ *              ZwQueryAttributesFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
+{
+    FILE_NETWORK_OPEN_INFORMATION full_info;
+    NTSTATUS status;
+
+    if (!(status = NtQueryFullAttributesFile( attr, &full_info )))
+    {
+        info->CreationTime.QuadPart   = full_info.CreationTime.QuadPart;
+        info->LastAccessTime.QuadPart = full_info.LastAccessTime.QuadPart;
+        info->LastWriteTime.QuadPart  = full_info.LastWriteTime.QuadPart;
+        info->ChangeTime.QuadPart     = full_info.ChangeTime.QuadPart;
+        info->FileAttributes          = full_info.FileAttributes;
+    }
     return status;
 }
 

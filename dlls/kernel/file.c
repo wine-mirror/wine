@@ -1081,6 +1081,151 @@ BOOL WINAPI SetFileAttributesA( LPCSTR name, DWORD attributes )
 }
 
 
+/**************************************************************************
+ *           GetFileAttributesExW   (KERNEL32.@)
+ */
+BOOL WINAPI GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INFO_LEVELS level, LPVOID ptr )
+{
+    FILE_NETWORK_OPEN_INFORMATION info;
+    WIN32_FILE_ATTRIBUTE_DATA *data = ptr;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    if (level != GetFileExInfoStandard)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtQueryFullAttributesFile( &attr, &info );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    data->dwFileAttributes = info.FileAttributes;
+    data->ftCreationTime.dwLowDateTime    = info.CreationTime.u.LowPart;
+    data->ftCreationTime.dwHighDateTime   = info.CreationTime.u.HighPart;
+    data->ftLastAccessTime.dwLowDateTime  = info.LastAccessTime.u.LowPart;
+    data->ftLastAccessTime.dwHighDateTime = info.LastAccessTime.u.HighPart;
+    data->ftLastWriteTime.dwLowDateTime   = info.LastWriteTime.u.LowPart;
+    data->ftLastWriteTime.dwHighDateTime  = info.LastWriteTime.u.HighPart;
+    data->nFileSizeLow                    = info.EndOfFile.u.LowPart;
+    data->nFileSizeHigh                   = info.EndOfFile.u.HighPart;
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *           GetFileAttributesExA   (KERNEL32.@)
+ */
+BOOL WINAPI GetFileAttributesExA( LPCSTR name, GET_FILEEX_INFO_LEVELS level, LPVOID ptr )
+{
+    UNICODE_STRING filenameW;
+    BOOL ret = FALSE;
+
+    if (!name)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
+    {
+        ret = GetFileAttributesExW(filenameW.Buffer, level, ptr);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
+}
+
+
+/******************************************************************************
+ *           GetCompressedFileSizeW   (KERNEL32.@)
+ *
+ * RETURNS
+ *    Success: Low-order doubleword of number of bytes
+ *    Failure: INVALID_FILE_SIZE
+ */
+DWORD WINAPI GetCompressedFileSizeW(
+    LPCWSTR name,       /* [in]  Pointer to name of file */
+    LPDWORD size_high ) /* [out] Receives high-order doubleword of size */
+{
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    DWORD ret = INVALID_FILE_SIZE;
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_FILE_SIZE;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status == STATUS_SUCCESS)
+    {
+        /* we don't support compressed files, simply return the file size */
+        ret = GetFileSize( handle, size_high );
+        NtClose( handle );
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
+    return ret;
+}
+
+
+/******************************************************************************
+ *           GetCompressedFileSizeA   (KERNEL32.@)
+ */
+DWORD WINAPI GetCompressedFileSizeA( LPCSTR name, LPDWORD size_high )
+{
+    UNICODE_STRING filenameW;
+    DWORD ret;
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, name))
+    {
+        ret = GetCompressedFileSizeW(filenameW.Buffer, size_high);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+    {
+        ret = INVALID_FILE_SIZE;
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    }
+    return ret;
+}
+
+
 /***********************************************************************
  *           OpenFile   (KERNEL32.@)
  */

@@ -165,6 +165,7 @@
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stub NtQueryEaFile
 @ stdcall NtQueryEvent(long long ptr long ptr)
+@ stdcall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
@@ -1067,7 +1068,6 @@
 @ stub NtAddAtom
 @ stub NtDeleteAtom
 @ stub NtFindAtom
-@ stub NtQueryFullAttributesFile
 @ stub NtReadFileScatter
 @ stub NtSignalAndWaitForSingleObject
 @ stub NtWriteFileGather
