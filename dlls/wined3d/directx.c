@@ -560,8 +560,9 @@ UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter,
                    i++; 
                    break;
             case D3DFMT_X8R8G8B8:   
-            case D3DFMT_A8R8G8B8:   
+            case D3DFMT_A8R8G8B8:    
                    if (min(DevModeW.dmBitsPerPel, bpp) == 32) i++; 
+                   if (min(DevModeW.dmBitsPerPel, bpp) == 24) i++; 
                    break;
             case D3DFMT_X1R5G5B5:
             case D3DFMT_A1R5G5B5:
@@ -616,9 +617,9 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, D3DF
             int i = 0;
             int j = 0;
             DEVMODEW DevModeWtmp;
-            
-            
-            while ((Mode+1) < i && EnumDisplaySettingsExW(NULL, j, &DevModeWtmp, 0)) {
+
+
+            while (i<(Mode+1) && EnumDisplaySettingsExW(NULL, j, &DevModeWtmp, 0)) {
                 j++;
                 switch (Format)
                 {
@@ -628,6 +629,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, D3DF
                 case D3DFMT_X8R8G8B8:   
                 case D3DFMT_A8R8G8B8:   
                        if (min(DevModeWtmp.dmBitsPerPel, bpp) == 32) i++; 
+                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 24) i++; 
                        break;
                 case D3DFMT_X1R5G5B5:
                 case D3DFMT_A1R5G5B5:
