@@ -60,6 +60,7 @@ typedef struct {
 	DWORD ms;
 	DWORD sample;
 	DWORD cb;
+        DWORD ticks;
 	struct {
 	    BYTE hour;
 	    BYTE min;
@@ -80,6 +81,7 @@ typedef struct {
 #define TIME_BYTES      0x0004  /* current byte offset */
 #define TIME_SMPTE      0x0008  /* SMPTE time */
 #define TIME_MIDI       0x0010  /* MIDI time */
+#define TIME_TICKS	0x0020  /* MIDI ticks */
 
 #define MM_JOY1MOVE         0x3A0           /* joystick */
 #define MM_JOY2MOVE         0x3A1
@@ -110,7 +112,7 @@ typedef struct {
 #define MM_MOM_OPEN         0x3C7           /* MIDI output */
 #define MM_MOM_CLOSE        0x3C8
 #define MM_MOM_DONE         0x3C9
-
+#define MM_MOM_POSITIONCB   0x3CA
 
 #define MMSYSERR_BASE          0
 #define WAVERR_BASE            32
@@ -139,14 +141,16 @@ typedef struct {
 #define MMSYSERR_INVALPARAM   	(MMSYSERR_BASE + 11) /* invalid parameter passed */
 #define MMSYSERR_LASTERROR    	(MMSYSERR_BASE + 11) /* last error in range */
 
-#define CALLBACK_TYPEMASK   	0x00070000l    /* callback type mask */
-#define CALLBACK_NULL       	0x00000000l    /* no callback */
-#define CALLBACK_WINDOW     	0x00010000l    /* dwCallback is a HWND */
-#define CALLBACK_TASK       	0x00020000l    /* dwCallback is a HTASK */
-#define CALLBACK_FUNCTION   	0x00030000l    /* dwCallback is a FARPROC */
-#define CALLBACK_FUNC     	0x00070000l    /* (ugly hack) 32-bit FARPROC */
+#define CALLBACK_TYPEMASK   	0x00070000l    	/* callback type mask */
+#define CALLBACK_NULL       	0x00000000l    	/* no callback */
+#define CALLBACK_WINDOW     	0x00010000l    	/* dwCallback is a HWND */
+#define CALLBACK_TASK       	0x00020000l    	/* dwCallback is a HTASK */
+#define CALLBACK_THREAD		(CALLBACK_TASK)	/* dwCallback is a thread ID */
+#define CALLBACK_FUNCTION   	0x00030000l    	/* dwCallback is a FARPROC */
+#define CALLBACK_EVENT		0x00050000l	/* dwCallback is an EVENT Handler */
+#define CALLBACK_FUNC32     	0x00070000l    	/* (ugly hack) 32-bit FARPROC */
 #define CALLBACK32CONV(x)   ((((x)&CALLBACK_TYPEMASK)==CALLBACK_FUNCTION) ? \
-                             (((x)&~CALLBACK_TYPEMASK)|CALLBACK_FUNC) : (x))
+                             (((x)&~CALLBACK_TYPEMASK)|CALLBACK_FUNC32) : (x))
 
 typedef void (CALLBACK *LPDRVCALLBACK16) (HDRVR16 h, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
@@ -270,7 +274,9 @@ DECL_WINELIB_TYPE_AW(LPWAVEOUTCAPS)
 #define WAVECAPS_PLAYBACKRATE   0x0002   /* supports playback rate control */
 #define WAVECAPS_VOLUME         0x0004   /* supports volume control */
 #define WAVECAPS_LRVOLUME       0x0008   /* separate left-right volume control */
-#define WAVECAPS_SYNC           0x0010
+#define WAVECAPS_SYNC           0x0010	 /* driver is synchrounous and playing is blocking */
+#define WAVECAPS_SAMPLEACCURATE 0x0020	 /* position is sample accurate */
+#define WAVECAPS_DIRECTSOUND	0x0040   /* ? */
 
 typedef struct {
     WORD	wMid;			/* manufacturer ID */
@@ -573,8 +579,8 @@ typedef struct {
 #define MHDR_DONE       0x00000001       /* done bit */
 #define MHDR_PREPARED   0x00000002       /* set if header prepared */
 #define MHDR_INQUEUE    0x00000004       /* reserved for driver */
-#define MHDR_ISSTRM	0x00000008	 /* FIXME is this a correct
-					  * value ? Win32 only */
+#define MHDR_ISSTRM	0x00000008	 /* data is sent by Stream functions */
+
 typedef struct {
     DWORD		cbStruct;
     DWORD		dwTempo;
@@ -601,15 +607,15 @@ typedef struct {
 #define MEVT_EVENTTYPE(x) ((BYTE) (((x)>>24)&0xFF))
 #define MEVT_EVENTPARM(x) ((DWORD) ((x)&0x00FFFFFFL))
 
-#define MEVT_F_CALLBACK 0x40000000
-#define	MEVT_F_LONG     0x80000000
-#define	MEVT_F_SHORT    0x00000000
-#define	MEVT_COMMENT	0x82
-#define	MEVT_LONGMSG	0x80
-#define	MEVT_NOP	0x02
-#define	MEVT_SHORTMSG	0x00
-#define	MEVT_TEMPO	0x01
-#define	MEVT_VERSION	0x84
+#define MEVT_F_CALLBACK 0x40000000l
+#define	MEVT_F_LONG     0x80000000l
+#define	MEVT_F_SHORT    0x00000000l
+#define	MEVT_COMMENT	((BYTE)0x82)
+#define	MEVT_LONGMSG	((BYTE)0x80)
+#define	MEVT_NOP	((BYTE)0x02)
+#define	MEVT_SHORTMSG	((BYTE)0x00)
+#define	MEVT_TEMPO	((BYTE)0x01)
+#define	MEVT_VERSION	((BYTE)0x84)
 
 UINT16		WINAPI	midiOutGetNumDevs16(void);
 UINT		WINAPI	midiOutGetNumDevs(void);
@@ -631,13 +637,13 @@ UINT		WINAPI	midiOutOpen(HMIDIOUT*,UINT,DWORD,DWORD,DWORD);
 UINT16		WINAPI	midiOutClose16(HMIDIOUT16);
 UINT		WINAPI	midiOutClose(HMIDIOUT);
 UINT16		WINAPI	midiOutPrepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiOutPrepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
+UINT		WINAPI	midiOutPrepareHeader(HMIDIOUT,MIDIHDR*,UINT);
 UINT16		WINAPI	midiOutUnprepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiOutUnprepareHeader(HMIDIOUT,MIDIHDR16*,UINT);
+UINT		WINAPI	midiOutUnprepareHeader(HMIDIOUT,MIDIHDR*,UINT);
 UINT16		WINAPI	midiOutShortMsg16(HMIDIOUT16,DWORD);
 UINT		WINAPI	midiOutShortMsg(HMIDIOUT,DWORD);
 UINT16		WINAPI	midiOutLongMsg16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiOutLongMsg(HMIDIOUT,MIDIHDR16*,UINT);
+UINT		WINAPI	midiOutLongMsg(HMIDIOUT,MIDIHDR*,UINT);
 UINT16		WINAPI	midiOutReset16(HMIDIOUT16);
 UINT		WINAPI	midiOutReset(HMIDIOUT);
 UINT16		WINAPI	midiOutCachePatches16(HMIDIOUT16,UINT16,WORD*,UINT16);
@@ -665,11 +671,11 @@ UINT		WINAPI	midiInOpen(HMIDIIN*,UINT,DWORD,DWORD,DWORD);
 UINT16		WINAPI	midiInClose16(HMIDIIN16);
 UINT		WINAPI	midiInClose(HMIDIIN);
 UINT16		WINAPI	midiInPrepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiInPrepareHeader(HMIDIIN,MIDIHDR16*,UINT);
+UINT		WINAPI	midiInPrepareHeader(HMIDIIN,MIDIHDR*,UINT);
 UINT16		WINAPI	midiInUnprepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiInUnprepareHeader(HMIDIIN,MIDIHDR16*,UINT);
+UINT		WINAPI	midiInUnprepareHeader(HMIDIIN,MIDIHDR*,UINT);
 UINT16		WINAPI	midiInAddBuffer16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT		WINAPI	midiInAddBuffer(HMIDIIN,MIDIHDR16*,UINT);
+UINT		WINAPI	midiInAddBuffer(HMIDIIN,MIDIHDR*,UINT);
 UINT16		WINAPI	midiInStart16(HMIDIIN16);
 UINT		WINAPI	midiInStart(HMIDIIN);
 UINT16		WINAPI	midiInStop16(HMIDIIN16);
@@ -688,7 +694,7 @@ MMRESULT	WINAPI	midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
 MMRESULT16	WINAPI	midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid, DWORD cMidi,
 					 DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
 MMRESULT16	WINAPI	midiStreamOut16(HMIDISTRM16 hms, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr); 
-MMRESULT	WINAPI	midiStreamOut(HMIDISTRM hms, LPMIDIHDR16 lpMidiHdr, UINT cbMidiHdr);
+MMRESULT	WINAPI	midiStreamOut(HMIDISTRM hms, LPMIDIHDR lpMidiHdr, UINT cbMidiHdr);
 MMRESULT16	WINAPI	midiStreamPause16(HMIDISTRM16 hms);
 MMRESULT	WINAPI	midiStreamPause(HMIDISTRM hms);
 MMRESULT16	WINAPI	midiStreamPosition16(HMIDISTRM16 hms, LPMMTIME16 lpmmt, UINT16 cbmmt);
@@ -2074,11 +2080,10 @@ typedef struct {
 	DWORD   dwTo;
 } MCI_RECORD_PARMS, *LPMCI_RECORD_PARMS;
 
-/* FIXME: are those constants correct ? */
 #define MCI_CDA_STATUS_TYPE_TRACK 	0x00004001
 
-#define MCI_CDA_TRACK_AUDIO		0x00000440
-#define MCI_CDA_TRACK_OTHER		0x00000441
+#define MCI_CDA_TRACK_AUDIO		(MCI_CD_OFFSET + 0)
+#define MCI_CDA_TRACK_OTHER		(MCI_CD_OFFSET + 1)
 
 #define MCI_VD_MODE_PARK                (MCI_VD_OFFSET + 1)
 
@@ -2744,33 +2749,45 @@ DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
 /* the 95 DDK defines those slightly different, but they are internal anyway */
 typedef struct {
-	DWORD   	dwCallback;
-	DWORD   	dwInstance;
-	HMIDIOUT16	hMidi;
-	DWORD   	dwFlags;
+	DWORD   		dwCallback;
+	DWORD   		dwInstance;
+	HMIDIOUT16		hMidi;
+	DWORD   		dwFlags;
 } PORTALLOC, *LPPORTALLOC;
 
 typedef struct {
-	HWAVE16		hWave;
-	LPWAVEFORMAT	lpFormat;
-	DWORD		dwCallBack;
-	DWORD		dwInstance;
-	UINT16		uDeviceID;
+	HWAVE16			hWave;
+	LPWAVEFORMAT		lpFormat;
+	DWORD			dwCallBack;
+	DWORD			dwInstance;
+	UINT16			uDeviceID;
 } WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {
-	HMIDI16		hMidi;
-	DWORD		dwCallback;
-	DWORD		dwInstance;
-	UINT16	wDevID;
+        DWORD  			dwStreamID;
+        WORD   			wDeviceID;
+} MIDIOPENSTRMID;
+
+/* FIXME: this structure has a different mapping in 16 & 32 bit mode
+ * Since, I don't plan to add support for native 16 bit low level
+ * multimedia drivers, it'll do.
+ */
+typedef struct {
+	HMIDI16			hMidi;
+	DWORD			dwCallback;
+	DWORD			dwInstance;
+	UINT16			wDevID;
+        DWORD          		dnDevNode;
+        DWORD          		cIds;
+        MIDIOPENSTRMID 		rgIds;
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {
-	UINT16				wDelay;
-	UINT16				wResolution;
+	UINT16			wDelay;
+	UINT16			wResolution;
 	LPTIMECALLBACK16	lpFunction;
-	DWORD					dwUser;
-	UINT16				wFlags;
+	DWORD			dwUser;
+	UINT16			wFlags;
 } TIMEREVENT, *LPTIMEREVENT;
 
 typedef struct tMIXEROPENDESC
@@ -2785,20 +2802,20 @@ typedef struct {
 	UINT16	wDeviceID;		/* device ID */
 	LPSTR		lpstrParams;	/* parameter string for entry in SYSTEM.INI */
 	UINT16	wCustomCommandTable;	/* custom command table (0xFFFF if none)
-											 * filled in by the driver */
+					 * filled in by the driver */
 	UINT16	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMS16, *LPMCI_OPEN_DRIVER_PARMS16;
 
 typedef struct {
 	UINT	wDeviceID;		/* device ID */
-	LPSTR	lpstrParams;	/* parameter string for entry in SYSTEM.INI */
+	LPSTR	lpstrParams;		/* parameter string for entry in SYSTEM.INI */
 	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
 	UINT	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMSA, *LPMCI_OPEN_DRIVER_PARMSA;
 
 typedef struct {
 	UINT	wDeviceID;		/* device ID */
-	LPWSTR	lpstrParams;	/* parameter string for entry in SYSTEM.INI */
+	LPWSTR	lpstrParams;		/* parameter string for entry in SYSTEM.INI */
 	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
 	UINT	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
@@ -2829,6 +2846,7 @@ BOOL		WINAPI	mciFreeCommandResource(UINT uTable);
 #define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
 #define DCB_TASK		0x0002			/* dwCallback is a HTASK */
 #define DCB_FUNCTION		0x0003			/* dwCallback is a FARPROC */
+#define DCB_EVENT		0x0005			/* dwCallback is an EVENT Handler */
 #define DCB_FUNC32		0x0007			/* (ugly hack) 32-bit FARPROC */
 #define DCB_TYPEMASK		0x0007
 #define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
