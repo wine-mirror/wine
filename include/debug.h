@@ -3,16 +3,6 @@
 #define stddeb stdout
 #define stdnimp stdout
 
-#ifdef DEBUG_RUNTIME
-#define api_assert(name,test) if (test) ; else \
-    { \
-        fprintf(stddeb,"API assertion failed for %s: %s\n", name, #test); \
-        abort(); \
-    }
-#else
-#define api_assert(name,test) ;
-#endif
-
 /* Do not remove this line or change anything below this line */
 
 #ifdef DEBUG_NONE_EXT

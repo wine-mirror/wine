@@ -1,3 +1,7 @@
+/*
+ * DOS interrupt 2ah handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "msdos.h"
@@ -11,7 +15,7 @@
  *
  * Handler for int 2ah (network).
  */
-void INT_Int2aHandler( SIGCONTEXT *context )
+void INT_Int2aHandler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

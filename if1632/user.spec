@@ -8,7 +8,7 @@ heap	65520
 4   stub DisableOEMLayer
 5   pascal16 InitApp(word) InitApp
 6   pascal16 PostQuitMessage(word) PostQuitMessage
-7   pascal16 ExitWindows(long word) ExitWindows
+7   pascal16 ExitWindows(long word) ExitWindows16
 10  pascal16 SetTimer(word word word segptr) SetTimer16
 11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer16
 12  pascal16 KillTimer(word word) KillTimer16
@@ -125,9 +125,9 @@ heap	65520
 123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter16
 124 pascal16 UpdateWindow(word) UpdateWindow
 125 pascal16 InvalidateRect(word ptr word) InvalidateRect16
-126 pascal16 InvalidateRgn(word word word) InvalidateRgn
+126 pascal16 InvalidateRgn(word word word) InvalidateRgn16
 127 pascal16 ValidateRect(word ptr) ValidateRect16
-128 pascal16 ValidateRgn(word word) ValidateRgn
+128 pascal16 ValidateRgn(word word) ValidateRgn16
 129 pascal16 GetClassWord(word s_word) GetClassWord
 130 pascal16 SetClassWord(word s_word word) SetClassWord
 131 pascal   GetClassLong(word s_word) GetClassLong16
@@ -170,7 +170,7 @@ heap	65520
 168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows
-171 pascal16 WinHelp(word ptr word long) WinHelp
+171 pascal16 WinHelp(word ptr word long) WinHelp16
 172 stub SwitchToThisWindow
 173 pascal16 LoadCursor(word segptr) LoadCursor16
 174 pascal16 LoadIcon(word segptr) LoadIcon16

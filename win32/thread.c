@@ -14,31 +14,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-/***********************************************************************
- *           GetCurrentThreadId   (KERNEL32.201)
- */
-
-DWORD GetCurrentThreadId(void)
-{
-        /* Windows 95 returns the address of the thread database (sorta) */
-        return MAKELONG(GetCurrentTask(), 0);
-}
-
-/***********************************************************************
- *           GetThreadContext         (KERNEL32.294)
- */
-BOOL GetThreadContext(HANDLE32 hThread, void *lpContext)
-{
-        return FALSE;
-}
-/***********************************************************************
- *           GetCurrentThread    (KERNEL32.200)
- */
-HANDLE32 GetCurrentThread(void)
-{
-        return 0xFFFFFFFE;	/* that's -2 */
-}
-
 /**********************************************************************
  *          Critical Sections are currently ignored
  */
@@ -76,53 +51,6 @@ void MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit) {
 	/* hmm */
 }
 
-/***********************************************************************
- *           Tls is available only for the single thread
- * (BTW: TLS means Thread Local Storage)
- */
-static LPVOID* Tls=0;
-static int TlsCount=0;
-
-DWORD TlsAlloc()
-{
-	if(!Tls){
-		TlsCount++;
-		Tls=xmalloc(sizeof(LPVOID));
-		/* Tls needs to be zero initialized */
-		Tls[0]=0;
-		return 0;
-	}
-	Tls=xrealloc(Tls,sizeof(LPVOID)*(++TlsCount));
-	Tls[TlsCount-1]=0;
-	return TlsCount-1;
-}
-
-void TlsFree(DWORD index)
-{
-	/*FIXME: should remember that it has been freed */
-	return;
-}
-
-LPVOID TlsGetValue(DWORD index)
-{
-	if(index>=TlsCount)
-	{
-		/* FIXME: Set last error*/
-		return 0;
-	}
-	return Tls[index];
-}
-
-BOOL32 TlsSetValue(DWORD index,LPVOID value)
-{
-	if(index>=TlsCount)
-	{
-		/* FIXME: Set last error*/
-		return FALSE;
-	}
-	Tls[index]=value;
-	return TRUE;
-}
 
 /* FIXME: This is required to work cross-addres space as well */
 static CRITICAL_SECTION interlocked;

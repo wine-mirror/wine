@@ -9,6 +9,7 @@
 
 #include <X11/extensions/XShm.h>
 #include "gdi.h"
+#include "xmalloc.h"
 
 #ifdef PRELIMINARY_WING16_SUPPORT
 

@@ -1901,19 +1901,19 @@ DWORD waveInMessage(HWAVEIN16 hWaveIn, UINT uMessage,
 */
 HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo, DWORD dwOpenFlags)
 {
-	int		hFile;
+        HFILE32 hFile;
 	HMMIO16		hmmio;
 	OFSTRUCT	ofs;
 	LPMMIOINFO	lpmminfo;
 	dprintf_mmsys(stddeb, "mmioOpen('%s', %p, %08lX);\n", szFileName, lpmmioinfo, dwOpenFlags);
-	hFile = OpenFile(szFileName, &ofs, dwOpenFlags);
+	hFile = OpenFile32(szFileName, &ofs, dwOpenFlags);
 	if (hFile == -1) return 0;
 	hmmio = GlobalAlloc16(GMEM_MOVEABLE, sizeof(MMIOINFO));
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	memset(lpmminfo, 0, sizeof(MMIOINFO));
 	lpmminfo->hmmio = hmmio;
-	lpmminfo->dwReserved2 = MAKELONG(hFile, 0);
+	lpmminfo->dwReserved2 = hFile;
 	GlobalUnlock16(hmmio);
 	dprintf_mmsys(stddeb, "mmioOpen // return hmmio=%04X\n", hmmio);
 	return hmmio;
@@ -1929,7 +1929,7 @@ UINT mmioClose(HMMIO16 hmmio, UINT uFlags)
 	dprintf_mmsys(stddeb, "mmioClose(%04X, %04X);\n", hmmio, uFlags);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
-	_lclose(LOWORD(lpmminfo->dwReserved2));
+	_lclose32((HFILE32)lpmminfo->dwReserved2);
 	GlobalUnlock16(hmmio);
 	GlobalFree16(hmmio);
 	return 0;
@@ -1983,7 +1983,7 @@ LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin)
 		dprintf_mmsys(stddeb, "mmioSeek // can't lock hmmio=%04X !\n", hmmio);
 		return 0;
 		}
-	count = _llseek(LOWORD(lpmminfo->dwReserved2), lOffset, iOrigin);
+	count = _llseek32((HFILE32)lpmminfo->dwReserved2, lOffset, iOrigin);
 	GlobalUnlock16(hmmio);
 	return count;
 }
@@ -2058,7 +2058,7 @@ UINT mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT uFlags)
 		}
 	lpmmioinfo->pchNext	+= count;
 	GlobalUnlock16(hmmio);
-	lpmminfo->lDiskOffset = _llseek(LOWORD(lpmminfo->dwReserved2), 0, SEEK_CUR);
+	lpmminfo->lDiskOffset = _llseek32((HFILE32)lpmminfo->dwReserved2, 0, SEEK_CUR);
 	return 0;
 }
 
@@ -2106,20 +2106,20 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	if (lpmminfo == NULL) return 0;
 	dwfcc = lpck->ckid;
 	dprintf_mmio(stddeb, "mmioDescend // dwfcc=%08lX\n", dwfcc);
-	dwOldPos = _llseek(LOWORD(lpmminfo->dwReserved2), 0, SEEK_CUR);
+	dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2, 0, SEEK_CUR);
 	dprintf_mmio(stddeb, "mmioDescend // dwOldPos=%ld\n", dwOldPos);
 	if (lpckParent != NULL) {
 		dprintf_mmio(stddeb, "mmioDescend // seek inside parent at %ld !\n", lpckParent->dwDataOffset);
-		dwOldPos = _llseek(LOWORD(lpmminfo->dwReserved2), 
+		dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2,
 					lpckParent->dwDataOffset, SEEK_SET);
 		}
 	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDRIFF) || 
 		(uFlags & MMIO_FINDLIST)) {
 		dprintf_mmio(stddeb, "mmioDescend // MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
-			if (_lread32(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+			if (_lread32((HFILE32)lpmminfo->dwReserved2, (LPSTR)lpck, 
 					sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
-				_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+				_llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
 				GlobalUnlock16(hmmio);
 				return MMIOERR_CHUNKNOTFOUND;
 				}
@@ -2129,13 +2129,13 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 			dwOldPos += lpck->cksize + 2 * sizeof(DWORD);
 			if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
 				dwOldPos += sizeof(DWORD);
-			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+			_llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
 			}
 		}
 	else {
 		if (_lread32(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
 				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
-			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+                    _llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
 			GlobalUnlock16(hmmio);
 			return MMIOERR_CHUNKNOTFOUND;
 			}
@@ -2143,8 +2143,8 @@ UINT mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
 	if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
 		lpck->dwDataOffset += sizeof(DWORD);
-	lpmminfo->lDiskOffset = _llseek(LOWORD(lpmminfo->dwReserved2), 
-									lpck->dwDataOffset, SEEK_SET);
+	lpmminfo->lDiskOffset = _llseek32((HFILE32)lpmminfo->dwReserved2, 
+                                          lpck->dwDataOffset, SEEK_SET);
 	GlobalUnlock16(hmmio);
 	dprintf_mmio(stddeb, "mmioDescend // lpck->ckid=%08lX lpck->cksize=%ld !\n", 
 								lpck->ckid, lpck->cksize);

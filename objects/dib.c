@@ -16,7 +16,6 @@
 #include "stddebug.h"
 #include "color.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 extern void CLIPPING_UpdateGCRegion(DC* );
 

@@ -1,3 +1,7 @@
+/*
+ * DOS interrupt 2fh handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,15 +19,15 @@
   /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
 
-static void do_int2f_16( SIGCONTEXT *context );
-void do_mscdex( SIGCONTEXT *context );
+static void do_int2f_16( CONTEXT *context );
+void do_mscdex( CONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int2fHandler
  *
  * Handler for int 2fh (multiplex).
  */
-void INT_Int2fHandler( SIGCONTEXT *context )
+void INT_Int2fHandler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {
@@ -65,7 +69,7 @@ void INT_Int2fHandler( SIGCONTEXT *context )
 /**********************************************************************
  *	    do_int2f_16
  */
-static void do_int2f_16( SIGCONTEXT *context )
+static void do_int2f_16( CONTEXT *context )
 {
     DWORD addr;
 
@@ -136,7 +140,7 @@ static void do_int2f_16( SIGCONTEXT *context )
     }
 }
 
-void do_mscdex( SIGCONTEXT *context )
+void do_mscdex( CONTEXT *context )
 {
     int drive, count;
     char *p;

@@ -28,6 +28,13 @@ typedef struct {
     long	size;
 } virtual_mem_t;
 
+typedef struct _VRANGE_OBJECT
+{
+	DWORD				start;
+	DWORD				size;
+	struct _VRANGE_OBJECT *next;
+} VRANGE_OBJECT;
+
 virtual_mem_t *mem = 0;
 int mem_count = 0;
 int mem_used = 0;
@@ -132,7 +139,6 @@ void MEMORY_InsertVrange(VRANGE_OBJECT *r)
 VRANGE_OBJECT *MEMORY_AllocVrange(int start,int size)
 {
 	VRANGE_OBJECT *ret=CreateKernelObject(sizeof(VRANGE_OBJECT));
-	ret->common.magic=KERNEL_OBJECT_VRANGE;
 	MEMORY_InsertVrange(ret);
 	return ret;
 }

@@ -1,5 +1,5 @@
 /*
- * (c) 1993, 1994 Erik Bos
+ * DOS interrupt 21h handler
  */
 
 #include <time.h>
@@ -65,7 +65,6 @@ struct DPB
 };
 
 WORD CodePage = 437;
-struct DPB *dpb;
 DWORD dpbsegptr;
 
 struct DosHeap {
@@ -81,6 +80,20 @@ WORD sharing_retries = 3;      /* number of retries at sharing violation */
 WORD sharing_pause = 1;        /* pause between retries */
 
 extern char TempDirectory[];
+
+static BOOL32 INT21_CreateHeap(void)
+{
+    if (!(DosHeapHandle = GlobalAlloc16(GMEM_FIXED,sizeof(struct DosHeap))))
+    {
+        fprintf( stderr, "INT21_Init: Out of memory\n");
+        return FALSE;
+    }
+    heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
+    dpbsegptr = PTR_SEG_OFF_TO_SEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
+    heap->InDosFlag = 0;
+    strcpy(heap->biosdate, "01/01/80");
+    return TRUE;
+}
 
 BYTE *GetCurrentDTA(void)
 {
@@ -133,7 +146,7 @@ void CreateBPB(int drive, BYTE *data)
 	}	
 }
 
-static int INT21_GetFreeDiskSpace( SIGCONTEXT *context )
+static int INT21_GetFreeDiskSpace( CONTEXT *context )
 {
     DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
     char root[] = "A:\\";
@@ -148,23 +161,24 @@ static int INT21_GetFreeDiskSpace( SIGCONTEXT *context )
     return 1;
 }
 
-static int INT21_GetDriveAllocInfo( SIGCONTEXT *context )
+static int INT21_GetDriveAllocInfo( CONTEXT *context )
 {
     if (!INT21_GetFreeDiskSpace( context )) return 0;
+    if (!heap && !INT21_CreateHeap()) return 0;
     heap->mediaID = 0xf0;
     DS_reg(context) = DosHeapHandle;
     BX_reg(context) = (int)&heap->mediaID - (int)heap;
     return 1;
 }
 
-static void GetDrivePB( SIGCONTEXT *context, int drive )
+static void GetDrivePB( CONTEXT *context, int drive )
 {
         if(!DRIVE_IsValid(drive))
         {
             DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
             AX_reg(context) = 0x00ff;
         }
-        else
+        else if (heap || INT21_CreateHeap())
         {
                 dprintf_int(stddeb, "int21: GetDrivePB not fully implemented.\n");
 
@@ -175,23 +189,23 @@ static void GetDrivePB( SIGCONTEXT *context, int drive )
                  * does worry me, though.  Should we have a complete table of
                  * separate DPBs per drive?  Probably, but I'm lazy. :-)  -CH
                  */
-                dpb->drive_num = dpb->unit_num = drive;    /* The same? */
-                dpb->sector_size = 512;
-                dpb->high_sector = 1;
-                dpb->shift = drive < 2 ? 0 : 6; /* 6 for HD, 0 for floppy */
-                dpb->reserved = 0;
-                dpb->num_FAT = 1;
-                dpb->dir_entries = 2;
-                dpb->first_data = 2;
-                dpb->high_cluster = 64000;
-                dpb->sectors_in_FAT = 1;
-                dpb->start_dir = 1;
-                dpb->driver_head = 0;
-                dpb->media_ID = (drive > 1) ? 0xF8 : 0xF0;
-                dpb->access_flag = 0;
-                dpb->next = 0;
-                dpb->free_search = 0;
-                dpb->free_clusters = 0xFFFF;    /* unknown */
+                heap->dpb.drive_num = heap->dpb.unit_num = drive; /*The same?*/
+                heap->dpb.sector_size = 512;
+                heap->dpb.high_sector = 1;
+                heap->dpb.shift = drive < 2 ? 0 : 6; /*6 for HD, 0 for floppy*/
+                heap->dpb.reserved = 0;
+                heap->dpb.num_FAT = 1;
+                heap->dpb.dir_entries = 2;
+                heap->dpb.first_data = 2;
+                heap->dpb.high_cluster = 64000;
+                heap->dpb.sectors_in_FAT = 1;
+                heap->dpb.start_dir = 1;
+                heap->dpb.driver_head = 0;
+                heap->dpb.media_ID = (drive > 1) ? 0xF8 : 0xF0;
+                heap->dpb.access_flag = 0;
+                heap->dpb.next = 0;
+                heap->dpb.free_search = 0;
+                heap->dpb.free_clusters = 0xFFFF;    /* unknown */
 
                 AL_reg(context) = 0x00;
                 DS_reg(context) = SELECTOROF(dpbsegptr);
@@ -200,7 +214,7 @@ static void GetDrivePB( SIGCONTEXT *context, int drive )
 }
 
 
-static void ioctlGetDeviceInfo( SIGCONTEXT *context )
+static void ioctlGetDeviceInfo( CONTEXT *context )
 {
     dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
     
@@ -213,7 +227,7 @@ static void ioctlGetDeviceInfo( SIGCONTEXT *context )
     RESET_CFLAG(context);
 }
 
-static void ioctlGenericBlkDevReq( SIGCONTEXT *context )
+static void ioctlGenericBlkDevReq( CONTEXT *context )
 {
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
 	int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -277,7 +291,7 @@ static void ioctlGenericBlkDevReq( SIGCONTEXT *context )
 	}
 }
 
-static void GetSystemDate( SIGCONTEXT *context )
+static void GetSystemDate( CONTEXT *context )
 {
 	struct tm *now;
 	time_t ltime;
@@ -290,7 +304,7 @@ static void GetSystemDate( SIGCONTEXT *context )
 	AX_reg(context) = now->tm_wday;
 }
 
-static void INT21_GetSystemTime( SIGCONTEXT *context )
+static void INT21_GetSystemTime( CONTEXT *context )
 {
 	struct tm *now;
 	struct timeval tv;
@@ -305,11 +319,11 @@ static void INT21_GetSystemTime( SIGCONTEXT *context )
 					/* Note hundredths of seconds */
 }
 
-static void INT21_CreateFile( SIGCONTEXT *context )
+static void INT21_CreateFile( CONTEXT *context )
 {
-    AX_reg(context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+    AX_reg(context) = _lcreat16( PTR_SEG_OFF_TO_LIN( DS_reg(context),
                                           DX_reg(context) ), CX_reg(context) );
-    if (AX_reg(context) == (WORD)HFILE_ERROR)
+    if (AX_reg(context) == (WORD)HFILE_ERROR16)
     {
 	AX_reg(context) = DOS_ExtendedError;
 	SET_CFLAG(context);
@@ -317,11 +331,11 @@ static void INT21_CreateFile( SIGCONTEXT *context )
 }
 
 
-void OpenExistingFile( SIGCONTEXT *context )
+void OpenExistingFile( CONTEXT *context )
 {
-    AX_reg(context) = _lopen( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
+    AX_reg(context) = _lopen16( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
                               AL_reg(context) );
-    if (AX_reg(context) == (WORD)HFILE_ERROR)
+    if (AX_reg(context) == (WORD)HFILE_ERROR16)
     {
         AX_reg(context) = DOS_ExtendedError;
         SET_CFLAG(context);
@@ -398,16 +412,16 @@ void OpenExistingFile( SIGCONTEXT *context )
 #endif
 }
 
-static void CloseFile( SIGCONTEXT *context )
+static void CloseFile( CONTEXT *context )
 {
-    if ((AX_reg(context) = _lclose( BX_reg(context) )) != 0)
+    if ((AX_reg(context) = _lclose16( BX_reg(context) )) != 0)
     {
         AX_reg(context) = DOS_ExtendedError;
         SET_CFLAG(context);
     }
 }
 
-void ExtendedOpenCreateFile(SIGCONTEXT *context )
+void ExtendedOpenCreateFile(CONTEXT *context )
 {
   BYTE action=DL_reg(context);
   dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
@@ -497,7 +511,7 @@ void ExtendedOpenCreateFile(SIGCONTEXT *context )
 }
 
 
-static int INT21_RenameFile( SIGCONTEXT *context )
+static int INT21_RenameFile( CONTEXT *context )
 {
     const char *newname, *oldname;
     char *buffer;
@@ -530,7 +544,7 @@ static int INT21_RenameFile( SIGCONTEXT *context )
 }
 
 
-static void INT21_ChangeDir( SIGCONTEXT *context )
+static void INT21_ChangeDir( CONTEXT *context )
 {
     int drive;
     char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
@@ -550,7 +564,7 @@ static void INT21_ChangeDir( SIGCONTEXT *context )
 }
 
 
-static int INT21_FindFirst( SIGCONTEXT *context )
+static int INT21_FindFirst( CONTEXT *context )
 {
     const char *path, *unixPath, *mask;
     char *p;
@@ -585,10 +599,10 @@ static int INT21_FindFirst( SIGCONTEXT *context )
 }
 
 
-static int INT21_FindNext( SIGCONTEXT *context )
+static int INT21_FindNext( CONTEXT *context )
 {
     FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA();
-    DOS_DIRENT entry;
+    WIN32_FIND_DATA32A entry;
     int count;
 
     if (!dta->unixPath) return 0;
@@ -607,16 +621,16 @@ static int INT21_FindNext( SIGCONTEXT *context )
         return 0;
     }
     dta->count += count;
-    dta->fileattr = entry.attr;
-    dta->filetime = entry.time;
-    dta->filedate = entry.date;
-    dta->filesize = entry.size;
-    strcpy( dta->filename, DOSFS_ToDosDTAFormat( entry.name ) );
+    dta->fileattr = entry.dwFileAttributes;
+    dta->filesize = entry.nFileSizeLow;
+    FileTimeToDosDateTime( &entry.ftLastWriteTime,
+                           &dta->filedate, &dta->filetime );
+    strcpy( dta->filename, entry.cAlternateFileName );
     return 1;
 }
 
 
-static int INT21_CreateTempFile( SIGCONTEXT *context )
+static int INT21_CreateTempFile( CONTEXT *context )
 {
     static int counter = 0;
     char *name = PTR_SEG_OFF_TO_LIN( DS_reg(context), DX_reg(context) );
@@ -627,7 +641,7 @@ static int INT21_CreateTempFile( SIGCONTEXT *context )
         sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
         counter = (counter + 1) % 1000;
 
-        if ((AX_reg(context) = _lcreat_uniq( name, 0 )) != (WORD)HFILE_ERROR)
+        if ((AX_reg(context) = _lcreat_uniq( name, 0 )) != (WORD)HFILE_ERROR16)
         {
             dprintf_int( stddeb, "INT21_CreateTempFile: created %s\n", name );
             return 1;
@@ -637,7 +651,7 @@ static int INT21_CreateTempFile( SIGCONTEXT *context )
 }
 
 
-static int INT21_GetCurrentDirectory( SIGCONTEXT *context ) 
+static int INT21_GetCurrentDirectory( CONTEXT *context ) 
 {
     int drive = DOS_GET_DRIVE( DL_reg(context) );
     char *ptr = (char *)PTR_SEG_OFF_TO_LIN( DS_reg(context), SI_reg(context) );
@@ -653,7 +667,7 @@ static int INT21_GetCurrentDirectory( SIGCONTEXT *context )
 }
 
 
-static int INT21_GetDiskSerialNumber( SIGCONTEXT *context )
+static int INT21_GetDiskSerialNumber( CONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -672,7 +686,7 @@ static int INT21_GetDiskSerialNumber( SIGCONTEXT *context )
 }
 
 
-static int INT21_SetDiskSerialNumber( SIGCONTEXT *context )
+static int INT21_SetDiskSerialNumber( CONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -691,7 +705,7 @@ static int INT21_SetDiskSerialNumber( SIGCONTEXT *context )
 /* microsoft's programmers should be shot for using CP/M style int21
    calls in Windows for Workgroup's winfile.exe */
 
-static int INT21_FindFirstFCB( SIGCONTEXT *context )
+static int INT21_FindFirstFCB( CONTEXT *context )
 {
     BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     FINDFILE_FCB *pFCB;
@@ -719,12 +733,12 @@ static int INT21_FindFirstFCB( SIGCONTEXT *context )
 }
 
 
-static int INT21_FindNextFCB( SIGCONTEXT *context )
+static int INT21_FindNextFCB( CONTEXT *context )
 {
     BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     FINDFILE_FCB *pFCB;
     DOS_DIRENTRY_LAYOUT *pResult = (DOS_DIRENTRY_LAYOUT *)GetCurrentDTA();
-    DOS_DIRENT entry;
+    WIN32_FIND_DATA32A entry;
     BYTE attr;
     int count;
 
@@ -750,18 +764,37 @@ static int INT21_FindNextFCB( SIGCONTEXT *context )
     }
     pFCB->count += count;
 
-    memcpy( pResult->filename, entry.name, sizeof(pResult->filename) );
-    pResult->fileattr = entry.attr;
-    memset( pResult->reserved, 0, sizeof(pResult->reserved) );
-    pResult->filetime = entry.time;
-    pResult->filedate = entry.date;
+    pResult->fileattr = entry.dwFileAttributes;
     pResult->cluster  = 0;  /* what else? */
-    pResult->filesize = entry.size;
+    pResult->filesize = entry.nFileSizeLow;
+    memset( pResult->reserved, 0, sizeof(pResult->reserved) );
+    FileTimeToDosDateTime( &entry.ftLastWriteTime,
+                           &pResult->filedate, &pResult->filetime );
+
+    /* Convert file name to FCB format */
+
+    memset( pResult->filename, ' ', sizeof(pResult->filename) );
+    if (!strcmp( entry.cAlternateFileName, "." )) pResult->filename[0] = '.';
+    else if (!strcmp( entry.cAlternateFileName, ".." ))
+        pResult->filename[0] = pResult->filename[1] = '.';
+    else
+    {
+        char *p = strrchr( entry.cAlternateFileName, '.' );
+        if (p && p[1] && (p != entry.cAlternateFileName))
+        {
+            memcpy( pResult->filename, entry.cAlternateFileName,
+                    MIN( (p - entry.cAlternateFileName), 8 ) );
+            memcpy( pResult->filename + 8, p + 1, MIN( strlen(p), 3 ) );
+        }
+        else
+            memcpy( pResult->filename, entry.cAlternateFileName,
+                    MIN( strlen(entry.cAlternateFileName), 8 ) );
+    }
     return 1;
 }
 
 
-static void DeleteFileFCB( SIGCONTEXT *context )
+static void DeleteFileFCB( CONTEXT *context )
 {
     fprintf( stderr, "DeleteFileFCB: not implemented yet\n" );
 #if 0
@@ -803,7 +836,7 @@ static void DeleteFileFCB( SIGCONTEXT *context )
 #endif
 }
 
-static void RenameFileFCB( SIGCONTEXT *context )
+static void RenameFileFCB( CONTEXT *context )
 {
     fprintf( stderr, "RenameFileFCB: not implemented yet\n" );
 #if 0
@@ -849,7 +882,7 @@ static void RenameFileFCB( SIGCONTEXT *context )
 
 
 
-static void fLock( SIGCONTEXT * context )
+static void fLock( CONTEXT * context )
 {
 #if 0
     struct flock f;
@@ -900,14 +933,15 @@ static void fLock( SIGCONTEXT * context )
 } 
 
 
-static int INT21_GetFileAttribute( SIGCONTEXT * context )
+static int INT21_GetFileAttribute( CONTEXT * context )
 {
     const char *unixName;
+    BY_HANDLE_FILE_INFORMATION info;
 
     unixName = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), TRUE );
     if (!unixName) return 0;
-    if (!FILE_Stat( unixName, &CL_reg(context), NULL, NULL, NULL )) return 0;
-    CH_reg(context) = 0;
+    if (!FILE_Stat( unixName, &info )) return 0;
+    CX_reg(context) = info.dwFileAttributes;
     dprintf_int( stddeb, "INT21_GetFileAttributes(%s) = 0x%x\n",
                  unixName, CX_reg(context) );
     return 1;
@@ -919,13 +953,14 @@ extern void LOCAL_PrintHeap (WORD ds);
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)
  */
-void DOS3Call( SIGCONTEXT *context )
+void DOS3Call( CONTEXT *context )
 {
     dprintf_int( stddeb, "int21: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
                  AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), SI_reg(context), DI_reg(context),
-                 DS_reg(context), ES_reg(context), EFL_reg(context));
+                 (WORD)DS_reg(context), (WORD)ES_reg(context),
+                 EFL_reg(context) );
 
     if (AH_reg(context) == 0x59)  /* Get extended error info */
     {
@@ -1124,6 +1159,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;	
 	    
     case 0x34: /* GET ADDRESS OF INDOS FLAG */
+        if (!heap) INT21_CreateHeap();
         ES_reg(context) = DosHeapHandle;
         BX_reg(context) = (int)&heap->InDosFlag - (int)heap;
         break;
@@ -1168,9 +1204,9 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 	
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
-        AX_reg(context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+        AX_reg(context) = _lcreat16( PTR_SEG_OFF_TO_LIN( DS_reg(context),
                                     DX_reg(context) ), CX_reg(context) );
-        if (AX_reg(context) == (WORD)HFILE_ERROR)
+        if (AX_reg(context) == (WORD)HFILE_ERROR16)
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1182,7 +1218,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
-        if ((AX_reg(context) = _lclose( BX_reg(context) )) != 0)
+        if ((AX_reg(context) = _lclose16( BX_reg(context) )) != 0)
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1206,10 +1242,10 @@ void DOS3Call( SIGCONTEXT *context )
 
     case 0x40: /* "WRITE" - WRITE TO FILE OR DEVICE */
         {
-            LONG result = _hwrite( BX_reg(context),
-                                   PTR_SEG_OFF_TO_LIN( DS_reg(context),
-                                                       DX_reg(context) ),
-                                   CX_reg(context) );
+            LONG result = _hwrite16( BX_reg(context),
+                                     PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                         DX_reg(context) ),
+                                     CX_reg(context) );
             if (result == -1)
             {
                 AX_reg(context) = DOS_ExtendedError;
@@ -1230,10 +1266,10 @@ void DOS3Call( SIGCONTEXT *context )
 
     case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
         {
-            LONG status = _llseek( BX_reg(context),
-                                   MAKELONG(DX_reg(context),CX_reg(context)),
-                                   AL_reg(context) );
-            if (status == HFILE_ERROR)
+            LONG status = _llseek16( BX_reg(context),
+                                     MAKELONG(DX_reg(context),CX_reg(context)),
+                                     AL_reg(context) );
+            if (status == -1)
             {
                 AX_reg(context) = DOS_ExtendedError;
                 SET_CFLAG(context);
@@ -1357,7 +1393,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
-        if ((AX_reg(context) = FILE_Dup(BX_reg(context))) == (WORD)HFILE_ERROR)
+        if ((AX_reg(context) = FILE_Dup(BX_reg(context))) == (WORD)HFILE_ERROR16)
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1365,7 +1401,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
-        if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR)
+        if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR32)
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1389,9 +1425,9 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 	
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-        AX_reg(context) = WinExec( PTR_SEG_OFF_TO_LIN( DS_reg(context),
-                                                        DX_reg(context) ),
-                                    SW_NORMAL );
+        AX_reg(context) = WinExec16( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                         DX_reg(context) ),
+                                     SW_NORMAL );
         if (AX_reg(context) < 32) SET_CFLAG(context);
         break;		
 	
@@ -1441,20 +1477,28 @@ void DOS3Call( SIGCONTEXT *context )
         switch (AL_reg(context))
         {
         case 0x00:  /* Get */
-            if (!FILE_GetDateTime( BX_reg(context), &DX_reg(context),
-                                   &CX_reg(context), TRUE ))
             {
-                AX_reg(context) = DOS_ExtendedError;
-                SET_CFLAG(context);
+                FILETIME filetime;
+                if (!GetFileTime( BX_reg(context), NULL, NULL, &filetime ))
+                {
+                    AX_reg(context) = DOS_ExtendedError;
+                    SET_CFLAG(context);
+                }
+                else FileTimeToDosDateTime( &filetime, &DX_reg(context),
+                                            &CX_reg(context) );
             }
             break;
 
         case 0x01:  /* Set */
-            if (!FILE_SetDateTime( BX_reg(context), DX_reg(context),
-                                   CX_reg(context) ))
             {
-                AX_reg(context) = DOS_ExtendedError;
-                SET_CFLAG(context);
+                FILETIME filetime;
+                DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
+                                       &filetime );
+                if (!SetFileTime( BX_reg(context), NULL, NULL, &filetime ))
+                {
+                    AX_reg(context) = DOS_ExtendedError;
+                    SET_CFLAG(context);
+                }
             }
             break;
         }
@@ -1485,7 +1529,7 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x5b: /* CREATE NEW FILE */
-        if ((AX_reg(context) = _lcreat_uniq( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), 0 )) == (WORD)HFILE_ERROR)
+        if ((AX_reg(context) = _lcreat_uniq( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), 0 )) == (WORD)HFILE_ERROR16)
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1564,14 +1608,11 @@ void DOS3Call( SIGCONTEXT *context )
 	    *(WORD*)(dataptr+3) = WINE_LanguageId;
 	    *(WORD*)(dataptr+5) = CodePage;
 	    break;
-	case 0x06: {
-	    extern  DWORD   DOSMEM_CollateTable;
-
+	case 0x06:
 	    dataptr[0] = 0x06;
 	    *(DWORD*)(dataptr+1) = MAKELONG(DOSMEM_CollateTable & 0xFFFF,DOSMEM_AllocSelector(DOSMEM_CollateTable>>16));
 	    CX_reg(context)         = 258;/*FIXME: size of table?*/
 	    break;
-	}
 	default:
             INT_BARF( context, 0x21 );
             SET_CFLAG(context);
@@ -1656,14 +1697,39 @@ void DOS3Call( SIGCONTEXT *context )
                 SET_CFLAG(context);
             }
             break;
+        case 0x4e:  /* Find first file */
+            /* FIXME: use attributes in CX */
+            if (!(AX_reg(context) = FindFirstFile16(
+                   PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
+                   (WIN32_FIND_DATA32A *)PTR_SEG_OFF_TO_LIN(ES_reg(context),
+                                                            DI_reg(context)))))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+        case 0x4f:  /* Find next file */
+            if (!FindNextFile16( BX_reg(context),
+                    (WIN32_FIND_DATA32A *)PTR_SEG_OFF_TO_LIN(ES_reg(context),
+                                                             DI_reg(context))))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+        case 0xa1:  /* Find close */
+            if (!FindClose16( BX_reg(context) ))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
 	case 0xa0:
 	    break;
         case 0x3b:  /* Change directory */
         case 0x41:  /* Delete file */
         case 0x43:  /* Get/Set file attributes */
         case 0x47:  /* Get current directory */
-        case 0x4e:  /* Find first file */
-        case 0x4f:  /* Find next file */
         case 0x56:  /* Move (rename) file */
         case 0x6c:  /* Create/Open file */
         default:
@@ -1697,22 +1763,6 @@ void DOS3Call( SIGCONTEXT *context )
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
                  AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), SI_reg(context), DI_reg(context),
-                 DS_reg(context), ES_reg(context), EFL_reg(context));
-}
-
-
-BOOL32 INT21_Init(void)
-{
-    if (!(DosHeapHandle = GlobalAlloc16(GMEM_FIXED,sizeof(struct DosHeap))))
-    {
-        fprintf( stderr, "INT21_Init: Out of memory\n");
-        return FALSE;
-    }
-    heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
-
-    dpb = &heap->dpb;
-    dpbsegptr = PTR_SEG_OFF_TO_SEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
-    heap->InDosFlag = 0;
-    strcpy(heap->biosdate, "01/01/80");
-    return TRUE;
+                 (WORD)DS_reg(context), (WORD)ES_reg(context),
+                 EFL_reg(context));
 }

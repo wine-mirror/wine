@@ -7,6 +7,7 @@
  * FIXME: return values might be wrong
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,8 +40,8 @@ struct lzfileheader {
 static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
 
 static struct lzstate {
-	HFILE	lzfd;		/* the handle used by the program */
-	HFILE	realfd;		/* the real filedescriptor */
+	HFILE32	lzfd;		/* the handle used by the program */
+	HFILE32	realfd;		/* the real filedescriptor */
 	CHAR	lastchar;	/* the last char of the filename */
 
 	DWORD	reallength;	/* the decompressed length of the file */
@@ -48,7 +49,7 @@ static struct lzstate {
 	DWORD	realwanted;	/* the position the user wants to read from */
 
 	BYTE	table[0x1000];	/* the rotating LZ table */
-	UINT	curtabent;	/* CURrent TABle ENTry */
+	UINT32	curtabent;	/* CURrent TABle ENTry */
 
 	BYTE	stringlen;	/* length and position of current string */ 
 	DWORD	stringpos;	/* from stringtable */
@@ -73,8 +74,8 @@ _lzget(struct lzstate *lzs,BYTE *b) {
 		return		1;
 	} else {
 		int ret = _lread32(lzs->realfd,lzs->get,GETLEN);
-		if (ret==HFILE_ERROR)
-			return HFILE_ERROR;
+		if (ret==HFILE_ERROR32)
+			return HFILE_ERROR32;
 		if (ret==0)
 			return 0;
 		lzs->getlen	= ret;
@@ -89,11 +90,11 @@ _lzget(struct lzstate *lzs,BYTE *b) {
  * return UNKNOWNALG for unknown algorithm
  * returns lzfileheader in *head
  */
-static INT
-read_header(HFILE fd,struct lzfileheader *head) {
+static INT32 read_header(HFILE32 fd,struct lzfileheader *head)
+{
 	BYTE	buf[14];
 
-	if (_llseek(fd,0,SEEK_SET)==-1)
+	if (_llseek32(fd,0,SEEK_SET)==-1)
 		return LZERROR_BADINHANDLE;
 
 	/* We can't directly read the lzfileheader struct due to 
@@ -114,18 +115,39 @@ read_header(HFILE fd,struct lzfileheader *head) {
 		return LZERROR_UNKNOWNALG;
 	return 1;
 }
-/* 
- * LZStart				[LZEXPAND.7] [LZ32.6]
+
+/***********************************************************************
+ *           LZStart16   (LZEXPAND.7)
  */
-INT16 LZStart(void)
+INT16 LZStart16(void)
 {
-    dprintf_file(stddeb,"LZStart(void)\n");
+    dprintf_file(stddeb,"LZStart16(void)\n");
     return 1;
 }
 
-/*
- * LZInit				[LZEXPAND.3] [LZ32.2]
- * 
+
+/***********************************************************************
+ *           LZStart32   (LZ32.6)
+ */
+INT32 LZStart32(void)
+{
+    dprintf_file(stddeb,"LZStart32(void)\n");
+    return 1;
+}
+
+
+/***********************************************************************
+ *           LZInit16   (LZEXPAND.3)
+ */
+HFILE16 LZInit16( HFILE16 hfSrc )
+{
+    return LZInit32( hfSrc );
+}
+
+
+/***********************************************************************
+ *           LZInit32   (LZ32.2)
+ *
  * initializes internal decompression buffers, returns lzfiledescriptor.
  * (return value the same as hfSrc, if hfSrc is not compressed)
  * on failure, returns error code <0
@@ -135,8 +157,9 @@ INT16 LZStart(void)
  * since _llseek uses the same types as libc.lseek, we just use the macros of 
  *  libc
  */
-HFILE
-LZInit(HFILE hfSrc) {
+HFILE32 LZInit32( HFILE32 hfSrc )
+{
+
 	struct	lzfileheader	head;
 	struct	lzstate		*lzs;
 	DWORD	ret;
@@ -144,7 +167,7 @@ LZInit(HFILE hfSrc) {
 	dprintf_file(stddeb,"LZInit(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);
 	if (ret<=0) {
-		_llseek(hfSrc,0,SEEK_SET);
+		_llseek32(hfSrc,0,SEEK_SET);
 		return ret?ret:hfSrc;
 	}
 	lzstates=xrealloc(lzstates,(++nroflzstates)*sizeof(struct lzstate));
@@ -167,17 +190,27 @@ LZInit(HFILE hfSrc) {
 	return lzs->lzfd;
 }
 
-/*
- * LZDone				[LZEXPAND.9]  [LZ32.8]
- */
 
-void
-LZDone(void) {
-	dprintf_file(stddeb,"LZDone()\n");
+/***********************************************************************
+ *           LZDone   (LZEXPAND.9) (LZ32.8)
+ */
+void LZDone(void)
+{
+    dprintf_file(stddeb,"LZDone()\n");
 }
 
-/*
- * GetExpandedName			[LZEXPAND.10]
+
+/***********************************************************************
+ *           GetExpandedName16   (LZEXPAND.10)
+ */
+INT16 GetExpandedName16( LPCSTR in, LPSTR out )
+{
+    return GetExpandedName32A( in, out );
+}
+
+
+/***********************************************************************
+ *           GetExpandedName32A   (LZ32.9)
  *
  * gets the full filename of the compressed file 'in' by opening it
  * and reading the header
@@ -187,21 +220,21 @@ LZDone(void) {
  * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
  */
 
-INT16
-GetExpandedName16(LPCSTR in,LPSTR out) {
+INT32 GetExpandedName32A( LPCSTR in, LPSTR out )
+{
 	struct lzfileheader	head;
-	HFILE		fd;
+	HFILE32		fd;
 	OFSTRUCT	ofs;
-	INT		fnislowercased,ret,len;
+	INT32		fnislowercased,ret,len;
 	LPSTR		s,t;
 
 	dprintf_file(stddeb,"GetExpandedName(%s)\n",in);
-	fd=OpenFile(in,&ofs,OF_READ);
-	if (fd==HFILE_ERROR)
+	fd=OpenFile32(in,&ofs,OF_READ);
+	if (fd==HFILE_ERROR32)
 		return LZERROR_BADINHANDLE;
 	ret=read_header(fd,&head);
 	if (ret<=0) {
-		_lclose(fd);
+		_lclose32(fd);
 		return LZERROR_BADINHANDLE;
 	}
 
@@ -219,7 +252,7 @@ GetExpandedName16(LPCSTR in,LPSTR out) {
 	if (!*s) {
 		/* FIXME: hmm. shouldn't happen? */
 		fprintf(stddeb,__FILE__":GetExpandedFileName(), specified a directory or what? (%s)\n",in);
-		_lclose(fd);
+		_lclose32(fd);
 		return 1;
 	}
 	/* see if we should use lowercase or uppercase on the last char */
@@ -250,15 +283,16 @@ GetExpandedName16(LPCSTR in,LPSTR out) {
 				t[len]=head.lastchar;
 		}
 	} /* else no modification necessary */
-	_lclose(fd);
+	_lclose32(fd);
 	return 1;
 }
 
-/* 
- * GetExpandedNameW			[LZ32.11] 
+
+/***********************************************************************
+ *           GetExpandedName32W   (LZ32.11)
  */
-INT32
-GetExpandedName32W(LPCWSTR in,LPWSTR out) {
+INT32 GetExpandedName32W( LPCWSTR in, LPWSTR out )
+{
 	char	*xin,*xout;
 	INT32	ret;
 
@@ -271,26 +305,21 @@ GetExpandedName32W(LPCWSTR in,LPWSTR out) {
 	return	ret;
 }
 
-/* 
- * GetExpandedNameA			[LZ32.9] 
+
+/***********************************************************************
+ *           LZRead16   (LZEXPAND.5)
  */
-INT32
-GetExpandedName32A(LPCSTR in,LPSTR out) {
-	return	GetExpandedName16(in,out);
+INT16 LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
+{
+    return LZRead32(fd,buf,toread);
 }
 
-/*
- * LZRead				[LZEXPAND.5] [LZ32.4]
- * just as normal read, but reads from LZ special fd and uncompresses.
- */
-INT16
-LZRead16(HFILE fd,SEGPTR segbuf,UINT16 toread) {
-	dprintf_file(stddeb,"LZRead16(%d,%08lx,%d)\n",fd,(DWORD)segbuf,toread);
-	return LZRead32(fd,(LPBYTE)PTR_SEG_TO_LIN(segbuf),toread);
-}
 
-INT32
-LZRead32(HFILE fd,LPVOID vbuf,UINT32 toread) {
+/***********************************************************************
+ *           LZRead32   (LZ32.4)
+ */
+INT32 LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
+{
 	int	i,howmuch;
 	BYTE	b,*buf;
 	struct	lzstate	*lzs;
@@ -358,7 +387,7 @@ LZRead32(HFILE fd,LPVOID vbuf,UINT32 toread) {
 		 */
 		if (lzs->realcurrent>lzs->realwanted) {
 			/* flush decompressor state */
-			_llseek(lzs->realfd,14,SEEK_SET);
+			_llseek32(lzs->realfd,14,SEEK_SET);
 			GET_FLUSH(lzs);
 			lzs->realcurrent= 0;
 			lzs->bytetype	= 0;
@@ -381,14 +410,21 @@ LZRead32(HFILE fd,LPVOID vbuf,UINT32 toread) {
 #undef DECOMPRESS_ONE_BYTE
 }
 
-/* 
- * LZSeek				[LZEXPAND.4] [LZ32.3]
- *
- * works as the usual _llseek
- */
 
-LONG
-LZSeek(HFILE fd,LONG off,INT32 type) {
+/***********************************************************************
+ *           LZSeek16   (LZEXPAND.4)
+ */
+LONG LZSeek16( HFILE16 fd, LONG off, INT16 type )
+{
+    return LZSeek32( fd, off, type );
+}
+
+
+/***********************************************************************
+ *           LZSeek32   (LZ32.3)
+ */
+LONG LZSeek32( HFILE32 fd, LONG off, INT32 type )
+{
 	int	i;
 	struct	lzstate	*lzs;
 	LONG	newwanted;
@@ -399,7 +435,7 @@ LZSeek(HFILE fd,LONG off,INT32 type) {
 			break;
 	/* not compressed? just use normal _llseek() */
 	if (i==nroflzstates)
-		return _llseek(fd,off,type);
+		return _llseek32(fd,off,type);
 	lzs		= lzstates+i;
 	newwanted	= lzs->realwanted;
 	switch (type) {
@@ -421,20 +457,30 @@ LZSeek(HFILE fd,LONG off,INT32 type) {
 	return newwanted;
 }
 
-/* 
- * LZCopy			[LZEXPAND.1] [LZ32.0]
+
+/***********************************************************************
+ *           LZCopy16   (LZEXPAND.1)
+ */
+LONG LZCopy16( HFILE16 src, HFILE16 dest )
+{
+    return LZCopy32( src, dest );
+}
+
+
+/***********************************************************************
+ *           LZCopy32   (LZ32.0)
  *
  * Copies everything from src to dest
  * if src is a LZ compressed file, it will be uncompressed.
  * will return the number of bytes written to dest or errors.
  */
-LONG
-LZCopy(HFILE src,HFILE dest) {
+LONG LZCopy32( HFILE32 src, HFILE32 dest )
+{
 	int	i,ret,wret;
 	LONG	len;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	INT32	(*xread)(HFILE,LPVOID,UINT32);
+	INT32	(*xread)(HFILE32,LPVOID,UINT32);
 
 	dprintf_file(stddeb,"LZCopy(%d,%d)\n",src,dest);
 	for (i=0;i<nroflzstates;i++)
@@ -443,7 +489,7 @@ LZCopy(HFILE src,HFILE dest) {
 
 	/* not compressed? just copy */
 	if (i==nroflzstates)
-		xread=(INT32(*)(HFILE,LPVOID,UINT32))_lread32;
+		xread=(INT32(*)(HFILE32,LPVOID,UINT32))_lread32;
 	else
 		xread=LZRead32;
 	len=0;
@@ -482,54 +528,58 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
     return mfn;
 }
 
-/*
- * LZOpenFile				[LZEXPAND.2]
+
+/***********************************************************************
+ *           LZOpenFile16   (LZEXPAND.2)
+ */
+HFILE16 LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
+{
+    return LZOpenFile32A( fn, ofs, mode );
+}
+
+
+/***********************************************************************
+ *           LZOpenFile32A   (LZ32.1)
+ *
  * Opens a file. If not compressed, open it as a normal file.
  */
-HFILE
-LZOpenFile16(LPCSTR fn,LPOFSTRUCT ofs,UINT16 mode) {
-	HFILE	fd,cfd;
+HFILE32 LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+{
+	HFILE32	fd,cfd;
 
 	dprintf_file(stddeb,"LZOpenFile(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
-	fd=OpenFile(fn,ofs,mode);
-	if (fd==HFILE_ERROR)
+	fd=OpenFile32(fn,ofs,mode);
+	if (fd==HFILE_ERROR32)
         {
             LPSTR mfn = LZEXPAND_MangleName(fn);
-            fd = OpenFile(mfn,ofs,mode);
+            fd = OpenFile32(mfn,ofs,mode);
             free( mfn );
 	}
 	if ((mode&~0x70)!=OF_READ)
 		return fd;
-	if (fd==HFILE_ERROR)
-		return HFILE_ERROR;
-	cfd=LZInit(fd);
+	if (fd==HFILE_ERROR32)
+		return HFILE_ERROR32;
+	cfd=LZInit32(fd);
 	if (cfd<=0)
 		return fd;
 	return cfd;
 }
 
-/* 
- * LZOpenFileA				[LZ32.1]
- */
-HFILE
-LZOpenFile32A(LPCSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
-	return LZOpenFile16(fn,ofs,mode);
-}
 
-/* 
- * LZOpenFileW				[LZ32.10]
+/***********************************************************************
+ *           LZOpenFile32W   (LZ32.10)
  */
-HFILE
-LZOpenFile32W(LPCWSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
+HFILE32 LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+{
 	LPSTR	xfn;
 	LPWSTR	yfn;
-	HFILE	ret;
+	HFILE32	ret;
 
 	xfn	= HEAP_strdupWtoA( GetProcessHeap(), 0, fn);
 	ret	= LZOpenFile16(xfn,ofs,mode);
 	HeapFree( GetProcessHeap(), 0, xfn );
-	if (ret!=HFILE_ERROR) {
+	if (ret!=HFILE_ERROR32) {
 		/* ofs->szPathName is an array with the OFSTRUCT */
                 yfn = HEAP_strdupAtoW( GetProcessHeap(), 0, ofs->szPathName );
 		memcpy(ofs->szPathName,yfn,lstrlen32W(yfn)*2+2);
@@ -538,11 +588,21 @@ LZOpenFile32W(LPCWSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
 	return	ret;
 }
 
-/*
- * LZClose			[LZEXPAND.6] [LZ32.5]
+
+/***********************************************************************
+ *           LZClose16   (LZEXPAND.6)
  */
-void
-LZClose(HFILE fd) {
+void LZClose16( HFILE16 fd )
+{
+    return LZClose32( fd );
+}
+
+
+/***********************************************************************
+ *           LZClose32   (LZ32.5)
+ */
+void LZClose32( HFILE32 fd )
+{
 	int	i;
 
 	dprintf_file(stddeb,"LZClose(%d)\n",fd);
@@ -550,25 +610,35 @@ LZClose(HFILE fd) {
 		if (lzstates[i].lzfd==fd)
 			break;
 	if (i==nroflzstates) {
-		_lclose(fd);
+		_lclose32(fd);
 		return;
 	}
 	if (lzstates[i].get)
 		free(lzstates[i].get);
-	_lclose(lzstates[i].realfd);
+	_lclose32(lzstates[i].realfd);
 	memcpy(lzstates+i,lzstates+i+1,sizeof(struct lzstate)*(nroflzstates-i-1));
 	nroflzstates--;
 	lzstates=xrealloc(lzstates,sizeof(struct lzstate)*nroflzstates);
 }
 
-/*
- * CopyLZFile				[LZEXPAND.8] [LZ32.7]
+/***********************************************************************
+ *           CopyLZFile16   (LZEXPAND.8)
+ */
+LONG CopyLZFile16( HFILE16 src, HFILE16 dest )
+{
+    dprintf_file(stddeb,"CopyLZFile16(%d,%d)\n",src,dest);
+    return LZCopy32(src,dest);
+}
+
+
+/***********************************************************************
+ *           CopyLZFile32  (LZ32.7)
  *
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.
  */
-LONG
-CopyLZFile(HFILE src,HFILE dest) {
-	dprintf_file(stddeb,"CopyLZFile(%d,%d)\n",src,dest);
-	return LZCopy(src,dest);
+LONG CopyLZFile32( HFILE32 src, HFILE32 dest )
+{
+    dprintf_file(stddeb,"CopyLZFile32(%d,%d)\n",src,dest);
+    return LZCopy32(src,dest);
 }

@@ -4,19 +4,19 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#ifndef WINELIB
-
+#include <assert.h>
 #include <ctype.h>
 #include <string.h>
 #include "windows.h"
 #include "gdi.h"
 #include "global.h"
 #include "module.h"
+#include "miscemu.h"
 #include "neexe.h"
+#include "stackframe.h"
 #include "user.h"
 #include "stddebug.h"
 #include "debug.h"
-
 
 /* Built-in modules descriptors */
 /* Don't change these structures! (see tools/build.c) */
@@ -166,6 +166,8 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { NULL, 0 }
 };
 
+  /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
+#define FIRST_INTERRUPT_ORDINAL 100
 
 /***********************************************************************
  *           BUILTIN_Init
@@ -176,14 +178,12 @@ BOOL16 BUILTIN_Init(void)
 {
     BUILTIN_DLL *dll;
     NE_MODULE *pModule;
+    WORD vector;
+    HMODULE16 hModule;
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
         if (dll->flags & DLL_FLAG_ALWAYS_USED)
             if (!BUILTIN_LoadModule(dll->descr->name, TRUE)) return FALSE;
-
-    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-
-    MODULE_SetEntryPoint( GetModuleHandle( "KERNEL" ), 178, GetWinFlags() );
 
     /* Set the USER and GDI heap selectors */
 
@@ -191,6 +191,40 @@ BOOL16 BUILTIN_Init(void)
     USER_HeapSel = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
     pModule      = MODULE_GetPtr( GetModuleHandle( "GDI" ));
     GDI_HeapSel  = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
+
+    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
+
+    hModule = GetModuleHandle( "KERNEL" );
+    MODULE_SetEntryPoint( hModule, 178, GetWinFlags() );
+
+    /* Initialize the real-mode selector entry points */
+
+#define SET_ENTRY_POINT(num,addr) \
+    MODULE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
+                                  DOSMEM_dosmem+(addr), 0x10000, hModule, \
+                                  FALSE, FALSE, FALSE, NULL ))
+
+    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
+    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
+    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
+    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
+    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
+    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
+    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
+    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
+    MODULE_SetEntryPoint(hModule,193,DOSMEM_BiosSeg); /* KERNEL.193: __0040H */
+#undef SET_ENTRY_POINT
+
+    /* Set interrupt vectors from entry points in WPROCS.DLL */
+
+    hModule = GetModuleHandle( "WPROCS" );
+    for (vector = 0; vector < 256; vector++)
+    {
+        FARPROC16 proc = MODULE_GetEntryPoint( hModule,
+                                               FIRST_INTERRUPT_ORDINAL+vector);
+        assert(proc);
+        INT_SetHandler( vector, proc );
+    }
 
     return TRUE;
 }
@@ -416,6 +450,20 @@ FARPROC32 BUILTIN_GetProcAddress32( NE_MODULE *pModule, LPCSTR function )
 }
 
 
+/**********************************************************************
+ *	    BUILTIN_DefaultIntHandler
+ *
+ * Default interrupt handler.
+ */
+void BUILTIN_DefaultIntHandler( CONTEXT *context )
+{
+    WORD ordinal;
+    STACK16FRAME *frame = CURRENT_STACK16;
+    BUILTIN_GetEntryPoint16( frame->entry_cs, frame->entry_ip, &ordinal );
+    INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
+}
+
+
 /***********************************************************************
  *           BUILTIN_ParseDLLOptions
  *
@@ -475,5 +523,3 @@ void BUILTIN_PrintDLLs(void)
     fprintf(stderr,"\n");
     exit(1);
 }
-
-#endif  /* WINELIB */

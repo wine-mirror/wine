@@ -25,11 +25,36 @@ UINT32 GetACP(void)
 /***********************************************************************
  *           GetCPInfo            (KERNEL32.154)
  */
-BOOL GetCPInfo(UINT codepage, LPCPINFO cpinfo)
+BOOL32 GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
 {
-    cpinfo->MaxCharSize = 1;
     cpinfo->DefaultChar[0] = '?';
-
+    switch (codepage)
+    {
+    case 932 : /* Shift JIS (japan) */
+        cpinfo->MaxCharSize = 2;
+        cpinfo->LeadByte[0]= 0x81; cpinfo->LeadByte[1] = 0x9F;
+        cpinfo->LeadByte[2]= 0xE0; cpinfo->LeadByte[3] = 0xFC;
+        cpinfo->LeadByte[4]= 0x00; cpinfo->LeadByte[5] = 0x00;
+        break;
+    case 936 : /* GB2312 (Chinese) */
+    case 949 : /* KSC5601-1987 (Korean) */
+    case 950 : /* BIG5 (Chinese) */
+        cpinfo->MaxCharSize = 2;
+        cpinfo->LeadByte[0]= 0x81; cpinfo->LeadByte[1] = 0xFE;
+        cpinfo->LeadByte[2]= 0x00; cpinfo->LeadByte[3] = 0x00;
+        break;
+    case 1361 : /* Johab (Korean) */
+        cpinfo->MaxCharSize = 2;
+        cpinfo->LeadByte[0]= 0x84; cpinfo->LeadByte[1] = 0xD3;
+        cpinfo->LeadByte[2]= 0xD8; cpinfo->LeadByte[3] = 0xDE;
+        cpinfo->LeadByte[4]= 0xE0; cpinfo->LeadByte[5] = 0xF9;
+        cpinfo->LeadByte[6]= 0x00; cpinfo->LeadByte[7] = 0x00;
+        break;
+    default :
+    	cpinfo->MaxCharSize = 1;
+        cpinfo->LeadByte[0]= 0x00; cpinfo->LeadByte[1] = 0x00;
+    	break;
+    }
     return 1;
 }
 
@@ -85,6 +110,29 @@ int WideCharToMultiByte(UINT page, DWORD flags, WCHAR *src, int srclen,
 	}
 	return count;
 }
+
+
+BOOL32 IsDBCSLeadByteEx(UINT32 codepage, BYTE testchar)
+{
+    CPINFO cpinfo;
+    int i;
+
+    GetCPInfo(codepage, &cpinfo);
+    for (i = 0 ; i < sizeof(cpinfo.LeadByte)/sizeof(cpinfo.LeadByte[0]); i+=2)
+    {
+	if (cpinfo.LeadByte[i] == 0)
+            return FALSE;
+	if (cpinfo.LeadByte[i] <= testchar && testchar <= cpinfo.LeadByte[i+1])
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL32 IsDBCSLeadByte(BYTE testchar)
+{
+    return IsDBCSLeadByteEx(GetACP(), testchar);
+}
+
 
 /***********************************************************************
  *              EnumSystemCodePages32A                (KERNEL32.92)

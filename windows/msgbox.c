@@ -2,11 +2,10 @@
  * Message boxes
  *
  * Copyright 1995 Bernd Schmidt
- *
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
-#include <malloc.h>
 #include "windows.h"
 #include "dlgs.h"
 #include "heap.h"
@@ -15,19 +14,27 @@
 #include "resource.h"
 #include "task.h"
 
-typedef struct {
-  LPCSTR title;
-  LPCSTR text;
-  WORD  type;
+typedef struct
+{
+    LPCSTR title;
+    LPCSTR text;
+    UINT32 type;
 } MSGBOX, *LPMSGBOX;
 
-LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lParam)
+
+/**************************************************************************
+ *           MSGBOX_DlgProc
+ *
+ * Dialog procedure for message boxes.
+ */
+static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
+                               WPARAM32 wParam, LPARAM lParam )
 {
   LPMSGBOX lpmb;
-  RECT16 rect, textrect;
-  HWND hItem;
+  RECT32 rect, textrect;
+  HWND32 hItem;
   HDC32 hdc;
-  LONG lRet;
+  LRESULT lRet;
   int i, buttons, bwidth, bheight, theight, wwidth, bpos;
   int borheight, iheight, tiheight;
   
@@ -86,21 +93,21 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
     }
     
     /* Position everything */
-    GetWindowRect16(hwnd, &rect);
+    GetWindowRect32(hwnd, &rect);
     borheight = rect.bottom - rect.top;
     wwidth = rect.right - rect.left;
-    GetClientRect16(hwnd, &rect);
+    GetClientRect32(hwnd, &rect);
     borheight -= rect.bottom - rect.top;
 
     /* Get the icon height */
-    GetWindowRect16(GetDlgItem(hwnd, 1088), &rect);
+    GetWindowRect32(GetDlgItem(hwnd, 1088), &rect);
     iheight = rect.bottom - rect.top;
     
     /* Get the number of visible buttons and their width */
-    GetWindowRect16(GetDlgItem(hwnd, 2), &rect);
+    GetWindowRect32(GetDlgItem(hwnd, 2), &rect);
     bheight = rect.bottom - rect.top;
     bwidth = rect.left;
-    GetWindowRect16(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect32(GetDlgItem(hwnd, 1), &rect);
     bwidth -= rect.left;
     for (buttons = 0, i = 1; i < 8; i++)
     {
@@ -110,13 +117,13 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
     
     /* Get the text size */
     hItem = GetDlgItem(hwnd, 100);
-    GetWindowRect16(hItem, &textrect);
-    MapWindowPoints16(0, hwnd, (LPPOINT16)&textrect, 2);
+    GetWindowRect32(hItem, &textrect);
+    MapWindowPoints32(0, hwnd, (LPPOINT32)&textrect, 2);
     
-    GetClientRect16(hItem, &rect);
+    GetClientRect32(hItem, &rect);
     hdc = GetDC32(hItem);
-    lRet = DrawText16( hdc, lpmb->text, -1, &rect,
-                       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
+    lRet = DrawText32A( hdc, lpmb->text, -1, &rect,
+                        DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     theight = rect.bottom  - rect.top;
     tiheight = 16 + MAX(iheight, theight);
     ReleaseDC32(hItem, hdc);
@@ -128,8 +135,8 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
     
     /* Position the icon */
     hItem = GetDlgItem(hwnd, 1088);
-    GetWindowRect16(hItem, &rect);
-    MapWindowPoints16(0, hwnd, (LPPOINT16)&rect, 2);
+    GetWindowRect32(hItem, &rect);
+    MapWindowPoints32(0, hwnd, (LPPOINT32)&rect, 2);
     SetWindowPos(hItem, 0, rect.left, (tiheight - iheight) / 2, 0, 0,
 		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
     
@@ -139,7 +146,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
     
     /* Position the buttons */
     bpos = (wwidth - bwidth * buttons) / 2;
-    GetWindowRect16(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect32(GetDlgItem(hwnd, 1), &rect);
     for (buttons = i = 0; i < 7; i++) {
       /* some arithmetic to get the right order for YesNoCancel windows */
       hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
@@ -157,7 +164,8 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
     break;
     
    case WM_COMMAND:
-    switch (wParam) {
+    switch (wParam)
+    {
      case IDOK:
      case IDCANCEL:
      case IDABORT:
@@ -173,6 +181,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lPara
   return 0;
 }
 
+
 /**************************************************************************
  *           MessageBox16   (USER.1)
  */
@@ -181,61 +190,60 @@ INT16 MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
     return MessageBox32A( hwnd, text, title, type );
 }
 
+
 /**************************************************************************
  *           MessageBox32A   (USER32.390)
  */
 INT32 MessageBox32A( HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type )
 {
-    HANDLE16 handle;
     MSGBOX mbox;
-    int ret;
-
     mbox.title = title;
     mbox.text  = text;
     mbox.type  = type;
-
-    handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
-    if (!handle) return 0;
-    ret = DialogBoxIndirectParam16( WIN_GetWindowInstance(hWnd),
-                                  handle, hWnd,
-                                  MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
-                                  (LONG)&mbox );
-    SYSRES_FreeResource( handle );
-    return ret;
+    return DialogBoxIndirectParam32A( WIN_GetWindowInstance(hWnd),
+                                      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+                                      hWnd, MSGBOX_DlgProc, (LPARAM)&mbox );
 }
+
 
 /**************************************************************************
  *           MessageBox32W   (USER32.395)
  */
-INT32 MessageBox32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title, UINT32 type )
+INT32 MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title, UINT32 type )
 {
-    HANDLE16 handle;
-    MSGBOX mbox;
-    int ret;
-
-    mbox.title = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    mbox.text  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
-    mbox.type  = type;
-
-    fprintf(stderr,"MessageBox(%s,%s)\n",mbox.text,mbox.title);
-    handle = SYSRES_LoadResource( SYSRES_DIALOG_MSGBOX );
-    if (!handle) return 0;
-    ret = DialogBoxIndirectParam16( WIN_GetWindowInstance(hWnd),
-                                  handle, hWnd,
-                                  MODULE_GetWndProcEntry16("SystemMessageBoxProc"),
-                                  (LONG)&mbox );
-    SYSRES_FreeResource( handle );
-    HeapFree( GetProcessHeap(), 0, mbox.title );
-    HeapFree( GetProcessHeap(), 0, mbox.text );
+    LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
+    LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
+    INT32 ret = MessageBox32A( hwnd, textA, titleA, type );
+    HeapFree( GetProcessHeap(), 0, titleA );
+    HeapFree( GetProcessHeap(), 0, textA );
     return ret;
 }
 
-/**************************************************************************
- *			FatalAppExit  [USER.137]
- */
 
-void FatalAppExit(UINT fuAction, LPCSTR str)
+/**************************************************************************
+ *           FatalAppExit16   (KERNEL.137)
+ */
+void FatalAppExit16( UINT16 action, LPCSTR str )
 {
-  MessageBox16(0, str, NULL, MB_SYSTEMMODAL | MB_OK);
-  TASK_KillCurrentTask(0);
+    FatalAppExit32A( action, str );
+}
+
+
+/**************************************************************************
+ *           FatalAppExit32A   (KERNEL32.108)
+ */
+void FatalAppExit32A( UINT32 action, LPCSTR str )
+{
+    MessageBox32A( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    TASK_KillCurrentTask(0);
+}
+
+
+/**************************************************************************
+ *           FatalAppExit32W   (KERNEL32.109)
+ */
+void FatalAppExit32W( UINT32 action, LPCWSTR str )
+{
+    MessageBox32W( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    TASK_KillCurrentTask(0);
 }

@@ -25,7 +25,7 @@ base	1
 0020 stdcall ClearCommBreak(long) ClearCommBreak32
 0021 stdcall ClearCommError(long ptr ptr) ClearCommError
 0022 stub CloseConsoleHandle
-0023    stdcall CloseHandle(long) CloseHandle
+0023 stdcall CloseHandle(long) CloseHandle
 0024 stub CloseProfileUserMapping
 0025 stub CmdBatNotification
 0026 stub CommConfigDialogA
@@ -110,8 +110,8 @@ base	1
 0105 stub ExpungeConsoleCommandHistoryA
 0106 stub ExpungeConsoleCommandHistoryW
 0107 stub ExtendVirtualBuffer
-0108 stub FatalAppExitA
-0109 stub FatalAppExitW
+0108 stdcall FatalAppExitA(long ptr) FatalAppExit32A
+0109 stdcall FatalAppExitW(long ptr) FatalAppExit32W
 0110 stub FatalExit
 0111 stdcall FileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
 0112 stdcall FileTimeToLocalFileTime(ptr ptr) FileTimeToLocalFileTime
@@ -201,9 +201,9 @@ base	1
 0196 stdcall GetCurrentDirectoryA(long ptr) GetCurrentDirectory32A
 0197 stdcall GetCurrentDirectoryW(long ptr) GetCurrentDirectory32W
 0198 stdcall GetCurrentProcess() GetCurrentProcess
-0199 stdcall GetCurrentProcessId() GetCurrentThreadId
-0200 	stdcall GetCurrentThread() GetCurrentThread
-0201	stdcall GetCurrentThreadId()	GetCurrentThreadId
+0199 stdcall GetCurrentProcessId() GetCurrentProcessId
+0200 stdcall GetCurrentThread() GetCurrentThread
+0201 stdcall GetCurrentThreadId() GetCurrentThreadId
 0202 stub GetDateFormatA
 0203 stub GetDateFormatW
 0204 stub GetDefaultCommConfigA
@@ -398,7 +398,7 @@ base	1
 0393 stub OpenConsoleW
 0394 stub OpenEventA
 0395 stub OpenEventW
-0396 stdcall OpenFile(ptr ptr long) OpenFile
+0396 stdcall OpenFile(ptr ptr long) OpenFile32
 0397 stdcall OpenFileMappingA(long long ptr) OpenFileMapping
 0398 stub OpenFileMappingW
 0399 stub OpenMutexA
@@ -499,7 +499,7 @@ base	1
 0494 stdcall SetHandleCount(long) SetHandleCount32
 0495 stub SetHandleInformation
 0496 stub SetLastConsoleEventActive
-0497    stdcall SetLastError(long) SetLastError
+0497 stdcall SetLastError(long) SetLastError
 0498 stub SetLocalTime
 0499 stdcall SetLocaleInfoA(long long ptr) SetLocaleInfoA
 0500 stub SetLocaleInfoW
@@ -533,9 +533,9 @@ base	1
 0528 stub TerminateProcess
 0529 stub TerminateThread
 0530 stdcall TlsAlloc()	TlsAlloc
-0531 stdcall TlsFree(long)	TlsFree
-0532 stdcall TlsGetValue(long)	TlsGetValue
-0533 stdcall TlsSetValue(long ptr)	TlsSetValue
+0531 stdcall TlsFree(long) TlsFree
+0532 stdcall TlsGetValue(long) TlsGetValue
+0533 stdcall TlsSetValue(long ptr) TlsSetValue
 0534 stub TransactNamedPipe
 0535 stdcall TransmitCommChar(long long) TransmitCommChar32
 0536 stub TrimVirtualBuffer
@@ -568,7 +568,7 @@ base	1
 0563 stub WaitNamedPipeA
 0564 stub WaitNamedPipeW
 0565 stdcall WideCharToMultiByte(long long ptr long ptr long ptr ptr)	WideCharToMultiByte
-0566 stdcall WinExec(ptr long) WinExec
+0566 stdcall WinExec(ptr long) WinExec32
 0567 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
 0568 stub WriteConsoleInputA
 0569 stub WriteConsoleInputVDMA
@@ -592,12 +592,12 @@ base	1
 0587 stdcall WriteProfileStringA(ptr ptr ptr) WriteProfileString32A
 0588 stdcall WriteProfileStringW(ptr ptr ptr) WriteProfileString32W
 0589 stub WriteTapemark
-0590 stdcall _hread(long ptr long) _hread
-0591 stdcall _hwrite(long ptr long) _hwrite
-0592 stdcall _lclose(long) _lclose
-0593 stdcall _lcreat(ptr long) _lcreat
-0594 stdcall _llseek(long long long) _llseek
-0595 stdcall _lopen(ptr long) _lopen
+0590 stdcall _hread(long ptr long) _hread32
+0591 stdcall _hwrite(long ptr long) _hwrite32
+0592 stdcall _lclose(long) _lclose32
+0593 stdcall _lcreat(ptr long) _lcreat32
+0594 stdcall _llseek(long long long) _llseek32
+0595 stdcall _lopen(ptr long) _lopen32
 0596 stdcall _lread(long ptr long) _lread32
 0597 stdcall _lwrite(long ptr long) _lwrite32
 0598 stdcall lstrcat(ptr ptr) lstrcat32A

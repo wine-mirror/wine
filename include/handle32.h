@@ -1,8 +1,48 @@
+/*
+ * KERNEL32 objects
+ *
+ * Copyright 1996 Alexandre Julliard
+ */
+
 #ifndef __WINE_HANDLE32_H
 #define __WINE_HANDLE32_H
 
-#include <stdlib.h>
 #include "wintypes.h"
+
+/* Object types */
+typedef enum
+{
+    K32OBJ_UNKNOWN = 0,
+    K32OBJ_SEMAPHORE,
+    K32OBJ_EVENT,
+    K32OBJ_MUTEX,
+    K32OBJ_CRITICAL_SECTION,
+    K32OBJ_PROCESS,
+    K32OBJ_THREAD,
+    K32OBJ_FILE,
+    K32OBJ_CHANGE,
+    K32OBJ_CONSOLE,
+    K32OBJ_SCREEN_BUFFER,
+    K32OBJ_MEM_MAPPED_FILE,
+    K32OBJ_SERIAL,
+    K32OBJ_DEVICE_IOCTL,
+    K32OBJ_PIPE,
+    K32OBJ_MAILSLOT,
+    K32OBJ_TOOLHELP_SNAPSHOT,
+    K32OBJ_SOCKET,
+    K32OBJ_NBOBJECTS
+} K32OBJ_TYPE;
+
+/* Kernel object */
+typedef struct
+{
+    K32OBJ_TYPE   type;
+    DWORD         refcount;
+} K32OBJ;
+
+extern void K32OBJ_IncCount( K32OBJ *ptr );
+extern void K32OBJ_DecCount( K32OBJ *ptr );
+
 
 /* The _*_OBJECT structures contain information needed about each
  * particular type of handle.  This information is a combination of
@@ -16,63 +56,6 @@
 typedef struct {
     unsigned long       magic;
 } KERNEL_OBJECT;
-
-typedef struct {
-    KERNEL_OBJECT       common;
-    unsigned long       thread_id;
-    unsigned long       process_id;
-} THREAD_OBJECT;
-
-typedef struct {
-    KERNEL_OBJECT       common;
-    unsigned long       process_id;
-    unsigned long       main_thread_id;
-} PROCESS_OBJECT;
-
-typedef struct {
-    KERNEL_OBJECT	common;
-    HFILE		hfile;
-    int			prot;
-    unsigned long	size;
-} FILEMAP_OBJECT;
-
-typedef struct {
-    KERNEL_OBJECT       common;
-} SEMAPHORE_OBJECT;
-
-typedef struct {
-    KERNEL_OBJECT       common;
-} EVENT_OBJECT;
-
-/* Should this even be here?
- */
-typedef struct {
-    KERNEL_OBJECT       common;
-} REGKEY_OBJECT;
-
-typedef struct _VRANGE_OBJECT{
-	KERNEL_OBJECT		common;
-	DWORD				start;
-	DWORD				size;
-	struct _VRANGE_OBJECT *next;
-} VRANGE_OBJECT;
-
-struct _HEAPITEM_OBJECT;
-typedef struct{
-	KERNEL_OBJECT		common;
-	LPVOID	start;
-	DWORD	size;
-	DWORD	maximum;
-	DWORD	flags;
-	struct _HEAPITEM_OBJECT *first,*last;
-} HEAP_OBJECT;
-
-typedef struct _HEAPITEM_OBJECT{
-	KERNEL_OBJECT	common;
-	HEAP_OBJECT	*heap;
-	DWORD size;		/* size including header */
-	struct _HEAPITEM_OBJECT *next,*prev;
-} HEAPITEM_OBJECT;
 
 
 /* Object number definitions.  These numbers are used to
@@ -100,9 +83,5 @@ int ValidateKernelObject(KERNEL_OBJECT *ptr);
  */
 #define CreateKernelObject(size) (malloc(size))
 #define ReleaseKernelObject(ptr) (free(ptr))
-
-/* Prototypes for the Close*Handle functions
- */
-int CloseFileHandle(HFILE hFile);
 
 #endif /* __WINE_HANDLE32_H */

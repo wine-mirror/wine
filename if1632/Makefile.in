@@ -55,6 +55,7 @@ DLLS = \
 SPEC_FILES = $(DLLS:.spec=.s)
 
 C_SRCS = \
+	builtin.c \
 	dummy.c \
 	relay.c \
 	thunk.c

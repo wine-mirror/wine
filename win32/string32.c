@@ -15,26 +15,11 @@
 #include "string32.h"
 #include "xmalloc.h"
 
-LPSTR STRING32_DupUniToAnsi(LPCWSTR src)
-{
-	LPSTR dest=xmalloc(lstrlen32W(src)+1);
-	lstrcpyWtoA(dest,src);
-	return dest;
-}
-
 LPWSTR STRING32_DupAnsiToUni(LPCSTR src)
 {
 	LPWSTR dest=xmalloc(2*strlen(src)+2);
 	lstrcpyAtoW(dest,src);
 	return dest;
-}
-
-/* not an API function */
-
-WCHAR STRING32_tolowerW(WCHAR c)
-{
-	/* FIXME: Unicode */
-	return tolower(c);
 }
 
 LPWSTR

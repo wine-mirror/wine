@@ -8,20 +8,9 @@
 #define __WINE_DOS_FS_H
 
 #include <time.h>
-#include "wintypes.h"
+#include "windows.h"
 
-#define MAX_FILENAME_LEN   256
 #define MAX_PATHNAME_LEN   1024
-
-typedef struct
-{
-    char   name[12];                    /* File name in FCB format */
-    char   unixname[MAX_FILENAME_LEN];  /* Unix file name */
-    DWORD  size;                        /* File size in bytes */
-    WORD   date;                        /* File date in DOS format */
-    WORD   time;                        /* File time in DOS format */
-    BYTE   attr;                        /* File DOS attributes */
-} DOS_DIRENT;
 
 #define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
@@ -30,17 +19,16 @@ extern time_t DOSFS_DosDateTimeToUnixTime(WORD,WORD);
 extern const char *DOSFS_ToDosFCBFormat( const char *name );
 extern const char *DOSFS_ToDosDTAFormat( const char *name );
 extern const char *DOSFS_IsDevice( const char *name );
+extern BOOL32 DOSFS_FindUnixName( const char *path, const char *name,
+                                  char *buffer, int maxlen,
+                                  UINT32 drive_flags );
 extern const char * DOSFS_GetUnixFileName( const char * name, int check_last );
 extern const char * DOSFS_GetDosTrueName( const char *name, int unix_format );
 extern int DOSFS_GetDosFileName( const char *name, char *buffer, int len );
-extern time_t DOSFS_FileTimeToUnixTime(LPFILETIME ft);
+extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft );
 extern void DOSFS_UnixTimeToFileTime(time_t unixtime,LPFILETIME ft);
 extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
-                           int skip, DOS_DIRENT *entry );
-
-
-extern int DOS_GetFreeSpace(int drive, long *size, long *available);
-extern char *WineIniFileName(void);
+                           int skip, WIN32_FIND_DATA32A *entry );
 
 #endif /* __WINE_DOS_FS_H */

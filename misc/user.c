@@ -20,8 +20,6 @@
 
 WORD USER_HeapSel = 0;
 
-
-extern HTASK16 TASK_GetNextTask(HTASK16);
 extern BOOL32 MENU_SwitchTPWndTo(HTASK16);
 
 /***********************************************************************

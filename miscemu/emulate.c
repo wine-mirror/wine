@@ -28,11 +28,11 @@ struct Win87EmInfoStruct
  */
 /* FIXME: Only skeletal implementation for now */
 
-void WIN87_fpmath( SIGCONTEXT *context )
+void WIN87_fpmath( CONTEXT *context )
 {
     dprintf_int(stddeb, "_fpmath: (cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
-                 CS_reg(context), EIP_reg(context),
-                 ES_reg(context), BX_reg(context),
+                 (WORD)CS_reg(context), EIP_reg(context),
+                 (WORD)ES_reg(context), BX_reg(context),
                  AX_reg(context), DX_reg(context) );
 
     switch(BX_reg(context))

@@ -1,8 +1,8 @@
 /*
-*     Windows Exec & Help
-*
-*/
+ *     Windows Exec & Help
+ */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,21 +15,6 @@
 #include "debug.h"
 #include "win.h"
 
-#define HELP_CONTEXT      0x0001
-#define HELP_QUIT         0x0002
-#define HELP_INDEX        0x0003
-#define HELP_CONTENTS     0x0003
-#define HELP_HELPONHELP   0x0004
-#define HELP_SETINDEX     0x0005
-#define HELP_SETCONTENTS  0x0005
-#define HELP_CONTEXTPOPUP 0x0008
-#define HELP_FORCEFILE    0x0009
-#define HELP_KEY          0x0101
-#define HELP_COMMAND      0x0102
-#define HELP_PARTIALKEY   0x0105
-#define HELP_MULTIKEY     0x0201
-#define HELP_SETWINPOS    0x0203
-
 
 /***********************************************************************
  *           EXEC_ExitWindows
@@ -38,29 +23,35 @@
  * This is the back-end of ExitWindows(), called when all windows
  * have agreed to be terminated.
  */
-void EXEC_ExitWindows( int retCode )
+void EXEC_ExitWindows(void)
 {
     /* Do the clean-up stuff */
 
     WriteOutProfiles();
     SHELL_SaveRegistry();
 
-    exit( retCode );
+    exit(0);
 }
 
 
 /***********************************************************************
- *           ExitWindows   (USER.7)
+ *           ExitWindows16   (USER.7)
  */
-BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
+BOOL16 ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
+{
+    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
+}
+
+
+/***********************************************************************
+ *           ExitWindowsEx   (USER32.195)
+ */
+BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
 {
     int i;
-    BOOL16 result;
+    BOOL32 result;
     WND **list, **ppWnd;
         
-    api_assert("ExitWindows", wReserved == 0);
-    api_assert("ExitWindows", HIWORD(dwReturnCode) == 0);
-
     /* We have to build a list of all windows first, as in EnumWindows */
 
     if (!(list = WIN_BuildWinArray( WIN_GetDesktop() ))) return FALSE;
@@ -85,24 +76,35 @@ BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
     }
     HeapFree( SystemHeap, 0, list );
 
-    if (result) EXEC_ExitWindows( LOWORD(dwReturnCode) );
+    if (result) EXEC_ExitWindows();
     return FALSE;
 }
 
 
 /**********************************************************************
- *				WinHelp		[USER.171]
+ *             WinHelp16   (USER.171)
  */
-BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
+BOOL16 WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
+                  DWORD dwData )
+{
+    return WinHelp32A( hWnd, lpHelpFile, wCommand,
+                       (DWORD)PTR_SEG_TO_LIN(dwData) );
+}
+
+
+/**********************************************************************
+ *             WinHelp32A   (USER32.578)
+ */
+BOOL32 WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
+                   DWORD dwData )
 {
 	static WORD WM_WINHELP=0;
-	HWND hDest;
+	HWND32 hDest;
 	LPWINHELP lpwh;
 	HGLOBAL16 hwh;
-	void *data=0;
 	int size,dsize,nlen;
         if (wCommand != HELP_QUIT)  /* FIXME */
-            if(WinExec("winhelp.exe -x",SW_SHOWNORMAL)<=32)
+            if(WinExec32("winhelp.exe -x",SW_SHOWNORMAL)<=32)
 		return FALSE;
 	/* FIXME: Should be directed yield, to let winhelp open the window */
 	Yield();
@@ -131,16 +133,13 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 		case HELP_KEY:
 		case HELP_PARTIALKEY:
 		case HELP_COMMAND:
-			data = PTR_SEG_TO_LIN(dwData);
-			dsize = strlen(data)+1;
+			dsize = strlen( (LPSTR)dwData )+1;
 			break;
 		case HELP_MULTIKEY:
-			data = PTR_SEG_TO_LIN(dwData);
-			dsize = ((LPMULTIKEYHELP)data) -> mkSize;
+			dsize = ((LPMULTIKEYHELP)dwData)->mkSize;
 			break;
 		case HELP_SETWINPOS:
-			data = PTR_SEG_TO_LIN(dwData);
-			dsize = ((LPHELPWININFO)data) -> wStructSize;
+			dsize = ((LPHELPWININFO)dwData)->wStructSize;
 			break;
 		default:
 			fprintf(stderr,"Unknown help command %d\n",wCommand);
@@ -160,10 +159,23 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 		strcpy(((char*)lpwh) + sizeof(WINHELP),lpHelpFile);
 	}
 	if(dsize) {
-		memcpy(((char*)lpwh)+sizeof(WINHELP)+nlen,data,dsize);
+		memcpy(((char*)lpwh)+sizeof(WINHELP)+nlen,(LPSTR)dwData,dsize);
 		lpwh->ofsData = sizeof(WINHELP)+nlen;
 	} else
 		lpwh->ofsData = 0;
 	GlobalUnlock16(hwh);
 	return SendMessage16(hDest,WM_WINHELP,hWnd,hwh);
+}
+
+
+/**********************************************************************
+ *             WinHelp32W   (USER32.579)
+ */
+BOOL32 WinHelp32W( HWND32 hWnd, LPCWSTR helpFile, UINT32 command,
+                   DWORD dwData )
+{
+    LPSTR file = HEAP_strdupWtoA( GetProcessHeap(), 0, helpFile );
+    BOOL32 ret = WinHelp32A( hWnd, file, command, dwData );
+    HeapFree( GetProcessHeap(), 0, file );
+    return ret;
 }

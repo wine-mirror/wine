@@ -86,15 +86,36 @@ struct dosmem_entry {
 
 
 /***********************************************************************
+ *           DOSMEM_InitCollateTable
+ *
+ * Initialises the collate table (character sorting, language dependend)
+ */
+DWORD DOSMEM_CollateTable;
+
+static void DOSMEM_InitCollateTable()
+{
+	DWORD		x;
+	unsigned char	*tbl;
+	int		i;
+
+	x=GlobalDOSAlloc(258);
+	DOSMEM_CollateTable=MAKELONG(0,(x>>16));
+	tbl=DOSMEM_RealMode2Linear(DOSMEM_CollateTable);
+	*(WORD*)tbl	= 0x100;
+	tbl+=2;
+	for (i=0;i<0x100;i++)
+		*tbl++=i;
+}
+
+
+/***********************************************************************
  *           DOSMEM_Init
  *
  * Create the dos memory segments, and store them into the KERNEL
- * exported values. BUILTIN_Init() must already have been called.
+ * exported values.
  */
 BOOL32 DOSMEM_Init(void)
 {
-    HMODULE16 hModule = GetModuleHandle( "KERNEL" );
-
     /* Allocate 1 MB dosmemory */
     /* Yes, allocating 1 MB of memory, which is usually not even used, is a 
      * waste of memory. But I (MM) don't see any easy method to use 
@@ -112,44 +133,11 @@ BOOL32 DOSMEM_Init(void)
         fprintf( stderr, "Could not allocate DOS memory.\n" );
         return FALSE;
     }
-
-    MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
-                                         hModule, FALSE, FALSE, FALSE, NULL );
-
-    MODULE_SetEntryPoint( hModule, 193,  /* KERNEL.193: __0040H */
-                          DOSMEM_BiosSeg );
-    MODULE_SetEntryPoint( hModule, 174,  /* KERNEL.174: __A000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xA0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 181,  /* KERNEL.181: __B000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xB0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 182,  /* KERNEL.182: __B800H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xB8000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 195,  /* KERNEL.195: __C000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xC0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 179,  /* KERNEL.179: __D000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xD0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 190,  /* KERNEL.190: __E000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xE0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 173,  /* KERNEL.173: __ROMBIOS */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xF0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 194,  /* KERNEL.194: __F000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+0xF0000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
+                                        0, FALSE, FALSE, FALSE, NULL );
     DOSMEM_FillBiosSegment();
-
     DOSMEM_InitMemoryHandling();
     DOSMEM_InitCollateTable();
-
     return TRUE;
 }
 
@@ -213,29 +201,6 @@ void DOSMEM_FillBiosSegment(void)
     pBiosData->NbHardDisks          = 2;
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
-}
-
-/***********************************************************************
- *           DOSMEM_InitCollateTable
- *
- * Initialises the collate table (character sorting, language dependend)
- */
-DWORD DOSMEM_CollateTable;
-
-void
-DOSMEM_InitCollateTable()
-{
-	DWORD		x;
-	unsigned char	*tbl;
-	int		i;
-
-	x=GlobalDOSAlloc(258);
-	DOSMEM_CollateTable=MAKELONG(0,(x>>16));
-	tbl=DOSMEM_RealMode2Linear(DOSMEM_CollateTable);
-	*(WORD*)tbl	= 0x100;
-	tbl+=2;
-	for (i=0;i<0x100;i++)
-		*tbl++=i;
 }
 
 /***********************************************************************
@@ -340,7 +305,7 @@ LPVOID DOSMEM_RealMode2Linear(DWORD x)
 }
 
 /***********************************************************************
- *           DOSMEM_RealMode2Linear
+ *           DOSMEM_AllocSelector
  *
  * Allocates a protected mode selector for a realmode segment.
  */

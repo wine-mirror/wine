@@ -372,4 +372,12 @@ leave:
 
 }
 
+#else	/* !__ELF__ */
+
+int
+DEBUG_ReadExecutableDbgInfo(void)
+{
+return FALSE;
+}
+
 #endif  /* __ELF__ */

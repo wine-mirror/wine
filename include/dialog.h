@@ -38,5 +38,10 @@ typedef struct
 #pragma pack(4)
 
 extern BOOL32 DIALOG_Init(void);
+extern HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
+                                     BOOL32 win32Template, HWND32 owner,
+                                     DLGPROC16 dlgProc, LPARAM param,
+                                     WINDOWPROCTYPE procType );
+extern INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner );
 
 #endif  /* DIALOG_H */

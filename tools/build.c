@@ -11,12 +11,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include "wintypes.h"
-#include "registers.h"
+#include "windows.h"
+#include "winnt.h"
 #include "winerror.h"  /* for ERROR_CALL_NOT_IMPLEMENTED */
 #include "module.h"
 #include "neexe.h"
-#include "windows.h"
+#include "selectors.h"
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"
@@ -131,10 +131,6 @@ char ParseSaveChar;
 int Line;
 
 static int debugging = 1;
-
-  /* Offset of register relative to the end of the SIGCONTEXT struct */
-#define SIGCONTEXTOFFSET(reg) \
-    ((int)&reg##_reg((SIGCONTEXT *)0) - sizeof(SIGCONTEXT))
 
   /* Offset of register relative to the start of the CONTEXT struct */
 #define CONTEXTOFFSET(reg) ((int)&((CONTEXT *)0)->reg)
@@ -1433,8 +1429,6 @@ static int TransferArgs16To32( FILE *outfile, char *args )
  *         BuildContext16
  *
  * Build the context structure on the 32-bit stack.
- * The only valid registers in the context structure are:
- *   eax, ebx, ecx, edx, esi, edi, ds, es, (some of the) flags
  */
 static void BuildContext16( FILE *outfile )
 {
@@ -1448,18 +1442,46 @@ static void BuildContext16( FILE *outfile )
 
     /* Store the registers */
 
-    fprintf( outfile, "\tpopl %d(%%ebx)\n", SIGCONTEXTOFFSET(EBX) ); /* Get ebx from stack*/
-    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n", SIGCONTEXTOFFSET(EAX) );
-    fprintf( outfile, "\tmovl %%ecx,%d(%%ebx)\n", SIGCONTEXTOFFSET(ECX) );
-    fprintf( outfile, "\tmovl %%edx,%d(%%ebx)\n", SIGCONTEXTOFFSET(EDX) );
-    fprintf( outfile, "\tmovl %%esi,%d(%%ebx)\n", SIGCONTEXTOFFSET(ESI) );
-    fprintf( outfile, "\tmovl %%edi,%d(%%ebx)\n", SIGCONTEXTOFFSET(EDI) );
-    fprintf( outfile, "\tmovw -10(%%ebp),%%ax\n" ); /*Get saved ds from stack*/
-    fprintf( outfile, "\tmovw %%ax,%d(%%ebx)\n", SIGCONTEXTOFFSET(DS) );
-    fprintf( outfile, "\tmovw -6(%%ebp),%%ax\n" ); /*Get saved es from stack*/
-    fprintf( outfile, "\tmovw %%ax,%d(%%ebx)\n", SIGCONTEXTOFFSET(ES) );
+    fprintf( outfile, "\tpopl %d(%%ebx)\n", /* Get ebx from stack*/
+             CONTEXTOFFSET(Ebx) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(Eax) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%ecx,%d(%%ebx)\n",
+             CONTEXTOFFSET(Ecx) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%edx,%d(%%ebx)\n",
+             CONTEXTOFFSET(Edx) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%esi,%d(%%ebx)\n",
+             CONTEXTOFFSET(Esi) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%edi,%d(%%ebx)\n",
+             CONTEXTOFFSET(Edi) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovzwl -10(%%ebp),%%eax\n" ); /* Get %ds from stack*/
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegDs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovzwl -6(%%ebp),%%eax\n" ); /* Get %es from stack*/
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegEs) - sizeof(CONTEXT) );
     fprintf( outfile, "\tpushfl\n" );
-    fprintf( outfile, "\tpopl %d(%%ebx)\n", SIGCONTEXTOFFSET(EFL) );
+    fprintf( outfile, "\tpopl %d(%%ebx)\n",
+             CONTEXTOFFSET(EFlags) - sizeof(CONTEXT) );
+#if 0
+    fprintf( outfile, "\tmovzwl 0(%%ebp),%%eax\n" ); /* Get %bp from stack */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(Ebp) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovzwl 2(%%ebp),%%eax\n" ); /* Get %ip from stack */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(Eip) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovzwl 4(%%ebp),%%eax\n" ); /* Get %cs from stack */
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegCs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%fs,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegFs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%gs,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegGs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %%ss,%d(%%ebx)\n",
+             CONTEXTOFFSET(SegSs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tfsave %d(%%ebx)\n",
+             CONTEXTOFFSET(FloatSave) - sizeof(CONTEXT) );
+#endif
 }
 
 
@@ -1476,18 +1498,27 @@ static void RestoreContext16( FILE *outfile )
 
     /* Restore the registers */
 
-    fprintf( outfile, "\tmovl %d(%%ebx),%%ecx\n", SIGCONTEXTOFFSET(ECX) );
-    fprintf( outfile, "\tmovl %d(%%ebx),%%edx\n", SIGCONTEXTOFFSET(EDX) );
-    fprintf( outfile, "\tmovl %d(%%ebx),%%esi\n", SIGCONTEXTOFFSET(ESI) );
-    fprintf( outfile, "\tmovl %d(%%ebx),%%edi\n", SIGCONTEXTOFFSET(EDI) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%ecx\n",
+             CONTEXTOFFSET(Ecx) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%edx\n",
+             CONTEXTOFFSET(Edx) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%esi\n",
+             CONTEXTOFFSET(Esi) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%edi\n",
+             CONTEXTOFFSET(Edi) - sizeof(CONTEXT) );
     fprintf( outfile, "\tpopl %%eax\n" ); /* Remove old ds and ip from stack */
     fprintf( outfile, "\tpopl %%eax\n" ); /* Remove old cs and es from stack */
-    fprintf( outfile, "\tpushw %d(%%ebx)\n", SIGCONTEXTOFFSET(DS) ); /* Push new ds */
-    fprintf( outfile, "\tpushw %d(%%ebx)\n", SIGCONTEXTOFFSET(ES) ); /*Push new es */
-    fprintf( outfile, "\tpushl %d(%%ebx)\n", SIGCONTEXTOFFSET(EFL) );
+    fprintf( outfile, "\tpushw %d(%%ebx)\n",  /* Push new ds */
+             CONTEXTOFFSET(SegDs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tpushw %d(%%ebx)\n",  /* Push new es */
+             CONTEXTOFFSET(SegEs) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tpushl %d(%%ebx)\n",
+             CONTEXTOFFSET(EFlags) - sizeof(CONTEXT) );
     fprintf( outfile, "\tpopfl\n" );
-    fprintf( outfile, "\tmovl %d(%%ebx),%%eax\n", SIGCONTEXTOFFSET(EAX) );
-    fprintf( outfile, "\tmovl %d(%%ebx),%%ebx\n", SIGCONTEXTOFFSET(EBX) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%eax\n",
+             CONTEXTOFFSET(Eax) - sizeof(CONTEXT) );
+    fprintf( outfile, "\tmovl %d(%%ebx),%%ebx\n",
+             CONTEXTOFFSET(Ebx) - sizeof(CONTEXT) );
 }
 
 
@@ -1588,7 +1619,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tpushw %%ds\n" );
     fprintf( outfile, "\tpopw %%ss\n" );
     fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
-             reg_func ? sizeof(SIGCONTEXT) : 4 * strlen(args) );
+             reg_func ? sizeof(CONTEXT) : 4 * strlen(args) );
     if (reg_func)  /* Push the address of the context struct */
         fprintf( outfile, "\tpushl %%esp\n" );
 
@@ -2101,6 +2132,8 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
 
     /* Call the function */
 
+    fprintf( outfile, "\tpushw %%ds\n" );
+    fprintf( outfile, "\tpopw %%es\n" );  /* Set %es = %ds */
     fprintf( outfile, "\tcall -4(%%ebp)\n" );
 
     /* Print the debugging info */

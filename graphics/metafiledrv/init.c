@@ -144,7 +144,7 @@ HDC16 CreateMetaFile16( LPCSTR filename )
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    HFILE hFile;
+    HFILE32 hFile;
 
     dprintf_metafile( stddeb, "CreateMetaFile16: '%s'\n", filename );
 
@@ -154,13 +154,13 @@ HDC16 CreateMetaFile16( LPCSTR filename )
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
-        if ((hFile = _lcreat( filename, 0 )) == HFILE_ERROR)
+        if ((hFile = _lcreat32( filename, 0 )) == HFILE_ERROR32)
         {
             DeleteDC32( dc->hSelf );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR)
+                       sizeof(*physDev->mh)) == HFILE_ERROR32)
 	{
             DeleteDC32( dc->hSelf );
             return 0;
@@ -183,7 +183,7 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
 {
     DC *dc;
     HMETAFILE16 hmf;
-    HFILE hFile;
+    HFILE32 hFile;
     METAFILEDRV_PDEVICE *physDev;
     
     dprintf_metafile( stddeb, "CloseMetaFile(%04x)\n", hdc );
@@ -205,18 +205,18 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
     {
         hFile = physDev->mh->mtNoParameters;
 	physDev->mh->mtNoParameters = 0;
-        if (_llseek(hFile, 0L, 0) == HFILE_ERROR)
+        if (_llseek32(hFile, 0L, 0) == HFILE_ERROR32)
         {
             DeleteDC32( hdc );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR)
+                       sizeof(*physDev->mh)) == HFILE_ERROR32)
         {
             DeleteDC32( hdc );
             return 0;
         }
-        _lclose(hFile);
+        _lclose32(hFile);
     }
 
     /* Now allocate a global handle for the metafile */

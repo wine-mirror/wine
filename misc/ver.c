@@ -23,21 +23,21 @@
 
 #define LZREAD(what) \
   if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
-#define LZTELL(lzfd) LZSeek(lzfd, 0, SEEK_CUR);
+#define LZTELL(lzfd) LZSeek32(lzfd, 0, SEEK_CUR);
 
 int
-read_ne_header(HFILE lzfd,struct ne_header_s *nehd) {
+read_ne_header(HFILE32 lzfd,struct ne_header_s *nehd) {
 	struct	mz_header_s	mzh;
 
-	LZSeek(lzfd,0,SEEK_SET);
+	LZSeek32(lzfd,0,SEEK_SET);
 	if (sizeof(mzh)!=LZRead32(lzfd,&mzh,sizeof(mzh)))
 		return 0;
 	if (mzh.mz_magic!=MZ_SIGNATURE)
 		return 0;
-	LZSeek(lzfd,mzh.ne_offset,SEEK_SET);
+	LZSeek32(lzfd,mzh.ne_offset,SEEK_SET);
 	LZREAD(nehd);
 	if (nehd->ne_magic == NE_SIGNATURE) {
-		LZSeek(lzfd,mzh.ne_offset,SEEK_SET);
+		LZSeek32(lzfd,mzh.ne_offset,SEEK_SET);
 		return 1;
 	}
 	/* must handle PE files too. Later. */
@@ -47,7 +47,7 @@ read_ne_header(HFILE lzfd,struct ne_header_s *nehd) {
 
 int
 find_ne_resource(
-	HFILE lzfd,struct ne_header_s *nehd,SEGPTR typeid,SEGPTR resid,
+	HFILE32 lzfd,struct ne_header_s *nehd,SEGPTR typeid,SEGPTR resid,
 	BYTE **resdata,int *reslen,DWORD *off
 ) {
 	NE_TYPEINFO	ti;
@@ -57,7 +57,7 @@ find_ne_resource(
 	DWORD		nehdoffset;
 
 	nehdoffset = LZTELL(lzfd);
-	LZSeek(lzfd,nehd->resource_tab_offset,SEEK_CUR);
+	LZSeek32(lzfd,nehd->resource_tab_offset,SEEK_CUR);
 	LZREAD(&shiftcount);
 	dprintf_ver(stddeb,"shiftcount is %d\n",shiftcount);
 	dprintf_ver(stddeb,"reading resource typeinfo dir.\n");
@@ -84,7 +84,7 @@ find_ne_resource(
 				DWORD	whereleft;
 
 				whereleft = LZTELL(lzfd);
-				LZSeek(
+				LZSeek32(
 					lzfd,
 					nehdoffset+nehd->resource_tab_offset+ti.type_id,
 					SEEK_SET
@@ -99,11 +99,11 @@ find_ne_resource(
 				if (lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
 					skipflag=1;
 				free(str);
-				LZSeek(lzfd,whereleft,SEEK_SET);
+				LZSeek32(lzfd,whereleft,SEEK_SET);
 			}
 		}
 		if (skipflag) {
-			LZSeek(lzfd,ti.count*sizeof(ni),SEEK_CUR);
+			LZSeek32(lzfd,ti.count*sizeof(ni),SEEK_CUR);
 			continue;
 		}
 		for (i=0;i<ti.count;i++) {
@@ -125,7 +125,7 @@ find_ne_resource(
 					DWORD	whereleft;
 
 					whereleft = LZTELL(lzfd);
-					  LZSeek(
+					  LZSeek32(
 						lzfd,
 						nehdoffset+nehd->resource_tab_offset+ni.id,
 						SEEK_SET
@@ -140,12 +140,12 @@ find_ne_resource(
 					if (!lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
 						skipflag=0;
 					free(str);
-					LZSeek(lzfd,whereleft,SEEK_SET);
+					LZSeek32(lzfd,whereleft,SEEK_SET);
 				}
 			}
 			if (skipflag)
 				continue;
-			LZSeek(lzfd,((int)ni.offset<<shiftcount),SEEK_SET);
+			LZSeek32(lzfd,((int)ni.offset<<shiftcount),SEEK_SET);
 			*off	= (int)ni.offset<<shiftcount;
 			len	= ni.length<<shiftcount;
 			rdata=(WORD*)xmalloc(len);
@@ -164,7 +164,7 @@ find_ne_resource(
 /* GetFileResourceSize				[VER.2] */
 DWORD
 GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
-	HFILE	lzfd;
+	HFILE32	lzfd;
 	OFSTRUCT	ofs;
 	BYTE	*resdata;
 	int	reslen;
@@ -173,19 +173,19 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	dprintf_ver(stddeb,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
-	lzfd=LZOpenFile16(filename,&ofs,OF_READ);
+	lzfd=LZOpenFile32A(filename,&ofs,OF_READ);
 	if (lzfd==0)
 		return 0;
 	if (!read_ne_header(lzfd,&nehd)) {
-		LZClose(lzfd);
+		LZClose32(lzfd);
 		return 0;
 	}
 	if (!find_ne_resource(lzfd,&nehd,restype,resid,&resdata,&reslen,off)) {
-		LZClose(lzfd);
+		LZClose32(lzfd);
 		return 0;
 	}
 	free(resdata);
-	LZClose(lzfd);
+	LZClose32(lzfd);
 	return reslen;
 }
 
@@ -194,7 +194,7 @@ DWORD
 GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD datalen,LPVOID data
 ) {
-	HFILE	lzfd;
+	HFILE32	lzfd;
 	OFSTRUCT	ofs;
 	BYTE	*resdata;
 	int	reslen=datalen;
@@ -203,25 +203,25 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
 
-	lzfd=LZOpenFile16(filename,&ofs,OF_READ);
+	lzfd=LZOpenFile32A(filename,&ofs,OF_READ);
 	if (lzfd==0)
 		return 0;
 	if (!off) {
 		if (!read_ne_header(lzfd,&nehd)) {
-			LZClose(lzfd);
+			LZClose32(lzfd);
 			return 0;
 		}
 		if (!find_ne_resource(lzfd,&nehd,restype,resid,&resdata,&reslen,&off)) {
-			LZClose(lzfd);
+			LZClose32(lzfd);
 			return 0;
 		}
 		free(resdata);
 	}
-	LZSeek(lzfd,off,SEEK_SET);
+	LZSeek32(lzfd,off,SEEK_SET);
 	if (reslen>datalen)
 		reslen=datalen;
 	LZRead32(lzfd,data,reslen);
-	LZClose(lzfd);
+	LZClose32(lzfd);
 	return reslen;
 }
 

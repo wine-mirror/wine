@@ -1,0 +1,31 @@
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msdos
+
+C_SRCS = \
+	dosmem.c \
+	dpmi.c \
+	int10.c \
+	int11.c \
+	int12.c \
+	int13.c \
+	int1a.c \
+	int21.c \
+	int25.c \
+	int26.c \
+	int2a.c \
+	int2f.c \
+	int4b.c \
+	int5c.c \
+	interrupts.c \
+	ioports.c \
+	vxd.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

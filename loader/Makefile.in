@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = loader
 
 C_SRCS = \
-	builtin.c \
 	main.c \
 	module.c \
 	ne_image.c \

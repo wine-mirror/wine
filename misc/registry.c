@@ -201,7 +201,7 @@ split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
 	int	i,j,len;
 	LPWSTR	ws;
 
-	ws	= strdupW(wp);
+	ws	= HEAP_strdupW( SystemHeap, 0, wp );
 	*wpc	= 1;
 	for (i=0;ws[i];i++) {
 		if (ws[i]=='\\') {
@@ -210,7 +210,7 @@ split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
 		}
 	}
 	len	= i;
-	*wpv	= (LPWSTR*)xmalloc(sizeof(LPWSTR)*(*wpc+2));
+	*wpv	= (LPWSTR*)HeapAlloc( SystemHeap, 0, sizeof(LPWSTR)*(*wpc+2));
 	(*wpv)[0]= ws;
 	j	= 1;
 	for (i=1;i<len;i++)
@@ -218,7 +218,7 @@ split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
 			(*wpv)[j++]=ws+i;
 	(*wpv)[j]=NULL;
 }
-#define FREE_KEY_PATH	free(wps[0]);free(wps);
+#define FREE_KEY_PATH HeapFree(SystemHeap,0,wps[0]);HeapFree(SystemHeap,0,wps);
 
 /*
  * Shell initialisation, allocates keys. 
@@ -1109,7 +1109,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	};
 	struct	_w95nr2da 	*nr2da;
 
-	HFILE		hfd;
+	HFILE32		hfd;
 	int		lastmodified;
 	char		magic[5];
 	unsigned long	nr,pos,i,where,version,rgdbsection,end,off_next_rgdb;
@@ -1120,8 +1120,8 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	BY_HANDLE_FILE_INFORMATION hfdinfo;
 
 	dprintf_reg(stddeb,"Loading Win95 registry database '%s'\n",fn);
-	hfd=OpenFile(fn,&ofs,OF_READ);
-	if (hfd==HFILE_ERROR)
+	hfd=OpenFile32(fn,&ofs,OF_READ);
+	if (hfd==HFILE_ERROR32)
 		return;
 	magic[4]=0;
 	if (4!=_lread32(hfd,magic,4))
@@ -1134,7 +1134,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		return;
 	if (4!=_lread32(hfd,&rgdbsection,4))
 		return;
-	if (-1==_llseek(hfd,0x20,SEEK_SET))
+	if (-1==_llseek32(hfd,0x20,SEEK_SET))
 		return;
 	if (4!=_lread32(hfd,magic,4))
 		return;
@@ -1144,7 +1144,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	}
 
 	/* STEP 1: Keylink structures */
-	if (-1==_llseek(hfd,0x40,SEEK_SET))
+	if (-1==_llseek32(hfd,0x40,SEEK_SET))
 		return;
 	where	= 0x40;
 	end	= rgdbsection;
@@ -1231,12 +1231,12 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	end		= hfdinfo.nFileSizeLow;
 	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfdinfo.ftLastWriteTime));
 
-	if (-1==_llseek(hfd,rgdbsection,SEEK_SET))
+	if (-1==_llseek32(hfd,rgdbsection,SEEK_SET))
 		return;
 	data = (char*)xmalloc(end-rgdbsection);
 	if ((end-rgdbsection)!=_lread32(hfd,data,end-rgdbsection))
 		return;
-	_lclose(hfd);
+	_lclose32(hfd);
 	curdata = data;
 	memcpy(magic,curdata,4);
 	memcpy(&off_next_rgdb,curdata+4,4);
@@ -1471,7 +1471,7 @@ __w31_dumptree(	unsigned short idx,
 
 void
 _w31_loadreg() {
-	HFILE			hf;
+	HFILE32			hf;
 	struct _w31_header	head;
 	struct _w31_tabent	*tab;
 	unsigned char		*txt;
@@ -1482,19 +1482,19 @@ _w31_loadreg() {
 	HKEY			hkey;
 	LPKEYSTRUCT		lpkey;
 
-	hf = OpenFile("reg.dat",&ofs,OF_READ);
-	if (hf==HFILE_ERROR)
+	hf = OpenFile32("reg.dat",&ofs,OF_READ);
+	if (hf==HFILE_ERROR32)
 		return;
 
 	/* read & dump header */
 	if (sizeof(head)!=_lread32(hf,&head,sizeof(head))) {
 		dprintf_reg(stddeb,"_w31_loadreg:reg.dat is too short.\n");
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 	if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
 		dprintf_reg(stddeb,"_w31_loadreg:reg.dat has bad signature.\n");
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 
@@ -1504,24 +1504,24 @@ _w31_loadreg() {
 	if (len!=_lread32(hf,tab,len)) {
 		dprintf_reg(stderr,"_w31_loadreg:couldn't read %d bytes.\n",len); 
 		free(tab);
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 
 	/* read text */
 	txt = xmalloc(head.textsize);
-	if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
+	if (-1==_llseek32(hf,head.textoff,SEEK_SET)) {
 		dprintf_reg(stderr,"_w31_loadreg:couldn't seek to textblock.\n"); 
 		free(tab);
 		free(txt);
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 	if (head.textsize!=_lread32(hf,txt,head.textsize)) {
 		dprintf_reg(stderr,"_w31_loadreg:textblock too short (%d instead of %ld).\n",len,head.textsize); 
 		free(tab);
 		free(txt);
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 
@@ -1529,7 +1529,7 @@ _w31_loadreg() {
 		dprintf_reg(stderr,"_w31_loadreg:GetFileInformationByHandle failed?.\n"); 
 		free(tab);
 		free(txt);
-		_lclose(hf);
+		_lclose32(hf);
 		return;
 	}
 	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfinfo.ftLastWriteTime));
@@ -1540,7 +1540,7 @@ _w31_loadreg() {
 	__w31_dumptree(tab[0].w1,txt,tab,&head,lpkey,lastmodified,0);
 	free(tab);
 	free(txt);
-	_lclose(hf);
+	_lclose32(hf);
 	return;
 }
 
@@ -2800,9 +2800,9 @@ DWORD RegDeleteKey32A(HKEY hkey,LPCSTR lpszSubKey) {
 	dprintf_reg(stddeb,"RegDeleteKey32A(%x,%s)\n",
 		hkey,lpszSubKey
 	);
-	lpszSubKeyW=strdupA2W(lpszSubKey);
+	lpszSubKeyW=HEAP_strdupAtoW(GetProcessHeap(),0,lpszSubKey);
 	ret=RegDeleteKey32W(hkey,lpszSubKeyW);
-	free(lpszSubKeyW);
+	HeapFree(GetProcessHeap(),0,lpszSubKeyW);
 	return ret;
 }
 
@@ -2867,13 +2867,9 @@ DWORD RegDeleteValue32A(HKEY hkey,LPSTR lpszValue) {
 	DWORD	ret;
 
 	dprintf_reg( stddeb, "RegDeleteValue32A(%x,%s)\n", hkey,lpszValue );
-	if (lpszValue)
-		lpszValueW=strdupA2W(lpszValue);
-	else
-		lpszValueW=NULL;
+        lpszValueW=HEAP_strdupAtoW(GetProcessHeap(),0,lpszValue);
 	ret=RegDeleteValue32W(hkey,lpszValueW);
-	if (lpszValueW)
-		free(lpszValueW);
+        HeapFree(GetProcessHeap(),0,lpszValueW);
 	return ret;
 }
 

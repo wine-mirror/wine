@@ -4,11 +4,11 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
-#include "debugger.h"
 #include "selectors.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -187,7 +187,7 @@ static HEAP *HEAP_GetPtr( HANDLE32 heap )
     if (debugging_heap && !HeapValidate( heap, 0, NULL ))
     {
         HEAP_Dump( heapPtr );
-        DEBUG_EnterDebugger();
+        assert( FALSE );
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
@@ -1204,12 +1204,28 @@ BOOL32 HeapWalk( HANDLE32 heap, void *entry )
 
 
 /***********************************************************************
+ *           HEAP_xalloc
+ *
+ * Same as HeapAlloc(), but die on failure.
+ */
+LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size )
+{
+    LPVOID p = HeapAlloc( heap, flags, size );
+    if (!p)
+    {
+        fprintf( stderr, "Virtual memory exhausted.\n" );
+        exit(1);
+    }
+    return p;
+}
+
+
+/***********************************************************************
  *           HEAP_strdupA
  */
 LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 {
-    INT32 len = lstrlen32A(str) + 1;
-    LPSTR p = HeapAlloc( heap, flags, len );
+    LPSTR p = HEAP_xalloc( heap, flags, lstrlen32A(str) + 1 );
     lstrcpy32A( p, str );
     return p;
 }
@@ -1221,7 +1237,7 @@ LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str )
 {
     INT32 len = lstrlen32W(str) + 1;
-    LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
+    LPWSTR p = HEAP_xalloc( heap, flags, len * sizeof(WCHAR) );
     lstrcpy32W( p, str );
     return p;
 }
@@ -1235,11 +1251,7 @@ LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str )
     LPWSTR ret;
 
     if (!str) return NULL;
-    if (!(ret = HeapAlloc( heap, flags, (lstrlen32A(str)+1) * sizeof(WCHAR) )))
-    {
-        fprintf( stderr, "Virtual memory exhausted.\n" );
-        exit(1);
-    }
+    ret = HEAP_xalloc( heap, flags, (lstrlen32A(str)+1) * sizeof(WCHAR) );
     lstrcpyAtoW( ret, str );
     return ret;
 }
@@ -1253,11 +1265,7 @@ LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str )
     LPSTR ret;
 
     if (!str) return NULL;
-    if (!(ret = HeapAlloc( heap, flags, lstrlen32W(str) + 1 )))
-    {
-        fprintf( stderr, "Virtual memory exhausted.\n" );
-        exit(1);
-    }
+    ret = HEAP_xalloc( heap, flags, lstrlen32W(str) + 1 );
     lstrcpyWtoA( ret, str );
     return ret;
 }

@@ -163,12 +163,8 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 	/* FIXME - should throw a warning, perhaps! */
 	return 2; /* File not found. Close enough, I guess. */
     }
-    if (SearchPath32A(lpDirectory,lpFile,NULL,sizeof(xlpFile),xlpFile,NULL))
-    	lpFile = xlpFile;
-    else {
-    	if (SearchPath32A(lpDirectory,lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
-	    lpFile = xlpFile;
-    }
+    if (SearchPath32A(lpDirectory,lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
+        lpFile = xlpFile;
 
     /* First thing we need is the file's extension */
     extension = strrchr( xlpFile, '.' ); /* Assume last "." is the one; */
@@ -321,7 +317,7 @@ HINSTANCE16 ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
     }
 
     dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
-    return WinExec(cmd,iShowCmd);
+    return WinExec32(cmd,iShowCmd);
 }
 
 /*************************************************************************
@@ -351,105 +347,124 @@ HINSTANCE16 FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
     return retval;
 }
 
-static char AppName[128], AppMisc[1536];
+typedef struct
+{
+    LPCSTR  szApp;
+    LPCSTR  szOtherStuff;
+    HICON32 hIcon;
+} ABOUT_INFO;
+
 
 /*************************************************************************
- *				AboutDlgProc		[SHELL.33]
+ *             AboutDlgProc32  (not an exported API function)
  */
-LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM16 wParam, LPARAM lParam)
+LRESULT AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+                        LPARAM lParam )
 {
-  char Template[512], AppTitle[512];
- 
-  switch(msg) {
-   case WM_INITDIALOG:
-    SendDlgItemMessage32A(hWnd,stc1,STM_SETICON,lParam,0);
-    GetWindowText32A(hWnd, Template, sizeof(Template));
-    sprintf(AppTitle, Template, AppName);
-    SetWindowText32A(hWnd, AppTitle);
-    SetWindowText32A(GetDlgItem(hWnd,100), AppMisc);
-    return 1;
+    char Template[512], AppTitle[512];
+
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+        {
+            ABOUT_INFO *info = (ABOUT_INFO *)lParam;
+            if (info)
+            {
+                SendDlgItemMessage32A(hWnd, stc1, STM_SETICON, info->hIcon, 0);
+                GetWindowText32A( hWnd, Template, sizeof(Template) );
+                sprintf( AppTitle, Template, info->szApp );
+                SetWindowText32A( hWnd, AppTitle );
+                SetWindowText32A( GetDlgItem(hWnd,100), info->szOtherStuff );
+            }
+        }
+        return 1;
     
-   case WM_COMMAND:
-    switch (wParam) {
-     case IDOK:
-      EndDialog(hWnd, TRUE);
-      return TRUE;
+    case WM_COMMAND:
+        if (wParam == IDOK)
+        {
+            EndDialog(hWnd, TRUE);
+            return TRUE;
+        }
+        break;
     }
-    break;
-  }
-  return FALSE;
+    return 0;
+}
+
+
+/*************************************************************************
+ *             AboutDlgProc16   (SHELL.33)
+ */
+LRESULT AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
+                        LPARAM lParam )
+{
+    return AboutDlgProc32( hWnd, msg, wParam, lParam );
+}
+
+
+/*************************************************************************
+ *             ShellAbout16   (SHELL.22)
+ */
+BOOL16 ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                     HICON16 hIcon )
+{
+    return ShellAbout32A( hWnd, szApp, szOtherStuff, hIcon );
 }
 
 /*************************************************************************
- *				ShellAbout		[SHELL.22]
+ *             ShellAbout32A   (SHELL32.82)
  */
-INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
+BOOL32 ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                      HICON32 hIcon )
 {
-    HGLOBAL16 handle;
-    BOOL bRet;
-
-    if (szApp) strncpy(AppName, szApp, sizeof(AppName));
-    else *AppName = 0;
-    AppName[sizeof(AppName)-1]=0;
-
-    if (szOtherStuff) strncpy(AppMisc, szOtherStuff, sizeof(AppMisc));
-    else *AppMisc = 0;
-    AppMisc[sizeof(AppMisc)-1]=0;
-
-    if (!hIcon) hIcon = LoadIcon16(0,MAKEINTRESOURCE(OIC_WINEICON));
-    handle = SYSRES_LoadResource( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX );
-    if (!handle) return FALSE;
-    bRet = DialogBoxIndirectParam16( WIN_GetWindowInstance( hWnd ),
-                                     handle, hWnd,
-                                     (DLGPROC16)MODULE_GetWndProcEntry16("AboutDlgProc"), 
-                                     (LPARAM)hIcon );
-    SYSRES_FreeResource( handle );
-    return bRet;
+    ABOUT_INFO info;
+    info.szApp        = szApp;
+    info.szOtherStuff = szOtherStuff;
+    info.hIcon        = hIcon;
+    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE(OIC_WINEICON) );
+    return DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
+                         SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
+                                      hWnd, AboutDlgProc32, (LPARAM)&info );
 }
+
 
 /*************************************************************************
- *				ShellAbout32W		[SHELL32.83]
+ *             ShellAbout32W   (SHELL32.83)
  */
-INT32 ShellAbout32W(HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff, HICON16 hIcon)
+BOOL32 ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
+                      HICON32 hIcon )
 {
-    HGLOBAL16 handle;
-    BOOL bRet;
+    BOOL32 ret;
+    ABOUT_INFO info;
 
-    if (szApp) lstrcpynWtoA(AppName, szApp, sizeof(AppName));
-    else *AppName = 0;
-    AppName[sizeof(AppName)-1]=0;
-
-    if (szOtherStuff) lstrcpynWtoA(AppMisc, szOtherStuff, sizeof(AppMisc));
-    else *AppMisc = 0;
-    AppMisc[sizeof(AppMisc)-1]=0;
-
-    if (!hIcon) hIcon = LoadIcon16(0,MAKEINTRESOURCE(OIC_WINEICON));
-    handle = SYSRES_LoadResource( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX );
-    if (!handle) return FALSE;
-    bRet = DialogBoxIndirectParam16( WIN_GetWindowInstance( hWnd ),
-                                     handle, hWnd,
-                                     (DLGPROC16)MODULE_GetWndProcEntry16("AboutDlgProc"), 
-                                     (LPARAM)hIcon );
-    SYSRES_FreeResource( handle );
-    return bRet;
+    info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
+    info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
+    info.hIcon        = hIcon;
+    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE(OIC_WINEICON) );
+    ret = DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
+                         SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
+                                      hWnd, AboutDlgProc32, (LPARAM)&info );
+    HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );
+    HeapFree( GetProcessHeap(), 0, (LPSTR)info.szOtherStuff );
+    return ret;
 }
+
 
 /*************************************************************************
  *				SHELL_GetResourceTable
  *
  * FIXME: Implement GetPEResourceTable in w32sys.c and call it here.
  */
-static BYTE* SHELL_GetResourceTable(HFILE hFile)
+static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
 {
   struct mz_header_s mz_header;
   struct ne_header_s ne_header;
   int		size;
   
-  _llseek( hFile, 0, SEEK_SET );
+  _llseek32( hFile, 0, SEEK_SET );
   if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
       (mz_header.mz_magic != MZ_SIGNATURE)) return (BYTE*)-1;
 
-  _llseek( hFile, mz_header.ne_offset, SEEK_SET );
+  _llseek32( hFile, mz_header.ne_offset, SEEK_SET );
   if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
       return NULL;
 
@@ -467,7 +482,7 @@ static BYTE* SHELL_GetResourceTable(HFILE hFile)
 
       if( !pTypeInfo ) return NULL;
 
-      _llseek(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
+      _llseek32(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
       if( _lread32( hFile, (char*)pTypeInfo, size) != size )
 	{ free(pTypeInfo); return NULL; }
       return pTypeInfo;
@@ -480,14 +495,14 @@ static BYTE* SHELL_GetResourceTable(HFILE hFile)
 /*************************************************************************
  *			SHELL_LoadResource
  */
-static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
+static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE32 hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
 {
  BYTE*	ptr;
  HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
 
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
-    _llseek( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
+    _llseek32( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
      _lread32( hFile, (char*)ptr, pNInfo->length << sizeShift);
      return handle;
    }
@@ -497,14 +512,14 @@ static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE hFile, NE_NAMEINFO*
 /*************************************************************************
  *                      ICO_LoadIcon
  */
-static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIRENTRY lpiIDE)
+static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE32 hFile, LPicoICONDIRENTRY lpiIDE)
 {
  BYTE*  ptr;
  HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, lpiIDE->dwBytesInRes);
 
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
-    _llseek( hFile, lpiIDE->dwImageOffset, SEEK_SET);
+    _llseek32( hFile, lpiIDE->dwImageOffset, SEEK_SET);
      _lread32( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
      return handle;
    }
@@ -516,13 +531,13 @@ static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIRENTRY 
  *
  *  Read .ico file and build phony ICONDIR struct for GetIconID
  */
-static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIR* lplpiID ) 
+static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICONDIR* lplpiID ) 
 {
   WORD		id[3];	/* idReserved, idType, idCount */
   LPicoICONDIR	lpiID;
   int		i;
  
-  _llseek( hFile, 0, SEEK_SET );
+  _llseek32( hFile, 0, SEEK_SET );
   if( _lread32(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
 
   /* check .ICO header 
@@ -573,12 +588,12 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
   HGLOBAL16*	RetPtr = NULL;
   BYTE*  	pData;
   OFSTRUCT 	ofs;
-  HFILE 	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
+  HFILE32 	hFile = OpenFile32( lpszExeFileName, &ofs, OF_READ );
   
   dprintf_reg(stddeb, "InternalExtractIcon(%04x, file '%s', start from %d, extract %d\n", 
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
-  if( hFile == HFILE_ERROR || !n ) return 0;
+  if( hFile == HFILE_ERROR32 || !n ) return 0;
 
   hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
   RetPtr = (HICON16*)GlobalLock16(hRet);
@@ -661,7 +676,7 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
     if( icoFile ) free(lpiID);
     else free(pData);
  } 
- _lclose( hFile );
+ _lclose32( hFile );
  
   /* return array with icon handles */
 

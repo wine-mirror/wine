@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "debugger.h"
 
-SIGCONTEXT *DEBUG_context;
+CONTEXT DEBUG_context;
 
 /***********************************************************************
  *           DEBUG_SetRegister
@@ -18,44 +18,32 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
 {
     switch(reg)
     {
-        case REG_EAX: EAX_reg(DEBUG_context) = val; break;
-        case REG_EBX: EBX_reg(DEBUG_context) = val; break;
-        case REG_ECX: ECX_reg(DEBUG_context) = val; break;
-        case REG_EDX: EDX_reg(DEBUG_context) = val; break;
-        case REG_ESI: ESI_reg(DEBUG_context) = val; break;
-        case REG_EDI: EDI_reg(DEBUG_context) = val; break;
-        case REG_EBP: EBP_reg(DEBUG_context) = val; break;
-        case REG_EFL: EFL_reg(DEBUG_context) = val; break;
-        case REG_EIP: EIP_reg(DEBUG_context) = val; break;
-        case REG_ESP: ESP_reg(DEBUG_context) = val; break;
-        case REG_AX:  AX_reg(DEBUG_context)  = val; break;
-        case REG_BX:  BX_reg(DEBUG_context)  = val; break;
-        case REG_CX:  CX_reg(DEBUG_context)  = val; break;
-        case REG_DX:  DX_reg(DEBUG_context)  = val; break;
-        case REG_SI:  SI_reg(DEBUG_context)  = val; break;
-        case REG_DI:  DI_reg(DEBUG_context)  = val; break;
-        case REG_BP:  BP_reg(DEBUG_context)  = val; break;
-        case REG_FL:  FL_reg(DEBUG_context)  = val; break;
-        case REG_IP:  IP_reg(DEBUG_context)  = val; break;
-        case REG_SP:  SP_reg(DEBUG_context)  = val; break;
-        case REG_CS:  CS_reg(DEBUG_context)  = val; break;
-        case REG_DS:  DS_reg(DEBUG_context)  = val; break;
-        case REG_ES:  ES_reg(DEBUG_context)  = val; break;
-        case REG_SS:  SS_reg(DEBUG_context)  = val; break;
-#ifdef FS_reg
-        case REG_FS:  FS_reg(DEBUG_context)  = val; break;
-#else
-        case REG_FS:
-            fprintf( stderr, "Register %%fs not supported on this system\n" );
-            break;
-#endif
-#ifdef GS_reg
-        case REG_GS:  GS_reg(DEBUG_context)  = val; break;
-#else
-        case REG_GS:
-            fprintf( stderr, "Register %%gs not supported on this system\n" );
-            break;
-#endif
+        case REG_EAX: EAX_reg(&DEBUG_context) = val; break;
+        case REG_EBX: EBX_reg(&DEBUG_context) = val; break;
+        case REG_ECX: ECX_reg(&DEBUG_context) = val; break;
+        case REG_EDX: EDX_reg(&DEBUG_context) = val; break;
+        case REG_ESI: ESI_reg(&DEBUG_context) = val; break;
+        case REG_EDI: EDI_reg(&DEBUG_context) = val; break;
+        case REG_EBP: EBP_reg(&DEBUG_context) = val; break;
+        case REG_EFL: EFL_reg(&DEBUG_context) = val; break;
+        case REG_EIP: EIP_reg(&DEBUG_context) = val; break;
+        case REG_ESP: ESP_reg(&DEBUG_context) = val; break;
+        case REG_AX:  AX_reg(&DEBUG_context)  = val; break;
+        case REG_BX:  BX_reg(&DEBUG_context)  = val; break;
+        case REG_CX:  CX_reg(&DEBUG_context)  = val; break;
+        case REG_DX:  DX_reg(&DEBUG_context)  = val; break;
+        case REG_SI:  SI_reg(&DEBUG_context)  = val; break;
+        case REG_DI:  DI_reg(&DEBUG_context)  = val; break;
+        case REG_BP:  BP_reg(&DEBUG_context)  = val; break;
+        case REG_FL:  FL_reg(&DEBUG_context)  = val; break;
+        case REG_IP:  IP_reg(&DEBUG_context)  = val; break;
+        case REG_SP:  SP_reg(&DEBUG_context)  = val; break;
+        case REG_CS:  CS_reg(&DEBUG_context)  = val; break;
+        case REG_DS:  DS_reg(&DEBUG_context)  = val; break;
+        case REG_ES:  ES_reg(&DEBUG_context)  = val; break;
+        case REG_SS:  SS_reg(&DEBUG_context)  = val; break;
+        case REG_FS:  FS_reg(&DEBUG_context)  = val; break;
+        case REG_GS:  GS_reg(&DEBUG_context)  = val; break;
     }
 }
 
@@ -69,48 +57,105 @@ int DEBUG_GetRegister( enum debug_regs reg )
 {
     switch(reg)
     {
-        case REG_EAX: return EAX_reg(DEBUG_context);
-        case REG_EBX: return EBX_reg(DEBUG_context);
-        case REG_ECX: return ECX_reg(DEBUG_context);
-        case REG_EDX: return EDX_reg(DEBUG_context);
-        case REG_ESI: return ESI_reg(DEBUG_context);
-        case REG_EDI: return EDI_reg(DEBUG_context);
-        case REG_EBP: return EBP_reg(DEBUG_context);
-        case REG_EFL: return EFL_reg(DEBUG_context);
-        case REG_EIP: return EIP_reg(DEBUG_context);
-        case REG_ESP: return ESP_reg(DEBUG_context);
-        case REG_AX:  return AX_reg(DEBUG_context);
-        case REG_BX:  return BX_reg(DEBUG_context);
-        case REG_CX:  return CX_reg(DEBUG_context);
-        case REG_DX:  return DX_reg(DEBUG_context);
-        case REG_SI:  return SI_reg(DEBUG_context);
-        case REG_DI:  return DI_reg(DEBUG_context);
-        case REG_BP:  return BP_reg(DEBUG_context);
-        case REG_FL:  return FL_reg(DEBUG_context);
-        case REG_IP:  return IP_reg(DEBUG_context);
-        case REG_SP:  return SP_reg(DEBUG_context);
-        case REG_CS:  return CS_reg(DEBUG_context);
-        case REG_DS:  return DS_reg(DEBUG_context);
-        case REG_ES:  return ES_reg(DEBUG_context);
-        case REG_SS:  return SS_reg(DEBUG_context);
-#ifdef FS_reg
-        case REG_FS:  return FS_reg(DEBUG_context);
-#else
-        case REG_FS:
-            fprintf( stderr, "Register %%fs not supported on this system\n" );
-            return 0;
-#endif
-#ifdef GS_reg
-        case REG_GS:  return GS_reg(DEBUG_context);
-#else
-        case REG_GS:
-            fprintf( stderr, "Register %%gs not supported on this system\n" );
-            return 0;
-#endif
+        case REG_EAX: return EAX_reg(&DEBUG_context);
+        case REG_EBX: return EBX_reg(&DEBUG_context);
+        case REG_ECX: return ECX_reg(&DEBUG_context);
+        case REG_EDX: return EDX_reg(&DEBUG_context);
+        case REG_ESI: return ESI_reg(&DEBUG_context);
+        case REG_EDI: return EDI_reg(&DEBUG_context);
+        case REG_EBP: return EBP_reg(&DEBUG_context);
+        case REG_EFL: return EFL_reg(&DEBUG_context);
+        case REG_EIP: return EIP_reg(&DEBUG_context);
+        case REG_ESP: return ESP_reg(&DEBUG_context);
+        case REG_AX:  return AX_reg(&DEBUG_context);
+        case REG_BX:  return BX_reg(&DEBUG_context);
+        case REG_CX:  return CX_reg(&DEBUG_context);
+        case REG_DX:  return DX_reg(&DEBUG_context);
+        case REG_SI:  return SI_reg(&DEBUG_context);
+        case REG_DI:  return DI_reg(&DEBUG_context);
+        case REG_BP:  return BP_reg(&DEBUG_context);
+        case REG_FL:  return FL_reg(&DEBUG_context);
+        case REG_IP:  return IP_reg(&DEBUG_context);
+        case REG_SP:  return SP_reg(&DEBUG_context);
+        case REG_CS:  return CS_reg(&DEBUG_context);
+        case REG_DS:  return DS_reg(&DEBUG_context);
+        case REG_ES:  return ES_reg(&DEBUG_context);
+        case REG_SS:  return SS_reg(&DEBUG_context);
+        case REG_FS:  return FS_reg(&DEBUG_context);
+        case REG_GS:  return GS_reg(&DEBUG_context);
     }
     return 0;  /* should not happen */
 }
 
+
+/***********************************************************************
+ *           DEBUG_SetSigContext
+ *
+ * Set the register values from a sigcontext. 
+ */
+extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
+{
+    EAX_reg(&DEBUG_context) = EAX_sig(sigcontext);
+    EBX_reg(&DEBUG_context) = EBX_sig(sigcontext);
+    ECX_reg(&DEBUG_context) = ECX_sig(sigcontext);
+    EDX_reg(&DEBUG_context) = EDX_sig(sigcontext);
+    ESI_reg(&DEBUG_context) = ESI_sig(sigcontext);
+    EDI_reg(&DEBUG_context) = EDI_sig(sigcontext);
+    EBP_reg(&DEBUG_context) = EBP_sig(sigcontext);
+    EFL_reg(&DEBUG_context) = EFL_sig(sigcontext);
+    EIP_reg(&DEBUG_context) = EIP_sig(sigcontext);
+    ESP_reg(&DEBUG_context) = ESP_sig(sigcontext);
+    CS_reg(&DEBUG_context)  = LOWORD(CS_sig(sigcontext));
+    DS_reg(&DEBUG_context)  = LOWORD(DS_sig(sigcontext));
+    ES_reg(&DEBUG_context)  = LOWORD(ES_sig(sigcontext));
+    SS_reg(&DEBUG_context)  = LOWORD(SS_sig(sigcontext));
+#ifdef FS_sig
+    FS_reg(&DEBUG_context)  = LOWORD(FS_sig(sigcontext));
+#else
+    __asm__("movw %%fs,%w0":"=r" (FS_reg(&DEBUG_context)));
+    FS_reg(&DEBUG_context) &= 0xffff;
+#endif
+#ifdef GS_sig
+    GS_reg(&DEBUG_context)  = LOWORD(GS_sig(sigcontext));
+#else
+    __asm__("movw %%gs,%w0":"=r" (GS_reg(&DEBUG_context)));
+    GS_reg(&DEBUG_context) &= 0xffff;
+#endif
+}
+
+
+/***********************************************************************
+ *           DEBUG_GetSigContext
+ *
+ * Build a sigcontext from the register values.
+ */
+extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
+{
+    EAX_sig(sigcontext) = EAX_reg(&DEBUG_context);
+    EBX_sig(sigcontext) = EBX_reg(&DEBUG_context);
+    ECX_sig(sigcontext) = ECX_reg(&DEBUG_context);
+    EDX_sig(sigcontext) = EDX_reg(&DEBUG_context);
+    ESI_sig(sigcontext) = ESI_reg(&DEBUG_context);
+    EDI_sig(sigcontext) = EDI_reg(&DEBUG_context);
+    EBP_sig(sigcontext) = EBP_reg(&DEBUG_context);
+    EFL_sig(sigcontext) = EFL_reg(&DEBUG_context);
+    EIP_sig(sigcontext) = EIP_reg(&DEBUG_context);
+    ESP_sig(sigcontext) = ESP_reg(&DEBUG_context);
+    CS_sig(sigcontext)  = CS_reg(&DEBUG_context);
+    DS_sig(sigcontext)  = DS_reg(&DEBUG_context);
+    ES_sig(sigcontext)  = ES_reg(&DEBUG_context);
+    SS_sig(sigcontext)  = SS_reg(&DEBUG_context);
+#ifdef FS_sig
+    FS_sig(sigcontext)  = FS_reg(&DEBUG_context);
+#else
+    __asm__("movw %w0,%%fs"::"r" (FS_reg(&DEBUG_context)));
+#endif
+#ifdef GS_sig
+    GS_sig(sigcontext)  = GS_reg(&DEBUG_context);
+#else
+    __asm__("movw %w0,%%gs"::"r" (FS_reg(&DEBUG_context)));
+#endif
+}
 
 
 /***********************************************************************
@@ -123,35 +168,30 @@ void DEBUG_InfoRegisters(void)
     fprintf(stderr,"Register dump:\n");
 
     /* First get the segment registers out of the way */
-    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x",
-             CS_reg(DEBUG_context), SS_reg(DEBUG_context),
-             DS_reg(DEBUG_context), ES_reg(DEBUG_context) );
-#ifdef FS_reg
-    fprintf( stderr, " FS:%04x", FS_reg(DEBUG_context) );
-#endif
-#ifdef GS_reg
-    fprintf( stderr, " GS:%04x", GS_reg(DEBUG_context) );
-#endif
+    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
+             (WORD)CS_reg(&DEBUG_context), (WORD)SS_reg(&DEBUG_context),
+             (WORD)DS_reg(&DEBUG_context), (WORD)ES_reg(&DEBUG_context),
+             (WORD)FS_reg(&DEBUG_context), (WORD)GS_reg(&DEBUG_context) );
     if (dbg_mode == 16)
     {
         fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x\n",
-                 IP_reg(DEBUG_context), SP_reg(DEBUG_context),
-                 BP_reg(DEBUG_context), FL_reg(DEBUG_context) );
+                 IP_reg(&DEBUG_context), SP_reg(&DEBUG_context),
+                 BP_reg(&DEBUG_context), FL_reg(&DEBUG_context) );
 	fprintf( stderr," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
-                 AX_reg(DEBUG_context), BX_reg(DEBUG_context),
-                 CX_reg(DEBUG_context), DX_reg(DEBUG_context),
-                 SI_reg(DEBUG_context), DI_reg(DEBUG_context) );
+                 AX_reg(&DEBUG_context), BX_reg(&DEBUG_context),
+                 CX_reg(&DEBUG_context), DX_reg(&DEBUG_context),
+                 SI_reg(&DEBUG_context), DI_reg(&DEBUG_context) );
     }
     else  /* 32-bit mode */
     {
         fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx\n", 
-                 EIP_reg(DEBUG_context), ESP_reg(DEBUG_context),
-                 EBP_reg(DEBUG_context), EFL_reg(DEBUG_context) );
+                 EIP_reg(&DEBUG_context), ESP_reg(&DEBUG_context),
+                 EBP_reg(&DEBUG_context), EFL_reg(&DEBUG_context) );
 	fprintf( stderr, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
-		 EAX_reg(DEBUG_context), EBX_reg(DEBUG_context),
-                 ECX_reg(DEBUG_context), EDX_reg(DEBUG_context) );
+		 EAX_reg(&DEBUG_context), EBX_reg(&DEBUG_context),
+                 ECX_reg(&DEBUG_context), EDX_reg(&DEBUG_context) );
 	fprintf( stderr, " ESI:%08lx EDI:%08lx\n",
-                 ESI_reg(DEBUG_context), EDI_reg(DEBUG_context) );
+                 ESI_reg(&DEBUG_context), EDI_reg(&DEBUG_context) );
     }
 }
 
@@ -170,39 +210,35 @@ BOOL32 DEBUG_ValidateRegisters(void)
         ((((seg) & 7) != 7) || IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(seg)))) \
     { \
         fprintf( stderr, "*** Invalid value for %s register: %04x\n", \
-                 (name), (seg) ); \
+                 (name), (WORD)(seg) ); \
         return FALSE; \
     }
 
-    if (CS_reg(DEBUG_context) != WINE_CODE_SELECTOR)
-        CHECK_SEG( CS_reg(DEBUG_context), "CS" );
-    if (SS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( SS_reg(DEBUG_context), "SS" );
-    if (DS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( DS_reg(DEBUG_context), "DS" );
-    if (ES_reg(DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( ES_reg(DEBUG_context), "ES" );
-#ifdef FS_reg
-    if (FS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( FS_reg(DEBUG_context), "FS" );
-#endif
-#ifdef GS_reg
-    if (GS_reg(DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( GS_reg(DEBUG_context), "GS" );
-#endif
+    if (CS_reg(&DEBUG_context) != WINE_CODE_SELECTOR)
+        CHECK_SEG( CS_reg(&DEBUG_context), "CS" );
+    if (SS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( SS_reg(&DEBUG_context), "SS" );
+    if (DS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( DS_reg(&DEBUG_context), "DS" );
+    if (ES_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( ES_reg(&DEBUG_context), "ES" );
+    if (FS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( FS_reg(&DEBUG_context), "FS" );
+    if (GS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
+        CHECK_SEG( GS_reg(&DEBUG_context), "GS" );
 
     /* Check that CS and SS are not NULL */
 
-    if (!(CS_reg(DEBUG_context) & ~3))
+    if (!(CS_reg(&DEBUG_context) & ~3))
     {
         fprintf( stderr, "*** Invalid value for CS register: %04x\n",
-                 CS_reg(DEBUG_context) );
+                 (WORD)CS_reg(&DEBUG_context) );
         return FALSE;
     }
-    if (!(SS_reg(DEBUG_context) & ~3))
+    if (!(SS_reg(&DEBUG_context) & ~3))
     {
         fprintf( stderr, "*** Invalid value for SS register: %04x\n",
-                 SS_reg(DEBUG_context) );
+                 (WORD)SS_reg(&DEBUG_context) );
         return FALSE;
     }
     return TRUE;

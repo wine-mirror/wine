@@ -2489,6 +2489,7 @@ loader/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile
+msdos/Makefile
 multimedia/Makefile
 objects/Makefile
 programs/Makefile
@@ -2496,6 +2497,7 @@ programs/progman/Makefile
 programs/winhelp/Makefile
 rc/Makefile
 resources/Makefile
+scheduler/Makefile
 tools/Makefile
 win32/Makefile
 windows/Makefile  include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
@@ -2604,6 +2606,7 @@ loader/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile
+msdos/Makefile
 multimedia/Makefile
 objects/Makefile
 programs/Makefile
@@ -2611,6 +2614,7 @@ programs/progman/Makefile
 programs/winhelp/Makefile
 rc/Makefile
 resources/Makefile
+scheduler/Makefile
 tools/Makefile
 win32/Makefile
 windows/Makefile "}

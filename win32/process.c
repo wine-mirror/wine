@@ -11,20 +11,8 @@
 #include "winerror.h"
 #include "heap.h"
 #include "handle32.h"
-#include "task.h"
 #include "stddebug.h"
 #include "debug.h"
-
-static HANDLE32 ProcessHeap = 0;  /* FIXME: should be in process database */
-
-/***********************************************************************
- *           ExitProcess   (KERNEL32.100)
- */
-
-void ExitProcess(DWORD status)
-{
-    TASK_KillCurrentTask( status );
-}
 
 /***********************************************************************
  *           CreateMutexA    (KERNEL32.52)
@@ -79,22 +67,7 @@ BOOL DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, 
 	*d = b;
 	return 1;
 }
-/***********************************************************************
- *           GetCurrentProcess    (KERNEL32.198)
- */
-HANDLE32 GetCurrentProcess(void)
-{
-	return 0;
-}
 
-/***********************************************************************
- *           GetProcessHeap    (KERNEL32.259)
- */
-HANDLE32 GetProcessHeap(void)
-{
-    if (!ProcessHeap) ProcessHeap = HeapCreate( 0, 0x10000, 0 );
-    return ProcessHeap;
-}
 
 /***********************************************************************
  *           LoadLibraryA         (KERNEL32.365)

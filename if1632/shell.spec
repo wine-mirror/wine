@@ -14,8 +14,8 @@ type	win16
  13 pascal16 DragQueryPoint(word ptr) DragQueryPoint
  20 pascal16 ShellExecute(word ptr ptr ptr ptr s_word) ShellExecute 
  21 pascal16 FindExecutable(ptr ptr ptr) FindExecutable
- 22 pascal16 ShellAbout(word ptr ptr word) ShellAbout
- 33 pascal16 AboutDlgProc(word word word long) AboutDlgProc
+ 22 pascal16 ShellAbout(word ptr ptr word) ShellAbout16
+ 33 pascal16 AboutDlgProc(word word word long) AboutDlgProc16
  34 pascal16 ExtractIcon(word ptr s_word) ExtractIcon
  36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon
  37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst

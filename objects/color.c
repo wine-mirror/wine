@@ -68,6 +68,7 @@ static PALETTEENTRY* COLOR_sysPal = NULL;    /* current system palette */
 static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
 static int COLOR_gapFilled = 0;
+static int COLOR_max = 256;
 
   /* First free dynamic color cell, 0 = full palette, -1 = fixed palette */
 static int            COLOR_firstFree = 0; 
@@ -231,8 +232,9 @@ void COLOR_FillDefaultColors(void)
   if( COLOR_gapStart < COLOR_gapEnd && COLOR_PixelToPalette )
   {
     XColor	xc;
-    int		r, g, b;
+    int		r, g, b, max;
 
+    max = COLOR_max - (256 - (COLOR_gapEnd - COLOR_gapStart));
     for ( i = 0, idx = COLOR_gapStart; i < 256 && idx <= COLOR_gapEnd; i++ )
       if( COLOR_PixelToPalette[i] == 0 )
 	{
@@ -248,6 +250,7 @@ void COLOR_FillDefaultColors(void)
 	     COLOR_PaletteToPixel[idx] = xc.pixel;
            *(COLORREF*)(COLOR_sysPal + idx) = RGB(r, g, b);
 	     COLOR_sysPal[idx++].peFlags |= PC_SYS_USED;
+	     if( --max <= 0 ) break;
 	  }
 	}
     COLOR_gapFilled = idx - COLOR_gapStart;    
@@ -317,16 +320,15 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
    unsigned long*	pixDynMapping = NULL;
    unsigned long	plane_masks[1];
    int			i, j, warn = 0;
-   int			color_ini_max = 256;
    int			diff, r, g, b, max = 256, bp = 0, wp = 1;
    int			step = 1;
 
    /* read "AllocSystemColors" from wine.conf */
 
-   color_ini_max = PROFILE_GetWineIniInt( "options", "AllocSystemColors", 256);
-   if (color_ini_max > 256) color_ini_max = 256;
-   if (color_ini_max < 20) color_ini_max = 20;
-   dprintf_palette(stddeb,"COLOR_Init: %d colors configured.\n",color_ini_max);
+   COLOR_max = PROFILE_GetWineIniInt( "options", "AllocSystemColors", 256);
+   if (COLOR_max > 256) COLOR_max = 256;
+   else if (COLOR_max < 20) COLOR_max = 20;
+   dprintf_palette(stddeb,"COLOR_Init: %d colors configured.\n", COLOR_max);
    
    dprintf_palette(stddeb,"\tbuilding shared map - %i palette entries\n", cs->size);
 
@@ -425,8 +427,8 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
                }
           }
 
-	if( c_min > color_ini_max - NB_RESERVED_COLORS) 
-	    c_min = color_ini_max - NB_RESERVED_COLORS;
+	if( c_min > COLOR_max - NB_RESERVED_COLORS) 
+	    c_min = COLOR_max - NB_RESERVED_COLORS;
 
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 

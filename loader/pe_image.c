@@ -28,7 +28,6 @@
 #include "global.h"
 #include "task.h"
 #include "ldt.h"
-#include "registers.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "debugger.h"
@@ -419,7 +418,8 @@ problem needs to be fixed properly at some stage */
 	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
 		pe->load_addr, pe->vma_size);
-
+	
+	memset( (void *)load_addr, 0, pe->vma_size);
 
 	for(i=0; i < pe->pe_header->coff.NumberOfSections; i++)
 	{
@@ -575,7 +575,6 @@ problem needs to be fixed properly at some stage */
 }
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
-void InitTask( SIGCONTEXT *context );
 
 HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
@@ -634,49 +633,6 @@ static void PE_InitDLL(HMODULE16 hModule)
                                   pe->pe_header->opt_coff.AddressOfEntryPoint),
                             hModule, DLL_PROCESS_ATTACH, -1 );
     }
-}
-
-
-/* FIXME: This stuff is all on a "well it works" basis. An implementation
-based on some kind of documentation would be greatly appreciated :-) */
-
-typedef struct _TEB
-{
-    void        *Except;	/* 00 */
-    void        *stack;		/* 04 */
-    int	        dummy1[4];	/* 08 */
-    struct _TEB *TEBDSAlias;	/* 18 */
-    int	        dummy2[2];	/* 1C */
-    int	        taskid;		/* 24 */
-    int		dummy3[2];	/* 28 */
-    LPBYTE	process;	/* 30 */ /* points to current process struct */
-} TEB;
-
-/* the current process structure. Only the processheap is of interest (off 0x18) */
-struct {
-	DWORD		dummy[6];
-	HANDLE32	procheap; /* 18: Process Heap */
-} dummyprocess;
-
-void PE_InitTEB(int hTEB)
-{
-    TDB *pTask;
-    TEB *pTEB;
-
-    pTask = (TDB *)(GlobalLock16(GetCurrentTask() & 0xffff));
-    pTEB  = (TEB *)(GlobalLock16(hTEB));
-    pTEB->stack = (void *)pTask->esp;
-    pTEB->Except = (void *)(-1); 
-    pTEB->TEBDSAlias = pTEB;
-    pTEB->taskid = getpid();
-
-    dummyprocess.procheap = GetProcessHeap();
-    pTEB->process = &dummyprocess;
-}
-
-VOID
-NtCurrentTeb(CONTEXT *context) {
-	context->Eax = GlobalLock16(LOWORD(context->SegFs));
 }
 
 void PE_InitializeDLLs(HMODULE16 hModule)

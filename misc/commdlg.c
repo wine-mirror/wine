@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "message.h"
 #include "commdlg.h"
+#include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
 #include "resource.h"
@@ -59,13 +60,22 @@ static BOOL FileDlg_Init()
 BOOL GetOpenFileName( SEGPTR ofn )
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl, hResInfo;
-    BOOL bRet;
+    HANDLE16 hDlgTmpl = 0, hResInfo;
+    BOOL32 bRet = FALSE, win32Format = FALSE;
+    HWND32 hwndDialog;
     LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
+    LPCVOID template;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) hDlgTmpl = lpofn->hInstance;
+    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+    {
+        if (!(template = LockResource16( lpofn->hInstance )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
+    }
     else if (lpofn->Flags & OFN_ENABLETEMPLATE)
     {
         if (!(hResInfo = FindResource16(lpofn->hInstance,
@@ -74,25 +84,27 @@ BOOL GetOpenFileName( SEGPTR ofn )
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo );
+        if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
+            !(template = LockResource16( hDlgTmpl )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
     }
-    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_OPEN_FILE );
-    if (!hDlgTmpl)
+    else
     {
-        CommDlgLastError = CDERR_LOADRESFAILURE;
-        return FALSE;
+        template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
+        win32Format = TRUE;
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
-    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
-                        (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),
-                        ofn );
+    hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
+                                        lpofn->hwndOwner,
+                                        (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),
+                                        ofn, WIN_PROC_16 );
+    if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
-    if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
-    {
-        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
-        else SYSRES_FreeResource( hDlgTmpl );
-    }
+    if (hDlgTmpl) FreeResource16( hDlgTmpl );
 
     dprintf_commdlg(stddeb,"GetOpenFileName // return lpstrFile='%s' !\n", 
            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
@@ -106,35 +118,53 @@ BOOL GetOpenFileName( SEGPTR ofn )
 BOOL GetSaveFileName( SEGPTR ofn)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl, hResInfo;
-    BOOL bRet;
+    HANDLE16 hDlgTmpl = 0;
+    BOOL32 bRet = FALSE, win32Format = FALSE;
     LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
-  
+    LPCVOID template;
+    HWND32 hwndDialog;
+
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) hDlgTmpl = lpofn->hInstance;
+    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+    {
+        if (!(template = LockResource16( lpofn->hInstance )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
+    }
     else if (lpofn->Flags & OFN_ENABLETEMPLATE)
     {
-        hInst = lpofn->hInstance;
+        HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16(lpofn->hInstance,
-                                        lpofn->lpTemplateName, RT_DIALOG )))
+                                        lpofn->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo );
+        if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
+            !(template = LockResource16( hDlgTmpl )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
     }
-    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_SAVE_FILE );
+    else
+    {
+        template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
+        win32Format = TRUE;
+    }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
-    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
-                        (DLGPROC16)MODULE_GetWndProcEntry16("FileSaveDlgProc"),
-                        ofn );
-    if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
-    {
-        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
-        else SYSRES_FreeResource( hDlgTmpl );
-    }
+
+    hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
+                                        lpofn->hwndOwner,
+                                        (DLGPROC16)MODULE_GetWndProcEntry16("FileSaveDlgProc"),
+                                        ofn, WIN_PROC_16 );
+    if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
+
+    if (hDlgTmpl) FreeResource16( hDlgTmpl );
 
     dprintf_commdlg(stddeb, "GetSaveFileName // return lpstrFile='%s' !\n", 
             (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
@@ -693,10 +723,9 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FindTextDlg   (COMMDLG.11)
  */
-BOOL FindText( SEGPTR find )
+HWND16 FindText( SEGPTR find )
 {
-    HANDLE16 hInst, hDlgTmpl;
-    BOOL bRet;
+    HANDLE16 hInst;
     LPCVOID ptr;
     LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
 
@@ -708,25 +737,20 @@ BOOL FindText( SEGPTR find )
      * FIXME : We should do error checking on the lpFind structure here
      * and make CommDlgExtendedError() return the error condition.
      */
-    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_FIND_TEXT );
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
-    bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FindTextDlgProc"),
-                        find );
-    GlobalUnlock16( hDlgTmpl );
-    SYSRES_FreeResource( hDlgTmpl );
-    return bRet;
+                                  find, WIN_PROC_16 );
 }
 
 
 /***********************************************************************
- *           ReplaceTextDlg   (COMMDLG.12)
+ *           ReplaceText   (COMMDLG.12)
  */
-BOOL ReplaceText( SEGPTR find )
+HWND16 ReplaceText( SEGPTR find )
 {
-    HANDLE16 hInst, hDlgTmpl;
-    BOOL bRet;
+    HANDLE16 hInst;
     LPCVOID ptr;
     LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
 
@@ -738,15 +762,11 @@ BOOL ReplaceText( SEGPTR find )
      * FIXME : We should do error checking on the lpFind structure here
      * and make CommDlgExtendedError() return the error condition.
      */
-    hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_REPLACE_TEXT );
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
-    bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
                      (DLGPROC16)MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
-                     find );
-    GlobalUnlock16( hDlgTmpl );
-    SYSRES_FreeResource( hDlgTmpl );
-    return bRet;
+                                  find, WIN_PROC_16 );
 }
 
 
@@ -978,8 +998,10 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
  */
 BOOL PrintDlg( SEGPTR printdlg )
 {
-    HANDLE16 hInst, hDlgTmpl;
-    BOOL bRet;
+    HANDLE16 hInst;
+    BOOL bRet = FALSE;
+    LPCVOID template;
+    HWND32 hwndDialog;
     LPPRINTDLG lpPrint = (LPPRINTDLG)PTR_SEG_TO_LIN(printdlg);
 
     dprintf_commdlg(stddeb,"PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
@@ -989,17 +1011,18 @@ BOOL PrintDlg( SEGPTR printdlg )
         return TRUE;
 
     if (lpPrint->Flags & PD_PRINTSETUP)
-	hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_PRINT_SETUP );
+	template = SYSRES_GetResPtr( SYSRES_DIALOG_PRINT_SETUP );
     else
-	hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_PRINT );
+	template = SYSRES_GetResPtr( SYSRES_DIALOG_PRINT );
 
     hInst = WIN_GetWindowInstance( lpPrint->hwndOwner );
-    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpPrint->hwndOwner,
+    hwndDialog = DIALOG_CreateIndirect( hInst, template, TRUE,
+                                        lpPrint->hwndOwner,
                                (DLGPROC16)((lpPrint->Flags & PD_PRINTSETUP) ?
                                 MODULE_GetWndProcEntry16("PrintSetupDlgProc") :
                                 MODULE_GetWndProcEntry16("PrintDlgProc")),
-                                printdlg );
-    SYSRES_FreeResource( hDlgTmpl );
+                                printdlg, WIN_PROC_16 );
+    if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpPrint->hwndOwner);
     return bRet;
 }
 
@@ -1108,37 +1131,51 @@ short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl, hResInfo;
-    BOOL bRet;
+    HANDLE16 hDlgTmpl = 0;
+    BOOL bRet = FALSE, win32Format = FALSE;
+    LPCVOID template;
+    HWND32 hwndDialog;
 
     dprintf_commdlg(stddeb,"ChooseColor\n");
     if (!lpChCol) return FALSE;    
-    if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChCol->hInstance;
+
+    if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
+    {
+        if (!(template = LockResource16( lpChCol->hInstance )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
+    }
     else if (lpChCol->Flags & CC_ENABLETEMPLATE)
     {
+        HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16(lpChCol->hInstance,
                                         lpChCol->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource16( lpChCol->hInstance, hResInfo );
+        if (!(hDlgTmpl = LoadResource16( lpChCol->hInstance, hResInfo )) ||
+            !(template = LockResource16( hDlgTmpl )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
     }
-    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
-    if (!hDlgTmpl)
+    else
     {
-        CommDlgLastError = CDERR_LOADRESFAILURE;
-        return FALSE;
+        template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_COLOR );
+        win32Format = TRUE;
     }
+
     hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
-    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChCol->hwndOwner,
+    hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
+                                        lpChCol->hwndOwner,
                            (DLGPROC16)MODULE_GetWndProcEntry16("ColorDlgProc"),
-                           (DWORD)lpChCol);
-    if (!(lpChCol->Flags & CC_ENABLETEMPLATEHANDLE))
-    {
-        if (lpChCol->Flags & CC_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
-        else SYSRES_FreeResource( hDlgTmpl );
-    }
+                                        (DWORD)lpChCol, WIN_PROC_16 );
+    if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpChCol->hwndOwner);
+    if (hDlgTmpl) FreeResource16( hDlgTmpl );
     return bRet;
 }
 
@@ -2189,37 +2226,52 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
 BOOL ChooseFont(LPCHOOSEFONT lpChFont)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl, hResInfo;
-    BOOL bRet;
+    HANDLE16 hDlgTmpl = 0;
+    BOOL bRet = FALSE, win32Format = FALSE;
+    LPCVOID template;
+    HWND32 hwndDialog;
 
     dprintf_commdlg(stddeb,"ChooseFont\n");
     if (!lpChFont) return FALSE;    
-    if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChFont->hInstance;
+
+    if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE)
+    {
+        if (!(template = LockResource16( lpChFont->hInstance )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
+    }
     else if (lpChFont->Flags & CF_ENABLETEMPLATE)
     {
-        if (!(hResInfo = FindResource16(lpChFont->hInstance,
-                                        lpChFont->lpTemplateName, RT_DIALOG)))
+        HANDLE16 hResInfo;
+        if (!(hResInfo = FindResource16( lpChFont->hInstance,
+                                         lpChFont->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource16( lpChFont->hInstance, hResInfo );
+        if (!(hDlgTmpl = LoadResource16( lpChFont->hInstance, hResInfo )) ||
+            !(template = LockResource16( hDlgTmpl )))
+        {
+            CommDlgLastError = CDERR_LOADRESFAILURE;
+            return FALSE;
+        }
     }
-    else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
-    if (!hDlgTmpl)
+    else
     {
-        CommDlgLastError = CDERR_LOADRESFAILURE;
-        return FALSE;
+        template = SYSRES_GetResPtr( SYSRES_DIALOG_CHOOSE_FONT );
+        win32Format = TRUE;
     }
+
     hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
-    bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChFont->hwndOwner,
+
+    hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
+                                        lpChFont->hwndOwner,
                       (DLGPROC16)MODULE_GetWndProcEntry16("FormatCharDlgProc"),
-                      (DWORD)lpChFont);
-    if (!(lpChFont->Flags & CF_ENABLETEMPLATEHANDLE))
-    {
-        if (lpChFont->Flags & CF_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
-        else SYSRES_FreeResource( hDlgTmpl );
-    }
+                                        (DWORD)lpChFont, WIN_PROC_16 );
+    if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);
+    if (hDlgTmpl) FreeResource16( hDlgTmpl );
     return bRet;
 }
 

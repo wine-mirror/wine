@@ -5,7 +5,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +13,6 @@
 #include "windows.h"
 #include "dos_fs.h"
 #include "heap.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -139,16 +137,16 @@ static void PROFILE_Free( PROFILESECTION *section )
 
     for ( ; section; section = next_section)
     {
-        if (section->name) free( section->name );
+        if (section->name) HeapFree( SystemHeap, 0, section->name );
         for (key = section->key; key; key = next_key)
         {
             next_key = key->next;
-            if (key->name) free( key->name );
-            if (key->value) free( key->value );
-            free( key );
+            if (key->name) HeapFree( SystemHeap, 0, key->name );
+            if (key->value) HeapFree( SystemHeap, 0, key->value );
+            HeapFree( SystemHeap, 0, key );
         }
         next_section = section->next;
-        free( section );
+        HeapFree( SystemHeap, 0, section );
     }
 }
 
@@ -167,7 +165,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     PROFILESECTION **prev_section;
     PROFILEKEY *key, **prev_key;
 
-    first_section = (PROFILESECTION *)xmalloc( sizeof(*section) );
+    first_section = HEAP_xalloc( SystemHeap, 0, sizeof(*section) );
     first_section->name = NULL;
     first_section->key  = NULL;
     first_section->next = NULL;
@@ -192,8 +190,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             {
                 *p2 = '\0';
                 p++;
-                section = (PROFILESECTION *)xmalloc( sizeof(*section));
-                section->name = xstrdup( p );
+                section = HEAP_xalloc( SystemHeap, 0, sizeof(*section) );
+                section->name = HEAP_strdupA( SystemHeap, 0, p );
                 section->key  = NULL;
                 section->next = NULL;
                 *prev_section = section;
@@ -209,9 +207,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             *p2++ = '\0';
             while (*p2 && isspace(*p2)) p2++;
         }
-        key = (PROFILEKEY *)xmalloc( sizeof(*key) );
-        key->name  = xstrdup( p );
-        key->value = p2 ? xstrdup( p2 ) : NULL;
+        key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
+        key->name  = HEAP_strdupA( SystemHeap, 0, p );
+        key->value = HEAP_strdupA( SystemHeap, 0, p2 );
         key->next  = NULL;
         *prev_key  = key;
         prev_key = &key->next;
@@ -268,9 +266,9 @@ static BOOL32 PROFILE_DeleteKey( PROFILESECTION **section,
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
-                    if (to_del->name) free( to_del->name );
-                    if (to_del->value) free( to_del->value );
-                    free( to_del );
+                    if (to_del->name) HeapFree( SystemHeap, 0, to_del->name );
+                    if (to_del->value) HeapFree( SystemHeap, 0, to_del->value);
+                    HeapFree( SystemHeap, 0, to_del );
                     return TRUE;
                 }
                 key = &(*key)->next;
@@ -302,8 +300,8 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
                 key = &(*key)->next;
             }
             if (!create) return NULL;
-            *key = (PROFILEKEY *)xmalloc( sizeof(PROFILEKEY) );
-            (*key)->name  = xstrdup( key_name );
+            *key = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILEKEY) );
+            (*key)->name  = HEAP_strdupA( SystemHeap, 0, key_name );
             (*key)->value = NULL;
             (*key)->next  = NULL;
             return *key;
@@ -311,11 +309,11 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
         section = &(*section)->next;
     }
     if (!create) return NULL;
-    *section = (PROFILESECTION *)xmalloc( sizeof(PROFILESECTION) );
-    (*section)->name = xstrdup(section_name);
+    *section = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILESECTION) );
+    (*section)->name = HEAP_strdupA( SystemHeap, 0, section_name );
     (*section)->next = NULL;
-    (*section)->key  = (PROFILEKEY *)xmalloc( sizeof(PROFILEKEY) );
-    (*section)->key->name  = xstrdup( key_name );
+    (*section)->key  = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILEKEY) );
+    (*section)->key->name  = HEAP_strdupA( SystemHeap, 0, key_name );
     (*section)->key->value = NULL;
     (*section)->key->next  = NULL;
     return (*section)->key;
@@ -400,10 +398,10 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
 
     /* Flush the previous profile */
 
-    newdos_name = xstrdup( dos_name );
+    newdos_name = HEAP_strdupA( SystemHeap, 0, dos_name );
     PROFILE_FlushFile();
     PROFILE_Free( CurProfile.section );
-    if (CurProfile.dos_name) free( CurProfile.dos_name );
+    if (CurProfile.dos_name) HeapFree( SystemHeap, 0, CurProfile.dos_name );
     CurProfile.section   = NULL;
     CurProfile.dos_name  = newdos_name;
 
@@ -528,6 +526,7 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
                                         key_name, TRUE );
         dprintf_profile( stddeb, "PROFILE_SetString('%s','%s','%s'): ",
                          section_name, key_name, value );
+        if (!key) return FALSE;
         if (key->value)
         {
             if (!strcmp( key->value, value ))
@@ -536,10 +535,10 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
                 return TRUE;  /* No change needed */
             }
             dprintf_profile( stddeb, "replacing '%s'\n", key->value );
-            free( key->value );
+            HeapFree( SystemHeap, 0, key->value );
         }
         else dprintf_profile( stddeb, "creating key\n" );
-        key->value = xstrdup( value );
+        key->value = HEAP_strdupA( SystemHeap, 0, value );
         CurProfile.changed = TRUE;
     }
     return TRUE;

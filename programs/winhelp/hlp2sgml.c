@@ -252,19 +252,19 @@ int main(int argc, char **argv)
 
 static FILE *file = 0;
 
-HFILE OpenFile( LPCSTR path, OFSTRUCT *ofs, UINT mode )
+HFILE OpenFile32( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
   file = *path ? fopen(path, "r") : stdin;
   return file ? 1 : HFILE_ERROR;
 }
 
-HFILE _lclose( HFILE hFile )
+HFILE _lclose32( HFILE hFile )
 {
   fclose(file);
   return 0;
 }
 
-LONG _hread( HFILE hFile, SEGPTR buffer, LONG count )
+LONG _hread32( HFILE hFile, SEGPTR buffer, LONG count )
 {
   return fread(buffer, 1, count, file);
 }

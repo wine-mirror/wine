@@ -4,7 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resources
-RCFLAGS   = -w16
+RCFLAGS   = -w32
 
 SYSRES_SRCS = \
 	sysres_Cz.c \

@@ -1,3 +1,7 @@
+/*
+ * DOS interrupt 25h handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +18,7 @@
  *
  * Handler for int 25h (absolute disk read).
  */
-void INT_Int25Handler( SIGCONTEXT *context )
+void INT_Int25Handler( CONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(context), BX_reg(context) );
     DWORD begin, length;

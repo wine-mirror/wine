@@ -34,7 +34,10 @@ static BYTE cmosimage[64] =
 };
 
 
-DWORD inport( int port, int count )
+/**********************************************************************
+ *	    IO_inport
+ */
+DWORD IO_inport( int port, int count )
 {
     DWORD res = 0;
     BYTE b;
@@ -52,7 +55,9 @@ DWORD inport( int port, int count )
             b = cmosimage[cmosaddress & 0x3f];
             break;
 	default:
-	  b = 0xff;
+            fprintf( stderr, "Direct I/O read attempted from port %x\n", port);
+            b = 0xff;
+            break;
 	}
         res = (res << 8) | b;
     }
@@ -60,7 +65,10 @@ DWORD inport( int port, int count )
 }
 
 
-void outport( int port, int count, DWORD value )
+/**********************************************************************
+ *	    IO_outport
+ */
+void IO_outport( int port, int count, DWORD value )
 {
     BYTE b;
 
@@ -80,7 +88,8 @@ void outport( int port, int count, DWORD value )
             cmosimage[cmosaddress & 0x3f] = b;
             break;
 	default:
-            /* Rien du tout.  */
+            fprintf( stderr, "Direct I/O write attempted to port %x\n", port );
+            break;
 	}
     }
 }

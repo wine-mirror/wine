@@ -84,7 +84,8 @@ extern WORD DOS_ExtendedError;
 extern BYTE DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus;
 
 #define DOS_ERROR(err,class,action,locus) \
-    ( DOS_ErrorClass = (class), DOS_ErrorAction = (action), \
+    ( SetLastError(err), \
+      DOS_ErrorClass = (class), DOS_ErrorAction = (action), \
       DOS_ErrorLocus = (locus), DOS_ExtendedError = (err) )
 
 /* Error codes */

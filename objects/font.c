@@ -482,7 +482,6 @@ HFONT16 CreateFontIndirect16( const LOGFONT16 *font )
     if (!hfont) return 0;
     fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
     memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
-    AnsiLower( fontPtr->logfont.lfFaceName );
     dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return %04x\n",
 	font, font->lfHeight, font->lfWidth, hfont);
     return hfont;

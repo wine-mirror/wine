@@ -458,9 +458,10 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 /***********************************************************************
  *           DIALOG_CreateIndirect
  */
-static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
-                                   HWND owner, DLGPROC16 dlgProc,
-                                   LPARAM param, WINDOWPROCTYPE procType )
+HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
+                              BOOL32 win32Template, HWND32 owner,
+                              DLGPROC16 dlgProc, LPARAM param,
+                              WINDOWPROCTYPE procType )
 {
     HMENU16 hMenu = 0;
     HFONT16 hFont = 0;
@@ -475,7 +476,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
       /* Parse dialog template */
 
     if (!dlgTemplate) return 0;
-    if (procType != WIN_PROC_16)
+    if (win32Template)
         dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
     else
         dlgTemplate = DIALOG_ParseTemplate16( dlgTemplate, &template );
@@ -593,7 +594,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     /* Create controls */
 
     if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
-                                hInst, (procType != WIN_PROC_16) ))
+                                hInst, win32Template ))
     {
         DestroyWindow( hwnd );
         return 0;
@@ -692,7 +693,7 @@ HWND16 CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
                                     HWND16 owner, DLGPROC16 dlgProc,
                                     LPARAM param )
 {
-    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, FALSE, owner,
                                   dlgProc, param, WIN_PROC_16 );
 }
 
@@ -704,7 +705,7 @@ HWND32 CreateDialogIndirectParam32A( HINSTANCE32 hInst, LPCVOID dlgTemplate,
                                      HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
-    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
                                   (DLGPROC16)dlgProc, param, WIN_PROC_32A );
 }
 
@@ -716,7 +717,7 @@ HWND32 CreateDialogIndirectParam32W( HINSTANCE32 hInst, LPCVOID dlgTemplate,
                                      HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
-    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, TRUE, owner,
                                   (DLGPROC16)dlgProc, param, WIN_PROC_32W );
 }
 
@@ -724,7 +725,7 @@ HWND32 CreateDialogIndirectParam32W( HINSTANCE32 hInst, LPCVOID dlgTemplate,
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
+INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
@@ -832,7 +833,7 @@ INT16 DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
  *           DialogBoxIndirectParam32A   (USER32.135)
  */
 INT32 DialogBoxIndirectParam32A( HINSTANCE32 hInstance, LPCVOID template,
-                                 HWND32 owner, DLGPROC32 dlgProc ,LPARAM param)
+                                 HWND32 owner, DLGPROC32 dlgProc, LPARAM param)
 {
     HWND32 hwnd = CreateDialogIndirectParam32A( hInstance, template,
                                                 owner, dlgProc, param );
@@ -845,7 +846,7 @@ INT32 DialogBoxIndirectParam32A( HINSTANCE32 hInstance, LPCVOID template,
  *           DialogBoxIndirectParam32W   (USER32.137)
  */
 INT32 DialogBoxIndirectParam32W( HINSTANCE32 hInstance, LPCVOID template,
-                                 HWND32 owner, DLGPROC32 dlgProc ,LPARAM param)
+                                 HWND32 owner, DLGPROC32 dlgProc, LPARAM param)
 {
     HWND32 hwnd = CreateDialogIndirectParam32W( hInstance, template,
                                                 owner, dlgProc, param );

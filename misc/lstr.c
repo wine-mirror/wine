@@ -12,12 +12,12 @@
 #include <ctype.h>
 
 #include "windows.h"
+#include "heap.h"
 #include "ldt.h"
 #include "module.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-#include "string32.h"
 
 #define ToUpper(c)	toupper(c)
 #define ToLower(c)	tolower(c)
@@ -173,7 +173,7 @@ SEGPTR AnsiPrev( SEGPTR start, SEGPTR current)
 void OutputDebugString( LPCSTR str )
 {
     char *module;
-    char *p, *buffer = xmalloc( strlen(str)+1 );
+    char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+1 );
     /* Remove CRs */
     for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
     *p = '\0';
@@ -181,7 +181,7 @@ void OutputDebugString( LPCSTR str )
     module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
     fprintf( stderr, "OutputDebugString: %s says '%s'\n",
              module ? module : "???", buffer );
-    free( buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 /***********************************************************************
@@ -506,7 +506,7 @@ FormatMessage32A(
 		fprintf(stdnimp,"	- line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-		from = xstrdup((LPSTR)lpSource);
+		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
 	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
 		/* gather information from system message tables ... */
 		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
@@ -517,11 +517,11 @@ FormatMessage32A(
 		dwMessageId &= 0xFFFF;
 		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
 		if (bufsize) {
-			from = (char*)xmalloc(bufsize+1);
+			from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
 			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
-	target	= (char*)xmalloc(100);
+	target	= HeapAlloc( GetProcessHeap(), 0, 100);
 	t	= target;
 	talloced= 100;
 	*t	= 0;
@@ -568,12 +568,12 @@ FormatMessage32A(
 						f++;
 						if (NULL!=(x=strchr(f,'!'))) {
 							*x='\0';
-							fmtstr=(char*)xmalloc(strlen(f)+2);
+							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						}
 					} else
-						fmtstr=strdup("%s");
+						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
 					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 						argliststart=args+insertnr-1;
 					else
@@ -583,16 +583,16 @@ FormatMessage32A(
 						argliststart=((DWORD*)&args)+insertnr-1;
 
 					if (fmtstr[strlen(fmtstr)]=='s')
-						sprintfbuf=(char*)xmalloc(strlen((LPSTR)argliststart[0])+1);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
 					else
-						sprintfbuf=(char*)xmalloc(100);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 					vsprintf(sprintfbuf,fmtstr,argliststart);
 					x=sprintfbuf;
 					while (*x) {
 						ADD_TO_T(*x++);
 					}
-					free(sprintfbuf);
-					free(fmtstr);
+					HeapFree(GetProcessHeap(),0,sprintfbuf);
+					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
 				case '0':
 					nolinefeed=1;
@@ -620,8 +620,8 @@ FormatMessage32A(
 		memcpy(*(LPSTR*)lpBuffer,target,talloced);
 	} else
 		strncpy(lpBuffer,target,nSize);
-	free(target);
-	if (from) free(from);
+	HeapFree(GetProcessHeap(),0,target);
+	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
 			strlen(*(LPSTR*)lpBuffer):
 			strlen(lpBuffer);
@@ -689,7 +689,7 @@ FormatMessage32W(
 		fprintf(stdnimp,"	- line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-		from = STRING32_DupUniToAnsi((LPWSTR)lpSource);
+		from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);
 	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
 		/* gather information from system message tables ... */
 		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
@@ -699,12 +699,13 @@ FormatMessage32W(
 
 		dwMessageId &= 0xFFFF;
 		bufsize=LoadMessage32A(0,dwMessageId,dwLanguageId,NULL,100);
-		if (bufsize) {
-			from = (char*)xmalloc(bufsize+1);
-			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
+		if (bufsize)
+                {
+                    from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
+                    LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
-	target	= (char*)xmalloc(100);
+	target	= HeapAlloc( GetProcessHeap(), 0, 100 );
 	t	= target;
 	talloced= 100;
 	*t	= 0;
@@ -749,14 +750,15 @@ FormatMessage32W(
 					}
 					if (*f=='!') {
 						f++;
-						if (NULL!=(x=strchr(f,'!'))) {
-							*x='\0';
-							fmtstr=(char*)xmalloc(strlen(f)+2);
+						if (NULL!=(x=strchr(f,'!')))
+                                                {
+                                                    *x='\0';
+                                                    fmtstr=HeapAlloc( GetProcessHeap(), 0, strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						}
 					} else
-						fmtstr=strdup("%s");
+						fmtstr=HEAP_strdupA( GetProcessHeap(),0,"%s");
 					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 						argliststart=args+insertnr-1;
 					else
@@ -768,22 +770,22 @@ FormatMessage32W(
 					if (fmtstr[strlen(fmtstr)]=='s') {
 						DWORD	xarr[3];
 
-						xarr[0]=(DWORD)STRING32_DupUniToAnsi((LPWSTR)(*(argliststart+0)));
+						xarr[0]=(DWORD)HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)(*(argliststart+0)));
 						/* possible invalid pointers */
 						xarr[1]=*(argliststart+1);
 						xarr[2]=*(argliststart+2);
-						sprintfbuf=(char*)xmalloc(lstrlen32W((LPWSTR)argliststart[0])*2+1);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,lstrlen32W((LPWSTR)argliststart[0])*2+1);
 						vsprintf(sprintfbuf,fmtstr,xarr);
 					} else {
-						sprintfbuf=(char*)xmalloc(100);
+						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 						vsprintf(sprintfbuf,fmtstr,argliststart);
 					}
 					x=sprintfbuf;
 					while (*x) {
 						ADD_TO_T(*x++);
 					}
-					free(sprintfbuf);
-					free(fmtstr);
+					HeapFree(GetProcessHeap(),0,sprintfbuf);
+					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
 				case '0':
 					nolinefeed=1;
@@ -810,8 +812,8 @@ FormatMessage32W(
 		lstrcpynAtoW(*(LPWSTR*)lpBuffer,target,talloced);
 	} else
 		lstrcpynAtoW(lpBuffer,target,nSize);
-	free(target);
-	if (from) free(from);
+	HeapFree(GetProcessHeap(),0,target);
+	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
 			lstrlen32W(*(LPWSTR*)lpBuffer):
 			lstrlen32W(lpBuffer);

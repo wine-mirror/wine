@@ -34,7 +34,7 @@ static int syntax_error;
 DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [bcdiswx]
-IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
+IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~@]*
 
 %%
 

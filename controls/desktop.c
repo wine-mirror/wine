@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
-#include "directory.h"
 #include "graphics.h"
 #include "heap.h"
 
@@ -25,13 +24,13 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
     BITMAPFILEHEADER *fileHeader;
     BITMAPINFO *bitmapInfo;
     HBITMAP32 hbitmap;
-    HFILE file;
+    HFILE32 file;
     LPSTR buffer;
     LONG size;
 
     /* Read all the file into memory */
 
-    if ((file = _lopen( filename, OF_READ )) == HFILE_ERROR)
+    if ((file = _lopen32( filename, OF_READ )) == HFILE_ERROR32)
     {
         UINT32 len = GetWindowsDirectory32A( NULL, 0 );
         if (!(buffer = HeapAlloc( SystemHeap, 0, len + strlen(filename) + 2 )))
@@ -39,19 +38,19 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
         GetWindowsDirectory32A( buffer, len + 1 );
         strcat( buffer, "\\" );
         strcat( buffer, filename );
-        file = _lopen( buffer, OF_READ );
+        file = _lopen32( buffer, OF_READ );
         HeapFree( SystemHeap, 0, buffer );
     }
-    if (file == HFILE_ERROR) return 0;
-    size = _llseek( file, 0, 2 );
+    if (file == HFILE_ERROR32) return 0;
+    size = _llseek32( file, 0, 2 );
     if (!(buffer = HeapAlloc( SystemHeap, 0, size )))
     {
-	_lclose( file );
+	_lclose32( file );
 	return 0;
     }
-    _llseek( file, 0, 0 );
+    _llseek32( file, 0, 0 );
     size = _lread32( file, buffer, size );
-    _lclose( file );
+    _lclose32( file );
     fileHeader = (BITMAPFILEHEADER *)buffer;
     bitmapInfo = (BITMAPINFO *)(buffer + sizeof(BITMAPFILEHEADER));
     
@@ -157,7 +156,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 
     case WM_SYSCOMMAND:
 	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
-	ExitWindows( 0, 0 ); 
+	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
         return (LRESULT)SetCursor( LoadCursor16( 0, IDC_ARROW ) );

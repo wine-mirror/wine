@@ -11,6 +11,9 @@
 
 int runtime_cpu (void)
 {
+#ifndef __i386__
+    return 5;  /* Might as well pretend to be a Pentium... */
+#else  /* __i386__ */
   static int cache = 0;
 
 #ifdef linux
@@ -37,8 +40,8 @@ int runtime_cpu (void)
 	}
     }
   return cache;
-#else
+#endif  /* linux */
   /* FIXME: how do we do this on other systems? */
   return 3;
-#endif
+#endif  /* __i386__ */
 }

@@ -6,24 +6,8 @@ VPATH     = @srcdir@
 MODULE    = miscemu
 
 C_SRCS = \
-	cpu.c \
-	dosmem.c \
-	dpmi.c \
 	emulate.c \
-	instr.c \
-	int10.c \
-	int13.c \
-	int1a.c \
-	int21.c \
-	int25.c \
-	int26.c \
-	int2a.c \
-	int2f.c \
-	int4b.c \
-	int5c.c \
-	interrupts.c \
-	ioports.c \
-	vxd.c
+	instr.c
 
 all: $(MODULE).o
 

@@ -11,12 +11,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-/* WIN32_LastError contains the last error that occurred in the
- * Win32 API.  This value should be stored separately for each
- * thread, when we eventually get thread support.
- */
-static int WIN32_LastError;
-
 /* The errno_xlat_table contains the errno-to-Win32 error
  * mapping.  Since this is a single table, it can't easily
  * take into account function-specific differences, so there
@@ -97,32 +91,6 @@ static ERRNO_XLAT_TABLE errno_xlat_table[] = {
 #endif
     {   -1,             0                               }
 };
-
-/**********************************************************************
- *              GetLastError   (KERNEL.148) (KERNEL32.227)
- */
-DWORD GetLastError(void)
-{
-    return WIN32_LastError;
-}
-
-/**********************************************************************
- *              SetLastError   (KERNEL.147) (KERNEL32.497)
- *
- * This is probably not used by apps too much, but it's useful for
- * our own internal use.
- */
-void SetLastError(DWORD error)
-{
-    WIN32_LastError = error;
-}
-
-/**********************************************************************
- *              SetLastErrorEx            (USER32.484)
- */
-void SetLastErrorEx(DWORD error,DWORD type) {
-    WIN32_LastError = error;
-}
 
 DWORD ErrnoToLastError(int errno_num)
 {

@@ -21,36 +21,6 @@
  */
 int WIN32_LastError;
 
-/*********************************************************************
- *              CloseHandle             (KERNEL32.23)
- */
-BOOL CloseHandle(KERNEL_OBJECT *handle)
-{
-    if ((int)handle<0x1000) /* FIXME: hack */
-    	return CloseFileHandle((int)handle);
-    if ((int)handle==0xFFFFFFFF)
-    	return FALSE;
-    switch(handle->magic)
-    {
-        case KERNEL_OBJECT_UNUSED:
-            SetLastError(ERROR_INVALID_HANDLE);
-            return 0;
-/* FIXME
-        case KERNEL_OBJECT_FILE:
-            rc = CloseFileHandle((FILE_OBJECT *)handle);
-            break;
- */
-
-        default:
-            dprintf_win32(stddeb, "CloseHandle: type %ld not implemented yet.\n",
-                   handle->magic);
-            break;
-    }
-
-    ReleaseKernelObject(handle);
-    return 0;
-}
-
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */

@@ -1,3 +1,7 @@
+/*
+ * DOS interrupt 26h handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "msdos.h"
@@ -13,7 +17,7 @@
  *
  * Handler for int 26h (absolute disk read).
  */
-void INT_Int26Handler( SIGCONTEXT *context )
+void INT_Int26Handler( CONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(context), BX_reg(context) );
     DWORD begin, length;

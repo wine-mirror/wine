@@ -1346,7 +1346,7 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
      {
 	while( w != wndPtr->owner )
 	{
-	  hwndLocalPrev = w->hwndSelf;
+          if (w != wndPtr) hwndLocalPrev = w->hwndSelf;
 	  if( hwndLocalPrev == hwndInsertAfter ) break;
 	  w = w->next;
 	}

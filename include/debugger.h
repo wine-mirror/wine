@@ -7,9 +7,9 @@
 #ifndef __WINE_DEBUGGER_H
 #define __WINE_DEBUGGER_H
 
-#include "ldt.h"
-#include "registers.h"
-
+#include "winnt.h"
+#include "selectors.h"
+#include "sigcontext.h"
 #include "pe_image.h"
 
 #define STEP_FLAG 0x100 /* single step flag */
@@ -101,7 +101,7 @@ enum exec_mode
     EXEC_STEP_INSTR  /* Single-stepping an instruction */
 };
 
-extern SIGCONTEXT *DEBUG_context;  /* debugger/registers.c */
+extern CONTEXT DEBUG_context;  /* debugger/registers.c */
 extern unsigned int dbg_mode;
 
   /* debugger/break.c */
@@ -111,10 +111,9 @@ extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL32 enable );
 extern void DEBUG_InfoBreakpoints(void);
-extern BOOL32 DEBUG_HandleTrap( SIGCONTEXT *context );
-extern BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode );
-extern void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
-                                    int instr_len );
+extern BOOL32 DEBUG_HandleTrap(void);
+extern BOOL32 DEBUG_ShouldContinue( enum exec_mode mode );
+extern void DEBUG_RestartExecution( enum exec_mode mode, int instr_len );
 
   /* debugger/db_disasm.c */
 extern void DEBUG_Disasm( DBG_ADDR *addr );
@@ -163,6 +162,8 @@ extern void DEBUG_SetRegister( enum debug_regs reg, int val );
 extern int DEBUG_GetRegister( enum debug_regs reg );
 extern void DEBUG_InfoRegisters(void);
 extern BOOL32 DEBUG_ValidateRegisters(void);
+extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext );
+extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext );
 
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);

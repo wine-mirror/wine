@@ -20,13 +20,13 @@
 #include <X11/Xatom.h>
 
 #include "windows.h"
+#include "winnt.h"
 #include "gdi.h"
 #include "heap.h"
 #include "queue.h"
 #include "win.h"
 #include "class.h"
 #include "clipboard.h"
-#include "debugger.h"
 #include "message.h"
 #include "module.h"
 #include "options.h"
@@ -35,7 +35,6 @@
 #include "drive.h"
 #include "dos_fs.h"
 #include "shell.h"
-#include "registers.h"
 #include "xmalloc.h"
 #include "keyboard.h"
 #include "stddebug.h"
@@ -65,7 +64,7 @@ BOOL MouseButtonsStates[NB_BUTTONS];
 BOOL AsyncMouseButtonsStates[NB_BUTTONS];
 BYTE InputKeyStateTable[256];
 
-
+static INT16  captureHT = HTCLIENT;
 static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;
 
@@ -542,10 +541,12 @@ static void EVENT_key( XKeyEvent *event )
 	   keysym, ksname, ascii_chars, Str[0], Str);
 	}
 
+#if 0
     /* Ctrl-Alt-Return enters the debugger */
     if ((keysym == XK_Return) && (event->type == KeyPress) &&
         (event->state & ControlMask) && (event->state & Mod1Mask))
         DEBUG_EnterDebugger();
+#endif
 
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
@@ -585,8 +586,8 @@ static void EVENT_key( XKeyEvent *event )
 	    case XK_Delete :
 	    case XK_Home :
 	    case XK_End :
-	    case XK_Page_Up :
-	    case XK_Page_Down :
+	    case XK_Prior :
+	    case XK_Next :
 	    case XK_Left :
 	    case XK_Up :
 	    case XK_Right :
@@ -1082,20 +1083,13 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
     return;
 }
 
-
 /**********************************************************************
- *		SetCapture16   (USER.18)
+ *              EVENT_Capture
+ * 
+ * We need this to be able to generate double click messages
+ * when menu code captures mouse in the window without CS_DBLCLK style.
  */
-HWND16 SetCapture16( HWND16 hwnd )
-{
-    return (HWND16)SetCapture32( hwnd );
-}
-
-
-/**********************************************************************
- *		SetCapture32   (USER32.463)
- */
-HWND32 SetCapture32( HWND32 hwnd )
+HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 {
     Window win;
     HWND32 old_capture_wnd = captureWnd;
@@ -1105,17 +1099,45 @@ HWND32 SetCapture32( HWND32 hwnd )
         ReleaseCapture();
         return old_capture_wnd;
     }
-    if (!(win = WIN_GetXWindow( hwnd ))) return 0;
-    if (XGrabPointer(display, win, False, 
+    if ((win = WIN_GetXWindow( hwnd )))
+    {
+        if (XGrabPointer(display, win, False,
                      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                      GrabModeAsync, GrabModeAsync,
                      None, None, CurrentTime ) == GrabSuccess)
-    {
-	dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
-	captureWnd   = hwnd;
-	return old_capture_wnd;
+	{
+            dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
+            captureWnd   = hwnd;
+	    captureHT    = ht;
+            return old_capture_wnd;
+        }
     }
-    else return 0;
+    return 0;
+}
+
+/**********************************************************************
+ *              EVENT_GetCaptureInfo
+ */
+INT16 EVENT_GetCaptureInfo()
+{
+    return captureHT;
+}
+
+/**********************************************************************
+ *		SetCapture16   (USER.18)
+ */
+HWND16 SetCapture16( HWND16 hwnd )
+{
+    return (HWND16)EVENT_Capture( hwnd, HTCLIENT );
+}
+
+
+/**********************************************************************
+ *		SetCapture32   (USER32.463)
+ */
+HWND32 SetCapture32( HWND32 hwnd )
+{
+    return EVENT_Capture( hwnd, HTCLIENT );
 }
 
 
@@ -1163,8 +1185,7 @@ FARPROC16 GetMouseEventProc(void)
 /***********************************************************************
  *           Mouse_Event   (USER.299)
  */
-#ifndef WINELIB
-void Mouse_Event( SIGCONTEXT *context )
+void Mouse_Event( CONTEXT *context )
 {
     /* Register values:
      * AX = mouse event
@@ -1199,7 +1220,6 @@ void Mouse_Event( SIGCONTEXT *context )
         hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
                         rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
 }
-#endif
 
 
 /**********************************************************************

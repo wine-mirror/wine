@@ -54,5 +54,6 @@ extern HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc );
 
 extern HGLOBAL16 SYSRES_LoadResource( SYSTEM_RESOURCE id );
 extern void SYSRES_FreeResource( HGLOBAL16 handle );
+extern LPCVOID SYSRES_GetResPtr( SYSTEM_RESOURCE id );
 
 #endif /* __WINE_RESOURCE_H */

@@ -426,7 +426,7 @@ gen_res* create_generic_control(char* label,int id,char* class,
 		put_WORD(ret->res+12,cx);
 		put_WORD(ret->res+14,cy);
 		put_WORD(ret->res+16,id);
-		ret->size=win32?24:17;
+		ret->size=24;
 		ret=insert_string(ret,label,20,0);
 		/* is it a predefined class? */
 		cl=0;
@@ -493,9 +493,18 @@ gen_res* add_control(int type,int flags,gen_res*cd,gen_res* rest)
 /* an ICON control was specified, whf contains width, height, and flags */
 gen_res* add_icon(char* name,int id,int x,int y,gen_res* whf,gen_res* rest)
 {
+    if (win32)
+    {
+	put_WORD(whf->res+8,x);
+	put_WORD(whf->res+10,y);
+	put_WORD(whf->res+16,id);
+    }
+    else
+    {
 	put_WORD(whf->res+0,x);
 	put_WORD(whf->res+2,y);
 	put_WORD(whf->res+8,id);
+    }
 	whf=label_control_desc(name,whf);
 	return add_control(CT_STATIC,SS_ICON,whf,rest);
 }
@@ -503,6 +512,10 @@ gen_res* add_icon(char* name,int id,int x,int y,gen_res* whf,gen_res* rest)
 /* insert the generic control into rest */
 gen_res* add_generic_control(gen_res* ctl, gen_res* rest)
 {
+	char zeros[4]={0,0,0,0};
+	/* WIN32: Control is on dword boundary */
+	if(win32 && ctl->size%4)
+		ctl=insert_bytes(ctl,zeros,ctl->size,4-ctl->size%4);
 	return insert_at_beginning(rest,ctl->res,ctl->size);
 }
 

@@ -11,7 +11,6 @@
 #include "dde_mem.h"
 #include "global.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 void SIGNAL_MaskAsyncEvents( BOOL32 mask )
 {
@@ -46,7 +45,6 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
   }
 }
 
-extern LRESULT AboutDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ComboBoxWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ComboLBoxWndProc(HWND,UINT,WPARAM16,LPARAM);
@@ -61,7 +59,6 @@ extern LRESULT PrintSetupDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ReplaceTextDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ScrollBarWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT StaticWndProc(HWND,UINT,WPARAM16,LPARAM);
-extern LRESULT SystemMessageBoxProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT TASK_Reschedule(void);
 
 /***********************************************************************
@@ -72,7 +69,6 @@ extern LRESULT TASK_Reschedule(void);
 FARPROC16 MODULE_GetWndProcEntry16( char *name )
 {
 #define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return (FARPROC16)proc
-  MAP_STR_TO_PROC("AboutDlgProc",AboutDlgProc);
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
   MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
   MAP_STR_TO_PROC("ComboLBoxWndProc",ComboLBoxWndProc);
@@ -88,7 +84,6 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("ReplaceTextDlgProc",ReplaceTextDlgProc);
   MAP_STR_TO_PROC("ScrollBarWndProc",ScrollBarWndProc);
   MAP_STR_TO_PROC("StaticWndProc",StaticWndProc);
-  MAP_STR_TO_PROC("SystemMessageBoxProc",SystemMessageBoxProc);
   MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
   fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
   return NULL;

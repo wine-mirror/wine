@@ -6,8 +6,7 @@
 #ifndef __WINE_EXCEPT_H
 #define __WINE_EXCEPT_H
 
-#include "wintypes.h"
-#include "registers.h"
+#include "winnt.h"
 /*
  * exception codes
  */

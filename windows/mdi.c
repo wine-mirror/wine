@@ -838,7 +838,6 @@ LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
 BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
 {
  WND*		child = WIN_FindWndPtr(hChild);
- HGLOBAL16      handle;
  HMENU16  	hSysPopup = 0;
 
  dprintf_mdi(stddeb,"MDI_AugmentFrameMenu: frame %p,child %04x\n",frame,hChild);
@@ -847,9 +846,8 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
 
  /* create a copy of sysmenu popup and insert it into frame menu bar */
 
- if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;
- hSysPopup = LoadMenuIndirect16( GlobalLock16( handle ) );
- SYSRES_FreeResource( handle );
+ if (!(hSysPopup = LoadMenuIndirect32A(SYSRES_GetResPtr(SYSRES_MENU_SYSMENU))))
+     return 0;
  
  dprintf_mdi(stddeb,"\t\tgot popup %04x\n in sysmenu %04x",hSysPopup,child->hSysMenu);
  

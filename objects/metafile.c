@@ -62,7 +62,7 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
 {
   HMETAFILE16 hmf;
   METAHEADER *mh;
-  HFILE hFile;
+  HFILE32 hFile;
   DWORD size;
   
   dprintf_metafile(stddeb,"GetMetaFile: %s\n", lpFilename);
@@ -78,12 +78,12 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
     return 0;
   }
   
-  if ((hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR) {
+  if ((hFile = _lopen32(lpFilename, OF_READ)) == HFILE_ERROR32) {
     GlobalFree16(hmf);
     return 0;
   }
   
-  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
+  if (_lread32(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR32) {
     GlobalFree16(hmf);
     return 0;
   }
@@ -99,12 +99,12 @@ HMETAFILE16 GetMetaFile(LPSTR lpFilename)
   }
   
   if (_lread32(hFile, (char*)mh + mh->mtHeaderSize * 2, 
-	        size - mh->mtHeaderSize * 2) == HFILE_ERROR) {
+	        size - mh->mtHeaderSize * 2) == HFILE_ERROR32) {
     GlobalFree16(hmf);
     return 0;
   }
   
-  _lclose(hFile);
+  _lclose32(hFile);
 
   if (mh->mtType != 1) {
     GlobalFree16(hmf);
@@ -126,7 +126,7 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
     METAHEADER *mh2;
-    HFILE hFile;
+    HFILE32 hFile;
     
     dprintf_metafile(stddeb,"CopyMetaFile: %s\n", lpFilename);
     
@@ -138,12 +138,12 @@ HMETAFILE16 CopyMetaFile(HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     if (lpFilename)          /* disk based metafile */
         {
         int i,j;
-	hFile = _lcreat(lpFilename, 0);
+	hFile = _lcreat32(lpFilename, 0);
 	j=mh->mtType;
 	mh->mtType=1;        /* disk file version stores 1 here */
 	i=_lwrite32(hFile, (char *)mh, mh->mtSize * 2) ;
 	mh->mtType=j;        /* restore old value  [0 or 1] */	
-        _lclose(hFile);
+        _lclose32(hFile);
 	if (i == -1)
 	    return 0;
         }

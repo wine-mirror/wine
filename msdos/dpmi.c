@@ -43,14 +43,14 @@ typedef struct
     WORD  ss;
 } REALMODECALL;
 
-extern void do_mscdex( SIGCONTEXT *context );
+extern void do_mscdex( CONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int31Handler
  *
  * Handler for int 31h (DPMI).
  */
-void INT_Int31Handler( SIGCONTEXT *context )
+void INT_Int31Handler( CONTEXT *context )
 {
     DWORD dw;
     BYTE *ptr;
@@ -78,12 +78,8 @@ void INT_Int31Handler( SIGCONTEXT *context )
             /* set it to zero. */
             if (!((DS_reg(context)^BX_reg(context)) & ~3)) DS_reg(context) = 0;
             if (!((ES_reg(context)^BX_reg(context)) & ~3)) ES_reg(context) = 0;
-#ifdef FS_reg
             if (!((FS_reg(context)^BX_reg(context)) & ~3)) FS_reg(context) = 0;
-#endif
-#ifdef GS_reg
             if (!((GS_reg(context)^BX_reg(context)) & ~3)) GS_reg(context) = 0;
-#endif
         }
         break;
 
@@ -235,7 +231,6 @@ void INT_Int31Handler( SIGCONTEXT *context )
 		case 0x65:
 		    switch (p->eax & 0xFF) {
 		    case 06:{/* get collate table */
-		    	extern  DWORD	DOSMEM_CollateTable;
 		        char	*table;
 		        /* ES:DI is a REALMODE pointer to 5 byte dosmem 
 			 * we fill that with 0x6, realmode pointer to collateTB
@@ -353,8 +348,7 @@ void INT_Int31Handler( SIGCONTEXT *context )
 		    "	Function to call: %04x:%04x\n",
                     p->eax, p->ebx, p->ecx, p->edx,
                     p->esi, p->edi, p->es, p->ds, p->cs, p->ip,
-		    DS_reg(context),SI_reg(context)
-	    );
+		    (WORD)DS_reg(context), SI_reg(context) );
             SET_CFLAG(context);
         }
         break;

@@ -11,10 +11,8 @@
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
-#include "directory.h"
 #include "dos_fs.h"
 #include "file.h"
-#include "debugger.h"
 #include "global.h"
 #include "instance.h"
 #include "message.h"
@@ -24,18 +22,23 @@
 #include "options.h"
 #include "peexe.h"
 #include "pe_image.h"
+#include "process.h"
 #include "queue.h"
+#include "selectors.h"
 #include "stackframe.h"
+#include "thread.h"
 #include "toolhelp.h"
+#include "winnt.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
 
+#ifndef WINELIB
+#include "debugger.h"
+#endif
+
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
-
-  /* 32-bit stack size for each task */
-#define STACK32_SIZE 0x10000
 
 extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
 
@@ -45,7 +48,6 @@ WORD IF1632_Saved16_sp = 0;
 
   /* Saved 32-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved32_esp = 0;
-SEGPTR IF1632_Stack32_base = 0;
 
   /* Original Unix stack */
 DWORD IF1632_Original32_esp;
@@ -279,7 +281,6 @@ static void TASK_CreateThunks( HGLOBAL16 handle, WORD offset, WORD count )
  *
  * Allocate a thunk for MakeProcInstance().
  */
-#ifndef WINELIB32
 static SEGPTR TASK_AllocThunk( HTASK16 hTask )
 {
     TDB *pTask;
@@ -308,7 +309,6 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
     pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
     return PTR_SEG_OFF_TO_SEGPTR( sel, base );
 }
-#endif
 
 
 /***********************************************************************
@@ -316,7 +316,6 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
  *
  * Free a MakeProcInstance() thunk.
  */
-#ifndef WINELIB32
 static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 {
     TDB *pTask;
@@ -338,7 +337,6 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
     pThunk->free = LOWORD(thunk) - base;
     return TRUE;
 }
-#endif
 
 
 /***********************************************************************
@@ -350,7 +348,7 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 #ifndef WINELIB
 static void TASK_CallToStart(void)
 {
-    int cs_reg, ds_reg, fs_reg, ip_reg;
+    int cs_reg, ds_reg, ip_reg;
     int exit_code = 1;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
@@ -363,15 +361,12 @@ static void TASK_CallToStart(void)
     {
         /* FIXME: all this is an ugly hack */
 
-        extern void PE_InitTEB( int hTEB );
-        extern void InitTask( SIGCONTEXT *context );
+        extern void InitTask( CONTEXT *context );
         extern void PE_InitializeDLLs( HMODULE16 hModule );
 
         InitTask( NULL );
         InitApp( pTask->hModule );
-        fs_reg = (int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
-        PE_InitTEB( fs_reg );
-        __asm__ __volatile__("movw %w0,%%fs"::"r" (fs_reg));
+        __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
         PE_InitializeDLLs( pTask->hModule );
         exit_code = CallTaskStart32((FARPROC32)(pModule->pe_module->load_addr + 
                 pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
@@ -421,6 +416,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 {
     HTASK16 hTask;
     TDB *pTask;
+    PDB32 *pdb32;
     HGLOBAL16 hParentEnv;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
@@ -505,10 +501,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
 #ifndef WINELIB
     *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
+#endif
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
-#endif
     pTask->pdb.fileHandlesPtr =
         PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(pTask->hPDB),
                                (int)&((PDB *)0)->fileHandles );
@@ -537,15 +533,14 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
-      /* Allocate the 32-bit stack */
+    /* Create the Win32 part of the task */
 
-    pTask->hStack32 = GLOBAL_Alloc( GMEM_FIXED, STACK32_SIZE, pTask->hPDB,
-                                    FALSE, FALSE, FALSE );
+    pdb32 = PROCESS_Create();
+    pTask->thdb = THREAD_Create( pdb32, 0 );
 
-      /* Create the 32-bit stack frame */
+    /* Create the 32-bit stack frame */
 
-    *(DWORD *)GlobalLock16(pTask->hStack32) = 0xDEADBEEF;
-    stack32Top = (char*)GlobalLock16(pTask->hStack32) + STACK32_SIZE;
+    stack32Top = (char*)pTask->thdb->teb.stack_top;
     frame32 = (STACK32FRAME *)stack32Top - 1;
     frame32->saved_esp = (DWORD)stack32Top;
     frame32->edi = 0;
@@ -633,13 +628,14 @@ static void TASK_DeleteTask( HTASK16 hTask )
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     hPDB = pTask->hPDB;
 
+    /* Delete the Win32 part of the task */
+
+    PROCESS_Destroy( &pTask->thdb->process->header );
+    THREAD_Destroy( &pTask->thdb->header );
+
     /* Free the task module */
 
     FreeModule16( pTask->hModule );
-
-    /* Close all open files of this task */
-
-    FILE_CloseAllFiles( pTask->hPDB );
 
     /* Free the selector aliases */
 
@@ -667,10 +663,10 @@ static void TASK_DeleteTask( HTASK16 hTask )
  */
 void TASK_KillCurrentTask( INT16 exitCode )
 {
-    extern void EXEC_ExitWindows( int retCode );
+    extern void EXEC_ExitWindows(void);
 
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
-    if (!pTask) EXEC_ExitWindows(0);  /* No current task yet */
+    if (!pTask) EXEC_ExitWindows();  /* No current task yet */
 
     /* Perform USER cleanup */
 
@@ -686,7 +682,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
     if (nTaskCount <= 1)
     {
         dprintf_task( stddeb, "Killing the last task, exiting\n" );
-        EXEC_ExitWindows( 0 );
+        EXEC_ExitWindows();
     }
 
     /* Remove the task from the list to be sure we never switch back to it */
@@ -711,29 +707,6 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     fprintf(stderr,"Return of the living dead %04x!!!\n", hCurrentTask);
     exit(1);
-}
-
-/***********************************************************************
- *           TASK_YieldToSystem
- *
- * Scheduler interface, this way we ensure that all "unsafe" events are
- * processed outside the scheduler.
- */
-void TASK_YieldToSystem(TDB* pTask)
-{
-  MESSAGEQUEUE*		pQ;
-
-  TASK_SCHEDULE();
-
-  if( pTask )
-  {
-    pQ = (MESSAGEQUEUE*)GlobalLock16(pTask->hQueue);
-    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT )
-    {
-      pQ->flags &= ~QUEUE_FLAG_XEVENT;
-      EVENT_WaitXEvent( FALSE, FALSE );
-    }
-  }
 }
 
 /***********************************************************************
@@ -830,21 +803,42 @@ void TASK_Reschedule(void)
       /* Switch to the new stack */
 
     hCurrentTask = hTask;
+    pCurrentThread = pNewTask->thdb;
+    pCurrentProcess = pCurrentThread->process;
     IF1632_Saved16_ss   = pNewTask->ss;
     IF1632_Saved16_sp   = pNewTask->sp;
     IF1632_Saved32_esp  = pNewTask->esp;
-    IF1632_Stack32_base = WIN16_GlobalLock16( pNewTask->hStack32 );
+}
+
+
+/***********************************************************************
+ *           TASK_YieldToSystem
+ *
+ * Scheduler interface, this way we ensure that all "unsafe" events are
+ * processed outside the scheduler.
+ */
+void TASK_YieldToSystem(TDB* pTask)
+{
+  MESSAGEQUEUE*		pQ;
+
+  TASK_SCHEDULE();
+
+  if( pTask )
+  {
+    pQ = (MESSAGEQUEUE*)GlobalLock16(pTask->hQueue);
+    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT )
+    {
+      pQ->flags &= ~QUEUE_FLAG_XEVENT;
+      EVENT_WaitXEvent( FALSE, FALSE );
+    }
+  }
 }
 
 
 /***********************************************************************
  *           InitTask  (KERNEL.91)
  */
-#ifdef WINELIB
-void InitTask(void)
-#else
-void InitTask( SIGCONTEXT *context )
-#endif
+void InitTask( CONTEXT *context )
 {
     TDB *pTask;
     NE_MODULE *pModule;
@@ -852,14 +846,13 @@ void InitTask( SIGCONTEXT *context )
     INSTANCEDATA *pinstance;
     LONG stacklow, stackhi;
 
-#ifndef WINELIB
     if (context) EAX_reg(context) = 0;
-#endif
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
 
 #ifndef WINELIB
     NE_InitializeDLLs( pTask->hModule );
+#endif
 
     if (context)
     {
@@ -885,7 +878,6 @@ void InitTask( SIGCONTEXT *context )
     {
         LocalInit( pTask->hInstance, 0, pModule->heap_size );
     }    
-#endif
 
     /* Initialize the INSTANCEDATA structure */
     pSegTable = NE_SEG_TABLE( pModule );
@@ -1039,12 +1031,10 @@ void Yield(void)
  */
 FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
-#ifdef WINELIB
-    return func; /* func can be called directly in Winelib */
-#else
     BYTE *thunk;
     SEGPTR thunkaddr;
     
+    if (__winelib) return func; /* func can be called directly in Winelib */
     thunkaddr = TASK_AllocThunk( hCurrentTask );
     if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
@@ -1058,7 +1048,6 @@ FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
     return (FARPROC16)thunkaddr;
-#endif
 }
 
 
@@ -1067,10 +1056,8 @@ FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
  */
 void FreeProcInstance16( FARPROC16 func )
 {
-#ifndef WINELIB
     dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (DWORD)func );
-    TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
-#endif
+    if (!__winelib) TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 }
 
 
@@ -1079,9 +1066,10 @@ void FreeProcInstance16( FARPROC16 func )
  */
 HANDLE16 GetCodeHandle( FARPROC16 proc )
 {
-#ifndef WINELIB32
     HANDLE16 handle;
     BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+
+    if (__winelib) return 0;
 
     /* Return the code segment containing 'proc'. */
     /* Not sure if this is really correct (shouldn't matter that much). */
@@ -1093,9 +1081,6 @@ HANDLE16 GetCodeHandle( FARPROC16 proc )
         handle = GlobalHandle16( HIWORD(proc) );
 
     return handle;
-#else
-    return (HANDLE16)proc;
-#endif
 }
 
 
@@ -1174,7 +1159,7 @@ void SwitchStackTo( WORD seg, WORD ptr, WORD top )
  *
  * Note: the function is declared as 'register' in the spec file in order
  * to make sure all registers are preserved, but we don't use them in any
- * way, so we don't need a SIGCONTEXT* argument.
+ * way, so we don't need a CONTEXT* argument.
  */
 void SwitchStackBack(void)
 {
@@ -1217,7 +1202,7 @@ void SwitchStackBack(void)
  *           GetTaskQueueDS  (KERNEL.118)
  */
 #ifndef WINELIB
-void GetTaskQueueDS( SIGCONTEXT *context )
+void GetTaskQueueDS( CONTEXT *context )
 {
     DS_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
@@ -1228,7 +1213,7 @@ void GetTaskQueueDS( SIGCONTEXT *context )
  *           GetTaskQueueES  (KERNEL.119)
  */
 #ifndef WINELIB
-void GetTaskQueueES( SIGCONTEXT *context )
+void GetTaskQueueES( CONTEXT *context )
 {
     ES_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }

@@ -84,7 +84,7 @@ base	1
 0079 stub SheSetCurDrive
 0080 stub SheShortenPathA
 0081 stub SheShortenPathW
-0082 stdcall ShellAboutA(long ptr ptr long) ShellAbout
+0082 stdcall ShellAboutA(long ptr ptr long) ShellAbout32A
 0083 stdcall ShellAboutW(long ptr ptr long) ShellAbout32W
 0084 stdcall ShellExecuteA(long ptr ptr ptr ptr long) ShellExecute
 0085 stub ShellExecuteEx

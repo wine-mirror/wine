@@ -18,7 +18,6 @@
 #include "region.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 WORD GDI_HeapSel = 0;
 

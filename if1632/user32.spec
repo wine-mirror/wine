@@ -199,7 +199,7 @@ base	1
 0192 stdcall EnumWindows(ptr long) THUNK_EnumWindows32
 0193 stdcall EqualRect(ptr ptr) EqualRect32
 0194 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
-0195 stub ExitWindowsEx
+0195 stdcall ExitWindowsEx(long long) ExitWindowsEx
 0196 stdcall FillRect(long ptr long) FillRect32
 0197 stdcall FindWindowA(ptr ptr) FindWindow32A
 0198 stdcall FindWindowExA(long long ptr ptr) FindWindowEx32A
@@ -332,7 +332,7 @@ base	1
 0325 stub InternalGetWindowText
 0326 stdcall IntersectRect(ptr ptr ptr) IntersectRect32
 0327 stdcall InvalidateRect(long ptr long) InvalidateRect32
-0328 stdcall InvalidateRgn(long long long) InvalidateRgn
+0328 stdcall InvalidateRgn(long long long) InvalidateRgn32
 0329 stdcall InvertRect(long ptr) InvertRect32
 0330 stdcall IsCharAlphaA(long) IsCharAlpha32A
 0331 stdcall IsCharAlphaNumericA(long) IsCharAlphaNumeric32A
@@ -553,7 +553,7 @@ base	1
 0546 stub ToAsciiEx
 0547 stub ToUnicode
 0548 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu32
-0549 stub TrackPopupMenuEx
+0549 stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
 0550 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
 0551 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
 0552 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
@@ -575,15 +575,15 @@ base	1
 0568 stub UserRealizePalette
 0569 stub UserRegisterWowHandlers
 0570 stdcall ValidateRect(long ptr) ValidateRect32
-0571 stdcall ValidateRgn(long long) ValidateRgn
+0571 stdcall ValidateRgn(long long) ValidateRgn32
 0572 stdcall VkKeyScanA(long) VkKeyScan
 0573 stub VkKeyScanExA
 0574 stub VkKeyScanExW
 0575 stub VkKeyScanW
 0576 stub WaitForInputIdle
 0577 stub WaitMessage
-0578 stdcall WinHelpA(long ptr long long)	WIN32_WinHelpA
-0579 stub WinHelpW
+0578 stdcall WinHelpA(long ptr long long) WinHelp32A
+0579 stdcall WinHelpW(long ptr long long) WinHelp32W
 0580 stdcall WindowFromDC(long) WindowFromDC32
 0581 stdcall WindowFromPoint(long long) WindowFromPoint32
 0582 stub keybd_event

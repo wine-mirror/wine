@@ -47,6 +47,7 @@ typedef struct
 
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 
+struct _THDB;
 
   /* Task database. See 'Windows Internals' p. 226 */
 typedef struct
@@ -55,9 +56,8 @@ typedef struct
     WORD      sp;                         /* 02 Stack pointer of task */
     WORD      ss;                         /* 04 Stack segment of task */
     WORD      nEvents;                    /* 06 Events for this task */
-    char      priority;                   /* 08 Task priority, -32..15 */
-    BYTE      unused1;                    /* 09 */
-    HGLOBAL16 hStack32;                   /* 0a Handle to 32-bit stack */
+    INT16     priority;                   /* 08 Task priority, -32..15 */
+    WORD      unused1;                    /* 0a */
     HTASK16   hSelf;                      /* 0c Selector of this TDB */
     HANDLE16  hPrevInstance;              /* 0e Previous instance of module */
     DWORD     esp;                        /* 10 32-bit stack pointer */
@@ -81,7 +81,9 @@ typedef struct
     DWORD     int3e WINE_PACKED;          /* 46 int 3e (80x87 emu) handler */
     DWORD     int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
-    BYTE      unused4[14];                /* 52 */
+    BYTE      unused4[2];                 /* 52 */
+    struct _THDB *thdb;                   /* 54 Pointer to thread database */
+    BYTE      unused5[8];                 /* 58 */
     HANDLE16  hPDB;                       /* 60 Selector of PDB (i.e. PSP) */
     SEGPTR    dta WINE_PACKED;            /* 62 Current DTA */
     BYTE      curdrive;                   /* 66 Current drive */
@@ -113,5 +115,6 @@ extern HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
                                 HANDLE16 hEnvironment, LPCSTR cmdLine,
                                 UINT16 cmdShow );
 extern void TASK_KillCurrentTask( INT16 exitCode );
+extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 
 #endif /* _WINE_TASK_H */

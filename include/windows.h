@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include "wintypes.h"
-#include "winuser.h"
 
 #pragma pack(1)
 
@@ -431,6 +430,139 @@ DECL_WINELIB_TYPE(LPNCCALCSIZE_PARAMS);
 #define SC_TASKLIST     0xf130
 #define SC_SCREENSAVE   0xf140
 #define SC_HOTKEY       0xf150
+
+/****** Window classes ******/
+
+typedef struct
+{
+    UINT16      style;
+    WNDPROC16   lpfnWndProc WINE_PACKED;
+    INT16       cbClsExtra;
+    INT16       cbWndExtra;
+    HANDLE16    hInstance;
+    HICON16     hIcon;
+    HCURSOR16   hCursor;
+    HBRUSH16    hbrBackground;
+    SEGPTR      lpszMenuName WINE_PACKED;
+    SEGPTR      lpszClassName WINE_PACKED;
+} WNDCLASS16, *LPWNDCLASS16;
+
+typedef struct
+{
+    UINT32      style;
+    WNDPROC32   lpfnWndProc;
+    INT32       cbClsExtra;
+    INT32       cbWndExtra;
+    HINSTANCE32 hInstance;
+    HICON32     hIcon;
+    HCURSOR32   hCursor;
+    HBRUSH32    hbrBackground;
+    LPCSTR      lpszMenuName;
+    LPCSTR      lpszClassName;
+} WNDCLASS32A, *LPWNDCLASS32A;
+
+typedef struct
+{
+    UINT32      style;
+    WNDPROC32   lpfnWndProc;
+    INT32       cbClsExtra;
+    INT32       cbWndExtra;
+    HINSTANCE32 hInstance;
+    HICON32     hIcon;
+    HCURSOR32   hCursor;
+    HBRUSH32    hbrBackground;
+    LPCWSTR     lpszMenuName;
+    LPCWSTR     lpszClassName;
+} WNDCLASS32W, *LPWNDCLASS32W;
+
+DECL_WINELIB_TYPE_AW(WNDCLASS);
+DECL_WINELIB_TYPE_AW(LPWNDCLASS);
+
+typedef struct
+{
+    UINT32      cbSize;
+    UINT32      style;
+    WNDPROC16   lpfnWndProc;
+    INT16       cbClsExtra;
+    INT16       cbWndExtra;
+    HANDLE16    hInstance;
+    HICON16     hIcon;
+    HCURSOR16   hCursor;
+    HBRUSH16    hbrBackground;
+    SEGPTR      lpszMenuName;
+    SEGPTR      lpszClassName;
+    HICON16     hIconSm;
+} WNDCLASSEX16, *LPWNDCLASSEX16;
+
+typedef struct
+{
+    UINT32      cbSize;
+    UINT32      style;
+    WNDPROC32   lpfnWndProc;
+    INT32       cbClsExtra;
+    INT32       cbWndExtra;
+    HINSTANCE32 hInstance;
+    HICON32     hIcon;
+    HCURSOR32   hCursor;
+    HBRUSH32    hbrBackground;
+    LPCSTR      lpszMenuName;
+    LPCSTR      lpszClassName;
+    HICON32     hIconSm;
+} WNDCLASSEX32A, *LPWNDCLASSEX32A;
+
+typedef struct
+{
+    UINT32      cbSize;
+    UINT32      style;
+    WNDPROC32   lpfnWndProc;
+    INT32       cbClsExtra;
+    INT32       cbWndExtra;
+    HINSTANCE32 hInstance;
+    HICON32     hIcon;
+    HCURSOR32   hCursor;
+    HBRUSH32    hbrBackground;
+    LPCWSTR     lpszMenuName;
+    LPCWSTR     lpszClassName;
+    HICON32     hIconSm;
+} WNDCLASSEX32W, *LPWNDCLASSEX32W;
+
+DECL_WINELIB_TYPE_AW(WNDCLASSEX);
+DECL_WINELIB_TYPE_AW(LPWNDCLASSEX);
+
+#define CS_VREDRAW          0x0001
+#define CS_HREDRAW          0x0002
+#define CS_KEYCVTWINDOW     0x0004
+#define CS_DBLCLKS          0x0008
+#define CS_OWNDC            0x0020
+#define CS_CLASSDC          0x0040
+#define CS_PARENTDC         0x0080
+#define CS_NOKEYCVT         0x0100
+#define CS_NOCLOSE          0x0200
+#define CS_SAVEBITS         0x0800
+#define CS_BYTEALIGNCLIENT  0x1000
+#define CS_BYTEALIGNWINDOW  0x2000
+#define CS_GLOBALCLASS      0x4000
+
+  /* Offsets for GetClassLong() and GetClassWord() */
+#define GCL_MENUNAME        (-8)
+#define GCW_HBRBACKGROUND   (-10)
+#define GCL_HBRBACKGROUND   GCW_HBRBACKGROUND
+#define GCW_HCURSOR         (-12)
+#define GCL_HCURSOR         GCW_HCURSOR
+#define GCW_HICON           (-14)
+#define GCL_HICON           GCW_HICON
+#define GCW_HMODULE         (-16)
+#define GCL_HMODULE         GCW_HMODULE
+#define GCW_CBWNDEXTRA      (-18)
+#define GCL_CBWNDEXTRA      GCW_CBWNDEXTRA
+#define GCW_CBCLSEXTRA      (-20)
+#define GCL_CBCLSEXTRA      GCW_CBCLSEXTRA
+#define GCL_WNDPROC         (-24)
+#define GCW_STYLE           (-26)
+#define GCL_STYLE           GCW_STYLE
+#define GCW_ATOM            (-32)
+#define GCW_HICONSM         (-34)
+#define GCL_HICONSM         GCW_HICONSM
 
 /***** Window hooks *****/
 
@@ -1653,7 +1785,9 @@ typedef struct
 #define DRIVE_CDROM                5
 #define DRIVE_RAMDISK              6
 
-#define HFILE_ERROR	-1
+#define HFILE_ERROR16   ((HFILE16)-1)
+#define HFILE_ERROR32   ((HFILE32)-1)
+#define HFILE_ERROR     WINELIB_NAME(HFILE_ERROR)
 
 #define DDL_READWRITE	0x0000
 #define DDL_READONLY	0x0001
@@ -1716,6 +1850,10 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(WIN32_FIND_DATA);
 DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA);
+
+#define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
+#define INVALID_HANDLE_VALUE32  ((HANDLE32) -1)
+#define INVALID_HANDLE_VALUE WINELIB_NAME(INVALID_HANDLE_VALUE)
 
 /* comm */
 
@@ -2482,11 +2620,25 @@ typedef struct
 #define HWND_NOTOPMOST      ((HWND)-2)
 
 /* Flags for TrackPopupMenu */
-#define TPM_LEFTBUTTON  0x0000
-#define TPM_RIGHTBUTTON 0x0002
-#define TPM_LEFTALIGN   0x0000
-#define TPM_CENTERALIGN 0x0004
-#define TPM_RIGHTALIGN  0x0008
+#define TPM_LEFTBUTTON    0x0000
+#define TPM_RIGHTBUTTON   0x0002
+#define TPM_LEFTALIGN     0x0000
+#define TPM_CENTERALIGN   0x0004
+#define TPM_RIGHTALIGN    0x0008
+#define TPM_TOPALIGN      0x0000
+#define TPM_VCENTERALIGN  0x0010
+#define TPM_BOTTOMALIGN   0x0020
+#define TPM_HORIZONTAL    0x0000
+#define TPM_VERTICAL      0x0040
+#define TPM_NONOTIFY      0x0080
+#define TPM_RETURNCMD     0x0100
+
+typedef struct 
+{
+    UINT32   cbSize;
+    RECT32   rcExclude;
+} TPMPARAMS, *LPTPMPARAMS;
+
 
 #define MF_INSERT          0x0000
 #define MF_CHANGE          0x0080
@@ -3723,10 +3875,14 @@ typedef struct {
 
 /* Code page information.
  */
-typedef struct {
-        DWORD MaxCharSize;
-        BYTE DefaultChar[2];
-        BYTE LeadBytes[5];
+#define MAX_LEADBYTES     12
+#define MAX_DEFAULTCHAR   2
+
+typedef struct
+{
+    UINT32 MaxCharSize;
+    BYTE   DefaultChar[MAX_DEFAULTCHAR];
+    BYTE   LeadByte[MAX_LEADBYTES];
 } CPINFO, *LPCPINFO;
 
 /* The 'overlapped' data structure used by async I/O functions.
@@ -3848,16 +4004,17 @@ typedef struct
 
 /* File attribute flags
  */
-#define FILE_ATTRIBUTE_ARCHIVE          0x0020
-#define FILE_ATTRIBUTE_COMPRESSED       0x0800
-#define FILE_ATTRIBUTE_DIRECTORY        0x0010
-#define FILE_ATTRIBUTE_HIDDEN           0x0002
-#define FILE_ATTRIBUTE_NORMAL           0x0080
 #define FILE_ATTRIBUTE_READONLY         0x0001
+#define FILE_ATTRIBUTE_HIDDEN           0x0002
 #define FILE_ATTRIBUTE_SYSTEM           0x0004
+#define FILE_ATTRIBUTE_LABEL            0x0008  /* Not in Windows API */
+#define FILE_ATTRIBUTE_DIRECTORY        0x0010
+#define FILE_ATTRIBUTE_ARCHIVE          0x0020
+#define FILE_ATTRIBUTE_NORMAL           0x0080
 #define FILE_ATTRIBUTE_TEMPORARY        0x0100
 #define FILE_ATTRIBUTE_ATOMIC_WRITE     0x0200
 #define FILE_ATTRIBUTE_XACTION_WRITE    0x0400
+#define FILE_ATTRIBUTE_COMPRESSED       0x0800
 
 
 /* WinHelp internal structure */
@@ -3901,6 +4058,19 @@ typedef struct {
 #define HELP_PARTIALKEY     0x0105
 #define HELP_MULTIKEY       0x0201
 #define HELP_SETWINPOS      0x0203
+
+/* ExitWindows() flags */
+#define EW_RESTARTWINDOWS   0x0042
+#define EW_REBOOTSYSTEM     0x0043
+#define EW_EXITANDEXECAPP   0x0044
+
+/* ExitWindowsEx() flags */
+#define EWX_LOGOFF           0
+#define EWX_SHUTDOWN         1
+#define EWX_REBOOT           2
+#define EWX_FORCE            4
+#define EWX_POWEROFF         8
+
 
 #define CCHDEVICENAME 32
 #define CCHFORMNAME   32
@@ -4281,6 +4451,7 @@ BOOL16     SetDeskPattern(void);
 VOID       SetPriority(HTASK16,INT16);
 WORD       SetSelectorBase(WORD,DWORD);
 WORD       SetSelectorLimit(WORD,DWORD);
+LONG       SetSwapAreaSize(WORD);
 HQUEUE16   SetTaskQueue(HTASK16,HQUEUE16);
 FARPROC16  SetTaskSignalProc(HTASK16,FARPROC16);
 DWORD      SetViewportExt(HDC16,INT16,INT16);
@@ -4302,8 +4473,9 @@ VOID       Yield(void);
 
 BOOL32     Beep(DWORD,DWORD);
 BOOL32     ClearCommError(INT32,LPDWORD,LPCOMSTAT);
-HFILE      CreateFile32A(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
-HFILE      CreateFile32W(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
+BOOL32     CloseHandle(HANDLE32);
+HFILE32    CreateFile32A(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
+HFILE32    CreateFile32W(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
 #define    CreateFile WINELIB_NAME_AW(CreateFile)
 HANDLE32   CreateFileMapping32A(HANDLE32,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD,LPCSTR);
 HANDLE32   CreateFileMapping32W(HANDLE32,LPSECURITY_ATTRIBUTES,DWORD,DWORD,DWORD,LPCWSTR);
@@ -4320,24 +4492,29 @@ BOOL32     EnumSystemLocales32W(LOCALE_ENUMPROC32W,DWORD);
 #define    EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
 BOOL32     EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
 void       ExitProcess(DWORD);
-BOOL32     FileTimeToDosDateTime(LPFILETIME,LPWORD,LPWORD);
-BOOL32     FileTimeToLocalFileTime(LPFILETIME,LPFILETIME);
-BOOL32     FileTimeToSystemTime(LPFILETIME,LPSYSTEMTIME);
+BOOL32     ExitWindowsEx(UINT32,DWORD);
+BOOL32     FileTimeToDosDateTime(const FILETIME*,LPWORD,LPWORD);
+BOOL32     FileTimeToLocalFileTime(const FILETIME*,LPFILETIME);
+BOOL32     FileTimeToSystemTime(const FILETIME*,LPSYSTEMTIME);
 HRSRC32    FindResourceEx32A(HINSTANCE32,LPCSTR,LPCSTR,WORD);
 HRSRC32    FindResourceEx32W(HINSTANCE32,LPCWSTR,LPCWSTR,WORD);
 #define    FindResourceEx WINELIB_NAME_AW(FindResourceEx)
-BOOL32     FlushFileBuffers(HFILE);
+BOOL32     FlushFileBuffers(HFILE32);
 UINT32     GetACP(void);
 LPCSTR     GetCommandLine32A();
 LPCWSTR    GetCommandLine32W();
 #define    GetCommandLine WINELIB_NAME_AW(GetCommandLine)
 BOOL32     GetCommTimeouts(INT32,LPCOMMTIMEOUTS);
-DWORD      GetCurrentThreadId(void);
+BOOL32     GetCPInfo(UINT32,LPCPINFO);
+HANDLE32   GetCurrentProcess(void);
+DWORD      GetCurrentProcessId(void);
 HANDLE32   GetCurrentThread(void);
+DWORD      GetCurrentThreadId(void);
 BOOL32     GetDCOrgEx(HDC32,LPPOINT32);
-DWORD      GetFileInformationByHandle(HFILE,BY_HANDLE_FILE_INFORMATION*);
-DWORD      GetFileSize(HFILE,LPDWORD);
-DWORD      GetFileType(HFILE);
+DWORD      GetFileInformationByHandle(HFILE32,BY_HANDLE_FILE_INFORMATION*);
+DWORD      GetFileSize(HFILE32,LPDWORD);
+BOOL32     GetFileTime(HFILE32,LPFILETIME,LPFILETIME,LPFILETIME);
+DWORD      GetFileType(HFILE32);
 VOID       GetLocalTime(LPSYSTEMTIME);
 DWORD      GetLogicalDrives(void);
 UINT32     GetOEMCP(void);
@@ -4345,7 +4522,7 @@ HANDLE32   GetProcessHeap(void);
 DWORD      GetShortPathName32A(LPCSTR,LPSTR,DWORD);
 DWORD      GetShortPathName32W(LPCWSTR,LPWSTR,DWORD);
 #define    GetShortPathName WINELIB_NAME_AW(GetShortPathName)
-HFILE      GetStdHandle(DWORD);
+HFILE32    GetStdHandle(DWORD);
 VOID       GetSystemInfo(LPSYSTEM_INFO);
 BOOL32     GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID       GetSystemTime(LPSYSTEMTIME);
@@ -4362,7 +4539,7 @@ BOOL32     HeapUnlock(HANDLE32);
 BOOL32     HeapValidate(HANDLE32,DWORD,LPVOID);
 BOOL32     IsWindowUnicode(HWND32);
 BOOL32     IsValidLocale(DWORD,DWORD);
-BOOL32     LocalFileTimeToFileTime(LPFILETIME,LPFILETIME);
+BOOL32     LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 LPVOID     MapViewOfFileEx(HANDLE32,DWORD,DWORD,DWORD,DWORD,DWORD);
 BOOL32     MoveFile32A(LPCSTR,LPCSTR);
 BOOL32     MoveFile32W(LPCWSTR,LPCWSTR);
@@ -4371,7 +4548,7 @@ BOOL32     QueryPerformanceCounter(LPLARGE_INTEGER);
 BOOL32     ReadConsole32A(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 BOOL32     ReadConsole32W(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 #define    ReadConsole WINELIB_NAME_AW(ReadConsole)
-BOOL32     ReadFile(HFILE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+BOOL32     ReadFile(HFILE32,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 DWORD      RegCreateKeyEx32A(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
                              LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
 DWORD      RegCreateKeyEx32W(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
@@ -4400,27 +4577,32 @@ BOOL32     SetCommTimeouts(INT32,LPCOMMTIMEOUTS);
 BOOL32     SetConsoleTitle32A(LPCSTR);
 BOOL32     SetConsoleTitle32W(LPCWSTR);
 #define    SetConsoleTitle WINELIB_NAME_AW(SetConsoleTitle)
-BOOL32     SetEndOfFile(HFILE);
-DWORD      SetFilePointer(HFILE,LONG,LPLONG,DWORD);
-BOOL32     SetFileTime(HFILE,LPFILETIME,LPFILETIME,LPFILETIME);
+BOOL32     SetEndOfFile(HFILE32);
+DWORD      SetFilePointer(HFILE32,LONG,LPLONG,DWORD);
+BOOL32     SetFileTime(HFILE32,const FILETIME*,const FILETIME*,const FILETIME*);
+VOID       SetLastErrorEx(DWORD,DWORD);
 BOOL32     SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
 BOOL32     SetSystemPowerState(BOOL32,BOOL32);
 BOOL32     SetSystemTime(const SYSTEMTIME*);
 VOID       Sleep(DWORD);
-BOOL32     SystemTimeToFileTime(LPSYSTEMTIME,LPFILETIME);
+BOOL32     SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+BOOL32     TrackPopupMenuEx(HMENU32,UINT32,INT32,INT32,HWND32,LPTPMPARAMS);
+DWORD      TlsAlloc(void);
+BOOL32     TlsFree(DWORD);
+LPVOID     TlsGetValue(DWORD);
+BOOL32     TlsSetValue(DWORD,LPVOID);
 LPVOID     VirtualAlloc(LPVOID,DWORD,DWORD,DWORD);
 BOOL32     VirtualFree(LPVOID,DWORD,DWORD);
 BOOL32     WriteConsole32A(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 BOOL32     WriteConsole32W(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 #define    WriteConsole WINELIB_NAME_AW(WriteConsole)
-BOOL32     WriteFile(HFILE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+BOOL32     WriteFile(HFILE32,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 
 
 /* Declarations for functions that are the same in Win16 and Win32 */
 
 BOOL16     CheckDlgButton(HWND32,INT32,UINT32);
 BOOL16     CheckRadioButton(HWND32,UINT32,UINT32,UINT32);
-LONG       CopyLZFile(HFILE,HFILE);
 HBITMAP16  CreateBitmap(INT32,INT32,UINT32,UINT32,LPCVOID);
 BOOL16     CreateCaret(HWND32,HBITMAP32,INT32,INT32);
 HBITMAP16  CreateCompatibleBitmap(HDC32,INT32,INT32);
@@ -4439,13 +4621,7 @@ INT16      GetUpdateRgn(HWND32,HRGN32,BOOL32);
 WORD       GetWindowWord(HWND32,INT32);
 BOOL16     HideCaret(HWND32);
 BOOL16     IsWindow(HWND32);
-void       LZClose(HFILE);
-LONG       LZCopy(HFILE,HFILE);
 void       LZDone(void);
-HFILE      LZInit(HFILE);
-LONG       LZSeek(HFILE,LONG,INT32);
-INT16      LZStart(void);
-HFILE      OpenFile(LPCSTR,OFSTRUCT*,UINT32);
 UINT16     RealizePalette(HDC32);
 DWORD      RegCloseKey(HKEY);
 DWORD      RegFlushKey(HKEY);
@@ -4456,18 +4632,11 @@ BOOL16     SetCaretBlinkTime(UINT32);
 BOOL16     SetCaretPos(INT32,INT32);
 WORD       SetClassWord(HWND32,INT32,WORD);
 VOID       SetLastError(DWORD);
-VOID       SetLastErrorEx(DWORD,DWORD);
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
 COLORREF   SetTextColor(HDC32,COLORREF);
 WORD       SetWindowWord(HWND32,INT32,WORD);
 BOOL16     ShowCaret(HWND32);
 VOID       UpdateWindow(HWND32);
-LONG       _hread(HFILE,LPVOID,LONG);
-HFILE      _lclose(HFILE);
-HFILE      _lcreat(LPCSTR,INT32);
-LONG       _llseek(HFILE,LONG,INT32);
-HFILE      _lopen(LPCSTR,INT32);
-LONG       _hwrite(HFILE,LPCSTR,LONG);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
@@ -4583,6 +4752,9 @@ HCURSOR16  CopyCursor16(HINSTANCE16,HCURSOR16);
 HICON16    CopyIcon16(HINSTANCE16,HICON16);
 HICON32    CopyIcon32(HICON32);
 #define    CopyIcon WINELIB_NAME(CopyIcon)
+LONG       CopyLZFile16(HFILE16,HFILE16);
+LONG       CopyLZFile32(HFILE32,HFILE32);
+#define    CopyLZFile WINELIB_NAME(CopyLZFile)
 BOOL16     CopyRect16(RECT16*,const RECT16*);
 BOOL32     CopyRect32(RECT32*,const RECT32*);
 #define    CopyRect WINELIB_NAME(CopyRect)
@@ -4835,6 +5007,9 @@ BOOL32     EscapeCommFunction32(INT32,UINT32);
 INT16      ExcludeClipRect16(HDC16,INT16,INT16,INT16,INT16);
 INT32      ExcludeClipRect32(HDC32,INT32,INT32,INT32,INT32);
 #define    ExcludeClipRect WINELIB_NAME(ExcludeClipRect)
+BOOL16     ExitWindows16(DWORD,UINT16);
+#define    ExitWindows32(a,b) ExitWindowsEx(EWX_LOGOFF,0xffffffff)
+#define    ExitWindows WINELIB_NAME(ExitWindows)
 BOOL16     ExtFloodFill16(HDC16,INT16,INT16,COLORREF,UINT16);
 BOOL32     ExtFloodFill32(HDC32,INT32,INT32,COLORREF,UINT32);
 #define    ExtFloodFill WINELIB_NAME(ExtFloodFill)
@@ -4842,6 +5017,10 @@ BOOL16     ExtTextOut16(HDC16,INT16,INT16,UINT16,const RECT16*,LPCSTR,UINT16,con
 BOOL32     ExtTextOut32A(HDC32,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
 BOOL32     ExtTextOut32W(HDC32,INT32,INT32,UINT32,const RECT32*,LPCWSTR,UINT32,const INT32*);
 #define    ExtTextOut WINELIB_NAME_AW(ExtTextOut)
+void       FatalAppExit16(UINT16,LPCSTR);
+void       FatalAppExit32A(UINT32,LPCSTR);
+void       FatalAppExit32W(UINT32,LPCWSTR);
+#define    FatalAppExit WINELIB_NAME_AW(FatalAppExit)
 INT16      FillRect16(HDC16,const RECT16*,HBRUSH16);
 INT32      FillRect32(HDC32,const RECT32*,HBRUSH32);
 #define    FillRect WINELIB_NAME(FillRect)
@@ -4851,11 +5030,11 @@ BOOL32     FillRgn32(HDC32,HRGN32,HBRUSH32);
 BOOL16     FindClose16(HANDLE16);
 BOOL32     FindClose32(HANDLE32);
 #define    FindClose WINELIB_NAME(FindClose)
-HANDLE16   FindFirstFile16(LPCSTR,LPVOID);
+HANDLE16   FindFirstFile16(LPCSTR,LPWIN32_FIND_DATA32A);
 HANDLE32   FindFirstFile32A(LPCSTR,LPWIN32_FIND_DATA32A);
 HANDLE32   FindFirstFile32W(LPCWSTR,LPWIN32_FIND_DATA32W);
 #define    FindFirst WINELIB_NAME_AW(FindFirst)
-BOOL16     FindNextFile16(HANDLE16,LPVOID);
+BOOL16     FindNextFile16(HANDLE16,LPWIN32_FIND_DATA32A);
 BOOL32     FindNextFile32A(HANDLE32,LPWIN32_FIND_DATA32A);
 BOOL32     FindNextFile32W(HANDLE32,LPWIN32_FIND_DATA32W);
 #define    FindNext WINELIB_NAME_AW(FindNext)
@@ -5227,6 +5406,9 @@ BOOL32     IntersectRect32(LPRECT32,const RECT32*,const RECT32*);
 void       InvalidateRect16(HWND16,const RECT16*,BOOL16);
 void       InvalidateRect32(HWND32,const RECT32*,BOOL32);
 #define    InvalidateRect WINELIB_NAME(InvalidateRect)
+void       InvalidateRgn16(HWND16,HRGN16,BOOL16);
+void       InvalidateRgn32(HWND32,HRGN32,BOOL32);
+#define    InvalidateRgn WINELIB_NAME(InvalidateRgn)
 void       InvertRect16(HDC16,const RECT16*);
 void       InvertRect32(HDC32,const RECT32*);
 #define    InvertRect WINELIB_NAME(InvertRect)
@@ -5277,13 +5459,16 @@ BOOL32     KillSystemTimer32(HWND32,UINT32);
 BOOL16     KillTimer16(HWND16,UINT16);
 BOOL32     KillTimer32(HWND32,UINT32);
 #define    KillTimer WINELIB_NAME(KillTimer)
-HFILE      LZOpenFile16(LPCSTR,LPOFSTRUCT,UINT16);
-HFILE      LZOpenFile32A(LPCSTR,LPOFSTRUCT,UINT32);
-HFILE      LZOpenFile32W(LPCWSTR,LPOFSTRUCT,UINT32);
+HFILE16    LZOpenFile16(LPCSTR,LPOFSTRUCT,UINT16);
+HFILE32    LZOpenFile32A(LPCSTR,LPOFSTRUCT,UINT32);
+HFILE32    LZOpenFile32W(LPCWSTR,LPOFSTRUCT,UINT32);
 #define    LZOpenFile WINELIB_NAME_AW(LZOpenFile)
-INT16      LZRead16(HFILE,SEGPTR,UINT16); 
-INT32      LZRead32(HFILE,LPVOID,UINT32); 
+INT16      LZRead16(HFILE16,LPVOID,UINT16); 
+INT32      LZRead32(HFILE32,LPVOID,UINT32); 
 #define    LZRead WINELIB_NAME(LZRead)
+INT16      LZStart16(void);
+INT32      LZStart32(void);
+#define    LZStart WINELIB_NAME(LZStart)
 VOID       LineDDA16(INT16,INT16,INT16,INT16,LINEDDAPROC16,LPARAM);
 BOOL32     LineDDA32(INT32,INT32,INT32,INT32,LINEDDAPROC32,LPARAM);
 #define    LineDDA WINELIB_NAME(LineDDA)
@@ -5364,6 +5549,18 @@ HGLOBAL16  LockSegment16(HGLOBAL16);
 BOOL16     LPtoDP16(HDC16,LPPOINT16,INT16);
 BOOL32     LPtoDP32(HDC32,LPPOINT32,INT32);
 #define    LPtoDP WINELIB_NAME(LPtoDP)
+void       LZClose16(HFILE16);
+void       LZClose32(HFILE32);
+#define    LZClose WINELIB_NAME(LZClose)
+LONG       LZCopy16(HFILE16,HFILE16);
+LONG       LZCopy32(HFILE32,HFILE32);
+#define    LZCopy WINELIB_NAME(LZCopy)
+HFILE16    LZInit16(HFILE16);
+HFILE32    LZInit32(HFILE32);
+#define    LZInit WINELIB_NAME(LZInit)
+LONG       LZSeek16(HFILE16,LONG,INT16);
+LONG       LZSeek32(HFILE32,LONG,INT32);
+#define    LZSeek WINELIB_NAME(LZSeek)
 FARPROC16  MakeProcInstance16(FARPROC16,HANDLE16);
 #define    MakeProcInstance32(proc,inst) (proc)
 #define    MakeProcInstance WINELIB_NAME(MakeProcInstance)
@@ -5416,6 +5613,9 @@ BOOL32     OffsetViewportOrgEx32(HDC32,INT32,INT32,LPPOINT32);
 BOOL16     OffsetWindowOrgEx16(HDC16,INT16,INT16,LPPOINT16);
 BOOL32     OffsetWindowOrgEx32(HDC32,INT32,INT32,LPPOINT32);
 #define    OffsetWindowOrgEx WINELIB_NAME(OffsetWindowOrgEx)
+HFILE16    OpenFile16(LPCSTR,OFSTRUCT*,UINT16);
+HFILE32    OpenFile32(LPCSTR,OFSTRUCT*,UINT32);
+#define    OpenFile WINELIB_NAME(OpenFile)
 BOOL16     PaintRgn16(HDC16,HRGN16);
 BOOL32     PaintRgn32(HDC32,HRGN32);
 #define    PaintRgn WINELIB_NAME(PaintRgn)
@@ -5720,6 +5920,10 @@ void       SetWindowText16(HWND16,SEGPTR);
 void       SetWindowText32A(HWND32,LPCSTR);
 void       SetWindowText32W(HWND32,LPCWSTR);
 #define    SetWindowText WINELIB_NAME_AW(SetWindowText)
+BOOL16     ShellAbout16(HWND16,LPCSTR,LPCSTR,HICON16);
+BOOL32     ShellAbout32A(HWND32,LPCSTR,LPCSTR,HICON32);
+BOOL32     ShellAbout32W(HWND32,LPCWSTR,LPCWSTR,HICON32);
+#define    ShellAbout WINELIB_NAME_AW(ShellAbout)
 void       ShowScrollBar16(HWND16,INT16,BOOL16);
 BOOL32     ShowScrollBar32(HWND32,INT32,BOOL32);
 #define    ShowScrollBar WINELIB_NAME(ShowScrollBar)
@@ -5728,8 +5932,10 @@ BOOL16     StretchBlt16(HDC16,INT16,INT16,INT16,INT16,HDC16,INT16,INT16,
 BOOL32     StretchBlt32(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,INT32,
                         INT32,INT32,DWORD);
 #define    StretchBlt WINELIB_NAME(StretchBlt)
-INT16      StretchDIBits16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,const VOID*,const BITMAPINFO*,UINT16,DWORD);
-INT32      StretchDIBits32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,const VOID*,const BITMAPINFO*,UINT32,DWORD);
+INT16      StretchDIBits16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,
+                           INT16,const VOID*,const BITMAPINFO*,UINT16,DWORD);
+INT32      StretchDIBits32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,
+                           INT32,const VOID*,const BITMAPINFO*,UINT32,DWORD);
 #define    StretchDIBits WINELIB_NAME(StretchDIBits)
 BOOL16     SubtractRect16(LPRECT16,const RECT16*,const RECT16*);
 BOOL32     SubtractRect32(LPRECT32,const RECT32*,const RECT32*);
@@ -5770,6 +5976,9 @@ BOOL32     UnregisterClass32W(LPCWSTR,HINSTANCE32);
 void       ValidateRect16(HWND16,const RECT16*);
 void       ValidateRect32(HWND32,const RECT32*);
 #define    ValidateRect WINELIB_NAME(ValidateRect)
+VOID       ValidateRgn16(HWND16,HRGN16);
+VOID       ValidateRgn32(HWND32,HRGN32);
+#define    ValidateRgn WINELIB_NAME(ValidateRgn)
 DWORD      VerFindFile16(UINT16,LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT16*,LPSTR,UINT16*);
 DWORD      VerFindFile32A(UINT32,LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT32*,LPSTR,UINT32*);
 DWORD      VerFindFile32W(UINT32,LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,UINT32*,LPWSTR,UINT32*);
@@ -5828,6 +6037,13 @@ INT16      lstrlen16(LPCSTR);
 INT32      lstrlen32A(LPCSTR);
 INT32      lstrlen32W(LPCWSTR);
 #define    lstrlen WINELIB_NAME_AW(lstrlen)
+HINSTANCE16 WinExec16(LPCSTR,UINT16);
+HINSTANCE32 WinExec32(LPCSTR,UINT32);
+#define    WinExec WINELIB_NAME(WinExec)
+BOOL16     WinHelp16(HWND16,LPCSTR,UINT16,DWORD);
+BOOL32     WinHelp32A(HWND32,LPCSTR,UINT32,DWORD);
+BOOL32     WinHelp32W(HWND32,LPCWSTR,UINT32,DWORD);
+#define    WinHelp WINELIB_NAME_AW(WinHelp)
 INT16      wsnprintf16(LPSTR,UINT16,LPCSTR,...);
 INT32      wsnprintf32A(LPSTR,UINT32,LPCSTR,...);
 INT32      wsnprintf32W(LPWSTR,UINT32,LPCWSTR,...);
@@ -5844,11 +6060,29 @@ INT16      wvsprintf16(LPSTR,LPCSTR,LPCVOID);
 INT32      wvsprintf32A(LPSTR,LPCSTR,LPCVOID);
 INT32      wvsprintf32W(LPWSTR,LPCWSTR,LPCVOID);
 #define    wvsprintf WINELIB_NAME_AW(wvsprintf)
-UINT16     _lread16(HFILE,LPVOID,UINT16);
-UINT32     _lread32(HFILE,LPVOID,UINT32);
+LONG       _hread16(HFILE16,LPVOID,LONG);
+LONG       _hread32(HFILE32,LPVOID,LONG);
+#define    _hread WINELIB_NAME(_hread)
+LONG       _hwrite16(HFILE16,LPCSTR,LONG);
+LONG       _hwrite32(HFILE32,LPCSTR,LONG);
+#define    _hwrite WINELIB_NAME(_hwrite)
+HFILE16    _lcreat16(LPCSTR,INT16);
+HFILE32    _lcreat32(LPCSTR,INT32);
+#define    _lcreat WINELIB_NAME(_lcreat)
+HFILE16    _lclose16(HFILE16);
+HFILE32    _lclose32(HFILE32);
+#define    _lclose WINELIB_NAME(_lclose)
+LONG       _llseek16(HFILE16,LONG,INT16);
+LONG       _llseek32(HFILE32,LONG,INT32);
+#define    _llseek WINELIB_NAME(_llseek)
+HFILE16    _lopen16(LPCSTR,INT16);
+HFILE32    _lopen32(LPCSTR,INT32);
+#define    _lopen WINELIB_NAME(_lopen)
+UINT16     _lread16(HFILE16,LPVOID,UINT16);
+UINT32     _lread32(HFILE32,LPVOID,UINT32);
 #define    _lread WINELIB_NAME(_lread)
-UINT16     _lwrite16(HFILE,LPCSTR,UINT16);
-UINT32     _lwrite32(HFILE,LPCSTR,UINT32);
+UINT16     _lwrite16(HFILE16,LPCSTR,UINT16);
+UINT32     _lwrite32(HFILE32,LPCSTR,UINT32);
 #define    _lwrite WINELIB_NAME(_lwrite)
 
 /* Extra functions that don't exist in the Windows API */
@@ -5942,9 +6176,7 @@ BOOL       EndDeferWindowPos(HDWP16);
 UINT16     EnumClipboardFormats(UINT16);
 BOOL       EnumMetaFile(HDC16,HMETAFILE16,MFENUMPROC16,LPARAM);
 INT        Escape(HDC16,INT,INT,SEGPTR,SEGPTR);
-BOOL       ExitWindows(DWORD,WORD);
 HICON16    ExtractIcon(HINSTANCE16,LPCSTR,WORD);
-void       FatalAppExit(UINT,LPCSTR);
 void       FatalExit(int);
 ATOM       FindAtom(SEGPTR);
 HINSTANCE16 FindExecutable(LPCSTR,LPCSTR,LPSTR);
@@ -6023,7 +6255,6 @@ BOOL       GrayString(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,INT,INT,INT,INT,INT
 BOOL       HiliteMenuItem(HWND,HMENU16,UINT,UINT);
 BOOL       InSendMessage(void);
 WORD       InitAtomTable(WORD);
-void       InvalidateRgn(HWND32,HRGN32,BOOL32);
 BOOL       IsChild(HWND,HWND);
 BOOL       IsClipboardFormatAvailable(WORD);
 BOOL       IsDialogMessage(HWND,LPMSG16);
@@ -6086,7 +6317,6 @@ WORD       SetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
 HWND       SetParent(HWND,HWND);
 FARPROC16  SetResourceHandler(HINSTANCE16,LPSTR,FARPROC16);
 int        SetSoundNoise(int,int);
-LONG       SetSwapAreaSize(WORD);
 void       SetSysColors(int,LPINT16,COLORREF*);
 WORD       SetSystemPaletteUse(HDC16,WORD);
 int        SetVoiceAccent(int,int,int,int,int);
@@ -6113,15 +6343,10 @@ INT16      TranslateAccelerator(HWND,HACCEL16,LPMSG16);
 BOOL       TranslateMDISysAccel(HWND,LPMSG16);
 BOOL       TranslateMessage(LPMSG16);
 int        UpdateColors(HDC16);
-void       ValidateCodeSegments(void);
-LPSTR      ValidateFreeSpaces(void);
-void       ValidateRgn(HWND32,HRGN32);
 WORD       VkKeyScan(WORD);
 SEGPTR     WIN16_LockResource(HGLOBAL16);
 void       WaitMessage(void);
 int        WaitSoundState(int);
-HINSTANCE16 WinExec(LPSTR,WORD);
-BOOL       WinHelp(HWND,LPSTR,WORD,DWORD);
 
 #endif  /* NO_TRANSITION_TYPES */
 

@@ -164,7 +164,7 @@ BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
 
     if (!nh) return FALSE;
     nh->addr = *addr;
-    DBG_FIX_ADDR_SEG( &nh->addr, DS_reg(DEBUG_context) );
+    DBG_FIX_ADDR_SEG( &nh->addr, DS_reg(&DEBUG_context) );
     return TRUE;
 }
 

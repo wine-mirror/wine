@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include "windows.h"
+#include "winnt.h"
 #include "global.h"
 #include "module.h"
-#include "registers.h"
 #include "stackframe.h"
 #include "task.h"
 #include "stddebug.h"
@@ -52,7 +52,7 @@ BOOL32 RELAY_Init(void)
  *           RELAY_DebugCallFrom16
  */
 void RELAY_DebugCallFrom16( int func_type, char *args,
-                            void *entry_point, SIGCONTEXT *context )
+                            void *entry_point, CONTEXT *context )
 {
     STACK16FRAME *frame;
     WORD ordinal;
@@ -108,25 +108,19 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
-                ES_reg(context), EFL_reg(context) );
+                (WORD)ES_reg(context), EFL_reg(context) );
 }
 
 
 /***********************************************************************
  *           RELAY_DebugCallFrom16Ret
  */
-void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, SIGCONTEXT *context)
+void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
 {
     STACK16FRAME *frame;
     WORD ordinal;
 
-    if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF)
-    {
-	fprintf(stderr, "Wine wrote past the end of the 32 bit stack. Please report this.\n");
-        exit(1);  /* There's probably no point in going on */
-    }
     if (!debugging_relay) return;
-
     frame = CURRENT_STACK16;
     printf( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
                                                    frame->entry_ip,
@@ -147,7 +141,7 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, SIGCONTEXT *context)
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
-                ES_reg(context), EFL_reg(context) );
+                (WORD)ES_reg(context), EFL_reg(context) );
         break;
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * BIOS interrupt 10h handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
@@ -11,7 +15,7 @@
  *
  * Handler for int 10h (video).
  */
-void INT_Int10Handler( SIGCONTEXT *context )
+void INT_Int10Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

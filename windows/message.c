@@ -32,7 +32,8 @@
 #define HWND_BROADCAST16  ((HWND16)0xffff)
 #define HWND_BROADCAST32  ((HWND32)0xffffffff)
 
-typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, SYSQ_MSG_ACCEPT } SYSQ_STATUS;
+typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, 
+               SYSQ_MSG_ACCEPT, SYSQ_MSG_CONTINUE } SYSQ_STATUS;
 
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
@@ -50,62 +51,64 @@ static WORD doubleClickSpeed = 452;
 static INT32 debugSMRL = 0;       /* intertask SendMessage() recursion level */
 
 /***********************************************************************
+ *           MSG_CheckFilter
+ */
+BOOL32 MSG_CheckFilter(WORD uMsg, DWORD filter)
+{
+   if( filter )
+       return (uMsg >= LOWORD(filter) && uMsg <= HIWORD(filter));
+   return TRUE;
+}
+
+/***********************************************************************
  *           MSG_TranslateMouseMsg
  *
  * Translate an mouse hardware event into a real mouse message.
  * Return value indicates whether the translated message must be passed
- * to the user.
- * Actions performed:
- * - Find the window for this message.
- * - Translate button-down messages in double-clicks.
- * - Send the WM_NCHITTEST message to find where the cursor is.
- * - Activate the window if needed.
- * - Translate the message into a non-client message, or translate
- *   the coordinates to client coordinates.
- * - Send the WM_SETCURSOR message.
+ * to the user, left in the queue, or skipped entirely (in this case
+ * HIWORD contains hit test code).
  */
-static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
+static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter, 
+				    MSG16 *msg, BOOL32 remove )
 {
-    WND *pWnd;
-    BOOL eatMsg = FALSE;
-    INT16 hittest;
-    MOUSEHOOKSTRUCT16 *hook;
-    BOOL32 ret;
-    static DWORD lastClickTime = 0;
-    static WORD  lastClickMsg = 0;
-    static POINT16 lastClickPos = { 0, 0 };
-    POINT16 pt = msg->pt;
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16(GetTaskQueue(0));
+    static DWORD   dblclk_time_limit = 0;
+    static UINT16     clk_message = 0;
+    static HWND16     clk_hwnd = 0;
+    static POINT16    clk_pos = { 0, 0 };
 
-    BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
-		       (msg->message == WM_RBUTTONDOWN) ||
-		       (msg->message == WM_MBUTTONDOWN));
+    WND *pWnd;
+    HWND16 hWnd;
+    INT16 ht, hittest, sendSC = 0;
+    UINT16 message = msg->message;
+    POINT16 screen_pt, pt;
+    HANDLE16 hQ = GetTaskQueue(0);
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16(hQ);
+    BOOL32 eatMsg = FALSE;
+    BOOL32 mouseClick = ((message == WM_LBUTTONDOWN) ||
+		         (message == WM_RBUTTONDOWN) ||
+		         (message == WM_MBUTTONDOWN))?1:0;
+    SYSQ_STATUS ret = 0;
 
       /* Find the window */
 
-    if ((msg->hwnd = GetCapture16()) != 0)
+    ht = hittest = HTCLIENT;
+    hWnd = GetCapture16();
+    if( !hWnd )
     {
-        BOOL32 ret;
-
-	ScreenToClient16( msg->hwnd, &pt );
-	msg->lParam = MAKELONG( pt.x, pt.y );
-        /* No need to further process the message */
-
-        if (!HOOK_IsHooked( WH_MOUSE ) ||
-            !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
-            return SYSQ_MSG_ACCEPT;
-        hook->pt           = msg->pt;
-        hook->hwnd         = msg->hwnd;
-        hook->wHitTestCode = HTCLIENT;
-        hook->dwExtraInfo  = 0;
-        ret = !HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                                 msg->message, (LPARAM)SEGPTR_GET(hook));
-        SEGPTR_FREE(hook);
-        return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP ;
+	sendSC = 1;
+	ht = hittest = WINPOS_WindowFromPoint( WIN_GetDesktop(), msg->pt, &pWnd );
+	if( !pWnd ) pWnd = WIN_GetDesktop();
+	hWnd = pWnd->hwndSelf;
+    } 
+    else 
+    {
+	pWnd = WIN_FindWndPtr(hWnd);
+	ht = EVENT_GetCaptureInfo();
     }
-   
-    hittest = WINPOS_WindowFromPoint( WIN_GetDesktop(), msg->pt, &pWnd );
-    if (pWnd->hmemTaskQ != GetTaskQueue(0))
+
+	/* stop if not the right queue */
+
+    if (pWnd->hmemTaskQ != hQ)
     {
         /* Not for the current task */
         if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
@@ -114,127 +117,147 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
         if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
         return SYSQ_MSG_ABANDON;
     }
-    pCursorQueue = queue;
-    msg->hwnd    = pWnd->hwndSelf;
 
-    if ((hittest != HTERROR) && mouseClick)
+	/* check if hWnd is within hWndScope */
+
+    if( hWndScope && hWnd != hWndScope )
+	if( !IsChild(hWndScope, hWnd) ) return SYSQ_MSG_CONTINUE;
+
+    if( mouseClick )
     {
-        HWND hwndTop = WIN_GetTopParent( msg->hwnd );
+	/* translate double clicks -
+	 * note that ...MOUSEMOVEs can slip in between
+	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
 
-        /* Send the WM_PARENTNOTIFY message */
-
-        WIN_SendParentNotify( msg->hwnd, msg->message, 0,
-                              MAKELPARAM( msg->pt.x, msg->pt.y ) );
-
-        /* Activate the window if needed */
-
-        if (msg->hwnd != GetActiveWindow() &&
-            msg->hwnd != GetDesktopWindow16())
-        {
-            LONG ret = SendMessage16( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
-                                    MAKELONG( hittest, msg->message ) );
-
-            if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
-                eatMsg = TRUE;
-
-            if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
-                && hwndTop != GetActiveWindow() )
-                WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE );
-        }
-    }
-
-      /* Send the WM_SETCURSOR message */
-
-    SendMessage16( msg->hwnd, WM_SETCURSOR, (WPARAM16)msg->hwnd,
-                   MAKELONG( hittest, msg->message ));
-    if (eatMsg) return SYSQ_MSG_SKIP;
-
-      /* Check for double-click */
-
-    if (mouseClick)
-    {
-	BOOL dbl_click = FALSE;
-
-	if ((msg->message == lastClickMsg) &&
-	    (msg->time - lastClickTime < doubleClickSpeed) &&
-	    (abs(msg->pt.x - lastClickPos.x) < SYSMETRICS_CXDOUBLECLK/2) &&
-	    (abs(msg->pt.y - lastClickPos.y) < SYSMETRICS_CYDOUBLECLK/2))
-	    dbl_click = TRUE;
-
-	if (dbl_click && (hittest == HTCLIENT))
+	if( pWnd->class->style & CS_DBLCLKS || ht != HTCLIENT )
 	{
-	    /* Check whether window wants the double click message. */
-            dbl_click = (pWnd->class->style & CS_DBLCLKS) != 0;
-	}
-
-	if (dbl_click) switch(msg->message)
-	{
-	    case WM_LBUTTONDOWN: msg->message = WM_LBUTTONDBLCLK; break;
-	    case WM_RBUTTONDOWN: msg->message = WM_RBUTTONDBLCLK; break;
-	    case WM_MBUTTONDOWN: msg->message = WM_MBUTTONDBLCLK; break;
-	}
-
-	if (remove)
-	{
-	    lastClickTime = msg->time;
-	    lastClickMsg  = msg->message;
-	    lastClickPos  = msg->pt;
+           if ((message == clk_message) && (hWnd == clk_hwnd) &&
+               (msg->time - dblclk_time_limit < doubleClickSpeed) &&
+               (abs(msg->pt.x - clk_pos.x) < SYSMETRICS_CXDOUBLECLK/2) &&
+               (abs(msg->pt.y - clk_pos.y) < SYSMETRICS_CYDOUBLECLK/2))
+	   {
+	      message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
+	      mouseClick++;   /* == 2 */
+	   }
 	}
     }
+    screen_pt = pt = msg->pt;
 
-      /* Build the translated message */
-
-    if (hittest == HTCLIENT)
-        ScreenToClient16( msg->hwnd, &pt );
-    else
+    if (hittest != HTCLIENT)
     {
+	message += ((INT16)WM_NCMOUSEMOVE - WM_MOUSEMOVE);
 	msg->wParam = hittest;
-	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
-    msg->lParam = MAKELONG( pt.x, pt.y );
+    else ScreenToClient16( hWnd, &pt );
 
-    /* Call the WH_MOUSE hook */
+	/* check message filter */
 
-    if (!HOOK_IsHooked( WH_MOUSE ) ||
-        !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
-        return SYSQ_MSG_ACCEPT;
+    if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
 
-    hook->pt           = msg->pt;
-    hook->hwnd         = msg->hwnd;
-    hook->wHitTestCode = hittest;
-    hook->dwExtraInfo  = 0;
-    ret = !HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                             msg->message, (LPARAM)SEGPTR_GET(hook) );
-    SEGPTR_FREE(hook);
-    return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP;
+    pCursorQueue = queue;
+
+	/* call WH_MOUSE */
+
+    if (HOOK_IsHooked( WH_MOUSE ))
+    { 
+	MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
+	if( hook )
+	{
+	    hook->pt           = screen_pt;
+	    hook->hwnd         = hWnd;
+	    hook->wHitTestCode = hittest;
+	    hook->dwExtraInfo  = 0;
+	    ret = HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+	                            message, (LPARAM)SEGPTR_GET(hook) );
+	    SEGPTR_FREE(hook);
+	}
+	if( ret ) return MAKELONG((INT16)SYSQ_MSG_SKIP, hittest);
+    }
+
+    if ((hittest == HTERROR) || (hittest == HTNOWHERE)) 
+	eatMsg = sendSC = 1;
+    else if( remove && mouseClick )
+    {
+        HWND hwndTop = WIN_GetTopParent( hWnd );
+
+	if( mouseClick == 1 )
+	{
+	    /* set conditions */
+	    dblclk_time_limit = msg->time;
+	       clk_message = msg->message;
+	       clk_hwnd = hWnd;
+	       clk_pos = screen_pt;
+	} else 
+	    /* got double click - zero them out */
+	    dblclk_time_limit = clk_hwnd = 0;
+
+	if( sendSC )
+	{
+            /* Send the WM_PARENTNOTIFY,
+	     * note that even for double/nonclient clicks
+	     * notification message is still WM_L/M/RBUTTONDOWN.
+	     */
+
+            WIN_SendParentNotify( hWnd, msg->message, 0,
+                              MAKELPARAM( screen_pt.x, screen_pt.y ) );
+
+            /* Activate the window if needed */
+
+            if (hWnd != GetActiveWindow() && hWnd != GetDesktopWindow16())
+            {
+                LONG ret = SendMessage16( hWnd, WM_MOUSEACTIVATE, hwndTop,
+                                          MAKELONG( hittest, message ) );
+
+                if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
+                         eatMsg = TRUE;
+
+                if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
+                      && hwndTop != GetActiveWindow() )
+                      if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))
+			 eatMsg = TRUE;
+            }
+	}
+    } else sendSC = (remove && sendSC);
+
+     /* Send the WM_SETCURSOR message */
+
+    if (sendSC)
+        SendMessage16( hWnd, WM_SETCURSOR, (WPARAM16)hWnd,
+                       MAKELONG( hittest, message ));
+    if (eatMsg) return MAKELONG( (UINT16)SYSQ_MSG_SKIP, hittest);
+
+    msg->hwnd    = hWnd;
+    msg->message = message;
+    msg->lParam  = MAKELONG( pt.x, pt.y );
+    return SYSQ_MSG_ACCEPT;
 }
 
 
 /***********************************************************************
- *           MSG_TranslateKeyboardMsg
+ *           MSG_TranslateKbdMsg
  *
  * Translate an keyboard hardware event into a real message.
- * Return value indicates whether the translated message must be passed
- * to the user.
  */
-static SYSQ_STATUS MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
+static DWORD MSG_TranslateKbdMsg( HWND16 hWndScope, DWORD filter,
+				  MSG16 *msg, BOOL32 remove )
 {
+    WORD message = msg->message;
+    HWND16 hWnd = GetFocus16();
     WND *pWnd;
 
       /* Should check Ctrl-Esc and PrintScreen here */
 
-    msg->hwnd = GetFocus16();
-    if (!msg->hwnd)
+    if (!hWnd)
     {
 	  /* Send the message to the active window instead,  */
 	  /* translating messages to their WM_SYS equivalent */
 
-	msg->hwnd = GetActiveWindow();
+	hWnd = GetActiveWindow();
 
-	if( msg->message < WM_SYSKEYDOWN )
-	    msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
+	if( message < WM_SYSKEYDOWN )
+	    message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
-    pWnd = WIN_FindWndPtr( msg->hwnd );
+    pWnd = WIN_FindWndPtr( hWnd );
     if (pWnd && (pWnd->hmemTaskQ != GetTaskQueue(0)))
     {
         /* Not for the current task */
@@ -245,6 +268,14 @@ static SYSQ_STATUS MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
         return SYSQ_MSG_ABANDON;
     }
+
+    if (hWndScope && hWnd != hWndScope)
+	if (!IsChild(hWndScope, hWnd)) return SYSQ_MSG_CONTINUE;
+    if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
+
+    msg->hwnd = hWnd;
+    msg->message = message;
+
     return (HOOK_CallHooks16( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
 			      msg->wParam, msg->lParam )
             ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT);
@@ -365,7 +396,13 @@ static int MSG_JournalPlayBackMsg(void)
 		     (LPARAM)SEGPTR_GET(tmpMsg));
   }
   else
-    result= QS_MOUSE | QS_KEY;
+  {
+    if( tmpMsg->message == WM_QUEUESYNC )
+        if (HOOK_IsHooked( WH_CBT ))
+            HOOK_CallHooks16( WH_CBT, HCBT_QS, 0, 0L);
+
+    result= QS_MOUSE | QS_KEY; /* ? */
+  }
   SEGPTR_FREE(tmpMsg);
  }
  return result;
@@ -376,35 +413,34 @@ static int MSG_JournalPlayBackMsg(void)
  *
  * Peek for a hardware message matching the hwnd and message filters.
  */
-static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
-                                 BOOL remove )
+static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter, BOOL32 remove )
 {
-    SYSQ_STATUS status = SYSQ_MSG_ACCEPT;
+    DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
-    int i, pos = sysMsgQueue->nextMessage;
+    int i, kbd_msg, pos = sysMsgQueue->nextMessage;
 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && XPending(display))
         EVENT_WaitXEvent( FALSE, FALSE );
 
-    for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
+    for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
         if (pos >= sysMsgQueue->queueSize) pos = 0;
 	*msg = sysMsgQueue->messages[pos].msg;
 
-          /* Translate message; return FALSE immediately on SYSQ_MSG_ABANDON */
+          /* Translate message */
 
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
-            if ((status = MSG_TranslateMouseMsg(msg,remove)) == SYSQ_MSG_ABANDON)
-                return FALSE;
+            status = MSG_TranslateMouseMsg(hwnd, filter, msg, remove);
+	    kbd_msg = 0;
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
         {
-            if ((status = MSG_TranslateKeyboardMsg(msg,remove)) == SYSQ_MSG_ABANDON)
-                return FALSE;
+            status = MSG_TranslateKbdMsg(hwnd, filter, msg, remove);
+	    kbd_msg = 1;
         }
-        else  /* Non-standard hardware event */
+        else /* Non-standard hardware event */
         {
             HARDWAREHOOKSTRUCT16 *hook;
             if ((hook = SEGPTR_NEW(HARDWAREHOOKSTRUCT16)))
@@ -418,56 +454,55 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                                         remove ? HC_ACTION : HC_NOREMOVE,
                                         0, (LPARAM)SEGPTR_GET(hook) );
                 SEGPTR_FREE(hook);
-                status = ret ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT;
+                if (ret) 
+		{
+		    QUEUE_RemoveMsg( sysMsgQueue, pos );
+		    continue;
+		}
+		status = SYSQ_MSG_ACCEPT; 
             }
         }
 
-        if (status == SYSQ_MSG_SKIP)
-        {
-            if (remove) QUEUE_RemoveMsg( sysMsgQueue, pos );
-            /* FIXME: call CBT_CLICKSKIPPED from here */
-            continue;
-        }
+	switch (LOWORD(status))
+	{
+	   case SYSQ_MSG_ACCEPT:
+		break;
 
-          /* Check message against filters */
+	   case SYSQ_MSG_SKIP:
+                if (HOOK_IsHooked( WH_CBT ))
+                   if( kbd_msg )
+		       HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED, 
+						 msg->wParam, msg->lParam );
+		   else
+		   {
+                       MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
+                       if (hook)
+                       {
+                           hook->pt           = msg->pt;
+                           hook->hwnd         = msg->hwnd;
+                           hook->wHitTestCode = HIWORD(status);
+                           hook->dwExtraInfo  = 0;
+                           HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message,
+                                          (LPARAM)SEGPTR_GET(hook) );
+                           SEGPTR_FREE(hook);
+                       }
+                   }
 
-        if (hwnd && (msg->hwnd != hwnd)) continue;
-        if ((first || last) && 
-            ((msg->message < first) || (msg->message > last))) continue;
+		if (remove)
+		    QUEUE_RemoveMsg( sysMsgQueue, pos );
+		/* continue */
+
+	   case SYSQ_MSG_CONTINUE:
+		continue;
+
+	   case SYSQ_MSG_ABANDON: 
+		return FALSE;
+	}
+
         if (remove)
         {
-            if (HOOK_IsHooked( WH_JOURNALRECORD ))
-                MSG_JournalRecordMsg( msg );
+            if (HOOK_IsHooked( WH_JOURNALRECORD )) MSG_JournalRecordMsg( msg );
             QUEUE_RemoveMsg( sysMsgQueue, pos );
-            
-            /* call CBT hook _after_ message removed from queue */
-	    if (HOOK_IsHooked( WH_CBT ))
-	    {
-	    	if (((msg->message >= WM_MOUSEFIRST) &&
-                     (msg->message <= WM_MOUSELAST)) ||
-	    	    ((msg->message >= WM_NCMOUSEFIRST) &&
-                     (msg->message <= WM_NCMOUSELAST)))
-	    	{
-                    MOUSEHOOKSTRUCT16 *hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16);
-                    if (hook)
-                    {
-	    	  	hook->pt           = msg->pt;
-			hook->hwnd         = msg->hwnd;
-			hook->wHitTestCode = (INT16)SendMessage16( msg->hwnd,
-                                            WM_NCHITTEST, 0,
-                                            MAKELONG( msg->pt.x, msg->pt.y ) );
-			hook->dwExtraInfo  = 0;
-			HOOK_CallHooks16( WH_CBT, HCBT_CLICKSKIPPED ,msg->message, 
-                                          (LPARAM)SEGPTR_GET(hook) );
-			SEGPTR_FREE(hook);
-                    }
-                }
-                else 
-                    if ((msg->message >= WM_KEYFIRST) &&
-                        (msg->message <= WM_KEYLAST))
-		   	HOOK_CallHooks16( WH_CBT, HCBT_KEYSKIPPED,
-                                          msg->wParam, msg->lParam );
-            }
         }
         return TRUE;
     }
@@ -692,7 +727,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
         /* Now find a hardware event */
 
         if (((msgQueue->wakeBits & mask) & (QS_MOUSE | QS_KEY)) &&
-            MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
+            MSG_PeekHardwareMsg( msg, hwnd, MAKELONG(first,last), flags & PM_REMOVE ))
         {
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;

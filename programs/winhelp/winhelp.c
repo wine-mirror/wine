@@ -5,11 +5,11 @@
  */
 
 #include <stdio.h>
-#include <windows.h>
+#include "windows.h"
 #ifdef WINELIB
-#include <resource.h>
-#include <options.h>
-#include <shell.h>
+#include "resource.h"
+#include "options.h"
+#include "shell.h"
 extern const char people[];
 #endif
 #include "winhelp.h"

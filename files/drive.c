@@ -32,7 +32,6 @@
 #include "msdos.h"
 #include "options.h"
 #include "task.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -137,11 +136,11 @@ int DRIVE_Init(void)
             p = path + strlen(path) - 1;
             while ((p > path) && ((*p == '/') || (*p == '\\'))) *p-- = '\0';
             if (strlen(path))
-                drive->root = xstrdup( path );
+                drive->root = HEAP_strdupA( SystemHeap, 0, path );
             else
-                drive->root = xstrdup( "/" );
-            drive->dos_cwd  = xstrdup( "" );
-            drive->unix_cwd = xstrdup( "" );
+                drive->root = HEAP_strdupA( SystemHeap, 0, "/" );
+            drive->dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
+            drive->unix_cwd = HEAP_strdupA( SystemHeap, 0, "" );
             drive->type     = DRIVE_GetDriveType( name );
             drive->flags    = 0;
 
@@ -180,9 +179,9 @@ int DRIVE_Init(void)
     {
         fprintf( stderr, "Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
-        DOSDrives[2].root     = xstrdup( "/" );
-        DOSDrives[2].dos_cwd  = xstrdup( "" );
-        DOSDrives[2].unix_cwd = xstrdup( "" );
+        DOSDrives[2].root     = HEAP_strdupA( SystemHeap, 0, "/" );
+        DOSDrives[2].dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
+        DOSDrives[2].unix_cwd = HEAP_strdupA( SystemHeap, 0, "" );
         strcpy( DOSDrives[2].label, "Drive C    " );
         DOSDrives[2].serial   = 0x12345678;
         DOSDrives[2].type     = TYPE_HD;
@@ -413,7 +412,7 @@ int DRIVE_Chdir( int drive, const char *path )
 {
     char buffer[MAX_PATHNAME_LEN];
     const char *unix_cwd, *dos_cwd;
-    BYTE attr;
+    BY_HANDLE_FILE_INFORMATION info;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:,%s)\n", 'A' + drive, path );
@@ -422,8 +421,8 @@ int DRIVE_Chdir( int drive, const char *path )
     lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!(unix_cwd = DOSFS_GetUnixFileName( buffer, TRUE ))) return 0;
-    if (!FILE_Stat( unix_cwd, &attr, NULL, NULL, NULL )) return 0;
-    if (!(attr & FA_DIRECTORY))
+    if (!FILE_Stat( unix_cwd, &info )) return 0;
+    if (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return 0;
@@ -437,10 +436,10 @@ int DRIVE_Chdir( int drive, const char *path )
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:): unix_cwd=%s dos_cwd=%s\n",
                    'A' + drive, unix_cwd, dos_cwd + 3 );
 
-    free( DOSDrives[drive].dos_cwd );
-    free( DOSDrives[drive].unix_cwd );
-    DOSDrives[drive].dos_cwd  = xstrdup( dos_cwd + 3 );
-    DOSDrives[drive].unix_cwd = xstrdup( unix_cwd );
+    HeapFree( SystemHeap, 0, DOSDrives[drive].dos_cwd );
+    HeapFree( SystemHeap, 0, DOSDrives[drive].unix_cwd );
+    DOSDrives[drive].dos_cwd  = HEAP_strdupA( SystemHeap, 0, dos_cwd + 3 );
+    DOSDrives[drive].unix_cwd = HEAP_strdupA( SystemHeap, 0, unix_cwd );
 
     if (pTask && (pTask->curdrive & 0x80) && 
         ((pTask->curdrive & ~0x80) == drive))
@@ -569,7 +568,7 @@ BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
                             LPDWORD total_clusters )
 {
     LPSTR xroot;
-    BOOL ret;
+    BOOL32 ret;
 
     xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
     ret = GetDiskFreeSpace32A( xroot,cluster_sectors, sector_bytes,

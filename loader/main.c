@@ -18,14 +18,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "menu.h"
 #include "atom.h"
 #include "dialog.h"
-#include "directory.h"
 #include "drive.h"
 #include "queue.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
+#include "file.h"
 #include "gdi.h"
 #include "heap.h"
-#include "debugger.h"
 #include "miscemu.h"
 #include "neexe.h"
 #include "options.h"
@@ -39,6 +38,9 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "stddebug.h"
 #include "debug.h"
 
+#ifndef WINELIB
+#include "debugger.h"
+#endif
 
 /* Winelib run-time flag */
 #ifdef WINELIB
@@ -70,6 +72,9 @@ int MAIN_Init(void)
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return 0;
 
+      /* Initialize DOS memory */
+    if (!DOSMEM_Init()) return 0;
+
 #ifdef WINELIB
     /* Create USER and GDI heap */
     USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
@@ -82,15 +87,6 @@ int MAIN_Init(void)
 
     /* Create built-in modules */
     if (!BUILTIN_Init()) return 0;
-
-    /* Initialize interrupt vectors */
-    if (!INT_Init()) return 0;
-
-      /* Initialize DOS memory */
-    if (!DOSMEM_Init()) return 0;
-
-      /* Initialize the DOS interrupt */
-    if (!INT21_Init()) return 0;
 
       /* Initialize signal handling */
     if (!SIGNAL_Init()) return 0;
@@ -182,7 +178,7 @@ int main(int argc, char *argv[] )
 
     for (i = 1; i < argc; i++)
     {
-        if ((handle = WinExec( argv[i], SW_SHOWNORMAL )) < 32)
+        if ((handle = WinExec32( argv[i], SW_SHOWNORMAL )) < 32)
         {
             fprintf(stderr, "wine: can't exec '%s': ", argv[i]);
             switch (handle)

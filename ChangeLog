@@ -1,4 +1,86 @@
 ----------------------------------------------------------------------
+Wed Jan  1 15:36:17 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/listbox.c]
+	Use FindFirstFile/FindNextFile in LISTBOX_Directory.
+
+	* [files/dos_fs.c]
+	Rewrote FindFirstFile/FindNextFile to use DOSFS_FindNext().
+
+	* [files/file.c] [files/directory.c]
+	Use Win32 kernel objects and handles for file handles.
+	Unified SearchPath() and OpenFile().
+
+	* [loader/builtin.c]
+	Moved to if1632/ directory.
+
+	* [tools/build.c] [debugger/*] [miscemu/*]
+	Win16 register functions now receive the same CONTEXT * structure
+	as Win32 functions.
+
+	* [include/sigcontext.h] [miscemu/instr.c]
+	Added new macros to get register values from the SIGCONTEXT
+	structure (only used for instruction emulation now).
+
+	* [scheduler/process.c] [scheduler/thread.c] (New files)
+	Allocate process and thread structures.
+
+	* [scheduler/process.c] [win32/k32obj.c]
+	Added Win32 kernel objects and handles management.
+
+	* [loader/task.c]
+	Create a Win32 process and thread for every Win16 task.
+
+	* [misc/commdlg.c] [misc/shell.c] [windows/msgbox.c]
+	Built-in resources are now in Win32 format. This also avoids
+	16-bit callbacks for built-in dialogs.
+
+	* [misc/lzexpand.c]
+	Differentiate between 16-bit and 32-bit file handles.
+
+	* [miscemu/int*.c]
+	Moved all int emulation to msdos/ directory.
+
+	* [msdos/*]
+	New directory msdos/ contains all MS-DOS emulation code that can
+	also be used for Winelib; this should enable Winelib apps to use
+	DOS3Call and related functions.
+
+	* [rc/winerc.c]
+	A few bug fixes for Win32 resource format.
+
+	* [windows/winpos.c]
+	Hack in WINPOS_ReorderOwnerPopups() to avoid X crashed (still not
+	right though).
+
+Sun Dec 29 17:47:55 1996  O. Flebbe <flebbe@science-computing.uni-tuebingen.de>
+
+	* [loader/pe_image.c]
+	Make sure BSS of a PE_Image is zero.
+
+Sat Dec 28 22:15:34 1996 Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/scroll.c]
+	ScrollWindowEx() rewrite, ScrollDC() fix.
+
+	* [windows/nonclient.c] [controls/menu.c]
+	Fixed Alt-Space crashes in dialogs.
+
+	* [windows/event.c] [windows/message.c]
+	Some changes in mouse message generation.
+
+Thu Dec 26 09:25:24 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [debugger/stabs.c]
+	Dummy DEBUG_ReadExecutableDbgInfo provided for !__ELF__ case.
+
+Tue Dec 24 00:59:05 MET 1996  Martin Buck <martin-2.buck@student.uni-ulm.de>
+
+	* [windows/event.c]
+	Changed XK_Page_{Up,Down} to XK_{Prior,Next} for X11R5
+	compatibility.
+
+----------------------------------------------------------------------
 Sun Dec 22 13:30:18 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [graphics/metafiledrv/init.c] [graphisc/metafiledrv/mapping.c]

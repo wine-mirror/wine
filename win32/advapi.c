@@ -11,7 +11,6 @@
 #include "advapi32.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 /***********************************************************************
  *           StartServiceCtrlDispatcherA   [ADVAPI32.196]

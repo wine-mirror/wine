@@ -114,7 +114,7 @@ int DEBUG_ReadMemory( const DBG_ADDR *address )
 {
     DBG_ADDR addr = *address;
 
-    DBG_FIX_ADDR_SEG( &addr, DS_reg(DEBUG_context) );
+    DBG_FIX_ADDR_SEG( &addr, DS_reg(&DEBUG_context) );
     if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return 0;
     return *(int *)DBG_ADDR_TO_LIN( &addr );
 }
@@ -129,7 +129,7 @@ void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
 {
     DBG_ADDR addr = *address;
 
-    DBG_FIX_ADDR_SEG( &addr, DS_reg(DEBUG_context) );
+    DBG_FIX_ADDR_SEG( &addr, DS_reg(&DEBUG_context) );
     if (!DBG_CHECK_WRITE_PTR( &addr, sizeof(int) )) return;
     *(int *)DBG_ADDR_TO_LIN( &addr ) = value;
 }
@@ -149,7 +149,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
     int i;
 
     DBG_FIX_ADDR_SEG( &addr, (format == 'i') ?
-                             CS_reg(DEBUG_context) : DS_reg(DEBUG_context) );
+                             CS_reg(&DEBUG_context) : DS_reg(&DEBUG_context) );
 
     if (format != 'i' && count > 1)
     {

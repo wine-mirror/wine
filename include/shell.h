@@ -13,8 +13,6 @@
 #define MAX_PATH 260
 #endif
 
-extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
-                      HICON16 hIcon);
 extern void SHELL_LoadRegistry();
 extern void SHELL_SaveRegistry();
 extern void SHELL_Init();
@@ -81,6 +79,6 @@ DWORD SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
 #define SE_ERR_DDEBUSY          30
 #define SE_ERR_NOASSOC          31
 
-LRESULT AboutDlgProc(HWND hWnd,UINT msg,WPARAM16 wParam,LPARAM lParam);
+LRESULT AboutDlgProc(HWND32 hWnd,UINT32 msg,WPARAM16 wParam,LPARAM lParam);
 
 #endif  /* __WINE_SHELL_H */

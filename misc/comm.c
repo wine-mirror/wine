@@ -739,7 +739,7 @@ UINT16	*SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 {
     	dprintf_comm(stddeb,"SetCommEventMask:fd %d,mask %d\n",fd,fuEvtMask);
 	eventmask |= fuEvtMask;
-	return (UINT *)&eventmask;	/* FIXME, should be SEGPTR */
+	return (UINT16 *)&eventmask;	/* FIXME, should be SEGPTR */
 }
 
 /*****************************************************************************

@@ -4,7 +4,7 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-#include <windows.h>
+#include "windows.h"
 #include "progman.h"
 
 #define MALLOCHUNK 1000

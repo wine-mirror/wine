@@ -4,9 +4,9 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-#include <windows.h>
+#include "windows.h"
 #ifdef WINELIB
-#include <options.h>
+#include "options.h"
 #endif
 #include "progman.h"
 

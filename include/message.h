@@ -33,5 +33,7 @@ extern void EVENT_ProcessEvent( XEvent *event );
 extern void EVENT_RegisterWindow( WND *pWnd );
 extern void EVENT_DestroyWindow( WND *pWnd );
 extern void EVENT_DummyMotionNotify(void);
+extern HWND32 EVENT_Capture( HWND32, INT16 );
+extern INT16 EVENT_GetCaptureInfo(void);
 
 #endif  /* __WINE_MESSAGE_H */

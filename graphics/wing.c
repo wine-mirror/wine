@@ -149,23 +149,9 @@ HBITMAP16 WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header, void **bits)
 				  bmpObjPtr->bitmap.bmHeight, bmpi->biBitCount );
 		    if( bmpObjPtr->pixmap )
 		    {
-			WORD s; 
-			if( (sel = AllocSelectorArray( (bytes + 0xFFFF) >> 16 )) )
-			{
-			    DWORD	base = (DWORD)p->si.shmaddr, l;
-
-			    SetSelectorBase( sel, base );
-			    SetSelectorLimit( sel, bytes );
-			    s = sel;
-			    for( l = 0x10000; l < bytes ; )
-			    {
-			       s += __AHINCR;
-			       SetSelectorBase( s, base + l );
-			       l += 0x10000;
-			       SetSelectorLimit( s, (l < bytes)?0xFFFF:bytes%0x10000);
-			    }
-			    p->bits = MAKELONG(0, sel);
-			} 
+                        sel = SELECTOR_AllocBlock( p->si.shmaddr, bytes,
+                                                   SEGMENT_DATA, FALSE, FALSE);
+                        if (sel) p->bits = PTR_SEG_OFF_TO_SEGPTR(sel,0);
 			else XFreePixmap( display, bmpObjPtr->pixmap );
 		    }
 		    if( !sel )

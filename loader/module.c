@@ -15,27 +15,22 @@
 #include "dos_fs.h"
 #include "file.h"
 #include "global.h"
+#include "heap.h"
 #include "hook.h"
-#include "ldt.h"
 #include "module.h"
 #include "neexe.h"
-#include "registers.h"
+#include "selectors.h"
 #include "stackframe.h"
 #include "task.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "callback.h"
-#include "xmalloc.h"
 
 extern HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
 
 static HMODULE16 hFirstModule = 0;
 static HMODULE16 hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
-
-#ifndef WINELIB
-static HGLOBAL16 hInitialStack32 = 0;
-#endif
 
 
 /***********************************************************************
@@ -281,8 +276,7 @@ DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
 /***********************************************************************
  *           MODULE_CreateSegments
  */
-#ifndef WINELIB32
-static BOOL MODULE_CreateSegments( HMODULE16 hModule )
+static BOOL32 MODULE_CreateSegments( HMODULE16 hModule )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -308,7 +302,6 @@ static BOOL MODULE_CreateSegments( HMODULE16 hModule )
                             (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;
     return TRUE;
 }
-#endif
 
 
 /***********************************************************************
@@ -443,7 +436,7 @@ HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
 /***********************************************************************
  *           MODULE_LoadExeHeader
  */
-static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
+static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
 {
     struct mz_header_s mz_header;
     struct ne_header_s ne_header;
@@ -459,15 +452,15 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
        ((fastload && ((offset) >= fastload_offset) && \
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (_llseek( hFile, mz_header.ne_offset+(offset), SEEK_SET), \
+        (_llseek32( hFile, mz_header.ne_offset+(offset), SEEK_SET), \
          _lread32( hFile, (buffer), (size) ) == (size)))
 
-    _llseek( hFile, 0, SEEK_SET );
+    _llseek32( hFile, 0, SEEK_SET );
     if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
         (mz_header.mz_magic != MZ_SIGNATURE))
         return (HMODULE16)11;  /* invalid exe */
 
-    _llseek( hFile, mz_header.ne_offset, SEEK_SET );
+    _llseek32( hFile, mz_header.ne_offset, SEEK_SET );
     if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
         return (HMODULE16)11;  /* invalid exe */
 
@@ -515,12 +508,12 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         fastload_length=ne_header.fastload_length<<ne_header.align_shift_count;
         dprintf_module( stddeb, "Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
-        if ((fastload = (char *)xmalloc( fastload_length )) != NULL)
+        if ((fastload = HeapAlloc( SystemHeap, 0, fastload_length )) != NULL)
         {
-            _llseek( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET );
+            _llseek32( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET);
             if (_lread32(hFile, fastload, fastload_length) != fastload_length)
             {
-                free( fastload );
+                HeapFree( SystemHeap, 0, fastload );
                 fastload = NULL;
             }
         }
@@ -537,7 +530,8 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     /* Get the segment table */
 
     pModule->seg_table = (int)pData - (int)pModule;
-    buffer = xmalloc( ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s) );
+    buffer = HeapAlloc( SystemHeap, 0, ne_header.n_segment_tab *
+                                      sizeof(struct ne_segment_table_entry_s));
     if (buffer)
     {
         int i;
@@ -545,17 +539,24 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 
         if (!READ( ne_header.segment_tab_offset,
              ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
-             buffer )) return (HMODULE16)11;  /* invalid exe */
+             buffer ))
+        {
+            HeapFree( SystemHeap, 0, buffer );
+            HeapFree( SystemHeap, 0, fastload );
+            GlobalFree16( hModule );
+            return (HMODULE16)11;  /* invalid exe */
+        }
         pSeg = (struct ne_segment_table_entry_s *)buffer;
         for (i = ne_header.n_segment_tab; i > 0; i--, pSeg++)
         {
             memcpy( pData, pSeg, sizeof(*pSeg) );
             pData += sizeof(SEGTABLEENTRY);
         }
-        free( buffer );
+        HeapFree( SystemHeap, 0, buffer );
     }
     else
     {
+        HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -579,6 +580,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
                pData ))
     {
+        HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -591,7 +593,12 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         pModule->modref_table = (int)pData - (int)pModule;
         if (!READ( ne_header.moduleref_tab_offset,
                   ne_header.n_mod_ref_tab * sizeof(WORD),
-                  pData )) return (HMODULE16)11;  /* invalid exe */
+                  pData ))
+        {
+            HeapFree( SystemHeap, 0, fastload );
+            GlobalFree16( hModule );
+            return (HMODULE16)11;  /* invalid exe */
+        }
         pData += ne_header.n_mod_ref_tab * sizeof(WORD);
     }
     else pModule->modref_table = 0;  /* No module references */
@@ -603,6 +610,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.entry_tab_offset - ne_header.iname_tab_offset,
                pData ))
     {
+        HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -615,10 +623,16 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                ne_header.entry_tab_length,
                pData ))
     {
+        HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_length;
+
+    /* Free the fast-load area */
+
+#undef READ
+    HeapFree( SystemHeap, 0, fastload );
 
     /* Get the non-resident names table */
 
@@ -632,7 +646,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
             return (HMODULE16)11;  /* invalid exe */
         }
         buffer = GlobalLock16( pModule->nrname_handle );
-        _llseek( hFile, ne_header.nrname_tab_offset, SEEK_SET );
+        _llseek32( hFile, ne_header.nrname_tab_offset, SEEK_SET );
         if (_lread32( hFile, buffer, ne_header.nrname_tab_length )
               != ne_header.nrname_tab_length)
         {
@@ -661,7 +675,6 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 
     MODULE_RegisterModule( pModule );
     return hModule;
-#undef READ
 }
 
 
@@ -1007,7 +1020,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
     OFSTRUCT ofs;
 #ifndef WINELIB
     WORD *pModRef, *pDLLs;
-    HFILE hFile;
+    HFILE32 hFile;
     int i;
 
     hModule = MODULE_FindModule( name );
@@ -1017,7 +1030,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
         /* Try to load the built-in first if not disabled */
         if ((hModule = BUILTIN_LoadModule( name, FALSE ))) return hModule;
 
-        if ((hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR)
+        if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
         {
             /* Now try the built-in even if disabled */
             if ((hModule = BUILTIN_LoadModule( name, TRUE )))
@@ -1035,7 +1048,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
         {
             /* FIXME: Hack because PE_LoadModule is recursive */
             int fd = dup( FILE_GetUnixHandle(hFile) );
-            _lclose( hFile );
+            _lclose32( hFile );
             if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
             close( fd );
             if (hModule < 32)
@@ -1043,7 +1056,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
                          name, hModule );
             return hModule;
         }
-        _lclose( hFile );
+        _lclose32( hFile );
         pModule = MODULE_GetPtr( hModule );
 
           /* Allocate the segments for this module */
@@ -1101,7 +1114,8 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
 
 	if (pModule->flags & NE_FFLAGS_SELFLOAD)
 	{
-                HFILE hf;
+                HFILE32 hf;
+                HGLOBAL16 hInitialStack32 = 0;
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
@@ -1139,17 +1153,17 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
                 stack16Top->ip = 0;
                 stack16Top->cs = 0;
 
-		if (!IF1632_Stack32_base) {
+		if (!IF1632_Saved32_esp)
+                {
 		  STACK32FRAME* frame32;
 		  char *stack32Top;
 		  /* Setup an initial 32 bit stack frame */
-		  hInitialStack32 =  GLOBAL_Alloc( GMEM_FIXED, 0x10000,
+		  hInitialStack32 = GLOBAL_Alloc( GMEM_FIXED, 0x10000,
 						  hModule, FALSE, FALSE, 
 						  FALSE );
 
 		  /* Create the 32-bit stack frame */
 		  
-		  *(DWORD *)GlobalLock16(hInitialStack32) = 0xDEADBEEF;
 		  stack32Top = (char*)GlobalLock16(hInitialStack32) + 
 		    0x10000;
 		  frame32 = (STACK32FRAME *)stack32Top - 1;
@@ -1163,20 +1177,19 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
 		  frame32->retaddr = 0;
 		  frame32->codeselector = WINE_CODE_SELECTOR;
 		  /* pTask->esp = (DWORD)frame32; */
-		  IF1632_Stack32_base = WIN16_GlobalLock16(hInitialStack32);
-
 		}
                 hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
 		CallTo16_word_ww( selfloadheader->BootApp, hModule, hf );
-                _lclose(hf);
+                _lclose32(hf);
 		/* some BootApp procs overwrite the selector of dgroup */
 		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
 		IF1632_Saved16_ss = oldss;
 		IF1632_Saved16_sp = oldsp;
 		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
-		if (hInitialStack32){
+		if (hInitialStack32)
+                {
 		  GlobalFree16(hInitialStack32);
-		  IF1632_Stack32_base = hInitialStack32 = 0;
+		  hInitialStack32 = 0;
 		}
 	} 
 	else
@@ -1389,9 +1402,18 @@ void FreeLibrary( HINSTANCE16 handle )
 
 
 /***********************************************************************
- *           WinExec   (KERNEL.166)
+ *           WinExec16   (KERNEL.166)
  */
-HINSTANCE16 WinExec( LPSTR lpCmdLine, WORD nCmdShow )
+HINSTANCE16 WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
+{
+    return WinExec32( lpCmdLine, nCmdShow );
+}
+
+
+/***********************************************************************
+ *           WinExec32   (KERNEL32.566)
+ */
+HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 {
     LOADPARAMS params;
     HGLOBAL16 cmdShowHandle, cmdLineHandle;

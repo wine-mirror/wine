@@ -27,7 +27,6 @@
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
-#include "registers.h"
 #include "shell.h"
 #include "winbase.h"
 #define DEBUG_DEFINE_VARIABLES
@@ -781,11 +780,7 @@ LONG GetWinFlags(void)
   long result = 0;
 
   /* There doesn't seem to be any Pentium flag.  */
-#ifndef WINELIB
   long cpuflag = cpuflags[MIN (runtime_cpu (), 4)];
-#else
-  long cpuflag = cpuflags[4];
-#endif
 
   switch(Options.mode) {
   case MODE_STANDARD:

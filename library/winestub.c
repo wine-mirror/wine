@@ -26,7 +26,7 @@ int main( int argc, char *argv [] )
   for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
 
   if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
-  hInstance = WinExec( *argv, SW_SHOWNORMAL );
+  hInstance = WinExec32( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
   InitApp( hInstance );
 

@@ -11,6 +11,7 @@ C_SRCS = \
 	commdlg.c \
 	compobj.c \
 	crtdll.c \
+	cpu.c \
 	driver.c \
 	exec.c \
 	escape.c \

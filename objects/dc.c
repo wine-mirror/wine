@@ -16,7 +16,6 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
-#include "xmalloc.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 
@@ -171,6 +170,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
 DC *DC_GetDCPtr( HDC32 hdc )
 {
     GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hdc );
+    if (!ptr) return NULL;
     if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC))
         return (DC *)ptr;
     return NULL;

@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "windows.h"
 #include "license.h"
 
 static CHAR LicenseCaption_En[] = "LICENSE";

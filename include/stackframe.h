@@ -51,7 +51,6 @@ extern WORD IF1632_Saved16_sp;
 
   /* Saved 32-bit stack for current process (Win16 only) */
 extern DWORD IF1632_Saved32_esp;
-extern SEGPTR IF1632_Stack32_base;
 
   /* Original Unix stack */
 extern DWORD IF1632_Original32_esp;

@@ -65,9 +65,10 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  * Determine if the instruction at CS:EIP is an instruction that
  * we need to step over (like a call or a repetitive string move).
  */
-static BOOL32 DEBUG_IsStepOverInstr( SIGCONTEXT *context )
+static BOOL32 DEBUG_IsStepOverInstr(void)
 {
-    BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN(CS_reg(context),EIP_reg(context));
+    BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN( CS_reg(&DEBUG_context),
+                                              EIP_reg(&DEBUG_context) );
 
     for (;;)
     {
@@ -182,7 +183,7 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
     int num;
     BYTE *p;
 
-    DBG_FIX_ADDR_SEG( &addr, CS_reg(DEBUG_context) );
+    DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
 
     if (next_bp < MAX_BREAKPOINTS)
         num = next_bp++;
@@ -273,17 +274,17 @@ void DEBUG_InfoBreakpoints(void)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode )
+BOOL32 DEBUG_ShouldContinue( enum exec_mode mode )
 {
     DBG_ADDR addr;
     int bpnum;
 
       /* If not single-stepping, back up over the int3 instruction */
-    if (!(EFL_reg(DEBUG_context) & STEP_FLAG)) EIP_reg(DEBUG_context)--;
+    if (!(EFL_reg(&DEBUG_context) & STEP_FLAG)) EIP_reg(&DEBUG_context)--;
 
-    addr.seg = (CS_reg(DEBUG_context) == WINE_CODE_SELECTOR) ? 
-                0 : CS_reg(DEBUG_context);
-    addr.off = EIP_reg(DEBUG_context);
+    addr.seg = (CS_reg(&DEBUG_context) == WINE_CODE_SELECTOR) ? 
+                0 : CS_reg(&DEBUG_context);
+    addr.off = EIP_reg(&DEBUG_context);
         
     bpnum = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
@@ -299,8 +300,8 @@ BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode )
 
     /* If there's no breakpoint and we are not single-stepping, then we     */
     /* must have encountered an int3 in the Windows program; let's skip it. */
-    if ((bpnum == -1) && !(EFL_reg(DEBUG_context) & STEP_FLAG))
-        EIP_reg(DEBUG_context)++;
+    if ((bpnum == -1) && !(EFL_reg(&DEBUG_context) & STEP_FLAG))
+        EIP_reg(&DEBUG_context)++;
 
       /* no breakpoint, continue if in continuous mode */
     return (mode == EXEC_CONT);
@@ -313,14 +314,13 @@ BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode )
  * Set the breakpoints to the correct state to restart execution
  * in the given mode.
  */
-void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
-                             int instr_len )
+void DEBUG_RestartExecution( enum exec_mode mode, int instr_len )
 {
     DBG_ADDR addr;
 
-    addr.seg = (CS_reg(DEBUG_context) == WINE_CODE_SELECTOR) ?
-                0 : CS_reg(DEBUG_context);
-    addr.off = EIP_reg(DEBUG_context);
+    addr.seg = (CS_reg(&DEBUG_context) == WINE_CODE_SELECTOR) ?
+                0 : CS_reg(&DEBUG_context);
+    addr.off = EIP_reg(&DEBUG_context);
 
     if (DEBUG_FindBreakpoint( &addr ) != -1)
         mode = EXEC_STEP_INSTR;  /* If there's a breakpoint, skip it */
@@ -328,14 +328,14 @@ void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
     switch(mode)
     {
     case EXEC_CONT: /* Continuous execution */
-        EFL_reg(DEBUG_context) &= ~STEP_FLAG;
+        EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
         DEBUG_SetBreakpoints( TRUE );
         break;
 
     case EXEC_STEP_OVER:  /* Stepping over a call */
-        if (DEBUG_IsStepOverInstr(DEBUG_context))
+        if (DEBUG_IsStepOverInstr())
         {
-            EFL_reg(DEBUG_context) &= ~STEP_FLAG;
+            EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
             addr.off += instr_len;
             breakpoints[0].addr    = addr;
             breakpoints[0].enabled = TRUE;
@@ -347,7 +347,7 @@ void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
         /* else fall through to single-stepping */
 
     case EXEC_STEP_INSTR: /* Single-stepping an instruction */
-        EFL_reg(DEBUG_context) |= STEP_FLAG;
+        EFL_reg(&DEBUG_context) |= STEP_FLAG;
         break;
     }
 }

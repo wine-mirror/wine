@@ -433,7 +433,7 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 /***********************************************************************
  *           NC_DrawSysButton
  */
-void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL down )
+void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL32 down )
 {
     RECT16 rect;
     HDC32 hdcMem;
@@ -844,17 +844,24 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 /***********************************************************************
  *           NC_GetSysPopupPos
  */
-BOOL NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
+BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
 {
-  if( !wndPtr->hSysMenu ) return FALSE;
-
-  NC_GetInsideRect( wndPtr->hwndSelf, rect );
-  OffsetRect16( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
-  if (wndPtr->dwStyle & WS_CHILD)
-     ClientToScreen16( wndPtr->parent->hwndSelf, (POINT16 *)rect );
-  rect->right = rect->left + SYSMETRICS_CXSIZE;
-  rect->bottom = rect->top + SYSMETRICS_CYSIZE;
-  return TRUE;
+  if( wndPtr->hSysMenu )
+  {
+      if( wndPtr->dwStyle & WS_MINIMIZE )
+	  GetWindowRect16( wndPtr->hwndSelf, rect );
+      else
+      {
+  	  NC_GetInsideRect( wndPtr->hwndSelf, rect );
+  	  OffsetRect16( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
+  	  if (wndPtr->dwStyle & WS_CHILD)
+     	      ClientToScreen16( wndPtr->parent->hwndSelf, (POINT16 *)rect );
+          rect->right = rect->left + SYSMETRICS_CXSIZE;
+          rect->bottom = rect->top + SYSMETRICS_CYSIZE;
+      }
+      return TRUE;
+  }
+  return FALSE;
 }
 
 /***********************************************************************
@@ -862,29 +869,53 @@ BOOL NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
  *
  * Track a mouse button press on the system menu.
  */
-static void NC_TrackSysMenu( HWND hwnd, HDC16 hdc, POINT16 pt )
+static void NC_TrackSysMenu( HWND hwnd, POINT16 pt )
 {
-    RECT16 rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    int iconic = wndPtr->dwStyle & WS_MINIMIZE;
-    HMENU16 hmenu;
+    WND*	wndPtr = WIN_FindWndPtr( hwnd );
     
-    if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
-
-    /* If window has a menu, track the menu bar normally if it not minimized */
-    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
-    else
+    if (wndPtr->dwStyle & WS_SYSMENU)
     {
-	  /* Otherwise track the system menu like a normal popup menu */
+	int	iconic, on = 1;
 
-	NC_GetSysPopupPos( wndPtr, &rect );
-	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
-	hmenu = GetSystemMenu(hwnd, 0);
-	MENU_InitSysMenuPopup(hmenu, wndPtr->dwStyle,
-				    wndPtr->class->style);
-	TrackPopupMenu16( hmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
-                          rect.left, rect.bottom, 0, hwnd, &rect );
-	if (!iconic) NC_DrawSysButton( hwnd, hdc, FALSE );
+	iconic = wndPtr->dwStyle & WS_MINIMIZE;
+
+	if( !iconic ) 
+	{
+	     HDC16	hdc = GetWindowDC32(hwnd);
+	     RECT16	rect, rTrack;
+	     BOOL32 	bNew, bTrack = TRUE;
+	     MSG16	msg;
+	    
+	     NC_GetSysPopupPos( wndPtr, &rect );
+	     rTrack = rect;
+	     MapWindowPoints16( 0, hwnd, (LPPOINT16)&rTrack, 2 );
+
+	     /* track mouse while waiting for WM_LBUTTONUP */
+
+	     NC_DrawSysButton( hwnd, hdc, bTrack );
+	     SetCapture32(hwnd);
+	     do
+	     {
+		msg.message = WM_NULL;
+		PeekMessage16( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE);
+		if( msg.message == WM_MOUSEMOVE )
+		{
+		    if( (bNew = PtInRect16(&rTrack, MAKEPOINT16(msg.lParam))) )
+		    {   if( bTrack ) continue; }
+		    else 
+		    {   if(!bTrack ) continue; }
+		    NC_DrawSysButton( hwnd, hdc, bTrack = bNew);
+		}
+	     } while( msg.message != WM_LBUTTONUP );
+
+	     ReleaseCapture();
+	     ReleaseDC32(hwnd, hdc);
+	     on = PtInRect16(&rTrack, MAKEPOINT16(msg.lParam));
+	} 
+
+	if( on ) 
+	    SendMessage16( hwnd, WM_SYSCOMMAND, 
+			   SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
     }
 }
 
@@ -1170,7 +1201,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 
     if (!moved && (wndPtr->dwStyle & WS_MINIMIZE))
     {
-        NC_TrackSysMenu( hwnd, hdc, pt );
+        NC_TrackSysMenu( hwnd, pt );
         return;
     }
 
@@ -1293,8 +1324,6 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
  */
 LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 {
-    HDC32 hdc;
-
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
@@ -1302,9 +1331,7 @@ LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-        hdc = GetWindowDC32( hwnd );
-	NC_TrackSysMenu( hwnd, hdc, MAKEPOINT16(lParam) );
-        ReleaseDC32( hwnd, hdc );
+        NC_TrackSysMenu( hwnd, MAKEPOINT16(lParam) );
 	break;
 
     case HTMENU:
@@ -1413,10 +1440,6 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	ShowWindow( hwnd, SW_RESTORE );
 	break;
 
-    case SC_NEXTWINDOW:
-    case SC_PREVWINDOW:
-	break;
-
     case SC_CLOSE:
 	return SendMessage16( hwnd, WM_CLOSE, 0, 0 );
 
@@ -1427,30 +1450,31 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_MOUSEMENU:
-	MENU_TrackMouseMenuBar( hwnd, pt );
+        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt );
 	break;
 
     case SC_KEYMENU:
 	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
 	break;
 	
-    case SC_ARRANGE:
-	break;
-
     case SC_TASKLIST:
-	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
-	break;
-
-    case SC_HOTKEY:
+	WinExec32( "taskman.exe", SW_SHOWNORMAL ); 
 	break;
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
 	{   
-	  extern const char people[];
-	  ShellAbout(hwnd,"WINE",people,0);
+            extern const char people[];
+            ShellAbout32A(hwnd,"Wine",people,0);
         }
 	break;
+  
+    case SC_HOTKEY:
+    case SC_ARRANGE:
+    case SC_NEXTWINDOW:
+    case SC_PREVWINDOW:
+ 	/* FIXME: unimplemented */
+        break;
     }
     return 0;
 }

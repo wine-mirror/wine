@@ -11,7 +11,6 @@
 /* #define DEBUG_CARET */
 #include "debug.h"
 
-
 typedef struct
 {
     HWND32     hwnd;
@@ -35,13 +34,21 @@ typedef enum
 
 static CARET Caret = { 0, 0, FALSE, 0, 0, 2, 12, 0, 500, 0 };
 
-
 /*****************************************************************
  *              CARET_GetHwnd
  */
-HWND32 CARET_GetHwnd()
+HWND32 CARET_GetHwnd(void)
 {
     return Caret.hwnd;
+}
+
+/*****************************************************************
+ *              CARET_GetRect
+ */
+void CARET_GetRect(LPRECT32 lprc)
+{
+    lprc->right = (lprc->left = Caret.x) + Caret.width - 1;
+    lprc->bottom = (lprc->top = Caret.y) + Caret.height - 1;
 }
 
 /*****************************************************************

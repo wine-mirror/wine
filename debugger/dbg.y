@@ -134,8 +134,8 @@ break_command:
                                     addr.off += $4;
                                     DEBUG_AddBreakpoint( &addr ); 
                                   }
-    | tBREAK tEOL              { DBG_ADDR addr = { CS_reg(DEBUG_context),
-                                                   EIP_reg(DEBUG_context) };
+    | tBREAK tEOL              { DBG_ADDR addr = { CS_reg(&DEBUG_context),
+                                                   EIP_reg(&DEBUG_context) };
                                  DEBUG_AddBreakpoint( &addr );
                                }
 
@@ -239,32 +239,15 @@ void mode_command(int newmode)
 }
 
 
-
 /***********************************************************************
- *           DEBUG_EnterDebugger
+ *           DEBUG_Main
  *
- * Force an entry into the debugger.
+ * Debugger main loop.
  */
-void DEBUG_EnterDebugger(void)
-{
-    kill( getpid(), SIGHUP );
-}
-
-
-/***********************************************************************
- *           DebugBreak16   (KERNEL.203)
- */
-void DebugBreak16( SIGCONTEXT *regs )
-{
-    const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
-    fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
-    wine_debug( SIGTRAP, regs );
-}
-
-
-void wine_debug( int signal, SIGCONTEXT *regs )
+static void DEBUG_Main( int signal )
 {
     static int loaded_symbols = 0;
+    static BOOL32 in_debugger = FALSE;
     char SymbolTableFile[256];
     int instr_len = 0, newmode;
     BOOL32 ret_ok;
@@ -272,8 +255,13 @@ void wine_debug( int signal, SIGCONTEXT *regs )
     yydebug = 0;
 #endif
 
+    if (in_debugger)
+    {
+        fprintf( stderr, "Segmentation fault inside debugger, exiting.\n" );
+        exit(1);
+    }
+    in_debugger = TRUE;
     yyin = stdin;
-    DEBUG_context = regs;
 
     DEBUG_SetBreakpoints( FALSE );
 
@@ -306,12 +294,12 @@ void wine_debug( int signal, SIGCONTEXT *regs )
         DEBUG_LoadEntryPoints();
     }
 
-    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( regs, dbg_exec_mode ))
+    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( dbg_exec_mode ))
     {
         DBG_ADDR addr;
 
-        addr.seg = CS_reg(DEBUG_context);
-        addr.off = EIP_reg(DEBUG_context);
+        addr.seg = CS_reg(&DEBUG_context);
+        addr.off = EIP_reg(&DEBUG_context);
         DBG_FIX_ADDR_SEG( &addr, 0 );
 
         /* Put the display in a correct state */
@@ -332,9 +320,9 @@ void wine_debug( int signal, SIGCONTEXT *regs )
             DEBUG_InfoStack();
             if (dbg_mode == 16)
             {
-                LDT_Print( SELECTOR_TO_ENTRY(DS_reg(DEBUG_context)), 1 );
-                if (ES_reg(DEBUG_context) != DS_reg(DEBUG_context))
-                    LDT_Print( SELECTOR_TO_ENTRY(ES_reg(DEBUG_context)), 1 );
+                LDT_Print( SELECTOR_TO_ENTRY(DS_reg(&DEBUG_context)), 1 );
+                if (ES_reg(&DEBUG_context) != DS_reg(&DEBUG_context))
+                    LDT_Print( SELECTOR_TO_ENTRY(ES_reg(&DEBUG_context)), 1 );
             }
             DEBUG_BackTrace();
         }
@@ -347,7 +335,7 @@ void wine_debug( int signal, SIGCONTEXT *regs )
         {
             DEBUG_Disasm( &addr );
             fprintf(stderr,"\n");
-            instr_len = addr.off - EIP_reg(DEBUG_context);
+            instr_len = addr.off - EIP_reg(&DEBUG_context);
         }
 
         ret_ok = 0;
@@ -356,17 +344,47 @@ void wine_debug( int signal, SIGCONTEXT *regs )
             issue_prompt();
             yyparse();
             flush_symbols();
-            addr.seg = CS_reg(DEBUG_context);
-            addr.off = EIP_reg(DEBUG_context);
+            addr.seg = CS_reg(&DEBUG_context);
+            addr.off = EIP_reg(&DEBUG_context);
             DBG_FIX_ADDR_SEG( &addr, 0 );
             ret_ok = DEBUG_ValidateRegisters();
             if (ret_ok) ret_ok = DBG_CHECK_READ_PTR( &addr, 1 );
         } while (!ret_ok);
     }
 
-    DEBUG_RestartExecution( regs, dbg_exec_mode, instr_len );
+    DEBUG_RestartExecution( dbg_exec_mode, instr_len );
+    in_debugger = FALSE;
 }
 
+
+/***********************************************************************
+ *           DEBUG_EnterDebugger
+ *
+ * Force an entry into the debugger.
+ */
+void DEBUG_EnterDebugger(void)
+{
+    kill( getpid(), SIGHUP );
+}
+
+
+/***********************************************************************
+ *           DebugBreak16   (KERNEL.203)
+ */
+void DebugBreak16( CONTEXT *regs )
+{
+    const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
+    DEBUG_Main( SIGTRAP );
+}
+
+
+void wine_debug( int signal, SIGCONTEXT *regs )
+{
+    DEBUG_SetSigContext( regs );
+    DEBUG_Main( signal );
+    DEBUG_GetSigContext( regs );
+}
 
 int yyerror(char * s)
 {

@@ -27,7 +27,6 @@
 #include "listbox.h"
 #include "dos_fs.h"
 #include "drive.h"
-#include "file.h"
 #include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -699,6 +698,7 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
 
 LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
 {
+#if 0
     char 	mask[13];
     char*	temp = NULL;
     const char*	ptr;
@@ -772,6 +772,8 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
     SEGPTR_FREE( temp );
 
     return ret;
+#endif
+    return 0;
 }
 
 /* ------------------------- dimensions ------------------------- */

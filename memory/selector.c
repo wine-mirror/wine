@@ -271,14 +271,11 @@ DWORD GetSelectorBase( WORD sel )
 
     base = GET_SEL_BASE(sel);
 
-#ifndef WINELIB
     /* if base points into DOSMEM, assume we have to
      * return pointer into physical lower 1MB
      */
-    if ((base >=  (DWORD)DOSMEM_dosmem)  &&
-        (base <  ((DWORD)DOSMEM_dosmem+0x100000))) 
-    	base = base - (DWORD)DOSMEM_dosmem;
-#endif
+    if ((base >= (DWORD)DOSMEM_dosmem) &&
+        (base < (DWORD)DOSMEM_dosmem+0x100000)) base -= (DWORD)DOSMEM_dosmem;
     return base;
 }
 

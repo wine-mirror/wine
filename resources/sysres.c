@@ -38,6 +38,17 @@ static const struct resource * const * SYSRES_Resources[] =
 
 
 /***********************************************************************
+ *           SYSRES_GetResourcePtr
+ *
+ * Return a pointer to a system resource.
+ */
+LPCVOID SYSRES_GetResPtr( SYSTEM_RESOURCE id )
+{
+    return SYSRES_Resources[Options.language][id]->bytes;
+}
+
+
+/***********************************************************************
  *           SYSRES_LoadResource
  *
  * Create a global memory block for a system resource.

@@ -5,13 +5,13 @@
  */
 
 #include <stdio.h>
-#include <windows.h>
+#include "windows.h"
 #include "license.h"
 #include "progman.h"
 #ifdef WINELIB
-#include <resource.h>
-#include <options.h>
-#include <shell.h>
+#include "resource.h"
+#include "options.h"
+#include "shell.h"
 void LIBWINE_Register_accel();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();

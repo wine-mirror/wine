@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include <windows.h>
+#include "windows.h"
 #include "winhelp.h"
 
 static void Report(LPCSTR str)

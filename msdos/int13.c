@@ -1,3 +1,7 @@
+/*
+ * BIOS interrupt 13h handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "miscemu.h"
@@ -11,7 +15,7 @@
  *
  * Handler for int 13h (disk I/O).
  */
-void INT_Int13Handler( SIGCONTEXT *context )
+void INT_Int13Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

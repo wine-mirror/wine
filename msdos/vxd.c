@@ -19,12 +19,12 @@
                      "SI %04x, DI %04x, DS %04x, ES %04x\n", \
              (name), (name), AX_reg(context), BX_reg(context), \
              CX_reg(context), DX_reg(context), SI_reg(context), \
-             DI_reg(context), DS_reg(context), ES_reg(context) )
+             DI_reg(context), (WORD)DS_reg(context), (WORD)ES_reg(context) )
 
 /***********************************************************************
  *           VXD_PageFile
  */
-void VXD_PageFile( SIGCONTEXT *context )
+void VXD_PageFile( CONTEXT *context )
 {
     /* taken from Ralf Brown's Interrupt List */
 
@@ -69,7 +69,7 @@ void VXD_PageFile( SIGCONTEXT *context )
 /***********************************************************************
  *           VXD_Shell
  */
-void VXD_Shell( SIGCONTEXT *context )
+void VXD_Shell( CONTEXT *context )
 {
     dprintf_vxd(stddeb,"VxD Shell called ...\n");
 
@@ -127,7 +127,7 @@ void VXD_Shell( SIGCONTEXT *context )
 /***********************************************************************
  *           VXD_Comm
  */
-void VXD_Comm( SIGCONTEXT *context )
+void VXD_Comm( CONTEXT *context )
 {
     dprintf_vxd(stddeb,"VxD Comm called ...\n");
 

@@ -4,8 +4,8 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-#include <windows.h>
-#include <commdlg.h>
+#include "windows.h"
+#include "commdlg.h"
 #include "progman.h"
 
 static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, INT);

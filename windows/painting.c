@@ -491,9 +491,18 @@ void UpdateWindow( HWND32 hwnd )
 
 
 /***********************************************************************
- *           InvalidateRgn   (USER.126) (USER32.328)
+ *           InvalidateRgn16   (USER.126)
  */
-void InvalidateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
+void InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
+{
+    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+}
+
+
+/***********************************************************************
+ *           InvalidateRgn32   (USER32.328)
+ */
+void InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
     RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
@@ -518,9 +527,18 @@ void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 
 
 /***********************************************************************
- *           ValidateRgn   (USER.128) (USER32.571)
+ *           ValidateRgn16   (USER.128)
  */
-void ValidateRgn( HWND32 hwnd, HRGN32 hrgn )
+void ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
+{
+    RedrawWindow32( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+}
+
+
+/***********************************************************************
+ *           ValidateRgn32   (USER32.571)
+ */
+void ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
 {
     RedrawWindow32( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }

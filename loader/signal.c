@@ -22,9 +22,8 @@
 #endif
 
 #include "debugger.h"
-#include "miscemu.h"
 #include "options.h"
-#include "registers.h"
+#include "sigcontext.h"
 #include "win.h"
 #include "winsock.h"
 
@@ -51,6 +50,7 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 }
 #endif
 
+extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
 
 /**********************************************************************
  *		wine_timer
@@ -139,17 +139,17 @@ static void SIGNAL_fault(int signal, void *siginfo, SIGCONTEXT *context)
 static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
 {
 #endif
-    if (CS_reg(context) == WINE_CODE_SELECTOR)
+    if (CS_sig(context) == WINE_CODE_SELECTOR)
     {
         fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
                          "  Please debug.\n",
-                 CS_reg(context), EIP_reg(context) );
+                 CS_sig(context), EIP_sig(context) );
     }
     else
     {
         if (INSTR_EmulateInstruction( context )) return;
         fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
-                 CS_reg(context), EIP_reg(context) );
+                 CS_sig(context), EIP_sig(context) );
     }
     wine_debug( signal, context );
 }

@@ -8,9 +8,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "windows.h"
+#include "winerror.h"
 #include "drive.h"
-#include "dos_fs.h"
-#include "msdos.h"
 #include "heap.h"
 #include "spy.h"
 #include "win.h"
@@ -478,7 +477,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
             else
                 SetTextColor( hdc, GetSysColor( COLOR_WINDOWTEXT ) );
         }
-        dprintf_listbox( stddeb, "Listbox %04x: painting %d (%s) action=%02x"
+        dprintf_listbox( stddeb, "Listbox %04x: painting %d (%s) action=%02x "
                          "rect=%d,%d-%d,%d\n",
                          wnd->hwndSelf, index, item ? item->str : "", action,
                          rect->left, rect->top, rect->right, rect->bottom );
@@ -1455,55 +1454,45 @@ static LRESULT LISTBOX_SetCount( WND *wnd, LB_DESCR *descr, INT32 count )
 LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT32 attrib,
                            LPCSTR filespec, BOOL32 long_names )
 {
-    char mask[13];
-    const char *ptr;
-    char *path, *p;
-    int count, skip, pos;
-    LRESULT ret;
-    DOS_DIRENT entry;
+    HANDLE32 handle;
+    LRESULT ret = LB_OKAY;
+    WIN32_FIND_DATA32A entry;
+    int pos;
 
-    /* FIXME: should use FindFirstFile/FindNextFile */
-
-    if (!filespec) return LB_ERR;
-    if (!(ptr = DOSFS_GetUnixFileName( filespec, FALSE ))) return LB_ERR;
-    path = HEAP_strdupA( SystemHeap, 0, ptr );
-    p = strrchr( path, '/' );
-    *p++ = '\0';
-    if (!(ptr = DOSFS_ToDosFCBFormat( p )))
+    if ((handle = FindFirstFile32A(filespec,&entry)) == INVALID_HANDLE_VALUE32)
     {
-        HeapFree( SystemHeap, 0, path );
-        return LB_ERR;
+        if (GetLastError() != ERROR_NO_MORE_FILES) return LB_ERR;
     }
-    strcpy( mask, ptr );
-
-    skip = 0;
-    ret = LB_OKAY;
-    attrib &= ~FA_LABEL;
-    while ((count = DOSFS_FindNext( path, mask, NULL, 0,
-                                    attrib, skip, &entry )) > 0)
+    else
     {
-        char buffer[260];
-        skip += count;
-        if (entry.attr & FA_DIRECTORY)
+        do
         {
-            if (!(attrib & DDL_DIRECTORY) || !strcmp(entry.name,".          "))
-                continue;
-            if (long_names) sprintf( buffer, "[%s]", entry.unixname );
-            else sprintf( buffer, "[%s]", DOSFS_ToDosDTAFormat( entry.name ) );
-        }
-        else  /* not a directory */
-        {
-            if ((attrib & DDL_EXCLUSIVE) &&
-                ((attrib & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE)) !=
-                 (entry.attr & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE))))
-                continue;
-            if (long_names) strcpy( buffer, entry.unixname );
-            else strcpy( buffer, DOSFS_ToDosDTAFormat( entry.name ) );
-        }
-        if (!long_names) AnsiLower( buffer );
-        pos = LISTBOX_FindFileStrPos( wnd, descr, buffer );
-        if ((ret = LISTBOX_InsertString( wnd, descr, pos, buffer )) < 0)
-            break;
+            char buffer[270];
+            if (entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                if (!(attrib & DDL_DIRECTORY) ||
+                    !strcmp( entry.cAlternateFileName, "." )) continue;
+                if (long_names) sprintf( buffer, "[%s]", entry.cFileName );
+                else sprintf( buffer, "[%s]", entry.cAlternateFileName );
+            }
+            else  /* not a directory */
+            {
+#define ATTRIBS (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
+                 FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE)
+
+                if ((attrib & DDL_EXCLUSIVE) &&
+                    ((attrib & ATTRIBS) != (entry.dwFileAttributes & ATTRIBS)))
+                    continue;
+#undef ATTRIBS
+                if (long_names) strcpy( buffer, entry.cFileName );
+                else strcpy( buffer, entry.cAlternateFileName );
+            }
+            if (!long_names) AnsiLower( buffer );
+            pos = LISTBOX_FindFileStrPos( wnd, descr, buffer );
+            if ((ret = LISTBOX_InsertString( wnd, descr, pos, buffer )) < 0)
+                break;
+        } while (FindNextFile32A( handle, &entry ));
+        FindClose32( handle );
     }
 
     if ((ret == LB_OKAY) && (attrib & DDL_DRIVES))
@@ -1517,8 +1506,6 @@ LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT32 attrib,
                 break;
         }
     }
-
-    HeapFree( SystemHeap, 0, path );
     return ret;
 }
 
@@ -1744,6 +1731,7 @@ static LRESULT LISTBOX_HandleTimer( WND *wnd, LB_DESCR *descr,
         break;
     case LB_TIMER_DOWN:
         index = descr->top_item + LISTBOX_GetCurrentPageSize( wnd, descr );
+        if (index == descr->focus_item) index++;
         if (index >= descr->nb_items) index = descr->nb_items - 1;
         break;
     case LB_TIMER_RIGHT:

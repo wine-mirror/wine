@@ -3,8 +3,6 @@
 
 #include "windows.h"
 
-#define INVALID_HANDLE_VALUE    ((HANDLE32) -1)
-
 #define WAIT_FAILED		0xffffffff
 #define WAIT_OBJECT_0		0
 #define WAIT_ABANDONED		STATUS_ABANDONED_WAIT_0
@@ -148,7 +146,6 @@ HACCEL32 LoadAcceleratorsA(   HINSTANCE32, const char *);
 
 void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
-int      GetCurrentProcessId(void);
 void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 HANDLE32 OpenProcess(DWORD access, BOOL32 inherit, DWORD id);

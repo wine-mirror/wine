@@ -13,16 +13,6 @@ at a later date. */
 #include "stddebug.h"
 #include "debug.h"
 
-/***********************************************************************
- *          WinHelpA           (USER32.578)
- */
-BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
-{
-	/* Should do parameter conversion here, but WinHelp is not working,
-	   anyways */
-	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
-}
-
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.415)
  */

@@ -70,18 +70,18 @@ type	win16
 71  pascal16 DeleteAtom(word) DeleteAtom
 72  pascal16 GetAtomName(word ptr word) GetAtomName
 73  pascal16 GetAtomHandle(word) GetAtomHandle
-74  pascal16 OpenFile(ptr ptr word) OpenFile
+74  pascal16 OpenFile(ptr ptr word) OpenFile16
 75  stub OpenPathName
 76  stub DeletePathName
 #77 RESERVED1
 #78 RESERVED2
 #79 RESERVED3
 #80 RESERVED4
-81  pascal16 _lclose(word) _lclose
+81  pascal16 _lclose(word) _lclose16
 82  pascal16 _lread(word segptr word) WIN16_lread
-83  pascal16 _lcreat(ptr word) _lcreat
-84  pascal   _llseek(word long word) _llseek
-85  pascal16 _lopen(ptr word) _lopen
+83  pascal16 _lcreat(ptr word) _lcreat16
+84  pascal   _llseek(word long word) _llseek16
+85  pascal16 _lopen(ptr word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
 87  pascal16 RESERVED5(ptr ptr) lstrcmp16
 88  pascal   lstrcpy(segptr segptr) lstrcpy16
@@ -96,7 +96,7 @@ type	win16
 97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
 98  return GetLastDiskChange 0 0
 99  stub GetLPErrMode
-100 stub ValidateCodeSegments
+100 return ValidateCodeSegments 0 0
 101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
 103 register NetBIOSCall() NetBIOSCall
@@ -135,7 +135,7 @@ type	win16
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(byte) GetDriveType16
-137 pascal FatalAppExit(word ptr) FatalAppExit
+137 pascal16 FatalAppExit(word ptr) FatalAppExit16
 138 pascal GetHeapSpaces(word) GetHeapSpaces
 139 stub DoSignal
 140 pascal16 SetSigHandler(segptr ptr ptr word word) SetSigHandler
@@ -146,7 +146,7 @@ type	win16
 145 pascal16 RemoveDirectory(ptr) RemoveDirectory16
 146 pascal16 DeleteFile(ptr) DeleteFile16
 147 pascal16 SetLastError(long) SetLastError
-148 pascal16 GetLastError() GetLastError
+148 pascal   GetLastError() GetLastError
 149 stub GetVersionEx
 150 pascal16 DirectedYield(word) DirectedYield
 151 stub WinOldApCall
@@ -163,7 +163,7 @@ type	win16
 163 pascal16 GlobalLRUOldest(word) GlobalLRUOldest
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest
 165 return A20Proc 2 0
-166 pascal16 WinExec(ptr word) WinExec
+166 pascal16 WinExec(ptr word) WinExec16
 167 pascal16 GetExpWinVer(word) GetExpWinVer
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc
 169 pascal GetFreeSpace(word) GetFreeSpace
@@ -197,7 +197,7 @@ type	win16
 197 pascal16 GlobalFix(word) GlobalFix
 198 pascal16 GlobalUnfix(word) GlobalUnfix
 199 pascal16 SetHandleCount(word) SetHandleCount16
-200 stub ValidateFreeSpaces
+200 return ValidateFreeSpaces 0 0
 201 stub ReplaceInst
 202 stub RegisterPtrace
 203 register DebugBreak() DebugBreak16
@@ -257,7 +257,7 @@ type	win16
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr16
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy
 349 pascal   _hread(word segptr long) WIN16_hread
-350 pascal   _hwrite(word ptr long) _hwrite
+350 pascal   _hwrite(word ptr long) _hwrite16
 #351 BUNNY_351
 352 pascal   lstrcatn(segptr segptr word) lstrcatn16
 353 pascal   lstrcpyn(segptr segptr word) lstrcpyn16
@@ -279,8 +279,8 @@ type	win16
 417 stub WriteProfileSection
 418 stub GetPrivateProfileSection
 419 stub GetProfileSection
-420 stub GetFileAttributes
-421 stub SetFileAttributes
+420 pascal   GetFileAttributes(ptr) GetFileAttributes16
+421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
 432 stub FileTimeToLocalFileTime
 450 pascal16 KERNEL_450() stub_KERNEL_450

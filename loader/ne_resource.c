@@ -234,7 +234,7 @@ HGLOBAL16 NE_AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size )
 int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
-    int fd;
+    HFILE32 fd;
 
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return -1;
@@ -242,10 +242,10 @@ int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc )
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 #endif
 
-    if ((fd = _lopen( NE_MODULE_NAME(pModule), OF_READ )) != -1)
+    if ((fd = _lopen32( NE_MODULE_NAME(pModule), OF_READ )) != -1)
     {
         WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-        _llseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+        _llseek32( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
     }
     return fd;
 }

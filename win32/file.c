@@ -6,6 +6,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,6 +34,12 @@ int TranslateProtectionFlags(DWORD);
 #define MAP_ANON 0
 #endif
 
+typedef struct {
+    HFILE32		hfile;
+    int			prot;
+    unsigned long	size;
+} FILEMAP_OBJECT;
+
 /***********************************************************************
  *           OpenFileMappingA             (KERNEL32.397)
  * FIXME: stub
@@ -57,17 +64,16 @@ HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
     );
     if (sh) {
         SetLastError(ErrnoToLastError(errno));
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE32;
     }
     filemap_obj=(FILEMAP_OBJECT *)CreateKernelObject(sizeof(FILEMAP_OBJECT));
     if(filemap_obj == NULL) {
         SetLastError(ERROR_UNKNOWN);
         return 0;
     }
-    if (h==INVALID_HANDLE_VALUE)
-    	h=_lcreat(lpName,1);/*FIXME*/
+    if (h==INVALID_HANDLE_VALUE32)
+    	h=_lcreat32(lpName,1);/*FIXME*/
 
-    filemap_obj->common.magic = KERNEL_OBJECT_FILEMAP;
     filemap_obj->hfile = h;
     filemap_obj->prot = TranslateProtectionFlags(pot);
     filemap_obj->size = hlow;
@@ -125,75 +131,14 @@ BOOL32 UnmapViewOfFile(LPVOID address) {
 
 
 /***********************************************************************
- *           GetFileInformationByHandle       (KERNEL32.219)
- */
-DWORD GetFileInformationByHandle(HFILE hFile,BY_HANDLE_FILE_INFORMATION *lpfi)
-{
-    struct stat file_stat;
-    int	rc;
-    int	unixfd = FILE_GetUnixHandle(hFile);
-
-    if (unixfd==-1)
-    	return 0;
-    rc = fstat(unixfd,&file_stat);
-    if(rc == -1) {
-        SetLastError(ErrnoToLastError(errno));
-        return 0;
-    }
-
-    /* Translate the file attributes.
-     */
-    lpfi->dwFileAttributes = 0;
-    if(file_stat.st_mode & S_IFREG)
-        lpfi->dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
-    if(file_stat.st_mode & S_IFDIR)
-        lpfi->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-    if((file_stat.st_mode & S_IWRITE) == 0)
-        lpfi->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
-
-    /* Translate the file times.  Use the last modification time
-     * for both the creation time and write time.
-     */
-    DOSFS_UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftCreationTime));
-    DOSFS_UnixTimeToFileTime(file_stat.st_mtime, &(lpfi->ftLastWriteTime));
-    DOSFS_UnixTimeToFileTime(file_stat.st_atime, &(lpfi->ftLastAccessTime));
-
-    lpfi->nFileSizeLow = file_stat.st_size;
-    lpfi->nNumberOfLinks = file_stat.st_nlink;
-    lpfi->nFileIndexLow = file_stat.st_ino;
-
-    /* Zero out currently unused fields.
-     */
-    lpfi->dwVolumeSerialNumber = 0;
-    lpfi->nFileSizeHigh = 0;
-    lpfi->nFileIndexHigh = 0;
-
-    return 1;
-}
-
-/***********************************************************************
- *           GetFileSize             (KERNEL32.220)
- */
-DWORD GetFileSize(HFILE hf,LPDWORD filesizehigh) {
-    BY_HANDLE_FILE_INFORMATION	fi;
-	DWORD	res = GetFileInformationByHandle(hf,&fi);
-
-	if (!res) 
-		return 0;	/* FIXME: correct ? */
-	if (filesizehigh) 
-		*filesizehigh = fi.nFileSizeHigh;
-	return fi.nFileSizeLow;
-}
-
-/***********************************************************************
  *           GetStdHandle             (KERNEL32.276)
  * FIXME: We should probably allocate filehandles for stdin/stdout/stderr
  *	  at task creation (with HFILE-handle 0,1,2 respectively) and
  *	  return them here. Or at least look, if we created them already.
  */
-HFILE GetStdHandle(DWORD nStdHandle)
+HFILE32 GetStdHandle(DWORD nStdHandle)
 {
-    HFILE hfile;
+    HFILE32 hfile;
     int	unixfd;
 
     switch(nStdHandle)
@@ -211,11 +156,11 @@ HFILE GetStdHandle(DWORD nStdHandle)
             break;
         default:
             SetLastError(ERROR_INVALID_HANDLE);
-            return HFILE_ERROR;
+            return HFILE_ERROR32;
     }
     hfile = FILE_DupUnixHandle(unixfd);
-    if (hfile == HFILE_ERROR)
-    	return HFILE_ERROR;
+    if (hfile == HFILE_ERROR32)
+    	return HFILE_ERROR32;
     FILE_SetFileType( hfile, FILE_TYPE_CHAR );
     return hfile;
 }
@@ -227,7 +172,7 @@ HFILE GetStdHandle(DWORD nStdHandle)
  * Luckily enough, this function maps almost directly into an lseek
  * call, the exception being the use of 64-bit offsets.
  */
-DWORD SetFilePointer(HFILE hFile, LONG distance, LONG *highword,
+DWORD SetFilePointer(HFILE32 hFile, LONG distance, LONG *highword,
                      DWORD method)
 {
     LONG rc;
@@ -240,7 +185,7 @@ DWORD SetFilePointer(HFILE hFile, LONG distance, LONG *highword,
         }
     }
 
-    rc = _llseek(hFile, distance, method);
+    rc = _llseek32(hFile, distance, method);
     if(rc == -1)
         SetLastError(ErrnoToLastError(errno));
     return rc;
@@ -249,7 +194,7 @@ DWORD SetFilePointer(HFILE hFile, LONG distance, LONG *highword,
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
  */
-BOOL32 WriteFile(HFILE hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
+BOOL32 WriteFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
                  LPDWORD numberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
     LONG	res;
@@ -267,7 +212,7 @@ BOOL32 WriteFile(HFILE hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
 /***********************************************************************
  *              ReadFile                (KERNEL32.428)
  */
-BOOL32 ReadFile(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
+BOOL32 ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
                 LPDWORD numread, LPOVERLAPPED lpOverlapped)
 {
     int actual_read;
@@ -290,9 +235,9 @@ BOOL32 ReadFile(HFILE hFile, LPVOID lpBuffer, DWORD numtoread,
  * Doesn't support character devices, pipes, template files, or a
  * lot of the 'attributes' flags yet.
  */
-HFILE CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
-                    LPSECURITY_ATTRIBUTES security, DWORD creation,
-                    DWORD attributes, HANDLE32 template)
+HFILE32 CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
+                      LPSECURITY_ATTRIBUTES security, DWORD creation,
+                      DWORD attributes, HANDLE32 template)
 {
     int access_flags, create_flags;
 
@@ -315,7 +260,7 @@ HFILE CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
     {
         dprintf_file(stddeb, "CreateFile: UNC names not supported.\n");
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return HFILE_ERROR;
+        return HFILE_ERROR32;
     }
 
     /* If the name is either CONIN$ or CONOUT$, give them stdin
@@ -331,31 +276,15 @@ HFILE CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
 /*************************************************************************
  *              CreateFile32W              (KERNEL32.48)
  */
-HFILE CreateFile32W(LPCWSTR filename, DWORD access, DWORD sharing,
-                    LPSECURITY_ATTRIBUTES security, DWORD creation,
-                    DWORD attributes, HANDLE32 template)
+HFILE32 CreateFile32W(LPCWSTR filename, DWORD access, DWORD sharing,
+                      LPSECURITY_ATTRIBUTES security, DWORD creation,
+                      DWORD attributes, HANDLE32 template)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    HFILE res = CreateFile32A( afn, access, sharing, security, creation,
-                               attributes, template );
+    HFILE32 res = CreateFile32A( afn, access, sharing, security, creation,
+                                 attributes, template );
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
-}
-
-/*************************************************************************
- *              SetHandleCount32   (KERNEL32.494)
- */
-UINT32 SetHandleCount32( UINT32 cHandles )
-{
-    return SetHandleCount16(cHandles);
-}
-
-
-int CloseFileHandle(HFILE hFile)
-{
-    if (!_lclose(hFile))
-	return TRUE;
-    return FALSE;
 }
 
 static int TranslateAccessFlags(DWORD access_flags)
@@ -412,39 +341,11 @@ static int TranslateCreationFlags(DWORD create_flags)
 
 
 /**************************************************************************
- *              GetFileAttributes32A	(KERNEL32.217)
+ *              SetFileAttributes16	(KERNEL.421)
  */
-DWORD GetFileAttributes32A(LPCSTR lpFileName)
+BOOL16 SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 {
-	struct stat buf;
-	DWORD	res=0;
-	char	*fn;
-
-	dprintf_file(stddeb,"GetFileAttributesA(%s)\n",lpFileName);
-	fn=(LPSTR)DOSFS_GetUnixFileName(lpFileName,FALSE);
-	/* fn points to a static buffer, don't free it */
-	if(stat(fn,&buf)==-1) {
-		SetLastError(ErrnoToLastError(errno));
-		return 0xFFFFFFFF;
-	}
-	if(buf.st_mode & S_IFREG)
-		res |= FILE_ATTRIBUTE_NORMAL;
-	if(buf.st_mode & S_IFDIR)
-		res |= FILE_ATTRIBUTE_DIRECTORY;
-	if((buf.st_mode & S_IWRITE) == 0)
-		res |= FILE_ATTRIBUTE_READONLY;
-	return res;
-}
-
-/**************************************************************************
- *              GetFileAttributes32W	(KERNEL32.218)
- */
-DWORD GetFileAttributes32W(LPCWSTR lpFileName)
-{
-    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    DWORD res = GetFileAttributes32A( afn );
-    HeapFree( GetProcessHeap(), 0, afn );
-    return res;
+    return SetFileAttributes32A( lpFileName, attributes );
 }
 
 
@@ -485,24 +386,6 @@ BOOL32 SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
-
-/**************************************************************************
- *              SetEndOfFile		(KERNEL32.483)
- */
-BOOL32 SetEndOfFile(HFILE hFile)
-{
-	int	unixfd = FILE_GetUnixHandle(hFile);
-
-	dprintf_file(stddeb,"SetEndOfFile(%lx)\n",(LONG)hFile);
-	if (!unixfd)
-		return 0;
-	if (-1==ftruncate(unixfd,lseek(unixfd,0,SEEK_CUR))) {
-            SetLastError(ErrnoToLastError(errno));
-	    return FALSE;
-	}
-	return TRUE;
-}
-
 
 /**************************************************************************
  *              MoveFileA		(KERNEL32.387)
@@ -569,40 +452,38 @@ BOOL32 AreFileApisANSI()
 BOOL32 CopyFile32A(LPCSTR sourcefn,LPCSTR destfn,BOOL32 failifexists)
 {
 	OFSTRUCT	of;
-	HFILE		hf1,hf2;
+	HFILE32		hf1,hf2;
 	char		buffer[2048];
 	int		lastread,curlen;
 
 	fprintf(stddeb,"CopyFile: %s -> %s\n",sourcefn,destfn);
-	hf1 = OpenFile(sourcefn,&of,OF_READ);
-	if (hf1==HFILE_ERROR)
-		return TRUE;
-	if (failifexists) {
-		hf2 = OpenFile(sourcefn,&of,OF_WRITE);
-		if (hf2 != HFILE_ERROR)
-			return FALSE;
-		_lclose(hf2);
+	hf1 = OpenFile32(sourcefn,&of,OF_READ);
+	if (hf1==HFILE_ERROR32) return TRUE;
+	if (failifexists)
+        {
+		hf2 = OpenFile32(sourcefn,&of,OF_WRITE);
+		if (hf2 != HFILE_ERROR32) return FALSE;
+		_lclose32(hf2);
 	}
-	hf2 = OpenFile(sourcefn,&of,OF_WRITE);
-	if (hf2 == HFILE_ERROR)
-		return FALSE;
+	hf2 = OpenFile32(sourcefn,&of,OF_WRITE);
+	if (hf2 == HFILE_ERROR32) return FALSE;
 	curlen = 0;
-	while ((lastread=_lread16(hf1,buffer,sizeof(buffer)))>0) {
+	while ((lastread=_lread32(hf1,buffer,sizeof(buffer)))>0) {
 		curlen=0;
 		while (curlen<lastread) {
-			int res = _lwrite16(hf2,buffer+curlen,lastread-curlen);
+			int res = _lwrite32(hf2,buffer+curlen,lastread-curlen);
 			if (res<=0) break;
 			curlen+=res;
 		}
 	}
-	_lclose(hf1);
-	_lclose(hf2);
+	_lclose32(hf1);
+	_lclose32(hf2);
 	return curlen > 0;
 }
 
 BOOL32
 LockFile(
-	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
 	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
 {
 	fprintf(stdnimp,"LockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
@@ -614,7 +495,7 @@ LockFile(
 
 BOOL32
 UnlockFile(
-	HFILE hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
 	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
 {
 	fprintf(stdnimp,"UnlockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
