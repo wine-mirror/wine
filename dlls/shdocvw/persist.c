@@ -30,31 +30,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBPS_QueryInterface(LPPERSISTSTORAGE iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WBPS_AddRef(LPPERSISTSTORAGE iface)
 {
-    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WBPS_Release(LPPERSISTSTORAGE iface)
 {
-    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI WBPS_GetClassID(LPPERSISTSTORAGE iface, CLSID *pClassID)
@@ -111,7 +105,7 @@ static IPersistStorageVtbl WBPS_Vtbl =
     WBPS_SaveCompleted
 };
 
-IPersistStorageImpl SHDOCVW_PersistStorage = { &WBPS_Vtbl, 1 };
+IPersistStorageImpl SHDOCVW_PersistStorage = {&WBPS_Vtbl};
 
 
 /**********************************************************************
@@ -121,31 +115,25 @@ IPersistStorageImpl SHDOCVW_PersistStorage = { &WBPS_Vtbl, 1 };
 static HRESULT WINAPI WBPSI_QueryInterface(LPPERSISTSTREAMINIT iface,
                                            REFIID riid, LPVOID *ppobj)
 {
-    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WBPSI_AddRef(LPPERSISTSTREAMINIT iface)
 {
-    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WBPSI_Release(LPPERSISTSTREAMINIT iface)
 {
-    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI WBPSI_GetClassID(LPPERSISTSTREAMINIT iface, CLSID *pClassID)
@@ -203,4 +191,4 @@ static IPersistStreamInitVtbl WBPSI_Vtbl =
     WBPSI_InitNew
 };
 
-IPersistStreamInitImpl SHDOCVW_PersistStreamInit = { &WBPSI_Vtbl, 1 };
+IPersistStreamInitImpl SHDOCVW_PersistStreamInit = {&WBPSI_Vtbl};

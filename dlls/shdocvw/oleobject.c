@@ -143,12 +143,9 @@ static HRESULT WINAPI WBOOBJ_QueryInterface(LPOLEOBJECT iface,
  */
 static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
 {
-    IOleObjectImpl *This = (IOleObjectImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 /************************************************************************
@@ -156,13 +153,9 @@ static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
  */
 static ULONG WINAPI WBOOBJ_Release(LPOLEOBJECT iface)
 {
-    IOleObjectImpl *This = (IOleObjectImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 /************************************************************************
@@ -442,7 +435,7 @@ static IOleObjectVtbl WBOOBJ_Vtbl =
     WBOOBJ_SetColorScheme
 };
 
-IOleObjectImpl SHDOCVW_OleObject = { &WBOOBJ_Vtbl, 1 };
+IOleObjectImpl SHDOCVW_OleObject = {&WBOOBJ_Vtbl};
 
 
 /**********************************************************************
@@ -452,31 +445,25 @@ IOleObjectImpl SHDOCVW_OleObject = { &WBOOBJ_Vtbl, 1 };
 static HRESULT WINAPI WBOIPO_QueryInterface(LPOLEINPLACEOBJECT iface,
                                             REFIID riid, LPVOID *ppobj)
 {
-    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WBOIPO_AddRef(LPOLEINPLACEOBJECT iface)
 {
-    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WBOIPO_Release(LPOLEINPLACEOBJECT iface)
 {
-    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI WBOIPO_GetWindow(LPOLEINPLACEOBJECT iface, HWND* phwnd)
@@ -548,7 +535,7 @@ static IOleInPlaceObjectVtbl WBOIPO_Vtbl =
     WBOIPO_ReactivateAndUndo
 };
 
-IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = { &WBOIPO_Vtbl, 1 };
+IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = {&WBOIPO_Vtbl};
 
 
 /**********************************************************************
@@ -558,31 +545,25 @@ IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = { &WBOIPO_Vtbl, 1 };
 static HRESULT WINAPI WBOC_QueryInterface(LPOLECONTROL iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    IOleControlImpl *This = (IOleControlImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WBOC_AddRef(LPOLECONTROL iface)
 {
-    IOleControlImpl *This = (IOleControlImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WBOC_Release(LPOLECONTROL iface)
 {
-    IOleControlImpl *This = (IOleControlImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI WBOC_GetControlInfo(LPOLECONTROL iface, LPCONTROLINFO pCI)
@@ -624,4 +605,4 @@ static IOleControlVtbl WBOC_Vtbl =
     WBOC_FreezeEvents
 };
 
-IOleControlImpl SHDOCVW_OleControl = { &WBOC_Vtbl, 1 };
+IOleControlImpl SHDOCVW_OleControl = {&WBOC_Vtbl};

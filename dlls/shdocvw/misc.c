@@ -32,31 +32,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBQA_QueryInterface(LPQUICKACTIVATE iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WBQA_AddRef(LPQUICKACTIVATE iface)
 {
-    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WBQA_Release(LPQUICKACTIVATE iface)
 {
-    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 /* Alternative interface for quicker, easier activation of a control. */
@@ -94,7 +88,7 @@ static IQuickActivateVtbl WBQA_Vtbl =
     WBQA_GetContentExtent
 };
 
-IQuickActivateImpl SHDOCVW_QuickActivate = { &WBQA_Vtbl, 1 };
+IQuickActivateImpl SHDOCVW_QuickActivate = {&WBQA_Vtbl};
 
 /**********************************************************************
  * OpenURL  (SHDOCVW.@)

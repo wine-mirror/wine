@@ -29,31 +29,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static HRESULT WINAPI WB_QueryInterface(IWebBrowser *iface, REFIID riid, LPVOID *ppobj)
 {
-    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
+    FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
 
-    FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
+    if (ppobj == NULL) return E_POINTER;
+    
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WB_AddRef(IWebBrowser *iface)
 {
-    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    SHDOCVW_LockModule();
 
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
-
-    return refCount;
+    return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WB_Release(IWebBrowser *iface)
 {
-    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    SHDOCVW_UnlockModule();
 
-    /* static class, won't be freed */
-    TRACE("(%p)->(ref before=%lu)\n", This, refCount + 1);
-
-    return refCount;
+    return 1; /* non-heap based object */
 }
 
 /* IDispatch methods */
@@ -281,4 +275,4 @@ static IWebBrowserVtbl WB_Vtbl =
     WB_get_Busy
 };
 
-IWebBrowserImpl SHDOCVW_WebBrowser = { &WB_Vtbl, 1 };
+IWebBrowserImpl SHDOCVW_WebBrowser = {&WB_Vtbl};
