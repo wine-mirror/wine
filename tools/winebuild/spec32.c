@@ -775,6 +775,7 @@ void BuildDef32File(FILE *outfile)
     {
         ORDDEF *odp = EntryPoints[i];
         if(!odp || !*odp->name || (odp->flags & FLAG_NOIMPORT)) continue;
+        if (odp->type == TYPE_STUB) continue;
 
         fprintf(outfile, "  %s", odp->name);
 
@@ -804,9 +805,6 @@ void BuildDef32File(FILE *outfile)
             }
             break;
         }
-        case TYPE_STUB:
-            fprintf(outfile, "=%s", make_internal_name( odp, "stub" ));
-            break;
         case TYPE_FORWARD:
             fprintf(outfile, "=%s", odp->link_name);
             break;
