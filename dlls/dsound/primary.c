@@ -77,7 +77,7 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 	DSOUND_RecalcVolPan(&(This->volpan));
 
 	/* are we using waveOut stuff? */
-	if (!This->hwbuf) {
+	if (!This->driver) {
 		LPBYTE newbuf;
 		DWORD buflen;
 		HRESULT merr = DS_OK;
@@ -141,6 +141,19 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 			err = mmErr(waveOutSetVolume(This->hwo, vol));
 		}
 	} else {
+		if (!This->hwbuf) {
+			err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
+							  DSBCAPS_PRIMARYBUFFER,0,
+							  &(This->buflen),&(This->buffer),
+							  (LPVOID*)&(This->hwbuf));
+			if (err != DS_OK) {
+				WARN("IDsDriver_CreateSoundBuffer failed\n");
+				return err;
+			}
+
+			if (dsound->state == STATE_PLAYING) dsound->state = STATE_STARTING;
+			else if (dsound->state == STATE_STOPPING) dsound->state = STATE_STOPPED;
+		}
 		err = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	}
 
@@ -161,6 +174,9 @@ static void DSOUND_PrimaryClose(IDirectSoundImpl *This)
 		for (c=0; c<DS_HEL_FRAGS; c++)
 			waveOutUnprepareHeader(This->hwo, This->pwave[c], sizeof(WAVEHDR));
 		This->pwqueue = 0;
+	} else {
+		if (IDsDriverBuffer_Release(This->hwbuf) == 0)
+			This->hwbuf = 0;
 	}
 }
 
@@ -217,9 +233,11 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 	TRACE("(%p)\n",This);
 
 	DSOUND_PrimaryClose(This);
-	if (This->hwbuf) {
-		if (IDsDriverBuffer_Release(This->hwbuf) == 0)
-			This->hwbuf = 0;
+	if (This->driver) {
+		if (This->hwbuf) {
+			if (IDsDriverBuffer_Release(This->hwbuf) == 0)
+				This->hwbuf = 0;
+		}
 	} else {
 		unsigned c;
 		for (c=0; c<DS_HEL_FRAGS; c++) {
@@ -390,8 +408,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 			RtlReleaseResource(&(dsound->lock));
 			return err;
 		}
-	}
-	if (dsound->hwbuf) {
+	} else if (dsound->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(dsound->hwbuf, &(dsound->wfx));
 		if (err == DSERR_BUFFERLOST) {
 			/* Wine-only: the driver wants us to recreate the HW buffer */
