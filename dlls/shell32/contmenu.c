@@ -12,10 +12,6 @@
 #include "shresdef.h"
 #include "if_macros.h"
 
-#define __T(x)      x
-#define _T(x)       __T(x)
-#define TEXT        _T
-
 static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU ,REFIID , LPVOID *);
 static ULONG WINAPI IContextMenu_AddRef(LPCONTEXTMENU);
 static ULONG WINAPI IContextMenu_Release(LPCONTEXTMENU);
@@ -164,24 +160,24 @@ static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32
 	  { /* folder menu */
 	    fExplore = uFlags & CMF_EXPLORE;
 	    if(fExplore) 
-	    { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED|MFS_DEFAULT);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED);
+	    { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED|MFS_DEFAULT);
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, "&Open", MFS_ENABLED);
 	    }
 	    else
-            { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED|MFS_DEFAULT);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED);
+            { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, "&Open", MFS_ENABLED|MFS_DEFAULT);
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED);
             }
 
             if(uFlags & CMF_CANRENAME)
             { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, TEXT("&Rename"), (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
 	    }
 	  }
 	  else	/* file menu */
-	  { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED|MFS_DEFAULT);
+	  { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, "&Open", MFS_ENABLED|MFS_DEFAULT);
             if(uFlags & CMF_CANRENAME)
             { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, TEXT("&Rename"), (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
 	    }
 	  }
 	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (IDM_LAST + 1));
@@ -248,15 +244,15 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 	    sei.cbSize = sizeof(sei);
 	    sei.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
 	    sei.lpIDList = pidlFQ;
-	    sei.lpClass = TEXT("folder");
+	    sei.lpClass = "folder";
 	    sei.hwnd = lpcmi->hwnd;
 	    sei.nShow = SW_SHOWNORMAL;
       
 	    if(LOWORD(lpcmi->lpVerb) == IDM_EXPLORE)
-	    { sei.lpVerb = TEXT("explore");
+	    { sei.lpVerb = "explore";
 	    }
 	    else
-	    { sei.lpVerb = TEXT("open");
+	    { sei.lpVerb = "open";
 	    }
 	    ShellExecuteEx32A(&sei);
 	    SHFree(pidlFQ);

@@ -12,11 +12,6 @@
 #define FAR
 #define THIS_ THIS,
 
-#define __T(x)      x
-#define _T(x)       __T(x)
-#define TEXT        _T
-
-
 /* forward declaration of the objects*/
 typedef struct tagOLEADVISEHOLDER	*LPOLEADVISEHOLDER,	IOleAdviseHolder;
 typedef struct tagADVISESINK		*LPADVISESINK,		IAdviseSink;

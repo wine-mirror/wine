@@ -489,7 +489,7 @@ void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 	if(hSubMenu)
 	{ /*insert this item at the beginning of the menu */
 	  _InsertMenuItem(hSubMenu, 0, TRUE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
-	  _InsertMenuItem(hSubMenu, 0, TRUE, IDM_MYFILEITEM, MFT_STRING, TEXT("dummy45"), MFS_ENABLED);
+	  _InsertMenuItem(hSubMenu, 0, TRUE, IDM_MYFILEITEM, MFT_STRING, "dummy45", MFS_ENABLED);
 
 	}
 	TRACE(shell,"--\n");	
@@ -752,7 +752,7 @@ void ShellView_UpdateShellSettings(LPSHELLVIEW this)
 /*
 	sfs.fWin95Classic = TRUE;
 
-	hinstShell32 = LoadLibrary(TEXT("shell32.dll"));
+	hinstShell32 = LoadLibrary("shell32.dll");
 	if(hinstShell32)
 	{ PFNSHGETSETTINGSPROC pfnSHGetSettings;
 
@@ -777,7 +777,7 @@ void ShellView_UpdateShellSettings(LPSHELLVIEW this)
 */   
 LRESULT ShellView_OnSettingChange(LPSHELLVIEW this, LPCSTR lpszSection)
 {	TRACE(shell,"(%p) stub\n",this);
-	//if(0 == lstrcmpi(lpszSection, TEXT("ShellState")))
+	//if(0 == lstrcmpi(lpszSection, "ShellState"))
 	{ ShellView_UpdateShellSettings(this);
 	  return 0;
 	}

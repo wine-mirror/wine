@@ -330,7 +330,7 @@ typedef struct
 /* shell specific clipboard formats */
 
 /* DATAOBJECT_InitShellIDList*/
-#define CFSTR_SHELLIDLIST       TEXT("Shell IDList Array")      /* CF_IDLIST */
+#define CFSTR_SHELLIDLIST       "Shell IDList Array"      /* CF_IDLIST */
 
 extern UINT32 cfShellIDList;
 
@@ -339,29 +339,29 @@ typedef struct
 	UINT32 aoffset[1];
 } CIDA, *LPCIDA;
 
-#define CFSTR_SHELLIDLISTOFFSET TEXT("Shell Object Offsets")    /* CF_OBJECTPOSITIONS */
-#define CFSTR_NETRESOURCES      TEXT("Net Resource")            /* CF_NETRESOURCE */
+#define CFSTR_SHELLIDLISTOFFSET "Shell Object Offsets"    /* CF_OBJECTPOSITIONS */
+#define CFSTR_NETRESOURCES      "Net Resource"            /* CF_NETRESOURCE */
 
 /* DATAOBJECT_InitFileGroupDesc */
-#define CFSTR_FILEDESCRIPTORA   TEXT("FileGroupDescriptor")     /* CF_FILEGROUPDESCRIPTORA */
+#define CFSTR_FILEDESCRIPTORA   "FileGroupDescriptor"     /* CF_FILEGROUPDESCRIPTORA */
 extern UINT32 cfFileGroupDesc;
 
-#define CFSTR_FILEDESCRIPTORW   TEXT("FileGroupDescriptorW")    /* CF_FILEGROUPDESCRIPTORW */
+#define CFSTR_FILEDESCRIPTORW   "FileGroupDescriptorW"    /* CF_FILEGROUPDESCRIPTORW */
 
 /* DATAOBJECT_InitFileContents*/
-#define CFSTR_FILECONTENTS      TEXT("FileContents")            /* CF_FILECONTENTS */
+#define CFSTR_FILECONTENTS      "FileContents"            /* CF_FILECONTENTS */
 extern UINT32 cfFileContents;
 
-#define CFSTR_FILENAMEA         TEXT("FileName")                /* CF_FILENAMEA */
-#define CFSTR_FILENAMEW         TEXT("FileNameW")               /* CF_FILENAMEW */
-#define CFSTR_PRINTERGROUP      TEXT("PrinterFriendlyName")     /* CF_PRINTERS */
-#define CFSTR_FILENAMEMAPA      TEXT("FileNameMap")             /* CF_FILENAMEMAPA */
-#define CFSTR_FILENAMEMAPW      TEXT("FileNameMapW")            /* CF_FILENAMEMAPW */
-#define CFSTR_SHELLURL          TEXT("UniformResourceLocator")
-#define CFSTR_PREFERREDDROPEFFECT TEXT("Preferred DropEffect")
-#define CFSTR_PERFORMEDDROPEFFECT TEXT("Performed DropEffect")
-#define CFSTR_PASTESUCCEEDED    TEXT("Paste Succeeded")
-#define CFSTR_INDRAGLOOP        TEXT("InShellDragLoop")
+#define CFSTR_FILENAMEA         "FileName"                /* CF_FILENAMEA */
+#define CFSTR_FILENAMEW         "FileNameW"               /* CF_FILENAMEW */
+#define CFSTR_PRINTERGROUP      "PrinterFriendlyName"     /* CF_PRINTERS */
+#define CFSTR_FILENAMEMAPA      "FileNameMap"             /* CF_FILENAMEMAPA */
+#define CFSTR_FILENAMEMAPW      "FileNameMapW"            /* CF_FILENAMEMAPW */
+#define CFSTR_SHELLURL          "UniformResourceLocator"
+#define CFSTR_PREFERREDDROPEFFECT "Preferred DropEffect"
+#define CFSTR_PERFORMEDDROPEFFECT "Performed DropEffect"
+#define CFSTR_PASTESUCCEEDED    "Paste Succeeded"
+#define CFSTR_INDRAGLOOP        "InShellDragLoop"
 
 /**************************************************************************
  *  IDLList "Item ID List List"
