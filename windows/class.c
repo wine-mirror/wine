@@ -834,9 +834,9 @@ LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
 
 
 /***********************************************************************
- *		GetClassLongA (USER32.@)
+ *		GetClassLongW (USER32.@)
  */
-LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
+LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
     CLASS *class;
     LONG retvalue = 0;
@@ -882,10 +882,10 @@ LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
         retvalue = (LONG)class->hInstance;
         break;
     case GCL_WNDPROC:
-        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32A );
+        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32W );
         break;
     case GCL_MENUNAME:
-        retvalue = (LONG)CLASS_GetMenuNameA( class );
+        retvalue = (LONG)CLASS_GetMenuNameW( class );
         break;
     case GCW_ATOM:
         retvalue = (DWORD)class->atomName;
@@ -900,24 +900,24 @@ LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 
 
 /***********************************************************************
- *		GetClassLongW (USER32.@)
+ *		GetClassLongA (USER32.@)
  */
-LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
+LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
     CLASS *class;
     LONG retvalue;
 
     if (offset != GCL_WNDPROC && offset != GCL_MENUNAME)
-        return GetClassLongA( hwnd, offset );
+        return GetClassLongW( hwnd, offset );
 
     TRACE("%x %d\n", hwnd, offset);
 
     if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
 
     if (offset == GCL_WNDPROC)
-        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32W );
+        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32A );
     else  /* GCL_MENUNAME */
-        retvalue = (LONG)CLASS_GetMenuNameW( class );
+        retvalue = (LONG)CLASS_GetMenuNameA( class );
 
     release_class_ptr( class );
     return retvalue;
@@ -979,9 +979,9 @@ LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
 
 
 /***********************************************************************
- *		SetClassLongA (USER32.@)
+ *		SetClassLongW (USER32.@)
  */
-LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
+LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
     CLASS *class;
     LONG retval = 0;
@@ -1003,11 +1003,11 @@ LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
     else switch(offset)
     {
     case GCL_MENUNAME:
-        CLASS_SetMenuNameA( class, (LPCSTR)newval );
+        CLASS_SetMenuNameW( class, (LPCWSTR)newval );
         retval = 0;  /* Old value is now meaningless anyway */
         break;
     case GCL_WNDPROC:
-        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32A );
+        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32W );
         break;
     case GCL_HBRBACKGROUND:
         retval = (LONG)class->hbrBackground;
@@ -1054,25 +1054,25 @@ LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 
 
 /***********************************************************************
- *		SetClassLongW (USER32.@)
+ *		SetClassLongA (USER32.@)
  */
-LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
+LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
     CLASS *class;
     LONG retval;
 
     if (offset != GCL_WNDPROC && offset != GCL_MENUNAME)
-        return SetClassLongA( hwnd, offset, newval );
+        return SetClassLongW( hwnd, offset, newval );
 
     TRACE("%x %d %lx\n", hwnd, offset, newval);
 
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
 
     if (offset == GCL_WNDPROC)
-        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32W );
+        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32A );
     else  /* GCL_MENUNAME */
     {
-        CLASS_SetMenuNameW( class, (LPCWSTR)newval );
+        CLASS_SetMenuNameA( class, (LPCSTR)newval );
         retval = 0;  /* Old value is now meaningless anyway */
     }
     release_class_ptr( class );
