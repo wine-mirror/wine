@@ -189,7 +189,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
       if(buff == NULL) {
           WARN_(dll)("Memory exausted!");
-          return FALSE;
+          goto fail;
       }
 
       ReadFile(hf, buff, size, &res, NULL);
@@ -213,10 +213,10 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     NE_FixupSegmentPrologs( pModule, segnum );
 
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
-        return TRUE;  /* No relocation data, we are done */
+        goto succeed;  /* No relocation data, we are done */
 
     ReadFile(hf, &count, sizeof(count), &res, NULL);
-    if (!count) return TRUE;
+    if (!count) goto succeed;
 
     TRACE_(fixup)("Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
@@ -230,13 +230,13 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     reloc_entries = (struct relocation_entry_s *)HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
     if(reloc_entries == NULL) {
         WARN_(fixup)("Not enough memory for relocation entries!");
-        return FALSE;
+        goto fail;
     }
     if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
         (res != count * sizeof(struct relocation_entry_s)))
     {
         WARN_(fixup)("Unable to read relocation information\n" );
-        return FALSE;
+        goto fail;
     }
 
     /*
@@ -419,6 +419,9 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     }
 
     HeapFree(GetProcessHeap(), 0, reloc_entries);
+
+succeed:
+    CloseHandle(hf);
     return TRUE;
 
 unknown:
@@ -427,6 +430,9 @@ unknown:
          i + 1, rep->address_type, rep->relocation_type,
          rep->offset, rep->target1, rep->target2);
     HeapFree(GetProcessHeap(), 0, reloc_entries);
+
+fail:
+    CloseHandle(hf);
     return FALSE;
 }
 
@@ -464,8 +470,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
                                                0xff00 - sizeof(STACK16FRAME) );
 
-        DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
-                         GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );
+        hf = NE_OpenFile(pModule);
         hFile16 = Win32HandleToDosFileHandle( hf );
         TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);

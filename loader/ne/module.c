@@ -421,22 +421,18 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
  */
 HANDLE NE_OpenFile( NE_MODULE *pModule )
 {
+    HANDLE handle;
     char *name;
 
-    static HANDLE cachedfd = INVALID_HANDLE_VALUE;
-
-    TRACE("(%p) cache: mod=%p fd=%d\n",
-           pModule, pCachedModule, cachedfd );
-    if (pCachedModule == pModule) return cachedfd;
-    CloseHandle( cachedfd );
-    pCachedModule = pModule;
+    TRACE("(%p)\n", pModule );
+    /* mjm - removed module caching because it keeps open file handles
+             thus preventing CDROMs from being ejected */
     name = NE_MODULE_NAME( pModule );
-    if ((cachedfd = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+    if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                                    NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         MESSAGE( "Can't open file '%s' for module %04x\n", name, pModule->self );
-    TRACE("opened '%s' -> %d\n",
-                    name, cachedfd );
-    return cachedfd;
+    TRACE("opened '%s' -> %d\n", name, handle);
+    return handle;
 }
 
 

@@ -246,6 +246,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
             ReadFile( fd, GlobalLock16( handle ), (int)pNameInfo->length << sizeShift,
                       &res, NULL );
 	}
+        CloseHandle(fd);
 	return handle;
     }
     return (HGLOBAL16)0;
