@@ -318,7 +318,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 /***********************************************************************
  *		NdrDllRegisterProxy (RPCRT4.@)
  */
-WINAPI HRESULT WINAPI NdrDllRegisterProxy(
+HRESULT WINAPI NdrDllRegisterProxy(
   HMODULE hDll,          /* [in] */
   void **pProxyFileList, /* [???] FIXME: const ProxyFileInfo ** */
   const CLSID *pclsid    /* [in] */
