@@ -53,7 +53,6 @@ struct SCA {
     UINT 	wMsg;
     DWORD 	dwParam1;
     DWORD 	dwParam2;
-    BOOL	allocatedCopy;
 };
 
 /**************************************************************************
@@ -69,8 +68,6 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
     ret = mciSendCommandA(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
     TRACE("In thread after async command (%08x,%u,%08lx,%08lx)\n",
 	  sca->wDevID, sca->wMsg, sca->dwParam1, sca->dwParam2);
-    if (sca->allocatedCopy)
-	HeapFree(GetProcessHeap(), 0, (LPVOID)sca->dwParam2);
     HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
     WARN("Should not happen ? what's wrong \n");
@@ -84,7 +81,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, 
 				   DWORD dwParam2, UINT size)
 {
-    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA));
+    struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
 
     if (sca == 0)
 	return MCIERR_OUT_OF_MEMORY;
@@ -93,20 +90,14 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
     sca->wMsg     = wMsg;
     sca->dwParam1 = dwParam1;
     
-    if (size) {
-	sca->dwParam2 = (DWORD)HeapAlloc(GetProcessHeap(), 0, size);
-	if (sca->dwParam2 == 0) {
-	    HeapFree(GetProcessHeap(), 0, sca);
-	    return MCIERR_OUT_OF_MEMORY;
-	}
-	sca->allocatedCopy = TRUE;
+    if (size && dwParam2) {
+	sca->dwParam2 = (DWORD)sca + sizeof(struct SCA);
 	/* copy structure passed by program in dwParam2 to be sure 
 	 * we can still use it whatever the program does 
 	 */
 	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
     } else {
 	sca->dwParam2 = dwParam2;
-	sca->allocatedCopy = FALSE;
     }
 
     if (CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL) == 0) {
