@@ -74,7 +74,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         wndPtr->pDriverData = window;
     }
 #else /* defined(WINE_CURSES) */
-    FIXME("(%x): stub\n", hwnd);
+    FIXME("(%p): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
     WIN_ReleasePtr( wndPtr );
 
@@ -118,7 +118,7 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
     wndPtr->pDriverData = NULL;
     WIN_ReleasePtr( wndPtr );
 #else /* defined(WINE_CURSES) */
-    FIXME("(%x): stub\n", hwnd);
+    FIXME("(%p): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
     return TRUE;
 }
