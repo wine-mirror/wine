@@ -256,7 +256,8 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
  */
 static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 				     LPARAM lParam )
-{       TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+{
+       TRACE("hwnd=%08x msg=%04x 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)
 	{ case WM_INITDIALOG:
@@ -299,7 +300,6 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	      case IDCANCEL:
 	        EndDialog(hWnd, 0);
 	        return TRUE;
-		break;
 	    }
 	    break;
 	case BFFM_SETSTATUSTEXTA:

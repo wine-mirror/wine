@@ -48,8 +48,8 @@
 #define IDS_DELETEMULTIPLE_TEXT	35
 
 /* browse for folder dialog box */
-#define IDD_STATUS		97
-#define IDD_TITLE		98
-#define IDD_TREEVIEW		99
+#define IDD_STATUS		0x3743
+#define IDD_TITLE		0x3742
+#define IDD_TREEVIEW		0x3741
 
 #endif
