@@ -1010,6 +1010,7 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBIF_LPARAM             0x00000010
 #define TBIF_COMMAND            0x00000020
 #define TBIF_SIZE               0x00000040
+#define TBIF_BYINDEX            0x80000000
 
 #define TBBF_LARGE		0x0001
 
