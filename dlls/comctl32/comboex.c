@@ -294,10 +294,16 @@ COMBOEX_NotifyEndEdit (COMBOEX_INFO *infoPtr, NMCBEENDEDITW *hdr, LPWSTR itemTex
 	return SendMessageW (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
 			     (LPARAM)hdr);
     else {
+	NMCBEENDEDITA ansi;
+
+	memcpy (&ansi.hdr, &hdr->hdr, sizeof(NMHDR));
+	ansi.fChanged = hdr->fChanged;
+	ansi.iNewSelection = hdr->iNewSelection;
 	WideCharToMultiByte (CP_ACP, 0, itemText, -1,
-			     (LPSTR)hdr->szText, CBEMAXSTRLEN, NULL, NULL);
+			     (LPSTR)&ansi.szText, CBEMAXSTRLEN, NULL, NULL);
+	ansi.iWhy = hdr->iWhy;
 	return SendMessageA (GetParent(infoPtr->hwndSelf), WM_NOTIFY, 0,
-			     (LPARAM)hdr);
+			     (LPARAM)&ansi);
     }
 }
 
