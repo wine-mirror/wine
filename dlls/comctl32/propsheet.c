@@ -78,6 +78,7 @@ typedef struct tagPropSheetInfo
 {
   HWND hwnd;
   PROPSHEETHEADERW ppshheader;
+  BOOL unicode;
   LPWSTR strPropertiesFor;
   int nPages;
   int active_page;
@@ -108,6 +109,8 @@ typedef struct
 
 const WCHAR PropSheetInfoStr[] =
     {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
+
+#define PSP_INTERNAL_UNICODE 0x80000000
 
 #define MAX_CAPTION_LENGTH 255
 #define MAX_TABTEXT_LENGTH 255
@@ -412,7 +415,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
    */
   if (dwFlags & PSP_DLGINDIRECT)
     pTemplate = (DLGTEMPLATE*)lppsp->u.pResource;
-  else
+  else if(dwFlags & PSP_INTERNAL_UNICODE )
   {
     HRSRC hResource = FindResourceW(lppsp->hInstance,
                                     lppsp->u.pszTemplate,
@@ -420,6 +423,15 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
     pTemplate = (LPDLGTEMPLATEW)LockResource(hTemplate);
+  }
+  else
+  {
+    HRSRC hResource = FindResourceA(lppsp->hInstance,
+                                    (LPSTR)lppsp->u.pszTemplate,
+                                    RT_DIALOGA);
+    HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
+                                     hResource);
+    pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
   }
 
   /*
@@ -565,10 +577,20 @@ int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
     resID = IDD_WIZARD;
 
-  if(!(hRes = FindResourceW(COMCTL32_hModule,
+  if( psInfo->unicode )
+  {
+    if(!(hRes = FindResourceW(COMCTL32_hModule,
                             MAKEINTRESOURCEW(resID),
                             RT_DIALOGW)))
-    return -1;
+      return -1;
+  }
+  else
+  {
+    if(!(hRes = FindResourceA(COMCTL32_hModule,
+                            MAKEINTRESOURCEA(resID),
+                            RT_DIALOGA)))
+      return -1;
+  }
 
   if(!(template = (LPVOID)LoadResource(COMCTL32_hModule, hRes)))
     return -1;
@@ -588,20 +610,41 @@ int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if (psInfo->useCallback)
     (*(psInfo->ppshheader.pfnCallback))(0, PSCB_PRECREATE, (LPARAM)temp);
 
-  if (!(psInfo->ppshheader.dwFlags & PSH_MODELESS))
+  if( psInfo->unicode )
+  {
+    if (!(psInfo->ppshheader.dwFlags & PSH_MODELESS))
       ret = DialogBoxIndirectParamW(psInfo->ppshheader.hInstance,
                                     (LPDLGTEMPLATEW) temp,
                                     psInfo->ppshheader.hwndParent,
                                     PROPSHEET_DialogProc,
                                     (LPARAM)psInfo);
-  else
-  {
+    else
+    {
       ret = (int)CreateDialogIndirectParamW(psInfo->ppshheader.hInstance,
                                             (LPDLGTEMPLATEW) temp,
                                             psInfo->ppshheader.hwndParent,
                                             PROPSHEET_DialogProc,
                                             (LPARAM)psInfo);
       if ( !ret ) ret = -1;
+    }
+  }
+  else
+  {
+    if (!(psInfo->ppshheader.dwFlags & PSH_MODELESS))
+      ret = DialogBoxIndirectParamA(psInfo->ppshheader.hInstance,
+                                    (LPDLGTEMPLATEA) temp,
+                                    psInfo->ppshheader.hwndParent,
+                                    PROPSHEET_DialogProc,
+                                    (LPARAM)psInfo);
+    else
+    {
+      ret = (int)CreateDialogIndirectParamA(psInfo->ppshheader.hInstance,
+                                            (LPDLGTEMPLATEA) temp,
+                                            psInfo->ppshheader.hwndParent,
+                                            PROPSHEET_DialogProc,
+                                            (LPARAM)psInfo);
+      if ( !ret ) ret = -1;
+    }
   }
 
   COMCTL32_Free(temp);
@@ -1342,7 +1385,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
       pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
       resSize = GetTemplateSize(pTemplate);
     }
-  else
+  else if(ppshpage->dwFlags & PSP_INTERNAL_UNICODE)
   {
     HRSRC hResource;
     HANDLE hTemplate;
@@ -1360,6 +1403,28 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 	return FALSE;
 
     pTemplate = (LPDLGTEMPLATEW)LockResource(hTemplate);
+    /*
+     * Make a copy of the dialog template to make it writable
+     */
+  }
+  else
+  {
+    HRSRC hResource;
+    HANDLE hTemplate;
+
+    hResource = FindResourceA(ppshpage->hInstance,
+                                    (LPSTR)ppshpage->u.pszTemplate,
+                                    RT_DIALOGA);
+    if(!hResource)
+	return FALSE;
+
+    resSize = SizeofResource(ppshpage->hInstance, hResource);
+
+    hTemplate = LoadResource(ppshpage->hInstance, hResource);
+    if(!hTemplate)
+	return FALSE;
+
+    pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
     /*
      * Make a copy of the dialog template to make it writable
      */
@@ -1400,7 +1465,14 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
                                PSPCB_CREATE,
                                (LPPROPSHEETPAGEW)ppshpage);
 
-  hwndPage = CreateDialogIndirectParamW(ppshpage->hInstance,
+  if(ppshpage->dwFlags & PSP_INTERNAL_UNICODE)
+     hwndPage = CreateDialogIndirectParamW(ppshpage->hInstance,
+					pTemplate,
+					hwndParent,
+					ppshpage->pfnDlgProc,
+					(LPARAM)ppshpage);
+  else
+     hwndPage = CreateDialogIndirectParamA(ppshpage->hInstance,
 					pTemplate,
 					hwndParent,
 					ppshpage->pfnDlgProc,
@@ -2421,6 +2493,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
     }
   }
 
+  psInfo->unicode = FALSE;
   bRet = PROPSHEET_CreateDialog(psInfo);
 
   return bRet;
@@ -2465,6 +2538,7 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
     }
   }
 
+  psInfo->unicode = TRUE;
   bRet = PROPSHEET_CreateDialog(psInfo);
 
   return bRet;
@@ -2481,9 +2555,13 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
+  ppsp->dwFlags &= ~ PSP_INTERNAL_UNICODE;
   if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
   {
-      PROPSHEET_AtoW(&ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate);
+     int len = strlen(lpPropSheetPage->u.pszTemplate);
+
+     ppsp->u.pszTemplate = HeapAlloc( GetProcessHeap(),0,len+1 );
+     strcpy( (LPSTR)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
   }
   if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
   {
@@ -2508,6 +2586,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
   PROPSHEETPAGEW* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEW));
 
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEW)));
+
+  ppsp->dwFlags |= PSP_INTERNAL_UNICODE;
 
   if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
   {
