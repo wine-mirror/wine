@@ -10,7 +10,6 @@
 #include "ldt.h"
 #include "global.h"
 #include "module.h"
-#include "dosexe.h"
 #include "miscemu.h"
 #include "selectors.h"
 #include "debugtools.h"
@@ -20,28 +19,32 @@ DECLARE_DEBUG_CHANNEL(io);
 
 #ifdef __i386__
 
-#define IS_SEL_32(context,seg) \
-   (ISV86(context) ? FALSE : IS_SELECTOR_32BIT(seg))
+inline static void add_stack( CONTEXT86 *context, int offset )
+{
+    if (ISV86(context) || !IS_SELECTOR_32BIT(context->SegSs))
+        ADD_LOWORD( context->Esp, offset );
+    else
+        context->Esp += offset;
+}
 
-#define STACK_reg(context) \
-   (IS_SEL_32(context,SS_reg(context)) ? ESP_reg(context) : (DWORD)LOWORD(ESP_reg(context)))
+inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long_addr )
+{
+    if (ISV86(context)) return DOSMEM_MemoryBase() + (seg << 4) + LOWORD(off);
+    if (IS_SELECTOR_SYSTEM(seg)) return (void *)off;
+    if (!long_addr) off = LOWORD(off);
+    return PTR_SEG_OFF_TO_LIN( seg, off );
+}
 
-#define ADD_STACK_reg(context,offset) \
-   do { if (IS_SEL_32(context,SS_reg(context))) ESP_reg(context) += (offset); \
-        else ADD_LOWORD(ESP_reg(context),(offset)); } while(0)
-
-#define MAKE_PTR(seg,off) \
-   (IS_SELECTOR_SYSTEM(seg) ? (void *)(off) : PTR_SEG_OFF_TO_LIN(seg,off))
-
-#define MK_PTR(context,seg,off) \
-   (ISV86(context) ? DOSMEM_MapRealToLinear(MAKELONG(off,seg)) \
-                   : MAKE_PTR(seg,off))
-
-#define STACK_PTR(context) \
-   (ISV86(context) ? \
-    DOSMEM_MapRealToLinear(MAKELONG(LOWORD(ESP_reg(context)),SS_reg(context))) : \
-    (IS_SELECTOR_SYSTEM(SS_reg(context)) ? (void *)ESP_reg(context) : \
-     (PTR_SEG_OFF_TO_LIN(SS_reg(context),STACK_reg(context)))))
+inline static void *get_stack( CONTEXT86 *context )
+{
+    if (ISV86(context))
+        return DOSMEM_MemoryBase() + (context->SegSs << 4) + LOWORD(context->Esp);
+    if (IS_SELECTOR_SYSTEM(context->SegSs))
+        return (void *)context->Esp;
+    if (IS_SELECTOR_32BIT(context->SegSs))
+        return PTR_SEG_OFF_TO_LIN( context->SegSs, context->Esp );
+    return PTR_SEG_OFF_TO_LIN( context->SegSs, LOWORD(context->Esp) );
+}
 
 /***********************************************************************
  *           INSTR_ReplaceSelector
@@ -387,8 +390,8 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
     SEGPTR gpHandler;
     BYTE *instr;
 
-    long_op = long_addr = IS_SEL_32(context,CS_reg(context));
-    instr = (BYTE *)MK_PTR(context,CS_reg(context),EIP_reg(context));
+    long_op = long_addr = (!ISV86(context) && IS_SELECTOR_32BIT(context->SegCs));
+    instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
     if (!instr) return FALSE;
 
     /* First handle any possible prefix */
@@ -452,7 +455,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
         case 0x17: /* pop ss */
         case 0x1f: /* pop ds */
             {
-                WORD seg = *(WORD *)STACK_PTR( context );
+                WORD seg = *(WORD *)get_stack( context );
                 if (INSTR_ReplaceSelector( context, &seg ))
                 {
                     switch(*instr)
@@ -461,7 +464,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                     case 0x17: SS_reg(context) = seg; break;
                     case 0x1f: DS_reg(context) = seg; break;
                     }
-                    ADD_STACK_reg(context, long_op ? 4 : 2);
+                    add_stack(context, long_op ? 4 : 2);
                     EIP_reg(context) += prefixlen + 1;
                     return TRUE;
                 }
@@ -512,11 +515,11 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 		break;
             case 0xa1: /* pop fs */
                 {
-                    WORD seg = *(WORD *)STACK_PTR( context );
+                    WORD seg = *(WORD *)get_stack( context );
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         FS_reg(context) = seg;
-                        ADD_STACK_reg(context, long_op ? 4 : 2);
+                        add_stack(context, long_op ? 4 : 2);
                         EIP_reg(context) += prefixlen + 2;
                         return TRUE;
                     }
@@ -524,11 +527,11 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 break;
             case 0xa9: /* pop gs */
                 {
-                    WORD seg = *(WORD *)STACK_PTR( context );
+                    WORD seg = *(WORD *)get_stack( context );
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         GS_reg(context) = seg;
-                        ADD_STACK_reg(context, long_op ? 4 : 2);
+                        add_stack(context, long_op ? 4 : 2);
                         EIP_reg(context) += prefixlen + 2;
                         return TRUE;
                     }
@@ -579,15 +582,13 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                   WORD dx = LOWORD(EDX_reg(context));
 		  if (outp)
                   {
-		      data = MK_PTR(context, seg,
-                                    long_addr ? ESI_reg(context) : LOWORD(ESI_reg(context)));
+		      data = make_ptr( context, seg, context->Esi, long_addr );
 		      if (long_addr) ESI_reg(context) += step;
 		      else ADD_LOWORD(ESI_reg(context),step);
                   }
 		  else
                   {
-		      data = MK_PTR(context, seg,
-                                    long_addr ? EDI_reg(context) : LOWORD(EDI_reg(context)));
+		      data = make_ptr( context, seg, context->Edi, long_addr );
 		      if (long_addr) EDI_reg(context) += step;
 		      else ADD_LOWORD(EDI_reg(context),step);
                   }
@@ -679,7 +680,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             else
             {
                 FARPROC16 addr = INT_GetPMHandler( instr[1] );
-                WORD *stack = (WORD *)STACK_PTR( context );
+                WORD *stack = get_stack( context );
                 if (!addr)
                 {
                     FIXME("no handler for interrupt %02x, ignoring it\n", instr[1]);
@@ -690,7 +691,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 *(--stack) = LOWORD(EFL_reg(context));
                 *(--stack) = CS_reg(context);
                 *(--stack) = LOWORD(EIP_reg(context)) + prefixlen + 2;
-                ADD_STACK_reg(context, -3 * sizeof(WORD));
+                add_stack(context, -3 * sizeof(WORD));
                 /* Jump to the interrupt handler */
                 CS_reg(context)  = HIWORD(addr);
                 EIP_reg(context) = LOWORD(addr);
@@ -700,19 +701,19 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
         case 0xcf: /* iret */
             if (long_op)
             {
-                DWORD *stack = (DWORD *)STACK_PTR( context );
+                DWORD *stack = get_stack( context );
                 EIP_reg(context) = *stack++;
                 CS_reg(context)  = *stack++;
                 EFL_reg(context) = *stack;
-                ADD_STACK_reg(context, 3*sizeof(DWORD));  /* Pop the return address and flags */
+                add_stack(context, 3*sizeof(DWORD));  /* Pop the return address and flags */
             }
             else
             {
-                WORD *stack = (WORD *)STACK_PTR( context );
+                WORD *stack = get_stack( context );
                 EIP_reg(context) = *stack++;
                 CS_reg(context)  = *stack++;
                 SET_LOWORD(EFL_reg(context),*stack);
-                ADD_STACK_reg(context, 3*sizeof(WORD));  /* Pop the return address and flags */
+                add_stack(context, 3*sizeof(WORD));  /* Pop the return address and flags */
             }
             return TRUE;
 
@@ -783,10 +784,10 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                                                        EIP_reg(context) ) );
     if (gpHandler)
     {
-        WORD *stack = (WORD *)STACK_PTR( context );
+        WORD *stack = get_stack( context );
         *--stack = CS_reg(context);
         *--stack = EIP_reg(context);
-        ADD_STACK_reg(context, -2*sizeof(WORD));
+        add_stack(context, -2*sizeof(WORD));
 
         CS_reg(context) = SELECTOROF( gpHandler );
         EIP_reg(context) = OFFSETOF( gpHandler );

@@ -9,7 +9,6 @@
 #include "ldt.h"
 #include "windows.h"
 #include "toolhelp.h"
-#include "module.h"
 #include "debugger.h"
 #include "win.h"
 

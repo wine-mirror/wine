@@ -89,7 +89,7 @@ void INT_SetRMHandler( BYTE intnum, FARPROC16 handler )
 FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum )
 {
     if (ISV86(context))
-        return ((FARPROC16*)V86BASE(context))[intnum];
+        return INT_GetRMHandler(intnum);
     else
         return INT_GetPMHandler(intnum);
 }
@@ -102,11 +102,9 @@ FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum )
  */
 void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler )
 {
-    if (ISV86(context)) {
-        TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
-                     intnum, HIWORD(handler), LOWORD(handler) );
-        ((FARPROC16*)V86BASE(context))[intnum] = handler;
-    } else
+    if (ISV86(context))
+        INT_SetRMHandler(intnum, handler);
+    else
         INT_SetPMHandler(intnum, handler);
 }
 
