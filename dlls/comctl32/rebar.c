@@ -18,7 +18,7 @@
 #define PROBLEM2 0
 
 /*
- * Rebar control    rev 7d
+ * Rebar control    rev 7e
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -78,6 +78,9 @@
  *     rows, and fills in the background color for each band. The gripper, 
  *     image, and text for each band is drawn by the WM_PAINT process. Change
  *     this code to match.
+ * rev 7e
+ * 16. RBBS_FIXEDSIZE should not affect _AdjustBands. (Found by Mike McCormack
+ *     in WinZip - Thanks!)
  *
  *
  *    Still to do:
@@ -594,8 +597,7 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 
     /* *******************  Phase 1  ************************ */
     /* Alg:                                                   */
-    /*  For each visible band with valid child and not        */
-    /*    RBBS_FIXEDSIZE:                                     */
+    /*  For each visible band with valid child                */
     /*      a. inflate band till either all extra space used  */
     /*         or band's ->ccx reached.                       */
     /*  If any band modified, add any space left to last band */
@@ -619,9 +621,7 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 	    lpBand->rcBand.left = x + xsep;
 
 	/* compute new width */
-	if (!(lpBand->fStyle & RBBS_FIXEDSIZE) && 
-	    lpBand->hwndChild &&
-	    extra) {
+	if (lpBand->hwndChild && extra) {
 	    /* set to the "current" band size less the header */
 	    fudge = lpBand->ccx;
 	    last_adjusted = i;
@@ -687,7 +687,7 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 
     /* *******************  Phase 2  ************************ */
     /* Alg:                                                   */
-    /*  Find first visible band not RBBS_FIXEDSIZE, put all   */
+    /*  Find first visible band, put all                      */
     /*    extra space there.                                  */
     /*                                                        */
     /* ****************************************************** */
@@ -706,7 +706,7 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
 	    lpBand->rcBand.left = x + xsep;
 
 	/* compute new width */
-	if (!(lpBand->fStyle & RBBS_FIXEDSIZE) && extra) {
+	if (extra) {
 	    curwidth += extra;
 	    extra = 0;
 	}
