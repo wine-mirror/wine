@@ -105,7 +105,8 @@ typedef struct _TEB
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
     UINT         code_page;      /* --3 1fc Thread code page */
-    DWORD        unused[3];      /* --3 200 Was server buffer */
+    DWORD        unused[2];      /* --3 200 Was server buffer */
+    DWORD        gs_sel;         /* --3 208 %gs selector for this thread */
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */

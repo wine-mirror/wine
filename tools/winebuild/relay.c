@@ -175,6 +175,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     else
         fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ", %%fs\n" );
 
+    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
+
     /* Get address of wine_ldt_copy array into %ecx */
     if ( UsePIC )
         fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy@GOT") "(%%ecx), %%ecx\n" );
@@ -732,6 +734,8 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tmovw %%di,%%es\n" );
 
     fprintf( outfile, "\tmovw " __ASM_NAME("SYSLEVEL_Win16CurrentTeb") ",%%fs\n" );
+
+    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
     /* Restore the 32-bit stack */
 

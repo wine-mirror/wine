@@ -575,6 +575,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
             vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
             /* get context from vm86 struct */
             save_vm86_context( context, vm86 );
+            wine_set_gs( NtCurrentTeb()->gs_sel );
             return;
         }
     }
@@ -601,6 +602,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #else
     context->SegGs  = wine_get_gs();
 #endif
+    wine_set_gs( NtCurrentTeb()->gs_sel );
 }
 
 
