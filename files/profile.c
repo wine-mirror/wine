@@ -332,11 +332,14 @@ static int convert_config( FILE *in, const char *output_name )
             p++;
         }
         fprintf( out, "\" = \"" );
-        while (*p2)
+        if (p2)
         {
-            if (*p2 == '\\') fputc( '\\', out );
-            fputc( *p2, out );
-            p2++;
+            while (*p2)
+            {
+                if (*p2 == '\\') fputc( '\\', out );
+                fputc( *p2, out );
+                p2++;
+            }
         }
         fprintf( out, "\"\n" );
     }
