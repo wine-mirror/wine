@@ -1740,9 +1740,9 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         goto error;
     }
 
-    ovp->async.ops = &fileio_async_ops;
+    ovp->async.ops = ( lpCompletionRoutine ? &fileio_async_ops : &fileio_nocomp_async_ops );
     ovp->async.handle = hFile;
-    ovp->async.fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    ovp->async.fd = fd;
     ovp->async.type = ASYNC_TYPE_WRITE;
     ovp->async.func = FILE_AsyncWriteService;
     ovp->lpOverlapped = overlapped;
