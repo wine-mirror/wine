@@ -465,10 +465,10 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 		return MCIERR_DRIVER_INTERNAL;
 	    }
 	}
-	end = wmcda->wcda.dwTotalLen;
+	end = wmcda->wcda.dwFirstOffset + wmcda->wcda.dwTotalLen;
 	wmcda->wcda.nCurTrack = 1;
 	if (dwFlags & MCI_FROM) {
-	    start = CDAUDIO_CalcFrame(wmcda, lpParms->dwFrom); 
+	    start = CDAUDIO_CalcFrame(wmcda, lpParms->dwFrom);
 	    TRACE(cdaudio,"MCI_FROM=%08lX -> %u \n", lpParms->dwFrom, start);
 	} else {
 	    if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) return MCIERR_DRIVER_INTERNAL;
@@ -478,7 +478,6 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
 	    end = CDAUDIO_CalcFrame(wmcda, lpParms->dwTo);
 	    TRACE(cdaudio, "MCI_TO=%08lX -> %u \n", lpParms->dwTo, end);
 	}
-	end += wmcda->wcda.dwFirstOffset;
 	
 	if (CDAUDIO_Play(&wmcda->wcda, start, end) == -1)
 	    return MCIERR_HARDWARE;
