@@ -192,6 +192,12 @@ HRESULT WINAPI common_IDirectDraw2Impl_CreatePalette(
 	ERR("unhandled palette format\n");
 
     *psize = size;
+    if (This->d.palette_convert == NULL) {
+	/* No depth conversion - create 8<->8 identity map */
+	int ent;
+	for (ent=0; ent<256; ent++)
+	    (*lpddpal)->screen_palents[ent] = ent;
+    }
     if (palent) {
 	/* Now, if we are in depth conversion mode, create the screen palette */
 	if (This->d.palette_convert != NULL)	    

@@ -330,7 +330,7 @@ HRESULT WINAPI DirectDrawCreateEx(
 ) {
   FIXME(":semi stub\n");
   /* I don't know about what functionality is unique to Ex */
-  return DirectDrawCreate(lpGUID,(LPDIRECTDRAW)lplpDD,pUnkOuter);
+  return DirectDrawCreate(lpGUID,(LPDIRECTDRAW*)lplpDD,pUnkOuter);
 }
 
 /*******************************************************************************
