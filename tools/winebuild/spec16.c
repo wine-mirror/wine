@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <ctype.h>
 
+#include "config.h"
 #include "wine/exception.h"
 #include "builtin16.h"
 #include "module.h"
