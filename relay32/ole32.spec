@@ -65,7 +65,7 @@ type	win32
  62 stub DllDebugObjectRPCHook
  63 stub DllGetClassObject
  64 stub DllGetClassObjectWOW
- 65 stub DoDragDrop
+ 65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop32
  66 stub EnableHookObject
  67 stub GetClassFile
  68 stub GetConvertStg
@@ -110,7 +110,7 @@ type	win32
 107 stub OleGetIconOfFile
 108 stdcall OleInitialize(ptr) OleInitialize
 109 stdcall OleInitializeWOW(long) OleInitializeWOW
-110 stub OleIsCurrentClipboard
+110 stdcall OleIsCurrentClipboard(ptr) OleIsCurrentClipboard32
 111 stub OleIsRunning
 112 stub OleLoad
 113 stub OleLoadFromStream

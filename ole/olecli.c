@@ -8,9 +8,13 @@
  */
 
 #include "windows.h"
+#include "winerror.h"
 #include "ole.h"
 #include "gdi.h"
 #include "debug.h"
+#include "ole2.h"
+#include "objidl.h"
+
 
 extern LONG	OLE_current_handle;
 
@@ -160,3 +164,14 @@ OLESTATUS WINAPI OleCreateFromClip32(
 	/* clipb type, object kreieren entsprechend etc. */
 	return OLE_OK;
 }
+
+/***********************************************************************
+ *           OleIsCurrentClipboard32 [OLE32.110]
+ */
+HRESULT WINAPI OleIsCurrentClipboard32 (
+  IDataObject *pDataObject)  /* ptr to the data obj previously copied or cut */
+{
+  FIXME(ole,"(DataObject %p): stub!\n", pDataObject);
+  return S_FALSE;
+}
+

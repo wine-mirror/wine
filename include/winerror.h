@@ -154,6 +154,10 @@ extern int WIN32_LastError;
 #define DISP_E_TYPEMISMATCH 0x80020005L
 
 
+/* Drag and Drop */
+#define DRAGDROP_S_DROP   0x00040100L
+#define DRAGDROP_S_CANCEL 0x00040101L
+
 #define	E_UNEXPECTED			0x8000FFFF
 
 #define E_NOTIMPL			0x80004001

@@ -9,6 +9,7 @@
 #include "ole2.h"
 #include "process.h"
 #include "debug.h"
+#include "objidl.h"
 #include "wine/obj_base.h"
 #include "wine/obj_clientserver.h"
 #include "wine/obj_storage.h"
@@ -170,3 +171,17 @@ HRESULT WINAPI CreateBindCtx32 (DWORD reserved,	LPVOID *ppbc)
 /*    return S_OK; */
     return E_OUTOFMEMORY;
 }
+
+/***********************************************************************
+ * DoDragDrop32 [OLE32.65]
+ */
+HRESULT WINAPI DoDragDrop32 (
+  IDataObject *pDataObject,  /* ptr to the data obj           */
+  IDataObject *pDropSource,  /* ptr to the source obj         */
+  DWORD       dwOKEffect,    /* effects allowed by the source */
+  DWORD       *pdwEffect)    /* ptr to effects of the source  */
+{
+  FIXME(ole,"(DataObject %p, DropSource %p): stub!\n", pDataObject, pDropSource);
+  return DRAGDROP_S_DROP;
+}
+
