@@ -479,7 +479,7 @@ debug_channels (msvcrt)
 @ cdecl _tolower(long) _tolower
 @ cdecl _toupper(long) _toupper
 @ stub _tzname
-@ stub _tzset #()
+@ cdecl _tzset() tzset
 @ stub _ui64toa #(long str long)
 @ stub _ui64tow #(long wstr long)
 @ forward -noimport _ultoa ntdll._ultoa
