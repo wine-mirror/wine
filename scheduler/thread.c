@@ -132,6 +132,16 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
     if (stack_size >= 16*1024*1024)
     	WARN("Thread stack size is %ld MB.\n",stack_size/1024/1024);
 
+    /* if size is smaller than default, get stack size from parent */
+    if (stack_size < 1024 * 1024)
+    {
+        if (teb)
+            stack_size = 1024 * 1024;  /* no parent */
+        else
+            stack_size = ((char *)NtCurrentTeb()->stack_top - (char *)NtCurrentTeb()->stack_base
+                          - SIGNAL_STACK_SIZE - 3 * page_size);
+    }
+
     /* FIXME: some Wine functions use a lot of stack, so we add 64Kb here */
     stack_size += 64 * 1024;
 
