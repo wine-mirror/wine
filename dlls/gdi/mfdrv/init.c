@@ -36,6 +36,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
     MFDRV_AbortPath,                 /* pAbortPath */
+    NULL,                            /* pAlphaBlend */
     NULL,                            /* pAngleArc */
     MFDRV_Arc,                       /* pArc */
     NULL,                            /* pArcTo */

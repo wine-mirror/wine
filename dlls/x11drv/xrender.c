@@ -47,6 +47,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
+/* Older version of the Xrender headers don't define these */
+#ifndef PictStandardARGB32
+
+#define PictStandardARGB32 0
+XRenderPictFormat * XRenderFindStandardFormat (Display *dpy, int format);
+
+#endif
+
 static XRenderPictFormat *screen_format; /* format of screen */
 static XRenderPictFormat *mono_format; /* format of mono bitmap */
 
@@ -109,6 +117,7 @@ static void *xrender_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XRenderAddGlyphs)
+MAKE_FUNCPTR(XRenderComposite)
 MAKE_FUNCPTR(XRenderCompositeString8)
 MAKE_FUNCPTR(XRenderCompositeString16)
 MAKE_FUNCPTR(XRenderCompositeString32)
@@ -116,6 +125,7 @@ MAKE_FUNCPTR(XRenderCreateGlyphSet)
 MAKE_FUNCPTR(XRenderCreatePicture)
 MAKE_FUNCPTR(XRenderFillRectangle)
 MAKE_FUNCPTR(XRenderFindFormat)
+MAKE_FUNCPTR(XRenderFindStandardFormat)
 MAKE_FUNCPTR(XRenderFindVisualFormat)
 MAKE_FUNCPTR(XRenderFreeGlyphSet)
 MAKE_FUNCPTR(XRenderFreePicture)
@@ -152,6 +162,7 @@ void X11DRV_XRender_Init(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
 LOAD_FUNCPTR(XRenderAddGlyphs)
+LOAD_FUNCPTR(XRenderComposite)
 LOAD_FUNCPTR(XRenderCompositeString8)
 LOAD_FUNCPTR(XRenderCompositeString16)
 LOAD_FUNCPTR(XRenderCompositeString32)
@@ -159,6 +170,7 @@ LOAD_FUNCPTR(XRenderCreateGlyphSet)
 LOAD_FUNCPTR(XRenderCreatePicture)
 LOAD_FUNCPTR(XRenderFillRectangle)
 LOAD_FUNCPTR(XRenderFindFormat)
+LOAD_FUNCPTR(XRenderFindStandardFormat)
 LOAD_FUNCPTR(XRenderFindVisualFormat)
 LOAD_FUNCPTR(XRenderFreeGlyphSet)
 LOAD_FUNCPTR(XRenderFreePicture)
@@ -1504,6 +1516,123 @@ done:
     return retv;
 }
 
+BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                       X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                       DWORD blendfn)
+{
+    XRenderPictureAttributes pa;
+    XRenderPictFormat *src_format;
+    Picture dst_pict, src_pict;
+    Pixmap xpm;
+    HBITMAP hBitmap;
+    BITMAPOBJ *bmp;
+    XImage *image;
+    GC gc;
+    XGCValues gcv;
+    char *dstbits, *data;
+    int y;
+    POINT pts[2];
+
+    if(!X11DRV_XRender_Installed) {
+        FIXME("Unable to AlphaBlend without Xrender\n");
+        return FALSE;
+    }
+    pts[0].x = xDst;
+    pts[0].y = yDst;
+    pts[1].x = xDst + widthDst;
+    pts[1].y = yDst + heightDst;
+    LPtoDP(devDst->hdc, pts, 2);
+    xDst      = pts[0].x;
+    yDst      = pts[0].y;
+    widthDst  = pts[1].x - pts[0].x;
+    heightDst = pts[1].y - pts[0].y;
+
+    pts[0].x = xSrc;
+    pts[0].y = ySrc;
+    pts[1].x = xSrc + widthSrc;
+    pts[1].y = ySrc + heightSrc;
+    LPtoDP(devSrc->hdc, pts, 2);
+    xSrc      = pts[0].x;
+    ySrc      = pts[0].y;
+    widthSrc  = pts[1].x - pts[0].x;
+    heightSrc = pts[1].y - pts[0].y;
+
+
+    if(widthDst != widthSrc || heightDst != heightSrc) {
+        FIXME("Unable to Stretch\n");
+        return FALSE;
+    }
+
+    hBitmap = GetCurrentObject( devSrc->hdc, OBJ_BITMAP );
+    bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC );
+    if(!bmp || !bmp->dib) {
+        FIXME("not a dibsection\n");
+        GDI_ReleaseObj( hBitmap );
+        return FALSE;
+    }
+
+    if(bmp->dib->dsBm.bmBitsPixel != 32) {
+        FIXME("not a 32 bpp dibsection\n");
+        GDI_ReleaseObj( hBitmap );
+        return FALSE;
+    }
+    dstbits = data = HeapAlloc(GetProcessHeap(), 0, heightSrc * widthSrc * 4);
+    for(y = ySrc + heightSrc - 1; y >= ySrc; y--) {
+        memcpy(dstbits, (char *)bmp->dib->dsBm.bmBits + y * bmp->dib->dsBm.bmWidthBytes + xSrc * 4,
+               widthSrc * 4);
+        dstbits += widthSrc * 4;
+    }
+
+    wine_tsx11_lock();
+    image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
+                         data, widthSrc, heightSrc, 32, widthSrc * 4);
+
+    src_format = pXRenderFindStandardFormat(gdi_display, PictStandardARGB32);
+
+
+    TRACE("src_format %p\n", src_format);
+
+    pa.subwindow_mode = IncludeInferiors;
+
+    /* FIXME use devDst->xrender->pict ? */
+    dst_pict = pXRenderCreatePicture(gdi_display,
+                                     devDst->drawable,
+                                     (devDst->depth == 1) ?
+                                     mono_format : screen_format,
+                                     CPSubwindowMode, &pa);
+    TRACE("dst_pict %08lx\n", dst_pict);
+    TRACE("src_drawable = %08lx\n", devSrc->drawable);
+    xpm = XCreatePixmap(gdi_display,
+                        devSrc->drawable,
+                        widthSrc, heightSrc, 32);
+    gcv.graphics_exposures = False;
+    gc = XCreateGC(gdi_display, xpm, GCGraphicsExposures, &gcv);
+    TRACE("xpm = %08lx\n", xpm);
+    XPutImage(gdi_display, xpm, gc, image, 0, 0, 0, 0, widthSrc, heightSrc);
+
+    src_pict = pXRenderCreatePicture(gdi_display,
+                                     xpm, src_format,
+                                     CPSubwindowMode, &pa);
+    TRACE("src_pict %08lx\n", src_pict);
+
+    pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
+                      xSrc, ySrc, 0, 0,
+                      xDst + devDst->org.x, yDst + devDst->org.y, widthSrc, heightSrc);
+
+
+    pXRenderFreePicture(gdi_display, src_pict);
+    XFreePixmap(gdi_display, xpm);
+    XFreeGC(gdi_display, gc);
+    pXRenderFreePicture(gdi_display, dst_pict);
+    image->data = NULL;
+    XDestroyImage(image);
+
+    wine_tsx11_unlock();
+    HeapFree(GetProcessHeap(), 0, data);
+    GDI_ReleaseObj( hBitmap );
+    return TRUE;
+}
+
 #else /* HAVE_X11_EXTENSIONS_XRENDER_H */
 
 void X11DRV_XRender_Init(void)
@@ -1540,6 +1669,14 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
   assert(0);
   return;
+}
+
+BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                       X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                       DWORD blendfn)
+{
+  FIXME("not supported - XRENDER headers were missing at compile time\n");
+  return FALSE;
 }
 
 #endif /* HAVE_X11_EXTENSIONS_XRENDER_H */

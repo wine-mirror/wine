@@ -117,6 +117,10 @@ extern unsigned int X11DRV_server_startticks;
 
 /* Wine driver X11 functions */
 
+extern BOOL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                               INT widthDst, INT heightDst,
+                               X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                               INT widthSrc, INT heightSrc, DWORD blendfn );
 extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                              INT width, INT height, X11DRV_PDEVICE *physDevSrc,
                              INT xSrc, INT ySrc, DWORD rop );

@@ -1,5 +1,6 @@
 # GDI driver
 
+@ cdecl AlphaBlend(ptr long long long long ptr long long long long long) X11DRV_AlphaBlend
 @ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc
 @ cdecl BitBlt(ptr long long long long ptr long long long) X11DRV_BitBlt
 @ cdecl ChoosePixelFormat(ptr ptr) X11DRV_ChoosePixelFormat

@@ -398,14 +398,30 @@ error:
 /******************************************************************************
  *           GdiAlphaBlend [GDI32.@]
  */
-BOOL WINAPI GdiAlphaBlend(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
-                          HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
+BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heightDst,
+                          HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
                           BLENDFUNCTION blendFunction)
 {
-    FIXME("partial stub - using StretchBlt\n");
-    return StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
-                      hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
-                      SRCCOPY);
+    BOOL ret = FALSE;
+    DC *dcDst, *dcSrc;
+    DWORD bfn = 0;
+
+    if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) GDI_ReleaseObj( hdcSrc );
+    /* FIXME: there is a race condition here */
+    if ((dcDst = DC_GetDCUpdate( hdcDst )))
+    {
+        dcSrc = DC_GetDCPtr( hdcSrc );
+        TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d blend=%08lx\n",
+              hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
+              hdcDst, xDst, yDst, widthDst, heightDst, bfn );
+        if (dcDst->funcs->pAlphaBlend)
+            ret = dcDst->funcs->pAlphaBlend( dcDst->physDev, xDst, yDst, widthDst, heightDst,
+                                             dcSrc ? dcSrc->physDev : NULL,
+                                             xSrc, ySrc, widthSrc, heightSrc, bfn );
+        if (dcSrc) GDI_ReleaseObj( hdcSrc );
+        GDI_ReleaseObj( hdcDst );
+    }
+    return ret;
 }
 
 /*********************************************************************

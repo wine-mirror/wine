@@ -36,6 +36,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
     EMFDRV_AbortPath,                /* pAbortPath */
+    NULL,                            /* pAlphaBlend */
     NULL,                            /* pAngleArc */
     EMFDRV_Arc,                      /* pArc */
     NULL,                            /* pArcTo */

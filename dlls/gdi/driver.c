@@ -77,6 +77,7 @@ static struct graphics_driver *create_driver( HMODULE module )
 
     GET_FUNC(AbortDoc);
     GET_FUNC(AbortPath);
+    GET_FUNC(AlphaBlend);
     GET_FUNC(AngleArc);
     GET_FUNC(Arc);
     GET_FUNC(ArcTo);
