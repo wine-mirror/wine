@@ -87,7 +87,6 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
     DDPRIVATE(This->s.ddraw);
     
     IDirectDrawSurface4_AddRef(iface);
-    assert(HeapValidate(GetProcessHeap(),0,NULL));
 
     TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,lprect,lpddsd,flags,(DWORD)hnd);
     if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
@@ -194,7 +193,6 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
 		TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
 	}
     }
-    assert(HeapValidate(GetProcessHeap(),0,NULL));
     IDirectDrawSurface4_Release(iface);
     return DD_OK;
 }
