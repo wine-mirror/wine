@@ -77,17 +77,88 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
 /*************************************************************************
  *		ScrollDC (USER32.@)
  *
- *   Only the hrgnUpdate is return in device coordinate.
- *   rcUpdate must be returned in logical coordinate to comply with win API.
- *
+ * dx, dy, lprcScroll and lprcClip are all in logical coordinates (msdn is wrong)
+ * hrgnUpdate is returned in device coordinates with rcUpdate in logical coordinates.
  */
-BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
-                          const RECT *prLClip, HRGN hrgnUpdate,
-                          LPRECT rcUpdate )
+BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
+                      const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
+
 {
-    if (USER_Driver.pScrollDC)
-        return USER_Driver.pScrollDC( hdc, dx, dy, rc, prLClip, hrgnUpdate, rcUpdate );
-    return FALSE;
+    RECT rSrc, rClipped_src, rClip, rDst, offset;
+
+    TRACE( "%p %d,%d hrgnUpdate=%p lprcUpdate = %p\n", hdc, dx, dy, hrgnUpdate, lprcUpdate );
+    if (lprcClip) TRACE( "lprcClip = %s\n", wine_dbgstr_rect(lprcClip));
+    if (lprcScroll) TRACE( "lprcScroll = %s\n", wine_dbgstr_rect(lprcScroll));
+
+    /* compute device clipping region (in device coordinates) */
+
+    if (lprcScroll) rSrc = *lprcScroll;
+    else GetClipBox( hdc, &rSrc );
+    LPtoDP(hdc, (LPPOINT)&rSrc, 2);
+
+    if (lprcClip) rClip = *lprcClip;
+    else GetClipBox( hdc, &rClip );
+    LPtoDP(hdc, (LPPOINT)&rClip, 2);
+
+    IntersectRect( &rClipped_src, &rSrc, &rClip );
+    TRACE("rSrc %s rClip %s clipped rSrc %s\n", wine_dbgstr_rect(&rSrc),
+          wine_dbgstr_rect(&rClip), wine_dbgstr_rect(&rClipped_src));
+
+    rDst = rClipped_src;
+    SetRect(&offset, 0, 0, dx, dy);
+    LPtoDP(hdc, (LPPOINT)&offset, 2);
+    OffsetRect( &rDst, offset.right - offset.left,  offset.bottom - offset.top );
+    TRACE("rDst before clipping %s\n", wine_dbgstr_rect(&rDst));
+    IntersectRect( &rDst, &rDst, &rClip );
+    TRACE("rDst after clipping %s\n", wine_dbgstr_rect(&rDst));
+
+    if (!IsRectEmpty(&rDst))
+    {
+        /* copy bits */
+        RECT rDst_lp = rDst, rSrc_lp = rDst;
+
+        OffsetRect( &rSrc_lp, offset.left - offset.right, offset.top - offset.bottom );
+        DPtoLP(hdc, (LPPOINT)&rDst_lp, 2);
+        DPtoLP(hdc, (LPPOINT)&rSrc_lp, 2);
+
+        if (!BitBlt( hdc, rDst_lp.left, rDst_lp.top,
+                     rDst_lp.right - rDst_lp.left, rDst_lp.bottom - rDst_lp.top,
+                     hdc, rSrc_lp.left, rSrc_lp.top, SRCCOPY))
+            return FALSE;
+    }
+
+    /* compute update areas.  This is the clipped source or'ed with the unclipped source translated minus the
+     clipped src translated (rDst) all clipped to rClip */
+
+    if (hrgnUpdate || lprcUpdate)
+    {
+        HRGN hrgn = hrgnUpdate, hrgn2;
+
+        if (hrgn) SetRectRgn( hrgn, rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
+        else hrgn = CreateRectRgn( rClipped_src.left, rClipped_src.top, rClipped_src.right, rClipped_src.bottom );
+
+        hrgn2 = CreateRectRgnIndirect( &rSrc );
+        OffsetRgn(hrgn2, offset.right - offset.left,  offset.bottom - offset.top );
+        CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
+
+        SetRectRgn( hrgn2, rDst.left, rDst.top, rDst.right, rDst.bottom );
+        CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
+
+        SetRectRgn( hrgn2, rClip.left, rClip.top, rClip.right, rClip.bottom );
+        CombineRgn( hrgn, hrgn, hrgn2, RGN_AND );
+
+        if( lprcUpdate )
+        {
+            GetRgnBox( hrgn, lprcUpdate );
+
+            /* Put the lprcUpdate in logical coordinate */
+            DPtoLP( hdc, (LPPOINT)lprcUpdate, 2 );
+            TRACE("returning lprcUpdate %s\n", wine_dbgstr_rect(lprcUpdate));
+        }
+        if (!hrgnUpdate) DeleteObject( hrgn );
+        DeleteObject( hrgn2 );
+    }
+    return TRUE;
 }
 
 
