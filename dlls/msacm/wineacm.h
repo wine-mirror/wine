@@ -299,11 +299,9 @@ typedef struct _WINE_ACMSTREAM
 typedef struct _WINE_ACMDRIVERID
 {
     WINE_ACMOBJ		obj;
-    LPSTR               pszDriverAlias;
+    LPSTR		pszDriverAlias;
     LPSTR               pszFileName;
     HINSTANCE		hInstModule;          /* NULL if global */
-    DWORD		dwProcessID;	      /* ID of process which installed a local driver */
-    BOOL                bEnabled;
     PWINE_ACMDRIVER     pACMDriverList;
     PWINE_ACMDRIVERID   pNextACMDriverID;
     PWINE_ACMDRIVERID	pPrevACMDriverID;

@@ -177,7 +177,7 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	fdwSupport = padid->fdwSupport;
 	
-	if (!padid->bEnabled) {
+	if (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) {
 	    if (fdwEnum & ACM_DRIVERENUMF_DISABLED)
 		fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
 	    else
@@ -226,6 +226,62 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
     return MMSYSERR_INVALPARAM;
 }
 
+static	MMRESULT	MSACM_DriverOpenHelper(PWINE_ACMDRIVER* ppad, PWINE_ACMDRIVERID padid, DWORD fdwOpen, BOOL useDesc)
+{
+    MMRESULT		ret = MMSYSERR_ERROR;
+    PWINE_ACMDRIVER	pad;
+
+    *ppad = NULL;
+
+    pad = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER));
+    if (!pad) return MMSYSERR_NOMEM;
+
+    pad->obj.dwType = WINE_ACMOBJ_DRIVER;
+    pad->obj.pACMDriverID = padid;
+
+    if (!(pad->hDrvr = padid->hInstModule)) {
+	/* this is not an externally added driver... need to load it */
+	if (!padid->pszDriverAlias) goto gotError;
+
+	if (useDesc) {
+	    ACMDRVOPENDESCW	adod;
+	    int			len;
+
+	    adod.cbStruct = sizeof(adod);
+	    adod.fccType = ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC;
+	    adod.fccComp = ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
+	    adod.dwVersion = acmGetVersion();
+	    adod.dwFlags = fdwOpen;
+	    adod.dwError = 0;
+	    len = strlen("Drivers32") + 1;
+	    adod.pszSectionName = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
+	    MultiByteToWideChar(CP_ACP, 0, "Drivers32", -1, (LPWSTR)adod.pszSectionName, len);
+	    len = strlen(padid->pszDriverAlias) + 1;
+	    adod.pszAliasName = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
+	    MultiByteToWideChar(CP_ACP, 0, padid->pszDriverAlias, -1, (LPWSTR)adod.pszAliasName, len);
+	    adod.dnDevNode = 0;
+
+	    pad->hDrvr = OpenDriverA(padid->pszDriverAlias, NULL, (DWORD)&adod);
+
+	    HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszSectionName);
+	    HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszAliasName);
+	    if (!pad->hDrvr) {
+		ret = adod.dwError;
+		goto gotError;
+	    }
+	} else {
+	    if (!(pad->hDrvr = OpenDriverA(padid->pszDriverAlias, 0L, 0L))) {
+		ret = MMSYSERR_ERROR;
+		goto gotError;
+	    }
+	}
+    }
+    *ppad = pad;
+    return MMSYSERR_NOERROR;
+ gotError:
+    HeapFree(MSACM_hHeap, 0, pad);
+    return ret;
+}
 
 /***********************************************************************
  *           acmDriverOpen (MSACM32.10)
@@ -233,8 +289,8 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
 MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpen)
 {
     PWINE_ACMDRIVERID	padid;
-    PWINE_ACMDRIVER	pad;
-    MMRESULT		ret = MMSYSERR_ERROR;
+    PWINE_ACMDRIVER	pad, first_pad = NULL;
+    MMRESULT		ret;
 
     TRACE("(%p, %x, %08lu)\n", phad, hadid, fdwOpen);
 
@@ -247,30 +303,23 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     padid = MSACM_GetDriverID(hadid); 
     if (!padid)
 	return MMSYSERR_INVALHANDLE;
-    
-    pad = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER));
-    if (!pad) return MMSYSERR_NOMEM;
 
-    pad->obj.dwType = WINE_ACMOBJ_DRIVER;
-    pad->obj.pACMDriverID = padid;
+    /* first driver to be loaded ? */
+    if (!padid->pACMDriverList && !padid->hInstModule) {
+	ret = MSACM_DriverOpenHelper(&first_pad, padid, fdwOpen, FALSE);
+	if (ret) goto gotError;
 
-    if (!(pad->hDrvr = padid->hInstModule) && padid->pszDriverAlias) {
-	ACMDRVOPENDESCW	adod;
+	
+	/* insert new pad at beg of list */
+	first_pad->pNextACMDriver = NULL;
+	padid->pACMDriverList = first_pad;
+    }
 
-	adod.cbStruct = sizeof(adod);
-	adod.fccType = ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC;
-	adod.fccComp = ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
-	adod.dwVersion = acmGetVersion();
-	adod.dwFlags = fdwOpen;
-	adod.dwError = 0;
-	adod.pszSectionName = (LPCWSTR)"\0"; /* FIXME */
-	adod.pszAliasName = (LPCWSTR)"\0"; /* FIXME */
-	adod.dnDevNode = 0;
-
-	if (!(pad->hDrvr = OpenDriverA(padid->pszDriverAlias, NULL, (DWORD)&adod))) {
-	    ret = adod.dwError;
-	    goto gotError;
-	}
+    ret = MSACM_DriverOpenHelper(&pad, padid, fdwOpen, TRUE);
+    if (ret) {
+	if (first_pad)
+	    acmDriverClose((HACMDRIVER)first_pad, 0L);
+	goto gotError;
     }
 
     /* insert new pad at beg of list */
@@ -280,6 +329,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     /* FIXME: Create a WINE_ACMDRIVER32 */
     *phad = (HACMDRIVER)pad;
     TRACE("'%s' => %08lx\n", padid->pszDriverAlias, (DWORD)pad);
+
     return MMSYSERR_NOERROR;
  gotError:
     if (!pad->hDrvr)

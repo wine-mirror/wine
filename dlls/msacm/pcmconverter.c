@@ -32,9 +32,9 @@ DEFAULT_DEBUG_CHANNEL(msacm);
  */
 static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
 {
-    return 
-	adod->fccType == ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC &&
-	adod->fccComp == ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
+    return (adod == NULL) ||
+	(adod->fccType == ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC &&
+	 adod->fccComp == ACMDRIVERDETAILS_FCCCOMP_UNDEFINED);
 }
 
 /***********************************************************************
@@ -789,8 +789,33 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
  */
 static	LRESULT	PCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
 {
-    FIXME("(%p);\n", adfs);
-    return MMSYSERR_NOTSUPPORTED;
+    /* some tests ... */
+    if (adfs->cbwfxSrc < sizeof(PCMWAVEFORMAT) ||
+	adfs->cbwfxDst < sizeof(PCMWAVEFORMAT) ||
+	PCM_GetFormatIndex(adfs->pwfxSrc) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+
+    /* is no suggestion for destination, then copy source value */
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_NCHANNELS)) {
+	adfs->pwfxDst->nChannels = adfs->pwfxSrc->nChannels;
+    }
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_NSAMPLESPERSEC)) {
+	adfs->pwfxDst->nSamplesPerSec = adfs->pwfxSrc->nSamplesPerSec;
+    }
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WBITSPERSAMPLE)) {
+	adfs->pwfxDst->wBitsPerSample = adfs->pwfxSrc->wBitsPerSample;
+    }
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)) {
+	if (adfs->pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) return ACMERR_NOTPOSSIBLE;
+	adfs->pwfxDst->wFormatTag = adfs->pwfxSrc->wFormatTag;
+    }
+    /* check if result is ok */
+    if (PCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+
+    /* recompute other values */
+    adfs->pwfxDst->nBlockAlign = (adfs->pwfxDst->nChannels * adfs->pwfxDst->wBitsPerSample) / 8;
+    adfs->pwfxDst->nAvgBytesPerSec = adfs->pwfxDst->nSamplesPerSec * adfs->pwfxDst->nBlockAlign;
+
+    return MMSYSERR_NOERROR;
 }
 
 /***********************************************************************

@@ -92,7 +92,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 		    mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS,
 					(LPARAM)pafd, (LPARAM)fdwDetails);
@@ -229,7 +229,8 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     }
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	    /* should check for codec only */
-	    if (!padid->bEnabled || acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
+	    if ((padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) || 
+		acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
 		continue;
 	    ret = MSACM_FilterEnumHelper(padid, had, pafd, 
 					 fnCallback, dwInstance, fdwEnum);
@@ -287,7 +288,8 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
+		      acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 		    mmr = MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, (LPARAM)paftd, fdwDetails);
 		    acmDriverClose(had, 0);
 		    if (mmr == MMSYSERR_NOERROR) break;
@@ -311,7 +313,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 
 		    memset(&tmp, 0, sizeof(tmp));
@@ -416,7 +418,8 @@ MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
     
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	/* should check for codec only */
-	if (padid->bEnabled && acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
+	if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
+	    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
 
 	    for (i = 0; i < padid->cFilterTags; i++) {
 		paftd->dwFilterTagIndex = i;

@@ -319,7 +319,7 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 		    mmr = MSACM_Message(had, ACMDM_FORMAT_DETAILS, (LPARAM)pafd, fdwDetails);
 		    acmDriverClose(had, 0);
@@ -498,7 +498,8 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     }
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	    /* should check for codec only */
-	    if (!padid->bEnabled || acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
+	    if ((padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) || 
+		acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
 		continue;
 	    ret = MSACM_FormatEnumHelper(padid, had, pafd, &wfxRef, 
 					 fnCallback, dwInstance, fdwEnum);
@@ -541,7 +542,7 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
 	mmr = ACMERR_NOTPOSSIBLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	    /* should check for codec only */
-	    if (!padid->bEnabled ||
+	    if ((padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) ||
 		acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
 		continue;
 	    
@@ -604,7 +605,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 	if (had == (HACMDRIVER)NULL) {
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
 		    MSACM_FindFormatTagInCache(padid, paftd->dwFormatTag, NULL) &&
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 		    mmr = MSACM_Message(had, ACMDM_FORMATTAG_DETAILS, (LPARAM)paftd, fdwDetails);
@@ -636,7 +637,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (padid->bEnabled && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 
 		    memset(&tmp, 0, sizeof(tmp));
@@ -742,8 +743,8 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
     
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	/* should check for codec only */
-	if (padid->bEnabled && acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
-
+	if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
+	    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
 	    for (i = 0; i < padid->cFormatTags; i++) {
 		paftd->dwFormatTagIndex = i;
 		if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS,

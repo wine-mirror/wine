@@ -140,7 +140,8 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     if (pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) wfxSrcSize += pwfxSrc->cbSize;
     if (pwfxDst->wFormatTag != WAVE_FORMAT_PCM) wfxDstSize += pwfxDst->cbSize;
 
-    was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize + ((pwfltr) ? sizeof(WAVEFILTER) : 0));
+    was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize + 
+		    ((pwfltr) ? sizeof(WAVEFILTER) : 0));
     if (was == NULL)
 	return MMSYSERR_NOMEM;
     
@@ -160,7 +161,8 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     was->drvInst.fdwOpen = fdwOpen;
     was->drvInst.fdwDriver = 0L;  
     was->drvInst.dwDriver = 0L;     
-    was->drvInst.has = (HACMSTREAM)was;
+    /* real value will be stored once ACMDM_STREAM_OPEN succeeds */
+    was->drvInst.has = 0L;
     
     if (had) {
 	if (!(wad = MSACM_GetDriver(had))) {
@@ -181,7 +183,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	
 	ret = ACMERR_NOTPOSSIBLE;
 	for (wadi = MSACM_pFirstACMDriverID; wadi; wadi = wadi->pNextACMDriverID) {
-	    if (!wadi->bEnabled || 
+	    if ((wadi->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) || 
 		!MSACM_FindFormatTagInCache(wadi, pwfxSrc->wFormatTag, NULL) ||
 		!MSACM_FindFormatTagInCache(wadi, pwfxDst->wFormatTag, NULL))
 		continue;
@@ -195,7 +197,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		was->hAcmDriver = had;
 		
 		ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
-		TRACE("%s => %08x\n", wadi->pszFileName, ret);
+		TRACE("%s => %08x\n", wadi->pszDriverAlias, ret);
 		if (ret == MMSYSERR_NOERROR) {
 		    if (fdwOpen & ACM_STREAMOPENF_QUERY) {
 			acmDriverClose(had, 0L);
@@ -212,6 +214,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	}
     }
     ret = MMSYSERR_NOERROR;
+    was->drvInst.has = (HACMSTREAM)was;
     if (!(fdwOpen & ACM_STREAMOPENF_QUERY)) {
 	if (phas)
 	    *phas = (HACMSTREAM)was;

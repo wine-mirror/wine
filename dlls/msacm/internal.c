@@ -224,7 +224,7 @@ static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 				       HINSTANCE hinstModule)
 { 
-    PWINE_ACMDRIVERID padid;
+    PWINE_ACMDRIVERID	padid;
 
     TRACE("('%s', '%s', 0x%08x)\n", pszDriverAlias, pszFileName, hinstModule);
 
@@ -245,7 +245,6 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     }
     padid->hInstModule = hinstModule;
 	
-    padid->bEnabled = TRUE;
     padid->pACMDriverList = NULL;
     padid->pNextACMDriverID = NULL;
     padid->pPrevACMDriverID = MSACM_pLastACMDriverID;
