@@ -613,8 +613,12 @@ PPD *PSDRV_ParsePPD(char *fname)
 			  page->Name);
 	    }
 	    if(!page->FullName) {
-		page->FullName = tuple.opttrans;
-		tuple.opttrans = NULL;
+	        if(tuple.opttrans) {
+		    page->FullName = tuple.opttrans;
+		    tuple.opttrans = NULL;
+		} else {
+		    page->FullName = HEAP_strdupA( PSDRV_Heap, 0, page->Name );
+		}
 	    }
 	    if(!page->InvocationString) {
 		page->InvocationString = tuple.value;
@@ -711,7 +715,10 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    if(tuple.opttrans) {
 	        slot->FullName = tuple.opttrans;
 		tuple.opttrans = NULL;
+	    } else {
+	        slot->FullName = HEAP_strdupA( PSDRV_Heap, 0, slot->Name );
 	    }
+
 	    if(tuple.value) {
 	        slot->InvocationString = tuple.value;
 		tuple.value = NULL;
