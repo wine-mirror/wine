@@ -90,6 +90,8 @@ extern int WIN32_LastError;
 #define ERROR_SHARING_VIOLATION                            32
 #define ERROR_LOCK_VIOLATION                               33
 #define ERROR_WRONG_DISK                                   34
+/* FIXME: 35 gets returned for some unsuccessful DeviceIoControl calls */
+#define ERROR_UNKNOWN_NAME_01                              35
 #define ERROR_SHARING_BUFFER_EXCEEDED                      36
 #define ERROR_HANDLE_EOF                                   38
 #define ERROR_HANDLE_DISK_FULL                             39
