@@ -353,9 +353,9 @@ WINSPOOL_LoadSystemPrinters() {
     di3a.cVersion = 0x400;
     di3a.pName = "PS Driver";
     di3a.pEnvironment = NULL;	/* NULL means auto */
-    di3a.pDriverPath = "wineps.drv";
+    di3a.pDriverPath = "wineps16";
     di3a.pDataFile = "<datafile?>";
-    di3a.pConfigFile = "wineps.drv";
+    di3a.pConfigFile = "wineps16";
     di3a.pHelpFile = "<helpfile?>";
     di3a.pDependentFiles = "<dependend files?>";
     di3a.pMonitorName = "<monitor name?>";
