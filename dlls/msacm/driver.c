@@ -132,29 +132,38 @@ MMRESULT WINAPI acmDriverDetailsA(HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, D
     MMRESULT mmr;
     ACMDRIVERDETAILSW	addw;
 
+    if (!padd)
+        return MMSYSERR_INVALPARAM;
+
+    if (padd->cbStruct < 4)
+        return MMSYSERR_INVALPARAM;
+
     addw.cbStruct = sizeof(addw);
     mmr = acmDriverDetailsW(hadid, &addw, fdwDetails);
     if (mmr == 0) {
-	padd->fccType = addw.fccType;
-	padd->fccComp = addw.fccComp;
-	padd->wMid = addw.wMid;
-	padd->wPid = addw.wPid;
-	padd->vdwACM = addw.vdwACM;
-	padd->vdwDriver = addw.vdwDriver;
-	padd->fdwSupport = addw.fdwSupport;
-	padd->cFormatTags = addw.cFormatTags;
-	padd->cFilterTags = addw.cFilterTags;
-	padd->hicon = addw.hicon;
-        WideCharToMultiByte( CP_ACP, 0, addw.szShortName, -1, padd->szShortName,
-                             sizeof(padd->szShortName), NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, addw.szLongName, -1, padd->szLongName,
-                             sizeof(padd->szLongName), NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, addw.szCopyright, -1, padd->szCopyright,
-                             sizeof(padd->szCopyright), NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, addw.szLicensing, -1, padd->szLicensing,
-                             sizeof(padd->szLicensing), NULL, NULL );
-        WideCharToMultiByte( CP_ACP, 0, addw.szFeatures, -1, padd->szFeatures,
-                             sizeof(padd->szFeatures), NULL, NULL );
+        ACMDRIVERDETAILSA padda;
+
+        padda.fccType = addw.fccType;
+        padda.fccComp = addw.fccComp;
+        padda.wMid = addw.wMid;
+        padda.wPid = addw.wPid;
+        padda.vdwACM = addw.vdwACM;
+        padda.vdwDriver = addw.vdwDriver;
+        padda.fdwSupport = addw.fdwSupport;
+        padda.cFormatTags = addw.cFormatTags;
+        padda.cFilterTags = addw.cFilterTags;
+        padda.hicon = addw.hicon;
+        WideCharToMultiByte( CP_ACP, 0, addw.szShortName, -1, padda.szShortName,
+                             sizeof(padda.szShortName), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szLongName, -1, padda.szLongName,
+                             sizeof(padda.szLongName), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szCopyright, -1, padda.szCopyright,
+                             sizeof(padda.szCopyright), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szLicensing, -1, padda.szLicensing,
+                             sizeof(padda.szLicensing), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, addw.szFeatures, -1, padda.szFeatures,
+                             sizeof(padda.szFeatures), NULL, NULL );
+        memcpy(padd, &padda, min(padd->cbStruct, sizeof(*padd)));
     }
     return mmr;
 }
@@ -167,14 +176,22 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
     HACMDRIVER acmDrvr;
     MMRESULT mmr;
 
+    if (!padd)
+        return MMSYSERR_INVALPARAM;
+
+    if (padd->cbStruct < 4)
+        return MMSYSERR_INVALPARAM;
+
     if (fdwDetails)
 	return MMSYSERR_INVALFLAG;
 
     mmr = acmDriverOpen(&acmDrvr, hadid, 0);
     if (mmr == MMSYSERR_NOERROR) {
-	mmr = (MMRESULT)MSACM_Message(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM)padd,  0);
+        ACMDRIVERDETAILSW paddw;
+        mmr = (MMRESULT)MSACM_Message(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM)&paddw,  0);
 
 	acmDriverClose(acmDrvr, 0);
+        memcpy(padd, &paddw, min(padd->cbStruct, sizeof(*padd)));
     }
 
     return mmr;
@@ -216,15 +233,15 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 {
     PWINE_ACMOBJ pao;
 
-    if (!phadid)
-	return MMSYSERR_INVALPARAM;
-
     if (fdwDriverID)
 	return MMSYSERR_INVALFLAG;
 
     pao = MSACM_GetObj(hao, WINE_ACMOBJ_DONTCARE);
     if (!pao)
 	return MMSYSERR_INVALHANDLE;
+
+    if (!phadid)
+        return MMSYSERR_INVALPARAM;
 
     *phadid = (HACMDRIVERID) pao->pACMDriverID;
 

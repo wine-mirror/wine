@@ -411,6 +411,12 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
     ACMFORMATDETAILSW		afdw;
     struct MSACM_FormatEnumWtoA_Instance afei;
 
+    if (!pafda)
+        return MMSYSERR_INVALPARAM;
+
+    if (pafda->cbStruct < sizeof(*pafda))
+        return MMSYSERR_INVALPARAM;
+
     memset(&afdw, 0, sizeof(afdw));
     afdw.cbStruct = sizeof(afdw);
     afdw.dwFormatIndex = pafda->dwFormatIndex;
@@ -489,7 +495,11 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
 
-    if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
+    if (!pafd)
+        return MMSYSERR_INVALPARAM;
+
+    if (pafd->cbStruct < sizeof(*pafd))
+        return MMSYSERR_INVALPARAM;
 
     if (fdwEnum & (ACM_FORMATENUMF_WFORMATTAG|ACM_FORMATENUMF_NCHANNELS|
 		   ACM_FORMATENUMF_NSAMPLESPERSEC|ACM_FORMATENUMF_WBITSPERSAMPLE|
