@@ -708,7 +708,11 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 				   This->s.palette);
 
 #ifdef HAVE_LIBXXSHM
-    if (This->s.ddraw->e.xlib.xshm_active)
+    if (This->s.ddraw->e.xlib.xshm_active) {
+      int compl = This->s.ddraw->e.xlib.xshm_compl;
+      if (compl)
+        X11DRV_EVENT_WaitShmCompletion( compl );
+      This->s.ddraw->e.xlib.xshm_compl = X11DRV_EVENT_PrepareShmCompletion( This->s.ddraw->d.drawable );
       TSXShmPutImage(display,
 		     This->s.ddraw->d.drawable,
 		     DefaultGCOfScreen(X11DRV_GetXScreen()),
@@ -716,7 +720,8 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 		     0, 0, 0, 0,
 		     This->t.xlib.image->width,
 		     This->t.xlib.image->height,
-		     False);
+		     True);
+    }
     else
 #endif
 	TSXPutImage(		display,
@@ -5027,8 +5032,10 @@ static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUn
 
 #ifdef HAVE_LIBXXSHM
 	/* Test if XShm is available. */
-	if (((*ilplpDD)->e.xlib.xshm_active = DDRAW_XSHM_Available()))
+	if (((*ilplpDD)->e.xlib.xshm_active = DDRAW_XSHM_Available())) {
+	  (*ilplpDD)->e.xlib.xshm_compl = 0;
 	  TRACE("Using XShm extension.\n");
+	}
 #endif
 	
 	return DD_OK;

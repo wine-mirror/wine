@@ -16,6 +16,7 @@ XChangeGC
 XChangeKeyboardControl
 XChangeProperty
 XChangeWindowAttributes
+XCheckTypedEvent
 XCheckTypedWindowEvent
 XCheckWindowEvent
 XClipBox

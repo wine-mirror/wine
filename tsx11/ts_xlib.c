@@ -422,6 +422,17 @@ int  TSXChangeWindowAttributes(Display* a0, Window a1, unsigned long a2, XSetWin
   return r;
 }
 
+int   TSXCheckTypedEvent(Display* a0, int a1, XEvent* a2)
+{
+  int   r;
+  TRACE("Call XCheckTypedEvent\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XCheckTypedEvent(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XCheckTypedEvent\n");
+  return r;
+}
+
 int   TSXCheckTypedWindowEvent(Display* a0, Window a1, int a2, XEvent* a3)
 {
   int   r;

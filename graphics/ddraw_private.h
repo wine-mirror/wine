@@ -81,7 +81,7 @@ struct _dga_directdrawdata
 struct _xlib_directdrawdata
 {
 #ifdef HAVE_LIBXXSHM
-    int xshm_active;
+    int xshm_active, xshm_compl;
 #endif /* defined(HAVE_LIBXXSHM) */
     
     /* are these needed for anything? (draw_surf is the active surface)

@@ -469,4 +469,7 @@ extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 
+extern int X11DRV_EVENT_PrepareShmCompletion( Drawable dw );
+extern void X11DRV_EVENT_WaitShmCompletion( int compl );
+
 #endif  /* __WINE_X11DRV_H */

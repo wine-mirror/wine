@@ -14,6 +14,9 @@
 #include "ts_xlib.h"
 #include "ts_xresource.h"
 #include "ts_xutil.h"
+#ifdef HAVE_LIBXXSHM
+#include "ts_xshm.h"
+#endif
 
 #include <assert.h>
 #include <string.h>
@@ -102,6 +105,11 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 static void EVENT_MapNotify( HWND pWnd, XMapEvent *event );
 static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 
+#ifdef HAVE_LIBXXSHM
+static void EVENT_ShmCompletion( XShmCompletionEvent *event );
+static int ShmCompletionType;
+#endif
+
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event );
 */
@@ -121,6 +129,10 @@ static BOOL in_transition = FALSE; /* This is not used as for today */
  */
 BOOL X11DRV_EVENT_Init(void)
 {
+#ifdef HAVE_LIBXXSHM
+    ShmCompletionType = XShmGetEventBase( display ) + ShmCompletion;
+#endif
+
     /* Install the X event processing callback */
     SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), 
                                            GENERIC_READ | SYNCHRONIZE ),
@@ -150,7 +162,7 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 {
     XEvent event;
   
-    TRACE_(event)( "called.\n" );
+    TRACE_(event)( "called (thread %lx).\n", GetCurrentThreadId() );
 
     EnterCriticalSection( &X11DRV_CritSection );
     while ( XPending( display ) )
@@ -211,6 +223,13 @@ static void EVENT_ProcessEvent( XEvent *event )
     case ReparentNotify:
       return;
   }
+
+#ifdef HAVE_LIBXXSHM
+  if (event->type == ShmCompletionType) {
+    EVENT_ShmCompletion( (XShmCompletionEvent*)event );
+    return;
+  }
+#endif
       
   if ( TSXFindContext( display, event->xany.window, winContext,
 		       (char **)&hWnd ) != 0) {
@@ -373,6 +392,7 @@ static void EVENT_ProcessEvent( XEvent *event )
 	   event_names[event->type], hWnd );
       break;
     }
+    TRACE_(event)( "returns.\n" );
 }
 
 /***********************************************************************
@@ -1779,5 +1799,97 @@ INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type)
 
   return prev;
 }
+
+#ifdef HAVE_LIBXXSHM
+
+/*
+Normal XShm operation:
+
+X11           service thread    app thread
+------------- ----------------- ------------------------
+              (idle)            ddraw calls XShmPutImage
+(copies data)                   (waiting for shm_event)
+ShmCompletion ->                (waiting for shm_event)
+(idle)        signal shm_event ->
+              (idle)            returns to app
+
+However, this situation can occur for some reason:
+
+X11           service thread    app thread
+------------- ----------------- ------------------------
+Expose ->
+              WM_ERASEBKGND? ->
+              (waiting for app) ddraw calls XShmPutImage
+(copies data) (waiting for app) (waiting for shm_event)
+ShmCompletion (waiting for app) (waiting for shm_event)
+(idle)        DEADLOCK          DEADLOCK
+
+which is why I also wait for shm_read and do XCheckTypedEvent()
+calls in the wait loop. This results in:
+
+X11           service thread    app thread
+------------- ----------------- ------------------------
+ShmCompletion (waiting for app) waking up on shm_read
+(idle)        (waiting for app) XCheckTypedEvent() -> signal shm_event
+              (waiting for app) returns
+              (idle)
+*/
+   
+/* FIXME: this is not pretty */
+static Drawable shm_draw = 0;
+static HANDLE shm_event = 0, shm_read = 0;
+
+static void EVENT_ShmCompletion( XShmCompletionEvent *event )
+{
+  TRACE_(event)("Got ShmCompletion for drawable %ld (time %ld)\n", event->drawable, GetTickCount() );
+  if (event->drawable == shm_draw) {
+    HANDLE event = shm_event;
+    shm_draw = 0;
+    shm_event = 0;
+    SetEvent(event);
+    TRACE_(event)("Event object triggered\n" );
+  } else ERR_(event)("Got ShmCompletion for unknown drawable %ld\n", event->drawable );
+}
+
+int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
+{
+  if (shm_draw) {
+    ERR_(event)("Multiple ShmCompletion requests not implemented\n");
+    return 0;
+  }
+  TRACE_(event)("Preparing ShmCompletion (%d) wait for drawable %ld (time %ld)\n", ShmCompletionType, dw, GetTickCount() );
+  shm_draw = dw;
+  if (!shm_event)
+    /* use manual reset just in case */
+    shm_event = ConvertToGlobalHandle( CreateEventA( NULL, TRUE, FALSE, NULL ) );
+  if (!shm_read)
+    shm_read = ConvertToGlobalHandle( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE ) );
+  return shm_event;
+}
+
+void X11DRV_EVENT_WaitShmCompletion( int compl )
+{
+  if (!compl) return;
+  TRACE_(event)("Waiting for ShmCompletion (%d) (thread %lx) (time %ld)\n", ShmCompletionType, GetCurrentThreadId(), GetTickCount() );
+  /* already triggered? */
+  if ( WaitForSingleObject( compl, 0 ) != WAIT_OBJECT_0 ) {
+    /* nope, may need to poll X event queue, in case the service thread is blocked */
+    XEvent event;
+    HANDLE hnd[2];
+
+    hnd[0] = compl;
+    hnd[1] = shm_read;
+    do {
+      /* check X event queue */
+      if (TSXCheckTypedEvent( display, ShmCompletionType, &event)) {
+        EVENT_ProcessEvent( &event );
+      }
+    } while ( WaitForMultipleObjects(2, hnd, FALSE, INFINITE) > WAIT_OBJECT_0 );
+  }
+  ResetEvent(compl); /* manual reset */
+  TRACE_(event)("Wait complete (time %ld)\n", GetTickCount() );
+}
+
+#endif
 
 #endif /* !defined(X_DISPLAY_MISSING) */

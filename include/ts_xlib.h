@@ -53,6 +53,7 @@ extern int  TSXChangeGC(Display*, GC, unsigned long, XGCValues*);
 extern int  TSXChangeKeyboardControl(Display*, unsigned long, XKeyboardControl*);
 extern int  TSXChangeProperty(Display*, Window, Atom, Atom, int, int, const  unsigned char*, int);
 extern int  TSXChangeWindowAttributes(Display*, Window, unsigned long, XSetWindowAttributes*);
+extern int   TSXCheckTypedEvent(Display*, int, XEvent*);
 extern int   TSXCheckTypedWindowEvent(Display*, Window, int, XEvent*);
 extern int   TSXCheckWindowEvent(Display*, Window, long, XEvent*);
 extern int  TSXConvertSelection(Display*, Atom, Atom, Atom, Window, Time);
