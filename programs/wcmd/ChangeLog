@@ -1,3 +1,7 @@
+v0.15 - 31 October 2000
+-Running console mode programs the interpreter now waits for the
+program to exit before issuing the next prompt.
+
 v0.14 - 1 August 2000
 Errorlevel support added
 Most errors reported via FormatMessage()

@@ -25,7 +25,7 @@ DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
-char version_string[] = "WCMD Version 0.14\n\n";
+char version_string[] = "WCMD Version 0.15\n\n";
 char anykey[] = "Press any key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
@@ -339,8 +339,11 @@ void WCMD_run_program (char *command) {
 
 STARTUPINFO st;
 PROCESS_INFORMATION pe;
+SHFILEINFO psfi;
+DWORD console;
 BOOL status;
 HANDLE h;
+HINSTANCE hinst;
 char filetorun[MAX_PATH];
 
   WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
@@ -371,6 +374,16 @@ char filetorun[MAX_PATH];
 
 	/* No batch file found, assume executable */
 
+  hinst = FindExecutable (param1, NULL, filetorun);
+  if ((int)hinst < 32) {
+    WCMD_print_error ();
+    return;
+  }
+  console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+  if (!console) {
+    WCMD_print_error ();
+    return;
+  }
   ZeroMemory (&st, sizeof(STARTUPINFO));
   st.cb = sizeof(STARTUPINFO);
   status = CreateProcess (NULL, command, NULL, NULL, FALSE,
@@ -378,6 +391,7 @@ char filetorun[MAX_PATH];
   if (!status) {
     WCMD_print_error ();
   }
+  if (!HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
   GetExitCodeProcess (pe.hProcess, &errorlevel);
   if (errorlevel == STILL_ACTIVE) errorlevel = 0;
 }
