@@ -254,7 +254,7 @@ ULARGE_INTEGER byte_count, file_size;
       dir_count++;
 
       if (!bare) {
-         WCMD_output ("%8s  %8s   <DIR>        %s\n",
+         WCMD_output ("%10s  %8s  <DIR>         %s\n",
       	     datestring, timestring, (fd+i)->cFileName);
          linesout++;
       } else {
@@ -276,7 +276,7 @@ ULARGE_INTEGER byte_count, file_size;
 #endif
       byte_count.QuadPart += file_size.QuadPart;
 	  if (!bare) {
-         WCMD_output ("%8s  %8s    %10s  %s\n",
+         WCMD_output ("%10s  %8s    %10s  %s\n",
      	     datestring, timestring,
 	         WCMD_filesize64(file_size.QuadPart), (fd+i)->cFileName);
          linesout++;

@@ -432,7 +432,7 @@ char *p, *q;
 
   status = GetEnvironmentVariable ("PROMPT", prompt_string, sizeof(prompt_string));
   if ((status == 0) || (status > sizeof(prompt_string))) {
-    lstrcpy (prompt_string, "$N$G");
+    lstrcpy (prompt_string, "$P$G");
   }
   p = prompt_string;
   q = out_string;
