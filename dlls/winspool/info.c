@@ -144,13 +144,12 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
 #ifdef HAVE_CUPS_CUPS_H
 BOOL
 CUPS_LoadPrinters(void) {
-    typeof(cupsGetPrinters) *pcupsGetPrinters = NULL;
-    typeof(cupsGetDefault) *pcupsGetDefault = NULL;
-    typeof(cupsGetPPD) *pcupsGetPPD = NULL;
-    char		**printers;
-    int			i,nrofdests,hadprinter = FALSE;
-    PRINTER_INFO_2A	pinfo2a;
-    const char*		def;
+    typeof(cupsGetDests) *pcupsGetDests = NULL;
+    typeof(cupsGetPPD)   *pcupsGetPPD = NULL;
+    int	                  i, nrofdests;
+    BOOL                  hadprinter = FALSE;
+    cups_dest_t          *dests;
+    PRINTER_INFO_2A       pinfo2a;
     void *cupshandle = NULL;
     const  char *ppd;
     char   *port,*devline;
@@ -161,25 +160,22 @@ CUPS_LoadPrinters(void) {
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
     if (!cupshandle) 
 	return FALSE;
+    TRACE("loaded %s\n", SONAME_LIBCUPS);
 
 #define DYNCUPS(x) 					\
     	p##x = wine_dlsym(cupshandle, #x, NULL,0);	\
 	if (!p##x) return FALSE;
 
-    DYNCUPS(cupsGetDefault);
     DYNCUPS(cupsGetPPD);
-    DYNCUPS(cupsGetPrinters);
+    DYNCUPS(cupsGetDests);
 #undef DYNCUPS
 
-    def = pcupsGetDefault();
 
-    if (def && !strcmp(def,"none")) /* CUPS has "none" for no default printer */
-    	def = NULL;
-
-    nrofdests = pcupsGetPrinters(&printers);
+    nrofdests = pcupsGetDests(&dests);
+    TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
         /* First check that the printer doesn't exist already */
-        pwstrNameW = asciitounicode(&lpszNameW, printers[i]);
+        pwstrNameW = asciitounicode(&lpszNameW, dests[i].name);
         if (RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) ==
             ERROR_SUCCESS) {
              if (RegOpenKeyW(hkeyPrinters, pwstrNameW, &hkeyPrinter) ==
@@ -188,7 +184,10 @@ CUPS_LoadPrinters(void) {
                   RegCloseKey(hkeyPrinter);
                   RegCloseKey(hkeyPrinters);
                   RtlFreeUnicodeString(&lpszNameW);
-                  TRACE("Printer %s already known. Skipping detection\n", printers[i]);
+                  hadprinter = TRUE;
+                  if(dests[i].is_default)
+                      WINSPOOL_SetDefaultPrinter(dests[i].name, dests[i].name, TRUE);
+                  TRACE("Printer %s already known. Skipping detection\n", dests[i].name);
                   continue;
              }
              RegCloseKey(hkeyPrinters);
@@ -196,39 +195,25 @@ CUPS_LoadPrinters(void) {
         RtlFreeUnicodeString(&lpszNameW);
 
         /* OK, we haven't seen this one yet. Request PPD for it */
-	ppd = pcupsGetPPD(printers[i]);
+	ppd = pcupsGetPPD(dests[i].name);
 	if (!ppd) {
-	    WARN("No ppd file for %s.\n",printers[i]);
+	    WARN("No ppd file for %s.\n",dests[i].name);
 	    /* If this was going to be the default printer,
 	     * forget it and use another one.
 	     */
-	    if (def && !strcmp(def,printers[i]))
-	        def = NULL;
 	    continue;
 	}
 	unlink(ppd);
 
-	hadprinter = TRUE;
-
-	if (def && !strcmp(def,printers[i]))
-	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
-
-	/* The default printer has no PPD file, just use the first one
-	 * which has one.
-	 */
-	if (!def) {
-	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
-		def = printers[i];
-	}
 	memset(&pinfo2a,0,sizeof(pinfo2a));
-	pinfo2a.pPrinterName	= printers[i];
+	pinfo2a.pPrinterName	= dests[i].name;
 	pinfo2a.pDatatype	= "RAW";
 	pinfo2a.pPrintProcessor	= "WinPrint";
 	pinfo2a.pDriverName	= "PS Driver";
 	pinfo2a.pComment	= "WINEPS Printer using CUPS";
 	pinfo2a.pLocation	= "<physical location of printer>";
-	port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(printers[i])+1);
-	sprintf(port,"LPR:%s",printers[i]);
+	port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(dests[i].name)+1);
+	sprintf(port,"LPR:%s",dests[i].name);
 	pinfo2a.pPortName	= port;
 	pinfo2a.pParameters	= "<parameters?>";
 	pinfo2a.pShareName	= "<share name?>";
@@ -236,14 +221,18 @@ CUPS_LoadPrinters(void) {
 
 	devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
 	sprintf(devline,"WINEPS,%s",port);
-	WriteProfileStringA("devices",printers[i],devline);
+	WriteProfileStringA("devices",dests[i].name,devline);
 	HeapFree(GetProcessHeap(),0,devline);
 
 	if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
 	    if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-	        ERR("printer '%s' not added by AddPrinterA (error %ld)\n",printers[i],GetLastError());
+	        ERR("printer '%s' not added by AddPrinterA (error %ld)\n",dests[i].name,GetLastError());
 	}
 	HeapFree(GetProcessHeap(),0,port);
+
+        hadprinter = TRUE;
+        if (dests[i].is_default)
+            WINSPOOL_SetDefaultPrinter(dests[i].name, dests[i].name, TRUE);
     }
     wine_dlclose(cupshandle, NULL, 0);
     return hadprinter;
@@ -311,7 +300,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
 	return FALSE;
 
     if (isfirst) /* set first entry as default */
-	    WINSPOOL_SetDefaultPrinter(devname,name,FALSE);
+	    WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
 
     memset(&pinfo2a,0,sizeof(pinfo2a));
     pinfo2a.pPrinterName	= devname;
@@ -384,8 +373,11 @@ PRINTCAP_LoadPrinters(void) {
 
 static inline DWORD set_reg_szW(HKEY hkey, WCHAR *keyname, WCHAR *value)
 {
-    return RegSetValueExW(hkey, keyname, 0, REG_SZ, (LPBYTE)value,
+    if (value)
+        return RegSetValueExW(hkey, keyname, 0, REG_SZ, (LPBYTE)value,
                    lstrlenW(value) * sizeof(WCHAR));
+    else
+        return ERROR_FILE_NOT_FOUND;
 }
 
 void
@@ -1159,34 +1151,44 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
      * one in case it is not there, so we are ok).
      */
     size = DocumentPropertiesW(0, 0, pi->pPrinterName, NULL, NULL, 0);
+
     if(size < 0) {
         FIXME("DocumentPropertiesW on printer '%s' fails\n", debugstr_w(pi->pPrinterName));
 	size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode)
         dmW = pi->pDevMode;
-    else {
-	dmW = HeapAlloc(GetProcessHeap(), 0, size);
-	dmW->dmSize = size;
-	if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) {
-	    ERR("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
-	    SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
-	    return 0;
-	}
-	/* set devmode to printer name */
-	strcpyW(dmW->dmDeviceName,pi->pPrinterName);
+    else 
+    {
+	    dmW = HeapAlloc(GetProcessHeap(), 0, size);
+        ZeroMemory(dmW,size);
+	    dmW->dmSize = size;
+	    if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) 
+        {
+	        WARN("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
+            HeapFree(GetProcessHeap(),0,dmW);
+            dmW=NULL;
+	    }
+        else
+        {
+	        /* set devmode to printer name */
+	        strcpyW(dmW->dmDeviceName,pi->pPrinterName);
+        }
     }
 
     /* Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
        and we support these drivers.  NT writes DEVMODEW so somehow
        we'll need to distinguish between these when we support NT
        drivers */
-    dmA = DEVMODEdupWtoA(GetProcessHeap(), dmW);
-    RegSetValueExA(hkeyPrinter, "Default DevMode", 0, REG_BINARY, (LPBYTE)dmA,
-		   dmA->dmSize + dmA->dmDriverExtra);
-    HeapFree(GetProcessHeap(), 0, dmA);
-    if(!pi->pDevMode)
-        HeapFree(GetProcessHeap(), 0, dmW);
+    if (dmW)
+    {
+        dmA = DEVMODEdupWtoA(GetProcessHeap(), dmW);
+        RegSetValueExA(hkeyPrinter, "Default DevMode", 0, REG_BINARY, 
+                       (LPBYTE)dmA, dmA->dmSize + dmA->dmDriverExtra);
+        HeapFree(GetProcessHeap(), 0, dmA);
+        if(!pi->pDevMode)
+            HeapFree(GetProcessHeap(), 0, dmW);
+    }
     set_reg_szW(hkeyPrinter, DescriptionW, pi->pComment);
     set_reg_szW(hkeyPrinter, LocationW, pi->pLocation);
     set_reg_szW(hkeyPrinter, NameW, pi->pPrinterName);
@@ -1597,7 +1599,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if ((ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)) sz = 0;
     if (sz < sizeof(DEVMODEA))
     {
-        ERR("corrupted registry for %s ( size %ld)\n",debugstr_w(ValueName),sz);
+        TRACE("corrupted registry for %s ( size %ld)\n",debugstr_w(ValueName),sz);
 	return FALSE;
     }
     /* ensures that dmSize is not erratically bogus if registry is invalid */
@@ -1703,8 +1705,6 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
     }
     else
     {
-	MESSAGE( "no DevMode in registry. please setup your printer again.\n"
-		 "use the default hard-coded DevMode(wineps/A4/300dpi).\n" );
 	WINSPOOL_GetDefaultDevMode(ptr, left, &size, unicode);
         if(space && size <= left) {
 	    pi2->pDevMode = (LPDEVMODEW)ptr;
@@ -2015,7 +2015,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     if (dwType & PRINTER_ENUM_CONNECTIONS) {
         FIXME("We dont handle PRINTER_ENUM_CONNECTIONS\n");
 	dwType &= ~PRINTER_ENUM_CONNECTIONS; /* we dont handle that */
-	dwType |= PRINTER_ENUM_LOCAL;
+        if(!dwType) return TRUE;
     }
 
     if (!((dwType & PRINTER_ENUM_LOCAL) || (dwType & PRINTER_ENUM_NAME))) {
