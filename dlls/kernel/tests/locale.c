@@ -141,7 +141,7 @@ void TestGetTimeFormatA()
   /* test out TIME_NOMINUTESORSECONDS */
   strcpy(Expected, "8 AM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, NULL, buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -149,7 +149,7 @@ void TestGetTimeFormatA()
   /* test out TIME_NOMINUTESORSECONDS with complex format strings */
   strcpy(Expected, "4");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOMINUTESORSECONDS, &curtime, "m1s2m3s4", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOMINUTESORSECONDS, &curtime, "m1s2m3s4", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -158,7 +158,7 @@ void TestGetTimeFormatA()
   /************************************/
   /* test out TIME_NOSECONDS */
   strcpy(Expected, "8:56 AM");
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS, &curtime, NULL, buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, NULL, buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -166,7 +166,7 @@ void TestGetTimeFormatA()
   /* test out TIME_NOSECONDS with a format string of "h:m:s tt" */
   strcpy(Expected, "8:56 AM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS, &curtime, "h:m:s tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h:m:s tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -176,7 +176,7 @@ void TestGetTimeFormatA()
   /* "hD1D2...mD3D4...tt" */
   strcpy(Expected, "8.@:56.@:AM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS, &curtime, "h.@:m.@:s.@:tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "h.@:m.@:s.@:tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -185,7 +185,7 @@ void TestGetTimeFormatA()
   /* expect to see only "3" */
   strcpy(Expected, "3");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS, &curtime, "s1s2s3", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, "s1s2s3", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -195,7 +195,7 @@ void TestGetTimeFormatA()
   /* test out time marker(AM/PM) behavior */
   strcpy(Expected, "A/AM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "t/tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -204,7 +204,7 @@ void TestGetTimeFormatA()
   curtime.wHour = 13;
   strcpy(Expected, "P/PM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "t/tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "t/tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -215,7 +215,7 @@ void TestGetTimeFormatA()
   /*      formatting character until the previous or next formatting character */
   strcpy(Expected, "156");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOTIMEMARKER, &curtime, "h1t2tt3m", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "h1t2tt3m", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -224,7 +224,7 @@ void TestGetTimeFormatA()
   /* test out TIME_FORCE24HOURFORMAT */
   strcpy(Expected, "13:56:13 PM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -233,7 +233,7 @@ void TestGetTimeFormatA()
   /* is not added under TIME_FORCE24HOURFORMAT */
   strcpy(Expected, "13:56:13");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, "h:m:s", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of %s", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -250,7 +250,8 @@ void TestGetTimeFormatA()
   curtime.wSecond = 3;
   strcpy(Expected, "2 02 14 14 5 05 3 03 P PM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h hh H HH m mm s ss t tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h hh H HH m mm s ss t tt", 
+buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -260,7 +261,7 @@ void TestGetTimeFormatA()
   curtime.wHour = 0;
   strcpy(Expected, "12/0/12/00");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h/H/hh/HH", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h/H/hh/HH", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -268,7 +269,7 @@ void TestGetTimeFormatA()
   /* test for LOCALE_NOUSEROVERRIDE set, lpFormat must be NULL */
   strcpy(Expected, "0:5:3 AM");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, LOCALE_NOUSEROVERRIDE, &curtime, "h:m:s tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, LOCALE_NOUSEROVERRIDE, &curtime, "h:m:s tt", buffer, sizeof(buffer));
   /* NOTE: we expect this to FAIL */
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (ret == 0, "GetTimeFormat succeeded instead of failing for LOCALE_NOUSEROVERRIDE and a non-null lpFormat\n");
@@ -282,7 +283,7 @@ void TestGetTimeFormatA()
   curtime.wSecond = 13; curtime.wMilliseconds = 22;
   strcpy(Expected, "8:08:08 8:08:08 56:56:56 M:MM:MMM 13:13:13 S:SS:SSS");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:hh:hhh H:HH:HHH m:mm:mmm M:MM:MMM s:ss:sss S:SS:SSS", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -292,7 +293,7 @@ void TestGetTimeFormatA()
   /* NOTE: The count includes the terminating null. */
   strcpy(buffer, "THIS SHOULD NOT BE MODIFIED");
   strcpy(Expected, "THIS SHOULD NOT BE MODIFIED");
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h", buffer, 0);
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h", buffer, 0);
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, 2, "GetTimeFormat", "%d"); /* we expect to require two characters of space from "h" */
@@ -301,7 +302,7 @@ void TestGetTimeFormatA()
   /* the same location in the output string */
   strcpy(Expected, "8 h 8 H 08 HH 56 m 13 s A t AM tt");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -310,7 +311,7 @@ void TestGetTimeFormatA()
   /* we use an invalid formatting string of "'''" instead of "''''" */
   strcpy(Expected, "'");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "'''", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -318,7 +319,7 @@ void TestGetTimeFormatA()
   /* test that msdn suggested single quotation usage works as expected */
   strcpy(Expected, "'");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "''''", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "''''", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -326,7 +327,7 @@ void TestGetTimeFormatA()
   /* test for more normal use of single quotation mark */
   strcpy(Expected, "08");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "''HHHHHH", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "''HHHHHH", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -334,7 +335,7 @@ void TestGetTimeFormatA()
   /* and test for normal use of the single quotation mark */
   strcpy(Expected, "'HHHHHH");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "'''HHHHHH'", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH'", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -342,7 +343,7 @@ void TestGetTimeFormatA()
   /* test for more odd use of the single quotation mark */
   strcpy(Expected, "'HHHHHH");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "'''HHHHHH", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'''HHHHHH", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -352,7 +353,7 @@ void TestGetTimeFormatA()
   /* formatting character */
   strcpy(Expected, "");
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOTIMEMARKER, &curtime, "'123'tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, TIME_NOTIMEMARKER, &curtime, "'123'tt", buffer, sizeof(buffer));
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok (cmp == 0, "GetTimeFormat got '%s' instead of '%s'", buffer, Expected);
   eq (ret, lstrlenA(Expected)+1, "GetTimeFormat", "%d");
@@ -361,7 +362,7 @@ void TestGetTimeFormatA()
   /* non-null format and LOCALE_NOUSEROVERRIDE for flags */
   SetLastError(NO_ERROR); /* reset last error value */
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, LOCALE_NOUSEROVERRIDE, &curtime, "'123'tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, LOCALE_NOUSEROVERRIDE, &curtime, "'123'tt", buffer, sizeof(buffer));
   error = GetLastError();
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok ((ret == 0) && (error == ERROR_INVALID_FLAGS), "GetTimeFormat got ret of '%d' and error of '%d'", ret, error);
@@ -371,7 +372,7 @@ void TestGetTimeFormatA()
   curtime.wHour = 25;
   SetLastError(NO_ERROR); /* reset last error value */
   memset(buffer, '0', sizeof(buffer));
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "'123'tt", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "'123'tt", buffer, sizeof(buffer));
   error = GetLastError();
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok ((ret == 0) && (error == ERROR_INVALID_PARAMETER), "GetTimeFormat got ret of '%d' and error of '%d'", ret, error);
@@ -382,7 +383,7 @@ void TestGetTimeFormatA()
   curtime.wMonth = 60; /* very invalid wMonth */
   strcpy(Expected, "12:56:13");
   SetLastError(NO_ERROR); /* reset last error value */
-  ret = GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &curtime, "h:m:s", buffer, sizeof(buffer));
+  ret = GetTimeFormatA(lcid, 0, &curtime, "h:m:s", buffer, sizeof(buffer));
   error = GetLastError();
   cmp = strncmp(buffer, Expected, BUFFER_SIZE);
   ok ((ret == lstrlenA(Expected)+1) && (error == NO_ERROR), "GetTimeFormat got ret of '%d' and error of '%d' and a buffer of '%s'", ret, error, buffer);
@@ -531,10 +532,10 @@ void TestGetDateFormatW()
 
     /* 1b The buffer can only be null if the count is zero */
     /* For the record other bad pointers result in a page fault (Win98) */
-    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, 0, NULL, format, NULL, COUNTOF(buffer));
+    ret = GetDateFormatW (lcid, 0, NULL, format, NULL, COUNTOF(buffer));
     error = ret ? 0 : GetLastError();
     ok (ret == 0 && error == ERROR_INVALID_PARAMETER, "GetDateFormatW did not detect null buffer pointer.");
-    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, 0, NULL, format, NULL, 0);
+    ret = GetDateFormatW (lcid, 0, NULL, format, NULL, 0);
     error = ret ? 0 : GetLastError();
     ok (ret != 0 && error == 0, "GetDateFormatW did not permit null buffer pointer when counting.");
 
