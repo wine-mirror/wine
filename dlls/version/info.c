@@ -152,9 +152,9 @@ typedef struct
     /* DWORD aligned */
     BYTE  Value[];
     /* DWORD aligned */
-    VS_VERSION_INFO16 Children[];
+    VS_VERSION_INFO_STRUCT16 Children[];
 #endif
-} VS_VERSION_INFO16;
+} VS_VERSION_INFO_STRUCT16;
 
 typedef struct
 {
@@ -166,12 +166,12 @@ typedef struct
     /* DWORD aligned */
     BYTE  Value[];
     /* DWORD aligned */
-    VS_VERSION_INFO32 Children[];
+    VS_VERSION_INFO_STRUCT32 Children[];
 #endif
-} VS_VERSION_INFO32;
+} VS_VERSION_INFO_STRUCT32;
 
 #define VersionInfoIs16( ver ) \
-    ( ((VS_VERSION_INFO16 *)ver)->szKey[0] >= ' ' )
+    ( ((VS_VERSION_INFO_STRUCT16 *)ver)->szKey[0] >= ' ' )
 
 #define VersionInfo16_Value( ver )  \
     (LPBYTE)( ((DWORD)((ver)->szKey) + (lstrlen32A((ver)->szKey)+1) + 3) & ~3 )
@@ -179,31 +179,31 @@ typedef struct
     (LPBYTE)( ((DWORD)((ver)->szKey) + 2*(lstrlen32W((ver)->szKey)+1) + 3) & ~3 )
 
 #define VersionInfo16_Children( ver )  \
-    (VS_VERSION_INFO16 *)( VersionInfo16_Value( ver ) + \
+    (VS_VERSION_INFO_STRUCT16 *)( VersionInfo16_Value( ver ) + \
                            ( ( (ver)->wValueLength + 3 ) & ~3 ) )
 #define VersionInfo32_Children( ver )  \
-    (VS_VERSION_INFO32 *)( VersionInfo32_Value( ver ) + \
+    (VS_VERSION_INFO_STRUCT32 *)( VersionInfo32_Value( ver ) + \
                            ( ( (ver)->wValueLength * \
                                ((ver)->bText? 2 : 1) + 3 ) & ~3 ) )
 
 #define VersionInfo16_Next( ver ) \
-    (VS_VERSION_INFO16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
+    (VS_VERSION_INFO_STRUCT16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
 #define VersionInfo32_Next( ver ) \
-    (VS_VERSION_INFO32 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
+    (VS_VERSION_INFO_STRUCT32 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
 
 /***********************************************************************
  *           ConvertVersionInfo32To16        [internal]
  */
-void ConvertVersionInfo32To16( VS_VERSION_INFO32 *info32, 
-                               VS_VERSION_INFO16 *info16 )
+void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32, 
+                               VS_VERSION_INFO_STRUCT16 *info16 )
 {
     /* Copy data onto local stack to prevent overwrites */
     WORD wLength = info32->wLength;
     WORD wValueLength = info32->wValueLength;
     WORD bText = info32->bText;
     LPBYTE lpValue = VersionInfo32_Value( info32 );
-    VS_VERSION_INFO32 *child32 = VersionInfo32_Children( info32 );
-    VS_VERSION_INFO16 *child16;
+    VS_VERSION_INFO_STRUCT32 *child32 = VersionInfo32_Children( info32 );
+    VS_VERSION_INFO_STRUCT16 *child16;
 
     TRACE( ver, "Converting %p to %p\n", info32, info16 );
     TRACE( ver, "wLength %d, wValueLength %d, bText %d, value %p, child %p\n",
@@ -243,7 +243,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO32 *info32,
     child16 = VersionInfo16_Children( info16 );
     while ( (DWORD)child32 < (DWORD)info32 + wLength )
     {
-        VS_VERSION_INFO32 *nextChild = VersionInfo32_Next( child32 );
+        VS_VERSION_INFO_STRUCT32 *nextChild = VersionInfo32_Next( child32 );
 
         ConvertVersionInfo32To16( child32, child16 );
 
@@ -285,9 +285,9 @@ DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
     if ( handle ) *handle = offset;
     
     if ( VersionInfoIs16( buf ) )
-        vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO16 *)buf );
+        vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)buf );
     else
-        vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO32 *)buf );
+        vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO_STRUCT32 *)buf );
 
     if ( vffi->dwSignature != VS_FFI_SIGNATURE )
     {
@@ -296,8 +296,8 @@ DWORD WINAPI GetFileVersionInfoSize32A( LPCSTR filename, LPDWORD handle )
         return 0;
     }
 
-    if ( ((VS_VERSION_INFO16 *)buf)->wLength < len )
-        len = ((VS_VERSION_INFO16 *)buf)->wLength;
+    if ( ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength < len )
+        len = ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength;
 
     if ( TRACE_ON( ver ) )
         print_vffi_debug( vffi );
@@ -330,13 +330,13 @@ DWORD WINAPI GetFileVersionInfo32A( LPCSTR filename, DWORD handle,
                                        handle, datasize, data ) )
         return FALSE;
 
-    if (    datasize >= sizeof(VS_VERSION_INFO16)
-         && datasize >= ((VS_VERSION_INFO16 *)data)->wLength  
+    if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
+         && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength  
          && !VersionInfoIs16( data ) )
     {
         /* convert resource from PE format to NE format */
-        ConvertVersionInfo32To16( (VS_VERSION_INFO32 *)data, 
-                                  (VS_VERSION_INFO16 *)data );
+        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data, 
+                                  (VS_VERSION_INFO_STRUCT16 *)data );
     }
 
     return TRUE;
@@ -359,8 +359,8 @@ DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
                                  handle, datasize, data ) )
         retv = FALSE;
 
-    else if (    datasize >= sizeof(VS_VERSION_INFO16)
-              && datasize >= ((VS_VERSION_INFO16 *)data)->wLength 
+    else if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
+              && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength 
               && VersionInfoIs16( data ) )
     {
         ERR( ver, "Cannot access NE resource in %s\n", debugstr_a(fn) );
@@ -375,10 +375,10 @@ DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
 /***********************************************************************
  *           VersionInfo16_FindChild             [internal]
  */
-VS_VERSION_INFO16 *VersionInfo16_FindChild( VS_VERSION_INFO16 *info, 
+VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info, 
                                             LPCSTR szKey, UINT32 cbKey )
 {
-    VS_VERSION_INFO16 *child = VersionInfo16_Children( info );
+    VS_VERSION_INFO_STRUCT16 *child = VersionInfo16_Children( info );
 
     while ( (DWORD)child < (DWORD)info + info->wLength )
     {
@@ -394,10 +394,10 @@ VS_VERSION_INFO16 *VersionInfo16_FindChild( VS_VERSION_INFO16 *info,
 /***********************************************************************
  *           VersionInfo32_FindChild             [internal]
  */
-VS_VERSION_INFO32 *VersionInfo32_FindChild( VS_VERSION_INFO32 *info, 
+VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info, 
                                             LPCWSTR szKey, UINT32 cbKey )
 {
-    VS_VERSION_INFO32 *child = VersionInfo32_Children( info );
+    VS_VERSION_INFO_STRUCT32 *child = VersionInfo32_Children( info );
 
     while ( (DWORD)child < (DWORD)info + info->wLength )
     {
@@ -416,7 +416,7 @@ VS_VERSION_INFO32 *VersionInfo32_FindChild( VS_VERSION_INFO32 *info,
 DWORD WINAPI VerQueryValue32A( LPVOID pBlock, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT32 *puLen )
 {
-    VS_VERSION_INFO16 *info = (VS_VERSION_INFO16 *)pBlock;
+    VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
     if ( !VersionInfoIs16( info ) )
     {
         ERR( ver, "called on PE resource!\n" );
@@ -462,7 +462,7 @@ DWORD WINAPI VerQueryValue32A( LPVOID pBlock, LPCSTR lpSubBlock,
 DWORD WINAPI VerQueryValue32W( LPVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT32 *puLen )
 {
-    VS_VERSION_INFO32 *info = (VS_VERSION_INFO32 *)pBlock;
+    VS_VERSION_INFO_STRUCT32 *info = (VS_VERSION_INFO_STRUCT32 *)pBlock;
     if ( VersionInfoIs16( info ) )
     {
         ERR( ver, "called on NE resource!\n" );
