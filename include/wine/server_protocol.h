@@ -134,29 +134,6 @@ struct wake_up_reply
 
 typedef struct
 {
-    size_t       size;
-    size_t       filename_len;
-    size_t       cmdline_len;
-    size_t       desktop_len;
-    size_t       title_len;
-    int          x;
-    int          y;
-    int          cx;
-    int          cy;
-    int          x_chars;
-    int          y_chars;
-    int          attribute;
-    int          cmd_show;
-    unsigned int flags;
-
-
-
-
-} startup_info_t;
-
-
-typedef struct
-{
     int            sec;
     int            usec;
 } abs_time_t;
@@ -3665,6 +3642,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 122
+#define SERVER_PROTOCOL_VERSION 123
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

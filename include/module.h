@@ -202,7 +202,6 @@ extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 
 /* loader/loadorder.c */
-extern BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename, UINT size );
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,
                                   const WCHAR *path, BOOL win32 );
 extern void MODULE_GetLoadOrderA( enum loadorder_type plo[], const WCHAR *app_name,

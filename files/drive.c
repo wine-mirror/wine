@@ -1449,27 +1449,26 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPWSTR buf )
  * Build the environment array containing the drives' current directories.
  * Resulting pointer must be freed with HeapFree.
  */
-char *DRIVE_BuildEnv(void)
+WCHAR *DRIVE_BuildEnv(void)
 {
     int i, length = 0;
     LPCWSTR cwd[MAX_DOS_DRIVES];
-    char *env, *p;
+    WCHAR *env, *p;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
         if ((cwd[i] = DRIVE_GetDosCwd(i)) && cwd[i][0])
-            length += WideCharToMultiByte(DRIVE_GetCodepage(i), 0,
-                                          cwd[i], -1, NULL, 0, NULL, NULL) + 7;
+            length += strlenW(cwd[i]) + 8;
     }
-    if (!(env = HeapAlloc( GetProcessHeap(), 0, length+1 ))) return NULL;
+    if (!(env = HeapAlloc( GetProcessHeap(), 0, (length+1) * sizeof(WCHAR) ))) return NULL;
     for (i = 0, p = env; i < MAX_DOS_DRIVES; i++)
     {
         if (cwd[i] && cwd[i][0])
         {
             *p++ = '='; *p++ = 'A' + i; *p++ = ':';
             *p++ = '='; *p++ = 'A' + i; *p++ = ':'; *p++ = '\\';
-            WideCharToMultiByte(DRIVE_GetCodepage(i), 0, cwd[i], -1, p, 0x7fffffff, NULL, NULL);
-            p += strlen(p) + 1;
+            strcpyW( p, cwd[i] );
+            p += strlenW(p) + 1;
         }
     }
     *p = 0;

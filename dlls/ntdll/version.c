@@ -248,7 +248,7 @@ static BOOL parse_win_version( HKEY hkey )
 /**********************************************************************
  *         VERSION_Init
  */
-void VERSION_Init( const char *appname )
+void VERSION_Init( const WCHAR *appname )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -275,18 +275,15 @@ void VERSION_Init( const char *appname )
     /* open AppDefaults\\appname\\Version key */
     if (appname && *appname)
     {
-        const char *p;
-        DWORD len;
+        const WCHAR *p;
         WCHAR appversion[MAX_PATH+20];
         BOOL got_win_ver = FALSE;
 
-        if ((p = strrchr( appname, '/' ))) appname = p + 1;
-        if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
         strcpyW( appversion, appdefaultsW );
-        len = strlenW(appversion);
-        RtlMultiByteToUnicodeN( appversion + len, sizeof(appversion) - len*sizeof(WCHAR),
-                                &len, appname, strlen(appname)+1 );
+        strcatW( appversion, appname );
         strcatW( appversion, versionW );
         TRACE( "getting version from %s\n", debugstr_w(appversion) );
         RtlInitUnicodeString( &nameW, appversion );

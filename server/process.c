@@ -95,7 +95,7 @@ struct startup_info
     struct process     *process;      /* created process */
     struct thread      *thread;       /* created thread */
     size_t              data_size;    /* size of startup data */
-    startup_info_t     *data;         /* data for startup info */
+    void               *data;         /* data for startup info */
 };
 
 static void startup_info_dump( struct object *obj, int verbose );
@@ -900,8 +900,7 @@ DECL_HANDLER(new_process)
         !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
         goto done;
 
-    if (!(info->data = mem_alloc( info->data_size ))) goto done;
-    memcpy( info->data, get_req_data(), info->data_size );
+    if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
 
  done:

@@ -147,29 +147,6 @@ struct wake_up_reply
     int   signaled;  /* wait result */
 };
 
-/* structure for process startup info */
-typedef struct
-{
-    size_t       size;         /* size of this structure */
-    size_t       filename_len; /* length of filename */
-    size_t       cmdline_len;  /* length of cmd line */
-    size_t       desktop_len;  /* length of desktop name */
-    size_t       title_len;    /* length of title */
-    int          x;            /* window position */
-    int          y;
-    int          cx;           /* window size */
-    int          cy;
-    int          x_chars;      /* console size */
-    int          y_chars;
-    int          attribute;    /* console attributes */
-    int          cmd_show;     /* main window show mode */
-    unsigned int flags;        /* info flags */
-    /* char filename[...]; */
-    /* char cmdline[...]; */
-    /* char desktop[...]; */
-    /* char title[...]; */
-} startup_info_t;
-
 /* structure for absolute timeouts */
 typedef struct
 {

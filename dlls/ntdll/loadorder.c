@@ -32,8 +32,6 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "file.h"
-#include "module.h"
 #include "ntdll_misc.h"
 
 #include "wine/debug.h"
@@ -475,62 +473,6 @@ static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_t
         lo[n] = LOADORDER_INVALID;
     }
     return ret;
-}
-
-
-/***************************************************************************
- *	MODULE_GetBuiltinPath
- *
- * Get the path of a builtin module when the native file does not exist.
- */
-BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename, UINT size )
-{
-    char *p;
-    BOOL ret = FALSE;
-    UINT len = GetSystemDirectoryA( filename, size );
-
-    if (FILE_contains_path( libname ))
-    {
-        char *tmp;
-
-        /* if the library name contains a path and can not be found,
-         * return an error.
-         * exception: if the path is the system directory, proceed,
-         * so that modules which are not PE modules can be loaded.
-         * If the library name does not contain a path and can not
-         * be found, assume the system directory is meant */
-
-        if (strlen(libname) >= size) return FALSE;  /* too long */
-        if (strchr( libname, '/' ))  /* need to convert slashes */
-        {
-            if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, strlen(libname)+1 ))) return FALSE;
-            strcpy( tmp, libname );
-            for (p = tmp; *p; p++) if (*p == '/') *p = '\\';
-        }
-        else tmp = (char *)libname;
-
-        if (!FILE_strncasecmp( filename, tmp, len ) && tmp[len] == '\\')
-        {
-            strcpy( filename, tmp );
-            ret = TRUE;
-        }
-        if (tmp != libname) RtlFreeHeap( GetProcessHeap(), 0, tmp );
-        if (!ret) return FALSE;
-    }
-    else
-    {
-        if (strlen(libname) >= size - len - 1) return FALSE;
-        filename[len] = '\\';
-        strcpy( filename+len+1, libname );
-    }
-
-    /* if the filename doesn't have an extension, append the default */
-    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-    {
-        if (strlen(filename) + strlen(ext) >= size) return FALSE;
-        strcat( filename, ext );
-    }
-    return TRUE;
 }
 
 

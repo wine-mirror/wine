@@ -30,10 +30,11 @@
 #include <sys/uio.h>
 #endif
 
-
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "request.h"
 #include "unicode.h"
 
@@ -294,41 +295,68 @@ static void dump_varargs_debug_event( size_t size )
     remove_data( size );
 }
 
+/* dump a unicode string contained in a buffer; helper for dump_varargs_startup_info */
+static void dump_inline_unicode_string( const UNICODE_STRING *str, const void *data, size_t size )
+{
+    size_t length = str->Length / sizeof(WCHAR);
+    size_t offset = (size_t)str->Buffer;
+
+    if (offset >= size) return;
+    if (offset + length > size) length = size - offset;
+    dump_strW( (const WCHAR *)data + offset/sizeof(WCHAR), length, stderr, "\"\"" );
+}
+
 static void dump_varargs_startup_info( size_t size )
 {
-    const startup_info_t *ptr = cur_data;
-    startup_info_t info;
+    const RTL_USER_PROCESS_PARAMETERS *ptr = cur_data;
+    RTL_USER_PROCESS_PARAMETERS params;
 
-    if (size < sizeof(info.size))
+    if (size < sizeof(params.Size))
     {
         fprintf( stderr, "{}" );
         return;
     }
-    if (size > ptr->size) size = ptr->size;
-    memset( &info, 0, sizeof(info) );
-    memcpy( &info, ptr, min( size, sizeof(info) ));
+    if (size > ptr->Size) size = ptr->Size;
+    memset( &params, 0, sizeof(params) );
+    memcpy( &params, ptr, min( size, sizeof(params) ));
 
-    fprintf( stderr, "{size=%d", info.size );
-    fprintf( stderr, ",x=%d", info.x );
-    fprintf( stderr, ",y=%d", info.y );
-    fprintf( stderr, ",cx=%d", info.cx );
-    fprintf( stderr, ",cy=%d", info.cy );
-    fprintf( stderr, ",x_chars=%d", info.x_chars );
-    fprintf( stderr, ",y_chars=%d", info.y_chars );
-    fprintf( stderr, ",attr=%d", info.attribute );
-    fprintf( stderr, ",cmd_show=%d", info.cmd_show );
-    fprintf( stderr, ",flags=%x", info.flags );
+    fprintf( stderr, "{AllocationSize=%lx,", params.AllocationSize );
+    fprintf( stderr, "Size=%lx,", params.Size );
+    fprintf( stderr, "Flags=%lx,", params.Flags );
+    fprintf( stderr, "DebugFlags=%lx,", params.DebugFlags );
+    fprintf( stderr, "Console=%p,", params.hConsole );
+    fprintf( stderr, "ProcessGroup=%lx,", params.ProcessGroup );
+    fprintf( stderr, "hStdInput=%p,", params.hStdInput );
+    fprintf( stderr, "hStdOutput=%p,", params.hStdOutput );
+    fprintf( stderr, "hStdError=%p,", params.hStdError );
+    fprintf( stderr, "CurrentDirectoryHandle=%p,", params.CurrentDirectoryHandle );
+    fprintf( stderr, "dwX=%ld,", params.dwX );
+    fprintf( stderr, "dwY=%ld,", params.dwY );
+    fprintf( stderr, "dwXSize=%ld,", params.dwXSize );
+    fprintf( stderr, "dwYSize=%ld,", params.dwYSize );
+    fprintf( stderr, "dwXCountChars=%ld,", params.dwXCountChars );
+    fprintf( stderr, "dwYCountChars=%ld,", params.dwYCountChars );
+    fprintf( stderr, "dwFillAttribute=%lx,", params.dwFillAttribute );
+    fprintf( stderr, "dwFlags=%lx,", params.dwFlags );
+    fprintf( stderr, "wShowWindow=%lx,", params.wShowWindow );
+    fprintf( stderr, "CurrentDirectoryName=L\"" );
+    dump_inline_unicode_string( &params.CurrentDirectoryName, cur_data, size );
+    fprintf( stderr, "\",DllPath=L\"" );
+    dump_inline_unicode_string( &params.DllPath, cur_data, size );
+    fprintf( stderr, "\",ImagePathName=L\"" );
+    dump_inline_unicode_string( &params.ImagePathName, cur_data, size );
+    fprintf( stderr, "\",CommandLine=L\"" );
+    dump_inline_unicode_string( &params.CommandLine, cur_data, size );
+    fprintf( stderr, "\",WindowTitle=L\"" );
+    dump_inline_unicode_string( &params.WindowTitle, cur_data, size );
+    fprintf( stderr, "\",Desktop=L\"" );
+    dump_inline_unicode_string( &params.Desktop, cur_data, size );
+    fprintf( stderr, "\",ShellInfo=L\"" );
+    dump_inline_unicode_string( &params.ShellInfo, cur_data, size );
+    fprintf( stderr, "\",RuntimeInfo=L\"" );
+    dump_inline_unicode_string( &params.RuntimeInfo, cur_data, size );
+    fprintf( stderr, "\"}" );
     remove_data( size );
-    fprintf( stderr, ",filename=" );
-    /* FIXME: these should be unicode */
-    dump_varargs_string( min(cur_size,info.filename_len) );
-    fprintf( stderr, ",cmdline=" );
-    dump_varargs_string( min(cur_size,info.cmdline_len) );
-    fprintf( stderr, ",desktop=" );
-    dump_varargs_string( min(cur_size,info.desktop_len) );
-    fprintf( stderr, ",title=" );
-    dump_varargs_string( min(cur_size,info.title_len) );
-    fputc( '}', stderr );
 }
 
 static void dump_varargs_input_records( size_t size )

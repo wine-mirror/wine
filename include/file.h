@@ -65,12 +65,6 @@ inline static char FILE_toupper( char c )
     return c;
 }
 
-inline static int FILE_contains_path (LPCSTR name)
-{
-    return ((*name && (name[1] == ':')) ||
-            strchr (name, '/') || strchr (name, '\\'));
-}
-
 /* files/file.c */
 extern mode_t FILE_umask;
 extern int FILE_strcasecmp( const char *str1, const char *str2 );
