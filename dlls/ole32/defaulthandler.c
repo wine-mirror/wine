@@ -383,13 +383,8 @@ HRESULT WINAPI OleCreateDefaultHandler(
 {
   DefaultHandler* newHandler = NULL;
   HRESULT         hr         = S_OK;
-  char            xclsid[50];
-  char            xriid[50];
 
-  WINE_StringFromCLSID((LPCLSID)clsid,xclsid);
-  WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-  TRACE("(%s, %p, %s, %p)\n", xclsid, pUnkOuter, xriid, ppvObj);
+  TRACE("(%s, %p, %s, %p)\n", debugstr_guid(clsid), pUnkOuter, debugstr_guid(riid), ppvObj);
 
   /*
    * Sanity check
@@ -621,14 +616,7 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
    */
   if ((*ppvObject)==0)
   {
-    char clsid[50];
-
-    WINE_StringFromCLSID((LPCLSID)riid,clsid);
-    
-    WARN(
-	 "() : asking for un supported interface %s\n", 
-	 clsid);
-
+    WARN( "() : asking for un supported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
   

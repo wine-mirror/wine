@@ -293,10 +293,8 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	LPUNKNOWN punk
 ) {
 	ICOM_THIS(IDirectInputAImpl,iface);
-	char	xbuf[50];
 	
-	WINE_StringFromCLSID(rguid,xbuf);
-	TRACE("(this=%p,%s,%p,%p)\n",This,xbuf,pdev,punk);
+	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
 	if ((!memcmp(&GUID_SysKeyboard,rguid,sizeof(GUID_SysKeyboard))) ||          /* Generic Keyboard */
 	    (!memcmp(&DInput_Wine_Keyboard_GUID,rguid,sizeof(GUID_SysKeyboard)))) { /* Wine Keyboard */
                 SysKeyboardAImpl* newDevice;
@@ -340,10 +338,8 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(
 	LPDIRECTINPUTA iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectInputAImpl,iface);
-	char	xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(this=%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
 		IDirectInputA_AddRef(iface);
 		*ppobj = This;
@@ -366,10 +362,8 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(
 static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUTA iface,
 							REFGUID rguid) {
   ICOM_THIS(IDirectInputAImpl,iface);
-  char xbuf[50];
   
-  WINE_StringFromCLSID(rguid,xbuf);
-  FIXME("(%p)->(%s): stub\n",This,xbuf);
+  FIXME("(%p)->(%s): stub\n",This,debugstr_guid(rguid));
   
   return DI_OK;
 }
@@ -414,13 +408,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 	TRACE(dinput,"(df.dwNumObjs=%ld)\n",df->dwNumObjs);
 
 	for (i=0;i<df->dwNumObjs;i++) {
-		char	xbuf[50];
-
-		if (df->rgodf[i].pguid)
-			WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
-		else
-			strcpy(xbuf,"<no guid>");
-		TRACE(dinput,"df.rgodf[%d].guid %s\n",i,xbuf);
+		TRACE(dinput,"df.rgodf[%d].guid %s\n",i,debugstr_guid(df->rgodf[i].pguid));
 		TRACE(dinput,"df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
 		TRACE(dinput,"dwType 0x%02lx,dwInstance %ld\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
 		TRACE(dinput,"df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
@@ -462,13 +450,8 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	char			xbuf[50];
 
-	if (HIWORD(rguid))
-		WINE_StringFromCLSID(rguid,xbuf);
-	else
-		sprintf(xbuf,"<special guid %ld>",(DWORD)rguid);
-	TRACE("(this=%p,%s,%p)\n",This,xbuf,ph);
+	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
 	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
             ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
 	if (!HIWORD(rguid)) {
@@ -558,10 +541,8 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 )
 {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
-	char	xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(this=%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	if (!memcmp(&IID_IUnknown,riid,sizeof(*riid))) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
@@ -821,13 +802,8 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   TRACE("(df.dwNumObjs=%ld)\n",df->dwNumObjs);
 
   for (i=0;i<df->dwNumObjs;i++) {
-    char	xbuf[50];
-    
-    if (df->rgodf[i].pguid)
-      WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
-    else
-      strcpy(xbuf,"<no guid>");
-    TRACE("df.rgodf[%d].guid %s (%p)\n",i,xbuf, df->rgodf[i].pguid);
+
+    TRACE("df.rgodf[%d].guid %s (%p)\n",i, debugstr_guid(df->rgodf[i].pguid), df->rgodf[i].pguid);
     TRACE("df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
     TRACE("dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
     TRACE("df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
@@ -1182,14 +1158,8 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
 					    LPCDIPROPHEADER ph)
 {
   ICOM_THIS(SysMouseAImpl,iface);
-  char	xbuf[50];
 
-  if (HIWORD(rguid))
-    WINE_StringFromCLSID(rguid,xbuf);
-  else
-    sprintf(xbuf,"<special guid %ld>",(DWORD)rguid);
-
-  TRACE("(this=%p,%s,%p)\n",This,xbuf,ph);
+  TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
   
   if (!HIWORD(rguid)) {
     switch ((DWORD)rguid) {
@@ -1205,7 +1175,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
       break;
     }
     default:
-      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,xbuf);
+      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
       break;
     }
   }
@@ -1262,13 +1232,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   TRACE("(df.dwNumObjs=%ld)\n",df->dwNumObjs);
 
   for (i=0;i<df->dwNumObjs;i++) {
-    char	xbuf[50];
-    
-    if (df->rgodf[i].pguid)
-      WINE_StringFromCLSID(df->rgodf[i].pguid,xbuf);
-    else
-      strcpy(xbuf,"<no guid>");
-    TRACE("df.rgodf[%d].guid %s (%p)\n",i,xbuf, df->rgodf[i].pguid);
+    TRACE("df.rgodf[%d].guid %s (%p)\n",i,debugstr_guid(df->rgodf[i].pguid), df->rgodf[i].pguid);
     TRACE("df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
     TRACE("dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
     TRACE("df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
@@ -1404,14 +1368,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
 					    LPCDIPROPHEADER ph)
 {
   ICOM_THIS(JoystickAImpl,iface);
-  char	xbuf[50];
 
-  if (HIWORD(rguid))
-    WINE_StringFromCLSID(rguid,xbuf);
-  else
-    sprintf(xbuf,"<special guid %ld>",(DWORD)rguid);
-
-  FIXME("(this=%p,%s,%p)\n",This,xbuf,ph);
+  FIXME("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
   FIXME("ph.dwSize = %ld, ph.dwHeaderSize =%ld, ph.dwObj = %ld, ph.dwHow= %ld\n",ph->dwSize, ph->dwHeaderSize,ph->dwObj,ph->dwHow);
   
   if (!HIWORD(rguid)) {
@@ -1438,7 +1396,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
       break;
     }
     default:
-      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,xbuf);
+      FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
       break;
     }
   }

@@ -81,9 +81,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPENUMFORMATETC iface, REFIID riid, LPVOID* ppvObj)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 			*ppvObj = NULL;
 
@@ -413,9 +411,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID riid, LPVOID * ppvObj)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 

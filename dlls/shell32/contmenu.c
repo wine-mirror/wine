@@ -180,10 +180,7 @@ static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *iface, REFIID 
 {
 	ICOM_THIS(IContextMenuImpl, iface);
 
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 

@@ -984,10 +984,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
    * Declare "This" pointer 
    */
   ICOM_THIS(OLEClipbrd, iface);
-  char    xriid[50];
-
-  WINE_StringFromCLSID((LPCLSID)riid,xriid);
-  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObject);
+  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObject);
   
   /*
    * Perform a sanity check on the parameters.
@@ -1013,11 +1010,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
   }
   else  /* We only support IUnknown and IDataObject */
   {
-    char clsid[50];
-
-    WINE_StringFromCLSID((LPCLSID)riid,clsid);
-    WARN( "() : asking for unsupported interface %s\n", clsid);
-
+    WARN( "() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
   
@@ -1461,10 +1454,8 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
   (LPENUMFORMATETC iface, REFIID riid, LPVOID* ppvObj)
 {
   ICOM_THIS(IEnumFORMATETCImpl,iface);
-  char    xriid[50];
 
-  WINE_StringFromCLSID((LPCLSID)riid,xriid);
-  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
   /*
    * Since enumerators are seperate objects from the parent data object

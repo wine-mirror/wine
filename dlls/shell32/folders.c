@@ -63,9 +63,7 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface( IExtractIconA * iface, REF
 {
 	ICOM_THIS(IExtractIconAImpl,iface);
 
-	char	xriid[50];
-	 WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	 TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	 TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 

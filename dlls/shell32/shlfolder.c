@@ -274,11 +274,8 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(
 {
 	ICOM_THIS(IGenericSFImpl, iface);
 
-	char	xriid[50];	
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
 	_CALL_TRACE
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 
@@ -373,11 +370,9 @@ HRESULT IFSFolder_Constructor(
 	LPVOID * ppv)
 {
 	IGenericSFImpl *	sf;
-	char	xriid[50];	
 	HRESULT hr = S_OK;
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-	TRACE("unkOut=%p riid=%s\n",pUnkOuter, xriid);
+	TRACE("unkOut=%p riid=%s\n",pUnkOuter, debugstr_guid(riid));
 
 	if(pUnkOuter && ! IsEqualIID(riid, &IID_IUnknown))
 	{
@@ -488,10 +483,8 @@ static HRESULT WINAPI IShellFolder_fnQueryInterface(
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	char	xriid[50];	
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 	_CALL_TRACE
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	return IUnknown_QueryInterface(This->pUnkOuter, riid, ppvObj);
 }
@@ -645,14 +638,11 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder2 * iface, LPCITE
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 	GUID		const * iid;
-	char		xriid[50];
 	IShellFolder	*pShellFolder, *pSubFolder;
 	IPersistFolder 	*pPersistFolder;
 	LPITEMIDLIST	absPidl;
 	
-	WINE_StringFromCLSID(riid,xriid);
-
-	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,debugstr_guid(riid),ppvOut);
 
 	if(!pidl || !ppvOut) return E_INVALIDARG;
 
@@ -714,10 +704,8 @@ static HRESULT WINAPI IShellFolder_fnBindToStorage(
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	char xriid[50];
-	WINE_StringFromCLSID(riid,xriid);
-
-	FIXME("(%p)->(pidl=%p,%p,\n\tIID:%s,%p) stub\n",This,pidl,pbcReserved,xriid,ppvOut);
+	FIXME("(%p)->(pidl=%p,%p,\n\tIID:%s,%p) stub\n",
+              This,pidl,pbcReserved,debugstr_guid(riid),ppvOut);
 
 	*ppvOut = NULL;
 	return E_NOTIMPL;
@@ -837,11 +825,9 @@ static HRESULT WINAPI IShellFolder_fnCreateViewObject(
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
 	LPSHELLVIEW	pShellView;
-	char		xriid[50];
 	HRESULT		hr = E_INVALIDARG;
 
-	WINE_StringFromCLSID(riid,xriid);
-	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,debugstr_guid(riid),ppvOut);
 	
 	if(ppvOut)
 	{
@@ -949,15 +935,12 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 {	
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	char		xclsid[50];
 	LPITEMIDLIST	pidl;
 	IUnknown*	pObj = NULL; 
 	HRESULT		hr = E_INVALIDARG;
 	
-	WINE_StringFromCLSID(riid,xclsid);
-
 	TRACE("(%p)->(%u,%u,apidl=%p,\n\tIID:%s,%p,%p)\n",
-	  This,hwndOwner,cidl,apidl,xclsid,prgfInOut,ppvOut);
+	  This,hwndOwner,cidl,apidl,debugstr_guid(riid),prgfInOut,ppvOut);
 
 	if (ppvOut)
 	{
@@ -1305,9 +1288,7 @@ static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
-	char	xriid[50];	
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 
@@ -1414,12 +1395,10 @@ static HRESULT WINAPI ISF_Desktop_fnBindToObject( IShellFolder2 * iface, LPCITEM
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 	GUID		const * clsid;
-	char		xriid[50];
 	IShellFolder	*pShellFolder, *pSubFolder;
 	
-	WINE_StringFromCLSID(riid,xriid);
-
-	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",
+              This,pidl,pbcReserved,debugstr_guid(riid),ppvOut);
 
 	*ppvOut = NULL;
 
@@ -1485,11 +1464,9 @@ static HRESULT WINAPI ISF_Desktop_fnCreateViewObject( IShellFolder2 * iface,
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
 	LPSHELLVIEW	pShellView;
-	char		xriid[50];
 	HRESULT		hr = E_INVALIDARG;
 
-	WINE_StringFromCLSID(riid,xriid);
-	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,debugstr_guid(riid),ppvOut);
 	
 	if(ppvOut)
 	{
@@ -1880,13 +1857,11 @@ static HRESULT WINAPI ISF_MyComputer_fnBindToObject( IShellFolder2 * iface, LPCI
 {
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 	GUID		const * clsid;
-	char		xriid[50];
 	IShellFolder	*pShellFolder, *pSubFolder;
 	LPITEMIDLIST	pidltemp;
 	
-	WINE_StringFromCLSID(riid,xriid);
-
-	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",
+              This,pidl,pbcReserved,debugstr_guid(riid),ppvOut);
 
 	if(!pidl || !ppvOut) return E_INVALIDARG;
 
@@ -1933,11 +1908,9 @@ static HRESULT WINAPI ISF_MyComputer_fnCreateViewObject( IShellFolder2 * iface,
 	_ICOM_THIS_From_IShellFolder2(IGenericSFImpl, iface)
 
 	LPSHELLVIEW	pShellView;
-	char		xriid[50];
 	HRESULT		hr = E_INVALIDARG;
 
-	WINE_StringFromCLSID(riid,xriid);
-	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,xriid,ppvOut);
+	TRACE("(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",This,hwndOwner,debugstr_guid(riid),ppvOut);
 	
 	if(ppvOut)
 	{

@@ -88,10 +88,8 @@ static HRESULT WINAPI IDirect3DViewport2Impl_QueryInterface(LPDIRECT3DVIEWPORT2 
 							LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  char xrefiid[50];
   
-  WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
   
   return S_OK;
 }

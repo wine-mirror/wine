@@ -259,10 +259,8 @@ static HRESULT WINAPI IDirect3DDevice2Impl_QueryInterface(LPDIRECT3DDEVICE2 ifac
 						      LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-  char xrefiid[50];
   
-  WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
   
   return S_OK;
 }
@@ -1316,10 +1314,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_QueryInterface(LPDIRECT3DDEVICE iface,
 						     LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
-  char xrefiid[50];
   
-  WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
   
   return S_OK;
 }

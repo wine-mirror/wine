@@ -57,10 +57,8 @@ static ULONG WINAPI IUnknown_fnRelease(LPUNKNOWN iface) {
  */
 static HRESULT WINAPI IUnknown_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IUnknownImpl,iface);
-	char	xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE("(%p)->QueryInterface(%s,%p)\n",This,xrefiid,obj);
+	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
@@ -111,10 +109,8 @@ typedef struct
  */
 HRESULT WINAPI IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID *obj) {
         ICOM_THIS(IMalloc16Impl,iface);
-	char	xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE("(%p)->QueryInterface(%s,%p)\n",This,xrefiid,obj);
+	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IMalloc,refiid,sizeof(IID_IMalloc))
 	) {
@@ -245,10 +241,8 @@ typedef struct
  */
 static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IMalloc32Impl,iface);
-	char	xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE("(%p)->QueryInterface(%s,%p)\n",This,xrefiid,obj);
+	TRACE("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IMalloc,refiid,sizeof(IID_IMalloc))
 	) {

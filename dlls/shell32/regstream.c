@@ -70,10 +70,7 @@ static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVO
 {
 	ICOM_THIS(ISHRegStream, iface);
 
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 

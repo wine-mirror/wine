@@ -116,10 +116,8 @@ typedef struct IAVIFileImpl {
 
 static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IAVIFileImpl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,xrefiid,obj);
+	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IAVIFile,refiid,sizeof(IID_IAVIFile))
 	) {
@@ -210,16 +208,9 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG 
 HRESULT WINAPI AVIFileOpenA(
 	PAVIFILE * ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler
 ) {
-	char	buf[80];
 	IAVIFileImpl	*iavi;
 
-
-	if (HIWORD(lpHandler))
-		WINE_StringFromCLSID(lpHandler,buf);
-	else
-		sprintf(buf,"<clsid-0x%04lx>",(DWORD)lpHandler);
-
-	FIXME("(%p,%s,0x%08lx,%s),stub!\n",ppfile,szFile,(DWORD)uMode,buf);
+	FIXME("(%p,%s,0x%08lx,%s),stub!\n",ppfile,szFile,(DWORD)uMode,debugstr_guid(lpHandler));
 	iavi = (IAVIFileImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IAVIFileImpl));
 	iavi->ref = 1;
 	ICOM_VTBL(iavi) = &iavift;
@@ -229,10 +220,8 @@ HRESULT WINAPI AVIFileOpenA(
 
 static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IAVIStreamImpl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,xrefiid,obj);
+	TRACE_(relay)("(%p)->QueryInterface(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IAVIStream,refiid,sizeof(IID_IAVIStream))
 	) {

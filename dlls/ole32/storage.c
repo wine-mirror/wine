@@ -356,9 +356,7 @@ STORAGE_look_for_named_pps(HFILE hf,int n,LPOLESTR name) {
  */
 void
 STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
-	char	name[33],xguid[50];
-
-	WINE_StringFromCLSID(&(stde->pps_guid),xguid);
+    char	name[33];
 
 	lstrcpyWtoA(name,stde->pps_rawname);
 	if (!stde->pps_sizeofname)
@@ -368,7 +366,7 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 	DPRINTF("prev pps: %ld\n",stde->pps_prev);
 	DPRINTF("next pps: %ld\n",stde->pps_next);
 	DPRINTF("dir pps: %ld\n",stde->pps_dir);
-	DPRINTF("guid: %s\n",xguid);
+	DPRINTF("guid: %s\n",debugstr_guid(&(stde->pps_guid)));
 	if (stde->pps_type !=2) {
 		time_t	t;
 
@@ -688,9 +686,7 @@ HRESULT WINAPI IStream16_fnQueryInterface(
 	IStream16* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStream16Impl,iface);
-	char    xrefiid[50];
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE_(relay)("(%p)->(%s,%p)\n",This,xrefiid,obj);
+	TRACE_(relay)("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
 		return 0;
@@ -1172,10 +1168,8 @@ HRESULT WINAPI IStream_fnQueryInterface(
 	IStream* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStream32Impl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE_(relay)("(%p)->(%s,%p)\n",This,xrefiid,obj);
+	TRACE_(relay)("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
 		return 0;
@@ -1228,10 +1222,8 @@ HRESULT WINAPI IStorage16_fnQueryInterface(
 	IStorage16* iface,REFIID refiid,LPVOID *obj
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE_(relay)("(%p)->(%s,%p)\n",This,xrefiid,obj);
+	TRACE_(relay)("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
@@ -1302,14 +1294,8 @@ HRESULT WINAPI IStorage16_fnCommit(
  */
 HRESULT WINAPI IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID *rgiidExclude,SNB16 SNB16Exclude,IStorage16 *pstgDest) {
 	ICOM_THIS(IStorage16Impl,iface);
-	char	xguid[50];
-
-	if (rgiidExclude)
-		WINE_StringFromCLSID(rgiidExclude,xguid);
-	else
-		strcpy(xguid,"<no guid>");
 	FIXME("IStorage16(%p)->(0x%08lx,%s,%p,%p),stub!\n",
-		This,ciidExclude,xguid,SNB16Exclude,pstgDest
+		This,ciidExclude,debugstr_guid(rgiidExclude),SNB16Exclude,pstgDest
 	);
 	return S_OK;
 }

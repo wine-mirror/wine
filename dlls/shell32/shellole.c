@@ -49,13 +49,10 @@ LRESULT WINAPI SHCoCreateInstance(
 	REFIID refiid,
 	LPVOID *ppv)
 {
-	char	xclsid[48], xiid[48];
 	DWORD	hres;
 	IID	iid;
 	CLSID * myclsid = (CLSID*)clsid;
 	
-	WINE_StringFromCLSID(refiid,xiid);
-
 	if (!clsid)
 	{
 	  if (!aclsid) return REGDB_E_CLASSNOTREG;
@@ -63,11 +60,8 @@ LRESULT WINAPI SHCoCreateInstance(
 	  myclsid = &iid;
 	}
 
-	WINE_StringFromCLSID(myclsid,xclsid);
-	WINE_StringFromCLSID(refiid,xiid);
-	  
 	TRACE("(%p,\n\tCLSID:\t%s, unk:%p\n\tIID:\t%s,%p)\n",
-		aclsid,xclsid,unknownouter,xiid,ppv);
+		aclsid,debugstr_guid(myclsid),unknownouter,debugstr_guid(refiid),ppv);
 
 	if IsEqualCLSID(myclsid, &CLSID_ShellFSFolder)
 	{
@@ -80,7 +74,8 @@ LRESULT WINAPI SHCoCreateInstance(
 	
 	if(hres!=S_OK)
 	{
-	  ERR("failed (0x%08lx) to create \n\tCLSID:\t%s\n\tIID:\t%s\n", hres, xclsid, xiid);
+	  ERR("failed (0x%08lx) to create \n\tCLSID:\t%s\n\tIID:\t%s\n",
+              hres, debugstr_guid(myclsid), debugstr_guid(refiid));
 	  ERR("class not found in registry\n");
 	}
 
@@ -95,10 +90,7 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv
 {	HRESULT	hres = E_OUTOFMEMORY;
 	LPCLASSFACTORY lpclf;
 
-	char xclsid[50],xiid[50];
-	WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
-	WINE_StringFromCLSID((LPCLSID)iid,xiid);
-	TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
+	TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
 	
 	*ppv = NULL;
 
@@ -233,9 +225,7 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(
   LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	char	xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s)\n",This,xriid);
+	TRACE("(%p)->(\n\tIID:\t%s)\n",This,debugstr_guid(riid));
 
 	*ppvObj = NULL;
 
@@ -251,7 +241,7 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE("-- Interface: %s E_NOINTERFACE\n", xriid);
+	TRACE("-- Interface: %s E_NOINTERFACE\n", debugstr_guid(riid));
 	return E_NOINTERFACE;
 }  
 /******************************************************************************
@@ -290,10 +280,8 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 	ICOM_THIS(IClassFactoryImpl,iface);
 	IUnknown *pObj = NULL;
 	HRESULT hres;
-	char	xriid[50];
 
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnknown,xriid,ppObject);
+	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnknown,debugstr_guid(riid),ppObject);
 
 	*ppObject = NULL;
 		
@@ -312,7 +300,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 	} 
 	else
 	{
-	  ERR("unknown IID requested\n\tIID:\t%s\n",xriid);
+	  ERR("unknown IID requested\n\tIID:\t%s\n",debugstr_guid(riid));
 	  return(E_NOINTERFACE);
 	}
 	
@@ -379,9 +367,6 @@ static ICOM_VTABLE(IClassFactory) dclfvt;
 IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, UINT * pcRefDll, REFIID riidInst)
 {
 	IDefClFImpl* lpclf;
-	char	xriidInst[50];
-
-	WINE_StringFromCLSID((LPCLSID)riidInst,xriidInst);
 
 	lpclf = (IDefClFImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
 	lpclf->ref = 1;
@@ -394,7 +379,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, UINT * pcRefDll
 
 	lpclf->riidInst = riidInst;
 
-	TRACE("(%p)\n\tIID:\t%s\n",lpclf, xriidInst);
+	TRACE("(%p)\n\tIID:\t%s\n",lpclf, debugstr_guid(riidInst));
 	shell32_ObjCount++;
 	return (LPCLASSFACTORY)lpclf;
 }
@@ -405,9 +390,8 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
   LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IDefClFImpl,iface);
-	char	xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s)\n",This,xriid);
+
+	TRACE("(%p)->(\n\tIID:\t%s)\n",This,debugstr_guid(riid));
 
 	*ppvObj = NULL;
 
@@ -423,7 +407,7 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	TRACE("-- Interface: %s E_NOINTERFACE\n", xriid);
+	TRACE("-- Interface: %s E_NOINTERFACE\n", debugstr_guid(riid));
 	return E_NOINTERFACE;
 }  
 /******************************************************************************
@@ -466,10 +450,8 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
 	ICOM_THIS(IDefClFImpl,iface);
-	char	xriid[50];
 
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnkOuter,xriid,ppvObject);
+	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnkOuter,debugstr_guid(riid),ppvObject);
 
 	*ppvObject = NULL;
 		
@@ -483,7 +465,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
 	  return This->lpfnCI(pUnkOuter, riid, ppvObject);
 	}
 
-	ERR("unknown IID requested\n\tIID:\t%s\n",xriid);
+	ERR("unknown IID requested\n\tIID:\t%s\n",debugstr_guid(riid));
 	return E_NOINTERFACE;
 }
 /******************************************************************************
@@ -516,13 +498,8 @@ HRESULT WINAPI SHCreateDefClassObject(
 	UINT	*pcRefDll,		/* ref count of the dll */
 	REFIID	riidInst)		/* optional interface to the instance */
 {
-
-	char xriid[50],xriidInst[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	WINE_StringFromCLSID((LPCLSID)riidInst,xriidInst);
-
 	TRACE("\n\tIID:\t%s %p %p %p \n\tIIDIns:\t%s\n",
-	xriid, ppv, lpfnCI, pcRefDll, xriidInst);
+              debugstr_guid(riid), ppv, lpfnCI, pcRefDll, debugstr_guid(riidInst));
 
 	if ( IsEqualCLSID(riid, &IID_IClassFactory) )
 	{

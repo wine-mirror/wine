@@ -6,6 +6,7 @@
 
 #include "debugstr.h"
 #include "debugtools.h"
+#include "wtypes.h"
 #include "xmalloc.h"
 
 /* ---------------------------------------------------------------------- */
@@ -148,6 +149,29 @@ LPSTR debugres_w( LPCWSTR res )
     if (HIWORD(res)) return debugstr_w(res);
     sprintf(resname, "#%04x", LOWORD(res));
     return debugstr_a (resname);
+}
+
+/* ---------------------------------------------------------------------- */
+
+LPSTR debugstr_guid( const GUID *id )
+{
+    LPSTR str;
+
+    if (!id) return "(null)";
+    if (!HIWORD(id))
+    {
+        str = gimme1(12);
+        sprintf( str, "<guid-0x%04x>", LOWORD(id) );
+    }
+    else
+    {
+        str = gimme1(40);
+        sprintf( str, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 id->Data1, id->Data2, id->Data3,
+                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    }
+    return str;
 }
 
 /* ---------------------------------------------------------------------- */

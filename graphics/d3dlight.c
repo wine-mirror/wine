@@ -144,10 +144,8 @@ static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(LPDIRECT3DLIGHT iface,
 						    LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DLightImpl,iface);
-  char xrefiid[50];
   
-  WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
   
   return S_OK;
 }

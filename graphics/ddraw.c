@@ -1830,10 +1830,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_ReleaseDC(LPDIRECTDRAWSURFACE4 ifa
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE4 iface,REFIID refiid,LPVOID *obj) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    char    xrefiid[50];
 
-    WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-    TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
     
     /* All DirectDrawSurface versions (1, 2, 3 and 4) use
      * the same interface. And IUnknown does that too of course.
@@ -1875,7 +1873,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE
 	return S_OK;
     }
     
-    FIXME("(%p):interface for IID %s NOT found!\n",This,xrefiid);
+    FIXME("(%p):interface for IID %s NOT found!\n",This,debugstr_guid(refiid));
     return OLE_E_ENUM_NOMORE;
 }
 
@@ -2659,10 +2657,8 @@ static HRESULT WINAPI IDirectDrawPaletteImpl_QueryInterface(
         LPDIRECTDRAWPALETTE iface,REFIID refiid,LPVOID *obj ) 
 {
   ICOM_THIS(IDirectDrawPaletteImpl,iface);
-  char    xrefiid[50];
 
-  WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-  FIXME("(%p)->(%s,%p) stub.\n",This,xrefiid,obj);
+  FIXME("(%p)->(%s,%p) stub.\n",This,debugstr_guid(refiid),obj);
 
   return S_OK;
 }
@@ -2701,10 +2697,8 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 ) {
         ICOM_THIS(IDirect3DImpl,iface);
 	/* FIXME: Not sure if this is correct */
-        char    xrefiid[50];
 
-        WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-        TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
+        TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
         if ( ( IsEqualGUID( &IID_IDirectDraw,  refiid ) ) ||
 	     ( IsEqualGUID (&IID_IDirectDraw2, refiid ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) ) {
@@ -2738,7 +2732,7 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 
                 return S_OK;
         }
-        FIXME("(%p):interface for IID %s NOT found!\n",This,xrefiid);
+        FIXME("(%p):interface for IID %s NOT found!\n",This,debugstr_guid(refiid));
         return OLE_E_ENUM_NOMORE;
 }
 
@@ -2767,10 +2761,8 @@ static HRESULT WINAPI IDirect3DImpl_Initialize(
 {
   ICOM_THIS(IDirect3DImpl,iface);
   /* FIXME: Not sure if this is correct */
-  char    xrefiid[50];
 
-  WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-  FIXME("(%p)->(%s):stub.\n",This,xrefiid);
+  FIXME("(%p)->(%s):stub.\n",This,debugstr_guid(refiid));
   
   return DDERR_ALREADYINITIALIZED;
 }
@@ -2859,10 +2851,8 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 	ICOM_THIS(IDirect3D2Impl,iface);
 
 	/* FIXME: Not sure if this is correct */
-        char    xrefiid[50];
 
-        WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-        TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
+        TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
         if ( ( IsEqualGUID( &IID_IDirectDraw,  refiid ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) ) {
@@ -2896,7 +2886,7 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 
                 return S_OK;
         }
-        FIXME("(%p):interface for IID %s NOT found!\n",This,xrefiid);
+        FIXME("(%p):interface for IID %s NOT found!\n",This,debugstr_guid(refiid));
         return OLE_E_ENUM_NOMORE;
 }
 
@@ -2987,10 +2977,8 @@ static HRESULT WINAPI IDirect3D2Impl_CreateDevice(LPDIRECT3D2 iface,
 					      LPDIRECT3DDEVICE2 *device)
 {
   ICOM_THIS(IDirect3D2Impl,iface);
-  char	xbuf[50];
   
-  WINE_StringFromCLSID(rguid,xbuf);
-  FIXME("(%p)->(%s,%p,%p): stub\n",This,xbuf,surface,device);
+  FIXME("(%p)->(%s,%p,%p): stub\n",This,debugstr_guid(rguid),surface,device);
 
   if (is_OpenGL(rguid, (IDirectDrawSurfaceImpl*)surface, (IDirect3DDevice2Impl**)device, This)) {
     IDirect3D2_AddRef(iface);
@@ -4368,10 +4356,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 	LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
 ) {
         ICOM_THIS(IDirectDraw2Impl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
+	TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if ( IsEqualGUID( &IID_IUnknown, refiid ) ) {
 		*obj = This;
 		IDirectDraw2_AddRef(iface);
@@ -4435,7 +4421,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	WARN("(%p):interface for IID %s _NOT_ found!\n",This,xrefiid);
+	WARN("(%p):interface for IID %s _NOT_ found!\n",This,debugstr_guid(refiid));
         return OLE_E_ENUM_NOMORE;
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -4444,10 +4430,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
 ) {
         ICOM_THIS(IDirectDraw2Impl,iface);
-	char    xrefiid[50];
 
-	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
+	TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if ( IsEqualGUID( &IID_IUnknown, refiid ) ) {
 		*obj = This;
 		IDirectDraw2_AddRef(iface);
@@ -4511,7 +4495,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 
 		return S_OK;
 	}
-	WARN("(%p):interface for IID %s _NOT_ found!\n",This,xrefiid);
+	WARN("(%p):interface for IID %s _NOT_ found!\n",This,debugstr_guid(refiid));
         return OLE_E_ENUM_NOMORE;
 }
 
@@ -5511,19 +5495,13 @@ static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUn
 
 HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter ) {
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
-	char	xclsid[50];
 	WNDCLASSA	wc;
         /* WND*            pParentWindow; */
 	HRESULT ret;
 
-	if (HIWORD(lpGUID))
-		WINE_StringFromCLSID(lpGUID,xclsid);
-	else {
-		sprintf(xclsid,"<guid-0x%08x>",(int)lpGUID);
-		lpGUID = NULL;
-	}
+	if (!HIWORD(lpGUID)) lpGUID = NULL;
 
-	TRACE("(%s,%p,%p)\n",xclsid,ilplpDD,pUnkOuter);
+	TRACE("(%s,%p,%p)\n",debugstr_guid(lpGUID),ilplpDD,pUnkOuter);
 
 	if ( ( !lpGUID ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw,  lpGUID ) ) ||
@@ -5574,7 +5552,8 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	return ret;
 
       err:
-	ERR("DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",xclsid,lplpDD,pUnkOuter);
+	ERR("DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",
+            debugstr_guid(lpGUID),lplpDD,pUnkOuter);
 	return DDERR_INVALIDDIRECTDRAWGUID;
 }
 
@@ -5594,13 +5573,8 @@ typedef struct
 static HRESULT WINAPI 
 DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	char buf[80];
 
-	if (HIWORD(riid))
-	    WINE_StringFromCLSID(riid,buf);
-	else
-	    sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-	FIXME("(%p)->(%s,%p),stub!\n",This,buf,ppobj);
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -5620,10 +5594,8 @@ static HRESULT WINAPI DDCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	char buf[80];
 
-	WINE_StringFromCLSID(riid,buf);
-	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
+	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 	if ( ( IsEqualGUID( &IID_IDirectDraw,  riid ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw2, riid ) ) ||
 	     ( IsEqualGUID( &IID_IDirectDraw4, riid ) ) ) {
@@ -5669,24 +5641,13 @@ static IClassFactoryImpl DDRAW_CF = {&DDCF_Vtbl, 1 };
  */
 DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    char buf[80],xbuf[80];
-
-    if (HIWORD(rclsid))
-    	WINE_StringFromCLSID(rclsid,xbuf);
-    else
-    	sprintf(xbuf,"<guid-0x%04x>",LOWORD(rclsid));
-    if (HIWORD(riid))
-    	WINE_StringFromCLSID(riid,buf);
-    else
-    	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-    WINE_StringFromCLSID(riid,xbuf);
-    TRACE("(%p,%p,%p)\n", xbuf, buf, ppv);
+    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DDRAW_CF;
 	IClassFactory_AddRef((IClassFactory*)*ppv);
     return S_OK;
     }
-    FIXME("(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
+    FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

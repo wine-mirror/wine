@@ -420,9 +420,7 @@ static HRESULT WINAPI IShellLink_fnQueryInterface( IShellLink * iface, REFIID ri
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s)\n",This,xriid);
+	TRACE("(%p)->(\n\tIID:\t%s)\n",This,debugstr_guid(riid));
 
 	*ppvObj = NULL;
 

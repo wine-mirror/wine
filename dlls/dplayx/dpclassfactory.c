@@ -21,14 +21,8 @@ typedef struct
 static HRESULT WINAPI
 DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
         ICOM_THIS(IClassFactoryImpl,iface);
-        char buf[80];
 
-        if (HIWORD(riid))
-            WINE_StringFromCLSID(riid,buf);
-        else
-            sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-
-        FIXME("(%p)->(%s,%p),stub!\n",This,buf,ppobj);
+        FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 
         return E_NOINTERFACE;
 }
@@ -50,10 +44,8 @@ static HRESULT WINAPI DP_and_DPL_CreateInstance(
         LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
         ICOM_THIS(IClassFactoryImpl,iface);
-        char buf[80];
 
-        WINE_StringFromCLSID(riid,buf);
-        TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
+        TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
         /* FIXME: reuse already created DP/DPL object if present? */
         if ( directPlayLobby_QueryInterface( riid, ppobj ) == S_OK )
@@ -104,21 +96,7 @@ static IClassFactoryImpl DP_and_DPL_CF = {&DP_and_DPL_Vtbl, 1 };
  */
 DWORD WINAPI DP_and_DPL_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    char buf[80],xbuf[80];
-
-    if (HIWORD(rclsid))
-        WINE_StringFromCLSID(rclsid,xbuf);
-    else
-        sprintf(xbuf,"<guid-0x%04x>",LOWORD(rclsid));
-
-    if (HIWORD(riid))
-        WINE_StringFromCLSID(riid,buf);
-    else
-        sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-
-    WINE_StringFromCLSID(riid,xbuf);
-
-    TRACE("(%p,%p,%p)\n", xbuf, buf, ppv);
+    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if ( IsEqualCLSID( riid, &IID_IClassFactory ) )
     {
@@ -128,7 +106,7 @@ DWORD WINAPI DP_and_DPL_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *pp
         return S_OK;
     }
 
-    ERR("(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
+    ERR("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

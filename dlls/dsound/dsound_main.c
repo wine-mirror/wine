@@ -248,10 +248,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
 	LPDIRECTSOUND3DBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
-	char xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
 	
@@ -544,10 +542,8 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 	LPDIRECTSOUND3DLISTENER iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
-	char xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
 	
@@ -727,10 +723,8 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	LPDIRECTSOUNDNOTIFY iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
-	char xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
 
@@ -1233,10 +1227,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	LPDIRECTSOUNDBUFFER iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	char	xbuf[50];
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
 	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 		IDirectSoundNotifyImpl	*dsn;
@@ -1535,7 +1527,6 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 	LPDIRECTSOUND iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
-	char xbuf[50];
 
 	if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
 
@@ -1568,8 +1559,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 		return DS_OK;
 	}
 
-	WINE_StringFromCLSID(riid,xbuf);
-	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
+	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
 
@@ -2357,13 +2347,8 @@ typedef struct
 static HRESULT WINAPI 
 DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	char buf[80];
 
-	if (HIWORD(riid))
-	    WINE_StringFromCLSID(riid,buf);
-	else
-	    sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-	FIXME("(%p)->(%s,%p),stub!\n",This,buf,ppobj);
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
@@ -2383,10 +2368,8 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IClassFactoryImpl,iface);
-	char buf[80];
 
-	WINE_StringFromCLSID(riid,buf);
-	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
+	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 	if ( IsEqualGUID( &IID_IDirectSound, riid ) ) {
 		/* FIXME: reuse already created dsound if present? */
 		return DirectSoundCreate(riid,(LPDIRECTSOUND*)ppobj,pOuter);
@@ -2428,25 +2411,14 @@ static IClassFactoryImpl DSOUND_CF = {&DSCF_Vtbl, 1 };
  */
 DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    char buf[80],xbuf[80];
-
-    if (HIWORD(rclsid))
-    	WINE_StringFromCLSID(rclsid,xbuf);
-    else
-    	sprintf(xbuf,"<guid-0x%04x>",LOWORD(rclsid));
-    if (HIWORD(riid))
-    	WINE_StringFromCLSID(riid,buf);
-    else
-    	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-    WINE_StringFromCLSID(riid,xbuf);
-    TRACE("(%p,%p,%p)\n", xbuf, buf, ppv);
+    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DSOUND_CF;
 	IClassFactory_AddRef((IClassFactory*)*ppv);
     return S_OK;
     }
 
-    FIXME("(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
+    FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

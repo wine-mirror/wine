@@ -402,14 +402,7 @@ HRESULT WINAPI OLEFontImpl_QueryInterface(
    */
   if ((*ppvObject)==0)
   {
-    char clsid[50];
-
-    WINE_StringFromCLSID((LPCLSID)riid,clsid);
-    
-    WARN(
-	 "() : asking for un supported interface %s\n", 
-	 clsid);
-
+    WARN("() : asking for un supported interface %s\n",debugstr_guid(riid));
     return E_NOINTERFACE;
   }
   

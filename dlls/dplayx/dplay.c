@@ -2044,11 +2044,7 @@ HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW lpEnumCallback, LPVOID 
 HRESULT WINAPI DirectPlayCreate
 ( LPGUID lpGUID, LPDIRECTPLAY2 *lplpDP, IUnknown *pUnk)
 {
-  char lpGUIDString[51];
- 
-  WINE_StringFromCLSID( lpGUID, &lpGUIDString[0] );
-
-  TRACE( "lpGUID=%s lplpDP=%p pUnk=%p\n", &lpGUIDString[0], lplpDP, pUnk );
+  TRACE( "lpGUID=%s lplpDP=%p pUnk=%p\n", debugstr_guid(lpGUID), lplpDP, pUnk );
 
   if( pUnk != NULL )
   {
@@ -2084,7 +2080,7 @@ HRESULT WINAPI DirectPlayCreate
      return DPERR_INVALIDPARAMS; 
   }
 
-  ERR( "unknown Service Provider %s\n", &lpGUIDString[0] );
+  ERR( "unknown Service Provider %s\n", debugstr_guid(lpGUID) );
 
   IDirectPlayX_Release( *lplpDP );
   *lplpDP = NULL;

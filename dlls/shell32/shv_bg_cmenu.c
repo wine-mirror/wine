@@ -53,10 +53,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu *iface, REFIID riid,
 {
 	ICOM_THIS(BgCmImpl, iface);
 
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 

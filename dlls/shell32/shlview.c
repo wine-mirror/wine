@@ -1201,9 +1201,7 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 {
 	ICOM_THIS(IShellViewImpl, iface);
 
-	char    xriid[50];
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	*ppvObj = NULL;
 
@@ -1531,10 +1529,7 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 {
 	ICOM_THIS(IShellViewImpl, iface);
 
-	char    xriid[50];
-	
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE("(%p)->(uItem=0x%08x,\n\tIID=%s, ppv=%p)\n",This, uItem, xriid, ppvOut);
+	TRACE("(%p)->(uItem=0x%08x,\n\tIID=%s, ppv=%p)\n",This, uItem, debugstr_guid(riid), ppvOut);
 
 	*ppvOut = NULL;
 
@@ -1623,13 +1618,10 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	OLECMD * prgCmds,
 	OLECMDTEXT* pCmdText)
 {
-	char    xguid[50];
-
 	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
-	WINE_StringFromCLSID((LPCLSID)pguidCmdGroup,xguid);
-
-	FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n", This, pguidCmdGroup, xguid, cCmds, prgCmds, pCmdText);
+	FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n",
+              This, pguidCmdGroup, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
 	return E_NOTIMPL;
 }
 
@@ -1646,13 +1638,10 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 	VARIANT* pvaIn,
 	VARIANT* pvaOut)
 {
-	char    xguid[50];
-
 	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
-	WINE_StringFromCLSID((LPCLSID)pguidCmdGroup,xguid);
-
-	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08lx Opt:0x%08lx %p %p)\n", This, xguid, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08lx Opt:0x%08lx %p %p)\n",
+              This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, pvaIn, pvaOut);
 	return E_NOTIMPL;
 }
 
@@ -1675,13 +1664,9 @@ static HRESULT WINAPI ISVDropTarget_QueryInterface(
 	REFIID riid,
 	LPVOID *ppvObj)
 {
-	char	xriid[50];
-
 	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
 
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
 }
@@ -1777,13 +1762,9 @@ static HRESULT WINAPI ISVDropSource_QueryInterface(
 	REFIID riid,
 	LPVOID *ppvObj)
 {
-	char	xriid[50];
-
 	_ICOM_THIS_From_IDropSource(IShellViewImpl, iface);
 
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
 }
@@ -1849,13 +1830,9 @@ static HRESULT WINAPI ISVViewObject_QueryInterface(
 	REFIID riid,
 	LPVOID *ppvObj)
 {
-	char	xriid[50];
-
 	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
 
-	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-
-	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
 	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
 }

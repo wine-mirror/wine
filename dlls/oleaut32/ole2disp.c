@@ -322,9 +322,7 @@ HRESULT WINAPI CreateDispTypeInfo16(
 HRESULT WINAPI RegisterActiveObject16(
 	IUnknown *punk, REFCLSID rclsid, DWORD dwFlags, unsigned long *pdwRegister
 ) {
-	char	buf[80];
-	WINE_StringFromCLSID(rclsid,buf);
-	FIXME("(%p,%s,0x%08lx,%p):stub\n",punk,buf,dwFlags,pdwRegister);
+	FIXME("(%p,%s,0x%08lx,%p):stub\n",punk,debugstr_guid(rclsid),dwFlags,pdwRegister);
 	return 0;
 }
 

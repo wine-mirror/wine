@@ -1569,11 +1569,7 @@ HRESULT DPL_CreateCompoundAddress
     }
     else
     {
-      char lpGUIDString[51];
-      WINE_StringFromCLSID( &lpElements->guidDataType, &lpGUIDString[0] );
-
-      ERR( "Unknown GUID %s\n", &lpGUIDString[0] );
-
+      ERR( "Unknown GUID %s\n", debugstr_guid(&lpElements->guidDataType) );
       return DPERR_INVALIDFLAGS; 
     }
   }

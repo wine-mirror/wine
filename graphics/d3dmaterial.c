@@ -105,10 +105,8 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_QueryInterface(LPDIRECT3DMATERIAL2 
 							LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  char xrefiid[50];
   
-  WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME("(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
+  FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
   
   return S_OK;
 }
