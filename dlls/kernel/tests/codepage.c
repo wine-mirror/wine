@@ -22,6 +22,16 @@
 #include "winbase.h"
 #include "winnls.h"
 
+/* lstrcmpW is not supported on Win9x! */
+static int mylstrcmpW(const WCHAR* str1, const WCHAR* str2)
+{
+    while (*str1 && *str1==*str2) {
+        str1++;
+        str2++;
+    }
+    return *str1-*str2;
+}
+
 static void test_negative_source_length(void)
 {
     int len;
@@ -31,14 +41,16 @@ static void test_negative_source_length(void)
 
     /* Test, whether any negative source length works as strlen() + 1 */
     SetLastError( 0xdeadbeef );
+    memset(buf,'x',sizeof(buf));
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -2002, buf, 10, NULL, NULL);
     ok(len == 7 && !lstrcmpA(buf, "foobar") && GetLastError() == 0xdeadbeef,
-       "any negative value should work as strlen() + 1");
+       "WideCharToMultiByte(-2002): len=%d error=%ld",len,GetLastError());
 
     SetLastError( 0xdeadbeef );
+    memset(bufW,'x',sizeof(bufW));
     len = MultiByteToWideChar(CP_ACP, 0, "foobar", -2002, bufW, 10);
-    ok(len == 7 && !lstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
-       "any negative value should work as strlen() + 1");
+    ok(len == 7 && !mylstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
+       "MultiByteToWideChar(-2002): len=%d error=%ld",len,GetLastError());
 }
 
 START_TEST(codepage)
