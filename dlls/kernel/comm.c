@@ -361,25 +361,25 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 		DWORD	flag,x;
 
 		flag=0;
-		if (!strncmp("baud=",ptr,5)) {
+		if (!strncasecmp("baud=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
 				WARN("Couldn't parse %s\n",ptr);
 			lpdcb->BaudRate = x;
 			flag=1;
 		}
-		if (!strncmp("stop=",ptr,5)) {
+		if (!strncasecmp("stop=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
 				WARN("Couldn't parse %s\n",ptr);
 			lpdcb->StopBits = x;
 			flag=1;
 		}
-		if (!strncmp("data=",ptr,5)) {
+		if (!strncasecmp("data=",ptr,5)) {
 			if (!sscanf(ptr+5,"%ld",&x))
 				WARN("Couldn't parse %s\n",ptr);
 			lpdcb->ByteSize = x;
 			flag=1;
 		}
-		if (!strncmp("parity=",ptr,7)) {
+		if (!strncasecmp("parity=",ptr,7)) {
 			lpdcb->fParity	= TRUE;
 			switch (ptr[7]) {
 			case 'N':case 'n':
