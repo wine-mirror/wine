@@ -94,7 +94,10 @@ static HKEY create_test_entries(void)
 	sExpLen2 = ExpandEnvironmentStringsA(sTestpath2, sExpTestpath2, sizeof(sExpTestpath2));
 
         ok(sExpLen1 > 0, "Couldn't expand %s\n", sTestpath1);
+        trace("sExplen1 = (%d)\n", sExpLen1);
         ok(sExpLen2 > 0, "Couldn't expand %s\n", sTestpath2);
+        trace("sExplen2 = (%d)\n", sExpLen2);
+
         return hKey;
 }
 
@@ -268,6 +271,7 @@ static void test_SHQUeryValueEx(void)
 static void test_SHCopyKey(void)
 {
 	HKEY hKeySrc, hKeyDst;
+        DWORD dwRet;
 
 	/* Delete existing destination sub keys */
 	hKeyDst = NULL;
@@ -278,31 +282,37 @@ static void test_SHCopyKey(void)
 	}
 
 	hKeyDst = NULL;
-	if (RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) || !hKeyDst)
+        dwRet = RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst);
+        if (dwRet || !hKeyDst)
 	{
-		ok(0, "didn't open dest\n");
+                ok( 0, "Destination couldn't be created, RegCreateKeyA returned (%lu)\n", dwRet);
 		return;
 	}
 
 	hKeySrc = NULL;
-	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc) || !hKeySrc)
+        dwRet = RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc);
+        if (dwRet || !hKeySrc)
 	{
-		ok(0, "didn't open source\n");
+                ok( 0, "Source couldn't be opened, RegOpenKeyA returned (%lu)\n", dwRet);
 		return;
 	}
 
 
 	if (pSHCopyKeyA)
-		ok (!(*pSHCopyKeyA)(hKeySrc, NULL, hKeyDst, 0), "failed copy\n");
+        {
+                dwRet = (*pSHCopyKeyA)(hKeySrc, NULL, hKeyDst, 0);
+                ok ( ERROR_SUCCESS == dwRet, "Copy failed, ret=(%lu)\n", dwRet);
+        }
 
 	RegCloseKey(hKeySrc);
 	RegCloseKey(hKeyDst);
 
         /* Check we copied the sub keys, i.e. something that's on every windows system (including Wine) */
 	hKeyDst = NULL;
-	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\Setup", &hKeyDst) || !hKeyDst)
+        dwRet = RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\Setup", &hKeyDst);
+        if (dwRet || !hKeyDst)
 	{
-		ok(0, "didn't open copy\n");
+                ok ( 0, "Copy couldn't be opened, RegOpenKeyA returned (%lu)\n", dwRet);
 		return;
 	}
 
@@ -314,17 +324,20 @@ static void test_SHCopyKey(void)
 
 static void test_SHDeleteKey()
 {
-    HKEY hKeyTest;
-    int sysfail=1;
+    HKEY hKeyTest, hKeyS;
+    DWORD dwRet;
+    int sysfail = 1;
+
     if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKeyTest))
     {
-        HKEY hKeyS;
         if (!RegCreateKey(hKeyTest, "ODBC", &hKeyS))
         {
             HKEY hKeyO;
+
             if (!RegCreateKey(hKeyS, "ODBC.INI", &hKeyO))
             {
                 RegCloseKey (hKeyO);
+
                 if (!RegCreateKey(hKeyS, "ODBCINST.INI", &hKeyO))
                 {
                     RegCloseKey (hKeyO);
@@ -335,17 +348,21 @@ static void test_SHDeleteKey()
         }
         RegCloseKey (hKeyTest);
     }
+
     if (!sysfail)
     {
-        HKEY hKeyS;
-        DWORD dwRet;
-        ok (!SHDeleteKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC"), "SHDeleteKey failed\n");
-        ok ((dwRet = RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC", &hKeyS)) == ERROR_FILE_NOT_FOUND, "SHDeleteKey did not delete\n");
+
+        dwRet = SHDeleteKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC");
+        ok ( ERROR_SUCCESS == dwRet, "SHDeleteKey failed, ret=(%lu)\n", dwRet);
+
+        dwRet = RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC", &hKeyS);
+        ok ( ERROR_FILE_NOT_FOUND == dwRet, "SHDeleteKey did not delete\n");
+
         if (dwRet == ERROR_SUCCESS)
             RegCloseKey (hKeyS);
     }
     else
-        ok (0, "Could not set up SHDeleteKey test\n");
+        ok( 0, "Could not set up SHDeleteKey test\n");
 }
 
 START_TEST(shreg)
