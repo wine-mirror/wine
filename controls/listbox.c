@@ -112,6 +112,8 @@ static TIMER_DIRECTION LISTBOX_Timer = LB_TIMER_NONE;
 static LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ListBoxWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
+static LRESULT LISTBOX_GetItemRect( WND *wnd, LB_DESCR *descr, INT index,
+                                    RECT *rect );
 
 /*********************************************************************
  * listbox class descriptor
@@ -409,6 +411,12 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
 		 wnd->hwndSelf, descr->width, descr->height );
     LISTBOX_UpdatePage( wnd, descr );
     LISTBOX_UpdateScroll( wnd, descr );
+
+    /* Invalidate the focused item so it will be repainted correctly */
+    if (1==LISTBOX_GetItemRect( wnd, descr, descr->focus_item, &rect ))
+    {
+        InvalidateRect( wnd->hwndSelf, &rect, FALSE );
+    }
 }
 
 
