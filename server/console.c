@@ -328,7 +328,7 @@ int free_console( struct process *process )
  *	2/ parent is a renderer which launches process, and process should attach to the console
  *	   renderered by parent
  */
-void inherit_console(struct thread *parent_thread, struct process *process, handle_t hconin)
+void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin)
 {
     int done = 0;
     struct process* parent = parent_thread->process;
@@ -360,7 +360,7 @@ void inherit_console(struct thread *parent_thread, struct process *process, hand
     }
 }
 
-static struct console_input* console_input_get( handle_t handle, unsigned access )
+static struct console_input* console_input_get( obj_handle_t handle, unsigned access )
 {
     struct console_input*	console = 0;
 
@@ -385,7 +385,7 @@ static int console_input_signaled( struct object *obj, struct thread *thread )
     return console->recnum ? 1 : 0;
 }
 
-static int get_console_mode( handle_t handle )
+static int get_console_mode( obj_handle_t handle )
 {
     struct object *obj;
     int ret = 0;
@@ -404,7 +404,7 @@ static int get_console_mode( handle_t handle )
 }
 
 /* changes the mode of either a console input or a screen buffer */
-static int set_console_mode( handle_t handle, int mode )
+static int set_console_mode( obj_handle_t handle, int mode )
 {
     struct object *obj;
     int ret = 0;
@@ -451,7 +451,7 @@ static int write_console_input( struct console_input* console, int count,
 }
 
 /* retrieve a pointer to the console input records */
-static int read_console_input( handle_t handle, int count, int flush )
+static int read_console_input( obj_handle_t handle, int count, int flush )
 {
     struct console_input *console;
 
@@ -1038,7 +1038,7 @@ static void read_console_output( struct screen_buffer *screen_buffer, int x, int
 }
 
 /* scroll parts of a screen buffer */
-static void scroll_console_output( handle_t handle, int xsrc, int ysrc, int xdst, int ydst,
+static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int xdst, int ydst,
                                    int w, int h )
 {
     struct screen_buffer *screen_buffer;
@@ -1101,8 +1101,8 @@ static void scroll_console_output( handle_t handle, int xsrc, int ysrc, int xdst
 /* allocate a console for the renderer */
 DECL_HANDLER(alloc_console)
 {
-    handle_t in = 0;
-    handle_t evt = 0;
+    obj_handle_t in = 0;
+    obj_handle_t evt = 0;
     struct process *process;
     struct process *renderer = current->process;
     struct console_input *console;
@@ -1180,7 +1180,7 @@ DECL_HANDLER(open_console)
              obj = grab_object( (struct object*)current->process->console->active );
         break;
     default:
-        if ((obj = get_handle_obj( current->process, (handle_t)req->from,
+        if ((obj = get_handle_obj( current->process, (obj_handle_t)req->from,
                                    GENERIC_READ|GENERIC_WRITE, &console_input_ops )))
         {
             struct console_input* console = (struct console_input*)obj;

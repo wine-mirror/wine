@@ -48,10 +48,7 @@ struct request_max_size
     int pad[16]; /* the max request size is 16 ints */
 };
 
-/* max size of the variable part of a request */
-#define REQUEST_MAX_VAR_SIZE  1024
-
-typedef int handle_t;
+typedef int obj_handle_t;
 typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
 
@@ -67,35 +64,35 @@ struct debug_event_exception
 };
 struct debug_event_create_thread
 {
-    handle_t    handle;     /* handle to the new thread */
-    void       *teb;        /* thread teb (in debugged process address space) */
-    void       *start;      /* thread startup routine */
+    obj_handle_t handle;     /* handle to the new thread */
+    void        *teb;        /* thread teb (in debugged process address space) */
+    void        *start;      /* thread startup routine */
 };
 struct debug_event_create_process
 {
-    handle_t    file;       /* handle to the process exe file */
-    handle_t    process;    /* handle to the new process */
-    handle_t    thread;     /* handle to the new thread */
-    void       *base;       /* base of executable image */
-    int         dbg_offset; /* offset of debug info in file */
-    int         dbg_size;   /* size of debug info */
-    void       *teb;        /* thread teb (in debugged process address space) */
-    void       *start;      /* thread startup routine */
-    void       *name;       /* image name (optional) */
-    int         unicode;    /* is it Unicode? */
+    obj_handle_t file;       /* handle to the process exe file */
+    obj_handle_t process;    /* handle to the new process */
+    obj_handle_t thread;     /* handle to the new thread */
+    void        *base;       /* base of executable image */
+    int          dbg_offset; /* offset of debug info in file */
+    int          dbg_size;   /* size of debug info */
+    void        *teb;        /* thread teb (in debugged process address space) */
+    void        *start;      /* thread startup routine */
+    void        *name;       /* image name (optional) */
+    int          unicode;    /* is it Unicode? */
 };
 struct debug_event_exit
 {
-    int         exit_code;  /* thread or process exit code */
+    int          exit_code;  /* thread or process exit code */
 };
 struct debug_event_load_dll
 {
-    handle_t    handle;     /* file handle for the dll */
-    void       *base;       /* base address of the dll */
-    int         dbg_offset; /* offset of debug info in file */
-    int         dbg_size;   /* size of debug info */
-    void       *name;       /* image name (optional) */
-    int         unicode;    /* is it Unicode? */
+    obj_handle_t handle;     /* file handle for the dll */
+    void        *base;       /* base address of the dll */
+    int          dbg_offset; /* offset of debug info in file */
+    int          dbg_size;   /* size of debug info */
+    void        *name;       /* image name (optional) */
+    int          unicode;    /* is it Unicode? */
 };
 struct debug_event_unload_dll
 {
@@ -173,7 +170,7 @@ typedef struct
 {
     atom_t         atom;     /* property atom */
     short          string;   /* was atom a string originally? */
-    handle_t       handle;   /* handle stored in property */
+    obj_handle_t   handle;   /* handle stored in property */
 } property_data_t;
 
 /* structure to specify window rectangles */
@@ -200,26 +197,26 @@ typedef struct
     int          inherit_all;  /* inherit all handles from parent */
     int          use_handles;  /* use stdio handles */
     int          create_flags; /* creation flags */
-    handle_t     exe_file;     /* file handle for main exe */
-    handle_t     hstdin;       /* handle for stdin */
-    handle_t     hstdout;      /* handle for stdout */
-    handle_t     hstderr;      /* handle for stderr */
+    obj_handle_t exe_file;     /* file handle for main exe */
+    obj_handle_t hstdin;       /* handle for stdin */
+    obj_handle_t hstdout;      /* handle for stdout */
+    obj_handle_t hstderr;      /* handle for stderr */
     VARARG(info,startup_info); /* startup information */
 @REPLY
-    handle_t     info;         /* new process info handle */
+    obj_handle_t info;         /* new process info handle */
 @END
 
 
 /* Retrieve information about a newly started process */
 @REQ(get_new_process_info)
-    handle_t     info;         /* info handle returned from new_process_request */
+    obj_handle_t info;         /* info handle returned from new_process_request */
     int          pinherit;     /* process handle inherit flag */
     int          tinherit;     /* thread handle inherit flag */
 @REPLY
     void*        pid;          /* process id */
-    handle_t     phandle;      /* process handle (in the current process) */
+    obj_handle_t phandle;      /* process handle (in the current process) */
     void*        tid;          /* thread id */
-    handle_t     thandle;      /* thread handle (in the current process) */
+    obj_handle_t thandle;      /* thread handle (in the current process) */
     int          success;      /* did the process start successfully? */
 @END
 
@@ -231,7 +228,7 @@ typedef struct
     int          request_fd;   /* fd for request pipe */
 @REPLY
     void*        tid;          /* thread id */
-    handle_t     handle;       /* thread handle (in the current process) */
+    obj_handle_t handle;       /* thread handle (in the current process) */
 @END
 
 
@@ -249,10 +246,10 @@ typedef struct
     int          create_flags; /* creation flags */
     unsigned int server_start; /* server start time (GetTickCount) */
     size_t       info_size;    /* total size of startup info */
-    handle_t     exe_file;     /* file handle for main exe */
-    handle_t     hstdin;       /* handle for stdin */
-    handle_t     hstdout;      /* handle for stdout */
-    handle_t     hstderr;      /* handle for stderr */
+    obj_handle_t exe_file;     /* file handle for main exe */
+    obj_handle_t hstdin;       /* handle for stdin */
+    obj_handle_t hstdout;      /* handle for stdout */
+    obj_handle_t hstderr;      /* handle for stderr */
 @END
 
 
@@ -269,7 +266,7 @@ typedef struct
     size_t       module_size;  /* main module size */
     void*        entry;        /* process entry point */
     void*        name;         /* ptr to ptr to name (in process addr space) */
-    handle_t     exe_file;     /* file handle for main exe */
+    obj_handle_t exe_file;     /* file handle for main exe */
     int          gui;          /* is it a GUI process? */
     VARARG(filename,string);   /* file name of main exe */
 @REPLY
@@ -294,7 +291,7 @@ typedef struct
 
 /* Terminate a process */
 @REQ(terminate_process)
-    handle_t     handle;       /* process handle to terminate */
+    obj_handle_t handle;       /* process handle to terminate */
     int          exit_code;    /* process exit code */
 @REPLY
     int          self;         /* suicide? */
@@ -303,7 +300,7 @@ typedef struct
 
 /* Terminate a thread */
 @REQ(terminate_thread)
-    handle_t     handle;       /* thread handle to terminate */
+    obj_handle_t handle;       /* thread handle to terminate */
     int          exit_code;    /* thread exit code */
 @REPLY
     int          self;         /* suicide? */
@@ -313,7 +310,7 @@ typedef struct
 
 /* Retrieve information about a process */
 @REQ(get_process_info)
-    handle_t     handle;           /* process handle */
+    obj_handle_t handle;           /* process handle */
 @REPLY
     void*        pid;              /* server process id */
     int          debugged;         /* debugged? */
@@ -326,7 +323,7 @@ typedef struct
 
 /* Set a process informations */
 @REQ(set_process_info)
-    handle_t     handle;       /* process handle */
+    obj_handle_t handle;       /* process handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
     int          affinity;     /* affinity mask */
@@ -337,7 +334,7 @@ typedef struct
 
 /* Retrieve information about a thread */
 @REQ(get_thread_info)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
     void*        tid_in;       /* thread id (optional) */
 @REPLY
     void*        tid;          /* server thread id */
@@ -349,7 +346,7 @@ typedef struct
 
 /* Set a thread informations */
 @REQ(set_thread_info)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
     int          affinity;     /* affinity mask */
@@ -360,7 +357,7 @@ typedef struct
 
 /* Suspend a thread */
 @REQ(suspend_thread)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
 @REPLY
     int          count;        /* new suspend count */
 @END
@@ -368,7 +365,7 @@ typedef struct
 
 /* Resume a thread */
 @REQ(resume_thread)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
 @REPLY
     int          count;        /* new suspend count */
 @END
@@ -376,7 +373,7 @@ typedef struct
 
 /* Notify the server that a dll has been loaded */
 @REQ(load_dll)
-    handle_t     handle;       /* file handle */
+    obj_handle_t handle;       /* file handle */
     void*        base;         /* base address */
     size_t       size;         /* dll size */
     int          dbg_offset;   /* debug info offset */
@@ -394,7 +391,7 @@ typedef struct
 
 /* Queue an APC for a thread */
 @REQ(queue_apc)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
     int          user;         /* user or system apc? */
     void*        func;         /* function to call */
     void*        param;        /* param for function to call */
@@ -414,7 +411,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Close a handle for the current process */
 @REQ(close_handle)
-    handle_t     handle;       /* handle to close */
+    obj_handle_t handle;       /* handle to close */
 @REPLY
     int          fd;           /* associated fd to close */
 @END
@@ -422,7 +419,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Set a handle information */
 @REQ(set_handle_info)
-    handle_t     handle;       /* handle we are interested in */
+    obj_handle_t handle;       /* handle we are interested in */
     int          flags;        /* new handle flags */
     int          mask;         /* mask for flags to set */
     int          fd;           /* file descriptor or -1 */
@@ -434,14 +431,14 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Duplicate a handle */
 @REQ(dup_handle)
-    handle_t     src_process;  /* src process handle */
-    handle_t     src_handle;   /* src handle to duplicate */
-    handle_t     dst_process;  /* dst process handle */
+    obj_handle_t src_process;  /* src process handle */
+    obj_handle_t src_handle;   /* src handle to duplicate */
+    obj_handle_t dst_process;  /* dst process handle */
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
     int          options;      /* duplicate options (see below) */
 @REPLY
-    handle_t     handle;       /* duplicated handle in dst process */
+    obj_handle_t handle;       /* duplicated handle in dst process */
     int          fd;           /* associated fd to close */
 @END
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
@@ -455,7 +452,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
 @REPLY
-    handle_t     handle;       /* handle to the process */
+    obj_handle_t handle;       /* handle to the process */
 @END
 
 
@@ -465,7 +462,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
 @REPLY
-    handle_t     handle;       /* handle to the thread */
+    obj_handle_t handle;       /* handle to the thread */
 @END
 
 
@@ -490,12 +487,12 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the event */
+    obj_handle_t handle;        /* handle to the event */
 @END
 
 /* Event operation */
 @REQ(event_op)
-    handle_t      handle;       /* handle to event */
+    obj_handle_t  handle;       /* handle to event */
     int           op;           /* event operation (see below) */
 @END
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
@@ -507,7 +504,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the event */
+    obj_handle_t handle;        /* handle to the event */
 @END
 
 
@@ -517,13 +514,13 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the mutex */
+    obj_handle_t handle;        /* handle to the mutex */
 @END
 
 
 /* Release a mutex */
 @REQ(release_mutex)
-    handle_t     handle;        /* handle to the mutex */
+    obj_handle_t handle;        /* handle to the mutex */
 @END
 
 
@@ -533,7 +530,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the mutex */
+    obj_handle_t handle;        /* handle to the mutex */
 @END
 
 
@@ -544,13 +541,13 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the semaphore */
+    obj_handle_t handle;        /* handle to the semaphore */
 @END
 
 
 /* Release a semaphore */
 @REQ(release_semaphore)
-    handle_t     handle;        /* handle to the semaphore */
+    obj_handle_t handle;        /* handle to the semaphore */
     unsigned int count;         /* count to add to semaphore */
 @REPLY
     unsigned int prev_count;    /* previous semaphore count */
@@ -563,7 +560,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the semaphore */
+    obj_handle_t handle;        /* handle to the semaphore */
 @END
 
 
@@ -577,7 +574,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          drive_type;    /* type of drive the file is on */
     VARARG(filename,string);    /* file name */
 @REPLY
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
 @END
 
 
@@ -587,13 +584,13 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     int          inherit;       /* inherit flag */
     int          fd;            /* file descriptor on the client side */
 @REPLY
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
 @END
 
 
 /* Get a Unix fd to access a file */
 @REQ(get_handle_fd)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
     unsigned int access;        /* wanted access rights */
 @REPLY
     int          fd;            /* file descriptor */
@@ -615,7 +612,7 @@ enum fd_type
 
 /* Set a file current position */
 @REQ(set_file_pointer)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
     int          low;           /* position low word */
     int          high;          /* position high word */
     int          whence;        /* whence to seek */
@@ -627,13 +624,13 @@ enum fd_type
 
 /* Truncate (or extend) a file */
 @REQ(truncate_file)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
 @END
 
 
 /* Set a file access and modification times */
 @REQ(set_file_time)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
     time_t       access_time;   /* last access time */
     time_t       write_time;    /* last write time */
 @END
@@ -641,13 +638,13 @@ enum fd_type
 
 /* Flush a file buffers */
 @REQ(flush_file)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
 @END
 
 
 /* Get information about a file */
 @REQ(get_file_info)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
 @REPLY
     int          type;          /* file type */
     int          attr;          /* file attributes */
@@ -664,7 +661,7 @@ enum fd_type
 
 /* Lock a region of a file */
 @REQ(lock_file)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
     unsigned int offset_low;    /* offset of start of lock */
     unsigned int offset_high;   /* offset of start of lock */
     unsigned int count_low;     /* count of bytes to lock */
@@ -674,7 +671,7 @@ enum fd_type
 
 /* Unlock a region of a file */
 @REQ(unlock_file)
-    handle_t     handle;        /* handle to the file */
+    obj_handle_t handle;        /* handle to the file */
     unsigned int offset_low;    /* offset of start of unlock */
     unsigned int offset_high;   /* offset of start of unlock */
     unsigned int count_low;     /* count of bytes to unlock */
@@ -686,8 +683,8 @@ enum fd_type
 @REQ(create_pipe)
     int          inherit;       /* inherit flag */
 @REPLY
-    handle_t     handle_read;   /* handle to the read-side of the pipe */
-    handle_t     handle_write;  /* handle to the write-side of the pipe */
+    obj_handle_t handle_read;   /* handle to the read-side of the pipe */
+    obj_handle_t handle_write;  /* handle to the write-side of the pipe */
 @END
 
 
@@ -700,25 +697,25 @@ enum fd_type
     int          protocol;      /* protocol, see socket manpage */
     unsigned int flags;         /* socket flags */
 @REPLY
-    handle_t     handle;        /* handle to the new socket */
+    obj_handle_t handle;        /* handle to the new socket */
 @END
 
 
 /* Accept a socket */
 @REQ(accept_socket)
-    handle_t     lhandle;       /* handle to the listening socket */
+    obj_handle_t lhandle;       /* handle to the listening socket */
     unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
 @REPLY
-    handle_t     handle;        /* handle to the new socket */
+    obj_handle_t handle;        /* handle to the new socket */
 @END
 
 
 /* Set socket event parameters */
 @REQ(set_socket_event)
-    handle_t      handle;        /* handle to the socket */
+    obj_handle_t  handle;        /* handle to the socket */
     unsigned int  mask;          /* event mask */
-    handle_t      event;         /* event object */
+    obj_handle_t  event;         /* event object */
     user_handle_t window;        /* window to send the message to */
     unsigned int  msg;           /* message to send */
 @END
@@ -726,9 +723,9 @@ enum fd_type
 
 /* Get socket event parameters */
 @REQ(get_socket_event)
-    handle_t     handle;        /* handle to the socket */
+    obj_handle_t handle;        /* handle to the socket */
     int          service;       /* clear pending? */
-    handle_t     c_event;       /* event to clear */
+    obj_handle_t c_event;       /* event to clear */
 @REPLY
     unsigned int mask;          /* event mask */
     unsigned int pmask;         /* pending events */
@@ -739,15 +736,15 @@ enum fd_type
 
 /* Reenable pending socket events */
 @REQ(enable_socket_event)
-    handle_t     handle;        /* handle to the socket */
+    obj_handle_t handle;        /* handle to the socket */
     unsigned int mask;          /* events to re-enable */
     unsigned int sstate;        /* status bits to set */
     unsigned int cstate;        /* status bits to clear */
 @END
 
 @REQ(set_socket_deferred)
-    handle_t     handle;        /* handle to the socket */
-    handle_t     deferred;      /* handle to the socket for which accept() is deferred */
+    obj_handle_t handle;        /* handle to the socket */
+    obj_handle_t deferred;      /* handle to the socket for which accept() is deferred */
 @END
 
 /* Allocate a console (only used by a console renderer) */
@@ -756,8 +753,8 @@ enum fd_type
     int          inherit;       /* inherit flag */
     void*        pid;           /* pid of process which shall be attached to the console */
 @REPLY
-    handle_t     handle_in;     /* handle to console input */
-    handle_t     event;         /* handle to renderer events change notification */
+    obj_handle_t handle_in;     /* handle to console input */
+    obj_handle_t event;         /* handle to renderer events change notification */
 @END
 
 
@@ -812,7 +809,7 @@ struct console_renderer_event
 
 /* retrieve console events for the renderer */
 @REQ(get_console_renderer_events)
-    handle_t     handle;        /* handle to console input events */
+    obj_handle_t handle;        /* handle to console input events */
 @REPLY
     VARARG(data,bytes);         /* the various console_renderer_events */
 @END
@@ -826,13 +823,13 @@ struct console_renderer_event
     int          inherit;       /* inherit flag */
     int          share;         /* share mask (only for output handles) */
 @REPLY
-    handle_t     handle;        /* handle to the console */
+    obj_handle_t handle;        /* handle to the console */
 @END
 
 
 /* Get a console mode (input or output) */
 @REQ(get_console_mode)
-    handle_t     handle;        /* handle to the console */
+    obj_handle_t handle;        /* handle to the console */
 @REPLY
     int          mode;          /* console mode */
 @END
@@ -840,16 +837,16 @@ struct console_renderer_event
 
 /* Set a console mode (input or output) */
 @REQ(set_console_mode)
-    handle_t     handle;        /* handle to the console */
+    obj_handle_t handle;        /* handle to the console */
     int          mode;          /* console mode */
 @END
 
 
 /* Set info about a console (input only) */
 @REQ(set_console_input_info)
-    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
     int          mask;          /* setting mask (see below) */
-    handle_t     active_sb;     /* active screen buffer */
+    obj_handle_t active_sb;     /* active screen buffer */
     int          history_mode;  /* whether we duplicate lines in history */
     int          history_size;  /* number of lines in history */
     VARARG(title,unicode_str);  /* console title */
@@ -862,7 +859,7 @@ struct console_renderer_event
 
 /* Get info about a console (input only) */
 @REQ(get_console_input_info)
-    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
 @REPLY
     int          history_mode;  /* whether we duplicate lines in history */
     int          history_size;  /* number of lines in history */
@@ -873,14 +870,14 @@ struct console_renderer_event
 
 /* appends a string to console's history */
 @REQ(append_console_input_history)
-    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
     VARARG(line,unicode_str);   /* line to add */
 @END
 
 
 /* appends a string to console's history */
 @REQ(get_console_input_history)
-    handle_t     handle;        /* handle to console input, or 0 for process' console */
+    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
     int          index;         /* index to get line from */
 @REPLY
     int          total;         /* total length of line in Unicode chars */
@@ -890,18 +887,18 @@ struct console_renderer_event
 
 /* creates a new screen buffer on process' console */
 @REQ(create_console_output)
-    handle_t     handle_in;     /* handle to console input, or 0 for process' console */
+    obj_handle_t handle_in;     /* handle to console input, or 0 for process' console */
     int          access;        /* wanted access rights */
     int          share;         /* sharing credentials */
     int          inherit;       /* inherit flag */
 @REPLY
-    handle_t     handle_out;    /* handle to the screen buffer */
+    obj_handle_t handle_out;    /* handle to the screen buffer */
 @END
 
 
 /* Set info about a console (output only) */
 @REQ(set_console_output_info)
-    handle_t     handle;        /* handle to the console */
+    obj_handle_t handle;        /* handle to the console */
     int          mask;          /* setting mask (see below) */
     short int    cursor_size;   /* size of cursor (percentage filled) */
     short int    cursor_visible;/* cursor visibility flag */
@@ -927,7 +924,7 @@ struct console_renderer_event
 
 /* Get info about a console (output only) */
 @REQ(get_console_output_info)
-    handle_t     handle;        /* handle to the console */
+    obj_handle_t handle;        /* handle to the console */
 @REPLY
     short int    cursor_size;   /* size of cursor (percentage filled) */
     short int    cursor_visible;/* cursor visibility flag */
@@ -946,7 +943,7 @@ struct console_renderer_event
 
 /* Add input records to a console input queue */
 @REQ(write_console_input)
-    handle_t     handle;        /* handle to the console input */
+    obj_handle_t handle;        /* handle to the console input */
     VARARG(rec,input_records);  /* input records */
 @REPLY
     int          written;       /* number of records written */
@@ -955,7 +952,7 @@ struct console_renderer_event
 
 /* Fetch input records from a console input queue */
 @REQ(read_console_input)
-    handle_t     handle;        /* handle to the console input */
+    obj_handle_t handle;        /* handle to the console input */
     int          flush;         /* flush the retrieved records from the queue? */
 @REPLY
     int          read;          /* number of records read */
@@ -965,7 +962,7 @@ struct console_renderer_event
 
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)
-    handle_t     handle;        /* handle to the console output */
+    obj_handle_t handle;        /* handle to the console output */
     int          x;             /* position where to start writing */
     int          y;
     int          mode;          /* char info (see below) */
@@ -987,7 +984,7 @@ enum char_info_mode
 
 /* fill a screen buffer with constant data (chars and/or attributes) */
 @REQ(fill_console_output)
-    handle_t     handle;        /* handle to the console output */
+    obj_handle_t handle;        /* handle to the console output */
     int          x;             /* position where to start writing */
     int          y;
     int          mode;          /* char info mode */
@@ -1001,7 +998,7 @@ enum char_info_mode
 
 /* read data (chars and/or attributes) from a screen buffer */
 @REQ(read_console_output)
-    handle_t     handle;        /* handle to the console output */
+    obj_handle_t handle;        /* handle to the console output */
     int          x;             /* position (x,y) where to start reading */
     int          y;
     int          mode;          /* char info mode */
@@ -1014,7 +1011,7 @@ enum char_info_mode
 
 /* move a rect (of data) in screen buffer content */
 @REQ(move_console_output)
-    handle_t     handle;        /* handle to the console output */
+    obj_handle_t handle;        /* handle to the console output */
     short int    x_src;         /* position (x, y) of rect to start moving from */
     short int    y_src;
     short int    x_dst;         /* position (x, y) of rect to move to */
@@ -1029,7 +1026,7 @@ enum char_info_mode
     int          subtree;       /* watch all the subtree */
     int          filter;        /* notification filter */
 @REPLY
-    handle_t     handle;        /* handle to the change notification */
+    obj_handle_t handle;        /* handle to the change notification */
 @END
 
 
@@ -1039,10 +1036,10 @@ enum char_info_mode
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags (see below) */
     int          inherit;       /* inherit flag */
-    handle_t     file_handle;   /* file handle */
+    obj_handle_t file_handle;   /* file handle */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the mapping */
+    obj_handle_t handle;        /* handle to the mapping */
 @END
 /* protection flags */
 #define VPROT_READ       0x01
@@ -1061,20 +1058,20 @@ enum char_info_mode
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the mapping */
+    obj_handle_t handle;        /* handle to the mapping */
 @END
 
 
 /* Get information about a file mapping */
 @REQ(get_mapping_info)
-    handle_t     handle;        /* handle to the mapping */
+    obj_handle_t handle;        /* handle to the mapping */
 @REPLY
     int          size_high;     /* mapping size */
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags */
     int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
-    handle_t     shared_file;   /* shared mapping file handle */
+    obj_handle_t shared_file;   /* shared mapping file handle */
     int          shared_size;   /* shared mapping size */
     int          drive_type;    /* type of drive the file is on */
 @END
@@ -1086,7 +1083,7 @@ enum char_info_mode
     int          inherit;       /* inherit flag */
     int          id;            /* client private id */
 @REPLY
-    handle_t     handle;        /* handle to the device */
+    obj_handle_t handle;        /* handle to the device */
 @END
 
 
@@ -1096,13 +1093,13 @@ enum char_info_mode
     int          flags;         /* snapshot flags (TH32CS_*) */
     void*        pid;           /* process id */
 @REPLY
-    handle_t     handle;        /* handle to the snapshot */
+    obj_handle_t handle;        /* handle to the snapshot */
 @END
 
 
 /* Get the next process from a snapshot */
 @REQ(next_process)
-    handle_t     handle;        /* handle to the snapshot */
+    obj_handle_t handle;        /* handle to the snapshot */
     int          reset;         /* reset snapshot position? */
 @REPLY
     int          count;         /* process usage count */
@@ -1118,7 +1115,7 @@ enum char_info_mode
 
 /* Get the next thread from a snapshot */
 @REQ(next_thread)
-    handle_t     handle;        /* handle to the snapshot */
+    obj_handle_t handle;        /* handle to the snapshot */
     int          reset;         /* reset snapshot position? */
 @REPLY
     int          count;         /* thread usage count */
@@ -1131,7 +1128,7 @@ enum char_info_mode
 
 /* Get the next module from a snapshot */
 @REQ(next_module)
-    handle_t     handle;        /* handle to the snapshot */
+    obj_handle_t handle;        /* handle to the snapshot */
     int          reset;         /* reset snapshot position? */
 @REPLY
     void*        pid;           /* process id */
@@ -1147,7 +1144,7 @@ enum char_info_mode
 @REPLY
     void*         pid;         /* process id */
     void*         tid;         /* thread id */
-    handle_t      wait;        /* wait handle if no event ready */
+    obj_handle_t  wait;        /* wait handle if no event ready */
     VARARG(event,debug_event); /* debug event data */
 @END
 
@@ -1157,13 +1154,13 @@ enum char_info_mode
     int              first;    /* first chance exception? */
     VARARG(record,exc_event);  /* thread context followed by exception record */
 @REPLY
-    handle_t         handle;   /* handle to the queued event */
+    obj_handle_t     handle;   /* handle to the queued event */
 @END
 
 
 /* Retrieve the status of an exception event */
 @REQ(get_exception_status)
-    handle_t         handle;   /* handle to the queued event */
+    obj_handle_t     handle;   /* handle to the queued event */
 @REPLY
     int              status;   /* event continuation status */
     VARARG(context,context);   /* modified thread context */
@@ -1195,7 +1192,7 @@ enum char_info_mode
 
 /* Simulate a breakpoint in a process */
 @REQ(debug_break)
-    handle_t     handle;       /* process handle */
+    obj_handle_t handle;       /* process handle */
 @REPLY
     int          self;         /* was it the caller itself? */
 @END
@@ -1209,7 +1206,7 @@ enum char_info_mode
 
 /* Read data from a process address space */
 @REQ(read_process_memory)
-    handle_t     handle;       /* process handle */
+    obj_handle_t handle;       /* process handle */
     void*        addr;         /* addr to read from */
 @REPLY
     VARARG(data,bytes);        /* result data */
@@ -1218,7 +1215,7 @@ enum char_info_mode
 
 /* Write data to a process address space */
 @REQ(write_process_memory)
-    handle_t     handle;       /* process handle */
+    obj_handle_t handle;       /* process handle */
     void*        addr;         /* addr to write to (must be int-aligned) */
     unsigned int first_mask;   /* mask for first word */
     unsigned int last_mask;    /* mask for last word */
@@ -1228,7 +1225,7 @@ enum char_info_mode
 
 /* Create a registry key */
 @REQ(create_key)
-    handle_t     parent;       /* handle to the parent key */
+    obj_handle_t parent;       /* handle to the parent key */
     unsigned int access;       /* desired access rights */
     unsigned int options;      /* creation options */
     time_t       modif;        /* last modification time */
@@ -1236,29 +1233,29 @@ enum char_info_mode
     VARARG(name,unicode_str,namelen);  /* key name */
     VARARG(class,unicode_str);         /* class name */
 @REPLY
-    handle_t     hkey;         /* handle to the created key */
+    obj_handle_t hkey;         /* handle to the created key */
     int          created;      /* has it been newly created? */
 @END
 
 /* Open a registry key */
 @REQ(open_key)
-    handle_t     parent;       /* handle to the parent key */
+    obj_handle_t parent;       /* handle to the parent key */
     unsigned int access;       /* desired access rights */
     VARARG(name,unicode_str);  /* key name */
 @REPLY
-    handle_t     hkey;         /* handle to the open key */
+    obj_handle_t hkey;         /* handle to the open key */
 @END
 
 
 /* Delete a registry key */
 @REQ(delete_key)
-    handle_t     hkey;         /* handle to the key */
+    obj_handle_t hkey;         /* handle to the key */
 @END
 
 
 /* Enumerate registry subkeys */
 @REQ(enum_key)
-    handle_t     hkey;         /* handle to registry key */
+    obj_handle_t hkey;         /* handle to registry key */
     int          index;        /* index of subkey (or -1 for current key) */
     int          info_class;   /* requested information class */
 @REPLY
@@ -1278,7 +1275,7 @@ enum char_info_mode
 
 /* Set a value of a registry key */
 @REQ(set_key_value)
-    handle_t     hkey;         /* handle to registry key */
+    obj_handle_t hkey;         /* handle to registry key */
     int          type;         /* value type */
     size_t       namelen;      /* length of value name in bytes */
     VARARG(name,unicode_str,namelen);  /* value name */
@@ -1288,7 +1285,7 @@ enum char_info_mode
 
 /* Retrieve the value of a registry key */
 @REQ(get_key_value)
-    handle_t     hkey;         /* handle to registry key */
+    obj_handle_t hkey;         /* handle to registry key */
     VARARG(name,unicode_str);  /* value name */
 @REPLY
     int          type;         /* value type */
@@ -1299,7 +1296,7 @@ enum char_info_mode
 
 /* Enumerate a value of a registry key */
 @REQ(enum_key_value)
-    handle_t     hkey;         /* handle to registry key */
+    obj_handle_t hkey;         /* handle to registry key */
     int          index;        /* value index */
     int          info_class;   /* requested information class */
 @REPLY
@@ -1313,29 +1310,29 @@ enum char_info_mode
 
 /* Delete a value of a registry key */
 @REQ(delete_key_value)
-    handle_t     hkey;         /* handle to registry key */
+    obj_handle_t hkey;         /* handle to registry key */
     VARARG(name,unicode_str);  /* value name */
 @END
 
 
 /* Load a registry branch from a file */
 @REQ(load_registry)
-    handle_t     hkey;         /* root key to load to */
-    handle_t     file;         /* file to load from */
+    obj_handle_t hkey;         /* root key to load to */
+    obj_handle_t file;         /* file to load from */
     VARARG(name,unicode_str);  /* subkey name */
 @END
 
 
 /* Save a registry branch to a file */
 @REQ(save_registry)
-    handle_t     hkey;         /* key to save */
-    handle_t     file;         /* file to save to */
+    obj_handle_t hkey;         /* key to save */
+    obj_handle_t file;         /* file to save to */
 @END
 
 
 /* Save a registry branch at server exit */
 @REQ(save_registry_atexit)
-    handle_t     hkey;         /* key to save */
+    obj_handle_t hkey;         /* key to save */
     VARARG(file,string);       /* file to save to */
 @END
 
@@ -1354,7 +1351,7 @@ enum char_info_mode
     int          manual;        /* manual reset */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the timer */
+    obj_handle_t handle;        /* handle to the timer */
 @END
 
 
@@ -1364,12 +1361,12 @@ enum char_info_mode
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
 @REPLY
-    handle_t     handle;        /* handle to the timer */
+    obj_handle_t handle;        /* handle to the timer */
 @END
 
 /* Set a waitable timer */
 @REQ(set_timer)
-    handle_t     handle;        /* handle to the timer */
+    obj_handle_t handle;        /* handle to the timer */
     int          sec;           /* next expiration absolute time */
     int          usec;          /* next expiration absolute time */
     int          period;        /* timer period in ms */
@@ -1379,13 +1376,13 @@ enum char_info_mode
 
 /* Cancel a waitable timer */
 @REQ(cancel_timer)
-    handle_t     handle;        /* handle to the timer */
+    obj_handle_t handle;        /* handle to the timer */
 @END
 
 
 /* Retrieve the current context of a thread */
 @REQ(get_thread_context)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
     unsigned int flags;        /* context flags */
 @REPLY
     VARARG(context,context);   /* thread context */
@@ -1394,7 +1391,7 @@ enum char_info_mode
 
 /* Set the current context of a thread */
 @REQ(set_thread_context)
-    handle_t     handle;       /* thread handle */
+    obj_handle_t handle;       /* thread handle */
     unsigned int flags;        /* context flags */
     VARARG(context,context);   /* thread context */
 @END
@@ -1402,7 +1399,7 @@ enum char_info_mode
 
 /* Fetch a selector entry for a thread */
 @REQ(get_selector_entry)
-    handle_t      handle;      /* thread handle */
+    obj_handle_t  handle;      /* thread handle */
     int           entry;       /* LDT entry */
 @REPLY
     unsigned int  base;        /* selector base */
@@ -1455,7 +1452,7 @@ enum char_info_mode
 /* Get the message queue of the current thread */
 @REQ(get_msg_queue)
 @REPLY
-    handle_t     handle;       /* handle to the queue */
+    obj_handle_t handle;       /* handle to the queue */
 @END
 
 
@@ -1481,10 +1478,10 @@ enum char_info_mode
 
 /* Wait for a process to start waiting on input */
 @REQ(wait_input_idle)
-    handle_t     handle;       /* process handle */
+    obj_handle_t handle;       /* process handle */
     int          timeout;      /* timeout */
 @REPLY
-    handle_t     event;        /* handle to idle event */
+    obj_handle_t event;        /* handle to idle event */
 @END
 
 
@@ -1583,13 +1580,13 @@ enum message_type
     unsigned int sharing;      /* sharing flags */
     VARARG(name,string);       /* file name */
 @REPLY
-    handle_t     handle;       /* handle to the port */
+    obj_handle_t handle;       /* handle to the port */
 @END
 
 
 /* Retrieve info about a serial port */
 @REQ(get_serial_info)
-    handle_t     handle;       /* handle to comm port */
+    obj_handle_t handle;       /* handle to comm port */
 @REPLY
     unsigned int readinterval;
     unsigned int readconst;
@@ -1603,7 +1600,7 @@ enum message_type
 
 /* Set info about a serial port */
 @REQ(set_serial_info)
-    handle_t     handle;       /* handle to comm port */
+    obj_handle_t handle;       /* handle to comm port */
     int          flags;        /* bitmask to set values (see below) */
     unsigned int readinterval;
     unsigned int readconst;
@@ -1620,7 +1617,7 @@ enum message_type
 
 /* Create / reschedule an async I/O */
 @REQ(register_async)
-    handle_t     handle;  /* handle to comm port, socket or file */
+    obj_handle_t handle;  /* handle to comm port, socket or file */
     int          type;
     void*        overlapped;
     int          count;
@@ -1642,7 +1639,7 @@ enum message_type
     unsigned int   timeout;
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
-    handle_t       handle;       /* handle to the pipe */
+    obj_handle_t   handle;       /* handle to the pipe */
 @END
 
 
@@ -1651,13 +1648,13 @@ enum message_type
     unsigned int   access;
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY
-    handle_t       handle;       /* handle to the pipe */
+    obj_handle_t   handle;       /* handle to the pipe */
 @END
 
 
 /* Connect to a named pipe */
 @REQ(connect_named_pipe)
-    handle_t       handle;
+    obj_handle_t   handle;
     void*          overlapped;
     void*          func;
 @END
@@ -1674,12 +1671,12 @@ enum message_type
 
 /* Disconnect a named pipe */
 @REQ(disconnect_named_pipe)
-    handle_t       handle;
+    obj_handle_t   handle;
 @END
 
 
 @REQ(get_named_pipe_info)
-    handle_t       handle;
+    obj_handle_t   handle;
 @REPLY
     unsigned int   flags;
     unsigned int   maxinstances;
@@ -1695,12 +1692,12 @@ enum message_type
     unsigned int   file_id;
     unsigned int   dialect;
 @REPLY
-    handle_t       handle;
+    obj_handle_t   handle;
 @END
 
 
 @REQ(get_smb_info)
-    handle_t       handle;
+    obj_handle_t   handle;
     unsigned int   flags;
     unsigned int   offset;
 @REPLY
@@ -1870,7 +1867,7 @@ enum message_type
     user_handle_t  window;        /* handle to the window */
     atom_t         atom;          /* property atom (high-word set if it was a string) */
     int            string;        /* was atom a string originally? */
-    handle_t       handle;        /* handle to store */
+    obj_handle_t   handle;        /* handle to store */
 @END
 
 
@@ -1879,7 +1876,7 @@ enum message_type
     user_handle_t  window;        /* handle to the window */
     atom_t         atom;          /* property atom */
 @REPLY
-    handle_t       handle;        /* handle stored in property */
+    obj_handle_t   handle;        /* handle stored in property */
 @END
 
 
@@ -1888,7 +1885,7 @@ enum message_type
     user_handle_t  window;        /* handle to the window */
     atom_t         atom;          /* property atom */
 @REPLY
-    handle_t       handle;        /* handle stored in property */
+    obj_handle_t   handle;        /* handle stored in property */
 @END
 
 

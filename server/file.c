@@ -463,12 +463,12 @@ void file_set_error(void)
     }
 }
 
-struct file *get_file_obj( struct process *process, handle_t handle, unsigned int access )
+struct file *get_file_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
-static int set_file_pointer( handle_t handle, unsigned int *low, int *high, int whence )
+static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, int whence )
 {
     struct file *file;
     off_t result,xto;
@@ -548,7 +548,7 @@ int grow_file( struct file *file, int size_high, int size_low )
     return ret;
 }
 
-static int set_file_time( handle_t handle, time_t access_time, time_t write_time )
+static int set_file_time( obj_handle_t handle, time_t access_time, time_t write_time )
 {
     struct file *file;
     struct utimbuf utimbuf;

@@ -80,9 +80,9 @@ struct startup_info
     int                 inherit_all;  /* inherit all handles from parent */
     int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
-    handle_t            hstdin;       /* handle for stdin */
-    handle_t            hstdout;      /* handle for stdout */
-    handle_t            hstderr;      /* handle for stderr */
+    obj_handle_t        hstdin;       /* handle for stdin */
+    obj_handle_t        hstdout;      /* handle for stdout */
+    obj_handle_t        hstderr;      /* handle for stderr */
     struct file        *exe_file;     /* file handle for main exe */
     struct thread      *owner;        /* owner thread (the one that created the new process) */
     struct process     *process;      /* created process */
@@ -397,7 +397,7 @@ struct process *get_process_from_id( void *id )
 }
 
 /* get a process from a handle (and increment the refcount) */
-struct process *get_process_from_handle( handle_t handle, unsigned int access )
+struct process *get_process_from_handle( obj_handle_t handle, unsigned int access )
 {
     return (struct process *)get_handle_obj( current->process, handle,
                                              access, &process_ops );

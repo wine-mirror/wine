@@ -94,7 +94,7 @@ struct module_snapshot
 
 extern struct thread *create_process( int fd );
 extern struct process *get_process_from_id( void *id );
-extern struct process *get_process_from_handle( handle_t handle, unsigned int access );
+extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
 extern int debugger_detach( struct process* process, struct thread* debugger );
 

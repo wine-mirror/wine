@@ -105,7 +105,7 @@ extern struct thread *current;
 
 extern struct thread *create_thread( int fd, struct process *process );
 extern struct thread *get_thread_from_id( void *id );
-extern struct thread *get_thread_from_handle( handle_t handle, unsigned int access );
+extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access );
 extern struct thread *get_thread_from_pid( int pid );
 extern int suspend_thread( struct thread *thread, int check_limit );
 extern int resume_thread( struct thread *thread );

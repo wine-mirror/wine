@@ -277,7 +277,7 @@ void wine_server_send_fd( int fd )
  *
  * Receive a file descriptor passed from the server.
  */
-static int receive_fd( handle_t *handle )
+static int receive_fd( obj_handle_t *handle )
 {
     struct iovec vec;
     int ret, fd;
@@ -336,7 +336,7 @@ static int receive_fd( handle_t *handle )
  * Returns the new fd, which can be different if there was already an
  * fd in the cache for that handle.
  */
-inline static int store_cached_fd( int fd, handle_t handle )
+inline static int store_cached_fd( int fd, obj_handle_t handle )
 {
     SERVER_START_REQ( set_handle_info )
     {
@@ -369,10 +369,10 @@ inline static int store_cached_fd( int fd, handle_t handle )
  *
  * Retrieve the Unix fd corresponding to a file handle.
  */
-int wine_server_handle_to_fd( handle_t handle, unsigned int access, int *unix_fd,
+int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                               enum fd_type *type, int *flags )
 {
-    handle_t fd_handle;
+    obj_handle_t fd_handle;
     int ret, fd = -1;
 
     *unix_fd = -1;
@@ -580,7 +580,7 @@ void CLIENT_InitServer(void)
     char hostname[64];
     char *oldcwd, *serverdir;
     const char *configdir;
-    handle_t dummy_handle;
+    obj_handle_t dummy_handle;
 
     /* retrieve the current directory */
     for (size = 512; ; size *= 2)

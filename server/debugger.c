@@ -115,7 +115,7 @@ static int fill_create_thread_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
-    handle_t handle;
+    obj_handle_t handle;
 
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
     if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE ))) return 0;
@@ -130,7 +130,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     struct process *process = thread->process;
-    handle_t handle;
+    obj_handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
     if (!(handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, FALSE ))) return 0;
@@ -182,7 +182,7 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct process_dll *dll = arg;
-    handle_t handle = 0;
+    obj_handle_t handle = 0;
 
     if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, FALSE )))
         return 0;

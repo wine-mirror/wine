@@ -52,7 +52,7 @@ extern void fatal_perror( const char *err, ... );
 extern const char *get_config_dir(void);
 extern void *set_reply_data_size( size_t size );
 extern int receive_fd( struct process *process );
-extern int send_client_fd( struct process *process, int fd, handle_t handle );
+extern int send_client_fd( struct process *process, int fd, obj_handle_t handle );
 extern void read_request( struct thread *thread );
 extern void write_reply( struct thread *thread );
 extern unsigned int get_tick_count(void);

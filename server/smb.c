@@ -94,7 +94,7 @@ static void smb_dump( struct object *obj, int verbose )
     fprintf( stderr, "smb file with socket fd=%d \n", smb->obj.fd );
 }
 
-struct smb *get_smb_obj( struct process *process, handle_t handle, unsigned int access )
+struct smb *get_smb_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct smb *)get_handle_obj( process, handle, access, &smb_ops );
 }

@@ -174,7 +174,7 @@ static void serial_dump( struct object *obj, int verbose )
     fprintf( stderr, "Port fd=%d mask=%x\n", serial->obj.fd, serial->eventmask );
 }
 
-struct serial *get_serial_obj( struct process *process, handle_t handle, unsigned int access )
+struct serial *get_serial_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct serial *)get_handle_obj( process, handle, access, &serial_ops );
 }

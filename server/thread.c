@@ -257,7 +257,7 @@ struct thread *get_thread_from_id( void *id )
 }
 
 /* get a thread from a handle (and increment the refcount) */
-struct thread *get_thread_from_handle( handle_t handle, unsigned int access )
+struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access )
 {
     return (struct thread *)get_handle_obj( current->process, handle,
                                             access, &thread_ops );
@@ -485,7 +485,7 @@ static void thread_timeout( void *ptr )
 }
 
 /* select on a list of handles */
-static void select_on( int count, void *cookie, const handle_t *handles,
+static void select_on( int count, void *cookie, const obj_handle_t *handles,
                        int flags, int sec, int usec )
 {
     int ret, i;
@@ -872,7 +872,7 @@ DECL_HANDLER(open_thread)
 DECL_HANDLER(get_thread_info)
 {
     struct thread *thread;
-    handle_t handle = req->handle;
+    obj_handle_t handle = req->handle;
 
     if (!handle) thread = get_thread_from_id( req->tid_in );
     else thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION );

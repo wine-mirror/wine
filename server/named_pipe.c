@@ -233,7 +233,7 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
     return pipe;
 }
 
-static struct pipe_user *get_pipe_user_obj( struct process *process, handle_t handle,
+static struct pipe_user *get_pipe_user_obj( struct process *process, obj_handle_t handle,
                                             unsigned int access )
 {
     return (struct pipe_user *)get_handle_obj( process, handle, access, &pipe_user_ops );

@@ -31,7 +31,7 @@
     "void*"         => "%p",
     "time_t"        => "%ld",
     "size_t"        => "%d",
-    "handle_t"      => "%d",
+    "obj_handle_t"  => "%d",
     "atom_t"        => "%04x",
     "user_handle_t" => "%08x",
     "rectangle_t"   => "&dump_rectangle",

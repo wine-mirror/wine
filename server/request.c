@@ -374,7 +374,7 @@ int receive_fd( struct process *process )
 }
 
 /* send an fd to a client */
-int send_client_fd( struct process *process, int fd, handle_t handle )
+int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 {
     int ret;
 

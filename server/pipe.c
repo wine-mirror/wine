@@ -170,7 +170,7 @@ static void pipe_destroy( struct object *obj )
 DECL_HANDLER(create_pipe)
 {
     struct object *obj[2];
-    handle_t hread = 0, hwrite = 0;
+    obj_handle_t hread = 0, hwrite = 0;
 
     if (create_pipe( obj ))
     {

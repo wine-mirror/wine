@@ -65,11 +65,11 @@ static struct handle_table *global_table;
 /* handle to table index conversion */
 
 /* handles are a multiple of 4 under NT; handle 0 is not used */
-inline static handle_t index_to_handle( int index )
+inline static obj_handle_t index_to_handle( int index )
 {
-    return (handle_t)((index + 1) << 2);
+    return (obj_handle_t)((index + 1) << 2);
 }
-inline static int handle_to_index( handle_t handle )
+inline static int handle_to_index( obj_handle_t handle )
 {
     return ((unsigned int)handle >> 2) - 1;
 }
@@ -78,18 +78,18 @@ inline static int handle_to_index( handle_t handle )
 
 #define HANDLE_OBFUSCATOR 0x544a4def
 
-inline static int handle_is_global( handle_t handle)
+inline static int handle_is_global( obj_handle_t handle)
 {
     return ((unsigned long)handle ^ HANDLE_OBFUSCATOR) < 0x10000;
 }
-inline static handle_t handle_local_to_global( handle_t handle )
+inline static obj_handle_t handle_local_to_global( obj_handle_t handle )
 {
     if (!handle) return 0;
-    return (handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
+    return (obj_handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
 }
-inline static handle_t handle_global_to_local( handle_t handle )
+inline static obj_handle_t handle_global_to_local( obj_handle_t handle )
 {
-    return (handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
+    return (obj_handle_t)((unsigned long)handle ^ HANDLE_OBFUSCATOR);
 }
 
 
@@ -189,7 +189,7 @@ static int grow_handle_table( struct handle_table *table )
 }
 
 /* allocate the first free entry in the handle table */
-static handle_t alloc_entry( struct handle_table *table, void *obj, unsigned int access )
+static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned int access )
 {
     struct handle_entry *entry = table->entries + table->free;
     int i;
@@ -211,7 +211,7 @@ static handle_t alloc_entry( struct handle_table *table, void *obj, unsigned int
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-handle_t alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
+obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
 {
     struct handle_table *table = (struct handle_table *)process->handles;
 
@@ -223,7 +223,7 @@ handle_t alloc_handle( struct process *process, void *obj, unsigned int access, 
 
 /* allocate a global handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-static handle_t alloc_global_handle( void *obj, unsigned int access )
+static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
 {
     if (!global_table)
     {
@@ -234,7 +234,7 @@ static handle_t alloc_global_handle( void *obj, unsigned int access )
 }
 
 /* return a handle entry, or NULL if the handle is invalid */
-static struct handle_entry *get_handle( struct process *process, handle_t handle )
+static struct handle_entry *get_handle( struct process *process, obj_handle_t handle )
 {
     struct handle_table *table = (struct handle_table *)process->handles;
     struct handle_entry *entry;
@@ -312,7 +312,7 @@ struct object *copy_handle_table( struct process *process, struct process *paren
 
 /* close a handle and decrement the refcount of the associated object */
 /* return 1 if OK, 0 on error */
-int close_handle( struct process *process, handle_t handle, int *fd )
+int close_handle( struct process *process, obj_handle_t handle, int *fd )
 {
     struct handle_table *table;
     struct handle_entry *entry;
@@ -347,7 +347,7 @@ void close_global_handles(void)
 }
 
 /* retrieve the object corresponding to one of the magic pseudo-handles */
-static inline struct object *get_magic_handle( handle_t handle )
+static inline struct object *get_magic_handle( obj_handle_t handle )
 {
     switch((unsigned long)handle)
     {
@@ -362,7 +362,7 @@ static inline struct object *get_magic_handle( handle_t handle )
 }
 
 /* retrieve the object corresponding to a handle, incrementing its refcount */
-struct object *get_handle_obj( struct process *process, handle_t handle,
+struct object *get_handle_obj( struct process *process, obj_handle_t handle,
                                unsigned int access, const struct object_ops *ops )
 {
     struct handle_entry *entry;
@@ -387,7 +387,7 @@ struct object *get_handle_obj( struct process *process, handle_t handle,
 }
 
 /* retrieve the cached fd for a given handle */
-int get_handle_fd( struct process *process, handle_t handle, unsigned int access )
+int get_handle_fd( struct process *process, obj_handle_t handle, unsigned int access )
 {
     struct handle_entry *entry;
 
@@ -402,7 +402,7 @@ int get_handle_fd( struct process *process, handle_t handle, unsigned int access
 
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
-static int set_handle_info( struct process *process, handle_t handle,
+static int set_handle_info( struct process *process, obj_handle_t handle,
                             int mask, int flags, int *fd )
 {
     struct handle_entry *entry;
@@ -426,10 +426,10 @@ static int set_handle_info( struct process *process, handle_t handle,
 }
 
 /* duplicate a handle */
-handle_t duplicate_handle( struct process *src, handle_t src_handle, struct process *dst,
+obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,
                            unsigned int access, int inherit, int options )
 {
-    handle_t res;
+    obj_handle_t res;
     struct object *obj = get_handle_obj( src, src_handle, 0, NULL );
 
     if (!obj) return 0;
@@ -454,10 +454,10 @@ handle_t duplicate_handle( struct process *src, handle_t src_handle, struct proc
 }
 
 /* open a new handle to an existing object */
-handle_t open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
+obj_handle_t open_object( const WCHAR *name, size_t len, const struct object_ops *ops,
                       unsigned int access, int inherit )
 {
-    handle_t handle = 0;
+    obj_handle_t handle = 0;
     struct object *obj = find_object( name, len );
     if (obj)
     {

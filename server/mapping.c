@@ -251,7 +251,7 @@ static int get_image_params( struct mapping *mapping )
 
 
 static struct object *create_mapping( int size_high, int size_low, int protect,
-                                      handle_t handle, const WCHAR *name, size_t len )
+                                      obj_handle_t handle, const WCHAR *name, size_t len )
 {
     struct mapping *mapping;
     int access = 0;

@@ -39,7 +39,7 @@ void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
 {
     SERVER_START_REQ( read_console_output )
     {
-        req->handle = (handle_t)data->hConOut;
+        req->handle = (obj_handle_t)data->hConOut;
         req->x      = 0;
         req->y      = upd_tp;
         req->mode   = CHAR_INFO_MODE_TEXTATTR;
@@ -61,7 +61,7 @@ void WINECON_NotifyWindowChange(struct inner_data* data)
 {
     SERVER_START_REQ( set_console_output_info )
     {
-        req->handle       = (handle_t)data->hConOut;
+        req->handle       = (obj_handle_t)data->hConOut;
         req->win_left     = data->curcfg.win_pos.X;
         req->win_top      = data->curcfg.win_pos.Y;
         req->win_right    = data->curcfg.win_pos.X + data->curcfg.win_width - 1;
@@ -83,7 +83,7 @@ int	WINECON_GetHistorySize(HANDLE hConIn)
 
     SERVER_START_REQ(get_console_input_info)
     {
-	req->handle = (handle_t)hConIn;
+	req->handle = (obj_handle_t)hConIn;
 	if (!wine_server_call_err( req )) ret = reply->history_size;
     }
     SERVER_END_REQ;
@@ -101,7 +101,7 @@ BOOL	WINECON_SetHistorySize(HANDLE hConIn, int size)
 
     SERVER_START_REQ(set_console_input_info)
     {
-	req->handle = (handle_t)hConIn;
+	req->handle = (obj_handle_t)hConIn;
 	req->mask = SET_CONSOLE_INPUT_INFO_HISTORY_SIZE;
 	req->history_size = size;
 	ret = !wine_server_call_err( req );
@@ -122,7 +122,7 @@ int	WINECON_GetHistoryMode(HANDLE hConIn)
 
     SERVER_START_REQ(get_console_input_info)
     {
-	req->handle = (handle_t)hConIn;
+	req->handle = (obj_handle_t)hConIn;
 	if (!wine_server_call_err( req )) ret = reply->history_mode;
     }
     SERVER_END_REQ;
@@ -140,7 +140,7 @@ BOOL	WINECON_SetHistoryMode(HANDLE hConIn, int mode)
 
     SERVER_START_REQ(set_console_input_info)
     {
-	req->handle = (handle_t)hConIn;
+	req->handle = (obj_handle_t)hConIn;
 	req->mask = SET_CONSOLE_INPUT_INFO_HISTORY_MODE;
 	req->history_mode = mode;
 	ret = !wine_server_call_err( req );
@@ -162,7 +162,7 @@ BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len)
 
     SERVER_START_REQ( get_console_input_info )
     {
-        req->handle = (handle_t)hConIn;
+        req->handle = (obj_handle_t)hConIn;
         wine_server_set_reply( req, buffer, len - sizeof(WCHAR) );
         if ((ret = !wine_server_call_err( req )))
         {
@@ -188,7 +188,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
     SERVER_START_REQ( get_console_renderer_events )
     {
         wine_server_set_reply( req, evts, sizeof(evts) );
-        req->handle = (handle_t)data->hSynchro;
+        req->handle = (obj_handle_t)data->hSynchro;
         if (!wine_server_call_err( req )) num = wine_server_reply_size(reply) / sizeof(evts[0]);
         else num = 0;
     }
@@ -393,7 +393,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
 
     SERVER_START_REQ( set_console_input_info )
     {
-        req->handle = (handle_t)data->hConIn;
+        req->handle = (obj_handle_t)data->hConIn;
         req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
         wine_server_add_data( req, szTitle, strlenW(szTitle) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
@@ -403,7 +403,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
 
     SERVER_START_REQ(create_console_output)
     {
-        req->handle_in = (handle_t)data->hConIn;
+        req->handle_in = (obj_handle_t)data->hConIn;
         req->access    = GENERIC_WRITE|GENERIC_READ;
         req->share     = FILE_SHARE_READ|FILE_SHARE_WRITE;
         req->inherit   = FALSE;

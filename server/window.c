@@ -39,7 +39,7 @@ struct property
 {
     unsigned short type;     /* property type (see below) */
     atom_t         atom;     /* property atom */
-    handle_t       handle;   /* property handle (user-defined storage) */
+    obj_handle_t   handle;   /* property handle (user-defined storage) */
 };
 
 enum property_type
@@ -138,7 +138,7 @@ static void link_window( struct window *win, struct window *parent, struct windo
 }
 
 /* set a window property */
-static void set_property( struct window *win, atom_t atom, handle_t handle,
+static void set_property( struct window *win, atom_t atom, obj_handle_t handle,
                           enum property_type type )
 {
     int i, free = -1;
@@ -186,7 +186,7 @@ static void set_property( struct window *win, atom_t atom, handle_t handle,
 }
 
 /* remove a window property */
-static handle_t remove_property( struct window *win, atom_t atom )
+static obj_handle_t remove_property( struct window *win, atom_t atom )
 {
     int i;
 
@@ -205,7 +205,7 @@ static handle_t remove_property( struct window *win, atom_t atom )
 }
 
 /* find a window property */
-static handle_t get_property( struct window *win, atom_t atom )
+static obj_handle_t get_property( struct window *win, atom_t atom )
 {
     int i;
 

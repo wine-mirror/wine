@@ -82,7 +82,7 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
     return sem;
 }
 
-static unsigned int release_semaphore( handle_t handle, unsigned int count )
+static unsigned int release_semaphore( obj_handle_t handle, unsigned int count )
 {
     struct semaphore *sem;
     unsigned int prev = 0;

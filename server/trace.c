@@ -117,7 +117,7 @@ static void dump_varargs_ints( size_t size )
 
 static void dump_varargs_handles( size_t size )
 {
-    const handle_t *data = cur_data;
+    const obj_handle_t *data = cur_data;
     size_t len = size / sizeof(*data);
 
     fputc( '{', stderr );

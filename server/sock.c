@@ -540,7 +540,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
 }
 
 /* accept a socket (creates a new fd) */
-static struct sock *accept_socket( handle_t handle )
+static struct sock *accept_socket( obj_handle_t handle )
 {
     struct sock *acceptsock;
     struct sock *sock;

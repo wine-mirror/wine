@@ -77,7 +77,7 @@ struct event *create_event( const WCHAR *name, size_t len,
     return event;
 }
 
-struct event *get_event_obj( struct process *process, handle_t handle, unsigned int access )
+struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct event *)get_handle_obj( process, handle, access, &event_ops );
 }

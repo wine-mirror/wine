@@ -891,7 +891,7 @@ static void delete_value( struct key *key, const WCHAR *name )
     }
 }
 
-static struct key *create_root_key( handle_t hkey )
+static struct key *create_root_key( obj_handle_t hkey )
 {
     WCHAR keyname[80];
     int i, dummy;
@@ -902,7 +902,7 @@ static struct key *create_root_key( handle_t hkey )
     i = 0;
     while (*p) keyname[i++] = *p++;
 
-    if (hkey == (handle_t)HKEY_CURRENT_USER)  /* this one is special */
+    if (hkey == (obj_handle_t)HKEY_CURRENT_USER)  /* this one is special */
     {
         /* get the current user name */
         char buffer[10];
@@ -927,7 +927,7 @@ static struct key *create_root_key( handle_t hkey )
 }
 
 /* get the registry key corresponding to an hkey handle */
-static struct key *get_hkey_obj( handle_t hkey, unsigned int access )
+static struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
 {
     struct key *key;
 
@@ -1330,7 +1330,7 @@ static void load_keys( struct key *key, FILE *f )
 }
 
 /* load a part of the registry from a file */
-static void load_registry( struct key *key, handle_t handle )
+static void load_registry( struct key *key, obj_handle_t handle )
 {
     struct object *obj;
     int fd;
@@ -1420,7 +1420,7 @@ static void save_all_subkeys( struct key *key, FILE *f )
 }
 
 /* save a registry branch to a file handle */
-static void save_registry( struct key *key, handle_t handle )
+static void save_registry( struct key *key, obj_handle_t handle )
 {
     struct object *obj;
     int fd;
