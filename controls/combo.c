@@ -403,7 +403,14 @@ static void CBCalcPlacement(
  */
 static void CBGetDroppedControlRect( LPHEADCOMBO lphc, LPRECT lpRect)
 {
-  CopyRect(lpRect, &lphc->droppedRect);
+    /* In windows, CB_GETDROPPEDCONTROLRECT returns the upper left corner
+     of the combo box and the lower right corner of the listbox */
+    
+    GetWindowRect(lphc->self->hwndSelf, lpRect);
+
+    lpRect->right =  lpRect->left + lphc->droppedRect.right - lphc->droppedRect.left;
+    lpRect->bottom = lpRect->top + lphc->droppedRect.bottom - lphc->droppedRect.top;
+
 }
 
 /***********************************************************************
