@@ -49,6 +49,42 @@ static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
 	}
 }
 
+/************************************************************
+ *                ADVAPI_IsLocalComputer
+ *
+ * Checks whether the server name indicates local machine.
+ */
+BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
+{
+    if (!ServerName)
+    {
+        return TRUE;
+    }
+    else
+    {
+        DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+        BOOL Result;
+        LPWSTR buf;
+
+        buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
+        Result = GetComputerNameW(buf,  &dwSize);
+        if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
+            ServerName += 2;
+        Result = Result && !lstrcmpW(ServerName, buf);
+        HeapFree(GetProcessHeap(), 0, buf);
+
+        return Result;
+    }
+}
+
+#define ADVAPI_ForceLocalComputer(ServerName, FailureCode) \
+    if (!ADVAPI_IsLocalComputer(ServerName)) \
+    { \
+        FIXME("Action Implemented for local computer only. " \
+              "Requested for server %s\n", debugstr_w(ServerName)); \
+        return FailureCode; \
+    }
+
 /*	##############################
 	######	TOKEN FUNCTIONS ######
 	##############################
@@ -802,9 +838,11 @@ LsaOpenPolicy(
 	FIXME("(%s,%p,0x%08lx,%p):stub\n",
               SystemName?debugstr_w(SystemName->Buffer):"null",
 	      ObjectAttributes, DesiredAccess, PolicyHandle);
+        ADVAPI_ForceLocalComputer(SystemName ? SystemName->Buffer : NULL,
+                                  STATUS_ACCESS_VIOLATION);
 	dumpLsaAttributes(ObjectAttributes);
 	if(PolicyHandle) *PolicyHandle = (LSA_HANDLE)0xcafe;
-	return TRUE;
+	return STATUS_SUCCESS;
 }
 
 /******************************************************************************
