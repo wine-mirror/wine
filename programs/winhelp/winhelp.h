@@ -78,6 +78,9 @@ typedef struct tagWinHelp
   HFONT (*fonts)[2];
   UINT  fonts_len;
 
+  HCURSOR hArrowCur;
+  HCURSOR hHandCur;
+
   HGLOBAL hSelf;
   struct tagWinHelp *next;
 } WINHELP_WINDOW;

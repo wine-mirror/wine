@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
 #include "windowsx.h"
 #include "winhelp.h"
 
@@ -27,6 +27,7 @@ static VOID    WINHELP_SetupText(HWND hWnd);
 static BOOL    WINHELP_AppendText(WINHELP_LINE***, WINHELP_LINE_PART***,
 				  LPSIZE, LPSIZE, INT*, INT, LPCSTR, UINT,
 				  HFONT, COLORREF, HLPFILE_LINK*);
+static WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
 WINHELP_GLOBALS Globals = {3, 0, 0, 0, 0, 0};
 
@@ -241,6 +242,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
       win->lpszName = ptr;
     }
   else win->lpszName = NULL;
+
   win->page = page;
   win->first_button = 0;
   win->first_line = 0;
@@ -248,6 +250,9 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
   win->hButtonBoxWnd = 0;
   win->hTextWnd = 0;
   win->hShadowWnd = 0;
+
+  win->hArrowCur = LoadCursorA(0, IDC_ARROWA);
+  win->hHandCur = LoadCursorA(0, IDC_HANDA);
 
   Globals.active_win = win;
 
@@ -620,24 +625,32 @@ static LRESULT CALLBACK WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam,
       EndPaint (hWnd, &ps);
       break;
 
+    case WM_MOUSEMOVE:
+      win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+
+      if(WINHELP_IsOverLink(hWnd, wParam, lParam))
+        SetCursor(win->hHandCur); /* set to hand pointer cursor to indicate a link */
+      else
+        SetCursor(win->hArrowCur); /* set to hand pointer cursor to indicate a link */
+
+      break;
+
     case WM_LBUTTONDOWN:
       win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
-      scroll_pos = GetScrollPos(hWnd, SB_VERT);
 
       hPopupWnd = Globals.hPopupWnd;
       Globals.hPopupWnd = 0;
 
-      mouse.x = LOWORD(lParam);
-      mouse.y = HIWORD(lParam);
-      for (line = win->first_line; line; line = line->next)
-	for (part = &line->first_part; part; part = part->next)
-	  if (part->link.lpszPath &&
-	      part->rect.left   <= mouse.x &&
-	      part->rect.right  >= mouse.x &&
-	      part->rect.top    <= mouse.y + scroll_pos &&
-	      part->rect.bottom >= mouse.y + scroll_pos)
-	    WINHELP_CreateHelpWindow(part->link.lpszPath, part->link.lHash, NULL,
+      part = WINHELP_IsOverLink(hWnd, wParam, lParam);
+      if(part)
+      {
+        mouse.x = LOWORD(lParam);
+        mouse.y = HIWORD(lParam);
+
+        WINHELP_CreateHelpWindow(part->link.lpszPath, part->link.lHash, NULL,
 				     part->link.bPopup, hWnd, &mouse,  SW_NORMAL);
+      }
+
       if (hPopupWnd)
 	DestroyWindow(hPopupWnd);
       break;
@@ -1050,6 +1063,34 @@ INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type
   wsprintf(newtext, text, str);
 
   return(MessageBox(0, newtext, title, type));
+}
+
+WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+  WINHELP_WINDOW* win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+  POINT mouse;
+  WINHELP_LINE      *line;
+  WINHELP_LINE_PART *part;
+  int scroll_pos = GetScrollPos(hWnd, SB_VERT);
+
+  mouse.x = LOWORD(lParam);
+  mouse.y = HIWORD(lParam);
+  for (line = win->first_line; line; line = line->next)
+  {
+    for (part = &line->first_part; part; part = part->next)
+    {
+      if (part->link.lpszPath &&
+	   part->rect.left   <= mouse.x &&
+	   part->rect.right  >= mouse.x &&
+	   part->rect.top    <= mouse.y + scroll_pos &&
+	   part->rect.bottom >= mouse.y + scroll_pos)
+      {
+        return part;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 /* Local Variables:    */
