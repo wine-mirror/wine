@@ -180,8 +180,12 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE);
 
 inline static COORD __wine_GetLargestConsoleWindowSize_wrapper(HANDLE h)
 {
+    COORD c;
     DWORD dw = GetLargestConsoleWindowSize(h);
-    return *(COORD *)&dw;
+
+    c.X = LOWORD(dw);
+    c.Y = HIWORD(dw);
+    return c;
 }
 #define GetLargestConsoleWindowSize(h) __wine_GetLargestConsoleWindowSize_wrapper(h)
 
