@@ -16,6 +16,7 @@ C_SRCS = \
 	oledlg.c \
 	oleobj.c \
 	olesvr.c \
+	parsedt.c \
 	storage.c \
 	typelib.c \
 	variant.c

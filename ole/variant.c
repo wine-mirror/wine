@@ -15,8 +15,9 @@
  *   - The Variant APIs do not the following types: IUknown, IDispatch, DECIMAL and SafeArray.
  *     The prototypes for these are commented out in the oleauto.h file.  They need
  *     to be implemented and cases need to be added to the switches of the  existing APIs.
- *   - The parsing of date for the VarDateFromStr still needs to be done.  I'm currently
- *     working on this.
+ *   - The parsing of date for the VarDateFromStr is not complete.
+ *   - The date manipulations do not support date prior to 1900.
+ *   - The parsing does not accept has many formats has the Windows implementation.
  */
  
 #include "wintypes.h"
@@ -25,6 +26,7 @@
 #include "debug.h"
 #include "winerror.h"
 #include "mapidefs.h"
+#include "parsedt.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -71,6 +73,391 @@ static const DATE DATE_MAX = 2958465;
  */
 #define BUFFER_MAX 1024
 static char pBuffer[BUFFER_MAX];
+
+/*
+ * Note a leap year is one that is a multiple of 4
+ * but not of a 100.  Except if it is a multiple of
+ * 400 then it is a leap year.
+ */
+/* According to postgeSQL date parsing functions there is
+ * a leap year when this expression is true.
+ * (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
+ * So according to this there is 365.2515 days in one year.
+ * One + every four years: 1/4 -> 365.25
+ * One - every 100 years: 1/100 -> 365.001
+ * One + every 400 years: 1/400 -> 365.0025
+ */
+static const double DAYS_IN_ONE_YEAR = 365.2515;
+
+
+
+/******************************************************************************
+ *	   DateTimeStringToTm	[INTERNAL]
+ *
+ * Converts a string representation of a date and/or time to a tm structure.
+ *
+ * Note this function uses the postgresql date parsing functions found
+ * in the parsedt.c file.
+ *
+ * Returns TRUE if successfull.
+ *
+ * Note: This function does not parse the day of the week,
+ * daylight savings time. It will only fill the followin fields in
+ * the tm struct, tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
+ *
+ ******************************************************************************/
+static BOOL32 DateTimeStringToTm( OLECHAR32* strIn, LCID lcid, struct tm* pTm )
+{
+	BOOL32 res = FALSE;
+	double		fsec;
+	int 		tzp;
+	int 		dtype;
+	int 		nf;
+	char	   *field[MAXDATEFIELDS];
+	int 		ftype[MAXDATEFIELDS];
+	char		lowstr[MAXDATELEN + 1];
+	char* strDateTime = NULL;
+
+	/* Convert the string to ASCII since this is the only format
+	 * postgesql can handle.
+	 */
+	strDateTime = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+
+	if( strDateTime != NULL )
+	{
+		/* Make sure we don't go over the maximum length
+		 * accepted by postgesql.
+		 */
+		if( strlen( strDateTime ) <= MAXDATELEN )
+		{
+			if( ParseDateTime( strDateTime, lowstr, field, ftype, MAXDATEFIELDS, &nf) == 0 )
+			{
+				if( lcid & VAR_DATEVALUEONLY )
+				{
+					/* Get the date information.
+					 * It returns 0 if date information was
+					 * present and 1 if only time information was present.
+					 * -1 if an error occures.
+					 */
+					if( DecodeDateTime(field, ftype, nf, &dtype, pTm, &fsec, &tzp) == 0 )
+					{
+						/* Eliminate the time information since we
+						 * were asked to get date information only.
+						 */
+						pTm->tm_sec = 0;
+						pTm->tm_min = 0;
+						pTm->tm_hour = 0;
+						res = TRUE;
+					}
+				}
+				if( lcid & VAR_TIMEVALUEONLY )
+				{
+					/* Get time information only.
+					 */
+					if( DecodeTimeOnly(field, ftype, nf, &dtype, pTm, &fsec) == 0 )
+					{
+						res = TRUE;
+					}
+				}
+				else
+				{
+					/* Get both date and time information.
+					 * It returns 0 if date information was
+					 * present and 1 if only time information was present.
+					 * -1 if an error occures.
+					 */
+					if( DecodeDateTime(field, ftype, nf, &dtype, pTm, &fsec, &tzp) != -1 )
+					{
+						res = TRUE;
+					}
+				}
+			}
+		}
+		HeapFree( GetProcessHeap(), 0, strDateTime );
+	}
+
+	return res;
+}
+
+
+
+
+
+
+/******************************************************************************
+ *	   TmToDATE 	[INTERNAL]
+ *
+ * The date is implemented using an 8 byte floating-point number.
+ * Days are represented by whole numbers increments starting with 0.00 has
+ * being December 30 1899, midnight.
+ * The hours are expressed as the fractional part of the number.
+ * December 30 1899 at midnight = 0.00
+ * January 1 1900 at midnight = 2.00
+ * January 4 1900 at 6 AM = 5.25
+ * January 4 1900 at noon = 5.50
+ * December 29 1899 at midnight = -1.00
+ * December 18 1899 at midnight = -12.00
+ * December 18 1899 at 6AM = -12.25
+ * December 18 1899 at 6PM = -12.75
+ * December 19 1899 at midnight = -11.00
+ * The tm structure is as follows:
+ * struct tm {
+ *		  int tm_sec;	   seconds after the minute - [0,59]
+ *		  int tm_min;	   minutes after the hour - [0,59]
+ *		  int tm_hour;	   hours since midnight - [0,23]
+ *		  int tm_mday;	   day of the month - [1,31]
+ *		  int tm_mon;	   months since January - [0,11]
+ *		  int tm_year;	   years
+ *		  int tm_wday;	   days since Sunday - [0,6]
+ *		  int tm_yday;	   days since January 1 - [0,365]
+ *		  int tm_isdst;    daylight savings time flag
+ *		  };
+ *
+ * Note: This function does not use the tm_wday, tm_yday, tm_wday,
+ * and tm_isdst fields of the tm structure. And only converts years
+ * after 1900.
+ *
+ * Returns TRUE if successfull.
+ */
+static BOOL32 TmToDATE( struct tm* pTm, DATE *pDateOut )
+{
+	if( (pTm->tm_year - 1900) >= 0 )
+	{
+		int leapYear = 0;
+		
+		/* Start at 1. This is the way DATE is defined.
+		 * January 1, 1900 at Midnight is 1.00.
+		 * January 1, 1900 at 6AM is 1.25.
+		 * and so on.
+		 */
+		*pDateOut = 1;
+
+		/* Add the number of days corresponding to
+		 * tm_year.
+		 */
+		*pDateOut += (pTm->tm_year - 1900) * 365;
+
+		/* Add the leap days in the previous years between now and 1900.
+		 * Note a leap year is one that is a multiple of 4
+		 * but not of a 100.  Except if it is a multiple of
+		 * 400 then it is a leap year.
+		 */
+		*pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
+		*pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
+		*pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
+
+		/* Set the leap year flag if the
+		 * current year specified by tm_year is a
+		 * leap year. This will be used to add a day
+		 * to the day count.
+		 */
+		if( isleap( pTm->tm_year ) )
+			leapYear = 1;
+		
+		/* Add the number of days corresponding to
+		 * the month.
+		 */
+		switch( pTm->tm_mon )
+		{
+		case 2:
+			*pDateOut += 31;
+			break;
+		case 3:
+			*pDateOut += ( 59 + leapYear );
+			break;
+		case 4:
+			*pDateOut += ( 90 + leapYear );
+			break;
+		case 5:
+			*pDateOut += ( 120 + leapYear );
+			break;
+		case 6:
+			*pDateOut += ( 151 + leapYear );
+			break;
+		case 7:
+			*pDateOut += ( 181 + leapYear );
+			break;
+		case 8:
+			*pDateOut += ( 212 + leapYear );
+			break;
+		case 9:
+			*pDateOut += ( 243 + leapYear );
+			break;
+		case 10:
+			*pDateOut += ( 273 + leapYear );
+			break;
+		case 11:
+			*pDateOut += ( 304 + leapYear );
+			break;
+		case 12:
+			*pDateOut += ( 334 + leapYear );
+			break;
+		}
+		/* Add the number of days in this month.
+		 */
+		*pDateOut += pTm->tm_mday;
+	
+		/* Add the number of seconds, minutes, and hours
+		 * to the DATE. Note these are the fracionnal part
+		 * of the DATE so seconds / number of seconds in a day.
+		 */
+		*pDateOut += pTm->tm_hour / 24.0;
+		*pDateOut += pTm->tm_min / 1440.0;
+		*pDateOut += pTm->tm_sec / 86400.0;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/******************************************************************************
+ *	   DateToTm 	[INTERNAL]
+ *
+ * This function converst a windows DATE to a tm structure.
+ *
+ * It does not fill all the fields of the tm structure.
+ * Here is a list of the fields that are filled:
+ * tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
+ *
+ * Note this function does not support dates before the January 1, 1900
+ * or ( dateIn < 2.0 ).
+ *
+ * Returns TRUE if successfull.
+ */
+static BOOL32 DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
+{
+	/* Do not process dates smaller than January 1, 1900.
+	 * Which corresponds to 2.0 in the windows DATE format.
+	 */
+	if( dateIn >= 2.0 )
+	{
+		double decimalPart = 0.0;
+		double wholePart = 0.0;
+
+		pTm->tm_sec = 0;
+		pTm->tm_min = 0;
+		pTm->tm_hour = 0;
+		pTm->tm_mday = 0;
+		pTm->tm_mon = 0;
+		pTm->tm_year = 0;
+		pTm->tm_wday = 0;
+		pTm->tm_yday = 0;
+		pTm->tm_isdst = 0;
+		pTm->tm_gmtoff = 0;
+		pTm->tm_zone = 0;
+	
+		/* Because of the nature of DATE format witch
+		 * associates 2.0 to January 1, 1900. We will
+		 * remove 1.0 from the whole part of the DATE
+		 * so that in the following code 1.0
+		 * will correspond to January 1, 1900.
+		 * This simplyfies the processing of the DATE value.
+		 */
+		dateIn -= 1.0;
+
+		wholePart = (double) floor( dateIn );
+		decimalPart = fmod( dateIn, wholePart );
+
+		if( !(lcid & VAR_TIMEVALUEONLY) )
+		{
+			int nDay = 0;
+			int leapYear = 0;
+			double yearsSince1900 = 0;
+			/* Start at 1900, this where the DATE time 0.0 starts.
+			 */
+			pTm->tm_year = 1900;
+			/* find in what year the day in the "wholePart" falls into.
+			 * add the value to the year field.
+			 */
+			yearsSince1900 = floor( wholePart / DAYS_IN_ONE_YEAR );
+			pTm->tm_year += yearsSince1900;
+			/* determine if this is a leap year.
+			 */
+			if( isleap( pTm->tm_year ) )
+				leapYear = 1;
+			/* find what day of that year does the "wholePart" corresponds to.
+			 * Note: nDay is in [1-366] format
+			 */
+			nDay = (int) ( wholePart - floor( yearsSince1900 * DAYS_IN_ONE_YEAR ) );
+			/* Set the tm_yday value.
+			 * Note: The day is must be converted from [1-366] to [0-365]
+			 */
+			//pTm->tm_yday = nDay - 1;
+			/* find which mount this day corresponds to.
+			 */
+			if( nDay <= 31 )
+			{
+				pTm->tm_mday = nDay;
+				pTm->tm_mon = 0;
+			}
+			else if( nDay <= ( 59 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - 31;
+				pTm->tm_mon = 1;
+			}
+			else if( nDay <= ( 90 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 59 + leapYear );
+				pTm->tm_mon = 2;
+			}
+			else if( nDay <= ( 120 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 90 + leapYear );
+				pTm->tm_mon = 3;
+			}
+			else if( nDay <= ( 151 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 120 + leapYear );
+				pTm->tm_mon = 4;
+			}
+			else if( nDay <= ( 181 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 151 + leapYear );
+				pTm->tm_mon = 5;
+			}
+			else if( nDay <= ( 212 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 181 + leapYear );
+				pTm->tm_mon = 6;
+			}
+			else if( nDay <= ( 243 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 212 + leapYear );
+				pTm->tm_mon = 7;
+			}
+			else if( nDay <= ( 273 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 243 + leapYear );
+				pTm->tm_mon = 8;
+			}
+			else if( nDay <= ( 304 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 273 + leapYear );
+				pTm->tm_mon = 9;
+			}
+			else if( nDay <= ( 334 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 304 + leapYear );
+				pTm->tm_mon = 10;
+			}
+			else if( nDay <= ( 365 + leapYear ) )
+			{
+				pTm->tm_mday = nDay - ( 334 + leapYear );
+				pTm->tm_mon = 11;
+			}
+		}
+		if( !(lcid & VAR_DATEVALUEONLY) )
+		{
+			/* find the number of seconds in this day.
+			 * fractional part times, hours, minutes, seconds.
+			 */
+			pTm->tm_hour = (int) ( decimalPart * 24 );
+			pTm->tm_min = (int) ( ( ( decimalPart * 24 ) - pTm->tm_hour ) * 60 );
+			pTm->tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 );
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
 
 
 
@@ -2555,12 +2942,9 @@ HRESULT WINAPI VarDateFromI432(LONG lIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromR432(FLOAT fltIn, DATE* pdateOut)
 {
-    unsigned long test = 0;
-
     TRACE( ole, "( %f, %p ), stub\n", fltIn, pdateOut );
 
-    test = (unsigned long) fltIn;
-	if( test < DATE_MIN || test > DATE_MAX )
+    if( ceil(fltIn) < DATE_MIN || floor(fltIn) > DATE_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -2575,12 +2959,9 @@ HRESULT WINAPI VarDateFromR432(FLOAT fltIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromR832(double dblIn, DATE* pdateOut)
 {
-    unsigned long test = 0;
-
     TRACE( ole, "( %f, %p ), stub\n", dblIn, pdateOut );
 
-    test = (unsigned long) dblIn;
-	if( test < DATE_MIN || test > DATE_MAX )
+	if( ceil(dblIn) < DATE_MIN || floor(dblIn) > DATE_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -2618,8 +2999,22 @@ HRESULT WINAPI VarDateFromR832(double dblIn, DATE* pdateOut)
 HRESULT WINAPI VarDateFromStr32(OLECHAR32* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
 {
 	HRESULT ret = S_OK;
+    struct tm TM = { 0,0,0,0,0,0,0,0,0 };
 
-    FIXME( ole, "( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
+    TRACE( ole, "( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
+
+    if( DateTimeStringToTm( strIn, lcid, &TM ) )
+    {
+        if( TmToDATE( &TM, pdateOut ) == FALSE )
+        {
+            ret = E_INVALIDARG;
+        }
+    }
+    else
+    {
+        ret = DISP_E_TYPEMISMATCH;
+    }
+
 
 	return ret;
 }
@@ -2780,7 +3175,7 @@ HRESULT WINAPI VarBstrFromR832(double dblIn, LCID lcid, ULONG dwFlags, BSTR32* p
  *		  int tm_hour;	   hours since midnight - [0,23]
  *		  int tm_mday;	   day of the month - [1,31]
  *		  int tm_mon;	   months since January - [0,11]
- *		  int tm_year;	   years since 1900
+ *		  int tm_year;	   years
  *		  int tm_wday;	   days since Sunday - [0,6]
  *		  int tm_yday;	   days since January 1 - [0,365]
  *		  int tm_isdst;    daylight savings time flag
@@ -2788,105 +3183,13 @@ HRESULT WINAPI VarBstrFromR832(double dblIn, LCID lcid, ULONG dwFlags, BSTR32* p
  */
 HRESULT WINAPI VarBstrFromDate32(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR32* pbstrOut)
 {
-	/* If the date is not after the 1900 return an error because
-	 * the tm structure does not allow such dates.
-	 */
-	if( dateIn >= 1.0 )
-	{
-		double decimalPart = 0.0;
-		double wholePart = 0.0;
 		struct tm TM = {0,0,0,0,0,0,0,0,0};
 	 
-		wholePart = (double) (long) dateIn;
-		decimalPart = fmod( dateIn, wholePart );
+    TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
 
-		if( !(lcid & VAR_TIMEVALUEONLY) )
-		{
-			int nDay = 0;
-			int leapYear = 0;
-			/* find in what year the day in the "wholePart" falls into.
-			 */
-			TM.tm_year = (int) ( wholePart / 365.25 );
-			/* determine if this is a leap year.
-			 */
-			if( ( TM.tm_year % 4 ) == 0 )
-				leapYear = 1;
-			/* find what day of that year does the "wholePart" corresponds to.
-			 * the day is [1-366]
-			 */
-			nDay = (int) ( wholePart - ( TM.tm_year * 365.25 ) );
-			TM.tm_yday = nDay - 1;
-			/* find which mount this day corresponds to.
-			 */
-			if( nDay <= 31 )
+    if( DateToTm( dateIn, lcid, &TM ) == FALSE )
 			{
-				TM.tm_mday = nDay;
-				TM.tm_mon = 0;
-			}
-			else if( nDay <= ( 59 + leapYear ) )
-			{
-				TM.tm_mday = nDay - 31;
-				TM.tm_mon = 1;
-			}
-			else if( nDay <= ( 90 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 59 + leapYear );
-				TM.tm_mon = 2;
-			}
-			else if( nDay <= ( 120 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 90 + leapYear );
-				TM.tm_mon = 3;
-			}
-			else if( nDay <= ( 151 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 120 + leapYear );
-				TM.tm_mon = 4;
-			}
-			else if( nDay <= ( 181 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 151 + leapYear );
-				TM.tm_mon = 5;
-			}
-			else if( nDay <= ( 212 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 181 + leapYear );
-				TM.tm_mon = 6;
-			}
-			else if( nDay <= ( 243 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 212 + leapYear );
-				TM.tm_mon = 7;
-			}
-			else if( nDay <= ( 273 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 243 + leapYear );
-				TM.tm_mon = 8;
-			}
-			else if( nDay <= ( 304 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 273 + leapYear );
-				TM.tm_mon = 9;
-			}
-			else if( nDay <= ( 334 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 304 + leapYear );
-				TM.tm_mon = 10;
-			}
-			else if( nDay <= ( 365 + leapYear ) )
-			{
-				TM.tm_mday = nDay - ( 334 + leapYear );
-				TM.tm_mon = 11;
-			}
-		}
-		if( !(lcid & VAR_DATEVALUEONLY) )
-		{
-			/* find the number of seconds in this day.
-			 * fractional part times, hours, minutes, seconds.
-			 */
-			TM.tm_hour = (int) ( decimalPart * 24 );
-			TM.tm_min = (int) ( ( ( decimalPart * 24 ) - TM.tm_hour ) * 60 );
-			TM.tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( TM.tm_hour * 60 ) - TM.tm_min ) * 60 );
+        return E_INVALIDARG;
 		}
 
 		if( lcid & VAR_DATEVALUEONLY )
@@ -2894,15 +3197,9 @@ HRESULT WINAPI VarBstrFromDate32(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR32* 
 		else if( lcid & VAR_TIMEVALUEONLY )
 			strftime( pBuffer, BUFFER_MAX, "%X", &TM );
 		else
-			strftime( pBuffer, 100, "%x %X", &TM );
+        strftime( pBuffer, BUFFER_MAX, "%x %X", &TM );
 
 		*pbstrOut = StringDupAtoBstr( pBuffer );
-	}
-	else
-	{
-		FIXME( ole, "( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
-		return E_INVALIDARG;
-	}
 
 	return S_OK;
 }
