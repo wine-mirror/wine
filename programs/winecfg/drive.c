@@ -88,8 +88,8 @@ void setDriveValue(char letter, const char *valueName, const char *newValue) {
 
 /* copies a drive configuration branch */
 void copyDrive(char srcLetter, char destLetter) {
-  char driveSection[sizeof("Drive X")];
-  char *path, *label, *type, *serial, *fs;
+  char driveSection[sizeof("Drive X") + 1];
+  char *path, *label, *type, *serial;
   
   WINE_TRACE("srcLetter=%c, destLetter=%c\n", srcLetter, destLetter);
 
@@ -98,24 +98,21 @@ void copyDrive(char srcLetter, char destLetter) {
   label = getDriveValue(srcLetter, "Label");
   type = getDriveValue(srcLetter, "Type");
   serial = getDriveValue(srcLetter, "Serial");
-  fs = getDriveValue(srcLetter, "FileSystem");
   
   sprintf(driveSection, "Drive %c", destLetter);
   if (path)   addTransaction(driveSection, "Path", ACTION_SET, path);
   if (label)  addTransaction(driveSection, "Label", ACTION_SET, label);
   if (type)   addTransaction(driveSection, "Type", ACTION_SET, type);
   if (serial) addTransaction(driveSection, "Serial", ACTION_SET, serial);
-  if (fs)     addTransaction(driveSection, "FileSystem", ACTION_SET, fs);
 
   if (path)   free(path);
   if (label)  free(label);
   if (type)   free(type);
   if (serial) free(serial);
-  if (fs)     free(fs);
 }
 
 void removeDrive(char letter) {
-  char driveSection[sizeof("Drive X")];
+  char driveSection[sizeof("Drive X") + 1];
   sprintf(driveSection, "Drive %c", letter);
   addTransaction(driveSection, NULL, ACTION_REMOVE, NULL);
 }
@@ -258,14 +255,6 @@ static code_desc_pair type_pairs[] = {
 };
 #define DRIVE_TYPE_DEFAULT 1
 
-static code_desc_pair fs_pairs[] = {
-  {"win95", "Long file names"},
-  {"msdos", "MS-DOS 8 character file names"},
-  {"unix", "UNIX file names"}
-};
- 
-#define DRIVE_FS_DEFAULT 0
-
 
 void fill_drive_droplist(long mask, char currentLetter, HWND hDlg)
 {
@@ -391,7 +380,6 @@ long drive_available_mask(char letter)
 void refreshDriveEditDialog(HWND dialog) {
   char *path;
   char *type;
-  char *fs;
   char *serial;
   char *label;
   char *device;
@@ -424,22 +412,6 @@ void refreshDriveEditDialog(HWND dialog) {
   } else WINE_WARN("no Type field?\n");
 
   
-  /* FileSystem name handling */
-  fs = getDriveValue(editWindowLetter, "FileSystem");
-  if (fs) {
-    for( i=0, selection=-1; i < sizeof(fs_pairs)/sizeof(code_desc_pair); i++) {
-      SendDlgItemMessage(dialog, IDC_COMBO_NAMES, CB_ADDSTRING, 0,
-			 (LPARAM) fs_pairs[i].sDesc);
-      if(strcasecmp(fs_pairs[i].sCode, fs) == 0){
-	selection = i;
-      }
-    }
-  
-    if( selection == -1 ) selection = DRIVE_FS_DEFAULT;
-    SendDlgItemMessage(dialog, IDC_COMBO_NAMES, CB_SETCURSEL, selection, 0);
-  } else WINE_WARN("no FileSystem field?\n");
-
-
   /* removeable media properties */
   serial = getDriveValue(editWindowLetter, "Serial");
   if (serial) {
@@ -475,7 +447,6 @@ void refreshDriveEditDialog(HWND dialog) {
   
   if (path) free(path);
   if (type) free(type);
-  if (fs) free(fs);
   if (serial) free(serial);
   if (label) free(label);
   if (device) free(device);
