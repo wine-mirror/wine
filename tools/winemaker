@@ -405,19 +405,18 @@ sub source_set_options
       push @{@$target[$T_LIBRARIES]},$';
     } elsif (@$target[$T_TYPE] != $TT_DLL and 
              $option =~ /^--wrap/) {
-      print STDERR "warning: --wrap no longer supported, ignoring\n";
-      #@$target[$T_FLAGS]|=$TF_WRAP;
+      @$target[$T_FLAGS]|=$TF_WRAP;
     } elsif (@$target[$T_TYPE] != $TT_DLL and 
              $option =~ /^--nowrap/) {
       @$target[$T_FLAGS]&=~$TF_WRAP;
     } elsif ($option =~ /^--mfc/) {
       @$target[$T_FLAGS]|=$TF_MFC;
-      #if (@$target[$T_TYPE] != $TT_DLL) {
-      #  @$target[$T_FLAGS]|=$TF_WRAP;
-      #}
+      if (@$target[$T_TYPE] != $TT_DLL) {
+        @$target[$T_FLAGS]|=$TF_WRAP;
+      }
     } elsif ($option =~ /^--nomfc/) {
       @$target[$T_FLAGS]&=~$TF_MFC;
-      #@$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
+      @$target[$T_FLAGS]&=~($TF_MFC|$TF_WRAP);
     } else {
       print STDERR "error: unknown option \"$option\"\n";
       return 0;
@@ -2051,13 +2050,12 @@ while (@ARGV>0) {
     $opt_ask_project_options=$OPT_ASK_YES;
     $opt_ask_target_options=$OPT_ASK_YES;
   } elsif ($arg eq "--wrap") {
-    print STDERR "warning: --wrap no longer supported, ignoring the option\n";
-    #$opt_flags|=$TF_WRAP;
+    $opt_flags|=$TF_WRAP;
   } elsif ($arg eq "--nowrap") {
     $opt_flags&=~$TF_WRAP;
   } elsif ($arg eq "--mfc") {
     $opt_flags|=$TF_MFC;
-    #$opt_flags|=$TF_MFC|$TF_WRAP;
+    $opt_flags|=$TF_MFC|$TF_WRAP;
     $needs_mfc=1;
   } elsif ($arg eq "--nomfc") {
     $opt_flags&=~($TF_MFC|$TF_WRAP);
