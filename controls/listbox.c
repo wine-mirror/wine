@@ -810,7 +810,7 @@ static INT LISTBOX_FindStringPos( HWND hwnd, LB_DESCR *descr, LPCWSTR str,
     {
         index = (min + max) / 2;
         if (HAS_STRINGS(descr))
-            res = lstrcmpiW( descr->items[index].str, str );
+            res = lstrcmpiW( str, descr->items[index].str);
         else
         {
             COMPAREITEMSTRUCT cis;
@@ -819,15 +819,17 @@ static INT LISTBOX_FindStringPos( HWND hwnd, LB_DESCR *descr, LPCWSTR str,
             cis.CtlType    = ODT_LISTBOX;
             cis.CtlID      = id;
             cis.hwndItem   = hwnd;
-            cis.itemID1    = index;
-            cis.itemData1  = descr->items[index].data;
-            cis.itemID2    = -1;
-            cis.itemData2  = (DWORD)str;
+            /* note that some application (MetaStock) expects the second item
+             * to be in the listbox */
+            cis.itemID1    = -1;
+            cis.itemData1  = (DWORD)str;
+            cis.itemID2    = index;
+            cis.itemData2  = descr->items[index].data;
             cis.dwLocaleId = descr->locale;
             res = SendMessageW( descr->owner, WM_COMPAREITEM, id, (LPARAM)&cis );
         }
         if (!res) return index;
-        if (res > 0) max = index;
+        if (res < 0) max = index;
         else min = index + 1;
     }
     return exact ? -1 : max;
