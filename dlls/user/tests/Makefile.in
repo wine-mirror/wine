@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = user32.dll
+IMPORTS   = user32 gdi32 advapi32
+
+CTESTS = \
+	class.c \
+	sysparams.c \
+	wsprintf.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

@@ -20,8 +20,6 @@
 # SUBDIRS      : subdirectories that contain a Makefile
 # EXTRASUBDIRS : subdirectories that do not contain a Makefile
 # INSTALLSUBDIRS : subdirectories to run make install/uninstall into
-# PLTESTS      : Perl test scripts
-# CTESTS       : C test sources
 
 # First some useful definitions
 
@@ -70,6 +68,7 @@ ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 WINEWRAPPER  = $(TOPSRCDIR)/tools/winewrapper
+RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
@@ -80,14 +79,6 @@ LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
 LIBUUID   = -L$(TOPOBJDIR)/ole -lwine_uuid
-
-RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
-RUNTESTFLAGS = -q -P wine -M $(MODULE) -T $(TOPOBJDIR)
-TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
-TESTPROGRAM  = tests/$(MODULE:%.dll=%)_test.exe
-TESTLIST     = tests/testlist.c
-TESTOBJS     = $(TESTMAIN) $(TESTLIST:.c=.o) $(CTESTS:.c=.o)
-TESTMAIN     = $(TOPOBJDIR)/programs/winetest/wtmain.o
 
 @SET_MAKE@
 
@@ -149,10 +140,10 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
 .c.ok:
-	$(RUNTEST) $(RUNTESTFLAGS) -p $(TESTPROGRAM)$(DLLEXT) $< && touch $@
+	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 .pl.ok:
-	$(RUNTEST) $(RUNTESTFLAGS) $(PLTESTPROGRAM:%=-p %) $< && touch $@
+	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
@@ -226,7 +217,7 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
 depend: $(MAKEDEP) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS) $(CTESTS)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)
 
@@ -242,10 +233,9 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 testclean:: $(SUBDIRS:%=%/__testclean__)
-	$(RM) $(TESTRESULTS)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(TESTLIST) $(TESTPROGRAM) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 
@@ -263,32 +253,19 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 
 .PHONY: install uninstall $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__)
 
-# Rules for testing
+# Rules for checking that no imports are missing
 
-check test:: $(TESTRESULTS)
+$(SUBDIRS:%=%/__checklink__): dummy
+	@cd `dirname $@` && $(MAKE) checklink
+
+.PHONY: checklink $(SUBDIRS:%=%/__checklink__)
+
+# Rules for testing
 
 $(SUBDIRS:%=%/__test__): dummy
 	@cd `dirname $@` && $(MAKE) test
 
 .PHONY: check test $(SUBDIRS:%=%/__test__)
-
-$(PLTESTS:.pl=.ok): $(PLTESTPROGRAM)
-$(CTESTS:.c=.ok): $(TESTPROGRAM)$(DLLEXT)
-
-$(TESTMAIN):
-	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o
-
-$(TESTLIST): Makefile.in
-	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
-
-$(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
-	$(LDSHARED) @LDDLLFLAGS@ $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
-
-$(TESTPROGRAM).spec.c: $(TESTOBJS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(TESTPROGRAM) -mcui $(TESTOBJS) -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
-
-$(TESTPROGRAM): $(TESTOBJS)
-	$(CC) $(TESTOBJS) -o $@ $(TESTIMPORTS:%=-l%) $(LIBWINE) $(LIBS)
 
 # Misc. rules
 

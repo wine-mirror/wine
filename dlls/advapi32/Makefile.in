@@ -17,10 +17,7 @@ C_SRCS = \
 	security.c \
 	service.c
 
-CTESTS = \
-	tests/registry.c
-
-EXTRASUBDIRS = tests
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 

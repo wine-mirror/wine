@@ -92,9 +92,6 @@ clean::
 
 # Rules for testing
 
-$(SUBDIRS:%=%/__checklink__): dummy
-	@cd `dirname $@` && $(MAKE) checklink
-
 checklink:: $(SUBDIRS:%=%/__checklink__)
 
 check test:: $(SUBDIRS:%=%/__test__)

@@ -17,13 +17,9 @@ C_SRCS = \
 	utility.c \
 	wininet_main.c
 
-RC_SRCS= \
-	version.rc
+RC_SRCS = version.rc
 
-CTESTS = \
-	tests/http.c
-
-EXTRASUBDIRS = tests
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 

@@ -82,19 +82,15 @@ RC_SRCS16 = \
 	resources/mouse.rc \
 	resources/version16.rc
 
+SUBDIRS = tests
+
 EXTRA_OBJS = $(MODULE).glue.o
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/controls \
 	$(TOPOBJDIR)/windows \
 	dde \
-	resources \
-	tests
-
-CTESTS = \
-	tests/class.c \
-	tests/sysparams.c \
-	tests/wsprintf.c
+	resources
 
 @MAKE_DLL_RULES@
 

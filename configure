@@ -13902,8 +13902,6 @@ fi
 
 ac_config_commands="$ac_config_commands controls"
 
-ac_config_commands="$ac_config_commands dlls/advapi32/tests"
-
 ac_config_commands="$ac_config_commands dlls/ddraw/d3ddevice"
 
 ac_config_commands="$ac_config_commands dlls/ddraw/dclipper"
@@ -13930,23 +13928,11 @@ ac_config_commands="$ac_config_commands dlls/gdi/win16drv"
 
 ac_config_commands="$ac_config_commands dlls/kernel/messages"
 
-ac_config_commands="$ac_config_commands dlls/kernel/tests"
-
-ac_config_commands="$ac_config_commands dlls/oleaut32/tests"
-
-ac_config_commands="$ac_config_commands dlls/shlwapi/tests"
-
 ac_config_commands="$ac_config_commands dlls/user/dde"
 
 ac_config_commands="$ac_config_commands dlls/user/resources"
 
-ac_config_commands="$ac_config_commands dlls/user/tests"
-
 ac_config_commands="$ac_config_commands dlls/wineps/data"
-
-ac_config_commands="$ac_config_commands dlls/wininet/tests"
-
-ac_config_commands="$ac_config_commands dlls/winsock/tests"
 
 ac_config_commands="$ac_config_commands files"
 
@@ -13991,10 +13977,13 @@ MAKE_RULES=Make.rules
 MAKE_DLL_RULES=dlls/Makedll.rules
 
 
+MAKE_TEST_RULES=dlls/Maketest.rules
+
+
 MAKE_PROG_RULES=programs/Makeprog.rules
 
 
-ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules programs/Makeprog.rules Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/d3d8/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput8/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/snmpapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineaudioio/Makefile dlls/winmm/winenas/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile include/Makefile library/Makefile miscemu/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winefile/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wpp/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile"
+ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules dlls/Maketest.rules programs/Makeprog.rules Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/advapi32/tests/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/d3d8/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput8/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/kernel/tests/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/oleaut32/tests/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/shlwapi/tests/Makefile dlls/snmpapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/user/tests/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/wininet/tests/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineaudioio/Makefile dlls/winmm/winenas/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winsock/tests/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile include/Makefile library/Makefile miscemu/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winefile/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wpp/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -14473,11 +14462,13 @@ do
   # Handling of arguments.
   "Make.rules" ) CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
   "dlls/Makedll.rules" ) CONFIG_FILES="$CONFIG_FILES dlls/Makedll.rules" ;;
+  "dlls/Maketest.rules" ) CONFIG_FILES="$CONFIG_FILES dlls/Maketest.rules" ;;
   "programs/Makeprog.rules" ) CONFIG_FILES="$CONFIG_FILES programs/Makeprog.rules" ;;
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "debugger/Makefile" ) CONFIG_FILES="$CONFIG_FILES debugger/Makefile" ;;
   "dlls/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/Makefile" ;;
   "dlls/advapi32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/advapi32/Makefile" ;;
+  "dlls/advapi32/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/advapi32/tests/Makefile" ;;
   "dlls/avicap32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
   "dlls/avifil32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;
   "dlls/comcat/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/comcat/Makefile" ;;
@@ -14500,6 +14491,7 @@ do
   "dlls/imagehlp/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/imagehlp/Makefile" ;;
   "dlls/imm32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/imm32/Makefile" ;;
   "dlls/kernel/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/kernel/Makefile" ;;
+  "dlls/kernel/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/kernel/tests/Makefile" ;;
   "dlls/lzexpand/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/lzexpand/Makefile" ;;
   "dlls/mapi32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/mapi32/Makefile" ;;
   "dlls/mpr/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/mpr/Makefile" ;;
@@ -14521,6 +14513,7 @@ do
   "dlls/odbc32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/odbc32/Makefile" ;;
   "dlls/ole32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/ole32/Makefile" ;;
   "dlls/oleaut32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/oleaut32/Makefile" ;;
+  "dlls/oleaut32/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/oleaut32/tests/Makefile" ;;
   "dlls/olecli/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/olecli/Makefile" ;;
   "dlls/oledlg/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/oledlg/Makefile" ;;
   "dlls/olepro32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/olepro32/Makefile" ;;
@@ -14538,6 +14531,7 @@ do
   "dlls/shell32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/shell32/Makefile" ;;
   "dlls/shfolder/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/shfolder/Makefile" ;;
   "dlls/shlwapi/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/shlwapi/Makefile" ;;
+  "dlls/shlwapi/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/shlwapi/tests/Makefile" ;;
   "dlls/snmpapi/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/Makefile" ;;
   "dlls/sti/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/sti/Makefile" ;;
   "dlls/tapi32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/tapi32/Makefile" ;;
@@ -14546,12 +14540,14 @@ do
   "dlls/url/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/url/Makefile" ;;
   "dlls/urlmon/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/urlmon/Makefile" ;;
   "dlls/user/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/user/Makefile" ;;
+  "dlls/user/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/user/tests/Makefile" ;;
   "dlls/version/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/version/Makefile" ;;
   "dlls/win32s/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/win32s/Makefile" ;;
   "dlls/winaspi/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winaspi/Makefile" ;;
   "dlls/winedos/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winedos/Makefile" ;;
   "dlls/wineps/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/wineps/Makefile" ;;
   "dlls/wininet/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/wininet/Makefile" ;;
+  "dlls/wininet/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/wininet/tests/Makefile" ;;
   "dlls/winmm/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/Makefile" ;;
   "dlls/winmm/joystick/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/joystick/Makefile" ;;
   "dlls/winmm/mcianim/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/mcianim/Makefile" ;;
@@ -14568,6 +14564,7 @@ do
   "dlls/winmm/wineoss/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineoss/Makefile" ;;
   "dlls/winnls/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winnls/Makefile" ;;
   "dlls/winsock/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winsock/Makefile" ;;
+  "dlls/winsock/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winsock/tests/Makefile" ;;
   "dlls/winspool/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winspool/Makefile" ;;
   "dlls/wintrust/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/wintrust/Makefile" ;;
   "dlls/wow32/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/wow32/Makefile" ;;
@@ -14613,7 +14610,6 @@ do
   "tsx11/Makefile" ) CONFIG_FILES="$CONFIG_FILES tsx11/Makefile" ;;
   "unicode/Makefile" ) CONFIG_FILES="$CONFIG_FILES unicode/Makefile" ;;
   "controls" ) CONFIG_COMMANDS="$CONFIG_COMMANDS controls" ;;
-  "dlls/advapi32/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/advapi32/tests" ;;
   "dlls/ddraw/d3ddevice" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/d3ddevice" ;;
   "dlls/ddraw/dclipper" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/dclipper" ;;
   "dlls/ddraw/ddraw" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/ddraw" ;;
@@ -14627,15 +14623,9 @@ do
   "dlls/gdi/mfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
   "dlls/gdi/win16drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/win16drv" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
-  "dlls/kernel/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/tests" ;;
-  "dlls/oleaut32/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/oleaut32/tests" ;;
-  "dlls/shlwapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/shlwapi/tests" ;;
   "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
-  "dlls/user/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/tests" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
-  "dlls/wininet/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wininet/tests" ;;
-  "dlls/winsock/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/winsock/tests" ;;
   "files" ) CONFIG_COMMANDS="$CONFIG_COMMANDS files" ;;
   "graphics" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics" ;;
   "graphics/x11drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics/x11drv" ;;
@@ -14820,6 +14810,8 @@ s,@ALLOCA@,$ALLOCA,;t t
 s,@MAKE_RULES@,,;t t
 /@MAKE_DLL_RULES@/r $MAKE_DLL_RULES
 s,@MAKE_DLL_RULES@,,;t t
+/@MAKE_TEST_RULES@/r $MAKE_TEST_RULES
+s,@MAKE_TEST_RULES@,,;t t
 /@MAKE_PROG_RULES@/r $MAKE_PROG_RULES
 s,@MAKE_PROG_RULES@,,;t t
 CEOF
@@ -15297,8 +15289,6 @@ echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
     controls ) test -d "controls" || ({ echo "$as_me:$LINENO: creating controls" >&5
 echo "$as_me: creating controls" >&6;} && mkdir "controls") ;;
-    dlls/advapi32/tests ) test -d "dlls/advapi32/tests" || ({ echo "$as_me:$LINENO: creating dlls/advapi32/tests" >&5
-echo "$as_me: creating dlls/advapi32/tests" >&6;} && mkdir "dlls/advapi32/tests") ;;
     dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/d3ddevice" >&5
 echo "$as_me: creating dlls/ddraw/d3ddevice" >&6;} && mkdir "dlls/ddraw/d3ddevice") ;;
     dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/dclipper" >&5
@@ -15325,24 +15315,12 @@ echo "$as_me: creating dlls/gdi/mfdrv" >&6;} && mkdir "dlls/gdi/mfdrv") ;;
 echo "$as_me: creating dlls/gdi/win16drv" >&6;} && mkdir "dlls/gdi/win16drv") ;;
     dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:$LINENO: creating dlls/kernel/messages" >&5
 echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/messages") ;;
-    dlls/kernel/tests ) test -d "dlls/kernel/tests" || ({ echo "$as_me:$LINENO: creating dlls/kernel/tests" >&5
-echo "$as_me: creating dlls/kernel/tests" >&6;} && mkdir "dlls/kernel/tests") ;;
-    dlls/oleaut32/tests ) test -d "dlls/oleaut32/tests" || ({ echo "$as_me:$LINENO: creating dlls/oleaut32/tests" >&5
-echo "$as_me: creating dlls/oleaut32/tests" >&6;} && mkdir "dlls/oleaut32/tests") ;;
-    dlls/shlwapi/tests ) test -d "dlls/shlwapi/tests" || ({ echo "$as_me:$LINENO: creating dlls/shlwapi/tests" >&5
-echo "$as_me: creating dlls/shlwapi/tests" >&6;} && mkdir "dlls/shlwapi/tests") ;;
     dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:$LINENO: creating dlls/user/dde" >&5
 echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
     dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:$LINENO: creating dlls/user/resources" >&5
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
-    dlls/user/tests ) test -d "dlls/user/tests" || ({ echo "$as_me:$LINENO: creating dlls/user/tests" >&5
-echo "$as_me: creating dlls/user/tests" >&6;} && mkdir "dlls/user/tests") ;;
     dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
-    dlls/wininet/tests ) test -d "dlls/wininet/tests" || ({ echo "$as_me:$LINENO: creating dlls/wininet/tests" >&5
-echo "$as_me: creating dlls/wininet/tests" >&6;} && mkdir "dlls/wininet/tests") ;;
-    dlls/winsock/tests ) test -d "dlls/winsock/tests" || ({ echo "$as_me:$LINENO: creating dlls/winsock/tests" >&5
-echo "$as_me: creating dlls/winsock/tests" >&6;} && mkdir "dlls/winsock/tests") ;;
     files ) test -d "files" || ({ echo "$as_me:$LINENO: creating files" >&5
 echo "$as_me: creating files" >&6;} && mkdir "files") ;;
     graphics ) test -d "graphics" || ({ echo "$as_me:$LINENO: creating graphics" >&5

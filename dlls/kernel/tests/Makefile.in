@@ -1,0 +1,20 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = kernel32.dll
+IMPORTS   = kernel32
+
+CTESTS = \
+	alloc.c \
+	atom.c \
+	directory.c \
+	file.c \
+	locale.c \
+	path.c \
+	process.c \
+	thread.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

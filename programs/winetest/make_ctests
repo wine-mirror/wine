@@ -26,7 +26,7 @@ print "/* Automatically generated file; DO NOT EDIT!! */\n\n";
 my @testlist = @ARGV;
 foreach (@testlist)
 {
-    s!.*/([^/]+)\.c$!$1!;
+    s!(.*/)*([^/]+)\.c$!$2!;
     printf "extern void func_%s(void);\n", $_;
 }
 

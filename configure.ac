@@ -1271,7 +1271,6 @@ dnl **** Generate output files ****
 AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(controls)
-WINE_CONFIG_EXTRA_DIR(dlls/advapi32/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/d3ddevice)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dclipper)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/ddraw)
@@ -1285,15 +1284,9 @@ WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/win16drv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
-WINE_CONFIG_EXTRA_DIR(dlls/kernel/tests)
-WINE_CONFIG_EXTRA_DIR(dlls/oleaut32/tests)
-WINE_CONFIG_EXTRA_DIR(dlls/shlwapi/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/user/dde)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
-WINE_CONFIG_EXTRA_DIR(dlls/user/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
-WINE_CONFIG_EXTRA_DIR(dlls/wininet/tests)
-WINE_CONFIG_EXTRA_DIR(dlls/winsock/tests)
 WINE_CONFIG_EXTRA_DIR(files)
 WINE_CONFIG_EXTRA_DIR(graphics)
 WINE_CONFIG_EXTRA_DIR(graphics/x11drv)
@@ -1319,17 +1312,22 @@ AC_SUBST_FILE(MAKE_RULES)
 MAKE_DLL_RULES=dlls/Makedll.rules
 AC_SUBST_FILE(MAKE_DLL_RULES)
 
+MAKE_TEST_RULES=dlls/Maketest.rules
+AC_SUBST_FILE(MAKE_TEST_RULES)
+
 MAKE_PROG_RULES=programs/Makeprog.rules
 AC_SUBST_FILE(MAKE_PROG_RULES)
 
 AC_CONFIG_FILES([
 Make.rules
 dlls/Makedll.rules
+dlls/Maketest.rules
 programs/Makeprog.rules
 Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
+dlls/advapi32/tests/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/comcat/Makefile
@@ -1352,6 +1350,7 @@ dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/kernel/Makefile
+dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile
 dlls/mapi32/Makefile
 dlls/mpr/Makefile
@@ -1373,6 +1372,7 @@ dlls/ntdll/Makefile
 dlls/odbc32/Makefile
 dlls/ole32/Makefile
 dlls/oleaut32/Makefile
+dlls/oleaut32/tests/Makefile
 dlls/olecli/Makefile
 dlls/oledlg/Makefile
 dlls/olepro32/Makefile
@@ -1390,6 +1390,7 @@ dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
+dlls/shlwapi/tests/Makefile
 dlls/snmpapi/Makefile
 dlls/sti/Makefile
 dlls/tapi32/Makefile
@@ -1398,12 +1399,14 @@ dlls/twain/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile
+dlls/user/tests/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
 dlls/winedos/Makefile
 dlls/wineps/Makefile
 dlls/wininet/Makefile
+dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/joystick/Makefile
 dlls/winmm/mcianim/Makefile
@@ -1420,6 +1423,7 @@ dlls/winmm/winenas/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile
+dlls/winsock/tests/Makefile
 dlls/winspool/Makefile
 dlls/wintrust/Makefile
 dlls/wow32/Makefile

@@ -1,3 +1,4 @@
+Makefile
 oleaut32_test.exe.spec.c
 testlist.c
 vartest.ok

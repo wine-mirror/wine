@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = shlwapi.dll
+IMPORTS   = shlwapi advapi32
+
+CTESTS = \
+	clist.c \
+	shreg.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

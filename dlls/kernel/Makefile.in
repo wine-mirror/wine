@@ -35,20 +35,8 @@ MC_SRCS = \
 
 EXTRA_OBJS = $(MODULE).glue.o
 
-EXTRASUBDIRS = \
-	messages \
-	nls \
-	tests
-
-CTESTS = \
-	tests/alloc.c \
-	tests/atom.c \
-	tests/directory.c \
-	tests/file.c \
-	tests/locale.c \
-	tests/path.c \
-	tests/process.c \
-	tests/thread.c
+SUBDIRS      = tests
+EXTRASUBDIRS = messages nls
 
 @MAKE_DLL_RULES@
 

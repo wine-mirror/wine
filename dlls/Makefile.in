@@ -905,16 +905,11 @@ install::
 
 # Misc rules
 
-$(BUILDSUBDIRS:%=%/__checklink__): dummy
-	@cd `dirname $@` && $(MAKE) checklink
-
 uninstall::
 	-rmdir $(dlldir)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 
 checklink:: $(BUILDSUBDIRS:%=%/__checklink__)
-
-.PHONY: checklink $(BUILDSUBDIRS:%=%/__checklink__)
 
 ### Dependencies:

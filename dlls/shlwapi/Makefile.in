@@ -24,11 +24,7 @@ C_SRCS = \
 	url.c \
 	wsprintf.c
 
-EXTRASUBDIRS = tests
-
-CTESTS = \
-	tests/clist.c \
-	tests/shreg.c
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 
