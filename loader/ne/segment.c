@@ -36,6 +36,8 @@ DECLARE_DEBUG_CHANNEL(segment)
 
 #define SEL(x) ((x)|1)
 
+static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum);
+
 /***********************************************************************
  *           NE_GetRelocAddrName
  */
@@ -97,14 +99,12 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	/* Implement self-loading segments */
  	SELFLOADHEADER *selfloadheader;
         DWORD oldstack;
- 	WORD old_hSeg, new_hSeg;
         HFILE hFile32;
         HFILE16 hFile16;
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
  	oldstack = NtCurrentTeb()->cur_stack;
- 	old_hSeg = pSeg->hSeg;
  	NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                           0xff00 - sizeof(STACK16FRAME));
 
@@ -113,29 +113,11 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
         hFile16 = FILE_AllocDosHandle( hFile32 );
- 	new_hSeg = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
+ 	pSeg->hSeg = Callbacks->CallLoadAppSegProc( selfloadheader->LoadAppSeg,
                                                     pModule->self, hFile16,
                                                     segnum );
-	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n",new_hSeg);
+	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
         _lclose16( hFile16 );
- 	if (SEL(new_hSeg) != SEL(old_hSeg)) {
- 	  /* Self loaders like creating their own selectors; 
- 	   * they love asking for trouble to Wine developers
- 	   */
- 	  if (segnum == pModule->dgroup) {
- 	    memcpy(PTR_SEG_OFF_TO_LIN(SEL(old_hSeg),0),
- 		   PTR_SEG_OFF_TO_LIN(SEL(new_hSeg),0), 
- 		   pSeg->minsize ? pSeg->minsize : 0x10000);
- 	    FreeSelector16(SEL(new_hSeg));
- 	    pSeg->hSeg = old_hSeg;
- 	    TRACE_(module)("New hSeg allocated for dgroup segment:Old=%d,New=%d\n", 
-                old_hSeg, new_hSeg);
- 	  } else {
- 	    FreeSelector16(SEL(pSeg->hSeg));
- 	    pSeg->hSeg = new_hSeg;
- 	  }
- 	} 
- 	
  	NtCurrentTeb()->cur_stack = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
@@ -165,6 +147,10 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     }
 
     pSeg->flags |= NE_SEGFLAGS_LOADED;
+
+    /* Perform exported function prolog fixups */
+    NE_FixupSegmentPrologs( pModule, segnum );
+
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
         return TRUE;  /* No relocation data, we are done */
 
@@ -396,7 +382,6 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         SELFLOADHEADER *selfloadheader;
         HMODULE16 hselfload = GetModuleHandle16("WPROCS");
         DWORD oldstack;
-        WORD saved_hSeg = pSegTable[pModule->dgroup - 1].hSeg;
 
         TRACE_(module)("%.*s is a self-loading module!\n",
 		     *((BYTE*)pModule + pModule->name_table),
@@ -420,8 +405,6 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,hFile16);
 	TRACE_(dll)("Return from CallBootAppProc\n");
         _lclose16(hf);
-        /* some BootApp procs overwrite the segment handle of dgroup */
-        pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
         NtCurrentTeb()->cur_stack = oldstack;
 
         for (i = 2; i <= pModule->seg_count; i++)
@@ -441,7 +424,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
  *
  * Fixup exported functions prologs of one segment
  */
-void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
+static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 {
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     ET_BUNDLE *bundle;
@@ -537,23 +520,6 @@ DWORD WINAPI PatchCodeHandle16(HANDLE16 hSeg)
     return MAKELONG(hSeg, sel);
 }
 
-/***********************************************************************
- *           NE_FixupPrologs
- *
- * Fixup the exported functions prologs.
- */
-void NE_FixupPrologs( NE_MODULE *pModule )
-{
-    WORD segnum;
-
-    TRACE_(module)("(%04x)\n", pModule->self );
-
-    if (pModule->flags & NE_FFLAGS_SELFLOAD)
-	NE_FixupSegmentPrologs(pModule, 1);
-    else
-    for (segnum=1; segnum <= pModule->seg_count; segnum++)
-	NE_FixupSegmentPrologs(pModule, segnum);
-}
 
 /***********************************************************************
  *           NE_GetDLLInitParams
@@ -746,49 +712,6 @@ static WORD NE_Ne2MemFlags(WORD flags)
     return memflags;
 }
 
-
-/***********************************************************************
- *           NE_CreateInstance
- *
- * If lib_only is TRUE, handle the module like a library even if it is a .EXE
- */
-HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
-                               BOOL lib_only )
-{
-    SEGTABLEENTRY *pSegment;
-    int minsize;
-    HINSTANCE16 hNewSeg;
-
-    if (pModule->dgroup == 0)
-    {
-        if (prev) *prev = pModule->self;
-        return pModule->self;
-    }
-
-    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-    if (prev) *prev = SEL(pSegment->hSeg);
-
-      /* if it's a library, create a new instance only the first time */
-    if (pSegment->hSeg)
-    {
-        if (pModule->flags & NE_FFLAGS_LIBMODULE) return SEL(pSegment->hSeg);
-        if (lib_only) return SEL(pSegment->hSeg);
-    }
-
-    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
-    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
-    minsize += pModule->heap_size;
-    hNewSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags), minsize,
-                                 pModule->self, FALSE, FALSE, FALSE );
-    if (!hNewSeg) return 0;
-    pSegment->hSeg = hNewSeg;
-    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
-
-    /* a HINSTANCE is the selector of the DSEG */
-    return (HINSTANCE16)SEL(hNewSeg);
-}
-
-
 /***********************************************************************
  *           NE_AllocateSegment (WPROCS.26)
  *
@@ -817,37 +740,65 @@ DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
 	return MAKELONG( 0, hMem );
 }
 
+/***********************************************************************
+ *           NE_GetInstance
+ */
+HINSTANCE16 NE_GetInstance( NE_MODULE *pModule )
+{
+    if ( !pModule->dgroup )
+        return pModule->self;
+    else
+    {
+        SEGTABLEENTRY *pSegment;
+        pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+
+        return SEL(pSegment->hSeg);
+    }
+}    
 
 /***********************************************************************
- *           NE_CreateSegments
+ *           NE_CreateSegment
  */
-BOOL NE_CreateSegments( NE_MODULE *pModule )
+BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
 {
-    SEGTABLEENTRY *pSegment;
-    int i, minsize, seg_count;
+    SEGTABLEENTRY *pSegment = NE_SEG_TABLE( pModule ) + segnum - 1;
+    int minsize;
 
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
-    pSegment = NE_SEG_TABLE( pModule );
+    if ( segnum < 1 || segnum > pModule->seg_count )
+        return FALSE;
 
-    if (pModule->flags & NE_FFLAGS_SELFLOAD)
-        seg_count = 1;
-    else
-        seg_count = pModule->seg_count;
-    for (i = 1; i <= seg_count; i++, pSegment++)
-    {
-        minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
-        if (i == pModule->ss) minsize += pModule->stack_size;
-	/* The DGROUP is allocated by NE_CreateInstance */
-        if (i == pModule->dgroup) continue;
-        pSegment->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
-                                      minsize, pModule->self,
-                                      !(pSegment->flags & NE_SEGFLAGS_DATA),
-                                      (pSegment->flags & NE_SEGFLAGS_32BIT) != 0,
+    if ( (pModule->flags & NE_FFLAGS_SELFLOAD) && segnum != 1 )
+        return TRUE;    /* selfloader allocates segment itself */
+
+    if ( (pSegment->flags & NE_SEGFLAGS_ALLOCATED) && segnum != pModule->dgroup )
+        return TRUE;    /* all but DGROUP only allocated once */
+
+    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    if ( segnum == pModule->ss )     minsize += pModule->stack_size;
+    if ( segnum == pModule->dgroup ) minsize += pModule->heap_size;
+
+    pSegment->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
+                                   minsize, pModule->self,
+                                   !(pSegment->flags & NE_SEGFLAGS_DATA),
+                                    (pSegment->flags & NE_SEGFLAGS_32BIT) != 0,
                             FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
-        if (!pSegment->hSeg) return FALSE;
-	pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
-    }
+    if (!pSegment->hSeg) return FALSE;
+
+    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           NE_CreateAllSegments
+ */
+BOOL NE_CreateAllSegments( NE_MODULE *pModule )
+{
+    int i;
+    for ( i = 1; i <= pModule->seg_count; i++ )
+        if ( !NE_CreateSegment( pModule, i ) )
+            return FALSE;
 
     pModule->dgroup_entry = pModule->dgroup ? pModule->seg_table +
                             (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;

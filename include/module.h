@@ -222,11 +222,10 @@ extern NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
 /* loader/ne/segment.c */
 extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
 extern BOOL NE_LoadAllSegments( NE_MODULE *pModule );
-extern void NE_FixupPrologs( NE_MODULE *pModule );
+extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum );
+extern BOOL NE_CreateAllSegments( NE_MODULE *pModule );
+extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
-extern BOOL NE_CreateSegments( NE_MODULE *pModule );
-extern HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
-                                      BOOL lib_only );
 
 /* loader/ne/convert.c */
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );

@@ -799,12 +799,9 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
  */
 static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 {
-    HINSTANCE16 hInstance;
-
     /* Allocate the segments for this module */
 
-    if (!NE_CreateSegments( pModule ) ||
-        !(hInstance = NE_CreateInstance( pModule, NULL, FALSE )))
+    if (!NE_CreateAllSegments( pModule ))
         return 8;  /* Insufficient memory */
 
     /* Load the referenced DLLs */
@@ -816,16 +813,12 @@ static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 
     NE_LoadAllSegments( pModule );
 
-    /* Fixup the functions prologs */
-
-    NE_FixupPrologs( pModule );
-
     /* Make sure the usage count is 1 on the first loading of  */
     /* the module, even if it contains circular DLL references */
 
     pModule->count = 1;
 
-    return hInstance;
+    return NE_GetInstance( pModule );
 }
 
 /**********************************************************************
@@ -1002,11 +995,6 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
         /* Increment refcount */
 
         pModule->count++;
-
-        /* If library module, we just retrieve the instance handle */
-
-        if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
-            return NE_CreateInstance( pModule, NULL, TRUE );
     }
     else
     {
@@ -1017,13 +1005,12 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
         if ( !(pModule = NE_GetPtr( hModule )) )
             return (HINSTANCE16)11;
-
-        /* If library module, we're finished */
-
-        if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
-            return hModule;
     }
 
+    /* If library module, we just retrieve the instance handle */
+
+    if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
+        return NE_GetInstance( pModule );
 
     /*
      *  At this point, we need to create a new process.
@@ -1177,9 +1164,13 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
         /* Second instance of an already loaded NE module */
         /* Note that the refcount was already incremented by the parent */
 
-        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
-        if ( hInstance != hPrevInstance )  /* not a library */
-            NE_LoadSegment( pModule, pModule->dgroup );
+        hPrevInstance = NE_GetInstance( pModule );
+
+        if ( pModule->dgroup )
+            if ( NE_CreateSegment( pModule, pModule->dgroup ) )
+                NE_LoadSegment( pModule, pModule->dgroup );
+
+        hInstance = NE_GetInstance( pModule );
     }
     else
     {
