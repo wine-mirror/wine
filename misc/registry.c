@@ -887,15 +887,17 @@ int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level);
 int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk, int level)
 {
 	WCHAR name [256];
+	DWORD ret;
 	BYTE * pdata = (BYTE *)(base+vk->data_off+4); /* start of data */
 
 	if(vk->id != REG_VALUE_BLOCK_ID) goto error;
 
 	lstrcpynAtoW(name, vk->name, vk->nam_len+1);
 
-	if (RegSetValueExW( hkey, (vk->flag & 0x00000001) ? name : NULL, 0, vk->type,
+	ret = RegSetValueExW( hkey, (vk->flag & 0x00000001) ? name : NULL, 0, vk->type,
 			(vk->data_len & 0x80000000) ? (LPBYTE)&(vk->data_off): pdata,
-			(vk->data_len & 0x7fffffff) )) goto error;
+			(vk->data_len & 0x7fffffff) );
+	if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
 	return TRUE;
 error:
 	ERR_(reg)("vk block invalid\n");
@@ -1664,6 +1666,9 @@ void SHELL_LoadRegistry( void )
 
       free (home);
       free (fn);
+      /* this key is generated when the nt-core booted successfully */
+      if (!RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\Clone",&hkey))
+        RegCloseKey(hkey);
   }
 
   if (PROFILE_GetWineIniBool ("registry","LoadGlobalRegistryFiles", 1))
