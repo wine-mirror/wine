@@ -900,11 +900,10 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     {
         extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
         if (!extra) breaks = 0;
-        dc->breakCount = breaks;
         if (breaks)
         {
             dc->breakExtra = extra / breaks;
-            dc->breakRem   = extra - (dc->breakCount * dc->breakExtra);
+            dc->breakRem   = extra - (breaks * dc->breakExtra);
         }
         else
         {
@@ -1008,14 +1007,17 @@ BOOL WINAPI GetTextExtentPoint32W(
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
-    if(dc->gdiFont) {
+    if(dc->gdiFont)
         ret = WineEngGetTextExtentPoint(dc->gdiFont, str, count, size);
-	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-        size->cx += count * dc->charExtra;
-    }
     else if(dc->funcs->pGetTextExtentPoint)
         ret = dc->funcs->pGetTextExtentPoint( dc->physDev, str, count, size );
+
+    if (ret)
+    {
+	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
+	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+        size->cx += count * dc->charExtra + dc->breakRem;
+    }
 
     GDI_ReleaseObj( hdc );
 

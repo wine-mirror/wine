@@ -444,12 +444,10 @@ END:
 BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
                                   LPSIZE size )
 {
-    DC *dc = physDev->dc;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
     TRACE("%s %d\n", debugstr_wn(str,count), count);
     if( pfo ) {
-        INT charExtra = GetTextCharacterExtra( physDev->hdc );
 	XChar2b *p = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, str, count );
 	if (!p) return FALSE;
         if( !pfo->lpX11Trans ) {
@@ -458,10 +456,8 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
 				count, &dir, &ascent, &descent, &info_width );
 
-          size->cx = fabs((FLOAT)(info_width + dc->breakRem + count *
-                                  charExtra) * dc->xformVport2World.eM11);
-          size->cy = fabs((FLOAT)(pfo->fs->ascent + pfo->fs->descent) *
-                          dc->xformVport2World.eM22);
+          size->cx = info_width;
+          size->cy = pfo->fs->ascent + pfo->fs->descent;
 	} else {
 	    INT i;
 	    float x = 0.0, y = 0.0;
@@ -473,11 +469,8 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 	    }
 	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
 	    TRACE("x = %f y = %f\n", x, y);
-	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
-	    y *= pfo->lpX11Trans->pixelsize / 1000.0;
-	    size->cx = fabs((x + dc->breakRem + count * charExtra) *
-			    dc->xformVport2World.eM11);
-	    size->cy = fabs(y * dc->xformVport2World.eM22);
+	    size->cx = x * pfo->lpX11Trans->pixelsize / 1000.0;
+	    size->cy = y * pfo->lpX11Trans->pixelsize / 1000.0;
 	}
 	size->cx *= pfo->rescale;
 	size->cy *= pfo->rescale;

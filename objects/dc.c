@@ -98,7 +98,6 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->brushOrgY           = 0;
     dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->charExtra           = 0;
-    dc->breakCount          = 0;
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
     dc->MapMode             = MM_TEXT;
@@ -306,7 +305,6 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->brushOrgY        = dc->brushOrgY;
     newdc->textAlign        = dc->textAlign;
     newdc->charExtra        = dc->charExtra;
-    newdc->breakCount       = dc->breakCount;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
@@ -395,7 +393,6 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->brushOrgY        = dcs->brushOrgY;
     dc->textAlign        = dcs->textAlign;
     dc->charExtra        = dcs->charExtra;
-    dc->breakCount       = dcs->breakCount;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
     dc->MapMode          = dcs->MapMode;

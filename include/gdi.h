@@ -139,7 +139,6 @@ typedef struct tagDC
 
     WORD          textAlign;         /* Text alignment from SetTextAlign() */
     INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
-    INT           breakCount;        /* Break char. count */
     INT           breakExtra;        /* breakTotalExtra / breakCount */
     INT           breakRem;          /* breakTotalExtra % breakCount */
     INT           MapMode;

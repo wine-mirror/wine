@@ -310,7 +310,6 @@ BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LP
 {
     int     	    i;
     float   	    width = 0.0;
-    POINT pt[3];
 
     assert(physDev->font.fontloc == Builtin);
 
@@ -319,18 +318,8 @@ BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LP
     for (i = 0; i < count && str[i] != '\0'; ++i)
 	width += PSDRV_UVMetrics(str[i], physDev->font.fontinfo.Builtin.afm)->WX;
 
-    width *= physDev->font.fontinfo.Builtin.scale;
-
-    /* convert back to logical coords */
-    pt[0].x = 0;
-    pt[0].y = 0;
-    pt[1].x = width;
-    pt[1].y = 0;
-    pt[2].x = 0;
-    pt[2].y = physDev->font.fontinfo.Builtin.tm.tmHeight;
-    DPtoLP( physDev->hdc, pt, 3 );
-    size->cx = pt[1].x - pt[0].x;
-    size->cy = pt[2].y - pt[0].y;
+    size->cx = width * physDev->font.fontinfo.Builtin.scale;
+    size->cy = physDev->font.fontinfo.Builtin.tm.tmHeight;
 
     TRACE("cx=%li cy=%li\n", size->cx, size->cy);
 
