@@ -2454,7 +2454,6 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
     }
 }
 
-
 /***********************************************************************
  *           X11DRV_DIB_SetImageBits
  *
@@ -2489,24 +2488,31 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				   bmpImage );
 	break;
     case 4:
-	if (descr->compression)
+        if (descr->compression) {
+	    XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
+			  descr->width, descr->height, AllPlanes, ZPixmap, 
+			  bmpImage, descr->xSrc, descr->ySrc );
+
 	    X11DRV_DIB_SetImageBits_RLE4( descr->lines, descr->bits,
 					  descr->infoWidth, descr->width,
 					  descr->xSrc, (int *)(descr->colorMap),
 					  bmpImage );
-	else
+	} else
 	    X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
 				       descr->infoWidth, descr->width,
 				       descr->xSrc, (int*)(descr->colorMap),
 				       bmpImage );
 	break;
     case 8:
-	if (descr->compression)
+        if (descr->compression) {
+	    XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
+			  descr->width, descr->height, AllPlanes, ZPixmap, 
+			  bmpImage, descr->xSrc, descr->ySrc );
 	    X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
 					  descr->infoWidth, descr->width,
 					  descr->xSrc, (int *)(descr->colorMap), 
 					  bmpImage );
-	else
+	} else
 	    X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
 				       descr->infoWidth, descr->width,
 				       descr->xSrc, (int *)(descr->colorMap),
@@ -2545,8 +2551,8 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     }
     else
         XPutImage( display, descr->drawable, descr->gc, bmpImage,
-               descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
-               descr->width, descr->height );
+		   descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
+		   descr->width, descr->height );
 
     if (!descr->image) XDestroyImage( bmpImage );
     return lines;
@@ -2673,8 +2679,8 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
        case 4:
        case 8:
                descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap( dc, coloruse,
-						   dc->w.bitsPerPixel,
-						   info, &descr.nColorMap );
+                                                   dc->w.bitsPerPixel,
+                                                   info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
                descr.rMask = descr.gMask = descr.bMask = 0;
                break;
@@ -3195,7 +3201,7 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
         if( shminfo->shmid != -1 )
         {
             shminfo->shmaddr = (*image)->data = shmat(shminfo->shmid, 0, 0);
-            if( shminfo->shmaddr != -1 )
+            if( shminfo->shmaddr != (char*)-1 )
             {
                 shminfo->readOnly = FALSE;
                 if( TSXShmAttach( display, shminfo ) != 0)
@@ -3428,7 +3434,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
 {
     HBITMAP hBmp = 0;
     BITMAPOBJ *pBmp = NULL;
-    HGLOBAL hPackedDIB = NULL;
+    HGLOBAL hPackedDIB = 0;
 
     /* Allocates an HBITMAP which references the Pixmap passed to us */
     hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(pixmap);
@@ -3475,7 +3481,7 @@ END:
  */
 Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 {
-    Pixmap pixmap = NULL;
+    Pixmap pixmap = None;
     HBITMAP hBmp = 0;
     BITMAPOBJ *pBmp = NULL;
     LPBYTE pPackedDIB = NULL;
