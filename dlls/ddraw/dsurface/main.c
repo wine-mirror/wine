@@ -40,6 +40,8 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 				 IDirectDrawImpl *pDD,
 				 const DDSURFACEDESC2 *pDDSD)
 {
+    TRACE("(%p)->(%p,%p)\n", This, pDD, pDDSD);
+
     if (pDDSD != &This->surface_desc) {
 	This->surface_desc.dwSize = sizeof(This->surface_desc);
 	DD_STRUCT_COPY_BYSIZE(&(This->surface_desc),pDDSD);
@@ -112,11 +114,16 @@ ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface)
 {
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
+    TRACE("(%p)->(): decreasing from %ld\n", This, This->ref);
+    
     if (--This->ref == 0)
     {
 	if (This->aux_release)
 	    This->aux_release(This->aux_ctx, This->aux_data);
 	Main_DirectDrawSurface_Destroy(This);
+
+	TRACE("released surface %p\n", This);
+	
 	return 0;
     }
 
@@ -127,6 +134,8 @@ ULONG WINAPI Main_DirectDrawSurface_AddRef(LPDIRECTDRAWSURFACE7 iface)
 {
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
+    TRACE("(%p)->(): increasing from %ld\n", This, This->ref);
+    
     return ++This->ref;
 }
 
@@ -586,19 +595,38 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
     IDirectDrawSurfaceImpl* surf;
     IDirectDrawSurfaceImpl* found = NULL;
+    DDSCAPS2 our_caps;
+    
+    if (TRACE_ON(ddraw)) {
+        TRACE("(%p)->Looking for caps: %lx,%lx,%lx,%lx output: %p\n",This,pCaps->dwCaps, pCaps->dwCaps2,
+	      pCaps->dwCaps3, pCaps->dwCaps4, ppSurface);
+	DPRINTF("   Caps are : "); DDRAW_dump_DDSCAPS(pCaps); DPRINTF("\n");
+    }
 
-    TRACE("(%p)->Looking for caps: %lx,%lx,%lx,%lx output: %p\n",This,pCaps->dwCaps, pCaps->dwCaps2,
-          pCaps->dwCaps3, pCaps->dwCaps4, ppSurface);
-
+    our_caps = *pCaps;
+    if ((This->ddraw_owner->local.dwLocalFlags & DDRAWILCL_DIRECTDRAW7) == 0) {
+        /* As this is not a DirectDraw7 application, remove the garbage that some games
+	   put in the new fields of the DDSCAPS2 structure. */
+        our_caps.dwCaps2 = 0;
+	our_caps.dwCaps3 = 0;
+	our_caps.dwCaps4 = 0;
+	if (TRACE_ON(ddraw)) {
+	    DPRINTF("   Real caps are : "); DDRAW_dump_DDSCAPS(&our_caps); DPRINTF("\n");
+	}
+    }
+    
     for (surf = This->attached; surf != NULL; surf = surf->next_attached)
     {
-        TRACE("Surface: (%p) caps: %lx,%lx,%lx,%lx \n",surf ,
-               surf->surface_desc.ddsCaps.dwCaps,
-               surf->surface_desc.ddsCaps.dwCaps2,
-               surf->surface_desc.ddsCaps.dwCaps3,
-               surf->surface_desc.ddsCaps.dwCaps4);
-	if (((surf->surface_desc.ddsCaps.dwCaps & pCaps->dwCaps) == pCaps->dwCaps)
-	   && ((surf->surface_desc.ddsCaps.dwCaps2 & pCaps->dwCaps2) == pCaps->dwCaps2))
+        if (TRACE_ON(ddraw)) {
+	    TRACE("Surface: (%p) caps: %lx,%lx,%lx,%lx \n",surf ,
+		  surf->surface_desc.ddsCaps.dwCaps,
+		  surf->surface_desc.ddsCaps.dwCaps2,
+		  surf->surface_desc.ddsCaps.dwCaps3,
+		  surf->surface_desc.ddsCaps.dwCaps4);
+	    DPRINTF("   Surface caps are : "); DDRAW_dump_DDSCAPS(&(surf->surface_desc.ddsCaps)); DPRINTF("\n");
+	}
+	if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
+	    ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2))
 	{
 	    /* MSDN: "This method fails if more than one surface is attached
 	     * that matches the capabilities requested." */
@@ -614,11 +642,18 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 	}
     }
 
-    if (found == NULL)
+    if (found == NULL) {
+        TRACE("Did not find any valid surface\n");
 	return DDERR_NOTFOUND;
+    }
 
     *ppSurface = ICOM_INTERFACE(found, IDirectDrawSurface7);
 
+    if (TRACE_ON(ddraw)) {
+        TRACE("Returning surface %p with description : \n", *ppSurface);
+	DDRAW_dump_surface_desc(&(found->surface_desc));
+    }
+    
     /* XXX d3dframe.cpp sometimes AddRefs things that it gets from us. */
     IDirectDrawSurface7_AddRef(ICOM_INTERFACE(found, IDirectDrawSurface7));
     return DD_OK;
