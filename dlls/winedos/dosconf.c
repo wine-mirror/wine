@@ -478,10 +478,13 @@ DOSCONF *DOSCONF_GetConfig(void)
 
     if ((filename[0] != '*' || filename[1] != '\0') && *filename != '\0')
     {
-        CHAR fullname[MAX_PATH];
+        char *fullname;
 
-        if (wine_get_unix_file_name(filename, fullname, sizeof(fullname)))
+        if ((fullname = wine_get_unix_file_name(filename)))
+        {
             DOSCONF_fd = fopen(fullname, "r");
+            HeapFree( GetProcessHeap(), 0, fullname );
+        }
 
         if (DOSCONF_fd)
         {

@@ -326,13 +326,9 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
 inline static char *get_unix_file_name( const char *dos )
 {
     WCHAR dosW[MAX_PATH];
-    char buffer[MAX_PATH], *ret;
 
     MultiByteToWideChar(CP_ACP, 0, dos, -1, dosW, MAX_PATH);
-    if (!wine_get_unix_file_name( dosW, buffer, sizeof(buffer) )) return NULL;
-    ret = HeapAlloc( GetProcessHeap(), 0, lstrlenA( buffer ) + 1 );
-    lstrcpyA( ret, buffer );
-    return ret;
+    return wine_get_unix_file_name( dosW );
 }
 
 static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)

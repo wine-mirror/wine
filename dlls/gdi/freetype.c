@@ -851,13 +851,16 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
-        char unixname[MAX_PATH];
+        char *unixname;
 
         if(flags)
             FIXME("Ignoring flags %lx\n", flags);
 
-        if(wine_get_unix_file_name(file, unixname, sizeof(unixname)))
+        if((unixname = wine_get_unix_file_name(file)))
+        {
             AddFontFileToList(unixname, NULL, FALSE);
+            HeapFree(GetProcessHeap(), 0, unixname);
+        }
     }
     return 1;
 }
@@ -884,7 +887,7 @@ BOOL WineEngInit(void)
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     LPVOID data;
     WCHAR windowsdir[MAX_PATH];
-    char unixname[MAX_PATH];
+    char *unixname;
     HANDLE font_mutex;
 
     TRACE("\n");
@@ -958,8 +961,11 @@ BOOL WineEngInit(void)
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
     GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
     strcatW(windowsdir, fontsW);
-    if(wine_get_unix_file_name(windowsdir, unixname, sizeof(unixname)))
+    if((unixname = wine_get_unix_file_name(windowsdir)))
+    {
         ReadFontDir(unixname, FALSE);
+        HeapFree(GetProcessHeap(), 0, unixname);
+    }
 
     /* now look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
        for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
@@ -981,8 +987,11 @@ BOOL WineEngInit(void)
             while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, data,
                                 &dlen) == ERROR_SUCCESS) {
                 if(((LPWSTR)data)[0] && ((LPWSTR)data)[1] == ':')
-                    if(wine_get_unix_file_name((LPWSTR)data, unixname, sizeof(unixname)))
+                    if((unixname = wine_get_unix_file_name((LPWSTR)data)))
+                    {
                         AddFontFileToList(unixname, NULL, FALSE);
+                        HeapFree(GetProcessHeap(), 0, unixname);
+                    }
                 /* reset dlen and vlen */
                 dlen = datalen;
                 vlen = valuelen;

@@ -915,6 +915,26 @@ done:
 }
 
 
+/***********************************************************************
+ *           wine_get_unix_file_name (NTDLL.@) Not a Windows API
+ *
+ * Return the full Unix file name for a given path.
+ * Returned buffer must be freed by caller.
+ */
+char *wine_get_unix_file_name( LPCWSTR dosW )
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    status = DIR_nt_to_unix( &nt_name, &unix_name, FALSE, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+    if (status) return NULL;
+    return unix_name.Buffer;
+}
+
+
 /******************************************************************
  *		RtlDoesFileExists_U   (NTDLL.@)
  */

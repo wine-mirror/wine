@@ -893,13 +893,13 @@ void __wine_kernel_init(void)
         ExitProcess(1);
     case BINARY_UNIX_LIB:
         {
-            DOS_FULL_NAME full_name;
+            char *unix_name;
 
             TRACE( "starting Winelib app %s\n", debugstr_w(main_exe_name) );
             CloseHandle( main_exe_file );
             main_exe_file = 0;
-            if (DOSFS_GetFullName( main_exe_name, TRUE, &full_name ) &&
-                wine_dlopen( full_name.long_name, RTLD_NOW, error, sizeof(error) ))
+            if ((unix_name = wine_get_unix_file_name( main_exe_name )) &&
+                wine_dlopen( unix_name, RTLD_NOW, error, sizeof(error) ))
             {
                 static const WCHAR soW[] = {'.','s','o',0};
                 if ((p = strrchrW( main_exe_name, '.' )) && !strcmpW( p, soW ))
@@ -908,6 +908,7 @@ void __wine_kernel_init(void)
                     /* update the unicode string */
                     RtlInitUnicodeString( &peb->ProcessParameters->ImagePathName, main_exe_name );
                 }
+                HeapFree( GetProcessHeap(), 0, unix_name );
                 goto found;
             }
             MESSAGE( "wine: could not load %s: %s\n", debugstr_w(main_exe_name), error );
@@ -1606,8 +1607,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
 {
     BOOL retv = FALSE;
     HANDLE hFile = 0;
-    const char *unixdir = NULL;
-    DOS_FULL_NAME full_dir;
+    char *unixdir = NULL;
     WCHAR name[MAX_PATH];
     WCHAR *tidy_cmdline, *p, *envW = env;
 
@@ -1629,15 +1629,12 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
 
     if (cur_dir)
     {
-        if (DOSFS_GetFullName( cur_dir, TRUE, &full_dir )) unixdir = full_dir.long_name;
+        unixdir = wine_get_unix_file_name( cur_dir );
     }
     else
     {
         WCHAR buf[MAX_PATH];
-        if (GetCurrentDirectoryW(MAX_PATH, buf))
-        {
-            if (DOSFS_GetFullName( buf, TRUE, &full_dir )) unixdir = full_dir.long_name;
-        }
+        if (GetCurrentDirectoryW(MAX_PATH, buf)) unixdir = wine_get_unix_file_name( buf );
     }
 
     if (env && !(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
@@ -1715,12 +1712,15 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     case BINARY_UNIX_EXE:
         {
             /* unknown file, try as unix executable */
-            DOS_FULL_NAME full_name;
+            char *unix_name;
 
             TRACE( "starting %s as Unix binary\n", debugstr_w(name) );
 
-            if (DOSFS_GetFullName( name, TRUE, &full_name ))
-                retv = (fork_and_exec( full_name.long_name, tidy_cmdline, envW, unixdir ) != -1);
+            if ((unix_name = wine_get_unix_file_name( name )))
+            {
+                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir ) != -1);
+                HeapFree( GetProcessHeap(), 0, unix_name );
+            }
         }
         break;
     }
@@ -1729,6 +1729,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
  done:
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
+    if (unixdir) HeapFree( GetProcessHeap(), 0, unixdir );
     return retv;
 }
 

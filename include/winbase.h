@@ -1988,7 +1988,7 @@ VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 
 /* Wine internal functions */
 
-BOOL        WINAPI wine_get_unix_file_name( LPCWSTR dos, LPSTR buffer, DWORD len );
+extern char *wine_get_unix_file_name( LPCWSTR dos );
 
 
 /* a few optimizations for i386/gcc */

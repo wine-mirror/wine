@@ -849,26 +849,6 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
 
 /***********************************************************************
- *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
- *
- * Return the full Unix file name for a given path.
- */
-BOOL WINAPI wine_get_unix_file_name( LPCWSTR dosW, LPSTR buffer, DWORD len )
-{
-    BOOL ret;
-    DOS_FULL_NAME path;
-
-    ret = DOSFS_GetFullName( dosW, FALSE, &path );
-    if (ret && len)
-    {
-        strncpy( buffer, path.long_name, len );
-        buffer[len - 1] = 0; /* ensure 0 termination */
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           MulDiv   (KERNEL32.@)
  * RETURNS
  *	Result of multiplication and division

@@ -511,7 +511,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     }
     else
     {
-	char buffer[MAX_PATH];
+        char *buffer;
         WCHAR psCmdPW[MAX_PATH];
 
         TRACE("Just assume it's a file\n");
@@ -521,12 +521,14 @@ static int CreateSpoolFile(LPCSTR pszOutput)
          * Unix correspondant file name
          */
         MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
-	wine_get_unix_file_name(psCmdPW, buffer, sizeof(buffer));
-
-        if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+        if ((buffer = wine_get_unix_file_name(psCmdPW)))
         {
-            ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
-                buffer, psCmdP, strerror(errno));
+            if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+            {
+                ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
+                    buffer, psCmdP, strerror(errno));
+            }
+            HeapFree(GetProcessHeap(), 0, buffer);
         }
     }
     return fd;
