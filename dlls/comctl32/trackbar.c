@@ -1546,7 +1546,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TRACKBAR_INFO *infoPtr = (TRACKBAR_INFO *)GetWindowLongW (hwnd, 0);
 
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
 
     if (!infoPtr && (uMsg != WM_CREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);

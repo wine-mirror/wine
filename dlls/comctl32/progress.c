@@ -107,7 +107,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     RECT rect;
     DWORD dwStyle;
 
-    TRACE("(infoPtr=%p, hdc=%x)\n", infoPtr, hdc);
+    TRACE("(infoPtr=%p, hdc=%p)\n", infoPtr, hdc);
 
     /* get the required bar brush */
     if (infoPtr->ColorBar == CLR_DEFAULT)
@@ -268,7 +268,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 {
     PROGRESS_INFO *infoPtr;
 
-    TRACE("hwnd=%x msg=%04x wparam=%x lParam=%lx\n", hwnd, message, wParam, lParam);
+    TRACE("hwnd=%p msg=%04x wparam=%x lParam=%lx\n", hwnd, message, wParam, lParam);
 
     infoPtr = (PROGRESS_INFO *)GetWindowLongW(hwnd, 0);
 
@@ -300,12 +300,12 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         infoPtr->ColorBar = CLR_DEFAULT;
         infoPtr->ColorBk = CLR_DEFAULT;
         infoPtr->Font = 0;
-        TRACE("Progress Ctrl creation, hwnd=%04x\n", hwnd);
+        TRACE("Progress Ctrl creation, hwnd=%p\n", hwnd);
         return 0;
     }
 
     case WM_DESTROY:
-        TRACE("Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+        TRACE("Progress Ctrl destruction, hwnd=%p\n", hwnd);
         COMCTL32_Free (infoPtr);
         SetWindowLongW(hwnd, 0, 0);
         return 0;

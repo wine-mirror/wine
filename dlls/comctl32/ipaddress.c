@@ -106,12 +106,12 @@ static int IPADDRESS_GetPartIndex(IPADDRESS_INFO *infoPtr, HWND hwnd)
 {
     int i;
 
-    TRACE("(hwnd=%x)\n", hwnd);
+    TRACE("(hwnd=%p)\n", hwnd);
 
     for (i = 0; i < 4; i++)
         if (infoPtr->Part[i].EditHwnd == hwnd) return i;
 
-    ERR("We subclassed the wrong window! (hwnd=%x)\n", hwnd);
+    ERR("We subclassed the wrong window! (hwnd=%p)\n", hwnd);
     return -1;
 }
 
@@ -415,7 +415,7 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     INT index, len = 0, startsel, endsel;
     IPPART_INFO *part;
 
-    TRACE("(hwnd=0x%x msg=0x%x wparam=0x%x lparam=0x%lx)\n", hwnd, uMsg, wParam, lParam);
+    TRACE("(hwnd=%p msg=0x%x wparam=0x%x lparam=0x%lx)\n", hwnd, uMsg, wParam, lParam);
 
     if ( (index = IPADDRESS_GetPartIndex(infoPtr, hwnd)) < 0) return 0;
     part = &infoPtr->Part[index];
@@ -494,7 +494,7 @@ IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr (hwnd);
 
-    TRACE("(hwnd=0x%x msg=0x%x wparam=0x%x lparam=0x%lx)\n", hwnd, uMsg, wParam, lParam);
+    TRACE("(hwnd=%p msg=0x%x wparam=0x%x lparam=0x%lx)\n", hwnd, uMsg, wParam, lParam);
 
     if (!infoPtr && (uMsg != WM_CREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);

@@ -880,7 +880,7 @@ DATETIME_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
         ShowWindow(infoPtr->hMonthCal, SW_SHOW);
 
-    TRACE ("dt:%x mc:%x mc parent:%x, desktop:%x, mcpp:%x\n",
+    TRACE ("dt:%p mc:%p mc parent:%p, desktop:%p, mcpp:%p\n",
               hwnd,infoPtr->hMonthCal,
               GetParent (infoPtr->hMonthCal),
               GetDesktopWindow (),
@@ -931,8 +931,8 @@ DATETIME_ParentNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
  LPNMHDR lpnmh = (LPNMHDR) lParam;
 
  TRACE ("%x,%lx\n",wParam, lParam);
- TRACE ("Got notification %x from %x\n", lpnmh->code, lpnmh->hwndFrom);
- TRACE ("info: %x %x %x\n",hwnd,infoPtr->hMonthCal,infoPtr->hUpdown);
+ TRACE ("Got notification %x from %p\n", lpnmh->code, lpnmh->hwndFrom);
+ TRACE ("info: %p %p %p\n",hwnd,infoPtr->hMonthCal,infoPtr->hUpdown);
  return 0;
 }
 
@@ -945,8 +945,8 @@ DATETIME_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
  LPNMHDR lpnmh = (LPNMHDR) lParam;
 
  TRACE ("%x,%lx\n",wParam, lParam);
- TRACE ("Got notification %x from %x\n", lpnmh->code, lpnmh->hwndFrom);
- TRACE ("info: %x %x %x\n",hwnd,infoPtr->hMonthCal,infoPtr->hUpdown);
+ TRACE ("Got notification %x from %p\n", lpnmh->code, lpnmh->hwndFrom);
+ TRACE ("info: %p %p %p\n",hwnd,infoPtr->hMonthCal,infoPtr->hUpdown);
  return 0;
 }
 

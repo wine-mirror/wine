@@ -171,7 +171,7 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
     BITMAP  bmp;
     HBITMAP hOldBitmapImage, hOldBitmap;
 
-    TRACE("himl=%p hbmimage=%x hbmmask=%x\n", himl, hbmImage, hbmMask);
+    TRACE("himl=%p hbmimage=%p hbmmask=%p\n", himl, hbmImage, hbmMask);
     if (!himl || !hbmImage)
         return -1;
 
@@ -283,7 +283,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     HBITMAP hMaskBitmap=0;
     COLORREF bkColor;
 
-    TRACE("himl=%p hbitmap=%x clrmask=%lx\n", himl, hBitmap, clrMask);
+    TRACE("himl=%p hbitmap=%p clrmask=%lx\n", himl, hBitmap, clrMask);
     if (himl == NULL)
         return -1;
 
@@ -722,7 +722,7 @@ ImageList_Destroy (HIMAGELIST himl)
 BOOL WINAPI
 ImageList_DragEnter (HWND hwndLock, INT x, INT y)
 {
-    TRACE("(hwnd=%#x x=%d y=%d)\n", hwndLock, x, y);
+    TRACE("(hwnd=%p x=%d y=%d)\n", hwndLock, x, y);
 
     if (InternalDrag.himl == NULL)
 	return FALSE;
@@ -1096,7 +1096,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     bIsTransparent = (fStyle & ILD_TRANSPARENT) || clrBk == CLR_NONE;
     bBlend = fStyle & (ILD_BLEND25 | ILD_BLEND50);
 
-    TRACE("hbmMask(0x%08x) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
+    TRACE("hbmMask(%p) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
           himl->hbmMask, pimldp->i, pimldp->x, pimldp->y, cx, cy);
 
     /* we will use these DCs to access the images and masks in the ImageList */
@@ -2205,7 +2205,7 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
     HDC hdcImageList, hdcImage;
     BITMAP bmp;
 
-    TRACE("%p %d %04x %04x\n", himl, i, hbmImage, hbmMask);
+    TRACE("%p %d %p %p\n", himl, i, hbmImage, hbmMask);
 
     if (himl == NULL) {
         ERR("Invalid image list handle!\n");
@@ -2280,7 +2280,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     ICONINFO  ii;
     BITMAP  bmp;
 
-    TRACE("(0x%lx 0x%x 0x%x)\n", (DWORD)himl, i, hIcon);
+    TRACE("(0x%lx 0x%x %p)\n", (DWORD)himl, i, hIcon);
 
     if (himl == NULL)
 	return -1;
@@ -2310,12 +2310,12 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
         nIndex = i;
 
     hdcImageList = CreateCompatibleDC (0);
-    TRACE("hdcImageList=0x%x!\n", hdcImageList);
+    TRACE("hdcImageList=%p!\n", hdcImageList);
     if (hdcImageList == 0)
 	ERR("invalid hdcImageList!\n");
 
     hdcImage = CreateCompatibleDC (0);
-    TRACE("hdcImage=0x%x!\n", hdcImage);
+    TRACE("hdcImage=%p!\n", hdcImage);
     if (hdcImage == 0)
 	ERR("invalid hdcImage!\n");
 

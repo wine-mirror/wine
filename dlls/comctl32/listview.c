@@ -339,16 +339,16 @@ typedef struct tagLISTVIEW_INFO
 
 /* Dump the LISTVIEW_INFO structure to the debug channel */
 #define LISTVIEW_DUMP(iP) do { \
-  TRACE("hwndSelf=%08x, clrBk=0x%06lx, clrText=0x%06lx, clrTextBk=0x%06lx, ItemHeight=%d, ItemWidth=%d, Style=0x%08lx\n", \
+  TRACE("hwndSelf=%p, clrBk=0x%06lx, clrText=0x%06lx, clrTextBk=0x%06lx, ItemHeight=%d, ItemWidth=%d, Style=0x%08lx\n", \
         iP->hwndSelf, iP->clrBk, iP->clrText, iP->clrTextBk, \
         iP->nItemHeight, iP->nItemWidth, infoPtr->dwStyle); \
-  TRACE("hwndSelf=%08x, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx, Focus=%d\n", \
+  TRACE("hwndSelf=%p, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx, Focus=%d\n", \
         iP->hwndSelf, iP->himlNormal, iP->himlSmall, iP->himlState, \
         iP->nFocusedItem, iP->nHotItem, iP->dwLvExStyle, iP->bFocus ); \
-  TRACE("hwndSelf=%08x, ntmH=%d, icSz.cx=%ld, icSz.cy=%ld, icSp.cx=%ld, icSp.cy=%ld, notifyFmt=%d\n", \
+  TRACE("hwndSelf=%p, ntmH=%d, icSz.cx=%ld, icSz.cy=%ld, icSp.cx=%ld, icSp.cy=%ld, notifyFmt=%d\n", \
         iP->hwndSelf, iP->ntmHeight, iP->iconSize.cx, iP->iconSize.cy, \
         iP->iconSpacing.cx, iP->iconSpacing.cy, iP->notifyFormat); \
-  TRACE("hwndSelf=%08x, rcList=%s\n", iP->hwndSelf, debugrect(&iP->rcList)); \
+  TRACE("hwndSelf=%p, rcList=%s\n", iP->hwndSelf, debugrect(&iP->rcList)); \
 } while(0)
 
 
@@ -3363,7 +3363,7 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
 {
     if (!infoPtr->hBkBrush) return FALSE;
 
-    TRACE("(hdc=%x, lprcBox=%s, hBkBrush=%x)\n", hdc, debugrect(lprcBox), infoPtr->hBkBrush);
+    TRACE("(hdc=%p, lprcBox=%s, hBkBrush=%p)\n", hdc, debugrect(lprcBox), infoPtr->hBkBrush);
 
     return FillRect(hdc, lprcBox, infoPtr->hBkBrush);
 }
@@ -3395,7 +3395,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     HIMAGELIST himl;
     LVITEMW lvItem;
 
-    TRACE("(hdc=%x, nItem=%d, nSubItem=%d, pos=%s)\n", hdc, nItem, nSubItem, debugpoint(&pos));
+    TRACE("(hdc=%p, nItem=%d, nSubItem=%d, pos=%s)\n", hdc, nItem, nSubItem, debugpoint(&pos));
 
     /* get information needed for drawing the item */
     lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
@@ -5060,7 +5060,7 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     LVITEMW lvItem;
     RECT label_rect;
 
-    TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
+    TRACE("(hwnd=%p, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
     if (!lprc || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
 
@@ -6986,7 +6986,7 @@ static inline BOOL LISTVIEW_EraseBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     RECT rc;
 
-    TRACE("(hdc=%x)\n", hdc);
+    TRACE("(hdc=%p)\n", hdc);
 
     if (!GetClipBox(hdc, &rc)) return FALSE;
 
@@ -7687,7 +7687,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, LPNMHEADERW l
  */
 static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT nCommand)
 {
-  TRACE("(hwndFrom=%x, nCommand=%d)\n", hwndFrom, nCommand);
+  TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
 
   if (nCommand == NF_REQUERY)
     infoPtr->notifyFormat = SendMessageW(hwndFrom, WM_NOTIFYFORMAT,
@@ -7708,7 +7708,7 @@ static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT 
  */
 static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
-    TRACE("(hdc=%x)\n", hdc);
+    TRACE("(hdc=%p)\n", hdc);
 
     if (hdc) 
 	LISTVIEW_Refresh(infoPtr, hdc);
@@ -7889,7 +7889,7 @@ static BOOL LISTVIEW_SetCursor(LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHittest,
  */
 static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
 {
-    TRACE("(hwndLoseFocus=%x)\n", hwndLoseFocus);
+    TRACE("(hwndLoseFocus=%p)\n", hwndLoseFocus);
 
     /* if we have the focus already, there's nothing to do */
     if (infoPtr->bFocus) return 0;
@@ -7925,7 +7925,7 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
 {
     HFONT oldFont = infoPtr->hFont;
 
-    TRACE("(hfont=%x,redraw=%hu)\n", hFont, fRedraw);
+    TRACE("(hfont=%p,redraw=%hu)\n", hFont, fRedraw);
 
     infoPtr->hFont = hFont ? hFont : infoPtr->hDefaultFont;
     if (infoPtr->hFont == oldFont) return 0;
@@ -8767,7 +8767,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(GetParent(hwnd), 0);
     BOOL cancel = FALSE;
 
-    TRACE("(hwnd=%x, uMsg=%x, wParam=%x, lParam=%lx, isW=%d)\n",
+    TRACE("(hwnd=%p, uMsg=%x, wParam=%x, lParam=%lx, isW=%d)\n",
 	  hwnd, uMsg, wParam, lParam, isW);
 
     switch (uMsg)

@@ -399,7 +399,7 @@ static VOID
 REBAR_DumpBandInfo( LPREBARBANDINFOA pB)
 {
     if( !TRACE_ON(rebar) ) return;
-    TRACE("band info: ID=%u, size=%u, child=%04x, clrF=0x%06lx, clrB=0x%06lx\n",
+    TRACE("band info: ID=%u, size=%u, child=%p, clrF=0x%06lx, clrB=0x%06lx\n",
 	  pB->wID, pB->cbSize, pB->hwndChild, pB->clrFore, pB->clrBack);
     TRACE("band info: mask=0x%08x (%s)\n", pB->fMask, REBAR_FmtMask(pB->fMask));
     if (pB->fMask & RBBIM_STYLE)
@@ -430,19 +430,19 @@ REBAR_DumpBand (REBAR_INFO *iP)
 
     if(! TRACE_ON(rebar) ) return;
 
-    TRACE("hwnd=%04x: color=%08lx/%08lx, bands=%u, rows=%u, cSize=%ld,%ld\n",
+    TRACE("hwnd=%p: color=%08lx/%08lx, bands=%u, rows=%u, cSize=%ld,%ld\n",
 	  iP->hwndSelf, iP->clrText, iP->clrBk, iP->uNumBands, iP->uNumRows,
 	  iP->calcSize.cx, iP->calcSize.cy);
-    TRACE("hwnd=%04x: flags=%08x, dragStart=%d,%d, dragNow=%d,%d, ihitBand=%d\n",
+    TRACE("hwnd=%p: flags=%08x, dragStart=%d,%d, dragNow=%d,%d, ihitBand=%d\n",
 	  iP->hwndSelf, iP->fStatus, iP->dragStart.x, iP->dragStart.y,
 	  iP->dragNow.x, iP->dragNow.y,
 	  iP->ihitBand);
-    TRACE("hwnd=%04x: style=%08lx, I'm Unicode=%s, notify in Unicode=%s, redraw=%s\n",
+    TRACE("hwnd=%p: style=%08lx, I'm Unicode=%s, notify in Unicode=%s, redraw=%s\n",
 	  iP->hwndSelf, iP->dwStyle, (iP->bUnicode)?"TRUE":"FALSE",
 	  (iP->NtfUnicode)?"TRUE":"FALSE", (iP->DoRedraw)?"TRUE":"FALSE");
     for (i = 0; i < iP->uNumBands; i++) {
 	pB = &iP->bands[i];
-	TRACE("band # %u: ID=%u, child=%04x, row=%u, clrF=0x%06lx, clrB=0x%06lx\n",
+	TRACE("band # %u: ID=%u, child=%p, row=%u, clrF=0x%06lx, clrB=0x%06lx\n",
 	      i, pB->wID, pB->hwndChild, pB->iRow, pB->clrFore, pB->clrBack);
 	TRACE("band # %u: mask=0x%08x (%s)\n", i, pB->fMask, REBAR_FmtMask(pB->fMask));
 	if (pB->fMask & RBBIM_STYLE)
@@ -506,7 +506,7 @@ REBAR_Notify (NMHDR *nmhdr, REBAR_INFO *infoPtr, UINT code)
     nmhdr->hwndFrom = infoPtr->hwndSelf;
     nmhdr->code = code;
 
-    TRACE("window %04x, code=%08x, %s\n", parent, code,
+    TRACE("window %p, code=%08x, %s\n", parent, code,
 	  (infoPtr->NtfUnicode) ? "via Unicode" : "via ANSI");
 
     if (infoPtr->NtfUnicode)
@@ -638,7 +638,7 @@ REBAR_Refresh (REBAR_INFO *infoPtr, HDC hdc)
 	if (HIDDENBAND(lpBand)) continue;
 
 	/* now draw the band */
-	TRACE("[%04x] drawing band %i, flags=%08x\n",
+	TRACE("[%p] drawing band %i, flags=%08x\n",
 	      infoPtr->hwndSelf, i, lpBand->fDraw);
 	REBAR_DrawBand (hdc, infoPtr, lpBand);
 
@@ -1224,7 +1224,7 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
 	y = infoPtr->origin.y;
     }
 
-    TRACE("hwnd %08x, style=%08lx, setting at (%d,%d) for (%d,%d)\n",
+    TRACE("hwnd %p, style=%08lx, setting at (%d,%d) for (%d,%d)\n",
 	infoPtr->hwndSelf, infoPtr->dwStyle,
 	x, y, width, height);
     SetWindowPos (infoPtr->hwndSelf, 0, x, y, width, height,
@@ -1250,7 +1250,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 
 	if (HIDDENBAND(lpBand)) continue;
 	if (lpBand->hwndChild) {
-	    TRACE("hwndChild = %x\n", lpBand->hwndChild);
+	    TRACE("hwndChild = %p\n", lpBand->hwndChild);
 
 	    /* Always geterate the RBN_CHILDSIZE even it child
 		   did not change */
@@ -1296,7 +1296,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
 
 		/* center combo box inside child area */
-		TRACE("moving child (Combo(Ex)) %04x to (%d,%d) for (%d,%d)\n",
+		TRACE("moving child (Combo(Ex)) %p to (%d,%d) for (%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, yPos,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1311,7 +1311,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		    ERR("DeferWindowPos returned NULL\n");
 	    }
 	    else {
-		TRACE("moving child (Other) %04x to (%d,%d) for (%d,%d)\n",
+		TRACE("moving child (Other) %p to (%d,%d) for (%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, lpBand->rcChild.top,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -2060,7 +2060,7 @@ REBAR_CommonSetupBand (HWND hwnd, LPREBARBANDINFOA lprbbi, REBAR_BAND *lpBand)
 	    /* above in trace fro WinRAR */
 	}
 	else {
-	    TRACE("child: 0x%x  prev parent: 0x%x\n",
+	    TRACE("child: %p  prev parent: %p\n",
 		   lpBand->hwndChild, lpBand->hwndPrevParent);
 	    lpBand->hwndChild = 0;
 	    lpBand->hwndPrevParent = 0;
@@ -2922,7 +2922,7 @@ REBAR_GetToolTips (REBAR_INFO *infoPtr)
 inline static LRESULT
 REBAR_GetUnicodeFormat (REBAR_INFO *infoPtr)
 {
-    TRACE("%s hwnd=0x%x\n",
+    TRACE("%s hwnd=%p\n",
 	  infoPtr->bUnicode ? "TRUE" : "FALSE", infoPtr->hwndSelf);
 
     return infoPtr->bUnicode;
@@ -3553,7 +3553,7 @@ REBAR_SetUnicodeFormat (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     BOOL bTemp = infoPtr->bUnicode;
 
-    TRACE("to %s hwnd=0x%04x, was %s\n",
+    TRACE("to %s hwnd=%p, was %s\n",
 	  ((BOOL)wParam) ? "TRUE" : "FALSE", infoPtr->hwndSelf,
 	  (bTemp) ? "TRUE" : "FALSE");
 
@@ -4249,7 +4249,7 @@ REBAR_WindowPosChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     ret = DefWindowProcA(infoPtr->hwndSelf, WM_WINDOWPOSCHANGED,
 			 wParam, lParam);
     GetWindowRect(infoPtr->hwndSelf, &rc);
-    TRACE("hwnd %08x new pos (%d,%d)-(%d,%d)\n",
+    TRACE("hwnd %p new pos (%d,%d)-(%d,%d)\n",
 	  infoPtr->hwndSelf, rc.left, rc.top, rc.right, rc.bottom);
     return ret;
 }
@@ -4260,7 +4260,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
 
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n",
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
 	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
     if (!infoPtr && (uMsg != WM_NCCREATE))
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);

@@ -226,11 +226,11 @@ TOOLBAR_DumpToolbar(TOOLBAR_INFO *iP, INT line)
 	DWORD dwStyle;
 
 	dwStyle = GetWindowLongA (iP->hwndSelf, GWL_STYLE);
-	TRACE("toolbar %08x at line %d, exStyle=%08lx, buttons=%d, bitmaps=%d, strings=%d, style=%08lx\n",
+	TRACE("toolbar %p at line %d, exStyle=%08lx, buttons=%d, bitmaps=%d, strings=%d, style=%08lx\n",
 	      iP->hwndSelf, line,
 	      iP->dwExStyle, iP->nNumButtons, iP->nNumBitmaps,
 	      iP->nNumStrings, dwStyle);
-	TRACE("toolbar %08x at line %d, himlInt=%p, himlDef=%p, himlHot=%p, himlDis=%p, redrawable=%s\n",
+	TRACE("toolbar %p at line %d, himlInt=%p, himlDef=%p, himlHot=%p, himlDis=%p, redrawable=%s\n",
 	      iP->hwndSelf, line,
 	      iP->himlInt, iP->himlDef, iP->himlHot, iP->himlDis,
 	      (iP->bDoRedraw) ? "TRUE" : "FALSE");
@@ -252,9 +252,9 @@ static void
 TOOLBAR_CheckStyle (HWND hwnd, DWORD dwStyle)
 {
     if (dwStyle & TBSTYLE_ALTDRAG)
-	FIXME("[%04x] TBSTYLE_ALTDRAG not implemented\n", hwnd);
+	FIXME("[%p] TBSTYLE_ALTDRAG not implemented\n", hwnd);
     if (dwStyle & TBSTYLE_REGISTERDROP)
-	FIXME("[%04x] TBSTYLE_REGISTERDROP not implemented\n", hwnd);
+	FIXME("[%p] TBSTYLE_REGISTERDROP not implemented\n", hwnd);
 }
 
 
@@ -268,7 +268,7 @@ TOOLBAR_SendNotify (NMHDR *nmhdr, TOOLBAR_INFO *infoPtr, UINT code)
     nmhdr->hwndFrom = infoPtr->hwndSelf;
     nmhdr->code = code;
 
-    TRACE("to window %04x, code=%08x, %s\n", infoPtr->hwndNotify, code,
+    TRACE("to window %p, code=%08x, %s\n", infoPtr->hwndNotify, code,
 	  (infoPtr->bNtfUnicode) ? "via Unicode" : "via ANSI");
 
     if (infoPtr->bNtfUnicode)
@@ -2082,7 +2082,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nIndex = 0, nButtons, nCount;
     HBITMAP hbmLoad;
 
-    TRACE("hwnd=%x wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wParam=%x lParam=%lx\n", hwnd, wParam, lParam);
     if (!lpAddBmp)
 	return -1;
 
@@ -2648,7 +2648,7 @@ TOOLBAR_ButtonStructSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
     if (infoPtr == NULL) {
-	ERR("(0x%x, 0x%x, 0x%lx)\n", hwnd, wParam, lParam);
+	ERR("(%p, 0x%x, 0x%lx)\n", hwnd, wParam, lParam);
 	ERR("infoPtr == NULL!\n");
 	return 0;
     }
@@ -3283,7 +3283,7 @@ TOOLBAR_GetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    TRACE("%s hwnd=0x%x stub!\n",
+    TRACE("%s hwnd=%p stub!\n",
 	   infoPtr->bUnicode ? "TRUE" : "FALSE", hwnd);
 
     return infoPtr->bUnicode;
@@ -3679,7 +3679,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HBITMAP hBitmap;
     int i = 0, nOldButtons = 0, pos = 0;
 
-    TRACE("hInstOld %x nIDOld %x hInstNew %x nIDNew %x nButtons %x\n",
+    TRACE("hInstOld %p nIDOld %x hInstNew %p nIDNew %x nButtons %x\n",
           lpReplace->hInstOld, lpReplace->nIDOld, lpReplace->hInstNew, lpReplace->nIDNew,
           lpReplace->nButtons);
 
@@ -3698,18 +3698,18 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
         hBitmap = (HBITMAP) lpReplace->nIDNew;
     }
 
-    TRACE("To be replaced hInstOld %x nIDOld %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+    TRACE("To be replaced hInstOld %p nIDOld %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
     for (i = 0; i < infoPtr->nNumBitmapInfos; i++) {
         TBITMAP_INFO *tbi = &infoPtr->bitmaps[i];
-        TRACE("tbimapinfo %d hInstOld %x nIDOld %x\n", i, tbi->hInst, tbi->nID);
+        TRACE("tbimapinfo %d hInstOld %p nIDOld %x\n", i, tbi->hInst, tbi->nID);
         if (tbi->hInst == lpReplace->hInstOld && tbi->nID == lpReplace->nIDOld)
         {
-            TRACE("Found: nButtons %d hInst %x nID %x\n", tbi->nButtons, tbi->hInst, tbi->nID);
+            TRACE("Found: nButtons %d hInst %p nID %x\n", tbi->nButtons, tbi->hInst, tbi->nID);
             nOldButtons = tbi->nButtons;
             tbi->nButtons = lpReplace->nButtons;
             tbi->hInst = lpReplace->hInstNew;
             tbi->nID = lpReplace->nIDNew;
-            TRACE("tbimapinfo changed %d hInstOld %x nIDOld %x\n", i, tbi->hInst, tbi->nID);
+            TRACE("tbimapinfo changed %d hInstOld %p nIDOld %x\n", i, tbi->hInst, tbi->nID);
             break;
         }
         pos += tbi->nButtons;
@@ -3717,7 +3717,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (nOldButtons == 0)
     {
-        WARN("No hinst/bitmap found! hInst %x nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+        WARN("No hinst/bitmap found! hInst %p nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
         return FALSE;
     }
 
@@ -4149,7 +4149,7 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     ImageList_GetIconSize(infoPtr->himlDef, &infoPtr->nBitmapWidth,
 			  &infoPtr->nBitmapHeight);
-    TRACE("hwnd %08x, new himl=%08x, count=%d, bitmap w=%d, h=%d\n",
+    TRACE("hwnd %p, new himl=%08x, count=%d, bitmap w=%d, h=%d\n",
 	  hwnd, (INT)infoPtr->himlDef, infoPtr->nNumBitmaps,
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
@@ -4358,7 +4358,7 @@ TOOLBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     BOOL bTemp;
 
-    TRACE("%s hwnd=0x%04x stub!\n",
+    TRACE("%s hwnd=%p stub!\n",
 	   ((BOOL)wParam) ? "TRUE" : "FALSE", hwnd);
 
     bTemp = infoPtr->bUnicode;
@@ -4652,7 +4652,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    case CDRF_SKIPDEFAULT:
 		return TRUE;
 	    default:
-		FIXME("[%04x] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		FIXME("[%p] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
 		      hwnd, ntfret);
 	    }
     }
@@ -4690,7 +4690,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    case CDRF_SKIPDEFAULT:
 		return TRUE;
 	    default:
-		FIXME("[%04x] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		FIXME("[%p] response %ld not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
 		      hwnd, ntfret);
 	    }
     }
@@ -5476,7 +5476,7 @@ TOOLBAR_SysColorChange (HWND hwnd)
 static LRESULT WINAPI
 ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n",
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
 	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
 
     if (!TOOLBAR_GetInfoPtr(hwnd) && (uMsg != WM_NCCREATE))

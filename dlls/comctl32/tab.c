@@ -2386,7 +2386,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT rect;
 
   GetClientRect (hwnd, &rect);
-  TRACE("Rect: %x T %i, L %i, B %i, R %i\n", hwnd,
+  TRACE("Rect: %p T %i, L %i, B %i, R %i\n", hwnd,
         rect.top, rect.left, rect.bottom, rect.right);
 
   pti = (TCITEMA *)lParam;
@@ -2445,7 +2445,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   else
     InvalidateRect(hwnd, NULL, TRUE);
 
-  TRACE("[%04x]: added item %d %s\n",
+  TRACE("[%p]: added item %d %s\n",
 	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
 
   return iItem;
@@ -2461,7 +2461,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT rect;
 
   GetClientRect (hwnd, &rect);
-  TRACE("Rect: %x T %i, L %i, B %i, R %i\n", hwnd,
+  TRACE("Rect: %p T %i, L %i, B %i, R %i\n", hwnd,
         rect.top, rect.left, rect.bottom, rect.right);
 
   pti = (TCITEMW *)lParam;
@@ -2519,7 +2519,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   else
     InvalidateRect(hwnd, NULL, TRUE);
 
-  TRACE("[%04x]: added item %d %s\n",
+  TRACE("[%p]: added item %d %s\n",
 	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
 
   return iItem;
@@ -2907,7 +2907,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->fSizeSet	   = FALSE;
   infoPtr->bUnicode	   = IsWindowUnicode (hwnd);
 
-  TRACE("Created tab control, hwnd [%04x]\n", hwnd);
+  TRACE("Created tab control, hwnd [%p]\n", hwnd);
 
   /* The tab control always has the WS_CLIPSIBLINGS style. Even
      if you don't specify it in CreateWindow. This is necessary in
@@ -3001,7 +3001,7 @@ static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 
-    TRACE("hwnd=%x msg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
     if (!TAB_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
       return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 

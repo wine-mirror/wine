@@ -540,7 +540,7 @@ TREEVIEW_SendCustomDrawNotify(TREEVIEW_INFO *infoPtr, DWORD dwDrawStage,
     NMTVCUSTOMDRAW nmcdhdr;
     LPNMCUSTOMDRAW nmcd;
 
-    TRACE("drawstage:%lx hdc:%x\n", dwDrawStage, hdc);
+    TRACE("drawstage:%lx hdc:%p\n", dwDrawStage, hdc);
 
     nmcd = &nmcdhdr.nmcd;
     nmcd->hdr.hwndFrom = hwnd;
@@ -600,7 +600,7 @@ TREEVIEW_SendCustomDrawItemNotify(TREEVIEW_INFO *infoPtr, HDC hdc,
     nmcdhdr.clrTextBk = infoPtr->clrBk;
     nmcdhdr.iLevel = wineItem->iLevel;
 
-    TRACE("drawstage:%lx hdc:%x item:%lx, itemstate:%x, lItemlParam:%lx\n",
+    TRACE("drawstage:%lx hdc:%p item:%lx, itemstate:%x, lItemlParam:%lx\n",
 	  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
 	  nmcd->uItemState, nmcd->lItemlParam);
 
@@ -1769,7 +1769,7 @@ TREEVIEW_GetItemHeight(TREEVIEW_INFO *infoPtr)
 static LRESULT
 TREEVIEW_GetFont(TREEVIEW_INFO *infoPtr)
 {
-    TRACE("%x\n", infoPtr->hFont);
+    TRACE("%p\n", infoPtr->hFont);
     return (LRESULT)infoPtr->hFont;
 }
 
@@ -1789,7 +1789,7 @@ TREEVIEW_SetFont(TREEVIEW_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
 {
     UINT uHeight = infoPtr->uItemHeight;
 
-    TRACE("%x %i\n", hFont, bRedraw);
+    TRACE("%p %i\n", hFont, bRedraw);
 
     infoPtr->hFont = hFont ? hFont : GetStockObject(SYSTEM_FONT);
 
@@ -4683,7 +4683,7 @@ TREEVIEW_Create(HWND hwnd)
     RECT rcClient;
     TREEVIEW_INFO *infoPtr;
 
-    TRACE("wnd %x, style %lx\n", hwnd, GetWindowLongA(hwnd, GWL_STYLE));
+    TRACE("wnd %p, style %lx\n", hwnd, GetWindowLongA(hwnd, GWL_STYLE));
 
     infoPtr = (TREEVIEW_INFO *)COMCTL32_Alloc(sizeof(TREEVIEW_INFO));
 

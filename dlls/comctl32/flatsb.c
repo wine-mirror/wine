@@ -53,7 +53,7 @@ typedef struct
  */
 BOOL WINAPI InitializeFlatSB(HWND hwnd)
 {
-    TRACE("[%04x]\n", hwnd);
+    TRACE("[%p]\n", hwnd);
     FIXME("stub\n");
     return FALSE;
 }
@@ -69,7 +69,7 @@ BOOL WINAPI InitializeFlatSB(HWND hwnd)
  */
 HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 {
-    TRACE("[%04x]\n", hwnd);
+    TRACE("[%p]\n", hwnd);
     FIXME("stub\n");
     return S_FALSE;
 }
@@ -85,7 +85,7 @@ HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 BOOL WINAPI
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
-    TRACE("[%04x] propIndex=%d\n", hwnd, propIndex);
+    TRACE("[%p] propIndex=%d\n", hwnd, propIndex);
     FIXME("stub\n");
     return FALSE;
 }
@@ -96,7 +96,7 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 BOOL WINAPI
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
-    TRACE("[%04x] index=%u newValue=%d flag=%d\n", hwnd, index, newValue, flag);
+    TRACE("[%p] index=%u newValue=%d flag=%d\n", hwnd, index, newValue, flag);
     FIXME("stub\n");
     return FALSE;
 }
@@ -193,7 +193,7 @@ FlatSB_SetScrollRange(HWND hwnd, int nBar, INT min, INT max, BOOL bRedraw)
 static LRESULT
 FlatSB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("[%04x] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
+    TRACE("[%p] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
     return 0;
 }
 
@@ -201,7 +201,7 @@ FlatSB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 FlatSB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("[%04x] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
+    TRACE("[%p] wParam=%04x lParam=%08lx\n", hwnd, wParam, lParam);
     return 0;
 }
 

@@ -324,7 +324,7 @@ static void COMBOEX_GetComboFontSize (COMBOEX_INFO *infoPtr, SIZE *size)
     GetTextExtentPointA (mydc, "A", 1, size);
     SelectObject (mydc, ofont);
     ReleaseDC (0, mydc);
-    TRACE("selected font hwnd=%08x, height=%ld\n", nfont, size->cy);
+    TRACE("selected font hwnd=%p, height=%ld\n", nfont, size->cy);
 }
 
 
@@ -1233,7 +1233,7 @@ static BOOL COMBOEX_WM_DeleteItem (COMBOEX_INFO *infoPtr, DELETEITEMSTRUCT *dis)
     NMCOMBOBOXEXW nmcit;
     INT i;
 
-    TRACE("CtlType=%08x, CtlID=%08x, itemID=%08x, hwnd=%x, data=%08lx\n",
+    TRACE("CtlType=%08x, CtlID=%08x, itemID=%08x, hwnd=%p, data=%08lx\n",
 	  dis->CtlType, dis->CtlID, dis->itemID, dis->hwndItem, dis->itemData);
 
     if (dis->itemID >= infoPtr->nb_items) return FALSE;
@@ -1291,7 +1291,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 	  dis->CtlType, dis->CtlID);
     TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
 	  dis->itemID, dis->itemAction, dis->itemState);
-    TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+    TRACE("hWnd=%p hDC=%p (%d,%d)-(%d,%d) itemData=0x%08lx\n",
 	  dis->hwndItem, dis->hDC, dis->rcItem.left,
 	  dis->rcItem.top, dis->rcItem.right, dis->rcItem.bottom,
 	  dis->itemData);
@@ -1358,7 +1358,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 		if (item->pszText)
 		    GetWindowTextW(infoPtr->hwndEdit, item->pszText, len+1);
 
-	       TRACE("edit control hwndEdit=%0x, text len=%d str=%s\n",
+	       TRACE("edit control hwndEdit=%p, text len=%d str=%s\n",
 		     infoPtr->hwndEdit, len, debugstr_txt(item->pszText));
 	    }
 	}
@@ -1552,7 +1552,7 @@ static LRESULT COMBOEX_MeasureItem (COMBOEX_INFO *infoPtr, MEASUREITEMSTRUCT *mi
     ReleaseDC (0, hdc);
     mis->itemHeight = mysize.cy + CBE_EXTRA;
 
-    TRACE("adjusted height hwnd=%08x, height=%d\n",
+    TRACE("adjusted height hwnd=%p, height=%d\n",
 	  infoPtr->hwndSelf, mis->itemHeight);
 
     return 0;
@@ -1677,7 +1677,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     RECT rect;
     LRESULT lret;
 
-    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx, info_ptr=%p\n",
+    TRACE("hwnd=%p msg=%x wparam=%x lParam=%lx, info_ptr=%p\n",
 	  hwnd, uMsg, wParam, lParam, infoPtr);
 
     if (!infoPtr) return 0;
@@ -1879,7 +1879,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     POINT pt;
     WCHAR edit_text[260];
 
-    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx, info_ptr=%p\n",
+    TRACE("hwnd=%p msg=%x wparam=%x lParam=%lx, info_ptr=%p\n",
 	  hwnd, uMsg, wParam, lParam, infoPtr);
 
     if (!infoPtr) return 0;
@@ -2116,7 +2116,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
 
     if (!infoPtr) {
 	if (uMsg == WM_CREATE)

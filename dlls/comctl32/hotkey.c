@@ -113,7 +113,7 @@ HOTKEY_Refresh(HOTKEY_INFO *infoPtr, HDC hdc)
 
     GetClientRect(infoPtr->hwndSelf, &rc);
 
-    TRACE("(infoPtr=%p hdc=%x)\n", infoPtr, hdc);
+    TRACE("(infoPtr=%p hdc=%p)\n", infoPtr, hdc);
 
     if(!infoPtr->CurrMod && !infoPtr->HotKey) {
 	HOTKEY_DrawHotKey (infoPtr, infoPtr->strNone, 4, &rc, hdc);
@@ -406,7 +406,7 @@ static LRESULT WINAPI
 HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd);
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
     if (!infoPtr && (uMsg != WM_CREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)

@@ -1554,7 +1554,7 @@ MONTHCAL_LButtonUp(HWND hwnd, WPARAM wParam, LPARAM lParam)
   nmhdr.hwndFrom = hwnd;
   nmhdr.idFrom   = GetWindowLongA( hwnd, GWL_ID);
   nmhdr.code     = NM_RELEASEDCAPTURE;
-  TRACE("Sent notification from %x to %x\n", hwnd, GetParent(hwnd));
+  TRACE("Sent notification from %p to %p\n", hwnd, GetParent(hwnd));
 
   SendMessageA(GetParent(hwnd), WM_NOTIFY,
                                 (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
@@ -1850,7 +1850,7 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
 
 static LRESULT MONTHCAL_Size(HWND hwnd, int Width, int Height)
 {
-  TRACE("(hwnd=%x, width=%d, height=%d)\n", hwnd, Width, Height);
+  TRACE("(hwnd=%p, width=%d, height=%d)\n", hwnd, Width, Height);
 
   MONTHCAL_UpdateSize(hwnd);
 
@@ -1928,7 +1928,7 @@ MONTHCAL_Destroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+  TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
   if (!MONTHCAL_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
     return DefWindowProcA(hwnd, uMsg, wParam, lParam);
   switch(uMsg)

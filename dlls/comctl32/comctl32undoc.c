@@ -669,7 +669,7 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
     if (lpRegNum && (ret != -1))
 	*lpRegNum = 'a' + i;
 
-    TRACE("(%08x, %p, %ld, %p) returning %d\n",
+    TRACE("(%p, %p, %ld, %p) returning %d\n",
 	   hList, lpData, cbData, lpRegNum, ret);
 
     return ret;
@@ -730,7 +730,7 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 	mp->realMRU[i] = mp->realMRU[i-1];
     }
     mp->realMRU[0] = replace + 'a';
-    TRACE("(%08x, %p, %ld) adding data, /%c/ now most current\n",
+    TRACE("(%p, %p, %ld) adding data, /%c/ now most current\n",
 	  hList, lpData, cbData, replace+'a');
     ret = replace;
 
@@ -760,7 +760,7 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 INT WINAPI
 AddMRUStringW(HANDLE hList, LPCWSTR lpszString)
 {
-    FIXME("(%08x, %s) empty stub!\n", hList, debugstr_w(lpszString));
+    FIXME("(%p, %s) empty stub!\n", hList, debugstr_w(lpszString));
 
     return 0;
 }
@@ -771,7 +771,7 @@ AddMRUStringW(HANDLE hList, LPCWSTR lpszString)
 INT WINAPI
 AddMRUStringA(HANDLE hList, LPCSTR lpszString)
 {
-    FIXME("(%08x, %s) empty stub!\n", hList, debugstr_a(lpszString));
+    FIXME("(%p, %s) empty stub!\n", hList, debugstr_a(lpszString));
 
     return 0;
 }
@@ -791,7 +791,7 @@ AddMRUStringA(HANDLE hList, LPCSTR lpszString)
 BOOL WINAPI
 DelMRUString(HANDLE hList, INT nItemPos)
 {
-    FIXME("(%08x, %d): stub\n", hList, nItemPos);
+    FIXME("(%p, %d): stub\n", hList, nItemPos);
     return TRUE;
 }
 
@@ -1025,7 +1025,7 @@ DWORD nBufferSize)
     witem = mp->array[desired];
     datasize = min( witem->size, nBufferSize );
     memcpy( lpBuffer, &witem->datastart, datasize);
-    TRACE("(%08x, %d, %p, %ld): returning len=%d\n",
+    TRACE("(%p, %d, %p, %ld): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
@@ -1058,7 +1058,7 @@ DWORD nBufferSize)
 	WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1,
 			    lpBuffer, datasize, NULL, NULL);
     }
-    TRACE("(%08x, %d, %p, %ld): returning len=%d\n",
+    TRACE("(%p, %d, %p, %ld): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
@@ -2225,7 +2225,7 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
 {
     HDPA hdpa;
 
-    TRACE("(%d 0x%x)\n", nGrow, hHeap);
+    TRACE("(%d %p)\n", nGrow, hHeap);
 
     if (hHeap)
 	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(DPA));
@@ -2273,7 +2273,7 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
     LPNMHDR lpNmh = NULL;
     UINT idFrom = 0;
 
-    TRACE("(0x%04x 0x%04x %d %p 0x%08lx)\n",
+    TRACE("(%p %p %d %p 0x%08lx)\n",
 	   lpNotify->hwndFrom, lpNotify->hwndTo, uCode, lpHdr,
 	   lpNotify->dwParam5);
 
@@ -2326,7 +2326,7 @@ COMCTL32_SendNotify (HWND hwndTo, HWND hwndFrom,
 {
     NOTIFYDATA notify;
 
-    TRACE("(0x%04x 0x%04x %d %p)\n",
+    TRACE("(%p %p %d %p)\n",
 	   hwndTo, hwndFrom, uCode, lpHdr);
 
     notify.hwndFrom = hwndFrom;
@@ -2360,7 +2360,7 @@ COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
     NOTIFYDATA notify;
     HWND hwndNotify;
 
-    TRACE("(0x%04x 0x%04x %d %p 0x%08lx)\n",
+    TRACE("(%p %p %d %p 0x%08lx)\n",
 	   hwndFrom, hwndTo, uCode, lpHdr, dwParam5);
 
     hwndNotify = hwndTo;
@@ -2703,7 +2703,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
 
 BOOL WINAPI COMCTL32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 
-   FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+   FIXME("(%p, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 
    return TRUE;
 }
@@ -2717,7 +2717,7 @@ BOOL WINAPI COMCTL32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
 
 BOOL WINAPI COMCTL32_411( HWND hw, DWORD b, DWORD c) {
 
-   FIXME("(%x, %lx, %lx): stub!\n", hw, b, c);
+   FIXME("(%p, %lx, %lx): stub!\n", hw, b, c);
 
    return TRUE;
 }
@@ -2731,7 +2731,7 @@ BOOL WINAPI COMCTL32_411( HWND hw, DWORD b, DWORD c) {
 
 BOOL WINAPI COMCTL32_412( HWND hwnd, DWORD b, DWORD c)
 {
-    FIXME("(%x, %lx, %lx): stub!\n", hwnd, b, c);
+    FIXME("(%p, %lx, %lx): stub!\n", hwnd, b, c);
 
     if (IsWindow (hwnd) == FALSE)
 	return FALSE;
@@ -2752,7 +2752,7 @@ BOOL WINAPI COMCTL32_412( HWND hwnd, DWORD b, DWORD c)
 
 BOOL WINAPI COMCTL32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
-   FIXME("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+   FIXME("(%p, %lx, %lx, %lx): stub!\n", hw, b, c, d);
 
    return TRUE;
 }
@@ -2768,7 +2768,7 @@ BOOL WINAPI COMCTL32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
 {
 
-   FIXME("(%x, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
+   FIXME("(%p, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
 
    return TRUE;
 }

@@ -1005,7 +1005,7 @@ static LRESULT
 STATUSBAR_WMSetFont (STATUSWINDOWINFO *infoPtr, HFONT font, BOOL redraw)
 {
     infoPtr->hFont = font;
-    TRACE("%04x\n", infoPtr->hFont);
+    TRACE("%p\n", infoPtr->hFont);
     if (redraw)
         InvalidateRect(infoPtr->Self, NULL, FALSE);
 
@@ -1111,7 +1111,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     INT nPart = ((INT) wParam) & 0x00ff;
     LRESULT res;
 
-    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
     if (!infoPtr && msg != WM_CREATE)
         return DefWindowProcW (hwnd, msg, wParam, lParam);
 

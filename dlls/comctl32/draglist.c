@@ -39,7 +39,7 @@ static DWORD dwLastScrollTime = 0;
  */
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {
-    FIXME("(0x%x)\n", hwndLB);
+    FIXME("(%p)\n", hwndLB);
 
 
     return FALSE;
@@ -50,7 +50,7 @@ BOOL WINAPI MakeDragList (HWND hwndLB)
  */
 VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 {
-    FIXME("(0x%x 0x%x %d)\n", hwndParent, hwndLB, nItem);
+    FIXME("(%p %p %d)\n", hwndParent, hwndLB, nItem);
 
 
 }
@@ -64,7 +64,7 @@ INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
     INT nIndex;
     DWORD dwScrollTime;
 
-    FIXME("(0x%x %ld x %ld %s)\n",
+    FIXME("(%p %ld x %ld %s)\n",
 	   hwndLB, pt.x, pt.y, bAutoScroll ? "TRUE" : "FALSE");
 
     ScreenToClient (hwndLB, &pt);

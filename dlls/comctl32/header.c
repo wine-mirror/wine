@@ -1651,7 +1651,7 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, msg, wParam, lParam);
+    TRACE("hwnd=%p msg=%x wparam=%x lParam=%lx\n", hwnd, msg, wParam, lParam);
     if (!HEADER_GetInfoPtr (hwnd) && (msg != WM_CREATE))
 	return DefWindowProcA (hwnd, msg, wParam, lParam);
     switch (msg) {

@@ -142,7 +142,7 @@ static const WORD wPattern55AA[] =
 BOOL WINAPI
 COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
@@ -150,7 +150,7 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             /* create private heap */
             COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
-            TRACE("Heap created: 0x%x\n", COMCTL32_hHeap);
+            TRACE("Heap created: %p\n", COMCTL32_hHeap);
 
             /* add global subclassing atom (used by 'tooltip' and 'updown') */
             COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
@@ -215,7 +215,7 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             /* destroy private heap */
             HeapDestroy (COMCTL32_hHeap);
-            TRACE("Heap destroyed: 0x%x\n", COMCTL32_hHeap);
+            TRACE("Heap destroyed: %p\n", COMCTL32_hHeap);
             COMCTL32_hHeap = (HANDLE)NULL;
             break;
     }
@@ -343,7 +343,7 @@ ShowHideMenuCtl (HWND hwnd, UINT uFlags, LPINT lpInfo)
 {
     LPINT lpMenuId;
 
-    TRACE("%x, %x, %p\n", hwnd, uFlags, lpInfo);
+    TRACE("%p, %x, %p\n", hwnd, uFlags, lpInfo);
 
     if (lpInfo == NULL)
 	return FALSE;
@@ -1066,7 +1066,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    LPSUBCLASS_INFO stack;
    int newnum, n;
 
-   TRACE ("(%x, %p, %x, %lx)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
+   TRACE ("(%p, %p, %x, %lx)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
 
    /* Since the window procedure that we set here has two additional arguments,
     * we can't simply set it as the new window procedure of the window. So we
@@ -1160,7 +1160,7 @@ BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    LPSUBCLASS_INFO stack;
    int n;
 
-   TRACE ("(%x, %p, %x, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
+   TRACE ("(%p, %p, %x, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
 
    /* See if we have been called for this window */
    stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
@@ -1198,7 +1198,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
    LPSUBCLASS_INFO stack;
    int n;
 
-   TRACE ("(%x, %p, %x)\n", hWnd, pfnSubclass, uID);
+   TRACE ("(%p, %p, %x)\n", hWnd, pfnSubclass, uID);
 
    /* Find the Subclass to remove */
    stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
@@ -1267,7 +1267,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
    /* retrieve our little stack from the Properties */
    stack = (LPSUBCLASS_INFO)GetPropA (hWnd, COMCTL32_aSubclass);
    if (!stack) {
-      ERR ("Our sub classing stack got erased for %x!! Nothing we can do\n", hWnd);
+      ERR ("Our sub classing stack got erased for %p!! Nothing we can do\n", hWnd);
       return 0;
    }
 

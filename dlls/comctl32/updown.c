@@ -425,7 +425,7 @@ static LRESULT CALLBACK
 UPDOWN_Buddy_SubclassProc(HWND  hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC superClassWndProc = (WNDPROC)GetPropA(hwnd, BUDDY_SUPERCLASS_WNDPROC);
-    TRACE("hwnd=%04x, wndProc=%d, uMsg=%04x, wParam=%d, lParam=%d\n",
+    TRACE("hwnd=%p, wndProc=%d, uMsg=%04x, wParam=%d, lParam=%d\n",
 	  hwnd, (INT)superClassWndProc, uMsg, wParam, (UINT)lParam);
 
     if (uMsg == WM_KEYDOWN) {
@@ -458,7 +458,7 @@ static BOOL UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
     /* Is it a valid bud? */
     if(!IsWindow(bud)) return FALSE;
 
-    TRACE("(hwnd=%04x, bud=%04x)\n", infoPtr->Self, bud);
+    TRACE("(hwnd=%p, bud=%p)\n", infoPtr->Self, bud);
 
     /* there is already a body assigned */
     if (infoPtr->Buddy)  RemovePropA(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
@@ -732,7 +732,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    if (dwStyle & UDS_AUTOBUDDY)
 		UPDOWN_SetBuddy (infoPtr, GetWindow (hwnd, GW_HWNDPREV));
 
-	    TRACE("UpDown Ctrl creation, hwnd=%04x\n", hwnd);
+	    TRACE("UpDown Ctrl creation, hwnd=%p\n", hwnd);
 	    break;
 
 	case WM_DESTROY:
@@ -742,7 +742,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
 	    COMCTL32_Free (infoPtr);
 	    SetWindowLongW (hwnd, 0, 0);
-	    TRACE("UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
+	    TRACE("UpDown Ctrl destruction, hwnd=%p\n", hwnd);
 	    break;
 
 	case WM_ENABLE:
@@ -830,7 +830,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return 0;
 
 	case UDM_SETACCEL:
-	    TRACE("UpDown Ctrl new accel info, hwnd=%04x\n", hwnd);
+	    TRACE("UpDown Ctrl new accel info, hwnd=%p\n", hwnd);
 	    if(infoPtr->AccelVect) {
 		COMCTL32_Free (infoPtr->AccelVect);
 		infoPtr->AccelCount = 0;
@@ -846,7 +846,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return infoPtr->Base;
 
 	case UDM_SETBASE:
-	    TRACE("UpDown Ctrl new base(%d), hwnd=%04x\n", wParam, hwnd);
+	    TRACE("UpDown Ctrl new base(%d), hwnd=%p\n", wParam, hwnd);
 	    if (wParam==10 || wParam==16) {
 		temp = infoPtr->Base;
 		infoPtr->Base = wParam;
@@ -868,7 +868,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
 	case UDM_SETPOS:
 	    temp = SLOWORD(lParam);
-	    TRACE("UpDown Ctrl new value(%d), hwnd=%04x\n", temp, hwnd);
+	    TRACE("UpDown Ctrl new value(%d), hwnd=%p\n", temp, hwnd);
 	    if(!UPDOWN_InBounds(infoPtr, temp)) {
 		if(temp < infoPtr->MinVal) temp = infoPtr->MinVal;
 		if(temp > infoPtr->MaxVal) temp = infoPtr->MaxVal;
@@ -886,7 +886,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    infoPtr->MaxVal = SLOWORD(lParam); /* UD_MINVAL <= Max <= UD_MAXVAL */
 	    infoPtr->MinVal = SHIWORD(lParam); /* UD_MINVAL <= Min <= UD_MAXVAL */
                 	                       /* |Max-Min| <= UD_MAXVAL        */
-	    TRACE("UpDown Ctrl new range(%d to %d), hwnd=%04x\n",
+	    TRACE("UpDown Ctrl new range(%d to %d), hwnd=%p\n",
 		  infoPtr->MinVal, infoPtr->MaxVal, hwnd);
 	    break;
 
@@ -900,7 +900,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    infoPtr->MaxVal = (INT)lParam;
 	    if (infoPtr->MaxVal <= infoPtr->MinVal)
 		infoPtr->MaxVal = infoPtr->MinVal + 1;
-	    TRACE("UpDown Ctrl new range(%d to %d), hwnd=%04x\n",
+	    TRACE("UpDown Ctrl new range(%d to %d), hwnd=%p\n",
 		  infoPtr->MinVal, infoPtr->MaxVal, hwnd);
 	    break;
 

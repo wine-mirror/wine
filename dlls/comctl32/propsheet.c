@@ -292,7 +292,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
-  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%ld\ndwFlags\t\t%08lx\nhwndParent\t%04x\nhInstance\t%08x\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
+  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%ld\ndwFlags\t\t%08lx\nhwndParent\t%p\nhInstance\t%p\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
 	lppsh->dwSize, lppsh->dwFlags, lppsh->hwndParent, lppsh->hInstance,
 	debugstr_a(lppsh->pszCaption), lppsh->nPages, lppsh->pfnCallback);
 
@@ -343,7 +343,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
-  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%ld\ndwFlags\t\t%08lx\nhwndParent\t%04x\nhInstance\t%08x\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
+  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%ld\ndwFlags\t\t%08lx\nhwndParent\t%p\nhInstance\t%p\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
       lppsh->dwSize, lppsh->dwFlags, lppsh->hwndParent, lppsh->hInstance, debugstr_w(lppsh->pszCaption), lppsh->nPages, lppsh->pfnCallback);
 
   PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
@@ -2665,7 +2665,7 @@ static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID)
 BOOL WINAPI
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n",
+  TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
 	hwnd, uMsg, wParam, lParam);
 
   switch (uMsg)
