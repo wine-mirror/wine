@@ -68,7 +68,6 @@ typedef struct
 
 typedef struct
 {
-    int  n_args;
     char arg_types[21];
 } ORD_FUNCTION;
 
@@ -170,6 +169,9 @@ extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
+extern int remove_stdcall_decoration( char *name );
+extern DLLSPEC *alloc_dll_spec(void);
+extern void free_dll_spec( DLLSPEC *spec );
 extern const char *make_c_identifier( const char *str );
 extern int get_alignment(int alignBoundary);
 
@@ -184,7 +186,6 @@ extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern int output_res16_data( FILE *outfile, DLLSPEC *spec );
 extern int output_res16_directory( unsigned char *buffer, DLLSPEC *spec );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
-extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
@@ -192,7 +193,10 @@ extern void BuildSpec16File( FILE *outfile, DLLSPEC *spec );
 extern void BuildSpec32File( FILE *outfile, DLLSPEC *spec );
 extern void BuildDef32File( FILE *outfile, DLLSPEC *spec );
 extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
-extern int ParseTopLevel( FILE *file, DLLSPEC *spec );
+
+extern int parse_spec_file( FILE *file, DLLSPEC *spec );
+extern int parse_def_file( FILE *file, DLLSPEC *spec );
+extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 /* global variables */
 

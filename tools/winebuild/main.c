@@ -56,17 +56,17 @@ char **lib_path = NULL;
 char *input_file_name = NULL;
 const char *output_file_name = NULL;
 
-static FILE *input_file;
 static FILE *output_file;
 static const char *current_src_dir;
 static int nb_res_files;
 static char **res_files;
+static char *spec_file_name;
 
 /* execution mode */
 enum exec_mode_values
 {
     MODE_NONE,
-    MODE_SPEC,
+    MODE_DLL,
     MODE_EXE,
     MODE_DEF,
     MODE_DEBUG,
@@ -87,7 +87,10 @@ static void set_dll_file_name( const char *name, DLLSPEC *spec )
     if ((p = strrchr( name, '/' ))) name = p + 1;
     spec->file_name = xmalloc( strlen(name) + 5 );
     strcpy( spec->file_name, name );
-    if ((p = strrchr( spec->file_name, '.' )) && !strcmp( p, ".spec" )) *p = 0;
+    if ((p = strrchr( spec->file_name, '.' )))
+    {
+        if (!strcmp( p, ".spec" ) || !strcmp( p, ".def" )) *p = 0;
+    }
     if (!strchr( spec->file_name, '.' )) strcat( spec->file_name, ".dll" );
 }
 
@@ -126,7 +129,7 @@ static const char usage_str[] =
 "       --version            Print the version and exit\n"
 "    -w --warnings           Turn on warnings\n"
 "\nMode options:\n"
-"       --spec=FILE.SPEC     Build a .c file from a spec file\n"
+"       --dll=FILE           Build a .c file from a .spec or .def file\n"
 "       --def=FILE.SPEC      Build a .def file from a spec file\n"
 "       --exe=NAME           Build a .c file for the named executable\n"
 "       --debug [FILES]      Build a .c file with the debug channels declarations\n"
@@ -136,7 +139,7 @@ static const char usage_str[] =
 
 enum long_options_values
 {
-    LONG_OPT_SPEC = 1,
+    LONG_OPT_DLL = 1,
     LONG_OPT_DEF,
     LONG_OPT_EXE,
     LONG_OPT_DEBUG,
@@ -149,13 +152,14 @@ static const char short_options[] = "C:D:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:w";
 
 static const struct option long_options[] =
 {
-    { "spec",     1, 0, LONG_OPT_SPEC },
+    { "dll",      1, 0, LONG_OPT_DLL },
     { "def",      1, 0, LONG_OPT_DEF },
     { "exe",      1, 0, LONG_OPT_EXE },
     { "debug",    0, 0, LONG_OPT_DEBUG },
     { "relay16",  0, 0, LONG_OPT_RELAY16 },
     { "relay32",  0, 0, LONG_OPT_RELAY32 },
     { "version",  0, 0, LONG_OPT_VERSION },
+    { "spec",     1, 0, LONG_OPT_DLL },  /* for backwards compatibility */
     /* aliases for short options */
     { "source-dir",    1, 0, 'C' },
     { "delay-lib",     1, 0, 'd' },
@@ -287,14 +291,14 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case 'w':
             display_warnings = 1;
             break;
-        case LONG_OPT_SPEC:
-            set_exec_mode( MODE_SPEC );
-            input_file = open_input_file( NULL, optarg );
+        case LONG_OPT_DLL:
+            set_exec_mode( MODE_DLL );
+            spec_file_name = xstrdup( optarg );
             set_dll_file_name( optarg, spec );
             break;
         case LONG_OPT_DEF:
             set_exec_mode( MODE_DEF );
-            input_file = open_input_file( NULL, optarg );
+            spec_file_name = xstrdup( optarg );
             set_dll_file_name( optarg, spec );
             break;
         case LONG_OPT_EXE:
@@ -357,65 +361,59 @@ static void load_resources( char *argv[], DLLSPEC *spec )
     }
 }
 
+static int parse_input_file( DLLSPEC *spec )
+{
+    FILE *input_file = open_input_file( NULL, spec_file_name );
+    char *extension = strrchr( spec_file_name, '.' );
+
+    if (extension && !strcmp( extension, ".def" ))
+        return parse_def_file( input_file, spec );
+    else
+        return parse_spec_file( input_file, spec );
+    close_input_file( input_file );
+}
+
+
 /*******************************************************************
  *         main
  */
 int main(int argc, char **argv)
 {
-    DLLSPEC spec;
-
-    spec.file_name          = NULL;
-    spec.dll_name           = NULL;
-    spec.owner_name         = NULL;
-    spec.init_func          = NULL;
-    spec.type               = SPEC_WIN32;
-    spec.mode               = SPEC_MODE_DLL;
-    spec.base               = MAX_ORDINALS;
-    spec.limit              = 0;
-    spec.stack_size         = 0;
-    spec.heap_size          = 0;
-    spec.nb_entry_points    = 0;
-    spec.alloc_entry_points = 0;
-    spec.nb_names           = 0;
-    spec.nb_resources       = 0;
-    spec.entry_points       = NULL;
-    spec.names              = NULL;
-    spec.ordinals           = NULL;
-    spec.resources          = NULL;
+    DLLSPEC *spec = alloc_dll_spec();
 
     output_file = stdout;
-    argv = parse_options( argc, argv, &spec );
+    argv = parse_options( argc, argv, spec );
 
     switch(exec_mode)
     {
-    case MODE_SPEC:
-        load_resources( argv, &spec );
-        if (!ParseTopLevel( input_file, &spec )) break;
-        switch (spec.type)
+    case MODE_DLL:
+        load_resources( argv, spec );
+        if (!parse_input_file( spec )) break;
+        switch (spec->type)
         {
             case SPEC_WIN16:
                 if (argv[0])
                     fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-                BuildSpec16File( output_file, &spec );
+                BuildSpec16File( output_file, spec );
                 break;
             case SPEC_WIN32:
                 read_undef_symbols( argv );
-                BuildSpec32File( output_file, &spec );
+                BuildSpec32File( output_file, spec );
                 break;
             default: assert(0);
         }
         break;
     case MODE_EXE:
-        if (spec.type == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
-        load_resources( argv, &spec );
+        if (spec->type == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
+        load_resources( argv, spec );
         read_undef_symbols( argv );
-        BuildSpec32File( output_file, &spec );
+        BuildSpec32File( output_file, spec );
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        if (spec.type == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
-        if (!ParseTopLevel( input_file, &spec )) break;
-        BuildDef32File( output_file, &spec );
+        if (spec->type == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
+        if (!parse_input_file( spec )) break;
+        BuildDef32File( output_file, spec );
         break;
     case MODE_DEBUG:
         BuildDebugFile( output_file, current_src_dir, argv );

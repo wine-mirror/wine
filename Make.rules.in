@@ -129,7 +129,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(WINDRES) -i $< -o $@
 
 .spec.spec.c:
-	$(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --spec $<
+	$(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --dll $<
 
 .spec.spec.def:
 	$(WINEBUILD) $(DEFS) -o $@ --def $<

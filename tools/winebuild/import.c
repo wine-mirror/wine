@@ -1,8 +1,8 @@
 /*
  * DLL imports support
  *
- * Copyright 2000 Alexandre Julliard
- *           2000 Eric Pouech
+ * Copyright 2000, 2004 Alexandre Julliard
+ * Copyright 2000 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,20 +32,13 @@
 
 #include "build.h"
 
-struct func
-{
-    char       *name;         /* function name */
-    int         ordinal;      /* function ordinal */
-    int         ord_only;     /* non-zero if function is imported by ordinal */
-};
-
 struct import
 {
-    char        *dll;         /* dll name */
+    DLLSPEC     *spec;         /* description of the imported dll */
     int          delay;       /* delay or not dll loading ? */
-    struct func *exports;     /* functions exported from this dll */
+    ORDDEF     **exports;     /* functions exported from this dll */
     int          nb_exports;  /* number of exported functions */
-    struct func *imports;     /* functions we want to import from this dll */
+    ORDDEF     **imports;     /* functions we want to import from this dll */
     int          nb_imports;  /* number of imported functions */
 };
 
@@ -143,7 +136,10 @@ static int name_cmp( const void *name, const void *entry )
 /* compare function names; helper for resolve_imports */
 static int func_cmp( const void *func1, const void *func2 )
 {
-    return strcmp( ((struct func *)func1)->name, ((struct func *)func2)->name );
+    const ORDDEF *odp1 = *(const ORDDEF **)func1;
+    const ORDDEF *odp2 = *(const ORDDEF **)func2;
+    return strcmp( odp1->name ? odp1->name : odp1->export_name,
+                   odp2->name ? odp2->name : odp2->export_name );
 }
 
 /* locate a symbol in a (sorted) list */
@@ -159,14 +155,15 @@ inline static const char *find_symbol( const char *name, char **table, int size 
 }
 
 /* locate an export in a (sorted) export list */
-inline static struct func *find_export( const char *name, struct func *table, int size )
+inline static ORDDEF *find_export( const char *name, ORDDEF **table, int size )
 {
-    struct func func, *res = NULL;
+    ORDDEF func, *odp, **res = NULL;
 
     func.name = (char *)name;
     func.ordinal = -1;
-    if (table) res = bsearch( &func, table, size, sizeof(*table), func_cmp );
-    return res;
+    odp = &func;
+    if (table) res = bsearch( &odp, table, size, sizeof(*table), func_cmp );
+    return res ? *res : NULL;
 }
 
 /* sort a symbol table */
@@ -179,13 +176,9 @@ inline static void sort_symbols( char **table, int size )
 /* free an import structure */
 static void free_imports( struct import *imp )
 {
-    int i;
-
-    for (i = 0; i < imp->nb_exports; i++) free( imp->exports[i].name );
-    for (i = 0; i < imp->nb_imports; i++) free( imp->imports[i].name );
     free( imp->exports );
     free( imp->imports );
-    free( imp->dll );
+    free_dll_spec( imp->spec );
     free( imp );
 }
 
@@ -202,7 +195,7 @@ static int is_already_imported( const char *name )
 
     for (i = 0; i < nb_imports; i++)
     {
-        if (!strcmp( dll_imports[i]->dll, name )) return 1;
+        if (!strcmp( dll_imports[i]->spec->file_name, name )) return 1;
     }
     return 0;
 }
@@ -241,152 +234,40 @@ static char *open_library( const char *name )
     return fullname;
 }
 
-/* skip whitespace until the next token */
-static char *skip_whitespace( char *p )
-{
-    while (*p && isspace(*p)) p++;
-    if (!*p || *p == ';') p = NULL;
-    return p;
-}
-
-/* skip to the start of the next token, null terminating the current one */
-static char *next_token( char *p )
-{
-    while (*p && !isspace(*p)) p++;
-    if (*p) *p++ = 0;
-    return skip_whitespace( p );
-}
-
-/* remove the @nn suffix from stdcall names */
-static char *remove_stdcall_decoration( char *buffer )
-{
-    char *p = buffer + strlen(buffer) - 1;
-    while (p > buffer && isdigit(*p)) p--;
-    if (p > buffer && *p == '@') *p = 0;
-    return buffer;
-}
-
 /* read in the list of exported symbols of an import library */
 static int read_import_lib( const char *name, struct import *imp )
 {
     FILE *f;
-    char buffer[1024];
     char *fullname;
-    int size;
+    int i, ret;
+    DLLSPEC *spec = imp->spec;
 
     imp->exports    = NULL;
-    imp->nb_exports = size = 0;
+    imp->nb_exports = 0;
 
     fullname = open_library( name );
     f = open_input_file( NULL, fullname );
     free( fullname );
 
-    while (fgets( buffer, sizeof(buffer), f ))
-    {
-        char *name, *flags;
-        int ordinal = 0, ord_only = 0;
-
-        char *p = buffer + strlen(buffer) - 1;
-        if (p < buffer) goto next;
-        if (*p == '\n') *p-- = 0;
-
-        p = buffer;
-        if (!(p = skip_whitespace(p))) goto next;
-        name = p;
-        p = next_token( name );
-
-        if (!strcmp( name, "LIBRARY" ))
-        {
-            if (!p)
-            {
-                error( "Expected name after LIBRARY\n" );
-                goto next;
-            }
-            name = p;
-            p = next_token( name );
-            if (p)
-            {
-                error( "Garbage after LIBRARY statement\n" );
-                goto next;
-            }
-            if (is_already_imported( name ))
-            {
-                close_input_file( f );
-                return 0;  /* ignore this dll */
-            }
-            free( imp->dll );
-            imp->dll = xstrdup( name );
-            goto next;
-        }
-        if (!strcmp( name, "EXPORTS" )) goto next;
-
-        /* check for ordinal */
-        if (!p)
-        {
-            error( "Expected ordinal after function name\n" );
-            goto next;
-        }
-        if (*p != '@' || !isdigit(p[1]))
-        {
-            error( "Expected ordinal after function name '%s'\n", name );
-            goto next;
-        }
-        ordinal = strtol( p+1, &p, 10 );
-        if (ordinal >= MAX_ORDINALS)
-        {
-            error( "Invalid ordinal number %d\n", ordinal );
-            goto next;
-        }
-
-        /* check for optional flags */
-        while (p && (p = skip_whitespace(p)))
-        {
-            flags = p;
-            p = next_token( flags );
-            if (!strcmp( flags, "NONAME" ))
-            {
-                ord_only = 1;
-                if (!ordinal)
-                {
-                    error( "Invalid ordinal number %d\n", ordinal );
-                    goto next;
-                }
-            }
-            else if (!strcmp( flags, "CONSTANT" ) || !strcmp( flags, "DATA" ))
-            {
-                /* we don't support importing non-function entry points */
-                goto next;
-            }
-            else if (!strcmp( flags, "PRIVATE" ))
-            {
-                /* function must not be imported */
-                goto next;
-            }
-            else
-            {
-                error( "Garbage after ordinal declaration\n" );
-                goto next;
-            }
-        }
-
-        if (imp->nb_exports == size)
-        {
-            size += 128;
-            imp->exports = xrealloc( imp->exports, size * sizeof(*imp->exports) );
-        }
-        if ((p = strchr( name, '=' ))) *p = 0;
-        remove_stdcall_decoration( name );
-        imp->exports[imp->nb_exports].name     = xstrdup( name );
-        imp->exports[imp->nb_exports].ordinal  = ordinal;
-        imp->exports[imp->nb_exports].ord_only = ord_only;
-        imp->nb_exports++;
-    next:
-        current_line++;
-    }
+    ret = parse_def_file( f, spec );
     close_input_file( f );
+    if (!ret) return 0;
+    if (is_already_imported( spec->file_name )) return 0;
+
+    imp->exports = xmalloc( spec->nb_entry_points * sizeof(*imp->exports) );
+
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+
+        if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL) continue;
+        if (odp->flags & FLAG_PRIVATE) continue;
+        imp->exports[imp->nb_exports++] = odp;
+    }
+    imp->exports = xrealloc( imp->exports, imp->nb_exports * sizeof(*imp->exports) );
     if (imp->nb_exports)
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
-    return !nb_errors;
+    return 1;
 }
 
 /* add a dll to the list of imports */
@@ -407,11 +288,11 @@ void add_import_dll( const char *name, int delay )
     }
 
     imp = xmalloc( sizeof(*imp) );
-    imp->dll        = fullname;
-    imp->delay      = delay;
-    imp->imports    = NULL;
-    imp->nb_imports = 0;
-
+    imp->spec            = alloc_dll_spec();
+    imp->spec->file_name = fullname;
+    imp->delay           = delay;
+    imp->imports         = NULL;
+    imp->nb_imports      = 0;
     if (delay) nb_delayed++;
 
     if (read_import_lib( name, imp ))
@@ -489,13 +370,10 @@ void add_ignore_symbol( const char *name )
 }
 
 /* add a function to the list of imports from a given dll */
-static void add_import_func( struct import *imp, const struct func *func )
+static void add_import_func( struct import *imp, ORDDEF *func )
 {
     imp->imports = xrealloc( imp->imports, (imp->nb_imports+1) * sizeof(*imp->imports) );
-    imp->imports[imp->nb_imports].name     = xstrdup( func->name );
-    imp->imports[imp->nb_imports].ordinal  = func->ordinal;
-    imp->imports[imp->nb_imports].ord_only = func->ord_only;
-    imp->nb_imports++;
+    imp->imports[imp->nb_imports++] = func;
     total_imports++;
     if (imp->delay) total_delayed++;
 }
@@ -613,15 +491,16 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
 static int check_unused( const struct import* imp, const DLLSPEC *spec )
 {
     int i;
-    size_t len = strlen(imp->dll);
-    const char *p = strchr( imp->dll, '.' );
-    if (p && !strcasecmp( p, ".dll" )) len = p - imp->dll;
+    const char *file_name = imp->spec->file_name;
+    size_t len = strlen( file_name );
+    const char *p = strchr( file_name, '.' );
+    if (p && !strcasecmp( p, ".dll" )) len = p - file_name;
 
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
         if (!odp || !(odp->flags & FLAG_FORWARD)) continue;
-        if (!strncasecmp( odp->link_name, imp->dll, len ) &&
+        if (!strncasecmp( odp->link_name, file_name, len ) &&
             odp->link_name[len] == '.')
             return 0;  /* found a forward, it is used */
     }
@@ -724,10 +603,10 @@ int resolve_imports( DLLSPEC *spec )
 
         for (j = 0; j < nb_undef_symbols; j++)
         {
-            struct func *func = find_export( undef_symbols[j], imp->exports, imp->nb_exports );
-            if (func)
+            ORDDEF *odp = find_export( undef_symbols[j], imp->exports, imp->nb_exports );
+            if (odp)
             {
-                add_import_func( imp, func );
+                add_import_func( imp, odp );
                 free( undef_symbols[j] );
                 undef_symbols[j] = NULL;
             }
@@ -736,7 +615,7 @@ int resolve_imports( DLLSPEC *spec )
         if (!remove_symbol_holes() && check_unused( imp, spec ))
         {
             /* the dll is not used, get rid of it */
-            warning( "%s imported but no symbols used\n", imp->dll );
+            warning( "%s imported but no symbols used\n", imp->spec->file_name );
             remove_import_dll( i );
             i--;
         }
@@ -772,7 +651,7 @@ static int output_immediate_imports( FILE *outfile )
     {
         if (dll_imports[i]->delay) continue;
         fprintf( outfile, "    { 0, 0, 0, \"%s\", &imports.data[%d] },\n",
-                 dll_imports[i]->dll, j );
+                 dll_imports[i]->spec->file_name, j );
         j += dll_imports[i]->nb_imports + 1;
     }
 
@@ -784,18 +663,18 @@ static int output_immediate_imports( FILE *outfile )
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
+        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            struct func *import = &dll_imports[i]->imports[j];
-            if (!import->ord_only)
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            if (!(odp->flags & FLAG_NONAME))
             {
-                unsigned short ord = import->ordinal;
+                unsigned short ord = odp->ordinal;
                 fprintf( outfile, "    \"\\%03o\\%03o%s\",\n",
-                         *(unsigned char *)&ord, *((unsigned char *)&ord + 1), import->name );
+                         *(unsigned char *)&ord, *((unsigned char *)&ord + 1), odp->name );
             }
             else
-                fprintf( outfile, "    (char *)%d,\n", import->ordinal );
+                fprintf( outfile, "    (char *)%d,\n", odp->ordinal );
         }
         fprintf( outfile, "    0,\n" );
     }
@@ -811,13 +690,14 @@ static int output_immediate_imports( FILE *outfile )
         if (dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
-            struct func *import = &dll_imports[i]->imports[j];
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", import->name );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", import->name );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", import->name);
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            const char *name = odp->name ? odp->name : odp->export_name;
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", name);
 
 #if defined(__i386__)
-            if (strstr( import->name, "__wine_call_from_16" ))
+            if (strstr( name, "__wine_call_from_16" ))
                 fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n", pos );
             else
                 fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
@@ -886,8 +766,9 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "static void *__wine_delay_imp_%d_hmod;\n", i);
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            fprintf( outfile, "void __wine_delay_imp_%d_%s();\n",
-                     i, dll_imports[i]->imports[j].name );
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            const char *name = odp->name ? odp->name : odp->export_name;
+            fprintf( outfile, "void __wine_delay_imp_%d_%s();\n", i, name );
         }
     }
     fprintf( outfile, "\n" );
@@ -910,31 +791,33 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     {
         if (!dll_imports[i]->delay) continue;
         fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_%d_hmod, &delay_imports.IAT[%d], &delay_imports.INT[%d], 0, 0, 0 },\n",
-                 dll_imports[i]->dll, i, j, j );
+                 dll_imports[i]->spec->file_name, i, j, j );
         j += dll_imports[i]->nb_imports;
     }
     fprintf( outfile, "  },\n  {\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
+        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, dll_imports[i]->imports[j].name);
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            const char *name = odp->name ? odp->name : odp->export_name;
+            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, name );
         }
     }
     fprintf( outfile, "  },\n  {\n" );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
+        fprintf( outfile, "    /* %s */\n", dll_imports[i]->spec->file_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            struct func *import = &dll_imports[i]->imports[j];
-            if (import->ord_only)
-                fprintf( outfile, "    (char *)%d,\n", import->ordinal );
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            if (!odp->name)
+                fprintf( outfile, "    (char *)%d,\n", odp->ordinal );
             else
-                fprintf( outfile, "    \"%s\",\n", import->name );
+                fprintf( outfile, "    \"%s\",\n", odp->name );
         }
     }
     fprintf( outfile, "  }\n};\n\n" );
@@ -1059,7 +942,10 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             char buffer[128];
-            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j].name );
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            const char *name = odp->name ? odp->name : odp->export_name;
+
+            sprintf( buffer, "__wine_delay_imp_%d_%s", i, name );
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
             fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
 #if defined(__i386__)
@@ -1088,12 +974,14 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         if (!dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
-            struct func *import = &dll_imports[i]->imports[j];
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", import->name );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", import->name );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t\"", import->name);
+            ORDDEF *odp = dll_imports[i]->imports[j];
+            const char *name = odp->name ? odp->name : odp->export_name;
+
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
+            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t\"", name );
 #if defined(__i386__)
-            if (strstr( import->name, "__wine_call_from_16" ))
+            if (strstr( name, "__wine_call_from_16" ))
                 fprintf( outfile, "\".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n\"", pos );
             else
                 fprintf( outfile, "\"jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n\"", pos );

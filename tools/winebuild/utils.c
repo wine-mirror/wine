@@ -210,6 +210,83 @@ void close_input_file( FILE *file )
 
 
 /*******************************************************************
+ *         remove_stdcall_decoration
+ *
+ * Remove a possible @xx suffix from a function name.
+ * Return the numerical value of the suffix, or -1 if none.
+ */
+int remove_stdcall_decoration( char *name )
+{
+    char *p, *end = strrchr( name, '@' );
+    if (!end || !end[1] || end == name) return -1;
+    /* make sure all the rest is digits */
+    for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
+    *end = 0;
+    return atoi( end + 1 );
+}
+
+
+/*******************************************************************
+ *         alloc_dll_spec
+ *
+ * Create a new dll spec file descriptor
+ */
+DLLSPEC *alloc_dll_spec(void)
+{
+    DLLSPEC *spec;
+
+    spec = xmalloc( sizeof(*spec) );
+    spec->file_name          = NULL;
+    spec->dll_name           = NULL;
+    spec->owner_name         = NULL;
+    spec->init_func          = NULL;
+    spec->type               = SPEC_WIN32;
+    spec->mode               = SPEC_MODE_DLL;
+    spec->base               = MAX_ORDINALS;
+    spec->limit              = 0;
+    spec->stack_size         = 0;
+    spec->heap_size          = 0;
+    spec->nb_entry_points    = 0;
+    spec->alloc_entry_points = 0;
+    spec->nb_names           = 0;
+    spec->nb_resources       = 0;
+    spec->entry_points       = NULL;
+    spec->names              = NULL;
+    spec->ordinals           = NULL;
+    spec->resources          = NULL;
+    return spec;
+}
+
+
+/*******************************************************************
+ *         free_dll_spec
+ *
+ * Free dll spec file descriptor
+ */
+void free_dll_spec( DLLSPEC *spec )
+{
+    int i;
+
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *odp = &spec->entry_points[i];
+        free( odp->name );
+        free( odp->export_name );
+        free( odp->link_name );
+    }
+    free( spec->file_name );
+    free( spec->dll_name );
+    free( spec->owner_name );
+    free( spec->init_func );
+    free( spec->entry_points );
+    free( spec->names );
+    free( spec->ordinals );
+    free( spec->resources );
+    free( spec );
+}
+
+
+/*******************************************************************
  *         make_c_identifier
  *
  * Map a string to a valid C identifier.

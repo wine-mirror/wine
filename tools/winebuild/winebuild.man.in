@@ -19,10 +19,11 @@ option can be specified, as described in the \fBOPTIONS\fR section.
 You have to specify exactly one of the following options, depending on
 what you want winebuild to generate.
 .TP
-.BI \--spec=\  file.spec
-Build a C file from a spec file (see \fBSPEC FILE SYNTAX\fR for
-details). The resulting C file must be compiled and linked to the
-other object files to build a working Wine dll.
+.BI \--dll=\  filename
+Build a C file from a .spec file (see \fBSPEC FILE SYNTAX\fR for
+details), or from a standard Windows .def file. The resulting C file
+must be compiled and linked to the other object files to build a
+working Wine dll.
 .br
 In that mode, the
 .I input files
@@ -34,7 +35,7 @@ other dlls.
 .TP
 .BI \--exe=\  name
 Build a C file for the named executable. This is basically the same as
-the --spec mode except that it doesn't require a .spec file as input,
+the --dll mode except that it doesn't require a .spec file as input,
 since an executable doesn't export functions. The resulting C file
 must be compiled and linked to the other object files to build a
 working Wine executable, and all the other object files must be listed
@@ -130,7 +131,7 @@ imported from it is actually called).
 .BI \-M,\ --main-module= module
 Specify that we are building a 16-bit dll, that will ultimately be
 linked together with the 32-bit dll specified in \fImodule\fR.  Only
-meaningful in \fB--spec\fR mode.
+meaningful in \fB--dll\fR mode.
 .TP
 .BI \-m,\ --mode= mode
 Set the executable or dll mode, which can be one of the following:
