@@ -211,6 +211,7 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     lpwhr->hdr.lpwhparent = hHttpSession;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
+    lpwhr->nSocketFD = INVALID_SOCKET;
 
     if (NULL != lpszObjectName && strlen(lpszObjectName))
     	lpwhr->lpszPath = HEAP_strdupA(GetProcessHeap(), 0, lpszObjectName);
