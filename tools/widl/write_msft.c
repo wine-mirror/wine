@@ -103,13 +103,21 @@ typedef struct _msft_typeinfo_t
     msft_typelib_t *typelib;
     MSFT_TypeInfoBase *typeinfo;
 
-    INT *typedata;
-    int typedata_allocated;
-    int typedata_length;
+    int var_data_allocated;
+    int *var_data;
 
-    int indices[42];
-    int names[42];
-    int offsets[42];
+    int func_data_allocated;
+    int *func_data;
+
+    int vars_allocated;
+    int *var_indices;
+    int *var_names;
+    int *var_offsets;
+
+    int funcs_allocated;
+    int *func_indices;
+    int *func_names;
+    int *func_offsets;
 
     int datawidth;
 
@@ -1168,7 +1176,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 {
     int offset;
-    int *typedata;
+    int *typedata, typedata_size;
     int i, id;
     int decoded_size, extra_attr = 0;
     int num_params = 0, num_defaults = 0;
@@ -1188,11 +1196,6 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
             chat("add_func_desc: skipping local function\n");
             return S_FALSE;
         }
-    }
-
-    if (!typeinfo->typedata) {
-	typeinfo->typedata = xmalloc(0x2000);
-	typeinfo->typedata[0] = 0;
     }
 
     for(arg = func->args; arg; arg = NEXT_LINK(arg)) {
@@ -1246,12 +1249,26 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         }
     }
     /* allocate type data space for us */
-    offset = typeinfo->typedata[0];
-    typeinfo->typedata[0] += 0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12));
-    typedata = typeinfo->typedata + (offset >> 2) + 1;
+    typedata_size = 0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12));
+
+    if (!typeinfo->func_data) {
+        typeinfo->func_data = xmalloc(0x100);
+        typeinfo->func_data_allocated = 0x100;
+        typeinfo->func_data[0] = 0;
+    }
+
+    if(typeinfo->func_data[0] + typedata_size + sizeof(int) > typeinfo->func_data_allocated) {
+        typeinfo->func_data_allocated = max(typeinfo->func_data_allocated * 2,
+                                            typeinfo->func_data[0] + typedata_size + sizeof(int));
+        typeinfo->func_data = xrealloc(typeinfo->func_data, typeinfo->func_data_allocated);
+    }
+
+    offset = typeinfo->func_data[0];
+    typeinfo->func_data[0] += typedata_size;
+    typedata = typeinfo->func_data + (offset >> 2) + 1;
 
     /* fill out the basic type information */
-    typedata[0] = (0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12))) | (index << 16);
+    typedata[0] = typedata_size | (index << 16);
     encode_var(typeinfo->typelib, func->def, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
@@ -1326,10 +1343,25 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 	typedata[3] += decoded_size << 16;
     }
 
+    if(typeinfo->funcs_allocated == 0) {
+        typeinfo->funcs_allocated = 10;
+        typeinfo->func_indices = xmalloc(typeinfo->funcs_allocated * sizeof(int));
+        typeinfo->func_names   = xmalloc(typeinfo->funcs_allocated * sizeof(int));
+        typeinfo->func_offsets = xmalloc(typeinfo->funcs_allocated * sizeof(int));
+    }
+    if(typeinfo->funcs_allocated == (typeinfo->typeinfo->cElement & 0xffff)) {
+        typeinfo->funcs_allocated *= 2;
+        typeinfo->func_indices = xrealloc(typeinfo->func_indices, typeinfo->funcs_allocated * sizeof(int));
+        typeinfo->func_names   = xrealloc(typeinfo->func_names,   typeinfo->funcs_allocated * sizeof(int));
+        typeinfo->func_offsets = xrealloc(typeinfo->func_offsets, typeinfo->funcs_allocated * sizeof(int));
+    }
+
     /* update the index data */
-    typeinfo->indices[index] = id; 
-    typeinfo->names[index] = -1;
-    typeinfo->offsets[index] = offset;
+    typeinfo->func_indices[typeinfo->typeinfo->cElement & 0xffff] = id; 
+    typeinfo->func_offsets[typeinfo->typeinfo->cElement & 0xffff] = offset;
+
+    offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
+    typeinfo->func_names[typeinfo->typeinfo->cElement & 0xffff] = offset;
 
     /* ??? */
     if (!typeinfo->typeinfo->res2) typeinfo->typeinfo->res2 = 0x20;
@@ -1347,11 +1379,6 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     /* Increment the number of function elements */
     typeinfo->typeinfo->cElement += 1;
 
-
-    offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
-    chat("name offset = %d index %d\n", offset, index);
-    typeinfo->names[index] = offset;
-
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
@@ -1359,9 +1386,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     }
 
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
-	/* FIXME: Almost certainly easy to break */
-	int *paramdata = &typeinfo->typedata[typeinfo->offsets[index] >> 2];
-        paramdata += 7 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
+	int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
 	offset = ctl2_alloc_name(typeinfo->typelib, arg->name);
 	paramdata[1] = offset;
         chat("param %d name %s offset %d\n", i, arg->name, offset);
@@ -1371,7 +1396,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
 static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 {
-    int offset;
+    int offset, typedata_size;
     INT *typedata;
     int var_datawidth;
     int var_alignment;
@@ -1380,10 +1405,11 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     int varflags = 0;
     attr_t *attr;
     char *namedata;
+    int var_num = (typeinfo->typeinfo->cElement >> 16) & 0xffff;
 
     chat("add_var_desc(%d,%s) array %p\n", index, var->name, var->array);
 
-    if ((typeinfo->typeinfo->cElement >> 16) != index) {
+    if (var_num != index) {
 	error("Out-of-order element.\n");
 	return TYPE_E_ELEMENTNOTFOUND;
     }
@@ -1397,25 +1423,46 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         }
     }
 
-    if (!typeinfo->typedata) {
-	typeinfo->typedata = xmalloc(0x2000);
-	typeinfo->typedata[0] = 0;
+    /* allocate type data space for us */
+    typedata_size = 0x14;
+
+    if (!typeinfo->var_data) {
+        typeinfo->var_data = xmalloc(0x100);
+        typeinfo->var_data_allocated = 0x100;
+        typeinfo->var_data[0] = 0;
     }
 
-    /* allocate type data space for us */
-    offset = typeinfo->typedata[0];
-    typeinfo->typedata[0] += 0x14;
-    typedata = typeinfo->typedata + (offset >> 2) + 1;
+    if(typeinfo->var_data[0] + typedata_size + sizeof(int) > typeinfo->var_data_allocated) {
+        typeinfo->var_data_allocated = max(typeinfo->var_data_allocated * 2,
+                                            typeinfo->var_data[0] + typedata_size + sizeof(int));
+        typeinfo->var_data = xrealloc(typeinfo->var_data, typeinfo->var_data_allocated);
+    }
+
+    offset = typeinfo->var_data[0];
+    typeinfo->var_data[0] += typedata_size;
+    typedata = typeinfo->var_data + (offset >> 2) + 1;
 
     /* fill out the basic type information */
-    typedata[0] = 0x14 | (index << 16);
+    typedata[0] = typedata_size | (index << 16);
     typedata[2] = varflags;
     typedata[3] = (36 /*sizeof(VARDESC)*/ << 16) | 0;
 
+    if(typeinfo->vars_allocated == 0) {
+        typeinfo->vars_allocated = 10;
+        typeinfo->var_indices = xmalloc(typeinfo->vars_allocated * sizeof(int));
+        typeinfo->var_names   = xmalloc(typeinfo->vars_allocated * sizeof(int));
+        typeinfo->var_offsets = xmalloc(typeinfo->vars_allocated * sizeof(int));
+    }
+    if(typeinfo->vars_allocated == var_num) {
+        typeinfo->vars_allocated *= 2;
+        typeinfo->var_indices = xrealloc(typeinfo->var_indices, typeinfo->vars_allocated * sizeof(int));
+        typeinfo->var_names   = xrealloc(typeinfo->var_names,   typeinfo->vars_allocated * sizeof(int));
+        typeinfo->var_offsets = xrealloc(typeinfo->var_offsets, typeinfo->vars_allocated * sizeof(int));
+    }
     /* update the index data */
-    typeinfo->indices[index] = 0x40000000 + index;
-    typeinfo->names[index] = -1;
-    typeinfo->offsets[index] = offset;
+    typeinfo->var_indices[var_num] = 0x40000000 + index;
+    typeinfo->var_names[var_num] = -1;
+    typeinfo->var_offsets[var_num] = offset;
 
     /* figure out type widths and whatnot */
     encode_var(typeinfo->typelib, var, &typedata[1], &var_datawidth,
@@ -1475,7 +1522,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     if ((typeinfo->typeinfo->typekind & 15) == TKIND_ENUM) {
 	namedata[9] |= 0x20;
     }
-    typeinfo->names[index] = offset;
+    typeinfo->var_names[var_num] = offset;
 
     return S_OK;
 }
@@ -1861,10 +1908,12 @@ static void ctl2_finalize_typeinfos(msft_typelib_t *typelib, int filesize)
 
     for (typeinfo = typelib->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
 	typeinfo->typeinfo->memoffset = filesize;
-	if (typeinfo->typedata) {
-	    /*LayOut(typeinfo);*/
-	    filesize += typeinfo->typedata[0] + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
-	}
+	if (typeinfo->func_data)
+	    filesize += typeinfo->func_data[0] + ((typeinfo->typeinfo->cElement & 0xffff) * 12);
+	if (typeinfo->var_data)
+	    filesize += typeinfo->var_data[0] + (((typeinfo->typeinfo->cElement >> 16) & 0xffff) * 12);
+        if (typeinfo->func_data || typeinfo->var_data)
+            filesize += 4;
     }
 }
 
@@ -1883,15 +1932,30 @@ static int ctl2_finalize_segment(msft_typelib_t *typelib, int filepos, int segme
 static void ctl2_write_typeinfos(msft_typelib_t *typelib, int fd)
 {
     msft_typeinfo_t *typeinfo;
+    int typedata_size;
 
     for (typeinfo = typelib->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
-	if (!typeinfo->typedata) continue;
-
-	ctl2_write_chunk(fd, typeinfo->typedata, typeinfo->typedata[0] + 4);
-	ctl2_write_chunk(fd, typeinfo->indices, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
-        chat("writing name chunk len %d %08lx\n", ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4, *(DWORD*)typeinfo->names);
-	ctl2_write_chunk(fd, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
-	ctl2_write_chunk(fd, typeinfo->offsets, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+        if (!typeinfo->func_data && !typeinfo->var_data) continue;
+        typedata_size = 0;
+	if (typeinfo->func_data)
+            typedata_size = typeinfo->func_data[0];
+	if (typeinfo->var_data)
+            typedata_size += typeinfo->var_data[0];
+	ctl2_write_chunk(fd, &typedata_size, sizeof(int));
+        if (typeinfo->func_data)
+            ctl2_write_chunk(fd, typeinfo->func_data + 1, typeinfo->func_data[0]);
+        if (typeinfo->var_data)
+            ctl2_write_chunk(fd, typeinfo->var_data + 1, typeinfo->var_data[0]);
+        if (typeinfo->func_indices) {
+            ctl2_write_chunk(fd, typeinfo->func_indices, (typeinfo->typeinfo->cElement & 0xffff) * 4);
+            ctl2_write_chunk(fd, typeinfo->func_names,   (typeinfo->typeinfo->cElement & 0xffff) * 4);
+            ctl2_write_chunk(fd, typeinfo->func_offsets, (typeinfo->typeinfo->cElement & 0xffff) * 4);
+        }
+        if (typeinfo->var_indices) {
+            ctl2_write_chunk(fd, typeinfo->var_indices, (typeinfo->typeinfo->cElement >> 16) * 4);
+            ctl2_write_chunk(fd, typeinfo->var_names,   (typeinfo->typeinfo->cElement >> 16) * 4);
+            ctl2_write_chunk(fd, typeinfo->var_offsets, (typeinfo->typeinfo->cElement >> 16) * 4);
+        }
     }
 }
 
