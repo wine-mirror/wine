@@ -102,10 +102,14 @@ typedef struct _TEB
     void        *pthread_data;   /* --3 220 Data for pthread emulation */
     struct async_private *pending_list;   /* --3 224 list of pending async operations */
     void        *driver_data;    /* --3 228 Graphics driver private data */
+    DWORD        alarms;         /* --3 22c Data for vm86 mode */
+    DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */
+    void        *vm86_ptr;       /* --3 234 Data for vm86 mode */
+    void        *vm86_ctx;       /* --3 238 Data for vm86 mode */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[627];                  /* --n 22c */
+    DWORD        pad6[623];                  /* --n 23c */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     DWORD        pad7;                       /* --n e0c */

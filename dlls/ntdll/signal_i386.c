@@ -774,6 +774,62 @@ static void do_fpe( CONTEXT *context, int trap_code )
 
 
 /**********************************************************************
+ *		set_vm86_pend
+ *
+ * Handler for SIGUSR2, which we use to set the vm86 pending flag.
+ */
+static void set_vm86_pend( CONTEXT *context )
+{
+    EXCEPTION_RECORD rec;
+    TEB *teb = NtCurrentTeb();
+
+    rec.ExceptionCode           = EXCEPTION_VM86_STI;
+    rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord         = NULL;
+    rec.NumberParameters        = 1;
+    rec.ExceptionInformation[0] = 0;
+
+    /* __wine_enter_vm86() merges the vm86_pending flag in safely */
+    teb->vm86_pending |= VIP_MASK;
+    /* see if we were in VM86 mode */
+    if (context->EFlags & 0x00020000)
+    {
+        /* seems so, also set flag in signal context */
+        if (context->EFlags & VIP_MASK) return;
+        context->EFlags |= VIP_MASK;
+        if (context->EFlags & VIF_MASK) {
+            /* VIF is set, throw exception */
+            teb->vm86_pending = 0;
+            rec.ExceptionAddress = (LPVOID)context->Eip;
+            EXC_RtlRaiseException( &rec, context );
+        }
+    }
+#ifdef linux
+    else if (teb->vm86_ptr)
+    {
+        /* not in VM86, but possibly setting up for it */
+        struct vm86plus_struct *vm86 = (struct vm86plus_struct*)(teb->vm86_ptr);
+        if (vm86->regs.eflags & VIP_MASK) return;
+        vm86->regs.eflags |= VIP_MASK;
+        if (vm86->regs.eflags & VIF_MASK) {
+            /* VIF is set, throw exception */
+            CONTEXT vcontext;
+            teb->vm86_pending = 0;
+            save_vm86_context( &vcontext, vm86 );
+            rec.ExceptionAddress = (LPVOID)vcontext.Eip;
+            EXC_RtlRaiseException( &rec, &vcontext );
+            restore_vm86_context( &vcontext, vm86 );
+            if (teb->vm86_ctx) {
+                /* must also save here */
+                *(CONTEXT*)(teb->vm86_ctx) = vcontext;
+            }
+        }
+    }
+#endif /* linux */
+}
+
+
+/**********************************************************************
  *		segv_handler
  *
  * Handler for SIGSEGV and related errors.
@@ -835,6 +891,41 @@ static HANDLER_DEF(int_handler)
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context );
+    restore_context( &context, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		alrm_handler
+ *
+ * Handler for SIGALRM.
+ * Increases the alarm counter and sets the vm86 pending flag.
+ */
+static HANDLER_DEF(alrm_handler)
+{
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    NtCurrentTeb()->alarms++;
+    set_vm86_pend( &context );
+    restore_context( &context, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		usr2_handler
+ *
+ * Handler for SIGUSR2.
+ * We use it to signal that the running __wine_enter_vm86() should
+ * immediately set VIP_MASK, causing pending events to be handled
+ * as early as possible.
+ */
+static HANDLER_DEF(usr2_handler)
+{
+    CONTEXT context;
+
+    save_context( &context, HANDLER_CONTEXT );
+    set_vm86_pend( &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -919,6 +1010,8 @@ BOOL SIGNAL_Init(void)
 #ifdef SIGTRAP
     if (set_handler( SIGTRAP, have_sigaltstack, (void (*)())trap_handler ) == -1) goto error;
 #endif
+    if (set_handler( SIGALRM, have_sigaltstack, (void (*)())alrm_handler ) == -1) goto error;
+    if (set_handler( SIGUSR2, have_sigaltstack, (void (*)())usr2_handler ) == -1) goto error;
     return TRUE;
 
  error:
@@ -936,6 +1029,7 @@ BOOL SIGNAL_Init(void)
 void __wine_enter_vm86( CONTEXT *context )
 {
     EXCEPTION_RECORD rec;
+    TEB *teb = NtCurrentTeb();
     int res;
     struct vm86plus_struct vm86;
 
@@ -943,6 +1037,22 @@ void __wine_enter_vm86( CONTEXT *context )
     for (;;)
     {
         restore_vm86_context( context, &vm86 );
+        /* Linux doesn't preserve pending flag (VIP_MASK) on return,
+         * so save it on entry, just in case */
+        teb->vm86_pending |= (context->EFlags & VIP_MASK);
+        /* Work around race conditions with signal handler
+         * (avoiding sigprocmask for performance reasons) */
+        teb->vm86_ptr = &vm86;
+        vm86.regs.eflags |= teb->vm86_pending;
+        /* Check for VIF|VIP here, since vm86_enter doesn't */
+        if ((vm86.regs.eflags & (VIF_MASK|VIP_MASK)) == (VIF_MASK|VIP_MASK)) {
+            teb->vm86_ptr = NULL;
+            teb->vm86_pending = 0;
+            context->EFlags |= VIP_MASK;
+            rec.ExceptionCode = EXCEPTION_VM86_STI;
+            rec.ExceptionInformation[0] = 0;
+            goto cancel_vm86;
+        }
 
         do
         {
@@ -954,7 +1064,11 @@ void __wine_enter_vm86( CONTEXT *context )
             }
         } while (VM86_TYPE(res) == VM86_SIGNAL);
 
+        teb->vm86_ctx = context;
         save_vm86_context( context, &vm86 );
+        teb->vm86_ptr = NULL;
+        teb->vm86_ctx = NULL;
+        context->EFlags |= teb->vm86_pending;
 
         switch(VM86_TYPE(res))
         {
@@ -962,12 +1076,13 @@ void __wine_enter_vm86( CONTEXT *context )
             do_segv( context, T_PROTFLT, 0, 0 );
             continue;
         case VM86_TRAP: /* return due to DOS-debugger request */
-            do_trap( context, VM86_ARG(res)  );
+            do_trap( context, VM86_ARG(res) );
             continue;
         case VM86_INTx: /* int3/int x instruction (ARG = x) */
             rec.ExceptionCode = EXCEPTION_VM86_INTx;
             break;
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
+            teb->vm86_pending = 0;
             rec.ExceptionCode = EXCEPTION_VM86_STI;
             break;
         case VM86_PICRETURN: /* return due to pending PIC request */
@@ -977,11 +1092,12 @@ void __wine_enter_vm86( CONTEXT *context )
             ERR( "unhandled result from vm86 mode %x\n", res );
             continue;
         }
+        rec.ExceptionInformation[0] = VM86_ARG(res);
+cancel_vm86:
         rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
         rec.ExceptionRecord         = NULL;
         rec.ExceptionAddress        = (LPVOID)context->Eip;
         rec.NumberParameters        = 1;
-        rec.ExceptionInformation[0] = VM86_ARG(res);
         EXC_RtlRaiseException( &rec, context );
     }
 }
