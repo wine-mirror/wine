@@ -2694,11 +2694,6 @@ static string_t *make_filename(string_t *str)
 		*cptr = '/';
 	}
 
-	/* Convert to lower case. Seems to be reasonable to do */
-	for(cptr = str->str.cstr; !leave_case && *cptr; cptr++)
-	{
-		*cptr = tolower(*cptr);
-	}
 	return str;
 }
 

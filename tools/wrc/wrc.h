@@ -64,7 +64,6 @@ extern int create_s;
 extern DWORD codepage;
 extern int pedantic;
 extern int auto_register;
-extern int leave_case;
 extern int byteorder;
 extern int preprocess_only;
 extern int no_preprocess;

@@ -104,7 +104,6 @@ static char usage[] =
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
-	"   -L          Leave case of embedded filenames as is\n"
 	"   -m          Do not remap numerical resource IDs\n"
 	"   -n          Do not generate .s file\n"
 	"   -N          Do not preprocess input\n"
@@ -250,12 +249,6 @@ int pedantic = 0;
  * Set when autoregister code must be added to the output (-A option)
  */
 int auto_register = 0;
-
-/*
- * Set when the case of embedded filenames should not be converted
- * to lower case (-L option)
- */
-int leave_case = 0;
 
 /*
  * The output byte-order of resources (set with -B)
@@ -433,9 +426,6 @@ int main(int argc,char *argv[])
 					error("Language %04x is not supported",lan);
 				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
-			break;
-		case 'L':
-			leave_case = 1;
 			break;
 		case 'm':
 			remap = 0;
