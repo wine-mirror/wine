@@ -2997,11 +2997,12 @@ BOOL pe_load_debug_directory(const struct process* pcs, struct module* module,
     BOOL                        ret;
     int                         i;
     struct msc_debug_info       msc_dbg;
-    const IMAGE_NT_HEADERS*     nth = RtlImageNtHeader((void*)mapping);
+    const IMAGE_SEPARATE_DEBUG_HEADER* dbg_hdr = (const IMAGE_SEPARATE_DEBUG_HEADER*)mapping;
 
     msc_dbg.module = module;
-    msc_dbg.nsect  = nth->FileHeader.NumberOfSections;
-    msc_dbg.sectp  = (const IMAGE_SECTION_HEADER*)((const char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
+    msc_dbg.nsect  = dbg_hdr->NumberOfSections;
+    /* section headers come immediately after debug header */
+    msc_dbg.sectp  = (const IMAGE_SECTION_HEADER*)(dbg_hdr + 1);
     msc_dbg.nomap  = 0;
     msc_dbg.omapp  = NULL;
 

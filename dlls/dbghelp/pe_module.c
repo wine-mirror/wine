@@ -115,13 +115,18 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
              * which have incorrect timestamps.
              */
         }
-        dbg = (const IMAGE_DEBUG_DIRECTORY*) 
-            (dbg_mapping + sizeof(*hdr) + 
-             hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
-             hdr->ExportedNamesSize);
-
-        ret = pe_load_debug_directory(pcs, module, dbg_mapping, dbg, 
-                                      hdr->DebugDirectorySize / sizeof(*dbg));
+        if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
+        {
+            dbg = (const IMAGE_DEBUG_DIRECTORY*) 
+                (dbg_mapping + sizeof(*hdr) + 
+                 hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
+                 hdr->ExportedNamesSize);
+    
+            ret = pe_load_debug_directory(pcs, module, dbg_mapping, dbg, 
+                                          hdr->DebugDirectorySize / sizeof(*dbg));
+        }
+        else
+            ERR("Wrong signature in .DBG file %s\n", debugstr_a(tmp));
     }
     else
         WINE_ERR("-Unable to peruse .DBG file %s (%s)\n", dbg_name, debugstr_a(tmp));
