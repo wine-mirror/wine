@@ -45,11 +45,11 @@ RM        = rm -f
 MV        = mv
 MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
-MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
-	    -w $(TOPSRCDIR)/relay32/user32.spec \
-	    -w $(TOPSRCDIR)/relay32/comctl32.spec \
-	    -w $(TOPSRCDIR)/relay32/comdlg32.spec \
-	    -w $(TOPSRCDIR)/relay32/kernel32.spec 
+MANSPECS  = -w $(TOPSRCDIR)/dlls/gdi/gdi32.spec \
+	    -w $(TOPSRCDIR)/dlls/user/user32.spec \
+	    -w $(TOPSRCDIR)/dlls/comctl32/comctl32.spec \
+	    -w $(TOPSRCDIR)/dlls/comdlg32/comdlg32.spec \
+	    -w $(TOPSRCDIR)/dlls/kernel/kernel32.spec 
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
