@@ -34,6 +34,7 @@
 #include "dsurface/thunks.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_flip);
 
 /** Creation/Destruction functions */
 
@@ -575,9 +576,26 @@ Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
     }
 
     TRACE("flip to backbuffer: %p\n",target);
+    if (TRACE_ON(ddraw_flip)) {
+	static unsigned int flip_count = 0;
+	IDirectDrawPaletteImpl *palette;
+	char buf[32];
+	FILE *f;
+
+	/* Hack for paletted games... */
+	palette = target->palette;
+	target->palette = This->palette;
+	
+	sprintf(buf, "flip_%08d.ppm", flip_count++);
+	TRACE_(ddraw_flip)("Dumping file %s to disk.\n", buf);
+	f = fopen(buf, "wb");
+	DDRAW_dump_surface_to_disk(target, f, 8);
+	target->palette = palette;
+    }
+
     if (This->flip_data(This, target, dwFlags))
 	This->flip_update(This, dwFlags);
-
+    
     return DD_OK;
 }
 

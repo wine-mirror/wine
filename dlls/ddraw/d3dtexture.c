@@ -52,7 +52,7 @@ snoop_texture(IDirectDrawSurfaceImpl *This) {
     
     sprintf(buf, "tex_%05d_%02d.pnm", glThis->tex_name, This->mipmap_level);
     f = fopen(buf, "wb");
-    DDRAW_dump_surface_to_disk(This, f);
+    DDRAW_dump_surface_to_disk(This, f, 1);
 }
 
 static IDirectDrawSurfaceImpl *

@@ -580,15 +580,26 @@ static int get_shift(DWORD color_mask) {
     return shift;
 }
 
-void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f)
+void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f, int scale)
 {
-    int i;
+    int rwidth, rheight, x, y;
+    static char *output = NULL;
+    static int size = 0;
 
-    fprintf(f, "P6\n%ld %ld\n255\n", surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+    rwidth  = (surface->surface_desc.dwWidth  + scale - 1) / scale;
+    rheight = (surface->surface_desc.dwHeight + scale - 1) / scale;
+
+    if (rwidth > size) {
+	output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, rwidth * 3);
+	size = rwidth;
+    }
+    
+    fprintf(f, "P6\n%d %d\n255\n", rwidth, rheight);
 
     if (surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
         unsigned char table[256][3];
-	unsigned char *src = (unsigned char *) surface->surface_desc.lpSurface;
+	int i;
+	
 	if (surface->palette == NULL) {
 	    fclose(f);
 	    return;
@@ -598,38 +609,56 @@ void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f)
 	    table[i][1] = surface->palette->palents[i].peGreen;
 	    table[i][2] = surface->palette->palents[i].peBlue;
 	}
-	for (i = 0; i < surface->surface_desc.dwHeight * surface->surface_desc.dwWidth; i++) {
-	    unsigned char color = *src++;
-	    fputc(table[color][0], f);
-	    fputc(table[color][1], f);
-	    fputc(table[color][2], f);
+	for (y = 0; y < rheight; y++) {
+	    unsigned char *src = (unsigned char *) surface->surface_desc.lpSurface + (y * scale * surface->surface_desc.u1.lPitch);
+	    for (x = 0; x < rwidth; x++) {
+		unsigned char color = *src;
+		src += scale;
+
+		output[3 * x + 0] = table[color][0];
+		output[3 * x + 1] = table[color][1];
+		output[3 * x + 2] = table[color][2];
+	    }
+	    fwrite(output, 3 * rwidth, 1, f);
 	}
     } else if (surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_RGB) {
-        int red_shift, green_shift, blue_shift;
+        int red_shift, green_shift, blue_shift, pix_width;
+	
+	if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	    pix_width = 1;
+	} else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	    pix_width = 2;
+	} else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) {
+	    pix_width = 4;
+	} else {
+	    pix_width = 3;
+	}
+	
 	red_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask);
 	green_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask);
 	blue_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask);
 
-	for (i = 0; i < surface->surface_desc.dwHeight * surface->surface_desc.dwWidth; i++) {
-	    int color;
-	    int comp;
-	    
-	    if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 8) {
-	        color = ((unsigned char *) surface->surface_desc.lpSurface)[i];
-	    } else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-	        color = ((unsigned short *) surface->surface_desc.lpSurface)[i];
-	    } else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-	        color = ((unsigned int *) surface->surface_desc.lpSurface)[i];
-	    } else {
-	        /* Well, this won't work on platforms without support for non-aligned memory accesses or big endian :-) */
-	        color = *((unsigned int *) (((char *) surface->surface_desc.lpSurface) + (3 * i)));
+	for (y = 0; y < rheight; y++) {
+	    unsigned char *src = (unsigned char *) surface->surface_desc.lpSurface + (y * scale * surface->surface_desc.u1.lPitch);
+	    for (x = 0; x < rwidth; x++) {	    
+		unsigned int color;
+		unsigned int comp;
+		int i;
+
+		color = 0;
+		for (i = 0; i < pix_width; i++) {
+		    color |= src[i] << (8 * i);
+		}
+		src += scale * pix_width;
+		
+		comp = color & surface->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask;
+		output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
+		comp = color & surface->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask;
+		output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
+		comp = color & surface->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask;
+		output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
 	    }
-	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask;
-	    fputc(red_shift > 0 ? comp >> red_shift : comp << -red_shift, f);
-	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask;
-	    fputc(green_shift > 0 ? comp >> green_shift : comp << -green_shift, f);
-	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask;
-	    fputc(blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift, f);
+	    fwrite(output, 3 * rwidth, 1, f);
 	}
     }
     fclose(f);
