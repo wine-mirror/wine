@@ -73,7 +73,7 @@ txt: $(ALLBOOKS:%=%.txt)
 .SUFFIXES: .sgml .html .pdf .ps .txt
 
 .sgml.html:
-	$(DB2HTML) -u -d $(SRCDIR)/default.dsl $<
+	$(DB2HTML) -u $<
 
 .sgml.pdf:
 	$(DB2PDF) $<
