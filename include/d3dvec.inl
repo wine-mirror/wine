@@ -51,6 +51,18 @@ inline _D3DVECTOR& _D3DVECTOR::operator /= (D3DVALUE s)
   return *this;
 }
 
+/*** unary operators ***/
+
+inline _D3DVECTOR operator + (const _D3DVECTOR& v)
+{
+  return v;
+}
+
+inline _D3DVECTOR operator - (const _D3DVECTOR& v)
+{
+  return _D3DVECTOR(-v.x, -v.y, -v.z);
+}
+
 /*** binary operators ***/
 
 inline _D3DVECTOR operator + (const _D3DVECTOR& v1, const _D3DVECTOR& v2)

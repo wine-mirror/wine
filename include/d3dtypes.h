@@ -133,6 +133,10 @@ public:
   _D3DVECTOR& operator *= (D3DVALUE s);
   _D3DVECTOR& operator /= (D3DVALUE s);
 
+  /*** unary operators ***/
+  friend _D3DVECTOR operator + (const _D3DVECTOR& v);
+  friend _D3DVECTOR operator - (const _D3DVECTOR& v);
+
   /*** binary operators ***/
   friend _D3DVECTOR operator + (const _D3DVECTOR& v1, const _D3DVECTOR& v2);
   friend _D3DVECTOR operator - (const _D3DVECTOR& v1, const _D3DVECTOR& v2);
@@ -170,7 +174,7 @@ typedef struct _D3DHVERTEX {
 /*
  * Transformed/lit vertices
  */
-typedef struct {
+typedef struct _D3DTLVERTEX {
   union {
     D3DVALUE    sx;
     D3DVALUE    dvSX;
@@ -203,7 +207,15 @@ typedef struct {
     D3DVALUE    tv;
     D3DVALUE    dvTV;
   } DUMMYUNIONNAME8;
-  /* There are C++ members associated with this class */
+#if defined(__cplusplus) && defined(D3D_OVERLOADS)
+public:
+  _D3DTLVERTEX() {}
+  _D3DTLVERTEX(const D3DVECTOR& v, float _rhw, D3DCOLOR _color, D3DCOLOR _specular, float _tu, float _tv) {
+    sx = v.x; sy = v.y; sz = v.z; rhw = _rhw;
+    color = _color; specular = _specular;
+    tu = _tu; tv = _tv;
+  }
+#endif
 } D3DTLVERTEX, *LPD3DTLVERTEX;
 
 typedef struct _D3DLVERTEX {
@@ -271,15 +283,31 @@ typedef struct _D3DVERTEX {
     D3DVALUE     tv;
     D3DVALUE     dvTV;
   } DUMMYUNIONNAME8;
-  /* FIXME: Some C++ stuff to go here */
+#if defined(__cplusplus) && defined(D3D_OVERLOADS)
+public:
+  _D3DVERTEX() {}
+  _D3DVERTEX(const D3DVECTOR& v, const D3DVECTOR& n, float _tu, float _tv) {
+    x  = v.x; y  = v.y; z  = v.z;
+    nx = n.x; ny = n.y; nz = n.z;
+    tu = _tu; tv = _tv;
+  }
+#endif
 } D3DVERTEX, *LPD3DVERTEX;
 
-typedef struct {
+typedef struct _D3DMATRIX {
   D3DVALUE        _11, _12, _13, _14;
   D3DVALUE        _21, _22, _23, _24;
   D3DVALUE        _31, _32, _33, _34;
   D3DVALUE        _41, _42, _43, _44;
-  /* FIXME: Some C++ stuff here */
+#if defined(__cplusplus) && defined(D3D_OVERLOADS)
+  _D3DMATRIX() { }
+
+    /* This is different from MS, but avoids anonymous structs. */
+    D3DVALUE &operator () (int r, int c)
+	{ return ((D3DVALUE [4][4])&_11)[r][c]; }
+    const D3DVALUE &operator() (int r, int c) const
+	{ return ((const D3DVALUE [4][4])&_11)[r][c]; }
+#endif
 } D3DMATRIX, *LPD3DMATRIX;
 
 #if defined(__cplusplus) && defined(D3D_OVERLOADS)
@@ -802,6 +830,9 @@ typedef enum {
   D3DRENDERSTATE_FOGTABLESTART      = 36,
   D3DRENDERSTATE_FOGTABLEEND        = 37,
   D3DRENDERSTATE_FOGTABLEDENSITY    = 38,
+  D3DRENDERSTATE_FOGSTART           = 36,
+  D3DRENDERSTATE_FOGEND             = 37,
+  D3DRENDERSTATE_FOGDENSITY         = 38,
   D3DRENDERSTATE_STIPPLEENABLE      = 39,
   D3DRENDERSTATE_EDGEANTIALIAS      = 40,
   D3DRENDERSTATE_COLORKEYENABLE     = 41,
@@ -813,6 +844,7 @@ typedef enum {
   D3DRENDERSTATE_RANGEFOGENABLE     = 48,
   D3DRENDERSTATE_ANISOTROPY         = 49,
   D3DRENDERSTATE_FLUSHBATCH         = 50,
+  D3DRENDERSTATE_TRANSLUCENTSORTINDEPENDENT = 51,
 
   D3DRENDERSTATE_STENCILENABLE      = 52,
   D3DRENDERSTATE_STENCILFAIL        = 53,
