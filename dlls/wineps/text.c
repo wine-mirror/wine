@@ -12,7 +12,7 @@
 DEFAULT_DEBUG_CHANNEL(psdrv);
 
 static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
-		       BOOL bDrawBackground);
+		       BOOL bDrawBackground, const INT *lpDx);
 
 /***********************************************************************
  *           PSDRV_ExtTextOut
@@ -27,8 +27,8 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     BOOL bOpaque = FALSE;
     RECT rect;
 
-    TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d)\n", x, y,
-	  flags, debugstr_wn(str, count), count);
+    TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d, lpDx=%p)\n", x, y,
+	  flags, debugstr_wn(str, count), count, lpDx);
 
     /* write font if not already written */
     PSDRV_SetFont(dc);
@@ -60,12 +60,12 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	    PSDRV_WriteClip(dc);
 	}
 
-	bResult = PSDRV_Text(dc, x, y, str, count, !(bClipped && bOpaque)); 
+	bResult = PSDRV_Text(dc, x, y, str, count, !(bClipped && bOpaque), lpDx); 
 	PSDRV_WriteGRestore(dc);
     }
     else
     {
-	bResult = PSDRV_Text(dc, x, y, str, count, TRUE); 
+	bResult = PSDRV_Text(dc, x, y, str, count, TRUE, lpDx); 
     }
 
     return bResult;
@@ -75,7 +75,7 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
  *           PSDRV_Text
  */
 static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
-		       BOOL bDrawBackground)
+		       BOOL bDrawBackground, const INT *lpDx)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     LPWSTR strbuf;
@@ -96,8 +96,19 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     y = INTERNAL_YWPTODP(dc, x, y);
 
     GetTextExtentPoint32W(dc->hSelf, str, count, &sz);
+    if(lpDx) {
+        SIZE tmpsz;
+	INT i;
+	/* Get the width of the last char and add on all the offsets */
+	GetTextExtentPoint32W(dc->hSelf, str + count - 1, 1, &tmpsz);
+	for(i = 0; i < count-1; i++)
+	    tmpsz.cx += lpDx[i];
+	sz.cx = tmpsz.cx; /* sz.cy remains untouched */
+    }
+
     sz.cx = INTERNAL_XWSTODS(dc, sz.cx);
     sz.cy = INTERNAL_YWSTODS(dc, sz.cy);
+    TRACE("textAlign = %x\n", dc->textAlign);
     switch(dc->textAlign & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
     case TA_LEFT:
         if(dc->textAlign & TA_UPDATECP) {
@@ -146,7 +157,22 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     }
 
     PSDRV_WriteMoveTo(dc, x, y);
-    PSDRV_WriteShow(dc, strbuf, lstrlenW(strbuf));
+    
+    if(!lpDx)
+        PSDRV_WriteShow(dc, strbuf, lstrlenW(strbuf));
+    else {
+        INT i, dx, dy;
+	INT newx = x, newy = y;
+        for(i = 0; i < count-1; i++) {
+	    PSDRV_WriteShow(dc, &strbuf[i], 1);
+	    dx = lpDx[i] * cos(physDev->font.escapement);
+	    dy = lpDx[i] * sin(physDev->font.escapement);
+	    newx += INTERNAL_XWSTODS(dc, dx);
+	    newy += INTERNAL_YWSTODS(dc, dy);
+	    PSDRV_WriteMoveTo(dc, newx, newy);
+	}
+	PSDRV_WriteShow(dc, &strbuf[i], 1);
+    }
 
     /*
      * Underline and strikeout attributes.
