@@ -1345,7 +1345,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
 HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pSourceSurface,CONST RECT* pSourceRectsArray,UINT cRects,
                                                 IDirect3DSurface8* pDestinationSurface,CONST POINT* pDestPointsArray) {
 
-    HRESULT rc = D3D_OK;
+    HRESULT rc      = D3D_OK;
+    void   *texture = NULL;
+
 
     IDirect3DSurface8Impl *src = (IDirect3DSurface8Impl*) pSourceSurface;
     IDirect3DSurface8Impl *dst = (IDirect3DSurface8Impl*) pDestinationSurface;
@@ -1359,9 +1361,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
     if (src->myDesc.Format != dst->myDesc.Format && (dst->myDesc.Format != D3DFMT_UNKNOWN)) {
         TRACE("Formats do not match %x / %x\n", src->myDesc.Format, dst->myDesc.Format);
         rc = D3DERR_INVALIDCALL;
-    } else if (dst->myDesc.Format == D3DFMT_UNKNOWN) {
-        void *texture = NULL;
 
+    } else if (dst->myDesc.Format == D3DFMT_UNKNOWN) {
         TRACE("Converting dest to same format as source, since dest was unknown\n");
         dst->myDesc.Format = src->myDesc.Format;
 
@@ -1424,6 +1425,37 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
             }
         }
     }
+
+    /* Set dirty */
+    if (rc == D3D_OK) {
+        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, NULL, &texture); /* FIXME: Which refid? */
+        if (texture != NULL) {
+
+            switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) texture)) {
+            case D3DRTYPE_TEXTURE:
+                {
+                    IDirect3DTexture8Impl *pTexture = (IDirect3DTexture8Impl *)texture;
+                    pTexture->Dirty = TRUE;
+                }
+                break;
+            case D3DRTYPE_VOLUMETEXTURE:
+                {
+                    IDirect3DVolumeTexture8Impl *pTexture = (IDirect3DVolumeTexture8Impl *)texture;
+                    pTexture->Dirty = TRUE;
+                }
+                break;
+            case D3DRTYPE_CUBETEXTURE:
+                {
+                    IDirect3DCubeTexture8Impl *pTexture = (IDirect3DCubeTexture8Impl *)texture;
+                    pTexture->Dirty = TRUE;
+                }
+                break;
+            default:
+                FIXME("Unhandled texture type\n");
+            }
+        }
+    }
+
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture,IDirect3DBaseTexture8* pDestinationTexture) {
