@@ -252,11 +252,15 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  */
 static void MODULE_IncRefCount( HMODULE hModule )
 {
-    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
-    if ( !wm ) return;
+    WINE_MODREF *wm;
 
     EnterCriticalSection( &PROCESS_Current()->crit_section );
-    wm->refCount++;
+    wm = MODULE32_LookupHMODULE( hModule );
+    if( wm )
+    {
+        wm->refCount++;
+        TRACE(module, "(%08x) count now %d\n", hModule, wm->refCount);
+    }
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 }
 
@@ -265,12 +269,16 @@ static void MODULE_IncRefCount( HMODULE hModule )
  */
 static int MODULE_DecRefCount( HMODULE hModule )
 {
-    int retv;
-    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
-    if ( !wm ) return 0;
+    int retv = 0;
+    WINE_MODREF *wm;
 
     EnterCriticalSection( &PROCESS_Current()->crit_section );
-    if ( ( retv = wm->refCount ) > 0 ) wm->refCount--;
+    wm = MODULE32_LookupHMODULE( hModule );
+    if( wm && ( retv = wm->refCount ) > 0 )
+    {
+        wm->refCount--;
+        TRACE(module, "(%08x) count now %d\n", hModule, wm->refCount);
+    }
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     return retv;
@@ -1188,9 +1196,6 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
 
     if ( hmod >= 32 )
     {
-        /* Increment RefCount */
-        MODULE_IncRefCount( hmod );
-
         /* Initialize DLL just loaded */
         MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, NULL );
 	/* FIXME: check for failure, SLE(ERROR_DLL_INIT_FAILED) */
@@ -1204,9 +1209,15 @@ HMODULE MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
     HMODULE hmod;
     
     hmod = ELF_LoadLibraryExA( libname, hfile, flags );
-    if (hmod) return hmod;
+    if(hmod < (HMODULE)32)
+        hmod = PE_LoadLibraryExA( libname, hfile, flags );
 
-    hmod = PE_LoadLibraryExA( libname, hfile, flags );
+    if(hmod >= (HMODULE)32)
+    {
+        /* Increment RefCount */
+        MODULE_IncRefCount( hmod );
+    }
+
     return hmod;
 }
 
@@ -1237,16 +1248,99 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HFILE hfile,DWORD flags)
     return ret;
 }
 
+
+/***********************************************************************
+ *	MODULE_FreeLibrary		(internal)
+ *
+ * Decrease the loadcount of the dll.
+ * If the count reaches 0, then notify the dll and free all dlls
+ * that depend on this one.
+ *
+ */
+static void MODULE_FreeLibrary(WINE_MODREF *wm, BOOL first)
+{
+    int i;
+
+    assert(wm != NULL);
+
+    /* Don't do anything if there still are references */
+    if( MODULE_DecRefCount(wm->module) > 1 )
+        return;
+
+    TRACE( module, "(%s, %08x, %d) - START\n", wm->modname, wm->module, first);
+
+    /* Evaluate module flags */
+    if(!(    ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+          || ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
+          || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) ))
+    {
+        /* Now we can call the initialization routine */
+        TRACE( module, "(%s, %08x, %d) - CALL\n", wm->modname, wm->module, first);
+
+        switch ( wm->type )
+        {
+        case MODULE32_PE:
+            PE_InitDLL(wm, DLL_PROCESS_DETACH, (LPVOID)(first ? 0 : 1));
+            break;
+
+        case MODULE32_ELF:
+            FIXME(module, "FreeLibrary requested on ELF module '%s'\n", wm->modname);
+            break;
+
+        default:
+           ERR(module, "wine_modref type %d not handled.\n", wm->type);
+           break;
+        }
+    }
+
+    /* Recursively free all DLLs that depend on this one */
+    for( i = 0; i < wm->nDeps; i++ )
+    {
+        if(wm->deps[i])
+        {
+            MODULE_FreeLibrary(wm->deps[i], FALSE);
+            break;
+        }
+    }
+
+    /* Be sure that the freed library and the list head are unlinked properly */
+    if(PROCESS_Current()->modref_list == wm)
+        PROCESS_Current()->modref_list = wm->next;
+    if(wm->next)
+        wm->next->prev = wm->prev;
+    if(wm->prev)
+        wm->prev->next = wm->next;
+
+    FIXME(module,"should free memory of module %08x '%s'\n", wm->module, wm->modname);
+
+    TRACE( module, "(%s, %08x, %d) - END\n", wm->modname, wm->module, first);
+}
+
+
 /***********************************************************************
  *           FreeLibrary
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
-    if ( MODULE_DecRefCount( hLibModule ) != 1 ) return TRUE;
+    WINE_MODREF *wm;
+    BOOL retval = TRUE;
 
-    FIXME(module,"(0x%08x): should unload now\n", hLibModule);
-    return TRUE; /* FIXME */
+    EnterCriticalSection(&PROCESS_Current()->crit_section);
+
+    wm = MODULE32_LookupHMODULE(hLibModule);
+    if(!wm)
+    {
+        ERR(module, "(%08x) module not found in process' modref_list. Freed too many times?\n", hLibModule);
+        retval = FALSE;
+    }
+    else
+        MODULE_FreeLibrary(wm, TRUE);	/* This always succeeds */
+
+    LeaveCriticalSection(&PROCESS_Current()->crit_section);
+
+    return retval;
 }
+
 
 /***********************************************************************
  *           FreeLibraryAndExitThread
