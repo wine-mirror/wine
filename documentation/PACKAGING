@@ -68,7 +68,7 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       better support of fonts than using the X11 fonts engine. It is 
       only needed for the X11 back end engine. Used from GDI.
 
-    * Alsa: "http://sourceforge.net/projects/alsa (Linux only)
+    * Alsa: http://sourceforge.net/projects/alsa (Linux only)
       This library gives sound support to the Windows environment.
 
     * JACK: http://jackit.sourceforge.net
@@ -86,6 +86,10 @@ they should appear as "Suggests" or "Recommends", as the case may be.
       If no library is available, packagers are encouraged to compile 
       Wine with Mesa3D (http://www.mesa3d.org), which requires no 
       hardware support to install.
+
+    * LittleCMS: http://www.littlecms.com
+      This library is used to implement MSCMS (Color Management System)
+      which is needed by an increasing number of graphics applications.
 
 GOALS
 ~~~~~
