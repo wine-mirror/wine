@@ -145,6 +145,10 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { 0 }
 };
+/* ShowWindow(SW_HIDE) for an invisible overlapped window */
+static const struct message WmHideInvisibleOverlappedSeq[] = {
+    { 0 }
+};
 /* DestroyWindow for a visible overlapped window */
 static const struct message WmDestroyOverlappedSeq[] = {
     { HCBT_DESTROYWND, hook },
@@ -755,6 +759,10 @@ static void test_messages(void)
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
     ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
+
+    /* test ShowWindow(SW_HIDE) on a newly created invisible window */
+    ok( ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow: window was visible\n" );
+    ok_sequence(WmHideInvisibleOverlappedSeq, "ShowWindow(SW_HIDE):overlapped, invisible");
 
     /* test WM_SETREDRAW on a not visible top level window */
     test_WM_SETREDRAW(hwnd);
