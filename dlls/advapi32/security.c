@@ -1448,8 +1448,50 @@ LookupAccountNameA(
 	IN OUT LPDWORD cbReferencedDomainName,
 	OUT PSID_NAME_USE name_use )
 {
+    /* Default implementation: Always return a default SID */
+    SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
+    BOOL ret;
+    PSID pSid;
+    static const char dm[] = "DOMAIN";
+
     FIXME("(%s,%s,%p,%p,%p,%p,%p), stub.\n",system,account,sid,cbSid,ReferencedDomainName,cbReferencedDomainName,name_use);
-    return FALSE;
+
+    ret = AllocateAndInitializeSid(&identifierAuthority,
+        2,
+        SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS,
+        0, 0, 0, 0, 0, 0,
+        &pSid);
+
+    if (!ret)
+       return FALSE;
+    if(!RtlValidSid(pSid))
+    {
+       FreeSid(pSid);
+       return FALSE;
+    }
+
+    if (sid != NULL && (*cbSid >= GetLengthSid(pSid)))
+       CopySid(*cbSid, sid, pSid);
+    if (*cbSid < GetLengthSid(pSid))
+    {
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       ret = FALSE;
+    }
+    *cbSid = GetLengthSid(pSid);
+    
+    if (ReferencedDomainName != NULL && (*cbReferencedDomainName > strlen(dm)))
+      strcpy(ReferencedDomainName, dm);
+    if (*cbReferencedDomainName <= strlen(dm))
+    {
+       SetLastError(ERROR_INSUFFICIENT_BUFFER);
+       ret = FALSE;
+    }
+    *cbReferencedDomainName = strlen(dm)+1;
+
+    FreeSid(pSid);
+
+    return ret;
 }
 
 /******************************************************************************
