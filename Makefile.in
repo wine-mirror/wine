@@ -78,6 +78,7 @@ LIBSUBDIRS = \
 	dlls/winmm/midimap \
 	dlls/winmm/wavemap \
 	dlls/winmm/wineoss \
+	dlls/winsock \
 	dlls/winspool \
 	dlls/wnaspi32 \
 	files \
@@ -192,6 +193,7 @@ LIBOBJS = \
 	dlls/winmm/midimap/midimap.drv.o \
 	dlls/winmm/wavemap/msacm.drv.o \
 	dlls/winmm/wineoss/wineoss.drv.o \
+	dlls/winsock/winsock.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \

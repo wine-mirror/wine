@@ -1,0 +1,18 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winsock
+
+SPEC_SRCS = winsock.spec wsock32.spec
+
+C_SRCS = \
+	async.c \
+	socket.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

@@ -20,7 +20,6 @@ SPEC_SRCS = \
 	toolhelp.spec \
 	user.spec \
 	wineps.spec \
-	winsock.spec \
 	wprocs.spec
 
 C_SRCS = \

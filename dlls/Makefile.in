@@ -38,6 +38,7 @@ SUBDIRS = \
 	windebug \
 	wing \
 	winmm \
+	winsock \
 	winspool \
 	wnaspi32
 

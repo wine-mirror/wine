@@ -950,6 +950,7 @@ dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/wineoss/Makefile
+dlls/winsock/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
