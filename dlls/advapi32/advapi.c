@@ -213,6 +213,40 @@ BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
      return TRUE;
 } 
 
+BOOL WINAPI InitiateSystemShutdownA( LPSTR lpMachineName, LPSTR lpMessage, DWORD dwTimeout,
+                                     BOOL bForceAppsClosed, BOOL bRebootAfterShutdown )
+{
+    return InitiateSystemShutdownExA( lpMachineName, lpMessage, dwTimeout,
+                                      bForceAppsClosed, bRebootAfterShutdown,
+                                      SHTDN_REASON_MAJOR_LEGACY_API );
+}
+
+BOOL WINAPI InitiateSystemShutdownW( LPWSTR lpMachineName, LPWSTR lpMessage, DWORD dwTimeout,
+                                     BOOL bForceAppsClosed, BOOL bRebootAfterShutdown )
+{
+    return InitiateSystemShutdownExW( lpMachineName, lpMessage, dwTimeout,
+                                      bForceAppsClosed, bRebootAfterShutdown,
+                                      SHTDN_REASON_MAJOR_LEGACY_API );
+}
+
+BOOL WINAPI LogonUserA( LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+                        DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken )
+{
+    FIXME("%s %s %p 0x%08lx 0x%08lx %p - stub\n", debugstr_a(lpszUsername),
+          debugstr_a(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
+
+    return TRUE;
+}
+
+BOOL WINAPI LogonUserW( LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+                        DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken )
+{
+    FIXME("%s %s %p 0x%08lx 0x%08lx %p - stub\n", debugstr_w(lpszUsername),
+          debugstr_w(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
+
+    return TRUE;
+}
+
 DWORD WINAPI CommandLineFromMsiDescriptor(WCHAR *Descriptor, WCHAR *CommandLine,
  DWORD *CommandLineLength)
 {

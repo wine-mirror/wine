@@ -39,6 +39,7 @@ typedef struct _SERVER_INFO_101 {
 NET_API_STATUS WINAPI NetServerEnum(LMCSTR servername, DWORD level,
  LPBYTE *bufptr, DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
  DWORD servertype, LMCSTR domain, LPDWORD resume_handle);
+BOOL WINAPI SetServiceBits(SERVICE_STATUS_HANDLE,DWORD,BOOL,BOOL);
 
 #define SV_TYPE_WORKSTATION       0x00000001
 #define SV_TYPE_SERVER            0x00000002

@@ -1758,6 +1758,39 @@ QueryServiceConfigW( SC_HANDLE hService,
     return TRUE;
 }
 
+BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
+                                LPSTR lpServiceName, LPDWORD lpcchBuffer )
+{
+    FIXME("%p %s %p %p\n", hSCManager, debugstr_a(lpDisplayName), lpServiceName, lpcchBuffer);
+
+    return FALSE;
+}
+
+BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
+                                LPWSTR lpServiceName, LPDWORD lpcchBuffer )
+{
+    FIXME("%p %s %p %p\n", hSCManager, debugstr_w(lpDisplayName), lpServiceName, lpcchBuffer);
+
+    return FALSE;
+}
+
+BOOL WINAPI QueryServiceLockStatusA( SC_HANDLE hSCManager,
+                                     LPQUERY_SERVICE_LOCK_STATUSA lpLockStatus,
+                                     DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    FIXME("%p %p 0x%08lx %p - stub\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+
+    return FALSE;
+}
+
+BOOL WINAPI QueryServiceLockStatusW( SC_HANDLE hSCManager,
+                                     LPQUERY_SERVICE_LOCK_STATUSW lpLockStatus,
+                                     DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    FIXME("%p %p 0x%08lx %p - stub\n", hSCManager, lpLockStatus, cbBufSize, pcbBytesNeeded);
+
+    return FALSE;
+}
 
 /******************************************************************************
  * GetServiceDisplayNameA  [ADVAPI32.@]
@@ -1939,5 +1972,16 @@ BOOL WINAPI SetServiceObjectSecurity(SC_HANDLE hService,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor)
 {
     FIXME("%p %ld %p\n", hService, dwSecurityInformation, lpSecurityDescriptor);
+    return TRUE;
+}
+
+BOOL WINAPI SetServiceBits( SERVICE_STATUS_HANDLE hServiceStatus,
+        DWORD dwServiceBits,
+        BOOL bSetBitsOn,
+        BOOL bUpdateImmediately)
+{
+    FIXME("0x%08lx 0x%08lx %x %x - stub\n", hServiceStatus, dwServiceBits,
+          bSetBitsOn, bUpdateImmediately);
+
     return TRUE;
 }

@@ -1417,6 +1417,7 @@ DWORD       WINAPI GetFullPathNameA(LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI GetFullPathNameW(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
 BOOL        WINAPI GetHandleInformation(HANDLE,LPDWORD);
+BOOL        WINAPI GetKernelObjectSecurity(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR,DWORD,LPDWORD);
 DWORD       WINAPI GetLengthSid(PSID);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
@@ -1431,6 +1432,7 @@ BOOL        WINAPI GetNamedPipeInfo(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI GetNumberOfEventLogRecords(HANDLE,PDWORD);
 BOOL        WINAPI GetOldestEventLogRecord(HANDLE,PDWORD);
 DWORD       WINAPI GetPriorityClass(HANDLE);
+BOOL        WINAPI GetPrivateObjectSecurity(PSECURITY_DESCRIPTOR,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR,DWORD,PDWORD);
 BOOL        WINAPI GetProcessAffinityMask(HANDLE,PDWORD,PDWORD);
 DWORD       WINAPI GetProcessId(HANDLE);
 BOOL        WINAPI GetProcessIoCounters(HANDLE,PIO_COUNTERS);
@@ -1501,18 +1503,29 @@ BOOL        WINAPI InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR,DWORD);
 BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsSystemResumeAutomatic(void);
 BOOL        WINAPI IsTextUnicode(CONST LPVOID lpBuffer, int cb, LPINT lpi);
+BOOL        WINAPI IsTokenRestricted(HANDLE);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);
+BOOL        WINAPI ImpersonateNamedPipeClient(HANDLE);
 BOOL        WINAPI ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
 BOOL        WINAPI IsProcessorFeaturePresent(DWORD);
 void        WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL        WINAPI LookupAccountNameA(LPCSTR,LPCSTR,PSID,LPDWORD,LPSTR,LPDWORD,PSID_NAME_USE);
+BOOL        WINAPI LookupAccountNameW(LPCWSTR,LPCWSTR,PSID,LPDWORD,LPWSTR,LPDWORD,PSID_NAME_USE);
+#define     LookupAccountName WINELIB_NAME_AW(LookupAccountName)
 BOOL        WINAPI LookupAccountSidA(LPCSTR,PSID,LPSTR,LPDWORD,LPSTR,LPDWORD,PSID_NAME_USE);
 BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDWORD,PSID_NAME_USE);
 #define     LookupAccountSid WINELIB_NAME_AW(LookupAccountSid)
 BOOL        WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 BOOL        WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);
+BOOL        WINAPI LogonUserA(LPCSTR,LPCSTR,LPCSTR,DWORD,DWORD,PHANDLE);
+BOOL        WINAPI LogonUserW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,DWORD,PHANDLE);
+#define     LogonUser WINELIB_NAME_AW(LogonUser)
+BOOL        WINAPI LookupPrivilegeDisplayNameA(LPCSTR,LPCSTR,LPSTR,LPDWORD,LPDWORD);
+BOOL        WINAPI LookupPrivilegeDisplayNameW(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,LPDWORD);
+#define     LookupPrivilegeDisplayName WINELIB_NAME_AW(LookupPrivilegeDisplayName)
 BOOL        WINAPI LookupPrivilegeNameA(LPCSTR,PLUID,LPSTR,LPDWORD);
 BOOL        WINAPI LookupPrivilegeNameW(LPCWSTR,PLUID,LPWSTR,LPDWORD);
 #define     LookupPrivilegeName WINELIB_NAME_AW(LookupPrivilegeName)
@@ -1523,6 +1536,7 @@ BOOL        WINAPI MakeAbsoluteSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDW
                                   PACL,LPDWORD,PACL,LPDWORD,PSID,LPDWORD,PSID,LPDWORD);
 void        WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
 BOOL        WINAPI MakeSelfRelativeSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
+VOID        WINAPI MapGenericMask(PDWORD,PGENERIC_MAPPING);
 HMODULE     WINAPI MapHModuleSL(WORD);
 WORD        WINAPI MapHModuleLS(HMODULE);
 LPVOID      WINAPI MapViewOfFile(HANDLE,DWORD,DWORD,DWORD,SIZE_T);
@@ -1535,6 +1549,17 @@ BOOL        WINAPI MoveFileExW(LPCWSTR,LPCWSTR,DWORD);
 #define     MoveFileEx WINELIB_NAME_AW(MoveFileEx)
 INT         WINAPI MulDiv(INT,INT,INT);
 BOOL        WINAPI NotifyChangeEventLog(HANDLE,HANDLE);
+BOOL        WINAPI ObjectCloseAuditAlarmA(LPCSTR,LPVOID,BOOL);
+BOOL        WINAPI ObjectCloseAuditAlarmW(LPCWSTR,LPVOID,BOOL);
+#define     ObjectCloseAuditAlarm WINELIB_NAME_AW(ObjectCloseAuditAlarm)
+BOOL        WINAPI ObjectOpenAuditAlarmA(LPCSTR,LPVOID,LPSTR,LPSTR,PSECURITY_DESCRIPTOR,HANDLE,
+                                         DWORD,DWORD,PPRIVILEGE_SET,BOOL,BOOL,LPBOOL);
+BOOL        WINAPI ObjectOpenAuditAlarmW(LPCWSTR,LPVOID,LPWSTR,LPWSTR,PSECURITY_DESCRIPTOR,HANDLE,
+                                         DWORD,DWORD,PPRIVILEGE_SET,BOOL,BOOL,LPBOOL);
+#define     ObjectOpenAuditAlarm WINELIB_NAME_AW(ObjectOpenAuditAlarm)
+BOOL        WINAPI ObjectPrivilegeAuditAlarmA(LPCSTR,LPVOID,HANDLE,DWORD,PPRIVILEGE_SET,BOOL);
+BOOL        WINAPI ObjectPrivilegeAuditAlarmW(LPCWSTR,LPVOID,HANDLE,DWORD,PPRIVILEGE_SET,BOOL);
+#define     ObjectPrivilegeAuditAlarm WINELIB_NAME_AW(ObjectPrivilegeAuditAlarm)
 HANDLE      WINAPI OpenBackupEventLogA(LPCSTR,LPCSTR);
 HANDLE      WINAPI OpenBackupEventLogW(LPCWSTR,LPCWSTR);
 #define     OpenBackupEventLog WINELIB_NAME_AW(OpenBackupEventLog)
@@ -1562,6 +1587,9 @@ HANDLE      WINAPI OpenWaitableTimerW(DWORD,BOOL,LPCWSTR);
 #define     OpenWaitableTimer WINELIB_NAME_AW(OpenWaitableTimer)
 BOOL        WINAPI PeekNamedPipe(HANDLE,PVOID,DWORD,PDWORD,PDWORD,PDWORD);
 DWORD       WINAPI PrepareTape(HANDLE,DWORD,BOOL);
+BOOL        WINAPI PrivilegedServiceAuditAlarmA(LPCSTR,LPCSTR,HANDLE,PPRIVILEGE_SET,BOOL);
+BOOL        WINAPI PrivilegedServiceAuditAlarmW(LPCWSTR,LPCWSTR,HANDLE,PPRIVILEGE_SET,BOOL);
+#define     PrivilegedServiceAuditAlarm WINELIB_NAME_AW(PrivilegedServiceAuditAlarm)
 BOOL        WINAPI PulseEvent(HANDLE);
 BOOL        WINAPI PurgeComm(HANDLE,DWORD);
 BOOL        WINAPI QueryActCtxW(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T *);
@@ -1596,6 +1624,7 @@ BOOL        WINAPI RevertToSelf(void);
 DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     SearchPath WINELIB_NAME_AW(SearchPath)
+BOOL        WINAPI SetAclInformation(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
 BOOL        WINAPI SetCommConfig(HANDLE,LPCOMMCONFIG,DWORD);
 BOOL        WINAPI SetCommBreak(HANDLE);
 BOOL        WINAPI SetCommMask(HANDLE,DWORD);
@@ -1630,10 +1659,14 @@ BOOL        WINAPI SetLocalTime(const SYSTEMTIME*);
 BOOL        WINAPI SetMailslotInfo(HANDLE,DWORD);
 BOOL        WINAPI SetNamedPipeHandleState(HANDLE,LPDWORD,LPDWORD,LPDWORD);
 BOOL        WINAPI SetPriorityClass(HANDLE,DWORD);
+BOOL        WINAPI SetPrivateObjectSecurity(SECURITY_INFORMATION,PSECURITY_DESCRIPTOR,
+                                            PSECURITY_DESCRIPTOR*,PGENERIC_MAPPING,HANDLE);
 BOOL        WINAPI SetProcessAffinityMask(HANDLE,DWORD_PTR);
 BOOL        WINAPI SetProcessPriorityBoost(HANDLE,BOOL);
 BOOL        WINAPI SetProcessShutdownParameters(DWORD,DWORD);
 BOOL        WINAPI SetProcessWorkingSetSize(HANDLE,SIZE_T,SIZE_T);
+BOOL        WINAPI SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR,SECURITY_DESCRIPTOR_CONTROL,
+                                                SECURITY_DESCRIPTOR_CONTROL);
 BOOL        WINAPI SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR,BOOL,PACL,BOOL);
 BOOL        WINAPI SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR,PSID,BOOL);
 BOOL        WINAPI SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR,PSID,BOOL);

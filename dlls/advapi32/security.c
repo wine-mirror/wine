@@ -442,6 +442,14 @@ CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 	return RtlCopySid(nDestinationSidLength, pDestinationSid, pSourceSid);
 }
 
+BOOL WINAPI
+IsTokenRestricted( HANDLE TokenHandle )
+{
+    FIXME("%p - stub\n", TokenHandle);
+
+    return FALSE;
+}
+
 /******************************************************************************
  * IsValidSid [ADVAPI32.@]
  *
@@ -610,6 +618,31 @@ BOOL WINAPI MakeAbsoluteSD (
                                                      pPrimaryGroup, lpdwPrimaryGroupSize));
 }
 
+BOOL WINAPI GetKernelObjectSecurity(
+        HANDLE Handle,
+        SECURITY_INFORMATION RequestedInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor,
+        DWORD nLength,
+        LPDWORD lpnLengthNeeded )
+{
+    FIXME("%p 0x%08lx %p 0x%08lx %p - stub\n", Handle, RequestedInformation,
+          pSecurityDescriptor, nLength, lpnLengthNeeded);
+
+    return FALSE;
+}
+
+BOOL WINAPI GetPrivateObjectSecurity(
+        PSECURITY_DESCRIPTOR ObjectDescriptor,
+        SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR ResultantDescriptor,
+        DWORD DescriptorLength,
+        PDWORD ReturnLength )
+{
+    FIXME("%p 0x%08lx %p 0x%08lx %p - stub\n", ObjectDescriptor, SecurityInformation,
+          ResultantDescriptor, DescriptorLength, ReturnLength);
+
+    return FALSE;
+}
 
 /******************************************************************************
  * GetSecurityDescriptorLength [ADVAPI32.@]
@@ -774,6 +807,13 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
 BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 {
     return set_ntstatus( RtlCreateAcl(acl, size, rev));
+}
+
+BOOL WINAPI ImpersonateNamedPipeClient( HANDLE hNamedPipe )
+{
+    FIXME("%p - stub\n", hNamedPipe);
+
+    return FALSE;
 }
 
 /******************************************************************************
@@ -1061,6 +1101,23 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
     return ret;
 }
 
+BOOL WINAPI LookupPrivilegeDisplayNameA( LPCSTR lpSystemName, LPCSTR lpName, LPSTR lpDisplayName,
+                                         LPDWORD cchDisplayName, LPDWORD lpLanguageId )
+{
+    FIXME("%s %s %s %p %p - stub\n", debugstr_a(lpSystemName), debugstr_a(lpName),
+          debugstr_a(lpDisplayName), cchDisplayName, lpLanguageId);
+
+    return FALSE;
+}
+
+BOOL WINAPI LookupPrivilegeDisplayNameW( LPCWSTR lpSystemName, LPCWSTR lpName, LPWSTR lpDisplayName,
+                                         LPDWORD cchDisplayName, LPDWORD lpLanguageId )
+{
+    FIXME("%s %s %s %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpName),
+          debugstr_w(lpDisplayName), cchDisplayName, lpLanguageId);
+
+    return FALSE;
+}
 
 /******************************************************************************
  * LookupPrivilegeNameA			[ADVAPI32.@]
@@ -1384,6 +1441,35 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
 	return TRUE;
 }
 
+NTSTATUS WINAPI
+LsaEnumerateTrustedDomains(
+    LSA_HANDLE PolicyHandle,
+    PLSA_ENUMERATION_HANDLE EnumerationContext,
+    PVOID* Buffer,
+    ULONG PreferedMaximumLength,
+    PULONG CountReturned)
+{
+    FIXME("(%p,%p,%p,0x%08lx,%p):stub\n", PolicyHandle, EnumerationContext,
+          Buffer, PreferedMaximumLength, CountReturned);
+
+    if (CountReturned) *CountReturned = 0;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI
+LsaLookupNames(
+  LSA_HANDLE PolicyHandle,
+  ULONG Count,
+  PLSA_UNICODE_STRING Names,
+  PLSA_REFERENCED_DOMAIN_LIST* ReferencedDomains,
+  PLSA_TRANSLATED_SID* Sids)
+{
+    FIXME("(%p,0x%08lx,%p,%p,%p):stub\n", PolicyHandle, Count, Names,
+          ReferencedDomains, Sids);
+
+    return STATUS_NONE_MAPPED;
+}
+
 /******************************************************************************
  * LsaOpenPolicy [ADVAPI32.@]
  *
@@ -1499,6 +1585,17 @@ LsaQueryInformationPolicy(
 	    }
 	}
 	return TRUE;
+}
+
+NTSTATUS WINAPI
+LsaSetInformationPolicy(
+    LSA_HANDLE PolicyHandle,
+    POLICY_INFORMATION_CLASS InformationClass,
+    PVOID Buffer)
+{
+    FIXME("(%p,0x%08x,%p):stub\n", PolicyHandle, InformationClass, Buffer);
+
+    return STATUS_UNSUCCESSFUL;    
 }
 
 /******************************************************************************
@@ -1658,6 +1755,15 @@ BOOL WINAPI AccessCheckByType(
 	return !*AccessStatus;
 }
 
+VOID WINAPI MapGenericMask( PDWORD AccessMask, PGENERIC_MAPPING GenericMapping )
+{
+	FIXME("%p %p - stub\n", AccessMask, GenericMapping);
+
+    *AccessMask |= GenericMapping->GenericRead;
+    *AccessMask |= GenericMapping->GenericWrite;
+    *AccessMask |= GenericMapping->GenericExecute;
+    *AccessMask |= GenericMapping->GenericAll;
+}
 
 /*************************************************************************
  * SetKernelObjectSecurity [ADVAPI32.@]
@@ -1745,6 +1851,16 @@ LookupAccountNameA(
     return ret;
 }
 
+BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
+                                LPDWORD cbSid, LPWSTR ReferencedDomainName,
+                                LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+{
+    FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
+          Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
+
+    return FALSE;
+}
+
 /******************************************************************************
  * PrivilegeCheck [ADVAPI32.@]
  */
@@ -1786,6 +1902,81 @@ BOOL WINAPI AccessCheckAndAuditAlarmW(LPCWSTR Subsystem, LPVOID HandleId, LPWSTR
 	return TRUE;
 }
 
+BOOL WINAPI ObjectCloseAuditAlarmA(LPCSTR SubsystemName, LPVOID HandleId, BOOL GenerateOnClose)
+{
+    FIXME("stub (%s,%p,%x)\n", debugstr_a(SubsystemName), HandleId, GenerateOnClose);
+
+    return TRUE;
+}
+
+BOOL WINAPI ObjectCloseAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, BOOL GenerateOnClose)
+{
+    FIXME("stub (%s,%p,%x)\n", debugstr_w(SubsystemName), HandleId, GenerateOnClose);
+
+    return TRUE;
+}
+
+BOOL WINAPI ObjectOpenAuditAlarmA(LPCSTR SubsystemName, LPVOID HandleId, LPSTR ObjectTypeName,
+  LPSTR ObjectName, PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
+  DWORD GrantedAccess, PPRIVILEGE_SET Privileges, BOOL ObjectCreation, BOOL AccessGranted,
+  LPBOOL GenerateOnClose)
+{
+	FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08lx,0x%08lx,%p,%x,%x,%p)\n", debugstr_a(SubsystemName),
+		HandleId, debugstr_a(ObjectTypeName), debugstr_a(ObjectName), pSecurityDescriptor,
+        ClientToken, DesiredAccess, GrantedAccess, Privileges, ObjectCreation, AccessGranted,
+        GenerateOnClose);
+
+    return TRUE;
+}
+
+BOOL WINAPI ObjectOpenAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, LPWSTR ObjectTypeName,
+  LPWSTR ObjectName, PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
+  DWORD GrantedAccess, PPRIVILEGE_SET Privileges, BOOL ObjectCreation, BOOL AccessGranted,
+  LPBOOL GenerateOnClose)
+{
+    FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08lx,0x%08lx,%p,%x,%x,%p)\n", debugstr_w(SubsystemName),
+        HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName), pSecurityDescriptor,
+        ClientToken, DesiredAccess, GrantedAccess, Privileges, ObjectCreation, AccessGranted,
+        GenerateOnClose);
+
+    return TRUE;
+}
+
+BOOL WINAPI ObjectPrivilegeAuditAlarmA( LPCSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
+  DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
+{
+    FIXME("stub (%s,%p,%p,0x%08lx,%p,%x)\n", debugstr_a(SubsystemName), HandleId, ClientToken,
+          DesiredAccess, Privileges, AccessGranted);
+
+    return TRUE;
+}
+
+BOOL WINAPI ObjectPrivilegeAuditAlarmW( LPCWSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
+  DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
+{
+    FIXME("stub (%s,%p,%p,0x%08lx,%p,%x)\n", debugstr_w(SubsystemName), HandleId, ClientToken,
+          DesiredAccess, Privileges, AccessGranted);
+
+    return TRUE;
+}
+
+BOOL WINAPI PrivilegedServiceAuditAlarmA( LPCSTR SubsystemName, LPCSTR ServiceName, HANDLE ClientToken,
+                                   PPRIVILEGE_SET Privileges, BOOL AccessGranted)
+{
+    FIXME("stub (%s,%s,%p,%p,%x)\n", debugstr_a(SubsystemName), debugstr_a(ServiceName),
+          ClientToken, Privileges, AccessGranted);
+
+    return TRUE;
+}
+
+BOOL WINAPI PrivilegedServiceAuditAlarmW( LPCWSTR SubsystemName, LPCWSTR ServiceName, HANDLE ClientToken,
+                                   PPRIVILEGE_SET Privileges, BOOL AccessGranted)
+{
+    FIXME("stub %s,%s,%p,%p,%x)\n", debugstr_w(SubsystemName), debugstr_w(ServiceName),
+          ClientToken, Privileges, AccessGranted);
+
+    return TRUE;
+}
 
 /******************************************************************************
  * GetSecurityInfo [ADVAPI32.@]
@@ -1971,6 +2162,16 @@ VOID WINAPI BuildTrusteeWithNameW(PTRUSTEEW pTrustee, LPWSTR name)
     pTrustee->ptstrName = name;
 }
 
+BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
+                               DWORD nAclInformationLength,
+                               ACL_INFORMATION_CLASS dwAclInformationClass )
+{
+    FIXME("%p %p 0x%08lx 0x%08x - stub\n", pAcl, pAclInformation,
+          nAclInformationLength, dwAclInformationClass);
+
+    return TRUE;
+}
+
 /******************************************************************************
  * SetEntriesInAclA [ADVAPI32.@]
  */
@@ -2018,6 +2219,28 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     HeapFree( GetProcessHeap(), 0, wstr );
 
     return r;
+}
+
+BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION SecurityInformation,
+    PSECURITY_DESCRIPTOR ModificationDescriptor,
+    PSECURITY_DESCRIPTOR* ObjectsSecurityDescriptor,
+    PGENERIC_MAPPING GenericMapping,
+    HANDLE Token )
+{
+    FIXME("0x%08lx %p %p %p %p - stub\n", SecurityInformation, ModificationDescriptor,
+          ObjectsSecurityDescriptor, GenericMapping, Token);
+
+    return TRUE;
+}
+
+BOOL WINAPI SetSecurityDescriptorControl( PSECURITY_DESCRIPTOR pSecurityDescriptor,
+  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet )
+{
+    FIXME("%p 0x%08x 0x%08x - stub\n", pSecurityDescriptor, ControlBitsOfInterest,
+          ControlBitsToSet);
+
+    return TRUE;
 }
 
 BOOL WINAPI AreAllAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )

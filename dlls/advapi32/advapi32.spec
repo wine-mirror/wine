@@ -118,14 +118,14 @@
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
 @ stdcall GetFileSecurityA(str long ptr long ptr)
 @ stdcall GetFileSecurityW(wstr long ptr long ptr)
-@ stub GetKernelObjectSecurity
+@ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLengthSid(ptr)
 @ stub GetMangledSiteSid
 @ stdcall GetNamedSecurityInfoA (str long long ptr ptr ptr ptr ptr)
 @ stdcall GetNamedSecurityInfoW (wstr long long ptr ptr ptr ptr ptr)
 @ stdcall GetNumberOfEventLogRecords (long ptr)
 @ stdcall GetOldestEventLogRecord (long ptr)
-@ stub GetPrivateObjectSecurity
+@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
 @ stdcall GetSecurityDescriptorControl (ptr ptr ptr)
 @ stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityDescriptorGroup(ptr ptr ptr)
@@ -136,8 +136,8 @@
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
 @ stdcall GetServiceDisplayNameA(ptr str ptr ptr)
 @ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
-@ stub GetServiceKeyNameA
-@ stub GetServiceKeyNameW
+@ stdcall GetServiceKeyNameA(long str ptr ptr)
+@ stdcall GetServiceKeyNameW(long wstr ptr ptr)
 @ stdcall GetSidIdentifierAuthority(ptr)
 @ stdcall GetSidLengthRequired(long)
 @ stdcall GetSidSubAuthority(ptr long)
@@ -147,38 +147,38 @@
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
 @ stdcall ImpersonateLoggedOnUser(long)
-@ stub ImpersonateNamedPipeClient
+@ stdcall ImpersonateNamedPipeClient(long)
 @ stdcall ImpersonateSelf(long)
 @ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
-@ stub InitiateSystemShutdownA
-@ stub InitiateSystemShutdownW
+@ stdcall InitiateSystemShutdownA(str str long long long)
+@ stdcall InitiateSystemShutdownW(str str long long long)
 @ stdcall InitiateSystemShutdownExA(str str long long long long)
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
-@ stub IsTokenRestricted
+@ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
 @ stdcall LockServiceDatabase(ptr)
-@ stub LogonUserA
-@ stub LogonUserW
+@ stdcall LogonUserA(str str str long long ptr)
+@ stdcall LogonUserW(wstr wstr wstr long long ptr)
 @ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr)
-@ stub LookupAccountNameW
+@ stdcall LookupAccountNameW(wstr wstr ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr)
-@ stub LookupPrivilegeDisplayNameA
-@ stub LookupPrivilegeDisplayNameW
+@ stdcall LookupPrivilegeDisplayNameA(str str str ptr ptr)
+@ stdcall LookupPrivilegeDisplayNameW(wstr wstr wstr ptr ptr)
 @ stdcall LookupPrivilegeNameA(str ptr ptr long)
 @ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
-@ stub MapGenericMask
+@ stdcall MapGenericMask(ptr ptr)
 @ stdcall MD4Final(ptr)
 @ stdcall MD4Init(ptr)
 @ stdcall MD4Update(ptr ptr long)
@@ -187,12 +187,12 @@
 @ stdcall MD5Update(ptr ptr long)
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
-@ stub ObjectCloseAuditAlarmA
-@ stub ObjectCloseAuditAlarmW
-@ stub ObjectOpenAuditAlarmA
-@ stub ObjectOpenAuditAlarmW
-@ stub ObjectPrivilegeAuditAlarmA
-@ stub ObjectPrivilegeAuditAlarmW
+@ stdcall ObjectCloseAuditAlarmA(str ptr long)
+@ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
+@ stdcall ObjectOpenAuditAlarmA(str ptr str str ptr long long long ptr long long ptr)
+@ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
+@ stdcall ObjectPrivilegeAuditAlarmA(str ptr long long ptr long)
+@ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 @ stdcall OpenBackupEventLogA (str str)
 @ stdcall OpenBackupEventLogW (wstr wstr)
 @ stdcall OpenEventLogA (str str)
@@ -204,12 +204,12 @@
 @ stdcall OpenServiceW(long wstr long)
 @ stdcall OpenThreadToken(long long long ptr)
 @ stdcall PrivilegeCheck(ptr ptr ptr)
-@ stub PrivilegedServiceAuditAlarmA
-@ stub PrivilegedServiceAuditAlarmW
+@ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
+@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 @ stdcall QueryServiceConfigA(long ptr long ptr)
 @ stdcall QueryServiceConfigW(long ptr long ptr)
-@ stub QueryServiceLockStatusA
-@ stub QueryServiceLockStatusW
+@ stdcall QueryServiceLockStatusA(long ptr long ptr)
+@ stdcall QueryServiceLockStatusW(long ptr long ptr)
 @ stdcall QueryServiceObjectSecurity(long long ptr long ptr)
 @ stdcall QueryServiceStatus(long ptr)
 @ stdcall QueryServiceStatusEx (long long ptr long ptr)
@@ -272,7 +272,7 @@
 @ stdcall ReportEventA (long long long long ptr long long str ptr)
 @ stdcall ReportEventW (long long long long ptr long long wstr ptr)
 @ stdcall RevertToSelf()
-@ stub SetAclInformation
+@ stdcall SetAclInformation(ptr ptr long long)
 @ stdcall SetEntriesInAclA(long ptr ptr ptr)
 @ stdcall SetEntriesInAclW(long ptr ptr ptr)
 @ stdcall SetFileSecurityA(str long ptr )
@@ -280,13 +280,13 @@
 @ stdcall SetKernelObjectSecurity(long long ptr)
 @ stdcall SetNamedSecurityInfoA(str long ptr ptr ptr ptr ptr)
 @ stdcall SetNamedSecurityInfoW(wstr long ptr ptr ptr ptr ptr)
-@ stub SetPrivateObjectSecurity
-@ stub SetSecurityDescriptorControl #(ptr long long)
+@ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
+@ stdcall SetSecurityDescriptorControl(ptr long long)
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
 @ stdcall SetSecurityDescriptorGroup (ptr ptr long)
 @ stdcall SetSecurityDescriptorOwner (ptr ptr long)
 @ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
-@ stub SetServiceBits
+@ stdcall SetServiceBits(long long long long)
 @ stdcall SetServiceObjectSecurity(long long ptr)
 @ stdcall SetServiceStatus(long long)
 @ stdcall SetThreadToken (ptr ptr)
@@ -301,8 +301,8 @@
 @ stdcall LsaFreeMemory(ptr)
 @ stdcall LsaQueryInformationPolicy(ptr long ptr)
 @ stdcall LsaClose(ptr)
-@ stub LsaSetInformationPolicy
-@ stub LsaLookupNames
+@ stdcall LsaSetInformationPolicy(long long ptr)
+@ stdcall LsaLookupNames(long long ptr ptr ptr)
 @ stub SystemFunction001
 @ stub SystemFunction002
 @ stub SystemFunction003
@@ -364,7 +364,7 @@
 @ stub LsaEnumerateAccounts
 @ stub LsaGetSystemAccessAccount
 @ stub LsaSetInformationTrustedDomain
-@ stub LsaEnumerateTrustedDomains
+@ stdcall LsaEnumerateTrustedDomains(long ptr ptr long ptr)
 @ stdcall LsaNtStatusToWinError(long)
 @ stub LsaOpenAccount
 @ stub LsaEnumeratePrivileges
