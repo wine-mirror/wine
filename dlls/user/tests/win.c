@@ -1472,6 +1472,19 @@ static void test_SetMenu(HWND parent)
     hMenu = CreateMenu();
     assert(hMenu);
 
+    ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
+    ret = GetMenu(parent);
+    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+    /* test whether we can destroy a menu assigned to a window */
+    ok(DestroyMenu(hMenu), "DestroyMenu error %ld\n", GetLastError());
+    ok(!IsMenu(hMenu), "menu handle should be not valid after DestroyMenu\n");
+    ret = GetMenu(parent);
+    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+    ok(SetMenu(parent, 0), "SetMenu(0) on a top level window should not fail\n");
+
+    hMenu = CreateMenu();
+    assert(hMenu);
+
     /* parent */
     ret = GetMenu(parent);
     ok(ret == 0, "unexpected menu id %p\n", ret);
