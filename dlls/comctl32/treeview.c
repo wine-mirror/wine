@@ -25,6 +25,7 @@
 	     
  */
 
+#include <string.h>
 #include "windows.h"
 #include "commctrl.h"
 #include "treeview.h"
@@ -32,14 +33,15 @@
 #include "win.h"
 #include "debug.h"
 
-#if defined(__FreeBSD__)
-#include <bitstring.h>
-#define test_bit(bit,name) bit_test(name,bit)
-#define set_bit(bit,name) bit_set(name,bit)
-#define clear_bit(bit,name) bit_clear(name,bit)
-#else
-#include <asm/bitops.h>      /* FIXME: linux specific */
-#endif
+/* ffs should be in <string.h>. */
+
+/* Defines, since they do not need to return previous state, and nr
+ * has no side effects in this file.
+ */
+#define tv_test_bit(nr,bf)	(((LPBYTE)bf)[nr>>8]&(1<<(nr&7)))
+#define tv_set_bit(nr,bf)	((LPBYTE)bf)[nr>>8]|=(1<<(nr&7))
+#define tv_clear_bit(nr,bf)	((LPBYTE)bf)[nr>>8]&=~(1<<(nr&7))
+
 
 #define TREEVIEW_GetInfoPtr(wndPtr) ((TREEVIEW_INFO *)wndPtr->wExtra[0])
 
@@ -66,7 +68,7 @@ TREEVIEW_ValidItem (TREEVIEW_INFO *infoPtr,int  handle)
 {
  
  if ((!handle) || (handle>infoPtr->uMaxHandle)) return NULL;
- if (test_bit (handle, infoPtr->freeList)) return NULL;
+ if (tv_test_bit (handle, infoPtr->freeList)) return NULL;
 
  return & infoPtr->items[handle];
 }
@@ -136,7 +138,7 @@ TREEVIEW_RemoveItem (TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
  INT32 iItem;
 
  iItem=wineItem->hItem;
- set_bit ( iItem & 31, &infoPtr->freeList[iItem >>5]);
+ tv_set_bit(iItem,infoPtr->freeList);
  infoPtr->uNumItems--;
  parentItem=NULL;
  if (wineItem->pszText!=LPSTR_TEXTCALLBACK32A) 
@@ -178,7 +180,7 @@ static void TREEVIEW_RemoveAllChildren (TREEVIEW_INFO *infoPtr,
  
  kill=parentItem->firstChild;
  while (kill) {
- 	set_bit ( kill & 31, &infoPtr->freeList[kill >>5]);
+ 	tv_set_bit ( kill, infoPtr->freeList);
  	killItem=& infoPtr->items[kill];
 	if (killItem->pszText!=LPSTR_TEXTCALLBACK32A) 
 		HeapFree (GetProcessHeap (), 0, killItem->pszText);
@@ -200,7 +202,7 @@ static void TREEVIEW_RemoveTree (TREEVIEW_INFO *infoPtr)
  	int i;
 
     for (i=1; i<=infoPtr->uMaxHandle; i++) 
-		if (!test_bit (i, infoPtr->freeList)) {
+		if (!tv_test_bit (i, infoPtr->freeList)) {
 			killItem=& infoPtr->items [i];	
 			if (killItem->pszText!=LPSTR_TEXTCALLBACK32A)
 				HeapFree (GetProcessHeap (), 0, killItem->pszText);
@@ -868,7 +870,7 @@ TREEVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	for (i=0; i<infoPtr->uNumPtrsAlloced>>5; i++) {
 		if (infoPtr->freeList[i]) {
 			iItem=ffs (infoPtr->freeList[i]);
-			clear_bit (iItem & 31, & infoPtr->freeList[i]);
+			tv_clear_bit(iItem,&infoPtr->freeList[i]);
 			break;
 		}
   	 } 
