@@ -1266,11 +1266,10 @@ typedef UINT __stdcall CustomEntry(MSIHANDLE);
 typedef struct 
 {
         MSIPACKAGE *package;
-        WCHAR target[MAX_PATH];
-        WCHAR source[MAX_PATH];
+        WCHAR *target;
+        WCHAR *source;
 } thread_struct;
 
-#if 0
 static DWORD WINAPI DllThread(LPVOID info)
 {
     HANDLE DLL;
@@ -1309,10 +1308,11 @@ static DWORD WINAPI DllThread(LPVOID info)
     else
         ERR("Unable to load library\n");
     msiobj_release( &stuff->package->hdr );
-    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree(GetProcessHeap(),0,stuff->source);
+    HeapFree(GetProcessHeap(),0,stuff->target);
+    HeapFree(GetProcessHeap(), 0, stuff);
     return 0;
 }
-#endif
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source, 
                                 const LPWSTR target, const INT type)
@@ -1335,18 +1335,18 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source,
 
     if (type & 0xc0)
     {
-        /* DWORD ThreadId; */
+        DWORD ThreadId;
+        HANDLE ThreadHandle;
         thread_struct *info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
 
-        /* msiobj_addref( &package->hdr ); */
+        msiobj_addref( &package->hdr );
         info->package = package;
-        strcpyW(info->target,target);
-        strcpyW(info->source,tmp_file);
-        TRACE("Start Asynchronous execution\n");
-        FIXME("DATABASE NOT THREADSAFE... not starting\n");
-        /* CreateThread(NULL,0,DllThread,(LPVOID)&info,0,&ThreadId); */
+        info->target = dupstrW(target);
+        info->source = dupstrW(tmp_file);
+        TRACE("Start Asynchronous execution of dll\n");
+        ThreadHandle = CreateThread(NULL,0,DllThread,(LPVOID)info,0,&ThreadId);
+        CloseHandle(ThreadHandle);
         /* FIXME: release the package if the CreateThread fails */
-        HeapFree( GetProcessHeap(), 0, info );
         return ERROR_SUCCESS;
     }
  
@@ -2866,6 +2866,11 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                     DeleteFileW(file->SourcePath);
                     rc = 0;
                 }
+                else if (rc == ERROR_FILE_NOT_FOUND)
+                {
+                    ERR("Source File Not Found!  Continueing\n");
+                    rc = 0;
+                }
                 else
                     break;
             }
@@ -3303,6 +3308,12 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
     DWORD sz;
     UINT rc;
 
+    if (ptr==NULL)
+    {
+        TRACE("Deformatting NULL string\n");
+        *data = NULL;
+        return 0;
+    }
     /* scan for special characters */
     if (!strchrW(ptr,'[') || (strchrW(ptr,'[') && !strchrW(ptr,']')))
     {
