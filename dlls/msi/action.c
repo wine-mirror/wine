@@ -1965,11 +1965,16 @@ static UINT resolve_folder(MSIPACKAGE *package, LPCWSTR name, LPWSTR path,
 
     if (package->folders[i].ParentIndex >= 0)
     {
+        int len;
         TRACE(" ! Parent is %s\n", debugstr_w(package->folders[
                    package->folders[i].ParentIndex].Directory));
         resolve_folder(package, package->folders[
                        package->folders[i].ParentIndex].Directory, path,source,
                        set_prop, NULL);
+
+        len = strlenW(path);
+        if (len && path[len-1] != '\\')
+            strcatW(path, cszbs);
 
         if (!source)
         {
@@ -2072,9 +2077,14 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
         if (comp)
         {
+            int len;
             /* calculate target */
             resolve_folder(package, comp->Directory, file->TargetPath, FALSE,
                        FALSE, NULL);
+            /* make sure that the path ends in a \ */
+            len = strlenW(file->TargetPath);
+            if (len && file->TargetPath[len-1] != '\\')
+                strcatW(file->TargetPath, cszbs);
             strcatW(file->TargetPath,file->FileName);
 
             TRACE("file %s resolves to %s\n",
