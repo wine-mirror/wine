@@ -2187,8 +2187,8 @@ typedef struct {
 /* FIXME: are those constants correct ? */
 #define MCI_CDA_STATUS_TYPE_TRACK 	0x00004001
 
-#define MCI_CDA_TRACK_AUDIO		0x00000001
-#define MCI_CDA_TRACK_OTHER		0x00000000
+#define MCI_CDA_TRACK_AUDIO		0x00000440
+#define MCI_CDA_TRACK_OTHER		0x00000441
 
 #define MCI_VD_MODE_PARK                (MCI_VD_OFFSET + 1)
 

@@ -72,10 +72,15 @@ typedef struct {
     DWORD		dwTotalLen;
     LPDWORD		lpdwTrackLen;
     LPDWORD		lpdwTrackPos;
+    LPBYTE		lpbTrackFlags;
     DWORD		dwFirstOffset;
 } WINE_CDAUDIO;
 
 static WINE_CDAUDIO	CDADev[MAX_CDAUDIODRV];
+#endif
+
+#ifndef CDROM_DATA_TRACK
+#define CDROM_DATA_TRACK 0x04
 #endif
 
 /*-----------------------------------------------------------------------*/
@@ -156,12 +161,18 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
     if (wcda->lpdwTrackPos != NULL) 
 	free(wcda->lpdwTrackPos);
     wcda->lpdwTrackPos = (LPDWORD)malloc((wcda->nTracks + 1) * sizeof(DWORD));
-    if (wcda->lpdwTrackLen == NULL || wcda->lpdwTrackPos == NULL) {
+    if (wcda->lpbTrackFlags != NULL)
+	free(wcda->lpbTrackFlags);
+    wcda->lpbTrackFlags = (LPBYTE)malloc((wcda->nTracks + 1) * sizeof(BYTE));
+    if (wcda->lpdwTrackLen == NULL || wcda->lpdwTrackPos == NULL ||
+	wcda->lpbTrackFlags == NULL)
+    {
 	WARN(cdaudio, "error allocating track table !\n");
 	return FALSE;
     }
     memset(wcda->lpdwTrackLen, 0, (wcda->nTracks + 1) * sizeof(DWORD));
     memset(wcda->lpdwTrackPos, 0, (wcda->nTracks + 1) * sizeof(DWORD));
+    memset(wcda->lpbTrackFlags, 0, (wcda->nTracks + 1) * sizeof(BYTE));
     for (i = 0; i <= wcda->nTracks; i++) {
 	if (i == wcda->nTracks)
 #ifdef linux
@@ -216,6 +227,13 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	    wcda->lpdwTrackPos[i - 1] = start;
 	    TRACE(cdaudio, "track #%u start=%u len=%u\n", i, start, length);
 	}
+	wcda->lpbTrackFlags[i] =
+#ifdef linux
+		(entry.cdte_adr << 4) | (entry.cdte_ctrl & 0x0f);
+#elif defined(__FreeBSD__)
+		(toc_buffer.addr_type << 4) | (toc_buffer.control & 0x0f);
+#endif 
+	TRACE(cdaudio, "track #%u flags=%02x\n", i + 1, wcda->lpbTrackFlags[i]);
     }
     wcda->dwTotalLen = total_length;
     TRACE(cdaudio,"total_len=%u\n", total_length);
@@ -283,6 +301,7 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A l
     wcda->dwFirstOffset = 0;
     wcda->lpdwTrackLen = NULL;
     wcda->lpdwTrackPos = NULL;
+    wcda->lpbTrackFlags = NULL;
     if (!CDAUDIO_GetTracksInfo(&CDADev[wDevID])) {
 	WARN(cdaudio,"error reading TracksInfo !\n");
 	/*		return MCIERR_INTERNAL; */
@@ -319,6 +338,7 @@ static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS 
     if (--wcda->nUseCount == 0) {
 	if (wcda->lpdwTrackLen != NULL) free(wcda->lpdwTrackLen);
 	if (wcda->lpdwTrackPos != NULL) free(wcda->lpdwTrackPos);
+	if (wcda->lpbTrackFlags != NULL) free(wcda->lpbTrackFlags);
 	close(wcda->unixdev);
     }
 #endif
@@ -665,7 +685,7 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
 		    TRACE(cdaudio,"MCI_TRACK #%lu LENGTH=??? !\n", lpParms->dwTrack);
 		    if (lpParms->dwTrack > wcda->nTracks)
 		    return MCIERR_OUTOFRANGE;
-		    lpParms->dwReturn = wcda->lpdwTrackLen[lpParms->dwTrack];
+		    lpParms->dwReturn = wcda->lpdwTrackLen[lpParms->dwTrack - 1];
 		} else {
 		    lpParms->dwReturn = wcda->dwTotalLen;
 	    }
@@ -716,7 +736,8 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
 		/* MCI_CDA_STATUS_TYPE_TRACK is very likely to be 0x00004001 */
 	    case MCI_CDA_STATUS_TYPE_TRACK:
 		if (!(dwFlags & MCI_TRACK)) return MCIERR_MISSING_PARAMETER;
-		lpParms->dwReturn = 0xFFFFFFFF;	/* FIXME: MCI_CDA_TRACK_AUDIO ou MCI_CDA_TRACK_OTHER */
+		lpParms->dwReturn = (wcda->lpbTrackFlags[lpParms->dwTrack - 1] & 
+		    CDROM_DATA_TRACK) ? MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
 		TRACE(cdaudio, "MCI_CDA_STATUS_TYPE_TRACK[%ld]=%08lx\n", lpParms->dwTrack, lpParms->dwReturn);
 	    return 0;
 	default:
