@@ -1439,11 +1439,20 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     for(attr = var->attrs; attr; attr = NEXT_LINK(attr)) {
         expr_t *expr = attr->u.pval; 
         switch(attr->type) {
+        case ATTR_HIDDEN:
+            varflags |= 0x40; /* VARFLAG_FHIDDEN */
+            break;
         case ATTR_ID:
             id = expr->u.lval;
             break;
         case ATTR_READONLY:
             varflags |= 0x01; /* VARFLAG_FREADONLY */
+            break;
+        case ATTR_RESTRICTED:
+            varflags |= 0x80; /* VARFLAG_FRESTRICTED */
+            break;
+        case ATTR_SOURCE:
+            varflags |= 0x02; /* VARFLAG_FSOURCE */
             break;
         default:
             warning("AddVarDesc: unhandled attr type %d\n", attr->type);
