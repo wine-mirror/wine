@@ -250,7 +250,7 @@ debug_channels (msvcrt)
 @ stub _fstati64 #(long ptr)
 @ cdecl _ftime(ptr) _ftime
 @ forward -noimport _ftol ntdll._ftol
-@ cdecl _fullpath(str str long) _fullpath
+@ cdecl _fullpath(ptr str long) _fullpath
 @ cdecl _futime(long ptr) _futime
 @ cdecl _gcvt( double long str) gcvt
 @ cdecl _get_osfhandle(long) _get_osfhandle

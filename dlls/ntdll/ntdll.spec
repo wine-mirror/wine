@@ -890,7 +890,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _memicmp(str str long) _memicmp
 @ varargs _snprintf(ptr long ptr) snprintf
 @ varargs _snwprintf(wstr long wstr) _snwprintf
-@ cdecl _splitpath(str str str str str) _splitpath
+@ cdecl _splitpath(str ptr ptr ptr ptr) _splitpath
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _stricmp(str str) strcasecmp
 @ cdecl _strlwr(str) _strlwr
