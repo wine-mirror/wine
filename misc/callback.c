@@ -264,6 +264,7 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     CALLBACK_CallLoadAppSegProc,      /* CallLoadAppSegProc */
     CALLBACK_CallSystemTimerProc,     /* CallSystemTimerProc */
     CALLBACK_CallResourceHandlerProc, /* CallResourceHandlerProc */
+    NULL,                             /* CallPostAppMessageProc */
     CALLBACK_CallWOWCallbackProc,     /* CallWOWCallbackProc */
     CALLBACK_CallWOWCallback16Ex,     /* CallWOWCallback16Ex */
     CALLBACK_CallASPIPostProc,        /* CallASPIPostProc */

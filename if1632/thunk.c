@@ -48,6 +48,7 @@ extern WORD CALLBACK CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
 extern WORD CALLBACK CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern LONG CALLBACK CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
@@ -157,6 +158,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
     (void *)CallTo16_word_,                /* CallSystemTimerProc */
     (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
+    (void *)CallTo16_word_wwwl,            /* CallPostAppMessageProc */
     (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
     THUNK_WOWCallback16Ex,                 /* CallWOWCallback16Ex */
     (void *)CallTo16_long_l,               /* CallASPIPostProc */

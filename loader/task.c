@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "windows.h"
 #include "user.h"
@@ -43,6 +44,8 @@
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
+  /* Pointer to debugger callback routine */
+void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask ) = NULL;
 
 static THHOOK DefaultThhook = { 0 };
 THHOOK *pThhook = &DefaultThhook;
@@ -241,11 +244,7 @@ static void TASK_CallToStart(void)
 
         LPTHREAD_START_ROUTINE entry = (LPTHREAD_START_ROUTINE)
                 RVA_PTR(pModule->module32, OptionalHeader.AddressOfEntryPoint);
-        DWORD size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
-        DWORD id;
-        THDB *thdb;
 
-        pTask->userhandler = (USERSIGNALPROC)&USER_SignalProc;
         if (pModule->heap_size)
             LocalInit( pTask->hInstance, 0, pModule->heap_size );
 
@@ -256,6 +255,11 @@ static void TASK_CallToStart(void)
 #if 1
         ExitProcess( entry(NULL) );
 #else
+{
+        DWORD size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+        DWORD id;
+        THDB *thdb;
+
         CreateThread( NULL, size, entry, NULL, 0, &id );
         thdb = THREAD_ID_TO_THDB( id );
 
@@ -266,6 +270,7 @@ static void TASK_CallToStart(void)
         }
 
         ExitProcess( thdb->exit_code );
+}
 #endif
     }
     else if (pModule->dos_image)
@@ -322,7 +327,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
                      HINSTANCE16 hPrevInstance, UINT16 cmdShow)
 {
     HTASK16 hTask;
-    TDB *pTask;
+    TDB *pTask, *pInitialTask;
     LPSTR cmd_line;
     WORD sp;
     char *stack32Top;
@@ -421,6 +426,12 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
+    /* Inherit default UserSignalHandler from initial process */
+
+    pInitialTask = (TDB *)GlobalLock16( PROCESS_Initial()->task );
+    if ( pInitialTask )
+        pTask->userhandler = pInitialTask->userhandler;
+
     /* Create the 16-bit stack frame */
 
     if (!(sp = pModule->sp))
@@ -475,6 +486,11 @@ void TASK_StartTask( HTASK16 hTask )
 
     TRACE(task, "linked task %04x\n", hTask );
 
+    /* If requested, add entry point breakpoint */
+
+    if ( TASK_AddTaskEntryBreakpoint )
+        TASK_AddTaskEntryBreakpoint( hTask );
+
     /* Get the task up and running. If we ourselves are a 16-bit task,
        we simply Yield(). If we are 32-bit however, we need to signal
        the main process somehow (NOT YET IMPLEMENTED!) */
@@ -504,14 +520,14 @@ static void TASK_DeleteTask( HTASK16 hTask )
     K32OBJ_DecCount( &pTask->thdb->process->header );
     K32OBJ_DecCount( &pTask->thdb->header );
 
-    /* Free the task module */
-
-    FreeModule16( pTask->hModule );
-
     /* Free the selector aliases */
 
     GLOBAL_FreeBlock( pTask->hCSAlias );
     GLOBAL_FreeBlock( pTask->hPDB );
+
+    /* Free the task module */
+
+    FreeModule16( pTask->hModule );
 
     /* Free the task structure itself */
 
@@ -579,10 +595,25 @@ void TASK_KillCurrentTask( INT16 exitCode )
         TASK_DeleteTask( hTaskToKill );
     }
 
-    if (nTaskCount <= 2)    /* FIXME */
+    if (nTaskCount <= 1)
     {
         TRACE(task, "this is the last task, exiting\n" );
         USER_ExitWindows();
+    }
+
+    if (!__winelib)
+    {
+    /* FIXME: Hack! Send a message to the initial task so that
+     * the GetMessage wakes up and the initial task can check whether
+     * it is the only remaining one and terminate itself ...
+     * The initial task should probably install hooks or something
+     * to get informed about task termination :-/
+     */
+        HTASK16 hTask = PROCESS_Initial()->task;
+        HMODULE16 hModule = GetModuleHandle16( "USER" );
+        FARPROC16 postFunc = WIN32_GetProcAddress16( hModule, "PostAppMessage" );
+        if (postFunc) 
+            Callbacks->CallPostAppMessageProc( postFunc, hTask, WM_NULL, 0, 0 );
     }
 
     /* Remove the task from the list to be sure we never switch back to it */
@@ -813,11 +844,6 @@ void WINAPI InitTask( CONTEXT *context )
     if (context) EAX_reg(context) = 0;
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
     if (!(pModule = NE_GetPtr( pTask->hModule ))) return;
-
-    /* This is a hack to install task USER signal handler before 
-     * implicitly loaded DLLs are initialized (see windows/user.c) */
-
-    pTask->userhandler = (USERSIGNALPROC)&USER_SignalProc;
 
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );

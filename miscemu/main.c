@@ -51,8 +51,8 @@ BOOL32 MAIN_EmulatorInit(void)
 void MAIN_EmulatorRun( void )
 {
     char startProg[256], defProg[256];
-    int i,loaded;
     HINSTANCE32 handle;
+    int i;
 
     BOOL32 (*WINAPI pGetMessage)(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max);
     BOOL32 (*WINAPI pTranslateMessage)( const MSG32* msg );
@@ -78,9 +78,15 @@ void MAIN_EmulatorRun( void )
 			       startProg, sizeof(startProg) );
     if (startProg[0]) MAIN_argv[MAIN_argc++] = startProg;
 
-    loaded=0;
-    for (i = 1; i < MAIN_argc; i++)
+    /* Abort if no executable on command line */
+    if (MAIN_argc <= 1) 
     {
+    	MAIN_Usage(MAIN_argv[0]);
+        exit(1);
+    }
+
+    /* Load and run executables given on command line */
+    for (i = 1; i < MAIN_argc; i++)
         if ((handle = WinExec32( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
         {
             MSG("wine: can't exec '%s': ", MAIN_argv[i]);
@@ -88,26 +94,15 @@ void MAIN_EmulatorRun( void )
             {
             case 2: MSG("file not found\n" ); break;
             case 11: MSG("invalid exe file\n" ); break;
-            case 21: MSG("win32 executable\n" ); break; /* FIXME: Obsolete? */
             default: MSG("error=%d\n", handle ); break;
             }
-            ExitProcess( 1 );
         }
-	loaded++;
-    }
-
-    if (!loaded) { /* nothing loaded */
-    	MAIN_Usage(MAIN_argv[0]);
-        ExitProcess( 1 );
-    }
 
     if (GetNumTasks() <= 1)
     {
         MSG("wine: no executable file found.\n" );
         ExitProcess( 0 );
     }
-
-    if (Options.debug) DEBUG_AddModuleBreakpoints();
 
 
     /* Start message loop for desktop window */
@@ -141,7 +136,6 @@ int main( int argc, char *argv[] )
     extern char * DEBUG_argv0;
 
     __winelib = 0;  /* First of all, clear the Winelib flag */
-    ctx_debug_call = ctx_debug;
 
     /*
      * Save this so that the internal debugger can get a hold of it if
@@ -167,6 +161,11 @@ int main( int argc, char *argv[] )
             exit(1);
         }
     }
+
+    /* Set up debugger callback routines */
+    ctx_debug_call = ctx_debug;
+    if (Options.debug) 
+        TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
 
     /* Initialize everything */
     if (!MAIN_EmulatorInit()) return 1;

@@ -233,11 +233,11 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     SetDoubleClickTime32( GetProfileInt32A("windows","DoubleClickSpeed",452) );
 
     /* Create task message queue for the initial task */
-    if ( GetCurrentTask() )
-    {
-        queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
-        if (!SetMessageQueue32( queueSize )) return FALSE;
-    }
+    queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
+    if (!SetMessageQueue32( queueSize )) return FALSE;
+
+    /* Install default USER Signal Handler */
+    SetTaskSignalProc( 0, (FARPROC16)USER_SignalProc );
 
     /* Initialize keyboard driver */
     KEYBOARD_Enable( keybd_event, InputKeyStateTable );
@@ -272,12 +272,6 @@ HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] )
     /* Initialize KERNEL */
     if (!MAIN_KernelInit(0, 0, NULL)) return 0;
 
-    /* Initialize GDI */
-    if (!MAIN_GdiInit(0, 0, NULL)) return 0;
-
-    /* Initialize USER */
-    if (!MAIN_UserInit(0, 0, NULL)) return 0;
-
     /* Create and switch to initial task */
     if (!(wm = ELF_CreateDummyModule( argv[0], argv[0], PROCESS_Current() )))
         return 0;
@@ -294,7 +288,9 @@ HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] )
 
     TASK_StartTask( PROCESS_Current()->task );
 
-    InitApp( hInstance );
+    /* Initialize GDI and USER */
+    if (!MAIN_GdiInit(0, 0, NULL)) return 0;
+    if (!MAIN_UserInit(0, 0, NULL)) return 0;
 
     return wm->module;
 }
