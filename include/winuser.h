@@ -2433,6 +2433,7 @@ DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 #define HWND_BOTTOM         ((HWND)1)
 #define HWND_TOPMOST        ((HWND)-1)
 #define HWND_NOTOPMOST      ((HWND)-2)
+#define HWND_MESSAGE        ((HWND)-3)
 
 #define MF_INSERT          0x0000
 #define MF_CHANGE          0x0080
