@@ -393,30 +393,47 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 {
-	FIXME("(0x%08lx,%p hwnd=0x%08x): stub\n", msg, data, data->hWnd);
-
-	switch (msg)
-	{ case ABM_GETSTATE:
-		return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
-	  case ABM_GETTASKBARPOS:
-		/* fake a taskbar on the bottom of the desktop */
-		{ RECT rec;
-		  GetWindowRect(GetDesktopWindow(), &rec);
-		  rec.left = 0;
-		  rec.top = rec.bottom - 2;
-		}
-		return TRUE;
-	  case ABM_ACTIVATE:
-	  case ABM_GETAUTOHIDEBAR:
-	  case ABM_NEW:
-	  case ABM_QUERYPOS:
-	  case ABM_REMOVE:
-	  case ABM_SETAUTOHIDEBAR:
-	  case ABM_SETPOS:
-	  case ABM_WINDOWPOSCHANGED:
-		return FALSE;
-	}
-	return 0;
+        int width=data->rc.right - data->rc.left;
+        int height=data->rc.bottom - data->rc.top;
+        RECT rec=data->rc;
+        switch (msg)
+        { case ABM_GETSTATE:
+               return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
+          case ABM_GETTASKBARPOS:
+               GetWindowRect(data->hWnd, &rec);
+               data->rc=rec;
+               return TRUE;
+          case ABM_ACTIVATE:
+               SetActiveWindow(data->hWnd);
+               return TRUE;
+          case ABM_GETAUTOHIDEBAR:
+               data->hWnd=GetActiveWindow();
+               return TRUE;
+          case ABM_NEW:
+               SetWindowPos(data->hWnd,HWND_TOP,rec.left,rec.top,
+                                        width,height,SWP_SHOWWINDOW);
+               return TRUE;
+          case ABM_QUERYPOS:
+               GetWindowRect(data->hWnd, &(data->rc));
+               return TRUE;
+          case ABM_REMOVE:
+               CloseHandle(data->hWnd);
+               return TRUE;
+          case ABM_SETAUTOHIDEBAR:
+               SetWindowPos(data->hWnd,HWND_TOP,rec.left+1000,rec.top,
+                                       width,height,SWP_SHOWWINDOW);          
+               return TRUE;
+          case ABM_SETPOS:
+               data->uEdge=(ABE_RIGHT | ABE_LEFT);
+               SetWindowPos(data->hWnd,HWND_TOP,data->rc.left,data->rc.top,
+                                  width,height,SWP_SHOWWINDOW);
+               return TRUE;
+          case ABM_WINDOWPOSCHANGED:
+               SetWindowPos(data->hWnd,HWND_TOP,rec.left,rec.top,
+                                        width,height,SWP_SHOWWINDOW);
+               return TRUE;
+          }
+      return FALSE;
 }
 
 /*************************************************************************
@@ -432,12 +449,22 @@ DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
 
 /*************************************************************************
  * SHLoadInProc				[SHELL32.225]
- *
+ * Create an instance of specified object class from within 
+ * the shell process and release it immediately
  */
 
-DWORD WINAPI SHLoadInProc (DWORD dwArg1)
-{ FIXME("(%lx) empty stub!\n", dwArg1);
-    return 0;
+DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
+{
+	IUnknown * pUnk = NULL;
+	TRACE("%s\n", debugstr_guid(rclsid));
+
+	CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown,(LPVOID*)pUnk);
+	if(pUnk)
+	{
+	  IUnknown_Release(pUnk);
+          return NOERROR;
+	}
+	return DISP_E_MEMBERNOTFOUND;
 }
 
 /*************************************************************************
@@ -727,15 +754,7 @@ LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
 HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
-/* ole2 */
-HRESULT (WINAPI* pOleInitialize)(LPVOID reserved);
-void (WINAPI* pOleUninitialize)(void);
-HRESULT (WINAPI* pDoDragDrop)(IDataObject* pDataObject, IDropSource * pDropSource, DWORD dwOKEffect, DWORD *pdwEffect);
-HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
-HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
-
 static HINSTANCE	hComctl32;
-static HINSTANCE	hOle32;
 static INT		shell32_RefCount = 0;
 
 INT		shell32_ObjCount = 0;
@@ -773,10 +792,9 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    shell32_hInstance = hinstDLL;
 
 	    hComctl32 = LoadLibraryA("COMCTL32.DLL");	
-	    hOle32 = LoadLibraryA("OLE32.DLL");
 	    hUser32 = GetModuleHandleA("USER32");
 
-	    if (!hComctl32 || !hUser32 || !hOle32)
+	    if (!hComctl32 || !hUser32)
 	    {
 	      ERR("P A N I C SHELL32 loading failed\n");
 	      return FALSE;
@@ -803,12 +821,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    /* user32 */
 	    pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(hUser32,"LookupIconIdFromDirectoryEx");
 	    pCreateIconFromResourceEx=(void*)GetProcAddress(hUser32,"CreateIconFromResourceEx");
-	    /* ole2 */
-	    pOleInitialize=(void*)GetProcAddress(hOle32,"OleInitialize");
-	    pOleUninitialize=(void*)GetProcAddress(hOle32,"OleUninitialize");
-	    pDoDragDrop=(void*)GetProcAddress(hOle32,"DoDragDrop");
-	    pRegisterDragDrop=(void*)GetProcAddress(hOle32,"RegisterDragDrop");
-	    pRevokeDragDrop=(void*)GetProcAddress(hOle32,"RevokeDragDrop");
 
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)
@@ -851,7 +863,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      }
 	    }
 
-	    FreeLibrary(hOle32);
 	    FreeLibrary(hComctl32);
 
 	    TRACE("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);

@@ -54,12 +54,13 @@ extern HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT 
 extern HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
 /* ole2 */
+/*
 extern HRESULT (WINAPI* pOleInitialize)(LPVOID reserved);
 extern void (WINAPI* pOleUninitialize)(void);
 extern HRESULT (WINAPI* pDoDragDrop)(IDataObject* pDataObject, IDropSource * pDropSource, DWORD dwOKEffect, DWORD * pdwEffect);
 extern HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
 extern HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
-
+*/
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
@@ -93,8 +94,8 @@ LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST myPidl, LPITEM
 LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
 
 LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
-IContextMenu *	IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *aPidls, UINT uItemCount);
-IContextMenu *	ISvBgCm_Constructor(void);
+IContextMenu *	ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *aPidls, UINT uItemCount);
+IContextMenu *	ISvBgCm_Constructor(LPSHELLFOLDER pSFParent);
 LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER);
 LPSHELLLINK	IShellLink_Constructor(BOOL);
 
@@ -141,4 +142,29 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 /* Systray */
 BOOL SYSTRAY_Init(void);
 
+/* Clipboard */
+void InitShellOle(void);
+void FreeShellOle(void);
+BOOL GetShellOle(void);
+
+HRESULT (WINAPI* pOleInitialize)(LPVOID reserved);
+void    (WINAPI* pOleUninitialize)(void);
+HRESULT (WINAPI* pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
+HRESULT (WINAPI* pRevokeDragDrop)(HWND hwnd);
+HRESULT (WINAPI* pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*); 
+void 	(WINAPI* pReleaseStgMedium)(STGMEDIUM* pmedium);
+HRESULT (WINAPI* pOleSetClipboard)(IDataObject* pDataObj);
+HRESULT (WINAPI* pOleGetClipboard)(IDataObject** ppDataObj);
+
+HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderSHELLIDLISTOFFSET (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderFILECONTENTS (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderFILEDESCRIPTOR (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderFILENAME (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags);
+
+/* Change Notification */
+void InitChangeNotifications(void);
+void FreeChangeNotifications(void);
 #endif
