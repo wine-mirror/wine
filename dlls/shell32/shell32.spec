@@ -235,7 +235,7 @@
  288 stdcall ShellAboutA(long str str long)
  289 stdcall ShellAboutW(long wstr wstr long)
  290 stdcall ShellExecuteA(long str str str str long)
- 291 stdcall ShellExecuteEx (long) ShellExecuteExAW
+ 291 stdcall ShellExecuteEx (long) ShellExecuteExA
  292 stdcall ShellExecuteExA (long)
  293 stdcall ShellExecuteExW (long)
  294 stdcall ShellExecuteW (long wstr wstr wstr wstr long)
@@ -343,7 +343,7 @@
 @ stdcall ExtractAssociatedIconExW(long wstr long long)
 @ stub ExtractAssociatedIconW
 @ stdcall ExtractIconA(long str long)
-@ stdcall ExtractIconEx(ptr long ptr ptr long)ExtractIconExAW
+@ stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconExA
 @ stdcall ExtractIconExA(str long ptr ptr long)
 @ stdcall ExtractIconExW(wstr long ptr ptr long)
 @ stdcall ExtractIconW(long wstr long)
@@ -378,19 +378,19 @@
 @ stub ShellHookProc
 @ stub SHEmptyRecycleBinA
 @ stub SHEmptyRecycleBinW
-@ stdcall SHFileOperation(ptr)SHFileOperationAW
+@ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)
 @ stdcall SHFileOperationW(ptr)
 @ stub SHFormatDrive
 @ stdcall SHFreeNameMappings(ptr)
 @ stdcall SHGetDesktopFolder(ptr)
-@ stdcall SHGetFileInfo(ptr long ptr long long)SHGetFileInfoAW
+@ stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoA
 @ stdcall SHGetFileInfoA(ptr long ptr long long)
 @ stdcall SHGetFileInfoW(ptr long ptr long long)
 @ stdcall SHGetInstanceExplorer(long)
 @ stdcall SHGetMalloc(ptr)
 @ stub SHGetNewLinkInfo
-@ stdcall SHGetPathFromIDList(ptr ptr)SHGetPathFromIDListAW
+@ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListA(ptr ptr)
 @ stdcall SHGetPathFromIDListW(ptr ptr)
 @ stdcall SHGetSettings(ptr long)
