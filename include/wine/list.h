@@ -143,6 +143,12 @@ inline static void list_init( struct list *list )
 #define LIST_FOR_EACH(cursor,list) \
     for ((cursor) = (list)->next; (cursor) != (list); (cursor) = (cursor)->next)
 
+/* iterate through the list, with safety against removal */
+#define LIST_FOR_EACH_SAFE(cursor, cursor2, list) \
+    for ((cursor) = (list)->next, (cursor2) = (cursor)->next; \
+         (cursor) != (list); \
+         (cursor) = (cursor2), (cursor2) = (cursor)->next)
+
 /* macros for statically initialized lists */
 #define LIST_INIT(list)  { &(list), &(list) }
 
