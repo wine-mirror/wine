@@ -83,6 +83,19 @@ extern int DMA_Transfer(int channel,int reqlength,void* buffer);
 extern void DMA_ioport_out( WORD port, BYTE val );
 extern BYTE DMA_ioport_in( WORD port );
 
+/* fpu.c */
+extern void WINAPI DOSVM_Int34Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int35Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int36Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int37Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int38Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int39Handler(CONTEXT86*);
+extern void WINAPI DOSVM_Int3aHandler(CONTEXT86*);
+extern void WINAPI DOSVM_Int3bHandler(CONTEXT86*);
+extern void WINAPI DOSVM_Int3cHandler(CONTEXT86*);
+extern void WINAPI DOSVM_Int3dHandler(CONTEXT86*);
+extern void WINAPI DOSVM_Int3eHandler(CONTEXT86*);
+
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int09SendScan(BYTE scan,BYTE ascii);
@@ -91,6 +104,15 @@ extern BYTE WINAPI DOSVM_Int09ReadScan(BYTE*ascii);
 /* int10.c */
 extern void WINAPI DOSVM_Int10Handler(CONTEXT86*);
 extern void WINAPI DOSVM_PutChar(BYTE ascii);
+
+/* int12.c */
+extern void WINAPI DOSVM_Int12Handler(CONTEXT86*);
+
+/* int13.c */
+extern void WINAPI DOSVM_Int13Handler(CONTEXT86*);
+
+/* int1a.c */
+extern void WINAPI DOSVM_Int1aHandler(CONTEXT86*);
 
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT86*);
@@ -112,6 +134,9 @@ extern void WINAPI DOSVM_Int21Handler(CONTEXT86*);
 /* int29.c */
 extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 
+/* int2a.c */
+extern void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
+
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 extern BOOL DOSVM_IsDos32(void);
@@ -120,6 +145,12 @@ extern BOOL DOSVM_IsDos32(void);
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Message(UINT,WPARAM,LPARAM);
 extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
+
+/* int41.c */
+extern void WINAPI DOSVM_Int41Handler(CONTEXT86*);
+
+/* int4b.c */
+extern void WINAPI DOSVM_Int4bHandler(CONTEXT86*);
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);

@@ -10,11 +10,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *	    INT_Int2aHandler (WPROCS.142)
+ *         DOSVM_Int2aHandler (WINEDOS16.142)
  *
  * Handler for int 2ah (network).
  */
-void WINAPI INT_Int2aHandler( CONTEXT86 *context )
+void WINAPI DOSVM_Int2aHandler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {
@@ -22,6 +22,6 @@ void WINAPI INT_Int2aHandler( CONTEXT86 *context )
         break;
 
     default:
-	INT_BARF( context, 0x2a );
+       INT_BARF( context, 0x2a );
     }
 }

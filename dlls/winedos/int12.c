@@ -5,11 +5,11 @@
 #include "miscemu.h"
 
 /**********************************************************************
- *	    INT_Int12Handler (WPROCS.118)
+ *         DOSVM_Int12Handler (WINEDOS16.118)
  *
  * Handler for int 12h (get memory size).
  */
-void WINAPI INT_Int12Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int12Handler( CONTEXT86 *context )
 {
     SET_AX( context, 640 );
 }

@@ -1,7 +1,6 @@
 /*
  * DOS interrupt 34->3e handlers.  All FPU interrupt code should be
  * moved into this file.
- *  int 3d is not activated yet...
  *
  * Copyright 2002 Robert 'Admiral' Coeyman
  *
@@ -34,71 +33,68 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode);
 
 
-
 /**********************************************************************
- *          INT_Int34Handler (WPROCS.152)
+ *          DOSVM_Int34Handler (WINEDOS16.152)
  *
  * Handler for int 34 (FLOATING POINT EMULATION - Opcode 0xd8).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int34Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int34Handler(CONTEXT86 *context)
 {
-
-	TRACE("Int 0x34 called-- FP opcode 0xd8");
-	FPU_ModifyCode(context, 0xd8);
-
+    TRACE("Int 0x34 called-- FP opcode 0xd8");
+    FPU_ModifyCode(context, 0xd8);
 }
 
+
 /**********************************************************************
- *          INT_Int35Handler (WPROCS.153)
+ *          DOSVM_Int35Handler (WINEDOS16.153)
  *
  * Handler for int 35 (FLOATING POINT EMULATION - Opcode 0xd9).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int35Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int35Handler(CONTEXT86 *context)
 {
-	TRACE("Int 0x35 called-- FP opcode 0xd9");
-	FPU_ModifyCode(context, 0xd9);
-
+    TRACE("Int 0x35 called-- FP opcode 0xd9");
+    FPU_ModifyCode(context, 0xd9);
 }
 
 
 /**********************************************************************
- *          INT_Int36Handler (WPROCS.154)
+ *          DOSVM_Int36Handler (WINEDOS16.154)
  *
  * Handler for int 36 (FLOATING POINT EMULATION - Opcode 0xda).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int36Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int36Handler(CONTEXT86 *context)
 {
-	TRACE("Int 0x36 called-- FP opcode 0xda");
-	FPU_ModifyCode(context, 0xda);
-
+    TRACE("Int 0x36 called-- FP opcode 0xda");
+    FPU_ModifyCode(context, 0xda);
 }
 
+
 /**********************************************************************
- *          INT_Int37Handler (WPROCS.155)
+ *          DOSVM_Int37Handler (WINEDOS16.155)
  *
  * Handler for int 37 (FLOATING POINT EMULATION - Opcode 0xdb).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int37Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int37Handler(CONTEXT86 *context)
 {
-	TRACE("Int 0x37 called-- FP opcode 0xdb");
-	FPU_ModifyCode(context, 0xdb);
-
+    TRACE("Int 0x37 called-- FP opcode 0xdb");
+    FPU_ModifyCode(context, 0xdb);
 }
 
+
 /**********************************************************************
- *          INT_Int38Handler (WPROCS.156)
+ *          DOSVM_Int38Handler (WINEDOS16.156)
  *
  * Handler for int 38 (FLOATING POINT EMULATION - Opcode 0xdc).
  *
@@ -108,62 +104,60 @@ void WINAPI INT_Int37Handler(CONTEXT86 *context)
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int38Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int38Handler(CONTEXT86 *context)
 {
-	TRACE("Int 0x38 called-- FP opcode 0xdc");
-	FPU_ModifyCode(context, 0xdc);
-
+    TRACE("Int 0x38 called-- FP opcode 0xdc");
+    FPU_ModifyCode(context, 0xdc);
 }
 
+
 /**********************************************************************
- *          INT_Int39Handler (WPROCS.157)
+ *          DOSVM_Int39Handler (WINEDOS16.157)
  *
  * Handler for int 39 (FLOATING POINT EMULATION - Opcode 0xdd).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int39Handler(CONTEXT86 *context)
+void WINAPI DOSVM_Int39Handler(CONTEXT86 *context)
 {
-	TRACE("Int 0x39 called-- FP opcode 0xdd");
-	FPU_ModifyCode(context, 0xdd);
-
+    TRACE("Int 0x39 called-- FP opcode 0xdd");
+    FPU_ModifyCode(context, 0xdd);
 }
 
+
 /**********************************************************************
- *          INT_Int3aHandler (WPROCS.158)
+ *          DOSVM_Int3aHandler (WINEDOS16.158)
  *
  * Handler for int 3a (FLOATING POINT EMULATION - Opcode 0xde).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int3aHandler(CONTEXT86 *context)
+void WINAPI DOSVM_Int3aHandler(CONTEXT86 *context)
 {
-	TRACE("Int 0x3a called-- FP opcode 0xde");
-	FPU_ModifyCode(context, 0xde);
-
+    TRACE("Int 0x3a called-- FP opcode 0xde");
+    FPU_ModifyCode(context, 0xde);
 }
 
+
 /**********************************************************************
- *          INT_Int3bHandler (WPROCS.159)
+ *          DOSVM_Int3bHandler (WINEDOS16.159)
  *
  * Handler for int 3B (FLOATING POINT EMULATION - Opcode 0xdf).
  *
  *  The interrupt list isn't specific about what this interrupt
  *  actually does. [ interrup.m ]
  */
-void WINAPI INT_Int3bHandler(CONTEXT86 *context)
+void WINAPI DOSVM_Int3bHandler(CONTEXT86 *context)
 {
-	TRACE("Int 0x3b called-- FP opcode 0xdf");
-	FPU_ModifyCode(context, 0xdf);
-
+    TRACE("Int 0x3b called-- FP opcode 0xdf");
+    FPU_ModifyCode(context, 0xdf);
 }
 
 
-
 /**********************************************************************
- *          INT_Int3cHandler (WPROCS.160)
+ *          DOSVM_Int3cHandler (WINEDOS16.160)
  *
  * Handler for int 3C (FLOATING POINT EMULATION - INSTRUCTIONS WITH SEGMENT OVERRIDE).
  *
@@ -171,37 +165,36 @@ void WINAPI INT_Int3bHandler(CONTEXT86 *context)
  *   xy is a modified ESC code and mm is the modR/M byte.
  *   xy byte seems to be encoded as ss011xxx  or ss000xxx
  *   ss= segment override.
- *	00 -> DS
- *	01 -> SS
- *	10 -> CS
- *	11 -> ES
+ *     00 -> DS
+ *     01 -> SS
+ *     10 -> CS
+ *     11 -> ES
  *
  *  11011xxx should be the opcode instruction.
  */
-void WINAPI INT_Int3cHandler(CONTEXT86 *context)
+void WINAPI DOSVM_Int3cHandler(CONTEXT86 *context)
 {
-	FIXME("Int 3C NOT Implemented");
-	INT_BARF(context, 0x3c);
+    FIXME("Int 3C NOT Implemented");
+    INT_BARF(context, 0x3c);
 }
 
+
 /**********************************************************************
- *          INT_Int3dHandler (WPROCS.161)
+ *          DOSVM_Int3dHandler (WINEDOS16.161)
  *
  * Handler for int 3D (FLOATING POINT EMULATION - Standalone FWAIT).
  *
  *  Opcode 0x90 is a NOP.  It just fills space where the 3D was.
  */
-void WINAPI INT_Int3dHandler(CONTEXT86 *context)
+void WINAPI DOSVM_Int3dHandler(CONTEXT86 *context)
 {
-	TRACE("Int 0x3d called-- Standalone FWAIT");
-	FPU_ModifyCode(context, 0x90);
-
+    TRACE("Int 0x3d called-- Standalone FWAIT");
+    FPU_ModifyCode(context, 0x90);
 }
 
 
-
 /**********************************************************************
- *          INT_Int3eHandler (WPROCS.162)
+ *          DOSVM_Int3eHandler (WINEDOS16.162)
  *
  * FLOATING POINT EMULATION -- Borland "Shortcut" call.
  *  The two bytes following the int 3E instruction are
@@ -211,11 +204,12 @@ void WINAPI INT_Int3dHandler(CONTEXT86 *context)
  *  Direct access 4.0 modifies and does not restore this vector.
  *
  */
-void WINAPI INT_Int3eHandler(CONTEXT86 *context)
+void WINAPI DOSVM_Int3eHandler(CONTEXT86 *context)
 {
-	FIXME("Int 3E NOT Implemented");
-	INT_BARF(context, 0x3e);
+    FIXME("Int 3E NOT Implemented");
+    INT_BARF(context, 0x3e);
 }
+
 
 /**********************************************************************
  *          FPU_ModifyCode
@@ -228,19 +222,19 @@ void WINAPI INT_Int3eHandler(CONTEXT86 *context)
  */
 static void FPU_ModifyCode(CONTEXT86 *context, BYTE Opcode)
 {
-  WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-  BYTE *code =  CTX_SEG_OFF_TO_LIN(context, stack[1], stack[0]);
+    WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
+    BYTE *code =  CTX_SEG_OFF_TO_LIN(context, stack[1], stack[0]);
 
-/*
- * All *NIX systems should have a real or kernel emulated FPU.
- */
+    /*
+     * All *NIX systems should have a real or kernel emulated FPU.
+     */
 
-  code[-2] = 0x9b;          /* The fwait instruction */
-  code[-1] = Opcode;        /* Insert the opcode     */
+    code[-2] = 0x9b;          /* The fwait instruction */
+    code[-1] = Opcode;        /* Insert the opcode     */
 
-  if ( stack[0] < 2 ) FIXME("Backed up over a segment boundry in FPU code.");
+    if ( stack[0] < 2 ) FIXME("Backed up over a segment boundry in FPU code.");
 
-  stack[0] -= 2;             /* back up the return address 2 bytes */
+    stack[0] -= 2;             /* back up the return address 2 bytes */
 
-  TRACE("Modified code in FPU int call to 0x9b 0x%x",Opcode);
+    TRACE("Modified code in FPU int call to 0x9b 0x%x",Opcode);
 }

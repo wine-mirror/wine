@@ -26,27 +26,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
  *		DOSVM_Int11Handler (WINEDOS16.117)
- *		DOSVM_Int12Handler (WINEDOS16.118)
- *		DOSVM_Int13Handler (WINEDOS16.119)
  *		DOSVM_Int15Handler (WINEDOS16.121)
- *		DOSVM_Int1aHandler (WINEDOS16.126)
  *		DOSVM_Int25Handler (WINEDOS16.137)
  *		DOSVM_Int26Handler (WINEDOS16.138)
- *		DOSVM_Int2aHandler (WINEDOS16.142)
  *		DOSVM_Int2fHandler (WINEDOS16.147)
- *		DOSVM_Int34Handler (WINEDOS16.152)
- *		DOSVM_Int35Handler (WINEDOS16.153)
- *		DOSVM_Int36Handler (WINEDOS16.154)
- *		DOSVM_Int37Handler (WINEDOS16.155)
- *		DOSVM_Int38Handler (WINEDOS16.156)
- *		DOSVM_Int39Handler (WINEDOS16.157)
- *		DOSVM_Int3aHandler (WINEDOS16.158)
- *		DOSVM_Int3bHandler (WINEDOS16.159)
- *		DOSVM_Int3cHandler (WINEDOS16.160)
- *		DOSVM_Int3dHandler (WINEDOS16.161)
- *		DOSVM_Int3eHandler (WINEDOS16.162)
- *		DOSVM_Int41Handler (WINEDOS16.165)
- *		DOSVM_Int4bHandler (WINEDOS16.175)
  *		DOSVM_Int5cHandler (WINEDOS16.192)
  *
  * FIXME: Interrupt handlers for interrupts implemented in other DLLs.
@@ -54,27 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *        been moved to winedos.
  */
 void WINAPI DOSVM_Int11Handler( CONTEXT86 *context ) { INT_Int11Handler(context); }
-void WINAPI DOSVM_Int12Handler( CONTEXT86 *context ) { INT_Int12Handler(context); }
-void WINAPI DOSVM_Int13Handler( CONTEXT86 *context ) { INT_Int13Handler(context); }
 void WINAPI DOSVM_Int15Handler( CONTEXT86 *context ) { INT_Int15Handler(context); }
-void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context ) { INT_Int1aHandler(context); }
 void WINAPI DOSVM_Int25Handler( CONTEXT86 *context ) { INT_Int25Handler(context); }
 void WINAPI DOSVM_Int26Handler( CONTEXT86 *context ) { INT_Int26Handler(context); }
-void WINAPI DOSVM_Int2aHandler( CONTEXT86 *context ) { INT_Int2aHandler(context); }
 void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context ) { INT_Int2fHandler(context); }
-void WINAPI DOSVM_Int34Handler( CONTEXT86 *context ) { INT_Int34Handler(context); }
-void WINAPI DOSVM_Int35Handler( CONTEXT86 *context ) { INT_Int35Handler(context); }
-void WINAPI DOSVM_Int36Handler( CONTEXT86 *context ) { INT_Int36Handler(context); }
-void WINAPI DOSVM_Int37Handler( CONTEXT86 *context ) { INT_Int37Handler(context); }
-void WINAPI DOSVM_Int38Handler( CONTEXT86 *context ) { INT_Int38Handler(context); }
-void WINAPI DOSVM_Int39Handler( CONTEXT86 *context ) { INT_Int39Handler(context); }
-void WINAPI DOSVM_Int3aHandler( CONTEXT86 *context ) { INT_Int3aHandler(context); }
-void WINAPI DOSVM_Int3bHandler( CONTEXT86 *context ) { INT_Int3bHandler(context); }
-void WINAPI DOSVM_Int3cHandler( CONTEXT86 *context ) { INT_Int3cHandler(context); }
-void WINAPI DOSVM_Int3dHandler( CONTEXT86 *context ) { INT_Int3dHandler(context); }
-void WINAPI DOSVM_Int3eHandler( CONTEXT86 *context ) { INT_Int3eHandler(context); }
-void WINAPI DOSVM_Int41Handler( CONTEXT86 *context ) { INT_Int41Handler(context); }
-void WINAPI DOSVM_Int4bHandler( CONTEXT86 *context ) { INT_Int4bHandler(context); }
 void WINAPI DOSVM_Int5cHandler( CONTEXT86 *context ) { NetBIOSCall16(context); }
 
 static FARPROC16     DOSVM_Vectors16[256];

@@ -9,10 +9,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
- *           INT_Int4bHandler (WPROCS.175)
+ *           DOSVM_Int4bHandler (WINEDOS16.175)
  *
  */
-void WINAPI INT_Int4bHandler( CONTEXT86 *context )
+void WINAPI DOSVM_Int4bHandler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {

@@ -27,10 +27,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /***********************************************************************
- *           INT_Int41Handler (WPROCS.165)
+ *           DOSVM_Int41Handler (WINEDOS16.165)
  *
  */
-void WINAPI INT_Int41Handler( CONTEXT86 *context )
+void WINAPI DOSVM_Int41Handler( CONTEXT86 *context )
 {
     if ( ISV86(context) )
     {
@@ -68,4 +68,3 @@ void WINAPI INT_Int41Handler( CONTEXT86 *context )
         }
     }
 }
-
