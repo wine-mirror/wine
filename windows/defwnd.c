@@ -217,15 +217,20 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_CONTEXTMENU:
 	if( wndPtr->dwStyle & WS_CHILD )
 	    SendMessageA( wndPtr->parent->hwndSelf, msg, wParam, lParam );
-	else
-	  if (wndPtr->hSysMenu)
-	  { /*
-	    TrackPopupMenu32(wndPtr->hSysMenu,TPM_LEFTALIGN | TPM_RETURNCMD,LOWORD(lParam),HIWORD(lParam),0,wndPtr->hwndSelf,NULL);
-	    DestroyMenu32(wndPtr->hSysMenu);
-	    */
-	    FIXME("Display default popup menu\n");
-	  /* Track system popup if click was in the caption area. */
-	  }
+	else if (wndPtr->hSysMenu)
+        {
+            LONG hitcode;
+            POINT16 pt = MAKEPOINT16(lParam);
+
+            ScreenToClient16(wndPtr->hwndSelf, &pt);
+            hitcode = NC_HandleNCHitTest(wndPtr->hwndSelf, pt);
+
+            /* Track system popup if click was in the caption area. */
+            if (hitcode==HTCAPTION || hitcode==HTSYSMENU)
+                TrackPopupMenu(GetSystemMenu(wndPtr->hwndSelf, FALSE),
+                               TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
+                               pt.x, pt.y, 0, wndPtr->hwndSelf, NULL);
+        }
 	break;
 
     case WM_NCACTIVATE:
