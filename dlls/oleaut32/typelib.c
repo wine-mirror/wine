@@ -4300,14 +4300,14 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
 		    if (V_VT(arg) == tdesc->vt) {
 			memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
-		    } else {
-			if (tdesc->vt == VT_VARIANT) {
-			    memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
-			} else {
-			    ERR("Set arg %d to disparg type %d vs %d\n",i,
-				    V_VT(arg),tdesc->vt
-			    );
-			}
+                   } else if(V_ISBYREF(arg) && ((V_VT(arg) & ~VT_BYREF)==tdesc->vt)) {
+                       memcpy(&args[argspos],(void*)V_UNION(arg,lVal), arglen*sizeof(DWORD));
+                    } else if (tdesc->vt == VT_VARIANT) {
+                       memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
+                    } else {
+                       ERR("Set arg %d to disparg type %d vs %d\n",i,
+                           V_VT(arg),tdesc->vt
+                       );
 		    }
 		    argspos += arglen;
 		} else {
