@@ -567,8 +567,8 @@ serialize_param(
     
     case VT_BSTR: {
 	if (debugout) {
-	    if (arg)
-		    TRACE_(olerelay)("%s",relaystr((BSTR)*arg));
+	    if (*arg)
+                   TRACE_(olerelay)("%s",relaystr((WCHAR*)*arg));
 	    else
 		    TRACE_(olerelay)("<bstr NULL>");
 	}
