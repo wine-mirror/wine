@@ -297,14 +297,17 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	    hr = SHILCreateFromPathA(path, &pidl, &dwAttributes);
 	}
 
-	/* get the parent shellfolder */
-	if (pidl) {
-	    hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
-	    ILFree(pidl);
-	} else {
-	    ERR("pidl is null!\n");
-	    return FALSE;
-	}
+        if ((flags & SHGFI_PIDL) || !(flags & SHGFI_USEFILEATTRIBUTES))
+        {
+	   /* get the parent shellfolder */
+	   if (pidl) {
+	      hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
+	      ILFree(pidl);
+	   } else {
+	      ERR("pidl is null!\n");
+	      return FALSE;
+	   }
+        }
 
 	/* get the attributes of the child */
 	if (SUCCEEDED(hr) && (flags & SHGFI_ATTRIBUTES))
@@ -338,13 +341,18 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                 _ILGetFileType(pidlLast, psfi->szTypeName, 80);
             else
             {
-                char sTemp[64];
-                strcpy(sTemp,PathFindExtensionA(path));
-                if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
-                       && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+                if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                   strcat (psfi->szTypeName, "File");
+                else 
                 {
-                    lstrcpynA (psfi->szTypeName, sTemp, 80 - 6);
-                    strcat (psfi->szTypeName, "-file");
+                   char sTemp[64];
+                   strcpy(sTemp,PathFindExtensionA(path));
+                   if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
+                        && HCR_MapTypeToValue(sTemp, psfi->szTypeName, 80, FALSE )))
+                   {
+                       lstrcpynA (psfi->szTypeName, sTemp, 64);
+                       strcat (psfi->szTypeName, "-file");
+                   }
                 }
             }
         }
@@ -390,28 +398,26 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	    DWORD dwNr=0;
 
 	    lstrcpynA(sTemp, path, MAX_PATH);
-	    szExt = (LPSTR) PathFindExtensionA(sTemp);
-	    if( szExt && HCR_MapTypeToValue(szExt, sTemp, MAX_PATH, TRUE)
-              && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+
+            if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+               psfi->iIcon = 2;
+            else
             {
-              if (!strcmp("%1",sTemp))            /* icon is in the file */
-              {
-                strcpy(sTemp, path);
-              }
-              IconNotYetLoaded=FALSE;
-              psfi->iIcon = 0;
-              if (SHGFI_LARGEICON)
-                PrivateExtractIconsA(sTemp,dwNr,GetSystemMetrics(SM_CXICON),
-                                     GetSystemMetrics(SM_CYICON),
-                                     &psfi->hIcon,0,1,0);
-              else
-                PrivateExtractIconsA(sTemp,dwNr,GetSystemMetrics(SM_CXSMICON),
-                                     GetSystemMetrics(SM_CYSMICON),
-                                     &psfi->hIcon,0,1,0);
-            }
-            else                                  /* default icon */
-            {
-              psfi->iIcon = 0;
+               psfi->iIcon = 0;
+               szExt = (LPSTR) PathFindExtensionA(sTemp);
+               if ( szExt && HCR_MapTypeToValue(szExt, sTemp, MAX_PATH, TRUE)
+                   && HCR_GetDefaultIcon(sTemp, sTemp, MAX_PATH, &dwNr))
+               {
+                  if (!strcmp("%1",sTemp))            /* icon is in the file */
+                     strcpy(sTemp, path);
+              
+                  IconNotYetLoaded=FALSE;
+                  /* FIXME: is it working correctly? */
+                  PrivateExtractIconsA(sTemp,dwNr,(flags&SHGFI_LARGEICON) ? 
+                    GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXSMICON),
+                    (flags&SHGFI_LARGEICON) ? GetSystemMetrics(SM_CYICON) :
+                    GetSystemMetrics(SM_CYSMICON), &psfi->hIcon,0,1,0);
+               }
             }
 	  }
 	  else
