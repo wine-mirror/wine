@@ -547,7 +547,7 @@ typedef enum tagREGKIND
 
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
 
-ULONG WINAPI LHashValOfNameSysA(SYSKIND syskind,LCID lcid,LPCSTR* szName);
+ULONG WINAPI LHashValOfNameSysA(SYSKIND syskind,LCID lcid,LPCSTR szName);
 ULONG WINAPI LHashValOfNameSys (SYSKIND syskind,LCID lcid,LPCOLESTR szName);
 
 HRESULT WINAPI DispGetParam(DISPPARAMS* pdispparams, UINT position,

@@ -12,6 +12,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	connpt.c \
 	dispatch.c \
+	hash.c \
 	ole2disp.c \
 	oleaut.c \
 	olefont.c \

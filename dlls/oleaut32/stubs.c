@@ -49,28 +49,3 @@ HRESULT WINAPI OleCreatePropertyFrame(
 	return S_OK;
 }
  
-/***********************************************************************
- *		LHashValOfNameSysA
- */
-ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR str)
-{
-    /* returns a 16 bit hashvalue (depending on skind and lcid) in the
-     * lowword and a unique id made from skind and lcid in bits 23-16
-     */
-    FIXME("(%d,%x,%s), stub, returning 0x424242!\n",skind,(int)lcid,debugstr_a(str));
-    return 0x00424242;
-}
-/***********************************************************************
- *		LHashValOfNameSys
- */
-ULONG WINAPI LHashValOfNameSys( SYSKIND skind, LCID lcid, LPCOLESTR str)
-{
-    LPSTR	strA;
-    ULONG	res;
-    
-    if (!str) return 0;
-    strA = HEAP_strdupWtoA(GetProcessHeap(),0,str);
-    res = LHashValOfNameSysA(skind,lcid,strA);
-    HeapFree(GetProcessHeap(),0,strA);
-    return res;
-}
