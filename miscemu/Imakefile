@@ -8,8 +8,6 @@ SRCS = \
 	instr.c \
 	int10.c \
 	int13.c \
-	int15.c \
-	int16.c \
 	int1a.c \
 	int21.c \
 	int25.c \

@@ -15,7 +15,6 @@
 #include "menu.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
-/* #define DEBUG_MDI */
 #include "debug.h"
 
 /**********************************************************************
@@ -61,6 +60,21 @@ void MDIRecreateMenuList(MDICLIENTINFO *ci)
     }
 }
 
+/**********************************************************************
+ *					MDISetMenu
+ * FIXME: This is not complete.
+ */
+HMENU MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU hmenuFrame, HMENU hmenuWindow)
+{
+    dprintf_mdi(stddeb, "WM_MDISETMENU: %04x %04x %04x %04x\n", hwnd, fRefresh, hmenuFrame, hmenuWindow);
+    if (!fRefresh) {
+	HWND hwndFrame = GetParent(hwnd);
+	HMENU oldFrameMenu = GetMenu(hwndFrame);
+	SetMenu(hwndFrame, hmenuFrame);
+	return oldFrameMenu;
+    }
+    return 0;
+}
 
 /**********************************************************************
  *					MDIIconArrange
@@ -666,8 +680,7 @@ LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	return MDIRestoreChild(hwnd, ci);
 
       case WM_MDISETMENU:
-	/* return MDISetMenu(...) */
-	break;
+	return MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
 	
       case WM_MDITILE:
 	return MDITile(hwnd, ci);

@@ -1,6 +1,7 @@
 #ifndef __WINE_PE_IMAGE_H
 #define __WINE_PE_IMAGE_H
 
+extern void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint);
 extern int PE_unloadImage(struct w_files *wpnt);
 extern int PE_StartProgram(struct w_files *wpnt);
 extern void PE_InitDLL(struct w_files *wpnt);

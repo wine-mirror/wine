@@ -7,13 +7,17 @@
 /* #define DEBUG_INT */
 #include "debug.h"
 
-int do_int13(struct sigcontext_struct *context)
-{
-        dprintf_int(stddeb,"int13: AX %04x, BX %04x, CX %04x, DX %04x, "
-               "SI %04x, DI %04x, DS %04x, ES %04x\n",
-               AX, BX, CX, DX, SI, DI, DS, ES);
 
-	switch(AH) {
+/**********************************************************************
+ *	    INT_Int13Handler
+ *
+ * Handler for int 13h (disk I/O).
+ */
+void INT_Int13Handler( struct sigcontext_struct sigcontext )
+{
+#define context (&sigcontext)
+    switch(AH)
+    {
 	case 0x00:                            /* RESET DISK SYSTEM     */
 	case 0x04:                            /* VERIFY DISK SECTOR(S) */
 		AH = 0;
@@ -52,7 +56,7 @@ int do_int13(struct sigcontext_struct *context)
 		break;
 
 	default:
-		IntBarf(0x13, context);
-	};
-	return 1;
+		INT_BARF( 0x13 );
+    }
+#undef context
 }

@@ -37,11 +37,7 @@ int main(int argc,char *argv[])
 	extern char* optarg;
 	int optc,lose,ret,binary;
 	lose=binary=0;
-#if defined(__NetBSD__) || defined(__FreeBSD__)
 	while((optc=getopt(argc,argv,"bdp:vo:"))!=EOF)
-#else
-	while((optc=getopt(argc,argv,"bdp:vo:",0))!=EOF)
-#endif
 		switch(optc)
 		{
 			/* bison will print state transitions on stderr */
@@ -531,7 +527,7 @@ void create_output(gen_res* top)
 	fprintf(header,"extern %sstruct ResourceTable %sTable[];\n",
 		ISCONSTANT,prefix);
 
-	fprintf(code,"#include \"prototypes.h\"\n#include \"%s\"\n",hname);
+	fprintf(code,"#include \"windows.h\"\n#include \"%s\"\n",hname);
 
 	/* print the resource table (0 terminated) */
 	fprintf(code,"\n%sstruct ResourceTable %sTable[]={\n",ISCONSTANT,prefix);

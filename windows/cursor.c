@@ -18,9 +18,8 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "neexe.h"
 #include "wine.h"
 #include "cursor.h"
+#include "resource.h"
 #include "stddebug.h"
-/* #define DEBUG_CURSOR   */
-/* #define DEBUG_RESOURCE */
 #include "debug.h"
 #include "arch.h"
 
@@ -191,7 +190,7 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
       fprintf(stderr,"No bitmap for cursor?\n");
       lpcur->hBitmap = 0;
     }
-    lpl = (char *)lpl + size + 8;
+    lpl = (LONG *)((char *)lpl + size + 8);
   /* This is rather strange! The data is stored *BACKWARDS* and       */
   /* mirrored! But why?? FIXME: the image must be flipped at the Y    */
   /* axis, either here or in CreateCusor(); */
@@ -308,8 +307,13 @@ HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot,
  */
 BOOL DestroyCursor(HCURSOR hCursor)
 {
+    int i;
     CURSORALLOC	*lpcur;
-    if (hCursor == (HCURSOR)NULL) return FALSE;
+    
+    if (hCursor == 0) return FALSE;
+    for (i = 0; i < NB_SYS_CURSORS; i++) {
+	if (system_cursor[i].cursor == hCursor) return TRUE;
+    }
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
     if (lpcur->hBitmap != (HBITMAP)NULL) DeleteObject(lpcur->hBitmap);
     GlobalUnlock(hCursor);
@@ -451,7 +455,3 @@ void GetClipCursor(LPRECT lpRetClipRect)
     if (lpRetClipRect != NULL)
 	CopyRect(lpRetClipRect, &ClipCursorRect);
 }
-
-
-
-

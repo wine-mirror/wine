@@ -517,17 +517,8 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 	break;
     }
     if (colorMapping) free(colorMapping);
-    {
-      WORD saved_ds = CURRENT_DS;
-      XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
-		xDest, yDest, width, height );
-      if (saved_ds != CURRENT_DS) {
-	fprintf(stderr,"Uh oh. XPutImage clobbered the 16 bit stack.\n"
-		"Please report: %s compression, %d bitplanes!!\n",
-		info->bmiHeader.biCompression ? "" : "no", 
-		info->bmiHeader.biBitCount);
-      }
-    }
+    XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
+	       xDest, yDest, width, height );
     XDestroyImage( bmpImage );
     return lines;
 }
@@ -656,8 +647,9 @@ int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
 
     if (bits)
     {	
-	bmpImage = XGetImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
-			      bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
+	bmpImage = (XImage *)CallTo32_LargeStack( (int (*)())XGetImage, 8, 
+		               display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
+		               bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
 	dibImage = DIB_DIBmpToImage( &info->bmiHeader, bits );
 
 	for (y = 0; y < lines; y++)
@@ -733,4 +725,3 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     SetBkColor( hDC, oldBg );
     return TRUE;
 }
-

@@ -37,6 +37,14 @@
 #define ES (context->sc_es)
 #define SS (context->sc_ss)
 
+#ifdef linux
+#define FS (context->sc_fs)
+#define GS (context->sc_gs)
+#else  /* FIXME: are fs and gs supported under *BSD? */
+#define FS  0
+#define GS  0
+#endif
+
 #ifndef __FreeBSD__
 #define EFL (context->sc_eflags)
 #define FL (*(WORD*)&context->sc_eflags)

@@ -25,40 +25,21 @@ static int	InstalledCount;
 static int	InstalledListLen;
 static LPSTR	lpInstallNames = NULL;
 
-static BOOL		mmTimeStarted = FALSE;
-static MMTIME	mmSysTimeMS;
-static MMTIME	mmSysTimeSMPTE;
-
-typedef struct tagTIMERENTRY {
-	WORD		wDelay;
-	WORD		wResol;
-	FARPROC		lpFunc;
-	DWORD		dwUser;
-	WORD		wFlags;
-	WORD		wTimerID;
-	WORD		wCurTime;
-	struct tagTIMERENTRY	*Next;
-	struct tagTIMERENTRY	*Prev;
-	} TIMERENTRY;
-typedef TIMERENTRY *LPTIMERENTRY;
-
-static LPTIMERENTRY lpTimerList = NULL;
-
 static MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 
 UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 LONG DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-						DWORD dwParam1, DWORD dwParam2);
+		      DWORD dwParam1, DWORD dwParam2);
 
 LONG WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-							DWORD dwParam1, DWORD dwParam2);
+		     DWORD dwParam1, DWORD dwParam2);
 LONG MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-							DWORD dwParam1, DWORD dwParam2);
+		     DWORD dwParam1, DWORD dwParam2);
 LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-							DWORD dwParam1, DWORD dwParam2);
+			DWORD dwParam1, DWORD dwParam2);
 LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-							DWORD dwParam1, DWORD dwParam2);
+		     DWORD dwParam1, DWORD dwParam2);
 
 /**************************************************************************
 * 				MMSYSTEM_WEP		[MMSYSTEM.1]
@@ -240,81 +221,6 @@ BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev,
 		}
 	return TRUE;
 }
-
-/**************************************************************************
-* 				JoyGetNumDevs		[MMSYSTEM.101]
-*/
-WORD JoyGetNumDevs()
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoyGetNumDevs();\n");
-	return 0;
-}
-
-/**************************************************************************
-* 				JoyGetDevCaps		[MMSYSTEM.102]
-*/
-WORD JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoyGetDevCaps(%04X, %p, %d);\n", 
-										wID, lpCaps, wSize);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoyGetPos			[MMSYSTEM.103]
-*/
-WORD JoyGetPos(WORD wID, LPJOYINFO lpInfo)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoyGetPos(%04X, %p);\n", wID, lpInfo);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoyGetThreshold		[MMSYSTEM.104]
-*/
-WORD JoyGetThreshold(WORD wID, LPWORD lpThreshold)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoyGetThreshold(%04X, %p);\n", wID, lpThreshold);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoyReleaseCapture	[MMSYSTEM.105]
-*/
-WORD JoyReleaseCapture(WORD wID)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoyReleaseCapture(%04X);\n", wID);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoySetCapture		[MMSYSTEM.106]
-*/
-WORD JoySetCapture(HWND hWnd, WORD wID, WORD wPeriod, BOOL bChanged)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoySetCapture(%04X, %04X, %d, %d);\n", 
-							hWnd, wID, wPeriod, bChanged);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoySetThreshold		[MMSYSTEM.107]
-*/
-WORD JoySetThreshold(WORD wID, WORD wThreshold)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoySetThreshold(%04X, %d);\n", wID, wThreshold);
-	return MMSYSERR_NODRIVER;
-}
-
-/**************************************************************************
-* 				JoySetCalibration	[MMSYSTEM.109]
-*/
-WORD JoySetCalibration(WORD wID)
-{
-	fprintf(stdnimp, "EMPTY STUB !!! JoySetCalibration(%04X);\n", wID);
-	return MMSYSERR_NODRIVER;
-}
-
 
 /**************************************************************************
 * 				auxGetNumDevs		[MMSYSTEM.350]
@@ -1930,7 +1836,7 @@ UINT waveInGetPosition(HWAVEIN hWaveIn, MMTIME FAR* lpTime, UINT uSize)
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
 	return widMessage(0, WIDM_GETPOS, lpDesc->dwInstance,
-							(DWORD)lpTime, (DWORD)uSize);
+			  (DWORD)lpTime, (DWORD)uSize);
 }
 
 
@@ -1949,7 +1855,7 @@ UINT waveInGetID(HWAVEIN hWaveIn, UINT FAR* lpuDeviceID)
 * 				waveInMessage 		[MMSYSTEM.514]
 */
 DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
-							DWORD dwParam1, DWORD dwParam2)
+		    DWORD dwParam1, DWORD dwParam2)
 {
 	LPWAVEOPENDESC	lpDesc;
 	dprintf_mmsys(stddeb, "waveInMessage(%04X, %04X, %08lX, %08lX)\n", 
@@ -1961,161 +1867,7 @@ DWORD waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
 
 /**************************************************************************
-* 				MMSysTimeCallback	[internal]
-*/
-WORD FAR PASCAL MMSysTimeCallback(HWND hWnd, WORD wMsg, int nID, DWORD dwTime)
-{
-	LPTIMERENTRY	lpTimer = lpTimerList;
-	mmSysTimeMS.u.ms += 33;
-	mmSysTimeSMPTE.u.smpte.frame++;
-	while (lpTimer != NULL) {
-		lpTimer->wCurTime--;
-		if (lpTimer->wCurTime == 0) {
-			lpTimer->wCurTime = lpTimer->wDelay;
-			if (lpTimer->lpFunc != (FARPROC)NULL) {
-				dprintf_mmtime(stddeb,"MMSysTimeCallback // before CallBack16 !\n");
-                                CallTimeFuncProc( lpTimer->lpFunc,
-                                                  lpTimer->wTimerID, 0,
-                                                  lpTimer->dwUser, 0, 0 );
-				dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
-				fflush(stdout);
-				}
-			if (lpTimer->wFlags & TIME_ONESHOT)
-				timeKillEvent(lpTimer->wTimerID);
-			}
-		lpTimer = lpTimer->Next;
-		}
-	return 0;
-}
-
-/**************************************************************************
-* 				StartMMTime			[internal]
-*/
-void StartMMTime()
-{
-	if (!mmTimeStarted) {
-		mmTimeStarted = TRUE;
-		mmSysTimeMS.wType = TIME_MS;
-		mmSysTimeMS.u.ms = 0;
-		mmSysTimeSMPTE.wType = TIME_SMPTE;
-		mmSysTimeSMPTE.u.smpte.hour = 0;
-		mmSysTimeSMPTE.u.smpte.min = 0;
-		mmSysTimeSMPTE.u.smpte.sec = 0;
-		mmSysTimeSMPTE.u.smpte.frame = 0;
-		mmSysTimeSMPTE.u.smpte.fps = 0;
-		mmSysTimeSMPTE.u.smpte.dummy = 0;
-		SetTimer(0, 1, 33, (FARPROC)MMSysTimeCallback);
-		}
-}
-
-/**************************************************************************
-* 				timeGetSystemTime	[MMSYSTEM.601]
-*/
-WORD timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
-{
-	dprintf_mmsys(stddeb, "timeGetSystemTime(%p, %u);\n", lpTime, wSize);
-	if (!mmTimeStarted) StartMMTime();
-	return 0;
-}
-
-/**************************************************************************
-* 				timeSetEvent		[MMSYSTEM.602]
-*/
-WORD timeSetEvent(WORD wDelay, WORD wResol, 
-				LPTIMECALLBACK lpFunc, 
-				DWORD dwUser, WORD wFlags)
-{
-	WORD			wNewID = 0;
-	LPTIMERENTRY	lpNewTimer;
-	LPTIMERENTRY	lpTimer = lpTimerList;
-	dprintf_mmsys(stddeb, "timeSetEvent(%u, %u, %p, %08lX, %04X);\n",
-			wDelay, wResol, lpFunc, dwUser, wFlags);
-	if (!mmTimeStarted) StartMMTime();
-	lpNewTimer = (LPTIMERENTRY) malloc(sizeof(TIMERENTRY));
-	if (lpNewTimer == NULL)	return 0;
-	while (lpTimer != NULL) {
-		wNewID = max(wNewID, lpTimer->wTimerID);
-		if (lpTimer->Next == NULL) break;
-		lpTimer = lpTimer->Next;
-		}
-	if (lpTimerList == NULL) {
-		lpTimerList = lpNewTimer;
-		lpNewTimer->Prev = NULL;
-		}
-	else {
-		lpTimer->Next = lpNewTimer;
-		lpNewTimer->Prev = lpTimer;
-		}
-	lpNewTimer->Next = NULL;
-	lpNewTimer->wTimerID = wNewID + 1;
-	lpNewTimer->wCurTime = wDelay;
-	lpNewTimer->wDelay = wDelay;
-	lpNewTimer->wResol = wResol;
-	lpNewTimer->lpFunc = (FARPROC)lpFunc;
-	lpNewTimer->dwUser = dwUser;
-	lpNewTimer->wFlags = wFlags;
-	return lpNewTimer->wTimerID;
-}
-
-/**************************************************************************
-* 				timeKillEvent		[MMSYSTEM.603]
-*/
-WORD timeKillEvent(WORD wID)
-{
-	LPTIMERENTRY	lpTimer = lpTimerList;
-	while (lpTimer != NULL) {
-		if (wID == lpTimer->wTimerID) {
-			if (lpTimer->Prev != NULL) lpTimer->Prev->Next = lpTimer->Next;
-			if (lpTimer->Next != NULL) lpTimer->Next->Prev = lpTimer->Prev;
-			free(lpTimer);
-			return TRUE;
-			}
-		lpTimer = lpTimer->Next;
-		}
-	return 0;
-}
-
-/**************************************************************************
-* 				timeGetDevCaps		[MMSYSTEM.604]
-*/
-WORD timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
-{
-	dprintf_mmsys(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
-	return 0;
-}
-
-/**************************************************************************
-* 				timeBeginPeriod		[MMSYSTEM.605]
-*/
-WORD timeBeginPeriod(WORD wPeriod)
-{
-	dprintf_mmsys(stddeb, "timeBeginPeriod(%u) !\n", wPeriod);
-	if (!mmTimeStarted) StartMMTime();
-	return 0;
-}
-
-/**************************************************************************
-* 				timeEndPeriod		[MMSYSTEM.606]
-*/
-WORD timeEndPeriod(WORD wPeriod)
-{
-	dprintf_mmsys(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
-	return 0;
-}
-
-/**************************************************************************
-* 				timeGetTime			[MMSYSTEM.607]
-*/
-DWORD timeGetTime()
-{
-	dprintf_mmsys(stddeb, "timeGetTime(); !\n");
-	if (!mmTimeStarted) StartMMTime();
-	return 0;
-}
-
-
-/**************************************************************************
-* 				mmioOpen			[MMSYSTEM.1210]
+* 				mmioOpen       		[MMSYSTEM.1210]
 */
 HMMIO mmioOpen(LPSTR szFileName, MMIOINFO FAR* lpmmioinfo, DWORD dwOpenFlags)
 {
@@ -2134,13 +1886,12 @@ HMMIO mmioOpen(LPSTR szFileName, MMIOINFO FAR* lpmmioinfo, DWORD dwOpenFlags)
 	lpmminfo->dwReserved2 = MAKELONG(hFile, 0);
 	GlobalUnlock(hmmio);
 	dprintf_mmsys(stddeb, "mmioOpen // return hmmio=%04X\n", hmmio);
-	return (HMMIO)hmmio;
+	return hmmio;
 }
-
 
     
 /**************************************************************************
-* 				mmioClose			[MMSYSTEM.1211]
+* 				mmioClose      		[MMSYSTEM.1211]
 */
 UINT mmioClose(HMMIO hmmio, UINT uFlags)
 {
@@ -2157,7 +1908,7 @@ UINT mmioClose(HMMIO hmmio, UINT uFlags)
 
 
 /**************************************************************************
-* 				mmioRead			[MMSYSTEM.1212]
+* 				mmioRead	       	[MMSYSTEM.1212]
 */
 LONG mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 {
@@ -2175,7 +1926,7 @@ LONG mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 
 
 /**************************************************************************
-* 				mmioWrite			[MMSYSTEM.1213]
+* 				mmioWrite      		[MMSYSTEM.1213]
 */
 LONG mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 {
@@ -2190,7 +1941,7 @@ LONG mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 }
 
 /**************************************************************************
-* 				mmioSeek			[MMSYSTEM.1214]
+* 				mmioSeek       		[MMSYSTEM.1214]
 */
 LONG mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin)
 {
@@ -2208,7 +1959,7 @@ LONG mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin)
 }
 
 /**************************************************************************
-* 				mmioGetInfo			[MMSYSTEM.1215]
+* 				mmioGetInfo	       	[MMSYSTEM.1215]
 */
 UINT mmioGetInfo(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
@@ -2222,7 +1973,7 @@ UINT mmioGetInfo(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 }
 
 /**************************************************************************
-* 				mmioSetInfo			[MMSYSTEM.1216]
+* 				mmioSetInfo    		[MMSYSTEM.1216]
 */
 UINT mmioSetInfo(HMMIO hmmio, const MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
@@ -2245,7 +1996,7 @@ UINT mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer,
 }
 
 /**************************************************************************
-* 				mmioFlush			[MMSYSTEM.1218]
+* 				mmioFlush      		[MMSYSTEM.1218]
 */
 UINT mmioFlush(HMMIO hmmio, UINT uFlags)
 {
@@ -2258,7 +2009,7 @@ UINT mmioFlush(HMMIO hmmio, UINT uFlags)
 }
 
 /**************************************************************************
-* 				mmioAdvance			[MMSYSTEM.1219]
+* 				mmioAdvance    		[MMSYSTEM.1219]
 */
 UINT mmioAdvance(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
@@ -2311,7 +2062,7 @@ LRESULT mmioSendMessage(HMMIO hmmio, UINT uMessage,
 }
 
 /**************************************************************************
-* 				mmioDescend			[MMSYSTEM.1223]
+* 				mmioDescend	       	[MMSYSTEM.1223]
 */
 UINT mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
 		    const MMCKINFO FAR* lpckParent, UINT uFlags)
@@ -2372,7 +2123,7 @@ UINT mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
 }
 
 /**************************************************************************
-* 				mmioAscend			[MMSYSTEM.1224]
+* 				mmioAscend     		[MMSYSTEM.1224]
 */
 UINT mmioAscend(HMMIO hmmio, MMCKINFO FAR* lpck, UINT uFlags)
 {
@@ -2391,7 +2142,7 @@ UINT mmioCreateChunk(HMMIO hmmio, MMCKINFO FAR* lpck, UINT uFlags)
 
 
 /**************************************************************************
-* 				mmioRename			[MMSYSTEM.1226]
+* 				mmioRename     		[MMSYSTEM.1226]
 */
 UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO FAR* lpmmioinfo, DWORD dwRenameFlags)
@@ -2402,7 +2153,7 @@ UINT mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
 }
 
 /**************************************************************************
-* 				DrvOpen				[MMSYSTEM.1100]
+* 				DrvOpen	       		[MMSYSTEM.1100]
 */
 HDRVR DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
@@ -2413,7 +2164,7 @@ HDRVR DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 
 
 /**************************************************************************
-* 				DrvClose			[MMSYSTEM.1101]
+* 				DrvClose       		[MMSYSTEM.1101]
 */
 LRESULT DrvClose(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {

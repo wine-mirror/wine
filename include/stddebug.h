@@ -77,6 +77,7 @@
 
 #ifdef DEBUG_NONE
 #undef DEBUG_ACCEL
+#undef DEBUG_ATOM
 #undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
 #undef DEBUG_CARET
@@ -89,6 +90,7 @@
 #undef DEBUG_COMM
 #undef DEBUG_CURSOR
 #undef DEBUG_DC
+#undef DEBUG_DDE
 #undef DEBUG_DIALOG
 #undef DEBUG_DLL
 #undef DEBUG_DOSFS
@@ -137,6 +139,9 @@
 #undef DEBUG_SCROLL
 #undef DEBUG_SELECTOR
 #undef DEBUG_SELECTORS
+#undef DEBUG_SEM
+#undef DEBUG_SHM
+#undef DEBUG_SPY
 #undef DEBUG_STRESS
 #undef DEBUG_SYSCOLOR
 #undef DEBUG_TASK
@@ -150,6 +155,7 @@
 
 #ifdef DEBUG_ALL
 #define DEBUG_ACCEL
+#define DEBUG_ATOM
 #define DEBUG_BITBLT
 #define DEBUG_BITMAP
 #define DEBUG_CARET
@@ -162,6 +168,7 @@
 #define DEBUG_COMM
 #define DEBUG_CURSOR
 #define DEBUG_DC
+#define DEBUG_DDE
 #define DEBUG_DIALOG
 #define DEBUG_DLL
 #define DEBUG_DOSFS
@@ -210,6 +217,9 @@
 #define DEBUG_SCROLL
 #define DEBUG_SELECTOR
 #define DEBUG_SELECTORS
+#define DEBUG_SEM
+#define DEBUG_SHM
+#define DEBUG_SPY
 #define DEBUG_STRESS
 #define DEBUG_SYSCOLOR
 #define DEBUG_TASK

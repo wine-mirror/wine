@@ -197,7 +197,7 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 		      wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
 	}
 	if(result==-1){
-		fprintf(stderr,"Could not load section %x to desired address %x\n",
+		fprintf(stderr,"Could not load section %x to desired address %lx\n",
 			i, load_addr+wpnt->pe->pe_seg[i].Virtual_Address);
 		fprintf(stderr,"Need to implement relocations now\n");
 		exit(0);

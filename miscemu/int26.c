@@ -10,8 +10,14 @@
 /* #define DEBUG_INT */
 #include "debug.h"
 
-int do_int26(struct sigcontext_struct *context)
+/**********************************************************************
+ *	    INT_Int26Handler
+ *
+ * Handler for int 26h (absolute disk read).
+ */
+void INT_Int26Handler( struct sigcontext_struct sigcontext )
 {
+#define context (&sigcontext)
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS, BX);
 	DWORD begin, length;
 
@@ -19,11 +25,7 @@ int do_int26(struct sigcontext_struct *context)
         {
             SetCflag;
             AX = 0x0101;        /* unknown unit */
-
-            /* push flags on stack */
-            SP -= sizeof(WORD);
-            setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
-            return 1;
+            return;
         }
 
 	if (CX == 0xffff) {
@@ -40,10 +42,5 @@ int do_int26(struct sigcontext_struct *context)
 	"count %ld, buffer %d\n", AL, begin, length, (int) dataptr);
 
 	ResetCflag;
-
-	/* push flags on stack */
-	SP -= sizeof(WORD);
-	setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
-
-	return 1;
+#undef context
 }

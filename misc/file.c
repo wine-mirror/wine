@@ -108,8 +108,8 @@ INT _lclose (INT hFile)
 {
     dprintf_file(stddeb, "_lclose: handle %d\n", hFile);
     
-    if (hFile == 1 || hFile == 2) {
-	fprintf( stderr, "Program attempted to close stdout or stderr!\n" );
+    if (hFile == 0 || hFile == 1 || hFile == 2) {
+	fprintf( stderr, "Program attempted to close stdin, stdout or stderr!\n" );
 	return 0;
     }
     if (close (hFile))
@@ -154,7 +154,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
             ofs->nErrCode = ExtendedError;
             return -1;
         }
-        handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0x666);
+        handle = open (unixfilename, (wStyle & 0x0003) | O_CREAT, 0666);
         if (handle == -1)
         {
             errno_to_doserr();
@@ -325,7 +325,7 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 		lpszFilename, fnAttribute);
 	if ((UnixFileName = DOS_GetUnixFileName(lpszFilename)) == NULL)
   		return HFILE_ERROR;
-	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 426);
+	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 0666);
 
 	if (handle == -1)
 		return HFILE_ERROR;
@@ -372,8 +372,7 @@ UINT GetWindowsDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 	
     	dprintf_file(stddeb,"GetWindowsDirectory (%s)\n",lpszSysPath);
 
-	ChopOffSlash(lpszSysPath);
-	return(strlen(lpszSysPath));
+	return strlen(lpszSysPath);
 }
 /***************************************************************************
  GetSystemDirectory
@@ -387,8 +386,7 @@ UINT GetSystemDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 
     	dprintf_file(stddeb,"GetSystemDirectory (%s)\n",lpszSysPath);
 
-	ChopOffSlash(lpszSysPath);
-	return(strlen(lpszSysPath));
+	return strlen(lpszSysPath);
 }
 /***************************************************************************
  GetTempFileName

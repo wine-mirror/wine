@@ -1,5 +1,193 @@
 ----------------------------------------------------------------------
-Wed Jul  5 19:06:35 1995  Alexandre Julliard  <alex@numenor>
+Sat Jul 22 22:39:09 IDT 1995 Michael Veksler <e1678223@tochnapc2.technion.ac.il>
+
+	* [ipc/*]
+	New directory. This directory contains the new inter-wine
+ 	communications support. It enables DDE protocols between two wine
+ 	instances.  Currently it is limited to DDE, but can be enhanced to
+ 	support OLE between 2 different wine instances.  This is very
+ 	important for libwine.a DDE/OLE support.
+
+	* [tools/ipcl]
+    	A script to delete garbage IPC handles (shared memory, semaphores
+ 	and message queues).  The current inter-wine communication is not
+ 	perfect, and sometimes leaves garbage behind.
+
+	* [if1632/relay.c] [include/atom.h] [include/global.h]
+ 	[loader/selector.c] [loader/task.c] [loader/module.c]
+ 	[loader/signal.c] [memory/global.c] [misc/atom.c]
+ 	[windows/class.c] [windows/message.c] [windows/win.c]
+	[Imakefile]
+    	Hooks for inter-wine DDE support, current Global.*Atom functions
+ 	renamed to Local.*Atom since Global.*Atom are used for Inter-Wine
+ 	DDE communication. (The first call to these functions sets up the
+ 	IPC structures - which otherwise cause unneeded overhead.
+
+Mon Jul 17 19:55:21 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [controls/menu.c]
+	Don't crash if a NULL string is passed to menu functions.
+
+	* [memory/selector.c]
+	We now use a bit in ldt_flags_copy to indicate free LDT entries.
+	Fixed a bug in SELECTOR_ReallocBlock that could cause it to
+	overwrite valid LDT entries when growing a block.
+
+	* [miscemu/instr.c]
+	Emulate int xx instruction by storing the interrupt vector in
+	CS:IP and returning directly. This allows a program to install an
+	interrupt vector.
+
+	* [windows/win.c]
+	Added function WIN_GetTopParent to get the top-level parent of a
+	window.
+
+Sun Jul  16 18:17:17 1995  Gregory Trubetskoy <grisha@mira.com>
+
+        * [loader/resource.c]
+        Added LoadIconHandler. It doesn't do anything yet, but now you
+        can use borland help files with winhelp.exe.
+
+Sun Jul 16 11:58:45 1996  Anand Kumria <akumria@ozemail.com.au>
+
+	* [misc/main.c]
+	Fixed to return 386 Enhanced mode correctly. Also return the same
+ 	type of CPU, for both Enhanced and Standard mode, namely a 386.
+
+Sun Jul 16 00:02:04 1995    Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [Configure] [include/options.h] [include/wineopts.h]
+	  [misc/main.c][misc/spy.c]
+	  Removed support of spy file. Redirected spy messages to stddeb.
+	  Removed -spy option. Added -debugmsg +spy option.
+
+	* [debugger/dbg.y][debugger/debug.l]
+	Enabled segmented addresses (seg:offs) for break and x commands.
+
+	* [if1632/gdi.spec] [objects/region.c] [windows/graphics.c]
+	  [include/region.h]
+	FrameRgn, REGION_FrameRgn: New functions
+
+	* [if1632/kernel.spec]
+	IsWinOldApTask: Return false
+
+	* [if1632/mouse.spec]
+	CplApplet: Removed
+
+	* [if1632/user.spec] [windows/win.c]
+	ShowOwnedPopups: New function
+
+	* [if1632/winsock.spec] [misc/winsocket.c]
+	inet_addr, select: New prototypes in relay code
+	Fixed memory layout for netdb functions (getXbyY).
+	WINSOCK_ioctlsocket: Translated FIONREAD, FIONBIO, and FIOASYNC
+
+	* [objects/clipping.c]
+	RectVisible: Fixed call to LPToDP
+
+	* [rc/winerc.c]
+	main: Removed extra argument to getopt for Linux.
+
+Tue Jul 11 00:14:41 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+        * [controls/listbox.c]
+	Yet another fix for ListBoxDirectory().
+	
+	* [loader/module.c] [if1632/kernel.spec]
+	Make GetModuleHandle() accept instance handles as parameter.
+
+        * [if1632/relay.c] [loader/task.c]
+	Put a magic cookie at the bottom of the 32 bit stack, and check on
+	each return from a 32 bit function whether it's still there. Complain
+	if it's not.
+
+        * [if1632/user.spec]
+	Wrong entry for CloseDriver().
+
+	* [misc/dos_fs.c] [loader/task.c] [include/dos_fs.h] [misc/file.c]
+	[miscemu/int21.c]
+	Large parts of dos_fs.c simplified. Changed it to use one
+	current drive/directory per task, which is set to the module path on
+	task creation.
+	Prevent CorelPaint from closing stdin.
+	open() with O_CREAT set must be passed three parameters.
+	DOS FindFirst()/FindNext() could crash when FA_LABEL was set. Fixed,
+	it's in DOS_readdir() now.
+
+	* [misc/profile.c]
+	Some badly written software (Lotus Freelance Graphics) passes a bogus
+	size parameter that caused Wine to write off the end of a segment.
+	Fixed. (It's probably too paranoid now.)
+	
+	* [multimedia/mmsystem.c] [multimedia/time.c] [multimedia/joystick.c]
+	[multimedia/Imakefile] [if1632/winprocs.spec]
+	16 bit entry point for MMSysTimeCallback.
+	Split off time.c and joystick.c from mmsystem.c.
+	
+	* [objects/dib.c]
+	GetDIBits(): call XGetImage() via CallTo32_LargeStack.
+
+        * [windows/cursor.c]
+	DestroyCursor(): do nothing for builtin cursors.
+	
+	* [windows/mdi.c]
+	Half of WM_MDISETMENU implemented.
+	
+	* [windows/win.c]
+	EnumWindows() and EnumTaskWindows() never enumerated any windows.
+	Fixed.
+
+	* [windows/*.c]
+	Fixed GetParent() to return correct values for owned windows.
+
+	* [windows/message.c]
+	Don't try to activate disabled top-level windows.
+
+        * [windows/nonclient.c]
+	Work around a bug in gcc-2.7.0.
+	
+	* [tools/build.c] [include/stackframe.h] [memory/global.c] 
+	[loader/task.c] [memory/selector.c]
+	Some Visual Basic programs (and possibly others, too) expect ES to be 
+	preserved by a call to an API function, so we have to save it.
+	In GlobalFree() and FreeSelector(), we must clear CURRENT_STACK16->es 
+	to prevent segfaults if ES contained the selector to be freed.
+
+Sun Jul  9 20:21:20 1995  Jon Tombs  <jon@gtex02.us.es>
+
+	* [*/*]
+	Added missing prototypes to header files and relevant includes
+	to reduce compile time warnings.
+
+Sun Jul  9 18:32:56 1995  Michael Patra  <micky@marie.physik.tu-berlin.de>
+
+	* [configure.in] [include/config.h] [*/Makefile.in]
+	New configuration scheme based on autoconf.
+
+Sat Jul  8 14:12:45 1995  Morten Welinder  <terra+@cs.cmu.edu>
+
+	* [miscemu/ioports.c]
+	Revamp to have only one in- and one out- variant, both really
+ 	implemented.
+
+	* [miscemu/instr.c]
+	INSTR_EmulateInstruction: Use new ioport interface.  Implement
+ 	string io.  Correct instruction pointer for 32-bit code.
+
+	* [include/miscemu.h]
+	Update port function prototypes.
+
+	* [include/registers.h]
+	Defined FS and GS.
+
+Sat Jul  8 13:38:54 1995  Hans de Graaff  <graaff@twi72.twi.tudelft.nl>
+
+	* [misc/dos_fs.c]
+	ChopOffSlash(): A path consisting off a single slash is left
+ 	intact, and multiple slashes are all removed.
+
+----------------------------------------------------------------------
+Wed Jul  5 19:06:35 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [controls/scroll.c]
 	Fixed drawing bug that caused part of a non-client scroll bar

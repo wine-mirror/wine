@@ -19,6 +19,7 @@ typedef struct
 {
     WORD    saved_ss;                /* saved previous 16-bit stack */
     WORD    saved_sp;
+    WORD    es;
     WORD    ds;                      /* 16-bit ds */
     DWORD   entry_point WINE_PACKED; /* entry point to call */
     WORD    ordinal_number;          /* ordinal number of entry point */

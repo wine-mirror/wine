@@ -31,4 +31,14 @@ typedef struct
 #define LocalAlign(flags,bytes) LocalAlloc((flags),(bytes))
 #endif
 
+ATOM LocalAddAtom( LPCSTR str );
+ATOM LocalDeleteAtom( ATOM atom );
+ATOM LocalFindAtom( LPCSTR str );
+WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count );
+
+ATOM LocalAddAtom( LPCSTR str );
+ATOM LocalDeleteAtom( ATOM atom );
+ATOM LocalFindAtom( LPCSTR str );
+WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count );
+
 #endif  /* ATOM_H */

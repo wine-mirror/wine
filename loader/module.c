@@ -21,7 +21,6 @@
 #include "task.h"
 #include "toolhelp.h"
 #include "stddebug.h"
-/* #define DEBUG_MODULE */
 #include "debug.h"
 
 
@@ -53,7 +52,7 @@ BOOL MODULE_Init(void)
 
         hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, table->module_start,
                                       table->module_end - table->module_start,
-                                      0, FALSE, FALSE, FALSE );
+                                      0, FALSE, FALSE, FALSE, NULL );
         if (!hModule) return FALSE;
         FarSetOwner( hModule, hModule );
 
@@ -69,7 +68,7 @@ BOOL MODULE_Init(void)
 
         pSegTable->selector = GLOBAL_CreateBlock(GMEM_FIXED, table->code_start,
                                                  pSegTable->minsize, hModule,
-                                                 TRUE, TRUE, FALSE );
+                                                 TRUE, TRUE, FALSE, NULL );
         if (!pSegTable->selector) return FALSE;
         pSegTable++;
 
@@ -99,35 +98,34 @@ BOOL MODULE_Init(void)
 
     MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 193,  /* KERNEL.193: __0040H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x400,
-                                     0x100, hModule, FALSE, FALSE, FALSE ) );
+                                  0x100, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 174,  /* KERNEL.174: __A000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x10000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 181,  /* KERNEL.181: __B000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x20000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 182,  /* KERNEL.182: __B800H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x28000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 195,  /* KERNEL.195: __C000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x30000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 179,  /* KERNEL.179: __D000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x40000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 190,  /* KERNEL.190: __E000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x50000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 173,  /* KERNEL.173: __ROMBIOS */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     MODULE_SetEntryPoint( hModule, 194,  /* KERNEL.194: __F000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
-                                     0x10000, hModule, FALSE, FALSE, FALSE ) );
-
+                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     return TRUE;
 }
 
@@ -304,15 +302,8 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
     {
         minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
         if (i == pModule->ss) minsize += pModule->stack_size;
-        if (i == pModule->dgroup)
-        {
-#if 0
-            /* FIXME: this is needed because heap growing is not implemented */
-            pModule->heap_size = 0x10000 - minsize;
-#endif
-            /* The DGROUP is allocated by MODULE_CreateInstance */
-            continue;
-        }
+	/* The DGROUP is allocated by MODULE_CreateInstance */
+        if (i == pModule->dgroup) continue;
         pSegment->selector = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
                                       minsize, hModule,
                                       !(pSegment->flags & NE_SEGFLAGS_DATA),
@@ -1013,6 +1004,12 @@ BOOL FreeModule( HANDLE hModule )
 /**********************************************************************
  *	    GetModuleHandle    (KERNEL.47)
  */
+HMODULE WIN16_GetModuleHandle( SEGPTR name )
+{
+    if (HIWORD(name) == 0) return GetExePtr( LOWORD(name) );
+    return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
+}
+
 HMODULE GetModuleHandle( LPCSTR name )
 {
     return MODULE_FindModule( name );

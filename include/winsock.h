@@ -7,13 +7,13 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
-#include <windows.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include "windows.h"
 
 /*
  * The new type to be used in all

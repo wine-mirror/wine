@@ -17,6 +17,9 @@ extern SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle );
 extern HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size );
 extern HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc );
 
+extern HBITMAP ConvertCoreBitmap( HDC hdc, BITMAPCOREHEADER * image );
+extern HBITMAP ConvertInfoBitmap( HDC hdc, BITMAPINFO * image );
+
 struct ResourceTable
 {
         int id,type;

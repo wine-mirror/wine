@@ -2,9 +2,7 @@
  * Default window procedure
  *
  * Copyright 1993 Alexandre Julliard
-
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,7 +36,6 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     strcpy( textPtr, text );
 }
 
-#include <assert.h>
 
 /***********************************************************************
  *           DefWindowProc   (USER.107)
@@ -206,7 +203,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 		textPtr = (LPSTR)USER_HEAP_LIN_ADDR(wndPtr->hText);
 		return (DWORD)strlen(textPtr);
 	    }
-	    return (0L);
+	    return 0;
 	}
 
     case WM_SETTEXT:
@@ -226,14 +223,13 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_SYSKEYDOWN:
 	if (wParam == VK_MENU)
 	{   /* Send to WS_OVERLAPPED parent. TODO: Handle MDI */
-	    HWND top;
-            for(top=hwnd;GetParent(top)!=0;top=GetParent(top));
-	    SendMessage( top, WM_SYSCOMMAND, SC_KEYMENU, 0L );
+	    SendMessage( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
+                         SC_KEYMENU, 0L );
 	}
 	break;
 
     case WM_SYSKEYUP:
-		break;
+        break;
     }
     return 0;
 }

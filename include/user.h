@@ -10,6 +10,7 @@
 #include "ldt.h"
 #include "local.h"
 
+extern BOOL USER_HeapInit(void);
 /* USER local heap */
 
 #ifdef WINELIB

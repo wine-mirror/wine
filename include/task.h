@@ -13,6 +13,10 @@
 #pragma pack(1)
 #endif
 
+
+extern BOOL TASK_Init(void);
+extern void TASK_KillCurrentTask( int exitCode );
+
   /* Process database (i.e. a normal DOS PSP) */
 
 typedef struct

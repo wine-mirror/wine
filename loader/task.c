@@ -21,6 +21,7 @@
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "dde_proc.h"
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
@@ -247,7 +248,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
     extern DWORD CALL16_RetAddr_word;
-
+    char filename[256];
+    
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
     pSegTable = NE_SEG_TABLE( pModule );
 
@@ -257,6 +259,12 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
                           hModule, FALSE, FALSE, FALSE );
     if (!hTask) return 0;
     pTask = (TDB *)GlobalLock( hTask );
+
+      /* get current directory */
+    
+    GetModuleFileName( hModule, filename, sizeof(filename) );
+    name = strrchr(filename, '\\');
+    if (name) *(name+1) = 0;
 
       /* Fill the task structure */
 
@@ -268,10 +276,10 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = hModule;
     pTask->hParent       = hCurrentTask;
-    pTask->curdrive      = 'C' - 'A' + 0x80;
+    pTask->curdrive      = filename[0] - 'A' + 0x80;
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
-    strcpy( pTask->curdir, "WINDOWS" );
+    strcpy( pTask->curdir, filename+2 );
 
       /* Create the thunks block */
 
@@ -302,13 +310,13 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
       /* Allocate a selector for the PDB */
 
     pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB),
-                                      hModule, FALSE, FALSE, FALSE );
+                                      hModule, FALSE, FALSE, FALSE, NULL );
 
       /* Allocate a code segment alias for the TDB */
 
     pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
                                           sizeof(TDB), pTask->hPDB, TRUE,
-                                          FALSE, FALSE );
+                                          FALSE, FALSE, NULL );
 
       /* Set the owner of the environment block */
 
@@ -326,6 +334,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Create the 32-bit stack frame */
 
+    *(DWORD *)GlobalLock(pTask->hStack32) = 0xDEADBEEF;
     stack32Top = (char*)GlobalLock(pTask->hStack32) + STACK32_SIZE;
     frame32 = (STACK32FRAME *)stack32Top - 1;
     frame32->saved_esp = (DWORD)stack32Top;
@@ -342,13 +351,13 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
       /* Create the 16-bit stack frame */
 
     pTask->ss = hInstance;
-    pTask->sp = (pModule->sp != 0) ? pModule->sp :
-                pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+    pTask->sp = ((pModule->sp != 0) ? pModule->sp :
+                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1;
     stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
     frame16 = (STACK16FRAME *)stack16Top - 1;
     frame16->saved_ss = pTask->ss;
     frame16->saved_sp = pTask->sp;
-    frame16->ds = pTask->hInstance;
+    frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
     frame16->ordinal_number = 24;  /* WINPROCS.24 is TASK_Reschedule */
     frame16->dll_id = 24; /* WINPROCS */
@@ -461,6 +470,7 @@ void TASK_Reschedule(void)
     TDB *pOldTask = NULL, *pNewTask;
     HTASK hTask = 0;
 
+    dde_reschedule();
       /* First check if there's a task to kill */
 
     if (hTaskToKill && (hTaskToKill != hCurrentTask))

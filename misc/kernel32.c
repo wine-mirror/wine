@@ -9,6 +9,7 @@
 
 #include "windows.h"
 #include "winerror.h"
+#include <unistd.h>
 
 int WIN32_LastError;
 

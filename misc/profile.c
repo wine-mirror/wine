@@ -96,7 +96,8 @@ static TSecHeader *load (char *filename, char **pfullname)
     int state;
     TSecHeader *SecHeader = 0;
     char CharBuffer [STRSIZE];
-    char *next, *file;
+    char *next = '\0';
+    char *file;
     char c;
     char path[MAX_PATH+1];
 
@@ -287,6 +288,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    return (Size - 2 - left);
 	}
 	for (key = section->Keys; key; key = key->link){
+	    int slen;
 	    if (strcasecmp (key->KeyName, KeyName))
 		continue;
 	    if (set){
@@ -295,19 +297,21 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 		Current->changed=TRUE;
 		return 1;
 	    }
-	    ReturnedString [Size-1] = 0;
-	    strncpy (ReturnedString, key->Value, Size-1);
+	    slen = min(strlen(key->Value), Size - 1);
+	    ReturnedString[slen] = 0;
+	    strncpy (ReturnedString, key->Value, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Return ``%s''\n", ReturnedString);
 	    return 1; 
 	}
 	/* If Getting the information, then don't write the information
 	   to the INI file, need to run a couple of tests with windog */
 	/* No key found */
-	if (set)
+	if (set) {
 	    new_key (section, KeyName, Default);
-        else {
-            ReturnedString [Size-1] = 0;
-            strncpy (ReturnedString, Default, Size-1);
+        } else {
+	    int slen = min(strlen(Default), Size - 1);
+            ReturnedString[slen] = 0;
+            strncpy(ReturnedString, Default, slen);
 	    dprintf_profile(stddeb,"GetSetProfile // Key not found\n");
 	}
 	return 1;
@@ -322,8 +326,9 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	Current->Section = section;
 	Current->changed = TRUE;
     } else {
-	ReturnedString [Size-1] = 0;
-	strncpy (ReturnedString, Default, Size-1);
+	int slen = min(strlen(Default), Size - 1);
+	ReturnedString[slen] = 0;
+	strncpy(ReturnedString, Default, slen);
 	dprintf_profile(stddeb,"GetSetProfile // Section not found\n");
     }
     return 1;

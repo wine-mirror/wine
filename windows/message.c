@@ -7,15 +7,17 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #include "message.h"
 #include "win.h"
 #include "gdi.h"
-#include "wineopts.h"
 #include "sysmetrics.h"
 #include "hook.h"
 #include "event.h"
 #include "winpos.h"
+#include "atom.h"
+#include "dde.h"
 #include "stddebug.h"
 /* #define DEBUG_MSG */
 #include "debug.h"
@@ -24,6 +26,15 @@
 #define HWND_BROADCAST  ((HWND)0xffff)
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
+
+
+/* used for passing message information when sending message */ 
+typedef struct {
+    LONG lParam;
+    WORD wParam;
+    WORD wMsg;
+    WORD hWnd;
+} msgstruct;
 
 
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
@@ -135,6 +146,8 @@ static int MSG_FindMsg(MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last)
 {
     int i, pos = msgQueue->nextMessage;
 
+    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x%04x, proc=%d\n",
+		hwnd, curr_proc_idx);
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;
         
@@ -191,7 +204,8 @@ static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
 {
     WND *wndPtr;
     HWND hwnd;
-    INT hittest, x, y;
+    INT hittest = HTERROR;
+    INT x, y;
 
     *phwnd = hwnd = GetDesktopWindow();
     x = pt.x;
@@ -212,11 +226,11 @@ static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
             (y < wndPtr->rectWindow.bottom))
 	{
 	    *phwnd = hwnd;
+	    x -= wndPtr->rectClient.left;
+	    y -= wndPtr->rectClient.top;
               /* If window is minimized or disabled, ignore its children */
             if ((wndPtr->dwStyle & WS_MINIMIZE) ||
                 (wndPtr->dwStyle & WS_DISABLED)) break;
-	    x -= wndPtr->rectClient.left;
-	    y -= wndPtr->rectClient.top;
 	    hwnd = wndPtr->hwndChild;
 	}
 	else hwnd = wndPtr->hwndNext;
@@ -276,7 +290,7 @@ static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
 static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
     BOOL eatMsg = FALSE;
-    INT hittest_result;
+    INT hittest;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT lastClickPos = { 0, 0 };
@@ -294,38 +308,40 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
 	return TRUE;  /* No need to further process the message */
     }
-    else hittest_result = MSG_GetWindowForEvent( msg->pt, &msg->hwnd );
-
-      /* Send the WM_PARENTNOTIFY message */
-
-    if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message,
-					  MAKELONG( msg->pt.x, msg->pt.y ) );
-
-      /* Activate the window if needed */
-
-    if (mouseClick)
+   
+    if ((hittest = MSG_GetWindowForEvent( msg->pt, &msg->hwnd )) != HTERROR)
     {
-	HWND parent, hwndTop = msg->hwnd;	
-	while ((parent = GetParent(hwndTop)) != 0) hwndTop = parent;
-	if (hwndTop != GetActiveWindow())
-	{
-	    LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
-				    MAKELONG( hittest_result, msg->message ) );
-	    if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
-		eatMsg = TRUE;
-	    if ((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT))
-	    {
-		SetWindowPos( hwndTop, HWND_TOP, 0, 0, 0, 0,
-			      SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-		WINPOS_ChangeActiveWindow( hwndTop, TRUE );
-	    }
-	}
+
+        /* Send the WM_PARENTNOTIFY message */
+
+        if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message,
+                                            MAKELONG( msg->pt.x, msg->pt.y ) );
+
+        /* Activate the window if needed */
+
+        if (mouseClick)
+        {
+            HWND hwndTop = WIN_GetTopParent( msg->hwnd );
+            if (hwndTop != GetActiveWindow())
+            {
+                LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+                                        MAKELONG( hittest, msg->message ) );
+                if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
+                    eatMsg = TRUE;
+                if ((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT))
+                {
+                    SetWindowPos( hwndTop, HWND_TOP, 0, 0, 0, 0,
+                                 SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+                    WINPOS_ChangeActiveWindow( hwndTop, TRUE );
+                }
+            }
+        }
     }
 
       /* Send the WM_SETCURSOR message */
 
     SendMessage( msg->hwnd, WM_SETCURSOR, msg->hwnd,
-		 MAKELONG( hittest_result, msg->message ));
+                 MAKELONG( hittest, msg->message ));
     if (eatMsg) return FALSE;
 
       /* Check for double-click */
@@ -340,7 +356,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	    (abs(msg->pt.y - lastClickPos.y) < SYSMETRICS_CYDOUBLECLK/2))
 	    dbl_click = TRUE;
 
-	if (dbl_click && (hittest_result == HTCLIENT))
+	if (dbl_click && (hittest == HTCLIENT))
 	{
 	    /* Check whether window wants the double click message. */
 	    WND * wndPtr = WIN_FindWndPtr( msg->hwnd );
@@ -366,13 +382,13 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
       /* Build the translated message */
 
     msg->lParam = MAKELONG( msg->pt.x, msg->pt.y );
-    if (hittest_result == HTCLIENT)
+    if (hittest == HTCLIENT)
     {
 	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
     }
     else
     {
-	msg->wParam = hittest_result;
+	msg->wParam = hittest;
 	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
     
@@ -713,19 +729,43 @@ BOOL MSG_WaitXEvent( LONG maxWait )
     XEvent event;
     int fd = ConnectionNumber(display);
 
-    if (!XPending(display) && (maxWait != -1))
+    if (!XPending(display))
     {
         FD_ZERO( &read_set );
         FD_SET( fd, &read_set );
-        timeout.tv_sec = maxWait / 1000;
-        timeout.tv_usec = (maxWait % 1000) * 1000;
-        if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-            return FALSE;  /* Timeout or error */
+	sigsetjmp(env_wait_x, 1);
+	
+	stop_wait_op= CONT;
+	    
+	if (DDE_GetRemoteMessage()) {
+	    while(DDE_GetRemoteMessage())
+		;
+	    return TRUE;
+	}
+
+	timeout.tv_usec = (maxWait % 1000) * 1000;
+	timeout.tv_sec = maxWait / 1000;
+
+	stop_wait_op= STOP_WAIT_X;
+	/* The code up to the next "stop_wait_op= CONT" must be reentrant  */
+	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
+	    !XPending(display)) {
+	    stop_wait_op= CONT;
+	    return FALSE;
+	} else {
+	    stop_wait_op= CONT;
+	}
+	    
     }
 
     /* Process the event (and possibly others that occurred in the meantime) */
     do
     {
+	if (DDE_GetRemoteMessage()) {
+	    while(DDE_GetRemoteMessage())
+		;
+	    return TRUE;
+	}
         XNextEvent( display, &event );
         EVENT_ProcessEvent( &event );
     }
@@ -744,6 +784,9 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     MESSAGEQUEUE *msgQueue;
     LONG nextExp;  /* Next timer expiration time */
 
+    DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
+    DDE_GetRemoteMessage();
+    
     if (first || last)
     {
 	mask = QS_POSTMESSAGE;  /* Always selectioned */
@@ -918,6 +961,17 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     MSG 	msg;
     WND 	*wndPtr;
 
+    msg.hwnd    = hwnd;
+    msg.message = message;
+    msg.wParam  = wParam;
+    msg.lParam  = lParam;
+    msg.time    = GetTickCount();
+    msg.pt.x    = 0;
+    msg.pt.y    = 0;
+
+    if (DDE_PostMessage(&msg))
+       return TRUE;
+    
     if (hwnd == HWND_BROADCAST) {
       dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
       hwnd = GetTopWindow(GetDesktopWindow());
@@ -928,11 +982,6 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		      hwnd, message, wParam, lParam);
 	  PostMessage(hwnd, message, wParam, lParam);
 	}
-	/*{
-	  char	str[128];
-	  GetWindowText(hwnd, str, sizeof(str));
-	  dprintf_msg(stddeb, "BROADCAST GetWindowText()='%s' !\n", str); 
-	}*/
 	hwnd = wndPtr->hwndNext;
       }
       dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
@@ -941,13 +990,6 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 
     wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr || !wndPtr->hmemTaskQ) return FALSE;
-    msg.hwnd    = hwnd;
-    msg.message = message;
-    msg.wParam  = wParam;
-    msg.lParam  = lParam;
-    msg.time    = GetTickCount();
-    msg.pt.x    = 0;
-    msg.pt.y    = 0;
 
     return MSG_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
 }
@@ -979,35 +1021,48 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
     WND * wndPtr;
     LONG ret;
-
-    wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
-    else {
-      /* Argh. This is inefficient. */
-      typedef struct {
+    MSG DDE_msg;
+    struct
+    {
 	LONG lParam;
 	WORD wParam;
 	WORD wMsg;
 	WORD hWnd;
-      } msgstruct;
-      HANDLE msgh    = GlobalAlloc(0,sizeof(msgstruct));
-      SEGPTR segmsg  = WIN16_GlobalLock(msgh);
-      msgstruct *Msg = PTR_SEG_TO_LIN(segmsg);
-    
-      Msg->hWnd    = hwnd;
-      Msg->wMsg    = msg;
-      Msg->wParam  = wParam;
-      Msg->lParam  = lParam;
-      CALL_SYSTEM_HOOK( WH_CALLWNDPROC, 0, 0, (LPARAM)segmsg );
-      CALL_TASK_HOOK( WH_CALLWNDPROC, 0, 0, (LPARAM)segmsg );
-      ret = CallWindowProc( wndPtr->lpfnWndProc, Msg->hWnd, Msg->wMsg, Msg->wParam,
-			   Msg->lParam );
-      GlobalUnlock(msgh);
-      GlobalFree(msgh);
-      dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
-		  hwnd, msg, wParam, lParam, ret );
-      return ret;
+    } msgstruct = { lParam, wParam, msg, hwnd };
+
+    DDE_msg.hwnd    = hwnd;
+    DDE_msg.message = msg;
+    DDE_msg.wParam  = wParam;
+    DDE_msg.lParam  = lParam;
+    if (DDE_SendMessage(&DDE_msg)) return TRUE;
+
+    if (hwnd == HWND_BROADCAST)
+    {
+        dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
+        hwnd = GetTopWindow(GetDesktopWindow());
+        while (hwnd)
+	{
+            if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
+            if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
+            {
+                dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08lX !\n",
+                            hwnd, msg, wParam, lParam);
+                 ret |= SendMessage( hwnd, msg, wParam, lParam );
+	    }
+            hwnd = wndPtr->hwndNext;
+        }
+        dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
+        return TRUE;
     }
+
+    CALL_SYSTEM_HOOK( WH_CALLWNDPROC, 0, 0, MAKE_SEGPTR(&msgstruct) );
+    CALL_TASK_HOOK( WH_CALLWNDPROC, 0, 0, MAKE_SEGPTR(&msgstruct) );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+    ret = CallWindowProc( wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
+                          msgstruct.wParam, msgstruct.lParam );
+    dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
+                 hwnd, msg, wParam, lParam, ret );
+    return ret;
 }
 
 
@@ -1020,6 +1075,8 @@ void WaitMessage( void )
     MESSAGEQUEUE *queue;
     LONG nextExp = -1;  /* Next timer expiration time */
 
+    DDE_GetRemoteMessage();
+    
     if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
     if ((queue->wPostQMsg) || 
         (queue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
@@ -1028,6 +1085,7 @@ void WaitMessage( void )
     if ((queue->status & QS_TIMER) && 
         TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
         return;
+    /* FIXME: (dde) must check DDE & X-events simultaneously */
     MSG_WaitXEvent( nextExp );
 }
 
@@ -1066,8 +1124,12 @@ LONG DispatchMessage( LPMSG msg )
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
 	if (msg->lParam)
-	    return CallWndProc( (WNDPROC)msg->lParam, CURRENT_DS, msg->hwnd,
-				   msg->message, msg->wParam, GetTickCount() );
+        {
+            WORD ds = msg->hwnd ? GetWindowWord( msg->hwnd, GWW_HINSTANCE )
+                                : CURRENT_DS;
+	    return CallWndProc( (WNDPROC)msg->lParam, ds, msg->hwnd,
+                                msg->message, msg->wParam, GetTickCount() );
+        }
     }
 
     if (!msg->hwnd) return 0;
@@ -1131,7 +1193,7 @@ WORD RegisterWindowMessage( LPCSTR str )
 {
 	WORD	wRet;
     dprintf_msg(stddeb, "RegisterWindowMessage: '%s'\n", str );
-	wRet = GlobalAddAtom( str );
+	wRet = LocalAddAtom( str );
     return wRet;
 }
 

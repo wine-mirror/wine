@@ -40,21 +40,23 @@ extern WORD ExtendedError;
 extern struct DosDeviceStruct COM[MAX_PORTS];
 extern struct DosDeviceStruct LPT[MAX_PORTS];
 
-#define setword(a,b)	*(BYTE*)(a)	  = (b) & 0xff; \
-			*((BYTE*)((a)+1)) = ((b)>>8) & 0xff;
+#define setword(a,b)	do { *(BYTE*)(a)	  = (b) & 0xff; \
+                             *((BYTE*)((a)+1)) = ((b)>>8) & 0xff;\
+                        } while(0)
 			
-#define setdword(a,b)	*(BYTE*)(a)	= (b) & 0xff; \
-			*((BYTE*)(a)+1) = ((b)>>8) & 0xff; \
-			*((BYTE*)(a)+2) = ((b)>>16) & 0xff; \
-			*((BYTE*)(a)+3) = ((b)>>24) & 0xff;
+#define setdword(a,b)	do { *(BYTE*)(a)	= (b) & 0xff; \
+			     *((BYTE*)(a)+1) = ((b)>>8) & 0xff; \
+			     *((BYTE*)(a)+2) = ((b)>>16) & 0xff; \
+			     *((BYTE*)(a)+3) = ((b)>>24) & 0xff; \
+                        } while(0)
 
-#define getword(a)	(WORD) *(BYTE*)(a) + \
-			(*((BYTE*)(a) + 1) << 8)
+#define getword(a)	( (WORD)*(BYTE*)(a) + \
+			  ((WORD)*((BYTE*)(a) + 1) << 8))
 
-#define getdword(a)	(DWORD) (*(BYTE*)(a) + \
-			(*((BYTE*)(a) + 1) << 8) + \
-			(*((BYTE*)(a) + 2) << 16) + \
-			(*((BYTE*)(a) + 3) << 24))
+#define getdword(a)	( (DWORD)*(BYTE*)(a) + \
+			  (DWORD)(*((BYTE*)(a) + 1) << 8) + \
+			  (DWORD)(*((BYTE*)(a) + 2) << 16) + \
+			  (DWORD)(*((BYTE*)(a) + 3) << 24))
 
 /* dos file attributes */
 

@@ -253,7 +253,7 @@ id	2
 250 pascal16 GetMenuState(word word word) GetMenuState
 251 pascal   SendDriverMessage(word word long long) SendDriverMessage
 252 pascal16 OpenDriver(ptr ptr long) OpenDriver
-253 pascal   CloseDriver(word word long) CloseDriver
+253 pascal   CloseDriver(word long long) CloseDriver
 254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle
 255 pascal   DefDriverProc(long word word long long) DefDriverProc
 256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
@@ -266,7 +266,7 @@ id	2
 262 pascal16 GetWindow(word word) GetWindow
 263 pascal16 GetMenuItemCount(word) GetMenuItemCount
 264 pascal16 GetMenuItemID(word word) GetMenuItemID
-265 stub ShowOwnedPopups
+265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
 266 pascal16 SetMessageQueue(word) SetMessageQueue
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar
 268 pascal16 GlobalAddAtom(ptr) GlobalAddAtom
@@ -371,7 +371,7 @@ id	2
                             word word word segptr) CreateWindowEx
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
 455 stub GetIconId
-456 stub LoadIconHandler
+456 pascal16 LoadIconHandler(word word) LoadIconHandler
 457 pascal16 DestroyIcon(word) DestroyIcon
 458 pascal16 DestroyCursor(word) DestroyCursor
 459 pascal   DumpIcon(ptr ptr ptr ptr) DumpIcon

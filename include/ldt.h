@@ -44,13 +44,13 @@ typedef struct
 
 extern ldt_copy_entry ldt_copy[LDT_SIZE];
 
-#define __AHSHIFT  3
+#define __AHSHIFT  3  /* don't change! */
 #define __AHINCR   (1 << __AHSHIFT)
 
 #ifndef WINELIB
 #define SELECTOR_TO_ENTRY(sel)  (((int)(sel) & 0xffff) >> __AHSHIFT)
 #define ENTRY_TO_SELECTOR(i)    ((i) ? (((int)(i) << __AHSHIFT) | 7) : 0)
-#define IS_LDT_ENTRY_FREE(i)    (!(ldt_copy[(i)].base || ldt_copy[(i)].limit))
+#define IS_LDT_ENTRY_FREE(i)    (!(ldt_flags_copy[(i)] & LDT_FLAGS_ALLOCATED))
 #define IS_SELECTOR_FREE(sel)   (IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(sel)))
 #define GET_SEL_BASE(sel)       (ldt_copy[SELECTOR_TO_ENTRY(sel)].base)
 #define GET_SEL_LIMIT(sel)      (ldt_copy[SELECTOR_TO_ENTRY(sel)].limit)
@@ -59,6 +59,7 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 #define SELECTOR_TO_ENTRY(sel)  error.error
 #define ENTRY_TO_SELECTOR(i)    error.error
 #define IS_LDT_ENTRY_FREE(i)    error.error
+#define IS_SELECTOR_FREE(sel)   error.error
 #define GET_SEL_BASE(sel)       error.error
 #define GET_SEL_LIMIT(sel)      error.error
 #endif
@@ -83,6 +84,7 @@ extern unsigned char ldt_flags_copy[LDT_SIZE];
 #define LDT_FLAGS_EXECONLY  0x04  /* Segment is execute-only (code) */
 #define LDT_FLAGS_32BIT     0x08  /* Segment is 32-bit (code or stack) */
 #define LDT_FLAGS_BIG       0x10  /* Segment is big (limit is in pages) */
+#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
 
 #define GET_SEL_FLAGS(sel)   (ldt_flags_copy[SELECTOR_TO_ENTRY(sel)])
 

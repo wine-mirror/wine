@@ -124,7 +124,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+    if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
     if (rectUpdate)

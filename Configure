@@ -106,7 +106,6 @@ then
 	prompt "Where is COM1" CF_Com1 '/dev/cua0'
 	prompt "Where is COM2" CF_Com2 '/dev/cua1'
 	prompt "Where is LPT1" CF_Lpt1 '/dev/lp0'
-	prompt "Log messages to which file (CON = stdout)" CF_File 'CON'
 
 	echo
 	sed -n -e 's/^ *\"\(WM_[A-Z0-9]*\)\".*/\1/p' < misc/spy.c | \
@@ -147,7 +146,6 @@ Com2=$CF_Com2
 Lpt1=$CF_Lpt1
 
 [spy]
-File=$CF_File
 Exclude=$CF_Exclude
 EOF
 

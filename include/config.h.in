@@ -1,0 +1,6 @@
+#undef HAVE_STDLIB_H
+#undef HAVE_TCGETATTR
+#undef HAVE_DIRENT_H
+#undef HAVE_SYS_NDIR_H
+#undef HAVE_NDIR_H
+#undef STAT_MACROS_BROKEN

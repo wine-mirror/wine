@@ -8,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "neexe.h"
-#include "prototypes.h"
 #include "dlls.h"
 #include "windows.h"
 #include "callback.h"

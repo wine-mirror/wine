@@ -11,6 +11,18 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
+#include "module.h"
+#include "task.h"
+#include "selectors.h"
+#include "comm.h"
+#include "user.h"
+#include "menu.h"
+#include "atom.h"
+#include "dialog.h"
+#include "message.h"
+#include "syscolor.h"
+#include "sysmetrics.h"
+#include "gdi.h"
 #include "debugger.h"
 #include "dos_fs.h"
 #include "dlls.h"
@@ -18,6 +30,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "neexe.h"
 #include "options.h"
 #include "task.h"
+#include "dce.h"
 #include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -29,6 +42,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 int MAIN_Init(void)
 {
     extern BOOL RELAY_Init(void);
+    extern BOOL RELAY32_Init(void); 
 
     int queueSize;
 
@@ -103,14 +117,22 @@ int MAIN_Init(void)
 int _WinMain(int argc, char **argv)
 {
     int i;
+    HANDLE handle;
 
     if (!MAIN_Init()) return 0;
 
     for (i = 1; i < argc; i++)
     {
-        if (WinExec( argv[i], SW_SHOWNORMAL ) < 32)
+        if ((handle = WinExec( argv[i], SW_SHOWNORMAL )) < 32)
         {
-            fprintf(stderr, "wine: can't exec '%s'.\n", argv[i]);
+            fprintf(stderr, "wine: can't exec '%s': ", argv[i]);
+            switch (handle)
+            {
+            case 2: fprintf( stderr, "file not found\n" ); break;
+            case 11: fprintf( stderr, "invalid exe file\n" ); break;
+            case 21: fprintf( stderr, "win32 executable\n" ); break;
+            default: fprintf( stderr, "error=%d\n", handle ); break;
+            }
             exit(1);
         }
     }

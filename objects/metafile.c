@@ -212,7 +212,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
     METAHEADER *mh;
     METARECORD *mr;
     HANDLETABLE *ht;
-    char *buffer;
+    char *buffer = (char *)NULL;
 
     if (mf->wMagic != METAFILE_MAGIC)
 	return FALSE;

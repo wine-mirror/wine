@@ -188,7 +188,9 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     SIZE size;
     char *strPtr;
     static char line[1024];
-    int len, lh, prefix_x, prefix_end;
+    int len, lh;
+    int prefix_x = 0;
+    int prefix_end = 0;
     TEXTMETRIC tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;

@@ -1,0 +1,33 @@
+#include "../Wine.tmpl"
+
+MODULE = ipc
+
+TEST_SRCS =  \
+          shm_fragment_test.c \
+          bit_array_test.c\
+          dde_proc_test.c \
+          dde_atom_test.c \
+          shm_semaph_test.c \
+          wine_test_stub.c \
+          hash_test.c \
+          dde_mem_test.c 
+
+SRCS =    bit_array.c \
+	  dde_atom.c  \
+	  dde_mem.c \
+          dde_proc.c  \
+          generic_hash.c \
+          shm_block.c \
+          shm_fragment.c \
+          shm_main_blk.c \
+          shm_semaph.c
+
+OBJS = $(SRCS:.c=.o)
+TEST_OBJS = $(TEST_SRCS:.c=.o)
+
+WineRelocatableTarget($(MODULE),,$(OBJS))
+DependTarget()
+
+includes::
+
+install::

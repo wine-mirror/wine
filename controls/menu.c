@@ -1660,15 +1660,17 @@ BOOL InsertMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewIt
     HANDLE hNewItems;
     MENUITEM *lpitem, *newItems;
     LPPOPUPMENU	menu;
-    
+
     if (IS_STRING_ITEM(wFlags))
-	{
-	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, '%s') !\n",
-				 hMenu, nPos, wFlags, wItemID, lpNewItem);
-	}
+    {
+        dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, '%s') !\n",
+                     hMenu, nPos, wFlags, wItemID,
+                     lpNewItem ? lpNewItem : "(null)");
+        if (!lpNewItem) return FALSE;
+    }
     else
-	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, %p) !\n",
-		                  hMenu, nPos, wFlags, wItemID, lpNewItem);
+        dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, %p) !\n",
+                     hMenu, nPos, wFlags, wItemID, lpNewItem);
 
       /* Find where to insert new item */
 
@@ -1816,8 +1818,11 @@ BOOL ModifyMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewIt
 {
     LPMENUITEM 	lpitem;
     if (IS_STRING_ITEM(wFlags))
+    {
 	dprintf_menu(stddeb,"ModifyMenu (%04X, %04X, %04X, %04X, '%s') !\n",
-	       hMenu, nPos, wFlags, wItemID, lpNewItem);
+	       hMenu, nPos, wFlags, wItemID, lpNewItem ? lpNewItem : "(null)");
+        if (!lpNewItem) return FALSE;
+    }
     else
 	dprintf_menu(stddeb,"ModifyMenu (%04X, %04X, %04X, %04X, %p) !\n",
 	       hMenu, nPos, wFlags, wItemID, lpNewItem);

@@ -8,6 +8,7 @@
 #include "windows.h"
 #include "ldt.h"
 #include "selectors.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -29,7 +30,9 @@ WORD AllocSelectorArray( WORD count )
         else if (++size >= count) break;
     }
     if (i == LDT_SIZE) return 0;
-    return ENTRY_TO_SELECTOR( i - size + 1 );
+    /* Mark selector as allocated */
+    while (size--) ldt_flags_copy[i--] |= LDT_FLAGS_ALLOCATED;
+    return ENTRY_TO_SELECTOR( i + 1 );
 }
 
 
@@ -68,8 +71,22 @@ WORD FreeSelector( WORD sel )
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
     count = (GET_SEL_LIMIT(sel) >> 16) + 1;
     memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
-    for (i = 0; i < count; i++)
-        LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
+    /* FIXME: is it correct to free the whole array? */
+    for (i = SELECTOR_TO_ENTRY(sel); count; i++, count--)
+    {
+        LDT_SetEntry( i, &entry );
+        ldt_flags_copy[i] &= ~LDT_FLAGS_ALLOCATED;
+    }
+
+    /* Clear the saved 16-bit selector */
+#ifndef WINELIB
+    if (CURRENT_STACK16)
+    {
+        /* FIXME: maybe we ought to walk up the stack and fix all frames */
+        if (CURRENT_STACK16->ds == sel) CURRENT_STACK16->ds = 0;
+        if (CURRENT_STACK16->es == sel) CURRENT_STACK16->es = 0;
+    }
+#endif
     return 0;
 }
 
@@ -108,38 +125,6 @@ static void SELECTOR_SetEntries( WORD sel, void *base, DWORD size,
 
 
 /***********************************************************************
- *           SELECTOR_ReallocArray
- *
- * Change the size of an allocated selector array.
- */
-static WORD SELECTOR_ReallocArray( WORD sel, WORD newcount )
-{
-    WORD i, oldcount;
-    ldt_entry entry;
-
-    oldcount = (GET_SEL_LIMIT(sel) >> 16) + 1;
-    if (oldcount < newcount)  /* We need to add selectors */
-    {
-          /* Check if the next selectors are free */
-        for (i = oldcount; i < newcount; i++)
-            if (!IS_SELECTOR_FREE(sel+i)) break;
-        if (i < newcount)
-        {
-            FreeSelector( sel );
-            sel = AllocSelectorArray( newcount );
-        }
-    }
-    else if (oldcount > newcount) /* We need to remove selectors */
-    {
-        memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
-        for (i = oldcount; i < newcount; i++)
-            LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
-    }
-    return sel;
-}
-
-
-/***********************************************************************
  *           SELECTOR_AllocBlock
  *
  * Allocate selectors for a block of linear memory.
@@ -165,15 +150,41 @@ WORD SELECTOR_AllocBlock( void *base, DWORD size, enum seg_type type,
 WORD SELECTOR_ReallocBlock( WORD sel, void *base, DWORD size,
                             enum seg_type type, BOOL is32bit, BOOL readonly )
 {
-    WORD count;
+    WORD i, oldcount, newcount;
+    ldt_entry entry;
 
-    if (!size)
+    if (!size) size = 1;
+    oldcount = (GET_SEL_LIMIT(sel) >> 16) + 1;
+    newcount = (size + 0xffff) >> 16;
+
+    if (oldcount < newcount)  /* We need to add selectors */
     {
-        FreeSelector( sel );
-        return 0;
+          /* Check if the next selectors are free */
+        if (SELECTOR_TO_ENTRY(sel) + newcount > LDT_SIZE) i = oldcount;
+        else
+            for (i = oldcount; i < newcount; i++)
+                if (!IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(sel)+i)) break;
+
+        if (i < newcount)  /* they are not free */
+        {
+            FreeSelector( sel );
+            sel = AllocSelectorArray( newcount );
+        }
+        else  /* mark the selectors as allocated */
+        {
+            for (i = oldcount; i < newcount; i++)
+                ldt_flags_copy[SELECTOR_TO_ENTRY(sel)+i] |=LDT_FLAGS_ALLOCATED;
+        }
     }
-    count = (size + 0xffff) / 0x10000;
-    sel = SELECTOR_ReallocArray( sel, count );
+    else if (oldcount > newcount) /* We need to remove selectors */
+    {
+        memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
+        for (i = oldcount; i < newcount; i++)
+        {
+            LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
+            ldt_flags_copy[SELECTOR_TO_ENTRY(sel) + i] &= ~LDT_FLAGS_ALLOCATED;
+        }
+    }
     if (sel) SELECTOR_SetEntries( sel, base, size, type, is32bit, readonly );
     return sel;
 }

@@ -2,9 +2,8 @@
  * Main function.
  *
  * Copyright 1994 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +23,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
-#include "prototypes.h"
 #include "dlls.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
@@ -63,7 +61,6 @@ int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
 
 struct options Options =
 {  /* default options */
-    NULL,           /* spyFilename */
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
     FALSE,          /* usePrivateMap */
@@ -86,7 +83,6 @@ static XrmOptionDescRec optionsTable[] =
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
-    { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
@@ -109,11 +105,11 @@ static XrmOptionDescRec optionsTable[] =
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
-  "    -spy file       Turn on message spying to the specified file\n" \
+  "    -spy file       Obsolete. Use -debugmsg +spy for Spy messages\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -dll name       Enable or disable built-in DLLs\n" \
   "    -allowreadonly  Read only files may be opened in write mode\n" \
-  "    -enhanced       Start wine in enhanced mode\n"
+  "    -enhanced       Start wine in enhanced mode (like 'win /3') \n"
 
 
 
@@ -313,8 +309,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         Options.allowReadOnly = TRUE;
     if (MAIN_GetResource( db, ".enhanced", &value ))
         Options.enhanced = TRUE;
-    if (MAIN_GetResource( db, ".spy", &value))
-	Options.spyFilename = value.addr;
     if (MAIN_GetResource( db, ".depth", &value))
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
@@ -463,14 +457,20 @@ static void MAIN_RestoreSetup(void)
     	KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 }
 
+
+#ifdef MALLOC_DEBUGGING
 static void malloc_error()
 {
        fprintf(stderr,"malloc is not feeling well. Good bye\n");
        exit(1);
 }
+#endif  /* MALLOC_DEBUGGING */
+
 
 static void called_at_exit(void)
 {
+    extern void sync_profiles(void);
+
     sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
@@ -485,8 +485,10 @@ int main( int argc, char *argv[] )
     int depth_count, i;
     int *depth_list;
 
-	setbuf(stdout,NULL);
-	setbuf(stderr,NULL);
+    extern int _WinMain(int argc, char **argv);
+
+    setbuf(stdout,NULL);
+    setbuf(stderr,NULL);
 
     setlocale(LC_CTYPE,"");
 
@@ -565,9 +567,9 @@ LONG GetVersion(void)
 LONG GetWinFlags(void)
 {
   if (Options.enhanced)
-    return (WF_STANDARD | WF_ENHANCED | WF_CPU386 | WF_PMODE | WF_80x87);
+    return (WF_ENHANCED | WF_CPU386 | WF_PMODE | WF_80x87 | WF_PAGING);
   else
-    return (WF_STANDARD | WF_CPU286 | WF_PMODE | WF_80x87);
+    return (WF_STANDARD | WF_CPU386 | WF_PMODE | WF_80x87);
 }
 
 /***********************************************************************

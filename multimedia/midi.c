@@ -1227,16 +1227,6 @@ static DWORD modReset(WORD wDevID)
 
 
 /**************************************************************************
-* 				modGetPosition			[internal]
-*/
-static DWORD modGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
-{
-	dprintf_midi(stddeb, "modGetposition(%u, %p, %08lX);\n", wDevID, lpTime, uSize);
-	return MMSYSERR_NOTENABLED;
-}
-
-
-/**************************************************************************
 * 				modMessage			[sample driver]
 */
 DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 

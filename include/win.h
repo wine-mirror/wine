@@ -74,6 +74,7 @@ extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
 extern void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam );
 extern BOOL WIN_CreateDesktopWindow(void);
+extern HWND WIN_GetTopParent( HWND hwnd );
 
 extern Display * display;
 extern Screen * screen;

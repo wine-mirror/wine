@@ -15,7 +15,7 @@ id	8
 7   pascal16 getsockopt(word word word ptr ptr) WINSOCK_getsockopt
 8   pascal   htonl(long) WINSOCK_htonl
 9   pascal16 htons(word) WINSOCK_htons
-10  pascal   inet_addr(long) WINSOCK_inet_addr
+10  pascal   inet_addr(ptr) WINSOCK_inet_addr
 11  pascal   inet_ntoa(long) WINSOCK_inet_ntoa
 12  pascal16 ioctlsocket(word long ptr) WINSOCK_ioctlsocket
 13  pascal16 listen(word word) WINSOCK_listen
@@ -23,7 +23,7 @@ id	8
 15  pascal16 ntohs(word) WINSOCK_ntohs
 16  pascal16 recv(word ptr word word) WINSOCK_recv
 17  pascal16 recvfrom(word ptr word word ptr ptr) WINSOCK_recvfrom
-18  pascal16 select(word ptr ptr ptr ptr word) WINSOCK_select
+18  pascal16 select(word ptr ptr ptr ptr ptr) WINSOCK_select
 19  pascal16 send(word ptr word word) WINSOCK_send
 20  pascal16 sendto(word ptr word word ptr ptr) WINSOCK_sendto
 21  pascal16 setsockopt(word word word ptr word) WINSOCK_setsockopt

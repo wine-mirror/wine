@@ -15,7 +15,6 @@
 #endif
 
 #include "debugger.h"
-#include "prototypes.h"
 #include "miscemu.h"
 #include "registers.h"
 #include "win.h"
@@ -24,6 +23,7 @@
 char * cstack[4096];
 #endif
 struct sigaction segv_act;
+struct sigaction usr2_act;
 
 #ifdef linux
 extern void ___sig_restore();
@@ -71,15 +71,21 @@ static void win_fault(int signal, int code, struct sigcontext *context)
 
 void init_wine_signals(void)
 {
+        extern void stop_wait(int a);
 #ifdef linux
 	segv_act.sa_handler = (__sighandler_t) win_fault;
 	/* Point to the top of the stack, minus 4 just in case, and make
 	   it aligned  */
 	segv_act.sa_restorer = 
-		(void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
+	    (void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
+	usr2_act.sa_restorer= segv_act.sa_restorer;
+	usr2_act.sa_handler = (__sighandler_t) stop_wait;
+	/* Point to the top of the stack, minus 4 just in case, and make
+	   it aligned  */
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
 	wine_sigaction(SIGILL, &segv_act, NULL);
 	wine_sigaction(SIGFPE, &segv_act, NULL);
+	wine_sigaction(SIGUSR2, &usr2_act, NULL);
 #ifdef SIGBUS
 	wine_sigaction(SIGBUS, &segv_act, NULL);
 #endif
@@ -124,6 +130,13 @@ void init_wine_signals(void)
         segv_act.sa_mask = sig_mask;
 	if (sigaction(SIGTRAP, &segv_act, NULL) < 0) {
                 perror("sigaction: SIGTRAP");
+                exit(1);
+        }
+        usr2_act.sa_handler = (void (*)) stop_wait; /* For breakpoints */
+	usr2_act.sa_flags = SA_ONSTACK;
+        usr2_act.sa_mask = sig_mask;
+	if (sigaction(SIGUSR2, &usr2_act, NULL) < 0) {
+                perror("sigaction: SIGUSR2");
                 exit(1);
         }
 #endif

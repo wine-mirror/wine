@@ -4,11 +4,13 @@ MODULE = multimedia
 
 SRCS = \
 	audio.c \
+	joystick.c \
 	mcianim.c \
 	mcicda.c \
 	midi.c \
 	mmaux.c \
-	mmsystem.c
+	mmsystem.c \
+	time.c
 
 OBJS = $(SRCS:.c=.o)
 

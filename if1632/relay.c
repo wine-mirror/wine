@@ -8,6 +8,7 @@
 #include "dlls.h"
 #include "global.h"
 #include "module.h"
+#include "registers.h"
 #include "stackframe.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
@@ -80,7 +81,7 @@ BOOL RELAY_Init(void)
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALL16_Start,
                                    (int)CALL16_End - (int)CALL16_Start,
-                                   0, TRUE, TRUE, FALSE );
+                                   0, TRUE, TRUE, FALSE, NULL );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
@@ -97,7 +98,7 @@ BOOL RELAY_Init(void)
 /***********************************************************************
  *           RELAY_DebugCall32
  */
-void RELAY_DebugCall32( char *args )
+void RELAY_DebugCall32( int func_type, char *args )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -150,6 +151,13 @@ void RELAY_DebugCall32( char *args )
         if (*args) printf( "," );
     }
     printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
+
+    if (func_type == 2)  /* register function */
+    {
+        struct sigcontext_struct *context = (struct sigcontext_struct *)args16;
+        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+                AX, BX, CX, DX, SI, DI, ES, EFL );
+    }
 }
 
 
@@ -162,6 +170,9 @@ void RELAY_DebugReturn( int func_type, int ret_val )
     struct dll_table_s *table;
     char *name;
 
+    if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF) {
+	fprintf(stderr, "Wine wrote past the end of the 32 bit stack. Please report this.\n");
+    }
     if (!debugging_relay) return;
 
     frame = CURRENT_STACK16;

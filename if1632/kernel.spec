@@ -42,7 +42,7 @@ id	1
 42  return DisableDos 0 0
 45  pascal16 LoadModule(ptr ptr) LoadModule
 46  pascal16 FreeModule(word) FreeModule
-47  pascal16 GetModuleHandle(ptr) GetModuleHandle
+47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
 50  pascal GetProcAddress(word segptr) GetProcAddress
@@ -82,7 +82,7 @@ id	1
 84  pascal _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
 86  pascal16 _lwrite(word ptr word) _lwrite
-87 	stub RESERVED5
+87  pascal16 RESERVED5(ptr ptr) lstrcmp
 88  pascal lstrcpy(segptr segptr) lstrcpy
 89  pascal lstrcat(segptr segptr) lstrcat
 90  pascal16 lstrlen(ptr) lstrlen
@@ -146,7 +146,7 @@ id	1
 155 pascal16 GetTaskDS() GetTaskDS
 156 stub LimitEMSPages
 157 return GetCurPID 4 0
-158 stub IsWinOldApTask
+158 return IsWinOldApTask 2 0
 159 stub GlobalHandleNoRIP
 160 stub EMSCopy
 161 pascal16 LocalCountFree() LocalCountFree

@@ -157,7 +157,8 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     ldt_flags_copy[entry] = (content->type & LDT_FLAGS_TYPE) |
                             (content->read_only ? LDT_FLAGS_READONLY : 0) |
                             (content->seg_32bit ? LDT_FLAGS_32BIT : 0) |
-                            (content->limit_in_pages ? LDT_FLAGS_BIG : 0);
+                            (content->limit_in_pages ? LDT_FLAGS_BIG : 0) |
+                            (ldt_flags_copy[entry] & LDT_FLAGS_ALLOCATED);
     return ret;
 }
 

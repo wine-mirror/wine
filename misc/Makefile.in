@@ -1,0 +1,59 @@
+CC 	= @CC@
+CFLAGS 	= @CFLAGS@
+XINCL 	= @x_includes@
+TOPSRC  = @top_srcdir@
+DIVINCL = -I$(TOPSRC)/include -I$(TOPSRC)
+LD	= @LD@
+LANG	= @LANG@
+LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+@SET_MAKE@
+
+
+MODULE 	= misc
+
+SRCS 	= atom.c clipboard.c comm.c commdlg.c compobj.c dos_fs.c \
+	driver.c exec.c escape.c file.c keyboard.c kernel32.c lstr.c \
+	main.c ole2.c ole2disp.c ole2nls.c olecli.c olesvr.c network.c \
+	profile.c rect.c shell.c sound.c spy.c stress.c user.c \
+	winsocket.c
+ 
+OBJS = $(SRCS:.c=.o)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) $(LANG) -o $*.o $<
+
+all: checkrc $(MODULE).o
+
+checkrc:
+	(cd $(TOPSRC)/rc; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)')
+
+$(MODULE).o: $(OBJS)
+	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
+
+depend:
+	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
+	cp tmp_make Makefile
+	rm tmp_make
+
+clean:
+	rm -f *.o \#*\# *~ tmp_make
+
+distclean: clean
+	rm Makefile
+
+countryclean:
+	rm -f ole2nls.o shell.o commdlg.o
+
+NAMES = $(SRCS:.c=)
+
+winelibclean:
+	for i in $(NAMES); do \
+	if test `grep -c WINELIB $$i.c` -ne 0; then \
+	rm $$i.o; \
+	fi; \
+	done
+ 
+dummy:
+
+### Dependencies:

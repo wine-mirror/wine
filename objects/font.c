@@ -262,31 +262,30 @@ void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
 /***********************************************************************
  *           GetGlyphOutLine    (GDI.309)
  */
-DWORD GetGlyphOutLine(
-	HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, 
-	DWORD cbBuffer, LPSTR lpBuffer, LPMAT2 lpmat2
-) {
-	dprintf_font(stdnimp,"GetGlyphOutLine(0x%x, '%c', 0x%x, %p, %d, %p, %p) // - empty stub!\n",
-		hdc,uChar,fuFormat,lpgm,cbBuffer,lpBuffer,lpmat2
-	);
-	return (DWORD)-1; /* failure */
+DWORD GetGlyphOutLine(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, 
+                      DWORD cbBuffer, LPSTR lpBuffer, LPMAT2 lpmat2) 
+{
+    fprintf( stdnimp,"GetGlyphOutLine(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
+             hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
+    return (DWORD)-1; /* failure */
 }
+
+
 /***********************************************************************
  *           CreateScalableFontResource    (GDI.310)
  */
-BOOL CreateScalableFontResource(
-	UINT fHidden,LPSTR lpszResourceFile,
-	LPSTR lpszFontFile,LPSTR lpszCurrentPath
-) {
-	/* fHidden=1 - only visible for the calling app, read-only, not
-	 * enumbered with EnumFonts/EnumFontFamilies
-	 * lpszCurrentPath can be NULL
-	 */
-	dprintf_font(stdnimp,"CreateScalableFontResource(%d,%s,%s,%x(%s)) // empty stub!\n",
-		fHidden,lpszResourceFile,lpszFontFile,lpszCurrentPath
-	);
-	return FALSE; /* create failed */
+BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
+                                 LPSTR lpszFontFile, LPSTR lpszCurrentPath )
+{
+    /* fHidden=1 - only visible for the calling app, read-only, not
+     * enumbered with EnumFonts/EnumFontFamilies
+     * lpszCurrentPath can be NULL
+     */
+    fprintf(stdnimp,"CreateScalableFontResource(%d,%s,%s,%s) // empty stub!\n",
+            fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+    return FALSE; /* create failed */
 }
+
 
 /***********************************************************************
  *           CreateFontIndirect    (GDI.57)
@@ -737,7 +736,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
   LPTEXTMETRIC lptm;
   LPSTR	       lpOldName;
   char	       FaceName[LF_FACESIZE];
-  int          nRet;
+  int          nRet = 0;
   int          i;
   
   dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %08lx, %p)\n", 
@@ -807,7 +806,7 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
   LPTEXTMETRIC	lptm;
   LPSTR	       	lpOldName;
   char	       	FaceName[LF_FACESIZE];
-  int	       	nRet;
+  int	       	nRet = 0;
   int	       	i;
   
   dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %08lx, %p)\n",

@@ -13,15 +13,19 @@
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
 
-int do_int1a(struct sigcontext_struct * context){
+
+/**********************************************************************
+ *	    INT_Int1aHandler
+ *
+ * Handler for int 1ah (date and time).
+ */
+void INT_Int1aHandler( struct sigcontext_struct sigcontext )
+{
+#define context (&sigcontext)
 	time_t ltime;
         DWORD ticks;
 	struct tm *bdtime;
         struct timeval tvs;
-
-	dprintf_int(stddeb,"int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
-	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
-	       AX, BX, CX, DX, SI, DI, DS, ES);
 
 	switch(AH) {
 	case 0:
@@ -68,8 +72,7 @@ int do_int1a(struct sigcontext_struct * context){
 		break;
 
 	default:
-		IntBarf(0x1a, context);
-		return 1;
-	};
-	return 1;
+		INT_BARF( 0x1a );
+	}
+#undef context
 }

@@ -1,0 +1,8 @@
+This is a pre-alpha code, it does not work for 100%,
+but it does not break anything (I hope).
+Proper documentation (LaTeX) will be ready for the next release.
+
+You can use "ipcl" perl script to remove junk IPC stuff.
+You can use "ipcs" system program to find junk IPC stuff.
+
+Michael

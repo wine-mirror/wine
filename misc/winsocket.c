@@ -20,6 +20,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include "winsock.h"
+#include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -37,33 +38,36 @@ struct ipc_packet {
 	LONG	lParam;
 };
 
+#ifndef WINELIB
 #pragma pack(1)
+#endif
 
 #define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
 #define MTYPE 0xb0b0eb05
-#define WINE_PACKED __attribute__ ((packed))
+
+/* These structures are Win16 only */
 
 struct WIN_hostent  {
-	char	*h_name WINE_PACKED;		/* official name of host */
-	char	**h_aliases WINE_PACKED;	/* alias list */
-	int	h_addrtype WINE_PACKED;		/* host address type */
-	int	h_length WINE_PACKED;		/* length of address */
+	SEGPTR	h_name WINE_PACKED;		/* official name of host */
+	SEGPTR	h_aliases WINE_PACKED;	/* alias list */
+	INT	h_addrtype WINE_PACKED;		/* host address type */
+	INT	h_length WINE_PACKED;		/* length of address */
 	char	**h_addr_list WINE_PACKED;	/* list of addresses from name server */
 	char	*names[2];
 	char    hostname[200];
 };
 
 struct	WIN_protoent {
-	char	*p_name WINE_PACKED;		/* official protocol name */
-	char	**p_aliases WINE_PACKED;	/* alias list */
-	int	p_proto WINE_PACKED;		/* protocol # */
+	SEGPTR	p_name WINE_PACKED;		/* official protocol name */
+	SEGPTR	p_aliases WINE_PACKED;	/* alias list */
+	INT	p_proto WINE_PACKED;		/* protocol # */
 };
 
 struct	WIN_servent {
-	char	*s_name WINE_PACKED;		/* official service name */
-	char	**s_aliases WINE_PACKED;	/* alias list */
-	int	s_port WINE_PACKED;		/* port # */
-	char	*s_proto WINE_PACKED;		/* protocol to use */
+	SEGPTR	s_name WINE_PACKED;		/* official service name */
+	SEGPTR	s_aliases WINE_PACKED;	/* alias list */
+	INT	s_port WINE_PACKED;		/* port # */
+	SEGPTR	s_proto WINE_PACKED;		/* protocol to use */
 };
 
 struct WinSockHeap {
@@ -82,16 +86,51 @@ struct WinSockHeap {
 	struct	WIN_protoent WSAprotoent_number;	
 	struct	WIN_servent WSAservent_name;
 	struct	WIN_servent WSAservent_port;
+	/* 8K scratch buffer for aliases and friends are hopefully enough */
+	char scratch[8192];
 };
-static struct WinSockHeap *heap;
+static struct WinSockHeap *Heap;
+static int HeapHandle;
+static int ScratchPtr;
 
+#ifndef WINELIB
+#define GET_SEG_PTR(x)	MAKELONG((int)((char*)(x)-(char*)Heap),	\
+							GlobalHandleToSel(HeapHandle))
+#else
+#define GET_SEG_PTR(x)	(x)
+#endif
+
+#ifndef WINELIB
 #pragma pack(4)
+#endif
 
 #define dump_sockaddr(a) \
 	fprintf(stderr, "sockaddr_in: family %d, address %s, port %d\n", \
 			((struct sockaddr_in *)a)->sin_family, \
 			inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
 			ntohs(((struct sockaddr_in *)a)->sin_port))
+
+static void ResetScratch()
+{
+	ScratchPtr=0;
+}
+
+static void *scratch_alloc(int size)
+{
+	char *ret;
+	if(ScratchPtr+size > sizeof(Heap->scratch))
+		return 0;
+	ret = Heap->scratch + ScratchPtr;
+	ScratchPtr += size;
+	return ret;
+}
+
+static SEGPTR scratch_strdup(char * s)
+{
+	char *ret=scratch_alloc(strlen(s)+1);
+	strcpy(ret,s);
+	return GET_SEG_PTR(ret);
+}
 
 static WORD wsaerrno(void)
 {
@@ -208,19 +247,70 @@ static void convert_sockopt(INT *level, INT *optname)
 }
 
 #ifndef WINELIB
-static void CONVERT_HOSTENT(struct WIN_hostent *heap, struct hostent *host)
+static SEGPTR copy_stringlist(char **list)
 {
+	SEGPTR *s_list;
+	int i;
+	for(i=0;list[i];i++)
+		;
+	s_list = scratch_alloc(sizeof(SEGPTR)*(i+1));
+	for(i=0;list[i];i++)
+	{
+		void *copy = scratch_alloc(strlen(list[i])+1);
+		strcpy(copy,list[i]);
+		s_list[i]=GET_SEG_PTR(copy);
+	}
+	s_list[i]=0;
+	return GET_SEG_PTR(s_list);
+}
+	
 
+static void CONVERT_HOSTENT(struct WIN_hostent *heapent, struct hostent *host)
+{
+	SEGPTR *addr_list;
+	int i;
+	ResetScratch();
+	strcpy(heapent->hostname,host->h_name);
+	heapent->h_name = GET_SEG_PTR(heapent->hostname);
+	/* Convert aliases. Have to create array with FAR pointers */
+	if(!host->h_aliases)
+		heapent->h_aliases = 0;
+	else
+		heapent->h_aliases = copy_stringlist(host->h_aliases);
+
+	heapent->h_addrtype = host->h_addrtype;
+	heapent->h_length = host->h_length;
+	for(i=0;host->h_addr_list[i];i++)
+		;
+	addr_list=scratch_alloc(sizeof(SEGPTR)*(i+1));
+	heapent->h_addr_list = GET_SEG_PTR(addr_list);
+	for(i=0;host->h_addr_list[i];i++)
+	{
+		void *addr=scratch_alloc(host->h_length);
+		memcpy(addr,host->h_addr_list[i],host->h_length);
+		addr_list[i]=GET_SEG_PTR(addr);
+	}
+	addr_list[i]=0;
 }
 
-static void CONVERT_PROTOENT(struct WIN_protoent *heap, struct protoent *proto)
+static void CONVERT_PROTOENT(struct WIN_protoent *heapent, 
+	struct protoent *proto)
 {
-
+	ResetScratch();
+	heapent->p_name= scratch_strdup(proto->p_name);
+	heapent->p_aliases=proto->p_aliases ? 
+			copy_stringlist(proto->p_aliases) : 0;
+	heapent->p_proto = proto->p_proto;
 }
 
-static void CONVERT_SERVENT(struct WIN_servent *heap, struct servent *serv)
+static void CONVERT_SERVENT(struct WIN_servent *heapent, struct servent *serv)
 {
-
+	ResetScratch();
+	heapent->s_name = scratch_strdup(serv->s_name);
+	heapent->s_aliases = serv->s_aliases ?
+			copy_stringlist(serv->s_aliases) : 0;
+	heapent->s_port = serv->s_port;
+	heapent->s_proto = scratch_strdup(serv->s_proto);
 }
 #else
 #define CONVERT_HOSTENT(a,b)	memcpy(a, &b, sizeof(a))
@@ -339,16 +429,45 @@ char *WINSOCK_inet_ntoa(struct in_addr in)
         	return NULL;
 	}
 
-	strncpy(heap->ntoa_buffer, s, sizeof(heap->ntoa_buffer) );
+	strncpy(Heap->ntoa_buffer, s, sizeof(Heap->ntoa_buffer) );
 
-	return (char *) &heap->ntoa_buffer;
+	return (char *) GET_SEG_PTR(&Heap->ntoa_buffer);
 }
 
-INT WINSOCK_ioctlsocket(SOCKET s, long cmd, u_long *argp)
+INT WINSOCK_ioctlsocket(SOCKET s, u_long cmd, u_long *argp)
 {
-	dprintf_winsock(stddeb, "WSA_ioctl: socket %d, cmd %ld, ptr %8x\n", s, cmd, (int) argp);
+	long newcmd;
+	u_long *newargp;
+	char *ctlname;
+	dprintf_winsock(stddeb, "WSA_ioctl: socket %d, cmd %lX, ptr %8x\n", s, cmd, (int) argp);
 
-	if (ioctl(s, cmd, argp) < 0) {
+	/* Why can't they all use the same ioctl numbers */
+	newcmd=cmd;
+	newargp=argp;
+	ctlname=0;
+	if(cmd == _IOR('f',127,u_long))
+	{
+		ctlname="FIONREAD";
+		newcmd=FIONREAD;
+	}else 
+	if(cmd == _IOW('f',126,u_long) || cmd == _IOR('f',126,u_long))
+	{
+		ctlname="FIONBIO";
+		newcmd=FIONBIO;
+	}else
+	if(cmd == _IOW('f',125,u_long))
+	{
+		ctlname="FIOASYNC";
+		newcmd=FIOASYNC;
+	}
+
+	if(!ctlname)
+		fprintf(stderr,"Unknown winsock ioctl. Trying anyway\n");
+	else
+		dprintf_winsock(stddeb,"Recognized as %s\n", ctlname);
+	
+
+	if (ioctl(s, newcmd, newargp) < 0) {
         	errno_to_wsaerrno();
         	return SOCKET_ERROR;
 	}
@@ -485,7 +604,10 @@ SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
     return sock;
 }
 
-struct WIN_hostent *WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
+/*
+struct WIN_hostent *
+*/
+SEGPTR WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
 {
 	struct hostent *host;
 
@@ -495,12 +617,15 @@ struct WIN_hostent *WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_HOSTENT(&heap->hostent_addr, host);
+	CONVERT_HOSTENT(&Heap->hostent_addr, host);
 
-	return &heap->hostent_addr;
+	return GET_SEG_PTR(&Heap->hostent_addr);
 }
 
-struct WIN_hostent *WINSOCK_gethostbyname(const char *name)
+/*
+struct WIN_hostent *
+*/
+SEGPTR WINSOCK_gethostbyname(const char *name)
 {
 	struct hostent *host;
 
@@ -510,9 +635,9 @@ struct WIN_hostent *WINSOCK_gethostbyname(const char *name)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_HOSTENT(&heap->hostent_name, host);
+	CONVERT_HOSTENT(&Heap->hostent_name, host);
 
-	return &heap->hostent_name;
+	return GET_SEG_PTR(&Heap->hostent_name);
 }
 
 INT WINSOCK_gethostname(char *name, INT namelen)
@@ -526,7 +651,10 @@ INT WINSOCK_gethostname(char *name, INT namelen)
 	return 0;
 }          
 
-struct WIN_protoent *WINSOCK_getprotobyname(char *name)
+/*
+struct WIN_protoent *
+*/
+SEGPTR WINSOCK_getprotobyname(char *name)
 {
 	struct protoent *proto;
 
@@ -536,12 +664,15 @@ struct WIN_protoent *WINSOCK_getprotobyname(char *name)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_PROTOENT(&heap->protoent_name, proto);
+	CONVERT_PROTOENT(&Heap->protoent_name, proto);
 
-	return &heap->protoent_name;
+	return GET_SEG_PTR(&Heap->protoent_name);
 }
 
-struct WIN_protoent *WINSOCK_getprotobynumber(INT number)
+/*
+struct WIN_protoent *
+*/
+SEGPTR WINSOCK_getprotobynumber(INT number)
 {
 	struct protoent *proto;
 
@@ -551,12 +682,15 @@ struct WIN_protoent *WINSOCK_getprotobynumber(INT number)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_PROTOENT(&heap->protoent_number, proto);
+	CONVERT_PROTOENT(&Heap->protoent_number, proto);
 
-	return &heap->protoent_number;
+	return GET_SEG_PTR(&Heap->protoent_number);
 }
 
-struct WIN_servent *WINSOCK_getservbyname(const char *name, const char *proto)
+/*
+struct WIN_servent *
+*/
+SEGPTR WINSOCK_getservbyname(const char *name, const char *proto)
 {
 	struct servent *service;
 
@@ -569,12 +703,15 @@ struct WIN_servent *WINSOCK_getservbyname(const char *name, const char *proto)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_SERVENT(&heap->servent_name, service);
+	CONVERT_SERVENT(&Heap->servent_name, service);
 
-	return &heap->servent_name;
+	return GET_SEG_PTR(&Heap->servent_name);
 }
 
-struct WIN_servent *WINSOCK_getservbyport(INT port, const char *proto)
+/*
+struct WIN_servent *
+*/
+SEGPTR WINSOCK_getservbyport(INT port, const char *proto)
 {
 	struct servent *service;
 
@@ -584,9 +721,9 @@ struct WIN_servent *WINSOCK_getservbyport(INT port, const char *proto)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	CONVERT_SERVENT(&heap->servent_port, service);
+	CONVERT_SERVENT(&Heap->servent_port, service);
 
-	return &heap->servent_port;
+	return GET_SEG_PTR(&Heap->servent_port);
 }
 
 /******************** winsock specific functions ************************
@@ -831,7 +968,7 @@ INT WSACancelBlockingCall(void)
           
 INT WSAGetLastError(void)
 {
-	dprintf_winsock(stddeb, "WSA_GetLastError\n");
+	dprintf_winsock(stddeb, "WSA_GetLastError = %x\n", wsa_errno);
 
     return wsa_errno;
 }
@@ -886,7 +1023,6 @@ WSADATA WINSOCK_data = {
 
 INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
-    int HeapHandle;
 
     dprintf_winsock(stddeb, "WSAStartup: verReq=%x\n", wVersionRequested);
 
@@ -903,7 +1039,7 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     if ((HeapHandle = GlobalAlloc(GMEM_FIXED,sizeof(struct WinSockHeap))) == 0)
 	return WSASYSNOTREADY;
 
-    heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
+    Heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
     bcopy(&WINSOCK_data, lpWSAData, sizeof(WINSOCK_data));
 
     /* ipc stuff */

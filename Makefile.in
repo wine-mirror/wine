@@ -1,0 +1,87 @@
+# This Makefile understands the following targets:
+#
+# all (default):	build wine
+# clean:		remove all intermediate files
+# distclean:		also remove all files created by configure
+# countryclean:		remove all files which have to be remade if
+#			a different LANGuage is selected
+# winelibclean:		remove all files which differ for the emulator
+#			and the library
+# depend:		create the dependencies
+#
+# Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
+#                         <patra@itp1.physik.tu-berlin.de>
+
+CC 	= @CC@
+CFLAGS 	= @CFLAGS@
+XINCL 	= @x_includes@
+TOPSRC  = @top_srcdir@
+DIVINCL = -I$(TOPSRC)/include
+XPM_LIB	= -lXpm
+XLIB	= -lXext -lX11
+XDIR	= -L@x_libraries@
+LDLIBS	= -lm
+LD	= @LD@
+LANG	= @LANG@
+LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+ 
+
+COMMONSUBDIRS = controls rc ipc loader misc multimedia objects windows
+
+EMUSUBDIRS = tools debugger if1632 memory miscemu
+
+LIBSUBDIRS = toolkit
+ 
+COMMONOBJS = controls/controls.o ipc/ipc.o loader/loader.o misc/misc.o \
+	multimedia/multimedia.o objects/objects.o rc/rc.o \
+	windows/windows.o
+
+EMUOBJS = debugger/debugger.o if1632/if1632.o memory/memory.o miscemu/miscemu.o
+
+LIBOBJS = toolkit/toolkit.o
+ 
+
+
+SUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS)
+
+OBJS = $(COMMONOBJS) $(EMUOBJS)
+
+
+all:
+	for i in $(SUBDIRS); do \
+	( cd $(TOPSRC)/$$i; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)' 'LANG=$(LANG)'); \
+	done
+	$(CC) -o wine $(OBJS) $(LDOPTIONS) $(XDIR) $(XPM_LIB) $(XLIB) $(LDLIBS)
+	nm wine | grep -v _compiled | sort >wine.sym
+
+depend:
+	for i in $(SUBDIRS); do \
+	( cd $(TOPSRC)/$$i; $(MAKE) depend); \
+	done
+
+clean:
+	for i in $(SUBDIRS); do \
+        ( cd $(TOPSRC)/$$i; $(MAKE) clean); \
+	done
+	rm -f *.o \#*\# *~ wine wine.sym
+
+distclean:
+	for i in $(SUBDIRS); do \
+	( cd $(TOPSRC)/$$i; $(MAKE) distclean); \
+	done
+	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
+	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
+	rm -f *.o \#*\# *~ wine wine.sym
+	rm -f stamp-config config.* include/config.h Makefile
+
+countryclean:
+	for i in $(SUBDIRS); do \
+	( cd $(TOPSRC)/$$i; $(MAKE) countryclean); \
+	done
+	rm -f wine wine.sym
+
+winelibclean:
+	for i in $(SUBDIRS); do \
+	( cd $(TOPSRC)/$$i; $(MAKE) winelibclean); \
+	done
+	

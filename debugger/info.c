@@ -10,11 +10,6 @@
 
 extern char * find_nearest_symbol( unsigned int seg, unsigned int addr );
 
-void application_not_running()
-{
-  fprintf(stderr,"Application not running\n");
-}
-
 void print_address( unsigned int segment, unsigned int addr, int addrlen )
 {
     char *name = find_nearest_symbol( segment, addr );

@@ -37,7 +37,7 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 \n		{ syntax_error = 0; return '\n'; } /*Indicate end of command*/
 
-[-+=()*]        { return *yytext; }
+[-+=()*:]       { return *yytext; }
 
 "0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval); return NUM; }
 {DIGIT}+             { sscanf(yytext, "%d", &yylval); return NUM; }

@@ -78,8 +78,8 @@ STATIC int		OldPoint;
 STATIC int		Point;
 STATIC int		PushBack;
 STATIC int		Pushed;
-FORWARD KEYMAP		Map[33];
-FORWARD KEYMAP		MetaMap[16];
+STATIC KEYMAP		Map[33];
+STATIC KEYMAP		MetaMap[16];
 STATIC SIZE_T		Length;
 STATIC SIZE_T		ScreenCount;
 STATIC SIZE_T		ScreenSize;
@@ -243,41 +243,6 @@ TTYinfo()
 }
 
 
-/*
-**  Print an array of words in columns.
-*/
-STATIC void
-columns(ac, av)
-    int		ac;
-    CHAR	**av;
-{
-    CHAR	*p;
-    int		i;
-    int		j;
-    int		k;
-    int		len;
-    int		skip;
-    int		longest;
-    int		cols;
-
-    /* Find longest name, determine column count from that. */
-    for (longest = 0, i = 0; i < ac; i++)
-	if ((j = strlen((char *)av[i])) > longest)
-	    longest = j;
-    cols = TTYwidth / (longest + 3);
-
-    TTYputs((CHAR *)NEWLINE);
-    for (skip = ac / cols + 1, i = 0; i < skip; i++) {
-	for (j = i; j < ac; j += skip) {
-	    for (p = av[j], len = strlen((char *)p), k = len; --k >= 0; p++)
-		TTYput(*p);
-	    if (j + skip < ac)
-		while (++len < longest + 3)
-		    TTYput(' ');
-	}
-	TTYputs((CHAR *)NEWLINE);
-    }
-}
 
 STATIC void
 reposition()
@@ -1026,71 +991,6 @@ end_line()
     return CSstay;
 }
 
-/*
-**  Move back to the beginning of the current word and return an
-**  allocated copy of it.
-*/
-STATIC CHAR *
-find_word()
-{
-    static char	SEPS[] = "#;&|^$=`'{}()<>\n\t ";
-    CHAR	*p;
-    CHAR	*new;
-    SIZE_T	len;
-
-    for (p = &Line[Point]; p > Line && strchr(SEPS, (char)p[-1]) == NULL; p--)
-	continue;
-    len = Point - (p - Line) + 1;
-    if ((new = NEW(CHAR, len)) == NULL)
-	return NULL;
-    COPYFROMTO(new, p, len);
-    new[len - 1] = '\0';
-    return new;
-}
-
-STATIC STATUS
-c_complete()
-{
-    CHAR	*p;
-    CHAR	*word;
-    int		unique;
-    STATUS	s;
-
-    word = find_word();
-    p = (CHAR *)rl_complete((char *)word, &unique);
-    if (word)
-	DISPOSE(word);
-    if (p && *p) {
-	s = insert_string(p);
-	if (!unique)
-	    (void)ring_bell();
-	DISPOSE(p);
-	return s;
-    }
-    return ring_bell();
-}
-
-STATIC STATUS
-c_possible()
-{
-    CHAR	**av;
-    CHAR	*word;
-    int		ac;
-
-    word = find_word();
-    ac = rl_list_possib((char *)word, (char ***)&av);
-    if (word)
-	DISPOSE(word);
-    if (ac) {
-	columns(ac, av);
-	while (--ac >= 0)
-	    DISPOSE(av[ac]);
-	DISPOSE(av);
-	return CSmove;
-    }
-    return ring_bell();
-}
-
 STATIC STATUS
 accept_line()
 {
@@ -1335,7 +1235,7 @@ STATIC KEYMAP	Map[33] = {
     {	CTL('F'),	fd_char		},
     {	CTL('G'),	ring_bell	},
     {	CTL('H'),	bk_del_char	},
-    {	CTL('I'),	c_complete	},
+    {	CTL('I'),	ring_bell	},
     {	CTL('J'),	accept_line	},
     {	CTL('K'),	kill_line	},
     {	CTL('L'),	redisplay	},
@@ -1367,7 +1267,7 @@ STATIC KEYMAP	MetaMap[16]= {
     {	'.',		last_argument	},
     {	'<',		h_first		},
     {	'>',		h_last		},
-    {	'?',		c_possible	},
+    {	'?',		ring_bell	},
     {	'b',		bk_word		},
     {	'd',		fd_kill_word	},
     {	'f',		fd_word		},

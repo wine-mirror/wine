@@ -773,7 +773,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         (hwndInsertAfter == HWND_NOTOPMOST)) hwndInsertAfter = HWND_TOP;
       /* hwndInsertAfter must be a sibling of the window */
     if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM) &&
-	(GetParent(hwnd) != GetParent(hwndInsertAfter))) return FALSE;
+	(wndPtr->hwndParent != WIN_FindWndPtr(hwndInsertAfter)->hwndParent))
+        return FALSE;
 
       /* Fill the WINDOWPOS structure */
 
@@ -965,14 +966,16 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
     DWP *pDWP;
     int i;
     HDWP newhdwp = hdwp;
+    HWND parent;
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
 
       /* All the windows of a DeferWindowPos() must have the same parent */
 
-    if (pDWP->actualCount == 0) pDWP->hwndParent = GetParent( hwnd );
-    else if (GetParent( hwnd ) != pDWP->hwndParent)
+    parent = WIN_FindWndPtr( hwnd )->hwndParent;
+    if (pDWP->actualCount == 0) pDWP->hwndParent = parent;
+    else if (parent != pDWP->hwndParent)
     {
         USER_HEAP_FREE( hdwp );
         return 0;

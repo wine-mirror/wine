@@ -8,14 +8,13 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <string.h>
-#include "wineopts.h"
 #include "windows.h"
 #include "wine.h"
 #include "options.h"
+#include "stddebug.h"
+#include "debug.h"
 
-#ifndef NOSPY
-
-#define SPY_MAX_MSGNUM		0x0232
+#define SPY_MAX_MSGNUM		0x03e8
 
 const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
@@ -245,27 +244,115 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MDIICONARRANGE",        /* 0x0228 */
     "WM_MDIGETACTIVE",          /* 0x0229 */
 
+    NULL, NULL, NULL, NULL, NULL, NULL,
+    /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */
     "WM_ENTERSIZEMOVE",		/* 0x0231 */
-    "WM_EXITSIZEMOVE"		/* 0x0232 */
+    "WM_EXITSIZEMOVE",		/* 0x0232 */
+    NULL, NULL, NULL, NULL, NULL, 
+    /* 0x0238*/
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    
+    /* 0x0240 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0250 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    
+    /* 0x0260 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0280 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x02c0 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0300 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0340 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0380 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x03c0 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x03e0 */
+    "WM_DDE_INITIATE",  /* 0x3E0 */
+    "WM_DDE_TERMINATE",	/* 0x3E1 */
+    "WM_DDE_ADVISE",	/* 0x3E2 */
+    "WM_DDE_UNADVISE",	/* 0x3E3 */
+    "WM_DDE_ACK",	/* 0x3E4 */
+    "WM_DDE_DATA",	/* 0x3E5 */
+    "WM_DDE_REQUEST",	/* 0x3E6 */
+    "WM_DDE_POKE",	/* 0x3E7 */
+    "WM_DDE_EXECUTE"	/* 0x3E8 */
 };
 
 char SpyFilters[256+1];
 char SpyIncludes[256+1];
-
-#endif /* NOSPY */
 
 /**********************************************************************
  *					SpyMessage
  */
 void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
 {
-#ifndef NOSPY
     char msg_name[80];
     
-    if (SpyFp == NULL)
-	return;
-    
+	if(!debugging_spy)
+		return;
+
     if (msg > SPY_MAX_MSGNUM || MessageTypeNames[msg] == NULL)
 	sprintf(msg_name, "%04x", msg);
     else
@@ -277,10 +364,9 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
 	strstr(SpyFilters, msg_name) == NULL)
     {
 	msg_name[strlen(msg_name) - 1] = '\0';
-	fprintf(SpyFp, "%04x  %20.20s  %04x  %04x  %08lx\n",
+	dprintf_spy(stddeb, "%04x  %20.20s  %04x  %04x  %08lx\n",
 		hwnd, msg_name, msg, wParam, lParam);
     }
-#endif
 }
 
 /**********************************************************************
@@ -288,30 +374,6 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
  */
 void SpyInit(void)
 {
-#ifndef NOSPY
-    char filename[100];
-
-    if (SpyFp != NULL)
-	return;
-
-    if (Options.spyFilename == NULL)
-    {
-	GetPrivateProfileString("spy", "file", "", filename, sizeof(filename),
-				WINE_INI);
-    }
-    else
-	strncpy(filename, Options.spyFilename, 100);
-
-    if (strcasecmp(filename, "CON") == 0)
-	SpyFp = stdout;
-    else if (strlen(filename))
-	SpyFp = fopen(filename, "a");
-    else
-    {
-	SpyFp = NULL;
-	return;
-    }
-    
     GetPrivateProfileString("spy", "exclude", "", SpyFilters, 
 			    sizeof(SpyFilters)-1, WINE_INI);
     GetPrivateProfileString("spy", "include", "", SpyIncludes, 
@@ -323,5 +385,4 @@ void SpyInit(void)
     if (*SpyFilters != 0) {
       strcat(SpyFilters, ";");
     }
-#endif
 }

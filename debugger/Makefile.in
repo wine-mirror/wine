@@ -1,0 +1,68 @@
+CC	= @CC@
+CFLAGS	= @CFLAGS@
+TOPSRC	= @top_srcdir@
+DIVINCL	= -I$(TOPSRC)/include
+BISON	= @YACC@
+FLEX	= @LEX@
+DIVDEFS	= -DUSE_READLINE
+COMPILE	= $(CC) $(CFLAGS) $(DIVINCL) $(DIVDEFS)
+LD	= @LD@
+LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+@SET_MAKE@
+
+
+MODULE	= debugger
+
+SRCS	= break.c db_disasm.c hash.c info.c registers.c stack.c
+
+OBJS = $(SRCS:.c=.o) dbg.tab.o lex.yy.o
+
+all: $(MODULE).o dbg.tab.o lex.yy.o
+
+dbg.tab.c: dbg.y
+	$(BISON) -b dbg -d dbg.y
+
+dbg.tab.h: dbg.y
+	$(BISON) -b dbg -d dbg.y
+
+lex.yy.c: debug.l dbg.tab.h dbg.tab.h
+	$(FLEX) -8 -I debug.l
+
+.c.o:
+	$(COMPILE) -c -o $*.o $<
+ 
+$(MODULE).o: $(OBJS)
+	(cd readline; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)')
+	$(LD) $(LDCOMBINEFLAGS) $(OBJS) readline/readline.o -o $(MODULE).o
+
+depend:
+	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
+	cp tmp_make Makefile
+	rm tmp_make
+
+clean:
+	(cd readline; $(MAKE) clean)
+	rm -f *.o \#*\# *~ dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h tmp_make
+
+distclean: clean
+	(cd readline; $(MAKE) distclean)
+	rm Makefile
+
+countryclean:
+
+NAMES = $(SRCS:.c=)
+
+winelibclean:
+	for i in $(NAMES); do \
+	if test `grep -c WINELIB $$i.c` -ne 0; then \
+	rm $$i.o; \
+	fi; \
+	done
+ 
+dbg.tab.o: dbg.tab.c
+lex.yy.o: lex.yy.c
+ 
+dummy:
+
+### Dependencies:

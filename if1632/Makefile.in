@@ -1,0 +1,88 @@
+CC 	= @CC@
+CFLAGS 	= @CFLAGS@
+XINCL 	= @x_includes@
+TOPSRC  = @top_srcdir@
+DIVINCL = -I$(TOPSRC)/include
+LD	= @LD@
+LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+BUILD	= $(TOPSRC)/tools/build
+@SET_MAKE@
+
+
+MODULE 	= if1632
+
+SRCS 	= callback.c relay.c relay32.c
+
+DLLS16	= commdlg.spec compobj.spec ddeml.spec gdi.spec kernel.spec \
+	keyboard.spec mmsystem.spec mouse.spec ole2.spec ole2conv.spec \
+	ole2disp.spec ole2nls.spec ole2prox.spec olecli.spec olesvr.spec \
+	shell.spec sound.spec storage.spec stress.spec system.spec \
+	toolhelp.spec user.spec win87em.spec winprocs.spec winsock.spec
+
+DLLS32	= gdi32.spec kernel32.spec shell32.spec user32.spec winprocs32.spec
+
+
+OBJS = $(SRCS:.c=.o) $(DLLS16:.spec=.o) $(DLLS32:.spec=.o) call16.o call32.o
+
+SFILES = $(DLLS16:.spec=.S)
+
+.SUFFIXES: .spec
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
+
+.spec.S:
+	$(BUILD) -spec16 $< > $*.S
+
+.S.o:
+	$(CC) -c -o $*.o $<  
+
+all: checkbuild $(MODULE).o
+
+gdi32.c: gdi32.spec
+	$(BUILD) -spec32 gdi32.spec > gdi32.c
+
+kernel32.c: kernel32.spec
+	$(BUILD) -spec32 kernel32.spec > kernel32.c
+
+shell32.c: shell32.spec
+	$(BUILD) -spec32 shell32.spec > shell32.c
+
+user32.c: user32.spec
+	$(BUILD) -spec32 user32.spec > user32.c
+
+winprocs32.c: winprocs32.spec
+	$(BUILD) -spec32 winprocs32.spec > winprocs32.c
+
+checkbuild:
+	(cd $(TOPSRC)/tools; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)')
+
+call16.S: $(TOPSRC)/include/callback.h
+	$(TOPSRC)/tools/build -call16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > call16.S
+
+call32.S: $(SFILES)
+	$(BUILD) -call32 `cat $(SFILES) | grep CallTo32_ | sed 's/.*CallTo32_\(.*\)/\1/' | sort | uniq` > call32.S
+
+
+$(MODULE).o: $(OBJS)
+	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
+
+depend:
+	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	$(CC) $(DIVINCL) $(XINCL) -MM callback.c relay32.c relay.c >> tmp_make
+	cp tmp_make Makefile
+	rm tmp_make
+
+clean:
+	rm -f *.o \#*\# *~ *.S gdi32.c kernel32.c shell32.c user32.c winprocs32.c tmp_make
+
+distclean: clean
+	rm Makefile
+
+countryclean:
+
+winelibclean:
+ 
+dummy:
+
+### Dependencies:

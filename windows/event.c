@@ -283,7 +283,8 @@ static void EVENT_key( XKeyEvent *event )
     char Str[24]; 
     XComposeStatus cs; 
     KeySym keysym;
-    WORD xkey, vkey, key_type, key;
+    WORD vkey = 0;
+    WORD xkey, key_type, key;
     KEYLP keylp;
     BOOL extended = FALSE;
 

@@ -19,6 +19,7 @@
 #include "syscolor.h"
 #include "stddebug.h"
 #include "color.h"
+#include "region.h"
 #include "debug.h"
 
 static __inline__ void swap_int(int *a, int *b)
@@ -626,6 +627,17 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     return retval;
 }
 
+/***********************************************************************
+ *           FrameRgn     (GDI.41)
+ */
+BOOL FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, int nWidth, int nHeight )
+{
+    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+    if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return 0;
+    FillRgn( hdc, tmp, hbrush );
+    DeleteObject( tmp );
+    return 1;
+}
 
 /***********************************************************************
  *           InvertRgn    (GDI.42)

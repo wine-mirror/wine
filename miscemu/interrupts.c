@@ -6,7 +6,10 @@
 
 #include "windows.h"
 #include "miscemu.h"
+#include "dos_fs.h"
 #include "module.h"
+#include "registers.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -21,15 +24,17 @@ static SEGPTR INT_Vectors[256];
  */
 BOOL INT_Init(void)
 {
-    SEGPTR addr, dummyHandler;
     WORD vector;
     HMODULE hModule = GetModuleHandle( "WINPROCS" );
 
-    dummyHandler = MODULE_GetEntryPoint( hModule, FIRST_INTERRUPT_ORDINAL+256);
     for (vector = 0; vector < 256; vector++)
     {
-        addr = MODULE_GetEntryPoint( hModule, FIRST_INTERRUPT_ORDINAL+vector );
-        INT_Vectors[vector] = addr ? addr : dummyHandler;
+        if (!(INT_Vectors[vector] = MODULE_GetEntryPoint( hModule,
+		                             FIRST_INTERRUPT_ORDINAL+vector )))
+	{
+	    fprintf(stderr,"Internal error: no vector for int %02x\n",vector);
+	    return FALSE;
+	}
     }
     return TRUE;
 }
@@ -42,9 +47,6 @@ BOOL INT_Init(void)
  */
 SEGPTR INT_GetHandler( BYTE intnum )
 {
-    dprintf_int( stddeb, "Get interrupt vector %02x -> %04x:%04x\n",
-                 intnum, HIWORD(INT_Vectors[intnum]),
-                 LOWORD(INT_Vectors[intnum]) );
     return INT_Vectors[intnum];
 }
 
@@ -65,126 +67,61 @@ void INT_SetHandler( BYTE intnum, SEGPTR handler )
 /**********************************************************************
  *	    INT_DummyHandler
  */
-void INT_DummyHandler( struct sigcontext_struct context )
+void INT_DummyHandler( struct sigcontext_struct sigcontext )
 {
-    dprintf_int( stddeb, "Dummy handler called!\n" );
-}
-
-/**********************************************************************
- *	    INT_Int10Handler
- */
-void INT_Int10Handler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 10 called indirectly through handler!\n" );
-    do_int10( &context );
+#define context (&sigcontext)
+    INT_BARF( CURRENT_STACK16->ordinal_number - FIRST_INTERRUPT_ORDINAL );
+#undef context
 }
 
 
 /**********************************************************************
- *	    INT_Int13Handler
+ *	    INT_Int11Handler
+ *
+ * Handler for int 11h (get equipment list).
  */
-void INT_Int13Handler( struct sigcontext_struct context )
+void INT_Int11Handler( struct sigcontext_struct sigcontext )
 {
-    dprintf_int( stddeb, "int 13 called indirectly through handler!\n" );
-    do_int13( &context );
+#define context (&sigcontext)
+    AX = DOS_GetEquipment();
+#undef context
+}
+
+
+/**********************************************************************
+ *	    INT_Int12Handler
+ *
+ * Handler for int 12h (get memory size).
+ */
+void INT_Int12Handler( struct sigcontext_struct sigcontext )
+{
+#define context (&sigcontext)
+    AX = 640;
+#undef context
 }
 
 
 /**********************************************************************
  *	    INT_Int15Handler
+ *
+ * Handler for int 15h.
  */
-void INT_Int15Handler( struct sigcontext_struct context )
+void INT_Int15Handler( struct sigcontext_struct sigcontext )
 {
-    dprintf_int( stddeb, "int 15 called indirectly through handler!\n" );
-    do_int15( &context );
+#define context (&sigcontext)
+    INT_BARF( 0x15 );
+#undef context
 }
 
 
 /**********************************************************************
  *	    INT_Int16Handler
+ *
+ * Handler for int 16h (keyboard).
  */
-void INT_Int16Handler( struct sigcontext_struct context )
+void INT_Int16Handler( struct sigcontext_struct sigcontext )
 {
-    dprintf_int( stddeb, "int 16 called indirectly through handler!\n" );
-    do_int16( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int1aHandler
- */
-void INT_Int1aHandler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 1a called indirectly through handler!\n" );
-    do_int1a( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int21Handler
- */
-void INT_Int21Handler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 21 called indirectly through handler!\n" );
-    do_int21( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int25Handler
- */
-void INT_Int25Handler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 25 called indirectly through handler!\n" );
-    do_int25( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int26Handler
- */
-void INT_Int26Handler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 26 called indirectly through handler!\n" );
-    do_int26( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int2aHandler
- */
-void INT_Int2aHandler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 2a called indirectly through handler!\n" );
-    do_int2a( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int2fHandler
- */
-void INT_Int2fHandler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 2f called indirectly through handler!\n" );
-    do_int2f( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int31Handler
- */
-void INT_Int31Handler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 31 called indirectly through handler!\n" );
-    do_int31( &context );
-}
-
-
-/**********************************************************************
- *	    INT_Int5cHandler
- */
-void INT_Int5cHandler( struct sigcontext_struct context )
-{
-    dprintf_int( stddeb, "int 5c called indirectly through handler!\n" );
-    do_int5c( &context );
+#define context (&sigcontext)
+    INT_BARF( 0x16 );
+#undef context
 }

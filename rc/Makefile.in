@@ -1,0 +1,59 @@
+CC	= @CC@
+CFLAGS	= @CFLAGS@
+TOPSRC	= @top_srcdir@
+DIVINCL	= -I$(TOPSRC)/include
+BISON	= @YACC@
+FLEX	= @LEX@
+LANG	= @LANG@
+COMPILE	= $(CC) $(CFLAGS) $(DIVINCL) $(LANG)
+
+all: rc.o
+
+y.tab.c: parser.y
+	$(BISON) -d -t parser.y
+
+y.tab.h: parser.y
+	$(BISON) -d -t parser.y
+
+lex.yy.c: parser.l parser.h y.tab.h
+	$(FLEX) -8 -I parser.l
+
+winerc: lex.yy.o winerc.o y.tab.o
+	$(COMPILE) lex.yy.o winerc.o y.tab.o -o winerc
+
+sysres.rct: sysres.rc
+	echo "#include \"windows.h\"" >sysres.rct
+	echo WINDOWS_H_ENDS_HERE >>sysres.rct
+	cat sysres.rc >>sysres.rct
+
+sysres.c: sysres.rct winerc
+	$(COMPILE) -E -x c -P sysres.rct > sysres.tmp
+	cat sysres.tmp | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o sysres -v -p sysres
+
+sysres.h: sysres.rct winerc
+	$(COMPILE) -E -x c -P sysres.rct > sysres.tmp
+	cat sysres.tmp | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | ./winerc -o sysres -v -p sysres
+
+rc.o: sysres.o
+	cp sysres.o rc.o
+
+.c.o:
+	$(COMPILE) -c -o $*.o $<
+
+clean:
+	rm -f *.o \#*\# *~ lex.yy.c sysres.tmp sysres.rct winerc y.tab.c \
+	y.tab.h sysres.c sysres.h tmp_make
+
+distclean: clean
+	rm Makefile
+
+countryclean:
+
+winelibclean: clean
+
+depend: sysres.h
+
+y.tab.o: y.tab.c
+lex.yy.o: lex.yy.c
+winerc.o: $(TOPSRC)/include/windows.h $(TOPSRC)/include/neexe.h parser.h y.tab.h
+ 

@@ -601,14 +601,12 @@ int ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPSTR filespec)
     }
     strcpy(temp,filespec);
     tstr = strrchr(temp, '\\');
-    if (tstr == NULL)
-      DOS_SetDefaultDrive( drive );
-    else {
-      *tstr = 0;
-      filespec = tstr + 1;
+    if (tstr != NULL) {
+      *(tstr+1) = 0;
+      filespec += tstr - temp + 1;
       if (!DOS_ChangeDir( drive, temp )) return 0;
-      DOS_SetDefaultDrive( drive );
     }
+    DOS_SetDefaultDrive( drive );
     dprintf_listbox(stddeb,"Changing directory to %c:%s, filemask is %s\n",
 		    drive+'A', temp, filespec);
   }

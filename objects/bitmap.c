@@ -12,7 +12,7 @@
 #include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
-#include "prototypes.h"
+#include "resource.h"  /* for ConvertCore/InfoBitmap */
 #include "stddebug.h"
 /* #define DEBUG_GDI    */
 /* #define DEBUG_BITMAP */

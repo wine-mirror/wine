@@ -416,7 +416,7 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
   WORD         	wMagic;
   LPSTR		lpLog;  	/* Point to a LOGBRUSH or LOGPEN struct */
   HANDLE       	hLog;
-  int	       	i, nRet = 0;
+  int	       	nRet = 0;
   
   if (lpEnumFunc == NULL) {
     fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");

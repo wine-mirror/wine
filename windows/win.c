@@ -21,6 +21,8 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "color.h"
+#include "shm_main_blk.h"
+#include "dde_proc.h"
 #include "callback.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN  */ 
@@ -165,14 +167,14 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  */
 void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam )
 {
-    HWND current = GetParent( hwnd );
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     
-    if (!wndPtr || (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY)) return;
-    while (current)
+    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
     {
-	SendMessage( current, WM_PARENTNOTIFY, event, lParam );
-	current = GetParent( current );
+        if (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) break;
+	SendMessage( wndPtr->hwndParent, WM_PARENTNOTIFY, event, lParam );
+        wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+
     }
 }
 
@@ -187,6 +189,9 @@ static void WIN_DestroyWindow( HWND hwnd )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     CLASS *classPtr = CLASS_FindClassPtr( wndPtr->hClass );
 
+    if (main_block)
+	DDE_DestroyWindow(hwnd);
+	
     if (!wndPtr || !classPtr) return;
     WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
@@ -364,7 +369,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->window         = 0;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndParent     = (style & WS_CHILD) ? parent : hwndDesktop;
-    wndPtr->hwndOwner      = (style & WS_CHILD) ? 0 : parent;
+    wndPtr->hwndOwner      = (style & WS_CHILD) ? 0 : WIN_GetTopParent(parent);
     wndPtr->hClass         = class;
     wndPtr->hInstance      = instance;
     wndPtr->ptIconPos.x    = -1;
@@ -389,11 +394,6 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
     classPtr->cWindows++;
-
-      /* Make sure owner is a top-level window */
-
-    while (wndPtr->hwndOwner && GetParent(wndPtr->hwndOwner))
-        wndPtr->hwndOwner = GetParent(wndPtr->hwndOwner);
 
       /* Get class or window DC if needed */
 
@@ -844,9 +844,28 @@ BOOL IsWindow( HWND hwnd )
 HWND GetParent(HWND hwnd)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) return 0;
-    return wndPtr->hwndParent;
+    if (!wndPtr) return 0;
+    return (wndPtr->dwStyle & WS_CHILD) ?
+            wndPtr->hwndParent : wndPtr->hwndOwner;
 }
+
+
+/*****************************************************************
+ *         WIN_GetTopParent
+ *
+ * Get the top-level parent for a child window.
+ */
+HWND WIN_GetTopParent( HWND hwnd )
+{
+    while (hwnd)
+    {
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
+        if (wndPtr->dwStyle & WS_CHILD) hwnd = wndPtr->hwndParent;
+        else break;
+    }
+    return hwnd;
+}
+
 
 /*****************************************************************
  *         SetParent              (USER.233)
@@ -984,6 +1003,20 @@ HWND GetNextWindow( HWND hwnd, WORD flag )
     return GetWindow( hwnd, flag );
 }
 
+/*******************************************************************
+ *         ShowOwnedPopups  (USER.265)
+ */
+void ShowOwnedPopups( HWND owner, BOOL fShow )
+{
+    HWND hwnd = GetWindow( hwndDesktop, GW_CHILD );
+    while (hwnd)
+    {
+        WND *wnd = WIN_FindWndPtr(hwnd);
+        if (wnd->hwndOwner == owner && (wnd->dwStyle & WS_POPUP))
+            ShowWindow( hwnd, fShow ? SW_SHOW : SW_HIDE );
+        hwnd = wnd->hwndNext;
+    }
+}
 
 
 /*******************************************************************
@@ -1015,7 +1048,7 @@ BOOL EnumWindows( FARPROC lpEnumFunc, LPARAM lParam )
       /* First count the windows */
 
     count = 0;
-    for (hwnd = hwndDesktop; hwnd != 0; hwnd = wndPtr->hwndNext)
+    for (hwnd = GetTopWindow(hwndDesktop); hwnd != 0; hwnd = wndPtr->hwndNext)
     {
         if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
         count++;
@@ -1025,7 +1058,7 @@ BOOL EnumWindows( FARPROC lpEnumFunc, LPARAM lParam )
       /* Now build the list of all windows */
 
     if (!(list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (hwnd = hwndDesktop, pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
+    for (hwnd = GetTopWindow(hwndDesktop), pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
     {
         wndPtr = WIN_FindWndPtr( hwnd );
         *pWnd++ = hwnd;
@@ -1061,7 +1094,7 @@ BOOL EnumTaskWindows( HTASK hTask, FARPROC lpEnumFunc, LONG lParam )
       /* First count the windows */
 
     count = 0;
-    for (hwnd = hwndDesktop; hwnd != 0; hwnd = wndPtr->hwndNext)
+    for (hwnd = GetTopWindow(hwndDesktop); hwnd != 0; hwnd = wndPtr->hwndNext)
     {
         if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
         if (wndPtr->hmemTaskQ == hQueue) count++;
@@ -1071,7 +1104,7 @@ BOOL EnumTaskWindows( HTASK hTask, FARPROC lpEnumFunc, LONG lParam )
       /* Now build the list of all windows */
 
     if (!(list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (hwnd = hwndDesktop, pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
+    for (hwnd = GetTopWindow(hwndDesktop), pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
     {
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr->hmemTaskQ == hQueue) *pWnd++ = hwnd;

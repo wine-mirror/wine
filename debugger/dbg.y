@@ -72,7 +72,8 @@ void mode_command(int);
 	| MODE NUM '\n'         { mode_command($2); }
 	| ENABLE NUM '\n'       { DEBUG_EnableBreakpoint( $2, TRUE ); }
 	| DISABLE NUM '\n'      { DEBUG_EnableBreakpoint( $2, FALSE ); }
-	| BREAK '*' expr        { DEBUG_AddBreakpoint( 0xffffffff, $3 ); }
+	| BREAK '*' expr '\n'       { DEBUG_AddBreakpoint( 0xffffffff, $3 ); }
+	| BREAK '*' expr ':' expr '\n'	{ DEBUG_AddBreakpoint( $3, $5); }
         | BREAK '\n'            { DEBUG_AddBreakpoint( 0xffffffff, EIP ); }
         | DELETE BREAK NUM '\n' { DEBUG_DelBreakpoint( $3 ); }
 	| BACKTRACE '\n'        { DEBUG_BackTrace(); }
@@ -90,6 +91,9 @@ x_command:
 	  EXAM expr  '\n' { examine_memory( 0xffffffff, $2, 1, 'x'); }
 	| EXAM FORMAT expr  '\n' { examine_memory( 0xffffffff, $3,
                                                   $2 >> 8, $2 & 0xff ); }
+	| EXAM expr ':' expr '\n' { examine_memory( $2, $4, 1, 'x' ); }
+	| EXAM FORMAT expr ':' expr'\n'  { examine_memory( $3, $5, 
+	                                              $2 >> 8,  $2 & 0xff ); }
 
  print_command:
 	  PRINT expr '\n' { examine_memory( 0, ((unsigned int) &$2 ), 1,'x'); }

@@ -11,6 +11,7 @@
 #include "user.h"
 #include "win.h"
 #include "dce.h"
+#include "atom.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 /* #define DEBUG_CLASS */
@@ -32,7 +33,7 @@ HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr )
     HCLASS class;
     CLASS * classPtr;
 
-    if (!(atom = GlobalFindAtom( name ))) return 0;
+    if (!(atom = LocalFindAtom( name ))) return 0;
 
       /* First search task-specific classes */
 
@@ -122,7 +123,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     newClass->wc.cbWndExtra = (class->cbWndExtra < 0) ? 0 : class->cbWndExtra;
     newClass->wc.cbClsExtra = classExtra;
 
-    newClass->atomName = GlobalAddAtom( name );
+    newClass->atomName = LocalAddAtom( name );
     newClass->wc.lpszClassName = NULL; 
 
     if (newClass->wc.style & CS_CLASSDC)
@@ -183,7 +184,7 @@ BOOL UnregisterClass( LPSTR className, HANDLE hinstance )
       /* Delete the class */
     if (classPtr->hdce) DCE_FreeDCE( classPtr->hdce );
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
-    /*if (classPtr->wc.style & CS_GLOBALCLASS)*/ GlobalDeleteAtom( classPtr->atomName );
+    /*if (classPtr->wc.style & CS_GLOBALCLASS)*/ LocalDeleteAtom( classPtr->atomName );
     /*else DeleteAtom( classPtr->atomName );*/
     if ((int)classPtr->wc.lpszMenuName & 0xffff0000)
 	USER_HEAP_FREE( (int)classPtr->wc.lpszMenuName & 0xffff );
@@ -264,7 +265,7 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
     
-    return GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
+    return LocalGetAtomName(classPtr->atomName, lpClassName, maxCount);
 }
 
 
@@ -328,7 +329,7 @@ BOOL ClassNext( CLASSENTRY *pClassEntry )
 
     pClassEntry->hInst = classPtr->wc.hInstance;
     pClassEntry->wNext = classPtr->hNext;
-    GlobalGetAtomName( classPtr->atomName, pClassEntry->szClassName,
+    LocalGetAtomName( classPtr->atomName, pClassEntry->szClassName,
                        sizeof(pClassEntry->szClassName) );
     return TRUE;
 }

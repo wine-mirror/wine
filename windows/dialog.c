@@ -415,7 +415,7 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     int retval;
 
       /* Owner must be a top-level window */
-    while (owner && GetParent(owner)) owner = GetParent(owner);
+    owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     if (!(msgHandle = USER_HEAP_ALLOC( sizeof(MSG) ))) return -1;
     lpmsg = (MSG *) USER_HEAP_LIN_ADDR( msgHandle );

@@ -114,6 +114,8 @@ BOOL TIMER_CheckTimer( LONG *next, MSG *msg, HWND hwnd, BOOL remove )
 	TIMER_RestartTimer( pTimer, curTime );
     }
 
+    dprintf_timer(stddeb, "Timer expired: %p, %04x, %04x, %04x, %08lx\n", 
+		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc);
       /* Build the message */
     msg->hwnd    = pTimer->hwnd;
     msg->message = pTimer->msg;
@@ -168,6 +170,8 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     pTimer->timeout = timeout;
     pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = proc;
+    dprintf_timer(stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
+		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc);
     TIMER_InsertTimer( pTimer );
     MSG_IncTimerCount( GetTaskQueue(0) );
     if (!id)

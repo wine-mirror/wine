@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "prototypes.h"
 #include "windows.h"
 #include "callback.h"
 #include "wine.h"

@@ -47,7 +47,7 @@ id	3
 38  pascal Escape(word word word ptr ptr) Escape
 39  pascal16 RestoreDC(word s_word) RestoreDC
 40  pascal16 FillRgn(word word word) FillRgn
-41  stub FrameRgn
+41  pascal16 FrameRgn(word word word word word) FrameRgn
 42  pascal16 InvertRgn(word word) InvertRgn
 43  pascal16 PaintRgn(word word) PaintRgn
 44  pascal16 SelectClipRgn(word word) SelectClipRgn

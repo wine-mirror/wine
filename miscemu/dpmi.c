@@ -18,18 +18,15 @@
 
 
 /**********************************************************************
- *	    do_int31
+ *	    INT_Int31Handler
  *
- * Handle the DPMI interrupt (int 31h).
+ * Handler for int 31h (DPMI).
  */
-int do_int31( struct sigcontext_struct *context )
+void INT_Int31Handler( struct sigcontext_struct sigcontext )
 {
+#define context (&sigcontext)
     DWORD dw;
     BYTE *ptr;
-
-    dprintf_int( stddeb, "int31 (DPMI): AX %04x, BX %04x, CX %04x, DX %04x, "
-                 "SI %04x, DI %04x, DS %04x, ES %04x\n",
-                 AX, BX, CX, DX, SI, DI, DS, ES );
 
     ResetCflag;
     switch(AX)
@@ -116,16 +113,27 @@ int do_int31( struct sigcontext_struct *context )
         SetCflag;
         break;
 
+    case 0x0204:  /* Get protected mode interrupt vector */
+	dw = (DWORD)INT_GetHandler( BL );
+	CX = HIWORD(dw);
+	DX = LOWORD(dw);
+	break;
+
+    case 0x0205:  /* Set protected mode interrupt vector */
+	INT_SetHandler( BL, (SEGPTR)MAKELONG( DX, CX ) );
+	break;
+
     case 0x0400:  /* Get DPMI version */
-        AX = 0x0009;  /* DPMI version 0.9 */
+        AX = 0x005a;  /* DPMI version 0.90 */
         BX = 0x0005;  /* Flags: 32-bit, virtual memory */
-        CL = 4;       /* CPU type: 486 */
+        CL = 3;       /* CPU type: 386 */
         DX = 0x0102;  /* Master and slave interrupt controller base */
         break;
 
     case 0x0500:  /* Get free memory information */
-        memset( PTR_SEG_OFF_TO_LIN( ES, DI ),
-                0xff, 0x30 );  /* No information supported */
+        ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( ES, DI );
+        *(DWORD *)ptr = 0x00ff0000; /* Largest block available */
+        memset( ptr + 4, 0xff, 0x2c );  /* No other information supported */
         break;
 
     case 0x0501:  /* Allocate memory block */
@@ -165,9 +173,10 @@ int do_int31( struct sigcontext_struct *context )
         break;  /* Just ignore it */
 
     default:
+        INT_BARF( 0x31 );
         AX = 0x8001;  /* unsupported function */
         SetCflag;
         break;
     }
-    return 1;
+#undef context
 }

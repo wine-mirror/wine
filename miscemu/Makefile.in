@@ -1,0 +1,51 @@
+CC 	= @CC@
+CFLAGS 	= @CFLAGS@
+XINCL 	= @x_includes@
+TOPSRC  = @top_srcdir@
+DIVINCL = -I$(TOPSRC)/include
+LD	= @LD@
+LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
+
+
+MODULE 	= miscemu
+
+SRCS 	= dpmi.c emulate.c instr.c int10.c int13.c \
+        int1a.c int21.c int25.c int26.c int2a.c int2f.c int5c.c interrupts.c \
+        ioports.c
+
+OBJS = $(SRCS:.c=.o)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(XINCL) $(DIVINCL) -o $*.o $<
+
+all: $(MODULE).o
+
+$(MODULE).o: $(OBJS)
+	$(LD) $(LDCOMBINEFLAGS) $(OBJS) -o $(MODULE).o
+
+depend:
+	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
+	$(CC) $(DIVINCL) $(XINCL) -MM *.c >> tmp_make
+	cp tmp_make Makefile
+	rm tmp_make
+
+clean:
+	rm -f *.o \#*\# *~ tmp_make
+
+distclean: clean
+	rm Makefile
+
+countryclean:
+
+NAMES = $(SRCS:.c=)
+
+winelibclean:
+	for i in $(NAMES); do \
+	if test `grep -c WINELIB $$i.c` -ne 0; then \
+	rm $$i.o; \
+	fi; \
+	done
+ 
+dummy:
+
+### Dependencies:

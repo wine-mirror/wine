@@ -7,13 +7,6 @@ CC = gcc -D__FreeBSD__
 #endif
 
 DEFINES = AutoDefines -DUSE_READLINE
-#ifdef __ELF__
-LD = /usr/i486-linuxaout/bin/ld -m i386linux
-CDEBUGFLAGS = -O2 -Wall -b i486-linuxaout
-ASFLAGS = -b i486-linuxaout
-#else
-CDEBUGFLAGS = -O2 -Wall
-#endif
 
 /*
  * This is the second try at using Imakefiles. There are probably many
@@ -33,6 +26,7 @@ CDEBUGFLAGS = -O2 -Wall
 COMMONSUBDIRS = \
 	controls \
 	rc \
+	ipc \
 	loader \
 	misc \
 	multimedia \
@@ -53,6 +47,7 @@ WINEDIR = $(LIBDIR)/wine
 
 COMMONOBJS = \
 	controls/controls.o \
+	ipc/ipc.o \
 	loader/loader.o \
 	misc/misc.o \
 	multimedia/multimedia.o \
@@ -122,4 +117,4 @@ etags::
 distclean: clean
 	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
 	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
-	$(RM) `find . -name Makefile -print`
+	$(RM) config.* `find . -name Makefile -print`

@@ -314,7 +314,9 @@ BOOL RectVisible( HDC hdc, LPRECT rect )
     dprintf_clipping(stddeb,"RectVisible: %x %d,%dx%d,%d\n",
                      hdc, rect->left, rect->top, rect->right, rect->bottom );
     if (!dc->w.hGCClipRgn) return FALSE;
-    LPtoDP( hdc, (LPPOINT)rect, 2 );
+    /* copy rectangle to avoid overwriting by LPtoDP */
+    tmpRect = *rect;
+    LPtoDP( hdc, (LPPOINT)&tmpRect, 2 );
     return RectInRegion( dc->w.hGCClipRgn, &tmpRect );
 }
 

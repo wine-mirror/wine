@@ -10,6 +10,7 @@
 #include "message.h"
 #include "sysmetrics.h"
 #include "user.h"
+#include "shell.h"
 #include "dialog.h"
 #include "syscolor.h"
 #include "menu.h"
@@ -152,7 +153,10 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxSize.x += 2 * xinc;
     MinMax.ptMaxSize.y += 2 * yinc;
 
-    if ((wndPtr->ptMaxPos.x != -1) || (wndPtr->ptMaxPos.y != -1))
+    /* Note: The '+' in the following test should really be a ||, but
+     * that would cause gcc-2.7.0 to generate incorrect code.
+     */
+    if ((wndPtr->ptMaxPos.x != -1) + (wndPtr->ptMaxPos.y != -1))
         MinMax.ptMaxPosition = wndPtr->ptMaxPos;
     else
     {

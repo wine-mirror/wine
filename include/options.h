@@ -9,7 +9,6 @@
 
 struct options
 {
-    char * spyFilename;
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
     int    usePrivateMap;

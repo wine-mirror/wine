@@ -11,8 +11,14 @@
 /* #define DEBUG_INT */
 #include "debug.h"
 
-int do_int25(struct sigcontext_struct *context)
+/**********************************************************************
+ *	    INT_Int25Handler
+ *
+ * Handler for int 25h (absolute disk read).
+ */
+void INT_Int25Handler( struct sigcontext_struct sigcontext )
 {
+#define context (&sigcontext)
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS, BX);
 	DWORD begin, length;
 
@@ -20,11 +26,7 @@ int do_int25(struct sigcontext_struct *context)
         {
             SetCflag;
             AX = 0x0101;        /* unknown unit */
-
-            /* push flags on stack */
-            SP -= sizeof(WORD);
-            setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
-            return 1;
+            return;
         }
 
 	if (CX == 0xffff) {
@@ -48,10 +50,5 @@ int do_int25(struct sigcontext_struct *context)
 		*dataptr = 0xf8;
 
 	ResetCflag;
-
-	/* push flags on stack */
-	SP -= sizeof(WORD);
-	setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
-
-	return 1;
+#undef context
 }

@@ -6,10 +6,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "windows.h"
 #include "global.h"
 #include "toolhelp.h"
 #include "selectors.h"
+#include "dde_mem.h"
 #include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -25,12 +27,14 @@ typedef struct
     BYTE     pageLockCount;  /* Count of GlobalPageLock() calls */
     BYTE     flags;          /* Allocation flags */
     BYTE     selCount;       /* Number of selectors allocated for this block */
+    int      shmid;
 } GLOBALARENA;
 
   /* Flags definitions */
 #define GA_MOVEABLE     0x02  /* same as GMEM_MOVEABLE */
 #define GA_DGROUP       0x04
 #define GA_DISCARDABLE  0x08
+#define GA_IPCSHARE     0x10  /* same as GMEM_DDESHARE */
 
   /* Arena array */
 static GLOBALARENA *pGlobalArena = NULL;
@@ -62,6 +66,36 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
 }
 
 
+void debug_handles()
+{
+    int printed=0;
+    int i;
+    for (i = globalArenaSize-1 ; i>=0 ; i--) {
+	if (pGlobalArena[i].size!=0 && (pGlobalArena[i].handle & 0x8000)){
+	    printed=1;
+	    printf("0x%08x, ",pGlobalArena[i].handle);
+	}
+    }
+    if (printed)
+	printf("\n");
+}
+/***********************************************************************
+ *           GLOBAL_FindArena
+ *
+ * Find the arena  for a given handle
+ * (when handle is not serial - e.g. DDE)
+ */
+static GLOBALARENA *GLOBAL_FindArena( HGLOBAL handle)
+{
+    int i;
+    for (i = globalArenaSize-1 ; i>=0 ; i--) {
+	if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == handle)
+	    return ( &pGlobalArena[i] );
+    }
+    return NULL;
+}
+
+
 /***********************************************************************
  *           GLOBAL_CreateBlock
  *
@@ -69,15 +103,18 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
  */
 HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
                             HGLOBAL hOwner, BOOL isCode,
-                            BOOL is32Bit, BOOL isReadOnly  )
+                            BOOL is32Bit, BOOL isReadOnly,
+			    SHMDATA *shmdata  )
 {
     WORD sel, selcount;
     GLOBALARENA *pArena;
 
       /* Allocate the selector(s) */
 
-    sel = SELECTOR_AllocBlock( ptr, size, isCode ? SEGMENT_CODE : SEGMENT_DATA,
-                               is32Bit, isReadOnly );
+    sel = SELECTOR_AllocBlock( ptr, size,
+			      isCode ? SEGMENT_CODE : SEGMENT_DATA,
+			      is32Bit, isReadOnly );
+    
     if (!sel) return 0;
     selcount = (size + 0xffff) / 0x10000;
 
@@ -91,12 +128,23 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
 
     pArena->base = (DWORD)ptr;
     pArena->size = GET_SEL_LIMIT(sel) + 1;
-    pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
+    if (flags & GMEM_DDESHARE)
+    {
+	pArena->handle = shmdata->handle;
+	pArena->shmid  = shmdata->shmid;
+	shmdata->sel   = sel;
+    }
+    else
+    {
+	pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
+	pArena->shmid  = 0;
+    }
     pArena->hOwner = hOwner;
     pArena->lockCount = 0;
     pArena->pageLockCount = 0;
     pArena->flags = flags & GA_MOVEABLE;
     if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
+    if (flags & GMEM_DDESHARE) pArena->flags |= GA_IPCSHARE;
     if (!isCode) pArena->flags |= GA_DGROUP;
     pArena->selCount = selcount;
     if (selcount > 1)  /* clear the next arena blocks */
@@ -119,7 +167,7 @@ BOOL GLOBAL_FreeBlock( HGLOBAL handle )
     if (!handle) return TRUE;
     sel = GlobalHandleToSel( handle );
     if (FreeSelector( sel )) return FALSE;  /* failed */
-    memset( GET_ARENA_PTR(handle), 0, sizeof(GLOBALARENA) );
+    memset( GET_ARENA_PTR(sel), 0, sizeof(GLOBALARENA) );
     return TRUE;
 }
 
@@ -134,6 +182,7 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 {
     void *ptr;
     HGLOBAL handle;
+    SHMDATA shmdata;
 
     dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
 
@@ -145,13 +194,16 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
       /* Allocate the linear memory */
 
-    ptr = malloc( size );
+    if (flags & GMEM_DDESHARE) 
+        ptr= DDE_malloc(flags, size, &shmdata);
+    else 
+	ptr = malloc( size );
     if (!ptr) return 0;
 
       /* Allocate the selector(s) */
 
     handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner,
-                                 isCode, is32Bit, isReadOnly);
+				isCode, is32Bit, isReadOnly, &shmdata);
     if (!handle)
     {
         free( ptr );
@@ -160,6 +212,29 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
     if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
     return handle;
+}
+
+/***********************************************************************
+ *           DDE_GlobalHandleToSel
+ */
+
+WORD DDE_GlobalHandleToSel( HGLOBAL handle )
+{
+    GLOBALARENA *pArena;
+    SEGPTR segptr;
+    
+    pArena= GLOBAL_FindArena(handle);
+    if (pArena) {
+	int ArenaIdx = pArena - pGlobalArena;
+
+	/* See if synchronized to the shared memory  */
+	return DDE_SyncHandle(handle, ( ArenaIdx << __AHSHIFT) | 7);
+    }
+
+    /* attach the block */
+    DDE_AttachHandle(handle, &segptr);
+
+    return SELECTOROF( segptr );
 }
 
 
@@ -172,7 +247,6 @@ HGLOBAL GlobalAlloc( WORD flags, DWORD size )
 
     if (flags & GMEM_DDESHARE)
         owner = GetExePtr(owner);  /* Make it a module handle */
-
     return GLOBAL_Alloc( flags, size, owner, FALSE, FALSE, FALSE );
 }
 
@@ -182,14 +256,22 @@ HGLOBAL GlobalAlloc( WORD flags, DWORD size )
  */
 HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 {
-    WORD sel, selcount;
+    WORD selcount;
     DWORD oldsize;
     void *ptr;
     GLOBALARENA *pArena, *pNewArena;
+    WORD sel = GlobalHandleToSel( handle );
 
     dprintf_global( stddeb, "GlobalReAlloc: %04x %ld flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
+    
+    if (flags & GMEM_DDESHARE || is_dde_handle(handle)) {
+	fprintf(stdnimp,
+		"GlobalReAlloc: shared memory reallocating unimplemented\n"); 
+	return 0;
+    }
+
     pArena = GET_ARENA_PTR( handle );
 
       /* Discard the block if requested */
@@ -201,6 +283,10 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
         free( (void *)pArena->base );
         pArena->base = 0;
+        /* Note: we rely on the fact that SELECTOR_ReallocBlock won't */
+        /* change the selector if we are shrinking the block */
+        SELECTOR_ReallocBlock( sel, 0, 1, SEGMENT_DATA, 0, 0 );
+        return handle;
     }
 
       /* Fixup the size */
@@ -221,7 +307,6 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 
       /* Reallocate the linear memory */
 
-    sel = GlobalHandleToSel( handle );
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
     dprintf_global(stddeb,"oldsize %08lx\n",oldsize);
@@ -275,12 +360,12 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
  */
 HGLOBAL GlobalFree( HGLOBAL handle )
 {
-    void *ptr;
+    void *ptr = GlobalLock( handle );
 
     dprintf_global( stddeb, "GlobalFree: %04x\n", handle );
-    if (!(ptr = GlobalLock( handle ))) return handle;  /* failed */
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
-    free( ptr );
+    if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
+    if (ptr) free( ptr );
     return 0;
 }
 
@@ -295,7 +380,9 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
     dprintf_global( stddeb, "WIN16_GlobalLock(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
-    if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
+    if ( !is_dde_handle(handle) && !GET_ARENA_PTR(handle)->base)
+	return (SEGPTR)0;
+
     return (SEGPTR)MAKELONG( 0, GlobalHandleToSel(handle) );
 }
 
@@ -308,6 +395,9 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
 LPSTR GlobalLock( HGLOBAL handle )
 {
     if (!handle) return 0;
+    if (is_dde_handle(handle)) {
+       return DDE_AttachHandle(handle, NULL);
+    }
     return (LPSTR)GET_ARENA_PTR(handle)->base;
 }
 
@@ -552,6 +642,9 @@ WORD GlobalHandleToSel( HGLOBAL handle )
 {
     dprintf_toolhelp( stddeb, "GlobalHandleToSel: %04x\n", handle );
     if (!handle) return 0;
+    if (is_dde_handle(handle)) 
+	return DDE_GlobalHandleToSel(handle);
+
     if (!(handle & 7))
     {
         fprintf( stderr, "Program attempted invalid selector conversion\n" );

@@ -9,9 +9,17 @@
 
 #include "wintypes.h"
 
+typedef struct
+{
+    HGLOBAL handle;
+    WORD sel;
+    int shmid;
+} SHMDATA;
+
 extern HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
                                    HGLOBAL hOwner, BOOL isCode,
-                                   BOOL is32Bit, BOOL isReadOnly );
+                                   BOOL is32Bit, BOOL isReadOnly,
+				   SHMDATA *shmdata);
 extern BOOL GLOBAL_FreeBlock( HGLOBAL handle );
 extern HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
                              BOOL isCode, BOOL is32Bit, BOOL isReadOnly );

@@ -6,5 +6,6 @@ id	13
 3 stub DISABLE
 4 stub MOUSEGETINTVECT
 5 stub GETSETMOUSEDATA
-6 stub CPLAPPLET
+#Control Panel thinks this is implemented if it is available
+#6 stub CPLAPPLET
 7 stub POWEREVENTPROC

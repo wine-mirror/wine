@@ -24,7 +24,6 @@
 #include "options.h"
 #include "miscemu.h"
 #include "stddebug.h"
-/* #define DEBUG_INT */
 #include "debug.h"
 
 /* Define the drive parameter block, as used by int21/1F
@@ -196,7 +195,7 @@ static void GetFreeDiskSpace(struct sigcontext_struct *context)
 		return;
 	}
 
-	AX = 4;	
+	AX = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
 	CX = 512;
 
 	BX = (available / (CX * AX));
@@ -206,8 +205,14 @@ static void GetFreeDiskSpace(struct sigcontext_struct *context)
 
 static void GetDriveAllocInfo(struct sigcontext_struct *context)
 {
+        int drive;
 	long size, available;
 	
+	if (DL == 0)
+		drive = DOS_GetDefaultDrive();
+	else
+		drive = DL - 1;
+
 	if (!DOS_ValidDrive(DL)) {
 		AX = 4;
 		CX = 512;
@@ -222,7 +227,7 @@ static void GetDriveAllocInfo(struct sigcontext_struct *context)
 		return;
 	}
 	
-	AX = 4;
+	AX = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
 	CX = 512;
 	DX = (size / (CX * AX));
 
@@ -231,12 +236,6 @@ static void GetDriveAllocInfo(struct sigcontext_struct *context)
 	DS = DosHeapHandle;
 	BX = (int)&heap->mediaID - (int)heap;
 	Error (0,0,0);
-}
-
-static void GetDefDriveAllocInfo(struct sigcontext_struct *context)
-{
-	DX = DOS_GetDefaultDrive();
-	GetDriveAllocInfo(context);
 }
 
 static void GetDrivePB(struct sigcontext_struct *context, int drive)
@@ -260,12 +259,12 @@ static void GetDrivePB(struct sigcontext_struct *context, int drive)
                 dpb->drive_num = dpb->unit_num = drive;    /* The same? */
                 dpb->sector_size = 512;
                 dpb->high_sector = 1;
-                dpb->shift = 0;
+                dpb->shift = drive < 2 ? 0 : 6; /* 6 for HD, 0 for floppy */
                 dpb->reserved = 0;
                 dpb->num_FAT = 1;
                 dpb->dir_entries = 2;
                 dpb->first_data = 2;
-                dpb->high_cluster = 1023;
+                dpb->high_cluster = 64000;
                 dpb->sectors_in_FAT = 1;
                 dpb->start_dir = 1;
                 dpb->driver_head = 0;
@@ -414,7 +413,7 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 	    
 		    if (fstat(BX, &sbuf) < 0)
 		    {
-			IntBarf(0x21, context);
+                        INT_BARF( 0x21 );
 			SetCflag;
 			return;
 		    }
@@ -444,8 +443,8 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 	}
 
 	if (CH != 0x08) {
-		IntBarf(0x21, context);
-		return;
+            INT_BARF( 0x21 );
+            return;
 	}
 	switch (CL) {
 		case 0x60: /* get device parameters */
@@ -469,7 +468,7 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 			ResetCflag;
 			return;
 		default:
-			IntBarf(0x21, context);
+                        INT_BARF( 0x21 );
 	}
 }
 
@@ -508,18 +507,18 @@ static void GetExtendedErrorInfo(struct sigcontext_struct *context)
 
 static void CreateFile(struct sigcontext_struct *context)
 {
-	int handle;
-
-	if ((handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX)), 
-           O_CREAT | O_TRUNC | O_RDWR )) == -1) {
-		errno_to_doserr();
-		AX = ExtendedError;
-		SetCflag;
-		return;
-		}			
-	Error (0,0,0);
-        AX = handle;
-	ResetCflag;
+    int handle;
+    handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX)), 
+		  O_CREAT | O_TRUNC | O_RDWR, 0666 );
+    if (handle == -1) {
+	errno_to_doserr();
+	AX = ExtendedError;
+	SetCflag;
+	return;
+    }
+    Error (0,0,0);
+    AX = handle;
+    ResetCflag;
 }
 
 void OpenExistingFile(struct sigcontext_struct *context)
@@ -725,6 +724,7 @@ static void FindNext(struct sigcontext_struct *context)
 
         memcpy(&dp, dta+0x11, sizeof(dp));
 
+        dprintf_int(stddeb, "int21: FindNext, dta %p, dp %p\n", dta, dp);
 	do {
 		if ((dp = DOS_readdir(dp)) == NULL) {
 			Error(NoMoreFiles, EC_MediaError , EL_Disk);
@@ -778,17 +778,6 @@ static void FindFirst(struct sigcontext_struct *context)
 	memset(dta + 1 , '?', 11);
 	*(dta + 0x0c) = ECX & (FA_LABEL | FA_DIREC);
 
-	if (ECX & FA_LABEL) {
-		/* return volume label */
-
-		if (DOS_GetVolumeLabel(drive) != NULL) 
-			strncpy(dta + 0x1e, DOS_GetVolumeLabel(drive), 8);
-
-		AX = 0;
-		ResetCflag;
-		return;
-	}
-
 	if ((dp = DOS_opendir(path)) == NULL) {
 		Error(PathNotFound, EC_MediaError, EL_Disk);
 		AX = FileNotFound;
@@ -841,7 +830,7 @@ static void CreateTempFile(struct sigcontext_struct *context)
 
 	dprintf_int(stddeb,"CreateTempFile %s\n",temp);
 
-	handle = open(DOS_GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
+	handle = open(DOS_GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR, 0666);
 
 	if (handle == -1) {
             Error( WriteProtected, EC_AccessDenied, EL_Disk );
@@ -860,7 +849,7 @@ static void CreateNewFile(struct sigcontext_struct *context)
 {
 	int handle;
 	
-	if ((handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
+	if ((handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX) ), O_CREAT | O_EXCL | O_RDWR, 0666)) == -1) {
             Error( WriteProtected, EC_AccessDenied, EL_Disk );
             AX = WriteProtected;
             SetCflag;
@@ -1204,20 +1193,18 @@ static void GetFileAttribute (struct sigcontext_struct * context)
 
 extern void LOCAL_PrintHeap (WORD ds);
 
-/************************************************************************/
-
-int do_int21(struct sigcontext_struct * context)
+/***********************************************************************
+ *           DOS3Call  (KERNEL.102)
+ */
+void DOS3Call( struct sigcontext_struct sigcontext )
 {
+#define context (&sigcontext)
     int drive;
-
-    dprintf_int(stddeb,"int21: AX %04x, BX %04x, CX %04x, DX %04x, "
-           "SI %04x, DI %04x, DS %04x, ES %04x\n",
-           AX, BX, CX, DX, SI, DI, DS, ES);
 
     if (AH == 0x59) 
     {
 	GetExtendedErrorInfo(context);
-	return 1;
+	return;
     } 
     else 
     {
@@ -1255,7 +1242,7 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
 	  case 0x29: /* PARSE FILENAME INTO FCB */
 	  case 0x2e: /* SET VERIFY FLAG */
-	    IntBarf(0x21, context);
+            INT_BARF( 0x21 );
 	    break;
 
 	  case 0x2b: /* SET SYSTEM DATE */
@@ -1264,7 +1251,7 @@ int do_int21(struct sigcontext_struct * context)
 			"SWITCHAR" - SET SWITCH CHARACTER
 			"AVAILDEV" - SPECIFY \DEV\ PREFIX USE */
 	  case 0x54: /* GET VERIFY FLAG */
-            IntBarf(0x21, context);
+            INT_BARF( 0x21 );
 	    break;
 
 	  case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
@@ -1284,15 +1271,14 @@ int do_int21(struct sigcontext_struct * context)
             break;
 
 	  case 0x0e: /* SELECT DEFAULT DRIVE */
-		if (!DOS_ValidDrive(DL)) {
-			Error (InvalidDrive, EC_MediaError, EL_Disk);
-			AX = MAX_DOS_DRIVES; 
-			break;
-		} else {
-			DOS_SetDefaultDrive(DL);
-			AX = MAX_DOS_DRIVES; 
-			Error(0,0,0);
+		if (!DOS_ValidDrive(DL))
+                    Error (InvalidDrive, EC_MediaError, EL_Disk);
+		else
+                {
+                    DOS_SetDefaultDrive(DL);
+                    Error(0,0,0);
 		}
+                AL = MAX_DOS_DRIVES;
 		break;
 
 	  case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
@@ -1321,7 +1307,8 @@ int do_int21(struct sigcontext_struct * context)
             break;
 
 	  case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
-	    GetDefDriveAllocInfo(context);
+            DL = 0;
+	    GetDriveAllocInfo(context);
 	    break;
 	
 	  case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
@@ -1359,7 +1346,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x31: /* TERMINATE AND STAY RESIDENT */
-            IntBarf(0x21, context);
+            INT_BARF( 0x21 );
 	    break;
 
 	  case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
@@ -1390,7 +1377,7 @@ int do_int21(struct sigcontext_struct * context)
 		break;
 
 	      default:
-		IntBarf(0x21, context);
+                INT_BARF( 0x21 );
 		break;			
 	    }
 	    break;	
@@ -1541,7 +1528,7 @@ int do_int21(struct sigcontext_struct * context)
                 break;
                 
 	      default:
-                IntBarf(0x21, context);
+                INT_BARF( 0x21 );
 		break;
 	    }
 	    break;
@@ -1575,8 +1562,8 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x48: /* ALLOCATE MEMORY */
 	  case 0x49: /* FREE MEMORY */
 	  case 0x4a: /* RESIZE MEMORY BLOCK */
-	    IntBarf(0x21, context);
-	    break;
+            INT_BARF( 0x21 );
+            break;
 	
 	  case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
             WinExec( PTR_SEG_OFF_TO_LIN(DS,DX), SW_NORMAL );
@@ -1597,12 +1584,19 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x4f: /* "FINDNEXT" - FIND NEXT MATCHING FILE */
 	    FindNext(context);
 	    break;
-			
-	  case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-		ES = 0x0;
-		BX = 0x0;
-		IntBarf(0x21, context);
+
+	  case 0x51: /* GET PSP ADDRESS */
+	  case 0x62: /* GET PSP ADDRESS */
+	    /* FIXME: should we return the original DOS PSP upon */
+	    /*        Windows startup ? */
+	    BX = GetCurrentPDB();
 	    break;
+
+	  case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
+            ES = 0x0;
+            BX = 0x0;
+            INT_BARF( 0x21 );
+            break;
 		
 	  case 0x56: /* "RENAME" - RENAME FILE */
 	    RenameFile(context);
@@ -1694,12 +1688,11 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x61: /* UNUSED */
-	  case 0x62: /* GET CURRENT PSP ADDRESS */
 	  case 0x63: /* UNUSED */
 	  case 0x64: /* OS/2 DOS BOX */
 	  case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
-		IntBarf(0x21, context);
-	    break;
+            INT_BARF( 0x21 );
+            break;
 	
 	  case 0x66: /* GLOBAL CODE PAGE TABLE */
 	    switch (AL) {
@@ -1741,25 +1734,17 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  default:
-            IntBarf(0x21, context);
-	    return 1;
+            INT_BARF( 0x21 );
+            break;
 	}
     }
     dprintf_int(stddeb,"ret21: AX %04x, BX %04x, CX %04x, DX %04x, "
            "SI %04x, DI %04x, DS %04x, ES %04x EFL %08lx\n",
            AX, BX, CX, DX, SI, DI, DS, ES, EFL);
 
-    return 1;
+#undef context
 }
 
-
-/***********************************************************************
- *           DOS3Call  (KERNEL.102)
- */
-void DOS3Call( struct sigcontext_struct context )
-{
-    do_int21( &context );
-}
 
 void INT21_Init(void)
 {

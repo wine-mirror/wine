@@ -329,36 +329,36 @@ WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
 
 
 /***********************************************************************
- *           GlobalAddAtom   (USER.268)
+ *           LocalAddAtom   (USER.268)
  */
-ATOM GlobalAddAtom( LPCSTR str )
+ATOM LocalAddAtom( LPCSTR str )
 {
     return ATOM_AddAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           GlobalDeleteAtom   (USER.269)
+ *           LocalDeleteAtom   (USER.269)
  */
-ATOM GlobalDeleteAtom( ATOM atom )
+ATOM LocalDeleteAtom( ATOM atom )
 {
     return ATOM_DeleteAtom( USER_HeapSel, atom );
 }
 
 
 /***********************************************************************
- *           GlobalFindAtom   (USER.270)
+ *           LocalFindAtom   (USER.270)
  */
-ATOM GlobalFindAtom( LPCSTR str )
+ATOM LocalFindAtom( LPCSTR str )
 {
     return ATOM_FindAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           GlobalGetAtomName   (USER.271)
+ *           LocalGetAtomName   (USER.271)
  */
-WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
+WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count )
 {
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }

@@ -1145,10 +1145,10 @@ static void BuildContext(void)
     printf( "\tmovl %%edx,%d(%%ebx)\n", CONTEXTOFFSET(sc_edx) );
     printf( "\tmovl %%esi,%d(%%ebx)\n", CONTEXTOFFSET(sc_esi) );
     printf( "\tmovl %%edi,%d(%%ebx)\n", CONTEXTOFFSET(sc_edi) );
-    printf( "\tpushw %%es\n" );
-    printf( "\tpopw %d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
     printf( "\tmovw -10(%%ebp),%%ax\n" );  /* Get saved ds from stack */
     printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(sc_ds) );
+    printf( "\tmovw -12(%%ebp),%%ax\n" );  /* Get saved es from stack */
+    printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
     printf( "\tpushfl\n" );
 #ifndef __FreeBSD__
     printf( "\tpopl %d(%%ebx)\n", CONTEXTOFFSET(sc_eflags) );
@@ -1175,10 +1175,9 @@ static void RestoreContext(void)
     printf( "\tmovl %d(%%ebx),%%edx\n", CONTEXTOFFSET(sc_edx) );
     printf( "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(sc_esi) );
     printf( "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(sc_edi) );
-    printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
-    printf( "\tpopw %%es\n" );
-    printf( "\tpopw %%ax\n" );  /* Remove old ds from the stack */
+    printf( "\tpopl %%eax\n" );  /* Remove old ds and es from stack */
     printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(sc_ds) ); /* Push new ds */
+    printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(sc_es) ); /* Push new es */
 #ifndef __FreeBSD__
     printf( "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(sc_eflags) );
 #else    
@@ -1241,14 +1240,17 @@ static void BuildCall32Func( char *profile )
     printf( "\tmovzwl %%sp,%%ebp\n" );
     printf( "\taddw $8,%%bp\n" );
 
-    /* Save 16-bit ds */
+    /* Save 16-bit ds and es */
 
     printf( "\tpushw %%ds\n" );
+    printf( "\tpushw %%es\n" );
 
-    /* Restore 32-bit ds */
+    /* Restore 32-bit ds and es */
 
-    printf( "\tpushw $0x%04x\n", WINE_DATA_SELECTOR );
+    printf( "\tpushl $0x%04x%04x\n", WINE_DATA_SELECTOR, WINE_DATA_SELECTOR );
     printf( "\tpopw %%ds\n" );
+    printf( "\tpopw %%es\n" );
+
 
     /* Save the 16-bit stack */
 
@@ -1271,11 +1273,6 @@ static void BuildCall32Func( char *profile )
     if (!reg_func && short_ret)
         printf( "\tmovl %%edx,-8(%%ebp)\n" );
 
-    /* Setup es */
-
-    printf( "\tpushw %%ds\n" );
-    printf( "\tpopw %%es\n" );
-
     /* Switch to the 32-bit stack */
 
     printf( "\tmovl " PREFIX "IF1632_Saved32_esp,%%ebp\n" );
@@ -1294,7 +1291,9 @@ static void BuildCall32Func( char *profile )
     {
         printf( "\tpushl %%eax\n" );
         printf( "\tpushl $CALL32_Str_%s\n", profile );
+        printf( "\tpushl $%d\n", reg_func ? 2 : (short_ret ? 1 : 0) );
         printf( "\tcall " PREFIX "RELAY_DebugCall32\n" );
+        printf( "\tpopl %%eax\n" );
         printf( "\tpopl %%eax\n" );
         printf( "\tpopl %%eax\n" );
     }
@@ -1346,8 +1345,9 @@ static void BuildCall32Func( char *profile )
         }
     }
 
-    /* Restore ds */
+    /* Restore ds and es */
 
+    printf( "\tpopw %%es\n" );
     printf( "\tpopw %%ds\n" );
 
     /* Get the return value into dx:ax and clean up the stack */
@@ -1532,7 +1532,6 @@ static void BuildCall16Func( char *profile )
     printf( "\tpushl 12(%%ebx)\n" );
 
     /* Get the 16-bit ds */
-    /* FIXME: this shouldn't be necessary if function prologs fixup worked. */
 
     if (reg_func)
     {
@@ -1544,8 +1543,6 @@ static void BuildCall16Func( char *profile )
     {
         /* Set ax equal to ds for window procedures */
         printf( "\tmovw 16(%%ebx),%%ax\n" );
-
-        /* This seems to be needed, although I still don't see why... */
         printf( "\tmovw %%ax,%%ds\n" );
     }
 

@@ -32,6 +32,16 @@
     else \
         dprintf_resource( stddeb, "#%04x", LOWORD(name)); 
 
+
+/**********************************************************************
+ *	    LoadIconHandler    (USER.456)
+ */
+HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
+{
+  return 0;
+}
+
+
 /**********************************************************************
  *	    FindResource    (KERNEL.60)
  */

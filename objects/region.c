@@ -377,6 +377,27 @@ static int REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
     }
 }
 
+/***********************************************************************
+ *           REGION_CreateFrameRgn
+ *
+ * Create a region that is a frame around another region
+ */
+BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, int x, int y )
+{
+    RGNOBJ *destObj,*srcObj;
+    Region result;
+
+    destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
+    srcObj  = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
+    if (!srcObj->xrgn) return 0;
+    REGION_CopyRegion( srcObj, destObj );
+    XShrinkRegion( destObj->xrgn, -x, -y );
+    result = XCreateRegion();
+    XSubtractRegion( destObj->xrgn, srcObj->xrgn, result );
+    XDestroyRegion( destObj->xrgn );
+    destObj->xrgn = result;
+    return 1;
+}
 
 /***********************************************************************
  *           CombineRgn    (GDI.451)

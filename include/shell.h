@@ -2,6 +2,8 @@
  * 				Shell Library definitions
  */
 
+extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon);
+
 #define ERROR_SUCCESS           0L
 #define ERROR_BADDB             1L
 #define ERROR_BADKEY            2L

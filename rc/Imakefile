@@ -26,7 +26,7 @@ includes::
 	touch $(RCSRCS:.rc=.h)
 
 clean::
-	$(RM) $(RCSRCS:.rc=.c) $(RCSRCS:.rc=.h)
+	$(RM) $(RCSRCS:.rc=.c) $(RCSRCS:.rc=.h) $(RCSRCS:.rc=.rct)
 
 
 XCOMM Rules to build the winerc program
@@ -60,6 +60,6 @@ y.tab.c y.tab.h: parser.y
 	$(YACC) -d -t parser.y
 
 lex.yy.c: parser.l y.tab.h
-	$(LEX) -I parser.l
+	$(LEX) -8 -I parser.l
  
 
