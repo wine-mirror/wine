@@ -47,16 +47,16 @@ void dump_UnicodeString(PUNICODE_STRING us, BOOLEAN showstring)
 	}
 }
 
-LPCSTR debugstr_as (PANSI_STRING us)
+LPCSTR debugstr_as( const STRING *str )
 {
-	if (!us) return NULL;
-	return debugstr_an(us->Buffer, us->Length);
+    if (!str) return "<null>";
+    return debugstr_an(str->Buffer, str->Length);
 }
 
-LPCSTR debugstr_us (PUNICODE_STRING us)
+LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
-	if (!us) return NULL;
-	return debugstr_wn(us->Buffer, us->Length);
+    if (!us) return "<null>";
+    return debugstr_wn(us->Buffer, us->Length);
 }
 
 /*********************************************************************
