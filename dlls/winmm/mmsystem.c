@@ -505,7 +505,7 @@ BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
 	return FALSE;
     
     if (!pszSound || (fdwSound & SND_PURGE)) 
-	return FALSE; /* We stoped playing so leaving */
+	return TRUE; /* We stopped playing so leaving */
     
     if (PlaySound_SearchMode != 1) PlaySound_SearchMode = 2;
     if (!(fdwSound & SND_ASYNC)) {
