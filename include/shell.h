@@ -253,10 +253,10 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
 /****************************************************************************
 *  string and path functions
 */
-LPSTR  WINAPI PathAddBackslash32A(LPCSTR path);	
-LPWSTR WINAPI PathAddBackslash32W(LPCWSTR path);	
+LPSTR  WINAPI PathAddBackslash32A(LPSTR path);	
+LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);	
 #define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
-LPVOID  WINAPI PathAddBackslash32AW(LPCVOID path);	
+LPVOID  WINAPI PathAddBackslash32AW(LPVOID path);	
 
 LPSTR  WINAPI PathQuoteSpaces32A(LPCSTR path);	
 LPWSTR WINAPI PathQuoteSpaces32W(LPCWSTR path);	
@@ -283,7 +283,7 @@ LPCWSTR WINAPI PathFindFilename32W(LPCWSTR path);
 #define  PathFindFilename WINELIB_NAME_AW(PathFindFilename)
 LPCVOID WINAPI PathFindFilename32AW(LPCVOID path); 
 
-LPSTR WINAPI PathRemoveBlanks(LPCSTR str);
+LPSTR WINAPI PathRemoveBlanks(LPSTR str);
 /****************************************************************************
 *  other functions
 */

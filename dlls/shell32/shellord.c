@@ -159,7 +159,7 @@ LPCVOID WINAPI PathFindExtension32AW(LPCVOID path)
  * NOTES
  *     append \ if there is none
  */
-LPSTR WINAPI PathAddBackslash32A(LPCSTR path)
+LPSTR WINAPI PathAddBackslash32A(LPSTR path)
 {	int len;
 	TRACE(shell,"%p->%s\n",path,path);
 
@@ -171,7 +171,7 @@ LPSTR WINAPI PathAddBackslash32A(LPCSTR path)
 	}
 	return path+len;
 }
-LPWSTR WINAPI PathAddBackslash32W(LPCWSTR path)
+LPWSTR WINAPI PathAddBackslash32W(LPWSTR path)
 {	int len;
 	TRACE(shell,"%p->%s\n",path,debugstr_w(path));
 
@@ -183,7 +183,7 @@ LPWSTR WINAPI PathAddBackslash32W(LPCWSTR path)
 	}
 	return path+len;
 }
-LPVOID WINAPI PathAddBackslash32AW(LPCVOID path)
+LPVOID WINAPI PathAddBackslash32AW(LPVOID path)
 {	if(VERSION_OsIsUnicode())
 	  return PathAddBackslash32W(path);
 	return PathAddBackslash32A(path);
@@ -195,7 +195,7 @@ LPVOID WINAPI PathAddBackslash32AW(LPCVOID path)
  * NOTES
  *     remove spaces from beginning and end of passed string
  */
-LPSTR WINAPI PathRemoveBlanks(LPCSTR str)
+LPSTR WINAPI PathRemoveBlanks(LPSTR str)
 {	LPSTR x = str;
 	TRACE(shell,"%s\n",str);
 	while (*x==' ') x++;
