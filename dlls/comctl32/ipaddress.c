@@ -347,7 +347,8 @@ IPADDRESS_SetAddress (HWND hwnd, WPARAM wParam, LPARAM lParam)
   HDC hdc;
   LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
             GetPropA ((HWND)hwnd, IP_SUBCLASS_PROP);
-  int i,ip_address,value;
+  int i,value;
+  DWORD ip_address;
   char buf[20];
 
   TRACE("\n");
@@ -361,7 +362,7 @@ IPADDRESS_SetAddress (HWND hwnd, WPARAM wParam, LPARAM lParam)
       SetWindowTextA (lpipsi->hwndIP[i],buf);
       IPADDRESS_SendNotify (hwnd, EN_CHANGE);
     }
-    ip_address/=256;
+    ip_address= ip_address >> 8;
   }
 
   hdc = GetDC (hwnd);		/* & send notifications */
