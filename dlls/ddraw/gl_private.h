@@ -82,6 +82,7 @@
 #define glColor3ub pglColor3ub
 #define glColor4ub pglColor4ub
 #define glColorMask pglColorMask
+#define glColorPointer pglColorPointer
 #define glCopyPixels pglCopyPixels
 #define glCopyTexSubImage2D pglCopyTexSubImage2D
 #define glColorMaterial pglColorMaterial
@@ -91,9 +92,13 @@
 #define glDepthMask pglDepthMask
 #define glDepthRange pglDepthRange
 #define glDisable pglDisable
+#define glDisableClientState pglDisableClientState
+#define glDrawArrays pglDrawArrays
 #define glDrawBuffer pglDrawBuffer
+#define glDrawElements pglDrawElements
 #define glDrawPixels pglDrawPixels
 #define glEnable pglEnable
+#define glEnableClientState pglEnableClientState
 #define glEnd pglEnd
 #define glFlush pglFlush
 #define glFogf pglFogf
@@ -120,6 +125,7 @@
 #define glMultMatrixf pglMultMatrixf
 #define glNormal3f pglNormal3f
 #define glNormal3fv pglNormal3fv
+#define glNormalPointer pglNormalPointer
 #define glOrtho pglOrtho
 #define glPixelStorei pglPixelStorei
 #define glPolygonMode pglPolygonMode
@@ -137,6 +143,7 @@
 #define glStencilOp pglStencilOp
 #define glTexCoord2f pglTexCoord2f
 #define glTexCoord2fv pglTexCoord2fv
+#define glTexCoordPointer pglTexCoordPointer
 #define glTexEnvf pglTexEnvf
 #define glTexEnvfv pglTexEnvfv
 #define glTexEnvi pglTexEnvi
@@ -149,6 +156,7 @@
 #define glVertex3f pglVertex3f
 #define glVertex3fv pglVertex3fv
 #define glVertex4f pglVertex4f
+#define glVertexPointer pglVertexPointer
 #define glViewport pglViewport
 #define glXCreateContext pglXCreateContext
 #define glXDestroyContext pglXDestroyContext

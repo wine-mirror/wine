@@ -174,6 +174,7 @@ typedef struct {
     GLint max_texture_units;
     void (*glActiveTexture)(GLenum texture);
     void (*glMultiTexCoord2fv)(GLenum target, const GLfloat *v);
+    void (*glClientActiveTexture)(GLenum texture);
 } GL_EXTENSIONS_LIST; 
 extern GL_EXTENSIONS_LIST GL_extensions;
 
