@@ -154,6 +154,7 @@ command:
 
 pathname:
       identifier                { $$ = $1; }
+    | tSTRING                   { $$ = $1; }
     | tPATH                     { $$ = $1; }
     ;
 
