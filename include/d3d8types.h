@@ -137,6 +137,16 @@
 #define D3DFVF_LASTBETA_UBYTE4     0x1000
 #define D3DFVF_RESERVED2           0xE000
 
+#define D3DTA_SELECTMASK        0x0000000f
+#define D3DTA_DIFFUSE           0x00000000
+#define D3DTA_CURRENT           0x00000001
+#define D3DTA_TEXTURE           0x00000002
+#define D3DTA_TFACTOR           0x00000003
+#define D3DTA_SPECULAR          0x00000004
+#define D3DTA_COMPLEMENT        0x00000010
+#define D3DTA_ALPHAREPLICATE    0x00000020
+#define D3DTA_TEMP              0x00000005
+
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
