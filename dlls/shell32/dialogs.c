@@ -255,7 +255,7 @@ void FillList (HWND hCb, char *pszLatest)
 /*    char szDbgMsg[256] = "" ; */
     char *pszList = NULL, *pszCmd = NULL, cMatch = 0, cMax = 0x60, szIndex[2] = "-" ;
     DWORD icList = 0, icCmd = 0 ;
-    int Nix ;
+    UINT Nix ;
 
     SendMessageA (hCb, CB_RESETCONTENT, 0, 0) ;
 

@@ -265,7 +265,7 @@ static void DoOpenExplore(
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
-	int i, bFolderFound = FALSE;
+	UINT i, bFolderFound = FALSE;
 	LPITEMIDLIST	pidlFQ;
 	SHELLEXECUTEINFOA	sei;
 

@@ -962,7 +962,7 @@ static HRESULT WINAPI ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCST
 static HRESULT WINAPI ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 {
     _ICOM_THIS_From_ISFHelper (IGenericSFImpl, iface)
-    int i;
+    UINT i;
     char szPath[MAX_PATH];
     BOOL bConfirm = TRUE;
 
@@ -1019,7 +1019,7 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPC
 static HRESULT WINAPI
 ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl, LPCITEMIDLIST * apidl)
 {
-    int i;
+    UINT i;
     IPersistFolder2 *ppf2 = NULL;
     char szSrcPath[MAX_PATH],
       szDstPath[MAX_PATH];

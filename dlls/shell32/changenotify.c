@@ -63,7 +63,7 @@ void FreeChangeNotifications()
 
 	while(ptr != &tail)
 	{
-	  int i;
+	  UINT i;
 	  item = ptr;
 	  ptr = ptr->next;
 
@@ -119,7 +119,7 @@ static BOOL DeleteNode(LPNOTIFICATIONLIST item)
 
 	  if (ptr == item)
 	  {
-	    int i;
+	    UINT i;
 
 	    TRACE("item=%p prev=%p next=%p\n", item, item->prev, item->next);
 

@@ -1364,7 +1364,7 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
 	LPCITEMIDLIST *lppidlFiles,
 	LPDATAOBJECT *ppdataObject)
 {
-    INT i;
+    UINT i;
     HWND hwnd = 0;   /*FIXME: who should be hwnd of owner? set to desktop */
 
     TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles, lppidlFiles, ppdataObject);

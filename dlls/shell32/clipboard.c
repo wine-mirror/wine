@@ -90,7 +90,7 @@ BOOL GetShellOle(void)
  */
 HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
-	int i;
+	UINT i;
 	int rootsize = 0,size = 0;
 	char szRootPath[MAX_PATH];
 	char szFileName[MAX_PATH];
@@ -143,7 +143,8 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 
 HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 {
-	int i,offset = 0, sizePidl, size;
+	UINT i;
+	int offset = 0, sizePidl, size;
 	HGLOBAL hGlobal;
 	LPIDA	pcida;
 

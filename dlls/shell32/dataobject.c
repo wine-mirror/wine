@@ -145,7 +145,7 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 static HRESULT WINAPI IEnumFORMATETC_fnNext(LPENUMFORMATETC iface, ULONG celt, FORMATETC *rgelt, ULONG *pceltFethed)
 {
 	ICOM_THIS(IEnumFORMATETCImpl,iface);
-	int i;
+	UINT i;
 
 	TRACE("(%p)->(%lu,%p)\n", This, celt, rgelt);
 

@@ -170,7 +170,6 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
     char buffer[256];       /* Used to GetProfileString */
     UINT retval = 31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
-    int i;                  /* random counter */
     char xlpFile[256] = ""; /* result of SearchPath */
 
     TRACE("%s\n", (lpFile != NULL) ? lpFile : "-");
@@ -224,6 +223,8 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
     if (GetProfileStringA("windows", "programs", "exe pif bat com",
                           buffer, sizeof(buffer)) > 0)
     {
+        UINT i;
+
         for (i = 0;i<strlen(buffer); i++) buffer[i] = tolower(buffer[i]);
 
         tok = strtok(buffer, " \t"); /* ? */

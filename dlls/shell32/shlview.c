@@ -561,7 +561,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	LPENUMIDLIST	pEnumIDList;
 	LPITEMIDLIST	pidl;
 	DWORD		dwFetched;
-	UINT		i;
+	INT		i;
 	HRESULT		hRes;
 	HDPA		hdpa;
 
@@ -1313,7 +1313,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 #endif
 	      else if(plvKeyDown->wVKey == VK_DELETE)
               {
-		int i, item_index;
+		UINT i;
+		int item_index;
 		LVITEMA item;
 		LPITEMIDLIST* pItems;
 		ISFHelper *psfhlp;
