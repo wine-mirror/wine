@@ -251,8 +251,17 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     "WM_MENUCHAR",              /* 0x0120 */
     "WM_ENTERIDLE",             /* 0x0121 */
+
+    "WM_MENURBUTTONUP",         /* 0x0122 */
+    "WM_MENUDRAG",              /* 0x0123 */
+    "WM_MENUGETOBJECT",         /* 0x0124 */
+    "WM_UNINITMENUPOPUP",       /* 0x0125 */
+    "WM_MENUCOMMAND",           /* 0x0126 */
+    "WM_CHANGEUISTATE",         /* 0x0127 */
+    "WM_UPDATEUISTATE",         /* 0x0128 */
+    "WM_QUERYUISTATE",          /* 0x0129 */
+
     NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0130 */
     NULL,

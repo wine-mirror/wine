@@ -615,7 +615,6 @@ typedef struct
 #define ES_NUMBER       0x00002000
 
 /* OEM Resource Ordinal Numbers */
-#define OBM_CLOSED          32731
 #define OBM_TRTYPE          32732
 #define OBM_LFARROWI        32734
 #define OBM_RGARROWI        32735
@@ -1046,6 +1045,16 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_MENUSELECT       0x011F
 #define WM_MENUCHAR         0x0120
 #define WM_ENTERIDLE        0x0121
+
+#define WM_MENURBUTTONUP    0x0122
+#define WM_MENUDRAG         0x0123
+#define WM_MENUGETOBJECT    0x0124
+#define WM_UNINITMENUPOPUP  0x0125
+#define WM_MENUCOMMAND      0x0126
+
+#define WM_CHANGEUISTATE    0x0127
+#define WM_UPDATEUISTATE    0x0128
+#define WM_QUERYUISTATE     0x0129
 
 #define WM_LBTRACKPOINT     0x0131
 
