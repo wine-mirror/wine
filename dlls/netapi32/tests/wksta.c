@@ -162,7 +162,7 @@ static void run_wkstatransportenum_tests(void)
         ok(bufPtr != NULL, "got data back");
         ok(entriesRead > 0, "read at least one transport");
         ok(totalEntries > 0, "at least one transport");
-        NetApiBufferFree(bufPtr);
+        pNetApiBufferFree(bufPtr);
     }
 }
 

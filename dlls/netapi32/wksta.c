@@ -156,9 +156,9 @@ NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
 
             for (n_adapt = 0, ptr = info; ptr; ptr = ptr->Next)
               n_adapt++;
-  	    size_needed = n_adapt * (sizeof(WKSTA_TRANSPORT_INFO_0) 
+  	    size_needed = n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0) 
 	     + n_adapt * TRANSPORT_NAME_LEN * sizeof (WCHAR)
-	     + n_adapt * 13 * sizeof (WCHAR));
+	     + n_adapt * 13 * sizeof (WCHAR);
   	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
   	      NetApiBufferAllocate( size_needed, (LPVOID *) pbuf);
   	    else
