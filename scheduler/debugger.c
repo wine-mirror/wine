@@ -245,7 +245,6 @@ void WINAPI OutputDebugStringA( LPCSTR str )
         event.length  = strlen(str) + 1;
         DEBUG_SendEvent( OUTPUT_DEBUG_STRING_EVENT, &event, sizeof(event) );
     }
-    else DPRINTF("OutputDebugStringA: %s\n", debugstr_a(str) );
 }
 
 
@@ -262,7 +261,6 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
         event.length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
         DEBUG_SendEvent( OUTPUT_DEBUG_STRING_EVENT, &event, sizeof(event) );
     }
-    else DPRINTF("OutputDebugStringW: %s\n", debugstr_w(str) );
 }
 
 
