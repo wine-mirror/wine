@@ -865,7 +865,7 @@ sub _generate_dsp {
 	    print OUT "InputPath=$spec_file\r\n";
 	    print OUT "\r\n";
 	    print OUT "BuildCmds= \\\r\n";
-	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -def $spec_file > $def_file \\\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe --def $spec_file > $def_file \\\r\n";
 	    
 	    if($project =~ /^ntdll$/) {
 		my $n = 0;
@@ -877,12 +877,12 @@ sub _generate_dsp {
 		    }
 		}
 		print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe";
-		print OUT " -o $dbg_c_file -debug -C$srcdir $dbg_file \\\r\n";
+		print OUT " -o $dbg_c_file --debug -C$srcdir $dbg_file \\\r\n";
 	    } else {
 		my $c_srcs = join(" ", grep(/\.c$/, @c_srcs));
 
 		print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe";
-		print OUT " -o $dbg_c_file -debug -C$srcdir $c_srcs \\\r\n";
+		print OUT " -o $dbg_c_file --debug -C$srcdir $c_srcs \\\r\n";
 	    }
 
 	    print OUT "\t\r\n";
