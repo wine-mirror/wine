@@ -444,7 +444,13 @@ static void test_RtlFindMostSignificantBit()
     ulLong <<= i;
 
     cPos = pRtlFindMostSignificantBit(ulLong);
-    ok (cPos == i, "didnt find MSB %lld %d %d", ulLong, i, cPos);
+    ok (cPos == i, "didnt find MSB %llx %d %d", ulLong, i, cPos);
+
+    /* Set all bits lower than bit i */
+    ulLong = ((ulLong - 1) << 1) | 1;
+
+    cPos = pRtlFindMostSignificantBit(ulLong);
+    ok (cPos == i, "didnt find MSB %llx %d %d", ulLong, i, cPos);
   }
   cPos = pRtlFindMostSignificantBit(0);
   ok (cPos == -1, "found bit when not set");
@@ -465,7 +471,13 @@ static void test_RtlFindLeastSignificantBit()
     ulLong <<= i;
 
     cPos = pRtlFindLeastSignificantBit(ulLong);
-    ok (cPos == i, "didnt find LSB at %d", cPos);
+    ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
+
+    ulLong = 0xfffffffffffffffful;
+    ulLong <<= i;
+
+    cPos = pRtlFindLeastSignificantBit(ulLong);
+    ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
   }
   cPos = pRtlFindLeastSignificantBit(0);
   ok (cPos == -1, "found bit when not set");

@@ -592,9 +592,9 @@ CCHAR WINAPI RtlFindMostSignificantBit(ULONGLONG ulLong)
   {
     if (*lpOut)
     {
-      if (*lpOut & 0x0f)
-        return lCount - 8 + NTDLL_mostSignificant[*lpOut & 0x0f];
-      return lCount - 4 + NTDLL_mostSignificant[*lpOut >> 4];
+      if (*lpOut & 0xf0)
+        return lCount - 4 + NTDLL_mostSignificant[*lpOut >> 4];
+      return lCount - 8 + NTDLL_mostSignificant[*lpOut & 0x0f];
     }
     lpOut--;
   }
