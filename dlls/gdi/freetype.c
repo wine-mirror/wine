@@ -135,6 +135,7 @@ typedef struct {
 
 struct tagGdiFont {
     FT_Face ft_face;
+    XFORM xform;
     LPWSTR name;
     int charset;
     BOOL fake_italic;
@@ -474,6 +475,7 @@ static BOOL ReadFontDir(char *dirname)
 	else
 	    AddFontFileToList(path);
     }
+    closedir(dir);
     return TRUE;
 }
 
@@ -763,6 +765,7 @@ static GdiFont alloc_font(void)
 			ret->gmsize * sizeof(*ret->gm));
     ret->next = NULL;
     ret->potm = NULL;
+    ret->xform.eM11 = ret->xform.eM22 = 1.0;
     return ret;
 }
 
@@ -946,7 +949,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     /* check the cache first */
     for(ret = GdiFontList; ret; ret = ret->next) {
-	if(ret->hfont == hfont) {
+	if(ret->hfont == hfont && !memcmp(&ret->xform, &dc->xformWorld2Vport, offsetof(XFORM, eDx))) {
 	    TRACE("returning cached gdiFont(%p) for hFont %x\n", ret, hfont);
 	    return ret;
 	}
@@ -959,6 +962,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     }
 
     ret = alloc_font();
+    memcpy(&ret->xform, &dc->xformWorld2Vport, sizeof(XFORM));
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
@@ -1131,24 +1135,31 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
 {
     GdiFont gdiFont;
     GdiFont gdiPrev = NULL;
+    BOOL ret = FALSE;
 
     TRACE("destroying hfont=%x\n", handle);
     if(TRACE_ON(font))
 	DumpGdiFontList();
 
-    for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
+    gdiFont = GdiFontList;
+    while(gdiFont) {
 	if(gdiFont->hfont == handle) {
-	    if(gdiPrev)
-		gdiPrev->next = gdiFont->next;
-	    else
+	    if(gdiPrev) {
+	        gdiPrev->next = gdiFont->next;
+		free_font(gdiFont);
+		gdiFont = gdiPrev->next;
+	    } else {
 		GdiFontList = gdiFont->next;
-
-	    free_font(gdiFont);
-	    return TRUE;
+		free_font(gdiFont);
+		gdiFont = GdiFontList;
+	    }
+	    ret = TRUE;
+	} else {
+	    gdiPrev = gdiFont;
+	    gdiFont = gdiFont->next;
 	}
-	gdiPrev = gdiFont;
     }
-    return FALSE;
+    return ret;
 }
 
 static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
@@ -1781,6 +1792,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     UINT needed, lenfam, lensty, ret;
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
+    TT_Postscript *pPost;
     FT_Fixed x_scale, y_scale;
     WCHAR *family_nameW, *style_nameW;
     WCHAR spaceW[] = {' ', '\0'};
@@ -1843,6 +1855,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
 	ret = 0;
 	goto end;
     }
+
+    pPost = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_post); /* we can live with this failing */
 
     TRACE("OS/2 winA = %d winD = %d typoA = %d typoD = %d typoLG = %d FT_Face a = %d, d = %d, h = %d: HORZ a = %d, d = %d lg = %d maxY = %ld minY = %ld\n",
 	  pOS2->usWinAscent, pOS2->usWinDescent,
@@ -1962,8 +1976,13 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     font->potm->otmptSuperscriptOffset.y = (pFT_MulFix(pOS2->ySuperscriptYOffset, y_scale) + 32) >> 6;
     font->potm->otmsStrikeoutSize = (pFT_MulFix(pOS2->yStrikeoutSize, y_scale) + 32) >> 6;
     font->potm->otmsStrikeoutPosition = (pFT_MulFix(pOS2->yStrikeoutPosition, y_scale) + 32) >> 6;
-    font->potm->otmsUnderscoreSize = 0; /* POST Header */
-    font->potm->otmsUnderscorePosition = 0; /* POST Header */
+    if(!pPost) {
+        font->potm->otmsUnderscoreSize = 0;
+	font->potm->otmsUnderscorePosition = 0;
+    } else {
+        font->potm->otmsUnderscoreSize = (pFT_MulFix(pPost->underlineThickness, y_scale) + 32) >> 6;
+	font->potm->otmsUnderscorePosition = (pFT_MulFix(pPost->underlinePosition, y_scale) + 32) >> 6;
+    }
 
     /* otmp* members should clearly have type ptrdiff_t, but M$ knows best */
     cp = (char*)font->potm + sizeof(*font->potm);
