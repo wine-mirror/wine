@@ -2845,6 +2845,9 @@ static void test_paint_messages(void)
     /* now with frame */
     SetRectRgn( hrgn, -5, -5, 20, 20 );
 
+    /* flush pending messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+
     flush_sequence();
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
     ok_sequence( WmEmptySeq, "EmptySeq", FALSE );
