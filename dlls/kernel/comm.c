@@ -1709,7 +1709,7 @@ BOOL WINAPI SetCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
  
-	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
 	        TRACE("FILE_GetUnixHandle failed\n");
 		return FALSE;
@@ -1749,7 +1749,7 @@ BOOL WINAPI ClearCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
  
-	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
 	        TRACE("FILE_GetUnixHandle failed\n");
 		return FALSE;
@@ -1789,7 +1789,7 @@ BOOL WINAPI EscapeCommFunction(
 	struct termios	port;
 
     	TRACE("handle %d, function=%d\n", handle, nFunction);
-	fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
 		FIXME("handle %d not found.\n",handle);
 		return FALSE;
@@ -1906,7 +1906,7 @@ BOOL WINAPI PurgeComm(
 
      TRACE("handle %d, flags %lx\n", handle, flags);
 
-     fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
      if(fd<0) {
 	FIXME("no handle %d found\n",handle);
 	return FALSE;
@@ -2011,7 +2011,7 @@ BOOL WINAPI SetupComm(
     int fd;
 
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=FILE_GetUnixHandle( handle, GENERIC_WRITE );
+    fd=FILE_GetUnixHandle( handle, GENERIC_READ );
     if(0>fd) {
 	FIXME("handle %d not found?\n",handle);
         return FALSE;
@@ -2108,7 +2108,7 @@ BOOL WINAPI SetCommState(
      TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 
-     fd = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
      if (fd < 0)  {
 	FIXME("no handle %d found\n",handle);
 	return FALSE;
@@ -2382,7 +2382,7 @@ BOOL WINAPI SetCommState(
 	        int save_error=errno;
 		commerror = WinError();	
                 close( fd );
-                ERR("tcgetattr error '%s'\n", strerror(save_error));
+                ERR("tcsetattr error '%s'\n", strerror(save_error));
 		return FALSE;
 	} else {
 		commerror = 0;
@@ -2708,7 +2708,7 @@ BOOL WINAPI SetCommTimeouts(
     if (!ret) return FALSE;
 
     /* FIXME: move this stuff to the server */
-    fd = FILE_GetUnixHandle( hComm, GENERIC_WRITE );
+    fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
     if (fd < 0) {
        FIXME("no fd for handle = %0x!.\n",hComm);
        return FALSE;
@@ -2746,14 +2746,14 @@ BOOL WINAPI GetCommModemStatus(
 	
 	*lpModemStat=0;
 #ifdef TIOCMGET
-	fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+	fd = FILE_GetUnixHandle( hFile, GENERIC_READ );
 	if(fd<0)
 		return FALSE;
 	result = ioctl(fd, TIOCMGET, &mstat);
 	close(fd);
 	if (result == -1)
 	  {
-	    TRACE("ioctl failed\n");
+	    WARN("ioctl failed\n");
 	    return FALSE;
 	  }
 #ifdef TIOCM_CTS
@@ -2773,7 +2773,7 @@ BOOL WINAPI GetCommModemStatus(
 	if (mstat & TIOCM_CAR)
 	  *lpModemStat |= MS_RLSD_ON;
 #endif
-	TRACE("%s%s%s%s\n",
+	TRACE("%04x -> %s%s%s%s\n", mstat,
 	      (*lpModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
 	      (*lpModemStat &MS_RING_ON)?"MS_RING_ON ":"",
 	      (*lpModemStat &MS_DSR_ON)?"MS_DSR_ON ":"",
