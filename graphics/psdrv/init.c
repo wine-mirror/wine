@@ -340,6 +340,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         HeapFree(PSDRV_Heap, 0, pi->Devmode);
         HeapFree(PSDRV_Heap, 0, pi);
 	*last = NULL;
+	MSG("Couldn't find PPD file '%s', expect a crash now!\n",
+	    pi->Devmode->dmDrvPrivate.ppdFileName);
 	return NULL;
     }
 
