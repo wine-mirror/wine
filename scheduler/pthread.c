@@ -222,8 +222,6 @@ static int *libc_multiple_threads;
 void PTHREAD_init_done(void)
 {
     init_done = 1;
-    if (!libc_fork) libc_fork = dlsym( RTLD_NEXT, "fork" );
-    if (!libc_sigaction) libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
 }
 
 struct __res_state *__res_state(void)
@@ -266,6 +264,8 @@ void PTHREAD_init_thread(void)
         NtCurrentTeb()->pthread_data = &initial_descr;
         errno_location_ptr = thread_errno_location;
         h_errno_location_ptr = thread_h_errno_location;
+        libc_fork = dlsym( RTLD_NEXT, "fork" );
+        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
         libc_uselocale = dlsym( RTLD_NEXT, "uselocale" );
         libc_pthread_init = dlsym( RTLD_NEXT, "__libc_pthread_init" );
         if (libc_pthread_init) libc_multiple_threads = libc_pthread_init( &wine_pthread_functions );
@@ -958,6 +958,11 @@ static struct pthread_functions wine_pthread_functions =
     NULL,                          /* ptr_pthread_sigwait */
     NULL                           /* ptr_pthread_raise */
 };
+
+#else /* __GLIBC__ || __FREEBSD__ */
+
+void PTHREAD_init_thread(void) { }
+void PTHREAD_init_done(void) { }
 
 #endif /* __GLIBC__ || __FREEBSD__ */
 
