@@ -54,6 +54,8 @@
  *
  * Speedups
  *   -- LISTVIEW_SetItemCount is too invalidation happy
+ *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
+ *      instead of inserting in the right spot
  *   -- we should keep an ordered array of coordinates in iconic mode
  *      this would allow to frame items (iterator_frameditems),
  *      and find nearest item (LVFI_NEARESTXY) a lot more efficiently
@@ -3386,6 +3388,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 {
     UINT uFormat, uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    WCHAR szCallback[] = { '(', 'c', 'a', 'l', 'l', 'b', 'a', 'c', 'k', ')', 0 };
     DWORD cditemmode = CDRF_DODEFAULT;
     RECT* lprcFocus, rcSelect, rcBox, rcState, rcIcon, rcLabel;
     NMLVCUSTOMDRAW nmlvcd;
@@ -3408,6 +3411,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     if (nSubItem > 0 && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) 
 	lvItem.state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
+    if (lvItem.pszText == LPSTR_TEXTCALLBACKW) lvItem.pszText = szCallback;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
@@ -3454,14 +3458,20 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     {
         UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
         if (uStateImage)
+	{
+	     TRACE("uStateImage=%d\n", uStateImage);
 	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcState.left, rcState.top, ILD_NORMAL);
+	}
     }
 
     /* small icons */
     himl = (uView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
     if (himl && lvItem.iImage >= 0 && !IsRectEmpty(&rcIcon))
+    {
+	TRACE("iImage=%d\n", lvItem.iImage);
 	ImageList_Draw(himl, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
 			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
+    }
 
     /* Don't bother painting item being edited */
     if (infoPtr->hwndEdit && lprcFocus && nSubItem == 0) goto postpaint;
@@ -3553,7 +3563,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     }
 
     /* iterate through the invalidated rows */
-    while(iterator_prev(&i))
+    while(iterator_next(&i))
     {
 	item.iItem = i.nItem;
 	item.iSubItem = 0;
@@ -3627,10 +3637,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     iterator_visibleitems(&i, infoPtr, hdc);
     
     /* a last few bits before we start drawing */
-    TRACE("Colums=(%di - %d)\n", nFirstCol, nLastCol);
+    TRACE("Colums=(%d - %d)\n", nFirstCol, nLastCol);
 
     /* iterate through the invalidated rows */
-    while(iterator_prev(&i))
+    while(iterator_next(&i))
     {
 	/* iterate through the invalidated columns */
 	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
