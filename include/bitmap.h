@@ -18,6 +18,9 @@ struct tagGDI_BITMAP_DRIVER;
 #define DDB_COPY		4
 #define DDB_SETWITHFILLER	8
 
+/* DIB Section sync state */
+enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
+
   /* GDI logical bitmap object */
 typedef struct tagBITMAPOBJ
 {
@@ -37,6 +40,8 @@ typedef struct tagBITMAP_DRIVER
   VOID (*pDeleteDIBSection)(struct tagBITMAPOBJ *);
   UINT (*pSetDIBColorTable)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,const RGBQUAD *);
   UINT (*pGetDIBColorTable)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,RGBQUAD *);
+  INT  (*pLockDIB)(struct tagBITMAPOBJ *,INT,BOOL);
+  VOID (*pUnlockDIB)(struct tagBITMAPOBJ *,BOOL);
 } BITMAP_DRIVER;
 
 extern BITMAP_DRIVER *BITMAP_Driver;

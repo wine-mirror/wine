@@ -269,12 +269,9 @@ static void X11DRV_DIB_SetImageBits_1_Line(DWORD dstwidth, int left, int *colors
  */
 static void X11DRV_DIB_SetImageBits_1( int lines, const BYTE *srcbits,
                                 DWORD srcwidth, DWORD dstwidth, int left,
-                                int *colors, XImage *bmpImage )
+                                int *colors, XImage *bmpImage, DWORD linebytes)
 {
     int h;
-
-    /* 32 bit aligned */
-    DWORD linebytes = ((srcwidth + 31) & ~31) / 8;
 
     if (lines > 0) {
 	for (h = lines-1; h >=0; h--) {
@@ -300,14 +297,11 @@ static void X11DRV_DIB_SetImageBits_1( int lines, const BYTE *srcbits,
 static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
 				       DWORD dstwidth, DWORD srcwidth,
 				       RGBQUAD *colors, PALETTEENTRY *srccolors, 
-                                XImage *bmpImage )
+                                XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
     BYTE *bits;
-
-       /* 32 bit aligned */
-    DWORD linebytes = ((dstwidth + 31) & ~31) / 8;
 
     if (lines < 0 ) {
         lines = -lines;
@@ -537,15 +531,12 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
  */
 static void X11DRV_DIB_SetImageBits_4( int lines, const BYTE *srcbits,
                                 DWORD srcwidth, DWORD dstwidth, int left,
-                                int *colors, XImage *bmpImage )
+                                int *colors, XImage *bmpImage, DWORD linebytes)
 {
     DWORD i, x;
     int h;
     const BYTE *bits = srcbits + (left >> 1);
   
-    /* 32 bit aligned */
-    DWORD linebytes = ((srcwidth+7)&~7)/2;
-
     if(left & 1) {
         left--;
 	dstwidth++;
@@ -587,15 +578,12 @@ static void X11DRV_DIB_SetImageBits_4( int lines, const BYTE *srcbits,
 static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 				       DWORD srcwidth, DWORD dstwidth,
 				       RGBQUAD *colors, PALETTEENTRY *srccolors, 
-				       XImage *bmpImage )
+				       XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
     BYTE *bits;
     LPBYTE srcpixel;
-
-    /* 32 bit aligned */
-    DWORD linebytes = ((srcwidth+7)&~7)/2;
 
     if (lines < 0 )
     {
@@ -903,14 +891,12 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
  */
 static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 				DWORD srcwidth, DWORD dstwidth, int left,
-                                const int *colors, XImage *bmpImage )
+                                const int *colors, XImage *bmpImage,
+				DWORD linebytes )
 {
     DWORD x;
     int h, color;
     const BYTE *bits;
-
-    /* align to 32 bit */
-    DWORD linebytes = (srcwidth + 3) & ~3;
 
     dstwidth += left;
 
@@ -976,14 +962,11 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 				       DWORD srcwidth, DWORD dstwidth,
 				       RGBQUAD *colors, PALETTEENTRY *srccolors, 
-				       XImage *bmpImage )
+				       XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
     BYTE *bits;
-
-    /* align to 32 bit */
-    DWORD linebytes = (srcwidth + 3) & ~3;
 
     if (lines < 0 )
     {
@@ -1391,14 +1374,11 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                                  DWORD srcwidth, DWORD dstwidth, int left,
                                        DC *dc, DWORD rSrc, DWORD gSrc, DWORD bSrc,
-                                       XImage *bmpImage )
+                                       XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
   
-    /* align to 32 bit */
-    DWORD linebytes = (srcwidth * 2 + 3) & ~3;
-
     if (lines < 0 )
     {
         lines = -lines;
@@ -1541,13 +1521,12 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
 					DWORD rDst, DWORD gDst, DWORD bDst,
-					XImage *bmpImage )
+					XImage *bmpImage, DWORD dibpitch )
 {
     DWORD x;
     int h, rsc, gsc;
 
-    /* align to 32 bit */
-    DWORD linebytes = (dstwidth * 2 + 3) & ~3;
+    DWORD linebytes = dibpitch;
 
     if (lines < 0 )
     {
@@ -1760,14 +1739,11 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
  */
 static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                                  DWORD srcwidth, DWORD dstwidth, int left,
-				 DC *dc, XImage *bmpImage )
+				 DC *dc, XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
   
-    /* align to 32 bit */
-    DWORD linebytes = (srcwidth * 3 + 3) & ~3;
-      	
     if (lines < 0 )
     {
         lines = -lines;
@@ -1994,13 +1970,11 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
  */
 static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
-					PALETTEENTRY *srccolors, XImage *bmpImage )
+					PALETTEENTRY *srccolors,
+					XImage *bmpImage, DWORD linebytes )
 {
     DWORD x, val;
     int h;
-
-    /* align to 32 bit */
-    DWORD linebytes = (dstwidth * 3 + 3) & ~3;
 
     if (lines < 0 )
     {
@@ -2248,13 +2222,12 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
  */
 static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
                                  DWORD srcwidth, DWORD dstwidth, int left,
-					DC *dc, XImage *bmpImage )
+					DC *dc, XImage *bmpImage,
+					DWORD linebytes )
 {
     DWORD x, *ptr;
     int h;
   
-    DWORD linebytes = (srcwidth * 4);
-
     if (lines < 0 )
     {
        lines = -lines;
@@ -2294,6 +2267,13 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
         case 24:
 	    /* ==== 32 BGR dib to 24 (888) BGR bitmap ==== */
 	    /* we need to check that source mask matches destination */
+	    if (bmpImage->bits_per_pixel == 32)
+	    {
+                for (h = lines - 1; h >= 0; h--, srcbits+=linebytes) {
+                    memcpy( bmpImage->data + h * bmpImage->bytes_per_line, srcbits + left*4, dstwidth*4 );
+		}
+	    }
+	    else
             {
                 BYTE  *bptr;
 
@@ -2405,15 +2385,14 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
  */
 static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
-					PALETTEENTRY *srccolors, XImage *bmpImage )
+					PALETTEENTRY *srccolors,
+					XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
     BYTE *bits;
 
-    /* align to 32 bit */
-    DWORD linebytes = (srcwidth * 4);
-    DWORD copybytes = linebytes;
+    DWORD copybytes = srcwidth * 4;
 
     if (lines < 0 )
     {
@@ -2647,7 +2626,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     case 1:
 	X11DRV_DIB_SetImageBits_1( descr->lines, descr->bits, descr->infoWidth,
 				   descr->width, descr->xSrc, (int *)(descr->colorMap),
-				   bmpImage );
+				   bmpImage, descr->dibpitch );
 	break;
     case 4:
         if (descr->compression) {
@@ -2663,7 +2642,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	    X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
 				       descr->infoWidth, descr->width,
 				       descr->xSrc, (int*)(descr->colorMap),
-				       bmpImage );
+				       bmpImage, descr->dibpitch );
 	break;
     case 8:
         if (descr->compression) {
@@ -2678,7 +2657,7 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	    X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
 				       descr->infoWidth, descr->width,
 				       descr->xSrc, (int *)(descr->colorMap),
-				       bmpImage );
+				       bmpImage, descr->dibpitch );
 	break;
     case 15:
     case 16:
@@ -2686,18 +2665,19 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				    descr->infoWidth, descr->width,
                                    descr->xSrc, descr->dc,
                                    descr->rMask, descr->gMask, descr->bMask,
-                                   bmpImage);
+                                   bmpImage, descr->dibpitch);
 	break;
     case 24:
 	X11DRV_DIB_SetImageBits_24( descr->lines, descr->bits,
 				    descr->infoWidth, descr->width,
-				    descr->xSrc, descr->dc, bmpImage );
+				    descr->xSrc, descr->dc, bmpImage,
+				    descr->dibpitch);
 	break;
     case 32:
 	X11DRV_DIB_SetImageBits_32( descr->lines, descr->bits,
 				    descr->infoWidth, descr->width,
                                    descr->xSrc, descr->dc,
-                                   bmpImage);
+                                   bmpImage, descr->dibpitch);
 	break;
     default:
         WARN("(%d): Invalid depth\n", descr->infoBpp );
@@ -2743,6 +2723,9 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             return lines;
         }                                                                           }
 
+    TRACE("XGetSubImage(%p,%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
+     display, descr->drawable, descr->xSrc, descr->ySrc, descr->width,
+     lines, AllPlanes, ZPixmap, bmpImage, descr->xDest, descr->yDest);
     XGetSubImage( display, descr->drawable, descr->xSrc, descr->ySrc,
                   descr->width, lines, AllPlanes, ZPixmap,
                   bmpImage, descr->xDest, descr->yDest );
@@ -2754,7 +2737,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
           X11DRV_DIB_GetImageBits_1( descr->lines,(LPVOID)descr->bits, 
 				     descr->infoWidth, descr->width,
 				     descr->colorMap, descr->palentry, 
-                                     bmpImage );
+                                     bmpImage, descr->dibpitch );
        break;
 
     case 4:
@@ -2764,7 +2747,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	   X11DRV_DIB_GetImageBits_4( descr->lines,(LPVOID)descr->bits, 
 				      descr->infoWidth, descr->width, 
 				      descr->colorMap, descr->palentry, 
-				      bmpImage );
+				      bmpImage, descr->dibpitch );
        break;
 
     case 8:
@@ -2774,7 +2757,7 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	   X11DRV_DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits,
 				      descr->infoWidth, descr->width,
 				      descr->colorMap, descr->palentry,
-				      bmpImage );
+				      bmpImage, descr->dibpitch );
        break;
     case 15:
     case 16:
@@ -2782,19 +2765,19 @@ int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 				   descr->infoWidth,descr->width,
 				   descr->palentry,
 				   descr->rMask, descr->gMask, descr->bMask,
-				   bmpImage );
+				   bmpImage, descr->dibpitch );
        break;
 
     case 24:
        X11DRV_DIB_GetImageBits_24( descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth,descr->width,
-				   descr->palentry, bmpImage );
+				   descr->palentry, bmpImage, descr->dibpitch);
        break;
 
     case 32:
        X11DRV_DIB_GetImageBits_32( descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth, descr->width,
-				   descr->palentry, bmpImage );
+				   descr->palentry, bmpImage, descr->dibpitch);
        break;
 
     default:
@@ -2889,6 +2872,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     descr.width     = cx;
     descr.height    = cy;
     descr.useShm    = FALSE;
+    descr.dibpitch  = ((width * descr.infoBpp + 31) &~31) / 8;
 
     EnterCriticalSection( &X11DRV_CritSection );
     result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
@@ -2977,6 +2961,7 @@ INT X11DRV_DIB_SetDIBits(
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = lines;
   descr.useShm    = FALSE;
+  descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
   
   EnterCriticalSection( &X11DRV_CritSection );
   result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
@@ -2998,6 +2983,7 @@ INT X11DRV_DIB_GetDIBits(
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   PALETTEOBJ * palette;
+  int height;
   
   TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
 	lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
@@ -3007,7 +2993,11 @@ INT X11DRV_DIB_GetDIBits(
   if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
       return 0;
 
-  if( lines > info->bmiHeader.biHeight )  lines = info->bmiHeader.biHeight;
+  if( lines > bmp->bitmap.bmHeight ) lines = bmp->bitmap.bmHeight;
+
+  height = info->bmiHeader.biHeight;
+  if (height < 0) height = -height;
+  if( lines > height ) lines = height;
   /* Top-down images have a negative biHeight, the scanlines of theses images
    * were inverted in X11DRV_DIB_GetImageBits_xx
    * To prevent this we simply change the sign of lines
@@ -3080,11 +3070,12 @@ INT X11DRV_DIB_GetDIBits(
      descr.ySrc = startscan;
   }
 #ifdef HAVE_LIBXXSHM
-  if (dib)
-    descr.useShm = (dib->shminfo.shmid != -1);
-  else
+  descr.useShm = dib ? (dib->shminfo.shmid != -1) : FALSE;
+#else
+  descr.useShm = FALSE;
 #endif
-    descr.useShm = FALSE;
+  descr.dibpitch = dib ? (dib->dibSection.dsBm.bmWidthBytes)
+		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
   EnterCriticalSection( &X11DRV_CritSection );
 
@@ -3182,6 +3173,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
 #else
   descr.useShm = FALSE;
 #endif
+  descr.dibpitch = dib->dibSection.dsBm.bmWidthBytes;
 
   if (toDIB)
     {
@@ -3204,137 +3196,355 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
  */
 static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
 {
-  BOOL handled = FALSE;
   BITMAPOBJ *bmp;
+  INT state;
   
   bmp = (BITMAPOBJ *)GDI_GetObjPtr( (HBITMAP)res, BITMAP_MAGIC );
   if (!bmp) return FALSE;
-  
-  if (bmp->dib)
-    switch (((X11DRV_DIBSECTION *) bmp->dib)->status)
-      {
-      case X11DRV_DIB_GdiMod:
-	TRACE("called in status DIB_GdiMod\n" );
-	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-	X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
-	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-	((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_InSync;
-	handled = TRUE;
-	break;
-	
-      case X11DRV_DIB_InSync:
-	TRACE("called in status X11DRV_DIB_InSync\n" );
-	X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-	((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_AppMod;
-	handled = TRUE;
-	break;
-	
-      case X11DRV_DIB_AppMod:
-	FIXME("called in status X11DRV_DIB_AppMod: this can't happen!\n" );
-	break;
-	
-      case X11DRV_DIB_NoHandler:
-	FIXME("called in status DIB_NoHandler: this can't happen!\n" );
-	break;
-      }
-  
+
+  state = X11DRV_DIB_Lock(bmp, DIB_Status_None, FALSE);
+  if (state != DIB_Status_InSync) {
+    /* no way to tell whether app needs read or write yet,
+     * try read first */
+    X11DRV_DIB_Coerce(bmp, DIB_Status_InSync, FALSE);
+  } else {
+    /* hm, apparently the app must have write access */
+    X11DRV_DIB_Coerce(bmp, DIB_Status_AppMod, FALSE);
+  }
+  X11DRV_DIB_Unlock(bmp, TRUE);
+
   GDI_ReleaseObj( (HBITMAP)res );
-  return handled;
+  return TRUE;
 }
 
 /***********************************************************************
- *           X11DRV_DIB_CmnUpdateDIBSection
+ *           X11DRV_DIB_Coerce
  */
-static void X11DRV_DIB_CmnUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
+INT X11DRV_DIB_Coerce(BITMAPOBJ *bmp, INT req, BOOL lossy)
 {
-  if (!bmp) return;
-  if (!bmp->dib) return;
-  
-  if (!toDIB)
-    {
-      /* Prepare for access to the DIB by GDI functions */
-      
-      switch (((X11DRV_DIBSECTION *) bmp->dib)->status)
-        {
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+  INT ret = DIB_Status_None;
+
+  if (dib) {
+    EnterCriticalSection(&(dib->lock));
+    ret = dib->status;
+    switch (req) {
+    case DIB_Status_GdiMod:
+      /* GDI access - request to draw on pixmap */
+      switch (dib->status)
+      {
         default:
-        case X11DRV_DIB_NoHandler:
+        case DIB_Status_None:
+	  dib->p_status = DIB_Status_GdiMod;
 	  X11DRV_DIB_DoUpdateDIBSection( bmp, FALSE );
 	  break;
-	  
-        case X11DRV_DIB_GdiMod:
-	  TRACE("fromDIB called in status X11DRV_DIB_GdiMod\n" );
-	  /* nothing to do */
+
+        case DIB_Status_GdiMod:
+	  TRACE("GdiMod requested in status GdiMod\n" );
 	  break;
-	  
-        case X11DRV_DIB_InSync:
-	  TRACE("fromDIB called in status X11DRV_DIB_InSync\n" );
-	  /* nothing to do */
-	  break;
-	  
-        case X11DRV_DIB_AppMod:
-	  TRACE("fromDIB called in status X11DRV_DIB_AppMod\n" );
-	  X11DRV_DIB_DoUpdateDIBSection( bmp, FALSE );
-	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-	  ((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_InSync;
-	  break;
-        }
-    }
-  else
-    {
-      /* Acknowledge write access to the DIB by GDI functions */
-      
-      switch (((X11DRV_DIBSECTION *) bmp->dib)->status)
-        {
-        default:
-        case X11DRV_DIB_NoHandler:
-	  X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
-	  break;
-	  
-        case X11DRV_DIB_GdiMod:
-	  TRACE("  toDIB called in status X11DRV_DIB_GdiMod\n" );
-	  /* nothing to do */
-	  break;
-	  
-        case X11DRV_DIB_InSync:
-	  TRACE("  toDIB called in status X11DRV_DIB_InSync\n" );
+
+        case DIB_Status_InSync:
+	  TRACE("GdiMod requested in status InSync\n" );
 	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
-	  ((X11DRV_DIBSECTION *) bmp->dib)->status = X11DRV_DIB_GdiMod;
+	  dib->status = DIB_Status_GdiMod;
+	  dib->p_status = DIB_Status_InSync;
 	  break;
-	  
-        case X11DRV_DIB_AppMod:
-	  FIXME("  toDIB called in status X11DRV_DIB_AppMod: "
-                "this can't happen!\n" );
+
+	case DIB_Status_AuxMod:
+	  TRACE("GdiMod requested in status AuxMod\n" );
+	  if (lossy) dib->status = DIB_Status_GdiMod;
+	  else (*dib->copy_aux)(dib->aux_ctx, DIB_Status_GdiMod);
+	  dib->p_status = DIB_Status_AuxMod;
+	  if (dib->status != DIB_Status_AppMod) {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
+	    break;
+	  }
+	  /* fall through if copy_aux() had to change to AppMod state */
+
+        case DIB_Status_AppMod:
+	  TRACE("GdiMod requested in status AppMod\n" );
+	  if (!lossy) {
+	    /* make it readonly to avoid app changing data while we copy */
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+	    X11DRV_DIB_DoUpdateDIBSection( bmp, FALSE );
+	  }
+	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
+	  dib->p_status = DIB_Status_AppMod;
+	  dib->status = DIB_Status_GdiMod;
 	  break;
-        }
+      }
+      break;
+
+    case DIB_Status_InSync:
+      /* App access - request access to read DIB surface */
+      /* (typically called from signal handler) */
+      switch (dib->status)
+      {
+        default:
+        case DIB_Status_None:
+	  /* shouldn't happen from signal handler */
+	  break;
+
+	case DIB_Status_AuxMod:
+	  TRACE("InSync requested in status AuxMod\n" );
+	  if (lossy) dib->status = DIB_Status_InSync;
+	  else {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+	    (*dib->copy_aux)(dib->aux_ctx, DIB_Status_InSync);
+	  }
+	  if (dib->status != DIB_Status_GdiMod) {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+	    break;
+	  }
+	  /* fall through if copy_aux() had to change to GdiMod state */
+
+	case DIB_Status_GdiMod:
+	  TRACE("InSync requested in status GdiMod\n" );
+	  if (!lossy) {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+	    X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
+	  }
+	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+	  dib->status = DIB_Status_InSync;
+	  break;
+
+        case DIB_Status_InSync:
+	  TRACE("InSync requested in status InSync\n" );
+	  /* shouldn't happen from signal handler */
+	  break;
+
+        case DIB_Status_AppMod:
+	  TRACE("InSync requested in status AppMod\n" );
+	  /* no reason to do anything here, and this
+	   * shouldn't happen from signal handler */
+	  break;
+      }
+      break;
+
+    case DIB_Status_AppMod:
+      /* App access - request access to write DIB surface */
+      /* (typically called from signal handler) */
+      switch (dib->status)
+      {
+        default:
+        case DIB_Status_None:
+	  /* shouldn't happen from signal handler */
+	  break;
+
+	case DIB_Status_AuxMod:
+	  TRACE("AppMod requested in status AuxMod\n" );
+	  if (lossy) dib->status = DIB_Status_AppMod;
+	  else {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+	    (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
+	  }
+	  if (dib->status != DIB_Status_GdiMod)
+	    break;
+	  /* fall through if copy_aux() had to change to GdiMod state */
+
+	case DIB_Status_GdiMod:
+	  TRACE("AppMod requested in status GdiMod\n" );
+	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+	  if (!lossy) X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
+	  /* fall through */
+
+        case DIB_Status_InSync:
+	  TRACE("AppMod requested in status InSync\n" );
+	  X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+	  dib->status = DIB_Status_AppMod;
+	  break;
+
+        case DIB_Status_AppMod:
+	  TRACE("AppMod requested in status AppMod\n" );
+	  /* shouldn't happen from signal handler */
+	  break;
+      }
+      break;
+
+    case DIB_Status_AuxMod:
+      if (dib->status == DIB_Status_None) {
+	dib->p_status = req;
+      } else {
+	if (dib->status != DIB_Status_AuxMod)
+	  dib->p_status = dib->status;
+	dib->status = DIB_Status_AuxMod;
+      }
+      break;
+      /* it is up to the caller to do the copy/conversion, probably
+       * using the return value to decide where to copy from */
     }
+    LeaveCriticalSection(&(dib->lock));
+  }
+  return ret;
 }
 
 /***********************************************************************
- *           X11DRV_DIB_UpdateDIBSection2
+ *           X11DRV_DIB_Lock
  */
-void X11DRV_DIB_UpdateDIBSection2(HBITMAP hbmp, BOOL toDIB)
+INT X11DRV_DIB_Lock(BITMAPOBJ *bmp, INT req, BOOL lossy)
+{
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+  INT ret = DIB_Status_None;
+
+  if (dib) {
+    EnterCriticalSection(&(dib->lock));
+    ret = dib->status;
+    if (req != DIB_Status_None)
+      X11DRV_DIB_Coerce(bmp, req, lossy);
+  }
+  return ret;
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_Unlock
+ */
+void X11DRV_DIB_Unlock(BITMAPOBJ *bmp, BOOL commit)
+{
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+
+  if (dib) {
+    switch (dib->status)
+    {
+      default:
+      case DIB_Status_None:
+	/* in case anyone is wondering, this is the "signal handler doesn't
+	 * work" case, where we always have to be ready for app access */
+	if (commit) {
+	  switch (dib->p_status)
+	  {
+	    case DIB_Status_AuxMod:
+	      TRACE("Unlocking and syncing from AuxMod\n" );
+	      (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
+	      if (dib->status != DIB_Status_None) {
+		dib->p_status = dib->status;
+		dib->status = DIB_Status_None;
+	      }
+	      if (dib->p_status != DIB_Status_GdiMod)
+		break;
+	      /* fall through if copy_aux() had to change to GdiMod state */
+
+	    case DIB_Status_GdiMod:
+	      TRACE("Unlocking and syncing from GdiMod\n" );
+	      X11DRV_DIB_DoUpdateDIBSection( bmp, TRUE );
+	      break;
+
+	    default:
+	      TRACE("Unlocking without needing to sync\n" );
+	      break;
+	  }
+	}
+	else TRACE("Unlocking with no changes\n");
+	dib->p_status = DIB_Status_None;
+	break;
+
+      case DIB_Status_GdiMod:
+	TRACE("Unlocking in status GdiMod\n" );
+	/* DIB was protected in Coerce */
+	if (!commit) {
+	  /* no commit, revert to InSync if applicable */
+	  if ((dib->p_status == DIB_Status_InSync) ||
+	      (dib->p_status == DIB_Status_AppMod)) {
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
+	    dib->status = DIB_Status_InSync;
+	  }
+	}
+	break;
+
+      case DIB_Status_InSync:
+	TRACE("Unlocking in status InSync\n" );
+	/* DIB was already protected in Coerce */
+	break;
+
+      case DIB_Status_AppMod:
+	TRACE("Unlocking in status AppMod\n" );
+	/* DIB was already protected in Coerce */
+	/* this case is ordinary only called from the signal handler,
+	 * so we don't bother to check for !commit */
+	break;
+
+      case DIB_Status_AuxMod:
+	TRACE("Unlocking in status AuxMod\n" );
+	if (commit) {
+	  /* DIB may need protection now */
+	  if ((dib->p_status == DIB_Status_InSync) ||
+	      (dib->p_status == DIB_Status_AppMod))
+	    X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
+	} else {
+	  /* no commit, revert to previous state */
+	  if (dib->p_status != DIB_Status_None)
+	    dib->status = dib->p_status;
+	  /* no protections changed */
+	}
+	dib->p_status = DIB_Status_None;
+	break;
+    }
+    LeaveCriticalSection(&(dib->lock));
+  }
+}
+
+/***********************************************************************
+ *           X11DRV_CoerceDIBSection
+ */
+INT X11DRV_CoerceDIBSection(DC *dc, INT req, BOOL lossy)
 {
   BITMAPOBJ *bmp;
-  
-  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbmp, BITMAP_MAGIC );
-  if (!bmp) return;
+  INT ret;
 
-  X11DRV_DIB_CmnUpdateDIBSection(bmp, toDIB);
+  if (!dc) return DIB_Status_None;
+  if (!(dc->flags & DC_MEMORY)) return DIB_Status_None;
 
-  GDI_ReleaseObj(hbmp);
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+  ret = X11DRV_DIB_Coerce(bmp, req, lossy);
+  GDI_ReleaseObj( dc->hBitmap );
+  return ret;
 }
 
 /***********************************************************************
- *           X11DRV_DIB_UpdateDIBSection
+ *           X11DRV_LockDIBSection2
  */
-void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
+INT X11DRV_LockDIBSection2(HBITMAP hBmp, INT req, BOOL lossy)
 {
-  /* Ensure this is a Compatible DC that has a DIB section selected */
-  
+  BITMAPOBJ *bmp;
+  INT ret;
+
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+  ret = X11DRV_DIB_Lock(bmp, req, lossy);
+  GDI_ReleaseObj( hBmp );
+  return ret;
+}
+
+/***********************************************************************
+ *           X11DRV_UnlockDIBSection2
+ */
+void X11DRV_UnlockDIBSection2(HBITMAP hBmp, BOOL commit)
+{
+  BITMAPOBJ *bmp;
+
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+  X11DRV_DIB_Unlock(bmp, commit);
+  GDI_ReleaseObj( hBmp );
+}
+
+/***********************************************************************
+ *           X11DRV_LockDIBSection
+ */
+INT X11DRV_LockDIBSection(DC *dc, INT req, BOOL lossy)
+{
+  if (!dc) return DIB_Status_None;
+  if (!(dc->flags & DC_MEMORY)) return DIB_Status_None;
+
+  return X11DRV_LockDIBSection2( dc->hBitmap, req, lossy );
+}
+
+/***********************************************************************
+ *           X11DRV_UnlockDIBSection
+ */
+void X11DRV_UnlockDIBSection(DC *dc, BOOL commit)
+{
   if (!dc) return;
   if (!(dc->flags & DC_MEMORY)) return;
-  
-  X11DRV_DIB_UpdateDIBSection2(dc->hBitmap, toDIB);
+
+  X11DRV_UnlockDIBSection2( dc->hBitmap, commit );
 }
 
 /***********************************************************************
@@ -3536,7 +3746,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       dib->dibSection.dshSection = section;
       dib->dibSection.dsOffset = offset;
       
-      dib->status    = X11DRV_DIB_NoHandler;
+      dib->status    = DIB_Status_None;
       dib->selector  = 0;
       
       dib->nColorMap = nColorMap;
@@ -3597,21 +3807,21 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       if (bmp) { GDI_ReleaseObj(res); bmp = NULL; }
       if (res) { DeleteObject(res); res = 0; }
     }
-  
-  /* Install fault handler, if possible */
-  if (bm.bmBits)
+  else if (bm.bmBits)
     {
+      /* Install fault handler, if possible */
+      InitializeCriticalSection(&(dib->lock));
       if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, (LPVOID)res))
         {
           if (section || offset)
             {
               X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-              if (dib) dib->status = X11DRV_DIB_AppMod;
+              if (dib) dib->status = DIB_Status_AppMod;
             }
           else
             {
 	      X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-	      if (dib) dib->status = X11DRV_DIB_InSync;
+	      if (dib) dib->status = DIB_Status_InSync;
 	    }
         }
     }
@@ -3648,6 +3858,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
     HeapFree(GetProcessHeap(), 0, dib->colorMap);
 
   if (dib->selector) SELECTOR_FreeBlock( dib->selector );
+  DeleteCriticalSection(&(dib->lock));
 }
 
 /***********************************************************************

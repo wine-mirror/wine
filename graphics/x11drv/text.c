@@ -18,6 +18,7 @@
 #include "gdi.h"
 #include "heap.h"
 #include "x11font.h"
+#include "bitmap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text);
@@ -112,7 +113,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
-        X11DRV_DIB_UpdateDIBSection( dc, FALSE );
+        X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
         dibUpdateFlag = TRUE;
 	TSXSetForeground( display, physDev->gc, physDev->backgroundPixel );
 	TSXFillRectangle( display, physDev->drawable, physDev->gc,
@@ -196,7 +197,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (!dibUpdateFlag)
     {
-        X11DRV_DIB_UpdateDIBSection( dc, FALSE );
+        X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
         dibUpdateFlag = TRUE;
     }
 
@@ -384,7 +385,7 @@ FAIL:
     result = FALSE;
     
 END:
-    if (dibUpdateFlag) X11DRV_DIB_UpdateDIBSection( dc, TRUE );
+    if (dibUpdateFlag) X11DRV_UnlockDIBSection( dc, TRUE );
     return result;
 }
 

@@ -1471,11 +1471,11 @@ BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
     params.heightSrc = 0;
     params.rop = rop;
 
-    X11DRV_DIB_UpdateDIBSection( dc, FALSE );
+    X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    X11DRV_DIB_UpdateDIBSection( dc, TRUE );
+    X11DRV_UnlockDIBSection( dc, TRUE );
     return result;
 }
 
@@ -1488,7 +1488,41 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
                       INT xSrc, INT ySrc, DWORD rop )
 {
     struct StretchBlt_params params;
-    BOOL result;
+    BOOL result = FALSE;
+    INT sSrc, sDst;
+
+    if (((rop >> 16) & 0x55) == ((rop >> 17) & 0x55)) {
+      /* FIXME: seems the ROP doesn't include destination;
+       * now if the destination area include the entire dcDst,
+       * we can pass TRUE instead of FALSE to CoerceDIBSection(dcDst...),
+       * which may avoid a copy in some situations */
+    }
+    sDst = X11DRV_LockDIBSection( dcDst, DIB_Status_None, FALSE );
+    sSrc = X11DRV_LockDIBSection( dcSrc, DIB_Status_None, FALSE );
+    if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY)) {
+      BITMAPOBJ *bmp;
+      BOOL done = FALSE;
+      
+      if (sDst == DIB_Status_AppMod) {
+        FIXME("potential optimization - client-side DIB copy\n");
+      }
+
+      X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
+
+      bmp = (BITMAPOBJ *)GDI_GetObjPtr( dcSrc->hBitmap, BITMAP_MAGIC );
+      if (bmp->dib) {
+        if (bmp->dib->dsBmih.biBitCount > 8) {
+          if (X11DRV_SetDIBitsToDevice( dcDst, xDst, yDst, width, height, xSrc, ySrc,
+                                        0, bmp->dib->dsBm.bmHeight, bmp->dib->dsBm.bmBits,
+                                        (BITMAPINFO*)&(bmp->dib->dsBmih), 0))
+            result = TRUE;
+          done = TRUE;
+        }
+        else FIXME("potential optimization - 8 bpp SetDIBitsToDevice\n");
+      }
+      GDI_ReleaseObj( dcSrc->hBitmap );
+      if (done) goto END;
+    }
 
     params.dcDst = dcDst;
     params.xDst = xDst;
@@ -1502,13 +1536,17 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     params.heightSrc = height;
     params.rop = rop;
 
-    X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
-    X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
+    X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
+    X11DRV_CoerceDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    X11DRV_DIB_UpdateDIBSection( dcDst, TRUE );
+
+END:
+    X11DRV_UnlockDIBSection( dcSrc, FALSE );
+    X11DRV_UnlockDIBSection( dcDst, TRUE );
+
     return result;
 }
 
@@ -1536,13 +1574,15 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
     params.heightSrc = heightSrc;
     params.rop = rop;
 
-    X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
-    X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
+    X11DRV_LockDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
+    X11DRV_LockDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    X11DRV_DIB_UpdateDIBSection( dcDst, TRUE );
+
+    X11DRV_UnlockDIBSection( dcSrc, FALSE );
+    X11DRV_UnlockDIBSection( dcDst, TRUE );
     return result;
 }
 

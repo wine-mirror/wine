@@ -223,6 +223,23 @@ UINT TTYDRV_BITMAP_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT cou
 }
 
 /***********************************************************************
+ *		TTYDRV_BITMAP_Lock
+ */
+INT TTYDRV_BITMAP_Lock(BITMAPOBJ *bmp, INT req, BOOL lossy)
+{
+  FIXME("(%p): stub\n", bmp);
+  return DIB_Status_None;
+}
+
+/***********************************************************************
+ *		TTYDRV_BITMAP_Unlock
+ */
+void TTYDRV_BITMAP_Unlock(BITMAPOBJ *bmp, BOOL commit)
+{
+  FIXME("(%p): stub\n", bmp);
+}
+
+/***********************************************************************
  *		TTYDRV_BITMAP_GetDIBits
  */
 INT TTYDRV_BITMAP_GetDIBits(

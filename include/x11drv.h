@@ -214,7 +214,7 @@ typedef struct
     DIBSECTION  dibSection;
 
     /* Mapping status */
-    enum { X11DRV_DIB_NoHandler, X11DRV_DIB_InSync, X11DRV_DIB_AppMod, X11DRV_DIB_GdiMod } status;
+    int         status, p_status;
 
     /* Color map info */
     int         nColorMap;
@@ -230,6 +230,13 @@ typedef struct
     /* Shared memory segment info */
     XShmSegmentInfo shminfo;
 #endif
+
+    /* Aux buffer access function */
+    void (*copy_aux)(void*ctx, int req);
+    void *aux_ctx;
+
+    /* GDI access lock */
+    CRITICAL_SECTION lock;
 
 } X11DRV_DIBSECTION;
 
@@ -259,14 +266,18 @@ typedef struct
     DWORD             gMask;
     DWORD             bMask;
     BOOL        useShm;
+    int               dibpitch;
 
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
 extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
-extern void X11DRV_DIB_UpdateDIBSection(struct tagDC *dc, BOOL toDIB);
-extern void X11DRV_DIB_UpdateDIBSection2(HBITMAP hbmp, BOOL toDIB);
+extern INT X11DRV_CoerceDIBSection(struct tagDC *dc,INT,BOOL);
+extern INT X11DRV_LockDIBSection(struct tagDC *dc,INT,BOOL);
+extern void X11DRV_UnlockDIBSection(struct tagDC *dc,BOOL);
+extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
+extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage,
 					   LPVOID *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
@@ -284,6 +295,9 @@ extern INT X11DRV_DIB_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT
 extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 extern UINT X11DRV_DIB_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,const RGBQUAD *);
 extern UINT X11DRV_DIB_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,RGBQUAD *);
+extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
+extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
+extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
 
 /**************************************************************************
  * X11 GDI driver

@@ -53,6 +53,8 @@ extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, U
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 extern UINT TTYDRV_BITMAP_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,const RGBQUAD *);
 extern UINT TTYDRV_BITMAP_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,RGBQUAD *);
+extern INT TTYDRV_BITMAP_Lock(struct tagBITMAPOBJ *,INT,BOOL);
+extern void TTYDRV_BITMAP_Unlock(struct tagBITMAPOBJ *,BOOL);
 
 #ifndef WINE_CURSES
 typedef struct { int dummy; } WINDOW;
