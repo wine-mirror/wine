@@ -9,7 +9,6 @@
 #include "wine/winbase16.h"
 #include "callback.h"
 #include "builtin16.h"
-#include "heap.h"
 #include "module.h"
 #include "stackframe.h"
 #include "debugtools.h"

@@ -8,7 +8,6 @@
 
 #include "gdi.h"
 #include "metafiledrv.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "bitmap.h"
 

@@ -14,13 +14,13 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "debugtools.h"
-#include "heap.h"
+#include "winnls.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "wineacm.h"
 #include "winreg.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(msacm);
 	

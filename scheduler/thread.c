@@ -19,7 +19,6 @@
 #include "task.h"
 #include "module.h"
 #include "winerror.h"
-#include "heap.h"
 #include "selectors.h"
 #include "winnt.h"
 #include "wine/server.h"

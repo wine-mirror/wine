@@ -20,7 +20,6 @@
 #include "wine/library.h"
 #include "module.h"
 #include "file.h"
-#include "heap.h"
 #include "winerror.h"
 #include "wine/server.h"
 #include "debugtools.h"

@@ -15,7 +15,6 @@
 #include "winerror.h"
 #include "shlobj.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "shell32_main.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

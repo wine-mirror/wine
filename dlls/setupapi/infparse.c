@@ -13,7 +13,6 @@
 #include "debugtools.h"
 #include "windef.h"
 #include "winbase.h"
-#include "heap.h"
 #include "wine/winbase16.h"
 #include "setupx16.h"
 #include "setupapi_private.h"

@@ -14,7 +14,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "digitalv.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mciwave);

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "heap.h"
 #include "debugtools.h"
 #include "windef.h"
 #include "winerror.h"

@@ -12,7 +12,6 @@
 #include "wine/winnet16.h"
 #include "winnetwk.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(wnet);
 

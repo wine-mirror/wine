@@ -15,7 +15,6 @@
 #include "local.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
-#include "heap.h"
 #include "wine/server.h"
 #include "debugtools.h"
 

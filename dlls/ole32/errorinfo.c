@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "oleauto.h"
 #include "winerror.h"
 
@@ -18,7 +19,6 @@
 #include "wine/obj_oleaut.h"
 #include "wine/obj_errorinfo.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "thread.h"
 
 #include "debugtools.h"

@@ -14,7 +14,6 @@
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 

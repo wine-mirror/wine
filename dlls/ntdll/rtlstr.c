@@ -11,7 +11,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "wine/unicode.h"
-#include "heap.h"
 #include "winnls.h"
 #include "debugtools.h"
 #include "ntdll_misc.h"

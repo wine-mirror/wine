@@ -11,7 +11,6 @@
 #include "wine/winbase16.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "wine/winuser16.h"
 

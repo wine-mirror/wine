@@ -41,7 +41,7 @@
 #include "winbase.h"
 #include "ntddk.h"
 #include "winnls.h"
-#include "heap.h"
+#include "wine/unicode.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "cdlg.h"

@@ -15,7 +15,6 @@
 #include "aspi.h"
 #include "winescsi.h"
 #include "wine/winaspi.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "miscemu.h"
 

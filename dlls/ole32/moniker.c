@@ -16,7 +16,6 @@
 #include "wine/obj_misc.h"
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "ole2.h"
 
 #include "compobj_private.h"

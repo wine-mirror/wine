@@ -25,7 +25,6 @@
 #include "clipboard.h"
 #include "dce.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "input.h"
 #include "keyboard.h"
 #include "mouse.h"

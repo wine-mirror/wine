@@ -10,7 +10,6 @@
 #include "windef.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile);
 

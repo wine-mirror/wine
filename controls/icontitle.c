@@ -16,7 +16,6 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "win.h"
-#include "heap.h"
 
 static BOOL bMultiLineTitle;
 static HFONT hIconTitleFont;

@@ -9,7 +9,6 @@
 
 #include "gdi.h"
 #include "enhmetafiledrv.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile);

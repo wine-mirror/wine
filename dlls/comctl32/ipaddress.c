@@ -28,7 +28,6 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ipaddress);

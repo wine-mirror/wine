@@ -9,7 +9,7 @@
  */
 
 #include <string.h>
-#include "heap.h"
+
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wingdi.h"

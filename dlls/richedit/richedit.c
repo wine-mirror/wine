@@ -12,7 +12,6 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "riched32.h"

@@ -10,7 +10,6 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "heap.h"
 #include "user.h"
 #include "win.h"
 #include "controls.h"

@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include "heap.h"
+
 #include "win16drv.h"
 #include "debugtools.h"
 

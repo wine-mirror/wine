@@ -6,7 +6,6 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "heap.h"
 
 #include "shlobj.h"
 #include "shlwapi.h"

@@ -19,7 +19,6 @@
 #include "shell32_main.h"
 #include "commctrl.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "config.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

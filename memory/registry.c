@@ -21,7 +21,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "wine/server.h"
 #include "debugtools.h"
 

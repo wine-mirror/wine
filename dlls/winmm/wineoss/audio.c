@@ -36,7 +36,6 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "oss.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(wave);

@@ -13,7 +13,6 @@
 #include "debugtools.h"
 #include "ole2.h"
 #include "olectl.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 

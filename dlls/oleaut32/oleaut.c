@@ -14,7 +14,6 @@
 #include "olectl.h"
 #include "wine/obj_oleaut.h"
 #include "wine/obj_olefont.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

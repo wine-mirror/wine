@@ -16,7 +16,6 @@
 #include "win.h"
 #include "queue.h"
 #include "dce.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win);

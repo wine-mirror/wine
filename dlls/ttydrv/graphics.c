@@ -8,7 +8,6 @@
 
 #include "winnls.h"
 #include "gdi.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "ttydrv.h"
 

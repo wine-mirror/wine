@@ -26,7 +26,6 @@
 #include "mmddk.h"
 #include "oss.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(midi);
 

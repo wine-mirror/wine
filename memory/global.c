@@ -16,7 +16,6 @@
 #include "wine/exception.h"
 #include "wine/port.h"
 #include "global.h"
-#include "heap.h"
 #include "toolhelp.h"
 #include "selectors.h"
 #include "miscemu.h"

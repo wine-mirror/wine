@@ -23,7 +23,6 @@
 #include "winnls.h"         /* for PRIMARYLANGID */
 
 #include "wine/obj_oleaut.h"
-#include "heap.h"
 
 #include "debugtools.h"
 

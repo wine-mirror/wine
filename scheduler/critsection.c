@@ -13,7 +13,6 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "ntddk.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "thread.h"
 

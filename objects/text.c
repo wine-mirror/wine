@@ -13,7 +13,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "gdi.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "winnls.h"
 

@@ -13,10 +13,10 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "win.h"
 #include "spy.h"
 #include "user.h"
-#include "heap.h"
 #include "controls.h"
 #include "debugtools.h"
 

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
-#include "heap.h"
 #include "instance.h"
 #include "local.h"
 #include "module.h"

@@ -11,7 +11,6 @@
 #include "bitmap.h"
 #include "enhmetafiledrv.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile);
 

@@ -21,7 +21,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "file.h"
-#include "heap.h"
 #include "winioctl.h"
 #include "winnt.h"
 #include "msdos.h"

@@ -28,7 +28,6 @@ typedef unsigned long Pixel;
 #include "cursoricon.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "heap.h"
 #include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11drv.h"
 

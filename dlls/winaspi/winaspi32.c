@@ -13,7 +13,6 @@
 #include "aspi.h"
 #include "wnaspi32.h"
 #include "winescsi.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);

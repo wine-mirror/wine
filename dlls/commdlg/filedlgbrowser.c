@@ -12,7 +12,6 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "heap.h"
 #include "debugtools.h"
 
 #include "shlwapi.h"

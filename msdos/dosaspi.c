@@ -4,7 +4,6 @@
 #include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/winaspi.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "miscemu.h" /* DOSMEM_* */
 #include "callback.h"

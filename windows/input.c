@@ -25,7 +25,6 @@
 #include "wine/keyboard16.h"
 #include "wine/server.h"
 #include "win.h"
-#include "heap.h"
 #include "input.h"
 #include "keyboard.h"
 #include "mouse.h"

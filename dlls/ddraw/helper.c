@@ -16,7 +16,6 @@
 
 #include "wine/exception.h"
 #include "ddraw_private.h"
-#include "heap.h"
 
 #include "debugtools.h"
 

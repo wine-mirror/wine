@@ -40,7 +40,6 @@
 #include "wininet.h"
 #include "winerror.h"
 #include "winsock.h"
-#include "heap.h"
 
 #include "debugtools.h"
 #include "internet.h"

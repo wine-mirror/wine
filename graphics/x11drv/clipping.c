@@ -14,7 +14,6 @@
 #include "x11drv.h"
 #include "region.h"
 #include "debugtools.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 

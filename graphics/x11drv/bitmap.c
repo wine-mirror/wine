@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include "gdi.h"
 #include "bitmap.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "x11drv.h"
 #include "wingdi.h"

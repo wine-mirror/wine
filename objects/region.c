@@ -87,7 +87,6 @@ SOFTWARE.
 #include "wingdi.h"
 #include "debugtools.h"
 #include "region.h"
-#include "heap.h"
 #include "gdi.h"
 
 DEFAULT_DEBUG_CHANNEL(region);

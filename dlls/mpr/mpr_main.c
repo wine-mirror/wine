@@ -4,7 +4,6 @@
 
 #include "winbase.h"
 #include "winnetwk.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mpr);

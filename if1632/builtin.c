@@ -12,7 +12,6 @@
 #include "wine/winbase16.h"
 #include "builtin16.h"
 #include "global.h"
-#include "heap.h"
 #include "file.h"
 #include "module.h"
 #include "miscemu.h"

@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "heap.h"
 #include "region.h"
 #include "path.h"
 #include "debugtools.h"

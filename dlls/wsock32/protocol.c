@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "winbase.h"
-#include "debugtools.h"
-#include "heap.h"
+#include "winnls.h"
+#include "wine/unicode.h"
 #include "nspapi.h"
 #include "winsock.h"
 #include "wsipx.h"
 #include "wshisotp.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 

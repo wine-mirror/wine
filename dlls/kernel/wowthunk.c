@@ -8,7 +8,6 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "file.h"
-#include "heap.h"
 #include "miscemu.h"
 #include "stackframe.h"
 #include "builtin16.h"

@@ -13,7 +13,6 @@
 #include "winbase.h"
 #include "wine/exception.h"
 #include "file.h"
-#include "heap.h"
 #include "winnls.h"
 #include "debugtools.h"
 #include "winerror.h"

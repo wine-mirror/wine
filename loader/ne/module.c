@@ -17,7 +17,6 @@
 #include "module.h"
 #include "toolhelp.h"
 #include "file.h"
-#include "heap.h"
 #include "task.h"
 #include "snoop.h"
 #include "builtin16.h"

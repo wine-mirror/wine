@@ -11,7 +11,6 @@
 #include "win.h"
 #include "cursoricon.h"
 #include "controls.h"
-#include "heap.h"
 #include "user.h"
 #include "debugtools.h"
 

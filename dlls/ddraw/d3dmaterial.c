@@ -7,7 +7,6 @@
 #include "windef.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
-#include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "debugtools.h"

@@ -24,7 +24,6 @@
 #include "winver.h"
 
 #include "wine/winbase16.h"
-#include "heap.h"
 
 #include "debugtools.h"
 

@@ -12,7 +12,6 @@
 
 #include "windef.h"
 #include "winnls.h"
-#include "heap.h"
 #include "x11font.h"
 #include "debugtools.h"
 
