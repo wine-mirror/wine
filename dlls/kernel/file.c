@@ -313,6 +313,8 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     NTSTATUS            status;
     PIO_STATUS_BLOCK    io_status;
 
+    TRACE("(hFile=%p, buffer=%p, bytes=%lu, ovl=%p, ovl_fn=%p)\n", hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
+
     if (!overlapped)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
