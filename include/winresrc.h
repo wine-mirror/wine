@@ -1,12 +1,12 @@
-#ifndef _WINRESRC_=0A=
-#define _WINRESRC_=0A=
-=0A=
-#include "windef.h"=0A=
-#include "winuser.h"=0A=
-#include "commctrl.h"=0A=
-#include "dde.h"=0A=
-#include "winnt.h"=0A=
-#include "dlgs.h"=0A=
-#include "winver.h"=0A=
-=0A=
-#endif /* _WINRESRC_ */=0A=
+#ifndef _WINRESRC_
+#define _WINRESRC_
+
+#include "windef.h"
+#include "winuser.h"
+#include "commctrl.h"
+#include "dde.h"
+#include "winnt.h"
+#include "dlgs.h"
+#include "winver.h"
+
+#endif /* _WINRESRC_ */
