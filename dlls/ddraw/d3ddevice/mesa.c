@@ -4010,9 +4010,9 @@ static void fill_caps(void)
     TRACE(": Z bits = %d\n", depth_bits);
     switch (depth_bits) {
         case 16: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16; break;
-        case 24: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_24; break;
-	case 32: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_32; break;
-	default: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32; break;
+        case 24: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24; break;
+        case 32:
+        default: opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32; break;
     }
 }
 
