@@ -150,6 +150,16 @@ static void handle_timeout( struct timeout_user *user )
     free( user );
 }
 
+#ifdef DEBUG_OBJECTS
+static int do_dump_objects;
+
+/* SIGHUP handler */
+static void sighup()
+{
+    do_dump_objects = 1;
+}
+#endif
+
 /* server main loop */
 void select_loop(void)
 {
@@ -157,6 +167,9 @@ void select_loop(void)
 
     setsid();
     signal( SIGPIPE, SIG_IGN );
+#ifdef DEBUG_OBJECTS
+    signal( SIGHUP, sighup );
+#endif
 
     while (nb_users)
     {
@@ -199,7 +212,14 @@ void select_loop(void)
 
         if (!ret) continue;
         if (ret == -1) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+            {
+#ifdef DEBUG_OBJECTS
+                if (do_dump_objects) dump_objects();
+                do_dump_objects = 0;
+#endif
+                continue;
+            }
             perror("select");
         }
 
