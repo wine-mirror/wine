@@ -50,32 +50,6 @@ CRITICAL_SECTION	WDML_CritSect = CRITICAL_SECTION_INIT("WDML_CritSect");
  *
  * ================================================================ */
 
-static BOOL DDE_RequirePacking(UINT msg)
-{
-    BOOL	ret;
-
-    switch (msg)
-    {
-    case WM_DDE_ACK:
-    case WM_DDE_ADVISE:
-    case WM_DDE_DATA:
-    case WM_DDE_POKE:
-	ret = TRUE;
-	break;
-    case WM_DDE_EXECUTE:	/* strange, NT 2000 (at least) really uses packing here... */
-    case WM_DDE_INITIATE:
-    case WM_DDE_REQUEST:	/* assuming clipboard formats are 16 bit */
-    case WM_DDE_TERMINATE:
-    case WM_DDE_UNADVISE:	/* assuming clipboard formats are 16 bit */
-	ret = FALSE;
-	break;
-    default:
-	TRACE("Unknown message %04x\n", msg);
-	ret = FALSE;
-	break;
-    }
-    return ret;
-}
 
 /*****************************************************************
  *            PackDDElParam (USER32.@)
@@ -85,31 +59,36 @@ static BOOL DDE_RequirePacking(UINT msg)
  */
 LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 {
-     HGLOBAL	hMem;
-     UINT*	params;
-     
-     if (!DDE_RequirePacking(msg))
-	 return MAKELONG(uiLo, uiHi);
+    HGLOBAL hMem;
+    UINT* params;
 
-     if (!(hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(UINT) * 2)))
-     {
-	  ERR("GlobalAlloc failed\n");
-	  return 0;
-     }
-     
-     params = GlobalLock(hMem);
-     if (params == NULL)
-     {
-	  ERR("GlobalLock failed (%x)\n", hMem);
-	  return 0;
-     }
-     
-     params[0] = uiLo;
-     params[1] = uiHi;
-     
-     GlobalUnlock(hMem);
+    switch (msg)
+    {
+    case WM_DDE_ACK:
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        if (!(hMem = GlobalAlloc(GMEM_DDESHARE, sizeof(UINT) * 2)))
+        {
+            ERR("GlobalAlloc failed\n");
+            return 0;
+        }
+        if (!(params = GlobalLock(hMem)))
+        {
+            ERR("GlobalLock failed (%x)\n", hMem);
+            return 0;
+        }
+        params[0] = uiLo;
+        params[1] = uiHi;
+        GlobalUnlock(hMem);
+        return (LPARAM)hMem;
 
-     return (LPARAM)hMem;
+    case WM_DDE_EXECUTE:
+        return uiHi;
+
+    default:
+        return MAKELONG(uiLo, uiHi);
+    }
 }
 
 
@@ -123,37 +102,35 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
 			    PUINT uiLo, PUINT uiHi)
 {
-     HGLOBAL hMem;
-     UINT *params;
+    UINT *params;
 
-     if (!DDE_RequirePacking(msg))
-     {
-	 *uiLo = LOWORD(lParam);
-	 *uiHi = HIWORD(lParam);
+    switch (msg)
+    {
+    case WM_DDE_ACK:
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        if (!lParam) return FALSE;
+        if (!(params = GlobalLock( (HGLOBAL)lParam )))
+        {
+            ERR("GlobalLock failed (%lx)\n", lParam);
+            return FALSE;
+        }
+        if (uiLo) *uiLo = params[0];
+        if (uiHi) *uiHi = params[1];
+        GlobalUnlock( (HGLOBAL)lParam );
+        return TRUE;
 
-	 return TRUE;
-     }
-     
-     if (lParam == 0)
-     {
-	  return FALSE;
-     }
-     
-     hMem = (HGLOBAL)lParam;
-     
-     params = GlobalLock(hMem);
-     if (params == NULL)
-     {
-	  ERR("GlobalLock failed (%x)\n", hMem);
-	  return FALSE;
-     }
-     
-     *uiLo = params[0];
-     *uiHi = params[1];
+    case WM_DDE_EXECUTE:
+        if (uiLo) *uiLo = 0;
+        if (uiHi) *uiHi = lParam;
+        return TRUE;
 
-     GlobalUnlock(hMem);
-     
-     return TRUE;
+    default:
+        if (uiLo) *uiLo = LOWORD(lParam);
+        if (uiHi) *uiHi = HIWORD(lParam);
+        return TRUE;
+    }
 }
 
 
@@ -166,16 +143,19 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
  */
 BOOL WINAPI FreeDDElParam(UINT msg, LPARAM lParam)
 {
-     HGLOBAL hMem = (HGLOBAL)lParam;
+    switch (msg)
+    {
+    case WM_DDE_ACK:
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        /* first check if it's a global handle */
+        if (!GlobalHandle( (LPVOID)lParam )) return TRUE;
+        return !GlobalFree( (HGLOBAL)lParam );
 
-     if (!DDE_RequirePacking(msg))
-	 return TRUE;
-
-     if (lParam == 0)
-     {
-	  return FALSE;
+    default:
+        return TRUE;
      }
-     return GlobalFree(hMem) == (HGLOBAL)NULL;
 }
 
 
@@ -188,45 +168,44 @@ BOOL WINAPI FreeDDElParam(UINT msg, LPARAM lParam)
 LPARAM WINAPI ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut,
                              UINT uiLo, UINT uiHi)
 {
-     HGLOBAL	hMem;
-     UINT*	params;
-     BOOL	in, out;
+    UINT* params;
 
-     in = DDE_RequirePacking(msgIn);
-     out = DDE_RequirePacking(msgOut);
+    switch (msgIn)
+    {
+    case WM_DDE_ACK:
+    case WM_DDE_ADVISE:
+    case WM_DDE_DATA:
+    case WM_DDE_POKE:
+        switch(msgOut)
+        {
+        case WM_DDE_ACK:
+        case WM_DDE_ADVISE:
+        case WM_DDE_DATA:
+        case WM_DDE_POKE:
+            if (!lParam) return 0;
+            if (!(params = GlobalLock( (HGLOBAL)lParam )))
+            {
+                ERR("GlobalLock failed\n");
+                return 0;
+            }
+            params[0] = uiLo;
+            params[1] = uiHi;
+            TRACE("Reusing pack %08x %08x\n", uiLo, uiHi);
+            GlobalLock( (HGLOBAL)lParam );
+            return lParam;
 
-     if (!in)
-     {
-	 return PackDDElParam(msgOut, uiLo, uiHi);
-     }
+        case WM_DDE_EXECUTE:
+            FreeDDElParam( msgIn, lParam );
+            return uiHi;
 
-     if (lParam == 0)
-     {
-	  return FALSE;
-     }
+        default:
+            FreeDDElParam( msgIn, lParam );
+            return MAKELONG(uiLo, uiHi);
+        }
 
-     if (!out)
-     {
-	 FreeDDElParam(msgIn, lParam);
-	 return MAKELONG(uiLo, uiHi);
-     }
-
-     hMem = (HGLOBAL)lParam;
-     
-     params = GlobalLock(hMem);
-     if (params == NULL)
-     {
-	  ERR("GlobalLock failed\n");
-	  return 0;
-     }
-     
-     params[0] = uiLo;
-     params[1] = uiHi;
-
-     TRACE("Reusing pack %08x %08x\n", uiLo, uiHi);
-
-     GlobalLock(hMem);
-     return lParam;
+    default:
+        return PackDDElParam( msgOut, uiLo, uiHi );
+    }
 }
 
 /*****************************************************************
@@ -2046,6 +2025,13 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, LPCONVINFO lpConvInfo)
     UINT	ret = lpConvInfo->cb;
     CONVINFO	ci;
     WDML_CONV*	pConv;
+
+
+    if (!hConv)
+    {
+        FIXME("hConv is NULL\n");
+        return 0;
+    }
 
     EnterCriticalSection(&WDML_CritSect);
 
