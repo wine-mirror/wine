@@ -7,6 +7,7 @@ init DPLAYX_LibMain
   3 stdcall DirectPlayEnumerateW(ptr ptr) DirectPlayEnumerateW
   4 stdcall DirectPlayLobbyCreateA(ptr ptr ptr ptr long) DirectPlayLobbyCreateA
   5 stdcall DirectPlayLobbyCreateW(ptr ptr ptr ptr long) DirectPlayLobbyCreateW
-  6 stub DllCanUnloadNow
-  7 stdcall DllGetClassObject(ptr ptr ptr) DP_and_DPL_DllGetClassObject
+  6 stub gdwDPlaySPRefCount
   9 stdcall DirectPlayEnumerate(ptr ptr) DirectPlayEnumerateA
+  10 stub DllCanUnloadNow
+  11 stdcall DllGetClassObject(ptr ptr ptr) DP_and_DPL_DllGetClassObject
