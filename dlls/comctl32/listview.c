@@ -27,6 +27,7 @@
  * TODO:
  *   -- Drawing optimizations.
  *   -- Hot item handling.
+ *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
  *
  * Notifications:
  *   LISTVIEW_Notify : most notifications from children (editbox and header)
@@ -3204,153 +3205,87 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
- * [I] rcItem : clipping rectangle
  *
  * RETURN:
  *   TRUE: if item is focused
  *   FALSE: otherwise
  */
-static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem)
+static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem)
 {
-  WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-  LVITEMW lvItem;
-  UINT uFormat;
-  RECT rcIcon, rcFocus, rcLabel, *lprcFocus;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    RECT rcIcon, rcLabel, *lprcFocus;
+    LVITEMW lvItem;
+    UINT uFormat;
+    TEXTATTR ta;
 
-  TRACE("(hdc=%x, nItem=%d, rcItem=%s)\n", hdc, nItem, debugrect(&rcItem));
+    TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
-  /* get information needed for drawing the item */
-  lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
-  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
-  lvItem.iItem = nItem;
-  lvItem.iSubItem = 0;
-  lvItem.cchTextMax = DISP_TEXT_SIZE;
-  lvItem.pszText = szDispText;
-  *lvItem.pszText = '\0';
-  if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+    /* get information needed for drawing the item */
+    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
+    lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    lvItem.pszText = szDispText;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return;
+    TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
-  /* now check if we need to update the focus rectangle */
-  lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
+    /* now check if we need to update the focus rectangle */
+    lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
   
-  if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, &rcIcon, &rcLabel)) return FALSE;
+    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, &rcIcon, &rcLabel)) return;
 
-  /* Set the item to the boundary box for now */
-  TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
+    /* Set the item to the boundary box for now */
+    TRACE("rcIcon=%s, rcLabel=%s\n", debugrect(&rcIcon), debugrect(&rcLabel));
 
-  /* Figure out text colours etc. depending on state
-   * At least the following states exist; there may be more.
-   * Many items may be selected
-   * At most one item may have the focus
-   * The application may not actually be active currently
-   * 1. The item is not selected in any way
-   * 2. The cursor is flying over the icon or text and the text is being
-   *    expanded because it is not fully displayed currently.
-   * 3. The item is selected and is focussed, i.e. the user has not clicked
-   *    in the blank area of the window, and the window (or application?)
-   *    still has the focus.
-   * 4. As 3 except that a different window has the focus
-   * 5. The item is the selected item of all the items, but the user has
-   *    clicked somewhere else on the window.
-   * Only a few of these are handled currently. In particular 2 is not yet
-   * handled since we do not support the functionality currently (or at least
-   * we didn't when I wrote this)
-   */
-
-  if (lvItem.state & LVIS_SELECTED)
-  {
-    /* set item colors */
-    SetBkColor(hdc, comctl32_color.clrHighlight);
-    SetTextColor(hdc, comctl32_color.clrHighlightText);
-    SetBkMode (hdc, OPAQUE);
-    /* set raster mode */
-    SetROP2(hdc, R2_XORPEN);
-    /* When exactly is it in XOR? while being dragged? */
-  }
-  else
-  {
-    /* set item colors */
-    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+    /* state icons */
+    if (infoPtr->himlState)
     {
-       SetBkMode(hdc, TRANSPARENT);
-    }
-    else
-    {
-      SetBkMode(hdc, OPAQUE);
-      SetBkColor(hdc, infoPtr->clrTextBk);
+     	UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+     	INT x = rcIcon.left - infoPtr->iconStateSize.cx + 10;
+     	INT y = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
+    	if (uStateImage > 0)
+	    ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, x, y, ILD_NORMAL);
     }
 
-    SetTextColor(hdc, infoPtr->clrText);
-    /* set raster mode */
-    SetROP2(hdc, R2_COPYPEN);
-  }
+    /* draw the icon */
+    if (infoPtr->himlNormal && lvItem.iImage >=0)
+	ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc, 
+		        rcIcon.left + ICON_LR_HALF, rcIcon.top + ICON_TOP_PADDING,
+                        (lvItem.state & LVIS_SELECTED) ? ILD_SELECTED : ILD_NORMAL);
 
-  /* In cases 2,3 and 5 (see above) the full text is displayed, with word
-   * wrapping and long words split.
-   * In cases 1 and 4 only a portion of the text is displayed with word
-   * wrapping and both word and end ellipsis.  (I don't yet know about path
-   * ellipsis)
-   */
-  uFormat = lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
+    /* Draw the text below the icon */
 
-  /* state icons */
-  if (infoPtr->himlState != NULL)
-  {
-     UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-     INT x, y;
+    /* Don't bother painting item being edited */
+    if ((infoPtr->bEditing && lprcFocus) || !lvItem.pszText || !lstrlenW(lvItem.pszText))
+    {
+        if(lprcFocus) SetRectEmpty(lprcFocus);
+        return;
+    }
 
-     x = rcIcon.left - infoPtr->iconStateSize.cx + 10;
-     y = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
-     if (uStateImage > 0)
-       ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, x, y, ILD_NORMAL);
-  }
+    select_text_attr(infoPtr, hdc, lvItem.state & LVIS_SELECTED, &ta);
 
-  /* draw the icon */
-  if (infoPtr->himlNormal != NULL)
-  {
-    if (lvItem.iImage >= 0)
-      ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc, 
-		      rcIcon.left + ICON_LR_HALF, rcIcon.top + ICON_TOP_PADDING,
-                      (lvItem.state & LVIS_SELECTED) ? ILD_SELECTED : ILD_NORMAL);
-  }
+    uFormat = lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS;
 
-  /* Draw the text below the icon */
+    /* draw label */
 
-  /* Don't bother painting item being edited */
-  if ((infoPtr->bEditing && lprcFocus) || !lvItem.pszText || !lstrlenW(lvItem.pszText))
-  {
-    if(lprcFocus) SetRectEmpty(lprcFocus);
-    return FALSE;
-  }
+    /* I am sure of most of the uFormat values.  However I am not sure about
+     * whether we need or do not need the following:
+     * DT_EXTERNALLEADING, DT_INTERNAL, DT_CALCRECT, DT_NOFULLWIDTHCHARBREAK,
+     * DT_PATH_ELLIPSIS, DT_RTLREADING,
+     * We certainly do not need
+     * DT_BOTTOM, DT_VCENTER, DT_MODIFYSTRING, DT_LEFT, DT_RIGHT, DT_PREFIXONLY,
+     * DT_SINGLELINE, DT_TABSTOP, DT_EXPANDTABS
+     */
 
-  /* draw label */
+    if (lvItem.state & LVIS_SELECTED)
+        ExtTextOutW(hdc, rcLabel.left, rcLabel.top, ETO_OPAQUE, &rcLabel, 0, 0, 0);
 
-  /* I am sure of most of the uFormat values.  However I am not sure about
-   * whether we need or do not need the following:
-   * DT_EXTERNALLEADING, DT_INTERNAL, DT_CALCRECT, DT_NOFULLWIDTHCHARBREAK,
-   * DT_PATH_ELLIPSIS, DT_RTLREADING,
-   * We certainly do not need
-   * DT_BOTTOM, DT_VCENTER, DT_MODIFYSTRING, DT_LEFT, DT_RIGHT, DT_PREFIXONLY,
-   * DT_SINGLELINE, DT_TABSTOP, DT_EXPANDTABS
-   */
+    DrawTextW (hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
-  /* If the text is being drawn without clipping (i.e. the full text) then we
-   * need to jump through a few hoops to ensure that it all gets displayed and
-   * that the background is complete
-   */
-  rcFocus = rcLabel;  /* save for focus */
-  if (lvItem.state & LVIS_SELECTED)
-      ExtTextOutW(hdc, rcLabel.left, rcLabel.top, ETO_OPAQUE, &rcLabel, 0, 0, 0);
-  /* else ? What if we are losing the focus? will we not get a complete
-   * background?
-   */
+    if(lprcFocus) *lprcFocus = rcLabel;
 
-  DrawTextW (hdc, lvItem.pszText, -1, &rcLabel, uFormat);
-  TRACE("text at rcLabel=%s is %s\n", debugrect(&rcLabel), debugstr_w(lvItem.pszText));
-
-  if(lprcFocus) CopyRect(lprcFocus, &rcFocus);
-
-  return lprcFocus != NULL;
+    set_text_attr(hdc, &ta);
 }
 
 /***
@@ -3642,18 +3577,12 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
 	    continue;
 
-	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
-	rcItem.left = Position.x;
-	rcItem.top = Position.y;
-	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-	rcItem.right = rcItem.left + infoPtr->nItemWidth;
-	OffsetRect(&rcItem, Origin.x, Origin.y);
-
         if (cdmode & CDRF_NOTIFYITEMDRAW)
             cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, 0, CDDS_ITEMPREPAINT);
         if (cditemmode & CDRF_SKIPDEFAULT) continue;
 
-        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem, rcItem);
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
+        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem);
 
         if (cditemmode & CDRF_NOTIFYPOSTPAINT)
             notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
@@ -3669,7 +3598,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     if (cditemmode & CDRF_SKIPDEFAULT)
 	return;
     
-    LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, rcItem);
+    LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem);
 	
     if (cditemmode & CDRF_NOTIFYPOSTPAINT)
 	notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
@@ -7062,6 +6991,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->nFocusedItem = -1;
   infoPtr->nSelectionMark = -1;
   infoPtr->nHotItem = -1;
+  infoPtr->bRedraw = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
