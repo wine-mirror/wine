@@ -92,7 +92,7 @@ typedef struct
 
 #define SEND_NOTIFICATION(wnd,descr,code) \
     (SendMessageA( (descr)->owner, WM_COMMAND, \
-     MAKEWPARAM((((descr)->lphc)?ID_CB_LISTBOX:(wnd)->wIDmenu), (code) ), (wnd)->hwndSelf ))
+     MAKEWPARAM((wnd)->wIDmenu, (code)), (wnd)->hwndSelf ))
 
 #define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
 
@@ -481,7 +481,6 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
     if (IS_OWNERDRAW(descr))
     {
         DRAWITEMSTRUCT dis;
-	UINT		 id = (descr->lphc) ? ID_CB_LISTBOX : wnd->wIDmenu;
 
 	if (!item)
 	{
@@ -492,7 +491,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
 	    return;
 	}
         dis.CtlType      = ODT_LISTBOX;
-        dis.CtlID        = id;
+        dis.CtlID        = wnd->wIDmenu;
         dis.hwndItem     = wnd->hwndSelf;
         dis.itemAction   = action;
         dis.hDC          = hdc;
@@ -510,7 +509,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
 		     wnd->hwndSelf, index, item ? item->str : "", action,
 		     dis.itemState, rect->left, rect->top,
 		     rect->right, rect->bottom );
-        SendMessageA(descr->owner, WM_DRAWITEM, id, (LPARAM)&dis);
+        SendMessageA(descr->owner, WM_DRAWITEM, wnd->wIDmenu, (LPARAM)&dis);
     }
     else
     {
@@ -709,10 +708,9 @@ static INT LISTBOX_FindStringPos( WND *wnd, LB_DESCR *descr, LPCSTR str,
         else
         {
             COMPAREITEMSTRUCT cis;
-	    UINT		id = (descr->lphc) ? ID_CB_LISTBOX : wnd->wIDmenu;
 
             cis.CtlType    = ODT_LISTBOX;
-            cis.CtlID      = id;
+            cis.CtlID      = wnd->wIDmenu;
             cis.hwndItem   = wnd->hwndSelf;
             cis.itemID1    = index;
             cis.itemData1  = descr->items[index].data;
@@ -720,7 +718,7 @@ static INT LISTBOX_FindStringPos( WND *wnd, LB_DESCR *descr, LPCSTR str,
             cis.itemData2  = (DWORD)str;
             cis.dwLocaleId = descr->locale;
             res = SendMessageA( descr->owner, WM_COMPAREITEM,
-                                  id, (LPARAM)&cis );
+                                  wnd->wIDmenu, (LPARAM)&cis );
         }
         if (!res) return index;
         if (res > 0) max = index;
@@ -898,8 +896,9 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
     HBRUSH hbrush, oldBrush = 0;
     INT focusItem;
 
-    SetRect( &rect, 0, 0, descr->width, descr->height );
     if (descr->style & LBS_NOREDRAW) return 0;
+
+    SetRect( &rect, 0, 0, descr->width, descr->height );
     if (descr->style & LBS_MULTICOLUMN)
         rect.right = rect.left + descr->column_width;
     else if (descr->horz_pos)
@@ -977,7 +976,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
 
     /* Paint the focus item now */
     descr->focus_item = focusItem;
-    if (focusRect.top != focusRect.bottom)
+    if (focusRect.top != focusRect.bottom && descr->caret_on)
         LISTBOX_PaintItem( wnd, descr, hdc, &focusRect, descr->focus_item, ODA_FOCUS );
 
     if (!IS_OWNERDRAW(descr))
@@ -1399,14 +1398,13 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT index,
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         MEASUREITEMSTRUCT mis;
-	UINT		    id = (descr->lphc) ? ID_CB_LISTBOX : wnd->wIDmenu;
 
         mis.CtlType    = ODT_LISTBOX;
-        mis.CtlID      = id;
+        mis.CtlID      = wnd->wIDmenu;
         mis.itemID     = index;
         mis.itemData   = descr->items[index].data;
         mis.itemHeight = descr->item_height;
-        SendMessageA( descr->owner, WM_MEASUREITEM, id, (LPARAM)&mis );
+        SendMessageA( descr->owner, WM_MEASUREITEM, wnd->wIDmenu, (LPARAM)&mis );
         item->height = mis.itemHeight ? mis.itemHeight : 1;
         TRACE("[%04x]: measure item %d (%s) = %d\n",
 		     wnd->hwndSelf, index, str ? str : "", item->height );
@@ -1488,14 +1486,13 @@ static void LISTBOX_DeleteItem( WND *wnd, LB_DESCR *descr, INT index )
     if (IS_OWNERDRAW(descr) || descr->items[index].data)
     {
         DELETEITEMSTRUCT dis;
-	UINT		   id = (descr->lphc) ? ID_CB_LISTBOX : wnd->wIDmenu;
 
         dis.CtlType  = ODT_LISTBOX;
-        dis.CtlID    = id;
+        dis.CtlID    = wnd->wIDmenu;
         dis.itemID   = index;
         dis.hwndItem = wnd->hwndSelf;
         dis.itemData = descr->items[index].data;
-        SendMessageA( descr->owner, WM_DELETEITEM, id, (LPARAM)&dis );
+        SendMessageA( descr->owner, WM_DELETEITEM, wnd->wIDmenu, (LPARAM)&dis );
     }
     if (HAS_STRINGS(descr) && descr->items[index].str)
         HeapFree( descr->heap, 0, descr->items[index].str );
@@ -1927,7 +1924,10 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
     {  
        /* MousePos is in client, resume normal processing */
         if (msg == WM_LBUTTONDOWN)
+        {
+           pDescr->lphc->droppedIndex = pDescr->nb_items ? pDescr->selected_item : -1;
            return LISTBOX_HandleLButtonDown( pWnd, pDescr, wParam, x, y);
+        }
         else if (pDescr->style & LBS_NOTIFY)
             SEND_NOTIFICATION( pWnd, pDescr, LBN_DBLCLK );
         return 0;
@@ -1946,8 +1946,8 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
 
         if(!PtInRect(&screenRect, screenMousePos))
         { 
-            /* Close The Drop Down */
-            SEND_NOTIFICATION( pWnd, pDescr, LBN_SELCANCEL );
+            LISTBOX_SetSelection( pWnd, pDescr, pDescr->lphc->droppedIndex, FALSE, FALSE );
+            COMBO_FlipListbox( pDescr->lphc, FALSE, FALSE );
             return 0;
         }
         else
@@ -2071,7 +2071,7 @@ static void LISTBOX_HandleMouseMove( WND *wnd, LB_DESCR *descr,
                                      INT x, INT y )
 {
     INT index;
-    TIMER_DIRECTION dir;
+    TIMER_DIRECTION dir = LB_TIMER_NONE;
 
     if (!descr->captured) return;
 
@@ -2091,13 +2091,11 @@ static void LISTBOX_HandleMouseMove( WND *wnd, LB_DESCR *descr,
             dir = LB_TIMER_RIGHT;
             x = descr->width - 1;
         }
-        else dir = LB_TIMER_NONE;  /* inside */
     }
     else
     {
         if (y < 0) dir = LB_TIMER_UP;  /* above */
         else if (y >= descr->height) dir = LB_TIMER_DOWN;  /* below */
-        else dir = LB_TIMER_NONE;  /* inside */
     }
 
     index = LISTBOX_GetItemFromPoint( wnd, descr, x, y );
@@ -2288,7 +2286,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
     descr->horz_pos      = 0;
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
-    descr->caret_on      = TRUE;
+    descr->caret_on      = lphc ? FALSE : TRUE;
     descr->in_focus 	 = FALSE;
     descr->captured      = FALSE;
     descr->font          = 0;
@@ -2331,15 +2329,13 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
 	}
 	else
 	{
-	    UINT	id = (descr->lphc ) ? ID_CB_LISTBOX : wnd->wIDmenu;
-
             mis.CtlType    = ODT_LISTBOX;
-            mis.CtlID      = id;
+            mis.CtlID      = wnd->wIDmenu;
             mis.itemID     = -1;
             mis.itemWidth  =  0;
             mis.itemData   =  0;
             mis.itemHeight = descr->item_height;
-            SendMessageA( descr->owner, WM_MEASUREITEM, id, (LPARAM)&mis );
+            SendMessageA( descr->owner, WM_MEASUREITEM, wnd->wIDmenu, (LPARAM)&mis );
             descr->item_height = mis.itemHeight ? mis.itemHeight : 1;
 	}
     }
@@ -2971,7 +2967,7 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 			     ( (lphc->wState & CBF_EUI) && !(lphc->wState & CBF_DROPPED)
 			       && (wParam == VK_DOWN || wParam == VK_UP)) )
 			 {
-			     COMBO_FlipListbox( lphc, FALSE );
+			     COMBO_FlipListbox( lphc, FALSE, FALSE );
                              return 0;
 			 }
 		     }
