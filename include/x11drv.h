@@ -9,6 +9,7 @@
 #include "ts_xutil.h"
 #include "winbase.h"
 #include "windows.h"
+#include "gdi.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 
   /* X physical pen */
@@ -59,7 +60,6 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 #define BITMAP_GC(bmp) \
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
-typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
 
 /* Wine driver X11 functions */
 
@@ -157,6 +157,12 @@ extern BOOL32 X11DRV_SetupGCForPen( struct tagDC *dc );
 extern BOOL32 X11DRV_SetupGCForText( struct tagDC *dc );
 
 extern const int X11DRV_XROPfunction[];
+
+extern Display * display;
+extern Screen * screen;
+extern Window rootWindow;
+extern int screenWidth, screenHeight, screenDepth;
+
 
 /* Xlib critical section */
 

@@ -14,7 +14,7 @@
 #include "debug.h"
 #include "font.h"
 #include "winerror.h"
-
+#include "x11drv.h"
 
 /***********************************************************************
  *           DC_Init_DC_INFO
@@ -221,7 +221,6 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
 
     TRACE(dc, "(%04x): returning %04x\n", hdc, handle );
 
-    memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     newdc->w.flags            = dc->w.flags | DC_SAVED;
     newdc->w.devCaps          = dc->w.devCaps;
     newdc->w.hPen             = dc->w.hPen;       
@@ -854,15 +853,18 @@ UINT32 WINAPI SetTextAlign32( HDC32 hdc, UINT32 textAlign )
 BOOL32 WINAPI GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
 {
     DC * dc;
+    X11DRV_PDEVICE *physDev;
+
     if (!lpp) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return FALSE;
+    physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!(dc->w.flags & DC_MEMORY))
     {
        Window root;
        int w, h, border, depth;
        /* FIXME: this is not correct for managed windows */
-       TSXGetGeometry( display, dc->u.x.drawable, &root,
+       TSXGetGeometry( display, physDev->drawable, &root,
                     &lpp->x, &lpp->y, &w, &h, &border, &depth );
     }
     else lpp->x = lpp->y = 0;

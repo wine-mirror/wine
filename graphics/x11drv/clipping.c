@@ -21,12 +21,13 @@
 void X11DRV_SetDeviceClipping( DC * dc )
 {
     XRectangle *pXrect;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
     if (!obj)
     {
         ERR(x11drv, "Rgn is 0. Please report this.\n");
 	return;
-        /*exit(1);*/
     }
     
     if (obj->rgn->numRects > 0)
@@ -54,7 +55,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     else
         pXrect = NULL;
 
-    TSXSetClipRectangles( display, dc->u.x.gc, 0, 0,
+    TSXSetClipRectangles( display, physDev->gc, 0, 0,
                           pXrect, obj->rgn->numRects, YXBanded );
 
     if(pXrect)

@@ -8,6 +8,8 @@
 #define __WINE_BITMAP_H
 
 #include "gdi.h"
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 
   /* Additional info for DIB section objects */
 typedef struct

@@ -16,7 +16,7 @@
 #include "region.h"
 #include "debug.h"
 #include "gdi.h"
-
+#include "x11drv.h"
 
 /***********************************************************************
  *          GDI stock objects 

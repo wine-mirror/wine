@@ -26,6 +26,7 @@
 #include "heap.h"
 #include "sysmetrics.h"
 #include "debug.h"
+#include "x11drv.h"
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
@@ -522,12 +523,14 @@ static void DCE_OffsetVisRgn( HDC32 hDC, HRGN32 hVisRgn )
  */
 static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin )
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
         dc->w.DCOrgX = 0;
         dc->w.DCOrgY = 0;
-        dc->u.x.drawable = rootWindow;
-        TSXSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
+        physDev->drawable = rootWindow;
+        TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
     }
     else
     {
@@ -549,7 +552,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
         }
         dc->w.DCOrgX -= wndPtr->rectWindow.left;
         dc->w.DCOrgY -= wndPtr->rectWindow.top;
-        dc->u.x.drawable = wndPtr->window;
+        physDev->drawable = wndPtr->window;
 
 #if 0
 	/* This is needed when we reuse a cached DC because
@@ -558,7 +561,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
 	 */
 
 	if( bSetClipOrigin )
-	    TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
 #endif
     }
 }

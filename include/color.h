@@ -3,6 +3,7 @@
 
 #include "palette.h"
 #include "gdi.h"
+#include "x11drv.h"
 
 #define COLOR_FIXED     0x0001          /* read-only colormap - have to use XAllocColor (if not virtual)*/
 #define COLOR_VIRTUAL   0x0002          /* no mapping needed - pixel == pixel color */

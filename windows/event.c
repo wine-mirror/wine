@@ -41,7 +41,7 @@
 #include "dde_proc.h"
 #include "winsock.h"
 #include "mouse.h"
-
+#include "x11drv.h"
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 

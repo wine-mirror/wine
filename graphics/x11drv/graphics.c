@@ -75,21 +75,22 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
     XGCValues val;
     unsigned long mask;
     Pixmap pixmap = 0;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (dc->u.x.brush.style == BS_NULL) return FALSE;
-    if (dc->u.x.brush.pixel == -1)
+    if (physDev->brush.style == BS_NULL) return FALSE;
+    if (physDev->brush.pixel == -1)
     {
 	/* Special case used for monochrome pattern brushes.
 	 * We need to swap foreground and background because
 	 * Windows does it the wrong way...
 	 */
-	val.foreground = dc->u.x.backgroundPixel;
-	val.background = dc->u.x.textPixel;
+	val.foreground = physDev->backgroundPixel;
+	val.background = physDev->textPixel;
     }
     else
     {
-	val.foreground = dc->u.x.brush.pixel;
-	val.background = dc->u.x.backgroundPixel;
+	val.foreground = physDev->brush.pixel;
+	val.background = physDev->backgroundPixel;
     }
     if (fMapColors && COLOR_PixelToPalette)
     {
@@ -110,13 +111,13 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
 	val.foreground = BlackPixelOfScreen(screen) ^ WhitePixelOfScreen(screen);
 	val.function = GXxor;
 	}
-    val.fill_style = dc->u.x.brush.fillStyle;
+    val.fill_style = physDev->brush.fillStyle;
     switch(val.fill_style)
     {
     case FillStippled:
     case FillOpaqueStippled:
 	if (dc->w.backgroundMode==OPAQUE) val.fill_style = FillOpaqueStippled;
-	val.stipple = dc->u.x.brush.pixmap;
+	val.stipple = physDev->brush.pixmap;
 	mask = GCStipple;
         break;
 
@@ -127,7 +128,7 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
             XImage *image;
             EnterCriticalSection( &X11DRV_CritSection );
             pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
-            image = XGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
+            image = XGetImage( display, physDev->brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
                 for (x = 0; x < 8; x++)
@@ -138,7 +139,7 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
             LeaveCriticalSection( &X11DRV_CritSection );
             val.tile = pixmap;
         }
-        else val.tile = dc->u.x.brush.pixmap;
+        else val.tile = physDev->brush.pixmap;
 	mask = GCTile;
         break;
 
@@ -161,26 +162,28 @@ BOOL32 X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
 /***********************************************************************
  *           X11DRV_SetupGCForBrush
  *
- * Setup dc->u.x.gc for drawing operations using current brush.
+ * Setup physDev->gc for drawing operations using current brush.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
 BOOL32 X11DRV_SetupGCForBrush( DC * dc )
 {
-    return X11DRV_SetupGCForPatBlt( dc, dc->u.x.gc, FALSE );
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    return X11DRV_SetupGCForPatBlt( dc, physDev->gc, FALSE );
 }
 
 
 /***********************************************************************
  *           X11DRV_SetupGCForPen
  *
- * Setup dc->u.x.gc for drawing operations using current pen.
+ * Setup physDev->gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
 BOOL32 X11DRV_SetupGCForPen( DC * dc )
 {
     XGCValues val;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (dc->u.x.pen.style == PS_NULL) return FALSE;
+    if (physDev->pen.style == PS_NULL) return FALSE;
 
     if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc); 
 
@@ -195,7 +198,7 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
 	val.function = GXcopy;
 	break;
     case R2_XORPEN :
-	val.foreground = dc->u.x.pen.pixel;
+	val.foreground = physDev->pen.pixel;
 	/* It is very unlikely someone wants to XOR with 0 */
 	/* This fixes the rubber-drawings in paintbrush */
 	if (val.foreground == 0)
@@ -204,24 +207,24 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
 	val.function = GXxor;
 	break;
     default :
-	val.foreground = dc->u.x.pen.pixel;
+	val.foreground = physDev->pen.pixel;
 	val.function   = X11DRV_XROPfunction[dc->w.ROPmode-1];
     }
-    val.background = dc->u.x.backgroundPixel;
+    val.background = physDev->backgroundPixel;
     val.fill_style = FillSolid;
-    if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))
+    if ((physDev->pen.style!=PS_SOLID) && (physDev->pen.style!=PS_INSIDEFRAME))
     {
-	TSXSetDashes( display, dc->u.x.gc, 0,
-		    dc->u.x.pen.dashes, dc->u.x.pen.dash_len );
+	TSXSetDashes( display, physDev->gc, 0, physDev->pen.dashes,
+		      physDev->pen.dash_len );
 	val.line_style = (dc->w.backgroundMode == OPAQUE) ?
 	                      LineDoubleDash : LineOnOffDash;
     }
     else val.line_style = LineSolid;
-    val.line_width = dc->u.x.pen.width;
+    val.line_width = physDev->pen.width;
     if (val.line_width <= 1) {
 	val.cap_style = CapNotLast;
     } else {
-	switch (dc->u.x.pen.endcap)
+	switch (physDev->pen.endcap)
 	{
 	case PS_ENDCAP_SQUARE:
 	    val.cap_style = CapProjecting;
@@ -234,7 +237,7 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
 	    val.cap_style = CapRound;
 	}
     }
-    switch (dc->u.x.pen.linejoin)
+    switch (physDev->pen.linejoin)
     {
     case PS_JOIN_BEVEL:
 	val.join_style = JoinBevel;
@@ -246,7 +249,7 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
     default:
 	val.join_style = JoinRound;
     }
-    TSXChangeGC( display, dc->u.x.gc, 
+    TSXChangeGC( display, physDev->gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
     return TRUE;
@@ -256,12 +259,13 @@ BOOL32 X11DRV_SetupGCForPen( DC * dc )
 /***********************************************************************
  *           X11DRV_SetupGCForText
  *
- * Setup dc->u.x.gc for text drawing operations.
+ * Setup physDev->gc for text drawing operations.
  * Return FALSE if the font is null, TRUE otherwise.
  */
 BOOL32 X11DRV_SetupGCForText( DC * dc )
 {
-    XFontStruct* xfs = XFONT_GetFontStruct( dc->u.x.font );
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    XFontStruct* xfs = XFONT_GetFontStruct( physDev->font );
 
     if( xfs )
     {
@@ -270,12 +274,12 @@ BOOL32 X11DRV_SetupGCForText( DC * dc )
 	if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
 
 	val.function   = GXcopy;  /* Text is always GXcopy */
-	val.foreground = dc->u.x.textPixel;
-	val.background = dc->u.x.backgroundPixel;
+	val.foreground = physDev->textPixel;
+	val.background = physDev->backgroundPixel;
 	val.fill_style = FillSolid;
 	val.font       = xfs->fid;
 
-	TSXChangeGC( display, dc->u.x.gc,
+	TSXChangeGC( display, physDev->gc,
 		   GCFunction | GCForeground | GCBackground | GCFillStyle |
 		   GCFont, &val );
 	return TRUE;
@@ -283,9 +287,6 @@ BOOL32 X11DRV_SetupGCForText( DC * dc )
     WARN(dc, "Physical font failure\n" );
     return FALSE;
 }
-
-
-
 
 
 /**********************************************************************
@@ -309,8 +310,10 @@ X11DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt) {
 BOOL32
 X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     if (X11DRV_SetupGCForPen( dc ))
-	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
+	TSXDrawLine(display, physDev->drawable, physDev->gc, 
 		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
 		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
 		  dc->w.DCOrgX + XLPTODP( dc, x ),
@@ -338,6 +341,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     INT32 width, oldwidth, oldendcap;
     double start_angle, end_angle;
     XPoint points[4];
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -353,12 +357,12 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     if ((left == right) || (top == bottom)
             ||(lines && ((right-left==1)||(bottom-top==1)))) return TRUE;
 
-    oldwidth = width = dc->u.x.pen.width;
-    oldendcap= dc->u.x.pen.endcap;
+    oldwidth = width = physDev->pen.width;
+    oldendcap = physDev->pen.endcap;
     if (!width) width = 1;
-    if(dc->u.x.pen.style == PS_NULL) width = 0;
+    if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    if ((physDev->pen.style == PS_INSIDEFRAME))
     {
         if (2*width > (right-left)) width=(right-left + 1)/2;
         if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
@@ -367,9 +371,9 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 0) width=1; /* more accurate */
-    dc->u.x.pen.width=width;
-    dc->u.x.pen.endcap=PS_ENDCAP_SQUARE;
+    if(width == 0) width = 1; /* more accurate */
+    physDev->pen.width = width;
+    physDev->pen.endcap = PS_ENDCAP_SQUARE;
 
     xcenter = (right + left) / 2;
     ycenter = (bottom + top) / 2;
@@ -395,8 +399,9 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
       /* Fill arc with brush if Chord() or Pie() */
 
     if ((lines > 0) && X11DRV_SetupGCForBrush( dc )) {
-        TSXSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
-        TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXSetArcMode( display, physDev->gc,
+		       (lines==1) ? ArcChord : ArcPieSlice);
+        TSXFillArc( display, physDev->drawable, physDev->gc,
                  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                  right-left-1, bottom-top-1, istart_angle, idiff_angle );
     }
@@ -404,7 +409,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
       /* Draw arc and lines */
 
     if (X11DRV_SetupGCForPen( dc )){
-    TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXDrawArc( display, physDev->drawable, physDev->gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
         if (lines) {
@@ -460,12 +465,12 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
                 }
                 lines++;
     }
-    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXDrawLines( display, physDev->drawable, physDev->gc,
 	        points, lines+1, CoordModeOrigin );
         }
     }
-    dc->u.x.pen.width=oldwidth;
-    dc->u.x.pen.endcap=oldendcap;
+    physDev->pen.width = oldwidth;
+    physDev->pen.endcap = oldendcap;
     return TRUE;
 }
 
@@ -512,6 +517,8 @@ BOOL32
 X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 {
     INT32 width, oldwidth;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
@@ -521,11 +528,11 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
     
-    oldwidth = width = dc->u.x.pen.width;
+    oldwidth = width = physDev->pen.width;
     if (!width) width = 1;
-    if(dc->u.x.pen.style == PS_NULL) width = 0;
+    if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    if ((physDev->pen.style == PS_INSIDEFRAME))
     {
         if (2*width > (right-left)) width=(right-left + 1)/2;
         if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
@@ -534,18 +541,18 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 0) width=1; /* more accurate */
-    dc->u.x.pen.width=width;
+    if(width == 0) width = 1; /* more accurate */
+    physDev->pen.width = width;
 
     if (X11DRV_SetupGCForBrush( dc ))
-	TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillArc( display, physDev->drawable, physDev->gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
     if (X11DRV_SetupGCForPen( dc ))
-	TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawArc( display, physDev->drawable, physDev->gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
-    dc->u.x.pen.width=oldwidth;
+    physDev->pen.width = oldwidth;
     return TRUE;
 }
 
@@ -557,6 +564,7 @@ BOOL32
 X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
     INT32 width, oldwidth, oldjoinstyle;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     TRACE(graphics, "(%d %d %d %d)\n", 
     	left, top, right, bottom);
@@ -571,11 +579,11 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
 
-    oldwidth = width = dc->u.x.pen.width;
+    oldwidth = width = physDev->pen.width;
     if (!width) width = 1;
-    if(dc->u.x.pen.style == PS_NULL) width = 0;
+    if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    if ((physDev->pen.style == PS_INSIDEFRAME))
     {
         if (2*width > (right-left)) width=(right-left + 1)/2;
         if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
@@ -584,27 +592,27 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 1) width=0;
-    dc->u.x.pen.width=width;
-    oldjoinstyle=dc->u.x.pen.linejoin;
-    if(dc->u.x.pen.type!=PS_GEOMETRIC)
-            dc->u.x.pen.linejoin=PS_JOIN_MITER;
+    if(width == 1) width = 0;
+    physDev->pen.width = width;
+    oldjoinstyle = physDev->pen.linejoin;
+    if(physDev->pen.type != PS_GEOMETRIC)
+        physDev->pen.linejoin = PS_JOIN_MITER;
 
     if ((right > left + width) && (bottom > top + width))
     {
         if (X11DRV_SetupGCForBrush( dc ))
-            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, physDev->drawable, physDev->gc,
                             dc->w.DCOrgX + left + (width + 1) / 2,
                             dc->w.DCOrgY + top + (width + 1) / 2,
                             right-left-width-1, bottom-top-width-1);
     }
     if (X11DRV_SetupGCForPen( dc ))
-	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawRectangle( display, physDev->drawable, physDev->gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
 
-    dc->u.x.pen.width=oldwidth;
-    dc->u.x.pen.linejoin=oldjoinstyle;
+    physDev->pen.width = oldwidth;
+    physDev->pen.linejoin = oldjoinstyle;
     return TRUE;
 }
 
@@ -616,6 +624,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
                   INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
     INT32 width, oldwidth, oldendcap;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     TRACE(graphics, "(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
@@ -638,12 +647,12 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
 
-    oldwidth=width = dc->u.x.pen.width;
-    oldendcap = dc->u.x.pen.endcap;
+    oldwidth = width = physDev->pen.width;
+    oldendcap = physDev->pen.endcap;
     if (!width) width = 1;
-    if(dc->u.x.pen.style == PS_NULL) width = 0;
+    if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    if ((physDev->pen.style == PS_INSIDEFRAME))
     {
         if (2*width > (right-left)) width=(right-left + 1)/2;
         if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
@@ -652,59 +661,60 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 0) width=1;
-    dc->u.x.pen.width=width;
-    dc->u.x.pen.endcap=PS_ENDCAP_SQUARE;
+    if(width == 0) width = 1;
+    physDev->pen.width = width;
+    physDev->pen.endcap = PS_ENDCAP_SQUARE;
 
     if (X11DRV_SetupGCForBrush( dc ))
     {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
-                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                              dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                              right - left - 1, bottom - top - 1,
-                              0, 360 * 64 );
+                    TSXFillArc( display, physDev->drawable, physDev->gc,
+				dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+				right - left - 1, bottom - top - 1,
+				0, 360 * 64 );
             else{
-                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                              dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                              right - left - 1, ell_height, 0, 180 * 64 );
-                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                              dc->w.DCOrgX + left,
-                              dc->w.DCOrgY + bottom - ell_height - 1,
-                              right - left - 1, ell_height, 180 * 64, 180 * 64 );
+                    TSXFillArc( display, physDev->drawable, physDev->gc,
+				dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+				right - left - 1, ell_height, 0, 180 * 64 );
+                    TSXFillArc( display, physDev->drawable, physDev->gc,
+				dc->w.DCOrgX + left,
+				dc->w.DCOrgY + bottom - ell_height - 1,
+				right - left - 1, ell_height, 180 * 64,
+				180 * 64 );
            }
 	else if (ell_height > (bottom-top) ){
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width, bottom - top - 1, 90 * 64, 180 * 64 );
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width -1, dc->w.DCOrgY + top,
                       ell_width, bottom - top - 1, 270 * 64, 180 * 64 );
         }else{
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width, ell_height, 90 * 64, 90 * 64 );
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left,
                       dc->w.DCOrgY + bottom - ell_height - 1,
                       ell_width, ell_height, 180 * 64, 90 * 64 );
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width - 1,
                       dc->w.DCOrgY + bottom - ell_height - 1,
                       ell_width, ell_height, 270 * 64, 90 * 64 );
-                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXFillArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width - 1,
                       dc->w.DCOrgY + top,
                       ell_width, ell_height, 0, 90 * 64 );
         }
         if (ell_width < right - left)
         {
-            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, physDev->drawable, physDev->gc,
                             dc->w.DCOrgX + left + (ell_width + 1) / 2,
                             dc->w.DCOrgY + top + 1,
                             right - left - ell_width - 1,
                             (ell_height + 1) / 2 - 1);
-            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, physDev->drawable, physDev->gc,
                             dc->w.DCOrgX + left + (ell_width + 1) / 2,
                             dc->w.DCOrgY + bottom - (ell_height) / 2 - 1,
                             right - left - ell_width - 1,
@@ -712,7 +722,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
         }
         if  (ell_height < bottom - top)
         {
-            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, physDev->drawable, physDev->gc,
                             dc->w.DCOrgX + left + 1,
                             dc->w.DCOrgY + top + (ell_height + 1) / 2,
                             right - left - 2,
@@ -731,49 +741,49 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     if (X11DRV_SetupGCForPen(dc)) {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
-                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXDrawArc( display, physDev->drawable, physDev->gc,
 		      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		      right - left - 1, bottom -top - 1, 0 , 360 * 64 );
             else{
-		TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+		TSXDrawArc( display, physDev->drawable, physDev->gc,
 		      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		      right - left - 1, ell_height - 1, 0 , 180 * 64 );
-		TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+		TSXDrawArc( display, physDev->drawable, physDev->gc,
 		      dc->w.DCOrgX + left, 
                       dc->w.DCOrgY + bottom - ell_height,
 		      right - left - 1, ell_height - 1, 180 * 64 , 180 * 64 );
             }
 	else if (ell_height > (bottom-top) ){
-                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width - 1 , bottom - top - 1, 90 * 64 , 180 * 64 );
-                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width, 
                       dc->w.DCOrgY + top,
                       ell_width - 1 , bottom - top - 1, 270 * 64 , 180 * 64 );
 	}else{
-            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width - 1, ell_height - 1, 90 * 64, 90 * 64 );
-            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
                       ell_width - 1, ell_height - 1, 180 * 64, 90 * 64 );
-            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width,
                       dc->w.DCOrgY + bottom - ell_height,
                       ell_width - 1, ell_height - 1, 270 * 64, 90 * 64 );
-            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, physDev->drawable, physDev->gc,
                       dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
                       ell_width - 1, ell_height - 1, 0, 90 * 64 );
 	}
 	if (ell_width < right - left)
 	{
-	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawLine( display, physDev->drawable, physDev->gc, 
                dc->w.DCOrgX + left + ell_width / 2,
 		       dc->w.DCOrgY + top,
                dc->w.DCOrgX + right - (ell_width+1) / 2,
 		       dc->w.DCOrgY + top);
-	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawLine( display, physDev->drawable, physDev->gc, 
                dc->w.DCOrgX + left + ell_width / 2 ,
 		       dc->w.DCOrgY + bottom - 1,
                dc->w.DCOrgX + right - (ell_width+1)/ 2,
@@ -781,20 +791,20 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
 	}
 	if (ell_height < bottom - top)
 	{
-	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawLine( display, physDev->drawable, physDev->gc, 
 		       dc->w.DCOrgX + right - 1,
                dc->w.DCOrgY + top + ell_height / 2,
 		       dc->w.DCOrgX + right - 1,
                dc->w.DCOrgY + bottom - (ell_height+1) / 2);
-	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawLine( display, physDev->drawable, physDev->gc, 
 		       dc->w.DCOrgX + left,
                dc->w.DCOrgY + top + ell_height / 2,
 		       dc->w.DCOrgX + left,
                dc->w.DCOrgY + bottom - (ell_height+1) / 2);
 	}
     }
-    dc->u.x.pen.width=oldwidth;
-    dc->u.x.pen.endcap=oldendcap;
+    physDev->pen.width = oldwidth;
+    physDev->pen.endcap = oldendcap;
     return TRUE;
 }
 
@@ -806,14 +816,15 @@ COLORREF
 X11DRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
 {
     Pixel pixel;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     pixel = COLOR_ToPhysical( dc, color );
     
-    TSXSetForeground( display, dc->u.x.gc, pixel );
-    TSXSetFunction( display, dc->u.x.gc, GXcopy );
-    TSXDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
+    TSXSetForeground( display, physDev->gc, pixel );
+    TSXSetFunction( display, physDev->gc, GXcopy );
+    TSXDrawPoint( display, physDev->drawable, physDev->gc, x, y );
 
     /* inefficient but simple... */
 
@@ -830,13 +841,14 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
     static Pixmap pixmap = 0;
     XImage * image;
     int pixel;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     EnterCriticalSection( &X11DRV_CritSection );
     if (dc->w.flags & DC_MEMORY)
     {
-        image = XGetImage( display, dc->u.x.drawable, x, y, 1, 1,
+        image = XGetImage( display, physDev->drawable, x, y, 1, 1,
                            AllPlanes, ZPixmap );
     }
     else
@@ -845,7 +857,7 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
         /* to avoid a BadMatch error */
         if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
                                              1, 1, dc->w.bitsPerPixel );
-        XCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
+        XCopyArea( display, physDev->drawable, pixmap, BITMAP_colorGC,
                    x, y, 1, 1, 0, 0 );
         image = XGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
     }
@@ -866,6 +878,7 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
     RECT32 box;
     HRGN32 tmpVisRgn, prevVisRgn;
     HDC32  hdc = dc->hSelf; /* FIXME: should not mix dc/hdc this way */
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return FALSE;
 
@@ -889,7 +902,7 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
 
     GetRgnBox32( dc->w.hGCClipRgn, &box );
     if (X11DRV_SetupGCForBrush( dc ))
-	TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillRectangle( display, physDev->drawable, physDev->gc,
 		          box.left, box.top,
 		          box.right-box.left, box.bottom-box.top );
 
@@ -908,7 +921,9 @@ X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
     INT32 oldwidth;
     register int i;
     XPoint *points;
-    if((oldwidth=dc->u.x.pen.width)==0) dc->u.x.pen.width=1;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    if((oldwidth = physDev->pen.width) == 0) physDev->pen.width = 1;
 
     points = (XPoint *) xmalloc (sizeof (XPoint) * (count));
     for (i = 0; i < count; i++)
@@ -918,11 +933,11 @@ X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
     }
 
     if (X11DRV_SetupGCForPen ( dc ))
-    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXDrawLines( display, physDev->drawable, physDev->gc,
            points, count, CoordModeOrigin );
 
     free( points );
-    dc->u.x.pen.width=oldwidth;
+    physDev->pen.width = oldwidth;
     return TRUE;
 }
 
@@ -935,6 +950,7 @@ X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 {
     register int i;
     XPoint *points;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
     for (i = 0; i < count; i++)
@@ -945,11 +961,11 @@ X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
     points[count] = points[0];
 
     if (X11DRV_SetupGCForBrush( dc ))
-	TSXFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillPolygon( display, physDev->drawable, physDev->gc,
 		     points, count+1, Complex, CoordModeOrigin);
 
     if (X11DRV_SetupGCForPen ( dc ))
-	TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawLines( display, physDev->drawable, physDev->gc,
 		   points, count+1, CoordModeOrigin );
 
     free( points );
@@ -964,11 +980,11 @@ BOOL32
 X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygons)
 {
     HRGN32 hrgn;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-      /* FIXME: The points should be converted to device coords before */
-      /* creating the region. But as CreatePolyPolygonRgn is not */
-      /* really correct either, it doesn't matter much... */
-      /* At least the outline will be correct :-) */
+    /* FIXME: The points should be converted to device coords before */
+    /* creating the region. */
+
     hrgn = CreatePolyPolygonRgn32( pt, counts, polygons, dc->w.polyFillMode );
     X11DRV_PaintRgn( dc, hrgn );
     DeleteObject32( hrgn );
@@ -992,7 +1008,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polyg
 		pt++;
 	    }
 	    points[j] = points[0];
-	    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+	    TSXDrawLines( display, physDev->drawable, physDev->gc,
 		        points, j + 1, CoordModeOrigin );
 	}
 	free( points );
@@ -1007,6 +1023,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polyg
 BOOL32 
 X11DRV_PolyPolyline( DC *dc, const POINT32* pt, const DWORD* counts, DWORD polylines )
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     if (X11DRV_SetupGCForPen ( dc ))
     {
         int i, j, max = 0;
@@ -1024,7 +1041,7 @@ X11DRV_PolyPolyline( DC *dc, const POINT32* pt, const DWORD* counts, DWORD polyl
                 pt++;
             }
             points[j] = points[0];
-            TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawLines( display, physDev->drawable, physDev->gc,
                         points, j + 1, CoordModeOrigin );
         }
         free( points );
@@ -1045,6 +1062,7 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
                                      int xOrg, int yOrg,
                                      Pixel pixel, WORD fillType )
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     int left, right;
 
 #define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
@@ -1058,7 +1076,7 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
     left = right = x;
     while ((left > 0) && TO_FLOOD( left-1, y )) left--;
     while ((right < image->width) && TO_FLOOD( right, y )) right++;
-    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+    XFillRectangle( display, physDev->drawable, physDev->gc,
                     xOrg + left, yOrg + y, right-left, 1 );
 
       /* Set the pixels of this line so we don't fill it again */
@@ -1124,10 +1142,11 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
     XImage *image;
     RECT32 rect;
     DC *dc = params->dc;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
-    if (!(image = XGetImage( display, dc->u.x.drawable,
+    if (!(image = XGetImage( display, physDev->drawable,
                              rect.left,
                              rect.top,
                              rect.right - rect.left,
@@ -1137,7 +1156,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
     if (X11DRV_SetupGCForBrush( dc ))
     {
           /* ROP mode is always GXcopy for flood-fill */
-        XSetFunction( display, dc->u.x.gc, GXcopy );
+        XSetFunction( display, physDev->gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
                                  XLPTODP(dc,params->x) + dc->w.DCOrgX - rect.left,
                                  YLPTODP(dc,params->y) + dc->w.DCOrgY - rect.top,
@@ -1293,8 +1312,10 @@ static BOOL32 BezierCheck( int level, POINT32 *Points)
 static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points, 
                           XPoint* xpoints, unsigned int* pIx)
 {
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     if(*pIx == BEZMAXPOINTS){
-        TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXDrawLines( display, physDev->drawable, physDev->gc,
                     xpoints, *pIx, CoordModeOrigin );
         *pIx=0;
     }
@@ -1343,6 +1364,8 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, const POINT32* BezierPoints, DWORD coun
     int i;
     unsigned int ix=0;
     XPoint* xpoints;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
     TRACE(graphics, "dc=%04x count=%ld %d,%d - %d,%d - %d,%d -%d,%d \n", 
             (int)dc, count,
             start.x, start.y,
@@ -1366,8 +1389,8 @@ X11DRV_PolyBezier(DC *dc, POINT32 start, const POINT32* BezierPoints, DWORD coun
         X11DRV_Bezier(BEZIERMAXDEPTH , dc, Points, xpoints, &ix );
         count -=3;
     }
-    if( ix) TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-                xpoints, ix, CoordModeOrigin );
+    if( ix) TSXDrawLines( display, physDev->drawable, physDev->gc,
+			  xpoints, ix, CoordModeOrigin );
     free(xpoints);
     return TRUE;
 }

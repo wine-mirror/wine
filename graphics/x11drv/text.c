@@ -35,10 +35,11 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     RECT32 		rect;
     char		dfBreakChar, lfUnderline, lfStrikeOut;
     BOOL32		rotated = FALSE;
+    X11DRV_PDEVICE      *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!X11DRV_SetupGCForText( dc )) return TRUE;
 
-    pfo = XFONT_GetFontObject( dc->u.x.font );
+    pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
      
     if (pfo->lf.lfEscapement && pfo->lpX11Trans)
@@ -48,7 +49,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
     TRACE(text,"hdc=%04x df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
-	  dc->hSelf, (UINT16)(dc->u.x.font), x, y,
+	  dc->hSelf, (UINT16)(physDev->font), x, y,
 	  debugstr_an (str, count), count, flags, lpDx);
 
     /* some strings sent here end in a newline for whatever reason.  I have no
@@ -102,8 +103,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     if (flags & ETO_OPAQUE)
     {
-        TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
-        TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXSetForeground( display, physDev->gc, physDev->backgroundPixel );
+        TSXFillRectangle( display, physDev->drawable, physDev->gc,
                         dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
                         rect.right-rect.left, rect.bottom-rect.top );
     }
@@ -195,8 +196,9 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                 (y - ascent < rect.top) ||
                 (y + descent >= rect.bottom))
             {
-                TSXSetForeground( display, dc->u.x.gc, dc->u.x.backgroundPixel );
-                TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXSetForeground( display, physDev->gc,
+				  physDev->backgroundPixel );
+                TSXFillRectangle( display, physDev->drawable, physDev->gc,
                                 dc->w.DCOrgX + x,
                                 dc->w.DCOrgY + y - ascent,
                                 width,
@@ -207,12 +209,12 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     
     /* Draw the text (count > 0 verified) */
 
-    TSXSetForeground( display, dc->u.x.gc, dc->u.x.textPixel );
+    TSXSetForeground( display, physDev->gc, physDev->textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
     {
       if(!rotated)
       {
-        TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
+        TSXDrawString( display, physDev->drawable, physDev->gc, 
                      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
       }
       else 
@@ -229,7 +231,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	  int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
 			   pfo->lpX11Trans->b / 1000.0 );
 
-	  TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc,
+	  TSXDrawString( display, physDev->drawable, physDev->gc,
 			 x_i, y_i, &str[i], 1);
 	  offset += (double) (font->per_char ?
 		     font->per_char[char_metric_offset].attributes:
@@ -293,7 +295,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
             } 
         }
 
-        TSXDrawText( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXDrawText( display, physDev->drawable, physDev->gc,
                    dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
     }
@@ -309,11 +311,11 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	if (!TSXGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
-	TSXSetLineAttributes( display, dc->u.x.gc, lineWidth,
-			    LineSolid, CapRound, JoinBevel ); 
-        TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
-		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
-		   dc->w.DCOrgX + x + width, dc->w.DCOrgY + y + linePos );
+	TSXSetLineAttributes( display, physDev->gc, lineWidth,
+			      LineSolid, CapRound, JoinBevel ); 
+        TSXDrawLine( display, physDev->drawable, physDev->gc,
+		     dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
+		     dc->w.DCOrgX + x + width, dc->w.DCOrgY + y + linePos );
     }
     if (lfStrikeOut)
     {
@@ -322,9 +324,9 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	    lineAscent = ascent / 2;
 	if (!TSXGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent * 2 / 3;
-	TSXSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
+	TSXSetLineAttributes( display, physDev->gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
-	TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawLine( display, physDev->drawable, physDev->gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
 		   dc->w.DCOrgX + x + width, dc->w.DCOrgY + y - lineAscent );
     }

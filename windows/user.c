@@ -25,6 +25,7 @@
 #include "queue.h"
 #include "shell.h"
 #include "callback.h"
+#include "x11drv.h"
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)

@@ -19,6 +19,7 @@
 #include "ts_xlib.h"
 #include <sys/signal.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -35,6 +36,7 @@
 #include "compobj.h"
 #include "spy.h"
 #include "message.h"
+#include "x11drv.h"
 
 #ifdef HAVE_LIBXXF86DGA
 #include "ts_xf86dga.h"

@@ -816,6 +816,8 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                                       RECT32 *visRectSrc, RECT32 *visRectDst )
 {
     XImage *imageSrc, *imageDst;
+    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
+    X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
     RECT32 rectSrc = *visRectSrc;
     RECT32 rectDst = *visRectDst;
@@ -828,7 +830,7 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
     OffsetRect32( &rectDst, -xDst, -yDst );
 
     /* FIXME: avoid BadMatch errors */
-    imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+    imageSrc = XGetImage( display, physDevSrc->drawable,
                           visRectSrc->left, visRectSrc->top,
                           visRectSrc->right - visRectSrc->left,
                           visRectSrc->bottom - visRectSrc->top,
@@ -837,9 +839,9 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                   rectDst.bottom - rectDst.top, dcDst->w.bitsPerPixel );
     BITBLT_StretchImage( imageSrc, imageDst, widthSrc, heightSrc,
                          widthDst, heightDst, &rectSrc, &rectDst,
-                         dcDst->u.x.textPixel, dcDst->w.bitsPerPixel != 1 ?
-                         dcDst->u.x.backgroundPixel :
-			 dcSrc->u.x.backgroundPixel,
+                         physDevDst->textPixel, dcDst->w.bitsPerPixel != 1 ?
+                         physDevDst->backgroundPixel :
+			 physDevSrc->backgroundPixel,
                          dcDst->w.stretchBltMode );
     XPutImage( display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
@@ -861,25 +863,27 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
     register INT32 x, y;
     INT32 width  = visRectSrc->right - visRectSrc->left;
     INT32 height = visRectSrc->bottom - visRectSrc->top;
+    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
+    X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
     if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
     {
         if (!COLOR_PixelToPalette ||
             (dcDst->w.bitsPerPixel == 1))  /* monochrome -> monochrome */
         {
-            XCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
+            XCopyArea( display, physDevSrc->drawable, pixmap, gc,
                        visRectSrc->left, visRectSrc->top, width, height, 0, 0);
         }
         else  /* color -> color */
         {
             if (dcSrc->w.flags & DC_MEMORY)
-                imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+                imageSrc = XGetImage( display, physDevSrc->drawable,
                                       visRectSrc->left, visRectSrc->top,
                                       width, height, AllPlanes, ZPixmap );
             else
             {
                 /* Make sure we don't get a BadMatch error */
-                XCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
+                XCopyArea( display, physDevSrc->drawable, pixmap, gc,
                            visRectSrc->left, visRectSrc->top,
                            width, height, 0, 0);
                 imageSrc = XGetImage( display, pixmap, 0, 0, width, height,
@@ -901,30 +905,30 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
             if (COLOR_PixelToPalette)
             {
                 XSetBackground( display, gc, 
-                             COLOR_PixelToPalette[dcDst->u.x.textPixel] );
+                             COLOR_PixelToPalette[physDevDst->textPixel] );
                 XSetForeground( display, gc,
-                             COLOR_PixelToPalette[dcDst->u.x.backgroundPixel]);
+                             COLOR_PixelToPalette[physDevDst->backgroundPixel]);
             }
             else
             {
-                XSetBackground( display, gc, dcDst->u.x.textPixel );
-                XSetForeground( display, gc, dcDst->u.x.backgroundPixel );
+                XSetBackground( display, gc, physDevDst->textPixel );
+                XSetForeground( display, gc, physDevDst->backgroundPixel );
             }
-            XCopyPlane( display, dcSrc->u.x.drawable, pixmap, gc,
+            XCopyPlane( display, physDevSrc->drawable, pixmap, gc,
                         visRectSrc->left, visRectSrc->top,
                         width, height, 0, 0, 1 );
         }
         else  /* color -> monochrome */
         {
             /* FIXME: avoid BadMatch error */
-            imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+            imageSrc = XGetImage( display, physDevSrc->drawable,
                                   visRectSrc->left, visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
             XCREATEIMAGE( imageDst, width, height, dcDst->w.bitsPerPixel );
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
-                                               dcSrc->u.x.backgroundPixel) );
+                                               physDevSrc->backgroundPixel) );
             XPutImage( display, pixmap, gc, imageDst,
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
@@ -944,11 +948,12 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
 {
     INT32 width  = visRectDst->right - visRectDst->left;
     INT32 height = visRectDst->bottom - visRectDst->top;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1) ||
 	(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
-        XCopyArea( display, dc->u.x.drawable, pixmap, gc,
+        XCopyArea( display, physDev->drawable, pixmap, gc,
                    visRectDst->left, visRectDst->top, width, height, 0, 0 );
     }
     else
@@ -957,13 +962,13 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
         XImage *image;
 
         if (dc->w.flags & DC_MEMORY)
-            image = XGetImage( display, dc->u.x.drawable,
+            image = XGetImage( display, physDev->drawable,
                                visRectDst->left, visRectDst->top,
                                width, height, AllPlanes, ZPixmap );
         else
         {
             /* Make sure we don't get a BadMatch error */
-            XCopyArea( display, dc->u.x.drawable, pixmap, gc,
+            XCopyArea( display, physDev->drawable, pixmap, gc,
                        visRectDst->left, visRectDst->top, width, height, 0, 0);
             image = XGetImage( display, pixmap, 0, 0, width, height,
                                AllPlanes, ZPixmap );
@@ -988,13 +993,14 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
 {
     INT32 width  = visRectDst->right - visRectDst->left;
     INT32 height = visRectDst->bottom - visRectDst->top;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     /* !COLOR_PaletteToPixel is _NOT_ enough */
 
     if (!COLOR_PaletteToPixel || (dc->w.bitsPerPixel == 1) || 
         (COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
-        XCopyArea( display, pixmap, dc->u.x.drawable, gc, 0, 0,
+        XCopyArea( display, pixmap, physDev->drawable, gc, 0, 0,
                    width, height, visRectDst->left, visRectDst->top );
     }
     else
@@ -1008,7 +1014,7 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
                 XPutPixel( image, x, y,
                            COLOR_PaletteToPixel[XGetPixel( image, x, y )]);
             }
-        XPutImage( display, dc->u.x.drawable, gc, image, 0, 0,
+        XPutImage( display, physDev->drawable, gc, image, 0, 0,
                    visRectDst->left, visRectDst->top, width, height );
         XDestroyImage( image );
     }
@@ -1101,7 +1107,10 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     const BYTE *opcode;
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
+    X11DRV_PDEVICE *physDevSrc = NULL;
+    X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
+    if(dcSrc) physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
     usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     useSrc = (((rop >> 2) & 0x330000) != (rop & 0x330000));
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
@@ -1169,14 +1178,14 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     {
     case BLACKNESS:  /* 0x00 */
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
-            XSetFunction( display, dcDst->u.x.gc, GXclear );
+            XSetFunction( display, physDevDst->gc, GXclear );
         else
         {
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetForeground( display, dcDst->u.x.gc, COLOR_PaletteToPixel[0] );
-            XSetFillStyle( display, dcDst->u.x.gc, FillSolid );
+            XSetFunction( display, physDevDst->gc, GXcopy );
+            XSetForeground( display, physDevDst->gc, COLOR_PaletteToPixel[0] );
+            XSetFillStyle( display, physDevDst->gc, FillSolid );
         }
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
 
@@ -1184,10 +1193,10 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel ||
             !Options.perfectGraphics)
         {
-            XSetFunction( display, dcDst->u.x.gc, GXinvert );
+            XSetFunction( display, physDevDst->gc, GXinvert );
 
             if( COLOR_GetSystemPaletteFlags() & (COLOR_PRIVATE | COLOR_VIRTUAL) )
-                XSetFunction( display, dcDst->u.x.gc, GXinvert);
+                XSetFunction( display, physDevDst->gc, GXinvert);
             else
             {
                 /* Xor is much better when we do not have full colormap.   */
@@ -1195,11 +1204,11 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                 /* and white. */
                 Pixel xor_pix = (WhitePixelOfScreen(screen) ^
                                  BlackPixelOfScreen(screen));
-                XSetFunction( display, dcDst->u.x.gc, GXxor );
-                XSetForeground( display, dcDst->u.x.gc, xor_pix);
-                XSetFillStyle( display, dcDst->u.x.gc, FillSolid ); 
+                XSetFunction( display, physDevDst->gc, GXxor );
+                XSetForeground( display, physDevDst->gc, xor_pix);
+                XSetFillStyle( display, physDevDst->gc, FillSolid ); 
             }
-            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+            XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
                             visRectDst.left, visRectDst.top, width, height ); 
             return TRUE;
         }
@@ -1209,8 +1218,8 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 	if (Options.perfectGraphics) break;
         if (X11DRV_SetupGCForBrush( dcDst ))
         {
-            XSetFunction( display, dcDst->u.x.gc, GXxor );
-            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+            XSetFunction( display, physDevDst->gc, GXxor );
+            XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
 			    visRectDst.left, visRectDst.top, width, height );
         }
         return TRUE;
@@ -1219,8 +1228,8 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 	if (Options.perfectGraphics) break;
 	if (X11DRV_SetupGCForBrush( dcDst ))
 	{
-	    XSetFunction( display, dcDst->u.x.gc, GXequiv );
-	    XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+	    XSetFunction( display, physDevDst->gc, GXequiv );
+	    XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
 			    visRectDst.left, visRectDst.top, width, height );
 	}
 	return TRUE;
@@ -1228,53 +1237,54 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
         {
-            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-	    XCopyArea( display, dcSrc->u.x.drawable,
-                       dcDst->u.x.drawable, dcDst->u.x.gc,
+            XSetGraphicsExposures( display, physDevDst->gc, True );
+            XSetFunction( display, physDevDst->gc, GXcopy );
+	    XCopyArea( display, physDevSrc->drawable,
+                       physDevDst->drawable, physDevDst->gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
+            XSetGraphicsExposures( display, physDevDst->gc, False );
             return TRUE;
         }
         if (dcSrc->w.bitsPerPixel == 1)
         {
-            XSetBackground( display, dcDst->u.x.gc, dcDst->u.x.textPixel );
-            XSetForeground( display, dcDst->u.x.gc, dcDst->u.x.backgroundPixel );
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
-	    XCopyPlane( display, dcSrc->u.x.drawable,
-                        dcDst->u.x.drawable, dcDst->u.x.gc,
+            XSetBackground( display, physDevDst->gc, physDevDst->textPixel );
+            XSetForeground( display, physDevDst->gc, 
+			    physDevDst->backgroundPixel );
+            XSetFunction( display, physDevDst->gc, GXcopy );
+            XSetGraphicsExposures( display, physDevDst->gc, True );
+	    XCopyPlane( display, physDevSrc->drawable,
+                        physDevDst->drawable, physDevDst->gc,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
+            XSetGraphicsExposures( display, physDevDst->gc, False );
             return TRUE;
         }
         break;
 
     case PATCOPY:  /* 0xf0 */
         if (!X11DRV_SetupGCForBrush( dcDst )) return TRUE;
-        XSetFunction( display, dcDst->u.x.gc, GXcopy );
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        XSetFunction( display, physDevDst->gc, GXcopy );
+        XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
 
     case WHITENESS:  /* 0xff */
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
-            XSetFunction( display, dcDst->u.x.gc, GXset );
+            XSetFunction( display, physDevDst->gc, GXset );
         else
         {
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetForeground( display, dcDst->u.x.gc, 
+            XSetFunction( display, physDevDst->gc, GXcopy );
+            XSetForeground( display, physDevDst->gc, 
                             COLOR_PaletteToPixel[COLOR_GetSystemPaletteSize() - 1]);
-            XSetFillStyle( display, dcDst->u.x.gc, FillSolid );
+            XSetFillStyle( display, physDevDst->gc, FillSolid );
         }
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
     }
 
-    tmpGC = XCreateGC( display, dcDst->u.x.drawable, 0, NULL );
+    tmpGC = XCreateGC( display, physDevDst->drawable, 0, NULL );
     pixmaps[DST] = XCreatePixmap( display, rootWindow, width, height,
                                   dcDst->w.bitsPerPixel );
     if (useSrc)
@@ -1331,9 +1341,9 @@ static BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
             break;
         }
     }
-    XSetFunction( display, dcDst->u.x.gc, GXcopy );
+    XSetFunction( display, physDevDst->gc, GXcopy );
     BITBLT_PutDstArea( dcDst, pixmaps[destUsed ? DST : SRC],
-                       dcDst->u.x.gc, &visRectDst );
+                       physDevDst->gc, &visRectDst );
     XFreePixmap( display, pixmaps[DST] );
     if (pixmaps[SRC]) XFreePixmap( display, pixmaps[SRC] );
     if (pixmaps[TMP]) XFreePixmap( display, pixmaps[TMP] );

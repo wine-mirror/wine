@@ -25,6 +25,7 @@
 #include "path.h"
 #include "debug.h"
 #include "winerror.h"
+#include "x11drv.h"
 
 /***********************************************************************
  *           LineTo16    (GDI.19)
@@ -623,9 +624,11 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     HPEN32 hOldPen, hnewPen;
     INT32 oldDrawMode, oldBkMode;
     INT32 left, top, right, bottom;
+    X11DRV_PDEVICE *physDev;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return;
+    physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     left   = XLPTODP( dc, rc->left );
     top    = YLPTODP( dc, rc->top );
@@ -641,10 +644,10 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     oldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
     /* Hack: make sure the XORPEN operation has an effect */
-    dc->u.x.pen.pixel = (1 << screenDepth) - 1;
+    physDev->pen.pixel = (1 << screenDepth) - 1;
 
     if (X11DRV_SetupGCForPen( dc ))
-	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawRectangle( display, physDev->drawable, physDev->gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
 

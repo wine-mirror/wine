@@ -17,6 +17,7 @@
 #include "dc.h"
 #include "gdi.h"
 #include "xmalloc.h"
+#include "x11drv.h"
 #include "debug.h"
 
 typedef enum WING_DITHER_TYPE
@@ -262,9 +263,12 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
     /* destDC is a display DC, srcDC is a memory DC */
 
     DC *dcDst, *dcSrc;
+    X11DRV_PDEVICE *physDevDst, *physDevSrc;
 
     if (!(dcDst = (DC *)GDI_GetObjPtr( destDC, DC_MAGIC ))) return FALSE;
     if (!(dcSrc = (DC *) GDI_GetObjPtr( srcDC, DC_MAGIC ))) return FALSE;
+    physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
+    physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
 
     if (dcDst->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dcDst );
 
@@ -275,10 +279,10 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
     widDest = widDest * dcDst->vportExtX / dcDst->wndExtX;
     heiDest = heiDest * dcDst->vportExtY / dcDst->wndExtY;
 
-    TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
-    TSXCopyArea( display, dcSrc->u.x.drawable,
-               dcDst->u.x.drawable, dcDst->u.x.gc,
-               xSrc, ySrc, widDest, heiDest, xDest, yDest );
+    TSXSetFunction( display, physDevDst->gc, GXcopy );
+    TSXCopyArea( display, physDevSrc->drawable,
+		 physDevDst->drawable, physDevDst->gc,
+		 xSrc, ySrc, widDest, heiDest, xDest, yDest );
     return TRUE;
 }
 

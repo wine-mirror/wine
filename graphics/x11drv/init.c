@@ -8,7 +8,8 @@
 #include "x11drv.h"
 #include "color.h"
 #include "bitmap.h"
-
+#include "winnt.h"
+#include "debug.h"
 
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -170,10 +171,13 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 {
     X11DRV_PDEVICE *physDev;
 
-    physDev = &dc->u.x;  /* for now */
+    dc->physDev = physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+				       sizeof(*physDev) );
+    if(!physDev) {
+        ERR(x11drv, "Can't allocate physDev\n");
+	return FALSE;
+    }
 
-    memset( physDev, 0, sizeof(*physDev) );
-    dc->physDev        = physDev;
     dc->w.devCaps      = &X11DRV_DevCaps;
     if (dc->w.flags & DC_MEMORY)
     {
@@ -227,6 +231,8 @@ static BOOL32 X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     TSXFreeGC( display, physDev->gc );
+    HeapFree( GetProcessHeap(), 0, physDev );
+    dc->physDev = NULL;
     return TRUE;
 }
 

@@ -34,6 +34,7 @@
 #include "xmalloc.h"
 #include "version.h"
 #include "winnls.h"
+#include "x11drv.h"
 
 /* when adding new languages look at ole/ole2nls.c 
  * for proper iso name and Windows code (add 0x0400 

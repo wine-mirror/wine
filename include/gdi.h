@@ -10,7 +10,6 @@
 #include "windows.h"
 #include "ldt.h"
 #include "local.h"
-#include "x11drv.h"
 #include "path.h"
 #include <math.h>
 
@@ -139,8 +138,6 @@ typedef struct
     BOOL32        vport2WorldValid;  /* Is xformVport2World valid? */
 } WIN_DC_INFO;
 
-typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
-
 typedef struct tagDC
 {
     GDIOBJHDR      header;
@@ -161,14 +158,12 @@ typedef struct tagDC
     INT32          vportExtY;
 
     WIN_DC_INFO w;
-    union
-    {
-	X_DC_INFO x;
-	/* other devices (e.g. printer) */
-    } u;
 } DC;
 
 /* Device functions for the Wine driver interface */
+
+typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
+
 typedef struct tagDC_FUNCS
 {
     BOOL32     (*pArc)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
@@ -431,12 +426,5 @@ extern GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16, WORD );
 extern BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
 extern BOOL32 DRIVER_UnregisterDriver( LPCSTR name );
-
-extern BOOL32 DIB_Init(void);
-
-extern Display * display;
-extern Screen * screen;
-extern Window rootWindow;
-extern int screenWidth, screenHeight, screenDepth;
 
 #endif  /* __WINE_GDI_H */

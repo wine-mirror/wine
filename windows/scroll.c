@@ -18,7 +18,7 @@
 #include "graphics.h"
 #include "sysmetrics.h"
 #include "debug.h"
-
+#include "x11drv.h"
 
 /*************************************************************************
  *             ScrollWindow16   (USER.61)
@@ -346,6 +346,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 		       ((flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0) );
 	if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
 	{
+	    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 	    POINT32 dst, src;
 
 	    if( dx > 0 ) dst.x = (src.x = dc->w.DCOrgX + cliprc.left) + dx;
@@ -358,13 +359,15 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
                 (cliprc.bottom - cliprc.top > abs(dy)))
             {
                 if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
-                    TSXSetGraphicsExposures( display, dc->u.x.gc, True );
-                TSXSetFunction( display, dc->u.x.gc, GXcopy );
-                TSXCopyArea( display, dc->u.x.drawable, dc->u.x.drawable, dc->u.x.gc, 
-                             src.x, src.y, cliprc.right - cliprc.left - abs(dx),
-                             cliprc.bottom - cliprc.top - abs(dy), dst.x, dst.y );
+                    TSXSetGraphicsExposures( display, physDev->gc, True );
+                TSXSetFunction( display, physDev->gc, GXcopy );
+                TSXCopyArea( display, physDev->drawable, physDev->drawable,
+			     physDev->gc, src.x, src.y,
+			     cliprc.right - cliprc.left - abs(dx),
+                             cliprc.bottom - cliprc.top - abs(dy),
+			     dst.x, dst.y );
                 if (bUpdate)
-                    TSXSetGraphicsExposures( display, dc->u.x.gc, False );
+                    TSXSetGraphicsExposures( display, physDev->gc, False );
             }
 
 	    if( dc->w.hVisRgn && bUpdate )

@@ -1098,6 +1098,7 @@ INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
     DWORD width, oldcy = cy;
     INT32 result;
     int height, tmpheight;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, 
@@ -1115,7 +1116,7 @@ INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
     if (!cx || !cy) return 0;
 
     X11DRV_SetupGCForText( dc );  /* To have the correct colors */
-    TSXSetFunction(display, dc->u.x.gc, X11DRV_XROPfunction[dc->w.ROPmode-1]);
+    TSXSetFunction(display, physDev->gc, X11DRV_XROPfunction[dc->w.ROPmode-1]);
 
     if (descr.infoBpp <= 8)
     {
@@ -1132,8 +1133,8 @@ INT32 X11DRV_SetDIBitsToDevice( DC *dc, INT32 xDest, INT32 yDest, DWORD cx,
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.infoWidth = width;
     descr.depth     = dc->w.bitsPerPixel;
-    descr.drawable  = dc->u.x.drawable;
-    descr.gc        = dc->u.x.gc;
+    descr.drawable  = physDev->drawable;
+    descr.gc        = physDev->gc;
     descr.xSrc      = xSrc;
     descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy) 
                                      : ySrc - startscan;

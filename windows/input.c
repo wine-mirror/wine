@@ -26,6 +26,7 @@
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
+#include "x11drv.h"
 
 static INT16  captureHT = HTCLIENT;
 static HWND32 captureWnd = 0;

@@ -2206,16 +2206,17 @@ HFONT32 X11DRV_FONT_SelectObject( DC* dc, HFONT32 hfont, FONTOBJ* font )
 {
     HFONT32 hPrevFont = 0;
     LOGFONT16 lf;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if( CHECK_PFONT(dc->u.x.font) ) 
-        XFONT_ReleaseCacheEntry( __PFONT(dc->u.x.font) );
+    if( CHECK_PFONT(physDev->font) ) 
+        XFONT_ReleaseCacheEntry( __PFONT(physDev->font) );
 
     /* FIXME: do we need to pass anything back from here? */
     memcpy(&lf,&font->logfont,sizeof(lf));
     lf.lfWidth  = font->logfont.lfWidth * dc->vportExtX/dc->wndExtX;
     lf.lfHeight = font->logfont.lfHeight* dc->vportExtY/dc->wndExtY;
 
-    dc->u.x.font = XFONT_RealizeFont( &lf );
+    physDev->font = XFONT_RealizeFont( &lf );
     hPrevFont = dc->w.hFont;
     dc->w.hFont = hfont;
 
@@ -2268,7 +2269,8 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
                                   LPSIZE32 size )
 {
-    fontObject* pfo = XFONT_GetFontObject( dc->u.x.font );
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    fontObject* pfo = XFONT_GetFontObject( physDev->font );
     if( pfo ) {
         if( !pfo->lpX11Trans ) {
 	    int dir, ascent, descent;
@@ -2307,9 +2309,11 @@ BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
  */
 BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 {
-    if( CHECK_PFONT(dc->u.x.font) )
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    if( CHECK_PFONT(physDev->font) )
     {
-	fontObject* pfo = __PFONT(dc->u.x.font);
+	fontObject* pfo = __PFONT(physDev->font);
 	XFONT_GetTextMetric( pfo, metrics );
 
 	return TRUE;
@@ -2324,7 +2328,8 @@ BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
                             LPINT32 buffer )
 {
-    fontObject* pfo = XFONT_GetFontObject( dc->u.x.font );
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
     if( pfo )
     {

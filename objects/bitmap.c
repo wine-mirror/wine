@@ -16,7 +16,7 @@
 #include "cursoricon.h"
 #include "color.h"
 #include "debug.h"
-
+#include "x11drv.h"
 
 /***********************************************************************
  *           BITMAP_GetPadding

@@ -1,5 +1,5 @@
 /*
- * GDI pen objects
+ * X11DRV pen objects
  *
  * Copyright 1993 Alexandre Julliard
  */
@@ -20,40 +20,41 @@ static const char PEN_alternate[]  = { 1,1 };      /* FIXME */
 HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
 {
     HPEN32 prevHandle = dc->w.hPen;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     dc->w.hPen = hpen;
-    dc->u.x.pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
-    dc->u.x.pen.type = pen->logpen.lopnStyle & PS_TYPE_MASK;
-    dc->u.x.pen.endcap = pen->logpen.lopnStyle & PS_ENDCAP_MASK;
-    dc->u.x.pen.linejoin = pen->logpen.lopnStyle & PS_JOIN_MASK;
+    physDev->pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
+    physDev->pen.type = pen->logpen.lopnStyle & PS_TYPE_MASK;
+    physDev->pen.endcap = pen->logpen.lopnStyle & PS_ENDCAP_MASK;
+    physDev->pen.linejoin = pen->logpen.lopnStyle & PS_JOIN_MASK;
 
-    dc->u.x.pen.width = (pen->logpen.lopnWidth.x * dc->vportExtX +
+    physDev->pen.width = (pen->logpen.lopnWidth.x * dc->vportExtX +
                     dc->wndExtX / 2) / dc->wndExtX;
-    if (dc->u.x.pen.width < 0) dc->u.x.pen.width = -dc->u.x.pen.width;
-    if (dc->u.x.pen.width == 1) dc->u.x.pen.width = 0;  /* Faster */
-    dc->u.x.pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    
+    if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
+    if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
+    physDev->pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    
     switch(pen->logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
-	dc->u.x.pen.dashes = (char *)PEN_dash;
-	dc->u.x.pen.dash_len = 2;
+	physDev->pen.dashes = (char *)PEN_dash;
+	physDev->pen.dash_len = 2;
 	break;
       case PS_DOT:
-	dc->u.x.pen.dashes = (char *)PEN_dot;
-	dc->u.x.pen.dash_len = 2;
+	physDev->pen.dashes = (char *)PEN_dot;
+	physDev->pen.dash_len = 2;
 	break;
       case PS_DASHDOT:
-	dc->u.x.pen.dashes = (char *)PEN_dashdot;
-	dc->u.x.pen.dash_len = 4;
+	physDev->pen.dashes = (char *)PEN_dashdot;
+	physDev->pen.dash_len = 4;
 	break;
       case PS_DASHDOTDOT:
-	dc->u.x.pen.dashes = (char *)PEN_dashdotdot;
-	dc->u.x.pen.dash_len = 6;
+	physDev->pen.dashes = (char *)PEN_dashdotdot;
+	physDev->pen.dash_len = 6;
 	break;
       case PS_ALTERNATE:
 	/* FIXME: should be alternating _pixels_ that are set */
-	dc->u.x.pen.dashes = (char *)PEN_alternate;
-	dc->u.x.pen.dash_len = 2;
+	physDev->pen.dashes = (char *)PEN_alternate;
+	physDev->pen.dash_len = 2;
 	break;
       case PS_USERSTYLE:
 	/* FIXME */

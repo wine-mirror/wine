@@ -11,7 +11,7 @@
 #include "mouse.h"
 #include "debug.h"
 #include "debugtools.h"
-
+#include "x11drv.h"
 
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 

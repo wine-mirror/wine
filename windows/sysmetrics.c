@@ -10,6 +10,7 @@
 #include "options.h"
 #include "tweak.h"
 #include "sysmetrics.h"
+#include "x11drv.h"
 
 short sysMetrics[SM_CMETRICS+1];
 

@@ -58,6 +58,8 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
     HRGN32 hrgn;
     HBITMAP32 prevHandle = dc->w.hBitmap;
     X11DRV_PHYSBITMAP *pbitmap;
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
 
     if (!(dc->w.flags & DC_MEMORY)) return 0;
 
@@ -66,7 +68,7 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
 	    return 0;
 
     if(bmp->DDBitmap->funcs != dc->funcs) {
-        WARN(bitmap, "Trying to select non-X11 DDB into an X11 dc\n");
+        WARN(x11drv, "Trying to select non-X11 DDB into an X11 dc\n");
 	return 0;
     }
 
@@ -87,15 +89,15 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
        dc->w.hVisRgn    = hrgn;
     }
 
-    dc->u.x.drawable = pbitmap->pixmap;
-    dc->w.hBitmap    = hbitmap;
+    physDev->drawable = pbitmap->pixmap;
+    dc->w.hBitmap     = hbitmap;
 
       /* Change GC depth if needed */
 
     if (dc->w.bitsPerPixel != bmp->bitmap.bmBitsPixel)
     {
-	TSXFreeGC( display, dc->u.x.gc );
-	dc->u.x.gc = TSXCreateGC( display, dc->u.x.drawable, 0, NULL );
+	TSXFreeGC( display, physDev->gc );
+	physDev->gc = TSXCreateGC( display, physDev->drawable, 0, NULL );
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
@@ -139,19 +141,18 @@ X11DRV_PHYSBITMAP *X11DRV_AllocBitmap( BITMAPOBJ *bmp )
     X11DRV_PHYSBITMAP *pbitmap;
 
     if(!(bmp->DDBitmap = HeapAlloc(GetProcessHeap(), 0, sizeof(DDBITMAP)))) {
-        WARN(bitmap, "Can't alloc DDBITMAP\n");
+        WARN(x11drv, "Can't alloc DDBITMAP\n");
 	return NULL;
     }
 
     if(!(pbitmap = HeapAlloc(GetProcessHeap(), 0,sizeof(X11DRV_PHYSBITMAP)))) {
-        WARN(bitmap, "Can't alloc X11DRV_PHYSBITMAP\n");
+        WARN(x11drv, "Can't alloc X11DRV_PHYSBITMAP\n");
         HeapFree(GetProcessHeap(), 0, bmp->DDBitmap);
 	return NULL;
     }
 
     bmp->DDBitmap->physBitmap = pbitmap;
     bmp->DDBitmap->funcs = DRIVER_FindDriver( "DISPLAY" );
-
     return pbitmap;
 }
 
@@ -172,7 +173,7 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
 
     if(!bmp) {
-        WARN(bitmap, "Bad bitmap handle %08x\n", hbitmap);
+        WARN(x11drv, "Bad bitmap handle %08x\n", hbitmap);
 	return FALSE;
     }
 
@@ -180,6 +181,8 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
     if (bmp->bitmap.bmPlanes != 1) return 0;
     if ((bmp->bitmap.bmBitsPixel != 1) && 
 	(bmp->bitmap.bmBitsPixel != screenDepth)) {
+        ERR(x11drv, "Trying to make bitmap with planes=%d, bpp=%d\n",
+	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
         GDI_HEAP_UNLOCK( hbitmap );
 	return FALSE;
     }
@@ -194,7 +197,7 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
     pbitmap->pixmap = TSXCreatePixmap(display, rootWindow, bmp->bitmap.bmWidth,
 			      bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
     if (!pbitmap->pixmap) {
-        WARN(bitmap, "Can't create Pixmap\n");
+        WARN(x11drv, "Can't create Pixmap\n");
         HeapFree(GetProcessHeap(), 0, bmp->DDBitmap->physBitmap);
         HeapFree(GetProcessHeap(), 0, bmp->DDBitmap);
 	GDI_HEAP_UNLOCK( hbitmap );
@@ -239,7 +242,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
     LPBYTE tbuf;
     int	h, w, pad;
 
-    TRACE(x11drv, "(bmp=%p, buffer=%p, count=%lx)\n", bmp, buffer, count);
+    TRACE(x11drv, "(bmp=%p, buffer=%p, count=0x%lx)\n", bmp, buffer, count);
 
     pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
 
@@ -340,7 +343,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 	}
         break;
     default:
-        FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
+        FIXME(x11drv, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
     }
     XDestroyImage( image );
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -365,7 +368,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     LPBYTE sbuf;
     int	w, h, pad;
 
-    TRACE(x11drv, "(bmp=%p, bits=%p, count=%lx)\n", bmp, bits, count);
+    TRACE(x11drv, "(bmp=%p, bits=%p, count=0x%lx)\n", bmp, bits, count);
     
     pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
 
@@ -451,7 +454,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
         }
         break;
     default:
-      FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
+      FIXME(x11drv, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
 
     }
 
@@ -475,7 +478,7 @@ LONG X11DRV_BitmapBits(HBITMAP32 hbitmap, void *bits, LONG count, WORD flags)
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     LONG ret;
     if(!bmp) {
-        WARN(bitmap, "Bad bitmap handle %08x\n", hbitmap);
+        WARN(x11drv, "Bad bitmap handle %08x\n", hbitmap);
 	return FALSE;
     }
 
@@ -484,7 +487,7 @@ LONG X11DRV_BitmapBits(HBITMAP32 hbitmap, void *bits, LONG count, WORD flags)
     else if(flags == DDB_SET)
         ret = X11DRV_SetBitmapBits(bmp, bits, count);
     else {
-        ERR(bitmap, "Unknown flags value %d\n", flags);
+        ERR(x11drv, "Unknown flags value %d\n", flags);
 	ret = 0;
     }
     

@@ -14,6 +14,7 @@
 #include "color.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "x11drv.h"
 
 /* Palette indexed mode:
 

@@ -20,6 +20,7 @@
 #include "heap.h"
 #include "debug.h"
 #include "debugtools.h"
+#include "x11drv.h"
 
 Cursor DISPLAY_XCursor = None;    /* Current X cursor */
 

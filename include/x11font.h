@@ -8,7 +8,7 @@
 #define __WINE_X11FONT_H
 
 #include "gdi.h"
-
+#include "x11drv.h"
 #pragma pack(1)
 
 /* this is a part of the font resource header, should 
