@@ -1516,8 +1516,6 @@ void WINAPI ReleaseStgMedium(
       if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hGlobal!=0) )
 	GlobalFree(pmedium->u.hGlobal);
-
-      pmedium->u.hGlobal = 0;
       break;
     }
     case TYMED_FILE:
@@ -1531,8 +1529,6 @@ void WINAPI ReleaseStgMedium(
 
 	CoTaskMemFree(pmedium->u.lpszFileName);
       }
-
-      pmedium->u.lpszFileName = 0;
       break;
     }
     case TYMED_ISTREAM:
@@ -1541,8 +1537,6 @@ void WINAPI ReleaseStgMedium(
       {
 	IStream_Release(pmedium->u.pstm);
       }
-
-      pmedium->u.pstm = 0;
       break;
     }
     case TYMED_ISTORAGE:
@@ -1551,17 +1545,13 @@ void WINAPI ReleaseStgMedium(
       {
 	IStorage_Release(pmedium->u.pstg);
       }
-
-      pmedium->u.pstg = 0;
       break;
     }
     case TYMED_GDI:
     {
       if ( (pmedium->pUnkForRelease==0) &&
-	   (pmedium->u.hGlobal!=0) )
-	DeleteObject(pmedium->u.hGlobal);
-
-      pmedium->u.hGlobal = 0;
+	   (pmedium->u.hBitmap!=0) )
+	DeleteObject(pmedium->u.hBitmap);
       break;
     }
     case TYMED_MFPICT:
@@ -1569,13 +1559,11 @@ void WINAPI ReleaseStgMedium(
       if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hMetaFilePict!=0) )
       {
-	LPMETAFILEPICT pMP = GlobalLock(pmedium->u.hGlobal);
+	LPMETAFILEPICT pMP = GlobalLock(pmedium->u.hMetaFilePict);
 	DeleteMetaFile(pMP->hMF);
-	GlobalUnlock(pmedium->u.hGlobal);
-	GlobalFree(pmedium->u.hGlobal);
+	GlobalUnlock(pmedium->u.hMetaFilePict);
+	GlobalFree(pmedium->u.hMetaFilePict);
       }
-
-      pmedium->u.hMetaFilePict = 0;
       break;
     }
     case TYMED_ENHMF:
@@ -1585,14 +1573,13 @@ void WINAPI ReleaseStgMedium(
       {
 	DeleteEnhMetaFile(pmedium->u.hEnhMetaFile);
       }
-
-      pmedium->u.hEnhMetaFile = 0;
       break;
     }
     case TYMED_NULL:
     default:
       break;
   }
+  pmedium->tymed=TYMED_NULL;
 
   /*
    * After cleaning up, the unknown is released
