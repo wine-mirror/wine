@@ -12,12 +12,9 @@ UINT
 WORD
 WSAEVENT
 int
+long
 u_long
 u_short
-
-%long # --forbidden
-
-SOCKET16
 
 %ptr
 
@@ -35,16 +32,15 @@ LPWSAOVERLAPPED_COMPLETION_ROUTINE
 LPWSANETWORKEVENTS
 LPWSAPROTOCOL_INFOA
 LPWSAPROTOCOL_INFOW
-ULONG *
-WIN_hostent *
-WIN_protoent *
-WIN_servent *
+WS_fd_set *
 char *
 int *
-struct sockaddr *
-struct timeval *
-ws_fd_set32 *
-ws_sockaddr *
+u_long *
+struct WS_hostent *
+struct WS_protoent *
+struct WS_servent *
+struct WS_sockaddr *
+struct WS_timeval *
 
 %str
 
@@ -53,7 +49,7 @@ LPSTR
 
 %unknown
 
-struct in_addr
+struct WS_in_addr
 
 %void
 

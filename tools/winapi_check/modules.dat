@@ -4,6 +4,10 @@ dlls/advapi32
 memory
 misc
 
+% dlls/avicap32/avicap32.spec
+
+dlls/avicap32
+
 % dlls/avifil32/avifil32.spec
 
 dlls/avifil32
@@ -36,6 +40,10 @@ dlls/dciman32
 
 dlls/ddraw
 dlls/ddraw/dclipper
+
+% dlls/devenum/devenum.spec
+
+dlls/devenum
 
 % dlls/dinput/dinput.spec
 
@@ -128,6 +136,10 @@ dlls/mapi32
 
 dlls/msimg32
 
+% dlls/msrle32/msrle32.spec
+
+dlls/msrle32
+
 % dlls/msvcrt/msvcrt.spec
 
 dlls/msvcrt
@@ -168,6 +180,10 @@ dlls/lzexpand
 
 dlls/lzexpand
 
+% dlls/msdmo/msdmo.spec
+
+dlls/msdmo
+
 % dlls/mpr/mpr.spec
 
 dlls/mpr
@@ -189,6 +205,10 @@ dlls/msvideo
 % dlls/msvideo/msvideo.spec
 
 dlls/msvideo
+
+% dlls/netapi32/netapi32.spec
+
+dlls/netapi32
 
 % dlls/ntdll/ntdll.spec
 
@@ -233,6 +253,10 @@ dlls/oleaut32
 % dlls/oleaut32/oleaut32.spec
 
 dlls/oleaut32
+
+% dlls/qcap/qcap.spec
+
+dlls/qcap
 
 % dlls/oleaut32/typelib.spec
 

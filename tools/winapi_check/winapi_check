@@ -393,7 +393,7 @@ foreach my $file (@c_files) {
     my $conditional = 0;
     my $found_include = sub {
 	local $_ = shift;
-	if(/^\"config\.h\"/) {
+	if(/^\"(?:config\.h|wine\/port\.h)\"/) {
 	    $config++;
 	}
     };
