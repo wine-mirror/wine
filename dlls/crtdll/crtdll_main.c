@@ -26,6 +26,10 @@ UB 000416:
 
 #include "crtdll.h"
 
+#ifdef HAVE_IEEEFP_H
+#include <ieeefp.h>
+#endif
+
 #include <ctype.h>
 #define __USE_ISOC9X 1
 #define __USE_ISOC99 1

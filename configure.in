@@ -98,9 +98,9 @@ AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lossaudio for NetBSD
 AC_CHECK_LIB(ossaudio,_oss_ioctl)
 dnl Check for -lw for Solaris
-AC_CHECK_LIB(w,iswalnum)
+AC_CHECK_FUNCS(iswalnum,,AC_CHECK_LIB(w,iswalnum))
 dnl Check for -lnsl for Solaris
-AC_CHECK_FUNCS(gethostbyname,, AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", , -lnsl), -lsocket))
+AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lxpg4 for FreeBSD
@@ -843,6 +843,7 @@ AC_CHECK_HEADERS(\
 	arpa/nameser.h \
 	elf.h \
 	float.h \
+	ieeefp.h \
 	libio.h \
 	libutil.h \
 	link.h \
