@@ -596,6 +596,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
 	if( (list = WIN_BuildWinArray( wndPtr, 0, NULL )) )
 	{
+            wndPtr = NULL;
 	    for (ppWnd = list; *ppWnd; ppWnd++)
 	    {
 		WIN_UpdateWndPtr(&wndPtr,*ppWnd);
@@ -604,6 +605,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 			 (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT)) )
 			hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
 	    }
+            WIN_ReleaseWndPtr(wndPtr);
 	    WIN_ReleaseWinArray(list);
 	}
     }
