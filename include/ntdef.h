@@ -1,6 +1,13 @@
 #ifndef __WINE_NTDEF_H
 #define __WINE_NTDEF_H
 
+/* fixme: include basestd.h instead */
+#include "wintypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NTAPI   __stdcall 
 
 #ifndef IN
@@ -15,26 +22,38 @@
 #define OPTIONAL
 #endif
 
+#ifndef VOID
+#define VOID void
+#endif
+
+typedef LONG NTSTATUS;
+typedef NTSTATUS *PNTSTATUS;
+
+typedef short CSHORT;
+typedef CSHORT *PCSHORT;  
+
+typedef WCHAR * PWCHAR;
+
 /* NT lowlevel Strings (handled by Rtl* functions in NTDLL)
  * If they are zero terminated, Length does not include the terminating 0.
  */
 
 typedef struct _STRING {
-	UINT16	Length;
-	UINT16	MaximumLength;
-	LPSTR	Buffer;
+	USHORT	Length;
+	USHORT	MaximumLength;
+	PSTR	Buffer;
 } STRING,*PSTRING,ANSI_STRING,*PANSI_STRING;
 
 typedef struct _CSTRING {
-	UINT16	Length;
-	UINT16	MaximumLength;
-	LPCSTR	Buffer;
+	USHORT	Length;
+	USHORT	MaximumLength;
+	PCSTR	Buffer;
 } CSTRING,*PCSTRING;
 
 typedef struct _UNICODE_STRING {
-	UINT16	Length;		/* bytes */
-	UINT16	MaximumLength;	/* bytes */
-	LPWSTR	Buffer;
+	USHORT	Length;		/* bytes */
+	USHORT	MaximumLength;	/* bytes */
+	PWSTR	Buffer;
 } UNICODE_STRING,*PUNICODE_STRING;
 
 /*
@@ -61,5 +80,8 @@ typedef struct _OBJECT_ATTRIBUTES
 
 typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

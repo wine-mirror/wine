@@ -378,6 +378,11 @@ typedef struct _SID {
     DWORD SubAuthority[1];
 } SID,*PSID;
 
+#define	SID_REVISION			(1)	/* Current revision */
+#define	SID_MAX_SUB_AUTHORITIES		(15)	/* current max subauths */
+#define	SID_RECOMMENDED_SUB_AUTHORITIES	(1)	/* recommended subauths */
+
+
 /* 
  * ACL 
  */
@@ -550,6 +555,81 @@ typedef struct _TOKEN_STATISTICS {
   DWORD PrivilegeCount; 
   LUID  ModifiedId; 
 } TOKEN_STATISTICS; 
+
+/* 
+ *	ACLs of NT 
+ */
+
+#define	ACL_REVISION	2
+
+#define	ACL_REVISION1	1
+#define	ACL_REVISION2	2
+
+/* ACEs, directly starting after an ACL */
+typedef struct _ACE_HEADER {
+	BYTE	AceType;
+	BYTE	AceFlags;
+	WORD	AceSize;
+} ACE_HEADER,*PACE_HEADER;
+
+/* AceType */
+#define	ACCESS_ALLOWED_ACE_TYPE		0
+#define	ACCESS_DENIED_ACE_TYPE		1
+#define	SYSTEM_AUDIT_ACE_TYPE		2
+#define	SYSTEM_ALARM_ACE_TYPE		3
+
+/* inherit AceFlags */
+#define	OBJECT_INHERIT_ACE		0x01
+#define	CONTAINER_INHERIT_ACE		0x02
+#define	NO_PROPAGATE_INHERIT_ACE	0x04
+#define	INHERIT_ONLY_ACE		0x08
+#define	VALID_INHERIT_FLAGS		0x0F
+
+/* AceFlags mask for what events we (should) audit */
+#define	SUCCESSFUL_ACCESS_ACE_FLAG	0x40
+#define	FAILED_ACCESS_ACE_FLAG		0x80
+
+/* different ACEs depending on AceType 
+ * SidStart marks the begin of a SID
+ * so the thing finally looks like this:
+ * 0: ACE_HEADER
+ * 4: ACCESS_MASK
+ * 8... : SID
+ */
+typedef struct _ACCESS_ALLOWED_ACE {
+	ACE_HEADER	Header;
+	DWORD		Mask;
+	DWORD		SidStart;
+} ACCESS_ALLOWED_ACE,*PACCESS_ALLOWED_ACE;
+
+typedef struct _ACCESS_DENIED_ACE {
+	ACE_HEADER	Header;
+	DWORD		Mask;
+	DWORD		SidStart;
+} ACCESS_DENIED_ACE,*PACCESS_DENIED_ACE;
+
+typedef struct _SYSTEM_AUDIT_ACE {
+	ACE_HEADER	Header;
+	DWORD		Mask;
+	DWORD		SidStart;
+} SYSTEM_AUDIT_ACE,*PSYSTEM_AUDIT_ACE;
+
+typedef struct _SYSTEM_ALARM_ACE {
+	ACE_HEADER	Header;
+	DWORD		Mask;
+	DWORD		SidStart;
+} SYSTEM_ALARM_ACE,*PSYSTEM_ALARM_ACE;
+
+typedef enum tagSID_NAME_USE {
+	SidTypeUser = 1,
+	SidTypeGroup,
+	SidTypeDomain,
+	SidTypeAlias,
+	SidTypeWellKnownGroup,
+	SidTypeDeletedAccount,
+	SidTypeInvalid,
+	SidTypeUnknown
+} SID_NAME_USE,*PSID_NAME_USE;
 
 /* Access rights */
 
