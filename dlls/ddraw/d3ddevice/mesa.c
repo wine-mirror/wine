@@ -302,8 +302,6 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	if (This->current_texture[0] != NULL)
 	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[0], IDirect3DTexture2));
 
-	if (glThis->handler) HeapFree(GetProcessHeap(), 0, This);
-	
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();

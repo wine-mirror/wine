@@ -99,12 +99,6 @@ typedef struct IDirect3DTextureGLImpl
     void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
 } IDirect3DTextureGLImpl;
 
-typedef struct {
-    int offset;
-    int extra;
-    void (*handler)(char *vertex, int offset, int extra);
-} D3DFVF_GENERIC;
-
 typedef struct IDirect3DDeviceGLImpl
 {
     struct IDirect3DDeviceImpl parent;
@@ -118,12 +112,6 @@ typedef struct IDirect3DDeviceGLImpl
     BOOLEAN last_vertices_transformed;
     BOOLEAN last_vertices_lit;
 
-    /* This is to optimize a little bit the 'slow generic' path for the DrawPrimitive stuff */
-    D3DFVF_GENERIC *handler;
-    DWORD last_vertex_format;
-    DWORD last_vertex_format_size;
-    DWORD last_vertex_format_elements;
-    
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;
     D3DMATRIX *proj_mat;
