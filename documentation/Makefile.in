@@ -65,32 +65,30 @@ all: $(MAN_TARGETS)
 
 everything: $(MAN_TARGETS) doc
 doc: html pdf ps
-html: $(ALLBOOKS:%=%/index.html) wine-faq.html
+html: $(ALLBOOKS:%=%.html) wine-faq.html
 pdf: $(ALLBOOKS:%=%.pdf)
 ps: $(ALLBOOKS:%=%.ps)
 
 .PHONY: everything doc html pdf ps dist
 
-.SUFFIXES: .sgml /index.html .pdf .ps
+.SUFFIXES: .sgml .html .pdf .ps .txt
 
-.sgml/index.html:
-	$(DB2HTML) -d $(SRCDIR)/default.dsl -o $* $<
+.sgml.html:
+	$(DB2HTML) -u -d $(SRCDIR)/default.dsl $<
 
 .sgml.pdf:
-	$(DB2PDF) $< >/dev/null
+	$(DB2PDF) $<
 
 .sgml.ps:
-	$(DB2PS) $< >/dev/null
+	$(DB2PS) $<
 
-wine-devel.pdf wine-devel.ps wine-devel/index.html: $(WINE_DEVEL_SRCS)
-wine-user.pdf wine-user.ps wine-user/index.html: $(WINE_USER_SRCS)
-winelib-user.pdf winelib-user.ps winelib-user/index.html: $(WINELIB_USER_SRCS)
+.html.txt:
+	w3m -dump $< > $@ || ($(RM) $@ && false)
 
-wine-faq.html: wine-faq.sgml $(WINE_FAQ_SRCS)
-	$(DB2HTML) -u -d $(SRCDIR)/default.dsl $(SRCDIR)/wine-faq.sgml
-
-wine-faq.txt: wine-faq.html
-	w3m -dump wine-faq.html > $@ || ($(RM) $@ && false)
+wine-devel.pdf wine-devel.ps wine-devel.html: $(WINE_DEVEL_SRCS)
+wine-user.pdf wine-user.ps wine-user.html: $(WINE_USER_SRCS)
+wine-faq.pdf wine-faq.ps wine-faq.html: $(WINE_FAQ_SRCS)
+winelib-user.pdf winelib-user.ps winelib-user.html: $(WINELIB_USER_SRCS)
 
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)
@@ -105,12 +103,11 @@ wine-doc-ps.tar.gz: $(ALLBOOKS:%=%.ps)
 wine-doc-pdf.tar.gz: $(ALLBOOKS:%=%.pdf)
 	tar cf - $(ALLBOOKS:%=%.pdf) | gzip -9 > $@ || ($(RM) $@ && false)
 
-wine-doc-html.tar.gz: $(ALLBOOKS:%=%/index.html)
-	tar cf - $(ALLBOOKS:%=%/*.html) | gzip -9 > $@ || ($(RM) $@ && false)
+wine-doc-html.tar.gz: $(ALLBOOKS:%=%.html)
+	tar cf - $(ALLBOOKS:%=%.html) | gzip -9 > $@ || ($(RM) $@ && false)
 
-wine-doc-txt.tar.gz: $(ALLBOOKS:%=%/index.html)
-	for i in $(ALLBOOKS:%=%/*.html); do w3m -dump $$i > `dirname $$i`/`basename $$i .html`.txt || exit 1; done
-	tar cf - $(ALLBOOKS:%=%/*.txt) | gzip -9 > $@ || ($(RM) $@ && false)
+wine-doc-txt.tar.gz: $(ALLBOOKS:%=%.txt)
+	tar cf - $(ALLBOOKS:%=%.txt) | gzip -9 > $@ || ($(RM) $@ && false)
 
 install:: $(MAN_TARGETS)
 	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext) $(mandir)/man$(api_manext)
@@ -125,7 +122,8 @@ install-api-man::
 	for i in $(SRCDIR)/man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
 
 clean::
-	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log *.html wine-doc-*.tar.gz wine-faq.txt $(MAN_TARGETS)
-	$(RM) -r $(ALLBOOKS) html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
+	$(RM) *.aux *.dvi *.out *.tex *.log wine-doc-*.tar.gz wine-faq.html wine-faq.txt $(MAN_TARGETS)
+	$(RM) $(ALLBOOKS:%=%.ps) $(ALLBOOKS:%=%.pdf) $(ALLBOOKS:%=%.html) $(ALLBOOKS:%=%.txt)
+	$(RM) -r html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
