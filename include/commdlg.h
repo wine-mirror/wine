@@ -11,6 +11,7 @@ extern "C" {
 
 #include "windef.h"		/* needed for CHOOSEFONT structure */
 #include "winuser.h"
+#include "pshpack1.h"
 
 #define OFN_READONLY                 0x00000001
 #define OFN_OVERWRITEPROMPT          0x00000002
@@ -251,9 +252,6 @@ DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
 #define FR_HIDEMATCHCASE                0x00008000
 #define FR_HIDEWHOLEWORD                0x00010000
 
-
-#include "pshpack1.h"
-
 typedef struct 
 {
 	DWORD			lStructSize;
@@ -261,20 +259,20 @@ typedef struct
 	HDC16          	        hDC;                /* printer DC/IC or NULL    */
 	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
 	short			iPointSize;         /* 10 * size in points of selected font */
-	DWORD			Flags WINE_PACKED;  /* enum. type flags         */
+	DWORD			Flags;  /* enum. type flags         */
 	COLORREF		rgbColors;          /* returned text color      */
 	LPARAM	                lCustData;          /* data passed to hook fn.  */
         WNDPROC16               lpfnHook;
 	SEGPTR			lpTemplateName;     /* custom template name     */
 	HINSTANCE16		hInstance;          /* instance handle of.EXE that   */
 							/* contains cust. dlg. template  */
-	SEGPTR			lpszStyle WINE_PACKED;  /* return the style field here   */
+	SEGPTR			lpszStyle;  /* return the style field here   */
 							/* must be LF_FACESIZE or bigger */
 	UINT16			nFontType;          	/* same value reported to the    */
 						    	/* EnumFonts callback with the   */
 							/* extra FONTTYPE_ bits added    */
-	short			nSizeMin WINE_PACKED;   /* minimum pt size allowed & */
-	short			nSizeMax WINE_PACKED;   /* max pt size allowed if    */
+	short			nSizeMin;   /* minimum pt size allowed & */
+	short			nSizeMax;   /* max pt size allowed if    */
 							/* CF_LIMITSIZE is used      */
 } CHOOSEFONT16, *LPCHOOSEFONT16;
 
@@ -321,8 +319,6 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(CHOOSEFONT)
 DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
-
-#include "poppack.h"
 
 #define CF_SCREENFONTS               0x00000001
 #define CF_PRINTERFONTS              0x00000002
@@ -645,6 +641,8 @@ LRESULT WINAPI FormatCharDlgProcW(HWND,UINT,WPARAM,LPARAM);
 #define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
 
 void COMDLG32_SetCommDlgExtendedError(DWORD err); 
+
+#include "poppack.h"
 
 #ifdef __cplusplus
 }
