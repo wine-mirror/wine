@@ -25,7 +25,7 @@ DEFAULT_DEBUG_CHANNEL(thunk)
  */
 BOOL WINAPI WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
 {
-    return GetThreadSelectorEntry( GetCurrentThreadId(), 
+    return GetThreadSelectorEntry( GetCurrentThread(), 
                                    segptr >> 16, ldtent );
 }
 
@@ -345,8 +345,8 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
     argconvmask = VA_ARG16( valist, DWORD );
     proc32      = VA_ARG16( valist, FARPROC );
     TRACE("(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
-    args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
-                                sizeof(DWORD)*nrofargs );
+    args = (DWORD*)HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD)*nrofargs );
+    if(args == NULL) proc32 = NULL; /* maybe we should WARN here? */
     /* CallProcEx doesn't need its args reversed */
     for (i=0;i<nrofargs;i++) {
             if (Ex) {
@@ -357,13 +357,14 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
             if (argconvmask & (1<<i))
             {
                 SEGPTR ptr = VA_ARG16( valist, SEGPTR );
-                args[aix] = (DWORD)PTR_SEG_TO_LIN(ptr);
+                if (args) args[aix] = (DWORD)PTR_SEG_TO_LIN(ptr);
                 if (TRACE_ON(thunk)) DPRINTF("%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
             }
             else
             {
-                args[aix] = VA_ARG16( valist, DWORD );
-                if (TRACE_ON(thunk)) DPRINTF("%ld,",args[aix]);
+		DWORD arg = VA_ARG16( valist, DWORD );
+                if (args) args[aix] = arg;
+                if (TRACE_ON(thunk)) DPRINTF("%ld,", arg);
             }
     }
     if (TRACE_ON(thunk)) DPRINTF("])\n");
@@ -407,6 +408,7 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
             ret = 0;
             break;
     }
+
     /* POP nrofargs DWORD arguments and 3 DWORD parameters */
     if (!Ex) stack16_pop( (3 + nrofargs) * sizeof(DWORD) );
 
