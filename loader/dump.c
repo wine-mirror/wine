@@ -29,14 +29,14 @@ PrintFileHeader(struct ne_header_s *ne_header)
 	   ne_header->header_type[1]);
     printf("linker version: %d.%d\n", ne_header->linker_version,
 	   ne_header->linker_revision);
-    printf("format flags: %04.4x\n", ne_header->format_flags);
-    printf("automatic data segment: %04.4x\n", ne_header->auto_data_seg);
-    printf("CS:IP  %04.4x:%04.4x\n", ne_header->cs, ne_header->ip);
-    printf("SS:SP  %04.4x:%04.4x\n", ne_header->ss, ne_header->sp);
-    printf("additional flags: %02.2x\n", ne_header->additional_flags);
-    printf("operating system: %02.2x\n", ne_header->operating_system);
-    printf("fast load offset: %04.4x\n", ne_header->fastload_offset);
-    printf("fast load length: %04.4x\n", ne_header->fastload_length);
+    printf("format flags: %04x\n", ne_header->format_flags);
+    printf("automatic data segment: %04x\n", ne_header->auto_data_seg);
+    printf("CS:IP  %04x:%04x\n", ne_header->cs, ne_header->ip);
+    printf("SS:SP  %04x:%04x\n", ne_header->ss, ne_header->sp);
+    printf("additional flags: %02x\n", ne_header->additional_flags);
+    printf("operating system: %02x\n", ne_header->operating_system);
+    printf("fast load offset: %04x\n", ne_header->fastload_offset);
+    printf("fast load length: %04x\n", ne_header->fastload_length);
 }
 
 /**********************************************************************
@@ -49,10 +49,10 @@ PrintSegmentTable(struct ne_segment_table_entry_s *seg_table, int nentries)
 
     for (i = 0; i < nentries; i++)
     {
-	printf("  %2d: OFFSET %04.4x, LENGTH %04.4x, ",
+	printf("  %2d: OFFSET %04x, LENGTH %04x, ",
 	       i + 1, seg_table[i].seg_data_offset, 
 	       seg_table[i].seg_data_length);
-	printf("FLAGS %04.4x, MIN ALLOC %04.4x\n",
+	printf("FLAGS %04x, MIN ALLOC %04x\n",
 	       seg_table[i].seg_flags, seg_table[i].min_alloc);
     }
 }
@@ -85,9 +85,9 @@ PrintRelocationTable(char *exe_ptr,
     rep = (struct relocation_entry_s *) (sp + 1);
     for (i = 0; i < n_entries; i++, rep++)
     {
-	printf("  ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,",
+	printf("  ADDR TYPE %d,  TYPE %d,  OFFSET %04x,",
 	       rep->address_type, rep->relocation_type, rep->offset);
-	printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+	printf("TARGET %04x %04x\n", rep->target1, rep->target2);
     }
 }
 #endif /* ifndef WINELIB */

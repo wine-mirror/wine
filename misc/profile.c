@@ -25,8 +25,11 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "wine.h"
 #include "windows.h"
 #include "prototypes.h"
+#include "stddebug.h"
+/* #define DEBUG_PROFILE */
+/* #undef  DEBUG_PROFILE */
+#include "debug.h"
 
-/* #define DEBUG */
 
 #define STRSIZE 255
 #define xmalloc(x) malloc(x)
@@ -97,15 +100,11 @@ static TSecHeader *load (char *filename)
 
     file = GetIniFileName(filename);
 
-#ifdef DEBUG
-    printf("Load %s\n", file);
-#endif		
+    dprintf_profile(stddeb,"Load %s\n", file);
     if ((f = fopen (file, "r"))==NULL)
 	return NULL;
 
-#ifdef DEBUG
-    printf("Loading %s\n", file);
-#endif		
+    dprintf_profile(stddeb,"Loading %s\n", file);
 
 
     state = FirstBrace;
@@ -121,9 +120,7 @@ static TSecHeader *load (char *filename)
 		next = CharBuffer;
 		SecHeader->AppName = strdup (CharBuffer);
 		state = IgnoreToEOL;
-#ifdef DEBUG
-		printf("%s: section %s\n", file, CharBuffer);
-#endif		
+		dprintf_profile(stddeb,"%s: section %s\n", file, CharBuffer);
 	    } else
 		*next++ = c;
 	    break;
@@ -151,7 +148,7 @@ static TSecHeader *load (char *filename)
 	    if (state == FirstBrace) /* On first pass, don't allow dangling keys */
 		break;
 
-	    if (c == ' ' || c == '\t')
+	    if (c == '\t')
 		break;
 	    
 	    if (c == '\n' || c == ';' || overflow) /* Abort Definition */
@@ -167,15 +164,14 @@ static TSecHeader *load (char *filename)
 		TKeys *temp;
 
 		temp = SecHeader->Keys;
+		while(next[-1]==' ')next--;
 		*next = '\0';
 		SecHeader->Keys = (TKeys *) xmalloc (sizeof (TKeys));
 		SecHeader->Keys->link = temp;
 		SecHeader->Keys->KeyName = strdup (CharBuffer);
 		state = KeyValue;
 		next = CharBuffer;
-#ifdef DEBUG
-		printf("%s:   key %s\n", file, CharBuffer);
-#endif		
+		dprintf_profile(stddeb,"%s:   key %s\n", file, CharBuffer);
 	    } else
 		*next++ = c;
 	    break;
@@ -186,10 +182,8 @@ static TSecHeader *load (char *filename)
 		SecHeader->Keys->Value = strdup (CharBuffer);
 		state = c == '\n' ? KeyDef : IgnoreToEOL;
 		next = CharBuffer;
-#ifdef DEBUG
-		printf ("[%s] (%s)=%s\n", SecHeader->AppName,
+		dprintf_profile (stddeb, "[%s] (%s)=%s\n", SecHeader->AppName,
 			SecHeader->Keys->KeyName, SecHeader->Keys->Value);
-#endif
 	    } else
 		*next++ = c;
 	    break;
@@ -243,28 +237,25 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    char *p = ReturnedString;
 	    int left = Size - 2;
 	    int slen;
-#ifdef DEBUG_PROFILE
-		printf("GetSetProfile // KeyName == NULL, Enumeration !\n");
-#endif
+
+	    dprintf_profile(stddeb,"GetSetProfile // KeyName == NULL, Enumeration !\n");
 	    for (key = section->Keys; key; key = key->link){
 		if (left < 1) {
-			printf("GetSetProfile // No more storage for enum !\n");
+			dprintf_profile(stddeb,"GetSetProfile // No more storage for enum !\n");
 			return (Size - 2);
 			}
 		slen = min(strlen(key->KeyName) + 1, left);
-#ifdef DEBUG_PROFILE
-		printf("GetSetProfile // strncpy(%08X, %08X, %d);\n", 
+		dprintf_profile(stddeb,"GetSetProfile // strncpy(%08X, %08X, %d);\n", 
 				ReturnedString, key->Value, slen);
-#endif
 		strncpy (p, key->KeyName, slen);
-#ifdef DEBUG_PROFILE
-		printf("GetSetProfile // enum '%s' !\n", p);
-#endif
+		dprintf_profile(stddeb,"GetSetProfile // enum '%s' !\n", p);
 		left -= slen;
 		p += slen;
 	    }
 		*p = '\0';
+#ifdef DEBUG_PROFILE
 		printf("GetSetProfile // normal end of enum !\n");
+#endif
 	    return (Size - 2 - left);
 	}
 	for (key = section->Keys; key; key = key->link){
@@ -311,10 +302,8 @@ short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
 {
     int v;
 
-#ifdef DEBUG_PROFILE
-	printf("GetPrivateProfileString ('%s', '%s', '%s', %08X, %d, %s\n", 
+    dprintf_profile(stddeb,"GetPrivateProfileString ('%s', '%s', '%s', %08X, %d, %s\n", 
 			AppName, KeyName, Default, ReturnedString, Size, FileName);
-#endif
     v = GetSetProfile (0,AppName,KeyName,Default,ReturnedString,Size,FileName);
     if (AppName)
 	return strlen (ReturnedString);

@@ -318,10 +318,8 @@ BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
 		      ell_width, ell_height);
 	return TRUE;
     }
-/*
-    printf("RoundRect(%d %d %d %d  %d %d\n", 
+    dprintf_graphics(stddeb, "RoundRect(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
-*/
     x1 = XLPTODP(dc, left);
     y1 = YLPTODP(dc, top);
     x2 = XLPTODP(dc, right - ell_width);
@@ -518,19 +516,15 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
 
       /* Modify visible region */
 
-    prevVisRgn = SaveVisRgn( hdc );
-    if (prevVisRgn)
+    if (!(prevVisRgn = SaveVisRgn( hdc ))) return FALSE;
+    if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 )))
     {
-	if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 )))
-	{
-	    RestoreVisRgn( hdc );
-	    return FALSE;
-	}
-	CombineRgn( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
-	SelectVisRgn( hdc, tmpVisRgn );
-	DeleteObject( tmpVisRgn );
+        RestoreVisRgn( hdc );
+        return FALSE;
     }
-    else SelectVisRgn( hdc, hrgn );
+    CombineRgn( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
+    SelectVisRgn( hdc, tmpVisRgn );
+    DeleteObject( tmpVisRgn );
 
       /* Fill the region */
 
@@ -542,8 +536,7 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
 
       /* Restore the visible region */
 
-    if (prevVisRgn) RestoreVisRgn( hdc );
-    else SelectVisRgn( hdc, 0 );
+    RestoreVisRgn( hdc );
     return TRUE;
 }
 

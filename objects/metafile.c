@@ -897,7 +897,7 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
 BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
 {
-    dprintf_metafile(stdnimp,"MF_BitBlt: not implemented yet\n");
+    fprintf(stdnimp,"MF_BitBlt: not implemented yet\n");
 }
 
 
@@ -908,5 +908,5 @@ BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, HDC hdcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop)
 {
-    dprintf_metafile(stdnimp,"MF_StretchBlt: not implemented yet\n");
+    fprintf(stdnimp,"MF_StretchBlt: not implemented yet\n");
 }

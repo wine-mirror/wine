@@ -172,7 +172,7 @@ length	540
 167 pascal ShowCaret(word) ShowCaret(1)
 168 pascal SetCaretBlinkTime(word) SetCaretBlinkTime(1)
 169 pascal GetCaretBlinkTime() GetCaretBlinkTime()
-#170 ARRANGEICONICWINDOWS
+170 pascal ArrangeIconicWindows(word) ArrangeIconicWindows(1)
 171 pascal WinHelp(word ptr word long) WinHelp(1 2 3 4)
 #172 SWITCHTOTHISWINDOW
 173 pascal LoadCursor(word ptr) LoadCursor(1 2)
@@ -203,8 +203,8 @@ length	540
 		TabbedTextOut(1 2 3 4 5 6 7 8)
 197 pascal GETTABBEDTEXTEXTENT(word ptr word word ptr)
 	   GetTabbedTextExtent(1 2 3 4 5)
-#198 CASCADECHILDWINDOWS
-#199 TILECHILDWINDOWS
+198 pascal CascadeChildWindows(word word) CascadeChildWindows(1 2)
+199 pascal TileChildWindows(word word) TileChildWindows(1 2)
 200 pascal OpenComm(ptr word word) OpenComm(1 2 3)
 201 pascal SetCommState(ptr) SetCommState(1)
 202 pascal GetCommState(word ptr) GetCommState(1 2)
@@ -299,7 +299,7 @@ length	540
 284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources(1)
 #285 BEAR285
 286 pascal GetDesktopWindow() GetDesktopWindow()
-#287 GETLASTACTIVEPOPUP
+287 pascal GetLastActivePopup(word) GetLastActivePopup(1)
 288 pascal GetMessageExtraInfo() GetMessageExtraInfo()
 #289 KEYB_EVENT
 290 pascal RedrawWindow(word ptr word word) RedrawWindow(1 2 3 4)

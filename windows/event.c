@@ -11,6 +11,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 #include "windows.h"
 #include "win.h"
@@ -140,6 +141,9 @@ static void EVENT_MotionNotify( XMotionEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event);
+static void EVENT_SelectionNotify( HWND hwnd, XSelectionEvent *event);
+static void EVENT_SelectionClear( HWND hwnd, XSelectionClearEvent *event);
 
 
 /***********************************************************************
@@ -197,6 +201,18 @@ void EVENT_ProcessEvent( XEvent *event )
 
     case ConfigureNotify:
 	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
+	break;
+
+    case SelectionRequest:
+	EVENT_SelectionRequest( hwnd, (XSelectionRequestEvent*)event );
+	break;
+
+    case SelectionNotify:
+	EVENT_SelectionNotify( hwnd, (XSelectionEvent*)event );
+	break;
+
+    case SelectionClear:
+	EVENT_SelectionClear( hwnd, (XSelectionClearEvent*) event );
 	break;
 
     default:    
@@ -443,6 +459,65 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     desktopY = event->y;
 }
 
+
+/***********************************************************************
+ *           EVENT_SelectionRequest
+ */
+static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
+{
+    XSelectionEvent result;
+    Atom rprop;
+    Window request=event->requestor;
+    rprop=None;
+    if(event->target == XA_STRING)
+    {
+	HANDLE hText;
+	LPSTR text;
+        rprop=event->property;
+	if(rprop == None)rprop=event->target;
+        if(event->selection!=XA_PRIMARY)rprop=None;
+        else if(!IsClipboardFormatAvailable(CF_TEXT))rprop=None;
+	else{
+            /* don't open the clipboard, just get the data */
+	    hText=GetClipboardData(CF_TEXT);
+	    text=GlobalLock(hText);
+	    XChangeProperty(display,request,rprop,XA_STRING,
+		8,PropModeReplace,text,strlen(text));
+	    GlobalUnlock(hText);
+	}
+    }
+    if(rprop==None) dprintf_event(stddeb,"Request for %s ignored\n",
+	XGetAtomName(display,event->target));
+    result.type=SelectionNotify;
+    result.display=display;
+    result.requestor=request;
+    result.selection=event->selection;
+    result.property=rprop;
+    result.target=event->target;
+    result.time=event->time;
+    XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
+}
+
+
+/***********************************************************************
+ *           EVENT_SelectionNotify
+ */
+static void EVENT_SelectionNotify(HWND hwnd, XSelectionEvent *event)
+{
+    if(event->selection!=XA_PRIMARY)return;
+    if(event->target!=XA_STRING)CLIPBOARD_ReadSelection(0,None);
+    CLIPBOARD_ReadSelection(event->requestor,event->property);
+}
+
+
+/***********************************************************************
+ *           EVENT_SelectionClear
+ */
+static void EVENT_SelectionClear(HWND hwnd, XSelectionClearEvent *event)
+{
+    if(event->selection!=XA_PRIMARY)return;
+    CLIPBOARD_ReleaseSelection(); 
+}
 
 /**********************************************************************
  *		SetCapture 	(USER.18)

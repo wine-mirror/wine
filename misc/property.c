@@ -3,9 +3,6 @@
  */
 static char Copyright[] = "Copyright Martin Ayotte, 1994";
 
-/*
-#define DEBUG_PROP
-*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,6 +11,11 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include "windows.h"
 #include "heap.h"
 #include "win.h"
+#include "callback.h"
+#include "stddebug.h"
+/* #define DEBUG_PROP */
+/* #undef  DEBUG_PROP */
+#include "debug.h"
 
 typedef struct tagPROPENTRY {
 	LPSTR		PropName;
@@ -33,12 +35,10 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
     WND 		*wndPtr;
 	LPPROPENTRY lpProp;
 	HANDLE		hOldData;
-#ifdef DEBUG_PROP
 	if (((DWORD)lpStr & 0xFFFF0000) == 0L)
-		printf("RemoveProp(%04X, Atom %04X)\n", hWnd, LOWORD((DWORD)lpStr));
+		dprintf_prop(stddeb, "RemoveProp(%04X, Atom %04X)\n", hWnd, LOWORD((DWORD)lpStr));
 	else
-		printf("RemoveProp(%04X, '%s')\n", hWnd, lpStr);
-#endif
+		dprintf_prop(stddeb, "RemoveProp(%04X, '%s')\n", hWnd, lpStr);
 	wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) {
     	printf("RemoveProp // Bad Window handle !\n");
@@ -46,9 +46,7 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) {
-#ifdef DEBUG_PROP
-		printf("Property List Empty !\n");
-#endif
+		dprintf_prop(stddeb, "Property List Empty !\n");
 		return 0;
 		}
 	while (TRUE) {
@@ -57,9 +55,7 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
 			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
-#ifdef DEBUG_PROP
-		   	printf("RemoveProp // Property found ! hData=%04X\n", lpProp->hData);
-#endif
+		   	dprintf_prop(stddeb, "RemoveProp // Property found ! hData=%04X\n", lpProp->hData);
 			hOldData = lpProp->hData;
 			if (lpProp->lpPrevProp != NULL) 
 				lpProp->lpPrevProp->lpNextProp = lpProp->lpNextProp;
@@ -74,9 +70,7 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 		lpProp = lpProp->lpNextProp;
 		}
 	GlobalUnlock(wndPtr->hProp);
-#ifdef DEBUG_PROP
-   	printf("RemoveProp // Property not found !\n");
-#endif
+   	dprintf_prop(stddeb, "RemoveProp // Property not found !\n");
 	return 0;
 }
 
@@ -88,12 +82,10 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
 {
     WND 		*wndPtr;
 	LPPROPENTRY lpProp;
-#ifdef DEBUG_PROP
 	if (((DWORD)lpStr & 0xFFFF0000) == 0L)
-		printf("GetProp(%04X, Atom %04X)\n", hWnd, LOWORD((DWORD)lpStr));
+		dprintf_prop(stddeb, "GetProp(%04X, Atom %04X)\n", hWnd, LOWORD((DWORD)lpStr));
 	else
-		printf("GetProp(%04X, '%s')\n", hWnd, lpStr);
-#endif
+		dprintf_prop(stddeb, "GetProp(%04X, '%s')\n", hWnd, lpStr);
 	wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) {
     	printf("GetProp // Bad Window handle !\n");
@@ -101,9 +93,7 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) {
-#ifdef DEBUG_PROP
-		printf("Property List Empty !\n");
-#endif
+		dprintf_prop(stddeb, "Property List Empty !\n");
 		return 0;
 		}
 	while (TRUE) {
@@ -112,18 +102,14 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
 			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
-#ifdef DEBUG_PROP
-		   	printf("GetProp // Property found ! hData=%04X\n", lpProp->hData);
-#endif
+		   	dprintf_prop(stddeb, "GetProp // Property found ! hData=%04X\n", lpProp->hData);
 			GlobalUnlock(wndPtr->hProp);
 			return lpProp->hData;
 			}
 		if (lpProp->lpNextProp == NULL) break;
 		lpProp = lpProp->lpNextProp;
 		}
-#ifdef DEBUG_PROP
-   	printf("GetProp // Property not found !\n");
-#endif
+   	dprintf_prop(stddeb, "GetProp // Property not found !\n");
 	GlobalUnlock(wndPtr->hProp);
 	return 0;
 }
@@ -138,13 +124,11 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
     HANDLE 		hNewProp;
 	LPPROPENTRY lpNewProp;
 	LPPROPENTRY lpProp;
-#ifdef DEBUG_PROP
 	if (((DWORD)lpStr & 0xFFFF0000) == 0L)
-		printf("SetProp(%04X, Atom %04X, %04X)\n", 
+		dprintf_prop(stddeb, "SetProp(%04X, Atom %04X, %04X)\n", 
 				hWnd, LOWORD((DWORD)lpStr), hData);
 	else
-		printf("SetProp(%04X, '%s', %04X)\n", hWnd, lpStr, hData);
-#endif
+		dprintf_prop(stddeb, "SetProp(%04X, '%s', %04X)\n", hWnd, lpStr, hData);
 	wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) {
     	printf("SetProp // Bad Window handle !\n");
@@ -158,9 +142,7 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 				(((DWORD)lpStr & 0xFFFF0000) != 0L && 
 				lpProp->PropName != NULL &&
 				strcmp(lpProp->PropName, lpStr) == 0)) {
-#ifdef DEBUG_PROP
-			    printf("SetProp // change already exinsting property !\n");
-#endif
+			    dprintf_prop(stddeb, "SetProp // change already exinsting property !\n");
 				lpProp->hData = hData;
 				GlobalUnlock(wndPtr->hProp);
 				return TRUE;
@@ -176,15 +158,11 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 		GlobalUnlock(wndPtr->hProp);
     	return FALSE;
 		}
-#ifdef DEBUG_PROP
-    printf("SetProp // entry allocated %08X\n", lpNewProp);
-#endif
+    dprintf_prop(stddeb, "SetProp // entry allocated %08X\n", lpNewProp);
 	if (lpProp == NULL) {
 		wndPtr->hProp = hNewProp;
 		lpNewProp->lpPrevProp = NULL;
-#ifdef DEBUG_PROP
-	    printf("SetProp // first entry \n");
-#endif
+	    dprintf_prop(stddeb, "SetProp // first entry \n");
 		}
 	else {
 		lpProp->lpNextProp = lpNewProp;
@@ -232,7 +210,7 @@ int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
 		printf("Property List Empty !\n");
 		return 0;
 		}
-	if (lpEnumFunc != NULL)	return 0;
+	if (lpEnumFunc == NULL)	return 0;
 	while (TRUE) {
     	printf("EnumProps // lpProp->Atom=%04X !\n", lpProp->Atom);
 		str = (LPSTR)MAKELONG(lpProp->Atom, 0); 
@@ -244,8 +222,10 @@ int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
 		nRet = (*lpEnumFunc)((HWND)hWnd, (WORD)0, 
 			(LPSTR)str, (HANDLE)lpProp->hData);
 #else
-		nRet = CallBack16(lpEnumFunc, 4, (HANDLE)lpProp->hData, 
-							(LPSTR)str, (WORD)0, (HWND)hWnd);
+		nRet = CallBack16(lpEnumFunc, 3,
+		    CALLBACK_SIZE_WORD, (HWND)hWnd,
+		    CALLBACK_SIZE_LONG, (LPSTR)str,
+		    CALLBACK_SIZE_WORD, (HANDLE)lpProp->hData);
 #endif
 		if (nRet == 0) break;
 		if (lpProp->lpNextProp == NULL) break;

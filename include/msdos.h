@@ -30,25 +30,24 @@ struct fcb {
 #define DOSVERSION 0x0330;
 #define MAX_DOS_DRIVES	26
 
-#define pointer(a,b) 	(BYTE*)(((WORD) a << 16) | b)
-#define segment(a) 	((DWORD)a >> 16)
-#define offset(a)	((DWORD)a & 0xffff)
+#define segment(a) 	((DWORD)(a) >> 16)
+#define offset(a)	((DWORD)(a) & 0xffff)
 
-#define setword(a,b)	*(BYTE*)(a)	= b & 0xff; \
-			*((BYTE*)(a + 1)) = (b>>8) & 0xff;
+#define setword(a,b)	*(BYTE*)(a)	  = (b) & 0xff; \
+			*((BYTE*)((a)+1)) = ((b)>>8) & 0xff;
 			
-#define setdword(a,b)	*(BYTE*)a	= b & 0xff; \
-			*((BYTE*)a + 1) = (b>>8) & 0xff; \
-			*((BYTE*)a + 2) = (b>>16) & 0xff; \
-			*((BYTE*)a + 3) = (b>>24) & 0xff;
+#define setdword(a,b)	*(BYTE*)(a)	= (b) & 0xff; \
+			*((BYTE*)(a)+1) = ((b)>>8) & 0xff; \
+			*((BYTE*)(a)+2) = ((b)>>16) & 0xff; \
+			*((BYTE*)(a)+3) = ((b)>>24) & 0xff;
 
-#define getword(a)	(WORD) *(BYTE*)a + \
-			(*((BYTE*)a + 1) << 8)
+#define getword(a)	(WORD) *(BYTE*)(a) + \
+			(*((BYTE*)(a) + 1) << 8)
 
-#define getdword(a)	(DWORD) (*(BYTE*)a + \
-			(*((BYTE*)a + 1) << 8) + \
-			(*((BYTE*)a + 2) << 16) + \
-			(*((BYTE*)a + 3) << 24))
+#define getdword(a)	(DWORD) (*(BYTE*)(a) + \
+			(*((BYTE*)(a) + 1) << 8) + \
+			(*((BYTE*)(a) + 2) << 16) + \
+			(*((BYTE*)(a) + 3) << 24))
 
 /* dos file attributes */
 

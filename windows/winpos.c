@@ -1,10 +1,10 @@
 /*
  * Window position related functions.
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include "sysmetrics.h"
 #include "user.h"
@@ -12,8 +12,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "message.h"
 #include "winpos.h"
 #include "stddebug.h"
-/* #define DEBUG_WIN /* */
-/* #undef  DEBUG_WIN /* */
+/* #define DEBUG_WIN */
+/* #undef  DEBUG_WIN */
 #include "debug.h"
 
 static HWND hwndActive = 0;  /* Currently active window */
@@ -90,9 +90,11 @@ HWND WindowFromPoint( POINT pt )
 	    (wndPtr->dwStyle & WS_VISIBLE) &&
 	    !(wndPtr->dwExStyle & WS_EX_TRANSPARENT))
 	{
+	    hwndRet = hwnd;
+              /* If window is minimized, ignore its children */
+            if (wndPtr->dwStyle & WS_MINIMIZE) break;
 	    pt.x -= wndPtr->rectClient.left;
 	    pt.y -= wndPtr->rectClient.top;
-	    hwndRet = hwnd;
 	    hwnd = wndPtr->hwndChild;
 	}
 	else hwnd = wndPtr->hwndNext;
@@ -224,47 +226,6 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 }
 
 
-#if 0
-/*
- * hwnd is the handle to the first child window to hide
- */
-static void WINPOS_hideChildren(HWND hwnd)
-{
-    WND *wndPtr;
-
-    while (hwnd) {
-	ShowWindow(hwnd, SW_HIDE);
-	wndPtr = WIN_FindWndPtr(hwnd);
-	assert(wndPtr);
-	WINPOS_hideChildren(wndPtr->hwndChild); 
-	hwnd = wndPtr->hwndNext;
-    }
-}
-
-
-static void WINPOS_ChildrenComeOutToPlay(HWND hwnd)
-{
-    WND *wndPtr;
-    
-    while (hwnd) {
-	/*
-	 * we shouldn't really be calling SW_SHOWNOACTIVATE
-	 * here because we wake up all windows, even the ones
-	 * the user has decided to iconify or hide
-	 *
-	 * have to use SHOWNOACTIVATE instead of SHOWNORMAL
-	 * since we are traversing the window tree and don't
-	 * want windows linked/unlined under us
-	 */
-	ShowWindow(hwnd, SW_SHOWNOACTIVATE);
-	wndPtr = WIN_FindWndPtr(hwnd);
-	assert(wndPtr);
-	WINPOS_ChildrenComeOutToPlay(wndPtr->hwndChild); 
-	hwnd = wndPtr->hwndNext;
-    }
-}
-#endif
-
 /***********************************************************************
  *           ShowWindow   (USER.42)
  */
@@ -305,13 +266,6 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 
-#if 0
-	    /*
-	     *	tell children that they are getting hidden
-	     */
-	    WINPOS_hideChildren(wndPtr->hwndChild);
-#endif
-
 	    /* store the size and position of the window, so we can
 	     *	deiconify it to the same size and position	
 	     */
@@ -323,9 +277,8 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	     */
             MoveWindow(hwnd, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
                        SYSMETRICS_CXICON, SYSMETRICS_CYICON, FALSE);
-            SendMessage(hwnd, WM_PAINTICON, 0, 0);
+            RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_ERASENOW );
 	    break;
-
 
 	case SW_SHOWNA:
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE: */
@@ -353,9 +306,6 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 			   wndPtr->rectNormal.bottom - wndPtr->rectNormal.top, 
 			   FALSE);
 	    }
-#if 0
-	    WINPOS_ChildrenComeOutToPlay(wndPtr->hwndChild);
-#endif
 	    break;
     }
 
@@ -894,6 +844,7 @@ HDWP BeginDeferWindowPos( INT count )
     pDWP->suggestedCount = count;
     pDWP->valid          = TRUE;
     pDWP->wMagic         = DWP_MAGIC;
+    pDWP->hwndParent     = 0;
     return handle;
 }
 
@@ -910,6 +861,16 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
 
     pDWP = (DWP *) USER_HEAP_ADDR( hdwp );
     if (!pDWP) return 0;
+
+      /* All the windows of a DeferWindowPos() must have the same parent */
+
+    if (pDWP->actualCount == 0) pDWP->hwndParent = GetParent( hwnd );
+    else if (GetParent( hwnd ) != pDWP->hwndParent)
+    {
+        USER_HEAP_FREE( hdwp );
+        return 0;
+    }
+
     for (i = 0; i < pDWP->actualCount; i++)
     {
         if (pDWP->winPos[i].hwnd == hwnd)
@@ -986,12 +947,35 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 {
     HDWP hdwp;
 
-#ifdef DEBUG_WIN
-    printf( "SetWindowPos: %04X %d %d,%d %dx%d 0x%x\n",
+    dprintf_win(stddeb, "SetWindowPos: %04X %d %d,%d %dx%d 0x%x\n",
             hwnd, hwndInsertAfter, x, y, cx, cy, flags );
-#endif
     if (!(hdwp = BeginDeferWindowPos( 1 ))) return FALSE;
     if (!(hdwp = DeferWindowPos( hdwp, hwnd, hwndInsertAfter,
                                  x, y, cx, cy, flags ))) return FALSE;
     return EndDeferWindowPos( hdwp );
+}
+
+/***********************************************************************
+ *           TileChildWindows   (USER.199)
+ */
+void TileChildWindows( HWND parent, WORD action )
+{
+    printf("STUB TileChildWindows(%04X, %d)\n", parent, action);
+}
+
+/***********************************************************************
+ *           CascageChildWindows   (USER.198)
+ */
+void CascadeChildWindows( HWND parent, WORD action )
+{
+    printf("STUB CascadeChildWindows(%04X, %d)\n", parent, action);
+}
+
+/***********************************************************************
+ *           ArrangeIconicWindows   (USER.170)
+ */
+WORD ArrangeIconicWindows( HWND parent )
+{
+    printf("STUB ArrangeIconicWindows(%04X)\n", parent);
+    return 0;
 }

@@ -84,7 +84,6 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_NCPAINT:
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
-
     case WM_NCHITTEST:
 	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );
 
@@ -239,7 +238,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     case WM_SYSKEYDOWN:
 	if (wParam == VK_MENU)
-	    SendMessage( hwnd, WM_SYSCOMMAND, SC_KEYMENU, 0L );
+	{   /* Send to WS_OVERLAPPED parent. TODO: Handle MDI */
+	    HWND top;
+            for(top=hwnd;GetParent(top)!=0;top=GetParent(top));
+	    SendMessage( top, WM_SYSCOMMAND, SC_KEYMENU, 0L );
+	}
 	break;
 
     case WM_SYSKEYUP:

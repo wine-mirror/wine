@@ -3,18 +3,17 @@
 
 MODULE = if1632
 
-#ifdef WINELIB
 SRCS = \
 	callback.c \
 	relay.c
-#else
-SRCS = \
-	call.S \
-	callback.c \
-	relay.c
-#endif
 
+#ifdef WINELIB
+CALLOBJS =
+DLLOBJS =
+#else
+CALLOBJS = call.o
 DLLOBJS = \
+	dll_commdlg.o \
 	dll_gdi.o \
 	dll_kernel.o \
 	dll_keyboard.o \
@@ -29,22 +28,18 @@ DLLOBJS = \
 	dll_user.o \
 	dll_win87em.o \
 	dll_winsock.o
-
-#ifdef WINELIB
-DLLOBJS=
 #endif
 
-OBJS1= $(SRCS:.S=.o)
-
 #ifndef NewBuild
-OBJS = $(DLLOBJS) $(OBJS1:.c=.o) $(DLLOBJS:.o=_tab.o)
+OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o)
 #else
-OBJS = $(DLLOBJS) $(OBJS1:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.rly_)
+OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.rly_)
 #endif
 
 /*
  * If you add a new spec file, copy one of these lines
  */
+MakeDllFromSpec(commdlg,$(TOP)/$(MODULE))
 MakeDllFromSpec(gdi,$(TOP)/$(MODULE))
 MakeDllFromSpec(kernel,$(TOP)/$(MODULE))
 MakeDllFromSpec(keyboard,$(TOP)/$(MODULE))
@@ -63,10 +58,13 @@ MakeDllFromSpec(winsock,$(TOP)/$(MODULE))
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
 
+#ifndef WINELIB
 pop.h: $(TOP)/tools/build
 	$(TOP)/tools/build -p
 
-call.s: call.S pop.h
+call.o: call.S pop.h
+	gcc -I. -c -o call.o call.S
+#endif
 
 includes::
 	touch pop.h

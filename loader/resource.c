@@ -19,10 +19,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dlls.h"
 #include "resource.h"
 #include "stddebug.h"
-/* #define DEBUG_RESOURCE /* */
-/* #undef  DEBUG_RESOURCE /* */
-/* #define DEBUG_ACCEL    /* */
-/* #undef  DEBUG_ACCEL    /* */
+/* #define DEBUG_RESOURCE */
+/* #undef  DEBUG_RESOURCE */
+/* #define DEBUG_ACCEL    */
+/* #undef  DEBUG_ACCEL    */
 #include "debug.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
@@ -110,9 +110,8 @@ HANDLE AllocResource(HANDLE instance, HANDLE hResInfo, DWORD dwSize)
 	RESOURCE *r;
 	int image_size;
 
-#ifdef DEBUG_RESOURCE
-	printf("AllocResource(%04X, %04X, %08X);\n", instance, hResInfo, (int) dwSize);
-#endif 
+	dprintf_resource(stddeb, "AllocResource(%04X, %04X, %08X);\n", 
+		instance, hResInfo, (int) dwSize);
 
 	if (instance == (HANDLE)NULL)
 		instance = hSysRes;
@@ -140,9 +139,8 @@ int AccessResource(HANDLE instance, HANDLE hResInfo)
 	int fd;
 	RESOURCE *r;
 
-#ifdef DEBUG_RESOURCE
-	printf("AccessResource(%04X, %04X);\n", instance, hResInfo);
-#endif
+	dprintf_resource(stddeb, "AccessResource(%04X, %04X);\n", 
+		instance, hResInfo);
 
 	if (instance == (HANDLE)NULL)
 		instance = hSysRes;
@@ -165,9 +163,8 @@ WORD SizeofResource(HANDLE instance, HANDLE hResInfo)
 	RESOURCE *r;
 	int size;
 	
-#ifdef DEBUG_RESOURCE
-	printf("SizeofResource(%04X, %04X);\n", instance, hResInfo);
-#endif
+	dprintf_resource(stddeb, "SizeofResource(%04X, %04X);\n", 
+		instance, hResInfo);
 
 	if (instance == (HANDLE)NULL)
 		instance = hSysRes;
@@ -191,9 +188,7 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
     void *image;
     HANDLE h;
 
-#ifdef DEBUG_RESOURCE
-	printf("LoadResource(%04X, %04X);\n", instance, hResInfo);
-#endif
+    dprintf_resource(stddeb, "LoadResource(%04X, %04X);\n", instance, hResInfo);
 
     if (instance == (HANDLE)NULL)
 	instance = hSysRes;
@@ -233,9 +228,7 @@ HANDLE FreeResource(HANDLE hResData)
 {
     RESOURCE *r, *rp;
 
-#ifdef DEBUG_RESOURCE
-    printf("FreeResource: handle %04x\n", hResData);
-#endif
+    dprintf_resource(stddeb, "FreeResource: handle %04x\n", hResData);
 
     for (r = rp = Top; r ; r = r->next) {
 	if (r->rsc_mem == hResData) {
@@ -269,9 +262,8 @@ HBITMAP ConvertCoreBitmap( HDC hdc, BITMAPCOREHEADER * image )
     HBITMAP hbitmap;
     char * bits;
     int i, size, n_colors;
-    
+   
     n_colors = 1 << image->bcBitCount;
-
     if (image->bcBitCount < 24)
     {
 	size = sizeof(BITMAPINFOHEADER) + n_colors * sizeof(RGBQUAD);	
@@ -337,10 +329,8 @@ RSC_LoadResource(int instance, LPSTR rsc_name, LPSTR type, int *image_size_ret)
 	if (instance == (HANDLE)NULL)
 		instance = hSysRes;
 
-#ifdef DEBUG_RESOURCE
-	printf("RSC_LoadResource: instance = %04x, name = %08x, type = %08x\n",
+	dprintf_resource(stddeb, "RSC_LoadResource: instance = %04x, name = %08x, type = %08x\n",
 	   instance, (int) rsc_name, (int) type);
-#endif
 
 	if ((hResInfo = FindResource(instance, rsc_name, (LPSTR) type)) == (HANDLE) NULL) {
 		return (HANDLE)NULL;
@@ -371,6 +361,7 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     HDC 	hMemDC2;
     HDC 	hdc;
     int 	image_size;
+    HBITMAP     hbmpOld1, hbmpOld2;
 
 #ifdef DEBUG_RESOURCE
 	printf("LoadIcon(%04X", instance);
@@ -458,9 +449,11 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     GlobalFree(rsc_mem);
     hMemDC = CreateCompatibleDC(hdc);
     hMemDC2 = CreateCompatibleDC(hdc);
-    SelectObject(hMemDC, lpico->hBitmap);
-    SelectObject(hMemDC2, lpico->hBitMask);
-    BitBlt(hMemDC, 0, 0, bih->biWidth, bih->biHeight, hMemDC2, 0, 0, SRCINVERT);
+    hbmpOld1 = SelectObject(hMemDC, lpico->hBitmap);
+    hbmpOld2 = SelectObject(hMemDC2, lpico->hBitMask);
+    BitBlt(hMemDC, 0, 0, bih->biWidth, bih->biHeight, hMemDC2, 0, 0,SRCINVERT);
+    SelectObject( hMemDC, hbmpOld1 );
+    SelectObject( hMemDC2, hbmpOld2 );
     DeleteDC(hMemDC);
     DeleteDC(hMemDC2);
     ReleaseDC(GetDesktopWindow(), hdc);
@@ -479,13 +472,11 @@ HICON CreateIcon(HANDLE hInstance, int nWidth, int nHeight,
     HICON 	hIcon;
     ICONALLOC	*lpico;
 
-#ifdef DEBUG_RESOURCE
-    printf("CreateIcon: hInstance = %04x, nWidth = %08x, nHeight = %08x \n",
+    dprintf_resource(stddeb, "CreateIcon: hInstance = %04x, nWidth = %08x, nHeight = %08x \n",
 	    hInstance, nWidth, nHeight);
-    printf("  nPlanes = %04x, nBitsPixel = %04x,",nPlanes, nBitsPixel);
-    printf(" lpANDbits= %04x, lpXORbits = %04x, \n", (int)lpANDbits,
+    dprintf_resource(stddeb, "  nPlanes = %04x, nBitsPixel = %04x,",nPlanes, nBitsPixel);
+    dprintf_resource(stddeb, " lpANDbits= %04x, lpXORbits = %04x, \n", (int)lpANDbits,
     		(int)lpXORbits);
-#endif
 
     if (hInstance == (HANDLE)NULL) { 
         printf("CreateIcon / hInstance %04x not Found!\n",hInstance);
@@ -522,9 +513,7 @@ HICON CreateIcon(HANDLE hInstance, int nWidth, int nHeight,
     }
 
     GlobalUnlock(hIcon);
-#ifdef DEBUG_RESOURCE
-    printf("CreateIcon Alloc hIcon=%X\n", hIcon);
-#endif
+    dprintf_resource(stddeb, "CreateIcon Alloc hIcon=%X\n", hIcon);
     return hIcon;
 }
 
@@ -612,9 +601,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
     	msg->message != WM_KEYUP &&
     	msg->message != WM_CHAR) return 0;
 
-#ifdef DEBUG_ACCEL
-    printf("TranslateAccelerators hAccel=%04X !\n", hAccel);
-#endif
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04X !\n", hAccel);
 
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
@@ -667,10 +654,8 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     int string_num;
     int i;
 
-#ifdef DEBUG_RESOURCE
-    printf("LoadString: instance = %04x, id = %d, buffer = %08x, "
+    dprintf_resource(stddeb, "LoadString: instance = %04x, id = %d, buffer = %08x, "
 	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
-#endif
 
     hmem = RSC_LoadResource(instance, (char *) ((resource_id >> 4) + 1),
 			    (LPSTR) NE_RSCTYPE_STRING, &rsc_size);
@@ -760,7 +745,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	return 0;
 	}
     lp = (long *) GlobalLinearLock(rsc_mem);
-    if (!(hdc = GetDC(0))) lp == NULL;
+    if (!(hdc = GetDC(0))) lp = NULL;
     if (lp == NULL)
     {
 	GlobalFree(rsc_mem);

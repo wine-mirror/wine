@@ -232,6 +232,8 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     BITMAPINFO * bmpInfo;
     HBRUSH prevHandle = dc->w.hBrush;
 
+    dprintf_gdi(stddeb, "Brush_SelectObject   hdc=%04x  hbrush=%04x\n",
+		hdc,hbrush);
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
     {
 	switch (brush->logbrush.lbStyle)
@@ -264,13 +266,16 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     switch(brush->logbrush.lbStyle)
     {
       case BS_NULL:
+	dprintf_gdi( stddeb,"BS_NULL\n" );
 	break;
 
       case BS_SOLID:
+        dprintf_gdi( stddeb,"BS_SOLID\n" );
 	BRUSH_SelectSolidBrush( dc, brush->logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
+	dprintf_gdi( stddeb, "BS_HATCHED\n" );
 	dc->u.x.brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
 	dc->u.x.brush.pixmap = XCreateBitmapFromData( display, rootWindow,
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
@@ -278,10 +283,12 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	break;
 	
       case BS_PATTERN:
+	dprintf_gdi( stddeb, "BS_PATTERN\n");
 	BRUSH_SelectPatternBrush( dc, brush->logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
+	dprintf_gdi( stddeb, "BS_DIBPATTERN\n");
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock( brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );

@@ -46,6 +46,7 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "SYSTEM",  WineLibSkip(SYSTEM_table),   20 ,12},
     { "TOOLHELP",WineLibSkip(TOOLHELP_table), 83, 13},
     { "MOUSE",   WineLibSkip(MOUSE_table),     8, 14},
+    { "EMUCOMMDLG", WineLibSkip(COMMDLG_table),  31, 15},
 };
 /* don't forget to increase N_BUILTINS in dll.h if you add a dll */
 

@@ -1195,7 +1195,7 @@ typedef OFSTRUCT *LPOFSTRUCT;
 typedef struct tagDCB
 {
     BYTE Id;
-    UINT BaudRate;
+    UINT BaudRate WINE_PACKED;
     BYTE ByteSize;
     BYTE Parity;
     BYTE StopBits;
@@ -1227,15 +1227,15 @@ typedef struct tagDCB
     char PeChar;
     char EofChar;
     char EvtChar;
-    UINT TxDelay;
+    UINT TxDelay WINE_PACKED;
 } DCB;
 typedef DCB FAR* LPDCB;
 
 typedef struct tagCOMSTAT
 {
     BYTE status;
-    UINT cbInQue;
-    UINT cbOutQue;
+    UINT cbInQue WINE_PACKED;
+    UINT cbOutQue WINE_PACKED;
 } COMSTAT;
 
 #define CSTF_CTSHOLD	0x01
@@ -2655,6 +2655,7 @@ Fb(BOOL,GetTextMetrics,HDC,a,LPTEXTMETRIC,b)
 Fb(BOOL,InvertRgn,HDC,a,HRGN,b)
 Fb(BOOL,IsChild,HWND,a,HWND,b)
 Fb(BOOL,IsDialogMessage,HWND,a,LPMSG,b)
+Fb(BOOL,KillSystemTimer,HWND,a,WORD,b)
 Fb(BOOL,KillTimer,HWND,a,WORD,b)
 Fb(BOOL,OemToAnsi,LPSTR,a,LPSTR,b)
 Fb(BOOL,PaintRgn,HDC,a,HRGN,b)
@@ -2916,6 +2917,7 @@ Fd(WORD,GetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(WORD,GetPrivateProfileInt,LPSTR,a,LPSTR,b,short,c,LPSTR,d)
 Fd(WORD,GetSystemPaletteEntries,HDC,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(WORD,SetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
+Fd(WORD,SetSystemTimer,HWND,a,WORD,d,WORD,b,FARPROC,c)
 Fd(WORD,SetTimer,HWND,a,WORD,d,WORD,b,FARPROC,c)
 Fd(BOOL,SetViewportExtEx,HDC,a,short,b,short,c,LPSIZE,d)
 Fd(BOOL,SetViewportOrgEx,HDC,a,short,b,short,c,LPPOINT,d)

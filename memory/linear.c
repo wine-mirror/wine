@@ -164,7 +164,7 @@ GlobalLinearUnlock(unsigned int block)
 }
 /**********************************************************************/
 
-LinearTest()
+void LinearTest()
 {
 #if 0
     unsigned int handle;

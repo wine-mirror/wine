@@ -186,12 +186,14 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetWindowsDirectory (filename,MAX_PATH);
-	  if (filename[1] != ':') strcat(filename,"\\");
+	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
+            strcat(filename, "\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetSystemDirectory (filename,MAX_PATH);
-	  if (filename[1] != ':') strcat(filename,"\\");
+	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
+ 	    strcat(filename, "\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;

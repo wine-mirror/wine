@@ -62,9 +62,9 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 	case LF:
 	    if (!(format & DT_SINGLELINE))
 	    {
-		i++;
-		if (str[i] == CR || str[i] == LF)
+		if (str[i] == CR && str[i+1] == LF)
 		    i++;
+		i++;
 		*len = j;
 		return (&str[i]);
 	    }
@@ -188,6 +188,7 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     TEXTMETRIC tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
+    int max_width = 0;
 
     dprintf_text(stddeb,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
 	   rect->left, rect->top, rect->right, rect->bottom);
@@ -237,8 +238,12 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 	}
 	if (!(flags & DT_CALCRECT))
+	{
 	    if (!ExtTextOut( hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
                              rect, line, len, NULL )) return 0;
+	}
+	else if (size.cx > max_width)
+	    max_width = size.cx;
 
 	if (prefix_offset != -1)
 	{
@@ -250,9 +255,9 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    DeleteObject( hpen );
 	}
 
+	y += lh;
 	if (strPtr)
 	{
-	    y += lh;
 	    if (!(flags & DT_NOCLIP))
 	    {
 		if (y > rect->bottom - lh)
@@ -261,7 +266,11 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	}
     }
     while (strPtr);
-    if (flags & DT_CALCRECT) rect->bottom = y;
+    if (flags & DT_CALCRECT)
+    {
+	rect->right = rect->left + max_width;
+	rect->bottom = y;
+    }
     return 1;
 }
 

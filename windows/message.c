@@ -641,7 +641,7 @@ void MSG_Synchronize()
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-static BOOL MSG_WaitXEvent( LONG maxWait )
+BOOL MSG_WaitXEvent( LONG maxWait )
 {
     fd_set read_set;
     struct timeval timeout;
@@ -854,7 +854,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /*				{
 				char	str[128];
 				GetWindowText(hwnd, str, sizeof(str));
-				printf("BROADCAST GetWindowText()='%s' !\n", str); 
+				dprintf_msg(stddeb, "BROADCAST GetWindowText()='%s' !\n", str); 
 				}*/
 			hwnd = wndPtr->hwndNext;
 			}

@@ -14,6 +14,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define UTEXTSEL 0x1f
 #endif
 
+/* ELF symbols do not have an underscore in front */
+#ifdef __ELF__
+#define PREFIX
+#else
+#define PREFIX "_"
+#endif
+
 #define VARTYPE_BYTE	0
 #define VARTYPE_SIGNEDWORD	0
 #define VARTYPE_WORD	1
@@ -671,7 +678,7 @@ OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
     ORDVARDEF *vdp;
     int i;
 
-    fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+    fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 
     vdp = odp->additional_data;
     for (i = 0; i < vdp->n_values; i++)
@@ -752,31 +759,31 @@ main(int argc, char **argv)
     sprintf(filename, "dll_%s.S", LowerDLLName);
     fp = fopen(filename, "w");
 
-    fprintf(fp, "\t.globl _%s_Dispatch\n", UpperDLLName);
-    fprintf(fp, "_%s_Dispatch:\n", UpperDLLName);
+    fprintf(fp, "\t.globl " PREFIX "%s_Dispatch\n", UpperDLLName);
+    fprintf(fp, PREFIX "%s_Dispatch:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
-    fprintf(fp, "\tjmp\t_CallTo32\n\n");
+    fprintf(fp, "\tjmp\t" PREFIX "CallTo32\n\n");
 
-    fprintf(fp, "\t.globl _%s_Dispatch_16\n", UpperDLLName);
-    fprintf(fp, "_%s_Dispatch_16:\n", UpperDLLName);
+    fprintf(fp, "\t.globl " PREFIX "%s_Dispatch_16\n", UpperDLLName);
+    fprintf(fp, PREFIX "%s_Dispatch_16:\n", UpperDLLName);
     fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
     fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
-    fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
+    fprintf(fp, "\tjmp\t" PREFIX "CallTo32_16\n\n");
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-	fprintf(fp, "\t.globl _%s_Ordinal_%d\n", UpperDLLName, i);
+	fprintf(fp, "\t.globl " PREFIX "%s_Ordinal_%d\n", UpperDLLName, i);
 
 	if (!odp->valid)
 	{
-	    fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+	    fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 	    fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 	    fprintf(fp, "\tpushw\t$0\n");
-	    fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+	    fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
 	}
 	else
 	{
@@ -786,7 +793,7 @@ main(int argc, char **argv)
 	    switch (odp->type)
 	    {
 	      case EQUATETYPE_ABS:
-		fprintf(fp, "_%s_Ordinal_%d = %d\n\n", 
+		fprintf(fp, PREFIX "%s_Ordinal_%d = %d\n\n", 
 			UpperDLLName, i, (int) odp->additional_data);
 		break;
 
@@ -803,7 +810,7 @@ main(int argc, char **argv)
 		break;
 
 	      case TYPE_RETURN:
-		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tmovw\t$%d,%%ax\n", rdp->ret_value & 0xffff);
 		fprintf(fp, "\tmovw\t$%d,%%dx\n", 
 			(rdp->ret_value >> 16) & 0xffff);
@@ -815,7 +822,7 @@ main(int argc, char **argv)
 		break;
 
 	      case FUNCTYPE_REG:
-		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
 
@@ -830,29 +837,29 @@ main(int argc, char **argv)
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$%d\n", 
 			sizeof(struct sigcontext_struct) + 4);
-		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
 		break;
 
 	      case FUNCTYPE_PASCAL:
-		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
-		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
 		break;
 		
 	      case FUNCTYPE_PASCAL_16:
-		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
-		fprintf(fp, "\tjmp\t_%s_Dispatch_16\n\n", UpperDLLName);
+		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch_16\n\n", UpperDLLName);
 		break;
 		
 	      case FUNCTYPE_C:
 	      default:
-		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$0\n");
-		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+		fprintf(fp, "\tjmp\t" PREFIX "%s_Dispatch\n\n", UpperDLLName);
 		break;
 	    }
 	}

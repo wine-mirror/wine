@@ -17,8 +17,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "message.h"
 #include "heap.h"
 #include "stddebug.h"
-/* #define DEBUG_DIALOG /* */
-/* #undef  DEBUG_DIALOG /* */
+/* #define DEBUG_DIALOG */
+/* #undef  DEBUG_DIALOG */
 #include "debug.h"
 
 
@@ -189,7 +189,7 @@ HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HANDLE hres, hmem;
     LPCSTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: %d,'%x',%d,%p,%d\n",
+    dprintf_dialog(stddeb, "CreateDialogParam: %d,'%p',%d,%p,%ld\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
      
       /* FIXME: MAKEINTRESOURCE should be replaced by RT_DIALOG */
@@ -231,8 +231,6 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     DWORD exStyle = 0;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
-    void *dlgHeapBase;
-    MDESC *dlgHeap;
 
       /* Parse dialog template */
 
@@ -326,7 +324,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	  dprintf_dialog(stddeb,"'%s'", text);
 	else 
 	  dprintf_dialog(stddeb,"%4X", (int)text & 0xffff);
-	dprintf_dialog(stddeb," %d, %d, %d, %d, %d, %08x\n", 
+	dprintf_dialog(stddeb," %d, %d, %d, %d, %d, %08lx\n", 
 		header->id, header->x, header->y, 
 		header->cx, header->cy, header->style );
 
@@ -335,12 +333,10 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    if (!dlgInfo->hDialogHeap) {
 		dlgInfo->hDialogHeap = GlobalAlloc(GMEM_FIXED, 0x10000);
 		if (!dlgInfo->hDialogHeap) {
-		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory ",
-			   "to create heap for edit control\n");
+		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n");
 		    continue;
 		}
-		dlgHeapBase = GlobalLock(dlgInfo->hDialogHeap);
-		HEAP_Init(dlgHeapBase,dlgHeapBase+sizeof(char*), 0x10000-sizeof(char*));
+		HEAP_LocalInit(dlgInfo->hDialogHeap, GlobalLock(dlgInfo->hDialogHeap), 0x10000);
 	    }
 	    header->style |= WS_CHILD;
 	    hwndCtrl = CreateWindowEx( WS_EX_NOPARENTNOTIFY, 

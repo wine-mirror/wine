@@ -7,6 +7,11 @@
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #define UDATASEL 0x27
 #endif
+#ifdef __ELF__
+#define A( addr) addr
+#else
+#define A( addr) _##addr
+#endif
 	.data
 jump_target:
 return_value:
@@ -15,23 +20,23 @@ return_value:
 /**********************************************************************
  *	Places to keep info about the current 32-bit stack frame.
  */
-	.globl	_IF1632_Saved32_esp,_IF1632_Saved32_ebp,_IF1632_Saved32_ss
-_IF1632_Saved32_esp:
+	.globl	A( IF1632_Saved32_esp), A(IF1632_Saved32_ebp), A(IF1632_Saved32_ss)
+A(IF1632_Saved32_esp):
 	.long	0
-_IF1632_Saved32_ebp:
+A(IF1632_Saved32_ebp):
 	.long	0
-_IF1632_Saved32_ss:
+A(IF1632_Saved32_ss):
 	.word	0
 
 /**********************************************************************
  *	Places to keep info about the current 16-bit stack frame.
  */
-	.globl	_IF1632_Saved16_esp,_IF1632_Saved16_ebp,_IF1632_Saved16_ss
-_IF1632_Saved16_esp:
+	.globl A(IF1632_Saved16_esp),A(IF1632_Saved16_ebp),A(IF1632_Saved16_ss)
+A(IF1632_Saved16_esp):
 	.long	0
-_IF1632_Saved16_ebp:
+A(IF1632_Saved16_ebp):
 	.long	0
-_IF1632_Saved16_ss:
+A(IF1632_Saved16_ss):
 	.word	0
 
 nbytes:
@@ -56,8 +61,8 @@ offset:
  *			16	target ds
  */
 	.align	4
-	.globl _CallToInit16
-_CallToInit16:
+	.globl A(CallToInit16)
+A(CallToInit16):
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -65,9 +70,9 @@ _CallToInit16:
  	 * Save our registers
 	 */
 	pushal
-	pushl	_IF1632_Saved32_esp
-	pushl	_IF1632_Saved32_ebp
-	pushw	_IF1632_Saved32_ss
+	pushl	A(IF1632_Saved32_esp)
+	pushl	A(IF1632_Saved32_ebp)
+	pushw	A(IF1632_Saved32_ss)
 
 	/*
 	 * Get target address.
@@ -79,18 +84,18 @@ _CallToInit16:
 	/*
 	 * Put stack registers where we can get them after stack switch.
 	 */
-	movw	%ss,_IF1632_Saved32_ss
-	movl	%esp,_IF1632_Saved32_esp
-	movl	%ebp,_IF1632_Saved32_ebp
+	movw	%ss,A(IF1632_Saved32_ss)
+	movl	%esp,A(IF1632_Saved32_esp)
+	movl	%ebp,A(IF1632_Saved32_ebp)
 
 	/*
 	 * Load initial registers
 	 */
-	movw	_WIN_StackSize,%bx
-	movw	_WIN_HeapSize,%cx
+	movw	A(WIN_StackSize),%bx
+	movw	A(WIN_HeapSize),%cx
 	movl	$0,%esi
 	xorl	%eax,%eax
-	movw	_PSPSelector,%ax
+	movw	A(PSPSelector),%ax
 	movw	%ax,%es
 	movw	16(%ebp),%ax
 	movw	%ax,%ds
@@ -131,16 +136,16 @@ _CallToInit16:
 	movw	%ax,%fs
 	movw	%ax,%gs
 	popl	%eax
-	movw	_IF1632_Saved32_ss,%ss
-	movl	_IF1632_Saved32_esp,%esp
-	movl	_IF1632_Saved32_ebp,%ebp
+	movw	A(IF1632_Saved32_ss),%ss
+	movl	A(IF1632_Saved32_esp),%esp
+	movl	A(IF1632_Saved32_ebp),%ebp
 
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
-	popw	_IF1632_Saved32_ss
-	popl	_IF1632_Saved32_ebp
-	popl	_IF1632_Saved32_esp
+	popw	A(IF1632_Saved32_ss)
+	popl	A(IF1632_Saved32_ebp)
+	popl	A(IF1632_Saved32_esp)
 	movl	%eax,return_value
 	popal
 	movl	return_value,%eax
@@ -158,8 +163,8 @@ _CallToInit16:
  *			12	target ds
  */
 	.align	4
-	.globl _CallTo16
-_CallTo16:
+	.globl A(CallTo16)
+A(CallTo16):
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -174,17 +179,17 @@ _CallTo16:
 	/*
 	 * Switch to 16-bit stack
 	 */
-	pushl	_IF1632_Saved32_esp
-	pushl	_IF1632_Saved32_ebp
-	pushw	_IF1632_Saved32_ss
+	pushl	A(IF1632_Saved32_esp)
+	pushl	A(IF1632_Saved32_ebp)
+	pushw	A(IF1632_Saved32_ss)
 
-	movw	%ss,_IF1632_Saved32_ss
-	movl	%esp,_IF1632_Saved32_esp
-	movl	%ebp,_IF1632_Saved32_ebp
+	movw	%ss,A(IF1632_Saved32_ss)
+	movl	%esp,A(IF1632_Saved32_esp)
+	movl	%ebp,A(IF1632_Saved32_ebp)
 
-	movw	_IF1632_Saved16_ss,%ss
-	movl	_IF1632_Saved16_esp,%esp
-	movl	_IF1632_Saved16_ebp,%ebp
+	movw	A(IF1632_Saved16_ss),%ss
+	movl	A(IF1632_Saved16_esp),%esp
+	movl	A(IF1632_Saved16_ebp),%ebp
 
 	/*
 	 * Call entry point
@@ -213,17 +218,17 @@ _CallTo16:
 	movw	%ax,%gs
 	popl	%eax
 
-	movw	%ss,_IF1632_Saved16_ss
-	movl	%esp,_IF1632_Saved16_esp
-	movl	%ebp,_IF1632_Saved16_ebp
+	movw	%ss,A(IF1632_Saved16_ss)
+	movl	%esp,A(IF1632_Saved16_esp)
+	movl	%ebp,A(IF1632_Saved16_ebp)
 
-	movw	_IF1632_Saved32_ss,%ss
-	movl	_IF1632_Saved32_esp,%esp
-	movl	_IF1632_Saved32_ebp,%ebp
+	movw	A(IF1632_Saved32_ss),%ss
+	movl	A(IF1632_Saved32_esp),%esp
+	movl	A(IF1632_Saved32_ebp),%ebp
 
-	popw	_IF1632_Saved32_ss
-	popl	_IF1632_Saved32_ebp
-	popl	_IF1632_Saved32_esp
+	popw	A(IF1632_Saved32_ss)
+	popl	A(IF1632_Saved32_ebp)
+	popl	A(IF1632_Saved32_esp)
 
 	movl	%eax,return_value
 	movw	return_value+2,%dx
@@ -246,8 +251,8 @@ _CallTo16:
  *	16-bit stack.
  */
 	.align	4
-	.globl _CallTo32
-_CallTo32:
+	.globl A(CallTo32)
+A(CallTo32):
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -270,26 +275,26 @@ _CallTo32:
 	 * Save old stack save variables, save stack registers, reload
 	 * stack registers.
 	 */
-	pushl	_IF1632_Saved16_esp
-	pushl	_IF1632_Saved16_ebp
-	pushw	_IF1632_Saved16_ss
+	pushl	A(IF1632_Saved16_esp)
+	pushl	A(IF1632_Saved16_ebp)
+	pushw	A(IF1632_Saved16_ss)
 
-	movw	%ss,_IF1632_Saved16_ss
-	movl	%esp,_IF1632_Saved16_esp
-	movl	%ebp,_IF1632_Saved16_ebp
+	movw	%ss,A(IF1632_Saved16_ss)
+	movl	%esp,A(IF1632_Saved16_esp)
+	movl	%ebp,A(IF1632_Saved16_ebp)
 
-	movw	_IF1632_Saved32_ss,%ss
-	movl	_IF1632_Saved32_esp,%esp
-	movl	_IF1632_Saved32_ebp,%ebp
+	movw	A(IF1632_Saved32_ss),%ss
+	movl	A(IF1632_Saved32_esp),%esp
+	movl	A(IF1632_Saved32_ebp),%ebp
 
 	/*
 	 * Call entry point
 	 */
 	pushl	%edx
-	pushw	_IF1632_Saved16_ss
-	pushw	_IF1632_Saved16_esp
+	pushw	A(IF1632_Saved16_ss)
+	pushw	A(IF1632_Saved16_esp)
 	pushl	%eax
-	call	_DLLRelay
+	call	A(DLLRelay)
 
 	popl	%edx
 	popl	%edx
@@ -298,13 +303,13 @@ _CallTo32:
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
-	movw	_IF1632_Saved16_ss,%ss
-	movl	_IF1632_Saved16_esp,%esp
-	movl	_IF1632_Saved16_ebp,%ebp
+	movw	A(IF1632_Saved16_ss),%ss
+	movl	A(IF1632_Saved16_esp),%esp
+	movl	A(IF1632_Saved16_ebp),%ebp
 
-	popw	_IF1632_Saved16_ss
-	popl	_IF1632_Saved16_ebp
-	popl	_IF1632_Saved16_esp
+	popw	A(IF1632_Saved16_ss)
+	popl	A(IF1632_Saved16_ebp)
+	popl	A(IF1632_Saved16_esp)
 
 	popw	%es
 	popw	%ds
@@ -348,8 +353,8 @@ noargs:
  *	word of EAX won't be moved to DX.
  */
 	.align	4
-	.globl _CallTo32_16
-_CallTo32_16:
+	.globl A(CallTo32_16)
+A(CallTo32_16):
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -372,26 +377,26 @@ _CallTo32_16:
 	 * Save old stack save variables, save stack registers, reload
 	 * stack registers.
 	 */
-	pushl	_IF1632_Saved16_esp
-	pushl	_IF1632_Saved16_ebp
-	pushw	_IF1632_Saved16_ss
+	pushl	A(IF1632_Saved16_esp)
+	pushl	A(IF1632_Saved16_ebp)
+	pushw	A(IF1632_Saved16_ss)
 
-	movw	%ss,_IF1632_Saved16_ss
-	movl	%esp,_IF1632_Saved16_esp
-	movl	%ebp,_IF1632_Saved16_ebp
+	movw	%ss,A(IF1632_Saved16_ss)
+	movl	%esp,A(IF1632_Saved16_esp)
+	movl	%ebp,A(IF1632_Saved16_ebp)
 
-	movw	_IF1632_Saved32_ss,%ss
-	movl	_IF1632_Saved32_esp,%esp
-	movl	_IF1632_Saved32_ebp,%ebp
+	movw	A(IF1632_Saved32_ss),%ss
+	movl	A(IF1632_Saved32_esp),%esp
+	movl	A(IF1632_Saved32_ebp),%ebp
 
 	/*
 	 * Call entry point
 	 */
 	pushl	%edx
-	pushw	_IF1632_Saved16_ss
-	pushw	_IF1632_Saved16_esp
+	pushw	A(IF1632_Saved16_ss)
+	pushw	A(IF1632_Saved16_esp)
 	pushl	%eax
-	call	_DLLRelay
+	call	A(DLLRelay)
 
 	popl	%edx
 	popl	%edx
@@ -400,13 +405,13 @@ _CallTo32_16:
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
-	movw	_IF1632_Saved16_ss,%ss
-	movl	_IF1632_Saved16_esp,%esp
-	movl	_IF1632_Saved16_ebp,%ebp
+	movw	A(IF1632_Saved16_ss),%ss
+	movl	A(IF1632_Saved16_esp),%esp
+	movl	A(IF1632_Saved16_ebp),%ebp
 
-	popw	_IF1632_Saved16_ss
-	popl	_IF1632_Saved16_ebp
-	popl	_IF1632_Saved16_esp
+	popw	A(IF1632_Saved16_ss)
+	popl	A(IF1632_Saved16_ebp)
+	popl	A(IF1632_Saved16_esp)
 
 	popw	%es
 	popw	%ds
@@ -437,18 +442,18 @@ noargs2:
 /**********************************************************************
  *	ReturnFromRegisterFunc()
  */
-	.globl _ReturnFromRegisterFunc
-_ReturnFromRegisterFunc:
+	.globl A(ReturnFromRegisterFunc)
+A(ReturnFromRegisterFunc):
 	/*
  	 * Restore 16-bit stack
 	 */
-	movw	_IF1632_Saved16_ss,%ss
-	movl	_IF1632_Saved16_esp,%esp
-	movl	_IF1632_Saved16_ebp,%ebp
+	movw	A(IF1632_Saved16_ss),%ss
+	movl	A(IF1632_Saved16_esp),%esp
+	movl	A(IF1632_Saved16_ebp),%ebp
 
-	popw	_IF1632_Saved16_ss
-	popl	_IF1632_Saved16_ebp
-	popl	_IF1632_Saved16_esp
+	popw	A(IF1632_Saved16_ss)
+	popl	A(IF1632_Saved16_ebp)
+	popl	A(IF1632_Saved16_esp)
 
 	popw	%es
 	popw	%ds

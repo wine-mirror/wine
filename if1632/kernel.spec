@@ -221,10 +221,10 @@ length	415
 #328 _DEBUGOUTPUT
 #329 K329
 #332 THHOOK
-#334 ISBADREADPTR
-#335 ISBADWRITEPTR
-#336 ISBADCODEPTR
-#337 ISBADSTRINGPTR
+334 pascal IsBadReadPtr(ptr long) IsBadReadPtr(1 2)
+335 pascal IsBadWritePtr(ptr long) IsBadWritePtr(1 2)
+336 pascal IsBadCodePtr(ptr) IsBadCodePtr(1)
+337 pascal IsBadStringPtr(ptr word) IsBadStringPtr(1 2)
 #338 HASGPHANDLER
 #339 DIAGQUERY
 #340 DIAGOUTPUT
@@ -233,8 +233,8 @@ length	415
 #343 REGISTERWINOLDAPHOOK
 #344 GETWINOLDAPHOOKS
 #345 ISSHAREDSELECTOR
-#346 ISBADHUGEREADPTR
-#347 ISBADHUGEWRITEPTR
+346 pascal IsBadHugeReadPtr(ptr long) IsBadHugeReadPtr(1 2)
+347 pascal IsBadHugeWritePtr(ptr long) IsBadHugeWritePtr(1 2)
 348 pascal hmemcpy(ptr ptr long) hmemcpy(1 2 3)
 349 pascal16 _hread(word ptr long) _hread(1 2 3)
 350 pascal16 _hwrite(word ptr long) _hwrite(1 2 3)

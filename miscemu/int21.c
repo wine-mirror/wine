@@ -97,8 +97,8 @@ void errno_to_doserr(void)
 /*
 static void Barf(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "int21: unknown/not implemented parameters:\n");
-	fprintf(stderr, "int21: AX %04x, BX %04x, CX %04x, DX %04x, "
+	fprintf(stdnimp, "int21: unknown/not implemented parameters:\n");
+	fprintf(stdnimp, "int21: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);
 }
@@ -235,7 +235,7 @@ static void ReadFile(struct sigcontext_struct *context)
 		return;
 	}
 
-	ptr = pointer (DS,DX);
+	ptr = SAFEMAKEPTR (DS,DX);
 	if (BX == 0) {
 		*ptr = EOF;
 		Error (0,0,0);
@@ -261,7 +261,7 @@ static void WriteFile(struct sigcontext_struct *context)
 	char *ptr;
 	int x,size;
 	
-	ptr = pointer (DS,DX);
+	ptr = SAFEMAKEPTR (DS,DX);
 	
 	if (BX == 0) {
 		Error (InvalidHandle, EC_Unknown, EL_Unknown);
@@ -312,7 +312,7 @@ static void SeekFile(struct sigcontext_struct *context)
 		case 0: fileoffset = SEEK_SET;
 			break;
 		}
-	status = lseek(BX, (CX * 0x100) + DX, fileoffset);
+        status = lseek(BX, (CX << 16) + DX, fileoffset);
 	if (status == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;			SetCflag;
@@ -355,7 +355,7 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 
 static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 {
-	BYTE *dataptr = pointer(DS, DX);
+	BYTE *dataptr = SAFEMAKEPTR(DS, DX);
 	int drive;
 
 	if (BL == 0)
@@ -436,7 +436,7 @@ static void CreateFile(struct sigcontext_struct *context)
 {
 	int handle;
 
-	if ((handle = open(GetUnixFileName( pointer(DS,DX)), 
+	if ((handle = open(GetUnixFileName( SAFEMAKEPTR(DS,DX)), 
            O_CREAT | O_TRUNC | O_RDWR )) == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;
@@ -469,7 +469,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	    break;
 	}
 
-	if ((handle = open(GetUnixFileName(pointer(DS,DX)), mode)) == -1) {
+	if ((handle = open(GetUnixFileName(SAFEMAKEPTR(DS,DX)), mode)) == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;
 		SetCflag;
@@ -486,7 +486,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	  case 0x30:    /* DENYREAD */
 	    dprintf_int(stdnimp,
 	      "OpenExistingFile (%s): DENYREAD changed to DENYALL\n",
-	      pointer(DS,DX));
+	      SAFEMAKEPTR(DS,DX));
 	  case 0x10:    /* DENYALL */  
 	    lock = LOCK_EX;
 	    break;
@@ -550,10 +550,10 @@ static void RenameFile(struct sigcontext_struct *context)
 	char *newname, *oldname;
 
 	dprintf_int(stddeb,"int21: renaming %s to %s\n",
-			pointer(DS,DX), pointer(ES,DI) );
+			SAFEMAKEPTR(DS,DX), SAFEMAKEPTR(ES,DI) );
 	
-	oldname = GetUnixFileName( pointer(DS,DX) );
-	newname = GetUnixFileName( pointer(ES,DI) );
+	oldname = GetUnixFileName( SAFEMAKEPTR(DS,DX) );
+	newname = GetUnixFileName( SAFEMAKEPTR(ES,DI) );
 
 	rename( oldname, newname);
 	ResetCflag;
@@ -564,9 +564,9 @@ static void MakeDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	dprintf_int(stddeb,"int21: makedir %s\n", pointer(DS,DX) );
+	dprintf_int(stddeb,"int21: makedir %s\n", SAFEMAKEPTR(DS,DX) );
 	
-	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
+	if ((dirname = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
 		SetCflag;
 		return;
@@ -583,7 +583,7 @@ static void MakeDir(struct sigcontext_struct *context)
 static void ChangeDir(struct sigcontext_struct *context)
 {
 	int drive;
-	char *dirname = pointer(DS,DX);
+	char *dirname = SAFEMAKEPTR(DS,DX);
 	drive = DOS_GetDefaultDrive();
 	dprintf_int(stddeb,"int21: changedir %s\n", dirname);
 	if (dirname != NULL && dirname[1] == ':') {
@@ -601,9 +601,9 @@ static void RemoveDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	dprintf_int(stddeb,"int21: removedir %s\n", pointer(DS,DX) );
+	dprintf_int(stddeb,"int21: removedir %s\n", SAFEMAKEPTR(DS,DX) );
 
-	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
+	if ((dirname = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
 		SetCflag;
 		return;
@@ -624,7 +624,7 @@ static void RemoveDir(struct sigcontext_struct *context)
 
 static void ExecProgram(struct sigcontext_struct *context)
 {
-	execl("wine", GetUnixFileName( pointer(DS,DX)) );
+	execl("wine", GetUnixFileName( SAFEMAKEPTR(DS,DX)) );
 }
 
 static void FindNext(struct sigcontext_struct *context)
@@ -656,7 +656,7 @@ static void FindNext(struct sigcontext_struct *context)
 
 static void FindFirst(struct sigcontext_struct *context)
 {
-	BYTE drive, *path = pointer(DS, DX);
+	BYTE drive, *path = SAFEMAKEPTR(DS, DX);
 	struct dosdirent *dp;
 
 	if ((*path)&&(path[1] == ':')) {
@@ -704,7 +704,7 @@ static void GetFileDateTime(struct sigcontext_struct *context)
 	struct stat filestat;
 	struct tm *now;
 
-	if ((filename = GetUnixFileName( pointer(DS,DX) ))== NULL) {
+	if ((filename = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = FileNotFound;
 		SetCflag;
 		return;
@@ -724,7 +724,7 @@ static void SetFileDateTime(struct sigcontext_struct *context)
 	char *filename;
 	struct utimbuf filetime;
 	
-	filename = GetUnixFileName( pointer(DS,DX) );
+	filename = GetUnixFileName( SAFEMAKEPTR(DS,DX) );
 
 	filetime.actime = 0L;
 	filetime.modtime = filetime.actime;
@@ -750,7 +750,7 @@ static void CreateTempFile(struct sigcontext_struct *context)
 		return;
 	}
 
-	strcpy(pointer(DS,DX), temp);
+	strcpy(SAFEMAKEPTR(DS,DX), temp);
 	
 	AX = handle;
 	ResetCflag;
@@ -760,7 +760,7 @@ static void CreateNewFile(struct sigcontext_struct *context)
 {
 	int handle;
 	
-	if ((handle = open(GetUnixFileName( pointer(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
+	if ((handle = open(GetUnixFileName( SAFEMAKEPTR(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
 		AL = WriteProtected;
 		SetCflag;
 		return;
@@ -785,14 +785,14 @@ static void GetCurrentDirectory(struct sigcontext_struct *context)
 		return;
 	}
 
-	strcpy(pointer(DS,SI), DOS_GetCurrentDir(drive) );
+	strcpy(SAFEMAKEPTR(DS,SI), DOS_GetCurrentDir(drive) );
 	ResetCflag;
 }
 
 static void GetDiskSerialNumber(struct sigcontext_struct *context)
 {
 	int drive;
-	BYTE *dataptr = pointer(DS, DX);
+	BYTE *dataptr = SAFEMAKEPTR(DS, DX);
 	DWORD serialnumber;
 	
 	if (BL == 0)
@@ -820,7 +820,7 @@ static void GetDiskSerialNumber(struct sigcontext_struct *context)
 static void SetDiskSerialNumber(struct sigcontext_struct *context)
 {
 	int drive;
-	BYTE *dataptr = pointer(DS, DX);
+	BYTE *dataptr = SAFEMAKEPTR(DS, DX);
 	DWORD serialnumber;
 
 	if (BL == 0)
@@ -860,7 +860,7 @@ static void DumpFCB(BYTE *fcb)
 
 static void FindFirstFCB(struct sigcontext_struct *context)
 {
-	BYTE *fcb = pointer(DS, DX);
+	BYTE *fcb = SAFEMAKEPTR(DS, DX);
 	struct fcb *standard_fcb;
 	struct fcb *output_fcb;
 	int drive;
@@ -927,7 +927,7 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 
 static void DeleteFileFCB(struct sigcontext_struct *context)
 {
-	BYTE *fcb = pointer(DS, DX);
+	BYTE *fcb = SAFEMAKEPTR(DS, DX);
 	int drive;
 	struct dosdirent *dp;
 	char temp[256], *ptr;
@@ -969,7 +969,7 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 
 static void RenameFileFCB(struct sigcontext_struct *context)
 {
-	BYTE *fcb = pointer(DS, DX);
+	BYTE *fcb = SAFEMAKEPTR(DS, DX);
 	int drive;
 	struct dosdirent *dp;
 	char temp[256], oldname[256], newname[256], *oldnameptr, *newnameptr;
@@ -1069,7 +1069,7 @@ static void fLock (struct sigcontext_struct * context)
 
 static void GetFileAttribute (struct sigcontext_struct * context)
 {
-  char *filename = pointer (DS,DX);
+  char *filename = SAFEMAKEPTR (DS,DX);
   struct stat s;
   int res,cx; 
 
@@ -1201,7 +1201,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-            dta = pointer(DS, DX);
+            dta = SAFEMAKEPTR(DS, DX);
             break;
 
 	  case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
@@ -1336,7 +1336,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 	
 	  case 0x41: /* "UNLINK" - DELETE FILE */
-		if (unlink( GetUnixFileName( pointer(DS,DX)) ) == -1) {
+		if (unlink( GetUnixFileName( SAFEMAKEPTR(DS,DX)) ) == -1) {
 			errno_to_doserr();
 			AL = ExtendedError;
 			SetCflag;
@@ -1526,7 +1526,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
-		strncpy(pointer(ES,DI), pointer(DS,SI), strlen(pointer(DS,SI)) & 0x7f);
+		strncpy(SAFEMAKEPTR(ES,DI), SAFEMAKEPTR(DS,SI), strlen(SAFEMAKEPTR(DS,SI)) & 0x7f);
 		ResetCflag;
 	    break;
 

@@ -8,10 +8,11 @@
 #include "prototypes.h"
 #include "windows.h"
 #include "shell.h"
+#include "stddebug.h"
+/* #define DEBUG_REG */
+/* #undef  DEBUG_REG */
+#include "debug.h"
 
-/*
-#define DEBUG_REG
-*/
 
 LPKEYSTRUCT	lphRootKey = NULL;
 
@@ -27,31 +28,23 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	LPKEYSTRUCT	lpKey = lphRootKey;
 	LPSTR		ptr;
 	char		str[128];
-	int			size;
-#ifdef DEBUG_REG
-	fprintf(stderr, "RegOpenKey(%04X, %08X='%s', %08X)\n",
+
+	dprintf_reg(stddeb, "RegOpenKey(%04X, %08X='%s', %08X)\n",
 						hKey, lpSubKey, lpSubKey, lphKey);
-#endif
 	if (lpKey == NULL) return ERROR_BADKEY;
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (hKey != HKEY_CLASSES_ROOT) {
-#ifdef DEBUG_REG
-		printf("RegOpenKey // specific key = %04X !\n", hKey);
-#endif
+		dprintf_reg(stddeb,"RegOpenKey // specific key = %04X !\n", hKey);
 		lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
 		}
 	while ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
 		strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
 		str[(LONG)ptr - (LONG)lpSubKey] = '\0';
 		lpSubKey = ptr + 1;
-#ifdef DEBUG_REG
-		printf("RegOpenKey // next level '%s' !\n", str);
-#endif
+		dprintf_reg(stddeb,"RegOpenKey // next level '%s' !\n", str);
 		while(TRUE) {
-#ifdef DEBUG_REG
-			printf("RegOpenKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
-#endif
+			dprintf_reg(stddeb,"RegOpenKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
 			if (lpKey->lpSubKey != NULL && lpKey->lpSubKey[0] != '\0' &&
 				strcmp(lpKey->lpSubKey, str) == 0) {
 				lpKey = lpKey->lpSubLvl;
@@ -78,9 +71,7 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 		lpKey = lpKey->lpNextKey;
 		}
 	*lphKey = lpKey->hKey;
-#ifdef DEBUG_REG
-	printf("RegOpenKey // return hKey=%04X !\n", lpKey->hKey);
-#endif
+	dprintf_reg(stddeb,"RegOpenKey // return hKey=%04X !\n", lpKey->hKey);
 	return ERROR_SUCCESS;
 }
 
@@ -97,35 +88,25 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	LONG		dwRet;
 	LPSTR		ptr;
 	char		str[128];
-#ifdef DEBUG_REG
-	fprintf(stderr, "RegCreateKey(%04X, '%s', %08X)\n",	hKey, lpSubKey, lphKey);
-#endif
+	dprintf_reg(stddeb, "RegCreateKey(%04X, '%s', %08X)\n",	hKey, lpSubKey, lphKey);
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lphKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (hKey != HKEY_CLASSES_ROOT) {
-#ifdef DEBUG_REG
-		printf("RegCreateKey // specific key = %04X !\n", hKey);
-#endif
+		dprintf_reg(stddeb,"RegCreateKey // specific key = %04X !\n", hKey);
 		lpKey = (LPKEYSTRUCT)GlobalLock(hKey);
 		}
 	while ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
 		strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
 		str[(LONG)ptr - (LONG)lpSubKey] = '\0';
 		lpSubKey = ptr + 1;
-#ifdef DEBUG_REG
-		printf("RegCreateKey // next level '%s' !\n", str);
-#endif
+		dprintf_reg(stddeb,"RegCreateKey // next level '%s' !\n", str);
 		lpPrevKey = lpKey;
 		while(TRUE) {
-#ifdef DEBUG_REG
-			printf("RegCreateKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
-#endif
+			dprintf_reg(stddeb,"RegCreateKey // '%s' <-> '%s' !\n", str, lpKey->lpSubKey);
 			if (lpKey->lpSubKey != NULL &&
 				strcmp(lpKey->lpSubKey, str) == 0) {
 				if (lpKey->lpSubLvl == NULL) {
-#ifdef DEBUG_REG
-					printf("RegCreateKey // '%s' found !\n", str);
-#endif
+					dprintf_reg(stddeb,"RegCreateKey // '%s' found !\n", str);
 					if ( (ptr = strchr(lpSubKey, '\\')) != NULL ) {
 						strncpy(str, lpSubKey, (LONG)ptr - (LONG)lpSubKey);
 						str[(LONG)ptr - (LONG)lpSubKey] = '\0';
@@ -181,9 +162,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	lpNewKey->lpNextKey = NULL;
 	lpNewKey->lpSubLvl = NULL;
 	*lphKey = hNewKey;
-#ifdef DEBUG_REG
-	printf("RegCreateKey // successful '%s' key=%04X !\n", lpSubKey, hNewKey);
-#endif
+	dprintf_reg(stddeb,"RegCreateKey // successful '%s' key=%04X !\n", lpSubKey, hNewKey);
 	return ERROR_SUCCESS;
 }
 
@@ -193,7 +172,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
  */
 LONG RegCloseKey(HKEY hKey)
 {
-	fprintf(stderr, "EMPTY STUB !!! RegCloseKey(%04X);\n", hKey);
+	dprintf_reg(stdnimp, "EMPTY STUB !!! RegCloseKey(%04X);\n", hKey);
 	return ERROR_INVALID_PARAMETER;
 }
 
@@ -203,7 +182,7 @@ LONG RegCloseKey(HKEY hKey)
  */
 LONG RegDeleteKey(HKEY hKey, LPCSTR lpSubKey)
 {
-	fprintf(stderr, "EMPTY STUB !!! RegDeleteKey(%04X, '%s');\n", 
+	dprintf_reg(stdnimp, "EMPTY STUB !!! RegDeleteKey(%04X, '%s');\n", 
 												hKey, lpSubKey);
 	return ERROR_INVALID_PARAMETER;
 }
@@ -218,16 +197,12 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
 	HKEY		hRetKey;
 	LPKEYSTRUCT	lpKey;
 	LONG		dwRet;
-#ifdef DEBUG_REG
-	fprintf(stderr, "RegSetValue(%04X, '%s', %08X, '%s', %08X);\n",
+	dprintf_reg(stddeb, "RegSetValue(%04X, '%s', %08X, '%s', %08X);\n",
 						hKey, lpSubKey, dwType, lpVal, dwIgnored);
-#endif
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
 	if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
-#ifdef DEBUG_REG
-		fprintf(stderr, "RegSetValue // key not found ... so create it !\n");
-#endif
+		dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
 		if ((dwRet = RegCreateKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
 			fprintf(stderr, "RegSetValue // key creation error %04X !\n", dwRet);
 			return dwRet;
@@ -238,9 +213,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
 	if (lpKey->lpValue != NULL) free(lpKey->lpValue);
 	lpKey->lpValue = malloc(strlen(lpVal) + 1);
 	strcpy(lpKey->lpValue, lpVal);
-#ifdef DEBUG_REG
-	printf("RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpVal);
-#endif
+	dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpVal);
 	return ERROR_SUCCESS;
 }
 
@@ -254,7 +227,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	LPKEYSTRUCT	lpKey;
 	LONG		dwRet;
 	int			size;
-	fprintf(stderr, "RegQueryValue(%04X, '%s', %08X, %08X);\n",
+	dprintf_reg(stddeb, "RegQueryValue(%04X, '%s', %08X, %08X);\n",
 							hKey, lpSubKey, lpVal, lpcb);
 	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
 	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
@@ -274,7 +247,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 		lpVal[0] = '\0';
 		*lpcb = (LONG)0;
 		}
-	printf("RegQueryValue // return '%s' !\n", lpVal);
+	dprintf_reg(stddeb,"RegQueryValue // return '%s' !\n", lpVal);
 	return ERROR_SUCCESS;
 }
 
@@ -284,7 +257,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
  */
 LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
 {
-	fprintf(stderr, "RegEnumKey : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "RegEnumKey : Empty Stub !!!\n");
 	return ERROR_INVALID_PARAMETER;
 }
 
@@ -293,7 +266,7 @@ LONG RegEnumKey(HKEY hKey, DWORD dwSubKey, LPSTR lpBuf, DWORD dwSize)
  */
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
-	fprintf(stderr, "DragAcceptFiles : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "DragAcceptFiles : Empty Stub !!!\n");
 }
 
 
@@ -302,7 +275,7 @@ void DragAcceptFiles(HWND hWnd, BOOL b)
  */
 void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
 {
-	fprintf(stderr, "DragQueryFile : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "DragQueryFile : Empty Stub !!!\n");
 
 }
 
@@ -312,7 +285,7 @@ void DragQueryFile(HDROP h, UINT u, LPSTR u2, UINT u3)
  */
 void DragFinish(HDROP h)
 {
-	fprintf(stderr, "DragFinish : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "DragFinish : Empty Stub !!!\n");
 
 }
 
@@ -322,8 +295,8 @@ void DragFinish(HDROP h)
  */
 BOOL DragQueryPoint(HDROP h, POINT FAR *p)
 {
-	fprintf(stderr, "DragQueryPoinyt : Empty Stub !!!\n");
-
+	dprintf_reg(stdnimp, "DragQueryPoinyt : Empty Stub !!!\n");
+        return FALSE;
 }
 
 
@@ -332,12 +305,12 @@ BOOL DragQueryPoint(HDROP h, POINT FAR *p)
  */
 HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int iShowCmd)
 {
-	fprintf(stderr, "ShellExecute // hWnd=%04X\n", hWnd);
-	fprintf(stderr, "ShellExecute // lpOperation='%s'\n", lpOperation);
-	fprintf(stderr, "ShellExecute // lpFile='%s'\n", lpFile);
-	fprintf(stderr, "ShellExecute // lpParameters='%s'\n", lpParameters);
-	fprintf(stderr, "ShellExecute // lpDirectory='%s'\n", lpDirectory);
-	fprintf(stderr, "ShellExecute // iShowCmd=%04X\n", iShowCmd);
+	dprintf_reg(stdnimp, "ShellExecute // hWnd=%04X\n", hWnd);
+	dprintf_reg(stdnimp, "ShellExecute // lpOperation='%s'\n", lpOperation);
+	dprintf_reg(stdnimp, "ShellExecute // lpFile='%s'\n", lpFile);
+	dprintf_reg(stdnimp, "ShellExecute // lpParameters='%s'\n", lpParameters);
+	dprintf_reg(stdnimp, "ShellExecute // lpDirectory='%s'\n", lpDirectory);
+	dprintf_reg(stdnimp, "ShellExecute // iShowCmd=%04X\n", iShowCmd);
 	return 2; /* file not found */
 }
 
@@ -347,7 +320,7 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpPa
  */
 HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-	fprintf(stderr, "FindExecutable : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "FindExecutable : Empty Stub !!!\n");
 
 }
 
@@ -371,7 +344,7 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 	else
 		*AppMisc = 0;
 
-	return DialogBox(hSysRes, "SHELL_ABOUT_MSGBOX", hWnd, (FARPROC)AboutDlgProc);
+	return DialogBox(hSysRes, "SHELL_ABOUT_MSGBOX", hWnd, (WNDPROC)AboutDlgProc);
 }
 
 
@@ -407,14 +380,14 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 	int		count;
 	HICON	hIcon = 0;
 	HINSTANCE hInst2 = hInst;
-	fprintf(stderr, "ExtractIcon(%04X, '%s', %d\n", 
+	dprintf_reg(stddeb, "ExtractIcon(%04X, '%s', %d\n", 
 			hInst, lpszExeFileName, nIconIndex);
 	if (lpszExeFileName != NULL) {
 		hInst2 = LoadLibrary(lpszExeFileName);
 		}
 	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
 		count = GetRsrcCount(hInst2, NE_RSCTYPE_GROUP_ICON);
-		printf("ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
+		dprintf_reg(stddeb, "ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
 		return (HICON)count;
 		}
 	if (hInst2 != hInst && hInst2 != 0) {
@@ -429,7 +402,7 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
  */
 HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 {
-	fprintf(stderr, "ExtractAssociatedIcon : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "ExtractAssociatedIcon : Empty Stub !!!\n");
 }
 
 /*************************************************************************
@@ -437,7 +410,7 @@ HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
  */
 int RegisterShellHook(void *ptr) 
 {
-	fprintf(stderr, "RegisterShellHook : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "RegisterShellHook : Empty Stub !!!\n");
 	return 0;
 }
 
@@ -447,5 +420,5 @@ int RegisterShellHook(void *ptr)
  */
 int ShellHookProc(void) 
 {
-	fprintf(stderr, "ShellHookProc : Empty Stub !!!\n");
+	dprintf_reg(stdnimp, "ShellHookProc : Empty Stub !!!\n");
 }

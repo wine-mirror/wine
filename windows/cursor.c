@@ -19,10 +19,10 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "wine.h"
 #include "cursor.h"
 #include "stddebug.h"
-/* #define DEBUG_CURSOR   /* */
-/* #undef  DEBUG_CURSOR   /* */
-/* #define DEBUG_RESOURCE /* */
-/* #undef  DEBUG_RESOURCE /* */
+/* #define DEBUG_CURSOR   */
+/* #undef  DEBUG_CURSOR   */
+/* #define DEBUG_RESOURCE */
+/* #undef  DEBUG_RESOURCE */
 #include "debug.h"
 
 static int ShowCursCount = 0;
@@ -65,7 +65,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     HDC 	hdc;
     int i, j, image_size;
 
-    dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08x\n",
+    dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %p\n",
 	   instance, cursor_name);
     if (!instance)
     {
@@ -132,7 +132,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-    fprintf(stderr,"LoadCursor / Cursor %08X not Found !\n", cursor_name);
+    fprintf(stderr,"LoadCursor / Cursor %p not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -167,7 +167,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     	NE_RSCTYPE_CURSOR, &image_size);
     if (rsc_mem == (HANDLE)NULL) {
     	fprintf(stderr,
-		"LoadCursor / Cursor %08X Bitmap not Found !\n", cursor_name);
+		"LoadCursor / Cursor %p Bitmap not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -240,14 +240,11 @@ HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot,
     XColor	fgcolor;
     HCURSOR 	hCursor;
     CURSORALLOC	  *lpcur;
-    BITMAP 	BitMap;
-    HBITMAP 	hBitMap;
-    HDC 	hMemDC;
     HDC 	hdc;
 
     dprintf_resource(stddeb,"CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
        instance, nXhotspot, nYhotspot, nWidth, nHeight);
-    dprintf_resource(stddeb,"CreateCursor: inst=%04x lpANDbitPlane=%08X lpXORbitPlane=%08X\n",
+    dprintf_resource(stddeb,"CreateCursor: inst=%04x lpANDbitPlane=%p lpXORbitPlane=%p\n",
 	instance, lpANDbitPlane, lpXORbitPlane);
 
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
@@ -308,7 +305,7 @@ BOOL DestroyCursor(HCURSOR hCursor)
  *
  * Internal helper function for SetCursor() and ShowCursor().
  */
-static BOOL CURSOR_SetCursor( HCURSOR hCursor )
+static void CURSOR_SetCursor( HCURSOR hCursor )
 {
     CURSORALLOC	*lpcur;
 
@@ -397,8 +394,6 @@ void GetCursorPos(LPPOINT lpRetPoint)
  */
 int ShowCursor(BOOL bShow)
 {
-    HCURSOR	hCursor;
-
     dprintf_cursor(stddeb, "ShowCursor(%d), count=%d\n", bShow, ShowCursCount);
 
     if (bShow)

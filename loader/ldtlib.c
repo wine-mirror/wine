@@ -7,8 +7,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <errno.h>
 #include "autoconf.h"
 #include "stddebug.h"
-/* #define DEBUG_LDT /* */
-/* #undef DEBUG_LDT  /* */
+/* #define DEBUG_LDT */
+/* #undef DEBUG_LDT  */
 #include "debug.h"
 
 #ifdef linux

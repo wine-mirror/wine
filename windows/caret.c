@@ -8,8 +8,8 @@ static char Copyright[] = "Copyright  David Metcalfe, 1993";
 
 #include "windows.h"
 #include "stddebug.h"
-/* #define DEBUG_CARET /* */
-/* #undef  DEBUG_CARET /* */
+/* #define DEBUG_CARET */
+/* #undef  DEBUG_CARET */
 #include "debug.h"
 
 
@@ -167,10 +167,6 @@ void DestroyCaret()
 
 void SetCaretPos(short x, short y)
 {
-    HDC hdc;
-    HBRUSH hBrush;
-    HRGN rgn;
-
     if (!Caret.hwnd) return;
 
     dprintf_caret(stddeb,"SetCaretPos: x=%d, y=%d\n", x, y);
@@ -237,8 +233,7 @@ void SetCaretBlinkTime(WORD msecs)
 
 WORD GetCaretBlinkTime()
 {
-    if (!Caret.hwnd) return;
-
+    if (!Caret.hwnd) return 0;
     return Caret.timeout;
 }
 

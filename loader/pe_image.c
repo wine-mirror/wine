@@ -6,6 +6,7 @@
  *	ftp.microsoft.com:/pub/developer/MSDN/CD8/PEFILE.ZIP
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,7 @@ char * xmmap(char * vaddr, unsigned int v_size, int prot, int flags,
 
   /* Sigh.  Alignment must be wrong for mmap.  Do this the hard way. */
   if(!(flags & MAP_FIXED)) {
-    vaddr = 0x40000000;
+    vaddr = (char *)0x40000000;
     flags |= MAP_FIXED;
   };
 
@@ -51,7 +52,7 @@ char * xmmap(char * vaddr, unsigned int v_size, int prot, int flags,
   return vaddr;
 };
 
-dump_exports(struct PE_Export_Directory * pe_exports)
+void dump_exports(struct PE_Export_Directory * pe_exports)
 { 
   char * Module;
   int i;
@@ -60,7 +61,7 @@ dump_exports(struct PE_Export_Directory * pe_exports)
   u_char ** name, *ename;
 
   Module = ((char *) load_addr) + pe_exports->Name;
-  printf("\n*******EXPORT DATA*******\nModule name is %s, %d functions, %d names\n", 
+  printf("\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
 	 pe_exports->Number_Of_Functions,
 	 pe_exports->Number_Of_Names);
@@ -73,13 +74,11 @@ dump_exports(struct PE_Export_Directory * pe_exports)
   for(i=0; i< pe_exports->Number_Of_Functions; i++)
     {
       ename =  (char *) (((char *) load_addr) + (int) *name++);
-      printf("%-32s %4d    %8.8x\n", ename, *ordinal++, *function++);
+      printf("%-32s %4d    %8.8lx\n", ename, *ordinal++, *function++);
     }
-
-  return;
 }
 
-dump_imports(struct PE_Import_Directory *pe_imports)
+void dump_imports(struct PE_Import_Directory *pe_imports)
 { 
   struct PE_Import_Directory * pe_imp;
 
@@ -88,7 +87,7 @@ dump_imports(struct PE_Import_Directory *pe_imports)
   pe_imp = pe_imports;
   while (pe_imp->ModuleName)
     {
-      char * Module, *Function;
+      char * Module;
       struct pe_import_name * pe_name;
       unsigned int * import_list;
       char * c;
@@ -119,7 +118,7 @@ static void dump_table(struct w_files *wpnt)
   printf("   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
   for(i=0; i< wpnt->pe->pe_header->coff.NumberOfSections; i++)
     {
-      printf("%8s: %4.4x %8.8x %8.8x %8.8x %8.8x %8.8x %4.4x %4.4x %8.8x\n", 
+      printf("%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
 	     wpnt->pe->pe_seg[i].Name, 
 	     wpnt->pe->pe_seg[i].Virtual_Size,
 	     wpnt->pe->pe_seg[i].Virtual_Address,

@@ -29,55 +29,62 @@ int commerror = 0, eventmask = 0;
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
 
-void Comm_DeInit(void);
-
 void Comm_Init(void)
 {
-	int x, serial = 0, parallel = 0;
-	char option[10], temp[256];
+	int x;
+	char option[10], temp[256], *btemp;
 	struct stat st;
 
 	for (x=0; x!=MAX_PORTS; x++) {
 		strcpy(option,"COMx");
-		option[3] = '0' + x;
+		option[3] = '1' + x;
 		option[4] = '\0';
 
 		GetPrivateProfileString("serialports", option, "*", temp, sizeof(temp), WINE_INI);
 		if (!strcmp(temp, "*") || *temp == '\0') 
-			COM[serial].devicename = NULL;
+			COM[x].devicename = NULL;
 		else {
+		  	btemp = index(temp,',');
+			if (btemp != NULL) {
+			  	*btemp++ = '\0';
+				COM[x].baudrate = atoi(btemp);
+			} else {
+				COM[x].baudrate = -1;
+			}
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can 't use `%s' as COM%d !\n", temp, x);
+				fprintf(stderr,"comm: can 't use `%s' as %s !\n", temp, option);
 			else
-				if ((COM[serial].devicename = malloc(strlen(temp)+1)) == NULL) 
+				if ((COM[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
 				else {
-					COM[serial].fd = 0;
-					strcpy(COM[serial].devicename, temp);
-					serial++;
+					COM[x].fd = 0;
+					strcpy(COM[x].devicename, temp);
 				}
-		}
+                dprintf_comm(stddeb,
+                        "Comm_Init: %s = %s\n", option, COM[x].devicename);
+ 		}
 
 		strcpy(option, "LPTx");
-		option[3] = '0' + x;
+		option[3] = '1' + x;
 		option[4] = '\0';
 
 		GetPrivateProfileString("parallelports", option, "*", temp, sizeof(temp), WINE_INI);
 		if (!strcmp(temp, "*") || *temp == '\0')
-			LPT[parallel].devicename = NULL;
+			LPT[x].devicename = NULL;
 		else {
 			stat(temp, &st);
 			if (!S_ISCHR(st.st_mode)) 
-				fprintf(stderr,"comm: can 't use `%s' as LPT%d !\n", temp, x);
+				fprintf(stderr,"comm: can 't use `%s' as %s !\n", temp, option);
 			else 
-				if ((LPT[parallel].devicename = malloc(strlen(temp)+1)) == NULL) 
+				if ((LPT[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					fprintf(stderr,"comm: can't malloc for device info!\n");
 				else {
-					LPT[parallel].fd = 0;
-					strcpy(LPT[parallel].devicename, temp);
-					parallel++;
+					LPT[x].fd = 0;
+					strcpy(LPT[x].devicename, temp);
 				}
+                dprintf_comm(stddeb,
+                        "Comm_Init: %s = %s\n", option, LPT[x].devicename);
 		}
 
 	}
@@ -128,7 +135,7 @@ int ValidLPTPort(int x)
 
 int WinError(void)
 {
-	perror("comm");
+        dprintf_comm(stddeb, "WinError: errno = %d\n", errno);
 	switch (errno) {
 		default:
 			return CE_IOE;
@@ -175,8 +182,11 @@ int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
 		strcpy(temp,device+5);
 		ptr = strtok(temp, ","); 
 
-        	dprintf_comm(stddeb,"BuildCommDCB: baudrate (%s)\n", ptr);
-		lpdcb->BaudRate = atoi(ptr);
+		if (COM[port].baudrate > 0)
+			lpdcb->BaudRate = COM[port].baudrate;
+		else
+			lpdcb->BaudRate = atoi(ptr);
+        	dprintf_comm(stddeb,"BuildCommDCB: baudrate (%d)\n", lpdcb->BaudRate);
 
 		ptr = strtok(NULL, ",");
 		if (islower(*ptr))
@@ -243,6 +253,9 @@ int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
 			commerror = IE_BADID;
 		}
 
+                dprintf_comm(stddeb,
+                       "OpenComm: %s = %s\n", device, COM[port].devicename);
+
 		if (!ValidCOMPort(port)) {
 			commerror = IE_BADID;
 			return -1;
@@ -251,7 +264,7 @@ int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
 			return COM[port].fd;
 		}
 
-		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK, 0);
+		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
 		if (fd == -1) {
 			commerror = WinError();
 			return -1;
@@ -344,13 +357,13 @@ LONG EscapeCommFunction(int fd, int nFunction)
 			break;					
 
 		case GETMAXCOM:
-			for (max = 0;COM[max].devicename;max++)
+			for (max = MAX_PORTS;!COM[max].devicename;max--)
 				;		
 			return max;
 			break;
 
 		case GETMAXLPT:
-			for (max = 0;LPT[max].devicename;max++)
+			for (max = MAX_PORTS;!LPT[max].devicename;max--)
 				;		
 			return 0x80 + max;
 			break;
@@ -425,9 +438,13 @@ int FlushComm(int fd, int fnQueue)
 
 int GetCommError(int fd, COMSTAT FAR *lpStat)
 {
+	int temperror;
+
     	dprintf_comm(stddeb,
 		"GetCommError: fd %d (current error %d)\n", fd, commerror);
-	return(commerror);
+	temperror = commerror;
+	commerror = 0;
+	return(temperror);
 }
 
 UINT FAR* SetCommEventMask(int fd, UINT fuEvtMask)
@@ -449,6 +466,7 @@ UINT GetCommEventMask(int fd, int fnEvtClear)
 int SetCommState(DCB FAR *lpdcb)
 {
 	struct termios port;
+	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,
 		"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
@@ -471,6 +489,12 @@ int SetCommState(DCB FAR *lpdcb)
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
+	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
+		commerror = IE_BADID;
+		return -1;
+	}
+	if (ptr->baudrate > 0)
+	  	lpdcb->BaudRate = ptr->baudrate;
     	dprintf_comm(stddeb,"SetCommState: baudrate %d\n",lpdcb->BaudRate);
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
@@ -823,9 +847,14 @@ int ReadComm(int fd, LPSTR lpvBuf, int cbRead)
 	status = read(fd, (void *) lpvBuf, cbRead);
 
 	if (status == -1) {
-		commerror = WinError();
-		return -1 - length;	
-	} else {
+                if (errno != EAGAIN) {
+                       commerror = WinError();
+                       return -1 - length;
+                } else {
+                        commerror = 0;
+                        return length;
+                }
+ 	} else {
 		commerror = 0;
 		return length + status;
 	}

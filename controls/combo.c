@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 #include "windows.h"
 #include "combo.h"
+#include "user.h"
 #include "heap.h"
 #include "win.h"
 #include "prototypes.h"
@@ -22,11 +23,18 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 /* #undef  DEBUG_COMBO */
 #include "debug.h"
 
+  /* windows/graphics.c */
+extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect,
+                                 int thickness, BOOL pressed );
+extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
+                          int xsrc, int ysrc, int width, int height, int rop );
+
 
 HBITMAP hComboBit = 0;
 
 LPHEADCOMBO ComboGetStorageHeader(HWND hwnd);
 int CreateComboStruct(HWND hwnd);
+void ComboBoxStaticOwnerDraw(HWND hWnd, LPHEADCOMBO lphc);
 
 
 /***********************************************************************
@@ -34,66 +42,75 @@ int CreateComboStruct(HWND hwnd);
  */
 LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
-    RECT	rect;
-    int		y, count;
-    int		width, height;
-    WND  	*wndPtr;
-    LPHEADCOMBO lphc;
-    HDC		hDC;
-    BITMAP	bm;
-    char	str[128];
-    PAINTSTRUCT paintstruct;
-    int         style;
-    switch(message)
-    {
-    case WM_CREATE:
-		wndPtr = WIN_FindWndPtr(hwnd);
-		if (wndPtr == NULL) return 0;
-		dprintf_combo(stddeb,"Combo WM_CREATE %p !\n", lphc);
-		if (hComboBit == (HBITMAP)NULL) 
-		hComboBit = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_COMBO));
-		GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
-		wndPtr->dwStyle &= 0xFFFFFFFFL ^ (WS_VSCROLL | WS_HSCROLL);
-		GetWindowRect(hwnd, &rect);
-		width = rect.right - rect.left;
-		height = rect.bottom - rect.top;
-		SetWindowPos(hwnd, 0, 0, 0, width + bm.bmHeight, bm.bmHeight, 
-										SWP_NOMOVE | SWP_NOZORDER); 
-		CreateComboStruct(hwnd);
-		lphc = ComboGetStorageHeader(hwnd);
-		if (lphc == NULL) return 0;
-		if (wndPtr->dwStyle & CBS_SIMPLE)
-/*			lphc->hWndEdit = CreateWindow("EDIT", "", */
-			lphc->hWndEdit = CreateWindow("STATIC", "", 
-				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-				0, 0, width - bm.bmHeight, bm.bmHeight, 
-				hwnd, 1, wndPtr->hInstance, 0L);
-		else
-			lphc->hWndEdit = CreateWindow("STATIC", "", 
-				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
-				0, 0, width - bm.bmHeight, bm.bmHeight, 
-				hwnd, 1, wndPtr->hInstance, 0L);
-		style=0;
-		if ((wndPtr->dwStyle & CBS_HASSTRINGS) == CBS_HASSTRINGS)
-			style |= LBS_HASSTRINGS;
-		if ((wndPtr->dwStyle & CBS_OWNERDRAWFIXED) ==CBS_OWNERDRAWFIXED)
-			style |= LBS_OWNERDRAWFIXED;
-		if ((wndPtr->dwStyle & CBS_OWNERDRAWVARIABLE)==CBS_OWNERDRAWVARIABLE)
-			style |= LBS_OWNERDRAWVARIABLE;
-		lphc->hWndLBox = CreateWindow("LISTBOX", "", 
-			WS_POPUP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | style,
-			rect.left, rect.top + bm.bmHeight, 
-			width, height, wndPtr->hwndParent, 0, 
-			wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
-		ShowWindow(lphc->hWndLBox, SW_HIDE);
-		dprintf_combo(stddeb,"Combo Creation LBox=%X!\n", 
-			      lphc->hWndLBox);
-		return 0;
+	RECT	rect;
+	int		y, count;
+	int		width, height;
+	WND  	*wndPtr;
+	LPHEADCOMBO lphc;
+	HDC		hDC;
+	BITMAP	bm;
+	char	str[128];
+	PAINTSTRUCT paintstruct;
+	LPDRAWITEMSTRUCT lpdis;
+	DWORD       dwStyle;
+	switch(message) {
+		case WM_CREATE:
+			wndPtr = WIN_FindWndPtr(hwnd);
+			if (wndPtr == NULL) return 0;
+			dprintf_combo(stddeb,"Combo WM_CREATE %p !\n", lphc);
+			if (hComboBit == (HBITMAP)NULL) 
+			hComboBit = LoadBitmap((HINSTANCE)NULL, MAKEINTRESOURCE(OBM_COMBO));
+			GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
+			wndPtr->dwStyle &= 0xFFFFFFFFL ^ (WS_VSCROLL | WS_HSCROLL);
+			GetWindowRect(hwnd, &rect);
+			width = rect.right - rect.left;
+			height = rect.bottom - rect.top;
+			if (height < bm.bmHeight) height = bm.bmHeight;
+/*			SetWindowPos(hwnd, 0, 0, 0, width + bm.bmHeight, bm.bmHeight, 
+									SWP_NOMOVE | SWP_NOZORDER); */
+			SetWindowPos(hwnd, 0, 0, 0, width, bm.bmHeight, 
+								SWP_NOMOVE | SWP_NOZORDER); 
+			CreateComboStruct(hwnd);
+			lphc = ComboGetStorageHeader(hwnd);
+			if (lphc == NULL) return 0;
+/*			SetRect(&lphc->RectEdit, 0, 0, width - 2, bm.bmHeight); */
+			SetRect(&lphc->RectEdit, 0, 0, width - bm.bmHeight, bm.bmHeight);
+			if (wndPtr->dwStyle & CBS_DROPDOWNLIST) {
+				if ((wndPtr->dwStyle & CBS_OWNERDRAWFIXED) == CBS_OWNERDRAWFIXED ||
+					(wndPtr->dwStyle & CBS_OWNERDRAWVARIABLE) == CBS_OWNERDRAWVARIABLE)
+					lphc->hWndEdit = 0;
+				else
+					lphc->hWndEdit = CreateWindow("STATIC", "",
+						WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
+						0, 0, width - bm.bmHeight, bm.bmHeight,
+						hwnd, 1, wndPtr->hInstance, 0L);
+				}
+			else {
+/*				lphc->hWndEdit = CreateWindow("EDIT", "", */
+				lphc->hWndEdit = CreateWindow("STATIC", "",
+					WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | SS_LEFT,
+					0, 0, width - bm.bmHeight, bm.bmHeight,
+					hwnd, 1, wndPtr->hInstance, 0L);
+				}
+			dwStyle = WS_POPUP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY;
+			if ((wndPtr->dwStyle & CBS_HASSTRINGS) == CBS_HASSTRINGS)
+				dwStyle |= LBS_HASSTRINGS;
+			if ((wndPtr->dwStyle & CBS_OWNERDRAWFIXED) == CBS_OWNERDRAWFIXED)
+				dwStyle |= LBS_OWNERDRAWFIXED;
+			if ((wndPtr->dwStyle & CBS_OWNERDRAWVARIABLE) == CBS_OWNERDRAWVARIABLE)
+				dwStyle |= LBS_OWNERDRAWVARIABLE;
+			lphc->hWndLBox = CreateWindow("LISTBOX", "", dwStyle,
+				rect.left, rect.top + bm.bmHeight,
+				width, height, wndPtr->hwndParent, 0,
+				wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
+			ShowWindow(lphc->hWndLBox, SW_HIDE);
+			dprintf_combo(stddeb,"Combo Creation LBox=%X!\n", lphc->hWndLBox);
+			return 0;
     case WM_DESTROY:
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == 0) return 0;
 /*
-		DestroyWindow(lphc->hWndEdit);
+		if (lphc->hWndEdit != 0) DestroyWindow(lphc->hWndEdit);
 */
 		DestroyWindow(lphc->hWndLBox);
 		free(lphc);
@@ -114,24 +131,29 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     case WM_COMMAND:
 		wndPtr = WIN_FindWndPtr(hwnd);
 		lphc = ComboGetStorageHeader(hwnd);
-		if (lphc == NULL) return 0;
+		if (lphc == NULL || wndPtr == NULL) return 0;
 		if (LOWORD(lParam) == lphc->hWndLBox) {
-            switch(HIWORD(lParam)) {
-	        	case LBN_SELCHANGE:
-				    lphc->dwState = lphc->dwState & (CB_SHOWDROPDOWN ^ 0xFFFFFFFFL);
-				    ShowWindow(lphc->hWndLBox, SW_HIDE);
-				    y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
-				    if (y != LB_ERR) {
-				    	SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-				    	SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str); 
-				    	}
-				    SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
-					        	MAKELONG(hwnd, CBN_SELCHANGE));
-	        	    break;
-	        	case LBN_DBLCLK:
-				    SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
-					        	MAKELONG(hwnd, CBN_DBLCLK));
-	        	    break;
+			switch(HIWORD(lParam)) {
+				case LBN_SELCHANGE:
+					lphc->dwState = lphc->dwState & (CB_SHOWDROPDOWN ^ 0xFFFFFFFFL);
+					ShowWindow(lphc->hWndLBox, SW_HIDE);
+					y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
+					if (y != LB_ERR) {
+						SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+						if (lphc->hWndEdit != 0) 
+							SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+						else {
+							InvalidateRect(hwnd, NULL, TRUE);
+							UpdateWindow(hwnd);
+							}
+						}
+					SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
+										MAKELONG(hwnd, CBN_SELCHANGE));
+					break;
+				case LBN_DBLCLK:
+					SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
+										MAKELONG(hwnd, CBN_DBLCLK));
+					break;
 	        	}
             }
 		break;
@@ -178,14 +200,18 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
    case WM_KEYDOWN:
 		wndPtr = WIN_FindWndPtr(hwnd);
 		lphc = ComboGetStorageHeader(hwnd);
-		if (lphc == NULL) return 0;
+		if (lphc == NULL || wndPtr == NULL) return 0;
 		y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
 		count = SendMessage(lphc->hWndLBox, LB_GETCOUNT, 0, 0L);
 		dprintf_combo(stddeb,"COMBOBOX // GetKeyState(VK_MENU)=%d\n", GetKeyState(VK_MENU));
 		if (GetKeyState(VK_MENU) < 0) {
 			lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
 			if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
-				ShowWindow(lphc->hWndLBox, SW_SHOW);
+				GetWindowRect(hwnd, &rect);
+				SetWindowPos(lphc->hWndLBox, 0, rect.left, rect.bottom, 0, 0, 
+									SWP_NOREDRAW | SWP_NOSIZE); 
+				SetWindowPos(lphc->hWndLBox, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | 
+									SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER); 
 			    SetFocus(lphc->hWndLBox);
 				}
 			else {
@@ -193,7 +219,8 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
 				if (y != LB_ERR) {
 					SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-					SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+					if (lphc->hWndEdit != 0) 
+						SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
 					}
 				}
 		    }
@@ -214,9 +241,11 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				}
 			if (y < 0) y = 0;
 			if (y >= count) y = count - 1;
+			lphc->LastSel = y;
 			SendMessage(lphc->hWndLBox, LB_SETCURSEL, y, 0L);
 			SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-			SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+			if (lphc->hWndEdit != 0) 
+				SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
 			SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
 			MAKELONG(hwnd, CBN_SELCHANGE));
 			}
@@ -226,8 +255,21 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     	return(SendMessage(GetParent(hwnd), WM_MEASUREITEM, wParam, lParam));
     case WM_CTLCOLOR:
     	return(SendMessage(GetParent(hwnd), WM_CTLCOLOR, wParam, lParam));
+	case WM_SETREDRAW:
+		dprintf_combo(stddeb,"ComboBoxWndProc WM_SETREDRAW hWnd=%04X w=%04X !\n", hwnd, wParam);
+		lphc = ComboGetStorageHeader(hwnd);
+		if (lphc == NULL) return 0;
+		lphc->bRedrawFlag = wParam;
+		break;
     case WM_DRAWITEM:
-	return(SendMessage(GetParent(hwnd), WM_DRAWITEM, wParam, lParam));
+		dprintf_combo(stddeb,"ComboBoxWndProc // WM_DRAWITEM w=%04X l=%08lX\n", wParam, lParam);
+		wndPtr = WIN_FindWndPtr(hwnd);
+		if (wndPtr == NULL) break;
+		lpdis = (LPDRAWITEMSTRUCT)lParam;
+		if (lpdis == NULL) break;
+		lpdis->CtlType = ODT_COMBOBOX;
+		lpdis->CtlID = wndPtr->wIDmenu;
+		return(SendMessage(GetParent(hwnd), WM_DRAWITEM, wParam, lParam));
     case WM_PAINT:
 		GetClientRect(hwnd, &rect);
 		hDC = BeginPaint(hwnd, &paintstruct);
@@ -241,8 +283,13 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		EndPaint(hwnd, &paintstruct);
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
-		InvalidateRect(lphc->hWndEdit, NULL, TRUE);
-		UpdateWindow(lphc->hWndEdit);
+		if (lphc->hWndEdit != 0) {
+			InvalidateRect(lphc->hWndEdit, NULL, TRUE);
+			UpdateWindow(lphc->hWndEdit);
+			}
+		else {
+			ComboBoxStaticOwnerDraw(hwnd, lphc);
+			}
 		if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
 			InvalidateRect(lphc->hWndLBox, NULL, TRUE);
 			UpdateWindow(lphc->hWndLBox);
@@ -251,7 +298,8 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 	case WM_SETFOCUS:
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
-		SetFocus(lphc->hWndEdit);
+		if (lphc->hWndEdit != 0) 
+			SetFocus(lphc->hWndEdit);
 		break;
 	case WM_KILLFOCUS:
 		lphc = ComboGetStorageHeader(hwnd);
@@ -260,11 +308,12 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
 		if (y != LB_ERR) {
 			SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-			SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+			if (lphc->hWndEdit != 0)
+				SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
 			}
 		break;
 	case CB_ADDSTRING:
-                dprintf_combo(stddeb,"CB_ADDSTRING '%s' !\n", (LPSTR)lParam);
+		dprintf_combo(stddeb,"CB_ADDSTRING '%s' !\n", (LPSTR)lParam);
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
 		return(SendMessage(lphc->hWndLBox, LB_ADDSTRING, wParam, lParam));
@@ -319,14 +368,16 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		dprintf_combo(stddeb,"ComboBox CB_GETEDITSEL !\n");
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
-/*        return(SendMessage(lphc->hWndEdit, EM_GETSEL, 0, 0L)); */
+/*		if (lphc->hWndEdit != 0)
+			return(SendMessage(lphc->hWndEdit, EM_GETSEL, 0, 0L)); */
 		break;
 	case CB_SETEDITSEL:
 		dprintf_combo(stddeb,"ComboBox CB_SETEDITSEL lParam=%lX !\n", 
 			      lParam);
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
-/*        return(SendMessage(lphc->hWndEdit, EM_SETSEL, 0, lParam)); */
+/*		if (lphc->hWndEdit != 0)
+			return(SendMessage(lphc->hWndEdit, EM_SETSEL, 0, lParam)); */
 		break;
 	case CB_SELECTSTRING:
 		dprintf_combo(stddeb,"ComboBox CB_SELECTSTRING !\n");
@@ -339,7 +390,11 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		if (lphc == NULL) return 0;
 		lphc->dwState = lphc->dwState | CB_SHOWDROPDOWN;
 		if (wParam != 0) {
-			ShowWindow(lphc->hWndLBox, SW_SHOW);
+			GetWindowRect(hwnd, &rect);
+			SetWindowPos(lphc->hWndLBox, 0, rect.left, rect.bottom, 0, 0, 
+								SWP_NOREDRAW | SWP_NOSIZE); 
+			SetWindowPos(lphc->hWndLBox, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | 
+								SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER); 
 			}
 		else {
 			lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
@@ -364,7 +419,8 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		dprintf_combo(stddeb,"ComboBox CB_LIMITTEXT !\n");
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
-/*        return(SendMessage(lphc->hWndEdit, EM_LIMITTEXT, wParam, 0L)); */
+/*		if (lphc->hWndEdit != 0) 
+	        return(SendMessage(lphc->hWndEdit, EM_LIMITTEXT, wParam, 0L)); */
         break;
 
     default:
@@ -377,34 +433,78 @@ return 0;
 
 LPHEADCOMBO ComboGetStorageHeader(HWND hwnd)
 {
-    WND  *wndPtr;
-    LPHEADCOMBO lphc;
-    wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr == 0) {
-    	fprintf(stderr,"Bad Window handle on ComboBox !\n");
-    	return 0;
-    	}
-    lphc = *((LPHEADCOMBO *)&wndPtr->wExtra[1]);
-    return lphc;
+	WND  *wndPtr;
+	LPHEADCOMBO lphc;
+	wndPtr = WIN_FindWndPtr(hwnd);
+	if (wndPtr == 0) {
+		fprintf(stderr,"Bad Window handle on ComboBox !\n");
+		return 0;
+		}
+	lphc = *((LPHEADCOMBO *)&wndPtr->wExtra[1]);
+	return lphc;
 }
 
 
 
 int CreateComboStruct(HWND hwnd)
 {
-    WND  *wndPtr;
-    LPHEADCOMBO lphc;
-    wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr == 0) {
-    	fprintf(stderr,"Bad Window handle on ComboBox !\n");
-    	return 0;
-    	}
-    lphc = (LPHEADCOMBO)malloc(sizeof(HEADCOMBO));
-    *((LPHEADCOMBO *)&wndPtr->wExtra[1]) = lphc;
-    lphc->dwState = 0;
-    return TRUE;
+	WND  *wndPtr;
+	LPHEADCOMBO lphc;
+	wndPtr = WIN_FindWndPtr(hwnd);
+	if (wndPtr == 0) {
+		fprintf(stderr,"Bad Window handle on ComboBox !\n");
+		return 0;
+		}
+	lphc = (LPHEADCOMBO)malloc(sizeof(HEADCOMBO));
+	*((LPHEADCOMBO *)&wndPtr->wExtra[1]) = lphc;
+	lphc->hWndEdit = 0;
+	lphc->hWndLBox = 0;
+	lphc->dwState = 0;
+	lphc->LastSel = -1;
+	return TRUE;
 }
 
+
+void ComboBoxStaticOwnerDraw(HWND hWnd, LPHEADCOMBO lphc)
+{
+	HDC     hDC;
+	HBRUSH  hBrush;
+	short   y;
+	char    str[64];
+	LPSTR   ptr = NULL;
+	HANDLE  hTemp;
+	WND       *wndPtr;
+	LPDRAWITEMSTRUCT lpdis;
+	dprintf_combo(stddeb,"ComboBoxStaticOwnerDraw(%04X, %p) !\n", hWnd, lphc);
+	y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
+	if (y != LB_ERR) {
+		SendMessage(lphc->hWndLBox, LB_GETTEXT, y, (LPARAM)str);
+		ptr = (LPSTR)SendMessage(lphc->hWndLBox, LB_GETITEMDATA, y, 0L);
+		}
+	hBrush = SendMessage(GetParent(hWnd), WM_CTLCOLOR, (WORD)hDC,
+						MAKELONG(hWnd, CTLCOLOR_STATIC)); 
+	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(WHITE_BRUSH);
+	wndPtr = WIN_FindWndPtr(hWnd);
+	if (wndPtr == NULL) return;
+	hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(DRAWITEMSTRUCT));
+	lpdis = (LPDRAWITEMSTRUCT) USER_HEAP_ADDR(hTemp);
+	if (lpdis == NULL) {
+		printf("ComboBox Ownerdraw // Error allocating DRAWITEMSTRUCT !\n");
+		return;
+		}
+	hDC = GetDC(hWnd);
+	FillRect(hDC, &lphc->RectEdit, hBrush);
+	lpdis->hDC = hDC;
+	if (y != LB_ERR) lpdis->itemID = y - 1;
+	CopyRect(&lpdis->rcItem, &lphc->RectEdit);
+	lpdis->itemData = (DWORD)ptr;
+	lpdis->itemAction = ODA_DRAWENTIRE;
+	lpdis->CtlType = ODT_COMBOBOX;
+	lpdis->CtlID = wndPtr->wIDmenu;
+	SendMessage(GetParent(hWnd), WM_DRAWITEM, y, (LPARAM)lpdis);
+	USER_HEAP_FREE(hTemp);
+	ReleaseDC(hWnd, hDC);
+}
 
 
 /************************************************************************
@@ -413,7 +513,8 @@ int CreateComboStruct(HWND hwnd)
 BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
 {
 	fprintf(stdnimp,"DlgDirSelectComboBox(%04X, '%s', %d) \n",	
-		hDlg, lpStr, nIDLBox);
+				hDlg, lpStr, nIDLBox);
+	return TRUE;
 }
 
 

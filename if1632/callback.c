@@ -10,6 +10,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "segmem.h"
 #include <setjmp.h>
 #include "dlls.h"
+#include "stddebug.h"
+/* #define DEBUG_CALLBACK */
+/* #undef  DEBUG_CALLBACK */
+#include "debug.h"
+
+
 extern SEGDESC Segments[];
 extern unsigned short IF1632_Saved16_ss;
 extern unsigned long  IF1632_Saved16_ebp;
@@ -99,8 +105,6 @@ CallBack16(void *func, int n_args, ...)
 void *
 CALLBACK_MakeProcInstance(void *func, int instance)
 {
-    int handle;
-    void *new_func;
     struct thunk_s *tp;
     int i;
     
@@ -129,8 +133,6 @@ CALLBACK_MakeProcInstance(void *func, int instance)
  */
 void FreeProcInstance(FARPROC func)
 {
-    int handle;
-    void *new_func;
     struct thunk_s *tp;
     int i;
     
@@ -155,7 +157,7 @@ HANDLE GetCodeHandle( FARPROC proc )
     /* Return the code segment containing 'proc'. */
     /* Not sure if this is really correct (shouldn't matter that much). */
     printf( "STUB: GetCodeHandle(%p) returning %x\n",
-            tp->thunk[8] + (tp->thunk[9] << 8) );
+            proc, tp->thunk[8] + (tp->thunk[9] << 8) );
     return tp->thunk[8] + (tp->thunk[9] << 8);
 }
 
@@ -197,9 +199,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     }
     else if (Is16bitAddress(func))
     {	
-#ifdef DEBUG_CALLBACK
-	printf("CallWindowProc // 16bit func=%08X !\n", func);
-#endif 
+	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%p !\n", func);
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
@@ -209,9 +209,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     }
     else
     {
-#ifdef DEBUG_CALLBACK
-	printf("CallWindowProc // 32bit func=%08X !\n", func);
-#endif 
+	dprintf_callback(stddeb, "CallWindowProc // 32bit func=%08X !\n", func);
 	return (*func)(hwnd, message, wParam, lParam);
     }
 }
@@ -325,15 +323,12 @@ int Catch (LPCATCHBUF cbuf)
 				(IF1632_Saved16_esp & 0xffff));
 
 		memcpy (stack16, sb -> stack_part, STACK_DEPTH_16);
-#ifdef	DEBUG_CATCH
-		printf ("Been thrown here: %d, retval = %d\n", sb, retval);
-#endif
+		dprintf_catch (stddeb, "Been thrown here: %d, retval = %d\n", 
+			sb, retval);
 		free ((void *) sb);
 		return (retval);
 	} else {
-#ifdef	DEBUG_CATCH
-		printf ("Will somtime get thrown here: %d\n", sb);
-#endif
+		dprintf_catch (stddeb, "Will somtime get thrown here: %d\n", sb);
 		return (retval);
 	}
 }
@@ -341,9 +336,7 @@ int Catch (LPCATCHBUF cbuf)
 void Throw (LPCATCHBUF cbuf, int val)
 {
 	sb = *((struct special_buffer **)cbuf);
-#ifdef	DEBUG_CATCH
-	printf ("Throwing to: %d\n", sb);
-#endif
+	dprintf_catch (stddeb, "Throwing to: %d\n", sb);
 	longjmp (sb -> buffer, val);
 }
 #endif /* !WINELIB */

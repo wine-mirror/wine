@@ -48,6 +48,47 @@ static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
 #define CI_GET_DEFAULT_INFO(fs,cs) \
   CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
 
+struct FontStructure {
+	char *window;
+	char *x11;
+} FontNames[32];
+int FontSize;
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ *           Font_Init
+ */
+
+void Font_Init( void )
+{
+  char  temp[1024];
+  LPSTR ptr;
+  int i;
+
+  if( GetPrivateProfileString("fonts", NULL, "*", temp, sizeof(temp), WINE_INI) > 2 ) {
+    for( ptr = temp, i = 1; strlen(ptr) != 0; ptr += strlen(ptr) + 1, i++ )
+      if( strcmp( ptr, "default" ) )
+	FontNames[i].window = strdup( ptr );
+    FontSize = i;
+
+    for( i = 1; i < FontSize; i++ ) {
+      GetPrivateProfileString("fonts", FontNames[i].window, "*", temp, sizeof(temp), WINE_INI);
+      FontNames[i].x11 = strdup( temp );
+    }
+    GetPrivateProfileString("fonts", "default", "*", temp, sizeof(temp), WINE_INI);
+    if( *temp == '*' )
+      FontNames[0].x11 = strdup( temp );
+
+  } else {
+    FontNames[0].window = NULL; FontNames[0].x11 = "bitstream-courier";
+    FontNames[1].window = "ms sans serif"; FontNames[1].x11 = "*-helvetica";
+    FontNames[2].window = "ms serif"; FontNames[2].x11 = "*-times";
+    FontNames[3].window = "fixedsys"; FontNames[3].x11 = "*-fixed";
+    FontNames[4].window = "arial"; FontNames[4].x11 = "*-helvetica";
+    FontNames[5].window = "helv"; FontNames[5].x11 = "*-helvetica";
+    FontNames[6].window = "roman"; FontNames[6].x11 = "*-times";
+    FontSize = 7;
+  }
+}
 
 /***********************************************************************
  *           FONT_TranslateName
@@ -57,26 +98,14 @@ static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
  */
 static const char *FONT_TranslateName( char *winFaceName )
 {
-    int i;
-    static const char *mappings[] =
-    {
-        /*Windows name*/  /*X11 name*/
-        "system",         "helvetica",
-        "ms sans serif",  "helvetica",
-        "ms serif",       "times",
-        "fixedsys",       "fixed",
-        "arial",          "helvetica",
-        "helv",           "helvetica",
-        "roman",          "times"
-    };
+  int i;
 
-    for (i = 0; i < sizeof(mappings)/sizeof(mappings[0]); i += 2)
-        if (!strcmp( winFaceName, mappings[i] ))
-        {
-            dprintf_font(stddeb, "---- Mapped %s to %s\n", winFaceName, mappings[i+1] );
-            return mappings[i+1];
-        }
-    return winFaceName;
+  for (i = 1; i < FontSize; i ++)
+    if( !strcmp( winFaceName, FontNames[i].window ) ) {
+      dprintf_font(stddeb, "---- Mapped %s to %s\n", winFaceName, FontNames[i].x11 );
+      return FontNames[i].x11;
+    }
+  return FontNames[0].x11;
 }
 
 
@@ -100,25 +129,37 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font )
     width = font->lfWidth * 10;
     spacing = (font->lfPitchAndFamily & FIXED_PITCH) ? 'm' :
 	      (font->lfPitchAndFamily & VARIABLE_PITCH) ? 'p' : '*';
-    charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*";
+    charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*-*";
     if (*font->lfFaceName) family = FONT_TranslateName( font->lfFaceName );
     else switch(font->lfPitchAndFamily & 0xf0)
     {
-      case FF_ROMAN:      family = "times"; break;
-      case FF_SWISS:      family = "helvetica"; break;
-      case FF_MODERN:     family = "courier"; break;
-      case FF_SCRIPT:     family = "*"; break;
-      case FF_DECORATIVE: family = "*"; break;
-      default:            family = "*"; break;
+    case FF_ROMAN:
+      family = FONT_TranslateName( "roman" );
+      break;
+    case FF_SWISS:
+      family = FONT_TranslateName( "swiss" );
+      break;
+    case FF_MODERN:
+      family = FONT_TranslateName( "modern" );
+      break;
+    case FF_SCRIPT:
+      family = FONT_TranslateName( "script" );
+      break;
+    case FF_DECORATIVE:
+      family = FONT_TranslateName( "decorative" );
+      break;
+    default:
+      family = FontNames[0].x11;
+      break;
     }
     
 	while (TRUE) {
 	    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
 	    if ( width == 0 )
-	      sprintf( pattern, "-*-%s-%s-%c-normal-*-*-%d-*-*-%c-*-%s",
+	      sprintf( pattern, "-%s-%s-%c-normal-*-*-%d-*-*-%c-*-%s",
 		      family, weight, slant, height, spacing, charset);
 	    else
-	      sprintf( pattern, "-*-%s-%s-%c-normal-*-*-%d-*-*-%c-%d-%s",
+	      sprintf( pattern, "-%s-%s-%c-normal-*-*-%d-*-*-%c-%d-%s",
 		      family, weight, slant, height, spacing, width, charset);
 	    dprintf_font(stddeb, "FONT_MatchFont: '%s'\n", pattern );
 	    names = XListFonts( display, pattern, 1, &count );
@@ -525,9 +566,9 @@ void InitFontsList()
     slant = 'r';
     spacing = '*';
     charset = "*";
-    family = "*";
+    family = "*-*";
     dprintf_font(stddeb,"InitFontsList !\n");
-    sprintf( pattern, "-*-%s-%s-%c-normal-*-*-*-*-*-%c-*-%s",
+    sprintf( pattern, "-%s-%s-%c-normal-*-*-*-*-*-%c-*-%s",
 	      family, weight, slant, spacing, charset);
     names = XListFonts( display, pattern, MAX_FONTS, &count );
     dprintf_font(stddeb,"InitFontsList // count=%d \n", count);

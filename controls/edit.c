@@ -18,8 +18,8 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "user.h"
 #include "scroll.h"
 #include "stddebug.h"
-/* #define DEBUG_EDIT /* */
-/* #undef  DEBUG_EDIT /* */
+/* #define DEBUG_EDIT */
+/* #undef  DEBUG_EDIT */
 #include "debug.h"
 
 
@@ -69,10 +69,12 @@ typedef struct
 } EDITSTATE;
 
 
-#define ClientWidth(wndPtr) (wndPtr->rectClient.right - \
-			     wndPtr->rectClient.left)
-#define ClientHeight(wndPtr, es) ((wndPtr->rectClient.bottom - \
-				   wndPtr->rectClient.top) / es->txtht)
+#define ClientWidth(wndPtr) \
+	(wndPtr->rectClient.right > wndPtr->rectClient.left ? \
+	wndPtr->rectClient.right - wndPtr->rectClient.left : 0)
+#define ClientHeight(wndPtr, es) \
+	(wndPtr->rectClient.bottom > wndPtr->rectClient.top ? \
+	(wndPtr->rectClient.bottom - wndPtr->rectClient.top) / es->txtht : 0)
 #define EditBufLen(wndPtr) (wndPtr->dwStyle & ES_MULTILINE \
 			    ? EDITLEN : ENTRYLEN)
 #define CurrChar (EDIT_TextLine(hwnd, es->CurrLine) + es->CurrCol)
@@ -94,7 +96,6 @@ static BOOL TextMarking;         /* TRUE if text marking in progress */
 static BOOL ButtonDown;          /* TRUE if left mouse button down */
 static int ButtonRow;              /* row in text buffer when button pressed */
 static int ButtonCol;              /* col in text buffer when button pressed */
-static BOOL Print = FALSE;
 
 
 LONG EditWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
@@ -106,7 +107,7 @@ void EDIT_ModTextPointers(HWND hwnd, int lineno, int var);
 void EDIT_PaintMsg(HWND hwnd);
 HANDLE EDIT_GetTextLine(HWND hwnd, int selection);
 char *EDIT_TextLine(HWND hwnd, int sel);
-int EDIT_StrLength(HWND hwnd, char *str, int len, int pcol);
+int EDIT_StrLength(HWND hwnd, unsigned char *str, int len, int pcol);
 int EDIT_LineLength(HWND hwnd, int num);
 void EDIT_WriteTextLine(HWND hwnd, RECT *rc, int y);
 void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row, 
@@ -177,7 +178,6 @@ void swap(int *a, int *b);
 LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 {
     LONG lResult = 0L;
-    HDC hdc;
     char *textPtr;
     int len;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
@@ -466,7 +466,6 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
     EDITSTATE *es;
     unsigned int *textPtrs;
     char *text;
-    int len;
 
     /* store pointer to local or global heap in window structure so that */
     /* EDITSTATE structure itself can be stored on local heap  */
@@ -627,7 +626,7 @@ void EDIT_BuildTextPointers(HWND hwnd)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     char *text, *cp;
     int incrs = INITLINES;
-    unsigned int off, len, temp;
+    unsigned int off, len;
     EDITSTATE *es;
     unsigned int *textPtrs;
     short *charWidths;
@@ -772,6 +771,7 @@ char *EDIT_TextLine(HWND hwnd, int sel)
     unsigned int *textPtrs = 
 	(unsigned int *)EDIT_HeapAddr(hwnd, es->hTextPtrs);
 
+    if(sel>es->wlines)return NULL;
     return (text + *(textPtrs + sel));
 }
     
@@ -784,12 +784,9 @@ char *EDIT_TextLine(HWND hwnd, int sel)
  *  the width of a tab.
  */
 
-int EDIT_StrLength(HWND hwnd, char *str, int len, int pcol)
+int EDIT_StrLength(HWND hwnd, unsigned char *str, int len, int pcol)
 {
     int i, plen = 0;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     for (i = 0; i < len; i++)
 	plen += EDIT_CharWidth(hwnd, (BYTE)(*(str + i)), pcol + plen);
@@ -807,12 +804,10 @@ int EDIT_StrLength(HWND hwnd, char *str, int len, int pcol)
 
 int EDIT_LineLength(HWND hwnd, int num)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
     char *cp = EDIT_TextLine(hwnd, num);
     char *cp1;
 
+    if(!cp)return 0;
     cp1 = strchr(cp, '\n');
     return cp1 ? (int)(cp1 - cp) : strlen(cp);
 }
@@ -827,14 +822,12 @@ int EDIT_LineLength(HWND hwnd, int num)
 void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 {
     int len = 0;
-    unsigned char line[200];
     HANDLE hLine;
     unsigned char *lp;
     int lnlen, lnlen1;
     int col, off = 0;
     int sbl, sel, sbc, sec;
     RECT rc;
-    BOOL trunc = FALSE;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -1049,7 +1042,7 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	cp++;
 	scol += tabwidth;
 
-	while (cp1 = strchr(cp, VK_TAB))
+	while ((cp1 = strchr(cp, VK_TAB)))
 	{
 	    TextOut(hdc, scol, row * es->txtht, cp, (int)(cp1 - cp));
 	    scol += EDIT_StrLength(hwnd, cp, (int)(cp1 - cp), scol);
@@ -1102,9 +1095,6 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
     char *str;
     int ch = 0, i = 0, j, s_i;
     int ch1;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     dprintf_edit(stddeb,"EDIT_GetStr %s %d %d\n", lp, off, len);
 
@@ -1147,8 +1137,6 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
 void EDIT_CharMsg(HWND hwnd, WORD wParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     dprintf_edit(stddeb,"EDIT_CharMsg: wParam=%c\n", (char)wParam);
 
@@ -1326,7 +1314,7 @@ int EDIT_CharWidth(HWND hwnd, short ch, int pcol)
 
 int EDIT_GetNextTabStop(HWND hwnd, int pcol)
 {
-    int i, tmp;
+    int i;
     int baseUnitWidth = LOWORD(GetDialogBaseUnits());
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -1360,7 +1348,6 @@ void EDIT_Forward(HWND hwnd)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
-    char *text = EDIT_HeapAddr(hwnd, es->hText);
 
     if (*CurrChar == '\0')
 	return;
@@ -1449,7 +1436,6 @@ void EDIT_Backward(HWND hwnd)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
-    char *text = EDIT_HeapAddr(hwnd, es->hText);
 
     if (es->CurrCol)
     {
@@ -1480,11 +1466,9 @@ void EDIT_Backward(HWND hwnd)
 
 void EDIT_End(HWND hwnd)
 {
-    RECT rc;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
-    char *text = EDIT_HeapAddr(hwnd, es->hText);
 
     while (*CurrChar && *CurrChar != '\n')
     {
@@ -1510,7 +1494,6 @@ void EDIT_End(HWND hwnd)
 
 void EDIT_Home(HWND hwnd)
 {
-    RECT rc;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -1667,7 +1650,6 @@ void EDIT_KeyDownMsg(HWND hwnd, WORD wParam)
 
 void EDIT_KeyHScroll(HWND hwnd, WORD opt)
 {
-    RECT rc;
     int hscrollpos;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -1779,7 +1761,6 @@ void EDIT_KeyVScrollLine(HWND hwnd, WORD opt)
 
 void EDIT_KeyVScrollPage(HWND hwnd, WORD opt)
 {
-    RECT rc;
     int vscrollpos;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -1827,7 +1808,6 @@ void EDIT_KeyVScrollPage(HWND hwnd, WORD opt)
 
 void EDIT_KeyVScrollDoc(HWND hwnd, WORD opt)
 {
-    RECT rc;
     int vscrollpos;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -2050,7 +2030,6 @@ void EDIT_VScrollLine(HWND hwnd, WORD opt)
 
 void EDIT_VScrollPage(HWND hwnd, WORD opt)
 {
-    RECT rc;
     int vscrollpos;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -2114,7 +2093,6 @@ void EDIT_HScrollMsg(HWND hwnd, WORD wParam, LONG lParam)
 
 void EDIT_SizeMsg(HWND hwnd, WORD wParam, LONG lParam)
 {
-    RECT rc;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -2200,9 +2178,6 @@ int EDIT_PixelToChar(HWND hwnd, int row, int *pixel)
 {
     int ch = 0, i = 0, s_i;
     char *text;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     dprintf_edit(stddeb,"EDIT_PixelToChar: row=%d, pixel=%d\n", row, *pixel);
 
@@ -2233,7 +2208,6 @@ LONG EDIT_SetTextMsg(HWND hwnd, LONG lParam)
 {
     int len;
     char *text;
-    RECT rc;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -2440,7 +2414,6 @@ void EDIT_DeleteSel(HWND hwnd)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
-    char *text = EDIT_HeapAddr(hwnd, es->hText);
 
     if (SelMarked(es))
     {
@@ -2555,7 +2528,7 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
 {
     int bbl, bel, bbc, bec;
     char *cp;
-    int len;
+    int len, line;
     BOOL end = FALSE;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
@@ -2565,8 +2538,11 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
 
     bbl = es->SelEndLine;
     bbc = es->SelEndCol;
-    cp = EDIT_TextLine(hwnd, es->wtop + y / es->txtht);
-    len = EDIT_LineLength(hwnd, es->wtop + y / es->txtht);
+    line = es->wtop + y / es->txtht;
+    if (line > es->wlines)
+	line = es->wlines;
+    cp = EDIT_TextLine(hwnd, line);
+    len = EDIT_LineLength(hwnd, line);
 
     es->WndRow = y / es->txtht;
     if (es->WndRow > es->wlines - es->wtop - 1)
@@ -2699,9 +2675,6 @@ LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam)
     char *cp, *cp1;
     int len;
     char *buffer = (char *)lParam;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    EDITSTATE *es = 
-	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     cp = EDIT_TextLine(hwnd, wParam);
     cp1 = EDIT_TextLine(hwnd, wParam + 1);
@@ -3077,7 +3050,6 @@ unsigned int EDIT_HeapSize(HWND hwnd, unsigned int handle)
 
 void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
 {
-    MDESC *m;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));

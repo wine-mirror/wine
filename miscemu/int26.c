@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "registers.h"
 #include "msdos.h"
+#include "segmem.h"
 #include "wine.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
@@ -12,7 +13,7 @@ void IntBarf(int i, struct sigcontext_struct *context);
 
 int do_int26(struct sigcontext_struct *context)
 {
-	BYTE *dataptr = pointer(DS, BX);
+	BYTE *dataptr = SAFEMAKEPTR(DS, BX);
 	DWORD begin, length;
 
 	if (CX == 0xffff) {
@@ -32,7 +33,7 @@ int do_int26(struct sigcontext_struct *context)
 
 	/* push flags on stack */
 	SP -= sizeof(WORD);
-	setword(pointer(SS,SP), (WORD) EFL);
+	setword(SAFEMAKEPTR(SS,SP), (WORD) EFL);
 
 	return 1;
 }

@@ -93,7 +93,7 @@ DWORD CDAUDIO_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 	wDevID = lpParms->wDeviceID;
 	if (CDADev[wDevID].nUseCount > 0) {
 		/* The driver already open on this channel */
-		/* If the driver was% op, ened shareable before and this open specifies */
+		/* If the driver was opened shareable before and this open specifies */
 		/* shareable then increment the use count */
 		if (CDADev[wDevID].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
 			++CDADev[wDevID].nUseCount;
@@ -468,7 +468,7 @@ UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 }
 
 /**************************************************************************
-* 				CDAUDIO_GetNumberOfTracks		[internal]
+* 				CDAUDIO_GetTracksInfo			[internal]
 */
 BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 {
@@ -544,7 +544,7 @@ BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 
 
 /**************************************************************************
-* 				CDAUDIO_GetNumberOfTracks		[internal]
+* 				CDAUDIO_GetCDStatus				[internal]
 */
 BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 {

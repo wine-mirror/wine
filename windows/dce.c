@@ -13,8 +13,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
-/* #define DEBUG_DC /* */
-/* #undef  DEBUG_DC /* */
+/* #define DEBUG_DC */
+/* #undef  DEBUG_DC */
 #include "debug.h"
 
 
@@ -264,8 +264,6 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
     {
         dc->w.DCOrgX = 0;
         dc->w.DCOrgY = 0;
-        dc->w.DCSizeX = SYSMETRICS_CXSCREEN;
-        dc->w.DCSizeY = SYSMETRICS_CYSCREEN;
         dc->u.x.drawable = rootWindow;
         XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     }
@@ -275,15 +273,11 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
         {
             dc->w.DCOrgX  = wndPtr->rectWindow.left;
             dc->w.DCOrgY  = wndPtr->rectWindow.top;
-            dc->w.DCSizeX = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-            dc->w.DCSizeY = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
         }
         else
         {
             dc->w.DCOrgX  = wndPtr->rectClient.left;
             dc->w.DCOrgY  = wndPtr->rectClient.top;
-            dc->w.DCSizeX = wndPtr->rectClient.right - wndPtr->rectClient.left;
-            dc->w.DCSizeY = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
         }
         while (!wndPtr->window)
         {
@@ -338,8 +332,8 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
       /* Can only use PARENTCLIP on child windows */
     if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) flags &= ~DCX_PARENTCLIP;
 
-      /* Whole window DC implies children are not clipped */
-    if (flags & DCX_WINDOW) flags &= ~DCX_CLIPCHILDREN;
+      /* Whole window DC implies using cache DC and not clipping children */
+    if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
 
     if (flags & DCX_CACHE)
     {
@@ -402,7 +396,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-    dprintf_dc(stddeb, "GetDCEx(%d,%d,0x%x): returning %d\n", 
+    dprintf_dc(stddeb, "GetDCEx(%d,%d,0x%lx): returning %d\n", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }

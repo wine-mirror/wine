@@ -9,8 +9,8 @@
 #
 makedepend -s"# /* Do not remove this line or change anything below this line */" -finclude/debug.h
 echo " " >> include/debug.h
-grep -h dprintf_ */*.c | tr -d '[:blank:]' | cut -d"(" -f1 | sort | uniq | \
-	cut -d"_" -f2 > temp.$$
+grep -h dprintf_ */*.c | tr -d '[:blank:]' | cut -d"(" -f1 | \
+	cut -d"_" -f2 | sort | uniq > temp.$$
 echo " " >> include/debug.h
 echo "#ifdef DEBUG_NONE_EXT" >> include/debug.h
 cat temp.$$ |

@@ -1,0 +1,44 @@
+#include "../Wine.tmpl"
+
+.SUFFIXES: .rc
+
+.rc.c:
+	echo "#include \"windows.h\"" >$*.rct
+	echo WINDOWS_H_ENDS_HERE >>$*.rct
+	cat $< >>$*.rct
+	gcc -E -x c $(CFLAGS) $*.rct | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | winerc -v -p $* >$@
+	$(RM) $*.rct
+
+AllTarget(sysres.c)
+
+sysres.c: winerc $(TOP)/include/windows.h
+
+includes::
+
+clean::
+	$(RM) sysres.c
+
+
+XCOMM Rules to build the winerc program
+
+SRCS = \
+	lex.yy.c \
+	rc.tab.c \
+	winerc.c
+
+OBJS = $(SRCS:.c=.o)
+
+depend:: rc.tab.c rc.tab.h lex.yy.c
+
+clean::
+	$(RM) lex.yy.c rc.tab* y.tab.c
+
+ComplexProgramTarget(winerc)
+
+rc.tab.c rc.tab.h: rc.y
+	$(YACC) -b rc -d --debug rc.y
+
+lex.yy.c: rc.l
+	$(LEX) -I rc.l
+ 
+

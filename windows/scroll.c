@@ -35,11 +35,11 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
     hdc = GetDC(hwnd);
 
     if (rect == NULL)
-	GetWindowRect(hwnd, &rc);
+	GetClientRect(hwnd, &rc);
     else
 	CopyRect(&rc, rect);
     if (clipRect == NULL)
-	GetWindowRect(hwnd, &cliprc);
+	GetClientRect(hwnd, &cliprc);
     else
 	CopyRect(&cliprc, clipRect);
 
@@ -143,11 +143,11 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect,
     hdc = GetDC(hwnd);
 
     if (rect == NULL)
-	GetWindowRect(hwnd, &rc);
+	GetClientRect(hwnd, &rc);
     else
 	CopyRect(&rc, rect);
     if (clipRect == NULL)
-	GetWindowRect(hwnd, &cliprc);
+	GetClientRect(hwnd, &cliprc);
     else
 	CopyRect(&cliprc, clipRect);
 

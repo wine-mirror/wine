@@ -22,8 +22,8 @@ static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt
 #include "task.h"
 #include "toolhelp.h"
 #include "stddebug.h"
-/* #define DEBUG_MODULE /* */
-/* #undef DEBUG_MODULE  /* */
+/* #define DEBUG_MODULE */
+/* #undef DEBUG_MODULE  */
 #include "debug.h"
 
 extern char WindowsPath[256];
@@ -96,12 +96,12 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
     static flagReadyToRun = 0;
     struct w_files *final_wpnt;
 
-    printf("InitializeLoadedDLLs %08X\n", wpnt);
+    dprintf_module(stddeb,"InitializeLoadedDLLs(%08lX)\n", wpnt);
 
     if (wpnt == NULL)
     {
 	flagReadyToRun = 1;
-	fprintf(stderr, "Initializing DLLs\n");
+	dprintf_module(stddeb,"Initializing DLLs\n");
     }
     
     if (!flagReadyToRun)
@@ -109,7 +109,7 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
 
 #if 1
     if (wpnt != NULL)
-	fprintf(stderr, "Initializing %s\n", wpnt->name);
+	dprintf_module(stddeb,"Initializing %s\n", wpnt->name);
 #endif
 
     /*
@@ -140,7 +140,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     char buffer[256], header[2], modulename[64], *fullname;
 
     ExtractDLLName(module, modulename);
-    printf("LoadImage [%s]\n", module);
+    dprintf_module(stddeb,"LoadImage [%s]\n", module);
     /* built-in one ? */
     if (FindDLLTable(modulename)) {
 	return GetModuleHandle(modulename);
@@ -166,7 +166,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
 
     fullname = GetDosFileName(fullname);
     
-    fprintf(stderr,"LoadImage: loading %s (%s)\n           [%s]\n", 
+    dprintf_module(stddeb,"LoadImage: loading %s (%s)\n           [%s]\n", 
 	    module, buffer, fullname);
 
     if (change_dir && fullname)
@@ -209,8 +209,12 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     {
 	myerror("Unable to read MZ header from file");
     }
+
+      /* This field is ignored according to "Windows Internals", p.242 */
+#if 0
     if (wpnt->mz_header->must_be_0x40 != 0x40)
 	myerror("This is not a Windows program");
+#endif
 
     /* read first two bytes to determine filetype */
     lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
@@ -261,45 +265,45 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 		ExtractDLLName(lpModuleName, dllname);
 
 	if ((int) lpModuleName & 0xffff0000)
-	 	printf("GetModuleHandle('%s');\n", lpModuleName);
+	 	dprintf_module(stddeb,"GetModuleHandle('%s');\n", lpModuleName);
 	else
-	 	printf("GetModuleHandle('%x');\n", lpModuleName);
+	 	dprintf_module(stddeb,"GetModuleHandle('%p');\n", lpModuleName);
 
-/* 	printf("GetModuleHandle // searching in builtin libraries\n");*/
+/* 	dprintf_module(stddeb,"GetModuleHandle // searching in builtin libraries\n");*/
 	for (i = 0; i < N_BUILTINS; i++) {
 		if (dll_builtin_table[i].dll_name == NULL) break;
 		if (((int) lpModuleName & 0xffff0000) == 0) {
 			if (0xFF00 + i == (int) lpModuleName) {
-				printf("GetModuleHandle('%s') return %04X \n",
+				dprintf_module(stddeb,"GetModuleHandle('%s') return %04X \n",
 				       lpModuleName, 0xff00 + i);
 				return 0xFF00 + i;
 				}
 			}
 		else if (strcasecmp(dll_builtin_table[i].dll_name, dllname) == 0) {
-			printf("GetModuleHandle('%x') return %04X \n", 
+			dprintf_module(stddeb,"GetModuleHandle('%p') return %04X \n", 
 							lpModuleName, 0xFF00 + i);
 			return (0xFF00 + i);
 			}
 		}
 
- 	printf("GetModuleHandle // searching in loaded modules\n");
+ 	dprintf_module(stddeb,"GetModuleHandle // searching in loaded modules\n");
 	while (w) {
-/*		printf("GetModuleHandle // '%x' \n", w->name);  */
+/*		dprintf_module(stddeb,"GetModuleHandle // '%x' \n", w->name);  */
 		if (((int) lpModuleName & 0xffff0000) == 0) {
 			if (w->hinstance == (int) lpModuleName) {
-				printf("GetModuleHandle('%x') return %04X \n",
+				dprintf_module(stddeb,"GetModuleHandle('%p') return %04X \n",
 				       lpModuleName, w->hinstance);
 				return w->hinstance;
 				}
 			}
 		else if (strcasecmp(w->name, dllname) == 0) {
-			printf("GetModuleHandle('%s') return %04X \n", 
+			dprintf_module(stddeb,"GetModuleHandle('%s') return %04X \n", 
 							lpModuleName, w->hinstance);
 			return w->hinstance;
 			}
 		w = w->next;
 		}
-	printf("GetModuleHandle('%x') not found !\n", lpModuleName);
+	printf("GetModuleHandle('%p') not found !\n", lpModuleName);
 	return 0;
 }
 
@@ -311,7 +315,7 @@ int GetModuleUsage(HANDLE hModule)
 {
 	struct w_files *w;
 
-	printf("GetModuleUsage(%04X);\n", hModule);
+	dprintf_module(stddeb,"GetModuleUsage(%04X);\n", hModule);
 
 	/* built-in dll ? */
 	if (IS_BUILTIN_DLL(hModule)) 
@@ -332,7 +336,7 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
     LPSTR str;
     char windir[256], temp[256];
 
-    printf("GetModuleFileName(%04X, %08X, %d);\n", hModule, lpFileName, nSize);
+    dprintf_module(stddeb,"GetModuleFileName(%04X, %p, %d);\n", hModule, lpFileName, nSize);
 
     if (lpFileName == NULL) return 0;
     if (nSize < 1) return 0;
@@ -343,7 +347,7 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
 	sprintf(temp, "%s\\%s.DLL", windir, dll_builtin_table[hModule & 0x00ff].dll_name);
 	ToDos(temp);
 	strncpy(lpFileName, temp, nSize);
-        printf("GetModuleFileName copied '%s' (internal dll) return %d \n", lpFileName, nSize);
+        dprintf_module(stddeb,"GetModuleFileName copied '%s' (internal dll) return %d \n", lpFileName, nSize);
 	return strlen(lpFileName);
     }
 
@@ -353,7 +357,7 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
     str = GetDosFileName(w->filename);
     if (nSize > strlen(str)) nSize = strlen(str) + 1;
     strncpy(lpFileName, str, nSize);
-    printf("GetModuleFileName copied '%s' return %d \n", lpFileName, nSize);
+    dprintf_module(stddeb,"GetModuleFileName copied '%s' return %d \n", lpFileName, nSize);
     return nSize - 1;
 }
 
@@ -379,8 +383,7 @@ HANDLE LoadLibrary(LPSTR libname)
  */
 void FreeLibrary(HANDLE hLib)
 {
-	struct w_files *wpnt;
-	printf("FreeLibrary(%04X);\n", hLib);
+	dprintf_module(stddeb,"FreeLibrary(%04X);\n", hLib);
 
 	/* built-in dll ? */
 	if (IS_BUILTIN_DLL(hLib) || hLib == 0 || hLib == hSysRes) 
@@ -399,11 +402,11 @@ void FreeLibrary(HANDLE hLib)
 				if (lpMod->ModuleName != NULL) free(lpMod->ModuleName);
 				if (lpMod->FileName != NULL) free(lpMod->FileName);
 				GlobalFree(lpMod->hModule);
-				printf("FreeLibrary // freed !\n");
+				dprintf_module(stddeb,"FreeLibrary // freed !\n");
 				return;
 				}
 			lpMod->Count--;
-			printf("FreeLibrary // Count decremented !\n");
+			dprintf_module(stddeb,"FreeLibrary // Count decremented !\n");
 			return;
 			}
 		lpMod = lpMod->lpNextModule;
@@ -433,7 +436,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     {
 	if ((int) proc_name & 0xffff0000) 
 	{
-	    printf("GetProcAddress: builtin %#04X, '%s'\n", 
+	    dprintf_module(stddeb,"GetProcAddress: builtin %#04X, '%s'\n", 
 		   hModule, proc_name);
 	    if (GetEntryDLLName(dll_builtin_table[hModule - 0xFF00].dll_name,
 				proc_name, &sel, &addr)) 
@@ -443,7 +446,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 	}
 	else 
 	{
-	    printf("GetProcAddress: builtin %#04X, %d\n", 
+	    dprintf_module(stddeb,"GetProcAddress: builtin %#04X, %d\n", 
 		   hModule, (int)proc_name);
 	    if (GetEntryDLLOrdinal(dll_builtin_table[hModule-0xFF00].dll_name,
 				   (int)proc_name & 0x0000FFFF, &sel, &addr)) 
@@ -452,14 +455,14 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 	    }
 	}
 	ret = MAKELONG(addr, sel);
-	printf("GetProcAddress // ret=%08X sel=%04X addr=%04X\n", 
+	dprintf_module(stddeb,"GetProcAddress // ret=%08X sel=%04X addr=%04X\n", 
 	       ret, sel, addr);
 	return (FARPROC)ret;
     }
     if (hModule == 0) 
     {
 	hTask = GetCurrentTask();
-	printf("GetProcAddress // GetCurrentTask()=%04X\n", hTask);
+	dprintf_module(stddeb,"GetProcAddress // GetCurrentTask()=%04X\n", hTask);
 	lpTask = (LPTASKENTRY) GlobalLock(hTask);
 	if (lpTask == NULL) 
 	{
@@ -467,7 +470,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 	    return NULL;
 	}
 	hModule = lpTask->hInst;
-	printf("GetProcAddress: current module=%04X instance=%04X!\n", 
+	dprintf_module(stddeb,"GetProcAddress: current module=%04X instance=%04X!\n", 
 	       lpTask->hModule, lpTask->hInst);
 	GlobalUnlock(hTask);
     }
@@ -475,11 +478,11 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 	w = w->next;
     if (w == NULL) 
 	return NULL;
-    printf("GetProcAddress // Module Found ! w->filename='%s'\n", w->filename);
+    dprintf_module(stddeb,"GetProcAddress // Module Found ! w->filename='%s'\n", w->filename);
     if ((int)proc_name & 0xFFFF0000) 
     {
 	AnsiUpper(proc_name);
-	printf("GetProcAddress: %04X, '%s'\n", hModule, proc_name);
+	dprintf_module(stddeb,"GetProcAddress: %04X, '%s'\n", hModule, proc_name);
 	cpnt = w->ne->nrname_table;
 	while(TRUE) 
 	{
@@ -488,10 +491,8 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 	    len = *cpnt++;
 	    strncpy(C, cpnt, len);
 	    C[len] = '\0';
-#ifdef DEBUG_MODULE
-	    printf("pointing Function '%s' ordinal=%d !\n", 
+	    dprintf_module(stddeb,"pointing Function '%s' ordinal=%d !\n", 
 		   C, *((unsigned short *)(cpnt +  len)));
-#endif
 	    if (strncmp(cpnt, proc_name, len) ==  0) 
 	    {
 		ordinal =  *((unsigned short *)(cpnt +  len));
@@ -507,7 +508,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     }
     else 
     {
-	printf("GetProcAddress: %#04x, %d\n", hModule, (int) proc_name);
+	dprintf_module(stddeb,"GetProcAddress: %#04x, %d\n", hModule, (int) proc_name);
 	ordinal = (int)proc_name;
     }
     ret = GetEntryPointFromOrdinal(w, ordinal);
@@ -518,7 +519,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     }
     addr  = ret & 0xffff;
     sel = (ret >> 16);
-    printf("GetProcAddress // ret=%08X sel=%04X addr=%04X\n", ret, sel, addr);
+    dprintf_module(stddeb,"GetProcAddress // ret=%08X sel=%04X addr=%04X\n", ret, sel, addr);
     return (FARPROC) ret;
 #endif /* WINELIB */
 }
@@ -552,7 +553,7 @@ FillModStructLoaded(MODULEENTRY *lpModule, struct w_files *dll)
  */
 BOOL ModuleFirst(MODULEENTRY *lpModule)
 {
-	printf("ModuleFirst(%08X)\n", (int) lpModule);
+	dprintf_module(stddeb,"ModuleFirst(%08X)\n", (int) lpModule);
 	
 	FillModStructBuiltIn(lpModule, &dll_builtin_table[0]);
 	return TRUE;
@@ -565,7 +566,7 @@ BOOL ModuleNext(MODULEENTRY *lpModule)
 {
 	struct w_files *w;
 
-	printf("ModuleNext(%08X)\n", (int) lpModule);
+	dprintf_module(stddeb,"ModuleNext(%08X)\n", (int) lpModule);
 
 	if (IS_BUILTIN_DLL(lpModule->hModule)) {
 		/* last built-in ? */
@@ -594,7 +595,7 @@ HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule)
 {
 	struct w_files *w;
 
-	printf("ModuleFindHandle(%08X, %04X)\n", (int) lpModule, (int)hModule);
+	dprintf_module(stddeb,"ModuleFindHandle(%08X, %04X)\n", (int) lpModule, (int)hModule);
 
 	/* built-in dll ? */
 	if (IS_BUILTIN_DLL(hModule)) {

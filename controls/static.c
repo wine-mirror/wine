@@ -86,6 +86,17 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    InvalidateRect(hWnd, NULL, FALSE);
 	    break;
 
+        case WM_NCCREATE:
+	    if (style == SS_ICON)
+            {
+		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
+		if (createStruct->lpszName)
+                    STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
+                                                    createStruct->lpszName ));
+                break;
+            }
+            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
 	case WM_CREATE:
 	    if (style < 0L || style > LAST_STATIC_TYPE) {
 		lResult = -1L;
@@ -95,17 +106,13 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
 	    color_background   = GetSysColor(COLOR_BACKGROUND);
 	    color_window       = GetSysColor(COLOR_WINDOW);
-	    if (style == SS_ICON)
-            {
-		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
-		if (createStruct->lpszName)
-                    STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
-                                                    createStruct->lpszName ));
-            }
 	    break;
 
-        case WM_DESTROY:
-            STATIC_SetIcon( hWnd, 0 );  /* Destroy the current icon */
+        case WM_NCDESTROY:
+            if (style == SS_ICON)
+                STATIC_SetIcon( hWnd, 0 );  /* Destroy the current icon */
+            else 
+                lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
             break;
 
 	case WM_PAINT:

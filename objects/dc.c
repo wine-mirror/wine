@@ -21,7 +21,7 @@ static DeviceCaps * displayDevCaps = NULL;
 
 extern const WIN_DC_INFO DCVAL_defaultValues;
 
-extern void CLIPPING_SetDeviceClipping( DC * dc );     /* objects/clipping.c */
+extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );/* objects/color.c */
 extern void COLOR_SetMapping( DC *dc, HANDLE, WORD );  /* objects/color.c */
 
@@ -110,7 +110,7 @@ void DC_InitDC( HDC hdc )
     SelectObject( hdc, dc->w.hFont );
     XSetGraphicsExposures( display, dc->u.x.gc, False );
     XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
-    CLIPPING_SetDeviceClipping( dc );
+    CLIPPING_UpdateGCRegion( dc );
 }
 
 
@@ -242,17 +242,14 @@ HDC GetDCState( HDC hdc )
     newdc->saveLevel = 0;
     newdc->w.flags |= DC_SAVED;
 
+    newdc->w.hGCClipRgn = 0;
+    newdc->w.hVisRgn = CreateRectRgn( 0, 0, 0, 0 );
+    CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
     if (dc->w.hClipRgn)
     {
 	newdc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
 	CombineRgn( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
     }
-    if (dc->w.hVisRgn)
-    {
-	newdc->w.hVisRgn = CreateRectRgn( 0, 0, 0, 0 );
-	CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
-    }
-    newdc->w.hGCClipRgn = 0;
     COLOR_SetMapping( newdc, dc->u.x.pal.hMapping, dc->u.x.pal.mappingSize );
     return handle;
 }
@@ -264,26 +261,31 @@ HDC GetDCState( HDC hdc )
 void SetDCState( HDC hdc, HDC hdcs )
 {
     DC * dc, * dcs;
-    
+    HRGN hVisRgn, hClipRgn, hGCClipRgn;
+
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
     if (!dcs->w.flags & DC_SAVED) return;
     dprintf_dc(stddeb, "SetDCState: %d %d\n", hdc, hdcs );
-    if (dc->w.hClipRgn)	DeleteObject( dc->w.hClipRgn );
-    if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
-    if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
 
+      /* Save the regions before overwriting everything */
+    hVisRgn    = dc->w.hVisRgn;
+    hClipRgn   = dc->w.hClipRgn;
+    hGCClipRgn = dc->w.hGCClipRgn;
     memcpy( &dc->w, &dcs->w, sizeof(dc->w) );
     memcpy( &dc->u.x.pen, &dcs->u.x.pen, sizeof(dc->u.x.pen) );
-    dc->w.hClipRgn = dc->w.hVisRgn = dc->w.hGCClipRgn = 0;
     dc->w.flags &= ~DC_SAVED;
+
+      /* Restore the regions */
+    dc->w.hVisRgn    = hVisRgn;
+    dc->w.hClipRgn   = hClipRgn;
+    dc->w.hGCClipRgn = hGCClipRgn;
+    CombineRgn( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
+    SelectClipRgn( hdc, dcs->w.hClipRgn );
 
     SelectObject( hdc, dcs->w.hBrush );
     SelectObject( hdc, dcs->w.hFont );
     COLOR_SetMapping( dc, dcs->u.x.pal.hMapping, dcs->u.x.pal.mappingSize );
-
-    SelectClipRgn( hdc, dcs->w.hClipRgn );
-    SelectVisRgn( hdc, dcs->w.hVisRgn );
 }
 
 
@@ -374,8 +376,13 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     dc->w.flags        = 0;
     dc->w.devCaps      = displayDevCaps;
     dc->w.bitsPerPixel = displayDevCaps->bitsPixel;
-    dc->w.DCSizeX      = displayDevCaps->horzRes;
-    dc->w.DCSizeY      = displayDevCaps->vertRes;
+    dc->w.hVisRgn      = CreateRectRgn( 0, 0, displayDevCaps->horzRes,
+                                        displayDevCaps->vertRes );
+    if (!dc->w.hVisRgn)
+    {
+        GDI_HEAP_FREE( handle );
+        return 0;
+    }
 
     DC_InitDC( handle );
 
@@ -426,9 +433,15 @@ HDC CreateCompatibleDC( HDC hdc )
     dc->w.flags        = DC_MEMORY;
     dc->w.bitsPerPixel = 1;
     dc->w.devCaps      = displayDevCaps;
-    dc->w.DCSizeX      = 1;
-    dc->w.DCSizeY      = 1;
     dc->w.hBitmap      = hbitmap;
+    dc->w.hVisRgn      = CreateRectRgn( 0, 0, 1, 1 );
+
+    if (!dc->w.hVisRgn)
+    {
+        DeleteObject( hbitmap );
+        GDI_HEAP_FREE( handle );
+        return 0;
+    }
 
     DC_InitDC( handle );
 

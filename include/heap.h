@@ -37,6 +37,7 @@ extern void *HEAP_ReAlloc(MDESC **free_list, void *old_block,
 			  int new_size, unsigned int flags);
 extern LHEAP *HEAP_LocalFindHeap(unsigned short owner);
 extern unsigned int HEAP_LocalSize(MDESC **free_list, unsigned int handle);
+extern void HEAP_LocalInit(unsigned short owner, void *start, int length);
 
 #define HEAP_OWNER	(Segments[Stack16Frame[11] >> 3].owner)
 #define LOCALHEAP()	(&HEAP_LocalFindHeap(HEAP_OWNER)->free_list)

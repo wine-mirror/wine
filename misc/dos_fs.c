@@ -382,9 +382,7 @@ static void GetUnixDirName(char *rootdir, char *name)
 
 	ToUnix(rootdir);
 
-#ifdef DEBUG
-	fprintf(stderr,"%s\n", rootdir);
-#endif
+	dprintf_dosfs(stddeb,"%s\n", rootdir);
 
 }
 
@@ -440,7 +438,7 @@ char *DOS_GetCurrentDir(int drive)
 { 
 	/* should return 'WINDOWS\SYSTEM' */
 
-	char temp[256];
+	static char temp[256];
 
 	if (!DOS_ValidDrive(drive)) 
 		return 0;

@@ -4,22 +4,23 @@
 
 
 typedef struct tagHEADSSCROLL {
-    short	CurVal;
-    short	MinVal;
-    short	MaxVal;
-    short	MaxPix;
-    short	CurPix;
-    short      ThumbVal;
-    RECT	rect;
-    RECT	rectUp;
-    RECT	rectDown;
-    BOOL	ThumbActive;
-    BOOL	TimerPending;
-    WORD	ButtonDown;
-    WORD	Direction;
-    DWORD	dwStyle;
-    HWND	hWndOwner;
-} HEADSCROLL;
+	short	CurVal;
+	short	MinVal;
+	short	MaxVal;
+	short	MaxPix;
+	short	CurPix;
+	short	ThumbVal;
+	RECT	rect;
+	RECT	rectUp;
+	RECT	rectDown;
+	BOOL	ThumbActive;
+	BOOL	TimerPending;
+	WORD	ButtonDown;
+	WORD	Direction;
+	DWORD	dwStyle;
+	HWND	hWndOwner;
+	BOOL	bRedrawFlag;
+	} HEADSCROLL;
 typedef HEADSCROLL FAR* LPHEADSCROLL;
 
 

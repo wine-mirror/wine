@@ -11,6 +11,8 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #ifdef BUILTIN_MMSYSTEM
 
+#define EMULATE_SB16
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -344,7 +346,7 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		end = lpParms->dwTo;
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // MCI_TO=%d \n", end);
 		}
-/*
+/**/
 	if (dwFlags & MCI_NOTIFY) {
         dprintf_mciwave(stddeb,
 	        "WAVE_mciPlay // MCI_NOTIFY %08X !\n", lpParms->dwCallback);
@@ -360,7 +362,7 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 				return 0;
 			}
 		}
-*/
+/**/
 	lpWaveHdr = &MCIWavDev[wDevID].WaveHdr;
 	lpWaveHdr->lpData = (LPSTR) malloc(64000);
 	lpWaveHdr->dwBufferLength = 32000;
@@ -719,7 +721,7 @@ DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 				lpParms->dwReturn = TRUE;
 				break;
 			case MCI_GETDEVCAPS_CAN_SAVE:
-				lpParms->dwReturn = FALSE;
+				lpParms->dwReturn = TRUE;
 				break;
 			case MCI_WAVE_GETDEVCAPS_INPUTS:
 				lpParms->dwReturn = 1;
@@ -752,7 +754,8 @@ DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 			lpParms->lpstrReturn = "Linux Sound System 0.5";
 			break;
 		case MCI_INFO_FILE:
-			lpParms->lpstrReturn = "FileName";
+			lpParms->lpstrReturn = 
+				(LPSTR)MCIWavDev[wDevID].openParms.lpstrElementName;
 			break;
 		case MCI_WAVE_INPUT:
 			lpParms->lpstrReturn = "Linux Sound System 0.5";
@@ -793,12 +796,19 @@ DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_WRONLY, 0);
 	if (audio == -1) return MMSYSERR_NOTENABLED;
-	lpCaps->wMid = 0xFF; 	/* Manufac ID */
-	lpCaps->wPid = 0x01; 	/* Product ID */
-	strcpy(lpCaps->szPname, "Linux WAV Driver");
-	lpCaps->dwFormats = 0;
-	lpCaps->dwSupport = 0;
+#ifdef EMULATE_SB16
+	lpCaps->wMid = 0x0002;
+	lpCaps->wPid = 0x0104;
+	strcpy(lpCaps->szPname, "SB16 Wave Out");
+#else
+	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
+	lpCaps->wPid = 0x0001; 	/* Product ID */
+	strcpy(lpCaps->szPname, "Linux WAVOUT Driver");
+#endif
+	lpCaps->dwFormats = 0x00000000;
+	lpCaps->dwSupport = WAVECAPS_VOLUME;
 	lpCaps->wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
+	if (lpCaps->wChannels > 1) lpCaps->dwSupport |= WAVECAPS_LRVOLUME;
 	bytespersmpl = (IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize) != 0) ? 1 : 2;
 	smplrate = 44100;
 	if (IOCTL(audio, SNDCTL_DSP_SPEED, smplrate) == 0) {
@@ -1223,10 +1233,16 @@ DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_RDONLY, 0);
 	if (audio == -1) return MMSYSERR_NOTENABLED;
-	lpCaps->wMid = 0xFF; 	/* Manufac ID */
-	lpCaps->wPid = 0x01; 	/* Product ID */
-	strcpy(lpCaps->szPname, "Linux WAV Driver");
-	lpCaps->dwFormats = 0;
+#ifdef EMULATE_SB16
+	lpCaps->wMid = 0x0002;
+	lpCaps->wPid = 0x0004;
+	strcpy(lpCaps->szPname, "SB16 Wave Out");
+#else
+	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
+	lpCaps->wPid = 0x0001; 	/* Product ID */
+	strcpy(lpCaps->szPname, "Linux WAVIN Driver");
+#endif
+	lpCaps->dwFormats = 0x00000000;
 	lpCaps->wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
 	bytespersmpl = (IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize) != 0) ? 1 : 2;
 	smplrate = 44100;
@@ -1680,27 +1696,5 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	return MMSYSERR_NOTSUPPORTED;
 }
 
-
-/*-----------------------------------------------------------------------*/
-
-
-
-/**************************************************************************
-* 				midMessage			[sample driver]
-*/
-DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2)
-{
-	return MMSYSERR_NOTENABLED;
-}
-
-/**************************************************************************
-* 				modMessage			[sample driver]
-*/
-DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-					DWORD dwParam1, DWORD dwParam2)
-{
-	return MMSYSERR_NOTENABLED;
-}
 
 #endif /* #ifdef BUILTIN_MMSYSTEM */

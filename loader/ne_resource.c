@@ -14,8 +14,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "arch.h"
 #include "dlls.h"
 #include "resource.h"
-
+#include "stddebug.h"
 /* #define DEBUG_RESOURCE */
+/* #undef  DEBUG_RESOURCE */
+#include "debug.h"
+
 
 static int ResourceFd = -1;
 static HANDLE ResourceInst = 0;
@@ -142,10 +145,8 @@ OpenResourceFile(HANDLE instance)
 #endif
 #endif
 
-#ifdef DEBUG_RESOURCE
-    printf("OpenResourceFile(%04X) // file='%s' hFile=%04X !\n", 
+    dprintf_resource(stddeb, "OpenResourceFile(%04X) // file='%s' hFile=%04X !\n", 
 		instance, w->filename, ResourceFd);
-#endif
     return ResourceFd;
 }
 
@@ -170,22 +171,16 @@ int type_match(int type_id1, int type_id2, int fd, off_t off)
 	}
 	if ((type_id2 & 0x8000) != 0)
 		return 0;
-#ifdef DEBUG_RESOURCE
-	printf("type_compare: type_id2=%04X !\n", type_id2);
-#endif
+	dprintf_resource(stddeb, "type_compare: type_id2=%04X !\n", type_id2);
 	old_pos = lseek(fd, 0, SEEK_CUR);
 	lseek(fd, off + type_id2, SEEK_SET);
 	read(fd, &c, 1);
 	nbytes = CONV_CHAR_TO_LONG (c);
-#ifdef DEBUG_RESOURCE
-	printf("type_compare: namesize=%d\n", nbytes);
-#endif
+	dprintf_resource(stddeb, "type_compare: namesize=%d\n", nbytes);
 	read(fd, name, nbytes);
 	lseek(fd, old_pos, SEEK_SET);
 	name[nbytes] = '\0';
-#ifdef DEBUG_RESOURCE
-	printf("type_compare: name=`%s'\n", name);
-#endif
+	dprintf_resource(stddeb, "type_compare: name=`%s'\n", name);
 	return strcasecmp((char *) type_id1, name) == 0;
 }
 
@@ -227,10 +222,8 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
 	    return -1;
 	    }
-#ifdef DEBUG_RESOURCE
-	printf("FindResourceByNumber type=%X count=%d ?=%d searched=%08X\n", 
+	dprintf_resource(stddeb, "FindResourceByNumber type=%X count=%d ?=%ld searched=%08X\n", 
 		typeinfo.type_id, typeinfo.count, typeinfo.reserved, type_id);
-#endif
 	if (typeinfo.type_id == 0) break;
 	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
 
@@ -245,10 +238,8 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 		    printf("FindResourceByNumber (%X) bad nameinfo size !\n", resource_id);
 		    return -1;
 		    }
-#ifdef DEBUG_RESOURCE
-		printf("FindResource: search type=%X id=%X // type=%X id=%X\n",
+		dprintf_resource(stddeb, "FindResource: search type=%X id=%X // type=%X id=%X\n",
 			type_id, resource_id, typeinfo.type_id, nameinfo.id);
-#endif
 		if (nameinfo.id == resource_id) {
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
 		    return size_shift;
@@ -325,10 +316,8 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	    printf("FindResourceByName (%s) bad typeinfo size !\n", resource_name);
 	    return -1;
 	}
-#ifdef DEBUG_RESOURCE
-	printf("FindResourceByName typeinfo.type_id=%X count=%d type_id=%X\n",
+	dprintf_resource(stddeb, "FindResourceByName typeinfo.type_id=%X count=%d type_id=%X\n",
 			typeinfo.type_id, typeinfo.count, type_id);
-#endif
 	if (typeinfo.type_id == 0) break;
 	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff))
 	{
@@ -347,25 +336,19 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 /*
 		if ((nameinfo.id & 0x8000) != 0) continue;
 */		
-#ifdef DEBUG_RESOURCE
-		printf("FindResourceByName // nameinfo.id=%04X !\n", nameinfo.id);
-#endif
+		dprintf_resource(stddeb, "FindResourceByName // nameinfo.id=%04X !\n", nameinfo.id);
 		old_pos = lseek(ResourceFd, 0, SEEK_CUR);
 		new_pos = rtoff + nameinfo.id;
 		lseek(ResourceFd, new_pos, SEEK_SET);
 		read(ResourceFd, &nbytes, 1);
-#ifdef DEBUG_RESOURCE
-		printf("FindResourceByName // namesize=%d !\n", nbytes);
-#endif
+		dprintf_resource(stddeb, "FindResourceByName // namesize=%d !\n", nbytes);
  		nbytes = CONV_CHAR_TO_LONG (nbytes);
 		read(ResourceFd, name, nbytes);
 		lseek(ResourceFd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
-#ifdef DEBUG_RESOURCE
-		printf("FindResourceByName type_id=%X (%d of %d) name='%s' resource_name='%s'\n", 
+		dprintf_resource(stddeb, "FindResourceByName type_id=%X (%d of %d) name='%s' resource_name='%s'\n", 
 			typeinfo.type_id, i + 1, typeinfo.count, 
 			name, resource_name);
-#endif
 		if (strcasecmp(name, resource_name) == 0)
 		{
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
@@ -392,9 +375,8 @@ int GetRsrcCount(HINSTANCE hInst, int type_id)
     off_t rtoff;
 
     if (hInst == 0) return 0;
-#ifdef DEBUG_RESOURCE
-    printf("GetRsrcCount hInst=%04X typename=%08X\n", hInst, type_id);
-#endif
+    dprintf_resource(stddeb, "GetRsrcCount hInst=%04X typename=%08X\n", 
+	hInst, type_id);
     if (OpenResourceFile(hInst) < 0)	return 0;
 
     /*
@@ -416,10 +398,8 @@ int GetRsrcCount(HINSTANCE hInst, int type_id)
 			printf("GetRsrcCount // bad typeinfo size !\n");
 			return 0;
 			}
-#ifdef DEBUG_RESOURCE
-		printf("GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
+		dprintf_resource(stddeb, "GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
 				typeinfo.type_id, typeinfo.count, type_id);
-#endif
 		if (typeinfo.type_id == 0) break;
 		if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
 			return typeinfo.count;
@@ -440,10 +420,8 @@ NE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
 {
     int type;
 
-#ifdef DEBUG_RESOURCE
-    printf("NE_FindResource hInst=%04X typename=%08X resname=%08X\n", 
+    dprintf_resource(stddeb, "NE_FindResource hInst=%04X typename=%p resname=%p\n", 
 			instance, type_name, resource_name);
-#endif
 
     ResourceFd = r->fd;
     ResourceFileInfo = r->wpnt;

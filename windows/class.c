@@ -14,8 +14,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "dce.h"
 #include "stddebug.h"
-/* #define DEBUG_CLASS /* */
-/* #undef  DEBUG_CLASS /* */
+/* #define DEBUG_CLASS */
+/* #undef  DEBUG_CLASS */
 #include "debug.h"
 
 
@@ -95,7 +95,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     HCLASS handle, prevClass;
     int classExtra;
 
-    dprintf_class(stddeb, "RegisterClass: wndproc=%08x hinst=%d name='%s' background %x\n", 
+    dprintf_class(stddeb, "RegisterClass: wndproc=%p hinst=%d name='%s' background %x\n", 
 	    class->lpfnWndProc, class->hInstance, class->lpszClassName,
 	    class->hbrBackground );
 

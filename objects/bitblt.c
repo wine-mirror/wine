@@ -15,11 +15,12 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "metafile.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI /* */
-/* #undef  DEBUG_GDI /* */
+/* #define DEBUG_GDI */
+/* #undef  DEBUG_GDI */
 #include "debug.h"
 
 extern const int DC_XROPfunction[];
+extern Colormap COLOR_WinColormap;
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -41,7 +42,7 @@ BOOL PatBlt( HDC hdc, short left, short top,
 	return TRUE;
     }
 
-    dprintf_gdi(stddeb, "PatBlt: %d %d,%d %dx%d %06x\n",
+    dprintf_gdi(stddeb, "PatBlt: %d %d,%d %dx%d %06lx\n",
 	    hdc, left, top, width, height, rop );
 
       /* Convert ROP3 code to ROP2 code */
@@ -92,7 +93,7 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
     DWORD saverop = rop;
     DC *dcDest, *dcSrc;
 
-    dprintf_gdi(stddeb, "BitBlt: %04x %d,%d %dx%d %04x %d,%d %08x\n",
+    dprintf_gdi(stddeb, "BitBlt: %04x %d,%d %dx%d %04x %d,%d %06lx\n",
                 hdcDest, xDest, yDest, width, height, hdcSrc, xSrc, ySrc, rop);
 
     if (width == 0 || height == 0) return FALSE;
@@ -100,12 +101,7 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 	return PatBlt( hdcDest, xDest, yDest, width, height, rop );
 
     rop >>= 16;
-    if ((rop & 0x0f) != (rop >> 4))
-    {
-	dprintf_gdi(stdnimp, "BitBlt: Unimplemented ROP %02x\n", rop );
-	return FALSE;
-    }
-    
+
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
     if (!dcSrc) return FALSE;
     dcDest = (DC *) GDI_GetObjPtr( hdcDest, DC_MAGIC );
@@ -131,22 +127,128 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 	return FALSE;  /* Should call StretchBlt here */
     
     DC_SetupGCForText( dcDest );
-    XSetFunction( display, dcDest->u.x.gc, DC_XROPfunction[rop & 0x0f] );
-    if (dcSrc->w.bitsPerPixel == dcDest->w.bitsPerPixel)
-    {
-	XCopyArea( display, dcSrc->u.x.drawable,
-		   dcDest->u.x.drawable, dcDest->u.x.gc,
-		   min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
-		   min(xd1,xd2), min(yd1,yd2) );
-    }
+    if (((rop & 0x0f) == (rop >> 4))&&(rop!=0xbb))
+	/* FIXME: Test, whether more than just 0xbb has to be excluded */
+      {
+        XSetFunction( display, dcDest->u.x.gc, DC_XROPfunction[rop & 0x0f] );
+        if (dcSrc->w.bitsPerPixel == dcDest->w.bitsPerPixel)
+        {
+	    XCopyArea( display, dcSrc->u.x.drawable,
+	    	       dcDest->u.x.drawable, dcDest->u.x.gc,
+		       min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
+		       min(xd1,xd2), min(yd1,yd2) );
+        }
+        else
+        {
+	   if (dcSrc->w.bitsPerPixel != 1) return FALSE;
+	    XCopyPlane( display, dcSrc->u.x.drawable,
+	  	        dcDest->u.x.drawable, dcDest->u.x.gc,
+		        min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
+		        min(xd1,xd2), min(yd1,yd2), 1 );
+        }
+      }  
     else
-    {
-	if (dcSrc->w.bitsPerPixel != 1) return FALSE;
-	XCopyPlane( display, dcSrc->u.x.drawable,
-		    dcDest->u.x.drawable, dcDest->u.x.gc,
-		    min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
-		    min(xd1,xd2), min(yd1,yd2), 1 );
-    }
+      {
+        XImage *sxi, *dxi, *bxi;
+	int x,y,s,d,p,res,ofs,i,cp,cs,cd,cres;
+	XColor sentry,dentry,pentry,entry;
+	long colors[256];
+
+	/* HDC hdcBrush = CreateCompatibleDC(hdcDest);
+	DC *dcBrush;*/
+	RECT r = {min(xDest,xDest+width), min(yDest,yDest+height), 
+		  MAX(xDest,xDest+width), MAX(yDest,yDest+height)};
+	HBRUSH cur_brush=SelectObject(hdcDest, GetStockObject(BLACK_BRUSH));
+	SelectObject(hdcDest, cur_brush);
+        /* FillRect(hdcBrush, &r, cur_brush);*/
+        sxi=XGetImage(display, dcSrc->u.x.drawable, min(xs1,xs2), min(ys1,ys2), 
+             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
+        dxi=XGetImage(display, dcDest->u.x.drawable, min(xd1,xd2),min(yd1,yd2), 
+             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
+        /* dcBrush = (DC *) GDI_GetObjPtr( hdcBrush, DC_MAGIC );*/
+        /* bxi=XGetImage(display, dcBrush->u.x.drawable, min(xd1,xd2),min(yd1,yd2),
+             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);*/
+	/* FIXME: It's really not necessary to do this on the visible screen */
+        FillRect(hdcDest, &r, cur_brush);
+	bxi=XGetImage(display, dcDest->u.x.drawable, min(xd1,xd2),min(yd1,yd2),
+             abs(xs2-xs1), abs(ys2-ys1), AllPlanes, ZPixmap);
+        for (i=0; i<min(256,1<<(dcDest->w.bitsPerPixel)); i++)
+	{
+	  entry.pixel = i;
+	  XQueryColor ( display, COLOR_WinColormap, &entry);
+	  colors[i] = (int) RGB( entry.red>>8, entry.green>>8, entry.blue>>8 );
+	}
+	if (dcSrc->w.bitsPerPixel == dcDest->w.bitsPerPixel)
+        {
+ 	  for(x=0; x<abs(xs2-xs1); x++)
+	  {
+	    for(y=0; y<abs(ys2-ys1); y++)
+	    {
+	      s = XGetPixel(sxi, x, y);
+	      d = XGetPixel(dxi, x, y);
+	      p = XGetPixel(bxi, x, y);
+	      if (s<256)
+		cs=colors[s];
+	      else
+	      {
+	        sentry.pixel = s;
+		XQueryColor ( display, COLOR_WinColormap, &sentry);
+		cs = (int) RGB( sentry.red>>8,sentry.green>>8, sentry.blue>>8 );
+	      }
+	      if (d<256)
+		cd=colors[d];
+	      else
+	      {
+       		dentry.pixel = d;
+		XQueryColor ( display, COLOR_WinColormap, &dentry);
+		cd = (int) RGB( dentry.red>>8, dentry.green>>8,dentry.blue>>8 );
+	      }
+	      if (p<256)
+		cp=colors[p];
+	      else
+    	      {	      
+	        pentry.pixel = p;
+	        XQueryColor ( display, COLOR_WinColormap, &pentry);
+	        cp = (int) RGB( pentry.red>>8, pentry.green>>8,pentry.blue>>8 );
+	      }
+	      cres = 0;
+	      for(i=0; i<24; i++)
+ 	      {
+		ofs=1<<(((cp>>i)&1)*4+((cs>>i)&1)*2+((cd>>i)&1));
+		if (rop & ofs)
+		  cres |= (1<<i);
+	      }
+	      if (cres==cs)
+		res=s;
+	      else if (cres==cd)
+		res=d;
+	      else if (cres==cp)
+		res=p;
+	      else
+	      {
+		res = -1;
+	        for (i=0; i<min(256,1<<(dcDest->w.bitsPerPixel)); i++)
+		  if (colors[i]==cres)
+		  {
+		    res = i;
+		    break;
+	          }
+		if (res == -1)
+	          res = GetNearestPaletteIndex(dcDest->w.hPalette, res);
+	      } 	
+	      XPutPixel(dxi, x, y, res);
+	    }
+	  }
+        }
+	else
+	    fprintf(stderr,"BitBlt // depths different!\n");
+	XPutImage(display, dcDest->u.x.drawable, dcDest->u.x.gc,
+            dxi, 0, 0, min(xd1,xd2), min(yd1,yd2), abs(xs2-xs1), abs(ys2-ys1)+38);
+	XDestroyImage(sxi);
+        XDestroyImage(dxi);
+	XDestroyImage(bxi);
+	/*DeleteDC(hdcBrush);*/
+      }
     return TRUE;
 }
 
@@ -351,9 +453,8 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     XImage *sxi, *dxi;
     DWORD saverop = rop;
     WORD stretchmode;
-	BOOL	flg;
 
-    dprintf_gdi(stddeb, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
+    dprintf_gdi(stddeb, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %06lx\n",
            hdcDest, xDest, yDest, widthDest, heightDest, hdcSrc, xSrc, 
            ySrc, widthSrc, heightSrc, rop );
     dprintf_gdi(stddeb, "StretchMode is %x\n", 
@@ -376,7 +477,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     rop >>= 16;
     if ((rop & 0x0f) != (rop >> 4))
     {
-        dprintf_gdi(stdnimp, "StretchBlt: Unimplemented ROP %02x\n", rop );
+        fprintf(stdnimp, "StretchBlt: Unimplemented ROP %02lx\n", rop );
         return FALSE;
     }
 

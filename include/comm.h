@@ -16,6 +16,7 @@ struct DosDeviceStruct {
     int suspended;
     int unget;
     int unget_byte;
+    int baudrate;
 };
 
 #endif  /* COMM_H */

@@ -6,7 +6,6 @@
 
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
-#define DEBUG_MSGBOX
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,7 +20,12 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "heap.h"
 #include "win.h"
 #include "texts.h"
- 
+#include "stddebug.h"
+/* #define DEBUG_MSGBOX */
+/* #undef  DEBUG_MSGBOX */ 
+#include "debug.h"
+
+
 /*
  * Defaults for button-texts
  */
@@ -76,17 +80,13 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
 		hInst = hSysRes;
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox(NULL, %08X='%s', %08X='%s', %04X)\n", 
+		dprintf_msgbox(stddeb,"MessageBox(NULL, %08X='%s', %08X='%s', %04X)\n", 
 									str, str, title, title, type);
-#endif
 		}
 	else {
 		hInst = wndPtr->hInstance;
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox(%04X, %08X='%s', %08X='%s', %04X)\n", 
+		dprintf_msgbox(stddeb,"MessageBox(%04X, %08X='%s', %08X='%s', %04X)\n", 
 							hWnd, str, str, title, title, type);
-#endif
 		}
     lpmb = (LPMSGBOX) malloc(sizeof(MSGBOX));
 	memset(lpmb, 0, sizeof(MSGBOX));
@@ -116,9 +116,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
 	wndClass.lpszMenuName    = NULL;
 	wndClass.lpszClassName   = "MESSAGEBOX";
-#ifdef DEBUG_MSGBOX
-	printf( "MessageBox // before RegisterClass, '%s' '%s' !\n", str, title);
-#endif
+	dprintf_msgbox(stddeb, "MessageBox // before RegisterClass, '%s' '%s' !\n", str, title);
 	if (!RegisterClass(&wndClass)) {
 		printf("Unable to Register class 'MESSAGEBOX' !\n");
 		if (lpmb != NULL) free(lpmb);
@@ -134,9 +132,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 		if (lpmb != NULL) free(lpmb);
 		return 0;
 		}
-#ifdef DEBUG_MSGBOX
-	printf( "MessageBox // before Msg Loop !\n");
-#endif
+	dprintf_msgbox(stddeb, "MessageBox // before Msg Loop !\n");
 	while(TRUE) {
 		if (!lpmb->ActiveFlg) break;
 		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
@@ -158,9 +154,7 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	nRet = lpmb->wRetVal;
 	if (lpmb != NULL) free(lpmb);
 	if (!UnregisterClass("MESSAGEBOX", hInst)) return 0;
-#ifdef DEBUG_MSGBOX
-	printf( "MessageBox return %04X !\n", nRet);
-#endif
+	dprintf_msgbox(stddeb, "MessageBox return %04X !\n", nRet);
 	return(nRet);
 }
 
@@ -190,26 +184,17 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	DWORD		OldTextColor;
 	RECT		rect;
 	LPMSGBOX	lpmb;
-	BITMAP		bm;
-	HBITMAP		hBitMap;
-	HDC			hMemDC;
-	HICON		hIcon;
-	HINSTANCE	hInst2;
-	int			x;
+
 	switch(message) {
 	case WM_CREATE:
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_CREATE hWnd=%04X !\n", hWnd);
-#endif
+		dprintf_msgbox(stddeb, "MessageBox WM_CREATE hWnd=%04X !\n", hWnd);
 		wndPtr = WIN_FindWndPtr(hWnd);
 		createStruct = (CREATESTRUCT *)lParam;
 		lpmb = (LPMSGBOX)createStruct->lpCreateParams;
 		if (lpmb == NULL) break;
 		*((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmb;
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_CREATE title='%s' str='%s' !\n", 
+		dprintf_msgbox(stddeb, "MessageBox WM_CREATE title='%s' str='%s' !\n", 
 									lpmb->Title, lpmb->Str);
-#endif
 		GetClientRect(hWnd, &rect);
 		CopyRect(&lpmb->rectStr, &rect);
 		lpmb->rectStr.bottom -= 32;
@@ -295,17 +280,13 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 			}
 	    break;
 	case WM_SHOWWINDOW:
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_SHOWWINDOW hWnd=%04X !\n", hWnd);
-#endif
+		dprintf_msgbox(stddeb, "MessageBox WM_SHOWWINDOW hWnd=%04X !\n", hWnd);
 		if (!(wParam == 0 && lParam == 0L)) {
 			InvalidateRect(hWnd, NULL, TRUE);
 			}
 	    break;
 	case WM_PAINT:
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_PAINT hWnd=%04X !\n", hWnd);
-#endif
+		dprintf_msgbox(stddeb, "MessageBox WM_PAINT hWnd=%04X !\n", hWnd);
 		lpmb = MsgBoxGetStorageHeader(hWnd);
 		if (lpmb == NULL) break;
 		if (!lpmb->ActiveFlg) break;
@@ -328,14 +309,10 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		DrawText(hDC, lpmb->Str, -1, &rect, DT_CENTER | DT_WORDBREAK);
 		SetTextColor(hDC, OldTextColor);
 		EndPaint(hWnd, &ps);
-#ifdef DEBUG_MSGBOX
-		printf("MessageBox End of WM_PAINT !\n");
-#endif
+		dprintf_msgbox(stddeb, "MessageBox End of WM_PAINT !\n");
 		break;
 	case WM_DESTROY:
-#ifdef DEBUG_MSGBOX
-	    printf("MessageBox WM_DESTROY !\n");
-#endif
+	    dprintf_msgbox(stddeb, "MessageBox WM_DESTROY !\n");
 	    ReleaseCapture();
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
 		if (lpmb == NULL) break;
@@ -343,9 +320,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    if (lpmb->hWndYes) DestroyWindow(lpmb->hWndYes);
 	    if (lpmb->hWndNo) DestroyWindow(lpmb->hWndNo);
 	    if (lpmb->hWndCancel) DestroyWindow(lpmb->hWndCancel);
-#ifdef DEBUG_MSGBOX
-	    printf("MessageBox WM_DESTROY end !\n");
-#endif
+	    dprintf_msgbox(stddeb, "MessageBox WM_DESTROY end !\n");
 	    lpmb->ActiveFlg = FALSE;
 	    break;
 	case WM_COMMAND:
@@ -353,9 +328,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		if (lpmb == NULL) break;
 	    if (wParam < IDOK || wParam > IDNO) return(0);
 	    lpmb->wRetVal = wParam;
-#ifdef DEBUG_MSGBOX
-	    printf("MessageBox sending WM_CLOSE !\n");
-#endif
+	    dprintf_msgbox(stddeb, "MessageBox sending WM_CLOSE !\n");
 	    PostMessage(hWnd, WM_CLOSE, 0, 0L);
 	    break;
 	case WM_CHAR:
@@ -398,12 +371,10 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
     HDC  	hDC;
     HDC		hMemDC;
     PAINTSTRUCT ps;
-    int 	OldBackMode;
-    HFONT	hOldFont;
     RECT 	rect;
     BITMAP	bm;
-    int 	X;
     OFSTRUCT	ofstruct;
+    HBITMAP     hbmpOld;
     static LPSTR	ptr;
     static char 	str[256];
     static HBITMAP	hBitMap = 0;
@@ -438,10 +409,11 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
 	FrameRect(hDC, &rect, GetStockObject(BLACK_BRUSH));
 	InflateRect(&rect, -10, -10);
 	hMemDC = CreateCompatibleDC(hDC);
-	SelectObject(hMemDC, hBitMap);
+	hbmpOld = SelectObject(hMemDC, hBitMap);
 	GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
 	BitBlt(hDC, rect.left, rect.top, bm.bmWidth, bm.bmHeight, 
 					hMemDC, 0, 0, SRCCOPY);
+        SelectObject( hMemDC, hbmpOld );
 	DeleteDC(hMemDC);
 	EndPaint(hDlg, &ps);
 	return TRUE;
@@ -465,7 +437,7 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
 		return TRUE;
 	    case IDCANCEL:
 	    case IDOK:
-CloseDLG:	if (hBitMap != 0 ) DeleteObject(hBitMap);
+                if (hBitMap != 0 ) DeleteObject(hBitMap);
 		if (ptr != NULL) free(ptr);
 		EndDialog(hDlg, TRUE);
 		return TRUE;

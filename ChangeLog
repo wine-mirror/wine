@@ -1,3 +1,222 @@
+----------------------------------------------------------------------
+Sun Oct 30 13:01:18 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/static.c]
+	Bug fix for SS_ICON controls.
+
+	* [if1632/Imakefile]
+	Fixed call.o dependencies.
+
+	* [objects/clipping.c] [objects/dc.c]
+	Fixed visible region handling. hVisRgn is always non-null now.
+
+	* [windows/dce.c]
+	Bug fix in GetDCEx for CS_OWNDC windows.
+
+	* [windows/nonclient.c] [windows/painting.c]
+	Fixes to icon window drawing.
+
+	* [windows/winpos.c]
+	A few fixes in SetWindowPos().
+
+Sun Oct 30 12:50:24 1994  Michael Patra  <micky@marie.physik.tu-berlin.de>
+
+	* [objects/bitblt.c]
+	BitBlt(): BitBlt is now able to handle any raster operation. If
+	the request can't be passed to XWindows directly, it's quite
+	slow, though.
+
+	* [*/*.c]
+	  [misc/main.c]
+	Improvements of the system for handling debug messages. Options are
+	now also loaded from /usr/lib/X11/app-defaults/Wine (insert
+	*debugoptions: +xxx there if you want to have turn messages xxx on).
+
+	* [controls/menu.c]
+	DestroyMenu(): The whole window won't be destroyed as a sideeffect
+	any longer.
+
+	* [misc/file.c]
+	OpenFile(): Fixed bug in searching in system/window-directory.
+
+Sun Oct 30 12:25:53 1994  Jimmy Tirtawangsa <j0t2527@tam2000.tamu.edu>
+
+	* [include/windows.h]
+	Bug fix for window related structures.
+	DCB and COMSTAT are affected. They must be packed.
+
+	* [misc/comm.c]
+	Bug fix for COM ports:
+	Dial and dialog window in terminal.exe now works.
+	Non sequential COM assignments in wine.conf should not break now.
+	Baudrate can be specified in wine.conf to overcome baudrate limitation
+	in mswindow. See sample wine.ini
+
+	* [include/comm.h]
+	add baudrate field to DosDeviceStructre
+
+	* [object/font.c]
+	Bug fix for font assignment.
+	Use pairs of foundry and family fontnames in X11 to correspond with
+	window's fonts.
+	Put font assignment ini wine.ini.
+
+	* [wine.ini]
+	Adding optional baudrate after port name in "serialports" section
+	Add new section, "fonts".
+	"default" is special key in "fonts" to match any unmatch window font.
+
+Oct 29, 94 (new address) wine@trgcorp.mksinfo.qc.ca (Martin Ayotte)
+
+	* [if1632/relay.c]
+	* [if1632/commdlg.spec] 	New file.
+	* [misc/commdlg.c] 			New file.
+	* [include/commdlg.h] 		New file.
+	Begin of an emulated COMMDLG DLL, built-in for now.
+	(BTW, if you want to switch between built-in & 16bits CommDlg, only 
+	thing you need to do is to put the real/dummy name in file relay.c)
+
+	* [controls/scroll.c]
+	* [controls/combo.c]
+	* [controls/listbox.c]
+	Few bug fixes and/or cosmetic.
+
+	* [misc/audio.c]
+	* [misc/mmaux.c]
+	bug fixes and flags returned to emulate SB16.
+
+	* [misc/midi.c] 			New file.
+	skeleton for 'Midi' MMSYSTEM & MCI driver.
+
+	* [misc/mcianim.c] 			New file.
+	skeleton for 'Animation1' MCI driver.
+
+	* [windows/win.c]
+	Add new stub for GetLastActiveWindow().
+
+Tue Oct 25 09:17:25 1994  Olaf Flebbe  (flebbe@tat.physik.uni-tuebingen.de)
+
+	* [if1632/call.S] [tools/build.c]
+           Support for ELF format. (Not complete)
+
+Sun Oct 23 00:51:50 1994  Paul Falstad  (pf@zoof)
+
+	* [if1632/user.spec]
+	Add stubs for ArrangeIconicWindows(), etc.
+
+	* [if1632/kernel.spec]
+	Add IsBad*Ptr() functions.
+
+	* [loader/signal.c]
+	Add test_memory(), for use with IsBad*Ptr().
+
+	* [windows/winpos.c]
+	Add stubs for TileChildWindows(), etc.
+
+	* [windows/win.c]
+	IsWindow() shouldn't crash if it's given a bad handle.
+	Add stub for GetLastActivePopup().
+
+	* [memory/global.c]
+	Implement the IsBad*Ptr() functions.
+
+	* [controls/listbox.c]
+	Return the full longword of the item data in LB_GETITEMDATA.
+
+	* [controls/edit.c]
+	Don't let the user select an area past the end of the text.
+
+	* [objects/text.c]
+	In DrawText(), the code to delete crlfs also removed multiple
+	consecutive newlines.  Also, using DT_CALCRECT didn't return
+	the right height, and the width wasn't returned at all.
+	This caused MessageBoxes to be missing much of their text.
+
+	* [windows/scroll.c]
+	ScrollWindow[Ex] didn't work right with null LPRECT arguments.
+
+Fri Oct 21 21:47:19 1994  Paul Falstad  (pf@zoof.cts.com)
+
+	* [miscemu/int21.c]
+	Fixed int21 0x42 handler to properly assemble 32-bit seek ptr.
+
+	* [misc/property.c]
+	Fixed inverted logic in EnumProps(), and changed CallBack16()
+	call to use new arg format.
+
+	* [windows/win.c]
+	Fixed CallBack16() call in Enum[Child]Windows to use new arg
+	format; this fixes crashes in enum procedures.
+
+Wed Oct 19 21:30:00 PDT 1994		martin@cs.csufresno.edu
+
+	* [misc/clipboard.c]
+	  [windows/event.c]
+	  [windows/message.c]
+	Added cut and paste between Wine and other X clients via
+	the PRIMARY selection. Text only this time.
+
+	* [controls/edit.c]
+	EDIT_LineLength, EDIT_TextLine return 0 for lines after last one.
+
+	* [windows/defwnd.c]
+	Send WM_SYSCOMMAND to overlapped ancestor window, 
+	not the receiver of WM_SYSKEYDOWN
+
+Sat Oct 22 15:01:02 1994  Thomas Sandford <t.d.g.sandford@bradford.ac.uk>
+
+        * [controls/edit.c]
+	ClientWidth()/ClientHeight() macros: return 0 if size would
+	be negative
+	EDIT_StrLength(): takes unsigned char* instead of char*
+
+	* [controls/listbox.c]
+	ListBoxWndProc(): in "case WM_MOUSEMOVE" - set lphl at start of
+	case instead of in each place required (it was omitted in
+	some places causing problems!)
+
+	* [controls/menu.c]
+	MENU_CalcItemSize(): don't try to find size of a text item
+	if the pointer is NULL
+
+	* [include/heap.h]
+	added definition of HEAP_LocalInit()
+
+	* [include/msdos.h]
+	removed buggy pointer() macro (use SAFEMAKEPTR() from segmem.h
+	instead)
+
+	* [loader/selector.c]
+	IPCCopySelector(): added missing flags to shmget() call
+	? does this break linux - I added these flags in a previous
+	patch but they were missing in the corresponding release ?
+
+	* [loader/signal.c]
+	win_fault(): added missing definitions of i, dump for those
+	not running NetBSD or linux
+
+	* [misc/dos_fs.c]
+	DOS_GetCurrentDir(): made temp[] static so it can be safely
+	returned
+
+	* [miscemu/int21.c,int25.c,int26.c]
+	Changed all invocations of pointer() to SAFEMAKEPTR(). Included
+	segmem.h where necessary.
+
+	* [windows/dialog.c]
+	CreateDialogIndirectParam(): Changed HEAP_Init() call to 
+	HEAP_LocalInit(), removed redundant variables
+
+Sat Oct 22 00:29:41 MET 1994		  Dag Asheim (dash@ifi.uio.no)
+
+	* [loader/library.c] [loader/main.c] [loader/ne_image.c]
+	  [misc/exec.c] [miscemu/int10.c] [miscemu/int21.c]
+	  [objects/bitblt.c] [objects/metafile.c]
+	Rewritten more printf's to use the new debugging system, and
+	made wine less verbose per default. Use "-debugmsg +module"
+	to get (almost) the same behavior as before.
+
+----------------------------------------------------------------------
 Sun Oct 16 13:29:07 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [controls/button.c]

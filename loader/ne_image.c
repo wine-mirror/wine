@@ -25,8 +25,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "arch.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_FIXUP /* */
-/* #undef DEBUG_FIXUP  /* */
+/* #define DEBUG_FIXUP */
+/* #undef DEBUG_FIXUP  */
 #include "debug.h"
 
 extern HANDLE CreateNewTask(HINSTANCE hInst);
@@ -284,7 +284,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		return -1;
 	    }
 
-	    dprintf_fixup(stddeb,"%d: %s.%d: %04.4x:%04.4x\n", i + 1, 
+	    dprintf_fixup(stddeb,"%d: %s.%d: %04x:%04x\n", i + 1, 
 		   dll_name, ordinal, selector, address);
 	    break;
 	    
@@ -317,7 +317,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		return -1;
 	    }
 
-	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04.4x:%04.4x\n", i + 1, 
+	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04x:%04x\n", i + 1, 
                    func_name, dll_name, ordinal, selector, address);
 	    break;
 	    
@@ -335,7 +335,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		address  = rep->target2;
 	    }
 	    
-	    dprintf_fixup(stddeb,"%d: %04.4x:%04.4x\n", 
+	    dprintf_fixup(stddeb,"%d: %04x:%04x\n", 
 			  i + 1, selector, address);
 	    break;
 
@@ -349,19 +349,19 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	     * exist.
 	     */
 	    dprintf_fixup(stddeb,
-                   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+                   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
+	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
 		   rep->target1, rep->target2);
 	    continue;
 	    
 	  default:
 	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
+	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
 		    rep->target1, rep->target2);
 	    free(rep1);
 	    return -1;
@@ -376,10 +376,10 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    if (FindDLLTable(dll_name) == NULL)
 		additive = 2;
 	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
+	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
 		    rep->target1, rep->target2);
 	    dprintf_fixup(stddeb, "    Additive = %d\n", additive);
 	}
@@ -388,8 +388,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	{
 	  case NE_RADDR_OFFSET16:
 	    do {
-		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x OFFSET16\n",
-		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16\n",
+		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
 		next_addr = *sp;
 		*sp = (unsigned short) address;
 		if (additive == 2)
@@ -402,8 +402,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_POINTER32:
 	    do {
-		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x POINTER32\n",
-		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32\n",
+		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
 		next_addr = *sp;
 		*sp     = (unsigned short) address;
 		if (additive == 2)
@@ -417,8 +417,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_SELECTOR:
 	    do {
-		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x SELECTOR\n",
-		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR\n",
+		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
 		next_addr = *sp;
 		*sp     = (unsigned short) selector;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
@@ -431,11 +431,11 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  default:
 	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
 	    dprintf_fixup(stddeb,
-		   "TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+		   "TARGET %04x %04x\n", rep->target1, rep->target2);
 	    free(rep1);
 	    return -1;
 	}
@@ -447,7 +447,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 
 int NEunloadImage(struct w_files *wpnt)
 {
-	printf("NEunloadImage() called!\n");
+	dprintf_fixup(stdnimp, "NEunloadImage() called!\n");
 	/* free resources, image */
 	return 1;
 }
@@ -491,13 +491,13 @@ void InitNEDLL(struct w_files *wpnt)
 	    ip_reg = wpnt->ne->ne_header->ip;
 
 	    if (cs_reg) {
-		fprintf(stderr, "Initializing %s, cs:ip %04x:%04x, ds %04x\n", 
+		dprintf_dll(stddeb,"Initializing %s, cs:ip %04x:%04x, ds %04x\n", 
 		    wpnt->name, cs_reg, ip_reg, ds_reg);
 	    	    
 		rv = CallTo16(cs_reg << 16 | ip_reg, ds_reg);
-		printf ("rv = %x\n", rv);
+		dprintf_exec(stddeb,"rv = %x\n", rv);
 	    } else
-		printf("%s skipped\n", wpnt->name);
+		dprintf_exec(stddeb,"%s skipped\n", wpnt->name);
 	}
 }
 

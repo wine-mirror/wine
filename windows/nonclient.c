@@ -112,7 +112,7 @@ void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 	style |= WS_CAPTION;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08x %d %08x\n",
+    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08lx %d %08lx\n",
       rect->left, rect->top, rect->right, rect->bottom, style, menu, exStyle );
 
     NC_AdjustRect( rect, style, menu, exStyle );
@@ -587,8 +587,6 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
         if (hIcon)  
         {
             SendMessage(hwnd, WM_ICONERASEBKGND, hdc, 0);
-            Rectangle(hdc, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
-                     wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
             DrawIcon(hdc, 0, 0, hIcon);
         }
         ReleaseDC(hwnd, hdc);
@@ -1265,7 +1263,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
 	    DialogBox( hSysRes, MAKEINTRESOURCE(2), 
-		       hwnd, (FARPROC)AboutWine_Proc );
+		       hwnd, (WNDPROC)AboutWine_Proc );
 	break;
     }
     return 0;

@@ -24,14 +24,15 @@ static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 #include "user.h"
 #include "win.h"
 #include "message.h"
+#include "stddebug.h"
+/* #define DEBUG_MENU */
+/* #undef DEBUG_MENU */
+/* #define DEBUG_MENUCALC */
+/* #undef DEBUG_MENUCALC */
+/* #define DEBUG_MENUSHORTCUT */
+/* #undef DEBUG_MENUSHORTCUT */
 #include "debug.h"
 
-/* #define DEBUG_MENU /* */
-/* #undef DEBUG_MENU /* */
-/* #define DEBUG_MENUCALC /* */
-/* #undef DEBUG_MENUCALC /* */
-/* #define DEBUG_MENUSHORTCUT /* */
-/* #undef DEBUG_MENUSHORTCUT /* */
 
   /* Dimension of the menu bitmaps */
 static WORD check_bitmap_width = 0, check_bitmap_height = 0;
@@ -288,7 +289,7 @@ static void MENU_CalcItemSize( HDC hdc, LPMENUITEM lpitem, HWND hwndOwner,
     
       /* If we get here, then it is a text item */
 
-    dwSize = GetTextExtent( hdc, lpitem->item_text, strlen(lpitem->item_text));
+    dwSize = (lpitem->item_text == NULL) ? 0 : GetTextExtent( hdc, lpitem->item_text, strlen(lpitem->item_text));
     lpitem->rect.right  += LOWORD(dwSize);
     lpitem->rect.bottom += max( HIWORD(dwSize), SYSMETRICS_CYMENU );
 
@@ -605,7 +606,7 @@ WORD MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
     
     lppop = (LPPOPUPMENU) USER_HEAP_ADDR( wndPtr->wIDmenu );
     if (lppop == NULL || lprect == NULL) return SYSMETRICS_CYMENU;
-    dprintf_menu(stddeb,"MENU_DrawMenuBar(%04X, %08X, %08X); !\n", 
+    dprintf_menu(stddeb,"MENU_DrawMenuBar(%04X, %p, %p); !\n", 
 		 hDC, lprect, lppop);
     if (lppop->Height == 0) MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
     lprect->bottom = lprect->top + lppop->Height;
@@ -1527,7 +1528,7 @@ int GetMenuString(HMENU hMenu, WORD wItemID,
 {
 	LPMENUITEM 	lpitem;
 	int		maxsiz;
-	dprintf_menu(stddeb,"GetMenuString(%04X, %04X, %08X, %d, %04X);\n",
+	dprintf_menu(stddeb,"GetMenuString(%04X, %04X, %p, %d, %04X);\n",
 					hMenu, wItemID, str, nMaxSiz, wFlags);
 	if (str == NULL) return FALSE;
 	lpitem = MENU_FindItem( &hMenu, &wItemID, wFlags );
@@ -1624,10 +1625,12 @@ BOOL InsertMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewIt
     LPPOPUPMENU	menu;
     
     if (IS_STRING_ITEM(wFlags))
-	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, '%s') !\n",
-					hMenu, wFlags, wItemID, lpNewItem);
+	{
+	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, '%s') !\n",
+				 hMenu, nPos, wFlags, wItemID, lpNewItem);
+	}
     else
-	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, %08X) !\n",
+	   dprintf_menu(stddeb,"InsertMenu (%04X, %04X, %04X, %04X, %p) !\n",
 		                  hMenu, nPos, wFlags, wItemID, lpNewItem);
 
       /* Find where to insert new item */
@@ -1763,7 +1766,7 @@ BOOL ModifyMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewIt
 	dprintf_menu(stddeb,"ModifyMenu (%04X, %04X, %04X, %04X, '%s') !\n",
 	       hMenu, nPos, wFlags, wItemID, lpNewItem);
     else
-	dprintf_menu(stddeb,"ModifyMenu (%04X, %04X, %04X, %04X, %08X) !\n",
+	dprintf_menu(stddeb,"ModifyMenu (%04X, %04X, %04X, %04X, %p) !\n",
 	       hMenu, nPos, wFlags, wItemID, lpNewItem);
     if (!(lpitem = MENU_FindItem( &hMenu, &nPos, wFlags ))) return FALSE;
     
@@ -1872,7 +1875,8 @@ BOOL DestroyMenu(HMENU hMenu)
 	if (hMenu == 0) return FALSE;
 	lppop = (LPPOPUPMENU) USER_HEAP_ADDR(hMenu);
 	if (lppop == NULL) return FALSE;
-	if (lppop->hWnd) DestroyWindow (lppop->hWnd);
+	if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
+            DestroyWindow( lppop->hWnd );
 
 	if (lppop->hItems)
 	{
@@ -1912,10 +1916,10 @@ HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
  */
 BOOL SetSystemMenu(HWND hWnd, HMENU newHmenu)
 {
-	WND	*wndPtr;
+    WND *wndPtr;
 
-	if ((wndPtr = WIN_FindWndPtr(hWnd)) != NULL)
-		wndPtr->hSysMenu = newHmenu;
+    if ((wndPtr = WIN_FindWndPtr(hWnd)) != NULL) wndPtr->hSysMenu = newHmenu;
+    return TRUE;
 }
 
 
@@ -2030,7 +2034,7 @@ HMENU LoadMenuIndirect(LPSTR menu_template)
 {
 	HMENU     		hMenu;
 	MENU_HEADER 	*menu_desc;
-	dprintf_menu(stddeb,"LoadMenuIndirect: menu_template '%08X'\n", 
+	dprintf_menu(stddeb,"LoadMenuIndirect: menu_template '%p'\n", 
 		     menu_template);
 	hMenu = CreateMenu();
 	menu_desc = (MENU_HEADER *)menu_template;

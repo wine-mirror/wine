@@ -55,7 +55,7 @@ print_ldt()
 #endif
 	if (*lp & 1000)
 	{
-	    printf("Entry %2d: Base %08.8x, Limit %05.5x, DPL %d, Type %d\n",
+	    printf("Entry %2d: Base %08lx, Limit %05lx, DPL %d, Type %d\n",
 		   i, base_addr, limit, dpl, type);
 	    printf("          ");
 	    if (*lp & 0x100)
@@ -75,13 +75,13 @@ print_ldt()
 	    else
 		printf("byte limit, ");
 	    printf("\n");
-	    printf("          %08.8x %08.8x\n", *(lp), *(lp-1));
+	    printf("          %08lx %08lx\n", *(lp), *(lp-1));
 	}
 	else
 	{
-	    printf("Entry %2d: Base %08.8x, Limit %05.5x, DPL %d, Type %d\n",
+	    printf("Entry %2d: Base %08lx, Limit %05lx, DPL %d, Type %d\n",
 		   i, base_addr, limit, dpl, type);
-	    printf("          SYSTEM: %08.8x %08.8x\n", *lp, *(lp-1));
+	    printf("          SYSTEM: %08x %08x\n", *lp, *(lp-1));
 	}
     }
 }

@@ -15,6 +15,7 @@ typedef struct
     WORD        suggestedCount;
     WORD        valid;
     WORD        wMagic;
+    HWND        hwndParent;
     WINDOWPOS   winPos[1];
 } DWP;
 

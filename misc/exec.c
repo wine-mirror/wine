@@ -129,14 +129,14 @@ void StartNewTask(HINSTANCE hInst)
 
 	dprintf_exec(stddeb,"StartNewTask() before CallToInit16() !\n");
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
-    printf ("rv = %x\n", rv);
+    dprintf_exec(stddeb,"rv = %x\n", rv);
 
 }
 
 #else
 void StartNewTask (HINSTANCE hInst)
 {
-    printf ("Not yet implemented\n");
+    fprintf(stdnimp, "StartNewTask(): Not yet implemented\n");
 }
 #endif
 

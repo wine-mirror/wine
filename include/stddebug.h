@@ -68,6 +68,8 @@
 /* #define DEBUG_WIN       */
 /* #define DEBUG_ENUM      */
 /* #define DEBUG_DLL       */
+/* #define DEBUG_MSGBOX    */
+/* #define DEBUG_CATCH     */
  
 
 # /* Do not remove this line or change anything below this line */
@@ -75,7 +77,9 @@
 #ifdef DEBUG_NONE
 #undef DEBUG_ACCEL
 #undef DEBUG_BITMAP
+#undef DEBUG_CALLBACK
 #undef DEBUG_CARET
+#undef DEBUG_CATCH
 #undef DEBUG_CDAUDIO
 #undef DEBUG_CLASS
 #undef DEBUG_CLIPBOARD
@@ -99,36 +103,51 @@
 #undef DEBUG_GRAPHICS
 #undef DEBUG_HEAP
 #undef DEBUG_ICON
+#undef DEBUG_IF
 #undef DEBUG_INT
 #undef DEBUG_KEY
 #undef DEBUG_KEYBOARD
 #undef DEBUG_LDT
 #undef DEBUG_LISTBOX
+#undef DEBUG_MCI
+#undef DEBUG_MCIANIM
 #undef DEBUG_MCIWAVE
 #undef DEBUG_MDI
 #undef DEBUG_MENU
 #undef DEBUG_MENUCALC
 #undef DEBUG_MESSAGE
 #undef DEBUG_METAFILE
+#undef DEBUG_MMIO
+#undef DEBUG_MMTIME
 #undef DEBUG_MODULE
 #undef DEBUG_MSG
+#undef DEBUG_MSGBOX
 #undef DEBUG_NONCLIENT
 #undef DEBUG_PALETTE
+#undef DEBUG_PROFILE
+#undef DEBUG_PROP
+#undef DEBUG_REG
 #undef DEBUG_REGION
 #undef DEBUG_RESOURCE
 #undef DEBUG_SCROLL
+#undef DEBUG_SELECTORS
+#undef DEBUG_STRESS
 #undef DEBUG_SYSCOLOR
+#undef DEBUG_TASK
 #undef DEBUG_TEXT
 #undef DEBUG_TIMER
 #undef DEBUG_UTILITY
 #undef DEBUG_WIN
+#undef DEBUG_WINSOCK
 #endif
  
  
 #ifdef DEBUG_ALL
 #define DEBUG_ACCEL
 #define DEBUG_BITMAP
+#define DEBUG_CALLBACK
 #define DEBUG_CARET
+#define DEBUG_CATCH
 #define DEBUG_CDAUDIO
 #define DEBUG_CLASS
 #define DEBUG_CLIPBOARD
@@ -152,27 +171,40 @@
 #define DEBUG_GRAPHICS
 #define DEBUG_HEAP
 #define DEBUG_ICON
+#define DEBUG_IF
 #define DEBUG_INT
 #define DEBUG_KEY
 #define DEBUG_KEYBOARD
 #define DEBUG_LDT
 #define DEBUG_LISTBOX
+#define DEBUG_MCI
+#define DEBUG_MCIANIM
 #define DEBUG_MCIWAVE
 #define DEBUG_MDI
 #define DEBUG_MENU
 #define DEBUG_MENUCALC
 #define DEBUG_MESSAGE
 #define DEBUG_METAFILE
+#define DEBUG_MMIO
+#define DEBUG_MMTIME
 #define DEBUG_MODULE
 #define DEBUG_MSG
+#define DEBUG_MSGBOX
 #define DEBUG_NONCLIENT
 #define DEBUG_PALETTE
+#define DEBUG_PROFILE
+#define DEBUG_PROP
+#define DEBUG_REG
 #define DEBUG_REGION
 #define DEBUG_RESOURCE
 #define DEBUG_SCROLL
+#define DEBUG_SELECTORS
+#define DEBUG_STRESS
 #define DEBUG_SYSCOLOR
+#define DEBUG_TASK
 #define DEBUG_TEXT
 #define DEBUG_TIMER
 #define DEBUG_UTILITY
 #define DEBUG_WIN
+#define DEBUG_WINSOCK
 #endif

@@ -196,9 +196,15 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 
 	g = GlobalGetFreeSegments(flags, segments);
 	if (g == NULL)
+	  {
+	    dprintf_heap(stddeb, "==> NULL\n");
 	    return 0;
+	  }
 	else
+	  {
+	    dprintf_heap(stddeb, "==> %04x\n",g->handle);
 	    return g->handle;
+	  }
     }
     /*
      * Otherwise we just need a little piece of a segment.
@@ -226,7 +232,10 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	{
 	    g = GlobalGetFreeSegments(0, 1);
 	    if (g == NULL)
+	      {
+		dprintf_heap(stddeb, "==> Null\n");
 		return 0;
+	      }
 
 	    g->handle = 0;
 	    g->sequence = 0;
@@ -235,7 +244,10 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	    m = HEAP_Alloc((MDESC **) g->addr, flags & GLOBAL_FLAGS_ZEROINIT, 
 			   size);
 	    if (m == NULL)
+	      {
+		dprintf_heap(stddeb, "==> Null\n");
 		return 0;
+	      }
 	}
 
 	/*
@@ -449,7 +461,7 @@ GlobalHandle(unsigned int selector)
 	if (g->handle == selector)
 	{
 	    if (g->sequence > 0)
-		return g->handle;
+		return MAKELONG(g->handle, selector);
 	    else
 	    {
 		fprintf(stderr, "Attempt to get a handle "
@@ -458,7 +470,7 @@ GlobalHandle(unsigned int selector)
 	    }
 	}
     }
-
+	dprintf_heap(stddeb, "GlobalHandle ==> Null\n");
     return 0;
 }
 
@@ -820,6 +832,65 @@ BOOL MemManInfo(LPMEMMANINFO lpmmi)
  */
 LONG SetSwapAreaSize( WORD size )
 {
-    printf( "STUB: SetSwapAreaSize(%d)\n", size );
+    dprintf_heap(stdnimp, "STUB: SetSwapAreaSize(%d)\n", size );
     return MAKELONG( size, 0xffff );
+}
+
+/***********************************************************************
+ *           IsBadCodePtr   (KERNEL.336)
+ */
+BOOL IsBadCodePtr( FARPROC lpfn )
+{
+    printf( "STUB: IsBadCodePtr(%p)\n", lpfn );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           IsBadHugeWritePtr  (KERNEL.347)
+ */
+BOOL IsBadHugeWritePtr( const char *lp, DWORD cb )
+{
+    return !test_memory(&lp[cb-1], TRUE);
+}
+
+/***********************************************************************
+ *           IsBadWritePtr   	(KERNEL.335)
+ */
+BOOL IsBadWritePtr( const char *lp, DWORD cb )
+{
+    if ((0xffff & (unsigned int) lp) + cb > 0xffff)
+	return TRUE;
+    return !test_memory(&lp[cb-1], TRUE);
+}
+
+/***********************************************************************
+ *           IsBadReadPtr      (KERNEL.334)
+ */
+BOOL IsBadReadPtr( const char *lp, DWORD cb )
+{
+    if ((0xffff & (unsigned int) lp) + cb > 0xffff)
+	return TRUE;
+    return !test_memory(&lp[cb-1], FALSE);
+}
+
+/***********************************************************************
+ *           IsBadHugeReadPtr  (KERNEL.346)
+ */
+BOOL IsBadHugeReadPtr( const char *lp, DWORD cb )
+{
+    if ((0xffff & (unsigned int) lp) + cb > 0xffff)
+	return TRUE;
+    return !test_memory(&lp[cb-1], FALSE);
+}
+
+/***********************************************************************
+ *           IsBadStringPtr   (KERNEL.337)
+ */
+BOOL IsBadStringPtr( const char *lp, UINT cb )
+{
+    if (!IsBadReadPtr(lp, cb+1))
+	return FALSE;
+    if (lp[cb])
+	return FALSE;
+    return TRUE;
 }

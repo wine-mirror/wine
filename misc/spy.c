@@ -268,7 +268,7 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
 	strstr(SpyFilters, msg_name) == NULL)
     {
 	msg_name[strlen(msg_name) - 1] = '\0';
-	fprintf(SpyFp, "%04.4x  %20.20s  %04.4x  %04.4x  %08.8x\n",
+	fprintf(SpyFp, "%04x  %20.20s  %04x  %04x  %08lx\n",
 		hwnd, msg_name, msg, wParam, lParam);
     }
 #endif

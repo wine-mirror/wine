@@ -29,10 +29,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "windows.h"
 #include "prototypes.h"
+#include "stddebug.h"
+/* #define DEBUG_SELECTORS */
+/* #undef DEBUG_SELECTORS */
 #include "debug.h"
 
-/* #define DEBUG_SELECTORS /* */
-/* #undef DEBUG_SELECTORS /* */
 
 #ifdef linux
 #define DEV_ZERO
@@ -68,6 +69,9 @@ extern char WindowsPath[256];
 extern char **Argv;
 extern int Argc;
 extern char **environ;
+
+unsigned int 
+GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal);
 
 /**********************************************************************
  *					FindUnusedSelectors
@@ -160,7 +164,7 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
      */
     if (s_old->shm_key == -1)
     {
-	s_old->shm_key = shmget(IPC_PRIVATE, s_old->length, IPC_CREAT);
+	s_old->shm_key = shmget(IPC_PRIVATE, s_old->length, IPC_CREAT | 0600);
 	if (s_old->shm_key == -1)
 	{
 	    if (s_new) {
@@ -232,7 +236,7 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
  */
 WORD AllocSelector(WORD old_selector)
 {
-    SEGDESC *s_new, *s_old;
+    SEGDESC *s_new;
     int i_new, i_old;
     int selector;
     
@@ -506,9 +510,8 @@ CreateNewSegments(int code_flag, int read_only, int length, int n_segments)
     
     i = FindUnusedSelectors(n_segments);
 
-#ifdef DEBUG_SELECTORS    
-    fprintf(stddeb, "Using %d segments starting at index %d.\n", n_segments, i);
-#endif
+    dprintf_selectors(stddeb, "Using %d segments starting at index %d.\n", 
+	n_segments, i);
 
     /*
      * Fill in selector info.
@@ -661,10 +664,6 @@ unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, int * sel,
 unsigned int 
 GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 {
-   int fd =  wpnt->fd;
-   struct mz_header_s *mz_header = wpnt->mz_header;   
-   struct ne_header_s *ne_header = wpnt->ne->ne_header;   
-
     union lookup entry_tab_pointer;
     struct entry_tab_header_s *eth;
     struct entry_tab_movable_s *etm;
@@ -771,11 +770,9 @@ CreateEnvironment(void)
     /*
      * Display environment
      */
-#ifdef DEBUG_SELECTORS
-    fprintf(stddeb, "Environment at %08.8x\n", s->base_addr);
+    dprintf_selectors(stddeb, "Environment at %08.8x\n", s->base_addr);
     for (p = s->base_addr; *p; p += strlen(p) + 1)
-	fprintf(stddeb, "    %s\n", p);
-#endif
+	dprintf_selectors(stddeb, "    %s\n", p);
 
     return  s;
 }
@@ -848,7 +845,7 @@ CreateSelectors(struct  w_files * wpnt)
     int fd = wpnt->fd;
     struct ne_segment_table_entry_s *seg_table = wpnt->ne->seg_table;
     struct ne_header_s *ne_header = wpnt->ne->ne_header;
-    SEGDESC *selectors, *s, *stmp;
+    SEGDESC *selectors, *s;
     unsigned short auto_data_sel;
     int contents, read_only;
     int SelectorTableLength;
@@ -992,7 +989,6 @@ CreateSelectors(struct  w_files * wpnt)
 void
 FixupFunctionPrologs(struct w_files * wpnt)
 {
-    struct mz_header_s *mz_header = wpnt->mz_header;   
     struct ne_header_s *ne_header = wpnt->ne->ne_header;   
     union lookup entry_tab_pointer;
     struct entry_tab_header_s *eth;
@@ -1059,6 +1055,7 @@ FixupFunctionPrologs(struct w_files * wpnt)
 DWORD GetSelectorBase(WORD wSelector)
 {
 	fprintf(stdnimp, "GetSelectorBase(selector %4X) stub!\n", wSelector);
+        return 0;
 }
 
 /***********************************************************************
@@ -1066,7 +1063,7 @@ DWORD GetSelectorBase(WORD wSelector)
  */
 void SetSelectorBase(WORD wSelector, DWORD dwBase)
 {
-	fprintf(stdnimp, "SetSelectorBase(selector %4X, base %8X) stub!\n",
+	fprintf(stdnimp, "SetSelectorBase(selector %4X, base %8lX) stub!\n",
 			wSelector, dwBase);
 }
 
@@ -1085,7 +1082,7 @@ DWORD GetSelectorLimit(WORD wSelector)
  */
 void SetSelectorLimit(WORD wSelector, DWORD dwLimit)
 {
-	fprintf(stdnimp, "SetSelectorLimit(selector %4X, base %8X) stub!\n", 
+	fprintf(stdnimp, "SetSelectorLimit(selector %4X, base %8lX) stub!\n", 
 			wSelector, dwLimit);
 }
 

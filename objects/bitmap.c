@@ -27,7 +27,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
-extern void DC_InitDC( HDC hdc );  /* dc.c */
+extern void DC_InitDC( HDC hdc );                /* objects/dc.c */
+extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
 
 /***********************************************************************
  *           BITMAP_Init
@@ -296,12 +297,16 @@ int BMP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
 HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 			     BITMAPOBJ * bmp )
 {
+    HRGN hrgn;
     HBITMAP prevHandle = dc->w.hBitmap;
     
     if (!(dc->w.flags & DC_MEMORY)) return 0;
+    hrgn = CreateRectRgn( 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
+    if (!hrgn) return 0;
+
+    DeleteObject( dc->w.hVisRgn );
+    dc->w.hVisRgn    = hrgn;
     dc->u.x.drawable = bmp->pixmap;
-    dc->w.DCSizeX    = bmp->bitmap.bmWidth;
-    dc->w.DCSizeY    = bmp->bitmap.bmHeight;
     dc->w.hBitmap    = hbitmap;
 
       /* Change GC depth if needed */
@@ -313,6 +318,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( hdc );
     }
+    else CLIPPING_UpdateGCRegion( dc );  /* Just update GC clip region */
     return prevHandle;
 }
 

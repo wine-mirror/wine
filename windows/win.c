@@ -20,6 +20,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "icon.h"
 #include "cursor.h"
 #include "stddebug.h"
+#include "callback.h"
 /* #define DEBUG_WIN  /* */ 
 /* #undef  DEBUG_WIN  /* */
 /* #define DEBUG_MENU /* */
@@ -54,6 +55,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     
     if (!hwnd) return NULL;
     ptr = (WND *) USER_HEAP_ADDR( hwnd );
+    if (IsBadReadPtr(ptr, sizeof *ptr)) return NULL;
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     return ptr;
 }
@@ -152,6 +154,8 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     {
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
         if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+            continue;
+        if ((wndPtr->dwStyle & WS_MINIMIZE) && (WIN_CLASS_INFO(wndPtr).hIcon))
             continue;
 	if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
 	    return hwnd;
@@ -253,7 +257,7 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->ptMaxPos.y        = -1;
     wndPtr->hmemTaskQ         = 0;  /* Desktop does not belong to a task */
     wndPtr->hrgnUpdate        = 0;
-    wndPtr->hwndLastActive    = 0;
+    wndPtr->hwndLastActive    = hwndDesktop;
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     wndPtr->dwExStyle         = 0;
@@ -374,7 +378,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hmemTaskQ         = GetTaskQueue(0);
     wndPtr->hrgnUpdate        = 0;
     wndPtr->hwndPrevActive    = 0;
-    wndPtr->hwndLastActive    = 0;
+    wndPtr->hwndLastActive    = hwnd;
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     wndPtr->dwStyle           = style;
     wndPtr->dwExStyle         = exStyle;
@@ -526,6 +530,8 @@ BOOL DestroyWindow( HWND hwnd )
 {
     WND * wndPtr;
     CLASS * classPtr;
+
+    dprintf_win(stddeb, "DestroyWindow (%04x)\n", hwnd);
     
       /* Initialisation */
 
@@ -933,6 +939,17 @@ HWND GetNextWindow( HWND hwnd, WORD flag )
 
 
 
+/*******************************************************************
+ *         GetLastActivePopup    (USER.287)
+ */
+HWND GetLastActivePopup(HWND hwnd)
+{
+    WND *wndPtr;
+    wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr == NULL) return hwnd;
+    return wndPtr->hwndLastActive;
+}
+
 
 /*******************************************************************
  *    EnumWindows             (USER.54)
@@ -966,7 +983,9 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
 #ifdef WINELIB
       (*wndenumprc)(hwnd, lParam);
 #else
-      result = CallBack16(wndenumprc, 2, lParam, (int) hwnd);
+      result = CallBack16(wndenumprc, 2,
+		CALLBACK_SIZE_WORD, (int) hwnd,
+		CALLBACK_SIZE_LONG, lParam);
 #endif
       if ( ! result )  {
               return 0;
@@ -1001,7 +1020,9 @@ static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 #ifdef WINELIB
         if (!(*wndenumprc)( 2, lParam, (int) hwnd)) {
 #else
-        if (!CallBack16(wndenumprc, 2, lParam, (int) hwnd)) {
+        if (!CallBack16(wndenumprc, 2,
+		CALLBACK_SIZE_WORD, (int) hwnd,
+		CALLBACK_SIZE_LONG, lParam)) {
 #endif
                 return 0;
       }

@@ -201,6 +201,56 @@ static void MAIN_GetAllButtonTexts(XrmDatabase db)
 }
 
 /***********************************************************************
+ *                    ParseDebugOptions
+ *
+ *  Turns specific debug messages on or off, according to "options".
+ *  Returns TRUE if parsing was successfull 
+ */
+#ifdef DEBUG_RUNTIME
+
+BOOL ParseDebugOptions(char *options)
+{
+  int l;
+  if (strlen(options)<3)
+    return FALSE;
+  do
+  {
+    if ((*options!='+')&&(*options!='-'))
+      return FALSE;
+    if (strchr(options,','))
+      l=strchr(options,',')-options;
+    else
+      l=strlen(options);
+    if (!strncasecmp(options+1,"all",l-1))
+      {
+	int i;
+	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+	  debug_msg_enabled[i]=(*options=='+');
+      }
+    else
+      {
+	int i;
+	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+	  if (debug_msg_name && (!strncasecmp(options+1,debug_msg_name[i],l-1)))
+	    {
+	      debug_msg_enabled[i]=(*options=='+');
+	      break;
+	    }
+	if (i==sizeof(debug_msg_enabled)/sizeof(short))
+	  return FALSE;
+      }
+    options+=l;
+  }
+  while((*options==',')&&(*(++options)));
+  if (*options)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+#endif
+
+/***********************************************************************
  *           MAIN_ParseOptions
  *
  * Parse command line options and open display.
@@ -209,7 +259,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 {
     char *display_name;
     XrmValue value;
-    XrmDatabase db = NULL;
+    XrmDatabase db = XrmGetFileDatabase("/usr/lib/X11/app-defaults/Wine");
 
       /* Parse command line */
     Options.programName = MAIN_GetProgramName( *argc, argv );
@@ -254,6 +304,10 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
 	Options.desktopGeometry = value.addr;
+#ifdef DEBUG_RUNTIME
+    if (MAIN_GetResource( db, ".debugoptions", &value))
+	ParseDebugOptions((char*)value.addr);
+#endif
     if (MAIN_GetResource( db, ".debugmsg", &value))
       {
 #ifndef DEBUG_RUNTIME
@@ -262,38 +316,19 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	  argv[0]);
 	exit(1);
 #else
-	char *p=(char*)value.addr;
-	if (strlen(p)<3)
-	  goto msgerror;
-	if ((*p!='+')&&(*p!='-'))
-	  goto msgerror;
-	if (!strcasecmp(p+1,"all"))
+	if (ParseDebugOptions((char*)value.addr)==FALSE)
 	  {
 	    int i;
-	    for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	      debug_msg_enabled[i]=(*p=='+');
-	  }
-	else
-	  {
-	    int i;
-	    for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	      if (debug_msg_name && (!strcasecmp(p+1,debug_msg_name[i])))
-		{
-		  debug_msg_enabled[i]=(*p=='+');
-		  break;
-		}
-	    if (i==sizeof(debug_msg_enabled)/sizeof(short))
-	      {
-	      msgerror:
-		fprintf(stderr,"%s: Syntax: -debugmsg +xxx  or -debugmsg -xxx  with xxx one of\n",argv[0]);
-		fprintf(stderr,"%-9s ","all");
-		for(i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-		  if(debug_msg_name[i])
-		      fprintf(stderr,"%-9s%c",debug_msg_name[i],
+	    fprintf(stderr,"%s: Syntax: -debugmsg +xxx,...  or -debugmsg -xxx,...\n",argv[0]);
+	    fprintf(stderr,"Example: -debugmsg +all,-heap    turn on all messages except heap messages\n");
+	    fprintf(stderr,"Available message types:\n");
+	    fprintf(stderr,"%-9s ","all");
+	    for(i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+	      if(debug_msg_name[i])
+		fprintf(stderr,"%-9s%c",debug_msg_name[i],
 			(((i+2)%8==0)?'\n':' '));
-		fprintf(stderr,"\n\n");
-		exit(1);
-	      }
+	    fprintf(stderr,"\n\n");
+	    exit(1);
 	  }
 #endif
       }
@@ -435,6 +470,7 @@ int main( int argc, char *argv[] )
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
+    Font_Init();
 #ifndef WINELIB
     INT21_Init();
 #endif

@@ -30,6 +30,7 @@ COMMONSUBDIRS = \
 	loader \
 	misc \
 	objects \
+	rc \
 	test \
 	windows
 

@@ -13,6 +13,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include "prototypes.h"
 #include "heap.h"
 #include "win.h"
@@ -35,6 +37,8 @@ typedef CLIPFORMAT FAR* LPCLIPFORMAT;
 static HWND hWndClipboardOwner = 0;
 static HWND hWndViewer = 0;
 static WORD LastRegFormat = 0xC000;
+static Bool wait_for_selection = False;
+static Bool wineOwnsSelection = False;
 
 CLIPFORMAT ClipFormats[12]  = {
     { CF_TEXT, 1, "Text", (HANDLE)NULL, 0, NULL, &ClipFormats[1] },
@@ -91,6 +95,11 @@ BOOL EmptyClipboard()
 	    }
 	lpFormat = lpFormat->NextFormat;
 	}
+    if(wineOwnsSelection){
+        dprintf_clipboard(stddeb,"Losing selection\n");
+	wineOwnsSelection=False;
+	XSetSelectionOwner(display,XA_PRIMARY,None,CurrentTime);
+    }
     return TRUE;
 }
 
@@ -119,6 +128,11 @@ HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
 	if (lpFormat->wFormatID == wFormat) break;
 	lpFormat = lpFormat->NextFormat;
 	}
+    /* doc says we shouldn't use CurrentTime */
+    /* should we become owner of CLIPBOARD as well? */
+    XSetSelectionOwner(display,XA_PRIMARY,WIN_GetXWindow(hWndClipboardOwner),CurrentTime);
+    wineOwnsSelection = True;
+    dprintf_clipboard(stddeb,"Getting selection\n");
     if (lpFormat->hData != 0) GlobalFree(lpFormat->hData);
     lpFormat->hData = hData;
     return lpFormat->hData;
@@ -132,6 +146,15 @@ HANDLE GetClipboardData(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,"GetClipboardData(%04X) !\n", wFormat);
+    if(wFormat == CF_TEXT && !wineOwnsSelection)
+    {	wait_for_selection=True;
+        dprintf_clipboard(stddeb,"Requesting selection\n");
+	XConvertSelection(display,XA_PRIMARY,XA_STRING,
+		XInternAtom(display,"PRIMARY_TEXT",False),
+		WIN_GetXWindow(hWndClipboardOwner),CurrentTime);
+	/* TODO: need time-out for broken clients */
+	while(wait_for_selection)MSG_WaitXEvent(-1);
+    }
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -289,6 +312,8 @@ BOOL IsClipboardFormatAvailable(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,"IsClipboardFormatAvailable(%04X) !\n", wFormat);
+    if(wFormat == CF_TEXT) /* obtain selection as text if possible */
+	return GetClipboardData(CF_TEXT)!=0;
     while(TRUE) {
 	if (lpFormat == NULL) return FALSE;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -319,4 +344,62 @@ int GetPriorityClipboardFormat(WORD FAR *lpPriorityList, short nCount)
 }
 
 
+/**************************************************************************
+ *			CLIPBOARD_ReadSelection
+ *
+ *	The current selection owner has set prop at our window w
+ *	Transfer the property contents into the Clipboard
+ */
+void CLIPBOARD_ReadSelection(Window w,Atom prop)
+{
+    HANDLE hText;
+    LPCLIPFORMAT lpFormat = ClipFormats; 
+    if(prop==None)hText=NULL;
+    else{
+	Atom atype=None;
+	int aformat;
+	unsigned long nitems,remain;
+	unsigned char *val=NULL;
+        dprintf_clipboard(stddeb,"Received prop %s\n",XGetAtomName(display,prop));
+        /* TODO: Properties longer than 64K */
+	if(XGetWindowProperty(display,w,prop,0,0x3FFF,True,XA_STRING,
+	    &atype, &aformat, &nitems, &remain, &val)!=Success)
+		printf("couldn't read property\n");
+        dprintf_clipboard(stddeb,"Type %s,Format %d,nitems %d,value %s\n",
+		XGetAtomName(display,atype),aformat,nitems,val);
+	if(atype!=XA_STRING || aformat!=8){
+	    fprintf(stderr,"Property not set\n");
+	    hText=NULL;
+	} else {
+	    dprintf_clipboard(stddeb,"Selection is %s\n",val);
+	    hText=GlobalAlloc(GMEM_MOVEABLE, nitems);
+	    memcpy(GlobalLock(hText),val,nitems+1);
+	    GlobalUnlock(hText);
+	}
+	XFree(val);
+    }
+    while(TRUE) {
+	if (lpFormat == NULL) return;
+	if (lpFormat->wFormatID == CF_TEXT) break;
+	lpFormat = lpFormat->NextFormat;
+	}
+    if (lpFormat->hData != 0) GlobalFree(lpFormat->hData);
+    wait_for_selection=False;
+    lpFormat->hData = hText;
+    dprintf_clipboard(stddeb,"Received selection\n");
+}
 
+/**************************************************************************
+ *			CLIPBOARD_ReleaseSelection
+ *
+ *	Wine lost the primary selection.
+ *	Empty the clipboard, but don't set the current owner to None.
+ *	Make sure current get/put attempts fail.
+ */
+void CLIPBOARD_ReleaseSelection(HWND hwnd)
+{
+    wineOwnsSelection=False;
+    OpenClipboard(hwnd);
+    EmptyClipboard();
+    CloseClipboard();
+}

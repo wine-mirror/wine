@@ -7,6 +7,7 @@ SRCS = \
 	atom.c \
 	clipboard.c \
 	comm.c \
+	commdlg.c \
 	dos_fs.c \
 	driver.c \
 	exec.c \
@@ -15,8 +16,10 @@ SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
+	mcianim.c \
 	mcicda.c \
 	message.c \
+	midi.c \
 	mmaux.c \
 	mmsystem.c \
 	network.c \

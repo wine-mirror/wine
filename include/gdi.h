@@ -124,8 +124,8 @@ typedef struct
     DeviceCaps   *devCaps;
 
     HANDLE        hMetaFile;
-    HRGN          hClipRgn;     /* Clip region */
-    HRGN          hVisRgn;      /* Visible region */
+    HRGN          hClipRgn;     /* Clip region (may be 0) */
+    HRGN          hVisRgn;      /* Visible region (must never be 0) */
     HRGN          hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
     HPEN          hPen;
     HBRUSH        hBrush;
@@ -158,8 +158,6 @@ typedef struct
     WORD          MapMode;
     short         DCOrgX;            /* DC origin */
     short         DCOrgY;
-    short         DCSizeX;           /* DC dimensions */
-    short         DCSizeY;
     short         CursPosX;          /* Current position */
     short         CursPosY;
     short         WndOrgX;

@@ -100,14 +100,6 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
-    /* 
-     *	I can't help but feel that this belongs somewhere upstream...
-     *
-     *  Don't redraw the window if it is iconified and we have an
-     *  icon to draw for it
-     */
-/*    if (IsIconic(hwnd) && wndPtr->hIcon) return FALSE; */
-
     GetClientRect( hwnd, &rectClient );
     rectWindow = wndPtr->rectWindow;
     OffsetRect(&rectWindow, -wndPtr->rectClient.left, -wndPtr->rectClient.top);
@@ -240,8 +232,13 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 			   DCX_INTERSECTRGN | DCX_USESTYLE );
 	if (hdc)
 	{
-	    SendMessage( hwnd, WM_NCPAINT, wndPtr->hrgnUpdate, 0 );
-	    SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
+            SendMessage( hwnd, WM_NCPAINT, wndPtr->hrgnUpdate, 0 );
+
+              /* Don't send WM_ERASEBKGND to icons */
+              /* (WM_ICONERASEBKGND is sent during processing of WM_NCPAINT) */
+            if (!(wndPtr->dwStyle & WS_MINIMIZE)
+                || !WIN_CLASS_INFO(wndPtr).hIcon)
+                SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
 	    ReleaseDC( hwnd, hdc );
 	}
     }
@@ -400,7 +397,7 @@ int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
  */
 int ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 {
-    int retval;
+    int retval = ERROR;
     HRGN hrgn;
     WND * wndPtr;
 
@@ -414,3 +411,5 @@ int ExcludeUpdateRgn( HDC hdc, HWND hwnd )
     }
     return retval;
 }
+
+

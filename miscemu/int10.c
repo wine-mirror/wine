@@ -9,8 +9,8 @@
 
 void IntBarf(int i, struct sigcontext_struct *context)
 {
-	fprintf(stderr, "int%x: unknown/not implemented parameters:\n", i);
-	fprintf(stderr, "int%x: AX %04x, BX %04x, CX %04x, DX %04x, "
+	fprintf(stdnimp, "int%x: unknown/not implemented parameters:\n", i);
+	fprintf(stdnimp, "int%x: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       i, AX, BX, CX, DX, SI, DI, DS, ES);
 }

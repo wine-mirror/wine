@@ -20,8 +20,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "task.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_DLL /* */
-/* #undef  DEBUG_DLL /* */
+/* #define DEBUG_DLL */
+/* #undef  DEBUG_DLL */
 #include "debug.h"
 
 
@@ -83,7 +83,8 @@ int _WinMain(int argc, char **argv)
 		exit(1);
 	}
 	hTaskMain = CreateNewTask(hInstMain, 0);
-	printf("_WinMain // hTaskMain=%04X hInstMain=%04X !\n", hTaskMain, hInstMain);
+	dprintf_dll(stddeb,"_WinMain // hTaskMain=%04X hInstMain=%04X !\n",
+		    hTaskMain, hInstMain);
 
 	GetPrivateProfileString("wine", "SystemResources", "sysres.dll", 
 				filename, sizeof(filename), WINE_INI);
@@ -93,7 +94,8 @@ int _WinMain(int argc, char **argv)
 		fprintf(stderr, "wine: can't load %s!.\n", filename);
 		exit(1);
 	} else
- 	    dprintf_dll(stddeb,"System Resources Loaded // hSysRes='%04X'\n", hSysRes);
+ 	    dprintf_dll(stddeb,"System Resources Loaded // hSysRes='%04X'\n",
+			hSysRes);
 	
 #ifdef WINESTAT
     cp = strrchr(argv[0], '/');

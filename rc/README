@@ -1,0 +1,38 @@
+This is winerc, the resource compiler for the Wine project. It takes the
+same input as rc.exe, but generates C files as output. These C files can
+be linked together with the application, which can access the resource
+data directly instead of using FindResource/LoadResource/LockResource.
+The generated C code contains arrays, which represent the resource as if
+it was obtained from LoadResource. A table to map resource names to
+pointers is also available.
+Primary applications are the resources of sysres.dll and a future
+commdlg.dll, but the use in the library version is possible as well.
+The expected advantage of using winerc over sysres.dll is a speed
+improvement, however, actual data to support that claim are not
+available. The use of winerc might also simplifies the source code. For
+example, the system menu is managed in the function CopySysMenu
+(controls/menu.c). A winerc-based implementation would just call
+	return LoadMenuIndirect(_Sysres_SYSMENU);
+As the resources are already in the Wine image, they are loaded on
+demand as any other part of a Unix executable image. 
+
+Current State
+This is the first release of winerc. It is alpha software, as the rest
+of Wine is. If you use it for replacing sysres.dll, or if you write
+other parts of Wine which require resource (like commdlg), you will
+probably notice a loss in stability. This is especially true for cursor
+and icon resources, as they are unlikely to work at all. See the TODO
+file for details.
+
+Copying
+The license for Wine applies for winerc as well. Read the files LICENSE
+and WARRANTY in the current or any future distribution for details. You
+can change any source files, and you can add your own copyright notice,
+as long as you leave the existing copyrights intact.
+
+Bug Reports and Fixes
+If you find a bug in winerc, you can report it to me,
+martin@cs.csufresno.edu (Martin von Loewis)
+or to comp.emulators.ms-windows.wine. If you can fix the bug, send the
+diffs & ChangeLog to wine-new@amscons.com (Bob Amstadt), or send it to
+me, and I will collect the fixes and forward them to wine-news.

@@ -112,7 +112,8 @@ extern struct dll_table_entry_s STRESS_table[];
 extern struct dll_table_entry_s SYSTEM_table[];
 extern struct dll_table_entry_s TOOLHELP_table[];
 extern struct dll_table_entry_s MOUSE_table[];
+extern struct dll_table_entry_s COMMDLG_table[];
 
-#define N_BUILTINS	14
+#define N_BUILTINS	15
 
 #endif /* DLLS_H */

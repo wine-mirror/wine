@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
+#include <setjmp.h>
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/syscall.h>
@@ -102,6 +103,9 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 {
 #endif
     unsigned char * instr;
+#if !(defined (linux) || defined (__NetBSD__))
+	int i, *dump;
+#endif
 
 	/* First take care of a few preliminaries */
 #ifdef linux
@@ -132,7 +136,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     {
 #endif
 	fprintf(stderr,
-		"Segmentation fault in Wine program (%x:%x)."
+		"Segmentation fault in Wine program (%x:%lx)."
 		"  Please debug\n",
 		scp->sc_cs, scp->sc_eip);
 	goto oops;
@@ -195,7 +199,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     XUngrabPointer(display, CurrentTime);
 	XUngrabServer(display);
 	XFlush(display);
-    fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
+    fprintf(stderr,"In win_fault %x:%lx\n", scp->sc_cs, scp->sc_eip);
 #if defined(linux) || defined(__NetBSD__)
     wine_debug(signal, scp);  /* Enter our debugger */
 #else
@@ -276,6 +280,36 @@ int init_wine_signals(void)
                 exit(1);
         }
 #endif
+}
+
+static sigjmp_buf segv_jmpbuf;
+
+static void
+segv_handler()
+{
+    siglongjmp(segv_jmpbuf, 1);
+}
+
+int
+test_memory( char *p, int write )
+{
+    int ret = FALSE;
+    struct sigaction new_act;
+    struct sigaction old_act;
+
+    memset(&new_act, 0, sizeof new_act);
+    new_act.sa_handler = segv_handler;
+    if (sigsetjmp( segv_jmpbuf, 1 ) == 0) {
+	char c = 100;
+	if (sigaction(SIGSEGV, &new_act, &old_act) < 0)
+	    perror("sigaction");
+	c = *p;
+	if (write)
+	    *p = c;
+	ret = TRUE;
+    }
+    wine_sigaction(SIGSEGV, &old_act, NULL);
+    return ret;
 }
 
 #endif /* ifndef WINELIB */
