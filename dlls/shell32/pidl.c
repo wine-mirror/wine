@@ -349,46 +349,59 @@ HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
 	return ret;
 }
 
-HRESULT WINAPI SHILCreateFromPathA (LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
-{	LPSHELLFOLDER sf;
+/*************************************************************************
+ * SHILCreateFromPath        [SHELL32.28]
+ *
+ * Create an ItemIDList from a path
+ *
+ * PARAMS
+ *  path       [I]
+ *  ppidl      [O]
+ *  attributes [I/O] requested attributes on call and actual attributes when
+ *                   the function returns
+ *
+ * RETURNS
+ *  NO_ERROR if successful, or an OLE errer code otherwise
+ *
+ * NOTES
+ *  Wrapper for IShellFolder_ParseDisplayName().
+ */
+HRESULT WINAPI SHILCreateFromPathA(LPCSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
+{
+	LPSHELLFOLDER sf;
 	WCHAR lpszDisplayName[MAX_PATH];
 	DWORD pchEaten;
 	HRESULT ret = E_FAIL;
 
-	TRACE_(shell)("%s %p 0x%08lx\n",path,ppidl,attributes?*attributes:0);
+	TRACE_(shell)("%s %p 0x%08lx\n", path, ppidl, attributes ? *attributes : 0);
 
-        if (!MultiByteToWideChar( CP_ACP, 0, path, -1, lpszDisplayName, MAX_PATH ))
-            lpszDisplayName[MAX_PATH-1] = 0;
+	if (!MultiByteToWideChar(CP_ACP, 0, path, -1, lpszDisplayName, MAX_PATH))
+	  lpszDisplayName[MAX_PATH-1] = 0;
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
-	  ret = IShellFolder_ParseDisplayName(sf,0, NULL,lpszDisplayName,&pchEaten,ppidl,attributes);
+	  ret = IShellFolder_ParseDisplayName(sf, 0, NULL, lpszDisplayName, &pchEaten, ppidl, attributes);
 	  IShellFolder_Release(sf);
 	}
 	return ret;
 }
 
-HRESULT WINAPI SHILCreateFromPathW (LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
-{	LPSHELLFOLDER sf;
+HRESULT WINAPI SHILCreateFromPathW(LPCWSTR path, LPITEMIDLIST * ppidl, DWORD * attributes)
+{
+	LPSHELLFOLDER sf;
 	DWORD pchEaten;
 	HRESULT ret = E_FAIL;
 
-	TRACE_(shell)("%s %p 0x%08lx\n",debugstr_w(path),ppidl,attributes?*attributes:0);
+	TRACE_(shell)("%s %p 0x%08lx\n", debugstr_w(path), ppidl, attributes ? *attributes : 0);
 
 	if (SUCCEEDED (SHGetDesktopFolder(&sf)))
 	{
-	  ret = IShellFolder_ParseDisplayName(sf,0, NULL, (LPWSTR) path, &pchEaten, ppidl, attributes);
+	  ret = IShellFolder_ParseDisplayName(sf, 0, NULL, (LPWSTR)path, &pchEaten, ppidl, attributes);
 	  IShellFolder_Release(sf);
 	}
 	return ret;
 }
 
-/*************************************************************************
- * SHILCreateFromPath   [SHELL32.28]
- *
- * NOTES
- *   Wrapper for IShellFolder_ParseDisplayName().
- */
 HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD * attributes)
 {
 	if ( SHELL_OsIsUnicode())
@@ -397,30 +410,48 @@ HRESULT WINAPI SHILCreateFromPathAW (LPCVOID path, LPITEMIDLIST * ppidl, DWORD *
 }
 
 /*************************************************************************
- * SHCloneSpecialIDList [SHELL32.89]
+ * SHCloneSpecialIDList      [SHELL32.89]
  *
- * PARAMETERS
- *  hwndOwner 	[in]
- *  nFolder 	[in]	CSIDL_xxxxx ??
+ * Create an ItemIDList to one of the special folders.
+
+ * PARAMS
+ *  hwndOwner	[in]
+ *  nFolder		[in]	CSIDL_xxxxx
+ *  fCreate		[in]	Create folder if it does not exist
  *
  * RETURNS
- *  pidl ??
+ *  Success: The newly created pidl
+ *  Failure: NULL, if inputs are invalid.
+ *
  * NOTES
- *     exported by ordinal
+ *  exported by ordinal.
+ *  Caller is responsible for deallocating the returned ItemIDList with the
+ *  shells IMalloc interface, aka ILFree.
  */
-LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND hwndOwner,DWORD nFolder,DWORD x3)
+LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND hwndOwner, DWORD nFolder, BOOL fCreate)
 {	LPITEMIDLIST ppidl;
-	WARN_(shell)("(hwnd=%p,csidl=0x%lx,0x%lx):semi-stub.\n",
-					 hwndOwner,nFolder,x3);
+	TRACE_(shell)("(hwnd=%p,csidl=0x%lx,%s).\n", hwndOwner, nFolder, fCreate ? "T" : "F");
+
+	if (fCreate)
+	  nFolder |= CSIDL_FLAG_CREATE;
 
 	SHGetSpecialFolderLocation(hwndOwner, nFolder, &ppidl);
-
 	return ppidl;
 }
 
 /*************************************************************************
- * ILGlobalClone [SHELL32.20]
+ * ILGlobalClone             [SHELL32.20]
  *
+ * Clones an ItemIDList using Alloc.
+ *
+ * PARAMS
+ *  pidl       [I]   ItemIDList to clone
+ *
+ * RETURNS
+ *  Newly allocated ItemIDList.
+ *
+ * NOTES
+ *  exported by ordinal.
  */
 LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
 {	DWORD    len;
@@ -483,13 +514,26 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 	return FALSE;
 }
 /*************************************************************************
- * ILIsParent [SHELL32.23]
+ * ILIsParent                [SHELL32.23]
  *
- * parent=a/b	child=a/b/c -> true, c is in folder a/b
- *		child=a/b/c/d -> false if bImmediate is true, d is not in folder a/b
- *		child=a/b/c/d -> true if bImmediate is false, d is in a subfolder of a/b
+ * Verifies that pidlParent is indeed the (immediate) parent of pidlChild.
+ *
+ * PARAMS
+ *  pidlParent [I]
+ *  pidlChild  [I]
+ *  bImmediate [I]   only return true if the parent is the direct parent
+ *                   of the child
+ *
+ * RETURNS
+ *  True if the parent ItemIDlist is a complete part of the child ItemIdList,
+ *  False otherwise.
+ *
+ * NOTES
+ *  parent = a/b, child = a/b/c -> true, c is in folder a/b
+ *  child = a/b/c/d -> false if bImmediate is true, d is not in folder a/b
+ *  child = a/b/c/d -> true if bImmediate is false, d is in a subfolder of a/b
  */
-BOOL WINAPI ILIsParent( LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL bImmediate)
+BOOL WINAPI ILIsParent(LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL bImmediate)
 {
 	char	szData1[MAX_PATH];
 	char	szData2[MAX_PATH];
@@ -511,26 +555,33 @@ BOOL WINAPI ILIsParent( LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL 
 	  pChild = ILGetNext(pChild);
 	}
 
-	if ( pParent->mkid.cb || ! pChild->mkid.cb)	/* child shorter or has equal length to parent */
+	if ( pParent->mkid.cb || ! pChild->mkid.cb) /* child shorter or has equal length to parent */
 	  return FALSE;
 
-	if ( ILGetNext(pChild)->mkid.cb && bImmediate)	/* not immediate descent */
+	if ( ILGetNext(pChild)->mkid.cb && bImmediate) /* not immediate descent */
 	  return FALSE;
 
 	return TRUE;
 }
 
 /*************************************************************************
- * ILFindChild [SHELL32.24]
+ * ILFindChild               [SHELL32.24]
  *
- * NOTES
  *  Compares elements from pidl1 and pidl2.
  *
- *  pidl1 is desktop		pidl2
- *  pidl1 shorter pidl2		pointer to first different element of pidl2
- *				if there was at least one equal element
- *  pidl2 shorter pidl1		0
- *  pidl2 equal pidl1		pointer to last 0x00-element of pidl2
+ * PARAMS
+ *  pidl1      [I]
+ *  pidl2      [I]
+ *
+ * RETURNS
+ *  pidl1 is desktop      pidl2
+ *  pidl1 shorter pidl2   pointer to first different element of pidl2
+ *                        if there was at least one equal element
+ *  pidl2 shorter pidl1   0
+ *  pidl2 equal pidl1     pointer to last 0x00-element of pidl2
+ *
+ * NOTES
+ *  exported by ordinal.
  */
 LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
@@ -580,14 +631,25 @@ LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 }
 
 /*************************************************************************
- * ILCombine [SHELL32.25]
+ * ILCombine                 [SHELL32.25]
+ *
+ * Concatenates two complex ItemIDLists.
+ *
+ * PARAMS
+ *  pidl1      [I]   first complex ItemIDLists
+ *  pidl2      [I]   complex ItemIDLists to append
+ *
+ * RETURNS
+ *  if both pidl's == NULL      NULL
+ *  if pidl1 == NULL            cloned pidl2
+ *  if pidl2 == NULL            cloned pidl1
+ *  otherwise new pidl with pidl2 appended to pidl1
  *
  * NOTES
- *  Concatenates two complex idlists.
- *  The pidl is the first one, pidlsub the next one
- *  Does not destroy the passed in idlists!
+ *  exported by ordinal.
+ *  Does not destroy the passed in ItemIDLists!
  */
-LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
+LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
 	DWORD    len1,len2;
 	LPITEMIDLIST  pidlNew;
@@ -654,14 +716,15 @@ LPITEMIDLIST WINAPI SHLogILFromFSIL(LPITEMIDLIST pidl)
 }
 
 /*************************************************************************
- * ILGetSize [SHELL32.152]
- *  gets the byte size of an idlist including zero terminator (pidl)
+ * ILGetSize                 [SHELL32.152]
  *
- * PARAMETERS
- *  pidl ITEMIDLIST
+ * Gets the byte size of an ItemIDList including zero terminator
+ *
+ * PARAMS
+ *  pidl       [I]   ItemIDList
  *
  * RETURNS
- *  size of pidl
+ *  size of pidl in bytes
  *
  * NOTES
  *  exported by ordinal
@@ -683,14 +746,20 @@ DWORD WINAPI ILGetSize(LPCITEMIDLIST pidl)
 }
 
 /*************************************************************************
- * ILGetNext [SHELL32.153]
- *  gets the next simple pidl of a complex pidl
+ * ILGetNext                 [SHELL32.153]
  *
- * observed return values:
+ * Gets the next ItemID of an ItemIDList
+ *
+ * PARAMS
+ *  pidl       [I]   ItemIDList
+ *
+ * RETURNS
  *  null -> null
  *  desktop -> null
  *  simple pidl -> pointer to 0x0000 element
  *
+ * NOTES
+ *  exported by ordinal.
  */
 LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl)
 {
@@ -710,16 +779,23 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl)
 	}
 	return NULL;
 }
+
 /*************************************************************************
- * ILAppend [SHELL32.154]
+ * ILAppend                  [SHELL32.154]
+ *
+ * Adds the single ItemID item to the ItemIDList indicated by pidl.
+ * If bEnd is FALSE, inserts the item in the front of the list,
+ * otherwise it adds the item to the end. (???)
+ *
+ * PARAMS
+ *  pidl       [I]   ItemIDList to extend
+ *  item       [I]   ItemID to prepend/append
+ *  bEnd       [I]   Indicates if the item should be appended
  *
  * NOTES
- *  Adds the single item to the idlist indicated by pidl.
- *  if bEnd is 0, adds the item to the front of the list,
- *  otherwise adds the item to the end. (???)
  *  Destroys the passed in idlist! (???)
  */
-LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL bEnd)
+LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl, LPCITEMIDLIST item, BOOL bEnd)
 {
 	LPITEMIDLIST idlRet;
 
@@ -738,23 +814,27 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL bEnd)
 
 	if (bEnd)
 	{
-	  idlRet=ILCombine(pidl,item);
+	  idlRet = ILCombine(pidl, item);
 	}
 	else
 	{
-	  idlRet=ILCombine(item,pidl);
+	  idlRet = ILCombine(item, pidl);
 	}
 
 	SHFree(pidl);
 	return idlRet;
 }
+
 /*************************************************************************
- * ILFree [SHELL32.155]
+ * ILFree                    [SHELL32.155]
+ *
+ * Frees memory (if not NULL) allocated by SHMalloc allocator
+ *
+ * PARAMS
+ *  pidl         [I]
  *
  * NOTES
- *     free_check_ptr - frees memory (if not NULL)
- *     allocated by SHMalloc allocator
- *     exported by ordinal
+ *  exported by ordinal
  */
 DWORD WINAPI ILFree(LPITEMIDLIST pidl)
 {
@@ -764,49 +844,76 @@ DWORD WINAPI ILFree(LPITEMIDLIST pidl)
 	SHFree(pidl);
 	return TRUE;
 }
+
 /*************************************************************************
- * ILGlobalFree [SHELL32.156]
+ * ILGlobalFree              [SHELL32.156]
  *
+ * Frees memory (if not NULL) allocated by Alloc allocator
+ *
+ * PARAMS
+ *  pidl         [I]
+ *
+ * NOTES
+ *  exported by ordinal.
  */
 void WINAPI ILGlobalFree( LPITEMIDLIST pidl)
 {
-	TRACE("%p\n",pidl);
+	TRACE("%p\n", pidl);
 
 	if(!pidl) return;
 	Free(pidl);
 }
+
 /*************************************************************************
- * ILCreateFromPath [SHELL32.157]
+ * ILCreateFromPathA         [SHELL32.189]
  *
+ * Creates a complex ItemIDList from a path and returns it.
+ *
+ * PARAMS
+ *  path         [I]
+ *
+ * RETURNS
+ *  the newly created complex ItemIDList or NULL if failed
+ *
+ * NOTES
+ *  exported by ordinal.
  */
+
 LPITEMIDLIST WINAPI ILCreateFromPathA (LPCSTR path)
 {
-	LPITEMIDLIST pidlnew;
-	DWORD attributes = 0;
+	LPITEMIDLIST pidlnew = NULL;
 
-	TRACE_(shell)("%s\n",path);
+	TRACE_(shell)("%s\n", debugstr_a(path));
 
-	if (SUCCEEDED (SHILCreateFromPathA (path, &pidlnew, &attributes)))
+	if (SUCCEEDED(SHILCreateFromPathA(path, &pidlnew, NULL)))
 	  return pidlnew;
-	return FALSE;
+	return NULL;
 }
+
+/*************************************************************************
+ * ILCreateFromPathW         [SHELL32.190]
+ */
 LPITEMIDLIST WINAPI ILCreateFromPathW (LPCWSTR path)
 {
-	LPITEMIDLIST pidlnew;
-	DWORD attributes = 0;
+	LPITEMIDLIST pidlnew = NULL;
 
-	TRACE_(shell)("%s\n",debugstr_w(path));
+	TRACE_(shell)("%s\n", debugstr_w(path));
 
-	if (SUCCEEDED (SHILCreateFromPathW (path, &pidlnew, &attributes)))
+	if (SUCCEEDED(SHILCreateFromPathW(path, &pidlnew, NULL)))
 	  return pidlnew;
-	return FALSE;
+	return NULL;
 }
+
+/*************************************************************************
+ * ILCreateFromPath          [SHELL32.157]
+ */
 LPITEMIDLIST WINAPI ILCreateFromPathAW (LPCVOID path)
 {
 	if ( SHELL_OsIsUnicode())
 	  return ILCreateFromPathW (path);
 	return ILCreateFromPathA (path);
 }
+
 /*************************************************************************
  * _ILParsePathW             [internal]
  *

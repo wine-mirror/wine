@@ -89,7 +89,7 @@
   95 stdcall SHLogILFromFSIL (ptr)
   96 stdcall StrRetToStrN (ptr long ptr ptr) StrRetToStrNAW
   97 stdcall SHWaitForFileToOpen (long long long)
-  98 stdcall SHGetRealIDL (long long long)
+  98 stdcall SHGetRealIDL (ptr ptr ptr)
   99 stdcall SetAppStartingCursor (long long)
  100 stdcall SHRestricted(long)
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr)
@@ -174,6 +174,8 @@
  184 stdcall ArrangeWindows(long long long long long)
  185 stub SHHandleDiskFull
  186 stdcall ILGetDisplayNameEx(ptr ptr ptr long)
+ 189 stdcall ILCreateFromPathA(str)
+ 190 stdcall ILCreateFromPathW(wstr)
  195 stdcall SHFree(ptr)
  196 stdcall SHAlloc(long)
  197 stub SHGlobalDefect
