@@ -784,8 +784,6 @@ static void doChild(const char *arg)
  * Some APIs unrelated to the ones under test may fail, but I expect they're
  * covered by other unit tests; I just print out something about failure to
  * help trace what's going on.
- * FIXME: this is basically a no-op under Wine, since it only reports shell32
- * version 4.72.
  */
 static void testNonExistentPath(void)
 {
