@@ -1608,7 +1608,7 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
 HWND WINAPI GetDesktopWindow(void)
 {
     if (pWndDesktop) return pWndDesktop->hwndSelf;
-    ERR( "You need the -desktop option when running with native USER\n" );
+    ERR( "Wine init error: either you're trying to use an invalid native USER.EXE config, or some graphics/GUI libraries or DLLs didn't initialize properly. Aborting.\n" );
     ExitProcess(1);
     return 0;
 }
@@ -1851,11 +1851,10 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
             SetLastError( ERROR_INVALID_INDEX );
             return 0;
         }
+        retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
             retvalue = (LONG)WINPROC_GetProc( (HWINDOWPROC)retvalue, type );
-        else
-            retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
         WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
@@ -2133,7 +2132,7 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  * The user data is reserved for use by the application which created
  * the window.
  *
- * Do not use GWL_STYLE to change the window's WS_DISABLE style;
+ * Do not use GWL_STYLE to change the window's WS_DISABLED style;
  * instead, call the EnableWindow() function to change the window's
  * disabled state.
  *
