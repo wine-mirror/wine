@@ -114,6 +114,13 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
     b_info->bmiHeader.biClrUsed = 0;
     b_info->bmiHeader.biClrImportant = 0;
 
+    if (!This->surface_desc.u1.lPitch) {
+	/* This can't happen, right? */
+	/* or use GDI_GetObj to get it from the created DIB? */
+	This->surface_desc.u1.lPitch = get_dib_width_bytes(b_info->bmiHeader.biWidth, b_info->bmiHeader.biBitCount);
+	This->surface_desc.dwFlags |= DDSD_PITCH;
+    }
+    
     switch (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount)
     {
     case 16:
@@ -158,12 +165,6 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
     }
 
     TRACE("DIBSection at : %p\n", priv->dib.bitmap_data);
-    if (!This->surface_desc.u1.lPitch) {
-	/* This can't happen, right? */
-	/* or use GDI_GetObj to get it from the created DIB? */
-	This->surface_desc.u1.lPitch = get_dib_width_bytes(b_info->bmiHeader.biWidth, b_info->bmiHeader.biBitCount);
-	This->surface_desc.dwFlags |= DDSD_PITCH;
-    }
 
     if (!This->surface_desc.lpSurface) {
 	This->surface_desc.lpSurface = priv->dib.bitmap_data;
