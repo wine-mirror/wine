@@ -378,6 +378,8 @@ typedef BOOL (WINAPI *PFN_CERT_ENUM_PHYSICAL_STORE)(const void *pvSystemStore,
 #define ALG_TYPE_RSA                    (2 << 9)
 #define ALG_TYPE_BLOCK                  (3 << 9)
 #define ALG_TYPE_STREAM                 (4 << 9)
+#define ALG_TYPE_DH                     (5 << 9)
+#define ALG_TYPE_SECURECHANNEL          (6 << 9)
 
 /* SIDs */
 #define ALG_SID_ANY                     (0)
@@ -415,24 +417,39 @@ typedef BOOL (WINAPI *PFN_CERT_ENUM_PHYSICAL_STORE)(const void *pvSystemStore,
 #define ALG_SID_RIPEMD160               7
 #define ALG_SID_SSL3SHAMD5              8
 #define ALG_SID_HMAC                    9
+/* SCHANNEL SIDs */
+#define ALG_SID_SSL3_MASTER             1
+#define ALG_SID_SCHANNEL_MASTER_HASH    2
+#define ALG_SID_SCHANNEL_MAC_KEY        3
+#define ALG_SID_PCT1_MASTER             4
+#define ALG_SID_SSL2_MASTER             5
+#define ALG_SID_TLS1_MASTER             6
+#define ALG_SID_SCHANNEL_ENC_KEY        7
 
 /* Algorithm Definitions */
-#define CALG_MD2         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD2)
-#define CALG_MD4         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD4)
-#define CALG_MD5         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MD5)
-#define CALG_SHA         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_SHA)
-#define CALG_MAC         (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_MAC)
-#define CALG_SSL3_SHAMD5 (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_SSL3SHAMD5)
-#define CALG_HMAC        (ALG_CLASS_HASH         | ALG_TYPE_ANY    | ALG_SID_HMAC)
-#define CALG_RSA_SIGN    (ALG_CLASS_SIGNATURE    | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
-#define CALG_DSS_SIGN    (ALG_CLASS_SIGNATURE    | ALG_TYPE_DSS    | ALG_SID_DSS_ANY)
-#define CALG_RSA_KEYX    (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RSA    | ALG_SID_RSA_ANY)
-#define CALG_DES         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_DES)
-#define CALG_RC2         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_RC2)
-#define CALG_3DES        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_3DES)
-#define CALG_3DES_112    (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK  | ALG_SID_3DES_112)
-#define CALG_RC4         (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_RC4)
-#define CALG_SEAL        (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM | ALG_SID_SEAL)
+#define CALG_MD2                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_MD2)
+#define CALG_MD4                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_MD4)
+#define CALG_MD5                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_MD5)
+#define CALG_SHA                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_SHA)
+#define CALG_MAC                  (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_MAC)
+#define CALG_SSL3_SHAMD5          (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_SSL3SHAMD5)
+#define CALG_HMAC                 (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_HMAC)
+#define CALG_RSA_SIGN             (ALG_CLASS_SIGNATURE    | ALG_TYPE_RSA           | ALG_SID_RSA_ANY)
+#define CALG_DSS_SIGN             (ALG_CLASS_SIGNATURE    | ALG_TYPE_DSS           | ALG_SID_DSS_ANY)
+#define CALG_RSA_KEYX             (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RSA           | ALG_SID_RSA_ANY)
+#define CALG_DES                  (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_DES)
+#define CALG_RC2                  (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_RC2)
+#define CALG_3DES                 (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_3DES)
+#define CALG_3DES_112             (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_3DES_112)
+#define CALG_RC4                  (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM        | ALG_SID_RC4)
+#define CALG_SEAL                 (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_STREAM        | ALG_SID_SEAL)
+#define CALG_SSL3_MASTER          (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_SSL3_MASTER)
+#define CALG_SCHANNEL_MASTER_HASH (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_SCHANNEL_MASTER_HASH)
+#define CALG_SCHANNEL_MAC_KEY     (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_SCHANNEL_MAC_KEY)
+#define CALG_SCHANNEL_ENC_KEY     (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_SCHANNEL_ENC_KEY)
+#define CALG_PCT1_MASTER          (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_PCT1_MASTER)
+#define CALG_SSL2_MASTER          (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_SSL2_MASTER)
+#define CALG_TLS1_MASTER          (ALG_CLASS_MSG_ENCRYPT  | ALG_TYPE_SECURECHANNEL | ALG_SID_TLS1_MASTER)
 
 /* Protocol Flags */
 #define CRYPT_FLAG_PCT1    0x0001
@@ -632,9 +649,9 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 /* CryptAcquireContext */
 #define CRYPT_VERIFYCONTEXT       0xF0000000
 #define CRYPT_NEWKEYSET           0x00000008
-#define CRYPT_MACHINE_KEYSET      0x00000000
 #define CRYPT_DELETEKEYSET        0x00000010
-#define CRYPT_SILENT              0x00000000
+#define CRYPT_MACHINE_KEYSET      0x00000020
+#define CRYPT_SILENT              0x00000040
 
 /* Crypt{Get|Set}Provider */
 #define CRYPT_MACHINE_DEFAULT     0x00000001
