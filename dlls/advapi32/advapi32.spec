@@ -134,7 +134,7 @@
 @ stdcall InitializeSid(ptr ptr long)
 @ stub InitiateSystemShutdownA
 @ stub InitiateSystemShutdownW
-@ stdcall InitiateSystemShutdownExA(wstr wstr long long long long)
+@ stdcall InitiateSystemShutdownExA(str str long long long long)
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
