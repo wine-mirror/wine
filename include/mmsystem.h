@@ -747,6 +747,9 @@ typedef struct {
     DWORD	dwSupport;		/* functionality supported by driver */
 } AUXCAPSW, *LPAUXCAPSW;
 
+DECL_WINELIB_TYPE_AW(AUXCAPS)
+DECL_WINELIB_TYPE_AW(LPAUXCAPS)
+
 #define AUXCAPS_CDAUDIO    1       /* audio from internal CD-ROM drive */
 #define AUXCAPS_AUXIN      2       /* audio from auxiliary input jacks */
 
