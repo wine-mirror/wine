@@ -362,7 +362,7 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 {
 	if (rev!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
-	memset(lpsd,'\0',sizeof(*lpsd));
+	memset(lpsd,'\0',sizeof(SECURITY_DESCRIPTOR));
 	((SECURITY_DESCRIPTOR*)lpsd)->Revision = SECURITY_DESCRIPTOR_REVISION;
 	return STATUS_SUCCESS;
 }
