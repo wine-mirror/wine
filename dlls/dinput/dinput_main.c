@@ -493,8 +493,8 @@ HRESULT WINAPI DirectInputCreateEx(
 	This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
 	This->ref = 1;
 	ICOM_VTBL(This) = &ddiavt;
-	res=IDirectInputA_QueryInterface(This,riid,ppDI);
-	IDirectInputA_Release(This); /* throw one reference away */
+	res=IDirectInputA_QueryInterface((IUnknown *)This,riid,ppDI);
+	IDirectInputA_Release((IUnknown *)This); /* throw one reference away */
 	return res;
 }
 
