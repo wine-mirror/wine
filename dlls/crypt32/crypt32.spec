@@ -148,6 +148,7 @@
 @ stub CryptSignHashU
 @ stub CryptSignMessage
 @ stub CryptSignMessageWithKey
+@ stub CryptUnprotectData
 @ stub CryptUnregisterDefaultOIDFunction
 @ stub CryptUnregisterOIDFunction
 @ stub CryptUnregisterOIDInfo
