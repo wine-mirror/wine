@@ -2033,12 +2033,12 @@ INT WINAPI LCMapStringA(
     FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
 	  lcid,
-  	  mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS,
+	  mapflags,
 	  srcstr,
 	  srclen,
 	  dststr,
 	  dstlen,
-	  mapflags
+	  mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS
      );
   }
 
