@@ -2641,7 +2641,7 @@ DWORD WINAPI WhichPlatform()
   GET_FUNC(pDllGetVersion, shell32, "DllGetVersion", 1);
   dwState = pDllGetVersion ? 2 : 1;
 
-  /* Set or delete the key accordinly */
+  /* Set or delete the key accordingly */
   dwRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
                         "Software\\Microsoft\\Internet Explorer", 0,
                          KEY_ALL_ACCESS, &hKey);

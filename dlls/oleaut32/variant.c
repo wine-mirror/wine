@@ -3551,7 +3551,7 @@ VarXor_Exit:
  *  pVarOut   [O] Destination for comparison result
  *
  * RETURNS
- *  Success: S_OK. pVarOut contains the result of the comparason (VARIANT_TRUE
+ *  Success: S_OK. pVarOut contains the result of the comparison (VARIANT_TRUE
  *           if equivalent or non-zero otherwise.
  *  Failure: An HRESULT error code indicating the error.
  *
