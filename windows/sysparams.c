@@ -40,11 +40,12 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETDOUBLECLKHEIGHT_IDX              12
 #define SPI_SETDOUBLECLICKTIME_IDX              13
 #define SPI_SETMOUSEBUTTONSWAP_IDX              14
-#define SPI_SETFASTTASKSWITCH_IDX               15
-#define SPI_SETDRAGFULLWINDOWS_IDX              16
-#define SPI_SETWORKAREA_IDX                     17
-#define SPI_SETSHOWSOUNDS_IDX                   18
-#define SPI_SETSCREENSAVERRUNNING_IDX           19
+#define SPI_SETDRAGFULLWINDOWS_IDX              15
+#define SPI_SETWORKAREA_IDX                     16
+#define SPI_SETSHOWSOUNDS_IDX                   17
+#define SPI_SETKEYBOARDPREF_IDX                 18
+#define SPI_SETSCREENREADER_IDX                 19
+#define SPI_SETSCREENSAVERRUNNING_IDX           20
 #define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
 /**
@@ -68,6 +69,8 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
 #define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
 #define SPI_SETSCREENSAVETIMEOUT_VALNAME        "ScreenSaveTimeOut"
+#define SPI_SETSCREENSAVEACTIVE_REGKEY          "Control Panel\\Desktop"
+#define SPI_SETSCREENSAVEACTIVE_VALNAME         "ScreenSaveActive"
 #define SPI_SETGRIDGRANULARITY_REGKEY           "Control Panel\\Desktop"
 #define SPI_SETGRIDGRANULARITY_VALNAME          "GridGranularity"
 #define SPI_SETKEYBOARDDELAY_REGKEY             "Control Panel\\Keyboard"
@@ -86,14 +89,17 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETDOUBLECLICKTIME_VALNAME          "DoubleClickSpeed"
 #define SPI_SETMOUSEBUTTONSWAP_REGKEY           "Control Panel\\Mouse"
 #define SPI_SETMOUSEBUTTONSWAP_VALNAME          "SwapMouseButtons"
-#define SPI_SETFASTTASKSWITCH_REGKEY            "Control Panel\\Desktop"
-#define SPI_SETFASTTASKSWITCH_VALNAME           "CoolSwitch"
 #define SPI_SETDRAGFULLWINDOWS_REGKEY           "Control Panel\\Desktop"
 #define SPI_SETDRAGFULLWINDOWS_VALNAME          "DragFullWindows"
 #define SPI_SETWORKAREA_REGKEY                  "Control Panel\\Desktop"
 #define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
 #define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
+/* FIXME - real values */
+#define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Desktop"
+#define SPI_SETKEYBOARDPREF_VALNAME     "WINE_KeyboardPref"
+#define SPI_SETSCREENREADER_REGKEY      "Control Panel\\Desktop"
+#define SPI_SETSCREENREADER_VALNAME     "WINE_ScreenReader"
 #define SPI_SETSCREENSAVERRUNNING_REGKEY        "Control Panel\\Desktop"
 #define SPI_SETSCREENSAVERRUNNING_VALNAME       "WINE_ScreenSaverRunning"
 
@@ -117,9 +123,10 @@ static int grid_granularity = 0;
 static int keyboard_delay = 1;
 static BOOL icon_title_wrap = TRUE;
 static int double_click_time = 500;
-static BOOL fast_task_switch = TRUE;
 static BOOL drag_full_windows = FALSE;
 static RECT work_area;
+static BOOL keyboard_pref = TRUE;
+static BOOL screen_reader = FALSE;
 static BOOL screensaver_running = FALSE;
 
 /***********************************************************************
@@ -277,9 +284,10 @@ void SYSPARAMS_Reset( UINT uiAction )
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
             WINE_INVALIDATE_SPI(SPI_SETICONTITLEWRAP);
             WINE_INVALIDATE_SPI(SPI_SETDOUBLECLICKTIME);
-            WINE_INVALIDATE_SPI(SPI_SETFASTTASKSWITCH);
             WINE_INVALIDATE_SPI(SPI_SETDRAGFULLWINDOWS);
             WINE_INVALIDATE_SPI(SPI_SETWORKAREA);
+            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDPREF);
+            WINE_INVALIDATE_SPI(SPI_SETSCREENREADER);
             WINE_INVALIDATE_SPI(SPI_SETSCREENSAVERRUNNING);
             default:
                 FIXME( "Unknown action reset: %u\n", uiAction );
@@ -748,6 +756,10 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
         sprintf(buf, "%u", uiParam);
         USER_Driver.pSetScreenSaveActive( uiParam );
+        /* saved value does not affect Wine */
+        SYSPARAMS_Save( SPI_SETSCREENSAVEACTIVE_REGKEY,
+                        SPI_SETSCREENSAVEACTIVE_VALNAME,
+                        buf, fWinIni );
         break;
     }
         
@@ -1050,37 +1062,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
 
     case SPI_GETFASTTASKSWITCH:			/*     35 */
-        spi_idx = SPI_SETFASTTASKSWITCH_IDX;
-        if (!spi_loaded[spi_idx])
-        {
-            char buf[5];
-
-            if (SYSPARAMS_Load( SPI_SETFASTTASKSWITCH_REGKEY,
-                                SPI_SETFASTTASKSWITCH_VALNAME, buf ))
-                fast_task_switch  = atoi(buf);
-            spi_loaded[spi_idx] = TRUE;
-        }
-        
-	*(BOOL *)pvParam = fast_task_switch;
+	*(BOOL *)pvParam = 1;
         break;
 
     case SPI_SETFASTTASKSWITCH:                 /*     36 */
-    {
-        char buf[5];
-
-        spi_idx = SPI_SETFASTTASKSWITCH_IDX;
-        sprintf(buf, "%u", uiParam);
-        if (SYSPARAMS_Save( SPI_SETFASTTASKSWITCH_REGKEY,
-                            SPI_SETFASTTASKSWITCH_VALNAME,
-                            buf, fWinIni ))
-        {
-            fast_task_switch = uiParam;
-            spi_loaded[spi_idx] = TRUE;
-        }
-        else
-            ret = FALSE;
+        /* the action is disabled */
+        fWinIni = 0;
         break;
-    }
     
     case SPI_SETDRAGFULLWINDOWS:                /*     37  WINVER >= 0x0400 */
     {
@@ -1453,17 +1441,71 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
     WINE_SPI_FIXME(SPI_SETHIGHCONTRAST);	/*     67  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETKEYBOARDPREF);	/*     68  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_SETKEYBOARDPREF);	/*     69  WINVER >= 0x400 */
+    case SPI_GETKEYBOARDPREF:                   /*     68  WINVER >= 0x400 */
+        spi_idx = SPI_SETKEYBOARDPREF_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
 
-    case SPI_GETSCREENREADER:
+            if (SYSPARAMS_Load( SPI_SETKEYBOARDPREF_REGKEY,
+                                SPI_SETKEYBOARDPREF_VALNAME, buf ))
+                keyboard_pref  = atoi(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = keyboard_pref;
+        break;
+
+    case SPI_SETKEYBOARDPREF:                   /*     69  WINVER >= 0x400 */
     {
-       LPBOOL	bool = (LPBOOL)pvParam;
-       *bool = FALSE;
-       break;
+        char buf[5];
+
+        spi_idx = SPI_SETKEYBOARDPREF_IDX;
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETKEYBOARDPREF_REGKEY,
+                            SPI_SETKEYBOARDPREF_VALNAME,
+                            buf, fWinIni ))
+        {
+            keyboard_pref = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
     }
 
-    WINE_SPI_FIXME(SPI_SETSCREENREADER);	/*     71  WINVER >= 0x400 */
+    case SPI_GETSCREENREADER:                   /*     70  WINVER >= 0x400 */
+        spi_idx = SPI_SETSCREENREADER_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_SETSCREENREADER_REGKEY,
+                                SPI_SETSCREENREADER_VALNAME, buf ))
+                screen_reader  = atoi(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = screen_reader;
+        break;
+
+    case SPI_SETSCREENREADER:                   /*     71  WINVER >= 0x400 */
+    {
+        char buf[5];
+
+        spi_idx = SPI_SETSCREENREADER_IDX;
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETSCREENREADER_REGKEY,
+                            SPI_SETSCREENREADER_VALNAME,
+                            buf, fWinIni ))
+        {
+            screen_reader = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_GETANIMATION:			/*     72  WINVER >= 0x400 */
     {
