@@ -106,6 +106,7 @@ extern int  TSXQueryColor(Display*, Colormap, XColor*);
 extern int  TSXQueryKeymap(Display*, char*);
 extern int   TSXQueryPointer(Display*, Window, Window*, Window*, int*, int*, int*, int*, unsigned int*);
 extern int   TSXQueryTree(Display*, Window, Window*, Window*, Window**, unsigned int*);
+extern int  TSXRefreshKeyboardMapping(XMappingEvent*);
 extern int  TSXResetScreenSaver(Display*);
 extern int  TSXRestackWindows(Display*, Window*, int);
 extern int   TSXSendEvent(Display*, Window, int, long, XEvent*);

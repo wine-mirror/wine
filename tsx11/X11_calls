@@ -111,6 +111,7 @@ XQueryPointer
 XQueryTree
 XReconfigureWMWindow
 XRectInRegion
+XRefreshKeyboardMapping
 XResetScreenSaver
 XResourceManagerString
 XRestackWindows

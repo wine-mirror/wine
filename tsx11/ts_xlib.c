@@ -1005,6 +1005,17 @@ int   TSXQueryTree(Display* a0, Window a1, Window* a2, Window* a3, Window** a4, 
   return r;
 }
 
+int  TSXRefreshKeyboardMapping(XMappingEvent* a0)
+{
+  int  r;
+  TRACE("Call XRefreshKeyboardMapping\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XRefreshKeyboardMapping(a0);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XRefreshKeyboardMapping\n");
+  return r;
+}
+
 int  TSXResetScreenSaver(Display* a0)
 {
   int  r;

@@ -110,6 +110,7 @@ static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 static void EVENT_MapNotify( HWND pWnd, XMapEvent *event );
 static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
+static void EVENT_MappingNotify( XMappingEvent *event );
 
 #ifdef HAVE_LIBXXSHM
 static void EVENT_ShmCompletion( XShmCompletionEvent *event );
@@ -323,7 +324,8 @@ static void EVENT_ProcessEvent( XEvent *event )
   }
 
   if ( !hWnd && event->xany.window != X11DRV_GetXRootWindow()
-             && event->type != PropertyNotify )
+             && event->type != PropertyNotify 
+             && event->type != MappingNotify)
       ERR("Got event %s for unknown Window %08lx\n",
           event_names[event->type], event->xany.window );
   else
@@ -460,6 +462,10 @@ static void EVENT_ProcessEvent( XEvent *event )
     case UnmapNotify:
       if (!hWnd || bUserRepaintDisabled) return;
       EVENT_UnmapNotify( hWnd, (XUnmapEvent *)event );
+      break;
+
+    case MappingNotify:
+      EVENT_MappingNotify( (XMappingEvent *) event );
       break;
 
     default:    
@@ -1859,6 +1865,18 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
   }
   WIN_ReleaseWndPtr(pWnd);
 }
+
+/***********************************************************************
+ *           EVENT_MappingNotify
+ */
+static void EVENT_MappingNotify( XMappingEvent *event )
+{
+    TSXRefreshKeyboardMapping(event);
+
+    /* reinitialize Wine-X11 driver keyboard table */
+    X11DRV_KEYBOARD_Init();
+}
+
 
 /**********************************************************************
  *              X11DRV_EVENT_SetInputMethod
