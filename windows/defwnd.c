@@ -205,8 +205,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
-    case WM_RBUTTONDOWN:
-    case WM_NCRBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_NCRBUTTONUP:
         if ((wndPtr->flags & WIN_ISWIN32) || (TWEAK_WineLook > WIN31_LOOK))
         {
 	    ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
