@@ -115,6 +115,8 @@ TAB_SetCurSel (HWND hwnd,WPARAM wParam)
   if ((iItem >= 0) && (iItem < infoPtr->uNumItem)) {
     prevItem=infoPtr->iSelected;
       infoPtr->iSelected=iItem;
+      TAB_EnsureSelectionVisible(hwnd, infoPtr);
+      TAB_InvalidateTabArea(hwnd, infoPtr);
   }
   return prevItem;
 }
