@@ -1638,6 +1638,7 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
     {
 	struct	linger linger;
 	int fd = _get_sock_fd(s);
+        int woptval;
 
         if(optname == WS_SO_DONTLINGER) {
             linger.l_onoff	= *((int*)optval) ? 0: 1;
@@ -1655,6 +1656,10 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 		   is null?? */
 		optval = (char*)&linger;
 		optlen = sizeof(struct linger);
+            } else if (optlen < sizeof(int)){
+                woptval= *((INT16 *) optval);
+                optval= (char*) &woptval;
+                optlen=sizeof(int);
             }
         }
 	if (setsockopt(fd, level, optname, optval, optlen) == 0)
@@ -1994,9 +1999,14 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
-	    else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	    else {
+                MESSAGE("service %s protocol %s not found; maybe you have add "
+                        "this to /etc/services\n", debugstr_a(pwsi->buffer),
+                        debugstr_a(pwsi->buffer+i)); 
+                SetLastError(WSANO_DATA);
+            }
 	else SetLastError(WSAENOBUFS);
-    }
+    } else SetLastError(WSANOTINITIALISED);
     return NULL;
 }
 
@@ -2034,9 +2044,14 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
-	    else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	    else {
+                MESSAGE("service on port %d protocol %s not found; maybe you have "
+                        "add this to /etc/services\n", ntohl(port),
+                        debugstr_a(pwsi->buffer)); 
+                SetLastError(WSANO_DATA);
+            }
 	else SetLastError(WSAENOBUFS);
-    }
+    } else SetLastError(WSANOTINITIALISED);
     return NULL;
 }
 
