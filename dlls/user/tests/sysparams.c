@@ -287,16 +287,31 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
     BOOL rc;
     INT mi[3];
     static int aw_turn = 0;
+    static BOOL w_implemented = 1;
 
     char buf[20];
     int i;
 
     aw_turn++;
     rc=0;
-    if (aw_turn % 2!=0)        /* call unicode version each second call */
+    if ((aw_turn % 2!=0) && (w_implemented))
+    {
+        /* call unicode on odd (non even) calls */ 
+        SetLastError(0xdeadbeef);
         rc=SystemParametersInfoW( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    if (aw_turn % 2==0 || (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
+        if (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            w_implemented = 0;
+            trace("SystemParametersInfoW not supported on this platform\n");
+        }
+    }
+
+    if ((aw_turn % 2==0) || (!w_implemented))
+    {
+        /* call ascii version on even calls or if unicode is not available */
         rc=SystemParametersInfoA( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+    }
+
     ok(rc!=0,"SystemParametersInfo: rc=%d err=%ld\n",rc,GetLastError());
     test_change_message( SPI_SETMOUSE, 0 );
     for (i = 0; i < 3; i++)
@@ -313,10 +328,10 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
            "incorrect value for %d: %d != %d\n", i, mi[i], curr_val[i]);
     }
 
-    rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
-    if (rc!=0 && GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (w_implemented)
+    { 
+        rc=SystemParametersInfoW( SPI_GETMOUSE, 0, mi, 0 );
+        ok(rc!=0,"SystemParametersInfoW: rc=%d err=%ld\n",rc,GetLastError());
         for (i = 0; i < 3; i++)
         {
             ok(mi[i] == curr_val[i],
