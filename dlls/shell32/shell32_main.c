@@ -191,7 +191,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     }
     if (*arg) {
         *d='\0';
-        argv[argc]=arg;
+        argv[argc++]=arg;
     }
     if (numargs)
         *numargs=argc;
