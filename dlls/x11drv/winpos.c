@@ -1552,6 +1552,24 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
 
 
 /***********************************************************************
+ *		X11DRV_handle_desktop_resize
+ */
+void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
+{
+    RECT rect;
+    HWND hwnd = GetDesktopWindow();
+
+    screen_width  = width;
+    screen_height = height;
+    TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
+    SetRect( &rect, 0, 0, width, height );
+    WIN_SetRectangles( hwnd, &rect, &rect );
+    SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
+                         MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
+}
+
+
+/***********************************************************************
  *		X11DRV_ConfigureNotify
  */
 void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )

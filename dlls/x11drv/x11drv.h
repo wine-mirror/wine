@@ -222,6 +222,7 @@ extern int client_side_with_render;
 extern int client_side_antialias_with_core;
 extern int client_side_antialias_with_render;
 extern int using_client_side_fonts;
+extern int using_wine_desktop;
 extern void X11DRV_XRender_Init(void);
 extern void X11DRV_XRender_Finalize(void);
 extern BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE*, HFONT);
@@ -551,6 +552,7 @@ extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zo
 extern int X11DRV_sync_client_window_position( Display *display, WND *win );
 extern void X11DRV_set_wm_hints( Display *display, WND *win );
 
+extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
 extern void X11DRV_Settings_AddDepthModes(void);
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq);
 extern int X11DRV_Settings_CreateDriver(LPDDHALINFO info);

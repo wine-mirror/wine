@@ -92,8 +92,6 @@ static int XVidModeErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-static Bool in_desktop_mode;
-
 int X11DRV_XF86VM_GetCurrentMode(void)
 {
   XF86VidModeModeLine line;
@@ -131,13 +129,6 @@ void X11DRV_XF86VM_SetCurrentMode(int mode)
   TRACE("Resizing X display to %dx%d\n", 
         real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay);
   XF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), real_xf86vm_modes[mode]);
-#if 0 /* FIXME */
-  SYSMETRICS_Set( SM_CXSCREEN, real_xf86vm_modes[mode]->hdisplay );
-  SYSMETRICS_Set( SM_CYSCREEN, real_xf86vm_modes[mode]->vdisplay );
-#else
-  FIXME("Need to update SYSMETRICS after resizing display (now %dx%d)\n",
-        real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay);
-#endif
 #if 0 /* it is said that SetViewPort causes problems with some X servers */
   XF86VidModeSetViewPort(gdi_display, DefaultScreen(gdi_display), 0, 0);
 #else
@@ -145,6 +136,8 @@ void X11DRV_XF86VM_SetCurrentMode(int mode)
 #endif
   XSync(gdi_display, False);
   wine_tsx11_unlock();
+  X11DRV_handle_desktop_resize( real_xf86vm_modes[mode]->hdisplay,
+                                real_xf86vm_modes[mode]->vdisplay );
 }
 
 void X11DRV_XF86VM_Init(void)
@@ -153,8 +146,6 @@ void X11DRV_XF86VM_Init(void)
   int nmodes, i;
   DWORD dwBpp = screen_depth;
   if (dwBpp == 24) dwBpp = 32;
-
-  in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
 
   if (xf86vm_major) return; /* already initialized? */
 
@@ -182,13 +173,13 @@ void X11DRV_XF86VM_Init(void)
 #endif /* X_XF86VidModeSetGammaRamp */
 
       /* retrieve modes */
-      if (!in_desktop_mode) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
+      if (!using_wine_desktop) ok = XF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
   }
   wine_tsx11_unlock();
   if (!ok) return;
 
   /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
-  if (in_desktop_mode) return;
+  if (using_wine_desktop) return;
   
   TRACE("XVidMode modes: count=%d\n", nmodes);
 

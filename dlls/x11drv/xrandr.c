@@ -56,7 +56,6 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-static Bool in_desktop_mode;
 
 /* create the mode structures */
 static void make_modes(void)
@@ -154,8 +153,6 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
                               dd_modes[mode].dwWidth, dd_modes[mode].dwHeight, rate);
                         stat = XRRSetScreenConfigAndRate (gdi_display, sc, root, 
                                                           size, rot, rate, CurrentTime);
-                        FIXME("Need to update SYSMETRICS after resizing display (now %ldx%ld)\n",
-                              dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
                     }
                 }
             }
@@ -165,17 +162,15 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
                       dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
                 stat = XRRSetScreenConfig (gdi_display, sc, root, 
                                            size, rot, CurrentTime);
-                FIXME("Need to update SYSMETRICS after resizing display (now %ldx%ld)\n",
-                      dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
             }
         }
     }
-    if (stat != RRSetConfigSuccess)
-    {
-        ERR("Resolution change not successful -- perhaps display has changed?\n");
-    }
     XRRFreeScreenConfigInfo(sc);
     wine_tsx11_unlock();
+    if (stat == RRSetConfigSuccess)
+        X11DRV_handle_desktop_resize( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
+    else
+        ERR("Resolution change not successful -- perhaps display has changed?\n");
 }
 
 void X11DRV_XRandR_Init(void)
@@ -183,11 +178,10 @@ void X11DRV_XRandR_Init(void)
     Bool ok;
     int nmodes = 0;
     int i;
-    in_desktop_mode = (root_window != DefaultRootWindow(gdi_display));
 
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
-    if (in_desktop_mode) return; /* not compatible with desktop mode */
+    if (using_wine_desktop) return; /* not compatible with desktop mode */
 
     /* see if Xrandr is available */
     wine_tsx11_lock();

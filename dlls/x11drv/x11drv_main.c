@@ -90,6 +90,7 @@ int client_side_with_core = 1;
 int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
+int using_wine_desktop = 0;
 
 unsigned int X11DRV_server_startticks;
 
@@ -380,7 +381,10 @@ static void process_attach(void)
     X11DRV_Settings_Init();
 
     if (desktop_geometry)
+    {
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
+        using_wine_desktop = 1;
+    }
 
     /* initialize GDI */
     if(!X11DRV_GDI_Initialize( display ))

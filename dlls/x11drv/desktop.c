@@ -176,20 +176,12 @@ int X11DRV_resize_desktop( unsigned int width, unsigned int height )
     /* do the work */
     XSetWMNormalHints( display, w, size_hints );
     XResizeWindow( display, w, width, height );
-    screen_width  = width;
-    screen_height = height;
-#if 0 /* FIXME */
-    SYSMETRICS_Set( SM_CXSCREEN, width );
-    SYSMETRICS_Set( SM_CYSCREEN, height );
-#else
-    FIXME("Need to update SYSMETRICS after resizing display (now %dx%d)\n", 
-          width, height);
-#endif
 
     /* clean up */
     XFree( size_hints );
     XFlush( display );
     wine_tsx11_unlock();
+    X11DRV_handle_desktop_resize( width, height );
     return 1;
 }
 
