@@ -1335,9 +1335,11 @@ typedef struct _MMCKINFO
 #define MMIO_CREATERIFF         0x0020  /* mmioCreateChunk: make a LIST chunk */
 #define MMIO_CREATELIST         0x0040  /* mmioCreateChunk: make a RIFF chunk */
 
+#ifndef SEEK_SET
 #define SEEK_SET   0
 #define SEEK_CUR   1
 #define SEEK_END   2
+#endif  /* SEEK_SET */
 
 #define MMIOM_READ      MMIO_READ       /* read */
 #define MMIOM_WRITE    MMIO_WRITE       /* write */
