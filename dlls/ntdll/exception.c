@@ -37,8 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 /* Exception record for handling exceptions happening inside exception handlers */
 typedef struct
 {
-    EXCEPTION_FRAME frame;
-    EXCEPTION_FRAME *prevFrame;
+    EXCEPTION_REGISTRATION_RECORD frame;
+    EXCEPTION_REGISTRATION_RECORD *prevFrame;
 } EXC_NESTED_FRAME;
 
 #ifdef __i386__
@@ -52,7 +52,7 @@ typedef struct
 #endif
 
 void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
+void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD, LPVOID,
                            PEXCEPTION_RECORD, DWORD, PCONTEXT );
 void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT,
                                   BOOL, PCONTEXT );
@@ -62,8 +62,8 @@ void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT,
  *
  * Handler for exceptions happening inside a handler.
  */
-static DWORD EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
-                               CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
         return ExceptionContinueSearch;
@@ -78,8 +78,8 @@ static DWORD EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
  *
  * Handler for exceptions happening inside an unwind handler.
  */
-static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
-                                CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
         return ExceptionContinueSearch;
@@ -97,8 +97,8 @@ static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
  * Please do not change the first 4 parameters order in any way - some exceptions handlers
  * rely on Base Pointer (EBP) to have a fixed position related to the exception frame
  */
-static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                              CONTEXT *context, EXCEPTION_FRAME **dispatcher,
+static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
+                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler)
 {
     EXC_NESTED_FRAME newframe;
@@ -179,7 +179,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 DEFINE_REGS_ENTRYPOINT_1( RtlRaiseException, EXC_RtlRaiseException, EXCEPTION_RECORD * );
 void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    PEXCEPTION_FRAME frame, dispatch, nested_frame;
+    PEXCEPTION_REGISTRATION_RECORD frame, dispatch, nested_frame;
     EXCEPTION_RECORD newrec;
     DWORD res, c;
 
@@ -195,7 +195,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     frame = NtCurrentTeb()->except;
     nested_frame = NULL;
-    while (frame != (PEXCEPTION_FRAME)0xFFFFFFFF)
+    while (frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL)
     {
         /* Check frame address */
         if (((void*)frame < NtCurrentTeb()->stack_low) ||
@@ -250,12 +250,12 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
  */
 DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind,
                           PVOID, PVOID, PEXCEPTION_RECORD, PVOID );
-void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
+void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, LPVOID unusedEip,
                            PEXCEPTION_RECORD pRecord, DWORD returnEax,
                            CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
-    PEXCEPTION_FRAME frame, dispatch;
+    PEXCEPTION_REGISTRATION_RECORD frame, dispatch;
 
 #ifdef __i386__
     context->Eax = returnEax;
@@ -278,7 +278,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
 
     /* get chain of exception frames */
     frame = NtCurrentTeb()->except;
-    while ((frame != (PEXCEPTION_FRAME)0xffffffff) && (frame != pEndFrame))
+    while ((frame != (PEXCEPTION_REGISTRATION_RECORD)~0UL) && (frame != pEndFrame))
     {
         /* Check frame address */
         if (pEndFrame && (frame > pEndFrame))
@@ -357,8 +357,8 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
  *
  * Exception handler for exception blocks declared in Wine code.
  */
-DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                                CONTEXT *context, LPVOID pdispatcher )
+DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
+                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
 
@@ -397,8 +397,8 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame
  *
  * Exception handler for try/finally blocks declared in Wine code.
  */
-DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                              CONTEXT *context, LPVOID pdispatcher )
+DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
+                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {

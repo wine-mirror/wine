@@ -86,7 +86,7 @@
              __wine_pop_frame( &__f.frame ); \
              break; \
          } else { \
-             __f.frame.Handler = (PEXCEPTION_HANDLER)__wine_exception_handler; \
+             __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
              __wine_push_frame( &__f.frame ); \
              if (setjmp( __f.jmp)) { \
@@ -107,7 +107,7 @@
              (func)(1); \
              break; \
          } else { \
-             __f.frame.Handler = (PEXCEPTION_HANDLER)__wine_finally_handler; \
+             __f.frame.Handler = __wine_finally_handler; \
              __f.u.finally_func = (func); \
              __wine_push_frame( &__f.frame ); \
              __first = 0; \
@@ -127,7 +127,7 @@ typedef void (CALLBACK *__WINE_FINALLY)(BOOL);
 
 typedef struct __tagWINE_FRAME
 {
-    EXCEPTION_FRAME frame;
+    EXCEPTION_REGISTRATION_RECORD frame;
     union
     {
         /* exception data */
@@ -141,17 +141,17 @@ typedef struct __tagWINE_FRAME
     const struct __tagWINE_FRAME *ExceptionRecord;
 } __WINE_FRAME;
 
-extern DWORD __wine_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                       CONTEXT *context, LPVOID pdispatcher );
-extern DWORD __wine_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                     CONTEXT *context, LPVOID pdispatcher );
+extern DWORD __wine_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_REGISTRATION_RECORD *frame,
+                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher );
+extern DWORD __wine_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_REGISTRATION_RECORD *frame,
+                                     CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 
 #endif /* USE_COMPILER_EXCEPTIONS */
 
-static inline EXCEPTION_FRAME * WINE_UNUSED __wine_push_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_REGISTRATION_RECORD *__wine_push_frame( EXCEPTION_REGISTRATION_RECORD *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
-    EXCEPTION_FRAME *prev;
+    EXCEPTION_REGISTRATION_RECORD *prev;
     __asm__ __volatile__(".byte 0x64\n\tmovl (0),%0"
                          "\n\tmovl %0,(%1)"
                          "\n\t.byte 0x64\n\tmovl %1,(0)"
@@ -165,7 +165,7 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_push_frame( EXCEPTION_FRAME *
 #endif
 }
 
-static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTRATION_RECORD *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
     __asm__ __volatile__(".byte 0x64\n\tmovl %0,(0)"

@@ -570,7 +570,7 @@ void DEBUG_WalkExceptions(DWORD tid)
 
     while (next_frame != (void *)-1)
     {
-        EXCEPTION_FRAME frame;
+        EXCEPTION_REGISTRATION_RECORD frame;
 
         DEBUG_Printf( DBG_CHN_MESG, "%p: ", next_frame );
         if (!DEBUG_READ_MEM(next_frame, &frame, sizeof(frame)))

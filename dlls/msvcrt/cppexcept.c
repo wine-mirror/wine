@@ -39,8 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 #ifdef __i386__  /* CxxFrameHandler is not supported on non-i386 */
 
 static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
-                                PCONTEXT exc_context, EXCEPTION_FRAME** dispatch,
-                                cxx_function_descr *descr, EXCEPTION_FRAME* nested_frame,
+                                PCONTEXT exc_context, EXCEPTION_REGISTRATION_RECORD** dispatch,
+                                cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
                                 int nested_trylevel, CONTEXT86 *context );
 
 /* call a function with a given ebp */
@@ -226,16 +226,16 @@ static void cxx_local_unwind( cxx_exception_frame* frame, cxx_function_descr *de
 /* exception frame for nested exceptions in catch block */
 struct catch_func_nested_frame
 {
-    EXCEPTION_FRAME      frame;     /* standard exception frame */
-    EXCEPTION_RECORD    *prev_rec;  /* previous record to restore in thread data */
-    cxx_exception_frame *cxx_frame; /* frame of parent exception */
-    cxx_function_descr  *descr;     /* descriptor of parent exception */
-    int                  trylevel;  /* current try level */
+    EXCEPTION_REGISTRATION_RECORD frame;     /* standard exception frame */
+    EXCEPTION_RECORD             *prev_rec;  /* previous record to restore in thread data */
+    cxx_exception_frame          *cxx_frame; /* frame of parent exception */
+    cxx_function_descr           *descr;     /* descriptor of parent exception */
+    int                           trylevel;  /* current try level */
 };
 
 /* handler for exceptions happening while calling a catch function */
-static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
-                                            CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                            CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct catch_func_nested_frame *nested_frame = (struct catch_func_nested_frame *)frame;
 
@@ -323,8 +323,8 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
  * Implementation of __CxxFrameHandler.
  */
 static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
-                                PCONTEXT exc_context, EXCEPTION_FRAME** dispatch,
-                                cxx_function_descr *descr, EXCEPTION_FRAME* nested_frame,
+                                PCONTEXT exc_context, EXCEPTION_REGISTRATION_RECORD** dispatch,
+                                cxx_function_descr *descr, EXCEPTION_REGISTRATION_RECORD* nested_frame,
                                 int nested_trylevel, CONTEXT86 *context )
 {
     cxx_exception_type *exc_type;
@@ -379,8 +379,8 @@ static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* fram
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
-void __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_FRAME* frame,
-                        PCONTEXT exc_context, EXCEPTION_FRAME** dispatch,
+void __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRATION_RECORD* frame,
+                        PCONTEXT exc_context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                         CONTEXT86 *context )
 {
     cxx_function_descr *descr = (cxx_function_descr *)context->Eax;

@@ -24,7 +24,6 @@
 #include "winternl.h"
 #include "wine/windef16.h"
 
-struct __EXCEPTION_FRAME;
 struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;
 struct server_buffer_info;
@@ -55,7 +54,7 @@ struct debug_info
 typedef struct _TEB
 {
 /* start of NT_TIB */
-    struct __EXCEPTION_FRAME *except; /* 12- 00 Head of exception handling chain */
+    EXCEPTION_REGISTRATION_RECORD *except; /* 12- 00 Head of exception handling chain */
     void        *stack_top;      /* 12-  04 Top of thread stack */
     void        *stack_low;      /* 12-  08 Stack low-water mark */
     HTASK16      htask16;        /* 1--  0c Win16 task handle */

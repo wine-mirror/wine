@@ -37,9 +37,9 @@ typedef struct __type_info
 /* the exception frame used by CxxFrameHandler */
 typedef struct __cxx_exception_frame
 {
-    EXCEPTION_FRAME  frame;    /* the standard exception frame */
-    int              trylevel;
-    DWORD            ebp;
+    EXCEPTION_REGISTRATION_RECORD  frame;    /* the standard exception frame */
+    int                            trylevel;
+    DWORD                          ebp;
 } cxx_exception_frame;
 
 /* info about a single catch {} block */
@@ -106,9 +106,9 @@ typedef struct __cxx_type_info_table
 } cxx_type_info_table;
 
 typedef DWORD (*cxx_exc_custom_handler)( PEXCEPTION_RECORD, cxx_exception_frame*,
-                                         PCONTEXT, struct __EXCEPTION_FRAME**,
+                                         PCONTEXT, EXCEPTION_REGISTRATION_RECORD**,
                                          cxx_function_descr*, int nested_trylevel,
-                                         EXCEPTION_FRAME *nested_frame, DWORD unknown3 );
+                                         EXCEPTION_REGISTRATION_RECORD *nested_frame, DWORD unknown3 );
 
 /* type information for an exception object */
 typedef struct __cxx_exception_type

@@ -1570,16 +1570,16 @@ typedef struct _EXCEPTION_POINTERS
  * larger exception frames for their own use.
  */
 
-struct __EXCEPTION_FRAME;
+struct _EXCEPTION_REGISTRATION_RECORD;
 
-typedef DWORD (*PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct __EXCEPTION_FRAME*,
-                                    PCONTEXT,struct __EXCEPTION_FRAME **);
+typedef DWORD (*PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct _EXCEPTION_REGISTRATION_RECORD*,
+                                    PCONTEXT,struct _EXCEPTION_REGISTRATION_RECORD **);
 
-typedef struct __EXCEPTION_FRAME
+typedef struct _EXCEPTION_REGISTRATION_RECORD
 {
-  struct __EXCEPTION_FRAME *Prev;
+  struct _EXCEPTION_REGISTRATION_RECORD *Prev;
   PEXCEPTION_HANDLER       Handler;
-} EXCEPTION_FRAME, *PEXCEPTION_FRAME;
+} EXCEPTION_REGISTRATION_RECORD, *PEXCEPTION_REGISTRATION_RECORD;
 
 /*
  * function pointer to a exception filter

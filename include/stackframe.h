@@ -34,7 +34,7 @@ typedef struct _STACK32FRAME
 {
     DWORD   restore_addr;   /* 00 return address for restoring code selector */
     DWORD   codeselector;   /* 04 code selector to restore */
-    EXCEPTION_FRAME frame;  /* 08 Exception frame */
+    EXCEPTION_REGISTRATION_RECORD frame;  /* 08 Exception frame */
     SEGPTR  frame16;        /* 10 16-bit frame from last CallFrom16() */
     DWORD   edi;            /* 14 saved registers */
     DWORD   esi;            /* 18 */

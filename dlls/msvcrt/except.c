@@ -53,8 +53,8 @@ typedef struct _SCOPETABLE
 
 typedef struct _MSVCRT_EXCEPTION_FRAME
 {
-  EXCEPTION_FRAME *prev;
-  void (*handler)(PEXCEPTION_RECORD, PEXCEPTION_FRAME,
+  EXCEPTION_REGISTRATION_RECORD *prev;
+  void (*handler)(PEXCEPTION_RECORD, PEXCEPTION_REGISTRATION_RECORD,
                   PCONTEXT, PEXCEPTION_RECORD);
   PSCOPETABLE scopetable;
   int trylevel;
@@ -83,9 +83,9 @@ inline static DWORD call_filter( void *func, void *arg, void *ebp )
 #endif
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
-                                   struct __EXCEPTION_FRAME* frame,
+                                   EXCEPTION_REGISTRATION_RECORD* frame,
                                    PCONTEXT context WINE_UNUSED,
-                                   struct __EXCEPTION_FRAME** dispatch)
+                                   EXCEPTION_REGISTRATION_RECORD** dispatch)
 {
   if (rec->ExceptionFlags & 0x6)
     return ExceptionContinueSearch;
@@ -123,7 +123,7 @@ __ASM_GLOBAL_FUNC(_EH_prolog,
 /*******************************************************************
  *		_global_unwind2 (MSVCRT.@)
  */
-void _global_unwind2(PEXCEPTION_FRAME frame)
+void _global_unwind2(PEXCEPTION_REGISTRATION_RECORD frame)
 {
     TRACE("(%p)\n",frame);
     RtlUnwind( frame, 0, 0, 0 );
@@ -135,7 +135,7 @@ void _global_unwind2(PEXCEPTION_FRAME frame)
 void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 {
   MSVCRT_EXCEPTION_FRAME *curframe = frame;
-  EXCEPTION_FRAME reg;
+  EXCEPTION_REGISTRATION_RECORD reg;
 
   TRACE("(%p,%d,%d)\n",frame, frame->trylevel, trylevel);
 
@@ -165,9 +165,9 @@ void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
  *		_except_handler2 (MSVCRT.@)
  */
 int _except_handler2(PEXCEPTION_RECORD rec,
-                     PEXCEPTION_FRAME frame,
+                     PEXCEPTION_REGISTRATION_RECORD frame,
                      PCONTEXT context,
-                     PEXCEPTION_FRAME* dispatcher)
+                     PEXCEPTION_REGISTRATION_RECORD* dispatcher)
 {
   FIXME("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -227,7 +227,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
         if (retval == EXCEPTION_EXECUTE_HANDLER)
         {
           /* Unwind all higher frames, this one will handle the exception */
-          _global_unwind2((PEXCEPTION_FRAME)frame);
+          _global_unwind2((PEXCEPTION_REGISTRATION_RECORD)frame);
           _local_unwind2(frame, trylevel);
 
           /* Set our trylevel to the enclosing block, and call the __finally
@@ -343,7 +343,7 @@ void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
     TRACE("cur_frame=%lx\n",cur_frame);
 
     if (cur_frame != jmp->Registration)
-        _global_unwind2((PEXCEPTION_FRAME)jmp->Registration);
+        _global_unwind2((PEXCEPTION_REGISTRATION_RECORD)jmp->Registration);
 
     if (jmp->Registration)
     {
