@@ -1,2 +1,3 @@
 Makefile
+libwine_unicode.dll
 libwine_unicode.so.1.0
