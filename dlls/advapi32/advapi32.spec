@@ -315,8 +315,8 @@
 @ stub SystemFunction034
 @ stub SystemFunction035
 @ stub SystemFunction036
-@ stub SystemFunction040
-@ stub SystemFunction041
+@ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
+@ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
 @ stub TraceEvent
 @ stub TraceEventInstance
 @ stub TraceMessage
