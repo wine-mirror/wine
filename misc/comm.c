@@ -1048,12 +1048,16 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		case CBR_38400:
 			port.c_cflag |= B38400;
 			break;		
+#ifdef B57600
 		case 57600:
 			port.c_cflag |= B57600;
 			break;		
+#endif
+#ifdef B115200
 		case 57601:
 			port.c_cflag |= B115200;
 			break;		
+#endif
 		default:
 			commerror = IE_BAUDRATE;
 			return -1;
@@ -1436,12 +1440,16 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 		case B38400:
 			lpdcb->BaudRate = 38400;
 			break;
+#ifdef B57600
 		case B57600:
 			lpdcb->BaudRate = 57600;
 			break;
+#endif
+#ifdef B115200
 		case B115200:
 			lpdcb->BaudRate = 57601;
 			break;
+#endif
 	}
 #endif
 	switch (port.c_cflag & CSIZE) {
