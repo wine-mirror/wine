@@ -48,9 +48,9 @@ $(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
 # Special rules for 16-bit resource files
 
 resources/display.res: resources/display.rc
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r resources/display.rc
+	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/display.rc
 
 resources/mouse.res: resources/mouse.rc
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r resources/mouse.rc
+	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/mouse.rc
 
 ### Dependencies:
