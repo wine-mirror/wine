@@ -482,10 +482,33 @@ NetQueryDisplayInformation(
  */
 
 NET_API_STATUS WINAPI
-NetGetDCName(LPWSTR servername, LPWSTR domainname, LPBYTE bufptr)
+NetGetDCName(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr)
 {
   FIXME("stub!\n");
   return NERR_DCNotFound; /* say we can't find a domain controller */  
 }
 
 
+/************************************************************
+ *                NetUserModalsGet  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetUserModalsGet(LPCWSTR szServer, DWORD level, LPBYTE *pbuffer)
+{
+    FIXME("%s %ld %p\n", debugstr_w( szServer ), level, pbuffer );
+    return NERR_InternalError;
+}
+
+NET_API_STATUS WINAPI NetLocalGroupAdd( LPCWSTR servername, DWORD level,
+                 LPBYTE buf, LPDWORD parm_err)
+{
+    FIXME("%s %ld %p %p\n", debugstr_w( servername ), level, buf, parm_err);
+    return NERR_Success;
+}
+
+NET_API_STATUS WINAPI NetLocalGroupSetMembers( LPCWSTR servername,
+             LPCWSTR groupname, DWORD level, LPBYTE buf, DWORD totalentries)
+{
+    FIXME("%s %s %ld %p %ld\n", debugstr_w(servername), debugstr_w(groupname),
+          level, buf, totalentries);
+    return NERR_Success;
+}

@@ -85,7 +85,7 @@
 @ stub NetGroupGetUsers
 @ stub NetGroupSetInfo
 @ stub NetGroupSetUsers
-@ stub NetLocalGroupAdd
+@ stdcall NetLocalGroupAdd(wstr long ptr ptr)
 @ stub NetLocalGroupAddMember
 @ stub NetLocalGroupAddMembers
 @ stub NetLocalGroupDel
@@ -95,7 +95,7 @@
 @ stub NetLocalGroupGetInfo
 @ stub NetLocalGroupGetMembers
 @ stub NetLocalGroupSetInfo
-@ stub NetLocalGroupSetMembers
+@ stdcall NetLocalGroupSetMembers(wstr wstr long ptr ptr)
 @ stub NetMessageBufferSend
 @ stub NetMessageNameAdd
 @ stub NetMessageNameDel
@@ -174,7 +174,7 @@
 @ stub NetShareCheck
 @ stub NetShareDel
 @ stub NetShareDelSticky
-@ stub NetShareEnum
+@ stdcall NetShareEnum(wstr long ptr long ptr ptr ptr)
 @ stub NetShareEnumSticky
 @ stub NetShareGetInfo
 @ stub NetShareSetInfo
@@ -190,11 +190,11 @@
 @ stub NetUserGetGroups
 @ stdcall NetUserGetInfo(wstr wstr long ptr)
 @ stub NetUserGetLocalGroups
-@ stub NetUserModalsGet
+@ stdcall NetUserModalsGet(wstr long ptr)
 @ stub NetUserModalsSet
 @ stub NetUserSetGroups
 @ stub NetUserSetInfo
-@ stub NetWkstaGetInfo
+@ stdcall NetWkstaGetInfo(wstr long ptr)
 @ stub NetWkstaSetInfo
 @ stub NetWkstaTransportAdd
 @ stub NetWkstaTransportDel

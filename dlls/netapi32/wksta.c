@@ -440,3 +440,10 @@ NET_API_STATUS WINAPI NetpGetComputerName(LPWSTR *Buffer)
         return ERROR_NOT_ENOUGH_MEMORY;
     }
 }
+
+NET_API_STATUS WINAPI NetWkstaGetInfo( LPWSTR servername, DWORD level,
+                                       LPBYTE* bufptr)
+{
+    FIXME("%p %ld %p\n", debugstr_w( servername ), level, bufptr );
+    return ERROR_ACCESS_DENIED;
+}
