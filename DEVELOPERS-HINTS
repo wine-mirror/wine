@@ -10,37 +10,10 @@ Most of the source is concerned with implementing the Wine API, although
 there are also various tools, documentation, sample Winelib code, and
 code specific to the binary loader.
 
-Wine API directories:
----------------------
+DLLs:
+-----
+	dlls/			- All the DLLs implemented by Wine
 
-KERNEL:
-
-	files/			- file I/O
-	memory/			- memory management
-	scheduler/		- process and thread management
-	winnls/			- National Language Support configuration files
-
-GDI:
-
-	graphics/		- graphics drivers
-		x11drv/		- X11 display driver
-		win16drv/	-> see below 
-		ttydrv/		- tty display driver
-		psdrv/		- PostScript graphics driver
-		metafiledrv/	- metafile driver
-		enhmetafiledrv/	- enhanced metafile driver
-		wing/           - WinG (for games) internface
-	objects/		- logical objects
-
-USER:
-
-	controls/		- built-in widgets
-	resources/		- built-in menu and message box resources
-	windows/		- window management
-
-Other DLLs:
-
-	dlls/			- Other system DLLs implemented by Wine
 		advapi32/	- crypto, systeminfo, security, eventlogging
 		avicap32/
 		avifil32/	- COM object to play AVI files
@@ -54,10 +27,15 @@ Other DLLs:
 		dplay/		- DirectX dplay
 		dplayx/		- DirectX dplayx
 		dsound/		- DirectX dsound
+		gdi/		- GDI (graphics calls)
+			enhmetafiledrv/	- enhanced metafile driver
+			metafiledrv/	- metafile driver
+			win16drv/	- support for Win16 printer drivers
 		glu32/
 		icmp/
 		imagehlp/	- PE (Portable Executable) Image Helper lib
 		imm32/
+		kernel/		- The Windows kernel
 		lzexpand/	- Liv-Zempel compression/decompression
 		mpr/		- Multi-Protocol Router (interface to various 
                                   network transport protocols)
@@ -95,14 +73,17 @@ Other DLLs:
 		shlwapi/
 		sti/
 		tapi32/		- telephone API
+		ttydrv/		- TTY display driver (Wine specific)
 		url
 		urlmon
+		user/		- Window management, standard controls, etc.
 		ver/		- File Installation Library (16 bit)
 		version/	- File Installation Library (32 bit)
 		win32s/
 		win87em/	- 80387 math-emulation
 		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
 		winedos/	- DOS features and BIOS calls (interrupts)
+		wineps/		- Postscript driver (Wine specific)
 		winmm/		- multimedia (16 & 32 bit)
 			mciXXX/	- various MCI drivers
 			midimap/- midi mapper
@@ -115,45 +96,86 @@ Other DLLs:
 		winspool/	- Printing & Print Spooler
 		wintrust/
 		wnaspi32/	- 32 bit ASPI
+		x11drv/		- X11 display driver (Wine specific)
 
-Miscellaneous:
+Winelib programs:
+-----------------
 
-	misc/			- shell, registry, winsock, etc.
-	ipc/			- SysV IPC based interprocess communication
-	win32/			- misc Win32 functions
+	programs/		- All the Winelib programs
+		avitools/
+		clock/
+		cmdlgtst/
+		control/
+		expand/
+		notepad/
+		osversioncheck/
+		progman/
+		regapi/
+		regedit/
+		regsvr32/
+		regtest/
+		uninstaller/
+		view/
+		wcmd/
+		wineconsole/
+		winedbg/
+		winefile/
+		winemine/
+		winepath/
+		winetest/
+		winhelp/
+		winver/
 
-Tools:
-------
 
+Support programs, libraries, etc:
+---------------------------------
+
+	documentation/		- some documentation
+	include/		- Windows standard includes
+	library/		- the Wine portability library
+	miscemu/		- the main Wine program
+	ole/			- global UUIDs static library
+        server/			- the Wine server
 	tools/			- relay code builder, new rc, bugreport
 				  generator, wineconfigurator, etc.
-	documentation/		- some documentation
+	unicode/		- Unicode support shared
 
 
-Binary loader specific directories:
------------------------------------
+Miscellaneous:
+--------------
 
-	if1632/			- relay code
-	miscemu/		- hardware instruction emulation
-	graphics/win16drv/	- Win16 printer driver
-        server/			- the main, controlling thread of wine
+Note: these directories will ultimately get moved into their
+respective dlls.
+
+	files/			- KERNEL file I/O
+	if1632/			- KERNEL relay code
+	loader/			- KERNEL loader code
+	memory/			- KERNEL memory management
+	misc/			- KERNEL shell, registry, winsock, etc.
+	msdos/			- KERNEL DOS support
+	relay32/		- KERNEL 32-bit relay code
+	scheduler/		- KERNEL process and thread management
+	win32/			- KERNEL misc Win32 functions
+
+	graphics/		- GDI graphics drivers
+	objects/		- GDI logical objects
+
+	controls/		- USER built-in widgets
+	windows/		- USER window management
+
         tsx11/			- thread-safe X11 wrappers (auto generated)
 
-Winelib specific directories:
------------------------------
-
-	library/		- Required code for programs using Winelib
-	programs/		- Extended samples / system utilities
 
 
 IMPLEMENTING NEW API CALLS
 ==========================
 
-This is the simple version, and covers only Win32. Win16 is slightly uglier,
-because of the Pascal heritage and the segmented memory model.
+This is the simple version, and covers only Win32. Win16 is slightly
+uglier, because of the Pascal heritage and the segmented memory model.
 
-All of the Win32 APIs known to Wine are listed in [relay32/*.spec]. An
-unimplemented call will look like (from gdi32.spec)
+All of the Win32 APIs known to Wine are listed in the .spec file of
+their corresponding dll. An unimplemented call will look like (from
+gdi32.spec)
   269 stub PolyBezierTo
 To implement this call, you need to do the following four things.
 
@@ -224,71 +246,33 @@ Apart from writing the set of needed .c files, you also need to do the
 following:
 
 1.  Create a directory <MyDll> where to store the implementation of
-    the DLL. 
-
-    If the DLL exists under Windows as both 16 and 32 bit DLL, you can
-    either create one directory for each, or have a single directory
-    with both implementations. 
-
-    This (those) directory(ies) have to be put under the dlls/
-    directory in Wine tree structure.
+    the DLL. This directory has to be put under the dlls/ directory.
+    If the DLL exists under Windows as both 16 and 32 bit DLL, you
+    should have a single directory with both implementations.
 
 2.  Create the Makefile.in in the ./dlls/<MyDll>/ directory. You can
     copy an existing Makefile.in from another ./dlls/ subdirectory.
+    You need at least to change the MODULE and C_SRCS macros. 
 
-    You need at least to change the MODULE, SPEC_SRCS, and C_SRCS
-    macros. 
+3.  Add the directory in ./configure.ac (in AC_OUTPUT macro at the end
+    of the file to trigger the Makefile generation)
 
-3.  Add the directory (and the generated .o file for the module) in: 
-    + ./configure.in (in AC_OUTPUT macro at the end of the file to
-      trigger the Makefile generation),
-    + ./Makefile.in (in LIBSUBDIRS and LIBOBJS macros)
-    + ./dlls/Makefile.in (in SUBDIRS macro)
+4.  Run ./make_dlls in the dlls directory to update Makefile.in in
+    that directory.
 
-4.  You can now regenerate ./configure file (with 'make configure')
+5.  You can now regenerate ./configure file (with 'make configure')
     and the various Makefiles (with 'configure; make depend') (run
     from the top of Wine's tree).
+    You should now have a Makefile file in ./dlls/<MyDll>/
 
-    You shall now have a Makefile file in ./dlls/<MyDll>/
-
-5.  You now need to declare the DLL in the module lists. This is done
-    by adding the corresponding descriptor in ./if1632/builtin.c if
-    your DLL is 16 bit (resp. ./relay32/builtin.c for a 32 bit DLL)
-    (or both if your directory contains the dual 16/32
-    implementations). 
-
-    Note: the name of the descriptor is based on the module name, not
-    on the file name (they are the same in most of the case, but for
-    some DLLs it's not the case).
-
-6.  You also need to define the loadorder for the created DLL
-    (./wine.ini and ./loader/loadorder.c). Usually, "native,builtin"
-    is ok. If you have written a paired 16/32 bit implementation, don't
-    forget to define it also in those files. 
-
-7.  Create the .spec file for the DLL export points in your
+6.  Create the .spec file for the DLL exported functions in your
     directory. Refer to 'Implementation of new API calls' earlier in
     this document for more information on this part.
 
-8.  Don't forget the .cvsignore file. The .cvsignore contain (on a per
-    directory basis) all the files generated by the compilation
-    process, why cvs shall ignore when processing the dir. 
-    *.o is in there by default, but in Wine case you will find:
-    - Makefile (generated from Makefile.in)
-    - *.spec.c: those c files are generated by tools/build from the
-      .spec file
-    - when thunking down to 16 bit DLLs, you'll get some others (.glue.c)
-    - result of .y => .c translation (by yacc or bison)
-    - result of .rc compilation
-    - ...
-    For a simple DLL, listing in .cvsignore Makefile and
-    <MyDll>.spec.c will do. 
-
-9.  You can now start adding .c files.
-
-10. For the .h files, if they are standard Windows one, put them in
-    include/. If they are linked to *your* implementation of the DLL,
-    put them in your newly created directory.
+7.  You can now start adding .c files. For the .h files, if they are
+    standard Windows one, put them in include/. If they are linked to
+    *your* implementation of the dll, put them in your newly created
+    directory.
 
 Debug channels
 --------------
@@ -301,18 +285,9 @@ Resources
 ---------
 
 If you also need to add resources to your DLL, the create the .rc
-file. Since, the .rc file will be translated into a .s file, and then
-compiled as a .o file, its basename must be different from the
-basename of any .c file.
-Add to your ./dlls/<MyDll>/Makefile.in, in the RC_SRCS macro, the list 
-of .rc files to add to the DLL. You may also have to add the following
-directives
-1/ to tell gnumake to translate .rc into .s files,
-	$(RC_SRCS:.rc=.s): $(WRC)
-2/ to give some parameters to wrc for helping the translation.
-	WRCEXTRA  = -s -p$(MODULE)
-
-See dlls/comctl32/ for an example of this.
+file. Add to your ./dlls/<MyDll>/Makefile.in, in the RC_SRCS macro,
+the list of .rc files to add to the DLL. See dlls/comctl32/ for an
+example of this.
 
 Thunking
 --------
@@ -330,10 +305,11 @@ or word) and the size of the parameters (here l=>long, w=>word; which
 maps to WORD,WORD,LONG,LONG,LONG.
 You can put several functions between the Start/Stop build pair.
 
-You can also read tools/build.txt for more details on this.
+You can also read the winebuild manpage for more details on this.
 
-Then, add to ./dlls/<MyDll>/Makefile.in to the macro GLUE the list of
-.c files containing the /* ### Start build ### */ directives.
+Then, add to ./dlls/<MyDll>/Makefile.in a line like:
+
+EXTRA_OBJS = $(MODULE).glue.o
 
 See dlls/winmm/ for an example of this.
 
@@ -349,21 +325,18 @@ by a 16-bit selector and a 16-bit offset.  Those used by the Wine code
 are regular 32-bit linear addresses.
 
 There are four ways to obtain a segmented pointer:
-  - Use the SEGPTR_* macros in include/heap.h (recommended).
+  - Using the MapLS function (recommended).
   - Allocate a block of memory from the global heap and use
     WIN16_GlobalLock to get its segmented address.
-  - Allocate a block of memory from a local heap, and build the
-    segmented address from the local heap selector (see the
-    USER_HEAP_* macros for an example of this).
   - Declare the argument as 'segptr' instead of 'ptr' in the spec file
     for a given API function.
 
 Once you have a segmented pointer, it must be converted to a linear
 pointer before you can use it from 32-bit code.  This can be done with
-the PTR_SEG_TO_LIN() and PTR_SEG_OFF_TO_LIN() macros.  The linear
-pointer can then be used freely with standard Unix functions like
-memcpy() etc. without worrying about 64k boundaries.  Note: there's no
-easy way to convert back from a linear to a segmented address.
+the MapSL function.  The linear pointer can then be used freely with
+standard Unix functions like memcpy() etc. without worrying about 64k
+boundaries.  Note: there's no easy way to convert back from a linear
+to a segmented address.
 
 In most cases, you don't need to worry about segmented address, as the
 conversion is made automatically by the callback code and the API
@@ -471,8 +444,6 @@ Examples:
 ENUMPRINTERS_GetDWORDFromRegistryA()    (in dlls/winspool/info.c)
 IAVIFile_fnRelease()                    (in dlls/avifil32/avifile.c)
 X11DRV_CreateDC()                       (in graphics/x11drv/init.c)
-TIMER_Init()                            (implemented in windows/timer.c,
-                                         used in loader/main.c )
 
 if you need prototypes for these, there are a few possibilities:
 - within same source file only:
@@ -481,27 +452,8 @@ if you need prototypes for these, there are a few possibilities:
   create a header file within the subdirectory where that module resides,
   e.g.  graphics/ddraw_private.h
 - from a totally different module, or for use in winelib:
-  put your header file entry in /include/wine/
-  but be careful not to clutter this directory!
-under no circumstances, you should add non-api calls to the standard
-windoze include files. Unfortunately, this is often the case, e.g.
-the above example of TIMER_Init is defined in include/message.h
-
-
-API ENTRY POINTS
-================
-
-Because Win16 programs use a 16-bit stack and because they can only
-call 16:16 addressed functions, all API entry points must be at low
-address offsets and must have the arguments translated and moved to
-Wines 32-bit stack.  This task is handled by the code in the "if1632"
-directory.  To define a new API entry point handler you must place a
-new entry in the appropriate API specification file.  These files are
-named *.spec.  For example, the API specification file for the USER
-DLL is contained in the file user.spec.  These entries are processed
-by the "build" program to create an assembly file containing the entry
-point code for each API call.  The format of the *.spec files is
-documented in the file "tools/build-spec.txt".
+  you should never do that. Only exported APIs can be called across
+  module boundaries.
 
 
 DEBUG MESSAGES
