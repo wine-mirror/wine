@@ -12,18 +12,18 @@ dettagli.
 2. QUICK START
 
 Ogni volta che si compila dal sorgente, è raccomandabile usare il Wine installer
-per compilare e installare Wine. Dalla directory di livello più alto del
-sorgente Wine (che contiene questo file), esegui:
+per compilare e installare Wine. Dalla directory di principale del
+sorgente Wine, esegui:
 
 ./tools/wineinstall
 
 Esegui i programmi con "wine [opzioni] programma". Per altre informazioni e
 risoluzione di problemi, leggi il resto di questo file, la pagina Wine man, i
-file nella directory documentazione del sorgente Wine (leggi "DOCUMENTATION"),
+file nella directory documentazione del sorgente Wine (leggi "DOCUMENTAZIONE"),
 ed in modo particolare la notevole quantità di informazioni che puoi trovare a
 http://www.winehq.org.
 
-3. RICHIESTE DI SISTEMA
+3. REQUISITI MINIMI DI SISTEMA
 
 Per compilare ed eseguire Wine, devi avere uno dei seguenti:
 
@@ -45,8 +45,8 @@ consigliabile quindi avere una versione corrente del Kernel come la 2.4.x.
 
 Informazioni FreeBSD:
 
-Assicurati che le opzioni USER_LDT, SYSVSHM, SYSVSEM, e SYSVMSG siano attive nel
-tuo Kernel. Altre informazioni si trovano nel ports tree:
+Assicurati che le opzioni USER_LDT, SYSVSHM, SYSVSEM, e SYSVMSG siano abilitate nel
+Kernel. Altre informazioni si trovano nel ports tree:
 ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
 Informazioni Solaris:
@@ -58,8 +58,8 @@ come lo è per ld delle gnu tools.
 
 Informazioni NetBSD:
 
-Assicurati che le opzioni USER_LDT, SYSVSHM, SYSVSEM, e SYSVMSG siano attive nel
-tuo Kernel.
+Assicurati che le opzioni USER_LDT, SYSVSHM, SYSVSEM, e SYSVMSG siano abilitate nel
+Kernel.
 
 File System supportati:
 Wine dovrebbe poter essere eseguito sulla maggioranza dei file system. Tuttavia,
@@ -118,9 +118,9 @@ codice sorgente Windows sotto Unix.
 Per vedere le opzioni della configurazione della compilazione, esegui
 ./configure -help.
 
-Per fare l'upgrade ad una nuova versione utilizzando una patch, prima cd fino
-alla directory di livello superiore della release (quella che contiene questo
-file README). Quindi esegui "make clean", ed applica la patch alla release con:
+Per fare l'aggiornamento ad una nuova versione utilizzando una patch, prima entra
+nella directory principale dei sorgenti (quella che contiene questo
+file README). Quindi esegui "make distclean", ed applica la patch alla release con:
 
 	Gunzip -c patch-file | patch -p1
 
@@ -131,9 +131,9 @@ Puoi quindi rieseguire "./configure", e quindi eseguire "make depend && make".
 
 Una volta che Wine è stato compilato correttamente, puoi eseguire
 "make install"; questo installerà gli eseguibili wine, la pagina Wine man, e
-altri pochi file necessari.
+pochi altri file necessari.
 
-Non scordarti di disinstallare qualsiasi precedente installazione di Wine in
+Non dimenticarti di disinstallare qualsiasi precedente installazione di Wine in
 conflitto. Prova sia "dpkg -r wine" o "rpm -e wine" o "make uninstall" prima di
 installare.
 
@@ -147,10 +147,10 @@ Il file documentation/samples/config contiene un esempio di file di
 configurazione che deve essere adattato e copiato nella locazione menzionata in
 precedenza.
 
-Non scordarti di aggiungere chiavi di registro vitali applicando winedefault.reg
+Non dimenticarti di aggiungere chiavi di registro vitali applicando winedefault.reg
 con programs/regedit/. Controlla la directory documentation/ per i dettagli.
 
-Controlla l'area Support a http://www.winehq.org/ per altri suggerimenti sulla
+Controlla l'area Support su http://www.winehq.org/ per altri suggerimenti sulla
 configurazione.
 
 Nel caso di errori di caricamento delle librerie
@@ -175,8 +175,8 @@ solo il nome del file.
 
 Per esempio: per eseguire Solitario:
 
-	Wine sol	(Utilizzando il percorso di ricerca come specificato
-	Wine sol.exe      nel file di configurazione per localizzare il file)
+	wine sol	(Utilizzando il percorso di ricerca come specificato
+	wine sol.exe      nel file di configurazione per localizzare il file)
 
 	wine c:\\windows\\sol.exe (utilizzando la sintassi DOS)
 	wine /usr/windows/sol.exe (utilizzando la sintassi Unix)
@@ -186,7 +186,7 @@ Per esempio: per eseguire Solitario:
 Nota: il percorso del file può essere aggiunto al percorso quando è fornito un
 nome intero sulla commandline.
 
-Wine non è ancora completo, quindi molti programmi potrebbero crashare. Se
+Wine non è ancora completo, quindi molti programmi potrebbero andare in crash. Se
 winedbg è settato correttamente in accordo con la documentazione contenuta in
 documentation/debugger.sgml, sarai mandato all'interno di un debugger così
 potrai studiare e risolvere il problema.
@@ -214,37 +214,39 @@ Per fare ciò è richiesto il pacchetto di tool sgml (per db2html, db2ps, db2pdf)
 chiamati:
 
 Debian:		docbook-utils
-Mandrake:		sgml-tools-A.B.C-DDmdk
+Mandrake:	sgml-tools-A.B.C-DDmdk
 SuSE:		docbktls-A.BB.C-DD
 
 8. PER OTTENERE PIU' INFORMAZIONI
 
-WWW: Un gran quantitativo di informazioni messe a disposizione da WineHQ su Wine
-è disponibile all'indirizzo http://www.winehq.org/: varie guide a Wine,
-database, identificazione di bug. Questo è probabilmente il miglior punto di
-partenza.
+WWW: 	Un gran quantitativo di informazioni messe a disposizione da WineHQ su Wine
+	è disponibile all'indirizzo http://www.winehq.org/: varie guide su Wine,
+	database, identificazione di bug. Questo è probabilmente il miglior punto di
+	partenza.
 
-FAQ: Le FAQ di Wine si trovano all'indirizzo http://www.winehq.org/FAQ
+FAQ: 	Le FAQ di Wine si trovano all'indirizzo http://www.winehq.org/FAQ
 
 Usenet: Puoi discutere di argomenti collegati a Wine ed ottenere aiuto su
-comp.emulators.ms-windows.wine.
+	comp.emulators.ms-windows.wine.
 
-Bugs: Riporta i Bug a Wine Bugzilla a http://bugs.winehq.org per favore cerca
-nel database di bugzilla per verificare che il tuo problema non sia già stato
-trovato prima di postare un rapporto su un bug. Puoi anche postare i rapporti
-sui bug a comp.emulators.ms-windows.wine. Per favore leggi il file
-documentation/bugs.sgml per verificare quali informazioni sono richieste.
+Bugs:	 Segnala i Bug su Wine Bugzilla all'indirizzo http://bugs.winehq.org
+	per favore cerca nel database di bugzilla per verificare che il tuo problema
+	non sia già stato trovato prima di postare un rapporto su un bug.
+	Puoi anche mandare le segnalazioni sui bug a comp.emulators.ms-windows.wine.
+	Per favore leggi il file documentation/bugs.sgml per verificare quali
+	informazioni sono richieste.
 
-IRC: Aiuto online è disponibile nel canale #WineHQ su irc.freenode.net.
+IRC:	 Aiuto online è disponibile nel canale #winehq su irc.freenode.net.
 
-CVS: Il tree di sviluppo corrente di wine e' disponibile in CVS. Visita
-http://www.winehq.org/cvs per altre informazioni.
+CVS: 	L'albero di sviluppo corrente di wine e' disponibile in CVS. Visita
+	http://www.winehq.org/cvs per ulteriori informazioni.
 
-Mailing list: Esistono diverse mailing list per gli sviluppatori di Wine; visita
-http://www.winehq.org/forums per ulteriori informazioni.
+Mailing list:
+	Esistono diverse mailing list per gli sviluppatori di Wine; visita
+	http://www.winehq.org/forums per ulteriori informazioni.
 
 Se aggiungi qualcosa, o correggi un bug, per favore manda una patch (nel formato
-'diff -u') a wine-patches@winehq.org per essere incluso nella prossima release.
+'diff -u') a wine-patches@winehq.org per essere farlo includere nella prossima release.
 
 --
 Alexandre Julliard
@@ -254,3 +256,5 @@ tradotto da:
 Francesco Di Punzio
 francesco_dipunzio@virgilio.it
 se trovi errori nella traduzione per favore segnalali tramite e-mail. Grazie
+Traduzione aggiornata il 18/01/2004 da Ivan Leo Murray-Smith
+Potete contatarmi all'indirizzo puoti@inwind.it
