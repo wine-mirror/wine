@@ -49,7 +49,7 @@ typedef struct
 #elif defined(__sparc__)
 # define GET_IP(context) ((LPVOID)(context)->pc)
 #elif defined(__powerpc__)
-# define GET_IP(context) ((LPVOID)(context)->Fill[0])
+# define GET_IP(context) ((LPVOID)(context)->Iar)
 #else
 # error You must define GET_IP for this CPU
 #endif

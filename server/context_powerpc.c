@@ -56,18 +56,13 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 #undef IREG
 	    XREG(37,Xer);
 	    XREG(38,Cr);
-
         }
         if (flags & CONTEXT_CONTROL)
         {
+	    XREG(32,Iar);
 	    XREG(33,Msr);
 	    XREG(35,Ctr);
-
-	    XREG(32,Fill[0]); /* misused for PC / nip */
-
-	/* what is Iar? Lr? */
-	    /*XREG(33*4,Iar);*/
-	    /*XREG(33*4,Lr);*/
+	    XREG(36,Lr); /* 36 is LNK ... probably Lr ? */
         }
     }
     if (flags & CONTEXT_FLOATING_POINT)
@@ -137,14 +132,10 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
         }
         if (flags & CONTEXT_CONTROL)
         {
+	    XREG(32,Iar);
 	    XREG(33,Msr);
 	    XREG(35,Ctr);
-
-	    XREG(32,Fill[0]); /* misused for PC / nip */
-
-	/* what is Iar? Lr? */
-	    /*XREG(33*4,Iar);*/
-	    /*XREG(33*4,Lr);*/
+	    XREG(36,Lr);
         }
     }
     if (flags & CONTEXT_FLOATING_POINT)
@@ -202,7 +193,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
     {
     	CREG(Msr);
     	CREG(Ctr);
-    	CREG(Fill[0]);
+    	CREG(Iar);
     }
     if (flags & CONTEXT_INTEGER)
     {
@@ -256,13 +247,13 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, int flags )
 void *get_thread_ip( struct thread *thread )
 {
     CONTEXT context;
-    context.Fill[0] = 0;
+    context.Iar = 0;
     if (suspend_for_ptrace( thread ))
     {
         get_thread_context( thread, CONTEXT_CONTROL, &context );
         resume_thread( thread );
     }
-    return (void *)context.Fill[0];
+    return (void *)context.Iar;
 }
 
 /* determine if we should continue the thread in single-step mode */

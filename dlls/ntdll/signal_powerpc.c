@@ -76,7 +76,7 @@ typedef struct ucontext SIGCONTEXT;
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-typedef int (*wine_signal_handler)(unsigned sig);
+typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
@@ -86,7 +86,7 @@ static sigset_t all_sigs;
 /***********************************************************************
  *           dispatch_signal
  */
-inline static int dispatch_signal(unsigned sig)
+inline static int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);
@@ -106,7 +106,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
 	C(31);
 
-	CX(Fill[0],nip);
+	CX(Iar,nip);
 	CX(Msr,msr);
 	CX(Ctr,ctr);
 #undef CX
@@ -139,7 +139,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
 	C(31);
 
-	CX(Fill[0],nip);
+	CX(Iar,nip);
 	CX(Msr,msr);
 	CX(Ctr,ctr);
 #undef CX
@@ -222,7 +222,7 @@ static HANDLER_DEF(segv_handler)
     rec.NumberParameters = 0;
     switch (__siginfo->si_signo) {
     case SIGSEGV:
-    	switch (__siginfo->si_code) {
+    	switch ( __siginfo->si_code & 0xffff ) {
 	case SEGV_MAPERR:
 	case SEGV_ACCERR:
 		rec.NumberParameters = 2;
@@ -237,7 +237,7 @@ static HANDLER_DEF(segv_handler)
 	}
     	break;
     case SIGBUS:
-    	switch (__siginfo->si_code) {
+    	switch ( __siginfo->si_code & 0xffff ) {
 	case BUS_ADRALN:
 		rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
 		break;
@@ -256,7 +256,7 @@ static HANDLER_DEF(segv_handler)
 	}
     	break;
     case SIGILL:
-    	switch (__siginfo->si_code) {
+    	switch ( __siginfo->si_code & 0xffff ) {
 	case ILL_ILLOPC: /* illegal opcode */
 	case ILL_ILLOPN: /* illegal operand */
 	case ILL_ILLADR: /* illegal addressing mode */
@@ -298,7 +298,7 @@ static HANDLER_DEF(trap_handler)
     rec.NumberParameters = 0;
 
     /* FIXME: check if we might need to modify PC */
-    switch (__siginfo->si_code) {
+    switch (__siginfo->si_code & 0xffff) {
     case TRAP_BRKPT:
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
     	break;
@@ -324,7 +324,7 @@ static HANDLER_DEF(fpe_handler)
     /*save_fpu( &context, HANDLER_CONTEXT );*/
     save_context( &context, HANDLER_CONTEXT );
 
-    switch ( __siginfo->si_code ) {
+    switch ( __siginfo->si_code  & 0xffff ) {
     case FPE_FLTSUB:
         rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
@@ -377,7 +377,7 @@ static HANDLER_DEF(int_handler)
         rec.ExceptionCode    = CONTROL_C_EXIT;
         rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
         rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context.Fill[0];
+        rec.ExceptionAddress = (LPVOID)context.Iar;
         rec.NumberParameters = 0;
         EXC_RtlRaiseException( &rec, &context );
         restore_context( &context, HANDLER_CONTEXT );
@@ -411,7 +411,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
 /***********************************************************************
  *           __wine_set_signal_handler   (NTDLL.@)
  */
-int __wine_set_signal_handler(unsigned sig, wine_signal_handler wsh)
+int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 {
     if (sig > sizeof(handlers) / sizeof(handlers[0])) return -1;
     if (handlers[sig] != NULL) return -2;

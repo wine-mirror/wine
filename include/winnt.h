@@ -959,7 +959,7 @@ typedef struct
 
     /* These are selected by CONTEXT_CONTROL */
     DWORD Msr;
-    DWORD Iar;
+    DWORD Iar; /* Instruction Address Register , aka PC ... */
     DWORD Lr;
     DWORD Ctr;
 
