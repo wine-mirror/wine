@@ -210,7 +210,7 @@ static int	OSS_OpenDevice(unsigned req_access)
             WARN("Mismatch in access...\n");
             return -1;
         }
-        if (GetCurrentThreadId() == OSS_OwnerThreadID)
+        if (GetCurrentThreadId() != OSS_OwnerThreadID)
         {
             WARN("Another thread is trying to access audio...\n");
             return -1;
