@@ -169,6 +169,86 @@ BOOL WINAPI SHRegGetBoolUSValueA(LPCSTR,LPCSTR,BOOL,BOOL);
 BOOL WINAPI SHRegGetBoolUSValueW(LPCWSTR,LPCWSTR,BOOL,BOOL);
 #define SHRegGetBoolUSValue WINELIB_NAME_AW(SHRegGetBoolUSValue)
 
+int WINAPI SHRegGetIntW(HKEY,LPCWSTR,int);
+
+/* IQueryAssociation and helpers */
+enum
+{
+    ASSOCF_INIT_NOREMAPCLSID    = 0x001, /* Don't map clsid->progid */
+    ASSOCF_INIT_BYEXENAME       = 0x002, /* .exe name given */
+    ASSOCF_OPEN_BYEXENAME       = 0x002, /* Synonym */
+    ASSOCF_INIT_DEFAULTTOSTAR   = 0x004, /* Use * as base */
+    ASSOCF_INIT_DEFAULTTOFOLDER = 0x008, /* Use folder as base */
+    ASSOCF_NOUSERSETTINGS       = 0x010, /* No HKCU reads */
+    ASSOCF_NOTRUNCATE           = 0x020, /* Don't truncate return */
+    ASSOCF_VERIFY               = 0x040, /* Verify data */
+    ASSOCF_REMAPRUNDLL          = 0x080, /* Get rundll args */
+    ASSOCF_NOFIXUPS             = 0x100, /* Don't fixup errors */
+    ASSOCF_IGNOREBASECLASS      = 0x200, /* Dont read baseclass */
+};
+
+typedef DWORD ASSOCF;
+
+typedef enum
+{
+    ASSOCSTR_COMMAND = 1,     /* Verb command */
+    ASSOCSTR_EXECUTABLE,      /* .exe from command string */
+    ASSOCSTR_FRIENDLYDOCNAME, /* Friendly doc type name */
+    ASSOCSTR_FRIENDLYAPPNAME, /* Friendly .exe name */
+    ASSOCSTR_NOOPEN,          /* noopen value */
+    ASSOCSTR_SHELLNEWVALUE,   /* Use shellnew key */
+    ASSOCSTR_DDECOMMAND,      /* DDE command template */
+    ASSOCSTR_DDEIFEXEC,       /* DDE command for process create */
+    ASSOCSTR_DDEAPPLICATION,  /* DDE app name */
+    ASSOCSTR_DDETOPIC,        /* DDE topic */
+    ASSOCSTR_INFOTIP,         /* Infotip */
+    ASSOCSTR_QUICKTIP,        /* Quick infotip */
+    ASSOCSTR_TILEINFO,        /* Properties for tileview */
+    ASSOCSTR_CONTENTTYPE,     /* Mimetype */
+    ASSOCSTR_DEFAULTICON,     /* Icon */
+    ASSOCSTR_SHELLEXTENSION,  /* GUID for shell extension handler */
+    ASSOCSTR_MAX
+} ASSOCSTR;
+
+typedef enum
+{
+    ASSOCKEY_SHELLEXECCLASS = 1, /* Key for ShellExec */
+    ASSOCKEY_APP,                /* Application */
+    ASSOCKEY_CLASS,              /* Progid or class */
+    ASSOCKEY_BASECLASS,          /* Base class */
+    ASSOCKEY_MAX
+} ASSOCKEY;
+
+typedef enum
+{
+    ASSOCDATA_MSIDESCRIPTOR = 1, /* Component descriptor */
+    ASSOCDATA_NOACTIVATEHANDLER, /* Don't activate */
+    ASSOCDATA_QUERYCLASSSTORE,   /* Look in Class Store */
+    ASSOCDATA_HASPERUSERASSOC,   /* Use user association */
+    ASSOCDATA_EDITFLAGS,         /* Edit flags */
+    ASSOCDATA_VALUE,             /* pszExtra is value */
+    ASSOCDATA_MAX
+} ASSOCDATA;
+
+typedef enum
+{
+    ASSOCENUM_NONE
+} ASSOCENUM;
+
+HRESULT WINAPI AssocCreate(CLSID,REFIID,LPVOID*);
+
+HRESULT WINAPI AssocQueryStringA(ASSOCF,ASSOCSTR,LPCSTR,LPCSTR,LPSTR,LPDWORD);
+HRESULT WINAPI AssocQueryStringW(ASSOCF,ASSOCSTR,LPCWSTR,LPCWSTR,LPWSTR,LPDWORD);
+#define AssocQueryString WINELIB_NAME_AW(AssocQueryString)
+
+HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF,ASSOCSTR,HKEY,LPCSTR,LPSTR,LPDWORD);
+HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF,ASSOCSTR,HKEY,LPCWSTR,LPWSTR,LPDWORD);
+#define AssocQueryStringByKey WINELIB_NAME_AW(AssocQueryStringByKey)
+
+HRESULT WINAPI AssocQueryKeyA(ASSOCF,ASSOCKEY,LPCSTR,LPCSTR,PHKEY);
+HRESULT WINAPI AssocQueryKeyW(ASSOCF,ASSOCKEY,LPCWSTR,LPCWSTR,PHKEY);
+#define AssocQueryKey WINELIB_NAME_AW(AssocQueryKey)
+
 #endif /* NO_SHLWAPI_REG */
 
 
@@ -535,8 +615,8 @@ HRESULT WINAPI UrlCreateFromPathW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 #define STIF_DEFAULT     0x0L
 #define STIF_SUPPORT_HEX 0x1L
 
-BOOL WINAPI ChrCmpIA (WORD w1, WORD w2);
-BOOL WINAPI ChrCmpIW (WCHAR w1, WCHAR w2);
+BOOL WINAPI ChrCmpIA (WORD,WORD);
+BOOL WINAPI ChrCmpIW (WCHAR,WCHAR);
 #define ChrCmpI WINELIB_NAME_AW(ChrCmpI)
 
 INT WINAPI StrCSpnA(LPCSTR,LPCSTR);
@@ -554,6 +634,8 @@ LPWSTR WINAPI StrCatW(LPWSTR,LPCWSTR);
 LPSTR WINAPI StrCatBuffA(LPSTR,LPCSTR,INT);
 LPWSTR WINAPI StrCatBuffW(LPWSTR,LPCWSTR,INT);
 #define StrCatBuff WINELIB_NAME_AW(StrCatBuff)
+
+DWORD WINAPI StrCatChainW(LPWSTR,DWORD,DWORD,LPCWSTR);
 
 LPSTR WINAPI StrChrA(LPCSTR,WORD);
 LPWSTR WINAPI StrChrW(LPCWSTR,WCHAR);
@@ -580,6 +662,8 @@ LPWSTR WINAPI StrCpyNW(LPWSTR,LPCWSTR,int);
 #define StrCpyN WINELIB_NAME_AW(StrCpyN)
 #define StrNCpy WINELIB_NAME_AW(StrCpyN)
 
+INT WINAPI StrCmpLogicalW(LPCWSTR,LPCWSTR);
+
 INT WINAPI StrCmpNA(LPCSTR,LPCSTR,INT);
 INT WINAPI StrCmpNW(LPCWSTR,LPCWSTR,INT);
 #define StrCmpN WINELIB_NAME_AW(StrCmpN)
@@ -593,6 +677,10 @@ INT WINAPI StrCmpNIW(LPCWSTR,LPCWSTR,INT);
 LPSTR WINAPI StrDupA(LPCSTR);
 LPWSTR WINAPI StrDupW(LPCWSTR);
 #define StrDup WINELIB_NAME_AW(StrDup)
+
+HRESULT WINAPI SHStrDupA(LPCSTR,WCHAR**);
+HRESULT WINAPI SHStrDupW(LPCWSTR,WCHAR**);
+#define SHStrDup WINELIB_NAME_AW(SHStrDup)
 
 LPSTR WINAPI StrFormatByteSizeA (DWORD,LPSTR,UINT);
 LPWSTR WINAPI StrFormatByteSizeW (DWORD,LPWSTR,UINT);
@@ -654,23 +742,46 @@ BOOL WINAPI StrToIntExA(LPCSTR,DWORD,int*);
 BOOL WINAPI StrToIntExW(LPCWSTR,DWORD,int*);
 #define StrToIntEx WINELIB_NAME_AW(StrToIntEx)
 
+BOOL WINAPI StrToInt64ExA(LPCSTR,DWORD,LONGLONG*);
+BOOL WINAPI StrToInt64ExW(LPCWSTR,DWORD,LONGLONG*);
+#define StrToIntEx64 WINELIB_NAME_AW(StrToIntEx64)
+
 BOOL WINAPI StrTrimA(LPSTR,LPCSTR);
 BOOL WINAPI StrTrimW(LPWSTR,LPCWSTR);
 #define StrTrim WINELIB_NAME_AW(StrTrim)
 
-INT WINAPI wvnsprintfA(LPSTR lpOut, INT cchLimitIn, LPCSTR lpFmt, va_list arglist);
-INT WINAPI wvnsprintfW(LPWSTR lpOut, INT cchLimitIn, LPCWSTR lpFmt, va_list arglist);
+INT WINAPI wvnsprintfA(LPSTR,INT,LPCSTR,va_list);
+INT WINAPI wvnsprintfW(LPWSTR,INT,LPCWSTR,va_list);
 #define wvnsprintf WINELIB_NAME_AW(wvnsprintf)
 
-INT WINAPIV wnsprintfA(LPSTR lpOut, INT cchLimitIn, LPCSTR lpFmt, ...);
-INT WINAPIV wnsprintfW(LPWSTR lpOut, INT cchLimitIn, LPCWSTR lpFmt, ...);
+INT WINAPIV wnsprintfA(LPSTR,INT,LPCSTR, ...);
+INT WINAPIV wnsprintfW(LPWSTR,INT,LPCWSTR, ...);
 #define wnsprintf WINELIB_NAME_AW(wnsprintf)
+
+HRESULT WINAPI SHLoadIndirectString(LPCWSTR,LPWSTR,UINT,PVOID*);
+
+BOOL IntlStrEqWorkerA(BOOL,LPCSTR,LPCSTR,int);
+BOOL IntlStrEqWorkerW(BOOL,LPCWSTR,LPCWSTR,int);
+#define IntlStrEqWorker WINELIB_NAME_AW(IntlStrEqWorker)
+
+#define IntlStrEqNA(s1,s2,n) IntlStrEqWorkerA(TRUE,s1,s2,n)
+#define IntlStrEqNW(s1,s2,n) IntlStrEqWorkerW(TRUE,s1,s2,n)
+#define IntlStrEqN WINELIB_NAME_AW(IntlStrEqN)
+
+#define IntlStrEqNIA(s1,s2,n) IntlStrEqWorkerA(FALSE,s1,s2,n)
+#define IntlStrEqNIW(s1,s2,n) IntlStrEqWorkerW(FALSE,s1,s2,n)
+#define IntlStrEqNI WINELIB_NAME_AW(IntlStrEqNI)
 
 /* Undocumented */
 struct _STRRET;
 struct _ITEMIDLIST;
-HRESULT WINAPI StrRetToBufA(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPSTR dest, DWORD len);
-HRESULT WINAPI StrRetToBufW(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPWSTR dest, DWORD len);
+
+HRESULT WINAPI StrRetToStrA(struct _STRRET*,const struct _ITEMIDLIST*,LPSTR*);
+HRESULT WINAPI StrRetToStrW(struct _STRRET*,const struct _ITEMIDLIST*,LPWSTR*);
+#define StrRetToStr WINELIB_NAME_AW(StrRetToStr)
+
+HRESULT WINAPI StrRetToBufA(struct _STRRET*,const struct _ITEMIDLIST*,LPSTR,DWORD);
+HRESULT WINAPI StrRetToBufW(struct _STRRET*,const struct _ITEMIDLIST*,LPWSTR,DWORD);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
 #endif /* NO_SHLWAPI_STRFCNS */
@@ -695,14 +806,57 @@ VOID WINAPI ColorRGBToHLS(COLORREF,LPWORD,LPWORD,LPWORD);
 
 IStream * WINAPI SHOpenRegStreamA(HKEY,LPCSTR,LPCSTR,DWORD);
 IStream * WINAPI SHOpenRegStreamW(HKEY,LPCWSTR,LPCWSTR,DWORD);
-#define SHOpenRegStream WINELIB_NAME_AW(SHOpenRegStream)
+#define SHOpenRegStream WINELIB_NAME_AW(SHOpenRegStream2) /* Uses version 2 */
 
 IStream * WINAPI SHOpenRegStream2A(HKEY,LPCSTR,LPCSTR,DWORD);
 IStream * WINAPI SHOpenRegStream2W(HKEY,LPCWSTR,LPCWSTR,DWORD);
 #define SHOpenRegStream2 WINELIB_NAME_AW(SHOpenRegStream2)
 
+HRESULT WINAPI SHCreateStreamOnFileA(LPCSTR,DWORD,IStream**);
+HRESULT WINAPI SHCreateStreamOnFileW(LPCWSTR,DWORD,IStream**);
+#define SHCreateStreamOnFile WINELIB_NAME_AW(SHCreateStreamOnFile)
+
+HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR,DWORD,DWORD,BOOL,IStream*,IStream**);
+
 #endif /* NO_SHLWAPI_STREAM */
 
+/* SHAutoComplete flags */
+#define SHACF_DEFAULT               0x00000000
+#define SHACF_FILESYSTEM            0x00000001
+#define SHACF_URLHISTORY            0x00000002
+#define SHACF_URLMRU                0x00000004
+#define SHACF_URLALL                (SHACF_URLHISTORY|SHACF_URLMRU)
+#define SHACF_USETAB                0x00000008
+#define SHACF_FILESYS_ONLY          0x00000010
+#define SHACF_FILESYS_DIRS          0x00000020
+#define SHACF_AUTOSUGGEST_FORCE_ON  0x10000000
+#define SHACF_AUTOSUGGEST_FORCE_OFF 0x20000000
+#define SHACF_AUTOAPPEND_FORCE_ON   0x40000000
+#define SHACF_AUTOAPPEND_FORCE_OFF  0x80000000
+
+HRESULT WINAPI SHAutoComplete(HWND,DWORD);
+
+/* Threads */
+#if defined(IUnknown_IMETHODS)
+HRESULT WINAPI SHGetThreadRef(IUnknown**);
+HRESULT WINAPI SHSetThreadRef(IUnknown*);
+#endif
+HRESULT WINAPI SHReleaseThreadRef();
+
+/* SHCreateThread flags */
+#define CTF_INSIST          0x01 /* Allways call */
+#define CTF_THREAD_REF      0x02 /* Hold thread ref */
+#define CTF_PROCESS_REF     0x04 /* Hold process ref */
+#define CTF_COINIT          0x08 /* Startup COM first */
+#define CTF_FREELIBANDEXIT  0x10 /* Hold DLL ref */
+#define CTF_REF_COUNTED     0x20 /* Thread is ref counted */
+#define CTF_WAIT_ALLOWCOM   0x40 /* Allow marshalling */
+
+BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE,void*,DWORD,LPTHREAD_START_ROUTINE);
+
+#if defined(IBindCtx_IMETHODS)
+BOOL WINAPI SHSkipJunction(IBindCtx*,const CLSID*);
+#endif
 
 /* Version Information */
 
@@ -718,6 +872,22 @@ typedef struct _DllVersionInfo {
 #define DLLVER_PLATFORM_NT      0x02 /* WinNT */
 
 typedef HRESULT (CALLBACK *DLLGETVERSIONPROC)(DLLVERSIONINFO *);
+
+typedef struct _DLLVERSIONINFO2 {
+    DLLVERSIONINFO info1;
+    DWORD          dwFlags;    /* Reserved */
+    ULONGLONG      ullVersion; /* 16 bits each for Major, Minor, Build, QFE */
+} DLLVERSIONINFO2;
+
+#define DLLVER_MAJOR_MASK 0xFFFF000000000000
+#define DLLVER_MINOR_MASK 0x0000FFFF00000000
+#define DLLVER_BUILD_MASK 0x00000000FFFF0000
+#define DLLVER_QFE_MASK   0x000000000000FFFF
+
+#define MAKEDLLVERULL(mjr, mnr, bld, qfe) (((ULONGLONG)(mjr)<< 48)| \
+  ((ULONGLONG)(mnr)<< 32) | ((ULONGLONG)(bld)<< 16) | (ULONGLONG)(qfe))
+
+HRESULT WINAPI DllInstall(BOOL,LPCWSTR);
 
 #ifdef __cplusplus
 } /* extern "C" */
