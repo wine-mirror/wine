@@ -191,7 +191,8 @@ static lnk_string* load_string(int fd, int unicode)
 
 static int dump_pidl(int fd)
 {
-    void *pidl;
+    lnk_string *pidl;
+    int i, n = 0, sz = 0;
 
     pidl = load_pidl(fd);
     if (!pidl)
@@ -199,6 +200,26 @@ static int dump_pidl(int fd)
 
     printf("PIDL\n");
     printf("----\n\n");
+
+    while(sz<pidl->size)
+    {
+        lnk_string *segment = (lnk_string*) &pidl->str.a[sz];
+
+        if(!segment->size)
+            break;
+        sz+=segment->size;
+        if(sz>pidl->size)
+        {
+            printf("bad pidl\n");
+            break;
+        }
+        n++;
+        printf("segment %d (%2d bytes) : ",n,segment->size);
+        for(i=0; i<segment->size; i++)
+            printf("%02x ",segment->str.a[i]);
+        printf("\n");
+    }
+    printf("\n");
 
     free(pidl);
 
@@ -257,7 +278,7 @@ static int dump_location(int fd)
         printf("size %ld  type %ld  serial %08lx  label %ld ",
                vol->dwSize, vol->dwType, vol->dwVolSerial, vol->dwVolLabelOfs);
         if(vol->dwVolLabelOfs)
-            printf("(\"%s\")", &p[vol->dwVolLabelOfs]);
+            printf("(\"%s\")", &p[loc->dwVolTableOfs + vol->dwVolLabelOfs]);
     }
     printf("\n");
 
