@@ -295,6 +295,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 	  DeleteObject(hFont);
       break;
     }
+    break;
 
     case WM_HELP:
     {
