@@ -372,7 +372,7 @@ HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs)
         if (!lstrcmpiA( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
 
-    if(table->flags && BI32_INSTANTIATED)
+    if(table->flags & BI32_INSTANTIATED)
     {
 	ERR_(module)("Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
 		table->descr->name);
