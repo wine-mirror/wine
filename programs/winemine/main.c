@@ -1,7 +1,7 @@
 /*
  * WineMine (main.c)
  *
- * Copyright 2000 Joshua Thielen <jt85296@ltu.edu>
+ * Copyright 2000 Joshua Thielen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -639,6 +639,8 @@ void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, 
             case COMPLETE:
                 offset = EXPLODE_BMP;
                 break;
+            case QUESTION:
+                /* fall through */
             case NORMAL:
                 offset = MINE_BMP;
             }
