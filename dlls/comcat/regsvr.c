@@ -398,7 +398,7 @@ static LONG recursive_delete_key(HKEY key)
  */
 static struct regsvr_coclass const coclass_list[] = {
     {	&CLSID_StdComponentCategoriesMgr,
-	"StdComponentCategoriesMgr",
+	"Component Categories Manager",
 	NULL,
 	"comcat.dll",
 	"Both"

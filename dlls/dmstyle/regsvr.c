@@ -541,6 +541,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.DirectMusicMuteTrack.1",
 	"Microsoft.DirectMusicMuteTrack"
     },
+    {   &CLSID_DirectMusicMelodyFormulationTrack,
+	"DirectMusicMelodyFormulationTrack",
+	NULL,
+	"dmstyle.dll",
+	"Both",
+	"Microsoft.DirectMusicMelodyFormulationTrack.1",
+	"Microsoft.DirectMusicMelodyFormulationTrack"
+    },
     { NULL }			/* list terminator */
 };
 

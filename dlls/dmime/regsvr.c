@@ -501,6 +501,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.DirectMusicSegmentState.1",
 	"Microsoft.DirectMusicSegmentState"
     },
+    {   &CLSID_DirectMusicSong,
+	"DirectMusicSong",
+	NULL,
+	"dmime.dll",
+	"Both",
+	"Microsoft.DirectMusicSong.1",
+	"Microsoft.DirectMusicSong"
+    },
     {   &CLSID_DirectMusicGraph,
 	"DirectMusicGraph",
 	NULL,
