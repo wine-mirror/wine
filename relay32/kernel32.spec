@@ -153,7 +153,7 @@ import  ntdll.dll
 135 stdcall ClearCommBreak(long) ClearCommBreak
 136 stdcall ClearCommError(long ptr ptr) ClearCommError
 137 stdcall CloseHandle(long) CloseHandle
-138 stub CloseProfileUserMapping
+138 stdcall CloseProfileUserMapping() CloseProfileUserMapping
 139 stub CloseSystemHandle
 140 stub CommConfigDialogA
 141 stub CommConfigDialogW

@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "winbase.h"
+#include "winerror.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winnls.h"
@@ -1554,4 +1555,13 @@ void WINAPI WriteOutProfiles16(void)
     EnterCriticalSection( &PROFILE_CritSect );
     PROFILE_FlushFile();
     LeaveCriticalSection( &PROFILE_CritSect );
+}
+
+/***********************************************************************
+ *           CloseProfileUserMapping   (KERNEL.138)
+ */
+BOOL WINAPI CloseProfileUserMapping(void) {
+    FIXME("(), stub!\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
