@@ -49,8 +49,10 @@ char*    pool_strdup(struct pool* a, const char* str);
 struct vector
 {
     void**      buckets;
-    unsigned    elt_size : 24, shift : 8;
-    unsigned    num_elts : 20, num_buckets : 12;
+    unsigned    elt_size;
+    unsigned    shift;
+    unsigned    num_elts;
+    unsigned    num_buckets;
 };
 
 void     vector_init(struct vector* v, unsigned elt_sz, unsigned bucket_sz);
