@@ -1362,16 +1362,32 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
  */
 BOOL WINAPI DeleteFileW( LPCWSTR path )
 {
-    HANDLE hFile;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
 
     TRACE("%s\n", debugstr_w(path) );
 
-    hFile = CreateFileW( path, GENERIC_READ | GENERIC_WRITE,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0 );
-    if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+    if (!RtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
 
-    CloseHandle(hFile);  /* last close will delete the file */
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtDeleteFile(&attr);
+    RtlFreeUnicodeString( &nameW );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
     return TRUE;
 }
 
