@@ -358,7 +358,10 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 
     /* First try to execute lpFile with lpParameters directly */ 
     strcpy(cmd,lpFile);
-    strcat(cmd,lpParameters ? lpParameters : "");
+    if (lpParameters) {
+        strcat(cmd, " " );
+        strcat(cmd,lpParameters );
+    }
 
     retval = WinExec16( cmd, iShowCmd );
 
