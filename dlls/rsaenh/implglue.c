@@ -2,7 +2,7 @@
  * dlls/rsaenh/implglue.c
  * Glueing the RSAENH specific code to the crypto library
  *
- * Copyright (c) 2004 Michael Jung
+ * Copyright (c) 2004, 2005 Michael Jung
  *
  * based on code by Mike McCormack and David Hammerton
  *
@@ -67,10 +67,6 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
         case CALG_SHA:
             A_SHAInit(&pHashContext->sha);
             break;
-        
-        default:
-            SetLastError(NTE_BAD_ALGID);
-            return FALSE;
     }
 
     return TRUE;
