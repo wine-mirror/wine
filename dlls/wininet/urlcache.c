@@ -115,6 +115,19 @@ BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl,
 }
 
 /***********************************************************************
+ *           GetUrlCacheEntryInfoW (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
+  LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntry,
+  LPDWORD lpCacheEntrySize)
+{
+    FIXME("(%s) stub\n",debugstr_w(lpszUrl));
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetUrlCacheEntryInfoExA (WININET.@)
  *
  */
@@ -147,5 +160,27 @@ BOOL WINAPI GetUrlCacheEntryInfoExW(
 {
     FIXME(" url=%s, flags=%ld\n",debugstr_w(lpszUrl),dwFlags);
     INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetUrlCacheConfigInfoA (WININET.@)
+ *
+ * CacheInfo is some CACHE_CONFIG_INFO structure, with no MS info found by google
+ */
+BOOL GetUrlCacheConfigInfoA(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
+{
+    FIXME("\n");
+    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetUrlCacheConfigInfoW (WININET.@)
+ */
+BOOL GetUrlCacheConfigInfoW(LPDWORD CacheInfo, LPDWORD size, DWORD bitmask)
+{
+    FIXME("\n");
+    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
 }

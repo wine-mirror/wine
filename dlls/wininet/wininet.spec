@@ -51,12 +51,12 @@
 @ stub FtpRenameFileW
 @ stdcall FtpSetCurrentDirectoryA(ptr str)
 @ stdcall FtpSetCurrentDirectoryW(ptr wstr)
-@ stub GetUrlCacheConfigInfoA
-@ stub GetUrlCacheConfigInfoW
+@ stdcall GetUrlCacheConfigInfoA(ptr ptr long)
+@ stdcall GetUrlCacheConfigInfoW(ptr ptr long)
 @ stdcall GetUrlCacheEntryInfoA(str ptr long)
 @ stdcall GetUrlCacheEntryInfoExA(str ptr ptr str ptr ptr long)
 @ stdcall GetUrlCacheEntryInfoExW(wstr ptr ptr wstr ptr ptr long)
-@ stub GetUrlCacheEntryInfoW
+@ stdcall GetUrlCacheEntryInfoW(wstr ptr long)
 @ stub GetUrlCacheHeaderData
 @ stub GopherCreateLocatorA
 @ stub GopherCreateLocatorW
