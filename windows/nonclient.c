@@ -1229,9 +1229,9 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
               rect->right - rect->left, height, PATCOPY );
     PatBlt( hdc, rect->left, rect->top,
               width, rect->bottom - rect->top, PATCOPY );
-    PatBlt( hdc, rect->left, rect->bottom,
+    PatBlt( hdc, rect->left, rect->bottom - 1,
               rect->right - rect->left, -height, PATCOPY );
-    PatBlt( hdc, rect->right, rect->top,
+    PatBlt( hdc, rect->right - 1, rect->top,
               -width, rect->bottom - rect->top, PATCOPY );
 
     if (dlgFrame)
@@ -1331,9 +1331,9 @@ static void  NC_DrawFrame95(
               rect->right - rect->left, height, PATCOPY );
     PatBlt( hdc, rect->left, rect->top,
               width, rect->bottom - rect->top, PATCOPY );
-    PatBlt( hdc, rect->left, rect->bottom,
+    PatBlt( hdc, rect->left, rect->bottom - 1,
               rect->right - rect->left, -height, PATCOPY );
-    PatBlt( hdc, rect->right, rect->top,
+    PatBlt( hdc, rect->right - 1, rect->top - 1,
               -width, rect->bottom - rect->top, PATCOPY );
 
     InflateRect( rect, -width, -height );

@@ -1115,6 +1115,16 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     X11DRV_PDEVICE *physDevSrc = NULL;
     X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
+    /* compensate for off-by-one shifting for negative widths and heights */
+    if (widthDst < 0)
+        ++xDst;
+    if (heightDst < 0)
+        ++yDst;
+    if (widthSrc < 0)
+        ++xSrc;
+    if (heightSrc < 0)
+        ++ySrc;
+
     if(dcSrc) physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
     usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     useSrc = (((rop >> 2) & 0x330000) != (rop & 0x330000));
