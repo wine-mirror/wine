@@ -125,7 +125,11 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
  */
 UINT WINAPI GetConsoleCP(VOID)
 {
-    if (!console_input_codepage) console_input_codepage = GetOEMCP();
+    if (!console_input_codepage) 
+    {
+        console_input_codepage = GetOEMCP();
+	TRACE("%u\n", console_input_codepage);
+    }
     return console_input_codepage;
 }
 
@@ -146,7 +150,11 @@ BOOL WINAPI SetConsoleCP(UINT cp)
  */
 UINT WINAPI GetConsoleOutputCP(VOID)
 {
-    if (!console_output_codepage) console_output_codepage = GetOEMCP();
+    if (!console_output_codepage)
+    {
+        console_output_codepage = GetOEMCP();
+	TRACE("%u\n", console_output_codepage);
+    }
     return console_output_codepage;
 }
 
@@ -961,6 +969,7 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
     } x;
     x.c.X = 80;
     x.c.Y = 24;
+    TRACE("(%p), returning %dx%d (%lx)\n", hConsoleOutput, x.c.X, x.c.Y, x.w);
     return x.w;
 }
 #endif /* defined(__i386__) */
@@ -981,6 +990,7 @@ COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
     COORD c;
     c.X = 80;
     c.Y = 24;
+    TRACE("(%p), returning %dx%d\n", hConsoleOutput, c.X, x.Y);
     return c;
 }
 #endif /* defined(__i386__) */
@@ -1315,6 +1325,7 @@ BOOL WINAPI SetConsoleTitleW(LPCWSTR title)
 {
     BOOL ret;
 
+    TRACE("(%s)\n", debugstr_w(title));
     SERVER_START_REQ( set_console_input_info )
     {
         req->handle = 0;
@@ -1638,6 +1649,13 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, LPCONSOLE_SCREEN_B
         }
     }
     SERVER_END_REQ;
+
+    TRACE("(%p,(%d,%d) (%d,%d) %d (%d,%d-%d,%d) (%d,%d)\n", 
+	  hConsoleOutput, csbi->dwSize.X, csbi->dwSize.Y,
+	  csbi->dwCursorPosition.X, csbi->dwCursorPosition.Y,
+	  csbi->wAttributes,
+	  csbi->srWindow.Left, csbi->srWindow.Top, csbi->srWindow.Right, csbi->srWindow.Bottom,
+	  csbi->dwMaximumWindowSize.X, csbi->dwMaximumWindowSize.Y);
 
     return ret;
 }
@@ -2023,13 +2041,13 @@ BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI GetConsoleCursorInfo(HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo)
+BOOL WINAPI GetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
 {
     BOOL ret;
 
     SERVER_START_REQ(get_console_output_info)
     {
-        req->handle = console_handle_unmap(hcon);
+        req->handle = console_handle_unmap(hCon);
         ret = !wine_server_call_err( req );
         if (ret && cinfo)
         {
@@ -2038,6 +2056,8 @@ BOOL WINAPI GetConsoleCursorInfo(HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo)
         }
     }
     SERVER_END_REQ;
+
+    TRACE("(%p) returning (%ld,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
     return ret;
 }
 
@@ -2056,6 +2076,7 @@ BOOL WINAPI SetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
 {
     BOOL ret;
 
+    TRACE("(%p,%ld,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
     SERVER_START_REQ(set_console_output_info)
     {
         req->handle         = console_handle_unmap(hCon);
@@ -2128,6 +2149,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttr)
 {
     BOOL ret;
 
+    TRACE("(%p,%d)\n", hConsoleOutput, wAttr);
     SERVER_START_REQ(set_console_output_info)
     {
         req->handle = console_handle_unmap(hConsoleOutput);
@@ -2155,6 +2177,7 @@ BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 {
     BOOL ret;
 
+    TRACE("(%p,(%d,%d))\n", hConsoleOutput, dwSize.X, dwSize.Y);
     SERVER_START_REQ(set_console_output_info)
     {
         req->handle = console_handle_unmap(hConsoleOutput);
