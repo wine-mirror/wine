@@ -74,12 +74,12 @@
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
 @ cdecl ChangeDisplaySettingsExW (ptr ptr long long long) X11DRV_ChangeDisplaySettingsExW
 @ cdecl EnumDisplaySettingsExW (ptr long ptr long) X11DRV_EnumDisplaySettingsExW
-@ cdecl AcquireClipboard() X11DRV_AcquireClipboard
+@ cdecl AcquireClipboard(long) X11DRV_AcquireClipboard
 @ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
 @ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl EmptyClipboard() X11DRV_EmptyClipboard
-@ cdecl EndClipboardUpdate(long) X11DRV_EndClipboardUpdate
+@ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
 @ cdecl GetClipboardData(long ptr ptr) X11DRV_GetClipboardData

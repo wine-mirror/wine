@@ -23,12 +23,15 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+# include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
+# include <arpa/nameser.h>
 #endif
-#include <resolv.h>
+#ifdef HAVE_RESOLV_H
+# include <resolv.h>
+#endif
+
 #include "winbase.h"
 #include "iphlpapi.h"
 #include "ifenum.h"

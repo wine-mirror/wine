@@ -2486,6 +2486,15 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
     return (hr==S_OK);
 }
 
+/***********************************************************************
+ *
+ *         InternetCreateUrlA
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
 BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
                                LPSTR lpszUrl, LPDWORD lpdwUrlLength)
 {
@@ -2493,6 +2502,15 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
     return FALSE;
 }
 
+/***********************************************************************
+ *
+ *         InternetCreateUrlW
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
 BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
                                LPWSTR lpszUrl, LPDWORD lpdwUrlLength)
 {

@@ -4,15 +4,15 @@
 4  pascal16 Ctl3dCtlColor(word long) Ctl3dCtlColor16
 5  pascal16 Ctl3dEnabled() Ctl3dEnabled16
 6  pascal16 Ctl3dColorChange() Ctl3dColorChange16
-7  stub BtnWndProc3d
-8  stub EditWndProc3d
-9  stub ListWndProc3d
-10 stub ComboWndProc3d
-11 stub StaticWndProc3d
+7  pascal BtnWndProc3d(word word word long) BtnWndProc3d16
+8  pascal EditWndProc3d(word word word long) EditWndProc3d16
+9  pascal ListWndProc3d(word word word long) ListWndProc3d16
+10 pascal ComboWndProc3d(word word word long) ComboWndProc3d16
+11 pascal StaticWndProc3d(word word word long) StaticWndProc3d16
 12 pascal16 Ctl3dRegister(word) Ctl3dRegister16
 13 pascal16 Ctl3dUnregister(word) Ctl3dUnregister16
 16 pascal16 Ctl3dAutoSubclass(word) Ctl3dAutoSubclass16
-17 stub Ctl3dDlgProc
+17 pascal Ctl3dDlgProc(word word word long) Ctl3dDlgProc16
 18 pascal16 Ctl3dCtlColorEx(word word long) Ctl3dCtlColorEx16
 19 stub Ctl3dSetStyle
 20 pascal Ctl3dDlgFramePaint(word word word long) Ctl3dDlgFramePaint16

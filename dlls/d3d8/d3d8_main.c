@@ -39,7 +39,7 @@ HRESULT WINAPI D3D8GetSWInfo(void)
     return 0;
 }
 
-void DebugSetMute(void)
+void WINAPI DebugSetMute(void)
 {
     /* nothing to do */
 }

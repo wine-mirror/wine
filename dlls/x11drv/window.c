@@ -23,7 +23,9 @@
 #include "config.h"
 
 #include <stdlib.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "ts_xlib.h"
 #include <X11/Xresource.h>

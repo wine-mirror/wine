@@ -282,6 +282,7 @@ BOOL WINAPI Win32CreateDirectoryAW(LPCVOID path, LPSECURITY_ATTRIBUTES sec)
  *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
  *  This is Unicode on NT/2000
  */
+
 static BOOL SHNotifyRemoveDirectoryA(LPCSTR path)
 {
 	BOOL ret;
@@ -301,6 +302,8 @@ static BOOL SHNotifyRemoveDirectoryA(LPCSTR path)
 	return ret;
 }
 
+/***********************************************************************/
+
 static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
 {
 	BOOL ret;
@@ -319,6 +322,8 @@ static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
 	  SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHW, path, NULL);
 	return ret;
 }
+
+/***********************************************************************/
 
 BOOL WINAPI Win32RemoveDirectoryAW(LPCVOID path)
 {
@@ -342,6 +347,7 @@ BOOL WINAPI Win32RemoveDirectoryAW(LPCVOID path)
  *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
  *  This is Unicode on NT/2000
  */
+
 static BOOL SHNotifyDeleteFileA(LPCSTR path)
 {
 	BOOL ret;
@@ -362,6 +368,8 @@ static BOOL SHNotifyDeleteFileA(LPCSTR path)
 	return ret;
 }
 
+/***********************************************************************/
+
 static BOOL SHNotifyDeleteFileW(LPCWSTR path)
 {
 	BOOL ret;
@@ -381,6 +389,8 @@ static BOOL SHNotifyDeleteFileW(LPCWSTR path)
 	  SHChangeNotify(SHCNE_DELETE, SHCNF_PATHW, path, NULL);
 	return ret;
 }
+
+/***********************************************************************/
 
 DWORD WINAPI Win32DeleteFileAW(LPCVOID path)
 {

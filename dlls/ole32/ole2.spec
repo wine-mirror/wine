@@ -51,7 +51,7 @@
 51 stub OLEDUPLICATEDATA
 52 stub OLEGETICONOFFILE
 53 stub OLEGETICONOFCLASS
-54 pascal CreateILockBytesOnHGLOBAL(word word ptr) CreateILockBytesOnHGlobal16
+54 pascal CreateILockBytesOnHGlobal(word word ptr) CreateILockBytesOnHGlobal16
 55 stub GETHGLOBALFROMILOCKBYTES
 56 pascal16 OleMetaFilePictFromIconAndLabel(word str str word) OleMetaFilePictFromIconAndLabel16
 57 stub GETCLASSFILE
@@ -149,7 +149,7 @@
 500 cdecl HGLOBALLockBytesImpl16_QueryInterface(segptr ptr ptr) HGLOBALLockBytesImpl16_QueryInterface
 501 cdecl HGLOBALLockBytesImpl16_AddRef(ptr) HGLOBALLockBytesImpl16_AddRef
 502 cdecl HGLOBALLockBytesImpl16_Release(ptr) HGLOBALLockBytesImpl16_Release
-503 cdecl HGLOBALLockBytesImpl16_ReadAt(ptr long long ptr ptr) HGLOBALLockBytesImpl16_ReadAt
+503 cdecl HGLOBALLockBytesImpl16_ReadAt(ptr long long ptr long ptr) HGLOBALLockBytesImpl16_ReadAt
 504 cdecl HGLOBALLockBytesImpl16_WriteAt(ptr long long ptr long ptr) HGLOBALLockBytesImpl16_WriteAt
 505 cdecl HGLOBALLockBytesImpl16_Flush(ptr) HGLOBALLockBytesImpl16_Flush
 506 cdecl HGLOBALLockBytesImpl16_SetSize(ptr long long) HGLOBALLockBytesImpl16_SetSize

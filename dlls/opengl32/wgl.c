@@ -684,14 +684,20 @@ static BOOL process_attach(void)
   return TRUE;
 }
 
+/**********************************************************************/
+
 /* Some WGL extensions... */
 static const char *WGL_extensions = "WGL_ARB_extensions_string WGL_EXT_extensions_string";
+
+/**********************************************************************/
 
 const char * WINAPI wglGetExtensionsStringEXT(void) {
     TRACE("() returning \"%s\"\n", WGL_extensions);
 
     return WGL_extensions;
 }
+
+/**********************************************************************/
 
 static void process_detach(void)
 {

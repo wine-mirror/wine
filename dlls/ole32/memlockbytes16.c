@@ -80,7 +80,7 @@ void HGLOBALLockBytesImpl16_Destroy(HGLOBALLockBytesImpl16* This);
 HRESULT WINAPI HGLOBALLockBytesImpl16_QueryInterface(
     ILockBytes16* iface,
     REFIID        riid,        /* [in] */
-    void**        ppvObject);  /* [iid_is][out] */
+    void**        ppvObject);  /* [out][iid_is] */
 
 ULONG WINAPI HGLOBALLockBytesImpl16_AddRef(
     ILockBytes16* iface);
@@ -91,14 +91,14 @@ ULONG WINAPI HGLOBALLockBytesImpl16_Release(
 HRESULT WINAPI HGLOBALLockBytesImpl16_ReadAt(
     ILockBytes16*  iface,
     ULARGE_INTEGER ulOffset,  /* [in] */
-    void*          pv,        /* [length_is][size_is][out] */
+    void*          pv,        /* [out][length_is][size_is] */
     ULONG          cb,        /* [in] */
     ULONG*         pcbRead);  /* [out] */
 
 HRESULT WINAPI HGLOBALLockBytesImpl16_WriteAt(
     ILockBytes16*  iface,
     ULARGE_INTEGER ulOffset,    /* [in] */
-    const void*    pv,          /* [size_is][in] */
+    const void*    pv,          /* [in][size_is] */
     ULONG          cb,          /* [in] */
     ULONG*         pcbWritten); /* [out] */
 
@@ -230,7 +230,7 @@ void HGLOBALLockBytesImpl16_Destroy(HGLOBALLockBytesImpl16* This)
 HRESULT WINAPI HGLOBALLockBytesImpl16_QueryInterface(
       ILockBytes16*  iface,	/* [in] SEGPTR */
       REFIID       riid,        /* [in] */
-      void**       ppvObject)   /* [iid_is][out] (ptr to SEGPTR!) */
+      void**       ppvObject)   /* [out][iid_is] (ptr to SEGPTR!) */
 {
   HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)MapSL((SEGPTR)iface);
 
@@ -317,7 +317,7 @@ ULONG WINAPI HGLOBALLockBytesImpl16_Release(ILockBytes16* iface)
 HRESULT WINAPI HGLOBALLockBytesImpl16_ReadAt(
       ILockBytes16*  iface,
       ULARGE_INTEGER ulOffset,  /* [in] */
-      void*          pv,        /* [length_is][size_is][out] */
+      void*          pv,        /* [out][length_is][size_is] */
       ULONG          cb,        /* [in] */
       ULONG*         pcbRead)   /* [out] */
 {
@@ -390,7 +390,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl16_ReadAt(
 HRESULT WINAPI HGLOBALLockBytesImpl16_WriteAt(
       ILockBytes16*  iface,
       ULARGE_INTEGER ulOffset,    /* [in] */
-      const void*    pv,          /* [size_is][in] */
+      const void*    pv,          /* [in][size_is] */
       ULONG          cb,          /* [in] */
       ULONG*         pcbWritten)  /* [out] */
 {
@@ -563,9 +563,10 @@ HRESULT WINAPI HGLOBALLockBytesImpl16_Stat(
  *	Staddard OLE error return codes.
  *
  */
-HRESULT WINAPI CreateILockBytesOnHGlobal16(HGLOBAL16      hGlobal,
-                                           BOOL16         fDeleteOnRelease,
-                                           /*SEGPTR**/	LPLOCKBYTES16* ppLkbyt)
+HRESULT WINAPI CreateILockBytesOnHGlobal16(
+	HGLOBAL16      hGlobal,          /* [in] */
+	BOOL16         fDeleteOnRelease, /* [in] */
+	LPLOCKBYTES16 *ppLkbyt)          /* [out] (ptr to SEGPTR!) */
 {
   HGLOBALLockBytesImpl16* newLockBytes; /* SEGPTR */
 

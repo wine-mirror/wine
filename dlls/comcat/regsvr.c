@@ -19,6 +19,9 @@
  */
 
 #define COM_NO_WINDOWS_H
+
+#include <string.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -27,8 +30,6 @@
 
 #include "ole2.h"
 #include "comcat.h"
-
-#include "string.h"
 
 #include "wine/debug.h"
 

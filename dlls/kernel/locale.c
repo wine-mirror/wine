@@ -1428,9 +1428,9 @@ void LOCALE_Init(void)
  *           EnumSystemLanguageGroupsA    (KERNEL32.@)
  */
 BOOL WINAPI EnumSystemLanguageGroupsA(
-  LANGUAGEGROUP_ENUMPROCA pLangGroupEnumProc, /* callback function */
-  DWORD dwFlags,                             /* language groups */
-  LONG_PTR  lParam                           /* callback parameter */
+  LANGUAGEGROUP_ENUMPROCA pLangGroupEnumProc, /* [in] callback function */
+  DWORD dwFlags,                              /* [in] language groups */
+  LONG_PTR  lParam                            /* [in] callback parameter */
 )
 {
   FIXME("stub\n");
@@ -1442,9 +1442,9 @@ BOOL WINAPI EnumSystemLanguageGroupsA(
  *           EnumSystemLanguageGroupsW    (KERNEL32.@)
  */
 BOOL WINAPI EnumSystemLanguageGroupsW(
-  LANGUAGEGROUP_ENUMPROCW pLangGroupEnumProc, /* callback function */
-  DWORD dwFlags,                             /* language groups */
-  LONG_PTR  lParam                           /* callback parameter */
+  LANGUAGEGROUP_ENUMPROCW pLangGroupEnumProc, /* [in] callback function */
+  DWORD dwFlags,                              /* [in] language groups */
+  LONG_PTR  lParam                            /* [in] callback parameter */
 )
 {
   FIXME("stub\n");

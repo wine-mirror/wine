@@ -46,7 +46,7 @@
 /* Must be before wine includes, the header has things conflicting with
  * WINE headers.
  */
-#ifdef HAVE_LIBGIF
+#ifdef HAVE_GIF_LIB_H
 # include <gif_lib.h>
 #endif
 

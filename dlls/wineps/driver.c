@@ -22,17 +22,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <string.h>
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "psdrv.h"
-#include <wine/debug.h>
-#include <winuser.h>
-#include <wownt32.h>
-#include <winspool.h>
-#include <prsht.h>
+
+#include "config.h"
+
+#include <string.h>
+
+#include "wine/debug.h"
 #include "psdlg.h"
+#include "psdrv.h"
+
+#include "winuser.h"
+#include "wownt32.h"
+#include "winspool.h"
+#include "prsht.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -699,8 +703,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 }
 
 /**************************************************************
- *
- *     PSDRV_DeviceCapabilities [WINEPS16.91]
+ *     DeviceCapabilities [WINEPS16.91]
  */
 DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice,
 			       LPCSTR lpszPort, WORD fwCapability,

@@ -64,53 +64,53 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <sys/types.h>
 
-#if HAVE_SYS_SOCKET_H
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 
-#if HAVE_NETINET_IN_H
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 
-#if HAVE_ARPA_INET_H
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 
-#if HAVE_NET_IF_H
+#ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
 
-#if HAVE_NET_IF_ARP_H
+#ifdef HAVE_NET_IF_ARP_H
 #include <net/if_arp.h>
 #endif
 
-#if HAVE_NET_ROUTE_H
+#ifdef HAVE_NET_ROUTE_H
 #include <net/route.h>
 #endif
 
-#if HAVE_SYS_IOCTL_H
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
 
-#if HAVE_SYS_SYSCTL_H
+#ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
 
-#if HAVE_SYS_SOCKIO_H
+#ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
 
-#if HAVE_NET_IF_DL_H
+#ifdef HAVE_NET_IF_DL_H
 #include <net/if_dl.h>
 #endif
 
-#if HAVE_NET_IF_TYPES_H
+#ifdef HAVE_NET_IF_TYPES_H
 #include <net/if_types.h>
 #endif
 
@@ -118,7 +118,7 @@
 #include "iprtrmib.h"
 #include "ifenum.h"
 
-#if HAVE_STRUCT_SOCKADDR_SA_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #define ifreq_len(ifr) \
  max(sizeof(struct ifreq), sizeof((ifr)->ifr_name)+(ifr)->ifr_addr.sa_len)
 #else

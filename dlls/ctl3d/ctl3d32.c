@@ -116,31 +116,49 @@ void WINAPI Ctl3dWinIniChange(void)
 {
 }
 
+/***********************************************************************
+ *		ComboWndProc3d (CTL3D32.10)
+ */
 LRESULT WINAPI ComboWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		BtnWndProc3d (CTL3D32.7)
+ */
 LRESULT WINAPI BtnWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		StaticWndProc3d (CTL3D32.11)
+ */
 LRESULT WINAPI StaticWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		EditWndProc3d (CTL3D32.8)
+ */
 LRESULT WINAPI EditWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		ListWndProc3d (CTL3D32.9)
+ */
 LRESULT WINAPI ListWndProc3d(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		Ctl3dDlgProc (CTL3D32.17)
+ */
 LRESULT WINAPI Ctl3dDlgProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
     return 0;

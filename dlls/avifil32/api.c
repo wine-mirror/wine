@@ -503,6 +503,7 @@ HRESULT WINAPI AVIStreamCreate(PAVISTREAM *ppavi, LONG lParam1, LONG lParam2,
 }
 
 /***********************************************************************
+ *		AVIStreamInfo		(AVIFIL32.@)
  *		AVIStreamInfoA		(AVIFIL32.@)
  *		AVIStreamInfo		(AVIFILE.162)
  */

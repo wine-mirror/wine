@@ -933,6 +933,10 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     return TRUE;
 }
 
+/***********************************************************************
+ *           RetrieveUrlCacheEntryFileA (WININET.@)
+ *
+ */
 BOOL WINAPI RetrieveUrlCacheEntryFileA(
     IN LPCSTR lpszUrlName,
     OUT LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo, 
@@ -983,6 +987,10 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     return TRUE;
 }
 
+/***********************************************************************
+ *           UnlockUrlCacheEntryFileA (WININET.@)
+ *
+ */
 BOOL WINAPI UnlockUrlCacheEntryFileA(
     IN LPCSTR lpszUrlName, 
     IN DWORD dwReserved
@@ -1349,6 +1357,10 @@ BOOL WINAPI ReadUrlCacheEntryStream(
     return ReadFile(pStream->hFile, lpBuffer, *lpdwLen, lpdwLen, NULL);
 }
 
+/***********************************************************************
+ *           RetrieveUrlCacheEntryStreamA (WININET.@)
+ *
+ */
 HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
     IN LPCSTR lpszUrlName,
     OUT LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
@@ -1398,6 +1410,10 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
     return (HANDLE)pStream;
 }
 
+/***********************************************************************
+ *           UnlockUrlCacheEntryStream (WININET.@)
+ *
+ */
 BOOL WINAPI UnlockUrlCacheEntryStream(
     IN HANDLE hUrlCacheStream,
     IN DWORD dwReserved
@@ -1430,6 +1446,11 @@ BOOL WINAPI UnlockUrlCacheEntryStream(
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           DeleteUrlCacheEntryA (WININET.@)
+ *
+ */
 BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
 {
     LPURLCACHE_HEADER pHeader;
@@ -1471,6 +1492,10 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     return TRUE;
 }
 
+/***********************************************************************
+ *           CreateUrlCacheGroup (WININET.@)
+ *
+ */
 INTERNETAPI GROUPID WINAPI CreateUrlCacheGroup(DWORD dwFlags, LPVOID 
 lpReserved)
 {
@@ -1478,6 +1503,10 @@ lpReserved)
   return FALSE;
 }
 
+/***********************************************************************
+ *           FindFirstUrlCacheEntryA (WININET.@)
+ *
+ */
 INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
  LPINTERNET_CACHE_ENTRY_INFOA lpFirstCacheEntryInfo, LPDWORD lpdwFirstCacheEntryInfoBufferSize)
 {
@@ -1485,6 +1514,10 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
   return 0;
 }
 
+/***********************************************************************
+ *           FindFirstUrlCacheEntryW (WININET.@)
+ *
+ */
 INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
  LPINTERNET_CACHE_ENTRY_INFOW lpFirstCacheEntryInfo, LPDWORD lpdwFirstCacheEntryInfoBufferSize)
 {
@@ -1492,12 +1525,20 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
   return 0;
 }
 
+/***********************************************************************
+ *           DeleteUrlCacheGroup (WININET.@)
+ *
+ */
 BOOL WINAPI DeleteUrlCacheGroup(GROUPID GroupId, DWORD dwFlags, LPVOID lpReserved)
 {
     FIXME("STUB\n");
     return FALSE;
 }
 
+/***********************************************************************
+ *           SetUrlCacheEntryGroup (WININET.@)
+ *
+ */
 BOOL WINAPI SetUrlCacheEntryGroup(LPCSTR lpszUrlName, DWORD dwFlags,
   GROUPID GroupId, LPBYTE pbGroupAttributes, DWORD cbGroupAttributes,
   LPVOID lpReserved)
