@@ -3754,7 +3754,8 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
         count++;
         /* Check the file attributes, and path */
         if (!(entry->dwFileAttributes & ~search_attr) &&
-            match_short(entry->cAlternateFileName, mask))
+            match_short(entry->cAlternateFileName[0] ? entry->cAlternateFileName : entry->cFileName,
+                        mask))
         {
             return count;
         }
@@ -3787,8 +3788,12 @@ static int INT21_FindNext( CONTEXT86 *context )
         dta->fileattr = entry.dwFileAttributes;
         dta->filesize = entry.nFileSizeLow;
         FileTimeToDosDateTime( &entry.ftLastWriteTime, &dta->filedate, &dta->filetime );
-        WideCharToMultiByte(CP_OEMCP, 0, entry.cAlternateFileName, -1, 
-                            dta->filename, 13, NULL, NULL);
+        if (entry.cAlternateFileName[0])
+            WideCharToMultiByte(CP_OEMCP, 0, entry.cAlternateFileName, -1,
+                                dta->filename, 13, NULL, NULL);
+        else
+            WideCharToMultiByte(CP_OEMCP, 0, entry.cFileName, -1, dta->filename, 13, NULL, NULL);
+
         if (!memchr(dta->mask,'?',11))
         {
             /* wildcardless search, release resources in case no findnext will
@@ -3887,7 +3892,10 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
                            &pResult->filedate, &pResult->filetime );
 
     /* Convert file name to FCB format */
-    INT21_ToDosFCBFormat( entry.cAlternateFileName, nameW );
+    if (entry.cAlternateFileName[0])
+        INT21_ToDosFCBFormat( entry.cAlternateFileName, nameW );
+    else
+        INT21_ToDosFCBFormat( entry.cFileName, nameW );
     WideCharToMultiByte(CP_OEMCP, 0, nameW, 11, pResult->filename, 11, NULL, NULL);
     return 1;
 }

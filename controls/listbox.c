@@ -1766,10 +1766,12 @@ static LRESULT LISTBOX_Directory( HWND hwnd, LB_DESCR *descr, UINT attrib,
                     static const WCHAR bracketW[]  = { ']',0 };
                     static const WCHAR dotW[] = { '.',0 };
                     if (!(attrib & DDL_DIRECTORY) ||
-                        !strcmpW( entry.cAlternateFileName, dotW )) continue;
+                        !strcmpW( entry.cFileName, dotW )) continue;
                     buffer[0] = '[';
-                    if (long_names) strcpyW( buffer + 1, entry.cFileName );
-                    else strcpyW( buffer + 1, entry.cAlternateFileName );
+                    if (!long_names && entry.cAlternateFileName[0])
+                        strcpyW( buffer + 1, entry.cAlternateFileName );
+                    else
+                        strcpyW( buffer + 1, entry.cFileName );
                     strcatW(buffer, bracketW);
                 }
                 else  /* not a directory */
@@ -1781,8 +1783,10 @@ static LRESULT LISTBOX_Directory( HWND hwnd, LB_DESCR *descr, UINT attrib,
                         ((attrib & ATTRIBS) != (entry.dwFileAttributes & ATTRIBS)))
                         continue;
 #undef ATTRIBS
-                    if (long_names) strcpyW( buffer, entry.cFileName );
-                    else strcpyW( buffer, entry.cAlternateFileName );
+                    if (!long_names && entry.cAlternateFileName[0])
+                        strcpyW( buffer + 1, entry.cAlternateFileName );
+                    else
+                        strcpyW( buffer + 1, entry.cFileName );
                 }
                 if (!long_names) CharLowerW( buffer );
                 pos = LISTBOX_FindFileStrPos( hwnd, descr, buffer );

@@ -1578,16 +1578,8 @@ LPITEMIDLIST _ILCreateFolder( WIN32_FIND_DATAA * stffile )
 	memcpy (pbuff, stffile->cFileName, len);
 	pbuff += len;
 
-	if (stffile->cAlternateFileName)
-	{
-	  len1 = strlen (stffile->cAlternateFileName)+1;
-	  memcpy (pbuff, stffile->cAlternateFileName, len1);
-	}
-	else
-	{
-	  len1 = 1;
-	  *pbuff = 0x00;
-	}
+	len1 = strlen (stffile->cAlternateFileName)+1;
+	memcpy (pbuff, stffile->cAlternateFileName, len1);
 
 	pidl = _ILCreate(PT_FOLDER, (LPVOID)buff, len + len1);
 
@@ -1618,16 +1610,8 @@ LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
 	memcpy (pbuff, stffile->cFileName, len);
 	pbuff += len;
 
-	if (stffile->cAlternateFileName)
-	{
-	  len1 = strlen (stffile->cAlternateFileName)+1;
-	  memcpy (pbuff, stffile->cAlternateFileName, len1);
-	}
-	else
-	{
-	  len1 = 1;
-	  *pbuff = 0x00;
-	}
+	len1 = strlen (stffile->cAlternateFileName)+1;
+	memcpy (pbuff, stffile->cAlternateFileName, len1);
 
 	pidl = _ILCreate(PT_VALUE, (LPVOID)buff, len + len1);
 
