@@ -80,6 +80,12 @@ diff -u file.old file.c > file.txt
       <itemizedlist>
         <listitem>
         <para>
+          No HTML mail please. It is considered bad netiquette as it uglifies
+          the message, and is not viewable by many of the subscribers.
+        </para>
+        </listitem>
+         <listitem>
+        <para>
            Only one change set per patch. Patches should address only one
            bug/problem at a time. If a lot of changes need to be made then it
            is perfered to break it into a series of patches. This makes it
@@ -88,7 +94,7 @@ diff -u file.old file.c > file.txt
         </listitem>
         <listitem>
         <para>
-          Tabs are not forbidden but are defined as 8 charaters and the usual
+          Tabs are not forbidden but are defined as 8 characters and the usual
           amount of indentation is 4 characters. 
         </para>
         </listitem>
