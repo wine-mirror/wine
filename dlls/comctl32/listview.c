@@ -4032,22 +4032,15 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 
   TRACE("(nItem=%d)\n", nItem);
 
+  /* remove selection, and focus */
+  item.state = 0;
+  item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+  LISTVIEW_SetItemState(infoPtr, nItem, &item);
 
-  /* First, send LVN_DELETEITEM notification. */
+  /* send LVN_DELETEITEM notification. */
   ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
   nmlv.iItem = nItem;
   notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
-
-  if (nItem == infoPtr->nFocusedItem)
-  {
-    infoPtr->nFocusedItem = -1;
-    SetRectEmpty(&infoPtr->rcFocus);
-  }
-
-  /* remove it from the selection range */
-  item.state = LVIS_SELECTED;
-  item.stateMask = LVIS_SELECTED;
-  LISTVIEW_SetItemState(infoPtr,nItem,&item);
 
   if (lStyle & LVS_OWNERDATA)
   {
