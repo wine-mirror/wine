@@ -213,6 +213,8 @@ typedef struct
 #define DRAW_BOTTOMSEP  0x00000020
 #define DRAW_CHEVRONHOT 0x00000040
 #define DRAW_CHEVRONPUSHED 0x00000080
+#define DRAW_LAST_IN_ROW   0x00000100
+#define DRAW_FIRST_IN_ROW  0x00000200
 #define NTF_INVALIDATE  0x01000000
 
 typedef struct
@@ -1753,8 +1755,29 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     /* ******* End Phase 2 - split rows till adjustment height full ******* */
 
 
-    /* ******* End Phase 2a - create array of start and end    ******* */
-    /*                          indexes by row                         */
+    /* ******* Start Phase 2a - mark first and last band in each ******* */
+
+    prevBand = NULL;
+    for (i = 0; i < infoPtr->uNumBands; i++) { 	 
+        lpBand = &infoPtr->bands[i]; 	 
+        if (HIDDENBAND(lpBand))
+            continue;
+        if( !prevBand ) {
+            lpBand->fDraw |= DRAW_FIRST_IN_ROW;
+            prevBand = lpBand;
+        }
+        else if( prevBand->iRow == lpBand->iRow )
+            prevBand = lpBand;
+        else {
+            prevBand->fDraw |= DRAW_LAST_IN_ROW;
+            lpBand->fDraw |= DRAW_FIRST_IN_ROW;
+            prevBand = lpBand;
+        }
+    }
+    if( prevBand )
+        prevBand->fDraw |= DRAW_LAST_IN_ROW;
+
+    /* ******* End Phase 2a - mark first and last band in each ******* */
 
 
     /* ******* Start Phase 2b - adjust all bands for height full ******* */
@@ -1770,21 +1793,16 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	diff = (infoPtr->dwStyle & CCS_VERT) ? clientcx - x : clientcy - y;
 
         /* iterate backwards thru the rows */
-        for (i = infoPtr->uNumBands-1; i>0; i--) {
+        for (i = infoPtr->uNumBands-1; i>=0; i--) {
 	    lpBand = &infoPtr->bands[i];
+	    if(HIDDENBAND(lpBand)) continue;
 
 	    /* if row has more than 1 band, ignore it */
-
-            /* row is same as previous */
-            if( lpBand->iRow == infoPtr->bands[i-1].iRow ) 
+            if( !(lpBand->fDraw&DRAW_FIRST_IN_ROW) )
+                continue;
+            if( !(lpBand->fDraw&DRAW_LAST_IN_ROW) )
                 continue;
 
-            /* row is same as next */
-            if( (i != (infoPtr->uNumBands-1)) && 
-                (lpBand->iRow == infoPtr->bands[i+1].iRow ) )
-                continue;
-
-	    if(HIDDENBAND(lpBand)) continue;
 	    if (lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
 	    if (((INT)lpBand->cyMaxChild < 1) ||
 		((INT)lpBand->cyIntegral < 1)) {
@@ -1839,12 +1857,11 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
                     continue;
 
                 /* not righthand bands */
-                if( (i!=(infoPtr->uNumBands - 1) ) &&
-                    (lpBand->iRow != infoPtr->bands[i+1].iRow ) )
+                if( !(lpBand->fDraw & DRAW_LAST_IN_ROW) )
 		    lpBand->fDraw |= DRAW_RIGHTSEP;
 
                 /* not the last row */
-                if( lpBand->iRow != infoPtr->bands[infoPtr->uNumBands-1].iRow )
+                if( lpBand->iRow != infoPtr->uNumRows )
 		    lpBand->fDraw |= DRAW_BOTTOMSEP;
 	    }
 	}
@@ -1852,27 +1869,30 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	/* Distribute the extra space on the horizontal and adjust  */
 	/* all bands in row to same height.                         */
 	mcy = 0;
-        row = 1;
-        startband = 0;
+        startband = -1;
         for (i=0; i<infoPtr->uNumBands; i++) {
 
             lpBand = &infoPtr->bands[i];
-            if (HIDDENBAND(lpBand)) continue;
-            if (mcy < ircBw(lpBand))
+
+            if( lpBand->fDraw & DRAW_FIRST_IN_ROW )
+            {
+                startband = i;
+                mcy = 0;
+            }
+
+            if ( (mcy < ircBw(lpBand)) && !HIDDENBAND(lpBand) )
                 mcy = ircBw(lpBand);
 
-            if( (i==(infoPtr->uNumBands-1)) ||
-                (infoPtr->bands[i+1].iRow != lpBand->iRow ) )
+            if( lpBand->fDraw & DRAW_LAST_IN_ROW )
             {
 	        TRACE("P3 processing row %d, starting band %d, ending band %d\n",
-		      row, startband, i);
+		      lpBand->iRow, startband, i);
+                if( startband < 0 )
+                    ERR("Last band %d with no first, row %d\n", i, lpBand->iRow);
 
 	        REBAR_AdjustBands (infoPtr, startband, i,
 			       (infoPtr->dwStyle & CCS_VERT) ?
 			       clientcy : clientcx, mcy);
-                startband = i+1;
-                mcy = 0;
-                row ++;
             }
 	}
 
