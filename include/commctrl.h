@@ -1036,6 +1036,11 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBN_GETINFOTIP WINELIB_NAME_AW(TBN_GETINFOTIP)
 
 
+/* Return values from TBN_DROPDOWN */
+#define TBDDRET_DEFAULT  0
+#define TBDDRET_NODEFAULT  1
+#define TBDDRET_TREATPRESSED  2
+
 typedef struct _NMTBCUSTOMDRAW
 {
     NMCUSTOMDRAW nmcd;
