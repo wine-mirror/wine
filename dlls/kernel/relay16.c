@@ -48,6 +48,13 @@ static const WCHAR **debug_snoop_excludelist;
 static const WCHAR **debug_snoop_includelist;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
+inline static int strcmpiAW( const char *strA, const WCHAR *strW )
+{
+    while (*strA && (toupperW((unsigned char)*strA) == toupperW(*strW))) { strA++; strW++; }
+    return toupperW((unsigned char)*strA) - toupperW(*strW);
+}
+
+/* compare an ASCII and a Unicode string without depending on the current codepage */
 inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
 {
     int ret = 0;
@@ -156,41 +163,48 @@ void RELAY16_InitDebugLists(void)
 
 
 /***********************************************************************
+ *           check_list
+ *
+ * Check if a given module and function is in the list.
+ */
+static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR **list )
+{
+    char ord_str[10];
+
+    sprintf( ord_str, "%d", ordinal );
+    for(; *list; list++)
+    {
+        const WCHAR *p = strrchrW( *list, '.' );
+        if (p && p > *list)  /* check module and function */
+        {
+            int len = p - *list;
+            if (strncmpiAW( module, *list, len-1 ) || module[len]) continue;
+            if (p[1] == '*' && !p[2]) return TRUE;
+            if (!strcmpiAW( ord_str, p + 1 )) return TRUE;
+            if (func && !strcmpiAW( func, p + 1 )) return TRUE;
+        }
+        else  /* function only */
+        {
+            if (func && !strcmpiAW( func, *list )) return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           RELAY_ShowDebugmsgRelay
  *
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-static int RELAY_ShowDebugmsgRelay(const char *func)
+static BOOL RELAY_ShowDebugmsgRelay(const char *module, int ordinal, const char *func)
 {
-  if(debug_relay_excludelist || debug_relay_includelist) {
-    const char *term = strchr(func, ':');
-    const WCHAR **listitem;
-    int len, len2, itemlen, show;
-
-    if(debug_relay_excludelist) {
-      show = 1;
-      listitem = debug_relay_excludelist;
-    } else {
-      show = 0;
-      listitem = debug_relay_includelist;
-    }
-    assert(term);
-    assert(strlen(term) > 2);
-    len = term - func;
-    len2 = strchr(func, '.') - func;
-    assert(len2 && len2 > 0 && len2 < 64);
-    term += 2;
-    for(; *listitem; listitem++)
-    {
-        itemlen = strlenW(*listitem);
-        if (itemlen == len && !strncmpiAW(func, *listitem, len)) return !show;
-        if (itemlen == len2 && !strncmpiAW(func, *listitem, len2)) return !show;
-        if (!strncmpiAW(term, *listitem, itemlen) && !term[itemlen]) return !show;
-    }
-    return show;
-  }
-  return 1;
+    if (debug_relay_excludelist && check_list( module, ordinal, func, debug_relay_excludelist ))
+        return FALSE;
+    if (debug_relay_includelist && !check_list( module, ordinal, func, debug_relay_includelist ))
+        return FALSE;
+    return TRUE;
 }
 
 
@@ -200,34 +214,13 @@ static int RELAY_ShowDebugmsgRelay(const char *func)
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-int SNOOP16_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
+int SNOOP16_ShowDebugmsgSnoop(const char *module, int ordinal, const char *func)
 {
-  if(debug_snoop_excludelist || debug_snoop_includelist) {
-    const WCHAR **listitem;
-    char buf[80];
-    int len, len2, itemlen, show;
-
-    if(debug_snoop_excludelist) {
-      show = 1;
-      listitem = debug_snoop_excludelist;
-    } else {
-      show = 0;
-      listitem = debug_snoop_includelist;
-    }
-    len = strlen(dll);
-    assert(len < 64);
-    sprintf(buf, "%s.%d", dll, ord);
-    len2 = strlen(buf);
-    for(; *listitem; listitem++)
-    {
-        itemlen = strlenW(*listitem);
-        if (itemlen == len && !strncmpiAW( buf, *listitem, len)) return !show;
-        if (itemlen == len2 && !strncmpiAW(buf, *listitem, len2)) return !show;
-        if (fname && !strncmpiAW(fname, *listitem, itemlen) && !fname[itemlen]) return !show;
-    }
-    return show;
-  }
-  return 1;
+    if (debug_snoop_excludelist && check_list( module, ordinal, func, debug_snoop_excludelist ))
+        return FALSE;
+    if (debug_snoop_includelist && !check_list( module, ordinal, func, debug_snoop_includelist ))
+        return FALSE;
+    return TRUE;
 }
 
 
@@ -236,7 +229,7 @@ int SNOOP16_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
  *
  * Return the ordinal, name, and type info corresponding to a CS:IP address.
  */
-static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
+static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPSTR func, WORD *pOrd )
 {
     WORD i, max_offset;
     register BYTE *p;
@@ -271,16 +264,16 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR name, WORD 
     /* (built-in modules have no non-resident table)   */
 
     p = (BYTE *)pModule + pModule->name_table;
+    memcpy( module, p + 1, *p );
+    module[*p] = 0;
+
     while (*p)
     {
         p += *p + 1 + sizeof(WORD);
         if (*(WORD *)(p + *p + 1) == *pOrd) break;
     }
-
-    sprintf( name, "%.*s.%d: %.*s",
-             *((BYTE *)pModule + pModule->name_table),
-             (char *)pModule + pModule->name_table + 1,
-             *pOrd, *p, (char *)(p + 1) );
+    memcpy( func, p + 1, *p );
+    func[*p] = 0;
 
     /* Retrieve entry point call structure */
     p = MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip ) );
@@ -296,17 +289,17 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    char *args16, funstr[80];
+    char *args16, module[10], func[64];
     const CALLFROM16 *call;
     int i;
 
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    call = get_entry_point( frame, funstr, &ordinal );
+    call = get_entry_point( frame, module, func, &ordinal );
     if (!call) return; /* happens for the two snoop register relays */
-    if (!RELAY_ShowDebugmsgRelay(funstr)) return;
-    DPRINTF( "%04lx:Call %s(",GetCurrentThreadId(),funstr);
+    if (!RELAY_ShowDebugmsgRelay( module, ordinal, func )) return;
+    DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
     args16 = (char *)(frame + 1);
 
     if (call->lret == 0xcb66)  /* cdecl */
@@ -407,15 +400,15 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    char funstr[80];
+    char module[10], func[64];
     const CALLFROM16 *call;
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    call = get_entry_point( frame, funstr, &ordinal );
+    call = get_entry_point( frame, module, func, &ordinal );
     if (!call) return;
-    if (!RELAY_ShowDebugmsgRelay(funstr)) return;
-    DPRINTF( "%04lx:Ret  %s() ",GetCurrentThreadId(),funstr);
+    if (!RELAY_ShowDebugmsgRelay( module, ordinal, func )) return;
+    DPRINTF( "%04lx:Ret  %s.%d: %s() ", GetCurrentThreadId(), module, ordinal, func );
 
     if (call->arg_types[0] & ARG_REGISTER)
     {

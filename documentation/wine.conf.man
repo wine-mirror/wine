@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE.CONF 5 "September 1, 2001" "Version 20010824" "Wine Configuration File"
+.TH WINE.CONF 5 "September 2003" "Version 20030911" "Wine Configuration File"
 .SH NAME
 wine.conf \- Wine configuration file
 .SH DESCRIPTION
@@ -273,18 +273,6 @@ Used to specify which messages will be excluded from the logfile.
 default: none
 .br Used to specify which messages will be included in the logfile.
 .PP
-.I format: """RelayExclude""=""<function or dll.functions separated by semicolons>"""
-.br
-default: none
-.br
-Used to specify which functions will be excluded from a relay debug log.
-.PP
-.I format: """RelayInclude""=""<function or dll.functions separated by semicolons>"""
-.br
-default: include all functions
-.br 
-Used to specify which functions will be included in a relay debug log.
-.PP
 .I format: """RelayFromExclude""=""<module names separated by semicolons>"""
 .br
 default: none
@@ -297,21 +285,32 @@ default: include all modules
 .br 
 Used to specify the set of modules whose calls are included in a relay debug log.
 .PP
-.I format: """SnoopExclude""=""<message names separated by semicolons>"""
+.I format: """RelayExclude""=""<functions or dll.functions separated by semicolons>"""
 .br
 default: none
-.br 
-Used to specify which functions will be included in snoop debug log.
+.br
+Used to specify which functions will be excluded from a relay debug log.
 .PP
-.I format: """SnoopInclude""=""<message names separated by semicolons>"""
+.I format: """RelayInclude""=""<functions or dll.functions separated by semicolons>"""
 .br
 default: include all functions
 .br 
-Used to specify which functions will be included in snoop debug log.
+Used to specify which functions will be included in a relay debug log.
+.PP
+.I format: """SnoopExclude""=""<functions or dll.functions separated by semicolons>"""
+.br
+default: none
+.br 
+Used to specify which functions will be excluded from the snoop debug log.
+.PP
+.I format: """SnoopInclude""=""<functions or dll.functions separated by semicolons>"""
+.br
+default: include all functions
+.br 
+Used to specify which functions will be included in the snoop debug log.
 .PP
 For Relay and Snoop <dllname>.* includes or excludes the whole dll. Exclude
-entries overwrite Include entries.
-.br
+entries have priority over Include entries.
 .PP
 .B [Tweak.Layout]
 .br

@@ -259,42 +259,47 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 /***********************************************************************
+ *           check_list
+ *
+ * Check if a given module and function is in the list.
+ */
+static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR **list )
+{
+    char ord_str[10];
+
+    sprintf( ord_str, "%d", ordinal );
+    for(; *list; list++)
+    {
+        const WCHAR *p = strrchrW( *list, '.' );
+        if (p && p > *list)  /* check module and function */
+        {
+            int len = p - *list;
+            if (strncmpiAW( module, *list, len-1 ) || module[len]) continue;
+            if (p[1] == '*' && !p[2]) return TRUE;
+            if (!strcmpAW( ord_str, p + 1 )) return TRUE;
+            if (func && !strcmpAW( func, p + 1 )) return TRUE;
+        }
+        else  /* function only */
+        {
+            if (func && !strcmpAW( func, *list )) return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           check_relay_include
  *
  * Check if a given function must be included in the relay output.
  */
-static BOOL check_relay_include( const char *module, const char *func )
+static BOOL check_relay_include( const char *module, int ordinal, const char *func )
 {
-    const WCHAR **listitem;
-    BOOL show;
-
-    if (!debug_relay_excludelist && !debug_relay_includelist) return TRUE;
-    if (debug_relay_excludelist)
-    {
-        show = TRUE;
-        listitem = debug_relay_excludelist;
-    }
-    else
-    {
-        show = FALSE;
-        listitem = debug_relay_includelist;
-    }
-    for(; *listitem; listitem++)
-    {
-        WCHAR *p = strrchrW( *listitem, '.' );
-        if (p && p > *listitem)  /* check module and function */
-        {
-            int len = p - *listitem;
-            if (strncmpiAW( module, *listitem, len-1 ) || module[len]) continue;
-            if (p[1] == '*' && !p[2]) return !show;
-            if (!strcmpAW( func, p + 1 )) return !show;
-        }
-        else  /* function only */
-        {
-            if (!strcmpAW( func, *listitem )) return !show;
-        }
-    }
-    return show;
+    if (debug_relay_excludelist && check_list( module, ordinal, func, debug_relay_excludelist ))
+        return FALSE;
+    if (debug_relay_includelist && !check_list( module, ordinal, func, debug_relay_includelist ))
+        return FALSE;
+    return TRUE;
 }
 
 
@@ -734,8 +739,8 @@ void RELAY_SetupDLL( HMODULE module )
         if (!debug->call) continue;  /* not a normal function */
         if (debug->call != 0xe8 && debug->call != 0xe9) break; /* not a debug thunk at all */
 
-        if ((name = find_exported_name( module, exports, i + exports->Base )))
-            on = check_relay_include( dllname, name );
+        name = find_exported_name( module, exports, i + exports->Base );
+        on = check_relay_include( dllname, i + exports->Base, name );
 
         if (on)
         {
@@ -763,35 +768,13 @@ void RELAY_SetupDLL( HMODULE module )
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-static int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
+static BOOL SNOOP_ShowDebugmsgSnoop(const char *module, int ordinal, const char *func)
 {
-  if(debug_snoop_excludelist || debug_snoop_includelist) {
-    const WCHAR **listitem;
-    char buf[80];
-    int len, len2, itemlen, show;
-
-    if(debug_snoop_excludelist) {
-      show = 1;
-      listitem = debug_snoop_excludelist;
-    } else {
-      show = 0;
-      listitem = debug_snoop_includelist;
-    }
-    len = strlen(dll);
-    assert(len < 64);
-    sprintf(buf, "%s.%d", dll, ord);
-    len2 = strlen(buf);
-    for(; *listitem; listitem++)
-    {
-        itemlen = strlenW(*listitem);
-        if((itemlen == len && !strncmpiAW( buf, *listitem, len)) ||
-           (itemlen == len2 && !strncmpiAW(buf, *listitem, len2)) ||
-           (fname && !strcmpAW(fname, *listitem)))
-            return !show;
-    }
-    return show;
-  }
-  return 1;
+    if (debug_snoop_excludelist && check_list( module, ordinal, func, debug_snoop_excludelist ))
+        return FALSE;
+    if (debug_snoop_includelist && !check_list( module, ordinal, func, debug_snoop_includelist ))
+        return FALSE;
+    return TRUE;
 }
 
 
