@@ -1752,14 +1752,13 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     }
     else if (!enable && !retvalue)
     {
-        HWND focus_wnd, capture_wnd;
+        HWND capture_wnd;
 
         SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
 
         WIN_SetStyle( hwnd, style | WS_DISABLED );
 
-        focus_wnd = GetFocus();
-        if (hwnd == focus_wnd || IsChild(hwnd, focus_wnd))
+        if (hwnd == GetFocus())
             SetFocus( 0 );  /* A disabled window can't have the focus */
 
         capture_wnd = GetCapture();

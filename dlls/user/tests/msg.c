@@ -599,6 +599,13 @@ static const struct message WmSetRedrawTrueSeq[] =
     { 0 }
 };
 
+static const struct message WmEnableWindowSeq[] =
+{
+    { WM_CANCELMODE, sent },
+    { WM_ENABLE, sent },
+    { 0 }
+};
+
 static int after_end_dialog;
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
@@ -910,6 +917,24 @@ static void test_messages(void)
     ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar");
 
     DestroyWindow(hwnd);
+    flush_sequence();
+
+    /* Message sequence for EnableWindow */
+    hparent = CreateWindowExA(0, "TestWindowClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILDWINDOW | WS_VISIBLE,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+
+    SetFocus(hchild);
+    flush_sequence();
+
+    EnableWindow(hparent, FALSE);
+    ok_sequence(WmEnableWindowSeq, "EnableWindow");
+
+    DestroyWindow(hparent);
+    flush_sequence();
 }
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

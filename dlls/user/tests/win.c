@@ -1626,6 +1626,14 @@ static void test_SetFocus(HWND hwnd)
     ShowWindow(child, SW_HIDE);
     ok( GetFocus() == hwnd, "Focus should still be on parent %p, not %p\n", hwnd, GetFocus() );
 
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(child, SW_SHOW);
+    SetFocus(child);
+    ok( GetFocus() == child, "Focus should be on child %p\n", child );
+    EnableWindow(hwnd, FALSE);
+    ok( GetFocus() == child, "Focus should still be on child %p\n", child );
+    EnableWindow(hwnd, TRUE);
+
     DestroyWindow( child );
 }
 
