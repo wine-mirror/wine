@@ -64,6 +64,7 @@ typedef struct
     DWORD         signaled;  /* Index of signaled object (or WAIT_FAILED)*/
     BOOL32        wait_all;  /* Wait for all objects flag */
     BOOL32        wait_msg;  /* Wait for message flag */
+    BOOL32        use_server; /* Use server call for waiting */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
     int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
 } WAIT_STRUCT;

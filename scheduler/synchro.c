@@ -24,7 +24,7 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
                                     BOOL32 wait_all, BOOL32 wait_msg, 
                                     WAIT_STRUCT *wait )
 {
-    DWORD i;
+    DWORD i, j;
     K32OBJ **ptr;
 
     SYSTEM_LOCK();
@@ -32,6 +32,7 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     wait->signaled = WAIT_FAILED;
     wait->wait_all = wait_all;
     wait->wait_msg = wait_msg;
+    wait->use_server = TRUE;
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
         if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
@@ -41,16 +42,29 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
             ERR(win32, "Bad handle %08x\n", handles[i]); 
             break; 
         }
-        if (!K32OBJ_OPS( *ptr )->signaled)
+        if (wait->server[i] == -1)
         {
-            /* This object type cannot be waited upon */
-            ERR(win32, "Cannot wait on handle %08x\n", handles[i]); 
-            K32OBJ_DecCount( *ptr );
-            break;
+            WARN(win32,"No server handle for %08x (type %d)\n",
+                 handles[i], (*ptr)->type );
+            wait->use_server = FALSE;
         }
-
     }
-    if (i != count)
+
+    if (!wait->use_server)
+    {
+        for (j = 0, ptr = wait->objs; j < i; j++, ptr++)
+        {
+            if (!K32OBJ_OPS( *ptr )->signaled)
+            {
+                /* This object type cannot be waited upon */
+                ERR(win32, "Cannot wait on handle %08x\n", handles[j]); 
+                break;
+            }
+        }
+    }
+    else j = count;
+
+    if ((i != count) || (j != count))
     {
         /* There was an error */
         wait->wait_msg = FALSE;
@@ -317,11 +331,8 @@ DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
         wait->signaled = WAIT_FAILED;
     else
     {
-        int i;
         /* Check if we can use a server wait */
-        for (i = 0; i < count; i++)
-            if (wait->server[i] == -1) break;
-        if (i == count)
+        if (wait->use_server)
         {
             int flags = 0;
             SYSTEM_UNLOCK();
