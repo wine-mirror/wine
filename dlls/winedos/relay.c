@@ -157,17 +157,6 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
         ERR( "Stack corrupted!\n" );
 
     stack->inuse = 0;
-
-    /*
-     * We have now restored original stack and instruction pointers.
-     * Because signals are blocked here, this is a safe place to
-     * check for pending events before we return to application context.
-     */
-    if (NtCurrentTeb()->vm86_pending && NtCurrentTeb()->dpmi_vif)
-    {
-        NtCurrentTeb()->vm86_pending = 0;
-        DOSVM_SendQueuedEvents( context );
-    }
 }
 
 

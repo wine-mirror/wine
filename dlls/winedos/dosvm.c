@@ -227,17 +227,6 @@ void DOSVM_SendQueuedEvents( CONTEXT86 *context )
 
 #ifdef MZ_SUPPORTED
 
-    if (!ISV86(context) && context->SegCs == old_cs && context->Eip == old_ip)
-    {
-        /*
-         * Routine was called from DPMI but there was nothing to do.
-         * We force a dummy relay call here so that we don't get a race
-         * if signals are unblocked when we return to DPMI application.
-         */
-        TRACE( "Called but there was nothing to do, calling NULL relay.\n" );
-        DOSVM_BuildCallFrame( context, NULL, NULL );
-    }
-
     if (DOSVM_HasPendingEvents())
     {
         /*

@@ -779,12 +779,6 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
         case 0xfb: /* sti */
             NtCurrentTeb()->dpmi_vif = 1;
             context->Eip += prefixlen + 1;
-            if (NtCurrentTeb()->vm86_pending)
-            {
-                NtCurrentTeb()->vm86_pending = 0;
-                rec->ExceptionCode = EXCEPTION_VM86_STI;
-                return ExceptionContinueSearch;
-            }
             return ExceptionContinueExecution;
     }
     return ExceptionContinueSearch;  /* Unable to emulate it */

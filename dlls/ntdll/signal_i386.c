@@ -595,9 +595,11 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Build a sigcontext from the register values.
  */
-static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
+static void restore_context( CONTEXT *context, SIGCONTEXT *sigcontext )
 {
 #ifdef __HAVE_VM86
+    BOOL check_pending = TRUE;
+
     /* check if exception occurred in vm86 mode */
     if ((void *)EIP_sig(sigcontext) == vm86_return &&
         IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) &&
@@ -609,6 +611,43 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
         struct vm86plus_struct *vm86 = (struct vm86plus_struct *)stack[2];
         restore_vm86_context( context, vm86 );
         return;
+    }
+
+    while (NtCurrentTeb()->dpmi_vif &&
+           !IS_SELECTOR_SYSTEM(context->SegCs) &&
+           !IS_SELECTOR_SYSTEM(context->SegSs) &&
+           check_pending)
+    {
+        /*
+         * Executing DPMI code and virtual interrupts are enabled. 
+         * We must block signals so that we can be safely check
+         * for pending asynchronous events. Return from signal handler
+         * will unblock signals again so it is is safe to do so.
+         */
+        SIGNAL_Block();
+        check_pending = FALSE;
+
+        if (NtCurrentTeb()->vm86_pending)
+        {
+            EXCEPTION_RECORD rec;
+
+            rec.ExceptionAddress        = (LPVOID)context->Eip;
+            rec.ExceptionCode           = EXCEPTION_VM86_STI;
+            rec.ExceptionFlags          = EXCEPTION_CONTINUABLE;
+            rec.ExceptionRecord         = NULL;
+            rec.NumberParameters        = 1;
+            rec.ExceptionInformation[0] = 0;
+
+            NtCurrentTeb()->vm86_pending = 0;
+            EXC_RtlRaiseException( &rec, context );
+
+            /* 
+             * EXC_RtlRaiseException has unblocked all signals
+             * and we must retry check for pending asynchronous 
+             * events in order to prevent races.
+             */
+            check_pending = TRUE;
+        }
     }
 #endif /* __HAVE_VM86 */
 
@@ -976,22 +1015,6 @@ static void set_vm86_pend( CONTEXT *context )
             teb->vm86_ptr = vm86;
             restore_vm86_context( &vcontext, vm86 );
         }
-    }
-    else if(teb->dpmi_vif && 
-            !IS_SELECTOR_SYSTEM(context->SegCs) &&
-            !IS_SELECTOR_SYSTEM(context->SegSs))
-    {
-        /* Executing DPMI code and virtual interrupts are enabled. */
-        teb->vm86_pending = 0;
-        rec.ExceptionAddress = (LPVOID)context->Eip;
-        EXC_RtlRaiseException( &rec, context );
-        /*
-         * EXC_RtlRaiseException has unblocked all signals and this
-         * signal handler is about to return to either DOS relay or
-         * IRQ handler. Because both of these will check pending
-         * interrupts again, it is not a problem if we receive
-         * a nested SIGUSR2 here and ignore it.
-         */
     }
 }
 
