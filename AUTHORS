@@ -1,5 +1,6 @@
 Wine is available thanks to the work of:
 
+Sami Aario
 James Abbatiello
 Michael Abd-El-Malek
 Howard Abrams
@@ -11,12 +12,14 @@ Jesse Allen
 Gustavo Junior Alves
 Bob Amstadt
 C. Scott Ananian
+Eric Anholt
 Dag Asheim
 Jim Aston
 Martin Ayotte
 Viktor Babrian
 Karl Backström
 Bradley Baetz
+Paul Bain
 Warren Baird
 Peter Bajusz
 Tijs van Bakel
@@ -31,8 +34,11 @@ Michael Beach
 Francis Beaudet
 Tom Bech
 Matthew Becker
+Dave Belanger
+Maxime Bellengé
 Leo van den Berg
 Joris Beugnies
+Stephan Beuze
 Georg Beyerle
 Pierre Beyssac
 Bobby Bingham
@@ -48,6 +54,7 @@ Pim Bollen
 Erik Inge Bolsø
 Mike Bond
 Uwe Bonnes
+Andrew Borodin
 Peter Bortas
 Noel Borthwick
 Erik Bos
@@ -103,10 +110,12 @@ Huw D. M. Davies
 Matthew Davison
 Moses DeJong
 Raul Dias
+Robert Dickenson
 Petar Djukic
 Roman Dolejsi
 Frans van Dorsselaer
 Josh DuBois
+Marcelo Duarte
 Charles Duffy
 Mark Dufour
 Zoran Dzelajlija
@@ -155,6 +164,7 @@ Brian Gerst
 Matthew Ghio
 Johan Gill
 John Gilmore
+Gabriele Giorgetti
 Kristoffer Gleditsch
 Jody Goldberg
 David Golding
@@ -162,21 +172,26 @@ Bob Goodwin
 Alexander Gottwald
 François Gouget
 Hans de Graaff
+Igor Grahek
 David Grant
 Jaco Greeff
 Chris Green
 Jon Griffiths
+Kevin Groeneveld
 Gerhard W. Gruber
 Daniel Gudbjartsson
+Adam Gundy
 Michael Günnewig
 Albert den Haan
 Jess Haas
 David D. Hagood
 Robert W Hall
 Patrick Haller
+Stefan Haller
 David Hammerton
 Noomen Hamza
 Charles M. Hannum
+Yorick Hardy
 Adrian Harvey
 John Harvey
 James Hatheway
@@ -192,6 +207,7 @@ Lars Heete
 Cameron Heide
 Hagen Heiduck
 Jukka Heinonen
+Pierre d'Herbemont
 Juraj Hercek
 Bernd Herd
 Theodore S. Hetke
@@ -205,11 +221,13 @@ Kevin Holbrook
 Nick Holloway
 Aaron Hope
 Enrico Horn
+Casper Hornstrup
 Olivier Houchard
 Onno Hovers
 David Howells
 Jeffrey Hsu
 Andrew John Hughes
+Tom Hughes
 Peter Hunnisett
 Miguel de Icaza
 Jukka Iivonen
@@ -224,8 +242,11 @@ György 'Nog' Jeney
 Jerry Jenkins
 Niels Kristian Bech Jensen
 Rajeev Jhangiani
+Jerry Ji
+Antonio Larrosa Jiménez
 Bill Jin
 Jeff Johann
+André Johansen
 Andrew Johnston
 Alexandre Julliard
 Jussi Jumppanen
@@ -251,14 +272,17 @@ Rein Klazes
 Albrecht Kleine
 Dietmar Kling
 Eric Kohl
+Kevin Koltzau
 Jon Konrath
 Ilya Konstantinov
 Oleg Korda
 Alex Korobka
+Kusanagi Kouichi
 Zoltan Kovacs
 Jan Kratochvil
 Marko Kreen
 Greg Kreider
+Phil Krylov
 Junichi Kuchinishi
 Anand Kumria
 Gerson Kurz
@@ -270,14 +294,19 @@ Matthew Lake
 David Lee Lambert
 Tony Lambregts
 Eric Lammerts
+Juan Lang
 Stephen Langasek
 Sean Langley
 Dan Langlois
+Peter Berg Larsen
 Alexander Larsson
 Tommy Schultz Lassen
 David Lassonde
+Paul Laufer
+Jaekil Lee
 Sander van Leeuwen
 Stefan Leichter
+Hans Leidekker
 Karl Lessard
 Pascal Lessard
 Andrew Lewycky
@@ -303,11 +332,16 @@ José Marcos López
 Kenneth MacDonald
 Peter MacDonald
 Ondrej Macek
+Kester Maddock
 Pierre Mageau
 Michael C. Maggio
 William Magro
 Rok Mandeljc
+Vitaliy Margolen
+Daniel Marmier
 Juergen Marquardt
+Greg Marsden
+Philip Mason
 Alberto Massari
 Ricardo Massaro
 Matthew Mastracci
@@ -322,18 +356,22 @@ Alastair McKinstry
 Jason McMullan
 Caolan McNamara
 Patrick J. McNerthney
+Paul McNett
 Bill Medland
 Marcus Meissner
 Josef Meixner
 Graham Menhennitt
+Thomas Mertes
 Johann Messner
 David Metcalfe
 Francois Methot
 Travis Michielsen
 Toufic Milan
 Paul Millar
+Dave Miller
 Donn Miller
 Bruce Milner
+Michal Janusz Miroslaw
 Peter Mladek
 Steffen Moeller
 Andreas Mohr
@@ -343,12 +381,16 @@ Chris Morgan
 Kai Morich
 Richard Mortimer
 Adam D. Moss
+Jeff Muizelaar
 Vasudev Mulchandani
+Ivan Leo Murray-Smith
 Rick Mutzke
 Philippe De Muyter
 Zoltan Nagy
 Itai Nahshon
+Filip Navara
 Dustin Navea
+Felix Nawothnig
 Jonathan Naylor
 Nathan Neulinger
 Christian Neumair
@@ -364,6 +406,7 @@ Robert O'Callahan
 Damien O'Neill
 Damyan Ognyanoff
 Henrik Olsen
+José Manuel Ferrer Ortiz
 Knut St. Osmundsen
 Andriy Palamarchuk
 Giovanni Pancotti
@@ -373,6 +416,7 @@ Michal Pasternak
 Gerard Patel
 Michael Patra
 Murali Pattathe
+Catalin Patulea
 Dimitrie O. Paun
 Bernd Paysan
 Brad Pepers
@@ -398,10 +442,13 @@ Vahid Pourlotfali
 Chad Powell
 Joseph Pranevich
 Alex Priem
+Oleg Prokhorov
 Roberto Augusto Pungartnik
+Francesco Di Punzio
 Paul Quinn
 Pete Ratzlaff
 Ron Record
+Robert Reif
 Petter Reinholdtsen
 Keith Reynolds
 Slaven Rezic
@@ -412,6 +459,7 @@ Konrad Rieck
 Robert Riggs
 Matthew Robertson
 Vedran Rodic
+Troy Rollo
 Drew Ronneberg
 Bernhard Rosenkraenzer
 Pavel Roskin
@@ -423,6 +471,7 @@ Andy Rysin
 Daniel Sabo
 Adam Sacarny
 Ivan de Saedeleer
+Madhura Sahasrabudhe
 Thomas Sandford
 Constantine Sapuntzakis
 Pablo Saratxaga
@@ -431,6 +480,7 @@ Daniel Schepler
 Johannes E. Schindelin
 Christian Schlaile
 Peter Schlaile
+Michael Schlüter
 Ulrich Schmid
 Axel Schmidt
 Bernd Schmidt
@@ -443,6 +493,7 @@ Glenn Schrader
 Federico Schwindt
 Wolfgang Schwotzer
 Dan Scott
+Tim Segall
 Stas Sergeev
 Robert Shearman
 John Sheets
@@ -452,6 +503,7 @@ Gustavo Noronha Silva
 Stephen Simmons
 Jesper Skov
 Rick Sladkey
+Kirill Smelkov
 Jeff Smith
 William Smith
 Ed Snow
@@ -465,6 +517,7 @@ Gavriel State
 Sheri Steeves
 Michael Stefaniuc
 Nikolay Stefanov
+Igor Stepin
 Norman Stevens
 Aric Stewart
 William Stinson
@@ -474,6 +527,7 @@ Vadim Strizhevsky
 Bertho Stultiens
 John F Sturtz
 Abraham Sudhakar
+Supphachoke Suntiwichaya
 Charles Suprin
 James Sutherland
 Erik Svendsen
@@ -482,10 +536,12 @@ Tristan Tarrant
 Andrew Taylor
 Brian Teague
 Joshua Thielen
+Ingmar Thiemann
 Dirk Thierbach
 Jean-Louis Thirot
 Ken Thomases
 Duncan C Thomson
+Geoff Thorpe
 Adrian Thurston
 Goran Thyni
 Steve Tibbett
@@ -504,15 +560,18 @@ Greg Turner
 Lionel Ulmer
 Moshe Vainer
 Hleb Valoska
+Hannu Valtonen
 Charles Vaughn
 Michael Veksler
 Sven Verdoolaege
 Todd Vierling
+Brian Vincent
 Vasily I. Volchenko
 Erez Volk
 Jerome Vouillon
 Duc Vuong
 William Waghorn
+Ferenc Wagner
 Ronan Waide
 Daniel Walker
 Martin Walker
@@ -525,6 +584,7 @@ Manfred Weichel
 Ulrich Weigand
 Morten Welinder
 Marcelo Welter
+Mark Westcott
 Michael Wetherell
 Jeremy White
 Len White
@@ -534,6 +594,8 @@ Martin Wilck
 Jan Willamowius
 Carl Williams
 Eric Williams
+Dan Wolf
+Erwin Wolff
 Philipp Wollermann
 Cliff Wright
 Karl Guenter Wuensch
