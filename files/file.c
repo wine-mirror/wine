@@ -557,16 +557,30 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
         req->handle = hFile;
         if ((ret = !SERVER_CALL_ERR()))
         {
-            RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
-            RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
-            RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
-            info->dwFileAttributes     = req->attr;
-            info->dwVolumeSerialNumber = req->serial;
-            info->nFileSizeHigh        = req->size_high;
-            info->nFileSizeLow         = req->size_low;
-            info->nNumberOfLinks       = req->links;
-            info->nFileIndexHigh       = req->index_high;
-            info->nFileIndexLow        = req->index_low;
+	    /* FIXME: which file types are supported ?
+	     * Serial ports (FILE_TYPE_CHAR) are not,
+	     * and MSDN also says that pipes are not supported.
+	     * FILE_TYPE_REMOTE seems to be supported according to
+	     * MSDN q234741.txt */
+	    if ((req->type == FILE_TYPE_DISK)
+	    ||  (req->type == FILE_TYPE_REMOTE))
+	    {
+                RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
+                RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
+                RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
+                info->dwFileAttributes     = req->attr;
+                info->dwVolumeSerialNumber = req->serial;
+                info->nFileSizeHigh        = req->size_high;
+                info->nFileSizeLow         = req->size_low;
+                info->nNumberOfLinks       = req->links;
+                info->nFileIndexHigh       = req->index_high;
+                info->nFileIndexLow        = req->index_low;
+	    }
+	    else
+	    {
+		SetLastError(ERROR_NOT_SUPPORTED);
+		ret = 0;
+	    }
         }
     }
     SERVER_END_REQ;
@@ -621,7 +635,7 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
 DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 {
     BY_HANDLE_FILE_INFORMATION info;
-    if (!GetFileInformationByHandle( hFile, &info )) return 0;
+    if (!GetFileInformationByHandle( hFile, &info )) return -1;
     if (filesizehigh) *filesizehigh = info.nFileSizeHigh;
     return info.nFileSizeLow;
 }
