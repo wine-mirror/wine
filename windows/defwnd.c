@@ -306,6 +306,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 		wndPtr = WIN_FindWndPtr( hWnd );
 		if( wndPtr && !(wndPtr->class->style & CS_NOCLOSE) )
 		    PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+                WIN_ReleaseWndPtr(wndPtr);
 	    }
 	} 
 	else if( wParam == VK_F10 )
@@ -358,6 +359,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_CANCELMODE:
 	if (wndPtr->parent == WIN_GetDesktop()) EndMenu();
 	if (GetCapture() == wndPtr->hwndSelf) ReleaseCapture();
+        WIN_ReleaseDesktop();
 	break;
 
     case WM_VKEYTOITEM:
@@ -458,6 +460,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         break;
     }
 
+    WIN_ReleaseWndPtr(wndPtr);
     SPY_ExitMessage( SPY_RESULT_DEFWND16, hwnd, msg, result );
     return result;
 }
@@ -520,6 +523,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
         break;
     }
 
+    WIN_ReleaseWndPtr(wndPtr);
     SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result );
     return result;
 }
@@ -553,6 +557,7 @@ LRESULT WINAPI DefWindowProcW(
                 LPSTR str = HEAP_strdupWtoA(GetProcessHeap(), 0, cs->lpszName);
                 DEFWND_SetText( wndPtr, str );
                 HeapFree( GetProcessHeap(), 0, str );
+                WIN_ReleaseWndPtr(wndPtr);
             }
 	    result = 1;
 	}

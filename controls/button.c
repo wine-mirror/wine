@@ -79,6 +79,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
                               WPARAM wParam, LPARAM lParam )
 {
     RECT rect;
+    LRESULT retvalue;
     POINT pt = { LOWORD(lParam), HIWORD(lParam) };
     WND *wndPtr = WIN_FindWndPtr(hWnd);
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
@@ -87,6 +88,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
     switch (uMsg)
     {
     case WM_GETDLGCODE:
+        WIN_ReleaseWndPtr(wndPtr);
         switch(style)
         {
         case BS_PUSHBUTTON:      return DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON;
@@ -109,12 +111,18 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
             checkBoxWidth  = bmp.bmWidth / 4;
             checkBoxHeight = bmp.bmHeight / 3;
         }
-        if (style < 0L || style >= MAX_BTN_TYPE) return -1; /* abort */
+        if (style < 0L || style >= MAX_BTN_TYPE)
+        {
+            WIN_ReleaseWndPtr(wndPtr);
+            return -1; /* abort */
+        }
         infoPtr->state = BUTTON_UNCHECKED;
         infoPtr->hFont = 0;
+        WIN_ReleaseWndPtr(wndPtr);
         return 0;
 
     case WM_ERASEBKGND:
+        WIN_ReleaseWndPtr(wndPtr);
         return 1;
 
     case WM_PAINT:
@@ -171,6 +179,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     case WM_NCHITTEST:
+        WIN_ReleaseWndPtr(wndPtr);
         if(style == BS_GROUPBOX) return HTTRANSPARENT;
         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 
@@ -178,6 +187,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         DEFWND_SetText( wndPtr, (LPCSTR)lParam );
 	if( wndPtr->dwStyle & WS_VISIBLE )
             PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
+        WIN_ReleaseWndPtr(wndPtr);
         return 0;
 
     case WM_SETFONT:
@@ -187,7 +197,9 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     case WM_GETFONT:
-        return infoPtr->hFont;
+        retvalue = infoPtr->hFont;
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
 
     case WM_SETFOCUS:
         infoPtr->state |= BUTTON_HASFOCUS;
@@ -219,7 +231,9 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
-        return infoPtr->state & 3;
+        retvalue = infoPtr->state & 3;
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
 
     case BM_SETCHECK16:
     case BM_SETCHECK:
@@ -242,7 +256,9 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 
     case BM_GETSTATE16:
     case BM_GETSTATE:
-        return infoPtr->state;
+        retvalue = infoPtr->state;
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
 
     case BM_SETSTATE16:
     case BM_SETSTATE:
@@ -260,8 +276,10 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     default:
+        WIN_ReleaseWndPtr(wndPtr);
         return DefWindowProcA(hWnd, uMsg, wParam, lParam);
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }
 
@@ -522,11 +540,14 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
     start = sibling = GetNextDlgGroupItem( parent, wndPtr->hwndSelf, TRUE );
     do
     {
+        WND *tmpWnd;
         if (!sibling) break;
+        tmpWnd = WIN_FindWndPtr(sibling);
         if ((wndPtr->hwndSelf != sibling) &&
-            ((WIN_FindWndPtr(sibling)->dwStyle & 0x0f) == BS_AUTORADIOBUTTON))
+            ((tmpWnd->dwStyle & 0x0f) == BS_AUTORADIOBUTTON))
             SendMessageA( sibling, BM_SETCHECK, BUTTON_UNCHECKED, 0 );
         sibling = GetNextDlgGroupItem( parent, sibling, FALSE );
+        WIN_ReleaseWndPtr(tmpWnd);
     } while (sibling != start);
 }
 

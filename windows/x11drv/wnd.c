@@ -234,8 +234,10 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       
       if (cs->hwndParent)  /* Get window owner */
 	{
-	  Window win = X11DRV_WND_FindXWindow( WIN_FindWndPtr( cs->hwndParent ) );
+          WND *tmpWnd = WIN_FindWndPtr(cs->hwndParent);
+	  Window win = X11DRV_WND_FindXWindow( tmpWnd );
 	  if (win) TSXSetTransientForHint( display, X11DRV_WND_GetXWindow(wndPtr), win );
+          WIN_ReleaseWndPtr(tmpWnd);
 	}
       X11DRV_WND_RegisterWindow( wndPtr );
     }
@@ -264,7 +266,9 @@ BOOL X11DRV_WND_DestroyWindow(WND *wndPtr)
  */
 WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 {
-    if( wndPtr && pWndParent && (wndPtr != WIN_GetDesktop()) )
+    WND *pDesktop = WIN_GetDesktop();
+    
+    if( wndPtr && pWndParent && (wndPtr != pDesktop) )
     {
 	WND* pWndPrev = wndPtr->parent;
 
@@ -284,7 +288,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
             /* Create an X counterpart for reparented top-level windows
 	     * when not in the desktop mode. */
 
-            if( pWndParent == WIN_GetDesktop () )
+            if( pWndParent == pDesktop )
             {
                 wndPtr->dwStyle &= ~WS_CHILD;
                 wndPtr->wIDmenu = 0;
@@ -325,8 +329,10 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
             }
 	    WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
 	}
+        WIN_ReleaseDesktop();
 	return pWndPrev;
     } /* failure */
+    WIN_ReleaseDesktop();
     return 0;
 }
 
@@ -339,7 +345,7 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
 {
   XWindowChanges winChanges;
-  WND *wndPrev;
+  WND *wndPrev,*pDesktop = WIN_GetDesktop();
   
   if( !wndPtr || !X11DRV_WND_GetXWindow(wndPtr) || (wndPtr->flags & WIN_MANAGED) )
     return;
@@ -354,11 +360,12 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
       if (X11DRV_WND_GetXWindow(wndPtr)) 
 	TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(wndPtr), 0,
 				CWStackMode, &winChanges );
-      wndPrev = WIN_GetDesktop()->child;
+      wndPrev = pDesktop->child;
       if (wndPrev == wndPtr) break;
       while (wndPrev && (wndPrev->next != wndPtr)) wndPrev = wndPrev->next;
       wndPtr = wndPrev;
     }
+  WIN_ReleaseDesktop();
 }
 
 /***********************************************************************
@@ -460,6 +467,8 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SET
 	      
 	      TSXRestackWindows(display, stack, 2); 
 	      changeMask &= ~CWStackMode;
+              
+              WIN_ReleaseWndPtr(insertPtr);
 	    }
 	}
       if (changeMask)
@@ -472,6 +481,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SET
     {
       if(X11DRV_WND_GetXWindow(wndPtr)) TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
+  WIN_ReleaseWndPtr(winposPtr);
 }
 
 /*****************************************************************

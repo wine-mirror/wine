@@ -462,7 +462,7 @@ int DDE_GetRemoteMessage()
   /* iterate through all the windows */
   for (wndPtr = WIN_FindWndPtr(GetTopWindow(GetDesktopWindow()));
        wndPtr != NULL;
-       wndPtr = wndPtr->next)
+       WIN_UpdateWndPtr(&wndPtr,wndPtr->next))
   {
      if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
 	if (was_sent)

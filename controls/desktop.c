@@ -24,8 +24,12 @@
  */
 int DESKTOP_GetScreenWidth()
 {
+    int retvalue;
   DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-  return MONITOR_GetWidth(pDesktop->pPrimaryMonitor);
+    retvalue = MONITOR_GetWidth(pDesktop->pPrimaryMonitor);
+    WIN_ReleaseDesktop();
+    return retvalue;
+    
 }
 
 /***********************************************************************
@@ -35,8 +39,12 @@ int DESKTOP_GetScreenWidth()
  */
 int DESKTOP_GetScreenHeight()
 {
+    int retvalue;
   DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-  return MONITOR_GetHeight(pDesktop->pPrimaryMonitor);
+    retvalue = MONITOR_GetHeight(pDesktop->pPrimaryMonitor);
+    WIN_ReleaseDesktop();
+    return retvalue;
+    
 }
 
 /***********************************************************************
@@ -46,8 +54,12 @@ int DESKTOP_GetScreenHeight()
  */
 int DESKTOP_GetScreenDepth()
 {
+    int retvalue;
   DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
-  return MONITOR_GetDepth(pDesktop->pPrimaryMonitor);
+    retvalue = MONITOR_GetDepth(pDesktop->pPrimaryMonitor);
+    WIN_ReleaseDesktop();
+    return retvalue;
+
 }
 
 /***********************************************************************
@@ -119,6 +131,8 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc,
     if (Wnd->hrgnUpdate > 1) DeleteObject( Wnd->hrgnUpdate );
     Wnd->hrgnUpdate = 0;
 
+    WIN_ReleaseWndPtr(Wnd);
+    
     GetClientRect( hwnd, &rect );    
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */
@@ -173,6 +187,7 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc,
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
                                WPARAM wParam, LPARAM lParam )
 {
+    LRESULT retvalue;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
 
@@ -187,23 +202,36 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
 	desktopPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
 	SetDeskWallPaper( (LPSTR)-1 );
-	return 1;
+        retvalue = 1;
+        goto END;
 	
     case WM_ERASEBKGND:
 	if (X11DRV_WND_GetXRootWindow(wndPtr) == 
 	    DefaultRootWindow(display))
-	  return 1;
-	return DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
+        {
+            retvalue = 1;
+            goto END;
+        }
+        retvalue = DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
+        goto END;
 
     case WM_SYSCOMMAND:
-	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
+        if ((wParam & 0xfff0) != SC_CLOSE)
+        {
+            retvalue = 0;
+            goto END;
+        }
 	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
-        return (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
+        retvalue = (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
+        goto END;
     }
     
-    return 0;
+    retvalue = 0;
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 /***********************************************************************
@@ -212,11 +240,14 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
  */
 BOOL WINAPI PaintDesktop(HDC hdc)
 {
+    BOOL retvalue;
     HWND hwnd = GetDesktopWindow();
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
+    retvalue = DESKTOP_DoEraseBkgnd( hwnd, hdc, desktopPtr );
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 
-    return DESKTOP_DoEraseBkgnd( hwnd, hdc, desktopPtr );
 }
 
 /***********************************************************************
@@ -270,6 +301,7 @@ BOOL WINAPI SetDeskWallPaper( LPCSTR filename )
 	desktopPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
 	desktopPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
     }
+    WIN_ReleaseDesktop();
     return TRUE;
 }
 
@@ -301,6 +333,7 @@ BOOL DESKTOP_SetPattern( LPCSTR pattern )
 	DeleteObject( hbitmap );
     }
     else desktopPtr->hbrushPattern = CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) );
+    WIN_ReleaseDesktop();
     return TRUE;
 }
 

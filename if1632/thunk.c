@@ -273,6 +273,8 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     EBP_reg(&context) = OFFSETOF(thdb->cur_stack)
                         + (WORD)&((STACK16FRAME*)0)->bp;
 
+    WIN_ReleaseWndPtr(wndPtr);
+    
     if (lParam)
     {
 	/* Some programs (eg. the "Undocumented Windows" examples, JWP) only

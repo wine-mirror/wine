@@ -728,7 +728,11 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
     if (offset >= 0)
     {
         if (offset <= wndPtr->class->cbClsExtra - sizeof(WORD))
-            return GET_WORD(((char *)wndPtr->class->wExtra) + offset);
+        {
+            WORD retvalue = GET_WORD(((char *)wndPtr->class->wExtra) + offset);
+            WIN_ReleaseWndPtr(wndPtr);
+            return retvalue;
+        }
     }
     else switch(offset)
     {
@@ -741,9 +745,11 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
         case GCW_CBWNDEXTRA:
         case GCW_CBCLSEXTRA:
         case GCW_HMODULE:
+            WIN_ReleaseWndPtr(wndPtr);
             return (WORD)GetClassLongA( hwnd, offset );
     }
 
+    WIN_ReleaseWndPtr(wndPtr);
     WARN(class, "Invalid offset %d\n", offset);
     return 0;
 }
@@ -763,7 +769,9 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
     {
     case GCL_WNDPROC:
         if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-        return (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_16 );
+        ret = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_16 );
+        WIN_ReleaseWndPtr(wndPtr);
+        return ret;
     case GCL_MENUNAME:
         ret = GetClassLongA( hwnd, offset );
         return (LONG)SEGPTR_GET( (void *)ret );
@@ -779,6 +787,7 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
 LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
     WND * wndPtr;
+    LONG retvalue;
     
     TRACE(class,"%x %x\n",hwnd, offset);
     
@@ -786,27 +795,41 @@ LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
     if (offset >= 0)
     {
         if (offset <= wndPtr->class->cbClsExtra - sizeof(LONG))
-            return GET_DWORD(((char *)wndPtr->class->wExtra) + offset);
+        {
+            retvalue = GET_DWORD(((char *)wndPtr->class->wExtra) + offset);
+            goto END;
+        }
     }
+        
     switch(offset)
     {
-        case GCL_STYLE:      return (LONG)wndPtr->class->style;
-        case GCL_CBWNDEXTRA: return (LONG)wndPtr->class->cbWndExtra;
-        case GCL_CBCLSEXTRA: return (LONG)wndPtr->class->cbClsExtra;
-        case GCL_HMODULE:    return (LONG)wndPtr->class->hInstance;
+        case GCL_STYLE:      retvalue = (LONG)wndPtr->class->style;
+                             goto END;
+        case GCL_CBWNDEXTRA: retvalue = (LONG)wndPtr->class->cbWndExtra;
+                             goto END;
+        case GCL_CBCLSEXTRA: retvalue = (LONG)wndPtr->class->cbClsExtra;
+                             goto END;
+        case GCL_HMODULE:    retvalue = (LONG)wndPtr->class->hInstance;
+                             goto END;
         case GCL_WNDPROC:
-            return (LONG)WINPROC_GetProc(wndPtr->class->winproc, WIN_PROC_32A);
+            retvalue = (LONG)WINPROC_GetProc(wndPtr->class->winproc, WIN_PROC_32A);
+            goto END;
         case GCL_MENUNAME:
-            return (LONG)CLASS_GetMenuNameA( wndPtr->class );
+            retvalue = (LONG)CLASS_GetMenuNameA( wndPtr->class );
+            goto END;
         case GCW_ATOM:
         case GCL_HBRBACKGROUND:
         case GCL_HCURSOR:
         case GCL_HICON:
         case GCL_HICONSM:
-            return GetClassWord( hwnd, offset );
+            retvalue = GetClassWord( hwnd, offset );
+            goto END;
     }
     WARN(class, "Invalid offset %d\n", offset);
-    return 0;
+    retvalue = 0;
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -816,6 +839,7 @@ LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
     WND * wndPtr;
+    LONG retvalue;
 
     TRACE(class,"%x %x\n",hwnd, offset);
 
@@ -823,10 +847,14 @@ LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
     {
     case GCL_WNDPROC:
         if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-        return (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_32W );
+        retvalue = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_32W );
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
     case GCL_MENUNAME:
         if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-        return (LONG)CLASS_GetMenuNameW( wndPtr->class );
+        retvalue = (LONG)CLASS_GetMenuNameW( wndPtr->class );
+        WIN_ReleaseWndPtr(wndPtr);
+        return retvalue;
     default:
         return GetClassLongA( hwnd, offset );
     }
@@ -861,6 +889,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
         else
         {
             WARN( class, "Invalid offset %d\n", offset );
+            WIN_ReleaseWndPtr(wndPtr);
             return 0;
         }
     }
@@ -870,6 +899,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
         case GCW_CBWNDEXTRA:
         case GCW_CBCLSEXTRA:
         case GCW_HMODULE:
+            WIN_ReleaseWndPtr(wndPtr);
             return (WORD)SetClassLongA( hwnd, offset, (LONG)newval );
         case GCW_HBRBACKGROUND: ptr = &wndPtr->class->hbrBackground; break;
         case GCW_HCURSOR:       ptr = &wndPtr->class->hCursor; break;
@@ -878,6 +908,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
         case GCW_ATOM:          ptr = &wndPtr->class->atomName; break;
         default:
             WARN( class, "Invalid offset %d\n", offset);
+            WIN_ReleaseWndPtr(wndPtr);
             return 0;
     }
     retval = GET_WORD(ptr);
@@ -892,6 +923,7 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
         CLASS_SetClassNameA( wndPtr->class, NULL );
         FIXME(class,"GCW_ATOM changed for a class.  Not updating className, so GetClassInfoEx may not return correct className!\n");
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -913,6 +945,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
         retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_16 );
         WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
                          WIN_PROC_16, WIN_PROC_CLASS );
+        WIN_ReleaseWndPtr(wndPtr);
         return retval;
     case GCL_MENUNAME:
         return SetClassLongA( hwnd, offset, (LONG)PTR_SEG_TO_LIN(newval) );
@@ -941,35 +974,41 @@ LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
         else
         {
             WARN( class, "Invalid offset %d\n", offset );
-            return 0;
+            retval = 0;
+            goto END;
         }
     }
     else switch(offset)
     {
         case GCL_MENUNAME:
             CLASS_SetMenuNameA( wndPtr->class, (LPCSTR)newval );
-            return 0;  /* Old value is now meaningless anyway */
+            retval = 0;  /* Old value is now meaningless anyway */
+            goto END;
         case GCL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc,
                                             WIN_PROC_32A );
             WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
                              WIN_PROC_32A, WIN_PROC_CLASS );
-            return retval;
+            goto END;
         case GCL_HBRBACKGROUND:
         case GCL_HCURSOR:
         case GCL_HICON:
         case GCL_HICONSM:
-            return SetClassWord( hwnd, offset, (WORD)newval );
+            retval = SetClassWord( hwnd, offset, (WORD)newval );
+            goto END;
         case GCL_STYLE:      ptr = &wndPtr->class->style; break;
         case GCL_CBWNDEXTRA: ptr = &wndPtr->class->cbWndExtra; break;
         case GCL_CBCLSEXTRA: ptr = &wndPtr->class->cbClsExtra; break;
         case GCL_HMODULE:    ptr = &wndPtr->class->hInstance; break;
         default:
             WARN( class, "Invalid offset %d\n", offset );
-            return 0;
+            retval = 0;
+            goto END;
     }
     retval = GET_DWORD(ptr);
     PUT_DWORD( ptr, newval );
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -991,10 +1030,12 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
         retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_32W );
         WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
                          WIN_PROC_32W, WIN_PROC_CLASS );
+        WIN_ReleaseWndPtr(wndPtr);
         return retval;
     case GCL_MENUNAME:
         if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
         CLASS_SetMenuNameW( wndPtr->class, (LPCWSTR)newval );
+        WIN_ReleaseWndPtr(wndPtr);
         return 0;  /* Old value is now meaningless anyway */
     default:
         return SetClassLongA( hwnd, offset, newval );
@@ -1008,8 +1049,11 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 {
     WND *wndPtr;
+    INT16 retvalue;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    return GlobalGetAtomName16( wndPtr->class->atomName, buffer, count );
+    retvalue = GlobalGetAtomName16( wndPtr->class->atomName, buffer, count );
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1023,6 +1067,7 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     ret = GlobalGetAtomNameA( wndPtr->class->atomName, buffer, count );
 
+    WIN_ReleaseWndPtr(wndPtr);
     TRACE(class,"%x %s %x\n",hwnd, buffer, count);
     return ret;
 }
@@ -1037,7 +1082,7 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     ret = GlobalGetAtomNameW( wndPtr->class->atomName, buffer, count );
-
+    WIN_ReleaseWndPtr(wndPtr);
     TRACE(class,"%x %s %x\n",hwnd, debugstr_w(buffer), count);
     
     return ret;

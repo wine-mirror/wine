@@ -707,9 +707,10 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	   ShowWindow( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
 	   UpdateWindow( hwnd );
 	}
+        WIN_ReleaseWndPtr(wndPtr);
 	return hwnd;
     }
-
+    WIN_ReleaseWndPtr(wndPtr);
     if( IsWindow(hwnd) ) DestroyWindow( hwnd );
     return 0;
 }
@@ -874,6 +875,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
         EnableWindow( owner, TRUE );
     }
     retval = dlgInfo->idResult; 
+    WIN_ReleaseWndPtr(wndPtr);
     DestroyWindow( hwnd );
     return retval;
 }
@@ -1005,6 +1007,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
         dlgInfo->idResult = retval;
         dlgInfo->flags |= DF_END;
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
 
@@ -1086,6 +1089,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 	    {
 		hwndNext = 0;
 	    }
+            WIN_ReleaseWndPtr(wndPtr);
 	    if (!hwndNext)
 	    {
 	        hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
@@ -1294,8 +1298,13 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr) return wndPtr->wIDmenu;
-    else return 0;
+    INT16 retvalue;
+    
+    if (!wndPtr) return 0;
+
+    retvalue = wndPtr->wIDmenu;
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
  
 
@@ -1304,9 +1313,12 @@ INT16 WINAPI GetDlgCtrlID16( HWND16 hwnd )
  */
 INT WINAPI GetDlgCtrlID( HWND hwnd )
 {
+    INT retvalue;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr) return wndPtr->wIDmenu;
-    else return 0;
+    if (!wndPtr) return 0;
+    retvalue = wndPtr->wIDmenu;
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
  
 
@@ -1318,8 +1330,13 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
     WND *pWnd;
 
     if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if (pWnd->wIDmenu == (UINT16)id) return pWnd->hwndSelf;
+    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+        if (pWnd->wIDmenu == (UINT16)id)
+        {
+            HWND16 retvalue = pWnd->hwndSelf;
+            WIN_ReleaseWndPtr(pWnd);
+            return retvalue;
+        }
     return 0;
 }
 
@@ -1332,8 +1349,13 @@ HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
     WND *pWnd;
 
     if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if (pWnd->wIDmenu == (UINT16)id) return pWnd->hwndSelf;
+    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
+        if (pWnd->wIDmenu == (UINT16)id)
+        {
+            HWND retvalue = pWnd->hwndSelf;
+            WIN_ReleaseWndPtr(pWnd);
+            return retvalue;
+        }
     return 0;
 }
 
@@ -1570,8 +1592,12 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
     if (!pWnd) return FALSE;
 
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if ((pWnd->wIDmenu == firstID) || (pWnd->wIDmenu == lastID)) break;
+    for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
+        if ((pWnd->wIDmenu == firstID) || (pWnd->wIDmenu == lastID))
+        {
+            WIN_ReleaseWndPtr(pWnd);
+            break;
+        }
     if (!pWnd) return FALSE;
 
     if (pWnd->wIDmenu == lastID)
@@ -1580,8 +1606,12 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
     {
 	SendMessageA( pWnd->hwndSelf, BM_SETCHECK,
                         (pWnd->wIDmenu == checkID), 0 );
-        if (pWnd->wIDmenu == lastID) break;
-	pWnd = pWnd->next;
+        if (pWnd->wIDmenu == lastID)
+        {
+                WIN_ReleaseWndPtr(pWnd);
+                break;
+        }
+	WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
     return TRUE;
 }
@@ -1609,6 +1639,7 @@ void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
     rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
     rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
     rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -1625,6 +1656,7 @@ BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
     rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
     rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
     rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+    WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
 
@@ -1645,33 +1677,51 @@ HWND16 WINAPI GetNextDlgGroupItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
                                      BOOL fPrevious )
 {
-    WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
+    WND *pWnd = NULL,
+        *pWndLast = NULL,
+        *pWndCtrl = NULL,
+        *pWndDlg = NULL;
+    HWND retvalue;
 
     if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
     if (hwndCtrl)
     {
-        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl )))
+    {
+            retvalue = 0;
+            goto END;
+        }
         /* Make sure hwndCtrl is a top-level child */
         while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
-            pWndCtrl = pWndCtrl->parent;
-        if (pWndCtrl->parent != pWndDlg) return 0;
+            WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->parent);
+        if (pWndCtrl->parent != pWndDlg)
+        {
+            retvalue = 0;
+            goto END;
+        }
     }
     else
     {
         /* No ctrl specified -> start from the beginning */
-        if (!(pWndCtrl = pWndDlg->child)) return 0;
-        if (fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
+        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child)))
+        {
+            retvalue = 0;
+            goto END;
+        }
+        if (fPrevious)
+            while (pWndCtrl->next) WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->next);
     }
 
-    pWndLast = pWndCtrl;
-    pWnd = pWndCtrl->next;
+    pWndLast = WIN_LockWndPtr(pWndCtrl);
+    pWnd = WIN_LockWndPtr(pWndCtrl->next);
+
     while (1)
     {
         if (!pWnd || (pWnd->dwStyle & WS_GROUP))
         {
             /* Wrap-around to the beginning of the group */
-            WND *pWndStart = pWndDlg->child;
-            for (pWnd = pWndStart; pWnd; pWnd = pWnd->next)
+            WND *pWndStart = WIN_LockWndPtr(pWndDlg->child);
+            for (WIN_UpdateWndPtr(&pWnd,pWndStart); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
             {
                 if (pWnd->dwStyle & WS_GROUP) pWndStart = pWnd;
                 if (pWnd == pWndCtrl) break;
@@ -1681,12 +1731,20 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
         if (pWnd == pWndCtrl) break;
 	if ((pWnd->dwStyle & WS_VISIBLE) && !(pWnd->dwStyle & WS_DISABLED))
 	{
-            pWndLast = pWnd;
+            WIN_UpdateWndPtr(&pWndLast,pWnd);
 	    if (!fPrevious) break;
 	}
-        pWnd = pWnd->next;
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
-    return pWndLast->hwndSelf;
+    retvalue = pWndLast->hwndSelf;
+
+    WIN_ReleaseWndPtr(pWndLast);
+    WIN_ReleaseWndPtr(pWnd);
+END:
+    WIN_ReleaseWndPtr(pWndCtrl);
+    WIN_ReleaseWndPtr(pWndDlg);
+
+    return retvalue;
 }
 
 
@@ -1706,39 +1764,61 @@ HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
                                    BOOL fPrevious )
 {
-    WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
+    WND *pWnd = NULL,
+        *pWndLast = NULL,
+        *pWndCtrl = NULL,
+        *pWndDlg = NULL;
+    HWND retvalue;
 
     if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
     if (hwndCtrl)
     {
-        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl )))
+    {
+            retvalue = 0;
+            goto END;
+        }
         /* Make sure hwndCtrl is a top-level child */
         while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
-            pWndCtrl = pWndCtrl->parent;
-        if (pWndCtrl->parent != pWndDlg) return 0;
+            WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->parent);
+        if (pWndCtrl->parent != pWndDlg)
+        {
+            retvalue = 0;
+            goto END;
+    }
     }
     else
     {
         /* No ctrl specified -> start from the beginning */
-        if (!(pWndCtrl = pWndDlg->child)) return 0;
-        if (!fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
+        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child))) return 0;
+        if (!fPrevious)
+            while (pWndCtrl->next) WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->next);
     }
 
-    pWndLast = pWndCtrl;
-    pWnd = pWndCtrl->next;
+    pWndLast = WIN_LockWndPtr(pWndCtrl);
+    pWnd = WIN_LockWndPtr(pWndCtrl->next);
     while (1)
     {
-        if (!pWnd) pWnd = pWndDlg->child;
+        if (!pWnd) pWnd = WIN_LockWndPtr(pWndDlg->child);
         if (pWnd == pWndCtrl) break;
 	if ((pWnd->dwStyle & WS_TABSTOP) && (pWnd->dwStyle & WS_VISIBLE) &&
             !(pWnd->dwStyle & WS_DISABLED))
 	{
-            pWndLast = pWnd;
+            WIN_UpdateWndPtr(&pWndLast,pWnd);
 	    if (!fPrevious) break;
 	}
-        pWnd = pWnd->next;
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
-    return pWndLast->hwndSelf;
+    retvalue = pWndLast->hwndSelf;
+    
+    WIN_ReleaseWndPtr(pWndLast);
+    WIN_ReleaseWndPtr(pWnd);
+END:
+    WIN_ReleaseWndPtr(pWndCtrl);
+    WIN_ReleaseWndPtr(pWndDlg);
+
+    return retvalue;
+
 }
 
 

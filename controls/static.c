@@ -182,12 +182,14 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 
         if (style == SS_ICON)
         {
-            if (cs->lpszName) {
+            if (cs->lpszName)
+            {
 	    	if (!HIWORD(cs->lpszName) || cs->lpszName[0])
 		    STATIC_SetIcon( wndPtr,
                                 STATIC_LoadIcon( wndPtr, cs->lpszName ));
 	    }
-            return 1;
+            lResult = 1;
+            goto END;
         }
 	if (style == SS_BITMAP)
 	{
@@ -196,15 +198,18 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
                                 STATIC_LoadBitmap( wndPtr, cs->lpszName ));
 	    WARN(static, "style SS_BITMAP, dwStyle is 0x%08lx\n",
 			wndPtr->dwStyle);
-            return 1;
+            lResult = 1;
+            goto END;
 	}
-	if (!HIWORD(cs->lpszName) && (cs->lpszName)) {
+        if (!HIWORD(cs->lpszName) && (cs->lpszName))
+        {
 		FIXME(static,"windowName is 0x%04x, not doing DefWindowProc\n",
-		    LOWORD(cs->lpszName)
-		);
-		return 1;
+		    LOWORD(cs->lpszName));
+                lResult = 1;
+                goto END;
 	}
-        return DefWindowProcA( hWnd, uMsg, wParam, lParam );
+        lResult = DefWindowProcA( hWnd, uMsg, wParam, lParam );
+        goto END;
     }
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
@@ -268,8 +273,16 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_SETFONT:
-        if (style == SS_ICON) return 0;
-        if (style == SS_BITMAP) return 0;
+        if (style == SS_ICON)
+        {
+            lResult = 0;
+            goto END;
+        }
+        if (style == SS_BITMAP)
+        {
+            lResult = 0;
+            goto END;
+        }
         infoPtr->hFont = (HFONT16)wParam;
         if (LOWORD(lParam))
         {
@@ -279,18 +292,22 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_GETFONT:
-        return infoPtr->hFont;
+        lResult = infoPtr->hFont;
+        goto END;
 
     case WM_NCHITTEST:
-        return HTTRANSPARENT;
+        lResult = HTTRANSPARENT;
+        goto END;
 
     case WM_GETDLGCODE:
-        return DLGC_STATIC;
+        lResult = DLGC_STATIC;
+        goto END;
 
     case STM_GETIMAGE:
     case STM_GETICON16:
     case STM_GETICON:
-        return infoPtr->hIcon;
+        lResult = infoPtr->hIcon;
+        goto END;
 
     case STM_SETIMAGE:
     	/* FIXME: handle wParam */
@@ -311,6 +328,8 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         break;
     }
     
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return lResult;
 }
 

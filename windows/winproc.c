@@ -391,9 +391,13 @@ WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
  * Return TRUE if the lparam is a string
  */
 BOOL WINPROC_TestCBForStr ( HWND hwnd )
-{	WND * wnd = WIN_FindWndPtr(hwnd); 
-	return ( !(LOWORD(wnd->dwStyle) & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) ||
+{
+    BOOL retvalue;
+    WND * wnd = WIN_FindWndPtr(hwnd);
+    retvalue = ( !(LOWORD(wnd->dwStyle) & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) ||
 	      (LOWORD(wnd->dwStyle) & CBS_HASSTRINGS) );
+    WIN_ReleaseWndPtr(wnd);
+    return retvalue;
 }
 /**********************************************************************
  *	     WINPROC_TestLBForStr
@@ -401,9 +405,14 @@ BOOL WINPROC_TestCBForStr ( HWND hwnd )
  * Return TRUE if the lparam is a string
  */
 BOOL WINPROC_TestLBForStr ( HWND hwnd )
-{	WND * wnd = WIN_FindWndPtr(hwnd); 
-	return ( !(LOWORD(wnd->dwStyle) & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || 
+{
+    BOOL retvalue;
+    WND * wnd = WIN_FindWndPtr(hwnd); 
+    retvalue = ( !(LOWORD(wnd->dwStyle) & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) ||
 	    (LOWORD(wnd->dwStyle) & LBS_HASSTRINGS) );
+    WIN_ReleaseWndPtr(wnd);
+    return retvalue;
+
 }
 /**********************************************************************
  *	     WINPROC_MapMsg32ATo32W
@@ -1681,8 +1690,10 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
     case WM_MDIACTIVATE:
-	if( WIDGETS_IsControl(WIN_FindWndPtr(hwnd), BIC32_MDICLIENT) )
 	{
+            WND *tempWnd = WIN_FindWndPtr(hwnd);
+            if( WIDGETS_IsControl(tempWnd, BIC32_MDICLIENT) )
+            {
 	    *pwparam16 = (HWND)wParam32;
 	    *plparam = 0;
 	}
@@ -1692,6 +1703,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 	    *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
 				   (HWND16)LOWORD(wParam32) );
 	}
+            WIN_ReleaseWndPtr(tempWnd);
+        }
         return 0;
     case WM_NCCALCSIZE:
         {

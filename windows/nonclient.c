@@ -349,6 +349,7 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
 	    DrawIconEx (hdc, pt.x, pt.y, hAppIcon, sysMetrics[SM_CXSMICON],
 			  sysMetrics[SM_CYSMICON], 0, 0, DI_NORMAL);
+            WIN_ReleaseWndPtr(wndPtr);
 	}
 
 	rc.left += (rc.bottom - rc.top);
@@ -554,7 +555,7 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) return;
+    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -570,7 +571,8 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
 	if (wndPtr->dwStyle & WS_BORDER)
 	    InflateRect( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
     }
-
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return;
 }
 
@@ -592,7 +594,7 @@ NC_GetInsideRect95 (HWND hwnd, RECT *rect)
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) return;
+    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
     if (HAS_FIXEDFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -614,7 +616,8 @@ NC_GetInsideRect95 (HWND hwnd, RECT *rect)
 	if (wndPtr->dwExStyle & WS_EX_STATICEDGE)
 	    InflateRect (rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
     }
-
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return;
 }
 
@@ -907,15 +910,18 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 LONG
 NC_HandleNCHitTest (HWND hwnd , POINT16 pt)
 {
+    LONG retvalue;
     WND *wndPtr = WIN_FindWndPtr (hwnd);
 
     if (!wndPtr)
 	return HTERROR;
 
     if (TWEAK_WineLook == WIN31_LOOK)
-        return NC_DoNCHitTest (wndPtr, pt);
+        retvalue = NC_DoNCHitTest (wndPtr, pt);
     else
-	return NC_DoNCHitTest95 (wndPtr, pt);
+        retvalue = NC_DoNCHitTest95 (wndPtr, pt);
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -940,6 +946,7 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
       SelectObject( hdcMem, hbitmap );
       DeleteDC( hdcMem );
     }
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -964,6 +971,8 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 		SRCCOPY );
       DeleteDC( hdcMem );
     }
+    WIN_ReleaseWndPtr(wndPtr);
+
 }
 
 
@@ -987,6 +996,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 		SRCCOPY );
       DeleteDC( hdcMem );
     }
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -1030,8 +1040,10 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 			  sysMetrics[SM_CYSMICON],
 			  0, 0, DI_NORMAL);
 
+        WIN_ReleaseWndPtr(wndPtr);
 	return (hIcon != 0);
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return FALSE;
 }
 
@@ -1075,6 +1087,7 @@ void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down)
 	SelectObject (hdcMem, hOldBmp);
 	DeleteDC (hdcMem);
     }
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 /******************************************************************************
@@ -1125,6 +1138,7 @@ static void  NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down )
 	SelectObject (hdcMem, hOldBmp);
 	DeleteDC( hdcMem );
     }
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 /******************************************************************************
@@ -1178,6 +1192,7 @@ static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down )
        SelectObject (hdcMem, hOldBmp);
 	DeleteDC( hdcMem );
     }
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 /***********************************************************************
@@ -1357,12 +1372,19 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     char buffer[256];
 
-    if (wndPtr->flags & WIN_MANAGED) return;
+    if (wndPtr->flags & WIN_MANAGED)
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return;
+    }
 
     if (!hbitmapClose)
     {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
+        {
+            WIN_ReleaseWndPtr(wndPtr);
 	    return;
+        }
 	hbitmapCloseD    = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSED) );
 	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
@@ -1382,7 +1404,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 	r.right--;
 	SelectObject( hdc, hbrushOld );
     }
-
+    WIN_ReleaseWndPtr(wndPtr);
     MoveTo16( hdc, r.left, r.bottom );
     LineTo( hdc, r.right, r.bottom );
 
@@ -1455,7 +1477,12 @@ static void  NC_DrawCaption95(
     char    buffer[256];
     HPEN  hPrevPen;
 
-    if (wndPtr->flags & WIN_MANAGED) return;
+    if (wndPtr->flags & WIN_MANAGED)
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return;
+    }
+    WIN_ReleaseWndPtr(wndPtr);
 
     hPrevPen = SelectObject( hdc, GetSysColorPen(COLOR_3DFACE) );
     MoveToEx( hdc, r.left, r.bottom - 1, NULL );
@@ -1755,6 +1782,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 	else
 	    NC_DoNCPaint95( wndPtr, clip, FALSE );
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }
 
@@ -1810,13 +1838,17 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
     case HTCLIENT:
 	{
 	    WND *wndPtr;
+            BOOL retvalue;
+            
 	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
 	    if (wndPtr->class->hCursor)
 	    {
 		SetCursor16( wndPtr->class->hCursor );
-		return TRUE;
+		retvalue = TRUE;
 	    }
-	    else return FALSE;
+            else retvalue = FALSE;
+            WIN_ReleaseWndPtr(wndPtr);
+            return retvalue;
 	}
 
     case HTLEFT:
@@ -1981,18 +2013,18 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     capturePoint = pt = *(POINT16*)&dwPoint;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
-        (wndPtr->flags & WIN_MANAGED)) return;
+        (wndPtr->flags & WIN_MANAGED)) goto END;
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
-	if (!(wndPtr->dwStyle & WS_CAPTION)) return;
+	if (!(wndPtr->dwStyle & WS_CAPTION)) goto END;
 	if (!hittest) 
 	     hittest = NC_StartSizeMove( wndPtr, wParam, &capturePoint );
-	if (!hittest) return;
+	if (!hittest) goto END;
     }
     else  /* SC_SIZE */
     {
-	if (!thickframe) return;
+	if (!thickframe) goto END;
 	if ( hittest && hittest != HTSYSMENU ) hittest += 2;
 	else
 	{
@@ -2001,7 +2033,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    if (!hittest)
 	    {
 		ReleaseCapture();
-		return;
+		goto END;
 	    }
 	}
     }
@@ -2193,6 +2225,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    }
 	    else WINPOS_ShowIconTitle( wndPtr, TRUE );
 	}
+
+END:
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -2295,16 +2330,16 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 
     if ((wParam & 0xfff0) == SC_HSCROLL)
     {
-	if ((wParam & 0x0f) != HTHSCROLL) return;
+	if ((wParam & 0x0f) != HTHSCROLL) goto END;
 	scrollbar = SB_HORZ;
     }
     else  /* SC_VSCROLL */
     {
-	if ((wParam & 0x0f) != HTVSCROLL) return;
+	if ((wParam & 0x0f) != HTVSCROLL) goto END;
 	scrollbar = SB_VERT;
     }
 
-    if (!(msg = SEGPTR_NEW(MSG16))) return;
+    if (!(msg = SEGPTR_NEW(MSG16))) goto END;
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );
@@ -2336,6 +2371,8 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
         }
     } while (msg->message != WM_LBUTTONUP);
     SEGPTR_FREE(msg);
+END:
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 /***********************************************************************
@@ -2532,5 +2569,6 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
  	FIXME (nonclient, "unimplemented!\n");
         break;
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }

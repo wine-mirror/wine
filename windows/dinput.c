@@ -892,6 +892,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
     /* This stores the current mouse handler.
        FIXME : need to be fixed for native USER use */
+      WND *tempWnd = 0;
     This->prev_handler = mouse_event;
     
     /* Store (in a global variable) the current lock */

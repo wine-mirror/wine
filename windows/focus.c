@@ -34,13 +34,17 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 #endif
 
     if( !pFocusTo || hFocusTo != PERQDATA_GetFocusWnd( pMsgQ->pQData ) )
+    {
+        WIN_ReleaseWndPtr(pFocusTo);
 	return;
+    }
 
     /* According to API docs, the WM_SETFOCUS message is sent AFTER the window
        has received the keyboard focus. */
 
     pFocusTo->pDriver->pSetFocus(pFocusTo);
 
+    WIN_ReleaseWndPtr(pFocusTo);
 #if 0
     SendMessageA( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
 #else
@@ -154,6 +158,7 @@ CLEANUP:
     if ( pCurMsgQ )
         QUEUE_Unlock( pCurMsgQ );
 
+    WIN_ReleaseWndPtr(wndPtr);
     return bRet ? hWndFocus : 0;
 }
 

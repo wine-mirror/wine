@@ -35,8 +35,10 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     if(wnd == WIN_GetDesktop()) 
     {
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
+        WIN_ReleaseDesktop();
         return;
     }
+    WIN_ReleaseDesktop();
 
     if( wnd->hrgnUpdate > 1 )
     {
@@ -136,6 +138,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     if (!lps->hdc)
     {
         WARN(win, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        WIN_ReleaseWndPtr(wndPtr);
         return 0;
     }
 
@@ -153,6 +156,7 @@ TRACE(win,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
     }
     else lps->fErase = TRUE;
 
+    WIN_ReleaseWndPtr(wndPtr);
     return lps->hdc;
 }
 
@@ -248,17 +252,23 @@ void WINAPI PaintRect16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
 {
     WND* wndPtr = WIN_FindWndPtr( hwnd );
+    HBRUSH16 retvalue;
 
     if((ctlType <= CTLCOLOR_MAX) && wndPtr )
     {
 	WND* parent;
-	if( wndPtr->dwStyle & WS_POPUP ) parent = wndPtr->owner;
-	else parent = wndPtr->parent;
+	if( wndPtr->dwStyle & WS_POPUP ) parent = WIN_LockWndPtr(wndPtr->owner);
+	else parent = WIN_LockWndPtr(wndPtr->parent);
 	if( !parent ) parent = wndPtr;
-	return (HBRUSH16)PAINT_GetControlBrush( parent->hwndSelf, hwnd, hdc, ctlType );
+	retvalue = (HBRUSH16)PAINT_GetControlBrush( parent->hwndSelf, hwnd, hdc, ctlType );
+        WIN_ReleaseWndPtr(parent);
+        goto END;
     }
-    return (HBRUSH16)0;
-}
+    retvalue = (HBRUSH16)0;
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
+    }
 
 
 /***********************************************************************
@@ -290,7 +300,10 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!WIN_IsWindowDrawable( wndPtr, !(flags & RDW_FRAME) ) )
+    {
+        WIN_ReleaseWndPtr(wndPtr);
         return TRUE;  /* No redraw needed */
+    }
 
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)
@@ -440,13 +453,18 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     {
         if ( hrgnUpdate || rectUpdate )
 	{
-	   if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 ))) return TRUE;
+            if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 )))
+	{
+                WIN_ReleaseWndPtr(wndPtr);
+                return TRUE;
+            }
 	   if( !hrgnUpdate )
            {
 	        control |= (RDW_C_DELETEHRGN | RDW_C_USEHRGN);
  	        if( !(hrgnUpdate = CreateRectRgnIndirect( rectUpdate )) )
                 {
                     DeleteObject( hrgn );
+                    WIN_ReleaseWndPtr(wndPtr);
                     return TRUE;
                 }
            }
@@ -454,7 +472,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	   {
 		for (ppWnd = list; *ppWnd; ppWnd++)
 		{
-		    wndPtr = *ppWnd;
+		    WIN_UpdateWndPtr(&wndPtr,*ppWnd);
 		    if (!IsWindow(wndPtr->hwndSelf)) continue;
 		    if (wndPtr->dwStyle & WS_VISIBLE)
 		    {
@@ -470,7 +488,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 			}
 		    }
 		}
-		HeapFree( SystemHeap, 0, list );
+                WIN_ReleaseWinArray(list);
 	   }
 	   DeleteObject( hrgn );
 	   if (control & RDW_C_DELETEHRGN) DeleteObject( hrgnUpdate );
@@ -481,15 +499,16 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	    {
 		for (ppWnd = list; *ppWnd; ppWnd++)
 		{
-		    wndPtr = *ppWnd;
+		    WIN_UpdateWndPtr(&wndPtr,*ppWnd);
 		    if (IsWindow( wndPtr->hwndSelf ))
 			PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
 		}
-	        HeapFree( SystemHeap, 0, list );
+                WIN_ReleaseWinArray(list);
 	    }
 	}
 
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
 
@@ -632,6 +651,7 @@ BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
+    BOOL retvalue;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
 
@@ -640,7 +660,11 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	if (wndPtr->hrgnUpdate > 1)
 	{
 	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
+            if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR)
+            {
+                retvalue = FALSE;
+                goto END;
+            }
 	    GetRgnBox( hrgn, rect );
 	    DeleteObject( hrgn );
 	    if (wndPtr->class->style & CS_OWNDC)
@@ -653,7 +677,10 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	}
 	else SetRectEmpty( rect );
     }
-    return (wndPtr->hrgnUpdate > 1);
+    retvalue = (wndPtr->hrgnUpdate > 1);
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -678,10 +705,13 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
     if (wndPtr->hrgnUpdate <= 1)
     {
         SetRectRgn( hrgn, 0, 0, 0, 0 );
-        return NULLREGION;
+        retval = NULLREGION;
+        goto END;
     }
     retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
     if (erase) RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -719,8 +749,10 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
 	ret = DCE_ExcludeRgn( hdc, wndPtr, hrgn );
 	DeleteObject( hrgn );
+        WIN_ReleaseWndPtr(wndPtr);
 	return ret;
     } 
+    WIN_ReleaseWndPtr(wndPtr);
     return GetClipBox( hdc, &rect );
 }
 

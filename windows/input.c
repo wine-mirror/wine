@@ -335,6 +335,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
         WND* wndPtr = WIN_FindWndPtr( capturePrev );
         if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
             SendMessageA( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
+            WIN_ReleaseWndPtr(wndPtr);
     }
 }
 
@@ -345,6 +346,7 @@ CLEANUP:
     if ( pCurMsgQ )
         QUEUE_Unlock( pCurMsgQ );
     
+    WIN_ReleaseWndPtr(wndPtr);
     return capturePrev;
 }
 
@@ -598,6 +600,8 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
 	    iStat = (hMenu) ? GetMenuState(hMenu,
 					    cmd, MF_BYCOMMAND) : -1 ;
 
+            WIN_ReleaseWndPtr(wndPtr);
+            
             if (iSysStat!=-1)
             {
               if (iSysStat & (MF_DISABLED|MF_GRAYED))

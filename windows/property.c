@@ -35,9 +35,9 @@ static PROPERTY *PROP_FindProp( HWND hwnd, LPCSTR str )
         {
             if (HIWORD(prop->string))
             {
-                if (!lstrcmpiA( prop->string, str )) return prop;
+                if (!lstrcmpiA( prop->string, str )) goto END;
             }
-            else if (LOWORD(prop->string) == atom) return prop;
+            else if (LOWORD(prop->string) == atom) goto END;
         }
     }
     else  /* atom */
@@ -47,12 +47,15 @@ static PROPERTY *PROP_FindProp( HWND hwnd, LPCSTR str )
         {
             if (HIWORD(prop->string))
             {
-                if (GlobalFindAtomA( prop->string ) == atom) return prop;
+                if (GlobalFindAtomA( prop->string ) == atom) goto END;
             }
-            else if (LOWORD(prop->string) == atom) return prop;
+            else if (LOWORD(prop->string) == atom) goto END;
         }
     }
-    return NULL;
+    prop = NULL;
+END:
+    WIN_ReleaseWndPtr(pWnd);
+    return prop;
 }
 
 
@@ -126,14 +129,21 @@ BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
         /* We need to create it */
         WND *pWnd = WIN_FindWndPtr( hwnd );
         if (!pWnd) return FALSE;
-        if (!(prop = HeapAlloc( SystemHeap, 0, sizeof(*prop) ))) return FALSE;
+        if (!(prop = HeapAlloc( SystemHeap, 0, sizeof(*prop) )))
+        {
+            WIN_ReleaseWndPtr(pWnd);
+            return FALSE;
+        }
         if (!(prop->string = SEGPTR_STRDUP(str)))
         {
             HeapFree( SystemHeap, 0, prop );
+            WIN_ReleaseWndPtr(pWnd);
             return FALSE;
+
         }
         prop->next  = pWnd->pProp;
         pWnd->pProp = prop;
+        WIN_ReleaseWndPtr(pWnd);
     }
     prop->handle = handle;
     return TRUE;
@@ -207,6 +217,7 @@ HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
             else if (LOWORD((*pprop)->string) == atom) break;
         }
     }
+    WIN_ReleaseWndPtr(pWnd);
     if (!*pprop) return 0;
     prop   = *pprop;
     handle = prop->handle;
@@ -275,6 +286,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
         ret = func( hwnd, SEGPTR_GET(prop->string), prop->handle );
         if (!ret) break;
     }
+    WIN_ReleaseWndPtr(pWnd);
     return ret;
 }
 
@@ -320,6 +332,7 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
         ret = func( hwnd, prop->string, prop->handle, lParam );
         if (!ret) break;
     }
+    WIN_ReleaseWndPtr(pWnd);
     return ret;
 }
 
@@ -355,5 +368,6 @@ INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
                         prop->handle, lParam );
         if (!ret) break;
     }
+    WIN_ReleaseWndPtr(pWnd);
     return ret;
 }

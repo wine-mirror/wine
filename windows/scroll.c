@@ -236,7 +236,11 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     RECT rc, cliprc;
     WND*   wnd = WIN_FindWndPtr( hwnd );
 
-    if( !wnd || !WIN_IsWindowDrawable( wnd, TRUE )) return ERROR;
+    if( !wnd || !WIN_IsWindowDrawable( wnd, TRUE ))
+    {
+        retVal = ERROR;
+        goto END;
+    }
 
     GetClientRect(hwnd, &rc);
     if (rect) IntersectRect(&rc, &rc, rect);
@@ -307,7 +311,7 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	{
 	    RECT	r;
 	    WND* 	w;
-	    for( w = wnd->child; w; w = w->next )
+	    for( w =WIN_LockWndPtr(wnd->child); w; WIN_UpdateWndPtr(&w, w->next))
 	    {
 		 CONV_RECT16TO32( &w->rectWindow, &r );
 	         if( IntersectRect(&r, &r, &rc) )
@@ -332,5 +336,7 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	DeleteObject( hrgnClip );
         DeleteObject( hrgnTemp );
     }
+END:
+    WIN_ReleaseWndPtr(wnd);
     return retVal;
 }

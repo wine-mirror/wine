@@ -54,6 +54,7 @@ HWND ICONTITLE_Create( WND* wnd )
 	wndPtr->owner = wnd;	/* MDI depends on this */
 	wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
 	if( wnd->dwStyle & WS_DISABLED ) wndPtr->dwStyle |= WS_DISABLED;
+        WIN_ReleaseWndPtr(wndPtr);
 	return hWnd;
     }
     return 0;
@@ -187,24 +188,25 @@ static BOOL ICONTITLE_Paint( WND* wnd, HDC hDC, BOOL bActive )
 LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
                                  WPARAM wParam, LPARAM lParam )
 {
+    LRESULT retvalue;
     WND *wnd = WIN_FindWndPtr( hWnd );
 
     switch( msg )
     {
 	case WM_NCHITTEST:
-	     return HTCAPTION;
-
+	     retvalue = HTCAPTION;
+             goto END;
 	case WM_NCMOUSEMOVE:
 	case WM_NCLBUTTONDBLCLK:
-	     return SendMessageA( wnd->owner->hwndSelf, msg, wParam, lParam );	
-
+	     retvalue = SendMessageA( wnd->owner->hwndSelf, msg, wParam, lParam );	
+             goto END;
 	case WM_ACTIVATE:
 	     if( wParam ) SetActiveWindow( wnd->owner->hwndSelf );
 	     /* fall through */
 
 	case WM_CLOSE:
-	     return 0;
-
+	     retvalue = 0;
+             goto END;
 	case WM_SHOWWINDOW:
 	     if( wnd && wParam )
 	     {
@@ -220,25 +222,30 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
 				     titleRect.right, titleRect.bottom, 
 				     SWP_NOACTIVATE | SWP_NOZORDER );
 	     }
-	     return 0;
-
+	     retvalue = 0;
+             goto END;
 	case WM_ERASEBKGND:
 	     if( wnd )
 	     {
-		 WND* iconWnd = wnd->owner;
+		 WND* iconWnd = WIN_LockWndPtr(wnd->owner);
 
 		 if( iconWnd->dwStyle & WS_CHILD )
 		     lParam = SendMessageA( iconWnd->hwndSelf, WM_ISACTIVEICON, 0, 0 );
 		 else
 		     lParam = (iconWnd->hwndSelf == GetActiveWindow16());
 
+                 WIN_ReleaseWndPtr(iconWnd);
 		 if( ICONTITLE_Paint( wnd, (HDC)wParam, (BOOL)lParam ) )
 		     ValidateRect( hWnd, NULL );
-	         return 1;
+                 retvalue = 1;
+                 goto END;
 	     }
     }
 
-    return DefWindowProcA( hWnd, msg, wParam, lParam );
+    retvalue = DefWindowProcA( hWnd, msg, wParam, lParam );
+END:
+    WIN_ReleaseWndPtr(wnd);
+    return retvalue;
 }
 
 

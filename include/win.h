@@ -139,8 +139,11 @@ extern void   WIN_UnlockWnds();
 extern int    WIN_SuspendWndsLock();
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
 extern WND*   WIN_FindWndPtr( HWND hwnd );
+extern WND*   WIN_LockWndPtr(WND *wndPtr);
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
+extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
 extern WND*   WIN_GetDesktop(void);
+extern void   WIN_ReleaseDesktop(void);
 extern void   WIN_DumpWindow( HWND hwnd );
 extern void   WIN_WalkWindows( HWND hwnd, int indent );
 extern BOOL WIN_UnlinkWindow( HWND hwnd );
@@ -153,6 +156,7 @@ extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
+extern void   WIN_ReleaseWinArray(WND **wndArray);
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */

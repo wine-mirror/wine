@@ -653,6 +653,8 @@ const char *SPY_GetWndName( HWND hwnd )
 	if( *src ) for( n = 0; n < 3; n++ ) *(p++)='.';
 	*(p++) = postfix;
 	*(p++) = '\0';
+        WIN_ReleaseWndPtr(pWnd);
+
     }
     else lstrcpyA( wnd_buffer, "\"NULL\"" );
     return wnd_buffer;

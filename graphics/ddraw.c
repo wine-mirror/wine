@@ -2671,7 +2671,11 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	/* This will be overwritten in the case of Full Screen mode.
 	   Windowed games could work with that :-) */
 	if (hwnd)
-	this->d.drawable  = X11DRV_WND_GetXWindow(WIN_FindWndPtr(hwnd));
+        {
+            WND *tmpWnd = WIN_FindWndPtr(hwnd);
+            this->d.drawable  = X11DRV_WND_GetXWindow(tmpWnd);
+            WIN_ReleaseWndPtr(tmpWnd);
+        }
 
 	return DD_OK;
 }
@@ -2985,6 +2989,7 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
 	char	buf[200];
+        WND *tmpWnd;
 
 	TRACE(ddraw, "(%p)->SetDisplayMode(%ld,%ld,%ld)\n",
 		      this, width, height, depth);
@@ -3062,11 +3067,17 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	_common_IDirectDraw_SetDisplayMode(this);
 
+        tmpWnd = WIN_FindWndPtr(this->d.window);
 	this->d.paintable = 1;
-        this->d.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(this->d.window)->pDriverData)->window;  
+        this->d.drawable  = ((X11DRV_WND_DATA *) tmpWnd->pDriverData)->window;
         /* We don't have a context for this window. Host off the desktop */
+
         if( !this->d.drawable )
+        {
            this->d.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
+            WIN_ReleaseDesktop();
+        }
+        WIN_ReleaseWndPtr(tmpWnd);
 	return DD_OK;
 }
 
@@ -4068,11 +4079,15 @@ LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
         if( !ret )
         {
+          WND *tmpWnd =WIN_FindWndPtr(ddraw->d.mainWindow);
           /* We didn't handle the message - give it to the application */
-	  if (ddraw && ddraw->d.mainWindow && WIN_FindWndPtr(ddraw->d.mainWindow)) {
-          	ret = CallWindowProcA( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
+          if (ddraw && ddraw->d.mainWindow && tmpWnd)
+          {
+          	ret = CallWindowProcA(tmpWnd->winproc,
                	                   ddraw->d.mainWindow, msg, wParam, lParam );
 	  }
+          WIN_ReleaseWndPtr(tmpWnd);
+
         }
         
       } else {
@@ -4223,10 +4238,14 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
                           sizeof( LPDIRECTDRAW ); /*  ddrawXlibThisOffset */
 
         /* We can be a child of the desktop since we're really important */
+        /*
+         This code is not useful since hInstance is forced to 0 afterward
         pParentWindow   = WIN_GetDesktop();
 	wc.hInstance	= pParentWindow ? pParentWindow->hwndSelf : 0;
+        */
         wc.hInstance    = 0; 
 
+        
 	wc.hIcon	= 0;
 	wc.hCursor	= (HCURSOR)IDC_ARROWA;
 	wc.hbrBackground= NULL_BRUSH;

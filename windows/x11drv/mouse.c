@@ -154,12 +154,15 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
         HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
         while(hwnd)
         {
-            Window win = X11DRV_WND_FindXWindow( WIN_FindWndPtr( hwnd ) );
+            WND *tmpWnd = WIN_FindWndPtr(hwnd);
+            Window win = X11DRV_WND_FindXWindow(tmpWnd );
             if (win && win!=DefaultRootWindow(display))
                 XDefineCursor( display, win, cursor );
             hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+            WIN_ReleaseWndPtr(tmpWnd);
         }
     }
+    WIN_ReleaseDesktop();
     return TRUE;
 }
 

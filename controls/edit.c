@@ -310,15 +310,21 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case WM_DESTROY:
 		DPRINTF_EDIT_MSG32("WM_DESTROY");
 		EDIT_WM_Destroy(wnd, es);
-		return 0;
+                result = 0;
+                goto END;
 
 	case WM_NCCREATE:
 		DPRINTF_EDIT_MSG32("WM_NCCREATE");
-		return EDIT_WM_NCCreate(wnd, (LPCREATESTRUCTA)lParam);
+                result = EDIT_WM_NCCreate(wnd, (LPCREATESTRUCTA)lParam);
+                goto END;
 	}
 
 	if (!es)
-		return DefWindowProcA(hwnd, msg, wParam, lParam);
+        {
+            result = DefWindowProcA(hwnd, msg, wParam, lParam);
+            goto END;
+        }
+
 
 	EDIT_LockBuffer(wnd, es);
 	switch (msg) {
@@ -633,7 +639,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 			wnd->dwStyle &= ~ES_READONLY;
 			es->style &= ~ES_READONLY;
 		}
-		return 1;
+                result = 1;
  		break;
 
 	case EM_SETWORDBREAKPROC16:
@@ -856,7 +862,10 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 		break;
 	}
 	EDIT_UnlockBuffer(wnd, es, FALSE);
+    END:
+        WIN_ReleaseWndPtr(wnd);
 	return result;
+        
 }
 
 

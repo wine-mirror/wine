@@ -91,6 +91,8 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 	
 	    if( wnd->dwStyle & WS_CLIPCHILDREN ) dce->DCXflags |= DCX_CLIPCHILDREN;
 	    if( wnd->dwStyle & WS_CLIPSIBLINGS ) dce->DCXflags |= DCX_CLIPSIBLINGS;
+
+            WIN_ReleaseWndPtr(wnd);
 	}
 	SetHookFlags16(dce->hDC,DCHF_INVALIDATEVISRGN);
     }
@@ -248,14 +250,18 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 
 		if( wndCurrent && wndCurrent != WIN_GetDesktop() )
 		{
-		    WND* wnd = wndCurrent;
+		    WND* wnd = NULL;
 		    INT xoffset = 0, yoffset = 0;
 
-		    if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) ) continue;
+                    if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) )
+                    {
+                        WIN_ReleaseWndPtr(wndCurrent);
+                        continue;
+                    }
 
 		    /* check if DCE window is within the z-order scope */
 
-		    for( wnd = wndCurrent; wnd; wnd = wnd->parent )
+		    for( wnd = WIN_LockWndPtr(wndCurrent); wnd; WIN_UpdateWndPtr(&wnd,wnd->parent))
 		    {
 			if( wnd == wndScope )
 		 	{
@@ -298,6 +304,8 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 			yoffset += wnd->rectClient.top;
 		    }
 		}
+                WIN_ReleaseWndPtr(wndCurrent);
+                WIN_ReleaseDesktop();
 	    }
 	} /* dce list */
     }
@@ -338,10 +346,13 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 
 	while (wndPtr->dwStyle & WS_CHILD)
 	{
-	    wndPtr = wndPtr->parent;
+	    wndPtr = WIN_LockWndPtr(wndPtr->parent);
 
 	    if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
+            {
+                WIN_ReleaseWndPtr(wndPtr);
 		goto fail;
+            }
 
 	    xoffset += wndPtr->rectClient.left;
 	    yoffset += wndPtr->rectClient.top;
@@ -354,12 +365,17 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 		(lprect->right <= wndPtr->rectClient.left) ||
 		(lprect->top >= wndPtr->rectClient.bottom) ||
 		(lprect->bottom <= wndPtr->rectClient.top) )
+            {
+                WIN_ReleaseWndPtr(wndPtr);
 		goto fail;
+            }
 
 	    lprect->left = MAX( lprect->left, wndPtr->rectClient.left );
 	    lprect->right = MIN( lprect->right, wndPtr->rectClient.right );
 	    lprect->top = MAX( lprect->top, wndPtr->rectClient.top );
 	    lprect->bottom = MIN( lprect->bottom, wndPtr->rectClient.bottom );
+
+            WIN_ReleaseWndPtr(wndPtr);
 	}
 	OffsetRect( lprect, -xoffset, -yoffset );
 	return TRUE;
@@ -386,9 +402,13 @@ static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
     if( pWndStart->pDriver->pIsSelfClipping( pWndStart ) )
         return TRUE; /* The driver itself will do the clipping */
 
-    for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
+    for (; pWndStart != pWndEnd; pWndStart = WIN_LockWndPtr(pWndStart->next))
     {
-	if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
+        if( !(pWndStart->dwStyle & WS_VISIBLE) )
+        {
+            WIN_ReleaseWndPtr(pWndStart);
+            continue;
+        }
 	    
 	rect.left = pWndStart->rectWindow.left + x;
 	rect.top = pWndStart->rectWindow.top + y;
@@ -397,7 +417,11 @@ static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
 
 	if( IntersectRect( &rect, &rect, lpRect ))
 	    if(!REGION_UnionRectWithRgn( hrgnClip, &rect ))
+            {
+                WIN_ReleaseWndPtr(pWndStart);
 		break;
+    }
+        WIN_ReleaseWndPtr(pWndStart);
     }
     return (pWndStart == pWndEnd);
 }
@@ -500,7 +524,7 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
 
 		while (wndPtr->dwStyle & WS_CHILD)
 		{
-		    wndPtr = wndPtr->parent;
+		    WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
 		    xoffset -= wndPtr->rectClient.left;
 		    yoffset -= wndPtr->rectClient.top;
 		    if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
@@ -526,6 +550,8 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
     }
     else
 	hrgnVis = CreateRectRgn(0, 0, 0, 0); /* empty */
+    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleaseWndPtr(childWnd);
     return hrgnVis;
 }
 
@@ -565,6 +591,7 @@ INT16 DCE_ExcludeRgn( HDC hDC, WND* wnd, HRGN hRgn )
 	  wnd = WIN_FindWndPtr(dce->hwndCurrent);
 	  pt.x += wnd->rectClient.left - wnd->rectWindow.left;
 	  pt.y += wnd->rectClient.top - wnd->rectWindow.top;
+          WIN_ReleaseWndPtr(wnd);
       }
   }
   else return ERROR;
@@ -719,14 +746,22 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    }
 	}
     }
-    if (!dce) return 0;
+    if (!dce)
+    {
+        hdc = 0;
+        goto END;
+    }
 
     dce->hwndCurrent = hwnd;
     dce->hClipRgn = 0;
     dce->DCXflags = dcxFlags | (flags & DCX_WINDOWPAINT) | DCX_DCEBUSY;
     hdc = dce->hDC;
     
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )))
+    {
+        hdc = 0;
+        goto END;
+    }
     bUpdateVisRgn = bUpdateVisRgn || (dc->w.flags & DC_DIRTY);
 
     /* recompute visible region */
@@ -738,7 +773,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
 	if (flags & DCX_PARENTCLIP)
         {
-            WND *parentPtr = wndPtr->parent;
+            WND *parentPtr = WIN_LockWndPtr(wndPtr->parent);
 
 	    if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
 	    {
@@ -759,6 +794,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    }
 	    else
 		hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
+            WIN_ReleaseWndPtr(parentPtr);
         }
         else 
 	    if ((hwnd == GetDesktopWindow()) &&
@@ -801,6 +837,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     TRACE(dc, "(%04x,%04x,0x%lx): returning %04x\n", 
 	       hwnd, hrgnClip, flags, hdc);
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return hdc;
 }
 

@@ -215,6 +215,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                             SendMessageA( wnd->parent->hwndSelf, 
                                             CB_SHOWDROPDOWN, FALSE, 0 );
                     }
+                    WIN_ReleaseWndPtr(wnd);
                 }
             }
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
@@ -287,6 +288,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
+                WIN_ReleaseWndPtr(wndPtr);
                 return DEFDLG_Proc( (HWND)hwnd, msg, 
                                     (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -296,9 +298,11 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                 break;
 
             default:
+                WIN_ReleaseWndPtr(wndPtr);
                 return DefWindowProc16( hwnd, msg, wParam, lParam );
         }
     }   
+    WIN_ReleaseWndPtr(wndPtr);
     return DEFDLG_Epilog(dlgInfo, msg, result);
 }
 
@@ -344,6 +348,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
+                 WIN_ReleaseWndPtr(wndPtr);
                  return DEFDLG_Proc( (HWND)hwnd, msg,
                                      (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -353,9 +358,11 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg,
                  break;
 
             default:
+                 WIN_ReleaseWndPtr(wndPtr);
                  return DefWindowProcA( hwnd, msg, wParam, lParam );
         }
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return DEFDLG_Epilog(dlgInfo, msg, result);
 }
 
@@ -401,6 +408,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
+                 WIN_ReleaseWndPtr(wndPtr);
                  return DEFDLG_Proc( (HWND)hwnd, msg,
                                      (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -410,8 +418,10 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam,
                  break;
 
             default:
+                 WIN_ReleaseWndPtr(wndPtr);
                  return DefWindowProcW( hwnd, msg, wParam, lParam );
         }
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return DEFDLG_Epilog(dlgInfo, msg, result);
 }

@@ -682,8 +682,12 @@ LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	break;
       /*If we released the mouse and our buddy is an edit */
       /* we must select all text in it.                   */
-      if(WIDGETS_IsControl(WIN_FindWndPtr(infoPtr->Buddy), BIC32_EDIT))
-	SendMessageA(infoPtr->Buddy, EM_SETSEL, 0, MAKELONG(0, -1));
+      {
+          WND *tmpWnd = WIN_FindWndPtr(infoPtr->Buddy);
+          if(WIDGETS_IsControl(tmpWnd, BIC32_EDIT))
+              SendMessageA(infoPtr->Buddy, EM_SETSEL, 0, MAKELONG(0, -1));
+          WIN_ReleaseWndPtr(tmpWnd);
+      }
       break;
       
     case WM_LBUTTONDOWN:

@@ -208,9 +208,8 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
     if( !selectionAcquired && 
 	(wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
     {
-	owner = X11DRV_WND_FindXWindow( 
-	    WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup() ) 
-	);
+        WND *tmpWnd = WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup() );
+	owner = X11DRV_WND_FindXWindow(tmpWnd );
 
 	TSXSetSelectionOwner(display,XA_PRIMARY, owner, CurrentTime);
 	if( TSXGetSelectionOwner(display,XA_PRIMARY) == owner )
@@ -221,6 +220,7 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
 	    TRACE(clipboard,"Grabbed X selection, owner=(%08x)\n", 
 						(unsigned) owner);
 	}
+        WIN_ReleaseWndPtr(tmpWnd);
     }
 }
 
@@ -230,6 +230,7 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat)
 BOOL X11DRV_CLIPBOARD_RequestSelection()
 {
     HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
+    WND *tmpWnd = WIN_FindWndPtr(hWnd);
 
     if( selectionAcquired )
       return TRUE;
@@ -244,8 +245,10 @@ BOOL X11DRV_CLIPBOARD_RequestSelection()
 
     TSXConvertSelection(display, XA_PRIMARY, XA_STRING,
 			TSXInternAtom(display, "PRIMARY_TEXT", False),
-			X11DRV_WND_FindXWindow( WIN_FindWndPtr( hWnd ) ),
+			X11DRV_WND_FindXWindow(tmpWnd ),
 			CurrentTime);
+    
+    WIN_ReleaseWndPtr(tmpWnd);
 
   /* wait until SelectionNotify is processed 
    *

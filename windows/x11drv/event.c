@@ -1205,6 +1205,8 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
       if( p_data ) TSXFree(p_data);  
       
     } /* WS_EX_ACCEPTFILES */
+
+  WIN_ReleaseWndPtr(pDropWnd);
 }
 
 /**********************************************************************
@@ -1349,6 +1351,7 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
 			 (WPARAM16)hDrop.h16, 0L );
 	}
       }
+      WIN_ReleaseWndPtr(pDropWnd);
     }
     if( p_data ) TSXFree(p_data);  
   }
@@ -1413,9 +1416,11 @@ void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 {
   HWND hwndFocus = GetFocus();
+  WND *tmpWnd = WIN_FindWndPtr(hwndFocus);
   
   if (hwndFocus && IsChild( hWnd, hwndFocus ))
-    X11DRV_WND_SetFocus( WIN_FindWndPtr( hwndFocus ) );
+      X11DRV_WND_SetFocus(tmpWnd );
+  WIN_ReleaseWndPtr(tmpWnd);
   
   return;
 }

@@ -924,6 +924,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
                                        smsg->lParam );
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
+        WIN_ReleaseWndPtr(wndPtr);
 	TRACE(sendmsg,"result =  %08x\n", (unsigned)result );
     }
     else WARN(sendmsg, "\trcm: bad hWnd\n");
@@ -1090,13 +1091,17 @@ static void QUEUE_WakeSomeone( UINT message )
 	 if( (wndPtr = WIN_FindWndPtr( hwnd )) ) 
            {
                hQueue = wndPtr->hmemTaskQ;
+               WIN_ReleaseWndPtr(wndPtr);
            }
     }
 
     if( (hwnd = GetSysModalWindow16()) )
     {
       if( (wndPtr = WIN_FindWndPtr( hwnd )) )
+        {
             hQueue = wndPtr->hmemTaskQ;
+            WIN_ReleaseWndPtr(wndPtr);
+        }
     }
 
     if (hQueue)
@@ -1309,10 +1314,13 @@ void WINAPI PostQuitMessage( INT exitCode )
  */
 HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 {
+    HTASK16 retvalue;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return 0;
-    return QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+    retvalue = QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 /***********************************************************************
@@ -1321,12 +1329,14 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
     HTASK16 htask;
+    DWORD retvalue;
     TDB	*tdb;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return 0;
     htask=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+    WIN_ReleaseWndPtr(wndPtr);
     tdb = (TDB*)GlobalLock16(htask);
     if (!tdb || !tdb->thdb) return 0;
     if (process) *process = (DWORD)tdb->thdb->process->server_pid;

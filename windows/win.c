@@ -63,9 +63,9 @@ static int ilockCounter = 0;
  */
 void WIN_LockWnds()
 {
+/*
     EnterCriticalSection(&WIN_CritSection);
-    ilockCounter++;
-    TRACE(win,"All windows hinstances have been locked (lock #%i)\n",ilockCounter);
+*/
 }
 
 /***********************************************************************
@@ -74,19 +74,10 @@ void WIN_LockWnds()
  *  Unlocks access to all WND structures
  */
 void WIN_UnlockWnds()
-{
-
-    TRACE(win,"Lock #%i been unlocked\n",ilockCounter+1);
-    ilockCounter--;
-    if(ilockCounter == 0)
     {
+/*
         LeaveCriticalSection(&WIN_CritSection);
-        TRACE(win,"All windows hinstances have been unlocked\n");
-    }
-    else if(ilockCounter < 0)
-    {
-        ERR(win,"Negative lock reference ==> missing call to  WIN_Lock!\n");
-    }
+*/
 }
 /***********************************************************************
  *           WIN_SuspendWndsLock
@@ -96,12 +87,12 @@ void WIN_UnlockWnds()
  */
 int WIN_SuspendWndsLock()
 {
-    int isuspendedLocks = ilockCounter;
-    ilockCounter = 0;
+/*
+    int isuspendedLocks = WIN_CritSection.RecursionCount;
+    WIN_CritSection.RecursionCount = 0;
     LeaveCriticalSection(&WIN_CritSection);
-    TRACE(win,"All windows hinstances locks have been suspended\n");
     return isuspendedLocks;
-
+*/
 }
 
 /***********************************************************************
@@ -109,10 +100,12 @@ int WIN_SuspendWndsLock()
  *
  *  Restore the suspended locks on WND structures
  */
-void WIN_Unlock(int ipreviousLocks)
+void WIN_RestoreWndslock(int ipreviousLocks)
 {
+/*
     EnterCriticalSection(&WIN_CritSection);
-    ilockCounter = ipreviousLocks;
+    WIN_CritSection.RecursionCount = ipreviousLocks;
+*/
 }
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -126,8 +119,8 @@ WND * WIN_FindWndPtr( HWND hwnd )
     if (!hwnd || HIWORD(hwnd)) goto error2;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     /* Lock all WND structures for thread safeness
-     WIN_LockWnds();
-     and increment destruction monitoring value
+    WIN_LockWnds(ptr);
+    and increment destruction monitoring
      ptr->irefCount++;
      */
     if (ptr->dwMagic != WND_MAGIC) goto error;
@@ -140,7 +133,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     return ptr;
  error:
     /* Unlock all WND structures for thread safeness
-     WIN_UnlockWnds();
+    WIN_UnlockWnds(ptr);
      and decrement destruction monitoring value
      ptr->irefCount--;
      */
@@ -151,6 +144,25 @@ error2:
 }
 
 /***********************************************************************
+ *           WIN_LockWndPtr
+ *
+ * Use in case the wnd ptr is not initialized with WIN_FindWndPtr
+ * but by initWndPtr;
+ * Returns the locked initialisation pointer
+ */
+WND *WIN_LockWndPtr(WND *initWndPtr)
+{
+
+    if(!initWndPtr) return 0;
+    /*
+    WIN_LockWnds();
+    initWndPtr->irefCount++;
+    */
+    return initWndPtr;
+
+}
+        
+/***********************************************************************
  *           WIN_ReleaseWndPtr
  *
  * Release the pointer to the WND structure.
@@ -158,6 +170,7 @@ error2:
 void WIN_ReleaseWndPtr(WND *wndPtr)
 {
 
+    if(!wndPtr) return;
     /*Decrement destruction monitoring value
      wndPtr->irefCount--;
      Check if it's time to release the memory
@@ -167,10 +180,23 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
      }
      unlock all WND structures for thread safeness
      WIN_UnlockWnds();
-
      */    
 }
 
+/***********************************************************************
+ *           WIN_ReleaseWndPtr
+ *
+ * Updates the value of oldPtr to newPtr.
+ */
+void WIN_UpdateWndPtr(WND **oldPtr, WND *newPtr)
+{
+    WND *tmpWnd = NULL;
+    
+    tmpWnd = WIN_LockWndPtr(newPtr);
+    WIN_ReleaseWndPtr(*oldPtr);
+    *oldPtr = tmpWnd;
+
+}
 
 /***********************************************************************
  *           WIN_DumpWindow
@@ -216,6 +242,7 @@ void WIN_DumpWindow( HWND hwnd )
         DUMP( "\n" );
     }
     DUMP( "\n" );
+    WIN_ReleaseWndPtr(ptr);
 }
 
 
@@ -229,7 +256,8 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     WND *ptr;
     char className[80];
 
-    ptr = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop;
+    ptr = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_GetDesktop();
+
     if (!ptr)
     {
         WARN( win, "Invalid window handle %04x\n", hwnd );
@@ -253,8 +281,10 @@ void WIN_WalkWindows( HWND hwnd, int indent )
                  ptr->text?ptr->text:"<null>");
         
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
-        ptr = ptr->next;
+        WIN_UpdateWndPtr(&ptr,ptr->next);
+        
     }
+
 }
 
 /***********************************************************************
@@ -266,10 +296,16 @@ BOOL WIN_UnlinkWindow( HWND hwnd )
 {    
     WND *wndPtr, **ppWnd;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd )) || !wndPtr->parent) return FALSE;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    else if(!wndPtr->parent)
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return FALSE;
+    }
     ppWnd = &wndPtr->parent->child;
     while (*ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
     *ppWnd = wndPtr->next;
+    WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
 
@@ -285,8 +321,12 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
 {    
     WND *wndPtr, **ppWnd;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd )) || !wndPtr->parent) return FALSE;
-
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    else if(!wndPtr->parent)
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return FALSE;
+    }
     if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
     {
         ppWnd = &wndPtr->parent->child;  /* Point to first sibling hwnd */
@@ -296,11 +336,17 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
     else  /* Normal case */
     {
 	WND * afterPtr = WIN_FindWndPtr( hwndInsertAfter );
-	if (!afterPtr) return FALSE;
+            if (!afterPtr)
+            {
+                WIN_ReleaseWndPtr(wndPtr);
+                return FALSE;
+            }
         ppWnd = &afterPtr->next;
+        WIN_ReleaseWndPtr(afterPtr);
     }
     wndPtr->next = *ppWnd;
     *ppWnd = wndPtr;
+    WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
 
@@ -313,32 +359,35 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
 HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
 {
     HWND hwndRet;
-    WND *pWnd = pWndDesktop;
+    WND *pWnd;
 
     /* Note: the desktop window never gets WM_PAINT messages 
      * The real reason why is because Windows DesktopWndProc
      * does ValidateRgn inside WM_ERASEBKGND handler.
      */
 
-    pWnd = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop->child;
+    pWnd = hwnd ? WIN_FindWndPtr(hwnd) : WIN_LockWndPtr(pWndDesktop->child);
 
-    for ( ; pWnd ; pWnd = pWnd->next )
+    for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
         if (!(pWnd->dwStyle & WS_VISIBLE))
         {
             TRACE(win, "skipping window %04x\n",
                          pWnd->hwndSelf );
-            continue;
         }
-        if ((pWnd->hmemTaskQ == hQueue) &&
+        else if ((pWnd->hmemTaskQ == hQueue) &&
             (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))) break;
         
-        if (pWnd->child )
+        else if (pWnd->child )
             if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf, hQueue )) )
-                return hwndRet;
+                goto end;
     }
     
-    if (!pWnd) return 0;
+    if(!pWnd)
+    {
+        hwndRet = 0;
+        goto end;
+    }
     
     hwndRet = pWnd->hwndSelf;
 
@@ -346,10 +395,12 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
     while (pWnd && ((pWnd->dwExStyle & WS_EX_TRANSPARENT) ||
                     !(pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))))
     {
-        pWnd = pWnd->next;
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
     if (pWnd) hwndRet = pWnd->hwndSelf;
     TRACE(win,"found %04x\n",hwndRet);
+  end:
+    WIN_ReleaseWndPtr(pWnd);
     return hwndRet;
 }
 
@@ -358,6 +409,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window. "Internals" p.358
+ * returns a locked wndPtr->next
  */
 static WND* WIN_DestroyWindow( WND* wndPtr )
 {
@@ -372,9 +424,12 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 #endif  /* CONFIG_IPC */
 	
     /* free child windows */
-
+    WIN_LockWndPtr(wndPtr->child);
     while ((pWnd = wndPtr->child))
+    {
         wndPtr->child = WIN_DestroyWindow( pWnd );
+        WIN_ReleaseWndPtr(pWnd);
+    }
 
     SendMessageA( wndPtr->hwndSelf, WM_NCDESTROY, 0, 0);
 
@@ -431,7 +486,8 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     wndPtr->hwndSelf = 0;
     wndPtr->class->cWindows--;
     wndPtr->class = NULL;
-    pWnd = wndPtr->next;
+
+    WIN_UpdateWndPtr(&pWnd,wndPtr->next);
 
     wndPtr->pDriver->pFinalize(wndPtr);
     USER_HEAP_FREE( hwnd );
@@ -450,7 +506,7 @@ BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
 
     if (hNew)  /* Set a new queue */
     {
-        for (wnd = wnd->child; (wnd); wnd = wnd->next)
+        for (wnd = WIN_LockWndPtr(wnd->child); (wnd);WIN_UpdateWndPtr(&wnd,wnd->next))
         {
             if (wnd->hmemTaskQ == hQueue)
             {
@@ -458,14 +514,17 @@ BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
                 ret = TRUE;
             }
             if (wnd->child)
+            {
                 ret |= WIN_ResetQueueWindows( wnd, hQueue, hNew );
         }
+    }
     }
     else  /* Queue is being destroyed */
     {
         while (wnd->child)
         {
-            WND *tmp = wnd->child;
+            WND *tmp = WIN_LockWndPtr(wnd->child);
+            WND *tmp2;
             ret = FALSE;
             while (tmp)
             {
@@ -475,11 +534,16 @@ BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
                     ret = TRUE;
                     break;
                 }
-                if (tmp->child && WIN_ResetQueueWindows(tmp->child,hQueue,0))
+                tmp2 = WIN_LockWndPtr(tmp->child);
+                if (tmp2 && WIN_ResetQueueWindows(tmp2,hQueue,0))
                     ret = TRUE;
                 else
-                    tmp = tmp->next;
+                {
+                    WIN_UpdateWndPtr(&tmp,tmp->next);
+                }
+                WIN_ReleaseWndPtr(tmp2);
             }
+            WIN_ReleaseWndPtr(tmp);
             if (!ret) break;
         }
     }
@@ -550,12 +614,18 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
     pWndDesktop->winproc = (WNDPROC16)class->winproc;
+    pWndDesktop->irefCount         = 0;
 
     /* FIXME: How do we know if it should be Unicode or not */
     if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop, class, FALSE))
       return FALSE;
     
     SendMessageA( hwndDesktop, WM_NCCREATE, 0, 0 );
+
+    /* Initialisation of the critical section for thread safeness
+     InitializeCriticalSection(&WIN_CritSection);
+     MakeCriticalSectionGlobal(&WIN_CritSection);
+     */
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
 }
@@ -571,6 +641,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 {
     CLASS *classPtr;
     WND *wndPtr;
+    HWND retvalue;
     HWND16 hwnd, hwndLinkAfter;
     POINT maxSize, maxPos, minTrack, maxTrack;
     LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
@@ -649,7 +720,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Fill the window structure */
 
-    wndPtr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
+    wndPtr = WIN_LockWndPtr((WND *) USER_HEAP_LIN_ADDR( hwnd ));
     wndPtr->next  = NULL;
     wndPtr->child = NULL;
 
@@ -657,6 +728,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     {
         wndPtr->parent = WIN_FindWndPtr( cs->hwndParent );
         wndPtr->owner  = NULL;
+        WIN_ReleaseWndPtr(wndPtr->parent);
     }
     else
     {
@@ -664,7 +736,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (!cs->hwndParent || (cs->hwndParent == pWndDesktop->hwndSelf))
             wndPtr->owner = NULL;
         else
+        {
             wndPtr->owner = WIN_GetTopParentPtr(WIN_FindWndPtr(cs->hwndParent));
+            WIN_ReleaseWndPtr(wndPtr->owner);
+    }
     }
 
     wndPtr->pDriver = wndPtr->parent->pDriver;
@@ -712,7 +787,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	    TRACE(win, "CBT-hook returned 0\n");
 	    wndPtr->pDriver->pFinalize(wndPtr);
 	    USER_HEAP_FREE( hwnd );
-	    return 0;
+            retvalue =  0;
+            goto end;
 	}
     }
 
@@ -764,7 +840,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->rectClient        = wndPtr->rectWindow;
 
     if(!wndPtr->pDriver->pCreateWindow(wndPtr, classPtr, cs, unicode))
-       return FALSE;
+    {
+        retvalue = FALSE;
+        goto end;
+    }
 
     /* Set the window menu */
 
@@ -853,7 +932,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
 		SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
 				MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
-		if( !IsWindow(hwnd) ) return 0;
+                if( !IsWindow(hwnd) )
+                {
+                    retvalue = 0;
+                    goto end;
+	    }
 	    }
 
             if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
@@ -864,7 +947,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                 HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
 
             TRACE(win, "created window %04x\n", hwnd);
-            return hwnd;
+            retvalue = hwnd;
+            goto end;
         }
         WIN_UnlinkWindow( hwnd );
     }
@@ -873,7 +957,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     WARN(win, "aborted by WM_xxCREATE!\n");
     WIN_DestroyWindow( wndPtr );
-    return 0;
+    retvalue = 0;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1048,11 +1135,11 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 
     if( IsWindow(pWnd->hwndSelf) )
     {
-	WND* pChild = pWnd->child;
+	WND* pChild = WIN_LockWndPtr(pWnd->child);
 	while( pChild )
 	{
 	    WIN_SendDestroyMsg( pChild );
-	    pChild = pChild->next;
+            WIN_UpdateWndPtr(&pChild,pChild->next);
 	}
 	WIN_CheckFocus(pWnd);
     }
@@ -1076,18 +1163,26 @@ BOOL16 WINAPI DestroyWindow16( HWND16 hwnd )
 BOOL WINAPI DestroyWindow( HWND hwnd )
 {
     WND * wndPtr;
+    BOOL retvalue;
 
     TRACE(win, "(%04x)\n", hwnd);
     
       /* Initialization */
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (wndPtr == pWndDesktop) return FALSE; /* Can't destroy desktop */
+    if (wndPtr == pWndDesktop)
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return FALSE; /* Can't destroy desktop */
+    }
 
       /* Call hooks */
 
     if( HOOK_CallHooks16( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
-        return FALSE;
+    {
+        retvalue = FALSE;
+        goto end;
+    }
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
@@ -1101,7 +1196,11 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 	    /* Notify the parent window only */
 	    SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
 			    MAKEWPARAM(WM_DESTROY, wndPtr->wIDmenu), (LPARAM)hwnd );
-	    if( !IsWindow(hwnd) ) return TRUE;
+            if( !IsWindow(hwnd) )
+            {
+                retvalue = TRUE;
+                goto end;
+            }
 	}
 
     CLIPBOARD_GetDriver()->pResetOwner( wndPtr, FALSE ); /* before the window is unmapped */
@@ -1113,7 +1212,11 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
 		        SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|
 		        ((QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
-	if (!IsWindow(hwnd)) return TRUE;
+        if (!IsWindow(hwnd))
+        {
+            retvalue = TRUE;
+            goto end;
+        }
     }
 
       /* Recursively destroy owned windows */
@@ -1125,7 +1228,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       for (;;)
       {
-        WND *siblingPtr = wndPtr->parent->child;  /* First sibling */
+        WND *siblingPtr = WIN_LockWndPtr(wndPtr->parent->child);  /* First sibling */
         while (siblingPtr)
         {
             if (siblingPtr->owner == wndPtr)
@@ -1135,7 +1238,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
                else 
                    siblingPtr->owner = NULL;
 	    }
-            siblingPtr = siblingPtr->next;
+            WIN_UpdateWndPtr(&siblingPtr,siblingPtr->next);
         }
         if (siblingPtr) DestroyWindow( siblingPtr->hwndSelf );
         else break;
@@ -1152,7 +1255,11 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
       /* Send destroy messages */
 
     WIN_SendDestroyMsg( wndPtr );
-    if (!IsWindow(hwnd)) return TRUE;
+    if (!IsWindow(hwnd))
+    {
+        retvalue = TRUE;
+        goto end;
+    }
 
       /* Unlink now so we won't bother with the children later on */
 
@@ -1161,7 +1268,10 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
       /* Destroy the window storage */
 
     WIN_DestroyWindow( wndPtr );
-    return TRUE;
+    retvalue = TRUE;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1180,9 +1290,19 @@ BOOL16 WINAPI CloseWindow16( HWND16 hwnd )
 BOOL WINAPI CloseWindow( HWND hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return FALSE;
+    BOOL retvalue;
+    
+    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD))
+    {
+        retvalue = FALSE;
+        goto end;
+    }
     ShowWindow( hwnd, SW_MINIMIZE );
-    return TRUE;
+    retvalue = TRUE;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
+
 }
 
  
@@ -1215,6 +1335,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
                               LPCSTR title )
 {
     WND *pWnd;
+    HWND retvalue;
     CLASS *pClass = NULL;
 
     if (child)
@@ -1222,17 +1343,33 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
         if (!(pWnd = WIN_FindWndPtr( child ))) return 0;
         if (parent)
         {
-            if (!pWnd->parent || (pWnd->parent->hwndSelf != parent)) return 0;
+            if (!pWnd->parent || (pWnd->parent->hwndSelf != parent))
+            {
+                retvalue = 0;
+                goto end;
+            }
         }
-        else if (pWnd->parent != pWndDesktop) return 0;
-        pWnd = pWnd->next;
+        else if (pWnd->parent != pWndDesktop)
+        {
+            retvalue = 0;
+            goto end;
+        }
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
     else
     {
-        if (!(pWnd = parent ? WIN_FindWndPtr(parent) : pWndDesktop)) return 0;
-        pWnd = pWnd->child;
+        if (!(pWnd = parent ? WIN_FindWndPtr(parent) : WIN_LockWndPtr(pWndDesktop)))
+        {
+            retvalue = 0;
+            goto end;
+        }
+        WIN_UpdateWndPtr(&pWnd,pWnd->child);
     }
-    if (!pWnd) return 0;
+    if (!pWnd)
+    {
+        retvalue = 0;
+        goto end;
+    }
 
     /* For a child window, all siblings will have the same hInstance, */
     /* so we can look for the class once and for all. */
@@ -1240,11 +1377,14 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
     if (className && (pWnd->dwStyle & WS_CHILD))
     {
         if (!(pClass = CLASS_FindClassByAtom( className, pWnd->hInstance )))
-            return 0;
+        {
+            retvalue = 0;
+            goto end;
+        }
     }
 
 
-    for ( ; pWnd; pWnd = pWnd->next)
+    while (pWnd)
     {
         if (className && !(pWnd->dwStyle & WS_CHILD))
         {
@@ -1257,10 +1397,22 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
 
         /* Now check the title */
 
-        if (!title) return pWnd->hwndSelf;
-        if (pWnd->text && !strcmp( pWnd->text, title )) return pWnd->hwndSelf;
+        if (!title)
+        {
+            retvalue = pWnd->hwndSelf;
+            goto end;
     }
-    return 0;
+        if (pWnd->text && !strcmp( pWnd->text, title ))
+        {
+            retvalue = pWnd->hwndSelf;
+            goto end;
+}
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+    }
+    retvalue = 0;
+end:
+    WIN_ReleaseWndPtr(pWnd);
+    return retvalue;
 }
 
 
@@ -1367,10 +1519,19 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
 
 /**********************************************************************
  *           WIN_GetDesktop
+ * returns a locked pointer
  */
 WND *WIN_GetDesktop(void)
 {
-    return pWndDesktop;
+    return WIN_LockWndPtr(pWndDesktop);
+}
+/**********************************************************************
+ *           WIN_ReleaseDesktop
+ * unlock the desktop pointer
+ */
+void WIN_ReleaseDesktop(void)
+{
+    WIN_ReleaseWndPtr(pWndDesktop);
 }
 
 
@@ -1419,6 +1580,7 @@ BOOL16 WINAPI EnableWindow16( HWND16 hwnd, BOOL16 enable )
 BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
     WND *wndPtr;
+    BOOL retvalue;
 
     TRACE(win,"EnableWindow32: ( %x, %d )\n", hwnd, enable);
    
@@ -1428,7 +1590,8 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 	  /* Enable window */
 	wndPtr->dwStyle &= ~WS_DISABLED;
 	SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
-	return TRUE;
+        retvalue = TRUE;
+        goto end;
     }
     else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
     {
@@ -1443,9 +1606,13 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
         }
 	SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
-	return FALSE;
+        retvalue = FALSE;
+        goto end;
     }
-    return ((wndPtr->dwStyle & WS_DISABLED) != 0);
+    retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1464,9 +1631,13 @@ BOOL16 WINAPI IsWindowEnabled16(HWND16 hWnd)
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
     WND * wndPtr; 
+    BOOL retvalue;
 
     if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
-    return !(wndPtr->dwStyle & WS_DISABLED);
+    retvalue = !(wndPtr->dwStyle & WS_DISABLED);
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
+
 }
 
 
@@ -1476,9 +1647,12 @@ BOOL WINAPI IsWindowEnabled(HWND hWnd)
 BOOL WINAPI IsWindowUnicode( HWND hwnd )
 {
     WND * wndPtr; 
+    BOOL retvalue;
 
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
-    return (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
+    retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1496,6 +1670,7 @@ WORD WINAPI GetWindowWord16( HWND16 hwnd, INT16 offset )
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 {
+    WORD retvalue;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     if (offset >= 0)
@@ -1503,9 +1678,11 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
             WARN( win, "Invalid offset %d\n", offset );
-            return 0;
+            retvalue = 0;
+            goto end;
         }
-        return *(WORD *)(((char *)wndPtr->wExtra) + offset);
+        retvalue = *(WORD *)(((char *)wndPtr->wExtra) + offset);
+        goto end;
     }
     switch(offset)
     {
@@ -1513,18 +1690,25 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
     	if (HIWORD(wndPtr->wIDmenu))
     		WARN( win,"GWW_ID: discards high bits of 0x%08x!\n",
                     wndPtr->wIDmenu);
-    	return (WORD)wndPtr->wIDmenu;
+        retvalue = (WORD)wndPtr->wIDmenu;
+        goto end;
     case GWW_HWNDPARENT: 
-    	return GetParent( hwnd );
+    	retvalue =  GetParent(hwnd);
+        goto end;
     case GWW_HINSTANCE:  
     	if (HIWORD(wndPtr->hInstance))
     		WARN(win,"GWW_HINSTANCE: discards high bits of 0x%08x!\n",
                     wndPtr->hInstance);
-   	return (WORD)wndPtr->hInstance;
+        retvalue = (WORD)wndPtr->hInstance;
+        goto end;
     default:
         WARN( win, "Invalid offset %d\n", offset );
-        return 0;
+        retvalue = 0;
+        goto end;
     }
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1533,9 +1717,12 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
  */
 HINSTANCE WIN_GetWindowInstance( HWND hwnd )
 {
+    
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return (HINSTANCE)0;
+    WIN_ReleaseWndPtr(wndPtr);
     return wndPtr->hInstance;
+    
 }
 
 
@@ -1561,7 +1748,8 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
         if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
         {
             WARN( win, "Invalid offset %d\n", offset );
-            return 0;
+            retval = 0;
+            goto end;
         }
         ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
     }
@@ -1569,13 +1757,17 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     {
 	case GWW_ID:        ptr = (WORD *)&wndPtr->wIDmenu; break;
 	case GWW_HINSTANCE: ptr = (WORD *)&wndPtr->hInstance; break;
-	case GWW_HWNDPARENT: return SetParent( hwnd, newval );
+        case GWW_HWNDPARENT: retval = SetParent( hwnd, newval );
+                             goto end;
 	default:
             WARN( win, "Invalid offset %d\n", offset );
-            return 0;
+            retval = 0;
+            goto end;
     }
     retval = *ptr;
     *ptr = newval;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -1587,7 +1779,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  */
 static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 {
-    LONG retval;
+    LONG retvalue;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     if (offset >= 0)
@@ -1595,28 +1787,42 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
             WARN( win, "Invalid offset %d\n", offset );
-            return 0;
+            retvalue = 0;
+            goto end;
         }
-        retval = *(LONG *)(((char *)wndPtr->wExtra) + offset);
+        retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
-            return (LONG)WINPROC_GetProc( (HWINDOWPROC)retval, type );
-        return retval;
+        {
+            retvalue = (LONG)WINPROC_GetProc( (HWINDOWPROC)retvalue, type );
+            goto end;
+    }
+        goto end;
     }
     switch(offset)
     {
-        case GWL_USERDATA:   return wndPtr->userdata;
-        case GWL_STYLE:      return wndPtr->dwStyle;
-        case GWL_EXSTYLE:    return wndPtr->dwExStyle;
-        case GWL_ID:         return (LONG)wndPtr->wIDmenu;
-        case GWL_WNDPROC:    return (LONG)WINPROC_GetProc( wndPtr->winproc,
+        case GWL_USERDATA:   retvalue = wndPtr->userdata;
+                             goto end;
+        case GWL_STYLE:      retvalue = wndPtr->dwStyle;
+                             goto end;
+        case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle;
+                             goto end;
+        case GWL_ID:         retvalue = (LONG)wndPtr->wIDmenu;
+                             goto end;
+        case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc,
                                                            type );
-        case GWL_HWNDPARENT: return GetParent(hwnd);
-        case GWL_HINSTANCE:  return wndPtr->hInstance;
+                             goto end;
+        case GWL_HWNDPARENT: retvalue = GetParent(hwnd);
+                             goto end;
+        case GWL_HINSTANCE:  retvalue = wndPtr->hInstance;
+                             goto end;
         default:
             WARN( win, "Unknown offset %d\n", offset );
     }
-    return 0;
+    retvalue = 0;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1656,7 +1862,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             /* Is this the right error? */
             SetLastError( ERROR_OUTOFMEMORY );
 
-            return 0;
+            retval = 0;
+            goto end;
         }
         ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
@@ -1665,7 +1872,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
             WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval, 
                              type, WIN_PROC_WINDOW );
-            return retval;
+            goto end;
         }
     }
     else switch(offset)
@@ -1674,12 +1881,13 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		ptr = (DWORD*)&wndPtr->wIDmenu;
 		break;
 	case GWL_HINSTANCE:
-		return SetWindowWord( hwnd, offset, newval );
+                retval = SetWindowWord( hwnd, offset, newval );
+                goto end;
 	case GWL_WNDPROC:
 					retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
 		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
 						type, WIN_PROC_WINDOW );
-		return retval;
+		goto end;;
 	case GWL_STYLE:
 	       	style.styleOld = wndPtr->dwStyle;
 		newval &= ~(WS_VISIBLE | WS_CHILD);	/* Some bits can't be changed this way */
@@ -1690,7 +1898,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		wndPtr->dwStyle = style.styleNew;
 		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
-		return style.styleOld;
+                retval = style.styleOld;
+                goto end;
 		    
         case GWL_USERDATA: 
 		ptr = &wndPtr->userdata; 
@@ -1703,7 +1912,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		wndPtr->dwExStyle = newval;
 		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessageA(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
-		return style.styleOld;
+                retval = style.styleOld;
+                goto end;
 
 	default:
             WARN( win, "Invalid offset %d\n", offset );
@@ -1711,10 +1921,13 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             /* Don't think this is right error but it should do */
             SetLastError( ERROR_OUTOFMEMORY );
 
-            return 0;
+            retval = 0;
+            goto end;
     }
     retval = *ptr;
     *ptr = newval;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -1962,8 +2175,14 @@ void WINAPI WIN16_IsWindow16( CONTEXT *context )
  */
 BOOL WINAPI IsWindow( HWND hwnd )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
+    WND * wndPtr;
+    BOOL retvalue;
+    
+    if(!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    retvalue = (wndPtr->dwMagic == WND_MAGIC);
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
+    
 }
 
 
@@ -1981,20 +2200,35 @@ HWND16 WINAPI GetParent16( HWND16 hwnd )
  */
 HWND WINAPI GetParent( HWND hwnd )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if ((!wndPtr) || (!(wndPtr->dwStyle & (WS_POPUP|WS_CHILD)))) return 0;
-    wndPtr = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->parent : wndPtr->owner;
-    return wndPtr ? wndPtr->hwndSelf : 0;
+    WND *wndPtr;
+    HWND retvalue;
+    
+    if(!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    if ((!(wndPtr->dwStyle & (WS_POPUP|WS_CHILD))))
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return 0;
+    }
+    WIN_UpdateWndPtr(&wndPtr,((wndPtr->dwStyle & WS_CHILD) ? wndPtr->parent : wndPtr->owner));
+    retvalue = wndPtr ? wndPtr->hwndSelf : 0;
+
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
+    
 }
 
 /*****************************************************************
  *         WIN_GetTopParent
  *
  * Get the top-level parent for a child window.
+ * returns a locked pointer
  */
 WND* WIN_GetTopParentPtr( WND* pWnd )
 {
-    while( pWnd && (pWnd->dwStyle & WS_CHILD)) pWnd = pWnd->parent;
+    while( pWnd && (pWnd->dwStyle & WS_CHILD))
+    {
+        WIN_UpdateWndPtr(&pWnd,pWnd->parent);
+    }
     return pWnd;
 }
 
@@ -2005,8 +2239,14 @@ WND* WIN_GetTopParentPtr( WND* pWnd )
  */
 HWND WIN_GetTopParent( HWND hwnd )
 {
-    WND *wndPtr = WIN_GetTopParentPtr ( WIN_FindWndPtr( hwnd ) );
-    return wndPtr ? wndPtr->hwndSelf : 0;
+    HWND retvalue;
+    WND *tmpPtr = WIN_FindWndPtr(hwnd);
+    WND *wndPtr = WIN_GetTopParentPtr (tmpPtr );
+    
+    retvalue = wndPtr ? wndPtr->hwndSelf : 0;
+    WIN_ReleaseWndPtr(tmpPtr);
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -2024,18 +2264,26 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
  */
 HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
 {
-  WND *wndPtr = WIN_FindWndPtr( hwndChild );
-  DWORD dwStyle = (wndPtr)?(wndPtr->dwStyle):0;
-  WND *pWndNewParent = 
-    (hwndNewParent) ? WIN_FindWndPtr( hwndNewParent ) : pWndDesktop;
+  WND *wndPtr;
+  DWORD dwStyle;
+  WND *pWndNewParent;
   WND *pWndOldParent;
+  HWND retvalue;
+
+
+  if(!(wndPtr = WIN_FindWndPtr(hwndChild))) return 0;
+
+  dwStyle = wndPtr->dwStyle;
+
+  pWndNewParent = hwndNewParent ? WIN_FindWndPtr(hwndNewParent)
+                                : WIN_LockWndPtr(pWndDesktop);
 
   /* Windows hides the window first, then shows it again
    * including the WM_SHOWWINDOW messages and all */
   if (dwStyle & WS_VISIBLE)
       ShowWindow( hwndChild, SW_HIDE );
 
-  pWndOldParent = (wndPtr)?(*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent):NULL;
+  pWndOldParent = WIN_LockWndPtr((*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent));
 
   /* SetParent32 additionally needs to make hwndChild the topmost window
      in the x-order and send the expected WM_WINDOWPOSCHANGING and
@@ -2046,7 +2294,14 @@ HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
   /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
    * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
-  return pWndOldParent?pWndOldParent->hwndSelf:0;
+  retvalue = pWndOldParent?pWndOldParent->hwndSelf:0;
+
+  WIN_ReleaseWndPtr(pWndOldParent);
+  WIN_ReleaseWndPtr(pWndNewParent);
+  WIN_ReleaseWndPtr(wndPtr);
+
+  return retvalue;
+  
 }
 
 /*******************************************************************
@@ -2066,9 +2321,14 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
     WND * wndPtr = WIN_FindWndPtr( child );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
     {
-        wndPtr = wndPtr->parent;
-	if (wndPtr->hwndSelf == parent) return TRUE;
+        WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
+        if (wndPtr->hwndSelf == parent)
+    {
+            WIN_ReleaseWndPtr(wndPtr);
+            return TRUE;
+        }
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return FALSE;
 }
 
@@ -2087,13 +2347,21 @@ BOOL16 WINAPI IsWindowVisible16( HWND16 hwnd )
  */
 BOOL WINAPI IsWindowVisible( HWND hwnd )
 {
+    BOOL retval;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
     {
-        if (!(wndPtr->dwStyle & WS_VISIBLE)) return FALSE;
-        wndPtr = wndPtr->parent;
+        if (!(wndPtr->dwStyle & WS_VISIBLE))
+    {
+            WIN_ReleaseWndPtr(wndPtr);
+            return FALSE;
+        }
+        WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
     }
-    return (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
+    retval = (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
+    WIN_ReleaseWndPtr(wndPtr);
+    return retval;
+    
 }
 
 
@@ -2130,9 +2398,15 @@ HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
  */
 HWND WINAPI GetTopWindow( HWND hwnd )
 {
+    HWND retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (wndPtr && wndPtr->child) return wndPtr->child->hwndSelf;
-    else return 0;
+    if (wndPtr && wndPtr->child)
+    {
+        retval = wndPtr->child->hwndSelf;
+    }
+    else retval = 0;
+    WIN_ReleaseWndPtr(wndPtr);
+    return retval;
 }
 
 
@@ -2150,41 +2424,71 @@ HWND16 WINAPI GetWindow16( HWND16 hwnd, WORD rel )
  */
 HWND WINAPI GetWindow( HWND hwnd, WORD rel )
 {
+    HWND retval;
+    
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     switch(rel)
     {
     case GW_HWNDFIRST:
-        if (wndPtr->parent) return wndPtr->parent->child->hwndSelf;
-	else return 0;
+        if (wndPtr->parent) retval = wndPtr->parent->child->hwndSelf;
+        else retval = 0;
+        goto end;
 	
     case GW_HWNDLAST:
-	if (!wndPtr->parent) return 0;  /* Desktop window */
-	while (wndPtr->next) wndPtr = wndPtr->next;
-        return wndPtr->hwndSelf;
-	
-    case GW_HWNDNEXT:
-        if (!wndPtr->next) return 0;
-	return wndPtr->next->hwndSelf;
-	
-    case GW_HWNDPREV:
-        if (!wndPtr->parent) return 0;  /* Desktop window */
-        wndPtr = wndPtr->parent->child;  /* First sibling */
-        if (wndPtr->hwndSelf == hwnd) return 0;  /* First in list */
+        if (!wndPtr->parent)
+        {
+            retval = 0;  /* Desktop window */
+            goto end;
+        }
         while (wndPtr->next)
         {
-            if (wndPtr->next->hwndSelf == hwnd) return wndPtr->hwndSelf;
-            wndPtr = wndPtr->next;
+            WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
         }
-        return 0;
+        retval = wndPtr->hwndSelf;
+        goto end;
+	
+    case GW_HWNDNEXT:
+        if (!wndPtr->next) retval = 0;
+        else retval = wndPtr->next->hwndSelf;
+        goto end;
+	
+    case GW_HWNDPREV:
+        if (!wndPtr->parent)
+        {
+            retval = 0;  /* Desktop window */
+            goto end;
+        }
+        WIN_UpdateWndPtr(&wndPtr,wndPtr->parent->child); /* First sibling */
+        if (wndPtr->hwndSelf == hwnd)
+        {
+            retval = 0;  /* First in list */
+            goto end;
+        }
+        while (wndPtr->next)
+        {
+            if (wndPtr->next->hwndSelf == hwnd)
+        {
+                retval = wndPtr->hwndSelf;
+                goto end;
+        }
+            WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
+        }
+        retval = 0;
+        goto end;
 	
     case GW_OWNER:
-	return wndPtr->owner ? wndPtr->owner->hwndSelf : 0;
+        retval = wndPtr->owner ? wndPtr->owner->hwndSelf : 0;
+        goto end;
 
     case GW_CHILD:
-	return wndPtr->child ? wndPtr->child->hwndSelf : 0;
+        retval = wndPtr->child ? wndPtr->child->hwndSelf : 0;
+        goto end;
     }
-    return 0;
+    retval = 0;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retval;
 }
 
 
@@ -2211,13 +2515,14 @@ void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
  */
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
-    WND *pWnd = pWndDesktop->child;
+    WND *pWnd;
+    pWnd = WIN_LockWndPtr(pWndDesktop->child);
     while (pWnd)
     {
         if (pWnd->owner && (pWnd->owner->hwndSelf == owner) &&
             (pWnd->dwStyle & WS_POPUP))
             ShowWindow( pWnd->hwndSelf, fShow ? SW_SHOW : SW_HIDE );
-        pWnd = pWnd->next;
+        WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
     return TRUE;
 }
@@ -2237,9 +2542,12 @@ HWND16 WINAPI GetLastActivePopup16( HWND16 hwnd )
 HWND WINAPI GetLastActivePopup( HWND hwnd )
 {
     WND *wndPtr;
+    HWND retval;
     wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr == NULL) return hwnd;
-    return wndPtr->hwndLastActive;
+    if (!wndPtr) return hwnd;
+    retval = wndPtr->hwndLastActive;
+    WIN_ReleaseWndPtr(wndPtr);
+    return retval;
 }
 
 
@@ -2252,9 +2560,11 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
 {
+    /* Future : this function will lock all windows associated with this array */
+    
     WND **list, **ppWnd;
     WND *pWnd;
-    UINT count, skipOwned, skipHidden;
+    UINT count = 0, skipOwned, skipHidden;
     DWORD skipFlags;
 
     skipHidden = bwaFlags & BWA_SKIPHIDDEN;
@@ -2264,11 +2574,19 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
 
     /* First count the windows */
 
-    if (!wndPtr) wndPtr = pWndDesktop;
-    for (pWnd = wndPtr->child, count = 0; pWnd; pWnd = pWnd->next) 
+    if (!wndPtr)
+        wndPtr = WIN_GetDesktop();
+
+    pWnd = WIN_LockWndPtr(wndPtr->child);
+    while (pWnd)
     {
 	if( (pWnd->dwStyle & skipFlags) || (skipOwned && pWnd->owner) ) continue;
-	if( !skipHidden || pWnd->dwStyle & WS_VISIBLE ) count++;
+        if( !skipHidden || pWnd->dwStyle & WS_VISIBLE )
+        {
+            count++;
+            WIN_UpdateWndPtr(&pWnd,pWnd->next);
+    }
+
     }
 
     if( count )
@@ -2277,15 +2595,16 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
 
 	if ((list = (WND **)HeapAlloc( SystemHeap, 0, sizeof(WND *) * (count + 1))))
 	{
-	    for (pWnd = wndPtr->child, ppWnd = list, count = 0; pWnd; pWnd = pWnd->next)
+	    for (pWnd = WIN_LockWndPtr(wndPtr->child), ppWnd = list, count = 0; pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
 	    {
-		if( (pWnd->dwStyle & skipFlags) || (skipOwned && pWnd->owner) ) continue;
-		if( !skipHidden || pWnd->dwStyle & WS_VISIBLE )
+		if( (pWnd->dwStyle & skipFlags) || (skipOwned && pWnd->owner) );
+		else if( !skipHidden || pWnd->dwStyle & WS_VISIBLE )
 		{
 		   *ppWnd++ = pWnd;
 		    count++;
 		}
 	    }
+            WIN_ReleaseWndPtr(pWnd);
 	   *ppWnd = NULL;
 	}
 	else count = 0;
@@ -2294,7 +2613,15 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
     if( pTotal ) *pTotal = count;
     return list;
 }
+/*******************************************************************
+ *           WIN_ReleaseWinArray
+ */
+void WIN_ReleaseWinArray(WND **wndArray)
+{
+    /* Future : this function will also unlock all windows associated with wndArray */
+     HeapFree( SystemHeap, 0, wndArray );
 
+}
 
 /*******************************************************************
  *           EnumWindows16   (USER.54)
@@ -2307,7 +2634,11 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
     /* unpleasant side-effects, for instance if the callback  */
     /* function changes the Z-order of the windows.           */
 
-    if (!(list = WIN_BuildWinArray( pWndDesktop, 0, NULL ))) return FALSE;
+    if (!(list = WIN_BuildWinArray(WIN_GetDesktop(), 0, NULL )))
+    {
+        WIN_ReleaseDesktop();
+        return FALSE;
+    }
 
     /* Now call the callback function for every window */
 
@@ -2317,7 +2648,8 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         if (!lpEnumFunc( (*ppWnd)->hwndSelf, lParam )) break;
     }
-    HeapFree( SystemHeap, 0, list );
+    WIN_ReleaseWinArray(list);
+    WIN_ReleaseDesktop();
     return TRUE;
 }
 
@@ -2342,7 +2674,11 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
     /* This function is the same as EnumWindows(),    */
     /* except for an added check on the window's task. */
 
-    if (!(list = WIN_BuildWinArray( pWndDesktop, 0, NULL ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+    {
+        WIN_ReleaseDesktop();
+        return FALSE;
+    }
 
     /* Now call the callback function for every window */
 
@@ -2353,7 +2689,8 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
         if (QUEUE_GetQueueTask((*ppWnd)->hmemTaskQ) != hTask) continue;
         if (!func( (*ppWnd)->hwndSelf, lParam )) break;
     }
-    HeapFree( SystemHeap, 0, list );
+    WIN_ReleaseWinArray(list);
+    WIN_ReleaseDesktop();
     return TRUE;
 }
 
@@ -2390,7 +2727,7 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
         if (childList)
         {
             if (ret) ret = WIN_EnumChildWindows( childList, func, lParam );
-            HeapFree( SystemHeap, 0, childList );
+            WIN_ReleaseWinArray(childList);
         }
         if (!ret) return FALSE;
     }
@@ -2407,9 +2744,14 @@ BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
     WND **list, *pParent;
 
     if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
-    if (!(list = WIN_BuildWinArray( pParent, BWA_SKIPOWNED, NULL ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( pParent, BWA_SKIPOWNED, NULL )))
+    {
+        WIN_ReleaseWndPtr(pParent);
+        return FALSE;
+    }
     WIN_EnumChildWindows( list, func, lParam );
-    HeapFree( SystemHeap, 0, list );
+    WIN_ReleaseWinArray(list);
+    WIN_ReleaseWndPtr(pParent);
     return TRUE;
 }
 
@@ -2439,10 +2781,22 @@ BOOL16 WINAPI AnyPopup16(void)
  */
 BOOL WINAPI AnyPopup(void)
 {
-    WND *wndPtr;
-    for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
-        if (wndPtr->owner && (wndPtr->dwStyle & WS_VISIBLE)) return TRUE;
-    return FALSE;
+    WND *wndPtr = WIN_LockWndPtr(pWndDesktop->child);
+    BOOL retvalue;
+    
+    while (wndPtr)
+    {
+        if (wndPtr->owner && (wndPtr->dwStyle & WS_VISIBLE))
+        {
+            retvalue = TRUE;
+            goto end;
+}
+        WIN_UpdateWndPtr(&wndPtr,wndPtr->next);
+    }
+    retvalue = FALSE;
+end:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -2484,6 +2838,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 					  RDW_UPDATENOW | RDW_FRAME, 0 );
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
+        WIN_ReleaseWndPtr(wndPtr);
         return TRUE;
     }
     else
@@ -2493,6 +2848,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         else wparam = (hWnd == GetActiveWindow());
 
         SendMessage16( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
+        WIN_ReleaseWndPtr(wndPtr);
         return wparam;
     }
 }
@@ -2524,9 +2880,12 @@ HWND16 WINAPI GetSysModalWindow16(void)
  */
 DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 {
+    DWORD retval;
     WND *wnd = WIN_FindWndPtr( hwnd );
     if (!wnd) return 0;
-    return wnd->helpContext;
+    retval = wnd->helpContext;
+    WIN_ReleaseWndPtr(wnd);
+    return retval;
 }
 
 
@@ -2538,6 +2897,7 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
     WND *wnd = WIN_FindWndPtr( hwnd );
     if (!wnd) return FALSE;
     wnd->helpContext = id;
+    WIN_ReleaseWndPtr(wnd);
     return TRUE;
 }
 
@@ -2556,7 +2916,11 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
  WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
  RECT		tempRect;
 
- if( !ptrQueryWnd || !ptrDragInfo ) return 0;
+ if( !ptrQueryWnd || !ptrDragInfo )
+ {
+     WIN_ReleaseWndPtr(ptrQueryWnd);
+     return 0;
+ }
 
  CONV_POINT16TO32( &ptrDragInfo->pt, &pt );
 
@@ -2564,7 +2928,10 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 
  if( !PtInRect(&tempRect,pt) ||
      (ptrQueryWnd->dwStyle & WS_DISABLED) )
+ {
+     WIN_ReleaseWndPtr(ptrQueryWnd);
 	return 0;
+ }
 
  if( !(ptrQueryWnd->dwStyle & WS_MINIMIZE) ) 
    {
@@ -2577,12 +2944,14 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 	{
 	 wParam = 0;
          
-	 for (ptrWnd = ptrQueryWnd->child; ptrWnd ;ptrWnd = ptrWnd->next)
+         for (ptrWnd = WIN_LockWndPtr(ptrQueryWnd->child); ptrWnd ;WIN_UpdateWndPtr(&ptrWnd,ptrWnd->next))
+         {
              if( ptrWnd->dwStyle & WS_VISIBLE )
 	     {
                  GetWindowRect( ptrWnd->hwndSelf, &tempRect );
                  if (PtInRect( &tempRect, pt )) break;
 	     }
+         }
 
 	 if(ptrWnd)
          {
@@ -2591,9 +2960,15 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 			ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
             if( !(ptrWnd->dwStyle & WS_DISABLED) )
 	        bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo, bNoSend);
+
+            WIN_ReleaseWndPtr(ptrWnd);
          }
 
-	 if(bResult) return bResult;
+         if(bResult)
+         {
+             WIN_ReleaseWndPtr(ptrQueryWnd);
+             return bResult;
+         }
 	}
      else wParam = 1;
    }
@@ -2610,6 +2985,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
  if( !bResult ) 
      CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
 
+ WIN_ReleaseWndPtr(ptrQueryWnd);
  return bResult;
 }
 
@@ -2681,13 +3057,18 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
     spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
 
-    if( !lpDragInfo || !spDragInfo ) return 0L;
+    if( !lpDragInfo || !spDragInfo )
+    {
+        WIN_ReleaseWndPtr(wndPtr);
+        return 0L;
+    }
 
     hBummer = LoadCursor16(0, IDC_BUMMER16);
 
     if( !hBummer || !wndPtr )
     {
         GlobalFree16(hDragInfo);
+        WIN_ReleaseWndPtr(wndPtr);
         return 0L;
     }
 
@@ -2696,6 +3077,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	if( !(hDragCursor = CURSORICON_IconToCursor(hCursor, FALSE)) )
 	{
 	    GlobalFree16(hDragInfo);
+            WIN_ReleaseWndPtr(wndPtr);
 	    return 0L;
 	}
 
@@ -2772,6 +3154,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     else
         msg.lParam = 0;
     GlobalFree16(hDragInfo);
+    WIN_ReleaseWndPtr(wndPtr);
 
     return (DWORD)(msg.lParam);
 }

@@ -146,8 +146,11 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT nBar )
  */
 static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, INT nBar )
 {
+   SCROLLBAR_INFO *retvalue;
    WND *wndPtr = WIN_FindWndPtr( hwnd );
-   return SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+   retvalue = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+   WIN_ReleaseWndPtr(wndPtr);
+   return retvalue;
 }
 
 
@@ -204,6 +207,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 	break;
 
     default:
+        WIN_ReleaseWndPtr(wndPtr);
         return FALSE;
     }
 
@@ -248,6 +252,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 		 + pixels * (info->CurVal-info->MinVal) / (max - info->MinVal);
         }
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return vertical;
 }
 
@@ -560,8 +565,8 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
-        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
-    if (!WIN_IsWindowDrawable( wndPtr, FALSE )) return;
+        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) goto END;
+    if (!WIN_IsWindowDrawable( wndPtr, FALSE )) goto END;
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
@@ -581,6 +586,8 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     if( interior )
 	SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                          thumbPos, infoPtr->flags, vertical, FALSE, FALSE );
+END:
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -621,11 +628,13 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
     case VK_UP:    msg = SB_LINEUP; break;
     case VK_DOWN:  msg = SB_LINEDOWN; break;
     default:
+        WIN_ReleaseWndPtr(wndPtr);
         return;
     }
     SendMessageA( GetParent(hwnd),
                     (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
                     msg, hwnd );
+    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -1383,6 +1392,7 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 			     BOOL fShowH, BOOL fShowV )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL retvalue = FALSE;
 
     if (!wndPtr) return FALSE;
     TRACE(scroll, "hwnd=%04x bar=%d horz=%d, vert=%d\n",
@@ -1392,7 +1402,8 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
     {
     case SB_CTL:
         ShowWindow( hwnd, fShowH ? SW_SHOW : SW_HIDE );
-        return TRUE;
+        retvalue = TRUE;
+        goto END;
 
     case SB_BOTH:
     case SB_HORZ:
@@ -1423,17 +1434,22 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
         break;
 
     default:
-        return FALSE;  /* Nothing to do! */
+        retvalue = FALSE;  /* Nothing to do! */
+        goto END;
     }
 
     if( fShowH || fShowV ) /* frame has been changed, let the window redraw itself */
     {
 	SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                     | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-        return TRUE;
+        retvalue = TRUE;
+        goto END;
     }
 
-    return FALSE; /* no frame changes */
+    retvalue = FALSE; /* no frame changes */
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
