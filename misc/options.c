@@ -156,7 +156,7 @@ static void remove_options( char *argv[], int pos, int count, int inherit )
         for (i = 0; i < count; i++) len += strlen(argv[pos+i]) + 1;
         if (inherit_str)
         {
-            if (!(inherit_str = realloc( inherit_str, strlen(inherit_str) + len )))
+            if (!(inherit_str = realloc( inherit_str, strlen(inherit_str) + 1 + len )))
                 out_of_memory();
             strcat( inherit_str, " " );
         }
