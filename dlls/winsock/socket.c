@@ -771,9 +771,9 @@ static struct ws_protoent* check_buffer_pe(int size)
 /* ----------------------------------- i/o APIs */
 
 #ifdef HAVE_IPX
-#define SUPPORTED_PF(pf) ((pf)==AF_INET || (pf)== AF_IPX)
+#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf)== WS_AF_IPX)
 #else
-#define SUPPORTED_PF(pf) ((pf)==AF_INET)
+#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET)
 #endif
 
 static void ws2_async_accept(SOCKET s, SOCKET as)
@@ -885,7 +885,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
             case 4:
             case 3:
             case 2:
-                wsipx->sa_family=AF_IPX;
+                wsipx->sa_family=WS_AF_IPX;
                 /* fall through */
             case 1:
             case 0:
