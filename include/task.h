@@ -33,6 +33,7 @@ typedef struct
     BYTE      fcb1[16];                /* 5c First FCB */
     BYTE      fcb2[20];                /* 6c Second FCB */
     BYTE      cmdLine[128];            /* 80 Command-line (first byte is len)*/
+    BYTE      padding[16];             /* Some apps access beyond the end of the cmd line */
 } PDB;
 
 
