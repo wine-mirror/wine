@@ -1221,6 +1221,8 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
     UINT ret;
     PALETTEOBJ *palPtr;
 
+    if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) return 0;
+
     if (!(palPtr = GDI_GetObjPtr( hpal, PALETTE_MAGIC ))) return 0;
     ret = X11DRV_PALETTE_SetMapping( palPtr, 0, palPtr->logpalette.palNumEntries, !primary );
     GDI_ReleaseObj( hpal );
