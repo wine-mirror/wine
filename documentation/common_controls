@@ -114,7 +114,7 @@
 3.9 IP Address Control
 ----------------------
   Status:
-      Nothing done at all.
+      Dummy written by Eric Kohl.
 
   Notes:
       Author needed!! Any volunteers??
@@ -124,7 +124,7 @@
 ----------------------
   Author:
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
-      Ben Williams <.edu>
+      Ben Williams <biwillia@shrug.isdn.uiuc.edu>
 
   Status:
       Under construction.
@@ -145,7 +145,7 @@
 3.12 Native font control
 ------------------------
   Status:
-      Nothing done at all.
+      Dummy written by Eric Kohl.
 
   Notes:
       Author needed!! Any volunteers??
@@ -225,7 +225,6 @@
 
   Status:
       - Development in progress.
-      - Not yet published.
 
 
 3.19 Toolbar Control
