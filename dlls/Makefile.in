@@ -8,7 +8,7 @@ VPATH     = @srcdir@
 # special configure-dependent targets
 
 GLU32FILES = glu32
-OPENGLFILES = d3d8 opengl32
+OPENGLFILES = d3d8 d3dx8 opengl32
 XFILES = ddraw x11drv
 EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @XFILES@
 
@@ -112,6 +112,7 @@ BASEDIRS = \
 SUBDIRS = \
 	$(BASEDIRS) \
 	d3d8 \
+	d3dx8 \
 	ddraw \
 	glu32 \
 	opengl32 \
@@ -300,6 +301,9 @@ crypt32.dll$(DLLEXT): crypt32/crypt32.dll$(DLLEXT)
 
 d3d8.dll$(DLLEXT): d3d8/d3d8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) d3d8/d3d8.dll$(DLLEXT) $@
+
+d3dx8.dll$(DLLEXT): d3dx8/d3dx8.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) d3dx8/d3dx8.dll$(DLLEXT) $@
 
 dciman32.dll$(DLLEXT): dciman32/dciman32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dciman32/dciman32.dll$(DLLEXT) $@
@@ -585,6 +589,7 @@ IMPORT_LIBS = \
 	libcrtdll \
 	libcrypt32 \
 	libd3d8 \
+	libd3dx8 \
 	libdciman32 \
 	libddraw \
 	libdevenum \
@@ -704,6 +709,11 @@ libd3d8.def: d3d8/d3d8.spec.def
 	$(RM) $@ && $(LN_S) d3d8/d3d8.spec.def $@
 libd3d8.a: d3d8/d3d8.spec.def
 	$(DLLTOOL) -k -l $@ -d d3d8/d3d8.spec.def
+
+libd3dx8.def: d3dx8/d3dx8.spec.def
+	$(RM) $@ && $(LN_S) d3dx8/d3dx8.spec.def $@
+libd3dx8.a: d3dx8/d3dx8.spec.def
+	$(DLLTOOL) -k -l $@ -d d3dx8/d3dx8.spec.def
 
 libdciman32.def: dciman32/dciman32.spec.def
 	$(RM) $@ && $(LN_S) dciman32/dciman32.spec.def $@
@@ -1060,6 +1070,7 @@ commdlg/comdlg32.spec.def: $(WINEBUILD)
 crtdll/crtdll.spec.def: $(WINEBUILD)
 crypt32/crypt32.spec.def: $(WINEBUILD)
 d3d8/d3d8.spec.def: $(WINEBUILD)
+d3dx8/d3dx8.spec.def: $(WINEBUILD)
 dciman32/dciman32.spec.def: $(WINEBUILD)
 ddraw/ddraw.spec.def: $(WINEBUILD)
 devenum/devenum.spec.def: $(WINEBUILD)
@@ -1145,6 +1156,7 @@ commdlg/comdlg32.dll$(DLLEXT): commdlg
 crtdll/crtdll.dll$(DLLEXT): crtdll
 crypt32/crypt32.dll$(DLLEXT): crypt32
 d3d8/d3d8.dll$(DLLEXT): d3d8
+d3dx8/d3dx8.dll$(DLLEXT): d3dx8
 dciman32/dciman32.dll$(DLLEXT): dciman32
 ddraw/ddraw.dll$(DLLEXT): ddraw
 devenum/devenum.dll$(DLLEXT): devenum
@@ -1246,6 +1258,7 @@ commdlg/__install__: comdlg32.dll$(DLLEXT)
 crtdll/__install__: crtdll.dll$(DLLEXT)
 crypt32/__install__: crypt32.dll$(DLLEXT)
 d3d8/__install__: d3d8.dll$(DLLEXT)
+d3dx8/__install__: d3dx8.dll$(DLLEXT)
 dciman32/__install__: dciman32.dll$(DLLEXT)
 ddraw/__install__: ddraw.dll$(DLLEXT)
 devenum/__install__: devenum.dll$(DLLEXT)

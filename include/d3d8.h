@@ -78,25 +78,25 @@ typedef struct IDirect3DVertexBuffer8  IDirect3DVertexBuffer8, *LPDIRECT3DVERTEX
 DEFINE_GUID(IID_IDirect3DVolume8,       0XBD7349F5,0X14F1,0X42E4,0X9C,0X79,0X97,0X23,0X80,0XDB,0X40,0XC0);
 typedef struct IDirect3DVolume8        IDirect3DVolume8, *LPDIRECT3DVOLUME8, *PDIRECT3DVOLUME8;
 
-DEFINE_GUID(IID_IDIRECT3DSWAPCHAIN8,    0X928C088B,0X76B9,0X4C6B,0XA5,0X36,0XA5,0X90,0X85,0X38,0X76,0XCD);
+DEFINE_GUID(IID_IDirect3DSwapChain8,    0X928C088B,0X76B9,0X4C6B,0XA5,0X36,0XA5,0X90,0X85,0X38,0X76,0XCD);
 typedef struct IDirect3DSwapChain8     IDirect3DSwapChain8, *LPDIRECT3DSWAPCHAIN8, *PDIRECT3DSWAPCHAIN8;
 
 DEFINE_GUID(IID_IDirect3DSurface8,      0XB96EEBCA,0XB326,0X4EA5,0X88,0X2F,0X2F,0XF5,0XBA,0XE0,0X21,0XDD);
 typedef struct IDirect3DSurface8       IDirect3DSurface8, *LPDIRECT3DSURFACE8, *PDIRECT3DSURFACE8;
 
-DEFINE_GUID(IID_IDIRECT3DINDEXBUFFER8,  0X0E689C9A,0X053D,0X44A0,0X9D,0X92,0XDB,0X0E,0X3D,0X75,0X0F,0X86);
+DEFINE_GUID(IID_IDirect3DIndexBuffer8,  0X0E689C9A,0X053D,0X44A0,0X9D,0X92,0XDB,0X0E,0X3D,0X75,0X0F,0X86);
 typedef struct IDirect3DIndexBuffer8   IDirect3DIndexBuffer8, *LPDIRECT3DINDEXBUFFER8, *PDIRECT3DINDEXBUFFER8;
 
-DEFINE_GUID(IID_IDIRECT3DBASETEXTURE8,  0XB4211CFA,0X51B9,0X4A9F,0XAB,0X78,0XDB,0X99,0XB2,0XBB,0X67,0X8E);
+DEFINE_GUID(IID_IDirect3DBaseTexture8,  0XB4211CFA,0X51B9,0X4A9F,0XAB,0X78,0XDB,0X99,0XB2,0XBB,0X67,0X8E);
 typedef struct IDirect3DBaseTexture8   IDirect3DBaseTexture8, *LPDIRECT3DBASETEXTURE8, *PDIRECT3DBASETEXTURE8;
 
-DEFINE_GUID(IID_IDIRECT3DTEXTURE8,      0XE4CDD575,0X2866,0X4F01,0XB1,0X2E,0X7E,0XEC,0XE1,0XEC,0X93,0X58);
+DEFINE_GUID(IID_IDirect3DTexture8,      0XE4CDD575,0X2866,0X4F01,0XB1,0X2E,0X7E,0XEC,0XE1,0XEC,0X93,0X58);
 typedef struct IDirect3DTexture8       IDirect3DTexture8, *LPDIRECT3DTEXTURE8, *PDIRECT3DTEXTURE8;
 
-DEFINE_GUID(IID_IDIRECT3DCUBETEXTURE8,  0X3EE5B968,0X2ACA,0X4C34,0X8B,0XB5,0X7E,0X0C,0X3D,0X19,0XB7,0X50);
+DEFINE_GUID(IID_IDirect3DCubeTexture8,  0X3EE5B968,0X2ACA,0X4C34,0X8B,0XB5,0X7E,0X0C,0X3D,0X19,0XB7,0X50);
 typedef struct IDirect3DCubeTexture8   IDirect3DCubeTexture8, *LPDIRECT3DCUBETEXTURE8, *PDIRECT3DCUBETEXTURE8;
 
-DEFINE_GUID(IID_IDIRECT3DVOLUMETEXTURE8,0X4B8AAAFA,0X140F,0X42BA,0X91,0X31,0X59,0X7E,0XAF,0XAA,0X2E,0XAD);
+DEFINE_GUID(IID_IDirect3DVolumeTexture8,0X4B8AAAFA,0X140F,0X42BA,0X91,0X31,0X59,0X7E,0XAF,0XAA,0X2E,0XAD);
 typedef struct IDirect3DVolumeTexture8 IDirect3DVolumeTexture8, *LPDIRECT3DVOLUMETEXTURE8, *PDIRECT3DVOLUMETEXTURE8;
 
 /*****************************************************************************
@@ -354,77 +354,6 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
 #define IDirect3DDevice8_DeletePatch(p,a)                          ICOM_CALL1(DeletePatch,p,a)
 
 /*****************************************************************************
- * IDirect3DResource8 interface
- */
-#define ICOM_INTERFACE IDirect3DResource8
-#define IDirect3DResource8_METHODS \
-    /*** IDirect3DResource8 methods ***/ \
-    ICOM_METHOD1(HRESULT,         GetDevice, IDirect3DDevice8**, ppDevice) \
-    ICOM_METHOD4(HRESULT,         SetPrivateData, REFGUID, refguid, CONST void*, pData, DWORD, SizeOfData, DWORD, Flags) \
-    ICOM_METHOD3(HRESULT,         GetPrivateData, REFGUID, refguid, void*, pData, DWORD*, pSizeOfData) \
-    ICOM_METHOD1(HRESULT,         FreePrivateData, REFGUID, refguid) \
-    ICOM_METHOD1(DWORD,           SetPriority, DWORD, PriorityNew) \
-    ICOM_METHOD (DWORD,           GetPriority) \
-    ICOM_METHOD (void,            PreLoad) \
-    ICOM_METHOD (D3DRESOURCETYPE, GetType)
-
-    /*** IDirect3DResource8 methods ***/
-#define IDirect3DResource8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS
-ICOM_DEFINE(IDirect3DResource8,IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IDirect3DResource8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirect3DResource8_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IDirect3DResource8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DResource8 methods ***/
-#define IDirect3DResource8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
-#define IDirect3DResource8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
-#define IDirect3DResource8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
-#define IDirect3DResource8_FreePrivateData(p,a)         ICOM_CALL1(FreePrivateData,p,a)
-#define IDirect3DResource8_SetPriority(p,a)             ICOM_CALL1(SetPriority,p,a)
-#define IDirect3DResource8_GetPriority(p)               ICOM_CALL (GetPriority,p)
-#define IDirect3DResource8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
-#define IDirect3DResource8_GetType(p)                   ICOM_CALL (GetType,p)
-
-/*****************************************************************************
- * IDirect3DVertexBuffer8 interface
- */
-#define ICOM_INTERFACE IDirect3DVertexBuffer8
-#define IDirect3DVertexBuffer8_METHODS \
-    /*** IDirect3DVertexBuffer8 methods ***/ \
-    ICOM_METHOD4(HRESULT,Lock, UINT, OffsetToLock, UINT, SizeToLock, BYTE**, ppbData, DWORD, Flags) \
-    ICOM_METHOD (HRESULT,Unlock) \
-    ICOM_METHOD1(HRESULT,GetDesc, D3DVERTEXBUFFER_DESC *, pDesc)
-
-    /*** IDirect3DVertexBuffer8 methods ***/
-#define IDirect3DVertexBuffer8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DVertexBuffer8_METHODS
-ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IDirect3DVertexBuffer8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirect3DVertexBuffer8_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IDirect3DVertexBuffer8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DVertexBuffer8 methods ***/
-#define IDirect3DVertexBuffer8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
-#define IDirect3DVertexBuffer8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
-#define IDirect3DVertexBuffer8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
-#define IDirect3DVertexBuffer8_FreePrivateData(p,a)         ICOM_CALL1(FreePrivateData,p,a)
-#define IDirect3DVertexBuffer8_SetPriority(p,a)             ICOM_CALL1(SetPriority,p,a)
-#define IDirect3DVertexBuffer8_GetPriority(p)               ICOM_CALL (GetPriority,p)
-#define IDirect3DVertexBuffer8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
-#define IDirect3DVertexBuffer8_GetType(p)                   ICOM_CALL (GetType,p)
-#define IDirect3DVertexBuffer8_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
-#define IDirect3DVertexBuffer8_Unlock(p)                    ICOM_CALL (Unlock,p)
-#define IDirect3DVertexBuffer8_GetDesc(p,a)                 ICOM_CALL1(GetDesc,p,a)
-
-/*****************************************************************************
  * IDirect3DVolume8 interface
  */
 #define ICOM_INTERFACE IDirect3DVolume8
@@ -521,6 +450,78 @@ ICOM_DEFINE(IDirect3DSurface8,IUnknown)
 #define IDirect3DSurface8_UnlockRect(p)                ICOM_CALL (UnlockRect,p)
 
 /*****************************************************************************
+ * IDirect3DResource8 interface
+ */
+#define ICOM_INTERFACE IDirect3DResource8
+#define IDirect3DResource8_METHODS \
+    /*** IDirect3DResource8 methods ***/ \
+    ICOM_METHOD1(HRESULT,         GetDevice, IDirect3DDevice8**, ppDevice) \
+    ICOM_METHOD4(HRESULT,         SetPrivateData, REFGUID, refguid, CONST void*, pData, DWORD, SizeOfData, DWORD, Flags) \
+    ICOM_METHOD3(HRESULT,         GetPrivateData, REFGUID, refguid, void*, pData, DWORD*, pSizeOfData) \
+    ICOM_METHOD1(HRESULT,         FreePrivateData, REFGUID, refguid) \
+    ICOM_METHOD1(DWORD,           SetPriority, DWORD, PriorityNew) \
+    ICOM_METHOD (DWORD,           GetPriority) \
+    ICOM_METHOD (void,            PreLoad) \
+    ICOM_METHOD (D3DRESOURCETYPE, GetType)
+
+    /*** IDirect3DResource8 methods ***/
+#define IDirect3DResource8_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DResource8_METHODS
+ICOM_DEFINE(IDirect3DResource8,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirect3DResource8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DResource8_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IDirect3DResource8_Release(p)                   ICOM_CALL (Release,p)
+/*** IDirect3DResource8 methods ***/
+#define IDirect3DResource8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
+#define IDirect3DResource8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
+#define IDirect3DResource8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
+#define IDirect3DResource8_FreePrivateData(p,a)         ICOM_CALL1(FreePrivateData,p,a)
+#define IDirect3DResource8_SetPriority(p,a)             ICOM_CALL1(SetPriority,p,a)
+#define IDirect3DResource8_GetPriority(p)               ICOM_CALL (GetPriority,p)
+#define IDirect3DResource8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
+#define IDirect3DResource8_GetType(p)                   ICOM_CALL (GetType,p)
+
+/*****************************************************************************
+ * IDirect3DVertexBuffer8 interface
+ */
+#define ICOM_INTERFACE IDirect3DVertexBuffer8
+#define IDirect3DVertexBuffer8_METHODS \
+    /*** IDirect3DVertexBuffer8 methods ***/ \
+    ICOM_METHOD4(HRESULT,Lock, UINT, OffsetToLock, UINT, SizeToLock, BYTE**, ppbData, DWORD, Flags) \
+    ICOM_METHOD (HRESULT,Unlock) \
+    ICOM_METHOD1(HRESULT,GetDesc, D3DVERTEXBUFFER_DESC *, pDesc)
+
+    /*** IDirect3DVertexBuffer8 methods ***/
+#define IDirect3DVertexBuffer8_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DResource8_METHODS \
+    IDirect3DVertexBuffer8_METHODS
+ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirect3DVertexBuffer8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DVertexBuffer8_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IDirect3DVertexBuffer8_Release(p)                   ICOM_CALL (Release,p)
+/*** IDirect3DVertexBuffer8 methods: IDirect3DResource8 ***/
+#define IDirect3DVertexBuffer8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
+#define IDirect3DVertexBuffer8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
+#define IDirect3DVertexBuffer8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
+#define IDirect3DVertexBuffer8_FreePrivateData(p,a)         ICOM_CALL1(FreePrivateData,p,a)
+#define IDirect3DVertexBuffer8_SetPriority(p,a)             ICOM_CALL1(SetPriority,p,a)
+#define IDirect3DVertexBuffer8_GetPriority(p)               ICOM_CALL (GetPriority,p)
+#define IDirect3DVertexBuffer8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
+#define IDirect3DVertexBuffer8_GetType(p)                   ICOM_CALL (GetType,p)
+/*** IDirect3DVertexBuffer8 methods ***/
+#define IDirect3DVertexBuffer8_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
+#define IDirect3DVertexBuffer8_Unlock(p)                    ICOM_CALL (Unlock,p)
+#define IDirect3DVertexBuffer8_GetDesc(p,a)                 ICOM_CALL1(GetDesc,p,a)
+
+/*****************************************************************************
  * IDirect3DIndexBuffer8 interface
  */
 #define ICOM_INTERFACE IDirect3DIndexBuffer8
@@ -542,7 +543,7 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
 #define IDirect3DIndexBuffer8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DIndexBuffer8_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirect3DIndexBuffer8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DIndexBuffer8 methods ***/
+/*** IDirect3DIndexBuffer8 methods: IDirect3DResource8 ***/
 #define IDirect3DIndexBuffer8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
 #define IDirect3DIndexBuffer8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
 #define IDirect3DIndexBuffer8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
@@ -551,6 +552,7 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
 #define IDirect3DIndexBuffer8_GetPriority(p)               ICOM_CALL (GetPriority,p)
 #define IDirect3DIndexBuffer8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
 #define IDirect3DIndexBuffer8_GetType(p)                   ICOM_CALL (GetType,p)
+/*** IDirect3DIndexBuffer8 methods ***/
 #define IDirect3DIndexBuffer8_Lock(p,a,b,c,d)              ICOM_CALL4(Lock,p,a,b,c,d)
 #define IDirect3DIndexBuffer8_Unlock(p)                    ICOM_CALL (Unlock,p)
 #define IDirect3DIndexBuffer8_GetDesc(p,a)                 ICOM_CALL1(GetDesc,p,a)
@@ -577,7 +579,7 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
 #define IDirect3DBaseTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DBaseTexture8_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirect3DBaseTexture8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DBaseTexture8 methods ***/
+/*** IDirect3DBaseTexture8 methods: IDirect3DResource8 ***/
 #define IDirect3DBaseTexture8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
 #define IDirect3DBaseTexture8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
 #define IDirect3DBaseTexture8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
@@ -586,6 +588,7 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
 #define IDirect3DBaseTexture8_GetPriority(p)               ICOM_CALL (GetPriority,p)
 #define IDirect3DBaseTexture8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
 #define IDirect3DBaseTexture8_GetType(p)                   ICOM_CALL (GetType,p)
+/*** IDirect3DBaseTexture8 methods ***/
 #define IDirect3DBaseTexture8_SetLOD(p,a)                  ICOM_CALL1(SetLOD,p,a)
 #define IDirect3DBaseTexture8_GetLOD(p)                    ICOM_CALL (GetLOD,p)
 #define IDirect3DBaseTexture8_GetLevelCount(p)             ICOM_CALL (GetLevelCount,p)
@@ -615,7 +618,7 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DCubeTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DCubeTexture8_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirect3DCubeTexture8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DCubeTexture8 methods: Resource8 ***/
+/*** IDirect3DCubeTexture8 methods: IDirect3DResource8 ***/
 #define IDirect3DCubeTexture8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
 #define IDirect3DCubeTexture8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
 #define IDirect3DCubeTexture8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
@@ -624,7 +627,7 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DCubeTexture8_GetPriority(p)               ICOM_CALL (GetPriority,p)
 #define IDirect3DCubeTexture8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
 #define IDirect3DCubeTexture8_GetType(p)                   ICOM_CALL (GetType,p)
-/*** IDirect3DCubeTexture8 methods: BaseTexture8 ***/
+/*** IDirect3DCubeTexture8 methods: IDirect3DBaseTexture8 ***/
 #define IDirect3DCubeTexture8_SetLOD(p,a)                  ICOM_CALL1(SetLOD,p,a)
 #define IDirect3DCubeTexture8_GetLOD(p)                    ICOM_CALL (GetLOD,p)
 #define IDirect3DCubeTexture8_GetLevelCount(p)             ICOM_CALL (GetLevelCount,p)
@@ -660,7 +663,7 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
 #define IDirect3DTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DTexture8_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirect3DTexture8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DTexture8 methods: Resource8 ***/
+/*** IDirect3DTexture8 methods: IDirect3DResource8 ***/
 #define IDirect3DTexture8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
 #define IDirect3DTexture8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
 #define IDirect3DTexture8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
@@ -669,7 +672,7 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
 #define IDirect3DTexture8_GetPriority(p)               ICOM_CALL (GetPriority,p)
 #define IDirect3DTexture8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
 #define IDirect3DTexture8_GetType(p)                   ICOM_CALL (GetType,p)
-/*** IDirect3DTexture8 methods: BaseTexture8 ***/
+/*** IDirect3DTexture8 methods: IDirect3DBaseTexture8 ***/
 #define IDirect3DTexture8_SetLOD(p,a)                  ICOM_CALL1(SetLOD,p,a)
 #define IDirect3DTexture8_GetLOD(p)                    ICOM_CALL (GetLOD,p)
 #define IDirect3DTexture8_GetLevelCount(p)             ICOM_CALL (GetLevelCount,p)
@@ -705,7 +708,7 @@ ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DVolumeTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DVolumeTexture8_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IDirect3DVolumeTexture8_Release(p)                   ICOM_CALL (Release,p)
-/*** IDirect3DVolumeTexture8 methods: Resource8 ***/
+/*** IDirect3DVolumeTexture8 methods: IDirect3DResource8 ***/
 #define IDirect3DVolumeTexture8_GetDevice(p,a)               ICOM_CALL1(GetDevice,p,a)
 #define IDirect3DVolumeTexture8_SetPrivateData(p,a,b,c,d)    ICOM_CALL4(SetPrivateData,p,a,b,c,d)
 #define IDirect3DVolumeTexture8_GetPrivateData(p,a,b,c)      ICOM_CALL3(GetPrivateData,p,a,b,c)
@@ -714,7 +717,7 @@ ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DVolumeTexture8_GetPriority(p)               ICOM_CALL (GetPriority,p)
 #define IDirect3DVolumeTexture8_PreLoad(p)                   ICOM_CALL (PreLoad,p)
 #define IDirect3DVolumeTexture8_GetType(p)                   ICOM_CALL (GetType,p)
-/*** IDirect3DVolumeTexture8 methods: BaseTexture8 ***/
+/*** IDirect3DVolumeTexture8 methods: IDirect3DBaseTexture8 ***/
 #define IDirect3DVolumeTexture8_SetLOD(p,a)                  ICOM_CALL1(SetLOD,p,a)
 #define IDirect3DVolumeTexture8_GetLOD(p)                    ICOM_CALL (GetLOD,p)
 #define IDirect3DVolumeTexture8_GetLevelCount(p)             ICOM_CALL (GetLevelCount,p)

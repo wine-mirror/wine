@@ -34,7 +34,8 @@ HRESULT WINAPI IDirect3DIndexBuffer8Impl_QueryInterface(LPDIRECT3DINDEXBUFFER8 i
     ICOM_THIS(IDirect3DIndexBuffer8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)
+        || IsEqualGUID(riid, &IID_IDirect3DIndexBuffer8)) {
         IDirect3DIndexBuffer8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -55,8 +56,8 @@ ULONG WINAPI IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface) {
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This);
         HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }
@@ -106,7 +107,7 @@ HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFFER8 ifa
     } else {
         FIXME("(%p) : stub, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
     }
-    *ppbData = This->allocatedMemory;
+    *ppbData = This->allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
 

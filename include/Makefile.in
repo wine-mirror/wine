@@ -27,6 +27,7 @@ WINDOWS_INCLUDES = \
 	d3dhal.h \
 	d3dtypes.h \
 	d3dvec.inl \
+	d3dx8core.h \
 	dde.h \
 	ddeml.h \
 	ddraw.h \

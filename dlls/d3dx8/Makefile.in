@@ -2,8 +2,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = d3d8.dll
-IMPORTS   = user32 gdi32 kernel32
+MODULE    = d3dx8.dll
+IMPORTS   = d3d8 user32 gdi32 kernel32
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = $(LIBUUID) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
@@ -11,20 +11,8 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	basetexture.c \
-	cubetexture.c \
-	d3d8_main.c \
-	device.c \
-	directx.c \
-	indexbuffer.c \
-	resource.c \
-	shader.c \
-	surface.c \
-	swapchain.c \
-	texture.c \
-	vertexbuffer.c \
-	volume.c \
-	volumetexture.c \
+	d3dx8_main.c \
+	d3dxbuffer.c
 
 @MAKE_DLL_RULES@
 

@@ -152,6 +152,50 @@ typedef struct STATEBLOCK {
 
 } STATEBLOCK;
 
+typedef struct SHADER8Vector {
+  float x;
+  float y;
+  float z;
+  float w;
+} SHADER8Vector;
+
+typedef struct SHADER8Scalar {
+  float x;
+} SHADER8Scalar;
+
+#define SHADER_MAX_CONSTANTS 96
+#define VSHADER_MAX_CONSTANTS 96
+#define PSHADER_MAX_CONSTANTS 96
+typedef SHADER8Vector SHADER8Constants[SHADER_MAX_CONSTANTS];
+
+typedef struct SHADER8Data {
+  /** Run Time Shader Function Constants */
+  /*D3DXBUFFER* constants; */
+  SHADER8Constants constants;
+  /** Shader Code as char ... */
+  CONST DWORD* code;
+  UINT codeLength;
+} SHADER8Data;
+
+typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
+  CONST DWORD* decl;
+  CONST DWORD* function;
+  DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
+  UINT declLength;
+  UINT functionLength;
+
+  /* run time datas */
+  SHADER8Data* data;
+} VERTEXSHADER8;
+
+typedef struct PIXELSHADER8 { /* TODO: Pixel Shader */
+  CONST DWORD* function;
+  UINT functionLength;
+
+  /* run time datas */
+  SHADER8Data* data;
+} PIXELSHADER8;
+
 /*
  * External prototypes
  */
@@ -198,11 +242,11 @@ struct IDirect3D8Impl
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface);
-extern ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface);
+extern HRESULT WINAPI   IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI     IDirect3D8Impl_AddRef(LPDIRECT3D8 iface);
+extern ULONG WINAPI     IDirect3D8Impl_Release(LPDIRECT3D8 iface);
 
-/* IDirect3d8:*/
+/* IDirect3d8: */
 extern HRESULT  WINAPI  IDirect3D8Impl_RegisterSoftwareDevice(LPDIRECT3D8 iface, void* pInitializeFunction);
 extern UINT     WINAPI  IDirect3D8Impl_GetAdapterCount(LPDIRECT3D8 iface);
 extern HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface, UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8* pIdentifier);
@@ -220,50 +264,8 @@ extern HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 extern HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps);
 extern HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter);
 extern HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
-                                                       DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                                       IDirect3DDevice8** ppReturnedDeviceInterface);
-/* --------------------- */
-/* IDirect3DBaseTexture8 */
-/* --------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern ICOM_VTABLE(IDirect3DBaseTexture8) Direct3DBaseTexture8_Vtbl;
-
-/*****************************************************************************
- * IDirect3DBaseTexture8 implementation structure
- */
-struct IDirect3DBaseTexture8Impl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DBaseTexture8);
-    DWORD                   ref;
-
-    /* IDirect3DBaseTexture8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-};
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI   IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface);
-extern ULONG WINAPI   IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface);
-
-/* IDirect3DBaseTexture8 (Inherited from IDirect3DResource8) */
-extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8** ppDevice);
-extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
-extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid);
-extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew);
-extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface);
-extern void     WINAPI        IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface);
-extern D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface);
-
-/* IDirect3DBaseTexture8 */
-extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew);
-extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface);
-extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface);
+						    DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
+						    IDirect3DDevice8** ppReturnedDeviceInterface);
 
 /* ---------------- */
 /* IDirect3DDevice8 */
@@ -274,7 +276,6 @@ extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3D
  */
 extern ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl;
 
-
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
  */
@@ -282,45 +283,44 @@ struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirect3DDevice8);
-    DWORD                   ref;
+    DWORD                         ref;
 
     /* IDirect3DDevice8 fields */
-    IDirect3D8Impl            *direct3d8;
-    IDirect3DSurface8Impl     *backBuffer;
+    IDirect3D8Impl               *direct3d8;
+    IDirect3DSurface8Impl        *backBuffer;
     D3DPRESENT_PARAMETERS         PresentParms;
     D3DDEVICE_CREATION_PARAMETERS CreateParms;
 
-    UINT                       adapterNo;
-    D3DDEVTYPE                 devType;
+    UINT                          adapterNo;
+    D3DDEVTYPE                    devType;
 
-    UINT                       srcBlend;
-    UINT                       dstBlend;
+    UINT                          srcBlend;
+    UINT                          dstBlend;
 
     /* State block related */
-    BOOL                       isRecordingState;
-    STATEBLOCK                 StateBlock;
-    STATEBLOCK                *UpdateStateBlock;
+    BOOL                          isRecordingState;
+    STATEBLOCK                    StateBlock;
+    STATEBLOCK                   *UpdateStateBlock;
 
     /* Other required values */
-    float lightPosn[MAX_ACTIVE_LIGHTS][4];
-    float lightDirn[MAX_ACTIVE_LIGHTS][4];
+    float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
+    float                         lightDirn[MAX_ACTIVE_LIGHTS][4];
 
     /* OpenGL related */
-    GLXContext   glCtx;
-    XVisualInfo *visInfo;
-    Display     *display;
-    Window       win;
+    GLXContext                    glCtx;
+    XVisualInfo                  *visInfo;
+    Display                      *display;
+    Window                        win;
 
-    UINT         dummyTextureName[8];
-
+    UINT                          dummyTextureName[8];
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DDevice8Impl_AddRef(LPDIRECT3DDEVICE8 iface);
-extern ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface);
+extern HRESULT WINAPI   IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI     IDirect3DDevice8Impl_AddRef(LPDIRECT3DDEVICE8 iface);
+extern ULONG WINAPI     IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface);
 
-/* IDirect3DDevice8:*/
+/* IDirect3DDevice8: */
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_TestCooperativeLevel(LPDIRECT3DDEVICE8 iface);
 extern UINT     WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 iface);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_ResourceManagerDiscardBytes(LPDIRECT3DDEVICE8 iface, DWORD Bytes);
@@ -416,91 +416,9 @@ extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 ifa
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_DrawTriPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DTRIPATCH_INFO* pTriPatchInfo);
 extern HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePatch(LPDIRECT3DDEVICE8 iface, UINT Handle);
 
-/* ------------------ */
-/* IDirect3DResource8 */
-/* ------------------ */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern ICOM_VTABLE(IDirect3DResource8) Direct3DResource8_Vtbl;
-
-/*****************************************************************************
- * IDirect3DResource8 implementation structure
- */
-struct IDirect3DResource8Impl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DResource8);
-    DWORD                   ref;
-
-    /* IDirect3DResource8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-};
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface);
-extern ULONG WINAPI IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface);
-
-/* IDirect3DResource8 */
-extern HRESULT  WINAPI        IDirect3DResource8Impl_GetDevice(LPDIRECT3DRESOURCE8 iface, IDirect3DDevice8** ppDevice);
-extern HRESULT  WINAPI        IDirect3DResource8Impl_SetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DResource8Impl_GetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
-extern HRESULT  WINAPI        IDirect3DResource8Impl_FreePrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid);
-extern DWORD    WINAPI        IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOURCE8 iface, DWORD PriorityNew);
-extern DWORD    WINAPI        IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface);
-extern void     WINAPI        IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface);
-extern D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface);
-
-/* ---------------------- */
-/* IDirect3DVertexBuffer8 */
-/* ---------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern ICOM_VTABLE(IDirect3DVertexBuffer8) Direct3DVertexBuffer8_Vtbl;
-
-/*****************************************************************************
- * IDirect3DVertexBuffer8 implementation structure
- */
-struct IDirect3DVertexBuffer8Impl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVertexBuffer8);
-    DWORD                   ref;
-
-    /* IDirect3DVertexBuffer8 fields */
-    IDirect3DDevice8Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-    BYTE *allocatedMemory;
-    D3DVERTEXBUFFER_DESC currentDesc;
-};
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirect3DVertexBuffer8Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DVertexBuffer8Impl_AddRef(LPDIRECT3DVERTEXBUFFER8 iface);
-extern ULONG WINAPI IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface);
-
-/* IDirect3DVertexBuffer8 (Inherited from IDirect3DResource8) */
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDevice(LPDIRECT3DVERTEXBUFFER8 iface, IDirect3DDevice8** ppDevice);
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetPrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_FreePrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid);
-extern DWORD    WINAPI        IDirect3DVertexBuffer8Impl_SetPriority(LPDIRECT3DVERTEXBUFFER8 iface, DWORD PriorityNew);
-extern DWORD    WINAPI        IDirect3DVertexBuffer8Impl_GetPriority(LPDIRECT3DVERTEXBUFFER8 iface);
-extern void     WINAPI        IDirect3DVertexBuffer8Impl_PreLoad(LPDIRECT3DVERTEXBUFFER8 iface);
-extern D3DRESOURCETYPE WINAPI IDirect3DVertexBuffer8Impl_GetType(LPDIRECT3DVERTEXBUFFER8 iface);
-
-/* IDirect3DVertexBuffer8 */
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Lock(LPDIRECT3DVERTEXBUFFER8 iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags);
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Unlock(LPDIRECT3DVERTEXBUFFER8 iface);
-extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8 iface, D3DVERTEXBUFFER_DESC *pDesc);
-
-/* IDirect3DVolume8 private include file
- */
+/* ---------------- */
+/* IDirect3DVolume8 */
+/* ---------------- */
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -525,15 +443,14 @@ struct IDirect3DVolume8Impl
     BYTE                   *allocatedMemory;
     UINT                    textureName;
     UINT                    bytesPerPixel;
-
 };
 
 /* IUnknown: */
 extern HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface);
-extern ULONG WINAPI IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface);
+extern ULONG WINAPI   IDirect3DVolume8Impl_AddRef(LPDIRECT3DVOLUME8 iface);
+extern ULONG WINAPI   IDirect3DVolume8Impl_Release(LPDIRECT3DVOLUME8 iface);
 
-/* IDirect3DVolume8 */
+/* IDirect3DVolume8: */
 extern HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
 extern HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData);
@@ -566,10 +483,10 @@ struct IDirect3DSwapChain8Impl
 
 /* IUnknown: */
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface);
-extern ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface);
+extern ULONG WINAPI   IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface);
+extern ULONG WINAPI   IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface);
 
-/* IDirect3DSwapChain8 */
+/* IDirect3DSwapChain8: */
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion);
 extern HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer);
 
@@ -605,10 +522,10 @@ struct IDirect3DSurface8Impl
 
 /* IUnknown: */
 extern HRESULT WINAPI IDirect3DSurface8Impl_QueryInterface(LPDIRECT3DSURFACE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface);
-extern ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface);
+extern ULONG WINAPI   IDirect3DSurface8Impl_AddRef(LPDIRECT3DSURFACE8 iface);
+extern ULONG WINAPI   IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface);
 
-/* IDirect3DSurface8 */
+/* IDirect3DSurface8: */
 extern HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid,CONST void* pData,DWORD SizeOfData,DWORD Flags);
 extern HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid,void* pData,DWORD* pSizeOfData);
@@ -617,6 +534,91 @@ extern HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 ifac
 extern HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc);
 extern HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect,DWORD Flags);
 extern HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface);
+
+/* ------------------ */
+/* IDirect3DResource8 */
+/* ------------------ */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+extern ICOM_VTABLE(IDirect3DResource8) Direct3DResource8_Vtbl;
+
+/*****************************************************************************
+ * IDirect3DResource8 implementation structure
+ */
+struct IDirect3DResource8Impl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirect3DResource8);
+    DWORD                   ref;
+
+    /* IDirect3DResource8 fields */
+    IDirect3DDevice8Impl   *Device;
+    D3DRESOURCETYPE         ResourceType;
+};
+
+/* IUnknown: */
+extern HRESULT WINAPI         IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DResource8Impl_AddRef(LPDIRECT3DRESOURCE8 iface);
+extern ULONG WINAPI           IDirect3DResource8Impl_Release(LPDIRECT3DRESOURCE8 iface);
+
+/* IDirect3DResource8: */
+extern HRESULT  WINAPI        IDirect3DResource8Impl_GetDevice(LPDIRECT3DRESOURCE8 iface, IDirect3DDevice8** ppDevice);
+extern HRESULT  WINAPI        IDirect3DResource8Impl_SetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DResource8Impl_GetPrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
+extern HRESULT  WINAPI        IDirect3DResource8Impl_FreePrivateData(LPDIRECT3DRESOURCE8 iface, REFGUID refguid);
+extern DWORD    WINAPI        IDirect3DResource8Impl_SetPriority(LPDIRECT3DRESOURCE8 iface, DWORD PriorityNew);
+extern DWORD    WINAPI        IDirect3DResource8Impl_GetPriority(LPDIRECT3DRESOURCE8 iface);
+extern void     WINAPI        IDirect3DResource8Impl_PreLoad(LPDIRECT3DRESOURCE8 iface);
+extern D3DRESOURCETYPE WINAPI IDirect3DResource8Impl_GetType(LPDIRECT3DRESOURCE8 iface);
+
+/* ---------------------- */
+/* IDirect3DVertexBuffer8 */
+/* ---------------------- */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+extern ICOM_VTABLE(IDirect3DVertexBuffer8) Direct3DVertexBuffer8_Vtbl;
+
+/*****************************************************************************
+ * IDirect3DVertexBuffer8 implementation structure
+ */
+struct IDirect3DVertexBuffer8Impl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirect3DVertexBuffer8);
+    DWORD                   ref;
+
+    /* IDirect3DResource8 fields */
+    IDirect3DDevice8Impl   *Device;
+    D3DRESOURCETYPE         ResourceType;
+
+    /* IDirect3DVertexBuffer8 fields */
+    BYTE                   *allocatedMemory;
+    D3DVERTEXBUFFER_DESC    currentDesc;
+};
+
+/* IUnknown: */
+extern HRESULT WINAPI         IDirect3DVertexBuffer8Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_AddRef(LPDIRECT3DVERTEXBUFFER8 iface);
+extern ULONG WINAPI           IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface);
+
+/* IDirect3DVertexBuffer8: (Inherited from IDirect3DResource8) */
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDevice(LPDIRECT3DVERTEXBUFFER8 iface, IDirect3DDevice8** ppDevice);
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetPrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_FreePrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid);
+extern DWORD    WINAPI        IDirect3DVertexBuffer8Impl_SetPriority(LPDIRECT3DVERTEXBUFFER8 iface, DWORD PriorityNew);
+extern DWORD    WINAPI        IDirect3DVertexBuffer8Impl_GetPriority(LPDIRECT3DVERTEXBUFFER8 iface);
+extern void     WINAPI        IDirect3DVertexBuffer8Impl_PreLoad(LPDIRECT3DVERTEXBUFFER8 iface);
+extern D3DRESOURCETYPE WINAPI IDirect3DVertexBuffer8Impl_GetType(LPDIRECT3DVERTEXBUFFER8 iface);
+
+/* IDirect3DVertexBuffer8: */
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Lock(LPDIRECT3DVERTEXBUFFER8 iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Unlock(LPDIRECT3DVERTEXBUFFER8 iface);
+extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8 iface, D3DVERTEXBUFFER_DESC *pDesc);
 
 /* --------------------- */
 /* IDirect3DIndexBuffer8 */
@@ -636,20 +638,21 @@ struct IDirect3DIndexBuffer8Impl
     ICOM_VFIELD(IDirect3DIndexBuffer8);
     DWORD                   ref;
 
-    /* IDirect3DIndexBuffer8 fields */
+    /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
-    D3DINDEXBUFFER_DESC     currentDesc;
+    /* IDirect3DIndexBuffer8 fields */
     void                   *allocatedMemory;
+    D3DINDEXBUFFER_DESC     currentDesc;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DIndexBuffer8Impl_QueryInterface(LPDIRECT3DINDEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DIndexBuffer8Impl_AddRef(LPDIRECT3DINDEXBUFFER8 iface);
-extern ULONG WINAPI IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface);
+extern HRESULT WINAPI         IDirect3DIndexBuffer8Impl_QueryInterface(LPDIRECT3DINDEXBUFFER8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_AddRef(LPDIRECT3DINDEXBUFFER8 iface);
+extern ULONG WINAPI           IDirect3DIndexBuffer8Impl_Release(LPDIRECT3DINDEXBUFFER8 iface);
 
-/* IDirect3DIndexBuffer8 (Inherited from IDirect3DResource8) */
+/* IDirect3DIndexBuffer8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDevice(LPDIRECT3DINDEXBUFFER8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_SetPrivateData(LPDIRECT3DINDEXBUFFER8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetPrivateData(LPDIRECT3DINDEXBUFFER8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
@@ -659,10 +662,59 @@ extern DWORD    WINAPI        IDirect3DIndexBuffer8Impl_GetPriority(LPDIRECT3DIN
 extern void     WINAPI        IDirect3DIndexBuffer8Impl_PreLoad(LPDIRECT3DINDEXBUFFER8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer8Impl_GetType(LPDIRECT3DINDEXBUFFER8 iface);
 
-/* IDirect3DIndexBuffer8 */
+/* IDirect3DIndexBuffer8: */
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFFER8 iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Unlock(LPDIRECT3DINDEXBUFFER8 iface);
 extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 iface, D3DINDEXBUFFER_DESC *pDesc);
+
+/* --------------------- */
+/* IDirect3DBaseTexture8 */
+/* --------------------- */
+
+/*****************************************************************************
+ * Predeclare the interface implementation structures
+ */
+extern ICOM_VTABLE(IDirect3DBaseTexture8) Direct3DBaseTexture8_Vtbl;
+
+/*****************************************************************************
+ * IDirect3DBaseTexture8 implementation structure
+ */
+struct IDirect3DBaseTexture8Impl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDirect3DBaseTexture8);
+    DWORD                   ref;
+
+    /* IDirect3DResource8 fields */
+    IDirect3DDevice8Impl   *Device;
+    D3DRESOURCETYPE         ResourceType;
+
+    /* IDirect3DBaseTexture8 fields */
+    /*
+     *BOOL                    isManaged;
+     *DWORD                   lod;
+     */
+};
+
+/* IUnknown: */
+extern HRESULT WINAPI         IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DBaseTexture8Impl_AddRef(LPDIRECT3DBASETEXTURE8 iface);
+extern ULONG WINAPI           IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface);
+
+/* IDirect3DBaseTexture8: (Inherited from IDirect3DResource8) */
+extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8** ppDevice);
+extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_SetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
+extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetPrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
+extern HRESULT  WINAPI        IDirect3DBaseTexture8Impl_FreePrivateData(LPDIRECT3DBASETEXTURE8 iface, REFGUID refguid);
+extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetPriority(LPDIRECT3DBASETEXTURE8 iface, DWORD PriorityNew);
+extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetPriority(LPDIRECT3DBASETEXTURE8 iface);
+extern void     WINAPI        IDirect3DBaseTexture8Impl_PreLoad(LPDIRECT3DBASETEXTURE8 iface);
+extern D3DRESOURCETYPE WINAPI IDirect3DBaseTexture8Impl_GetType(LPDIRECT3DBASETEXTURE8 iface);
+
+/* IDirect3DBaseTexture8: */
+extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_SetLOD(LPDIRECT3DBASETEXTURE8 iface, DWORD LODNew);
+extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLOD(LPDIRECT3DBASETEXTURE8 iface);
+extern DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEXTURE8 iface);
 
 /* --------------------- */
 /* IDirect3DCubeTexture8 */
@@ -682,26 +734,29 @@ struct IDirect3DCubeTexture8Impl
     ICOM_VFIELD(IDirect3DCubeTexture8);
     DWORD                   ref;
 
-    /* IDirect3DCubeTexture8 fields */
+    /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
-    UINT edgeLength;
-    DWORD usage;
-    UINT levels;
-    D3DFORMAT format;
+    /* IDirect3DBaseTexture8 fields */
 
-    IDirect3DDevice8Impl  *device;
-    IDirect3DSurface8Impl *surfaces[6][MAX_LEVELS];
-    BOOL Dirty;
+    /* IDirect3DCubeTexture8 fields */
+    UINT                    edgeLength;
+    DWORD                   usage;
+    UINT                    levels;
+    D3DFORMAT               format;
+
+    IDirect3DDevice8Impl   *device;
+    IDirect3DSurface8Impl  *surfaces[6][MAX_LEVELS];
+    BOOL                    Dirty;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DCubeTexture8Impl_QueryInterface(LPDIRECT3DCUBETEXTURE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DCubeTexture8Impl_AddRef(LPDIRECT3DCUBETEXTURE8 iface);
-extern ULONG WINAPI IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 iface);
+extern HRESULT WINAPI         IDirect3DCubeTexture8Impl_QueryInterface(LPDIRECT3DCUBETEXTURE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DCubeTexture8Impl_AddRef(LPDIRECT3DCUBETEXTURE8 iface);
+extern ULONG WINAPI           IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 iface);
 
-/* IDirect3DCubeTexture8 (Inherited from IDirect3DResource8) */
+/* IDirect3DCubeTexture8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetDevice(LPDIRECT3DCUBETEXTURE8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_SetPrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetPrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
@@ -711,7 +766,7 @@ extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetPriority(LPDIRECT3DCU
 extern void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DCubeTexture8Impl_GetType(LPDIRECT3DCUBETEXTURE8 iface);
 
-/* IDirect3DCubeTexture8 (Inherited from IDirect3DBaseTexture8) */
+/* IDirect3DCubeTexture8: (Inherited from IDirect3DBaseTexture8) */
 extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_SetLOD(LPDIRECT3DCUBETEXTURE8 iface, DWORD LODNew);
 extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLOD(LPDIRECT3DCUBETEXTURE8 iface);
 extern DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLevelCount(LPDIRECT3DCUBETEXTURE8 iface);
@@ -741,27 +796,30 @@ struct IDirect3DTexture8Impl
     ICOM_VFIELD(IDirect3DTexture8);
     DWORD                   ref;
 
-    /* IDirect3DTexture8 fields */
+    /* IDirect3DResourc8 fields */
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
-    UINT width;
-    UINT height;
-    UINT levels;
-    DWORD usage;
-    D3DFORMAT format;
 
-    IDirect3DDevice8Impl *device;
-    IDirect3DSurface8Impl *surfaces[MAX_LEVELS];
-    BOOL Dirty;
+    /* IDirect3DBaseTexture8 fields */
 
+    /* IDirect3DTexture8 fields */
+    UINT                    width;
+    UINT                    height;
+    UINT                    levels;
+    DWORD                   usage;
+    D3DFORMAT               format;
+
+    IDirect3DDevice8Impl   *device;
+    IDirect3DSurface8Impl  *surfaces[MAX_LEVELS];
+    BOOL                    Dirty;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI   IDirect3DTexture8Impl_AddRef(LPDIRECT3DTEXTURE8 iface);
-extern ULONG WINAPI   IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface);
+extern HRESULT WINAPI         IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DTexture8Impl_AddRef(LPDIRECT3DTEXTURE8 iface);
+extern ULONG WINAPI           IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface);
 
-/* IDirect3DTexture8 (Inherited from IDirect3DResource8) */
+/* IDirect3DTexture8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetDevice(LPDIRECT3DTEXTURE8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_SetPrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetPrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
@@ -771,12 +829,12 @@ extern DWORD    WINAPI        IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTUR
 extern void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface);
 
-/* IDirect3DTexture8 (Inherited from IDirect3DBaseTexture8) */
+/* IDirect3DTexture8: (Inherited from IDirect3DBaseTexture8) */
 extern DWORD    WINAPI        IDirect3DTexture8Impl_SetLOD(LPDIRECT3DTEXTURE8 iface, DWORD LODNew);
 extern DWORD    WINAPI        IDirect3DTexture8Impl_GetLOD(LPDIRECT3DTEXTURE8 iface);
 extern DWORD    WINAPI        IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 iface);
 
-/* IDirect3DTexture8 */
+/* IDirect3DTexture8: */
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DSURFACE_DESC* pDesc);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level,IDirect3DSurface8** ppSurfaceLevel);
 extern HRESULT  WINAPI        IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags);
@@ -801,9 +859,13 @@ struct IDirect3DVolumeTexture8Impl
     ICOM_VFIELD(IDirect3DVolumeTexture8);
     DWORD                   ref;
 
-    /* IDirect3DVolumeTexture8 fields */
+    /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
+
+    /* IDirect3DBaseTexture8 fields */
+
+    /* IDirect3DVolumeTexture8 fields */
     UINT                    width;
     UINT                    height;
     UINT                    depth;
@@ -811,18 +873,17 @@ struct IDirect3DVolumeTexture8Impl
     DWORD                   usage;
     D3DFORMAT               format;
 
-    IDirect3DDevice8Impl *device;
-    IDirect3DVolume8Impl *volumes[MAX_LEVELS];
-    BOOL Dirty;
-
+    IDirect3DDevice8Impl   *device;
+    IDirect3DVolume8Impl   *volumes[MAX_LEVELS];
+    BOOL                    Dirty;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DVolumeTexture8Impl_QueryInterface(LPDIRECT3DVOLUMETEXTURE8 iface,REFIID refiid,LPVOID *obj);
-extern ULONG WINAPI IDirect3DVolumeTexture8Impl_AddRef(LPDIRECT3DVOLUMETEXTURE8 iface);
-extern ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8 iface);
+extern HRESULT WINAPI         IDirect3DVolumeTexture8Impl_QueryInterface(LPDIRECT3DVOLUMETEXTURE8 iface,REFIID refiid,LPVOID *obj);
+extern ULONG WINAPI           IDirect3DVolumeTexture8Impl_AddRef(LPDIRECT3DVOLUMETEXTURE8 iface);
+extern ULONG WINAPI           IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8 iface);
 
-/* IDirect3DVolumeTexture8 (Inherited from IDirect3DResource8) */
+/* IDirect3DVolumeTexture8: (Inherited from IDirect3DResource8) */
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetDevice(LPDIRECT3DVOLUMETEXTURE8 iface, IDirect3DDevice8** ppDevice);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetPrivateData(LPDIRECT3DVOLUMETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData);
@@ -832,12 +893,12 @@ extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetPriority(LPDIRECT3D
 extern void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE8 iface);
 extern D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTURE8 iface);
 
-/* IDirect3DVolumeTexture8 (Inherited from IDirect3DBaseTexture8) */
+/* IDirect3DVolumeTexture8: (Inherited from IDirect3DBaseTexture8) */
 extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE8 iface, DWORD LODNew);
 extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE8 iface);
 extern DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE8 iface);
 
-/* IDirect3DVolumeTexture8 */
+/* IDirect3DVolumeTexture8: */
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DVOLUME_DESC *pDesc);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,IDirect3DVolume8** ppVolumeLevel);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox,DWORD Flags);

@@ -34,7 +34,7 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface
     ICOM_THIS(IDirect3DSwapChain8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DSwapChain8)) {
         IDirect3DSwapChain8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;

@@ -29,12 +29,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DResource IUnknown parts follow: */
-HRESULT WINAPI IDirect3DVertexBuffer8Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER8 iface,REFIID riid,LPVOID *ppobj)
+HRESULT WINAPI IDirect3DVertexBuffer8Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER8 iface, REFIID riid, LPVOID *ppobj)
 {
     ICOM_THIS(IDirect3DVertexBuffer8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)
+        || IsEqualGUID(riid, &IID_IDirect3DVertexBuffer8)) {
         IDirect3DVertexBuffer8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -55,7 +56,7 @@ ULONG WINAPI IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface) {
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        if (NULL != This->allocatedMemory) HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -101,9 +102,9 @@ D3DRESOURCETYPE WINAPI IDirect3DVertexBuffer8Impl_GetType(LPDIRECT3DVERTEXBUFFER
 /* IDirect3DVertexBuffer8 */
 HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Lock(LPDIRECT3DVERTEXBUFFER8 iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     ICOM_THIS(IDirect3DVertexBuffer8Impl,iface);
-    if (OffsetToLock) FIXME("(%p) : with non-zero offset!!\n", This);
-    TRACE("(%p) : returning memory of %p\n", This, This->allocatedMemory);
-    *ppbData = This->allocatedMemory;
+    TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, This->allocatedMemory + OffsetToLock, This->allocatedMemory, OffsetToLock);
+    /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
+    *ppbData = This->allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_Unlock(LPDIRECT3DVERTEXBUFFER8 iface) {

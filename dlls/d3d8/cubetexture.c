@@ -34,7 +34,9 @@ HRESULT WINAPI IDirect3DCubeTexture8Impl_QueryInterface(LPDIRECT3DCUBETEXTURE8 i
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : QueryInterface\n", This);
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)
+        || IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)
+        || IsEqualGUID(riid, &IID_IDirect3DCubeTexture8)) {
         IDirect3DCubeTexture8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -68,7 +70,7 @@ ULONG WINAPI IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 iface) {
     return ref;
 }
 
-/* IDirect3DCubeTexture8 IDirect3DResource8 Interface follow: */
+/* IDirect3DCubeTexture8 (Inherited from IDirect3DResource8) */
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetDevice(LPDIRECT3DCUBETEXTURE8 iface, IDirect3DDevice8** ppDevice) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
@@ -109,11 +111,13 @@ D3DRESOURCETYPE WINAPI IDirect3DCubeTexture8Impl_GetType(LPDIRECT3DCUBETEXTURE8 
 /* IDirect3DCubeTexture8 (Inherited from IDirect3DBaseTexture8) */
 DWORD    WINAPI        IDirect3DCubeTexture8Impl_SetLOD(LPDIRECT3DCUBETEXTURE8 iface, DWORD LODNew) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLOD(LPDIRECT3DCUBETEXTURE8 iface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 
 DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLevelCount(LPDIRECT3DCUBETEXTURE8 iface) {
@@ -133,7 +137,6 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXT
     }
     return D3D_OK;
 }
-
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level,IDirect3DSurface8** ppCubeMapSurface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->surfaces[FaceType][Level]);

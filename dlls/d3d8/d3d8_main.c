@@ -22,24 +22,13 @@
 #include "winuser.h"
 #include "wine/debug.h"
 
+#include "d3d8.h"
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
-
-HRESULT WINAPI ValidatePixelShader(void)
-{
-    FIXME("(void): stub\n");
-    return 0;
-}
-
-HRESULT WINAPI ValidateVertexShader(void)
-{
-    FIXME("(void): stub\n");
-    return 0;
-}
 
 HRESULT WINAPI D3D8GetSWInfo(void)
 {

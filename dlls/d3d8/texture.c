@@ -34,7 +34,9 @@ HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface,REF
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) : QueryInterface\n", This);
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)
+        || IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)
+        || IsEqualGUID(riid, &IID_IDirect3DTexture8)) {
         IDirect3DTexture8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;

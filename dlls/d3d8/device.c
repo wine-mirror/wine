@@ -29,6 +29,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+static VERTEXSHADER8* VertexShaders[64];
+static PIXELSHADER8*  PixelShaders[64];
+
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 
@@ -90,7 +93,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Dont understand how to handle multiple streams, but if a fixed
-         FVF is passed in rather than a handle, it must use stream 0 */
+       FVF is passed in rather than a handle, it must use stream 0 */
 
     if (This->StateBlock.VertexShader > VS_HIGHESTFIXEDFXF) {
         FIXME("Cant handle created shaders yet\n");
@@ -558,7 +561,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFII
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DDevice8)) {
         IDirect3DDevice8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -898,8 +901,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8)object;
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size,DWORD Usage,
-                                                         DWORD FVF,D3DPOOL Pool,IDirect3DVertexBuffer8** ppVertexBuffer) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage,
+                                                         DWORD FVF,D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
     IDirect3DVertexBuffer8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -2185,7 +2188,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL || pSB->blockType == D3DSBT_PIXELSTATE) {
 
         if (pSB->Set.pixelShader && pSB->Changed.pixelShader)
-            IDirect3DDevice8Impl_SetVertexShader(iface, pSB->PixelShader);
+            IDirect3DDevice8Impl_SetPixelShader(iface, pSB->PixelShader);
 
         /* TODO: Pixel Shader Constants */
     }
@@ -2336,28 +2339,28 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
         if (updateBlock->Set.pixelShader && updateBlock->PixelShader != This->StateBlock.PixelShader) {
             TRACE("Updating pixel shader to %ld\n", This->StateBlock.PixelShader);
             updateBlock->lights[i] = This->StateBlock.lights[i];
-                IDirect3DDevice8Impl_SetVertexShader(iface, updateBlock->PixelShader);
+	    IDirect3DDevice8Impl_SetVertexShader(iface, updateBlock->PixelShader);
         }
 
         /* TODO: Pixel Shader Constants */
 
         /* Others + Render & Texture */
-       for (i=0; i<HIGHEST_TRANSFORMSTATE; i++) {
-            if (updateBlock->Set.transform[i] && memcmp(&This->StateBlock.transforms[i], 
-                                                   &updateBlock->transforms[i], 
-                                                   sizeof(D3DMATRIX)) != 0) {
-                TRACE("Updating transform %d\n", i);
-                memcpy(&updateBlock->transforms[i], &This->StateBlock.transforms[i], sizeof(D3DMATRIX));
-            }
-       }
+	for (i=0; i<HIGHEST_TRANSFORMSTATE; i++) {
+	  if (updateBlock->Set.transform[i] && memcmp(&This->StateBlock.transforms[i], 
+						      &updateBlock->transforms[i], 
+						      sizeof(D3DMATRIX)) != 0) {
+	    TRACE("Updating transform %d\n", i);
+	    memcpy(&updateBlock->transforms[i], &This->StateBlock.transforms[i], sizeof(D3DMATRIX));
+	  }
+	}
 
-       if (updateBlock->Set.Indices && ((updateBlock->pIndexData != This->StateBlock.pIndexData)
-                                    || (updateBlock->baseVertexIndex != This->StateBlock.baseVertexIndex))) {
-           TRACE("Updating pindexData to %p, baseVertexIndex to %d\n", 
-                       This->StateBlock.pIndexData, This->StateBlock.baseVertexIndex);
-           updateBlock->pIndexData = This->StateBlock.pIndexData;
-           updateBlock->baseVertexIndex = This->StateBlock.baseVertexIndex;
-       }
+	if (updateBlock->Set.Indices && ((updateBlock->pIndexData != This->StateBlock.pIndexData)
+					 || (updateBlock->baseVertexIndex != This->StateBlock.baseVertexIndex))) {
+	  TRACE("Updating pindexData to %p, baseVertexIndex to %d\n", 
+		This->StateBlock.pIndexData, This->StateBlock.baseVertexIndex);
+	  updateBlock->pIndexData = This->StateBlock.pIndexData;
+	  updateBlock->baseVertexIndex = This->StateBlock.baseVertexIndex;
+	}
 
        if (updateBlock->Set.material && memcmp(&This->StateBlock.material, 
                                                    &updateBlock->material, 
@@ -2431,12 +2434,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteStateBlock(LPDIRECT3DDEVICE8 iface, DWORD Token) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : freeing token %lx\n", This, Token);
+    TRACE("(%p) : freeing StateBlock %lx\n", This, Token);
     HeapFree(GetProcessHeap(), 0, (void *)Token);
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, D3DSTATEBLOCKTYPE Type,DWORD* pToken) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, D3DSTATEBLOCKTYPE Type, DWORD* pToken) {
     void *memory;
     STATEBLOCK *s;
     int i,j;
@@ -2446,7 +2449,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
 
     /* Allocate Storage */
     memory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(STATEBLOCK));
-    if (memory) memcpy(memory, &This->StateBlock, sizeof(STATEBLOCK));
+    if (memory) {
+      memcpy(memory, &This->StateBlock, sizeof(STATEBLOCK));
+    } else {
+      *pToken = 0xFFFFFFFF;
+      return E_OUTOFMEMORY;
+    } 
     *pToken = (DWORD) memory;
     s = memory;
     s->blockType = Type;
@@ -3069,9 +3077,42 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 iface, U
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration,CONST DWORD* pFunction,DWORD* pHandle,DWORD Usage) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* pHandle, DWORD Usage) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    VERTEXSHADER8* object;
+    UINT i;
+
+    FIXME("(%p) : VertexShader not fully supported yet\n", This);    
+    if (NULL == pDeclaration || NULL == pHandle) { /* pFunction can be NULL see MSDN */
+      return D3DERR_INVALIDCALL;
+    }
+    for (i = 1; NULL != VertexShaders[i] && i < sizeof(VertexShaders) / sizeof(VERTEXSHADER8*); ++i) ;
+    if (i >= sizeof(VertexShaders) / sizeof(VERTEXSHADER8*)) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VERTEXSHADER8));
+    if (NULL == object) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->usage = Usage;
+    object->data = NULL; /* TODO */
+
+    VertexShaders[i] = object;
+    *pHandle = VS_HIGHESTFIXEDFXF + i;
+
+    object->decl = pDeclaration;
+    for (i = 0; 0xFFFFFFFF != pDeclaration[i]; ++i) ;
+    object->declLength = i + 1;
+    object->function = pFunction;
+    if (NULL != pFunction) {
+      for (i = 0; 0xFFFFFFFF != pFunction[i]; ++i) ;
+      object->functionLength = i + 1;
+    } else {
+      object->functionLength = 1; /* no Function defined use fixed function vertex processing */
+    }
+
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -3096,30 +3137,108 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) = %ld\n", This, This->StateBlock.VertexShader);
+    TRACE("(%p) : GetVertexShader returning %ld\n", This, This->StateBlock.VertexShader);
     *pHandle = This->StateBlock.VertexShader;
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    VERTEXSHADER8* object;
+
+    if (Handle <= VS_HIGHESTFIXEDFXF) { /* only delete user defined shaders */
+      return D3DERR_INVALIDCALL;
+    }
+    object = VertexShaders[Handle - VS_HIGHESTFIXEDFXF];
+    TRACE("(%p) : freing VertexShader %p\n", This, object);
+    /* TODO: check validity of object */
+    HeapFree(GetProcessHeap(), 0, (void *)object);
+    VertexShaders[Handle - VS_HIGHESTFIXEDFXF] = 0;
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,CONST void* pConstantData,DWORD ConstantCount) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+
+#define VERTEX_SHADER(Handle) ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaders) / sizeof(VERTEXSHADER8*)) ? NULL : VertexShaders[Handle]) : VertexShaders[Handle - VS_HIGHESTFIXEDFXF])
+
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
+  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  VERTEXSHADER8* object;
+  DWORD Handle = This->UpdateStateBlock->VertexShader;
+
+  FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This);   
+
+  if (Register + ConstantCount > VSHADER_MAX_CONSTANTS) {
+    return D3DERR_INVALIDCALL;
+  }
+  object = VERTEX_SHADER(Handle);
+  if (NULL == object || NULL == pConstantData) {
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(object->data->constants + Register, pConstantData, ConstantCount * sizeof(SHADER8Vector));
+
+  return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,void* pConstantData,DWORD ConstantCount) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
+  ICOM_THIS(IDirect3DDevice8Impl,iface);
+  VERTEXSHADER8* object;
+  DWORD Handle = This->UpdateStateBlock->VertexShader;
+
+  FIXME("(%p) : VertexShader_GetConstant not fully supported yet\n", This);
+
+  if (Register + ConstantCount > VSHADER_MAX_CONSTANTS) {
+    return D3DERR_INVALIDCALL;
+  }
+  object = VERTEX_SHADER(Handle);
+  if (NULL == object || NULL == pConstantData) {
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(pConstantData, object->data->constants + Register, ConstantCount * sizeof(SHADER8Vector));
+
+  return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVICE8 iface, DWORD Handle,void* pData,DWORD* pSizeOfData) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    VERTEXSHADER8* object;
+
+    object = VERTEX_SHADER(Handle);
+    if (NULL == object) {
+      return D3DERR_INVALIDCALL;
+    }
+    if (NULL == pData) {
+      *pSizeOfData = object->declLength;
+      return D3D_OK;
+    }
+    if (*pSizeOfData < object->declLength) {
+      *pSizeOfData = object->declLength;
+      return D3DERR_MOREDATA;
+    }
+    TRACE("(%p) : GetVertexShaderDeclaration copying to %p\n", This, pData);
+    memcpy(pData, object->decl, object->declLength);
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle,void* pData,DWORD* pSizeOfData) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    VERTEXSHADER8* object;
+
+    object = VERTEX_SHADER(Handle);
+    if (NULL == object) {
+      return D3DERR_INVALIDCALL;
+    }
+    if (NULL == pData) {
+      *pSizeOfData = object->functionLength;
+      return D3D_OK;
+    }
+    if (*pSizeOfData < object->functionLength) {
+      *pSizeOfData = object->functionLength;
+      return D3DERR_MOREDATA;
+    }
+    if (NULL == object->function) { /* no function defined */
+      TRACE("(%p) : GetVertexShaderFunction no User Function defined using NULL to %p\n", This, pData);
+      ((DWORD *) pData) = NULL;
+    } else {
+      TRACE("(%p) : GetVertexShaderFunction copying to %p\n", This, pData);
+      memcpy(pData, object->function, object->functionLength);
+    }
+    return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData,UINT BaseVertexIndex) {
@@ -3156,9 +3275,34 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirec
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction,DWORD* pHandle) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PIXELSHADER8* object;
+    UINT i;
+
+    FIXME("(%p) : PixelShader not fully supported yet\n", This);    
+    if (NULL == pFunction || NULL == pHandle) {
+      return D3DERR_INVALIDCALL;
+    }
+    for (i = 1; NULL != PixelShaders[i] && i < sizeof(PixelShaders) / sizeof(PIXELSHADER8*); ++i) ;
+    if (i >= sizeof(PixelShaders) / sizeof(PIXELSHADER8*)) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PIXELSHADER8));
+    if (NULL == object) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    
+    object->data = NULL; /* TODO */
+
+    PixelShaders[i] = object;
+    *pHandle = VS_HIGHESTFIXEDFXF + i;
+
+    object->function = pFunction;
+    for (i = 0; 0xFFFFFFFF != pFunction[i]; ++i) ;
+    object->functionLength = i + 1;
+
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -3175,35 +3319,65 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DW
 
     /* FIXME: Quieten when not being used */
     if (Handle != 0) {
-       FIXME("(%p) : stub %ld\n", This, Handle);
+      FIXME("(%p) : stub %ld\n", This, Handle);
     } else {
-       TRACE("(%p) : stub %ld\n", This, Handle);
+      TRACE("(%p) : stub %ld\n", This, Handle);
     }
 
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : returning %ld\n", This, This->StateBlock.PixelShader);
+    TRACE("(%p) : GetPixelShader returning %ld\n", This, This->StateBlock.PixelShader);
     *pHandle = This->StateBlock.PixelShader;
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PIXELSHADER8* object;   
+
+    if (Handle <= VS_HIGHESTFIXEDFXF) { /* only delete user defined shaders */
+      return D3DERR_INVALIDCALL;
+    }
+    object = PixelShaders[Handle - VS_HIGHESTFIXEDFXF];
+    TRACE("(%p) : freeing PixelShader %p\n", This, object);
+    /* TODO: check validity of object before free */
+    HeapFree(GetProcessHeap(), 0, (void *)object);
+    PixelShaders[Handle - VS_HIGHESTFIXEDFXF] = 0;
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,CONST void* pConstantData,DWORD ConstantCount) {
+#define PIXEL_SHADER(Handle) ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(PixelShaders) / sizeof(PIXELSHADER8*)) ? NULL : PixelShaders[Handle]) : PixelShaders[Handle - VS_HIGHESTFIXEDFXF])
+
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,CONST void* pConstantData, DWORD ConstantCount) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,void* pConstantData,DWORD ConstantCount) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,void* pConstantData, DWORD ConstantCount) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);  
+    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle,void* pData,DWORD* pSizeOfData) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PIXELSHADER8* object;
+
+    object = PIXEL_SHADER(Handle);
+    if (NULL == object) {
+      return D3DERR_INVALIDCALL;
+    }
+    if (NULL == pData) {
+      *pSizeOfData = object->functionLength;
+      return D3D_OK;
+    }
+    if (*pSizeOfData < object->functionLength) {
+      *pSizeOfData = object->functionLength;
+      return D3DERR_MOREDATA;
+    }
+    TRACE("(%p) : GetPixelShaderFunction copying to %p\n", This, pData);
+    memcpy(pData, object->function, object->functionLength);
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);

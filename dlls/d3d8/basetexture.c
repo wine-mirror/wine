@@ -28,13 +28,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-/* IDirect3DBaseTexture8 IUnknown parts follow: */
+/* IDirect3DBaseTexture8 (Inherited from IUnknown) */
 HRESULT WINAPI IDirect3DBaseTexture8Impl_QueryInterface(LPDIRECT3DBASETEXTURE8 iface,REFIID riid,LPVOID *ppobj)
 {
     ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
     TRACE("(%p) : QueryInterface\n", This);
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)
+        || IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)) {
         IDirect3DBaseTexture8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -59,7 +60,7 @@ ULONG WINAPI IDirect3DBaseTexture8Impl_Release(LPDIRECT3DBASETEXTURE8 iface) {
     return ref;
 }
 
-/* IDirect3DBaseTexture8 IDirect3DResource8 Interface follow: */
+/* IDirect3DBaseTexture8 (Inherited from IDirect3DResource8) */
 HRESULT  WINAPI        IDirect3DBaseTexture8Impl_GetDevice(LPDIRECT3DBASETEXTURE8 iface, IDirect3DDevice8** ppDevice) {
     ICOM_THIS(IDirect3DBaseTexture8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
