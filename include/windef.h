@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_WINDEF_H
-#define __WINE_WINDEF_H
+#ifndef _WINDEF_
+#define _WINDEF_
 
 #ifndef WINVER
 #define WINVER 0x0500
@@ -343,4 +343,4 @@ typedef const RECTL *LPCRECTL;
 }
 #endif
 
-#endif /* __WINE_WINDEF_H */
+#endif /* _WINDEF_ */

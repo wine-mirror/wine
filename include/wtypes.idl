@@ -220,7 +220,7 @@ cpp_quote("#endif")
 
 cpp_quote("#ifndef _TEXTMETRIC_DEFINED")
 cpp_quote("#define _TEXTMETRIC_DEFINED")
-typedef struct
+typedef struct tagTEXTMETRICA
 {
     LONG      tmHeight;
     LONG      tmAscent;
@@ -244,7 +244,7 @@ typedef struct
     BYTE      tmCharSet;
 } TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
 
-typedef struct
+typedef struct tagTEXTMETRICW
 {
     LONG      tmHeight;
     LONG      tmAscent;

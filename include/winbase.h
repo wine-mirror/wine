@@ -673,7 +673,7 @@ typedef struct _SYSTEM_POWER_STATUS
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
 
 
-typedef struct tagSYSTEM_INFO
+typedef struct _SYSTEM_INFO
 {
     union {
 	DWORD	dwOemId; /* Obsolete field - do not use */

@@ -219,7 +219,7 @@ typedef struct _FILETIME {
 #endif
 #ifndef _TEXTMETRIC_DEFINED
 #define _TEXTMETRIC_DEFINED
-typedef struct {
+typedef struct tagTEXTMETRICA {
     LONG tmHeight;
     LONG tmAscent;
     LONG tmDescent;
@@ -242,7 +242,7 @@ typedef struct {
     BYTE tmCharSet;
 } TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
 
-typedef struct {
+typedef struct tagTEXTMETRICW {
     LONG tmHeight;
     LONG tmAscent;
     LONG tmDescent;

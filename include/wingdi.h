@@ -516,7 +516,7 @@ typedef LOGBRUSH PATTERN, *PPATTERN, *LPPATTERN;
 #define DEVICE_FONTTYPE     0x0002
 #define TRUETYPE_FONTTYPE   0x0004
 
-typedef struct
+typedef struct tagLOGFONTA
 {
     LONG   lfHeight;
     LONG   lfWidth;
@@ -534,7 +534,7 @@ typedef struct
     CHAR   lfFaceName[LF_FACESIZE];
 } LOGFONTA, *PLOGFONTA, *LPLOGFONTA;
 
-typedef struct
+typedef struct tagLOGFONTW
 {
     LONG   lfHeight;
     LONG   lfWidth;
@@ -653,7 +653,7 @@ typedef struct
 #define OBJ_ENHMETAFILE     13
 #define OBJ_COLORSPACE      14
 
-typedef struct
+typedef struct tagXFORM
 {
     FLOAT  eM11;
     FLOAT  eM12;
@@ -773,7 +773,7 @@ typedef struct
 #ifndef _TEXTMETRIC_DEFINED
 #define _TEXTMETRIC_DEFINED
 
-typedef struct
+typedef struct tagTEXTMETRICA
 {
     LONG      tmHeight;
     LONG      tmAscent;
@@ -797,7 +797,7 @@ typedef struct
     BYTE      tmCharSet;
 } TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
 
-typedef struct
+typedef struct tagTEXTMETRICW
 {
     LONG      tmHeight;
     LONG      tmAscent;

@@ -1834,7 +1834,7 @@ typedef struct
 #define CURSOR_SHOWING 0x00000001
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
-typedef struct
+typedef struct tagACCEL
 {
     BYTE   fVirt;
     WORD   key;

@@ -245,7 +245,7 @@ DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
 
 typedef UINT (CALLBACK *LPCFHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
 
-typedef struct
+typedef struct tagCHOOSEFONTA
 {
 	UINT  	lStructSize;
 	HWND 		hwndOwner;
@@ -265,7 +265,7 @@ typedef struct
 	INT		nSizeMax;
 } CHOOSEFONTA, *LPCHOOSEFONTA;
 
-typedef struct
+typedef struct tagCHOOSEFONTW
 {
 	UINT  	lStructSize;
 	HWND 		hwndOwner;
