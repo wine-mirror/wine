@@ -84,7 +84,11 @@ void WINAPI XMS_Handler( CONTEXT86 *context )
 	break;
     case 0x0a:   /* Free Extended Memory Block */
 	TRACE("free extended memory block %04x\n",DX_reg(context));
-	GlobalFree16(DX_reg(context));
+       if(!DX_reg(context) || GlobalFree16(DX_reg(context))) {
+         AX_reg(context) = 0;    /* failure */
+         BL_reg(context) = 0xa2; /* invalid handle */
+       } else
+         AX_reg(context) = 1;    /* success */
 	break;
     case 0x0b:   /* Move Extended Memory Block */
     {
