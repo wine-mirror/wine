@@ -10,6 +10,8 @@
 #include "rpc.h"
 #include "rpcndr.h"
 
+typedef void* HMETAFILEPICT;
+
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
 
 /* FIXME: does not belong here */
