@@ -361,7 +361,7 @@ static void start_process(void)
  *
  * Try to open the Winelib app .so file based on argv[0] or WINEPRELOAD.
  */
-void *open_winelib_app( const char *argv0 )
+void *open_winelib_app( char *argv[] )
 {
     void *ret = NULL;
     char *tmp;
@@ -369,22 +369,34 @@ void *open_winelib_app( const char *argv0 )
 
     if ((name = getenv( "WINEPRELOAD" )))
     {
-        ret = wine_dll_load_main_exe( name, 0 );
+        if (!(ret = wine_dll_load_main_exe( name, 0 )))
+        {
+            MESSAGE( "%s: could not load '%s' as specified in the WINEPRELOAD environment variable\n",
+                     argv[0], name );
+            ExitProcess(1);
+        }
     }
     else
     {
         /* if argv[0] is "wine", don't try to load anything */
-        if (!(name = strrchr( argv0, '/' ))) name = argv0;
+        if (!(name = strrchr( argv[0], '/' ))) name = argv[0];
         else name++;
         if (!strcmp( name, "wine" )) return NULL;
 
         /* now try argv[0] with ".so" appended */
-        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 4 )))
+        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv[0]) + 4 )))
         {
-            strcpy( tmp, argv0 );
+            strcpy( tmp, argv[0] );
             strcat( tmp, ".so" );
             /* search in PATH only if there was no '/' in argv[0] */
-            ret = wine_dll_load_main_exe( tmp, (name == argv0) );
+            ret = wine_dll_load_main_exe( tmp, (name == argv[0]) );
+            if (!ret && !argv[1])
+            {
+                /* if no argv[1], this will be better than displaying usage */
+                MESSAGE( "%s: could not load library '%s' as Winelib application\n",
+                         argv[0], tmp );
+                ExitProcess(1);
+            }
             HeapFree( GetProcessHeap(), 0, tmp );
         }
     }
@@ -403,7 +415,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
 
-    if (open_winelib_app( argv[0] )) goto found; /* try to open argv[0] as a winelib app */
+    if (open_winelib_app( argv )) goto found; /* try to open argv[0] as a winelib app */
 
     main_exe_argv = ++argv;  /* remove argv[0] (wine itself) */
 
@@ -565,6 +577,7 @@ static char **build_envp( const char *env, const char *extra_env )
         {
             if (memcmp( p, "PATH=", 5 ) &&
                 memcmp( p, "HOME=", 5 ) &&
+                memcmp( p, "WINEPRELOAD=", 12 ) &&
                 memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = (char *)p;
         }
         *envptr = 0;
