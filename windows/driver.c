@@ -920,17 +920,23 @@ LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
 
     switch(wMsg) {
-    case DRV_LOAD:		return (LRESULT)0L;
-    case DRV_FREE:		return (LRESULT)0L;
-    case DRV_OPEN:		return (LRESULT)0L;
-    case DRV_CLOSE:		return (LRESULT)0L;
-    case DRV_ENABLE:		return (LRESULT)1L;
-    case DRV_DISABLE:		return (LRESULT)1L;
-    case DRV_QUERYCONFIGURE:	return (LRESULT)0L;
-    case DRV_CONFIGURE:		MessageBoxA(0, "Driver isn't configurable !", "Wine Driver", MB_OK); return (LRESULT)0L;
-    case DRV_INSTALL:		return (LRESULT)DRVCNF_RESTART;
-    case DRV_REMOVE:		return (LRESULT)DRVCNF_RESTART;
-    default:			return (LRESULT)0L;
+    case DRV_LOAD:		
+    case DRV_FREE:		
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+	return (LRESULT)1L;
+    case DRV_OPEN:		
+    case DRV_CLOSE:		
+    case DRV_QUERYCONFIGURE:
+	return (LRESULT)0L;
+    case DRV_CONFIGURE:		
+	MessageBoxA(0, "Driver isn't configurable !", "Wine Driver", MB_OK); 
+	return (LRESULT)0L;
+    case DRV_INSTALL:		
+    case DRV_REMOVE:		
+	return DRV_SUCCESS;
+    default:			
+	return (LRESULT)0L;
     }
 }
 
