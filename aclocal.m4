@@ -79,7 +79,7 @@ AC_DEFUN([WINE_TRY_ASM_LINK],
 [ac_try_asm_link_saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
 cat > conftest_asm.s <<EOF
-$1
+[$1]
 EOF
 AC_TRY_LINK([$2],[$3],[$4],[$5])
 rm -f conftest_asm.s
