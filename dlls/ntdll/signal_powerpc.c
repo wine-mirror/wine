@@ -101,7 +101,7 @@ typedef struct ucontext SIGCONTEXT;
 
 #endif /* linux */
 
-#ifdef __darwin__
+#ifdef __APPLE__
 
 # include <sys/ucontext.h>
 
@@ -159,7 +159,7 @@ SIGTRAP
 SIGFPE
 */
 
-#endif /* __darwin__ */
+#endif /* __APPLE__ */
 
 
 
