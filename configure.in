@@ -753,6 +753,7 @@ AC_CHECK_HEADERS(\
 	linux/joystick.h \
 	linux/ucdrom.h \
 	net/if.h \
+	netdb.h \
 	netinet/in.h \
 	netinet/tcp.h \
 	pty.h \

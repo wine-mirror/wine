@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "config.h"
 #include "windows.h"
 #include "wininet.h"
 #include "winerror.h"
