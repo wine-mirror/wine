@@ -167,73 +167,83 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
 }
 
 
-/*******************************************************************
- *         WINPOS_WindowFromPoint 
+/***********************************************************************
+ *           WINPOS_WindowFromPoint
  *
- * The Right Thing
+ * Find the window and hittest for a given point.
  */
-HWND WINPOS_WindowFromPoint( HWND hScope, POINT pt, WORD* lpht )
+INT WINPOS_WindowFromPoint( POINT pt, HWND *phwnd )
 {
- WORD   wRet;
- WND*	wndPtr = WIN_FindWndPtr( hScope );
+    WND *wndPtr;
+    HWND hwnd;
+    INT hittest = HTERROR;
+    INT x, y;
 
- if( !wndPtr || !(wndPtr->dwStyle & WS_VISIBLE) ) return 0;
+    *phwnd = 0;
+    x = pt.x;
+    y = pt.y;
+    hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
+    for (;;)
+    {
+        while (hwnd)
+        {
+            /* If point is in window, and window is visible, and it  */
+            /* is enabled (or it's a top-level window), then explore */
+            /* its children. Otherwise, go to the next window.       */
 
- if ((pt.x <  wndPtr->rectWindow.left)  ||
-     (pt.x >= wndPtr->rectWindow.right) ||
-     (pt.y <  wndPtr->rectWindow.top)   ||
-     (pt.y >= wndPtr->rectWindow.bottom)) return 0; 
+            wndPtr = WIN_FindWndPtr( hwnd );
+            if ((wndPtr->dwStyle & WS_VISIBLE) &&
+                (!(wndPtr->dwStyle & WS_DISABLED) ||
+                 ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)) &&
+                (x >= wndPtr->rectWindow.left) &&
+                (x < wndPtr->rectWindow.right) &&
+                (y >= wndPtr->rectWindow.top) &&
+                (y < wndPtr->rectWindow.bottom))
+            {
+                *phwnd = hwnd;  /* Got a suitable window */
 
- /* pt is inside hScope window */
+                /* If window is minimized or disabled, return at once */
+                if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
+                if (wndPtr->dwStyle & WS_DISABLED) return HTERROR;
 
- if( wndPtr->dwStyle & WS_DISABLED )
-   if( wndPtr->dwStyle & (WS_POPUP | WS_CHILD) == WS_CHILD )
-       return 0;
-   else
-     {
-       if( lpht ) *lpht = HTERROR;
-       return hScope;
-     }  
+                /* If point is not in client area, ignore the children */
+                if ((x < wndPtr->rectClient.left) ||
+                    (x >= wndPtr->rectClient.right) ||
+                    (y < wndPtr->rectClient.top) ||
+                    (y >= wndPtr->rectClient.bottom)) break;
 
- if( wndPtr->dwStyle & WS_MINIMIZE )
-   {
-     if( lpht ) *lpht = HTCAPTION;
-     return hScope; 
-   }  
+                x -= wndPtr->rectClient.left;
+                y -= wndPtr->rectClient.top;
+                hwnd = wndPtr->hwndChild;
+            }
+            else hwnd = wndPtr->hwndNext;
+        }
 
- if( PtInRect(&wndPtr->rectClient, pt))
-   {
-     /* look among children */
-     HWND   hwnd     = wndPtr->hwndChild;
-     WND*   wndChild = WIN_FindWndPtr(hwnd);
-     POINT  ptChild  = { pt.x - wndPtr->rectClient.left,
-		         pt.y - wndPtr->rectClient.top };
+        /* If nothing found, return the desktop window */
+        if (!*phwnd)
+        {
+            *phwnd = GetDesktopWindow();
+            return HTCLIENT;
+        }
+        wndPtr = WIN_FindWndPtr( *phwnd );
 
-     while( wndChild )
-      {      
-            if( (hwnd = WINPOS_WindowFromPoint(hwnd, ptChild, lpht)) ) 
-                return hwnd;
+        /* Send the WM_NCHITTEST message (only if to the same task) */
+        if (wndPtr->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
+        hittest = (INT)SendMessage( *phwnd, WM_NCHITTEST, 0,
+                                    MAKELONG( pt.x, pt.y ) );
+        if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
 
-	    hwnd = wndChild->hwndNext;
-	    wndChild = WIN_FindWndPtr( hwnd );
-      }
-   }
+        /* If no children found in last search, make point relative to parent*/
+        if (!hwnd)
+        {
+            x += wndPtr->rectClient.left;
+            y += wndPtr->rectClient.top;
+        }
 
- /* don't do intertask sendmessage */ 
- if( wndPtr->hmemTaskQ == GetTaskQueue(0) ) 
-   {
-      if( wndPtr->dwStyle & WS_CHILD )
-          MapWindowPoints( hScope, GetDesktopWindow(), &pt, 1);
-
-      wRet = SendMessage( hScope, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ));
-      if( wRet == (WORD)HTTRANSPARENT )
-          return 0;
-   }
- else
-      wRet = HTCLIENT;
-
- if( lpht ) *lpht = wRet;
- return hScope;
+        /* Restart the search from the next sibling */
+        hwnd = wndPtr->hwndNext;
+        *phwnd = wndPtr->hwndParent;
+    }
 }
 
 
@@ -242,7 +252,9 @@ HWND WINPOS_WindowFromPoint( HWND hScope, POINT pt, WORD* lpht )
  */
 HWND WindowFromPoint( POINT pt )
 {
-   return WINPOS_WindowFromPoint( GetDesktopWindow(), pt , NULL );
+    HWND hwnd;
+    WINPOS_WindowFromPoint( pt, &hwnd );
+    return hwnd;
 }
 
 
@@ -705,7 +717,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
             RedrawIconTitle(hwndPrevActive); 
       } 
   */
-    if (!(wndPtr->dwStyle & WS_CHILD) )
+    if (!(wndPtr->dwStyle & WS_CHILD))
     {
 	/* check Z-order and bring hWnd to the top */
 	wndTemp = WIN_FindWndPtr( GetDesktopWindow() );
@@ -1099,9 +1111,9 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     result = WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
 				    &wndPtr->rectWindow, &wndPtr->rectClient,
 				    &winpos, &newClientRect );
-    /* ....  Should handle result here */
+    /* FIXME: Should handle result here */
 
-      /* Perform the moving and resizing */
+    /* Perform the moving and resizing */
 
     if (wndPtr->window)
     {
@@ -1249,7 +1261,7 @@ HDWP BeginDeferWindowPos( INT count )
  *           DeferWindowPos   (USER.260)
  */
 HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
-                     INT cx, INT cy, WORD flags )
+                     INT cx, INT cy, UINT flags )
 {
     DWP *pDWP;
     int i;

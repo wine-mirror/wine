@@ -308,7 +308,10 @@ WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if (op == 0)  /* get */
     {
-        return 1 /* accessed */ |
+        return 0x01 | /* accessed */
+               0x10 | /* not system */
+               0x60 | /* DPL 3 */
+               0x80 | /* present */
                ((entry.read_only == 0) << 1) |
                (entry.type << 2) |
                (entry.seg_32bit << 14) |
@@ -453,7 +456,7 @@ SEGPTR MAKE_SEGPTR(void * ptr)
     if (!ptr)
 	return ptr;
     if (!((unsigned)ptr & 0xffff0000)) {
- 	fprintf(stderr, "Invalid pointer %08x has been passed to MAKE_SEGPTR. This was\n", ptr);
+ 	fprintf(stderr, "Invalid pointer %p has been passed to MAKE_SEGPTR. This was\n", ptr);
 	fprintf(stderr, "probably caused by an unnecessary call to PTR_SEG_TO_LIN.\n");
 	fprintf(stderr, "Forcing call to debugger\n");
 	ptr = *(void **)0;

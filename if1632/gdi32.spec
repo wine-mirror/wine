@@ -20,7 +20,7 @@ base	1
 0016 stub CloseFigure
 0017 stub CloseMetaFile
 0018 stub ColorMatchToTarget
-0019 stub CombineRgn
+0019 stdcall CombineRgn(long long long long) CombineRgn
 0020 stub CombineTransform
 0021 stub CopyEnhMetaFileA
 0022 stub CopyEnhMetaFileW
@@ -60,7 +60,7 @@ base	1
 0056 stub CreatePenIndirect
 0057 stub CreatePolyPolygonRgn
 0058 stub CreatePolygonRgn
-0059 stub CreateRectRgn
+0059 stdcall CreateRectRgn(long long long long) CreateRectRgn
 0060 stub CreateRectRgnIndirect
 0061 stub CreateRoundRectRgn
 0062 stub CreateScalableFontResourceA
@@ -205,7 +205,7 @@ base	1
 0201 stub GetMiterLimit
 0202 stub GetNearestColor
 0203 stub GetNearestPaletteIndex
-0204 stdcall GetObjectA(long long ptr) GetObject
+0204 stdcall GetObjectA(long long ptr) WIN32_GetObject
 0205 stub GetObjectType
 0206 stub GetObjectW
 0207 stub GetOutlineTextMetricsA
@@ -333,7 +333,7 @@ base	1
 0329 stub SetPixelV
 0330 stub SetPolyFillMode
 0331 stub SetROP2
-0332 stub SetRectRgn
+0332 stdcall SetRectRgn(long long long long long) SetRectRgn
 0333 stub SetRelAbs
 0334 stub SetStretchBltMode
 0335 stub SetSystemPaletteUse
@@ -351,7 +351,7 @@ base	1
 0347 stub StartDocA
 0348 stub StartDocW
 0349 stub StartPage
-0350 stub StretchBlt
+0350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt
 0351 stub StretchDIBits
 0352 stub StrokeAndFillPath
 0353 stub StrokePath
@@ -363,4 +363,30 @@ base	1
 0359 stub UpdateColors
 0360 stub WidenPath
 0361 stub pstackConnect
+#late additions
+0362 stub DeviceCapabilitiesEx
+0363 stub GdiDciBeginAccess
+0364 stub GdiDciCreateOffscreenSurface
+0365 stub GdiDciCreateOverlaySurface
+0366 stub GdiDciCreatePrimarySurface
+0367 stub GdiDciDestroySurface
+0368 stub GdiDciDrawSurface
+0369 stub GdiDciEndAccess
+0370 stub GdiDciEnumSurface
+0371 stub GdiDciInitialize
+0372 stub GdiDciSetClipList
+0373 stub GdiDciSetDestination
+0374 stub GdiDllInitialize
+0375 stub GdiGetLocalBitmap
+0376 stub GdiWinWatchClose
+0377 stub GdiWinWatchDidStatusChange
+0378 stub GdiWinWatchGetClipList
+0379 stub GdiWinWatchOpen
+0380 stub GetGlyphOutlineWow
+0381 stub GetTextCharsetInfo
+0382 stub TranslateCharsetInfo
+0383 stub UpdateICMRegKeyA
+0384 stub UpdateICMRegKeyW
+0385 stub gdiPlaySpoolStream
+
 

@@ -971,7 +971,7 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
 /*************************************************************************
  *           EnableScrollBar   (USER.482)
  */
-BOOL EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
+BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
 {
     SCROLLINFO *infoPtr;
     HDC hdc;

@@ -45,14 +45,14 @@ void STRING32_AnsiToUni(LPWSTR dest,LPCSTR src)
 	*dest = *src;
 }
 
-LPSTR STRING32_DupUniToAnsi(LPWSTR src)
+LPSTR STRING32_DupUniToAnsi(LPCWSTR src)
 {
 	LPSTR dest=xmalloc(STRING32_UniLen(src)+1);
 	STRING32_UniToAnsi(dest,src);
 	return dest;
 }
 
-LPWSTR STRING32_DupAnsiToUni(LPSTR src)
+LPWSTR STRING32_DupAnsiToUni(LPCSTR src)
 {
 	LPWSTR dest=xmalloc(2*strlen(src)+2);
 	STRING32_AnsiToUni(dest,src);
@@ -75,7 +75,7 @@ WCHAR STRING32_tolowerW(WCHAR c)
 	return tolower(c);
 }
 
-LPWSTR STRING32_lstrcmpniW(LPCWSTR a,LPCWSTR b,DWORD len)
+int STRING32_lstrcmpniW(LPCWSTR a,LPCWSTR b,DWORD len)
 {
 	while(len--)
 	{

@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 
-HANDLE32 FindResource32( HINSTANCE hModule, LPCTSTR name, LPCTSTR type );
+HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type );
 HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc );
 LPVOID LockResource32( HANDLE32 handle );
 BOOL FreeResource32( HANDLE32 handle );
@@ -44,5 +44,10 @@ typedef struct _IMAGE_RESOURCE_DIR_STRING_U {
 	WORD Length;
 	WCHAR NameString[1];
 } IMAGE_RESOURCE_DIR_STRING_U, *PIMAGE_RESOURCE_DIR_STRING_U;
+
+HMENU WIN32_LoadMenuIndirectW(void *menu);
+HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name);
+HMENU WIN32_LoadMenuIndirectA(void *menu);
+HMENU WIN32_LoadMenuA(HANDLE instance,LPCSTR name);
 
 #endif  /* __WINE_RESOURCE32_H */

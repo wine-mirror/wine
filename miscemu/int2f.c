@@ -46,6 +46,8 @@ void INT_Int2fHandler( struct sigcontext_struct context )
         {
 	case 0x10:  /* smartdrv */
 	    break;  /* not installed */
+        case 0x11:  /* dblspace */
+            break;  /* not installed */
         case 0x12:  /* realtime compression interface */
             break;  /* not installed */
         default:

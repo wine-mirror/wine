@@ -986,7 +986,7 @@ LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 /************************************************************************
  * 			       	DlgDirSelectComboBox	[USER.194]
  */
-BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
+BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, INT nIDLBox)
 {
 	fprintf(stdnimp,"DlgDirSelectComboBox("NPFMT", '%s', %d) \n",
 				hDlg, lpStr, nIDLBox);
@@ -998,7 +998,7 @@ BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
  * 					DlgDirListComboBox     [USER.195]
  */
 INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
-                        INT idStatic, WORD wType )
+                        INT idStatic, UINT wType )
 {
     INT ret = 0;
 

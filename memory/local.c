@@ -681,6 +681,7 @@ HLOCAL LOCAL_Free( HANDLE ds, HLOCAL handle )
 
     dprintf_local( stddeb, "LocalFree: %04x ds=%04x\n", handle, ds );
     
+    if (!handle) { fprintf( stderr, "LOCAL_Free: handle is 0.\n" ); return 0; }
     if (HANDLE_FIXED( handle )) {
 	arena = ARENA_HEADER( handle );
     } else {

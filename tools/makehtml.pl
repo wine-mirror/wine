@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-open(APIW,"./apiw.index");
+open(APIW,"./apiw.index") or die "Can't find ./apiw.index";
 while(<APIW>)
 {
   ($func,$link)=split /:/;
@@ -9,13 +9,13 @@ while(<APIW>)
 }
 close(APIW);
 
-open(WINDOWS,"../include/windows.h");
+open(WINDOWS,"../include/windows.h") or die "Can't find ../include/windows.h";
 while(<WINDOWS>) { add_func($_) if /AccessResource/../wvsprintf/; }
 close(WINDOWS);
-open(TOOLHELP,"../include/toolhelp.h");
+open(TOOLHELP,"../include/toolhelp.h") or die "Can't find ../include/toolhelp.h";
 while(<TOOLHELP>) { add_func($_) if /GlobalInfo/../MemoryWrite/; }
 close(TOOLHELP);
-open(COMMDLG,"../include/commdlg.h");
+open(COMMDLG,"../include/commdlg.h") or die "Can't find ../include/commdlg.h";
 while(<COMMDLG>) { add_func($_) if /ChooseColor/../ReplaceText/; }
 close(COMMDLG);
 

@@ -895,27 +895,39 @@ static void MENU_SelectPrevItem( HWND hwndOwner, HMENU hmenu )
  */
 static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id, SEGPTR data)
 {
-    item->item_flags = flags & ~(MF_HILITE | MF_MOUSESELECT);
-    item->item_id    = id;
+    HANDLE hPrevText = IS_STRING_ITEM(item->item_flags) ? item->hText : 0;
 
-    SetRectEmpty( &item->rect );
     if (IS_STRING_ITEM(flags))
     {
-        char *str = (char *)PTR_SEG_TO_LIN(data);
-        HANDLE hText;
-
-	  /* Item beginning with a backspace is a help item */
-	if (*str == '\b')
-	{
-	    item->item_flags |= MF_HELP;
-            str++;
-	}
-	if (!(hText = USER_HEAP_ALLOC( strlen(str)+1 ))) return FALSE;
-        item->hText = hText;
-	strcpy( (char *)USER_HEAP_LIN_ADDR( hText ), str );
+        if (!data)
+        {
+            flags |= MF_SEPARATOR;
+            item->hText = 0;
+        }
+        else
+        {
+            char *str = (char *)PTR_SEG_TO_LIN(data);
+            HANDLE hText;
+            
+            /* Item beginning with a backspace is a help item */
+            if (*str == '\b')
+            {
+                flags |= MF_HELP;
+                str++;
+            }
+            if (!(hText = USER_HEAP_ALLOC( strlen(str)+1 ))) return FALSE;
+            item->hText = hText;
+            strcpy( (char *)USER_HEAP_LIN_ADDR( hText ), str );
+        }
     }
     else if (flags & MF_BITMAP) item->hText = (HANDLE)(DWORD)data;
     else if (flags & MF_OWNERDRAW) SET_OWNERDRAW_DATA( item, data );
+    else item->hText = 0;
+
+    item->item_flags = flags & ~(MF_HILITE | MF_MOUSESELECT);
+    item->item_id    = id;
+    SetRectEmpty( &item->rect );
+    if (hPrevText) USER_HEAP_FREE( hPrevText );
     return TRUE;
 }
 
@@ -984,6 +996,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
     }
     menu->hItems = hNewItems;
     menu->nItems++;
+    memset( &newItems[pos], 0, sizeof(*newItems) );
     return &newItems[pos];
 }
 
@@ -1022,8 +1035,7 @@ static SEGPTR MENU_ParseResource( SEGPTR res, HMENU hMenu )
         }
         else
         {
-            if (!id && !flags && !*(char *)PTR_SEG_TO_LIN(data))
-                flags |= MF_SEPARATOR;  /* FIXME: do this in InsertMenu? */
+            if (!*(char *)PTR_SEG_TO_LIN(data)) data = 0;
             AppendMenu( hMenu, flags, id, data );
         }
     } while (!(flags & MF_END));
@@ -1877,13 +1889,9 @@ BOOL InsertMenu( HMENU hMenu, UINT pos, UINT flags, UINT id, SEGPTR data )
 {
     MENUITEM *item;
 
-    if (IS_STRING_ITEM(flags))
-    {
+    if (IS_STRING_ITEM(flags) && data)
         dprintf_menu( stddeb, "InsertMenu: "NPFMT" %d %04x %04x '%s'\n",
-                      hMenu, pos, flags, id,
-                      data ? (char *)PTR_SEG_TO_LIN(data) : "#NULL#" );
-        if (!data) return FALSE;
-    }
+                      hMenu, pos, flags, id, (char *)PTR_SEG_TO_LIN(data) );
     else dprintf_menu( stddeb, "InsertMenu: "NPFMT" %d %04x %04x %08lx\n",
                        hMenu, pos, flags, id, (DWORD)data );
 
@@ -1891,7 +1899,6 @@ BOOL InsertMenu( HMENU hMenu, UINT pos, UINT flags, UINT id, SEGPTR data )
 
     if (!(MENU_SetItemData( item, flags, id, data )))
     {
-        item->hText = 0;
         RemoveMenu( hMenu, pos, flags );
         return FALSE;
     }
@@ -1928,7 +1935,8 @@ BOOL RemoveMenu(HMENU hMenu, UINT nPos, UINT wFlags)
     
       /* Remove item */
 
-    if (IS_STRING_ITEM(lpitem->item_flags)) USER_HEAP_FREE( lpitem->hText );
+    if (IS_STRING_ITEM(lpitem->item_flags) && lpitem->hText)
+	USER_HEAP_FREE(lpitem->hText);
     if (--menu->nItems == 0)
     {
 	USER_HEAP_FREE( menu->hItems );
@@ -1969,7 +1977,6 @@ BOOL DeleteMenu(HMENU hMenu, UINT nPos, UINT wFlags)
 BOOL ModifyMenu( HMENU hMenu, UINT pos, UINT flags, UINT id, SEGPTR data )
 {
     MENUITEM *item;
-    HANDLE hText = 0;
 
     if (IS_STRING_ITEM(flags))
     {
@@ -1983,10 +1990,7 @@ BOOL ModifyMenu( HMENU hMenu, UINT pos, UINT flags, UINT id, SEGPTR data )
                       hMenu, pos, flags, id, (DWORD)data );
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;
 
-    if (IS_STRING_ITEM(item->item_flags)) hText = item->hText;
-    if (!MENU_SetItemData( item, flags, id, data )) return FALSE;
-    if (hText) USER_HEAP_FREE( hText );
-    return TRUE;
+    return MENU_SetItemData( item, flags, id, data );
 }
 
 
@@ -2018,7 +2022,7 @@ DWORD GetMenuCheckMarkDimensions()
  *			SetMenuItemBitmaps	[USER.418]
  */
 BOOL SetMenuItemBitmaps(HMENU hMenu, UINT nPos, UINT wFlags,
-		HBITMAP hNewCheck, HBITMAP hNewUnCheck)
+		HBITMAP hNewUnCheck, HBITMAP hNewCheck)
 {
     LPMENUITEM lpitem;
    dprintf_menu(stddeb,"SetMenuItemBitmaps ("NPFMT", %04X, %04X, "NPFMT", %08lX) !\n",
@@ -2090,6 +2094,8 @@ BOOL DestroyMenu(HMENU hMenu)
         {
             if (item->item_flags & MF_POPUP)
                 DestroyMenu( (HMENU)item->item_id );
+	    if (IS_STRING_ITEM(item->item_flags) && item->hText)
+		USER_HEAP_FREE(item->hText);
         }
         USER_HEAP_FREE( lppop->hItems );
     }

@@ -5,8 +5,8 @@
    the return value yourself, for instance because you don't have a good
    way to handle a zero return value.
 
-   Typically, Wine's own memory requests should be handles by this function,
-   while the client's should use malloc directly (and Wine should return an
+   Typically, Wine's own memory requests should be handled by this function,
+   while the clients should use malloc directly (and Wine should return an
    error to the client if allocation fails).
 
    Copyright 1995 by Morten Welinder.

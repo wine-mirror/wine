@@ -30,6 +30,7 @@ static WORD INSTR_ReplaceSelector( struct sigcontext_struct *context, WORD sel)
     {
         fprintf( stderr, "Direct access to segment 0x40 (cs:ip=%04x:%04lx).\n",
                  CS_reg(context), EIP_reg(context) );
+        DOSMEM_Alarm();  /* Increment BIOS clock */
         return DOSMEM_BiosSeg;
     }
     return 0;  /* Can't replace selector */

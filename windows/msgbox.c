@@ -195,7 +195,8 @@ int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
     {
         WineProc=(DWORD)SystemMessageBoxProc;
         Win16Proc=(DWORD)GetWndProcEntry16("SystemMessageBoxProc");
-        Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","SystemMessageBoxProc",0);
+        Win32Proc=(DWORD)RELAY32_GetEntryPoint(RELAY32_GetBuiltinDLL("WINPROCS32"),
+                                               "SystemMessageBoxProc",0);
         ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
         initialized=1;
     }

@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include <fcntl.h>
 #include "gdi.h"
 #include "bitmap.h"
+#include "file.h"
 #include "metafile.h"
 #include "stddebug.h"
 /* #define DEBUG_METAFILE */
@@ -55,7 +56,7 @@ HMETAFILE GetMetaFile(LPSTR lpFilename)
     GlobalFree(hmf);
     return 0;
   }
-  if (_lread(mf->hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
+  if (FILE_Read(mf->hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
     GlobalFree(mf->hMetaHdr);
     GlobalFree(hmf);
     return 0;
@@ -77,7 +78,7 @@ HMETAFILE GetMetaFile(LPSTR lpFilename)
 /******************************************************************
  *         CreateMetafile         GDI.125
  */
-HANDLE CreateMetaFile(LPSTR lpFilename)
+HANDLE CreateMetaFile(LPCTSTR lpFilename)
 {
     DC *dc;
     HANDLE handle;
@@ -254,9 +255,9 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
     {
 	if (mh->mtType == 1)   /* disk based metafile */
 	{
-	    _lread(mf->hFile, buffer, sizeof(METARECORD));
+	    FILE_Read(mf->hFile, buffer, sizeof(METARECORD));
 	    mr = (METARECORD *)buffer;
-	    _lread(mf->hFile, (char *)(mr->rdParam + 1), (mr->rdSize * 2) -
+	    FILE_Read(mf->hFile, (char *)(mr->rdParam + 1), (mr->rdSize * 2) -
 		                                       sizeof(METARECORD));
 	    mf->MetaOffset += mr->rdSize * 2;
 	}

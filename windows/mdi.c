@@ -1138,11 +1138,7 @@ LRESULT DefFrameProc(HWND hwnd, HWND hwndMDIClient, UINT message,
  *					DefMDIChildProc (USER.447)
  *
  */
-#ifdef WINELIB32
-LONG DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-#else
-LONG DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
-#endif
+LRESULT DefMDIChildProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;

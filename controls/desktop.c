@@ -2,9 +2,7 @@
  * Desktop window class.
  *
  * Copyright 1994 Alexandre Julliard
-
-static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-*/
+ */
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -13,6 +11,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
+#include "directory.h"
 #include "dos_fs.h"
 #include "graphics.h"
 
@@ -34,7 +33,17 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 
       /* Read all the file into memory */
 
-    if (!(unixFileName = DOSFS_GetUnixFileName( filename, TRUE ))) return 0;
+    if (!(unixFileName = DOSFS_GetUnixFileName( filename, TRUE )))
+    {
+        int len = DIR_GetWindowsUnixDir( NULL, 0 );
+        if (!(buffer = malloc( len + strlen(filename) + 2 ))) return 0;
+        DIR_GetWindowsUnixDir( buffer, len + 1 );
+        strcat( buffer, "/" );
+        strcat( buffer, filename );
+        unixFileName = DOSFS_GetUnixFileName( buffer, TRUE );
+        free( buffer );
+        if (!unixFileName) return 0;
+    }
     if ((file = open( unixFileName, O_RDONLY )) == -1) return 0;
     size = lseek( file, 0, SEEK_END );
     if (!(buffer = (char *)malloc( size )))

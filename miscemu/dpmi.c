@@ -290,10 +290,22 @@ void INT_Int31Handler( struct sigcontext_struct context )
     case 0x0601:  /* Unlock linear region */
         break;  /* Just ignore it */
 
+    case 0x0602:  /* Unlock real-mode region */
+        break;  /* Just ignore it */
+
+    case 0x0603:  /* Lock real-mode region */
+        break;  /* Just ignore it */
+
     case 0x0604:  /* Get page size */
         BX_reg(&context) = 0;
         CX_reg(&context) = 4096;
 	break;
+
+    case 0x0702:  /* Mark page as demand-paging candidate */
+        break;  /* Just ignore it */
+
+    case 0x0703:  /* Discard page contents */
+        break;  /* Just ignore it */
 
     default:
         INT_BARF( &context, 0x31 );

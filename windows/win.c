@@ -444,14 +444,18 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 
     if (!(style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
     {
-	if(Options.managed && className != POPUPMENU_CLASS_ATOM) {
+	if (Options.managed && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
+            (exStyle & WS_EX_DLGMODALFRAME)))
+        {
 	    win_attr.event_mask = ExposureMask | KeyPressMask |
 	                          KeyReleaseMask | PointerMotionMask |
 	                          ButtonPressMask | ButtonReleaseMask |
 	                          FocusChangeMask | StructureNotifyMask;
 	    win_attr.override_redirect = FALSE;
+            wndPtr->flags |= WIN_MANAGED;
 	}
-	else {
+	else
+        {
 	    win_attr.event_mask = ExposureMask | KeyPressMask |
 	                          KeyReleaseMask | PointerMotionMask |
 	                          ButtonPressMask | ButtonReleaseMask |
@@ -1079,7 +1083,7 @@ HWND GetLastActivePopup(HWND hwnd)
 /*******************************************************************
  *           EnumWindows   (USER.54)
  */
-BOOL EnumWindows( FARPROC lpEnumFunc, LPARAM lParam )
+BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     HWND hwnd;
     WND *wndPtr;
@@ -1125,7 +1129,7 @@ BOOL EnumWindows( FARPROC lpEnumFunc, LPARAM lParam )
 /**********************************************************************
  *           EnumTaskWindows   (USER.225)
  */
-BOOL EnumTaskWindows( HTASK hTask, FARPROC lpEnumFunc, LONG lParam )
+BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     HWND hwnd;
     WND *wndPtr;
@@ -1200,7 +1204,7 @@ static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
  *
  *   o calls WIN_EnumChildWin to do a recursive decent of child windows
  */
-BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
+BOOL EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
 

@@ -70,4 +70,7 @@ typedef struct
 
 #pragma pack(4)
 
+extern WORD xBaseUnit,yBaseUnit;
+int DIALOG_DoDialogBox( HWND hwnd, HWND owner );
+
 #endif  /* DIALOG_H */

@@ -29,11 +29,15 @@
 
 int language = 0x0409;
 
+#if 0
 #define PrintId(name) \
     if (HIWORD((DWORD)name)) \
         dprintf_resource( stddeb, "'%s'", name); \
     else \
         dprintf_resource( stddeb, "#%04x", LOWORD(name)); 
+#else
+#define PrintId(name)
+#endif
 
 /**********************************************************************
  *	    GetResDirEntry
@@ -85,12 +89,13 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 /**********************************************************************
  *	    FindResource    (KERNEL.60)
  */
-HANDLE32 FindResource32( HINSTANCE hModule, LPCTSTR name, LPCTSTR type )
+HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 {
 #ifndef WINELIB
     struct w_files *wptr = wine_files;
     PIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
+	HANDLE32 result;
 
 #if 0
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
@@ -110,7 +115,10 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCTSTR name, LPCTSTR type )
 	return 0;
     if ((resdirptr = GetResDirEntry(resdirptr, name, root)) == NULL)
 	return 0;
-    return (HANDLE32) GetResDirEntry(resdirptr, (LPCSTR)language, root);
+    result = GetResDirEntry(resdirptr, (LPCWSTR)language, root);
+	/* Try LANG_NEUTRAL, too */
+	if(!result)
+		return GetResDirEntry(resdirptr, (LPCWSTR)0, root);
 #else
     return LIBRES_FindResource( hModule, name, type );
 #endif
@@ -164,26 +172,12 @@ BOOL FreeResource32( HANDLE32 handle )
  */
 INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc )
 {
-    WORD *pModule;
-
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "AccessResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-#ifndef WINELIB
-    switch(*pModule)
-    {
-      case NE_SIGNATURE:
-        return NE_AccessResource( hModule, hRsrc );
-      case PE_SIGNATURE:
-        return 0;
-      default:
-        return 0;
-    }
-#else
-        return LIBRES_AccessResource( hModule, hRsrc );
-#endif
+	fprintf(stderr,"AccessResource32: not implemented\n");
+	return 0;
 }
 
 
@@ -192,25 +186,11 @@ INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc )
  */
 DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc )
 {
-    WORD *pModule;
-
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "SizeofResource: module="NPFMT" res="NPFMT"\n",
                      hModule, hRsrc );
-    if (!(pModule = (WORD *)GlobalLock( hModule ))) return 0;
-#ifndef WINELIB
-    switch(*pModule)
-    {
-      case NE_SIGNATURE:
-        return NE_SizeofResource( hModule, hRsrc );
-      case PE_SIGNATURE:
-        return 0;
-      default:
-        return 0;
-    }
-#else
-    return LIBRES_SizeofResource( hModule, hRsrc );
-#endif
+	fprintf(stderr,"SizeofResource32: not implemented\n");
+	return 0;
 }
 
 /**********************************************************************
@@ -218,6 +198,7 @@ DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc )
 */
 HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
 {
+#if 0
     HANDLE32 	hAccel;
     HANDLE32 	rsc_mem;
     HANDLE32 hRsrc;
@@ -232,7 +213,8 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
         dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" %04x\n",
                        instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource32( instance, lpTableName, RT_ACCELERATOR )))
+    if (!(hRsrc = FindResource32( instance, lpTableName, 
+		(LPCWSTR)RT_ACCELERATOR )))
       return 0;
     if (!(rsc_mem = LoadResource32( instance, hRsrc ))) return 0;
 
@@ -258,6 +240,10 @@ HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
     GlobalUnlock(hAccel);
     FreeResource( rsc_mem );
     return hAccel;
+#else
+	fprintf(stderr,"LoadAcceleratorsW: not implemented\n");
+	return 0;
+#endif
 }
 
 HANDLE32 WIN32_LoadAcceleratorsA(HINSTANCE instance, LPCSTR lpTableName)
@@ -280,9 +266,10 @@ WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int bufl
     int i;
 
     dprintf_resource(stddeb, "LoadString: instance = "NPFMT", id = %04x, buffer = %08x, "
-	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
+	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource32( instance, (resource_id>>4)+1, RT_STRING );
+    hrsrc = FindResource32( instance, (LPCWSTR)((resource_id>>4)+1), 
+		(LPCWSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource32( instance, hrsrc );
     if (!hmem) return 0;
@@ -305,8 +292,10 @@ WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int bufl
 	    buffer[0] = (WCHAR) 0;
 	    return 0;
 	}
+#if 0
 	fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
 	fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
+#endif
     }
     dprintf_resource(stddeb,"LoadString // '%s' copied !\n", buffer);
     return i;
@@ -341,7 +330,7 @@ HICON LoadIconA32(HINSTANCE hinst, LPCTSTR lpszIcon)
 /**********************************************************************
  *	    LoadBitmapW
  */
-HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCTSTR name )
+HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCWSTR name )
 {
     HBITMAP hbitmap = 0;
     HDC hdc;
@@ -355,7 +344,8 @@ HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCTSTR name )
         return OBM_LoadBitmap( LOWORD((int)name) );
     }
 
-    if (!(hRsrc = FindResource32( instance, name, RT_BITMAP ))) return 0;
+    if (!(hRsrc = FindResource32( instance, name, 
+		(LPWSTR)RT_BITMAP ))) return 0;
     if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource32( handle );
@@ -371,11 +361,11 @@ HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCTSTR name )
 /**********************************************************************
  *	    LoadBitmapA
  */
-HBITMAP WIN32_LoadBitmapA( HANDLE instance, LPCTSTR name )
+HBITMAP WIN32_LoadBitmapA( HANDLE instance, LPCSTR name )
 {
     HBITMAP res;
     if(!HIWORD(name))
-        res = WIN32_LoadBitmapW(instance,name);
+        res = WIN32_LoadBitmapW(instance,(LPWSTR)name);
     else{
         LPWSTR uni=STRING32_DupAnsiToUni(name);
         res=WIN32_LoadBitmapW(instance,uni);
@@ -403,15 +393,15 @@ BYTE* WIN32_ParseMenu(HMENU hMenu,BYTE *it)
 		if(flags & MF_POPUP)
 		{
 			wMenuID = CreatePopupMenu();
-			len = STRING32_lstrlenW(it);
-			utext = it;
+			len = STRING32_lstrlenW((LPWSTR)it);
+			utext = (WCHAR*)it;
 			it += sizeof(WCHAR)*(len+1);
 			it = WIN32_ParseMenu(wMenuID,it);
 		} else {
 			wMenuID=*(WORD*)it;
 			it+=sizeof(WORD);
-			utext = it;
-			len = STRING32_lstrlenW(it);
+			utext = (LPWSTR)it;
+			len = STRING32_lstrlenW((LPWSTR)it);
 			it += sizeof(WCHAR)*(len+1);
 			if(!wMenuID && !*utext)
 				flags |= MF_SEPARATOR;
@@ -444,7 +434,7 @@ HMENU WIN32_LoadMenuIndirectW(void *menu)
 HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name)
 {
 	HANDLE32 hrsrc;
-	hrsrc=FindResource32(instance,name,RT_MENU);
+	hrsrc=FindResource32(instance,name,(LPWSTR)RT_MENU);
 	if(!hrsrc)return 0;
 	return WIN32_LoadMenuIndirectW(LoadResource32(instance, hrsrc));
 }
@@ -465,7 +455,7 @@ HMENU WIN32_LoadMenuA(HANDLE instance,LPCSTR name)
 {
 	HMENU res;
 	if(!HIWORD(name))
-		res = WIN32_LoadMenuW(instance,name);
+		res = WIN32_LoadMenuW(instance,(LPWSTR)name);
 	else{
 		LPWSTR uni=STRING32_DupAnsiToUni(name);
 		res=WIN32_LoadMenuW(instance,uni);

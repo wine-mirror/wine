@@ -68,9 +68,10 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 /***********************************************************************
  *           EndPaint    (USER.40)
  */
-void EndPaint( HWND hwnd, LPPAINTSTRUCT lps )
+BOOL EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
 {
     ReleaseDC( hwnd, lps->hdc );
+    return TRUE;
 }
 
 

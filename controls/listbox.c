@@ -694,6 +694,7 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
                 if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
         }
     }
+    free( path );
     return ret;
 }
 
@@ -1886,7 +1887,7 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 /**********************************************************************
  *	    DlgDirSelect    (USER.99)
  */
-BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, int id )
+BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
 {
     char buffer[20];
     INT i;
@@ -1920,7 +1921,7 @@ BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, int id )
 /**********************************************************************
  *	    DlgDirList    (USER.100)
  */
-INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, WORD attrib )
+INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
 {
     char *filespec = (char *)PTR_SEG_TO_LIN( spec );
     int drive;
@@ -1934,7 +1935,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, WORD attrib )
                      hDlg, filespec ? filespec : "NULL",
                      idLBox, idStatic, attrib );
 
-    if (filespec && (filespec[1] == ':'))
+    if (filespec && filespec[0] && (filespec[1] == ':'))
     {
         drive = toupper( filespec[0] ) - 'A';
         filespec += 2;
@@ -2004,4 +2005,5 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, WORD attrib )
         SENDMSG( WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(temp) );
     }
     return TRUE;
+#undef SENDMSG
 }

@@ -136,7 +136,7 @@ BOOL DOSMEM_Init(void)
  *
  * Increment the BIOS tick counter.
  */
-static void DOSMEM_Alarm(void)
+void DOSMEM_Alarm(void)
 {
     pBiosData->Ticks = INT1A_GetTicksSinceMidnight();
     printf( "Ticks = %ld\n", pBiosData->Ticks );

@@ -164,11 +164,11 @@ int DIR_Init(void)
 
     /* Put the temp and Windows directories into the environment */
 
-    env_p = (char *)xmalloc( strlen(DIR_TempDosDir) + 5 );
+    env_p = (char *)xmalloc( strlen(DIR_TempDosDir) + 6 );
     strcpy( env_p, "TEMP=" );
     strcpy( env_p + 5, DIR_TempDosDir );
     putenv( env_p );
-    env_p = (char *)xmalloc( strlen(DIR_WindowsDosDir) + 7 );
+    env_p = (char *)xmalloc( strlen(DIR_WindowsDosDir) + 8 );
     strcpy( env_p, "windir=" );
     strcpy( env_p + 7, DIR_WindowsDosDir );
     putenv( env_p );

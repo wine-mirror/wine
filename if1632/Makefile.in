@@ -8,7 +8,8 @@ DLLS16	= commdlg.spec compobj.spec ddeml.spec gdi.spec kernel.spec \
 	shell.spec sound.spec storage.spec stress.spec system.spec \
 	toolhelp.spec user.spec win87em.spec winprocs.spec winsock.spec
 
-DLLS32	= advapi32.spec comdlg32.spec gdi32.spec kernel32.spec shell32.spec user32.spec winprocs32.spec
+DLLS32	= advapi32.spec comctl32.spec comdlg32.spec gdi32.spec kernel32.spec \
+	ole32.spec shell32.spec user32.spec winprocs32.spec winspool.spec
 
 SPEC16_FILES = $(DLLS16:.spec=.S)
 SPEC32_FILES = $(DLLS32:.spec=.c)
@@ -53,18 +54,18 @@ clean::
 
 # Kludge: don't use optimisation flags to compile these files
 advapi32.o: advapi32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o advapi32.o advapi32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o advapi32.o advapi32.c
 comdlg32.o: comdlg32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o comdlg32.o comdlg32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o comdlg32.o comdlg32.c
 gdi32.o: gdi32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o gdi32.o gdi32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o gdi32.o gdi32.c
 kernel32.o: kernel32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o kernel32.o kernel32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o kernel32.o kernel32.c
 shell32.o: shell32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o shell32.o shell32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o shell32.o shell32.c
 user32.o: user32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o user32.o user32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o user32.o user32.c
 winprocs32.o: winprocs32.c
-	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o winprocs32.o winprocs32.c
+	$(CC) -c -g $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o winprocs32.o winprocs32.c
 
 ### Dependencies:

@@ -64,7 +64,7 @@ NotifyUnregister(HTASK htask)
     if (i==-1)
         return FALSE;
     memcpy(notifys+i,notifys+(i+1),sizeof(struct notify)*(nrofnotifys-i-1));
-    notifys=(struct notify*)realloc(notifys,(nrofnotifys-1)*sizeof(struct notify));
+    notifys=(struct notify*)xrealloc(notifys,(nrofnotifys-1)*sizeof(struct notify));
     nrofnotifys--;
     return TRUE;
 }

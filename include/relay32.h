@@ -4,8 +4,13 @@
  * Copyright 1995 Martin von Loewis
  */
 
+#ifndef _RELAY32_H
+#define _RELAY32_H
+#include "pe_image.h"
+
 void RELAY32_Unimplemented(char *dll, int item);
-void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint);
+WIN32_builtin *RELAY32_GetBuiltinDLL(char *name);
+void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint);
 LONG RELAY32_CallWindowProc(WNDPROC,int,int,int,int);
 void RELAY32_DebugEnter(char *dll,char *name);
 
@@ -58,3 +63,5 @@ LRESULT USER32_DefWindowProcA(DWORD hwnd,DWORD msg,DWORD wParam,DWORD lParam);
 BOOL USER32_GetMessageA(struct WIN32_MSG* lpmsg,DWORD hwnd,DWORD min,DWORD max);
 HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps);
 BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps);
+#endif
+

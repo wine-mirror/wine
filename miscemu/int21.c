@@ -560,8 +560,8 @@ static int INT21_FindFirst(struct sigcontext_struct *context)
         return 0;
     }
     memcpy( dta->mask, mask, sizeof(dta->mask) );
-    dta->drive = (path[1] == ':') ? toupper(path[0]) - 'A'
-                                  : DRIVE_GetCurrentDrive();
+    dta->drive = (path[0] && (path[1] == ':')) ? toupper(path[0]) - 'A'
+                                               : DRIVE_GetCurrentDrive();
     dta->count = 0;
     dta->search_attr = CL_reg(context);
     return 1;
@@ -694,86 +694,76 @@ static int INT21_SetDiskSerialNumber(struct sigcontext_struct *context)
 }
 
 
-static void DumpFCB(BYTE *fcb)
-{
-	int x, y;
-
-	fcb -= 7;
-
-	for (y = 0; y !=2 ; y++) {
-		for (x = 0; x!=15;x++)
-			dprintf_int(stddeb, "%02x ", *fcb++);
-		dprintf_int(stddeb,"\n");
-	}
-}
-
 /* microsoft's programmers should be shot for using CP/M style int21
    calls in Windows for Workgroup's winfile.exe */
 
-static void FindFirstFCB(struct sigcontext_struct *context)
+static int INT21_FindFirstFCB( struct sigcontext_struct *context )
 {
-	BYTE *fcb = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	struct fcb *standard_fcb;
-	struct fcb *output_fcb;
-	int drive;
-	char path[12];
+    BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
+    FINDFILE_FCB *pFCB;
+    BYTE attr;
+    char buffer[] = "A:.";
+    const char *unixPath;
 
-	BYTE *dta = GetCurrentDTA();
+    if (*fcb == 0xff)
+    {
+        attr = fcb[6];
+        pFCB = (FINDFILE_FCB *)(fcb + 7);
+    }
+    else
+    {
+        attr = 0;
+        pFCB = (FINDFILE_FCB *)fcb;
+    }
 
-	DumpFCB( fcb );
-	
-	if ((*fcb) == 0xff)
-	  {
-	    standard_fcb = (struct fcb *)(fcb + 7);
-	    output_fcb = (struct fcb *)(dta + 7);
-	    *dta = 0xff;
-	  }
-	else
-	  {
-	    standard_fcb = (struct fcb *)fcb;
-	    output_fcb = (struct fcb *)dta;
-	  }
+    buffer[0] += DOS_GET_DRIVE( pFCB->drive );
+    pFCB->unixPath = NULL;
+    if (!(unixPath = DOSFS_GetUnixFileName( buffer, TRUE ))) return 0;
+    pFCB->unixPath = xstrdup( unixPath );
+    pFCB->count = 0;
+    return 1;
+}
 
-	if (standard_fcb->drive)
-	  {
-	    drive = standard_fcb->drive - 1;
-	    if (!DRIVE_IsValid(drive))
-	      {
-                  DOS_ERROR(ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk);
-                  AX_reg(context) = 0xff;
-                  return;
-	      }
-	  }
-	else
-	  drive = DRIVE_GetCurrentDrive();
 
-	output_fcb->drive = drive;
+static int INT21_FindNextFCB( struct sigcontext_struct *context )
+{
+    BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
+    FINDFILE_FCB *pFCB;
+    DOS_DIRENTRY_LAYOUT *pResult = (DOS_DIRENTRY_LAYOUT *)GetCurrentDTA();
+    DOS_DIRENT entry;
+    BYTE attr;
+    int count;
 
-	if (*(fcb) == 0xff)
-	  {
-	    if (*(fcb+6) & FA_LABEL)      /* return volume label */
-	      {
-		*(dta+6) = FA_LABEL;
-		memset(&output_fcb->name, ' ', 11);
-                memcpy(output_fcb->name, DRIVE_GetLabel(drive), 11);
-                AX_reg(context) = 0x00;
-                return;
-	      }
-	  }
+    if (*fcb == 0xff)
+    {
+        attr = fcb[6];
+        pFCB = (FINDFILE_FCB *)(fcb + 7);
+    }
+    else
+    {
+        attr = 0;
+        pFCB = (FINDFILE_FCB *)fcb;
+    }
 
-	strncpy(output_fcb->name, standard_fcb->name, 11);
-	if (*fcb == 0xff)
-	  *(dta+6) = ( *(fcb+6) & (!FA_DIRECTORY));
+    if (!pFCB->unixPath) return 0;
+    if (!(count = DOSFS_FindNext( pFCB->unixPath, pFCB->filename,
+                                  DOS_GET_DRIVE( pFCB->drive ), attr,
+                                  pFCB->count, &entry )))
+    {
+        free( pFCB->unixPath );
+        pFCB->unixPath = NULL;
+        return 0;
+    }
+    pFCB->count += count;
 
-#if 0
-	sprintf(path,"%c:*.*",drive+'A');
-	if ((output_fcb->directory = DOS_opendir(path))==NULL)
-	  {
-	    Error (PathNotFound, EC_MediaError, EL_Disk);
-	    AX_reg(context) = 0xff;
-	    return;
-	  }
-#endif	
+    memcpy( pResult->filename, entry.name, sizeof(pResult->filename) );
+    pResult->fileattr = entry.attr;
+    memset( pResult->reserved, 0, sizeof(pResult->reserved) );
+    pResult->filetime = entry.time;
+    pResult->filedate = entry.date;
+    pResult->cluster  = 0;  /* what else? */
+    pResult->filesize = entry.size;
+    return 1;
 }
 
 
@@ -975,7 +965,6 @@ void DOS3Call( struct sigcontext_struct context )
     case 0x0c: /* FLUSH BUFFER AND READ STANDARD INPUT */
     case 0x0f: /* OPEN FILE USING FCB */
     case 0x10: /* CLOSE FILE USING FCB */
-    case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
     case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
     case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
@@ -1017,7 +1006,15 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
-        FindFirstFCB(&context);
+        if (!INT21_FindFirstFCB(&context))
+        {
+            AL_reg(&context) = 0xff;
+            break;
+        }
+        /* else fall through */
+
+    case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
+        AL_reg(&context) = INT21_FindNextFCB(&context) ? 0x00 : 0xff;
         break;
 
     case 0x13: /* DELETE FILE USING FCB */
@@ -1200,8 +1197,8 @@ void DOS3Call( struct sigcontext_struct context )
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
         {
             LONG result = _hread( BX_reg(&context),
-                                  PTR_SEG_OFF_TO_LIN( DS_reg(&context),
-                                                      DX_reg(&context) ),
+                                  (SEGPTR)MAKELONG( DX_reg(&context),
+                                                    DS_reg(&context) ),
                                   CX_reg(&context) );
             if (result == -1)
             {
@@ -1569,7 +1566,7 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
     case 0x6a: /* COMMIT FILE */
-        if (fsync( FILE_GetUnixHandle( BX_reg(&context) )) == -1)
+        if (fsync( FILE_GetUnixTaskHandle( BX_reg(&context) )) == -1)
         {
             FILE_SetDosError();
             AX_reg(&context) = DOS_ExtendedError;

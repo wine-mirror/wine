@@ -696,7 +696,8 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
     {
         WineProc=(DWORD)AboutDlgProc;
         Win16Proc=(DWORD)GetWndProcEntry16("AboutDlgProc");
-        Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","AboutDlgProc",0);
+        Win32Proc=(DWORD)RELAY32_GetEntryPoint(RELAY32_GetBuiltinDLL("WINPROCS32"),
+                                               "AboutDlgProc",0);
         ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
         initialized=1;
     }
@@ -752,7 +753,7 @@ HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
  */
 DWORD DoEnvironmentSubst(LPSTR str,WORD len)
 {
-    dprintf_reg(stdnimp, "DoEnvironmentSubst(%s,%x): Empyt Stub !!!\n",str,len);
+    dprintf_reg(stdnimp, "DoEnvironmentSubst(%s,%x): Empty Stub !!!\n",str,len);
     return 0;
 }
 

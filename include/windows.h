@@ -10,23 +10,14 @@
 #endif
 
 #ifdef WINELIB32
-typedef struct { LONG x,y; } POINT;
 typedef struct { SHORT x,y; } POINTS;
-typedef struct { LONG cx,cy; } SIZE, *LPSIZE;
-typedef struct { LONG left, top, right, bottom; } RECT;
 #define MAKEPOINTS(l) (*((POINTS *)&(l)))
 #else
-typedef struct { INT x,y; } POINT;
-typedef struct { INT cx,cy; } SIZE, *LPSIZE;
-typedef struct { INT left, top, right, bottom; } RECT;
 #define MAKEPOINT(l) (*((POINT *)&(l)))
 #endif
-typedef POINT *PPOINT;
-typedef POINT *NPPOINT;
-typedef POINT *LPPOINT;
-typedef RECT *LPRECT;
-typedef RECT *NPRECT;
-typedef RECT *PRECT;
+typedef struct { INT cx,cy; } SIZE, *LPSIZE;
+typedef struct { INT x,y; } POINT, *PPOINT, *NPPOINT, *LPPOINT;
+typedef struct { INT left, top, right, bottom; } RECT, *LPRECT;
 
 #ifdef WINELIB32
 #define MAKEWPARAM(low, high) ((LONG)(((WORD)(low)) | \
@@ -1751,32 +1742,33 @@ typedef struct tagDRAGINFO {
 #define TPM_CENTERALIGN 0x0004
 #define TPM_RIGHTALIGN  0x0008
 
-#define MF_INSERT 0
-#define MF_CHANGE 0x0080
-#define MF_APPEND 0x0100
-#define MF_DELETE 0x0200
-#define MF_REMOVE 0x1000
-#define MF_BYCOMMAND 0
-#define MF_BYPOSITION 0x0400
-#define MF_SEPARATOR 0x0800
-#define MF_ENABLED 0
-#define MF_GRAYED 0x0001
-#define MF_DISABLED 0x0002
-#define MF_UNCHECKED 0
-#define MF_CHECKED 0x0008
+#define MF_INSERT          0x0000
+#define MF_CHANGE          0x0080
+#define MF_APPEND          0x0100
+#define MF_DELETE          0x0200
+#define MF_REMOVE          0x1000
+#define MF_END             0x0080
+
+#define MF_ENABLED         0x0000
+#define MF_GRAYED          0x0001
+#define MF_DISABLED        0x0002
+#define MF_STRING          0x0000
+#define MF_BITMAP          0x0004
+#define MF_UNCHECKED       0x0000
+#define MF_CHECKED         0x0008
+#define MF_POPUP           0x0010
+#define MF_MENUBARBREAK    0x0020
+#define MF_MENUBREAK       0x0040
+#define MF_UNHILITE        0x0000
+#define MF_HILITE          0x0080
+#define MF_OWNERDRAW       0x0100
 #define MF_USECHECKBITMAPS 0x0200
-#define MF_STRING 0
-#define MF_BITMAP 0x0004
-#define MF_OWNERDRAW 0x0100
-#define MF_POPUP 0x0010
-#define MF_MENUBARBREAK 0x0020
-#define MF_MENUBREAK 0x0040
-#define MF_UNHILITE 0
-#define MF_HILITE 0x0080
-#define MF_SYSMENU 0x2000
-#define MF_HELP 0x4000
-#define MF_MOUSESELECT 0x8000
-#define MF_END 0x0080
+#define MF_BYCOMMAND       0x0000
+#define MF_BYPOSITION      0x0400
+#define MF_SEPARATOR       0x0800
+#define MF_SYSMENU         0x2000
+#define MF_HELP            0x4000
+#define MF_MOUSESELECT     0x8000
 
 #ifndef NOWINOFFSETS
 #define GCW_HBRBACKGROUND (-10)
@@ -2566,6 +2558,35 @@ typedef struct {
 #define HELP_MULTIKEY       0x0201
 #define HELP_SETWINPOS      0x0203
 
+typedef struct {
+        TCHAR  dmDeviceName[32];
+        WORD   dmSpecVersion;
+        WORD   dmDriverVersion;
+        WORD   dmSize;
+        WORD   dmDriverExtra;
+        DWORD  dmFields;
+        short  dmOrientation;
+        short  dmPaperSize;
+        short  dmPaperLength;
+        short  dmPaperWidth;
+        short  dmScale;
+        short  dmCopies;
+        short  dmDefaultSource;
+        short  dmPrintQuality;
+        short  dmColor;
+        short  dmDuplex;
+        short  dmYResolution;
+        short  dmTTOption;
+        short  dmCollate;
+        TCHAR  dmFormName[32];
+        WORD   dmUnusedPadding;
+        WORD   dmBitsPerPel;
+        DWORD  dmPelsWidth;
+        DWORD  dmPelsHeight;
+        DWORD  dmDisplayFlags;
+        DWORD  dmDisplayFrequency;
+} DEVMODE;
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif
@@ -2638,95 +2659,95 @@ HBRUSH     CreateBrushIndirect(const LOGBRUSH*);
 BOOL       CreateCaret(HWND,HBITMAP,INT,INT);
 HBITMAP    CreateCompatibleBitmap(HDC,INT,INT);
 HDC        CreateCompatibleDC(HDC);
-HCURSOR    CreateCursor(HANDLE,INT,INT,INT,INT,LPVOID,LPVOID);
-HANDLE     CreateCursorIconIndirect(HANDLE,CURSORICONINFO*,LPSTR,LPSTR);
-HDC        CreateDC(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
+HCURSOR    CreateCursor(HANDLE,INT,INT,INT,INT,const BYTE*,const BYTE*);
+HANDLE     CreateCursorIconIndirect(HANDLE,CURSORICONINFO*,const BYTE*,const BYTE*);
+HDC        CreateDC(LPCTSTR,LPCTSTR,LPCTSTR,const DEVMODE*);
 HBRUSH     CreateDIBPatternBrush(HGLOBAL,UINT);
 HBITMAP    CreateDIBitmap(HDC,BITMAPINFOHEADER*,DWORD,LPVOID,BITMAPINFO*,UINT);
-HWND       CreateDialog(HANDLE,SEGPTR,HWND,DLGPROC);
-HWND       CreateDialogIndirect(HANDLE,SEGPTR,HWND,DLGPROC);
-HWND       CreateDialogIndirectParam(HANDLE,SEGPTR,HWND,DLGPROC,LPARAM);
-HWND       CreateDialogParam(HANDLE,SEGPTR,HWND,DLGPROC,LPARAM);
+HWND       CreateDialog(HINSTANCE,SEGPTR,HWND,DLGPROC);
+HWND       CreateDialogIndirect(HINSTANCE,SEGPTR,HWND,DLGPROC);
+HWND       CreateDialogIndirectParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LPARAM);
+HWND       CreateDialogParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LPARAM);
 HBITMAP    CreateDiscardableBitmap(HDC,INT,INT);
 HRGN       CreateEllipticRgn(INT,INT,INT,INT);
 HRGN       CreateEllipticRgnIndirect(LPRECT);
 HFONT      CreateFont(INT,INT,INT,INT,INT,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,BYTE,LPCSTR);
 HFONT      CreateFontIndirect(const LOGFONT*);
 HBRUSH     CreateHatchBrush(INT,COLORREF);
-HDC        CreateIC(LPSTR,LPSTR,LPSTR,LPSTR);
-HICON      CreateIcon(HANDLE,INT,INT,BYTE,BYTE,LPSTR,LPSTR);
+HDC        CreateIC(LPCTSTR,LPCTSTR,LPCTSTR,const DEVMODE*);
+HICON      CreateIcon(HINSTANCE,INT,INT,BYTE,BYTE,const BYTE*,const BYTE*);
 HMENU      CreateMenu(void);
-HANDLE     CreateMetaFile(LPSTR);
-HPALETTE   CreatePalette(LPLOGPALETTE);
+HDC        CreateMetaFile(LPCTSTR);
+HPALETTE   CreatePalette(const LOGPALETTE*);
 HBRUSH     CreatePatternBrush(HBITMAP);
 HPEN       CreatePen(INT,INT,COLORREF);
-HPEN       CreatePenIndirect(LOGPEN*);
-HRGN       CreatePolyPolygonRgn(LPPOINT,LPINT,INT,INT);
-HRGN       CreatePolygonRgn(LPPOINT,INT,INT);
+HPEN       CreatePenIndirect(const LOGPEN*);
+HRGN       CreatePolyPolygonRgn(const POINT*,const INT*,INT,INT);
+HRGN       CreatePolygonRgn(const POINT*,INT,INT);
 HMENU      CreatePopupMenu(void);
-HRGN       CreateRectRgn(short,short,short,short);
-HRGN       CreateRectRgnIndirect(LPRECT);
-HRGN       CreateRoundRectRgn(short,short,short,short,short,short);
-HBRUSH     CreateSolidBrush(DWORD);
+HRGN       CreateRectRgn(INT,INT,INT,INT);
+HRGN       CreateRectRgnIndirect(const RECT*);
+HRGN       CreateRoundRectRgn(INT,INT,INT,INT,INT,INT);
+HBRUSH     CreateSolidBrush(COLORREF);
 HWND       CreateWindow(SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
 HWND       CreateWindowEx(DWORD,SEGPTR,SEGPTR,DWORD,INT,INT,INT,INT,HWND,HMENU,HINSTANCE,SEGPTR);
-BOOL       DPtoLP(HDC,LPPOINT,int);
+BOOL       DPtoLP(HDC,LPPOINT,INT);
 void       DebugBreak(void);
-LONG       DefDlgProc(HWND,UINT,WPARAM,LPARAM);
-LONG       DefFrameProc(HWND,HWND,UINT,WPARAM,LPARAM);
+LRESULT    DefDlgProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT    DefFrameProc(HWND,HWND,UINT,WPARAM,LPARAM);
 DWORD      DefHookProc(short,WORD,DWORD,HHOOK*);
-LONG       DefMDIChildProc(HWND,UINT,WPARAM,LPARAM);
+LRESULT    DefMDIChildProc(HWND,UINT,WPARAM,LPARAM);
 LRESULT    DefWindowProc(HWND,UINT,WPARAM,LPARAM);
-HDWP       DeferWindowPos(HDWP,HWND,HWND,INT,INT,INT,INT,WORD);
+HDWP       DeferWindowPos(HDWP,HWND,HWND,INT,INT,INT,INT,UINT);
 ATOM       DeleteAtom(ATOM);
 BOOL       DeleteDC(HDC);
 BOOL       DeleteMenu(HMENU,UINT,UINT);
 BOOL       DeleteMetaFile(HMETAFILE);
-BOOL       DeleteObject(HANDLE);
-void       DestroyCaret(void);
+BOOL       DeleteObject(HGDIOBJ);
+BOOL       DestroyCaret(void);
 BOOL       DestroyCursor(HCURSOR);
 BOOL       DestroyIcon(HICON);
 BOOL       DestroyMenu(HMENU);
 BOOL       DestroyWindow(HWND);
-int        DialogBox(HINSTANCE,SEGPTR,HWND,WNDPROC);
-int        DialogBoxIndirect(HANDLE,HANDLE,HWND,WNDPROC);
-int        DialogBoxIndirectParam(HANDLE,HANDLE,HWND,WNDPROC,LONG);
-int        DialogBoxParam(HANDLE,SEGPTR,HWND,WNDPROC,LONG);
+INT        DialogBox(HINSTANCE,SEGPTR,HWND,DLGPROC);
+INT        DialogBoxIndirect(HINSTANCE,HANDLE,HWND,DLGPROC);
+INT        DialogBoxIndirectParam(HINSTANCE,HANDLE,HWND,DLGPROC,LONG);
+INT        DialogBoxParam(HINSTANCE,SEGPTR,HWND,DLGPROC,LONG);
 HANDLE     DirectResAlloc(HANDLE,WORD,WORD);
 void       DirectedYield(HTASK);
-LONG       DispatchMessage(LPMSG);
-INT        DlgDirList(HWND,SEGPTR,INT,INT,WORD);
-INT        DlgDirListComboBox(HWND,SEGPTR,INT,INT,WORD);
-BOOL       DlgDirSelect(HWND,LPSTR,int);
-BOOL       DlgDirSelectComboBox(HWND,LPSTR,int);
+LONG       DispatchMessage(const MSG*);
+INT        DlgDirList(HWND,SEGPTR,INT,INT,UINT);
+INT        DlgDirListComboBox(HWND,SEGPTR,INT,INT,UINT);
+BOOL       DlgDirSelect(HWND,LPSTR,INT);
+BOOL       DlgDirSelectComboBox(HWND,LPSTR,INT);
 BOOL       DragDetect(HWND,POINT);
 DWORD      DragObject(HWND, HWND, WORD, HANDLE, WORD, HCURSOR);
-void       DrawFocusRect(HDC,LPRECT);
-BOOL       DrawIcon(HDC,short,short,HICON);
+void       DrawFocusRect(HDC,const RECT*);
+BOOL       DrawIcon(HDC,INT,INT,HICON);
 void       DrawMenuBar(HWND);
-int        DrawText(HDC,LPCSTR,int,LPRECT,WORD);
+INT        DrawText(HDC,LPCTSTR,INT,LPRECT,UINT);
 DWORD      DumpIcon(SEGPTR,WORD*,SEGPTR*,SEGPTR*);
 BOOL       Ellipse(HDC,INT,INT,INT,INT);
 BOOL       EmptyClipboard(void);
 BOOL       EnableHardwareInput(BOOL);
 BOOL       EnableMenuItem(HMENU,UINT,UINT);
-BOOL       EnableScrollBar(HWND,INT,UINT);
+BOOL       EnableScrollBar(HWND,UINT,UINT);
 BOOL       EnableWindow(HWND,BOOL);
 BOOL       EndDeferWindowPos(HDWP);
-void       EndDialog(HWND,short);
-void       EndPaint(HWND,LPPAINTSTRUCT);
-BOOL       EnumChildWindows(HWND,FARPROC,LONG);
-WORD       EnumClipboardFormats(WORD);
-int        EnumFontFamilies(HDC,LPSTR,FONTENUMPROC,LPARAM);
-int        EnumFonts(HDC,LPSTR,FARPROC,LPSTR);
-BOOL       EnumMetaFile(HDC,LOCALHANDLE,FARPROC,BYTE*);
-int        EnumObjects(HDC,int,FARPROC,LPARAM);
-int        EnumProps(HWND,FARPROC);
-BOOL       EnumTaskWindows(HANDLE,FARPROC,LONG);
-BOOL       EnumWindows(FARPROC,LONG);
-BOOL       EqualRect(LPRECT,LPRECT);
+BOOL       EndDialog(HWND,INT);
+BOOL       EndPaint(HWND,const PAINTSTRUCT*);
+BOOL       EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
+UINT       EnumClipboardFormats(UINT);
+INT        EnumFontFamilies(HDC,LPCTSTR,FONTENUMPROC,LPARAM);
+INT        EnumFonts(HDC,LPCTSTR,FONTENUMPROC,LPARAM);
+BOOL       EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
+INT        EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
+INT        EnumProps(HWND,PROPENUMPROC);
+BOOL       EnumTaskWindows(HTASK,WNDENUMPROC,LPARAM);
+BOOL       EnumWindows(WNDENUMPROC,LPARAM);
+BOOL       EqualRect(const RECT*,const RECT*);
 BOOL       EqualRgn(HRGN,HRGN);
-int        Escape(HDC,int,int,LPSTR,LPSTR);
+INT        Escape(HDC,INT,INT,LPCSTR,LPVOID);
 LONG       EscapeCommFunction(int,int);
 int        ExcludeClipRect(HDC,short,short,short,short);
 int        ExcludeUpdateRgn(HDC,HWND);
@@ -3269,13 +3290,13 @@ void       WriteOutProfiles(void);
 BOOL       WritePrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 BOOL       WriteProfileString(LPCSTR,LPCSTR,LPCSTR);
 void       Yield(void);
-LONG       _hread(HFILE,LPSTR,LONG);
+LONG       _hread(HFILE,SEGPTR,LONG);
 LONG       _hwrite(HFILE,LPCSTR,LONG);
 HFILE      _lclose(HFILE);
 HFILE      _lcreat(LPCSTR,INT);
 LONG       _llseek(HFILE,LONG,INT);
 HFILE      _lopen(LPCSTR,INT);
-INT        _lread(HFILE,LPSTR,WORD);
+INT        _lread(HFILE,SEGPTR,WORD);
 INT        _lwrite(HFILE,LPCSTR,WORD);
 void       hmemcpy(LPVOID,LPCVOID,LONG);
 SEGPTR     lstrcat(SEGPTR,SEGPTR);

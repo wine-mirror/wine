@@ -21,7 +21,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "debug.h"
 
   /* Dialog base units */
-static WORD xBaseUnit = 0, yBaseUnit = 0;
+WORD xBaseUnit = 0, yBaseUnit = 0;
 
 
 /***********************************************************************
@@ -469,7 +469,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
+int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
@@ -508,8 +508,8 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 /***********************************************************************
  *           DialogBox   (USER.87)
  */
-int DialogBox( HINSTANCE hInst, SEGPTR dlgTemplate,
-	       HWND owner, WNDPROC dlgProc )
+INT DialogBox( HINSTANCE hInst, SEGPTR dlgTemplate,
+	       HWND owner, DLGPROC dlgProc )
 {
     return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -518,8 +518,8 @@ int DialogBox( HINSTANCE hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           DialogBoxParam   (USER.239)
  */
-int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-		    HWND owner, WNDPROC dlgProc, LPARAM param )
+INT DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
+		    HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
     
@@ -534,8 +534,8 @@ int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 /***********************************************************************
  *           DialogBoxIndirect   (USER.218)
  */
-int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
-		       HWND owner, WNDPROC dlgProc )
+INT DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
+		       HWND owner, DLGPROC dlgProc )
 {
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -544,8 +544,8 @@ int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
 /***********************************************************************
  *           DialogBoxIndirectParam   (USER.240)
  */
-int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
-			    HWND owner, WNDPROC dlgProc, LPARAM param )
+INT DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
+			    HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
     SEGPTR ptr;
@@ -561,13 +561,14 @@ int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
 /***********************************************************************
  *           EndDialog   (USER.88)
  */
-void EndDialog( HWND hwnd, short retval )
+BOOL EndDialog( HWND hwnd, INT retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->msgResult = retval;
     dlgInfo->fEnd = TRUE;
     dprintf_dialog(stddeb, "EndDialog: "NPFMT" %d\n", hwnd, retval );
+    return TRUE;
 }
 
 

@@ -187,7 +187,7 @@ INT CountClipboardFormats()
 /**************************************************************************
  *			EnumClipboardFormats	[USER.144]
  */
-WORD EnumClipboardFormats(WORD wFormat)
+UINT EnumClipboardFormats(UINT wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,"EnumClipboardFormats(%04X) !\n", wFormat);

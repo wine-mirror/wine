@@ -25,6 +25,10 @@ void PARAM32_POINT32to16(const POINT32* p32,POINT* p16)
 BOOL WIN32_MoveToEx(HDC hdc,int x,int y,POINT32* p32)
 {
 	POINT p;
-	PARAM32_POINT32to16(p32,&p);
-	return MoveToEx(hdc,x,y,&p);
+	if (p32 == NULL)
+		return MoveToEx(hdc,x,y,(POINT *)NULL);
+	else {
+		PARAM32_POINT32to16(p32,&p);
+		return MoveToEx(hdc,x,y,&p);
+	}
 }

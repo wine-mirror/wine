@@ -323,9 +323,8 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
  *
  * Create the 2 bitmaps from XPM data.
  */
-static BOOL OBM_CreateBitmaps( char **data, BOOL color, BOOL mask,
-                               HBITMAP *hBitmap, HBITMAP *hBitmapMask,
-                               POINT *hotspot )
+static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
+                               HBITMAP *hBitmapMask, POINT *hotspot )
 {
     Pixmap pixmap, pixmask;
     XpmAttributes attrs;
@@ -348,14 +347,14 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color, BOOL mask,
     }
     *hBitmap = OBM_MakeBitmap( attrs.width, attrs.height,
                                attrs.depth, pixmap );
-    if (mask) *hBitmapMask = OBM_MakeBitmap( attrs.width, attrs.height,
-                                             1, pixmask );
+    if (hBitmapMask) *hBitmapMask = OBM_MakeBitmap( attrs.width, attrs.height,
+                                                    1, pixmask );
     if (!*hBitmap)
     {
         if (pixmap) XFreePixmap( display, pixmap );
         if (pixmask) XFreePixmap( display, pixmask );
         if (*hBitmap) GDI_FreeObject( *hBitmap );
-        if (*hBitmapMask) GDI_FreeObject( *hBitmapMask );
+        if (hBitmapMask && *hBitmapMask) GDI_FreeObject( *hBitmapMask );
         return FALSE;
     }
     else return TRUE;
@@ -367,17 +366,17 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color, BOOL mask,
  */
 HBITMAP OBM_LoadBitmap( WORD id )
 {
-    HBITMAP hbitmap, hbitmask;
+    HBITMAP hbitmap;
 
     if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
     id -= OBM_FIRST;
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 6,
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
                               OBM_Pixmaps_Data[id].data,
                               OBM_Pixmaps_Data[id].color,
-                              FALSE, &hbitmap, &hbitmask, NULL, NULL ))
+                              &hbitmap, NULL, NULL ))
     {
         fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
@@ -417,9 +416,9 @@ HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 6,
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
                            fCursor ? OBM_Cursors_Data[id] : OBM_Icons_Data[id],
-                           !fCursor, TRUE, &hXorBits, &hAndBits, &hotspot ))
+                           !fCursor, &hXorBits, &hAndBits, &hotspot ))
     {
         fprintf( stderr, "Error creating OEM cursor/icon %d\n", id );
         return 0;

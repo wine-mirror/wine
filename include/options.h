@@ -16,7 +16,8 @@ typedef enum
     LANG_No,  /* Norwegian */
     LANG_Fr,  /* French */
     LANG_Fi,  /* Finnish */
-    LANG_Da   /* Danish */
+    LANG_Da,  /* Danish */
+    LANG_Cz   /* Czech */
 } WINE_LANGUAGE;
 
 struct options

@@ -10,6 +10,7 @@
 #include "dde_mem.h"
 #include "windows.h"
 #include "global.h"
+#include "relay32.h"
 #include "debug.h"
 #include "xmalloc.h"
 
@@ -128,7 +129,12 @@ HGLOBAL GlobalHandle(LPCVOID a)
   return 0;
 }
 
-void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
+WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
+{
+    return NULL;
+}
+
+void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
 {
   return NULL;
 }

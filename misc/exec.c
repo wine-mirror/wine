@@ -72,6 +72,8 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 		strcat(str, lpHelpFile);
         dprintf_exec(stddeb,"'%s'\n", str);
 		break;
+        case HELP_QUIT:
+            return TRUE;
 	default:
 		return FALSE;
 	}

@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <string.h>
@@ -415,7 +416,7 @@ const char *DOSFS_IsDevice( const char *name )
     int i;
     const char *p;
 
-    if (name[1] == ':') name += 2;
+    if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
@@ -424,7 +425,6 @@ const char *DOSFS_IsDevice( const char *name )
         if (!lstrncmpi( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
-            if (*p == ':') p++;
             if (!*p || (*p == '.')) return DOSFS_Devices[i][1];
         }
     }
@@ -446,7 +446,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
     char *p, *root;
 
     dprintf_dosfs( stddeb, "DOSFS_GetUnixFileName: %s\n", name );
-    if (name[1] == ':')
+    if (name[0] && (name[1] == ':'))
     {
         drive = toupper(name[0]) - 'A';
         name += 2;
@@ -549,7 +549,7 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
     char *p;
 
     dprintf_dosfs( stddeb, "DOSFS_GetDosTrueName(%s,%d)\n", name, unix_format);
-    if (name[1] == ':')
+    if (name[0] && (name[1] == ':'))
     {
         drive = toupper(name[0]) - 'A';
         name += 2;
@@ -646,6 +646,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     int count = 0;
     static char buffer[MAX_PATHNAME_LEN];
     static int cur_pos = 0;
+    static int drive_root = 0;
     char *p;
     const char *hash_name;
     
@@ -664,12 +665,22 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     if (dir && !strcmp( buffer, path ) && (cur_pos <= skip)) skip -= cur_pos;
     else  /* Not in the cache, open it anew */
     {
+        const char *drive_path;
         dprintf_dosfs( stddeb, "DOSFS_FindNext: cache miss, path=%s skip=%d buf=%s cur=%d\n",
                        path, skip, buffer, cur_pos );
         cur_pos = skip;
         if (dir) closedir(dir);
         if (!(dir = opendir( path ))) return 0;
+        drive_path = path;
+        drive_root = 0;
+        if (DRIVE_FindDriveRoot( &drive_path ) != -1)
+        {
+            while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
+            if (!*drive_path) drive_root = 1;
+        }
+        dprintf_dosfs(stddeb, "DOSFS_FindNext: drive_root = %d\n", drive_root);
         lstrcpyn( buffer, path, sizeof(buffer) - 1 );
+        
     }
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);
@@ -681,6 +692,10 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         count++;
         hash_name = DOSFS_Hash( dirent->d_name, TRUE );
         if (!DOSFS_Match( mask, hash_name )) continue;
+        /* Don't return '.' and '..' in the root of the drive */
+        if (drive_root && (dirent->d_name[0] == '.') &&
+            (!dirent->d_name[1] ||
+             ((dirent->d_name[1] == '.') && !dirent->d_name[2]))) continue;
         lstrcpyn( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
 
         if (!FILE_Stat( buffer, &entry->attr, &entry->size,

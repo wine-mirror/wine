@@ -24,7 +24,7 @@ HPEN CreatePen( INT style, INT width, COLORREF color )
 /***********************************************************************
  *           CreatePenIndirect    (GDI.62)
  */
-HPEN CreatePenIndirect( LOGPEN * pen )
+HPEN CreatePenIndirect( const LOGPEN * pen )
 {
     PENOBJ * penPtr;
     HPEN hpen;

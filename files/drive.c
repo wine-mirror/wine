@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #if defined(__linux__) || defined(sun)
@@ -131,7 +132,7 @@ int DRIVE_Init(void)
 
     if (!count) 
     {
-        fprintf( stderr, "Warning: no valid DOS drive found\n" );
+        fprintf( stderr, "Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
         DOSDrives[2].root     = xstrdup( "/" );
         DOSDrives[2].dos_cwd  = xstrdup( "" );

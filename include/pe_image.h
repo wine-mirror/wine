@@ -1,6 +1,7 @@
 #ifndef __WINE_PE_IMAGE_H
 #define __WINE_PE_IMAGE_H
 
+#include <sys/types.h>
 #include "windows.h"
 
 struct pe_data {
@@ -16,6 +17,21 @@ struct pe_data {
 	int resource_offset; /* offset to resource typedirectory in file */
 };
 
+typedef struct _WIN32_function{
+    char *name;
+    void *definition;
+} WIN32_function;
+
+typedef struct _WIN32_builtin{
+    char *name;
+    WIN32_function *functions;
+    int size;
+	int base;
+    struct _WIN32_builtin *next;
+} WIN32_builtin;
+
+extern WIN32_builtin *WIN32_builtin_list;
+
 struct w_files
 {
     struct w_files  * next;
@@ -29,6 +45,7 @@ struct w_files
     struct pe_data *pe;
 	OFSTRUCT ofs;
     unsigned int load_addr;
+	WIN32_builtin* builtin;
 };
 
 
@@ -37,19 +54,5 @@ extern int PE_StartProgram(struct w_files *wpnt);
 extern void PE_InitDLL(HMODULE hModule);
 extern void my_wcstombs(char * result, u_short * source, int len);
 extern struct w_files *wine_files;
-
-typedef struct _WIN32_function{
-    char *name;
-    void *definition;
-} WIN32_function;
-
-typedef struct _WIN32_builtin{
-    char *name;
-    WIN32_function *functions;
-    int size;
-    struct _WIN32_builtin *next;
-} WIN32_builtin;
-
-extern WIN32_builtin *WIN32_builtin_list;
 
 #endif /* __WINE_PE_IMAGE_H */

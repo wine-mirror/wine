@@ -12,6 +12,8 @@
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"
+#include "stddebug.h"
+#include "debug.h"
 #include "xmalloc.h"
 
 Colormap COLOR_WinColormap = 0;
@@ -301,8 +303,18 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 {
     WORD index = 0;
     WORD *mapping;
+    unsigned char	spec_type;
 
-    if (dc && (dc->w.bitsPerPixel == 1) && ((color >> 24) == 0))
+    spec_type = color >> 24;
+    if (spec_type == 0xff)
+	{
+	spec_type = 0; /* 'write' seems to need that for 'Page 1' text */
+	color &= 0xffffff;
+	}
+    if (spec_type > 2)
+	fprintf(stderr, "COLOR_ToPhysical : color >> 24 not in {-1,0,1,2} : %08lx\n",
+	    color);
+    if (dc && (dc->w.bitsPerPixel == 1) && (spec_type == 0))
     {
 	/* monochrome */
         if (((color >> 16) & 0xff) +
@@ -320,7 +332,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	unsigned idx;
 	PALETTEOBJ * palPtr;
 
-	switch(color >> 24)
+	switch(spec_type)
         {
         case 0: /* RGB */
         case 2: /* PALETTERGB -- needs some work, but why bother; we've got a REALLY LARGE number of colors...? */
@@ -362,8 +374,9 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	    return (red << COLOR_Redshift) | (green << COLOR_Greenshift) | (blue << COLOR_Blueshift);
         }
     }
-    else switch(color >> 24)
+    else switch(spec_type)
     {
+    default:
     case 0:  /* RGB */
 	index = GetNearestPaletteIndex( STOCK_DEFAULT_PALETTE, color );
 	break;

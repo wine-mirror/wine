@@ -642,7 +642,7 @@ BOOL InvertRgn( HDC hdc, HRGN hrgn )
 /***********************************************************************
  *           DrawFocusRect    (USER.466)
  */
-void DrawFocusRect( HDC hdc, LPRECT rc )
+void DrawFocusRect( HDC hdc, const RECT* rc )
 {
     HPEN hOldPen;
     int oldDrawMode, oldBkMode;

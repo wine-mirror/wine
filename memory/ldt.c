@@ -125,6 +125,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     {
         struct modify_ldt_ldt_s ldt_info;
 
+        /* Clear all unused bits (like seg_not_present) */
         memset( &ldt_info, 0, sizeof(ldt_info) );
         ldt_info.entry_number   = entry;
         ldt_info.base_addr      = content->base;

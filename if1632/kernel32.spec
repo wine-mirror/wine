@@ -338,7 +338,7 @@ base	1
 0333 stub GlobalWire
 0334 stdcall HeapAlloc(long long long) HeapAlloc
 0335 stub HeapCompact
-0336 stub HeapCreate
+0336 stdcall HeapCreate(long long long)	HeapCreate
 0337 stub HeapDestroy
 0338 stub HeapFree
 0339 stub HeapLock
@@ -618,3 +618,22 @@ base	1
 0613 stub lstrlen
 0614 	stdcall lstrlenA(ptr) strlen
 0615 stub lstrlenW
+#late additions
+0616 stub GetPrivateProfileSectionNamesA
+0617 stub GetPrivateProfileSectionNamesW
+0618 stub GetPrivateProfileStructA
+0619 stub GetPrivateProfileStructW
+0620 stub GetProcessVersion
+0621 stub GetSystemPowerStatus
+0622 stub GetSystemTimeAsFileTime
+0623 stub HeapCreateTagsW
+0624 stub HeapExtend
+0625 stub HeapQueryTagW
+0626 stub HeapSummary
+0627 stub HeapUsage
+0628 stub IsDebuggerPresent
+0629 stub PostQueuedCompletionStatus
+0630 stub SetSystemPowerState
+0631 stub WritePrivateProfileStructA
+0632 stub WritePrivateProfileStructW
+0633 stub MakeCriticalSectionGlobal

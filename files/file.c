@@ -26,6 +26,179 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#define MAX_OPEN_FILES 64  /* Max. open files for all tasks; must be <255 */
+
+typedef struct
+{
+    int unix_handle;
+    int mode;
+} DOS_FILE;
+
+/* Global files array */
+static DOS_FILE DOSFiles[MAX_OPEN_FILES];
+
+
+/***********************************************************************
+ *           FILE_AllocDOSFile
+ *
+ * Allocate a file from the DOS files array.
+ */
+static BYTE FILE_AllocDOSFile( int unix_handle )
+{
+    BYTE i;
+    for (i = 0; i < MAX_OPEN_FILES; i++) if (!DOSFiles[i].mode)
+    {
+        DOSFiles[i].unix_handle = unix_handle;
+        DOSFiles[i].mode = 1;
+        return i;
+    }
+    return 0xff;
+}
+
+
+/***********************************************************************
+ *           FILE_FreeDOSFile
+ *
+ * Free a file from the DOS files array.
+ */
+static BOOL FILE_FreeDOSFile( BYTE handle )
+{
+    if (handle >= MAX_OPEN_FILES) return FALSE;
+    if (!DOSFiles[handle].mode) return FALSE;
+    DOSFiles[handle].mode = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FILE_GetUnixHandle
+ *
+ * Return the Unix handle for a global DOS file handle.
+ */
+static int FILE_GetUnixHandle( BYTE handle )
+{
+    if (handle >= MAX_OPEN_FILES) return -1;
+    if (!DOSFiles[handle].mode) return -1;
+    return DOSFiles[handle].unix_handle;
+}
+
+
+/***********************************************************************
+ *           FILE_AllocTaskHandle
+ *
+ * Allocate a per-task file handle.
+ */
+static HFILE FILE_AllocTaskHandle( int unix_handle )
+{
+    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
+    BYTE *files, *fp;
+    WORD i;
+
+    if (!pdb)
+    {
+        fprintf(stderr,"FILE_MakeTaskHandle: internal error, no current PDB.\n");
+        exit(1);
+    }
+    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    fp = files + 1;  /* Don't use handle 0, as some programs don't like it */
+    for (i = pdb->nbFiles - 1; (i > 0) && (*fp != 0xff); i--, fp++);
+    if (!i || (*fp = FILE_AllocDOSFile( unix_handle )) == 0xff)
+    {  /* No more handles or files */
+        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
+        return -1;
+    }
+    dprintf_file(stddeb, 
+       "FILE_AllocTaskHandle: returning task handle %d, file %d for unix handle %d file %d of %d \n", 
+             (fp - files), *fp, unix_handle, pdb->nbFiles - i, pdb->nbFiles  );
+    return (HFILE)(fp - files);
+}
+
+
+/***********************************************************************
+ *           FILE_FreeTaskHandle
+ *
+ * Free a per-task file handle.
+ */
+static void FILE_FreeTaskHandle( HFILE handle )
+{
+    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
+    BYTE *files;
+    
+    if (!pdb)
+    {
+        fprintf(stderr,"FILE_FreeTaskHandle: internal error, no current PDB.\n");
+        exit(1);
+    }
+    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    dprintf_file( stddeb,"FILE_FreeTaskHandle: dos=%d file=%d\n",
+                  handle, files[handle] );
+    if ((handle < 0) || (handle >= (INT)pdb->nbFiles) ||
+        !FILE_FreeDOSFile( files[handle] ))
+    {
+        fprintf( stderr, "FILE_FreeTaskHandle: invalid file handle %d\n",
+                 handle );
+        return;
+    }
+    files[handle] = 0xff;
+}
+
+
+/***********************************************************************
+ *           FILE_GetUnixTaskHandle
+ *
+ * Return the Unix file handle associated to a task file handle.
+ */
+int FILE_GetUnixTaskHandle( HFILE handle )
+{
+    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
+    BYTE *files;
+    int unix_handle;
+
+    if (!pdb)
+    {
+        fprintf(stderr,"FILE_GetUnixHandle: internal error, no current PDB.\n");
+        exit(1);
+    }
+    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    if ((handle < 0) || (handle >= (INT)pdb->nbFiles) ||
+        ((unix_handle = FILE_GetUnixHandle( files[handle] )) == -1))
+    {
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return -1;
+    }
+    return unix_handle;
+}
+
+
+/***********************************************************************
+ *           FILE_CloseAllFiles
+ *
+ * Close all open files of a given PDB. Used on task termination.
+ */
+void FILE_CloseAllFiles( HANDLE hPDB )
+{
+    BYTE *files;
+    WORD count;
+    PDB *pdb = (PDB *)GlobalLock( hPDB );
+    int unix_handle;
+
+    if (!pdb) return;
+    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    dprintf_file(stddeb,"FILE_CloseAllFiles: closing %d files\n",pdb->nbFiles);
+    for (count = pdb->nbFiles; count > 0; count--, files++)
+    {
+        if (*files != 0xff)
+        {
+            if ((unix_handle = FILE_GetUnixHandle( *files )) != -1)
+            {
+                close( unix_handle );
+                FILE_FreeDOSFile( *files );
+            }
+            *files = 0xff;
+        }
+    }
+}
+
 
 /***********************************************************************
  *           FILE_SetDosError
@@ -71,115 +244,6 @@ void FILE_SetDosError(void)
         perror( "int21: unknown errno" );
         DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort, EL_Unknown );
         break;
-    }
-}
-
-
-/***********************************************************************
- *           FILE_AllocTaskHandle
- *
- * Allocate a DOS file handle for the current task.
- */
-static HFILE FILE_AllocTaskHandle( int handle )
-{
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
-    BYTE *files, *fp;
-    WORD i;
-
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_MakeTaskHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    fp = files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    for (i = pdb->nbFiles; (i > 0) && (*fp != 0xff); i--, fp++);
-    if (!i || (handle >= 0xff))  /* No more handles */
-    {
-        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
-        return -1;
-    }
-    *fp = (BYTE)handle;
-    dprintf_file(stddeb, 
-       "FILE_AllocTaskHandle: returning %d for handle %d file %d of %d \n", 
-                 (fp - files),handle,pdb->nbFiles - i, pdb->nbFiles  );
-    return (HFILE)(fp - files);
-}
-
-
-/***********************************************************************
- *           FILE_FreeTaskHandle
- *
- * Free a DOS file handle for the current task.
- */
-static void FILE_FreeTaskHandle( HFILE handle )
-{
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
-    BYTE *files;
-    
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_FreeTaskHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    dprintf_file( stddeb,"FILE_FreeTaskHandle: dos=%d unix=%d\n",
-                  handle, files[handle]);
-    if ((handle<0) || (handle >= (INT)pdb->nbFiles) || (files[handle] == 0xff))
-    {
-        fprintf( stderr, "FILE_FreeTaskHandle: invalid file handle %d\n",
-                 handle );
-        return;
-    }
-    files[handle] = 0xff;
-}
-
-
-/***********************************************************************
- *           FILE_GetUnixHandle
- *
- * Return the Unix file handle associated to a DOS file handle.
- */
-int FILE_GetUnixHandle( HFILE handle )
-{
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
-    BYTE *files;
-    
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_GetUnixHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    if ((handle<0) || (handle >= (INT)pdb->nbFiles) || (files[handle] == 0xff))
-    {
-        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
-        return -1;
-    }
-    return (int)files[handle];
-}
-
-
-/***********************************************************************
- *           FILE_CloseAllFiles
- *
- * Close all open files of a given PDB. Used on task termination.
- */
-void FILE_CloseAllFiles( HANDLE hPDB )
-{
-    BYTE *files;
-    WORD count;
-    PDB *pdb = (PDB *)GlobalLock( hPDB );
-
-    if (!pdb) return;
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    fprintf(stderr,"FILE_CloseAllFiles: closing %d files\n",pdb->nbFiles);
-    for (count = pdb->nbFiles; count > 0; count--, files++)
-    {
-        if (*files != 0xff)
-        {
-            close( (int)*files );
-            *files = 0xff;
-        }
     }
 }
 
@@ -310,7 +374,7 @@ int FILE_Stat( LPCSTR unixName, BYTE *pattr, DWORD *psize,
         return 0;
     }
     if (pattr) *pattr = FA_ARCHIVE | (S_ISDIR(st.st_mode) ? FA_DIRECTORY : 0);
-    if (psize) *psize = st.st_size;
+    if (psize) *psize = S_ISDIR(st.st_mode) ? 0 : st.st_size;
     DOSFS_ToDosDateTime( &st.st_mtime, pdate, ptime );
     return 1;
 }
@@ -327,14 +391,14 @@ int FILE_Fstat( HFILE hFile, BYTE *pattr, DWORD *psize,
     struct stat st;
     int handle;
 
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return 0;
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return 0;
     if (fstat( handle, &st ) == -1)
     {
         FILE_SetDosError();
         return 0;
     }
     if (pattr) *pattr = FA_ARCHIVE | (S_ISDIR(st.st_mode) ? FA_DIRECTORY : 0);
-    if (psize) *psize = st.st_size;
+    if (psize) *psize = S_ISDIR(st.st_mode) ? 0 : st.st_size;
     DOSFS_ToDosDateTime( &st.st_mtime, pdate, ptime );
     return 1;
 }
@@ -400,7 +464,7 @@ HFILE FILE_Dup( HFILE hFile )
     int handle, newhandle;
     HFILE dosHandle;
 
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
     dprintf_file( stddeb, "FILE_Dup for handle %d\n",handle);
     if ((newhandle = dup(handle)) == -1)
     {
@@ -425,7 +489,7 @@ HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
     BYTE *files;
     int handle, newhandle;
 
-    if ((handle = FILE_GetUnixHandle( hFile1 )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixTaskHandle( hFile1 )) == -1) return HFILE_ERROR;
     dprintf_file( stddeb, "FILE_Dup2 for handle %d\n",handle);
     if ((hFile2 < 0) || (hFile2 >= (INT)pdb->nbFiles))
     {
@@ -640,6 +704,22 @@ found:
 
 
 /***********************************************************************
+ *           FILE_Read
+ */
+LONG FILE_Read( HFILE hFile, LPSTR buffer, LONG count )
+{
+    int handle;
+    LONG result;
+
+    dprintf_file( stddeb, "FILE_Read: %d %p %ld\n", hFile, buffer, count );
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return -1;
+    if (!count) return 0;
+    if ((result = read( handle, buffer, count )) == -1) FILE_SetDosError();
+    return result;
+}
+
+
+/***********************************************************************
  *           GetTempFileName   (KERNEL.97)
  */
 INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
@@ -719,7 +799,7 @@ HFILE _lclose( HFILE hFile )
     int handle;
 
     
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
     dprintf_file( stddeb, "_lclose: doshandle %d unixhandle %d\n", hFile,handle );
     if (handle <= 2)
     {
@@ -735,7 +815,7 @@ HFILE _lclose( HFILE hFile )
 /***********************************************************************
  *           _lread   (KERNEL.82)
  */
-INT _lread( HFILE hFile, LPSTR buffer, WORD count )
+INT _lread( HFILE hFile, SEGPTR buffer, WORD count )
 {
     return (INT)_hread( hFile, buffer, (LONG)count );
 }
@@ -787,7 +867,7 @@ LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
     dprintf_file( stddeb, "_llseek: handle %d, offset %ld, origin %d\n", 
                   hFile, lOffset, nOrigin);
 
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
     switch(nOrigin)
     {
         case 1:  origin = SEEK_CUR; break;
@@ -843,17 +923,19 @@ INT _lwrite( HFILE hFile, LPCSTR buffer, WORD count )
 /***********************************************************************
  *           _hread   (KERNEL.349)
  */
-LONG _hread( HFILE hFile, LPSTR buffer, LONG count )
+LONG _hread( HFILE hFile, SEGPTR buffer, LONG count )
 {
-    int handle;
-    LONG result;
+#ifndef WINELIB
+    LONG maxlen;
 
-    dprintf_file( stddeb, "_hread: %d %p %ld\n", hFile, buffer, count );
-  
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return -1;
-    if (!count) return 0;
-    if ((result = read( handle, buffer, count )) == -1) FILE_SetDosError();
-    return result;
+    dprintf_file( stddeb, "_hread: %d %08lx %ld\n",
+                  hFile, (DWORD)buffer, count );
+
+    /* Some programs pass a count larger than the allocated buffer */
+    maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
+    if (count > maxlen) count = maxlen;
+#endif
+    return FILE_Read( hFile, PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -867,7 +949,7 @@ LONG _hwrite( HFILE hFile, LPCSTR buffer, LONG count )
 
     dprintf_file( stddeb, "_hwrite: %d %p %ld\n", hFile, buffer, count );
 
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
     
     if (count == 0)  /* Expand or truncate at current position */
         result = ftruncate( handle, lseek( handle, 0, SEEK_CUR ) );

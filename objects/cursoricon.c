@@ -499,7 +499,8 @@ HICON LoadIcon( HANDLE hInstance, SEGPTR name )
  *           CreateCursor    (USER.406)
  */
 HCURSOR CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
-                      INT nWidth, INT nHeight, LPVOID lpANDbits, LPVOID lpXORbits)
+                      INT nWidth, INT nHeight,
+                      const BYTE *lpANDbits, const BYTE *lpXORbits )
 {
     CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
@@ -512,8 +513,8 @@ HCURSOR CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
 /***********************************************************************
  *           CreateIcon    (USER.407)
  */
-HICON CreateIcon( HANDLE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
-                  BYTE bBitsPixel, LPSTR lpANDbits, LPSTR lpXORbits)
+HICON CreateIcon( HINSTANCE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
+                  BYTE bBitsPixel, const BYTE* lpANDbits, const BYTE* lpXORbits)
 {
     CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel };
 
@@ -527,7 +528,7 @@ HICON CreateIcon( HANDLE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
  *           CreateCursorIconIndirect    (USER.408)
  */
 HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
-                                 LPSTR lpANDbits, LPSTR lpXORbits )
+                                 const BYTE *lpANDbits, const BYTE *lpXORbits )
 {
     HANDLE handle;
     char *ptr;
@@ -611,7 +612,7 @@ BOOL DestroyCursor( HCURSOR hCursor )
 /***********************************************************************
  *           DrawIcon    (USER.84)
  */
-BOOL DrawIcon( HDC hdc, short x, short y, HICON hIcon )
+BOOL DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
     CURSORICONINFO *ptr;
     HDC hMemDC;

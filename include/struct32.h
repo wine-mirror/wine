@@ -22,4 +22,26 @@ typedef struct tagPOINT32
 void PARAM32_POINT32to16(const POINT32*,POINT*);
 void PARAM32_POINT16to32(const POINT*,POINT32*);
 
+typedef struct {
+	DWORD style;
+	DWORD dwExtendedStyle;
+	WORD noOfItems;
+	short x;
+	short y;
+	WORD cx;
+	WORD cy;
+} DLGTEMPLATE32;
+
+typedef struct {
+	DWORD style;
+	DWORD dwExtendedStyle;
+	short x;
+	short y;
+	short cx;
+	short cy;
+	WORD id;
+} DLGITEMTEMPLATE32;
+
+#define CW_USEDEFAULT32	0x80000000
+
 #endif

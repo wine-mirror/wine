@@ -12,6 +12,8 @@
 #include <errno.h>
 #include "windows.h"
 #include "dlls.h"
+#include "module.h"
+#include "neexe.h"
 #include "pe_image.h"
 #include "peexe.h"
 #include "relay32.h"
@@ -23,24 +25,30 @@ WIN32_builtin	*WIN32_builtin_list;
 
 /* Functions are in generated code */
 void ADVAPI32_Init();
+void COMCTL32_Init();
 void COMDLG32_Init();
+void OLE32_Init();
 void GDI32_Init();
 void KERNEL32_Init();
 void SHELL32_Init();
 void USER32_Init();
 void WINPROCS32_Init();
+void WINSPOOL_Init();
 
 int RELAY32_Init(void)
 {
 #ifndef WINELIB
 	/* Add a call for each DLL */
 	ADVAPI32_Init();
+	COMCTL32_Init();
 	COMDLG32_Init();
 	GDI32_Init();
 	KERNEL32_Init();
+	OLE32_Init();
 	SHELL32_Init();
 	USER32_Init();
 	WINPROCS32_Init();
+	WINSPOOL_Init();
 #endif
 	/* Why should it fail, anyways? */
 	return 1;
@@ -72,70 +80,18 @@ void RELAY32_Unimplemented(char *dll, int item)
 	exit(1);
 }
 
-void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
+void *RELAY32_GetEntryPoint(WIN32_builtin *dll, char *item, int hint)
 {
-	WIN32_builtin *dll;
 	int i;
-  	u_short * ordinal;
-  	u_long * function;
-  	u_char ** name;
-	struct PE_Export_Directory * pe_exports;
-	unsigned int load_addr;
 
 	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
-		item ? item: "(no name)", dll_name, hint);
-	dll=RELAY32_GetBuiltinDLL(dll_name);
-	/* FIXME: This should deal with built-in DLLs only. See pe_module on
-	loading PE DLLs */
+		item ? item: "(no name)", dll->name, hint);
 	if(!dll)
 		return 0;
-#if 0
-	if(!dll) {
-		if(!wine_files || !wine_files->name ||
-		   lstrcmpi(dll_name, wine_files->name)) {
-			LoadModule(dll_name, (LPVOID) -1);
-			if(!wine_files || !wine_files->name ||
-		   	   lstrcmpi(dll_name, wine_files->name)) 
-				return 0;
-		}
-		load_addr = wine_files->load_addr;
-		pe_exports = wine_files->pe->pe_export;
-  		ordinal = (u_short *) (((char *) load_addr) + (int) pe_exports->Address_Of_Name_Ordinals);
-  		function = (u_long *)  (((char *) load_addr) + (int) pe_exports->AddressOfFunctions);
-  		name = (u_char **)  (((char *) load_addr) + (int) pe_exports->AddressOfNames);
-		/* import by ordinal */
-		if(!item){
-			return 0;
-		}
-		/* hint is correct */
-		#if 0
-		if(hint && hint<dll->size && 
-			dll->functions[hint].name &&
-			strcmp(item,dll->functions[hint].name)==0)
-			return dll->functions[hint].definition;
-		#endif
-		/* hint is incorrect, search for name */
-		for(i=0;i<pe_exports->Number_Of_Functions;i++)
-	            if (name[i] && !strcmp(item,name[i]+load_addr))
-	                return function[i]+(char *)load_addr;
-	
-		/* function at hint has no name (unimplemented) */
-		#if 0
-		if(hint && hint<dll->size && !dll->functions[hint].name)
-		{
-			dll->functions[hint].name=xstrdup(item);
-			dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
-				dll_name,hint);
-			return dll->functions[hint].definition;
-		}
-		#endif
-		printf("Not found\n");
-		return 0;
-	}
-#endif
 	/* import by ordinal */
 	if(!item){
-		if(hint && hint<dll->size)return dll->functions[hint].definition;
+		if(hint && hint<dll->size)
+			return dll->functions[hint-dll->base].definition;
 		return 0;
 	}
 	/* hint is correct */
@@ -153,7 +109,7 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 	{
 		dll->functions[hint].name=xstrdup(item);
 		dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
-			dll_name,hint);
+			dll->name,hint);
 		return dll->functions[hint].definition;
 	}
 	return 0;
@@ -179,3 +135,63 @@ __asm__ (
 	);
 	return ret;
 }
+
+void RELAY32_MakeFakeModule(WIN32_builtin*dll)
+{
+	NE_MODULE *pModule;
+	struct w_files *wpnt;
+	int size;
+	HMODULE hModule;
+	LOADEDFILEINFO *pFileInfo;
+	char *pStr;
+	wpnt=xmalloc(sizeof(struct w_files));
+	wpnt->hinstance=0;
+	wpnt->hModule=0;
+	wpnt->initialised=1;
+	wpnt->mz_header=wpnt->pe=0;
+	size=sizeof(NE_MODULE) +
+		/* loaded file info */
+		sizeof(LOADEDFILEINFO) + strlen(dll->name) +
+		/* name table */
+		12 +
+		/* several empty tables */
+		8;
+	hModule = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+	wpnt->hModule = hModule;
+	FarSetOwner( hModule, hModule );
+	pModule = (NE_MODULE*)GlobalLock(hModule);
+	/* Set all used entries */
+	pModule->magic=PE_SIGNATURE;
+	pModule->count=1;
+	pModule->next=0;
+	pModule->flags=0;
+	pModule->dgroup=0;
+	pModule->ss=0;
+	pModule->cs=0;
+	pModule->heap_size=0;
+	pModule->stack_size=0;
+	pModule->seg_count=0;
+	pModule->modref_count=0;
+	pModule->nrname_size=0;
+	pModule->seg_table=0;
+	pModule->fileinfo=sizeof(NE_MODULE);
+	pModule->os_flags=NE_OSFLAGS_WINDOWS;
+	pModule->expected_version=0x30A;
+	pFileInfo=(LOADEDFILEINFO *)(pModule + 1);
+	pFileInfo->length = sizeof(LOADEDFILEINFO)+strlen(dll->name)-1;
+	strcpy(pFileInfo->filename,dll->name);
+	pStr = ((char*)pFileInfo+pFileInfo->length+1);
+	pModule->name_table=(int)pStr-(int)pModule;
+	*pStr=strlen(dll->name);
+	strcpy(pStr+1,dll->name);
+	pStr += *pStr+1;
+	pModule->res_table=pModule->import_table=pModule->entry_table=
+		(int)pStr-(int)pModule;
+	MODULE_RegisterModule(hModule);
+	wpnt->builtin=dll;
+	wpnt->next=wine_files;
+	wine_files=wpnt;
+}
+
+
+

@@ -113,7 +113,7 @@ HANDLE RemoveProp( HWND hwnd, SEGPTR str )
 /***********************************************************************
  *           EnumProps   (USER.27)
  */
-int EnumProps( HWND hwnd, FARPROC func )
+INT EnumProps( HWND hwnd, PROPENUMPROC func )
 {
     int ret = -1;
     HANDLE hProp;

@@ -2,6 +2,7 @@
 #define __WINE_HANDLE32_H
 
 #include <malloc.h>
+#include "wintypes.h"
 
 /* The _*_OBJECT structures contain information needed about each
  * particular type of handle.  This information is a combination of
@@ -61,6 +62,31 @@ typedef struct {
     KERNEL_OBJECT       common;
 } REGKEY_OBJECT;
 
+typedef struct _VRANGE_OBJECT{
+	KERNEL_OBJECT		common;
+	DWORD				start;
+	DWORD				size;
+	struct _VRANGE_OBJECT *next;
+} VRANGE_OBJECT;
+
+struct _HEAPITEM_OBJECT;
+typedef struct{
+	KERNEL_OBJECT		common;
+	LPVOID	start;
+	DWORD	size;
+	DWORD	maximum;
+	DWORD	flags;
+	struct _HEAPITEM_OBJECT *first,*last;
+} HEAP_OBJECT;
+
+typedef struct _HEAPITEM_OBJECT{
+	KERNEL_OBJECT	common;
+	HEAP_OBJECT	*heap;
+	DWORD size;		/* size including header */
+	struct _HEAPITEM_OBJECT *next,*prev;
+} HEAPITEM_OBJECT;
+
+
 /* Object number definitions.  These numbers are used to
  * validate the kernel object by comparison against the
  * object's 'magic' value.
@@ -73,6 +99,9 @@ typedef struct {
 #define KERNEL_OBJECT_EVENT     (KERNEL_OBJECT_UNUSED + 5)
 #define KERNEL_OBJECT_REGKEY    (KERNEL_OBJECT_UNUSED + 6)
 #define KERNEL_OBJECT_FILEMAP   (KERNEL_OBJECT_UNUSED + 7)
+#define KERNEL_OBJECT_VRANGE    (KERNEL_OBJECT_UNUSED + 8)
+#define KERNEL_OBJECT_HEAP      (KERNEL_OBJECT_UNUSED + 9)
+#define KERNEL_OBJECT_HEAPITEM  (KERNEL_OBJECT_UNUSED + 10)
 
 /* Define the invalid handle value
  */

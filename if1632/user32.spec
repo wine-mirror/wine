@@ -70,11 +70,15 @@ base	1
 0066 stub CreateCursor
 0067 stub CreateDesktopA
 0068 stub CreateDesktopW
-0069 stub CreateDialogIndirectParamA
+0069 stdcall CreateDialogIndirectParamA(long ptr long ptr long)	
+	USER32_CreateDialogIndirectParamA
 0070 stub CreateDialogIndirectParamAorW
-0071 stub CreateDialogIndirectParamW
-0072 stub CreateDialogParamA
-0073 stub CreateDialogParamW
+0071 stdcall CreateDialogIndirectParamW(long ptr long ptr long)	
+	USER32_CreateDialogIndirectParamW
+0072 stdcall CreateDialogParamA(long ptr long ptr long)	
+	USER32_CreateDialogParamA
+0073 stdcall CreateDialogParamW(long ptr long ptr long)	
+	USER32_CreateDialogParamW
 0074 stub CreateIcon
 0075 stub CreateIconFromResource
 0076 stub CreateIconFromResourceEx
@@ -137,11 +141,13 @@ base	1
 0132 stub DestroyIcon
 0133 stub DestroyMenu
 0134 stub DestroyWindow
-0135 stub DialogBoxIndirectParamA
+0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long)	
+			USER32_DialogBoxIndirectParamA
 0136 stub DialogBoxIndirectParamAorW
-0137 stub DialogBoxIndirectParamW
-0138 stub DialogBoxParamA
-0139 stub DialogBoxParamW
+0137 stdcall DialogBoxIndirectParamW(long ptr long ptr long)	
+			USER32_DialogBoxIndirectParamW
+0138 stdcall DialogBoxParamA(long ptr long ptr long)	USER32_DialogBoxParamA
+0139 stdcall DialogBoxParamW(long ptr long ptr long)	USER32_DialogBoxParamW
 0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
 0141 stub DispatchMessageW
 0142 stub DlgDirListA
@@ -203,7 +209,7 @@ base	1
 0198 stub FindWindowExA
 0199 stub FindWindowExW
 0200 stub FindWindowW
-0201 stub FlashWindow
+0201 stdcall FlashWindow(long long) FlashWindow
 0202 stub FrameRect
 0203 stub FreeDDElParam
 0204 stub GetActiveWindow
@@ -355,7 +361,7 @@ base	1
 0350 stub IsWindowVisible
 0351 stub IsZoomed
 0352 stub KillSystemTimer
-0353 stub KillTimer
+0353 stdcall KillTimer(long long) KillTimer
 0354 	stdcall LoadAcceleratorsA(long ptr) WIN32_LoadAcceleratorsA
 0355 stdcall LoadAcceleratorsW(long ptr)	WIN32_LoadAcceleratorsW
 0356 	stdcall LoadBitmapA(long ptr) WIN32_LoadBitmapA
@@ -421,7 +427,7 @@ base	1
 0415 stub PeekMessageA
 0416 stub PeekMessageW
 0417 stub PlaySoundEvent
-0418 stub PostMessageA
+0418 stdcall PostMessageA(long long long long) PostMessage
 0419 stub PostMessageW
 0420 stdcall PostQuitMessage(long) PostQuitMessage
 0421 stub PostThreadMessageA
@@ -441,7 +447,7 @@ base	1
 0435 stub RegisterTasklist
 0436 stub RegisterWindowMessageA
 0437 stub RegisterWindowMessageW
-0438 stub ReleaseCapture
+0438 stdcall ReleaseCapture() ReleaseCapture
 0439 stdcall ReleaseDC(long long) ReleaseDC
 0440 stub RemoveMenu
 0441 stub RemovePropA
@@ -456,7 +462,7 @@ base	1
 0450 stub ScrollWindowEx
 0451 stub SendDlgItemMessageA
 0452 stub SendDlgItemMessageW
-0453 stub SendMessageA
+0453 stdcall SendMessageA(long long long long) SendMessage
 0454 stub SendMessageCallbackA
 0455 stub SendMessageCallbackW
 0456 stub SendMessageTimeoutA
@@ -466,7 +472,7 @@ base	1
 0460 stub SendNotifyMessageW
 0461 stub ServerSetFunctionPointers
 0462 stub SetActiveWindow
-0463 stub SetCapture
+0463 stdcall SetCapture(long) SetCapture
 0464 stub SetCaretBlinkTime
 0465 stub SetCaretPos
 0466 stub SetClassLongA
@@ -513,7 +519,7 @@ base	1
 0507 stub SetSystemMenu
 0508 stub SetSystemTimer
 0509 stub SetThreadDesktop
-0510 stub SetTimer
+0510 stdcall SetTimer(long long long long) USER32_SetTimer
 0511 stub SetUserObjectInformationA
 0512 stub SetUserObjectInformationW
 0513 stub SetUserObjectSecurity
@@ -587,7 +593,19 @@ base	1
 0581 stub WindowFromPoint
 0582 stub keybd_event
 0583 stub mouse_event
-0584 	cdecl wsprintfA(ptr ptr ...) wsprintf
+0584 	cdecl wsprintfA(ptr ptr ...) vsprintf
 0585 stub wsprintfW
 0586 stub wvsprintfA
 0587 stub wvsprintfW
+#late additions
+0588 stub ChangeDisplaySettingsA
+0588 stub ChangeDisplaySettingsW
+0588 stub EnumDesktopWindows
+0588 stub EnumDisplaySettingsA
+0588 stub EnumDisplaySettingsW
+0588 stub GetWindowRgn
+0588 stub MapVirtualKeyExW
+0588 stub RegisterServicesProcess
+0588 stub SetWindowRgn
+0588 stub ToUnicodeEx
+

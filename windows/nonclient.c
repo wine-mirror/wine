@@ -37,17 +37,12 @@ static HBITMAP hbitmapRestoreD = 0;
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
 
   /* Some useful macros */
-#define IS_MANAGED(style) \
-    (Options.managed && !((style) & WS_CHILD))
-
 #define HAS_DLGFRAME(style,exStyle) \
-    (!(IS_MANAGED(style)) && \
-     (((exStyle) & WS_EX_DLGMODALFRAME) || \
-      (((style) & WS_DLGFRAME) && !((style) & WS_BORDER))))
+    (((exStyle) & WS_EX_DLGMODALFRAME) || \
+     (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
 
 #define HAS_THICKFRAME(style) \
-    (!(IS_MANAGED(style)) && \
-     ((style) & WS_THICKFRAME) && \
+    (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
 #define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
@@ -70,19 +65,24 @@ static HBITMAP hbitmapRestoreD = 0;
 static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
     if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
-    if (IS_MANAGED(style)) return;
-    if (HAS_DLGFRAME( style, exStyle ))
-	InflateRect( rect, SYSMETRICS_CXDLGFRAME, SYSMETRICS_CYDLGFRAME );
-    else
-    {
-	if (HAS_THICKFRAME(style))
-	    InflateRect( rect, SYSMETRICS_CXFRAME, SYSMETRICS_CYFRAME );
-	if (style & WS_BORDER)
-	    InflateRect( rect, SYSMETRICS_CXBORDER, SYSMETRICS_CYBORDER );
-    }
 
-    if ((style & WS_CAPTION) == WS_CAPTION)
-	rect->top -= SYSMETRICS_CYCAPTION - SYSMETRICS_CYBORDER;
+    /* Decide if the window will be managed (see CreateWindowEx) */
+    if (!(Options.managed && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
+          (exStyle & WS_EX_DLGMODALFRAME))))
+    {
+        if (HAS_DLGFRAME( style, exStyle ))
+            InflateRect( rect, SYSMETRICS_CXDLGFRAME, SYSMETRICS_CYDLGFRAME );
+        else
+        {
+            if (HAS_THICKFRAME(style))
+                InflateRect( rect, SYSMETRICS_CXFRAME, SYSMETRICS_CYFRAME );
+            if (style & WS_BORDER)
+                InflateRect( rect, SYSMETRICS_CXBORDER, SYSMETRICS_CYBORDER );
+        }
+
+        if ((style & WS_CAPTION) == WS_CAPTION)
+            rect->top -= SYSMETRICS_CYCAPTION - SYSMETRICS_CYBORDER;
+    }
     if (menu) rect->top -= SYSMETRICS_CYMENU + SYSMETRICS_CYBORDER;
 
     if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
@@ -140,8 +140,7 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
     MinMax.ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
 
-    if (IS_MANAGED(wndPtr->dwStyle))
-	xinc = yinc = 0;
+    if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
     else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
         xinc = SYSMETRICS_CXDLGFRAME;
@@ -240,7 +239,7 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
     if (wndPtr->dwStyle & WS_ICONIC) return;  /* No border to remove */
-    if (IS_MANAGED(wndPtr->dwStyle)) return;
+    if (wndPtr->flags & WIN_MANAGED) return;
 
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -275,86 +274,79 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
-    /*
-     * if this is a iconic window, we don't care were the hit
-     * occured, only that it did occur, just return HTCAPTION 
-     * so the caller knows the icon did get hit
-     */
-    if (IsIconic(hwnd))
-    {
-        return HTCAPTION;       /* change this to something meaningful? */
-    }
+    if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
-      /* Check borders */
-    if (HAS_THICKFRAME( wndPtr->dwStyle ))
+    if (!(wndPtr->flags & WIN_MANAGED))
     {
-	InflateRect( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
-	if (wndPtr->dwStyle & WS_BORDER)
-	    InflateRect( &rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
-	if (!PtInRect( &rect, pt ))
-	{
-	      /* Check top sizing border */
-	    if (pt.y < rect.top)
-	    {
-		if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
-		if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
-		return HTTOP;
-	    }
-	      /* Check bottom sizing border */
-	    if (pt.y >= rect.bottom)
-	    {
-		if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
-		if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
-		return HTBOTTOM;
-	    }
-	      /* Check left sizing border */
-	    if (pt.x < rect.left)
-	    {
-		if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
-		if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
-		return HTLEFT;
-	    }
-	      /* Check right sizing border */
-	    if (pt.x >= rect.right)
-	    {
-		if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
-		if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
-		return HTRIGHT;
-	    }
-	}
-    }
-    else  /* No thick frame */
-    {
-	if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-	    InflateRect(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
-	else if (!(IS_MANAGED(wndPtr->dwStyle)) &&
-		 (wndPtr->dwStyle & WS_BORDER))
-	    InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
-	if (!PtInRect( &rect, pt )) return HTBORDER;
-    }
+        /* Check borders */
+        if (HAS_THICKFRAME( wndPtr->dwStyle ))
+        {
+            InflateRect( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+            if (wndPtr->dwStyle & WS_BORDER)
+                InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+            if (!PtInRect( &rect, pt ))
+            {
+                /* Check top sizing border */
+                if (pt.y < rect.top)
+                {
+                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
+                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
+                    return HTTOP;
+                }
+                /* Check bottom sizing border */
+                if (pt.y >= rect.bottom)
+                {
+                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
+                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
+                    return HTBOTTOM;
+                }
+                /* Check left sizing border */
+                if (pt.x < rect.left)
+                {
+                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
+                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
+                    return HTLEFT;
+                }
+                /* Check right sizing border */
+                if (pt.x >= rect.right)
+                {
+                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
+                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
+                    return HTRIGHT;
+                }
+            }
+        }
+        else  /* No thick frame */
+        {
+            if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+                InflateRect(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+            else if (wndPtr->dwStyle & WS_BORDER)
+                InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+            if (!PtInRect( &rect, pt )) return HTBORDER;
+        }
 
-      /* Check caption */
+        /* Check caption */
 
-    if (!(IS_MANAGED(wndPtr->dwStyle)) &&
-	((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION))
-    {
-	rect.top += SYSMETRICS_CYCAPTION - 1;
-	if (!PtInRect( &rect, pt ))
-	{
-	      /* Check system menu */
-	    if (wndPtr->dwStyle & WS_SYSMENU)
-		rect.left += SYSMETRICS_CXSIZE;
-	    if (pt.x <= rect.left) return HTSYSMENU;
-	      /* Check maximize box */
-	    if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-		rect.right -= SYSMETRICS_CXSIZE + 1;
-	    if (pt.x >= rect.right) return HTMAXBUTTON;
-	      /* Check minimize box */
-	    if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-		rect.right -= SYSMETRICS_CXSIZE + 1;
-	    if (pt.x >= rect.right) return HTMINBUTTON;
-	    return HTCAPTION;
-	}
+        if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+        {
+            rect.top += SYSMETRICS_CYCAPTION - 1;
+            if (!PtInRect( &rect, pt ))
+            {
+                /* Check system menu */
+                if (wndPtr->dwStyle & WS_SYSMENU)
+                    rect.left += SYSMETRICS_CXSIZE;
+                if (pt.x <= rect.left) return HTSYSMENU;
+                /* Check maximize box */
+                if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                if (pt.x >= rect.right) return HTMAXBUTTON;
+                /* Check minimize box */
+                if (wndPtr->dwStyle & WS_MINIMIZEBOX)
+                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                if (pt.x >= rect.right) return HTMINBUTTON;
+                return HTCAPTION;
+            }
+        }
     }
 
       /* Check client area */
@@ -673,31 +665,31 @@ void NC_DoNCPaint( HWND hwnd, BOOL active, BOOL suppress_menupaint )
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
 
-    if (((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
-	 (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)) &&
-	!(IS_MANAGED(wndPtr->dwStyle)))
+    if (!(wndPtr->flags & WIN_MANAGED))
     {
-	MoveTo( hdc, 0, 0 );
-	LineTo( hdc, rect.right-1, 0 );
-	LineTo( hdc, rect.right-1, rect.bottom-1 );
-	LineTo( hdc, 0, rect.bottom-1 );
-	LineTo( hdc, 0, 0 );
-	InflateRect( &rect, -1, -1 );
-    }
+        if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
+            (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
+        {
+            MoveTo( hdc, 0, 0 );
+            LineTo( hdc, rect.right-1, 0 );
+            LineTo( hdc, rect.right-1, rect.bottom-1 );
+            LineTo( hdc, 0, rect.bottom-1 );
+            LineTo( hdc, 0, 0 );
+            InflateRect( &rect, -1, -1 );
+        }
 
-    if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
-	NC_DrawFrame( hdc, &rect, TRUE, active );
-    else if ((wndPtr->dwStyle & WS_THICKFRAME) &&
-	     !(IS_MANAGED(wndPtr->dwStyle)))
-	NC_DrawFrame(hdc, &rect, FALSE, active );
+        if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
+            NC_DrawFrame( hdc, &rect, TRUE, active );
+        else if (wndPtr->dwStyle & WS_THICKFRAME)
+            NC_DrawFrame(hdc, &rect, FALSE, active );
 
-    if (((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION) &&
-	!(IS_MANAGED(wndPtr->dwStyle)))
-    {
-	RECT r = rect;
-	r.bottom = rect.top + SYSMETRICS_CYSIZE;
-	rect.top += SYSMETRICS_CYSIZE + SYSMETRICS_CYBORDER;
-	NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
+        if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+        {
+            RECT r = rect;
+            r.bottom = rect.top + SYSMETRICS_CYSIZE;
+            rect.top += SYSMETRICS_CYSIZE + SYSMETRICS_CYBORDER;
+            NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
+        }
     }
 
     if (HAS_MENU(wndPtr))
@@ -913,7 +905,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     POINT minTrack, maxTrack, capturePoint = pt;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
+        (wndPtr->flags & WIN_MANAGED)) return;
     hittest = wParam & 0x0f;
     thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
 

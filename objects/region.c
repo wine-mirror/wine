@@ -66,7 +66,7 @@ int GetRgnBox( HRGN hrgn, LPRECT rect )
 /***********************************************************************
  *           CreateRectRgn    (GDI.64)
  */
-HRGN CreateRectRgn( short left, short top, short right, short bottom )
+HRGN CreateRectRgn( INT left, INT top, INT right, INT bottom )
 {
     HRGN hrgn;
     RGNOBJ *obj;
@@ -93,7 +93,7 @@ HRGN CreateRectRgn( short left, short top, short right, short bottom )
 /***********************************************************************
  *           CreateRectRgnIndirect    (GDI.65)
  */
-HRGN CreateRectRgnIndirect( LPRECT rect )
+HRGN CreateRectRgnIndirect( const RECT* rect )
 {
     return CreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
 }
@@ -124,8 +124,8 @@ void SetRectRgn( HRGN hrgn, short left, short top, short right, short bottom )
 /***********************************************************************
  *           CreateRoundRectRgn    (GDI.444)
  */
-HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
-			 short ellipse_width, short ellipse_height )
+HRGN CreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
+			 INT ellipse_width, INT ellipse_height )
 {
     RGNOBJ * obj;
     HRGN hrgn;
@@ -240,7 +240,7 @@ HRGN CreateEllipticRgnIndirect( LPRECT rect )
 /***********************************************************************
  *           CreatePolygonRgn    (GDI.63)
  */
-HRGN CreatePolygonRgn( POINT * points, INT count, INT mode )
+HRGN CreatePolygonRgn( const POINT * points, INT count, INT mode )
 {
     return CreatePolyPolygonRgn( points, &count, 1, mode );
 }
@@ -249,7 +249,7 @@ HRGN CreatePolygonRgn( POINT * points, INT count, INT mode )
 /***********************************************************************
  *           CreatePolyPolygonRgn    (GDI.451)
  */
-HRGN CreatePolyPolygonRgn( POINT * points, INT * count,
+HRGN CreatePolyPolygonRgn( const POINT * points, const INT * count,
 			   INT nbpolygons, INT mode )
 {
     RGNOBJ * obj;

@@ -135,7 +135,7 @@ BOOL UnionRect( LPRECT dest, LPRECT src1, LPRECT src2 )
 /***********************************************************************
  *           EqualRect    (USER.244)
  */
-BOOL EqualRect( LPRECT rect1, LPRECT rect2 )
+BOOL EqualRect( const RECT* rect1, const RECT* rect2 )
 {
     return ((rect1->left == rect2->left) && (rect1->right == rect2->right) &&
 	    (rect1->top == rect2->top) && (rect1->bottom == rect2->bottom));

@@ -447,21 +447,22 @@ static INT PROFILE_GetSection( PROFILESECTION *section,
     {
         if (section->name && !lstrcmpi( section->name, section_name ))
         {
+            INT oldlen = len;
             for (key = section->key; key; key = key->next)
             {
                 if (len <= 2) break;
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
-                len -= strlen(buffer) - 1;
+                len -= strlen(buffer) + 1;
                 buffer += strlen(buffer) + 1;
             }
             *buffer = '\0';
-            return len - 1;
+            return oldlen - len + 1;
         }
         section = section->next;
     }
     buffer[0] = buffer[1] = '\0';
-    return len - 2;
+    return 2;
 }
 
 

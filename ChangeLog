@@ -1,5 +1,241 @@
 ----------------------------------------------------------------------
-Wed Jan 31 10:58:00 1996  Alexandre Julliard  <julliar@sunsite.unc.edu>
+Sun Feb 18 16:35:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/desktop.c]
+	Look for the wallpaper file in the Windows directory.
+
+	* [controls/menu.c]
+	Fixed swapped parameters in SetMenuItemBitmaps().
+	Create a separator in MENU_SetItemData() when the string is NULL.
+
+	* [file/dosfs.c]
+	DOSFS_FindNext: don't return '.' and '..' in a drive root dir.
+
+	* [files/file.c]
+	Added a DOS_FILE structure to store per-file information (not
+	really used yet).
+	Fixed _lread and _hread to check the size of the buffer before
+	calling Unix read() to avoid EFAULT error.
+
+	* [misc/exec.c]
+	Return TRUE in WinHelp() for HELP_QUIT to quiet Notepad on exit.
+
+	* [miscemu/instr.c]
+	Call DOSMEM_Alarm() in INSTR_ReplaceSelector(). This should fix
+ 	programs that poll the BIOS counter, provided they reload the
+ 	selector on every read.
+
+	* [miscemu/int21.c]
+	Re-implemented FindFirst/FindNext for FCB calls.
+
+	* [windows/message.c] [windows/winpos.c]
+	Merged MSG_GetWindowForEvent() and WINPOS_WindowFromPoint().
+
+	* [windows/nonclient.c] [windows/win.c] [include/windows.h]
+	Added a per-window WIN_MANAGED flag; only windows that have a
+	dialog frame or a sizing border are managed.
+
+Sat Feb 17 18:25:00 1996  Thomas Sandford <tdgsandf@prds-grn.demon.co.uk>
+
+	* [if1632/Makefile.in]
+	Added -g flag to compilation of .c files generated from *32.spec.
+
+	* [if1632/gdi32.spec]
+	Numerous additional functions implemented.
+
+	* if1632/user32.spec]
+	wsprintfA maps to vsprintf not wsprintf
+	Numerous additional functions implemented.
+
+	* [include/gdi.h] [objects/gdiobj.c]
+	New #define MAGIC_DONTCARE added. This is used in
+	GDI_GetObjPtr to enable getting a pointer to a GDI object of
+	unknow type.
+
+	* [win32/gdi32.c]
+	New file.
+
+	* [win32/param32.c]
+	WIN32_MoveToEx() - handle NULL pointer argument.
+
+	* [win32/user32.c]
+	USER32_InvalidateRect - handle passing of a NULL pointer.
+	USER32_SetTimer - New function.
+
+	* [files/directory.c]
+	Fixed DIR_Init() (off by one in allocation of space for
+	environment variables).
+
+	* [files/drive.c]
+	Added <sys/types.h> to #includes (prerequisite for <sys/stat.h>
+	on FreeBSD).
+
+Fri Feb 16 10:26:56 1996  Andreas Kirschbaum <ank@rbg.informatik.th-darmstadt.de>
+
+	* [controls/menu.c]
+	Memory leak plugged.
+
+	* [controls/edit.c]
+	Erase space with function ExtTextOut(). This eliminates the use of
+ 	xmalloc().  Memory leak in EDIT_WriteText plugged.
+
+	* [debugger/db_disasm.c]
+	Operand for scas now is di.
+
+	* [files/profile.c]
+	PROFILE_GetSection was copying too much data.
+	PROFILE_GetSection now returns the correct value. It was returning
+ 	the number of unused instead of used bytes.
+
+	* [objects/dc.c]
+	Corrected two typos in comments.
+
+	* [objects/font.c]
+	FONT_MatchFont didn't return if it couldn't find any font.
+
+	* [objects/oembitmap.c]
+	Free object only if it has been allocated.
+
+	* [windows/scroll.c]
+	Memory leak in ScrollDC plugged.
+
+Tue Feb 13 11:17:00 1996 William Magro  <wmagro@tc.cornell.edu>
+
+	* [controls/edit.c]
+	Implemented ES_NOHIDESEL style, shift+click selection,
+ 	shift+{arrow,home,end,pgup,pgdn} selection.  Optimized
+	(de)selection drawing.  Changed selection drawing to use correct
+ 	system colors instead of inverting.  Fixed deleting or backspacing
+ 	across a '\r\n' end of line pair.  Selection now anchors
+ 	correctly. Fixed text leaking and extra garbage problem bug
+ 	uncovered by change in class style in wine960131.
+
+	* [controls/widgets.c]
+	Class flags now match those of Windows.
+
+Mon Feb 12 21:28:19 1996  Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [controls/widgets.c]
+	WIDGETS_Init: RELAY32_GetEntryPoint does not take a string anymore.
+
+	* [if1632/Makefile.in][if1632/relay32.c][include/relay32.h]
+	comctl32.spec ole32.spec winspool.spec: new files.
+	RELAY32_Init: call initialization of new DLLs.
+	RELAY32_GetEntryPoint: expects WIN32_builtin* now.
+	RELAY32_MakeFakeModule: new function.
+
+	* [if1632/gdi32.spec][if1632/kernel32.spec][if1632/user32.spec]
+	Added Win95 functions. Ordinals now differ from both NT and Win95
+	HeapCreate, CreateDialogIndirectParamA, CreateDialogIndirectParamW,
+	CreateDialogParamA, CreateDialogParamW, DialogBoxIndirectParamA
+	DialogBoxIndirectParamW, DialogBoxParamA, DialogBoxParamW:
+	new relays.
+
+	* [if1632/shell32.spec]
+	shell32.spec: renumbered all functions to take into account ordinals.
+	These seem to be identical between NT and Win95.
+
+	* [include/dialog.h][windows/dialog.c]
+	xBaseUnit,yBaseUnit,DIALOG_DoDialogBox: made non-static.
+
+	* [include/handle32.h]
+	New handle types VRANGE, HEAP, HEAPITEM.
+
+	* [include/pe_image.h][loader/pe_image.c]
+	struct w_files: new field builtin.
+	PE_FindExportedFunction: support ordinals.
+	PE_GetProcAddress: call RELAY32_GetEntryPoint for builtins.
+	fixup_imports: support ordinals.
+	PE_LoadImage: prefer directories over segments.
+
+	* [include/resource.h][win32/resource.c]
+	FindResource32: changed parameter from LPCTSTR to LPCWSTR
+		check LANG_NEUTRAL if LANG_ENGLISH fails.
+	LoadAcceleratorsW,SizeofResource32,AccessResource32: 
+		disabled because it's broken.
+	Casted to and from LPWSTR at various places.
+
+	* [include/string32.h][win32/string32.c]
+	Changed prototypes to take const arguments where appropriate.
+
+	* [include/struct32.h]
+	New structures DLGTEMPLATE32, DLGITEMTEMPLATE32.
+
+	* [tools/build.c]
+	BuildSpec32Files: generate Base value into code, generate call to
+	RELAY32_MakeFakeModule.
+	
+	* [win32/heap.c]
+	This is still not finished and needs rework.
+	HeapAlloc: renamed to SIMPLE_HeapAlloc, implemented HeapAlloc.
+	HeapCreate: implemented on top of VirtualAlloc, which does not work yet
+	HeapDestroy, HEAP_GrowHeap, HeapFree: new functions.
+
+	* [win32/memory.c]
+	Support for VRANGE_OBJECT. This is not yet called from any place,
+	and needs more platform specific support
+	MEMORY_FindVrange, MEMORY_IsVrangeFree, MEMORY_InsertVrange,
+	MEMORY_AllocVrange, MEMORY_ReleaseVrange: new functions.
+
+	* [win32/user32.c]
+	WIN32_CreateWindowExA: don't GlobalAlloc for integer class and window
+	names, as in dialogs.
+	Implemented dialog functions (see user32.spec).
+
+	* [windows/caret.c]
+	CARET_Initialize: call RELAY32_GetBuiltinDLL.
+
+Mon Feb 12 18:52:40 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [controls/edit.c]
+	Removed commented out #ifdefs for WINELIB.
+
+	* [tools/makehtml.pl]
+	Put in error checking when trying to open a file.
+
+	* [libtest/Makefile.in] [libtest/new.c] [libtest/hello4.c]
+	Added two new targets: hello4 and new.
+
+	* [include/windows.h]
+	Added definition of DEVMODE structure, although it's not yet used.
+  	Modified various API functions from CreateDC() to Escape(), in
+ 	order to make them more compliant with the strict API definitions.
+
+	* [include/wintypes.h]
+	Added 'typedef char TCHAR'.  It probably should be defined as
+	'short', but then we would have to support such characters.  Also did
+	'typedef const TCHAR* LPCTSTR' and 'typedef TCHAR* LPTSTR'.
+	Also defined WNDENUMPROC, FONTENUMPROC, GOBJENUMPROC, PROPENUMPROC
+	MFENUMPROC, and HGDIOBJ.
+
+Mon Feb  5 16:42:07 1996  Frans van Dorsselaer <dorssel@rulhm1.leidenuniv.nl>
+
+	* [misc/commdlg.c]
+	Patched a bug that occurred in the internal COMMDLG module for the
+ 	FileOpen(), FileSave() and FileSaveAs() functions.  The file-type
+ 	combobox is now handled correctly.
+
+Fri Feb  2 22:52:58 1996  Roman Dolejsi  <roman@sorry.vse.cz>
+
+	* [resources/sysres_Cz.rc]
+	Added support for Czech [Cz] language.
+
+Thu Feb  1 00:35:04 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [objects/font.c]
+	FONT_matchfont : for fixed-spacing fonts, allow 'c' if 'm' fails;
+	for variable-spacing fonts : allow '*' if 'p' fails; if asked lfHeight
+	is -1, assume 0.
+	CreateFontIndirect : if font parameter is NULL, issue an error message.
+	CreateFont : null-terminate lfFaceName.
+	ParseFontParms : debug code turned off : too verbose.
+	InitFontsList : recognize *-c-* fonts as fixed-spacing fonts.
+
+	* [objects/color.c]
+	ColorToPhysical : admit 0xff...... COLORREF's as 0x00...... ones.
+
+--------------------------------------------------------------------
+Wed Jan 31 10:58:00 1996  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in]
 	Added --with-dll option to build libwine.so.

@@ -74,7 +74,7 @@ Enter the debugger before starting application
 .I -language xx
 Set the language to
 .I xx
-(one of En, Es, De, No, Fr, Fi, Da)
+(one of En, Es, De, No, Fr, Fi, Da Cz)
 .TP
 .I -managed
 Create each top-level window as a properly managed X window

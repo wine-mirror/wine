@@ -30,6 +30,7 @@ DWORD WINAPI GetUserDefaultLCID()
     case LANG_Fr:
     case LANG_Fi:
     case LANG_Da:
+    case LANG_Cz:
     default:
 	return 0;  /* Neutral language */
     }

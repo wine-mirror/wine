@@ -76,7 +76,7 @@ static WORD PALETTE_GetNearestIndexAndColor(HPALETTE hpalette, COLORREF *color)
 /***********************************************************************
  *           CreatePalette    (GDI.360)
  */
-HPALETTE CreatePalette( LOGPALETTE * palette )
+HPALETTE CreatePalette( const LOGPALETTE* palette )
 {
     PALETTEOBJ * palettePtr;
     HPALETTE hpalette;

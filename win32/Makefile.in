@@ -8,6 +8,7 @@ C_SRCS = \
 	environment.c \
 	error.c \
 	file.c \
+	gdi32.c \
 	heap.c \
 	init.c \
 	memory.c \

@@ -915,12 +915,12 @@ static void BuildSpec32Files( char *specname )
     }
     printf("};\n\n");
 
-    printf( "static WIN32_builtin dll={\"%s\",functions,%d,0};\n",
-            UpperDLLName, Limit+1);
+    printf( "static WIN32_builtin dll={\"%s\",functions,%d,%d,0};\n",
+            UpperDLLName, Limit+1, Base);
 
     printf( "void %s_Init(void)\n{\n",UpperDLLName);
     printf( "\tdll.next=WIN32_builtin_list;\n");
-    printf( "\tWIN32_builtin_list=&dll;\n}");
+    printf( "\tWIN32_builtin_list=&dll;\n\tRELAY32_MakeFakeModule(&dll);\n}");
 }
 
 

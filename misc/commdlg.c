@@ -17,6 +17,8 @@
 #include "dos_fs.h"
 #include "drive.h"
 #include "stackframe.h"
+#include "stddebug.h"
+#include "debug.h"
 
 static	DWORD 		CommDlgLastError = 0;
 
@@ -90,7 +92,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
         else SYSRES_FreeResource( hDlgTmpl );
     }
 
-    printf("GetOpenFileName // return lpstrFile='%s' !\n", 
+    dprintf_commdlg(stddeb,"GetOpenFileName // return lpstrFile='%s' !\n", 
            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -131,7 +133,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
         else SYSRES_FreeResource( hDlgTmpl );
     }
 
-    printf( "GetSaveFileName // return lpstrFile='%s' !\n", 
+    dprintf_commdlg(stddeb, "GetSaveFileName // return lpstrFile='%s' !\n", 
             (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -253,14 +255,14 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
 		    (LPARAM)MAKE_SEGPTR(str));
-	switch(str[2]) {
-	 case 'a': case 'b':
-	    hBitmap = hFloppy;
-	    break;
-	 default:
-	    hBitmap = hHDisk;
-	    break;
-	}
+        switch(DRIVE_GetType( str[2] - 'a' ))
+        {
+        case TYPE_FLOPPY:  hBitmap = hFloppy; break;
+        case TYPE_CDROM:   hBitmap = hCDRom; break;
+        case TYPE_HD:
+        case TYPE_NETWORK:
+        default:           hBitmap = hHDisk; break;
+        }
 	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
 	TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
 		lpdis->rcItem.top, str, strlen(str));
@@ -299,6 +301,7 @@ static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
   int n;
+  int i;
   LPOPENFILENAME lpofn;
   char tmpstr[512];
   LPSTR pstr;
@@ -308,16 +311,17 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   if (lpofn->lpstrCustomFilter)
     {
       pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter);
-      printf("lpstrCustomFilter = %p\n", pstr);
+      dprintf_commdlg(stddeb,"lpstrCustomFilter = %p\n", pstr);
       while(*pstr)
 	{
 	  n = strlen(pstr);
 	  strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
-	  printf("lpstrCustomFilter // add tmpstr='%s' ", tmpstr);
-	  SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
+	  dprintf_commdlg(stddeb,"lpstrCustomFilter // add tmpstr='%s' ", tmpstr);
+          i = SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
 	  pstr += n + 1;
 	  n = strlen(pstr);
-	  printf("associated to '%s'\n", pstr);
+	  dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
+          SendDlgItemMessage(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
 	  pstr += n + 1;
 	}
     }
@@ -327,11 +331,12 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     {
       n = strlen(pstr);
       strncpy(tmpstr, pstr, 511); tmpstr[511]=0;
-      printf("lpstrFilter // add tmpstr='%s' ", tmpstr);
-      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
+      dprintf_commdlg(stddeb,"lpstrFilter // add tmpstr='%s' ", tmpstr);
+      i = SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
       pstr += n + 1;
       n = strlen(pstr);
-      printf("associated to '%s'\n", pstr);
+      dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
+      SendDlgItemMessage(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
       pstr += n + 1;
     }
   /* set default filter */
@@ -341,7 +346,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
   tmpstr[511]=0;
-  printf("nFilterIndex = %ld // SetText of edt1 to '%s'\n", 
+  dprintf_commdlg(stddeb,"nFilterIndex = %ld // SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
   SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
   /* get drive list */
@@ -437,9 +442,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
       if (lRet == LB_ERR)
 	return TRUE;
-      pstr = FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
-				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
-				 lRet);
+      pstr = (LPSTR)SendDlgItemMessage(hWnd, cmb1, CB_GETITEMDATA, lRet, 0);
+      dprintf_commdlg(stddeb,"Selected filter : %s\n", pstr);
       strncpy(tmpstr2, pstr, 511); tmpstr2[511]=0;
       SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
       FILEDLG_ScanDir(hWnd, tmpstr);
@@ -467,7 +471,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	      strcpy(tmpstr2, tmpstr);
 	      *tmpstr=0;
 	    }
-	  printf("commdlg: %s, %s\n", tmpstr, tmpstr2);
+	  dprintf_commdlg(stddeb,"commdlg: %s, %s\n", tmpstr, tmpstr2);
 	  SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr2));
 	  FILEDLG_ScanDir(hWnd, tmpstr);
 	  return TRUE;
@@ -480,7 +484,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
-      printf("commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
+      dprintf_commdlg(stddeb,"commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
       strncpy(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
@@ -528,7 +532,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	  lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
 	  SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet,
 			     (LPARAM)MAKE_SEGPTR(tmpstr));
-          printf("strcpy'ing '%s'\n",tmpstr); fflush(stdout);
+          dprintf_commdlg(stddeb,"strcpy'ing '%s'\n",tmpstr); fflush(stdout);
 	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), tmpstr);
 	}
       EndDialog(hWnd, TRUE);
@@ -639,7 +643,7 @@ LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   switch (wMsg) 
     {
     case WM_INITDIALOG:
-      printf("ColorDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      dprintf_commdlg(stddeb,"ColorDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -702,7 +706,7 @@ LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      printf("FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      dprintf_commdlg(stddeb,"FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -729,7 +733,7 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      printf("ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      dprintf_commdlg(stddeb,"ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -756,7 +760,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
 
-    printf("PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
+    dprintf_commdlg(stddeb,"PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
     if (lpPrint->Flags & PD_RETURNDEFAULT)
         /* FIXME: should fill lpPrint->hDevMode and lpPrint->hDevNames here */
@@ -786,7 +790,7 @@ LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      printf("PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      dprintf_commdlg(stddeb,"PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -813,7 +817,7 @@ LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      printf("PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      dprintf_commdlg(stddeb,"PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -846,7 +850,7 @@ DWORD CommDlgExtendedError(void)
 short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 {
     int i, len;
-    printf("GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
+    dprintf_commdlg(stddeb,"GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
     if (lpFile == NULL || lpTitle == NULL)
     	return -1;
     len = strlen(lpFile);
@@ -863,7 +867,7 @@ short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 	i++;
 	break;
     }
-    printf("\n---> '%s' ", &lpFile[i]);
+    dprintf_commdlg(stddeb,"\n---> '%s' ", &lpFile[i]);
     
     len = strlen(lpFile+i)+1;
     if (cbBuf < len)

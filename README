@@ -77,7 +77,7 @@ comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
 month.
 
 If you add something, or fix a bug, please send a patch ('diff -u'
-format preferred) to wine-new@amscons.com for inclusion in the next
+format preferred) to julliard@lrc.epfl.ch for inclusion in the next
 release.
 
 --

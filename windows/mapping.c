@@ -38,7 +38,7 @@ void MAPPING_FixIsotropic( DC * dc )
 /***********************************************************************
  *           DPtoLP    (GDI.67)
  */
-BOOL DPtoLP( HDC hdc, LPPOINT points, int count )
+BOOL DPtoLP( HDC hdc, LPPOINT points, INT count )
 {
     POINT * pt;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

@@ -246,7 +246,7 @@ GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
     else 
       ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return NULL;
-    if (ptr->wMagic != magic) return NULL;
+    if ((magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) return NULL;
     return ptr;
 }
 
@@ -254,7 +254,7 @@ GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
 /***********************************************************************
  *           DeleteObject    (GDI.69)
  */
-BOOL DeleteObject( HANDLE obj )
+BOOL DeleteObject( HGDIOBJ obj )
 {
       /* Check if object is valid */
 
@@ -377,7 +377,7 @@ BOOL UnrealizeObject( HANDLE handle )
 /***********************************************************************
  *           EnumObjects    (GDI.71)
  */
-int EnumObjects( HDC hdc, int nObjType, FARPROC lpEnumFunc, LPARAM lParam )
+INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =

@@ -39,6 +39,9 @@ typedef void* SEGPTR;
 #define UIFMT "%u"
 #define NPFMT "%p"
 #define SPFMT "%p"
+
+/* Should probably eventually be unsigned short, but not now */
+typedef char TCHAR;
 #else
 typedef short INT;
 typedef unsigned short UINT;
@@ -49,6 +52,9 @@ typedef DWORD SEGPTR;
 #define UIFMT "%hu"
 #define NPFMT "%04x"
 #define SPFMT "%08lx"
+
+/* TCHAR is just char in Win16 */
+typedef char TCHAR;
 #endif
 typedef LONG LPARAM;
 typedef LONG LRESULT;
@@ -56,7 +62,8 @@ typedef INT HFILE;
 typedef DWORD HHOOK;
 typedef char *LPSTR;
 typedef const char *LPCSTR;
-typedef LPCSTR LPCTSTR;
+typedef TCHAR *LPTSTR;
+typedef const TCHAR *LPCTSTR;
 typedef WCHAR *LPWSTR;
 typedef const WCHAR *LPCWSTR;
 typedef char *NPSTR;
@@ -81,6 +88,7 @@ DECLARE_HANDLE(HDROP);
 DECLARE_HANDLE(HDRVR);
 DECLARE_HANDLE(HDWP);
 DECLARE_HANDLE(HFONT);
+DECLARE_HANDLE(HGDIOBJ);
 DECLARE_HANDLE(HGLOBAL);
 DECLARE_HANDLE(HICON);
 DECLARE_HANDLE(HINSTANCE);
@@ -107,12 +115,23 @@ typedef HGLOBAL GLOBALHANDLE;
 #ifdef WINELIB
 typedef long (*FARPROC)();
 typedef LRESULT (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
+typedef LRESULT (*WNDENUMPROC)(HWND,LPARAM);
+/*typedef int (*FONTENUMPROC)(const LOGFONT*,const TEXTMETRIC*,DWORD,LPARAM);*/
+typedef int (*FONTENUMPROC)(const void*,const void*,DWORD,LPARAM);
+typedef int (*GOBJENUMPROC)(LPVOID,LPARAM);
+typedef BOOL (*PROPENUMPROC)(HWND,LPCTSTR,HANDLE);
+/*typedef int (*MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,int,LPARAM);*/
+typedef int (*MFENUMPROC)(HDC,void*,void*,int,LPARAM);
 #else
 typedef SEGPTR FARPROC;
 typedef SEGPTR WNDPROC;
+typedef SEGPTR WNDENUMPROC;
+typedef SEGPTR FONTENUMPROC;
+typedef SEGPTR GOBJENUMPROC;
+typedef SEGPTR PROPENUMPROC;
+typedef SEGPTR MFENUMPROC;
 #endif
 typedef FARPROC DLGPROC;
-typedef FARPROC FONTENUMPROC;
 typedef FARPROC HOOKPROC;
 
 #define TRUE 1

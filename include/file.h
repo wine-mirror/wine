@@ -10,7 +10,7 @@
 #include "windows.h"
 
 extern void FILE_SetDosError(void);
-extern int FILE_GetUnixHandle( HFILE handle );
+extern int FILE_GetUnixTaskHandle( HFILE handle );
 extern void FILE_CloseAllFiles( HANDLE hPDB );
 extern int FILE_Open( LPCSTR path, int mode );
 extern int FILE_Create( LPCSTR path, int mode, int unique );
@@ -24,6 +24,7 @@ extern int FILE_RemoveDir( LPCSTR path );
 extern HFILE FILE_Dup( HFILE hFile );
 extern HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 );
 extern int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode );
+extern LONG FILE_Read( HFILE hFile, LPSTR buffer, LONG count );
 extern INT _lcreat_uniq( LPCSTR path, INT attr );
 
 #endif  /* __WINE_FILE_H */

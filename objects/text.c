@@ -184,12 +184,12 @@ static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
 /***********************************************************************
  *           DrawText    (USER.85)
  */
-int DrawText( HDC hdc, LPCSTR str, int count, LPRECT rect, WORD flags )
+INT DrawText( HDC hdc, LPCTSTR str, INT i_count, LPRECT rect, UINT flags )
 {
     SIZE size;
     const char *strPtr;
     static char line[1024];
-    int len, lh;
+    int len, lh, count=i_count;
     int prefix_x = 0;
     int prefix_end = 0;
     TEXTMETRIC tm;

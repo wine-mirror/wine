@@ -32,7 +32,6 @@ as long as you leave the existing copyrights intact.
 
 Bug Reports and Fixes
 If you find a bug in winerc, you can report it to me,
-martin@cs.csufresno.edu (Martin von Loewis)
-or to comp.emulators.ms-windows.wine. If you can fix the bug, send the
-diffs & ChangeLog to wine-new@amscons.com (Bob Amstadt), or send it to
-me, and I will collect the fixes and forward them to wine-news.
+martin@cs.csufresno.edu (Martin von Loewis) or to
+comp.emulators.ms-windows.wine. If you can fix the bug, send the diffs
+and ChangeLog entry to julliard@lrc.epfl.ch (Alexandre Julliard).

@@ -5,21 +5,6 @@
 #include <windows.h>
 #include "comm.h"
 
-#define WINE_PATH_LENGTH 256
-struct dosdirent {
-	int  inuse;
-	DIR *ds;
-	char unixpath[WINE_PATH_LENGTH];
-	char filename[WINE_PATH_LENGTH];
-	char filemask[13];
-	char attribute;
-	char search_attribute;
-	long filesize;
-	long filetime;
-        short entnum;           /* Directory entry number */
-        struct dosdirent *next;
-};
-
 struct fcb {
         BYTE drive;
 	char name[8];
@@ -48,6 +33,26 @@ typedef struct
     char   filename[13];         /* 1e file name + extension */
 } FINDFILE_DTA;
 
+/* FCB layout for FindFirstFCB/FindNextFCB */
+typedef struct
+{
+    BYTE   drive;                /* 00 drive letter */
+    char   filename[11];         /* 01 filename 8+3 format */
+    int    count;                /* 0c entry count (was: reserved) */
+    char  *unixPath;             /* 10 unix path (was: reserved) */
+} FINDFILE_FCB;
+
+/* DOS directory entry for FindFirstFCB/FindNextFCB */
+typedef struct
+{
+    char   filename[11];         /* 00 filename 8+3 format */
+    BYTE   fileattr;             /* 0b file attributes */
+    BYTE   reserved[10];         /* 0c reserved */
+    WORD   filetime;             /* 16 file time */
+    WORD   filedate;             /* 18 file date */
+    WORD   cluster;              /* 1a file first cluster */
+    DWORD  filesize;             /* 1c file size */
+} DOS_DIRENTRY_LAYOUT;
 
 #define DOSVERSION 0x1606      /* Major version in low byte: DOS 6.22 */
 #define WINDOSVER  0x0616      /* Windows reports the DOS version reversed */
@@ -55,8 +60,6 @@ typedef struct
 
 #define MAX_DOS_DRIVES	26
 
-extern WORD ExtendedError;
-extern BYTE ErrorClass, Action, ErrorLocus;
 extern struct DosDeviceStruct COM[MAX_PORTS];
 extern struct DosDeviceStruct LPT[MAX_PORTS];
 

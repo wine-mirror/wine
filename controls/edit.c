@@ -2,9 +2,8 @@
  * Edit control
  *
  * Copyright  David W. Metcalfe, 1994
+ * Copyright  William Magro, 1995, 1996
  *
- * Release 3, July 1994
- * April 1995 bug fixes (William Magro)
  */
 
 #include <stdio.h>
@@ -50,7 +49,6 @@ typedef struct
     HANDLE hText;            /* handle to text buffer */
     INT *CharWidths;         /* widths of chars in font */
     unsigned int *textptrs;  /* list of line offsets */
-    char *BlankLine;         /* to fill blank lines quickly */
     int CurrCol;             /* current column */
     int CurrLine;            /* current line */
     int WndCol;              /* current window column */
@@ -78,8 +76,8 @@ typedef struct
 #define EditBufStartLen(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & ES_MULTILINE \
 			       ? EDITLEN : ENTRYLEN)
 #define CurrChar (EDIT_TextLine(hwnd, es->CurrLine) + es->CurrCol)
-#define SelMarked(es) ((es)->SelBegLine != 0 || (es)->SelBegCol != 0 || \
-		       (es)->SelEndLine != 0 || (es)->SelEndCol != 0)
+#define SelMarked(es) (((es)->SelBegCol != (es)->SelEndCol) || \
+		       ((es)->SelBegLine  != (es)->SelEndLine))
 #define ROUNDUP(numer, denom) (((numer) % (denom)) \
 			       ? ((((numer) + (denom)) / (denom)) * (denom)) \
 			       : (numer) + (denom))
@@ -459,11 +457,12 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     HDC hdc;
     HANDLE hStr;
     char *str, *cp, *cp1;
-    int diff=0, num_spaces, tabwidth, scol;
+    int diff=0, tabwidth, scol;
     HRGN hrgnClip;
     COLORREF oldTextColor, oldBkgdColor;
     HFONT oldfont;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
+    RECT rc2;
 
     dprintf_edit(stddeb,"EDIT_WriteText lp=%s, off=%d, len=%d, row=%d, col=%d, reverse=%d\n", lp, off, len, row, col, reverse);
 
@@ -478,6 +477,7 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     str = (char *)EDIT_HeapLock(hwnd, hStr);
     hrgnClip = CreateRectRgnIndirect(rc);
     SelectClipRgn(hdc, hrgnClip);
+    DeleteObject(hrgnClip);
 
     if (es->hFont)
 	oldfont = (HFONT)SelectObject(hdc, (HANDLE)es->hFont);
@@ -495,20 +495,11 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     {
 	oldBkgdColor = GetBkColor(hdc);
 	oldTextColor = GetTextColor(hdc);
-	SetBkColor(hdc, oldTextColor);
-	SetTextColor(hdc, oldBkgdColor);
+	SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+	SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
     }
     else			/* -Wall does not see the use of if */
         oldTextColor = oldBkgdColor = 0;
-
-    if (strlen(es->BlankLine) < (es->ClientWidth / es->CharWidths[32]) + 2)
-    {
-	dprintf_edit( stddeb, "EDIT_WriteText: realloc\n" );
-        es->BlankLine = xrealloc(es->BlankLine, 
-				 (es->ClientWidth / es->CharWidths[32]) + 2);
-        memset(es->BlankLine, ' ', (es->ClientWidth / es->CharWidths[32]) + 2);
-	es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
-    }
 
     if ((es->PasswordChar && GetWindowLong( hwnd, GWL_STYLE ) & ES_PASSWORD))
     {
@@ -525,8 +516,8 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	TextOut(hdc, col - diff, row * es->txtht, str, (int)(cp - str));
 	scol = EDIT_StrWidth(hwnd, str, (int)(cp - str), 0);
 	tabwidth = EDIT_CharWidth(hwnd, VK_TAB, scol);
-	num_spaces = tabwidth / es->CharWidths[32] + 1;
-	TextOut(hdc, scol, row * es->txtht, es->BlankLine, num_spaces);
+	SetRect(&rc2, scol, row * es->txtht, scol+tabwidth, (row + 1) * es->txtht);
+	ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rc2, "", 0, NULL);
 	cp++;
 	scol += tabwidth;
 
@@ -535,8 +526,8 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	    TextOut(hdc, scol, row * es->txtht, cp, (int)(cp1 - cp));
 	    scol += EDIT_StrWidth(hwnd, cp, (int)(cp1 - cp), scol);
 	    tabwidth = EDIT_CharWidth(hwnd, VK_TAB, scol);
-	    num_spaces = tabwidth / es->CharWidths[32] + 1;
-	    TextOut(hdc, scol, row * es->txtht, es->BlankLine, num_spaces);
+	    SetRect(&rc2, scol, row * es->txtht, scol+tabwidth, (row + 1) * es->txtht);
+	    ExtTextOut( hdc, 0, 0, ETO_OPAQUE, &rc2, "", 0, NULL );
 	    cp = ++cp1;
 	    scol += tabwidth;
 	}
@@ -551,13 +542,11 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     }
 
     /* blank out remainder of line if appropriate */
-    if (blank)
+    if (blank && ((rc->right - col) > len))
     {
-	if ((rc->right - col) > len)
-	{
-	    num_spaces = (rc->right - col - len) / es->CharWidths[32];
-	    TextOut(hdc, col + len, row * es->txtht, es->BlankLine, num_spaces);
-	}
+        SetRect( &rc2, col + len, row * es->txtht,
+                 rc->right, (row + 1) * es->txtht );
+        ExtTextOut( hdc, 0, 0, ETO_OPAQUE, &rc2, "", 0, NULL );
     }
 
     if (es->hFont)
@@ -643,7 +632,7 @@ static void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
     }
     len = MIN(lnlen, rc.right - rc.left);
 
-    if (SelMarked(es))
+    if (SelMarked(es) && (es->HaveFocus))
     {
 	sbl = es->SelBegLine;
 	sel = es->SelEndLine;
@@ -1142,11 +1131,21 @@ static void EDIT_DelKey(HWND hwnd)
     RECT rc;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
     char *currchar = CurrChar;
-    BOOL repaint = *currchar == '\n';
+    BOOL repaint;
 
-    if (IsMultiLine(hwnd) && *currchar == '\n' && *(currchar + 1) == '\0')
+    if (IsMultiLine(hwnd) && !strncmp(currchar,"\r\n\0",3))
 	return;
-    strcpy(currchar, currchar + 1);
+
+    if(*currchar == '\n') {
+        repaint = TRUE;
+        strcpy(currchar, currchar + 1);
+    } else if (*currchar == '\r') {
+        repaint = TRUE;
+        strcpy(currchar, currchar + 2);
+    } else {
+        repaint = FALSE;
+        strcpy(currchar, currchar + 1);
+    }
     NOTIFY_PARENT(hwnd, EN_UPDATE);
     
     if (repaint)
@@ -1304,11 +1303,9 @@ static void EDIT_ClearText(HWND hwnd)
     char *text;
 
     dprintf_edit(stddeb,"EDIT_ClearText %d\n",blen);
-/*#ifndef WINELIB*/
     es->hText = EDIT_HeapReAlloc(hwnd, es->hText, blen);
     text = EDIT_HeapLock(hwnd, es->hText);
     memset(text, 0, blen);
-/*#endif*/
     es->textlen = 0;
     es->wlines = 0;
     es->CurrLine = es->CurrCol = 0;
@@ -1316,9 +1313,7 @@ static void EDIT_ClearText(HWND hwnd)
     es->wleft = es->wtop = 0;
     es->textwidth = 0;
     es->TextChanged = FALSE;
-/*#ifndef WINELIB*/
     EDIT_ClearTextPointers(hwnd);
-/*#endif*/
 }
 
 /*********************************************************************
@@ -1365,6 +1360,29 @@ static void EDIT_GetLineCol(HWND hwnd, int off, int *line, int *col)
 }
 
 /*********************************************************************
+ *  EDIT_UpdateSel
+ *
+ *  Redraw the current selection, after losing focus, for example.
+ */
+static void EDIT_UpdateSel(HWND hwnd)
+{
+    EDITSTATE *es = EDIT_GetEditState(hwnd);
+    int y, bbl, bel;
+    RECT rc;
+    
+    /* Note which lines need redrawing. */
+    bbl=MIN(es->SelBegLine,es->SelEndLine);
+    bel=MAX(es->SelBegLine,es->SelEndLine);
+
+    /* Redraw the affected lines */
+    GetClientRect(hwnd, &rc);
+    for (y = bbl; y <= bel; y++)
+    {
+        EDIT_WriteTextLine(hwnd, &rc, y);
+    }
+}
+
+/*********************************************************************
  *  EDIT_ClearSel
  *
  *  Clear the current selection.
@@ -1372,12 +1390,23 @@ static void EDIT_GetLineCol(HWND hwnd, int off, int *line, int *col)
 static void EDIT_ClearSel(HWND hwnd)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
+    int y, bbl, bel;
+    RECT rc;
+    
+    /* Note which lines need redrawing. */
+    bbl=MIN(es->SelBegLine,es->SelEndLine);
+    bel=MAX(es->SelBegLine,es->SelEndLine);
 
+    /* Clear the selection */
     es->SelBegLine = es->SelBegCol = 0;
     es->SelEndLine = es->SelEndCol = 0;
 
-    InvalidateRect(hwnd, NULL, TRUE);
-    UpdateWindow(hwnd);
+    /* Redraw the affected lines */
+    GetClientRect(hwnd, &rc);
+    for (y = bbl; y <= bel; y++)
+    {
+        EDIT_WriteTextLine(hwnd, &rc, y);
+    }
 }
 
 /*********************************************************************
@@ -1412,33 +1441,52 @@ static void EDIT_SaveDeletedText(HWND hwnd, char *deltext, int len,
  */
 static void EDIT_DeleteSel(HWND hwnd)
 {
-    char *bbl, *bel;
+    char *selStart, *selEnd;
+    int bl, el, bc, ec;
     int len;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     if (SelMarked(es))
     {
-	bbl = EDIT_TextLine(hwnd, es->SelBegLine) + es->SelBegCol;
-	bel = EDIT_TextLine(hwnd, es->SelEndLine) + es->SelEndCol;
-	len = (int)(bel - bbl);
-	EDIT_SaveDeletedText(hwnd, bbl, len, es->SelBegLine, es->SelBegCol);
+        /* Get the real beginning and ending lines and columns */
+        bl = es->SelBegLine;
+        el = es->SelEndLine;
+        if ( bl > el ) {
+            bl = el;
+            el = es->SelBegLine;
+            bc = es->SelEndCol;
+            ec = es->SelBegCol;
+        } else if ( bl == el ) {
+            bc = MIN(es->SelBegCol,es->SelEndCol);
+            ec = MAX(es->SelBegCol,es->SelEndCol);
+        } else {
+            bc = es->SelBegCol;
+            ec = es->SelEndCol;
+        }
+            
+	selStart = EDIT_TextLine(hwnd, bl) + bc;
+	selEnd = EDIT_TextLine(hwnd, el) + ec;
+	len = (int)(selEnd - selStart);
+	EDIT_SaveDeletedText(hwnd, selStart, len, bl, bc);
 	es->TextChanged = TRUE;
-	strcpy(bbl, bel);
+        EDIT_ClearSel(hwnd);
+	strcpy(selStart, selEnd);
 
-	es->CurrLine = es->SelBegLine;
-	es->CurrCol = es->SelBegCol;
-	es->WndRow = es->SelBegLine - es->wtop;
+	es->CurrLine = bl;
+	es->CurrCol = bc;
+	es->WndRow = bl - es->wtop;
 	if (es->WndRow < 0)
 	{
-	    es->wtop = es->SelBegLine;
+	    es->wtop = bl;
 	    es->WndRow = 0;
 	}
-	es->WndCol = EDIT_StrWidth(hwnd, bbl - es->SelBegCol, 
-				     es->SelBegCol, 0) - es->wleft;
+	es->WndCol = EDIT_StrWidth(hwnd, selStart - bc, bc, 0) - es->wleft;
 
 	EDIT_BuildTextPointers(hwnd);
 	es->PaintBkgd = TRUE;
-	EDIT_ClearSel(hwnd);
+
+        InvalidateRect(hwnd, NULL, TRUE);
+        UpdateWindow(hwnd);
     }
 }
 
@@ -1475,65 +1523,11 @@ static int EDIT_TextLineNumber(HWND hwnd, char *lp)
  */
 static void EDIT_SetAnchor(HWND hwnd, int row, int col)
 {
-    BOOL sel = FALSE;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
-    if (SelMarked(es))
-    {
-	sel = TRUE;
-        EDIT_ClearSel(hwnd);
-    }
+    if (SelMarked(es)) EDIT_ClearSel(hwnd);
     es->SelBegLine = es->SelEndLine = row;
     es->SelBegCol = es->SelEndCol = col;
-    if (sel)
-    {
-	InvalidateRect(hwnd, NULL, FALSE);
-	UpdateWindow(hwnd);
-    }
-}
-
-/*********************************************************************
- *  EDIT_WriteSel
- *
- *  Display selection by reversing pixels in selected text.
- *  If end == -1, selection applies to end of line.
- */
-static void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
-{
-    RECT rc, rcInvert;
-    int scol, ecol;
-    char *cp;
-    HDC hdc;
-    EDITSTATE *es = EDIT_GetEditState(hwnd);
-
-    dprintf_edit(stddeb,"EDIT_WriteSel: y=%d start=%d end=%d\n", y, start,end);
-    GetClientRect(hwnd, &rc);
-
-    /* make sure y is within the window */
-    if (y < es->wtop || y > (es->wtop + es->ClientHeight))
-	return;
-
-    /* get pointer to text */
-    cp = EDIT_TextLine(hwnd, y);
-
-    /* get length of line if end == -1 */
-    if (end == -1)
-	end = EDIT_LineLength(hwnd, y);
-
-    scol = EDIT_StrWidth(hwnd, cp, start, 0) - es->wleft;
-    if (scol > rc.right) return;
-    if (scol < rc.left) scol = rc.left;
-    ecol = EDIT_StrWidth(hwnd, cp, end, 0) - es->wleft;
-    if (ecol < rc.left) return;
-    if (ecol > rc.right) ecol = rc.right;
-
-    hdc = GetDC(hwnd);
-    rcInvert.left = scol;
-    rcInvert.top = (y - es->wtop) * es->txtht;
-    rcInvert.right = ecol;
-    rcInvert.bottom = (y - es->wtop + 1) * es->txtht;
-    InvertRect(hdc, (LPRECT) &rcInvert);
-    ReleaseDC(hwnd, hdc);
 }
 
 /*********************************************************************
@@ -1543,10 +1537,11 @@ static void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
  */
 static void EDIT_ExtendSel(HWND hwnd, INT x, INT y)
 {
-    int bbl, bel, bbc, bec;
+    int bbl, bel, bbc;
     char *cp;
     int len, line;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
+    RECT rc;
 
     dprintf_edit(stddeb,"EDIT_ExtendSel: x=%d, y=%d\n", x, y);
 
@@ -1580,51 +1575,19 @@ static void EDIT_ExtendSel(HWND hwnd, INT x, INT y)
     es->SelEndCol = es->CurrCol;
 
     bel = es->SelEndLine;
-    bec = es->SelEndCol;
 
     /* return if no new characters to mark */
-    if (bbl == bel && bbc == bec)
-	return;
+    if (bbl == bel && bbc == es->SelEndCol) return;
 
     /* put lowest marker first */
-    if (bbl > bel)
-    {
-	SWAP_INT(bbl, bel);
-	SWAP_INT(bbc, bec);
-    }
-    if (bbl == bel && bbc > bec)
-	SWAP_INT(bbc, bec);
+    if (bbl > bel) SWAP_INT(bbl, bel);
 
+    /* Update lines on which selection has changed */
+    GetClientRect(hwnd, &rc);
     for (y = bbl; y <= bel; y++)
     {
-	if (y == bbl && y == bel)
-	    EDIT_WriteSel(hwnd, y, bbc, bec);
-	else if (y == bbl)
-	    EDIT_WriteSel(hwnd, y, bbc, -1);
-	else if (y == bel)
-	    EDIT_WriteSel(hwnd, y, 0, bec);
-	else
-	    EDIT_WriteSel(hwnd, y, 0, -1);
+        EDIT_WriteTextLine(hwnd, &rc, y);
     }
-}
-
-/*********************************************************************
- *  EDIT_StopMarking
- *
- *  Stop text marking (selection).
- */
-static void EDIT_StopMarking(HWND hwnd)
-{
-    EDITSTATE *es = EDIT_GetEditState(hwnd);
-
-    TextMarking = FALSE;
-    if (es->SelBegLine > es->SelEndLine)
-    {
-	SWAP_INT((es->SelBegLine), (es->SelEndLine));
-	SWAP_INT((es->SelBegCol), (es->SelEndCol));
-    }
-    if (es->SelBegLine == es->SelEndLine && es->SelBegCol > es->SelEndCol)
-	SWAP_INT((es->SelBegCol), (es->SelEndCol));
 }
 
 /*********************************************************************
@@ -1804,6 +1767,7 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
 	EDIT_BuildTextPointers(hwnd);
 	EDIT_End(hwnd);
 	EDIT_Forward(hwnd);
+        EDIT_SetAnchor(hwnd, es->CurrLine, es->CurrCol);
 
 	/* invalidate rest of window */
 	GetClientRect(hwnd, &rc);
@@ -1829,6 +1793,7 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
     }
     es->WndCol += EDIT_CharWidth(hwnd, (BYTE)ch, es->WndCol + es->wleft);
     es->CurrCol++;
+    EDIT_SetAnchor(hwnd, es->CurrLine, es->CurrCol);
     EDIT_WriteTextLine(hwnd, NULL, es->wtop + es->WndRow);
     SetCaretPos(es->WndCol, es->WndRow * es->txtht);
     ShowCaret(hwnd);
@@ -2222,7 +2187,8 @@ static void EDIT_WM_Paint(HWND hwnd)
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     hdc = BeginPaint(hwnd, &ps);
-    rc = ps.rcPaint;
+    GetClientRect(hwnd, &rc);
+    IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
 
     dprintf_edit(stddeb,"WM_PAINT: rc=(%ld,%ld), (%ld,%ld)\n", (LONG)rc.left, 
            (LONG)rc.top, (LONG)rc.right, (LONG)rc.bottom);
@@ -2399,12 +2365,6 @@ static long EDIT_WM_Create(HWND hwnd, LONG lParam)
     es->NumTabStops = 0;
     es->TabStops = xmalloc( sizeof(short) );
 
-    /* allocate space for a line full of blanks to speed up */
-    /* line filling */
-    es->BlankLine = xmalloc( (es->ClientWidth / es->CharWidths[32]) + 2);
-    memset(es->BlankLine, ' ', (es->ClientWidth / es->CharWidths[32]) + 2);
-    es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
-
     /* set up text cursor for edit class */
     {
         char editname[] = "EDIT";
@@ -2491,8 +2451,12 @@ static void EDIT_WM_LButtonDown(HWND hwnd, WORD wParam, LONG lParam)
     BOOL end = FALSE;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
-    if (SelMarked(es))
-	EDIT_ClearSel(hwnd);
+    ButtonDown = TRUE;
+
+    if ((wParam & MK_SHIFT)) {
+        EDIT_ExtendSel(hwnd, LOWORD(lParam), HIWORD(lParam));
+        return;
+    }
 
     es->WndRow = HIWORD(lParam) / es->txtht;
     dprintf_edit( stddeb, "EDIT_LButtonDown: %04x %08lx, WndRow %d\n", wParam,
@@ -2515,9 +2479,9 @@ static void EDIT_WM_LButtonDown(HWND hwnd, WORD wParam, LONG lParam)
     es->CurrCol = EDIT_PixelToChar(hwnd, es->CurrLine, &(es->WndCol));
     es->WndCol -= es->wleft;
 
-    ButtonDown = TRUE;
     ButtonRow = es->CurrLine;
     ButtonCol = es->CurrCol;
+    EDIT_SetAnchor(hwnd, ButtonRow, ButtonCol);
 }
 
 /*********************************************************************
@@ -2527,13 +2491,11 @@ static void EDIT_WM_MouseMove(HWND hwnd, WORD wParam, LONG lParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
-    if (wParam != MK_LBUTTON)
-	return;
+    if (!(wParam & MK_LBUTTON)) return;
 
     HideCaret(hwnd);
     if (ButtonDown)
     {
-	EDIT_SetAnchor(hwnd, ButtonRow, ButtonCol);
 	TextMarking = TRUE;
 	ButtonDown = FALSE;
     }
@@ -2582,6 +2544,7 @@ static void EDIT_WM_Char(HWND hwnd, WORD wParam)
 static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
+    BOOL motionKey = FALSE;
 
     dprintf_edit(stddeb,"EDIT_WM_KeyDown: key=%x\n", wParam);
 
@@ -2589,63 +2552,55 @@ static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
     switch (wParam)
     {
     case VK_UP:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	if (IsMultiLine(hwnd))
 	    EDIT_Upward(hwnd);
 	else
 	    EDIT_Backward(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_DOWN:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	if (IsMultiLine(hwnd))
 	    EDIT_Downward(hwnd);
 	else
 	    EDIT_Forward(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_RIGHT:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	EDIT_Forward(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_LEFT:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	EDIT_Backward(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_HOME:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	EDIT_Home(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_END:
-	if (SelMarked(es))
-	    EDIT_ClearSel(hwnd);
 	EDIT_End(hwnd);
+        motionKey = TRUE;
 	break;
 
     case VK_PRIOR:
 	if (IsMultiLine(hwnd))
 	{
-	    if (SelMarked(es))
-		EDIT_ClearSel(hwnd);
 	    EDIT_KeyVScrollPage(hwnd, SB_PAGEUP);
 	}
+        motionKey = TRUE;
 	break;
 
     case VK_NEXT:
 	if (IsMultiLine(hwnd))
 	{
-	    if (SelMarked(es))
-		EDIT_ClearSel(hwnd);
 	    EDIT_KeyVScrollPage(hwnd, SB_PAGEDOWN);
 	}
+        motionKey = TRUE;
 	break;
 
     case VK_BACK:
@@ -2666,8 +2621,26 @@ static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
 	else
 	    EDIT_DelKey(hwnd);
 	break;
+
+    case VK_SHIFT:
+        motionKey = TRUE;
+        break;
+
+    default:
+        ShowCaret(hwnd);
+        return;
     }
 
+    /* FIXME: GetKeyState appears to have its bits reversed */
+#if CorrectGetKeyState
+    if(motionKey && (0x80 & GetKeyState(VK_SHIFT))) {
+#else
+    if(motionKey && (0x01 & GetKeyState(VK_SHIFT))) {
+#endif
+        EDIT_ExtendSel(hwnd, es->WndCol, es->WndRow*es->txtht);
+    } else {
+        EDIT_SetAnchor(hwnd, es->CurrLine, es->CurrCol);
+    }
     SetCaretPos(es->WndCol, es->WndRow * es->txtht);
     ShowCaret(hwnd);
 }
@@ -2813,6 +2786,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case EM_SETHANDLE:
 	HideCaret(hwnd);
+	EDIT_ClearDeletedText(hwnd);
 	EDIT_SetHandleMsg(hwnd, wParam);
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	ShowCaret(hwnd);
@@ -2882,7 +2856,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	free(es->textptrs);
 	free(es->CharWidths);
 	free(es->TabStops);
-	free(es->BlankLine);
 	EDIT_HeapFree(hwnd, es->hText);
 	free( EDIT_GetEditState(hwnd) );
 	break;
@@ -2919,9 +2892,14 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case WM_KILLFOCUS:
+	dprintf_edit(stddeb, "WM_KILLFOCUS\n");
 	es->HaveFocus = FALSE;
 	DestroyCaret();
-	if (SelMarked(es)) EDIT_ClearSel(hwnd);
+	if (SelMarked(es))
+            if(GetWindowLong(hwnd,GWL_STYLE) & ES_NOHIDESEL)
+	        EDIT_UpdateSel(hwnd);
+            else
+	        EDIT_ClearSel(hwnd);
 	NOTIFY_PARENT(hwnd, EN_KILLFOCUS);
 	break;
 
@@ -2938,8 +2916,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (GetCapture() != hwnd) break;
 	ReleaseCapture();
 	ButtonDown = FALSE;
-	if (TextMarking)
-	    EDIT_StopMarking(hwnd);
+        TextMarking = FALSE;
 	break;
 
     case WM_MOUSEMOVE:
@@ -2964,7 +2941,9 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case WM_SETFOCUS:
+	dprintf_edit(stddeb, "WM_SETFOCUS\n");
 	es->HaveFocus = TRUE;
+	if (SelMarked(es)) EDIT_UpdateSel(hwnd);
 	CreateCaret(hwnd, 0, 2, es->txtht);
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	ShowCaret(hwnd);
@@ -2985,6 +2964,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 #endif
     case WM_SETTEXT:
+	EDIT_ClearDeletedText(hwnd);
 	EDIT_WM_SetText(hwnd, lParam);
 	break;
 
@@ -2995,6 +2975,12 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_VSCROLL:
 	EDIT_WM_VScroll(hwnd, wParam, lParam);
+	break;
+
+    case WM_LBUTTONDBLCLK:
+	dprintf_edit(stddeb, "WM_LBUTTONDBLCLK: hwnd=%d, wParam=%x\n",
+		     hwnd, wParam);
+	lResult = 0;
 	break;
 
     default:

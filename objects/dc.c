@@ -158,7 +158,7 @@ void DC_InitDC( HDC hdc )
 
 
 /***********************************************************************
- *           DC_SetupDCForPatBlt
+ *           DC_SetupGCForPatBlt
  *
  * Setup the GC for a PatBlt operation using current brush.
  * If fMapColors is TRUE, X pixels are mapped to Windows colors.
@@ -239,7 +239,7 @@ BOOL DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
 
 
 /***********************************************************************
- *           DC_SetupDCForBrush
+ *           DC_SetupGCForBrush
  *
  * Setup dc->u.x.gc for drawing operations using current brush.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
@@ -251,7 +251,7 @@ BOOL DC_SetupGCForBrush( DC * dc )
 
 
 /***********************************************************************
- *           DC_SetupDCForPen
+ *           DC_SetupGCForPen
  *
  * Setup dc->u.x.gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
@@ -450,7 +450,7 @@ BOOL RestoreDC( HDC hdc, short level )
 /***********************************************************************
  *           CreateDC    (GDI.53)
  */
-HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, LPCSTR initData )
+HDC CreateDC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* initData )
 {
     DC * dc;
     HANDLE handle;
@@ -494,7 +494,7 @@ HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, LPCSTR initData )
 /***********************************************************************
  *           CreateIC    (GDI.153)
  */
-HDC CreateIC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
+HDC CreateIC( LPCTSTR driver, LPCTSTR device, LPCTSTR output, const DEVMODE* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC( driver, device, output, initData );

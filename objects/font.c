@@ -123,20 +123,26 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
     char pattern[100];
     const char *family, *weight, *charset;
     char **names;
-    char slant, spacing;
+    char slant, oldspacing, spacing;
     int width, height, oldheight, count;
     XFontStruct * fontStruct;
     
+    dprintf_font(stddeb,
+	"FONT_MatchFont(H,W = %d,%d; Weight = %d; Italic = %d; FaceName = '%s'\n",
+	font->lfHeight, font->lfWidth, font->lfWeight, font->lfItalic, font->lfFaceName);
     weight = (font->lfWeight > 550) ? "bold" : "medium";
     slant = font->lfItalic ? 'i' : 'r';
-    height = font->lfHeight * dc->w.VportExtX / dc->w.WndExtX;
+    if (font->lfHeight == -1)
+	height = 0;
+    else
+	height = font->lfHeight * dc->w.VportExtX / dc->w.WndExtX;
     if (height == 0) height = 120;  /* Default height = 12 */
     else if (height < 0)
     {
           /* If height is negative, it means the height of the characters */
           /* *without* the internal leading. So we adjust it a bit to     */
           /* compensate. 5/4 seems to give good results for small fonts.  */
-        height = 10 * (-height * 5 / 4);
+        height = 10 * (-height * 8 / 7);
     }
     else height *= 10;
     width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);
@@ -172,6 +178,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
     }
     
     oldheight = height;
+    oldspacing = spacing;
     while (TRUE) {
 	    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
 	    if ( width == 0 )
@@ -183,22 +190,30 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
 	    dprintf_font(stddeb, "FONT_MatchFont: '%s'\n", pattern );
 	    names = XListFonts( display, pattern, 1, &count );
 	    if (count > 0) break;
+            if (spacing == 'm') /* try 'c' if no 'm' found */ {
+                spacing = 'c';
+                continue;
+            } else if (spacing == 'p') /* try '*' if no 'p' found */ {
+                spacing = '*';
+                continue;
+            }
+            spacing = oldspacing;
             height -= 10;		
             if (height < 10) {
-                dprintf_font(stddeb,"*** No match for %s\n", pattern );
-		if(slant == 'i') {
+                if (slant == 'i') {
 		    /* try oblique if no italic font */
 		    slant = 'o';
 		    height = oldheight;
 		    continue;
 		}
-		if (spacing == 'm') {
+		if (spacing == 'm' && strcmp(family, "*-*") != 0) {
 		    /* If a fixed spacing font could not be found, ignore
 		     * the family */
 		    family = "*-*";
 		    height = oldheight;
 		    continue;
 		}
+                fprintf(stderr, "FONT_MatchFont(%s) : returning NULL\n", pattern);
 		return NULL;
             }
     }
@@ -296,12 +311,20 @@ BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
 HFONT CreateFontIndirect( const LOGFONT * font )
 {
     FONTOBJ * fontPtr;
-    HFONT hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
+    HFONT hfont;
+
+    if (!font)
+	{
+	fprintf(stderr, "CreateFontIndirect : font is NULL : returning NULL\n");
+	return 0;
+	}
+    hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
     if (!hfont) return 0;
     fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
     memcpy( &fontPtr->logfont, font, sizeof(LOGFONT) );
     AnsiLower( fontPtr->logfont.lfFaceName );
-    dprintf_font(stddeb,"CreateFontIndirect(%p); return "NPFMT"\n",font,hfont);
+    dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return "NPFMT"\n",
+	font, font->lfHeight, font->lfWidth, hfont);
     return hfont;
 }
 
@@ -316,7 +339,12 @@ HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
 {
     LOGFONT logfont = { height, width, esc, orient, weight, italic, underline,
 		    strikeout, charset, outpres, clippres, quality, pitch, };
-    if (name) strncpy( logfont.lfFaceName, name, LF_FACESIZE );
+    dprintf_font(stddeb,"CreateFont(%d,%d)\n", height, width);
+    if (name)
+	{
+	strncpy( logfont.lfFaceName, name, LF_FACESIZE - 1 );
+	logfont.lfFaceName[LF_FACESIZE - 1] = '\0';
+	}
     else logfont.lfFaceName[0] = '\0';
     return CreateFontIndirect( &logfont );
 }
@@ -344,8 +372,9 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     XFontStruct * fontStruct;
     dprintf_font(stddeb,"FONT_SelectObject(%p, "NPFMT", %p)\n", 
 		     dc, hfont, font);
-      /* Load font if necessary */
 
+#if 0 /* From the code in SelectObject, this can not happen */
+      /* Load font if necessary */
     if (!font)
     {
 	HFONT hnewfont;
@@ -355,6 +384,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 			      DEFAULT_QUALITY, FF_DONTCARE, "*" );
 	font = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hnewfont );
     }
+#endif
 
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
       if (MF_CreateFontIndirect(dc, hfont, &(font->logfont)))
@@ -627,8 +657,10 @@ BOOL RemoveFontResource( LPSTR str )
 int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 {
 	int 	i;
+#if 0
 	dprintf_font(stddeb,"ParseFontParms('%s', %d, %p, %d);\n", 
 			lpFont, wParmsNo, lpRetStr, wMaxSiz);
+#endif
 	if (lpFont == NULL) return 0;
 	if (lpRetStr == NULL) return 0;
 	for (i = 0; (*lpFont != '\0' && i != wParmsNo); ) {
@@ -641,7 +673,9 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 		for (i = 0; (*lpFont != '\0' && *lpFont != '-' && i < wMaxSiz); i++)
 			*(lpRetStr + i) = *lpFont++;
 		*(lpRetStr + i) = '\0';
+#if 0
 		dprintf_font(stddeb,"ParseFontParms // '%s'\n", lpRetStr);
+#endif
 		return i;
 		}
 	else
@@ -714,6 +748,7 @@ void InitFontsList(void)
       lpNewFont->lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
       break;
      case 'm':
+     case 'c':
       lpNewFont->lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
       break;
      default:
@@ -734,7 +769,7 @@ void InitFontsList(void)
 /*************************************************************************
  *				EnumFonts			[GDI.70]
  */
-int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
+INT EnumFonts(HDC hDC, LPCTSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData)
 {
   HANDLE       hLog;
   HANDLE       hMet;
@@ -747,7 +782,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
   int          nRet = 0;
   int          i;
   
-  dprintf_font(stddeb,"EnumFonts("NPFMT", %p='%s', %08lx, %p)\n", 
+  dprintf_font(stddeb,"EnumFonts("NPFMT", %p='%s', %08lx, %08lx)\n", 
 	       hDC, lpFaceName, lpFaceName, (LONG)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
@@ -804,7 +839,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 /*************************************************************************
  *				EnumFontFamilies	[GDI.330]
  */
-int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
+INT EnumFontFamilies(HDC hDC, LPCTSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
 {
   HANDLE       	hLog;
   HANDLE       	hMet;

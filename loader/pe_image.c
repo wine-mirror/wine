@@ -1,6 +1,7 @@
 #ifndef WINELIB
 /* 
  *  Copyright	1994	Eric Youndale & Erik Bos
+ *  Copyright	1995	Martin von Löwis
  *
  *	based on Eric Youndale's pe-test and:
  *
@@ -118,9 +119,15 @@ DWORD PE_FindExportedFunction(struct w_files* wpnt, char* funcName)
 	name = (u_char **)  (((char *) load_addr) + (int) exports->AddressOfNames);
 	for(i=0; i<exports->Number_Of_Functions; i++)
 	{
-		ename =  (char *) (((char *) load_addr) + (int) *name);
-		if(strcmp(ename,funcName)==0)
-			return load_addr+*function;
+		if(HIWORD(funcName))
+		{
+			ename =  (char *) (((char *) load_addr) + (int) *name);
+			if(strcmp(ename,funcName)==0)
+				return load_addr+*function;
+		}else{
+			if(funcName == (int)*ordinal + exports->Base)
+				return load_addr+*function;
+		}
 		function++;
 		ordinal++;
 		name++;
@@ -134,6 +141,13 @@ DWORD PE_GetProcAddress(HMODULE hModule, char* function)
 	for(wpnt=wine_files;wpnt;wpnt=wpnt->next)
 		if(wpnt->hModule==hModule) break;
 	if(!wpnt)return 0;
+	if(wpnt->builtin)
+	{
+		if(HIWORD(function))
+			return RELAY32_GetEntryPoint(wpnt->builtin,function,0);
+		else
+			return RELAY32_GetEntryPoint(wpnt->builtin,0,(int)function);
+	}
 	return PE_FindExportedFunction(wpnt,function);
 }
 
@@ -179,16 +193,9 @@ void fixup_imports(struct w_files* wpnt)
       char * Module;
       struct pe_import_name * pe_name;
       unsigned int * import_list, *thunk_list;
-#if 0
-      char * c;
-#endif
 
       Module = ((char *) load_addr) + pe_imp->ModuleName;
       dprintf_win32(stddeb, "%s\n", Module);
-#if 0
-      c = strchr(Module, '.');
-      if (c) *c = 0;
-#endif
 
    if(pe_imp->Import_List != 0) { /* original microsoft style */
       dprintf_win32(stddeb, "Microsoft style imports used\n");
@@ -198,28 +205,29 @@ void fixup_imports(struct w_files* wpnt)
 	  (((unsigned int) load_addr) + pe_imp->Thunk_List);
 
 
-      while(*import_list)
+    while(*import_list)
 	{
 	  pe_name = (struct pe_import_name *) ((int) load_addr + *import_list);
-	  if((unsigned)pe_name & 0x80000000)
+	  if((unsigned)*import_list & 0x80000000)
 	  {
-	  	fprintf(stderr,"Import by ordinal not supported\n");
-		exit(0);
-	  }
+		int ordinal=*import_list & (0x80000000-1);
+		dprintf_win32(stddeb,"--- Ordinal %s,%d\n", Module, ordinal);
+		*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
+			ordinal);
+	  }else{ /* import by name */
 	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-	/* FIXME: Both calls should be unified into GetProcAddress */
-	  *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
-	  if(*thunk_list == 0)
 	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
 				pe_name->Name);
 
 #else
 	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
 #endif
+		}
 	  if(!*thunk_list)
 	  {
-	  	fprintf(stderr,"No implementation for %s.%d\n",Module, pe_name->Hint);
+	  	fprintf(stderr,"No implementation for %s.%d(%s)\n",Module, 
+			pe_name->Hint, pe_name->Name);
 		fixup_failed=1;
 	  }
 
@@ -239,8 +247,10 @@ void fixup_imports(struct w_files* wpnt)
         dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
 	/* FIXME: Both calls should be unified into GetProcAddress */
+#if 0
         *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
 	if(*thunk_list == 0)
+#endif
 	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
 				pe_name->Name);
 #else
@@ -454,8 +464,8 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 		if(wpnt->pe->pe_export && 
 			wpnt->pe->pe_export!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong export directory??\n");
-		else
-			wpnt->pe->pe_export = load_addr+dir.Virtual_address;
+		/* always trust the directory */
+		wpnt->pe->pe_export = load_addr+dir.Virtual_address;
 	}
 
 	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
@@ -463,9 +473,8 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 	{
 		if(wpnt->pe->pe_import && 
 			wpnt->pe->pe_import!=load_addr+dir.Virtual_address)
-			fprintf(stderr,"wrong export directory??\n");
-		else
-			wpnt->pe->pe_import = load_addr+dir.Virtual_address;
+			fprintf(stderr,"wrong import directory??\n");
+		wpnt->pe->pe_import = load_addr+dir.Virtual_address;
 	}
 
 	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
@@ -474,8 +483,7 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 		if(wpnt->pe->pe_resource && 
 			wpnt->pe->pe_resource!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong resource directory??\n");
-		else
-			wpnt->pe->pe_resource = load_addr+dir.Virtual_address;
+		wpnt->pe->pe_resource = load_addr+dir.Virtual_address;
 	}
 
 	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
@@ -483,9 +491,8 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 	{
 		if(wpnt->pe->pe_reloc && 
 			wpnt->pe->pe_reloc!=load_addr+dir.Virtual_address)
-			fprintf(stderr,"wrong export directory??\n");
-		else
-			wpnt->pe->pe_reloc = load_addr+dir.Virtual_address;
+			fprintf(stderr,"wrong relocation list??\n");
+		wpnt->pe->pe_reloc = load_addr+dir.Virtual_address;
 	}
 
 	if(wpnt->pe->pe_header->opt_coff.DataDirectory
@@ -549,6 +556,7 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	wpnt->hinstance=0;
 	wpnt->hModule=0;
 	wpnt->initialised=0;
+	wpnt->builtin=0;
 	lseek(fd,0,SEEK_SET);
 	wpnt->mz_header=xmalloc(sizeof(struct mz_header_s));
 	read(fd,wpnt->mz_header,sizeof(struct mz_header_s));

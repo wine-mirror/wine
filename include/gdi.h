@@ -26,6 +26,7 @@
 #define META_DC_MAGIC         0x4f4f
 #define METAFILE_MAGIC        0x4f50
 #define METAFILE_DC_MAGIC     0x4f51
+#define MAGIC_DONTCARE	      0xffff
 
 #ifndef WINELIB
 #pragma pack(1)

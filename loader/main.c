@@ -76,6 +76,9 @@ int MAIN_Init(void)
       /* Initialize tasks */
     if (!TASK_Init()) return 0;
 
+      /* Initialize communications */
+    COMM_Init();
+
 #ifndef WINELIB
       /* Initialize interrupt vectors */
     if (!INT_Init()) return 0;
@@ -85,12 +88,7 @@ int MAIN_Init(void)
 
       /* Initialize signal handling */
     init_wine_signals();
-#endif
 
-      /* Initialize communications */
-    COMM_Init();
-
-#ifndef WINELIB    
       /* Initialize the DOS memory */
     if (!INT21_Init()) return 0;
 

@@ -733,8 +733,8 @@ static struct inst db_inst_table[256] = {
 /*ab*/	{ "stos",  FALSE, LONG,  op1(DI),     0 },
 /*ac*/	{ "lods",  FALSE, BYTE,  op1(SI),     0 },
 /*ad*/	{ "lods",  FALSE, LONG,  op1(SI),     0 },
-/*ae*/	{ "scas",  FALSE, BYTE,  op1(SI),     0 },
-/*af*/	{ "scas",  FALSE, LONG,  op1(SI),     0 },
+/*ae*/	{ "scas",  FALSE, BYTE,  op1(DI),     0 },
+/*af*/	{ "scas",  FALSE, LONG,  op1(DI),     0 },
 
 /*b0*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
 /*b1*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },

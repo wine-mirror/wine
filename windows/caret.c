@@ -84,7 +84,7 @@ static void CARET_HideCaret()
     else
 	hBrush = CreatePatternBrush(Caret.bitmap);
     SelectObject(hdc, (HANDLE)hBrush);
-    SetROP2(hdc, R2_XORPEN);
+    SetROP2(hdc, R2_NOTXORPEN);
     rgn = CreateRectRgn(Caret.x, Caret.y, 
 			Caret.x + Caret.width,
 			Caret.y + Caret.height);
@@ -105,7 +105,8 @@ static void CARET_Initialize()
     {
       WineProc=(DWORD)CARET_Callback;
       Win16Proc=(DWORD)GetWndProcEntry16("CARET_Callback");
-      Win32Proc=(DWORD)RELAY32_GetEntryPoint("WINPROCS32","CARET_Callback",0);
+      Win32Proc=(DWORD)RELAY32_GetEntryPoint(
+	  	RELAY32_GetBuiltinDLL("WINPROCS32"),"CARET_Callback",0);
       ALIAS_RegisterAlias(WineProc,Win16Proc,Win32Proc);
       initialized=1;
     }
@@ -165,7 +166,7 @@ BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
  *               DestroyCaret         (USER.164)
  */
 
-void DestroyCaret()
+BOOL DestroyCaret()
 {
 /*    if (!Caret.hwnd) return;
 */
@@ -177,6 +178,7 @@ void DestroyCaret()
 	CARET_HideCaret();
 
     Caret.hwnd = 0;          /* cursor marked as not existing */
+    return TRUE;
 }
 
 

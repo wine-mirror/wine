@@ -55,6 +55,7 @@ static const char *langNames[] =
     "Fr",  /* LANG_Fr */
     "Fi",  /* LANG_Fi */
     "Da",  /* LANG_Da */
+    "Cz",  /* LANG_Cz */
     NULL
 };
 
@@ -132,7 +133,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
   "    -debug          Enter debugger before starting application\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \

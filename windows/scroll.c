@@ -268,6 +268,8 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
 	    hrgn2 = CreateRectRgn(0, 0, 0, 0);
 
 	RgnType = CombineRgn(hrgnUpdate, hrgn1, hrgn2, RGN_OR);
+	DeleteObject(hrgn1);
+	DeleteObject(hrgn2);
     }
 
     if (rcUpdate) GetRgnBox( hrgnUpdate, rcUpdate );

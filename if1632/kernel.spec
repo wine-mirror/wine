@@ -78,7 +78,7 @@ id	1
 #79 RESERVED3
 #80 RESERVED4
 81  pascal16 _lclose(word) _lclose
-82  pascal16 _lread(word ptr word) _lread
+82  pascal16 _lread(word segptr word) _lread
 83  pascal16 _lcreat(ptr word) _lcreat
 84  pascal   _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
@@ -256,7 +256,7 @@ id	1
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy
-349 pascal   _hread(word ptr long) _hread
+349 pascal   _hread(word segptr long) _hread
 350 pascal   _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
 352 stub lstrcatn
