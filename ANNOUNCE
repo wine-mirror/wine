@@ -1,4 +1,4 @@
-This is release 981108 of Wine, a free implementation of Windows on
+This is release 981211 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,11 +6,12 @@ correctly.
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-981108: (see ChangeLog for details)
-	- More common controls.
-	- Better separation of X11-dependent code.
-	- More DOS support.
-	- Winsock IPX support.
+WHAT'S NEW with Wine-981211: (see ChangeLog for details)
+	- A lot of code moved around for a better structure.
+	- New console support.
+	- Beginnings of TTY driver.
+	- Tons of new stubs.
+	- More DOS and native USER support.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -19,10 +20,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-981108.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-981108.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-981108.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-981108.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-981211.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-981211.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-981211.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-981211.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
