@@ -515,7 +515,7 @@ void PRINTERROR(void)
                        (LPSTR)&msg, 0, NULL);
 
         /* eliminate trailing newline, is this a Wine bug? */
-        *(strrchr(msg, '\n')) = '\0';
+        *(strrchr(msg, '\r')) = '\0';
         
         WINE_TRACE("error: '%s'\n", msg);
 }
