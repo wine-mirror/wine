@@ -67,7 +67,7 @@ static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
 #define CHECK_ENOUGH_MEMORY(p) \
     if (!(p)) \
     { \
-        printf("%s: file %s, line %d: Not enough memory", \
+        fprintf(stderr,"%s: file %s, line %d: Not enough memory", \
                getAppName(), __FILE__, __LINE__); \
         exit(NOT_ENOUGH_MEMORY); \
     }
@@ -131,7 +131,8 @@ void get_file_name(CHAR **command_line, CHAR *file_name)
         {
             if (!s[0])
             {
-                printf("%s: Unexpected end of file name!\n", getAppName());
+                fprintf(stderr,"%s: Unexpected end of file name!\n",
+                        getAppName());
                 exit(1);
             }
             s++;
@@ -252,10 +253,11 @@ DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
    * not contains ",".  It is more likely because the data is invalid.
    */
   if ( ( strLen > 2) && ( strchr(str, ',') == NULL) )
-    printf("%s: WARNING converting CSV hex stream with no comma, "
-           "input data seems invalid.\n", getAppName());
+    fprintf(stderr,"%s: WARNING converting CSV hex stream with no comma, "
+            "input data seems invalid.\n", getAppName());
   if (strLen > 3*bufLen)
-    printf ("%s: ERROR converting CSV hex stream.  Too long\n", getAppName());
+    fprintf(stderr,"%s: ERROR converting CSV hex stream.  Too long\n",
+            getAppName());
 
   while (strPos < strLen)
   {
@@ -373,8 +375,8 @@ void REGPROC_unescape_string(LPSTR str)
                 str[val_idx] = str[str_idx];
                 break;
             default:
-                printf("Warning! Unrecognized escape sequence: \\%c'\n",
-                       str[str_idx]);
+                fprintf(stderr,"Warning! Unrecognized escape sequence: \\%c'\n",
+                        str[str_idx]);
                 str[val_idx] = str[str_idx];
                 break;
             }
@@ -616,7 +618,8 @@ void doSetValue(LPSTR stdInput)
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
-      printf("%s: setValue failed to open key %s\n", getAppName(), stdInput);
+      fprintf(stderr,"%s: setValue failed to open key %s\n",
+              getAppName(), stdInput);
   }
   else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
@@ -655,7 +658,8 @@ void doQueryValue(LPSTR stdInput) {
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
-      printf("%s: queryValue failed to open key %s\n", getAppName(), stdInput);
+      fprintf(stderr,"%s: queryValue failed to open key %s\n",
+              getAppName(), stdInput);
   }
   else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
@@ -676,7 +680,7 @@ void doQueryValue(LPSTR stdInput) {
  * context.
  */
 void doDeleteValue(LPSTR line) {
-  printf ("%s: deleteValue not yet implemented\n", getAppName());
+  fprintf(stderr,"%s: deleteValue not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
@@ -685,7 +689,7 @@ void doDeleteValue(LPSTR line) {
  * context.
  */
 void doDeleteKey(LPSTR line)   {
-  printf ("%s: deleteKey not yet implemented\n", getAppName());
+  fprintf(stderr,"%s: deleteKey not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
@@ -694,7 +698,7 @@ void doDeleteKey(LPSTR line)   {
  * context.
  */
 void doCreateKey(LPSTR line)   {
-  printf ("%s: createKey not yet implemented\n", getAppName());
+  fprintf(stderr,"%s: createKey not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
@@ -743,14 +747,14 @@ void processSetValue(LPSTR line)
       if (line[line_idx] != '=')
       {
           line[line_idx] = '\"';
-          printf("Warning! unrecognized line:\n%s\n", line);
+          fprintf(stderr,"Warning! unrecognized line:\n%s\n", line);
           return;
       }
 
   }
   else
   {
-      printf("Warning! unrecognized line:\n%s\n", line);
+      fprintf(stderr,"Warning! unrecognized line:\n%s\n", line);
       return;
   }
   line_idx++;                   /* skip the '=' character */
@@ -759,11 +763,11 @@ void processSetValue(LPSTR line)
   REGPROC_unescape_string(val_name);
   hRes = setValue(val_name, val_data);
   if ( hRes != ERROR_SUCCESS )
-    printf("%s: ERROR Key %s not created. Value: %s, Data: %s\n",
-           getAppName(),
-           currentKeyName,
-           val_name,
-           val_data);
+    fprintf(stderr,"%s: ERROR Key %s not created. Value: %s, Data: %s\n",
+            getAppName(),
+            currentKeyName,
+            val_name,
+            val_data);
 }
 
 /******************************************************************************
@@ -772,7 +776,7 @@ void processSetValue(LPSTR line)
  */
 void processQueryValue(LPSTR cmdline)
 {
-  printf("ERROR!!! - temporary disabled");
+  fprintf(stderr,"ERROR!!! - temporary disabled");
   exit(1);
 #if 0
   LPSTR   argv[QUERY_VALUE_MAX_ARGS];/* args storage    */
@@ -882,7 +886,7 @@ void processQueryValue(LPSTR cmdline)
 
 
   if ( hRes == ERROR_SUCCESS )
-    printf(
+    fprintf(stderr,
       "%s: Value \"%s\" = \"%s\" in key [%s]\n",
       getAppName(),
       keyValue,
@@ -890,7 +894,7 @@ void processQueryValue(LPSTR cmdline)
       currentKeyName);
 
   else
-    printf("%s: ERROR Value \"%s\" not found for key \"%s\".\n",
+    fprintf(stderr,"%s: ERROR Value \"%s\" not found for key \"%s\".\n",
       getAppName(),
       keyValue,
       currentKeyName);
@@ -1009,7 +1013,8 @@ void processRegLines(FILE *in, CommandAPI command)
                  */
                 if ((c = fgetc (in)) == EOF || c != ' ' ||
                     (c = fgetc (in)) == EOF || c != ' ')
-                    printf ("%s: ERROR - invalid continuation.\n", getAppName());
+                    fprintf(stderr,"%s: ERROR - invalid continuation.\n",
+                            getAppName());
                 continue;
             }
 
@@ -1043,18 +1048,18 @@ void doRegisterDLL(LPSTR stdInput) {
     if (lpfnDLLRegProc)
       retVal = (*lpfnDLLRegProc)();
     else
-      printf("%s: Couldn't find DllRegisterServer proc in '%s'.\n",
-             getAppName(), stdInput);
+      fprintf(stderr,"%s: Couldn't find DllRegisterServer proc in '%s'.\n",
+              getAppName(), stdInput);
 
     if (retVal != S_OK)
-      printf("%s: DLLRegisterServer error 0x%x in '%s'.\n",
-             getAppName(), retVal, stdInput);
+      fprintf(stderr,"%s: DLLRegisterServer error 0x%x in '%s'.\n",
+              getAppName(), retVal, stdInput);
 
     FreeLibrary(theLib);
   }
   else
   {
-    printf("%s: Could not load DLL '%s'.\n", getAppName(), stdInput);
+    fprintf(stderr,"%s: Could not load DLL '%s'.\n", getAppName(), stdInput);
   }
 }
 
@@ -1078,18 +1083,18 @@ void doUnregisterDLL(LPSTR stdInput) {
     if (lpfnDLLRegProc)
       retVal = (*lpfnDLLRegProc)();
     else
-      printf("%s: Couldn't find DllUnregisterServer proc in '%s'.\n",
-             getAppName(), stdInput);
+      fprintf(stderr,"%s: Couldn't find DllUnregisterServer proc in '%s'.\n",
+              getAppName(), stdInput);
 
     if (retVal != S_OK)
-      printf("%s: DLLUnregisterServer error 0x%x in '%s'.\n",
-             getAppName(), retVal, stdInput);
+      fprintf(stderr,"%s: DLLUnregisterServer error 0x%x in '%s'.\n",
+              getAppName(), retVal, stdInput);
 
     FreeLibrary(theLib);
   }
   else
   {
-    printf("%s: Could not load DLL '%s'.\n", getAppName(), stdInput);
+    fprintf(stderr,"%s: Could not load DLL '%s'.\n", getAppName(), stdInput);
   }
 }
 
@@ -1108,8 +1113,8 @@ void REGPROC_print_error() {
     status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL, error_code, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
     if (!status) {
-        printf("%s: Cannot display message for error %ld, status %ld\n",
-               getAppName(), error_code, GetLastError());
+        fprintf(stderr,"%s: Cannot display message for error %ld, status %ld\n",
+                getAppName(), error_code, GetLastError());
         exit(1);
     }
     puts(lpMsgBuf);
@@ -1268,11 +1273,11 @@ void export_hkey(FILE *file, HKEY key,
                 break;
 
             default:
-                printf("%s: warning - unsupported registry format '%ld', "
+                fprintf(stderr,"%s: warning - unsupported registry format '%ld', "
                        "treat as binary\n",
                        getAppName(), value_type);
-                printf("key name: \"%s\"\n", *reg_key_name_buf);
-                printf("value name:\"%s\"\n\n", *val_name_buf);
+                fprintf(stderr,"key name: \"%s\"\n", *reg_key_name_buf);
+                fprintf(stderr,"value name:\"%s\"\n\n", *val_name_buf);
                 /* falls through */
             case REG_MULTI_SZ:
                 /* falls through */
@@ -1363,7 +1368,7 @@ FILE *REGPROC_open_export_file(CHAR *file_name)
     if (!file)
     {
         perror("");
-        printf("%s: Can't open file \"%s\"\n", getAppName(), file_name);
+        fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), file_name);
         exit(1);
     }
     fputs("REGEDIT4\n", file);
@@ -1410,8 +1415,8 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         reg_key_class = getRegClass(reg_key_name);
         if (reg_key_class == (HKEY)ERROR_INVALID_PARAMETER)
         {
-            printf("%s: Incorrect registry class specification in '%s'\n",
-                   getAppName(), reg_key_name);
+            fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
+                    getAppName(), reg_key_name);
             exit(1);
         }
         branch_name = getRegKeyName(reg_key_name);
@@ -1434,8 +1439,8 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
                         &val_buf, &val_size);
             RegCloseKey(key);
         } else {
-            printf("%s: Can't export. Registry key '%s' does not exist!\n",
-                   getAppName(), reg_key_name);
+            fprintf(stderr,"%s: Can't export. Registry key '%s' does not exist!\n",
+                    getAppName(), reg_key_name);
             REGPROC_print_error();
         }
         HeapFree(GetProcessHeap(), 0, branch_name);
@@ -1554,8 +1559,8 @@ void delete_registry_key(CHAR *reg_key_name)
     reg_key_class = getRegClass(reg_key_name);
     if (reg_key_class == (HKEY)ERROR_INVALID_PARAMETER)
     {
-        printf("%s: Incorrect registry class specification in '%s'\n",
-               getAppName(), reg_key_name);
+        fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
+                getAppName(), reg_key_name);
         exit(1);
     }
     branch_name = getRegKeyName(reg_key_name);
@@ -1563,8 +1568,8 @@ void delete_registry_key(CHAR *reg_key_name)
     branch_name_len = strlen(branch_name);
     if (!branch_name[0])
     {
-        printf("%s: Can't delete registry class '%s'\n",
-               getAppName(), reg_key_name);
+        fprintf(stderr,"%s: Can't delete registry class '%s'\n",
+                getAppName(), reg_key_name);
         exit(1);
     }
     if (RegOpenKey(reg_key_class, branch_name, &branch_key) == ERROR_SUCCESS)

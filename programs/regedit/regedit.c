@@ -72,10 +72,10 @@ void error_unknown_switch(char chu, char *s)
 {
     if (isalpha(chu))
     {
-        printf("%s: Undefined switch /%c!\n", getAppName(), chu);
+        fprintf(stderr,"%s: Undefined switch /%c!\n", getAppName(), chu);
     } else {
-        printf("%s: Alphabetic character is expected after '%c' "
-               "in switch specification\n", getAppName(), *(s - 1));
+        fprintf(stderr,"%s: Alphabetic character is expected after '%c' "
+                "in swit ch specification\n", getAppName(), *(s - 1));
     }
     exit(1);
 }
@@ -111,7 +111,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
                     action = ACTION_EXPORT;
                     break;
                 case '?':
-                    printf(usage);
+                    fprintf(stderr,usage);
                     exit(0);
                     break;
                 default:
@@ -174,8 +174,8 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         get_file_name(&s, filename);
         if (!filename[0])
         {
-            printf("%s: No file name is specified\n", getAppName());
-            printf(usage);
+            fprintf(stderr,"%s: No file name is specified\n", getAppName());
+            fprintf(stderr,usage);
             exit(1);
         }
 
@@ -187,7 +187,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                 processRegLines(reg_file, doSetValue);
             } else {
                 perror("");
-                printf("%s: Can't open file \"%s\"\n", getAppName(), filename);
+                fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
                 exit(1);
             }
             get_file_name(&s, filename);
@@ -201,9 +201,9 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         get_file_name(&s, reg_key_name);
         if (!reg_key_name[0])
         {
-            printf("%s: No registry key is specified for removal\n",
+            fprintf(stderr,"%s: No registry key is specified for removal\n",
                    getAppName());
-            printf(usage);
+            fprintf(stderr,usage);
             exit(1);
         }
         delete_registry_key(reg_key_name);
@@ -217,8 +217,8 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         get_file_name(&s, filename);
         if (!filename[0])
         {
-            printf("%s: No file name is specified\n", getAppName());
-            printf(usage);
+            fprintf(stderr,"%s: No file name is specified\n", getAppName());
+            fprintf(stderr,usage);
             exit(1);
         }
 
@@ -234,7 +234,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         break;
     }
     default:
-        printf("%s: Unhandled action!\n", getAppName());
+        fprintf(stderr,"%s: Unhandled action!\n", getAppName());
         exit(1);
         break;
     }
