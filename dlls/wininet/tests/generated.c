@@ -372,6 +372,7 @@ static void test_pack_GROUPID(void)
 {
     /* GROUPID */
     TEST_TYPE(GROUPID, 8, 8);
+    TEST_TYPE_SIGNED(GROUPID);
 }
 
 static void test_pack_HINTERNET(void)
@@ -874,11 +875,13 @@ static void test_pack_LPINTERNET_VERSION_INFO(void)
 static void test_pack_LPURL_COMPONENTSA(void)
 {
     /* LPURL_COMPONENTSA */
+    TEST_TYPE(LPURL_COMPONENTSA, 4, 4);
 }
 
 static void test_pack_LPURL_COMPONENTSW(void)
 {
     /* LPURL_COMPONENTSW */
+    TEST_TYPE(LPURL_COMPONENTSW, 4, 4);
 }
 
 static void test_pack_PFN_AUTH_NOTIFY(void)

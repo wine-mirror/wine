@@ -604,6 +604,18 @@ static void test_pack_LPDRAGINFOW(void)
     TEST_TYPE_POINTER(LPDRAGINFOW, 24, 1);
 }
 
+static void test_pack_LPSHELLEXECUTEINFOA(void)
+{
+    /* LPSHELLEXECUTEINFOA */
+    TEST_TYPE(LPSHELLEXECUTEINFOA, 4, 4);
+}
+
+static void test_pack_LPSHELLEXECUTEINFOW(void)
+{
+    /* LPSHELLEXECUTEINFOW */
+    TEST_TYPE(LPSHELLEXECUTEINFOW, 4, 4);
+}
+
 static void test_pack_LPSHFILEOPSTRUCTA(void)
 {
     /* LPSHFILEOPSTRUCTA */
@@ -688,6 +700,42 @@ static void test_pack_PRINTEROP_FLAGS(void)
     TEST_TYPE_UNSIGNED(PRINTEROP_FLAGS);
 }
 
+static void test_pack_SHELLEXECUTEINFOA(void)
+{
+    /* SHELLEXECUTEINFOA (pack 1) */
+    TEST_FIELD(SHELLEXECUTEINFOA, DWORD, cbSize, 0, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, ULONG, fMask, 4, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, HWND, hwnd, 8, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpVerb, 12, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpFile, 16, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpParameters, 20, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpDirectory, 24, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, INT, nShow, 28, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, HINSTANCE, hInstApp, 32, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPVOID, lpIDList, 36, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, LPCSTR, lpClass, 40, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, HKEY, hkeyClass, 44, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOA, DWORD, dwHotKey, 48, 4, 1);
+}
+
+static void test_pack_SHELLEXECUTEINFOW(void)
+{
+    /* SHELLEXECUTEINFOW (pack 1) */
+    TEST_FIELD(SHELLEXECUTEINFOW, DWORD, cbSize, 0, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, ULONG, fMask, 4, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, HWND, hwnd, 8, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpVerb, 12, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpFile, 16, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpParameters, 20, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpDirectory, 24, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, INT, nShow, 28, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, HINSTANCE, hInstApp, 32, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPVOID, lpIDList, 36, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, LPCWSTR, lpClass, 40, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, HKEY, hkeyClass, 44, 4, 1);
+    TEST_FIELD(SHELLEXECUTEINFOW, DWORD, dwHotKey, 48, 4, 1);
+}
+
 static void test_pack_SHFILEINFOA(void)
 {
     /* SHFILEINFOA (pack 1) */
@@ -758,6 +806,42 @@ static void test_pack_SHNAMEMAPPINGW(void)
     TEST_FIELD(SHNAMEMAPPINGW, int, cchNewPath, 12, 4, 1);
 }
 
+static void test_pack_ITEMIDLIST(void)
+{
+    /* ITEMIDLIST (pack 1) */
+    TEST_TYPE(ITEMIDLIST, 3, 1);
+    TEST_FIELD(ITEMIDLIST, SHITEMID, mkid, 0, 3, 1);
+}
+
+static void test_pack_LPCITEMIDLIST(void)
+{
+    /* LPCITEMIDLIST */
+    TEST_TYPE(LPCITEMIDLIST, 4, 4);
+    TEST_TYPE_POINTER(LPCITEMIDLIST, 3, 1);
+}
+
+static void test_pack_LPITEMIDLIST(void)
+{
+    /* LPITEMIDLIST */
+    TEST_TYPE(LPITEMIDLIST, 4, 4);
+    TEST_TYPE_POINTER(LPITEMIDLIST, 3, 1);
+}
+
+static void test_pack_LPSHITEMID(void)
+{
+    /* LPSHITEMID */
+    TEST_TYPE(LPSHITEMID, 4, 4);
+    TEST_TYPE_POINTER(LPSHITEMID, 3, 1);
+}
+
+static void test_pack_SHITEMID(void)
+{
+    /* SHITEMID (pack 1) */
+    TEST_TYPE(SHITEMID, 3, 1);
+    TEST_FIELD(SHITEMID, WORD, cb, 0, 2, 1);
+    TEST_FIELD(SHITEMID, BYTE[1], abID, 2, 1, 1);
+}
+
 static void test_pack_AUTO_SCROLL_DATA(void)
 {
     /* AUTO_SCROLL_DATA (pack 1) */
@@ -773,6 +857,34 @@ static void test_pack_BFFCALLBACK(void)
 {
     /* BFFCALLBACK */
     TEST_TYPE(BFFCALLBACK, 4, 4);
+}
+
+static void test_pack_BROWSEINFOA(void)
+{
+    /* BROWSEINFOA (pack 8) */
+    TEST_TYPE(BROWSEINFOA, 32, 4);
+    TEST_FIELD(BROWSEINFOA, HWND, hwndOwner, 0, 4, 4);
+    TEST_FIELD(BROWSEINFOA, LPCITEMIDLIST, pidlRoot, 4, 4, 4);
+    TEST_FIELD(BROWSEINFOA, LPSTR, pszDisplayName, 8, 4, 4);
+    TEST_FIELD(BROWSEINFOA, LPCSTR, lpszTitle, 12, 4, 4);
+    TEST_FIELD(BROWSEINFOA, UINT, ulFlags, 16, 4, 4);
+    TEST_FIELD(BROWSEINFOA, BFFCALLBACK, lpfn, 20, 4, 4);
+    TEST_FIELD(BROWSEINFOA, LPARAM, lParam, 24, 4, 4);
+    TEST_FIELD(BROWSEINFOA, INT, iImage, 28, 4, 4);
+}
+
+static void test_pack_BROWSEINFOW(void)
+{
+    /* BROWSEINFOW (pack 8) */
+    TEST_TYPE(BROWSEINFOW, 32, 4);
+    TEST_FIELD(BROWSEINFOW, HWND, hwndOwner, 0, 4, 4);
+    TEST_FIELD(BROWSEINFOW, LPCITEMIDLIST, pidlRoot, 4, 4, 4);
+    TEST_FIELD(BROWSEINFOW, LPWSTR, pszDisplayName, 8, 4, 4);
+    TEST_FIELD(BROWSEINFOW, LPCWSTR, lpszTitle, 12, 4, 4);
+    TEST_FIELD(BROWSEINFOW, UINT, ulFlags, 16, 4, 4);
+    TEST_FIELD(BROWSEINFOW, BFFCALLBACK, lpfn, 20, 4, 4);
+    TEST_FIELD(BROWSEINFOW, LPARAM, lParam, 24, 4, 4);
+    TEST_FIELD(BROWSEINFOW, INT, iImage, 28, 4, 4);
 }
 
 static void test_pack_CABINETSTATE(void)
@@ -872,6 +984,20 @@ static void test_pack_IShellIcon(void)
     /* IShellIcon */
 }
 
+static void test_pack_LPBROWSEINFOA(void)
+{
+    /* LPBROWSEINFOA */
+    TEST_TYPE(LPBROWSEINFOA, 4, 4);
+    TEST_TYPE_POINTER(LPBROWSEINFOA, 32, 4);
+}
+
+static void test_pack_LPBROWSEINFOW(void)
+{
+    /* LPBROWSEINFOW */
+    TEST_TYPE(LPBROWSEINFOW, 4, 4);
+    TEST_TYPE_POINTER(LPBROWSEINFOW, 32, 4);
+}
+
 static void test_pack_LPCABINETSTATE(void)
 {
     /* LPCABINETSTATE */
@@ -956,6 +1082,20 @@ static void test_pack_LPSHELLSTATE(void)
     TEST_TYPE_POINTER(LPSHELLSTATE, 32, 1);
 }
 
+static void test_pack_PBROWSEINFOA(void)
+{
+    /* PBROWSEINFOA */
+    TEST_TYPE(PBROWSEINFOA, 4, 4);
+    TEST_TYPE_POINTER(PBROWSEINFOA, 32, 4);
+}
+
+static void test_pack_PBROWSEINFOW(void)
+{
+    /* PBROWSEINFOW */
+    TEST_TYPE(PBROWSEINFOW, 4, 4);
+    TEST_TYPE_POINTER(PBROWSEINFOW, 32, 4);
+}
+
 static void test_pack_SHChangeDWORDAsIDList(void)
 {
     /* SHChangeDWORDAsIDList (pack 1) */
@@ -969,6 +1109,9 @@ static void test_pack_SHChangeDWORDAsIDList(void)
 static void test_pack_SHChangeNotifyEntry(void)
 {
     /* SHChangeNotifyEntry (pack 1) */
+    TEST_TYPE(SHChangeNotifyEntry, 8, 1);
+    TEST_FIELD(SHChangeNotifyEntry, LPCITEMIDLIST, pidl, 0, 4, 1);
+    TEST_FIELD(SHChangeNotifyEntry, BOOL, fRecursive, 4, 4, 1);
 }
 
 static void test_pack_SHChangeProductKeyAsIDList(void)
@@ -982,7 +1125,7 @@ static void test_pack_SHChangeProductKeyAsIDList(void)
 
 static void test_pack_SHDESCRIPTIONID(void)
 {
-    /* SHDESCRIPTIONID (pack 1) */
+    /* SHDESCRIPTIONID (pack 8) */
     TEST_TYPE(SHDESCRIPTIONID, 20, 4);
     TEST_FIELD(SHDESCRIPTIONID, DWORD, dwDescriptionId, 0, 4, 4);
     TEST_FIELD(SHDESCRIPTIONID, CLSID, clsid, 4, 16, 4);
@@ -1018,6 +1161,8 @@ static void test_pack(void)
     test_pack_AUTO_SCROLL_DATA();
     test_pack_BFFCALLBACK();
     test_pack_BLOB();
+    test_pack_BROWSEINFOA();
+    test_pack_BROWSEINFOW();
     test_pack_BSTR();
     test_pack_BSTRBLOB();
     test_pack_BYTE_BLOB();
@@ -1050,10 +1195,14 @@ static void test_pack(void)
     test_pack_IID();
     test_pack_IShellChangeNotify();
     test_pack_IShellIcon();
+    test_pack_ITEMIDLIST();
     test_pack_LPBLOB();
+    test_pack_LPBROWSEINFOA();
+    test_pack_LPBROWSEINFOW();
     test_pack_LPBSTR();
     test_pack_LPBSTRBLOB();
     test_pack_LPCABINETSTATE();
+    test_pack_LPCITEMIDLIST();
     test_pack_LPCOLESTR();
     test_pack_LPCY();
     test_pack_LPDECIMAL();
@@ -1066,20 +1215,26 @@ static void test_pack(void)
     test_pack_LPFILEGROUPDESCRIPTORW();
     test_pack_LPGUID();
     test_pack_LPIDA();
+    test_pack_LPITEMIDLIST();
     test_pack_LPOLESTR();
     test_pack_LPSHChangeDWORDAsIDList();
     test_pack_LPSHChangeProductKeyAsIDList();
     test_pack_LPSHDESCRIPTIONID();
+    test_pack_LPSHELLEXECUTEINFOA();
+    test_pack_LPSHELLEXECUTEINFOW();
     test_pack_LPSHELLFLAGSTATE();
     test_pack_LPSHELLSTATE();
     test_pack_LPSHFILEOPSTRUCTA();
     test_pack_LPSHFILEOPSTRUCTW();
+    test_pack_LPSHITEMID();
     test_pack_LPSHNAMEMAPPINGA();
     test_pack_LPSHNAMEMAPPINGW();
     test_pack_NOTIFYICONDATAA();
     test_pack_NOTIFYICONDATAW();
     test_pack_OLECHAR();
     test_pack_PAPPBARDATA();
+    test_pack_PBROWSEINFOA();
+    test_pack_PBROWSEINFOW();
     test_pack_PNOTIFYICONDATAA();
     test_pack_PNOTIFYICONDATAW();
     test_pack_PRINTEROP_FLAGS();
@@ -1094,6 +1249,8 @@ static void test_pack(void)
     test_pack_SHChangeNotifyEntry();
     test_pack_SHChangeProductKeyAsIDList();
     test_pack_SHDESCRIPTIONID();
+    test_pack_SHELLEXECUTEINFOA();
+    test_pack_SHELLEXECUTEINFOW();
     test_pack_SHELLFLAGSTATE();
     test_pack_SHELLSTATE();
     test_pack_SHELLVIEWID();
@@ -1101,6 +1258,7 @@ static void test_pack(void)
     test_pack_SHFILEINFOW();
     test_pack_SHFILEOPSTRUCTA();
     test_pack_SHFILEOPSTRUCTW();
+    test_pack_SHITEMID();
     test_pack_SHNAMEMAPPINGA();
     test_pack_SHNAMEMAPPINGW();
     test_pack_UP_BYTE_BLOB();

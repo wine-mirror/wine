@@ -318,6 +318,28 @@ static void test_pack_COLORADJUSTMENT(void)
     TEST_FIELD(COLORADJUSTMENT, SHORT, caRedGreenTint, 22, 2, 2);
 }
 
+static void test_pack_DEVMODEA(void)
+{
+    /* DEVMODEA (pack 4) */
+    TEST_FIELD(DEVMODEA, BYTE[CCHDEVICENAME], dmDeviceName, 0, 32, 1);
+    TEST_FIELD(DEVMODEA, WORD, dmSpecVersion, 32, 2, 2);
+    TEST_FIELD(DEVMODEA, WORD, dmDriverVersion, 34, 2, 2);
+    TEST_FIELD(DEVMODEA, WORD, dmSize, 36, 2, 2);
+    TEST_FIELD(DEVMODEA, WORD, dmDriverExtra, 38, 2, 2);
+    TEST_FIELD(DEVMODEA, DWORD, dmFields, 40, 4, 4);
+}
+
+static void test_pack_DEVMODEW(void)
+{
+    /* DEVMODEW (pack 4) */
+    TEST_FIELD(DEVMODEW, WCHAR[CCHDEVICENAME], dmDeviceName, 0, 64, 2);
+    TEST_FIELD(DEVMODEW, WORD, dmSpecVersion, 64, 2, 2);
+    TEST_FIELD(DEVMODEW, WORD, dmDriverVersion, 66, 2, 2);
+    TEST_FIELD(DEVMODEW, WORD, dmSize, 68, 2, 2);
+    TEST_FIELD(DEVMODEW, WORD, dmDriverExtra, 70, 2, 2);
+    TEST_FIELD(DEVMODEW, DWORD, dmFields, 72, 4, 4);
+}
+
 static void test_pack_DIBSECTION(void)
 {
     /* DIBSECTION (pack 4) */
@@ -1903,6 +1925,18 @@ static void test_pack_LPCOLORADJUSTMENT(void)
     /* LPCOLORADJUSTMENT */
     TEST_TYPE(LPCOLORADJUSTMENT, 4, 4);
     TEST_TYPE_POINTER(LPCOLORADJUSTMENT, 24, 2);
+}
+
+static void test_pack_LPDEVMODEA(void)
+{
+    /* LPDEVMODEA */
+    TEST_TYPE(LPDEVMODEA, 4, 4);
+}
+
+static void test_pack_LPDEVMODEW(void)
+{
+    /* LPDEVMODEW */
+    TEST_TYPE(LPDEVMODEW, 4, 4);
 }
 
 static void test_pack_LPDIBSECTION(void)
@@ -3829,6 +3863,8 @@ static void test_pack(void)
     test_pack_CIEXYZTRIPLE();
     test_pack_COLOR16();
     test_pack_COLORADJUSTMENT();
+    test_pack_DEVMODEA();
+    test_pack_DEVMODEW();
     test_pack_DIBSECTION();
     test_pack_DISPLAY_DEVICEA();
     test_pack_DISPLAY_DEVICEW();
@@ -3989,6 +4025,8 @@ static void test_pack(void)
     test_pack_LPCIEXYZ();
     test_pack_LPCIEXYZTRIPLE();
     test_pack_LPCOLORADJUSTMENT();
+    test_pack_LPDEVMODEA();
+    test_pack_LPDEVMODEW();
     test_pack_LPDIBSECTION();
     test_pack_LPDISPLAY_DEVICEA();
     test_pack_LPDISPLAY_DEVICEW();

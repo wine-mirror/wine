@@ -561,6 +561,12 @@ static void test_pack_ICONMETRICSW(void)
     TEST_FIELD(ICONMETRICSW, LOGFONTW, lfFont, 16, 92, 4);
 }
 
+static void test_pack_INPUT(void)
+{
+    /* INPUT (pack 4) */
+    TEST_FIELD(INPUT, DWORD, type, 0, 4, 4);
+}
+
 static void test_pack_KBDLLHOOKSTRUCT(void)
 {
     /* KBDLLHOOKSTRUCT (pack 4) */
@@ -861,6 +867,12 @@ static void test_pack_LPICONMETRICSW(void)
     /* LPICONMETRICSW */
     TEST_TYPE(LPICONMETRICSW, 4, 4);
     TEST_TYPE_POINTER(LPICONMETRICSW, 108, 4);
+}
+
+static void test_pack_LPINPUT(void)
+{
+    /* LPINPUT */
+    TEST_TYPE(LPINPUT, 4, 4);
 }
 
 static void test_pack_LPKBDLLHOOKSTRUCT(void)
@@ -1713,6 +1725,12 @@ static void test_pack_PICONMETRICSW(void)
     TEST_TYPE_POINTER(PICONMETRICSW, 108, 4);
 }
 
+static void test_pack_PINPUT(void)
+{
+    /* PINPUT */
+    TEST_TYPE(PINPUT, 4, 4);
+}
+
 static void test_pack_PKBDLLHOOKSTRUCT(void)
 {
     /* PKBDLLHOOKSTRUCT */
@@ -2266,6 +2284,7 @@ static void test_pack(void)
     test_pack_ICONINFO();
     test_pack_ICONMETRICSA();
     test_pack_ICONMETRICSW();
+    test_pack_INPUT();
     test_pack_KBDLLHOOKSTRUCT();
     test_pack_KEYBDINPUT();
     test_pack_LPACCEL();
@@ -2308,6 +2327,7 @@ static void test_pack(void)
     test_pack_LPHIGHCONTRASTW();
     test_pack_LPICONMETRICSA();
     test_pack_LPICONMETRICSW();
+    test_pack_LPINPUT();
     test_pack_LPKBDLLHOOKSTRUCT();
     test_pack_LPKEYBDINPUT();
     test_pack_LPMDICREATESTRUCTA();
@@ -2408,6 +2428,7 @@ static void test_pack(void)
     test_pack_PICONINFO();
     test_pack_PICONMETRICSA();
     test_pack_PICONMETRICSW();
+    test_pack_PINPUT();
     test_pack_PKBDLLHOOKSTRUCT();
     test_pack_PKEYBDINPUT();
     test_pack_PMDINEXTMENU();

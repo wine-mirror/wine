@@ -340,6 +340,20 @@ static void test_pack_BY_HANDLE_FILE_INFORMATION(void)
     TEST_FIELD(BY_HANDLE_FILE_INFORMATION, DWORD, nFileIndexLow, 48, 4, 4);
 }
 
+static void test_pack_COMMCONFIG(void)
+{
+    /* COMMCONFIG (pack 4) */
+    TEST_TYPE(COMMCONFIG, 52, 4);
+    TEST_FIELD(COMMCONFIG, DWORD, dwSize, 0, 4, 4);
+    TEST_FIELD(COMMCONFIG, WORD, wVersion, 4, 2, 2);
+    TEST_FIELD(COMMCONFIG, WORD, wReserved, 6, 2, 2);
+    TEST_FIELD(COMMCONFIG, DCB, dcb, 8, 28, 4);
+    TEST_FIELD(COMMCONFIG, DWORD, dwProviderSubType, 36, 4, 4);
+    TEST_FIELD(COMMCONFIG, DWORD, dwProviderOffset, 40, 4, 4);
+    TEST_FIELD(COMMCONFIG, DWORD, dwProviderSize, 44, 4, 4);
+    TEST_FIELD(COMMCONFIG, DWORD[1], wcProviderData, 48, 4, 4);
+}
+
 static void test_pack_COMMPROP(void)
 {
     /* COMMPROP (pack 4) */
@@ -373,6 +387,14 @@ static void test_pack_COMMTIMEOUTS(void)
     TEST_FIELD(COMMTIMEOUTS, DWORD, ReadTotalTimeoutConstant, 8, 4, 4);
     TEST_FIELD(COMMTIMEOUTS, DWORD, WriteTotalTimeoutMultiplier, 12, 4, 4);
     TEST_FIELD(COMMTIMEOUTS, DWORD, WriteTotalTimeoutConstant, 16, 4, 4);
+}
+
+static void test_pack_COMSTAT(void)
+{
+    /* COMSTAT (pack 4) */
+    TEST_TYPE(COMSTAT, 12, 4);
+    TEST_FIELD(COMSTAT, DWORD, cbInQue, 4, 4, 4);
+    TEST_FIELD(COMSTAT, DWORD, cbOutQue, 8, 4, 4);
 }
 
 static void test_pack_CREATE_PROCESS_DEBUG_INFO(void)
@@ -410,6 +432,34 @@ static void test_pack_CRITICAL_SECTION_DEBUG(void)
 {
     /* CRITICAL_SECTION_DEBUG */
     TEST_TYPE(CRITICAL_SECTION_DEBUG, 32, 4);
+}
+
+static void test_pack_DCB(void)
+{
+    /* DCB (pack 4) */
+    TEST_TYPE(DCB, 28, 4);
+    TEST_FIELD(DCB, DWORD, DCBlength, 0, 4, 4);
+    TEST_FIELD(DCB, DWORD, BaudRate, 4, 4, 4);
+    TEST_FIELD(DCB, WORD, wReserved, 12, 2, 2);
+    TEST_FIELD(DCB, WORD, XonLim, 14, 2, 2);
+    TEST_FIELD(DCB, WORD, XoffLim, 16, 2, 2);
+    TEST_FIELD(DCB, BYTE, ByteSize, 18, 1, 1);
+    TEST_FIELD(DCB, BYTE, Parity, 19, 1, 1);
+    TEST_FIELD(DCB, BYTE, StopBits, 20, 1, 1);
+    TEST_FIELD(DCB, char, XonChar, 21, 1, 1);
+    TEST_FIELD(DCB, char, XoffChar, 22, 1, 1);
+    TEST_FIELD(DCB, char, ErrorChar, 23, 1, 1);
+    TEST_FIELD(DCB, char, EofChar, 24, 1, 1);
+    TEST_FIELD(DCB, char, EvtChar, 25, 1, 1);
+    TEST_FIELD(DCB, WORD, wReserved1, 26, 2, 2);
+}
+
+static void test_pack_DEBUG_EVENT(void)
+{
+    /* DEBUG_EVENT (pack 4) */
+    TEST_FIELD(DEBUG_EVENT, DWORD, dwDebugEventCode, 0, 4, 4);
+    TEST_FIELD(DEBUG_EVENT, DWORD, dwProcessId, 4, 4, 4);
+    TEST_FIELD(DEBUG_EVENT, DWORD, dwThreadId, 8, 4, 4);
 }
 
 static void test_pack_ENUMRESLANGPROCA(void)
@@ -507,6 +557,13 @@ static void test_pack_LPBY_HANDLE_FILE_INFORMATION(void)
     TEST_TYPE_POINTER(LPBY_HANDLE_FILE_INFORMATION, 52, 4);
 }
 
+static void test_pack_LPCOMMCONFIG(void)
+{
+    /* LPCOMMCONFIG */
+    TEST_TYPE(LPCOMMCONFIG, 4, 4);
+    TEST_TYPE_POINTER(LPCOMMCONFIG, 52, 4);
+}
+
 static void test_pack_LPCOMMPROP(void)
 {
     /* LPCOMMPROP */
@@ -521,6 +578,13 @@ static void test_pack_LPCOMMTIMEOUTS(void)
     TEST_TYPE_POINTER(LPCOMMTIMEOUTS, 20, 4);
 }
 
+static void test_pack_LPCOMSTAT(void)
+{
+    /* LPCOMSTAT */
+    TEST_TYPE(LPCOMSTAT, 4, 4);
+    TEST_TYPE_POINTER(LPCOMSTAT, 12, 4);
+}
+
 static void test_pack_LPCRITICAL_SECTION(void)
 {
     /* LPCRITICAL_SECTION */
@@ -531,6 +595,19 @@ static void test_pack_LPCRITICAL_SECTION_DEBUG(void)
 {
     /* LPCRITICAL_SECTION_DEBUG */
     TEST_TYPE(LPCRITICAL_SECTION_DEBUG, 4, 4);
+}
+
+static void test_pack_LPDCB(void)
+{
+    /* LPDCB */
+    TEST_TYPE(LPDCB, 4, 4);
+    TEST_TYPE_POINTER(LPDCB, 28, 4);
+}
+
+static void test_pack_LPDEBUG_EVENT(void)
+{
+    /* LPDEBUG_EVENT */
+    TEST_TYPE(LPDEBUG_EVENT, 4, 4);
 }
 
 static void test_pack_LPEXCEPTION_POINTERS(void)
@@ -599,6 +676,12 @@ static void test_pack_LPOVERLAPPED_COMPLETION_ROUTINE(void)
     TEST_TYPE(LPOVERLAPPED_COMPLETION_ROUTINE, 4, 4);
 }
 
+static void test_pack_LPPROCESS_HEAP_ENTRY(void)
+{
+    /* LPPROCESS_HEAP_ENTRY */
+    TEST_TYPE(LPPROCESS_HEAP_ENTRY, 4, 4);
+}
+
 static void test_pack_LPPROCESS_INFORMATION(void)
 {
     /* LPPROCESS_INFORMATION */
@@ -638,6 +721,12 @@ static void test_pack_LPSYSTEMTIME(void)
     /* LPSYSTEMTIME */
     TEST_TYPE(LPSYSTEMTIME, 4, 4);
     TEST_TYPE_POINTER(LPSYSTEMTIME, 16, 2);
+}
+
+static void test_pack_LPSYSTEM_INFO(void)
+{
+    /* LPSYSTEM_INFO */
+    TEST_TYPE(LPSYSTEM_INFO, 4, 4);
 }
 
 static void test_pack_LPSYSTEM_POWER_STATUS(void)
@@ -864,6 +953,12 @@ static void test_pack_POFSTRUCT(void)
     TEST_TYPE_POINTER(POFSTRUCT, 136, 2);
 }
 
+static void test_pack_PPROCESS_HEAP_ENTRY(void)
+{
+    /* PPROCESS_HEAP_ENTRY */
+    TEST_TYPE(PPROCESS_HEAP_ENTRY, 4, 4);
+}
+
 static void test_pack_PPROCESS_INFORMATION(void)
 {
     /* PPROCESS_INFORMATION */
@@ -875,6 +970,16 @@ static void test_pack_PQUERYACTCTXW_FUNC(void)
 {
     /* PQUERYACTCTXW_FUNC */
     TEST_TYPE(PQUERYACTCTXW_FUNC, 4, 4);
+}
+
+static void test_pack_PROCESS_HEAP_ENTRY(void)
+{
+    /* PROCESS_HEAP_ENTRY (pack 4) */
+    TEST_FIELD(PROCESS_HEAP_ENTRY, LPVOID, lpData, 0, 4, 4);
+    TEST_FIELD(PROCESS_HEAP_ENTRY, DWORD, cbData, 4, 4, 4);
+    TEST_FIELD(PROCESS_HEAP_ENTRY, BYTE, cbOverhead, 8, 1, 1);
+    TEST_FIELD(PROCESS_HEAP_ENTRY, BYTE, iRegionIndex, 9, 1, 1);
+    TEST_FIELD(PROCESS_HEAP_ENTRY, WORD, wFlags, 10, 2, 2);
 }
 
 static void test_pack_PROCESS_INFORMATION(void)
@@ -1007,6 +1112,11 @@ static void test_pack_SYSTEMTIME(void)
     TEST_FIELD(SYSTEMTIME, WORD, wMilliseconds, 14, 2, 2);
 }
 
+static void test_pack_SYSTEM_INFO(void)
+{
+    /* SYSTEM_INFO (pack 4) */
+}
+
 static void test_pack_SYSTEM_POWER_STATUS(void)
 {
     /* SYSTEM_POWER_STATUS (pack 4) */
@@ -1109,12 +1219,16 @@ static void test_pack(void)
     test_pack_ACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA();
     test_pack_ACTIVATION_CONTEXT_BASIC_INFORMATION();
     test_pack_BY_HANDLE_FILE_INFORMATION();
+    test_pack_COMMCONFIG();
     test_pack_COMMPROP();
     test_pack_COMMTIMEOUTS();
+    test_pack_COMSTAT();
     test_pack_CREATE_PROCESS_DEBUG_INFO();
     test_pack_CREATE_THREAD_DEBUG_INFO();
     test_pack_CRITICAL_SECTION();
     test_pack_CRITICAL_SECTION_DEBUG();
+    test_pack_DCB();
+    test_pack_DEBUG_EVENT();
     test_pack_ENUMRESLANGPROCA();
     test_pack_ENUMRESLANGPROCW();
     test_pack_ENUMRESNAMEPROCA();
@@ -1128,10 +1242,14 @@ static void test_pack(void)
     test_pack_HW_PROFILE_INFOW();
     test_pack_LOAD_DLL_DEBUG_INFO();
     test_pack_LPBY_HANDLE_FILE_INFORMATION();
+    test_pack_LPCOMMCONFIG();
     test_pack_LPCOMMPROP();
     test_pack_LPCOMMTIMEOUTS();
+    test_pack_LPCOMSTAT();
     test_pack_LPCRITICAL_SECTION();
     test_pack_LPCRITICAL_SECTION_DEBUG();
+    test_pack_LPDCB();
+    test_pack_LPDEBUG_EVENT();
     test_pack_LPEXCEPTION_POINTERS();
     test_pack_LPEXCEPTION_RECORD();
     test_pack_LPFIBER_START_ROUTINE();
@@ -1147,12 +1265,14 @@ static void test_pack(void)
     test_pack_LPOSVERSIONINFOW();
     test_pack_LPOVERLAPPED();
     test_pack_LPOVERLAPPED_COMPLETION_ROUTINE();
+    test_pack_LPPROCESS_HEAP_ENTRY();
     test_pack_LPPROCESS_INFORMATION();
     test_pack_LPPROGRESS_ROUTINE();
     test_pack_LPSECURITY_ATTRIBUTES();
     test_pack_LPSTARTUPINFOA();
     test_pack_LPSTARTUPINFOW();
     test_pack_LPSYSTEMTIME();
+    test_pack_LPSYSTEM_INFO();
     test_pack_LPSYSTEM_POWER_STATUS();
     test_pack_LPTHREAD_START_ROUTINE();
     test_pack_LPTIME_ZONE_INFORMATION();
@@ -1192,8 +1312,10 @@ static void test_pack(void)
     test_pack_POSVERSIONINFOEXA();
     test_pack_POSVERSIONINFOEXW();
     test_pack_POSVERSIONINFOW();
+    test_pack_PPROCESS_HEAP_ENTRY();
     test_pack_PPROCESS_INFORMATION();
     test_pack_PQUERYACTCTXW_FUNC();
+    test_pack_PROCESS_HEAP_ENTRY();
     test_pack_PROCESS_INFORMATION();
     test_pack_PSECURITY_ATTRIBUTES();
     test_pack_PSYSTEMTIME();
@@ -1206,6 +1328,7 @@ static void test_pack(void)
     test_pack_STARTUPINFOA();
     test_pack_STARTUPINFOW();
     test_pack_SYSTEMTIME();
+    test_pack_SYSTEM_INFO();
     test_pack_SYSTEM_POWER_STATUS();
     test_pack_TIME_ZONE_INFORMATION();
     test_pack_UNLOAD_DLL_DEBUG_INFO();

@@ -353,6 +353,7 @@ static void test_pack_DWORDLONG(void)
 {
     /* DWORDLONG */
     TEST_TYPE(DWORDLONG, 8, 8);
+    TEST_TYPE_UNSIGNED(DWORDLONG);
 }
 
 static void test_pack_EXCEPTION_POINTERS(void)
@@ -415,6 +416,12 @@ static void test_pack_GENERIC_MAPPING(void)
     TEST_FIELD(GENERIC_MAPPING, ACCESS_MASK, GenericWrite, 4, 4, 4);
     TEST_FIELD(GENERIC_MAPPING, ACCESS_MASK, GenericExecute, 8, 4, 4);
     TEST_FIELD(GENERIC_MAPPING, ACCESS_MASK, GenericAll, 12, 4, 4);
+}
+
+static void test_pack_HANDLE(void)
+{
+    /* HANDLE */
+    TEST_TYPE(HANDLE, 4, 4);
 }
 
 static void test_pack_HRESULT(void)
@@ -591,6 +598,11 @@ static void test_pack_IMAGE_IMPORT_DESCRIPTOR(void)
     /* IMAGE_IMPORT_DESCRIPTOR (pack 4) */
 }
 
+static void test_pack_IMAGE_LINENUMBER(void)
+{
+    /* IMAGE_LINENUMBER (pack 2) */
+}
+
 static void test_pack_IMAGE_LOAD_CONFIG_DIRECTORY(void)
 {
     /* IMAGE_LOAD_CONFIG_DIRECTORY (pack 4) */
@@ -699,6 +711,11 @@ static void test_pack_IMAGE_OS2_HEADER(void)
     TEST_FIELD(IMAGE_OS2_HEADER, WORD, ne_expver, 62, 2, 2);
 }
 
+static void test_pack_IMAGE_RELOCATION(void)
+{
+    /* IMAGE_RELOCATION (pack 2) */
+}
+
 static void test_pack_IMAGE_RESOURCE_DATA_ENTRY(void)
 {
     /* IMAGE_RESOURCE_DATA_ENTRY (pack 4) */
@@ -721,6 +738,11 @@ static void test_pack_IMAGE_RESOURCE_DIRECTORY(void)
     TEST_FIELD(IMAGE_RESOURCE_DIRECTORY, WORD, NumberOfIdEntries, 14, 2, 2);
 }
 
+static void test_pack_IMAGE_RESOURCE_DIRECTORY_ENTRY(void)
+{
+    /* IMAGE_RESOURCE_DIRECTORY_ENTRY (pack 4) */
+}
+
 static void test_pack_IMAGE_RESOURCE_DIRECTORY_STRING(void)
 {
     /* IMAGE_RESOURCE_DIRECTORY_STRING (pack 4) */
@@ -735,6 +757,12 @@ static void test_pack_IMAGE_RESOURCE_DIR_STRING_U(void)
     TEST_TYPE(IMAGE_RESOURCE_DIR_STRING_U, 4, 2);
     TEST_FIELD(IMAGE_RESOURCE_DIR_STRING_U, WORD, Length, 0, 2, 2);
     TEST_FIELD(IMAGE_RESOURCE_DIR_STRING_U, WCHAR[ 1 ], NameString, 2, 2, 2);
+}
+
+static void test_pack_IMAGE_SECTION_HEADER(void)
+{
+    /* IMAGE_SECTION_HEADER (pack 4) */
+    TEST_FIELD(IMAGE_SECTION_HEADER, BYTE[IMAGE_SIZEOF_SHORT_NAME], Name, 0, 8, 1);
 }
 
 static void test_pack_IMAGE_SEPARATE_DEBUG_HEADER(void)
@@ -754,6 +782,16 @@ static void test_pack_IMAGE_SEPARATE_DEBUG_HEADER(void)
     TEST_FIELD(IMAGE_SEPARATE_DEBUG_HEADER, DWORD, DebugDirectorySize, 32, 4, 4);
     TEST_FIELD(IMAGE_SEPARATE_DEBUG_HEADER, DWORD, SectionAlignment, 36, 4, 4);
     TEST_FIELD(IMAGE_SEPARATE_DEBUG_HEADER, DWORD[ 2 ], Reserved, 40, 8, 4);
+}
+
+static void test_pack_IMAGE_SYMBOL(void)
+{
+    /* IMAGE_SYMBOL (pack 2) */
+}
+
+static void test_pack_IMAGE_THUNK_DATA(void)
+{
+    /* IMAGE_THUNK_DATA (pack 4) */
 }
 
 static void test_pack_IMAGE_TLS_DIRECTORY(void)
@@ -937,6 +975,15 @@ static void test_pack_MESSAGE_RESOURCE_ENTRY(void)
     TEST_FIELD(MESSAGE_RESOURCE_ENTRY, WORD, Length, 0, 2, 2);
     TEST_FIELD(MESSAGE_RESOURCE_ENTRY, WORD, Flags, 2, 2, 2);
     TEST_FIELD(MESSAGE_RESOURCE_ENTRY, BYTE[1], Text, 4, 1, 1);
+}
+
+static void test_pack_NT_TIB(void)
+{
+    /* NT_TIB (pack 4) */
+    TEST_FIELD(NT_TIB, struct _EXCEPTION_REGISTRATION_RECORD *, ExceptionList, 0, 4, 4);
+    TEST_FIELD(NT_TIB, PVOID, StackBase, 4, 4, 4);
+    TEST_FIELD(NT_TIB, PVOID, StackLimit, 8, 4, 4);
+    TEST_FIELD(NT_TIB, PVOID, SubSystemTib, 12, 4, 4);
 }
 
 static void test_pack_OBJECT_TYPE_LIST(void)
@@ -1182,6 +1229,12 @@ static void test_pack_PIMAGE_IMPORT_DESCRIPTOR(void)
     TEST_TYPE(PIMAGE_IMPORT_DESCRIPTOR, 4, 4);
 }
 
+static void test_pack_PIMAGE_LINENUMBER(void)
+{
+    /* PIMAGE_LINENUMBER */
+    TEST_TYPE(PIMAGE_LINENUMBER, 4, 4);
+}
+
 static void test_pack_PIMAGE_LOAD_CONFIG_DIRECTORY(void)
 {
     /* PIMAGE_LOAD_CONFIG_DIRECTORY */
@@ -1210,6 +1263,12 @@ static void test_pack_PIMAGE_OS2_HEADER(void)
     TEST_TYPE_POINTER(PIMAGE_OS2_HEADER, 64, 2);
 }
 
+static void test_pack_PIMAGE_RELOCATION(void)
+{
+    /* PIMAGE_RELOCATION */
+    TEST_TYPE(PIMAGE_RELOCATION, 4, 4);
+}
+
 static void test_pack_PIMAGE_RESOURCE_DATA_ENTRY(void)
 {
     /* PIMAGE_RESOURCE_DATA_ENTRY */
@@ -1222,6 +1281,12 @@ static void test_pack_PIMAGE_RESOURCE_DIRECTORY(void)
     /* PIMAGE_RESOURCE_DIRECTORY */
     TEST_TYPE(PIMAGE_RESOURCE_DIRECTORY, 4, 4);
     TEST_TYPE_POINTER(PIMAGE_RESOURCE_DIRECTORY, 16, 4);
+}
+
+static void test_pack_PIMAGE_RESOURCE_DIRECTORY_ENTRY(void)
+{
+    /* PIMAGE_RESOURCE_DIRECTORY_ENTRY */
+    TEST_TYPE(PIMAGE_RESOURCE_DIRECTORY_ENTRY, 4, 4);
 }
 
 static void test_pack_PIMAGE_RESOURCE_DIRECTORY_STRING(void)
@@ -1238,11 +1303,29 @@ static void test_pack_PIMAGE_RESOURCE_DIR_STRING_U(void)
     TEST_TYPE_POINTER(PIMAGE_RESOURCE_DIR_STRING_U, 4, 2);
 }
 
+static void test_pack_PIMAGE_SECTION_HEADER(void)
+{
+    /* PIMAGE_SECTION_HEADER */
+    TEST_TYPE(PIMAGE_SECTION_HEADER, 4, 4);
+}
+
 static void test_pack_PIMAGE_SEPARATE_DEBUG_HEADER(void)
 {
     /* PIMAGE_SEPARATE_DEBUG_HEADER */
     TEST_TYPE(PIMAGE_SEPARATE_DEBUG_HEADER, 4, 4);
     TEST_TYPE_POINTER(PIMAGE_SEPARATE_DEBUG_HEADER, 48, 4);
+}
+
+static void test_pack_PIMAGE_SYMBOL(void)
+{
+    /* PIMAGE_SYMBOL */
+    TEST_TYPE(PIMAGE_SYMBOL, 4, 4);
+}
+
+static void test_pack_PIMAGE_THUNK_DATA(void)
+{
+    /* PIMAGE_THUNK_DATA */
+    TEST_TYPE(PIMAGE_THUNK_DATA, 4, 4);
 }
 
 static void test_pack_PIMAGE_TLS_CALLBACK(void)
@@ -1348,6 +1431,12 @@ static void test_pack_PMESSAGE_RESOURCE_ENTRY(void)
     TEST_TYPE_POINTER(PMESSAGE_RESOURCE_ENTRY, 6, 2);
 }
 
+static void test_pack_PNT_TIB(void)
+{
+    /* PNT_TIB */
+    TEST_TYPE(PNT_TIB, 4, 4);
+}
+
 static void test_pack_POBJECT_TYPE_LIST(void)
 {
     /* POBJECT_TYPE_LIST */
@@ -1417,6 +1506,12 @@ static void test_pack_PSECURITY_DESCRIPTOR(void)
 {
     /* PSECURITY_DESCRIPTOR */
     TEST_TYPE(PSECURITY_DESCRIPTOR, 4, 4);
+}
+
+static void test_pack_PSECURITY_QUALITY_OF_SERVICE(void)
+{
+    /* PSECURITY_QUALITY_OF_SERVICE */
+    TEST_TYPE(PSECURITY_QUALITY_OF_SERVICE, 4, 4);
 }
 
 static void test_pack_PSID(void)
@@ -1624,6 +1719,12 @@ static void test_pack_SECURITY_INFORMATION(void)
     TEST_TYPE_UNSIGNED(SECURITY_INFORMATION);
 }
 
+static void test_pack_SECURITY_QUALITY_OF_SERVICE(void)
+{
+    /* SECURITY_QUALITY_OF_SERVICE (pack 4) */
+    TEST_FIELD(SECURITY_QUALITY_OF_SERVICE, DWORD, Length, 0, 4, 4);
+}
+
 static void test_pack_SHORT(void)
 {
     /* SHORT */
@@ -1730,6 +1831,14 @@ static void test_pack_TOKEN_SOURCE(void)
     TEST_TYPE(TOKEN_SOURCE, 16, 4);
     TEST_FIELD(TOKEN_SOURCE, char[TOKEN_SOURCE_LENGTH], SourceName, 0, 8, 1);
     TEST_FIELD(TOKEN_SOURCE, LUID, SourceIdentifier, 8, 8, 4);
+}
+
+static void test_pack_TOKEN_STATISTICS(void)
+{
+    /* TOKEN_STATISTICS (pack 4) */
+    TEST_FIELD(TOKEN_STATISTICS, LUID, TokenId, 0, 8, 4);
+    TEST_FIELD(TOKEN_STATISTICS, LUID, AuthenticationId, 8, 8, 4);
+    TEST_FIELD(TOKEN_STATISTICS, LARGE_INTEGER, ExpirationTime, 16, 8, 8);
 }
 
 static void test_pack_TOKEN_USER(void)
@@ -2107,6 +2216,7 @@ static void test_pack(void)
     test_pack_GENERIC_MAPPING();
     test_pack_GLOBALHANDLE();
     test_pack_HALF_PTR();
+    test_pack_HANDLE();
     test_pack_HCURSOR();
     test_pack_HFILE();
     test_pack_HGDIOBJ();
@@ -2129,15 +2239,21 @@ static void test_pack(void)
     test_pack_IMAGE_FUNCTION_ENTRY();
     test_pack_IMAGE_IMPORT_BY_NAME();
     test_pack_IMAGE_IMPORT_DESCRIPTOR();
+    test_pack_IMAGE_LINENUMBER();
     test_pack_IMAGE_LOAD_CONFIG_DIRECTORY();
     test_pack_IMAGE_NT_HEADERS();
     test_pack_IMAGE_OPTIONAL_HEADER();
     test_pack_IMAGE_OS2_HEADER();
+    test_pack_IMAGE_RELOCATION();
     test_pack_IMAGE_RESOURCE_DATA_ENTRY();
     test_pack_IMAGE_RESOURCE_DIRECTORY();
+    test_pack_IMAGE_RESOURCE_DIRECTORY_ENTRY();
     test_pack_IMAGE_RESOURCE_DIRECTORY_STRING();
     test_pack_IMAGE_RESOURCE_DIR_STRING_U();
+    test_pack_IMAGE_SECTION_HEADER();
     test_pack_IMAGE_SEPARATE_DEBUG_HEADER();
+    test_pack_IMAGE_SYMBOL();
+    test_pack_IMAGE_THUNK_DATA();
     test_pack_IMAGE_TLS_DIRECTORY();
     test_pack_IMAGE_VXD_HEADER();
     test_pack_INT();
@@ -2174,6 +2290,7 @@ static void test_pack(void)
     test_pack_MESSAGE_RESOURCE_BLOCK();
     test_pack_MESSAGE_RESOURCE_DATA();
     test_pack_MESSAGE_RESOURCE_ENTRY();
+    test_pack_NT_TIB();
     test_pack_OBJECT_TYPE_LIST();
     test_pack_PACCESS_ALLOWED_ACE();
     test_pack_PACCESS_DENIED_ACE();
@@ -2209,15 +2326,21 @@ static void test_pack(void)
     test_pack_PIMAGE_FUNCTION_ENTRY();
     test_pack_PIMAGE_IMPORT_BY_NAME();
     test_pack_PIMAGE_IMPORT_DESCRIPTOR();
+    test_pack_PIMAGE_LINENUMBER();
     test_pack_PIMAGE_LOAD_CONFIG_DIRECTORY();
     test_pack_PIMAGE_NT_HEADERS();
     test_pack_PIMAGE_OPTIONAL_HEADER();
     test_pack_PIMAGE_OS2_HEADER();
+    test_pack_PIMAGE_RELOCATION();
     test_pack_PIMAGE_RESOURCE_DATA_ENTRY();
     test_pack_PIMAGE_RESOURCE_DIRECTORY();
+    test_pack_PIMAGE_RESOURCE_DIRECTORY_ENTRY();
     test_pack_PIMAGE_RESOURCE_DIRECTORY_STRING();
     test_pack_PIMAGE_RESOURCE_DIR_STRING_U();
+    test_pack_PIMAGE_SECTION_HEADER();
     test_pack_PIMAGE_SEPARATE_DEBUG_HEADER();
+    test_pack_PIMAGE_SYMBOL();
+    test_pack_PIMAGE_THUNK_DATA();
     test_pack_PIMAGE_TLS_CALLBACK();
     test_pack_PIMAGE_TLS_DIRECTORY();
     test_pack_PIMAGE_VXD_HEADER();
@@ -2233,6 +2356,7 @@ static void test_pack(void)
     test_pack_PMESSAGE_RESOURCE_BLOCK();
     test_pack_PMESSAGE_RESOURCE_DATA();
     test_pack_PMESSAGE_RESOURCE_ENTRY();
+    test_pack_PNT_TIB();
     test_pack_POBJECT_TYPE_LIST();
     test_pack_POINT();
     test_pack_POINTL();
@@ -2251,6 +2375,7 @@ static void test_pack(void)
     test_pack_PRTL_OSVERSIONINFOW();
     test_pack_PRTL_RESOURCE_DEBUG();
     test_pack_PSECURITY_DESCRIPTOR();
+    test_pack_PSECURITY_QUALITY_OF_SERVICE();
     test_pack_PSID();
     test_pack_PSID_IDENTIFIER_AUTHORITY();
     test_pack_PSINGLE_LIST_ENTRY();
@@ -2278,6 +2403,7 @@ static void test_pack(void)
     test_pack_SECURITY_DESCRIPTOR_CONTROL();
     test_pack_SECURITY_DESCRIPTOR_RELATIVE();
     test_pack_SECURITY_INFORMATION();
+    test_pack_SECURITY_QUALITY_OF_SERVICE();
     test_pack_SHORT();
     test_pack_SID();
     test_pack_SID_AND_ATTRIBUTES();
@@ -2296,6 +2422,7 @@ static void test_pack(void)
     test_pack_TOKEN_PRIMARY_GROUP();
     test_pack_TOKEN_PRIVILEGES();
     test_pack_TOKEN_SOURCE();
+    test_pack_TOKEN_STATISTICS();
     test_pack_TOKEN_USER();
     test_pack_UCHAR();
     test_pack_UHALF_PTR();
