@@ -25,6 +25,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "winsock.h"
+#include "shlwapi.h"
 
 #include "internet.h"
 
@@ -724,20 +725,19 @@ INTERNETAPI DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
 BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
-    BOOL bSuccess = FALSE;
+    HRESULT hr;
+    TRACE("%s %p %p %08lx\n",debugstr_a(lpszUrl), lpszBuffer,
+	  lpdwBufferLength, dwFlags);
 
-    FIXME("Stub!\n");
+    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+    dwFlags ^= ICU_NO_ENCODE;
 
-    if (lpszUrl)
-    {
-        strncpy(lpszBuffer, lpszUrl, *lpdwBufferLength);
-        *lpdwBufferLength = strlen(lpszBuffer);
-	bSuccess = TRUE;
-    }
+    dwFlags |= 0x80000000; /* Don't know what this means */
 
-    return bSuccess;
+    hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
+
+    return (hr == S_OK) ? TRUE : FALSE;
 }
-
 
 /***********************************************************************
  *           InternetSetStatusCallback (WININET.133)
