@@ -1404,13 +1404,23 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     HDC hdcmf;
     HMETAFILE hmf;
     UINT ret;
+    RECT rc;
+    INT oldMapMode;
 
-    FIXME("(%p,%d,%p,%d,%p): stub\n", hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
+    GetClipBox(hdcRef, &rc);
+    oldMapMode = SetMapMode(hdcRef, fnMapMode);
+
+    TRACE("(%p,%d,%p,%d,%p) rc=%s\n", hemf, cbBuffer, lpbBuffer,
+        fnMapMode, hdcRef, wine_dbgstr_rect(&rc));
+
     hdcmf = CreateMetaFileA(NULL);
-/*  PlayEnhMetaFile(hdcmf, hemf, lpRect); where does the bounding rect come from? */
+    PlayEnhMetaFile(hdcmf, hemf, &rc);
     hmf = CloseMetaFile(hdcmf);
     ret = GetMetaFileBitsEx(hmf, cbBuffer, lpbBuffer);
     DeleteMetaFile(hmf);
+
+    SetMapMode(hdcRef, oldMapMode);
+
     return ret;
 }
 
