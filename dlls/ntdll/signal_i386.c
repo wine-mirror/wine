@@ -226,7 +226,7 @@ typedef struct sigcontext SIGCONTEXT;
 #undef ERR
 typedef struct ucontext SIGCONTEXT;
 
-#define HANDLER_DEF(name) void name( int __signal, void *__siginfo, SIGCONTEXT *__context )
+#define HANDLER_DEF(name) void name( int __signal, siginfo_t *__siginfo, SIGCONTEXT *__context )
 #define HANDLER_CONTEXT __context
 
 #endif  /* svr4 || SCO_DS */
