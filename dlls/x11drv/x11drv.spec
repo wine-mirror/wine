@@ -60,7 +60,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 
 # USER driver
 
-@ cdecl InitKeyboard() X11DRV_InitKeyboard
+@ cdecl InitKeyboard(ptr) X11DRV_InitKeyboard
 @ cdecl VkKeyScan(long) X11DRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) X11DRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) X11DRV_GetKeyNameText

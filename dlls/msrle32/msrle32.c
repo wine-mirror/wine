@@ -472,7 +472,7 @@ static void Codec_Close( CodecImpl* This )
 
 
 
-LONG APIENTRY MSRLE32_DriverProc(
+LONG WINAPI MSRLE32_DriverProc(
 	DWORD dwDriverId, HDRVR hdrvr, UINT msg, LONG lParam1, LONG lParam2 )
 {
 	TRACE( "DriverProc(%08lx,%08x,%08x,%08lx,%08lx)\n",
@@ -604,7 +604,7 @@ LONG APIENTRY MSRLE32_DriverProc(
 	return DefDriverProc( dwDriverId, hdrvr, msg, lParam1, lParam2 );
 }
 
-BOOL APIENTRY MSRLE32_DllMain( HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved )
+BOOL WINAPI MSRLE32_DllMain( HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved )
 {
 	TRACE( "(%08x,%08lx,%p)\n",hInst,dwReason,lpvReserved );
 
