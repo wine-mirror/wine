@@ -137,9 +137,8 @@ void *alloc_object( const struct object_ops *ops )
     {
         obj->refcount = 1;
         obj->ops      = ops;
-        obj->head     = NULL;
-        obj->tail     = NULL;
         obj->name     = NULL;
+        list_init( &obj->wait_queue );
 #ifdef DEBUG_OBJECTS
         list_add_head( &object_list, &obj->obj_list );
 #endif
@@ -205,8 +204,7 @@ void release_object( void *ptr )
     if (!--obj->refcount)
     {
         /* if the refcount is 0, nobody can be in the wait queue */
-        assert( !obj->head );
-        assert( !obj->tail );
+        assert( list_empty( &obj->wait_queue ));
         obj->ops->destroy( obj );
         if (obj->name) free_name( obj );
 #ifdef DEBUG_OBJECTS

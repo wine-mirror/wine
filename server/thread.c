@@ -342,22 +342,15 @@ static int resume_thread( struct thread *thread )
 int add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     grab_object( obj );
-    entry->obj    = obj;
-    entry->prev   = obj->tail;
-    entry->next   = NULL;
-    if (obj->tail) obj->tail->next = entry;
-    else obj->head = entry;
-    obj->tail = entry;
+    entry->obj = obj;
+    list_add_tail( &obj->wait_queue, &entry->entry );
     return 1;
 }
 
 /* remove a thread from an object wait queue */
 void remove_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    if (entry->next) entry->next->prev = entry->prev;
-    else obj->tail = entry->prev;
-    if (entry->prev) entry->prev->next = entry->next;
-    else obj->head = entry->next;
+    list_remove( &entry->entry );
     release_object( obj );
 }
 
@@ -569,13 +562,12 @@ done:
 /* attempt to wake threads sleeping on the object wait queue */
 void wake_up( struct object *obj, int max )
 {
-    struct wait_queue_entry *entry = obj->head;
+    struct list *ptr, *next;
 
-    while (entry)
+    LIST_FOR_EACH_SAFE( ptr, next, &obj->wait_queue )
     {
-        struct thread *thread = entry->thread;
-        entry = entry->next;
-        if (wake_thread( thread ))
+        struct wait_queue_entry *entry = LIST_ENTRY( ptr, struct wait_queue_entry, entry );
+        if (wake_thread( entry->thread ))
         {
             if (max && !--max) break;
         }

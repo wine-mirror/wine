@@ -69,8 +69,7 @@ struct object
 {
     unsigned int              refcount;    /* reference count */
     const struct object_ops  *ops;
-    struct wait_queue_entry  *head;
-    struct wait_queue_entry  *tail;
+    struct list               wait_queue;
     struct object_name       *name;
 #ifdef DEBUG_OBJECTS
     struct list               obj_list;
@@ -79,10 +78,9 @@ struct object
 
 struct wait_queue_entry
 {
-    struct wait_queue_entry *next;
-    struct wait_queue_entry *prev;
-    struct object           *obj;
-    struct thread           *thread;
+    struct list     entry;
+    struct object  *obj;
+    struct thread  *thread;
 };
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */

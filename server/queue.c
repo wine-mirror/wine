@@ -663,7 +663,7 @@ static int is_queue_hung( struct msg_queue *queue )
     if (now.tv_sec - queue->last_get_msg.tv_sec <= 5)
         return 0;  /* less than 5 seconds since last get message -> not hung */
 
-    for (entry = queue->obj.head; entry; entry = entry->next)
+    LIST_FOR_EACH_ENTRY( entry, &queue->obj.wait_queue, struct wait_queue_entry, entry )
     {
         if (entry->thread->queue == queue)
             return 0;  /* thread is waiting on queue -> not hung */
