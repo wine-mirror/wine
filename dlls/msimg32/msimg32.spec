@@ -3,10 +3,10 @@ type win32
 
 import ntdll.dll
 
-debug_channels()
+debug_channels (msimg32)
 
 @ stub AlphaBlend
 @ stub DllInitialize
-@ stub GradientFill
+@ stdcall GradientFill (long ptr long ptr long long ) GradientFill
 @ stub TransparentBlt
 @ stub vSetDdrawflag
