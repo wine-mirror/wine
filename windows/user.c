@@ -95,10 +95,6 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
  */
 INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
 {
-    /* Hack: restore the divide-by-zero handler */
-    /* FIXME: should set a USER-specific handler that displays a msg box */
-    INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
-
     /* Create task message queue */
     if ( !InitThreadInput16( 0, 0 ) ) return 0;
 

@@ -1049,14 +1049,12 @@
 @ cdecl DOSMEM_GetBlock(long ptr) DOSMEM_GetBlock
 @ cdecl DOSMEM_GetDPMISegments() DOSMEM_GetDPMISegments
 @ cdecl DOSMEM_Init(long) DOSMEM_Init
-@ cdecl INT_GetPMHandler(long) INT_GetPMHandler
 @ stdcall INT_Int11Handler(ptr) INT_Int11Handler
 @ stdcall INT_Int15Handler(ptr) INT_Int15Handler
 @ stdcall INT_Int25Handler(ptr) INT_Int25Handler
 @ stdcall INT_Int26Handler(ptr) INT_Int26Handler  
 @ stdcall INT_Int2fHandler(ptr) INT_Int2fHandler
 @ stdcall NetBIOSCall16(ptr) NetBIOSCall16
-@ cdecl INT_SetPMHandler(long long) INT_SetPMHandler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
 @ cdecl LOCAL_Compact(long long long) LOCAL_Compact
 @ cdecl LOCAL_CountFree(long) LOCAL_CountFree

@@ -314,9 +314,9 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
     proc = GetProcAddress16( GetModuleHandle16("KERNEL"), "DOS3Call" );
     memcpy( &pTask->pdb.dispatcher[1], &proc, sizeof(proc) );
-    pTask->pdb.savedint22 = INT_GetPMHandler( 0x22 );
-    pTask->pdb.savedint23 = INT_GetPMHandler( 0x23 );
-    pTask->pdb.savedint24 = INT_GetPMHandler( 0x24 );
+    pTask->pdb.savedint22 = 0;
+    pTask->pdb.savedint23 = 0;
+    pTask->pdb.savedint24 = 0;
     pTask->pdb.fileHandlesPtr =
         MAKESEGPTR( GlobalHandleToSel16(pTask->hPDB), (int)&((PDB16 *)0)->fileHandles );
     pTask->pdb.hFileHandles = 0;

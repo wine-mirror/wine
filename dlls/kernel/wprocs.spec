@@ -1,16 +1,3 @@
-# Interrupt vectors 0-255 are ordinals 100-355
-# The '-interrupt' keyword takes care of the flags pushed on the stack by the interrupt
-117 pascal -interrupt INT_Int11Handler() INT_Int11Handler
-121 pascal -interrupt INT_Int15Handler() INT_Int15Handler
-133 pascal -interrupt INT_Int21Handler() DOS3Call
-# Note: int 25 and 26 don't pop the flags from the stack
-137 pascal -register  INT_Int25Handler() INT_Int25Handler
-138 pascal -register  INT_Int26Handler() INT_Int26Handler
-147 pascal -interrupt INT_Int2fHandler() INT_Int2fHandler
-192 pascal -interrupt INT_Int5cHandler() NetBIOSCall16
-# default handler for unimplemented interrupts
-356 pascal -interrupt INT_DefaultHandler() INT_DefaultHandler
-
 # VxDs. The first Vxd is at 400
 #
 #400+VXD_ID pascal -register <VxD handler>() <VxD handler>

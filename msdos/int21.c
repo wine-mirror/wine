@@ -1295,7 +1295,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x25: /* SET INTERRUPT VECTOR */
-        INT_SetPMHandler( AL_reg(context), (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context)));
+        FIXME("set interrupt vector - move to winedos...");
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
@@ -1414,7 +1414,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x35: /* GET INTERRUPT VECTOR */
         TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
-            FARPROC16 addr = INT_GetPMHandler( AL_reg(context) );
+            FARPROC16 addr = 0;
+            FIXME("get interrupt vector - move to winedos...\n");            
             context->SegEs = SELECTOROF(addr);
             SET_BX( context, OFFSETOF(addr) );
         }
