@@ -5,16 +5,18 @@
  * Copyright 1996 Alex Korobka
  */
 
-#include <stdlib.h>
 #include "ts_xlib.h"
+#include "x11drv.h"
+
+#include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "options.h"
 #include "gdi.h"
 #include "color.h"
 #include "debug.h"
 #include "xmalloc.h"
-#include "x11drv.h"
+#include "monitor.h"
 
 /* Palette indexed mode:
 
@@ -121,7 +123,7 @@ int COLOR_mapEGAPixel[16];
 /***********************************************************************
  *	Misc auxiliary functions
  */
-Colormap COLOR_GetColormap(void)
+Colormap X11DRV_COLOR_GetColormap(void)
 {
     return cSpace.colorMap;
 }
@@ -238,7 +240,6 @@ static void COLOR_FillDefaultColors(void)
 			    (DoRed | DoGreen | DoBlue) };
 	   TSXStoreColor(display, cSpace.colorMap, &color);
 	 }
-
 	 idx = COLOR_freeList[idx];
       }
 
@@ -327,6 +328,7 @@ static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
     COLOR_gapStart = 256; COLOR_gapEnd = -1;
 
     COLOR_firstFree = (cs->size > NB_RESERVED_COLORS)?NB_RESERVED_COLORS/2 : -1;
+
     return FALSE;
 }
 
@@ -369,7 +371,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	          bp = BlackPixel(display, DefaultScreen(display));
 	          wp = WhitePixel(display, DefaultScreen(display));
 
-	          max = (0xffffffff)>>(32 - screenDepth);
+	          max = (0xffffffff)>>(32 - MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
 	          if( max > 256 ) 
 	          {
 	  	      step = max/256;
@@ -470,7 +472,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	   * to maintain compatibility
 	   */
 	  cs->size = 256;
-	  TRACE(palette,"Virtual colorspace - screendepth %i\n", screenDepth);
+	  TRACE(palette,"Virtual colorspace - screendepth %i\n", MONITOR_GetDepth(&MONITOR_PrimaryMonitor));
 	}
    else cs->size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
@@ -493,7 +495,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
    /* setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
-   if( screenDepth <= 8 )
+   if( MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8 )
      {
        COLOR_PixelToPalette = (int*)xmalloc(sizeof(int)*256);
        memset( COLOR_PixelToPalette, 0, 256*sizeof(int) );
@@ -536,6 +538,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
    }
 
    if( pixDynMapping ) free(pixDynMapping);
+
    return TRUE;
 }
 
@@ -576,8 +579,8 @@ BOOL32 COLOR_Init(void)
 
     TRACE(palette,"initializing palette manager...\n");
 
-    white = WhitePixelOfScreen( screen );
-    black = BlackPixelOfScreen( screen );
+    white = WhitePixelOfScreen( X11DRV_GetXScreen() );
+    black = BlackPixelOfScreen( X11DRV_GetXScreen() );
     cSpace.monoPlane = 1;
     for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
 	 cSpace.monoPlane++;
@@ -594,7 +597,7 @@ BOOL32 COLOR_Init(void)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    cSpace.colorMap = TSXCreateColormap( display, rootWindow,
+	    cSpace.colorMap = TSXCreateColormap( display, X11DRV_GetXRootWindow(),
 						 visual, AllocAll );
 	    if (cSpace.colorMap)
 	    {
@@ -604,22 +607,22 @@ BOOL32 COLOR_Init(void)
 		for( white = cSpace.size - 1; !(white & 1); white >>= 1 )
 		     cSpace.monoPlane++;
 
-	        if( rootWindow != DefaultRootWindow(display) )
+	        if( X11DRV_GetXRootWindow() != DefaultRootWindow(display) )
 	        {
 		    win_attr.colormap = cSpace.colorMap;
-		    TSXChangeWindowAttributes( display, rootWindow,
+		    TSXChangeWindowAttributes( display, X11DRV_GetXRootWindow(),
 					 CWColormap, &win_attr );
 		}
 		break;
 	    }
 	}
-	cSpace.colorMap = DefaultColormapOfScreen( screen );
+	cSpace.colorMap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
         break;
 
     case StaticGray:
-	cSpace.colorMap = DefaultColormapOfScreen( screen );
+	cSpace.colorMap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
 	cSpace.flags |= COLOR_FIXED;
-        COLOR_Graymax = (1<<screenDepth)-1;
+        COLOR_Graymax = (1<<MONITOR_GetDepth(&MONITOR_PrimaryMonitor))-1;
         break;
 
     case TrueColor:
@@ -635,12 +638,12 @@ BOOL32 COLOR_Init(void)
 	    for( white = cSpace.size - 1; !(white & 1); white >>= 1 )
 	        cSpace.monoPlane++;
     	    cSpace.flags = (white & mask) ? COLOR_WHITESET : 0;
-	    cSpace.colorMap = DefaultColormapOfScreen( screen );
+	    cSpace.colorMap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
 	    TSXFree(depths);
 	    break;
 	}
 	TSXFree(depths);
-        cSpace.colorMap = DefaultColormapOfScreen( screen );
+        cSpace.colorMap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
         cSpace.flags |= COLOR_FIXED;
         COLOR_Computeshifts(visual->red_mask, &COLOR_Redshift, &COLOR_Redmax);
         COLOR_Computeshifts(visual->green_mask, &COLOR_Greenshift, &COLOR_Greenmax);
@@ -822,7 +825,7 @@ COLORREF COLOR_ToLogical(int pixel)
 #if 0
     /* truecolor visual */
 
-    if (screenDepth >= 24) return pixel;
+    if (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) >= 24) return pixel;
 #endif
 
     /* check for hicolor visuals first */
@@ -839,7 +842,7 @@ COLORREF COLOR_ToLogical(int pixel)
 
     /* check if we can bypass X */
 
-    if ((screenDepth <= 8) && (pixel < 256) && 
+    if ((MONITOR_GetDepth(&MONITOR_PrimaryMonitor) <= 8) && (pixel < 256) && 
        !(cSpace.flags & (COLOR_VIRTUAL | COLOR_FIXED)) )
          return  ( *(COLORREF*)(COLOR_sysPal + 
 		   ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;

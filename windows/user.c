@@ -24,7 +24,9 @@
 #include "miscemu.h"
 #include "shell.h"
 #include "callback.h"
-#include "x11drv.h"
+#include "local.h"
+#include "class.h"
+#include "desktop.h"
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -312,9 +314,9 @@ LONG WINAPI ChangeDisplaySettings32A( LPDEVMODE32A devmode, DWORD flags )
   FIXME(system, ": stub\n");
   if (devmode==NULL)
     FIXME(system,"   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != DefaultDepthOfScreen(screen)) 
-	    || (devmode->dmPelsHeight != screenHeight)
-	    || (devmode->dmPelsWidth != screenWidth) )
+  else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
+	    || (devmode->dmPelsHeight != DESKTOP_GetScreenHeight())
+	    || (devmode->dmPelsWidth != DESKTOP_GetScreenWidth()) )
 
   {
 
@@ -353,9 +355,9 @@ BOOL32 WINAPI EnumDisplaySettings32A(
 
 	TRACE(system,"(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
-		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
-		devmode->dmPelsHeight = screenHeight;
-		devmode->dmPelsWidth = screenWidth;
+		devmode->dmBitsPerPel = DESKTOP_GetScreenDepth();
+		devmode->dmPelsHeight = DESKTOP_GetScreenHeight();
+		devmode->dmPelsWidth = DESKTOP_GetScreenWidth();
 		return TRUE;
 	}
 	if ((n-1)<NRMODES*NRDEPTHS) {

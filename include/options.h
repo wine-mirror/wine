@@ -51,6 +51,8 @@ typedef enum
 
 struct options
 {
+    int  *argc;
+    char **argv;
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
     char * argv0;           /* argv[0] of Wine process */
@@ -71,6 +73,7 @@ struct options
     int    noDGA;           /* Disable XFree86 DGA extensions */
     char * configFileName;  /* Command line config file */
     char * consoleDrivers;  /* Console driver list */
+    int screenDepth;
 };
 
 extern struct options Options;

@@ -7,6 +7,7 @@
  */
 
 #include "ts_xlib.h"
+#include "x11drv.h"
 
 #include <stdio.h>
 #include <signal.h>
@@ -24,8 +25,6 @@
 #include "neexe.h"
 #include "process.h"
 #include "main.h"
-#include "ts_xlib.h"
-
 #include "expr.h"
 
 extern FILE * yyin;

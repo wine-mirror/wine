@@ -4,6 +4,8 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include "options.h"
@@ -31,8 +33,16 @@
 #include "debug.h"
 #include "winerror.h"
 #include "mdi.h"
+#include "local.h"
+#include "desktop.h"
 
+#ifndef X_DISPLAY_MISSING
+extern DESKTOP_DRIVER X11DRV_DESKTOP_Driver;
 extern WND_DRIVER X11DRV_WND_Driver;
+#else /* X_DISPLAY_MISSING */
+extern DESKTOP_DRIVER TTYDRV_DESKTOP_Driver;
+extern WND_DRIVER TTYDRV_WND_Driver;
+#endif /* X_DISPLAY_MISSING */
 
 /* Desktop window */
 static WND *pWndDesktop = NULL;
@@ -387,6 +397,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
 {
     CLASS *class;
     HWND32 hwndDesktop;
+    DESKTOP *pDesktop;
 
     TRACE(win,"Creating desktop window\n");
 
@@ -399,7 +410,16 @@ BOOL32 WIN_CreateDesktopWindow(void)
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
+    pDesktop = (DESKTOP *) pWndDesktop->wExtra;
+#ifndef X_DISPLAY_MISSING
+    pDesktop->pDriver = &X11DRV_DESKTOP_Driver;
     pWndDesktop->pDriver = &X11DRV_WND_Driver;
+#else /* X_DISPLAY_MISSING */
+    pDesktop->pDriver = &TTYDRV_DESKTOP_Driver;
+    pWndDesktop->pDriver = &TTYDRV_WND_Driver;
+#endif /* X_DISPLAY_MISSING */
+
+    pDesktop->pDriver->pInitialize(pDesktop);
     pWndDesktop->pDriver->pInitialize(pWndDesktop);
 
     pWndDesktop->next              = NULL;

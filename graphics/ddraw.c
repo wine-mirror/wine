@@ -15,22 +15,38 @@
  */
 
 #include "config.h"
-#include <unistd.h>
-#include <assert.h>
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
-#include <sys/signal.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include "windows.h"
+
+#ifdef HAVE_LIBXXSHM
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include "ts_xshm.h"
+#endif /* defined(HAVE_LIBXXSHM) */
+
+#ifdef HAVE_LIBXXF86DGA
+#include "ts_xf86dga.h"
+#endif /* defined(HAVE_LIBXXF86DGA) */
 
 #ifdef HAVE_LIBXXF86VM
 /* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h,
    this is a crude hack to get around it */
 #define XMD_H
+#include "wintypes.h"
 #include "ts_xf86vmode.h"
-#endif
+#endif /* defined(HAVE_LIBXXF86VM) */
+
+#include "x11drv.h"
+
+#include <unistd.h>
+#include <assert.h>
+#include <sys/signal.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stdlib.h>
+#include "windows.h"
 
 #include "winerror.h"
 #include "gdi.h"
@@ -44,21 +60,9 @@
 #include "debug.h"
 #include "spy.h"
 #include "message.h"
-#include "x11drv.h"
 #include "options.h"
 #include "objbase.h"
-
-#ifdef HAVE_LIBXXF86DGA
-#include "ts_xf86dga.h"
-#include <sys/mman.h>
-#endif
-
-#ifdef HAVE_LIBXXSHM
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include "ts_xshm.h"
-#endif
+#include "monitor.h"
 
 /* This for all the enumeration and creation of D3D-related objects */
 #include "d3d_private.h"
@@ -444,7 +448,7 @@ static void Xlib_copy_surface_on_screen(LPDIRECTDRAWSURFACE4 this) {
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
 		     this->s.ddraw->d.drawable,
-		     DefaultGCOfScreen(screen),
+		     DefaultGCOfScreen(X11DRV_GetXScreen()),
 		     this->t.xlib.image,
 		     0, 0, 0, 0,
 		     this->t.xlib.image->width,
@@ -454,7 +458,7 @@ static void Xlib_copy_surface_on_screen(LPDIRECTDRAWSURFACE4 this) {
 #endif
 	TSXPutImage(		display,
 				this->s.ddraw->d.drawable,
-				DefaultGCOfScreen(screen),
+				DefaultGCOfScreen(X11DRV_GetXScreen()),
 				this->t.xlib.image,
 				0, 0, 0, 0,
 				this->t.xlib.image->width,
@@ -570,7 +574,8 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4_SetPalette(
 	
 	if( !(pal->cm) && (this->s.ddraw->d.screen_depth<=8)) 
 	{
-		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,DefaultVisualOfScreen(screen),AllocAll);
+		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,
+					    DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
 
     	    	if (!Options.managed)
 			TSXInstallColormap(display,pal->cm);
@@ -2286,7 +2291,7 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
 #ifdef HAVE_LIBXXSHM
   if (this->e.xlib.xshm_active) {
     img = TSXShmCreateImage(display,
-			    DefaultVisualOfScreen(screen),
+			    DefaultVisualOfScreen(X11DRV_GetXScreen()),
 			    this->d.screen_depth,
 			    ZPixmap,
 			    NULL,
@@ -2345,7 +2350,7 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
     /* In this case, create an XImage */
     img =
       TSXCreateImage(display,
-		     DefaultVisualOfScreen(screen),
+		     DefaultVisualOfScreen(X11DRV_GetXScreen()),
 		     this->d.screen_depth,
 		     ZPixmap,
 		     0,
@@ -2510,7 +2515,7 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 	/* This will be overwritten in the case of Full Screen mode.
 	   Windowed games could work with that :-) */
 	if (hwnd)
-	this->d.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(hwnd)->pDriverData)->window;
+	this->d.drawable  = X11DRV_WND_GetXWindow(WIN_FindWndPtr(hwnd));
 
 	return DD_OK;
 }
@@ -2571,6 +2576,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	this->d.screen_depth = depth;
 
 	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
+
 	for (i=0;i<depcount;i++)
 		if (depths[i]==depth)
 			break;
@@ -2671,8 +2677,9 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	/* We hope getting the asked for depth */
 	this->d.screen_depth = depth;
-	
+
 	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
+
 	for (i=0;i<depcount;i++)
 		if (depths[i]==depth)
 			break;
@@ -2859,7 +2866,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
 	if (res != 0) return res;
 	(*lpddpal)->lpvtbl = &dga_ddpalvt;
 	if (this->d.depth<=8) {
-		(*lpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(screen),AllocAll);
+		(*lpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
 	} else {
 		FIXME(ddraw,"why are we doing CreatePalette in hi/truecolor?\n");
 		(*lpddpal)->cm = 0;
@@ -3182,8 +3189,8 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		  }
 		}
 
-		ddsfd.dwWidth = screenWidth;
-		ddsfd.dwHeight = screenHeight;
+		ddsfd.dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+		ddsfd.dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 		TRACE(ddraw," enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
 		if (!modescb(&ddsfd,context)) return DD_OK;
 
@@ -3212,8 +3219,8 @@ static HRESULT WINAPI DGA_IDirectDraw2_GetDisplayMode(
 #ifdef HAVE_LIBXXF86DGA
 	TRACE(ddraw,"(%p)->(%p)\n",this,lpddsfd);
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-	lpddsfd->dwHeight = screenHeight;
-	lpddsfd->dwWidth = screenWidth;
+	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 	lpddsfd->lPitch = this->e.dga.fb_width*this->d.depth/8;
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
@@ -3230,8 +3237,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2_GetDisplayMode(
 ) {
 	TRACE(ddraw,"(%p)->GetDisplayMode(%p)\n",this,lpddsfd);
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-	lpddsfd->dwHeight = screenHeight;
-	lpddsfd->dwWidth = screenWidth;
+	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 	/* POOLE FIXME: Xlib */
 	lpddsfd->lPitch = this->e.dga.fb_width*this->d.depth/8;
 	/* END FIXME: Xlib */
@@ -3660,7 +3667,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 
 	TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
 	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
-	(*lplpDD)->e.dga.fb_height = screenHeight;
+	(*lplpDD)->e.dga.fb_height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 #ifdef DIABLO_HACK
 	(*lplpDD)->e.dga.vpmask = 1;
 #else
@@ -3668,8 +3675,8 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #endif
 
 	/* just assume the default depth is the DGA depth too */
-	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(screen);
-	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
+	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	(*lplpDD)->d.depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 #ifdef RESTORE_SIGNALS
 	if (SIGNAL_Reinit) SIGNAL_Reinit();
 #endif
@@ -3708,10 +3715,9 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	(*lplpDD)->ref = 1;
 	(*lplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
-	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(screen);
-	(*lplpDD)->d.depth = DefaultDepthOfScreen(screen);
-	(*lplpDD)->d.height = screenHeight;
-	(*lplpDD)->d.width = screenWidth;
+	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	(*lplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	(*lplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 
 #ifdef HAVE_LIBXXSHM
 	/* Test if XShm is available. */
@@ -3770,6 +3776,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 		ret = Xlib_DirectDrawCreate(lplpDD, pUnkOuter);
 	else
 	  goto err;
+
 
 	(*lplpDD)->d.winclass = RegisterClass32A(&wc);
 	return ret;

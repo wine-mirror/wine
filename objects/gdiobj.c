@@ -4,6 +4,14 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+#include "x11drv.h"
+#else /* !defined(X_DISPLAY_MISSING) */
+#include "ttydrv.h"
+#endif /* !defined(X_DISPLAY_MISSING) */
+
 #include <stdlib.h>
 #include "bitmap.h"
 #include "brush.h"
@@ -16,7 +24,6 @@
 #include "region.h"
 #include "debug.h"
 #include "gdi.h"
-#include "x11drv.h"
 
 /***********************************************************************
  *          GDI stock objects 
@@ -243,8 +250,13 @@ BOOL32 GDI_Init(void)
 
     /* Initialize drivers */
 
+#ifndef X_DISPLAY_MISSING
     if( ! X11DRV_Init() )
         return FALSE;
+#else /* !defined(X_DISPLAY_MISSING) */
+    if( ! TTYDRV_GDI_Initialize() )
+        return FALSE;    
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 	/* Create default palette */
 

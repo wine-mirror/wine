@@ -6,6 +6,9 @@
  * TODO: Still contains some references to X11DRV.
  */
 
+#include "ts_xlib.h"
+#include "x11drv.h"
+
 #include <stdlib.h>
 #include "dc.h"
 #include "bitmap.h"
@@ -13,7 +16,9 @@
 #include "palette.h"
 #include "global.h"
 #include "debug.h"
-#include "x11drv.h"
+#include "local.h"
+#include "xmalloc.h" /* for XCREATEIMAGE macro */
+#include "monitor.h"
 
 
 /***********************************************************************
@@ -696,7 +701,7 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    handle = fColor ? CreateBitmap32( width, height, 1, screenDepth, NULL ) :
+    handle = fColor ? CreateBitmap32( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL ) :
                       CreateBitmap32( width, height, 1, 1, NULL );
     if (!handle) return 0;
 

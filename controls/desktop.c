@@ -4,14 +4,50 @@
  * Copyright 1994 Alexandre Julliard
  */
 
+#include "x11drv.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "win.h"
+
 #include "desktop.h"
 #include "heap.h"
+#include "monitor.h"
+#include "win.h"
 #include "wine/winuser16.h"
 
+/***********************************************************************
+ *              DESKTOP_GetScreenWidth
+ *
+ * Return the width of the screen associated to the current desktop.
+ */
+int DESKTOP_GetScreenWidth()
+{
+  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
+  return MONITOR_GetWidth(pDesktop->pPrimaryMonitor);
+}
+
+/***********************************************************************
+ *              DESKTOP_GetScreenHeight
+ *
+ * Return the height of the screen associated to the current desktop.
+ */
+int DESKTOP_GetScreenHeight()
+{
+  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
+  return MONITOR_GetHeight(pDesktop->pPrimaryMonitor);
+}
+
+/***********************************************************************
+ *              DESKTOP_GetScreenDepth
+ *
+ * Return the depth of the screen associated to the current desktop.
+ */
+int DESKTOP_GetScreenDepth()
+{
+  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
+  return MONITOR_GetDepth(pDesktop->pPrimaryMonitor);
+}
 
 /***********************************************************************
  *           DESKTOP_LoadBitmap
@@ -74,7 +110,7 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
  * Handle the WM_ERASEBKGND message.
  */
 static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
-                                     DESKTOPINFO *infoPtr )
+                                     DESKTOP *desktopPtr )
 {
     RECT32 rect;
     WND*   Wnd = WIN_FindWndPtr( hwnd );
@@ -86,40 +122,40 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */
 
-    if (!infoPtr->hbitmapWallPaper || 
-	(!infoPtr->fTileWallPaper && ((infoPtr->bitmapSize.cx < rect.right) ||
-	 (infoPtr->bitmapSize.cy < rect.bottom))))
+    if (!desktopPtr->hbitmapWallPaper || 
+	(!desktopPtr->fTileWallPaper && ((desktopPtr->bitmapSize.cx < rect.right) ||
+	 (desktopPtr->bitmapSize.cy < rect.bottom))))
     {
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor32( hdc, RGB(0,0,0) );
 	SetTextColor32( hdc, GetSysColor32(COLOR_BACKGROUND) );
-	FillRect32( hdc, &rect, infoPtr->hbrushPattern );
+	FillRect32( hdc, &rect, desktopPtr->hbrushPattern );
     }
 
       /* Paint wall paper */
 
-    if (infoPtr->hbitmapWallPaper)
+    if (desktopPtr->hbitmapWallPaper)
     {
 	INT32 x, y;
 	HDC32 hMemDC = CreateCompatibleDC32( hdc );
 	
-	SelectObject32( hMemDC, infoPtr->hbitmapWallPaper );
+	SelectObject32( hMemDC, desktopPtr->hbitmapWallPaper );
 
-	if (infoPtr->fTileWallPaper)
+	if (desktopPtr->fTileWallPaper)
 	{
-	    for (y = 0; y < rect.bottom; y += infoPtr->bitmapSize.cy)
-		for (x = 0; x < rect.right; x += infoPtr->bitmapSize.cx)
-		    BitBlt32( hdc, x, y, infoPtr->bitmapSize.cx,
-			      infoPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
+	    for (y = 0; y < rect.bottom; y += desktopPtr->bitmapSize.cy)
+		for (x = 0; x < rect.right; x += desktopPtr->bitmapSize.cx)
+		    BitBlt32( hdc, x, y, desktopPtr->bitmapSize.cx,
+			      desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
 	}
 	else
 	{
-	    x = (rect.left + rect.right - infoPtr->bitmapSize.cx) / 2;
-	    y = (rect.top + rect.bottom - infoPtr->bitmapSize.cy) / 2;
+	    x = (rect.left + rect.right - desktopPtr->bitmapSize.cx) / 2;
+	    y = (rect.top + rect.bottom - desktopPtr->bitmapSize.cy) / 2;
 	    if (x < 0) x = 0;
 	    if (y < 0) y = 0;
-	    BitBlt32( hdc, x, y, infoPtr->bitmapSize.cx,
-		      infoPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
+	    BitBlt32( hdc, x, y, desktopPtr->bitmapSize.cx,
+		      desktopPtr->bitmapSize.cy, hMemDC, 0, 0, SRCCOPY );
 	}
 	DeleteDC32( hMemDC );
     }
@@ -137,7 +173,7 @@ LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
                                WPARAM32 wParam, LPARAM lParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
 
       /* Most messages are ignored (we DON'T call DefWindowProc) */
 
@@ -146,15 +182,17 @@ LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
 	/* Warning: this message is sent directly by                     */
 	/* WIN_CreateDesktopWindow() and does not contain a valid lParam */
     case WM_NCCREATE:
-	infoPtr->hbrushPattern = 0;
-	infoPtr->hbitmapWallPaper = 0;
+	desktopPtr->hbrushPattern = 0;
+	desktopPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
 	SetDeskWallPaper32( (LPSTR)-1 );
 	return 1;
 	
     case WM_ERASEBKGND:
-	if (rootWindow == DefaultRootWindow(display)) return 1;
-	return DESKTOP_DoEraseBkgnd( hwnd, (HDC32)wParam, infoPtr );
+	if (X11DRV_WND_GetXRootWindow(wndPtr) == 
+	    DefaultRootWindow(display))
+	  return 1;
+	return DESKTOP_DoEraseBkgnd( hwnd, (HDC32)wParam, desktopPtr );
 
     case WM_SYSCOMMAND:
 	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
@@ -175,9 +213,9 @@ BOOL32 WINAPI PaintDesktop(HDC32 hdc)
 {
     HWND32 hwnd = GetDesktopWindow32();
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
 
-    return DESKTOP_DoEraseBkgnd( hwnd, hdc, infoPtr );
+    return DESKTOP_DoEraseBkgnd( hwnd, hdc, desktopPtr );
 }
 
 /***********************************************************************
@@ -211,7 +249,7 @@ BOOL32 WINAPI SetDeskWallPaper32( LPCSTR filename )
     HDC32 hdc;
     char buffer[256];
     WND *wndPtr = WIN_GetDesktop();
-    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
 
     if (filename == (LPSTR)-1)
     {
@@ -221,15 +259,15 @@ BOOL32 WINAPI SetDeskWallPaper32( LPCSTR filename )
     hdc = GetDC32( 0 );
     hbitmap = DESKTOP_LoadBitmap( hdc, filename );
     ReleaseDC32( 0, hdc );
-    if (infoPtr->hbitmapWallPaper) DeleteObject32( infoPtr->hbitmapWallPaper );
-    infoPtr->hbitmapWallPaper = hbitmap;
-    infoPtr->fTileWallPaper = GetProfileInt32A( "desktop", "TileWallPaper", 0 );
+    if (desktopPtr->hbitmapWallPaper) DeleteObject32( desktopPtr->hbitmapWallPaper );
+    desktopPtr->hbitmapWallPaper = hbitmap;
+    desktopPtr->fTileWallPaper = GetProfileInt32A( "desktop", "TileWallPaper", 0 );
     if (hbitmap)
     {
 	BITMAP32 bmp;
 	GetObject32A( hbitmap, sizeof(bmp), &bmp );
-	infoPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
-	infoPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
+	desktopPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
+	desktopPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
     }
     return TRUE;
 }
@@ -243,10 +281,10 @@ BOOL32 WINAPI SetDeskWallPaper32( LPCSTR filename )
 BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 {
     WND *wndPtr = WIN_GetDesktop();
-    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+    DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
     int pat[8];
 
-    if (infoPtr->hbrushPattern) DeleteObject32( infoPtr->hbrushPattern );
+    if (desktopPtr->hbrushPattern) DeleteObject32( desktopPtr->hbrushPattern );
     memset( pat, 0, sizeof(pat) );
     if (pattern && sscanf( pattern, " %d %d %d %d %d %d %d %d",
 			   &pat[0], &pat[1], &pat[2], &pat[3],
@@ -258,10 +296,10 @@ BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 
 	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
 	hbitmap = CreateBitmap32( 8, 8, 1, 1, (LPSTR)pattern );
-	infoPtr->hbrushPattern = CreatePatternBrush32( hbitmap );
+	desktopPtr->hbrushPattern = CreatePatternBrush32( hbitmap );
 	DeleteObject32( hbitmap );
     }
-    else infoPtr->hbrushPattern = CreateSolidBrush32( GetSysColor32(COLOR_BACKGROUND) );
+    else desktopPtr->hbrushPattern = CreateSolidBrush32( GetSysColor32(COLOR_BACKGROUND) );
     return TRUE;
 }
 

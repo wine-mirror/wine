@@ -11,11 +11,11 @@
 #include "wine/winuser16.h"
 
 #pragma pack(1)
-typedef struct _CURSORINFO
+typedef struct tagCURSORINFO
 {
     WORD wXMickeys;
     WORD wYMickeys;
-} CURSORINFO, *LPCURSORINFO;
+} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
 #pragma pack(4)
 
 typedef struct _MOUSE_DRIVER {

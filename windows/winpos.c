@@ -5,6 +5,8 @@
  *                       1995, 1996 Alex Korobka
  */
 
+#include "x11drv.h"
+
 #include <string.h>
 #include "sysmetrics.h"
 #include "heap.h"
@@ -20,7 +22,8 @@
 #include "dce.h"
 #include "nonclient.h"
 #include "debug.h"
-#include "x11drv.h"
+#include "local.h"
+#include "ldt.h"
 
 #define HAS_DLGFRAME(style,exStyle) \
     (((exStyle) & WS_EX_DLGMODALFRAME) || \
@@ -2120,7 +2123,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	   if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
 	 }
        }
-    else if (!((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+    else if (!X11DRV_WND_GetXWindow(wndPtr))
     {
          /* FIXME: the following optimization is no good for "X-ed" windows */
        if (hwndInsertAfter == HWND_TOP)
@@ -2177,20 +2180,20 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	if( wndPtr->parent == WIN_GetDesktop() )
 	    hwndInsertAfter = WINPOS_ReorderOwnedPopups( hwndInsertAfter,
 							 wndPtr, winpos.flags );
+        if (X11DRV_WND_GetXWindow(wndPtr))
 
-        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
         {
             WIN_UnlinkWindow( winpos.hwnd );
             WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
         }
-        else WINPOS_MoveWindowZOrder( winpos.hwnd, hwndInsertAfter );
+        else
+	  WINPOS_MoveWindowZOrder( winpos.hwnd, hwndInsertAfter );
     }
 
-    if ( !((X11DRV_WND_DATA *) wndPtr->pDriverData)->window && !(winpos.flags & SWP_NOREDRAW) && 
+    if ( !X11DRV_WND_GetXWindow(wndPtr) && !(winpos.flags & SWP_NOREDRAW) && 
 	((winpos.flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED)) 
 		      != (SWP_NOMOVE | SWP_NOSIZE)) )
           visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS);
-
 
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (winpos.flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
@@ -2234,7 +2237,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
     oldWindowRect = wndPtr->rectWindow;
 
-    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+    if (X11DRV_WND_GetXWindow(wndPtr))
     {
         RECT32 oldClientRect = wndPtr->rectClient;
 
@@ -2337,7 +2340,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if (flags & SWP_SHOWWINDOW)
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
-        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+        if (X11DRV_WND_GetXWindow(wndPtr))
         {
 	    HWND32 focus, curr;
 
@@ -2371,8 +2374,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     else if (flags & SWP_HIDEWINDOW)
     {
         wndPtr->dwStyle &= ~WS_VISIBLE;
-
-        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+        if (X11DRV_WND_GetXWindow(wndPtr))
         {
 	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, uFlags & SMC_SETXPOS );
 	    if( uFlags & SMC_SETXPOS )
@@ -2402,7 +2404,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     
       /* Repaint the window */
 
-    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+    if (X11DRV_WND_GetXWindow(wndPtr))
         EVENT_Synchronize();  /* Wait for all expose events */
 
     if (!GetCapture32())

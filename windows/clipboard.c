@@ -22,7 +22,11 @@
 #include "xmalloc.h"
 #include "debug.h"
 
+#ifndef X_DISPLAY_MISSING
 extern CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
+#else /* X_DISPLAY_MISSING */
+extern CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
+#endif /* X_DISPLAY_MISSING */
 
 #define  CF_REGFORMATBASE 	0xC000
 
@@ -75,7 +79,11 @@ static LPCLIPFORMAT __lookup_format( LPCLIPFORMAT lpFormat, WORD wID )
  */
 CLIPBOARD_DRIVER *CLIPBOARD_GetDriver()
 {
-    return &X11DRV_CLIPBOARD_Driver;
+#ifndef X_DISPLAY_MISSING
+  return &X11DRV_CLIPBOARD_Driver;
+#else /* X_DISPLAY_MISSING */
+  return &TTYDRV_CLIPBOARD_Driver;
+#endif /* X_DISPLAY_MISSING */
 };
 
 /**************************************************************************

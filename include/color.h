@@ -3,7 +3,6 @@
 
 #include "palette.h"
 #include "gdi.h"
-#include "x11drv.h"
 
 #define COLOR_FIXED     0x0001          /* read-only colormap - have to use XAllocColor (if not virtual)*/
 #define COLOR_VIRTUAL   0x0002          /* no mapping needed - pixel == pixel color */
@@ -21,7 +20,6 @@ extern COLORREF	  COLOR_ToLogical(int pixel);
 extern int 	  COLOR_ToPhysical( DC *dc, COLORREF color );
 extern int 	  COLOR_SetMapping( PALETTEOBJ* pal, UINT32 uStart, UINT32 uNum, BOOL32 mapOnly );
 extern BOOL32 	  COLOR_IsSolid( COLORREF color );
-extern Colormap	  COLOR_GetColormap(void);
 extern UINT16	  COLOR_GetSystemPaletteSize(void);
 extern UINT16	  COLOR_GetSystemPaletteFlags(void);
 extern const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void);

@@ -11,7 +11,11 @@
 #include "mouse.h"
 #include "debug.h"
 #include "debugtools.h"
-#include "x11drv.h"
+#include "desktop.h"
+
+/**********************************************************************/
+
+extern BOOL32 X11DRV_MOUSE_DisableWarpPointer;
 
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
@@ -55,7 +59,6 @@ VOID WINAPI MOUSE_Disable(VOID)
 void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                       DWORD keyState, DWORD time, HWND32 hWnd )
 {
-    extern BOOL32 DISPLAY_DisableWarpPointer;
     WINE_MOUSEEVENT wme;
 
     if ( !DefMouseEventProc ) return;
@@ -63,16 +66,16 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     TRACE( event, "(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
 
     mouseStatus |= MOUSEEVENTF_ABSOLUTE;
-    posX = (((long)posX << 16) + screenWidth-1)  / screenWidth;
-    posY = (((long)posY << 16) + screenHeight-1) / screenHeight;
+    posX = (((long)posX << 16) + DESKTOP_GetScreenWidth()-1)  / DESKTOP_GetScreenWidth();
+    posY = (((long)posY << 16) + DESKTOP_GetScreenHeight()-1) / DESKTOP_GetScreenHeight();
 
     wme.magic    = WINE_MOUSEEVENT_MAGIC;
     wme.keyState = keyState;
     wme.time     = time;
     wme.hWnd     = hWnd;
 
-    DISPLAY_DisableWarpPointer = TRUE;
+    X11DRV_MOUSE_DisableWarpPointer = TRUE;
     DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
-    DISPLAY_DisableWarpPointer = FALSE;
+    X11DRV_MOUSE_DisableWarpPointer = FALSE;
 }
 

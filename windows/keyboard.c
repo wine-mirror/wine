@@ -9,6 +9,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -26,14 +28,22 @@
 static LPKEYBD_EVENT_PROC DefKeybEventProc = NULL;
 LPBYTE pKeyStateTable = NULL;
 
+#ifndef X_DISPLAY_MISSING
 extern KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
+#else /* X_DISPLAY_MISSING */
+extern KEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver;
+#endif /* X_DISPLAY_MISSING */
 
 /***********************************************************************
  *           KEYBOARD_GetDriver
  */
 KEYBOARD_DRIVER *KEYBOARD_GetDriver()
 {
+#ifndef X_DISPLAY_MISSING
   return &X11DRV_KEYBOARD_Driver;
+#else /* X_DISPLAY_MISSING */
+  return &TTYDRV_KEYBOARD_Driver;
+#endif /* X_DISPLAY_MISSING */
 }
 
 /***********************************************************************

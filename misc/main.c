@@ -4,19 +4,23 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#include <signal.h>
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+#include "ts_xlib.h"
+#include "x11drv.h"
+#else /* X_DISPLAY_MISSING */
+#include "ttydrv.h"
+#endif /* X_DISPLAY_MISSING */
+
+#include <locale.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
 #ifdef MALLOC_DEBUGGING
 # include <malloc.h>
 #endif
-#include "ts_xlib.h"
-#include "ts_xresource.h"
-#include "ts_xutil.h"
-#include <X11/Xlocale.h>
-#include <X11/cursorfont.h>
 #include "winsock.h"
 #include "heap.h"
 #include "message.h"
@@ -25,7 +29,6 @@
 #include "color.h"
 #include "options.h"
 #include "desktop.h"
-#include "process.h"
 #include "shell.h"
 #include "winbase.h"
 #include "builtin32.h"
@@ -34,8 +37,8 @@
 #include "xmalloc.h"
 #include "version.h"
 #include "winnls.h"
-#include "x11drv.h"
 #include "console.h"
+#include "monitor.h"
 
 /* when adding new languages look at ole/ole2nls.c 
  * for proper iso name and Windows code (add 0x0400 
@@ -64,18 +67,10 @@ const WINE_LANGUAGE_DEF Languages[] =
 
 WORD WINE_LanguageId = 0x409;	/* english as default */
 
-#define WINE_CLASS    "Wine"    /* Class name for resources */
-
-#define WINE_APP_DEFAULTS "/usr/lib/X11/app-defaults/Wine"
-
-Display *display;
-Screen *screen;
-Window rootWindow;
-int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
-int screenDepth = 0;  /* Screen depth to use */
-
 struct options Options =
 {  /* default options */
+    0,              /* argc */
+    NULL,           /* argv */
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
     NULL,           /* argv0 */
@@ -97,79 +92,52 @@ struct options Options =
     FALSE,          /* Perfect graphics */
     FALSE,          /* No DGA */
     NULL,           /* Alternate config file name */
-    NULL	    /* Console driver list */
+    NULL,	    /* Console driver list */
+    0               /* screenDepth */
 };
 
-
-static XrmOptionDescRec optionsTable[] =
-{
-    { "-backingstore",  ".backingstore",    XrmoptionNoArg,  (caddr_t)"on" },
-    { "-desktop",       ".desktop",         XrmoptionSepArg, (caddr_t)NULL },
-    { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
-    { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
-    { "-iconic",        ".iconic",          XrmoptionNoArg,  (caddr_t)"on" },
-    { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
-    { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
-    { "-perfect",       ".perfect",         XrmoptionNoArg,  (caddr_t)"on" },
-    { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
-    { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)"on" },
-    { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
-    { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
-    { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
-    { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
-    { "-failreadonly",  ".failreadonly",    XrmoptionNoArg,  (caddr_t)"on" },
-    { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
-    { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
-    { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
-    { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
-    { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL },
-    { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
-};
-
-#define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
-
-#define USAGE \
-  "%s\n" \
-  "Usage:  %s [options] \"program_name [arguments]\"\n" \
-  "\n" \
-  "Options:\n" \
-  "    -backingstore   Turn on backing store\n" \
-  "    -config name    Specify config file to use\n" \
-  "    -console driver Select which driver(s) to use for the console\n" \
-  "    -debug          Enter debugger before starting application\n" \
-  "    -debugmsg name  Turn debugging-messages on or off\n" \
-  "    -depth n        Change the depth to use for multiple-depth screens\n" \
-  "    -desktop geom   Use a desktop window of the given geometry\n" \
-  "    -display name   Use the specified display\n" \
-  "    -dll name       Enable or disable built-in DLLs\n" \
-  "    -failreadonly   Read only files may not be opened in write mode\n" \
-  "    -fixedmap       Use a \"standard\" color map\n" \
-  "    -help           Show this help message\n" \
-  "    -iconic         Start as an icon\n" \
-  "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n                    Ko,No,Pl,Pt,Sv)\n" \
-  "    -managed        Allow the window manager to manage created windows\n" \
-  "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
-  "    -name name      Set the application name\n" \
-  "    -nodga          Disable XFree86 DGA extensions\n" \
-  "    -perfect        Favor correctness over speed for graphical operations\n" \
-  "    -privatemap     Use a private color map\n" \
-  "    -synchronous    Turn on synchronous display mode\n" \
-  "    -version        Display the Wine version\n" \
-  "    -winver         Windows version to imitate (one of win31,win95,nt351,nt40)\n" \
+static char szUsage[] =
+  "%s\n"
+  "Usage:  %s [options] \"program_name [arguments]\"\n"
+#ifndef X_DISPLAY_MISSING
+  "\n"
+  "Options:\n"
+  "    -backingstore   Turn on backing store\n"
+  "    -config name    Specify config file to use\n"
+  "    -console driver Select which driver(s) to use for the console\n"
+  "    -debug          Enter debugger before starting application\n"
+  "    -debugmsg name  Turn debugging-messages on or off\n"
+  "    -depth n        Change the depth to use for multiple-depth screens\n"
+  "    -desktop geom   Use a desktop window of the given geometry\n"
+  "    -display name   Use the specified display\n"
+  "    -dll name       Enable or disable built-in DLLs\n"
+  "    -failreadonly   Read only files may not be opened in write mode\n"
+  "    -fixedmap       Use a \"standard\" color map\n"
+  "    -help           Show this help message\n"
+  "    -iconic         Start as an icon\n"
+  "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n"
+  "                    Ko,No,Pl,Pt,Sv)\n"
+  "    -managed        Allow the window manager to manage created windows\n"
+  "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
+  "    -name name      Set the application name\n"
+  "    -nodga          Disable XFree86 DGA extensions\n"
+  "    -perfect        Favor correctness over speed for graphical operations\n"
+  "    -privatemap     Use a private color map\n"
+  "    -synchronous    Turn on synchronous display mode\n"
+  "    -version        Display the Wine version\n"
+  "    -winver         Version to imitate (one of win31,win95,nt351,nt40)\n"
   "    -dosver         DOS version to imitate (x.xx, e.g. 6.22). Only valid with -winver win31\n"
-
-
+#endif /* X_DISPLAY_MISSING */
+  ;
 
 /***********************************************************************
  *           MAIN_Usage
  */
 void MAIN_Usage( char *name )
 {
-    MSG( USAGE, WINE_RELEASE_INFO, name );
+    MSG( szUsage, WINE_RELEASE_INFO, name );
     exit(1);
 }
-
 
 /***********************************************************************
  *           MAIN_GetProgramName
@@ -191,33 +159,6 @@ static char *MAIN_GetProgramName( int argc, char *argv[] )
     return argv[0];
 }
 
-
-/***********************************************************************
- *           MAIN_GetResource
- *
- * Fetch the value of resource 'name' using the correct instance name.
- * 'name' must begin with '.' or '*'
- */
-static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
-{
-    char *buff_instance, *buff_class;
-    char *dummy;
-    int retval;
-
-    buff_instance = (char *)xmalloc(strlen(Options.programName)+strlen(name)+1);
-    buff_class    = (char *)xmalloc( strlen(WINE_CLASS) + strlen(name) + 1 );
-
-    strcpy( buff_instance, Options.programName );
-    strcat( buff_instance, name );
-    strcpy( buff_class, WINE_CLASS );
-    strcat( buff_class, name );
-    retval = TSXrmGetResource( db, buff_instance, buff_class, &dummy, value );
-    free( buff_instance );
-    free( buff_class );
-    return retval;
-}
-
-
 /***********************************************************************
  *          MAIN_ParseDebugOptions
  *
@@ -235,6 +176,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
   extern char **debug_snoop_includelist;
   extern char **debug_snoop_excludelist;
 
+  int i;
   int l, cls, dotracerelay = TRACE_ON(relay);
 
   l = strlen(options);
@@ -250,10 +192,10 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
 	if(!lstrncmpi32A(options, debug_cl_name[j], strlen(debug_cl_name[j])))
 	  break;
       if(j==DEBUG_CLASS_COUNT)
-	return FALSE;
+	goto error;
       options += strlen(debug_cl_name[j]);
       if ((*options!='+')&&(*options!='-'))
-	return FALSE;
+	goto error;
       cls = j;
     }
     else
@@ -287,7 +229,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
 	  }
 	/* should never happen, maybe assert(i!=DEBUG_CHANNEL_COUNT)? */
 	if (i==DEBUG_CHANNEL_COUNT)
-	  return FALSE;
+	  goto error;
 	output = (*options == '+') ?
 			((*(options+1) == 'r') ?
 				&debug_relay_includelist :
@@ -326,7 +268,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
 	    break;
 	  }
 	if (i==DEBUG_CHANNEL_COUNT)
-	  return FALSE;
+	  goto error;
       }
     options+=l;
   }
@@ -336,10 +278,33 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
   if (dotracerelay != TRACE_ON(relay))
   	BUILTIN32_SwitchRelayDebug( TRACE_ON(relay) );
 
-  if (*options)
-    return FALSE;
-  else
+  if (!*options)
     return TRUE;
+
+ error:  
+  MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
+      "-debugmsg [class]-xxx,...\n",Options.argv[0]);
+  MSG("Example: -debugmsg +all,warn-heap\n"
+      "  turn on all messages except warning heap messages\n");
+  MSG("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
+      "  turn on -debugmsg +relay only as specified\n"
+      "Special case: -debugmsg -relay=DLL:DLL.###:FuncName\n"
+      "  turn on -debugmsg +relay except as specified\n"
+      "Also permitted, +snoop=..., -snoop=... as with relay.\n\n");
+  
+  MSG("Available message classes:\n");
+  for(i=0;i<DEBUG_CLASS_COUNT;i++)
+    MSG( "%-9s", debug_cl_name[i]);
+  MSG("\n\n");
+  
+  MSG("Available message types:\n");
+  MSG("%-9s ","all");
+  for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
+    if(debug_ch_name[i])
+      MSG("%-9s%c",debug_ch_name[i],
+	  (((i+2)%8==0)?'\n':' '));
+  MSG("\n\n");
+  exit(1);
 }
 
 /***********************************************************************
@@ -697,7 +662,7 @@ end_MAIN_GetLanguageID:
  *
  * Parse -language option.
  */
-static void MAIN_ParseLanguageOption( char *arg )
+void MAIN_ParseLanguageOption( char *arg )
 {
     const WINE_LANGUAGE_DEF *p = Languages;
 
@@ -728,7 +693,7 @@ static void MAIN_ParseLanguageOption( char *arg )
  *
  * Parse -mode option.
  */
-static void MAIN_ParseModeOption( char *arg )
+void MAIN_ParseModeOption( char *arg )
 {
     if (!lstrcmpi32A("enhanced", arg)) Options.mode = MODE_ENHANCED;
     else if (!lstrcmpi32A("standard", arg)) Options.mode = MODE_STANDARD;
@@ -747,22 +712,18 @@ static void MAIN_ParseModeOption( char *arg )
  */
 static void MAIN_ParseOptions( int *argc, char *argv[] )
 {
-    char *display_name = NULL;
-    XrmValue value;
-    XrmDatabase db = TSXrmGetFileDatabase(WINE_APP_DEFAULTS);
     int i;
-    char *xrm_string;
 
+    Options.argc = argc;
+    Options.argv = argv;
     Options.programName = MAIN_GetProgramName( *argc, argv );
     Options.argv0 = argv[0];
 
     /* initialise Options.language to 0 to tell "no language choosen yet" */
     Options.language = 0;
   
-      /* Get display name from command line */
     for (i = 1; i < *argc; i++)
     {
-        if (!strcmp( argv[i], "-display" )) display_name = argv[i+1];
         if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
         {
             MSG( "%s\n", WINE_RELEASE_INFO );
@@ -775,261 +736,30 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         }
     }
 
-      /* Open display */
+#ifndef X_DISPLAY_MISSING
+    X11DRV_MAIN_ParseOptions(argc,argv);
+#else /* X_DISPLAY_MISSING */
+    TTYDRV_MAIN_ParseOptions(argc,argv);
+#endif /* X_DISPLAY_MISSING */
 
-    if (display_name == NULL &&
-	MAIN_GetResource( db, ".display", &value )) display_name = value.addr;
-
-    if (!(display = TSXOpenDisplay( display_name )))
-    {
-	MSG( "%s: Can't open display: %s\n",
-		 argv[0], display_name ? display_name : "(none specified)" );
-	exit(1);
-    }
-
-    /* tell the libX11 that we will do input method handling ourselves
-     * that keep libX11 from doing anything whith dead keys, allowing Wine
-     * to have total control over dead keys, that is this line allows
-     * them to work in Wine, even whith a libX11 including the dead key
-     * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
-     */
-    TSXOpenIM(display,NULL,NULL,NULL);
-
-      /* Merge file and screen databases */
-    if ((xrm_string = TSXResourceManagerString( display )) != NULL)
-    {
-        XrmDatabase display_db = TSXrmGetStringDatabase( xrm_string );
-        TSXrmMergeDatabases( display_db, &db );
-    }
-
-      /* Parse command line */
-    TSXrmParseCommand( &db, optionsTable, NB_OPTIONS,
-		     Options.programName, argc, argv );
-
-      /* Get all options */
-    if (MAIN_GetResource( db, ".iconic", &value ))
-	Options.cmdShow = SW_SHOWMINIMIZED;
-    if (MAIN_GetResource( db, ".privatemap", &value ))
-	Options.usePrivateMap = TRUE;
-    if (MAIN_GetResource( db, ".fixedmap", &value ))
-	Options.useFixedMap = TRUE;
-    if (MAIN_GetResource( db, ".synchronous", &value ))
-	Options.synchronous = TRUE;
-    if (MAIN_GetResource( db, ".backingstore", &value ))
-	Options.backingstore = TRUE;	
-    if (MAIN_GetResource( db, ".debug", &value ))
-	Options.debug = TRUE;
-    if (MAIN_GetResource( db, ".failreadonly", &value ))
-        Options.failReadOnly = TRUE;
-    if (MAIN_GetResource( db, ".perfect", &value ))
-	Options.perfectGraphics = TRUE;
-    if (MAIN_GetResource( db, ".depth", &value))
-	screenDepth = atoi( value.addr );
-    if (MAIN_GetResource( db, ".desktop", &value))
-	Options.desktopGeometry = value.addr;
-    if (MAIN_GetResource( db, ".language", &value))
-        MAIN_ParseLanguageOption( (char *)value.addr );
-    if (MAIN_GetResource( db, ".managed", &value))
-        Options.managed = TRUE;
-    if (MAIN_GetResource( db, ".mode", &value))
-        MAIN_ParseModeOption( (char *)value.addr );
-    if (MAIN_GetResource( db, ".debugoptions", &value))
-	MAIN_ParseDebugOptions((char*)value.addr);
-    if (MAIN_GetResource( db, ".debugmsg", &value))
-      {
-#ifndef DEBUG_RUNTIME
-	MSG("%s: Option \"-debugmsg\" not implemented.\n" \
-          "    Recompile with DEBUG_RUNTIME in include/debugtools.h defined.\n",
-	  argv[0]);
-	exit(1);
-#else
-	if (MAIN_ParseDebugOptions((char*)value.addr)==FALSE)
-	  {
-	    int i;
-	    MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
-		    "-debugmsg [class]-xxx,...\n",argv[0]);
-	    MSG("Example: -debugmsg +all,warn-heap\n"
-		    "  turn on all messages except warning heap messages\n");
-	    MSG("Special case: -debugmsg +relay=DLL:DLL.###:FuncName\n"
-		"  turn on -debugmsg +relay only as specified\n"
-		"Special case: -debugmsg -relay=DLL:DLL.###:FuncName\n"
-		"  turn on -debugmsg +relay except as specified\n"
-		"Also permitted, +snoop=..., -snoop=... as with relay.\n\n");
-
-	    MSG("Available message classes:\n");
-	    for(i=0;i<DEBUG_CLASS_COUNT;i++)
-	      MSG( "%-9s", debug_cl_name[i]);
-	    MSG("\n\n");
-
-	    MSG("Available message types:\n");
-	    MSG("%-9s ","all");
-	    for(i=0;i<DEBUG_CHANNEL_COUNT;i++)
-	      if(debug_ch_name[i])
-		MSG("%-9s%c",debug_ch_name[i],
-			(((i+2)%8==0)?'\n':' '));
-	    MSG("\n\n");
-	    exit(1);
-	  }
-#endif
-      }
-
-      if (MAIN_GetResource( db, ".dll", &value))
-      {
-          /* Hack: store option value in Options to be retrieved */
-          /* later on inside the emulator code. */
-          if (!__winelib)
-                        {
-                                if (Options.dllFlags)
-                                {
-                                        /* don't overwrite previous value. Should we
-                                         * automatically add the ',' between multiple DLLs ?
-                                         */
-                                        MSG("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
-                                }
-                                else
-                                {
-                                        Options.dllFlags = xstrdup((char *)value.addr);
-                                }
-                        }
-          else
-          {
-              MSG("-dll not supported in Winelib\n" );
-              exit(1);
-          }
-      }
-
-      if (MAIN_GetResource( db, ".winver", &value))
-          VERSION_ParseWinVersion( (char*)value.addr );
-      if (MAIN_GetResource( db, ".dosver", &value))
-          VERSION_ParseDosVersion( (char*)value.addr );
-      if (MAIN_GetResource( db, ".config", &value))
-         Options.configFileName = xstrdup((char *)value.addr);
-      if (MAIN_GetResource( db, ".nodga", &value))
-	 Options.noDGA = TRUE;
-      if (MAIN_GetResource( db, ".console", &value))
-         Options.consoleDrivers = xstrdup((char *)value.addr);
-      else
-         Options.consoleDrivers = CONSOLE_DEFAULT_DRIVER;
-
-      CONSOLE_Init(Options.consoleDrivers);
+    CONSOLE_Init(Options.consoleDrivers);
 }
-
-
-/***********************************************************************
- *           MAIN_CreateDesktop
- */
-static void MAIN_CreateDesktop( int argc, char *argv[] )
-{
-    int x, y, flags;
-    unsigned int width = 640, height = 480;  /* Default size = 640x480 */
-    char *name = "Wine desktop";
-    XSizeHints *size_hints;
-    XWMHints   *wm_hints;
-    XClassHint *class_hints;
-    XSetWindowAttributes win_attr;
-    XTextProperty window_name;
-    Atom XA_WM_DELETE_WINDOW;
-
-    flags = TSXParseGeometry( Options.desktopGeometry, &x, &y, &width, &height );
-    screenWidth  = width;
-    screenHeight = height;
-
-      /* Create window */
-
-    win_attr.background_pixel = BlackPixel(display,0);
-    win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-	                 PointerMotionMask | ButtonPressMask |
-			 ButtonReleaseMask | EnterWindowMask;
-    win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
-
-    rootWindow = TSXCreateWindow( display, DefaultRootWindow(display),
-			        x, y, width, height, 0,
-			        CopyFromParent, InputOutput, CopyFromParent,
-			        CWBackPixel | CWEventMask | CWCursor, &win_attr );
-
-      /* Set window manager properties */
-
-    size_hints  = TSXAllocSizeHints();
-    wm_hints    = TSXAllocWMHints();
-    class_hints = TSXAllocClassHint();
-    if (!size_hints || !wm_hints || !class_hints)
-    {
-        MSG("Not enough memory for window manager hints.\n" );
-        exit(1);
-    }
-    size_hints->min_width = size_hints->max_width = width;
-    size_hints->min_height = size_hints->max_height = height;
-    size_hints->flags = PMinSize | PMaxSize;
-    if (flags & (XValue | YValue)) size_hints->flags |= USPosition;
-    if (flags & (WidthValue | HeightValue)) size_hints->flags |= USSize;
-    else size_hints->flags |= PSize;
-
-    wm_hints->flags = InputHint | StateHint;
-    wm_hints->input = True;
-    wm_hints->initial_state = NormalState;
-    class_hints->res_name = argv[0];
-    class_hints->res_class = "Wine";
-
-    TSXStringListToTextProperty( &name, 1, &window_name );
-    TSXSetWMProperties( display, rootWindow, &window_name, &window_name,
-                      argv, argc, size_hints, wm_hints, class_hints );
-    XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
-    TSXSetWMProtocols( display, rootWindow, &XA_WM_DELETE_WINDOW, 1 );
-    TSXFree( size_hints );
-    TSXFree( wm_hints );
-    TSXFree( class_hints );
-
-      /* Map window */
-
-    TSXMapWindow( display, rootWindow );
-}
-
-
-XKeyboardState keyboard_state;
-
-/***********************************************************************
- *           MAIN_SaveSetup
- */
-static void MAIN_SaveSetup(void)
-{
-    TSXGetKeyboardControl(display, &keyboard_state);
-}
-
-/***********************************************************************
- *           MAIN_RestoreSetup
- */
-static void MAIN_RestoreSetup(void)
-{
-    XKeyboardControl keyboard_value;
-
-    keyboard_value.key_click_percent	= keyboard_state.key_click_percent;
-    keyboard_value.bell_percent 	= keyboard_state.bell_percent;
-    keyboard_value.bell_pitch		= keyboard_state.bell_pitch;
-    keyboard_value.bell_duration	= keyboard_state.bell_duration;
-    keyboard_value.auto_repeat_mode	= keyboard_state.global_auto_repeat;
-
-    XChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
-    	KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
-}
-
 
 /***********************************************************************
  *           called_at_exit
  */
 static void called_at_exit(void)
 {
-    MAIN_RestoreSetup();
+#ifndef X_DISPLAY_MISSING
+    X11DRV_MAIN_RestoreSetup();
+#else /* X_DISPLAY_MISSING */
+    TTYDRV_MAIN_RestoreSetup();
+#endif /* X_DISPLAY_MISSING */
     COLOR_Cleanup();
     WINSOCK_Shutdown();
     /* FIXME: should check for other processes or threads */
     DeleteCriticalSection( HEAP_SystemLock );
     CONSOLE_Close();
-}
-
-static int WINE_X11_ErrorHandler(Display *display,XErrorEvent *error_evt)
-{
-    kill( getpid(), SIGHUP ); /* force an entry in the debugger */
-    return 0;
 }
 
 /***********************************************************************
@@ -1039,8 +769,6 @@ static int WINE_X11_ErrorHandler(Display *display,XErrorEvent *error_evt)
  */
 BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 {    
-    int depth_count, i;
-    int *depth_list;
     struct timeval tv;
 
 #ifdef MALLOC_DEBUGGING
@@ -1064,56 +792,29 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     setlocale(LC_CTYPE,"");
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-
-    /* We need this before calling any Xlib function */
-    InitializeCriticalSection( &X11DRV_CritSection );
-    MakeCriticalSectionGlobal( &X11DRV_CritSection );
-
-    TSXrmInitialize();
-
-    putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
-
+    
+#ifndef X_DISPLAY_MISSING
+    X11DRV_MAIN_Initialize();
     MAIN_ParseOptions( argc, argv );
+    X11DRV_MAIN_Create();
+    X11DRV_MAIN_SaveSetup();
+#else /* !defined(X_DISPLAY_MISSING) */
+    TTYDRV_MAIN_Initialize();
+    MAIN_ParseOptions( argc, argv );
+    TTYDRV_MAIN_Create();
+    TTYDRV_MAIN_SaveSetup();
+#endif /* !defined(X_DISPLAY_MISSING) */
 
-    if (Options.synchronous) XSetErrorHandler( WINE_X11_ErrorHandler );
+#ifndef X_DISPLAY_MISSING
+    MONITOR_PrimaryMonitor.pDriver = &X11DRV_MONITOR_Driver;
+#else /* !defined(X_DISPLAY_MISSING) */
+    MONITOR_PrimaryMonitor.pDriver = &TTYDRV_MONITOR_Driver;
+#endif /* !defined(X_DISPLAY_MISSING) */
+    MONITOR_Initialize(&MONITOR_PrimaryMonitor);
 
-    if (Options.desktopGeometry && Options.managed)
-    {
-#if 0
-        MSG( "%s: -managed and -desktop options cannot be used together\n",
-                 Options.programName );
-        exit(1);
-#else
-        Options.managed = FALSE;
-#endif
-    }
-
-    screen       = DefaultScreenOfDisplay( display );
-    screenWidth  = WidthOfScreen( screen );
-    screenHeight = HeightOfScreen( screen );
-    if (screenDepth)  /* -depth option specified */
-    {
-	depth_list = TSXListDepths(display,DefaultScreen(display),&depth_count);
-	for (i = 0; i < depth_count; i++)
-	    if (depth_list[i] == screenDepth) break;
-	TSXFree( depth_list );
-	if (i >= depth_count)
-	{
-	    MSG( "%s: Depth %d not supported on this screen.\n",
-		              Options.programName, screenDepth );
-	    exit(1);
-	}
-    }
-    else screenDepth  = DefaultDepthOfScreen( screen );
-    if (Options.synchronous) TSXSynchronize( display, True );
-    if (Options.desktopGeometry) MAIN_CreateDesktop( *argc, argv );
-    else rootWindow = DefaultRootWindow( display );
-
-    MAIN_SaveSetup();
     atexit(called_at_exit);
     return TRUE;
 }
-
 
 /***********************************************************************
  *           MessageBeep16   (USER.104)
@@ -1159,7 +860,8 @@ LONG WINAPI GetTimerResolution(void)
 BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
                                        LPVOID lpvParam, UINT32 fuWinIni )
 {
-	int timeout, temp;
+	int timeout;
+	int temp;
 	XKeyboardState		keyboard_state;
 
 	switch (uAction) {
@@ -1217,8 +919,11 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		break;
 
 	case SPI_GETSCREENSAVETIMEOUT:
-	/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
-		TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+#ifndef X_DISPLAY_MISSING
+	        TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+#else /* X_DISPLAY_MISSING */
+		timeout = GetProfileInt32A( "windows", "ScreenSaveTimeout", 300 );
+#endif /* X_DISPLAY_MISSING */
 		*(INT32 *) lpvParam = timeout * 1000;
 		break;
 
@@ -1340,11 +1045,11 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                                       LPVOID lpvParam, UINT16 fuWinIni )
 {
-	int timeout, temp;
+	int timeout; 
 	char buffer[256];
+	int temp;
 	XKeyboardState		keyboard_state;
 	XKeyboardControl	keyboard_value;
-
 
 	switch (uAction)
         {
@@ -1402,8 +1107,11 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
-			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
+#ifndef X_DISPLAY_MISSING
 			TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+#else /* X_DISPLAY_MISSING */
+			timeout = GetProfileInt32A( "windows", "ScreenSaveTimeout", 300 );
+#endif /* X_DISPLAY_MISSING */
 			*(INT16 *) lpvParam = timeout;
 			break;
 

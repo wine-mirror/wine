@@ -15,6 +15,7 @@
 #include "palette.h"
 #include "xmalloc.h"
 #include "debug.h"
+#include "wine/winuser16.h"
 
 FARPROC32 pfnSelectPalette = NULL;
 FARPROC32 pfnRealizePalette = NULL;

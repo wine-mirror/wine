@@ -5,11 +5,13 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include <math.h>
-#include <stdlib.h>
+#include <X11/Intrinsic.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"
-#include <X11/Intrinsic.h>
+#include "x11drv.h"
+
+#include <math.h>
+#include <stdlib.h>
 #ifndef PI
 #define PI M_PI
 #endif
@@ -19,13 +21,14 @@
 #include "callback.h"
 #include "heap.h"
 #include "metafile.h"
+#include "monitor.h"
 #include "palette.h"
 #include "cache.h"
 #include "region.h"
 #include "path.h"
 #include "debug.h"
 #include "winerror.h"
-#include "x11drv.h"
+
 
 /***********************************************************************
  *           LineTo16    (GDI.19)
@@ -681,7 +684,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     oldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
     /* Hack: make sure the XORPEN operation has an effect */
-    physDev->pen.pixel = (1 << screenDepth) - 1;
+    physDev->pen.pixel = (1 << MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) - 1;
 
     if (X11DRV_SetupGCForPen( dc ))
 	TSXDrawRectangle( display, physDev->drawable, physDev->gc,

@@ -5,6 +5,9 @@
  *
  */
 
+#include "ts_xlib.h"
+#include "x11drv.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include "dc.h"
@@ -14,8 +17,7 @@
 #include "debug.h"
 #include "font.h"
 #include "winerror.h"
-#include "x11drv.h"
-#include "ts_xlib.h"
+#include "wine/winuser16.h"
 
 /***********************************************************************
  *           DC_Init_DC_INFO

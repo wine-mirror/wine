@@ -7,9 +7,9 @@
 #ifndef __WINE_BITMAP_H
 #define __WINE_BITMAP_H
 
+#include <X11/Xlib.h>
+
 #include "gdi.h"
-#include "ts_xlib.h"
-#include "ts_xutil.h"
 
   /* Additional info for DIB section objects */
 typedef struct

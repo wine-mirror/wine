@@ -5,18 +5,28 @@
  *
  */
 
+#include "config.h"
+
 #include "debug.h"
 #include "display.h"
 #include "wintypes.h"
 
+#ifndef X_DISPLAY_MISSING
 extern MOUSE_DRIVER X11DRV_MOUSE_Driver;
+#else /* X_DISPLAY_MISSING */
+extern MOUSE_DRIVER TTYDRV_MOUSE_Driver;
+#endif /* X_DISPLAY_MISSING */
 
 /***********************************************************************
  *           MOUSE_GetDriver()
  */
 MOUSE_DRIVER *MOUSE_GetDriver()
 {
+#ifndef X_DISPLAY_MISSING
   return &X11DRV_MOUSE_Driver;
+#else /* X_DISPLAY_MISSING */
+  return &TTYDRV_MOUSE_Driver;
+#endif /* X_DISPLAY_MISSING */
 }
 
 /***********************************************************************

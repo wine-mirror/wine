@@ -7,14 +7,9 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include "config.h"
-
-#ifndef X_DISPLAY_MISSING
-#include <X11/Xlib.h>
-#endif /* !defined(X_DISPLAY_MISSING) */
-
-#include "ldt.h"
 #include "class.h"
+#include "ldt.h"
+#include "windows.h"
 #include "winproc.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
@@ -54,6 +49,7 @@ typedef enum
 #define RDW_C_USEHRGN		0x0001
 #define RDW_C_DELETEHRGN	0x0002
 
+struct tagCLASS;
 struct tagDCE;
 struct tagDC;
 struct _WND_DRIVER;
@@ -64,7 +60,7 @@ typedef struct tagWND
     struct tagWND *child;         /* First child */
     struct tagWND *parent;        /* Window parent (from CreateWindow) */
     struct tagWND *owner;         /* Window owner */
-    CLASS         *class;         /* Window class */
+    struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND32         hwndSelf;      /* Handle of this window */
@@ -84,9 +80,6 @@ typedef struct tagWND
     UINT32         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     WORD           flags;         /* Misc. flags (see below) */
-#if 0
-    Window         window;        /* X window (only for top-level windows) */
-#endif
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     DWORD          userdata;      /* User private data */
     struct _WND_DRIVER *pDriver;  /* Window driver */
@@ -98,8 +91,8 @@ typedef struct _WND_DRIVER
 {
     void   (*pInitialize)(WND *);
     void   (*pFinalize)(WND *);
-    BOOL32 (*pCreateDesktopWindow)(WND *, CLASS *, BOOL32);
-    BOOL32 (*pCreateWindow)(WND *, CLASS *, CREATESTRUCT32A *, BOOL32);
+    BOOL32 (*pCreateDesktopWindow)(WND *, struct tagCLASS *, BOOL32);
+    BOOL32 (*pCreateWindow)(WND *, struct tagCLASS *, CREATESTRUCT32A *, BOOL32);
     BOOL32 (*pDestroyWindow)(WND *);
     WND*   (*pSetParent)(WND *, WND *);
     void   (*pForceWindowRaise)(WND *);
@@ -180,9 +173,5 @@ extern BOOL32 ICONTITLE_Init( void );
 
 /* windows/focus.c */
 extern void FOCUS_SwitchFocus( HWND32 , HWND32 );
-
-extern Display * display;
-extern Screen * screen;
-extern Window rootWindow;
 
 #endif  /* __WINE_WIN_H */

@@ -9,13 +9,29 @@
 
 #include "windows.h"
 
-typedef struct
+struct tagMONITOR;
+
+struct _DESKTOP_DRIVER;
+
+typedef struct tagDESKTOP
 {
-    HBRUSH32   hbrushPattern;
-    HBITMAP32  hbitmapWallPaper;
-    SIZE32     bitmapSize;
-    BOOL32     fTileWallPaper;
-} DESKTOPINFO;
+  HBRUSH32                hbrushPattern;
+  HBITMAP32               hbitmapWallPaper;
+  SIZE32                  bitmapSize;
+  BOOL32                  fTileWallPaper;
+  struct tagMONITOR      *pPrimaryMonitor;
+  struct _DESKTOP_DRIVER *pDriver;         /* Desktop driver */
+  void                   *pDriverData;     /* Desktop driver data */
+} DESKTOP;
+
+typedef struct _DESKTOP_DRIVER {
+  void (*pInitialize)(struct tagDESKTOP *pDesktop);
+  void (*pFinalize)(struct tagDESKTOP *pDesktop);
+} DESKTOP_DRIVER;
+
+extern int DESKTOP_GetScreenWidth();
+extern int DESKTOP_GetScreenHeight();
+extern int DESKTOP_GetScreenDepth();
 
 extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
 extern LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,

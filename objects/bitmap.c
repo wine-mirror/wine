@@ -15,7 +15,8 @@
 #include "sysmetrics.h"
 #include "cursoricon.h"
 #include "debug.h"
-#include "x11drv.h"
+#include "monitor.h"
+#include "wine/winuser16.h"
 
 /***********************************************************************
  *           BITMAP_GetPadding
@@ -107,7 +108,7 @@ HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
 HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy, 
                                                 INT16 width, INT16 height )
 {
-    return CreateUserBitmap16( width, height, 1, screenDepth, NULL );
+    return CreateUserBitmap16( width, height, 1, MONITOR_GetDepth(&MONITOR_PrimaryMonitor), NULL );
 }
 
 

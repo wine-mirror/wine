@@ -14,15 +14,14 @@
 #include <X11/Xatom.h>
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#include "winbase.h"
-#include "wintypes.h"
-#include "display.h"
 #include "gdi.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
-#include "clipboard.h"
-#include "keyboard.h"
-#include "message.h"
-#include "win.h"
+#include "wintypes.h"
+#include "wine/winuser16.h"
+
+struct tagCLASS;
+struct tagDC;
+struct tagDeviceCaps;
+struct tagWND;
 
   /* X physical pen */
 typedef struct
@@ -74,9 +73,6 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 
 
 /* Wine driver X11 functions */
-
-struct tagDC;
-struct tagDeviceCaps;
 
 extern BOOL32 X11DRV_Init(void);
 extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
@@ -173,12 +169,6 @@ extern BOOL32 X11DRV_SetupGCForText( struct tagDC *dc );
 
 extern const int X11DRV_XROPfunction[];
 
-extern Display * display;
-extern Screen * screen;
-extern Window rootWindow;
-extern int screenWidth, screenHeight, screenDepth;
-
-
 /* Xlib critical section */
 
 extern CRITICAL_SECTION X11DRV_CritSection;
@@ -188,7 +178,7 @@ extern void _XInitImageFuncPtrs(XImage *);
 #define XCREATEIMAGE(image,width,height,bpp) \
 { \
     int width_bytes = X11DRV_DIB_GetXImageWidthBytes( (width), (bpp) ); \
-    (image) = TSXCreateImage(display, DefaultVisualOfScreen(screen), \
+    (image) = TSXCreateImage(display, DefaultVisualOfScreen(X11DRV_GetXScreen()), \
                            (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
@@ -224,67 +214,43 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
 
-/* X11 windows driver */
-
-extern WND_DRIVER X11DRV_WND_Driver;
-
-typedef struct _X11DRV_WND_DATA {
-  Window window;
-} X11DRV_WND_DATA;
-
-extern Window X11DRV_WND_GetXWindow(WND *wndPtr);
-extern Window X11DRV_WND_FindXWindow(WND *wndPtr);
-
-extern void X11DRV_WND_Initialize(WND *wndPtr);
-extern void X11DRV_WND_Finalize(WND *wndPtr);
-extern BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnicode);
-extern BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode);
-extern BOOL32 X11DRV_WND_DestroyWindow(WND *pWnd);
-extern WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent);
-extern void X11DRV_WND_ForceWindowRaise(WND *pWnd);
-extern void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS);
-extern void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text);
-extern void X11DRV_WND_SetFocus(WND *wndPtr);
-extern void X11DRV_WND_PreSizeMove(WND *wndPtr);
-extern void X11DRV_WND_PostSizeMove(WND *wndPtr);
-extern void X11DRV_WND_ScrollWindow(WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, const RECT32 *clipRect, BOOL32 bUpdate);
-extern void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin);
-extern BOOL32 X11DRV_WND_IsSelfClipping(WND *wndPtr);
-
 /* X11 clipboard driver */
 
-extern CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
+extern struct _CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
 extern void X11DRV_CLIPBOARD_EmptyClipboard();
 extern void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
 extern BOOL32 X11DRV_CLIPBOARD_RequestSelection();
-extern void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar);
+extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL32 bFooBar);
 
 void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
 void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd);
 
-/* X11 keyboard driver */
+/* X11 color driver */
 
-extern KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
+extern Colormap	X11DRV_COLOR_GetColormap(void);
 
-extern void X11DRV_KEYBOARD_Init(void);
-extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
-extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
-extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
-extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
-extern void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event );
-extern void KEYBOARD_UpdateState ( void );
+/* X11 desktop driver */
 
-/* X11 mouse driver */
+extern struct _DESKTOP_DRIVER X11DRV_DESKTOP_Driver;
 
-extern MOUSE_DRIVER X11DRV_MOUSE_Driver;
+typedef struct _X11DRV_DESKTOP_DATA {
+} X11DRV_DESKTOP_DATA;
 
-extern void X11DRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
-extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
+struct tagDESKTOP;
+
+extern Screen *X11DRV_DESKTOP_GetXScreen(struct tagDESKTOP *pDesktop);
+extern Window X11DRV_DESKTOP_GetXRootWindow(struct tagDESKTOP *pDesktop);
+
+extern void X11DRV_DESKTOP_Initialize(struct tagDESKTOP *pDesktop);
+extern void X11DRV_DESKTOP_Finalize(struct tagDESKTOP *pDesktop);
+extern int X11DRV_DESKTOP_GetScreenWidth(struct tagDESKTOP *pDesktop);
+extern int X11DRV_DESKTOP_GetScreenHeight(struct tagDESKTOP *pDesktop);
+extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 
 /* X11 event driver */
 
-extern EVENT_DRIVER X11DRV_EVENT_Driver;
+extern struct _EVENT_DRIVER X11DRV_EVENT_Driver;
 
 extern BOOL32 X11DRV_EVENT_Init(void);
 extern void X11DRV_EVENT_AddIO(int fd, unsigned flag);
@@ -296,5 +262,89 @@ extern BOOL32 X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_DummyMotionNotify(void);
 extern BOOL32 X11DRV_EVENT_Pending(void);
 extern BOOL16 X11DRV_EVENT_IsUserIdle(void);
+
+/* X11 keyboard driver */
+
+extern struct _KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
+
+extern void X11DRV_KEYBOARD_Init(void);
+extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
+extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
+extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
+extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
+extern void KEYBOARD_HandleEvent( struct tagWND *pWnd, XKeyEvent *event );
+extern void KEYBOARD_UpdateState ( void );
+
+/* X11 main driver */
+
+extern Display *display;
+extern Screen *X11DRV_GetXScreen();
+extern Window X11DRV_GetXRootWindow();
+
+extern void X11DRV_MAIN_Finalize();
+extern void X11DRV_MAIN_Initialize();
+extern void X11DRV_MAIN_ParseOptions(int *argc, char *argv[]);
+extern void X11DRV_MAIN_Create();
+extern void X11DRV_MAIN_SaveSetup();
+extern void X11DRV_MAIN_RestoreSetup();
+
+/* X11 monitor driver */
+
+extern struct tagMONITOR_DRIVER X11DRV_MONITOR_Driver;
+
+typedef struct _X11DRV_MONITOR_DATA {
+  Screen  *screen;
+  Window   rootWindow;
+  int      width;
+  int      height;
+  int      depth;
+} X11DRV_MONITOR_DATA;
+
+struct tagMONITOR;
+
+extern Screen *X11DRV_MONITOR_GetXScreen(struct tagMONITOR *pMonitor);
+extern Window X11DRV_MONITOR_GetXRootWindow(struct tagMONITOR *pMonitor);
+
+extern void X11DRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
+extern void X11DRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
+extern int X11DRV_MONITOR_GetWidth(struct tagMONITOR *pMonitor);
+extern int X11DRV_MONITOR_GetHeight(struct tagMONITOR *pMonitor);
+extern int X11DRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
+
+/* X11 mouse driver */
+
+extern struct _MOUSE_DRIVER X11DRV_MOUSE_Driver;
+
+extern void X11DRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
+extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
+
+/* X11 windows driver */
+
+extern struct _WND_DRIVER X11DRV_WND_Driver;
+
+typedef struct _X11DRV_WND_DATA {
+  Window window;
+} X11DRV_WND_DATA;
+
+extern Window X11DRV_WND_GetXWindow(struct tagWND *wndPtr);
+extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
+extern Screen *X11DRV_WND_GetXScreen(struct tagWND *wndPtr);
+extern Window X11DRV_WND_GetXRootWindow(struct tagWND *wndPtr);
+
+extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
+extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);
+extern BOOL32 X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL32 bUnicode);
+extern BOOL32 X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode);
+extern BOOL32 X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
+extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
+extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
+extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC_SETXPOS);
+extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
+extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
+extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
+extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
+extern void X11DRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT32 dx, INT32 dy, const RECT32 *clipRect, BOOL32 bUpdate);
+extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL32 bSetClipOrigin);
+extern BOOL32 X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 
 #endif  /* __WINE_X11DRV_H */

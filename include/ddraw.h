@@ -1,16 +1,12 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include "wine/obj_base.h"
-
-#include "config.h"
-
-#ifndef X_DISPLAY_MISSING
 #include <X11/Xlib.h>
 #ifdef HAVE_LIBXXSHM
 #include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
-#endif /* !defined(X_DISPLAY_MISSING) */
+
+#include "wine/obj_base.h"
 
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500
@@ -936,7 +932,7 @@ struct _dga_directdrawdata {
 struct _xlib_directdrawdata {
 #ifdef HAVE_LIBXXSHM
     int xshm_active;
-#endif
+#endif /* defined(HAVE_LIBXXSHM) */
     
     /* are these needed for anything? (draw_surf is the active surface)
     IDirectDrawSurface	*surfs;

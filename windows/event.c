@@ -5,16 +5,26 @@
  * 
  */
 
+#include "config.h"
+
 #include "message.h"
 
+#ifndef X_DISPLAY_MISSING
 extern EVENT_DRIVER X11DRV_EVENT_Driver;
+#else /* X_DISPLAY_MISSING */
+extern EVENT_DRIVER TTYDRV_EVENT_Driver;
+#endif /* X_DISPLAY_MISSING */
 
 /***********************************************************************
  *		EVENT_GetDriver
  */
 EVENT_DRIVER *EVENT_GetDriver(void)
 {
+#ifndef X_DISPLAY_MISSING
   return &X11DRV_EVENT_Driver;
+#else /* X_DISPLAY_MISSING */
+  return &TTYDRV_EVENT_Driver;
+#endif /* X_DISPLAY_MISSING */
 }
 
 /***********************************************************************

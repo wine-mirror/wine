@@ -7,10 +7,10 @@
 
 #include <stdio.h>
 #include "gdi.h"
+#include "monitor.h"
 #include "options.h"
-#include "tweak.h"
 #include "sysmetrics.h"
-#include "x11drv.h"
+#include "tweak.h"
 
 short sysMetrics[SM_CMETRICS+1];
 
@@ -35,8 +35,8 @@ void SYSMETRICS_Init(void)
 {
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
-    sysMetrics[SM_CXSCREEN] = screenWidth;
-    sysMetrics[SM_CYSCREEN] = screenHeight;
+    sysMetrics[SM_CXSCREEN] = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    sysMetrics[SM_CYSCREEN] =  MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     sysMetrics[SM_CXVSCROLL] =
 	PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16) + 1;
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];

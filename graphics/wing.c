@@ -4,21 +4,26 @@
  * Started by Robert Pouliot <krynos@clic.net>
  */
 
+#include "config.h"
+
 #include "ts_xlib.h"
-#include "ts_xshm.h"
+#ifdef HAVE_LIBXXSHM
 #include <sys/types.h>
 #include <sys/ipc.h>
 #ifndef __EMX__
 #include <sys/shm.h>
-#endif
+#endif /* !defined(__EMX__) */
+#include "ts_xshm.h"
+#endif /* defined(HAVE_LIBXXSHM) */
+#include "x11drv.h"
 
-#include "windows.h"
 #include "bitmap.h"
 #include "dc.h"
-#include "gdi.h"
-#include "xmalloc.h"
-#include "x11drv.h"
 #include "debug.h"
+#include "gdi.h"
+#include "monitor.h"
+#include "wintypes.h"
+#include "xmalloc.h"
 
 typedef enum WING_DITHER_TYPE
 {
@@ -46,18 +51,20 @@ static void __initWinG(void)
 {
   if( __WinGOK < 0 )
   {
+#ifdef HAVE_LIBXXSHM
     Status s = TSXShmQueryExtension(display);
     if( s )
     {
       int i = TSXShmPixmapFormat(display);
-      if( i == ZPixmap && screenDepth == 8 ) 
+      if( i == ZPixmap && MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == 8 ) 
       {
-        __WinGOK = True;
+        __WinGOK = 1;
 	return;
       }
     } 
+#endif /* defined(HAVE_LIBXXSHM) */
     FIXME(wing,"WinG: incorrect depth or unsupported card.\n");
-    __WinGOK = False;
+    __WinGOK = 0;
   }
 }
 
@@ -126,7 +133,9 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
 	    HBITMAP16 hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
 	    if (hbitmap)
 	    {
-	      __ShmBitmapCtl* p = (__ShmBitmapCtl*)xmalloc(sizeof(__ShmBitmapCtl));
+#ifdef HAVE_LIBXXSHM
+	        __ShmBitmapCtl* p = (__ShmBitmapCtl*)xmalloc(sizeof(__ShmBitmapCtl));
+#endif /* defined(HAVE_LIBXXSHM) */
 		BITMAPOBJ* 	 bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
 
 		bmpObjPtr->size.cx = 0;
@@ -138,6 +147,8 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
 		bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bmpi->biBitCount;
 		bmpObjPtr->bitmap.bmWidthBytes = 
 		  (INT16)BITMAP_WIDTH_BYTES( bmpObjPtr->bitmap.bmWidth, bmpi->biBitCount );
+
+#ifdef HAVE_LIBXXSHM
 		bmpObjPtr->bitmap.bmBits = (SEGPTR)p;
 
 		p->si.shmid = key;
@@ -170,12 +181,16 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
 		    GDI_FreeObject( hbitmap );
 		    hbitmap = 0;
 		}
+#else /* defined(HAVE_LIBXXSHM) */
+		bmpObjPtr->bitmap.bmBits = (SEGPTR) NULL;
+		bmpObjPtr->pixmap = NULL;
+#endif /* defined(HAVE_LIBXXSHM) */
 	    }
 	    GDI_HEAP_UNLOCK( hbitmap );
 	    return hbitmap;
 	}
     }
-#endif
+#endif /* defined(PRELIMINARY_WING16_SUPPORT) */
   }
   return 0;
 }
@@ -186,6 +201,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
 #ifdef PRELIMINARY_WING16_SUPPORT
+#ifdef HAVE_LIBXXSHM
   BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
 
   if( bmp )
@@ -198,7 +214,8 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
       return p->bits;
     }
   }
-#endif
+#endif /* defined(HAVE_LIBXXSHM) */
+#endif /* defined(PRELIMINARY_WING16_SUPPORT) */
   return (SEGPTR)NULL;
 }
 
@@ -279,10 +296,12 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
     widDest = widDest * dcDst->vportExtX / dcDst->wndExtX;
     heiDest = heiDest * dcDst->vportExtY / dcDst->wndExtY;
 
+
     TSXSetFunction( display, physDevDst->gc, GXcopy );
     TSXCopyArea( display, physDevSrc->drawable,
 		 physDevDst->drawable, physDevDst->gc,
 		 xSrc, ySrc, widDest, heiDest, xDest, yDest );
+
     return TRUE;
 }
 
