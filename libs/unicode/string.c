@@ -320,7 +320,6 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
                    *iter == '+' ||
                    *iter == '-' ||
                    *iter == ' ' ||
-                   *iter == '0' ||
                    *iter == '*' ||
                    *iter == '#')
             {
@@ -393,10 +392,18 @@ int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
                 {
                     *fmta++ = *iter;
                     *fmta = '\0';
-                    if (*iter == 'f')
+                    if (*iter == 'a' || *iter == 'A' ||
+                        *iter == 'e' || *iter == 'E' ||
+                        *iter == 'f' || *iter == 'F' || 
+                        *iter == 'g' || *iter == 'G')
                         sprintf(bufaiter, fmtbufa, va_arg(valist, double));
                     else
+                    {
+                        /* FIXME: On 32 bit systems this doesn't handle int 64's.
+                         *        on 64 bit systems this doesn't work for 32 bit types
+			 */
                         sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
+                    }
                 }
                 while (*bufaiter)
                 {
