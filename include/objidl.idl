@@ -19,7 +19,6 @@
 import "unknwn.idl";
 
 interface IStream;
-interface IStream16;
 interface IEnumString;
 interface IRunningObjectTable;
 interface IMoniker;
@@ -811,80 +810,6 @@ interface IStream : ISequentialStream
 
 [
   object,
-  pointer_default(unique)
-]
-interface IStream16 : ISequentialStream
-{
-  typedef [unique] IStream16 *LPSTREAM16;
-
-  typedef struct tagSTATSTG16 {
-    LPOLESTR16 pwcsName;
-    DWORD type;
-    ULARGE_INTEGER cbSize;
-    FILETIME mtime;
-    FILETIME ctime;
-    FILETIME atime;
-    DWORD grfMode;
-    DWORD grfLocksSupported;
-    CLSID clsid;
-    DWORD grfStateBits;
-    DWORD reserved;
-  } STATSTG16;
-
-  [local]
-  HRESULT Seek(
-    [in] LARGE_INTEGER dlibMove,
-    [in] DWORD dwOrigin,
-    [out] ULARGE_INTEGER *plibNewPosition);
-
-  [call_as(Seek)]
-  HRESULT RemoteSeek(
-    [in] LARGE_INTEGER dlibMove,
-    [in] DWORD dwOrigin,
-    [out] ULARGE_INTEGER *plibNewPosition);
-
-  HRESULT SetSize(
-    [in] ULARGE_INTEGER libNewSize);
-
-  [local]
-  HRESULT CopyTo(
-    [in, unique] IStream16 *pstm,
-    [in] ULARGE_INTEGER cb,
-    [out] ULARGE_INTEGER *pcbRead,
-    [out] ULARGE_INTEGER *pcbWritten);
-
-  [call_as(CopyTo)]
-  HRESULT RemoteCopyTo(
-    [in, unique] IStream16 *pstm,
-    [in] ULARGE_INTEGER cb,
-    [out] ULARGE_INTEGER *pcbRead,
-    [out] ULARGE_INTEGER *pcbWritten);
-
-  HRESULT Commit(
-    [in] DWORD grfCommitFlags);
-
-  HRESULT Revert();
-
-  HRESULT LockRegion(
-    [in] ULARGE_INTEGER libOffset,
-    [in] ULARGE_INTEGER cb,
-    [in] DWORD dwLockType);
-
-  HRESULT UnlockRegion(
-    [in] ULARGE_INTEGER libOffset,
-    [in] ULARGE_INTEGER cb,
-    [in] DWORD dwLockType);
-
-  HRESULT Stat(
-    [out] STATSTG *pstatstg,
-    [in] DWORD grfStatFlag);
-
-  HRESULT Clone(
-    [out] IStream16 **ppstm);
-}
-
-[
-  object,
   uuid(0000000d-0000-0000-C000-000000000046),
   pointer_default(unique)
 ]
@@ -1013,119 +938,6 @@ interface IStorage : IUnknown
 
   HRESULT SetElementTimes(
     [in, unique] LPCOLESTR pwcsName,
-    [in, unique] const FILETIME *pctime,
-    [in, unique] const FILETIME *patime,
-    [in, unique] const FILETIME *pmtime);
-
-  HRESULT SetClass(
-    [in] REFCLSID clsid);
-
-  HRESULT SetStateBits(
-    [in] DWORD grfStateBits,
-    [in] DWORD grfMask);
-
-  HRESULT Stat(
-    [out] STATSTG *pstatstg,
-    [in] DWORD grfStatFlag);
-}
-
-[
-  object,
-  pointer_default(unique)
-]
-interface IStorage16 : IUnknown
-{
-  typedef [unique] IStorage16 *LPSTORAGE16;
-
-  typedef struct tagRemSNB16 {
-    unsigned long ulCntStr;
-    unsigned long ulCntChar;
-    [size_is(ulCntChar)] OLECHAR16 rgString[];
-  } RemSNB16;
-
-  typedef [unique] RemSNB16 *wireSNB16;
-  typedef [wire_marshal(wireSNB16)] OLECHAR16 **SNB16;
-
-  HRESULT CreateStream(
-    [in] LPCOLESTR16 pwcsName,
-    [in] DWORD grfMode,
-    [in] DWORD reserved1,
-    [in] DWORD reserved2,
-    [out] IStream16 **ppstm);
-
-  [local]
-  HRESULT OpenStream(
-    [in] LPCOLESTR16 pwcsName,
-    [in, unique] void *reserved1,
-    [in] DWORD grfMode,
-    [in] DWORD reserved2,
-    [out] IStream16 **ppstm);
-
-  [call_as(OpenStream)]
-  HRESULT RemoteOpenStream(
-    [in] LPCOLESTR16 pwcsName,
-    [in] unsigned long cbReserved1,
-    [in, unique, size_is(cbReserved1)] byte *reserved1,
-    [in] DWORD grfMode,
-    [in] DWORD reserved2,
-    [out] IStream16 **ppstm);
-
-  HRESULT CreateStorage(
-    [in] LPCOLESTR16 pwcsName,
-    [in] DWORD grfMode,
-    [in] DWORD dwStgFmt,
-    [in] DWORD reserved2,
-    [out] IStorage16 **ppstg);
-
-  HRESULT OpenStorage(
-    [in, unique] LPCOLESTR16 pwcsName,
-    [in, unique] IStorage16 *pstgPriority,
-    [in] DWORD grfMode,
-    [in, unique] SNB16 snbExclude,
-    [in] DWORD reserved,
-    [out] IStorage16 **ppstg);
-
-  HRESULT CopyTo(
-    [in] DWORD ciidExclude,
-    [in, unique, size_is(ciidExclude)] const IID *rgiidExclude,
-    [in, unique] SNB16 snbExclude,
-    [in, unique] IStorage16 *pstgDest);
-
-  HRESULT MoveElementTo(
-    [in] LPCOLESTR16 pwcsName,
-    [in, unique] IStorage16 *pstgDest,
-    [in] LPCOLESTR16 pwcsNewName,
-    [in] DWORD grfFlags);
-
-  HRESULT Commit(
-    [in] DWORD grfCommitFlags);
-
-  HRESULT Revert();
-
-  [local]
-  HRESULT EnumElements(
-    [in] DWORD reserved1,
-    [in, unique, size_is(1)] void *reserved2,
-    [in] DWORD reserved3,
-    [out] IEnumSTATSTG **ppenum);
-
-  [call_as(EnumElements)]
-  HRESULT RemoteEnumElements(
-    [in] DWORD reserved1,
-    [in] unsigned long cbReserved2,
-    [in, unique, size_is(cbReserved2)] byte *reserved2,
-    [in] DWORD reserved3,
-    [out] IEnumSTATSTG **ppenum);
-
-  HRESULT DestroyElement(
-    [in] LPCOLESTR16 pwcsName);
-
-  HRESULT RenameElement(
-    [in] LPCOLESTR16 pwcsOldName,
-    [in] LPCOLESTR16 pwcsNewName);
-
-  HRESULT SetElementTimes(
-    [in, unique] LPCOLESTR16 pwcsName,
     [in, unique] const FILETIME *pctime,
     [in, unique] const FILETIME *patime,
     [in, unique] const FILETIME *pmtime);

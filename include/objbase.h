@@ -505,14 +505,9 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *ppr
 #define STGM_NOSCRATCH		0x00100000
 #define STGM_NOSNAPSHOT		0x00200000
 
-HRESULT WINAPI StgCreateDocFile16(LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved,IStorage16 **ppstgOpen);
 HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
-
-HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn);
 HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
 HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
-
-HRESULT WINAPI StgOpenStorage16(const OLECHAR16* pwcsName,IStorage16* pstgPriority,DWORD grfMode,SNB16 snbExclude,DWORD reserved,IStorage16**ppstgOpen);
 HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
 
 HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid);
