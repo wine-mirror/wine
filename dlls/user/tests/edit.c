@@ -23,6 +23,11 @@
 
 #include "wine/test.h"
 
+#ifndef ES_COMBO
+#define ES_COMBO 0x200
+#endif
+
+
 HWND create_editcontrol (DWORD style, DWORD exstyle)
 {
     HWND handle;
