@@ -282,7 +282,8 @@ static void dump_get_thread_buffer_reply( const struct get_thread_buffer_request
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " tid=%p,", req->tid );
-    fprintf( stderr, " boot=%d", req->boot );
+    fprintf( stderr, " boot=%d,", req->boot );
+    fprintf( stderr, " version=%d", req->version );
 }
 
 static void dump_terminate_process_request( const struct terminate_process_request *req )

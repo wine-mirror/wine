@@ -104,6 +104,7 @@ static int alloc_client_buffer( struct thread *thread )
     req->pid  = get_process_id( thread->process );
     req->tid  = get_thread_id( thread );
     req->boot = (thread == booting_thread);
+    req->version = SERVER_PROTOCOL_VERSION;
     set_reply_fd( thread, fd );
     send_reply( thread );
     return 1;

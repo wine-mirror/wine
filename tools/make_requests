@@ -30,10 +30,12 @@ open(SERVER,"include/server.h") or die "Can't open include/server.h";
 ### Parse server.h to find request/reply structure definitions
 
 my @trace_lines = ();
+my $protocol = 0;  # server protocol version
 
 while (<SERVER>)
 {
     if (/^struct +(\w+)_request/) { &DO_REQUEST($1); }
+    if (/^\#define SERVER_PROTOCOL_VERSION (\d+)/) { $protocol = $1 + 1; }
 }
 
 ### Output the dumping function tables
@@ -68,6 +70,7 @@ my @server_lines = ();
 push @server_lines, "enum request\n{\n";
 foreach $req (@requests) { push @server_lines, "    REQ_\U$req,\n"; }
 push @server_lines, "    REQ_NB_REQUESTS\n};\n";
+push @server_lines, "\n#define SERVER_PROTOCOL_VERSION $protocol\n";
 
 REPLACE_IN_FILE( "include/server.h", @server_lines );
 

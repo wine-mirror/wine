@@ -188,6 +188,7 @@ struct get_thread_buffer_request
     OUT void*        pid;          /* process id of the new thread's process */
     OUT void*        tid;          /* thread id of the new thread */
     OUT int          boot;         /* is this the boot thread? */
+    OUT int          version;      /* protocol version */
 };
 
 
@@ -1184,6 +1185,8 @@ enum request
     REQ_GET_ATOM_NAME,
     REQ_NB_REQUESTS
 };
+
+#define SERVER_PROTOCOL_VERSION 1
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

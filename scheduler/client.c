@@ -467,6 +467,12 @@ int CLIENT_InitThread(void)
     first_req = teb->buffer;
     teb->process->server_pid = first_req->pid;
     teb->tid = first_req->tid;
+    if (first_req->version != SERVER_PROTOCOL_VERSION)
+        server_protocol_error( "version mismatch %d/%d.\n"
+                               "Your %s binary was not upgraded correctly,\n"
+                               "or you have an older one somewhere in your PATH.\n",
+                               first_req->version, SERVER_PROTOCOL_VERSION,
+                               (first_req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
     if (first_req->boot) boot_thread_id = teb->tid;
     else if (boot_thread_id == teb->tid) boot_thread_id = 0;
 
