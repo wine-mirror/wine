@@ -1,4 +1,3 @@
-0 stub DirectSoundUnknown
 1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate8
 2 stdcall DirectSoundEnumerateA(ptr ptr) DirectSoundEnumerateA
 3 stdcall DirectSoundEnumerateW(ptr ptr) DirectSoundEnumerateW
