@@ -93,6 +93,7 @@ PDB current_process;
 
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
+static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
 
 unsigned int server_startticks;
@@ -337,7 +338,8 @@ static void start_process(void)
     {
         req->module   = (void *)current_process.module;
         req->entry    = entry;
-        req->name     = main_exe_name;
+        /* API requires a double indirection */
+        req->name     = &main_exe_name_ptr;
         req->exe_file = main_exe_file;
         req->gui      = !console_app;
         SERVER_CALL();
