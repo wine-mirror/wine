@@ -1289,11 +1289,17 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 	else
 	if (path[0] == '\\')
 	    path++;
-	if (strlen(path)) /* oops, we are in a subdir */
-	    return FALSE;
+        if (path[0]) /* oops, we are in a subdir */
+        {
+            SetLastError(ERROR_INVALID_NAME);
+            return FALSE;
+        }
     }
     else
+    {
+        SetLastError(ERROR_INVALID_NAME);
         return FALSE;
+    }
 
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
 
@@ -1311,7 +1317,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
     sec_size = (DRIVE_GetType(drive)==DRIVE_CDROM) ? 2048 : 512;
     size.s.LowPart            /= sec_size;
     available.s.LowPart       /= sec_size;
-    /* fixme: probably have to adjust those variables too for CDFS */
+    /* FIXME: probably have to adjust those variables too for CDFS */
     cluster_sec = 1;
     while (cluster_sec * 65536 < size.s.LowPart) cluster_sec *= 2;
 
