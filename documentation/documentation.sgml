@@ -148,7 +148,7 @@
           <listItem><para>
           Additional notes such as interaction with other parts of the system, differences
           between Wines implementation and Win32s, errors in MSDN documentation,
-          undocumented cases and bugs that Wine corrects or is compatable with.
+          undocumented cases and bugs that Wine corrects or is compatible with.
           </para></listitem>
 
           </itemizedlist>
@@ -340,7 +340,7 @@ BOOL WINAPI PathRelativePathToA(
 
           <listItem><para>
           <command>BUGS</command>. Any bugs in the function that exist 'by design', i.e.
-          those that will not be fixed or exist for compatability with Windows.
+          those that will not be fixed or exist for compatibility with Windows.
           </para></listitem>
 
           <listItem><para>

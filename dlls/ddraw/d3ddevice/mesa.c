@@ -647,7 +647,7 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
     } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 	switch (dwLightState) {
 	    case D3DCOLOR_MONO:
-	       ERR("DDCOLOR_MONO should not happend!\n");
+	       ERR("DDCOLOR_MONO should not happen!\n");
 	       break;
 	    case D3DCOLOR_RGB:
 	       /* We are already in this mode */

@@ -43,8 +43,8 @@
  *   o Wine's named pipes (in general) may not interoperate with those of 
  *     Windows yet (?)
  *
- *   o There is a looming problem regarding listening on priveleged
- *     ports.  We will need to be able to coexist with SAMBA, and able
+ *   o There is a looming problem regarding listening on privileged
+ *     ports.  We will need to be able to coexist with SAMBA, and be able
  *     to function without running winelib code as root.  This may
  *     take some doing, including significant reconceptualization of the
  *     role of rpcss.exe in wine.

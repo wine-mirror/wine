@@ -32,9 +32,9 @@
 #define SHORTDIR "shortdir"
 #define LONGDIR "Long Directory"
 #define NONFILE_SHORT "noexist.pth"
-#define NONFILE_LONG "Non Existant File"
+#define NONFILE_LONG "Non Existent File"
 #define NONDIR_SHORT "notadir"
-#define NONDIR_LONG "Non Existant Directory"
+#define NONDIR_LONG "Non Existent Directory"
 
 #define NOT_A_VALID_DRIVE '@'
 
@@ -198,7 +198,7 @@ static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
   }
 /* Check that we didn't find a trailing '\\' or multiple '.' */
   ok(!error,"Illegal file found in 8.3 path '%s'",path);
-/* Seperate dir, root, and extension */
+/* Separate dir, root, and extension */
   if(ext!=len) lstrcpyA(three,path+ext+1); else lstrcpyA(three,"");
   if(fil!=len) {
     lstrcpynA(eight,path+fil+1,ext-fil);
@@ -228,7 +228,7 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
    characters in the filename.
      'valid' indicates whether this would be an allowed filename
      'todo' indictaes that wine doesn't get this right yet.
-   NOTE: We always call this routine with a non-existant filename, so
+   NOTE: We always call this routine with a non-existent filename, so
          Get(Short|Long)PathNameA should never pass, but GetFullPathNameA
          should.
 */
@@ -438,10 +438,10 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
    so why check it again.
 */
   SetCurrentDirectoryA(newdir);
-/* Check that SetCurrentDirectory fails when a non-existant dir is specified */
+/* Check that SetCurrentDirectory fails when a non-existent dir is specified */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_SHORT);
   test_setdir(newdir,tmpstr,NULL,0,"check 3");
-/* Check that SetCurrentDirectory fails for a non-existant lond directory */
+/* Check that SetCurrentDirectory fails for a non-existent lond directory */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_LONG);
   test_setdir(newdir,tmpstr,NULL,0,"check 4");
 /* Check that SetCurrentDirectory passes with a long directory */
@@ -653,7 +653,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,NULL,"test13");
   sprintf(tmpstr,"%s\\",LONGDIR);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,NULL,"test14");
-/* Non-existant directories */
+/* Non-existent directories */
   sprintf(tmpstr,"%s\\",NONDIR_SHORT);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test15");
   sprintf(tmpstr2,"%s\\%s",curdir,tmpstr);

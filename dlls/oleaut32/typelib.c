@@ -4762,7 +4762,7 @@ static HRESULT WINAPI ITypeInfo_fnCreateInstance( ITypeInfo2 *iface,
 
 /* ITypeInfo::GetMops
  *
- * Retrieves marshaling information.
+ * Retrieves marshalling information.
  */
 static HRESULT WINAPI ITypeInfo_fnGetMops( ITypeInfo2 *iface, MEMBERID memid,
 				BSTR  *pBstrMops)

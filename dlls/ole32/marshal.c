@@ -1,5 +1,5 @@
 /*
- *	Marshaling library
+ *	Marshalling library
  *
  *  Copyright 2002  Marcus Meissner
  *
@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 extern const CLSID CLSID_DfMarshal;
 
-/* Marshaling just passes a unique identifier to the remote client,
+/* Marshalling just passes a unique identifier to the remote client,
  * that makes it possible to find the passed interface again.
  *
  * So basically we need a set of values that make it unique.
@@ -350,9 +350,9 @@ ICOM_VTABLE(IMarshal) stdmvtbl = {
 /***********************************************************************
  *		CoGetStandardMarshal	[OLE32.23]
  *
- * When the COM library in the client process receives a marshaled
+ * When the COM library in the client process receives a marshalled
  * interface pointer, it looks for a CLSID to be used in creating a proxy
- * for the purposes of unmarshaling the packet. If the packet does not
+ * for the purposes of unmarshalling the packet. If the packet does not
  * contain a CLSID for the proxy, COM calls CoGetStandardMarshal, passing a
  * NULL pUnk value.
  * This function creates a standard proxy in the client process and returns

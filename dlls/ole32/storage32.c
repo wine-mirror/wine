@@ -6503,7 +6503,7 @@ DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
 /*************************************************************************
  * OLECONVERT_CreateOleStream [Internal]
  *
- * Creates the "\001OLE" stream in the IStorage if neccessary.
+ * Creates the "\001OLE" stream in the IStorage if necessary.
  *
  * PARAMS
  *     pStorage     [I] Dest storage to create the stream in

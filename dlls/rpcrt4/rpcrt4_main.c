@@ -22,7 +22,7 @@
  * - widl is like MIDL for wine.  For wine to be a useful RPC platform, quite
  *   a bit of work needs to be done here.  widl currently doesn't generate stubs
  *   for RPC invocation -- it will need to; this is tricky because the MIDL compiler
- *   does some really wierd stuff.  Then again, we don't neccesarily have to
+ *   does some really weird stuff.  Then again, we don't necessarily have to
  *   make widl work like MIDL, so it could be worse.  Lately Ove has been working on
  *   some widl enhancements.
  *

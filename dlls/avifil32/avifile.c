@@ -1372,7 +1372,7 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   This->idxFrames[This->lLastFrame].dwChunkOffset = offset;
   This->idxFrames[This->lLastFrame].dwChunkLength = size;
 
-  /* update AVISTREAMINFO structure if neccessary */
+  /* update AVISTREAMINFO structure if necessary */
   if (This->sInfo.dwLength < This->lLastFrame)
     This->sInfo.dwLength = This->lLastFrame;
 
@@ -2046,7 +2046,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
   if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
     return AVIERR_FILEWRITE;
 
-  /* write the headers of each stream into a seperate streamheader list */
+  /* write the headers of each stream into a separate streamheader list */
   for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++) {
     AVIStreamHeader strHdr;
 
@@ -2087,7 +2087,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
     if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
       return AVIERR_FILEWRITE;
 
-    /* ... the hopefull ever present streamformat ... */
+    /* ... the hopefully ever present streamformat ... */
     ck.ckid   = ckidSTREAMFORMAT;
     ck.cksize = pStream->cbFormat;
     if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)

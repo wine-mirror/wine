@@ -277,7 +277,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(unsigned long *pFlags, unsigned char 
     break;
   }
   var->clSize = Pos - Buffer;
-  TRACE("marshaled size=%ld\n", var->clSize);
+  TRACE("marshalled size=%ld\n", var->clSize);
   return Pos;
 }
 
@@ -290,7 +290,7 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(unsigned long *pFlags, unsigned cha
   TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
   VariantInit(pvar);
   pvar->n1.n2.vt = var->rpcReserved;
-  TRACE("marshaled: clSize=%ld, vt=%04x\n", var->clSize, var->vt);
+  TRACE("marshalled: clSize=%ld, vt=%04x\n", var->clSize, var->vt);
   TRACE("vt=%04x\n", V_VT(pvar));
   TRACE("reserved: %d, %d, %d\n", var->wReserved1, var->wReserved2, var->wReserved3);
   TRACE("val: %ld\n", var->u.lVal);

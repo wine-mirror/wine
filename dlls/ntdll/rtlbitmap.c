@@ -23,7 +23,7 @@
  *  but are also available to applications that need this functionality.
  *
  *  Bits are set LSB to MSB in each consecutive byte, making this implementation
- *  binary compatable with Win32.
+ *  binary compatible with Win32.
  *
  *  Note that to avoid unexpected behaviour, the size of a bitmap should be set
  *  to a multiple of 32.

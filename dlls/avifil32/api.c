@@ -1047,7 +1047,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   if (cbFilter > size) {
     int i;
 
-    /* replace '@' with \000 to seperate description of filter */
+    /* replace '@' with \000 to separate description of filter */
     for (i = 0; i < size && szAllFiles[i] != 0; i++) {
       if (szAllFiles[i] == '@') {
 	szAllFiles[i] = 0;

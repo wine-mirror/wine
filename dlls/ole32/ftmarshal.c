@@ -1,5 +1,5 @@
 /*
- *	free threaded marshaler
+ *	free threaded marshaller
  *
  *  Copyright 2002  Juergen Schmied
  *
@@ -141,14 +141,14 @@ HRESULT WINAPI FTMarshalImpl_GetMarshalSizeMax (LPMARSHAL iface, REFIID riid, vo
 
     FIXME ("(), stub!\n");
 
-    /* if the marshaling happends inside the same process the interface pointer is
-       copied between the appartments */
+    /* if the marshalling happens inside the same process the interface pointer is
+       copied between the apartments */
     if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX) {
 	*pSize = sizeof (This);
 	return S_OK;
     }
 
-    /* use the standard marshaler to handle all other cases */
+    /* use the standard marshaller to handle all other cases */
     CoGetStandardMarshal (riid, pv, dwDestContext, pvDestContext, mshlflags, &pMarshal);
     hres = IMarshal_GetMarshalSizeMax (pMarshal, riid, pv, dwDestContext, pvDestContext, mshlflags, pSize);
     IMarshal_Release (pMarshal);
@@ -168,8 +168,8 @@ HRESULT WINAPI FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, 
 
     FIXME ("(), stub!\n");
 
-    /* if the marshaling happends inside the same process the interface pointer is
-       copied between the appartments */
+    /* if the marshalling happens inside the same process the interface pointer is
+       copied between the apartments */
     if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX) {
 	return IStream_Write (pStm, This, sizeof (This), 0);
     }

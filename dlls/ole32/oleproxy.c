@@ -252,7 +252,7 @@ CFStub_Construct(LPRPCSTUBBUFFER *ppv) {
 }
 
 /* Since we create proxy buffers and classfactory in a pair, there is
- * no need for 2 seperate structs. Just put them in one, but remember
+ * no need for 2 separate structs. Just put them in one, but remember
  * the refcount.
  */
 typedef struct _CFProxy {
@@ -313,7 +313,7 @@ CFProxy_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
 	IClassFactory_AddRef(iface);
 	return S_OK;
     }
-    if (IsEqualIID(riid,&IID_IMarshal)) /* just to avoid debugoutput */
+    if (IsEqualIID(riid,&IID_IMarshal)) /* just to avoid debug output */
 	return E_NOINTERFACE;
     FIXME("Unhandled interface: %s\n",debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -371,7 +371,7 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     if (!msg.cbBuffer) /* interface not found on remote */
 	return srstatus;
 
-    /* We got back: [Marshaled Interface data] */
+    /* We got back: [Marshalled Interface data] */
     TRACE("got %ld bytes data.\n",msg.cbBuffer);
     hGlobal = GlobalAlloc(GMEM_MOVEABLE|GMEM_NODISCARD|GMEM_SHARE,msg.cbBuffer);
     memcpy(GlobalLock(hGlobal),msg.Buffer,msg.cbBuffer);

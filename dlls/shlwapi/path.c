@@ -682,7 +682,7 @@ BOOL WINAPI PathStripToRootW(LPWSTR lpszPath)
 /*************************************************************************
  * PathRemoveArgsA	[SHLWAPI.@]
  *
- * Strip space seperated arguments from a path.
+ * Strip space separated arguments from a path.
  *
  * PARAMS
  *  lpszPath [I] Path to remove arguments from
@@ -1778,7 +1778,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
  * NOTES
  *  Multiple search masks may be given if they are seperated by ";". The
  *  pattern "*.*" is treated specially in that it matches all paths (for
- *  backwards compatability with DOS).
+ *  backwards compatibility with DOS).
  */
 BOOL WINAPI PathMatchSpecA(LPCSTR lpszPath, LPCSTR lpszMask)
 {
@@ -2601,7 +2601,7 @@ int WINAPI PathCommonPrefixA(LPCSTR lpszFile1, LPCSTR lpszFile2, LPSTR achPath)
   } while (1);
 
   if (iLen == 2)
-    iLen++; /* Feature/Bug compatable with Win32 */
+    iLen++; /* Feature/Bug compatible with Win32 */
 
   if (iLen && achPath)
   {
@@ -2656,7 +2656,7 @@ int WINAPI PathCommonPrefixW(LPCWSTR lpszFile1, LPCWSTR lpszFile2, LPWSTR achPat
   } while (1);
 
   if (iLen == 2)
-    iLen++; /* Feature/Bug compatable with Win32 */
+    iLen++; /* Feature/Bug compatible with Win32 */
 
   if (iLen && achPath)
   {
@@ -2871,7 +2871,7 @@ UINT WINAPI PathGetCharTypeW(WCHAR ch)
          flags |= GCT_SHORTCHAR; /* All these are valid for DOS */
      }
      else
-       flags |= GCT_SHORTCHAR; /* Bug compatable with win32 */
+       flags |= GCT_SHORTCHAR; /* Bug compatible with win32 */
      flags |= GCT_LFNCHAR; /* Valid for long file names */
   }
   return flags;

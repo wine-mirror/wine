@@ -759,7 +759,7 @@ sub process_comment
   $prototype =~ s/ *\* */\*/g;     # Strip space around pointers
   $prototype =~ s/ *\, */\,/g;     # Strip space around commas
   $prototype =~ s/^(void|VOID)$//; # If void, leave blank
-  $prototype =~ s/\*([A-Za-z_])/\* $1/g; # Seperate pointers from parameter name
+  $prototype =~ s/\*([A-Za-z_])/\* $1/g; # Separate pointers from parameter name
   @{$comment->{PROTOTYPE}} = split ( /,/ ,$prototype);
 
   # FIXME: If we have no parameters, make sure we have a PARAMS: None. section

@@ -886,12 +886,12 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
  /*
   * some macro definitions for bezier drawing
   *
-  * to avoid trucation errors the coordinates are
+  * to avoid truncation errors the coordinates are
   * shifted upwards. When used in drawing they are
   * shifted down again, including correct rounding
-  * and avoiding floating point arithmatic
+  * and avoiding floating point arithmetic
   * 4 bits should allow 27 bits coordinates which I saw
-  * somewere in the win32 doc's
+  * somewhere in the win32 doc's
   *
   */
 

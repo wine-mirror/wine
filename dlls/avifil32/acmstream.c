@@ -629,7 +629,7 @@ static HRESULT WINAPI ACMStream_fnDelete(IAVIStream *iface, LONG start,
   if ((This->sInfo.dwCaps & AVIFILECAPS_CANWRITE) == 0)
     return AVIERR_READONLY;
 
-  /* A compressor is also neccessary */
+  /* A compressor is also necessary */
   if (This->has == NULL)
     return AVIERR_NOCOMPRESSOR;
 

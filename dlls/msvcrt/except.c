@@ -107,7 +107,7 @@ int _XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
  *		_EH_prolog (MSVCRT.@)
  */
 #ifdef __i386__
-/* Provided for VC++ binary compatability only */
+/* Provided for VC++ binary compatibility only */
 __ASM_GLOBAL_FUNC(_EH_prolog,
                   "pushl $-1\n\t"
                   "pushl %eax\n\t"

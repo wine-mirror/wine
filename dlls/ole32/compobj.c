@@ -63,7 +63,7 @@ const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 
 static void* StdGlobalInterfaceTableInstance;
 
 /*****************************************************************************
- * Appartment management stuff
+ * Apartment management stuff
  *
  * NOTE:
  *  per Thread values are stored in the TEB on offset 0xF80
@@ -75,22 +75,22 @@ static void* StdGlobalInterfaceTableInstance;
 typedef struct {
         unsigned char		threadingModell;	/* we use the COINIT flags */
         unsigned long		threadID;
-	long			AppartmentLockCount;
-} OleAppartmentData;
+	long			ApartmentLockCount;
+} OleApartmentData;
 
 typedef struct {
-	OleAppartmentData 	*AppartmentData;
+	OleApartmentData 	*ApartmentData;
 } OleThreadData;
 
 /* not jet used
-static CRITICAL_SECTION csAppartmentData = CRITICAL_SECTION_INIT("csAppartmentData");
+static CRITICAL_SECTION csApartmentData = CRITICAL_SECTION_INIT("csApartmentData");
 */
 /*
  * the first STA created in a process is the main STA
  */
 
 /* not jet used
-static OleAppartmentData * mainSTA;
+static OleApartmentData * mainSTA;
 */
 
 /*
@@ -98,7 +98,7 @@ static OleAppartmentData * mainSTA;
  */
 
 /* not jet used
-static OleAppartmentData * processMTA;
+static OleApartmentData * processMTA;
 */
 
 

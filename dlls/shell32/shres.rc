@@ -26,7 +26,7 @@
 
 /*--------------------- FIXME --------------------------
  *
- * These must be seperated into the language files
+ * These must be separated into the language files
  * and translated. The language 0,0 is a hack to get it
  * loaded properly for all languages by pretending that
  * they are neutral.

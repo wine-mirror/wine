@@ -45,7 +45,7 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
 
 #define PIPEPREF "\\\\.\\pipe\\"
 #define OLESTUBMGR PIPEPREF"WINE_OLE_StubMgr"
-/* Standard Marshaling definitions */
+/* Standard Marshalling definitions */
 typedef struct _wine_marshal_id {
     DWORD	processid;
     DWORD	objectid;	/* unique value corresp. IUnknown of object */

@@ -222,7 +222,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
       <para>
         In order to avoid warnings in C (and potential errors in C++)
         from not having prototypes, you may need to use a set of MS
-        compatable header files. These are scheduled for inclusion
+        compatible header files. These are scheduled for inclusion
         into Wine but at the time of writing are not available. Until
         they are, you can try prototyping the functions you need, or
         just live with the warnings.

@@ -118,7 +118,7 @@ BOOL RPCRT4_SendReceiveNPMsg(HANDLE np, PRPCSS_NP_MESSAGE msg, char *vardata, PR
     return FALSE;
   }
 
-  /* process the vardata payload if neccesary */
+  /* process the vardata payload if necessary */
   vardata_payload_msg.message_type = RPCSS_NP_MESSAGE_TYPEID_VARDATAPAYLOADMSG;
   vardata_payload_msg.vardata_payload_size = 0; /* meaningless */
   for ( payload_offset = 0; payload_offset < msg->vardata_payload_size; 

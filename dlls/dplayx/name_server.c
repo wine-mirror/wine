@@ -158,7 +158,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
 
   lpCache->present = lpCacheNode;
 
-  /* Use this message as an oportunity to weed out any old sessions so
+  /* Use this message as an opportunity to weed out any old sessions so
    * that we don't enum them again
    */
   NS_PruneSessionCache( lpNSInfo );
@@ -236,7 +236,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
 
   lpMsg = (LPDPMSG_ENUMSESSIONSREQUEST)(((BYTE*)data.lpMessage)+lpSpData->dwSPHeaderSize);
 
-  /* Setup EnumSession reqest message */
+  /* Setup EnumSession request message */
   lpMsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
   lpMsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREQUEST;
   lpMsg->envelope.wVersion   = DPMSGVER_DP6;
@@ -267,7 +267,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
 
   if( lpCache == NULL )
   {
-    ERR( ": invalidate non existant cache\n" );
+    ERR( ": invalidate non existent cache\n" );
     return;
   }
 
@@ -362,7 +362,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
       break;
     }
 
-    /* Deal with time in a wrap around safe manner - unsigned arithmatic.
+    /* Deal with time in a wrap around safe manner - unsigned arithmetic.
      * Check the difference in time */
     if( (dwPresentTime - (DPQ_FIRST(lpCache->first)->dwTime)) < dwPrunePeriod )
     {

@@ -65,13 +65,13 @@
 
         <itemizedlist>
           <listitem>
-            <para>existance of a header file</para>
+            <para>existence of a header file</para>
           </listitem>
           <listitem>
-            <para>existance of a library function</para>
+            <para>existence of a library function</para>
           </listitem>
           <listitem>
-            <para>existance of libraries</para>
+            <para>existence of libraries</para>
           </listitem>
           <listitem>
             <para>bugs in header files, library functions, the compiler, ...</para>

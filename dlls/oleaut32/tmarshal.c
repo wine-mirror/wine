@@ -117,7 +117,7 @@ _unmarshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN *pUnk) {
     if (hres) { FIXME("Failed Seek %lx\n",hres); return hres;}
     hres = CoUnmarshalInterface(pStm,riid,(LPVOID*)pUnk);
     if (hres) {
-	FIXME("Marshaling interface %s failed with %lx\n",debugstr_guid(riid),hres);
+	FIXME("Marshalling interface %s failed with %lx\n",debugstr_guid(riid),hres);
 	return hres;
     }
     IStream_Release(pStm);
@@ -154,7 +154,7 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
     hres = CoMarshalInterface(pStm,riid,newiface,0,NULL,0);
     IUnknown_Release(newiface);
     if (hres) {
-	FIXME("Marshaling interface %s failed with %lx\n",
+	FIXME("Marshalling interface %s failed with %lx\n",
 		debugstr_guid(riid),hres
 	);
 	goto fail;
