@@ -95,6 +95,8 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     WORD *glyphs = NULL;
     DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
+    INT char_extra;
+    INT *deltas = NULL;
 
     if (!count)
 	return TRUE;
@@ -125,7 +127,27 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
     else
         GetTextExtentPoint32W(physDev->hdc, str, count, &sz);
 
-    if(lpDx) {
+    if((char_extra = GetTextCharacterExtra(physDev->hdc)) != 0) {
+        INT i;
+	SIZE tmpsz;
+
+        deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
+	for(i = 0; i < count; i++) {
+	    deltas[i] = char_extra;
+	    if(lpDx)
+	        deltas[i] += lpDx[i];
+	    else {
+	        if(physDev->font.fontloc == Download)
+		    GetTextExtentPointI(physDev->hdc, glyphs + i, 1, &tmpsz);
+		else
+		    GetTextExtentPoint32W(physDev->hdc, str + i, 1, &tmpsz);
+	        deltas[i] += tmpsz.cx;
+	    }
+	}
+    } else if(lpDx)
+        deltas = (INT*)lpDx;
+
+    if(deltas) {
         SIZE tmpsz;
 	INT i;
 	/* Get the width of the last char and add on all the offsets */
@@ -134,7 +156,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	else
 	    GetTextExtentPoint32W(physDev->hdc, str + count - 1, 1, &tmpsz);
 	for(i = 0; i < count-1; i++)
-	    tmpsz.cx += lpDx[i];
+	    tmpsz.cx += deltas[i];
 	sz.cx = tmpsz.cx; /* sz.cy remains untouched */
     }
 
@@ -201,7 +223,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 
     PSDRV_WriteMoveTo(physDev, x, y);
 
-    if(!lpDx) {
+    if(!deltas) {
         if(physDev->font.fontloc == Download)
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs, count);
 	else
@@ -213,13 +235,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	float cos_theta = cos(physDev->font.escapement * M_PI / 1800.0);
 	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);
         for(i = 0; i < count-1; i++) {
-	    TRACE("lpDx[%d] = %d\n", i, lpDx[i]);
+	    TRACE("lpDx[%d] = %d\n", i, deltas[i]);
 	    if(physDev->font.fontloc == Download)
 	        PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
 	    else
 	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
-	    dx += lpDx[i] * cos_theta;
-	    dy -= lpDx[i] * sin_theta;
+	    dx += deltas[i] * cos_theta;
+	    dy -= deltas[i] * sin_theta;
 	    PSDRV_WriteMoveTo(physDev, x + INTERNAL_XWSTODS(dc, dx),
 			      y + INTERNAL_YWSTODS(dc, dy));
 	}
@@ -227,6 +249,8 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
 	else
 	    PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
+	if(deltas != lpDx)
+	    HeapFree(GetProcessHeap(), 0, deltas);
     }
 
     /*

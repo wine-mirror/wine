@@ -317,10 +317,12 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	{
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
-	    TRACE("(%ld %ld %ld %ld %x) %s %s %s => %04x\n",
+	    TRACE("(%ld %ld %ld %ld %x %d %x %d %d) %s %s %s => %04x\n",
                   plf->lfHeight, plf->lfWidth,
                   plf->lfEscapement, plf->lfOrientation,
                   plf->lfPitchAndFamily,
+		  plf->lfOutPrecision, plf->lfClipPrecision,
+		  plf->lfQuality, plf->lfCharSet,
                   debugstr_w(plf->lfFaceName),
                   plf->lfWeight > 400 ? "Bold" : "",
                   plf->lfItalic ? "Italic" : "", hFont);
@@ -766,9 +768,8 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
 {
     INT ret;
     DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return 0;
-    ret = abs( (dc->charExtra * dc->wndExtX + dc->vportExtX / 2)
-                 / dc->vportExtX );
+    if (!dc) return 0x80000000;
+    ret = dc->charExtra;
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -781,14 +782,13 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 {
     INT prev;
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc) return 0;
+    if (!dc) return 0x80000000;
     if (dc->funcs->pSetTextCharacterExtra)
         prev = dc->funcs->pSetTextCharacterExtra( dc->physDev, extra );
     else
     {
-        extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
-        prev = (dc->charExtra * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
-        dc->charExtra = abs(extra);
+        prev = dc->charExtra;
+        dc->charExtra = extra;
     }
     GDI_ReleaseObj( hdc );
     return prev;

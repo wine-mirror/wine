@@ -85,7 +85,9 @@ INT MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
 
 INT MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )
 {
-    return MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra );
+    if(!MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra ))
+        return 0x80000000;
+    return TRUE;
 }
 
 DWORD MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
