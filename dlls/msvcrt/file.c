@@ -148,7 +148,7 @@ static MSVCRT_FILE* msvcrt_alloc_fp(int fd)
     {
       MSVCRT_files[fd]->_file = fd;
       MSVCRT_files[fd]->_flag = MSVCRT_flags[fd];
-      MSVCRT_files[fd]->_flag &= ~_IOAPPEND; /* mask out, see above */
+      MSVCRT_files[fd]->_flag &= ~MSVCRT__IOAPPEND; /* mask out, see above */
     }
   }
   TRACE(":got FILE* (%p)\n",MSVCRT_files[fd]);
@@ -162,11 +162,11 @@ void msvcrt_init_io(void)
   int i;
   memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
   MSVCRT_handles[0] = GetStdHandle(STD_INPUT_HANDLE);
-  MSVCRT_flags[0] = MSVCRT__iob[0]._flag = _IOREAD;
+  MSVCRT_flags[0] = MSVCRT__iob[0]._flag = MSVCRT__IOREAD;
   MSVCRT_handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
-  MSVCRT_flags[1] = MSVCRT__iob[1]._flag = _IOWRT;
+  MSVCRT_flags[1] = MSVCRT__iob[1]._flag = MSVCRT__IOWRT;
   MSVCRT_handles[2] = GetStdHandle(STD_ERROR_HANDLE);
-  MSVCRT_flags[2] = MSVCRT__iob[2]._flag = _IOWRT;
+  MSVCRT_flags[2] = MSVCRT__iob[2]._flag = MSVCRT__IOWRT;
 
   TRACE(":handles (%d)(%d)(%d)\n",MSVCRT_handles[0],
 	MSVCRT_handles[1],MSVCRT_handles[2]);
@@ -376,7 +376,7 @@ int _eof(int fd)
    * will be set by the read()/write() functions.
    */
   if (MSVCRT_files[fd])
-    return MSVCRT_files[fd]->_flag & _IOEOF;
+    return MSVCRT_files[fd]->_flag & MSVCRT__IOEOF;
 
   /* Otherwise we do it the hard way */
   curpos = SetFilePointer(hand, 0, NULL, SEEK_CUR);
@@ -433,7 +433,7 @@ LONG _lseek(int fd, LONG offset, int whence)
   if ((ret = SetFilePointer(hand, offset, NULL, whence)) != 0xffffffff)
   {
     if (MSVCRT_files[fd])
-      MSVCRT_files[fd]->_flag &= ~_IOEOF;
+      MSVCRT_files[fd]->_flag &= ~MSVCRT__IOEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
     return ret;
   }
@@ -444,7 +444,7 @@ LONG _lseek(int fd, LONG offset, int whence)
     case ERROR_NEGATIVE_SEEK:
     case ERROR_SEEK_ON_DEVICE:
       MSVCRT__set_errno(GetLastError());
-      MSVCRT_files[fd]->_flag |= _IOERR;
+      MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
       break;
     default:
       break;
@@ -459,7 +459,7 @@ void MSVCRT_rewind(MSVCRT_FILE* file)
 {
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
   _lseek(file->_file,0,SEEK_SET);
-  file->_flag &= ~(_IOEOF | _IOERR);
+  file->_flag &= ~(MSVCRT__IOEOF | MSVCRT__IOERR);
 }
 
 /*********************************************************************
@@ -530,7 +530,7 @@ int _flushall(void)
     {
       if (_commit(i) == -1)
 	if (MSVCRT_files[i])
-	  MSVCRT_files[i]->_flag |= _IOERR;
+	  MSVCRT_files[i]->_flag |= MSVCRT__IOERR;
       num_flushed++;
     }
 
@@ -732,15 +732,15 @@ int _open(const char *path,int flags,...)
   {
   case _O_RDONLY:
     access |= GENERIC_READ;
-    ioflag |= _IOREAD;
+    ioflag |= MSVCRT__IOREAD;
     break;
   case _O_WRONLY:
     access |= GENERIC_WRITE;
-    ioflag |= _IOWRT;
+    ioflag |= MSVCRT__IOWRT;
     break;
   case _O_RDWR:
     access |= GENERIC_WRITE | GENERIC_READ;
-    ioflag |= _IORW;
+    ioflag |= MSVCRT__IORW;
     break;
   }
 
@@ -761,7 +761,7 @@ int _open(const char *path,int flags,...)
       creation = OPEN_EXISTING;
   }
   if (flags & _O_APPEND)
-    ioflag |= _IOAPPEND;
+    ioflag |= MSVCRT__IOAPPEND;
 
 
   flags |= _O_BINARY; /* FIXME: Default to text */
@@ -800,7 +800,7 @@ int _open(const char *path,int flags,...)
   {
     if (flags & _O_TEMPORARY)
       MSVCRT_tempfiles[fd] = _strdup(path);
-    if (ioflag & _IOAPPEND)
+    if (ioflag & MSVCRT__IOAPPEND)
       _lseek(fd, 0, FILE_END);
   }
 
@@ -905,13 +905,13 @@ int _read(int fd, void *buf, unsigned int count)
     if (num_read != count && MSVCRT_files[fd])
     {
       TRACE(":EOF\n");
-      MSVCRT_files[fd]->_flag |= _IOEOF;
+      MSVCRT_files[fd]->_flag |= MSVCRT__IOEOF;
     }
     return num_read;
   }
   TRACE(":failed-last error (%ld)\n",GetLastError());
   if (MSVCRT_files[fd])
-     MSVCRT_files[fd]->_flag |= _IOERR;
+     MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
   return -1;
 }
 
@@ -1158,7 +1158,7 @@ int _write(int fd, const void* buf, unsigned int count)
     return -1;
 
   /* If appending, go to EOF */
-  if (MSVCRT_flags[fd] & _IOAPPEND)
+  if (MSVCRT_flags[fd] & MSVCRT__IOAPPEND)
     _lseek(fd, 0, FILE_END);
 
   /* Set _cnt to 0 so optimised binaries will call our implementation
@@ -1173,7 +1173,7 @@ int _write(int fd, const void* buf, unsigned int count)
 
   TRACE(":failed-last error (%ld)\n",GetLastError());
   if (MSVCRT_files[fd])
-     MSVCRT_files[fd]->_flag |= _IOERR;
+     MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
 
   return -1;
 }
@@ -1192,7 +1192,7 @@ int _putw(int val, MSVCRT_FILE* file)
 void MSVCRT_clearerr(MSVCRT_FILE* file)
 {
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
-  file->_flag &= ~(_IOERR | _IOEOF);
+  file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
 }
 
 /*********************************************************************
@@ -1202,7 +1202,7 @@ int MSVCRT_fclose(MSVCRT_FILE* file)
 {
   int r;
   r=_close(file->_file);
-  return ((r==MSVCRT_EOF) || (file->_flag & _IOERR) ? MSVCRT_EOF : 0);
+  return ((r==MSVCRT_EOF) || (file->_flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
 
 /*********************************************************************
@@ -1210,7 +1210,7 @@ int MSVCRT_fclose(MSVCRT_FILE* file)
  */
 int MSVCRT_feof(MSVCRT_FILE* file)
 {
-  return file->_flag & _IOEOF;
+  return file->_flag & MSVCRT__IOEOF;
 }
 
 /*********************************************************************
@@ -1218,7 +1218,7 @@ int MSVCRT_feof(MSVCRT_FILE* file)
  */
 int MSVCRT_ferror(MSVCRT_FILE* file)
 {
-  return file->_flag & _IOERR;
+  return file->_flag & MSVCRT__IOERR;
 }
 
 /*********************************************************************
