@@ -180,7 +180,7 @@ static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid) {
 		return FALSE;
 	*atomid=strtol(atomstr+1,&xend,10);
 	if (*xend) {
-		FIXME("found atom named '%s'\n",atomstr);
+		/* atom has a name like '## some name ##'  */
 		return FALSE;
 	}
 	return TRUE;
