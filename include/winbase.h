@@ -1491,6 +1491,7 @@ BOOL        WINAPI FindNextFileW(HANDLE,LPWIN32_FIND_DATAW);
 HRSRC     WINAPI FindResourceA(HMODULE,LPCSTR,LPCSTR);
 HRSRC     WINAPI FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 #define     FindResource WINELIB_NAME_AW(FindResource)
+BOOL        WINAPI FlushInstructionCache(HANDLE,LPCVOID,DWORD);
 BOOL        WINAPI FreeLibrary(HMODULE);
 #define     FreeModule(handle) FreeLibrary(handle)
 #define     FreeProcInstance(proc) /*nothing*/

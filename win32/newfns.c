@@ -149,10 +149,11 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 /****************************************************************************
  *		FlushInstructionCache (KERNEL32.@)
  */
-BOOL WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
-        if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
-	FIXME_(debug)("(0x%08lx,0x%08lx,0x%08lx): stub\n",x,y,z);
-	return TRUE;
+BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, DWORD dwSize)
+{
+    if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
+    FIXME_(debug)("(0x%08lx,%p,0x%08lx): stub\n",(DWORD)hProcess, lpBaseAddress, dwSize);
+    return TRUE;
 }
 
 /***********************************************************************
