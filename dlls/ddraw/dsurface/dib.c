@@ -35,6 +35,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable;
 
+/* Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned. */
+inline static int get_dib_width_bytes( int width, int depth )
+{
+    int words;
+
+    switch(depth)
+    {
+    case 1:  words = (width + 31) / 32; break;
+    case 4:  words = (width + 7) / 8; break;
+    case 8:  words = (width + 3) / 4; break;
+    case 15:
+    case 16: words = (width + 1) / 2; break;
+    case 24: words = (width * 3 + 3)/4; break;
+    default:
+        WARN("(%d): Unsupported depth\n", depth );
+        /* fall through */
+    case 32: words = width; break;
+    }
+    return 4 * words;
+}
+
+
 static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
 {
     BITMAPINFO* b_info;
@@ -136,7 +158,7 @@ static HRESULT create_dib(IDirectDrawSurfaceImpl* This)
     if (!This->surface_desc.u1.lPitch) {
 	/* This can't happen, right? */
 	/* or use GDI_GetObj to get it from the created DIB? */
-	This->surface_desc.u1.lPitch = DIB_GetDIBWidthBytes(b_info->bmiHeader.biWidth, b_info->bmiHeader.biBitCount);
+	This->surface_desc.u1.lPitch = get_dib_width_bytes(b_info->bmiHeader.biWidth, b_info->bmiHeader.biBitCount);
 	This->surface_desc.dwFlags |= DDSD_PITCH;
     }
 

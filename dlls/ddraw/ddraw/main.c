@@ -34,7 +34,6 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"
-#include "bitmap.h"
 
 #include "ddraw_private.h"
 #include "ddraw/main.h"
