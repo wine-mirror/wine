@@ -386,7 +386,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput, const CHAR_INFO *lpBuffe
     {
         memcpy( &ciw[y * new_size.X], &lpBuffer[(y + coord.Y) * size.X + coord.X],
                 new_size.X * sizeof(CHAR_INFO) );
-        char_info_AtoW( ciw, new_size.X );
+        char_info_AtoW( &ciw[ y * new_size.X ], new_size.X );
     }
     new_coord.X = new_coord.Y = 0;
     ret = WriteConsoleOutputW( hConsoleOutput, ciw, new_size, new_coord, region );
