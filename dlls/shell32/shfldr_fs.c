@@ -324,9 +324,9 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
     HRESULT hr = E_OUTOFMEMORY;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
-    CHAR szTempA[MAX_PATH],
-      szPath[MAX_PATH];
+    CHAR szPath[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
+    DWORD len;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n",
 	   This, hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName), pchEaten, ppidl, pdwAttributes);
@@ -342,14 +342,13 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
 
 	/* build the full pathname to the element */
-	WideCharToMultiByte (CP_ACP, 0, szElement, -1, szTempA, MAX_PATH, NULL, NULL);
-	lstrcpyA (szPath, This->sPathTarget);
-	PathAddBackslashA (szPath);
-	lstrcatA (szPath, szTempA);
+	lstrcpyA(szPath, This->sPathTarget);
+	PathAddBackslashA(szPath);
+	len = lstrlenA(szPath);
+	WideCharToMultiByte(CP_ACP, 0, szElement, -1, szPath + len, MAX_PATH - len, NULL, NULL);
 
 	/* get the pidl */
-	pidlTemp = SHSimpleIDListFromPathA (szPath);
-
+	pidlTemp = _ILCreateFromPathA(szPath);
 	if (pidlTemp) {
 	    if (szNext && *szNext) {
 		/* try to analyse the next element */
@@ -696,6 +695,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface, HWND hwnd
 	len = strlen (szSrc);
 	_ILSimpleGetText (pidl, szSrc + len, MAX_PATH - len);
     } else {
+	/* FIXME: Can this work with a simple PIDL? */
 	SHGetPathFromIDListA (pidl, szSrc);
     }
 
@@ -708,7 +708,7 @@ static HRESULT WINAPI IShellFolder_fnSetNameOf (IShellFolder2 * iface, HWND hwnd
     TRACE ("src=%s dest=%s\n", szSrc, szDest);
     if (MoveFileA (szSrc, szDest)) {
 	if (pPidlOut)
-	    *pPidlOut = SHSimpleIDListFromPathA (szDest);
+	    *pPidlOut = _ILCreateFromPathA(szDest);
 	SHChangeNotify (bIsFolder ? SHCNE_RENAMEFOLDER : SHCNE_RENAMEITEM, SHCNF_PATHA, szSrc, szDest);
 	return S_OK;
     }
@@ -931,23 +931,13 @@ static HRESULT WINAPI ISFHelper_fnAddFolder (ISFHelper * iface, HWND hwnd, LPCST
     TRACE ("(%p)(%s %p)\n", This, lpName, ppidlOut);
 
     strcpy (lpstrNewDir, This->sPathTarget);
-    PathAddBackslashA (lpstrNewDir);
-    strcat (lpstrNewDir, lpName);
+    PathAppendA(lpstrNewDir, lpName);
 
     bRes = CreateDirectoryA (lpstrNewDir, NULL);
-
     if (bRes) {
-	LPITEMIDLIST pidl,
-	  pidlitem;
-
-	pidlitem = SHSimpleIDListFromPathA (lpstrNewDir);
-
-	pidl = ILCombine (This->pidlRoot, pidlitem);
-	SHChangeNotify (SHCNE_MKDIR, SHCNF_IDLIST, pidl, NULL);
-	SHFree (pidl);
-
+	SHChangeNotify (SHCNE_MKDIR, SHCNF_PATHA, lpstrNewDir, NULL);
 	if (ppidlOut)
-	    *ppidlOut = pidlitem;
+	    *ppidlOut = _ILCreateFromPathA(lpstrNewDir);
 	hres = S_OK;
     } else {
 	char lpstrText[128 + MAX_PATH];

@@ -1116,7 +1116,7 @@ LPITEMIDLIST _ILCreateFolder( WIN32_FIND_DATAA * stffile )
 	  pData = _ILGetDataPointer(pidl);
 	  FileTimeToDosDateTime(&(stffile->ftLastWriteTime),&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
 	  pData->u.folder.dwFileSize = stffile->nFileSizeLow;
-	  pData->u.folder.uFileAttribs=stffile->dwFileAttributes;
+	  pData->u.folder.uFileAttribs = stffile->dwFileAttributes;
 	}
 
 	return pidl;
@@ -1159,6 +1159,24 @@ LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
 	  pData->u.folder.uFileAttribs=stffile->dwFileAttributes;
 	}
 
+	return pidl;
+}
+
+LPITEMIDLIST _ILCreateFromPathA(LPCSTR szPath)
+{
+	HANDLE hFile;
+	WIN32_FIND_DATAA stffile;
+	LPITEMIDLIST pidl = NULL;
+	
+	hFile = FindFirstFileA(szPath, &stffile);
+	if (hFile != INVALID_HANDLE_VALUE) 
+	{
+	  if (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	    pidl = _ILCreateFolder(&stffile);
+	  else
+	    pidl = _ILCreateValue(&stffile);
+	  FindClose(hFile);
+	}
 	return pidl;
 }
 

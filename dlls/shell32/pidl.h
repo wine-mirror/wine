@@ -58,7 +58,8 @@
 *	drive		0x2F		drive		(lnk/persistant)
 *	folder/file	0x30		folder/file (1)	(lnk/persistant)
 *	folder		0x31		folder		(usual)
-*	value		0x32		file		(usual)
+*	valueA		0x32		file		(ANSI file name) 
+*	valueW		0x34		file		(Unicode file name)
 *	workgroup	0x41		network (3)
 *	computer	0x42		network (4)
 *	whole network	0x47		network (5)
@@ -174,6 +175,7 @@ LPITEMIDLIST	_ILCreateDrive		(LPCSTR);
 LPITEMIDLIST	_ILCreateFolder		(WIN32_FIND_DATAA * stffile);
 LPITEMIDLIST	_ILCreateValue		(WIN32_FIND_DATAA * stffile);
 LPITEMIDLIST	_ILCreateSpecial	(LPCSTR szGUID);
+LPITEMIDLIST	_ILCreateFromPathA	(LPCSTR szPath);
 
 /*
  * helper functions (getting struct-pointer)
