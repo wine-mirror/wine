@@ -212,7 +212,7 @@ static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam,
  *      Generates a 16 bits template from the Wine 32 bits resource
  *
  */
-static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
+static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(LPCSTR PrintResourceName)
 {
 	HRSRC hResInfo;
 	HGLOBAL hDlgTmpl32;

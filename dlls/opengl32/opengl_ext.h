@@ -51,8 +51,8 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 
 
 typedef struct {
-  char  *name;     /* name of the extension */
-  char  *glx_name; /* name used on Unix's libGL */
+  const char  *name;     /* name of the extension */
+  const char  *glx_name; /* name used on Unix's libGL */
   void  *func;     /* pointer to the Wine function for this extension */
   void **func_ptr; /* where to store the value of glXGetProcAddressARB */
 } OpenGL_extension;

@@ -64,8 +64,8 @@ typedef struct
 
 /* Debugging info */
 static struct pd_flags {
-  DWORD flag;
-  LPSTR name;
+  DWORD  flag;
+  LPCSTR name;
 } pd_flags[] = {
   {PD_SELECTION, "PD_SELECTION "},
   {PD_PAGENUMS, "PD_PAGENUMS "},

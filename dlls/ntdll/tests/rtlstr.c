@@ -87,7 +87,7 @@ static NTSTATUS (WINAPI *pRtlValidateUnicodeString)(long, UNICODE_STRING *);
 /*static DWORD (WINAPI *pRtlIsTextUnicode)(LPVOID, DWORD, DWORD *);*/
 
 
-static WCHAR* AtoW( char* p )
+static WCHAR* AtoW( const char* p )
 {
     WCHAR* buffer;
     DWORD len = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
@@ -296,15 +296,15 @@ typedef struct {
     int source_Length;
     int source_MaximumLength;
     int source_buf_size;
-    char *source_buf;
+    const char *source_buf;
     int dest_Length;
     int dest_MaximumLength;
     int dest_buf_size;
-    char *dest_buf;
+    const char *dest_buf;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } dupl_ustr_t;
 
@@ -714,16 +714,16 @@ typedef struct {
     int ansi_Length;
     int ansi_MaximumLength;
     int ansi_buf_size;
-    char *ansi_buf;
+    const char *ansi_buf;
     int uni_Length;
     int uni_MaximumLength;
     int uni_buf_size;
-    char *uni_buf;
+    const char *uni_buf;
     BOOLEAN doalloc;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } ustr2astr_t;
 
@@ -797,12 +797,12 @@ typedef struct {
     int dest_Length;
     int dest_MaximumLength;
     int dest_buf_size;
-    char *dest_buf;
-    char *src;
+    const char *dest_buf;
+    const char *src;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } app_asc2str_t;
 
@@ -864,15 +864,15 @@ typedef struct {
     int dest_Length;
     int dest_MaximumLength;
     int dest_buf_size;
-    char *dest_buf;
+    const char *dest_buf;
     int src_Length;
     int src_MaximumLength;
     int src_buf_size;
-    char *src_buf;
+    const char *src_buf;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } app_str2str_t;
 
@@ -945,12 +945,12 @@ typedef struct {
     int dest_Length;
     int dest_MaximumLength;
     int dest_buf_size;
-    char *dest_buf;
-    char *src;
+    const char *dest_buf;
+    const char *src;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } app_uni2str_t;
 
@@ -1017,15 +1017,15 @@ typedef struct {
     int dest_Length;
     int dest_MaximumLength;
     int dest_buf_size;
-    char *dest_buf;
+    const char *dest_buf;
     int src_Length;
     int src_MaximumLength;
     int src_buf_size;
-    char *src_buf;
+    const char *src_buf;
     int res_Length;
     int res_MaximumLength;
     int res_buf_size;
-    char *res_buf;
+    const char *res_buf;
     NTSTATUS result;
 } app_ustr2str_t;
 
@@ -1100,8 +1100,8 @@ static void test_RtlAppendUnicodeStringToString(void)
 
 typedef struct {
     int flags;
-    char *main_str;
-    char *search_chars;
+    const char *main_str;
+    const char *search_chars;
     USHORT pos;
     NTSTATUS result;
 } find_ch_in_ustr_t;
@@ -1436,7 +1436,7 @@ typedef struct {
     ULONG value;
     USHORT Length;
     USHORT MaximumLength;
-    char *Buffer;
+    const char *Buffer;
     NTSTATUS result;
 } int2str_t;
 

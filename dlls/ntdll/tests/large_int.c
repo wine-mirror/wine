@@ -133,7 +133,7 @@ typedef struct {
     ULONGLONG value;
     USHORT Length;
     USHORT MaximumLength;
-    char *Buffer;
+    const char *Buffer;
     NTSTATUS result;
 } largeint2str_t;
 

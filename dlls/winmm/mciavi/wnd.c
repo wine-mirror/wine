@@ -164,7 +164,7 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
 DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
-    LPSTR		x = "";
+    LPCSTR		x = "";
 
     TRACE("(%04x, %08lx, %p)\n", wDevID, dwFlags, lpParms);
 

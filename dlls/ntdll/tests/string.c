@@ -101,7 +101,7 @@ static void InitFunctionPtrs()
 typedef struct {
     int base;
     ULONG value;
-    char *Buffer;
+    const char *Buffer;
     int mask; /* ntdll/msvcrt: 0x01=itoa, 0x02=ltoa, 0x04=ultoa */
               /*               0x10=itow, 0x20=ltow, 0x40=ultow */
 } ulong2str_t;
@@ -442,7 +442,7 @@ static void test_ulongtow(void)
 typedef struct {
     int base;
     ULONGLONG value;
-    char *Buffer;
+    const char *Buffer;
     int mask; /* ntdll/msvcrt: 0x01=i64toa, 0x02=ui64toa, 0x04=wrong _i64toa try next example */
               /*               0x10=i64tow, 0x20=ui64tow, 0x40=wrong _i64tow try next example */
 } ulonglong2str_t;
@@ -773,7 +773,7 @@ static void test_ulonglongtow(void)
 
 
 typedef struct {
-    char *str;
+    const char *str;
     LONG value;
 } str2long_t;
 
@@ -918,7 +918,7 @@ static void test_wtol(void)
 
 
 typedef struct {
-    char *str;
+    const char *str;
     LONGLONG value;
 } str2longlong_t;
 

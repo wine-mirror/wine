@@ -66,7 +66,7 @@ static int prepare_test(void)
     return 1;
 }
 
-static void cmp_call(NTSTATUS win_nt, ULONG win32, char* message)
+static void cmp_call(NTSTATUS win_nt, ULONG win32, const char* message)
 {
     ULONG err;
 
@@ -76,7 +76,7 @@ static void cmp_call(NTSTATUS win_nt, ULONG win32, char* message)
             message, win_nt, err, win32);
 }
 
-static void cmp_call2(NTSTATUS win_nt, ULONG win32, char* message)
+static void cmp_call2(NTSTATUS win_nt, ULONG win32, const char* message)
 {
     ULONG err;
 
@@ -87,7 +87,7 @@ static void cmp_call2(NTSTATUS win_nt, ULONG win32, char* message)
        message, win_nt, err, win32);
 }
 
-static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, char* message)
+static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char* message)
 {
     ULONG err;
 
@@ -97,7 +97,7 @@ static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, char* messa
             message, win_nt, err, win32_1, win32_2);
 }
 
-static void cmp_call4(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, char* message)
+static void cmp_call4(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char* message)
 {
     ULONG err;
 
