@@ -540,6 +540,15 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
                          const DEVMODEA *initData )
 {
+    return CreateDCA( driver, device, output, initData );
+}
+
+/***********************************************************************
+ *           CreateDCA    (GDI32.@)
+ */
+HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
+                          const DEVMODEA *initData )
+{
     HDC hdc;
     DC * dc;
     const DC_FUNCTIONS *funcs;
@@ -571,16 +580,6 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDCA    (GDI32.@)
- */
-HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODEA *initData )
-{
-    return CreateDC16( driver, device, output, (const DEVMODEA *)initData );
-}
-
-
-/***********************************************************************
  *           CreateDCW    (GDI32.@)
  */
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
@@ -589,7 +588,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
     LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
     LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
-    HDC res = CreateDC16( driverA, deviceA, outputA,
+    HDC res = CreateDCA( driverA, deviceA, outputA,
                             (const DEVMODEA *)initData /*FIXME*/ );
     HeapFree( GetProcessHeap(), 0, driverA );
     HeapFree( GetProcessHeap(), 0, deviceA );
