@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+typedef LPSTR (*wine_get_unix_file_name_t) ( LPCWSTR dos );
+
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
  * winmain().
@@ -42,10 +44,28 @@ int main (int argc, char *argv[])
   DWORD maxLength;
   CHAR szBrowsers[256];
   DWORD type;
-  CHAR *defaultBrowsers = "mozilla,netscape,konqueror,galeon,opera,dillo";
+  CHAR *defaultBrowsers =
+      "mozilla,firefox,netscape,konqueror,galeon,opera,dillo";
   char *browser;
   HKEY hkey;
   LONG r;
+  wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
+
+  /* check if the argument is a local file */
+  wine_get_unix_file_name_ptr = (wine_get_unix_file_name_t)
+      GetProcAddress( GetModuleHandle( "KERNEL32"), "wine_get_unix_file_name");
+  if( wine_get_unix_file_name_ptr == NULL) {
+      fprintf( stderr, "%s: cannot get the address of "
+                      "'wine_get_unix_file_name'\n", argv[0]);
+  } else {
+      WCHAR dospathW[ MAX_PATH];
+      char *p;
+      MultiByteToWideChar( CP_ACP, 0, argv[1], -1, dospathW, MAX_PATH);
+      if((p = wine_get_unix_file_name_ptr( dospathW))) {
+          struct stat dummy;
+          if(stat( p, &dummy) >= 0 ) argv[1] = p;
+      }
+  }
 
   maxLength = sizeof(szBrowsers);
 
