@@ -2200,8 +2200,12 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
     {
 	RECT rcHeader;
 
-	LISTVIEW_GetHeaderRect(infoPtr, infoPtr->hdpaColumns->nItemCount - 1, &rcHeader);
-        nItemWidth = rcHeader.right;	
+	if (infoPtr->hdpaColumns->nItemCount > 0)
+	{
+	    LISTVIEW_GetHeaderRect(infoPtr, infoPtr->hdpaColumns->nItemCount - 1, &rcHeader);
+            nItemWidth = rcHeader.right;
+	}
+	else nItemWidth = 0;
     }
     else /* LVS_SMALLICON, or LVS_LIST */
     {
@@ -3419,6 +3423,11 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (lvItem.iItem == infoPtr->nHotItem) nmlvcd.nmcd.uItemState |= CDIS_HOT;
     nmlvcd.nmcd.lItemlParam = lvItem.lParam;
 
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
+    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
+
+    /* apprently, for selected items, we have to override the returned values */
     if (lvItem.state & LVIS_SELECTED)
     {
 	if (infoPtr->bFocus)
@@ -3433,10 +3442,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	}
     }
     
-    if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
-    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
-
     /* state icons */
     if (infoPtr->himlState && !IsRectEmpty(&rcState))
     {
@@ -3477,7 +3482,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     	if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
 	    rcSelect.right = rcBox.right;
    
-    	if (lvItem.state & LVIS_SELECTED) 
+    	if (nmlvcd.clrTextBk != CLR_NONE) 
             ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
     	if(lprcFocus) *lprcFocus = rcSelect;
     }
