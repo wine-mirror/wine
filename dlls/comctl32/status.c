@@ -116,7 +116,7 @@ STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
 
 
 static VOID
-STATUSBAR_RefreshPart (HWND hwnd, STATUSWINDOWPART *part, HDC hdc)
+STATUSBAR_RefreshPart (HWND hwnd, STATUSWINDOWPART *part, HDC hdc, int itemID)
 {
     STATUSWINDOWINFO *self = STATUSBAR_GetInfoPtr (hwnd);
     HBRUSH hbrBk;
@@ -137,7 +137,7 @@ STATUSBAR_RefreshPart (HWND hwnd, STATUSWINDOWPART *part, HDC hdc)
 	DRAWITEMSTRUCT dis;
 
 	dis.CtlID = GetWindowLongA (hwnd, GWL_ID);
-	dis.itemID = -1;
+	dis.itemID = itemID;
 	dis.hwndItem = hwnd;
 	dis.hDC = hdc;
 	dis.rcItem = part->bound;
@@ -193,7 +193,7 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
 		DRAWITEMSTRUCT dis;
 
 		dis.CtlID = GetWindowLongA (hwnd, GWL_ID);
-		dis.itemID = -1;
+		dis.itemID = i;
 		dis.hwndItem = hwnd;
 		dis.hDC = hdc;
 		dis.rcItem = infoPtr->parts[i].bound;
@@ -512,12 +512,12 @@ STATUSBAR_SetIcon (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nPart == -1) {
 	self->part0.hIcon = (HICON)lParam;
 	if (self->simple)
-	    STATUSBAR_RefreshPart (hwnd, &self->part0, hdc);
+	    STATUSBAR_RefreshPart (hwnd, &self->part0, hdc, 0);
     }
     else {
 	self->parts[nPart].hIcon = (HICON)lParam;
 	if (!(self->simple))
-	    STATUSBAR_RefreshPart (hwnd, &self->parts[nPart], hdc);
+	    STATUSBAR_RefreshPart (hwnd, &self->parts[nPart], hdc, nPart);
     }
     ReleaseDC (hwnd, hdc);
 
@@ -665,7 +665,7 @@ STATUSBAR_SetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     part->style = style;
 
     hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc);
+    STATUSBAR_RefreshPart (hwnd, part, hdc, part_num);
     ReleaseDC (hwnd, hdc);
 
     return TRUE;
@@ -708,7 +708,7 @@ STATUSBAR_SetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     part->style = style;
 
     hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc);
+    STATUSBAR_RefreshPart (hwnd, part, hdc, part_num);
     ReleaseDC (hwnd, hdc);
 
     return TRUE;
@@ -1061,7 +1061,7 @@ STATUSBAR_WMSetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     hdc = GetDC (hwnd);
-    STATUSBAR_RefreshPart (hwnd, part, hdc);
+    STATUSBAR_RefreshPart (hwnd, part, hdc, 0);
     ReleaseDC (hwnd, hdc);
 
     return TRUE;
