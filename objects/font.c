@@ -343,6 +343,19 @@ INT32 FONT_GetObject32A( FONTOBJ *font, INT32 count, LPSTR buffer )
     memcpy( buffer, &fnt32, count );
     return count;
 }
+/***********************************************************************
+ *           FONT_GetObject32W
+ */
+INT32 FONT_GetObject32W( FONTOBJ *font, INT32 count, LPSTR buffer )
+{
+    LOGFONT32W fnt32;
+
+    FONT_LogFont16To32W( &font->logfont, &fnt32 );
+
+    if (count > sizeof(fnt32)) count = sizeof(fnt32);
+    memcpy( buffer, &fnt32, count );
+    return count;
+}
 
 
 /***********************************************************************

@@ -58,7 +58,7 @@ typedef struct {
 extern BOOL32 FONT_Init( UINT16* pTextCaps );
 extern INT16  FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer );
 extern INT32  FONT_GetObject32A( FONTOBJ * font, INT32 count, LPSTR buffer );
-
+extern INT32  FONT_GetObject32W( FONTOBJ * font, INT32 count, LPSTR buffer );
 extern void FONT_LogFont32ATo16( const LOGFONT32A* font32, LPLOGFONT16 font16 );
 extern void FONT_LogFont32WTo16( const LOGFONT32W* font32, LPLOGFONT16 font16 );
 extern void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONT32A font32 );

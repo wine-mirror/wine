@@ -478,6 +478,47 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
     GDI_HEAP_UNLOCK( handle );
     return result;
 }
+/***********************************************************************
+ *           GetObject32W    (GDI32.206)
+ */
+INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
+{
+    GDIOBJHDR * ptr = NULL;
+    INT32 result = 0;
+    TRACE(gdi, "%08x %d %p\n", handle, count, buffer );
+    if (!count) return 0;
+
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+    else
+      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
+    if (!ptr) return 0;
+    
+    switch(ptr->wMagic)
+    {
+      case PEN_MAGIC:
+	  result = PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+	  break;
+      case BRUSH_MAGIC: 
+	  result = BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
+	  break;
+      case BITMAP_MAGIC: 
+	  result = BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+	  break;
+      case FONT_MAGIC:
+	  result = FONT_GetObject32W( (FONTOBJ *)ptr, count, buffer );
+	  break;
+      case PALETTE_MAGIC:
+	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
+	  break;
+      default:
+          FIXME(gdi, "Magic %04x not implemented\n",
+                   ptr->wMagic );
+          break;
+    }
+    GDI_HEAP_UNLOCK( handle );
+    return result;
+}
 
 /***********************************************************************
  *           GetObjectType    (GDI32.205)
@@ -534,14 +575,6 @@ DWORD WINAPI GetObjectType( HANDLE32 handle )
     }
     GDI_HEAP_UNLOCK( handle );
     return result;
-}
-
-/***********************************************************************
- *           GetObject32W    (GDI32.206)
- */
-INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
-{
-    return GetObject32A( handle, count, buffer );
 }
 
 /***********************************************************************
