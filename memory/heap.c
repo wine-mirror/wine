@@ -33,16 +33,16 @@ DEFAULT_DEBUG_CHANNEL(heap);
 typedef struct tagARENA_INUSE
 {
     DWORD  size;                    /* Block size; must be the first field */
-    WORD   threadId;                /* Allocating thread id */
     WORD   magic;                   /* Magic number */
+    WORD   threadId;                /* Allocating thread id */
     void  *callerEIP;               /* EIP of caller upon allocation */
 } ARENA_INUSE;
 
 typedef struct tagARENA_FREE
 {
     DWORD                 size;     /* Block size; must be the first field */
-    WORD                  threadId; /* Freeing thread id */
     WORD                  magic;    /* Magic number */
+    WORD                  threadId; /* Freeing thread id */
     struct tagARENA_FREE *next;     /* Next free arena */
     struct tagARENA_FREE *prev;     /* Prev free arena */
 } ARENA_FREE;
@@ -446,7 +446,8 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, DWORD size)
     {
         HEAP_CreateFreeBlock( subheap, (char *)(pArena + 1) + size,
                               (pArena->size & ARENA_SIZE_MASK) - size );
-        pArena->size = (pArena->size & ~ARENA_SIZE_MASK) | size;
+	/* assign size plus previous arena flags */
+        pArena->size = size | (pArena->size & ~ARENA_SIZE_MASK);
     }
     else
     {
@@ -636,7 +637,12 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
                  (DWORD)heap, size );
         return NULL;
     }
-    size += sizeof(SUBHEAP) + sizeof(ARENA_FREE);
+    /* make sure that we have a big enough size *committed* to fit another
+     * last free arena in !
+     * So just one heap struct, one first free arena which will eventually
+     * get inuse, and HEAP_MIN_BLOCK_SIZE for the second free arena that
+     * might get assigned all remaining free space in HEAP_ShrinkBlock() */
+    size += sizeof(SUBHEAP) + sizeof(ARENA_FREE) + HEAP_MIN_BLOCK_SIZE;
     if (!(subheap = HEAP_CreateSubHeap( heap, heap->flags, size,
                                         max( HEAP_DEF_SIZE, size ) )))
         return NULL;
@@ -721,6 +727,8 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     if (!(pArena->prev->size & ARENA_FLAG_FREE) ||
         (pArena->prev->magic != ARENA_FREE_MAGIC))
     { 
+	/* this often means that the prev arena got overwritten
+	 * by a memory write before that prev arena */
         ERR("Heap %08lx: prev arena %08lx invalid for %08lx\n", 
                  (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
         return FALSE;
@@ -1102,10 +1110,10 @@ LPVOID WINAPI HeapAlloc(
     if (!heapPtr) return NULL;
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
-    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     size = (size + 3) & ~3;
     if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
 
+    if (!(flags & HEAP_NO_SERIALIZE)) EnterCriticalSection( &heapPtr->critSection );
     /* Locate a suitable free block */
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, size, &subheap )))
