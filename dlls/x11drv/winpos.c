@@ -1399,25 +1399,20 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
     unsigned    total, check, pos, best;
     HWND *list = WIN_ListChildren( GetDesktopWindow() );
     HWND hwndA = 0, hwndB = 0;
-    WND *win;
     int i;
 
     /* find at least two managed windows */
     if (!list) return 0;
     for (i = 0; list[i]; i++)
     {
-        if (!(win = WIN_FindWndPtr( list[i] ))) continue;
-        if ((win->dwExStyle & WS_EX_MANAGED) && (win->dwStyle & WS_VISIBLE))
+        if (!(GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_MANAGED)) continue;
+        if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) continue;
+        if (!hwndA) hwndA = list[i];
+        else
         {
-            if (!hwndA) hwndA = list[i];
-            else
-            {
-                hwndB = list[i];
-                WIN_ReleaseWndPtr( win );
-                break;
-            }
+            hwndB = list[i];
+            break;
         }
-        WIN_ReleaseWndPtr( win );
     }
     if (!hwndA || !hwndB) goto done;
 
