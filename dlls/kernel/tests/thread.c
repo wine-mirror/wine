@@ -525,7 +525,7 @@ VOID test_thread_processor(void)
 /* Check the Affinity Mask functions */
    ok(GetProcessAffinityMask(curproc,&processMask,&systemMask)!=0,
       "GetProcessAffinityMask failed\n");
-   ok(SetThreadAffinityMask(curthread,processMask)==1,
+   ok(SetThreadAffinityMask(curthread,processMask)==processMask,
       "SetThreadAffinityMask failed\n");
    ok(SetThreadAffinityMask(curthread,processMask+1)==0,
       "SetThreadAffinityMask passed for an illegal processor\n");
