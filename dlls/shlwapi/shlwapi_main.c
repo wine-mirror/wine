@@ -58,6 +58,7 @@ BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad
 	    if (SHLWAPI_hshell32)  FreeLibrary(SHLWAPI_hshell32);
 	    if (SHLWAPI_hwinmm)    FreeLibrary(SHLWAPI_hwinmm);
 	    if (SHLWAPI_hcomdlg32) FreeLibrary(SHLWAPI_hcomdlg32);
+	    if (SHLWAPI_hcomctl32) FreeLibrary(SHLWAPI_hcomctl32);
 	    if (SHLWAPI_hmpr)      FreeLibrary(SHLWAPI_hmpr);
 	    if (SHLWAPI_hmlang)    FreeLibrary(SHLWAPI_hmlang);
 	    if (SHLWAPI_hversion)  FreeLibrary(SHLWAPI_hversion);
