@@ -193,6 +193,8 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
     int alloc = 0;
+    WORD sel;
+    SEGPTR seg_addr;
 
     GlobalUnlock16( GetCurrentTask() );
 
@@ -251,9 +253,6 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
     TRACE(int31,"returned from real-mode call\n");
     if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
 #else
-    /* FIXME: I copied this from CallRMProcFar (below), did I do it right? */
-    /* Murphy's law says I didn't */
-
     addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), IP_reg(context));
     sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
     seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
