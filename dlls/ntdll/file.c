@@ -416,6 +416,19 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         ret = register_new_async(&ovp->async);
         if (ret != STATUS_SUCCESS)
             return ret;
+        if (flags & FD_FLAG_TIMEOUT)
+        {
+            NtWaitForSingleObject(hEvent, TRUE, NULL);
+            NtClose(hEvent);
+        }
+        else
+        {
+            LARGE_INTEGER   timeout;
+
+            /* let some APC be run, this will read some already pending data */
+            timeout.s.LowPart = timeout.s.HighPart = 0;
+            NtDelayExecution( TRUE, &timeout );
+        }
         return io_status->u.Status;
     }
     switch (type)
@@ -577,6 +590,19 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         ret = register_new_async(&ovp->async);
         if (ret != STATUS_SUCCESS)
             return ret;
+        if (flags & FD_FLAG_TIMEOUT)
+        {
+            NtWaitForSingleObject(hEvent, TRUE, NULL);
+            NtClose(hEvent);
+        }
+        else
+        {
+            LARGE_INTEGER   timeout;
+
+            /* let some APC be run, this will write as much data as possible */
+            timeout.s.LowPart = timeout.s.HighPart = 0;
+            NtDelayExecution( TRUE, &timeout );
+        }
         return io_status->u.Status;
     }
     switch (type)
