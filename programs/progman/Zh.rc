@@ -1,0 +1,221 @@
+/*
+ * Program Manager
+ * Simplified Chinese Language Support
+ *
+ * Copyright 2002 liuspider <liuspider@yahoo.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/* Menu */
+
+MAIN_MENU MENU LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+{
+ POPUP "文件（&F）" {
+   MENUITEM "新建（&N）...",              PM_NEW
+   MENUITEM "打开（&O）\tEnter",             PM_OPEN
+   MENUITEM "移动（&M）...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "复制（&C）...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "删除（&D）\tEntf",           PM_DELETE
+   MENUITEM "属性（&A）...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "执行（&E）...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "退出 Windows（&X）...",             PM_EXIT
+ }
+ POPUP "选项（&O）" {
+   MENUITEM "自动排列（&A)",  PM_AUTO_ARRANGE
+   MENUITEM "运行时最小化（&M）",    PM_MIN_ON_RUN
+   MENUITEM "退出时保存设置（&S）", PM_SAVE_SETTINGS
+ }
+ POPUP "窗口（&W）" {
+   MENUITEM "层叠（&O）\tShift+F5",       PM_OVERLAP
+   MENUITEM "并排（&S）\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "排列图标（&A）",       PM_ARRANGE
+ }
+
+POPUP "帮助（&H）" {
+   MENUITEM "内容（&C）",         PM_CONTENTS
+   MENUITEM "搜索（&S）...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "如何使用帮助（&H）",     PM_HELPONHELP
+   MENUITEM "教程（&T）",         PM_TUTORIAL
+   MENUITEM SEPARATOR
+
+   POPUP "资料信息（&I）..." {
+     MENUITEM "用户许可协议（&L）",        PM_LICENSE
+     MENUITEM "责任无关（&N）",    PM_NO_WARRANTY
+     MENUITEM "关于 Wine（&A）",     PM_ABOUT_WINE
+   }
+ }
+}
+
+/* Dialog `New' */
+
+DIALOG_NEW DIALOG 0, 0, 170, 65
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "New"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "程序组（&G）",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "程序（&P）", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "确定",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Move' */
+
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "Move Program"
+{
+LTEXT         "移动程序：",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "从此程序组中：", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "移动到程序组（&T）：",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "确定",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Copy' */
+
+DIALOG_COPY DIALOG 0, 0, 250, 65
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "复制程序"
+{
+LTEXT         "复制程序：",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "从此程序组中：", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "移动到程序组（&T）：",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "确定",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Group attributes' */
+
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "程序组属性"
+{
+LTEXT     "描述（&D）：", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "组文件（&G）：",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "确定",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Program attributes' */
+
+DIALOG_PROGRAM DIALOG 0, 0, 250, 105
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "程序属性"
+{
+LTEXT         "描述（&D）：",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "命令行（&C）：", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "工作目录（&W）：",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "快捷键（&K）：",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "启动后最小化（&M）",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "确定",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "浏览（&B）...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "修改图标（&I）...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Symbol' */
+
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "修改图标"
+{
+LTEXT     "文件名（&F）：",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "当前图标（&I）：", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "确定",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "浏览（&B）...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STYLE DS_MODALFRAME
+CAPTION "执行程序"
+{
+LTEXT     "命令行（&C）：", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "启动后最小化（&M）",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "确定",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "取消",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "浏览（&B）...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "帮助（&H）",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
+
+/* Strings */
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+{
+IDS_PROGRAM_MANAGER,		"程序管理器"
+IDS_ERROR,			"错误"
+IDS_WARNING,			"警告"
+IDS_INFO,			"信息"
+IDS_DELETE,			"删除"
+IDS_DELETE_GROUP_s,		"是否删除程序组 `%s' ？"
+IDS_DELETE_PROGRAM_s,		"是否删除程序组 `%s' ?"
+IDS_NOT_IMPLEMENTED,		"此功能未实现"
+IDS_FILE_READ_ERROR_s,		"读取文件 %s 时发生错误。"
+IDS_FILE_WRITE_ERROR_s,		"写入文件 %s 时发生错误。"
+IDS_GRPFILE_READ_ERROR_s,	"\
+不能打开组文件 `%s' 。\n\
+是否继续尝试？"
+IDS_OUT_OF_MEMORY,		"内存溢出。"
+IDS_WINHELP_ERROR,		"没有可用的帮助信息。"
+IDS_UNKNOWN_FEATURE_s,		"在 %s 中发现未知特性"
+IDS_FILE_NOT_OVERWRITTEN_s,	"文件 %s 已经存在。不覆盖已有文件。"
+IDS_SAVE_GROUP_AS_s,		"将程序组保存为 %s 可以避免复盖已有的文件。"
+IDS_NO_HOT_KEY,			"未定义"
+IDS_ALL_FILES,			"所有文件 (*.*)"
+IDS_PROGRAMS,			"程序"
+IDS_LIBRARIES_DLL,		"动态连接库 (*.dll)"
+IDS_SYMBOL_FILES,		"图标文件"
+IDS_SYMBOLS_ICO,		"图标 (*.ico)"
+}
