@@ -357,7 +357,7 @@ static void UPDOWN_Draw (HWND hwnd, HDC hdc)
   UPDOWN_GetArrowRect (hwnd, &rect, TRUE);
   prssed = (infoPtr->Flags & FLAG_INCR) && (infoPtr->Flags & FLAG_MOUSEIN);
   DrawFrameControl(hdc, &rect, DFC_SCROLL, 
-	(dwStyle & UDS_HORZ ? DFCS_SCROLLLEFT : DFCS_SCROLLUP) |
+	(dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLUP) |
 	(prssed ? DFCS_PUSHED : 0) |
 	(dwStyle&WS_DISABLED ? DFCS_INACTIVE : 0) );
 
@@ -369,7 +369,7 @@ static void UPDOWN_Draw (HWND hwnd, HDC hdc)
   UPDOWN_GetArrowRect(hwnd, &rect, FALSE);
   prssed = (infoPtr->Flags & FLAG_DECR) && (infoPtr->Flags & FLAG_MOUSEIN);
   DrawFrameControl(hdc, &rect, DFC_SCROLL, 
-	(dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLDOWN) |
+	(dwStyle & UDS_HORZ ? DFCS_SCROLLLEFT : DFCS_SCROLLDOWN) |
 	(prssed ? DFCS_PUSHED : 0) |
 	(dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
 }
@@ -528,19 +528,12 @@ static void UPDOWN_DoAction (HWND hwnd, int delta, BOOL incr)
 {
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd); 
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-  int old_val = infoPtr->CurVal;
   NM_UPDOWN ni;
 
   TRACE("%s by %d\n", incr ? "inc" : "dec", delta);
 
   /* check if we can do the modification first */
   delta *= (incr ? 1 : -1) * (infoPtr->MaxVal < infoPtr->MinVal ? -1 : 1);
-  if(!UPDOWN_OffsetVal (hwnd, delta))
-    return;
-
-  /* so, if we can do the change, recompute delta and restore old value */
-  delta = infoPtr->CurVal - old_val;
-  infoPtr->CurVal = old_val;
 
   /* We must notify parent now to obtain permission */
   ni.iPos = infoPtr->CurVal;
@@ -548,30 +541,25 @@ static void UPDOWN_DoAction (HWND hwnd, int delta, BOOL incr)
   ni.hdr.hwndFrom = hwnd;
   ni.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
   ni.hdr.code = UDN_DELTAPOS; 
-  if (SendMessageA(GetParent (hwnd), WM_NOTIFY,
+  if (!SendMessageA(GetParent (hwnd), WM_NOTIFY,
 		   (WPARAM)ni.hdr.idFrom, (LPARAM)&ni))
-    return; /* we are not allowed to change */
+  {
+     /* Parent said: OK to adjust */
+
+     /* Now adjust value with (maybe new) delta */
+     if (UPDOWN_OffsetVal (hwnd, ni.iDelta))
+     {
+        /* Now take care about our buddy */
+        if(infoPtr->Buddy && IsWindow(infoPtr->Buddy)
+           && (dwStyle & UDS_SETBUDDYINT) )
+           UPDOWN_SetBuddyInt (hwnd);
+     }
+  }
   
-  /* Now adjust value with (maybe new) delta */
-  if (!UPDOWN_OffsetVal (hwnd, ni.iDelta))
-    return;
-
-  /* Now take care about our buddy */
-  if(!IsWindow(infoPtr->Buddy)) 
-    return; /* Nothing else to do */
-
-
-  if (dwStyle & UDS_SETBUDDYINT)
-    UPDOWN_SetBuddyInt (hwnd);
-
-  /* Also, notify it */
-  /* FIXME: do we need to send the notification only if
-            we do not have the UDS_SETBUDDYINT style set? */
-
+  /* Also, notify it. This message is sent in any case. */
   SendMessageA (GetParent (hwnd), 
 		dwStyle & UDS_HORZ ? WM_HSCROLL : WM_VSCROLL, 
-		 MAKELONG(incr ? SB_LINEUP : SB_LINEDOWN, infoPtr->CurVal),
-		hwnd);
+		 MAKELONG(SB_THUMBPOSITION, infoPtr->CurVal), hwnd);
 }
 
 /***********************************************************************
@@ -586,7 +574,9 @@ static BOOL UPDOWN_IsEnabled (HWND hwnd)
 
   if(GetWindowLongA (hwnd, GWL_STYLE) & WS_DISABLED)
     return FALSE;
-  return IsWindowEnabled(infoPtr->Buddy);
+  if(infoPtr->Buddy)
+    return IsWindowEnabled(infoPtr->Buddy);
+  return TRUE;
 }
 
 /***********************************************************************
@@ -649,12 +639,6 @@ static void UPDOWN_HandleMouseEvent (HWND hwnd, UINT msg, POINT pt)
       if (dwStyle & UDS_SETBUDDYINT)
 	UPDOWN_GetBuddyInt (hwnd);
 	
-      /* Before we proceed, see if we can spin... */
-      if(!(dwStyle & UDS_WRAP))
-	if(( temp && infoPtr->CurVal==infoPtr->MaxVal) ||
-	   (!temp && infoPtr->CurVal==infoPtr->MinVal))
-	  return;
-
       /* Set up the correct flags */
       infoPtr->Flags  = 0; 
       infoPtr->Flags |= temp ? FLAG_INCR : FLAG_DECR;
@@ -798,6 +782,10 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
     case WM_LBUTTONUP:
       if(!UPDOWN_CancelMode(hwnd))
 	break;
+
+      SendMessageA(GetParent(hwnd), dwStyle & UDS_HORZ ? WM_HSCROLL : WM_VSCROLL,
+                  MAKELONG(SB_ENDSCROLL, infoPtr->CurVal), hwnd);
+
       /*If we released the mouse and our buddy is an edit */
       /* we must select all text in it.                   */
       if (!lstrcmpA (infoPtr->szBuddyClass, "Edit"))
