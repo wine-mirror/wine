@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "debug.h"
 #include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "heap.h"
 #include "ldt.h"
 

@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "winnt.h"
+#include "winbase.h"
 #include "server/thread.h"
 
 struct device

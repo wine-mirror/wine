@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 #include "winerror.h"
-#include "winnt.h"
+#include "winbase.h"
 #include "server/thread.h"
 
 enum side { READ_SIDE, WRITE_SIDE };

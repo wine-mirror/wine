@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include "winuser.h"
 #include "builtin32.h"
 #include "peexe.h"
 #include "heap.h"

@@ -13,8 +13,10 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <stdarg.h>
 
-#include "winnt.h"
+
+#include "winbase.h"
 #include "winerror.h"
 #include "server.h"
 #include "server/thread.h"
