@@ -324,7 +324,7 @@ struct IDirect3DExecuteBufferImpl
 
     void (*execute)(IDirect3DExecuteBuffer* this,
                     IDirect3DDevice* dev,
-                    IDirect3DViewport2* vp);
+                    IDirect3DViewport* vp);
     LPVOID private;
 };
 extern LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(IDirect3DDeviceImpl* d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);

@@ -35,6 +35,7 @@ typedef struct x11_dd_private {
     int xshm_active, xshm_compl;
 #endif /* defined(HAVE_LIBXXSHM) */
     Window drawable;
+    void *device_capabilities;
 } x11_dd_private;
 
 typedef struct x11_dp_private {
@@ -51,6 +52,7 @@ typedef struct x11_ds_private {
     XShmSegmentInfo	shminfo;
 #endif
     int		*oldDIBmap;
+    BOOL         opengl_flip;
 } x11_ds_private;
 
 #ifdef HAVE_LIBXXSHM

@@ -34,13 +34,14 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
     case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
       IDirect3DTexture2Impl* tex = (IDirect3DTexture2Impl*) dwRenderState;
-      D3DTPRIVATE(tex);
       
       if (tex == NULL) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
+	TRACE("disabling texturing\n");
       } else {
-	TRACE("setting OpenGL texture handle : %d\n", dtpriv->tex_name);
+	D3DTPRIVATE(tex);
+	
 	glEnable(GL_TEXTURE_2D);
 	/* Default parameters */
 	glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
@@ -48,6 +49,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	   stored in the texture */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, rs->mag);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, rs->min);
+	TRACE("setting OpenGL texture handle : %d\n", dtpriv->tex_name);
       }
     } break;
 

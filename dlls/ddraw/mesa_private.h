@@ -146,6 +146,13 @@ static const GUID WINE_UNUSED IID_D3DDEVICE_OpenGL = {
   { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfa }
 };
 
+/* This structure contains all the function pointers to OpenGL extensions
+   that are used by Wine */
+typedef struct {
+  void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
+			     GLsizei width, GLenum format, GLenum type, const GLvoid *table);
+} Mesa_DeviceCapabilities;
+
 extern ICOM_VTABLE(IDirect3D) mesa_d3dvt;
 extern ICOM_VTABLE(IDirect3D2) mesa_d3d2vt;
 extern ICOM_VTABLE(IDirect3D3) mesa_d3d3vt;

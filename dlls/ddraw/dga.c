@@ -165,7 +165,7 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
     /* just assume the default depth is the DGA depth too */
     depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
     
-    _common_depth_to_pixelformat(depth, ddraw);
+    _common_depth_to_pixelformat(depth, (IDirectDraw*) ddraw);
     
 #ifdef RESTORE_SIGNALS
     SIGNAL_Init();

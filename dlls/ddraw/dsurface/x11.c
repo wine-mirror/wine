@@ -17,6 +17,7 @@
 #include "debugtools.h"
 #include "x11_private.h"
 #include "bitmap.h"
+#include "win.h"
 
 #ifdef HAVE_OPENGL
 /* for d3d texture stuff */
@@ -133,12 +134,66 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
     }
 #endif
 
+    /* If part of a visible 'clipped' surface, copy what is seen on the
+       screen to the surface */
+    if ((dspriv->image && VISIBLE(This)) &&
+	(This->s.lpClipper)) {
+          HWND hWnd = ((IDirectDrawClipperImpl *) This->s.lpClipper)->hWnd;
+	  WND *wndPtr = WIN_FindWndPtr(hWnd);
+	  Drawable drawable = X11DRV_WND_GetXWindow(wndPtr);
+	  int width = wndPtr->rectClient.right - wndPtr->rectClient.left;
+	  int height = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+	  /* Now, get the source / destination coordinates */
+	  int dest_x = wndPtr->rectClient.left;
+	  int dest_y = wndPtr->rectClient.top;
+
+	  XGetSubImage(display, drawable, 0, 0, width, height, 0xFFFFFFFF,
+		       ZPixmap, dspriv->image, dest_x, dest_y);
+	  
+	  WIN_ReleaseWndPtr(wndPtr);
+    }
+    
     return DD_OK;
 }
 
 static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   DSPRIVATE(This);
   DDPRIVATE(This->s.ddraw);
+
+  Drawable drawable = ddpriv->drawable;
+  POINT adjust[2] = {{0, 0}, {0, 0}};
+  SIZE imgsiz;
+
+  /* Get XImage size */
+  imgsiz.cx = dspriv->image->width;
+  imgsiz.cy = dspriv->image->height;
+
+  if (This->s.lpClipper) {
+    HWND hWnd = ((IDirectDrawClipperImpl *) This->s.lpClipper)->hWnd;
+    SIZE csiz;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+    drawable = X11DRV_WND_GetXWindow(wndPtr);
+    
+    MapWindowPoints(hWnd, 0, adjust, 2);
+
+    imgsiz.cx -= adjust[0].x;
+    imgsiz.cy -= adjust[0].y;
+    /* (note: the rectWindow here should be the X window's interior rect, in
+     *  case anyone thinks otherwise while rewriting managed mode) */
+    adjust[1].x -= wndPtr->rectWindow.left;
+    adjust[1].y -= wndPtr->rectWindow.top;
+    csiz.cx = wndPtr->rectClient.right - wndPtr->rectClient.left;
+    csiz.cy = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+    if (csiz.cx < imgsiz.cx) imgsiz.cx = csiz.cx;
+    if (csiz.cy < imgsiz.cy) imgsiz.cy = csiz.cy;
+    
+    TRACE("adjust: hwnd=%08x, surface %ldx%ld, drawable %ldx%ld\n", hWnd,
+	  adjust[0].x, adjust[0].y,
+	  adjust[1].x,adjust[1].y);
+    
+    WIN_ReleaseWndPtr(wndPtr);
+  }
+  
   if (This->s.ddraw->d.pixel_convert != NULL)
     This->s.ddraw->d.pixel_convert(This->s.surface_desc.u1.lpSurface,
 				   dspriv->image->data,
@@ -160,27 +215,24 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 	* surface locking, where threads have concurrent access) */
 	X11DRV_EVENT_PrepareShmCompletion( ddpriv->drawable );
 	TSXShmPutImage(display,
-	    ddpriv->drawable,
-	    DefaultGCOfScreen(X11DRV_GetXScreen()),
-	    dspriv->image,
-	    0, 0, 0, 0,
-	    dspriv->image->width,
-	    dspriv->image->height,
-	    True
-	);
+		       drawable,
+		       DefaultGCOfScreen(X11DRV_GetXScreen()),
+		       dspriv->image,
+		       adjust[0].x, adjust[0].y, adjust[1].x, adjust[1].y,
+		       imgsiz.cx, imgsiz.cy,
+		       True
+		       );
 	/* make sure the image is transferred ASAP */
 	TSXFlush(display);
     } else
 #endif
-	TSXPutImage(	
-	    display,
-	    ddpriv->drawable,
-	    DefaultGCOfScreen(X11DRV_GetXScreen()),
-	    dspriv->image,
-	    0, 0, 0, 0,
-	    dspriv->image->width,
-	    dspriv->image->height
-	);
+	TSXPutImage(display,
+		    drawable,
+		    DefaultGCOfScreen(X11DRV_GetXScreen()),
+		    dspriv->image,
+		    adjust[0].x, adjust[0].y, adjust[1].x, adjust[1].y,
+		    imgsiz.cx, imgsiz.cy
+		    );
 }
 
 HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
@@ -237,20 +289,28 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     dspriv->image	= fspriv->image;
     fspriv->image	= image;
 
-#ifdef HAVE_LIBXXSHM
-    if (ddpriv->xshm_active) {
-/*
-	int compl = InterlockedExchange( &(ddpriv->xshm_compl), 0 );
-	if (compl) X11DRV_EVENT_WaitShmCompletion( compl );
-*/
-	X11DRV_EVENT_WaitShmCompletions( ddpriv->drawable );
-    }
+    if (dspriv->opengl_flip) {
+#ifdef HAVE_OPENGL
+      ENTER_GL();
+      glXSwapBuffers(display, ddpriv->drawable);
+      LEAVE_GL();
 #endif
-    Xlib_copy_surface_on_screen(This);
-    if (iflipto->s.palette) {
+    } else {
+#ifdef HAVE_LIBXXSHM
+      if (ddpriv->xshm_active) {
+	/*
+	   int compl = InterlockedExchange( &(ddpriv->xshm_compl), 0 );
+	   if (compl) X11DRV_EVENT_WaitShmCompletion( compl );
+	   */
+	X11DRV_EVENT_WaitShmCompletions( ddpriv->drawable );
+      }
+#endif
+      Xlib_copy_surface_on_screen(This);
+      if (iflipto->s.palette) {
         DPPRIVATE(iflipto->s.palette);
 	if (dppriv->cm)
-	    TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
+	  TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
+      }
     }
     return DD_OK;
 }

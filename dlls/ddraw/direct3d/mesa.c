@@ -317,35 +317,45 @@ static HRESULT WINAPI MESA_IDirect3D3Impl_EvictManagedTextures(
 }
 
 
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(mesa_d3d3vt.fn##fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
+
 ICOM_VTABLE(IDirect3D3) mesa_d3d3vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    MESA_IDirect3D2Impl_QueryInterface,
-    IDirect3D2Impl_AddRef,
-    MESA_IDirect3D2Impl_Release,
-    MESA_IDirect3D2Impl_EnumDevices,
-    MESA_IDirect3D2Impl_CreateLight,
-    MESA_IDirect3D2Impl_CreateMaterial,
-    MESA_IDirect3D2Impl_CreateViewport,
-    MESA_IDirect3D2Impl_FindDevice,
-    MESA_IDirect3D2Impl_CreateDevice,
-    MESA_IDirect3D3Impl_CreateVertexBuffer,
-    MESA_IDirect3D3Impl_EnumZBufferFormats,
-    MESA_IDirect3D3Impl_EvictManagedTextures
+    XCAST(QueryInterface)MESA_IDirect3D2Impl_QueryInterface,
+    XCAST(AddRef)IDirect3D2Impl_AddRef,
+    XCAST(Release)MESA_IDirect3D2Impl_Release,
+    XCAST(EnumDevices)MESA_IDirect3D2Impl_EnumDevices,
+    XCAST(CreateLight)MESA_IDirect3D2Impl_CreateLight,
+    XCAST(CreateMaterial)MESA_IDirect3D2Impl_CreateMaterial,
+    XCAST(CreateViewport)MESA_IDirect3D2Impl_CreateViewport,
+    XCAST(FindDevice)MESA_IDirect3D2Impl_FindDevice,
+    XCAST(CreateDevice)MESA_IDirect3D2Impl_CreateDevice,
+    XCAST(CreateVertexBuffer)MESA_IDirect3D3Impl_CreateVertexBuffer,
+    XCAST(EnumZBufferFormats)MESA_IDirect3D3Impl_EnumZBufferFormats,
+    XCAST(EvictManagedTextures)MESA_IDirect3D3Impl_EvictManagedTextures
 };
 
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+#undef XCAST
+#endif
 
 HRESULT create_direct3d(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     IDirect3DImpl* d3d;
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
     d3d->ref = 1;
-    d3d->ddraw = ddraw;
+    d3d->ddraw = (IDirectDrawImpl *) ddraw;
     d3d->private = NULL; /* unused for now */
     IDirectDraw_AddRef((LPDIRECTDRAW)ddraw);
     ICOM_VTBL(d3d) = &mesa_d3dvt;
     *obj = (LPUNKNOWN)d3d;
     TRACE("  Created IDirect3D interface (%p)\n", *obj);
+
     return S_OK;
 }
 
@@ -354,12 +364,13 @@ HRESULT create_direct3d2(LPVOID *obj,IDirectDraw2Impl* ddraw) {
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
     d3d->ref = 1;
-    d3d->ddraw = ddraw;
+    d3d->ddraw = (IDirectDrawImpl *) ddraw;
     d3d->private = NULL; /* unused for now */
     IDirectDraw_AddRef((LPDIRECTDRAW)ddraw);
     ICOM_VTBL(d3d) = &mesa_d3d2vt;
     *obj = (LPUNKNOWN)d3d;
     TRACE("  Creating IDirect3D2 interface (%p)\n", *obj);
+
     return S_OK;
 }
 
@@ -368,7 +379,7 @@ HRESULT create_direct3d3(LPVOID *obj,IDirectDraw2Impl* ddraw) {
 
     d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
     d3d->ref = 1;
-    d3d->ddraw = ddraw;
+    d3d->ddraw = (IDirectDrawImpl *) ddraw;
     d3d->private = NULL; /* unused for now */
 
     IDirectDraw_AddRef((LPDIRECTDRAW)ddraw);
@@ -376,7 +387,7 @@ HRESULT create_direct3d3(LPVOID *obj,IDirectDraw2Impl* ddraw) {
     *obj = (LPUNKNOWN)d3d;
 
     TRACE("  Creating IDirect3D3 interface (%p)\n", *obj);
-
+    
     return S_OK;
 }
 

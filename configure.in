@@ -250,13 +250,6 @@ then
 
 		if test $ac_cv_lib_GL_glXCreateContext = "yes"
 		then
-			dnl Check for the Color Table and Paletted Texture extensions
-			AC_CACHE_CHECK("for the OpenGL Color Index extension",dummy,
-				       AC_TRY_COMPILE([#include <GL/gl.h>],
-			               [GLenum test = GL_COLOR_INDEX8_EXT;],
-				       [AC_DEFINE(HAVE_GL_COLOR_TABLE)],))
-
-		        AC_CHECK_LIB(GL,glColorTableEXT,AC_DEFINE(HAVE_GL_PALETTED_TEXTURE),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 			AC_CHECK_LIB(GL,glXGetProcAddressARB,AC_DEFINE(HAVE_GLX_GETPROCADDRESS),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
 			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"

@@ -94,8 +94,8 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 #define SNOOP_5551()
 #endif
 
-static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable;
-static ICOM_VTABLE(IDirect3DTexture) texture_vtable;
+extern ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable;
+extern ICOM_VTABLE(IDirect3DTexture) mesa_texture_vtable;
 
 /*******************************************************************************
  *				Texture2 Creation functions
@@ -106,8 +106,10 @@ LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf)
   
   tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
   tex->ref = 1;
-  ICOM_VTBL(tex) = &texture2_vtable;
+  ICOM_VTBL(tex) = &mesa_texture2_vtable;
   tex->surface = surf;
+
+  tex->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dt_private));
   
   return (LPDIRECT3DTEXTURE2)tex;
 }
@@ -121,8 +123,10 @@ LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf)
   
   tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
   tex->ref = 1;
-  ICOM_VTBL(tex) = (ICOM_VTABLE(IDirect3DTexture2)*)&texture_vtable;
+  ICOM_VTBL(tex) = (ICOM_VTABLE(IDirect3DTexture2)*)&mesa_texture_vtable;
   tex->surface = surf;
+
+  tex->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dt_private));
   
   return (LPDIRECT3DTEXTURE)tex;
 }
@@ -354,8 +358,11 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
   D3DTPRIVATE(This);
   IDirect3DTexture2Impl* ilpD3DTexture2=(IDirect3DTexture2Impl*)lpD3DTexture2;
   DDSURFACEDESC	*src_d, *dst_d;
+  static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
+				    GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
+  static BOOL color_table_queried = FALSE;
+  
   TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
-
   TRACE("Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
 
   /* Suppress the ALLOCONLOAD flag */
@@ -403,6 +410,11 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
       IDirectDrawPaletteImpl* pal = This->surface->s.palette;
       BYTE table[256][4];
       int i;
+
+      if (color_table_queried == FALSE) {
+	ptr_ColorTableEXT =
+	  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) This->surface->s.ddraw->private)->device_capabilities)->ptr_ColorTableEXT;
+      }
       
       if (pal == NULL) {
 	ERR("Palettized texture Loading with a NULL palette !\n");
@@ -426,24 +438,47 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
       /* Texture snooping */
       SNOOP_PALETTED();
 
-#if defined(HAVE_GL_COLOR_TABLE) && defined(HAVE_GL_PALETTED_TEXTURE)
-      /* use Paletted Texture Extension */
-      glColorTableEXT(GL_TEXTURE_2D,    /* target */
-		      GL_RGBA,          /* internal format */
-		      256,              /* table size */
-		      GL_RGBA,          /* table format */
-		      GL_UNSIGNED_BYTE, /* table type */
-		      table);           /* the color table */
-
-      glTexImage2D(GL_TEXTURE_2D,       /* target */
-		   0,                   /* level */
-		   GL_COLOR_INDEX8_EXT, /* internal format */
-		   src_d->dwWidth, src_d->dwHeight, /* width, height */
-		   0,                   /* border */
-		   GL_COLOR_INDEX,      /* texture format */
-		   GL_UNSIGNED_BYTE,    /* texture type */
-		   src_d->u1.lpSurface); /* the texture */
-#endif
+      if (ptr_ColorTableEXT != NULL) {
+	/* use Paletted Texture Extension */
+	ptr_ColorTableEXT(GL_TEXTURE_2D,    /* target */
+			  GL_RGBA,          /* internal format */
+			  256,              /* table size */
+			  GL_RGBA,          /* table format */
+			  GL_UNSIGNED_BYTE, /* table type */
+			  table);           /* the color table */
+	
+	glTexImage2D(GL_TEXTURE_2D,       /* target */
+		     0,                   /* level */
+		     GL_COLOR_INDEX8_EXT, /* internal format */
+		     src_d->dwWidth, src_d->dwHeight, /* width, height */
+		     0,                   /* border */
+		     GL_COLOR_INDEX,      /* texture format */
+		     GL_UNSIGNED_BYTE,    /* texture type */
+		     src_d->u1.lpSurface); /* the texture */
+      } else {
+	DWORD *surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+	DWORD i;
+	BYTE *src = (BYTE *) src_d->u1.lpSurface, *dst = (BYTE *) surface;
+	
+	for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	  BYTE color = *src++;
+	  *dst++ = table[color][0];
+	  *dst++ = table[color][1];
+	  *dst++ = table[color][2];
+	  *dst++ = table[color][3];
+	}
+	
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGBA,
+		     src_d->dwWidth, src_d->dwHeight,
+		     0,
+		     GL_RGBA,
+		     GL_UNSIGNED_BYTE,
+		     surface);
+	
+	HeapFree(GetProcessHeap(), 0, surface);
+      }
     } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
       /* ************
 	 RGB Textures
@@ -551,17 +586,27 @@ ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable =
 /*******************************************************************************
  *				IDirect3DTexture VTable
  */
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(mesa_texture_vtable.fn##fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
+
 ICOM_VTABLE(IDirect3DTexture) mesa_texture_vtable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
-  IDirect3DTexture2Impl_QueryInterface,
-  IDirect3DTexture2Impl_AddRef,
-  IDirect3DTexture2Impl_Release,
+  XCAST(QueryInterface)IDirect3DTexture2Impl_QueryInterface,
+  XCAST(AddRef)IDirect3DTexture2Impl_AddRef,
+  XCAST(Release)IDirect3DTexture2Impl_Release,
   /*** IDirect3DTexture methods ***/
   IDirect3DTextureImpl_Initialize,
   IDirect3DTextureImpl_GetHandle,
-  IDirect3DTexture2Impl_PaletteChanged,
-  IDirect3DTexture2Impl_Load,
+  XCAST(PaletteChanged)IDirect3DTexture2Impl_PaletteChanged,
+  XCAST(Load)IDirect3DTexture2Impl_Load,
   IDirect3DTextureImpl_Unload
 };
+
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+#undef XCAST
+#endif

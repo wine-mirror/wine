@@ -216,22 +216,31 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
 /*******************************************************************************
  *				IDirect3DMaterial VTable
  */
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+# define XCAST(fun)	(typeof(material_vtable.fn##fun))
+#else
+# define XCAST(fun)	(void*)
+#endif
+
 static ICOM_VTABLE(IDirect3DMaterial) material_vtable = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
-  IDirect3DMaterial2Impl_QueryInterface,
-  IDirect3DMaterial2Impl_AddRef,
-  IDirect3DMaterial2Impl_Release,
+  XCAST(QueryInterface)IDirect3DMaterial2Impl_QueryInterface,
+  XCAST(AddRef)IDirect3DMaterial2Impl_AddRef,
+  XCAST(Release)IDirect3DMaterial2Impl_Release,
   /*** IDirect3DMaterial methods ***/
   IDirect3DMaterialImpl_Initialize,
-  IDirect3DMaterial2Impl_SetMaterial,
-  IDirect3DMaterial2Impl_GetMaterial,
-  IDirect3DMaterial2Impl_GetHandle,
+  XCAST(SetMaterial)IDirect3DMaterial2Impl_SetMaterial,
+  XCAST(GetMaterial)IDirect3DMaterial2Impl_GetMaterial,
+  XCAST(GetHandle)IDirect3DMaterial2Impl_GetHandle,
   IDirect3DMaterialImpl_Reserve,
   IDirect3DMaterialImpl_Unreserve
 };
 
+#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
+#undef XCAST
+#endif
 
 /*******************************************************************************
  *				IDirect3DMaterial2 VTable

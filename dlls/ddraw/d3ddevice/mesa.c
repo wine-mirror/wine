@@ -30,6 +30,13 @@ ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;
 #define D3DDPRIVATE(x) mesa_d3dd_private *odev=((mesa_d3dd_private*)x->private)
 #define DDPRIVATE(x) x11_dd_private *ddpriv=((x11_dd_private*)(x)->private)
 
+static const float id_mat[16] = {
+  1.0, 0.0, 0.0, 0.0,
+  0.0, 1.0, 0.0, 0.0,
+  0.0, 0.0, 1.0, 0.0,
+  0.0, 0.0, 0.0, 1.0
+};
+
 /*******************************************************************************
  *				OpenGL static functions
  */
@@ -108,11 +115,31 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
   d2->dwFlags = 0;
 }
 
+static void fill_device_capabilities(IDirectDrawImpl* ddraw) {
+  x11_dd_private *private = (x11_dd_private *) ddraw->private;
+  const char *ext_string;
+  Mesa_DeviceCapabilities *devcap;
+  
+  private->device_capabilities = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(Mesa_DeviceCapabilities));
+  devcap = (Mesa_DeviceCapabilities *) private->device_capabilities;
+  
+  ENTER_GL();
+  ext_string = glGetString(GL_EXTENSIONS);
+  /* Query for the ColorTable Extension */
+  if (strstr(ext_string, "GL_EXT_paletted_texture")) {
+    devcap->ptr_ColorTableEXT = (PFNGLCOLORTABLEEXTPROC) glXGetProcAddressARB("glColorTableEXT");
+    TRACE("Color table extension supported (function at %p)\n", devcap->ptr_ColorTableEXT);
+  } else {
+    TRACE("Color table extension not found.\n");
+  }
+  LEAVE_GL();
+}
+
 int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   D3DDEVICEDESC	d1,d2;
-  TRACE(" Enumerating OpenGL D3D device.\n");
+  TRACE(" Enumerating OpenGL D3D2 device (IID %s).\n", debugstr_guid(&IID_D3DDEVICE2_OpenGL));
   fill_opengl_caps(&d1, &d2);
-  return cb((void*)&IID_D3DDEVICE2_OpenGL,"WINE Direct3D using OpenGL","direct3d",&d1,&d2,context);
+  return cb((void*)&IID_D3DDEVICE2_OpenGL,"WINE Direct3D2 using OpenGL","direct3d",&d1,&d2,context);
 }
 
 int
@@ -128,17 +155,6 @@ is_OpenGL(
       (!memcmp(&IID_IDirect3DHALDevice,rguid,sizeof(IID_IDirect3DHALDevice))) ||
       /* OpenGL Device */
       (!memcmp(&IID_D3DDEVICE2_OpenGL,rguid,sizeof(IID_D3DDEVICE2_OpenGL)))) {
-    
-    const float id_mat[16] = {
-      1.0, 0.0, 0.0, 0.0,
-      0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 1.0, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    };
-#ifndef USE_OSMESA
-    int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
-    XVisualInfo *xvis;
-#endif
     
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDevice2Impl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
@@ -159,38 +175,34 @@ is_OpenGL(
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
 #else
     /* First get the correct visual */
-    /* if (surface->s.backbuffer == NULL)
-       attributeList[3] = None; */
     ENTER_GL();
-    xvis = glXChooseVisual(display,
-			   DefaultScreen(display),
-			   attributeList);
-    if (xvis == NULL)
-      ERR("No visual found !\n");
-    else
-      TRACE("Visual found\n");
     /* Create the context */
-    odev->ctx = glXCreateContext(display,
-				 xvis,
-				 NULL,
-				 GL_TRUE);
+    {
+      XVisualInfo *vis;
+      int num;
+      XVisualInfo template;
+
+      template.visualid = XVisualIDFromVisual(visual);
+      vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+
+      odev->ctx = glXCreateContext(display, vis,
+				   NULL, GL_TRUE);
+    }
+    
     if (odev->ctx == NULL)
       ERR("Error in context creation !\n");
     else
       TRACE("Context created (%p)\n", odev->ctx);
     
-#if 0 /* not functional currently */
     /* Now override the surface's Flip method (if in double buffering) */
-    surface->s.d3d_device = (void *) odev;
-
+    ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
 	int i;
 	struct _surface_chain *chain = surface->s.chain;
 	for (i=0;i<chain->nrofsurfaces;i++)
 	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
-	      chain->surfaces[i]->s.d3d_device = (void *) odev;
+	      ((x11_ds_private *) chain->surfaces[i]->private)->opengl_flip = TRUE;
     }
-#endif
 
 #endif
     odev->rs.src = GL_ONE;
@@ -198,6 +210,11 @@ is_OpenGL(
     odev->rs.mag = GL_NEAREST;
     odev->rs.min = GL_NEAREST;
     odev->vt     = 0;
+
+    /* Allocate memory for the matrices */
+    odev->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    odev->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    odev->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     
     memcpy(odev->world_mat, id_mat, 16 * sizeof(float));
     memcpy(odev->view_mat , id_mat, 16 * sizeof(float));
@@ -210,6 +227,9 @@ is_OpenGL(
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
     LEAVE_GL();
+
+    fill_device_capabilities(d3d->ddraw);
+    
     TRACE("OpenGL device created \n");
     return 1;
   }
@@ -330,7 +350,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
     return DD_OK;
 #endif
 
-#if defined(HAVE_GL_COLOR_TABLE) && defined(HAVE_GL_PALETTED_TEXTURE)
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
   pformat->u.dwRGBBitCount = 8;
@@ -340,7 +359,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat->u4.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
-#endif
   
   TRACE("End of enumeration\n");
   
@@ -529,21 +547,21 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
   case D3DTRANSFORMSTATE_WORLD: {
     conv_mat(lpmatrix, odev->world_mat);
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf((float *) &(odev->world_mat));
+    glLoadMatrixf((float *) odev->world_mat);
   } break;
     
   case D3DTRANSFORMSTATE_VIEW: {
     conv_mat(lpmatrix, odev->view_mat);
     glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf((float *) &(odev->proj_mat));
-    glMultMatrixf((float *) &(odev->view_mat));
+    glLoadMatrixf((float *) odev->proj_mat);
+    glMultMatrixf((float *) odev->view_mat);
   } break;
     
   case D3DTRANSFORMSTATE_PROJECTION: {
     conv_mat(lpmatrix, odev->proj_mat);
     glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf((float *) &(odev->proj_mat));
-    glMultMatrixf((float *) &(odev->view_mat));
+    glLoadMatrixf((float *) odev->proj_mat);
+    glMultMatrixf((float *) odev->view_mat);
   } break;
     
   default:
@@ -559,10 +577,10 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
     if (odev->vt == D3DVT_TLVERTEX) {					\
       /* Need to put the correct transformation again */		\
       glMatrixMode(GL_MODELVIEW);					\
-      glLoadMatrixf((float *) &(odev->world_mat));			\
+      glLoadMatrixf((float *) odev->world_mat);                      \
       glMatrixMode(GL_PROJECTION);					\
-      glLoadMatrixf((float *) &(odev->proj_mat));			\
-      glMultMatrixf((float *) &(odev->view_mat));			\
+      glLoadMatrixf((float *) odev->proj_mat);	                \
+      glMultMatrixf((float *) odev->view_mat);	                \
     }									\
 									\
     switch (d3dv) {							\
@@ -820,19 +838,12 @@ ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable =
 int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   D3DDEVICEDESC	d1,d2;
   
-  TRACE(" Enumerating OpenGL D3D device.\n");
+  TRACE(" Enumerating OpenGL D3D device (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
   
   fill_opengl_caps(&d1, &d2);
   
   return cb((void*)&IID_D3DDEVICE_OpenGL,"WINE Direct3D using OpenGL","direct3d",&d1,&d2,context);
 }
-
-float id_mat[16] = {
-  1.0, 0.0, 0.0, 0.0,
-  0.0, 1.0, 0.0, 0.0,
-  0.0, 0.0, 1.0, 0.0,
-  0.0, 0.0, 0.0, 1.0
-};
 
 int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDeviceImpl** device)
 {
@@ -908,6 +919,8 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
     
+    fill_device_capabilities((IDirectDrawImpl *) surface->s.ddraw);
+
     return 1;
   }
   

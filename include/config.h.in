@@ -137,12 +137,6 @@
 /* Define if <linux/joystick.h> defines the Linux 2.2 joystick API */
 #undef HAVE_LINUX_22_JOYSTICK_API
 
-/* Define if the OpenGL implementation supports the GL_EXT_color_table extension */
-#undef HAVE_GL_COLOR_TABLE
-
-/* Define if the OpenGL implementation supports the GL_EXT_paletted_texture extension */
-#undef HAVE_GL_PALETTED_TEXTURE
-
 /* Define if the OpenGL library supports the glXGetProcAddressARB call */
 #undef HAVE_GLX_GETPROCADDRESS
 
