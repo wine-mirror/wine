@@ -284,8 +284,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("%s\n", debugstr_w(filename) );
 
-    if (!(dc = DC_AllocDC( &EMFDRV_Funcs ))) return 0;
-    dc->header.wMagic = ENHMETAFILE_DC_MAGIC;
+    if (!(dc = DC_AllocDC( &EMFDRV_Funcs, ENHMETAFILE_DC_MAGIC ))) return 0;
 
     physDev = (EMFDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {

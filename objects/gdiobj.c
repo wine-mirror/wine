@@ -692,6 +692,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     case METAFILE_DC_MAGIC:
     case ENHMETAFILE_MAGIC:
     case ENHMETAFILE_DC_MAGIC:
+    case MEMORY_DC_MAGIC:
     case BITMAP_MAGIC:
     case PALETTE_MAGIC:
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
@@ -1022,6 +1023,9 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 	  break;
       case ENHMETAFILE_DC_MAGIC:
 	  result = OBJ_ENHMETADC;
+	  break;
+      case MEMORY_DC_MAGIC:
+	  result = OBJ_MEMDC;
 	  break;
       default:
 	  FIXME("Magic %04x not implemented\n", GDIMAGIC(ptr->wMagic) );

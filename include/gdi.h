@@ -41,7 +41,8 @@
 #define METAFILE_DC_MAGIC     0x4f51
 #define ENHMETAFILE_MAGIC     0x4f52
 #define ENHMETAFILE_DC_MAGIC  0x4f53
-#define LAST_MAGIC            0x4f53
+#define MEMORY_DC_MAGIC       0x4f54
+#define LAST_MAGIC            0x4f54
 
 #define MAGIC_DONTCARE	      0xffff
 
@@ -296,7 +297,6 @@ typedef struct tagDC_FUNCS
 #define DCHF_VALIDATEVISRGN     0x0002
 
   /* DC flags */
-#define DC_MEMORY     0x0001   /* It is a memory DC */
 #define DC_SAVED      0x0002   /* It is a saved DC */
 #define DC_DIRTY      0x0004   /* hVisRgn has to be updated */
 #define DC_THUNKHOOK  0x0008   /* DC hook is in the 16-bit code */
@@ -455,7 +455,7 @@ extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
 
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 
-extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs );
+extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic );
 extern DC * DC_GetDCPtr( HDC hdc );
 extern DC * DC_GetDCUpdate( HDC hdc );
 extern void DC_InitDC( DC * dc );

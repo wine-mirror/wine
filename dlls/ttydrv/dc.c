@@ -57,7 +57,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR dev
   physDev->hdc = dc->hSelf;
   physDev->org.x = physDev->org.y = 0;
 
-  if(dc->flags & DC_MEMORY){
+  if(GetObjectType(dc->hSelf) == OBJ_MEMDC) {
     physDev->window = NULL;
     physDev->cellWidth = 1;
     physDev->cellHeight = 1;

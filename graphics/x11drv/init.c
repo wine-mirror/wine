@@ -103,7 +103,7 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCSTR driver, LPCSTR devic
     physDev->hdc = dc->hSelf;
     physDev->dc  = dc;  /* FIXME */
 
-    if (dc->flags & DC_MEMORY)
+    if (GetObjectType( dc->hSelf ) == OBJ_MEMDC)
     {
         physDev->drawable  = BITMAP_stock_pixmap;
     }

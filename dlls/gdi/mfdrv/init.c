@@ -154,8 +154,7 @@ static DC *MFDRV_AllocMetaFile(void)
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    if (!(dc = DC_AllocDC( &MFDRV_Funcs ))) return NULL;
-    dc->header.wMagic = METAFILE_DC_MAGIC;
+    if (!(dc = DC_AllocDC( &MFDRV_Funcs, METAFILE_DC_MAGIC ))) return NULL;
 
     physDev = (METAFILEDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)

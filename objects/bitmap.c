@@ -407,7 +407,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     DC *dc = DC_GetDCPtr( hdc );
 
     if (!dc) return 0;
-    if (!(dc->flags & DC_MEMORY))
+    if (GetObjectType( hdc ) != OBJ_MEMDC)
     {
         GDI_ReleaseObj( hdc );
         return 0;

@@ -898,6 +898,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
     XImage * image;
     int pixel;
     POINT pt;
+    BOOL memdc = (GetObjectType(physDev->hdc) == OBJ_MEMDC);
     DC *dc = physDev->dc;
 
     pt.x = x;
@@ -908,7 +909,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
     X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
     wine_tsx11_lock();
-    if (dc->flags & DC_MEMORY)
+    if (memdc)
     {
         image = XGetImage( gdi_display, physDev->drawable,
                            physDev->org.x + pt.x, physDev->org.y + pt.y,

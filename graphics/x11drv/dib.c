@@ -5209,7 +5209,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     xSrc, ySrc, xDest, yDest, width, height);
   /* this function is meant as an optimization for BitBlt,
    * not to be called otherwise */
-  if (!(dcSrc->flags & DC_MEMORY)) {
+  if (GetObjectType( physDevSrc->hdc ) != OBJ_MEMDC) {
     ERR("called for non-memory source DC!?\n");
     return;
   }
@@ -5621,7 +5621,7 @@ INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 {
   if (!physDev) return DIB_Status_None;
-  if (!(physDev->dc->flags & DC_MEMORY)) return DIB_Status_None;
+  if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return DIB_Status_None;
 
   return X11DRV_LockDIBSection2( physDev->dc->hBitmap, req, lossy );
 }
@@ -5632,7 +5632,7 @@ INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev, BOOL commit)
 {
   if (!physDev) return;
-  if (!(physDev->dc->flags & DC_MEMORY)) return;
+  if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return;
 
   X11DRV_UnlockDIBSection2( physDev->dc->hBitmap, commit );
 }

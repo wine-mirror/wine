@@ -953,7 +953,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
         }
         else  /* color -> color */
         {
-            if (dcSrc->flags & DC_MEMORY)
+            if (GetObjectType(physDevSrc->hdc) == OBJ_MEMDC)
                 imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
                                       physDevSrc->org.x + visRectSrc->left,
                                       physDevSrc->org.y + visRectSrc->top,
@@ -1047,7 +1047,7 @@ static int BITBLT_GetDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, GC gc, RECT
         register INT x, y;
         XImage *image;
 
-        if (physDev->dc->flags & DC_MEMORY)
+        if (GetObjectType( physDev->hdc ) == OBJ_MEMDC)
             image = XGetImage( gdi_display, physDev->drawable,
                                physDev->org.x + visRectDst->left,
                                physDev->org.y + visRectDst->top,

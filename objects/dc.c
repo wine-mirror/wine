@@ -48,12 +48,12 @@ static const struct gdi_obj_funcs dc_funcs =
 /***********************************************************************
  *           DC_AllocDC
  */
-DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
+DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
 {
     HDC hdc;
     DC *dc;
 
-    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, (HGDIOBJ*)&hdc, &dc_funcs ))) return NULL;
+    if (!(dc = GDI_AllocObject( sizeof(*dc), magic, (HGDIOBJ*)&hdc, &dc_funcs ))) return NULL;
 
     dc->hSelf               = hdc;
     dc->funcs               = funcs;
@@ -130,8 +130,9 @@ DC *DC_GetDCPtr( HDC hdc )
     GDIOBJHDR *ptr = GDI_GetObjPtr( hdc, MAGIC_DONTCARE );
     if (!ptr) return NULL;
     if ((GDIMAGIC(ptr->wMagic) == DC_MAGIC) ||
-	(GDIMAGIC(ptr->wMagic) == METAFILE_DC_MAGIC) ||
-	(GDIMAGIC(ptr->wMagic) == ENHMETAFILE_DC_MAGIC))
+        (GDIMAGIC(ptr->wMagic) == MEMORY_DC_MAGIC) ||
+        (GDIMAGIC(ptr->wMagic) == METAFILE_DC_MAGIC) ||
+        (GDIMAGIC(ptr->wMagic) == ENHMETAFILE_DC_MAGIC))
         return (DC *)ptr;
     GDI_ReleaseObj( hdc );
     SetLastError( ERROR_INVALID_HANDLE );
@@ -151,18 +152,15 @@ DC *DC_GetDCUpdate( HDC hdc )
     if (!dc) return NULL;
     while (dc->flags & DC_DIRTY)
     {
+        DCHOOKPROC proc = dc->hookThunk;
         dc->flags &= ~DC_DIRTY;
-        if (!(dc->flags & (DC_SAVED | DC_MEMORY)))
+        if (proc)
         {
-            DCHOOKPROC proc = dc->hookThunk;
-            if (proc)
-            {
-                DWORD data = dc->dwHookData;
-                GDI_ReleaseObj( hdc );
-                proc( HDC_16(hdc), DCHC_INVALIDVISRGN, data, 0 );
-                if (!(dc = DC_GetDCPtr( hdc ))) break;
-                /* otherwise restart the loop in case it became dirty again in the meantime */
-            }
+            DWORD data = dc->dwHookData;
+            GDI_ReleaseObj( hdc );
+            proc( HDC_16(hdc), DCHC_INVALIDVISRGN, data, 0 );
+            if (!(dc = DC_GetDCPtr( hdc ))) break;
+            /* otherwise restart the loop in case it became dirty again in the meantime */
         }
     }
     return dc;
@@ -271,7 +269,7 @@ HDC WINAPI GetDCState( HDC hdc )
     HGDIOBJ handle;
 
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    if (!(newdc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &handle, &dc_funcs )))
+    if (!(newdc = GDI_AllocObject( sizeof(DC), GDIMAGIC(dc->header.wMagic), &handle, &dc_funcs )))
     {
       GDI_ReleaseObj( hdc );
       return 0;
@@ -409,7 +407,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->vportExtX        = dcs->vportExtX;
     dc->vportExtY        = dcs->vportExtY;
 
-    if (!(dc->flags & DC_MEMORY)) dc->bitsPerPixel = dcs->bitsPerPixel;
+    if (GDIMAGIC(dc->header.wMagic) != MEMORY_DC_MAGIC) dc->bitsPerPixel = dcs->bitsPerPixel;
 
     if (dcs->hClipRgn)
     {
@@ -586,13 +584,12 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
         ERR( "no driver found for %s\n", buf );
         return 0;
     }
-    if (!(dc = DC_AllocDC( funcs )))
+    if (!(dc = DC_AllocDC( funcs, DC_MAGIC )))
     {
         DRIVER_release_driver( funcs );
         return 0;
     }
 
-    dc->flags   = 0;
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
@@ -667,20 +664,26 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
     const DC_FUNCTIONS *funcs;
+    PHYSDEV physDev;
 
     GDI_CheckNotLock();
 
     if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC )))
     {
         funcs = origDC->funcs;
+        physDev = origDC->physDev;
         GDI_ReleaseObj( hdc ); /* can't hold the lock while loading the driver */
         funcs = DRIVER_get_driver( funcs );
     }
-    else funcs = DRIVER_load_driver( "DISPLAY" );
+    else
+    {
+        funcs = DRIVER_load_driver( "DISPLAY" );
+        physDev = NULL;
+    }
 
     if (!funcs) return 0;
 
-    if (!(dc = DC_AllocDC( funcs )))
+    if (!(dc = DC_AllocDC( funcs, MEMORY_DC_MAGIC )))
     {
         DRIVER_release_driver( funcs );
         return 0;
@@ -688,21 +691,19 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
-    dc->flags        = DC_MEMORY;
     dc->bitsPerPixel = 1;
     dc->hBitmap      = GetStockObject( DEFAULT_BITMAP );
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info
      * while creating the compatible DC below. */
-    if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC ))) dc->physDev = origDC->physDev;
+    dc->physDev = physDev;
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, &dc->physDev, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
         GDI_FreeObject( dc->hSelf, dc );
-        if (origDC) GDI_ReleaseObj( hdc );
         DRIVER_release_driver( funcs );
         return 0;
     }
@@ -715,7 +716,6 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     DC_InitDC( dc );
     GDI_ReleaseObj( dc->hSelf );
-    if (origDC) GDI_ReleaseObj( hdc );
     return dc->hSelf;
 }
 
@@ -732,19 +732,16 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     GDI_CheckNotLock();
 
-    if (!(dc = GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
+    if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
 
     /* Call hook procedure to check whether is it OK to delete this DC */
-    if (dc->hookThunk && !(dc->flags & (DC_SAVED | DC_MEMORY)))
+    if (dc->hookThunk)
     {
         DCHOOKPROC proc = dc->hookThunk;
-        if (proc)
-        {
-            DWORD data = dc->dwHookData;
-            GDI_ReleaseObj( hdc );
-            if (!proc( HDC_16(hdc), DCHC_DELETEDC, data, 0 )) return FALSE;
-            if (!(dc = DC_GetDCPtr( hdc ))) return TRUE;  /* deleted by the hook */
-        }
+        DWORD data = dc->dwHookData;
+        GDI_ReleaseObj( hdc );
+        if (!proc( HDC_16(hdc), DCHC_DELETEDC, data, 0 )) return FALSE;
+        if (!(dc = DC_GetDCPtr( hdc ))) return TRUE;  /* deleted by the hook */
     }
 
     while (dc->saveLevel)
@@ -1141,11 +1138,15 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
  */
 BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD dwHookData )
 {
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = GDI_GetObjPtr( hdc, DC_MAGIC );
 
     if (!dc) return FALSE;
-    dc->dwHookData = dwHookData;
-    dc->hookThunk = hookProc;
+
+    if (!(dc->flags & DC_SAVED))
+    {
+        dc->dwHookData = dwHookData;
+        dc->hookThunk = hookProc;
+    }
     GDI_ReleaseObj( hdc );
     return TRUE;
 }

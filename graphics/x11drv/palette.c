@@ -1233,10 +1233,9 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
  */
 UINT X11DRV_RealizeDefaultPalette( X11DRV_PDEVICE *physDev )
 {
-    DC *dc = physDev->dc;
     UINT ret = 0;
 
-    if (palette_size && !(dc->flags & DC_MEMORY))
+    if (palette_size && GetObjectType(physDev->hdc) != OBJ_MEMDC)
     {
         PALETTEOBJ*  palPtr = GDI_GetObjPtr( GetStockObject(DEFAULT_PALETTE), PALETTE_MAGIC );
         if (palPtr)
