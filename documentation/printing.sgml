@@ -97,6 +97,7 @@ printer=on
 	  to <command>lpr -Pprintername</command>. You do not need to 
 	  specify those in the config file, they are handled automatically by
 	  <filename>dlls/gdi/printdrv.c</filename>.
+	</para>
       </sect3>
     </sect2>
 
@@ -287,6 +288,7 @@ printer=on
 	    Powerpoint2000 with some degree of success - you should be
 	    able to get something out, it may not be in the right place.
 	  </para>
+	</sect4>
       </sect3>
 
       <sect3>
