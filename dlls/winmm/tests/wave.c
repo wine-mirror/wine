@@ -18,9 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <malloc.h>
+#include <math.h>
+
 #include "wine/test.h"
 #include "winbase.h"
-#include <mmsystem.h>
+#include "mmsystem.h"
 
 /*
  * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
@@ -28,23 +31,149 @@
  * sound device. So we should not report these as test failures.
  */
 
-#define TEST_FORMATS 12
-static const unsigned int win_formats[TEST_FORMATS][4]={
-    {WAVE_FORMAT_1M08, 11025,  8, 1},
-    {WAVE_FORMAT_1S08, 11025,  8, 2},
-    {WAVE_FORMAT_1M16, 11025, 16, 1},
-    {WAVE_FORMAT_1S16, 11025, 16, 2},
-    {WAVE_FORMAT_2M08, 22050,  8, 1},
-    {WAVE_FORMAT_2S08, 22050,  8, 2},
-    {WAVE_FORMAT_2M16, 22050, 16, 1},
-    {WAVE_FORMAT_2S16, 22050, 16, 2},
-    {WAVE_FORMAT_4M08, 44100,  8, 1},
-    {WAVE_FORMAT_4S08, 44100,  8, 2},
-    {WAVE_FORMAT_4M16, 44100, 16, 1},
-    {WAVE_FORMAT_4S16, 44100, 16, 2}
-};
+/* This test can play a test sound. But this only makes sense if someone
+ * is going to carefully listen to it, and would only bother everyone else.
+ * So to play the test sound you have to pass the 'play' parameter:
+ *     winmm_test wave play
+ */
+static int play_la;
 
-void wave_out_tests()
+static const unsigned int win_formats[][4]={
+    {WAVE_FORMAT_1M08,  11025,  8, 1},
+    {WAVE_FORMAT_1S08,  11025,  8, 2},
+    {WAVE_FORMAT_1M16,  11025, 16, 1},
+    {WAVE_FORMAT_1S16,  11025, 16, 2},
+    {WAVE_FORMAT_2M08,  22050,  8, 1},
+    {WAVE_FORMAT_2S08,  22050,  8, 2},
+    {WAVE_FORMAT_2M16,  22050, 16, 1},
+    {WAVE_FORMAT_2S16,  22050, 16, 2},
+    {WAVE_FORMAT_4M08,  44100,  8, 1},
+    {WAVE_FORMAT_4S08,  44100,  8, 2},
+    {WAVE_FORMAT_4M16,  44100, 16, 1},
+    {WAVE_FORMAT_4S16,  44100, 16, 2},
+#ifdef WAVE_FORMAT_48M08
+    {WAVE_FORMAT_48M08, 48000,  8, 1},
+    {WAVE_FORMAT_48S08, 48000,  8, 2},
+    {WAVE_FORMAT_48M16, 48000, 16, 1},
+    {WAVE_FORMAT_48S16, 48000, 16, 2},
+    {WAVE_FORMAT_96M08, 96000,  8, 1},
+    {WAVE_FORMAT_96S08, 96000,  8, 2},
+    {WAVE_FORMAT_96M16, 96000, 16, 1},
+    {WAVE_FORMAT_96S16, 96000, 16, 2}
+#endif
+};
+#define NB_WIN_FORMATS (sizeof(win_formats)/sizeof(*win_formats))
+
+#define PI 3.14159265358979323846
+static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
+{
+    int i;
+    int nb_samples;
+    char* buf;
+    char* b;
+
+    nb_samples=(int)(duration*wfx->nSamplesPerSec);
+    *size=nb_samples*wfx->nBlockAlign;
+    b=buf=malloc(*size);
+    for (i=0;i<nb_samples;i++) {
+        double y=sin(440.0*2*PI*i/wfx->nSamplesPerSec);
+        if (wfx->wBitsPerSample==8) {
+            unsigned char sample=(unsigned char)((double)127.5*(y+1.0));
+            *b++=sample;
+            if (wfx->nChannels==2)
+               *b++=sample;
+        } else {
+            signed short sample=(signed short)((double)32767.5*y-0.5);
+            b[0]=sample & 0xff;
+            b[1]=sample >> 8;
+            b+=2;
+            if (wfx->nChannels==2) {
+                b[0]=sample & 0xff;
+                b[1]=sample >> 8;
+                b+=2;
+            }
+        }
+    }
+    return buf;
+}
+
+static void wave_out_test_deviceOut(int device, int format, DWORD flags)
+{
+    WAVEFORMATEX wfx;
+    HWAVEOUT wout;
+    HANDLE hevent;
+    WAVEHDR frag;
+    MMRESULT rc;
+    DWORD volume;
+
+    hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
+    ok(hevent!=NULL,"CreateEvent: error=%ld\n",GetLastError());
+    if (hevent==NULL)
+        return;
+
+    wfx.wFormatTag=WAVE_FORMAT_PCM;
+    wfx.nChannels=win_formats[format][3];
+    wfx.wBitsPerSample=win_formats[format][2];
+    wfx.nSamplesPerSec=win_formats[format][1];
+    wfx.nBlockAlign=wfx.nChannels*wfx.wBitsPerSample/8;
+    wfx.nAvgBytesPerSec=wfx.nSamplesPerSec*wfx.nBlockAlign;
+    wfx.cbSize=0;
+
+    wout=NULL;
+    rc=waveOutOpen(&wout,device,&wfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
+    /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
+       "waveOutOpen: device=%d rc=%d",device,rc);
+    if (rc!=MMSYSERR_NOERROR) {
+        CloseHandle(hevent);
+        return;
+    }
+
+    ok(wfx.nChannels==win_formats[format][3] &&
+       wfx.wBitsPerSample==win_formats[format][2] &&
+       wfx.nSamplesPerSec==win_formats[format][1],
+       "got the wrong format: %ldx%2dx%d instead of %dx%2dx%d\n",
+       wfx.nSamplesPerSec, wfx.wBitsPerSample,
+       wfx.nChannels, win_formats[format][1], win_formats[format][2],
+       win_formats[format][3]);
+
+    frag.lpData=wave_generate_la(&wfx,1.0,&frag.dwBufferLength);
+    frag.dwFlags=0;
+    frag.dwLoops=0;
+
+    rc=waveOutGetVolume(wout,&volume);
+    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume: device=%d rc=%d\n",device,rc);
+
+    rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutPrepareHeader: device=%d rc=%d\n",device,rc);
+
+    if (play_la && rc==MMSYSERR_NOERROR) {
+        trace("Playing 440Hz LA at %ldx%2dx%d %04lx\n",
+              wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
+        rc=waveOutSetVolume(wout,0x20002000);
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%d\n",device,rc);
+        WaitForSingleObject(hevent,INFINITE);
+
+        rc=waveOutWrite(wout, &frag, sizeof(frag));
+        ok(rc==MMSYSERR_NOERROR,"waveOutWrite: device=%d rc=%d\n",device,rc);
+        WaitForSingleObject(hevent,INFINITE);
+
+        rc=waveOutSetVolume(wout,volume);
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume: device=%d rc=%d\n",device,rc);
+    }
+
+    rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutUnprepareHeader: device=%d rc=%d\n",device,rc);
+    free(frag.lpData);
+
+    CloseHandle(hevent);
+    waveOutClose(wout);
+}
+
+static void wave_out_tests()
 {
     WAVEOUTCAPS caps;
     WAVEFORMATEX format;
@@ -83,47 +212,10 @@ void wave_out_tests()
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats,caps.dwSupport);
 
-        for (f=0;f<TEST_FORMATS;f++) {
-            if (!(caps.dwFormats & win_formats[f][0]))
-                continue;
-
-            format.wFormatTag=WAVE_FORMAT_PCM;
-            format.nChannels=win_formats[f][3];
-            format.wBitsPerSample=win_formats[f][2];
-            format.nSamplesPerSec=win_formats[f][1];
-            format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-            format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-            format.cbSize=0;
-
-            rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL);
-            ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
-               "failed to open device %d: rc=%d",d,rc);
-            if (rc==MMSYSERR_NOERROR) {
-                ok(format.nChannels==win_formats[f][3] &&
-                   format.wBitsPerSample==win_formats[f][2] &&
-                   format.nSamplesPerSec==win_formats[f][1],
-                   "got the wrong format: %ldx%2dx%d instead of %dx%2dx%d\n",
-                   format.nSamplesPerSec, format.wBitsPerSample,
-                   format.nChannels, win_formats[f][1], win_formats[f][2],
-                   win_formats[f][3]);
-                waveOutClose(wout);
-            }
-
-            /* Try again with WAVE_FORMAT_DIRECT
-             * Note: Win9x doesn't know WAVE_FORMAT_DIRECT
-             */
-            rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-            ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_INVALFLAG,
-               "failed to open device %d: rc=%d",d,rc);
-            if (rc==MMSYSERR_NOERROR) {
-                ok(format.nChannels==win_formats[f][3] &&
-                   format.wBitsPerSample==win_formats[f][2] &&
-                   format.nSamplesPerSec==win_formats[f][1],
-                   "got the wrong format: %ldx%2dx%d instead of %dx%2dx%d\n",
-                   format.nSamplesPerSec, format.wBitsPerSample,
-                   format.nChannels, win_formats[f][1], win_formats[f][2],
-                   win_formats[f][3]);
-                waveOutClose(wout);
+        for (f=0;f<NB_WIN_FORMATS;f++) {
+            if (caps.dwFormats & win_formats[f][0]) {
+                wave_out_test_deviceOut(d,f,0);
+                wave_out_test_deviceOut(d,f,WAVE_FORMAT_DIRECT);
             }
         }
 
@@ -171,5 +263,10 @@ void wave_out_tests()
 
 START_TEST(wave)
 {
+    int argc;
+    char** argv;
+    argc = winetest_get_mainargs(&argv);
+    play_la=(argc >= 3 && strcmp(argv[2],"play")==0);
+
     wave_out_tests();
 }
