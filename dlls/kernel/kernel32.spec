@@ -685,9 +685,9 @@
 @ stdcall ReinitializeCriticalSection(ptr) ReinitializeCriticalSection
 @ stdcall ReleaseMutex(long) ReleaseMutex
 @ stdcall ReleaseSemaphore(long long ptr) ReleaseSemaphore
-@ stub ReplaceFile
-@ stub ReplaceFileA
-@ stub ReplaceFileW
+@ stdcall ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
+@ stdcall ReplaceFileA(str str str long ptr ptr) ReplaceFileA
+@ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) ReplaceFileW
 @ stdcall RemoveDirectoryA(str) RemoveDirectoryA
 @ stdcall RemoveDirectoryW(wstr) RemoveDirectoryW
 @ stub RequestDeviceWakeup

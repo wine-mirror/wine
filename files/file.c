@@ -3409,3 +3409,30 @@ BOOL WINAPI GetFileAttributesExA(
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
 }
+
+/**************************************************************************
+ *           ReplaceFileW   (KERNEL32.@)
+ *           ReplaceFile    (KERNEL32.@)
+ */
+BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName,LPCWSTR lpReplacementFileName,
+                         LPCWSTR lpBackupFileName, DWORD dwReplaceFlags,
+                         LPVOID lpExclude, LPVOID lpReserved)
+{
+    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",debugstr_w(lpReplacedFileName),debugstr_w(lpReplacementFileName),
+                                          debugstr_w(lpBackupFileName),dwReplaceFlags,lpExclude,lpReserved);
+    SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
+    return FALSE;
+}
+
+/**************************************************************************
+ *           ReplaceFileA (KERNEL32.@)
+ */
+BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
+                         LPCSTR lpBackupFileName, DWORD dwReplaceFlags,
+                         LPVOID lpExclude, LPVOID lpReserved)
+{
+    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",lpReplacedFileName,lpReplacementFileName,
+                                          lpBackupFileName,dwReplaceFlags,lpExclude,lpReserved);
+    SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
+    return FALSE;
+}
