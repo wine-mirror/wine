@@ -1,11 +1,17 @@
 #include "winver.h"
 
+/*
+Assign WINE_FILEVERSION and WINE_FILEVERSION_STR high enough number
+to make sure that programs, relying on the version numbers, will
+never complain.
+*/
+
 #ifndef WINE_FILEVERSION
-#define WINE_FILEVERSION 1,0,0,0
+#define WINE_FILEVERSION 10,0,0,0
 #endif
 
 #ifndef WINE_FILEVERSION_STR
-#define WINE_FILEVERSION_STR "1.0"
+#define WINE_FILEVERSION_STR "10.0"
 #endif
 
 #ifndef WINE_FILEDESCRIPTION_STR

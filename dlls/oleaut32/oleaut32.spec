@@ -1,5 +1,6 @@
 name oleaut32
 type win32
+rsrc version.res
 
 import ole32.dll
 import user32.dll

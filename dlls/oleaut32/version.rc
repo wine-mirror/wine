@@ -1,0 +1,4 @@
+#define WINE_FILEDESCRIPTION_STR "Wine OLE dll"
+#define WINE_FILENAME_STR "oleaut32.dll"
+
+#include "wine/wine_common_ver.rc"

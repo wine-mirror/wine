@@ -23,6 +23,9 @@ C_SRCS = \
 	typelib.c \
 	variant.c
 
+RC_SRCS = \
+	version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
