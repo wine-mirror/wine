@@ -224,8 +224,12 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
 	cptr = get_tok(key, ", \t");
 	while(cptr)
 	{
-		if(strchr(cptr, '.'))
-			MSG("Warning: Loadorder override '%s' contains an extension and might not be found during lookup\n", cptr);
+		char *ext = strrchr(cptr, '.');
+		if(ext)
+		{
+			if(strlen(ext) == 4 && (!strcasecmp(ext, ".dll") || !strcasecmp(ext, ".exe")))
+				MSG("Warning: Loadorder override '%s' contains an extension and might not be found during lookup\n", cptr);
+		}
 
 		ldo.modulename = cptr;
 		if(!AddLoadOrder(&ldo, override))
