@@ -358,11 +358,6 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    if (IsBadReadPtr(buffer, bytesToRead))
-    {
-        SetLastError(ERROR_WRITE_FAULT); /* FIXME */
-        return FALSE;
-    }
     if (is_console_handle(hFile))
         return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
 
@@ -440,12 +435,6 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     if (is_console_handle(hFile))
         return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
-
-    if (IsBadReadPtr(buffer, bytesToWrite))
-    {
-        SetLastError(ERROR_READ_FAULT); /* FIXME */
-        return FALSE;
-    }
 
     if (overlapped)
     {
