@@ -2,7 +2,7 @@ name	keyboard
 type	win16
 
 1   pascal16 Inquire(ptr) KEYBOARD_Inquire
-2   pascal16 Enable(segptr ptr) THUNK_KEYBOARD_Enable
+2   pascal16 Enable(segptr ptr) WIN16_KEYBOARD_Enable
 3   pascal16 Disable() KEYBOARD_Disable
 4   pascal16 ToAscii(word word ptr ptr word) ToAscii16
 5   pascal16 AnsiToOem(str ptr) AnsiToOem16

@@ -19,7 +19,8 @@
 #include "heap.h"
 #include "keyboard.h"
 #include "message.h"
-#include "debugtools.h"
+#include "callback.h"
+#include "builtin16.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
@@ -55,6 +56,8 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
                              LPBYTE lpKeyState )
 {
   static BOOL initDone = FALSE;
+
+  THUNK_Free( (FARPROC)DefKeybEventProc );
   
   DefKeybEventProc = lpKeybEventProc;
   pKeyStateTable = lpKeyState;
@@ -66,11 +69,40 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
   initDone = TRUE;
 }
 
+static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
+                                                BYTE bVk, BYTE bScan,
+                                                DWORD dwFlags, DWORD dwExtraInfo )
+{
+    CONTEXT86 context;
+
+    memset( &context, 0, sizeof(context) );
+    CS_reg(&context)  = SELECTOROF( proc );
+    EIP_reg(&context) = OFFSETOF( proc );
+    AH_reg(&context)  = (dwFlags & KEYEVENTF_KEYUP)? 0x80 : 0;
+    AL_reg(&context)  = bVk;
+    BH_reg(&context)  = (dwFlags & KEYEVENTF_EXTENDEDKEY)? 1 : 0;
+    BL_reg(&context)  = bScan;
+    SI_reg(&context)  = LOWORD( dwExtraInfo );
+    DI_reg(&context)  = HIWORD( dwExtraInfo );
+
+    CallTo16RegisterShort( &context, 0 );
+}
+
+VOID WINAPI WIN16_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
+{
+    LPKEYBD_EVENT_PROC thunk = 
+      (LPKEYBD_EVENT_PROC)THUNK_Alloc( proc, (RELAY)KEYBOARD_CallKeybdEventProc );
+
+    KEYBOARD_Enable( thunk, lpKeyState );
+}
+
 /***********************************************************************
  *           KEYBOARD_Disable			(KEYBOARD.3)
  */
 VOID WINAPI KEYBOARD_Disable(VOID)
 {
+  THUNK_Free( (FARPROC)DefKeybEventProc );
+  
   DefKeybEventProc = NULL;
   pKeyStateTable = NULL;
 }

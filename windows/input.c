@@ -24,6 +24,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "message.h"
+#include "module.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
@@ -143,6 +144,20 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
 }
 
 /***********************************************************************
+ *           WIN16_keybd_event   (USER.289)
+ */
+void WINAPI WIN16_keybd_event( CONTEXT86 *context )
+{
+    DWORD dwFlags = 0;
+
+    if (AH_reg(context) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
+    if (BH_reg(context) & 1   ) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    keybd_event( AL_reg(context), BL_reg(context),
+                 dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
+}
+
+/***********************************************************************
  *           mouse_event   (USER32.584)
  */
 void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
@@ -237,6 +252,25 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
                         keyState, 0L, posX, posY, time, extra );
     }
 }
+
+/***********************************************************************
+ *           WIN16_mouse_event   (USER.299)
+ */
+void WINAPI WIN16_mouse_event( CONTEXT86 *context )
+{
+    mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
+                 DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );
+}
+
+/***********************************************************************
+ *           GetMouseEventProc   (USER.337)
+ */
+FARPROC16 WINAPI GetMouseEventProc16(void)
+{
+    HMODULE16 hmodule = GetModuleHandle16("USER");
+    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "mouse_event" ));
+}
+
 
 /**********************************************************************
  *                      EnableHardwareInput   (USER.331)
