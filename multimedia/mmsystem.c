@@ -1651,7 +1651,7 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
     return ret;
 }
 
-UINT16	MCI_DefYieldProc(UINT16 wDevID, DWORD data)
+UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
 {
     MSG		msg;
     INT16	ret;

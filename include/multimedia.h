@@ -104,7 +104,7 @@ extern int			mciInstalledCount;
 extern int			mciInstalledListLen;
 extern LPSTR			lpmciInstallNames;
 
-extern UINT16			MCI_DefYieldProc(UINT16 wDevID, DWORD data);
+extern UINT16		WINAPI	MCI_DefYieldProc(UINT16 wDevID, DWORD data);
 
 typedef struct {
     WORD	uDevType;

@@ -2361,9 +2361,9 @@ typedef struct {
 typedef struct {
 	DWORD		dwCallback;
 	MCIDEVICEID	wDeviceID;
-	LPCSTR		lpstrDeviceType;
-	LPCSTR		lpstrElementName;
-	LPCSTR		lpstrAlias;
+	LPCWSTR		lpstrDeviceType;
+	LPCWSTR		lpstrElementName;
+	LPCWSTR		lpstrAlias;
 	DWORD		dwStyle;
 	HWND		hWndParent;
 } MCI_ANIM_OPEN_PARMSW, *LPMCI_ANIM_OPEN_PARMSW;
@@ -2819,6 +2819,8 @@ typedef struct {
 	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
 	UINT	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
+DECL_WINELIB_TYPE_AW(MCI_OPEN_DRIVER_PARMS);
+DECL_WINELIB_TYPE_AW(LPMCI_OPEN_DRIVER_PARMS);
 
 DWORD 		WINAPI	mciGetDriverData16(UINT16 uDeviceID);
 DWORD 		WINAPI	mciGetDriverData(UINT uDeviceID);
