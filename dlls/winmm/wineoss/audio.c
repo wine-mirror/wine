@@ -1450,9 +1450,9 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->lpNext = 0;
 
-    if ((lpWaveHdr->dwBufferLength & ~(WOutDev[wDevID].format.wf.nBlockAlign - 1)) != 0)
+    if ((lpWaveHdr->dwBufferLength & (WOutDev[wDevID].format.wf.nBlockAlign - 1)) != 0)
     {
-        WARN("WaveHdr length isn't a multiple of the PCM block size\n");
+        WARN("WaveHdr length isn't a multiple of the PCM block size: %ld %% %d\n",lpWaveHdr->dwBufferLength,WOutDev[wDevID].format.wf.nBlockAlign);
         lpWaveHdr->dwBufferLength &= ~(WOutDev[wDevID].format.wf.nBlockAlign - 1);
     }
 
