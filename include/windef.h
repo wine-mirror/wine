@@ -5,6 +5,18 @@
 
 #pragma pack(1)
 
+#ifndef IN
+#define IN
+#endif
+
+#ifndef OUT
+#define OUT
+#endif
+
+#ifndef OPTIONAL
+#define OPTIONAL
+#endif
+
 /* FIXME: _MAX_PATH should be defined in stdlib.h and MAX_PATH in windef.h 
  * and mapiwin.h
  */

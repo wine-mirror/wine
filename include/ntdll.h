@@ -22,7 +22,7 @@ typedef DWORD NTSTATUS;
 /* Moved to windows.h
 typedef struct {
 	BYTE	Value[6];
-} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
 */
 
 /* Moved to windows.h
@@ -31,7 +31,7 @@ typedef struct _SID {
 	BYTE	SubAuthorityCount;
 	SID_IDENTIFIER_AUTHORITY	IdentifierAuthority;
 	DWORD	SubAuthority[1];
-} SID,*PSID,*LPSID;
+} SID,*PSID,*PSID;
 */
 
 #define	SID_REVISION			(1)	/* Current revision */
@@ -130,8 +130,8 @@ typedef struct {
 	BYTE	Revision;
 	BYTE	Sbz1;
 	SECURITY_DESCRIPTOR_CONTROL Control;
-	LPSID	Owner;
-	LPSID	Group;
+	PSID	Owner;
+	PSID	Group;
 	LPACL	Sacl;
 	LPACL	Dacl;
 } SECURITY_DESCRIPTOR,*PSECURITY_DESCRIPTOR,*LPSECURITY_DESCRIPTOR;
@@ -146,29 +146,7 @@ typedef enum tagSID_NAME_USE {
 	SidTypeDeletedAccount,
 	SidTypeInvalid,
 	SidTypeUnknown
-} SID_NAME_USE,*PSID_NAME_USE,*LPSID_NAME_USE;
-
-/* NT lowlevel Strings (handled by Rtl* functions in NTDLL)
- * If they are zero terminated, Length does not include the terminating 0.
- */
-
-typedef struct _STRING {
-	UINT16	Length;
-	UINT16	MaximumLength;
-	LPSTR	Buffer;
-} STRING,*LPSTRING,ANSI_STRING,*LPANSI_STRING;
-
-typedef struct _CSTRING {
-	UINT16	Length;
-	UINT16	MaximumLength;
-	LPCSTR	Buffer;
-} CSTRING,*LPCSTRING;
-
-typedef struct _UNICODE_STRING {
-	UINT16	Length;		/* bytes */
-	UINT16	MaximumLength;	/* bytes */
-	LPWSTR	Buffer;
-} UNICODE_STRING,*LPUNICODE_STRING;
+} SID_NAME_USE,*PSID_NAME_USE;
 
 typedef struct _RTL_RWLOCK {
 	CRITICAL_SECTION	rtlCS;
@@ -189,25 +167,25 @@ BYTE   WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK, BYTE fWait);
 VOID   WINAPI RtlReleaseResource(LPRTL_RWLOCK);
 VOID   WINAPI RtlDumpResource(LPRTL_RWLOCK);
 
-BOOL32 WINAPI IsValidSid(LPSID);
-BOOL32 WINAPI EqualSid(LPSID,LPSID);
-BOOL32 WINAPI EqualPrefixSid(LPSID,LPSID);
+BOOL32 WINAPI IsValidSid(PSID);
+BOOL32 WINAPI EqualSid(PSID,PSID);
+BOOL32 WINAPI EqualPrefixSid(PSID,PSID);
 DWORD  WINAPI GetSidLengthRequired(BYTE);
-BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,
+BOOL32 WINAPI AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,
                                        DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,
-                                       DWORD,LPSID*);
-VOID*  WINAPI FreeSid(LPSID);
+                                       DWORD,PSID*);
+VOID*  WINAPI FreeSid(PSID);
 BOOL32 WINAPI InitializeSecurityDescriptor(SECURITY_DESCRIPTOR*,DWORD);
-BOOL32 WINAPI InitializeSid(LPSID,LPSID_IDENTIFIER_AUTHORITY,BYTE);
-DWORD* WINAPI GetSidSubAuthority(LPSID,DWORD);
-BYTE * WINAPI GetSidSubAuthorityCount(LPSID);
-DWORD  WINAPI GetLengthSid(LPSID);
-BOOL32 WINAPI CopySid(DWORD,LPSID,LPSID);
+BOOL32 WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
+DWORD* WINAPI GetSidSubAuthority(PSID,DWORD);
+BYTE * WINAPI GetSidSubAuthorityCount(PSID);
+DWORD  WINAPI GetLengthSid(PSID);
+BOOL32 WINAPI CopySid(DWORD,PSID,PSID);
 BOOL32 WINAPI LookupAccountSid32A(LPCSTR,PSID,LPCSTR,LPDWORD,LPCSTR,LPDWORD,
                                   PSID_NAME_USE);
 BOOL32 WINAPI LookupAccountSid32W(LPCWSTR,PSID,LPCWSTR,LPDWORD,LPCWSTR,LPDWORD,
                                   PSID_NAME_USE);
-LPSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(LPSID);
+PSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(PSID);
 INT32       WINAPI AccessResource32(HMODULE32,HRSRC32);
 #define     AccessResource WINELIB_NAME(AccessResource)
 

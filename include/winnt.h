@@ -317,14 +317,14 @@ typedef struct _EXCEPTION_POINTERS
 
 typedef struct {
     BYTE Value[6];
-} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY;
 
 typedef struct _SID {
     BYTE Revision;
     BYTE SubAuthorityCount;
     SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
     DWORD SubAuthority[1];
-} SID,*PSID,*LPSID;
+} SID,*PSID;
 
 
 #pragma pack(4)
@@ -400,15 +400,15 @@ typedef struct _LARGE_INTEGER
 {
     DWORD    LowPart;
     LONG     HighPart;
-} LARGE_INTEGER,*LPLARGE_INTEGER;
+} LARGE_INTEGER,*PLARGE_INTEGER;
 
 typedef struct _ULARGE_INTEGER
 {
     DWORD    LowPart;
     DWORD    HighPart;
-} ULARGE_INTEGER,*LPULARGE_INTEGER;
+} ULARGE_INTEGER,*PULARGE_INTEGER;
 
-typedef LARGE_INTEGER LUID,*LPLUID; /* locally unique ids */
+typedef LARGE_INTEGER LUID,*PLUID; /* locally unique ids */
 
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid; 
@@ -422,7 +422,7 @@ typedef struct _LUID_AND_ATTRIBUTES {
 typedef struct _TOKEN_PRIVILEGES {
   DWORD PrivilegeCount; 
   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY]; 
-} TOKEN_PRIVILEGES; 
+} TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES; 
 
 /*
  * TOKEN_OWNER
@@ -440,9 +440,8 @@ typedef struct _TOKEN_PRIMARY_GROUP {
   PSID PrimaryGroup; 
 } TOKEN_PRIMARY_GROUP; 
 
-
 /*
- * ACL (and PACL LPACL?).
+ * ACL 
  */
 
 typedef struct _ACL {
@@ -451,14 +450,14 @@ typedef struct _ACL {
     WORD AclSize;
     WORD AceCount;
     WORD Sbz2;
-} ACL, *LPACL;
+} ACL, *PACL;
 
 /*
  * TOKEN_DEFAULT_DACL
  */
 
 typedef struct _TOKEN_DEFAULT_DACL { 
-  LPACL DefaultDacl; 
+  PACL DefaultDacl; 
 } TOKEN_DEFAULT_DACL; 
 
 /*
@@ -507,10 +506,6 @@ typedef struct _TOKEN_STATISTICS {
   DWORD PrivilegeCount; 
   LUID  ModifiedId; 
 } TOKEN_STATISTICS; 
-
-
-/* I moved the Language IDs to winnls.h (David Lee Lambert) */
-
 
 /* Access rights */
 
