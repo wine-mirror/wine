@@ -1204,7 +1204,7 @@ DPA_SetPtr (const HDPA hdpa, INT32 i, LPVOID p)
 LPVOID WINAPI
 DPA_DeletePtr (const HDPA hdpa, INT32 i)
 {
-    LPVOID lpDest, lpSrc, lpTemp = NULL;
+    LPVOID *lpDest, *lpSrc, lpTemp = NULL;
     INT32  nSize;
     
     TRACE (commctrl, "(%p %d)\n", hdpa, i);
