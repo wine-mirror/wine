@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
 # This script is the receipe to generate the key that have to be created like
-# if an applicaiton was installed by its installer.  It processes using a
+# if an application was installed by its installer.  It processes using a
 # registry based on the picture of the registry before the application is
 # installed and the picture of the registry after the application is installed.
 #
@@ -30,6 +30,9 @@ if [ $# -ne 2 ]; then
   echo
   exit 1
 fi
+
+if [ ! -f $1 ]; then echo "$1 does not exist."; exit 1; fi
+if [ ! -f $2 ]; then echo "$2 does not exist."; exit 1; fi
 
 echo "Assuming that $1 is the \"before\" file..."
 echo "Assuming that $2 is the \"after\" file..."
