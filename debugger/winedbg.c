@@ -40,6 +40,7 @@ DWORD		DEBUG_CurrTid;
 DWORD		DEBUG_CurrPid;
 CONTEXT		DEBUG_context;
 BOOL		DEBUG_interactiveP = FALSE;
+enum exit_mode  DEBUG_ExitMode = EXIT_CONTINUE;
 int 		curr_frame = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
@@ -242,8 +243,9 @@ static	DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid,
     t->teb = teb;
     t->process = p;
     t->wait_for_first_exception = 0;
-    t->dbg_exec_mode = EXEC_CONT;
-    t->dbg_exec_count = 0;
+    t->exec_mode = EXEC_CONT;
+    t->exec_count = 0;
+
     sprintf(t->name, "%08lx", tid);
 
     p->num_threads++;
@@ -349,10 +351,8 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
 
     if (!force && is_debug && 
-	DEBUG_ShouldContinue(&addr,
-			     code, 
-			     DEBUG_CurrThread->dbg_exec_mode, 
-			     &DEBUG_CurrThread->dbg_exec_count))
+	DEBUG_ShouldContinue(&addr, code, 
+			     &DEBUG_CurrThread->exec_count))
 	return FALSE;
 
     if ((newmode = DEBUG_GetSelectorType(addr.seg)) == MODE_INVALID) newmode = MODE_32;
@@ -387,8 +387,8 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     }
 
     if (!is_debug ||
-	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_OVER) ||
-	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_INSTR)) {
+	(DEBUG_CurrThread->exec_mode == EXEC_STEPI_OVER) ||
+	(DEBUG_CurrThread->exec_mode == EXEC_STEPI_INSTR)) {
 
 	struct list_id list;
 
@@ -403,30 +403,27 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     return TRUE;
 }
 
-static  DWORD	DEBUG_ExceptionEpilog(void)
+static  void	DEBUG_ExceptionEpilog(void)
 {
-    DEBUG_CurrThread->dbg_exec_mode = DEBUG_RestartExecution(DEBUG_CurrThread->dbg_exec_mode, 
-							     DEBUG_CurrThread->dbg_exec_count);
+    DEBUG_RestartExecution(DEBUG_CurrThread->exec_count);
     /*
      * This will have gotten absorbed into the breakpoint info
      * if it was used.  Otherwise it would have been ignored.
      * In any case, we don't mess with it any more.
      */
-    if (DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT || DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS)
-	DEBUG_CurrThread->dbg_exec_count = 0;
-    
-    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE;
+    if (DEBUG_CurrThread->exec_mode == EXEC_CONT)
+	DEBUG_CurrThread->exec_count = 0;
 }
 
-static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force, LPDWORD cont)
+static	void DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force)
 {
     BOOL             is_debug = FALSE;
-    enum exit_mode   ret = EXIT_CONT;
     THREADNAME_INFO *pThreadName;
     DBG_THREAD      *pThread;
 
+    assert(DEBUG_CurrThread);
 
-    *cont = DBG_CONTINUE;
+    DEBUG_ExitMode = EXIT_CONTINUE;
 
     switch (rec->ExceptionCode)
     {
@@ -446,14 +443,14 @@ static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_ch
             DEBUG_Printf (DBG_CHN_MESG,
                           "Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
                           pThread->tid, pThread->name);
-        return EXIT_CONT;
+        return;
     }
 
     if (first_chance && !is_debug && !force && !DBG_IVAR(BreakOnFirstChance))
     {
         /* pass exception to program except for debug exceptions */
-        *cont = is_debug ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED;
-        return EXIT_CONT;
+        if (!is_debug) DEBUG_ExitMode = EXIT_PASS;
+        return;
     }
 
     if (!is_debug)
@@ -511,7 +508,7 @@ static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_ch
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
 	    {
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
-		return EXIT_CONT;
+		return;
 	    }
             break;
         case EXCEPTION_WINE_STUB:
@@ -548,27 +545,32 @@ static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_ch
 #else
 		 0L, 0L,
 #endif
-		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
+		 DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #endif
 
     if (automatic_mode)
     {
         DEBUG_ExceptionProlog(is_debug, FALSE, rec->ExceptionCode);
-        return EXIT_QUIT;  /* terminate execution */
+        DEBUG_ExitMode = EXIT_QUIT;
+        return;  /* terminate execution */
     }
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
 	DEBUG_interactiveP = TRUE;
-	while ((ret = DEBUG_Parser()) == EXIT_CONT) {
+	for (;;)
+        {
+            DEBUG_Parser();
+            if (DEBUG_ExitMode == EXIT_QUIT || DEBUG_ExitMode == EXIT_DETACH)
+                break;
 	    if (DEBUG_ValidateRegisters()) {
-		if (DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
+		if (DEBUG_ExitMode == EXIT_PASS || first_chance)
 		    break;
 		DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
 	    }
 	}
 	DEBUG_interactiveP = FALSE;
     }
-    *cont = DEBUG_ExceptionEpilog();
+    DEBUG_ExceptionEpilog();
 
 #if 0
     DEBUG_Printf(DBG_CHN_TRACE, 
@@ -578,24 +580,19 @@ static	enum exit_mode DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_ch
 #else
 		 0L, 0L,
 #endif
-		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
+		 DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #endif
-
-    return ret;
 }
 
-static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
+static	void	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 {
     char		buffer[256];
-    enum exit_mode      ret;
 
     DEBUG_CurrPid = de->dwProcessId;
     DEBUG_CurrTid = de->dwThreadId;
 
+    DEBUG_ExitMode = EXIT_CONTINUE;
     __TRY {
-	ret = EXIT_CONT;
-	*cont = 0L;
-	
 	if ((DEBUG_CurrProcess = DEBUG_GetProcess(de->dwProcessId)) != NULL)
 	    DEBUG_CurrThread = DEBUG_GetThread(DEBUG_CurrProcess, de->dwThreadId);
 	else 
@@ -616,7 +613,6 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    if (DEBUG_CurrProcess->continue_on_first_exception) {
 		DEBUG_CurrProcess->continue_on_first_exception = FALSE;
 		if (!DBG_IVAR(BreakOnAttach)) {
-		    *cont = DBG_CONTINUE;
 		    break;
 		}
 	    }
@@ -636,10 +632,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		break;
 	    }
 	    
-	    ret = DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
-					de->u.Exception.dwFirstChance, 
-					DEBUG_CurrThread->wait_for_first_exception,
-					cont);
+	    DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
+                                  de->u.Exception.dwFirstChance, 
+                                  DEBUG_CurrThread->wait_for_first_exception);
 	    if (DEBUG_CurrThread) {
 		DEBUG_CurrThread->wait_for_first_exception = 0;
 		SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
@@ -793,7 +788,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    if (DBG_IVAR(BreakOnDllLoad)) {
 		DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n", 
 			     buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
-		ret = DEBUG_Parser();
+		DEBUG_Parser();
 	    }
 	    break;
 	    
@@ -829,38 +824,42 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	}
 	
     } __EXCEPT(wine_dbg) {
-	*cont = 0;
-	ret = EXIT_CONT;
+	DEBUG_ExitMode = EXIT_CONTINUE;
     }
     __ENDTRY;
-    return ret;
 }
 
 static	DWORD	DEBUG_MainLoop(void)
 {
     DEBUG_EVENT		de;
-    DWORD		cont;
-    enum exit_mode      ret = EXIT_CONT;
 
     DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
     
-    while (ret == EXIT_CONT) 
+    while (DEBUG_ExitMode == EXIT_CONTINUE) 
     {
 	/* wait until we get at least one loaded process */
-	while (!DEBUG_ProcessList && (ret = DEBUG_Parser()) == EXIT_CONT);
-	if (ret != EXIT_CONT) break;
-
-	while (ret == EXIT_CONT && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE)) {
-	    ret = DEBUG_HandleDebugEvent(&de, &cont);
-	    ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
-	}
-        if (ret == EXIT_DETACH && DEBUG_Detach())
+	while (!DEBUG_ProcessList)
         {
-            /* ret = EXIT_CONT; */
+            DEBUG_Parser();
+            if (DEBUG_ExitMode == EXIT_CONTINUE || DEBUG_ExitMode == EXIT_QUIT) break;
+        }
+	if (DEBUG_ExitMode != EXIT_CONTINUE) break;
+
+	while ((DEBUG_ExitMode == EXIT_CONTINUE || DEBUG_ExitMode == EXIT_PASS) && 
+               DEBUG_ProcessList && 
+               WaitForDebugEvent(&de, INFINITE)) 
+        {
+	    DEBUG_HandleDebugEvent(&de);
+	    ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 
+                               (DEBUG_ExitMode == EXIT_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE);
+	}
+        if (DEBUG_ExitMode == EXIT_DETACH && DEBUG_Detach())
+        {
+            /* DEBUG_ExitMode = EXIT_CONTINUE; */
             /* FIXME: as we don't have a simple way to zero out the process symbol table
              * we simply quit the debugger on detach...
              */
-            ret = EXIT_QUIT;
+            DEBUG_ExitMode = EXIT_QUIT;
         }
     }
     
@@ -872,15 +871,16 @@ static	DWORD	DEBUG_MainLoop(void)
 static DWORD DEBUG_AutoMode(void)
 {
     DEBUG_EVENT de;
-    DWORD cont;
-    enum exit_mode ret = EXIT_CONT;
 
     DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
 
-    while (ret == EXIT_CONT && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE))
+    while ((DEBUG_ExitMode == EXIT_CONTINUE || DEBUG_ExitMode == EXIT_PASS) &&
+           DEBUG_ProcessList && 
+           WaitForDebugEvent(&de, INFINITE))
     {
-        ret = DEBUG_HandleDebugEvent(&de, &cont);
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
+        DEBUG_HandleDebugEvent(&de);
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 
+                           (DEBUG_ExitMode == EXIT_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE);
     }
     /* print some extra information */
     DEBUG_Printf(DBG_CHN_MESG, "Modules:\n");

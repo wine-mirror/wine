@@ -103,31 +103,30 @@ line: command
     | error tEOL               	{ yyerrok; }
 
 command:
-      tQUIT tEOL		{ return EXIT_QUIT; }
+      tQUIT tEOL		{ DEBUG_ExitMode = EXIT_QUIT; return 1; }
     | tHELP tEOL                { DEBUG_Help(); }
     | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
-    | tCONT tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return EXIT_CONT; }
-    | tPASS tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_PASS; return EXIT_CONT; }
-    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->dbg_exec_count = $2; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return EXIT_CONT; }
-    | tSTEP tEOL               	{ DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return EXIT_CONT; }
-    | tNEXT tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return EXIT_CONT; }
-    | tSTEP tNUM tEOL           { DEBUG_CurrThread->dbg_exec_count = $2; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return EXIT_CONT; }
-    | tNEXT tNUM tEOL           { DEBUG_CurrThread->dbg_exec_count = $2; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return EXIT_CONT; }
-    | tSTEPI tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return EXIT_CONT; }
-    | tNEXTI tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return EXIT_CONT; }
-    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
-			 	  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return EXIT_CONT; }
-    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
-                                  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return EXIT_CONT; }
+    | tCONT tEOL                { DEBUG_CurrThread->exec_count = 1; 
+				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
+    | tPASS tEOL                { DEBUG_ExitMode = EXIT_PASS; return 1; }
+    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->exec_count = $2; 
+				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
+    | tSTEP tEOL               	{ DEBUG_CurrThread->exec_count = 1; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
+    | tNEXT tEOL                { DEBUG_CurrThread->exec_count = 1; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
+    | tSTEP tNUM tEOL           { DEBUG_CurrThread->exec_count = $2; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
+    | tNEXT tNUM tEOL           { DEBUG_CurrThread->exec_count = $2; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
+    | tSTEPI tEOL               { DEBUG_CurrThread->exec_count = 1; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
+    | tNEXTI tEOL               { DEBUG_CurrThread->exec_count = 1; 
+				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
+    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2; 
+			 	  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
+    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2; 
+                                  DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
     | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
     | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
@@ -141,8 +140,8 @@ command:
     | tDOWN tEOL	       	{ DEBUG_SetFrame( curr_frame - 1 );  }
     | tDOWN tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame - $2 ); }
     | tFRAME tNUM tEOL         	{ DEBUG_SetFrame( $2 ); }
-    | tFINISH tEOL	       	{ DEBUG_CurrThread->dbg_exec_count = 0;
-				  DEBUG_CurrThread->dbg_exec_mode = EXEC_FINISH; return EXIT_CONT; }
+    | tFINISH tEOL	       	{ DEBUG_CurrThread->exec_count = 0;
+				  DEBUG_CurrThread->exec_mode = EXEC_FINISH; return 1; }
     | tSHOW tDIR tEOL	       	{ DEBUG_ShowDir(); }
     | tDIR pathname tEOL       	{ DEBUG_AddPath( $2 ); }
     | tDIR tEOL		       	{ DEBUG_NukePath(); }
@@ -157,8 +156,8 @@ command:
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
-    | tATTACH tNUM tEOL		{ if (DEBUG_Attach($2, FALSE)) return EXIT_CONT; }
-    | tDETACH tEOL              { return EXIT_DETACH; }
+    | tATTACH tNUM tEOL		{ if (DEBUG_Attach($2, FALSE)) return 1; }
+    | tDETACH tEOL              { DEBUG_ExitMode = EXIT_DETACH; return 1; }
     | list_command
     | disassemble_command
     | set_command
@@ -409,29 +408,27 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
  *
  * Debugger editline parser
  */
-enum exit_mode	DEBUG_Parser(void)
+void	DEBUG_Parser(void)
 {
     BOOL 	        ret_ok;
-    enum exit_mode	ret = EXIT_CONT;
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
     yyin = stdin;
 
+    DEBUG_ExitMode = EXIT_CONTINUE;
+
     ret_ok = FALSE;
     do {
        __TRY {
 	  ret_ok = TRUE;
-	  if ((ret = yyparse())) {
-	     DEBUG_FlushSymbols();
-	  }
+	  yyparse();
        } __EXCEPT(wine_dbg_cmd) {
 	  ret_ok = FALSE;
        }
        __ENDTRY;
-       
+       DEBUG_FlushSymbols();
     } while (!ret_ok);
-    return ret;
 }
 
 int yyerror(char* s)

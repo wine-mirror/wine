@@ -746,13 +746,14 @@ static	BOOL DEBUG_ShallBreak( int bpnum )
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int * count )
+BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
 {
-    int 	bpnum;
-    DWORD	oldval;
-    int 	wpnum;
-    enum dbg_mode addr_mode;
-    struct symbol_info syminfo;
+    int 	        bpnum;
+    DWORD	        oldval;
+    int 	        wpnum;
+    enum dbg_mode       addr_mode;
+    struct symbol_info  syminfo;
+    enum exec_mode      mode = DEBUG_CurrThread->exec_mode;
 
 #ifdef __i386__
     /* If not single-stepping, back up over the int3 instruction */
@@ -833,7 +834,7 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int 
      * If we are about to stop, then print out the source line if we
      * have it.
      */
-    if (mode != EXEC_CONT && mode != EXEC_PASS && mode != EXEC_FINISH)
+    if (mode != EXEC_CONT && mode != EXEC_FINISH)
     {
 	DEBUG_FindNearestSymbol( addr, TRUE, NULL, 0, &syminfo.list);
 	if( syminfo.list.sourcefile != NULL )
@@ -853,7 +854,7 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int 
 #endif
 
     /* no breakpoint, continue if in continuous mode */
-    return (mode == EXEC_CONT || mode == EXEC_PASS || mode == EXEC_FINISH);
+    return (mode == EXEC_CONT || mode == EXEC_FINISH);
 }
 
 /***********************************************************************
@@ -873,14 +874,14 @@ void	DEBUG_SuspendExecution( void )
  * Set the breakpoints to the correct state to restart execution
  * in the given mode.
  */
-enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
+void DEBUG_RestartExecution( int count )
 {
     DBG_ADDR addr;
     DBG_ADDR addr2;
     int bp;
     int	delta;
     int status;
-    enum exec_mode ret_mode;
+    enum exec_mode mode, ret_mode;
     DWORD instr;
     unsigned char ch;
 
@@ -890,7 +891,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
      * This is the mode we will be running in after we finish.  We would like
      * to be able to modify this in certain cases.
      */
-    ret_mode = mode;
+    ret_mode = mode = DEBUG_CurrThread->exec_mode;
 
     bp = DEBUG_FindBreakpoint( &addr, DBG_BREAK ); 
     if ( bp != -1 && bp != 0)
@@ -971,7 +972,6 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     switch(mode)
     {
     case EXEC_CONT: /* Continuous execution */
-    case EXEC_PASS: /* Continue, passing exception */
 #ifdef __i386__
         DEBUG_context.EFlags &= ~STEP_FLAG;
 #endif
@@ -1030,7 +1030,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
         RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
     }
     DEBUG_CurrThread->stepOverBP = breakpoints[0];
-    return ret_mode;
+    DEBUG_CurrThread->exec_mode = ret_mode;
 }
 
 int

@@ -126,7 +126,6 @@ typedef struct wine_locals WineLocals;
 enum exec_mode
 {
     EXEC_CONT,       		/* Continuous execution */
-    EXEC_PASS,       		/* Continue, passing exception to app */
     EXEC_STEP_OVER,  		/* Stepping over a call to next source line */
     EXEC_STEP_INSTR,  		/* Step to next source line, stepping in if needed */
     EXEC_STEPI_OVER,  		/* Stepping over a call */
@@ -137,6 +136,19 @@ enum exec_mode
 				 * and set breakpoint there - not at the
 				 * instr just after the call.
 				 */
+};
+
+enum dbg_mode
+{
+    MODE_INVALID, MODE_16, MODE_32, MODE_VM86
+};
+
+enum exit_mode /* of exception handling */
+{
+    EXIT_CONTINUE,              /* continue execution */
+    EXIT_PASS,                  /* pass exception back to app (1st chance) */
+    EXIT_DETACH,                /* detach debugger */
+    EXIT_QUIT,                  /* exit debugger and kill debuggee */
 };
 
 #define	DBG_BREAK 	0
@@ -165,17 +177,6 @@ typedef struct
     struct expr * condition;
 } DBG_BREAKPOINT;
 
-enum dbg_mode
-{
-    MODE_INVALID, MODE_16, MODE_32, MODE_VM86
-};
-
-
-enum exit_mode
-{
-    EXIT_CONT, EXIT_QUIT, EXIT_DETACH
-};
-
 /* Wine extension; Windows doesn't have a name for this code.  This is an
    undocumented exception understood by MS VC debugger, allowing the program
    to name a particular thread.  Search google.com or deja.com for "0x406d1388"
@@ -198,9 +199,9 @@ typedef struct tagDBG_THREAD {
     LPVOID			start;
     LPVOID			teb;
     int				wait_for_first_exception;
-    enum dbg_mode		dbg_mode;
-    enum exec_mode 		dbg_exec_mode;
-    int 			dbg_exec_count;
+    enum exec_mode              exec_mode;      /* mode the thread is run (step/run...) */
+    int			        exec_count;     /* count of mode operations */
+    enum dbg_mode	        dbg_mode;       /* mode (VM86, 32bit, 16bit) */
     DBG_BREAKPOINT		stepOverBP;
     char                        name[9];
     struct tagDBG_THREAD* 	next;
@@ -241,6 +242,7 @@ extern	DWORD		DEBUG_CurrTid;
 extern	DWORD		DEBUG_CurrPid;
 extern  CONTEXT		DEBUG_context;
 extern  BOOL		DEBUG_interactiveP;
+extern  enum exit_mode  DEBUG_ExitMode;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
       (ReadProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
@@ -294,10 +296,9 @@ extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
 extern BOOL DEBUG_HandleTrap(void);
-extern BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode,
-				  int * count );
+extern BOOL DEBUG_ShouldContinue( DBG_ADDR* addr, DWORD code, int* count );
 extern void DEBUG_SuspendExecution( void );
-extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
+extern void DEBUG_RestartExecution( int count );
 extern BOOL DEBUG_IsFctReturn(void);
 extern int  DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 
@@ -305,7 +306,7 @@ extern int  DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
 
   /* debugger/dbg.y */
-extern enum exit_mode DEBUG_Parser(void);
+extern void DEBUG_Parser(void);
 extern void DEBUG_Exit( DWORD );
 
   /* debugger/debug.l */
