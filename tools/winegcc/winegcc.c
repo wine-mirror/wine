@@ -167,10 +167,8 @@ int main(int argc, char **argv)
 
     gcc_argv = strarray_alloc();
 
-    i = 0;
     if (linking)
     {
-	int has_output_name = 0;
 	int has_input_files = 0;
 
 	strarray *copy_argv;
@@ -202,7 +200,6 @@ int main(int argc, char **argv)
 			argv[j] = 0;
 			strarray_add(gcc_argv, argv[++j]);
 		    }
-		    has_output_name = 1;
 		    argv[j] = 0;
 		    break;
 		case 'l':
@@ -223,12 +220,6 @@ int main(int argc, char **argv)
 
 	if (has_input_files)
 	{
-	    /* Support the a.out default name, to appease configure */
-	    if (!has_output_name)
-	    {
-		strarray_add(gcc_argv, "-o");
-		strarray_add(gcc_argv, "a.out");
-	    }
 	    if (use_stdlib && use_msvcrt) strarray_add(gcc_argv, "-lmsvcrt");
 	    if (gui_app) strarray_add(gcc_argv, "-lcomdlg32");
 	    strarray_add(gcc_argv, "-ladvapi32");

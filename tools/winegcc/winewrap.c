@@ -210,7 +210,7 @@ static const char *wrapper_code =
     "}\n"
 ;
 
-static char *output_name;
+static char *output_name = "a.out";
 static strarray *arh_files, *dll_files, *lib_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
