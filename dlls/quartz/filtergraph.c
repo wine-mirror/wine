@@ -28,6 +28,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+typedef struct _IFilterGraphImpl {
+    ICOM_VTABLE(IGraphBuilder) *IGraphBuilder_vtbl;
+    ICOM_VTABLE(IMediaControl) *IMediaControl_vtbl;
+    ICOM_VTABLE(IMediaSeeking) *IMediaSeeking_vtbl;
+    ICOM_VTABLE(IBasicAudio) *IBasicAudio_vtbl;
+    ICOM_VTABLE(IBasicVideo) *IBasicVideo_vtbl;
+    ICOM_VTABLE(IVideoWindow) *IVideoWindow_vtbl;
+    ICOM_VTABLE(IMediaEventEx) *IMediaEventEx_vtbl;
+    ULONG ref;
+} IFilterGraphImpl;
+
+
 static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
 					  REFIID riid,
 					  LPVOID *ppvObj) {

@@ -61,6 +61,8 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_FilterGraph, FILTERGRAPH_create },
+    { &CLSID_FilterMapper, FilterMapper2_create },
+    { &CLSID_FilterMapper2, FilterMapper2_create },
 };
 
 static HRESULT WINAPI

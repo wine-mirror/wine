@@ -29,17 +29,9 @@
 #include "winuser.h"
 #include "dshow.h"
 
-typedef struct _IFilterGraphImpl {
-    ICOM_VTABLE(IGraphBuilder) *IGraphBuilder_vtbl;
-    ICOM_VTABLE(IMediaControl) *IMediaControl_vtbl;
-    ICOM_VTABLE(IMediaSeeking) *IMediaSeeking_vtbl;
-    ICOM_VTABLE(IBasicAudio) *IBasicAudio_vtbl;
-    ICOM_VTABLE(IBasicVideo) *IBasicVideo_vtbl;
-    ICOM_VTABLE(IVideoWindow) *IVideoWindow_vtbl;
-    ICOM_VTABLE(IMediaEventEx) *IMediaEventEx_vtbl;
-    ULONG ref;
-} IFilterGraphImpl;
-
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
+HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+
+HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */
