@@ -54,6 +54,12 @@ extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 # endif  /* CLONE_VM */
 #endif  /* HAVE_CLONE_SYSCALL */
 
+static int init_done;
+
+#ifndef __i386__
+static THDB *pCurrentThread;
+#endif
+
 
 #ifndef NO_REENTRANT_LIBC
 
@@ -72,11 +78,12 @@ int *__error()
 int *___errno()
 #endif
 {
-    THDB *thdb = THREAD_Current();
-    if (!thdb) return perrno;
+    THDB *thdb;
+    if (!init_done) return perrno;
+    thdb = THREAD_Current();
 #ifdef NO_REENTRANT_X11
     /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
+    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->teb.tid)
         return perrno;
 #endif
     return &thdb->thread_errno;
@@ -89,11 +96,12 @@ int *___errno()
  */
 int *__h_errno_location()
 {
-    THDB *thdb = THREAD_Current();
-    if (!thdb) return ph_errno;
+    THDB *thdb;
+    if (!init_done) return ph_errno;
+    thdb = THREAD_Current();
 #ifdef NO_REENTRANT_X11
     /* Use static libc h_errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
+    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->teb.tid)
         return ph_errno;
 #endif
     return &thdb->thread_h_errno;
@@ -102,16 +110,33 @@ int *__h_errno_location()
 #endif /* NO_REENTRANT_LIBC */
 
 /***********************************************************************
+ *           SYSDEPS_SetCurThread
+ *
+ * Make 'thread' the current thread.
+ */
+void SYSDEPS_SetCurThread( THDB *thread )
+{
+#ifdef __i386__
+    /* On the i386, the current thread is in the %fs register */
+    SET_FS( thread->teb_sel );
+#else
+    /* FIXME: only works if there is no preemptive task-switching going on... */
+    pCurrentThread = thread;
+#endif  /* __i386__ */
+    init_done = 1;  /* now we can use threading routines */
+}
+
+/***********************************************************************
  *           SYSDEPS_StartThread
  *
  * Startup routine for a new thread.
  */
 static void SYSDEPS_StartThread( THDB *thdb )
 {
-    SET_CUR_THREAD( thdb );
+    SYSDEPS_SetCurThread( thdb );
     CLIENT_InitThread();
     thdb->startup();
-    _exit(0);  /* should never get here */
+    SYSDEPS_ExitThread();  /* should never get here */
 }
 
 
@@ -197,12 +222,7 @@ void SYSDEPS_ExitThread(void)
 TEB * WINAPI NtCurrentTeb(void)
 {
 #ifdef __i386__
-    TEB *teb;
-
-    /* Get the TEB self-pointer */
-    __asm__( ".byte 0x64\n\tmovl (%1),%0"
-             : "=r" (teb) : "r" (&((TEB *)0)->self) );
-    return teb;
+    return CURRENT();
 #else
     return &pCurrentThread->teb;
 #endif  /* __i386__ */

@@ -28,29 +28,11 @@
 
 DEFAULT_DEBUG_CHANNEL(thread)
 
-#ifndef __i386__
-THDB *pCurrentThread;
-#endif
-
-/* Is threading code initialized? */
-BOOL THREAD_InitDone = FALSE;
-
 /* THDB of the initial thread */
 static THDB initial_thdb;
 
 /* Global thread list (FIXME: not thread-safe) */
 THDB *THREAD_First = &initial_thdb;
-
-/***********************************************************************
- *           THREAD_Current
- *
- * Return the current thread THDB pointer.
- */
-THDB *THREAD_Current(void)
-{
-    if (!THREAD_InitDone) return NULL;
-    return (THDB *)((char *)NtCurrentTeb() - (int)&((THDB *)0)->teb);
-}
 
 /***********************************************************************
  *           THREAD_IsWin16
@@ -72,7 +54,7 @@ THDB *THREAD_IdToTHDB( DWORD id )
     if (!id) return THREAD_Current();
     while (thdb)
     {
-        if ((DWORD)thdb->server_tid == id) return thdb;
+        if ((DWORD)thdb->teb.tid == id) return thdb;
         thdb = thdb->next;
     }
     /* Allow task handles to be used; convert to main thread */
@@ -202,8 +184,7 @@ THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
         MESSAGE("Could not allocate fs register for initial thread\n" );
         return NULL;
     }
-    SET_CUR_THREAD( &initial_thdb );
-    THREAD_InitDone = TRUE;
+    SYSDEPS_SetCurThread( &initial_thdb );
 
     /* Now proceed with normal initialization */
 
@@ -259,7 +240,7 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     request.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
-    thdb->server_tid = reply.tid;
+    thdb->teb.tid = reply.tid;
     *server_handle = reply.handle;
 
     /* Do the rest of the initialization */
@@ -321,7 +302,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
         CloseHandle( handle );
         return INVALID_HANDLE_VALUE;
     }
-    if (id) *id = (DWORD)thread->server_tid;
+    if (id) *id = (DWORD)thread->teb.tid;
     return handle;
 }
 
@@ -359,10 +340,7 @@ HANDLE WINAPI GetCurrentThread(void)
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    THDB *thdb = THREAD_Current();
-    assert( thdb );
-    assert( thdb->server_tid );
-    return (DWORD)thdb->server_tid;
+    return (DWORD)CURRENT()->tid;
 }
 
 
@@ -391,12 +369,8 @@ void WINAPI SetLastError(
     DWORD error) /* [in] Per-thread error code */
 {
     THDB *thread = THREAD_Current();
-    /* This one must work before we have a thread (FIXME) */
-
     TRACE("%p error=0x%lx\n",thread,error);
-
-    if (thread)
-      thread->last_error = error;
+    thread->last_error = error;
 }
 
 

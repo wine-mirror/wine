@@ -32,9 +32,9 @@
  *
  * Die on protocol errors or socket close
  */
-static void CLIENT_Die( THDB *thdb )
+static void CLIENT_Die(void)
 {
-    close( thdb->socket );
+    close( THREAD_Current()->socket );
     SYSDEPS_ExitThread();
 }
 
@@ -43,14 +43,13 @@ static void CLIENT_Die( THDB *thdb )
  */
 void CLIENT_ProtocolError( const char *err, ... )
 {
-    THDB *thdb = THREAD_Current();
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Client protocol error:%p: ", thdb->server_tid );
+    fprintf( stderr, "Client protocol error:%p: ", CURRENT()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
-    CLIENT_Die( thdb );
+    CLIENT_Die();
 }
 
 
@@ -116,7 +115,11 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
 
     if ((ret = sendmsg( thdb->socket, &msghdr, 0 )) < len)
     {
-        if (ret == -1) perror( "sendmsg" );
+        if (ret == -1)
+        {
+            if (errno == EPIPE) CLIENT_Die();
+            perror( "sendmsg" );
+        }
         CLIENT_ProtocolError( "partial msg sent %d/%d\n", ret, len );
     }
     /* we passed the fd now we can close it */
@@ -193,10 +196,11 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     while ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
     {
         if (errno == EINTR) continue;
+        if (errno == EPIPE) CLIENT_Die();
         perror("recvmsg");
         CLIENT_ProtocolError( "recvmsg\n" );
     }
-    if (!ret) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
+    if (!ret) CLIENT_Die(); /* the server closed the connection; time to die... */
 
     /* sanity checks */
 
@@ -240,7 +244,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 		    perror( "recv" );
 		    CLIENT_ProtocolError( "recv\n" );
 		}
-		if (!addlen) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
+		if (!addlen) CLIENT_Die(); /* the server closed the connection; time to die... */
 		if (len) *len += addlen;
 		remaining -= addlen;
 	    }
@@ -257,7 +261,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
             perror( "recv" );
             CLIENT_ProtocolError( "recv\n" );
         }
-        if (!addlen) CLIENT_Die( thdb ); /* the server closed the connection; time to die... */
+        if (!addlen) CLIENT_Die(); /* the server closed the connection; time to die... */
         remaining -= addlen;
     }
 
@@ -367,7 +371,7 @@ int CLIENT_InitThread(void)
     CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return -1;
     thdb->process->server_pid = reply.pid;
-    thdb->server_tid = reply.tid;
+    thdb->teb.tid = reply.tid;
     return 0;
 }
 

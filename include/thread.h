@@ -29,11 +29,11 @@ typedef struct _TEB
     WORD         flags;          /* 1c Flags */
     WORD         mutex_count;    /* 1e Win16 mutex count */
     DWORD        debug_context;  /* 20 Debug context */
-    DWORD       *ppriority;      /* 24 Pointer to current priority */
+    void        *tid;            /* 24 Thread id */
     HQUEUE16     queue;          /* 28 Message queue */
     WORD         pad1;           /* 2a */
     LPVOID      *tls_ptr;        /* 2c Pointer to TLS array */
-    struct _PDB *process;      /* 30 owning process (used by NT3.51 applets)*/
+    struct _PDB *process;        /* 30 owning process (used by NT3.51 applets)*/
 } TEB;
 
 /* Thread exception flags */
@@ -84,7 +84,6 @@ typedef struct _THDB
     /* The following are Wine-specific fields */
     int            socket;         /* Socket for server communication */
     unsigned int   seq;            /* Server sequence number */
-    void          *server_tid;     /* Server id for this thread */
     void         (*startup)(void); /* Thread startup routine */
     struct _THDB  *next;           /* Global thread list */
     DWORD          cleanup;        /* Cleanup service handle */
@@ -96,27 +95,38 @@ typedef struct _THDB
 /* The per-thread signal stack size */
 #define SIGNAL_STACK_SIZE  16384
 
-#ifdef __i386__
-/* On the i386, the current thread is in the %fs register */
-# define SET_CUR_THREAD(thdb) SET_FS((thdb)->teb_sel)
-#else
-extern THDB *pCurrentThread;
-# define SET_CUR_THREAD(thdb) (pCurrentThread = (thdb))
-#endif  /* __i386__ */
-
 
 /* scheduler/thread.c */
 extern THDB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
 extern THDB *THREAD_Create( struct _PDB *pdb, DWORD flags, 
                             DWORD stack_size, BOOL alloc_stack16,
                             LPSECURITY_ATTRIBUTES sa, int *server_handle );
-extern THDB *THREAD_Current(void);
 extern BOOL THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( THDB *thread );
+extern void SYSDEPS_SetCurThread( THDB *thread );
 extern void SYSDEPS_ExitThread(void);
 extern TEB * WINAPI NtCurrentTeb(void);
+
+/* return the current thread TEB pointer */
+static inline TEB *CURRENT(void)
+{
+#ifdef __i386__
+    TEB *teb;
+    __asm__( ".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb) );
+    return teb;
+#else
+    return NtCurrentTeb();
+#endif
+}
+
+/* return the current thread THDB pointer */
+static inline THDB *THREAD_Current(void)
+{
+    TEB *teb = CURRENT();
+    return (THDB *)((char *)teb - (int)&((THDB *)0)->teb);
+}
 
 #endif  /* __WINE_THREAD_H */

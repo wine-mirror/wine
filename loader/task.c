@@ -66,8 +66,6 @@ static HANDLE TASK_ScheduleEvent = INVALID_HANDLE_VALUE;
 
 static void TASK_YieldToSystem( void );
 
-extern BOOL THREAD_InitDone;
-
 
 /***********************************************************************
  *	     TASK_InstallTHHook
@@ -239,7 +237,7 @@ static void TASK_CallToStart(void)
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
-    SET_CUR_THREAD( pTask->thdb );
+    SYSDEPS_SetCurThread( pTask->thdb );
     CLIENT_InitThread();
 
     /* Terminate the stack frame chain */
@@ -825,7 +823,7 @@ BOOL TASK_Reschedule(void)
     SYSLEVEL_ReleaseWin16Lock();
 
     hCurrentTask = hTask;
-    SET_CUR_THREAD( pNewTask->thdb );
+    SYSDEPS_SetCurThread( pNewTask->thdb );
     pNewTask->ss_sp = pNewTask->thdb->cur_stack;
 
     SYSLEVEL_RestoreWin16Lock();
@@ -1415,7 +1413,7 @@ void WINAPI GetTaskQueueES16( CONTEXT *context )
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
-    return THREAD_InitDone? PROCESS_Current()->task : 0;
+    return PROCESS_Current()->task;
 }
 
 DWORD WINAPI WIN16_GetCurrentTask(void)

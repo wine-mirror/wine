@@ -606,7 +606,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
         goto error;
     info->hThread     = server_thandle;
-    info->dwThreadId  = (DWORD)thdb->server_tid;
+    info->dwThreadId  = (DWORD)thdb->teb.tid;
     thdb->startup     = PROCESS_Start;
 
     if (pModule->module32)
