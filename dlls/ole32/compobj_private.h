@@ -139,41 +139,52 @@ MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
 HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
+/* Thread-safety Annotation Legend:
+ *
+ * RO   - The value is read only. It never changes after creation, so no
+ *        locking is required.
+ * LOCK - The value is written to only using Interlocked* functions.
+ * CS   - The value is read or written to with a critical section held.
+ *        The identifier following "CS" is the specific critical section that
+ *        must be used.
+ */
+
 /* an interface stub */
 struct ifstub   
 {
-    struct list       entry;
-    IRpcStubBuffer   *stubbuffer;
-    IID               iid;
-    IPID              ipid;
-    IUnknown         *iface;
-
-    BOOL              table;
+    struct list       entry;      /* entry in stub_manager->ifstubs list (CS stub_manager->lock) */
+    IRpcStubBuffer   *stubbuffer; /* RO */
+    IID               iid;        /* RO */
+    IPID              ipid;       /* RO */
+    IUnknown         *iface;      /* RO */
+    BOOL              table;      /* CS stub_manager->lock */
 };
 
 
 /* stub managers hold refs on the object and each interface stub */
 struct stub_manager
 {
-    struct list       entry;
-    struct list       ifstubs;
+    struct list       entry;      /* entry in apartment stubmgr list (CS apt->cs) */
+    struct list       ifstubs;    /* list of active ifstubs for the object (CS lock) */
     CRITICAL_SECTION  lock;
-    APARTMENT        *apt;        /* owning apt */
+    APARTMENT        *apt;        /* owning apt (RO) */
 
-    DWORD             refcount;   /* count of 'external' references */
-    OID               oid;        /* apartment-scoped unique identifier */
-    IUnknown         *object;     /* the object we are managing the stub for */
-    DWORD             next_ipid;  /* currently unused */
+    ULONG             extrefs;    /* number of 'external' references (LOCK) */
+    ULONG             refs;       /* internal reference count (CS apt->cs) */
+    OID               oid;        /* apartment-scoped unique identifier (RO) */
+    IUnknown         *object;     /* the object we are managing the stub for (RO) */
+    ULONG             next_ipid;  /* currently unused (LOCK) */
 };
 
+ULONG stub_manager_int_addref(struct stub_manager *This);
+ULONG stub_manager_int_release(struct stub_manager *This);
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
-int stub_manager_ref(struct stub_manager *m, int refs);
-int stub_manager_unref(struct stub_manager *m, int refs);
-IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, IPID *iid);
+ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
+ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
+IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *iid);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
 struct stub_manager *get_stub_manager(OXID oxid, OID oid);
 struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object);
-void stub_manager_delete_ifstub(struct stub_manager *m, IPID *ipid);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 

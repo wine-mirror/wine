@@ -83,6 +83,7 @@ typedef struct _wine_marshal_data {
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
 {
+    IRpcStubBuffer *ret;
     struct stub_manager *m;
 
     if (!(m = get_stub_manager(mid->oxid, mid->oid)))
@@ -91,7 +92,10 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
         return NULL;
     }
 
-    return stub_manager_ipid_to_stubbuffer(m, &mid->ipid);
+    ret = stub_manager_ipid_to_stubbuffer(m, &mid->ipid);
+
+    stub_manager_int_release(m);
+    return ret;
 }
 
 /* creates a new stub manager and sets mid->oid when mid->oid == 0 */
@@ -117,16 +121,23 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
         COM_ApartmentRelease(apt);
         if (!manager) return E_OUTOFMEMORY;
 
-        if (!tablemarshal) stub_manager_ref(manager, 1);
-
         mid->oid = manager->oid;
     }
 
     ifstub = stub_manager_new_ifstub(manager, stub, obj, riid, tablemarshal);
     if (!ifstub)
+    {
+        stub_manager_int_release(manager);
+        /* FIXME: should we do another release to completely destroy the
+         * stub manager? */
         return E_OUTOFMEMORY;
+    }
+
+    if (!tablemarshal) stub_manager_ext_addref(manager, 1);
 
     mid->ipid = ifstub->ipid;
+
+    stub_manager_int_release(manager);
     return S_OK;
 }
 
@@ -510,6 +521,7 @@ StdMarshalImpl_MarshalInterface(
   if ((manager = get_stub_manager_from_object(mid.oxid, pUnk)))
   {
       mid.oid = manager->oid;
+      stub_manager_int_release(manager);
   }
   else
   {
@@ -560,7 +572,8 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   if (hres) return hres;
   
   /* check if we're marshalling back to ourselves */
-  if ((stubmgr = get_stub_manager(mid.oxid, mid.oid)))
+  /* FIXME: commented out until we can get the tests passing with it uncommented. */
+  if (/*(apt->oxid == mid.oxid) &&*/ (stubmgr = get_stub_manager(mid.oxid, mid.oid)))
   {
       TRACE("Unmarshalling object marshalled in same apartment for iid %s, returning original object %p\n", debugstr_guid(riid), stubmgr->object);
     
@@ -568,9 +581,10 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
       if ((md.mshlflags & MSHLFLAGS_TABLESTRONG) || (md.mshlflags & MSHLFLAGS_TABLEWEAK))
           FIXME("table marshalling unimplemented\n");
       
-      /* clean up the stubs */
-      stub_manager_delete_ifstub(stubmgr, &mid.ipid);
-      stub_manager_unref(stubmgr, 1);
+      /* unref the ifstub. FIXME: only do this on success? */
+      stub_manager_ext_release(stubmgr, 1);
+
+      stub_manager_int_release(stubmgr);
       return hres;
   }
 
@@ -616,12 +630,9 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
         return RPC_E_INVALID_OBJREF;
     }
     
-    /* currently, each marshal has its own interface stub.  this might
-     * not be correct. but, it means we don't need to refcount anything
-     * here. */
-    stub_manager_delete_ifstub(stubmgr, &mid.ipid);
-    
-    stub_manager_unref(stubmgr, 1);
+    stub_manager_ext_release(stubmgr, 1);
+
+    stub_manager_int_release(stubmgr);
 
     return S_OK;
 }

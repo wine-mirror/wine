@@ -791,9 +791,10 @@ COM_RpcReceive(wine_pipe *xpipe) {
             goto end;
         }
 
-        /* this should destroy the stub manager in the case of only one connection to it */
-        stub_manager_unref(stubmgr, 1);
-        
+        stub_manager_ext_release(stubmgr, 1);
+
+        stub_manager_int_release(stubmgr);
+
         goto end;
     } else if (reqtype == REQTYPE_REQUEST) {
 	wine_rpc_request	*xreq;
