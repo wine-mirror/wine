@@ -983,7 +983,8 @@
 @ cdecl _ui64tow(long long ptr long)
 @ cdecl _ultoa(long ptr long)
 @ cdecl _ultow(long ptr long)
-@ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
+@ cdecl _vsnprintf(ptr long str ptr) vsnprintf
+@ cdecl _vsnwprintf(ptr long wstr ptr) vsnprintfW
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
