@@ -46,11 +46,9 @@ void *BUILTIN32_dlopen( const char *name )
 
     if (!(handle = wine_dll_load( name )))
     {
-	LPSTR pErr, p;
+	LPSTR pErr;
 	pErr = dlerror();
-	p = strchr(pErr, ':');
-	if ((p) && 
-	   (!strncmp(p, ": undefined symbol", 18))) /* undef symbol -> ERR() */
+	if (strstr(pErr, "undefined symbol")) /* undef symbol -> ERR() */
 	    ERR("failed to load %s: %s\n", name, pErr);
 	else /* WARN() for libraries that are supposed to be native */
             WARN("failed to load %s: %s\n", name, pErr );
