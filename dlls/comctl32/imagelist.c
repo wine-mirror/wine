@@ -191,10 +191,10 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     HBITMAP hOldBitmapImage, hOldBitmapMask;
     HIMAGELIST himlLocal = pimldp->himl;
     COLORREF oldBkColor, oldFgColor;
+    UINT fStyle = pimldp->fStyle & (~ILD_OVERLAYMASK);
 
     bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
-    bBlendFlag = (pimldp->fStyle & ILD_BLEND50 ) 
-        || (pimldp->fStyle & ILD_BLEND25);
+    bBlendFlag = (fStyle & ILD_BLEND50 ) || (fStyle & ILD_BLEND25);
 
     hImageDC = CreateCompatibleDC(0);
     hMaskDC = CreateCompatibleDC(0);
@@ -203,9 +203,8 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     hOldBitmapMask = SelectObject(hMaskDC, himlLocal->hbmMask);
     /* Draw the Background for the appropriate Styles
     */
-    if( bUseCustomBackground && (pimldp->fStyle == ILD_NORMAL 
-          || (pimldp->fStyle & ILD_IMAGE)
-          || bBlendFlag))
+    if( bUseCustomBackground &&
+	(fStyle == ILD_NORMAL || fStyle & ILD_IMAGE || bBlendFlag))
     {
         hBrush = CreateSolidBrush (himlLocal->clrBk);
         hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
@@ -218,9 +217,9 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 
     /* Draw Image Transparently over the current background
     */
-    if(pimldp->fStyle == ILD_NORMAL
-        || (pimldp->fStyle & ILD_TRANSPARENT)
-        || ((pimldp->fStyle & ILD_IMAGE) && bUseCustomBackground)
+    if(fStyle == ILD_NORMAL
+        || (fStyle & ILD_TRANSPARENT)
+        || ((fStyle & ILD_IMAGE) && bUseCustomBackground)
         || bBlendFlag)
     {
         /* to obtain a transparent look, background color should be set
@@ -246,7 +245,7 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     }
     /* Draw the image when no Background is specified
     */
-    else if((pimldp->fStyle & ILD_IMAGE) && !bUseCustomBackground)
+    else if((fStyle & ILD_IMAGE) && !bUseCustomBackground)
     {
         BitBlt(pimldp->hdcDst, 
             pimldp->x, pimldp->y, cx, cy,
@@ -256,7 +255,7 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     }
     /* Draw the mask with or without a background
     */
-    else if(pimldp->fStyle & ILD_MASK)
+    else if(fStyle & ILD_MASK)
     {
         BitBlt(pimldp->hdcDst, 
             pimldp->x, pimldp->y, cx, cy,
@@ -388,7 +387,7 @@ IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     HDC     hImageDC;
     HBITMAP hOldBitmap;
 
-    nOvlIdx = (pimldp->fStyle & 0x0700) >> 8;
+    nOvlIdx = (pimldp->fStyle & ILD_OVERLAYMASK) >> 8;
     if ((nOvlIdx >= 1) && (nOvlIdx <= MAX_OVERLAYIMAGE))
     {
         nOvlIdx = pimldp->himl->nOvlIdx[nOvlIdx - 1];
@@ -1284,7 +1283,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     /*
         Apply the Overlay if needed
     */
-    if (pimldp->fStyle & 0x0700)
+    if (pimldp->fStyle & ILD_OVERLAYMASK)
     {
         IMAGELIST_InternalDrawOverlay(pimldp, cx, cy);
     }
@@ -1891,6 +1890,7 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
 
 /* helper for _read_bitmap currently unused */
+#if 0
 static int may_use_dibsection(HDC hdc) {
     int bitspixel = GetDeviceCaps(hdc,BITSPIXEL)*GetDeviceCaps(hdc,PLANES);
     if (bitspixel>8)
@@ -1899,6 +1899,7 @@ static int may_use_dibsection(HDC hdc) {
 	return FALSE;
     return GetDeviceCaps(hdc,94) & 0x10;
 }
+#endif
 
 /* helper for ImageList_Read, see comments below */
 static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
