@@ -284,7 +284,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
 
     if (FALSE == This->locked) {
-      ERR("trying to lock unlocked surf@%p\n", This);  
+      ERR("trying to Unlock an unlocked surf@%p\n", This);  
       return D3DERR_INVALIDCALL;
     }
 
