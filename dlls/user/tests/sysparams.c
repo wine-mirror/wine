@@ -1034,7 +1034,6 @@ START_TEST(sysparams)
 
     ghTestWnd = CreateWindowA( "SysParamsTestClass", "Test System Parameters Application",
                                WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, hInstance, NULL );
-    ShowWindow( ghTestWnd, SW_SHOWNORMAL );
 
     hThread = CreateThread( NULL, 0, SysParamsThreadFunc, 0, 0, &dwThreadId );
     assert( hThread );
