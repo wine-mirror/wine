@@ -7,6 +7,8 @@ import	ntdll.dll
 debug_channels (imm)
 
 @ stdcall ImmAssociateContext(long long) ImmAssociateContext
+@ stub ImmAssociateContextEx
+@ stub ImmConfigureIME
 @ stdcall ImmConfigureIMEA(long long long ptr) ImmConfigureIMEA
 @ stdcall ImmConfigureIMEW(long long long ptr) ImmConfigureIMEW
 @ stdcall ImmCreateContext() ImmCreateContext
@@ -15,6 +17,8 @@ debug_channels (imm)
 @ stdcall ImmDestroyContext(long) ImmDestroyContext
 @ stdcall ImmDestroyIMCC(long) ImmDestroyIMCC
 @ stdcall ImmDestroySoftKeyboard(long) ImmDestroySoftKeyboard
+@ stub ImmDisableIME
+@ stub ImmEnumInputContext
 @ stdcall ImmEnumRegisterWordA(long ptr str long str ptr) ImmEnumRegisterWordA
 @ stdcall ImmEnumRegisterWordW(long ptr wstr long wstr ptr) ImmEnumRegisterWordW
 @ stdcall ImmEscapeA(long long long ptr) ImmEscapeA
@@ -63,6 +67,8 @@ debug_channels (imm)
 @ stdcall ImmRegisterWordA(long str long str) ImmRegisterWordA
 @ stdcall ImmRegisterWordW(long wstr long wstr) ImmRegisterWordW
 @ stdcall ImmReleaseContext(long long) ImmReleaseContext
+@ stub ImmRequestMessageA
+@ stub ImmRequestMessageW
 @ stdcall ImmSetCandidateWindow(long ptr) ImmSetCandidateWindow
 @ stdcall ImmSetCompositionFontA(long ptr) ImmSetCompositionFontA
 @ stdcall ImmSetCompositionFontW(long ptr) ImmSetCompositionFontW
@@ -79,3 +85,4 @@ debug_channels (imm)
 @ stdcall ImmUnlockIMCC(long) ImmUnlockIMCC
 @ stdcall ImmUnregisterWordA(long str long str) ImmUnregisterWordA
 @ stdcall ImmUnregisterWordW(long wstr long wstr) ImmUnregisterWordW
+@ stub SKWndProcT1
