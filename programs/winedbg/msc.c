@@ -37,6 +37,8 @@
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif
+#include "wine/exception.h"
+#include "excpt.h"
 #include "debugger.h"
 
 #define MAX_PATHNAME_LEN 1024
@@ -62,6 +64,12 @@ typedef struct tagMSC_DBG_INFO
  * Debug file access helper routines
  */
 
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+      if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+                return EXCEPTION_EXECUTE_HANDLER;
+          return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /***********************************************************************
  *           DEBUG_LocateDebugInfoFile
@@ -2860,43 +2868,44 @@ static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module,
 						     PIMAGE_DEBUG_DIRECTORY dbg,
 						     int nDbg )
 {
-    enum DbgInfoLoad dil = DIL_ERROR;
+    enum DbgInfoLoad dil;
     int i;
-
-    /* First, watch out for OMAP data */
-    for ( i = 0; i < nDbg; i++ )
-    {
-        if ( dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC )
+    __TRY {
+        dil = DIL_ERROR;
+        /* First, watch out for OMAP data */
+        for ( i = 0; i < nDbg; i++ )
         {
-            module->msc_info->nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
-            module->msc_info->omapp = (OMAP_DATA *)(file_map + dbg[i].PointerToRawData);
-            break;
+            if ( dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC )
+            {
+                module->msc_info->nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
+                module->msc_info->omapp = (OMAP_DATA *)(file_map + dbg[i].PointerToRawData);
+                break;
+            }
         }
-    }
-
-    /* Now, try to parse CodeView debug info */
-    for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
-    {
-        if ( dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW )
+  
+      /* Now, try to parse CodeView debug info */
+        for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
         {
-            dil = DEBUG_ProcessCodeView( module, file_map + dbg[i].PointerToRawData );
+            if ( dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW )
+            {
+                dil = DEBUG_ProcessCodeView( module, file_map + dbg[i].PointerToRawData );
+            }
         }
-    }
-
-    /* If not found, try to parse COFF debug info */
-    for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
-    {
-        if ( dbg[i].Type == IMAGE_DEBUG_TYPE_COFF )
-            dil = DEBUG_ProcessCoff( module, file_map + dbg[i].PointerToRawData );
-    }
+    
+        /* If not found, try to parse COFF debug info */
+        for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
+        {
+            if ( dbg[i].Type == IMAGE_DEBUG_TYPE_COFF )
+                dil = DEBUG_ProcessCoff( module, file_map + dbg[i].PointerToRawData );
+        }
 #if 0
 	 /* FIXME: this should be supported... this is the debug information for
 	  * functions compiled without a frame pointer (FPO = frame pointer omission)
 	  * the associated data helps finding out the relevant information
 	  */
-    for ( i = 0; i < nDbg; i++ )
-        if ( dbg[i].Type == IMAGE_DEBUG_TYPE_FPO )
-			  DEBUG_Printf(DBG_CHN_MESG, "This guy has FPO information\n");
+        for ( i = 0; i < nDbg; i++ )
+            if ( dbg[i].Type == IMAGE_DEBUG_TYPE_FPO )
+                DEBUG_Printf(DBG_CHN_MESG, "This guy has FPO information\n");
 
 #define FRAME_FPO   0
 #define FRAME_TRAP  1
@@ -2916,7 +2925,12 @@ typedef struct _FPO_DATA {
 	WORD        cbFrame  : 2;          /* frame type */
 } FPO_DATA;
 #endif
-
+    }
+    __EXCEPT(page_fault)
+    {
+        return DIL_ERROR;
+    }
+    __ENDTRY
     return dil;
 }
 
