@@ -532,44 +532,68 @@ static BOOL32 FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND32 hwnd,
 	UINT32 wMsg,WPARAM32 wParam,LPARAM lParam
 
 ) {
-	BOOL32	needstruct;
+	BOOL32	        needstruct;
+        BOOL32          result = FALSE;
+        WINDOWPROCTYPE  ProcType;               /* Type of Hook Function to be called. */
 
+        /* TRUE if lParam points to the OPENFILENAME16 Structure */
 	needstruct = (PTR_SEG_TO_LIN(lParam) == lpofn);
 
+        ProcType   = (lpofn->Flags & OFN_WINE32)
+                     ? (lpofn->Flags & OFN_UNICODE)             /* 32-Bit call to GetOpenFileName */
+                       ? WIN_PROC_32W : WIN_PROC_32A
+                     : WIN_PROC_16;                             /* 16-Bit call to GetOpenFileName */
+
 	if (!(lpofn->Flags & OFN_WINE32))
+                /* Call to 16-Bit Hooking function... No Problem at all. */
 		return (BOOL32)CallWindowProc16(
 			lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
 		);
 	/* |OFN_WINE32 */
-	if (lpofn->Flags & OFN_UNICODE) {
-		if (needstruct) {
-		    OPENFILENAME32W ofnw;
+        if (needstruct)
+        {
+           /* Parameter lParam points to lpofn... Convert Structure Data... */
+       	   if (lpofn->Flags & OFN_UNICODE)
+           {
+                OPENFILENAME32W ofnw;
 
-		    /* FIXME: probably needs more converted */
-		    ofnw.lCustData = lpofn->lCustData;
-		    return (BOOL32)CallWindowProc32W(
-			    (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofnw
-		    );
-		} else
-		    return (BOOL32)CallWindowProc32W(
-			    (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
-		    );
-	}
-	/* ! |OFN_UNICODE */
-	if (needstruct) {
+                /* FIXME: probably needs more converted */
+                ofnw.lCustData = lpofn->lCustData;
+                return (BOOL32)CallWindowProc32W(
+                         (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofnw
+                );
+           }
+           else /* ! |OFN_UNICODE */
+           {
 		OPENFILENAME32A ofna;
 
 		/* FIXME: probably needs more converted */
 		ofna.lCustData = lpofn->lCustData;
 		return (BOOL32)CallWindowProc32A(
-			(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofna
+		        (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofna
 		);
-	} else
-		return (BOOL32)CallWindowProc32A(
-			(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
-		);
+           }
+	}
+        else /* ! needstruct */
+        {
+                HWINDOWPROC     hWindowProc=NULL;
 
+                if (WINPROC_SetProc(&hWindowProc, lpofn->lpfnHook, ProcType, WIN_PROC_WINDOW))
+                {
+                    /* Call Window Procedure converting 16-Bit Type Parameters to 32-Bit Type Parameters */
+                    result = CallWindowProc16( (WNDPROC16)hWindowProc,
+                                                      hwnd, wMsg, wParam, lParam );
+
+                    result = LOWORD(result);
+
+                    WINPROC_FreeProc( hWindowProc, WIN_PROC_WINDOW );
+                }
+
+                return result;
+
+        }
 }
+
 
 /***********************************************************************
  *                              FILEDLG_WMInitDialog            [internal]
