@@ -1092,12 +1092,11 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 
                                         TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
                                         (ppd->Callback)(&data, ppd->Context);
-
-                                        HeapFree(GetProcessHeap(),0,szInterface);
                                     }
+                                    HeapFree(GetProcessHeap(),0,szInterface);
                                 }
-                                HeapFree(GetProcessHeap(),0,nameW);
 			    }
+                            HeapFree(GetProcessHeap(),0,nameW);
 			}
 		    }
 		}
@@ -1126,12 +1125,11 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
 
                                         TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
                                         (ppd->Callback)(&data, ppd->Context);
-
-                                        HeapFree(GetProcessHeap(),0,szInterface);
                                     }
+                                    HeapFree(GetProcessHeap(),0,szInterface);
                                 }
-                                HeapFree(GetProcessHeap(),0,nameW);
 			    }
+                            HeapFree(GetProcessHeap(),0,nameW);
 			}
 		    }
 		}
@@ -1198,12 +1196,12 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
                                         (ppd->Callback)(&data, ppd->Context);
                             	    }
-                                    HeapFree(GetProcessHeap(),0,wInterface);
                                 }
+                                HeapFree(GetProcessHeap(),0,wInterface);
 			    }
-                            HeapFree(GetProcessHeap(),0,wDescription);
-                            HeapFree(GetProcessHeap(),0,wModule);
 			}
+                        HeapFree(GetProcessHeap(),0,wDescription);
+                        HeapFree(GetProcessHeap(),0,wModule);
 		    }
 		}
 
@@ -1235,12 +1233,12 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         TRACE("calling Callback(%p,%p)\n", &data, ppd->Context);
                                         (ppd->Callback)(&data, ppd->Context);
                                     }
-                                    HeapFree(GetProcessHeap(),0,wInterface);
                                 }
+                                HeapFree(GetProcessHeap(),0,wInterface);
 			    }
-                            HeapFree(GetProcessHeap(),0,wDescription);
-                            HeapFree(GetProcessHeap(),0,wModule);
 			}
+                        HeapFree(GetProcessHeap(),0,wDescription);
+                        HeapFree(GetProcessHeap(),0,wModule);
 		    }
 		}
 
