@@ -709,7 +709,7 @@ static void _copy_registry( HKEY from, HKEY to )
         name_len = sizeof(name);
         if (RegEnumValueW( from, index++, name, &name_len,
                            NULL, &type, data, &len ) != ERROR_SUCCESS) break;
-        RegSetValueW( to, name, type, (LPCWSTR)data, len );
+        RegSetValueExW( to, name, 0, type, (LPCWSTR)data, len );
     }
 
     /* copy subkeys */
