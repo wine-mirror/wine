@@ -1697,7 +1697,7 @@ BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType)
  */
 BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pdwReserved, DWORD dwFlags)
 {
-	HKEY hKey;
+	HKEY hProvKey, hTypeKey;
 	PSTR keyname;
 
 	TRACE("(%s, %ld, %p, %08ld)\n", pszProvName, dwProvType, pdwReserved, dwFlags);
@@ -1709,31 +1709,48 @@ BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pd
 	if (dwFlags & ~(CRYPT_MACHINE_DEFAULT | CRYPT_USER_DEFAULT | CRYPT_DELETE_DEFAULT)
 			|| dwFlags == CRYPT_DELETE_DEFAULT)
 		CRYPT_ReturnLastError(NTE_BAD_FLAGS);
-
-	if (dwFlags & CRYPT_DELETE_DEFAULT)
-	{
-		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, dwFlags & CRYPT_USER_DEFAULT)) )
-			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-		RegDeleteKeyA( (dwFlags & CRYPT_USER_DEFAULT) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE, keyname);
-		CRYPT_Free(keyname);
-		return TRUE;
-	}
-
-	if ( !(keyname = CRYPT_GetProvKeyName(pszProvName)) )
+	
+	if (!(keyname = CRYPT_GetTypeKeyName(dwProvType, dwFlags & CRYPT_USER_DEFAULT)))
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &hKey))
+	if (RegOpenKeyA((dwFlags & CRYPT_USER_DEFAULT) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE,
+		keyname, &hTypeKey))
 	{
 		CRYPT_Free(keyname);
 		CRYPT_ReturnLastError(NTE_BAD_PROVIDER);
 	}
 	CRYPT_Free(keyname);
-	RegCloseKey(hKey);
-	if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, dwFlags & CRYPT_USER_DEFAULT)) )
-		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-	RegCreateKeyA( (dwFlags & CRYPT_USER_DEFAULT) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE, keyname, &hKey);
-	CRYPT_Free(keyname);
-	if (RegSetValueExA(hKey, "Name", 0, REG_SZ, pszProvName, strlen(pszProvName) +1))
-		return FALSE;
+	
+	if (dwFlags & CRYPT_DELETE_DEFAULT)
+	{
+		RegDeleteValueA(hTypeKey, "Name");
+	}
+	else
+	{
+		if (!(keyname = CRYPT_GetProvKeyName(pszProvName)))
+		{
+			RegCloseKey(hTypeKey);
+			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
+		}
+		if (RegOpenKeyA((dwFlags & CRYPT_USER_DEFAULT) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE,
+			keyname, &hProvKey))
+		{
+			CRYPT_Free(keyname);
+			RegCloseKey(hTypeKey);
+			CRYPT_ReturnLastError(NTE_BAD_PROVIDER);
+		}
+		CRYPT_Free(keyname);
+		
+		if (RegSetValueExA(hTypeKey, "Name", 0, REG_SZ, pszProvName, strlen(pszProvName) + 1))
+		{
+			RegCloseKey(hTypeKey);
+			RegCloseKey(hProvKey);
+			return FALSE;
+		}
+		
+		RegCloseKey(hProvKey);
+	}
+	RegCloseKey(hTypeKey);
+
 	return TRUE;
 }
 
