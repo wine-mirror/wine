@@ -98,7 +98,7 @@ extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
 extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
 extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile );
-extern HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes );
+extern HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
 extern BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                                   INT long_len, LPSTR short_buf,
                                   BOOL ignore_case );

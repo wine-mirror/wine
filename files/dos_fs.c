@@ -705,7 +705,7 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 /**************************************************************************
  *         DOSFS_CreateCommPort
  */
-static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes)
+static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa)
 {
     HANDLE ret;
     char devname[40];
@@ -723,7 +723,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes)
     SERVER_START_VAR_REQ( create_serial, len )
     {
         req->access  = access;
-        req->inherit = 0;  /*FIXME*/
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->attributes = attributes;
         req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
         memcpy( server_data_ptr(req), devname, len );
@@ -746,7 +746,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes)
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
  * Returns 0 on failure.
  */
-HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes )
+HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa )
 {
     int i;
     const char *p;
@@ -765,7 +765,7 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes )
 	    	/* got it */
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
                     return FILE_CreateFile( "/dev/null", access,
-                                            FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                                            FILE_SHARE_READ|FILE_SHARE_WRITE, sa,
                                             OPEN_EXISTING, 0, 0, TRUE );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			HANDLE to_dup;
@@ -781,17 +781,19 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes )
 				return 0;
 			}
 			if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
-					      &handle, 0, FALSE, DUPLICATE_SAME_ACCESS ))
+					      &handle, 0, 
+					      sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle, 
+					      DUPLICATE_SAME_ACCESS ))
 			    handle = 0;
 			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
                     !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
                 {
-                    return FILE_CreateDevice( i, access, NULL );
+                    return FILE_CreateDevice( i, access, sa );
 		}
 
-                if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access,attributes)) )
+                if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access,attributes,sa)) )
                     return handle;
                 FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return 0;
