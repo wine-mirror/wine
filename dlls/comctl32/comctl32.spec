@@ -140,7 +140,7 @@ init	COMCTL32_LibMain
 350 stdcall StrChrA(str str) COMCTL32_StrChrA
 351 stdcall StrRChrA(str str long) COMCTL32_StrRChrA
 352 stdcall StrCmpNA(str str long) COMCTL32_StrCmpNA
-353 stub StrCmpNIA
+353 stdcall StrCmpNIA(str str long) COMCTL32_StrCmpNIA
 354 stdcall StrStrA(str str) COMCTL32_StrStrA
 355 stdcall StrStrIA(str str) COMCTL32_StrStrIA
 356 stdcall StrCSpnA(str str) COMCTL32_StrCSpnA

@@ -1997,6 +1997,14 @@ INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
 }
 
 /**************************************************************************
+ * StrCmpNA [COMCTL32.352]
+ *
+ */
+INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
+  return strncasecmp(lpStr1, lpStr2, nChar);
+}
+
+/**************************************************************************
  * StrCmpNW [COMCTL32.360]
  *
  */
