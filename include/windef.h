@@ -141,9 +141,8 @@ extern "C" {
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
 
+#define _declspec(x)
 #define __declspec(x)
-#define dllimport
-#define dllexport
 
 #define CONST       const
 
@@ -395,7 +394,7 @@ typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 /* macros to set parts of a DWORD (not in the Windows API) */
 #define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
 #define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
-#define SET_HIBYTE(dw,val)  ((dw) = ((dw) & 0xffff00ff) | (LOWORD(val) & 0xff00))
+#define SET_HIBYTE(dw,val)  ((dw) = ((dw) & 0xffff00ff) | (LOBYTE(val) << 8))
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 #endif
 
