@@ -445,7 +445,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 		if (wParam)
 			es->flags |= EF_MODIFIED;
 		else
-			es->flags &= ~EF_MODIFIED;
+                        es->flags &= ~(EF_MODIFIED | EF_UPDATE);  /* reset pending updates */
 		break;
 
 	case EM_GETLINECOUNT16:
