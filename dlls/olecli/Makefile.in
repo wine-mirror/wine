@@ -14,7 +14,9 @@ SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 C_SRCS = \
 	olecli_main.c
 
+C_SRCS16 = \
+	olecli16.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
