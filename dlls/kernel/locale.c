@@ -505,13 +505,13 @@ static int charset_cmp( const void *name, const void *entry )
 /***********************************************************************
  *		init_default_lcid
  */
-static LCID init_default_lcid( UINT *unix_cp )
+static LCID init_default_lcid( UINT *unix_cp, const char *env_str )
 {
     char *buf, *lang,*country,*charset,*dialect,*next;
     LCID ret = 0;
 
     if ((lang = getenv( "LC_ALL" )) ||
-        (lang = getenv( "LANGUAGE" )) ||
+        (env_str && (lang = getenv( env_str ))) ||
         (lang = getenv( "LANG" )))
     {
         if (!strcmp(lang,"POSIX") || !strcmp(lang,"C")) goto done;
@@ -2483,10 +2483,12 @@ void LOCALE_Init(void)
                                        const union cptable *unix_cp );
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = ~0U;
-    LCID lcid = init_default_lcid( &unix_cp );
+    LCID lcid = init_default_lcid( &unix_cp, NULL );
 
-    NtSetDefaultLocale( FALSE, lcid );
     NtSetDefaultLocale( TRUE, lcid );
+
+    lcid = init_default_lcid( &unix_cp, "LC_CTYPE" );
+    NtSetDefaultLocale( FALSE, lcid );
 
     ansi_cp = get_lcid_codepage(lcid);
     GetLocaleInfoW( lcid, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
