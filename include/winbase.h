@@ -1148,43 +1148,6 @@ typedef struct tagCOMMTIMEOUTS {
 	DWORD	WriteTotalTimeoutConstant;
 } COMMTIMEOUTS,*LPCOMMTIMEOUTS;
 
-typedef struct tagMODEMSETTINGS {
-	DWORD dwActualSize;
-	DWORD dwRequiredSize;
-	DWORD dwDevSpecificOffset;
-	DWORD dwDevSpecificSize;
-	DWORD dwCallSetupFailTimer;
-	DWORD dwInactivityTimeout;
-	DWORD dwSpeakerVolume;
-	DWORD dwSpeakerMode;
-	DWORD dwPreferedModemOptions;
-	DWORD dwNegotiatedModemOptions;
-	DWORD dwNegotiatedDCERate;
-	BYTE  abVariablePortion[1];
-} MODEMSETTINGS, *LPMODEMSETTINGS;
-
-typedef struct tagMODEMDEVCAPS {
-	DWORD dwActualSize;
-	DWORD dwRequiredSize;
-	DWORD dwDevSpecificOffset;
-	DWORD dwDevSpecificSize;
-	DWORD dwModemProviderVersion;
-	DWORD dwModemManufacturerOffset;
-	DWORD dwModemManufacturerSize;
-	DWORD dwModemModelOffset;
-	DWORD dwModemModelSize;
-	DWORD dwModemVersionOffset;
-	DWORD dwModemVersionSize;
-	DWORD dwDialOptions;
-	DWORD dwCallSetupFailTimer;
-	DWORD dwInactivityTimeout;
-	DWORD dwSpeakerVolume;
-	DWORD dwSpeakerMode;
-	DWORD dwModemoptions;
-	DWORD dwMaxDTERate;
-	DWORD dwMaxDCERate;
-	BYTE  abVariablePortion[1];
-} MODEMDEVCAPS, *LPMODEMDEVCAPS;
 
 #include "poppack.h"
 
@@ -1451,7 +1414,7 @@ PUCHAR      WINAPI GetSidSubAuthorityCount(PSID);
 DWORD       WINAPI GetShortPathNameA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI GetShortPathNameW(LPCWSTR,LPWSTR,DWORD);
 #define     GetShortPathName WINELIB_NAME_AW(GetShortPathName)
-HFILE     WINAPI GetStdHandle(DWORD);
+HANDLE      WINAPI GetStdHandle(DWORD);
 BOOL      WINAPI GetStringTypeExA(LCID,DWORD,LPCSTR,INT,LPWORD);
 BOOL      WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
 #define     GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
