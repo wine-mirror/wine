@@ -475,12 +475,12 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 	    
 	if (lpWaveHdr->reserved > tc && !force) break;
 
+	wwo->dwPlayedTotal += lpWaveHdr->dwBufferLength;
+	wwo->lpQueuePtr = lpWaveHdr->lpNext;
+
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 
-	wwo->dwPlayedTotal += lpWaveHdr->dwBufferLength;
-	wwo->lpQueuePtr = lpWaveHdr->lpNext;
-	    
 	TRACE("Notifying client with %p\n", lpWaveHdr);
 	if (OSS_NotifyClient(uDevID, WOM_DONE, (DWORD)lpWaveHdr, 0) != MMSYSERR_NOERROR) {
 	    WARN("can't notify client !\n");
@@ -574,10 +574,6 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	    case WINE_WM_HEADER:
 		lpWaveHdr = (LPWAVEHDR)msg.lParam;
 		
-		lpWaveHdr->dwFlags &= ~WHDR_DONE;
-		lpWaveHdr->dwFlags |= WHDR_INQUEUE;
-		lpWaveHdr->lpNext = 0;
-
 		/* insert buffer at the end of queue */
 		{
 		    LPWAVEHDR*	wh;
@@ -801,6 +797,10 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE) 
 	return WAVERR_STILLPLAYING;
+
+    lpWaveHdr->dwFlags &= ~WHDR_DONE;
+    lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+    lpWaveHdr->lpNext = 0;
 
     TRACE("imhere[3-HEADER]\n");
     PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_HEADER, 0, (DWORD)lpWaveHdr);
