@@ -847,6 +847,7 @@ then
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(cups,cupsGetDefault)
+  WINE_GET_SONAME(jack,jack_client_new)
 fi
 
 
@@ -973,6 +974,7 @@ AC_CHECK_HEADERS(\
 	getopt.h \
 	ieeefp.h \
 	io.h \
+	jack/jack.h \
 	libio.h \
 	libutil.h \
 	link.h \
@@ -1455,6 +1457,7 @@ dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
 dlls/winmm/wineaudioio/Makefile
 dlls/winmm/winenas/Makefile
+dlls/winmm/winejack/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile

@@ -99,6 +99,7 @@ BASEDIRS = \
 	winmm/winealsa \
 	winmm/winearts \
 	winmm/wineaudioio \
+	winmm/winejack \
 	winmm/winenas \
 	winmm/wineoss \
 	winnls \
@@ -254,6 +255,7 @@ all: \
 	winearts.drv$(DLLEXT) \
 	wineaudioio.drv$(DLLEXT) \
 	winedos.dll$(DLLEXT) \
+	winejack.drv$(DLLEXT) \
 	winemp3.acm$(DLLEXT) \
 	winenas.drv$(DLLEXT) \
 	wineoss.drv$(DLLEXT) \
@@ -524,6 +526,9 @@ wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
 
 winedos.dll$(DLLEXT) winedos16.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
+
+winejack.drv$(DLLEXT): winmm/winejack/winejack.drv$(DLLEXT)
+	$(RM) $@ && $(LN_S) winmm/winejack/winejack.drv$(DLLEXT) $@
 
 winemp3.acm$(DLLEXT): msacm/winemp3/winemp3.acm$(DLLEXT)
 	$(RM) $@ && $(LN_S) msacm/winemp3/winemp3.acm$(DLLEXT) $@
@@ -1213,6 +1218,7 @@ winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
 winmm/wineaudioio/wineaudioio.drv$(DLLEXT): winmm/wineaudioio
 winedos/winedos.dll$(DLLEXT): winedos
+winmm/winejack/winejack.drv$(DLLEXT): winmm/winejack
 msacm/winemp3/winemp3.acm$(DLLEXT): msacm/winemp3
 winmm/winenas/winenas.drv$(DLLEXT): winmm/winenas
 winmm/wineoss/wineoss.drv$(DLLEXT): winmm/wineoss
@@ -1313,6 +1319,7 @@ winmm/winealsa/__install__: winealsa.drv$(DLLEXT)
 winmm/winearts/__install__: winearts.drv$(DLLEXT)
 winmm/wineaudioio/__install__: wineaudioio.drv$(DLLEXT)
 winedos/__install__: winedos.dll$(DLLEXT)
+winmm/winejack/__install__: winejack.drv$(DLLEXT)
 msacm/winemp3/__install__: winemp3.acm$(DLLEXT)
 winmm/winenas/__install__: winenas.drv$(DLLEXT)
 winmm/wineoss/__install__: wineoss.drv$(DLLEXT)

@@ -89,6 +89,7 @@ DLLs:
 			midimap/- midi mapper
 			wavemap/- audio mapper
 			winearts/ - ARTS audio driver
+			winejack/ - jack audio server driver
 			wineoss/- MM driver for OSS systems
 		winnls/		- National Language Support
 		winsock/	

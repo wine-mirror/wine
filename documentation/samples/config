@@ -253,8 +253,9 @@ WINE REGISTRY Version 2
 "4" = "/usr/X11R6/lib/X11/fonts/Type1"
 
 [WinMM]
-"Drivers" = "wineoss.drv"
 #"Drivers" = "winearts.drv"
+#"Drivers" = "winejack.drv"
+"Drivers" = "wineoss.drv"
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
 
