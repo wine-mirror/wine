@@ -40,6 +40,7 @@ hello2: hello2.o
 
 hello3: hello3res.o hello3.o
 	$(CC) -o hello3 hello3.o hello3res.o $(LDOPTIONS) $(ALL_LIBS)
+hello3.o: hello3res.h
 
 hello4: hello4.o
 	$(CC) -o hello4 hello4.o $(LDOPTIONS) $(ALL_LIBS)
