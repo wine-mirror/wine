@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = relay32
 
-DLLS = \
+SPEC_SRCS = \
 	advapi32.spec \
 	avifil32.spec \
 	comctl32.spec \
@@ -56,30 +56,14 @@ C_SRCS = \
 	snoop.c \
 	utthunk.c
 
-SPEC_FILES = $(DLLS:.spec=.c)
-
-EXTRA_OBJS = $(DLLS:.spec=.o)
-
 GEN_ASM_SRCS = \
 	call32.s
 
-.SUFFIXES: .spec
-
-.spec.c:
-	$(BUILD) -o $@ -spec $<
-
-all: checkbuild $(MODULE).o
+all: $(MODULE).o
 
 @MAKE_RULES@
 
-$(SPEC_FILES): $(BUILD)
-
-$(EXTRA_OBJS): $(TOPSRCDIR)/include/builtin32.h
-
 call32.s: $(BUILD)
 	$(BUILD) -o $@ -call32
-
-clean::
-	$(RM) $(SPEC_FILES)
 
 ### Dependencies:

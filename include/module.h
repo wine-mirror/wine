@@ -235,7 +235,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 /* if1632/builtin.c */
 extern BOOL BUILTIN_Init(void);
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force );
-extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
+extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd );
 
 /* relay32/builtin.c */
 extern HMODULE BUILTIN32_LoadImage(LPCSTR name, OFSTRUCT *ofs);

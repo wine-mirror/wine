@@ -26,85 +26,84 @@ DECLARE_DEBUG_CHANNEL(system)
 DECLARE_DEBUG_CHANNEL(thunk)
 
 
+extern LONG CallTo16RegisterShort(const CONTEXT86 *context, INT offset);
+extern LONG CallTo16RegisterLong(const CONTEXT86 *context, INT offset);
+
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */
 
 /* ### start build ### */
-extern LONG CALLBACK CallTo16_sreg_(const CONTEXT86 *context, INT offset);
-extern LONG CALLBACK CallTo16_lreg_(const CONTEXT86 *context, INT offset);
-extern WORD CALLBACK CallTo16_word_     (FARPROC16);
-extern LONG CALLBACK CallTo16_long_     (FARPROC16);
-extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
-extern WORD CALLBACK CallTo16_word_l    (FARPROC16,LONG);
-extern LONG CALLBACK CallTo16_long_l    (FARPROC16,LONG);
-extern WORD CALLBACK CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wl   (FARPROC16,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_ll   (FARPROC16,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_ll   (FARPROC16,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
-extern LONG CALLBACK CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
-extern LONG CALLBACK CallTo16_long_lll  (FARPROC16,LONG,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern LONG CALLBACK CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
-extern LONG CALLBACK CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lllll(FARPROC16,LONG,LONG,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
-                                          LONG);
-extern LONG CALLBACK CallTo16_long_lllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
-                                           LONG,LONG);
-extern WORD CALLBACK CallTo16_word_llwwlll(FARPROC16,LONG,LONG,WORD,WORD,LONG,
-                                           LONG,LONG);
-extern LONG CALLBACK CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
+extern WORD THUNK_CallTo16_word_     (FARPROC16);
+extern LONG THUNK_CallTo16_long_     (FARPROC16);
+extern WORD THUNK_CallTo16_word_w    (FARPROC16,WORD);
+extern WORD THUNK_CallTo16_word_l    (FARPROC16,LONG);
+extern LONG THUNK_CallTo16_long_l    (FARPROC16,LONG);
+extern WORD THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
+extern WORD THUNK_CallTo16_word_wl   (FARPROC16,WORD,LONG);
+extern WORD THUNK_CallTo16_word_ll   (FARPROC16,LONG,LONG);
+extern LONG THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
+extern WORD THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
+extern WORD THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
+extern WORD THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
+extern LONG THUNK_CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
+extern LONG THUNK_CallTo16_long_lll  (FARPROC16,LONG,LONG,LONG);
+extern WORD THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
+extern WORD THUNK_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
+extern WORD THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
+extern WORD THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
+extern WORD THUNK_CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
+extern WORD THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
+extern LONG THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
+extern WORD THUNK_CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern WORD THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
+extern WORD THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
+extern LONG THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
+extern WORD THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
+extern WORD THUNK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
+extern WORD THUNK_CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_long_lllll(FARPROC16,LONG,LONG,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_long_llllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_long_lllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG,LONG);
+extern WORD THUNK_CallTo16_word_llwwlll(FARPROC16,LONG,LONG,WORD,WORD,LONG,LONG,LONG);
+extern LONG THUNK_CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
                                             LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
                                             LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_lllllllll(FARPROC16,LONG,LONG,LONG,LONG,
                                              LONG,LONG,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_llllllllll(FARPROC16,LONG,LONG,LONG,LONG,
                                               LONG,LONG,LONG,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_lllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
                                                LONG,LONG,LONG,LONG,LONG,LONG,
                                                LONG);
-extern LONG CALLBACK CallTo16_long_llllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_llllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
                                                 LONG,LONG,LONG,LONG,LONG,LONG,
                                                 LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
+extern LONG THUNK_CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
                                                 LONG,WORD,LONG,LONG,LONG,LONG,
                                                 LONG,WORD);
-extern LONG CALLBACK CallTo16_long_lllllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_lllllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
                                                  LONG,LONG,LONG,LONG,LONG,LONG,
                                                  LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llllllllllllll(FARPROC16,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_llllllllllllll(FARPROC16,LONG,LONG,LONG,
                                                   LONG,LONG,LONG,LONG,LONG,
                                                   LONG,LONG,LONG,LONG,LONG,
                                                   LONG);
-extern LONG CALLBACK CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
+extern LONG THUNK_CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
                                                   WORD,WORD,LONG,WORD,WORD,
                                                   WORD,WORD,LONG,LONG,LONG,
                                                   LONG);
-extern LONG CALLBACK CallTo16_long_lllllllllllllll(FARPROC16,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_lllllllllllllll(FARPROC16,LONG,LONG,LONG,
                                                    LONG,LONG,LONG,LONG,LONG,
                                                    LONG,LONG,LONG,LONG,LONG,
                                                    LONG,LONG);
-extern LONG CALLBACK CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LONG,
+extern LONG THUNK_CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LONG,
                                                     LONG,LONG,LONG,LONG,LONG,
                                                     LONG,LONG,LONG,LONG,LONG,
                                                     LONG,LONG,LONG);
+extern void THUNK_CallFrom16_p_long_wwwll();
 /* ### stop build ### */
 
 
@@ -144,38 +143,36 @@ static BOOL WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
                                             LPVOID,LPDWORD );
 static BOOL THUNK_ThunkletInit( void );
 
-extern void CallFrom16_p_long_wwwll(void);
-
 /* Callbacks function table for the emulator */
 static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 {
-    (void *)CallTo16_sreg_,                /* CallRegisterShortProc */
-    (void *)CallTo16_lreg_,                /* CallRegisterLongProc */
-    (void*)CallFrom16_p_long_wwwll,        /* CallFrom16WndProc */
-    THUNK_CallWndProc16,                   /* CallWndProc */
-    (void *)CallTo16_long_lwwll,           /* CallDriverProc */
-    (void *)CallTo16_word_wwlll,           /* CallDriverCallback */
-    (void *)CallTo16_word_wwlll,           /* CallTimeFuncProc */
-    (void *)CallTo16_word_w,               /* CallWindowsExitProc */
-    (void *)CallTo16_word_lwww,            /* CallWordBreakProc */
-    (void *)CallTo16_word_ww,              /* CallBootAppProc */
-    (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
-    (void *)CallTo16_word_www,             /* CallLocalNotifyFunc */
-    (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
-    (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
-    THUNK_WOWCallback16Ex,                 /* CallWOWCallback16Ex */
-    (void *)CallTo16_long_ll,              /* CallUTProc */
-    (void *)CallTo16_long_l,               /* CallASPIPostProc */
-    (void *)CallTo16_word_lwll,            /* CallDrvControlProc */
-    (void *)CallTo16_word_lwlll,           /* CallDrvEnableProc */
-    (void *)CallTo16_word_llll,            /* CallDrvEnumDFontsProc */
-    (void *)CallTo16_word_lwll,            /* CallDrvEnumObjProc */
-    (void *)CallTo16_word_lwwlllll,        /* CallDrvOutputProc */
-    (void *)CallTo16_long_lwlll,           /* CallDrvRealizeProc */
-    (void *)CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
-    (void *)CallTo16_long_lwwllwlllllw,    /* CallDrvExtTextOutProc */
-    (void *)CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */ 
-    (void *)CallTo16_word_ww               /* CallDrvAbortProc */
+    (void *)CallTo16RegisterShort,               /* CallRegisterShortProc */
+    (void *)CallTo16RegisterLong,                /* CallRegisterLongProc */
+    (void*)THUNK_CallFrom16_p_long_wwwll,        /* CallFrom16WndProc */
+    THUNK_CallWndProc16,                         /* CallWndProc */
+    (void *)THUNK_CallTo16_long_lwwll,           /* CallDriverProc */
+    (void *)THUNK_CallTo16_word_wwlll,           /* CallDriverCallback */
+    (void *)THUNK_CallTo16_word_wwlll,           /* CallTimeFuncProc */
+    (void *)THUNK_CallTo16_word_w,               /* CallWindowsExitProc */
+    (void *)THUNK_CallTo16_word_lwww,            /* CallWordBreakProc */
+    (void *)THUNK_CallTo16_word_ww,              /* CallBootAppProc */
+    (void *)THUNK_CallTo16_word_www,             /* CallLoadAppSegProc */
+    (void *)THUNK_CallTo16_word_www,             /* CallLocalNotifyFunc */
+    (void *)THUNK_CallTo16_word_www,             /* CallResourceHandlerProc */
+    (void *)THUNK_CallTo16_long_l,               /* CallWOWCallbackProc */
+    THUNK_WOWCallback16Ex,                       /* CallWOWCallback16Ex */
+    (void *)THUNK_CallTo16_long_ll,              /* CallUTProc */
+    (void *)THUNK_CallTo16_long_l,               /* CallASPIPostProc */
+    (void *)THUNK_CallTo16_word_lwll,            /* CallDrvControlProc */
+    (void *)THUNK_CallTo16_word_lwlll,           /* CallDrvEnableProc */
+    (void *)THUNK_CallTo16_word_llll,            /* CallDrvEnumDFontsProc */
+    (void *)THUNK_CallTo16_word_lwll,            /* CallDrvEnumObjProc */
+    (void *)THUNK_CallTo16_word_lwwlllll,        /* CallDrvOutputProc */
+    (void *)THUNK_CallTo16_long_lwlll,           /* CallDrvRealizeProc */
+    (void *)THUNK_CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
+    (void *)THUNK_CallTo16_long_lwwllwlllllw,    /* CallDrvExtTextOutProc */
+    (void *)THUNK_CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */ 
+    (void *)THUNK_CallTo16_word_ww               /* CallDrvAbortProc */
 };
 
 
@@ -307,7 +304,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[3] = msg;
     args[4] = hwnd;
 
-    ret = CallTo16_sreg_( &context, 5 * sizeof(WORD) );
+    ret = CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
     if (offset) STACK16_POP( teb, offset );
 
     WIN_RestoreWndsLock(iWndsLocks);
@@ -322,7 +319,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
                                   GOBJENUMPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_ll );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_ll );
     return EnumObjects16( hdc, nObjType, (GOBJENUMPROC16)&thunk, lParam );
 }
 
@@ -333,7 +330,7 @@ INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
 INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
                                 FONTENUMPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_llwl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
     return EnumFonts16( hdc, lpFaceName, (FONTENUMPROC16)&thunk, lParam );
 }
 
@@ -343,7 +340,7 @@ INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
 BOOL16 WINAPI THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
                                     MFENUMPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wllwl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wllwl );
     return EnumMetaFile16( hdc, hmf, (MFENUMPROC16)&thunk, lParam );
 }
 
@@ -354,7 +351,7 @@ BOOL16 WINAPI THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 INT16 WINAPI THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
                                        FONTENUMPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_llwl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
     return EnumFontFamilies16(hdc, lpszFamily, (FONTENUMPROC16)&thunk, lParam);
 }
 
@@ -366,7 +363,7 @@ INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
                                          FONTENUMPROCEX16 func, LPARAM lParam,
                                          DWORD reserved )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_llwl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
     return EnumFontFamiliesEx16( hdc, lpLF, (FONTENUMPROCEX16)&thunk,
                                  lParam, reserved );
 }
@@ -378,7 +375,7 @@ INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
 void WINAPI THUNK_LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
                              INT16 nYEnd, LINEDDAPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wwl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wwl );
     LineDDA16( nXStart, nYStart, nXEnd, nYEnd, (LINEDDAPROC16)&thunk, lParam );
 }
 
@@ -388,7 +385,7 @@ void WINAPI THUNK_LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
  */
 BOOL16 WINAPI THUNK_EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
     return EnumWindows16( (WNDENUMPROC16)&thunk, lParam );
 }
 
@@ -399,7 +396,7 @@ BOOL16 WINAPI THUNK_EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
 BOOL16 WINAPI THUNK_EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
                                         LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
     return EnumChildWindows16( parent, (WNDENUMPROC16)&thunk, lParam );
 }
 
@@ -410,7 +407,7 @@ BOOL16 WINAPI THUNK_EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
 BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
                                        LPARAM lParam )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wl );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
     return EnumTaskWindows16( hTask, (WNDENUMPROC16)&thunk, lParam );
 }
 
@@ -420,7 +417,7 @@ BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
  */
 INT16 WINAPI THUNK_EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wlw );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wlw );
     return EnumProps16( hwnd, (PROPENUMPROC16)&thunk );
 }
 
@@ -433,7 +430,7 @@ BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
                                   INT16 cch, INT16 x, INT16 y,
                                   INT16 cx, INT16 cy )
 {
-    DECL_THUNK( thunk, func, CallTo16_word_wlw );
+    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wlw );
     if (!func)
         return GrayString16( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
     else
@@ -449,7 +446,7 @@ FARPROC16 WINAPI THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HINSTANCE16 hInst = FarGetOwner16( HIWORD(proc) );
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)CallTo16_long_wwl );
+    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
     if (!thunk) return 0;
     return (FARPROC16)SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask);
 }
@@ -475,7 +472,7 @@ BOOL16 WINAPI THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 HHOOK WINAPI THUNK_SetWindowsHookEx16( INT16 id, HOOKPROC16 proc,
                                        HINSTANCE16 hInst, HTASK16 hTask )
 {
-    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)CallTo16_long_wwl );
+    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
     if (!thunk) return 0;
     return SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask );
 }
@@ -518,7 +515,7 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
         thunk = NULL;
     else if (proc != defDCHookProc)
     {
-        thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwll );
+        thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwll );
         if (!thunk) return FALSE;
     }
     else thunk = (THUNK *)DCHook16;
@@ -560,7 +557,7 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
  */
 FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
-    THUNK *thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwwww );
+    THUNK *thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwwww );
     if ( !thunk ) return NULL;
 
     thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)thunk );
@@ -580,7 +577,7 @@ static DWORD CALLBACK THUNK_StartThread16( LPVOID threadArgs )
     DWORD     param = ((DWORD *)threadArgs)[1];
     HeapFree( GetProcessHeap(), 0, threadArgs );
 
-    return CallTo16_long_l( start, param );
+    return THUNK_CallTo16_long_l( start, param );
 }
 HANDLE WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
                                       FARPROC16 start, SEGPTR param,
@@ -621,61 +618,61 @@ static BOOL WINAPI THUNK_WOWCallback16Ex(
 	    args[i] = ((DWORD*)xargs)[cbArgs-i-1];
     }
     switch (cbArgs) {
-    case 0: ret = CallTo16_long_(proc);break;
-    case 1: ret = CallTo16_long_l(proc,args[0]);break;
-    case 2: ret = CallTo16_long_ll(proc,args[0],args[1]);break;
-    case 3: ret = CallTo16_long_lll(proc,args[0],args[1],args[2]);break;
-    case 4: ret = CallTo16_long_llll(proc,args[0],args[1],args[2],args[3]);
+    case 0: ret = THUNK_CallTo16_long_(proc);break;
+    case 1: ret = THUNK_CallTo16_long_l(proc,args[0]);break;
+    case 2: ret = THUNK_CallTo16_long_ll(proc,args[0],args[1]);break;
+    case 3: ret = THUNK_CallTo16_long_lll(proc,args[0],args[1],args[2]);break;
+    case 4: ret = THUNK_CallTo16_long_llll(proc,args[0],args[1],args[2],args[3]);
 	    break;
-    case 5: ret = CallTo16_long_lllll(proc,args[0],args[1],args[2],args[3],
+    case 5: ret = THUNK_CallTo16_long_lllll(proc,args[0],args[1],args[2],args[3],
 		args[4]
 	    );
 	    break;
-    case 6: ret = CallTo16_long_llllll(proc,args[0],args[1],args[2],args[3],
+    case 6: ret = THUNK_CallTo16_long_llllll(proc,args[0],args[1],args[2],args[3],
 		args[4],args[5]
 	    );
 	    break;
-    case 7: ret = CallTo16_long_lllllll(proc,args[0],args[1],args[2],args[3],
+    case 7: ret = THUNK_CallTo16_long_lllllll(proc,args[0],args[1],args[2],args[3],
 		args[4],args[5],args[6]
 	    );
 	    break;
-    case 8: ret = CallTo16_long_llllllll(proc,args[0],args[1],args[2],args[3],
+    case 8: ret = THUNK_CallTo16_long_llllllll(proc,args[0],args[1],args[2],args[3],
   		args[4],args[5],args[6],args[7]
 	    );
 	    break;
-    case 9: ret = CallTo16_long_lllllllll(proc,args[0],args[1],args[2],args[3],
+    case 9: ret = THUNK_CallTo16_long_lllllllll(proc,args[0],args[1],args[2],args[3],
     		args[4],args[5],args[6],args[7],args[8]
 	    );
 	    break;
-    case 10:ret = CallTo16_long_llllllllll(proc,args[0],args[1],args[2],args[3],
+    case 10:ret = THUNK_CallTo16_long_llllllllll(proc,args[0],args[1],args[2],args[3],
     		args[4],args[5],args[6],args[7],args[8],args[9]
 	    );
 	    break;
-    case 11:ret = CallTo16_long_lllllllllll(proc,args[0],args[1],args[2],
+    case 11:ret = THUNK_CallTo16_long_lllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]
 	    );
 	    break;
-    case 12:ret = CallTo16_long_llllllllllll(proc,args[0],args[1],args[2],
+    case 12:ret = THUNK_CallTo16_long_llllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],
 		args[10],args[11]
 	    );
 	    break;
-    case 13:ret = CallTo16_long_lllllllllllll(proc,args[0],args[1],args[2],
+    case 13:ret = THUNK_CallTo16_long_lllllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],
 		args[10],args[11],args[12]
 	    );
 	    break;
-    case 14:ret = CallTo16_long_llllllllllllll(proc,args[0],args[1],args[2],
+    case 14:ret = THUNK_CallTo16_long_llllllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],
 		args[10],args[11],args[12],args[13]
 	    );
 	    break;
-    case 15:ret = CallTo16_long_lllllllllllllll(proc,args[0],args[1],args[2],
+    case 15:ret = THUNK_CallTo16_long_lllllllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],
 		args[10],args[11],args[12],args[13],args[14]
 	    );
 	    break;
-    case 16:ret = CallTo16_long_llllllllllllllll(proc,args[0],args[1],args[2],
+    case 16:ret = THUNK_CallTo16_long_llllllllllllllll(proc,args[0],args[1],args[2],
     		args[3],args[4],args[5],args[6],args[7],args[8],args[9],
 		args[10],args[11],args[12],args[13],args[14],args[15]
 	    );
@@ -712,7 +709,7 @@ static VOID WINAPI THUNK_CallMouseEventProc( FARPROC16 proc,
     SI_reg(&context)  = LOWORD( dwExtraInfo );
     DI_reg(&context)  = HIWORD( dwExtraInfo );
 
-    CallTo16_sreg_( &context, 0 );
+    CallTo16RegisterShort( &context, 0 );
 }
 VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
 {
@@ -774,7 +771,7 @@ static VOID WINAPI THUNK_CallKeybdEventProc( FARPROC16 proc,
     SI_reg(&context)  = LOWORD( dwExtraInfo );
     DI_reg(&context)  = HIWORD( dwExtraInfo );
 
-    CallTo16_sreg_( &context, 0 );
+    CallTo16RegisterShort( &context, 0 );
 }
 VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 {
@@ -834,7 +831,7 @@ static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
         return;
     }
 
-    CallTo16_sreg_( &context, 0 ); 
+    CallTo16RegisterShort( &context, 0 ); 
 
     /* FIXME: This does not work if the signal occurs while this thread
               is currently in 16-bit code. With the current structure
@@ -890,7 +887,7 @@ void THUNK_InitCallout(void)
 #define GETADDR( var, name, thk )  \
         *(FARPROC *)&Callout.##var = (FARPROC) \
               THUNK_Alloc( WIN32_GetProcAddress16( hModule, name ), \
-                           (RELAY)CallTo16_##thk )
+                           (RELAY)THUNK_CallTo16_##thk )
 
         GETADDR( PeekMessage16, "PeekMessage", word_lwwww );
         GETADDR( GetMessage16, "GetMessage", word_lwww );
@@ -1006,7 +1003,7 @@ UINT WINAPI ThunkConnect16(
 
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
-    extern void CallFrom16_t_long_(void);
+    extern void CallFrom16Thunk(void);
     LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
     WORD cs, ds;
     GET_CS(cs);
@@ -1031,7 +1028,7 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
 
     *x++ = 0x55;
     *x++ = 0x66; *x++ = 0x52;
-    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16_t_long_;
+    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
                               *((WORD *)x)++ = cs;
 
     /* Jump to the stub code just created */
@@ -1056,7 +1053,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(EDX_reg(context));
         struct ThunkDataSL *td = SL16->fpData;
 
-        extern void CallFrom16_t_long_(void);
+        extern void CallFrom16Thunk(void);
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
         WORD cs;
         GET_CS(cs);
@@ -1086,7 +1083,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
 
         *x++ = 0x55;
         *x++ = 0x66; *x++ = 0x52;
-        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16_t_long_;
+        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
                                   *((WORD *)x)++ = cs;
 
         /* Jump to the stub code just created */

@@ -30,34 +30,27 @@ BOOL RELAY_Init(void)
 
       /* Allocate the code selector for CallTo16 routines */
 
-    extern void CALLTO16_Start(), CALLTO16_End();
-    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
-    extern void CALLTO16_Ret_eax();
+    extern void Call16_Ret_Start(), Call16_Ret_End();
+    extern void CallTo16_Ret();
     extern void CALL32_CBClient_Ret();
     extern void CALL32_CBClientEx_Ret();
-    extern DWORD CALLTO16_RetAddr_word;
-    extern DWORD CALLTO16_RetAddr_long;
-    extern DWORD CALLTO16_RetAddr_eax;
+    extern DWORD CallTo16_RetAddr;
     extern DWORD CALL32_CBClient_RetAddr;
     extern DWORD CALL32_CBClientEx_RetAddr;
 
-    codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
-                                   (int)CALLTO16_End - (int)CALLTO16_Start,
+    codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)Call16_Ret_Start,
+                                   (int)Call16_Ret_End - (int)Call16_Ret_Start,
                                    0, TRUE, TRUE, FALSE, NULL );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
 
-    CALLTO16_RetAddr_word=MAKELONG( (int)CALLTO16_Ret_word-(int)CALLTO16_Start,
-                                    codesel );
-    CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
-                                    codesel );
-    CALLTO16_RetAddr_eax =MAKELONG( (int)CALLTO16_Ret_eax -(int)CALLTO16_Start,
-                                    codesel );
+    CallTo16_RetAddr = 
+        MAKELONG( (int)CallTo16_Ret -(int)Call16_Ret_Start, codesel );
     CALL32_CBClient_RetAddr = 
-        MAKELONG( (int)CALL32_CBClient_Ret -(int)CALLTO16_Start, codesel );
+        MAKELONG( (int)CALL32_CBClient_Ret -(int)Call16_Ret_Start, codesel );
     CALL32_CBClientEx_RetAddr = 
-        MAKELONG( (int)CALL32_CBClientEx_Ret -(int)CALLTO16_Start, codesel );
+        MAKELONG( (int)CALL32_CBClientEx_Ret -(int)Call16_Ret_Start, codesel );
 
     /* Create built-in modules */
     if (!BUILTIN_Init()) return FALSE;
@@ -73,25 +66,29 @@ extern char **debug_relay_excludelist,**debug_relay_includelist;
 /***********************************************************************
  *           RELAY_DebugCallFrom16
  */
-void RELAY_DebugCallFrom16( int func_type, char *args,
-                            void *entry_point, CONTEXT86 *context )
+void RELAY_DebugCallFrom16( CONTEXT86 *context )
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    char *args16;
-    const char *funstr;
-    int i;
+    char *args16, funstr[80];
+    const char *args;
+    int i, usecdecl, reg_func;
 
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    funstr = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal);
-    if (!funstr) return; /* happens for the two snoop register relays */
+    args = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,funstr,&ordinal);
+    if (!args) return; /* happens for the two snoop register relays */
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "Call %s(",funstr);
     VA_START16( args16 );
 
-    if (func_type & 4)  /* cdecl */
+    usecdecl = ( *args == 'c' );
+    args += 2;
+    reg_func = ( memcmp( args, "regs_", 5 ) == 0 );
+    args += 5;
+
+    if (usecdecl)
     {
         while (*args)
         {
@@ -185,11 +182,11 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
     VA_END16( args16 );
 
-    if (func_type & 2)  /* register function */
-        DPRINTF( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                 AX_reg(context), BX_reg(context), CX_reg(context),
-                 DX_reg(context), SI_reg(context), DI_reg(context),
-                 (WORD)ES_reg(context), EFL_reg(context) );
+    if (reg_func)
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+                AX_reg(context), BX_reg(context), CX_reg(context),
+                DX_reg(context), SI_reg(context), DI_reg(context),
+                (WORD)ES_reg(context), EFL_reg(context) );
 
     SYSLEVEL_CheckNotLevel( 2 );
 }
@@ -198,36 +195,38 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 /***********************************************************************
  *           RELAY_DebugCallFrom16Ret
  */
-void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT86 *context)
+void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    const char *funstr;
+    char funstr[80];
+    const char *args;
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    funstr = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal);
-    if (!funstr) return;
+    args = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,funstr,&ordinal);
+    if (!args) return;
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "Ret  %s() ",funstr);
-    switch(func_type)
+
+    if ( memcmp( args+2, "long_", 5 ) == 0 )
     {
-    case 0: /* long */
         DPRINTF( "retval=0x%08x ret=%04x:%04x ds=%04x\n",
                  ret_val, frame->cs, frame->ip, frame->ds );
-        break;
-    case 1: /* word */
+    }
+    else if ( memcmp( args+2, "word_", 5 ) == 0 )
+    {
         DPRINTF( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
                  ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
-        break;
-    case 2: /* regs */
+    }
+    else if ( memcmp( args+2, "regs_", 5 ) == 0 )
+    {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)CS_reg(context), IP_reg(context), (WORD)DS_reg(context));
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
                 (WORD)ES_reg(context), EFL_reg(context) );
-        break;
     }
 
     SYSLEVEL_CheckNotLevel( 2 );
@@ -243,10 +242,11 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT86 *context)
 void RELAY_Unimplemented16(void)
 {
     WORD ordinal;
+    char name[80];
     STACK16FRAME *frame = CURRENT_STACK16;
+    BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,name,&ordinal);
     MESSAGE("No handler for Win16 routine %s (called from %04x:%04x)\n",
-            BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal),
-            frame->cs, frame->ip );
+            name, frame->cs, frame->ip );
     ExitProcess(1);
 }
 

@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 void WINAPI SNOOP16_Entry(CONTEXT86 *context);
 void WINAPI SNOOP16_Return(CONTEXT86 *context);
-extern void CallFrom16_p_regs_();
+extern void KERNEL_CallFrom16_p_regs_();
 
 /* Generic callfrom16_p_regs function entry.
  *      pushw %bp			0x55
@@ -103,14 +103,14 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 		snr[0].pushl	= 0x68;
 		snr[0].realfun	= (DWORD)SNOOP16_Entry;
 		snr[0].lcall 	= 0x9a;
-		snr[0].callfromregs = (DWORD)CallFrom16_p_regs_;
+		snr[0].callfromregs = (DWORD)KERNEL_CallFrom16_p_regs_;
 		GET_CS(snr[0].seg);
 		snr[1].prefix	= 0x66;
 		snr[1].pushbp	= 0x55;
 		snr[1].pushl	= 0x68;
 		snr[1].realfun	= (DWORD)SNOOP16_Return;
 		snr[1].lcall 	= 0x9a;
-		snr[1].callfromregs = (DWORD)CallFrom16_p_regs_;
+		snr[1].callfromregs = (DWORD)KERNEL_CallFrom16_p_regs_;
 		GET_CS(snr[1].seg);
 	}
 	while (*dll) {

@@ -27,12 +27,8 @@ extern int (*INSTR_IsRelay)( const void *addr );
 
 static int is_relay_addr( const void *addr )
 {
-    extern char CallFrom16_Start, CallFrom16_End, CALLTO16_Start, CALLTO16_End;
-
-    return ((((char *)addr >= &CallFrom16_Start) &&
-             ((char *)addr < &CallFrom16_End)) ||
-            (((char *)addr >= &CALLTO16_Start) &&
-             ((char *)addr < &CALLTO16_End)));
+    extern char Call16_Start, Call16_End;
+    return ((char *)addr >= &Call16_Start) && ((char *)addr < &Call16_End);
 }
 
 /***********************************************************************

@@ -32,17 +32,20 @@ typedef struct _STACK32FRAME
 typedef struct
 {
     STACK32FRAME *frame32;        /* 00 32-bit frame from last CallTo16() */
-    DWORD         ebp;            /* 04 full 32-bit content of ebp */
-    WORD          mutex_count;    /* 08 Win16Mutex recursion count */
-    WORD          fs;             /* 0a fs */
-    WORD          entry_ip;       /* 0c ip of entry point */
-    WORD          ds;             /* 0e ds */
-    WORD          entry_cs;       /* 10 cs of entry point */
-    WORD          es;             /* 12 es */
-    DWORD         entry_point;    /* 14 32-bit entry point to call */
-    WORD          bp;             /* 18 16-bit bp */
-    WORD          ip;             /* 1a return address */
-    WORD          cs;             /* 1c */
+    DWORD         edx;            /* 04 saved registers */
+    DWORD         ecx;            /* 08 */
+    DWORD         ebp;            /* 0c */
+    WORD          ds;             /* 10 */
+    WORD          es;             /* 12 */
+    WORD          fs;             /* 14 */
+    WORD          gs;             /* 16 */
+    DWORD         relay;          /* 18 address of argument relay stub */
+    DWORD         entry_ip;       /* 1c ip of entry point */
+    DWORD         entry_cs;       /* 20 cs of entry point */
+    DWORD         entry_point;    /* 24 API entry point to call, reused as mutex count */
+    WORD          bp;             /* 28 16-bit stack frame chain */
+    WORD          ip;             /* 2a return address */
+    WORD          cs;             /* 2c */
 } STACK16FRAME;
 
 #include "poppack.h"

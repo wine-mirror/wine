@@ -9,6 +9,8 @@
 # ASM_SRCS     : assembly sources (optional)
 # GEN_ASM_SRCS : generated assembly sources (optional)
 # RC_SRCS      : resource source files (optional)
+# SPEC_SRCS    : interface definition files (optional)
+# GLUE         : C sources for which glue code needs to be generated (optional)
 # EXTRA_SRCS   : extra source files for make depend (optional)
 # EXTRA_OBJS   : extra object files (optional)
 # WRCEXTRA     : extra wrc flags (e.g. '-p _SysRes') (optional)
@@ -69,12 +71,12 @@ mandir          = @mandir@/man1
 manext          = .1
 includedir      = @includedir@/wine
 
-OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
-       $(RC_SRCS:.rc=.o) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o) \
+       $(SPEC_SRCS:.spec=.spec.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 # Implicit rules
 
-.SUFFIXES: .rc .res
+.SUFFIXES: .rc .res .spec .spec.c .glue.s
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -100,6 +102,11 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
 .res.h:
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -bnh $<
 
+.spec.spec.c:
+	$(BUILD) -o $@ -spec $<
+
+.c.glue.s:
+	$(BUILD) -o $@ -glue $<
 
 # Rule to rebuild the resource compiler
 
@@ -147,11 +154,15 @@ lint:
 
 # Misc. rules
 
+$(SPEC_SRCS:.spec=.spec.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
+
+$(GLUE:.c=.glue.s): $(BUILD)
+
 depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) *.o \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.s) $(PROGRAMS)
 
 dummy:
 

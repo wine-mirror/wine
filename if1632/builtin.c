@@ -263,12 +263,11 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
 /***********************************************************************
  *           BUILTIN_GetEntryPoint16
  *
- * Return the ordinal and name corresponding to a CS:IP address.
+ * Return the ordinal, name, and type info corresponding to a CS:IP address.
  * This is used only by relay debugging.
  */
-LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
+LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
 {
-    static char buffer[80];
     WORD i, max_offset;
     register BYTE *p;
     NE_MODULE *pModule;
@@ -286,7 +285,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
         entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	for (i = bundle->first + 1; i <= bundle->last; i++)
         {
-	    if ((entry->offs <= ip)
+	    if ((entry->offs < ip)
 	    && (entry->segnum == 1) /* code segment ? */
 	    && (entry->offs >= max_offset))
             {
@@ -308,11 +307,13 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
         if (*(WORD *)(p + *p + 1) == *pOrd) break;
     }
 
-    sprintf( buffer, "%.*s.%d: %.*s",
+    sprintf( name, "%.*s.%d: %.*s",
              *((BYTE *)pModule + pModule->name_table),
              (char *)pModule + pModule->name_table + 1,
              *pOrd, *p, (char *)(p + 1) );
-    return buffer;
+
+    /* Retrieve type info string */
+    return *(LPCSTR *)((LPBYTE)PTR_SEG_OFF_TO_LIN( cs, ip ) - 6) + 10;
 }
 
 
@@ -324,8 +325,9 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
 void BUILTIN_DefaultIntHandler( CONTEXT86 *context )
 {
     WORD ordinal;
+    char name[80];
     STACK16FRAME *frame = CURRENT_STACK16;
-    BUILTIN_GetEntryPoint16( frame->entry_cs, frame->entry_ip, &ordinal );
+    BUILTIN_GetEntryPoint16( frame->entry_cs, frame->entry_ip, name, &ordinal );
     INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }
 

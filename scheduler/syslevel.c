@@ -204,14 +204,10 @@ VOID WINAPI RestoreThunkLock(DWORD mutex_count)
  */
 VOID SYSLEVEL_ReleaseWin16Lock(VOID)
 {
-    DWORD count;
+    /* entry_point is never used again once the entry point has
+       been called.  Thus we re-use it to hold the Win16Lock count */
 
-    ReleaseThunkLock(&count);
-
-    if (count > 0xffff)
-        ERR("Win16Mutex recursion count too large!\n");
-
-    CURRENT_STACK16->mutex_count = (WORD)count;
+    ReleaseThunkLock(&CURRENT_STACK16->entry_point);
 }
 
 /************************************************************************
@@ -219,12 +215,7 @@ VOID SYSLEVEL_ReleaseWin16Lock(VOID)
  */
 VOID SYSLEVEL_RestoreWin16Lock(VOID)
 {
-    DWORD count = CURRENT_STACK16->mutex_count;
-
-    if (!count)
-        ERR("Win16Mutex recursion count is zero!\n");
-
-    RestoreThunkLock(count);
+    RestoreThunkLock(CURRENT_STACK16->entry_point);
 }
 
 /************************************************************************

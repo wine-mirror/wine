@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = if1632
 
-DLLS = \
+SPEC_SRCS = \
 	avifile.spec \
 	comm.spec \
 	commdlg.spec \
@@ -49,8 +49,6 @@ DLLS = \
 	winsock.spec \
 	wprocs.spec
 
-SPEC_FILES = $(DLLS:.spec=.s)
-
 C_SRCS = \
 	builtin.c \
 	dummy.c \
@@ -59,25 +57,16 @@ C_SRCS = \
 	thunk.c
 
 GEN_ASM_SRCS = \
-	$(SPEC_FILES) \
-	callfrom16.s \
-	callto16.s
+	call16.s
 
-.SUFFIXES: .spec
+GLUE = 	$(SPEC_SRCS:.spec=.spec.c) \
+	thunk.c
 
-.spec.s:
-	$(BUILD) -o $@ -spec $<
-
-all: checkbuild $(MODULE).o
+all: $(MODULE).o
 
 @MAKE_RULES@
 
-$(SPEC_FILES): $(BUILD)
-
-callfrom16.s: $(SPEC_FILES)
-	$(BUILD) -o $@ -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq`
-
-callto16.s: $(SRCDIR)/thunk.c $(BUILD)
-	$(BUILD) -o $@ -callto16 $(SRCDIR)/thunk.c
+call16.s: $(BUILD)
+	$(BUILD) -o $@ -call16
 
 ### Dependencies:

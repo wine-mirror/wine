@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(relay)
 /**********************************************************************
  *	     CALLBACK_CallWndProc
  */
-static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
+static LRESULT CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
                                             UINT16 msg, WPARAM16 wParam,
                                             LPARAM lParam )
 {
@@ -36,225 +36,149 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
     return retvalue;
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallRegisterProc
  */
-static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT86 *context, INT offset)
+static LONG CALLBACK_CallRegisterProc( CONTEXT86 *context, INT offset)
 {
     ERR("Cannot call a register proc in Winelib\n" );
     assert( FALSE );
     return 0;
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallDriverProc
  */
-static LRESULT WINAPI CALLBACK_CallDriverProc( DRIVERPROC16 proc, DWORD dwId,
-                                               HDRVR16 hdrvr, UINT16 msg,
-                                               LPARAM lp1, LPARAM lp2 )
+static LRESULT CALLBACK_CallDriverProc( DRIVERPROC16 proc, DWORD dwId,
+                                        HDRVR16 hdrvr, UINT16 msg,
+                                        LPARAM lp1, LPARAM lp2 )
 {
-    return proc( dwId, hdrvr, msg, lp1, lp2 );
+    ERR("Cannot call a 16-bit driver proc in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
-
 
 /**********************************************************************
  *	     CALLBACK_CallDriverCallback
  */
-static LRESULT WINAPI CALLBACK_CallDriverCallback( FARPROC16 proc,
-                                                   HANDLE16 hDev, UINT16 msg,
-                                                   DWORD dwUser, LPARAM lp1,
-                                                   LPARAM lp2 )
+static LRESULT CALLBACK_CallDriverCallback( FARPROC16 proc,
+                                            HANDLE16 hDev, UINT16 msg,
+                                            DWORD dwUser, LPARAM lp1,
+                                            LPARAM lp2 )
 {
-    return proc( hDev, msg, dwUser, lp1, lp2 );
+    ERR("Cannot call a 16-bit driver proc in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
-
 
 /**********************************************************************
  *	     CALLBACK_CallTimeFuncProc
  */
-static LRESULT WINAPI CALLBACK_CallTimeFuncProc( FARPROC16 proc, WORD id,
+static LRESULT CALLBACK_CallTimeFuncProc( FARPROC16 proc, WORD id,
                                                  UINT16 msg, DWORD dwUser,
                                                  LPARAM lp1, LPARAM lp2 )
 {
     return proc( id, msg, dwUser, lp1, lp2 );
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallWindowsExitProc
  */
-static INT16 WINAPI CALLBACK_CallWindowsExitProc( FARPROC16 proc, INT16 type)
+static INT16 CALLBACK_CallWindowsExitProc( FARPROC16 proc, INT16 type)
 {
     return proc( type );
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallWordBreakProc
  */
-static INT16 WINAPI CALLBACK_CallWordBreakProc( EDITWORDBREAKPROC16 proc,
+static INT16 CALLBACK_CallWordBreakProc( EDITWORDBREAKPROC16 proc,
                                                 SEGPTR text, INT16 word,
                                                 INT16 len, INT16 action )
 {
     return proc( (LPSTR)text, word, len, action );
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallBootAppProc
  */
-static void WINAPI CALLBACK_CallBootAppProc( FARPROC16 proc, HANDLE16 module,
+static void CALLBACK_CallBootAppProc( FARPROC16 proc, HANDLE16 module,
                                              HFILE16 file )
 {
-    proc( module, file );
+    ERR("Cannot call a 16-bit self-load handler in Winelib\n" );
+    assert( FALSE );
+    return;
 }
-
 
 /**********************************************************************
  *	     CALLBACK_CallLoadAppSegProc
  */
-static WORD WINAPI CALLBACK_CallLoadAppSegProc( FARPROC16 proc,
+static WORD CALLBACK_CallLoadAppSegProc( FARPROC16 proc,
                                                 HANDLE16 module, HFILE16 file,
                                                 WORD seg )
 {
-    return proc( module, file, seg );
+    ERR("Cannot call a 16-bit self-load handler in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
-
 
 /**********************************************************************
  *           CALLBACK_CallLocalNotifyFunc
  */
-static WORD WINAPI CALLBACK_CallLocalNotifyFunc( FARPROC16 proc,
-                                                 WORD wMsg, HLOCAL16 hMem,
-                                                 WORD wArg )
+static WORD CALLBACK_CallLocalNotifyFunc( FARPROC16 proc,
+                                          WORD wMsg, HLOCAL16 hMem, WORD wArg )
 {
-    return proc( wMsg, hMem, wArg );
+    ERR("Cannot call a 16-bit notification handler in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
-
 
 /**********************************************************************
  *	     CALLBACK_CallResourceHandlerProc
  */
-static HGLOBAL16 WINAPI CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
-                                                          HGLOBAL16 hMemObj, 
-                                                          HMODULE16 hModule,
-                                                          HRSRC16 hRsrc )
+static HGLOBAL16 CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
+                                                   HGLOBAL16 hMemObj, 
+                                                   HMODULE16 hModule,
+                                                   HRSRC16 hRsrc )
 {
     ERR("Cannot call a 16-bit resource handler in Winelib\n" );
     assert( FALSE );
     return 0;
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallASPIPostProc
  */
-static LRESULT WINAPI CALLBACK_CallASPIPostProc( FARPROC16 proc, SEGPTR ptr )
+static LRESULT CALLBACK_CallASPIPostProc( FARPROC16 proc, SEGPTR ptr )
 {
     return proc( ptr );
 }
 
-
 /**********************************************************************
  *	     CALLBACK_CallWOWCallbackProc
  */
-static DWORD WINAPI CALLBACK_CallWOWCallbackProc( FARPROC16 proc, DWORD dw )
+static DWORD CALLBACK_CallWOWCallbackProc( FARPROC16 proc, DWORD dw )
 {
-    return proc( dw );
+    ERR("Cannot call a WOW thunk proc in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
 
 /**********************************************************************
  *	     CALLBACK_CallWOWCallback16Ex
- *
- * WCB16_MAX_CBARGS (16) is the maximum number of args.
- *
- * Can call functions using CDECL or PASCAL calling conventions. The CDECL
- * ones are reversed (not 100% sure about that).
  */
-static BOOL WINAPI CALLBACK_CallWOWCallback16Ex( 
-	FARPROC16 proc, DWORD dwFlags, DWORD cbArgs, LPVOID xargs,LPDWORD pdwret
-) {
-    LPDWORD	args = (LPDWORD)xargs;
-    DWORD	ret,i;
-
-    if (dwFlags == WCB16_CDECL) {
-    	/* swap the arguments */
-    	args = HeapAlloc(GetProcessHeap(),0,cbArgs*sizeof(DWORD));
-	for (i=0;i<cbArgs;i++)
-		args[i] = ((DWORD*)xargs)[cbArgs-i-1];
-    }
-    switch (cbArgs) {
-    case 0: ret = proc();break;
-    case 1: ret = proc(args[0]);break;
-    case 2: ret = proc(args[0],args[1]);break;
-    case 3: ret = proc(args[0],args[1],args[2]);break;
-    case 4: ret = proc(args[0],args[1],args[2],args[3]);break;
-    case 5: ret = proc(args[0],args[1],args[2],args[3],args[4]);break;
-    case 6: ret = proc(args[0],args[1],args[2],args[3],args[4],args[5]);
-	    break;
-    case 7: ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6]
-	    );
-	    break;
-    case 8: ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7]
-	    );
-	    break;
-    case 9: ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8]
-	    );
-	    break;
-    case 10:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9]
-	    );
-	    break;
-    case 11:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10]
-	    );
-	    break;
-    case 12:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10],args[11]
-	    );
-	    break;
-    case 13:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10],args[11],
-		    args[12]
-	    );
-	    break;
-    case 14:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10],args[11],
-		    args[12],args[13]
-	    );
-	    break;
-    case 15:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10],args[11],
-		    args[12],args[13],args[14]
-	    );
-	    break;
-    case 16:ret = proc(args[0],args[1],args[2],args[3],args[4],args[5],
-		    args[6],args[7],args[8],args[9],args[10],args[11],
-		    args[12],args[13],args[14],args[15]
-	    );
-	    break;
-    default:
-	    WARN("(%ld) arguments not supported.\n",cbArgs);
-	    if (dwFlags == WCB16_CDECL)
-		HeapFree(GetProcessHeap(),0,args);
-	    return FALSE;
-    }
-    if (dwFlags == WCB16_CDECL)
-    	HeapFree(GetProcessHeap(),0,args);
-    if (pdwret) 
-    	*pdwret = ret;
-    return TRUE;
+static BOOL CALLBACK_CallWOWCallback16Ex( FARPROC16 proc, DWORD dwFlags, 
+                                          DWORD cbArgs, LPVOID xargs, LPDWORD pdwret )
+{
+    ERR("Cannot call a WOW thunk proc in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
 
 /**********************************************************************
  *	     CALLBACK_CallUTProc
  */
-static DWORD WINAPI CALLBACK_CallUTProc( FARPROC16 proc, DWORD w1, DWORD w2 )
+static DWORD CALLBACK_CallUTProc( FARPROC16 proc, DWORD w1, DWORD w2 )
 {
     ERR("Cannot call a UT thunk proc in Winelib\n" );
     assert( FALSE );
