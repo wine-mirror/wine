@@ -2506,6 +2506,8 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
     fprintf( outfile, "\t.align 4\n" );
     fprintf( outfile, "Code_Start:\n\n" );
 #endif
+    fprintf( outfile, PREFIX"CallFrom16_Start:\n" );
+    fprintf( outfile, "\t.globl "PREFIX"CallFrom16_Start\n" );
 
     /* Build the callback functions */
 
@@ -2526,6 +2528,8 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
             fprintf( outfile, STRING " \"%s\\0\"\n", argv[i] + 7 );
         }
     }
+    fprintf( outfile, PREFIX"CallFrom16_End:\n" );
+    fprintf( outfile, "\t.globl "PREFIX"CallFrom16_End\n" );
 
 #ifdef USE_STABS
     fprintf( outfile, "\t.text\n");

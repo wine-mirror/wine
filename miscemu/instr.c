@@ -11,6 +11,7 @@
 #include "dosexe.h"
 #include "miscemu.h"
 #include "sig_context.h"
+#include "selectors.h"
 #include "debug.h"
 
 
@@ -32,6 +33,9 @@
    (IS_V86(context) ? DOSMEM_MapRealToLinear(MAKELONG(SP_sig(context),SS_sig(context))) : \
     (IS_SELECTOR_SYSTEM(SS_sig(context)) ? (void *)ESP_sig(context) : \
      (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context)))))
+
+/* For invalid registers fixup */
+extern DWORD CallFrom16_Start,CallFrom16_End;
 
 
 /***********************************************************************
@@ -386,9 +390,24 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
         case 0x1f: /* pop ds */
             {
                 WORD seg = *(WORD *)STACK_PTR( context );
+
+		/* Sometimes invalid selectors are left on the stackframe 
+		 * pop them if needed.
+		 */
+		if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
+		    (EIP_sig(context)<(DWORD)&CallFrom16_End)
+		) {
+                    switch(*instr) {
+                    case 0x07: ES_sig(context) = 0; break;
+                    case 0x17: SS_sig(context) = 0; break;
+                    case 0x1f: DS_sig(context) = 0; break;
+                    }
+                    STACK_sig(context) += long_op ? 4 : 2;
+                    EIP_sig(context) += prefixlen + 1;
+		    return TRUE;
+		}
                 if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
-                {
-                    switch(*instr)
+                {                    switch(*instr)
                     {
                     case 0x07: ES_sig(context) = seg; break;
                     case 0x17: SS_sig(context) = seg; break;
@@ -426,6 +445,14 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
             case 0xa1: /* pop fs */
                 {
                     WORD seg = *(WORD *)STACK_PTR( context );
+ 		    if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
+ 		        (EIP_sig(context)<(DWORD)&CallFrom16_End)
+ 		    ) {
+ 		    	FS_sig(context) = 0;
+ 			STACK_sig(context) += long_op ? 4 : 2;
+ 			EIP_sig(context) += prefixlen + 1;
+ 			return TRUE;
+ 		    }
                     if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
                     {
                         FS_sig(context) = seg;
@@ -441,6 +468,14 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
             case 0xa9: /* pop gs */
                 {
                     WORD seg = *(WORD *)STACK_PTR( context );
+		    if ((EIP_sig(context)>=(DWORD)&CallFrom16_Start) &&
+		        (EIP_sig(context)<(DWORD)&CallFrom16_End)
+		    ) {
+		    	GS_sig(context) = 0;
+			STACK_sig(context) += long_op ? 4 : 2;
+			EIP_sig(context) += prefixlen + 1;
+			return TRUE;
+		    }
                     if ((seg = INSTR_ReplaceSelector( context, seg )) != 0)
                     {
                         GS_sig(context) = seg;

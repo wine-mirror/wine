@@ -162,7 +162,6 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
 {
     WORD i, nextsel;
     ldt_entry entry;
-    STACK16FRAME *frame;
 
     TRACE(selector, "(%04x,%d)\n", sel, count );
     sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
@@ -189,16 +188,6 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     {
         LDT_SetEntry( i, &entry );
         ldt_flags_copy[i] &= ~LDT_FLAGS_ALLOCATED;
-    }
-
-    /* Clear the saved 16-bit selector */
-    frame = CURRENT_STACK16;
-    while (frame && frame->frame32)
-    {
-        if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
-        if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
-        if ((frame->fs >= sel) && (frame->fs < nextsel)) frame->fs = 0;
-        frame = PTR_SEG_TO_LIN( frame->frame32->frame16 );
     }
 }
 
