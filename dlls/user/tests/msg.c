@@ -152,6 +152,7 @@ static const struct message WmSWP_ResizeSeq[] = {
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
@@ -170,6 +171,7 @@ static const struct message WmSWP_ResizePopupSeq[] = {
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
@@ -183,6 +185,7 @@ static const struct message WmSWP_MoveSeq[] = {
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOCLIENTSIZE },
     { WM_MOVE, sent|defwinproc|wparam, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
@@ -1029,6 +1032,7 @@ static const struct message WmSHOWNAChildVisParVis[] = {
 static const struct message WmSHOWNAChildInvisParVis[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER},
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
     { 0 }
@@ -1041,6 +1045,7 @@ static const struct message WmSHOWNATopVisible[] = {
 static const struct message WmSHOWNATopInvisible[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_GETICON, sent|optional },
     { WM_GETICON, sent|optional },
@@ -2835,7 +2840,11 @@ static void test_showwindow(void)
     ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent", FALSE);
     trace("done\n");
 
+    SetCapture(hchild);
+    ok(GetCapture() == hchild, "wrong capture window %p\n", GetCapture());
     DestroyWindow(hchild);
+    ok(!GetCapture(), "wrong capture window %p\n", GetCapture());
+
     DestroyWindow(hwnd);
     flush_sequence();
 }
@@ -4374,9 +4383,32 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
     switch (message)
     {
+	case WM_CAPTURECHANGED:
+	    if (test_DestroyWindow_flag)
+	    {
+		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+		if (style & WS_CHILD)
+		    lParam = GetWindowLongA(hwnd, GWL_ID);
+		else if (style & WS_POPUP)
+		    lParam = WND_POPUP_ID;
+		else
+		    lParam = WND_PARENT_ID;
+	    }
+	    break;
+
 	case WM_NCDESTROY:
+	{
+	    HWND capture;
+
 	    ok(!GetWindow(hwnd, GW_CHILD), "children should be unlinked at this point\n");
-	    ok(GetCapture() != hwnd, "capture should be released at this point\n");
+	    capture = GetCapture();
+	    if (capture)
+	    {
+		ok(capture == hwnd, "capture should NOT be released at this point (capture %p)\n", capture);
+		trace("current capture %p, releasing...\n", capture);
+		ReleaseCapture();
+	    }
+	}
 	/* fall through */
 	case WM_DESTROY:
             if (pGetAncestor)
@@ -5445,10 +5477,12 @@ static void test_scrollwindowex(void)
 }
 
 static const struct message destroy_window_with_children[] = {
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 }, /* popup */
     { HCBT_DESTROYWND, hook|lparam, 0, WND_PARENT_ID }, /* parent */
     { HCBT_DESTROYWND, hook|lparam, 0, WND_POPUP_ID }, /* popup */
     { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, 0, 0 }, /* popup */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
+    { WM_CAPTURECHANGED, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
     { WM_NCDESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
     { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, 0, 0 }, /* parent */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_PARENT_ID }, /* parent */
@@ -5559,9 +5593,9 @@ todo_wine {
     trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
 	   parent, child1, child2, child3, child4);
 
-    SetCapture(child3);
+    SetCapture(child4);
     test = GetCapture();
-    ok(test == child3, "wrong capture window %p\n", test);
+    ok(test == child4, "wrong capture window %p\n", test);
 
     test_DestroyWindow_flag = TRUE;
     ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());

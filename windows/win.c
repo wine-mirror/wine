@@ -614,23 +614,6 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
 
 
 /***********************************************************************
- *           WIN_ReleaseCapture
- *
- * Internal version of ReleaseCapture which doesn't send WM_CAPTURECHANGED
- * message. Used at the window destruction time.
- */
-static void WIN_ReleaseCapture( void )
-{
-    SERVER_START_REQ( set_capture_window )
-    {
-        req->handle = 0;
-        req->flags  = 0;
-        wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-}
-
-/***********************************************************************
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window. "Internals" p.358
@@ -666,8 +649,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
      */
     RedrawWindow( hwnd, NULL, 0,
                   RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_NOCHILDREN);
-
-    if (hwnd == GetCapture()) WIN_ReleaseCapture();
 
     /* Unlink now so we won't bother with the children later on */
     WIN_UnlinkWindow( hwnd );

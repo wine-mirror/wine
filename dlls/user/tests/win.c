@@ -2043,7 +2043,12 @@ static void test_capture_1(void)
 
     SendMessageA(button, WM_LBUTTONDOWN, 0, 0);
 
+    capture = SetCapture(button);
+    ok(capture == 0, "SetCapture() = %p\n", capture);
+    check_wnd_state(button, 0, button, button);
+
     DestroyWindow(button);
+    check_wnd_state(0, 0, 0, 0);
 }
 
 static void test_capture_2(void)
