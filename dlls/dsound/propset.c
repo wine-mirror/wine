@@ -514,14 +514,15 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 		    if (err == DS_OK) {
 			err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
 			if (err == DS_OK) {
-			    memset(&data, 0, sizeof(data));
-			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
-			    data.WaveDeviceId = wod;
-			    data.DeviceId = guid;
 			    /* FIXME: this is a memory leak */
 			    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
+			    
+			    memset(&data, 0, sizeof(data));
+			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
+			    data.WaveDeviceId = wod;
+			    data.DeviceId = guid;
 
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
@@ -542,14 +543,15 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 		    if (err == DS_OK) {
 			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDGUID,(DWORD)&guid,0));
 			if (err == DS_OK) {
-			    memset(&data, 0, sizeof(data));
-			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
-			    data.WaveDeviceId = wid;
-			    data.DeviceId = guid;
 			    /* FIXME: this is a memory leak */
 			    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
+			    
+			    memset(&data, 0, sizeof(data));
+			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
+			    data.WaveDeviceId = wid;
+			    data.DeviceId = guid;
 
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100  );
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, wModule, 0x100 );
