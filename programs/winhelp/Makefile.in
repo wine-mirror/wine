@@ -25,7 +25,7 @@ RC_SRCS = rsrc.rc
 all: $(PROGRAMS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o
-	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o
+	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o $(LDFLAGS)
 
 @LEX_OUTPUT_ROOT@.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
