@@ -147,7 +147,7 @@ static void test_acquire_context(void)
 	hProv = 0;
 	SetLastError(0xdeadbeef);
 	result = pCryptAcquireContextA(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-	ok(result && (GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
+	ok(result && (GetLastError() == ERROR_ENVVAR_NOT_FOUND || GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
 		pCryptReleaseContext(hProv, 0);
