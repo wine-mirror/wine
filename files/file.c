@@ -1314,9 +1314,9 @@ static void add_timeout( struct timeval *when, int timeout )
 }
 
 /***********************************************************************
- *              ReadFileEx                (KERNEL32.@)
+ *              FILE_ReadFileEx                (INTERNAL)
  */
-BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
+static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 			 LPOVERLAPPED overlapped, 
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
@@ -1333,9 +1333,6 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-
-    overlapped->Internal     = STATUS_PENDING;
-    overlapped->InternalHigh = 0;
 
     /* 
      * Although the overlapped transfer will be done in this thread
@@ -1390,10 +1387,20 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         ovp->next->prev = ovp;
     NtCurrentTeb()->pending_list = ovp;
 
-    SetLastError(ERROR_IO_PENDING);
+    return TRUE;
+}
 
-    /* always fail on return, either ERROR_IO_PENDING or other error */
-    return FALSE;
+/***********************************************************************
+ *              ReadFileEx                (KERNEL32.@)
+ */
+BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
+			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+    /* FIXME: MS docs say we shouldn't set overlapped->hEvent */
+    overlapped->Internal     = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
+    return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine);
 }
 
 /***********************************************************************
@@ -1412,7 +1419,38 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     /* this will only have impact if the overlapped structure is specified */
     if ( overlapped )
-        return ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL);
+    {
+        /* see if we can read some data already (this shouldn't block) */
+        unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
+        if (unix_handle == -1)
+            return FALSE;
+        result = read( unix_handle, buffer, bytesToRead );
+        close(unix_handle);
+
+        if(result<0)
+        {
+            FILE_SetDosError();
+            return FALSE;
+        }
+        
+        /* if we read enough to keep the app happy, then return now */
+        if(result>=bytesToRead)
+        {
+            *bytesRead = result;
+            return TRUE;
+        }
+
+        /* at last resort, do an overlapped read */
+        overlapped->Internal     = STATUS_PENDING;
+        overlapped->InternalHigh = result;
+        
+        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL))
+            return FALSE;
+
+        /* fail on return, with ERROR_IO_PENDING */
+        SetLastError(ERROR_IO_PENDING);
+        return FALSE;
+    }
 
     unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
     if (unix_handle == -1) return FALSE;
