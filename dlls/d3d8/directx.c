@@ -441,6 +441,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     case D3DFMT_L6V5U5:
     /*case D3DFMT_V8U8:*/
     case D3DFMT_L8:
+    case D3DFMT_P8:
+    case D3DFMT_A8P8:
       /* Since we do not support these formats right now, don't pretend to. */
       return D3DERR_NOTAVAILABLE;
     default:
@@ -1269,7 +1271,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* init the default renderTarget management */
     object->drawable = object->win;
     object->render_ctx = object->glCtx;
-    object->renderTarget = object->frontBuffer;
+    object->renderTarget = object->backBuffer;
     IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->renderTarget);
     object->stencilBufferTarget = object->depthStencilBuffer;
     if (NULL != object->stencilBufferTarget) {
@@ -1330,6 +1332,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
     TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
+
+    /* Clear the screen */
+    IDirect3DDevice8Impl_Clear((LPDIRECT3DDEVICE8) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+
     return D3D_OK;
 }
 

@@ -1,7 +1,8 @@
 /*
  * IDirect3DDevice8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1169,7 +1170,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    FIXME("(%p) : see if behavior correct\n", This);
+    FIXME("(%p) : Should return whole screen, only returns GL context window in top left corner\n", This);
 
     if (D3DFMT_A8R8G8B8 != ((IDirect3DSurface8Impl*) pDestSurface)->myDesc.Format) {
       ERR("(%p) : surface(%p) have a invalid format\n", This, pDestSurface);
@@ -1204,7 +1205,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     {
       long j;
       for (j = 0; j < This->PresentParms.BackBufferHeight; ++j) {
-	/*memcpy(lockedRect.pBits + (j * lockedRect.Pitch), This->frontBuffer->allocatedMemory + (j * i), i);*/
 	glReadPixels(0, This->PresentParms.BackBufferHeight - j - 1, This->PresentParms.BackBufferWidth, 1,
 		     GL_BGRA, GL_UNSIGNED_BYTE, ((char*) lockedRect.pBits) + (j * lockedRect.Pitch));
 	vcheckGLcall("glReadPixels");
@@ -1261,7 +1261,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppRenderTarget) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    TRACE("(%p)->(%p) default(%p)\n", This, This->renderTarget, This->frontBuffer);
+    TRACE("(%p)->returning (%p) default is backbuffer=(%p)\n", This, This->renderTarget, This->backBuffer);
     
     *ppRenderTarget = (LPDIRECT3DSURFACE8) This->renderTarget;
     IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppRenderTarget);
@@ -1303,12 +1303,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     getchar();
 #endif
 
-    if (This->frontBuffer != This->renderTarget) {
+    if ((This->frontBuffer != This->renderTarget) && (This->backBuffer != This->renderTarget)) {
 #if 0
 	GLenum prev_read;
 	glGetIntegerv(GL_READ_BUFFER, &prev_read);
 	vcheckGLcall("glIntegerv");
-	glReadBuffer(GL_BACK);
+	glReadBuffer(GL_FRONT);
 	vcheckGLcall("glReadBuffer");
 	{
 	  long j;
@@ -1413,14 +1413,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (This->PresentParms.BackBufferHeight - curRect->y2), 
+                  curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (This->PresentParms.BackBufferHeight - curRect->y2), 
+            glScissor(curRect->x1, (This->renderTarget->myDesc.Height - curRect->y2), 
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         } else {
             glScissor(This->StateBlock->viewport.X, 
-                      (This->PresentParms.BackBufferHeight - (This->StateBlock->viewport.Y + This->StateBlock->viewport.Height)), 
+                      (This->renderTarget->myDesc.Height - (This->StateBlock->viewport.Y + This->StateBlock->viewport.Height)), 
                       This->StateBlock->viewport.Width, 
                       This->StateBlock->viewport.Height);
             checkGLcall("glScissor");
@@ -4614,7 +4614,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
     {
       DWORD value;
       /* The surface must be rendered upside down to cancel the flip produce by glCopyTexImage */
-      This->renderUpsideDown = This->renderTarget != This->frontBuffer;
+      This->renderUpsideDown = (This->renderTarget != This->frontBuffer) && (This->renderTarget != This->backBuffer);
       /* Force updating the cull mode */
       IDirect3DDevice8_GetRenderState(iface, D3DRS_CULLMODE, &value);
       IDirect3DDevice8_SetRenderState(iface, D3DRS_CULLMODE, value);

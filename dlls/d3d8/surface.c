@@ -1,8 +1,9 @@
 /*
  * IDirect3DSurface8 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -193,7 +194,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
       /* Nothing to do ;) */
 
-    } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage) { /* render surfaces */
+    } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
       
       if (This == This->Device->backBuffer || This == This->Device->renderTarget || This == This->Device->frontBuffer) {
 	GLint  prev_store;
@@ -293,18 +294,19 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
       return D3DERR_INVALIDCALL;
     }
 
-    if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {
+    if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This->Device->depthStencilBuffer || This == This->Device->renderTarget) {
       if (This == This->Device->backBuffer) {
 	TRACE("(%p, backBuffer) : dirtyfied(%d)\n", This, This->Dirty);
       } else if (This == This->Device->frontBuffer) {
 	TRACE("(%p, frontBuffer) : dirtyfied(%d)\n", This, This->Dirty);
       } else if (This == This->Device->depthStencilBuffer) {
 	TRACE("(%p, stencilBuffer) : dirtyfied(%d)\n", This, This->Dirty);
+      } else if (This == This->Device->renderTarget) {
+	TRACE("(%p, renderTarget) : dirtyfied(%d)\n", This, This->Dirty);
       }
     } else {
       TRACE("(%p) : dirtyfied(%d)\n", This, This->Dirty);
     }
-    /*TRACE("(%p) see if behavior is correct\n", This);*/
 
     if (FALSE == This->Dirty) {
       TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
@@ -318,7 +320,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
        */
     } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage) { /* render surfaces */
 
-      if (This == This->Device->backBuffer || This == This->Device->frontBuffer) {
+      if (This == This->Device->backBuffer || This == This->Device->frontBuffer || This == This->Device->renderTarget) {
 	GLint  prev_store;
 	GLenum prev_draw;
 	GLint  prev_rasterpos[4];
@@ -376,7 +378,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 
 	if (This == This->Device->backBuffer) {
 	  glDrawBuffer(GL_BACK);
-	} else if (This == This->Device->frontBuffer) {
+	} else if (This == This->Device->frontBuffer || This == This->Device->renderTarget) {
 	  glDrawBuffer(GL_FRONT);
 	}
 	vcheckGLcall("glDrawBuffer");

@@ -1605,11 +1605,11 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         if (isDumpingFrames == TRUE) {
             D3DLOCKED_RECT r;
             char buffer[80];
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->backBuffer, &r, NULL, D3DLOCK_READONLY);
+            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->renderTarget, &r, NULL, D3DLOCK_READONLY);
             sprintf(buffer, "/tmp/backbuffer_%ld.ppm", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
-            IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This->backBuffer, buffer);
-            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) This->backBuffer);
+            IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This->renderTarget, buffer);
+            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) This->renderTarget);
 
 #if defined(SHOW_TEXTURE_MAKEUP)
            {
