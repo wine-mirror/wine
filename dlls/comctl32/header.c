@@ -705,6 +705,9 @@ HEADER_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (phdi->mask & HDI_FORMAT)
 	lpItem->fmt = phdi->fmt;
 
+    if (lpItem->fmt == 0)
+	lpItem->fmt = HDF_LEFT;
+
     if (phdi->mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
