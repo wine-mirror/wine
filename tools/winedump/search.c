@@ -126,9 +126,9 @@ int symbol_search (parsed_symbol *sym)
 
         while ((iter = strstr (iter, sym->symbol)))
         {
-          if (iter > grep_buff && iter[-1] == ' ' &&
+          if (iter > grep_buff && (iter[-1] == ' ' || iter[-1] == '*') &&
              (iter[strlen (sym->symbol)] == ' ' ||
-             iter[strlen (sym->symbol)] == '('))
+              iter[strlen (sym->symbol)] == '('))
           {
             if (VERBOSE)
               printf ("Prototype '%s' looks OK, processing\n", grep_buff);
