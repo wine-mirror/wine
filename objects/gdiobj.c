@@ -25,6 +25,7 @@
 #include "region.h"
 #include "debugtools.h"
 #include "gdi.h"
+#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -97,7 +98,7 @@ static PENOBJ NullPen =
 static FONTOBJ OEMFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 /* Filler to make the location counter dword aligned again.  This is necessary
@@ -108,7 +109,7 @@ static UINT16 align_OEMFixedFont = 1;
 static FONTOBJ AnsiFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 static UINT16 align_AnsiFixedFont = 1;
@@ -116,7 +117,7 @@ static UINT16 align_AnsiFixedFont = 1;
 static FONTOBJ AnsiVarFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
 };
 static UINT16 align_AnsiVarFont = 1;
@@ -124,7 +125,7 @@ static UINT16 align_AnsiVarFont = 1;
 static FONTOBJ SystemFont =
 {
     { 0, FONT_MAGIC, 1 },
-    { 16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "System" }
 };
 static UINT16 align_SystemFont = 1;
@@ -132,7 +133,7 @@ static UINT16 align_SystemFont = 1;
 static FONTOBJ DeviceDefaultFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
 static UINT16 align_DeviceDefaultFont = 1;
@@ -140,7 +141,7 @@ static UINT16 align_DeviceDefaultFont = 1;
 static FONTOBJ SystemFixedFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 static UINT16 align_SystemFixedFont = 1;
@@ -148,8 +149,8 @@ static UINT16 align_SystemFixedFont = 1;
 /* FIXME: Is this correct? */
 static FONTOBJ DefaultGuiFont =
 {
-    { 9, FONT_MAGIC, 1 },   /* header */
-    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 0, FONT_MAGIC, 1 },   /* header */
+    { 0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
 };
 static UINT16 align_DefaultGuiFont = 1;
@@ -207,6 +208,9 @@ static void  ReadFontInformation(
 {
     char  key[256];
 
+    /* In order for the stock fonts to be independent of 
+     * mapping mode, the height (& width) must be 0
+     */
     sprintf(key, "%s.Height", fontName);
     font->logfont.lfHeight =
 	PROFILE_GetWineIniInt("Tweak.Fonts", key, defHeight);
@@ -231,7 +235,6 @@ static void  ReadFontInformation(
     return;
 }
 
-
 /***********************************************************************
  *           GDI_Init
  *
@@ -239,6 +242,8 @@ static void  ReadFontInformation(
  */
 BOOL GDI_Init(void)
 {
+    BOOL systemIsBold = (TWEAK_WineLook == WIN31_LOOK);
+
     /* Kill some warnings.  */
     (void)align_OEMFixedFont;
     (void)align_AnsiFixedFont;
@@ -249,11 +254,13 @@ BOOL GDI_Init(void)
     (void)align_DefaultGuiFont;
 
     /* TWEAK: Initialize font hints */
-    ReadFontInformation("OEMFixed", &OEMFixedFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("AnsiVar", &AnsiVarFont, 12, 0, 0, 0, 0);
-    ReadFontInformation("System", &SystemFont, 16, 1, 0, 0, 0);
-    ReadFontInformation("SystemFixed", &SystemFixedFont, 12, 1, 0, 0, 0);
+    ReadFontInformation("OEMFixed", &OEMFixedFont, 0, 0, 0, 0, 0);
+    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 0, 0, 0, 0, 0);
+    ReadFontInformation("AnsiVar", &AnsiVarFont, 0, 0, 0, 0, 0);
+    ReadFontInformation("System", &SystemFont, 0, systemIsBold, 0, 0, 0);
+    ReadFontInformation("DeviceDefault", &DeviceDefaultFont, 0, 0, 0, 0, 0);
+    ReadFontInformation("SystemFixed", &SystemFixedFont, 0, systemIsBold, 0, 0, 0);
+    ReadFontInformation("DefaultGui", &DefaultGuiFont, 0, 0, 0, 0, 0);
 
     /* Initialize drivers */
 
