@@ -391,6 +391,9 @@ HRESULT HAL_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
      * CoCreateInstanced then Initialized. */
     This->private = (HAL_DirectDrawImpl *)(This+1);
 
+    /* Initialize the DDCAPS structure */
+    This->caps.dwSize = sizeof(This->caps);
+
     hr = HAL_DirectDraw_Construct(This, ex);
     if (FAILED(hr))
 	HeapFree(GetProcessHeap(), 0, This);
@@ -412,6 +415,9 @@ HRESULT HAL_DirectDraw_Initialize(IDirectDrawImpl *This, const GUID* guid)
     This->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			      sizeof(HAL_DirectDrawImpl));
     if (This->private == NULL) return E_OUTOFMEMORY;
+
+    /* Initialize the DDCAPS structure */
+    This->caps.dwSize = sizeof(This->caps);
 
     hr = HAL_DirectDraw_Construct(This, TRUE); /* XXX ex? */
     if (FAILED(hr))
