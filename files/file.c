@@ -307,14 +307,31 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template )
 {
-    DOS_FULL_NAME full_name;
+    NTSTATUS status;
+    UINT options;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
     HANDLE ret;
     DWORD dosdev;
-    static const WCHAR bkslashes_with_question_markW[] = {'\\','\\','?','\\',0};
     static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
-    static const WCHAR bkslashesW[] = {'\\','\\',0};
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
+
+    static const char * const creation_name[5] =
+        { "CREATE_NEW", "CREATE_ALWAYS", "OPEN_EXISTING", "OPEN_ALWAYS", "TRUNCATE_EXISTING" };
+
+    static const UINT nt_disposition[5] =
+    {
+        FILE_CREATE,        /* CREATE_NEW */
+        FILE_OVERWRITE_IF,  /* CREATE_ALWAYS */
+        FILE_OPEN,          /* OPEN_EXISTING */
+        FILE_OPEN_IF,       /* OPEN_ALWAYS */
+        FILE_OVERWRITE      /* TRUNCATE_EXISTING */
+    };
+
+
+    /* sanity checks */
 
     if (!filename || !filename[0])
     {
@@ -322,37 +339,27 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         return INVALID_HANDLE_VALUE;
     }
 
+    if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+
     TRACE("%s %s%s%s%s%s%s%s attributes 0x%lx\n", debugstr_w(filename),
-	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
-	  ((access & GENERIC_WRITE)==GENERIC_WRITE)?"GENERIC_WRITE ":"",
-	  (!access)?"QUERY_ACCESS ":"",
-	  ((sharing & FILE_SHARE_READ)==FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
-	  ((sharing & FILE_SHARE_WRITE)==FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
-	  ((sharing & FILE_SHARE_DELETE)==FILE_SHARE_DELETE)?"FILE_SHARE_DELETE ":"",
-	  (creation ==CREATE_NEW)?"CREATE_NEW":
-	  (creation ==CREATE_ALWAYS)?"CREATE_ALWAYS ":
-	  (creation ==OPEN_EXISTING)?"OPEN_EXISTING ":
-	  (creation ==OPEN_ALWAYS)?"OPEN_ALWAYS ":
-	  (creation ==TRUNCATE_EXISTING)?"TRUNCATE_EXISTING ":"", attributes);
+          (access & GENERIC_READ)?"GENERIC_READ ":"",
+          (access & GENERIC_WRITE)?"GENERIC_WRITE ":"",
+          (!access)?"QUERY_ACCESS ":"",
+          (sharing & FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
+          (sharing & FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
+          (sharing & FILE_SHARE_DELETE)?"FILE_SHARE_DELETE ":"",
+          creation_name[creation - CREATE_NEW], attributes);
 
     /* Open a console for CONIN$ or CONOUT$ */
+
     if (!strcmpiW(filename, coninW) || !strcmpiW(filename, conoutW))
     {
         ret = OpenConsoleW(filename, access, (sa && sa->bInheritHandle), creation);
         goto done;
-    }
-
-    /* If the name starts with '\\?\', ignore the first 4 chars. */
-    if (!strncmpW(filename, bkslashes_with_question_markW, 4))
-    {
-        static const WCHAR uncW[] = {'U','N','C','\\',0};
-        filename += 4;
-	if (!strncmpiW(filename, uncW, 4))
-	{
-            FIXME("UNC name (%s) not supported.\n", debugstr_w(filename) );
-            SetLastError( ERROR_PATH_NOT_FOUND );
-            return INVALID_HANDLE_VALUE;
-	}
     }
 
     if (!strncmpW(filename, bkslashes_with_dotW, 4))
@@ -375,7 +382,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             else
             {
                 SetLastError( ERROR_ACCESS_DENIED );
-                ret = INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE_VALUE;
             }
             goto done;
         }
@@ -383,10 +390,15 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         {
             dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
         }
-        else
+        else if (filename[4])
         {
             ret = VXD_Open( filename+4, access, sa );
             goto done;
+        }
+        else
+        {
+            SetLastError( ERROR_INVALID_NAME );
+            return INVALID_HANDLE_VALUE;
         }
     }
     else dosdev = RtlIsDosDeviceName_U( filename );
@@ -412,7 +424,6 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                 ret = OpenConsoleW(conoutW, access, (sa && sa->bInheritHandle), creation);
                 goto done;
             default:
-                FIXME("can't open CON read/write\n");
                 SetLastError( ERROR_FILE_NOT_FOUND );
                 return INVALID_HANDLE_VALUE;
             }
@@ -422,32 +433,57 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         goto done;
     }
 
-    /* If the name still starts with '\\', it's a UNC name. */
-    if (!strncmpW(filename, bkslashesW, 2))
+    if (!RtlDosPathNameToNtPathName_U( filename, &nameW, NULL, NULL ))
     {
-        ret = SMB_CreateFileW(filename, access, sharing, sa, creation, attributes, template );
-        goto done;
-    }
-
-    /* If the name contains a DOS wild card (* or ?), do no create a file */
-    if(strchrW(filename, '*') || strchrW(filename, '?'))
-    {
-        SetLastError(ERROR_BAD_PATHNAME);
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
 
-    /* check for filename, don't check for last entry if creating */
-    if (!DOSFS_GetFullName( filename,
-			    (creation == OPEN_EXISTING) ||
-			    (creation == TRUNCATE_EXISTING),
-			    &full_name )) {
-	WARN("Unable to get full filename from %s (GLE %ld)\n",
-	     debugstr_w(filename), GetLastError());
-        return INVALID_HANDLE_VALUE;
-    }
+    /* now call NtCreateFile */
 
-    ret = FILE_CreateFile( full_name.long_name, access, sharing,
-                           sa, creation, attributes, template );
+    options = 0;
+    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
+        options |= FILE_OPEN_FOR_BACKUP_INTENT;
+    else
+        options |= FILE_NON_DIRECTORY_FILE;
+    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
+        options |= FILE_DELETE_ON_CLOSE;
+    if (!(attributes & FILE_FLAG_OVERLAPPED))
+        options |= FILE_SYNCHRONOUS_IO_ALERT;
+    if (attributes & FILE_FLAG_RANDOM_ACCESS)
+        options |= FILE_RANDOM_ACCESS;
+    attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+
+    status = NtCreateFile( &ret, access, &attr, &io, NULL, attributes,
+                           sharing, nt_disposition[creation - CREATE_NEW],
+                           options, NULL, 0 );
+    if (status)
+    {
+        WARN("Unable to create file %s (status %lx)\n", debugstr_w(filename), status);
+        ret = INVALID_HANDLE_VALUE;
+
+        /* In the case file creation was rejected due to CREATE_NEW flag
+         * was specified and file with that name already exists, correct
+         * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
+         * Note: RtlNtStatusToDosError is not the subject to blame here.
+         */
+        if (status == STATUS_OBJECT_NAME_COLLISION)
+            SetLastError( ERROR_FILE_EXISTS );
+        else
+            SetLastError( RtlNtStatusToDosError(status) );
+    }
+    else SetLastError(0);
+    RtlFreeUnicodeString( &nameW );
+
  done:
     if (!ret) ret = INVALID_HANDLE_VALUE;
     TRACE("returning %p\n", ret);
