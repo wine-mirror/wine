@@ -831,6 +831,21 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
     return status;
 }
 
+
+/**************************************************************************
+ *                 RtlAbsoluteToSelfRelativeSD [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAbsoluteToSelfRelativeSD(
+    PSECURITY_DESCRIPTOR AbsoluteSecurityDescriptor,
+    PSECURITY_DESCRIPTOR SelfRelativeSecurityDescriptor,
+    PULONG BufferLength)
+{
+    FIXME("%p %p %p\n", AbsoluteSecurityDescriptor,
+          SelfRelativeSecurityDescriptor, BufferLength);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 /*
  *	access control list's
  */

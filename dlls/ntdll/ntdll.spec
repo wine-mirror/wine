@@ -277,7 +277,7 @@
 @ stub PfxRemovePrefix
 @ stub RestoreEm87Context
 @ stub RtlAbortRXact
-@ stub RtlAbsoluteToSelfRelativeSD
+@ stdcall RtlAbsoluteToSelfRelativeSD(ptr ptr ptr)
 @ stdcall RtlAcquirePebLock()
 @ stdcall RtlAcquireResourceExclusive(ptr long)
 @ stdcall RtlAcquireResourceShared(ptr long)
