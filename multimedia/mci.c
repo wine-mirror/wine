@@ -838,8 +838,12 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	}
     } else {
 	wmd = MCI_GetDriver(mciGetDeviceIDA(dev));
-	if (!wmd) 
-	    FIXME("Oooch: couldn't find driver for '%s'; automatic open not implemented\n", dev);
+	if (!wmd) {
+	    FIXME("Oooch: couldn't find driver for '%s' in '%s'; automatic open is NIY\n", 
+		  dev, lpstrCommand);
+	    dwRet = MCIERR_INVALID_DEVICE_ID;
+	    goto errCleanUp;
+	}
     }
 
     /* get the verb in the different command tables */
@@ -1979,7 +1983,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 {
     char			strDevTyp[128];
     DWORD 			dwRet; 
-    LPWINE_MCIDRIVER		wmd;
+    LPWINE_MCIDRIVER		wmd = 0;
     LPWINE_MM_IDATA		iData;
 
     TRACE("(%08lX, %p)\n", dwParam, lpParms);
@@ -1989,7 +1993,9 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	return MCIERR_INTERNAL;
 
     /* only two low bytes are generic, the other ones are dev type specific */
-#define WINE_MCI_SUPP	(0xFFFF0000|MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT|MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_NOTIFY|MCI_WAIT)
+#define WINE_MCI_SUPP	(0xFFFF0000|MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT| \
+                         MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID| \
+                         MCI_NOTIFY|MCI_WAIT)
     if ((dwParam & ~WINE_MCI_SUPP) != 0) {
 	FIXME("Unsupported yet dwFlags=%08lX\n", dwParam & ~WINE_MCI_SUPP);
     }
@@ -1997,31 +2003,6 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 
     strDevTyp[0] = 0;
 
-    if (dwParam & MCI_OPEN_ELEMENT) {
-	TRACE("lpstrElementName='%s'\n", lpParms->lpstrElementName);
-
-	if (dwParam & MCI_OPEN_ELEMENT_ID) {
-	    FIXME("Unsupported yet flag MCI_OPEN_ELEMENT_ID\n");
-	    dwRet = MCIERR_UNRECOGNIZED_KEYWORD;
-	    goto errCleanUp;
-	}
-
-	if (!lpParms->lpstrElementName) {
-	    dwRet = MCIERR_NULL_PARAMETER_BLOCK;
-	    goto errCleanUp;
-	}
-
-	if (MCI_GetDevTypeFromFileName(lpParms->lpstrElementName, strDevTyp, sizeof(strDevTyp))) {
-	    if (GetDriveTypeA(lpParms->lpstrElementName) == DRIVE_CDROM) {
-		/* FIXME: this will not work if several CDROM drives are installed on the machine */
-		strcpy(strDevTyp, "CDAUDIO");
-	    } else {
-		dwRet = MCIERR_EXTENSION_NOT_FOUND;
-		goto errCleanUp;
-	    }
-	}
-    }
-    
     if (dwParam & MCI_OPEN_TYPE) {
 	if (dwParam & MCI_OPEN_TYPE_ID) {
 	    WORD uDevType = LOWORD((DWORD)lpParms->lpstrDeviceType);
@@ -2042,6 +2023,34 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	TRACE("devType='%s' !\n", strDevTyp);
     }
 
+    if (dwParam & MCI_OPEN_ELEMENT) {
+	TRACE("lpstrElementName='%s'\n", lpParms->lpstrElementName);
+
+	if (dwParam & MCI_OPEN_ELEMENT_ID) {
+	    FIXME("Unsupported yet flag MCI_OPEN_ELEMENT_ID\n");
+	    dwRet = MCIERR_UNRECOGNIZED_KEYWORD;
+	    goto errCleanUp;
+	}
+
+	if (!lpParms->lpstrElementName) {
+	    dwRet = MCIERR_NULL_PARAMETER_BLOCK;
+	    goto errCleanUp;
+	}
+
+	/* type, if given as a parameter, supersedes file extension */
+	if (!strDevTyp[0] && 
+	    MCI_GetDevTypeFromFileName(lpParms->lpstrElementName, 
+				       strDevTyp, sizeof(strDevTyp))) {
+	    if (GetDriveTypeA(lpParms->lpstrElementName) == DRIVE_CDROM) {
+		/* FIXME: this will not work if several CDROM drives are installed on the machine */
+		strcpy(strDevTyp, "CDAUDIO");
+	    } else {
+		dwRet = MCIERR_EXTENSION_NOT_FOUND;
+		goto errCleanUp;
+	    }
+	}
+    }
+    
     if (strDevTyp[0] == 0) {
 	FIXME("Couldn't load driver\n");
 	dwRet = MCIERR_INVALID_DEVICE_NAME;
@@ -2061,7 +2070,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
     }
 
     if ((dwRet = MCI_FinishOpen(wmd, lpParms, dwParam))) {
-	TRACE("Failed to open driver (MCI_OPEN_DRIVER msg) [%08lx], closing\n", dwRet);
+	TRACE("Failed to open driver (MCI_OPEN_DRIVER) [%08lx], closing\n", dwRet);
 	/* FIXME: is dwRet the correct ret code ? */
 	goto errCleanUp;
     }
@@ -2417,7 +2426,7 @@ DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
  *
  * Some MCI commands need to be cleaned-up (when not called from 
  * mciSendString), because MCI drivers return extra information for string
- * transformation. This function gets read of them.
+ * transformation. This function gets rid of them.
  */
 LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 {
@@ -2428,17 +2437,17 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
     case MCI_GETDEVCAPS:
 	switch (dwRet & 0xFFFF0000ul) {
 	case 0:
-	    break;
-	case MCI_RESOURCE_RETURNED:
-	case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 	case MCI_COLONIZED3_RETURN:
 	case MCI_COLONIZED4_RETURN:
 	case MCI_INTEGER_RETURNED:
+	    /* nothing to do */
+	    break;
+	case MCI_RESOURCE_RETURNED:
+	case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 	    {
 		LPMCI_GETDEVCAPS_PARMS	lmgp;
 
 		lmgp = (LPMCI_GETDEVCAPS_PARMS)(bIs32 ? (void*)dwParam2 : PTR_SEG_TO_LIN(dwParam2));
-		dwRet = LOWORD(dwRet);
 		TRACE("Changing %08lx to %08lx\n", lmgp->dwReturn, (DWORD)LOWORD(lmgp->dwReturn));
 		lmgp->dwReturn = LOWORD(lmgp->dwReturn);
 	    } 
@@ -2451,17 +2460,17 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
     case MCI_STATUS:
 	switch (dwRet & 0xFFFF0000ul) {
 	case 0:
-	    break;
-	case MCI_RESOURCE_RETURNED:
-	case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 	case MCI_COLONIZED3_RETURN:
 	case MCI_COLONIZED4_RETURN:
 	case MCI_INTEGER_RETURNED:
+	    /* nothing to do */
+	    break;
+	case MCI_RESOURCE_RETURNED:
+	case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
 	    {
 		LPMCI_STATUS_PARMS	lsp;
 
 		lsp = (LPMCI_STATUS_PARMS)(bIs32 ? (void*)dwParam2 : PTR_SEG_TO_LIN(dwParam2));
-		dwRet = LOWORD(dwRet);
 		TRACE("Changing %08lx to %08lx\n", lsp->dwReturn, (DWORD)LOWORD(lsp->dwReturn));
 		lsp->dwReturn = LOWORD(lsp->dwReturn);
 	    }
@@ -2474,22 +2483,21 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
     case MCI_SYSINFO:
 	switch (dwRet & 0xFFFF0000ul) {
 	case 0:
-	    break;
 	case MCI_INTEGER_RETURNED:
-	    dwRet = LOWORD(dwRet);
+	    /* nothing to do */
 	    break;
 	default:
 	    FIXME("Unsupported value for hiword (%04x)\n", HIWORD(dwRet));	
 	}
 	break;
     default:
-	if (dwRet & 0xFFFF0000ul) {
+	if (HIWORD(dwRet)) {
 	    FIXME("Got non null hiword for dwRet=0x%08lx for command %s\n", 
 		  dwRet, MCI_MessageToString(wMsg));
 	}
 	break;
     }
-    return dwRet;
+    return LOWORD(dwRet);
 }
 
 /**************************************************************************
