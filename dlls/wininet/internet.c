@@ -72,7 +72,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define RESPONSE_TIMEOUT        30
 
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
-(LPWININETAPPINFOW)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
+(LPWININETAPPINFOW)(((LPWININETFTPSESSIONW)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
 
 
 typedef struct
@@ -81,7 +81,7 @@ typedef struct
     CHAR   response[MAX_REPLY_LEN];
 } WITHREADERROR, *LPWITHREADERROR;
 
-BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
+BOOL WINAPI INTERNET_FindNextFileW(HINTERNET hFind, LPVOID lpvFindData);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 					   LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
 VOID INTERNET_ExecuteWork();
@@ -746,12 +746,33 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
  */
 BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 {
+    BOOL ret;
+    WIN32_FIND_DATAW fd;
+    
+    ret = InternetFindNextFileW(hFind, lpvFindData?&fd:NULL);
+    if(lpvFindData)
+        WININET_find_data_WtoA(&fd, (LPWIN32_FIND_DATAA)lpvFindData);
+    return ret;
+}
+
+/***********************************************************************
+ *           InternetFindNextFileW (WININET.@)
+ *
+ * Continues a file search from a previous call to FindFirstFile
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
+{
     LPWININETAPPINFOW hIC = NULL;
-    LPWININETFINDNEXTA lpwh;
+    LPWININETFINDNEXTW lpwh;
 
     TRACE("\n");
 
-    lpwh = (LPWININETFINDNEXTA) WININET_GetObject( hFind );
+    lpwh = (LPWININETFINDNEXTW) WININET_GetObject( hFind );
 
     if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
     {
@@ -763,23 +784,23 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
-        struct WORKREQ_INTERNETFINDNEXTA *req;
+        struct WORKREQ_INTERNETFINDNEXTW *req;
 
-        workRequest.asyncall = INTERNETFINDNEXTA;
+        workRequest.asyncall = INTERNETFINDNEXTW;
 	workRequest.handle = hFind;
-        req = &workRequest.u.InternetFindNextA;
+        req = &workRequest.u.InternetFindNextW;
 	req->lpFindFileData = lpvFindData;
 
 	return INTERNET_AsyncCall(&workRequest);
     }
     else
     {
-        return INTERNET_FindNextFileA(hFind, lpvFindData);
+        return INTERNET_FindNextFileW(hFind, lpvFindData);
     }
 }
 
 /***********************************************************************
- *           INTERNET_FindNextFileA (Internal)
+ *           INTERNET_FindNextFileW (Internal)
  *
  * Continues a file search from a previous call to FindFirstFile
  *
@@ -788,16 +809,16 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
  *    FALSE on failure
  *
  */
-BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
+BOOL WINAPI INTERNET_FindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
     BOOL bSuccess = TRUE;
     LPWININETAPPINFOW hIC = NULL;
-    LPWIN32_FIND_DATAA lpFindFileData;
-    LPWININETFINDNEXTA lpwh;
+    LPWIN32_FIND_DATAW lpFindFileData;
+    LPWININETFINDNEXTW lpwh;
 
     TRACE("\n");
 
-    lpwh = (LPWININETFINDNEXTA) WININET_GetObject( hFind );
+    lpwh = (LPWININETFINDNEXTW) WININET_GetObject( hFind );
     if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -816,7 +837,7 @@ BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 
     TRACE("index(%d) size(%ld)\n", lpwh->index, lpwh->size);
 
-    lpFindFileData = (LPWIN32_FIND_DATAA) lpvFindData;
+    lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
     ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
     if (lpwh->index >= lpwh->size)
@@ -829,12 +850,12 @@ BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
     FTP_ConvertFileProp(&lpwh->lpafp[lpwh->index], lpFindFileData);
     lpwh->index++;
 
-    TRACE("\nName: %s\nSize: %ld\n", lpFindFileData->cFileName, lpFindFileData->nFileSizeLow);
+    TRACE("\nName: %s\nSize: %ld\n", debugstr_w(lpFindFileData->cFileName), lpFindFileData->nFileSizeLow);
 
 lend:
 
     hIC = GET_HWININET_FROM_LPWININETFINDNEXT(lpwh);
-    if (hIC->lpfnStatusCB)
+    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
 
@@ -933,11 +954,11 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 		break;
 
 	    case WH_HFTPSESSION:
-		retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONA) lpwh);
+		retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONW) lpwh);
 		break;
 
 	    case WH_HFINDNEXT:
-		retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTA) lpwh);
+		retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTW) lpwh);
 		break;
 
 	    case WH_HFILE:
@@ -1460,14 +1481,49 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
     INTERNET_STATUS_CALLBACK retVal;
     LPWININETAPPINFOW lpwai;
 
+    TRACE("0x%08lx\n", (ULONG)hInternet);
+    
     lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
         return NULL;
 
-    TRACE("0x%08lx\n", (ULONG)hInternet);
     if (lpwai->hdr.htype != WH_HINIT)
         return INTERNET_INVALID_STATUS_CALLBACK;
 
+    lpwai->hdr.dwInternalFlags &= ~INET_CALLBACKW;
+    retVal = lpwai->lpfnStatusCB;
+    lpwai->lpfnStatusCB = lpfnIntCB;
+
+    return retVal;
+}
+
+/***********************************************************************
+ *           InternetSetStatusCallbackW (WININET.@)
+ *
+ * Sets up a callback function which is called as progress is made
+ * during an operation.
+ *
+ * RETURNS
+ *    Previous callback or NULL 	on success
+ *    INTERNET_INVALID_STATUS_CALLBACK  on failure
+ *
+ */
+INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
+	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
+{
+    INTERNET_STATUS_CALLBACK retVal;
+    LPWININETAPPINFOW lpwai;
+
+    TRACE("0x%08lx\n", (ULONG)hInternet);
+    
+    lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
+    if (!lpwai)
+        return NULL;
+
+    if (lpwai->hdr.htype != WH_HINIT)
+        return INTERNET_INVALID_STATUS_CALLBACK;
+
+    lpwai->hdr.dwInternalFlags |= INET_CALLBACKW;
     retVal = lpwai->lpfnStatusCB;
     lpwai->lpfnStatusCB = lpfnIntCB;
 
@@ -2071,7 +2127,13 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
 	client = FTP_Connect(hInternet, hostName, urlComponents.nPort,
 			     userName, password, dwFlags, dwContext, INET_OPENURL);
+	if(client == NULL)
+	    break;
 	client1 = FtpOpenFileW(client, path, GENERIC_READ, dwFlags, dwContext);
+	if(client1 == NULL) {
+	    InternetCloseHandle(client);
+	    break;
+	}
 	break;
 	
     case INTERNET_SCHEME_HTTP:
@@ -2096,7 +2158,6 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	HttpAddRequestHeadersW(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
 	if (!HTTP_HttpSendRequestW(client1, NULL, 0, NULL, 0)) {
 	    InternetCloseHandle(client1);
-	    InternetCloseHandle(client);
 	    client1 = NULL;
 	    break;
 	}
@@ -2425,17 +2486,17 @@ VOID INTERNET_ExecuteWork()
     if (TRACE_ON(wininet)) {
 	static const wininet_flag_info work_request_types[] = {
 #define FE(x) { x, #x }
-	    FE(FTPPUTFILEA),
-	    FE(FTPSETCURRENTDIRECTORYA),
-	    FE(FTPCREATEDIRECTORYA),
-	    FE(FTPFINDFIRSTFILEA),
-	    FE(FTPGETCURRENTDIRECTORYA),
-	    FE(FTPOPENFILEA),
-	    FE(FTPGETFILEA),
-	    FE(FTPDELETEFILEA),
-	    FE(FTPREMOVEDIRECTORYA),
-	    FE(FTPRENAMEFILEA),
-	    FE(INTERNETFINDNEXTA),
+	    FE(FTPPUTFILEW),
+	    FE(FTPSETCURRENTDIRECTORYW),
+	    FE(FTPCREATEDIRECTORYW),
+	    FE(FTPFINDFIRSTFILEW),
+	    FE(FTPGETCURRENTDIRECTORYW),
+	    FE(FTPOPENFILEW),
+	    FE(FTPGETFILEW),
+	    FE(FTPDELETEFILEW),
+	    FE(FTPREMOVEDIRECTORYW),
+	    FE(FTPRENAMEFILEW),
+	    FE(INTERNETFINDNEXTW),
 	    FE(HTTPSENDREQUESTW),
 	    FE(HTTPOPENREQUESTW),
 	    FE(SENDCALLBACK),
@@ -2456,11 +2517,11 @@ VOID INTERNET_ExecuteWork()
     }
     switch (workRequest.asyncall)
     {
-    case FTPPUTFILEA:
+    case FTPPUTFILEW:
         {
-        struct WORKREQ_FTPPUTFILEA *req = &workRequest.u.FtpPutFileA;
+        struct WORKREQ_FTPPUTFILEW *req = &workRequest.u.FtpPutFileW;
 
-	FTP_FtpPutFileA(workRequest.handle, req->lpszLocalFile,
+	FTP_FtpPutFileW(workRequest.handle, req->lpszLocalFile,
                    req->lpszNewRemoteFile, req->dwFlags, req->dwContext);
 
 	HeapFree(GetProcessHeap(), 0, req->lpszLocalFile);
@@ -2468,62 +2529,62 @@ VOID INTERNET_ExecuteWork()
         }
 	break;
 
-    case FTPSETCURRENTDIRECTORYA:
+    case FTPSETCURRENTDIRECTORYW:
         {
-        struct WORKREQ_FTPSETCURRENTDIRECTORYA *req;
+        struct WORKREQ_FTPSETCURRENTDIRECTORYW *req;
 
-        req = &workRequest.u.FtpSetCurrentDirectoryA;
-	FTP_FtpSetCurrentDirectoryA(workRequest.handle, req->lpszDirectory);
+        req = &workRequest.u.FtpSetCurrentDirectoryW;
+	FTP_FtpSetCurrentDirectoryW(workRequest.handle, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
 
-    case FTPCREATEDIRECTORYA:
+    case FTPCREATEDIRECTORYW:
         {
-        struct WORKREQ_FTPCREATEDIRECTORYA *req;
+        struct WORKREQ_FTPCREATEDIRECTORYW *req;
 
-        req = &workRequest.u.FtpCreateDirectoryA;
-	FTP_FtpCreateDirectoryA(workRequest.handle, req->lpszDirectory);
+        req = &workRequest.u.FtpCreateDirectoryW;
+	FTP_FtpCreateDirectoryW(workRequest.handle, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
 
-    case FTPFINDFIRSTFILEA:
+    case FTPFINDFIRSTFILEW:
         {
-        struct WORKREQ_FTPFINDFIRSTFILEA *req;
+        struct WORKREQ_FTPFINDFIRSTFILEW *req;
 
-        req = &workRequest.u.FtpFindFirstFileA;
-        FTP_FtpFindFirstFileA(workRequest.handle, req->lpszSearchFile,
+        req = &workRequest.u.FtpFindFirstFileW;
+        FTP_FtpFindFirstFileW(workRequest.handle, req->lpszSearchFile,
            req->lpFindFileData, req->dwFlags, req->dwContext);
 	HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
         }
 	break;
 
-    case FTPGETCURRENTDIRECTORYA:
+    case FTPGETCURRENTDIRECTORYW:
         {
-        struct WORKREQ_FTPGETCURRENTDIRECTORYA *req;
+        struct WORKREQ_FTPGETCURRENTDIRECTORYW *req;
 
-        req = &workRequest.u.FtpGetCurrentDirectoryA;
-        FTP_FtpGetCurrentDirectoryA(workRequest.handle,
+        req = &workRequest.u.FtpGetCurrentDirectoryW;
+        FTP_FtpGetCurrentDirectoryW(workRequest.handle,
 		req->lpszDirectory, req->lpdwDirectory);
         }
 	break;
 
-    case FTPOPENFILEA:
+    case FTPOPENFILEW:
         {
-        struct WORKREQ_FTPOPENFILEA *req = &workRequest.u.FtpOpenFileA;
+        struct WORKREQ_FTPOPENFILEW *req = &workRequest.u.FtpOpenFileW;
 
-        FTP_FtpOpenFileA(workRequest.handle, req->lpszFilename,
+        FTP_FtpOpenFileW(workRequest.handle, req->lpszFilename,
             req->dwAccess, req->dwFlags, req->dwContext);
         HeapFree(GetProcessHeap(), 0, req->lpszFilename);
         }
         break;
 
-    case FTPGETFILEA:
+    case FTPGETFILEW:
         {
-        struct WORKREQ_FTPGETFILEA *req = &workRequest.u.FtpGetFileA;
+        struct WORKREQ_FTPGETFILEW *req = &workRequest.u.FtpGetFileW;
 
-        FTP_FtpGetFileA(workRequest.handle, req->lpszRemoteFile,
+        FTP_FtpGetFileW(workRequest.handle, req->lpszRemoteFile,
                  req->lpszNewFile, req->fFailIfExists,
                  req->dwLocalFlagsAttribute, req->dwFlags, req->dwContext);
 	HeapFree(GetProcessHeap(), 0, req->lpszRemoteFile);
@@ -2531,41 +2592,41 @@ VOID INTERNET_ExecuteWork()
         }
 	break;
 
-    case FTPDELETEFILEA:
+    case FTPDELETEFILEW:
         {
-        struct WORKREQ_FTPDELETEFILEA *req = &workRequest.u.FtpDeleteFileA;
+        struct WORKREQ_FTPDELETEFILEW *req = &workRequest.u.FtpDeleteFileW;
 
-        FTP_FtpDeleteFileA(workRequest.handle, req->lpszFilename);
+        FTP_FtpDeleteFileW(workRequest.handle, req->lpszFilename);
 	HeapFree(GetProcessHeap(), 0, req->lpszFilename);
         }
 	break;
 
-    case FTPREMOVEDIRECTORYA:
+    case FTPREMOVEDIRECTORYW:
         {
-        struct WORKREQ_FTPREMOVEDIRECTORYA *req;
+        struct WORKREQ_FTPREMOVEDIRECTORYW *req;
 
-        req = &workRequest.u.FtpRemoveDirectoryA;
-        FTP_FtpRemoveDirectoryA(workRequest.handle, req->lpszDirectory);
+        req = &workRequest.u.FtpRemoveDirectoryW;
+        FTP_FtpRemoveDirectoryW(workRequest.handle, req->lpszDirectory);
 	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
         }
 	break;
 
-    case FTPRENAMEFILEA:
+    case FTPRENAMEFILEW:
         {
-        struct WORKREQ_FTPRENAMEFILEA *req = &workRequest.u.FtpRenameFileA;
+        struct WORKREQ_FTPRENAMEFILEW *req = &workRequest.u.FtpRenameFileW;
 
-        FTP_FtpRenameFileA(workRequest.handle, req->lpszSrcFile, req->lpszDestFile);
+        FTP_FtpRenameFileW(workRequest.handle, req->lpszSrcFile, req->lpszDestFile);
 	HeapFree(GetProcessHeap(), 0, req->lpszSrcFile);
 	HeapFree(GetProcessHeap(), 0, req->lpszDestFile);
         }
 	break;
 
-    case INTERNETFINDNEXTA:
+    case INTERNETFINDNEXTW:
         {
-        struct WORKREQ_INTERNETFINDNEXTA *req;
+        struct WORKREQ_INTERNETFINDNEXTW *req;
 
-        req = &workRequest.u.InternetFindNextA;
-	INTERNET_FindNextFileA(workRequest.handle, req->lpFindFileData);
+        req = &workRequest.u.InternetFindNextW;
+	INTERNET_FindNextFileW(workRequest.handle, req->lpFindFileData);
         }
 	break;
 
@@ -2643,12 +2704,13 @@ LPSTR INTERNET_GetResponseBuffer()
  *
  */
 
-LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer)
+LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen)
 {
     struct timeval tv;
     fd_set infd;
     BOOL bSuccess = FALSE;
     INT nRecv = 0;
+    LPSTR lpszBuffer = INTERNET_GetResponseBuffer();
 
     TRACE("\n");
 
@@ -2657,7 +2719,7 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer)
     tv.tv_sec=RESPONSE_TIMEOUT;
     tv.tv_usec=0;
 
-    while (nRecv < *dwBuffer)
+    while (nRecv < MAX_REPLY_LEN)
     {
         if (select(nSocket+1,&infd,NULL,NULL,&tv) > 0)
         {
@@ -2686,7 +2748,7 @@ lend:
     if (bSuccess)
     {
         lpszBuffer[nRecv] = '\0';
-	*dwBuffer = nRecv - 1;
+	*dwLen = nRecv - 1;
         TRACE(":%d %s\n", nRecv, lpszBuffer);
         return lpszBuffer;
     }

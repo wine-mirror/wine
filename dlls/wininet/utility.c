@@ -219,20 +219,27 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo, DWORD dwStatusInfoLength)
 {
-        if (! (hIC->lpfnStatusCB))
-            return;
+    LPVOID lpvNewInfo = NULL;
+    if (! (hIC->lpfnStatusCB))
+        return;
 
-        /* the IE5 version of wininet does not
-           send callbacks if dwContext is zero */
-        if( !dwContext )
-            return;
+    /* the IE5 version of wininet does not
+       send callbacks if dwContext is zero */
+    if( !dwContext )
+        return;
 
-        TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
+    TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
-        hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
-                          lpvStatusInfo, dwStatusInfoLength);
+    if(!(hIC->hdr.dwInternalFlags & INET_CALLBACKW)) {
+        if(dwInternetStatus == INTERNET_STATUS_RESOLVING_NAME)
+            lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
+    }
+    hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
+                      lpvNewInfo?lpvNewInfo:lpvStatusInfo, dwStatusInfoLength);
+    if(lpvNewInfo)
+        HeapFree(GetProcessHeap(), 0, lpvNewInfo);
 
-        TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
+    TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 }
 
 

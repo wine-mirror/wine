@@ -54,7 +54,7 @@
 @ stdcall FtpCreateDirectoryA(ptr str)
 @ stdcall FtpCreateDirectoryW(ptr wstr)
 @ stdcall FtpDeleteFileA(ptr str)
-@ stub FtpDeleteFileW
+@ stdcall FtpDeleteFileW(ptr wstr)
 @ stdcall FtpFindFirstFileA(ptr str ptr long long)
 @ stdcall FtpFindFirstFileW(ptr wstr ptr long long)
 @ stdcall FtpGetCurrentDirectoryA(ptr str ptr)
@@ -64,11 +64,11 @@
 @ stdcall FtpOpenFileA(ptr str long long long)
 @ stdcall FtpOpenFileW(ptr wstr long long long)
 @ stdcall FtpPutFileA(ptr str str long long)
-@ stub FtpPutFileW
+@ stdcall FtpPutFileW(ptr wstr wstr long long)
 @ stdcall FtpRemoveDirectoryA(ptr str)
-@ stub FtpRemoveDirectoryW
+@ stdcall FtpRemoveDirectoryW(ptr wstr)
 @ stdcall FtpRenameFileA(ptr str str)
-@ stub FtpRenameFileW
+@ stdcall FtpRenameFileW(ptr wstr wstr)
 @ stdcall FtpSetCurrentDirectoryA(ptr str)
 @ stdcall FtpSetCurrentDirectoryW(ptr wstr)
 @ stdcall GetUrlCacheConfigInfoA(ptr ptr long)
@@ -123,7 +123,7 @@
 @ stub InternetDial
 @ stdcall InternetErrorDlg(long long long long ptr)
 @ stdcall InternetFindNextFileA(ptr ptr)
-@ stub InternetFindNextFileW
+@ stdcall InternetFindNextFileW(ptr ptr)
 @ stub InternetGetCertByURL
 @ stdcall InternetGetConnectedState(ptr long)
 @ stdcall InternetGetConnectedStateExW(ptr ptr long long)
@@ -156,7 +156,7 @@
 @ stdcall InternetSetOptionExW(ptr long ptr long long)
 @ stdcall InternetSetStatusCallback(ptr ptr) InternetSetStatusCallbackA
 @ stdcall InternetSetStatusCallbackA(ptr ptr)
-@ stub InternetSetStatusCallbackW
+@ stdcall InternetSetStatusCallbackW(ptr ptr)
 @ stub InternetShowSecurityInfoByURL
 @ stub InternetTimeFromSystemTime
 @ stub InternetTimeToSystemTime

@@ -70,6 +70,42 @@ inline static LPWSTR WININET_strdupW( LPCWSTR str )
     return ret;
 }
 
+inline static LPWSTR WININET_strdup_AtoW( LPCSTR str )
+{
+    int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0);
+    LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if (ret)
+        MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+inline static LPSTR WININET_strdup_WtoA( LPCWSTR str )
+{
+    int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, len );
+    if (ret)
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL);
+    return ret;
+}
+
+inline static void WININET_find_data_WtoA(LPWIN32_FIND_DATAW dataW, LPWIN32_FIND_DATAA dataA)
+{
+    dataA->dwFileAttributes = dataW->dwFileAttributes;
+    dataA->ftCreationTime   = dataW->ftCreationTime;
+    dataA->ftLastAccessTime = dataW->ftLastAccessTime;
+    dataA->ftLastWriteTime  = dataW->ftLastWriteTime;
+    dataA->nFileSizeHigh    = dataW->nFileSizeHigh;
+    dataA->nFileSizeLow     = dataW->nFileSizeLow;
+    dataA->dwReserved0      = dataW->dwReserved0;
+    dataA->dwReserved1      = dataW->dwReserved1;
+    WideCharToMultiByte(CP_ACP, 0, dataW->cFileName, -1, 
+        dataA->cFileName, sizeof(dataA->cFileName),
+        NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, dataW->cAlternateFileName, -1, 
+        dataA->cAlternateFileName, sizeof(dataA->cAlternateFileName),
+        NULL, NULL);
+}
+
 typedef enum
 {
     WH_HINIT = INTERNET_HANDLE_TYPE_INTERNET,
@@ -82,6 +118,7 @@ typedef enum
 } WH_TYPE;
 
 #define INET_OPENURL 0x0001
+#define INET_CALLBACKW 0x0002
 
 typedef struct _WININETHANDLEHEADER
 {
@@ -161,19 +198,19 @@ typedef struct
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
     struct hostent *phostent;
-    LPSTR  lpszPassword;
-    LPSTR  lpszUserName;
-} WININETFTPSESSIONA, *LPWININETFTPSESSIONA;
+    LPWSTR  lpszPassword;
+    LPWSTR  lpszUserName;
+} WININETFTPSESSIONW, *LPWININETFTPSESSIONW;
 
 
 typedef struct
 {
     BOOL bIsDirectory;
-    LPSTR lpszName;
+    LPWSTR lpszName;
     DWORD nSize;
     struct tm tmLastModified;
     unsigned short permissions;
-} FILEPROPERTIESA, *LPFILEPROPERTIESA;
+} FILEPROPERTIESW, *LPFILEPROPERTIESW;
 
 
 typedef struct
@@ -181,97 +218,97 @@ typedef struct
     WININETHANDLEHEADER hdr;
     int index;
     DWORD size;
-    LPFILEPROPERTIESA lpafp;
-} WININETFINDNEXTA, *LPWININETFINDNEXTA;
+    LPFILEPROPERTIESW lpafp;
+} WININETFINDNEXTW, *LPWININETFINDNEXTW;
 
 typedef enum
 {
-    FTPPUTFILEA,
-    FTPSETCURRENTDIRECTORYA,
-    FTPCREATEDIRECTORYA,
-    FTPFINDFIRSTFILEA,
-    FTPGETCURRENTDIRECTORYA,
-    FTPOPENFILEA,
-    FTPGETFILEA,
-    FTPDELETEFILEA,
-    FTPREMOVEDIRECTORYA,
-    FTPRENAMEFILEA,
-    INTERNETFINDNEXTA,
+    FTPPUTFILEW,
+    FTPSETCURRENTDIRECTORYW,
+    FTPCREATEDIRECTORYW,
+    FTPFINDFIRSTFILEW,
+    FTPGETCURRENTDIRECTORYW,
+    FTPOPENFILEW,
+    FTPGETFILEW,
+    FTPDELETEFILEW,
+    FTPREMOVEDIRECTORYW,
+    FTPRENAMEFILEW,
+    INTERNETFINDNEXTW,
     HTTPSENDREQUESTW,
     HTTPOPENREQUESTW,
     SENDCALLBACK,
     INTERNETOPENURLW,
 } ASYNC_FUNC;
 
-struct WORKREQ_FTPPUTFILEA
+struct WORKREQ_FTPPUTFILEW
 {
-    LPSTR lpszLocalFile;
-    LPSTR lpszNewRemoteFile;
+    LPWSTR lpszLocalFile;
+    LPWSTR lpszNewRemoteFile;
     DWORD  dwFlags;
     DWORD  dwContext;
 };
 
-struct WORKREQ_FTPSETCURRENTDIRECTORYA
+struct WORKREQ_FTPSETCURRENTDIRECTORYW
 {
-    LPSTR lpszDirectory;
+    LPWSTR lpszDirectory;
 };
 
-struct WORKREQ_FTPCREATEDIRECTORYA
+struct WORKREQ_FTPCREATEDIRECTORYW
 {
-    LPSTR lpszDirectory;
+    LPWSTR lpszDirectory;
 };
 
-struct WORKREQ_FTPFINDFIRSTFILEA
+struct WORKREQ_FTPFINDFIRSTFILEW
 {
-    LPSTR lpszSearchFile;
-    LPWIN32_FIND_DATAA lpFindFileData;
+    LPWSTR lpszSearchFile;
+    LPWIN32_FIND_DATAW lpFindFileData;
     DWORD  dwFlags;
     DWORD  dwContext;
 };
 
-struct WORKREQ_FTPGETCURRENTDIRECTORYA
+struct WORKREQ_FTPGETCURRENTDIRECTORYW
 {
-    LPSTR lpszDirectory;
+    LPWSTR lpszDirectory;
     DWORD *lpdwDirectory;
 };
 
-struct WORKREQ_FTPOPENFILEA
+struct WORKREQ_FTPOPENFILEW
 {
-    LPSTR lpszFilename;
+    LPWSTR lpszFilename;
     DWORD  dwAccess;
     DWORD  dwFlags;
     DWORD  dwContext;
 };
 
-struct WORKREQ_FTPGETFILEA
+struct WORKREQ_FTPGETFILEW
 {
-    LPSTR lpszRemoteFile;
-    LPSTR lpszNewFile;
+    LPWSTR lpszRemoteFile;
+    LPWSTR lpszNewFile;
     BOOL   fFailIfExists;
     DWORD  dwLocalFlagsAttribute;
     DWORD  dwFlags;
     DWORD  dwContext;
 };
 
-struct WORKREQ_FTPDELETEFILEA
+struct WORKREQ_FTPDELETEFILEW
 {
-    LPSTR lpszFilename;
+    LPWSTR lpszFilename;
 };
 
-struct WORKREQ_FTPREMOVEDIRECTORYA
+struct WORKREQ_FTPREMOVEDIRECTORYW
 {
-    LPSTR lpszDirectory;
+    LPWSTR lpszDirectory;
 };
 
-struct WORKREQ_FTPRENAMEFILEA
+struct WORKREQ_FTPRENAMEFILEW
 {
-    LPSTR lpszSrcFile;
-    LPSTR lpszDestFile;
+    LPWSTR lpszSrcFile;
+    LPWSTR lpszDestFile;
 };
 
-struct WORKREQ_INTERNETFINDNEXTA
+struct WORKREQ_INTERNETFINDNEXTW
 {
-    LPWIN32_FIND_DATAA lpFindFileData;
+    LPWIN32_FIND_DATAW lpFindFileData;
 };
 
 struct WORKREQ_HTTPOPENREQUESTW
@@ -318,17 +355,17 @@ typedef struct WORKREQ
     HINTERNET handle;
 
     union {
-        struct WORKREQ_FTPPUTFILEA              FtpPutFileA;
-        struct WORKREQ_FTPSETCURRENTDIRECTORYA  FtpSetCurrentDirectoryA;
-        struct WORKREQ_FTPCREATEDIRECTORYA      FtpCreateDirectoryA;
-        struct WORKREQ_FTPFINDFIRSTFILEA        FtpFindFirstFileA;
-        struct WORKREQ_FTPGETCURRENTDIRECTORYA  FtpGetCurrentDirectoryA;
-        struct WORKREQ_FTPOPENFILEA             FtpOpenFileA;
-        struct WORKREQ_FTPGETFILEA              FtpGetFileA;
-        struct WORKREQ_FTPDELETEFILEA           FtpDeleteFileA;
-        struct WORKREQ_FTPREMOVEDIRECTORYA      FtpRemoveDirectoryA;
-        struct WORKREQ_FTPRENAMEFILEA           FtpRenameFileA;
-        struct WORKREQ_INTERNETFINDNEXTA        InternetFindNextA;
+        struct WORKREQ_FTPPUTFILEW              FtpPutFileW;
+        struct WORKREQ_FTPSETCURRENTDIRECTORYW  FtpSetCurrentDirectoryW;
+        struct WORKREQ_FTPCREATEDIRECTORYW      FtpCreateDirectoryW;
+        struct WORKREQ_FTPFINDFIRSTFILEW        FtpFindFirstFileW;
+        struct WORKREQ_FTPGETCURRENTDIRECTORYW  FtpGetCurrentDirectoryW;
+        struct WORKREQ_FTPOPENFILEW             FtpOpenFileW;
+        struct WORKREQ_FTPGETFILEW              FtpGetFileW;
+        struct WORKREQ_FTPDELETEFILEW           FtpDeleteFileW;
+        struct WORKREQ_FTPREMOVEDIRECTORYW      FtpRemoveDirectoryW;
+        struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
+        struct WORKREQ_INTERNETFINDNEXTW        InternetFindNextW;
         struct WORKREQ_HTTPOPENREQUESTW         HttpOpenRequestW;
         struct WORKREQ_HTTPSENDREQUESTW         HttpSendRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
@@ -364,26 +401,26 @@ void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError();
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer();
-LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer);
+LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 
-BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs);
-BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn);
+BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONW lpwfs);
+BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTW lpwfn);
 BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwfn);
-BOOLAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
-    LPCSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory);
-BOOLAPI FTP_FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory);
-INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
-    LPCSTR lpszSearchFile, LPWIN32_FIND_DATAA lpFindFileData, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory,
+BOOLAPI FTP_FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
+    LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext);
+BOOLAPI FTP_FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory);
+BOOLAPI FTP_FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory);
+INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(HINTERNET hConnect,
+    LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext);
+BOOLAPI FTP_FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
-BOOL FTP_ConvertFileProp(LPFILEPROPERTIESA lpafp, LPWIN32_FIND_DATAA lpFindFileData);
-BOOL FTP_FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDest);
-BOOL FTP_FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory);
-BOOL FTP_FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName);
-HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession, LPCSTR lpszFileName,
+BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);
+BOOL FTP_FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszDest);
+BOOL FTP_FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory);
+BOOL FTP_FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName);
+HINTERNET FTP_FtpOpenFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName,
 	DWORD fdwAccess, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
+BOOLAPI FTP_FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD dwContext);
 
