@@ -483,6 +483,22 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define PUBLICKEYBLOBEX         0xA
 #define SYMMETRICWRAPKEYBLOB    0xB
 
+#define CERT_STORE_PROV_MSG        ((LPCSTR)1)
+#define CERT_STORE_PROV_MEMORY     ((LPCSTR)2)
+#define CERT_STORE_PROV_FILE       ((LPCSTR)3)
+#define CERT_STORE_PROV_REG        ((LPCSTR)4)
+#define CERT_STORE_PROV_PKCS7      ((LPCSTR)5)
+#define CERT_STORE_PROV_SERIALIZED ((LPCSTR)6)
+#define CERT_STORE_PROV_FILENAME_A ((LPCSTR)7)
+#define CERT_STORE_PROV_FILENAME_W ((LPCSTR)8)
+#define CERT_STORE_PROV_SYSTEM_A   ((LPCSTR)9)
+#define CERT_STORE_PROV_SYSTEM_W   ((LPCSTR)10)
+
+#define X509_ASN_ENCODING   0x00000001
+#define X509_NDR_ENCODING   0x00000002
+#define PKCS_7_ASN_ENCODING 0x00010000
+#define PKCS_7_NDR_ENCODING 0x00020000
+
 /* function declarations */
 /* advapi32.dll */
 BOOL WINAPI CryptAcquireContextA(HCRYPTPROV *phProv, LPCSTR pszContainer,
@@ -535,6 +551,8 @@ BOOL WINAPI CryptHashData (HCRYPTHASH hHash, BYTE *pbData, DWORD dwDataLen, DWOR
 BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags);
 BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
 		HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey);
+BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
+
 BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags);
 BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen);
