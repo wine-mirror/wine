@@ -610,7 +610,7 @@ sub source_scan_directory
     # Ask confirmation to the user if he wishes so
     if ($opt_is_interactive == $OPT_ASK_YES) {
       my $target_list=join " ",keys %targets;
-      print "\n*** In $path\n";
+      print "\n*** In ",($path?$path:"./"),"\n";
       print "* winemaker found the following list of (potential) targets\n";
       print "*   $target_list\n";
       print "* Type enter to use it as is, your own comma-separated list of\n";
@@ -1481,7 +1481,7 @@ sub generate_list
   my $first=$name;
 
   if ($name) {
-    printf FILEO "%-21s =",$name;
+    printf FILEO "%-22s=",$name;
   }
   if (defined $list) {
     foreach $item (@$list) {
@@ -1537,10 +1537,10 @@ sub generate_project_files
   print FILEO "\n\n";
 
   print FILEO "### Generic autoconf variables\n\n";
-  print FILEO "TOPSRCDIR = \@top_srcdir\@\n";
-  print FILEO "TOPOBJDIR = .\n";
-  print FILEO "SRCDIR    = \@srcdir\@\n";
-  print FILEO "VPATH     = \@srcdir\@\n";
+  generate_list("TOPSRCDIR",1,[ "\@top_srcdir\@" ]);
+  generate_list("TOPOBJDIR",1,[ "." ]);
+  generate_list("SRCDIR",1,[ "\@srcdir\@" ]);
+  generate_list("VPATH",1,[ "\@srcdir\@" ]);
   print FILEO "\n";
   if (@$project[$P_PATH] eq "") {
     # This is the main project. It is also responsible for recursively 
@@ -1588,7 +1588,7 @@ sub generate_project_files
 		    if (is_absolute($')) {
 		      return "$_[0]";
 		    }
-		    return "\$(TOPSRCDIR)/$_[0]";
+		    return "-I\$(TOPSRCDIR)/$'";
 		  });
     generate_list("LIBRARY_PATH",$no_extra,@$project_settings[$T_LIBRARY_PATH],sub 
 		  {
@@ -1602,7 +1602,7 @@ sub generate_project_files
 		    if (is_absolute($')) {
 		      return "$_[0]";
 		    }
-		    return "\$(TOPSRCDIR)/$_[0]";
+		    return "-L\$(TOPSRCDIR)/$'";
 		  });
     generate_list("LIBRARIES",$no_extra,@$project_settings[$T_LIBRARIES],sub 
 		  {
@@ -1703,7 +1703,7 @@ sub generate_project_files
     print FILEO "\$(SUBDIRS)";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\$(EXES:%=%.so) \$(DLLS)";
+    print FILEO "\$(DLLS) \$(EXES:%=%.so)";
   }
   print FILEO "\n\n";
   print FILEO "\@MAKE_RULES\@\n";
@@ -2018,7 +2018,7 @@ if (defined $usage) {
   print STDERR "                 [--lower-include|--nolower-include]\n";
   print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
-  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-iimport] [-llibrary]\n";
+  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-idll] [-llibrary]\n";
   print STDERR "                 [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
   exit (2);
