@@ -5,11 +5,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcrt4.dll
 IMPORTS   = kernel32
+EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	cproxy.c \
 	ndr_stubless.c \
 	rpc_binding.c \
 	rpc_message.c \

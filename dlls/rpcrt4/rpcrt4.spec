@@ -195,9 +195,9 @@ init	RPCRT4_LibMain
 @ stub NdrCStdStubBuffer2_Release
 @ stub NdrCStdStubBuffer_Release
 
-@ stub IUnknown_QueryInterface_Proxy
-@ stub IUnknown_AddRef_Proxy
-@ stub IUnknown_Release_Proxy
+@ stdcall IUnknown_QueryInterface_Proxy(ptr ptr ptr) IUnknown_QueryInterface_Proxy
+@ stdcall IUnknown_AddRef_Proxy(ptr) IUnknown_AddRef_Proxy
+@ stdcall IUnknown_Release_Proxy(ptr) IUnknown_Release_Proxy
 
 @ stub NdrAllocate
 @ stub NdrAsyncClientCall
