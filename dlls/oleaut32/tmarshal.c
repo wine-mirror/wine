@@ -500,10 +500,12 @@ serialize_param(
 	return S_OK;
     case VT_BOOL:
     case VT_ERROR:
-    case VT_UI4:
     case VT_UINT:
     case VT_I4:
+    case VT_I2:
+    case VT_I1:
     case VT_R4:
+    case VT_UI4:
     case VT_UI2:
     case VT_UI1:
 	hres = S_OK;
@@ -527,6 +529,30 @@ serialize_param(
 	if (debugout) TRACE_(olerelay)(")");
 	return hres;
     }
+    case VT_BSTR|VT_BYREF: {
+        if (debugout) TRACE_(olerelay)("[byref]'%s'", *arg ? relaystr(*((BSTR*)*arg)) : "<bstr NULL>");
+        if (writeit) {
+            /* ptr to ptr to magic widestring, basically */
+            BSTR *bstr = (BSTR *) *arg;
+            if (!bstr) {
+                /* -1 means "null string" which is equivalent to empty string */
+                DWORD fakelen = -1;     
+                xbuf_add(buf, (LPBYTE)&fakelen,4);
+            } else {
+                /* BSTRs store the length behind the first character */
+                DWORD *len = ((DWORD *)(*bstr))-1;
+                hres = xbuf_add(buf, (LPBYTE) len, *len + 4);
+                if (hres) return hres;
+            }
+        }
+
+        if (dealloc && arg) {
+            BSTR *str = *((BSTR **)arg);
+            SysFreeString(*str);
+        }
+        return S_OK;
+    }
+    
     case VT_BSTR: {
 	if (debugout) {
 	    if (arg)
@@ -850,7 +876,13 @@ deserialize_param(
 	    }
 	}
         case VT_ERROR:
-	case VT_BOOL: case VT_I4: case VT_UI4: case VT_UINT: case VT_R4:
+	case VT_BOOL:
+        case VT_I4:
+        case VT_I2:
+        case VT_I1:
+        case VT_UINT:
+        case VT_R4:
+        case VT_UI4:
         case VT_UI2:
 	case VT_UI1:
 	    if (readit) {
@@ -859,6 +891,37 @@ deserialize_param(
 	    }
 	    if (debugout) TRACE_(olerelay)("%lx",*arg);
 	    return hres;
+	case VT_BSTR|VT_BYREF: {
+	    BSTR **bstr = (BSTR **)arg;
+	    WCHAR	*str;
+	    DWORD	len;
+
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)&len,sizeof(DWORD));
+		if (hres) {
+		    ERR("failed to read bstr klen\n");
+		    return hres;
+		}
+		if (len == -1) {
+		    *bstr = NULL;
+		    if (debugout) TRACE_(olerelay)("<bstr NULL>");
+		} else {
+		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
+		    hres = xbuf_get(buf,(LPBYTE)str,len);
+		    if (hres) {
+			ERR("Failed to read BSTR.\n");
+			return hres;
+		    }
+                    *bstr = CoTaskMemAlloc(sizeof(BSTR *));
+		    **bstr = SysAllocStringLen(str,len);
+		    if (debugout) TRACE_(olerelay)("%s",relaystr(str));
+		    HeapFree(GetProcessHeap(),0,str);
+		}
+	    } else {
+	        *bstr = NULL;
+	    }
+	    return S_OK;
+	}
 	case VT_BSTR: {
 	    WCHAR	*str;
 	    DWORD	len;
@@ -949,8 +1012,6 @@ deserialize_param(
 	    if (hres) {
 		ERR("Could not get typeattr in VT_USERDEFINED.\n");
 	    } else {
-		if (alloc)
-		    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,tattr->cbSizeInstance);
 		switch (tattr->typekind) {
 		case TKIND_DISPATCH:
 		case TKIND_INTERFACE:
@@ -959,6 +1020,9 @@ deserialize_param(
 		    break;
 		case TKIND_RECORD: {
 		    int i;
+
+		    if (alloc)
+			*arg = (DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,tattr->cbSizeInstance);
 
 		    if (debugout) TRACE_(olerelay)("{");
 		    for (i=0;i<tattr->cVars;i++) {
