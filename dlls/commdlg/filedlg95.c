@@ -248,12 +248,12 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
 
     /* Create the dialog from a template */
 
-    if(!(hRes = FindResourceA(COMMDLG_hInstance32,MAKEINTRESOURCEA(NEWFILEOPENORD),RT_DIALOGA)))
+    if(!(hRes = FindResourceA(COMDLG32_hInstance,MAKEINTRESOURCEA(NEWFILEOPENORD),RT_DIALOGA)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
     }
-    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hRes )) ||
+    if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hRes )) ||
         !(template = LockResource( hDlgTmpl )))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -269,7 +269,7 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
       fodInfos->HookMsg.sharevistring = RegisterWindowMessageA(SHAREVISTRINGA);
     }
 
-    lRes = DialogBoxIndirectParamA(COMMDLG_hInstance32,
+    lRes = DialogBoxIndirectParamA(COMDLG32_hInstance,
                                   (LPDLGTEMPLATEA) template,
                                   fodInfos->ofnInfos->hwndOwner,
                                   FileOpenDlgProc95,
@@ -990,7 +990,7 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 		default:
 		    stringId = 0;
 	    }
-	    lpdi->hinst = COMMDLG_hInstance32;
+	    lpdi->hinst = COMDLG32_hInstance;
 	    lpdi->lpszText =  (LPSTR) stringId;
 	}
         return FALSE;
@@ -1070,7 +1070,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
   fodInfos->DlgInfos.hwndTB = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL,
         WS_CHILD | WS_GROUP | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE,
-        0, 0, 150, 26, hwnd, (HMENU) IDC_TOOLBAR, COMMDLG_hInstance32, NULL);
+        0, 0, 150, 26, hwnd, (HMENU) IDC_TOOLBAR, COMDLG32_hInstance, NULL);
 
   SetWindowPos(fodInfos->DlgInfos.hwndTB, 0,
   	rectTB.left,rectTB.top, rectTB.right-rectTB.left, rectTB.bottom-rectTB.top,
@@ -1521,8 +1521,8 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
         WCHAR tmp[400];
         WCHAR nl[] = {'\n',0};
 
-        LoadStringW(COMMDLG_hInstance32, IDS_FILENOTFOUND, lpstrNotFound, 100);
-        LoadStringW(COMMDLG_hInstance32, IDS_VERIFYFILE, lpstrMsg, 100);
+        LoadStringW(COMDLG32_hInstance, IDS_FILENOTFOUND, lpstrNotFound, 100);
+        LoadStringW(COMDLG32_hInstance, IDS_VERIFYFILE, lpstrMsg, 100);
 
         strcpyW(tmp, lpstrTemp);
         strcatW(tmp, nl);

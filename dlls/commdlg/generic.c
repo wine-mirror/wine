@@ -29,10 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-HINSTANCE16	COMMDLG_hInstance = 0;
-HINSTANCE	COMMDLG_hInstance32 = 0;
-static int	COMMDLG_Attach = 0;
-
 /***********************************************************************
  *	DllEntryPoint			[COMMDLG.32]
  *
@@ -43,30 +39,6 @@ static int	COMMDLG_Attach = 0;
 BOOL WINAPI COMMDLG_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
 	TRACE("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
-	switch(Reason)
-	{
-	case DLL_PROCESS_ATTACH:
-		if (COMMDLG_Attach++) break;
-		COMMDLG_hInstance = hInst;
-		if(!COMMDLG_hInstance32)
-		{
-			if(!(COMMDLG_hInstance32 = LoadLibraryA("comdlg32.dll")))
-			{
-				ERR("Could not load sibling comdlg32.dll\n");
-				return FALSE;
-			}
-		}
-		break;
-
-	case DLL_PROCESS_DETACH:
-		if(!--COMMDLG_Attach)
-		{
-			COMMDLG_hInstance = 0;
-			if(COMMDLG_hInstance32)
-				FreeLibrary(COMMDLG_hInstance32);
-		}
-		break;
-	}
 	return TRUE;
 }
 

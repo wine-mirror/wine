@@ -1407,12 +1407,12 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
 	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
 	}
-	if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo)) ||
+	if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo)) ||
 	    !(template32 = LockResource(hDlgTmpl32)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -1492,12 +1492,12 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     {
 	HRSRC hResInfo;
 	HGLOBAL hDlgTmpl;
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
 	}
-	if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
 	    !(template = LockResource(hDlgTmpl)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -1505,7 +1505,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 	}
     }
 
-    bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template, lpChCol->hwndOwner,
+    bRet = DialogBoxIndirectParamW(COMDLG32_hInstance, template, lpChCol->hwndOwner,
                      ColorDlgProc, (DWORD)lpChCol);
     return bRet;
 }

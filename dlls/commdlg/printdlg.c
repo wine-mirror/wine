@@ -2109,19 +2109,19 @@ static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
         HGLOBAL16 hGlobal16;
         LPVOID template;
 
-        if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
+        if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
                PrintResourceName, RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return 0;
         }
-        if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+        if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo )) ||
             !(template32 = LockResource( hDlgTmpl32 )))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return 0;
         }
-        size = SizeofResource(COMMDLG_hInstance32, hResInfo);
+        size = SizeofResource(COMDLG32_hInstance, hResInfo);
         hGlobal16 = GlobalAlloc16(0, size);
         if (!hGlobal16)
         {

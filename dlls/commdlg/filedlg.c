@@ -174,13 +174,13 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
 	}
     } else { /* get it from internal Wine resource */
 	HRSRC hResInfo;
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
              lfs->open? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
         }
-        if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+        if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
                 !(lfs->template = LockResource( hDlgTmpl )))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -230,13 +230,13 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
         LPCVOID template32;
         DWORD size;
 
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
                lfs->open ? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
 	}
-	if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo )) ||
 	    !(template32 = LockResource( hDlgTmpl32 )))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);

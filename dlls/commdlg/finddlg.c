@@ -102,7 +102,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
         DWORD size;
         HGLOBAL16 hGlobal16;
 
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
                lfr->find ?
                MAKEINTRESOURCEA(FINDDLGORD):MAKEINTRESOURCEA(REPLACEDLGORD),
                RT_DIALOGA)))
@@ -110,7 +110,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
 	}
-	if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo )) ||
 	    !(template32 = LockResource( hDlgTmpl32 )))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);

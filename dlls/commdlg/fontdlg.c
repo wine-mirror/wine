@@ -242,12 +242,12 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
-        if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+        if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
-        if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo)) ||
+        if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo)) ||
             !(template32 = LockResource(hDlgTmpl32)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -336,7 +336,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
       }
     } else
     {
-      hDlginst=COMMDLG_hInstance32;
+      hDlginst=COMDLG32_hInstance;
       if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", RT_DIALOGA)))
       {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -356,7 +356,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS ))
     FIXME(": unimplemented flag (ignored)\n");
 
-  return DialogBoxIndirectParamA(COMMDLG_hInstance32, template,
+  return DialogBoxIndirectParamA(COMDLG32_hInstance, template,
             lpChFont->hwndOwner, FormatCharDlgProcA, (LPARAM)lpChFont );
 }
 
@@ -485,12 +485,12 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   if (TRACE_ON(commdlg))
 	_dump_cf_flags(lpChFont->Flags);
 
-  if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+  if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", RT_DIALOGA)))
   {
     COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
     return FALSE;
   }
-  if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+  if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo )) ||
       !(template = LockResource( hDlgTmpl )))
   {
     COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -508,7 +508,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   cf32a.lpLogFont=&lf32a;
   cf32a.lpszStyle=HEAP_strdupWtoA(GetProcessHeap(), 0, lpChFont->lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)&cf32a;
-  bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template,
+  bRet = DialogBoxIndirectParamW(COMDLG32_hInstance, template,
             lpChFont->hwndOwner, FormatCharDlgProcW, (LPARAM)lpChFont );
   HeapFree(GetProcessHeap(), 0, cf32a.lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)cf32a.lpTemplateName;
@@ -805,7 +805,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     {
       char name[30];
 
-      if( LoadStringA(COMMDLG_hInstance32, IDS_COLOR_BLACK+i, name,
+      if( LoadStringA(COMDLG32_hInstance, IDS_COLOR_BLACK+i, name,
               sizeof(name)/sizeof(*name) )==0 )
       {
           strcpy( name, "[color name]" );

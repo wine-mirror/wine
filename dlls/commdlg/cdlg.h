@@ -26,12 +26,6 @@
 #include "wine/windef16.h"
 #include "wownt32.h"
 
-/*---------------- 16-bit ----------------*/
-extern HINSTANCE16	COMMDLG_hInstance;
-extern HINSTANCE	COMMDLG_hInstance32;
-
-/*---------------- 32-bit ----------------*/
-
 /* Common dialogs implementation globals */
 #define COMDLG32_Atom	((ATOM)0xa000)	/* MS uses this one to identify props */
 
