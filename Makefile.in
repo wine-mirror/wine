@@ -126,7 +126,7 @@ crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
 # Misc rules
 
 TAGS etags:
-	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print`
+	find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print | etags -
 
 tags ctags:
 	ctags --c-types=+px `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print`
