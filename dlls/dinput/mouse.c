@@ -1070,7 +1070,6 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
 
 static IDirectInputDevice8AVtbl SysMouseAvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
     SysMouseAImpl_Release,
@@ -1113,7 +1112,6 @@ static IDirectInputDevice8AVtbl SysMouseAvt =
 
 static IDirectInputDevice8WVtbl SysMouseWvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectInputDevice2WImpl_QueryInterface,
     XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
     XCAST(Release)SysMouseAImpl_Release,

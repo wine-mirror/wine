@@ -245,7 +245,6 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
 
 static IAMMultiMediaStreamVtbl AM_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAMMultiMediaStreamImpl_QueryInterface,
     IAMMultiMediaStreamImpl_AddRef,
     IAMMultiMediaStreamImpl_Release,

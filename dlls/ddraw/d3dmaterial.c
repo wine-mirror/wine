@@ -328,7 +328,6 @@ static void activate(IDirect3DMaterialImpl* This) {
 
 IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DMaterialImpl_3_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DMaterialImpl_3_2T_1T_AddRef,
     XCAST(Release) Main_IDirect3DMaterialImpl_3_2T_1T_Release,
@@ -350,7 +349,6 @@ IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
 
 IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DMaterialImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DMaterialImpl_2_Release,
@@ -372,7 +370,6 @@ IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
 
 IDirect3DMaterialVtbl VTABLE_IDirect3DMaterial =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DMaterialImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DMaterialImpl_1_Release,

@@ -1986,7 +1986,6 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 
 static struct IShellViewVtbl svvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellView_fnQueryInterface,
 	IShellView_fnAddRef,
 	IShellView_fnRelease,
@@ -2099,7 +2098,6 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 
 static IOleCommandTargetVtbl ctvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVOleCmdTarget_QueryInterface,
 	ISVOleCmdTarget_AddRef,
 	ISVOleCmdTarget_Release,
@@ -2195,7 +2193,6 @@ static HRESULT WINAPI ISVDropTarget_Drop(
 
 static struct IDropTargetVtbl dtvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVDropTarget_QueryInterface,
 	ISVDropTarget_AddRef,
 	ISVDropTarget_Release,
@@ -2266,7 +2263,6 @@ static HRESULT WINAPI ISVDropSource_GiveFeedback(
 
 static struct IDropSourceVtbl dsvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVDropSource_QueryInterface,
 	ISVDropSource_AddRef,
 	ISVDropSource_Release,
@@ -2398,7 +2394,6 @@ static HRESULT WINAPI ISVViewObject_GetAdvise(
 
 static struct IViewObjectVtbl vovt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVViewObject_QueryInterface,
 	ISVViewObject_AddRef,
 	ISVViewObject_Release,

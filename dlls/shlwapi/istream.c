@@ -322,7 +322,6 @@ static HRESULT WINAPI IStream_fnClone(IStream *iface, IStream** ppstm)
 
 static struct IStreamVtbl SHLWAPI_fsVTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IStream_fnQueryInterface,
   IStream_fnAddRef,
   IStream_fnRelease,

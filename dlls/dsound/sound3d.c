@@ -700,7 +700,6 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 
 static IDirectSound3DBufferVtbl ds3dbvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
 	IDirectSound3DBufferImpl_QueryInterface,
 	IDirectSound3DBufferImpl_AddRef,
@@ -1081,7 +1080,6 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 
 static IDirectSound3DListenerVtbl ds3dlvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
 	IDirectSound3DListenerImpl_QueryInterface,
 	IDirectSound3DListenerImpl_AddRef,

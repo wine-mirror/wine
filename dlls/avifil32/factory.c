@@ -49,7 +49,6 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,LPUNKN
 static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL dolock);
 
 static IClassFactoryVtbl iclassfact = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IClassFactory_fnQueryInterface,
   IClassFactory_fnAddRef,
   IClassFactory_fnRelease,

@@ -54,7 +54,6 @@ static HRESULT WINAPI IFileSystemBindData_fnSetFindData(IFileSystemBindData *ifa
 
 static struct IFileSystemBindDataVtbl sbvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IFileSystemBindData_fnQueryInterface,
     IFileSystemBindData_fnAddRef,
     IFileSystemBindData_fnRelease,

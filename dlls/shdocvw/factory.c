@@ -111,7 +111,6 @@ static HRESULT WINAPI WBCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 
 static IClassFactoryVtbl WBCF_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBCF_QueryInterface,
     WBCF_AddRef,
     WBCF_Release,

@@ -737,7 +737,6 @@ HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFile (LPD
 }
 
 IDirectMusicLoader8Vtbl DirectMusicLoader_Loader_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderImpl_IDirectMusicLoader_QueryInterface,
 	IDirectMusicLoaderImpl_IDirectMusicLoader_AddRef,
 	IDirectMusicLoaderImpl_IDirectMusicLoader_Release,

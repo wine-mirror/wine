@@ -189,7 +189,6 @@ static HRESULT WINAPI EnumMonikerImpl_Clone(LPENUMMONIKER iface, IEnumMoniker **
  */
 static IEnumMonikerVtbl EnumMonikerImpl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     EnumMonikerImpl_QueryInterface,
     EnumMonikerImpl_AddRef,
     EnumMonikerImpl_Release,

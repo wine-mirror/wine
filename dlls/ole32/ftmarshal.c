@@ -92,7 +92,6 @@ ULONG WINAPI IiFTMUnknown_fnRelease (IUnknown * iface)
 
 static IUnknownVtbl iunkvt =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IiFTMUnknown_fnQueryInterface,
 	IiFTMUnknown_fnAddRef,
 	IiFTMUnknown_fnRelease
@@ -203,7 +202,6 @@ HRESULT WINAPI FTMarshalImpl_DisconnectObject (LPMARSHAL iface, DWORD dwReserved
 
 IMarshalVtbl ftmvtbl =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	FTMarshalImpl_QueryInterface,
 	FTMarshalImpl_AddRef,
 	FTMarshalImpl_Release,

@@ -672,7 +672,6 @@ static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 
 static IClassFactoryVtbl MLANGCF_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     MLANGCF_QueryInterface,
     MLANGCF_AddRef,
     MLANGCF_Release,
@@ -919,7 +918,6 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
 
 static IEnumCodePageVtbl IEnumCodePage_vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIEnumCodePage_QueryInterface,
     fnIEnumCodePage_AddRef,
     fnIEnumCodePage_Release,
@@ -1089,7 +1087,6 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
 
 static IEnumScriptVtbl IEnumScript_vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIEnumScript_QueryInterface,
     fnIEnumScript_AddRef,
     fnIEnumScript_Release,
@@ -1241,7 +1238,6 @@ static HRESULT WINAPI fnIMLangFontLink_ResetFontMapping(
 
 static IMLangFontLinkVtbl IMLangFontLink_vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMLangFontLink_QueryInterface,
     fnIMLangFontLink_AddRef,
     fnIMLangFontLink_Release,
@@ -1426,7 +1422,6 @@ static HRESULT WINAPI fnIMultiLanguage_CreateConvertCharset(
 
 static IMultiLanguageVtbl IMultiLanguage_vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMultiLanguage_QueryInterface,
     fnIMultiLanguage_AddRef,
     fnIMultiLanguage_Release,
@@ -1877,7 +1872,6 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
 
 static IMultiLanguage2Vtbl IMultiLanguage2_vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     fnIMultiLanguage2_QueryInterface,
     fnIMultiLanguage2_AddRef,
     fnIMultiLanguage2_Release,

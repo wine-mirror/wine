@@ -112,7 +112,6 @@ static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
 /* IPersistStream and IMoniker functions.                                       */
 static IMonikerVtbl VT_ItemMonikerImpl =
     {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ItemMonikerImpl_QueryInterface,
     ItemMonikerImpl_AddRef,
     ItemMonikerImpl_Release,
@@ -142,7 +141,6 @@ static IMonikerVtbl VT_ItemMonikerImpl =
 /* Virtual function table for the IROTData class.                               */
 static IROTDataVtbl VT_ROTDataImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ItemMonikerROTDataImpl_QueryInterface,
     ItemMonikerROTDataImpl_AddRef,
     ItemMonikerROTDataImpl_Release,

@@ -466,7 +466,6 @@ PipeBuf_IsConnected(LPRPCCHANNELBUFFER iface) {
 }
 
 static IRpcChannelBufferVtbl pipebufvt = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PipeBuf_QueryInterface,
     PipeBuf_AddRef,
     PipeBuf_Release,

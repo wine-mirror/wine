@@ -412,7 +412,6 @@ static HRESULT WINAPI WBOOBJ_SetColorScheme(LPOLEOBJECT iface,
 
 static IOleObjectVtbl WBOOBJ_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOOBJ_QueryInterface,
     WBOOBJ_AddRef,
     WBOOBJ_Release,
@@ -530,7 +529,6 @@ static HRESULT WINAPI WBOIPO_ReactivateAndUndo(LPOLEINPLACEOBJECT iface)
 
 static IOleInPlaceObjectVtbl WBOIPO_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOIPO_QueryInterface,
     WBOIPO_AddRef,
     WBOIPO_Release,
@@ -605,7 +603,6 @@ static HRESULT WINAPI WBOC_FreezeEvents(LPOLECONTROL iface, BOOL bFreeze)
 
 static IOleControlVtbl WBOC_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOC_QueryInterface,
     WBOC_AddRef,
     WBOC_Release,

@@ -100,7 +100,6 @@ static HRESULT WINAPI IAVIFile_fnEndRecord(IAVIFile*iface);
 static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
 
 struct IAVIFileVtbl iwavft = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IAVIFile_fnQueryInterface,
   IAVIFile_fnAddRef,
   IAVIFile_fnRelease,
@@ -124,7 +123,6 @@ static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile*iface,LPCOLESTR 
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile*iface,LPOLESTR*ppszFileName);
 
 struct IPersistFileVtbl iwavpft = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IPersistFile_fnQueryInterface,
   IPersistFile_fnAddRef,
   IPersistFile_fnRelease,
@@ -152,7 +150,6 @@ static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID l
 static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
 struct IAVIStreamVtbl iwavst = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IAVIStream_fnQueryInterface,
   IAVIStream_fnAddRef,
   IAVIStream_fnRelease,

@@ -787,7 +787,6 @@ static HRESULT WINAPI ISF_ControlPanel_fnMapColumnToSCID(IShellFolder2 * iface, 
 
 static IShellFolder2Vtbl vt_ShellFolder2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ISF_ControlPanel_fnQueryInterface,
     ISF_ControlPanel_fnAddRef,
@@ -894,7 +893,6 @@ static HRESULT WINAPI ICPanel_PersistFolder2_GetCurFolder(IPersistFolder2 * ifac
 
 static IPersistFolder2Vtbl vt_PersistFolder2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ICPanel_PersistFolder2_QueryInterface,
     ICPanel_PersistFolder2_AddRef,
@@ -1004,7 +1002,6 @@ static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW* iface, LP
 
 static IShellExecuteHookWVtbl vt_ShellExecuteHookW =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     IShellExecuteHookW_fnQueryInterface,
     IShellExecuteHookW_fnAddRef,
@@ -1084,7 +1081,6 @@ static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA* iface, LP
 
 static IShellExecuteHookAVtbl vt_ShellExecuteHookA =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     IShellExecuteHookA_fnQueryInterface,
     IShellExecuteHookA_fnAddRef,

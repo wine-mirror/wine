@@ -89,7 +89,6 @@ HRESULT WINAPI IDirectMusicPortDownloadImpl_Unload (LPDIRECTMUSICPORTDOWNLOAD if
 }
 
 IDirectMusicPortDownloadVtbl DirectMusicPortDownload_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicPortDownloadImpl_QueryInterface,
 	IDirectMusicPortDownloadImpl_AddRef,
 	IDirectMusicPortDownloadImpl_Release,

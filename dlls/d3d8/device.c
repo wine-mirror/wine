@@ -4345,7 +4345,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, U
 
 IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DDevice8Impl_QueryInterface,
     IDirect3DDevice8Impl_AddRef,
     IDirect3DDevice8Impl_Release,

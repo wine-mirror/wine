@@ -115,7 +115,6 @@ static HRESULT URLMonikerImpl_Destroy(URLMonikerImpl* iface);
 /* IPersistStream and IMoniker functions.                                       */
 static IMonikerVtbl VT_URLMonikerImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     URLMonikerImpl_QueryInterface,
     URLMonikerImpl_AddRef,
     URLMonikerImpl_Release,
@@ -143,7 +142,6 @@ static IMonikerVtbl VT_URLMonikerImpl =
 
 static IBindingVtbl VTBinding_URLMonikerImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     URLMonikerImpl_IBinding_QueryInterface,
     URLMonikerImpl_IBinding_AddRef,
     URLMonikerImpl_IBinding_Release,

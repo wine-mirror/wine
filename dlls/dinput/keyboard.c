@@ -697,7 +697,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
 
 static IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	SysKeyboardAImpl_Release,
@@ -740,7 +739,6 @@ static IDirectInputDevice8AVtbl SysKeyboardAvt =
 
 static IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
 	XCAST(Release)SysKeyboardAImpl_Release,

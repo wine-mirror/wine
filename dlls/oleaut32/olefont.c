@@ -222,7 +222,6 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
  */
 static IFontVtbl OLEFontImpl_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_QueryInterface,
   OLEFontImpl_AddRef,
   OLEFontImpl_Release,
@@ -254,7 +253,6 @@ static IFontVtbl OLEFontImpl_VTable =
 
 static IDispatchVtbl OLEFontImpl_IDispatch_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IDispatch_QueryInterface,
   OLEFontImpl_IDispatch_AddRef,
   OLEFontImpl_IDispatch_Release,
@@ -266,7 +264,6 @@ static IDispatchVtbl OLEFontImpl_IDispatch_VTable =
 
 static IPersistStreamVtbl OLEFontImpl_IPersistStream_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistStream_QueryInterface,
   OLEFontImpl_IPersistStream_AddRef,
   OLEFontImpl_IPersistStream_Release,
@@ -280,7 +277,6 @@ static IPersistStreamVtbl OLEFontImpl_IPersistStream_VTable =
 static IConnectionPointContainerVtbl
      OLEFontImpl_IConnectionPointContainer_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IConnectionPointContainer_QueryInterface,
   OLEFontImpl_IConnectionPointContainer_AddRef,
   OLEFontImpl_IConnectionPointContainer_Release,
@@ -1981,7 +1977,6 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Save(
 
 static IPersistPropertyBagVtbl OLEFontImpl_IPersistPropertyBag_VTable = 
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistPropertyBag_QueryInterface,
   OLEFontImpl_IPersistPropertyBag_AddRef,
   OLEFontImpl_IPersistPropertyBag_Release,
@@ -2060,7 +2055,6 @@ static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_InitNew(
 
 static IPersistStreamInitVtbl OLEFontImpl_IPersistStreamInit_VTable = 
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistStreamInit_QueryInterface,
   OLEFontImpl_IPersistStreamInit_AddRef,
   OLEFontImpl_IPersistStreamInit_Release,
@@ -2117,7 +2111,6 @@ static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl SFCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SFCF_QueryInterface,
 	SFCF_AddRef,
 	SFCF_Release,

@@ -205,7 +205,6 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMe
 
 static const IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IEnumMediaTypesImpl_QueryInterface,
     IEnumMediaTypesImpl_AddRef,
     IEnumMediaTypesImpl_Release,

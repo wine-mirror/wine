@@ -96,7 +96,6 @@ static HRESULT WINAPI WBPS_SaveCompleted(LPPERSISTSTORAGE iface, LPSTORAGE pStgN
 
 static IPersistStorageVtbl WBPS_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPS_QueryInterface,
     WBPS_AddRef,
     WBPS_Release,
@@ -185,7 +184,6 @@ static HRESULT WINAPI WBPSI_InitNew(LPPERSISTSTREAMINIT iface)
 
 static IPersistStreamInitVtbl WBPSI_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPSI_QueryInterface,
     WBPSI_AddRef,
     WBPSI_Release,

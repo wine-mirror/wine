@@ -209,7 +209,6 @@ GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 
 IDirect3DLightVtbl VTABLE_IDirect3DLight =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DLightImpl_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DLightImpl_1_AddRef,
     XCAST(Release) GL_IDirect3DLightImpl_1_Release,

@@ -182,7 +182,6 @@ static HRESULT WINAPI RpcStream_SetSize(LPSTREAM iface,
 
 static IStreamVtbl RpcStream_Vtbl =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   RpcStream_QueryInterface,
   RpcStream_AddRef,
   RpcStream_Release,

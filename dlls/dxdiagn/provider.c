@@ -96,7 +96,6 @@ HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDi
 
 IDxDiagProviderVtbl DxDiagProvider_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDxDiagProviderImpl_QueryInterface,
     IDxDiagProviderImpl_AddRef,
     IDxDiagProviderImpl_Release,

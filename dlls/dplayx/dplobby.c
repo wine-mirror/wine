@@ -1766,7 +1766,6 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 /* All lobby 1 methods are exactly the same except QueryInterface */
 static struct IDirectPlayLobbyVtbl directPlayLobbyAVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
@@ -1797,7 +1796,6 @@ static struct IDirectPlayLobbyVtbl directPlayLobbyAVT =
 /* Direct Play Lobby 1 (unicode) Virtual Table for methods */
 static IDirectPlayLobbyVtbl directPlayLobbyWVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
@@ -1827,7 +1825,6 @@ static IDirectPlayLobbyVtbl directPlayLobbyWVT =
 /* Direct Play Lobby 2 (ascii) Virtual Table for methods */
 static IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
@@ -1859,7 +1856,6 @@ static IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 /* Direct Play Lobby 2 (unicode) Virtual Table for methods */
 static IDirectPlayLobby2Vtbl directPlayLobby2WVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
@@ -1892,7 +1888,6 @@ static IDirectPlayLobby2Vtbl directPlayLobby2WVT =
 
 static IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
   XCAST(Release)DPL_Release,
@@ -1929,7 +1924,6 @@ static IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 
 static IDirectPlayLobby3Vtbl directPlayLobby3WVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
   XCAST(Release)DPL_Release,

@@ -131,7 +131,6 @@ HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, D
 }
 
 IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicBufferImpl_QueryInterface,
 	IDirectMusicBufferImpl_AddRef,
 	IDirectMusicBufferImpl_Release,

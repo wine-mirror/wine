@@ -363,7 +363,6 @@ static HRESULT WINAPI IEnumIDList_fnClone(
  */
 static IEnumIDListVtbl eidlvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEnumIDList_fnQueryInterface,
 	IEnumIDList_fnAddRef,
 	IEnumIDList_fnRelease,

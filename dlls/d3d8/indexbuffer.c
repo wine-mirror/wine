@@ -127,7 +127,6 @@ HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 
 
 IDirect3DIndexBuffer8Vtbl Direct3DIndexBuffer8_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DIndexBuffer8Impl_QueryInterface,
     IDirect3DIndexBuffer8Impl_AddRef,
     IDirect3DIndexBuffer8Impl_Release,

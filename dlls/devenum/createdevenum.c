@@ -192,7 +192,6 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
  */
 static ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_ICreateDevEnum_QueryInterface,
     DEVENUM_ICreateDevEnum_AddRef,
     DEVENUM_ICreateDevEnum_Release,

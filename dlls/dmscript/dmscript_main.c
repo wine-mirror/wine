@@ -62,7 +62,6 @@ static HRESULT WINAPI ScriptAutoImplSegmentCF_LockServer(LPCLASSFACTORY iface,BO
 }
 
 static IClassFactoryVtbl ScriptAutoImplSegmentCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplSegmentCF_QueryInterface,
 	ScriptAutoImplSegmentCF_AddRef,
 	ScriptAutoImplSegmentCF_Release,
@@ -105,7 +104,6 @@ static HRESULT WINAPI ScriptTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 }
 
 static IClassFactoryVtbl ScriptTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptTrackCF_QueryInterface,
 	ScriptTrackCF_AddRef,
 	ScriptTrackCF_Release,
@@ -150,7 +148,6 @@ static HRESULT WINAPI AudioVBScriptCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 }
 
 static IClassFactoryVtbl AudioVBScriptCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	AudioVBScriptCF_QueryInterface,
 	AudioVBScriptCF_AddRef,
 	AudioVBScriptCF_Release,
@@ -193,7 +190,6 @@ static HRESULT WINAPI ScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl ScriptCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptCF_QueryInterface,
 	ScriptCF_AddRef,
 	ScriptCF_Release,
@@ -238,7 +234,6 @@ static HRESULT WINAPI ScriptAutoImplPerformanceCF_LockServer(LPCLASSFACTORY ifac
 }
 
 static IClassFactoryVtbl ScriptAutoImplPerformanceCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplPerformanceCF_QueryInterface,
 	ScriptAutoImplPerformanceCF_AddRef,
 	ScriptAutoImplPerformanceCF_Release,
@@ -283,7 +278,6 @@ static HRESULT WINAPI ScriptSourceCodeLoaderCF_LockServer(LPCLASSFACTORY iface,B
 }
 
 static IClassFactoryVtbl ScriptSourceCodeLoaderCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptSourceCodeLoaderCF_QueryInterface,
 	ScriptSourceCodeLoaderCF_AddRef,
 	ScriptSourceCodeLoaderCF_Release,
@@ -328,7 +322,6 @@ static HRESULT WINAPI ScriptAutoImplSegmentStateCF_LockServer(LPCLASSFACTORY ifa
 }
 
 static IClassFactoryVtbl ScriptAutoImplSegmentStateCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplSegmentStateCF_QueryInterface,
 	ScriptAutoImplSegmentStateCF_AddRef,
 	ScriptAutoImplSegmentStateCF_Release,
@@ -373,7 +366,6 @@ static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_LockServer(LPCLASSFACTORY 
 }
 
 static IClassFactoryVtbl ScriptAutoImplAudioPathConfigCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplAudioPathConfigCF_QueryInterface,
 	ScriptAutoImplAudioPathConfigCF_AddRef,
 	ScriptAutoImplAudioPathConfigCF_Release,
@@ -418,7 +410,6 @@ static HRESULT WINAPI ScriptAutoImplAudioPathCF_LockServer(LPCLASSFACTORY iface,
 }
 
 static IClassFactoryVtbl ScriptAutoImplAudioPathCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplAudioPathCF_QueryInterface,
 	ScriptAutoImplAudioPathCF_AddRef,
 	ScriptAutoImplAudioPathCF_Release,
@@ -463,7 +454,6 @@ static HRESULT WINAPI ScriptAutoImplSongCF_LockServer(LPCLASSFACTORY iface,BOOL 
 }
 
 static IClassFactoryVtbl ScriptAutoImplSongCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ScriptAutoImplSongCF_QueryInterface,
 	ScriptAutoImplSongCF_AddRef,
 	ScriptAutoImplSongCF_Release,

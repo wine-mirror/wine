@@ -915,7 +915,6 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetParamEx (LPDIRECTMUSICPERFORMANCE
 }
 
 IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicPerformance8Impl_QueryInterface,
 	IDirectMusicPerformance8Impl_AddRef,
 	IDirectMusicPerformance8Impl_Release,

@@ -237,7 +237,6 @@ CFStub_DebugServerRelease(LPRPCSTUBBUFFER iface,void *pv) {
 }
 
 static IRpcStubBufferVtbl cfstubvt = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CFStub_QueryInterface,
     CFStub_AddRef,
     CFStub_Release,
@@ -412,7 +411,6 @@ static HRESULT WINAPI CFProxy_LockServer(LPCLASSFACTORY iface,BOOL fLock) {
 }
 
 static IRpcProxyBufferVtbl pspbvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IRpcProxyBufferImpl_QueryInterface,
     IRpcProxyBufferImpl_AddRef,
     IRpcProxyBufferImpl_Release,
@@ -420,7 +418,6 @@ static IRpcProxyBufferVtbl pspbvtbl = {
     IRpcProxyBufferImpl_Disconnect
 };
 static IClassFactoryVtbl cfproxyvt = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CFProxy_QueryInterface,
     CFProxy_AddRef,
     CFProxy_Release,
@@ -496,7 +493,6 @@ PSFacBuf_CreateStub(
 }
 
 static IPSFactoryBufferVtbl psfacbufvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PSFacBuf_QueryInterface,
     PSFacBuf_AddRef,
     PSFacBuf_Release,

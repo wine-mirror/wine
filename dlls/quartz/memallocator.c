@@ -403,7 +403,6 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
 
 static const IMemAllocatorVtbl BaseMemAllocator_VTable = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     BaseMemAllocator_QueryInterface,
     BaseMemAllocator_AddRef,
     BaseMemAllocator_Release,
@@ -737,7 +736,6 @@ static HRESULT WINAPI StdMediaSample2_SetProperties(IMediaSample2 * iface, DWORD
 
 static const IMediaSample2Vtbl StdMediaSample2_VTable = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StdMediaSample2_QueryInterface,
     StdMediaSample2_AddRef,
     StdMediaSample2_Release,

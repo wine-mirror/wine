@@ -304,7 +304,6 @@ static void light_released(IDirectDrawImpl *This, GLenum light_num)
 
 IDirect3D7Vtbl VTABLE_IDirect3D7 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_7_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_7_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_7_Release,
@@ -328,7 +327,6 @@ IDirect3D7Vtbl VTABLE_IDirect3D7 =
 
 IDirect3D3Vtbl VTABLE_IDirect3D3 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_3_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_3_Release,
@@ -356,7 +354,6 @@ IDirect3D3Vtbl VTABLE_IDirect3D3 =
 
 IDirect3D2Vtbl VTABLE_IDirect3D2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_2_Release,
@@ -381,7 +378,6 @@ IDirect3D2Vtbl VTABLE_IDirect3D2 =
 
 IDirect3DVtbl VTABLE_IDirect3D =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_1_Release,

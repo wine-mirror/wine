@@ -198,7 +198,7 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
 
 static IUnknownVtbl unkvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE IUnknown_fnQueryInterface,
+      IUnknown_fnQueryInterface,
       IUnknown_fnAddRef,
       IUnknown_fnRelease,
 };
@@ -860,7 +860,6 @@ static HRESULT WINAPI IShellFolder_fnMapColumnToSCID (IShellFolder2 * iface, UIN
 
 static IShellFolder2Vtbl sfvt =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellFolder_fnQueryInterface,
 	IShellFolder_fnAddRef,
 	IShellFolder_fnRelease,
@@ -1100,7 +1099,6 @@ ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl, LPC
 
 static ISFHelperVtbl shvt =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFHelper_fnQueryInterface,
 	ISFHelper_fnAddRef,
 	ISFHelper_fnRelease,
@@ -1276,7 +1274,6 @@ IFSFldr_PersistFolder3_GetFolderTargetInfo (IPersistFolder3 * iface, PERSIST_FOL
 
 static IPersistFolder3Vtbl vt_FSFldr_PersistFolder3 =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IFSFldr_PersistFolder3_QueryInterface,
 	IFSFldr_PersistFolder3_AddRef,
 	IFSFldr_PersistFolder3_Release,
@@ -1390,7 +1387,6 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject, DWORD dwKeyS
 }
 
 static struct IDropTargetVtbl dtvt = {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFDropTarget_QueryInterface,
 	ISFDropTarget_AddRef,
 	ISFDropTarget_Release,

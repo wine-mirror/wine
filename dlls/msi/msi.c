@@ -1411,7 +1411,6 @@ static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl MsiCF_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   MsiCF_QueryInterface,
   MsiCF_AddRef,
   MsiCF_Release,

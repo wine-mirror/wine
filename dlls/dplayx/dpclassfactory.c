@@ -87,7 +87,6 @@ static HRESULT WINAPI DP_and_DPL_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl DP_and_DPL_Vtbl = {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         DP_and_DPL_QueryInterface,
         DP_and_DPL_AddRef,
         DP_and_DPL_Release,

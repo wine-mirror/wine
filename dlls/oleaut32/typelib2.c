@@ -2800,7 +2800,6 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
 
 static ICreateTypeInfo2Vtbl ctypeinfo2vt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ICreateTypeInfo2_fnQueryInterface,
     ICreateTypeInfo2_fnAddRef,
@@ -2849,7 +2848,6 @@ static ICreateTypeInfo2Vtbl ctypeinfo2vt =
 
 static ITypeInfo2Vtbl typeinfo2vt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ITypeInfo2_fnQueryInterface,
     ITypeInfo2_fnAddRef,
@@ -3759,7 +3757,6 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
 
 static ICreateTypeLib2Vtbl ctypelib2vt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ICreateTypeLib2_fnQueryInterface,
     ICreateTypeLib2_fnAddRef,
@@ -3784,7 +3781,6 @@ static ICreateTypeLib2Vtbl ctypelib2vt =
 
 static ITypeLib2Vtbl typelib2vt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     ITypeLib2_fnQueryInterface,
     ITypeLib2_fnAddRef,

@@ -141,7 +141,6 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
 static IDirectXFileVtbl IDirectXFile_Vtbl =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectXFileImpl_QueryInterface,
   IDirectXFileImpl_AddRef,
   IDirectXFileImpl_Release,
@@ -258,7 +257,6 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPV
 
 static IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileBinaryImpl_QueryInterface,
     IDirectXFileBinaryImpl_AddRef,
     IDirectXFileBinaryImpl_Release,
@@ -404,7 +402,6 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* ifa
 
 static IDirectXFileDataVtbl IDirectXFileData_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileDataImpl_QueryInterface,
     IDirectXFileDataImpl_AddRef,
     IDirectXFileDataImpl_Release,
@@ -507,7 +504,6 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
 
 static IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileDataReferenceImpl_QueryInterface,
     IDirectXFileDataReferenceImpl_AddRef,
     IDirectXFileDataReferenceImpl_Release,
@@ -611,7 +607,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFil
 
 static IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileEnumObjectImpl_QueryInterface,
     IDirectXFileEnumObjectImpl_AddRef,
     IDirectXFileEnumObjectImpl_Release,
@@ -698,7 +693,6 @@ static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LP
 
 static IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileObjectImpl_QueryInterface,
     IDirectXFileObjectImpl_AddRef,
     IDirectXFileObjectImpl_Release,
@@ -792,7 +786,6 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject
 
 static IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectXFileSaveObjectImpl_QueryInterface,
     IDirectXFileSaveObjectImpl_AddRef,
     IDirectXFileSaveObjectImpl_Release,

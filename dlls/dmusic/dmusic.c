@@ -231,7 +231,6 @@ HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 iface, I
 }
 
 IDirectMusic8Vtbl DirectMusic8_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusic8Impl_QueryInterface,
 	IDirectMusic8Impl_AddRef,
 	IDirectMusic8Impl_Release,

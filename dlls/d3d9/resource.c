@@ -119,7 +119,6 @@ D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9 iface)
 
 IDirect3DResource9Vtbl Direct3DResource9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DResource9Impl_QueryInterface,
     IDirect3DResource9Impl_AddRef,
     IDirect3DResource9Impl_Release,

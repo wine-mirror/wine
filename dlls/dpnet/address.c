@@ -209,7 +209,6 @@ HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromDirectPlay4Address(PDIRECTPLAY8A
 
 IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectPlay8AddressImpl_QueryInterface,
     IDirectPlay8AddressImpl_AddRef,
     IDirectPlay8AddressImpl_Release,

@@ -433,7 +433,6 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 */
 static struct IContextMenu2Vtbl cmvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVBgCm_fnQueryInterface,
 	ISVBgCm_fnAddRef,
 	ISVBgCm_fnRelease,

@@ -627,7 +627,6 @@ static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 
 static IDirectDrawSurface7Vtbl User_IDirectDrawSurface7_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,
     Main_DirectDrawSurface_Release,

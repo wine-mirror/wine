@@ -654,7 +654,6 @@ Main_IDirect3DExecuteBufferImpl_1_Optimize(LPDIRECT3DEXECUTEBUFFER iface,
 
 IDirect3DExecuteBufferVtbl VTABLE_IDirect3DExecuteBuffer =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DExecuteBufferImpl_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DExecuteBufferImpl_1_AddRef,
     XCAST(Release) Main_IDirect3DExecuteBufferImpl_1_Release,

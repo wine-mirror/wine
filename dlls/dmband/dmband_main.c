@@ -61,7 +61,6 @@ static HRESULT WINAPI BandCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl BandCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	BandCF_QueryInterface,
 	BandCF_AddRef,
 	BandCF_Release,
@@ -107,7 +106,6 @@ static HRESULT WINAPI BandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl BandTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	BandTrackCF_QueryInterface,
 	BandTrackCF_AddRef,
 	BandTrackCF_Release,

@@ -827,7 +827,6 @@ Thunk_IDirect3DTextureImpl_1_Load(LPDIRECT3DTEXTURE iface,
 
 IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DTextureImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DTextureImpl_2_Release,
@@ -849,7 +848,6 @@ IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
 
 IDirect3DTextureVtbl VTABLE_IDirect3DTexture =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DTextureImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DTextureImpl_1_Release,

@@ -632,7 +632,6 @@ HRESULT WINAPI IShellBrowserImpl_TranslateAcceleratorSB(IShellBrowser *iface,
 
 static IShellBrowserVtbl IShellBrowserImpl_Vtbl =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         /* IUnknown */
         IShellBrowserImpl_QueryInterface,
         IShellBrowserImpl_AddRef,
@@ -857,7 +856,6 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
 
 static ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         /* IUnknown */
         IShellBrowserImpl_ICommDlgBrowser_QueryInterface,
         IShellBrowserImpl_ICommDlgBrowser_AddRef,
@@ -947,7 +945,6 @@ HRESULT WINAPI IShellBrowserImpl_IServiceProvider_QueryService(
 
 static IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         /* IUnknown */
         IShellBrowserImpl_IServiceProvider_QueryInterface,
         IShellBrowserImpl_IServiceProvider_AddRef,

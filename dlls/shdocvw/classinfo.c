@@ -76,7 +76,6 @@ static HRESULT WINAPI WBPCI_GetClassInfo(LPPROVIDECLASSINFO iface, LPTYPEINFO *p
 
 static IProvideClassInfoVtbl WBPCI_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPCI_QueryInterface,
     WBPCI_AddRef,
     WBPCI_Release,
@@ -161,7 +160,6 @@ static HRESULT WINAPI WBPCI2_GetGUID(LPPROVIDECLASSINFO2 iface,
 
 static IProvideClassInfo2Vtbl WBPCI2_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPCI2_QueryInterface,
     WBPCI2_AddRef,
     WBPCI2_Release,

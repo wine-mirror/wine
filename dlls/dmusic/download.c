@@ -60,7 +60,6 @@ HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, 
 }
 
 IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicDownloadImpl_QueryInterface,
 	IDirectMusicDownloadImpl_AddRef,
 	IDirectMusicDownloadImpl_Release,

@@ -97,7 +97,6 @@ HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDirectMus
 }
 
 IDirectMusicTool8Vtbl DirectMusicTool8_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicTool8Impl_QueryInterface,
 	IDirectMusicTool8Impl_AddRef,
 	IDirectMusicTool8Impl_Release,

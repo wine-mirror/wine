@@ -240,7 +240,6 @@ HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
 
 static IDirectDrawClipperVtbl DDRAW_Clipper_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawClipper_QueryInterface,
     Main_DirectDrawClipper_AddRef,
     Main_DirectDrawClipper_Release,

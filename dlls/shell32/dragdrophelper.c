@@ -173,7 +173,6 @@ static HRESULT WINAPI IDropTargetHelper_fnShow (IDropTargetHelper * iface, BOOL 
 
 static IDropTargetHelperVtbl vt_IDropTargetHelper =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDropTargetHelper_fnQueryInterface,
 	IDropTargetHelper_fnAddRef,
 	IDropTargetHelper_fnRelease,

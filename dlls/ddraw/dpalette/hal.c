@@ -127,7 +127,6 @@ void HAL_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This)
 
 static IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawPalette_QueryInterface,
     Main_DirectDrawPalette_AddRef,
     Main_DirectDrawPalette_Release,

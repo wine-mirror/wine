@@ -527,7 +527,6 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 
 static IDirectDraw7Vtbl User_DirectDraw_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,
     Main_DirectDraw_Release,

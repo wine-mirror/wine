@@ -127,7 +127,6 @@ DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEX
 
 IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DBaseTexture8Impl_QueryInterface,
     IDirect3DBaseTexture8Impl_AddRef,
     IDirect3DBaseTexture8Impl_Release,

@@ -67,7 +67,6 @@ ULONG WINAPI IDirectMusicSegTriggerTrack_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicSegTriggerTrack_Unknown_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSegTriggerTrack_IUnknown_QueryInterface,
 	IDirectMusicSegTriggerTrack_IUnknown_AddRef,
 	IDirectMusicSegTriggerTrack_IUnknown_Release
@@ -187,7 +186,6 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_Join (LPDIRECTMUSIC
 }
 
 IDirectMusicTrack8Vtbl DirectMusicSegTriggerTrack_Track_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_QueryInterface,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_AddRef,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_Release,
@@ -492,7 +490,6 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetSizeMax (LPPERSISTS
 }
 
 IPersistStreamVtbl DirectMusicSegTriggerTrack_PersistStream_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicSegTriggerTrack_IPersistStream_QueryInterface,
   IDirectMusicSegTriggerTrack_IPersistStream_AddRef,
   IDirectMusicSegTriggerTrack_IPersistStream_Release,

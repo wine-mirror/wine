@@ -69,7 +69,6 @@ ULONG WINAPI IDirectMusicCollectionImpl_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicCollection_Unknown_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicCollectionImpl_IUnknown_QueryInterface,
 	IDirectMusicCollectionImpl_IUnknown_AddRef,
 	IDirectMusicCollectionImpl_IUnknown_Release
@@ -140,7 +139,6 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument 
 }
 
 IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface,
 	IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef,
 	IDirectMusicCollectionImpl_IDirectMusicCollection_Release,
@@ -376,7 +374,6 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor (LP
 }
 
 IDirectMusicObjectVtbl DirectMusicCollection_Object_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicCollectionImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicCollectionImpl_IDirectMusicObject_AddRef,
 	IDirectMusicCollectionImpl_IDirectMusicObject_Release,
@@ -728,7 +725,6 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax (LPPERSISTST
 }
 
 IPersistStreamVtbl DirectMusicCollection_PersistStream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicCollectionImpl_IPersistStream_QueryInterface,
 	IDirectMusicCollectionImpl_IPersistStream_AddRef,
 	IDirectMusicCollectionImpl_IPersistStream_Release,

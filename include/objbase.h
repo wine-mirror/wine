@@ -270,7 +270,6 @@
 /* Wine-specific macros */
 
 #define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
-#define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE  /* no longer used */
 
 #include <objidl.h>
 

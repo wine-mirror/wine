@@ -134,7 +134,6 @@ static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 
 static IClassFactoryVtbl DSCF_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DSCF_QueryInterface,
     DSCF_AddRef,
     DSCF_Release,

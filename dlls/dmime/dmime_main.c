@@ -62,7 +62,6 @@ static HRESULT WINAPI PerformanceCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 }
 
 static IClassFactoryVtbl PerformanceCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	PerformanceCF_QueryInterface,
 	PerformanceCF_AddRef,
 	PerformanceCF_Release,
@@ -105,7 +104,6 @@ static HRESULT WINAPI SegmentCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl SegmentCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SegmentCF_QueryInterface,
 	SegmentCF_AddRef,
 	SegmentCF_Release,
@@ -148,7 +146,6 @@ static HRESULT WINAPI SegmentStateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 }
 
 static IClassFactoryVtbl SegmentStateCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SegmentStateCF_QueryInterface,
 	SegmentStateCF_AddRef,
 	SegmentStateCF_Release,
@@ -191,7 +188,6 @@ static HRESULT WINAPI GraphCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl GraphCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	GraphCF_QueryInterface,
 	GraphCF_AddRef,
 	GraphCF_Release,
@@ -234,7 +230,6 @@ static HRESULT WINAPI TempoTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 }
 
 static IClassFactoryVtbl TempoTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	TempoTrackCF_QueryInterface,
 	TempoTrackCF_AddRef,
 	TempoTrackCF_Release,
@@ -277,7 +272,6 @@ static HRESULT WINAPI SeqTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl SeqTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SeqTrackCF_QueryInterface,
 	SeqTrackCF_AddRef,
 	SeqTrackCF_Release,
@@ -320,7 +314,6 @@ static HRESULT WINAPI SysExTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 }
 
 static IClassFactoryVtbl SysExTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SysExTrackCF_QueryInterface,
 	SysExTrackCF_AddRef,
 	SysExTrackCF_Release,
@@ -363,7 +356,6 @@ static HRESULT WINAPI TimeSigTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 }
 
 static IClassFactoryVtbl TimeSigTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	TimeSigTrackCF_QueryInterface,
 	TimeSigTrackCF_AddRef,
 	TimeSigTrackCF_Release,
@@ -406,7 +398,6 @@ static HRESULT WINAPI ParamControlTrackCF_LockServer(LPCLASSFACTORY iface,BOOL d
 }
 
 static IClassFactoryVtbl ParamControlTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ParamControlTrackCF_QueryInterface,
 	ParamControlTrackCF_AddRef,
 	ParamControlTrackCF_Release,
@@ -449,7 +440,6 @@ static HRESULT WINAPI MarkerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 }
 
 static IClassFactoryVtbl MarkerTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	MarkerTrackCF_QueryInterface,
 	MarkerTrackCF_AddRef,
 	MarkerTrackCF_Release,
@@ -492,7 +482,6 @@ static HRESULT WINAPI LyricsTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 }
 
 static IClassFactoryVtbl LyricsTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	LyricsTrackCF_QueryInterface,
 	LyricsTrackCF_AddRef,
 	LyricsTrackCF_Release,
@@ -536,7 +525,6 @@ static HRESULT WINAPI SegTriggerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dol
 }
 
 static IClassFactoryVtbl SegTriggerTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SegTriggerTrackCF_QueryInterface,
 	SegTriggerTrackCF_AddRef,
 	SegTriggerTrackCF_Release,
@@ -579,7 +567,6 @@ static HRESULT WINAPI AudioPathCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl AudioPathCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	AudioPathCF_QueryInterface,
 	AudioPathCF_AddRef,
 	AudioPathCF_Release,
@@ -622,7 +609,6 @@ static HRESULT WINAPI WaveTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl WaveTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	WaveTrackCF_QueryInterface,
 	WaveTrackCF_AddRef,
 	WaveTrackCF_Release,

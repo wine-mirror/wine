@@ -345,7 +345,6 @@ out:
 
 IReferenceClockVtbl SystemClock_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     SystemClockImpl_QueryInterface,
     SystemClockImpl_AddRef,
     SystemClockImpl_Release,

@@ -105,7 +105,6 @@ static HRESULT WINAPI WBCPC_FindConnectionPoint(LPCONNECTIONPOINTCONTAINER iface
 
 static IConnectionPointContainerVtbl WBCPC_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBCPC_QueryInterface,
     WBCPC_AddRef,
     WBCPC_Release,
@@ -200,7 +199,6 @@ static HRESULT WINAPI WBCP_EnumConnections(LPCONNECTIONPOINT iface,
 
 static IConnectionPointVtbl WBCP_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBCP_QueryInterface,
     WBCP_AddRef,
     WBCP_Release,

@@ -70,7 +70,6 @@ ULONG WINAPI IDirectMusicStyle8Impl_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicStyle8_Unknown_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicStyle8Impl_IUnknown_QueryInterface,
 	IDirectMusicStyle8Impl_IUnknown_AddRef,
 	IDirectMusicStyle8Impl_IUnknown_Release
@@ -166,7 +165,6 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumPattern (LPDIRECTMU
 }
 
 IDirectMusicStyle8Vtbl DirectMusicStyle8_Style_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_QueryInterface,
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef,
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_Release,
@@ -392,7 +390,6 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_ParseDescriptor (LPDIRE
 }
 
 IDirectMusicObjectVtbl DirectMusicStyle8_Object_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicStyle8Impl_IDirectMusicObject_QueryInterface,
   IDirectMusicStyle8Impl_IDirectMusicObject_AddRef,
   IDirectMusicStyle8Impl_IDirectMusicObject_Release,
@@ -1028,7 +1025,6 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_GetSizeMax (LPPERSISTSTREAM
 }
 
 IPersistStreamVtbl DirectMusicStyle8_PersistStream_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicStyle8Impl_IPersistStream_QueryInterface,
   IDirectMusicStyle8Impl_IPersistStream_AddRef,
   IDirectMusicStyle8Impl_IPersistStream_Release,

@@ -250,7 +250,6 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone(LPENUMFORMATETC iface, LPE
  */
 static IDataObjectVtbl OLEClipbrd_IDataObject_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEClipbrd_IDataObject_QueryInterface,
   OLEClipbrd_IDataObject_AddRef,
   OLEClipbrd_IDataObject_Release,
@@ -270,7 +269,6 @@ static IDataObjectVtbl OLEClipbrd_IDataObject_VTable =
  */
 static struct IEnumFORMATETCVtbl efvt =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEClipbrd_IEnumFORMATETC_QueryInterface,
   OLEClipbrd_IEnumFORMATETC_AddRef,
   OLEClipbrd_IEnumFORMATETC_Release,

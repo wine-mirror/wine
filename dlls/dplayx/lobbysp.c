@@ -442,7 +442,6 @@ HRESULT WINAPI IDPLobbySPImpl_StartSession
 
 static struct IDPLobbySPVtbl dpLobbySPVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   DPLSP_QueryInterface,
   DPLSP_AddRef,

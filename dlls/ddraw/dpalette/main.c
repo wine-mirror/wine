@@ -268,7 +268,6 @@ Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
 
 static IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawPalette_QueryInterface,
     Main_DirectDrawPalette_AddRef,
     Main_DirectDrawPalette_Release,

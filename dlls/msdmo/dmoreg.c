@@ -649,7 +649,6 @@ HRESULT WINAPI DMOEnum(
 
 static IEnumDMOVtbl edmovt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEnumDMO_fnQueryInterface,
 	IEnumDMO_fnAddRef,
 	IEnumDMO_fnRelease,

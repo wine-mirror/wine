@@ -85,7 +85,6 @@ HRESULT WINAPI IDirect3DVertexShader9Impl_GetFunction(LPDIRECT3DVERTEXSHADER9 if
 
 IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVertexShader9Impl_QueryInterface,
     IDirect3DVertexShader9Impl_AddRef,
     IDirect3DVertexShader9Impl_Release,

@@ -717,7 +717,6 @@ static HRESULT WINAPI ISF_MyComputer_fnMapColumnToSCID (IShellFolder2 * iface, U
 
 static IShellFolder2Vtbl vt_ShellFolder2 =
 {
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISF_MyComputer_fnQueryInterface,
 	ISF_MyComputer_fnAddRef,
 	ISF_MyComputer_fnRelease,
@@ -822,7 +821,6 @@ static HRESULT WINAPI IMCFldr_PersistFolder2_GetCurFolder (IPersistFolder2 * ifa
 
 static IPersistFolder2Vtbl vt_PersistFolder2 =
 {
-ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IMCFldr_PersistFolder2_QueryInterface,
 	IMCFldr_PersistFolder2_AddRef,
 	IMCFldr_PersistFolder2_Release,

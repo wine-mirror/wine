@@ -134,7 +134,6 @@ static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface WINE_UNUSED)
 
 static IRecordInfoVtbl IRecordInfoImpl_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   (PVOID)IRecordInfoImpl_Dummy,
   IRecordInfoImpl_AddRef,
   IRecordInfoImpl_Release,
@@ -1023,7 +1022,6 @@ static ULONG WINAPI tunk_Release(LPUNKNOWN punk) {
 }
 
 static IUnknownVtbl xtunk_vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	tunk_QueryInterface,
 	tunk_AddRef,
 	tunk_Release

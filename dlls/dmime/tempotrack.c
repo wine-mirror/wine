@@ -67,7 +67,6 @@ ULONG WINAPI IDirectMusicTempoTrack_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicTempoTrack_Unknown_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicTempoTrack_IUnknown_QueryInterface,
   IDirectMusicTempoTrack_IUnknown_AddRef,
   IDirectMusicTempoTrack_IUnknown_Release
@@ -260,7 +259,6 @@ HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK
 }
 
 IDirectMusicTrack8Vtbl DirectMusicTempoTrack_Track_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicTempoTrack_IDirectMusicTrack_QueryInterface,
   IDirectMusicTempoTrack_IDirectMusicTrack_AddRef,
   IDirectMusicTempoTrack_IDirectMusicTrack_Release,
@@ -379,7 +377,6 @@ HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM
 }
 
 IPersistStreamVtbl DirectMusicTempoTrack_PersistStream_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicTempoTrack_IPersistStream_QueryInterface,
   IDirectMusicTempoTrack_IPersistStream_AddRef,
   IDirectMusicTempoTrack_IPersistStream_Release,

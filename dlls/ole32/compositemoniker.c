@@ -150,7 +150,6 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tab
 
 static IMonikerVtbl VT_CompositeMonikerImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CompositeMonikerImpl_QueryInterface,
     CompositeMonikerImpl_AddRef,
     CompositeMonikerImpl_Release,
@@ -180,7 +179,6 @@ static IMonikerVtbl VT_CompositeMonikerImpl =
 /* Virtual function table for the IROTData class.                               */
 static IROTDataVtbl VT_ROTDataImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     CompositeMonikerROTDataImpl_QueryInterface,
     CompositeMonikerROTDataImpl_AddRef,
     CompositeMonikerROTDataImpl_Release,
@@ -191,7 +189,6 @@ static IROTDataVtbl VT_ROTDataImpl =
 /* Virtual function table for the IROTData class                                */
 static IEnumMonikerVtbl VT_EnumMonikerImpl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     EnumMonikerImpl_QueryInterface,
     EnumMonikerImpl_AddRef,
     EnumMonikerImpl_Release,

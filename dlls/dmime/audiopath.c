@@ -72,7 +72,6 @@ ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicAudioPath_Unknown_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAudioPathImpl_IUnknown_QueryInterface,
 	IDirectMusicAudioPathImpl_IUnknown_AddRef,
 	IDirectMusicAudioPathImpl_IUnknown_Release
@@ -211,7 +210,6 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_ConvertPChannel (
 }
 
 IDirectMusicAudioPathVtbl DirectMusicAudioPath_AudioPath_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_QueryInterface,
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_AddRef,
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Release,
@@ -429,7 +427,6 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_ParseDescriptor (LPD
 }
 
 IDirectMusicObjectVtbl DirectMusicAudioPath_Object_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAudioPathImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicAudioPathImpl_IDirectMusicObject_AddRef,
 	IDirectMusicAudioPathImpl_IDirectMusicObject_Release,
@@ -618,7 +615,6 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IPersistStream_GetSizeMax (LPPERSISTSTR
 }
 
 IPersistStreamVtbl DirectMusicAudioPath_PersistStream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicAudioPathImpl_IPersistStream_QueryInterface,
 	IDirectMusicAudioPathImpl_IPersistStream_AddRef,
 	IDirectMusicAudioPathImpl_IPersistStream_Release,

@@ -4820,7 +4820,6 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 
 static IDirectPlay2Vtbl directPlay2WVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,
@@ -4866,7 +4865,6 @@ static IDirectPlay2Vtbl directPlay2WVT =
 
 static IDirectPlay2Vtbl directPlay2AVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,
@@ -4913,7 +4911,6 @@ static IDirectPlay2Vtbl directPlay2AVT =
 
 static IDirectPlay3Vtbl directPlay3AVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,
@@ -4974,7 +4971,6 @@ static IDirectPlay3Vtbl directPlay3AVT =
 #endif
 static IDirectPlay3Vtbl directPlay3WVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,
@@ -5035,7 +5031,6 @@ static IDirectPlay3Vtbl directPlay3WVT =
 #endif
 static IDirectPlay4Vtbl directPlay4WVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,
@@ -5104,7 +5099,6 @@ static IDirectPlay4Vtbl directPlay4WVT =
 #endif
 static IDirectPlay4Vtbl directPlay4AVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
   XCAST(Release)DP_Release,

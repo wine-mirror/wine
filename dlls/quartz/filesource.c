@@ -512,7 +512,6 @@ static HRESULT WINAPI AsyncReader_QueryVendorInfo(IBaseFilter * iface, LPWSTR *p
 
 static const IBaseFilterVtbl AsyncReader_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AsyncReader_QueryInterface,
     AsyncReader_AddRef,
     AsyncReader_Release,
@@ -650,7 +649,6 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
 
 static const IFileSourceFilterVtbl FileSource_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileSource_QueryInterface,
     FileSource_AddRef,
     FileSource_Release,
@@ -768,7 +766,6 @@ static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMedia
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileAsyncReaderPin_QueryInterface,
     IPinImpl_AddRef,
     FileAsyncReaderPin_Release,
@@ -1185,7 +1182,6 @@ static HRESULT WINAPI FileAsyncReader_EndFlush(IAsyncReader * iface)
 
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileAsyncReader_QueryInterface,
     FileAsyncReader_AddRef,
     FileAsyncReader_Release,

@@ -945,7 +945,6 @@ static VOID WINAPI IDirectPlaySPImpl_SendComplete
 
 static struct IDirectPlaySPVtbl directPlaySPVT =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   DPSP_QueryInterface,
   DPSP_AddRef,

@@ -147,7 +147,6 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 
 IDirectSoundNotifyVtbl dsnvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSoundNotifyImpl_QueryInterface,
     IDirectSoundNotifyImpl_AddRef,
     IDirectSoundNotifyImpl_Release,
@@ -1034,7 +1033,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 static IDirectSoundBuffer8Vtbl dsbvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundBufferImpl_QueryInterface,
 	IDirectSoundBufferImpl_AddRef,
 	IDirectSoundBufferImpl_Release,
@@ -1551,7 +1549,6 @@ static HRESULT WINAPI SecondaryBufferImpl_GetObjectInPath(
 
 static IDirectSoundBuffer8Vtbl sbvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SecondaryBufferImpl_QueryInterface,
 	SecondaryBufferImpl_AddRef,
 	SecondaryBufferImpl_Release,

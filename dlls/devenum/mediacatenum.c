@@ -255,7 +255,6 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
 
 static IPropertyBagVtbl IPropertyBag_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IPropertyBag_QueryInterface,
     DEVENUM_IPropertyBag_AddRef,
     DEVENUM_IPropertyBag_Release,
@@ -633,7 +632,6 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_IsSystemMoniker(
 
 static IMonikerVtbl IMoniker_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IMediaCatMoniker_QueryInterface,
     DEVENUM_IMediaCatMoniker_AddRef,
     DEVENUM_IMediaCatMoniker_Release,
@@ -809,7 +807,6 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Clone(LPENUMMONIKER iface, IEnumMonik
  */
 IEnumMonikerVtbl IEnumMoniker_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IEnumMoniker_QueryInterface,
     DEVENUM_IEnumMoniker_AddRef,
     DEVENUM_IEnumMoniker_Release,

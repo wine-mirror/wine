@@ -458,7 +458,6 @@ static HRESULT WINAPI AVISplitter_QueryVendorInfo(IBaseFilter * iface, LPWSTR *p
 
 static const IBaseFilterVtbl AVISplitter_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AVISplitter_QueryInterface,
     AVISplitter_AddRef,
     AVISplitter_Release,
@@ -1045,7 +1044,6 @@ static ULONG WINAPI AVISplitter_Seeking_Release(IMediaSeeking * iface)
 
 static const IMediaSeekingVtbl AVISplitter_Seeking_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AVISplitter_Seeking_QueryInterface,
     AVISplitter_Seeking_AddRef,
     AVISplitter_Seeking_Release,
@@ -1137,7 +1135,6 @@ static HRESULT AVISplitter_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TY
 
 static const IPinVtbl AVISplitter_OutputPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AVISplitter_OutputPin_QueryInterface,
     IPinImpl_AddRef,
     AVISplitter_OutputPin_Release,
@@ -1219,7 +1216,6 @@ static HRESULT WINAPI AVISplitter_InputPin_Disconnect(IPin * iface)
 
 static const IPinVtbl AVISplitter_InputPin_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PullPin_QueryInterface,
     IPinImpl_AddRef,
     PullPin_Release,

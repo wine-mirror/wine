@@ -166,7 +166,6 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 
 IDirect3D9Vtbl Direct3D9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3D9Impl_QueryInterface,
     IDirect3D9Impl_AddRef,
     IDirect3D9Impl_Release,

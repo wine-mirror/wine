@@ -443,7 +443,6 @@ static HRESULT WINAPI StdDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMember, 
 
 static IDispatchVtbl StdDispatch_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   StdDispatch_QueryInterface,
   StdDispatch_AddRef,
   StdDispatch_Release,

@@ -714,7 +714,6 @@ static HRESULT WINAPI ISF_Desktop_fnMapColumnToSCID (IShellFolder2 * iface, UINT
 
 static IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISF_Desktop_fnQueryInterface,
 	ISF_Desktop_fnAddRef,
 	ISF_Desktop_fnRelease,

@@ -76,7 +76,6 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
                                                LPAVISTREAMINFOW asi,LONG size);
 
 struct IAVIEditStreamVtbl ieditstream = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IAVIEditStream_fnQueryInterface,
   IAVIEditStream_fnAddRef,
   IAVIEditStream_fnRelease,
@@ -112,7 +111,6 @@ static HRESULT WINAPI IEditAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,
 static HRESULT WINAPI IEditAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
 struct IAVIStreamVtbl ieditstast = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IEditAVIStream_fnQueryInterface,
   IEditAVIStream_fnAddRef,
   IEditAVIStream_fnRelease,
@@ -135,7 +133,6 @@ static ULONG   WINAPI IEditStreamInternal_fnRelease(IEditStreamInternal*iface);
 static HRESULT WINAPI IEditStreamInternal_fnGetEditStreamImpl(IEditStreamInternal*iface,LPVOID*ppimpl);
 
 struct IEditStreamInternalVtbl ieditstreaminternal = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IEditStreamInternal_fnQueryInterface,
   IEditStreamInternal_fnAddRef,
   IEditStreamInternal_fnRelease,

@@ -2572,7 +2572,6 @@ GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
 
 IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DDeviceImpl_7_3T_2T_1T_AddRef,
     XCAST(Release) GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release,
@@ -2637,7 +2636,6 @@ IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
 
 IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_3_AddRef,
     XCAST(Release) Thunk_IDirect3DDeviceImpl_3_Release,
@@ -2695,7 +2693,6 @@ IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
 
 IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DDeviceImpl_2_Release,
@@ -2744,7 +2741,6 @@ IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
 
 IDirect3DDeviceVtbl VTABLE_IDirect3DDevice =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DDeviceImpl_1_Release,

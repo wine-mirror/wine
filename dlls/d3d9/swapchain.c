@@ -119,7 +119,6 @@ HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWAPCHAIN9
 
 IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DSwapChain9Impl_QueryInterface,
     IDirect3DSwapChain9Impl_AddRef,
     IDirect3DSwapChain9Impl_Release,

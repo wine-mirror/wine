@@ -543,7 +543,6 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
 #endif
 
 static IDirectInput7AVtbl ddi7avt = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputAImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -564,7 +563,6 @@ static IDirectInput7AVtbl ddi7avt = {
 #endif
 
 static IDirectInput7WVtbl ddi7wvt = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputWImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -585,7 +583,6 @@ static IDirectInput7WVtbl ddi7wvt = {
 #endif
 
 static IDirectInput8AVtbl ddi8avt = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInput8AImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -606,7 +603,6 @@ static IDirectInput8AVtbl ddi8avt = {
 # define XCAST(fun)	(void*)
 #endif
 static IDirectInput8WVtbl ddi8wvt = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInput8WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -678,7 +674,6 @@ static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl DICF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DICF_QueryInterface,
 	DICF_AddRef,
 	DICF_Release,

@@ -132,7 +132,6 @@ HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER
 
 IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVertexBuffer8Impl_QueryInterface,
     IDirect3DVertexBuffer8Impl_AddRef,
     IDirect3DVertexBuffer8Impl_Release,

@@ -384,7 +384,6 @@ static VOID WINAPI IShellMalloc_fnHeapMinimize(LPMALLOC iface)
 
 static IMallocVtbl VT_Shell_IMalloc32 =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellMalloc_fnQueryInterface,
 	IShellMalloc_fnAddRefRelease,
 	IShellMalloc_fnAddRefRelease,
@@ -611,7 +610,6 @@ static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 
 static IClassFactoryVtbl dclfvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDefClF_fnQueryInterface,
     IDefClF_fnAddRef,
   IDefClF_fnRelease,

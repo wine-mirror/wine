@@ -56,7 +56,6 @@ ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOAD
 /* none at this time */
 
 IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicDownloadedInstrumentImpl_QueryInterface,
 	IDirectMusicDownloadedInstrumentImpl_AddRef,
 	IDirectMusicDownloadedInstrumentImpl_Release

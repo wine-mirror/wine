@@ -160,7 +160,6 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm);
  */
 static IStorageVtbl Storage32Impl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StorageBaseImpl_QueryInterface,
     StorageBaseImpl_AddRef,
     StorageBaseImpl_Release,
@@ -186,7 +185,6 @@ static IStorageVtbl Storage32Impl_Vtbl =
  */
 static IStorageVtbl Storage32InternalImpl_Vtbl =
   {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StorageBaseImpl_QueryInterface,
     StorageBaseImpl_AddRef,
     StorageBaseImpl_Release,
@@ -212,7 +210,6 @@ static IStorageVtbl Storage32InternalImpl_Vtbl =
  */
 static IEnumSTATSTGVtbl IEnumSTATSTGImpl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IEnumSTATSTGImpl_QueryInterface,
     IEnumSTATSTGImpl_AddRef,
     IEnumSTATSTGImpl_Release,

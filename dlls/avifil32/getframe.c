@@ -55,7 +55,6 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 					    INT dx, INT dy);
 
 struct IGetFrameVtbl igetframeVtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IGetFrame_fnQueryInterface,
   IGetFrame_fnAddRef,
   IGetFrame_fnRelease,

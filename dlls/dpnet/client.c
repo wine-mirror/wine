@@ -222,7 +222,6 @@ HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CO
 
 IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectPlay8ClientImpl_QueryInterface,
     IDirectPlay8ClientImpl_AddRef,
     IDirectPlay8ClientImpl_Release,

@@ -116,7 +116,6 @@ static HRESULT WINAPI CStdPSFactory_CreateStub(LPPSFACTORYBUFFER iface,
 
 static IPSFactoryBufferVtbl CStdPSFactory_Vtbl =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   CStdPSFactory_QueryInterface,
   CStdPSFactory_AddRef,
   CStdPSFactory_Release,

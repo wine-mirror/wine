@@ -69,7 +69,6 @@ ULONG WINAPI IDirectMusicGraphImpl_IUnknown_Release (LPUNKNOWN iface) {
 }
 
 IUnknownVtbl DirectMusicGraph_Unknown_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicGraphImpl_IUnknown_QueryInterface,
 	IDirectMusicGraphImpl_IUnknown_AddRef,
 	IDirectMusicGraphImpl_IUnknown_Release
@@ -176,7 +175,6 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool (LPDIRECTMUSIC
 }
 
 IDirectMusicGraphVtbl DirectMusicGraph_Graph_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface,
   IDirectMusicGraphImpl_IDirectMusicGraph_AddRef,
   IDirectMusicGraphImpl_IDirectMusicGraph_Release,
@@ -395,7 +393,6 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_ParseDescriptor (LPDIREC
 }
 
 IDirectMusicObjectVtbl DirectMusicGraph_Object_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicGraphImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicGraphImpl_IDirectMusicObject_AddRef,
 	IDirectMusicGraphImpl_IDirectMusicObject_Release,
@@ -583,7 +580,6 @@ HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM 
 }
 
 IPersistStreamVtbl DirectMusicGraph_PersistStream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicGraphImpl_IPersistStream_QueryInterface,
 	IDirectMusicGraphImpl_IPersistStream_AddRef,
 	IDirectMusicGraphImpl_IPersistStream_Release,

@@ -357,7 +357,6 @@ static HRESULT WINAPI ConnectionPointImpl_EnumConnections(
 
 static IConnectionPointVtbl ConnectionPointImpl_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   ConnectionPointImpl_QueryInterface,
   ConnectionPointImpl_AddRef,
   ConnectionPointImpl_Release,
@@ -600,7 +599,6 @@ static HRESULT WINAPI EnumConnectionsImpl_Clone(IEnumConnections* iface,
 
 static IEnumConnectionsVtbl EnumConnectionsImpl_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   EnumConnectionsImpl_QueryInterface,
   EnumConnectionsImpl_AddRef,
   EnumConnectionsImpl_Release,

@@ -312,7 +312,6 @@ static HRESULT WINAPI IAutoComplete_fnInit(
  */
 static IAutoCompleteVtbl acvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAutoComplete_fnQueryInterface,
     IAutoComplete_fnAddRef,
     IAutoComplete_fnRelease,
@@ -433,7 +432,6 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
  */
 static IAutoComplete2Vtbl ac2vt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAutoComplete2_fnQueryInterface,
     IAutoComplete2_fnAddRef,
     IAutoComplete2_fnRelease,

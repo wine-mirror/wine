@@ -141,7 +141,6 @@ static HRESULT WINAPI DEVENUM_IClassFactory_LockServer(
  */
 static IClassFactoryVtbl IClassFactory_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IClassFactory_QueryInterface,
     DEVENUM_IClassFactory_AddRef,
     DEVENUM_IClassFactory_Release,

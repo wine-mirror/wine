@@ -97,7 +97,6 @@ static ULONG WINAPI COMCAT_IUnknown_Release(LPUNKNOWN iface)
  */
 static IUnknownVtbl COMCAT_IUnknown_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     COMCAT_IUnknown_QueryInterface,
     COMCAT_IUnknown_AddRef,
     COMCAT_IUnknown_Release

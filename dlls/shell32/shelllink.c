@@ -328,7 +328,6 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *p
 
 static IPersistFileVtbl pfvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IPersistFile_fnQueryInterface,
 	IPersistFile_fnAddRef,
 	IPersistFile_fnRelease,
@@ -772,7 +771,6 @@ static HRESULT WINAPI IPersistStream_fnGetSizeMax(
 
 static IPersistStreamVtbl psvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IPersistStream_fnQueryInterface,
 	IPersistStream_fnAddRef,
 	IPersistStream_fnRelease,
@@ -1331,7 +1329,6 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 
 static IShellLinkAVtbl slvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellLinkA_fnQueryInterface,
 	IShellLinkA_fnAddRef,
 	IShellLinkA_fnRelease,
@@ -1719,7 +1716,6 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 
 static IShellLinkWVtbl slvtw =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IShellLinkW_fnQueryInterface,
 	IShellLinkW_fnAddRef,
 	IShellLinkW_fnRelease,

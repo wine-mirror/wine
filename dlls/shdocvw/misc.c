@@ -82,7 +82,6 @@ static HRESULT WINAPI WBQA_GetContentExtent(LPQUICKACTIVATE iface, LPSIZEL pSize
 
 static IQuickActivateVtbl WBQA_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBQA_QueryInterface,
     WBQA_AddRef,
     WBQA_Release,

@@ -491,7 +491,6 @@ HRESULT WINAPI InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENC
 
 static const IPinVtbl InputPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     InputPin_QueryInterface,
     IPinImpl_AddRef,
     InputPin_Release,
@@ -614,7 +613,6 @@ HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface)
 
 static const IMemInputPinVtbl MemInputPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     MemInputPin_QueryInterface,
     MemInputPin_AddRef,
     MemInputPin_Release,
@@ -809,7 +807,6 @@ HRESULT WINAPI OutputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFEREN
 
 static const IPinVtbl OutputPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     OutputPin_QueryInterface,
     IPinImpl_AddRef,
     OutputPin_Release,
@@ -1321,7 +1318,6 @@ HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE
 
 static const IPinVtbl PullPin_Vtbl = 
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PullPin_QueryInterface,
     IPinImpl_AddRef,
     PullPin_Release,

@@ -88,7 +88,6 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface,
 
 IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DSwapChain8Impl_QueryInterface,
     IDirect3DSwapChain8Impl_AddRef,
     IDirect3DSwapChain8Impl_Release,

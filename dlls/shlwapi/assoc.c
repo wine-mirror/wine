@@ -693,7 +693,6 @@ static HRESULT WINAPI IQueryAssociations_fnGetEnum(
 
 static struct IQueryAssociationsVtbl IQueryAssociations_vtbl =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IQueryAssociations_fnQueryInterface,
   IQueryAssociations_fnAddRef,
   IQueryAssociations_fnRelease,

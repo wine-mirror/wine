@@ -169,7 +169,6 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
  */
 static IParseDisplayNameVtbl IParseDisplayName_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DEVENUM_IParseDisplayName_QueryInterface,
     DEVENUM_IParseDisplayName_AddRef,
     DEVENUM_IParseDisplayName_Release,

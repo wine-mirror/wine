@@ -479,7 +479,6 @@ Main_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
 
 IDirect3DViewport3Vtbl VTABLE_IDirect3DViewport3 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DViewportImpl_3_2_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DViewportImpl_3_2_1_AddRef,
     XCAST(Release) Main_IDirect3DViewportImpl_3_2_1_Release,

@@ -1049,7 +1049,6 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 
 static IDirectSoundBuffer8Vtbl dspbvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	PrimaryBufferImpl_QueryInterface,
 	PrimaryBufferImpl_AddRef,
 	PrimaryBufferImpl_Release,

@@ -1476,7 +1476,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 
 static IDsDriverBufferVtbl dsdbvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverBufferImpl_QueryInterface,
     IDsDriverBufferImpl_AddRef,
     IDsDriverBufferImpl_Release,
@@ -1660,7 +1659,6 @@ static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
 
 static IDsDriverVtbl dsdvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDsDriverImpl_QueryInterface,
     IDsDriverImpl_AddRef,
     IDsDriverImpl_Release,

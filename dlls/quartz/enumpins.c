@@ -163,7 +163,6 @@ static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum
 
 static const IEnumPinsVtbl IEnumPinsImpl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IEnumPinsImpl_QueryInterface,
     IEnumPinsImpl_AddRef,
     IEnumPinsImpl_Release,

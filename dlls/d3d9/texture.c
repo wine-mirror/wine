@@ -215,7 +215,6 @@ HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTURE9 iface, CONS
 
 IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DTexture9Impl_QueryInterface,
     IDirect3DTexture9Impl_AddRef,
     IDirect3DTexture9Impl_Release,

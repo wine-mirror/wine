@@ -612,7 +612,6 @@ IDirectSoundCaptureImpl_Initialize(
 
 static IDirectSoundCaptureVtbl dscvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
     IDirectSoundCaptureImpl_QueryInterface,
     IDirectSoundCaptureImpl_AddRef,
@@ -870,7 +869,6 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 
 IDirectSoundNotifyVtbl dscnvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectSoundCaptureNotifyImpl_QueryInterface,
     IDirectSoundCaptureNotifyImpl_AddRef,
     IDirectSoundCaptureNotifyImpl_Release,
@@ -1575,7 +1573,6 @@ IDirectSoundCaptureBufferImpl_GetFXStatus(
 
 static IDirectSoundCaptureBuffer8Vtbl dscbvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
     IDirectSoundCaptureBufferImpl_QueryInterface,
     IDirectSoundCaptureBufferImpl_AddRef,
@@ -1660,7 +1657,6 @@ DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 
 static IClassFactoryVtbl DSCCF_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DSCCF_QueryInterface,
     DSCCF_AddRef,
     DSCCF_Release,
@@ -1824,7 +1820,6 @@ IDirectSoundFullDuplexImpl_Initialize(
 
 static IDirectSoundFullDuplexVtbl dsfdvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     /* IUnknown methods */
     IDirectSoundFullDuplexImpl_QueryInterface,
     IDirectSoundFullDuplexImpl_AddRef,
@@ -1899,7 +1894,6 @@ DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 
 static IClassFactoryVtbl DSFDCF_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DSFDCF_QueryInterface,
     DSFDCF_AddRef,
     DSFDCF_Release,

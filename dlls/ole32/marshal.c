@@ -392,7 +392,6 @@ StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved) {
 }
 
 IMarshalVtbl stdmvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StdMarshalImpl_QueryInterface,
     StdMarshalImpl_AddRef,
     StdMarshalImpl_Release,
@@ -752,7 +751,6 @@ SMCF_LockServer(LPCLASSFACTORY iface, BOOL fLock) {
 }
 
 static IClassFactoryVtbl dfmarshalcfvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     SMCF_QueryInterface,
     SMCF_AddRef,
     SMCF_Release,

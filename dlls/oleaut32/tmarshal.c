@@ -370,7 +370,6 @@ TMProxyImpl_Disconnect(LPRPCPROXYBUFFER iface) {
 
 
 static IRpcProxyBufferVtbl tmproxyvtable = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     TMProxyImpl_QueryInterface,
     TMProxyImpl_AddRef,
     TMProxyImpl_Release,
@@ -1712,7 +1711,6 @@ TMStubImpl_DebugServerRelease(LPRPCSTUBBUFFER iface, LPVOID ppv) {
 }
 
 IRpcStubBufferVtbl tmstubvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     TMStubImpl_QueryInterface,
     TMStubImpl_AddRef,
     TMStubImpl_Release,
@@ -1756,7 +1754,6 @@ PSFacBuf_CreateStub(
 }
 
 static IPSFactoryBufferVtbl psfacbufvtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     PSFacBuf_QueryInterface,
     PSFacBuf_AddRef,
     PSFacBuf_Release,

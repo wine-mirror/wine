@@ -200,7 +200,6 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Clone(IEnumRegFilters * iface, IEnumRe
 
 static const IEnumRegFiltersVtbl IEnumRegFiltersImpl_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IEnumRegFiltersImpl_QueryInterface,
     IEnumRegFiltersImpl_AddRef,
     IEnumRegFiltersImpl_Release,

@@ -193,7 +193,6 @@ HRESULT WINAPI IDirectMusicSynth8Impl_AssignChannelToBuses (LPDIRECTMUSICSYNTH8 
 }
 
 IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicSynth8Impl_QueryInterface,
 	IDirectMusicSynth8Impl_AddRef,
 	IDirectMusicSynth8Impl_Release,

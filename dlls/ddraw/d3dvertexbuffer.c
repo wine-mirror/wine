@@ -471,7 +471,6 @@ GL_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided(LPDIRECT3DVERTEXBUFFER7 if
 
 IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Main_IDirect3DVertexBufferImpl_7_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DVertexBufferImpl_7_1T_AddRef,
     XCAST(Release) Main_IDirect3DVertexBufferImpl_7_1T_Release,
@@ -496,7 +495,6 @@ IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
 
 IDirect3DVertexBufferVtbl VTABLE_IDirect3DVertexBuffer =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface) Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DVertexBufferImpl_1_AddRef,
     XCAST(Release) Thunk_IDirect3DVertexBufferImpl_1_Release,

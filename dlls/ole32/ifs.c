@@ -344,7 +344,6 @@ static VOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
 
 static IMallocVtbl VT_IMalloc32 =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IMalloc_fnQueryInterface,
 	IMalloc_fnAddRefRelease,
 	IMalloc_fnAddRefRelease,
@@ -504,7 +503,6 @@ static void MallocSpyDumpLeaks() {
 
 static IMallocSpyVtbl VT_IMallocSpy =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IMallocSpy_fnQueryInterface,
 	IMallocSpy_fnAddRef,
 	IMallocSpy_fnRelease,

@@ -1660,7 +1660,6 @@ Uninit_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface, DWORD dwFlags,
 
 static IDirectDraw7Vtbl Uninit_DirectDraw_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,
     Main_DirectDraw_Release,

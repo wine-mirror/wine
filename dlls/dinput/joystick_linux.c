@@ -640,7 +640,6 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 
 static IDirectInputDevice8AVtbl JoystickAvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	JoystickAImpl_Release,
@@ -683,7 +682,6 @@ static IDirectInputDevice8AVtbl JoystickAvt =
 
 static IDirectInputDevice8WVtbl SysJoystickWvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
 	XCAST(Release)JoystickAImpl_Release,

@@ -58,7 +58,6 @@ static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMAT
 
 static struct IEnumFORMATETCVtbl efvt =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         IEnumFORMATETC_fnQueryInterface,
         IEnumFORMATETC_fnAddRef,
     IEnumFORMATETC_fnRelease,
@@ -442,7 +441,6 @@ static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDAT
 
 static struct IDataObjectVtbl dtovt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDataObject_fnQueryInterface,
 	IDataObject_fnAddRef,
 	IDataObject_fnRelease,

@@ -392,7 +392,6 @@ IDirectDrawSurface3Impl_SetSurfaceDesc(LPDIRECTDRAWSURFACE3 This,
 
 IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDrawSurface3Impl_QueryInterface,
     IDirectDrawSurface3Impl_AddRef,
     IDirectDrawSurface3Impl_Release,

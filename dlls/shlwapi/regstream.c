@@ -253,7 +253,6 @@ static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
 
 static struct IStreamVtbl rstvt =
 {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IStream_fnQueryInterface,
 	IStream_fnAddRef,
 	IStream_fnRelease,
@@ -304,7 +303,6 @@ static HRESULT WINAPI IStream_fnReadDummy(IStream *iface, LPVOID pv, ULONG cb, U
 
 static struct IStreamVtbl DummyRegStreamVTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IStream_fnQueryInterface,
   IStream_fnAddRefDummy,  /* Overridden */
   IStream_fnReleaseDummy, /* Overridden */

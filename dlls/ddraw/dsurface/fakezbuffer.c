@@ -261,7 +261,6 @@ FakeZBuffer_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 
 static IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable=
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,
     Main_DirectDrawSurface_Release,

@@ -62,7 +62,6 @@ static HRESULT WINAPI SectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl SectionCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SectionCF_QueryInterface,
 	SectionCF_AddRef,
 	SectionCF_Release,
@@ -105,7 +104,6 @@ static HRESULT WINAPI StyleCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl StyleCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	StyleCF_QueryInterface,
 	StyleCF_AddRef,
 	StyleCF_Release,
@@ -148,7 +146,6 @@ static HRESULT WINAPI ChordTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 }
 
 static IClassFactoryVtbl ChordTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ChordTrackCF_QueryInterface,
 	ChordTrackCF_AddRef,
 	ChordTrackCF_Release,
@@ -191,7 +188,6 @@ static HRESULT WINAPI CommandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 }
 
 static IClassFactoryVtbl CommandTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	CommandTrackCF_QueryInterface,
 	CommandTrackCF_AddRef,
 	CommandTrackCF_Release,
@@ -234,7 +230,6 @@ static HRESULT WINAPI StyleTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 }
 
 static IClassFactoryVtbl StyleTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	StyleTrackCF_QueryInterface,
 	StyleTrackCF_AddRef,
 	StyleTrackCF_Release,
@@ -277,7 +272,6 @@ static HRESULT WINAPI MotifTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 }
 
 static IClassFactoryVtbl MotifTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	MotifTrackCF_QueryInterface,
 	MotifTrackCF_AddRef,
 	MotifTrackCF_Release,
@@ -320,7 +314,6 @@ static HRESULT WINAPI AuditionTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 }
 
 static IClassFactoryVtbl AuditionTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	AuditionTrackCF_QueryInterface,
 	AuditionTrackCF_AddRef,
 	AuditionTrackCF_Release,
@@ -363,7 +356,6 @@ static HRESULT WINAPI MuteTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl MuteTrackCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	MuteTrackCF_QueryInterface,
 	MuteTrackCF_AddRef,
 	MuteTrackCF_Release,

@@ -986,7 +986,6 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
 
 static IFilterMapper2Vtbl fm2vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     FilterMapper2_QueryInterface,
     FilterMapper2_AddRef,
@@ -1473,7 +1472,6 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
 
 static IFilterMapperVtbl fmvtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
     FilterMapper_QueryInterface,
     FilterMapper_AddRef,

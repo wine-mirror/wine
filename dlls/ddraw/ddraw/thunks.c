@@ -944,7 +944,6 @@ IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 This,
 
 IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDrawImpl_QueryInterface,
     IDirectDrawImpl_AddRef,
     IDirectDrawImpl_Release,
@@ -972,7 +971,6 @@ IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
 
 IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDraw2Impl_QueryInterface,
     IDirectDraw2Impl_AddRef,
     IDirectDraw2Impl_Release,
@@ -1001,7 +999,6 @@ IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
 
 IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirectDraw4Impl_QueryInterface,
     IDirectDraw4Impl_AddRef,
     IDirectDraw4Impl_Release,

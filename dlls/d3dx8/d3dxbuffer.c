@@ -79,7 +79,6 @@ DWORD WINAPI ID3DXBufferImpl_GetBufferSize(LPD3DXBUFFER iface) {
 
 ID3DXBufferVtbl D3DXBuffer_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ID3DXBufferImpl_QueryInterface,
     ID3DXBufferImpl_AddRef,
     ID3DXBufferImpl_Release,

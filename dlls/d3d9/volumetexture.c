@@ -219,7 +219,6 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE9 
 
 IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DVolumeTexture9Impl_QueryInterface,
     IDirect3DVolumeTexture9Impl_AddRef,
     IDirect3DVolumeTexture9Impl_Release,

@@ -715,7 +715,6 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_DeletePatch(LPDIRECT3DDEVICE9 iface, UINT 
 
 IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DDevice9Impl_QueryInterface,
     IDirect3DDevice9Impl_AddRef,
     IDirect3DDevice9Impl_Release,

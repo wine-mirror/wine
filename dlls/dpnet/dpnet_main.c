@@ -103,7 +103,6 @@ static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl DICF_Vtbl = {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DICF_QueryInterface,
   DICF_AddRef,
   DICF_Release,

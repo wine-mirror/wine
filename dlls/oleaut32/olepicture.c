@@ -1486,7 +1486,6 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
 
 static IPictureVtbl OLEPictureImpl_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_QueryInterface,
   OLEPictureImpl_AddRef,
   OLEPictureImpl_Release,
@@ -1508,7 +1507,6 @@ static IPictureVtbl OLEPictureImpl_VTable =
 
 static IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IDispatch_QueryInterface,
   OLEPictureImpl_IDispatch_AddRef,
   OLEPictureImpl_IDispatch_Release,
@@ -1520,7 +1518,6 @@ static IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
 
 static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IPersistStream_QueryInterface,
   OLEPictureImpl_IPersistStream_AddRef,
   OLEPictureImpl_IPersistStream_Release,
@@ -1533,7 +1530,6 @@ static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
 
 static IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable =
 {
-  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEPictureImpl_IConnectionPointContainer_QueryInterface,
   OLEPictureImpl_IConnectionPointContainer_AddRef,
   OLEPictureImpl_IConnectionPointContainer_Release,
@@ -1696,7 +1692,6 @@ static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 }
 
 static IClassFactoryVtbl SPCF_Vtbl = {
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	SPCF_QueryInterface,
 	SPCF_AddRef,
 	SPCF_Release,

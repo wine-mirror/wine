@@ -231,7 +231,6 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Stat (LPSTREAM iface, STATST
 }
 
 IStreamVtbl DirectMusicLoaderFileStream_Stream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderFileStream_IStream_QueryInterface,
 	IDirectMusicLoaderFileStream_IStream_AddRef,
 	IDirectMusicLoaderFileStream_IStream_Release,
@@ -275,7 +274,6 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_GetLoader (LPD
 }
 
 IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_Release,
@@ -499,7 +497,6 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Stat (LPSTREAM iface, ST
 }
 
 IStreamVtbl DirectMusicLoaderResourceStream_Stream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderResourceStream_IStream_QueryInterface,
 	IDirectMusicLoaderResourceStream_IStream_AddRef,
 	IDirectMusicLoaderResourceStream_IStream_Release,
@@ -543,7 +540,6 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_GetLoader 
 }
 
 IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_Release,
@@ -759,7 +755,6 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Stat (LPSTREAM iface, STA
 }
 
 IStreamVtbl DirectMusicLoaderGenericStream_Stream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderGenericStream_IStream_QueryInterface,
 	IDirectMusicLoaderGenericStream_IStream_AddRef,
 	IDirectMusicLoaderGenericStream_IStream_Release,
@@ -803,7 +798,6 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_GetLoader (
 }
 
 IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_Release,
