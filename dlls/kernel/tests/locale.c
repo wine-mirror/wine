@@ -30,6 +30,7 @@
 #define BUFFER_SIZE		50
 /* Buffer used by callback function */
 char GlobalBuffer[BUFFER_SIZE];
+#define COUNTOF(x) (sizeof(x)/sizeof(x)[0])
 
 /* TODO :
  * Unicode versions
@@ -181,6 +182,58 @@ LCID lcid;
 	cmp = strncmp (Expected, buffer, 4);
 	todo_wine { ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected); }
 	eq (ret, 0, "GetDateFormat with len=2", "%d");
+}
+
+void TestGetDateFormatW()
+{
+    int ret, error, cmp;
+    SYSTEMTIME  curtime;
+    WCHAR buffer[BUFFER_SIZE], format[BUFFER_SIZE], Expected[BUFFER_SIZE];
+    LCID lcid;
+
+    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
+
+    /* 1. Error cases */
+
+    /* 1a If flags is not zero then format must be null. */
+    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL, format, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    error = ret ? 0 : GetLastError();
+    ok (ret == 0 && error == ERROR_INVALID_FLAGS, "GetDateFormatW allowed flags and format");
+
+    /* 1b The buffer can only be null if the count is zero */
+    /* For the record other bad pointers result in a page fault (Win98) */
+    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, 0, NULL, format, NULL, sizeof(buffer)/sizeof(buffer[0]));
+    error = ret ? 0 : GetLastError();
+    ok (ret == 0 && error == ERROR_INVALID_PARAMETER, "GetDateFormatW did not detect null buffer pointer.");
+    ret = GetDateFormatW (LOCALE_SYSTEM_DEFAULT, 0, NULL, format, NULL, 0);
+    error = ret ? 0 : GetLastError();
+    ok (ret != 0 && error == 0, "GetDateFormatW did not permit null buffer pointer when counting.");
+
+    /* 1c An incorrect day of week is corrected. */
+    curtime.wYear = 2002;
+    curtime.wMonth = 10;
+    curtime.wDay = 23;
+    curtime.wDayOfWeek = 5; /* should be 3 - Wednesday */
+    curtime.wHour = 0;
+    curtime.wMinute = 0;
+    curtime.wSecond = 0;
+    curtime.wMilliseconds = 234;
+    MultiByteToWideChar (CP_ACP, 0, "dddd d MMMM yyyy", -1, format, COUNTOF(format));
+    ret = GetDateFormatW (lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
+    error = ret ? 0 : GetLastError();
+    MultiByteToWideChar (CP_ACP, 0, "Wednesday 23 October 2002", -1, Expected, COUNTOF(Expected));
+    cmp = ret ? lstrcmpW (buffer, Expected) : 2;
+    ok (ret == lstrlenW(Expected)+1 && error == 0 && cmp == 0, "Day of week correction failed\n");
+
+    /* 1d Invalid year, month or day results in error */
+
+    /* 1e Insufficient space results in error */
+
+    /* 2. Standard behaviour */
+    /* 1c is a reasonable test */
+
+    /* 3. Replicated undocumented behaviour */
+    /* e.g. unexepected characters are retained. */
 }
 
 
@@ -343,6 +396,7 @@ START_TEST(locale)
 	TestGetLocaleInfoA();
 	TestGetTimeFormatA();
 	TestGetDateFormatA();
+	TestGetDateFormatW();
 	TestGetNumberFormat();
 	TestGetCurrencyFormat();
 	TestCompareStringA();

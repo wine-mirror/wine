@@ -1572,26 +1572,15 @@ static INT OLE_GetFormatA(LCID locale,
 
 /******************************************************************************
  * OLE_GetFormatW [INTERNAL]
+ *
+ * dateformat is set TRUE if being called for a date, false for a time
  */
 static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    const SYSTEMTIME* xtime,
 			    LPCWSTR format,
-			    LPWSTR output, INT outlen)
+			    LPWSTR output, INT outlen, int dateformat)
 {
-   INT   inpos, outpos;
-   int     count, type=0, inquote;
-   int     Overflow; /* loop check */
-   char    tmp[16];
-   WCHAR   buf[40];
-   int     buflen=0;
-   WCHAR   arg0[] = {0}, arg1[] = {'%','d',0};
-   WCHAR   arg2[] = {'%','0','2','d',0};
-   WCHAR  *argarr[3];
-   int     datevars=0, timevars=0;
-
-   argarr[0] = arg0;
-   argarr[1] = arg1;
-   argarr[2] = arg2;
+   INT     outpos;
 
    /* make a debug report */
    TRACE("args: 0x%lx, 0x%lx, 0x%lx, time(d=%d,h=%d,m=%d,s=%d), fmt:%s (at %p), "
@@ -1600,55 +1589,50 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 debugstr_w(format), format, output, outlen);
 
-   if(outlen == 0) {
-     FIXME("outlen = 0, returning 255\n");
-     return 255;
-   }
-
    /* initialize state variables */
-   inpos = outpos = 0;
-   count = 0;
-   inquote = Overflow = 0;
-   /* this is really just a sanity check */
-   output[0] = buf[0] = 0;
+   outpos = 0;
 
-   /* this loop is the core of the function */
-   for (inpos = 0; /* we have several break points */ ; inpos++) {
-      if (inquote) {
-	 if (format[inpos] == (WCHAR) '\'') {
-	    if (format[inpos+1] == '\'') {
-	       inpos++;
-	       output[outpos++] = '\'';
-	    } else {
-	       inquote = 0;
-	       continue;
-	    }
-	 } else if (format[inpos] == 0) {
-	    output[outpos++] = 0;
-	    if (outpos > outlen) Overflow = 1;
-	    break;  /*  normal exit (within a quote) */
-	 } else {
-	    output[outpos++] = format[inpos]; /* copy input */
-	    if (outpos > outlen) {
-	       Overflow = 1;
-	       output[outpos-1] = 0;
-	       break;
-	    }
-	 }
-      } else if (  (count && (format[inpos] != type))
-		   || ( (count==4 && type =='y') ||
-			(count==4 && type =='M') ||
-			(count==4 && type =='d') ||
-			(count==2 && type =='g') ||
-			(count==2 && type =='h') ||
-			(count==2 && type =='H') ||
-			(count==2 && type =='m') ||
-			(count==2 && type =='s') ||
-			(count==2 && type =='t') )  ) {
-          switch(type)
-          {
+   while (*format) {
+      /* Literal string: Maybe terminated early by a \0 */
+      if (*format == (WCHAR) '\'') {
+         format++;
+         while (*format) {
+            if (*format == (WCHAR) '\'') {
+               format++;
+               if (*format != '\'') {
+                  break; /* It was a terminating quote */
+               }
+            }
+            if (!outlen)
+               /* We are counting */;
+            else if (outpos >= outlen)
+               goto too_short;
+            else
+               output[outpos] = *format;
+            outpos++;
+            format++;
+         }
+      } else if ( (dateformat &&  (*format=='d' ||
+				   *format=='M' ||
+				   *format=='y' ||
+				   *format=='g')  ) ||
+		  (!dateformat && (*format=='H' ||
+				   *format=='h' ||
+				   *format=='m' ||
+				   *format=='s' ||
+				   *format=='t') )    ) {
+         int type, count;
+         char    tmp[16];
+         WCHAR   buf[40];
+         int     buflen=0;
+         type = *format;
+         format++;
+         for (count = 1; *format == type; format++)
+            count++;
+         switch(type)
+         {
           case 'd':
-	    if        (count == 4) {
+	    if        (count >= 4) {
 	       GetLocaleInfoW(locale,
 			     LOCALE_SDAYNAME1 + (xtime->wDayOfWeek +6)%7,
 			     buf, sizeof(buf)/sizeof(WCHAR) );
@@ -1664,7 +1648,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
             break;
 
           case 'M':
-	    if        (count == 4) {
+	    if        (count >= 4) {
 	       GetLocaleInfoW(locale,  LOCALE_SMONTHNAME1 +
 				xtime->wMonth -1, buf,
 				sizeof(buf)/sizeof(WCHAR) );
@@ -1678,12 +1662,10 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	    }
             break;
           case 'y':
-	    if        (count == 4) {
+	    if        (count >= 4) {
                 sprintf( tmp, "%d", xtime->wYear );
-	    } else if (count == 3) {
-                strcpy( tmp, "yyy" );
 	    } else {
-                sprintf( tmp, "%.*d", count, xtime->wYear % 100 );
+                sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wYear % 100 );
 	    }
             MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
             break;
@@ -1701,22 +1683,22 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 
           case 'h':
               /* hours 1:00-12:00 --- is this right? */
-              sprintf( tmp, "%.*d", count, (xtime->wHour-1)%12 +1);
+              sprintf( tmp, "%.*d", count > 2 ? 2 : count, (xtime->wHour-1)%12 +1);
               MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
               break;
 
           case 'H':
-              sprintf( tmp, "%.*d", count, xtime->wHour );
+              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wHour );
               MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
               break;
 
           case 'm':
-              sprintf( tmp, "%.*d", count, xtime->wMinute );
+              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wMinute );
               MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
               break;
 
           case 's':
-              sprintf( tmp, "%.*d", count, xtime->wSecond );
+              sprintf( tmp, "%.*d", count > 2 ? 2 : count, xtime->wSecond );
               MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
               break;
 
@@ -1728,71 +1710,49 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	       buf[1] = 0;
 	    }
             break;
-          }
-
-	 /* no matter what happened,  we need to check this next
-	    character the next time we loop through */
-	 inpos--;
+         }
 
 	 /* cat buf onto the output */
-	 outlen = strlenW(buf);
-	 if (outpos + buflen < outlen) {
+	 buflen = strlenW(buf);
+         if (!outlen)
+            /* We are counting */;
+         else if (outpos + buflen < outlen) {
             strcpyW( output + outpos, buf );
-	    outpos += buflen;
 	 } else {
             lstrcpynW( output + outpos, buf, outlen - outpos );
-	    Overflow = 1;
-	    break; /* Abnormal exit */
+            /* Is this an undocumented feature we are supporting? */
+            goto too_short;
 	 }
-
-	 /* reset the variables we used this time */
-	 count = 0;
-	 type = '\0';
-      } else if (format[inpos] == 0) {
-	 /* we can't check for this at the beginning,  because that
-	 would keep us from printing a format spec that ended the
-	 string */
-	 output[outpos] = 0;
-	 break;  /*  NORMAL EXIT  */
-      } else if (count) {
-	 /* how we keep track of the middle of a format spec */
-	 count++;
-	 continue;
-      } else if ( (datevars && (format[inpos]=='d' ||
-				format[inpos]=='M' ||
-				format[inpos]=='y' ||
-				format[inpos]=='g')  ) ||
-		  (timevars && (format[inpos]=='H' ||
-				format[inpos]=='h' ||
-				format[inpos]=='m' ||
-				format[inpos]=='s' ||
-				format[inpos]=='t') )    ) {
-	 type = format[inpos];
-	 count = 1;
-	 continue;
-      } else if (format[inpos] == '\'') {
-	 inquote = 1;
-	 continue;
+	 outpos += buflen;
       } else {
-	 /* unquoted literals */
-	 output[outpos++] = format[inpos];
+         /* a literal character */
+         if (!outlen)
+            /* We are counting */;
+         else if (outpos >= outlen)
+            goto too_short;
+         else
+            output[outpos] = *format;
+         outpos++;
+         format++;
       }
    }
 
-   if (Overflow) {
-      SetLastError(ERROR_INSUFFICIENT_BUFFER);
-      WARN(" buffer overflow\n");
-   };
-
    /* final string terminator and sanity check */
+   if (!outlen)
+      /* We are counting */;
+   else if (outpos >= outlen)
+      goto too_short;
+   else
+      output[outpos] = '\0';
    outpos++;
-   if (outpos > outlen-1) outpos = outlen-1;
-   output[outpos] = '0';
 
-   TRACE(" returning %s\n", debugstr_w(output));
+   TRACE(" returning %d %s\n", outpos, debugstr_w(output));
+   return outpos;
 
-   return (!Overflow) ? outlen : 0;
-
+too_short:
+   SetLastError(ERROR_INSUFFICIENT_BUFFER);
+   WARN(" buffer overflow\n");
+   return 0;
 }
 
 
@@ -1910,6 +1870,17 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
     TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
 	  locale,flags,xtime,debugstr_w(format),date,datelen);
     
+    /* Tests (could be left until OLE_GetFormatW) */
+    if (flags && format)
+    {
+        SetLastError (ERROR_INVALID_FLAGS);
+	return 0;
+    }
+    if (datelen && !date)
+    {
+        SetLastError (ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     if (!locale) {
 	locale = LOCALE_SYSTEM_DEFAULT;
     };
@@ -1950,7 +1921,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
     
     
     ret = OLE_GetFormatW(thislocale, flags, 0, thistime, thisformat,
-			 date, datelen);
+			 date, datelen, 1);
     
     
     TRACE("GetDateFormatW() returning %d, with data=%s\n",
@@ -3067,7 +3038,7 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	}
 
 	ret = OLE_GetFormatW(thislocale, thisflags, flags, thistime, thisformat,
-  			 timestr, timelen);
+  			 timestr, timelen, 0);
 	return ret;
 }
 
