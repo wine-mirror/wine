@@ -1067,6 +1067,8 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
         /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
+            if (extra_env && p[0]=='=' && 'A'<=p[1] && p[1]<='Z' && p[2]==':' && p[3]=='=')
+                continue; /* skipped */
             if (!memcmp( p, "PATH=", 5 ))  /* store PATH as WINEPATH */
                 *envptr++ = alloc_env_string( "WINEPATH=", p + 5 );
             else if (memcmp( p, "HOME=", 5 ) &&
