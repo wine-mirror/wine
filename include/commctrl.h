@@ -130,6 +130,43 @@ typedef struct tagNMTOOLTIPSCREATED
     HWND hwndToolTips;
 } NMTOOLTIPSCREATED, *LPNMTOOLTIPSCREATED;
 
+typedef struct tagNMMOUSE
+{
+    NMHDR   hdr;
+    DWORD   dwItemSpec;
+    DWORD   dwItemData;
+    POINT   pt;
+    DWORD   dwHitInfo;   /* info where on item or control the mouse is */
+} NMMOUSE, *LPNMMOUSE;
+
+typedef struct tagNMOBJECTNOTIFY
+{
+    NMHDR   hdr;
+    int     iItem;
+#ifdef __IID_DEFINED__
+    const IID *piid;
+#else
+    const void *piid;
+#endif
+    void    *pObject;
+    HRESULT hResult;
+    DWORD   dwFlags;
+} NMOBJECTNOTIFY, *LPNMOBJECTNOTIFY;
+
+typedef struct tagNMKEY
+{
+    NMHDR   hdr;
+    UINT    nVKey;
+    UINT    uFlags;
+} NMKEY, *LPNMKEY;
+
+typedef struct tagNMCHAR
+{
+    NMHDR   hdr;
+    UINT    ch;
+    DWORD   dwItemPrev;           /* Item previously selected */
+    DWORD   dwItemNext;           /* Item to be selected */
+} NMCHAR, *LPNMCHAR;
 
 #ifndef CCSIZEOF_STRUCT
 #define CCSIZEOF_STRUCT(name, member) \
