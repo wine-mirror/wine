@@ -155,6 +155,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			GotProductCode = GetProductCode(argv[i], ProductCode);
 			if(!GotProductCode)
 			{
@@ -169,6 +170,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			PackageName = argv[i];
 			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)+strlen(ActionAdmin));
 			if(!TempStr)
@@ -236,6 +238,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			GotProductCode = GetProductCode(argv[i], ProductCode);
 			if(!GotProductCode)
 			{
@@ -250,6 +253,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			GotProductCode = GetProductCode(argv[i], ProductCode);
 			if(!GotProductCode)
 			{
@@ -291,6 +295,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			PackageName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "u"))
@@ -300,6 +305,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			PackageName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "m"))
@@ -309,6 +315,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			PackageName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "/t"))
@@ -316,6 +323,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)+strlen(argv[i])+1);
 			if(!TempStr)
 			{
@@ -343,6 +351,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			Language = strtol(argv[i], NULL, 0);
 		}
 		else if(!strncasecmp(argv[i], "/l", 2))
@@ -350,6 +359,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			WINE_FIXME("Logging not yet implemented\n");
 			ExitProcess(1);
 		}
@@ -358,6 +368,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			WINE_FIXME("Patching not yet implemented\n");
 			ExitProcess(1);
 		}
@@ -366,6 +377,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			WINE_FIXME("User interface not yet implemented\n");
 			ExitProcess(1);
 		}
@@ -375,6 +387,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			DllName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "/z"))
@@ -383,6 +396,7 @@ int main(int argc, char *argv[])
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
+			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			DllName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "/h") || !strcasecmp(argv[i], "/?"))
