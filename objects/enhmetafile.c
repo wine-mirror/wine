@@ -638,17 +638,19 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_EXTTEXTOUTW:
       {
-	/* 0-3: ??? */
+	/* 0-3: rect ??? */
 	DWORD flags = mr->dParm[4];
 	/* 5, 6: ??? */
 	DWORD x = mr->dParm[7], y = mr->dParm[8];
 	DWORD count = mr->dParm[9];
-	/* 10-16: ??? */
-	LPWSTR str = (LPWSTR)& mr->dParm[17];
-	/* trailing info: dx array? */
-	FIXME("Many ExtTextOut args not handled\n");
-	ExtTextOutW(hdc, x, y, flags, /* lpRect */ NULL, 
-		      str, count, /* lpDx */ NULL); 
+	LPWSTR str = (LPWSTR)((char *)mr + mr->dParm[10]);
+	/* 11: ??? */
+	/* 12-15: rect ???*/
+	LPINT lpDx = (LPINT)((char *)mr + mr->dParm[16]);
+
+	FIXME("Some ExtTextOut args not handled\n");
+	ExtTextOutW(hdc, x, y, flags, NULL,
+		      str, count, lpDx);
 	break;
       }
  
@@ -666,9 +668,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	PEMRSELECTPALETTE lpSelectPal = (PEMRSELECTPALETTE)mr;
 
-	/* FIXME: Should this be forcing background mode? */
-	(handletable->objectHandle)[ lpSelectPal->ihPal ] = 
-		SelectPalette( hdc, (handletable->objectHandle)[lpSelectPal->ihPal], FALSE );
+	if( lpSelectPal->ihPal & 0x80000000 ) {
+		SelectPalette( hdc, GetStockObject(lpSelectPal->ihPal & 0x7fffffff), TRUE);
+	} else {
+	(handletable->objectHandle)[ lpSelectPal->ihPal ] =
+		SelectPalette( hdc, (handletable->objectHandle)[lpSelectPal->ihPal], TRUE);
+	}
 	break;
       }
 
@@ -704,9 +709,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_SETWORLDTRANSFORM:
       {
         PEMRSETWORLDTRANSFORM lpXfrm = (PEMRSETWORLDTRANSFORM)mr;
-
         SetWorldTransform( hdc, &lpXfrm->xform );
-
         break;
       }
 
@@ -870,7 +873,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRMODIFYWORLDTRANSFORM lpModifyWorldTrans = (PEMRMODIFYWORLDTRANSFORM)mr;
 
-        ModifyWorldTransform( hdc, &lpModifyWorldTrans->xform, 
+        ModifyWorldTransform( hdc, &lpModifyWorldTrans->xform,
                               lpModifyWorldTrans->iMode );
 
         break;
@@ -1219,9 +1222,11 @@ BOOL WINAPI EnumEnhMetaFile(
     INT savedMode = 0;
     FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
     XFORM savedXform, xform;
-    HPEN hPen;
-    HBRUSH hBrush;
-    HFONT hFont;
+    HPEN hPen = (HPEN)NULL;
+    HBRUSH hBrush = (HBRUSH)NULL;
+    HFONT hFont = (HFONT)NULL;
+
+    XFORM outXform;
 
     if(!lpRect)
     {
@@ -1257,32 +1262,36 @@ BOOL WINAPI EnumEnhMetaFile(
     }
     ht->objectHandle[0] = hmf;
 
-    xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
-    ySrcPixSize = (FLOAT) emh->szlMillimeters.cy / emh->szlDevice.cy;
-    xscale = (FLOAT)(lpRect->right - lpRect->left) * 100.0 /
-      (emh->rclFrame.right - emh->rclFrame.left) * xSrcPixSize;
-    yscale = (FLOAT)(lpRect->bottom - lpRect->top) * 100.0 /
-      (emh->rclFrame.bottom - emh->rclFrame.top) * ySrcPixSize;
+    if (hdc)
+    {
+	xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
+	ySrcPixSize = (FLOAT) emh->szlMillimeters.cy / emh->szlDevice.cy;
+	xscale = (FLOAT)(lpRect->right - lpRect->left) * 100.0 /
+	  (emh->rclFrame.right - emh->rclFrame.left) * xSrcPixSize;
+	yscale = (FLOAT)(lpRect->bottom - lpRect->top) * 100.0 /
+	  (emh->rclFrame.bottom - emh->rclFrame.top) * ySrcPixSize;
 
-    xform.eM11 = xscale;
-    xform.eM12 = 0;
-    xform.eM21 = 0;
-    xform.eM22 = yscale;
-    if(emh->rclFrame.left || emh->rclFrame.top)
-      FIXME("Can't cope with nonzero rclFrame origin yet\n");
- /* eDx = lpRect->left - (lpRect width) / (rclFrame width) * rclFrame.left ? */
-    xform.eDx = lpRect->left;
-    xform.eDy = lpRect->top;
-    savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
-    GetWorldTransform(hdc, &savedXform);
-    if (!ModifyWorldTransform(hdc, &xform, MWT_LEFTMULTIPLY)) {
-        ERR("World transform failed!\n");
+	xform.eM11 = xscale;
+	xform.eM12 = 0;
+	xform.eM21 = 0;
+	xform.eM22 = yscale;
+	xform.eDx = (FLOAT)lpRect->left - (xscale * emh->rclFrame.left * 0.5);
+	xform.eDy = (FLOAT)lpRect->top - (yscale * (FLOAT)emh->rclFrame.top * 0.5);
+
+	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
+	GetWorldTransform(hdc, &savedXform);
+
+	if (!ModifyWorldTransform(hdc, &xform, MWT_RIGHTMULTIPLY)) {
+	    ERR("World transform failed!\n");
+	}
+
+	GetWorldTransform(hdc, &outXform);
+
+	/* save the current pen, brush and font */
+	hPen = GetCurrentObject(hdc, OBJ_PEN);
+	hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+	hFont = GetCurrentObject(hdc, OBJ_FONT);
     }
-
-    /* save the current pen, brush and font */
-    hPen = GetCurrentObject(hdc, OBJ_PEN);
-    hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
-    hFont = GetCurrentObject(hdc, OBJ_FONT);
 
     TRACE("nSize = %ld, nBytes = %ld, nHandles = %d, nRecords = %ld, nPalEntries = %ld\n",
 	emh->nSize, emh->nBytes, emh->nHandles, emh->nRecords, emh->nPalEntries);
@@ -1293,24 +1302,28 @@ BOOL WINAPI EnumEnhMetaFile(
     {
 	emr = (ENHMETARECORD *)((char *)emh + offset);
 	TRACE("Calling EnumFunc with record type %ld, size %ld\n", emr->iType, emr->nSize);
-	ret = (*callback)(hdc, ht, emr, emh->nRecords, data);
+	ret = (*callback)(hdc, ht, emr, emh->nHandles, data);
 	offset += emr->nSize;
     }
 
-    /* restore pen, brush and font */
-    SelectObject(hdc, hBrush);
-    SelectObject(hdc, hPen);
-    SelectObject(hdc, hFont);
+    if (hdc)
+    {
+	/* restore pen, brush and font */
+	SelectObject(hdc, hBrush);
+	SelectObject(hdc, hPen);
+	SelectObject(hdc, hFont);
 
-    for(i = 1; i < emh->nRecords; i++) /* Don't delete element 0 (hmf) */
+	SetWorldTransform(hdc, &savedXform);
+	if (savedMode)
+	    SetGraphicsMode(hdc, savedMode);
+    }
+
+    for(i = 1; i < emh->nHandles; i++) /* Don't delete element 0 (hmf) */
         if( (ht->objectHandle)[i] )
 	    DeleteObject( (ht->objectHandle)[i] );
 
     HeapFree( GetProcessHeap(), 0, ht );
     HeapFree(GetProcessHeap(), 0, emhTemp);
-
-    SetWorldTransform(hdc, &savedXform);
-    if (savedMode) SetGraphicsMode(hdc, savedMode);
 
     return ret;
 }
