@@ -364,7 +364,6 @@ static int AllocEntry(void)
 
 static int GetCacheEntry(LFANDSIZE *plfsz)
 {
-    XRenderPictFormat pf;
     int ret;
     gsCacheEntry *entry;
 
@@ -380,35 +379,8 @@ static int GetCacheEntry(LFANDSIZE *plfsz)
     else
         entry->aa = AA_None;
 
-    if(X11DRV_XRender_Installed) {
-        switch(entry->aa) {
-	case AA_Grey:
-	    pf.depth = 8;
-	    pf.direct.alphaMask = 0xff;
-	    break;
-
-	default:
-	    ERR("aa = %d - not implemented\n", entry->aa);
-	case AA_None:
-	    pf.depth = 1;
-	    pf.direct.alphaMask = 1;
-	    break;
-	}
-
-	pf.type = PictTypeDirect;
-	pf.direct.alpha = 0;
-
-	wine_tsx11_lock();
-	entry->font_format = pXRenderFindFormat(gdi_display,
-						PictFormatType |
-						PictFormatDepth |
-						PictFormatAlpha |
-						PictFormatAlphaMask,
-						&pf, 0);
-
-	entry->glyphset = pXRenderCreateGlyphSet(gdi_display, entry->font_format);
-	wine_tsx11_unlock();
-    }
+    entry->font_format = NULL;
+    entry->glyphset = 0;
     return ret;
 }
 
@@ -544,6 +516,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
     XGlyphInfo gi;
     gsCacheEntry *entry = glyphsetCache + physDev->xrender->cache_index;
     UINT ggo_format = GGO_GLYPH_INDEX;
+    XRenderPictFormat pf;
 
     if(entry->nrealized <= glyph) {
         entry->nrealized = (glyph / 128 + 1) * 128;
@@ -558,7 +531,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 				      HEAP_ZERO_MEMORY,
 				      entry->nrealized * sizeof(BOOL));
 
-	if(entry->glyphset == 0) {
+	if(!X11DRV_XRender_Installed) {
 	  if (entry->bitmaps)
 	    entry->bitmaps = HeapReAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
@@ -596,14 +569,54 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
     buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
 			      NULL);
     if(buflen == GDI_ERROR) {
-        LeaveCriticalSection(&xrender_cs);
-	return FALSE;
+        if(entry->aa != AA_None) {
+            entry->aa = AA_None;
+            ggo_format &= ~WINE_GGO_GRAY16_BITMAP;
+            ggo_format |= GGO_BITMAP;
+            buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
+                                      NULL);
+        }
+        if(buflen == GDI_ERROR) {
+            LeaveCriticalSection(&xrender_cs);
+            return FALSE;
+        }
+        TRACE("Turning off antialiasing for this monochrome font\n");
     }
 
-    entry->realized[glyph] = TRUE;
+    if(entry->glyphset == 0 && X11DRV_XRender_Installed) {
+        switch(entry->aa) {
+	case AA_Grey:
+	    pf.depth = 8;
+	    pf.direct.alphaMask = 0xff;
+	    break;
+
+	default:
+	    ERR("aa = %d - not implemented\n", entry->aa);
+	case AA_None:
+	    pf.depth = 1;
+	    pf.direct.alphaMask = 1;
+	    break;
+	}
+
+	pf.type = PictTypeDirect;
+	pf.direct.alpha = 0;
+
+	wine_tsx11_lock();
+	entry->font_format = pXRenderFindFormat(gdi_display,
+						PictFormatType |
+						PictFormatDepth |
+						PictFormatAlpha |
+						PictFormatAlphaMask,
+						&pf, 0);
+
+	entry->glyphset = pXRenderCreateGlyphSet(gdi_display, entry->font_format);
+	wine_tsx11_unlock();
+    }
+
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
     GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
+    entry->realized[glyph] = TRUE;
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%ld,%ld\n",
 	  buflen,
