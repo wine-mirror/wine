@@ -36,7 +36,7 @@ static CLASS *firstClass = NULL;
  */
 void CLASS_DumpClass( CLASS *ptr )
 {
-    char className[80];
+    char className[MAX_CLASSNAME+1];
     int i;
 
     if (ptr->magic != CLASS_MAGIC)
@@ -74,7 +74,7 @@ void CLASS_DumpClass( CLASS *ptr )
 void CLASS_WalkClasses(void)
 {
     CLASS *ptr;
-    char className[80];
+    char className[MAX_CLASSNAME+1];
 
     DUMP( " Class   Name                  Style   WndProc\n" );
     for (ptr = firstClass; ptr; ptr = ptr->next)
@@ -158,6 +158,75 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 
 
 /***********************************************************************
+ *           CLASS_GetClassNameA
+ *
+ * Get the clas name as a ASCII string.
+ */
+static LPSTR CLASS_GetClassNameA( CLASS *classPtr )
+{
+    if (!classPtr->classNameA && classPtr->classNameW)
+    {
+        /* We need to copy the Unicode string */
+        classPtr->classNameA = SEGPTR_STRDUP_WtoA( classPtr->classNameW );
+    }
+    return classPtr->classNameA;
+}
+
+
+/***********************************************************************
+ *           CLASS_GetClassNameW
+ *
+ * Get the class name as a Unicode string.
+ */
+static LPWSTR CLASS_GetClassNameW( CLASS *classPtr )
+{
+    if (!classPtr->classNameW && classPtr->classNameA)
+    {
+        if (!HIWORD(classPtr->classNameA))
+            return (LPWSTR)classPtr->classNameA;
+        /* Now we need to copy the ASCII string */
+        classPtr->classNameW = HEAP_strdupAtoW( SystemHeap, 0,
+                                               classPtr->classNameA );
+    }
+    return classPtr->classNameW;
+}
+
+/***********************************************************************
+ *           CLASS_SetClassNameA
+ *
+ * Set the class name in a class structure by copying the string.
+ */
+static void CLASS_SetClassNameA( CLASS *classPtr, LPCSTR name )
+{
+    if (HIWORD(classPtr->classNameA)) SEGPTR_FREE( classPtr->classNameA );
+    if (classPtr->classNameW) HeapFree( SystemHeap, 0, classPtr->classNameW );
+    classPtr->classNameA = SEGPTR_STRDUP( name );
+    classPtr->classNameW = 0;
+}
+
+
+/***********************************************************************
+ *           CLASS_SetClassNameW
+ *
+ * Set the class name in a class structure by copying the string.
+ */
+static void CLASS_SetClassNameW( CLASS *classPtr, LPCWSTR name )
+{
+    if (!HIWORD(name))
+    {
+        CLASS_SetClassNameA( classPtr, (LPCSTR)name );
+        return;
+    }
+    if (HIWORD(classPtr->classNameA)) SEGPTR_FREE( classPtr->classNameA );
+    if (classPtr->classNameW) HeapFree( SystemHeap, 0, classPtr->classNameW );
+    if ((classPtr->classNameW = HeapAlloc( SystemHeap, 0,
+                                         (lstrlen32W(name)+1)*sizeof(WCHAR) )))
+        lstrcpy32W( classPtr->classNameW, name );
+    classPtr->classNameA = 0;
+}
+
+
+/***********************************************************************
  *           CLASS_FreeClass
  *
  * Free a class structure.
@@ -188,6 +257,7 @@ static BOOL32 CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->hbrBackground) DeleteObject32( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
+    CLASS_SetClassNameA( classPtr, NULL );
     WINPROC_FreeProc( classPtr->winproc, WIN_PROC_CLASS );
     HeapFree( SystemHeap, 0, classPtr );
     return TRUE;
@@ -317,10 +387,12 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
     classPtr->atomName    = atom;
     classPtr->menuNameA   = 0;
     classPtr->menuNameW   = 0;
+    classPtr->classNameA   = 0;
+    classPtr->classNameA   = 0;
     classPtr->dce         = (style & CS_CLASSDC) ?
                                  DCE_AllocDCE( 0, DCE_CLASS_DC ) : NULL;
 
-    WINPROC_SetProc( &classPtr->winproc, wndProc, wndProcType, WIN_PROC_CLASS);
+    WINPROC_SetProc( &classPtr->winproc, wndProc, wndProcType, WIN_PROC_CLASS);    
 
     /* Other values must be set by caller */
 
@@ -363,6 +435,9 @@ bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 
     CLASS_SetMenuNameA( classPtr, HIWORD(wc->lpszMenuName) ?
                  PTR_SEG_TO_LIN(wc->lpszMenuName) : (LPCSTR)wc->lpszMenuName );
+    CLASS_SetClassNameA( classPtr, HIWORD(wc->lpszClassName) ?
+                 PTR_SEG_TO_LIN(wc->lpszClassName) : (LPCSTR)wc->lpszClassName );
+
     return atom;
 }
 
@@ -403,7 +478,9 @@ ATOM WINAPI RegisterClass32A(
     classPtr->hIconSm       = 0;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
+    CLASS_SetClassNameA( classPtr, wc->lpszClassName );
     return atom;
 }
 
@@ -440,7 +517,9 @@ ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
     classPtr->hIconSm       = 0;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
+    CLASS_SetClassNameW( classPtr, wc->lpszClassName );
     return atom;
 }
 
@@ -475,6 +554,8 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 
     CLASS_SetMenuNameA( classPtr, HIWORD(wc->lpszMenuName) ?
                  PTR_SEG_TO_LIN(wc->lpszMenuName) : (LPCSTR)wc->lpszMenuName );
+    CLASS_SetClassNameA( classPtr, HIWORD(wc->lpszClassName) ?
+                 PTR_SEG_TO_LIN(wc->lpszClassName) : (LPCSTR)wc->lpszClassName );
     return atom;
 }
 
@@ -512,6 +593,7 @@ ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
+    CLASS_SetClassNameA( classPtr, wc->lpszClassName );
     return atom;
 }
 
@@ -549,6 +631,7 @@ ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
+    CLASS_SetClassNameW( classPtr, wc->lpszClassName );
     return atom;
 }
 
@@ -797,6 +880,16 @@ WORD WINAPI SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
     }
     retval = GET_WORD(ptr);
     PUT_WORD( ptr, newval );
+    
+    /* Note: If the GCW_ATOM was changed, this means that the WNDCLASS className fields
+    need to be updated as well.  Problem is that we can't tell whether the atom is 
+    using wide or narrow characters.  For now, we'll just NULL out the className 
+    fields, and emit a FIXME. */
+    if (offset == GCW_ATOM)
+    {
+        CLASS_SetClassNameA( wndPtr->class, NULL );
+        FIXME(class,"GCW_ATOM changed for a class.  Not updating className, so GetClassInfoEx may not return correct className!\n");
+    }
     return retval;
 }
 
@@ -975,7 +1068,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name,
     wc->hIcon         = classPtr->hIcon;
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
-    wc->lpszClassName = (SEGPTR)0;
+    wc->lpszClassName = (SEGPTR)CLASS_GetClassNameA( classPtr );;
     wc->lpszMenuName  = (SEGPTR)CLASS_GetMenuNameA( classPtr );
     if (HIWORD(wc->lpszMenuName))  /* Make it a SEGPTR */
         wc->lpszMenuName = SEGPTR_GET( (LPSTR)wc->lpszMenuName );
@@ -1019,7 +1112,7 @@ BOOL32 WINAPI GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name,
     wc->hCursor       = (HCURSOR32)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH32)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
-    wc->lpszClassName = NULL;
+    wc->lpszClassName = CLASS_GetClassNameA( classPtr );
     return TRUE;
 }
 
@@ -1050,7 +1143,7 @@ BOOL32 WINAPI GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name,
     wc->hCursor       = (HCURSOR32)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH32)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
-    wc->lpszClassName = NULL;
+    wc->lpszClassName = CLASS_GetClassNameW( classPtr );
     return TRUE;
 }
 
@@ -1086,6 +1179,9 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name,
     wc->lpszMenuName  = (SEGPTR)CLASS_GetMenuNameA( classPtr );
     if (HIWORD(wc->lpszMenuName))  /* Make it a SEGPTR */
         wc->lpszMenuName = SEGPTR_GET( (LPSTR)wc->lpszMenuName );
+    wc->lpszClassName  = (SEGPTR)CLASS_GetClassNameA( classPtr );
+    if (HIWORD(wc->lpszClassName))  /* Make it a SEGPTR */
+        wc->lpszClassName = SEGPTR_GET( (LPSTR)wc->lpszClassName );
     return TRUE;
 }
 
@@ -1115,7 +1211,7 @@ BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
     wc->hCursor       = (HCURSOR32)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH32)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
-    wc->lpszClassName = NULL;
+    wc->lpszClassName  = CLASS_GetClassNameA( classPtr );
     return TRUE;
 }
 
@@ -1145,7 +1241,7 @@ BOOL32 WINAPI GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
     wc->hCursor       = (HCURSOR32)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH32)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
-    wc->lpszClassName = NULL;
+    wc->lpszClassName = CLASS_GetClassNameW( classPtr );;
     return TRUE;
 }
 

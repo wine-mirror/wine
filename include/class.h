@@ -32,6 +32,8 @@ typedef struct tagCLASS
     HCURSOR16        hCursor;       /* Default cursor */
     HBRUSH16         hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
+    LPSTR            classNameA;    /* Class name (ASCII string) */
+    LPWSTR           classNameW;    /* Class name (Unicode) */
     LONG             wExtra[1];     /* Class extra bytes */
 } CLASS;
 
