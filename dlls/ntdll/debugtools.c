@@ -170,7 +170,7 @@ inline static char *put_string_w( const WCHAR *src, int n )
 const char *wine_dbgstr_an( const char *src, int n )
 {
     char *res, *old_pos;
-    struct debug_info *info;
+    struct debug_info *info = get_info();
 
     if (!HIWORD(src))
     {
@@ -180,7 +180,6 @@ const char *wine_dbgstr_an( const char *src, int n )
         return res;
     }
     /* save current position to restore it on exception */
-    info = NtCurrentTeb()->debug_info;
     old_pos = info->str_pos;
     __TRY
     {
@@ -201,7 +200,7 @@ const char *wine_dbgstr_an( const char *src, int n )
 const char *wine_dbgstr_wn( const WCHAR *src, int n )
 {
     char *res, *old_pos;
-    struct debug_info *info;
+    struct debug_info *info = get_info();
 
     if (!HIWORD(src))
     {
@@ -212,7 +211,6 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
     }
 
     /* save current position to restore it on exception */
-    info = NtCurrentTeb()->debug_info;
     old_pos = info->str_pos;
     __TRY
     {
