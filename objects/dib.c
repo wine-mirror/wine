@@ -15,6 +15,7 @@
 #include "callback.h"
 #include "palette.h"
 #include "global.h"
+#include "selectors.h"
 #include "debug.h"
 #include "local.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
@@ -776,7 +777,7 @@ static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL32 toDIB )
 /***********************************************************************
  *           DIB_FaultHandler
  */
-static BOOL32 DIB_FaultHandler( LPVOID res, LPVOID addr )
+static BOOL32 DIB_FaultHandler( LPVOID res, LPCVOID addr )
 {
     BOOL32 handled = FALSE;
     BITMAPOBJ *bmp;
@@ -906,17 +907,46 @@ void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
  *           CreateDIBSection16    (GDI.489)
  */
 HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
-				     LPVOID **bits, HANDLE32 section,
+				     SEGPTR *bits, HANDLE32 section,
 				     DWORD offset)
 {
-    return CreateDIBSection32(hdc, bmi, usage, bits, section, offset);
+    HBITMAP32 res = CreateDIBSection32(hdc, bmi, usage, NULL, section,
+				       offset);
+
+    if ( res )
+    {
+	BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
+	if ( bmp && bmp->dib )
+	{
+	    DIBSECTION *dib = &bmp->dib->dibSection;
+	    INT32 height = dib->dsBm.bmHeight >= 0 ?
+		dib->dsBm.bmHeight : -dib->dsBm.bmHeight;
+	    INT32 size = dib->dsBmih.biSizeImage ?
+		dib->dsBmih.biSizeImage : dib->dsBm.bmWidthBytes * height;
+	    if ( dib->dsBm.bmBits )
+	    {
+		bmp->dib->selector = 
+		    SELECTOR_AllocBlock( dib->dsBm.bmBits, size, 
+					 SEGMENT_DATA, FALSE, FALSE );
+	    }
+	    printf("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
+		   dib->dsBm.bmBits, size, bmp->dib->selector,
+		   PTR_SEG_OFF_TO_SEGPTR(bmp->dib->selector, 0));
+}
+	GDI_HEAP_UNLOCK( res );
+
+	if ( bits ) 
+	    *bits = PTR_SEG_OFF_TO_SEGPTR( bmp->dib->selector, 0 );
+    }
+
+    return res;
 }
 
 /***********************************************************************
  *           CreateDIBSection32    (GDI32.36)
  */
 HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
-				     LPVOID **bits,HANDLE32 section,
+				     LPVOID *bits,HANDLE32 section,
 				     DWORD offset)
 {
     HBITMAP32 res = 0;
@@ -977,6 +1007,7 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 	dib->dibSection.dsOffset = offset;
 
         dib->status    = DIB_NoHandler;
+	dib->selector  = 0;
         
 	dib->nColorMap = nColorMap;
         dib->colorMap  = colorMap;
@@ -1060,6 +1091,12 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
 
         if (dib->colorMap)
             HeapFree(GetProcessHeap(), 0, dib->colorMap);
+
+        if (dib->selector)
+        {
+            WORD count = (GET_SEL_LIMIT( dib->selector ) >> 16) + 1;
+            SELECTOR_FreeBlock( dib->selector, count );
+        }
 
         HeapFree(GetProcessHeap(), 0, dib);
         bmp->dib = NULL;

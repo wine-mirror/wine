@@ -504,7 +504,7 @@ DWORD VIRTUAL_GetGranularity(void)
 /***********************************************************************
  *           VIRTUAL_SetFaultHandler
  */
-BOOL32 VIRTUAL_SetFaultHandler( LPVOID addr, HANDLERPROC proc, LPVOID arg )
+BOOL32 VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 {
     FILE_VIEW *view;
 
@@ -517,7 +517,7 @@ BOOL32 VIRTUAL_SetFaultHandler( LPVOID addr, HANDLERPROC proc, LPVOID arg )
 /***********************************************************************
  *           VIRTUAL_HandleFault
  */
-BOOL32 VIRTUAL_HandleFault(LPVOID addr)
+BOOL32 VIRTUAL_HandleFault( LPCVOID addr )
 {
     FILE_VIEW *view = VIRTUAL_FindView((UINT32)addr);
 

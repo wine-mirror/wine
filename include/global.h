@@ -35,9 +35,9 @@ extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
 extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
 
-typedef BOOL32 (*HANDLERPROC)(LPVOID, LPVOID);
-extern BOOL32 VIRTUAL_SetFaultHandler(LPVOID addr, HANDLERPROC proc, LPVOID arg);
-extern BOOL32 VIRTUAL_HandleFault(LPVOID addr);
+typedef BOOL32 (*HANDLERPROC)(LPVOID, LPCVOID);
+extern BOOL32 VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
+extern BOOL32 VIRTUAL_HandleFault(LPCVOID addr);
 
 /* memory/atom.c */
 extern BOOL32 ATOM_Init( WORD globalTableSel );
