@@ -1144,7 +1144,11 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	{
 	  case SHGDFIL_FINDDATA:
 	    {
+	       LPSTR filename, shortname;
 	       WIN32_FIND_DATAA * pfd = dest;
+
+	       if (_ILIsDrive(pidl))
+	           return E_INVALIDARG;
 
 	       if (len < (int)sizeof(WIN32_FIND_DATAA)) return E_INVALIDARG;
 
@@ -1152,8 +1156,19 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	       _ILGetFileDateTime( pidl, &(pfd->ftLastWriteTime));
 	       pfd->dwFileAttributes = _ILGetFileAttributes(pidl, NULL, 0);
 	       pfd->nFileSizeLow = _ILGetFileSize ( pidl, NULL, 0);
-	       lstrcpynA(pfd->cFileName,_ILGetTextPointer(pidl), MAX_PATH);
-	       lstrcpynA(pfd->cAlternateFileName,_ILGetSTextPointer(pidl), 14);
+
+	       filename = _ILGetTextPointer(pidl);
+	       shortname = _ILGetSTextPointer(pidl);
+
+	       if (filename)
+	           lstrcpynA(pfd->cFileName, filename, MAX_PATH);
+	       else
+	           pfd->cFileName[0] = '\0';
+
+	       if (shortname)
+	           lstrcpynA(pfd->cAlternateFileName, shortname, MAX_PATH);
+	       else
+	           pfd->cAlternateFileName[0] = '\0';
 	    }
 	    return NOERROR;
 
@@ -1168,6 +1183,7 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 
 	return E_INVALIDARG;
 }
+
 /*************************************************************************
  * SHGetDataFromIDListW [SHELL32.248]
  *
@@ -1184,7 +1200,11 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	{
 	  case SHGDFIL_FINDDATA:
 	    {
+	       LPSTR filename, shortname;
 	       WIN32_FIND_DATAW * pfd = dest;
+
+	       if (_ILIsDrive(pidl))
+	           return E_INVALIDARG;
 
 	       if (len < (int)sizeof(WIN32_FIND_DATAW)) return E_INVALIDARG;
 
@@ -1192,12 +1212,19 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	       _ILGetFileDateTime( pidl, &(pfd->ftLastWriteTime));
 	       pfd->dwFileAttributes = _ILGetFileAttributes(pidl, NULL, 0);
 	       pfd->nFileSizeLow = _ILGetFileSize ( pidl, NULL, 0);
-               if (!MultiByteToWideChar( CP_ACP, 0, _ILGetTextPointer(pidl), -1,
-                                         pfd->cFileName, MAX_PATH ))
-                   pfd->cFileName[MAX_PATH-1] = 0;
-               if (!MultiByteToWideChar( CP_ACP, 0, _ILGetSTextPointer(pidl), -1,
-                                         pfd->cAlternateFileName, 14 ))
-                   pfd->cFileName[13] = 0;
+
+	       filename = _ILGetTextPointer(pidl);
+	       shortname = _ILGetSTextPointer(pidl);
+
+	       if (!filename)
+	           pfd->cFileName[0] = '\0';
+	       else if (!MultiByteToWideChar(CP_ACP, 0, filename, -1, pfd->cFileName, MAX_PATH))
+	           pfd->cFileName[MAX_PATH-1] = 0;
+
+	       if (!shortname)
+	           pfd->cAlternateFileName[0] = '\0';
+	       else if (!MultiByteToWideChar(CP_ACP, 0, shortname, -1, pfd->cAlternateFileName, 14))
+	           pfd->cAlternateFileName[13] = 0;
 	    }
 	    return NOERROR;
 	  case SHGDFIL_NETRESOURCE:
