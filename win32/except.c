@@ -15,8 +15,8 @@
  *  Another reason could be that Microsoft does not want others to write
  *  binary compatible implementations of the Win32 API (like us).  
  *
- *  Whatever the reason, THIS SUCKS!! Ensuring portabilty or future 
- *  compatability may be valid reasons to keep some things undocumented. 
+ *  Whatever the reason, THIS SUCKS!! Ensuring portability or future 
+ *  compatibility may be valid reasons to keep some things undocumented. 
  *  But exception handling is so basic to Win32 that it should be 
  *  documented!
  *

@@ -20,7 +20,7 @@
  * which is confusing with Win32 HANDLES.
  * M$ CRT includes inline versions of some of these functions (like feof()).
  * These inlines check/modify bitfields in the FILE structure, so we set
- * _flags/_file/_cnt in the FILE* to be binary compatable with the win dll.
+ * _flags/_file/_cnt in the FILE* to be binary compatible with the win dll.
  * lcc defines _IOAPPEND as one of the flags for a FILE*, but testing shows
  * that M$ CRT never sets it. So we keep the flag in our mapping table but
  * mask it out when we populate a FILE* with it. Then when we write we seek

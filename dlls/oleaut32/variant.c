@@ -16,8 +16,8 @@
  *     The prototypes for these are commented out in the oleauto.h file.  They need
  *     to be implemented and cases need to be added to the switches of the  existing APIs.
  *   - The parsing of date for the VarDateFromStr is not complete.
- *   - The date manipulations do not support date prior to 1900.
- *   - The parsing does not accept has many formats has the Windows implementation.
+ *   - The date manipulations do not support dates prior to 1900.
+ *   - The parsing does not accept as many formats as the Windows implementation.
  */
 
 #include "config.h"
@@ -106,7 +106,7 @@ static const double DAYS_IN_ONE_YEAR = 365.2425;
  * Note this function uses the postgresql date parsing functions found
  * in the parsedt.c file.
  *
- * Returns TRUE if successfull.
+ * Returns TRUE if successful.
  *
  * Note: This function does not parse the day of the week,
  * daylight savings time. It will only fill the followin fields in
@@ -224,7 +224,7 @@ static BOOL DateTimeStringToTm( OLECHAR* strIn, LCID lcid, struct tm* pTm )
  * and tm_isdst fields of the tm structure. And only converts years
  * after 1900.
  *
- * Returns TRUE if successfull.
+ * Returns TRUE if successful.
  */
 static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
 {
@@ -319,7 +319,7 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
 /******************************************************************************
  *	   DateToTm 	[INTERNAL]
  *
- * This function converst a windows DATE to a tm structure.
+ * This function converts a windows DATE to a tm structure.
  *
  * It does not fill all the fields of the tm structure.
  * Here is a list of the fields that are filled:
@@ -328,7 +328,7 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
  * Note this function does not support dates before the January 1, 1900
  * or ( dateIn < 2.0 ).
  *
- * Returns TRUE if successfull.
+ * Returns TRUE if successful.
  */
 static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 {

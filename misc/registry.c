@@ -1190,7 +1190,7 @@ error:	close(fd);
             is the index of the next free entry. The last has 0 as a link.
             The other three words in the free list are probably irrelevant.
 
-    Entries in text table are preceeded by a word at offset-2. This word
+    Entries in text table are preceded by a word at offset-2. This word
     has the value (2*index)+1, where index is the referring keyent/valent
     entry in the table. I have no suggestion for the 2* and the +1.
     Following the word, there are N bytes of data, as per the keyent/valent

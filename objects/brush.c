@@ -223,7 +223,7 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
- *	Function call is for compatability only.  CreateDIBPatternBrushPt should be used.   
+ *	Function call is for compatibility only.  CreateDIBPatternBrushPt should be used.   
  *
  * RETURNS
  *

@@ -774,7 +774,7 @@ void WINAPI SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context
  * Input:   EDI register: size of buffer to allocate
  * Output:  EDI register: pointer to buffer
  *
- * Note: The buffer is preceeded by 8 bytes:
+ * Note: The buffer is preceded by 8 bytes:
  *        ...
  *       edi+0   buffer
  *       edi-4   SEGPTR to buffer

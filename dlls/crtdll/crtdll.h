@@ -124,11 +124,11 @@ extern INT  CRTDLL_doserrno;
 extern INT  CRTDLL_errno;
 
 
-/* Binary compatable structures, types and defines used
+/* Binary compatible structures, types and defines used
  * by CRTDLL. These should move to external header files,
- * and in some cases need be renamed (CRTDLL_FILE!) to defs
+ * and in some cases need to be renamed (CRTDLL_FILE!) to defs
  * as used by lcc/bcc/watcom/vc++ etc, in order to get source
- * compatability for winelib.
+ * compatibility for winelib.
  */
 
 typedef struct _crtfile

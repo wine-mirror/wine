@@ -82,7 +82,7 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
 	    break;
 	case 0x04: /* Get Pointing Device Type */
 	    FIXME("Get Pointing Device Type - not implemented\n");
-	    BH_reg(context) = 0x01;/*Device id FIXME what is it suposed to be?*/
+	    BH_reg(context) = 0x01;/*Device id FIXME what is it supposed to be?*/
 	    break;
 	default:
 	    INT_BARF( context, 0x15 );

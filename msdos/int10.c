@@ -42,7 +42,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *    Most INT 10 functions for text-mode, CGA, EGA, and VGA cards
  *    are present in this list. (SVGA and XGA are not) That is not
  *    to say that all these functions should be supported, but if
- *    anyone is braindamaged enough to want to emulate one of these
+ *    anyone is brain-damaged enough to want to emulate one of these
  *    beasts then this should get you started. 
  *
  * NOTE:
@@ -86,7 +86,7 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
         */
         
         /* These AllocColor calls have the side-effect of triggering 
-           ternimal initialization as xx_Init() is no longer called on
+           terminal initialization as xx_Init() is no longer called on
            startup. Which is what we want anyway. */
 
         color_palette[0]  = CONSOLE_AllocColor(WINE_BLACK);
@@ -269,41 +269,41 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
 		break;
 	case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
 		ERR("VESA SAVE/RESTORE Video State - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so dont set since not implemented */	
-		/* maby we should do this instead ? */
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x01;  not implemented so just fail */
 		break;
 	case 0x05: /* VESA SuperVGA BIOS - CPU VIDEO MEMORY CONTROL */
 		ERR("VESA CPU VIDEO MEMORY CONTROL\n");
-		/* AL_reg(context) = 0x4f; = supported so dont set since not implemented */	
-		/* maby we should do this instead ? */
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x06: /* VESA GET/SET LOGICAL SCAN LINE LENGTH */
 		ERR("VESA GET/SET LOGICAL SCAN LINE LENGTH - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so dont set since not implemented */	
-		/* maby we should do this instead ? */
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x07: /* GET/SET DISPLAY START */
 		ERR("VESA GET/SET DISPLAY START - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so dont set since not implemented */	
-		/* maby we should do this instead ? */
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x08: /* GET/SET DAC PALETTE CONTROL */
 		ERR("VESA GET/SET DAC PALETTE CONTROL- Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so dont set since not implemented */	
-		/* maby we should do this instead ? */
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x09: /* SET PALETTE ENTRIES */
 		FIXME("VESA Set palette entries - not implemented\n");
 		break;
-        case 0xef:  /* get video mode for hercules-compatables   */
+        case 0xef:  /* get video mode for hercules-compatibles   */
                     /* There's no reason to really support this  */
                     /* is there?....................(A.C.)       */
-                TRACE("Just report the video not hercules compatable\n");
+                TRACE("Just report the video not hercules compatible\n");
                 DX_reg(context) = 0xffff;
                 break; 
 	case 0xff: /* Turn VESA ON/OFF */
@@ -747,10 +747,10 @@ else {
           *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
         }
         break;
-        case 0xef:  /* get video mode for hercules-compatables   */
+        case 0xef:  /* get video mode for hercules-compatibles   */
                     /* There's no reason to really support this  */
                     /* is there?....................(A.C.)       */
-                TRACE("Just report the video not hercules compatable\n");
+                TRACE("Just report the video not hercules compatible\n");
                 DX_reg(context) = 0xffff;
                 break; 
     default:

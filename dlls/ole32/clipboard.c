@@ -595,7 +595,7 @@ HRESULT WINAPI OleIsCurrentClipboard (  IDataObject *pDataObject)
 void OLEClipbrd_Initialize()
 {
   /*
-   * Create the clipboard if necesary 
+   * Create the clipboard if necessary 
    */
   if ( !theOleClipboard )
   {
