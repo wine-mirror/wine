@@ -181,7 +181,6 @@ enum binary_type
 /* module.c */
 extern NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
-extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern void MODULE_WalkModref( DWORD id );
@@ -216,20 +215,12 @@ extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
 extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 
-/* loader/pe_image.c */
-extern NTSTATUS PE_LoadLibraryExA(LPCSTR, DWORD, WINE_MODREF**);
-extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags );
-extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
-                                     DWORD flags, HANDLE hFile, BOOL builtin );
-extern DWORD PE_fixup_imports(WINE_MODREF *wm);
-
 /* loader/loadorder.c */
 extern BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename, UINT size );
 extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BOOL win32 );
 extern void MODULE_AddLoadOrderOption( const char *option );
 
 /* relay32/builtin.c */
-extern NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, WINE_MODREF**);
 extern HMODULE BUILTIN32_LoadExeModule( HMODULE main );
 
 #endif  /* __WINE_MODULE_H */

@@ -124,6 +124,8 @@ int main_create_flags = 0;
 extern BOOL init_user_process_pmts( size_t, char*, size_t );
 extern BOOL build_command_line( char **argv );
 
+extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );  /* FIXME */
+
 extern void RELAY_InitDebugLists(void);
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const char *appname );
@@ -276,6 +278,51 @@ static BOOL find_exe_file( const char *name, char *buffer, int buflen, HANDLE *h
 }
 
 
+/**********************************************************************
+ *           load_pe_exe
+ *
+ * Load a PE format EXE file.
+ */
+static HMODULE load_pe_exe( HANDLE file )
+{
+    IMAGE_NT_HEADERS *nt;
+    HANDLE mapping;
+    void *module;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER size;
+    DWORD len = 0;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    size.QuadPart = 0;
+
+    if (NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
+                         &attr, &size, 0, SEC_IMAGE, file ) != STATUS_SUCCESS)
+        return NULL;
+
+    module = NULL;
+    if (NtMapViewOfSection( mapping, GetCurrentProcess(), &module, 0, 0, &size, &len,
+                            ViewShare, 0, PAGE_READONLY ) != STATUS_SUCCESS)
+        return NULL;
+
+    NtClose( mapping );
+
+    /* virus check */
+    nt = RtlImageNtHeader( module );
+    if (nt->OptionalHeader.AddressOfEntryPoint)
+    {
+        if (!RtlImageRvaToSection( nt, module, nt->OptionalHeader.AddressOfEntryPoint ))
+            MESSAGE("VIRUS WARNING: PE module has an invalid entrypoint (0x%08lx) "
+                    "outside all sections (possibly infected by Tchernobyl/SpaceFiller virus)!\n",
+                    nt->OptionalHeader.AddressOfEntryPoint );
+    }
+    return module;
+}
+
 /***********************************************************************
  *           process_init
  *
@@ -411,6 +458,7 @@ static void start_process( void *arg )
         LPTHREAD_START_ROUTINE entry;
         HANDLE main_file = main_exe_file;
         IMAGE_NT_HEADERS *nt;
+        WINE_MODREF *wm;
         PEB *peb = NtCurrentTeb()->Peb;
 
         if (main_file)
@@ -450,11 +498,13 @@ static void start_process( void *arg )
         SERVER_END_REQ;
 
         /* create the main modref and load dependencies */
-        if (!PE_CreateModule( peb->ImageBaseAddress, main_exe_name, 0, 0, FALSE )) goto error;
-
+        if (!(wm = MODULE_AllocModRef( peb->ImageBaseAddress, main_exe_name ))) goto error;
         if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
-
-        MODULE_DllProcessAttach( NULL, (LPVOID)1 );
+        if (MODULE_DllProcessAttach( NULL, (LPVOID)1 ) != STATUS_SUCCESS)
+        {
+            ERR( "Main exe initialization failed\n" );
+            goto error;
+        }
 
         if (TRACE_ON(relay))
             DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
@@ -523,7 +573,7 @@ void __wine_process_init( int argc, char *argv[] )
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_a(main_exe_name) );
-        if ((current_process.module = PE_LoadImage( main_exe_file, main_exe_name, 0 ))) goto found;
+        if ((current_process.module = load_pe_exe( main_exe_file ))) goto found;
         MESSAGE( "%s: could not load '%s' as Win32 binary\n", argv0, main_exe_name );
         ExitProcess(1);
     case BINARY_PE_DLL:

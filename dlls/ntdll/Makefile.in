@@ -14,7 +14,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/smb.c \
 	$(TOPOBJDIR)/loader/loadorder.c \
 	$(TOPOBJDIR)/loader/module.c \
-	$(TOPOBJDIR)/loader/pe_image.c \
 	$(TOPOBJDIR)/loader/task.c \
 	$(TOPOBJDIR)/loader/ne/module.c \
 	$(TOPOBJDIR)/memory/codepage.c \
@@ -28,7 +27,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/misc/version.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \
 	$(TOPOBJDIR)/scheduler/handle.c \

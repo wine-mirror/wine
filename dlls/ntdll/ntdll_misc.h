@@ -40,13 +40,12 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
                                                  const LARGE_INTEGER *timeout );
 
 /* module handling */
-extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
-
 extern FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, const char *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
                                      FARPROC origfun, DWORD ordinal );
 extern void RELAY_SetupDLL( const char *module );
+extern void SNOOP_SetupDLL( HMODULE hmod );
 
 static inline HANDLE ntdll_get_process_heap(void)
 {

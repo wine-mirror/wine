@@ -142,47 +142,51 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
   return 1;
 }
 
-void
-SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
-	SNOOP_DLL	**dll = &(firstdll);
-	char		*s;
-        void            *addr;
-        SIZE_T          size;
+void SNOOP_SetupDLL(HMODULE hmod)
+{
+    SNOOP_DLL **dll = &firstdll;
+    char *p, *name;
+    void *addr;
+    SIZE_T size;
+    IMAGE_EXPORT_DIRECTORY *exports;
 
-    TRACE("hmod=%p, name=%s, ordbase=%ld, nrofordinals=%ld\n",
-	   hmod, name, ordbase, nrofordinals);
+    exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+    if (!exports) return;
+    name = (char *)hmod + exports->Name;
 
-	if (!TRACE_ON(snoop)) return;
-	while (*dll) {
-		if ((*dll)->hmod == hmod)
-		{
-		    /* another dll, loaded at the same address */
-                    addr = (*dll)->funs;
-                    size = (*dll)->nrofordinals * sizeof(SNOOP_FUN);
-                    NtFreeVirtualMemory(GetCurrentProcess(), &addr, &size, MEM_RELEASE);
-		    break;
-		}
-		dll = &((*dll)->next);
-	}
-        *dll = RtlReAllocateHeap(ntdll_get_process_heap(),
-                                 HEAP_ZERO_MEMORY, *dll, 
-                                 sizeof(SNOOP_DLL) + strlen(name));
-	(*dll)->hmod	= hmod;
-	(*dll)->ordbase = ordbase;
-	(*dll)->nrofordinals = nrofordinals;
-	strcpy( (*dll)->name, name );
-	if ((s=strrchr((*dll)->name,'.')))
-		*s='\0';
-        size = nrofordinals * sizeof(SNOOP_FUN);
-        NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size, 
-                                MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	if (!addr) {
-		RtlFreeHeap(ntdll_get_process_heap(),0,*dll);
-		FIXME("out of memory\n");
-		return;
-	}
-        (*dll)->funs = addr;
-	memset((*dll)->funs,0,size);
+    TRACE("hmod=%p, name=%s\n", hmod, name);
+
+    while (*dll) {
+        if ((*dll)->hmod == hmod)
+        {
+            /* another dll, loaded at the same address */
+            addr = (*dll)->funs;
+            size = (*dll)->nrofordinals * sizeof(SNOOP_FUN);
+            NtFreeVirtualMemory(GetCurrentProcess(), &addr, &size, MEM_RELEASE);
+            break;
+        }
+        dll = &((*dll)->next);
+    }
+    *dll = RtlReAllocateHeap(ntdll_get_process_heap(),
+                             HEAP_ZERO_MEMORY, *dll,
+                             sizeof(SNOOP_DLL) + strlen(name));
+    (*dll)->hmod	= hmod;
+    (*dll)->ordbase = exports->Base;
+    (*dll)->nrofordinals = exports->NumberOfFunctions;
+    strcpy( (*dll)->name, name );
+    p = (*dll)->name + strlen((*dll)->name) - 4;
+    if (p > (*dll)->name && !strcasecmp( p, ".dll" )) *p = 0;
+
+    size = exports->NumberOfFunctions * sizeof(SNOOP_FUN);
+    NtAllocateVirtualMemory(GetCurrentProcess(), &addr, NULL, &size,
+                            MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!addr) {
+        RtlFreeHeap(ntdll_get_process_heap(),0,*dll);
+        FIXME("out of memory\n");
+        return;
+    }
+    (*dll)->funs = addr;
+    memset((*dll)->funs,0,size);
 }
 
 FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
@@ -432,9 +436,10 @@ __ASM_GLOBAL_FUNC( SNOOP_Return,
                    ".long " __ASM_NAME("SNOOP_DoReturn") ",0" );
 
 #else	/* !__i386__ */
-void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals, DWORD dw) {
-	if (!TRACE_ON(snoop)) return;
-	FIXME("snooping works only on i386 for now.\n");
+
+void SNOOP_SetupDLL(HMODULE hmod)
+{
+    FIXME("snooping works only on i386 for now.\n");
 }
 
 FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
