@@ -31,47 +31,154 @@ typedef struct IMultiQI IMultiQI,*LPMULTIQI;
  * IEnumString interface
  */
 #define ICOM_INTERFACE IEnumString
-ICOM_BEGIN(IEnumString,IUnknown)
-    ICOM_METHOD3 (HRESULT, Next, ULONG, celt, LPOLESTR32, rgelt, ULONG*, pceltFetched);
-    ICOM_METHOD1 (HRESULT, Skip, ULONG, celt);
-    ICOM_METHOD  (HRESULT, Reset);
+#define IEnumString_METHODS \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, LPOLESTR32*,rgelt, ULONG*,pceltFethed); \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
+    ICOM_METHOD (HRESULT,Reset); \
     ICOM_METHOD1 (HRESULT, Clone, IEnumString**, ppenum);
-ICOM_END(IEnumString)
-
+#define IEnumString_IMETHODS \
+    IUnknown_IMETHODS \
+    IEnumString_METHODS
+ICOM_DEFINE(IEnumString,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IEnumString_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IEnumString_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IEnumString_Release(p)            ICOM_ICALL (IUnknown,Release,p)
-/* IBindCtx methods*/
-#define IEnumString_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c);
-#define IEnumString_Skip(p,a)             ICOM_CALL1(Skip,p,a);
-#define IEnumString_Reset(p,a)            ICOM_CALL(Reset,p);
-#define IEnumString_Clone(p,a)            ICOM_CALL1(Clone,p,a);
+#define IEnumString_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IEnumString_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IEnumString_Release(p)            ICOM_CALL (Release,p)
+/*** IEnumString methods ***/
+#define IEnumString_Next(p,a,b,c) ICOM_CALL3(Next,p,a,b,c)
+#define IEnumString_Skip(p,a)     ICOM_CALL1(Skip,p,a)
+#define IEnumString_Reset(p)      ICOM_CALL (Reset,p)
+#define IEnumString_Clone(p,a)    ICOM_CALL1(Clone,p,a)
 #endif
 
 #define CreateEnumString WINELIB_NAME(CreateEnumString)
 
 
-
 /*****************************************************************************
  * IEnumUnknown interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IEnumUnknown
+#define IEnumUnknown_METHODS \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, IUnknown**,rgelt, ULONG*,pceltFethed); \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt); \
+    ICOM_METHOD (HRESULT,Reset); \
+    ICOM_METHOD1(HRESULT,Clone, IEnumUnknown**,ppenum);
+#define IEnumUnknown_IMETHODS \
+    IUnknown_IMETHODS \
+    IEnumUnknown_METHODS
+ICOM_DEFINE(IEnumUnknown,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IEnumUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IEnumUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IEnumUnknown_Release(p)            ICOM_CALL (Release,p)
+/*** IEnumUnknown methods ***/
+#define IEnumUnknown_Next(p,a,b,c) ICOM_CALL3(Next,p,a,b,c)
+#define IEnumUnknown_Skip(p,a)     ICOM_CALL1(Skip,p,a)
+#define IEnumUnknown_Reset(p)      ICOM_CALL (Reset,p)
+#define IEnumUnknown_Clone(p,a)    ICOM_CALL1(Clone,p,a)
+#endif
 
 
 /*****************************************************************************
  * IMallocSpy interface
  */
+#define ICOM_INTERFACE IMallocSpy
+#define IMallocSpy_METHODS \
+    ICOM_METHOD1 (ULONG,PreAlloc,        ULONG,cbRequest); \
+    ICOM_VMETHOD1(      PostAlloc,       void*,pActual); \
+    ICOM_METHOD2 (void*,PreFree,         void*,pRequest, BOOL32,fSpyed); \
+    ICOM_VMETHOD1(      PostFree,        BOOL32,fSpyed); \
+    ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL32,fSpyed); \
+    ICOM_METHOD2 (void*,PostRealloc,     void*,pActual, BOOL32,fSpyed); \
+    ICOM_METHOD2 (void*,PreGetSize,      void*,pRequest, BOOL32,fSpyed); \
+    ICOM_METHOD2 (ULONG,PostGetSize,     ULONG,cbActual, BOOL32,fSpyed); \
+    ICOM_METHOD2 (void*,PreDidAlloc,     void*,pRequest, BOOL32,fSpyed); \
+    ICOM_METHOD3 (int,  PostDidAlloc,    void*,pRequest, BOOL32,fSpyed, int,fActual); \
+    ICOM_METHOD  (int,  PreHeapMinimize); \
+    ICOM_METHOD  (int,  PostHeapMinimize);
+#define IMallocSpy_IMETHODS \
+    IUnknown_IMETHODS \
+    IMallocSpy_METHODS
+ICOM_DEFINE(IMallocSpy,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IMallocSpy_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMallocSpy_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMallocSpy_Release(p)            ICOM_CALL (Release,p)
+/*** IMallocSpy methods ***/
+#define IMallocSpy_PreAlloc(p,a)         ICOM_CALL1(PreAlloc,p,a)
+#define IMallocSpy_PostAlloc(p,a)        ICOM_CALL1(PostAlloc,p,a)
+#define IMallocSpy_PreFree(p,a,b)        ICOM_CALL2(PreFree,p,a,b)
+#define IMallocSpy_PostFree(p,a)         ICOM_CALL1(PostFree,p,a)
+#define IMallocSpy_PreRealloc(p,a,b,c,d) ICOM_CALL4(PreRealloc,p,a,b,c,d)
+#define IMallocSpy_PostRealloc(p,a,b)    ICOM_CALL2(PostRealloc,p,a,b)
+#define IMallocSpy_PreGetSize(p,a,b)     ICOM_CALL2(PreGetSize,p,a,b)
+#define IMallocSpy_PostGetSize(p,a,b)    ICOM_CALL2(PostGetSize,p,a,b)
+#define IMallocSpy_PreDidAlloc(p,a,b)    ICOM_CALL2(PreDidAlloc,p,a,b)
+#define IMallocSpy_PostDidAlloc(p,a,b,c) ICOM_CALL3(PostDidAlloc,p,a,b,c)
+#define IMallocSpy_PreHeapMinimize(p)    ICOM_CALL (PreHeapMinimize,p)
+#define IMallocSpy_PostHeapMinimize(p)   ICOM_CALL (PostHeapMinimize,p)
+#endif
+
 /* FIXME: not implemented */
+HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoRevokeMallocSpy(void);
+
+HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
 
 
 /*****************************************************************************
  * IMultiQI interface
  */
-/* FIXME: not implemented */
+typedef struct tagMULTI_QI
+{
+    const IID* pIID;
+    IUnknown* pItf;
+    HRESULT hr;
+} MULTI_QI;
+
+#define ICOM_INTERFACE IMultiQI
+#define IMultiQI_METHODS \
+    ICOM_METHOD2(HRESULT,QueryMultipleInterfaces, ULONG,cMQIs, MULTI_QI*,pMQIs);
+#define IMultiQI_IMETHODS \
+    IUnknown_IMETHODS \
+    IMultiQI_METHODS
+ICOM_DEFINE(IMultiQI,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IMultiQI_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMultiQI_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMultiQI_Release(p)            ICOM_CALL (Release,p)
+/*** IMultiQI methods ***/
+#define IMultiQI_QueryMultipleInterfaces(p,a,b) ICOM_CALL2(QueryMultipleInterfaces,p,a,b)
+#endif
+
+
+/*****************************************************************************
+ * Additional API
+ */
+
+DWORD WINAPI CoBuildVersion(void);
+
+DWORD WINAPI CoGetCurrentProcess(void);
+
+/* FIXME: unimplemented */
+HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
+
+/* FIXME: unimplemented */
+HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
 
 
 #endif /* __WINE_WINE_OBJ_MISC_H */

@@ -49,7 +49,8 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES
     ICOM_METHOD8(HRESULT,SetBlanket,   IUnknown*,pProxy, DWORD,pAuthnSvc, DWORD,pAuthzSvc, OLECHAR32*,pServerPrincName, DWORD,pAuthnLevel, DWORD,pImpLevel, void*,pAuthInfo, DWORD,pCapabilites); \
     ICOM_METHOD2(HRESULT,CopyProxy,    IUnknown*,pProxy, IUnknown**,ppCopy);
 #define IClientSecurity_IMETHODS \
-    ICOM_INHERITS(IClientSecurity,IUnknown)
+    IUnknown_IMETHODS \
+    IClientSecurity_METHODS
 ICOM_DEFINE(IClientSecurity,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -63,7 +64,6 @@ ICOM_DEFINE(IClientSecurity,IUnknown)
 #define IClientSecurity_SetBlanket(p,a,b,c,d,e,f,g,h)   ICOM_CALL8(SetBlanket,p,a,b,c,d,e,f,g,h)
 #define IClientSecurity_CopyProxy(p,a,b)                ICOM_CALL2(CopyProxy,p,a,b)
 #endif
-
 
 
 /*****************************************************************************
@@ -81,7 +81,8 @@ typedef enum tagEXTCONN
     ICOM_METHOD2(DWORD,AddConnection,     DWORD,extconn, DWORD,reserved); \
     ICOM_METHOD3(DWORD,ReleaseConnection, DWORD,extconn, DWORD,reserved, BOOL32,fLastReleaseCloses);
 #define IExternalConnection_IMETHODS \
-    ICOM_INHERITS(IExternalConnection,IUnknown)
+    IUnknown_IMETHODS \
+    IExternalConnection_METHODS
 ICOM_DEFINE(IExternalConnection,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -144,7 +145,8 @@ typedef struct tagINTERFACEINFO
     ICOM_METHOD3(DWORD,RetryRejectedCall,  HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType); \
     ICOM_METHOD3(DWORD,MessagePending,     HTASK32,htaskCallee, DWORD,dwTickCount, DWORD,dwRejectType);
 #define IMessageFilter_IMETHODS \
-    ICOM_INHERITS(IMessageFilter,IUnknown)
+    IUnknown_IMETHODS \
+    IMessageFilter_METHODS
 ICOM_DEFINE(IMessageFilter,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -175,7 +177,8 @@ HRESULT WINAPI CoRegisterMessageFilter32(LPMESSAGEFILTER lpMessageFilter,LPMESSA
     ICOM_METHOD (HRESULT,RevertToSelf); \
     ICOM_METHOD (BOOL32,   IsImpersonating);
 #define IServerSecurity_IMETHODS \
-    ICOM_INHERITS(IServerSecurity,IUnknown)
+    IUnknown_IMETHODS \
+    IServerSecurity_METHODS
 ICOM_DEFINE(IServerSecurity,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -190,6 +193,69 @@ ICOM_DEFINE(IServerSecurity,IUnknown)
 #define IServerSecurity_RevertToSelf(p)               ICOM_CALL (RevertToSelf,p)
 #define IServerSecurity_IsImpersonating(p)            ICOM_CALL (IsImpersonating,p)
 #endif
+
+
+/*****************************************************************************
+ * Additional client API
+ */
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR32** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilites);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR32* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
+
+
+/*****************************************************************************
+ * Additional server API
+ */
+
+/* FIXME: not implemented */
+ULONG WINAPI CoAddRefServerProcess(void);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoImpersonateClient(void);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR16** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoReleaseServerProcess(void);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoRevertToSelf(void);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoSuspendClassObjects(void);
+
+
+/*****************************************************************************
+ * Additional API
+ */
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoGetCallContext(REFIID riid, void** ppInterface);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID* pClsid);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc, SOLE_AUTHENTICATION_SERVICE* asAuthSvc, void* pReserved1, DWORD dwAuthnLevel, DWORD dwImpLevel, void* pReserved2, DWORD dwCapabilities, void* pReserved3);
+
+/* FIXME: not implemented */
+BOOL32 WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoQueryAuthenticationServices(DWORD* pcAuthSvc, SOLE_AUTHENTICATION_SERVICE** asAuthSvc);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoResumeClassObjects(void);
 
 
 #endif /* __WINE_WINE_OBJ_CLIENTSERVER_H */
