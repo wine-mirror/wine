@@ -488,6 +488,9 @@ sub source_scan_directory
 	    $targets{$candidate}=1;
 	  }
 	}
+      } elsif ($dentry =~ /^include/i) {
+        # This directory must contain headers we're going to need
+        push @{@$project_settings[$T_INCLUDE_PATH]},"-I$dentry";
       } else {
 	# Recursively scan this directory. Any source file that cannot be 
 	# attributed to a project in one of the subdirectories will be attributed 
@@ -727,7 +730,7 @@ sub source_scan_directory
     }
     # This is the default link list of Visual Studio, except for uuid and
     # odbccp32 which we don't have in Wine. Also I add ntdll which seems 
-    # necessary for WineLib.
+    # necessary for Winelib.
     my @std_imports=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32 oleaut32.dll shell32.dll user32.dll winspool.drv);
     @$target[$T_IMPORTS]=\@std_imports;
     push @{@$project[$P_TARGETS]},$target;
@@ -774,13 +777,21 @@ sub source_scan_directory
 
     # Match sources...
     if ($target_count == 1) {
-      push @{@$target[$T_SOURCES_C]},@sources_c;
-      push @{@$target[$T_SOURCES_CXX]},@sources_cxx;
-      push @{@$target[$T_SOURCES_RC]},@sources_rc;
-      push @{@$target[$T_SOURCES_MISC]},@sources_misc;
+      push @{@$target[$T_SOURCES_C]},@{@$project_settings[$T_SOURCES_C]},@sources_c;
+      @$project_settings[$T_SOURCES_C]=[];
       @sources_c=();
+
+      push @{@$target[$T_SOURCES_CXX]},@{@$project_settings[$T_SOURCES_CXX]},@sources_cxx;
+      @$project_settings[$T_SOURCES_CXX]=[];
       @sources_cxx=();
+
+      push @{@$target[$T_SOURCES_RC]},@{@$project_settings[$T_SOURCES_RC]},@sources_rc;
+      @$project_settings[$T_SOURCES_RC]=[];
       @sources_rc=();
+
+      push @{@$target[$T_SOURCES_MISC]},@{@$project_settings[$T_SOURCES_MISC]},@sources_misc;
+      # No need for sorting these sources
+      @$project_settings[$T_SOURCES_MISC]=[];
       @sources_misc=();
     } else {
       foreach $source (@sources_c) {
