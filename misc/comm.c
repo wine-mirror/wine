@@ -246,15 +246,20 @@ static void comm_notification(int fd,void*private)
       if (!bleft) {
 	ptr->commerror = CE_RXOVER;
       } else {
-	ptr->ibuf_head += len;
-	if (ptr->ibuf_head >= ptr->ibuf_size)
-	  ptr->ibuf_head = 0;
-	/* flag event */
+	/* check for events */
+	if ((ptr->eventmask & EV_RXFLAG) &&
+	    memchr(ptr->inbuf + ptr->ibuf_head, ptr->evtchar, bleft)) {
+	  *(WORD*)(unknown[cid]) |= EV_RXFLAG;
+	  mask |= CN_EVENT;
+	}
 	if (ptr->eventmask & EV_RXCHAR) {
 	  *(WORD*)(unknown[cid]) |= EV_RXCHAR;
 	  mask |= CN_EVENT;
 	}
-	/* FIXME: check for event character (EV_RXFLAG) */
+	/* advance buffer position */
+	ptr->ibuf_head += len;
+	if (ptr->ibuf_head >= ptr->ibuf_size)
+	  ptr->ibuf_head = 0;
       }
     }
   } while (len > 0);
@@ -426,6 +431,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			COM[port].fd = fd;
 			COM[port].commerror = 0;
 			COM[port].eventmask = 0;
+			COM[port].evtchar = 0; /* FIXME: default? */
                         /* save terminal state */
                         tcgetattr(fd,&m_stat[port]);
                         /* set default parameters */
@@ -974,6 +980,8 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	else
 		port.c_iflag &= ~IXOFF;
 
+	ptr->evtchar = lpdcb->EvtChar;
+
 	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
 		ptr->commerror = WinError();	
 		return FALSE;
@@ -1115,6 +1123,8 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
  */
 	lpdcb->XonLim = 10;
 	lpdcb->XoffLim = 10;
+
+	lpdcb->EvtChar = ptr->evtchar;
 
 	ptr->commerror = 0;
 	return 0;

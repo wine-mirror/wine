@@ -9,6 +9,7 @@ struct DosDeviceStruct {
     int suspended;
     int unget,xmit;
     int baudrate;
+    int evtchar;
     /* events */
     int commerror, eventmask;
     /* buffers */
