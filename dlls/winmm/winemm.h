@@ -57,6 +57,40 @@ typedef struct tagWINE_DRIVER
     struct tagWINE_DRIVER*	lpNextItem;
 } WINE_DRIVER, *LPWINE_DRIVER;
 
+typedef	DWORD	(CALLBACK *WINEMM_msgFunc16)(UINT16, WORD, DWORD, DWORD, DWORD);
+typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT  , UINT, DWORD, DWORD, DWORD);
+
+/* for each loaded driver and each known type of driver, this structure contains
+ * the information needed to access it
+ */
+typedef struct tagWINE_MM_DRIVER_PART {
+    int				nIDMin;		/* lower bound of global indexes for this type */
+    int				nIDMax;		/* hhigher bound of global indexes for this type */
+    union {
+	WINEMM_msgFunc32	fnMessage32;	/* pointer to fonction */
+	WINEMM_msgFunc16	fnMessage16;
+    } u;
+} WINE_MM_DRIVER_PART;
+
+#define	MMDRV_AUX		0
+#define	MMDRV_MIXER		1
+#define	MMDRV_MIDIIN		2
+#define	MMDRV_MIDIOUT		3
+#define	MMDRV_WAVEIN		4
+#define	MMDRV_WAVEOUT		5
+#define MMDRV_MAX		6
+
+/* each low-level .drv will be associated with an instance of this structure */
+typedef struct tagWINE_MM_DRIVER {
+    HDRVR			hDriver;
+    LPSTR			drvname;	/* name of the driver */
+    BOOL			bIs32 : 1,	/* TRUE if 32 bit driver, FALSE for 16 */
+	                        bIsMapper : 1;	/* TRUE if mapper */
+    WINE_MM_DRIVER_PART		parts[MMDRV_MAX];/* Information for all known types */
+} WINE_MM_DRIVER, *LPWINE_MM_DRIVER;
+
+typedef	WINMM_MapType	(*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+
 typedef struct tagWINE_MLD {
 /* EPP struct tagWINE_MLD*	lpNext; */		/* not used so far */
        UINT			uDeviceID;
@@ -82,26 +116,6 @@ typedef struct {
 typedef struct {
        WINE_MLD			mld;
 } WINE_MIXER, *LPWINE_MIXER;
-
-extern	BOOL		MMDRV_Init(void);
-extern	UINT		MMDRV_GetNum(UINT);
-extern	LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-				    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
-extern	void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
-extern	DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
-extern	DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
-extern	LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
-extern  LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
-extern	DWORD		MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
-extern	UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
-
-#define	MMDRV_AUX		0
-#define	MMDRV_MIXER		1
-#define	MMDRV_MIDIIN		2
-#define	MMDRV_MIDIOUT		3
-#define	MMDRV_WAVEIN		4
-#define	MMDRV_WAVEOUT		5
-#define MMDRV_MAX		6
 
 #define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
 #define WINE_MMTHREAD_DELETED	0xDEADDEAD
@@ -215,63 +229,114 @@ typedef struct tagWINE_MM_IDATA {
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
 
-extern LPWINE_DRIVER		DRIVER_FindFromHDrvr(HDRVR hDrvr);
-extern BOOL			DRIVER_GetLibName(LPCSTR keyName, LPCSTR sectName, LPSTR buf, int sz);
-extern LPWINE_DRIVER		DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2);
+LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
+BOOL		DRIVER_GetLibName(LPCSTR keyName, LPCSTR sectName, LPSTR buf, int sz);
+LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2);
 
-extern LPWINE_MCIDRIVER		MCI_GetDriver(UINT16 uDevID);
-extern UINT			MCI_GetDriverFromString(LPCSTR str);
-extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
-extern const char* 		MCI_MessageToString(UINT16 wMsg);
+BOOL		MMDRV_Init(void);
+UINT		MMDRV_GetNum(UINT);
+LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
+                            DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
+void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
+DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
+DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
+LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
+LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
+DWORD		MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
+UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
+BOOL            MMDRV_Is32(unsigned int);
 
-extern UINT		WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
+WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
+UINT		MCI_GetDriverFromString(LPCSTR str);
+DWORD		MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
+const char* 	MCI_MessageToString(UINT16 wMsg);
+UINT	WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
+LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
+DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
+DWORD		MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
+DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 
-extern LRESULT			MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
+void CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
 
-extern DWORD			MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
-extern DWORD 			MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
-extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
+void 		MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
+void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
-void		CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
+UINT            MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
+                                   DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT            MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
+                                     DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+UINT            MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
+                                    DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
+MMRESULT        MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
+                                         DWORD cMidi, DWORD dwCallback,
+                                         DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
+UINT            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
+                                  const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
+                                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
 
-void 				MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
-void 				MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
+WORD            timeSetEventInternal(UINT wDelay, UINT wResol,
+                                     FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
 
-UINT                            MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
-                                                   DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
-UINT                            MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback,
-                                                     DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
-UINT                            MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCallback,
-                                                    DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
-MMRESULT                        MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
-                                                         DWORD cMidi, DWORD dwCallback,
-                                                         DWORD dwInstance, DWORD fdwOpen, BOOL bFrom32);
-UINT                            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
-                                                  const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
-                                                  DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
-WORD	                        timeSetEventInternal(UINT wDelay, UINT wResol,
-                                                     FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
-HMMIO                           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
-                                          DWORD dwOpenFlags, enum mmioProcType type);
-LPMMIOPROC                      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
-                                                   DWORD dwFlags, enum mmioProcType type);
-LRESULT                         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
-                                                 LPARAM lParam2, enum mmioProcType type);
-LPWINE_MMIO	                MMIO_Get(HMMIO h);
+HMMIO           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
+                          DWORD dwOpenFlags, enum mmioProcType type);
+LPMMIOPROC      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
+                                   DWORD dwFlags, enum mmioProcType type);
+LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
+                                 LPARAM lParam2, enum mmioProcType type);
+LPWINE_MMIO     MMIO_Get(HMMIO h);
 
-BOOL				MULTIMEDIA_MciInit(void);
-BOOL                            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
+BOOL    	MULTIMEDIA_MciInit(void);
+BOOL            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
-void    			TIME_MMTimeStart(void);
-void				TIME_MMTimeStop(void);
+void    	TIME_MMTimeStart(void);
+void		TIME_MMTimeStop(void);
 
-/* temporary defines */
+/* temporary definitions */
 WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2);
 WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2);
 WINMM_MapType	MCI_MapMsg16To32A  (WORD uDevType, WORD wMsg,                DWORD* lParam);
 WINMM_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg,                DWORD  lParam);
 WINMM_MapType	MCI_MapMsg32ATo16  (WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam);
 WINMM_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD  lParam);
+void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Aux_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Aux_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Aux_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_Mixer_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Mixer_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Mixer_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_Mixer_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_MidiIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiIn_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiIn_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiOut_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveIn_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+WINMM_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveOut_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
+void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+
+BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen);
 
 /* Global variables */
 extern LPWINE_MM_IDATA		WINMM_IData;
