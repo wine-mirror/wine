@@ -272,43 +272,6 @@
                 to satisfy the needs of literally hundreds of concurrent
                 users, all from a single server.
               </entry>
-              <entry>
-                Commercial
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <ulink url="http://www.transgaming.com">TransGaming Technologies Cedega</ulink>
-              </entry>
-              <entry>
-                Cedega, formerly known as WineX, is a Wine version derived
-                from the old BSD licensed Wine tree.  It is designed
-                specifically to function with games, and so development
-                is centered around ensuring compatibility with technologies
-                like Direct3D, DirectX, and various methods of copy protection.
-              </entry>
-              <entry>
-                Commercial; free CVS download of reduced version (no copy
-                protection support etc.)
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <ulink
-                url="http://sourceforge.net/projects/rewind">ReWind</ulink>
-              </entry>
-              <entry>
-                ReWind is a Wine version derived from the old BSD licensed
-                Wine tree.  Due to its BSD license it can't incorporate
-                most recent Wine patches, however its code can be used by
-                any software project without restriction.  Although code
-                is occasionally contributed to ReWind alongside the main
-                Wine project, there has never been an official release of
-                ReWind.
-              </entry>
-              <entry>
-                Free, Open Source: BSD license 
-              </entry>
             </row>
           </tbody>
         </tgroup>

@@ -293,26 +293,6 @@
           </varlistentry>
 
 	  <varlistentry>
-          <term><ulink url="http://www.transgaming.com">TransGaming's Cedega</ulink></term>
-          <listitem>
-            <para>
-              This is TransGaming's Wine version specially suited for
-              games.  It includes more mature Direct3D support than
-              WineHQ, although these days WineHQ has quite advanced
-              D3D support as well. Most of the code is under the AFPL
-              and can be downloaded for free.
-            </para>
-            <para>
-              However TransGaming also distributes binaries that contain
-              improved copy protection support (needed for many
-              games), support, and other enhancements. These packages are
-              only available in binary form to subscribed customers
-              ($5/month, minimum three months).
-            </para>
-         </listitem>
-          </varlistentry>
-
-	  <varlistentry>
           <term><ulink url="http://www.codeweavers.com/site/products/cxoffice/">CodeWeavers' CrossOver Office</ulink></term>
           <listitem>
             <para>
@@ -466,27 +446,6 @@
 	  parts needed to make Windows programs work), that's still nearly 10 times
 	  more people working simply on one release than have <emphasis>ever</emphasis>
 	  worked on Wine, in the history of the project.
-        </para>
-      </answer>
-      </qandaentry>
-
-     <qandaentry>
-      <question id="Is-TransGamings-last-patch-included-in-Wine">
-        <para>Is TransGaming's latest patch included in the standard Wine release?</para>
-      </question>
-      <answer>
-        <para>
-          No, it's not.
-        </para>
-        <para>
-          TransGaming makes money via a subscription service and the license
-          of their Cedega tree is incompatible with the Wine license. Thus
-          Cedega patches cannot be integrated into the Wine tree without
-          express permission by TransGaming. They have submitted some
-          of their work for integration into Wine, most notably DirectDraw
-          and some DirectSound work, and such work has been integrated into
-          the Wine tree. However it seems highly unlikely they will ever submit their
-          Direct3D work.
         </para>
       </answer>
       </qandaentry>
