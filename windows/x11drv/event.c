@@ -64,6 +64,8 @@ extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
 
 #define DndURL          128   /* KDE drag&drop */
 
+/* The last X window which had the focus */
+static Window glastXFocusWin = 0;
 
 static const char * const event_names[] =
 {
@@ -258,14 +260,50 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case FocusIn:
+    {
+      WND *pWndLastFocus = 0;
+      XWindowAttributes win_attr;
+      BOOL bIsDisabled;
+      XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
+
       if (!hWnd || bUserRepaintDisabled) return;
-      EVENT_FocusIn( hWnd, (XFocusChangeEvent*)event );
+
+      bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
+
+      /* If the window has been disabled and we are in managed mode,
+       * revert the X focus back to the last focus window. This is to disallow
+       * the window manager from switching focus away while the app is
+       * in a modal state.
+       */
+      if ( Options.managed && bIsDisabled && glastXFocusWin)
+      {
+        /* Change focus only if saved focus window is registered and viewable */
+        if ( TSXFindContext( xfocChange->display, glastXFocusWin, winContext,
+                             (char **)&pWndLastFocus ) == 0 )
+        {
+          if ( TSXGetWindowAttributes( display, glastXFocusWin, &win_attr ) &&
+                 (win_attr.map_state == IsViewable) )
+          {
+            TSXSetInputFocus( xfocChange->display, glastXFocusWin, RevertToParent, CurrentTime );
+            EVENT_Synchronize();
       break;
+          }
+        }
+      }
+       
+      EVENT_FocusIn( hWnd, xfocChange );
+      break;
+    }
       
     case FocusOut:
+    {
+      /* Save the last window which had the focus */
+      XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
+      glastXFocusWin = xfocChange->window;
       if (!hWnd || bUserRepaintDisabled) return;
       EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
+    }
       
     case Expose:
       if (bUserRepaintDisabled) return;
