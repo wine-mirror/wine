@@ -467,4 +467,8 @@ extern BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
 extern BOOL DRIVER_UnregisterDriver( LPCSTR name );
 extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
+
+extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
+
+
 #endif  /* __WINE_GDI_H */

@@ -1,8 +1,9 @@
 /*
- * Misc. graphics operations
+ * GDI drawing functions.
  *
  * Copyright 1993, 1994 Alexandre Julliard
  * Copyright 1997 Bertho A. Stultiens
+ *           1999 Huw D M Davies
  */
 
 #include <string.h>
@@ -100,7 +101,7 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 
     if(dc->funcs->pMoveToEx)
         return dc->funcs->pMoveToEx(dc,x,y,pt);
-    return TRUE;
+    return FALSE;
 }
 
 
@@ -125,12 +126,13 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
                      INT xend, INT yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
-  
-    if(dc && PATH_IsPathOpen(dc->w.path))
+    if(!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path))
         return PATH_Arc(hdc, left, top, right, bottom, xstart, ystart, xend,
 	   yend);
     
-    return dc && dc->funcs->pArc &&
+    return dc->funcs->pArc &&
     	   dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
@@ -145,7 +147,6 @@ BOOL WINAPI ArcTo( HDC hdc,
 {
     BOOL result;
     DC * dc = DC_GetDCPtr( hdc );
-
     if(!dc) return FALSE;
 
     if(dc->funcs->pArcTo)
@@ -200,8 +201,14 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
                      INT xend, INT yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
-  
-    return dc && dc->funcs->pPie &&
+    if(!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path)) {
+        FIXME("-> Path: stub\n");
+	return FALSE;
+    }
+
+    return dc->funcs->pPie &&
     	   dc->funcs->pPie(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
@@ -225,8 +232,14 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
                        INT xend, INT yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path)) {
+        FIXME("-> Path: stub\n");
+	return FALSE;
+    }
   
-    return dc && dc->funcs->pChord &&
+    return dc->funcs->pChord &&
     	   dc->funcs->pChord(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
@@ -248,8 +261,14 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
                          INT right, INT bottom )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path)) {
+        FIXME("-> Path: stub\n");
+	return FALSE;
+    }
   
-    return dc && dc->funcs->pEllipse &&
+    return dc->funcs->pEllipse &&
     	   dc->funcs->pEllipse(dc,left,top,right,bottom);
 }
 
@@ -271,11 +290,12 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
                            INT right, INT bottom )
 {
     DC * dc = DC_GetDCPtr( hdc );
-  
-    if(dc && PATH_IsPathOpen(dc->w.path))
+    if(!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path))
         return PATH_Rectangle(hdc, left, top, right, bottom);
 
-    return dc && dc->funcs->pRectangle &&
+    return dc->funcs->pRectangle &&
     	   dc->funcs->pRectangle(dc,left,top,right,bottom);
 }
 
@@ -296,16 +316,16 @@ BOOL16 WINAPI RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
                            INT bottom, INT ell_width, INT ell_height )
 {
-  
-    if(ell_width == 0 || ell_height == 0) /* Just an optimization */
-        return Rectangle(hdc, left, top, right, bottom);
+    DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    else {
-        DC * dc = DC_GetDCPtr( hdc );
-
-	return dc && dc->funcs->pRoundRect &&
-    	   dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
+    if(PATH_IsPathOpen(dc->w.path)) {
+        FIXME("-> Path: stub\n");
+	return FALSE;
     }
+
+    return dc->funcs->pRoundRect &&
+      dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
 }
 
 /***********************************************************************
@@ -599,8 +619,12 @@ BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
 BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    return dc && dc->funcs->pPolyline &&
+    if(PATH_IsPathOpen(dc->w.path))
+        return PATH_Polyline(hdc, pt, count);
+
+    return dc->funcs->pPolyline &&
     	   dc->funcs->pPolyline(dc,pt,count);
 }
 
@@ -614,7 +638,10 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 
     if(!dc) return FALSE;
 
-    if(dc->funcs->pPolylineTo)
+    if(PATH_IsPathOpen(dc->w.path))
+        ret = PATH_PolylineTo(hdc, pt, cCount);
+
+    else if(dc->funcs->pPolylineTo)
         ret = dc->funcs->pPolylineTo(dc, pt, cCount);
 
     else { /* do it using Polyline */
@@ -659,8 +686,12 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
 BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    return dc && dc->funcs->pPolygon &&
+    if(PATH_IsPathOpen(dc->w.path))
+	return PATH_Polygon(hdc, pt, count);
+
+    return dc->funcs->pPolygon &&
     	   dc->funcs->pPolygon(dc,pt,count);
 }
 
@@ -699,8 +730,12 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
                              UINT polygons )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    return dc && dc->funcs->pPolyPolygon &&
+    if(PATH_IsPathOpen(dc->w.path))
+        return PATH_PolyPolygon(hdc, pt, counts, polygons);
+
+    return dc->funcs->pPolyPolygon &&
     	   dc->funcs->pPolyPolygon(dc,pt,counts,polygons);
 }
 
@@ -711,8 +746,12 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
                             DWORD polylines )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    return dc && dc->funcs->pPolyPolyline &&
+    if(PATH_IsPathOpen(dc->w.path))
+        return PATH_PolyPolyline(hdc, pt, counts, polylines);
+
+    return dc->funcs->pPolyPolyline &&
     	   dc->funcs->pPolyPolyline(dc,pt,counts,polylines);
 }
 
@@ -803,9 +842,27 @@ BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
 BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
     DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    return dc && dc->funcs->pPolyBezier &&
-    	   dc->funcs->pPolyBezier(dc, lppt, cPoints);
+    if(PATH_IsPathOpen(dc->w.path))
+	return PATH_PolyBezier(hdc, lppt, cPoints);
+
+    if(dc->funcs->pPolyBezier)
+        return dc->funcs->pPolyBezier(dc, lppt, cPoints);
+
+    /* We'll convert it into line segments and draw them using Polyline */
+    {
+        POINT *Pts;
+	INT nOut;
+	BOOL ret;
+
+	Pts = GDI_Bezier( lppt, cPoints, &nOut );
+	if(!Pts) return FALSE;
+	TRACE("Pts = %p, no = %d\n", Pts, nOut);
+	ret = Polyline( dc->hSelf, Pts, nOut );
+	HeapFree( GetProcessHeap(), 0, Pts );
+	return ret;
+    }
 }
 
 /******************************************************************************
@@ -828,10 +885,18 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 
     if(PATH_IsPathOpen(dc->w.path))
         ret = PATH_PolyBezierTo(hdc, lppt, cPoints);
-    else 
-        ret = dc->funcs->pPolyBezierTo &&
-	    dc->funcs->pPolyBezierTo(dc, lppt, cPoints);
-
+    else if(dc->funcs->pPolyBezierTo)
+        ret = dc->funcs->pPolyBezierTo(dc, lppt, cPoints);
+    else { /* We'll do it using PolyBezier */
+        POINT *pt;
+	pt = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (cPoints + 1) );
+	if(!pt) return FALSE;
+	pt[0].x = dc->w.CursPosX;
+	pt[0].y = dc->w.CursPosY;
+	memcpy(pt + 1, lppt, sizeof(POINT) * cPoints);
+	ret = PolyBezier(dc->hSelf, pt, cPoints+1);
+	HeapFree( GetProcessHeap(), 0, pt );
+    }
     if(ret) {
         dc->w.CursPosX = lppt[cPoints-1].x;
         dc->w.CursPosY = lppt[cPoints-1].y;
@@ -859,4 +924,199 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 {
         FIXME("PolyDraw, stub\n");
         return 0;
+}
+
+/******************************************************************
+ * 
+ *   *Very* simple bezier drawing code, 
+ *
+ *   It uses a recursive algorithm to divide the curve in a series
+ *   of straight line segements. Not ideal but for me sufficient.
+ *   If you are in need for something better look for some incremental
+ *   algorithm.
+ *
+ *   7 July 1998 Rein Klazes
+ */
+
+ /* 
+  * some macro definitions for bezier drawing
+  *
+  * to avoid trucation errors the coordinates are
+  * shifted upwards. When used in drawing they are
+  * shifted down again, including correct rounding
+  * and avoiding floating point arithmatic
+  * 4 bits should allow 27 bits coordinates which I saw
+  * somewere in the win32 doc's
+  * 
+  */
+
+#define BEZIERSHIFTBITS 4
+#define BEZIERSHIFTUP(x)    ((x)<<BEZIERSHIFTBITS)
+#define BEZIERPIXEL        BEZIERSHIFTUP(1)    
+#define BEZIERSHIFTDOWN(x)  (((x)+(1<<(BEZIERSHIFTBITS-1)))>>BEZIERSHIFTBITS)
+/* maximum depth of recursion */
+#define BEZIERMAXDEPTH  8
+
+/* size of array to store points on */
+/* enough for one curve */
+#define BEZIER_INITBUFSIZE    (150)
+
+/* calculate Bezier average, in this case the middle 
+ * correctly rounded...
+ * */
+
+#define BEZIERMIDDLE(Mid, P1, P2) \
+    (Mid).x=((P1).x+(P2).x + 1)/2;\
+    (Mid).y=((P1).y+(P2).y + 1)/2;
+    
+/**********************************************************
+* BezierCheck helper function to check
+* that recursion can be terminated
+*       Points[0] and Points[3] are begin and endpoint
+*       Points[1] and Points[2] are control points
+*       level is the recursion depth
+*       returns true if the recusion can be terminated
+*/
+static BOOL BezierCheck( int level, POINT *Points)
+{ 
+    INT dx, dy;
+    dx=Points[3].x-Points[0].x;
+    dy=Points[3].y-Points[0].y;
+    if(abs(dy)<=abs(dx)){/* shallow line */
+        /* check that control points are between begin and end */
+        if(Points[1].x < Points[0].x){
+            if(Points[1].x < Points[3].x)
+                return FALSE;
+        }else
+            if(Points[1].x > Points[3].x)
+                return FALSE;
+        if(Points[2].x < Points[0].x){
+            if(Points[2].x < Points[3].x)
+                return FALSE;
+        }else
+            if(Points[2].x > Points[3].x)
+                return FALSE;
+        dx=BEZIERSHIFTDOWN(dx);
+        if(!dx) return TRUE;
+        if(abs(Points[1].y-Points[0].y-(dy/dx)*
+                BEZIERSHIFTDOWN(Points[1].x-Points[0].x)) > BEZIERPIXEL ||
+           abs(Points[2].y-Points[0].y-(dy/dx)*
+                   BEZIERSHIFTDOWN(Points[2].x-Points[0].x)) > BEZIERPIXEL )
+            return FALSE;
+        else
+            return TRUE;
+    }else{ /* steep line */
+        /* check that control points are between begin and end */
+        if(Points[1].y < Points[0].y){
+            if(Points[1].y < Points[3].y)
+                return FALSE;
+        }else
+            if(Points[1].y > Points[3].y)
+                return FALSE;
+        if(Points[2].y < Points[0].y){
+            if(Points[2].y < Points[3].y)
+                return FALSE;
+        }else
+            if(Points[2].y > Points[3].y)
+                return FALSE;
+        dy=BEZIERSHIFTDOWN(dy);
+        if(!dy) return TRUE;
+        if(abs(Points[1].x-Points[0].x-(dx/dy)*
+                BEZIERSHIFTDOWN(Points[1].y-Points[0].y)) > BEZIERPIXEL ||
+           abs(Points[2].x-Points[0].x-(dx/dy)*
+                   BEZIERSHIFTDOWN(Points[2].y-Points[0].y)) > BEZIERPIXEL )
+            return FALSE;
+        else
+            return TRUE;
+    }
+}
+    
+/* Helper for GDI_Bezier.
+ * Just handles one Bezier, so Points should point to four POINTs
+ */
+static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
+				INT *nPtsOut, INT level )
+{
+    if(*nPtsOut == *dwOut) {
+        *dwOut *= 2;
+	*PtsOut = HeapReAlloc( GetProcessHeap(), 0, *PtsOut,
+			       *dwOut * sizeof(POINT) );
+    }
+
+    if(!level || BezierCheck(level, Points)) {
+        if(*nPtsOut == 0) {
+            (*PtsOut)[0].x = BEZIERSHIFTDOWN(Points[0].x);
+            (*PtsOut)[0].y = BEZIERSHIFTDOWN(Points[0].y);
+            *nPtsOut = 1;
+        }
+	(*PtsOut)[*nPtsOut].x = BEZIERSHIFTDOWN(Points[3].x);
+        (*PtsOut)[*nPtsOut].y = BEZIERSHIFTDOWN(Points[3].y);
+        (*nPtsOut) ++;
+    } else {
+        POINT Points2[4]; /* for the second recursive call */
+        Points2[3]=Points[3];
+        BEZIERMIDDLE(Points2[2], Points[2], Points[3]);
+        BEZIERMIDDLE(Points2[0], Points[1], Points[2]);
+        BEZIERMIDDLE(Points2[1],Points2[0],Points2[2]);
+
+        BEZIERMIDDLE(Points[1], Points[0],  Points[1]);
+        BEZIERMIDDLE(Points[2], Points[1], Points2[0]);
+        BEZIERMIDDLE(Points[3], Points[2], Points2[1]);
+
+        Points2[0]=Points[3];
+
+        /* do the two halves */
+        GDI_InternalBezier(Points, PtsOut, dwOut, nPtsOut, level-1);
+        GDI_InternalBezier(Points2, PtsOut, dwOut, nPtsOut, level-1);
+    }
+}
+
+
+    
+/***********************************************************************
+ *           GDI_Bezier   [INTERNAL]
+ *   Calculate line segments that approximate -what microsoft calls- a bezier
+ *   curve.
+ *   The routine recursively divides the curve in two parts until a straight
+ *   line can be drawn
+ *
+ *  PARAMS
+ *
+ *  Points  [I] Ptr to count POINTs which are the end and control points
+ *              of the set of Bezier curves to flatten.
+ *  count   [I] Number of Points.  Must be 3n+1.
+ *  nPtsOut [O] Will contain no of points that have been produced (i.e. no. of
+ *              lines+1).
+ *   
+ *  RETURNS
+ *
+ *  Ptr to an array of POINTs that contain the lines that approximinate the
+ *  Beziers.  The array is allocated on the process heap and it is the caller's
+ *  responsibility to HeapFree it. [this is not a particularly nice interface
+ *  but since we can't know in advance how many points will generate, the
+ *  alternative would be to call the function twice, once to determine the size
+ *  and a second time to do the work - I decided this was too much of a pain].
+ */
+POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
+{
+    POINT *out;
+    INT Bezier, dwOut = BEZIER_INITBUFSIZE, i;
+
+    if((count - 1) % 3 != 0) {
+        ERR("Invalid no. of points\n");
+	return NULL;
+    }
+    *nPtsOut = 0;
+    out = HeapAlloc( GetProcessHeap(), 0, dwOut * sizeof(POINT));
+    for(Bezier = 0; Bezier < (count-1)/3; Bezier++) {
+	POINT ptBuf[4];
+	memcpy(ptBuf, Points + Bezier * 3, sizeof(POINT) * 4);
+	for(i = 0; i < 4; i++) {
+	    ptBuf[i].x = BEZIERSHIFTUP(ptBuf[i].x);
+	    ptBuf[i].y = BEZIERSHIFTUP(ptBuf[i].y);
+	}
+        GDI_InternalBezier( ptBuf, &out, &dwOut, nPtsOut, BEZIERMAXDEPTH );
+    }
+    TRACE("Produced %d points\n", *nPtsOut);
+    return out;
 }

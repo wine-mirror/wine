@@ -2,6 +2,7 @@
  * Graphics paths (BeginPath, EndPath etc.)
  *
  * Copyright 1997, 1998 Martin Boehme
+ *                 1999 Huw D M Davies
  */
 
 #include <assert.h>
@@ -903,6 +904,7 @@ BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pts, DWORD cbPoints)
       if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
          return FALSE;
    }
+
    for(i = 0; i < cbPoints; i++) {
        pt = pts[i];
        if(!LPtoDP(hdc, &pt, 1))
@@ -912,10 +914,217 @@ BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pts, DWORD cbPoints)
    return TRUE;
 }
    
+BOOL PATH_PolyBezier(HDC hdc, const POINT *pts, DWORD cbPoints)
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   for(i = 0; i < cbPoints; i++) {
+       pt = pts[i];
+       if(!LPtoDP(hdc, &pt, 1))
+	   return FALSE;
+       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO : PT_BEZIERTO);
+   }
+   return TRUE;
+}
+
+BOOL PATH_Polyline(HDC hdc, const POINT *pts, DWORD cbPoints)
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   for(i = 0; i < cbPoints; i++) {
+       pt = pts[i];
+       if(!LPtoDP(hdc, &pt, 1))
+	   return FALSE;
+       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO : PT_LINETO);
+   }
+   return TRUE;
+}
+   
+BOOL PATH_PolylineTo(HDC hdc, const POINT *pts, DWORD cbPoints)
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   /* Add a PT_MOVETO if necessary */
+   if(pPath->newStroke)
+   {
+      pPath->newStroke=FALSE;
+      if(!GetCurrentPositionEx(hdc, &pt) ||
+         !LPtoDP(hdc, &pt, 1))
+         return FALSE;
+      if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
+         return FALSE;
+   }
+
+   for(i = 0; i < cbPoints; i++) {
+       pt = pts[i];
+       if(!LPtoDP(hdc, &pt, 1))
+	   return FALSE;
+       PATH_AddEntry(pPath, &pt, PT_LINETO);
+   }
+
+   return TRUE;
+}
+
+
+BOOL PATH_Polygon(HDC hdc, const POINT *pts, DWORD cbPoints)
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   for(i = 0; i < cbPoints; i++) {
+       pt = pts[i];
+       if(!LPtoDP(hdc, &pt, 1))
+	   return FALSE;
+       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO :
+		     ((i == cbPoints-1) ? PT_LINETO | PT_CLOSEFIGURE :
+		      PT_LINETO));
+   }
+   return TRUE;
+}
+
+BOOL PATH_PolyPolygon( HDC hdc, const POINT* pts, const INT* counts,
+		       UINT polygons )
+{
+   GdiPath     *pPath;
+   POINT       pt, startpt;
+   INT         poly, point, i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   for(i = 0, poly = 0; poly < polygons; poly++) {
+       for(point = 0; point < counts[poly]; point++, i++) {
+	   pt = pts[i];
+	   if(!LPtoDP(hdc, &pt, 1))
+	       return FALSE;
+	   if(point == 0) startpt = pt;
+	   PATH_AddEntry(pPath, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
+       }
+       /* win98 adds an extra line to close the figure for some reason */
+       PATH_AddEntry(pPath, &startpt, PT_LINETO | PT_CLOSEFIGURE);
+   }
+   return TRUE;
+}
+
+BOOL PATH_PolyPolyline( HDC hdc, const POINT* pts, const DWORD* counts,
+			DWORD polylines )
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         poly, point, i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   for(i = 0, poly = 0; poly < polylines; poly++) {
+       for(point = 0; point < counts[poly]; point++, i++) {
+	   pt = pts[i];
+	   if(!LPtoDP(hdc, &pt, 1))
+	       return FALSE;
+	   PATH_AddEntry(pPath, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
+       }
+   }
+   return TRUE;
+}
+   
 /***********************************************************************
  * Internal functions
  */
 
+
+/* PATH_AddFlatBezier
+ *
+ */
+static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
+{
+    POINT *pts;
+    INT no, i;
+
+    pts = GDI_Bezier( pt, 4, &no );
+    if(!pts) return FALSE;
+
+    for(i = 1; i < no; i++)
+        PATH_AddEntry(pPath, &pts[i], 
+	    (i == no-1 && closed) ? PT_LINETO | PT_CLOSEFIGURE : PT_LINETO);
+    HeapFree( GetProcessHeap(), 0, pts );
+    return TRUE;
+}
+
+/* PATH_FlattenPath
+ *
+ * Replaces Beziers with line segments
+ *
+ */
+static BOOL PATH_FlattenPath(GdiPath *pPath)
+{
+    GdiPath newPath;
+    INT srcpt;
+
+    memset(&newPath, 0, sizeof(newPath));
+    newPath.state = PATH_Open;
+    for(srcpt = 0; srcpt < pPath->numEntriesUsed; srcpt++) {
+        switch(pPath->pFlags[srcpt] & ~PT_CLOSEFIGURE) {
+	case PT_MOVETO:
+	case PT_LINETO:
+	    PATH_AddEntry(&newPath, &pPath->pPoints[srcpt],
+			  pPath->pFlags[srcpt]);
+	    break;
+	case PT_BEZIERTO:
+	  PATH_AddFlatBezier(&newPath, &pPath->pPoints[srcpt-1],
+			     pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE);
+	    srcpt += 2;
+	    break;
+	}
+    }
+    newPath.state = PATH_Closed;
+    PATH_AssignGdiPath(pPath, &newPath);
+    PATH_EmptyPath(&newPath);
+    return TRUE;
+}
+	  
 /* PATH_PathToRegion
  *
  * Creates a region from the specified path using the specified polygon
@@ -933,7 +1142,9 @@ static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
 
    assert(pPath!=NULL);
    assert(pHrgn!=NULL);
-   
+
+      PATH_FlattenPath(pPath);
+
    /* FIXME: What happens when number of points is zero? */
    
    /* First pass: Find out how many strokes there are in the path */
@@ -1008,6 +1219,7 @@ BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
    /* FIXME: If newStroke is true, perhaps we want to check that we're
     * getting a PT_MOVETO
     */
+   TRACE("(%ld,%ld) - %d\n", pPoint->x, pPoint->y, flags);
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -1225,7 +1437,9 @@ BOOL16 WINAPI FlattenPath16(HDC16 hdc)
 BOOL WINAPI FlattenPath(HDC hdc)
 {
    DC *dc = DC_GetDCPtr( hdc );
-   
+   GdiPath *pPath;
+   TRACE("%08x\n", hdc);
+
    if(!dc) {
      SetLastError(ERROR_INVALID_HANDLE);
      return FALSE;
@@ -1234,8 +1448,10 @@ BOOL WINAPI FlattenPath(HDC hdc)
    if(dc->funcs->pFlattenPath)
      return dc->funcs->pFlattenPath(dc);
 
-   FIXME("stub\n");
-   return 0;
+    pPath = &dc->w.path;
+    if(pPath->state != PATH_Closed)
+        return FALSE;
+   return PATH_FlattenPath(pPath);
 }
 
 /*******************************************************************

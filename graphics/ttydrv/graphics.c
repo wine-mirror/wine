@@ -140,16 +140,6 @@ BOOL TTYDRV_DC_Pie(DC *dc, INT left, INT top, INT right, INT bottom,
 }
 
 /***********************************************************************
- *		TTYDRV_DC_PolyBezier
- */
-BOOL TTYDRV_DC_PolyBezier(DC *dc, const POINT* BezierPoints, DWORD count)
-{
-  FIXME("(%p, %p, %lu): stub\n", dc, BezierPoints, count);
-
-  return TRUE;
-}
-
-/***********************************************************************
  *		TTYDRV_DC_Polygon
  */
 BOOL TTYDRV_DC_Polygon(DC *dc, const POINT* pt, INT count)

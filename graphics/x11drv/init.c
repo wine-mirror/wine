@@ -78,8 +78,8 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_PaintRgn,                 /* pPaintRgn */
     X11DRV_PatBlt,                   /* pPatBlt */
     X11DRV_Pie,                      /* pPie */
-    X11DRV_PolyBezier,               /* pPolyBezier */
-    X11DRV_PolyBezierTo,             /* pPolyBezierTo */
+    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
     X11DRV_PolyPolygon,              /* pPolyPolygon */
     X11DRV_PolyPolyline,             /* pPolyPolyline */

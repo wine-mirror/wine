@@ -63,7 +63,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   TTYDRV_DC_PaintRgn,  /* pPaintRgn */
   TTYDRV_DC_PatBlt,    /* pPatBlt */
   TTYDRV_DC_Pie,       /* pPie */
-  TTYDRV_DC_PolyBezier, /* pPolyBezier */
+  NULL,                /* pPolyBezier */
   NULL,                /* pPolyBezierTo */
   NULL,                /* pPolyDraw */
   TTYDRV_DC_PolyPolygon, /* pPolyPolygon */

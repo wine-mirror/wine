@@ -51,6 +51,14 @@ extern BOOL PATH_Ellipse(HDC hdc, INT x1, INT y1,
 extern BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
    INT xStart, INT yStart, INT xEnd, INT yEnd);
 extern BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyBezier(HDC hdc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolylineTo(HDC hdc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polyline(HDC hdc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polygon(HDC hdc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyPolyline(HDC hdc, const POINT *pt, const DWORD *counts,
+			      DWORD polylines);
+extern BOOL PATH_PolyPolygon(HDC hdc, const POINT *pt, const INT *counts,
+			     UINT polygons);
 #endif /* __WINE_PATH_H */
 
 

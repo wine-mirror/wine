@@ -74,6 +74,8 @@ extern BOOL MFDRV_PatBlt( DC *dc, INT left, INT top, INT width, INT height,
 extern BOOL MFDRV_Pie( DC *dc, INT left, INT top, INT right,
 		       INT bottom, INT xstart, INT ystart, INT xend,
 		       INT yend );
+extern BOOL MFDRV_PolyBezier( DC *dc, const POINT* pt, DWORD count );
+extern BOOL MFDRV_PolyBezierTo( DC *dc, const POINT* pt, DWORD count );
 extern BOOL MFDRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts,
 			       UINT polygons);
 extern BOOL MFDRV_Polygon( DC *dc, const POINT* pt, INT count );

@@ -379,3 +379,25 @@ MFDRV_SetTextColor( DC *dc, COLORREF color )
 			    LOWORD(color));
 }
 
+
+/**********************************************************************
+ *          MFDRV_PolyBezier
+ * Since MetaFiles don't record Beziers and they don't even record
+ * approximations to them using lines, we need this stub function.
+ */
+BOOL
+MFDRV_PolyBezier( DC *dc, const POINT *pts, DWORD count )
+{
+    return FALSE;
+}
+
+/**********************************************************************
+ *          MFDRV_PolyBezierTo
+ * Since MetaFiles don't record Beziers and they don't even record
+ * approximations to them using lines, we need this stub function.
+ */
+BOOL
+MFDRV_PolyBezierTo( DC *dc, const POINT *pts, DWORD count )
+{
+    return FALSE;
+}

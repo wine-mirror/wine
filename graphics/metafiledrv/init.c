@@ -65,8 +65,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_PaintRgn,                  /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
     MFDRV_Pie,                       /* pPie */
-    NULL,                            /* pPolyBezier */
-    NULL,                            /* pPolyBezierTo */
+    MFDRV_PolyBezier,                /* pPolyBezier */
+    MFDRV_PolyBezierTo,              /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
     MFDRV_PolyPolygon,               /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */

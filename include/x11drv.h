@@ -125,10 +125,6 @@ extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT x, INT y,
 extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT x, INT y);
 extern BOOL X11DRV_PaintRgn( struct tagDC *dc, HRGN hrgn );
 extern BOOL X11DRV_Polyline( struct tagDC *dc,const POINT* pt,INT count);
-extern BOOL X11DRV_PolyBezier( struct tagDC *dc, const POINT* lppt,
-			       DWORD cPoints);
-extern BOOL X11DRV_PolyBezierTo( struct tagDC *dc, const POINT* lppt,
-				 DWORD cPoints);
 extern BOOL X11DRV_Polygon( struct tagDC *dc, const POINT* pt, INT count );
 extern BOOL X11DRV_PolyPolygon( struct tagDC *dc, const POINT* pt, 
 				  const INT* counts, UINT polygons);
