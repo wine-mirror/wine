@@ -84,15 +84,17 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 /* common control shared messages */
 #define CCM_FIRST            0x2000
 
-#define CCM_SETBKCOLOR       (CCM_FIRST+1)     /* lParam = bkColor */
-#define CCM_SETCOLORSCHEME   (CCM_FIRST+2)     /* lParam = COLORSCHEME struct ptr */
-#define CCM_GETCOLORSCHEME   (CCM_FIRST+3)     /* lParam = COLORSCHEME struct ptr */
-#define CCM_GETDROPTARGET    (CCM_FIRST+4)
-#define CCM_SETUNICODEFORMAT (CCM_FIRST+5)
-#define CCM_GETUNICODEFORMAT (CCM_FIRST+6)
-#define CCM_SETVERSION       (CCM_FIRST+7)
-#define CCM_GETVERSION       (CCM_FIRST+8)
-#define CCM_SETNOTIFYWINDOW  (CCM_FIRST+9)     /* wParam = hwndParent */
+#define CCM_SETBKCOLOR       (CCM_FIRST+0x1)     /* lParam = bkColor */
+#define CCM_SETCOLORSCHEME   (CCM_FIRST+0x2)     /* lParam = COLORSCHEME struct ptr */
+#define CCM_GETCOLORSCHEME   (CCM_FIRST+0x3)     /* lParam = COLORSCHEME struct ptr */
+#define CCM_GETDROPTARGET    (CCM_FIRST+0x4)
+#define CCM_SETUNICODEFORMAT (CCM_FIRST+0x5)
+#define CCM_GETUNICODEFORMAT (CCM_FIRST+0x6)
+#define CCM_SETVERSION       (CCM_FIRST+0x7)
+#define CCM_GETVERSION       (CCM_FIRST+0x8)
+#define CCM_SETNOTIFYWINDOW  (CCM_FIRST+0x9)     /* wParam = hwndParent */
+#define CCM_SETWINDOWTHEME   (CCM_FIRST+0xb)
+#define CCM_DPISCALE         (CCM_FIRST+0xc)
 
 
 /* common notification codes (WM_NOTIFY)*/
@@ -114,6 +116,10 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define NM_SETCURSOR            (NM_FIRST-17)
 #define NM_CHAR                 (NM_FIRST-18)
 #define NM_TOOLTIPSCREATED      (NM_FIRST-19)
+#define NM_LDOWN                (NM_FIRST-20)
+#define NM_RDOWN                (NM_FIRST-21)
+#define NM_THEMECHANGED         (NM_FIRST-22)
+
 
 #define HANDLE_WM_NOTIFY(hwnd, wParam, lParam, fn) \
     (fn)((hwnd), (int)(wParam), (NMHDR*)(lParam))
@@ -130,6 +136,9 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define I_IMAGENONE              (-2)
 #define I_INDENTCALLBACK         (-1)
 #define I_CHILDRENCALLBACK       (-1)
+#define I_GROUPIDCALLBACK        (-1)
+#define I_GROUPIDNONE            (-2)
+#define I_COLUMNSCALLBACK        ((UINT)-1)
 
 /* owner drawn types */
 #define ODT_HEADER      100
@@ -234,15 +243,16 @@ typedef struct tagNMCHAR
 
 /* itemState flags */
 
-#define CDIS_SELECTED	 	0x0001
-#define CDIS_GRAYED		0x0002
-#define CDIS_DISABLED		0x0004
-#define CDIS_CHECKED		0x0008
-#define CDIS_FOCUS		0x0010
-#define CDIS_DEFAULT		0x0020
-#define CDIS_HOT		0x0040
-#define CDIS_MARKED         	0x0080
-#define CDIS_INDETERMINATE  	0x0100
+#define CDIS_SELECTED           0x0001
+#define CDIS_GRAYED             0x0002
+#define CDIS_DISABLED           0x0004
+#define CDIS_CHECKED            0x0008
+#define CDIS_FOCUS              0x0010
+#define CDIS_DEFAULT            0x0020
+#define CDIS_HOT                0x0040
+#define CDIS_MARKED             0x0080
+#define CDIS_INDETERMINATE      0x0100
+#define CDIS_SHOWKEYBOARDCUES   0x0200
 
 
 typedef struct tagNMCUSTOMDRAWINFO
@@ -479,15 +489,17 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define CLR_DEFAULT      0xFF000000
 #define CLR_HILIGHT      CLR_DEFAULT
 
-#define ILC_MASK         0x0001
-#define ILC_COLOR        0x0000
-#define ILC_COLORDDB     0x00FE
-#define ILC_COLOR4       0x0004
-#define ILC_COLOR8       0x0008
-#define ILC_COLOR16      0x0010
-#define ILC_COLOR24      0x0018
-#define ILC_COLOR32      0x0020
-#define ILC_PALETTE      0x0800  /* no longer supported by M$ */
+#define ILC_MASK          0x0001
+#define ILC_COLOR         0x0000
+#define ILC_COLORDDB      0x00FE
+#define ILC_COLOR4        0x0004
+#define ILC_COLOR8        0x0008
+#define ILC_COLOR16       0x0010
+#define ILC_COLOR24       0x0018
+#define ILC_COLOR32       0x0020
+#define ILC_PALETTE       0x0800  /* no longer supported by M$ */
+#define ILC_MIRROR        0x2000
+#define ILC_PERITEMMIRROR 0x8000
 
 #define ILD_NORMAL        0x0000
 #define ILD_TRANSPARENT   0x0001
@@ -684,6 +696,8 @@ BOOL WINAPI GetWindowSubclass(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR*);
 BOOL WINAPI RemoveWindowSubclass(HWND, SUBCLASSPROC, UINT_PTR);
 LRESULT WINAPI DefSubclassProc(HWND, UINT, WPARAM, LPARAM);
 
+int WINAPI DrawShadowText(HDC, LPCWSTR, UINT, RECT*, DWORD, COLORREF, COLORREF, int, int);
+
 /* Header control */
 
 #define WC_HEADERA		"SysHeader32"
@@ -702,6 +716,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDS_HIDDEN              0x0008
 #define HDS_DRAGDROP            0x0040
 #define HDS_FULLDRAG            0x0080
+#define HDS_FILTERBAR           0x0100
+#define HDS_FLAT                0x0200
 
 #define HDI_WIDTH               0x0001
 #define HDI_HEIGHT              HDI_WIDTH
@@ -712,6 +728,7 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDI_IMAGE               0x0020
 #define HDI_DI_SETITEM          0x0040
 #define HDI_ORDER               0x0080
+#define HDI_FILTER              0x0100
 
 #define HDF_LEFT                0x0000
 #define HDF_RIGHT               0x0001
@@ -719,6 +736,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDF_JUSTIFYMASK         0x0003
 #define HDF_RTLREADING          0x0004
 
+#define HDF_SORTDOWN            0x0200
+#define HDF_SORTUP              0x0400
 #define HDF_IMAGE               0x0800
 #define HDF_BITMAP_ON_RIGHT     0x1000
 #define HDF_BITMAP              0x2000
@@ -729,6 +748,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HHT_ONHEADER            0x0002
 #define HHT_ONDIVIDER           0x0004
 #define HHT_ONDIVOPEN           0x0008
+#define HHT_ONFILTER            0x0010
+#define HHT_ONFILTERBUTTON      0x0020
 #define HHT_ABOVE               0x0100
 #define HHT_BELOW               0x0200
 #define HHT_TORIGHT             0x0400
@@ -796,6 +817,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDN_GETDISPINFO         WINELIB_NAME_AW(HDN_GETDISPINFO)
 #define HDN_BEGINDRAG           (HDN_FIRST-10)
 #define HDN_ENDDRAG             (HDN_FIRST-11)
+#define HDN_FILTERCHANGE        (HDN_FIRST-12)
+#define HDN_FILTERBTNCLICK      (HDN_FIRST-13)
 
 typedef struct _HD_LAYOUT
 {
@@ -842,6 +865,27 @@ typedef struct _HD_ITEMW
 #define HDITEM_V1_SIZEA CCSIZEOF_STRUCT(HDITEMA, lParam)
 #define HDITEM_V1_SIZEW CCSIZEOF_STRUCT(HDITEMW, lParam)
 #define HDITEM_V1_SIZE WINELIB_NAME_AW(HDITEM_V1_SIZE)
+
+#define HDFT_ISSTRING      0x0000
+#define HDFT_ISNUMBER      0x0001
+#define HDFT_HASNOVALUE    0x8000
+
+typedef struct _HD_TEXTFILTERA
+{
+    LPSTR pszText;
+    INT cchTextMax;
+} HD_TEXTFILTERA, *LPHD_TEXTFILTERA;
+
+typedef struct _HD_TEXTFILTERW
+{
+    LPWSTR pszText;
+    INT cchTextMax;
+} HD_TEXTFILTERW, *LPHD_TEXTFILTERW;
+
+#define HD_TEXTFILTER WINELIB_NAME_AW(HD_TEXTFILTER)
+#define HDTEXTFILTER WINELIB_NAME_AW(HD_TEXTFILTER)
+#define LPHD_TEXTFILTER WINELIB_NAME_AW(LPHD_TEXTFILTER)
+#define LPHDTEXTFILTER WINELIB_NAME_AW(LPHD_TEXTFILTER)
 
 typedef struct _HD_HITTESTINFO
 {
@@ -896,6 +940,13 @@ typedef struct tagNMHDDISPINFOW
 
 #define NMHDDISPINFO		WINELIB_NAME_AW(NMHDDISPINFO)
 #define LPNMHDDISPINFO		WINELIB_NAME_AW(LPNMHDDISPINFO)
+
+typedef struct tagNMHDFILTERBTNCLICK
+{
+    NMHDR hdr;
+    INT iItem;
+    RECT rc;
+} NMHDFILTERBTNCLICK, *LPNMHDFILTERBTNCLICK;
 
 #define Header_GetItemCount(hwndHD) \
   (INT)SNDMSGA((hwndHD),HDM_GETITEMCOUNT,0,0L)
@@ -1127,6 +1178,9 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TB_UNKWN463              (WM_USER+99)
 #define TB_UNKWN464              (WM_USER+100)
 
+#define TB_GETMETRICS            (WM_USER+101)
+#define TB_SETMETRICS            (WM_USER+102)
+#define TB_SETWINDOWTHEME        CCM_SETWINDOWTHEME
 
 #define TBN_FIRST               (0U-700U)
 #define TBN_LAST                (0U-720U)
@@ -1177,6 +1231,7 @@ typedef struct _NMTBCUSTOMDRAW
     RECT rcText;
     int nStringBkMode;
     int nHLStringBkMode;
+    int iListGap;
 } NMTBCUSTOMDRAW, *LPNMTBCUSTOMDRAW;
 
 /* return flags for Toolbar NM_CUSTOMDRAW notifications */
@@ -1431,6 +1486,45 @@ typedef struct
 #define TBIMHT_AFTER      0x00000001 /* TRUE = insert After iButton, otherwise before */
 #define TBIMHT_BACKGROUND 0x00000002 /* TRUE if and only if missed buttons completely */
 
+typedef struct tagNMTBSAVE
+{
+    NMHDR hdr;
+    DWORD* pData;
+    DWORD* pCurrent;
+    UINT cbData;
+    int iItem;
+    int cButtons;
+    TBBUTTON tbButton;
+} NMTBSAVE, *LPNMTBSAVE;
+
+typedef struct tagNMTBRESTORE
+{
+    NMHDR hdr;
+    DWORD* pData;
+    DWORD* pCurrent;
+    UINT cbData;
+    int iItem;
+    int cButtons;
+    int cbBytesPerRecord;
+    TBBUTTON tbButton;
+} NMTBRESTORE, *LPNMTBRESTORE;
+
+#define TBMF_PAD           0x00000001
+#define TBMF_BARPAD        0x00000002
+#define TBMF_BUTTONSPACING 0x00000004
+
+typedef struct
+{
+    UINT cbSize;
+    DWORD dwMask;
+    INT cxPad;
+    INT cyPad;
+    INT cxBarPad;
+    INT cyBarPad;
+    INT cxButtonSpacing;
+    INT cyButtonSpacing;
+} TBMETRICS, *LPTBMETRICS;
+
 HWND WINAPI
 CreateToolbar(HWND, DWORD, UINT, INT, HINSTANCE,
               UINT, LPCTBBUTTON, INT);
@@ -1483,6 +1577,12 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 #define TTDT_INITIAL            3
 
 
+#define TTI_NONE                0
+#define TTI_INFO                1
+#define TTI_WARNING             2
+#define TTI_ERROR               3
+
+
 #define TTM_ACTIVATE            (WM_USER+1)
 #define TTM_SETDELAYTIME        (WM_USER+3)
 #define TTM_ADDTOOLA            (WM_USER+4)
@@ -1532,6 +1632,13 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 #define TTM_POP                 (WM_USER+28)
 #define TTM_UPDATE              (WM_USER+29)
 #define TTM_GETBUBBLESIZE       (WM_USER+30)
+#define TTM_ADJUSTRECT          (WM_USER+31)
+#define TTM_SETTITLEA           (WM_USER+32)
+#define TTM_SETTITLEW           (WM_USER+33)
+#define TTM_SETTITLE            WINELIB_NAME_AW(TTM_SETTITLE)
+#define TTM_POPUP               (WM_USER+34)
+#define TTM_GETTITLE            (WM_USER+35)
+#define TTM_SETWINDOWTHEME      CCM_SETWINDOWTHEME
 
 
 #define TTN_FIRST               (0U-520U)
@@ -1555,6 +1662,7 @@ typedef struct tagTOOLINFOA {
     HINSTANCE hinst;
     LPSTR lpszText;
     LPARAM lParam;
+    void *lpReserved;
 } TTTOOLINFOA, *LPTOOLINFOA, *PTOOLINFOA, *LPTTTOOLINFOA;
 
 typedef struct tagTOOLINFOW {
@@ -1566,6 +1674,7 @@ typedef struct tagTOOLINFOW {
     HINSTANCE hinst;
     LPWSTR lpszText;
     LPARAM lParam;
+    void *lpReserved;
 } TTTOOLINFOW, *LPTOOLINFOW, *PTOOLINFOW, *LPTTTOOLINFOW;
 
 #define TTTOOLINFO WINELIB_NAME_AW(TTTOOLINFO)
@@ -1624,6 +1733,14 @@ typedef struct tagNMTTDISPINFOW
 #define NMTTDISPINFO_V1_SIZEA CCSIZEOF_STRUCT(NMTTDISPINFOA, uFlags)
 #define NMTTDISPINFO_V1_SIZEW CCSIZEOF_STRUCT(NMTTDISPINFOW, uFlags)
 #define NMTTDISPINFO_V1_SIZE WINELIB_NAME_AW(NMTTDISPINFO_V1_SIZE)
+
+typedef struct _TTGETTITLE
+{
+    DWORD dwSize;
+    UINT uTitleBitmap;
+    UINT cch;
+    WCHAR* pszTitle;
+} TTGETTITLE, *PTTGETTITLE;
 
 #define TOOLTIPTEXTW    NMTTDISPINFOW
 #define TOOLTIPTEXTA    NMTTDISPINFOA
@@ -1738,6 +1855,7 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RB_GETCOLORSCHEME       CCM_GETCOLORSCHEME
 #define RB_SETUNICODEFORMAT     CCM_SETUNICODEFORMAT
 #define RB_GETUNICODEFORMAT     CCM_GETUNICODEFORMAT
+#define RB_SETWINDOWTHEME       CCM_SETWINDOWTHEME
 
 #define RBN_FIRST               (0U-831U)
 #define RBN_LAST                (0U-859U)
@@ -1864,6 +1982,20 @@ typedef struct _RB_HITTESTINFO
     UINT  flags;
     INT   iBand;
 } RBHITTESTINFO, *LPRBHITTESTINFO;
+
+#define RBAB_AUTOSIZE   0x0001
+#define RBAB_ADDBAND    0x0002
+
+typedef struct tagNMREBARAUTOBREAK
+{
+    NMHDR hdr;
+    UINT uBand;
+    UINT wID;
+    LPARAM lParam;
+    UINT uMsg;
+    UINT fStyleCurrent;
+    BOOL fAutoBreak;
+} NMREBARAUTOBREAK, *LPNMREBARAUTOBREAK;
 
 
 /* Trackbar control */
@@ -2107,7 +2239,8 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVM_GETLINECOLOR        (TV_FIRST+41)
 #define TVM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
 #define TVM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
-
+#define TVM_MAPACCIDTOHTREEITEM (TV_FIRST + 42)
+#define TVM_MAPHTREEITEMTOACCID (TV_FIRST + 43)
 
 
 #define TVN_FIRST               (0U-400U)
@@ -2247,6 +2380,7 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVGN_DROPHILITE       8
 #define TVGN_CARET            9
 #define TVGN_LASTVISIBLE      10
+#define TVSI_NOSINGLEEXPAND   0x8000
 
 #define TVC_UNKNOWN           0x00
 #define TVC_BYMOUSE           0x01
@@ -2629,6 +2763,15 @@ typedef struct tagTVKEYDOWN
 #define TreeView_GetInsertMarkColor(hwnd) \
     (COLORREF)SNDMSGA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
 
+#define TreeView_SetItemState(hwndTV, hti, data, _mask) \
+{ TVITEM _TVi; \
+  _TVi.mask = TVIF_STATE; \
+  _TVi.hItem = hti; \
+  _TVi.stateMask = _mask; \
+  _TVi.state = data; \
+  SNDMSG((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
+}
+
 #define TreeView_GetItemState(hwndTV, hti, mask) \
    (UINT)SNDMSGA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
 #define TreeView_GetCheckState(hwndTV, hti) \
@@ -2641,14 +2784,11 @@ typedef struct tagTVKEYDOWN
 #define TreeView_GetLineColor(hwnd) \
     (COLORREF)SNDMSGA((hwnd), TVM_GETLINECOLOR, 0, 0)
 
-#define TreeView_SetItemState(hwndTV, hti, data, _mask) \
-{ TVITEM _TVi; \
-  _TVi.mask = TVIF_STATE; \
-  _TVi.hItem = hti; \
-  _TVi.stateMask = _mask; \
-  _TVi.state = data; \
-  SNDMSGA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
-}
+#define TreeView_MapAccIDToHTREEITEM(hwnd, id) \
+    (HTREEITEM)SNDMSG((hwnd), TVM_MAPACCIDTOHTREEITEM, id, 0)
+
+#define TreeView_MapHTREEITEMToAccID(hwnd, htreeitem) \
+    (UINT)SNDMSG((hwnd), TVM_MAPHTREEITEMTOACCID, (WPARAM)htreeitem, 0)
 
 
 /* Listview control */
@@ -2705,6 +2845,13 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVS_EX_UNDERLINEHOT     0x0800
 #define LVS_EX_UNDERLINECOLD    0x1000
 #define LVS_EX_MULTIWORKAREAS   0x2000
+#define LVS_EX_LABELTIP         0x4000
+#define LVS_EX_BORDERSELECT     0x8000
+#define LVS_EX_DOUBLEBUFFER     0x00010000
+#define LVS_EX_HIDELABELS       0x00020000
+#define LVS_EX_SINGLEROW        0x00040000
+#define LVS_EX_SNAPTOGRID       0x00080000
+#define LVS_EX_SIMPLESELECT     0x00100000
 
 #define LVCF_FMT                0x0001
 #define LVCF_WIDTH              0x0002
@@ -2782,6 +2929,47 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVHT_BELOW		0x0010
 #define LVHT_TORIGHT		0x0020
 #define LVHT_TOLEFT		0x0040
+
+#define LV_VIEW_ICON            0x0000
+#define LV_VIEW_DETAILS         0x0001
+#define LV_VIEW_SMALLICON       0x0002
+#define LV_VIEW_LIST            0x0003
+#define LV_VIEW_TILE            0x0004
+#define LV_VIEW_MAX             0x0004
+
+#define LVGF_NONE               0x00000000
+#define LVGF_HEADER             0x00000001
+#define LVGF_FOOTER             0x00000002
+#define LVGF_STATE              0x00000004
+#define LVGF_ALIGN              0x00000008
+#define LVGF_GROUPID            0x00000010
+
+#define LVGS_NORMAL             0x00000000
+#define LVGS_COLLAPSED          0x00000001
+#define LVGS_HIDDEN             0x00000002
+
+#define LVGA_HEADER_LEFT        0x00000001
+#define LVGA_HEADER_CENTER      0x00000002
+#define LVGA_HEADER_RIGHT       0x00000004
+#define LVGA_FOOTER_LEFT        0x00000008
+#define LVGA_FOOTER_CENTER      0x00000010
+#define LVGA_FOOTER_RIGHT       0x00000020
+
+#define LVGMF_NONE              0x00000000
+#define LVGMF_BORDERSIZE        0x00000001
+#define LVGMF_BORDERCOLOR       0x00000002
+#define LVGMF_TEXTCOLOR         0x00000004
+
+#define LVTVIF_AUTOSIZE         0x00000000
+#define LVTVIF_FIXEDWIDTH       0x00000001
+#define LVTVIF_FIXEDHEIGHT      0x00000002
+#define LVTVIF_FIXEDSIZE        0x00000003
+
+#define LVTVIM_TILESIZE         0x00000001
+#define LVTVIM_COLUMNS          0x00000002
+#define LVTVIM_LABELMARGIN      0x00000004
+
+#define LVIM_AFTER              0x00000001
 
 #define LVM_FIRST               0x1000
 #define LVM_GETBKCOLOR          (LVM_FIRST+0)
@@ -2890,6 +3078,41 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETTOOLTIPS         (LVM_FIRST+78)
 #define LVM_GETUNICODEFORMAT    (CCM_GETUNICODEFORMAT)
 #define LVM_SETUNICODEFORMAT    (CCM_SETUNICODEFORMAT)
+#define LVM_SETSELECTEDCOLUMN   (LVM_FIRST + 140)
+#define LVM_SETTILEWIDTH        (LVM_FIRST + 141)
+#define LVM_SETVIEW             (LVM_FIRST + 142)
+#define LVM_GETVIEW             (LVM_FIRST + 143)
+#define LVM_INSERTGROUP         (LVM_FIRST + 145)
+#define LVM_SETGROUPINFO        (LVM_FIRST + 147)
+#define LVM_GETGROUPINFO        (LVM_FIRST + 149)
+#define LVM_REMOVEGROUP         (LVM_FIRST + 150)
+#define LVM_MOVEGROUP           (LVM_FIRST + 151)
+#define LVM_MOVEITEMTOGROUP     (LVM_FIRST + 154)
+#define LVM_SETGROUPMETRICS     (LVM_FIRST + 155)
+#define LVM_GETGROUPMETRICS     (LVM_FIRST + 156)
+#define LVM_ENABLEGROUPVIEW     (LVM_FIRST + 157)
+#define LVM_SORTGROUPS          (LVM_FIRST + 158)
+#define LVM_INSERTGROUPSORTED   (LVM_FIRST + 159)
+#define LVM_REMOVEALLGROUPS     (LVM_FIRST + 160)
+#define LVM_HASGROUP            (LVM_FIRST + 161)
+#define LVM_SETTILEVIEWINFO     (LVM_FIRST + 162)
+#define LVM_GETTILEVIEWINFO     (LVM_FIRST + 163)
+#define LVM_SETTILEINFO         (LVM_FIRST + 164)
+#define LVM_GETTILEINFO         (LVM_FIRST + 165)
+#define LVM_SETINSERTMARK       (LVM_FIRST + 166)
+#define LVM_GETINSERTMARK       (LVM_FIRST + 167)
+#define LVM_INSERTMARKHITTEST   (LVM_FIRST + 168)
+#define LVM_GETINSERTMARKRECT   (LVM_FIRST + 169)
+#define LVM_SETINSERTMARKCOLOR  (LVM_FIRST + 170)
+#define LVM_GETINSERTMARKCOLOR  (LVM_FIRST + 171)
+#define LVM_SETINFOTIP          (LVM_FIRST + 173)
+#define LVM_GETSELECTEDCOLUMN   (LVM_FIRST + 174)
+#define LVM_ISGROUPVIEWENABLED  (LVM_FIRST + 175)
+#define LVM_GETOUTLINECOLOR     (LVM_FIRST + 176)
+#define LVM_SETOUTLINECOLOR     (LVM_FIRST + 177)
+#define LVM_CANCELEDITLABEL     (LVM_FIRST + 179)
+#define LVM_MAPINDEXTOID        (LVM_FIRST + 180)
+#define LVM_MAPIDTOINDEX        (LVM_FIRST + 181)
 
 #define LVN_FIRST               (0U-100U)
 #define LVN_LAST                (0U-199U)
@@ -3030,6 +3253,8 @@ typedef struct tagLVBKIMAGEW
 #define LVBKIF_STYLE_NORMAL     0x00000000
 #define LVBKIF_STYLE_TILE       0x00000010
 #define LVBKIF_STYLE_MASK       0x00000010
+#define LVBKIF_FLAG_TILEOFFSET  0x00000100
+#define LVBKIF_TYPE_WATERMARK   0x10000000
 
 #define ListView_SetBkImage(hwnd, plvbki) \
     (BOOL)SNDMSG((hwnd), LVM_SETBKIMAGE, 0, (LPARAM)plvbki)
@@ -3261,7 +3486,7 @@ typedef struct LVINSERTGROUPSORTEDW
 
 /* Tile related structures */
 
-typedef struct LVTILEINFO 
+typedef struct LVTILEINFO
 {
 	UINT cbSize;
 	int iItem;
@@ -3544,17 +3769,84 @@ typedef struct NMLVSCROLL
     (HWND)SNDMSGA((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
 #define ListView_SubItemHitTest(hwndLV, plvhti) \
     (int)SNDMSGA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
-
 #define ListView_GetSelectionMark(hwndLV) \
     (int)SNDMSG((hwndLV), LVM_GETSELECTIONMARK, 0, 0)
 #define ListView_SetSelectionMark(hwndLV, iItem) \
     (int)SNDMSG((hwndLV), LVM_SETSELECTIONMARK, 0, (LPARAM)(iItem))
-
 #define ListView_GetViewRect(hwndLV, prc) \
     (BOOL)SNDMSG((hwndLV),LVM_GETVIEWRECT,0,(LPARAM)(LPRECT)(prc))
-
 #define ListView_GetHeader(hwndLV) \
     (HWND)SNDMSG((hwndLV),LVM_GETHEADER,0,0L)
+#define ListView_SetSelectedColumn(hwnd, iCol) \
+    SNDMSG((hwnd), LVM_SETSELECTEDCOLUMN, (WPARAM)iCol, 0)
+#define ListView_SetTileWidth(hwnd, cpWidth) \
+    SNDMSG((hwnd), LVM_SETTILEWIDTH, (WPARAM)cpWidth, 0)
+#define ListView_SetView(hwnd, iView) \
+    (DWORD)SNDMSG((hwnd), LVM_SETVIEW, (WPARAM)(DWORD)iView, 0)
+#define ListView_GetView(hwnd) \
+    (DWORD)SNDMSG((hwnd), LVM_GETVIEW, 0, 0)
+#define ListView_InsertGroup(hwnd, index, pgrp) \
+    SNDMSG((hwnd), LVM_INSERTGROUP, (WPARAM)index, (LPARAM)pgrp)
+#define ListView_SetGroupInfo(hwnd, iGroupId, pgrp) \
+    SNDMSG((hwnd), LVM_SETGROUPINFO, (WPARAM)iGroupId, (LPARAM)pgrp)
+#define ListView_GetGroupInfo(hwnd, iGroupId, pgrp) \
+    SNDMSG((hwnd), LVM_GETGROUPINFO, (WPARAM)iGroupId, (LPARAM)pgrp)
+#define ListView_RemoveGroup(hwnd, iGroupId) \
+    SNDMSG((hwnd), LVM_REMOVEGROUP, (WPARAM)iGroupId, 0)
+#define ListView_MoveGroup(hwnd, iGroupId, toIndex) \
+    SNDMSG((hwnd), LVM_MOVEGROUP, (WPARAM)iGroupId, (LPARAM)toIndex)
+#define ListView_MoveItemToGroup(hwnd, idItemFrom, idGroupTo) \
+    SNDMSG((hwnd), LVM_MOVEITEMTOGROUP, (WPARAM)idItemFrom, (LPARAM)idGroupTo)
+#define ListView_SetGroupMetrics(hwnd, pGroupMetrics) \
+    SNDMSG((hwnd), LVM_SETGROUPMETRICS, 0, (LPARAM)pGroupMetrics)
+#define ListView_GetGroupMetrics(hwnd, pGroupMetrics) \
+    SNDMSG((hwnd), LVM_GETGROUPMETRICS, 0, (LPARAM)pGroupMetrics)
+#define ListView_EnableGroupView(hwnd, fEnable) \
+    SNDMSG((hwnd), LVM_ENABLEGROUPVIEW, (WPARAM)fEnable, 0)
+#define ListView_SortGroups(hwnd, _pfnGroupCompate, _plv) \
+    SNDMSG((hwnd), LVM_SORTGROUPS, (WPARAM)_pfnGroupCompate, (LPARAM)_plv)
+#define ListView_InsertGroupSorted(hwnd, structInsert) \
+    SNDMSG((hwnd), LVM_INSERTGROUPSORTED, (WPARAM)structInsert, 0)
+#define ListView_RemoveAllGroups(hwnd) \
+    SNDMSG((hwnd), LVM_REMOVEALLGROUPS, 0, 0)
+#define ListView_HasGroup(hwnd, dwGroupId) \
+    SNDMSG((hwnd), LVM_HASGROUP, dwGroupId, 0)
+#define ListView_SetTileViewInfo(hwnd, ptvi) \
+    SNDMSG((hwnd), LVM_SETTILEVIEWINFO, 0, (LPARAM)ptvi)
+#define ListView_GetTileViewInfo(hwnd, ptvi) \
+    SNDMSG((hwnd), LVM_GETTILEVIEWINFO, 0, (LPARAM)ptvi)
+#define ListView_SetTileInfo(hwnd, pti) \
+    SNDMSG((hwnd), LVM_SETTILEINFO, 0, (LPARAM)pti)
+#define ListView_GetTileInfo(hwnd, pti) \
+    SNDMSG((hwnd), LVM_GETTILEINFO, 0, (LPARAM)pti)
+#define ListView_SetInsertMark(hwnd, lvim) \
+    (BOOL)SNDMSG((hwnd), LVM_SETINSERTMARK, (WPARAM) 0, (LPARAM) (lvim))
+#define ListView_GetInsertMark(hwnd, lvim) \
+    (BOOL)SNDMSG((hwnd), LVM_GETINSERTMARK, (WPARAM) 0, (LPARAM) (lvim))
+#define ListView_InsertMarkHitTest(hwnd, point, lvim) \
+    (int)SNDMSG((hwnd), LVM_INSERTMARKHITTEST, (WPARAM)(LPPOINT)(point), (LPARAM)(LPLVINSERTMARK)(lvim))
+#define ListView_GetInsertMarkRect(hwnd, rc) \
+    (int)SNDMSG((hwnd), LVM_GETINSERTMARKRECT, (WPARAM)0, (LPARAM)(LPRECT)(rc))
+#define ListView_SetInsertMarkColor(hwnd, color) \
+    (COLORREF)SNDMSG((hwnd), LVM_SETINSERTMARKCOLOR, (WPARAM)0, (LPARAM)(COLORREF)(color))
+#define ListView_GetInsertMarkColor(hwnd) \
+    (COLORREF)SNDMSG((hwnd), LVM_GETINSERTMARKCOLOR, (WPARAM)0, (LPARAM)0)
+#define ListView_SetInfoTip(hwndLV, plvInfoTip)\
+    (BOOL)SNDMSG((hwndLV), LVM_SETINFOTIP, (WPARAM)0, (LPARAM)plvInfoTip)
+#define ListView_GetSelectedColumn(hwnd) \
+    (UINT)SNDMSG((hwnd), LVM_GETSELECTEDCOLUMN, 0, 0)
+#define ListView_IsGroupViewEnabled(hwnd) \
+    (BOOL)SNDMSG((hwnd), LVM_ISGROUPVIEWENABLED, 0, 0)
+#define ListView_GetOutlineColor(hwnd) \
+    (COLORREF)SNDMSG((hwnd), LVM_GETOUTLINECOLOR, 0, 0)
+#define ListView_SetOutlineColor(hwnd, color) \
+    (COLORREF)SNDMSG((hwnd), LVM_SETOUTLINECOLOR, (WPARAM)0, (LPARAM)(COLORREF)(color))
+#define ListView_CancelEditLabel(hwnd) \
+    (VOID)SNDMSG((hwnd), LVM_CANCELEDITLABEL, (WPARAM)0, (LPARAM)0)
+#define ListView_MapIndexToID(hwnd, index) \
+    (UINT)SNDMSG((hwnd), LVM_MAPINDEXTOID, (WPARAM)index, (LPARAM)0)
+#define ListView_MapIDToIndex(hwnd, id) \
+    (UINT)SNDMSG((hwnd), LVM_MAPIDTOINDEX, (WPARAM)id, (LPARAM)0)
 
 /* Tab Control */
 
@@ -3832,6 +4124,7 @@ static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
 #define CBEM_SETUNICODEFORMAT   CCM_SETUNICODEFORMAT
 #define CBEM_GETUNICODEFORMAT   CCM_GETUNICODEFORMAT
 #define CBEM_HASEDITCHANGED     (WM_USER+10)
+#define CBEM_SETWINDOWTHEME     CCM_SETWINDOWTHEME
 
 #define CBEIF_TEXT              0x00000001
 #define CBEIF_IMAGE             0x00000002
