@@ -930,17 +930,44 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
 
-    if (!func) {
-      ERR("Ouch ! MakeProcInstance called with func == NULL !\n");
-      return (FARPROC16)0; /* Windows seems to do the same */
+    TRACE("(%08lx, %04x);", (DWORD)func, hInstance);
+
+    if (!HIWORD(func)) {
+      /* Win95 actually protects via SEH, but this is better for debugging */
+      ERR("Ouch ! Called with invalid func 0x%08lx !\n", (DWORD)func);
+      return (FARPROC16)0;
     }
-    if ( GetTaskDS16() !=hInstance )
+
+    if (hInstance)
     {
-        ERR("Problem with hInstance? Got %04x, using %04x instead\n",
-                   hInstance,GetTaskDS16());
-        hInstance = GetTaskDS16();
+	if ( (!(hInstance & 4)) ||
+	     ((hInstance != 0xffff) && IS_SELECTOR_FREE(hInstance|7)) )
+ 	{
+	    ERR("Invalid hInstance (%04x) passed to MakeProcInstance !\n",
+		hInstance);
+	    return 0;
+	}
     }
-    if (!hInstance) hInstance = CURRENT_DS;
+
+    if ( (CURRENT_DS != hInstance)
+      && (hInstance != 0)
+      && (hInstance != 0xffff) )
+    {
+	/* calling MPI with a foreign DSEG is invalid ! */
+        ERR("Problem with hInstance? Got %04x, using %04x instead\n",
+                   hInstance,CURRENT_DS);
+    }
+
+    /* Always use the DSEG that MPI was entered with.
+     * We used to set hInstance to GetTaskDS16(), but this should be wrong
+     * as CURRENT_DS provides the DSEG value we need.
+     * ("calling" DS, *not* "task" DS !) */
+    hInstance = CURRENT_DS;
+
+    /* no thunking for DLLs */
+    if (NE_GetPtr(FarGetOwner16(hInstance))->flags & NE_FFLAGS_LIBMODULE)
+	return func;
+
     thunkaddr = TASK_AllocThunk( GetCurrentTask() );
     if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
@@ -948,12 +975,10 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
     TRACE("(%08lx,%04x): got thunk %08lx\n",
           (DWORD)func, hInstance, (DWORD)thunkaddr );
-    if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) ||
-    	((lfunc[0]==0x1e) && (lfunc[1]==0x58))
+    if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) || /* movw %ds, %ax */
+    	((lfunc[0]==0x1e) && (lfunc[1]==0x58))    /* pushw %ds, popw %ax */
     ) {
-    	FIXME("thunk would be useless for %p, overwriting with nop;nop;\n", func );
-	lfunc[0]=0x90; /* nop */
-	lfunc[1]=0x90; /* nop */
+    	FIXME("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
     }
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
@@ -962,6 +987,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
     return (FARPROC16)thunkaddr;
+    /* CX reg indicates if thunkaddr != NULL, implement if needed */
 }
 
 
