@@ -894,7 +894,7 @@ BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
  */
 BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
 {
-    int drive = DRIVE_GetCurrentDrive();
+    int olddrive, drive = DRIVE_GetCurrentDrive();
 
     if (!dir) {
     	ERR(file,"(NULL)!\n");
@@ -903,17 +903,20 @@ BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
     if (dir[0] && (dir[1]==':'))
     {
         drive = tolower( *dir ) - 'a';
-        if (!DRIVE_IsValid( drive ))
-        {
-            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
-            return FALSE;
-        }
         dir += 2;
     }
+
+    /* WARNING: we need to set the drive before the dir, as DRIVE_Chdir
+       sets pTask->curdir only if pTask->curdrive is drive */
+    olddrive = drive; /* in case DRIVE_Chdir fails */
+    if (!(DRIVE_SetCurrentDrive( drive )))
+	return FALSE;
     /* FIXME: what about empty strings? Add a \\ ? */
-    if (!DRIVE_Chdir( drive, dir )) return FALSE;
-    if (drive == DRIVE_GetCurrentDrive()) return TRUE;
-    return DRIVE_SetCurrentDrive( drive );
+    if (!DRIVE_Chdir( drive, dir )) {
+	DRIVE_SetCurrentDrive(olddrive);
+	return FALSE;
+    }
+    return TRUE;
 }
 
 
