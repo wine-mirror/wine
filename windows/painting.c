@@ -459,7 +459,21 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 	    wndPtr->hrgnUpdate = (HRGN)1;
 	}
 	else
-	    hRgn = wndPtr->hrgnUpdate;	/* this is a trick that depends on code in PAINT_RedrawWindow() */
+        {
+            /* hRgn is zero */
+            if( wndPtr->hrgnUpdate > (HRGN)1)
+            {
+                GetRgnBox( wndPtr->hrgnUpdate, &r );
+                if( IsRectEmpty( &r ) )
+                {
+                    DeleteObject( wndPtr->hrgnUpdate );
+                    wndPtr->hrgnUpdate = 0;
+                    goto end;
+                }
+            }
+            hRgn = wndPtr->hrgnUpdate;	/* this is a trick that depends
+                                         * on code in RDW_Paint() */
+        }
 
 	if( !bHadOne && !(wndPtr->flags & WIN_INTERNAL_PAINT) )
             add_paint_count( wndPtr->hwndSelf, 1 );
@@ -665,7 +679,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 		{
 		    if (SendMessageW( hWnd, (bIcon) ? WM_ICONERASEBKGND : WM_ERASEBKGND,
                                       (WPARAM)hDC, 0 ))
-		    wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+                        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
 		    ReleaseDC( hWnd, hDC );
 		}
             }
