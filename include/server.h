@@ -611,6 +611,7 @@ struct get_socket_event_request
     IN  int          handle;        /* handle to the socket */
     IN  int          service;       /* clear pending? */
     IN  int          s_event;       /* "expected" event object */
+    IN  int          c_event;       /* event to clear */
     OUT unsigned int mask;          /* event mask */
     OUT unsigned int pmask;         /* pending events */
     OUT unsigned int state;         /* status bits */
@@ -1208,7 +1209,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 5
+#define SERVER_PROTOCOL_VERSION 6
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

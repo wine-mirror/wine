@@ -728,7 +728,8 @@ static void dump_get_socket_event_request( const struct get_socket_event_request
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " service=%d,", req->service );
-    fprintf( stderr, " s_event=%d", req->s_event );
+    fprintf( stderr, " s_event=%d,", req->s_event );
+    fprintf( stderr, " c_event=%d", req->c_event );
 }
 
 static void dump_get_socket_event_reply( const struct get_socket_event_request *req )

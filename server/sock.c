@@ -56,6 +56,7 @@ static int sock_get_poll_events( struct object *obj );
 static void sock_poll_event( struct object *obj, int event );
 static int sock_get_fd( struct object *obj );
 static void sock_destroy( struct object *obj );
+static int sock_get_error( int err );
 static void sock_set_error(void);
 
 static const struct object_ops sock_ops =
@@ -89,17 +90,17 @@ static void sock_reselect( struct sock *sock )
     pfd.events = ev;
     pfd.revents = 0;
     poll( &pfd, 1, 0 );
-    if (pfd.revents & (POLLIN|POLLOUT|POLLPRI))
+    if (pfd.revents)
         sock_poll_event( &sock->obj, pfd.revents);
 }
 
 inline static int sock_error(int s)
 {
-    unsigned int optval, optlen;
+    unsigned int optval = 0, optlen;
     
     optlen = sizeof(optval);
     getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
-    return optval;
+    return optval ? sock_get_error(optval) : 0;
 }
 
 static void sock_poll_event( struct object *obj, int event )
@@ -177,10 +178,10 @@ static void sock_poll_event( struct object *obj, int event )
             if (debug_level)
                 fprintf(stderr, "socket %d got OOB data\n", sock->obj.fd);
         }
-        if (event & (POLLERR|POLLHUP))
-        {
+        if (((event & POLLERR) || ((event & (POLLIN|POLLHUP)) == POLLHUP))
+            && (sock->state & (WS_FD_READ|WS_FD_WRITE))) {
+            /* socket closing */
             sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
-            /* we got an error, socket closing? */
             sock->state &= ~(WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE);
             sock->pmask |= FD_CLOSE;
             if (debug_level)
@@ -333,7 +334,8 @@ static struct object *accept_socket( int handle )
     acceptsock->hmask  = 0;
     acceptsock->pmask  = 0;
     acceptsock->event  = NULL;
-    if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
+    if (sock->event && !(sock->mask & WS_FD_SERVEVENT))
+        acceptsock->event = (struct event *)grab_object( sock->event );
 
     sock_reselect( acceptsock );
     clear_error();
@@ -344,67 +346,73 @@ static struct object *accept_socket( int handle )
 }
 
 /* set the last error depending on errno */
-static void sock_set_error(void)
+static int sock_get_error( int err )
 {
-    switch (errno)
+    switch (err)
     {
-        case EINTR:             set_error(WSAEINTR);break;
-        case EBADF:             set_error(WSAEBADF);break;
+        case EINTR:             return WSAEINTR; break;
+        case EBADF:             return WSAEBADF; break;
         case EPERM:
-        case EACCES:            set_error(WSAEACCES);break;
-        case EFAULT:            set_error(WSAEFAULT);break;
-        case EINVAL:            set_error(WSAEINVAL);break;
-        case EMFILE:            set_error(WSAEMFILE);break;
-        case EWOULDBLOCK:       set_error(WSAEWOULDBLOCK);break;
-        case EINPROGRESS:       set_error(WSAEINPROGRESS);break;
-        case EALREADY:          set_error(WSAEALREADY);break;
-        case ENOTSOCK:          set_error(WSAENOTSOCK);break;
-        case EDESTADDRREQ:      set_error(WSAEDESTADDRREQ);break;
-        case EMSGSIZE:          set_error(WSAEMSGSIZE);break;
-        case EPROTOTYPE:        set_error(WSAEPROTOTYPE);break;
-        case ENOPROTOOPT:       set_error(WSAENOPROTOOPT);break;
-        case EPROTONOSUPPORT:   set_error(WSAEPROTONOSUPPORT);break;
-        case ESOCKTNOSUPPORT:   set_error(WSAESOCKTNOSUPPORT);break;
-        case EOPNOTSUPP:        set_error(WSAEOPNOTSUPP);break;
-        case EPFNOSUPPORT:      set_error(WSAEPFNOSUPPORT);break;
-        case EAFNOSUPPORT:      set_error(WSAEAFNOSUPPORT);break;
-        case EADDRINUSE:        set_error(WSAEADDRINUSE);break;
-        case EADDRNOTAVAIL:     set_error(WSAEADDRNOTAVAIL);break;
-        case ENETDOWN:          set_error(WSAENETDOWN);break;
-        case ENETUNREACH:       set_error(WSAENETUNREACH);break;
-        case ENETRESET:         set_error(WSAENETRESET);break;
-        case ECONNABORTED:      set_error(WSAECONNABORTED);break;
+        case EACCES:            return WSAEACCES; break;
+        case EFAULT:            return WSAEFAULT; break;
+        case EINVAL:            return WSAEINVAL; break;
+        case EMFILE:            return WSAEMFILE; break;
+        case EWOULDBLOCK:       return WSAEWOULDBLOCK; break;
+        case EINPROGRESS:       return WSAEINPROGRESS; break;
+        case EALREADY:          return WSAEALREADY; break;
+        case ENOTSOCK:          return WSAENOTSOCK; break;
+        case EDESTADDRREQ:      return WSAEDESTADDRREQ; break;
+        case EMSGSIZE:          return WSAEMSGSIZE; break;
+        case EPROTOTYPE:        return WSAEPROTOTYPE; break;
+        case ENOPROTOOPT:       return WSAENOPROTOOPT; break;
+        case EPROTONOSUPPORT:   return WSAEPROTONOSUPPORT; break;
+        case ESOCKTNOSUPPORT:   return WSAESOCKTNOSUPPORT; break;
+        case EOPNOTSUPP:        return WSAEOPNOTSUPP; break;
+        case EPFNOSUPPORT:      return WSAEPFNOSUPPORT; break;
+        case EAFNOSUPPORT:      return WSAEAFNOSUPPORT; break;
+        case EADDRINUSE:        return WSAEADDRINUSE; break;
+        case EADDRNOTAVAIL:     return WSAEADDRNOTAVAIL; break;
+        case ENETDOWN:          return WSAENETDOWN; break;
+        case ENETUNREACH:       return WSAENETUNREACH; break;
+        case ENETRESET:         return WSAENETRESET; break;
+        case ECONNABORTED:      return WSAECONNABORTED; break;
         case EPIPE:
-        case ECONNRESET:        set_error(WSAECONNRESET);break;
-        case ENOBUFS:           set_error(WSAENOBUFS);break;
-        case EISCONN:           set_error(WSAEISCONN);break;
-        case ENOTCONN:          set_error(WSAENOTCONN);break;
-        case ESHUTDOWN:         set_error(WSAESHUTDOWN);break;
-        case ETOOMANYREFS:      set_error(WSAETOOMANYREFS);break;
-        case ETIMEDOUT:         set_error(WSAETIMEDOUT);break;
-        case ECONNREFUSED:      set_error(WSAECONNREFUSED);break;
-        case ELOOP:             set_error(WSAELOOP);break;
-        case ENAMETOOLONG:      set_error(WSAENAMETOOLONG);break;
-        case EHOSTDOWN:         set_error(WSAEHOSTDOWN);break;
-        case EHOSTUNREACH:      set_error(WSAEHOSTUNREACH);break;
-        case ENOTEMPTY:         set_error(WSAENOTEMPTY);break;
+        case ECONNRESET:        return WSAECONNRESET; break;
+        case ENOBUFS:           return WSAENOBUFS; break;
+        case EISCONN:           return WSAEISCONN; break;
+        case ENOTCONN:          return WSAENOTCONN; break;
+        case ESHUTDOWN:         return WSAESHUTDOWN; break;
+        case ETOOMANYREFS:      return WSAETOOMANYREFS; break;
+        case ETIMEDOUT:         return WSAETIMEDOUT; break;
+        case ECONNREFUSED:      return WSAECONNREFUSED; break;
+        case ELOOP:             return WSAELOOP; break;
+        case ENAMETOOLONG:      return WSAENAMETOOLONG; break;
+        case EHOSTDOWN:         return WSAEHOSTDOWN; break;
+        case EHOSTUNREACH:      return WSAEHOSTUNREACH; break;
+        case ENOTEMPTY:         return WSAENOTEMPTY; break;
 #ifdef EPROCLIM
-        case EPROCLIM:          set_error(WSAEPROCLIM);break;
+        case EPROCLIM:          return WSAEPROCLIM; break;
 #endif
 #ifdef EUSERS
-        case EUSERS:            set_error(WSAEUSERS);break;
+        case EUSERS:            return WSAEUSERS; break;
 #endif
 #ifdef EDQUOT
-        case EDQUOT:            set_error(WSAEDQUOT);break;
+        case EDQUOT:            return WSAEDQUOT; break;
 #endif
 #ifdef ESTALE
-        case ESTALE:            set_error(WSAESTALE);break;
+        case ESTALE:            return WSAESTALE; break;
 #endif
 #ifdef EREMOTE
-        case EREMOTE:           set_error(WSAEREMOTE);break;
+        case EREMOTE:           return WSAEREMOTE; break;
 #endif
-    default:        perror("sock_set_error"); set_error( ERROR_UNKNOWN ); break;
+    default: errno=err; perror("sock_set_error"); return ERROR_UNKNOWN; break;
     }
+}
+
+/* set the last error depending on errno */
+static void sock_set_error(void)
+{
+    set_error( sock_get_error( errno ) );
 }
 
 /* create a socket */
@@ -496,6 +504,12 @@ DECL_HANDLER(get_socket_event)
         }
         if (!req->s_event)
         {
+            if (req->c_event)
+            {
+                struct event *cevent = get_event_obj(current->process, req->c_event, EVENT_MODIFY_STATE);
+                reset_event( cevent );
+                release_object( cevent );
+            }
             sock->pmask = 0;
             sock_reselect( sock );
         }
@@ -517,5 +531,16 @@ DECL_HANDLER(enable_socket_event)
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
     sock_reselect( sock );
+
+    /* service trigger */
+    if (req->mask & WS_FD_SERVEVENT)
+    {
+        sock->pmask |= WS_FD_SERVEVENT;
+        if (sock->event) {
+            if (debug_level) fprintf(stderr, "signalling service event ptr %p\n", sock->event);
+            set_event(sock->event);
+        }
+    }
+
     release_object( &sock->obj );
 }

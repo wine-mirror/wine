@@ -107,10 +107,14 @@ typedef struct          /* WSAAsyncSelect() control struct */
   HANDLE      service, event, sock;
   HWND        hWnd;
   UINT        uMsg;
+  LONG        lEvent;
+  struct _WSINFO *pwsi;
 } ws_select_info;  
 
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
+
+#define WS_ACCEPT_QUEUE 6
 
 #define WSI_BLOCKINGCALL        0x00000001      /* per-thread info flags */
 #define WSI_BLOCKINGHOOK        0x00000002      /* 32-bit callback */
@@ -135,6 +139,8 @@ typedef struct _WSINFO
   char*			dbuffer;		/* buffer for dummies (32 bytes) */
 
   DWORD			blocking_hook;
+
+  volatile HANDLE	accept_old[WS_ACCEPT_QUEUE], accept_new[WS_ACCEPT_QUEUE];
 } WSINFO, *LPWSINFO;
 
 /* function prototypes */
@@ -229,6 +235,7 @@ static int _is_blocking(SOCKET s)
     req->handle  = s;
     req->service = FALSE;
     req->s_event = 0;
+    req->c_event = 0;
     sock_server_call( REQ_GET_SOCKET_EVENT );
     return (req->state & WS_FD_NONBLOCKING) == 0;
 }
@@ -240,6 +247,7 @@ static unsigned int _get_sock_mask(SOCKET s)
     req->handle  = s;
     req->service = FALSE;
     req->s_event = 0;
+    req->c_event = 0;
     sock_server_call( REQ_GET_SOCKET_EVENT );
     return req->mask;
 }
@@ -258,6 +266,7 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
     req->handle  = s;
     req->service = FALSE;
     req->s_event = 0;
+    req->c_event = 0;
     sock_server_call( REQ_GET_SOCKET_EVENT );
     return req->errors[bit];
 }
@@ -694,6 +703,21 @@ struct ws_protoent* _check_buffer_pe(LPWSINFO pwsi, int size)
 /***********************************************************************
  *		accept()		(WSOCK32.1)
  */
+static void WSOCK32_async_accept(LPWSINFO pwsi, SOCKET s, SOCKET as)
+{
+    int q;
+    /* queue socket for WSAAsyncSelect */
+    for (q=0; q<WS_ACCEPT_QUEUE; q++)
+	if (InterlockedCompareExchange((PVOID*)&pwsi->accept_old[q], (PVOID)s, (PVOID)0) == (PVOID)0)
+	    break;
+    if (q<WS_ACCEPT_QUEUE)
+	pwsi->accept_new[q] = as;
+    else
+	ERR("accept queue too small\n");
+    /* now signal our AsyncSelect handler */
+    _enable_event(s, WS_FD_SERVEVENT, 0, 0);
+}
+
 SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
                                  INT *addrlen32)
 {
@@ -724,7 +748,9 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 	sock_server_call( REQ_ACCEPT_SOCKET );
 	if( req->handle >= 0 )
 	{
-	    int fd = _get_sock_fd( s = req->handle );
+	    unsigned omask = _get_sock_mask( s );
+	    SOCKET as = req->handle;
+	    int fd = _get_sock_fd( as );
 	    if( getpeername(fd, addr, addrlen32) != -1 )
 	    {
 #ifdef HAVE_IPX
@@ -743,7 +769,9 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 #endif
 	    } else SetLastError(wsaErrno());
 	    close(fd);
-	    return s;
+	    if (omask & WS_FD_SERVEVENT)
+		WSOCK32_async_accept(pwsi, s, as);
+	    return as;
 	}
     }
     return INVALID_SOCKET;
@@ -2119,11 +2147,10 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 	req->handle  = s;
 	req->service = TRUE;
 	req->s_event = 0;
+	req->c_event = hEvent;
 	sock_server_call( REQ_GET_SOCKET_EVENT );
 	lpEvent->lNetworkEvents = req->pmask;
 	memcpy(lpEvent->iErrorCode, req->errors, sizeof(lpEvent->iErrorCode));
-	if (hEvent)
-	    ResetEvent(hEvent);
 	return 0;
     }
     else SetLastError(WSAEINVAL);
@@ -2155,34 +2182,55 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 
 VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 {
-    /* FIXME: accepted socket uses same event object as listening socket by default
-     * (at least before a new WSAAsyncSelect is issued), must handle it somehow */
     ws_select_info *info = (ws_select_info*)ptr;
+    LPWSINFO      pwsi = info->pwsi;
     struct get_socket_event_request *req = get_req_buffer();
-    unsigned int i, pmask;
+    unsigned int i, pmask, orphan = FALSE;
 
     TRACE("socket %08x, event %08x\n", info->sock, info->event);
     SetLastError(0);
     req->handle  = info->sock;
     req->service = TRUE;
     req->s_event = info->event; /* <== avoid race conditions */
+    req->c_event = info->event;
     sock_server_call( REQ_GET_SOCKET_EVENT );
-    if ( GetLastError() == WSAEINVAL )
+    if ( (GetLastError() == WSAENOTSOCK) || (GetLastError() == WSAEINVAL) )
     {
 	/* orphaned event (socket closed or something) */
-	TRACE("orphaned event, self-destructing\n");
-	SERVICE_Delete( info->service );
-	WS_FREE(info);
-	return;
+	pmask = WS_FD_SERVEVENT;
+	orphan = TRUE;
+    } else
+	pmask = req->pmask;
+    /* check for accepted sockets that needs to inherit WSAAsyncSelect */
+    if (pmask & WS_FD_SERVEVENT) {
+	int q;
+	for (q=0; q<WS_ACCEPT_QUEUE; q++)
+	    if (pwsi->accept_old[q] == info->sock) {
+		/* there's only one service thread per pwsi, no lock necessary */
+		HANDLE as = pwsi->accept_new[q];
+		if (as) {
+		    pwsi->accept_new[q] = 0;
+		    pwsi->accept_old[q] = 0;
+		    WSAAsyncSelect(as, info->hWnd, info->uMsg, info->lEvent);
+		}
+	    }
+	pmask &= ~WS_FD_SERVEVENT;
     }
     /* dispatch network events */
-    pmask = req->pmask;
     for (i=0; i<FD_MAX_EVENTS; i++)
 	if (pmask & (1<<i)) {
 	    TRACE("post: event bit %d, error %d\n", i, req->errors[i]);
 	    PostMessageA(info->hWnd, info->uMsg, info->sock,
 			 WSAMAKESELECTREPLY(1<<i, req->errors[i]));
 	}
+    /* cleanup */
+    if (orphan)
+    {
+	TRACE("orphaned event, self-destructing\n");
+	/* SERVICE_Delete closes the event object */
+	SERVICE_Delete( info->service );
+	WS_FREE(info);
+    }
 }
 
 INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
@@ -2198,17 +2246,20 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 	    ws_select_info *info = (ws_select_info*)WS_ALLOC(sizeof(ws_select_info));
 	    if( info )
 	    {
-		HANDLE hObj = CreateEventA( NULL, FALSE, FALSE, NULL );
+		HANDLE hObj = CreateEventA( NULL, TRUE, FALSE, NULL );
 		INT err;
 		
-		info->sock  = s;
-		info->event = hObj;
-		info->hWnd  = hWnd;
-		info->uMsg  = uMsg;
+		info->sock   = s;
+		info->event  = hObj;
+		info->hWnd   = hWnd;
+		info->uMsg   = uMsg;
+		info->lEvent = lEvent;
+		info->pwsi   = pwsi;
 		info->service = SERVICE_AddObject( hObj, WINSOCK_DoAsyncEvent, (ULONG_PTR)info );
 
 		err = WSAEventSelect( s, hObj, lEvent | WS_FD_SERVEVENT );
 		if (err) {
+		    /* SERVICE_Delete closes the event object */
 		    SERVICE_Delete( info->service );
 		    WS_FREE(info);
 		    return err;
