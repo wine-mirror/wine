@@ -841,6 +841,14 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 /***********************************************************************
  *           GetRegionData   (GDI32.217)
  * 
+ * MSDN: GetRegionData, Return Values:
+ *
+ * "If the function succeeds and dwCount specifies an adequate number of bytes,
+ * the return value is always dwCount. If dwCount is too small or the function
+ * fails, the return value is 0. If lpRgnData is NULL, the return value is the
+ * required number of bytes.
+ *
+ * If the function fails, the return value is zero."
  */
 DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 {
@@ -856,7 +864,10 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
     {
         GDI_ReleaseObj( hrgn );
-        return size + sizeof(RGNDATAHEADER);
+	if (rgndata)
+	    return size + sizeof(RGNDATAHEADER);
+	else
+	    return 0;
     }
 
     rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);
@@ -871,7 +882,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     memcpy( rgndata->Buffer, obj->rgn->rects, size );
 
     GDI_ReleaseObj( hrgn );
-    return 1;
+    return size + sizeof(RGNDATAHEADER);
 }
 
 /***********************************************************************
