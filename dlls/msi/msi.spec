@@ -171,8 +171,8 @@
 171 stdcall MsiFormatRecordW(long long ptr ptr)
 172 stdcall MsiGetComponentPathA(str str ptr ptr)
 173 stdcall MsiGetComponentPathW(wstr wstr ptr ptr)
-174 stub MsiApplyPatchA
-175 stub MsiApplyPatchW
+174 stdcall MsiApplyPatchA(str str long str)
+175 stdcall MsiApplyPatchW(wstr wstr long wstr)
 176 stub MsiAdvertiseScriptA
 177 stub MsiAdvertiseScriptW
 178 stub MsiGetPatchInfoA

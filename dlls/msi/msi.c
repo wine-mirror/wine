@@ -573,6 +573,18 @@ UINT WINAPI MsiReinstallProductW(LPCWSTR szProduct, DWORD dwReinstallMode)
 	return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+UINT WINAPI MsiApplyPatchA(LPCSTR szPatchPackage, LPCSTR szInstallPackage, INSTALLTYPE eInstallType, LPCSTR szCommandLine)
+{
+	FIXME("%s %s %d %s\n", debugstr_a(szPatchPackage), debugstr_a(szInstallPackage), eInstallType, debugstr_a(szCommandLine));
+	return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage, INSTALLTYPE eInstallType, LPCWSTR szCommandLine)
+{
+	FIXME("%s %s %d %s\n", debugstr_w(szPatchPackage), debugstr_w(szInstallPackage), eInstallType, debugstr_w(szCommandLine));
+	return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
 {
     LPWSTR szwProduct = NULL;

@@ -43,8 +43,8 @@ static const char UsageStr[] =
 "    msiexec /j[u|m] package [/t transform] [/g languageid]\n"
 "    msiexec {u|m} package [/t transform] [/g languageid]\n"
 "  Apply a patch:\n"
-"    msiexec /p patchpackage [property] (UNIMPLEMENTED)\n"
-"    msiexec /p patchpackage /a package [property] (UNIMPLEMENTED)\n"
+"    msiexec /p patchpackage [property]\n"
+"    msiexec /p patchpackage /a package [property]\n"
 "  Modifiers for above operations:\n"
 "    msiexec /l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "    msiexec /q{|n|b|r|f|n+|b+|b-}\n"
@@ -149,8 +149,10 @@ int main(int argc, char *argv[])
 {
 	int i;
 	BOOL FunctionInstall = FALSE;
+	BOOL FunctionInstallAdmin = FALSE;
 	BOOL FunctionRepair = FALSE;
 	BOOL FunctionAdvertise = FALSE;
+	BOOL FunctionPatch = FALSE;
 	BOOL FunctionDllRegisterServer = FALSE;
 	BOOL FunctionDllUnregisterServer = FALSE;
 
@@ -169,6 +171,9 @@ int main(int argc, char *argv[])
 	DWORD LogMode = 0;
 	LPSTR LogFileName = NULL;
 	DWORD LogAttributes = 0;
+
+	LPSTR PatchFileName = NULL;
+	INSTALLTYPE InstallType = INSTALLTYPE_DEFAULT;
 
 	INSTALLUILEVEL InstallUILevel = 0, retInstallUILevel;
 
@@ -199,6 +204,8 @@ int main(int argc, char *argv[])
 		else if(!strcasecmp(argv[i], "/a"))
 		{
 			FunctionInstall = TRUE;
+			FunctionInstallAdmin = TRUE;
+			InstallType = INSTALLTYPE_NETWORK_IMAGE;
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
@@ -486,12 +493,12 @@ int main(int argc, char *argv[])
 		}
 		else if(!strcasecmp(argv[i], "/p"))
 		{
+			FunctionPatch = TRUE;
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			WINE_FIXME("Patching not yet implemented\n");
-			ExitProcess(1);
+			PatchFileName = argv[i];
 		}
 		else if(!strncasecmp(argv[i], "/q", 2))
 		{
@@ -581,6 +588,9 @@ int main(int argc, char *argv[])
 		Transforms = TempStr;
 	}
 
+	if(FunctionInstallAdmin && FunctionPatch)
+		FunctionInstall = FALSE;
+
 	if(FunctionInstall)
 	{
 		if(GotProductCode)
@@ -618,6 +628,14 @@ int main(int argc, char *argv[])
 		if(MsiAdvertiseProductA(PackageName, (LPSTR) AdvertiseMode, Transforms, Language) != ERROR_SUCCESS)
 		{
 			fprintf(stderr, "Advertising of %s (%lu, %s, 0x%04x) failed.\n", PackageName, AdvertiseMode, Transforms, Language);
+			ExitProcess(1);
+		}
+	}
+	else if(FunctionPatch)
+	{
+		if(MsiApplyPatchA(PatchFileName, PackageName, InstallType, Properties) != ERROR_SUCCESS)
+		{
+			fprintf(stderr, "Patching with %s (%s, %d, %s)\n", PatchFileName, PackageName, InstallType, Properties);
 			ExitProcess(1);
 		}
 	}
