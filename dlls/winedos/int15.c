@@ -36,8 +36,8 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
     switch(AH_reg(context))
     {
     case 0x4f: /*catch keyboard*/
-      FIXME("INT15: catch keyboard not handled yet\n");
-       break;
+        FIXME("INT15: intercept keyboard not handled yet\n");
+        break;
     case 0x83: /* start timer*/
         switch(AL_reg(context))
         {
@@ -85,6 +85,15 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
     case 0x88: /* get size of memory above 1 M */
         SET_AX( context, 64 );  /* FIXME: are 64K ok? */
         RESET_CFLAG(context);
+        break;
+    case 0x89: /*  Switch to protected mode*/
+        FIXME("INT15: switching to protected mode not supported\n");
+        break;
+    case 0x90:/* OS hook  - Device busy*/
+        FIXME("INT15: OS hook - device busy\n");
+        break;
+    case 0x91: /* OS hook -  Device post*/
+        FIXME("INT15: OS hook - device post\n");
         break;
 
     case 0xc0: /* GET CONFIGURATION */
@@ -138,6 +147,13 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
 	    INT_BARF( context, 0x15 );
 	}
         break;
+    case 0xc3: /* set carry flag, so BorlandRTM doesn't  assume a Vectra/PS2*/
+	FIXME("INT15: 0xc3\n");
+	SET_AH( context , 0x86 );
+	break;
+    case 0xc4: /*  BIOS POS Programm option select  */
+	FIXME("INT15: option 0xc4 not handled!\n");
+	break;
 
     default:
         INT_BARF( context, 0x15 );
