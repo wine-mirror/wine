@@ -395,6 +395,8 @@ enum x11drv_atoms
     XATOM__NET_WM_PID,
     XATOM__NET_WM_PING,
     XATOM__NET_WM_NAME,
+    XATOM__NET_WM_WINDOW_TYPE,
+    XATOM__NET_WM_WINDOW_TYPE_UTILITY,
     XATOM_XdndAware,
     XATOM_XdndEnter,
     XATOM_XdndPosition,

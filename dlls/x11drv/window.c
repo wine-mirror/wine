@@ -81,6 +81,8 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "_NET_WM_PID",
     "_NET_WM_PING",
     "_NET_WM_NAME",
+    "_NET_WM_WINDOW_TYPE",
+    "_NET_WM_WINDOW_TYPE_UTILITY",
     "XdndAware",
     "XdndEnter",
     "XdndPosition",
@@ -119,10 +121,11 @@ inline static BOOL is_window_managed( WND *win )
     if (win->dwExStyle & WS_EX_TRAYWINDOW) return TRUE;
     /* child windows are not managed */
     if (win->dwStyle & WS_CHILD) return FALSE;
-    /* tool windows are not managed */
-    if (win->dwExStyle & WS_EX_TOOLWINDOW) return FALSE;
-    /* windows with caption or thick frame are managed */
+    /* windows with caption are managed */
     if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) return TRUE;
+    /* tool windows are not managed  */
+    if (win->dwExStyle & WS_EX_TOOLWINDOW) return FALSE;
+    /* windows with thick frame are managed */
     if (win->dwStyle & WS_THICKFRAME) return TRUE;
     /* default: not managed */
     return FALSE;
@@ -423,6 +426,14 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     i = getpid();
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_PID),
                     XA_CARDINAL, 32, PropModeReplace, (char *)&i, 1);
+
+   /* map WS_EX_TOOLWINDOW to _NET_WM_WINDOW_TYPE_UTILITY */
+   if (win->dwExStyle & WS_EX_TOOLWINDOW)
+   {
+      Atom a = x11drv_atom(_NET_WM_WINDOW_TYPE_UTILITY);
+      XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
+                      XA_ATOM, 32, PropModeReplace, (char*)&a, 1);
+   }
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
     mwm_hints.functions = 0;
