@@ -5,6 +5,7 @@ kernel32.dll.dbg.c
 kernel32.spec.c
 kernel32.spec.def
 krnl386.exe.spec.c
+relay16asm.s
 stress.spec.c
 system.drv.spec.c
 toolhelp.spec.c

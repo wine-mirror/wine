@@ -2,5 +2,4 @@ Makefile
 ntdll.dll.dbg.c
 ntdll.spec.c
 ntdll.spec.def
-relay16.s
 relay32.s

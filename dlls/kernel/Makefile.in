@@ -38,8 +38,10 @@ C_SRCS = \
 	ne_segment.c \
 	powermgnt.c \
 	process.c \
+	relay16.c \
 	resource.c \
 	resource16.c \
+	snoop16.c \
 	stress.c \
 	string.c \
 	sync.c \
@@ -59,6 +61,8 @@ C_SRCS16 = \
 	registry16.c \
 	system.c
 
+ASM_SRCS = relay16asm.s
+
 RC_SRCS = kernel.rc
 
 RC_SRCS16 = \
@@ -67,12 +71,16 @@ RC_SRCS16 = \
 MC_SRCS = \
 	messages/winerr_enu.mc
 
+EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
 SUBDIRS      = tests
 EXTRASUBDIRS = messages nls
 
 @MAKE_DLL_RULES@
 
 kernel.res: $(MC_SRCS:.mc=.mc.rc)
+
+relay16asm.s: $(WINEBUILD)
+	$(WINEBUILD) $(DEFS) -o $@ --relay16
 
 # Special rules for 16-bit resource and spec files
 

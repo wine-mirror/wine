@@ -13,8 +13,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/file.c \
 	$(TOPOBJDIR)/files/profile.c \
 	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/if1632/relay.c \
-	$(TOPOBJDIR)/if1632/snoop.c \
 	$(TOPOBJDIR)/loader/loadorder.c \
 	$(TOPOBJDIR)/loader/module.c \
 	$(TOPOBJDIR)/loader/pe_image.c \
@@ -83,9 +81,7 @@ C_SRCS = \
 	virtual.c \
 	wcstring.c
 
-ASM_SRCS = \
-	relay16.s \
-	relay32.s
+ASM_SRCS = relay32.s
 
 EXTRA_OBJS = $(ASM_SRCS:.s=.o)
 
@@ -93,7 +89,6 @@ SUBDIRS = tests
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \
-	$(TOPOBJDIR)/if1632 \
 	$(TOPOBJDIR)/loader \
 	$(TOPOBJDIR)/loader/ne \
 	$(TOPOBJDIR)/memory \
@@ -104,9 +99,6 @@ EXTRASUBDIRS = \
 	$(TOPOBJDIR)/win32
 
 @MAKE_DLL_RULES@
-
-relay16.s: $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --relay16
 
 relay32.s: $(WINEBUILD)
 	$(WINEBUILD) $(DEFS) -o $@ --relay32
