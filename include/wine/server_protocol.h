@@ -793,9 +793,10 @@ enum fd_type
     FD_TYPE_CONSOLE,
     FD_TYPE_SMB
 };
-#define FD_FLAG_OVERLAPPED 0x01
-#define FD_FLAG_TIMEOUT    0x02
-
+#define FD_FLAG_OVERLAPPED         0x01
+#define FD_FLAG_TIMEOUT            0x02
+#define FD_FLAG_RECV_SHUTDOWN      0x04
+#define FD_FLAG_SEND_SHUTDOWN      0x08
 
 
 struct set_file_pointer_request
