@@ -27,6 +27,9 @@ struct tagMSG;
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define E_DRAW                  VIEW_E_DRAW
+#define DATA_E_FORMATETC        DV_E_FORMATETC
+
 #define OLEIVERB_PRIMARY            (0L)
 #define OLEIVERB_SHOW               (-1L)
 #define OLEIVERB_OPEN               (-2L)
