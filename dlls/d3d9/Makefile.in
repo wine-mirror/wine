@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = d3d9.dll
 IMPORTS   = user32 gdi32 kernel32
 EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = $(LIBUUID) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
+EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
 C_SRCS = \
 	basetexture.c \

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = oleaut32.dll
 IMPORTS   = oleaut32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -luuid
 
 CTESTS = \
 	olefont.c \

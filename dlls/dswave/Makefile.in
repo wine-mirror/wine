@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dswave.dll
 IMPORTS   = msacm32 ole32 user32 advapi32 kernel32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	dswave.c \

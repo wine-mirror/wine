@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msisys.ocx
 IMPORTS   = kernel32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -luuid
 
 C_SRCS = msisys.c
 

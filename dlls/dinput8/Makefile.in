@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dinput8.dll
 IMPORTS   = dinput
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	dinput8_main.c
@@ -12,4 +12,3 @@ C_SRCS = \
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmusic32.dll
 IMPORTS   = winmm user32 advapi32 kernel32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	dmusic32_main.c

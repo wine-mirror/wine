@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmscript.dll
 IMPORTS   = ole32 user32 advapi32 kernel32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	dmscript_main.c \
