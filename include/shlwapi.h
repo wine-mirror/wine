@@ -668,6 +668,28 @@ HRESULT WINAPI UrlCreateFromPathA(LPCSTR,LPSTR,LPDWORD,DWORD);
 HRESULT WINAPI UrlCreateFromPathW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
 #define UrlCreateFromPath WINELIB_AW_NAME(UrlCreateFromPath)
 
+typedef struct tagPARSEDURLA {
+    DWORD cbSize;
+    LPCSTR pszProtocol;
+    UINT cchProtocol;
+    LPCSTR pszSuffix;
+    UINT cchSuffix;
+    UINT nScheme;
+} PARSEDURLA, *PPARSEDURLA;
+
+typedef struct tagPARSEDURLW {
+    DWORD cbSize;
+    LPCWSTR pszProtocol;
+    UINT cchProtocol;
+    LPCWSTR pszSuffix;
+    UINT cchSuffix;
+    UINT nScheme;
+} PARSEDURLW, *PPARSEDURLW;
+
+HRESULT WINAPI ParseURLA(LPCSTR pszUrl, PARSEDURLA *ppu);
+HRESULT WINAPI ParseURLW(LPCWSTR pszUrl, PARSEDURLW *ppu);
+#define ParseURL WINELIB_AW_NAME(ParseUrl)
+
 #endif /* NO_SHLWAPI_PATH */
 
 

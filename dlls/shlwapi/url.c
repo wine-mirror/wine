@@ -92,24 +92,6 @@ typedef enum {
     USERPASS,
 } WINE_URL_SCAN_TYPE;
 
-typedef struct {
-    INT     size;      /* [in]  (always 0x18)                       */
-    LPCSTR  ap1;       /* [out] start of scheme                     */
-    INT     sizep1;    /* [out] size of scheme (until colon)        */
-    LPCSTR  ap2;       /* [out] pointer following first colon       */
-    INT     sizep2;    /* [out] size of remainder                   */
-    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */
-} UNKNOWN_SHLWAPI_1;
-
-typedef struct {
-    INT     size;      /* [in]  (always 0x18)                       */
-    LPCWSTR ap1;       /* [out] start of scheme                     */
-    INT     sizep1;    /* [out] size of scheme (until colon)        */
-    LPCWSTR ap2;       /* [out] pointer following first colon       */
-    INT     sizep2;    /* [out] size of remainder                   */
-    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */
-} UNKNOWN_SHLWAPI_2;
-
 static const CHAR hexDigits[] = "0123456789ABCDEF";
 
 static const WCHAR fileW[] = {'f','i','l','e','\0'};
@@ -252,25 +234,25 @@ static BOOL URL_JustLocation(LPCWSTR str)
  *  Success: S_OK. y contains the parsed Url details.
  *  Failure: An HRESULT error code.
  */
-DWORD WINAPI ParseURLA(LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
+HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
 {
     DWORD cnt;
     const SHL_2_inet_scheme *inet_pro;
 
-    y->fcncde = URL_SCHEME_INVALID;
-    if (y->size != 0x18) return E_INVALIDARG;
+    y->nScheme = URL_SCHEME_INVALID;
+    if (y->cbSize != sizeof(*y)) return E_INVALIDARG;
     /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
      */
     if (*x <= ' ') return 0x80041001;
     cnt = 0;
-    y->sizep1 = 0;
-    y->ap1 = x;
+    y->cchProtocol = 0;
+    y->pszProtocol = x;
     while (*x) {
 	if (*x == ':') {
-	    y->sizep1 = cnt;
+	    y->cchProtocol = cnt;
 	    cnt = -1;
-	    y->ap2 = x+1;
+	    y->pszSuffix = x+1;
 	    break;
 	}
 	x++;
@@ -279,21 +261,21 @@ DWORD WINAPI ParseURLA(LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
 
     /* check for no scheme in string start */
     /* (apparently schemes *must* be larger than a single character)  */
-    if ((*x == '\0') || (y->sizep1 <= 1)) {
-	y->ap1 = 0;
+    if ((*x == '\0') || (y->cchProtocol <= 1)) {
+	y->pszProtocol = NULL;
 	return 0x80041001;
     }
 
     /* found scheme, set length of remainder */
-    y->sizep2 = lstrlenA(y->ap2);
+    y->cchSuffix = lstrlenA(y->pszSuffix);
 
     /* see if known scheme and return indicator number */
-    y->fcncde = URL_SCHEME_UNKNOWN;
+    y->nScheme = URL_SCHEME_UNKNOWN;
     inet_pro = shlwapi_schemes;
     while (inet_pro->scheme_name) {
-	if (!strncasecmp(inet_pro->scheme_name, y->ap1,
-		    min(y->sizep1, lstrlenA(inet_pro->scheme_name)))) {
-	    y->fcncde = inet_pro->scheme_number;
+	if (!strncasecmp(inet_pro->scheme_name, y->pszProtocol,
+		    min(y->cchProtocol, lstrlenA(inet_pro->scheme_name)))) {
+	    y->nScheme = inet_pro->scheme_number;
 	    break;
 	}
 	inet_pro++;
@@ -306,27 +288,27 @@ DWORD WINAPI ParseURLA(LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
  *
  * Unicode version of ParseURLA.
  */
-DWORD WINAPI ParseURLW(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
+HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
 {
     DWORD cnt;
     const SHL_2_inet_scheme *inet_pro;
     LPSTR cmpstr;
     INT len;
 
-    y->fcncde = URL_SCHEME_INVALID;
-    if (y->size != 0x18) return E_INVALIDARG;
+    y->nScheme = URL_SCHEME_INVALID;
+    if (y->cbSize != sizeof(*y)) return E_INVALIDARG;
     /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
      */
     if (*x <= L' ') return 0x80041001;
     cnt = 0;
-    y->sizep1 = 0;
-    y->ap1 = x;
+    y->cchProtocol = 0;
+    y->pszProtocol = x;
     while (*x) {
 	if (*x == L':') {
-	    y->sizep1 = cnt;
+	    y->cchProtocol = cnt;
 	    cnt = -1;
-	    y->ap2 = x+1;
+	    y->pszSuffix = x+1;
 	    break;
 	}
 	x++;
@@ -335,24 +317,24 @@ DWORD WINAPI ParseURLW(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 
     /* check for no scheme in string start */
     /* (apparently schemes *must* be larger than a single character)  */
-    if ((*x == L'\0') || (y->sizep1 <= 1)) {
-	y->ap1 = 0;
+    if ((*x == L'\0') || (y->cchProtocol <= 1)) {
+	y->pszProtocol = NULL;
 	return 0x80041001;
     }
 
     /* found scheme, set length of remainder */
-    y->sizep2 = lstrlenW(y->ap2);
+    y->cchSuffix = lstrlenW(y->pszSuffix);
 
     /* see if known scheme and return indicator number */
-    len = WideCharToMultiByte(0, 0, y->ap1, y->sizep1, 0, 0, 0, 0);
+    len = WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, 0, 0, 0, 0);
     cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(0, 0, y->ap1, y->sizep1, cmpstr, len, 0, 0);
-    y->fcncde = URL_SCHEME_UNKNOWN;
+    WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, cmpstr, len, 0, 0);
+    y->nScheme = URL_SCHEME_UNKNOWN;
     inet_pro = shlwapi_schemes;
     while (inet_pro->scheme_name) {
 	if (!strncasecmp(inet_pro->scheme_name, cmpstr,
 		    min(len, lstrlenA(inet_pro->scheme_name)))) {
-	    y->fcncde = inet_pro->scheme_number;
+	    y->nScheme = inet_pro->scheme_number;
 	    break;
 	}
 	inet_pro++;
@@ -661,7 +643,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 			   LPWSTR pszCombined, LPDWORD pcchCombined,
 			   DWORD dwFlags)
 {
-    UNKNOWN_SHLWAPI_2 base, relative;
+    PARSEDURLW base, relative;
     DWORD myflags, sizeloc = 0;
     DWORD len, res1, res2, process_case = 0;
     LPWSTR work, preliminary, mbase, mrelative;
@@ -676,8 +658,8 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
     if(!pszBase || !pszRelative || !pcchCombined)
 	return E_INVALIDARG;
 
-    base.size = 24;
-    relative.size = 24;
+    base.cbSize = sizeof(base);
+    relative.cbSize = sizeof(relative);
 
     /* Get space for duplicates of the input and the output */
     preliminary = HeapAlloc(GetProcessHeap(), 0, (3*INTERNET_MAX_URL_LENGTH) *
@@ -705,7 +687,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
     else do {
 
 	/* get size of location field (if it exists) */
-	work = (LPWSTR)base.ap2;
+	work = (LPWSTR)base.pszSuffix;
 	sizeloc = 0;
 	if (*work++ == L'/') {
 	    if (*work++ == L'/') {
@@ -713,23 +695,23 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		 * it ends at next '/' or end of string.
 		 */
 		while(*work && (*work != L'/')) work++;
-		sizeloc = (DWORD)(work - base.ap2);
+		sizeloc = (DWORD)(work - base.pszSuffix);
 	    }
 	}
 
 	/* Change .sizep2 to not have the last leaf in it,
 	 * Note: we need to start after the location (if it exists)
 	 */
-	work = strrchrW((base.ap2+sizeloc), L'/');
+	work = strrchrW((base.pszSuffix+sizeloc), L'/');
 	if (work) {
-	    len = (DWORD)(work - base.ap2 + 1);
-	    base.sizep2 = len;
+	    len = (DWORD)(work - base.pszSuffix + 1);
+	    base.cchSuffix = len;
 	}
 	/*
 	 * At this point:
-	 *    .ap2      points to location (starting with '//')
-	 *    .sizep2   length of location (above) and rest less the last
-	 *              leaf (if any)
+	 *    .pszSuffix   points to location (starting with '//')
+	 *    .cchSuffix   length of location (above) and rest less the last
+	 *                 leaf (if any)
 	 *    sizeloc   length of location (above) up to but not including
 	 *              the last '/'
 	 */
@@ -738,8 +720,8 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	if (res2) {
 	    /* no scheme in pszRelative */
 	    TRACE("no scheme detected in Relative\n");
-	    relative.ap2 = mrelative;  /* case 3,4,5 depends on this */
-	    relative.sizep2 = strlenW(mrelative);
+	    relative.pszSuffix = mrelative;  /* case 3,4,5 depends on this */
+	    relative.cchSuffix = strlenW(mrelative);
 	    if (*pszRelative  == L':') {
 		/* case that is either left alone or uses pszBase */
 		if (dwFlags & URL_PLUGGABLE_PROTOCOL) {
@@ -765,21 +747,21 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		process_case = 4;
 		break;
 	    }
-	    process_case = (*base.ap2 == L'/') ? 5 : 3;
+	    process_case = (*base.pszSuffix == L'/') ? 5 : 3;
 	    break;
 	}
 
 	/* handle cases where pszRelative has scheme */
-	if ((base.sizep1 == relative.sizep1) &&
-	    (strncmpW(base.ap1, relative.ap1, base.sizep1) == 0)) {
+	if ((base.cchProtocol == relative.cchProtocol) &&
+	    (strncmpW(base.pszProtocol, relative.pszProtocol, base.cchProtocol) == 0)) {
 
 	    /* since the schemes are the same */
-	    if ((*relative.ap2 == L'/') && (*(relative.ap2+1) == L'/')) {
+	    if ((*relative.pszSuffix == L'/') && (*(relative.pszSuffix+1) == L'/')) {
 		/* case where pszRelative replaces location and following */
 		process_case = 3;
 		break;
 	    }
-	    if (*relative.ap2 == L'/') {
+	    if (*relative.pszSuffix == L'/') {
 		/* case where pszRelative is root to location */
 		process_case = 4;
 		break;
@@ -788,7 +770,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	    process_case = 5;
 	    break;
 	}
-	if ((*relative.ap2 == L'/') && (*(relative.ap2+1) == L'/')) {
+	if ((*relative.pszSuffix == L'/') && (*(relative.pszSuffix+1) == L'/')) {
 	    /* case where pszRelative replaces scheme, location,
 	     * and following and handles PLUGGABLE
 	     */
@@ -816,7 +798,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      */
 	strcpyW(preliminary, mrelative);
 	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
-	    URL_JustLocation(relative.ap2))
+	    URL_JustLocation(relative.pszSuffix))
 	    strcatW(preliminary, single_slash);
 	break;
 
@@ -824,11 +806,11 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      * Return the pszBase scheme with pszRelative. Basically
 	      * keeps the scheme and replaces the domain and following.
 	      */
-	strncpyW(preliminary, base.ap1, base.sizep1 + 1);
-	work = preliminary + base.sizep1 + 1;
-	strcpyW(work, relative.ap2);
+	strncpyW(preliminary, base.pszProtocol, base.cchProtocol + 1);
+	work = preliminary + base.cchProtocol + 1;
+	strcpyW(work, relative.pszSuffix);
 	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
-	    URL_JustLocation(relative.ap2))
+	    URL_JustLocation(relative.pszSuffix))
 	    strcatW(work, single_slash);
 	break;
 
@@ -837,22 +819,22 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      * after the location is pszRelative. (Replace document
 	      * from root on.)
 	      */
-	strncpyW(preliminary, base.ap1, base.sizep1+1+sizeloc);
-	work = preliminary + base.sizep1 + 1 + sizeloc;
+	strncpyW(preliminary, base.pszProtocol, base.cchProtocol+1+sizeloc);
+	work = preliminary + base.cchProtocol + 1 + sizeloc;
 	if (dwFlags & URL_PLUGGABLE_PROTOCOL)
 	    *(work++) = L'/';
-	strcpyW(work, relative.ap2);
+	strcpyW(work, relative.pszSuffix);
 	break;
 
     case 5:  /*
 	      * Return the pszBase without its document (if any) and
 	      * append pszRelative after its scheme.
 	      */
-	strncpyW(preliminary, base.ap1, base.sizep1+1+base.sizep2);
-	work = preliminary + base.sizep1+1+base.sizep2 - 1;
+	strncpyW(preliminary, base.pszProtocol, base.cchProtocol+1+base.cchSuffix);
+	work = preliminary + base.cchProtocol+1+base.cchSuffix - 1;
 	if (*work++ != L'/')
 	    *(work++) = L'/';
-	strcpyW(work, relative.ap2);
+	strcpyW(work, relative.pszSuffix);
 	break;
 
     default:
@@ -1248,18 +1230,18 @@ HRESULT WINAPI UrlUnescapeW(
 LPCSTR WINAPI UrlGetLocationA(
 	LPCSTR pszUrl)
 {
-    UNKNOWN_SHLWAPI_1 base;
+    PARSEDURLA base;
     DWORD res1;
 
-    base.size = 24;
+    base.cbSize = sizeof(base);
     res1 = ParseURLA(pszUrl, &base);
     if (res1) return NULL;  /* invalid scheme */
 
     /* if scheme is file: then never return pointer */
-    if (strncmp(base.ap1, "file", min(4,base.sizep1)) == 0) return NULL;
+    if (strncmp(base.pszProtocol, "file", min(4,base.cchProtocol)) == 0) return NULL;
 
     /* Look for '#' and return its addr */
-    return strchr(base.ap2, '#');
+    return strchr(base.pszSuffix, '#');
 }
 
 /*************************************************************************
@@ -1270,18 +1252,18 @@ LPCSTR WINAPI UrlGetLocationA(
 LPCWSTR WINAPI UrlGetLocationW(
 	LPCWSTR pszUrl)
 {
-    UNKNOWN_SHLWAPI_2 base;
+    PARSEDURLW base;
     DWORD res1;
 
-    base.size = 24;
+    base.cbSize = sizeof(base);
     res1 = ParseURLW(pszUrl, &base);
     if (res1) return NULL;  /* invalid scheme */
 
     /* if scheme is file: then never return pointer */
-    if (strncmpW(base.ap1, fileW, min(4,base.sizep1)) == 0) return NULL;
+    if (strncmpW(base.pszProtocol, fileW, min(4,base.cchProtocol)) == 0) return NULL;
 
     /* Look for '#' and return its addr */
-    return strchrW(base.ap2, L'#');
+    return strchrW(base.pszSuffix, L'#');
 }
 
 /*************************************************************************
@@ -1567,7 +1549,7 @@ static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
  */
 HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {
-    UNKNOWN_SHLWAPI_2 in_scheme;
+    PARSEDURLW in_scheme;
     DWORD res1;
     HRESULT ret;
 
@@ -1582,7 +1564,7 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
 	return S_FALSE;
     }
 
-    in_scheme.size = 24;
+    in_scheme.cbSize = sizeof(in_scheme);
     /* See if the base has a scheme */
     res1 = ParseURLW(pszIn, &in_scheme);
     if (res1) {
@@ -1594,7 +1576,7 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
     }
     else {
 	/* we have a scheme, see if valid (known scheme) */
-	if (in_scheme.fcncde) {
+	if (in_scheme.nScheme) {
 	    /* have valid scheme, so just copy and exit */
 	    if (strlenW(pszIn) + 1 > *pcchOut) {
 		*pcchOut = strlenW(pszIn) + 1;
@@ -1643,17 +1625,17 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
  */
 BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 {
-    UNKNOWN_SHLWAPI_1 base;
+    PARSEDURLA base;
     DWORD res1;
     LPCSTR last;
 
     switch (Urlis) {
 
     case URLIS_OPAQUE:
-	base.size = 24;
+	base.cbSize = sizeof(base);
 	res1 = ParseURLA(pszUrl, &base);
 	if (res1) return FALSE;  /* invalid scheme */
-	if ((*base.ap2 == '/') && (*(base.ap2+1) == '/'))
+	if ((*base.pszSuffix == '/') && (*(base.pszSuffix+1) == '/'))
 	    /* has scheme followed by 2 '/' */
 	    return FALSE;
 	return TRUE;
@@ -1683,17 +1665,17 @@ BOOL WINAPI UrlIsA(LPCSTR pszUrl, URLIS Urlis)
 BOOL WINAPI UrlIsW(LPCWSTR pszUrl, URLIS Urlis)
 {
     static const WCHAR stemp[] = { 'f','i','l','e',':','/','/',0 };
-    UNKNOWN_SHLWAPI_2 base;
+    PARSEDURLW base;
     DWORD res1;
     LPCWSTR last;
 
     switch (Urlis) {
 
     case URLIS_OPAQUE:
-	base.size = 24;
+	base.cbSize = sizeof(base);
 	res1 = ParseURLW(pszUrl, &base);
 	if (res1) return FALSE;  /* invalid scheme */
-	if ((*base.ap2 == '/') && (*(base.ap2+1) == '/'))
+	if ((*base.pszSuffix == '/') && (*(base.pszSuffix+1) == '/'))
 	    /* has scheme followed by 2 '/' */
 	    return FALSE;
 	return TRUE;
@@ -2086,15 +2068,15 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
  */
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
-    UNKNOWN_SHLWAPI_1 base;
+    PARSEDURLA base;
     DWORD res1;
 
     if (!lpstrPath || !*lpstrPath) return FALSE;
 
     /* get protocol        */
-    base.size = sizeof(base);
+    base.cbSize = sizeof(base);
     res1 = ParseURLA(lpstrPath, &base);
-    return (base.fcncde > 0);
+    return (base.nScheme > 0);
 }
 
 /*************************************************************************
@@ -2104,15 +2086,15 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
  */
 BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {
-    UNKNOWN_SHLWAPI_2 base;
+    PARSEDURLW base;
     DWORD res1;
 
     if (!lpstrPath || !*lpstrPath) return FALSE;
 
     /* get protocol        */
-    base.size = sizeof(base);
+    base.cbSize = sizeof(base);
     res1 = ParseURLW(lpstrPath, &base);
-    return (base.fcncde > 0);
+    return (base.nScheme > 0);
 }
 
 /*************************************************************************
