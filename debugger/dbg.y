@@ -74,6 +74,7 @@ extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT tDEBUGMSG
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
+%token tPROCESS tMODREF
 %token tEOL tSTRING tDEBUGSTR
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR
@@ -313,6 +314,8 @@ walk_command:
     | tWALK tQUEUE tEOL         { QUEUE_WalkQueues(); }
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
+    | tWALK tPROCESS tEOL       { PROCESS_WalkProcess(); }
+    | tWALK tMODREF expr_value tEOL   { MODULE_WalkModref( $3 ); }
 
 
 type_cast: 

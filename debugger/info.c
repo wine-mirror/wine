@@ -142,7 +142,8 @@ void DEBUG_Help(void)
 "  delete display <disnum>                debugmsg <class>[-+]<type>\n",
 
 "Wine-specific commands:",
-"  mode [16,32]                           walk [wnd,class,queue,module]",
+"  mode [16,32]                           walk [wnd,class,queue,module,",
+"                                               process,modref <pid>]",
 "  info (see 'help info' for options)\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",

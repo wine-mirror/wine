@@ -35,6 +35,35 @@
 DECLARE_DEBUG_CHANNEL(module)
 DECLARE_DEBUG_CHANNEL(win32)
 
+/*************************************************************************
+ *		MODULE_WalkModref
+ * Walk MODREFs for input process ID
+ */
+void MODULE_WalkModref( DWORD id )
+{
+    int i;
+    WINE_MODREF  *zwm, *prev = NULL;
+    PDB *pdb = PROCESS_IdToPDB( id );
+
+    if (!pdb) {
+        MESSAGE("Invalid process id (pid)\n");
+        return;
+    }
+
+    MESSAGE("Modref list for process pdb=%p\n", pdb);
+    MESSAGE("Modref     next       prev        handle  deps  flags  name\n");
+    for ( zwm = pdb->modref_list; zwm; zwm = zwm->next) {
+        MESSAGE("%p %p %p %04x %5d %04x %s\n", zwm, zwm->next, zwm->prev,
+               zwm->module, zwm->nDeps, zwm->flags, zwm->modname);
+        for ( i = 0; i < zwm->nDeps; i++ ) {
+            if ( zwm->deps[i] )
+                MESSAGE("    %d %p %s\n", i, zwm->deps[i], zwm->deps[i]->modname);
+	}
+        if (prev != zwm->prev) 
+            MESSAGE("   --> modref corrupt, previous pointer wrong!!\n");
+        prev = zwm;
+    }
+}
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE

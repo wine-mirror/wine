@@ -165,6 +165,7 @@ extern PDB *PROCESS_Create( struct _NE_MODULE *pModule,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_FreePDB( PDB *pdb );
+extern void PROCESS_WalkProcess( void );
 
 /* scheduler/debugger.c */
 extern DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance );

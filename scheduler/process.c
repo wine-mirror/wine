@@ -37,6 +37,30 @@ static PDB initial_pdb;
 static PDB *PROCESS_First = &initial_pdb;
 
 /***********************************************************************
+ *           PROCESS_WalkProcess
+ */
+void PROCESS_WalkProcess(void)
+{
+    PDB  *pdb;
+    char *name;
+
+    pdb = PROCESS_First;
+    MESSAGE( " pid        PDB         #th  modref     module \n" );
+    while(pdb)
+    {
+        if (pdb == &initial_pdb)
+            name = "initial PDB";
+        else
+            name = (pdb->exe_modref) ? pdb->exe_modref->shortname : "";
+
+        MESSAGE( " %8p %8p %5d  %8p %s\n", pdb->server_pid, pdb,
+               pdb->threads, pdb->exe_modref, name);
+        pdb = pdb->next;
+    }
+    return;
+}
+
+/***********************************************************************
  *           PROCESS_Current
  */
 PDB *PROCESS_Current(void)
