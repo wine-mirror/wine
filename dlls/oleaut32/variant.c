@@ -1447,6 +1447,12 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	case( VT_BSTR ):
 		switch( vtFrom )
 		{
+		case( VT_EMPTY ):
+			if ((pd->u.bstrVal = SysAllocStringLen(NULL, 0)))
+				res = S_OK;
+			else
+				res = E_OUTOFMEMORY;
+			break;
 		case( VT_I1 ):
 			res = VarBstrFromI1( ps->u.cVal, lcid, dwFlags, &(pd->u.bstrVal) );
 			break;
