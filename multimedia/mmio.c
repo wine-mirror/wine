@@ -1002,16 +1002,15 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, LPMMCKINFO lpck,
 			memcpy(fcc,&lpck->fccType,4);
 			TRACE(mmio, "ckid=%s fcc=%s cksize=%08lX !\n",
 				ckid, searchcki.fccType?fcc:"<unused>",
-				lpck->cksize
-			);
+				lpck->cksize);
 			if ((searchcki.ckid == lpck->ckid) &&
 			    (!searchcki.fccType ||
 			      (searchcki.fccType == lpck->fccType)
+			     )
 			    )
-			)
 				break;
 
-			dwOldPos = lpck->dwDataOffset + lpck->cksize;
+			dwOldPos = lpck->dwDataOffset + ((lpck->cksize + 1) & ~1);
 			mmioSeek(hmmio, dwOldPos, SEEK_SET);
 		}
 		/* If we were looking for RIFF/LIST chunks, the final dataptr
