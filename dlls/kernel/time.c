@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
 /* maximum time adjustment in seconds for SetLocalTime and SetSystemTime */
 #define SETTIME_MAX_ADJUST 120
+#define CALINFO_MAX_YEAR 2029
 
 
 /* This structure is used to store strings that represent all of the time zones
@@ -732,8 +733,8 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_SYEARMONTH:
 	    return GetLocaleInfoW(Locale, LOCALE_SYEARMONTH, lpCalData, cchData);
 	case CAL_ITWODIGITYEARMAX:
-	    FIXME("Unimplemented caltype %ld\n", CalType & 0xffff);
-	    return E_FAIL;
+	    if (lpValue) *lpValue = CALINFO_MAX_YEAR;
+	    break;
 	default: MESSAGE("Unknown caltype %ld\n",CalType & 0xffff);
 		 return E_FAIL;
     }
