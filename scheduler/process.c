@@ -554,7 +554,7 @@ static void start_process(void)
     if (console_app) PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Starting process %s (entryproc=%p)\n",
+        DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
                  GetCurrentThreadId(), main_exe_name, entry );
     if (debugged) DbgBreakPoint();
     /* FIXME: should use _PEB as parameter for NT 3.5 programs !

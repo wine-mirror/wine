@@ -176,7 +176,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
+        DPRINTF( "%04lx:Call window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
     /* To avoid any deadlocks, all the locks on the windows structures
        must be suspended before the control is passed to the application */
@@ -185,7 +185,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     WIN_RestoreWndsLock(iWndsLocks);
 
     if (TRACE_ON(relay))
-        DPRINTF( "%08lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
+        DPRINTF( "%04lx:Ret  window proc %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx) retval=%08lx\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam, retvalue );
     return retvalue;
 }
