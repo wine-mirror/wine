@@ -209,6 +209,80 @@ static inline VOID SERV_free( LPWSTR wstr )
     HeapFree( GetProcessHeap(), 0, wstr );
 }
 
+/******************************************************************************
+ * registry access functions and data
+ */
+static const WCHAR szDisplayName[] = {
+       'D','i','s','p','l','a','y','N','a','m','e', 0 };
+static const WCHAR szType[] = {'T','y','p','e',0};
+static const WCHAR szStart[] = {'S','t','a','r','t',0};
+static const WCHAR szError[] = {
+       'E','r','r','o','r','C','o','n','t','r','o','l', 0};
+static const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
+static const WCHAR szGroup[] = {'G','r','o','u','p',0};
+static const WCHAR szDependencies[] = {
+       'D','e','p','e','n','d','e','n','c','i','e','s',0};
+static const WCHAR szDependOnService[] = {
+       'D','e','p','e','n','d','O','n','S','e','r','v','i','c','e',0};
+
+struct reg_value {
+    DWORD type;
+    DWORD size;
+    LPCWSTR name;
+    LPCVOID data;
+};
+
+static inline void service_set_value( struct reg_value *val,
+                        DWORD type, LPCWSTR name, LPCVOID data, DWORD size )
+{
+    val->name = name;
+    val->type = type;
+    val->data = data;
+    val->size = size;
+}
+
+static inline void service_set_dword( struct reg_value *val, 
+                                      LPCWSTR name, DWORD *data )
+{
+    service_set_value( val, REG_DWORD, name, data, sizeof (DWORD));
+}
+
+static inline void service_set_string( struct reg_value *val,
+                                       LPCWSTR name, LPCWSTR string )
+{
+    DWORD len = (lstrlenW(string)+1) * sizeof (WCHAR);
+    service_set_value( val, REG_SZ, name, string, len );
+}
+
+static inline void service_set_multi_string( struct reg_value *val,
+                                             LPCWSTR name, LPCWSTR string )
+{
+    DWORD len = 0;
+
+    /* determine the length of a double null terminated multi string */
+    do {
+        len += (lstrlenW( &string[ len ] )+1);
+    } while ( string[ len++ ] );
+
+    len *= sizeof (WCHAR);
+    service_set_value( val, REG_MULTI_SZ, name, string, len );
+}
+
+static inline LONG service_write_values( HKEY hKey,
+                                         struct reg_value *val, int n )
+{
+    LONG r = ERROR_SUCCESS;
+    int i;
+
+    for( i=0; i<n; i++ )
+    {
+        r = RegSetValueExW(hKey, val[i].name, 0, val[i].type, 
+                       (const BYTE*)val[i].data, val[i].size );
+        if( r != ERROR_SUCCESS )
+            break;
+    }
+    return r;
+}
 
 /******************************************************************************
  * Service IPC functions
@@ -1122,15 +1196,10 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     HKEY hKey;
     LONG r;
     DWORD dp, len;
-    static const WCHAR szDisplayName[] = { 'D','i','s','p','l','a','y','N','a','m','e', 0 };
-    static const WCHAR szType[] = {'T','y','p','e',0};
-    static const WCHAR szStart[] = {'S','t','a','r','t',0};
-    static const WCHAR szError[] = {'E','r','r','o','r','C','o','n','t','r','o','l', 0};
-    static const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
-    static const WCHAR szGroup[] = {'G','r','o','u','p',0};
-    static const WCHAR szDependencies[] = { 'D','e','p','e','n','d','e','n','c','i','e','s',0};
+    struct reg_value val[10];
+    int n = 0;
 
-    FIXME("%p %s %s\n", hSCManager, 
+    TRACE("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
 
     hscm = sc_handle_get_handle_data( hSCManager, SC_HTYPE_MANAGER );
@@ -1143,7 +1212,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
-        goto error;
+        return NULL;
 
     if (dp != REG_CREATED_NEW_KEY)
     {
@@ -1151,75 +1220,38 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         goto error;
     }
 
-    if(lpDisplayName)
-    {
-        r = RegSetValueExW(hKey, szDisplayName, 0, REG_SZ, (const BYTE*)lpDisplayName,
-                           (strlenW(lpDisplayName)+1)*sizeof(WCHAR) );
-        if (r!=ERROR_SUCCESS)
-            goto error;
-    }
+    if( lpDisplayName )
+        service_set_string( &val[n++], szDisplayName, lpDisplayName );
 
-    r = RegSetValueExW(hKey, szType, 0, REG_DWORD, (LPVOID)&dwServiceType, sizeof (DWORD) );
-    if (r!=ERROR_SUCCESS)
-        goto error;
+    service_set_dword( &val[n++], szType, &dwServiceType );
+    service_set_dword( &val[n++], szStart, &dwStartType );
+    service_set_dword( &val[n++], szError, &dwErrorControl );
 
-    r = RegSetValueExW(hKey, szStart, 0, REG_DWORD, (LPVOID)&dwStartType, sizeof (DWORD) );
-    if (r!=ERROR_SUCCESS)
-        goto error;
+    if( lpBinaryPathName )
+        service_set_string( &val[n++], szImagePath, lpBinaryPathName );
 
-    r = RegSetValueExW(hKey, szError, 0, REG_DWORD,
-                           (LPVOID)&dwErrorControl, sizeof (DWORD) );
-    if (r!=ERROR_SUCCESS)
-        goto error;
+    if( lpLoadOrderGroup )
+        service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
 
-    if(lpBinaryPathName)
-    {
-        r = RegSetValueExW(hKey, szImagePath, 0, REG_SZ, (const BYTE*)lpBinaryPathName,
-                           (strlenW(lpBinaryPathName)+1)*sizeof(WCHAR) );
-        if (r!=ERROR_SUCCESS)
-            goto error;
-    }
+    if( lpDependencies )
+        service_set_multi_string( &val[n++], szDependencies, lpDependencies );
 
-    if(lpLoadOrderGroup)
-    {
-        r = RegSetValueExW(hKey, szGroup, 0, REG_SZ, (const BYTE*)lpLoadOrderGroup,
-                           (strlenW(lpLoadOrderGroup)+1)*sizeof(WCHAR) );
-        if (r!=ERROR_SUCCESS)
-            goto error;
-    }
-
-    if(lpDependencies)
-    {
-        DWORD len = 0;
-
-        /* determine the length of a double null terminated multi string */
-        do {
-            len += (strlenW(&lpDependencies[len])+1);
-        } while (lpDependencies[len++]);
-
-        r = RegSetValueExW(hKey, szDependencies, 0, REG_MULTI_SZ,
-                           (const BYTE*)lpDependencies, len );
-        if (r!=ERROR_SUCCESS)
-            goto error;
-    }
-
-    if(lpPassword)
-    {
+    if( lpPassword )
         FIXME("Don't know how to add a Password for a service.\n");
-    }
 
-    if(lpServiceStartName)
-    {
-        FIXME("Don't know how to add a ServiceStartName for a service.\n");
-    }
+    if( lpServiceStartName )
+        service_set_string( &val[n++], szDependOnService, lpServiceStartName );
+
+    r = service_write_values( hKey, val, n );
+    if( r != ERROR_SUCCESS )
+        goto error;
 
     len = strlenW(lpServiceName)+1;
-    hsvc = sc_handle_alloc( SC_HTYPE_SERVICE,
-                            sizeof (struct sc_service) + len*sizeof(WCHAR),
-                            sc_handle_destroy_service );
-    if (!hsvc)
-        return NULL;
-    strcpyW( hsvc->name, lpServiceName );
+    len = sizeof (struct sc_service) + len*sizeof(WCHAR);
+    hsvc = sc_handle_alloc( SC_HTYPE_SERVICE, len, sc_handle_destroy_service );
+    if( !hsvc )
+        goto error;
+    lstrcpyW( hsvc->name, lpServiceName );
     hsvc->hkey = hKey;
     hsvc->scm = hscm;
     hscm->hdr.ref_count++;
@@ -1227,8 +1259,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     return (SC_HANDLE) &hsvc->hdr;
     
 error:
-    if (hsvc)
-        sc_handle_free( &hsvc->hdr );
+    RegCloseKey( hKey );
     return NULL;
 }
 
@@ -1737,16 +1768,6 @@ QueryServiceConfigW( SC_HANDLE hService,
                      LPQUERY_SERVICE_CONFIGW lpServiceConfig,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    static const WCHAR szDisplayName[] = {
-        'D','i','s','p','l','a','y','N','a','m','e', 0 };
-    static const WCHAR szType[] = {'T','y','p','e',0};
-    static const WCHAR szStart[] = {'S','t','a','r','t',0};
-    static const WCHAR szError[] = {
-        'E','r','r','o','r','C','o','n','t','r','o','l', 0};
-    static const WCHAR szImagePath[] = {'I','m','a','g','e','P','a','t','h',0};
-    static const WCHAR szGroup[] = {'G','r','o','u','p',0};
-    static const WCHAR szDependencies[] = {
-        'D','e','p','e','n','d','e','n','c','i','e','s',0};
     WCHAR str_buffer[ MAX_PATH ];
     LONG r;
     DWORD type, val, sz, total, n;
@@ -1992,12 +2013,53 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
   LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId, LPCWSTR lpDependencies,
   LPCWSTR lpServiceStartName, LPCWSTR lpPassword, LPCWSTR lpDisplayName)
 {
-    FIXME("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
+    struct reg_value val[10];
+    struct sc_service *hsvc;
+    DWORD r = ERROR_SUCCESS;
+    HKEY hKey;
+    int n = 0;
+
+    TRACE("%p %ld %ld %ld %s %s %p %p %s %s %s\n",
           hService, dwServiceType, dwStartType, dwErrorControl, 
           debugstr_w(lpBinaryPathName), debugstr_w(lpLoadOrderGroup),
           lpdwTagId, lpDependencies, debugstr_w(lpServiceStartName),
           debugstr_w(lpPassword), debugstr_w(lpDisplayName) );
-    return TRUE;
+
+    hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
+    if (!hsvc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    hKey = hsvc->hkey;
+
+    if( dwServiceType != SERVICE_NO_CHANGE )
+        service_set_dword( &val[n++], szType, &dwServiceType );
+
+    if( dwStartType != SERVICE_NO_CHANGE )
+        service_set_dword( &val[n++], szStart, &dwStartType );
+
+    if( dwErrorControl != SERVICE_NO_CHANGE )
+        service_set_dword( &val[n++], szError, &dwErrorControl );
+
+    if( lpBinaryPathName )
+        service_set_string( &val[n++], szImagePath, lpBinaryPathName );
+
+    if( lpLoadOrderGroup )
+        service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
+
+    if( lpDependencies )
+        service_set_multi_string( &val[n++], szDependencies, lpDependencies );
+
+    if( lpPassword )
+        FIXME("ignoring password\n");
+
+    if( lpServiceStartName )
+        service_set_string( &val[n++], szDependOnService, lpServiceStartName );
+
+    r = service_write_values( hsvc->hkey, val, n );
+
+    return (r == ERROR_SUCCESS) ? TRUE : FALSE ;
 }
 
 /******************************************************************************
