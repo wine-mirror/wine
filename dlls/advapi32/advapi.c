@@ -23,9 +23,10 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 
 #include "winbase.h"
 #include "windef.h"
@@ -48,14 +49,16 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
   size_t len;
   char *name;
 
+#ifdef HAVE_GETPWUID
   struct passwd *pwd = getpwuid( getuid() );
-  if (!pwd)
-  {
+  name = pwd ? pwd->pw_name : NULL;
+#else
+  name = getenv("USER");
+#endif
+  if (!name) {
     ERR("Username lookup failed: %s\n", strerror(errno));
     return 0;
   }
-
-  name = pwd->pw_name;
 
   /* We need to include the null character when determining the size of the buffer. */
   len = strlen(name) + 1;

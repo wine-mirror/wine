@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <unistd.h>
 #include <ctype.h>
 
 #include "wine/debug.h"

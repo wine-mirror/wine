@@ -31,7 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <time.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_INTTYPES_H
 # include <sys/inttypes.h>
@@ -101,7 +104,7 @@ void *memmove( void *dest, const void *src, unsigned int len )
         memcpy( dst, src, len );
     }
     /* Otherwise do it the hard way (FIXME: could do better than this) */
-    else if (dst < src)
+    else if (dst < (char *)src)
     {
         while (len--) *dst++ = *((char *)src)++;
     }
@@ -668,6 +671,8 @@ char *gcvt (double number, size_t  ndigit,  char *buff)
  */
 #ifdef __i386__
 
+#ifdef __GNUC__
+
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "movl 12(%esp),%eax\n\t"
                   "movl 8(%esp),%ecx\n\t"
@@ -695,6 +700,54 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "movl 4(%esp),%edx\n\t"
                   "lock; xaddl %eax,(%edx)\n\t"
                   "ret");
+
+#elif defined(_MSC_VER)
+
+__declspec(naked) long interlocked_cmpxchg( long *dest, long xchg, long compare )
+{
+    __asm mov eax, 12[esp];
+    __asm mov ecx, 8[esp];
+    __asm mov edx, 4[esp];
+    __asm lock cmpxchg [edx], ecx;
+    __asm ret;
+}
+
+__declspec(naked) void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+{
+    __asm mov eax, 12[esp];
+    __asm mov ecx, 8[esp];
+    __asm mov edx, 4[esp];
+    __asm lock cmpxchg [edx], ecx;
+    __asm ret;
+}
+
+__declspec(naked) long interlocked_xchg( long *dest, long val )
+{
+    __asm mov eax, 8[esp];
+    __asm mov edx, 4[esp];
+    __asm lock xchg [edx], eax;
+    __asm ret;
+}
+
+__declspec(naked) void *interlocked_xchg_ptr( void **dest, void *val )
+{
+    __asm mov eax, 8[esp];
+    __asm mov edx, 4[esp];
+    __asm lock xchg [edx], eax;
+    __asm ret;
+}
+
+__declspec(naked) long interlocked_xchg_add( long *dest, long incr )
+{
+    __asm mov eax, 8[esp];
+    __asm mov edx, 4[esp];
+    __asm lock xadd [edx], eax;
+    __asm ret;
+}
+
+#else
+# error You must implement the interlocked* functions for your compiler
+#endif
 
 #elif defined(__powerpc__)
 void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
