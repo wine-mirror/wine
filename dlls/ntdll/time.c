@@ -443,6 +443,8 @@ VOID WINAPI RtlTimeToTimeFields(
         TimeFields->Year += DeltaYear * 400;
         Days -= DeltaYear * DAYSPERQUADRICENTENNIUM;
         DeltaYear = Days / DAYSPERNORMALCENTURY;
+        if( DeltaYear > 3) DeltaYear = 3;  /* fix 31 Dec of 2000 and every 
+                                              400 years after that */
         TimeFields->Year += DeltaYear * 100;
         Days -= DeltaYear * DAYSPERNORMALCENTURY;
         DeltaYear = Days / DAYSPERNORMALQUADRENNIUM;
