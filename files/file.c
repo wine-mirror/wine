@@ -174,30 +174,6 @@ void FILE_SetDosError(void)
 }
 
 
-static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa )
-{
-    HANDLE ret;
-    DWORD len = 0;
-
-    if (name && (len = strlenW(name)) > MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    SERVER_START_REQ( open_named_pipe )
-    {
-        req->access = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        SetLastError(0);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    TRACE("Returned %p\n",ret);
-    return ret;
-}
-
 /*************************************************************************
  * CreateFileW [KERNEL32.@]  Creates or opens a file or other object
  *
@@ -288,13 +264,9 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     if (!strncmpW(filename, bkslashes_with_dotW, 4))
     {
         static const WCHAR pipeW[] = {'P','I','P','E','\\',0};
-        if(!strncmpiW(filename + 4, pipeW, 5))
-        {
-            TRACE("Opening a pipe: %s\n", debugstr_w(filename));
-            ret = FILE_OpenPipe( filename, access, sa );
-            goto done;
-        }
-        else if (isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0')
+
+        if ((isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0') ||
+            !strncmpiW( filename + 4, pipeW, 5 ))
         {
             dosdev = 0;
         }

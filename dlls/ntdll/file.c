@@ -130,6 +130,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG attributes, ULONG sharing, ULONG disposition,
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
+    static const WCHAR pipeW[] = {'\\','?','?','\\','p','i','p','e','\\'};
     ANSI_STRING unix_name;
     int created = FALSE;
 
@@ -145,6 +146,24 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
     if (alloc_size) FIXME( "alloc_size not supported\n" );
+
+    /* check for named pipe */
+
+    if (attr->ObjectName->Length > sizeof(pipeW) &&
+        !memicmpW( attr->ObjectName->Buffer, pipeW, sizeof(pipeW)/sizeof(WCHAR) ))
+    {
+        SERVER_START_REQ( open_named_pipe )
+        {
+            req->access = access;
+            req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
+            wine_server_add_data( req, attr->ObjectName->Buffer + sizeof(pipeW)/sizeof(WCHAR),
+                                  attr->ObjectName->Length - sizeof(pipeW) );
+            io->u.Status = wine_server_call( req );
+            *handle = reply->handle;
+        }
+        SERVER_END_REQ;
+        return io->u.Status;
+    }
 
     io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
                                               !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
