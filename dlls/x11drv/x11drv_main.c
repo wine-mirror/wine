@@ -337,20 +337,6 @@ static void process_attach(void)
     }
     else screen_depth = DefaultDepthOfScreen( screen );
 
-    /* check for Xkb extension */
-#ifdef HAVE_XKB
-    if (use_xkb)
-    {
-        int xkb_opcode, xkb_event, xkb_error;
-        int xkb_major = XkbMajorVersion, xkb_minor = XkbMinorVersion;
-
-        use_xkb = XkbQueryExtension(display, &xkb_opcode, &xkb_event, &xkb_error,
-                                    &xkb_major, &xkb_minor);
-        if (use_xkb) /* we have XKB, approximate Windows behaviour */
-            XkbSetDetectableAutoRepeat(display, True, NULL);
-    }
-#endif
-
     /* Initialize OpenGL */
     X11DRV_OpenGL_Init(display);
 
@@ -469,7 +455,11 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
         WARN("Can't open input method\n");
 
 #ifdef HAVE_XKB
-    if (use_xkb) XkbSetDetectableAutoRepeat( data->display, True, NULL );
+    if (use_xkb)
+    {
+        use_xkb = XkbUseExtension( data->display, NULL, NULL );
+        if (use_xkb) XkbSetDetectableAutoRepeat( data->display, True, NULL );
+    }
 #endif
 
     if (synchronous) XSynchronize( data->display, True );
