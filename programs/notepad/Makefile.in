@@ -6,6 +6,7 @@ MODULE    = notepad.exe
 APPMODE   = gui
 IMPORTS   = comdlg32 shell32 msvcrt user32 gdi32 kernel32
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRADEFS = -DNO_LIBWINE_PORT
 
 C_SRCS = \
 	License_En.c \
