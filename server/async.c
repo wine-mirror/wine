@@ -56,7 +56,7 @@ void destroy_async( struct async *async )
     async->q = NULL;
     async->next = NULL;
     async->prev = NULL;
-
+    release_object( async->thread );
     free(async);
 }
 
@@ -127,7 +127,7 @@ struct async *create_async(struct object *obj, struct thread *thread,
     }
 
     async->obj = obj;
-    async->thread = thread;
+    async->thread = (struct thread *)grab_object(thread);
     async->overlapped = overlapped;
     async->next = NULL;
     async->prev = NULL;
@@ -178,4 +178,3 @@ DECL_HANDLER(register_async)
     obj->ops->queue_async (obj, req->overlapped, req->status, req->type, req->count);
     release_object(obj);
 }
-
