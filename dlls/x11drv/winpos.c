@@ -1464,11 +1464,6 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
     wndPtr->hrgnWnd = hrgn;
 
-    /* Size the window to the rectangle of the new region (if it isn't NULL) */
-    if (hrgn) SetWindowPos( hwnd, 0, rect.left, rect.top,
-                            rect.right  - rect.left, rect.bottom - rect.top,
-                            SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOACTIVATE |
-                            SWP_NOZORDER | (redraw ? 0 : SWP_NOREDRAW) );
 #ifdef HAVE_LIBXSHAPE
     {
         Display *display = thread_display();
@@ -1528,6 +1523,7 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
 #endif  /* HAVE_LIBXSHAPE */
 
+    if (redraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
     ret = TRUE;
 
  done:
