@@ -28,4 +28,15 @@
 
 #pragma pack(4)
 
+
+/*
+ * POINTL structure. Used in some OLE calls.
+ */
+typedef struct _POINTL
+{
+  LONG x;
+  LONG y;
+} POINTL;
+
+
 #endif /* __INCLUDE_WINDEF_H */

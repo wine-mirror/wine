@@ -105,7 +105,7 @@ type	win32
 102 stub OleDuplicateData
 103 stub OleFlushClipboard
 104 stub OleGetAutoConvert
-105 stub OleGetClipboard
+105 stdcall OleGetClipboard(ptr) OleGetClipboard32
 106 stub OleGetIconOfClass
 107 stub OleGetIconOfFile
 108 stdcall OleInitialize(ptr) OleInitialize
@@ -118,10 +118,10 @@ type	win32
 115 stub OleMetafilePictFromIconAndLabel
 116 stub OleNoteObjectVisible
 117 stub OleQueryCreateFromData
-118 stub OleQueryLinkFromData
+118 stdcall OleQueryLinkFromData(ptr) OleQueryLinkFromData32
 119 stub OleRegEnumFormatEtc
 120 stub OleRegEnumVerbs
-121 stub OleRegGetMiscStatus
+121 stdcall OleRegGetMiscStatus(ptr long ptr) OleRegGetMiscStatus32
 122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType32
 123 stub OleRun
 124 stub OleSave

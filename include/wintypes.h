@@ -485,13 +485,6 @@ DECL_WINELIB_TYPE(POINT)
 DECL_WINELIB_TYPE(PPOINT)
 DECL_WINELIB_TYPE(LPPOINT)
 
-typedef struct  tagPOINTL
-{
-    LONG x;
-    LONG y;
-} POINTL, *PPOINTL, *LPPOINTL;
-
-
 #define CONV_POINT16TO32(p16,p32) \
             ((p32)->x = (INT32)(p16)->x, (p32)->y = (INT32)(p16)->y)
 #define CONV_POINT32TO16(p32,p16) \

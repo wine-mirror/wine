@@ -198,7 +198,7 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #define OCR_BASE1	(OCR_BASE0 + OCR_LAST0 - OCR_FIRST0 + 1)
 
 #define OCR_FIRST2 OCR_SIZE
-#define OCR_LAST2  OCR_SIZENS 
+#define OCR_LAST2  OCR_SIZEALL
 #define OCR_BASE2	(OCR_BASE1 + OCR_LAST1 - OCR_FIRST1 + 1)
 
 #define OCR_FIRST3 OCR_NO
@@ -229,8 +229,8 @@ static char **OBM_Cursors_Data[NB_CURSORS] =
     ocr_sizenesw,    /* OCR_SIZENESW */
     ocr_sizewe,      /* OCR_SIZEWE */
     ocr_sizens,      /* OCR_SIZENS */
+    ocr_size,        /* OCR_SIZEALL */ /* Re-used the same one as OCR_SIZE for now */
 #if 0
-    ocr_sizeall,     /* OCR_SIZEALL */
     ocr_icocur       /* OCR_ICOCUR */
 #endif
     ocr_no,          /* OCR_NO */

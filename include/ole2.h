@@ -5,12 +5,8 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
+#include "oleidl.h"
 #include "wintypes.h"
-
-/* to be implemented */
-/* FIXME: this should be defined somewhere in oleidl.h instead, should it be repeated here ? */
-typedef LPVOID LPDROPTARGET;
-
 
 /* OLE version */
 #define rmm             23
@@ -27,11 +23,23 @@ typedef struct tagOleMenuGroupWidths *LPOLEMENUGROUPWIDTHS32;
 
 typedef HGLOBAL32 HOLEMENU32;
 
-HRESULT     WINAPI RegisterDragDrop16(HWND16,LPVOID);
-HRESULT     WINAPI RegisterDragDrop32(HWND32,LPVOID);
+/*
+ * API declarations
+ */
+HRESULT     WINAPI RegisterDragDrop16(HWND16,LPDROPTARGET);
+HRESULT     WINAPI RegisterDragDrop32(HWND32,LPDROPTARGET);
 #define     RegisterDragDrop WINELIB_NAME(RegisterDragDrop)
 HRESULT     WINAPI RevokeDragDrop16(HWND16);
 HRESULT     WINAPI RevokeDragDrop32(HWND32);
 #define     RevokeDragDrop WINELIB_NAME(RevokeDragDrop)
+HRESULT     WINAPI DoDragDrop16(LPDATAOBJECT, 
+                                LPDROPSOURCE,
+				DWORD,
+				DWORD*);
+HRESULT     WINAPI DoDragDrop32(LPDATAOBJECT,
+				LPDROPSOURCE,
+				DWORD,
+				DWORD*);
+#define     DoDragDrop WINELIB_NAME(DoDragDrop)
 
 #endif  /* __WINE_OLE2_H */

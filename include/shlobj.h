@@ -389,13 +389,6 @@ typedef enum tagSHCONTF
   SHCONTF_INCLUDEHIDDEN   = 128       /* for hidden/system objects */
 } SHCONTF;
 
-/* from oleidl.h */
-#define	DROPEFFECT_NONE		0
-#define	DROPEFFECT_COPY		1
-#define	DROPEFFECT_MOVE		2
-#define	DROPEFFECT_LINK		4
-#define	DROPEFFECT_SCROLL       0x80000000
-
 /* IShellFolder::GetAttributesOf flags */
 #define SFGAO_CANCOPY           DROPEFFECT_COPY /* Objects can be copied */
 #define SFGAO_CANMOVE           DROPEFFECT_MOVE /* Objects can be moved */
