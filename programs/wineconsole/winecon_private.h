@@ -67,19 +67,6 @@ struct inner_data {
     void*               private;        /* data part belonging to the choosen backed */
 };
 
-#  ifdef __GNUC__
-extern void  XTracer(int level, const char* format, ...) __attribute__((format (printf,2,3)));
-#  else
-extern void  XTracer(int level, const char* format, ...);
-#  endif
-#if 0
-/* Trace mode */
-#  define Trace XTracer
-#else
-/* non trace mode */
-#  define Trace (1) ? (void)0 : XTracer
-#endif
-
 /* from wineconsole.c */
 extern void WINECON_NotifyWindowChange(struct inner_data* data);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);

@@ -53,3 +53,5 @@ extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFON
 extern void WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, 
                                UINT height, UINT weight);
 
+extern void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft);
+extern void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft);

@@ -23,6 +23,10 @@
 #include "prsht.h"
 #include "winecon_user.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
+
 enum WCUSER_ApplyTo {
     /* Prop sheet CFG */
     WCUSER_ApplyToCursorSize, 
@@ -392,6 +396,7 @@ static int CALLBACK font_enum_size2(const LOGFONT* lf, const TEXTMETRIC* tm,
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
 
+    WCUSER_DumpTextMetric(tm, FontType);
     if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
     {
 	di->nFont++;
@@ -406,6 +411,7 @@ static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
     struct dialog_info*	di = (struct dialog_info*)lParam;
     HDC	hdc;
 
+    WCUSER_DumpLogFont("font", lf, FontType);
     if (WCUSER_ValidateFont(di->data, lf) && (hdc = GetDC(di->hDlg)))
     {
         if (FontType & RASTER_FONTTYPE)
@@ -439,6 +445,7 @@ static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm,
     WCHAR	        buf[32];
     static const WCHAR  fmt[] = {'%','l','d',0};
 
+    WCUSER_DumpTextMetric(tm, FontType);
     if (di->nFont == 0 && !(FontType & RASTER_FONTTYPE))
     {
         static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
@@ -523,8 +530,8 @@ static BOOL  select_font(struct dialog_info* di)
     if (!hFont) return FALSE;
 
     if (config.cell_height != di->font[size_idx].height)
-        Trace(0, "select_font: mismatched heights (%u<>%u)\n",
-              config.cell_height, di->font[size_idx].height);
+        WINE_TRACE("select_font: mismatched heights (%u<>%u)\n",
+                   config.cell_height, di->font[size_idx].height);
     hOldFont = (HFONT)SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_GETFONT, 0L, 0L);
 
     SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_SETFONT, (DWORD)hFont, TRUE);
@@ -575,7 +582,7 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
                 di->font[idx].weight == di->config->font_weight)
             {
                 if (ref == -1) ref = idx;
-                else Trace(0, "Several matches found: ref=%d idx=%d\n", ref, idx);
+                else WINE_TRACE("Several matches found: ref=%d idx=%d\n", ref, idx);
             }
 	}
 	idx = (ref == -1) ? 0 : ref;

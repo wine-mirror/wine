@@ -23,6 +23,10 @@
 #include "winreg.h"
 #include "winecon_private.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
+
 static const WCHAR wszConsole[]           = {'C','o','n','s','o','l','e',0};
 static const WCHAR wszCursorSize[]        = {'C','u','r','s','o','r','S','i','z','e',0};
 static const WCHAR wszCursorVisible[]     = {'C','u','r','s','o','r','V','i','s','i','b','l','e',0};
@@ -125,7 +129,7 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
 
     if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey)) 
     {
-        Trace(0, "Can't open registry for saving\n");
+        WINE_ERR("Can't open registry for saving\n");
         return FALSE;
     }
    

@@ -22,6 +22,11 @@
 #include <stdlib.h>
 #include "winecon_user.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
+WINE_DECLARE_DEBUG_CHANNEL(wc_font);
+
 /* mapping console colors to RGB values */
 COLORREF	WCUSER_ColorMap[16] = 
 {
@@ -44,19 +49,24 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
     WORD		attr;
     WCHAR*		line;
 
+    /* no font has been set up yet, don't worry about filling the bitmap, 
+     * we'll do it once a font is chosen
+     */
+    if (!PRIVATE(data)->hFont) return;
+
     if (!(line = HeapAlloc(GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(WCHAR))))
-    {Trace(0, "OOM\n"); return;}
+    {WINE_ERR("OOM\n"); return;}
 
     hOldFont = SelectObject(PRIVATE(data)->hMemDC, PRIVATE(data)->hFont);
     for (j = upd_tp; j <= upd_bm; j++)
     {
 	cell = &data->cells[j * data->curcfg.sb_width];
-	for (i = 0; i < data->curcfg.win_width; i++)
+	for (i = 0; i < data->curcfg.sb_width; i++)
 	{
 	    attr = cell[i].Attributes;
 	    SetBkColor(PRIVATE(data)->hMemDC,WCUSER_ColorMap[(attr>>4)&0x0F]);
 	    SetTextColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[attr&0x0F]);
-	    for (k = i; k < data->curcfg.win_width && cell[k].Attributes == attr; k++)
+	    for (k = i; k < data->curcfg.sb_width && cell[k].Attributes == attr; k++)
 	    {
 		line[k - i] = cell[k].Char.UnicodeChar;
 	    }
@@ -93,7 +103,7 @@ static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
 	if (hold == PRIVATE(data)->hBitmap)
 	    DeleteObject(PRIVATE(data)->hBitmap);
 	else
-	    Trace(0, "leak\n");
+	    WINE_FIXME("leak\n");
     }
     PRIVATE(data)->hBitmap = hnew;
     if (fill)
@@ -144,7 +154,7 @@ void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 
 	    w16b = ((data->curcfg.cell_width + 15) & ~15) / 8;
 	    ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, w16b * data->curcfg.cell_height);
-	    if (!ptr) {Trace(0, "OOM\n"); return;}
+	    if (!ptr) {WINE_ERR("OOM\n"); return;}
 	    nbl = max((data->curcfg.cell_height * size) / 100, 1);
 	    for (j = data->curcfg.cell_height - nbl; j < data->curcfg.cell_height; j++)
 	    {
@@ -250,6 +260,42 @@ static void	WCUSER_SetTitle(const struct inner_data* data)
 	SetWindowText(PRIVATE(data)->hWnd, buffer);
 }
 
+void WCUSER_DumpLogFont(const char* pfx, const LOGFONT* lf, DWORD ft)
+{
+    WINE_TRACE_(wc_font)("%s %s%s%s%s\n"
+                         "\tlf.lfHeight=%ld lf.lfWidth=%ld lf.lfEscapement=%ld lf.lfOrientation=%ld\n"
+                         "\tlf.lfWeight=%ld lf.lfItalic=%u lf.lfUnderline=%u lf.lfStrikeOut=%u\n"
+                         "\tlf.lfCharSet=%u lf.lfOutPrecision=%u lf.lfClipPrecision=%u lf.lfQuality=%u\n"
+                         "\tlf->lfPitchAndFamily=%u lf.lfFaceName=%s\n",
+                         pfx,
+                         (ft & RASTER_FONTTYPE) ? "raster" : "", 
+                         (ft & TRUETYPE_FONTTYPE) ? "truetype" : "", 
+                         ((ft & (RASTER_FONTTYPE|TRUETYPE_FONTTYPE)) == 0) ? "vector" : "", 
+                         (ft & DEVICE_FONTTYPE) ? "|device" : "", 
+                         lf->lfHeight, lf->lfWidth, lf->lfEscapement, lf->lfOrientation, 
+                         lf->lfWeight, lf->lfItalic, lf->lfUnderline, lf->lfStrikeOut, lf->lfCharSet,
+                         lf->lfOutPrecision, lf->lfClipPrecision, lf->lfQuality, lf->lfPitchAndFamily, 
+                         wine_dbgstr_w(lf->lfFaceName));
+}
+
+void WCUSER_DumpTextMetric(const TEXTMETRIC* tm, DWORD ft)
+{
+    WINE_TRACE_(wc_font)("%s%s%s%s\n"
+                         "\ttmHeight=%ld tmAscent=%ld tmDescent=%ld tmInternalLeading=%ld tmExternalLeading=%ld\n"
+                         "\ttmAveCharWidth=%ld tmMaxCharWidth=%ld tmWeight=%ld tmOverhang=%ld\n"
+                         "\ttmDigitizedAspectX=%ld tmDigitizedAspectY=%ld\n"
+                         "\ttmFirstChar=%d tmLastChar=%d tmDefaultChar=%d tmBreakChar=%d\n"
+                         "\ttmItalic=%u tmUnderlined=%u tmStruckOut=%u tmPitchAndFamily=%u tmCharSet=%u\n",
+                         (ft & RASTER_FONTTYPE) ? "raster" : "", 
+                         (ft & TRUETYPE_FONTTYPE) ? "truetype" : "", 
+                         ((ft & (RASTER_FONTTYPE|TRUETYPE_FONTTYPE)) == 0) ? "vector" : "", 
+                         (ft & DEVICE_FONTTYPE) ? "|device" : "", 
+                         tm->tmHeight, tm->tmAscent, tm->tmDescent, tm->tmInternalLeading, tm->tmExternalLeading, tm->tmAveCharWidth, 
+                         tm->tmMaxCharWidth, tm->tmWeight, tm->tmOverhang, tm->tmDigitizedAspectX, tm->tmDigitizedAspectY, 
+                         tm->tmFirstChar, tm->tmLastChar, tm->tmDefaultChar, tm->tmBreakChar, tm->tmItalic, tm->tmUnderlined, tm->tmStruckOut, 
+                         tm->tmPitchAndFamily, tm->tmCharSet);
+}
+
 /******************************************************************
  *		FontEqual
  *
@@ -263,7 +309,8 @@ BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf)
         !lstrcmp(lf->lfFaceName, config->face_name);
 }
 
-struct font_chooser {
+struct font_chooser 
+{
     struct inner_data*	data;
     int			done;
 };
@@ -307,11 +354,20 @@ static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* t
 {
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
-    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType))
+    WCUSER_DumpTextMetric(tm, FontType);
+
+    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType) && 
+        WCUSER_SetFont(fc->data, lf))
     {
-	WCUSER_SetFont(fc->data, lf);
-	fc->done = 1;
-	return 0;
+        fc->done = 1;
+        /* since we've modified the current config with new font information, 
+         * set it as the new default.
+         * Force also its writing back to the registry so that we can get it
+         * the next time
+         */
+        fc->data->defcfg = fc->data->curcfg;
+        WINECON_RegSave(&fc->data->defcfg);
+        return 0;
     }
     return 1;
 }
@@ -321,9 +377,12 @@ static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 {
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
+    WCUSER_DumpLogFont("init", lf, FontType);
+
     if (WCUSER_ValidateFont(fc->data, lf))
     {
-	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName, get_first_font_enum_2, lParam);
+	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName, 
+                         get_first_font_enum_2, lParam);
 	return !fc->done; /* we just need the first matching one... */
     }
     return 1;
@@ -372,8 +431,8 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
         {
             if (buf[j] != w)
             {
-                Trace(0, "Non uniform cell width: [%d]=%d [%d]=%d\n", 
-                      i + j, buf[j], tm.tmFirstChar, w);
+                WINE_WARN("Non uniform cell width: [%d]=%d [%d]=%d\n", 
+                          i + j, buf[j], tm.tmFirstChar, w);
                 goto err;
             }
         }
@@ -427,11 +486,16 @@ void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT wei
  */
 BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
 {
-    if (WCUSER_AreFontsEqual(&data->curcfg, logfont)) return TRUE;
-    if (PRIVATE(data)->hFont) DeleteObject(PRIVATE(data)->hFont);
+    HFONT       hFont;
 
-    PRIVATE(data)->hFont = WCUSER_CopyFont(&data->curcfg, PRIVATE(data)->hWnd, logfont);
-    if (!PRIVATE(data)->hFont) {Trace(0, "wrong font\n");return FALSE;}
+    if (PRIVATE(data)->hFont != 0 && WCUSER_AreFontsEqual(&data->curcfg, logfont)) 
+        return TRUE;
+
+    hFont = WCUSER_CopyFont(&data->curcfg, PRIVATE(data)->hWnd, logfont);
+    if (!hFont) {WINE_ERR("wrong font\n"); return FALSE;}
+
+    if (PRIVATE(data)->hFont) DeleteObject(PRIVATE(data)->hFont);
+    PRIVATE(data)->hFont = hFont;
 
     WCUSER_ComputePositions(data);
     WCUSER_NewBitmap(data, TRUE);
@@ -449,18 +513,23 @@ BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
  */
 static BOOL	WCUSER_InitFont(struct inner_data* data)
 {
-    LOGFONT             lf;
     struct font_chooser fc;
 
-    WCUSER_FillLogFont(&lf, data->curcfg.face_name, 
-                       data->curcfg.cell_height, data->curcfg.font_weight);
-    data->curcfg.face_name[0] = 0;
-    data->curcfg.cell_height = data->curcfg.font_weight = 0;
+    if (data->curcfg.face_name[0] != '\0' &&
+        data->curcfg.cell_height != 0 &&
+        data->curcfg.font_weight != 0)
+    {
+        LOGFONT             lf;
 
-    if (WCUSER_SetFont(data, &lf)) return TRUE;
+        WCUSER_FillLogFont(&lf, data->curcfg.face_name, 
+                           data->curcfg.cell_height, data->curcfg.font_weight);
+        if (PRIVATE(data)->hFont != 0) WINE_FIXME("Oh strange\n");
+
+        if (WCUSER_SetFont(data, &lf)) return TRUE;
+    }
 
     /* try to find an acceptable font */
-    Trace(0, "Couldn't match the font from registry... trying to find one\n");
+    WINE_WARN("Couldn't match the font from registry... trying to find one\n");
     fc.data = data;
     fc.done = 0;
     EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
@@ -642,6 +711,7 @@ static void	WCUSER_PasteFromClipboard(struct inner_data* data)
  */
 static void WCUSER_Refresh(const struct inner_data* data, int tp, int bm)
 {
+    WCUSER_FillMemDC(data, tp, bm);
     if (data->curcfg.win_pos.Y <= bm && data->curcfg.win_pos.Y + data->curcfg.win_height >= tp)
     {
 	RECT	r;
@@ -651,7 +721,6 @@ static void WCUSER_Refresh(const struct inner_data* data, int tp, int bm)
 	r.top    = (tp - data->curcfg.win_pos.Y) * data->curcfg.cell_height;
 	r.bottom = (bm - data->curcfg.win_pos.Y + 1) * data->curcfg.cell_height;
 	InvalidateRect(PRIVATE(data)->hWnd, &r, FALSE);
-	WCUSER_FillMemDC(data, tp, bm);
 	UpdateWindow(PRIVATE(data)->hWnd);
     }
 }
@@ -689,7 +758,6 @@ static void WCUSER_Scroll(struct inner_data* data, int pos, BOOL horz)
     {
 	SetScrollPos(PRIVATE(data)->hWnd, SB_HORZ, pos, TRUE);
 	data->curcfg.win_pos.X = pos;
-	InvalidateRect(PRIVATE(data)->hWnd, NULL, FALSE);
     }
     else
     {
@@ -765,7 +833,7 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
     WCUSER_FillMenu(PRIVATE(data)->hPopMenu, FALSE);
 
     PRIVATE(data)->hMemDC = CreateCompatibleDC(0);
-    if (!PRIVATE(data)->hMemDC) {Trace(0, "no mem dc\n");return 0;}
+    if (!PRIVATE(data)->hMemDC) {WINE_ERR("no mem dc\n");return 0;}
 
     data->curcfg.quick_edit = FALSE;
     return 0;
@@ -778,7 +846,7 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
  */
 static void	WCUSER_SetMenuDetails(const struct inner_data* data, HMENU hMenu)
 {
-    if (!hMenu) {Trace(0, "Issue in getting menu bits\n");return;}
+    if (!hMenu) {WINE_ERR("Issue in getting menu bits\n");return;}
 
     EnableMenuItem(hMenu, IDS_COPY, 
                    MF_BYCOMMAND|(PRIVATE(data)->has_selection ? MF_ENABLED : MF_GRAYED));
@@ -1216,7 +1284,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	    break;
 	case IDS_SCROLL:
 	case IDS_SEARCH:
-	    Trace(0, "unhandled yet command: %x\n", wParam);
+	    WINE_FIXME("Unhandled yet command: %x\n", wParam);
 	    break;
 	default: 
 	    return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -1278,7 +1346,7 @@ static int WCUSER_MainLoop(struct inner_data* data)
 	    }
 	    break;
 	default:
-	    Trace(0, "got pb\n");
+	    WINE_ERR("got pb\n");
 	    /* err */
 	    break;
 	}
