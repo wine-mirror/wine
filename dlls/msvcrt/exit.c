@@ -191,11 +191,12 @@ void MSVCRT_exit(int exitcode)
 /*********************************************************************
  *		atexit (MSVCRT.@)
  */
-int MSVCRT_atexit(_onexit_t func)
+int MSVCRT_atexit(void (*func)(void))
 {
   TRACE("(%p)\n", func);
-  return _onexit(func) == func ? 0 : -1;
+  return _onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
 }
+
 
 /*********************************************************************
  *		_purecall (MSVCRT.@)

@@ -138,7 +138,7 @@ char*       _ultoa(unsigned long,char*,int);
 void        MSVCRT(_exit)(int);
 void        MSVCRT(abort)();
 int         MSVCRT(abs)(int);
-int         MSVCRT(atexit)(_onexit_t);
+int         MSVCRT(atexit)(void (*)(void));
 double      MSVCRT(atof)(const char*);
 int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
