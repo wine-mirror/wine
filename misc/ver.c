@@ -71,10 +71,12 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 {
         dbg_decl_str(ver, 1024);
 
-	TRACE(ver," structversion=0x%lx.0x%lx, fileversion=0x%lx.0x%lx, productversion=0x%lx.0x%lx, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
-		    (vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
-		    vffi->dwFileVersionMS,vffi->dwFileVersionLS,
-		    vffi->dwProductVersionMS,vffi->dwProductVersionLS,
+	TRACE(ver," structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
+		    HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion),
+		    HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
+		    HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS),
+		    HIWORD(vffi->dwProductVersionMS),LOWORD(vffi->dwProductVersionMS),
+		    HIWORD(vffi->dwProductVersionLS),LOWORD(vffi->dwProductVersionLS),
 		    vffi->dwFileFlagsMask,
 		    (vffi->dwFileFlags & VS_FF_DEBUG) ? "DEBUG," : "",
 		    (vffi->dwFileFlags & VS_FF_PRERELEASE) ? "PRERELEASE," : "",
@@ -84,9 +86,9 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 		    (vffi->dwFileFlags & VS_FF_SPECIALBUILD) ? "SPECIALBUILD," : ""
 		    );
 
-	dsprintf(ver," OS=0x%lx.0x%lx ",
-		(vffi->dwFileOS&0xFFFF0000)>>16,
-		vffi->dwFileOS&0x0000FFFF
+	dsprintf(ver," OS=0x%x.0x%x ",
+		HIWORD(vffi->dwFileOS),
+		LOWORD(vffi->dwFileOS)
 	);
 	switch (vffi->dwFileOS&0xFFFF0000) {
 	case VOS_DOS:dsprintf(ver,"DOS,");break;
@@ -97,13 +99,13 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 	default:
 		dsprintf(ver,"UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
 	}
-	switch (vffi->dwFileOS & 0xFFFF) {
+	switch (LOWORD(vffi->dwFileOS)) {
 	case VOS__BASE:dsprintf(ver,"BASE");break;
 	case VOS__WINDOWS16:dsprintf(ver,"WIN16");break;
 	case VOS__WINDOWS32:dsprintf(ver,"WIN32");break;
 	case VOS__PM16:dsprintf(ver,"PM16");break;
 	case VOS__PM32:dsprintf(ver,"PM32");break;
-	default:dsprintf(ver,"UNKNOWN(0x%lx)",vffi->dwFileOS&0xFFFF);break;
+	default:dsprintf(ver,"UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
 	}
 	TRACE(ver, "(%s)\n", dbg_str(ver));
 
@@ -444,7 +446,7 @@ find_pe_resource(
 	pehdoffset = LZTELL(lzfd);
 	LZREAD(&pehd);
 	resdir = pehd.OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-	TRACE(ver,"(.,%p,%p,....)\n",typeid,resid);
+	TRACE(ver,"(.,type=%p, id=%p, len=%u, off=%lu)\n",typeid,resid,*reslen,*off);
 	if (!resdir.Size) {
 		WARN(ver,"No resource directory found in PE file.\n");
 		return 0;
@@ -515,6 +517,7 @@ find_pe_resource(
 	}
 	HeapFree(GetProcessHeap(),0,image);
 	HeapFree(GetProcessHeap(),0,sections);
+	TRACE(ver,"-- found at off=%lu\n",*off);
 	return 1;
 }
 
@@ -528,7 +531,7 @@ DWORD WINAPI GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	int			reslen=0;
 	int			res=0;
 
-	TRACE(ver,"(%s,%lx,%lx,%p)\n",
+	TRACE(ver,"(%s,type=0x%lx,id=0x%lx,off=%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
 	lzfd=LZOpenFile32A(filename,&ofs,OF_READ);
@@ -565,7 +568,7 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	int			res=0;
 	int			reslen=datalen;
 
-	TRACE(ver,"(%s,%lx,%lx,%ld,%ld,%p)\n",
+	TRACE(ver,"(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,date=%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
 
@@ -589,11 +592,13 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		if (reslen>datalen) reslen = datalen;
 		memcpy(data,resdata,reslen);
 		free(resdata);
+		TRACE(ver,"--[1] len=%u\n", reslen);
 		return reslen;
 	}
 	LZSeek32(lzfd,off,SEEK_SET);
 	reslen = LZRead32(lzfd,data,datalen);
 	LZClose32(lzfd);
+	TRACE(ver,"--[2] len=%u\n", reslen);
 	return reslen;
 }
 
@@ -656,12 +661,12 @@ DWORD WINAPI GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
 DWORD  WINAPI GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,
                                    LPVOID data)
 {
-	TRACE(ver,"(%s,%ld,%ld,%p)\n",
-		filename,handle,datasize,data
-	);
-	return GetFileResource(
-		filename,VS_FILE_INFO,VS_VERSION_INFO,handle,datasize,data
-	);
+        TRACE(ver,"(%s,%ld,size=%ld,data=%p)\n",
+                filename,handle,datasize,data
+        );
+        return GetFileResource(
+                filename,VS_FILE_INFO,VS_VERSION_INFO,handle,datasize,data
+        );
 }
 
 /* GetFileVersionInfoA				[VERSION.0] */
