@@ -1050,7 +1050,6 @@ HGLOBAL WINAPI GlobalAlloc(
       if (!pintern) return 0;
       if(size)
       {
-	 size = (size + 0x1f) & ~0x1f;
 	 if (!(palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL)))) {
 	    HeapFree(heap, 0, pintern);
 	    return 0;

@@ -34,6 +34,7 @@ DECLARE_DEBUG_CHANNEL(relay);
 #define BUFLIMIT_MULTI		65534	/* maximum buffer size (not including '\0')
 					   FIXME: BTW, new specs say 65535 (do you dare ???) */
 #define BUFLIMIT_SINGLE		32766	/* maximum buffer size (not including '\0') */
+#define GROWLENGTH		32	/* buffers granularity in bytes: must be power of 2 */
 #define HSCROLL_FRACTION	3	/* scroll window by 1/3 width */
 
 /*
@@ -1643,7 +1644,8 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 
 	if (es->hloc32W) {
-	    if ((hNew32W = LocalReAlloc(es->hloc32W, (size + 1) * sizeof(WCHAR), LMEM_MOVEABLE | LMEM_ZEROINIT))) {
+	    UINT alloc_size = ((size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	    if ((hNew32W = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT))) {
 		TRACE("Old 32 bit handle %08x, new handle %08x\n", es->hloc32W, hNew32W);
 		es->hloc32W = hNew32W;
 		es->buffer_size = LocalSize(hNew32W)/sizeof(WCHAR) - 1;
@@ -1672,13 +1674,16 @@ static BOOL EDIT_MakeFit(WND *wnd, EDITSTATE *es, UINT size)
  */
 static BOOL EDIT_MakeUndoFit(EDITSTATE *es, INT size)
 {
+	UINT alloc_size;
+
 	if (size <= es->undo_buffer_size)
 		return TRUE;
 
 	TRACE("trying to ReAlloc to %d+1\n", size);
 
-	if ((es->undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, (size + 1) * sizeof(WCHAR)))) {
-		es->undo_buffer_size = size;
+	alloc_size = ((size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	if ((es->undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, alloc_size))) {
+		es->undo_buffer_size = alloc_size/sizeof(WCHAR);
 		return TRUE;
 	}
 	else
@@ -2677,6 +2682,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 				/* undo-buffer is extended to the right */
 				EDIT_MakeUndoFit(es, utl + e - s);
 				strncpyW(es->undo_text + utl, es->text + s, e - s + 1);
+				(es->undo_text + utl)[e - s] = 0; /* ensure 0 termination */
 			} else if (!es->undo_insert_count && (*es->undo_text && (e == es->undo_position))) {
 				/* undo-buffer is extended to the left */
 				EDIT_MakeUndoFit(es, utl + e - s);
@@ -2689,6 +2695,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 				/* new undo-buffer */
 				EDIT_MakeUndoFit(es, e - s);
 				strncpyW(es->undo_text, es->text + s, e - s + 1);
+				es->undo_text[e - s] = 0; /* ensure 0 termination */
 				es->undo_position = s;
 			}
 			/* any deletion makes the old insertion-undo invalid */
@@ -3421,9 +3428,10 @@ static void EDIT_WM_Copy(WND *wnd, EDITSTATE *es)
 	if (e == s)
 		return;
 	ORDER_INT(s, e);
-	hdst = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, (DWORD)(e - s + 1) * sizeof(WCHAR));
+	hdst = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (DWORD)(e - s + 1) * sizeof(WCHAR));
 	dst = GlobalLock(hdst);
 	strncpyW(dst, es->text + s, e - s);
+	dst[e - s] = 0; /* ensure 0 termination */
 	TRACE("%s\n", debugstr_w(dst));
 	GlobalUnlock(hdst);
 	OpenClipboard(wnd->hwndSelf);
@@ -3532,16 +3540,21 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
  */
 static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode)
 {
+    if(!count) return 0;
+
     if(unicode)
     {
 	LPWSTR textW = (LPWSTR)lParam;
 	strncpyW(textW, es->text, count);
+	textW[count - 1] = 0; /* ensure 0 termination */
 	return strlenW(textW);
     }
     else
     {
 	LPSTR textA = (LPSTR)lParam;
-	return WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, count, NULL, NULL);
+	INT ret = WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, count, NULL, NULL);
+	textA[count - 1] = 0; /* ensure 0 termination */
+	return ret;
     }
 }
 
@@ -4010,6 +4023,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, INT x, INT y)
 static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL unicode)
 {
 	EDITSTATE *es;
+	UINT alloc_size;
 
 	TRACE("Creating %s edit control\n", unicode ? "Unicode" : "ANSI");
 
@@ -4087,7 +4101,8 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, DWORD style, HWND hwndParent, BOOL uni
 		es->style |= ES_AUTOHSCROLL;
 	}
 
-	if(!(es->hloc32W = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, (es->buffer_size + 1) * sizeof(WCHAR))))
+	alloc_size = ((es->buffer_size + 1) * sizeof(WCHAR) + GROWLENGTH - 1) & ~(GROWLENGTH - 1);
+	if(!(es->hloc32W = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size)))
 	    return FALSE;
 	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
 
