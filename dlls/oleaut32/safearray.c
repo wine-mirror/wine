@@ -1254,7 +1254,8 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
   if (psa->cLocks)
     return DISP_E_ARRAYISLOCKED; /* Can't delete a locked array */
 
-  if (psa->pvData)
+  /* If static, keep pvData and don't free */
+  if (psa->pvData && !(psa->fFeatures & FADF_STATIC))
   {
     /* Delete the actual item data */
     if (FAILED(SAFEARRAY_DestroyData(psa, 0)))
