@@ -842,7 +842,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-curses        do not use curses
-  --without-reentrant-x   compile for use with non-reentrant X libraries
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -1263,12 +1262,6 @@ fi;
 # Check whether --with-curses or --without-curses was given.
 if test "${with_curses+set}" = set; then
   withval="$with_curses"
-
-fi;
-
-# Check whether --with-reentrant-x or --without-reentrant-x was given.
-if test "${with_reentrant_x+set}" = set; then
-  withval="$with_reentrant_x"
 
 fi;
 
@@ -10054,54 +10047,38 @@ _ACEOF
 fi
 
 
-if test "$have_x" = "yes" -a "$wine_cv_libc_reentrant" != "no"
+if test "$have_x" = "yes"
 then
 echo "$as_me:$LINENO: checking for reentrant X libraries" >&5
 echo $ECHO_N "checking for reentrant X libraries... $ECHO_C" >&6
 if test "${wine_cv_x_reentrant+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-   if test "x$with_reentrant_x" = "xno"
-    then
-        wine_cv_x_reentrant=no
+  libX11_check=none
+    for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
+        if test -r $dir/libX11.so; then
+            libX11_check="-D $dir/libX11.so"
+            break
+        fi
+        if test -r $dir/libX11.a; then
+            libX11_check="$dir/libX11.a"
+            break
+        fi
+    done
+    if test "$libX11_check" != "none"; then
+        if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
+        then
+            wine_cv_x_reentrant=yes
+        else
+            wine_cv_x_reentrant=no
+        fi
     else
-	libX11_check=none
-	for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
-	    if test -r $dir/libX11.so; then
-		libX11_check="-D $dir/libX11.so"
-		break 1
-	    fi
-	    if test -r $dir/libX11.a; then
-		libX11_check="$dir/libX11.a"
-		break 1
-	    fi
-	done
-	if test "$libX11_check" != "none"; then
-	    if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
-	    then
-		wine_cv_x_reentrant=yes
-	    else
-		wine_cv_x_reentrant=no
-	    fi
-	else
-	    wine_cv_x_reentrant=unknown
-	fi
+        wine_cv_x_reentrant=unknown
     fi
 fi
 echo "$as_me:$LINENO: result: $wine_cv_x_reentrant" >&5
 echo "${ECHO_T}$wine_cv_x_reentrant" >&6
-else
-    wine_cv_x_reentrant=no
 fi
-if test "$wine_cv_x_reentrant" = "no"
-then
-
-cat >>confdefs.h <<\_ACEOF
-#define NO_REENTRANT_X11 1
-_ACEOF
-
-fi
-
 
 
 # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
@@ -13886,6 +13863,13 @@ then
   echo "*** Warning: non-reentrant libc detected. Wine will be built without"
   echo "*** threading support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
+fi
+
+if test "$have_x" = "yes" -a "$wine_cv_x_reentrant" != "yes"
+then
+  echo
+  echo "*** Warning: non-reentrant X11 library detected. Multi-threaded"
+  echo "*** applications won't work properly. You should upgrade your X11 library."
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"

@@ -19,7 +19,6 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
 AC_ARG_ENABLE(opengl,AC_HELP_STRING([--enable-opengl],[force usage of OpenGL even if the latter is thread-safe via pthread]))
 AC_ARG_WITH(curses,     AC_HELP_STRING([--without-curses],[do not use curses]))
-AC_ARG_WITH(reentrant-x,AC_HELP_STRING([--without-reentrant-x],[compile for use with non-reentrant X libraries]))
 
 AC_SUBST(OPTIONS)
 if test "x$enable_debug" = "xno"
@@ -833,47 +832,33 @@ fi
 dnl **** Check for reentrant X libraries ****
 dnl
 dnl This may fail to determine whether X libraries are reentrant if
-dnl AC_PATH_XTRA does not set x_libraries. In this case manual configuration
-dnl is possible with the --without-reentrant-x option.
+dnl AC_PATH_XTRA does not set x_libraries.
 
-if test "$have_x" = "yes" -a "$wine_cv_libc_reentrant" != "no"
+if test "$have_x" = "yes"
 then
 AC_CACHE_CHECK( [for reentrant X libraries], wine_cv_x_reentrant,
-  [ if test "x$with_reentrant_x" = "xno" 
-    then
-        wine_cv_x_reentrant=no
+    [libX11_check=none
+    for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
+        if test -r $dir/libX11.so; then
+            libX11_check="-D $dir/libX11.so"
+            break
+        fi
+        if test -r $dir/libX11.a; then
+            libX11_check="$dir/libX11.a"
+            break
+        fi
+    done
+    if test "$libX11_check" != "none"; then
+        if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
+        then
+            wine_cv_x_reentrant=yes
+        else
+            wine_cv_x_reentrant=no
+        fi
     else
-	libX11_check=none
-	for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
-	    if test -r $dir/libX11.so; then
-		libX11_check="-D $dir/libX11.so"
-		break 1
-	    fi
-	    if test -r $dir/libX11.a; then
-		libX11_check="$dir/libX11.a"
-		break 1
-	    fi
-	done
-	if test "$libX11_check" != "none"; then
-	    if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
-	    then
-		wine_cv_x_reentrant=yes
-	    else
-		wine_cv_x_reentrant=no
-	    fi
-	else
-	    wine_cv_x_reentrant=unknown
-	fi
-    fi ] )
-else
-    wine_cv_x_reentrant=no
+        wine_cv_x_reentrant=unknown
+    fi])
 fi
-if test "$wine_cv_x_reentrant" = "no"
-then
-  AC_DEFINE(NO_REENTRANT_X11, 1,
-            [Define if X libraries are not reentrant (compiled without -D_REENTRANT)])
-fi
-
 
 dnl **** Check for functions ****
 
@@ -1437,6 +1422,13 @@ then
   echo "*** Warning: non-reentrant libc detected. Wine will be built without"
   echo "*** threading support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
+fi
+
+if test "$have_x" = "yes" -a "$wine_cv_x_reentrant" != "yes"
+then
+  echo
+  echo "*** Warning: non-reentrant X11 library detected. Multi-threaded"
+  echo "*** applications won't work properly. You should upgrade your X11 library."
 fi
 
 if test "$wine_cv_opengl_version_OK" = "no"
