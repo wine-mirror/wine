@@ -25,6 +25,7 @@
 #include "callback.h"
 #include "options.h"
 #include "heap.h"
+#include "file.h"
 
 DEFAULT_DEBUG_CHANNEL(print)
 
@@ -421,7 +422,6 @@ static PPRINTJOB FindPrintJobFromHandle(HANDLE16 hHandle)
     return gPrintJobsTable[0];
 }
 
-/* TTD Need to do some DOS->UNIX file conversion here */
 static int CreateSpoolFile(LPCSTR pszOutput)
 {
     int fd=-1;
@@ -470,12 +470,20 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     }
     else
     {
+        DOS_FULL_NAME fullName;
+
         TRACE("Just assume its a file\n");
 
-        if ((fd = open(psCmdP, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+        /**
+         * The file name can be dos based, we have to find its
+         * Unix correspondant file name
+         */
+        DOSFS_GetFullName(psCmdP, FALSE, &fullName);
+
+        if ((fd = open(fullName.long_name, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
             ERR("Failed to create spool file %s, errno = %d\n", 
-		psCmdP, errno);
+                fullName.long_name, errno);
         }
     }
     return fd;
