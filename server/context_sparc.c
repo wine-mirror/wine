@@ -157,6 +157,12 @@ void *get_thread_ip( struct thread *thread )
     return (void *)context.pc;
 }
 
+/* determine if we should continue the thread in single-step mode */
+int get_thread_single_step( struct thread *thread )
+{
+    return 0;  /* FIXME */
+}
+
 /* retrieve the current context of a thread */
 DECL_HANDLER(get_thread_context)
 {

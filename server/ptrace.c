@@ -26,6 +26,9 @@
 #ifndef PTRACE_CONT
 #define PTRACE_CONT PT_CONTINUE
 #endif
+#ifndef PTRACE_SINGLESTEP
+#define PTRACE_SINGLESTEP PT_STEP
+#endif
 #ifndef PTRACE_ATTACH
 #define PTRACE_ATTACH PT_ATTACH
 #endif
@@ -49,6 +52,7 @@ static const int use_ptrace = 0;
 #define PT_DETACH   2
 #define PT_READ_D   3
 #define PT_WRITE_D  4
+#define PT_STEP     5
 
 static int ptrace(int req, ...) { return -1; /*FAIL*/ }
 #endif
@@ -64,11 +68,13 @@ static int handle_child_status( struct thread *thread, int pid, int status )
         switch(sig)
         {
         case SIGSTOP:  /* continue at once if not suspended */
-            if (!thread || !(thread->process->suspend + thread->suspend))
-                ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
-            break;
+            if (thread && (thread->process->suspend + thread->suspend)) break;
+            /* fall through */
         default:  /* ignore other signals for now */
-            ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
+            if (thread && get_thread_single_step( thread ))
+                ptrace( PTRACE_SINGLESTEP, pid, (caddr_t)1, sig );
+            else
+                ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
             break;
         }
         return sig;
@@ -168,7 +174,8 @@ void continue_thread( struct thread *thread )
 {
     if (!thread->unix_pid) return;
     if (!thread->attached) kill( thread->unix_pid, SIGCONT );
-    else ptrace( PTRACE_CONT, thread->unix_pid, (caddr_t)1, SIGSTOP );
+    else ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
+                 thread->unix_pid, (caddr_t)1, SIGSTOP );
 }
 
 /* suspend a thread to allow using ptrace on it */
