@@ -456,6 +456,7 @@ L\"			{
 <yylstr>\\x[0-9a-fA-F]{1,3} {  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
 <yylstr>\\[0-9]+	yyerror("Bad escape sequence");
+<yylstr>\\\n{ws}*	;	/* backslash at EOL continues string after leading whitespace on next line */
 <yylstr>\\a		addwchar('\a');
 <yylstr>\\b		addwchar('\b');
 <yylstr>\\f		addwchar('\f');
@@ -499,7 +500,8 @@ L\"			{
 			}
 <yystr>\\x[0-9a-fA-F]	{  yyerror("Invalid hex escape sequence '%s'", yytext); }
 
-<yystr>\\[0-9]+		yyerror("Bad escape secuence");
+<yystr>\\[0-9]+		yyerror("Bad escape sequence");
+<yystr>\\\n{ws}*	;	/* backslash at EOL continues string after leading whitespace on next line */
 <yystr>\\a		addcchar('\a');
 <yystr>\\b		addcchar('\b');
 <yystr>\\f		addcchar('\f');
