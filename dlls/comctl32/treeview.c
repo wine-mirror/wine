@@ -2502,7 +2502,7 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 	    }
 	    else
 	    {
-		if (wineItem == infoPtr->hotItem)
+		if ((infoPtr->dwStyle & TVS_TRACKSELECT) && (wineItem == infoPtr->hotItem))
 		    oldTextColor = SetTextColor(hdc, comctl32_color.clrHighlight);
 		else if (infoPtr->clrText == -1)
 		    oldTextColor =
