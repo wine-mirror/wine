@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 # define TRACE_VSVECTOR(name)
 #endif
 
+#if 0 /* FIXME : Needs sorting when vshader code moved in properly */
 
 /**
  * DirectX9 SDK download
@@ -845,3 +846,5 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantB(IDirect3DVertexShaderImpl*
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
+
+#endif

@@ -21,22 +21,9 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/debug.h"
-
-#include "d3d9.h"
 #include "d3d9_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-
 
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
@@ -56,8 +43,9 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
 
     object->lpVtbl = &Direct3D9_Vtbl;
     object->ref = 1;
+    object->WineD3D = WineDirect3DCreate(SDKVersion, 9);
 
-    TRACE("SDKVersion = %x, Created Direct3D object at %p\n", SDKVersion, object);
+    TRACE("SDKVersion = %x, Created Direct3D object @ %p, WineObj @ %p\n", SDKVersion, object, object->WineD3D);
 
     return (IDirect3D9*) object;
 }

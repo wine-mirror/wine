@@ -75,9 +75,7 @@ HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(LPDIRECT3D9 iface, void* 
 
 UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9 iface) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    /* FIXME: Set to one for now to imply the display */
-    TRACE("(%p): Mostly stub, only returns primary display\n", This);
-    return 1;
+    return IWineD3D_GetAdapterCount(This->WineD3D);
 }
 
 HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) {

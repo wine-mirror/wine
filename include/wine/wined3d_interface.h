@@ -35,6 +35,36 @@
  * PLEASE USE wine/wined3d_gl.h INSTEAD
  */
 
+
+/*****************************************************************************
+ * WineD3D interface 
+ */
+typedef struct IWineD3D IWineD3D;
+
+#define INTERFACE IWineD3D
+#define IWineD3D_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD_(UINT,GetAdapterCount             )(THIS) PURE; \
+
+DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
+#undef INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define IWineD3D_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)
+#define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
+/*** IWineD3D methods ***/
+#define IWineD3D_GetAdapterCount(p)                       (p)->lpVtbl->GetAdapterCount(p)
+#endif
+
+/* Define the main WineD3D entrypoint */
+IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion);
+
+
+
+
+#if 0 /* FIXME: During porting in from d3d8 - the following will be used */
 /*****************************************************************
  * Some defines
  */
@@ -104,15 +134,7 @@ extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantF(IDirect3DVertexShad
 extern DWORD   WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderImpl* This);
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA* input, VSHADEROUTPUTDATA* output);
 
-#ifdef __cplusplus
-extern "C" {
-#endif  /* defined(__cplusplus) */
+#endif /* Temporary #if 0 */
 
-/* Define the main entrypoint as well */
-IDirect3DImpl* WINAPI WineDirect3DCreate(UINT SDKVersion);
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif /* defined(__cplusplus) */
 
 #endif

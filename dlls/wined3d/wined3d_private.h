@@ -3,6 +3,7 @@
  *
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2004      Jason Edmeades   
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,18 +24,46 @@
 #define __WINE_WINED3D_PRIVATE_H
 
 #include <stdarg.h>
-
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
 
-#include "d3d8.h"
-#include "d3d8types.h"
+#include "d3d9.h"
+#include "d3d9types.h"
 #include "wine/wined3d_interface.h"
 
+extern int vs_mode;
+#define VS_NONE 0
+#define VS_HW   1
+#define VS_SW   2
 
+extern int ps_mode;
+#define PS_NONE 0
+#define PS_HW   1
+
+/*****************************************************************************
+ * IWineD3D implementation structure
+ */
+typedef struct IWineD3DImpl
+{
+    /* IUnknown fields */
+    IWineD3DVtbl           *lpVtbl;
+    DWORD                   ref;     /* Note: Ref counting not required */
+
+    /* WineD3D Information */
+    UINT                    dxVersion;
+} IWineD3DImpl;
+
+extern IWineD3DVtbl IWineD3D_Vtbl;
+
+
+
+#if 0 /* Needs fixing during rework */
 /*****************************************************************************
  * IDirect3DVertexShaderDeclaration implementation structure
  */
@@ -86,4 +115,5 @@ struct IDirect3DPixelShaderImpl {
   PSHADEROUTPUTDATA output;
 };
 
+#endif /* Needs fixing during rework */
 #endif

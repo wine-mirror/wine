@@ -27,7 +27,16 @@
 #endif
 
 /* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
-/*
+#include <stdarg.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "wine/debug.h"
+
 #define XMD_H 
 #include <GL/gl.h>
 #include <GL/glx.h>
@@ -35,7 +44,6 @@
 # include <GL/glext.h>
 #endif
 #undef  XMD_H
-*/
 
 #undef APIENTRY
 #undef CALLBACK
@@ -45,6 +53,10 @@
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
+
+#include "d3d9.h"
+#include "d3d9_private.h"
+#include "wine/wined3d_interface.h"
 
 /* X11 locking */
 
@@ -179,6 +191,9 @@ struct IDirect3D9Impl
     /* IUnknown fields */
     IDirect3D9Vtbl         *lpVtbl;
     DWORD                   ref;
+
+    /* The WineD3D device */
+    IWineD3D               *WineD3D;
 
     /* IDirect3D9 fields */
     /*
