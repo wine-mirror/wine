@@ -450,9 +450,9 @@ int DRIVE_Chdir( int drive, const char *path )
     BY_HANDLE_FILE_INFORMATION info;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    TRACE(dosfs, "(%c:,%s)\n", 'A' + drive, path );
     strcpy( buffer, "A:" );
     buffer[0] += drive;
+    TRACE(dosfs, "(%c:,%s)\n", buffer[0], path );
     lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
@@ -630,6 +630,30 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
 
 /***********************************************************************
  *           GetDiskFreeSpace32A   (KERNEL32.206)
+ *
+ * Fails if expression resulting from current drive's dir and "root"
+ * is not a root dir of the target drive.
+ *
+ * UNDOC: setting some LPDWORDs to NULL is perfectly possible 
+ * if the corresponding info is unneeded.
+ *
+ * FIXME: needs to support UNC names from Win95 OSR2 on.
+ *
+ * Behaviour under Win95a:
+ * CurrDir     root   result
+ * "E:\\TEST"  "E:"   FALSE
+ * "E:\\"      "E:"   TRUE
+ * "E:\\"      "E"    FALSE
+ * "E:\\"      "\\"   TRUE
+ * "E:\\TEST"  "\\"   TRUE
+ * "E:\\TEST"  ":\\"  FALSE
+ * "E:\\TEST"  "E:\\" TRUE
+ * "E:\\TEST"  ""     FALSE
+ * "E:\\"      ""     FALSE (!)
+ * "E:\\"      0x0    TRUE
+ * "E:\\TEST"  0x0    TRUE  (!)
+ * "E:\\TEST"  "C:"   TRUE  (when CurrDir of "C:" set to "\\")
+ * "E:\\TEST"  "C:"   FALSE (when CurrDir of "C:" set to "\\TEST")
  */
 BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
@@ -637,17 +661,27 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
 {
     int	drive;
     DWORD size,available;
+    LPCSTR path;
+    DWORD cluster_sec;
 
-    if (!root) drive = DRIVE_GetCurrentDrive();
+    if ((!root) || (root == "\\"))
+	drive = DRIVE_GetCurrentDrive();
     else
+    if ( (strlen(root) >= 2) && (root[1] == ':')) /* root contains drive tag */
     {
-        if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
-        {
-            WARN(dosfs, "invalid root '%s'\n", root );
-            return FALSE;
-        }
         drive = toupper(root[0]) - 'A';
+	path = &root[2];
+	if (path[0] == '\0')
+	    path = DRIVE_GetDosCwd(drive);
+	else
+	if (path[0] == '\\')
+	    path++;
+	if (strlen(path)) /* oops, we are in a subdir */
+	    return FALSE;
     }
+    else
+        return FALSE;
+
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
 
     /* Cap the size and available at 2GB as per specs.  */
@@ -655,19 +689,26 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     if (available > 0x7fffffff) available = 0x7fffffff;
 
     if (DRIVE_GetType(drive)==TYPE_CDROM) {
+	if (sector_bytes)
 	*sector_bytes    = 2048;
 	size            /= 2048;
 	available       /= 2048;
     } else {
+	if (sector_bytes)
 	*sector_bytes    = 512;
 	size            /= 512;
 	available       /= 512;
     }
     /* fixme: probably have to adjust those variables too for CDFS */
-    *cluster_sectors = 1;
-    while (*cluster_sectors * 65536 < size) *cluster_sectors *= 2;
-    *free_clusters   = available/ *cluster_sectors;
-    *total_clusters  = size/ *cluster_sectors;
+    cluster_sec = 1;
+    while (cluster_sec * 65536 < size) cluster_sec *= 2;
+
+    if (cluster_sectors)
+	*cluster_sectors = cluster_sec;
+    if (free_clusters)
+	*free_clusters   = available / cluster_sec;
+    if (total_clusters)
+	*total_clusters  = size / cluster_sec;
     return TRUE;
 }
 
