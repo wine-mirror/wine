@@ -45,7 +45,7 @@
         <title>Fiddle with DLL configuration</title>
 
 	<para>
-	  Run with --debugmsg +loaddll to figure out which DLLs are
+	  Run with WINEDEBUG=+loaddll to figure out which DLLs are
 	  being used, and whether they're being loaded as native or
 	  built-in.
 	  Then make sure you have proper native DLL files in your
@@ -316,9 +316,9 @@
           </listitem>
           <listitem>
           <para>
-            Re-run the program with the <parameter>--debugmsg
-            +relay</parameter> option (i.e., <command>wine
-            --debugmsg +relay sol.exe</command>).
+            Re-run the program with the WINEDEBUG enviroment variable <parameter>
+            WINEDEBUG=+relay</parameter> option (i.e., <command>WINEDEBUG=+relay
+            wine sol.exe</command>).
           </para>
           <para>
             This will output additional information at the console 
@@ -413,7 +413,7 @@
            <orderedlist>
              <listitem>
              <para>
-               Redirect all the output of <parameter> -debugmsg </parameter>
+               Redirect all the output of <parameter> WINEDEBUG </parameter>
                to a file.
              </para>
              </listitem>
@@ -432,7 +432,7 @@
              <term>all shells:</term>
              <listitem>
              <screen>
-<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out;
+<prompt>$ </prompt>echo quit | WINEDEBUG=+relay wine [other_options] program_name >& filename.out;
 <prompt>$ </prompt>tail -n 100 filename.out > report_file
              </screen>
              <para>
@@ -447,7 +447,7 @@
              <term>tcsh and other csh-like shells:</term>
              <listitem>
              <screen>
-<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name |& tee filename.out;
+<prompt>$ </prompt>WINEDEBUG=+relay wine [other_options] program_name |& tee filename.out;
 <prompt>$ </prompt>tail -n 100 filename.out > report_file
              </screen>
              </listitem>
@@ -456,7 +456,7 @@
              <term>bash and other sh-like shells:</term>
              <listitem>
              <screen>
-<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out;
+<prompt>$ </prompt>WINEDEBUG=+relay wine [other_options] program_name 2>&1 | tee filename.out;
 <prompt>$ </prompt>tail -n 100 filename.out > report_file
              </screen>
              </listitem>
