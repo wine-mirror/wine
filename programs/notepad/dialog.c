@@ -76,7 +76,7 @@ int AlertFileNotSaved(LPSTR szFileName) {
    LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
 
    /* Display modal */
-   nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource, MB_ICONEXCLAMATION + MB_YESNOCANCEL);
+   nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
    return(nResult);
 }
 

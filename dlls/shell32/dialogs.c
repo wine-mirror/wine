@@ -56,7 +56,7 @@ void WINAPI RunFileDlg(
 void WINAPI ExitWindowsDialog (HWND hWndOwner)
 {
 	TRACE("(0x%08x)\n", hWndOwner);
-	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDOK)
+	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDYES)
 	{
 	  SendMessageA ( hWndOwner, WM_QUIT, 0, 0);
 	}
