@@ -306,6 +306,16 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             0x07 - 80x25
         */
 
+        /* Bit 7 of AH = 0 -> Clean the video memory
+                         1 -> Don't clean it
+        */  
+        if (!(AL_reg(context)&0x80)) {
+	    /* FIXME: Do something which cleans the video memory */ 
+        }
+
+        /* FIXME: Should we keep the bit 7 in the Bios Data memory? */ 
+        AL_reg(context) &= ~0x80;
+
         switch (AL_reg(context)) {
             case 0x00: /* 40x25 */
             case 0x01:
