@@ -174,11 +174,11 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpNextSize, LPDWORD lpMessageCount,
                                LPDWORD lpReadTimeout )
 {
-    FIXME_(win32)("(%d): stub\n",hMailslot);
-    *lpMaxMessageSize = (DWORD)NULL;
-    *lpNextSize = (DWORD)NULL;
-    *lpMessageCount = (DWORD)NULL;
-    *lpReadTimeout = (DWORD)NULL;
+    FIXME_(win32)("(%04x): stub\n",hMailslot);
+    if (lpMaxMessageSize) *lpMaxMessageSize = (DWORD)NULL;
+    if (lpNextSize) *lpNextSize = (DWORD)NULL;
+    if (lpMessageCount) *lpMessageCount = (DWORD)NULL;
+    if (lpReadTimeout) *lpReadTimeout = (DWORD)NULL;
     return TRUE;
 }
 
