@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2003 Kevin Koltzau
+ * Copyright (C) 2004 Francois Gouget
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,1013 +20,1251 @@
 #ifndef __WINE_TMSCHEMA_H
 #define __WINE_TMSCHEMA_H
 
+#include <schemadef.h>
 
-/* Primitive types */
-#define TMT_STRING   201
-#define TMT_INT      202
-#define TMT_BOOL     203
-#define TMT_COLOR    204
-#define TMT_MARGINS  205
-#define TMT_FILENAME 206
-#define TMT_SIZE     207
-#define TMT_POSITION 208
-#define TMT_RECT     209
-#define TMT_FONT     210
-#define TMT_INTLIST  211
+BEGIN_TM_SCHEMA(ThemeMgrSchema)
 
 
-/* Enumerations */
+/***** ENUMERATIONS *****/
 
 /* BGTYPE Enum */
-#define BT_IMAGEFILE  0
-#define BT_BORDERFILL 1
-#define BT_NONE       2
+BEGIN_TM_ENUM(BGTYPE)
+    TM_ENUM(0, BT, IMAGEFILE)
+    TM_ENUM(1, BT, BORDERFILL)
+    TM_ENUM(2, BT, NONE)
+END_TM_ENUM()
 
 /* IMAGELAYOUT Enum */
-#define IL_VERTICAL   0
-#define IL_HORIZONTAL 1
+BEGIN_TM_ENUM(IMAGELAYOUT)
+    TM_ENUM(0, IL, VERTICAL)
+    TM_ENUM(1, IL, HORIZONTAL)
+END_TM_ENUM()
 
 /* BORDERTYPE Enum */
-#define BT_RECT      0
-#define BT_ROUNDRECT 1
-#define BT_ELLIPSE   2
+BEGIN_TM_ENUM(BORDERTYPE)
+    TM_ENUM(0, BT, RECT)
+    TM_ENUM(1, BT, ROUNDRECT)
+    TM_ENUM(2, BT, ELLIPSE)
+END_TM_ENUM()
 
 /* FILLTYPE Enum */
-#define FT_SOLID          0
-#define FT_VERTGRADIENT   1
-#define FT_HORZGRADIENT   2
-#define FT_RADIALGRADIENT 3
-#define FT_TILEIMAGE      4
+BEGIN_TM_ENUM(FILLTYPE)
+    TM_ENUM(0, FT, SOLID)
+    TM_ENUM(1, FT, VERTGRADIENT)
+    TM_ENUM(2, FT, HORZGRADIENT)
+    TM_ENUM(3, FT, RADIALGRADIENT)
+    TM_ENUM(4, FT, TILEIMAGE)
+END_TM_ENUM()
 
 /* SIZINGTYPE Enum */
-#define ST_TRUESIZE 0
-#define ST_STRETCH  1
-#define ST_TILE     2
+BEGIN_TM_ENUM(SIZINGTYPE)
+    TM_ENUM(0, ST, TRUESIZE)
+    TM_ENUM(1, ST, STRETCH)
+    TM_ENUM(2, ST, TILE)
+END_TM_ENUM()
 
 /* HALIGN Enum */
-#define HA_LEFT   0
-#define HA_CENTER 1
-#define HA_RIGHT  2
+BEGIN_TM_ENUM(HALIGN)
+    TM_ENUM(0, HA, LEFT)
+    TM_ENUM(1, HA, CENTER)
+    TM_ENUM(2, HA, RIGHT)
+END_TM_ENUM()
 
 /* CONTENTALIGNMENT Enum */
-#define CA_LEFT   0
-#define CA_CENTER 1
-#define CA_RIGHT  2
+BEGIN_TM_ENUM(CONTENTALIGNMENT)
+    TM_ENUM(0, CA, LEFT)
+    TM_ENUM(1, CA, CENTER)
+    TM_ENUM(2, CA, RIGHT)
+END_TM_ENUM()
 
 /* VALIGN Enum */
-#define VA_TOP    0
-#define VA_CENTER 1
-#define VA_BOTTOM 2
+BEGIN_TM_ENUM(VALIGN)
+    TM_ENUM(0, VA, TOP)
+    TM_ENUM(1, VA, CENTER)
+    TM_ENUM(2, VA, BOTTOM)
+END_TM_ENUM()
 
 /* OFFSETTYPE Enum */
-#define OT_TOPLEFT           0
-#define OT_TOPRIGHT          1
-#define OT_TOPMIDDLE         2
-#define OT_BOTTOMLEFT        3
-#define OT_BOTTOMRIGHT       4
-#define OT_BOTTOMMIDDLE      5
-#define OT_MIDDLELEFT        6
-#define OT_MIDDLERIGHT       7
-#define OT_LEFTOFCAPTION     8
-#define OT_RIGHTOFCAPTION    9
-#define OT_LEFTOFLASTBUTTON  10
-#define OT_RIGHTOFLASTBUTTON 11
-#define OT_ABOVELASTBUTTON   12
-#define OT_BELOWLASTBUTTON   13
+BEGIN_TM_ENUM(OFFSETTYPE)
+    TM_ENUM(0, OT, TOPLEFT)
+    TM_ENUM(1, OT, TOPRIGHT)
+    TM_ENUM(2, OT, TOPMIDDLE)
+    TM_ENUM(3, OT, BOTTOMLEFT)
+    TM_ENUM(4, OT, BOTTOMRIGHT)
+    TM_ENUM(5, OT, BOTTOMMIDDLE)
+    TM_ENUM(6, OT, MIDDLELEFT)
+    TM_ENUM(7, OT, MIDDLERIGHT)
+    TM_ENUM(8, OT, LEFTOFCAPTION)
+    TM_ENUM(9, OT, RIGHTOFCAPTION)
+    TM_ENUM(10, OT, LEFTOFLASTBUTTON)
+    TM_ENUM(11, OT, RIGHTOFLASTBUTTON)
+    TM_ENUM(12, OT, ABOVELASTBUTTON)
+    TM_ENUM(13, OT, BELOWLASTBUTTON)
+END_TM_ENUM()
 
 /* ICONEFFECT Enum */
-#define ICE_NONE   0
-#define ICE_GLOW   1
-#define ICE_SHADOW 2
-#define ICE_PULSE  3
-#define ICE_ALPHA  4
+BEGIN_TM_ENUM(ICONEFFECT)
+    TM_ENUM(0, ICE, NONE)
+    TM_ENUM(1, ICE, GLOW)
+    TM_ENUM(2, ICE, SHADOW)
+    TM_ENUM(3, ICE, PULSE)
+    TM_ENUM(4, ICE, ALPHA)
+END_TM_ENUM()
 
 /* TEXTSHADOWTYPE Enum */
-#define TST_NONE       0
-#define TST_SINGLE     1
-#define TST_CONTINUOUS 2
+BEGIN_TM_ENUM(TEXTSHADOWTYPE)
+    TM_ENUM(0, TST, NONE)
+    TM_ENUM(1, TST, SINGLE)
+    TM_ENUM(2, TST, CONTINUOUS)
+END_TM_ENUM()
 
 /* GLYPHTYPE Enum */
-#define GT_NONE       0
-#define GT_IMAGEGLYPH 1
-#define GT_FONTGLYPH  2
+BEGIN_TM_ENUM(GLYPHTYPE)
+    TM_ENUM(0, GT, NONE)
+    TM_ENUM(1, GT, IMAGEGLYPH)
+    TM_ENUM(2, GT, FONTGLYPH)
+END_TM_ENUM()
 
 /* IMAGESELECTTYPE Enum */
-#define IST_NONE 0
-#define IST_SIZE 1
-#define IST_DPI  2
+BEGIN_TM_ENUM(IMAGESELECTTYPE)
+    TM_ENUM(0, IST, NONE)
+    TM_ENUM(1, IST, SIZE)
+    TM_ENUM(2, IST, DPI)
+END_TM_ENUM()
 
 /* TRUESIZESCALINGTYPE Enum */
-#define TSST_NONE 0
-#define TSST_SIZE 1
-#define TSST_DPI  2
+BEGIN_TM_ENUM(TRUESIZESCALINGTYPE)
+    TM_ENUM(0, TSST, NONE)
+    TM_ENUM(1, TSST, SIZE)
+    TM_ENUM(2, TSST, DPI)
+END_TM_ENUM()
 
 /* GLYPHFONTSIZINGTYPE Enum */
-#define GFST_NONE 0
-#define GFST_SIZE 1
-#define GFST_DPI  2
+BEGIN_TM_ENUM(GLYPHFONTSIZINGTYPE)
+    TM_ENUM(0, GFST, NONE)
+    TM_ENUM(1, GFST, SIZE)
+    TM_ENUM(2, GFST, DPI)
+END_TM_ENUM()
 
 
-/* PROPERTIES */
+/***** PROPERTIES *****/
+BEGIN_TM_PROPS()
 
-/* Misc properties */
-#define TMT_COLORSCHEMES 401
-#define TMT_SIZES        402
-#define TMT_CHARSET      403
+    /* Primitive types */
+    TM_PROP(201, TMT, STRING,                     STRING)
+    TM_PROP(202, TMT, INT,                        INT)
+    TM_PROP(203, TMT, BOOL,                       BOOL)
+    TM_PROP(204, TMT, COLOR,                      COLOR)
+    TM_PROP(205, TMT, MARGINS,                    MARGINS)
+    TM_PROP(206, TMT, FILENAME,                   FILENAME)
+    TM_PROP(207, TMT, SIZE,                       SIZE)
+    TM_PROP(208, TMT, POSITION,                   POSITION)
+    TM_PROP(209, TMT, RECT,                       RECT)
+    TM_PROP(210, TMT, FONT,                       FONT)
+    TM_PROP(211, TMT, INTLIST,                    INTLIST)
+    /* we should have ENUM around here */
 
-/* Documentation properties */
-#define TMT_DISPLAYNAME 601
-#define TMT_TOOLTIP     602
-#define TMT_COMPANY     603
-#define TMT_AUTHOR      604
-#define TMT_COPYRIGHT   605
-#define TMT_URL         606
-#define TMT_VERSION     607
-#define TMT_DESCRIPTION 608
-#define TMT_FIRST_RCSTRING_NAME   TMT_DISPLAYNAME
-#define TMT_LAST_RCSTRING_NAME    TMT_DESCRIPTION
+    /* Misc properties */
+    TM_PROP(401, TMT, COLORSCHEMES,               STRING)
+    TM_PROP(402, TMT, SIZES,                      STRING)
+    TM_PROP(403, TMT, CHARSET,                    INT)
 
-/* Font theme metric properties */
-#define TMT_CAPTIONFONT      801
-#define TMT_SMALLCAPTIONFONT 802
-#define TMT_MENUFONT         803
-#define TMT_STATUSFONT       804
-#define TMT_MSGBOXFONT       805
-#define TMT_ICONTITLEFONT    806
-#define TMT_FIRSTFONT TMT_CAPTIONFONT
-#define TMT_LASTFONT  TMT_ICONTITLEFONT
+    /* Documentation properties */
+    TM_PROP(601, TMT, DISPLAYNAME,                STRING)
+    TM_PROP(602, TMT, TOOLTIP,                    STRING)
+    TM_PROP(603, TMT, COMPANY,                    STRING)
+    TM_PROP(604, TMT, AUTHOR,                     STRING)
+    TM_PROP(605, TMT, COPYRIGHT,                  STRING)
+    TM_PROP(606, TMT, URL,                        STRING)
+    TM_PROP(607, TMT, VERSION,                    STRING)
+    TM_PROP(608, TMT, DESCRIPTION,                STRING)
+#   define TMT_FIRST_RCSTRING_NAME                TMT_DISPLAYNAME
+#   define TMT_LAST_RCSTRING_NAME                 TMT_DESCRIPTION
 
-/* Bool theme metric properties */
-#define TMT_FLATMENUS 1001
-#define TMT_FIRSTBOOL   TMT_FLATMENUS
-#define TMT_LASTBOOL    TMT_FLATMENUS
+    /* Font theme metric properties */
+    TM_PROP(801, TMT, CAPTIONFONT,                FONT)
+    TM_PROP(802, TMT, SMALLCAPTIONFONT,           FONT)
+    TM_PROP(803, TMT, MENUFONT,                   FONT)
+    TM_PROP(804, TMT, STATUSFONT,                 FONT)
+    TM_PROP(805, TMT, MSGBOXFONT,                 FONT)
+    TM_PROP(806, TMT, ICONTITLEFONT,              FONT)
+#   define TMT_FIRSTFONT                          TMT_CAPTIONFONT
+#   define TMT_LASTFONT                           TMT_ICONTITLEFONT
 
-/* Size theme metric properties */
-#define TMT_SIZINGBORDERWIDTH  1201
-#define TMT_SCROLLBARWIDTH     1202
-#define TMT_SCROLLBARHEIGHT    1203
-#define TMT_CAPTIONBARWIDTH    1204
-#define TMT_CAPTIONBARHEIGHT   1205
-#define TMT_SMCAPTIONBARWIDTH  1206
-#define TMT_SMCAPTIONBARHEIGHT 1207
-#define TMT_MENUBARWIDTH       1208
-#define TMT_MENUBARHEIGHT      1209
-#define TMT_FIRSTSIZE   TMT_SIZINGBORDERWIDTH
-#define TMT_LASTSIZE    TMT_MENUBARHEIGHT
+    /* Bool theme metric properties */
+    TM_PROP(1001, TMT, FLATMENUS,                 BOOL)
+#   define TMT_FIRSTBOOL                          TMT_FLATMENUS
+#   define TMT_LASTBOOL                           TMT_FLATMENUS
 
-/* Int theme metric properties */
-#define TMT_MINCOLORDEPTH 1301
-#define TMT_FIRSTINT   TMT_MINCOLORDEPTH
-#define TMT_LASTINT    TMT_MINCOLORDEPTH
+    /* Size theme metric properties */
+    TM_PROP(1201, TMT, SIZINGBORDERWIDTH,         SIZE)
+    TM_PROP(1202, TMT, SCROLLBARWIDTH,            SIZE)
+    TM_PROP(1203, TMT, SCROLLBARHEIGHT,           SIZE)
+    TM_PROP(1204, TMT, CAPTIONBARWIDTH,           SIZE)
+    TM_PROP(1205, TMT, CAPTIONBARHEIGHT,          SIZE)
+    TM_PROP(1206, TMT, SMCAPTIONBARWIDTH,         SIZE)
+    TM_PROP(1207, TMT, SMCAPTIONBARHEIGHT,        SIZE)
+    TM_PROP(1208, TMT, MENUBARWIDTH,              SIZE)
+    TM_PROP(1209, TMT, MENUBARHEIGHT,             SIZE)
+#   define TMT_FIRSTSIZE                          TMT_SIZINGBORDERWIDTH
+#   define TMT_LASTSIZE                           TMT_MENUBARHEIGHT
 
-/* String theme metric properties */
-#define TMT_CSSNAME 1401
-#define TMT_XMLNAME 1402
-#define TMT_FIRSTSTRING   TMT_CSSNAME
-#define TMT_LASTSTRING    TMT_XMLNAME
+    /* Int theme metric properties */
+    TM_PROP(1301, TMT, MINCOLORDEPTH,             INT)
+#   define TMT_FIRSTINT                           TMT_MINCOLORDEPTH
+#   define TMT_LASTINT                            TMT_MINCOLORDEPTH
 
-/* Color theme metric properties */
-#define TMT_SCROLLBAR               1601
-#define TMT_BACKGROUND              1602
-#define TMT_ACTIVECAPTION           1603
-#define TMT_INACTIVECAPTION         1604
-#define TMT_MENU                    1605
-#define TMT_WINDOW                  1606
-#define TMT_WINDOWFRAME             1607
-#define TMT_MENUTEXT                1608
-#define TMT_WINDOWTEXT              1609
-#define TMT_CAPTIONTEXT             1610
-#define TMT_ACTIVEBORDER            1611
-#define TMT_INACTIVEBORDER          1612
-#define TMT_APPWORKSPACE            1613
-#define TMT_HIGHLIGHT               1614
-#define TMT_HIGHLIGHTTEXT           1615
-#define TMT_BTNFACE                 1616
-#define TMT_BTNSHADOW               1617
-#define TMT_GRAYTEXT                1618
-#define TMT_BTNTEXT                 1619
-#define TMT_INACTIVECAPTIONTEXT     1620
-#define TMT_BTNHIGHLIGHT            1621
-#define TMT_DKSHADOW3D              1622
-#define TMT_LIGHT3D                 1623
-#define TMT_INFOTEXT                1624
-#define TMT_INFOBK                  1625
-#define TMT_BUTTONALTERNATEFACE     1626
-#define TMT_HOTTRACKING             1627
-#define TMT_GRADIENTACTIVECAPTION   1628
-#define TMT_GRADIENTINACTIVECAPTION 1629
-#define TMT_MENUHILIGHT             1630
-#define TMT_MENUBAR                 1631
-#define TMT_FIRSTCOLOR  TMT_SCROLLBAR
-#define TMT_LASTCOLOR   TMT_MENUBAR
+    /* String theme metric properties */
+    TM_PROP(1401, TMT, CSSNAME,                   STRING)
+    TM_PROP(1402, TMT, XMLNAME,                   STRING)
+#   define TMT_FIRSTSTRING                        TMT_CSSNAME
+#   define TMT_LASTSTRING                         TMT_XMLNAME
+
+    /* Color theme metric properties */
+    TM_PROP(1601, TMT, SCROLLBAR,                 COLOR)
+    TM_PROP(1602, TMT, BACKGROUND,                COLOR)
+    TM_PROP(1603, TMT, ACTIVECAPTION,             COLOR)
+    TM_PROP(1604, TMT, INACTIVECAPTION,           COLOR)
+    TM_PROP(1605, TMT, MENU,                      COLOR)
+    TM_PROP(1606, TMT, WINDOW,                    COLOR)
+    TM_PROP(1607, TMT, WINDOWFRAME,               COLOR)
+    TM_PROP(1608, TMT, MENUTEXT,                  COLOR)
+    TM_PROP(1609, TMT, WINDOWTEXT,                COLOR)
+    TM_PROP(1610, TMT, CAPTIONTEXT,               COLOR)
+    TM_PROP(1611, TMT, ACTIVEBORDER,              COLOR)
+    TM_PROP(1612, TMT, INACTIVEBORDER,            COLOR)
+    TM_PROP(1613, TMT, APPWORKSPACE,              COLOR)
+    TM_PROP(1614, TMT, HIGHLIGHT,                 COLOR)
+    TM_PROP(1615, TMT, HIGHLIGHTTEXT,             COLOR)
+    TM_PROP(1616, TMT, BTNFACE,                   COLOR)
+    TM_PROP(1617, TMT, BTNSHADOW,                 COLOR)
+    TM_PROP(1618, TMT, GRAYTEXT,                  COLOR)
+    TM_PROP(1619, TMT, BTNTEXT,                   COLOR)
+    TM_PROP(1620, TMT, INACTIVECAPTIONTEXT,       COLOR)
+    TM_PROP(1621, TMT, BTNHIGHLIGHT,              COLOR)
+    TM_PROP(1622, TMT, DKSHADOW3D,                COLOR)
+    TM_PROP(1623, TMT, LIGHT3D,                   COLOR)
+    TM_PROP(1624, TMT, INFOTEXT,                  COLOR)
+    TM_PROP(1625, TMT, INFOBK,                    COLOR)
+    TM_PROP(1626, TMT, BUTTONALTERNATEFACE,       COLOR)
+    TM_PROP(1627, TMT, HOTTRACKING,               COLOR)
+    TM_PROP(1628, TMT, GRADIENTACTIVECAPTION,     COLOR)
+    TM_PROP(1629, TMT, GRADIENTINACTIVECAPTION,   COLOR)
+    TM_PROP(1630, TMT, MENUHILIGHT,               COLOR)
+    TM_PROP(1631, TMT, MENUBAR,                   COLOR)
+#   define TMT_FIRSTCOLOR                         TMT_SCROLLBAR
+#   define TMT_LASTCOLOR                          TMT_MENUBAR
+
+    /* hue substitutions */
+    TM_PROP(1801, TMT, FROMHUE1,                  INT)
+    TM_PROP(1802, TMT, FROMHUE2,                  INT)
+    TM_PROP(1803, TMT, FROMHUE3,                  INT)
+    TM_PROP(1804, TMT, FROMHUE4,                  INT)
+    TM_PROP(1805, TMT, FROMHUE5,                  INT)
+    TM_PROP(1806, TMT, TOHUE1,                    INT)
+    TM_PROP(1807, TMT, TOHUE2,                    INT)
+    TM_PROP(1808, TMT, TOHUE3,                    INT)
+    TM_PROP(1809, TMT, TOHUE4,                    INT)
+    TM_PROP(1810, TMT, TOHUE5,                    INT)
+
+    /* color substitutions */
+    TM_PROP(2001, TMT, FROMCOLOR1,                COLOR)
+    TM_PROP(2002, TMT, FROMCOLOR2,                COLOR)
+    TM_PROP(2003, TMT, FROMCOLOR3,                COLOR)
+    TM_PROP(2004, TMT, FROMCOLOR4,                COLOR)
+    TM_PROP(2005, TMT, FROMCOLOR5,                COLOR)
+    TM_PROP(2006, TMT, TOCOLOR1,                  COLOR)
+    TM_PROP(2007, TMT, TOCOLOR2,                  COLOR)
+    TM_PROP(2008, TMT, TOCOLOR3,                  COLOR)
+    TM_PROP(2009, TMT, TOCOLOR4,                  COLOR)
+    TM_PROP(2010, TMT, TOCOLOR5,                  COLOR)
+
+    /* Bool rendering properties */
+    TM_PROP(2201, TMT, TRANSPARENT,               BOOL)
+    TM_PROP(2202, TMT, AUTOSIZE,                  BOOL)
+    TM_PROP(2203, TMT, BORDERONLY,                BOOL)
+    TM_PROP(2204, TMT, COMPOSITED,                BOOL)
+    TM_PROP(2205, TMT, BGFILL,                    BOOL)
+    TM_PROP(2206, TMT, GLYPHTRANSPARENT,          BOOL)
+    TM_PROP(2207, TMT, GLYPHONLY,                 BOOL)
+    TM_PROP(2208, TMT, ALWAYSSHOWSIZINGBAR,       BOOL)
+    TM_PROP(2209, TMT, MIRRORIMAGE,               BOOL)
+    TM_PROP(2210, TMT, UNIFORMSIZING,             BOOL)
+    TM_PROP(2211, TMT, INTEGRALSIZING,            BOOL)
+    TM_PROP(2212, TMT, SOURCEGROW,                BOOL)
+    TM_PROP(2213, TMT, SOURCESHRINK,              BOOL)
+
+    /* Int rendering properties */
+    TM_PROP(2401, TMT, IMAGECOUNT,                INT)
+    TM_PROP(2402, TMT, ALPHALEVEL,                INT)
+    TM_PROP(2403, TMT, BORDERSIZE,                INT)
+    TM_PROP(2404, TMT, ROUNDCORNERWIDTH,          INT)
+    TM_PROP(2405, TMT, ROUNDCORNERHEIGHT,         INT)
+    TM_PROP(2406, TMT, GRADIENTRATIO1,            INT)
+    TM_PROP(2407, TMT, GRADIENTRATIO2,            INT)
+    TM_PROP(2408, TMT, GRADIENTRATIO3,            INT)
+    TM_PROP(2409, TMT, GRADIENTRATIO4,            INT)
+    TM_PROP(2410, TMT, GRADIENTRATIO5,            INT)
+    TM_PROP(2411, TMT, PROGRESSCHUNKSIZE,         INT)
+    TM_PROP(2412, TMT, PROGRESSSPACESIZE,         INT)
+    TM_PROP(2413, TMT, SATURATION,                INT)
+    TM_PROP(2414, TMT, TEXTBORDERSIZE,            INT)
+    TM_PROP(2415, TMT, ALPHATHRESHOLD,            INT)
+    TM_PROP(2416, TMT, WIDTH,                     SIZE)
+    TM_PROP(2417, TMT, HEIGHT,                    SIZE)
+    TM_PROP(2418, TMT, GLYPHINDEX,                INT)
+    TM_PROP(2419, TMT, TRUESIZESTRETCHMARK,       INT)
+    TM_PROP(2420, TMT, MINDPI1,                   INT)
+    TM_PROP(2421, TMT, MINDPI2,                   INT)
+    TM_PROP(2422, TMT, MINDPI3,                   INT)
+    TM_PROP(2423, TMT, MINDPI4,                   INT)
+    TM_PROP(2424, TMT, MINDPI5,                   INT)
+
+    /* Font rendering properties */
+    TM_PROP(2601, TMT, GLYPHFONT,                 FONT)
+
+    /* Filename rendering properties */
+    TM_PROP(3001, TMT, IMAGEFILE,                 FILENAME)
+    TM_PROP(3002, TMT, IMAGEFILE1,                FILENAME)
+    TM_PROP(3003, TMT, IMAGEFILE2,                FILENAME)
+    TM_PROP(3004, TMT, IMAGEFILE3,                FILENAME)
+    TM_PROP(3005, TMT, IMAGEFILE4,                FILENAME)
+    TM_PROP(3006, TMT, IMAGEFILE5,                FILENAME)
+    TM_PROP(3007, TMT, STOCKIMAGEFILE,            FILENAME)
+    TM_PROP(3008, TMT, GLYPHIMAGEFILE,            FILENAME)
+
+    /* String rendering properties */
+    TM_PROP(3201, TMT, TEXT,                      STRING)
+
+    /* Position rendering properties */
+    TM_PROP(3401, TMT, OFFSET,                    POSITION)
+    TM_PROP(3402, TMT, TEXTSHADOWOFFSET,          POSITION)
+    TM_PROP(3403, TMT, MINSIZE,                   POSITION)
+    TM_PROP(3404, TMT, MINSIZE1,                  POSITION)
+    TM_PROP(3405, TMT, MINSIZE2,                  POSITION)
+    TM_PROP(3406, TMT, MINSIZE3,                  POSITION)
+    TM_PROP(3407, TMT, MINSIZE4,                  POSITION)
+    TM_PROP(3408, TMT, MINSIZE5,                  POSITION)
+    TM_PROP(3409, TMT, NORMALSIZE,                POSITION)
+
+    /* Margin rendering properties */
+    TM_PROP(3601, TMT, SIZINGMARGINS,             MARGINS)
+    TM_PROP(3602, TMT, CONTENTMARGINS,            MARGINS)
+    TM_PROP(3603, TMT, CAPTIONMARGINS,            MARGINS)
+
+    /* Color rendering properties */
+    TM_PROP(3801, TMT, BORDERCOLOR,               COLOR)
+    TM_PROP(3802, TMT, FILLCOLOR,                 COLOR)
+    TM_PROP(3803, TMT, TEXTCOLOR,                 COLOR)
+    TM_PROP(3804, TMT, EDGELIGHTCOLOR,            COLOR)
+    TM_PROP(3805, TMT, EDGEHIGHLIGHTCOLOR,        COLOR)
+    TM_PROP(3806, TMT, EDGESHADOWCOLOR,           COLOR)
+    TM_PROP(3807, TMT, EDGEDKSHADOWCOLOR,         COLOR)
+    TM_PROP(3808, TMT, EDGEFILLCOLOR,             COLOR)
+    TM_PROP(3809, TMT, TRANSPARENTCOLOR,          COLOR)
+    TM_PROP(3810, TMT, GRADIENTCOLOR1,            COLOR)
+    TM_PROP(3811, TMT, GRADIENTCOLOR2,            COLOR)
+    TM_PROP(3812, TMT, GRADIENTCOLOR3,            COLOR)
+    TM_PROP(3813, TMT, GRADIENTCOLOR4,            COLOR)
+    TM_PROP(3814, TMT, GRADIENTCOLOR5,            COLOR)
+    TM_PROP(3815, TMT, SHADOWCOLOR,               COLOR)
+    TM_PROP(3816, TMT, GLOWCOLOR,                 COLOR)
+    TM_PROP(3817, TMT, TEXTBORDERCOLOR,           COLOR)
+    TM_PROP(3818, TMT, TEXTSHADOWCOLOR,           COLOR)
+    TM_PROP(3819, TMT, GLYPHTEXTCOLOR,            COLOR)
+    TM_PROP(3820, TMT, GLYPHTRANSPARENTCOLOR,     COLOR)
+    TM_PROP(3821, TMT, FILLCOLORHINT,             COLOR)
+    TM_PROP(3822, TMT, BORDERCOLORHINT,           COLOR)
+    TM_PROP(3823, TMT, ACCENTCOLORHINT,           COLOR)
+
+    /* Enum rendering properties */
+    TM_PROP(4001, TMT, BGTYPE,                    ENUM)
+    TM_PROP(4002, TMT, BORDERTYPE,                ENUM)
+    TM_PROP(4003, TMT, FILLTYPE,                  ENUM)
+    TM_PROP(4004, TMT, SIZINGTYPE,                ENUM)
+    TM_PROP(4005, TMT, HALIGN,                    ENUM)
+    TM_PROP(4006, TMT, CONTENTALIGNMENT,          ENUM)
+    TM_PROP(4007, TMT, VALIGN,                    ENUM)
+    TM_PROP(4008, TMT, OFFSETTYPE,                ENUM)
+    TM_PROP(4009, TMT, ICONEFFECT,                ENUM)
+    TM_PROP(4010, TMT, TEXTSHADOWTYPE,            ENUM)
+    TM_PROP(4011, TMT, IMAGELAYOUT,               ENUM)
+    TM_PROP(4012, TMT, GLYPHTYPE,                 ENUM)
+    TM_PROP(4013, TMT, IMAGESELECTTYPE,           ENUM)
+    TM_PROP(4014, TMT, GLYPHFONTSIZINGTYPE,       ENUM)
+    TM_PROP(4015, TMT, TRUESIZESCALINGTYPE,       ENUM)
+
+    /* custom properties */
+    TM_PROP(5001, TMT, USERPICTURE,               BOOL)
+    TM_PROP(5002, TMT, DEFAULTPANESIZE,           RECT)
+    TM_PROP(5003, TMT, BLENDCOLOR,                COLOR)
+
+END_TM_PROPS()
 
 
-/* hue substitutions */
-#define TMT_FROMHUE1 1801
-#define TMT_FROMHUE2 1802
-#define TMT_FROMHUE3 1803
-#define TMT_FROMHUE4 1804
-#define TMT_FROMHUE5 1805
-#define TMT_TOHUE1   1806
-#define TMT_TOHUE2   1807
-#define TMT_TOHUE3   1808
-#define TMT_TOHUE4   1809
-#define TMT_TOHUE5   1810
-
-/* color substitutions */
-#define TMT_FROMCOLOR1 2001
-#define TMT_FROMCOLOR2 2002
-#define TMT_FROMCOLOR3 2003
-#define TMT_FROMCOLOR4 2004
-#define TMT_FROMCOLOR5 2005
-#define TMT_TOCOLOR1   2006
-#define TMT_TOCOLOR2   2007
-#define TMT_TOCOLOR3   2008
-#define TMT_TOCOLOR4   2009
-#define TMT_TOCOLOR5   2010
-
-
-/* Bool rendering properties */
-#define TMT_TRANSPARENT         2201
-#define TMT_AUTOSIZE            2202
-#define TMT_BORDERONLY          2203
-#define TMT_COMPOSITED          2204
-#define TMT_BGFILL              2205
-#define TMT_GLYPHTRANSPARENT    2206
-#define TMT_GLYPHONLY           2207
-#define TMT_ALWAYSSHOWSIZINGBAR 2208
-#define TMT_MIRRORIMAGE         2209
-#define TMT_UNIFORMSIZING       2210
-#define TMT_INTEGRALSIZING      2211
-#define TMT_SOURCEGROW          2212
-#define TMT_SOURCESHRINK        2213
-
-/* Int rendering properties */
-#define TMT_IMAGECOUNT          2401
-#define TMT_ALPHALEVEL          2402
-#define TMT_BORDERSIZE          2403
-#define TMT_ROUNDCORNERWIDTH    2404
-#define TMT_ROUNDCORNERHEIGHT   2405
-#define TMT_GRADIENTRATIO1      2406
-#define TMT_GRADIENTRATIO2      2407
-#define TMT_GRADIENTRATIO3      2408
-#define TMT_GRADIENTRATIO4      2409
-#define TMT_GRADIENTRATIO5      2410
-#define TMT_PROGRESSCHUNKSIZE   2411
-#define TMT_PROGRESSSPACESIZE   2412
-#define TMT_SATURATION          2413
-#define TMT_TEXTBORDERSIZE      2414
-#define TMT_ALPHATHRESHOLD      2415
-#define TMT_WIDTH               2416
-#define TMT_HEIGHT              2417
-#define TMT_GLYPHINDEX          2418
-#define TMT_TRUESIZESTRETCHMARK 2419
-#define TMT_MINDPI1             2420
-#define TMT_MINDPI2             2421
-#define TMT_MINDPI3             2422
-#define TMT_MINDPI4             2423
-#define TMT_MINDPI5             2424
-
-/* Font rendering properties */
-#define TMT_GLYPHFONT 2601
-
-/* Filename rendering properties */
-#define TMT_IMAGEFILE       3001
-#define TMT_IMAGEFILE1      3002
-#define TMT_IMAGEFILE2      3003
-#define TMT_IMAGEFILE3      3004
-#define TMT_IMAGEFILE4      3005
-#define TMT_IMAGEFILE5      3006
-#define TMT_STOCKIMAGEFILE  3007
-#define TMT_GLYPHIMAGEFILE  3008
-
-/* String rendering properties */
-#define TMT_TEXT 3201
-
-/* Position rendering properties */
-#define TMT_OFFSET              3401
-#define TMT_TEXTSHADOWOFFSET    3402
-#define TMT_MINSIZE             3403
-#define TMT_MINSIZE1            3404
-#define TMT_MINSIZE2            3405
-#define TMT_MINSIZE3            3406
-#define TMT_MINSIZE4            3407
-#define TMT_MINSIZE5            3408
-#define TMT_NORMALSIZE          3409
-
-/* Margin rendering properties */
-#define TMT_SIZINGMARGINS   3601
-#define TMT_CONTENTMARGINS  3602
-#define TMT_CAPTIONMARGINS  3603
-
-/* Color rendering properties */
-#define TMT_BORDERCOLOR             3801
-#define TMT_FILLCOLOR               3802
-#define TMT_TEXTCOLOR               3803
-#define TMT_EDGELIGHTCOLOR          3804
-#define TMT_EDGEHIGHLIGHTCOLOR      3805
-#define TMT_EDGESHADOWCOLOR         3806
-#define TMT_EDGEDKSHADOWCOLOR       3807
-#define TMT_EDGEFILLCOLOR           3808
-#define TMT_TRANSPARENTCOLOR        3809
-#define TMT_GRADIENTCOLOR1          3810
-#define TMT_GRADIENTCOLOR2          3811
-#define TMT_GRADIENTCOLOR3          3812
-#define TMT_GRADIENTCOLOR4          3813
-#define TMT_GRADIENTCOLOR5          3814
-#define TMT_SHADOWCOLOR             3815
-#define TMT_GLOWCOLOR               3816
-#define TMT_TEXTBORDERCOLOR         3817
-#define TMT_TEXTSHADOWCOLOR         3818
-#define TMT_GLYPHTEXTCOLOR          3819
-#define TMT_GLYPHTRANSPARENTCOLOR   3820
-#define TMT_FILLCOLORHINT           3821
-#define TMT_BORDERCOLORHINT         3822
-#define TMT_ACCENTCOLORHINT         3823
-
-/* Enum rendering properties */
-#define TMT_BGTYPE              4001
-#define TMT_BORDERTYPE          4002
-#define TMT_FILLTYPE            4003
-#define TMT_SIZINGTYPE          4004
-#define TMT_HALIGN              4005
-#define TMT_CONTENTALIGNMENT    4006
-#define TMT_VALIGN              4007
-#define TMT_OFFSETTYPE          4008
-#define TMT_ICONEFFECT          4009
-#define TMT_TEXTSHADOWTYPE      4010
-#define TMT_IMAGELAYOUT         4011
-#define TMT_GLYPHTYPE           4012
-#define TMT_IMAGESELECTTYPE     4013
-#define TMT_GLYPHFONTSIZINGTYPE 4014
-#define TMT_TRUESIZESCALINGTYPE 4015
-
-/* custom properties */
-#define TMT_USERPICTURE     5001
-#define TMT_DEFAULTPANESIZE 5002
-#define TMT_BLENDCOLOR      5003
-
-/* PARTS & STATES */
+/***** PARTS & STATES *****/
 
 /* BUTTON parts */
-#define BP_PUSHBUTTON   1
-#define BP_RADIOBUTTON  2
-#define BP_CHECKBOX     3
-#define BP_GROUPBOX     4
-#define BP_USERBUTTON   5
+BEGIN_TM_CLASS_PARTS(BUTTON)
+    TM_PART(1, BP, PUSHBUTTON)
+    TM_PART(2, BP, RADIOBUTTON)
+    TM_PART(3, BP, CHECKBOX)
+    TM_PART(4, BP, GROUPBOX)
+    TM_PART(5, BP, USERBUTTON)
+END_TM_CLASS_PARTS()
 
-/* BUTTON PUSHBUTTON states */
-#define PBS_NORMAL      1
-#define PBS_HOT         2
-#define PBS_PRESSED     3
-#define PBS_DISABLED    4
-#define PBS_DEFAULTED   5
+/* BUTTON - PUSHBUTTON states */
+BEGIN_TM_PART_STATES(PUSHBUTTON)
+    TM_STATE(1, PBS, NORMAL)
+    TM_STATE(2, PBS, HOT)
+    TM_STATE(3, PBS, PRESSED)
+    TM_STATE(4, PBS, DISABLED)
+    TM_STATE(5, PBS, DEFAULTED)
+END_TM_PART_STATES()
 
-/* BUTTON RADIOBUTTON states */
-#define RBS_UNCHECKEDNORMAL   1
-#define RBS_UNCHECKEDHOT      2
-#define RBS_UNCHECKEDPRESSED  3
-#define RBS_UNCHECKEDDISABLED 4
-#define RBS_CHECKEDNORMAL     5
-#define RBS_CHECKEDHOT        6
-#define RBS_CHECKEDPRESSED    7
-#define RBS_CHECKEDDISABLED   8
+/* BUTTON - RADIOBUTTON states */
+BEGIN_TM_PART_STATES(RADIOBUTTON)
+    TM_STATE(1, RBS, UNCHECKEDNORMAL)
+    TM_STATE(2, RBS, UNCHECKEDHOT)
+    TM_STATE(3, RBS, UNCHECKEDPRESSED)
+    TM_STATE(4, RBS, UNCHECKEDDISABLED)
+    TM_STATE(5, RBS, CHECKEDNORMAL)
+    TM_STATE(6, RBS, CHECKEDHOT)
+    TM_STATE(7, RBS, CHECKEDPRESSED)
+    TM_STATE(8, RBS, CHECKEDDISABLED)
+END_TM_PART_STATES()
 
-/* BUTTON CHECBOX states */
-#define CBS_UNCHECKEDNORMAL   1
-#define CBS_UNCHECKEDHOT      2
-#define CBS_UNCHECKEDPRESSED  3
-#define CBS_UNCHECKEDDISABLED 4
-#define CBS_CHECKEDNORMAL     5
-#define CBS_CHECKEDHOT        6
-#define CBS_CHECKEDPRESSED    7
-#define CBS_CHECKEDDISABLED   8
-#define CBS_MIXEDNORMAL       9
-#define CBS_MIXEDHOT          10
-#define CBS_MIXEDPRESSED      11
-#define CBS_MIXEDDISABLED     12
+/* BUTTON - CHECKBOX states */
+BEGIN_TM_PART_STATES(CHECKBOX)
+    TM_STATE(1, CBS, UNCHECKEDNORMAL)
+    TM_STATE(2, CBS, UNCHECKEDHOT)
+    TM_STATE(3, CBS, UNCHECKEDPRESSED)
+    TM_STATE(4, CBS, UNCHECKEDDISABLED)
+    TM_STATE(5, CBS, CHECKEDNORMAL)
+    TM_STATE(6, CBS, CHECKEDHOT)
+    TM_STATE(7, CBS, CHECKEDPRESSED)
+    TM_STATE(8, CBS, CHECKEDDISABLED)
+    TM_STATE(9, CBS, MIXEDNORMAL)
+    TM_STATE(10, CBS, MIXEDHOT)
+    TM_STATE(11, CBS, MIXEDPRESSED)
+    TM_STATE(12, CBS, MIXEDDISABLED)
+END_TM_PART_STATES()
 
-/* BUTTON GROUPBOX states */
-#define GBS_NORMAL   1
-#define GBS_DISABLED 2
+/* BUTTON - GROUPBOX states */
+BEGIN_TM_PART_STATES(GROUPBOX)
+    TM_STATE(1, GBS, NORMAL)
+    TM_STATE(2, GBS, DISABLED)
+END_TM_PART_STATES()
 
 /* CLOCK parts */
-#define CLP_TIME 1
+BEGIN_TM_CLASS_PARTS(CLOCK)
+    TM_PART(1, CLP, TIME)
+END_TM_CLASS_PARTS()
 
-/* CLOCK TIME states */
-#define CLS_NORMAL 1
+/* CLOCK states */
+BEGIN_TM_PART_STATES(CLOCK)
+    TM_STATE(1, CLS, NORMAL)
+END_TM_PART_STATES()
 
 /* COMBOBOX parts */
-#define CP_DROPDOWNBUTTON 1
+BEGIN_TM_CLASS_PARTS(COMBOBOX)
+    TM_PART(1, CP, DROPDOWNBUTTON)
+END_TM_CLASS_PARTS()
 
-/* COMBOBOX DROPDOWNBUTTON states */
-#define CBXS_NORMAL   1
-#define CBXS_HOT      2
-#define CBXS_PRESSED  3
-#define CBXS_DISABLED 4
+/* COMBOBOX states */
+BEGIN_TM_PART_STATES(COMBOBOX)
+    TM_STATE(1, CBXS, NORMAL)
+    TM_STATE(2, CBXS, HOT)
+    TM_STATE(3, CBXS, PRESSED)
+    TM_STATE(4, CBXS, DISABLED)
+END_TM_PART_STATES()
 
 /* EDIT parts */
-#define EP_EDITTEXT 1
-#define EP_CARET    2
+BEGIN_TM_CLASS_PARTS(EDIT)
+    TM_PART(1, EP, EDITTEXT)
+    TM_PART(2, EP, CARET)
+END_TM_CLASS_PARTS()
 
-/* EDIT EDITTEXT states */
-#define ETS_NORMAL   1
-#define ETS_HOT      2
-#define ETS_SELECTED 3
-#define ETS_DISABLED 4
-#define ETS_FOCUSED  5
-#define ETS_READONLY 6
-#define ETS_ASSIST   7
+/* EDIT - EDITTEXT states */
+BEGIN_TM_PART_STATES(EDITTEXT)
+    TM_STATE(1, ETS, NORMAL)
+    TM_STATE(2, ETS, HOT)
+    TM_STATE(3, ETS, SELECTED)
+    TM_STATE(4, ETS, DISABLED)
+    TM_STATE(5, ETS, FOCUSED)
+    TM_STATE(6, ETS, READONLY)
+    TM_STATE(7, ETS, ASSIST)
+END_TM_PART_STATES()
 
 /* EXPLORERBAR parts */
-#define EBP_HEADERBACKGROUND       1
-#define EBP_HEADERCLOSE            2
-#define EBP_HEADERPIN              3
-#define EBP_IEBARMENU              4
-#define EBP_NORMALGROUPBACKGROUND  5
-#define EBP_NORMALGROUPCOLLAPSE    6
-#define EBP_NORMALGROUPEXPAND      7
-#define EBP_NORMALGROUPHEAD        8
-#define EBP_SPECIALGROUPBACKGROUND 9
-#define EBP_SPECIALGROUPCOLLAPSE   10
-#define EBP_SPECIALGROUPEXPAND     11
-#define EBP_SPECIALGROUPHEAD       12
+BEGIN_TM_CLASS_PARTS(EXPLORERBAR)
+    TM_PART(1, EBP, HEADERBACKGROUND)
+    TM_PART(2, EBP, HEADERCLOSE)
+    TM_PART(3, EBP, HEADERPIN)
+    TM_PART(4, EBP, IEBARMENU)
+    TM_PART(5, EBP, NORMALGROUPBACKGROUND)
+    TM_PART(6, EBP, NORMALGROUPCOLLAPSE)
+    TM_PART(7, EBP, NORMALGROUPEXPAND)
+    TM_PART(8, EBP, NORMALGROUPHEAD)
+    TM_PART(9, EBP, SPECIALGROUPBACKGROUND)
+    TM_PART(10, EBP, SPECIALGROUPCOLLAPSE)
+    TM_PART(11, EBP, SPECIALGROUPEXPAND)
+    TM_PART(12, EBP, SPECIALGROUPHEAD)
+END_TM_CLASS_PARTS()
 
-/* EXPLORERBAR HEADERCLOSE states */
-#define EBHC_NORMAL  1
-#define EBHC_HOT     2
-#define EBHC_PRESSED 3
+/* EXPLORERBAR - HEADERCLOSE states */
+BEGIN_TM_PART_STATES(HEADERCLOSE)
+    TM_STATE(1, EBHC, NORMAL)
+    TM_STATE(2, EBHC, HOT)
+    TM_STATE(3, EBHC, PRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR HEADERPIN states */
-#define EBHP_NORMAL          1
-#define EBHP_HOT             2
-#define EBHP_PRESSED         3
-#define EBHP_SELECTEDNORMAL  4
-#define EBHP_SELECTEDHOT     5
-#define EBHP_SELECTEDPRESSED 6
+/* EXPLORERBAR - HEADERPIN states */
+BEGIN_TM_PART_STATES(HEADERPIN)
+    TM_STATE(1, EBHP, NORMAL)
+    TM_STATE(2, EBHP, HOT)
+    TM_STATE(3, EBHP, PRESSED)
+    TM_STATE(4, EBHP, SELECTEDNORMAL)
+    TM_STATE(5, EBHP, SELECTEDHOT)
+    TM_STATE(6, EBHP, SELECTEDPRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR IEBARMENU states */
-#define EBM_NORMAL  1
-#define EBM_HOT     2
-#define EBM_PRESSED 3
+/* EXPLORERBAR - IEBARMENU states */
+BEGIN_TM_PART_STATES(IEBARMENU)
+    TM_STATE(1, EBM, NORMAL)
+    TM_STATE(2, EBM, HOT)
+    TM_STATE(3, EBM, PRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR NORMALGROUPCOLLAPSE states */
-#define EBNGC_NORMAL  1
-#define EBNGC_HOT     2
-#define EBNGC_PRESSED 3
+/* EXPLORERBAR - NORMALGROUPCOLLAPSE states */
+BEGIN_TM_PART_STATES(NORMALGROUPCOLLAPSE)
+    TM_STATE(1, EBNGC, NORMAL)
+    TM_STATE(2, EBNGC, HOT)
+    TM_STATE(3, EBNGC, PRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR NORMALGROUPEXPAND states */
-#define EBNGE_NORMAL  1
-#define EBNGE_HOT     2
-#define EBNGE_PRESSED 3
+/* EXPLORERBAR - NORMALGROUPEXPAND states */
+BEGIN_TM_PART_STATES(NORMALGROUPEXPAND)
+    TM_STATE(1, EBNGE, NORMAL)
+    TM_STATE(2, EBNGE, HOT)
+    TM_STATE(3, EBNGE, PRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR SPECIALGROUPCOLLAPSE states */
-#define EBSGC_NORMAL  1
-#define EBSGC_HOT     2
-#define EBSGC_PRESSED 3
+/* EXPLORERBAR - SPECIALGROUPCOLLAPSE states */
+BEGIN_TM_PART_STATES(SPECIALGROUPCOLLAPSE)
+    TM_STATE(1, EBSGC, NORMAL)
+    TM_STATE(2, EBSGC, HOT)
+    TM_STATE(3, EBSGC, PRESSED)
+END_TM_PART_STATES()
 
-/* EXPLORERBAR SPECIALGROUPEXPAND states */
-#define EBSGE_NORMAL  1
-#define EBSGE_HOT     2
-#define EBSGE_PRESSED 3
+/* EXPLORERBAR - SPECIALGROUPEXPAND states */
+BEGIN_TM_PART_STATES(SPECIALGROUPEXPAND)
+    TM_STATE(1, EBSGE, NORMAL)
+    TM_STATE(2, EBSGE, HOT)
+    TM_STATE(3, EBSGE, PRESSED)
+END_TM_PART_STATES()
 
 /* GLOBALS parts */
-#define GP_BORDER   1
-#define GP_LINEHORZ 2
-#define GP_LINEVERT 3
+BEGIN_TM_CLASS_PARTS(GLOBALS)
+    TM_PART(1, GP, BORDER)
+    TM_PART(2, GP, LINEHORZ)
+    TM_PART(3, GP, LINEVERT)
+END_TM_CLASS_PARTS()
 
-/* GLOBALS BORDER states */
-#define BSS_FLAT   1
-#define BSS_RAISED 2
-#define BSS_SUNKEN 3
+/* GLOBALS - BORDER states */
+BEGIN_TM_PART_STATES(BORDER)
+    TM_STATE(1, BSS, FLAT)
+    TM_STATE(2, BSS, RAISED)
+    TM_STATE(3, BSS, SUNKEN)
+END_TM_PART_STATES()
 
-/* GLOBALS LINEHORZ states */
-#define LHS_FLAT   1
-#define LHS_RAISED 2
-#define LHS_SUNKEN 3
+/* GLOBALS - LINEHORZ states */
+BEGIN_TM_PART_STATES(LINEHORZ)
+    TM_STATE(1, LHS, FLAT)
+    TM_STATE(2, LHS, RAISED)
+    TM_STATE(3, LHS, SUNKEN)
+END_TM_PART_STATES()
 
-/* GLOBAL LINEVERT states */
-#define LVS_FLAT   1
-#define LVS_RAISED 2
-#define LVS_SUNKEN 3
+/* GLOBAL - LINEVERT states */
+BEGIN_TM_PART_STATES(LINEVERT)
+    TM_STATE(1, LVS, FLAT)
+    TM_STATE(2, LVS, RAISED)
+    TM_STATE(3, LVS, SUNKEN)
+END_TM_PART_STATES()
 
 /* HEADER parts */
-#define HP_HEADERITEM      1
-#define HP_HEADERITEMLEFT  2
-#define HP_HEADERITEMRIGHT 3
-#define HP_HEADERSORTARROW 4
+BEGIN_TM_CLASS_PARTS(HEADER)
+    TM_PART(1, HP, HEADERITEM)
+    TM_PART(2, HP, HEADERITEMLEFT)
+    TM_PART(3, HP, HEADERITEMRIGHT)
+    TM_PART(4, HP, HEADERSORTARROW)
+END_TM_CLASS_PARTS()
 
-/* HEADER HEADERITEM states */
-#define HIS_NORMAL  1
-#define HIS_HOT     2
-#define HIS_PRESSED 3
+/* HEADER - HEADERITEM states */
+BEGIN_TM_PART_STATES(HEADERITEM)
+    TM_STATE(1, HIS, NORMAL)
+    TM_STATE(2, HIS, HOT)
+    TM_STATE(3, HIS, PRESSED)
+END_TM_PART_STATES()
 
-/* HEADER HEADERITEMLEFT states */
-#define HILS_NORMAL  1
-#define HILS_HOT     2
-#define HILS_PRESSED 3
+/* HEADER - HEADERITEMLEFT states */
+BEGIN_TM_PART_STATES(HEADERITEMLEFT)
+    TM_STATE(1, HILS, NORMAL)
+    TM_STATE(2, HILS, HOT)
+    TM_STATE(3, HILS, PRESSED)
+END_TM_PART_STATES()
 
-/* HEADER HEADERITEMRIGHT states */
-#define HIRS_NORMAL  1
-#define HIRS_HOT     2
-#define HIRS_PRESSED 3
+/* HEADER - HEADERITEMRIGHT states */
+BEGIN_TM_PART_STATES(HEADERITEMRIGHT)
+    TM_STATE(1, HIRS, NORMAL)
+    TM_STATE(2, HIRS, HOT)
+    TM_STATE(3, HIRS, PRESSED)
+END_TM_PART_STATES()
 
-/* HEADER HEADERSORTARROW states */
-#define HSAS_SORTEDUP   1
-#define HSAS_SORTEDDOWN 2
+/* HEADER - HEADERSORTARROW states */
+BEGIN_TM_PART_STATES(HEADERSORTARROW)
+    TM_STATE(1, HSAS, SORTEDUP)
+    TM_STATE(2, HSAS, SORTEDDOWN)
+END_TM_PART_STATES()
 
 /* LISTVIEW parts */
-#define LVP_LISTITEM         1
-#define LVP_LISTGROUP        2
-#define LVP_LISTDETAIL       3
-#define LVP_LISTSORTEDDETAIL 4
-#define LVP_EMPTYTEXT        5
+BEGIN_TM_CLASS_PARTS(LISTVIEW)
+    TM_PART(1, LVP, LISTITEM)
+    TM_PART(2, LVP, LISTGROUP)
+    TM_PART(3, LVP, LISTDETAIL)
+    TM_PART(4, LVP, LISTSORTEDDETAIL)
+    TM_PART(5, LVP, EMPTYTEXT)
+END_TM_CLASS_PARTS()
 
-/* LISTVIEW LISTITEM states */
-#define LIS_NORMAL           1
-#define LIS_HOT              2
-#define LIS_SELECTED         3
-#define LIS_DISABLED         4
-#define LIS_SELECTEDNOTFOCUS 5
+/* LISTVIEW - LISTITEM states */
+BEGIN_TM_PART_STATES(LISTITEM)
+    TM_STATE(1, LIS, NORMAL)
+    TM_STATE(2, LIS, HOT)
+    TM_STATE(3, LIS, SELECTED)
+    TM_STATE(4, LIS, DISABLED)
+    TM_STATE(5, LIS, SELECTEDNOTFOCUS)
+END_TM_PART_STATES()
 
 /* MENU parts */
-#define MP_MENUITEM        1
-#define MP_MENUDROPDOWN    2
-#define MP_MENUBARITEM     3
-#define MP_MENUBARDROPDOWN 4
-#define MP_CHEVRON         5
-#define MP_SEPARATOR       6
+BEGIN_TM_CLASS_PARTS(MENU)
+    TM_PART(1, MP, MENUITEM)
+    TM_PART(2, MP, MENUDROPDOWN)
+    TM_PART(3, MP, MENUBARITEM)
+    TM_PART(4, MP, MENUBARDROPDOWN)
+    TM_PART(5, MP, CHEVRON)
+    TM_PART(6, MP, SEPARATOR)
+END_TM_CLASS_PARTS()
 
-/* MENU * states */
-#define MS_NORMAL    1
-#define MS_SELECTED  2
-#define MS_DEMOTED   3
+/* MENU - * states */
+BEGIN_TM_PART_STATES(MENU)
+    TM_STATE(1, MS, NORMAL)
+    TM_STATE(2, MS, SELECTED)
+    TM_STATE(3, MS, DEMOTED)
+END_TM_PART_STATES()
 
 /* MENUBAND parts */
-#define MDP_NEWAPPBUTTON 1
+BEGIN_TM_CLASS_PARTS(MENUBAND)
+    TM_PART(1, MDP, NEWAPPBUTTON)
 /* MDP_SEPERATOR isn't a typo, as per Microsoft's headers */
-#define MDP_SEPERATOR    2
+    TM_PART(2, MDP, SEPERATOR)
+END_TM_CLASS_PARTS()
 
-/* MENUBAND NEWAPPBUTTON states */
-#define MDS_NORMAL     1
-#define MDS_HOT        2
-#define MDS_PRESSED    3
-#define MDS_DISABLED   4
-#define MDS_CHECKED    5
-#define MDS_HOTCHECKED 6
+/* MENUBAND states */
+BEGIN_TM_PART_STATES(MENUBAND)
+    TM_STATE(1, MDS, NORMAL)
+    TM_STATE(2, MDS, HOT)
+    TM_STATE(3, MDS, PRESSED)
+    TM_STATE(4, MDS, DISABLED)
+    TM_STATE(5, MDS, CHECKED)
+    TM_STATE(6, MDS, HOTCHECKED)
+END_TM_PART_STATES()
 
 /* PAGE parts */
-#define PGRP_UP       1
-#define PGRP_DOWN     2
-#define PGRP_UPHORZ   3
-#define PGRP_DOWNHORZ 4
+BEGIN_TM_CLASS_PARTS(PAGE)
+    TM_PART(1, PGRP, UP)
+    TM_PART(2, PGRP, DOWN)
+    TM_PART(3, PGRP, UPHORZ)
+    TM_PART(4, PGRP, DOWNHORZ)
+END_TM_CLASS_PARTS()
 
-/* PAGE UP states */
-#define UPS_NORMAL   1
-#define UPS_HOT      2
-#define UPS_PRESSED  3
-#define UPS_DISABLED 4
+/* PAGE - UP states */
+BEGIN_TM_PART_STATES(UP)
+    TM_STATE(1, UPS, NORMAL)
+    TM_STATE(2, UPS, HOT)
+    TM_STATE(3, UPS, PRESSED)
+    TM_STATE(4, UPS, DISABLED)
+END_TM_PART_STATES()
 
-/* PAGE DOWN states  */
-#define DNS_NORMAL   1
-#define DNS_HOT      2
-#define DNS_PRESSED  3
-#define DNS_DISABLED 4
+/* PAGE - DOWN states  */
+BEGIN_TM_PART_STATES(DOWN)
+    TM_STATE(1, DNS, NORMAL)
+    TM_STATE(2, DNS, HOT)
+    TM_STATE(3, DNS, PRESSED)
+    TM_STATE(4, DNS, DISABLED)
+END_TM_PART_STATES()
 
-/* PAGE UPHORZ states */
-#define UPHZS_NORMAL   1
-#define UPHZS_HOT      2
-#define UPHZS_PRESSED  3
-#define UPHZS_DISABLED 4
+/* PAGE - UPHORZ states */
+BEGIN_TM_PART_STATES(UPHORZ)
+    TM_STATE(1, UPHZS, NORMAL)
+    TM_STATE(2, UPHZS, HOT)
+    TM_STATE(3, UPHZS, PRESSED)
+    TM_STATE(4, UPHZS, DISABLED)
+END_TM_PART_STATES()
 
-/* PAGE DOWNHORZ states */
-#define DNHZS_NORMAL   1
-#define DNHZS_HOT      2
-#define DNHZS_PRESSED  3
-#define DNHZS_DISABLED 4
+/* PAGE - DOWNHORZ states */
+BEGIN_TM_PART_STATES(DOWNHORZ)
+    TM_STATE(1, DNHZS, NORMAL)
+    TM_STATE(2, DNHZS, HOT)
+    TM_STATE(3, DNHZS, PRESSED)
+    TM_STATE(4, DNHZS, DISABLED)
+END_TM_PART_STATES()
 
 /* PROGRESS parts */
-#define PP_BAR       1
-#define PP_BARVERT   2
-#define PP_CHUNK     3
-#define PP_CHUNKVERT 4
+BEGIN_TM_CLASS_PARTS(PROGRESS)
+    TM_PART(1, PP, BAR)
+    TM_PART(2, PP, BARVERT)
+    TM_PART(3, PP, CHUNK)
+    TM_PART(4, PP, CHUNKVERT)
+END_TM_CLASS_PARTS()
 
 /* REBAR parts */
-#define RP_GRIPPER     1
-#define RP_GRIPPERVERT 2
-#define RP_BAND        3
-#define RP_CHEVRON     4
-#define RP_CHEVRONVERT 5
+BEGIN_TM_CLASS_PARTS(REBAR)
+    TM_PART(1, RP, GRIPPER)
+    TM_PART(2, RP, GRIPPERVERT)
+    TM_PART(3, RP, BAND)
+    TM_PART(4, RP, CHEVRON)
+    TM_PART(5, RP, CHEVRONVERT)
+END_TM_CLASS_PARTS()
 
-/* REBAR CHEVRON states */
-#define CHEVS_NORMAL  1
-#define CHEVS_HOT     2
-#define CHEVS_PRESSED 3
+/* REBAR - CHEVRON states */
+BEGIN_TM_PART_STATES(CHEVRON)
+    TM_STATE(1, CHEVS, NORMAL)
+    TM_STATE(2, CHEVS, HOT)
+    TM_STATE(3, CHEVS, PRESSED)
+END_TM_PART_STATES()
 
 /* SCROLLBAR parts */
-#define SBP_ARROWBTN       1
-#define SBP_THUMBBTNHORZ   2
-#define SBP_THUMBBTNVERT   3
-#define SBP_LOWERTRACKHORZ 4
-#define SBP_UPPERTRACKHORZ 5
-#define SBP_LOWERTRACKVERT 6
-#define SBP_UPPERTRACKVERT 7
-#define SBP_GRIPPERHORZ    8
-#define SBP_GRIPPERVERT    9
-#define SBP_SIZEBOX        10
+BEGIN_TM_CLASS_PARTS(SCROLLBAR)
+    TM_PART(1, SBP, ARROWBTN)
+    TM_PART(2, SBP, THUMBBTNHORZ)
+    TM_PART(3, SBP, THUMBBTNVERT)
+    TM_PART(4, SBP, LOWERTRACKHORZ)
+    TM_PART(5, SBP, UPPERTRACKHORZ)
+    TM_PART(6, SBP, LOWERTRACKVERT)
+    TM_PART(7, SBP, UPPERTRACKVERT)
+    TM_PART(8, SBP, GRIPPERHORZ)
+    TM_PART(9, SBP, GRIPPERVERT)
+    TM_PART(10, SBP, SIZEBOX)
+END_TM_CLASS_PARTS()
 
-/* SCROLLBAR ARROWBTN states */
-#define ABS_UPNORMAL      1
-#define ABS_UPHOT         2
-#define ABS_UPPRESSED     3
-#define ABS_UPDISABLED    4
-#define ABS_DOWNNORMAL    5
-#define ABS_DOWNHOT       6
-#define ABS_DOWNPRESSED   7
-#define ABS_DOWNDISABLED  8
-#define ABS_LEFTNORMAL    9
-#define ABS_LEFTHOT       10
-#define ABS_LEFTPRESSED   11
-#define ABS_LEFTDISABLED  12
-#define ABS_RIGHTNORMAL   13
-#define ABS_RIGHTHOT      14
-#define ABS_RIGHTPRESSED  15
-#define ABS_RIGHTDISABLED 16
+/* SCROLLBAR - ARROWBTN states */
+BEGIN_TM_PART_STATES(ARROWBTN)
+    TM_STATE(1, ABS, UPNORMAL)
+    TM_STATE(2, ABS, UPHOT)
+    TM_STATE(3, ABS, UPPRESSED)
+    TM_STATE(4, ABS, UPDISABLED)
+    TM_STATE(5, ABS, DOWNNORMAL)
+    TM_STATE(6, ABS, DOWNHOT)
+    TM_STATE(7, ABS, DOWNPRESSED)
+    TM_STATE(8, ABS, DOWNDISABLED)
+    TM_STATE(9, ABS, LEFTNORMAL)
+    TM_STATE(10, ABS, LEFTHOT)
+    TM_STATE(11, ABS, LEFTPRESSED)
+    TM_STATE(12, ABS, LEFTDISABLED)
+    TM_STATE(13, ABS, RIGHTNORMAL)
+    TM_STATE(14, ABS, RIGHTHOT)
+    TM_STATE(15, ABS, RIGHTPRESSED)
+    TM_STATE(16, ABS, RIGHTDISABLED)
+END_TM_PART_STATES()
 
-/* SCROLLBAR LOWER* / THUMB* / UPPER* states */
-#define SCRBS_NORMAL   1
-#define SCRBS_HOT      2
-#define SCRBS_PRESSED  3
-#define SCRBS_DISABLED 4
+/* SCROLLBAR - LOWER* / THUMB* / UPPER* states */
+BEGIN_TM_PART_STATES(SCROLLBAR)
+    TM_STATE(1, SCRBS, NORMAL)
+    TM_STATE(2, SCRBS, HOT)
+    TM_STATE(3, SCRBS, PRESSED)
+    TM_STATE(4, SCRBS, DISABLED)
+END_TM_PART_STATES()
 
-/* SCROLLBAR SIZEBOX states */
-#define SZB_RIGHTALIGN 1
-#define SZB_LEFTALIGN  2
+/* SCROLLBAR - SIZEBOX states */
+BEGIN_TM_PART_STATES(SIZEBOX)
+    TM_STATE(1, SZB, RIGHTALIGN)
+    TM_STATE(2, SZB, LEFTALIGN)
+END_TM_PART_STATES()
 
 /* SPIN parts */
-#define SPNP_UP       1
-#define SPNP_DOWN     2
-#define SPNP_UPHORZ   3
-#define SPNP_DOWNHORZ 4
+BEGIN_TM_CLASS_PARTS(SPIN)
+    TM_PART(1, SPNP, UP)
+    TM_PART(2, SPNP, DOWN)
+    TM_PART(3, SPNP, UPHORZ)
+    TM_PART(4, SPNP, DOWNHORZ)
+END_TM_CLASS_PARTS()
 
 /* SPIN * states */
 /* See PAGE states */
 
 /* STARTPANEL parts */
-#define SPP_USERPANE            1
-#define SPP_MOREPROGRAMS        2
-#define SPP_MOREPROGRAMSARROW   3
-#define SPP_PROGLIST            4
-#define SPP_PROGLISTSEPARATOR   5
-#define SPP_PLACESLIST          6
-#define SPP_PLACESLISTSEPARATOR 7
-#define SPP_LOGOFF              8
-#define SPP_LOGOFFBUTTONS       9
-#define SPP_USERPICTURE         10
-#define SPP_PREVIEW             11
+BEGIN_TM_CLASS_PARTS(STARTPANEL)
+    TM_PART(1, SPP, USERPANE)
+    TM_PART(2, SPP, MOREPROGRAMS)
+    TM_PART(3, SPP, MOREPROGRAMSARROW)
+    TM_PART(4, SPP, PROGLIST)
+    TM_PART(5, SPP, PROGLISTSEPARATOR)
+    TM_PART(6, SPP, PLACESLIST)
+    TM_PART(7, SPP, PLACESLISTSEPARATOR)
+    TM_PART(8, SPP, LOGOFF)
+    TM_PART(9, SPP, LOGOFFBUTTONS)
+    TM_PART(10, SPP, USERPICTURE)
+    TM_PART(11, SPP, PREVIEW)
+END_TM_CLASS_PARTS()
 
-/* STARTPANEL MOREPROGRAMSARROW states */
-#define SPS_NORMAL  1
-#define SPS_HOT     2
-#define SPS_PRESSED 3
+/* STARTPANEL - MOREPROGRAMSARROW states */
+BEGIN_TM_PART_STATES(MOREPROGRAMSARROW)
+    TM_STATE(1, SPS, NORMAL)
+    TM_STATE(2, SPS, HOT)
+    TM_STATE(3, SPS, PRESSED)
+END_TM_PART_STATES()
 
-/* STARTPANEL LOGOFFBUTTONS states */
-#define SPLS_NORMAL  1
-#define SPLS_HOT     2
-#define SPLS_PRESSED 3
+/* STARTPANEL - LOGOFFBUTTONS states */
+BEGIN_TM_PART_STATES(LOGOFFBUTTONS)
+    TM_STATE(1, SPLS, NORMAL)
+    TM_STATE(2, SPLS, HOT)
+    TM_STATE(3, SPLS, PRESSED)
+END_TM_PART_STATES()
 
 /* STATUS parts */
-#define SP_PANE        1
-#define SP_GRIPPERPANE 2
-#define SP_GRIPPER     3
+BEGIN_TM_CLASS_PARTS(STATUS)
+    TM_PART(1, SP, PANE)
+    TM_PART(2, SP, GRIPPERPANE)
+    TM_PART(3, SP, GRIPPER)
+END_TM_CLASS_PARTS()
 
 /* TAB parts */
-#define TABP_TABITEM             1
-#define TABP_TABITEMLEFTEDGE     2
-#define TABP_TABITEMRIGHTEDGE    3
-#define TABP_TABITEMBOTHEDGE     4
-#define TABP_TOPTABITEM          5
-#define TABP_TOPTABITEMLEFTEDGE  6
-#define TABP_TOPTABITEMRIGHTEDGE 7
-#define TABP_TOPTABITEMBOTHEDGE  8
-#define TABP_PANE                9
-#define TABP_BODY                10
+BEGIN_TM_CLASS_PARTS(TAB)
+    TM_PART(1, TABP, TABITEM)
+    TM_PART(2, TABP, TABITEMLEFTEDGE)
+    TM_PART(3, TABP, TABITEMRIGHTEDGE)
+    TM_PART(4, TABP, TABITEMBOTHEDGE)
+    TM_PART(5, TABP, TOPTABITEM)
+    TM_PART(6, TABP, TOPTABITEMLEFTEDGE)
+    TM_PART(7, TABP, TOPTABITEMRIGHTEDGE)
+    TM_PART(8, TABP, TOPTABITEMBOTHEDGE)
+    TM_PART(9, TABP, PANE)
+    TM_PART(10, TABP, BODY)
+END_TM_CLASS_PARTS()
 
-/* TAB TABITEM states */
-#define TIS_NORMAL   1
-#define TIS_HOT      2
-#define TIS_SELECTED 3
-#define TIS_DISABLED 4
-#define TIS_FOCUSED  5
+/* TAB - TABITEM states */
+BEGIN_TM_PART_STATES(TABITEM)
+    TM_STATE(1, TIS, NORMAL)
+    TM_STATE(2, TIS, HOT)
+    TM_STATE(3, TIS, SELECTED)
+    TM_STATE(4, TIS, DISABLED)
+    TM_STATE(5, TIS, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TABITEMLEFTEDGE states */
-#define TILES_NORMAL   1
-#define TILES_HOT      2
-#define TILES_SELECTED 3
-#define TILES_DISABLED 4
-#define TILES_FOCUSED  5
+/* TAB - TABITEMLEFTEDGE states */
+BEGIN_TM_PART_STATES(TABITEMLEFTEDGE)
+    TM_STATE(1, TILES, NORMAL)
+    TM_STATE(2, TILES, HOT)
+    TM_STATE(3, TILES, SELECTED)
+    TM_STATE(4, TILES, DISABLED)
+    TM_STATE(5, TILES, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TABITEMRIGHTEDGE states */
-#define TIRES_NORMAL   1
-#define TIRES_HOT      2
-#define TIRES_SELECTED 3
-#define TIRES_DISABLED 4
-#define TIRES_FOCUSED  5
+/* TAB - TABITEMRIGHTEDGE states */
+BEGIN_TM_PART_STATES(TABITEMRIGHTEDGE)
+    TM_STATE(1, TIRES, NORMAL)
+    TM_STATE(2, TIRES, HOT)
+    TM_STATE(3, TIRES, SELECTED)
+    TM_STATE(4, TIRES, DISABLED)
+    TM_STATE(5, TIRES, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TABITEMBOTHEDGES states */
-#define TIBES_NORMAL   1
-#define TIBES_HOT      2
-#define TIBES_SELECTED 3
-#define TIBES_DISABLED 4
-#define TIBES_FOCUSED  5
+/* TAB - TABITEMBOTHEDGES states */
+BEGIN_TM_PART_STATES(TABITEMBOTHEDGES)
+    TM_STATE(1, TIBES, NORMAL)
+    TM_STATE(2, TIBES, HOT)
+    TM_STATE(3, TIBES, SELECTED)
+    TM_STATE(4, TIBES, DISABLED)
+    TM_STATE(5, TIBES, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TOPTABITEM states */
-#define TTIS_NORMAL   1
-#define TTIS_HOT      2
-#define TTIS_SELECTED 3
-#define TTIS_DISABLED 4
-#define TTIS_FOCUSED  5
+/* TAB - TOPTABITEM states */
+BEGIN_TM_PART_STATES(TOPTABITEM)
+    TM_STATE(1, TTIS, NORMAL)
+    TM_STATE(2, TTIS, HOT)
+    TM_STATE(3, TTIS, SELECTED)
+    TM_STATE(4, TTIS, DISABLED)
+    TM_STATE(5, TTIS, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TOPTABITEMLEFTEDGE states */
-#define TTILES_NORMAL   1
-#define TTILES_HOT      2
-#define TTILES_SELECTED 3
-#define TTILES_DISABLED 4
-#define TTILES_FOCUSED  5
+/* TAB - TOPTABITEMLEFTEDGE states */
+BEGIN_TM_PART_STATES(TOPTABITEMLEFTEDGE)
+    TM_STATE(1, TTILES, NORMAL)
+    TM_STATE(2, TTILES, HOT)
+    TM_STATE(3, TTILES, SELECTED)
+    TM_STATE(4, TTILES, DISABLED)
+    TM_STATE(5, TTILES, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TOPTABITEMRIGHTEDGE states */
-#define TTIRES_NORMAL   1
-#define TTIRES_HOT      2
-#define TTIRES_SELECTED 3
-#define TTIRES_DISABLED 4
-#define TTIRES_FOCUSED  5
+/* TAB - TOPTABITEMRIGHTEDGE states */
+BEGIN_TM_PART_STATES(TOPTABITEMRIGHTEDGE)
+    TM_STATE(1, TTIRES, NORMAL)
+    TM_STATE(2, TTIRES, HOT)
+    TM_STATE(3, TTIRES, SELECTED)
+    TM_STATE(4, TTIRES, DISABLED)
+    TM_STATE(5, TTIRES, FOCUSED)
+END_TM_PART_STATES()
 
-/* TAB TOPTABITEMBOTHEDGES states */
-#define TTIBES_NORMAL   1
-#define TTIBES_HOT      2
-#define TTIBES_SELECTED 3
-#define TTIBES_DISABLED 4
-#define TTIBES_FOCUSED  5
+/* TAB - TOPTABITEMBOTHEDGES states */
+BEGIN_TM_PART_STATES(TOPTABITEMBOTHEDGES)
+    TM_STATE(1, TTIBES, NORMAL)
+    TM_STATE(2, TTIBES, HOT)
+    TM_STATE(3, TTIBES, SELECTED)
+    TM_STATE(4, TTIBES, DISABLED)
+    TM_STATE(5, TTIBES, FOCUSED)
+END_TM_PART_STATES()
 
 /* TASKBAND parts */
-#define TDP_GROUPCOUNT           1
-#define TDP_FLASHBUTTON          2
-#define TDP_FLASHBUTTONGROUPMENU 3
+BEGIN_TM_CLASS_PARTS(TASKBAND)
+    TM_PART(1, TDP, GROUPCOUNT)
+    TM_PART(2, TDP, FLASHBUTTON)
+    TM_PART(3, TDP, FLASHBUTTONGROUPMENU)
+END_TM_CLASS_PARTS()
 
 /* TASKBAR parts */
-#define TBP_BACKGROUNDBOTTOM 1
-#define TBP_BACKGROUNDRIGHT  2
-#define TBP_BACKGROUNDTOP    3
-#define TBP_BACKGROUNDLEFT   4
-#define TBP_SIZINGBARBOTTOM  5
-#define TBP_SIZINGBARRIGHT   6
-#define TBP_SIZINGBARTOP     7
-#define TBP_SIZINGBARLEFT    8
+BEGIN_TM_CLASS_PARTS(TASKBAR)
+    TM_PART(1, TBP, BACKGROUNDBOTTOM)
+    TM_PART(2, TBP, BACKGROUNDRIGHT)
+    TM_PART(3, TBP, BACKGROUNDTOP)
+    TM_PART(4, TBP, BACKGROUNDLEFT)
+    TM_PART(5, TBP, SIZINGBARBOTTOM)
+    TM_PART(6, TBP, SIZINGBARRIGHT)
+    TM_PART(7, TBP, SIZINGBARTOP)
+    TM_PART(8, TBP, SIZINGBARLEFT)
+END_TM_CLASS_PARTS()
 
 /* TOOLBAR parts */
-#define TP_BUTTON              1
-#define TP_DROPDOWNBUTTON      2
-#define TP_SPLITBUTTON         3
-#define TP_SPLITBUTTONDROPDOWN 4
-#define TP_SEPARATOR           5
-#define TP_SEPARATORVERT       6
+BEGIN_TM_CLASS_PARTS(TOOLBAR)
+    TM_PART(1, TP, BUTTON)
+    TM_PART(2, TP, DROPDOWNBUTTON)
+    TM_PART(3, TP, SPLITBUTTON)
+    TM_PART(4, TP, SPLITBUTTONDROPDOWN)
+    TM_PART(5, TP, SEPARATOR)
+    TM_PART(6, TP, SEPARATORVERT)
+END_TM_CLASS_PARTS()
 
-/* TOOLBAR * states */
-#define TS_NORMAL     1
-#define TS_HOT        2
-#define TS_PRESSED    3
-#define TS_DISABLED   4
-#define TS_CHECKED    5
-#define TS_HOTCHECKED 6
+/* TOOLBAR - * states */
+BEGIN_TM_PART_STATES(TOOLBAR)
+    TM_STATE(1, TS, NORMAL)
+    TM_STATE(2, TS, HOT)
+    TM_STATE(3, TS, PRESSED)
+    TM_STATE(4, TS, DISABLED)
+    TM_STATE(5, TS, CHECKED)
+    TM_STATE(6, TS, HOTCHECKED)
+END_TM_PART_STATES()
 
 /* TOOLTIP parts */
-#define TTP_STANDARD      1
-#define TTP_STANDARDTITLE 2
-#define TTP_BALLOON       3
-#define TTP_BALLOONTITLE  4
-#define TTP_CLOSE         5
+BEGIN_TM_CLASS_PARTS(TOOLTIP)
+    TM_PART(1, TTP, STANDARD)
+    TM_PART(2, TTP, STANDARDTITLE)
+    TM_PART(3, TTP, BALLOON)
+    TM_PART(4, TTP, BALLOONTITLE)
+    TM_PART(5, TTP, CLOSE)
+END_TM_CLASS_PARTS()
 
-/* TOOLTIP STANDARD states */
-#define TTSS_NORMAL 1
-#define TTSS_LINK   2
+/* TOOLTIP - STANDARD states */
+BEGIN_TM_PART_STATES(STANDARD)
+    TM_STATE(1, TTSS, NORMAL)
+    TM_STATE(2, TTSS, LINK)
+END_TM_PART_STATES()
 
-/* TOOLTIP STANDARDTITLE states */
+/* TOOLTIP - STANDARDTITLE states */
 /* See TOOLTIP STANDARD  */
 
-/* TOOLTIP BALLOON states */
-#define TTBS_NORMAL 1
-#define TTBS_LINK   2
+/* TOOLTIP - BALLOON states */
+BEGIN_TM_PART_STATES(BALLOON)
+    TM_STATE(1, TTBS, NORMAL)
+    TM_STATE(2, TTBS, LINK)
+END_TM_PART_STATES()
 
-/* TOOLTIP BALOONTITLE states */
-/* See TOOLTIP BALOON */
+/* TOOLTIP - BALLOONTITLE states */
+/* See TOOLTIP BALLOON */
 
-/* TOOLTIP CLOSE states */
-#define TTCS_NORMAL  1
-#define TTCS_HOT     2
-#define TTCS_PRESSED 3
+/* TOOLTIP - CLOSE states */
+BEGIN_TM_PART_STATES(CLOSE)
+    TM_STATE(1, TTCS, NORMAL)
+    TM_STATE(2, TTCS, HOT)
+    TM_STATE(3, TTCS, PRESSED)
+END_TM_PART_STATES()
 
 /* TRACKBAR parts */
-#define TKP_TRACK       1
-#define TKP_TRACKVERT   2
-#define TKP_THUMB       3
-#define TKP_THUMBBOTTOM 4
-#define TKP_THUMBTOP    5
-#define TKP_THUMBVERT   6
-#define TKP_THUMBLEFT   7
-#define TKP_THUMBRIGHT  8
-#define TKP_TICS        9
-#define TKP_TICSVERT    10
+BEGIN_TM_CLASS_PARTS(TRACKBAR)
+    TM_PART(1, TKP, TRACK)
+    TM_PART(2, TKP, TRACKVERT)
+    TM_PART(3, TKP, THUMB)
+    TM_PART(4, TKP, THUMBBOTTOM)
+    TM_PART(5, TKP, THUMBTOP)
+    TM_PART(6, TKP, THUMBVERT)
+    TM_PART(7, TKP, THUMBLEFT)
+    TM_PART(8, TKP, THUMBRIGHT)
+    TM_PART(9, TKP, TICS)
+    TM_PART(10, TKP, TICSVERT)
+END_TM_CLASS_PARTS()
 
-/* TRACKBAR TRACK states */
-#define TRS_NORMAL 1
+/* TRACKBAR states */
+BEGIN_TM_PART_STATES(TRACKBAR)
+    TM_STATE(1, TKS, NORMAL)
+END_TM_PART_STATES()
 
-/* TRACKBAR TRACKVERT states */
-#define TRVS_NORMAL 1
+/* TRACKBAR - TRACK states */
+BEGIN_TM_PART_STATES(TRACK)
+    TM_STATE(1, TRS, NORMAL)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMB states */
-#define TUS_NORMAL   1
-#define TUS_HOT      2
-#define TUS_PRESSED  3
-#define TUS_FOCUSED  4
-#define TUS_DISABLED 5
+/* TRACKBAR - TRACKVERT states */
+BEGIN_TM_PART_STATES(TRACKVERT)
+    TM_STATE(1, TRVS, NORMAL)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMBBOTTOM states */
-#define TUBS_NORMAL   1
-#define TUBS_HOT      2
-#define TUBS_PRESSED  3
-#define TUBS_FOCUSED  4
-#define TUBS_DISABLED 5
+/* TRACKBAR - THUMB states */
+BEGIN_TM_PART_STATES(THUMB)
+    TM_STATE(1, TUS, NORMAL)
+    TM_STATE(2, TUS, HOT)
+    TM_STATE(3, TUS, PRESSED)
+    TM_STATE(4, TUS, FOCUSED)
+    TM_STATE(5, TUS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMBTOP states */
-#define TUTS_NORMAL   1
-#define TUTS_HOT      2
-#define TUTS_PRESSED  3
-#define TUTS_FOCUSED  4
-#define TUTS_DISABLED 5
+/* TRACKBAR - THUMBBOTTOM states */
+BEGIN_TM_PART_STATES(THUMBBOTTOM)
+    TM_STATE(1, TUBS, NORMAL)
+    TM_STATE(2, TUBS, HOT)
+    TM_STATE(3, TUBS, PRESSED)
+    TM_STATE(4, TUBS, FOCUSED)
+    TM_STATE(5, TUBS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMBVERT states */
-#define TUVS_NORMAL   1
-#define TUVS_HOT      2
-#define TUVS_PRESSED  3
-#define TUVS_FOCUSED  4
-#define TUVS_DISABLED 5
+/* TRACKBAR - THUMBTOP states */
+BEGIN_TM_PART_STATES(THUMBTOP)
+    TM_STATE(1, TUTS, NORMAL)
+    TM_STATE(2, TUTS, HOT)
+    TM_STATE(3, TUTS, PRESSED)
+    TM_STATE(4, TUTS, FOCUSED)
+    TM_STATE(5, TUTS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMBLEFT states */
-#define TUVLS_NORMAL   1
-#define TUVLS_HOT      2
-#define TUVLS_PRESSED  3
-#define TUVLS_FOCUSED  4
-#define TUVLS_DISABLED 5
+/* TRACKBAR - THUMBVERT states */
+BEGIN_TM_PART_STATES(THUMBVERT)
+    TM_STATE(1, TUVS, NORMAL)
+    TM_STATE(2, TUVS, HOT)
+    TM_STATE(3, TUVS, PRESSED)
+    TM_STATE(4, TUVS, FOCUSED)
+    TM_STATE(5, TUVS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR THUMBRIGHT states */
-#define TUVRS_NORMAL   1
-#define TUVRS_HOT      2
-#define TUVRS_PRESSED  3
-#define TUVRS_FOCUSED  4
-#define TUVRS_DISABLED 5
+/* TRACKBAR - THUMBLEFT states */
+BEGIN_TM_PART_STATES(THUMBLEFT)
+    TM_STATE(1, TUVLS, NORMAL)
+    TM_STATE(2, TUVLS, HOT)
+    TM_STATE(3, TUVLS, PRESSED)
+    TM_STATE(4, TUVLS, FOCUSED)
+    TM_STATE(5, TUVLS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR TICS states */
-#define TSS_NORMAL 1
+/* TRACKBAR - THUMBRIGHT states */
+BEGIN_TM_PART_STATES(THUMBRIGHT)
+    TM_STATE(1, TUVRS, NORMAL)
+    TM_STATE(2, TUVRS, HOT)
+    TM_STATE(3, TUVRS, PRESSED)
+    TM_STATE(4, TUVRS, FOCUSED)
+    TM_STATE(5, TUVRS, DISABLED)
+END_TM_PART_STATES()
 
-/* TRACKBAR TICSVERT states */
-#define TSVS_NORMAL 1
+/* TRACKBAR - TICS states */
+BEGIN_TM_PART_STATES(TICS)
+    TM_STATE(1, TSS, NORMAL)
+END_TM_PART_STATES()
+
+/* TRACKBAR - TICSVERT states */
+BEGIN_TM_PART_STATES(TICSVERT)
+    TM_STATE(1, TSVS, NORMAL)
+END_TM_PART_STATES()
 
 /* TRAYNOTIFY parts */
-#define TNP_BACKGROUND     1
-#define TNP_ANIMBACKGROUND 2
+BEGIN_TM_CLASS_PARTS(TRAYNOTIFY)
+    TM_PART(1, TNP, BACKGROUND)
+    TM_PART(2, TNP, ANIMBACKGROUND)
+END_TM_CLASS_PARTS()
 
 /* TREEVIEW parts */
-#define TVP_TREEITEM 1
-#define TVP_GLYPH    2
-#define TVP_BRANCH   3
+BEGIN_TM_CLASS_PARTS(TREEVIEW)
+    TM_PART(1, TVP, TREEITEM)
+    TM_PART(2, TVP, GLYPH)
+    TM_PART(3, TVP, BRANCH)
+END_TM_CLASS_PARTS()
 
-/* TREEVIEW TREEITEM states */
-#define TREIS_NORMAL           1
-#define TREIS_HOT              2
-#define TREIS_SELECTED         3
-#define TREIS_DISABLED         4
-#define TREIS_SELECTEDNOTFOCUS 5
+/* TREEVIEW - TREEITEM states */
+BEGIN_TM_PART_STATES(TREEITEM)
+    TM_STATE(1, TREIS, NORMAL)
+    TM_STATE(2, TREIS, HOT)
+    TM_STATE(3, TREIS, SELECTED)
+    TM_STATE(4, TREIS, DISABLED)
+    TM_STATE(5, TREIS, SELECTEDNOTFOCUS)
+END_TM_PART_STATES()
 
-/* TREEVIEW GLYPH states */
-#define GLPS_CLOSED 1
-#define GLPS_OPENED 2
+/* TREEVIEW - GLYPH states */
+BEGIN_TM_PART_STATES(GLYPH)
+    TM_STATE(1, GLPS, CLOSED)
+    TM_STATE(2, GLPS, OPENED)
+END_TM_PART_STATES()
 
 /* WINDOW parts */
-#define WP_CAPTION                        1
-#define WP_SMALLCAPTION                   2
-#define WP_MINCAPTION                     3
-#define WP_SMALLMINCAPTION                4
-#define WP_MAXCAPTION                     5
-#define WP_SMALLMAXCAPTION                6
-#define WP_FRAMELEFT                      7
-#define WP_FRAMERIGHT                     8
-#define WP_FRAMEBOTTOM                    9
-#define WP_SMALLFRAMELEFT                 10
-#define WP_SMALLFRAMERIGHT                11
-#define WP_SMALLFRAMEBOTTOM               12
-#define WP_SYSBUTTON                      13
-#define WP_MDISYSBUTTON                   14
-#define WP_MINBUTTON                      15
-#define WP_MDIMINBUTTON                   16
-#define WP_MAXBUTTON                      17
-#define WP_CLOSEBUTTON                    18
-#define WP_SMALLCLOSEBUTTON               19
-#define WP_MDICLOSEBUTTON                 20
-#define WP_RESTOREBUTTON                  21
-#define WP_MDIRESTOREBUTTON               22
-#define WP_HELPBUTTON                     23
-#define WP_MDIHELPBUTTON                  24
-#define WP_HORZSCROLL                     25
-#define WP_HORZTHUMB                      26
-#define WP_VERTSCROLL                     27
-#define WP_VERTTHUMB                      28
-#define WP_DIALOG                         29
-#define WP_CAPTIONSIZINGTEMPLATE          30
-#define WP_SMALLCAPTIONSIZINGTEMPLATE     31
-#define WP_FRAMELEFTSIZINGTEMPLATE        32
-#define WP_SMALLFRAMELEFTSIZINGTEMPLATE   33
-#define WP_FRAMERIGHTSIZINGTEMPLATE       34
-#define WP_SMALLFRAMERIGHTSIZINGTEMPLATE  35
-#define WP_FRAMEBOTTOMSIZINGTEMPLATE      36
-#define WP_SMALLFRAMEBOTTOMSIZINGTEMPLATE 37
+BEGIN_TM_CLASS_PARTS(WINDOW)
+    TM_PART(1, WP, CAPTION)
+    TM_PART(2, WP, SMALLCAPTION)
+    TM_PART(3, WP, MINCAPTION)
+    TM_PART(4, WP, SMALLMINCAPTION)
+    TM_PART(5, WP, MAXCAPTION)
+    TM_PART(6, WP, SMALLMAXCAPTION)
+    TM_PART(7, WP, FRAMELEFT)
+    TM_PART(8, WP, FRAMERIGHT)
+    TM_PART(9, WP, FRAMEBOTTOM)
+    TM_PART(10, WP, SMALLFRAMELEFT)
+    TM_PART(11, WP, SMALLFRAMERIGHT)
+    TM_PART(12, WP, SMALLFRAMEBOTTOM)
+    TM_PART(13, WP, SYSBUTTON)
+    TM_PART(14, WP, MDISYSBUTTON)
+    TM_PART(15, WP, MINBUTTON)
+    TM_PART(16, WP, MDIMINBUTTON)
+    TM_PART(17, WP, MAXBUTTON)
+    TM_PART(18, WP, CLOSEBUTTON)
+    TM_PART(19, WP, SMALLCLOSEBUTTON)
+    TM_PART(20, WP, MDICLOSEBUTTON)
+    TM_PART(21, WP, RESTOREBUTTON)
+    TM_PART(22, WP, MDIRESTOREBUTTON)
+    TM_PART(23, WP, HELPBUTTON)
+    TM_PART(24, WP, MDIHELPBUTTON)
+    TM_PART(25, WP, HORZSCROLL)
+    TM_PART(26, WP, HORZTHUMB)
+    TM_PART(27, WP, VERTSCROLL)
+    TM_PART(28, WP, VERTTHUMB)
+    TM_PART(29, WP, DIALOG)
+    TM_PART(30, WP, CAPTIONSIZINGTEMPLATE)
+    TM_PART(31, WP, SMALLCAPTIONSIZINGTEMPLATE)
+    TM_PART(32, WP, FRAMELEFTSIZINGTEMPLATE)
+    TM_PART(33, WP, SMALLFRAMELEFTSIZINGTEMPLATE)
+    TM_PART(34, WP, FRAMERIGHTSIZINGTEMPLATE)
+    TM_PART(35, WP, SMALLFRAMERIGHTSIZINGTEMPLATE)
+    TM_PART(36, WP, FRAMEBOTTOMSIZINGTEMPLATE)
+    TM_PART(37, WP, SMALLFRAMEBOTTOMSIZINGTEMPLATE)
+END_TM_CLASS_PARTS()
 
-/* WINDOW CAPTION / SMALLCAPTION state */
-#define CS_ACTIVE   1
-#define CS_INACTIVE 2
-#define CS_DISABLED 3
+/* WINDOW - CAPTION / SMALLCAPTION states */
+BEGIN_TM_PART_STATES(CAPTION)
+    TM_STATE(1, CS, ACTIVE)
+    TM_STATE(2, CS, INACTIVE)
+    TM_STATE(3, CS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW MINCAPTION / SMALLMINCAPTION state */
-#define MNCS_ACTIVE   1
-#define MNCS_INACTIVE 2
-#define MNCS_DISABLED 3
+/* WINDOW - MINCAPTION / SMALLMINCAPTION states */
+BEGIN_TM_PART_STATES(MINCAPTION)
+    TM_STATE(1, MNCS, ACTIVE)
+    TM_STATE(2, MNCS, INACTIVE)
+    TM_STATE(3, MNCS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW MAXCAPTION / SMALLMAXCAPTION state */
-#define MXCS_ACTIVE   1
-#define MXCS_INACTIVE 2
-#define MXCS_DISABLED 3
+/* WINDOW - MAXCAPTION / SMALLMAXCAPTION states */
+BEGIN_TM_PART_STATES(MAXCAPTION)
+    TM_STATE(1, MXCS, ACTIVE)
+    TM_STATE(2, MXCS, INACTIVE)
+    TM_STATE(3, MXCS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW FRAME* / SMALLFRAME* state */
-#define FS_ACTIVE   1
-#define FS_INACTIVE 2
+/* WINDOW - FRAME* / SMALLFRAME* states */
+BEGIN_TM_PART_STATES(FRAME)
+    TM_STATE(1, FS, ACTIVE)
+    TM_STATE(2, FS, INACTIVE)
+END_TM_PART_STATES()
 
-/* WINDOW SYSBUTTON / MDISYSBUTTON state */
-#define SBS_NORMAL   1
-#define SBS_HOT      2
-#define SBS_PUSHED   3
-#define SBS_DISABLED 4
+/* WINDOW - SYSBUTTON / MDISYSBUTTON states */
+BEGIN_TM_PART_STATES(SYSBUTTON)
+    TM_STATE(1, SBS, NORMAL)
+    TM_STATE(2, SBS, HOT)
+    TM_STATE(3, SBS, PUSHED)
+    TM_STATE(4, SBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW MINBUTTON / MDIMINBUTTON state */
-#define MINBS_NORMAL   1
-#define MINBS_HOT      2
-#define MINBS_PUSHED   3
-#define MINBS_DISABLED 4
+/* WINDOW - MINBUTTON / MDIMINBUTTON states */
+BEGIN_TM_PART_STATES(MINBUTTON)
+    TM_STATE(1, MINBS, NORMAL)
+    TM_STATE(2, MINBS, HOT)
+    TM_STATE(3, MINBS, PUSHED)
+    TM_STATE(4, MINBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW MAXBUTTON state */
-#define MAXBS_NORMAL   1
-#define MAXBS_HOT      2
-#define MAXBS_PUSHED   3
-#define MAXBS_DISABLED 4
+/* WINDOW - MAXBUTTON states */
+BEGIN_TM_PART_STATES(MAXBUTTON)
+    TM_STATE(1, MAXBS, NORMAL)
+    TM_STATE(2, MAXBS, HOT)
+    TM_STATE(3, MAXBS, PUSHED)
+    TM_STATE(4, MAXBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW CLOSEBUTTON / SMALLCLOSEBUTTON / MDICLOSEBUTTON state */
-#define CBS_NORMAL   1
-#define CBS_HOT      2
-#define CBS_PUSHED   3
-#define CBS_DISABLED 4
+/* WINDOW - CLOSEBUTTON / SMALLCLOSEBUTTON / MDICLOSEBUTTON states */
+BEGIN_TM_PART_STATES(CLOSEBUTTON)
+    TM_STATE(1, CBS, NORMAL)
+    TM_STATE(2, CBS, HOT)
+    TM_STATE(3, CBS, PUSHED)
+    TM_STATE(4, CBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW RESTOREBUTTON / MDIRESTOREBUTTON state */
-#define RBS_NORMAL   1
-#define RBS_HOT      2
-#define RBS_PUSHED   3
-#define RBS_DISABLED 4
+/* WINDOW - RESTOREBUTTON / MDIRESTOREBUTTON states */
+BEGIN_TM_PART_STATES(RESTOREBUTTON)
+    TM_STATE(1, RBS, NORMAL)
+    TM_STATE(2, RBS, HOT)
+    TM_STATE(3, RBS, PUSHED)
+    TM_STATE(4, RBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW HELPBUTTON / MDIHELPBUTTON state */
-#define HBS_NORMAL   1
-#define HBS_HOT      2
-#define HBS_PUSHED   3
-#define HBS_DISABLED 4
+/* WINDOW - HELPBUTTON / MDIHELPBUTTON states */
+BEGIN_TM_PART_STATES(HELPBUTTON)
+    TM_STATE(1, HBS, NORMAL)
+    TM_STATE(2, HBS, HOT)
+    TM_STATE(3, HBS, PUSHED)
+    TM_STATE(4, HBS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW HORZSCROLL state */
-#define HSS_NORMAL   1
-#define HSS_HOT      2
-#define HSS_PUSHED   3
-#define HSS_DISABLED 4
+/* WINDOW - HORZSCROLL states */
+BEGIN_TM_PART_STATES(HORZSCROLL)
+    TM_STATE(1, HSS, NORMAL)
+    TM_STATE(2, HSS, HOT)
+    TM_STATE(3, HSS, PUSHED)
+    TM_STATE(4, HSS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW HORZTHUMB state */
-#define HTS_NORMAL   1
-#define HTS_HOT      2
-#define HTS_PUSHED   3
-#define HTS_DISABLED 4
+/* WINDOW - HORZTHUMB states */
+BEGIN_TM_PART_STATES(HORZTHUMB)
+    TM_STATE(1, HTS, NORMAL)
+    TM_STATE(2, HTS, HOT)
+    TM_STATE(3, HTS, PUSHED)
+    TM_STATE(4, HTS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW VERTSCROLL state */
-#define VSS_NORMAL   1
-#define VSS_HOT      2
-#define VSS_PUSHED   3
-#define VSS_DISABLED 4
+/* WINDOW - VERTSCROLL states */
+BEGIN_TM_PART_STATES(VERTSCROLL)
+    TM_STATE(1, VSS, NORMAL)
+    TM_STATE(2, VSS, HOT)
+    TM_STATE(3, VSS, PUSHED)
+    TM_STATE(4, VSS, DISABLED)
+END_TM_PART_STATES()
 
-/* WINDOW VERTTHUMB state */
-#define VTS_NORMAL   1
-#define VTS_HOT      2
-#define VTS_PUSHED   3
-#define VTS_DISABLED 4
+/* WINDOW - VERTTHUMB states */
+BEGIN_TM_PART_STATES(VERTTHUMB)
+    TM_STATE(1, VTS, NORMAL)
+    TM_STATE(2, VTS, HOT)
+    TM_STATE(3, VTS, PUSHED)
+    TM_STATE(4, VTS, DISABLED)
+END_TM_PART_STATES()
 
+END_TM_SCHEMA(ThemeMgrSchema)
 #endif

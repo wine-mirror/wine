@@ -184,6 +184,7 @@ WINDOWS_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
+	schemadef.h \
 	sddl.h \
 	secext.h \
 	setupapi.h \
