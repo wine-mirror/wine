@@ -129,7 +129,7 @@
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
 @ stdcall NtListenPort(ptr ptr)
-@ stub NtLoadDriver
+@ stdcall NtLoadDriver(ptr)
 @ stdcall NtLoadKey(ptr ptr)
 @ stdcall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
 @ stdcall NtLockVirtualMemory(long ptr ptr long)
@@ -254,7 +254,7 @@
 @ stdcall NtTerminateProcess(long long)
 @ stdcall NtTerminateThread(long long)
 @ stub NtTestAlert
-@ stub NtUnloadDriver
+@ stdcall NtUnloadDriver(ptr)
 @ stdcall NtUnloadKey(long)
 @ stub NtUnloadKeyEx
 @ stdcall NtUnlockFile(long ptr ptr ptr ptr)
@@ -719,7 +719,7 @@
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
 @ stdcall ZwListenPort(ptr ptr) NtListenPort
-@ stub ZwLoadDriver
+@ stdcall ZwLoadDriver(ptr) NtLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) NtLoadKey
 @ stdcall ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 @ stdcall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
@@ -840,7 +840,7 @@
 @ stdcall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
 @ stub ZwTestAlert
-@ stub ZwUnloadDriver
+@ stdcall ZwUnloadDriver(ptr) NtUnloadDriver
 @ stdcall ZwUnloadKey(long) NtUnloadKey
 @ stub ZwUnloadKeyEx
 @ stdcall ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile

@@ -2071,6 +2071,28 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
 }
 
 
+/***********************************************************************
+ *           NtLoadDriver   (NTDLL.@)
+ *           ZwLoadDriver   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLoadDriver( const UNICODE_STRING *DriverServiceName )
+{
+    FIXME("(%p), stub!\n",DriverServiceName);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *           NtUnloadDriver   (NTDLL.@)
+ *           ZwUnloadDriver   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtUnloadDriver( const UNICODE_STRING *DriverServiceName )
+{
+    FIXME("(%p), stub!\n",DriverServiceName);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 /******************************************************************
  *		__wine_init_windows_dir   (NTDLL.@)
  *
