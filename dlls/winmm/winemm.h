@@ -155,6 +155,18 @@ typedef struct tagWINE_MMIO {
     DWORD                       dwFileSize;
 } WINE_MMIO, *LPWINE_MMIO;
 
+typedef struct tagWINE_PLAYSOUND {
+    HANDLE              hThread;
+    HANDLE		hReadyEvent;
+    BOOL 		bStop;
+    LPCWSTR		pszSound;
+    HMODULE		hMod;
+    DWORD		fdwSound;
+    int		        bLoop;
+    int 		searchMode; /* 1 - sndPlaySound search order
+                                       2 - PlaySound order */
+} WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
+
 typedef struct tagWINE_MM_IDATA {
     /* iData reference */
     DWORD			dwThisProcess;
@@ -178,6 +190,8 @@ typedef struct tagWINE_MM_IDATA {
     /* LPWINE_MIXER		lpMixer; */
     /* mmio part */
     LPWINE_MMIO			lpMMIO;
+    /* playsound and sndPlaySound */
+    LPWINE_PLAYSOUND            lpPlaySound;
 } WINE_MM_IDATA, *LPWINE_MM_IDATA;
 
 /* function prototypes */

@@ -218,50 +218,39 @@ void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
     memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
 }
 
-static HANDLE		PlaySound_hThread = 0;
-static HANDLE		PlaySound_hPlayEvent = 0;
-static HANDLE		PlaySound_hReadyEvent = 0;
-static HANDLE		PlaySound_hMiddleEvent = 0;
-static BOOL		PlaySound_Result = FALSE;
-static int		PlaySound_Stop = FALSE;
-static int		PlaySound_Playing = FALSE;
-
-static LPCSTR		PlaySound_pszSound = NULL;
-static HMODULE		PlaySound_hmod = 0;
-static DWORD		PlaySound_fdwSound = 0;
-static int		PlaySound_Loop = FALSE;
-static int		PlaySound_SearchMode = 0; /* 1 - sndPlaySound search order
-						     2 - PlaySound order */
-
-static HMMIO	get_mmioFromFile(LPCSTR lpszName)
+static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
 {
-    return mmioOpenA((LPSTR)lpszName, NULL,
+    return mmioOpenW((LPWSTR)lpszName, NULL,
 		     MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 }
 
-static HMMIO	get_mmioFromProfile(UINT uFlags, LPCSTR lpszName) 
+static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName) 
 {
-    char	str[128];
-    LPSTR	ptr;
+    WCHAR	str[128];
+    LPWSTR	ptr;
     HMMIO  	hmmio;
-    
+static  WCHAR       wszSounds[] = {'S','o','u','n','d','s',0};
+static  WCHAR       wszDefault[] = {'D','e','f','a','u','l','t',0};
+static  WCHAR       wszNull[] = {0};
     TRACE("searching in SystemSound List !\n");
-    GetProfileStringA("Sounds", (LPSTR)lpszName, "", str, sizeof(str));
-    if (strlen(str) == 0) {
+    GetProfileStringW(wszSounds, (LPWSTR)lpszName, wszNull, str, sizeof(str)/sizeof(str[0]));
+    if (lstrlenW(str) == 0) {
 	if (uFlags & SND_NODEFAULT) return 0;
-	GetProfileStringA("Sounds", "Default", "", str, sizeof(str));
-	if (strlen(str) == 0) return 0;
+	GetProfileStringW(wszSounds, wszDefault, wszNull, str, sizeof(str)/sizeof(str[0]));
+	if (lstrlenW(str) == 0) return 0;
     }
-    if ((ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
-    hmmio = get_mmioFromFile(str);
+    for (ptr = str; *ptr && *ptr != ','; ptr++);
+    if (*ptr) *ptr = 0;
+    hmmio = mmioOpenW(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     if (hmmio == 0) {
-	WARN("can't find SystemSound='%s' !\n", str);
+	WARN("can't find SystemSound='%s' !\n", debugstr_w(str));
 	return 0;
     }
     return hmmio;
 }
 
-struct playsound_data {
+struct playsound_data 
+{
     HANDLE	hEvent;
     DWORD	dwEventCount;
 };
@@ -290,17 +279,17 @@ static void PlaySound_WaitDone(struct playsound_data* s)
 {
     for (;;) {
 	ResetEvent(s->hEvent);
-	if (InterlockedDecrement(&s->dwEventCount) >= 0) {
-	    break;
-	}
+	if (InterlockedDecrement(&s->dwEventCount) >= 0) break;
 	InterlockedIncrement(&s->dwEventCount);
 	
 	WaitForSingleObject(s->hEvent, INFINITE);
     }
 }
 
-static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
+static DWORD WINAPI proc_PlaySound(LPVOID arg)
 {
+    WINE_PLAYSOUND*     wps = (WINE_PLAYSOUND*)arg;
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     BOOL		bRet = FALSE;
     HMMIO		hmmio = 0;
     MMCKINFO		ckMainRIFF;
@@ -310,43 +299,60 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
     LPWAVEHDR		waveHdr = NULL;
     INT			count, bufsize, left, index;
     struct playsound_data	s;
+    void*               data;
 
     s.hEvent = 0;
 
-    TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
-    if (lpszSoundName == NULL) {
-	TRACE("Stop !\n");
-	return FALSE;
-    }
-    if (uFlags & SND_MEMORY) {
+    TRACE("SoundName='%s' !\n", debugstr_w(wps->pszSound));
+
+    /* if resource, grab it */
+    if ((wps->fdwSound & SND_RESOURCE) == SND_RESOURCE) {
+        static WCHAR wszWave[] = {'W','A','V','E',0};
+        HRSRC	hRes;
+        HGLOBAL	hGlob;
+        
+        if ((hRes = FindResourceW(wps->hMod, wps->pszSound, wszWave)) == 0 ||
+            (hGlob = LoadResource(wps->hMod, hRes)) == 0) {
+            return FALSE;
+        }
+        if ((data = LockResource(hGlob)) == NULL) {
+            FreeResource(hGlob);
+            return FALSE;
+        }
+        FreeResource(hGlob);
+    } else
+        data = (void*)wps->pszSound;
+
+    /* construct an MMIO stream (either in memory, or from a file */
+    if (wps->fdwSound & SND_MEMORY) { /* NOTE: SND_RESOURCE has the SND_MEMORY bit set */
 	MMIOINFO	mminfo;
+
 	memset(&mminfo, 0, sizeof(mminfo));
 	mminfo.fccIOProc = FOURCC_MEM;
-	mminfo.pchBuffer = (LPSTR)lpszSoundName;
-	mminfo.cchBuffer = -1;
-	TRACE("Memory sound %p\n", lpszSoundName);
-	hmmio = mmioOpenA(NULL, &mminfo, MMIO_READ);
+	mminfo.pchBuffer = (LPSTR)data;
+	mminfo.cchBuffer = -1; /* FIXME: when a resource, could grab real size */
+	TRACE("Memory sound %p\n", data);
+	hmmio = mmioOpenW(NULL, &mminfo, MMIO_READ);
     } else {
 	hmmio = 0;
-	if (uFlags & SND_ALIAS)
-	    if ((hmmio = get_mmioFromProfile(uFlags, lpszSoundName)) == 0) 
+	if (wps->fdwSound & SND_ALIAS)
+	    if ((hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound)) == 0) 
 		return FALSE;
 	
-	if (uFlags & SND_FILENAME)
-	    if ((hmmio=get_mmioFromFile(lpszSoundName)) == 0) return FALSE;
+	if (wps->fdwSound & SND_FILENAME)
+	    if ((hmmio = get_mmioFromFile(wps->pszSound)) == 0) return FALSE;
 	
-	if (PlaySound_SearchMode == 1) {
-	    PlaySound_SearchMode = 0;
-	    if ((hmmio = get_mmioFromFile(lpszSoundName)) == 0) 
-		hmmio = get_mmioFromProfile(uFlags, lpszSoundName);
-	}
-	
-	if (PlaySound_SearchMode == 2) {
-	    PlaySound_SearchMode = 0;
-	    if ((hmmio = get_mmioFromProfile(uFlags | SND_NODEFAULT, lpszSoundName)) == 0) 
-		if ((hmmio = get_mmioFromFile(lpszSoundName)) == 0)	
-		    hmmio = get_mmioFromProfile(uFlags, lpszSoundName);
-	}
+	switch (wps->searchMode) {
+        case 1:
+	    if ((hmmio = get_mmioFromFile(wps->pszSound)) == 0) 
+		hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
+            break;
+        case 2:
+	    if ((hmmio = get_mmioFromProfile(wps->fdwSound | SND_NODEFAULT, wps->pszSound)) == 0) 
+		if ((hmmio = get_mmioFromFile(wps->pszSound)) == 0)	
+		    hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
+            break;
+        }
     }
     if (hmmio == 0) return FALSE;
 
@@ -416,8 +422,8 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left) {
-	    if (PlaySound_Stop) {
-		PlaySound_Stop = PlaySound_Loop = FALSE;
+	    if (wps->bStop) {
+		wps->bStop = wps->bLoop = FALSE;
 		break;
 	    }
 	    count = mmioRead(hmmio, waveHdr[index].lpData, min(bufsize, left));
@@ -425,14 +431,16 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 	    left -= count;
 	    waveHdr[index].dwBufferLength = count;
 	    waveHdr[index].dwFlags &= ~WHDR_DONE;
-	    waveOutWrite(hWave, &waveHdr[index], sizeof(WAVEHDR));
-	    index ^= 1;
-	    PlaySound_WaitDone(&s);
+	    if (waveOutWrite(hWave, &waveHdr[index], sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
+                index ^= 1;
+                PlaySound_WaitDone(&s);
+            }
+            else FIXME("Couldn't play header\n");
 	}
 	bRet = TRUE;
-    } while (PlaySound_Loop);
+    } while (wps->bLoop);
 
-    PlaySound_WaitDone(&s);
+    PlaySound_WaitDone(&s); /* for last buffer */
     waveOutReset(hWave);
 
     waveOutUnprepareHeader(hWave, &waveHdr[0], sizeof(WAVEHDR));
@@ -445,123 +453,105 @@ errCleanUp:
     if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
     if (hmmio) 		mmioClose(hmmio, 0);
 
+    SetEvent(wps->hReadyEvent);
+    iData->lpPlaySound = NULL;
+
+    /* when filename: HeapFree(GetProcessHeap(), 0, wps->pszSound); */
+    CloseHandle(wps->hReadyEvent);
+    HeapFree(GetProcessHeap(), 0, wps);
+
     return bRet;
 }
 
-static DWORD WINAPI PlaySound_Thread(LPVOID arg) 
+static BOOL MULTIMEDIA_PlaySound(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound, DWORD search)
 {
-    DWORD     res;
-    
-    for (;;) {
-	PlaySound_Playing = FALSE;
-	SetEvent(PlaySound_hReadyEvent);
-	res = WaitForSingleObject(PlaySound_hPlayEvent, INFINITE);
-	ResetEvent(PlaySound_hReadyEvent);
-	SetEvent(PlaySound_hMiddleEvent);
-	if (res == WAIT_FAILED) ExitThread(2);
-	if (res != WAIT_OBJECT_0) continue;
-	PlaySound_Playing = TRUE;
-	
-	if ((PlaySound_fdwSound & SND_RESOURCE) == SND_RESOURCE) {
-	    HRSRC	hRES;
-	    HGLOBAL	hGLOB;
-	    void*	ptr;
+    WINE_PLAYSOUND*     wps = NULL;
+    DWORD	        id;
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+    BOOL                bRet = FALSE;
 
-	    if ((hRES = FindResourceA(PlaySound_hmod, PlaySound_pszSound, "WAVE")) == 0) {
-		PlaySound_Result = FALSE;
-		continue;
-	    }
-	    if ((hGLOB = LoadResource(PlaySound_hmod, hRES)) == 0) {
-		PlaySound_Result = FALSE;
-		continue;
-	    }
-	    if ((ptr = LockResource(hGLOB)) == NULL) {
-		FreeResource(hGLOB);
-		PlaySound_Result = FALSE;
-		continue;
-	    }
-	    PlaySound_Result = proc_PlaySound(ptr, 
-					      ((UINT16)PlaySound_fdwSound ^ SND_RESOURCE) | SND_MEMORY);
-	    FreeResource(hGLOB);
-	    continue;
-	}
-	PlaySound_Result = proc_PlaySound(PlaySound_pszSound, (UINT16)PlaySound_fdwSound);
-    }
-}
-
-/**************************************************************************
- * 				@			[WINMM.1]
- * 				PlaySound		[WINMM.@]
- * 				PlaySoundA		[WINMM.@]
- */
-BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
-{
-    static LPSTR StrDup = NULL;
-    
     TRACE("pszSound='%p' hmod=%04X fdwSound=%08lX\n",
 	  pszSound, hmod, fdwSound);
     
-    if (PlaySound_hThread == 0) { /* This is the first time they called us */
-	DWORD	id;
-	if ((PlaySound_hReadyEvent = CreateEventA(NULL, TRUE, FALSE, NULL)) == 0)
-	    return FALSE;
-	if ((PlaySound_hMiddleEvent = CreateEventA(NULL, FALSE, FALSE, NULL)) == 0)
-	    return FALSE;
-	if ((PlaySound_hPlayEvent = CreateEventA(NULL, FALSE, FALSE, NULL)) == 0)
-	    return FALSE;
-	if ((PlaySound_hThread = CreateThread(NULL, 0, PlaySound_Thread, 0, 0, &id)) == 0) 
-	    return FALSE;
-    }
-    
-    /* FIXME? I see no difference between SND_WAIT and SND_NOSTOP ! */ 
-    if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && PlaySound_Playing) 
+    /* FIXME? I see no difference between SND_NOWAIT and SND_NOSTOP !
+     * there could be one if several sounds can be played at once...
+     */ 
+    if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && iData->lpPlaySound) 
 	return FALSE;
     
-    /* Trying to stop if playing */
-    if (PlaySound_Playing) PlaySound_Stop = TRUE;
-    
-    /* Waiting playing thread to get ready. I think 10 secs is ok & if not then leave*/
-    if (WaitForSingleObject(PlaySound_hReadyEvent, 1000*10) != WAIT_OBJECT_0)
-	return FALSE;
-    
-    if (!pszSound || (fdwSound & SND_PURGE)) 
-	return TRUE; /* We stopped playing so leaving */
-    
-    if (PlaySound_SearchMode != 1) PlaySound_SearchMode = 2;
-    if (!(fdwSound & SND_ASYNC)) {
-	if (fdwSound & SND_LOOP) 
-	    return FALSE;
-	PlaySound_pszSound = pszSound;
-	PlaySound_hmod = hmod;
-	PlaySound_fdwSound = fdwSound;
-	PlaySound_Result = FALSE;
-	SetEvent(PlaySound_hPlayEvent);
-	if (WaitForSingleObject(PlaySound_hMiddleEvent, INFINITE) != WAIT_OBJECT_0) 
-	    return FALSE;
-	if (WaitForSingleObject(PlaySound_hReadyEvent, INFINITE) != WAIT_OBJECT_0) 
-	    return FALSE;
-	return PlaySound_Result;
-    } else {
-	PlaySound_hmod = hmod;
-	PlaySound_fdwSound = fdwSound;
-	PlaySound_Result = FALSE;
-	if (StrDup) {
-	    HeapFree(GetProcessHeap(), 0, StrDup);
-	    StrDup = NULL;
-	}
-	if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
-					  !((DWORD)pszSound >> 16)) || !pszSound))
+    do {
+        HANDLE  hEvt = 0;
+
+        /* Trying to stop if playing */
+        EnterCriticalSection(&iData->cs);
+        if (iData->lpPlaySound) {
+            LPWINE_PLAYSOUND        ps2stop = iData->lpPlaySound;
+            
+            hEvt = ps2stop->hReadyEvent;
+            ps2stop->bStop = TRUE;
+        }
+        LeaveCriticalSection(&iData->cs);
+        /* Waiting playing thread to get ready. I think 10 secs is ok & if not then leave
+         * FIXME: race here (if hEvt is destroyed and reallocated - as a handle - to
+         * another object)... unlikely but possible
+         */
+        if (hEvt) WaitForSingleObject(hEvt, 1000*10);
+
+        if (!pszSound || (fdwSound & SND_PURGE)) 
+            return TRUE; /* We stopped playing so leaving */
+
+        if (wps == NULL)
         {
-	    StrDup = HeapAlloc(GetProcessHeap(), 0, strlen(pszSound)+1 );
-	    strcpy( StrDup, pszSound );
-	    PlaySound_pszSound = StrDup;
-	} else PlaySound_pszSound = pszSound;
-	PlaySound_Loop = fdwSound & SND_LOOP;
-	SetEvent(PlaySound_hPlayEvent);
-	ResetEvent(PlaySound_hMiddleEvent);
+            wps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wps));
+            if (!wps) return FALSE;
+            
+            wps->searchMode = search;
+            wps->hMod = hmod;
+            wps->fdwSound = fdwSound;
+            wps->pszSound = pszSound;
+            if ((wps->hReadyEvent = CreateEventA(NULL, TRUE, FALSE, NULL)) == 0)
+                goto cleanup;
+        }
+    } while (InterlockedCompareExchangePointer((void**)&iData->lpPlaySound, wps, NULL) != NULL);
+
+    if (fdwSound & SND_ASYNC) {
+	if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
+					  !((DWORD)pszSound >> 16)) || 
+              !pszSound)) {
+	    wps->pszSound = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pszSound)+1) * sizeof(WCHAR) );
+	    lstrcpyW((LPWSTR)wps->pszSound, pszSound);
+	}
+	wps->bLoop = fdwSound & SND_LOOP;
+        /* FIXME: memory leak in case of error & cs is still lock */
+        if ((wps->hThread = CreateThread(NULL, 0, proc_PlaySound, wps, 0, &id)) == 0) 
+            return FALSE;
+    
 	return TRUE;
     }
-    return FALSE;
+
+    bRet = proc_PlaySound(wps);
+ cleanup:
+    return bRet;
+}
+
+/**************************************************************************
+ * 				PlaySoundA		[WINMM.@]
+ */
+BOOL WINAPI PlaySoundA(LPCSTR pszSoundA, HMODULE hmod, DWORD fdwSound)
+{
+    LPWSTR 	pszSoundW;
+    BOOL	bSound;
+    
+    if (!((fdwSound & SND_MEMORY) || 
+          ((fdwSound & SND_RESOURCE) && !((DWORD)pszSoundA >> 16)) ||
+          !pszSoundA)) {
+	pszSoundW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA);
+	bSound = PlaySoundW(pszSoundW, hmod, fdwSound);
+	HeapFree(GetProcessHeap(), 0, pszSoundW);
+    } else  
+	bSound = PlaySoundW((LPWSTR)pszSoundA, hmod, fdwSound);
+    
+    return bSound;
 }
 
 /**************************************************************************
@@ -569,18 +559,7 @@ BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
  */
 BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 {
-    LPSTR 	pszSoundA;
-    BOOL	bSound;
-    
-    if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
-				      !((DWORD)pszSound >> 16)) || !pszSound)) {
-	pszSoundA = HEAP_strdupWtoA(GetProcessHeap(), 0,pszSound);
-	bSound = PlaySoundA(pszSoundA, hmod, fdwSound);
-	HeapFree(GetProcessHeap(), 0, pszSoundA);
-    } else  
-	bSound = PlaySoundA((LPCSTR)pszSound, hmod, fdwSound);
-    
-    return bSound;
+    return MULTIMEDIA_PlaySound(pszSound, hmod, fdwSound, 2);
 }
 
 /**************************************************************************
@@ -601,19 +580,29 @@ BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
 /**************************************************************************
  * 				sndPlaySoundA		[WINMM.@]
  */
-BOOL WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT uFlags)
+BOOL WINAPI sndPlaySoundA(LPCSTR pszSoundA, UINT uFlags)
 {
-    PlaySound_SearchMode = 1;
-    return PlaySoundA(lpszSoundName, 0, uFlags);
+    LPWSTR 	pszSoundW;
+    BOOL	bSound;
+    
+    if (!((uFlags & SND_MEMORY) || 
+          ((uFlags & SND_RESOURCE) && !((DWORD)pszSoundA >> 16)) ||
+          !pszSoundA)) {
+	pszSoundW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA);
+	bSound = sndPlaySoundW(pszSoundW, uFlags);
+	HeapFree(GetProcessHeap(), 0, pszSoundW);
+    } else  
+	bSound = sndPlaySoundW((LPWSTR)pszSoundA, uFlags);
+    
+    return bSound;
 }
 
 /**************************************************************************
  * 				sndPlaySoundW		[WINMM.@]
  */
-BOOL WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT uFlags)
+BOOL WINAPI sndPlaySoundW(LPCWSTR pszSound, UINT uFlags)
 {
-    PlaySound_SearchMode = 1;
-    return PlaySoundW(lpszSoundName, 0, uFlags);
+    return MULTIMEDIA_PlaySound(pszSound, 0, uFlags, 1);
 }
 
 /**************************************************************************
@@ -625,12 +614,11 @@ BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
     DWORD	lc;
 
     ReleaseThunkLock(&lc);
-    retv = sndPlaySoundA( lpszSoundName, uFlags );
+    retv = sndPlaySoundA(lpszSoundName, uFlags);
     RestoreThunkLock(lc);
 
     return retv;
 }
-
 
 /**************************************************************************
  * 				mmsystemGetVersion	[MMSYSTEM.5]
@@ -668,9 +656,7 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	break;
     case DCB_WINDOW:
 	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
-	if (!IsWindow(dwCallBack))
-	    return FALSE;
-	PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
+	PostMessageA((HWND)dwCallBack, wMsg, hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */
 	TRACE("Task(%04lx) !\n", dwCallBack);
@@ -1584,13 +1570,7 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
 {
     TRACE("(%04X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    if (!IsWindow(hWndCallBack)) {
-	WARN("bad hWnd for call back (0x%04x)\n", hWndCallBack);
-	return FALSE;
-    }
-    TRACE("before PostMessage\n");
-    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
-    return TRUE;
+    return PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
 }
 
 /**************************************************************************
@@ -1601,13 +1581,7 @@ BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 
     TRACE("(%08X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    if (!IsWindow(hWndCallBack)) {
-	WARN("bad hWnd for call back (0x%04x)\n", hWndCallBack);
-	return FALSE;
-    }
-    TRACE("before PostMessage\n");
-    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
-    return TRUE;
+    return PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
 }
 
 /**************************************************************************
