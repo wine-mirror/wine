@@ -50,7 +50,7 @@ int *__errno_location()
     if (!thdb) return perrno;
 #ifdef NO_REENTRANT_X11
     /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == thdb->server_tid)
+    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
         return perrno;
 #endif
     return &thdb->thread_errno;
@@ -67,7 +67,7 @@ int *__h_errno_location()
     if (!thdb) return ph_errno;
 #ifdef NO_REENTRANT_X11
     /* Use static libc h_errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == thdb->server_tid)
+    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->server_tid)
         return ph_errno;
 #endif
     return &thdb->thread_h_errno;

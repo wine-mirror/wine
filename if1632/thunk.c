@@ -153,7 +153,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_sreg_,                /* CallRegisterShortProc */
     (void *)CallTo16_lreg_,                /* CallRegisterLongProc */
     THUNK_CallTaskReschedule,              /* CallTaskRescheduleProc */
-    CallFrom16_p_long_wwwll,               /* CallFrom16WndProc */
+    (void*)CallFrom16_p_long_wwwll,        /* CallFrom16WndProc */
     THUNK_CallWndProc16,                   /* CallWndProc */
     (void *)CallTo16_long_lwwll,           /* CallDriverProc */
     (void *)CallTo16_word_wwlll,           /* CallDriverCallback */

@@ -1330,7 +1330,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     tdb = (TDB*)GlobalLock16(htask);
     if (!tdb || !tdb->thdb) return 0;
     if (process) *process = (DWORD)tdb->thdb->process->server_pid;
-    return tdb->thdb->server_tid;
+    return (DWORD)tdb->thdb->server_tid;
 }
 
 

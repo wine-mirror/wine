@@ -22,7 +22,7 @@
 static HRESULT WINAPI IShellFolder_QueryInterface(LPSHELLFOLDER,REFIID,LPVOID*);
 static ULONG WINAPI IShellFolder_AddRef(LPSHELLFOLDER);
 static ULONG WINAPI IShellFolder_Release(LPSHELLFOLDER);
-static HRESULT WINAPI IShellFolder_Initialize(LPSHELLFOLDER,LPCITEMIDLIST);
+static HRESULT WINAPI WINE_UNUSED IShellFolder_Initialize(LPSHELLFOLDER,LPCITEMIDLIST);
 static HRESULT WINAPI IShellFolder_ParseDisplayName(LPSHELLFOLDER,HWND,LPBC,LPOLESTR,DWORD*,LPITEMIDLIST*,DWORD*);
 static HRESULT WINAPI IShellFolder_EnumObjects(LPSHELLFOLDER,HWND,DWORD,LPENUMIDLIST*);
 static HRESULT WINAPI IShellFolder_BindToObject(LPSHELLFOLDER,LPCITEMIDLIST,LPBC,REFIID,LPVOID*);
@@ -465,7 +465,7 @@ static HRESULT WINAPI IShellFolder_EnumObjects(
  *  IShellFolder_Initialize()
  *  IPersistFolder Method
  */
-static HRESULT WINAPI IShellFolder_Initialize( LPSHELLFOLDER this,LPCITEMIDLIST pidl)
+static HRESULT WINAPI WINE_UNUSED IShellFolder_Initialize( LPSHELLFOLDER this,LPCITEMIDLIST pidl)
 {	TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
 
 	if(this->pMyPidl)
