@@ -1972,7 +1972,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
 {
     int                 sock;
     struct sockaddr_in  s_addrs;
-    socklen_t           s_len = sizeof(s_addrs);
+    int                 s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     char                wine_path[MAX_PATH];
     char*               ptr;
