@@ -864,15 +864,18 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
     y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
     pixel = X11DRV_PALETTE_ToPhysical( dc, color );
-    
+
+    /* Update the pixmap from the DIB section */
+    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+
+    /* inefficient but simple... */
     TSXSetForeground( display, physDev->gc, pixel );
     TSXSetFunction( display, physDev->gc, GXcopy );
     TSXDrawPoint( display, physDev->drawable, physDev->gc, x, y );
 
-    /* inefficient but simple... */
+    /* Update the DIBSection from the pixmap */
+    X11DRV_UnlockDIBSection(dc, TRUE);
 
-    /* FIXME: the DIBSection pixel should be updated too */
-    
     return X11DRV_PALETTE_ToLogical(pixel);
 }
 
@@ -887,6 +890,9 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     XImage * image;
     int pixel;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    /* Update the pixmap from the DIB section */
+    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
 
     x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
     y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
@@ -909,6 +915,10 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     pixel = XGetPixel( image, 0, 0 );
     XDestroyImage( image );
     wine_tsx11_unlock();
+
+    /* Update the DIBSection from the pixmap */
+    X11DRV_UnlockDIBSection(dc, FALSE);
+
     return X11DRV_PALETTE_ToLogical(pixel);
 }
 
