@@ -769,7 +769,9 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
     {
         /* if there's no path... try run the link itself */
         WideCharToMultiByte( CP_ACP, 0, link, -1, szArgs, MAX_PATH, NULL, NULL );
-        strcpy(szPath, "C:\\Windows\\System\\start.exe");
+        GetWindowsDirectoryA(szPath, MAX_PATH);
+        strncat(szPath, "\\command\\start.exe",
+                MAX_PATH - GetWindowsDirectoryA(NULL, 0));
     }
 
     link_name = cleanup_link( &link[ofs] );
