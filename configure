@@ -21667,6 +21667,15 @@ then
   echo "*** enable Wine to use TrueType fonts."
 fi
 
+if test -z "$ALSALIBS" -a -z "$ARTSC_LIBS" -a -z "$AUDIOIOLIBS" -a \
+        -z "$ac_cv_lib_soname_jack" -a -z "$NASLIBS" -a \
+        "$ac_cv_c_opensoundsystem" = "no"
+then
+    echo "*** No sound system was found. Windows applications will be silent."
+    echo "*** The currently supported sound systems are:"
+    echo "*** ALSA, ARTS, AudioIO, Jack, NAS and OSS"
+fi
+
 echo
 echo "Configure finished.  Do '${ac_make} depend && ${ac_make}' to compile Wine."
 echo
