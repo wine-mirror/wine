@@ -114,7 +114,7 @@ static inline int get_debug_reg( int pid, int num, DWORD *data )
 /* retrieve a thread context */
 static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct kernel_user_regs_struct regs;
@@ -170,7 +170,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 /* set a thread context */
 static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct kernel_user_regs_struct regs;
@@ -230,7 +230,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 /* retrieve a thread context */
 static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct regs regs;
@@ -281,7 +281,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 /* set a thread context */
 static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct regs regs;
@@ -338,7 +338,7 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
 /* retrieve a thread context */
 static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct reg regs;
@@ -410,7 +410,7 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
 /* set a thread context */
 static void set_thread_context( struct thread *thread, unsigned int flags, const CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct reg regs;

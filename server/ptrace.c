@@ -123,7 +123,7 @@ static void wait4_thread( struct thread *thread, int signal )
 
     do
     {
-        if ((res = wait4( thread->unix_pid, &status, WUNTRACED, NULL )) == -1)
+        if ((res = wait4( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
         {
             if (errno == ECHILD)  /* must have died */
             {
@@ -135,6 +135,12 @@ static void wait4_thread( struct thread *thread, int signal )
         }
         res = handle_child_status( thread, res, status, signal );
     } while (res && res != signal);
+}
+
+/* return the Unix pid to use in ptrace calls for a given thread */
+int get_ptrace_pid( struct thread *thread )
+{
+    return thread->unix_pid;
 }
 
 /* send a Unix signal to a specific thread */
@@ -159,7 +165,7 @@ static int attach_thread( struct thread *thread )
 {
     /* this may fail if the client is already being debugged */
     if (!use_ptrace) return 0;
-    if (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)
+    if (ptrace( PTRACE_ATTACH, get_ptrace_pid(thread), 0, 0 ) == -1)
     {
         if (errno == ESRCH) thread->unix_pid = -1;  /* thread got killed */
         return 0;
@@ -181,10 +187,41 @@ void detach_thread( struct thread *thread, int sig )
         if (sig) send_thread_signal( thread, sig );
         if (thread->unix_pid == -1) return;
         if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
-        ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
+        ptrace( PTRACE_DETACH, get_ptrace_pid(thread), (caddr_t)1, sig );
         thread->attached = 0;
     }
     else if (sig) send_thread_signal( thread, sig );
+}
+
+/* attach to a Unix process with ptrace */
+int attach_process( struct process *process )
+{
+    struct thread *thread;
+    int ret = 1;
+
+    if (!process->thread_list)  /* need at least one running thread */
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    for (thread = process->thread_list; thread; thread = thread->proc_next)
+    {
+        if (thread->attached) continue;
+        if (suspend_for_ptrace( thread )) resume_after_ptrace( thread );
+        else ret = 0;
+    }
+    return ret;
+}
+
+/* detach from a ptraced Unix process */
+void detach_process( struct process *process )
+{
+    struct thread *thread;
+
+    for (thread = process->thread_list; thread; thread = thread->proc_next)
+    {
+        if (thread->attached) detach_thread( thread, 0 );
+    }
 }
 
 /* suspend a thread to allow using ptrace on it */
@@ -212,14 +249,14 @@ void resume_after_ptrace( struct thread *thread )
     if (thread->unix_pid == -1) return;
     assert( thread->attached );
     ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
-            thread->unix_pid, (caddr_t)1, 0 /* cancel the SIGSTOP */ );
+            get_ptrace_pid(thread), (caddr_t)1, 0 /* cancel the SIGSTOP */ );
 }
 
 /* read an int from a thread address space */
 int read_thread_int( struct thread *thread, const int *addr, int *data )
 {
     errno = 0;
-    *data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, (caddr_t)addr, 0 );
+    *data = ptrace( PTRACE_PEEKDATA, get_ptrace_pid(thread), (caddr_t)addr, 0 );
     if ( *data == -1 && errno)
     {
         file_set_error();
@@ -237,7 +274,7 @@ int write_thread_int( struct thread *thread, int *addr, int data, unsigned int m
         if (read_thread_int( thread, addr, &res ) == -1) return -1;
         data = (data & mask) | (res & ~mask);
     }
-    if ((res = ptrace( PTRACE_POKEDATA, thread->unix_pid, (caddr_t)addr, data )) == -1)
+    if ((res = ptrace( PTRACE_POKEDATA, get_ptrace_pid(thread), (caddr_t)addr, data )) == -1)
         file_set_error();
     return res;
 }

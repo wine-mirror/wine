@@ -85,7 +85,7 @@ struct startup_info
     int                 inherit_all;  /* inherit all handles from parent */
     int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
-    pid_t               unix_pid;     /* Unix pid of new process */
+    int                 unix_pid;     /* Unix pid of new process */
     obj_handle_t        hstdin;       /* handle for stdin */
     obj_handle_t        hstdout;      /* handle for stdout */
     obj_handle_t        hstderr;      /* handle for stderr */
@@ -331,7 +331,7 @@ struct thread *create_process( int fd )
 }
 
 /* find the startup info for a given Unix process */
-inline static struct startup_info *find_startup_info( pid_t unix_pid )
+inline static struct startup_info *find_startup_info( int unix_pid )
 {
     struct list *ptr;
 

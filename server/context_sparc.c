@@ -45,7 +45,7 @@
 /* retrieve a thread context */
 static void get_thread_context( struct thread *thread, unsigned int flags, CONTEXT *context )
 {
-    int pid = thread->unix_pid;
+    int pid = get_ptrace_pid(thread);
     if (flags & CONTEXT_FULL)
     {
         struct regs regs;

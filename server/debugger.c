@@ -429,20 +429,13 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         goto error;
 
     suspend_process( process );
-
-    /* we must have been able to attach all threads */
-    if (!process->thread_list) goto error2;
-    for (thread = process->thread_list; thread; thread = thread->proc_next)
+    if (!attach_process( process ) || !set_process_debugger( process, debugger ))
     {
-        if (!thread->attached) goto error2;
+        resume_process( process );
+        return 0;
     }
+    return 1;
 
-    if (set_process_debugger( process, debugger )) return 1;
-    resume_process( process );
-    return 0;
-
- error2:
-    resume_process( process );
  error:
     set_error( STATUS_ACCESS_DENIED );
     return 0;
@@ -452,7 +445,6 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 /* detach a process from a debugger thread (and resume it ?) */
 int debugger_detach( struct process *process, struct thread *debugger )
 {
-    struct thread *thread;
     struct debug_event *event;
     struct debug_ctx *debug_ctx;
 
@@ -488,15 +480,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
     process->debugger = NULL;
     release_object( debugger->debug_ctx );
     debugger->debug_ctx = NULL;
-
-    /* now detach all the threads */
-    for (thread = process->thread_list; thread; thread = thread->proc_next)
-    {
-        if (thread->attached)
-        {
-            detach_thread( thread, 0 );
-        }
-    }
+    detach_process( process );
 
     /* from this function */
     resume_process( process );
