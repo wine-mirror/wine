@@ -135,7 +135,7 @@ extern DWORD WINAPI WINE_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FR
 
 #endif /* USE_COMPILER_EXCEPTIONS */
 
-static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_FRAME * WINE_UNUSED EXC_push_frame( EXCEPTION_FRAME *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
     EXCEPTION_FRAME *prev;
@@ -152,7 +152,7 @@ static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
 #endif
 }
 
-static inline EXCEPTION_FRAME *EXC_pop_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_FRAME * WINE_UNUSED EXC_pop_frame( EXCEPTION_FRAME *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
     __asm__ __volatile__(".byte 0x64\n\tmovl %0,(0)"

@@ -514,7 +514,7 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 
 struct _TEB;
 #if defined(__i386__) && defined(__WINE__)
-static inline struct _TEB *__get_teb(void)
+static inline struct _TEB * WINE_UNUSED __get_teb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));

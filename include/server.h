@@ -831,13 +831,13 @@ enum request
 /* client communication functions */
 
 /* get a pointer to the request buffer */
-static inline void *get_req_buffer(void)
+static inline void * WINE_UNUSED get_req_buffer(void)
 {
     return NtCurrentTeb()->buffer;
 }
 
 /* maximum remaining size in the server buffer */
-static inline int server_remaining( const void *ptr )
+static inline int WINE_UNUSED server_remaining( const void *ptr )
 {
     return (char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size - (char *)ptr;
 }

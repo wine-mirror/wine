@@ -172,7 +172,7 @@ extern DWORD DEBUG_SendCreateThreadEvent( void *entry );
 extern DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR name );
 extern DWORD DEBUG_SendUnloadDLLEvent( HMODULE module );
 
-static inline PDB *PROCESS_Current(void)
+static inline PDB * WINE_UNUSED PROCESS_Current(void)
 {
     return NtCurrentTeb()->process;
 }
