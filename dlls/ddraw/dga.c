@@ -126,8 +126,11 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
     TRACE("XF86DGA is version %d.%d\n",major,minor);
     
     TSXF86DGAQueryDirectVideo(display,DefaultScreen(display),&flags);
-    if (!(flags & XF86DGADirectPresent))
+    if (!(flags & XF86DGADirectPresent)) {
+      /* On some boards, DGA extension is present but does not support DirectVideo */
       MESSAGE("direct video is NOT PRESENT.\n");
+      return DDERR_GENERIC;
+    }
     TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
     dgpriv->fb_width = width;
     TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
