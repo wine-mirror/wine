@@ -963,17 +963,21 @@ static HANDLER_DEF(fpe_handler)
  */
 static HANDLER_DEF(int_handler)
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
+    extern int CONSOLE_HandleCtrlC(void);
+    if (!CONSOLE_HandleCtrlC())
+    {
+        EXCEPTION_RECORD rec;
+        CONTEXT context;
 
-    save_context( &context, HANDLER_CONTEXT );
-    rec.ExceptionCode    = CONTROL_C_EXIT;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Eip;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
-    restore_context( &context, HANDLER_CONTEXT );
+        save_context( &context, HANDLER_CONTEXT );
+        rec.ExceptionCode    = CONTROL_C_EXIT;
+        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+        rec.ExceptionRecord  = NULL;
+        rec.ExceptionAddress = (LPVOID)context.Eip;
+        rec.NumberParameters = 0;
+        EXC_RtlRaiseException( &rec, &context );
+        restore_context( &context, HANDLER_CONTEXT );
+    }
 }
 
 

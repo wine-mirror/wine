@@ -310,17 +310,21 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  */
 static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
+    extern int CONSOLE_HandleCtrlC(void);
+    if (!CONSOLE_HandleCtrlC())
+    {
+        EXCEPTION_RECORD rec;
+        CONTEXT context;
 
-    save_context( &context, ucontext );
-    rec.ExceptionCode    = CONTROL_C_EXIT;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.pc;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
-    restore_context( &context, ucontext );
+        save_context( &context, ucontext );
+        rec.ExceptionCode    = CONTROL_C_EXIT;
+        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+        rec.ExceptionRecord  = NULL;
+        rec.ExceptionAddress = (LPVOID)context.pc;
+        rec.NumberParameters = 0;
+        EXC_RtlRaiseException( &rec, &context );
+        restore_context( &context, ucontext );
+    }
 }
 
 

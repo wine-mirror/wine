@@ -5,7 +5,7 @@
  * Copyright 1997 Karl Garrison
  * Copyright 1998 John Richardson
  * Copyright 1998 Marcus Meissner
- * Copyright 2001 Eric Pouech
+ * Copyright 2001,2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -109,7 +109,7 @@ static	BOOL	start_console_renderer(void)
     }
 
     /* then try the regular PATH */
-    sprintf(buffer, "wineconsole --use-event=%d\n", hEvent);
+    sprintf(buffer, "wineconsole --use-event=%d", hEvent);
     if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
 	goto succeed;
 
@@ -210,7 +210,6 @@ static BOOL read_console_input(HANDLE handle, LPINPUT_RECORD buffer, DWORD count
 {
     BOOL	ret;
     unsigned	read = 0;
-    DWORD	mode;
 
     SERVER_START_REQ( read_console_input )
     {
@@ -220,22 +219,6 @@ static BOOL read_console_input(HANDLE handle, LPINPUT_RECORD buffer, DWORD count
         if ((ret = !wine_server_call_err( req ))) read = reply->read;
     }
     SERVER_END_REQ;
-    if (count && flush && GetConsoleMode(handle, &mode) && (mode & ENABLE_PROCESSED_INPUT))
-    {
-	int	i;
-
-	for (i = 0; i < read; i++)
-	{
-	    if (buffer[i].EventType == KEY_EVENT && buffer[i].Event.KeyEvent.bKeyDown &&
-		buffer[i].Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
-		!(buffer[i].Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
-	    {
-		GenerateConsoleCtrlEvent(CTRL_C_EVENT, GetCurrentProcessId());
-		/* FIXME: this is hackish, but it easily disables IR handling afterwards */
-		buffer[i].Event.KeyEvent.uChar.UnicodeChar = 0;
-	    }
-	}
-    }
     if (pRead) *pRead = read;
     return ret;
 }
@@ -460,6 +443,11 @@ BOOL WINAPI SetConsoleInputExeNameA(LPCSTR name)
     return ret;
 }
 
+/******************************************************************
+ *		CONSOLE_DefaultHandler
+ *
+ * Final control event handler
+ */
 static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
 {
     FIXME("Terminating process %lx on event %lx\n", GetCurrentProcessId(), dwCtrlType);
@@ -546,9 +534,6 @@ static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
  *    dwCtrlEvent        [I] Type of event
  *    dwProcessGroupID   [I] Process group ID to send event to
  *
- * NOTES
- *    Doesn't yet work...!
- *
  * RETURNS
  *    Success: True
  *    Failure: False (and *should* [but doesn't] set LastError)
@@ -556,46 +541,25 @@ static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
 BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
 				     DWORD dwProcessGroupID)
 {
+    BOOL ret;
+
+    TRACE("(%ld, %ld)\n", dwCtrlEvent, dwProcessGroupID);
+
     if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
     {
-	ERR("invalid event %ld for PGID %ld\n", dwCtrlEvent, dwProcessGroupID);
+	ERR("Invalid event %ld for PGID %ld\n", dwCtrlEvent, dwProcessGroupID);
 	return FALSE;
     }
 
-    if (dwProcessGroupID == GetCurrentProcessId() || dwProcessGroupID == 0)
+    SERVER_START_REQ( send_console_signal )
     {
-	int	i;
-
-	FIXME("Attempt to send event %ld to self groupID, doing locally only\n", dwCtrlEvent);
-
-	/* this is only meaningfull when done locally, otherwise it will have to be done on
-	 * the 'receive' side of the event generation
-	 */
-	if (dwCtrlEvent == CTRL_C_EVENT && console_ignore_ctrl_c)
-	    return TRUE;
-
-        /* try to pass the exception to the debugger
-         * if it continues, there's nothing more to do
-         * otherwise, we need to send the ctrl-event to the handlers
-         */
-        __TRY
-        {
-            RaiseException( (dwCtrlEvent == CTRL_C_EVENT) ? DBG_CONTROL_C : DBG_CONTROL_BREAK,
-                            0, 0, NULL);
-        }
-        __EXCEPT(CONSOLE_CtrlEventHandler)
-        {
-            /* the debugger didn't continue... so, pass to ctrl handlers */
-            for (i = 0; i < sizeof(handlers)/sizeof(handlers[0]); i++)
-            {
-                if (handlers[i] && (handlers[i])(dwCtrlEvent)) break;
-            }
-        }
-        __ENDTRY;
-        return TRUE;
+        req->signal = dwCtrlEvent;
+        req->group_id = (void*)dwProcessGroupID;
+        ret = !wine_server_call_err( req );
     }
-    FIXME("event %ld to external PGID %ld - not implemented yet\n", dwCtrlEvent, dwProcessGroupID);
-    return FALSE;
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 
@@ -1346,6 +1310,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
  * Console manipulation functions
  *
  * ====================================================================*/
+
 /* some missing functions...
  * FIXME: those are likely to be defined as undocumented function in kernel32 (or part of them)
  * should get the right API and implement them
@@ -1405,7 +1370,7 @@ BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
  */
 unsigned CONSOLE_GetNumHistoryEntries(void)
 {
-    unsigned ret = 0;
+    unsigned ret = -1;
     SERVER_START_REQ(get_console_input_info)
     {
         req->handle = 0;
@@ -1413,5 +1378,42 @@ unsigned CONSOLE_GetNumHistoryEntries(void)
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/******************************************************************
+ *		CONSOLE_HandleCtrlC
+ *
+ * Check whether the shall manipulate CtrlC events
+ */
+int     CONSOLE_HandleCtrlC(void)
+{
+    int i;
+
+    /* FIXME: better test whether a console is attached to this process ??? */
+    extern    unsigned CONSOLE_GetNumHistoryEntries(void);
+    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
+    
+    /* try to pass the exception to the debugger
+     * if it continues, there's nothing more to do
+     * otherwise, we need to send the ctrl-event to the handlers
+     */
+    __TRY
+    {
+        RaiseException( DBG_CONTROL_C, 0, 0, NULL );
+    }
+    __EXCEPT(CONSOLE_CtrlEventHandler)
+    {
+        /* the debugger didn't continue... so, pass to ctrl handlers */
+        /* FIXME: since this routine is called while in a signal handler, 
+         * there are some serious synchronisation issues with
+         * SetConsoleCtrlHandler (trouble ahead)
+         */
+        for (i = 0; i < sizeof(handlers)/sizeof(handlers[0]); i++)
+        {
+            if (handlers[i] && (handlers[i])(CTRL_C_EVENT)) break;
+        }
+    }
+    __ENDTRY;
+    return 1;
 }
 

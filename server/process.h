@@ -72,6 +72,7 @@ struct process
     struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
+    void                *group_id;        /* group ID of the process */
 };
 
 struct process_snapshot
@@ -110,6 +111,7 @@ extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
+extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 inline static void *get_process_id( struct process *process ) { return process; }
 inline static int is_process_init_done( struct process *process )

@@ -1366,6 +1366,7 @@ struct read_console_output_reply
 };
 
 
+
 struct move_console_output_request
 {
     struct request_header __header;
@@ -1378,6 +1379,19 @@ struct move_console_output_request
     short int    h;
 };
 struct move_console_output_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct send_console_signal_request
+{
+    struct request_header __header;
+    int          signal;
+    void*        group_id;
+};
+struct send_console_signal_reply
 {
     struct reply_header __header;
 };
@@ -2784,6 +2798,7 @@ enum request
     REQ_fill_console_output,
     REQ_read_console_output,
     REQ_move_console_output,
+    REQ_send_console_signal,
     REQ_create_change_notification,
     REQ_create_mapping,
     REQ_open_mapping,
@@ -2946,6 +2961,7 @@ union generic_request
     struct fill_console_output_request fill_console_output_request;
     struct read_console_output_request read_console_output_request;
     struct move_console_output_request move_console_output_request;
+    struct send_console_signal_request send_console_signal_request;
     struct create_change_notification_request create_change_notification_request;
     struct create_mapping_request create_mapping_request;
     struct open_mapping_request open_mapping_request;
@@ -3106,6 +3122,7 @@ union generic_reply
     struct fill_console_output_reply fill_console_output_reply;
     struct read_console_output_reply read_console_output_reply;
     struct move_console_output_reply move_console_output_reply;
+    struct send_console_signal_reply send_console_signal_reply;
     struct create_change_notification_reply create_change_notification_reply;
     struct create_mapping_reply create_mapping_reply;
     struct open_mapping_reply open_mapping_reply;
@@ -3192,6 +3209,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 80
+#define SERVER_PROTOCOL_VERSION 81
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

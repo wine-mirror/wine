@@ -218,6 +218,7 @@ struct thread *create_process( int fd )
     process->exe.dbg_size    = 0;
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
+    process->group_id        = NULL;
 
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
@@ -285,6 +286,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
     /* set the process console */
     if (!set_process_console( process, parent_thread, info, reply )) return NULL;
 
+    process->group_id = process;
     if (parent)
     {
         /* attach to the debugger if requested */
@@ -292,6 +294,8 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
             set_process_debugger( process, parent_thread );
         else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
             set_process_debugger( process, parent->debugger );
+        if (!(process->create_flags & CREATE_NEW_PROCESS_GROUP))
+            process->group_id = parent->group_id;
     }
 
     /* thread will be actually suspended in init_done */
@@ -610,6 +614,16 @@ void detach_debugged_processes( struct thread *debugger )
         {
             debugger_detach( process, debugger );
         }
+    }
+}
+
+
+void enum_processes( int (*cb)(struct process*, void*), void *user )
+{
+    struct process *process;
+    for (process = first_process; process; process = process->next)
+    {
+        if ((cb)(process, user)) break;
     }
 }
 

@@ -1009,6 +1009,7 @@ enum char_info_mode
     VARARG(data,bytes);
 @END
 
+
 /* move a rect (of data) in screen buffer content */
 @REQ(move_console_output)
     obj_handle_t handle;        /* handle to the console output */
@@ -1018,6 +1019,13 @@ enum char_info_mode
     short int    y_dst;
     short int    w;             /* size of the rect (width, height) to move */
     short int    h;
+@END
+
+
+/* Sends a signal to a process group */
+@REQ(send_console_signal)
+    int          signal;        /* the signal to send */
+    void*        group_id;      /* the group to send the signal to */
 @END
 
 

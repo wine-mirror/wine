@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "handle.h"
 #include "process.h"
@@ -385,6 +386,54 @@ static int console_input_signaled( struct object *obj, struct thread *thread )
     return console->recnum ? 1 : 0;
 }
 
+struct console_signal_info {
+    struct console_input        *console;
+    struct process              *group;
+    int                          signal;
+};
+
+static int propagate_console_signal_cb(struct process *process, void *user)
+{
+    struct console_signal_info* csi = (struct console_signal_info*)user;
+
+    if (process->console == csi->console && process->running_threads &&
+        (csi->group == NULL || process->group_id == csi->group))
+    {
+        struct thread *thread = process->thread_list;
+
+        while (thread)
+        {
+            struct thread *next = thread->proc_next;
+            kill( thread->unix_pid, csi->signal );
+            thread = next;
+        }
+    }
+    return FALSE;
+}
+
+static void propagate_console_signal( struct console_input *console, 
+                                      int sig, void* group_id )
+{
+    struct console_signal_info csi;
+
+    if (!console)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    /* FIXME: should support the other events (like CTRL_BREAK) */
+    if (sig != CTRL_C_EVENT)
+    {
+        set_error( STATUS_NOT_IMPLEMENTED );
+        return;
+    }
+    csi.console = console;
+    csi.signal  = SIGINT;
+    csi.group   = group_id;
+
+    enum_processes(propagate_console_signal_cb, &csi);
+}
+
 static int get_console_mode( obj_handle_t handle )
 {
     struct object *obj;
@@ -443,8 +492,31 @@ static int write_console_input( struct console_input* console, int count,
     }
     console->records = new_rec;
     memcpy( new_rec + console->recnum, records, count * sizeof(INPUT_RECORD) );
-    console->recnum += count;
 
+    if (console->mode & ENABLE_PROCESSED_INPUT)
+    {
+        int i = 0;
+        while (i < count)
+        {
+            if (records[i].EventType == KEY_EVENT && 
+		records[i].Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
+		!(records[i].Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+            {
+                if (i != count - 1)
+                    memcpy( &console->records[console->recnum + i], 
+                            &console->records[console->recnum + i + 1], 
+                            (count - i - 1) * sizeof(INPUT_RECORD) );
+                count--;
+                if (records[i].Event.KeyEvent.bKeyDown)
+                {
+                    /* send SIGINT to all processes attached to this console */
+                    propagate_console_signal( console, CTRL_C_EVENT, NULL );
+                }
+            }
+            else i++;
+        }
+    }
+    console->recnum += count;
     /* wake up all waiters */
     wake_up( &console->obj, 0 );
     return count;
@@ -1385,3 +1457,18 @@ DECL_HANDLER(move_console_output)
     scroll_console_output( req->handle, req->x_src, req->y_src, req->x_dst, req->y_dst,
 			   req->w, req->h );
 }
+
+/* sends a signal to a console (process, group...) */
+DECL_HANDLER(send_console_signal)
+{
+    void*       group;
+
+    group = req->group_id ? req->group_id : current->process->group_id;
+
+    if (!group)
+        set_error( STATUS_INVALID_PARAMETER);
+    else
+        propagate_console_signal( current->process->console, req->signal, group );
+}
+
+
