@@ -1078,4 +1078,13 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
+@ cdecl CDROM_InitRegistry(long long str)
+@ cdecl MODULE_DllThreadAttach(ptr)
+@ cdecl MODULE_GetLoadOrderA(ptr str str long)
+@ cdecl MODULE_GetLoadOrderW(ptr wstr wstr long)
+@ cdecl SIGNAL_Init()
+@ cdecl SYSDEPS_ExitThread(long)
+@ cdecl SYSDEPS_SetCurThread(ptr)
+@ cdecl SYSDEPS_SpawnThread(ptr ptr)
+@ cdecl VERSION_Init(wstr)
 @ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)
