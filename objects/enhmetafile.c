@@ -157,9 +157,9 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
 /*****************************************************************************
  *        GetEnhMetaFileHeader  (GDI32.178)
  *
- *  If _buf_ is NULL, returns the size of buffer required.
- *  Otherwise, copy up to _bufsize_ bytes of enhanced metafile header into 
- *  _buf.
+ *  If buf is NULL, returns the size of buffer required.
+ *  Otherwise, copy up to bufsize bytes of enhanced metafile header into 
+ *  buf.
  */
 UINT WINAPI GetEnhMetaFileHeader( 
        HENHMETAFILE hmf, /* enhanced metafile */
@@ -168,13 +168,19 @@ UINT WINAPI GetEnhMetaFileHeader(
     )
 {
     LPENHMETAHEADER emh;
+    UINT size;
 
-    if (!buf) return sizeof(ENHMETAHEADER);
     emh = EMF_GetEnhMetaHeader(hmf);
     if(!emh) return FALSE;
-    memmove(buf, emh, min(sizeof(ENHMETAHEADER), bufsize));
+    size = emh->nSize;
+    if (!buf) {
+        EMF_ReleaseEnhMetaHeader(hmf);
+        return size;
+    }
+    size = min(size, bufsize);
+    memmove(buf, emh, size);
     EMF_ReleaseEnhMetaHeader(hmf);
-    return min(sizeof(ENHMETAHEADER), bufsize);
+    return size;
 }
 
 
@@ -258,19 +264,6 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
     return EMF_Create_HENHMETAFILE( emh, 0, 0 );
 }
 
-INT CALLBACK cbCountSizeOfEnhMetaFile( HDC a, 
-                                       LPHANDLETABLE b,
-                                       LPENHMETARECORD lpEMR, 
-                                       INT c, 
-                                       LPVOID lpData )
-{
-  LPUINT uSizeOfRecordData = (LPUINT)lpData;
-
-  *uSizeOfRecordData += lpEMR->nSize;
-
-  return TRUE;
-}
-
 /*****************************************************************************
  *  GetEnhMetaFileBits (GDI32.175)
  *
@@ -281,41 +274,22 @@ UINT WINAPI GetEnhMetaFileBits(
     LPBYTE buf  
 ) 
 {
-  LPENHMETAHEADER lpEnhMetaFile;
-  UINT uEnhMetaFileSize = 0;
+    LPENHMETAHEADER emh = EMF_GetEnhMetaHeader( hmf );
+    UINT size;
 
-  FIXME( "(%04x,%u,%p): untested\n", hmf, bufsize, buf );
+    if(!emh) return 0;
 
-  /* Determine the required buffer size */
-  /* Enumerate all records and count their size */ 
-  if( !EnumEnhMetaFile( 0, hmf, cbCountSizeOfEnhMetaFile, &uEnhMetaFileSize, NULL ) )
-  {
-    ERR( "Unable to enumerate enhanced metafile!\n" );
-    return 0;
-  }
+    size = emh->nBytes;
+    if( buf == NULL ) {
+        EMF_ReleaseEnhMetaHeader( hmf ); 
+	return size;
+    }
 
-  if( buf == NULL )
-  {
-    return uEnhMetaFileSize;
-  }
+    size = min( size, bufsize );
+    memmove(buf, emh, size);
 
-  /* Copy the lesser of the two byte counts */
-  uEnhMetaFileSize = min( uEnhMetaFileSize, bufsize );
-
-  /* Copy everything */
-  lpEnhMetaFile = EMF_GetEnhMetaHeader( hmf );
-
-  if( lpEnhMetaFile == NULL )
-  {
-    return 0;
-  }
-
-  /* Use memmove just in case they overlap */
-  memmove(buf, lpEnhMetaFile, bufsize);
-
-  EMF_ReleaseEnhMetaHeader( hmf ); 
-
-  return bufsize;
+    EMF_ReleaseEnhMetaHeader( hmf ); 
+    return size;
 }
 
 /*****************************************************************************
@@ -1229,45 +1203,59 @@ BOOL WINAPI EnumEnhMetaFile(
     )
 {
     BOOL ret = TRUE;
-    LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
+    LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
     INT count, i;
     HANDLETABLE *ht;
     INT savedMode = 0;
+    FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
+    XFORM savedXform, xform;
 
-    if(!p) return FALSE;
-    count = ((LPENHMETAHEADER) p)->nHandles;
+    if(!emh) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    if(!lpRect) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    count = emh->nHandles;
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 		    sizeof(HANDLETABLE) * count );
     ht->objectHandle[0] = hmf;
-    if (lpRect) {
-        LPENHMETAHEADER h = (LPENHMETAHEADER) p;
-	FLOAT xscale = (h->rclBounds.right - h->rclBounds.left) /
-	  (lpRect->right - lpRect->left);
-	FLOAT yscale = (h->rclBounds.bottom - h->rclBounds.top) /
-	  (lpRect->bottom - lpRect->top);
-	XFORM xform;
-	xform.eM11 = xscale;
-	xform.eM12 = 0;
-	xform.eM21 = 0;
-	xform.eM22 = yscale;
-        xform.eDx = lpRect->left;
-	xform.eDy = lpRect->top; 
-	FIXME("play into rect doesn't work\n");
-	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
-	if (!SetWorldTransform(hdc, &xform)) {
-	    WARN("World transform failed!\n");
-	}
+
+    xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
+    ySrcPixSize = (FLOAT) emh->szlMillimeters.cy / emh->szlDevice.cy;
+    xscale = (FLOAT)(lpRect->right - lpRect->left) * 100.0 /
+      (emh->rclFrame.right - emh->rclFrame.left) * xSrcPixSize;
+    yscale = (FLOAT)(lpRect->bottom - lpRect->top) * 100.0 /
+      (emh->rclFrame.bottom - emh->rclFrame.top) * ySrcPixSize;
+
+    xform.eM11 = xscale;
+    xform.eM12 = 0;
+    xform.eM21 = 0;
+    xform.eM22 = yscale;
+    if(emh->rclFrame.left || emh->rclFrame.top)
+      FIXME("Can't cope with nonzero rclFrame origin yet\n");
+ /* eDx = lpRect->left - (lpRect width) / (rclFrame width) * rclFrame.left ? */
+    xform.eDx = lpRect->left;
+    xform.eDy = lpRect->top;
+    savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
+    GetWorldTransform(hdc, &savedXform);
+    if (!ModifyWorldTransform(hdc, &xform, MWT_LEFTMULTIPLY)) {
+        ERR("World transform failed!\n");
     }
+
     while (ret) {
-        ret = (*callback)(hdc, ht, p, count, data); 
-	if (p->iType == EMR_EOF) break;
-	p = (LPENHMETARECORD) ((char *) p + p->nSize);
+        ret = (*callback)(hdc, ht, (LPENHMETARECORD) emh, count, data); 
+	if (emh->iType == EMR_EOF) break;
+	emh = (LPENHMETAHEADER) ((char *) emh + emh->nSize);
     }
     for(i = 1; i < count; i++) /* Don't delete element 0 (hmf) */
         if( (ht->objectHandle)[i] )
 	    DeleteObject( (ht->objectHandle)[i] );
     HeapFree( GetProcessHeap(), 0, ht );
     EMF_ReleaseEnhMetaHeader(hmf);
+    SetWorldTransform(hdc, &savedXform);
     if (savedMode) SetGraphicsMode(hdc, savedMode);
     return ret;
 }
