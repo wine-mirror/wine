@@ -1205,10 +1205,33 @@ static UINT LISTVIEW_GetItemChanges(LISTVIEW_ITEM *lpItem, LPLVITEMA lpLVItem)
         {
           uChanged |= LVIF_TEXT; 
         }
+	else
+	{
+	  if (lpLVItem->pszText)
+	  {
+	    if (lpItem->pszText)
+	    {
+	      if (strcmp(lpLVItem->pszText, lpItem->pszText) != 0)
+	      {
+		uChanged |= LVIF_TEXT;
+	      }
+	    }
+	    else
+	    {
+	      uChanged |= LVIF_TEXT;
+	    }
+	  }
+	  else
+	  {
+	    if (lpItem->pszText)
+	    {
+	      uChanged |= LVIF_TEXT;
+	    }
+	  }
+	}
       }
     }
   }
-
   return uChanged;
 }
 
