@@ -145,9 +145,6 @@ HBITMAP TTYDRV_SelectBitmap(TTYDRV_PDEVICE *physDev, HBITMAP hbitmap)
 
   TRACE("(%p, 0x%04x)\n", dc, hbitmap);
 
-  if(!(dc->flags & DC_MEMORY)) 
-    return 0;
-
   if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
   /* Assure that the bitmap device dependent */
   if(!bitmap->physBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
@@ -162,25 +159,6 @@ HBITMAP TTYDRV_SelectBitmap(TTYDRV_PDEVICE *physDev, HBITMAP hbitmap)
     return 0;
   }
 
-  dc->totalExtent.left   = 0;
-  dc->totalExtent.top    = 0;
-  dc->totalExtent.right  = bitmap->bitmap.bmWidth;
-  dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
-
-  /* FIXME: Should be done in the common code instead */
-  if(dc->hVisRgn) {
-    SetRectRgn(dc->hVisRgn, 0, 0,
-	       bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
-  } else { 
-    HRGN hrgn;
-
-    if(!(hrgn = CreateRectRgn(0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight)))
-    {
-        GDI_ReleaseObj( hbitmap );
-        return 0;
-    }
-    dc->hVisRgn = hrgn;
-  }
   GDI_ReleaseObj( hbitmap );
   return hbitmap;
 }

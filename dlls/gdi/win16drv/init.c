@@ -271,7 +271,6 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     wRet = PRTDRV_Enable(&physDev->DevCaps, GETGDIINFO, device, driver, output,NULL); 
 
     /* Add this to the DC */
-    dc->hVisRgn = CreateRectRgn(0, 0, physDev->DevCaps.horzRes, physDev->DevCaps.vertRes);
     dc->bitsPerPixel = physDev->DevCaps.bitsPixel;
     
     TRACE("Got devcaps width %d height %d bits %d planes %d\n",

@@ -134,23 +134,6 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
 
 
 /***********************************************************************
- *           DCE_OffsetVisRgn
- *
- * Change region from DC-origin relative coordinates to screen coords.
- */
-
-static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
-{
-    DC *dc;
-    if (!(dc = DC_GetDCPtr( hDC ))) return;
-
-    OffsetRgn( hVisRgn, dc->DCOrgX, dc->DCOrgY );
-
-    GDI_ReleaseObj( hDC );
-}
-
-
-/***********************************************************************
  *           DCE_GetVisRect
  *
  * Calculate the visible rectangle of a window (i.e. the client or
@@ -388,25 +371,28 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     DC *dc;
     BOOL updateVisRgn;
     HRGN hrgnVisible = 0;
+    POINT org;
 
     if (!wndPtr) return FALSE;
+
+    if(flags & DCX_WINDOW)
+    {
+        org.x = wndPtr->rectWindow.left;
+        org.y = wndPtr->rectWindow.top;
+    }
+    else
+    {
+        org.x = wndPtr->rectClient.left;
+        org.y = wndPtr->rectClient.top;
+    }
 
     if (!(dc = DC_GetDCPtr( hdc )))
     {
         WIN_ReleaseWndPtr( wndPtr );
         return FALSE;
     }
-
-    if(flags & DCX_WINDOW)
-    {
-        dc->DCOrgX = wndPtr->rectWindow.left;
-        dc->DCOrgY = wndPtr->rectWindow.top;
-    }
-    else
-    {
-        dc->DCOrgX = wndPtr->rectClient.left;
-        dc->DCOrgY = wndPtr->rectClient.top;
-    }
+    dc->DCOrgX = org.x;
+    dc->DCOrgY = org.y;
     updateVisRgn = (dc->flags & DC_DIRTY) != 0;
     GDI_ReleaseObj( hdc );
 
@@ -433,7 +419,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
                 else
                     OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
                                -wndPtr->rectClient.top );
-                DCE_OffsetVisRgn( hdc, hrgnVisible );
+                OffsetRgn( hrgnVisible, org.x, org.y );
             }
             else
                 hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
@@ -442,7 +428,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         else
         {
             hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
-            DCE_OffsetVisRgn( hdc, hrgnVisible );
+            OffsetRgn( hrgnVisible, org.x, org.y );
         }
         SelectVisRgn16( hdc, hrgnVisible );
     }
@@ -457,7 +443,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
         SaveVisRgn16( hdc );
         CombineRgn( hrgnVisible, hrgn, 0, RGN_COPY );
-        DCE_OffsetVisRgn( hdc, hrgnVisible );
+        OffsetRgn( hrgnVisible, org.x, org.y );
         CombineRgn( hrgnVisible, InquireVisRgn16( hdc ), hrgnVisible,
                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
         SelectVisRgn16( hdc, hrgnVisible );

@@ -125,33 +125,17 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->hBitmap );
         physDev->drawable  = (Pixmap)bmp->physBitmap;
         physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
-        dc->bitsPerPixel       = bmp->bitmap.bmBitsPixel;
-        dc->totalExtent.left   = 0;
-        dc->totalExtent.top    = 0;
-        dc->totalExtent.right  = bmp->bitmap.bmWidth;
-        dc->totalExtent.bottom = bmp->bitmap.bmHeight;
         GDI_ReleaseObj( dc->hBitmap );
     }
     else
     {
         physDev->drawable  = root_window;
         physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
-        dc->bitsPerPixel       = screen_depth;
-        dc->totalExtent.left   = 0;
-        dc->totalExtent.top    = 0;
-        dc->totalExtent.right  = screen_width;
-        dc->totalExtent.bottom = screen_height;
+        dc->bitsPerPixel   = screen_depth;
     }
 
     physDev->current_pf   = 0;
     physDev->used_visuals = 0;
-
-    if (!(dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent )))
-    {
-        TSXFreeGC( gdi_display, physDev->gc );
-	HeapFree( GetProcessHeap(), 0, physDev );
-        return FALSE;
-    }
 
     wine_tsx11_lock();
     XSetGraphicsExposures( gdi_display, physDev->gc, False );

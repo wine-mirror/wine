@@ -21,8 +21,6 @@
 #include "config.h"
 
 #include "gdi.h"
-#include "bitmap.h"
-#include "palette.h"
 #include "ttydrv.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -48,7 +46,6 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 			LPCSTR output, const DEVMODEA *initData)
 {
   TTYDRV_PDEVICE *physDev;
-  BITMAPOBJ *bmp;
 
   TRACE("(%p, %s, %s, %s, %p)\n",
     dc, debugstr_a(driver), debugstr_a(device), 
@@ -72,28 +69,12 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     physDev->cellHeight = 1;
 
     TTYDRV_DC_CreateBitmap(dc->hBitmap);
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr(dc->hBitmap, BITMAP_MAGIC);
-				   
-    dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
-    
-    dc->totalExtent.left   = 0;
-    dc->totalExtent.top    = 0;
-    dc->totalExtent.right  = bmp->bitmap.bmWidth;
-    dc->totalExtent.bottom = bmp->bitmap.bmHeight;
-    dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
-    
-    GDI_ReleaseObj( dc->hBitmap );
   } else {
     physDev->window = root_window;
     physDev->cellWidth = cell_width;
     physDev->cellHeight = cell_height;
-    
-    dc->bitsPerPixel       = 1;
-    dc->totalExtent.left   = 0;
-    dc->totalExtent.top    = 0;
-    dc->totalExtent.right  = cell_width * screen_cols;
-    dc->totalExtent.bottom = cell_height * screen_rows;
-    dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );    
+
+    dc->bitsPerPixel = 1;
   }
 
   return TRUE;
@@ -128,9 +109,9 @@ INT TTYDRV_GetDeviceCaps( TTYDRV_PDEVICE *physDev, INT cap )
     case VERTSIZE:
         return 0;    /* FIXME: Screen height in mm */
     case HORZRES:
-        return 640;  /* FIXME: Screen width in pixel */
+        return cell_width * screen_cols;
     case VERTRES:
-        return 480;  /* FIXME: Screen height in pixel */
+        return cell_height * screen_rows;
     case BITSPIXEL:
         return 1;    /* FIXME */
     case PLANES:

@@ -1173,6 +1173,52 @@ static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
     return ret;
 }
 
+
+/***********************************************************************
+ *           select_bitmap
+ */
+static HGDIOBJ select_bitmap( DC *dc, HBITMAP handle )
+{
+    BITMAPOBJ *bitmap;
+    HGDIOBJ ret = handle;
+
+    if (!(dc->flags & DC_MEMORY)) return 0;
+    if (handle == dc->hBitmap) return handle;  /* nothing to do */
+    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC ))) return 0;
+
+    if (bitmap->header.dwCount && (handle != GetStockObject(DEFAULT_BITMAP)))
+    {
+        WARN( "Bitmap already selected in another DC\n" );
+        GDI_ReleaseObj( handle );
+        return 0;
+    }
+
+    if (dc->funcs->pSelectBitmap) ret = dc->funcs->pSelectBitmap( dc->physDev, handle );
+
+    if (ret)
+    {
+        dc->hBitmap            = ret;
+        dc->totalExtent.left   = 0;
+        dc->totalExtent.top    = 0;
+        dc->totalExtent.right  = bitmap->bitmap.bmWidth;
+        dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
+        if (dc->hVisRgn)
+            SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
+        else
+            dc->hVisRgn = CreateRectRgn( 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight );
+
+        if (dc->bitsPerPixel != bitmap->bitmap.bmBitsPixel)
+        {
+            /* depth changed, reinitialize the DC */
+            dc->bitsPerPixel = bitmap->bitmap.bmBitsPixel;
+            DC_InitDC( dc );
+        }
+    }
+    GDI_ReleaseObj( handle );
+    return ret;
+}
+
+
 /***********************************************************************
  *           SelectObject    (GDI.45)
  */
@@ -1198,9 +1244,8 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
     {
     case OBJ_BITMAP:
         ret = dc->hBitmap;
-        if (dc->funcs->pSelectBitmap) handle = dc->funcs->pSelectBitmap( dc->physDev, handle );
-        if (handle) dc->hBitmap = handle;
-        else ret = 0;
+        handle = select_bitmap( dc, handle );
+        if (!handle) ret = 0;
         break;
     case OBJ_BRUSH:
         ret = dc->hBrush;

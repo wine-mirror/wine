@@ -605,6 +605,12 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
         return 0;
     }
 
+    dc->totalExtent.left   = 0;
+    dc->totalExtent.top    = 0;
+    dc->totalExtent.right  = GetDeviceCaps( dc->hSelf, HORZRES );
+    dc->totalExtent.bottom = GetDeviceCaps( dc->hSelf, VERTRES );
+    dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent );
+
     DC_InitDC( dc );
     hdc = dc->hSelf;
     GDI_ReleaseObj( hdc );
@@ -719,6 +725,12 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         DRIVER_release_driver( funcs );
         return 0;
     }
+
+    dc->totalExtent.left   = 0;
+    dc->totalExtent.top    = 0;
+    dc->totalExtent.right  = 1;  /* default bitmap is 1x1 */
+    dc->totalExtent.bottom = 1;
+    dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent );
 
     DC_InitDC( dc );
     GDI_ReleaseObj( dc->hSelf );

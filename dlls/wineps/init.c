@@ -285,7 +285,6 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     }
 
     PSDRV_UpdateDevCaps(physDev);
-    dc->hVisRgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
     dc->hFont = PSDRV_DefaultFont;
     return TRUE;
 }

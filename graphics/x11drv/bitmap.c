@@ -79,19 +79,9 @@ BOOL X11DRV_BITMAP_Init(void)
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BITMAPOBJ *bmp;
-    HRGN hrgn;
     DC *dc = physDev->dc;
 
-    if (!(dc->flags & DC_MEMORY)) return 0;
-    if (hbitmap == dc->hBitmap) return hbitmap;  /* nothing to do */
     if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
-
-    if (bmp->header.dwCount && (hbitmap != GetStockObject(DEFAULT_BITMAP)))
-    {
-        WARN( "Bitmap already selected in another DC\n" );
-        GDI_ReleaseObj( hbitmap );
-        return 0;
-    }
 
     if(!bmp->physBitmap)
     {
@@ -108,22 +98,7 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 	return 0;
     }
 
-    if (!(hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight)))
-    {
-        GDI_ReleaseObj( hbitmap );
-        return 0;
-    }
-
-    dc->totalExtent.left   = 0;
-    dc->totalExtent.top    = 0;
-    dc->totalExtent.right  = bmp->bitmap.bmWidth;
-    dc->totalExtent.bottom = bmp->bitmap.bmHeight;
-
     physDev->drawable = (Pixmap)bmp->physBitmap;
-    dc->hBitmap     = hbitmap;
-
-    SelectVisRgn16( dc->hSelf, hrgn );
-    DeleteObject( hrgn );
 
       /* Change GC depth if needed */
 
@@ -136,8 +111,6 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
         XFlush( gdi_display );
         wine_tsx11_unlock();
-	dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
-        DC_InitDC( dc );
     }
     GDI_ReleaseObj( hbitmap );
     return hbitmap;
