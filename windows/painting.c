@@ -688,6 +688,45 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
 
 /***********************************************************************
+ *           dump_rdw_flags
+ */
+static void dump_rdw_flags(UINT flags)
+{
+    TRACE("flags:");
+    if (flags & RDW_INVALIDATE) TRACE(" RDW_INVALIDATE");
+    if (flags & RDW_INTERNALPAINT) TRACE(" RDW_INTERNALPAINT");
+    if (flags & RDW_ERASE) TRACE(" RDW_ERASE");
+    if (flags & RDW_VALIDATE) TRACE(" RDW_VALIDATE");
+    if (flags & RDW_NOINTERNALPAINT) TRACE(" RDW_NOINTERNALPAINT");
+    if (flags & RDW_NOERASE) TRACE(" RDW_NOERASE");
+    if (flags & RDW_NOCHILDREN) TRACE(" RDW_NOCHILDREN");
+    if (flags & RDW_ALLCHILDREN) TRACE(" RDW_ALLCHILDREN");
+    if (flags & RDW_UPDATENOW) TRACE(" RDW_UPDATENOW");
+    if (flags & RDW_ERASENOW) TRACE(" RDW_ERASENOW");
+    if (flags & RDW_FRAME) TRACE(" RDW_FRAME");
+    if (flags & RDW_NOFRAME) TRACE(" RDW_NOFRAME");
+
+#define RDW_FLAGS \
+    (RDW_INVALIDATE | \
+    RDW_INTERNALPAINT | \
+    RDW_ERASE | \
+    RDW_VALIDATE | \
+    RDW_NOINTERNALPAINT | \
+    RDW_NOERASE | \
+    RDW_NOCHILDREN | \
+    RDW_ALLCHILDREN | \
+    RDW_UPDATENOW | \
+    RDW_ERASENOW | \
+    RDW_FRAME | \
+    RDW_NOFRAME)
+
+    if (flags & ~RDW_FLAGS) TRACE(" %04x", flags & ~RDW_FLAGS);
+    TRACE("\n");
+#undef RDW_FLAGS
+}
+
+
+/***********************************************************************
  *		RedrawWindow (USER32.@)
  */
 BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
@@ -727,6 +766,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
                    hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left,
                    r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
+        dump_rdw_flags(flags);
     }
 
     /* prepare an update region in window coordinates */
