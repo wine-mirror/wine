@@ -59,6 +59,7 @@ EXTRASUBDIRS = \
 	tests
 
 CTESTS = \
+	tests/class.c \
 	tests/sysparams.c
 
 @MAKE_DLL_RULES@
