@@ -12,6 +12,7 @@
 #ifndef RC_INVOKED
 #include <ctype.h>
 #include <string.h>
+#include <stddef.h>
 #endif
 
 
@@ -227,10 +228,15 @@ typedef double          DATE;
 typedef VOID           *PVOID,      *LPVOID;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
-/* Some systems might have wchar_t, but we really need 16 bit characters */
-typedef unsigned short  WCHAR,      *PWCHAR;
 typedef short           SHORT,      *PSHORT;
 typedef long            LONG,       *PLONG,    *LPLONG;
+
+/* Some systems might have wchar_t, but we really need 16 bit characters */
+#ifdef WINE_UNICODE_NATIVE
+typedef wchar_t         WCHAR,      *PWCHAR;
+#else
+typedef unsigned short  WCHAR,      *PWCHAR;
+#endif
 
 /* 'Extended/Wide' numerical types */
 #ifndef _ULONGLONG_
@@ -257,24 +263,46 @@ typedef WCHAR          *PWSTR,      *LPWSTR;
 typedef const WCHAR    *PCWSTR,     *LPCWSTR;
 
 /* Neutral character and string types */
-/* These are only defined for WineLib, i.e. _not_ defined for 
+/* These are only defined for Winelib, i.e. _not_ defined for 
  * the emulator. The reason is they depend on the UNICODE 
  * macro which only exists in the user's code.
  */
 #ifndef __WINE__
+# ifdef WINE_UNICODE_REWRITE
+EXTERN_C unsigned short* wine_rewrite_s4tos2(const wchar_t* str4);
+#  ifdef __cplusplus
+inline WCHAR* wine_unicode_text(const wchar_t* str4)
+{
+  return (WCHAR*)wine_rewrite_s4tos2(str4);
+}
+inline WCHAR wine_unicode_text(wchar_t chr4)
+{
+  return (WCHAR)chr4;
+}
+#   define WINE_UNICODE_TEXT(x)       wine_unicode_text(L##x)
+#  else  /* __cplusplus */
+#   define WINE_UNICODE_TEXT(x)       ((sizeof(x)==1) || (sizeof(L##x)>4) ? \
+                                      (WCHAR*)wine_rewrite_s4tos2(L##x) : \
+                                      ((WCHAR)L##x))
+#  endif  /* __cplusplus */
+# else  /* WINE_UNICODE_REWRITE */
+/* WINE_UNICODE_NATIVE or nothing at all */
+#  define WINE_UNICODE_TEXT(string)   L##string
+# endif  /* WINE_UNICODE_REWRITE */
+
 # ifdef UNICODE
 typedef WCHAR           TCHAR,      *PTCHAR;
 typedef LPWSTR          PTSTR,       LPTSTR;
 typedef LPCWSTR         PCTSTR,      LPCTSTR;
-#  define __TEXT(string) L##string /*probably wrong */
+#  define __TEXT(string) WINE_UNICODE_TEXT(string)
 # else  /* UNICODE */
 typedef CHAR            TCHAR,      *PTCHAR;
 typedef LPSTR           PTSTR,       LPTSTR;
 typedef LPCSTR          PCTSTR,      LPCTSTR;
 #  define __TEXT(string) string
 # endif /* UNICODE */
+# define TEXT(quote) __TEXT(quote)
 #endif   /* __WINE__ */
-#define TEXT(quote) __TEXT(quote)
 
 /* Misc common WIN32 types */
 typedef LONG            HRESULT;

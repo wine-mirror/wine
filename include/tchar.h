@@ -245,10 +245,11 @@ char *CRTDLL__strrev(char *string);
 #define _vsntprintf   WINE_tchar_routine(_vsnprintf,      _vsnprintf,  _vsnwprintf)
 #define _vstprintf    WINE_tchar_routine(vsprintf,        vsprintf,    vswprintf)
 #define _vtprintf     WINE_tchar_routine(vprintf,         vprintf,     vwprintf)
+#define _TEOF         WINE_tchar_routine(EOF,             EOF,         WEOF)
 
+#define __T(x) __TEXT(x)
 #define _T(x) __T(x)
 #define _TEXT(x) __T(x)
-#define __T(x) x
 
 typedef CHAR  _TCHARA;
 typedef WCHAR _TCHARW;

@@ -20,11 +20,14 @@ typedef OLECHAR16	*BSTR16;
 typedef BSTR16		*LPBSTR16;
 #define OLESTR16(x) x
 
-typedef WCHAR		OLECHAR;
-typedef LPWSTR		LPOLESTR;
-typedef LPCWSTR		LPCOLESTR;
-typedef OLECHAR	*BSTR;
-typedef BSTR		*LPBSTR;
+typedef WCHAR           OLECHAR;
+typedef LPWSTR          LPOLESTR;
+typedef LPCWSTR         LPCOLESTR;
+typedef OLECHAR        *BSTR;
+typedef BSTR           *LPBSTR;
+#ifndef __WINE__
+#define OLESTR(str)     WINE_UNICODE_TEXT(str)
+#endif
 
 #ifndef _DWORDLONG_
 #define _DWORDLONG_
@@ -36,8 +39,6 @@ typedef __uint64 DWORDLONG, *PDWORDLONG;
 typedef __int64 LONGLONG, *PLONGLONG;
 typedef __uint64 ULONGLONG, *PULONGLONG;
 #endif
-
-#define OLESTR(x) L##x
 
 typedef enum tagDVASPECT
 { 
