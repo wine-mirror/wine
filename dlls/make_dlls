@@ -189,18 +189,20 @@ EOF
 
 foreach my $mod (sort keys %directories)
 {
-    printf NEWMAKE "%s\$(DLLEXT)", $mod;
+    printf NEWMAKE "%s\$(DLLEXT): %s/%s\$(DLLEXT)\n", $mod, $directories{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
+
     if (defined $altnames{$mod})
     {
-        my $count = 1;
+        my $count = 0;
         foreach my $i (sort @{$altnames{$mod}})
         {
-            if (!($count++ % 3)) { printf NEWMAKE " \\\n "; }
-            printf NEWMAKE " %s\$(DLLEXT)", $i;
+            if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
+            printf NEWMAKE "%s\$(DLLEXT) ", $i;
         }
+        printf NEWMAKE ": %s\$(DLLEXT)\n", $mod;
+        printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s\$(DLLEXT) \$@\n\n", $mod;
     }
-    printf NEWMAKE ": %s/%s\$(DLLEXT)\n", $directories{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
 }
 
 
