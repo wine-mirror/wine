@@ -1172,7 +1172,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	    }
 	}
 
-	MESSAGE("Created not existing system directory '%s'\n", szPath);
+	TRACE("Created missing system directory '%s'\n", szPath);
 	return TRUE;
 }
 
