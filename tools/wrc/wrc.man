@@ -97,13 +97,13 @@ searched exclusively via the \fI\-I\fR set path, whereas the '""' quoted
 filenames are first tried to be opened in the current directory. Also
 resource statements with file references are located in the same way.
 .TP
+.I \-J
+Do not search the standard include path, look for include files only
+in the directories explicitly specified with the \fI\-I\fR option.
+.TP
 .I \-l lan
 Set default language to \fIlan\fR. Default is the neutral language 0
 (i.e. "LANGUAGE 0, 0").
-.TP
-.I \-L
-Leave case of embedded filenames as is. All filenames are converted to
-lower case before they are attemped to be opened without this option.
 .TP
 .I \-m
 Do not remap numerical resource type-IDs onto standard resources. This will

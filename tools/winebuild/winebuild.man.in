@@ -91,6 +91,10 @@ modules.
 .BI \-f\  flags
 Ignored for compatibility with the C compiler.
 .TP
+.BI \-F\  filename
+Set the file name of the module. The default is to use the base name
+of the spec file (without any extension).
+.TP
 .B \-h
 Display a usage message and exit.
 .TP
