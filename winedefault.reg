@@ -68,6 +68,8 @@
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
 "ProgramFilesDir"="C:\Program Files"
 "CommonFilesDir"="C:\Program Files\Common Files"
+"RegisteredOrganization"="Change preferred organization in ~/.wine/system.reg"
+"RegisteredOwner"="Change preferred owner in ~/.wine/system.reg"
 
 # Font name to font file mappings
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Fonts]
