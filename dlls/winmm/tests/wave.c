@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -103,6 +104,69 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
     return buf;
 }
 
+static const char * wave_out_error(MMRESULT error)
+{
+    static char msg[1024];
+    MMRESULT rc;
+
+    rc = waveOutGetErrorText(error, msg, sizeof(msg));
+    if (rc != MMSYSERR_NOERROR)
+	sprintf(msg, "waveOutGetErrorText(%x) failed with error %x", error, rc);
+    return msg;
+}
+
+static const char * wave_open_flags(DWORD flags)
+{
+    static char msg[1024];
+    int first = TRUE;
+    msg[0] = 0;
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_EVENT) {
+	strcat(msg, "CALLBACK_EVENT");
+        first = FALSE;
+    }
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "CALLBACK_FUNCTION");
+        first = FALSE;
+    }
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_NULL) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "CALLBACK_NULL");
+        first = FALSE;
+    }
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "CALLBACK_THREAD");
+        first = FALSE;
+    }
+    if ((flags & CALLBACK_TYPEMASK) == CALLBACK_WINDOW) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "CALLBACK_WINDOW");
+        first = FALSE;
+    }
+    if ((flags & WAVE_ALLOWSYNC) == WAVE_ALLOWSYNC) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "WAVE_ALLOWSYNC");
+        first = FALSE;
+    }
+    if ((flags & WAVE_FORMAT_DIRECT) == WAVE_FORMAT_DIRECT) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "WAVE_FORMAT_DIRECT");
+        first = FALSE;
+    }
+    if ((flags & WAVE_FORMAT_QUERY) == WAVE_FORMAT_QUERY) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "WAVE_FORMAT_QUERY");
+        first = FALSE;
+    }
+    if ((flags & WAVE_MAPPED) == WAVE_MAPPED) {
+	if (!first) strcat(msg, "|");
+	strcat(msg, "WAVE_MAPPED");
+        first = FALSE;
+    }
+    return msg;
+}
+
 static void wave_out_test_deviceOut(int device, int format, DWORD flags)
 {
     WAVEFORMATEX wfx;
@@ -130,7 +194,9 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags)
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveOutOpen: device=%d rc=%d",device,rc);
+       "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)",device,
+       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
+       wave_open_flags(CALLBACK_EVENT|flags),rc,wave_out_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
         CloseHandle(hevent);
         return;
@@ -182,7 +248,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags)
 static void wave_out_tests()
 {
     WAVEOUTCAPS caps;
-    WAVEFORMATEX format;
+    WAVEFORMATEX format, oformat;
     HWAVEOUT wout;
     MMRESULT rc;
     UINT ndev,d,f;
@@ -212,7 +278,7 @@ static void wave_out_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
-        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%04lx support=%04lx\n",
+        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx\n",
               d,caps.szPname,caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
@@ -234,15 +300,16 @@ static void wave_out_tests()
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL);
+	oformat=format;
+        rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT,
            "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
         if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
+            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
                   format.nChannels,
-                  win_formats[f][1], win_formats[f][2],
-                  win_formats[f][3]);
+                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
+                  oformat.nChannels);
             waveOutClose(wout);
         }
 
@@ -265,6 +332,17 @@ static void wave_out_tests()
             waveOutClose(wout);
         }
     }
+}
+
+static const char * wave_in_error(MMRESULT error)
+{
+    static char msg[1024];
+    MMRESULT rc;
+
+    rc = waveInGetErrorText(error, msg, sizeof(msg));
+    if (rc != MMSYSERR_NOERROR)
+	sprintf(msg, "waveInGetErrorText(%x) failed with error %x", error, rc);
+    return msg;
 }
 
 static void wave_in_test_deviceIn(int device, int format, DWORD flags)
@@ -293,7 +371,9 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveInOpen: device=%d rc=%d",device,rc);
+       "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)",device,
+       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
+       wave_open_flags(CALLBACK_EVENT|flags),rc,wave_in_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
         CloseHandle(hevent);
         return;
@@ -339,7 +419,7 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
 static void wave_in_tests()
 {
     WAVEINCAPS caps;
-    WAVEFORMATEX format;
+    WAVEFORMATEX format,oformat;
     HWAVEIN win;
     MMRESULT rc;
     UINT ndev,d,f;
@@ -369,7 +449,7 @@ static void wave_in_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
-        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%04lx\n",
+        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%05lx\n",
               d,caps.szPname,caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
@@ -391,15 +471,16 @@ static void wave_in_tests()
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
-        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL);
+	oformat=format;
+        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT,
            "waveInOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
         if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %dx%2dx%d\n",
+            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
                   format.nChannels,
-                  win_formats[f][1], win_formats[f][2],
-                  win_formats[f][3]);
+                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
+                  oformat.nChannels);
             waveInClose(win);
         }
 
