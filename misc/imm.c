@@ -325,7 +325,7 @@ HWND32 WINAPI ImmGetDefaultIMEWnd32(HWND32 hWnd)
 {
   FIXME(imm, "(0x%08x): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC32)NULL;
+  return (HWND32)NULL;
 }
 
 /***********************************************************************
@@ -484,7 +484,7 @@ HKL32 WINAPI ImmInstallIME32A(
     debugstr_a(lpszIMEFileName), debugstr_a(lpszLayoutText)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC32)NULL;
+  return (HKL32)NULL;
 }
 
 /***********************************************************************
@@ -497,7 +497,7 @@ HKL32 WINAPI ImmInstallIME32W(
     debugstr_w(lpszIMEFileName), debugstr_w(lpszLayoutText)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC32)NULL;
+  return (HKL32)NULL;
 }
 
 /***********************************************************************
