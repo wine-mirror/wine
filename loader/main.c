@@ -178,6 +178,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
+    PDB	      *curr;
 
     /* Main initialization */
     if (!MAIN_MainInit( *argc, argv, TRUE )) return 0;
@@ -195,13 +196,18 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
         return 0;
 
     /* Increment EXE refcount */
-    assert( PROCESS_Current()->exe_modref );
-    PROCESS_Current()->exe_modref->refCount++;
+    curr = PROCESS_Current();
+    assert( curr->exe_modref );
+    curr->exe_modref->refCount++;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
         || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
         ExitProcess( 1 );
+
+    /* attach the imported DLLs */
+    if ( !MODULE_DllProcessAttach( curr->exe_modref, NULL ) )
+       ExitProcess( 1 );
 
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
