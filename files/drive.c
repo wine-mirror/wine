@@ -785,30 +785,33 @@ UINT16 WINAPI GetDriveType16(
  *   DRIVE_CDROM       CDROM drive
  *   DRIVE_RAMDISK     virtual disk in ram
  *
- *   DRIVE_DOESNOTEXIST XXX Not valid return value
+ *   DRIVE_DOESNOTEXIST    XXX Not valid return value
+ *   DRIVE_CANNOTDETERMINE XXX Not valid return value
  *   
  * BUGS
  *
- *  Currently returns DRIVE_DOESNOTEXIST when it really should return
- *  DRIVE_UNKNOWN or DRIVE_NO_ROOT_DIR.  DRIVE_RAMDISK is unsupported.
- *  Should determine current directory and use that root if param is
- *  NULL.
+ *  Currently returns DRIVE_DOESNOTEXIST and DRIVE_CANNOTDETERMINE
+ *  when it really should return DRIVE_NO_ROOT_DIR and DRIVE_UNKNOWN.
+ *  Why where the former defines used?
+ *
+ *  DRIVE_RAMDISK is unsupported.
  */
 UINT32 WINAPI GetDriveType32A(LPCSTR root /* String describing drive */)
 {
-    TRACE(dosfs, "(%s)\n", NULL != root ? root : "NULL");
-    if (NULL == root)
-    {
-	FIXME(dosfs,"(NULL) should use current dir, hardcoded c: instead\n");
-        root = "C:";
-    }
+    int drive;
+    TRACE(dosfs, "(%s)\n", debugstr_a(root));
 
-    if ((root[1]) && (root[1] != ':'))
+    if (NULL == root) drive = DRIVE_GetCurrentDrive();
+    else
     {
-        WARN(dosfs, "invalid root '%s'\n", NULL != root ? root : "NULL");
-        return DRIVE_DOESNOTEXIST;
+        if ((root[1]) && (root[1] != ':'))
+	{
+	    WARN(dosfs, "invalid root '%s'\n", debugstr_a(root));
+	    return DRIVE_DOESNOTEXIST;
+	}
+	drive = toupper(root[0]) - 'A';
     }
-    switch(DRIVE_GetType(toupper(root[0]) - 'A'))
+    switch(DRIVE_GetType(drive))
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
     case TYPE_HD:      return DRIVE_FIXED;
