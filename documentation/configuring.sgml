@@ -95,30 +95,6 @@
 	initial wine configuration file with useful default settings.
       </para>
 
-      <sect2 id="config-helper-winesetuptk">
-        <title>WineSetupTk</title>
-	<para>
-	  WineSetupTk is a graphical Wine configuration tool with
-	  incredibly easy handling of Wine configuration issues, to be
-	  used for configuring the Wine environment after having
-	  installed the Wine files.
-	  It has been written by CodeWeavers in 2000 as part of a host
-	  of other efforts to make Wine more desktop oriented, and updated
-	  in 2003 by Vincent Béron, Alex Pasadyn and Ivan Leo Puoti.
-	</para>
-	<para>
-	  If you're using Debian, simply install the WineSetupTk
-	  package (as root):
-	</para>
-  <screen>
-  <prompt># </prompt><userinput>apt-get install winesetuptk</userinput>
-  </screen>
-	<para>
-	  If you're using another distribution, you can get WineSetupTk from the
-	  <ulink url="http://sourceforge.net/project/showfiles.php?group_id=6241">
-          sourceforge.net Wine download page</ulink>
-	</para>
-      </sect2>
       
       <sect2 id="config-helper-wineinstall">
         <title>wineinstall</title>
