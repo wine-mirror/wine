@@ -573,8 +573,8 @@ BOOLEAN WINAPI RtlFreeHeap(
  *	misc
  */
 void __cdecl DbgPrint(LPCSTR fmt,LPVOID args);
-DWORD NtRaiseException ( DWORD dwExceptionCode, DWORD dwExceptionFlags, DWORD nNumberOfArguments,CONST ULONG_PTR *lpArguments);
-DWORD RtlRaiseException ( DWORD x);
+DWORD WINAPI NtRaiseException(PEXCEPTION_RECORD,PCONTEXT,BOOL);
+void WINAPI RtlRaiseException(PEXCEPTION_RECORD);
 VOID WINAPI RtlAcquirePebLock(void);
 VOID WINAPI RtlReleasePebLock(void);
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4);

@@ -582,7 +582,7 @@ init	MAIN_KernelInit
 564 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 565 stdcall QueryPerformanceFrequency(ptr) QueryPerformanceFrequency
 566 stdcall QueueUserAPC(ptr long long) QueueUserAPC
-567 register RaiseException() RaiseException
+567 stdcall RaiseException(long long long ptr) RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsoleA
 569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
 570 stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInputW 

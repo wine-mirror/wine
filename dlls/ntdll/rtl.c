@@ -283,15 +283,7 @@ void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
 	MSG("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
 }
-DWORD NtRaiseException ( DWORD dwExceptionCode, DWORD dwExceptionFlags, DWORD nNumberOfArguments,CONST ULONG_PTR *lpArguments)
-{	FIXME(ntdll,"0x%08lx 0x%08lx 0x%08lx %p\n", dwExceptionCode, dwExceptionFlags, nNumberOfArguments, lpArguments);
-	return 0;
-}
 
-DWORD RtlRaiseException ( DWORD x)
-{	FIXME(ntdll, "0x%08lx\n", x);
-	return 0;
-}
 /******************************************************************************
  *  RtlAcquirePebLock		[NTDLL] 
  */

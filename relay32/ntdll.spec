@@ -180,7 +180,7 @@ type	win32
 172 stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 173 stub NtQueryVirtualMemory
 174 stub NtQueryVolumeInformationFile
-175 stdcall NtRaiseException(long long long ptr) NtRaiseException
+175 register NtRaiseException() NtRaiseException
 176 stub NtRaiseHardError
 177 stdcall NtReadFile(long long long long long long long long long) NtReadFile
 178 stub NtReadRequestData
@@ -469,8 +469,8 @@ type	win32
 461 stub RtlQuerySecurityObject
 462 stub RtlQueryTagHeap
 463 stub RtlQueryTimeZoneInformation
-464 stdcall RtlRaiseException (long) RtlRaiseException
-465 stub RtlRaiseStatus
+464 register RtlRaiseException() RtlRaiseException
+465 stdcall RtlRaiseStatus(long) RtlRaiseStatus
 466 stub RtlRandom
 467 stub RtlReAllocateHeap
 468 stub RtlRealPredecessor

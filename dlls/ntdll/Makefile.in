@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = ntdll
 
 C_SRCS = \
+	exception.c \
 	file.c \
 	nt.c \
 	om.c \

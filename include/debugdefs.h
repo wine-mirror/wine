@@ -122,52 +122,54 @@ int dbch_resource = 110;
 int dbch_scroll = 111;
 int dbch_security = 112;
 int dbch_segment = 113;
-int dbch_selector = 114;
-int dbch_sem = 115;
-int dbch_sendmsg = 116;
-int dbch_server = 117;
-int dbch_shell = 118;
-int dbch_shm = 119;
-int dbch_snoop = 120;
-int dbch_sound = 121;
-int dbch_static = 122;
-int dbch_statusbar = 123;
-int dbch_storage = 124;
-int dbch_stress = 125;
-int dbch_string = 126;
-int dbch_syscolor = 127;
-int dbch_system = 128;
-int dbch_tab = 129;
-int dbch_tapi = 130;
-int dbch_task = 131;
-int dbch_text = 132;
-int dbch_thread = 133;
-int dbch_thunk = 134;
-int dbch_timer = 135;
-int dbch_toolbar = 136;
-int dbch_toolhelp = 137;
-int dbch_tooltips = 138;
-int dbch_trackbar = 139;
-int dbch_treeview = 140;
-int dbch_ttydrv = 141;
-int dbch_tweak = 142;
-int dbch_updown = 143;
-int dbch_ver = 144;
-int dbch_virtual = 145;
-int dbch_vxd = 146;
-int dbch_wave = 147;
-int dbch_win = 148;
-int dbch_win16drv = 149;
-int dbch_win32 = 150;
-int dbch_wing = 151;
-int dbch_winsock = 152;
-int dbch_wnet = 153;
-int dbch_x11 = 154;
-int dbch_x11drv = 155;
+int dbch_seh = 114;
+int dbch_selector = 115;
+int dbch_sem = 116;
+int dbch_sendmsg = 117;
+int dbch_server = 118;
+int dbch_shell = 119;
+int dbch_shm = 120;
+int dbch_snoop = 121;
+int dbch_sound = 122;
+int dbch_static = 123;
+int dbch_statusbar = 124;
+int dbch_storage = 125;
+int dbch_stress = 126;
+int dbch_string = 127;
+int dbch_syscolor = 128;
+int dbch_system = 129;
+int dbch_tab = 130;
+int dbch_tapi = 131;
+int dbch_task = 132;
+int dbch_text = 133;
+int dbch_thread = 134;
+int dbch_thunk = 135;
+int dbch_timer = 136;
+int dbch_toolbar = 137;
+int dbch_toolhelp = 138;
+int dbch_tooltips = 139;
+int dbch_trackbar = 140;
+int dbch_treeview = 141;
+int dbch_ttydrv = 142;
+int dbch_tweak = 143;
+int dbch_updown = 144;
+int dbch_ver = 145;
+int dbch_virtual = 146;
+int dbch_vxd = 147;
+int dbch_wave = 148;
+int dbch_win = 149;
+int dbch_win16drv = 150;
+int dbch_win32 = 151;
+int dbch_wing = 152;
+int dbch_winsock = 153;
+int dbch_wnet = 154;
+int dbch_x11 = 155;
+int dbch_x11drv = 156;
 
-#define DEBUG_CHANNEL_COUNT 156
+#define DEBUG_CHANNEL_COUNT 157
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -441,6 +443,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "scroll",
 "security",
 "segment",
+"seh",
 "selector",
 "sem",
 "sendmsg",

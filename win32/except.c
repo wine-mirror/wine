@@ -2,6 +2,7 @@
  * Win32 exception functions
  *
  * Copyright (c) 1996 Onno Hovers, (onno@stack.urc.tue.nl)
+ * Copyright (c) 1999 Alexandre Julliard
  *
  * Notes:
  *  What really happens behind the scenes of those new
@@ -41,152 +42,31 @@
 #include "except.h"
 #include "stackframe.h"
 
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(win32)
-
-#define TEB_EXCEPTION_FRAME(pcontext) \
-    ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
-
-/*******************************************************************
- *         RtlUnwind  (KERNEL32.443)
- *
- *  This function is undocumented. This is the general idea of 
- *  RtlUnwind, though. Note that error handling is not yet implemented.
- *
- * The real prototype is:
- * void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
- *                            PEXCEPTION_RECORD pRecord, DWORD returnEax );
- */
-REGS_ENTRYPOINT(RtlUnwind)
-{
-    EXCEPTION_RECORD record;
-    DWORD            dispatch;
-    int              retval;
-    PEXCEPTION_FRAME pEndFrame;
-    PEXCEPTION_RECORD pRecord;
-
-    /* get the arguments from the stack */
-
-    DWORD ret        = STACK32_POP(context);  /* return addr */
-    pEndFrame        = (PEXCEPTION_FRAME)STACK32_POP(context);
-    (void)STACK32_POP(context);  /* unused arg */
-    pRecord          = (PEXCEPTION_RECORD)STACK32_POP(context);
-    EAX_reg(context) = STACK32_POP(context);
-    STACK32_PUSH(context,ret);  /* restore return addr */
-   
-   /* build an exception record, if we do not have one */
-   if(!pRecord)
-   {
-     record.ExceptionCode    = STATUS_INVALID_DISPOSITION;
-     record.ExceptionFlags   = 0;
-     record.ExceptionRecord  = NULL;
-     record.ExceptionAddress = (LPVOID)EIP_reg(context); 
-     record.NumberParameters = 0;
-     pRecord = &record;
-   }
-
-   if(pEndFrame)
-     pRecord->ExceptionFlags|=EH_UNWINDING;
-   else
-     pRecord->ExceptionFlags|=EH_UNWINDING | EH_EXIT_UNWIND;
-  
-   /* get chain of exception frames */      
-   while ((TEB_EXCEPTION_FRAME(context) != NULL) &&
-          (TEB_EXCEPTION_FRAME(context) != ((void *)0xffffffff)) &&
-          (TEB_EXCEPTION_FRAME(context) != pEndFrame))
-   {
-       TRACE_(win32)("calling exception handler at 0x%x\n",
-                      (int)TEB_EXCEPTION_FRAME(context)->Handler );
-
-       dispatch=0;       
-       retval = TEB_EXCEPTION_FRAME(context)->Handler( pRecord,
-                                                TEB_EXCEPTION_FRAME(context),
-                                                context, &dispatch);
-                                         
-       TRACE_(win32)("exception handler returns 0x%x, dispatch=0x%x\n",
-                              retval, (int) dispatch);
-  
-       if (	(retval == ExceptionCollidedUnwind) &&
-           	(TEB_EXCEPTION_FRAME(context) != (LPVOID)dispatch)
-       )
-           TEB_EXCEPTION_FRAME(context) = (LPVOID)dispatch;
-       else if (	(TEB_EXCEPTION_FRAME(context) != pEndFrame) &&
-           		(TEB_EXCEPTION_FRAME(context) != TEB_EXCEPTION_FRAME(context)->Prev)
-       )
-           TEB_EXCEPTION_FRAME(context) = TEB_EXCEPTION_FRAME(context)->Prev;
-       else
-          break;  
-   }
-}
+DEFAULT_DEBUG_CHANNEL(seh)
 
 
 /*******************************************************************
  *         RaiseException  (KERNEL32.418)
- *
- * The real prototype is:
- * void WINAPI EXC_RaiseException(DWORD dwExceptionCode,
- *                                DWORD dwExceptionFlags,
- *                                DWORD cArguments,
- *                                const LPDWORD lpArguments );
  */
-REGS_ENTRYPOINT(RaiseException)
+void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD args )
 {
-    PEXCEPTION_FRAME    pframe; 
-    EXCEPTION_RECORD    record;
-    DWORD               dispatch; /* is this used in raising exceptions ?? */
-    int                 retval;
-    int                 i;
+    EXCEPTION_RECORD record;
 
-    /* Get the arguments from the stack */
-
-    DWORD ret                 = STACK32_POP(context);  /* return addr */
-    DWORD dwExceptionCode     = STACK32_POP(context);
-    DWORD dwExceptionFlags    = STACK32_POP(context);
-    DWORD cArguments          = STACK32_POP(context);
-    const LPDWORD lpArguments = (LPDWORD)STACK32_POP(context);
-    STACK32_PUSH(context,ret);  /* Restore the return address */
-
-    /* compose an exception record */ 
+    /* Compose an exception record */ 
     
-    record.ExceptionCode       = dwExceptionCode;   
-    record.ExceptionFlags      = dwExceptionFlags;
-    record.ExceptionRecord     = NULL;
-    record.NumberParameters    = cArguments;
-    record.ExceptionAddress    = (LPVOID)EIP_reg(context);
-    
-    if (lpArguments) for( i = 0; i < cArguments; i++)
-        record.ExceptionInformation[i] = lpArguments[i];
-    
-    /* get chain of exception frames */    
-    
-    retval = ExceptionContinueSearch;    
-    pframe = TEB_EXCEPTION_FRAME( context );
-    
-    while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
+    record.ExceptionCode    = code;
+    record.ExceptionFlags   = flags & EH_NONCONTINUABLE;
+    record.ExceptionRecord  = NULL;
+    record.ExceptionAddress = RaiseException;
+    if (nbargs && args)
     {
-       PEXCEPTION_FRAME    prevframe; 
-       TRACE_(win32)("calling exception handler at 0x%x\n",
-                                                (int) pframe->Handler);
-       dispatch=0;  
-       TRACE_(relay)("(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
-                     pframe->Handler, &record, pframe, context, &dispatch );
-       prevframe = pframe->Prev;
-       retval=pframe->Handler(&record,pframe,context,&dispatch);
- 
-       TRACE_(win32)("exception handler returns 0x%x, dispatch=0x%x\n",
-                              retval, (int) dispatch);
-                              
-       if(retval==ExceptionContinueExecution)
-          break;
-       pframe=prevframe;
-   }
+        if (nbargs > EXCEPTION_MAXIMUM_PARAMETERS) nbargs = EXCEPTION_MAXIMUM_PARAMETERS;
+        record.NumberParameters = nbargs;
+        memcpy( record.ExceptionInformation, args, nbargs * sizeof(*args) );
+    }
+    else record.NumberParameters = 0;
 
-   if (retval!=ExceptionContinueExecution)
-   {    
-       /* FIXME: what should we do here? */
-       TRACE_(win32)("no handler wanted to handle the exception, exiting\n");
-       ExitProcess(dwExceptionCode); /* what status should be used here ? */
-   }
+    RtlRaiseException( &record );
 }
 
 

@@ -12,11 +12,12 @@
 #include "selectors.h"  /* for SET_FS */
 
 struct _PDB;
+struct __EXCEPTION_FRAME;
 
 /* Thread exception block */
 typedef struct _TEB
 {
-    void        *except;         /* 00 Head of exception handling chain */
+    struct __EXCEPTION_FRAME *except; /* 00 Head of exception handling chain */
     void        *stack_top;      /* 04 Top of thread stack */
     void        *stack_low;      /* 08 Stack low-water mark */
     HTASK16      htask16;        /* 0c Win16 task handle */

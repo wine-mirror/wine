@@ -1,12 +1,15 @@
 /*
  * except.h
- * Copyright (c) 1996, Onno Hovers (onno@stack.urc.tue.nl)
+ * Copyright (c) 1996 Onno Hovers (onno@stack.urc.tue.nl)
+ * Copyright (c) 1999 Alexandre Julliard
  */
 
 #ifndef __WINE_EXCEPT_H
 #define __WINE_EXCEPT_H
 
+#include <setjmp.h>
 #include "winnt.h"
+#include "thread.h"
 
 /*
  * the function pointer to a exception handler
@@ -18,7 +21,7 @@ struct __EXCEPTION_FRAME;
 typedef DWORD (CALLBACK *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD pexcrec,
                                       struct __EXCEPTION_FRAME  *pestframe,
                                       PCONTEXT                   pcontext,
-                                      LPVOID                     pdispatcher);
+                                      struct __EXCEPTION_FRAME **pdispatcher);
 
 /*
  * The exception frame, used for registering exception handlers 
@@ -33,22 +36,20 @@ typedef struct __EXCEPTION_FRAME
 } EXCEPTION_FRAME, *PEXCEPTION_FRAME;
 
                         
-/*
- *  this undocumented function is called when an exception
- *  handler wants all the frames to be unwound. RtlUnwind
- *  calls all exception handlers with the EH_UNWIND or
- *  EH_EXIT_UNWIND flags set in the exception record
- *
- *  This prototype assumes RtlUnwind takes the same
- *  parameters as OS/2 2.0 DosUnwindException
- *  Disassembling RtlUnwind shows this is true, except for
- *  the TargetEIP parameter, which is unused. There is 
- *  a fourth parameter, that is used as the eax in the 
- *  context.   
- */
-void WINAPI RtlUnwind( PEXCEPTION_FRAME pestframe,
-                       LPVOID unusedEIP,
-                       PEXCEPTION_RECORD pexcrec,
-                       DWORD contextEAX );
+void WINAPI RtlUnwind(PEXCEPTION_FRAME,LPVOID,PEXCEPTION_RECORD,DWORD);
+
+static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
+{
+    TEB * teb = NtCurrentTeb();
+    frame->Prev = teb->except;
+    teb->except = frame;
+    return frame;
+}
+
+static inline EXCEPTION_FRAME *EXC_pop_frame( EXCEPTION_FRAME *frame )
+{
+    NtCurrentTeb()->except = frame->Prev;
+    return frame->Prev;
+}
 
 #endif  /* __WINE_EXCEPT_H */
