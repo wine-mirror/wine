@@ -581,12 +581,16 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   HWND hwnd =  wndPtr->hwndSelf;
   XWindowAttributes win_attr;
   Window win;
+  WND *w = wndPtr;
   
   /* Only mess with the X focus if there's */
   /* no desktop window and if the window is not managed by the WM. */
-  if ((X11DRV_GetXRootWindow() != DefaultRootWindow(display))
-      || (wndPtr->flags & WIN_MANAGED)) return;
-  
+  if ((X11DRV_GetXRootWindow() != DefaultRootWindow(display))) return;
+  while (w && !((X11DRV_WND_DATA *) w->pDriverData)->window)
+      w = w->parent;
+  if (!w) w = wndPtr;
+  if (w->flags & WIN_MANAGED) return;
+
   if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
       if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
