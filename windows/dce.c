@@ -172,6 +172,8 @@ void DCE_FreeWindowDCE( HWND hwnd )
                 }
 		else if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )	/* Class DCE*/
 		{
+                    if (USER_Driver.pReleaseDC)
+                        USER_Driver.pReleaseDC( pDCE->hwndCurrent, pDCE->hDC );
                     DCE_DeleteClipRgn( pDCE );
                     pDCE->hwndCurrent = 0;
 		}
@@ -191,6 +193,8 @@ void DCE_FreeWindowDCE( HWND hwnd )
 		    DCE_ReleaseDC( pDCE );
 		}
 
+                if (pDCE->hwndCurrent && USER_Driver.pReleaseDC)
+                    USER_Driver.pReleaseDC( pDCE->hwndCurrent, pDCE->hDC );
 		pDCE->DCXflags &= DCX_CACHE;
 		pDCE->DCXflags |= DCX_DCEEMPTY;
 		pDCE->hwndCurrent = 0;
@@ -247,7 +251,8 @@ static INT DCE_ReleaseDC( DCE* dce )
 	    /* don't keep around invalidated entries
 	     * because SetDCState() disables hVisRgn updates
 	     * by removing dirty bit. */
-
+            if (dce->hwndCurrent && USER_Driver.pReleaseDC)
+                USER_Driver.pReleaseDC( dce->hwndCurrent, dce->hDC );
 	    dce->hwndCurrent = 0;
 	    dce->DCXflags &= DCX_CACHE;
 	    dce->DCXflags |= DCX_DCEEMPTY;
@@ -306,6 +311,8 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
                     /* Don't bother with visible regions of unused DCEs */
 
                     TRACE("\tpurged %p dce [%04x]\n", dce, dce->hwndCurrent);
+                    if (dce->hwndCurrent && USER_Driver.pReleaseDC)
+                        USER_Driver.pReleaseDC( dce->hwndCurrent, dce->hDC );
                     dce->hwndCurrent = 0;
                     dce->DCXflags &= DCX_CACHE;
                     dce->DCXflags |= DCX_DCEEMPTY;

@@ -531,6 +531,17 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 }
 
 
+/***********************************************************************
+ *		ReleaseDC (X11DRV.@)
+ */
+void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+{
+    POINT org;
+
+    org.x = org.y = 0;
+    X11DRV_SetDrawable( hdc, root_window, IncludeInferiors, &org, &org );
+}
+
 
 /***********************************************************************
  *           SWP_DoWinPosChanging

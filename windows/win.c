@@ -694,8 +694,8 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 	DestroyMenu( wndPtr->hSysMenu );
 	wndPtr->hSysMenu = 0;
     }
-    USER_Driver.pDestroyWindow( hwnd );
     DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
+    USER_Driver.pDestroyWindow( hwnd );
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;

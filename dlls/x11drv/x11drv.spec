@@ -77,6 +77,7 @@
 @ cdecl GetDC(long long long long) X11DRV_GetDC
 @ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
+@ cdecl ReleaseDC(long long) X11DRV_ReleaseDC
 @ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
 @ cdecl SetFocus(long) X11DRV_SetFocus

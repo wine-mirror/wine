@@ -105,6 +105,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetDC);
     GET_USER_FUNC(ForceWindowRaise);
     GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
+    GET_USER_FUNC(ReleaseDC);
     GET_USER_FUNC(ScrollDC);
     GET_USER_FUNC(ScrollWindowEx);
     GET_USER_FUNC(SetFocus);
