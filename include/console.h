@@ -53,7 +53,7 @@ typedef struct CONSOLE_DRIVER
    void (*scrollUpWindow)(char, char, char, char, char, int, int);
    void (*scrollDownWindow)(char, char, char, char, char, int, int);
 
-   /* Accellerator Functions (Keyboard) */
+   /* Accelerator Functions (Keyboard) */
    char (*getCharacter)(void);
 
    /* Other functions */

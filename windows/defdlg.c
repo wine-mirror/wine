@@ -119,7 +119,7 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
 static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
                                    HWND hwndNew )
 {
-    DWORD dlgcode;
+    DWORD dlgcode=0; /* initialize just to avoid a warning */
     if (hwndNew &&
         !((dlgcode=SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 )) 
             & (DLGC_UNDEFPUSHBUTTON | DLGC_BUTTON)))

@@ -890,6 +890,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
             case 1:
             case 0:
                 /* way too small */
+                break;
             }
         }
         break;
