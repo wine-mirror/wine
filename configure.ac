@@ -1507,6 +1507,7 @@ dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
 dlls/user/Makefile
 dlls/user/tests/Makefile
+dlls/uxtheme/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile

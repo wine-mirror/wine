@@ -167,6 +167,7 @@ WINDOWS_INCLUDES = \
 	tlhelp32.h \
 	tmschema.h \
 	uuids.h \
+	uxtheme.h \
 	ver.h \
 	vfw.h \
 	vfwmsgs.h \

@@ -1,0 +1,156 @@
+/*
+ * Win32 5.1 theme definitions
+ *
+ * Copyright (C) 2003 Kevin Koltzau
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef __WINE_UXTHEME_H
+#define __WINE_UXTHEME_H
+
+#include <commctrl.h>
+
+typedef HANDLE HTHEME;
+
+HRESULT WINAPI CloseThemeData(HTHEME hTheme);
+HRESULT WINAPI DrawThemeBackground(HTHEME,HDC,int,int,const RECT*,const RECT*);
+
+typedef struct _DTBGOPTS {
+    DWORD dwSize;
+    DWORD dwFlags;
+    RECT rcClip;
+} DTBGOPTS, *PDTBGOPTS;
+
+HRESULT WINAPI DrawThemeBackgroundEx(HTHEME,HDC,int,int,const RECT*,
+                                     const DTBGOPTS*);
+HRESULT WINAPI DrawThemeEdge(HTHEME,HDC,int,int,const RECT*,UINT,UINT,
+                             RECT*);
+HRESULT WINAPI DrawThemeIcon(HTHEME,HDC,int,int,const RECT*,HIMAGELIST,int);
+HRESULT WINAPI DrawThemeParentBackground(HWND,HDC,RECT*);
+
+#define DTT_GRAYED      0x1
+
+HRESULT WINAPI DrawThemeText(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,DWORD,
+                             const RECT*);
+
+#define ETDT_DISABLE       0x00000001
+#define ETDT_ENABLE        0x00000002
+#define ETDT_USETABTEXTURE 0x00000004
+#define ETDT_ENABLETAB     (ETDT_ENABLE|ETDT_USETABTEXTURE)
+
+HRESULT WINAPI EnableThemeDialogTexture(HWND,DWORD);
+HRESULT WINAPI EnableTheming(BOOL);
+HRESULT WINAPI GetCurrentThemeName(LPWSTR,int,LPWSTR,int,LPWSTR,int);
+
+#define STAP_ALLOW_NONCLIENT    (1<<0)
+#define STAP_ALLOW_CONTROLS     (1<<1)
+#define STAP_ALLOW_WEBCONTENT   (1<<2)
+
+DWORD WINAPI GetThemeAppProperties();
+HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME,HDC,int,int,
+                                             const RECT*,RECT*);
+HRESULT WINAPI GetThemeBackgroundExtent(HTHEME,HDC,int,int,const RECT*,RECT*);
+HRESULT WINAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
+HRESULT WINAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
+HRESULT WINAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
+
+#define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"
+#define SZ_THDOCPROP_CANONICALNAME L"ThemeName"
+#define SZ_THDOCPROP_TOOLTIP       L"ToolTip"
+#define SZ_THDOCPROP_AUTHOR        L"author"
+
+HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR,LPCWSTR,LPWSTR,int);
+HRESULT WINAPI GetThemeEnumValue(HTHEME,int,int,int,int*);
+HRESULT WINAPI GetThemeFilename(HTHEME,int,int,int,LPWSTR,int);
+HRESULT WINAPI GetThemeFont(HTHEME,HDC,int,int,int,LOGFONTW*);
+HRESULT WINAPI GetThemeInt(HTHEME,int,int,int,int*);
+
+#define MAX_INTLIST_COUNT 10
+typedef struct _INTLIST {
+    int iValueCount;
+    int iValues[MAX_INTLIST_COUNT];
+} INTLIST, *PINTLIST;
+
+HRESULT WINAPI GetThemeIntList(HTHEME,int,int,int,INTLIST*);
+
+typedef struct _MARGINS {
+    int cxLeftWidth;
+    int cxRightWidth;
+    int cyTopHeight;
+    int cyBottomHeight;
+} MARGINS, *PMARGINS;
+
+HRESULT WINAPI GetThemeMargins(HTHEME,HDC,int,int,int,RECT*,MARGINS*);
+HRESULT WINAPI GetThemeMetric(HTHEME,HDC,int,int,int,int*);
+
+typedef enum {
+    TS_MIN,
+    TS_TRUE,
+    TS_DRAW
+} THEMESIZE;
+
+HRESULT WINAPI GetThemePartSize(HTHEME,HDC,int,int,RECT*,THEMESIZE,SIZE*);
+HRESULT WINAPI GetThemePosition(HTHEME,int,int,int,POINT*);
+
+typedef enum {
+    PO_STATE,
+    PO_PART,
+    PO_CLASS,
+    PO_GLOBAL,
+    PO_NOTFOUND
+} PROPERTYORIGIN;
+
+HRESULT WINAPI GetThemePropertyOrigin(HTHEME,int,int,int,PROPERTYORIGIN*);
+HRESULT WINAPI GetThemeRect(HTHEME,int,int,int,RECT*);
+HRESULT WINAPI GetThemeString(HTHEME,int,int,int,LPWSTR,int);
+BOOL WINAPI GetThemeSysBool(HTHEME,int);
+COLORREF WINAPI GetThemeSysColor(HTHEME,int);
+HBRUSH WINAPI GetThemeSysColorBrush(HTHEME,int);
+HRESULT WINAPI GetThemeSysFont(HTHEME,int,LOGFONTW*);
+HRESULT WINAPI GetThemeSysInt(HTHEME,int,int*);
+int WINAPI GetThemeSysSize(HTHEME,int);
+HRESULT WINAPI GetThemeSysString(HTHEME,int,LPWSTR,int);
+HRESULT WINAPI GetThemeTextExtent(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,
+                                  const RECT*,RECT*);
+HRESULT WINAPI GetThemeTextMetrics(HTHEME,HDC,int,int,TEXTMETRICW*);
+HTHEME WINAPI GetWindowTheme(HWND);
+
+#define HTTB_BACKGROUNDSEG          0x0000
+#define HTTB_FIXEDBORDER            0x0002
+#define HTTB_CAPTION                0x0004
+#define HTTB_RESIZINGBORDER_LEFT    0x0010
+#define HTTB_RESIZINGBORDER_TOP     0x0020
+#define HTTB_RESIZINGBORDER_RIGHT   0x0040
+#define HTTB_RESIZINGBORDER_BOTTOM  0x0080
+#define HTTB_RESIZINGBORDER \
+    (HTTB_RESIZINGBORDER_LEFT|HTTB_RESIZINGBORDER_TOP|\
+     HTTB_RESIZINGBORDER_RIGHT|HTTB_RESIZINGBORDER_BOTTOM)
+#define HTTB_SIZINGTEMPLATE         0x0100
+#define HTTB_SYSTEMSIZINGMARGINS    0x0200
+
+HRESULT WINAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*,
+                                      HRGN,POINT,WORD*);
+BOOL WINAPI IsAppThemed();
+BOOL WINAPI IsThemeActive();
+BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME,int,int);
+BOOL WINAPI IsThemeDialogTextureEnabled();
+BOOL WINAPI IsThemePartDefined(HTHEME,int,int);
+HTHEME WINAPI OpenThemeData(HWND,LPCWSTR);
+void WINAPI SetThemeAppProperties(DWORD);
+HRESULT WINAPI SetWindowTheme(HWND,LPCWSTR,LPCWSTR);
+
+
+#endif

@@ -99,6 +99,7 @@ BASEDIRS = \
 	url \
 	urlmon \
 	user \
+	uxtheme \
 	version \
 	win32s \
 	winaspi \
@@ -290,6 +291,7 @@ SYMLINKS = \
 	url.dll$(DLLEXT) \
 	urlmon.dll$(DLLEXT) \
 	user32.dll$(DLLEXT) \
+	uxtheme.dll$(DLLEXT) \
 	version.dll$(DLLEXT) \
 	w32skrnl.dll$(DLLEXT) \
 	winealsa.drv$(DLLEXT) \
@@ -615,6 +617,9 @@ user32.dll$(DLLEXT) ddeml.dll$(DLLEXT) display.drv$(DLLEXT) \
   keyboard.drv$(DLLEXT) mouse.drv$(DLLEXT) user.exe$(DLLEXT): user/user32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) user/user32.dll$(DLLEXT) $@
 
+uxtheme.dll$(DLLEXT): uxtheme/uxtheme.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) uxtheme/uxtheme.dll$(DLLEXT) $@
+
 version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) version/version.dll$(DLLEXT) $@
 
@@ -770,6 +775,7 @@ IMPORT_LIBS = \
 	liburl \
 	liburlmon \
 	libuser32 \
+	libuxtheme \
 	libversion \
 	libw32skrnl \
 	libwinedos \
@@ -1211,6 +1217,11 @@ libuser32.def: user/user32.spec.def
 libuser32.a: user/user32.spec.def
 	$(DLLTOOL) -k -l $@ -d user/user32.spec.def
 
+libuxtheme.def: uxtheme/uxtheme.spec.def
+	$(RM) $@ && $(LN_S) uxtheme/uxtheme.spec.def $@
+libuxtheme.a: uxtheme/uxtheme.spec.def
+	$(DLLTOOL) -k -l $@ -d uxtheme/uxtheme.spec.def
+
 libversion.def: version/version.spec.def
 	$(RM) $@ && $(LN_S) version/version.spec.def $@
 libversion.a: version/version.spec.def
@@ -1371,6 +1382,7 @@ twain/twain_32.spec.def: $(WINEBUILD)
 url/url.spec.def: $(WINEBUILD)
 urlmon/urlmon.spec.def: $(WINEBUILD)
 user/user32.spec.def: $(WINEBUILD)
+uxtheme/uxtheme.spec.def: $(WINEBUILD)
 version/version.spec.def: $(WINEBUILD)
 win32s/w32skrnl.spec.def: $(WINEBUILD)
 winedos/winedos.spec.def: $(WINEBUILD)
@@ -1490,6 +1502,7 @@ twain/twain_32.dll$(DLLEXT): twain
 url/url.dll$(DLLEXT): url
 urlmon/urlmon.dll$(DLLEXT): urlmon
 user/user32.dll$(DLLEXT): user
+uxtheme/uxtheme.dll$(DLLEXT): uxtheme
 version/version.dll$(DLLEXT): version
 win32s/w32skrnl.dll$(DLLEXT): win32s
 winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
