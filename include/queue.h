@@ -8,7 +8,7 @@
 #define __WINE_QUEUE_H
 
 #include "wintypes.h"
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "thread.h"
 
 

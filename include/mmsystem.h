@@ -8,6 +8,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif 
+#include "wintypes.h"
 
 typedef LPSTR		    HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */

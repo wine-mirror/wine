@@ -7,6 +7,8 @@
 #ifndef __WINE_PATH_H
 #define __WINE_PATH_H
 
+#include "wintypes.h"
+
 /* It should not be necessary to access the contents of the GdiPath
  * structure directly; if you find that the exported functions don't
  * allow you to do what you want, then please place a new exported

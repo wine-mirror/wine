@@ -8,6 +8,7 @@
 #define __WINE_WINPOS_H
 
 #include "win.h"
+#include "wine/winuser16.h" /* for WINDOWPOS16 */
 
 #define DWP_MAGIC  ((INT32)('W' | ('P' << 8) | ('O' << 16) | ('S' << 24)))
 

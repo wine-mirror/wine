@@ -1,7 +1,7 @@
 #ifndef __WINE_DSOUND_H
 #define __WINE_DSOUND_H
 
-#include "wintypes.h"
+#include "winbase.h"     /* for CRITICAL_SECTION */
 #include "mmsystem.h"
 #include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
 

@@ -17,7 +17,6 @@
 #include "dce.h"
 #include "sysmetrics.h"
 #include "cursoricon.h"
-#include "heap.h"
 #include "hook.h"
 #include "menu.h"
 #include "message.h"

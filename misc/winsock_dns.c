@@ -41,6 +41,7 @@
 # include <resolv.h>
 #endif
 
+#include "wine/winuser16.h"
 #include "winsock.h"
 #include "heap.h"
 #include "ldt.h"

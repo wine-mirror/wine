@@ -13,11 +13,11 @@ extern "C" {
 #include "winreg.h"
 #include "winnetwk.h"
 #include "winver.h"
-#include "winreg.h"
 #include "lzexpand.h"
 #include "shellapi.h"
 #include "ole2.h"
 #include "winnls.h"
+#include "objbase.h"
 
 /* FIXME: remove the following includes which are not in SDK */
 #include "ntdll.h"

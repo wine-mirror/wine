@@ -20,6 +20,7 @@
 #include "bitmap.h"
 #include "win.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "sysmetrics.h"
 #include "task.h"
 #include "heap.h"

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "bitmap.h"
 #include "comm.h"
 #include "neexe.h"
@@ -140,7 +141,6 @@ BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvR
         NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
 #undef SET_ENTRY_POINT
     }
-
     return TRUE;
 }
 

@@ -8,7 +8,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "winbase.h"
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "win.h"
 #include "heap.h"
 #include "message.h"

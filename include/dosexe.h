@@ -8,7 +8,7 @@
 #define __WINE_DOSEXE_H
 
 #include <sys/types.h> /* pid_t */
-#include "winbase.h"
+#include "winbase.h"   /* for LPSTARTUPINFO32A */
 #include "sig_context.h"
 
 typedef struct _DOSTASK {

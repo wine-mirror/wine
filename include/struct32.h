@@ -3,6 +3,7 @@
 #define __WINE__STRUCT32_H
 
 #include "winbase.h"
+#include "wine/winuser16.h"
 #include "queue.h"
 
 extern void STRUCT32_MINMAXINFO32to16( const MINMAXINFO32*, MINMAXINFO16* );

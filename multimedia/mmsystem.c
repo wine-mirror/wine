@@ -15,13 +15,13 @@
  *        and long term pointers to 16 bit space in here
  */
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 
+#include "winbase.h"
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -30,10 +30,8 @@
 #include "ldt.h"
 #include "user.h"
 #include "driver.h"
-#include "file.h"
 #include "mmsystem.h"
 #include "multimedia.h"
-#include "xmalloc.h"
 #include "callback.h"
 #include "module.h"
 #include "selectors.h"

@@ -7,6 +7,9 @@
 #ifndef __WINE_UPDOWN_H
 #define __WINE_UPDOWN_H
 
+#include "wintypes.h"
+#include "commctrl.h"
+
 typedef struct
 {
   UINT32      AccelCount;   /* Number of elements in AccelVect */

@@ -7,7 +7,7 @@
 #ifndef __WINE_CURSORICON_H
 #define __WINE_CURSORICON_H
 
-#include "wingdi.h"
+#include "wintypes.h"
 
 #pragma pack(1)
 

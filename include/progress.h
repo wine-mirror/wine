@@ -7,6 +7,8 @@
 #ifndef __WINE_PROGRESS_H
 #define __WINE_PROGRESS_H
 
+#include "wintypes.h"
+
 typedef struct
 {
   INT32       CurVal;       /* Current progress value */
