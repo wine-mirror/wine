@@ -1113,8 +1113,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Warn if unsupported features are used */
 
-    if (dwCreationFlags & CREATE_SUSPENDED)
-        FIXME_(module)("(%s,...): CREATE_SUSPENDED ignored\n", name);
     if (dwCreationFlags & DETACHED_PROCESS)
         FIXME_(module)("(%s,...): DETACHED_PROCESS ignored\n", name);
     if (dwCreationFlags & CREATE_NEW_CONSOLE)

@@ -318,7 +318,8 @@ static void detach_thread( struct thread *thread )
 /* stop a thread (at the Unix level) */
 void stop_thread( struct thread *thread )
 {
-    if (!thread->unix_pid) return;
+    /* can't stop a thread while initialisation is in progress */
+    if (!thread->unix_pid || thread->process->init_event) return;
     /* first try to attach to it */
     if (!thread->attached)
         if (attach_thread( thread )) return;  /* this will have stopped it */

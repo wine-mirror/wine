@@ -446,9 +446,7 @@ void PROCESS_Start(void)
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
 
     /* Signal the parent process to continue */
-    SetEvent( pdb->load_done_evt );
-    CloseHandle( pdb->load_done_evt );
-    pdb->load_done_evt = INVALID_HANDLE_VALUE;
+    server_call( REQ_INIT_PROCESS_DONE );
 
     /* Perform Win32 specific process initialization */
     if ( type == PROC_WIN32 )
@@ -523,7 +521,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
-    HANDLE handles[2], load_done_evt = INVALID_HANDLE_VALUE;
+    HANDLE handles[2], load_done_evt = 0;
     DWORD exitcode, size;
     BOOL alloc_stack16;
     int server_thandle;
@@ -534,13 +532,15 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
-
+    if (!(load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL ))) goto error;
+    
     /* Create the process on the server side */
 
     req->inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
     req->inherit_all  = inherit;
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
+    req->event        = load_done_evt;
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {
         req->hstdin  = startup->hStdInput;
@@ -588,16 +588,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, 0L, size, alloc_stack16, tsa, &server_thandle ))) 
-        goto error;
+    if (!(teb = THREAD_Create( pdb, flags & CREATE_SUSPENDED, size,
+                               alloc_stack16, tsa, &server_thandle ))) goto error;
     info->hThread     = server_thandle;
     info->dwThreadId  = (DWORD)teb->tid;
     teb->startup = PROCESS_Start;
-
-    /* Create the load-done event */
-    load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
-    DuplicateHandle( GetCurrentProcess(), load_done_evt,
-                     info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
 
     /* Pass module to new process (FIXME: hack) */
     pdb->module = pModule->self;
@@ -634,12 +629,12 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     } 
 
     CloseHandle( load_done_evt );
-    load_done_evt = INVALID_HANDLE_VALUE;
+    load_done_evt = 0;
 
     return pdb;
 
 error:
-    if (load_done_evt != INVALID_HANDLE_VALUE) CloseHandle( load_done_evt );
+    if (load_done_evt) CloseHandle( load_done_evt );
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     PROCESS_FreePDB( pdb );

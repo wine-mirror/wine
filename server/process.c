@@ -70,6 +70,7 @@ static struct process *create_process( struct process *parent, struct new_proces
     process->suspend         = 0;
     process->console_in      = NULL;
     process->console_out     = NULL;
+    process->init_event      = NULL;
     process->info            = NULL;
     gettimeofday( &process->start_time, NULL );
 
@@ -86,6 +87,13 @@ static struct process *create_process( struct process *parent, struct new_proces
     memcpy( process->info, req, sizeof(*req) );
     memcpy( process->info->cmdline, cmd_line, len );
     process->info->cmdline[len] = 0;
+
+    /* get the init done event */
+    if (req->event != -1)
+    {
+        if (!(process->init_event = get_event_obj( parent, req->event, EVENT_MODIFY_STATE )))
+            goto error;
+    }
 
     /* set the process console */
     if (req->create_flags & CREATE_NEW_CONSOLE)
@@ -120,7 +128,6 @@ static struct process *create_process( struct process *parent, struct new_proces
 
  error:
     free_console( process );
-    if (process->info) free( process->info );
     if (process->handles) release_object( process->handles );
     release_object( process );
     return NULL;
@@ -139,6 +146,7 @@ struct process *create_initial_process(void)
     req.hstdin       = -1;
     req.hstdout      = -1;
     req.hstderr      = -1;
+    req.event        = -1;
     req.cmd_show     = 0;
     req.env_ptr      = NULL;
     if ((process = create_process( NULL, &req, "", 1 )))
@@ -165,6 +173,7 @@ static void process_destroy( struct object *obj )
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
     if (process->info) free( process->info );
+    if (process->init_event) release_object( process->init_event );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -367,6 +376,21 @@ DECL_HANDLER(init_process)
     req->env_ptr     = info->env_ptr;
     strcpy( req->cmdline, info->cmdline );
     free( info );
+}
+
+/* signal the end of the process initialization */
+DECL_HANDLER(init_process_done)
+{
+    struct process *process = current->process;
+    if (!process->init_event)
+    {
+        fatal_protocol_error( current, "init_process_done: no event\n" );
+        return;
+    }
+    set_event( process->init_event );
+    release_object( process->init_event );
+    process->init_event = NULL;
+    if (current->suspend + current->process->suspend > 0) stop_thread( current );
 }
 
 /* open a handle to a process */

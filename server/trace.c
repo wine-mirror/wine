@@ -52,6 +52,7 @@ static void dump_new_process_request( struct new_process_request *req )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
+    fprintf( stderr, " event=%d,", req->event );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " env_ptr=%p,", req->env_ptr );
     fprintf( stderr, " cmdline=\"%s\"", req->cmdline );
@@ -94,6 +95,11 @@ static void dump_init_process_reply( struct init_process_request *req )
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " env_ptr=%p,", req->env_ptr );
     fprintf( stderr, " cmdline=\"%s\"", req->cmdline );
+}
+
+static void dump_init_process_done_request( struct init_process_done_request *req )
+{
+    fprintf( stderr, " dummy=%d", req->dummy );
 }
 
 static void dump_init_thread_request( struct init_thread_request *req )
@@ -762,6 +768,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_request,
     (dump_func)dump_set_debug_request,
     (dump_func)dump_init_process_request,
+    (dump_func)dump_init_process_done_request,
     (dump_func)dump_init_thread_request,
     (dump_func)dump_get_thread_buffer_request,
     (dump_func)dump_terminate_process_request,
@@ -835,6 +842,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_reply,
     (dump_func)0,
     (dump_func)dump_init_process_reply,
+    (dump_func)0,
     (dump_func)dump_init_thread_reply,
     (dump_func)0,
     (dump_func)0,
@@ -908,6 +916,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_thread",
     "set_debug",
     "init_process",
+    "init_process_done",
     "init_thread",
     "get_thread_buffer",
     "terminate_process",

@@ -65,6 +65,7 @@ DECL_HANDLER(new_process);
 DECL_HANDLER(new_thread);
 DECL_HANDLER(set_debug);
 DECL_HANDLER(init_process);
+DECL_HANDLER(init_process_done);
 DECL_HANDLER(init_thread);
 DECL_HANDLER(get_thread_buffer);
 DECL_HANDLER(terminate_process);
@@ -142,6 +143,7 @@ static const struct handler {
     { (void(*)())req_new_thread, sizeof(struct new_thread_request) },
     { (void(*)())req_set_debug, sizeof(struct set_debug_request) },
     { (void(*)())req_init_process, sizeof(struct init_process_request) },
+    { (void(*)())req_init_process_done, sizeof(struct init_process_done_request) },
     { (void(*)())req_init_thread, sizeof(struct init_thread_request) },
     { (void(*)())req_get_thread_buffer, sizeof(struct get_thread_buffer_request) },
     { (void(*)())req_terminate_process, sizeof(struct terminate_process_request) },

@@ -33,6 +33,7 @@ struct new_process_request
     IN  int          hstdin;       /* handle for stdin */
     IN  int          hstdout;      /* handle for stdout */
     IN  int          hstderr;      /* handle for stderr */
+    IN  int          event;        /* event to signal startup */
     IN  int          cmd_show;     /* main window show mode */
     IN  void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     OUT void*        pid;          /* process id */
@@ -69,6 +70,13 @@ struct init_process_request
     OUT int          cmd_show;     /* main window show mode */
     OUT void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     OUT char         cmdline[1];   /* command line */
+};
+
+
+/* Signal the end of the process initialization */
+struct init_process_done_request
+{
+    IN  int          dummy;
 };
 
 
@@ -808,6 +816,7 @@ enum request
     REQ_NEW_THREAD,
     REQ_SET_DEBUG,
     REQ_INIT_PROCESS,
+    REQ_INIT_PROCESS_DONE,
     REQ_INIT_THREAD,
     REQ_GET_THREAD_BUFFER,
     REQ_TERMINATE_PROCESS,

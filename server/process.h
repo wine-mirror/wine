@@ -34,6 +34,7 @@ struct process
     int                  suspend;         /* global process suspend count */
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
+    struct event        *init_event;      /* event for init done */
     struct new_process_request *info;     /* startup info (freed after startup) */
 };
 
