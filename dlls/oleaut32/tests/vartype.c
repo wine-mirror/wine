@@ -2339,10 +2339,30 @@ static void test_VarI8FromStr(void)
 
 static void test_VarI8Copy(void)
 {
+  HRESULT hres;
+  VARIANTARG vSrc, vDst;
+  LONGLONG in = 1;
+
   if (!HAVE_OLEAUT32_I8)
     return;
 
-  COPYTEST(1, VT_I8, ((int)V_I8(&vSrc)), ((int)V_I8(&vDst)), V_I8REF(&vSrc), V_I8REF(&vDst), "%d");
+  VariantInit(&vSrc);
+  VariantInit(&vDst);
+  V_VT(&vSrc) = VT_I8;
+  V_I8(&vSrc) = in;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I8 && V_I8(&vDst) == in,
+     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_I8(&vDst) >> 32), (UINT)V_I8(&vDst) );
+  V_VT(&vSrc) = VT_I8|VT_BYREF;
+  V_I8REF(&vSrc) = &in;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == (VT_I8|VT_BYREF) && V_I8REF(&vDst) == &in,
+     "ref hres 0x%lX, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_I8REF(&vDst));
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I8 && V_I8(&vDst) == in,
+     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_I8(&vDst) >> 32), (UINT)V_I8(&vDst) );
 }
 
 static void test_VarI8ChangeTypeEx(void)
@@ -2573,11 +2593,30 @@ static void test_VarUI8FromStr(void)
 
 static void test_VarUI8Copy(void)
 {
+  HRESULT hres;
+  VARIANTARG vSrc, vDst;
+  ULONGLONG in = 1;
+
   if (!HAVE_OLEAUT32_I8)
     return;
 
-  COPYTEST(1, VT_UI8, ((unsigned)V_UI8(&vSrc)), ((unsigned)V_I8(&vDst)),
-           V_UI8REF(&vSrc), V_UI8REF(&vDst), "%u");
+  VariantInit(&vSrc);
+  VariantInit(&vDst);
+  V_VT(&vSrc) = VT_UI8;
+  V_UI8(&vSrc) = in;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
+     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
+  V_VT(&vSrc) = VT_UI8|VT_BYREF;
+  V_UI8REF(&vSrc) = &in;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == (VT_UI8|VT_BYREF) && V_UI8REF(&vDst) == &in,
+     "ref hres 0x%lX, type %d, ref (%p) %p\n", hres, V_VT(&vDst), &in, V_UI8REF(&vDst));
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == S_OK && V_VT(&vDst) == VT_UI8 && V_UI8(&vDst) == in,
+     "copy hres 0x%lX, type %d, value (%x%08x) %x%08x\n",
+     hres, V_VT(&vDst), (UINT)(in >> 32), (UINT)in, (UINT)(V_UI8(&vDst) >> 32), (UINT)V_UI8(&vDst) );
 }
 
 static void test_VarUI8ChangeTypeEx(void)
