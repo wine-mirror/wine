@@ -58,10 +58,11 @@ install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
 	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
+	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
 	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(bindir)/winegcc $(bindir)/winewrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(bindir)/winemaker $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winewrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 ### Dependencies:

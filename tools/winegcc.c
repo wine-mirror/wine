@@ -26,9 +26,17 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+static char **tmp_files;
+static int nb_tmp_files;
+static int verbose = 0;
+static int keep_generated = 0;
 
 void error(const char *s, ...)
 {
@@ -42,13 +50,114 @@ void error(const char *s, ...)
     exit(2);
 }
 
+char *strmake(const char *fmt, ...) 
+{
+    int n, size = 100;
+    char *p;
+    va_list ap;
+
+    if ((p = malloc (size)) == NULL)
+	error("Can not malloc %d bytes.", size);
+    
+    while (1) 
+    {
+        va_start(ap, fmt);
+	n = vsnprintf (p, size, fmt, ap);
+	va_end(ap);
+        if (n > -1 && n < size) return p;
+        size *= 2;
+	if ((p = realloc (p, size)) == NULL)
+	    error("Can not realloc %d bytes.", size);
+    }
+}
+
+void spawn(char *const argv[])
+{
+    int pid, status, wret, i;
+
+    if (verbose)
+    {	
+	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
+	printf("\n");
+    }
+    
+    if ((pid = fork()) == 0) execvp(argv[0], argv);
+    else if (pid > 0)
+    {
+	while (pid != (wret = waitpid(pid, &status, 0)))
+	    if (wret == -1 && errno != EINTR) break;
+	
+        if (pid == wret && WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
+        error("%s failed.", argv[0]);
+    }
+    perror("Error:");
+    exit(3);
+}
+
+int strendswith(const char *str, const char *end)
+{
+    int l = strlen(str);
+    int m = strlen(end);
+   
+    return l >= m && strcmp(str + l - m, end) == 0; 
+}
+
+void clean_temp_files()
+{
+    int i;
+    
+    if (keep_generated) return;
+
+    for (i = 0; i < nb_tmp_files; i++)
+	unlink(tmp_files[i]);
+}
+
+char *get_temp_file(const char *suffix)
+{
+    char *tmp = strmake("%s%s", tempnam(0, "wgcc"), suffix);
+
+    tmp_files = realloc( tmp_files, (nb_tmp_files+1) * sizeof(*tmp_files) );
+    tmp_files[nb_tmp_files++] = tmp;
+
+    return tmp;
+}
+
+char *get_obj_file(char **argv, int n)
+{
+    char *tmpobj, **compargv;
+    int i, j;
+
+    if (strendswith(argv[n], ".o")) return argv[n];
+    if (strendswith(argv[n], ".a")) return argv[n];
+    
+    tmpobj = get_temp_file(".o");
+    compargv = malloc(sizeof(char*) * (n + 10));
+    i = 0;
+    compargv[i++] = BINDIR "/winegcc";
+    compargv[i++] = "-c";
+    compargv[i++] = "-o";
+    compargv[i++] = tmpobj;
+    for (j = 1; j <= n; j++)
+	if (argv[j]) compargv[i++] = argv[j];
+    compargv[i] = 0;
+    
+    spawn(compargv);
+
+    return tmpobj;
+}
+
+
 int main(int argc, char **argv)
 {
     char **gcc_argv;
     int i, j;
-    int linking = 1, verbose = 0, cpp = 0, use_static_linking = 0;
+    int linking = 1, cpp = 0, use_static_linking = 0;
     int use_stdinc = 1, use_stdlib = 1, use_msvcrt = 0, gui_app = 0;
 
+    atexit(clean_temp_files);
+    
+    if (strendswith(argv[0], "++")) cpp = 1;
+    
     for ( i = 1 ; i < argc ; i++ ) 
     {
         if (argv[i][0] == '-')  /* option */
@@ -94,9 +203,6 @@ int main(int argc, char **argv)
                             use_static_linking = 1;
                     }
                     break;
-		case 'x':
-		    if (strcmp("-xc++", argv[i]) == 0) cpp = 1;
-		    break;
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         use_static_linking = 1;
@@ -125,16 +231,26 @@ int main(int argc, char **argv)
 		case 'L':
 		case 'o':
 		    gcc_argv[i++] = argv[j];
+		    argv[j] = 0;
+		    if (!gcc_argv[i-1][2] && j + 1 < argc)
+		    {
+			gcc_argv[i++] = argv[++j];
+			argv[j] = 0;
+		    }
 		    break;
 		case 'l':
 		    gcc_argv[i++] = strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"; 
+		    argv[j] = 0;
 		    break;
 		default:
 		    ; /* ignore the rest */
 		}
 	    }
 	    else
-		gcc_argv[i++] = argv[j];
+	    {
+		gcc_argv[i++] = get_obj_file(argv, j);
+		argv[j] = 0;
+	    }
 	}
 	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
 	if (gui_app) gcc_argv[i++] = "-lcomdlg32";
@@ -175,13 +291,7 @@ int main(int argc, char **argv)
 
     gcc_argv[i] = NULL;
 
-    if (verbose)
-    {
-	for (i = 0; gcc_argv[i]; i++) printf("%s ", gcc_argv[i]);
-	printf("\n");
-    }
+    spawn(gcc_argv);
 
-    execvp(gcc_argv[0], gcc_argv);
-
-    return 1;
+    return 0;
 }
