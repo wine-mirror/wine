@@ -12,7 +12,7 @@
 #include "winerror.h"
 
 #include "ddraw_private.h"
-#include "wndproc.h"
+#include "dsurface/wndproc.h"
 
 #include "debugtools.h"
 
