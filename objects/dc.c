@@ -15,7 +15,7 @@
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
-#include "metafile.h"
+#include "metafiledrv.h"
 #include "debug.h"
 #include "font.h"
 #include "winerror.h"
@@ -410,7 +410,7 @@ INT WINAPI SaveDC( HDC hdc )
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0;
-	MF_MetaParam0(dc, META_SAVEDC);
+	MFDRV_MetaParam0(dc, META_SAVEDC);
 	GDI_HEAP_UNLOCK( hdc );
 	return 1;  /* ?? */
     }
@@ -473,7 +473,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 	  GDI_HEAP_UNLOCK( hdc );
 	  return FALSE;
 	}
-	MF_MetaParam1(dc, META_RESTOREDC, level);
+	MFDRV_MetaParam1(dc, META_RESTOREDC, level);
 	GDI_HEAP_UNLOCK( hdc );
 	return TRUE;
     }
@@ -841,7 +841,7 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT textAlign )
     if (!dc)
     {
 	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
-	MF_MetaParam1( dc, META_SETTEXTALIGN, textAlign );
+	MFDRV_MetaParam1( dc, META_SETTEXTALIGN, textAlign );
 	GDI_HEAP_UNLOCK( hdc );
 	return 1;
     }

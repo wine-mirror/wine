@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include "dc.h"
-#include "metafile.h"
+#include "metafiledrv.h"
 #include "region.h"
 #include "debug.h"
 #include "wine/winuser16.h"
@@ -152,7 +152,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return ERROR;
-	MF_MetaParam2(dc, META_OFFSETCLIPRGN, x, y);
+	MFDRV_MetaParam2(dc, META_OFFSETCLIPRGN, x, y);
 	GDI_HEAP_UNLOCK( hdc );
 	return NULLREGION;   /* ?? */
     }
@@ -257,7 +257,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return ERROR;
-	MF_MetaParam4(dc, META_EXCLUDECLIPRECT, left, top, right, bottom);
+	MFDRV_MetaParam4(dc, META_EXCLUDECLIPRECT, left, top, right, bottom);
 	GDI_HEAP_UNLOCK( hdc );
 	return NULLREGION;   /* ?? */
     }
@@ -297,7 +297,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return ERROR;
-	MF_MetaParam4(dc, META_INTERSECTCLIPRECT, left, top, right, bottom);
+	MFDRV_MetaParam4(dc, META_INTERSECTCLIPRECT, left, top, right, bottom);
 	GDI_HEAP_UNLOCK( hdc );
 	return NULLREGION;   /* ?? */
     }

@@ -116,6 +116,7 @@ static DC *MFDRV_AllocMetaFile(void)
     }
 
     physDev->nextHandle = 0;
+    physDev->hFile = 0;
 
     physDev->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
     physDev->mh->mtVersion      = 0x0300;
@@ -124,13 +125,12 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev->mh->mtMaxRecord    = 0;
     physDev->mh->mtNoParameters = 0;
 
-/*    DC_InitDC( dc ); */
     return dc;
 }
 
 
 /**********************************************************************
-*	     MFDRV_DeleteDC
+ *	     MFDRV_DeleteDC
  */
 static BOOL MFDRV_DeleteDC( DC *dc )
 {
@@ -142,7 +142,6 @@ static BOOL MFDRV_DeleteDC( DC *dc )
     GDI_FreeObject(dc->hSelf);
     return TRUE;
 }
-
 
 /**********************************************************************
  *	     CreateMetaFile16   (GDI.125)
@@ -169,29 +168,30 @@ HDC16 WINAPI CreateMetaFile16(
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
-        if ((hFile = _lcreat( filename, 0 )) == HFILE_ERROR)
-        {
+        if ((hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
+				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        if (_lwrite( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR)
-	{
+        if (!WriteFile( hFile, (LPSTR)physDev->mh, sizeof(*physDev->mh), NULL,
+			NULL )) {
             MFDRV_DeleteDC( dc );
             return 0;
 	}
-	physDev->mh->mtNoParameters = hFile; /* store file descriptor here */
-	                            /* windows probably uses this too*/
+	physDev->hFile = hFile;
+
+	/* Grow METAHEADER to include filename */
+	physDev->mh = MF_CreateMetaHeaderDisk(physDev->mh, filename);
     }
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
-
+	
     TRACE(metafile, "returning %04x\n", dc->hSelf);
     return dc->hSelf;
 }
 
 /**********************************************************************
- *	     CreateMetaFile32A   (GDI32.51)
+ *	     CreateMetaFileA   (GDI32.51)
  */
 HDC WINAPI CreateMetaFileA( 
 			      LPCSTR filename /* Filename of disk metafile */
@@ -201,7 +201,7 @@ HDC WINAPI CreateMetaFileA(
 }
 
 /**********************************************************************
- *          CreateMetaFile32W   (GDI32.52)
+ *          CreateMetaFileW   (GDI32.52)
  */
 HDC WINAPI CreateMetaFileW(LPCWSTR filename)
 {
@@ -217,10 +217,13 @@ HDC WINAPI CreateMetaFileW(LPCWSTR filename)
     return hReturnDC;
 }
 
-static DC *METAFILE_CloseMetaFile( HDC hdc ) 
+
+/**********************************************************************
+ *          MFDRV_CloseMetaFile
+ */
+static DC *MFDRV_CloseMetaFile( HDC hdc ) 
 {
     DC *dc;
-    HFILE hFile;
     METAFILEDRV_PDEVICE *physDev;
     
     TRACE(metafile, "(%04x)\n", hdc );
@@ -232,7 +235,7 @@ static DC *METAFILE_CloseMetaFile( HDC hdc )
      * in SDK Knowledgebase Q99334.
      */
 
-    if (!MF_MetaParam0(dc, META_EOF))
+    if (!MFDRV_MetaParam0(dc, META_EOF))
     {
         MFDRV_DeleteDC( dc );
 	return 0;
@@ -240,20 +243,19 @@ static DC *METAFILE_CloseMetaFile( HDC hdc )
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
-        hFile = physDev->mh->mtNoParameters;
-	physDev->mh->mtNoParameters = 0;
-        if (_llseek(hFile, 0L, 0) == HFILE_ERROR)
-        {
+        if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        if (_lwrite( hFile, (LPSTR)physDev->mh,
-                       sizeof(*physDev->mh)) == HFILE_ERROR)
-        {
+
+	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
+        if (!WriteFile(physDev->hFile, (LPSTR)physDev->mh,
+                       sizeof(*physDev->mh), NULL, NULL)) {
             MFDRV_DeleteDC( dc );
             return 0;
         }
-        _lclose(hFile);
+        CloseHandle(physDev->hFile);
+	physDev->mh->mtType = METAFILE_DISK;
     }
 
     return dc;
@@ -268,22 +270,21 @@ HMETAFILE16 WINAPI CloseMetaFile16(
 {
     HMETAFILE16 hmf;
     METAFILEDRV_PDEVICE *physDev;
-    DC *dc = METAFILE_CloseMetaFile(hdc);
+    DC *dc = MFDRV_CloseMetaFile(hdc);
     if (!dc) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
 
     /* Now allocate a global handle for the metafile */
 
-    hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, physDev->mh,
-                              physDev->mh->mtSize * sizeof(WORD),
-                              GetCurrentPDB16(), FALSE, FALSE, FALSE, NULL );
+    hmf = MF_Create_HMETAFILE16( physDev->mh );
+
     physDev->mh = NULL;  /* So it won't be deleted */
     MFDRV_DeleteDC( dc );
     return hmf;
 }
 
 /******************************************************************
- *	     CloseMetaFile32   (GDI32.17)
+ *	     CloseMetaFile   (GDI32.17)
  *
  *  Stop recording graphics operations in metafile associated with
  *  hdc and retrieve metafile.
@@ -295,32 +296,191 @@ HMETAFILE WINAPI CloseMetaFile(
 				   HDC hdc /* Metafile DC to close */
 )
 {
-  return CloseMetaFile16(hdc);
+    HMETAFILE hmf;
+    METAFILEDRV_PDEVICE *physDev;
+    DC *dc = MFDRV_CloseMetaFile(hdc);
+    if (!dc) return 0;
+    physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+
+    /* Now allocate a global handle for the metafile */
+
+    hmf = MF_Create_HMETAFILE( physDev->mh );
+
+    physDev->mh = NULL;  /* So it won't be deleted */
+    MFDRV_DeleteDC( dc );
+    return hmf;
 }
 
 
 /******************************************************************
- *	     DeleteMetaFile16   (GDI.127)
- */
-BOOL16 WINAPI DeleteMetaFile16( 
-			       HMETAFILE16 hmf 
-			       /* Handle of memory metafile to delete */
-)
-{
-    return !GlobalFree16( hmf );
-}
-
-/******************************************************************
- *          DeleteMetaFile32  (GDI32.69)
+ *         MFDRV_WriteRecord
  *
- *  Delete a memory-based metafile.
+ * Warning: this function can change the pointer to the metafile header.
+ */
+BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
+{
+    DWORD len;
+    METAHEADER *mh;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+
+    switch(physDev->mh->mtType)
+    {
+    case METAFILE_MEMORY:
+	len = physDev->mh->mtSize * 2 + rlen;
+	mh = HeapReAlloc( SystemHeap, 0, physDev->mh, len );
+        if (!mh) return FALSE;
+        physDev->mh = mh;
+	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
+        break;
+    case METAFILE_DISK:
+        TRACE(metafile,"Writing record to disk\n");
+	if (!WriteFile(physDev->hFile, (char *)mr, rlen, NULL, NULL))
+	    return FALSE;
+        break;
+    default:
+        ERR(metafile, "Unknown metafile type %d\n", physDev->mh->mtType );
+        return FALSE;
+    }
+
+    physDev->mh->mtSize += rlen / 2;
+    physDev->mh->mtMaxRecord = MAX(physDev->mh->mtMaxRecord, rlen / 2);
+    return TRUE;
+}
+
+
+/******************************************************************
+ *         MFDRV_MetaParam0
  */
 
-BOOL WINAPI DeleteMetaFile(
-	      HMETAFILE hmf
-) {
-  return !GlobalFree16( hmf );
+BOOL MFDRV_MetaParam0(DC *dc, short func)
+{
+    char buffer[8];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 3;
+    mr->rdFunction = func;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
 }
+
+
+/******************************************************************
+ *         MFDRV_MetaParam1
+ */
+BOOL MFDRV_MetaParam1(DC *dc, short func, short param1)
+{
+    char buffer[8];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 4;
+    mr->rdFunction = func;
+    *(mr->rdParm) = param1;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+}
+
+
+/******************************************************************
+ *         MFDRV_MetaParam2
+ */
+BOOL MFDRV_MetaParam2(DC *dc, short func, short param1, short param2)
+{
+    char buffer[10];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 5;
+    mr->rdFunction = func;
+    *(mr->rdParm) = param2;
+    *(mr->rdParm + 1) = param1;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+}
+
+
+/******************************************************************
+ *         MFDRV_MetaParam4
+ */
+
+BOOL MFDRV_MetaParam4(DC *dc, short func, short param1, short param2, 
+		      short param3, short param4)
+{
+    char buffer[14];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 7;
+    mr->rdFunction = func;
+    *(mr->rdParm) = param4;
+    *(mr->rdParm + 1) = param3;
+    *(mr->rdParm + 2) = param2;
+    *(mr->rdParm + 3) = param1;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+}
+
+
+/******************************************************************
+ *         MFDRV_MetaParam6
+ */
+
+BOOL MFDRV_MetaParam6(DC *dc, short func, short param1, short param2, 
+		      short param3, short param4, short param5, short param6)
+{
+    char buffer[18];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 9;
+    mr->rdFunction = func;
+    *(mr->rdParm) = param6;
+    *(mr->rdParm + 1) = param5;
+    *(mr->rdParm + 2) = param4;
+    *(mr->rdParm + 3) = param3;
+    *(mr->rdParm + 4) = param2;
+    *(mr->rdParm + 5) = param1;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+}
+
+
+/******************************************************************
+ *         MFDRV_MetaParam8
+ */
+BOOL MFDRV_MetaParam8(DC *dc, short func, short param1, short param2, 
+		      short param3, short param4, short param5,
+		      short param6, short param7, short param8)
+{
+    char buffer[22];
+    METARECORD *mr = (METARECORD *)&buffer;
+    
+    mr->rdSize = 11;
+    mr->rdFunction = func;
+    *(mr->rdParm) = param8;
+    *(mr->rdParm + 1) = param7;
+    *(mr->rdParm + 2) = param6;
+    *(mr->rdParm + 3) = param5;
+    *(mr->rdParm + 4) = param4;
+    *(mr->rdParm + 5) = param3;
+    *(mr->rdParm + 6) = param2;
+    *(mr->rdParm + 7) = param1;
+    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+}
+
+
+/******************************************************************
+ *         MFDRV_AddHandleDC
+ *
+ * Note: this function assumes that we never delete objects.
+ * If we do someday, we'll need to maintain a table to re-use deleted
+ * handles.
+ */
+int MFDRV_AddHandleDC( DC *dc )
+{
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    physDev->mh->mtNoObjects++;
+    return physDev->nextHandle++;
+}
+
+
+
+
+
+
+
+
 
 /********************************************************************
 

@@ -6,7 +6,7 @@
  */
 
 #include "gdi.h"
-#include "metafile.h"
+#include "metafiledrv.h"
 
 
 #define DC_GET_VAL_16( func_type, func_name, dc_field ) \
@@ -65,7 +65,7 @@ INT16 WINAPI func_name( HDC16 hdc, INT16 mode ) \
     if (!dc) { \
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC); \
 	if (!dc) return 0; \
-	MF_MetaParam1(dc, meta_func, mode); \
+	MFDRV_MetaParam1(dc, meta_func, mode); \
 	return 1; \
     } \
     prevMode = dc->dc_field; \
@@ -82,7 +82,7 @@ INT WINAPI func_name( HDC hdc, INT mode ) \
     if (!dc) { \
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC); \
 	if (!dc) return 0; \
-	MF_MetaParam1(dc, meta_func, mode); \
+	MFDRV_MetaParam1(dc, meta_func, mode); \
 	return 1; \
     } \
     prevMode = dc->dc_field; \

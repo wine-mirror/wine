@@ -5,7 +5,6 @@
  */
 
 #include "gdi.h"
-#include "metafile.h"
 #include "metafiledrv.h"
 
 
@@ -15,7 +14,7 @@
 INT MFDRV_SetMapMode( DC *dc, INT mode )
 {
     INT prevMode = dc->w.MapMode;
-    MF_MetaParam1( dc, META_SETMAPMODE, mode );
+    MFDRV_MetaParam1( dc, META_SETMAPMODE, mode );
     return prevMode;
 }
 
@@ -25,7 +24,7 @@ INT MFDRV_SetMapMode( DC *dc, INT mode )
  */
 BOOL MFDRV_SetViewportExt( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_SETVIEWPORTEXT, x, y );
+    MFDRV_MetaParam2( dc, META_SETVIEWPORTEXT, x, y );
     return TRUE;
 }
 
@@ -35,7 +34,7 @@ BOOL MFDRV_SetViewportExt( DC *dc, INT x, INT y )
  */
 BOOL MFDRV_SetViewportOrg( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_SETVIEWPORTORG, x, y );
+    MFDRV_MetaParam2( dc, META_SETVIEWPORTORG, x, y );
     return TRUE;
 }
 
@@ -45,7 +44,7 @@ BOOL MFDRV_SetViewportOrg( DC *dc, INT x, INT y )
  */
 BOOL MFDRV_SetWindowExt( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_SETWINDOWEXT, x, y );
+    MFDRV_MetaParam2( dc, META_SETWINDOWEXT, x, y );
     return TRUE;
 }
 
@@ -55,7 +54,7 @@ BOOL MFDRV_SetWindowExt( DC *dc, INT x, INT y )
  */
 BOOL MFDRV_SetWindowOrg( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_SETWINDOWORG, x, y );
+    MFDRV_MetaParam2( dc, META_SETWINDOWORG, x, y );
     return TRUE;
 }
 
@@ -65,7 +64,7 @@ BOOL MFDRV_SetWindowOrg( DC *dc, INT x, INT y )
  */
 BOOL MFDRV_OffsetViewportOrg( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_OFFSETVIEWPORTORG, x, y );
+    MFDRV_MetaParam2( dc, META_OFFSETVIEWPORTORG, x, y );
     return TRUE;
 }
 
@@ -75,7 +74,7 @@ BOOL MFDRV_OffsetViewportOrg( DC *dc, INT x, INT y )
  */
 BOOL MFDRV_OffsetWindowOrg( DC *dc, INT x, INT y )
 {
-    MF_MetaParam2( dc, META_OFFSETWINDOWORG, x, y );
+    MFDRV_MetaParam2( dc, META_OFFSETWINDOWORG, x, y );
     return TRUE;
 }
 
@@ -86,7 +85,7 @@ BOOL MFDRV_OffsetWindowOrg( DC *dc, INT x, INT y )
 BOOL MFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom,
                                INT yNum, INT yDenom )
 {
-    MF_MetaParam4( dc, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom );
+    MFDRV_MetaParam4( dc, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom );
     return TRUE;
 }
 
@@ -97,6 +96,7 @@ BOOL MFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom,
 BOOL MFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom,
                              INT yNum, INT yDenom )
 {
-    MF_MetaParam4( dc, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
+    MFDRV_MetaParam4( dc, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
     return TRUE;
 }
+

@@ -6,22 +6,46 @@
  *
  */
 
+/*
+ * These functions are primarily involved with metafile playback or anything
+ * that touches a HMETAFILE.
+ * For recording of metafiles look in graphics/metafiledrv/
+ *
+ * Note that (32 bit) HMETAFILEs are GDI objects, while HMETAFILE16s are 
+ * global memory handles so these cannot be interchanged.
+ *
+ * Memory-based metafiles are just stored as a continuous block of memory with
+ * a METAHEADER at the head with METARECORDs appended to it.  mtType is
+ * METAFILE_MEMORY (1).  Note this is indentical to the disk image of a
+ * disk-based metafile - even mtType is METAFILE_MEMORY.
+ * 16bit HMETAFILE16s are global handles to this block
+ * 32bit HMETAFILEs are GDI handles METAFILEOBJs, which contains a ptr to
+ * the memory.
+ * Disk-based metafiles are rather different. HMETAFILE16s point to a
+ * METAHEADER which has mtType equal to METAFILE_DISK (2).  Following the 9
+ * WORDs of the METAHEADER there are a further 3 WORDs of 0, 1 of 0x117, 1
+ * more 0, then 2 which may be a time stamp of the file and then the path of
+ * the file (METAHEADERDISK). I've copied this for 16bit compatibility.
+ *
+ * HDMD - 14/4/1999
+ */  
+
+
 #include <string.h>
 #include <fcntl.h>
 #include "wine/winbase16.h"
-#include "metafiledrv.h"
 #include "metafile.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "toolhelp.h"
 #include "debug.h"
+#include "global.h"
 
 /******************************************************************
  *         MF_AddHandle
  *
  *    Add a handle to an external handle table and return the index
  */
-
 static int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HGDIOBJ16 hobj)
 {
     int i;
@@ -39,129 +63,307 @@ static int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HGDIOBJ16 hobj)
 
 
 /******************************************************************
- *         MF_AddHandleDC
+ *         MF_Create_HMETATFILE
  *
- * Note: this function assumes that we never delete objects.
- * If we do someday, we'll need to maintain a table to re-use deleted
- * handles.
+ * Creates a (32 bit) HMETAFILE object from a METAHEADER
+ *
+ * HMETAFILEs are GDI objects.
  */
-static int MF_AddHandleDC( DC *dc )
+HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
-    physDev->mh->mtNoObjects++;
-    return physDev->nextHandle++;
+    HMETAFILE hmf = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC );
+    METAFILEOBJ *metaObj = (METAFILEOBJ *)GDI_HEAP_LOCK( hmf );
+    metaObj->mh = mh;
+    GDI_HEAP_UNLOCK( hmf );
+    return hmf;
 }
 
+/******************************************************************
+ *         MF_Create_HMETATFILE16
+ *
+ * Creates a HMETAFILE16 object from a METAHEADER
+ *
+ * HMETAFILE16s are Global memory handles.
+ */
+HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
+{
+    HMETAFILE16 hmf;
+    DWORD size;
+
+    if(mh->mtType == METAFILE_MEMORY)
+        size = mh->mtSize * sizeof(WORD);
+    else
+        size = sizeof(METAHEADER) + sizeof(METAHEADERDISK);
+
+    hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, mh, mh->mtSize * sizeof(WORD),
+                              GetCurrentPDB16(), FALSE, FALSE, FALSE, NULL );
+    return hmf;
+}
+
+/******************************************************************
+ *         MF_GetMetaHeader
+ *
+ * Returns ptr to METAHEADER associated with HMETAFILE
+ * Should be followed by call to MF_ReleaseMetaHeader
+ */
+static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
+{
+    METAFILEOBJ *metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    return metaObj->mh;
+}
+
+/******************************************************************
+ *         MF_GetMetaHeader16
+ *
+ * Returns ptr to METAHEADER associated with HMETAFILE16
+ * Should be followed by call to MF_ReleaseMetaHeader16
+ */
+static METAHEADER *MF_GetMetaHeader16( HMETAFILE16 hmf )
+{
+    return GlobalLock16(hmf);
+}
+
+/******************************************************************
+ *         MF_ReleaseMetaHeader
+ *
+ * Releases METAHEADER associated with HMETAFILE
+ */
+static BOOL MF_ReleaseMetaHeader( HMETAFILE hmf )
+{
+    return GDI_HEAP_UNLOCK( hmf );
+}
+
+/******************************************************************
+ *         MF_ReleaseMetaHeader16
+ *
+ * Releases METAHEADER associated with HMETAFILE16
+ */
+static BOOL16 MF_ReleaseMetaHeader16( HMETAFILE16 hmf )
+{
+    return GlobalUnlock16( hmf );
+}
+
+
+/******************************************************************
+ *	     DeleteMetaFile16   (GDI.127)
+ */
+BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
+{
+    return !GlobalFree16( hmf );
+}
+
+/******************************************************************
+ *          DeleteMetaFile  (GDI32.69)
+ *
+ *  Delete a memory-based metafile.
+ */
+
+BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
+{
+    METAHEADER *mh = MF_GetMetaHeader( hmf );
+
+    if(!mh) return FALSE;
+    HeapFree( SystemHeap, 0, mh );
+    GDI_FreeObject( hmf );
+    return TRUE;
+}
+
+/******************************************************************
+ *         MF_ReadMetaFile
+ *
+ * Returns a pointer to a memory based METAHEADER read in from file HFILE
+ *
+ */
+static METAHEADER *MF_ReadMetaFile(HFILE hfile)
+{
+    METAHEADER *mh;
+    DWORD BytesRead, size;
+
+    size = sizeof(METAHEADER);
+    mh = HeapAlloc( SystemHeap, 0, size );
+    if(!mh) return NULL;
+    if(ReadFile( hfile, mh, size, &BytesRead, NULL) == 0 ||
+       BytesRead != size) {
+        HeapFree( SystemHeap, 0, mh );
+	return NULL;
+    }
+    size = mh->mtSize * 2;
+    mh = HeapReAlloc( SystemHeap, 0, mh, size );
+    if(!mh) return NULL;
+    size -= sizeof(METAHEADER);
+    if(ReadFile( hfile, (char *)mh + sizeof(METAHEADER), size, &BytesRead,
+		 NULL) == 0 ||
+       BytesRead != size) {
+        HeapFree( SystemHeap, 0, mh );
+	return NULL;
+    }
+
+    if (mh->mtType != METAFILE_MEMORY) {
+        WARN(metafile, "Disk metafile had mtType = %04x\n", mh->mtType);
+	mh->mtType = METAFILE_MEMORY;
+    }
+    return mh;
+}
 
 /******************************************************************
  *         GetMetaFile16   (GDI.124)
  */
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
-    return GetMetaFileA( lpFilename );
+    METAHEADER *mh;
+    HFILE hFile;
+ 
+    TRACE(metafile,"%s\n", lpFilename);
+
+    if(!lpFilename)
+        return 0;
+
+    if((hFile = CreateFileA(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+			    0, -1)) == HFILE_ERROR)
+        return 0;
+
+    mh = MF_ReadMetaFile(hFile);
+    CloseHandle(hFile);
+    if(!mh) return 0;
+    return MF_Create_HMETAFILE16( mh );
 }
 
-
 /******************************************************************
- *         GetMetaFile32A   (GDI32.197)
+ *         GetMetaFileA   (GDI32.197)
  *
- *  Read a metafile from a file. Returns handle to a disk-based metafile.
+ *  Read a metafile from a file. Returns handle to a memory-based metafile.
  */
-HMETAFILE WINAPI GetMetaFileA( 
-				  LPCSTR lpFilename 
-		      /* pointer to string containing filename to read */
-)
+HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
 {
-  HMETAFILE16 hmf;
-  METAHEADER *mh;
-  HFILE hFile;
-  DWORD size;
-  
-  TRACE(metafile,"%s\n", lpFilename);
+    METAHEADER *mh;
+    HFILE hFile;
+ 
+    TRACE(metafile,"%s\n", lpFilename);
 
-  if (!lpFilename)
-    return 0;
+    if(!lpFilename)
+        return 0;
 
-  hmf = GlobalAlloc16(GMEM_MOVEABLE, MFHEADERSIZE);
-  mh = (METAHEADER *)GlobalLock16(hmf);
-  
-  if (!mh)
-  {
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  if ((hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR)
-  {
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  if (_lread(hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR)
-  {
-    _lclose( hFile );
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  size = mh->mtSize * 2;         /* alloc memory for whole metafile */
-  GlobalUnlock16(hmf);
-  hmf = GlobalReAlloc16(hmf,size,GMEM_MOVEABLE);
-  mh = (METAHEADER *)GlobalLock16(hmf);
-  
-  if (!mh)
-  {
-    _lclose( hFile );
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  if (_lread(hFile, (char*)mh + mh->mtHeaderSize * 2, 
-	        size - mh->mtHeaderSize * 2) == HFILE_ERROR)
-  {
-    _lclose( hFile );
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  _lclose(hFile);
+    if((hFile = CreateFileA(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+			    0, -1)) == HFILE_ERROR)
+        return 0;
 
-  if (mh->mtType != 1)
-  {
-    GlobalFree16(hmf);
-    return 0;
-  }
-  
-  GlobalUnlock16(hmf);
-  return hmf;
-
+    mh = MF_ReadMetaFile(hFile);
+    CloseHandle(hFile);
+    if(!mh) return 0;
+    return MF_Create_HMETAFILE( mh );
 }
 
 
+
 /******************************************************************
- *         GetMetaFile32W   (GDI32.199)
+ *         GetMetaFileW   (GDI32.199)
  */
 HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 {
-    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
-    HMETAFILE ret = GetMetaFileA( p );
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
+    METAHEADER *mh;
+    HFILE hFile;
+ 
+    TRACE(metafile,"%s\n", debugstr_w(lpFilename));
+
+    if(!lpFilename)
+        return 0;
+
+    if((hFile = CreateFileW(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+			    0, -1)) == HFILE_ERROR)
+        return 0;
+
+    mh = MF_ReadMetaFile(hFile);
+    CloseHandle(hFile);
+    if(!mh) return 0;
+    return MF_Create_HMETAFILE( mh );
 }
 
+
+/******************************************************************
+ *         MF_LoadDiskBasedMetaFile
+ *
+ * Creates a new memory-based metafile from a disk-based one.
+ */
+static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
+{
+    METAHEADERDISK *mhd;
+    HFILE hfile;
+    METAHEADER *mh2;
+
+    if(mh->mtType != METAFILE_DISK) {
+        ERR(metafile, "Not a disk based metafile\n");
+	return NULL;
+    }
+    mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
+
+    if((hfile = CreateFileA(mhd->filename, GENERIC_READ, 0, NULL,
+			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR) {
+        WARN(metafile, "Can't open file of disk based metafile\n");
+        return NULL;
+    }
+    mh2 = MF_ReadMetaFile(hfile);
+    CloseHandle(hfile);
+    return mh2;
+}
+
+/******************************************************************
+ *         MF_CreateMetaHeaderDisk
+ *
+ * Take a memory based METAHEADER and change it to a disk based METAHEADER
+ * assosiated with filename.  Note: Trashes contents of old one. 
+ */
+METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCSTR filename)
+{
+    METAHEADERDISK *mhd;
+    DWORD size;
+
+    mh = HeapReAlloc( SystemHeap, 0, mh,
+		      sizeof(METAHEADER) + sizeof(METAHEADERDISK));
+    mh->mtType = METAFILE_DISK;
+    size = HeapSize( SystemHeap, 0, mh );
+    mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
+    strcpy(mhd->filename, filename);
+    return mh;
+}
 
 /******************************************************************
  *         CopyMetaFile16   (GDI.151)
  */
-
-HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
+HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 {
-    return CopyMetaFileA( hSrcMetaFile, lpFilename );
+    METAHEADER *mh = MF_GetMetaHeader16( hSrcMetaFile );
+    METAHEADER *mh2 = NULL;
+    HFILE hFile;
+
+    TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
+    
+    if(!mh) return 0;
+    
+    if(mh->mtType == METAFILE_DISK)
+        mh2 = MF_LoadDiskBasedMetaFile(mh);
+    else {
+        mh2 = HeapAlloc( SystemHeap, 0, mh->mtSize * 2 );
+        memcpy( mh2, mh, mh->mtSize * 2 );
+    }
+    MF_ReleaseMetaHeader16( hSrcMetaFile );
+
+    if(lpFilename) {         /* disk based metafile */
+        if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
+				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+	    HeapFree( SystemHeap, 0, mh2 );
+	    return 0;
+	}
+	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
+	CloseHandle(hFile);
+	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename);
+    }
+
+    return MF_Create_HMETAFILE16( mh2 );
 }
 
 
 /******************************************************************
- *         CopyMetaFile32A   (GDI32.23)
+ *         CopyMetaFileA   (GDI32.23)
  *
  *  Copies the metafile corresponding to hSrcMetaFile to either
  *  a disk file, if a filename is given, or to a new memory based
@@ -179,46 +381,39 @@ HMETAFILE WINAPI CopyMetaFileA(
 		   HMETAFILE hSrcMetaFile, /* handle of metafile to copy */
 		   LPCSTR lpFilename /* filename if copying to a file */
 ) {
-    HMETAFILE16 handle = 0;
-    METAHEADER *mh;
-    METAHEADER *mh2;
+    METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
+    METAHEADER *mh2 = NULL;
     HFILE hFile;
-    
+
     TRACE(metafile,"(%08x,%s)\n", hSrcMetaFile, lpFilename);
     
-    mh = (METAHEADER *)GlobalLock16(hSrcMetaFile);
+    if(!mh) return 0;
     
-    if (!mh)
-      return 0;
-    
-    if (lpFilename)          /* disk based metafile */
-        {
-        int i,j;
-	hFile = _lcreat(lpFilename, 0);
-	j=mh->mtType;
-	mh->mtType=1;        /* disk file version stores 1 here */
-	i=_lwrite(hFile, (char *)mh, mh->mtSize * 2) ;
-	mh->mtType=j;        /* restore old value  [0 or 1] */	
-        _lclose(hFile);
-	if (i == -1)
-	    return 0;
-        /* FIXME: return value */
-        }
-    else                     /* memory based metafile */
-        {
-	handle = GlobalAlloc16(GMEM_MOVEABLE,mh->mtSize * 2);
-	mh2 = (METAHEADER *)GlobalLock16(handle);
-	memcpy(mh2,mh, mh->mtSize * 2);
-	GlobalUnlock16(handle);
-        }
+    if(mh->mtType == METAFILE_DISK)
+        mh2 = MF_LoadDiskBasedMetaFile(mh);
+    else {
+        mh2 = HeapAlloc( SystemHeap, 0, mh->mtSize * 2 );
+        memcpy( mh2, mh, mh->mtSize * 2 );
+    }
+    MF_ReleaseMetaHeader( hSrcMetaFile );
 
-    GlobalUnlock16(hSrcMetaFile);
-    return handle;
+    if(lpFilename) {         /* disk based metafile */
+        if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
+				CREATE_ALWAYS, 0, -1)) == HFILE_ERROR) {
+	    HeapFree( SystemHeap, 0, mh2 );
+	    return 0;
+	}
+	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
+	CloseHandle(hFile);
+	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename);
+    }
+
+    return MF_Create_HMETAFILE( mh2 );
 }
 
 
 /******************************************************************
- *         CopyMetaFile32W   (GDI32.24)
+ *         CopyMetaFileW   (GDI32.24)
  */
 HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
                                     LPCWSTR lpFilename )
@@ -244,56 +439,46 @@ HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
  *  This is not exactly what windows does, see _Undocumented_Windows_
  *  for details.
  */
-
 BOOL16 WINAPI IsValidMetaFile16(HMETAFILE16 hmf)
 {
-    BOOL16 resu=FALSE;
-    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
+    BOOL16 res=FALSE;
+    METAHEADER *mh = MF_GetMetaHeader16(hmf);
     if (mh) {
-      if (mh->mtType == 1 || mh->mtType == 0) 
-        if (mh->mtHeaderSize == MFHEADERSIZE/sizeof(INT16))
-          if (mh->mtVersion == MFVERSION)
-            resu=TRUE;
-      GlobalUnlock16(hmf);
+        if (mh->mtType == METAFILE_MEMORY || mh->mtType == METAFILE_DISK) 
+	    if (mh->mtHeaderSize == MFHEADERSIZE/sizeof(INT16))
+	        if (mh->mtVersion == MFVERSION)
+		    res=TRUE;
+	MF_ReleaseMetaHeader16(hmf);
     }
-    TRACE(metafile,"IsValidMetaFile %x => %d\n",hmf,resu);
-    return resu;         
+    TRACE(metafile,"IsValidMetaFile %x => %d\n",hmf,res);
+    return res;         
 }
 
 
-/******************************************************************
- *         PlayMetaFile16   (GDI.123)
+/*******************************************************************
+ *         MF_PlayMetaFile
  *
+ * Helper for PlayMetaFile
  */
-BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
+static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 {
-    return PlayMetaFile( hdc, hmf );
-}
 
-/******************************************************************
- *         PlayMetaFile32   (GDI32.265)
- *
- *  Renders the metafile specified by hmf in the DC specified by
- *  hdc. Returns FALSE on failure, TRUE on success.
- */
-BOOL WINAPI PlayMetaFile( 
-			     HDC hdc, /* handle of DC to render in */
-			     HMETAFILE hmf /* handle of metafile to render */
-)
-{
-    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
     HANDLETABLE16 *ht;
-    HGLOBAL16 hHT;
     int offset = 0;
     WORD i;
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
     DC *dc;
-    
-    TRACE(metafile,"(%04x %04x)\n",hdc,hmf);
+    BOOL loaded = FALSE;
+
     if (!mh) return FALSE;
+    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+        mh = MF_LoadDiskBasedMetaFile(mh);
+	if(!mh) return FALSE;
+	loaded = TRUE;
+    }
 
     /* save the current pen, brush and font */
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
@@ -302,10 +487,9 @@ BOOL WINAPI PlayMetaFile(
     hFont = dc->w.hFont;
     GDI_HEAP_UNLOCK(hdc);
     /* create the handle table */
-    hHT = GlobalAlloc16(GMEM_MOVEABLE|GMEM_ZEROINIT,
-		      sizeof(HANDLETABLE16) * mh->mtNoObjects);
-    ht = (HANDLETABLE16 *)GlobalLock16(hHT);
-
+    ht = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
+		    sizeof(HANDLETABLE16) * mh->mtNoObjects);
+    if(!ht) return FALSE;
     
     /* loop through metafile playing records */
     offset = mh->mtHeaderSize * 2;
@@ -315,8 +499,9 @@ BOOL WINAPI PlayMetaFile(
 	TRACE(metafile,"offset=%04x,size=%08lx\n",
             offset, mr->rdSize);
 	if (!mr->rdSize) {
-            TRACE(metafile,"Entry got size 0 at offset %d, total mf length is %ld\n",
-                offset,mh->mtSize*2);
+            TRACE(metafile,
+		  "Entry got size 0 at offset %d, total mf length is %ld\n",
+		  offset,mh->mtSize*2);
 		break; /* would loop endlessly otherwise */
 	}
 	offset += mr->rdSize * 2;
@@ -333,34 +518,52 @@ BOOL WINAPI PlayMetaFile(
         DeleteObject(*(ht->objectHandle + i));
     
     /* free handle table */
-    GlobalFree16(hHT);
-
+    HeapFree( SystemHeap, 0, ht );
+    if(loaded)
+        HeapFree( SystemHeap, 0, mh );
     return TRUE;
+}
+
+/******************************************************************
+ *         PlayMetaFile16   (GDI.123)
+ *
+ */
+BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
+{
+    BOOL16 ret;
+    METAHEADER *mh = MF_GetMetaHeader16( hmf );
+    ret = MF_PlayMetaFile( hdc, mh );
+    MF_ReleaseMetaHeader16( hmf );
+    return ret;
+}
+
+/******************************************************************
+ *         PlayMetaFile   (GDI32.265)
+ *
+ *  Renders the metafile specified by hmf in the DC specified by
+ *  hdc. Returns FALSE on failure, TRUE on success.
+ */
+BOOL WINAPI PlayMetaFile( 
+			     HDC hdc, /* handle of DC to render in */
+			     HMETAFILE hmf /* handle of metafile to render */
+)
+{
+    BOOL ret;
+    METAHEADER *mh = MF_GetMetaHeader( hmf );
+    ret = MF_PlayMetaFile( hdc, mh );
+    MF_ReleaseMetaHeader( hmf );
+    return ret;
 }
 
 
 /******************************************************************
  *            EnumMetaFile16   (GDI.175)
  *
- *  Loop through the metafile records in hmf, calling the user-specified
- *  function for each one, stopping when the user's function returns FALSE
- *  (which is considered to be failure)
- *  or when no records are left (which is considered to be success). 
- *
- * RETURNS
- *  TRUE on success, FALSE on failure.
- * 
- * HISTORY
- *   Niels de carpentier, april 1996
  */
-BOOL16 WINAPI EnumMetaFile16( 
-			     HDC16 hdc, 
-			     HMETAFILE16 hmf,
-			     MFENUMPROC16 lpEnumFunc, 
-			     LPARAM lpData 
-)
+BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
+			      MFENUMPROC16 lpEnumFunc, LPARAM lpData )
 {
-    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
+    METAHEADER *mh = MF_GetMetaHeader16(hmf);
     METARECORD *mr;
     HANDLETABLE16 *ht;
     HGLOBAL16 hHT;
@@ -371,10 +574,18 @@ BOOL16 WINAPI EnumMetaFile16(
     HBRUSH hBrush;
     HFONT hFont;
     DC *dc;
-    BOOL16 result = TRUE;
-    
+    BOOL16 result = TRUE, loaded = FALSE;
+
     TRACE(metafile,"(%04x, %04x, %08lx, %08lx)\n",
 		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
+
+
+    if(!mh) return FALSE;
+    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+        mh = MF_LoadDiskBasedMetaFile(mh);
+	if(!mh) return FALSE;
+	loaded = TRUE;
+    }
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     hPen = dc->w.hPen;
@@ -421,20 +632,36 @@ BOOL16 WINAPI EnumMetaFile16(
 
     /* free handle table */
     GlobalFree16(hHT);
-    GlobalUnlock16(hmf);
+    if(loaded)
+        HeapFree( SystemHeap, 0, mh );
+    MF_ReleaseMetaHeader16(hmf);
     return result;
 }
 
+/******************************************************************
+ *            EnumMetaFile   (GDI32.88)
+ *
+ *  Loop through the metafile records in hmf, calling the user-specified
+ *  function for each one, stopping when the user's function returns FALSE
+ *  (which is considered to be failure)
+ *  or when no records are left (which is considered to be success). 
+ *
+ * RETURNS
+ *  TRUE on success, FALSE on failure.
+ * 
+ * HISTORY
+ *   Niels de carpentier, april 1996
+ */
 BOOL WINAPI EnumMetaFile( 
 			     HDC hdc, 
 			     HMETAFILE hmf,
 			     MFENUMPROC lpEnumFunc, 
 			     LPARAM lpData 
 ) {
-    METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
+    METAHEADER *mh = MF_GetMetaHeader(hmf);
     METARECORD *mr;
     HANDLETABLE *ht;
-    BOOL result = TRUE;
+    BOOL result = TRUE, loaded = FALSE;
     int i, offset = 0;
     DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     HPEN hPen;
@@ -444,7 +671,12 @@ BOOL WINAPI EnumMetaFile(
     TRACE(metafile,"(%08x,%08x,%p,%p)\n",
 		     hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
-
+    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+        mh = MF_LoadDiskBasedMetaFile(mh);
+	if(!mh) return 0;
+	loaded = TRUE;
+    }
+    
     /* save the current pen, brush and font */
     if (!dc) return 0;
     hPen = dc->w.hPen;
@@ -453,9 +685,9 @@ BOOL WINAPI EnumMetaFile(
     GDI_HEAP_UNLOCK(hdc);
 
 
-    ht = (HANDLETABLE *) GlobalAlloc(GPTR, 
+    ht = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, 
 			    sizeof(HANDLETABLE) * mh->mtNoObjects);
-    
+
     /* loop through metafile records */
     offset = mh->mtHeaderSize * 2;
     
@@ -482,12 +714,14 @@ BOOL WINAPI EnumMetaFile(
         DeleteObject(*(ht->objectHandle + i));
 
     /* free handle table */
-    GlobalFree((HGLOBAL)ht);
-    GlobalUnlock16(hmf);
+    HeapFree( SystemHeap, 0, ht);
+    if(loaded)
+        HeapFree( SystemHeap, 0, mh );
+    MF_ReleaseMetaHeader(hmf);
     return result;
 }
 
-static BOOL MF_Meta_CreateRegion( METARECORD *mr, HRGN hrgn );
+static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn );
 
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
@@ -742,7 +976,6 @@ void WINAPI PlayMetaFileRecord16(
 		     CreateBrushIndirect16((LOGBRUSH16 *)(&(mr->rdParm))));
 	break;
 
-    /* W. Magro: Some new metafile operations.  Not all debugged. */
     case META_CREATEPALETTE:
 	MF_AddHandle(ht, nHandles, 
 		     CreatePalette16((LPLOGPALETTE)mr->rdParm));
@@ -753,7 +986,8 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_SELECTPALETTE:
-	SelectPalette16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),*(mr->rdParm));
+	SelectPalette16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
+			*(mr->rdParm));
 	break;
 
     case META_SETMAPPERFLAGS:
@@ -768,7 +1002,6 @@ void WINAPI PlayMetaFileRecord16(
 	FIXME(metafile, "META_ESCAPE unimplemented.\n");
         break;
 
-        /* --- Begin of fixed or new metafile operations. July 1996 ----*/
     case META_EXTTEXTOUT:
       {
         LPINT16 dxx;
@@ -849,7 +1082,7 @@ void WINAPI PlayMetaFileRecord16(
       }
       break;
 
-    case META_BITBLT:            /* <-- not yet debugged */
+    case META_BITBLT:
       {
        HDC16 hdcSrc=CreateCompatibleDC16(hdc);
        HBITMAP hbitmap=CreateBitmap(mr->rdParm[7]/*Width */,
@@ -866,34 +1099,33 @@ void WINAPI PlayMetaFileRecord16(
       }
       break;
 
-       /* --- Begin of new metafile operations. April, 1997 (ak) ----*/
     case META_CREATEREGION:
       {
 	HRGN hrgn = CreateRectRgn(0,0,0,0);
  
-	MF_Meta_CreateRegion(mr, hrgn);
+	MF_Play_MetaCreateRegion(mr, hrgn);
 	MF_AddHandle(ht, nHandles, hrgn);
       }
       break;
 
-     case META_FILLREGION:
+    case META_FILLREGION:
         FillRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)),
 		       *(ht->objectHandle + *(mr->rdParm+1)));
         break;
 
-     case META_INVERTREGION:
+    case META_INVERTREGION:
         InvertRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
         break; 
 
-     case META_PAINTREGION:
+    case META_PAINTREGION:
         PaintRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
         break;
 
-     case META_SELECTCLIPREGION:
+    case META_SELECTCLIPREGION:
        	SelectClipRgn(hdc, *(ht->objectHandle + *(mr->rdParm)));
 	break;
 
-     case META_DIBCREATEPATTERNBRUSH:
+    case META_DIBCREATEPATTERNBRUSH:
 	/*  *(mr->rdParm) may be BS_PATTERN or BS_DIBPATTERN: but there's no difference */
         TRACE(metafile,"%d\n",*(mr->rdParm));
 	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
@@ -934,12 +1166,12 @@ void WINAPI PlayMetaFileRecord16(
         }
         break;	
        
-     case META_SETTEXTCHAREXTRA:
-	    SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParm));
-	    break;
+    case META_SETTEXTCHAREXTRA:
+        SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParm));
+	break;
 
-     case META_SETTEXTJUSTIFICATION:
-       	SetTextJustification(hdc, *(mr->rdParm + 1), *(mr->rdParm));
+    case META_SETTEXTJUSTIFICATION:
+        SetTextJustification(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
     case META_EXTFLOODFILL:
@@ -971,25 +1203,24 @@ void WINAPI PlayMetaFileRecord16(
     }
 }
 
-
-BOOL WINAPI PlayMetaFileRecord( 
-     HDC hdc, 
-     HANDLETABLE *handletable, 
-     METARECORD *metarecord, 
-     UINT handles  
-    )
+/******************************************************************
+ *         PlayMetaFileRecord   (GDI32.266)
+ */
+BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable, 
+				METARECORD *metarecord, UINT handles )
 {
-  HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
-                               handles*sizeof(HANDLETABLE16));
-  int i = 0;
-  TRACE(metafile, "(%08x,%p,%p,%d)\n", hdc, handletable, metarecord, handles); 
-  for (i=0; i<handles; i++)  
-    ht->objectHandle[i] =  handletable->objectHandle[i];
-  PlayMetaFileRecord16(hdc, ht, metarecord, handles);
-  for (i=0; i<handles; i++) 
-    handletable->objectHandle[i] = ht->objectHandle[i];
-  GlobalFree((HGLOBAL)ht);
-  return TRUE;
+    HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
+					     handles*sizeof(HANDLETABLE16));
+    int i = 0;
+    TRACE(metafile, "(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
+	  handles); 
+    for (i=0; i<handles; i++)  
+        ht->objectHandle[i] =  handletable->objectHandle[i];
+    PlayMetaFileRecord16(hdc, ht, metarecord, handles);
+    for (i=0; i<handles; i++) 
+        handletable->objectHandle[i] = ht->objectHandle[i];
+    GlobalFree((HGLOBAL)ht);
+    return TRUE;
 }
 
 /******************************************************************
@@ -1054,13 +1285,10 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
      const BYTE *lpData /* pointer to metafile data */  
     )
 {
-  HMETAFILE hmf = GlobalAlloc16(GHND, size);
-  BYTE *p = GlobalLock16(hmf) ;
-  TRACE(metafile, "(%d,%p) returning %08x\n", size, lpData, hmf);
-  if (!hmf || !p) return 0;
-  memcpy(p, lpData, size);
-  GlobalUnlock16(hmf);
-  return hmf;
+    METAHEADER *mh = HeapAlloc( SystemHeap, 0, size );
+    if (!mh) return 0;
+    memcpy(mh, lpData, size);
+    return MF_Create_HMETAFILE(mh);
 }
 
 /*****************************************************************
@@ -1075,21 +1303,23 @@ UINT WINAPI GetMetaFileBitsEx(
      UINT nSize, /* size of buf */ 
      LPVOID buf   /* buffer to receive raw metafile data */  
 ) {
-  METAHEADER *h = GlobalLock16(hmf);
-  UINT mfSize;
+    METAHEADER *mh = MF_GetMetaHeader(hmf);
+    UINT mfSize;
 
-  TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
-  if (!h) return 0;  /* FIXME: error code */
-  mfSize = h->mtSize * 2;
-  if (!buf) {
-    GlobalUnlock16(hmf);
-    TRACE(metafile,"returning size %d\n", mfSize);
+    TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
+    if (!mh) return 0;  /* FIXME: error code */
+    if(mh->mtType == METAFILE_DISK)
+        FIXME(metafile, "Disk-based metafile?\n");
+    mfSize = mh->mtSize * 2;
+    if (!buf) {
+        MF_ReleaseMetaHeader(hmf);
+	TRACE(metafile,"returning size %d\n", mfSize);
+	return mfSize;
+    }
+    if(mfSize > nSize) mfSize = nSize;
+    memmove(buf, mh, mfSize);
+    MF_ReleaseMetaHeader(hmf);
     return mfSize;
-  }
-  if(mfSize > nSize) mfSize = nSize;
-  memmove(buf, h, mfSize);
-  GlobalUnlock16(hmf);
-  return mfSize;
 }
 
 /******************************************************************
@@ -1105,7 +1335,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
 }
 
 /******************************************************************
- *         MF_Meta_CreateRegion
+ *         MF_Play_MetaCreateRegion
  *
  *  Handles META_CREATEREGION for PlayMetaFileRecord().
  */
@@ -1136,7 +1366,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
  *
  */
 
-static BOOL MF_Meta_CreateRegion( METARECORD *mr, HRGN hrgn )
+static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
 {
     WORD band, pair;
     WORD *start, *end;
@@ -1177,623 +1407,5 @@ static BOOL MF_Meta_CreateRegion( METARECORD *mr, HRGN hrgn )
  }
  
 
-/******************************************************************
- *         MF_WriteRecord
- *
- * Warning: this function can change the metafile handle.
+/*  LocalWords:  capatibility
  */
-
-static BOOL MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
-{
-    DWORD len;
-    METAHEADER *mh;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
-
-    switch(physDev->mh->mtType)
-    {
-    case METAFILE_MEMORY:
-	len = physDev->mh->mtSize * 2 + rlen;
-	mh = HeapReAlloc( SystemHeap, 0, physDev->mh, len );
-        if (!mh) return FALSE;
-        physDev->mh = mh;
-	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
-        break;
-    case METAFILE_DISK:
-        TRACE(metafile,"Writing record to disk\n");
-	if (_lwrite(physDev->mh->mtNoParameters, (char *)mr, rlen) == -1)
-	    return FALSE;
-        break;
-    default:
-        ERR(metafile, "Unknown metafile type %d\n", physDev->mh->mtType );
-        return FALSE;
-    }
-
-    physDev->mh->mtSize += rlen / 2;
-    physDev->mh->mtMaxRecord = MAX(physDev->mh->mtMaxRecord, rlen / 2);
-    return TRUE;
-}
-
-
-/******************************************************************
- *         MF_MetaParam0
- */
-
-BOOL MF_MetaParam0(DC *dc, short func)
-{
-    char buffer[8];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 3;
-    mr->rdFunction = func;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_MetaParam1
- */
-BOOL MF_MetaParam1(DC *dc, short func, short param1)
-{
-    char buffer[8];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 4;
-    mr->rdFunction = func;
-    *(mr->rdParm) = param1;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_MetaParam2
- */
-BOOL MF_MetaParam2(DC *dc, short func, short param1, short param2)
-{
-    char buffer[10];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 5;
-    mr->rdFunction = func;
-    *(mr->rdParm) = param2;
-    *(mr->rdParm + 1) = param1;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_MetaParam4
- */
-
-BOOL MF_MetaParam4(DC *dc, short func, short param1, short param2, 
-		   short param3, short param4)
-{
-    char buffer[14];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 7;
-    mr->rdFunction = func;
-    *(mr->rdParm) = param4;
-    *(mr->rdParm + 1) = param3;
-    *(mr->rdParm + 2) = param2;
-    *(mr->rdParm + 3) = param1;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_MetaParam6
- */
-
-BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2, 
-		   short param3, short param4, short param5, short param6)
-{
-    char buffer[18];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 9;
-    mr->rdFunction = func;
-    *(mr->rdParm) = param6;
-    *(mr->rdParm + 1) = param5;
-    *(mr->rdParm + 2) = param4;
-    *(mr->rdParm + 3) = param3;
-    *(mr->rdParm + 4) = param2;
-    *(mr->rdParm + 5) = param1;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_MetaParam8
- */
-BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2, 
-		   short param3, short param4, short param5,
-		   short param6, short param7, short param8)
-{
-    char buffer[22];
-    METARECORD *mr = (METARECORD *)&buffer;
-    
-    mr->rdSize = 11;
-    mr->rdFunction = func;
-    *(mr->rdParm) = param8;
-    *(mr->rdParm + 1) = param7;
-    *(mr->rdParm + 2) = param6;
-    *(mr->rdParm + 3) = param5;
-    *(mr->rdParm + 4) = param4;
-    *(mr->rdParm + 5) = param3;
-    *(mr->rdParm + 6) = param2;
-    *(mr->rdParm + 7) = param1;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_CreateBrushIndirect
- */
-
-BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
-{
-    int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(*logbrush)];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = (sizeof(METARECORD) + sizeof(*logbrush) - 2) / 2;
-    mr->rdFunction = META_CREATEBRUSHINDIRECT;
-    memcpy(&(mr->rdParm), logbrush, sizeof(*logbrush));
-    if (!(MF_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
-
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MF_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_CreatePatternBrush
- */
-
-BOOL MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
-{
-    DWORD len, bmSize, biSize;
-    METARECORD *mr;
-    BITMAPINFO *info;
-    int index;
-    char buffer[sizeof(METARECORD)];
-
-    switch (logbrush->lbStyle)
-    {
-    case BS_PATTERN:
-        {
-	    BITMAP bm;
-	    BYTE *bits;
-
-	    GetObjectA(logbrush->lbHatch, sizeof(bm), &bm);
-	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
-	        FIXME(metafile, "Trying to store a colour pattern brush\n");
-		return FALSE;
-	    }
-
-	    bmSize = bm.bmHeight * DIB_GetDIBWidthBytes(bm.bmWidth, 1);
-
-	    len = sizeof(METARECORD) +  sizeof(WORD) + sizeof(BITMAPINFO) + 
-	      sizeof(RGBQUAD) + bmSize;
-	     
-	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-	    if(!mr) return FALSE;
-	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
-	    mr->rdSize = len / 2;
-	    mr->rdParm[0] = BS_PATTERN;
-	    mr->rdParm[1] = DIB_RGB_COLORS;
-	    info = (BITMAPINFO *)(mr->rdParm + 2);
-
-	    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	    info->bmiHeader.biWidth = bm.bmWidth;
-	    info->bmiHeader.biHeight = bm.bmHeight;
-	    info->bmiHeader.biPlanes = 1;
-	    info->bmiHeader.biBitCount = 1;
-	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
-
-	    GetDIBits(dc->hSelf, logbrush->lbHatch, 0, bm.bmHeight, bits,
-		      info, DIB_RGB_COLORS);
-	    *(DWORD *)info->bmiColors = 0;
-	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
-	    break;
-	}
-
-    case BS_DIBPATTERN:
-	info = (BITMAPINFO *)GlobalLock16((HGLOBAL16)logbrush->lbHatch);
-	if (info->bmiHeader.biCompression)
-            bmSize = info->bmiHeader.biSizeImage;
-        else
-	    bmSize = DIB_GetDIBWidthBytes(info->bmiHeader.biWidth,
-					  info->bmiHeader.biBitCount) 
-	               * info->bmiHeader.biHeight;
-	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush->lbColor)); 
-	len = sizeof(METARECORD) + biSize + bmSize + 2;
-	mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-	if(!mr) return FALSE;
-	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
-	mr->rdSize = len / 2;
-	*(mr->rdParm) = logbrush->lbStyle;
-	*(mr->rdParm + 1) = LOWORD(logbrush->lbColor);
-	memcpy(mr->rdParm + 2, info, biSize + bmSize);
-	break;
-    default:
-        return FALSE;
-    }
-    if (!(MF_WriteRecord(dc, mr, len)))
-    {
-	HeapFree(GetProcessHeap(), 0, mr);
-	return FALSE;
-    }
-
-    HeapFree(GetProcessHeap(), 0, mr);
-    
-    mr = (METARECORD *)&buffer;
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MF_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_CreatePenIndirect
- */
-
-BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
-{
-    int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(*logpen)];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = (sizeof(METARECORD) + sizeof(*logpen) - 2) / 2;
-    mr->rdFunction = META_CREATEPENINDIRECT;
-    memcpy(&(mr->rdParm), logpen, sizeof(*logpen));
-    if (!(MF_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
-
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MF_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_CreateFontIndirect
- */
-
-BOOL MF_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
-{
-    int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
-    METARECORD *mr = (METARECORD *)&buffer;
-
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT16) - 2) / 2;
-    mr->rdFunction = META_CREATEFONTINDIRECT;
-    memcpy(&(mr->rdParm), logfont, sizeof(LOGFONT16));
-    if (!(MF_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
-
-    mr->rdSize = sizeof(METARECORD) / 2;
-    mr->rdFunction = META_SELECTOBJECT;
-
-    if ((index = MF_AddHandleDC( dc )) == -1) return FALSE;
-    *(mr->rdParm) = index;
-    return MF_WriteRecord( dc, mr, mr->rdSize * 2);
-}
-
-
-/******************************************************************
- *         MF_TextOut
- */
-BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
-{
-    BOOL ret;
-    DWORD len;
-    HGLOBAL16 hmr;
-    METARECORD *mr;
-
-    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 4;
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    memset(mr, 0, len);
-
-    mr->rdSize = len / 2;
-    mr->rdFunction = META_TEXTOUT;
-    *(mr->rdParm) = count;
-    memcpy(mr->rdParm + 1, str, count);
-    *(mr->rdParm + ((count + 1) >> 1) + 1) = y;
-    *(mr->rdParm + ((count + 1) >> 1) + 2) = x;
-    ret = MF_WriteRecord( dc, mr, mr->rdSize * 2);
-    GlobalFree16(hmr);
-    return ret;
-}
-
-/******************************************************************
- *         MF_ExtTextOut
- */
-BOOL MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
-                     LPCSTR str, short count, const INT16 *lpDx)
-{
-    BOOL ret;
-    DWORD len;
-    HGLOBAL16 hmr;
-    METARECORD *mr;
-    
-    if((!flags && rect) || (flags && !rect))
-	WARN(metafile, "Inconsistent flags and rect\n");
-    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
-	    + sizeof(UINT16);
-    if(rect)
-        len += sizeof(RECT16);
-    if (lpDx)
-     len+=count*sizeof(INT16);
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    memset(mr, 0, len);
-
-    mr->rdSize = len / 2;
-    mr->rdFunction = META_EXTTEXTOUT;
-    *(mr->rdParm) = y;
-    *(mr->rdParm + 1) = x;
-    *(mr->rdParm + 2) = count;
-    *(mr->rdParm + 3) = flags;
-    if (rect) memcpy(mr->rdParm + 4, rect, sizeof(RECT16));
-    memcpy(mr->rdParm + (rect ? 8 : 4), str, count);
-    if (lpDx)
-     memcpy(mr->rdParm + (rect ? 8 : 4) + ((count + 1) >> 1),lpDx,
-      count*sizeof(INT16));
-    ret = MF_WriteRecord( dc, mr, mr->rdSize * 2);
-    GlobalFree16(hmr);
-    return ret;
-}
-
-/******************************************************************
- *         MF_MetaPoly - implements Polygon and Polyline
- */
-BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
-{
-    BOOL ret;
-    DWORD len;
-    HGLOBAL16 hmr;
-    METARECORD *mr;
-
-    len = sizeof(METARECORD) + (count * 4); 
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    memset(mr, 0, len);
-
-    mr->rdSize = len / 2;
-    mr->rdFunction = func;
-    *(mr->rdParm) = count;
-    memcpy(mr->rdParm + 1, pt, count * 4);
-    ret = MF_WriteRecord( dc, mr, mr->rdSize * 2);
-    GlobalFree16(hmr);
-    return ret;
-}
-
-
-/******************************************************************
- *         MF_BitBlt
- */
-BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
-                 short height, DC *dcSrc, short xSrc, short ySrc, DWORD rop)
-{
-    BOOL ret;
-    DWORD len;
-    HGLOBAL16 hmr;
-    METARECORD *mr;
-    BITMAP16  BM;
-
-    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
-    len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    mr->rdFunction = META_BITBLT;
-    *(mr->rdParm + 7) = BM.bmWidth;
-    *(mr->rdParm + 8) = BM.bmHeight;
-    *(mr->rdParm + 9) = BM.bmWidthBytes;
-    *(mr->rdParm +10) = BM.bmPlanes;
-    *(mr->rdParm +11) = BM.bmBitsPixel;
-    TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
-                        mr->rdParm +12))
-    {
-      mr->rdSize = len / sizeof(INT16);
-      *(mr->rdParm) = HIWORD(rop);
-      *(mr->rdParm + 1) = ySrc;
-      *(mr->rdParm + 2) = xSrc;
-      *(mr->rdParm + 3) = height;
-      *(mr->rdParm + 4) = width;
-      *(mr->rdParm + 5) = yDest;
-      *(mr->rdParm + 6) = xDest;
-      ret = MF_WriteRecord( dcDest, mr, mr->rdSize * 2);
-    }  
-    else
-        ret = FALSE;
-    GlobalFree16(hmr);
-    return ret;
-}
-
-
-/**********************************************************************
- *         MF_StretchBlt         
- * this function contains TWO ways for procesing StretchBlt in metafiles,
- * decide between rdFunction values  META_STRETCHBLT or META_DIBSTRETCHBLT
- * via #define STRETCH_VIA_DIB
- */
-#define STRETCH_VIA_DIB
-#undef  STRETCH_VIA_DIB
-BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
-                     short heightDest, DC *dcSrc, short xSrc, short ySrc, 
-                     short widthSrc, short heightSrc, DWORD rop)
-{
-    BOOL ret;
-    DWORD len;
-    HGLOBAL16 hmr;
-    METARECORD *mr;
-    BITMAP16  BM;
-#ifdef STRETCH_VIA_DIB    
-    LPBITMAPINFOHEADER lpBMI;
-    WORD nBPP;
-#endif  
-    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
-#ifdef STRETCH_VIA_DIB
-    nBPP = BM.bmPlanes * BM.bmBitsPixel;
-    len = sizeof(METARECORD) + 10 * sizeof(INT16) 
-            + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD) 
-              + ((BM.bmWidth * nBPP + 31) / 32) * 4 * BM.bmHeight;
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    mr->rdFunction = META_DIBSTRETCHBLT;
-    lpBMI=(LPBITMAPINFOHEADER)(mr->rdParm+10);
-    lpBMI->biSize      = sizeof(BITMAPINFOHEADER);
-    lpBMI->biWidth     = BM.bmWidth;
-    lpBMI->biHeight    = BM.bmHeight;
-    lpBMI->biPlanes    = 1;
-    lpBMI->biBitCount  = nBPP;                              /* 1,4,8 or 24 */
-    lpBMI->biClrUsed   = nBPP != 24 ? 1 << nBPP : 0;
-    lpBMI->biSizeImage = ((lpBMI->biWidth * nBPP + 31) / 32) * 4 * lpBMI->biHeight;
-    lpBMI->biCompression = BI_RGB;
-    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
-    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
-    lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
-
-    TRACE(metafile,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
-               len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
-    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
-                  (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
-                                                     DIB_RGB_COLORS ),
-                  (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
-#else
-    len = sizeof(METARECORD) + 15 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
-    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
-	return FALSE;
-    mr = (METARECORD *)GlobalLock16(hmr);
-    mr->rdFunction = META_STRETCHBLT;
-    *(mr->rdParm +10) = BM.bmWidth;
-    *(mr->rdParm +11) = BM.bmHeight;
-    *(mr->rdParm +12) = BM.bmWidthBytes;
-    *(mr->rdParm +13) = BM.bmPlanes;
-    *(mr->rdParm +14) = BM.bmBitsPixel;
-    TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
-                         mr->rdParm +15))
-#endif    
-    {
-      mr->rdSize = len / sizeof(INT16);
-      *(mr->rdParm) = LOWORD(rop);
-      *(mr->rdParm + 1) = HIWORD(rop);
-      *(mr->rdParm + 2) = heightSrc;
-      *(mr->rdParm + 3) = widthSrc;
-      *(mr->rdParm + 4) = ySrc;
-      *(mr->rdParm + 5) = xSrc;
-      *(mr->rdParm + 6) = heightDest;
-      *(mr->rdParm + 7) = widthDest;
-      *(mr->rdParm + 8) = yDest;
-      *(mr->rdParm + 9) = xDest;
-      ret = MF_WriteRecord( dcDest, mr, mr->rdSize * 2);
-    }  
-    else
-        ret = FALSE;
-    GlobalFree16(hmr);
-    return ret;
-}
-
-
-/******************************************************************
- *         MF_CreateRegion
- */
-INT16 MF_CreateRegion(DC *dc, HRGN hrgn)
-{
-    DWORD len;
-    METARECORD *mr;
-    RGNDATA *rgndata;
-    RECT *pCurRect, *pEndRect;
-    WORD Bands = 0, MaxBands = 0;
-    WORD *Param, *StartBand;
-    BOOL ret;
-
-    len = GetRegionData( hrgn, 0, NULL );
-    if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
-        WARN(metafile, "MF_CreateRegion: can't alloc rgndata buffer\n");
-	return -1;
-    }
-    GetRegionData( hrgn, len, rgndata );
-
-    /* Overestimate of length:
-     * Assume every rect is a separate band -> 6 WORDs per rect
-     */
-    len = sizeof(METARECORD) + 20 + (rgndata->rdh.nCount * 12);
-    if( !(mr = HeapAlloc( SystemHeap, 0, len )) ) {
-        WARN(metafile, "MF_CreateRegion: can't alloc METARECORD buffer\n");
-	HeapFree( SystemHeap, 0, rgndata );
-	return -1;
-    }
-
-    memset(mr, 0, len);
-        
-    Param = mr->rdParm + 11;
-    StartBand = NULL;
-
-    pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
-    for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
-    {
-        if( StartBand && pCurRect->top == *(StartBand + 1) )
-        {
-	    *Param++ = pCurRect->left;
-	    *Param++ = pCurRect->right;
-	}
-	else
-	{
-	    if(StartBand)
-	    {
-	        *StartBand = Param - StartBand - 3;
-		*Param++ = *StartBand;
-		if(*StartBand > MaxBands)
-		    MaxBands = *StartBand;
-		Bands++;
-	    }
-	    StartBand = Param++;
-	    *Param++ = pCurRect->top;
-	    *Param++ = pCurRect->bottom;
-	    *Param++ = pCurRect->left;
-	    *Param++ = pCurRect->right;
-	}
-    }
-    len = Param - (WORD *)mr;
-    
-    mr->rdParm[0] = 0;
-    mr->rdParm[1] = 6;
-    mr->rdParm[2] = 0x1234;
-    mr->rdParm[3] = 0;
-    mr->rdParm[4] = len * 2;
-    mr->rdParm[5] = Bands;
-    mr->rdParm[6] = MaxBands;
-    mr->rdParm[7] = rgndata->rdh.rcBound.left;
-    mr->rdParm[8] = rgndata->rdh.rcBound.top;
-    mr->rdParm[9] = rgndata->rdh.rcBound.right;
-    mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
-    mr->rdFunction = META_CREATEREGION;
-    mr->rdSize = len / 2;
-    ret = MF_WriteRecord( dc, mr, mr->rdSize * 2 );	
-    HeapFree( SystemHeap, 0, mr );
-    HeapFree( SystemHeap, 0, rgndata );
-    if(!ret) 
-    {
-        WARN(metafile, "MF_CreateRegion: MF_WriteRecord failed\n");
-	return -1;
-    }
-    return MF_AddHandleDC( dc );
-}

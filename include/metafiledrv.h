@@ -8,19 +8,29 @@
 #include "wingdi.h"
 #include "gdi.h"
 
-/* FIXME: SDK docs says these should be 1 and 2 */
-/*  DR 980322: most wmf's have 1, so I think 0 and 1 is correct */
-#define METAFILE_MEMORY 0
-#define METAFILE_DISK   1
-
 /* Metafile driver physical DC */
 
 typedef struct
 {
     METAHEADER  *mh;           /* Pointer to metafile header */
-    UINT       nextHandle;   /* Next handle number */
+    UINT       nextHandle;     /* Next handle number */
+    HFILE      hFile;          /* HFILE for disk based MetaFile */ 
 } METAFILEDRV_PDEVICE;
 
+
+extern BOOL MFDRV_MetaParam0(DC *dc, short func);
+extern BOOL MFDRV_MetaParam1(DC *dc, short func, short param1);
+extern BOOL MFDRV_MetaParam2(DC *dc, short func, short param1, short param2);
+extern BOOL MFDRV_MetaParam4(DC *dc, short func, short param1, short param2, 
+			     short param3, short param4);
+extern BOOL MFDRV_MetaParam6(DC *dc, short func, short param1, short param2, 
+			     short param3, short param4, short param5,
+			     short param6);
+extern BOOL MFDRV_MetaParam8(DC *dc, short func, short param1, short param2, 
+			     short param3, short param4, short param5,
+			     short param6, short param7, short param8);
+extern BOOL MFDRV_WriteRecord(DC *dc, METARECORD *mr, DWORD rlen);
+extern int MFDRV_AddHandleDC( DC *dc );
 
 /* Metafile driver functions */
 
