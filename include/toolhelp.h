@@ -362,4 +362,27 @@ typedef struct {
 
 #pragma pack(4)
 
+/*
+ * Process Entry list as created by CreateToolHelp32Snapshot 
+ */
+
+typedef struct tagPROCESSENTRY32 { 
+    DWORD dwSize; 
+    DWORD cntUsage; 
+    DWORD th32ProcessID; 
+    DWORD th32DefaultHeapID; 
+    DWORD th32ModuleID; 
+    DWORD cntThreads; 
+    DWORD th32ParentProcessID; 
+    LONG  pcPriClassBase; 
+    DWORD dwFlags; 
+    char szExeFile[MAX_PATH]; 
+} PROCESSENTRY32; 
+typedef PROCESSENTRY32 *  PPROCESSENTRY32; 
+typedef PROCESSENTRY32 *  LPPROCESSENTRY32; 
+
+BOOL32      WINAPI Process32First(HANDLE32,LPPROCESSENTRY32);
+BOOL32      WINAPI Process32Next(HANDLE32,LPPROCESSENTRY32);
+
+
 #endif /* __WINE_TOOLHELP_H */

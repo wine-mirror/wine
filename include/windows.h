@@ -5445,28 +5445,6 @@ typedef struct {
 #define TIME_ZONE_ID_STANDARD   1
 #define TIME_ZONE_ID_DAYLIGHT   2
 
-/*
- * Process Entry list as created by CreateToolHelp32Snapshot 
- */
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
-
-typedef struct tagPROCESSENTRY32 { 
-    DWORD dwSize; 
-    DWORD cntUsage; 
-    DWORD th32ProcessID; 
-    DWORD th32DefaultHeapID; 
-    DWORD th32ModuleID; 
-    DWORD cntThreads; 
-    DWORD th32ParentProcessID; 
-    LONG  pcPriClassBase; 
-    DWORD dwFlags; 
-    char szExeFile[MAX_PATH]; 
-} PROCESSENTRY32; 
-typedef PROCESSENTRY32 *  PPROCESSENTRY32; 
-typedef PROCESSENTRY32 *  LPPROCESSENTRY32; 
-
 /* CreateProcess: dwCreationFlag values
  */
 #define DEBUG_PROCESS               0x00000001
@@ -6980,8 +6958,6 @@ BOOL32      WINAPI PaintDesktop(HDC32);
 BOOL32      WINAPI PlayEnhMetaFile(HDC32,HENHMETAFILE32,const RECT32*);
 BOOL32      WINAPI PlayEnhMetaFileRecord(HDC32,LPHANDLETABLE32,const ENHMETARECORD*,UINT32);
 BOOL32      WINAPI PolyPolyline32(HDC32,const POINT32*,const DWORD*,DWORD);
-BOOL32      WINAPI Process32First(HANDLE32,LPPROCESSENTRY32);
-BOOL32      WINAPI Process32Next(HANDLE32,LPPROCESSENTRY32);
 BOOL32      WINAPI PulseEvent(HANDLE32);
 DWORD       WINAPI QueryDosDevice32A(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI QueryDosDevice32W(LPCWSTR,LPWSTR,DWORD);

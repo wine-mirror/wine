@@ -22,6 +22,7 @@
 #include "task.h"
 #include "server.h"
 #include "debug.h"
+#include "toolhelp.h"
 
 static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
 static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
@@ -905,14 +906,14 @@ void PROCESS_ResumeOtherThreads(void)
 
 BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
 {
-  FIXME (process, "(0x%08lx,0x%08lx), stub!\n", hSnapshot, lppe);
+  FIXME (process, "(0x%08x,%p), stub!\n", hSnapshot, lppe);
   SetLastError (ERROR_NO_MORE_FILES);
   return FALSE;
 }
 
 BOOL32 WINAPI Process32Next(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
 {
-  FIXME (process, "(0x%08lx,0x%08lx), stub!\n", hSnapshot, lppe);
+  FIXME (process, "(0x%08x,%p), stub!\n", hSnapshot, lppe);
   SetLastError (ERROR_NO_MORE_FILES);
   return FALSE;
 }
