@@ -50,6 +50,15 @@ typedef struct {
 	LPVOID lpvbits;				/* Buffer for holding decompressed dib */
 } WINE_HDD;
 
+int num_colours(LPBITMAPINFOHEADER lpbi)
+{
+	if(lpbi->biClrUsed)
+		return lpbi->biClrUsed;
+	if(lpbi->biBitCount<=8)
+		return 1<<lpbi->biBitCount;
+	return 0;
+}
+
 /***********************************************************************
  *		DrawDibOpen		[MSVFW32.@]
  */
@@ -215,7 +224,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 		DWORD dwSize;
 		/* No compression */
 		TRACE("Not compressed!\n");
-		dwSize = lpbi->biSize + lpbi->biClrUsed*sizeof(RGBQUAD);
+		dwSize = lpbi->biSize + num_colours(lpbi)*sizeof(RGBQUAD);
 		whdd->lpbiOut = HeapAlloc(GetProcessHeap(),0,dwSize);
 		memcpy(whdd->lpbiOut,lpbi,dwSize);
 	}
@@ -294,7 +303,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 
 	if (!lpBits) {
 		/* Undocumented? */
-		lpBits = (LPSTR)lpbi + (WORD)(lpbi->biSize) + (WORD)(lpbi->biClrUsed*sizeof(RGBQUAD));
+		lpBits = (LPSTR)lpbi + (WORD)(lpbi->biSize) + (WORD)(num_colours(lpbi)*sizeof(RGBQUAD));
 	}
 
 	whdd = GlobalLock16(hdd);
