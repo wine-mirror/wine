@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = unicows.dll
 IMPORTS   = avicap32 msvfw32 oledlg comdlg32 shell32 winmm winspool \
-            rasapi32 secur32 version user32 mpr gdi32 advapi32 kernel32
+            rasapi32 secur32 sensapi version user32 mpr gdi32 advapi32 kernel32
 
 C_SRCS = \
 	main.c

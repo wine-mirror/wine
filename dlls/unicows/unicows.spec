@@ -269,7 +269,7 @@
 @ stdcall IsCharLowerW(long)
 @ stdcall IsCharUpperW(long)
 @ stdcall IsClipboardFormatAvailable(long)
-@ stub IsDestinationReachableW
+@ stdcall IsDestinationReachableW(wstr ptr)
 @ stdcall IsDialogMessageW(long ptr)
 @ stdcall IsTextUnicode(ptr long ptr)
 @ stdcall IsValidCodePage(long)

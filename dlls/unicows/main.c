@@ -40,6 +40,7 @@
 #include "shellapi.h"
 #include "vfw.h"
 #include "winnetwk.h"
+#include "sensapi.h"
 
 /* Create a dummy reference to every function we need so that
  * the linker will import them.
@@ -314,6 +315,7 @@ const void *dummy_references[] =
     IsCharLowerW,
     IsCharUpperW,
     IsClipboardFormatAvailable,
+    IsDestinationReachableW,
     IsDialogMessageW,
     IsTextUnicode,
     IsValidCodePage,
