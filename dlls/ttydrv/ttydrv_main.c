@@ -1,6 +1,9 @@
 /*
  * TTYDRV initialization code
  */
+
+#include "config.h"
+
 #include <stdio.h>
 
 #include "winbase.h"

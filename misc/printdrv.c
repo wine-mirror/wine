@@ -246,7 +246,7 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
 }
 
 /**********************************************************************
- *           SetAbortProc32   (GDI32.301)
+ *           SetAbortProc   (GDI32.301)
  *
  */
 INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
@@ -599,8 +599,6 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
  */
 INT16 WINAPI WriteDialog16(HPJOB16 hJob, LPSTR lpMsg, INT16 cchMsg)
 {
-    int nRet = 0;
-
     TRACE("%04x %04x '%s'\n", hJob,  cchMsg, lpMsg);
 
     return Callout.MessageBoxA(0, lpMsg, "Printing Error", MB_OKCANCEL);

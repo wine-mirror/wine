@@ -300,7 +300,7 @@ static VOID WINAPI IMalloc_fnFree(LPMALLOC iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_GetSize [VTABLE]
  */
-static DWORD WINAPI IMalloc_fnGetSize(const IMalloc* iface,LPVOID pv) {
+static DWORD WINAPI IMalloc_fnGetSize(LPMALLOC iface,LPVOID pv) {
 	ICOM_CTHIS(IMalloc,iface);
 	TRACE("(%p)->GetSize(%p)\n",This,pv);
 	return HeapSize(GetProcessHeap(),0,pv);
@@ -309,7 +309,7 @@ static DWORD WINAPI IMalloc_fnGetSize(const IMalloc* iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_DidAlloc [VTABLE]
  */
-static INT WINAPI IMalloc_fnDidAlloc(const IMalloc* iface,LPVOID pv) {
+static INT WINAPI IMalloc_fnDidAlloc(LPMALLOC iface,LPVOID pv) {
 	ICOM_CTHIS(IMalloc32Impl,iface);
 	TRACE("(%p)->DidAlloc(%p)\n",This,pv);
 	return -1;
@@ -355,7 +355,7 @@ IMalloc_Constructor() {
  */
 
 /******************************************************************************
- *		IsValidInterface32	[OLE32.78]
+ *		IsValidInterface	[OLE32.78]
  *
  * RETURNS
  *  True, if the passed pointer is a valid interface
