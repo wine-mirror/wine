@@ -36,6 +36,40 @@
 #include "file.h"
 
 /*
+    *dbg_filename must be at least MAX_PATHNAME_LEN bytes in size
+*/
+static void LocateDebugInfoFile(char *filename, char *dbg_filename)
+{
+    char	  str1[MAX_PATHNAME_LEN*10];
+    char	  str2[MAX_PATHNAME_LEN];
+    char	  *file;
+    char	  *name_part;
+    DOS_FULL_NAME fullname;
+    
+    file = strrchr(filename, '\\');
+    if( file == NULL ) file = filename; else file++;
+
+    if (GetEnvironmentVariable32A("_NT_SYMBOL_PATH", str1, sizeof(str1)))
+	if (SearchPath32A(str1, file, NULL, sizeof(str2), str2, &name_part))
+	    goto ok;
+    if (GetEnvironmentVariable32A("_NT_ALT_SYMBOL_PATH", str1, sizeof(str1)))
+	if (SearchPath32A(str1, file, NULL, sizeof(str2), str2, &name_part))
+	    goto ok;
+    if (SearchPath32A(NULL, file, NULL, sizeof(str2), str2, &name_part))
+	goto ok;
+    else
+    {
+quit:	memcpy(dbg_filename, filename, MAX_PATHNAME_LEN);
+	return;
+    }
+ok:
+    if (DOSFS_GetFullName(str2, TRUE, &fullname))
+	memcpy(dbg_filename, fullname.long_name, MAX_PATHNAME_LEN);
+    else
+	goto quit;
+    return;
+}
+/*
  * This is an index we use to keep track of the debug information
  * when we have multiple sources.  We use the same database to also
  * allow us to do an 'info shared' type of deal, and we use the index
@@ -942,6 +976,9 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
           if(   (dbgptr->Type != IMAGE_DEBUG_TYPE_MISC) ||
                 (PE_HEADER(hModule)->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0 )
             {
+                char                 fn[PATH_MAX];
+                int                  fd = -1;
+                DOS_FULL_NAME        full_name;
                 struct deferred_debug_info*      deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
  
                 deefer->module    = hModule;
@@ -952,40 +989,29 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
                  * upon the type, but this is always enough so we are able
                  * to proceed if we know what we need to do next.
                  */                  
-                /* in some cases, debug information has not been mapped, so load it...
-                 * basically, the PE loader maps all sections (data, resources...), but doesn't map
+                /* basically, the PE loader maps all sections (data, resources...), but doesn't map
                  * the DataDirectory array's content. One its entry contains the *beloved*
                  * debug information. (Note the DataDirectory is mapped, not its content)
                  */
-                if (IsBadReadPtr32((void*)hModule, dbgptr->PointerToRawData + dbgptr->SizeOfData))
-                {
-                    char                 fn[PATH_MAX];
-                    int                  fd = -1;
-                    DOS_FULL_NAME        full_name;
  
-                    if (GetModuleFileName32A(hModule, fn, sizeof(fn)) > 0 &&
-                        DOSFS_GetFullName(fn, TRUE, &full_name) &&
-                        (fd = open(full_name.long_name, O_RDONLY)) > 0)
-                    {
-                        deefer->dbg_info = mmap(NULL, dbgptr->SizeOfData,
-                                                PROT_READ, MAP_PRIVATE, fd, dbgptr->PointerToRawData);
-                        close(fd);
-                        if( deefer->dbg_info == (char *) 0xffffffff )
-                        {
-                            free(deefer);
-                            break;
-                        }
-                    }
-                    else
+                 if (GetModuleFileName32A(hModule, fn, sizeof(fn)) > 0 &&
+                    DOSFS_GetFullName(fn, TRUE, &full_name) &&
+                    (fd = open(full_name.long_name, O_RDONLY)) > 0)
+                {
+                    deefer->dbg_info = mmap(NULL, dbgptr->SizeOfData,
+                                            PROT_READ, MAP_PRIVATE, fd, dbgptr->PointerToRawData);
+                    close(fd);
+                    if( deefer->dbg_info == (char *) 0xffffffff )
                     {
                         free(deefer);
-                        fprintf(stderr, " (not mapped: fn=%s, lfn=%s, fd=%d)", fn, full_name.long_name, fd);
                         break;
                     }
                 }
                 else
                 {
-                    deefer->dbg_info = (char *)(hModule + dbgptr->PointerToRawData);
+                    free(deefer);
+                    fprintf(stderr, " (not mapped: fn=%s, lfn=%s, fd=%d)", fn, full_name.long_name, fd);
+                    break;
                 }
                 deefer->dbg_size = dbgptr->SizeOfData;
                 deefer->dbgdir = dbgptr;
@@ -1402,7 +1428,8 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
       for(j=0; j < nfiles; j++)
 	{
 	  i = 0;
-	  for(k=0; k < coff_files[j].linecnt; k++)
+	  if( coff_files[j].neps != 0 )
+	    for(k=0; k < coff_files[j].linecnt; k++)
 	    {
 	      /*
 	       * Another monstrosity caused by the fact that we are using
@@ -1418,17 +1445,13 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	       */
 	      while(TRUE)
 		{
+		  if (i+1 >= coff_files[j].neps) break;
 		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_addr);
-		  if(   (i+1 < coff_files[j].neps)
-			&& (   ((unsigned int) deefer->load_addr + linepnt->VirtualAddr)
-			       >= new_addr.off) )
-		    {
+		  if( (((unsigned int)deefer->load_addr +
+		        linepnt->VirtualAddr) >= new_addr.off) )
+		  {
 		      i++;
-		    }
-		  else
-		    {
-		      break;
-		    }
+		  } else break;
 		}
 
 	      /*
@@ -1808,7 +1831,7 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
   unsigned short	      * extent_table;
   int				fd = -1;
   struct file_ent	      * fent;
-  char			      * filename;
+  char			      * filename[MAX_PATHNAME_LEN];
   struct file_list	      * filelist = NULL;
   unsigned int			gsym_record = 0;
   char			      * gsymtab = NULL;
@@ -1827,25 +1850,8 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
   unsigned short	      * table;
   char			      * toc;
   unsigned int			toc_blocks;
-  
-  /*
-   * FIXME - we should use some kind of search path mechanism to locate
-   * PDB files.  Right now we just look in the current working directory,
-   * which works much of the time, I guess.  Ideally we should be able to
-   * map the filename back using the settings in wine.ini and perhaps
-   * we could find it there.  This bit of coding is left as an exercise
-   * for the reader. :-).
-   */
-  filename = strrchr(full_filename, '\\');
-  if( filename == NULL )
-    {
-      filename = full_filename;
-    }
-  else
-    {
-      filename++;
-    }
 
+  LocateDebugInfoFile(full_filename, filename);
   status = stat(filename, &statbuf);
   if( status == -1 )
     {
@@ -2173,21 +2179,23 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   IMAGE_SECTION_HEADER        * sectp;
   struct stat			statbuf;
   int				status;
-  
-  status = stat(filename, &statbuf);
+  char				dbg_file[MAX_PATHNAME_LEN];
+
+  LocateDebugInfoFile(filename, dbg_file);
+  status = stat(dbg_file, &statbuf);
   if( status == -1 )
     {
-      fprintf(stderr, "-Unable to open .DBG file %s\n", filename);
+      fprintf(stderr, "-Unable to open .DBG file %s\n", dbg_file);
       goto leave;
     }
 
   /*
    * Now open the file, so that we can mmap() it.
    */
-  fd = open(filename, O_RDONLY);
+  fd = open(dbg_file, O_RDONLY);
   if( fd == -1 )
     {
-      fprintf(stderr, "Unable to open .DBG file %s\n", filename);
+      fprintf(stderr, "Unable to open .DBG file %s\n", dbg_file);
       goto leave;
     }
 
@@ -2199,7 +2207,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 	      MAP_PRIVATE, fd, 0);
   if( addr == (char *) 0xffffffff )
     {
-      fprintf(stderr, "Unable to mmap .DBG file %s\n", filename);
+      fprintf(stderr, "Unable to mmap .DBG file %s\n", dbg_file);
       goto leave;
     }
 
@@ -2208,11 +2216,16 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   if( pdbg->TimeDateStamp != deefer->dbgdir->TimeDateStamp )
     {
       fprintf(stderr, "Warning - %s has incorrect internal timestamp\n",
-	      filename);
-      goto leave;
+	      dbg_file);
+/*      goto leave; */
+/*
+   Well, sometimes this happens to DBG files which ARE REALLY the right .DBG
+   files but nonetheless this check fails. Anyway, WINDBG (debugger for
+   Windows by Microsoft) loads debug symbols which have incorrect timestamps.
+*/
    }
 
-  fprintf(stderr, "Processing symbols from %s...\n", filename);
+  fprintf(stderr, "Processing symbols from %s...\n", dbg_file);
 
   dbghdr = (PIMAGE_DEBUG_DIRECTORY) (  addr + sizeof(*pdbg) 
 		 + pdbg->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
