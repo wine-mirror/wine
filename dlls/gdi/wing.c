@@ -92,12 +92,13 @@ HDC16 WINAPI WinGCreateDC16(void)
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
+    static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     HDC hdc;
     TRACE("(%p)\n", bmpi);
     if (!bmpi)
 	return FALSE;
 
-    hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    hdc = CreateDCW( szDisplayW, NULL, NULL, NULL );
     bmpi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmpi->bmiHeader.biWidth = 320;
     bmpi->bmiHeader.biHeight = -1;

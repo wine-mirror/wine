@@ -2509,6 +2509,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST METAFILEPICT *lpmfp
 					   )
 {
+    static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     HMETAFILE hmf = 0;
     HENHMETAFILE ret = 0;
     HDC hdc = 0, hdcdisp = 0;
@@ -2528,7 +2529,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     }
 
     if(!hdcRef)
-        hdcRef = hdcdisp = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        hdcRef = hdcdisp = CreateDCW(szDisplayW, NULL, NULL, NULL);
 
     if(!lpmfp) {
         lpmfp = &mfp;

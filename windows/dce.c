@@ -81,10 +81,13 @@ static void DCE_DumpCache(void)
  */
 DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
+    static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     DCE * dce;
 
+    TRACE("(%p,%d)\n", hWnd, type);
+
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(DCE) ))) return NULL;
-    if (!(dce->hDC = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
+    if (!(dce->hDC = CreateDCW( szDisplayW, NULL, NULL, NULL )))
     {
         HeapFree( GetProcessHeap(), 0, dce );
 	return 0;

@@ -4633,6 +4633,7 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
+    static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     RECT rcClient;
     TREEVIEW_INFO *infoPtr;
 
@@ -4736,7 +4737,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 	infoPtr->himlState =
 	    ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
 
-	hdcScreen = CreateDCA("DISPLAY", NULL, NULL, NULL);
+	hdcScreen = CreateDCW(szDisplayW, NULL, NULL, NULL);
 
 	/* Create a coloured bitmap compatible with the screen depth
 	   because checkboxes are not black&white */
