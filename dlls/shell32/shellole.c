@@ -68,6 +68,7 @@ struct {
 	{&CLSID_ShellLink,	&IShellLink_Constructor},
 	{&CLSID_DragDropHelper, &IDropTargetHelper_Constructor},
 	{&CLSID_ControlPanel,	&IControlPanel_Constructor},
+	{&CLSID_AutoComplete,   &IAutoComplete_Constructor},
 	{NULL,NULL}
 };
 

@@ -18,6 +18,7 @@ IDL_SRCS = \
 	ocidl.idl \
 	oleidl.idl \
 	servprov.idl \
+	shldisp.idl \
 	shobjidl.idl \
 	shtypes.idl \
 	strmif.idl \
