@@ -1324,6 +1324,24 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    glThis->render_state.mag = gl_state;
 	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_state);
             break;
+
+        case D3DTSS_ADDRESS:
+        case D3DTSS_ADDRESSU:
+        case D3DTSS_ADDRESSV: {
+	    GLenum arg = GL_REPEAT; /* Default value */
+	    switch ((D3DTEXTUREADDRESS) dwState) {
+	        case D3DTADDRESS_WRAP:   if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_WRAP\n"); arg = GL_REPEAT; break;
+	        case D3DTADDRESS_CLAMP:  if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_CLAMP\n"); arg = GL_CLAMP; break;
+	        case D3DTADDRESS_BORDER: if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_BORDER\n"); arg = GL_CLAMP_TO_EDGE; break;
+	        default: ERR("Unhandled TEXTUREADDRESS mode %ld !\n", dwState);
+	    }
+	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
+		(d3dTexStageStateType == D3DTSS_ADDRESSU))
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, arg);
+	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
+		(d3dTexStageStateType == D3DTSS_ADDRESSV))
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, arg);
+        } break;
 	    
 	default:
 	    if (TRACE_ON(ddraw)) DPRINTF(" unhandled.\n");
