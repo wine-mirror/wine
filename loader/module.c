@@ -499,10 +499,10 @@ WINE_MODREF *MODULE_FindModule(
  * Returns FALSE if the file is not an executable or if the function fails.
  *
  * To do so it opens the file and reads in the header information
- * if the extended header information is not presend it will
- * assume that that the file is a DOS executable.
+ * if the extended header information is not present it will
+ * assume that the file is a DOS executable.
  * If the extended header information is present it will
- * determine if the file is an 16 or 32 bit Windows executable
+ * determine if the file is a 16 or 32 bit Windows executable
  * by check the flags in the header.
  *
  * Note that .COM and .PIF files are only recognized by their
@@ -1050,7 +1050,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     char name[256], dummy[256];
     LPCSTR cmdline = NULL;
     LPSTR tidy_cmdline;
-    int len = 0;
 
     /* Get name and command line */
 
@@ -1064,19 +1063,18 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     name[0] = '\0';
 
-    if (lpApplicationName) {
-       found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
-       if (lpCommandLine) {
-	  make_lpCommandLine_name( lpCommandLine, dummy, sizeof ( dummy ), &cmdline );
+    if (lpApplicationName)
+    {
+        found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
+	if (lpCommandLine)
+            make_lpCommandLine_name( lpCommandLine, dummy, sizeof ( dummy ), &cmdline );
+        else
+            cmdline = lpApplicationName;
     }
-       else {
-	  cmdline = lpApplicationName;
-       }
-       len += strlen(lpApplicationName);
-    }
-    else {
-       found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
-       if (lpCommandLine) len = strlen(lpCommandLine);
+    else
+    {
+        if (lpCommandLine)
+            found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
     }
 
     if ( !found_file ) {
@@ -1085,8 +1083,10 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         return FALSE;
     }
 
-    len += strlen(name) + 2;
-    tidy_cmdline = HeapAlloc( GetProcessHeap(), 0, len );
+    if (!cmdline) cmdline = "";
+    tidy_cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(name) + strlen(cmdline) + 3 );
+    TRACE_(module)("tidy_cmdline: name '%s'[%d], cmdline '%s'[%d]\n",
+                   name, strlen(name), cmdline, strlen(cmdline));
     sprintf( tidy_cmdline, "\"%s\"%s", name, cmdline);
 
     /* Warn if unsupported features are used */
