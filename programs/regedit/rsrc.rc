@@ -32,3 +32,4 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "En.rc"
 #include "Es.rc"
 #include "Pt.rc"
+#include "Si.rc"
