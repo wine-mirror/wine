@@ -1025,7 +1025,7 @@
 @ stdcall SetThreadIdealProcessor(long long)
 @ stdcall SetThreadPriorityBoost(long long)
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
-@ stub SignalObjectAndWait
+@ stdcall SignalObjectAndWait(long long long long)
 @ stdcall SwitchToFiber(ptr)
 @ stdcall SwitchToThread()
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
