@@ -287,7 +287,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
 
   psInfo->hasHelp = dwFlags & PSH_HASHELP;
   psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
-  psInfo->useCallback = dwFlags & PSH_USECALLBACK;
+  psInfo->useCallback = (dwFlags & PSH_USECALLBACK )&& (lppsh->pfnCallback);
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
@@ -338,7 +338,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
 
   psInfo->hasHelp = dwFlags & PSH_HASHELP;
   psInfo->hasApply = !(dwFlags & PSH_NOAPPLYNOW);
-  psInfo->useCallback = dwFlags & PSH_USECALLBACK;
+  psInfo->useCallback = (dwFlags & PSH_USECALLBACK) && (lppsh->pfnCallback);
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
