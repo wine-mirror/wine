@@ -131,7 +131,7 @@ static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
 
  if (env) {
   /* get size of environment block */
-  while (env[sz++]) sz+=strlen(env+sz);
+  while (env[sz++]) sz+=strlen(env+sz)+1;
  } else sz++;
  /* allocate it */
  envblk=DOSMEM_GetBlock(lpDosTask->hModule,sz+sizeof(WORD)+strlen(name)+1,&seg);
@@ -364,6 +364,7 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
  HMODULE16 hModule;
  HINSTANCE16 hInstance;
+ PDB32 *pdb = PROCESS_Current();
  TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
  NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
  HFILE16 hFile;
@@ -378,6 +379,7 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
  if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
   return 2; /* File not found */
 
+ if ((!env)&&pdb) env = pdb->env_db->environ;
  if (alloc) {
   if ((hModule = MODULE_CreateDummyModule(&ofs)) < 32)
    return hModule;
