@@ -166,6 +166,8 @@ static struct {
   {"Envelope",		DMBIN_ENVELOPE},
   {"LargeCapacity",	DMBIN_LARGECAPACITY},
   {"Lower",		DMBIN_LOWER},
+  {"Manual",            DMBIN_MANUAL},
+  {"ManualEnv",         DMBIN_ENVMANUAL},
   {"ManualFeed",        DMBIN_MANUAL},
   {"Middle",            DMBIN_MIDDLE},
   {"OnlyOne",		DMBIN_ONLYONE},
@@ -356,7 +358,7 @@ static BOOL PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
  */
 static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 {
-    char line[257], *opt = NULL, *cp, *trans;
+    char line[257], *opt = NULL, *cp, *trans, *endkey;
     BOOL gotoption = TRUE;
 
     memset(tuple, 0, sizeof(*tuple));
@@ -373,25 +375,29 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 	return FALSE;
     }
 
-    for(cp = line; !isspace(*cp); cp++)
+    for(cp = line; !isspace(*cp) && *cp != ':'; cp++)
         ;
 
-    if(*(cp-1) == ':') {
-        cp--;
+    endkey = cp;
+    if(*cp == ':') { /* <key>: */
         gotoption = FALSE;
     } else {
-        opt = cp;
+	while(isspace(*cp))
+	    cp++;
+	if(*cp == ':') { /* <key>  : */
+	    gotoption = FALSE;
+	} else { /* <key> <option> */
+	    opt = cp;
+	}
     }
 
-    tuple->key = HeapAlloc( PSDRV_Heap, 0, cp - line + 1 );
+    tuple->key = HeapAlloc( PSDRV_Heap, 0, endkey - line + 1 );
     if(!tuple->key) return FALSE;
 
-    memcpy(tuple->key, line, cp - line);
-    tuple->key[cp - line] = '\0';
+    memcpy(tuple->key, line, endkey - line);
+    tuple->key[endkey - line] = '\0';
 
-    if(gotoption) {
-        while(isspace(*opt))
-	    opt++;
+    if(gotoption) { /* opt points to 1st non-space character of the option */
         cp = strpbrk(opt, ":/");
 	if(!cp) {
 	    ERR("Error in line '%s'?\n", line);
@@ -417,7 +423,8 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 	    HeapFree( PSDRV_Heap, 0, buf );
 	}
     }
-    while(!isspace(*cp))
+
+    /* cp should point to a ':', so we increment past it */
         cp++;
 
     while(isspace(*cp))
