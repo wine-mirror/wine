@@ -449,7 +449,12 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     }
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
 
-    if (!(data->xim = XOpenIM( data->display, NULL, NULL, NULL )))
+    if ((data->xim = XOpenIM( data->display, NULL, NULL, NULL )))
+    {
+        TRACE("X display of IM = %p\n", XDisplayOfIM(data->xim));
+        TRACE("Using %s locale of Input Method\n", XLocaleOfIM(data->xim));
+    }
+    else
         WARN("Can't open input method\n");
 
 #ifdef HAVE_XKB
