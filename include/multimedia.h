@@ -43,7 +43,7 @@
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c))
 #endif
 
-struct WINE_MCIDRIVER {
+typedef struct {
 	HDRVR16			hDrv;
 	DRIVERPROC16		driverProc;
 	MCI_OPEN_DRIVER_PARMS16	modp;
@@ -53,9 +53,27 @@ struct WINE_MCIDRIVER {
         DWORD	                dwYieldData;
         BOOL			bIs32;
         HTASK16			hCreatorTask;
-};
+} WINE_MCIDRIVER;
 
-extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
+extern WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
+
+#define WINE_MMTHREAD_CREATED	0x4153494C	/* "BSIL" */
+#define WINE_MMTHREAD_DELETED	0xDEADDEAD
+
+typedef struct {
+       DWORD			dwSignature;		/* 00 "BSIL" when ok, 0xDEADDEAD when being deleted */
+       DWORD			dwCounter;		/* 04 */
+       HANDLE			hThread;		/* 08 hThread */
+       DWORD                    dwThreadId;     	/* 0C */
+       FARPROC16		fpThread;		/* 10 segmented address of thread proc */
+       DWORD			dwThreadPmt;    	/* 14 parameter to be called upon thread creation */
+       DWORD                    dwUnknown3;     	/* 18 increment interlocked ? */
+       DWORD                    hEvent;     		/* 1C event */
+       DWORD                    dwUnknown5;     	/* 20 */
+       DWORD                    dwStatus;       	/* 24 0, 10, 20, 30 */
+       DWORD			dwFlags;		/* 28 dwFlags upon creation */
+       HANDLE16			hTask;          	/* 2C handle to created task */
+} WINE_MMTHREAD;
 
 #define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
 #define MCI_GetOpenDrv(wDevID)	(&(MCI_GetDrv(wDevID)->mop))
@@ -85,6 +103,8 @@ extern const char* 		MCI_CommandToString(UINT16 wMsg);
 extern int			mciInstalledCount;
 extern int			mciInstalledListLen;
 extern LPSTR			lpmciInstallNames;
+
+extern UINT16			MCI_DefYieldProc(UINT16 wDevID, DWORD data);
 
 typedef struct {
     WORD	uDevType;
