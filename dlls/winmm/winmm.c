@@ -2357,7 +2357,8 @@ UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 	return MMSYSERR_INVALHANDLE;
 
     dwRet = MMDRV_Close(wmld, WODM_CLOSE);
-    MMDRV_Free(hWaveOut, wmld);
+    if (dwRet != WAVERR_STILLPLAYING)
+	MMDRV_Free(hWaveOut, wmld);
 
     return dwRet;
 }
@@ -2706,7 +2707,8 @@ UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 	return MMSYSERR_INVALHANDLE;
 
     dwRet = MMDRV_Message(wmld, WIDM_CLOSE, 0L, 0L, TRUE);
-    MMDRV_Free(hWaveIn, wmld);
+    if (dwRet != WAVERR_STILLPLAYING)
+	MMDRV_Free(hWaveIn, wmld);
     return dwRet;
 }
 
