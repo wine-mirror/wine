@@ -270,7 +270,7 @@ int DRIVE_Init(void)
 
             /* Get the serial number */
             PROFILE_GetWineIniString( name, SerialW, def_serialW, buffer, 80 );
-            drive->serial_conf = strtolW( buffer, NULL, 16 );
+            drive->serial_conf = strtoulW( buffer, NULL, 16 );
 
             /* Get the filesystem type */
             PROFILE_GetWineIniString( name, FilesystemW, win95W, buffer, 80 );
