@@ -454,12 +454,20 @@ UINT MSI_RecordSetStringA( MSIRECORD *rec, unsigned int iField, LPCSTR szValue )
     if( iField > rec->count )
         return ERROR_INVALID_FIELD;
 
-    len = MultiByteToWideChar( CP_ACP, 0, szValue, -1, NULL, 0 );
-    str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, szValue, -1, str, len );
     MSI_FreeField( &rec->fields[iField] );
-    rec->fields[iField].type = MSIFIELD_WSTR;
-    rec->fields[iField].u.szwVal = str;
+    if( szValue )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szValue, -1, NULL, 0 );
+        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, szValue, -1, str, len );
+        rec->fields[iField].type = MSIFIELD_WSTR;
+        rec->fields[iField].u.szwVal = str;
+    }
+    else
+    {
+        rec->fields[iField].type = MSIFIELD_NULL;
+        rec->fields[iField].u.szwVal = NULL;
+    }
 
     return 0;
 }
@@ -491,13 +499,22 @@ UINT MSI_RecordSetStringW( MSIRECORD *rec, unsigned int iField, LPCWSTR szValue 
     if( iField > rec->count )
         return ERROR_INVALID_FIELD;
 
-    len = lstrlenW(szValue) + 1;
-    str = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR));
-    lstrcpyW( str, szValue );
-
     MSI_FreeField( &rec->fields[iField] );
-    rec->fields[iField].type = MSIFIELD_WSTR;
-    rec->fields[iField].u.szwVal = str;
+
+    if( szValue )
+    {
+        len = lstrlenW(szValue) + 1;
+        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR));
+        lstrcpyW( str, szValue );
+
+        rec->fields[iField].type = MSIFIELD_WSTR;
+        rec->fields[iField].u.szwVal = str;
+    }
+    else
+    {
+        rec->fields[iField].type = MSIFIELD_NULL;
+        rec->fields[iField].u.szwVal = NULL;
+    }
 
     return 0;
 }
