@@ -17,7 +17,7 @@ DEFAULT_DEBUG_CHANNEL(ole)
  */
 HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
 {
-  FIXME("(%ld, %p): stub:\n", pperrinfo);
+  FIXME("(%p): stub:\n", pperrinfo);
   
   return S_OK;
 }

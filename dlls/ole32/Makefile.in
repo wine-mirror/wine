@@ -17,6 +17,7 @@ C_SRCS = \
 	compositemoniker.c \
 	datacache.c \
 	defaulthandler.c \
+	errorinfo.c \
 	filemoniker.c \
 	hglobalstream.c \
 	ifs.c \
