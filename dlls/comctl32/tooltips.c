@@ -1404,6 +1404,15 @@ TOOLTIPS_Pop (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
 
+	/*
+	 * Need to set nCurrentTool to nOldTool so we hide the tool.
+	 *  nTool and nOldTool values change when the mouse leaves the window.
+	 * If using TTM_UPDATETIPTEXT we can end up with an nCurrentTool = -1 if the 
+	 * text can't be found, thus the tooltip would never be hidden.
+	 */
+	if (infoPtr->nTool != infoPtr->nOldTool)
+        infoPtr->nCurrentTool = infoPtr->nOldTool;
+
     TOOLTIPS_Hide (hwnd, infoPtr);
 
     return 0;
@@ -1453,7 +1462,15 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    TRACE("timer 1 started!\n");
 		}
 		else {
-		    TOOLTIPS_Hide (hwnd, infoPtr);
+			/*
+			 * Need to set nCurrentTool to nOldTool so we hide the tool.
+			 *  nTool and nOldTool values change when the mouse leaves the window.
+			 * If using TTM_UPDATETIPTEXT we can end up with an nCurrentTool = -1 if the 
+			 * text can't be found, thus the tooltip would never be hidden.
+			 */
+			if (infoPtr->nTool != infoPtr->nOldTool)
+				infoPtr->nCurrentTool = infoPtr->nOldTool;
+			TOOLTIPS_Hide (hwnd, infoPtr);
 		    SetTimer (hwnd, ID_TIMERSHOW, infoPtr->nReshowTime, 0);
 		    TRACE("timer 2 started!\n");
 		}
