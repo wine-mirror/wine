@@ -56,6 +56,12 @@ WINE REGISTRY Version 2
 "Label" = "Home"
 "Filesystem" = "win95"
 
+[Drive Z]
+"Path" = "/"
+"Type" = "hd"
+"Label" = "Root"
+"Filesystem" = "win95"
+
 [wine]
 "Windows" = "c:\\windows"
 "System" = "c:\\windows\\system"
