@@ -46,7 +46,7 @@ enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL
 #define __WINE_DBG_LOG(args...) \
     wine_dbg_log( __dbcl, __dbch, __FUNCTION__, args); } } while(0)
 
-#define __PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)));
+#define __PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 
 #else  /* __GNUC__ */
 
