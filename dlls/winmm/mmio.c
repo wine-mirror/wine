@@ -509,6 +509,8 @@ static FOURCC MMIO_ParseExt(LPCSTR szFileName)
     
     TRACE("(%s)\n",debugstr_a(szFileName));
     
+    if (!szFileName)
+	return ret;
     extEnd = strrchr(szFileName,'+');
     if (extEnd) {
 	/* Need to parse to find the extension */
@@ -719,7 +721,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     LPWINE_MMIO		wm;
 
     TRACE("('%s', %p, %08lX, %d);\n", szFileName, refmminfo, dwOpenFlags, type);
-    
+
     if (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)) {
 	char	buffer[MAX_PATH];
 	
@@ -734,7 +736,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     if ((wm = MMIO_Create()) == NULL)
 	return 0;
 
-    /* If both params are NULL, then parse the file name */
+    /* If both params are NULL, then parse the file name if available */
     if (refmminfo->fccIOProc == 0 && refmminfo->pIOProc == NULL) {
 	wm->info.fccIOProc = MMIO_ParseExt(szFileName);
 	/* Handle any unhandled/error case. Assume DOS file */
@@ -785,7 +787,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     
     /* call IO proc to actually open file */
     refmminfo->wErrorRet = MMIO_SendMessage(wm, MMIOM_OPEN, (LPARAM)szFileName, 
-					    type == MMIO_PROC_16, MMIO_PROC_32A);
+					type == MMIO_PROC_16, MMIO_PROC_32A);
 
     if (refmminfo->wErrorRet == 0)
 	return wm->info.hmmio;
