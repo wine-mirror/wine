@@ -383,7 +383,7 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
       {
         if (*lpBstr)
         {
-          *lpDest = SysAllocStringLen(*lpBstr, SysStringLen(*lpBstr));
+          *lpDest = SysAllocStringByteLen((char*)*lpBstr, SysStringByteLen(*lpBstr));
           if (!*lpDest)
             return E_OUTOFMEMORY;
         }
@@ -887,7 +887,7 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
 
         if (lpBstr)
         {
-          *lpDest = SysAllocStringLen(lpBstr, SysStringLen(lpBstr));
+          *lpDest = SysAllocStringByteLen((char*)lpBstr, SysStringByteLen(lpBstr));
           if (!*lpDest)
             hRet = E_OUTOFMEMORY;
         }
@@ -968,7 +968,7 @@ HRESULT WINAPI SafeArrayGetElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
 
         if (*lpBstr)
         {
-          *lpDest = SysAllocStringLen(*lpBstr, SysStringLen(*lpBstr));
+          *lpDest = SysAllocStringByteLen((char*)*lpBstr, SysStringByteLen(*lpBstr));
           if (!*lpBstr)
             hRet = E_OUTOFMEMORY;
         }

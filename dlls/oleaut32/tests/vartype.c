@@ -4607,6 +4607,7 @@ static void test_SysAllocStringByteLen()
   const OLECHAR szTest[10] = { 'T','e','s','t','\0' };
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
   BSTR str;
+  HRESULT hres;
 
   str = SysAllocStringByteLen(szTestA, 0x80000000);
   ok (str == NULL, "Expected NULL, got %p\n", str);
@@ -4640,9 +4641,20 @@ static void test_SysAllocStringByteLen()
   {
     const CHAR szTestTruncA[4] = { 'T','e','s','\0' };
     LPINTERNAL_BSTR bstr = Get(str);
+    VARIANT vt1, vt2;
 
     ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
+
+    V_VT(&vt1) = VT_BSTR;
+    V_BSTR(&vt1) = str;
+    V_VT(&vt2) = VT_EMPTY;
+    hres = VariantCopy(&vt2, &vt1);
+    ok (hres == S_OK,"Failed to copy binary bstring with hres 0x%08lx\n", hres);
+    bstr = Get(V_BSTR(&vt2));
+    ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
+    ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
+
     SysFreeString(str);
   }
 

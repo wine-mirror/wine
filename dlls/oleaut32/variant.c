@@ -727,7 +727,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
       {
         if (V_BSTR(pvargSrc))
         {
-          V_BSTR(pvargDest) = SysAllocStringLen(V_BSTR(pvargSrc), SysStringLen(V_BSTR(pvargSrc)));
+          V_BSTR(pvargDest) = SysAllocStringByteLen((char*)V_BSTR(pvargSrc), SysStringByteLen(V_BSTR(pvargSrc)));
           if (!V_BSTR(pvargDest))
             hres = E_OUTOFMEMORY;
         }
@@ -852,7 +852,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
   else if (V_VT(pSrc) == (VT_BSTR|VT_BYREF))
   {
     /* Native doesn't check that *V_BSTRREF(pSrc) is valid */
-    V_BSTR(pvargDest) = SysAllocStringLen(*V_BSTRREF(pSrc), SysStringLen(*V_BSTRREF(pSrc)));
+    V_BSTR(pvargDest) = SysAllocStringByteLen((char*)*V_BSTRREF(pSrc), SysStringByteLen(*V_BSTRREF(pSrc)));
   }
   else if (V_VT(pSrc) == (VT_RECORD|VT_BYREF))
   {
