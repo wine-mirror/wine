@@ -3,8 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dsound
-SOVERSION = 1.0
-IMPORTS   = winmm kernel32 ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	dsound_main.c

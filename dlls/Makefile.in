@@ -418,13 +418,13 @@ opengl32/libopengl32.so: libx11drv.so libkernel32.so
 psapi/libpsapi.so: libkernel32.so libntdll.so
 rasapi32/librasapi32.so: libntdll.so
 richedit/libriched32.so: libuser32.so libkernel32.so libntdll.so
-rpcrt4/librpcrt4.so: libntdll.so
+rpcrt4/librpcrt4.so: libkernel32.so libntdll.so
 serialui/libserialui.so: libuser32.so libadvapi32.so libkernel32.so libntdll.so
 setupapi/libsetupapi.so: libadvapi32.so libkernel32.so libntdll.so
 shell32/libshell32.so: libole32.so libshlwapi.so libcomctl32.so libadvapi32.so libuser32.so libgdi32.so libkernel32.so libntdll.so
-shfolder/libshfolder.so: libshell32.so libntdll.so
+shfolder/libshfolder.so: libshell32.so
 shlwapi/libshlwapi.so: libadvapi32.so libuser32.so libgdi32.so libkernel32.so libntdll.so
-tapi32/libtapi32.so: libkernel32.so
+tapi32/libtapi32.so: libkernel32.so libntdll.so
 ttydrv/libttydrv.so: libuser32.so libgdi32.so libkernel32.so libntdll.so
 urlmon/liburlmon.so: libole32.so libntdll.so
 user/libuser32.so: libgdi32.so libadvapi32.so libkernel32.so libntdll.so
@@ -445,7 +445,7 @@ winmm/wavemap/libmsacm.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.
 winmm/wineoss/libwineoss.drv.so: libwinmm.so libuser32.so libkernel32.so libntdll.so
 winsock/libws2_32.so: libuser32.so libkernel32.so libntdll.so
 winspool/libwinspool.drv.so: libgdi32.so libadvapi32.so libkernel32.so libntdll.so
-wow32/libwow32.so: libkernel32.so libntdll.so
+wow32/libwow32.so: libkernel32.so
 wsock32/libwsock32.so: libws2_32.so libkernel32.so libntdll.so
 x11drv/libx11drv.so: libuser32.so libgdi32.so libkernel32.so
 

@@ -3,9 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32
-SOVERSION = 1.0
 ALTNAMES  = rasapi16
 IMPORTS   = ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = rasapi.c 
 

@@ -6,20 +6,19 @@
 
 #include <stdio.h>
 
-#include "filedlgbrowser.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "unknwn.h"
 #include "wine/winestring.h"
 #include "heap.h"
-#include "shlguid.h"
-#include "wine/obj_dataobject.h"
 #include "debugtools.h"
-#include "cdlg.h"
 
 #define INITGUID
 #include "initguid.h"
+#include "unknwn.h"
+#include "filedlgbrowser.h"
+#include "cdlg.h"
+#include "shlguid.h"
 #include "wine/obj_serviceprovider.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg);

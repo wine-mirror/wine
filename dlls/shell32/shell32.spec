@@ -272,10 +272,10 @@ debug_channels (exec pidl shell)
  322 stub StrRStrIA
  323 stub StrRStrIW
  324 stub StrRStrW
- 325 stdcall StrStrA(str str)StrStrA
- 326 stdcall StrStrIA(str str)StrStrIA
- 327 stdcall StrStrIW(wstr wstr)StrStrIW
- 328 stdcall StrStrW(wstr wstr)StrStrW
+ 325 forward StrStrA shlwapi.StrStrA
+ 326 forward StrStrIA shlwapi.StrStrIA
+ 327 forward StrStrIW shlwapi.StrStrIW
+ 328 forward StrStrW shlwapi.StrStrW
 
  505 stdcall SHRegCloseKey (long) SHRegCloseKey
  506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKeyA

@@ -3,9 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olecli32
-SOVERSION = 1.0
 ALTNAMES  = olecli
-IMPORTS   = ole32 olesvr32 gdi32 ntdll
+IMPORTS   = ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	olecli_main.c

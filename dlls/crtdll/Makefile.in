@@ -3,8 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = crtdll
-SOVERSION = 1.0
-IMPORTS   = kernel32 ntdll
+EXTRALIBS = -lwine_unicode
+IMPORTS   = ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	crtdll_main.c \

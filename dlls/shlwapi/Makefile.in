@@ -3,8 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi
-SOVERSION = 1.0
-IMPORTS   = advapi32 user32 gdi32 kernel32 ntdll
+EXTRALIBS = -lwine_unicode
+IMPORTS   = ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	ordinal.c \

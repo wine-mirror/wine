@@ -3,8 +3,9 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm.drv
-SOVERSION = 1.0
-IMPORTS   = winmm user32 kernel32 ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	wavemap.c

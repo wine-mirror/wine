@@ -3,9 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = version
-SOVERSION = 1.0
 ALTNAMES  = ver
-IMPORTS   = lz32 kernel32 ntdll
+EXTRALIBS = -lwine_unicode
+IMPORTS   = ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	info.c \
