@@ -262,6 +262,10 @@ HRESULT WINAPI DirectDrawEnumerateExA(
     /* For the moment, Wine does not support any 3D only accelerators */
     return DD_OK;
   }
+  if (dwFlags == DDENUM_NONDISPLAYDEVICES) {
+    /* For the moment, Wine does not support any attached secondary devices */
+    return DD_OK;
+  }
   
   if (DDRAW_DGA_Available()) {
     TRACE("Enumerating DGA interface\n");
@@ -1488,9 +1492,8 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
     }
 
     /* Free the clipper if attached to this surface */
-    if( This->lpClipper ) {
-      IDirectDrawClipper_Release(This->lpClipper);
-    }
+    if( This->s.lpClipper )
+      IDirectDrawClipper_Release(This->s.lpClipper);
     
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
@@ -1557,9 +1560,8 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
     }
 
     /* Free the clipper if present */
-    if( This->lpClipper ) {
+    if( This->s.lpClipper )
       IDirectDrawClipper_Release(This->lpClipper);
-    }
 
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
@@ -1641,12 +1643,11 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_SetClipper(
 	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWCLIPPER lpClipper
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
-
 	TRACE("(%p)->(%p)!\n",This,lpClipper);
 
-	This->lpClipper = lpClipper;
+	IDirectDrawClipper_Release( This->s.lpClipper );
+	This->s.lpClipper = lpClipper;
 	IDirectDrawClipper_AddRef( lpClipper ); /* Add the reference to it */
-
 	return DD_OK;
 }
 
@@ -2408,14 +2409,12 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetHwnd(
         ICOM_THIS(IDirectDrawClipperImpl,iface);
 
 	TRACE("(%p)->SetHwnd(0x%08lx,0x%08lx)\n",This,dwFlags,(DWORD)hWnd);
-
-        if( dwFlags )
-        {
+        if( dwFlags ) {
+	  FIXME("dwFlags = 0x%08lx, not supported.\n",dwFlags);
           return DDERR_INVALIDPARAMS; 
         }
 
         This->hWnd = hWnd;
-
 	return DD_OK;
 }
 
@@ -3088,7 +3087,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     (*ilpdsf)->s.ddraw = This;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
-    (*ilpdsf)->lpClipper = NULL;
+    (*ilpdsf)->s.lpClipper = NULL;
 
     /* Copy the surface description */
     (*ilpdsf)->s.surface_desc = *lpddsd;
@@ -3355,7 +3354,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     ICOM_VTBL(*ilpdsf)             = (ICOM_VTABLE(IDirectDrawSurface)*)&xlib_dds4vt;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
-    (*ilpdsf)->lpClipper = NULL;
+    (*ilpdsf)->s.lpClipper = NULL;
 
     /* Copy the surface description */
     (*ilpdsf)->s.surface_desc = *lpddsd;

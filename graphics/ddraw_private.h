@@ -169,6 +169,8 @@ struct _common_directdrawsurface
 
     /* Storage for attached device (void * as it can be either a Device or a Device2) */
     void                       *d3d_device;
+
+    LPDIRECTDRAWCLIPPER		lpClipper;
 };
 
 struct _dga_directdrawsurface
@@ -195,7 +197,6 @@ struct IDirectDrawSurfaceImpl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
-    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
