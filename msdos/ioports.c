@@ -321,7 +321,10 @@ DWORD IO_inport( int port, int size )
         break;
     }
     case 0x60:
+        res = INT_Int09ReadScan();
+#if 0 /* what's this port got to do with parport ? */
         res = (DWORD)parport_8255[0];
+#endif
         break;
     case 0x61:
         res = (DWORD)parport_8255[1];
@@ -381,6 +384,9 @@ void IO_outport( int port, int size, DWORD value )
     case 0x3c8:
     case 0x3c9:
         VGA_ioport_out( port, (BYTE)value );
+        break;
+    case 0x20:
+        DOSVM_PIC_ioport_out( port, (BYTE)value );
         break;
     case 0x40:
     case 0x41:
