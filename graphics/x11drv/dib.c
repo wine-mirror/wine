@@ -1442,9 +1442,9 @@ INT X11DRV_DIB_SetDIBits(
 
   if (descr.infoBpp <= 8)
     {
-      descr.colorMap = X11DRV_DIB_BuildColorMap( descr.dc, coloruse,
-						 bmp->bitmap.bmBitsPixel,
-						 info, &descr.nColorMap );
+      descr.colorMap = X11DRV_DIB_BuildColorMap(
+		coloruse == DIB_PAL_COLORS? descr.dc : NULL,
+		coloruse, bmp->bitmap.bmBitsPixel, info, &descr.nColorMap );
       if (!descr.colorMap)
         {
 	  return 0;
@@ -2172,11 +2172,8 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   
   /* Create Color Map */
   if (bm.bmBits && bm.bmBitsPixel <= 8)
-    {
-      if(dc)
-	colorMap = X11DRV_DIB_BuildColorMap( dc, usage, bm.bmBitsPixel,
-					     bmi, &nColorMap );
-    }
+      colorMap = X11DRV_DIB_BuildColorMap( usage == DIB_PAL_COLORS? dc : NULL, 
+				usage, bm.bmBitsPixel, bmi, &nColorMap );
 
   /* Allocate Memory for DIB and fill structure */
   if (bm.bmBits)
