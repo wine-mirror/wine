@@ -186,7 +186,7 @@ struct IDirectSound3DBufferImpl
 
 /* #define USE_DSOUND3D 1 */
 
-#define DSOUND_FRAGLEN (primarybuf->wfx.nAvgBytesPerSec >> 4)
+#define DSOUND_FRAGLEN ((primarybuf->wfx.nAvgBytesPerSec >> 4) & ~3)
 #define DSOUND_FREQSHIFT (14)
 
 static int audiofd = -1;
