@@ -484,10 +484,10 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
     /* calculate placement */
     MDI_CalcDefaultChildPos(parent, ci->nTotalCreated++, pos, 0);
 
-    if (cs->cx == CW_USEDEFAULT || !cs->cx) cs->cx = pos[1].x;
-    if (cs->cy == CW_USEDEFAULT || !cs->cy) cs->cy = pos[1].y;
+    if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16 || !cs->cx) cs->cx = pos[1].x;
+    if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16 || !cs->cy) cs->cy = pos[1].y;
 
-    if( cs->x == CW_USEDEFAULT )
+    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
     {
  	cs->x = pos[0].x;
 	cs->y = pos[0].y;
