@@ -143,7 +143,7 @@ inline static HKEY get_special_root_hkey( HKEY hkey )
 
 
 /******************************************************************************
- *           RegCreateKeyExW   [ADVAPI32.@]
+ * RegCreateKeyExW   [ADVAPI32.@]
  *
  * See RegCreateKeyExA.
  */
@@ -173,27 +173,27 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPCWSTR c
 
 
 /******************************************************************************
- *           RegCreateKeyExA   [ADVAPI32.@]
+ * RegCreateKeyExA   [ADVAPI32.@]
  *
  * Open a registry key, creating it if it doesn't exist.
  *
  * PARAMS
- *    hkey       [I] Handle of the parent registry key
- *    name       [I] Name of the new key to open or create
- *    reserved   [I] Reserved, pass 0
- *    class      [I] The object type of the new key
- *    options    [I] Flags controlling the key creation (REG_OPTION_* flags from "winnt.h")
- *    access     [I] Access level desired
- *    sa         [I] Security attributes for the key
- *    retkey     [O] Destination for the resulting handle
- *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
+ *  hkey       [I] Handle of the parent registry key
+ *  name       [I] Name of the new key to open or create
+ *  reserved   [I] Reserved, pass 0
+ *  class      [I] The object type of the new key
+ *  options    [I] Flags controlling the key creation (REG_OPTION_* flags from "winnt.h")
+ *  access     [I] Access level desired
+ *  sa         [I] Security attributes for the key
+ *  retkey     [O] Destination for the resulting handle
+ *  dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
  *
  * RETURNS
- *    Success: ERROR_SUCCESS.
- *    Failure: A standard Win32 error code. retkey remains untouched.
+ *  Success: ERROR_SUCCESS.
+ *  Failure: A standard Win32 error code. retkey remains untouched.
  *
  * FIXME
- *   MAXIMUM_ALLOWED in access mask not supported by server
+ *  MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPCSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
@@ -232,31 +232,44 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPCSTR cla
 
 
 /******************************************************************************
- *           RegCreateKeyW   [ADVAPI32.@]
+ * RegCreateKeyW   [ADVAPI32.@]
+ *
+ * Creates the specified reg key.
+ *
+ * PARAMS
+ *  hKey      [I] Handle to an open key.
+ *  lpSubKey  [I] Name of a key that will be opened or created.
+ *  phkResult [O] Receives a handle to the opened or created key.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code defined in Winerror.h
  */
-DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
+DWORD WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
 {
     /* FIXME: previous implementation converted ERROR_INVALID_HANDLE to ERROR_BADKEY, */
     /* but at least my version of NT (4.0 SP5) doesn't do this.  -- AJ */
-    return RegCreateKeyExW( hkey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS, NULL, retkey, NULL );
+    return RegCreateKeyExW( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
+                            KEY_ALL_ACCESS, NULL, phkResult, NULL );
 }
 
 
 /******************************************************************************
- *           RegCreateKeyA   [ADVAPI32.@]
- */
-DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
-{
-    return RegCreateKeyExA( hkey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS, NULL, retkey, NULL );
-}
-
-
-
-/******************************************************************************
- *           RegOpenKeyExW   [ADVAPI32.@]
+ * RegCreateKeyA   [ADVAPI32.@]
  *
+ * see RegCreateKeyW
+ */
+DWORD WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
+{
+    return RegCreateKeyExA( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
+                            KEY_ALL_ACCESS, NULL, phkResult, NULL );
+}
+
+
+
+/******************************************************************************
+ * RegOpenKeyExW   [ADVAPI32.@]
+ * 
  * See RegOpenKeyExA.
  */
 DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
@@ -278,24 +291,24 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
 
 
 /******************************************************************************
- *           RegOpenKeyExA   [ADVAPI32.@]
+ * RegOpenKeyExA   [ADVAPI32.@]
  *
  * Open a registry key.
  *
  * PARAMS
- *    hkey       [I] Handle of open key
- *    name       [I] Name of subkey to open
- *    reserved   [I] Reserved - must be zero
- *    access     [I] Security access mask
- *    retkey     [O] Handle to open key
+ *  hkey       [I] Handle of open key
+ *  name       [I] Name of subkey to open
+ *  reserved   [I] Reserved - must be zero
+ *  access     [I] Security access mask
+ *  retkey     [O] Handle to open key
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: A standard Win32 error code. retkey is set to 0.
+ *  Success: ERROR_SUCCESS
+ *  Failure: A standard Win32 error code. retkey is set to 0.
  *
  * NOTES
- *  - Unlike RegCreateKeyExA(), this function will not create the key if it
- *    does not exist.
+ *  Unlike RegCreateKeyExA(), this function will not create the key if it
+ *  does not exist.
  */
 DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM access, PHKEY retkey )
 {
@@ -325,7 +338,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
 
 
 /******************************************************************************
- *           RegOpenKeyW   [ADVAPI32.@]
+ * RegOpenKeyW   [ADVAPI32.@]
  *
  * See RegOpenKeyA.
  */
@@ -336,18 +349,18 @@ DWORD WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 
 
 /******************************************************************************
- *           RegOpenKeyA   [ADVAPI32.@]
+ * RegOpenKeyA   [ADVAPI32.@]
  *           
  * Open a registry key.
  *
  * PARAMS
- *    hkey    [I] Handle of parent key to open the new key under
- *    name    [I] Name of the key under hkey to open
- *    retkey  [O] Destination for the resulting Handle
+ *  hkey    [I] Handle of parent key to open the new key under
+ *  name    [I] Name of the key under hkey to open
+ *  retkey  [O] Destination for the resulting Handle
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: A standard Win32 error code. retkey is set to 0.
+ *  Success: ERROR_SUCCESS
+ *  Failure: A standard Win32 error code. retkey is set to 0.
  */
 DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
@@ -356,7 +369,8 @@ DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 
 
 /******************************************************************************
- *           RegOpenCurrentUser   [ADVAPI32.@]
+ * RegOpenCurrentUser   [ADVAPI32.@]
+ * 
  * FIXME: This function is supposed to retrieve a handle to the
  * HKEY_CURRENT_USER for the user the current thread is impersonating.
  * Since Wine does not currently allow threads to impersonate other users,
@@ -370,17 +384,22 @@ DWORD WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
 
 
 /******************************************************************************
- *           RegEnumKeyExW   [ADVAPI32.@]
+ * RegEnumKeyExW   [ADVAPI32.@]
  *
  * PARAMS
- *    hkey         [I] Handle to key to enumerate
- *    index        [I] Index of subkey to enumerate
- *    name         [O] Buffer for subkey name
- *    name_len     [O] Size of subkey buffer
- *    reserved     [I] Reserved
- *    class        [O] Buffer for class string
- *    class_len    [O] Size of class buffer
- *    ft           [O] Time key last written to
+ *  hkey         [I] Handle to key to enumerate
+ *  index        [I] Index of subkey to enumerate
+ *  name         [O] Buffer for subkey name
+ *  name_len     [O] Size of subkey buffer
+ *  reserved     [I] Reserved
+ *  class        [O] Buffer for class string
+ *  class_len    [O] Size of class buffer
+ *  ft           [O] Time key last written to
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: System error code. If there are no more subkeys available, the
+ *           function returns ERROR_NO_MORE_ITEMS.
  */
 DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPWSTR class, LPDWORD class_len, FILETIME *ft )
@@ -442,7 +461,9 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 
 
 /******************************************************************************
- *           RegEnumKeyExA   [ADVAPI32.@]
+ * RegEnumKeyExA   [ADVAPI32.@]
+ *
+ * see RegEnumKeyExW
  */
 DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPSTR class, LPDWORD class_len, FILETIME *ft )
@@ -508,7 +529,20 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
 
 
 /******************************************************************************
- *           RegEnumKeyW   [ADVAPI32.@]
+ * RegEnumKeyW   [ADVAPI32.@]
+ *
+ * Enumerates subkyes of the specified open reg key.
+ *
+ * PARAMS
+ *  hKey    [I] Handle to an open key.
+ *  dwIndex [I] Index of the subkey of hKey to retrieve.
+ *  lpName  [O] Name of the subkey.
+ *  cchName [I] Size of lpName in TCHARS.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: system error code. If there are no more subkeys available, the
+ *           function returns ERROR_NO_MORE_ITEMS.
  */
 DWORD WINAPI RegEnumKeyW( HKEY hkey, DWORD index, LPWSTR name, DWORD name_len )
 {
@@ -517,7 +551,9 @@ DWORD WINAPI RegEnumKeyW( HKEY hkey, DWORD index, LPWSTR name, DWORD name_len )
 
 
 /******************************************************************************
- *           RegEnumKeyA   [ADVAPI32.@]
+ * RegEnumKeyA   [ADVAPI32.@]
+ *
+ * see RegEnumKeyW
  */
 DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 {
@@ -526,7 +562,7 @@ DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
 
 
 /******************************************************************************
- *           RegQueryInfoKeyW   [ADVAPI32.@]
+ * RegQueryInfoKeyW   [ADVAPI32.@]
  *
  * PARAMS
  *    hkey       [I] Handle to key to query
@@ -608,7 +644,21 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
 
 
 /******************************************************************************
- *           RegQueryMultipleValuesA   [ADVAPI32.@]
+ * RegQueryMultipleValuesA   [ADVAPI32.@]
+ *
+ * Retrieves the type and data for a list of value names associated with a key.
+ *
+ * PARAMS
+ *  hKey       [I] Handle to an open key.
+ *  val_list   [O] Array of VALENT structures that describes the entries.
+ *  num_vals   [I] Number of elements in val_list.
+ *  lpValueBuf [O] Pointer to a buffer that receives the data for each value.
+ *  ldwTotsize [I/O] Size of lpValueBuf.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS. ldwTotsize contains num bytes copied.
+ *  Failure: nonzero error code from Winerror.h ldwTotsize contains num needed
+ *           bytes.
  */
 DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_vals,
                                      LPSTR lpValueBuf, LPDWORD ldwTotsize)
@@ -652,7 +702,9 @@ DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_val
 
 
 /******************************************************************************
- *           RegQueryMultipleValuesW   [ADVAPI32.@]
+ * RegQueryMultipleValuesW   [ADVAPI32.@]
+ *
+ * see RegQueryMultipleValuesA
  */
 DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_vals,
                                      LPWSTR lpValueBuf, LPDWORD ldwTotsize)
@@ -694,7 +746,28 @@ DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_val
 }
 
 /******************************************************************************
- *           RegQueryInfoKeyA   [ADVAPI32.@]
+ * RegQueryInfoKeyA   [ADVAPI32.@]
+ *
+ * Retrieves information about a registry key.
+ *
+ * PARAMS
+ *  hKey                   [I] Handle to an open key.
+ *  lpClass                [O] Class string of the key.
+ *  lpcClass               [I/O] size of lpClass.
+ *  lpReserved             [I] Reserved; must be NULL.
+ *  lpcSubKeys             [O] Number of subkeys contained by the key.
+ *  lpcMaxSubKeyLen        [O] Size of the key's subkey with the longest name.
+ *  lpcMaxClassLen         [O] Size of the longest string specifying a subkey
+ *                             class in TCHARS.
+ *  lpcValues              [O] Number of values associated with the key.
+ *  lpcMaxValueNameLen     [O] Size of the key's longest value name in TCHARS.
+ *  lpcMaxValueLen         [O] Longest data component among the key's values
+ *  lpcbSecurityDescriptor [O] Size of the key's security descriptor.
+ *  lpftLastWriteTime      [O] FILETIME strucutre that is the last write time.
+ *
+ *  RETURNS
+ *   Success: ERROR_SUCCESS
+ *   Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWORD reserved,
                                LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
@@ -759,16 +832,16 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
 
 
 /******************************************************************************
- *           RegCloseKey   [ADVAPI32.@]
+ * RegCloseKey   [ADVAPI32.@]
  *
  * Close an open registry key.
  *
  * PARAMS
- *    hkey [I] Handle of key to close
+ *  hkey [I] Handle of key to close
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ *  Success: ERROR_SUCCESS
+ *  Failure: Error code
  */
 DWORD WINAPI RegCloseKey( HKEY hkey )
 {
@@ -778,7 +851,7 @@ DWORD WINAPI RegCloseKey( HKEY hkey )
 
 
 /******************************************************************************
- *           RegDeleteKeyW   [ADVAPI32.@]
+ * RegDeleteKeyW   [ADVAPI32.@]
  *
  * See RegDeleteKeyA.
  */
@@ -814,17 +887,17 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 
 
 /******************************************************************************
- *           RegDeleteKeyA   [ADVAPI32.@]
+ * RegDeleteKeyA   [ADVAPI32.@]
  *
  * Delete a registry key.
  *
  * PARAMS
- *    hkey   [I] Handle to parent key containing the key to delete
- *    name   [I] Name of the key user hkey to delete
+ *  hkey   [I] Handle to parent key containing the key to delete
+ *  name   [I] Name of the key user hkey to delete
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ *  Success: ERROR_SUCCESS
+ *  Failure: Error code
  */
 DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 {
@@ -859,25 +932,25 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 
 
 /******************************************************************************
- *           RegSetValueExW   [ADVAPI32.@]
+ * RegSetValueExW   [ADVAPI32.@]
  *
  * Set the data and contents of a registry value.
  *
  * PARAMS
- *    hkey       [I] Handle of key to set value for
- *    name       [I] Name of value to set
- *    reserved   [I] Reserved, must be zero
- *    type       [I] Type of the value being set
- *    data       [I] The new contents of the value to set
- *    count      [I] Size of data
+ *  hkey       [I] Handle of key to set value for
+ *  name       [I] Name of value to set
+ *  reserved   [I] Reserved, must be zero
+ *  type       [I] Type of the value being set
+ *  data       [I] The new contents of the value to set
+ *  count      [I] Size of data
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ *  Success: ERROR_SUCCESS
+ *  Failure: Error code
  *
  * NOTES
- *   win95 does not care about count for REG_SZ and finds out the len by itself (js)
- *   NT does definitely care (aj)
+ *  win95 does not care about count for REG_SZ and finds out the len by itself (js)
+ *  NT does definitely care (aj)
  */
 DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
                              DWORD type, CONST BYTE *data, DWORD count )
@@ -903,7 +976,9 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 
 
 /******************************************************************************
- *           RegSetValueExA   [ADVAPI32.@]
+ * RegSetValueExA   [ADVAPI32.@]
+ *
+ * see RegSetValueExW
  */
 DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
                              CONST BYTE *data, DWORD count )
@@ -946,7 +1021,20 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 
 
 /******************************************************************************
- *           RegSetValueW   [ADVAPI32.@]
+ * RegSetValueW   [ADVAPI32.@]
+ *
+ * Sets the data for the default or unnamed value of a reg key.
+ *
+ * PARAMS
+ *  hKey     [I] Handle to an open key.
+ *  lpSubKey [I] Name of a subkey of hKey.
+ *  dwType   [I] Type of information to store.
+ *  lpData   [I] String that contains the data to set for the default value.
+ *  cbData   [I] Size of lpData.
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DWORD count )
 {
@@ -970,7 +1058,9 @@ DWORD WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DW
 
 
 /******************************************************************************
- *           RegSetValueA   [ADVAPI32.@]
+ * RegSetValueA   [ADVAPI32.@]
+ *
+ * see RegSetValueW
  */
 DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
 {
@@ -993,7 +1083,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
 
 
 /******************************************************************************
- *           RegQueryValueExW   [ADVAPI32.@]
+ * RegQueryValueExW   [ADVAPI32.@]
  *
  * See RegQueryValueExA.
  */
@@ -1061,17 +1151,17 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
 
 
 /******************************************************************************
- *           RegQueryValueExA   [ADVAPI32.@]
+ * RegQueryValueExA   [ADVAPI32.@]
  *
  * Get the type and contents of a specified value under with a key.
  *
  * PARAMS
- *    hkey      [I]   Handle of the key to query
- *    name      [I]   Name of value under hkey to query
- *    reserved  [I]   Reserved - must be NULL
- *    type      [O]   Destination for the value type, or NULL if not required
- *    data      [O]   Destination for the values contents, or NULL if not required
- *    count     [I/O] Size of data, updated with the number of bytes returned
+ *  hkey      [I]   Handle of the key to query
+ *  name      [I]   Name of value under hkey to query
+ *  reserved  [I]   Reserved - must be NULL
+ *  type      [O]   Destination for the value type, or NULL if not required
+ *  data      [O]   Destination for the values contents, or NULL if not required
+ *  count     [I/O] Size of data, updated with the number of bytes returned
  *
  * RETURNS
  *  Success: ERROR_SUCCESS. *count is updated with the number of bytes copied to data.
@@ -1166,7 +1256,20 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
 
 /******************************************************************************
- *           RegQueryValueW   [ADVAPI32.@]
+ * RegQueryValueW   [ADVAPI32.@]
+ *
+ * Retrieves the data associated with the default or unnamed value of a key.
+ *
+ * PARAMS
+ *  hKey      [I] Handle to an open key.
+ *  lpSubKey  [I] Name of the subkey of hKey.
+ *  lpValue   [O] Receives the string associated with the default value
+ *                of the key.
+ *  lpcbValue [I/O] Size of lpValue.
+ *
+ *  RETURNS
+ *   Success: ERROR_SUCCESS
+ *   Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count )
 {
@@ -1193,7 +1296,9 @@ DWORD WINAPI RegQueryValueW( HKEY hkey, LPCWSTR name, LPWSTR data, LPLONG count 
 
 
 /******************************************************************************
- *           RegQueryValueA   [ADVAPI32.@]
+ * RegQueryValueA   [ADVAPI32.@]
+ *
+ * see RegQueryValueW
  */
 DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 {
@@ -1220,17 +1325,21 @@ DWORD WINAPI RegQueryValueA( HKEY hkey, LPCSTR name, LPSTR data, LPLONG count )
 
 
 /******************************************************************************
- *           RegEnumValueW   [ADVAPI32.@]
+ * RegEnumValueW   [ADVAPI32.@]
  *
  * PARAMS
- *    hkey       [I] Handle to key to query
- *    index      [I] Index of value to query
- *    value      [O] Value string
- *    val_count  [I/O] Size of value buffer (in wchars)
- *    reserved   [I] Reserved
- *    type       [O] Type code
- *    data       [O] Value data
- *    count      [I/O] Size of data buffer (in bytes)
+ *  hkey       [I] Handle to key to query
+ *  index      [I] Index of value to query
+ *  value      [O] Value string
+ *  val_count  [I/O] Size of value buffer (in wchars)
+ *  reserved   [I] Reserved
+ *  type       [O] Type code
+ *  data       [O] Value data
+ *  count      [I/O] Size of data buffer (in bytes)
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 
 DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_count,
@@ -1314,7 +1423,9 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 
 
 /******************************************************************************
- *           RegEnumValueA   [ADVAPI32.@]
+ * RegEnumValueA   [ADVAPI32.@]
+ *
+ * see RegEnumValueW
  */
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
@@ -1418,7 +1529,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
 
 /******************************************************************************
- *           RegDeleteValueW   [ADVAPI32.@]
+ * RegDeleteValueW   [ADVAPI32.@]
  *
  * See RegDeleteValueA.
  */
@@ -1434,7 +1545,7 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 
 
 /******************************************************************************
- *           RegDeleteValueA   [ADVAPI32.@]
+ * RegDeleteValueA   [ADVAPI32.@]
  *
  * Delete a value from the registry.
  *
@@ -1443,8 +1554,8 @@ DWORD WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
  *  name [I] Name of the value under hkey to delete
  *
  * RETURNS
- *  Success: 0
- *  Failure: A standard Windows error code.
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
@@ -1462,12 +1573,16 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 
 
 /******************************************************************************
- *           RegLoadKeyW   [ADVAPI32.@]
+ * RegLoadKeyW   [ADVAPI32.@]
  *
  * PARAMS
- *    hkey      [I] Handle of open key
- *    subkey    [I] Address of name of subkey
- *    filename  [I] Address of filename for registry information
+ *  hkey      [I] Handle of open key
+ *  subkey    [I] Address of name of subkey
+ *  filename  [I] Address of filename for registry information
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCES
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 {
@@ -1511,7 +1626,9 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 
 
 /******************************************************************************
- *           RegLoadKeyA   [ADVAPI32.@]
+ * RegLoadKeyA   [ADVAPI32.@]
+ *
+ * see RegLoadKeyW
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
@@ -1556,12 +1673,16 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 
 
 /******************************************************************************
- *           RegSaveKeyW   [ADVAPI32.@]
+ * RegSaveKeyW   [ADVAPI32.@]
  *
  * PARAMS
- *    hkey   [I] Handle of key where save begins
- *    lpFile [I] Address of filename to save to
- *    sa     [I] Address of security structure
+ *  hkey   [I] Handle of key where save begins
+ *  lpFile [I] Address of filename to save to
+ *  sa     [I] Address of security structure
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
 {
@@ -1621,7 +1742,9 @@ done:
 
 
 /******************************************************************************
- *           RegSaveKeyA  [ADVAPI32.@]
+ * RegSaveKeyA  [ADVAPI32.@]
+ *
+ * see RegSaveKeyW
  */
 LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 {
@@ -1640,9 +1763,13 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
  * RegRestoreKeyW [ADVAPI32.@]
  *
  * PARAMS
- *    hkey    [I] Handle of key where restore begins
- *    lpFile  [I] Address of filename containing saved tree
- *    dwFlags [I] Optional flags
+ *  hkey    [I] Handle of key where restore begins
+ *  lpFile  [I] Address of filename containing saved tree
+ *  dwFlags [I] Optional flags
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 {
@@ -1662,6 +1789,8 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
 
 /******************************************************************************
  * RegRestoreKeyA [ADVAPI32.@]
+ *
+ * see RegRestoreKeyW
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
@@ -1679,8 +1808,12 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
  * RegUnLoadKeyW [ADVAPI32.@]
  *
  * PARAMS
- *    hkey     [I] Handle of open key
- *    lpSubKey [I] Address of name of subkey to unload
+ *  hkey     [I] Handle of open key
+ *  lpSubKey [I] Address of name of subkey to unload
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 {
@@ -1707,6 +1840,8 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 
 /******************************************************************************
  * RegUnLoadKeyA [ADVAPI32.@]
+ *
+ * see RegUnLoadKeyW
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
@@ -1724,10 +1859,14 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
  * RegReplaceKeyW [ADVAPI32.@]
  *
  * PARAMS
- *    hkey      [I] Handle of open key
- *    lpSubKey  [I] Address of name of subkey
- *    lpNewFile [I] Address of filename for file with new data
- *    lpOldFile [I] Address of filename for backup file
+ *  hkey      [I] Handle of open key
+ *  lpSubKey  [I] Address of name of subkey
+ *  lpNewFile [I] Address of filename for file with new data
+ *  lpOldFile [I] Address of filename for backup file
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
                               LPCWSTR lpOldFile )
@@ -1740,6 +1879,8 @@ LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 
 /******************************************************************************
  * RegReplaceKeyA [ADVAPI32.@]
+ *
+ * see RegReplaceKeyW
  */
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )
@@ -1764,9 +1905,13 @@ LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
  * RegSetKeySecurity [ADVAPI32.@]
  *
  * PARAMS
- *    hkey          [I] Open handle of key to set
- *    SecurityInfo  [I] Descriptor contents
- *    pSecurityDesc [I] Address of descriptor for key
+ *  hkey          [I] Open handle of key to set
+ *  SecurityInfo  [I] Descriptor contents
+ *  pSecurityDesc [I] Address of descriptor for key
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
                                PSECURITY_DESCRIPTOR pSecurityDesc )
@@ -1797,14 +1942,14 @@ LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
  * Get a copy of the security descriptor for a given registry key.
  *
  * PARAMS
- *    hkey                   [I]   Open handle of key to set
- *    SecurityInformation    [I]   Descriptor contents
- *    pSecurityDescriptor    [O]   Address of descriptor for key
- *    lpcbSecurityDescriptor [I/O] Address of size of buffer and description
+ *  hkey                   [I]   Open handle of key to set
+ *  SecurityInformation    [I]   Descriptor contents
+ *  pSecurityDescriptor    [O]   Address of descriptor for key
+ *  lpcbSecurityDescriptor [I/O] Address of size of buffer and description
  *
  * RETURNS
- *    Success: ERROR_SUCCESS
- *    Failure: Error code
+ *  Success: ERROR_SUCCESS
+ *  Failure: Error code
  */
 LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformation,
                                PSECURITY_DESCRIPTOR pSecurityDescriptor,
@@ -1834,11 +1979,11 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
  * Immediately write a registry key to registry.
  *
  * PARAMS
- * hkey [I] Handle of key to write
+ *  hkey [I] Handle of key to write
  *
  * RETURNS
- *   Success: ERROR_SUCCESS
- *   Failure: Error code
+ *  Success: ERROR_SUCCESS
+ *  Failure: Error code
  */
 DWORD WINAPI RegFlushKey( HKEY hkey )
 {
@@ -1853,9 +1998,13 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
  * RegConnectRegistryW [ADVAPI32.@]
  *
  * PARAMS
- *    lpMachineName [I] Address of name of remote computer
- *    hHey          [I] Predefined registry handle
- *    phkResult     [I] Address of buffer for remote registry handle
+ *  lpMachineName [I] Address of name of remote computer
+ *  hHey          [I] Predefined registry handle
+ *  phkResult     [I] Address of buffer for remote registry handle
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
                                    PHKEY phkResult )
@@ -1894,6 +2043,8 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 
 /******************************************************************************
  * RegConnectRegistryA [ADVAPI32.@]
+ *
+ * see RegConnectRegistryW
  */
 LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
 {
@@ -1911,11 +2062,15 @@ LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
  * RegNotifyChangeKeyValue [ADVAPI32.@]
  *
  * PARAMS
- *    hkey            [I] Handle of key to watch
- *    fWatchSubTree   [I] Flag for subkey notification
- *    fdwNotifyFilter [I] Changes to be reported
- *    hEvent          [I] Handle of signaled event
- *    fAsync          [I] Flag for asynchronous reporting
+ *  hkey            [I] Handle of key to watch
+ *  fWatchSubTree   [I] Flag for subkey notification
+ *  fdwNotifyFilter [I] Changes to be reported
+ *  hEvent          [I] Handle of signaled event
+ *  fAsync          [I] Flag for asynchronous reporting
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
                                      DWORD fdwNotifyFilter, HANDLE hEvent,
@@ -1955,15 +2110,19 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
  * Open the HKEY_CLASSES_ROOT key for a user.
  *
  * PARAMS
- *    hToken     [I] Handle of token representing the user
- *    dwOptions  [I] Reserved, nust be 0
- *    samDesired [I] Desired access rights
- *    phkResult  [O] Destination for the resulting key handle
+ *  hToken     [I] Handle of token representing the user
+ *  dwOptions  [I] Reserved, nust be 0
+ *  samDesired [I] Desired access rights
+ *  phkResult  [O] Destination for the resulting key handle
  *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: nonzero error code from Winerror.h
+ * 
  * NOTES
- * On Windows 2000 and upwards the HKEY_CLASSES_ROOT key is a view of the
- * "HKEY_LOCAL_MACHINE\Software\Classes" and the
- * "HKEY_CURRENT_USER\Software\Classes" keys merged together.
+ *  On Windows 2000 and upwards the HKEY_CLASSES_ROOT key is a view of the
+ *  "HKEY_LOCAL_MACHINE\Software\Classes" and the
+ *  "HKEY_CURRENT_USER\Software\Classes" keys merged together.
  */
 LONG WINAPI RegOpenUserClassesRoot(
     HANDLE hToken,
