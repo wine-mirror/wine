@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -195,7 +196,7 @@ int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event)
         X11DRV_XDND_FreeDragDropOp();
 
         /* Tell the target we are finished. */
-        bzero(&e, sizeof(e));
+        memset(&e, 0, sizeof(e));
         e.type = ClientMessage;
         e.display = event->display;
         e.window = event->data.l[0];

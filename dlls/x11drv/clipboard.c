@@ -62,6 +62,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #include <stdarg.h>
