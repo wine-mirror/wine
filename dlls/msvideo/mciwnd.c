@@ -26,7 +26,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "vfw.h"
-#include "wine/mmsystem16.h"
 #include "digitalv.h"
 #include "commctrl.h"
 #include "wine/debug.h"

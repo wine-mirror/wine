@@ -35,7 +35,6 @@
 #include "mmsystem.h"
 #include "winbase.h"
 
-#include "wine/mmsystem16.h"
 #include "wine/winuser16.h"
 #include "winemm.h"
 #include "heap.h"

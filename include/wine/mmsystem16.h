@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "wine/windef16.h"
+#include "mmddk.h"
 
 #include "pshpack1.h"
 
@@ -101,6 +102,15 @@ typedef struct {
     WORD	wChannels;		/* number of channels supported */
 } WAVEINCAPS16, *LPWAVEINCAPS16;
 
+typedef struct {
+	HWAVE16			hWave;
+	LPWAVEFORMATEX		lpFormat;
+	DWORD			dwCallback;
+	DWORD			dwInstance;
+	UINT16			uMappedDeviceID;
+        DWORD			dnDevNode;
+} WAVEOPENDESC16, *LPWAVEOPENDESC16;
+
 UINT16    WINAPI waveOutGetNumDevs16(void);
 UINT16    WINAPI waveOutGetDevCaps16(UINT16,LPWAVEOUTCAPS16,UINT16);
 UINT16    WINAPI waveOutGetVolume16(UINT16,DWORD*);
@@ -168,6 +178,16 @@ typedef struct midihdr16_tag {
     struct midihdr16_tag *lpNext;	/* reserved for driver */
     DWORD	reserved;	/* reserved for driver */
 } MIDIHDR16, *LPMIDIHDR16;
+
+typedef struct {
+    HMIDI16         hMidi;
+    DWORD           dwCallback;
+    DWORD           dwInstance;
+    UINT16          reserved;
+    DWORD           dnDevNode;
+    DWORD           cIds;
+    MIDIOPENSTRMID  rgIds;
+} MIDIOPENDESC16, *LPMIDIOPENDESC16;
 
 UINT16     WINAPI midiOutGetNumDevs16(void);
 UINT16     WINAPI midiOutGetDevCaps16(UINT16,LPMIDIOUTCAPS16,UINT16);
@@ -266,6 +286,14 @@ typedef struct {
     DWORD        fdwSupport;            /* misc. support bits */
     DWORD        cDestinations;         /* count of destinations */
 } MIXERCAPS16,*LPMIXERCAPS16;
+
+typedef struct tMIXEROPENDESC16
+{
+	HMIXEROBJ16		hmx;
+        LPVOID			pReserved0;
+	DWORD			dwCallback;
+	DWORD			dwInstance;
+} MIXEROPENDESC16, *LPMIXEROPENDESC16;
 
 typedef struct {
     DWORD	cbStruct;		/* size of MIXERLINE structure */
@@ -427,6 +455,29 @@ BOOL16		WINAPI mciGetErrorString16 (DWORD,LPSTR,UINT16);
 BOOL16		WINAPI mciSetYieldProc16(UINT16,YIELDPROC16,DWORD);
 HTASK16		WINAPI mciGetCreatorTask16(UINT16);
 YIELDPROC16	WINAPI mciGetYieldProc16(UINT16,DWORD*);
+DWORD 		WINAPI mciGetDriverData16(UINT16 uDeviceID);
+BOOL16		WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
+UINT16		WINAPI mciDriverYield16(UINT16 uDeviceID);
+BOOL16		WINAPI mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
+					  UINT16 uStatus);
+UINT16		WINAPI mciLoadCommandResource16(HINSTANCE16 hInstance,
+					 LPCSTR lpResName, UINT16 uType);
+BOOL16		WINAPI mciFreeCommandResource16(UINT16 uTable);
+
+HINSTANCE16	WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
+void    	WINAPI mmTaskBlock16(HINSTANCE16 hInst);
+LRESULT 	WINAPI mmTaskSignal16(HTASK16 ht);
+void    	WINAPI mmTaskYield16(void);
+LRESULT 	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl,
+					 DWORD dwPmt, DWORD dwFlags);
+void 		WINAPI mmThreadSignal16(HANDLE16 hndl);
+void    	WINAPI mmThreadBlock16(HANDLE16 hndl);
+HANDLE16 	WINAPI mmThreadGetTask16(HANDLE16 hndl);
+BOOL16   	WINAPI mmThreadIsValid16(HANDLE16 hndl);
+BOOL16  	WINAPI mmThreadIsCurrent16(HANDLE16 hndl);
+
+BOOL16		WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
+					 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
 typedef struct {
     DWORD	dwCallback;
@@ -469,6 +520,14 @@ typedef struct {
     DWORD	dwCallback;
     SEGPTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMS16, *LPMCI_VD_ESCAPE_PARMS16;
+
+typedef struct {
+    UINT16			wDeviceID;		/* device ID */
+    SEGPTR			lpstrParams;		/* parameter string for entry in SYSTEM.INI */
+    UINT16			wCustomCommandTable;	/* custom command table (0xFFFF if none)
+							 * filled in by the driver */
+    UINT16			wType;			/* driver type (filled in by the driver) */
+} MCI_OPEN_DRIVER_PARMS16, *LPMCI_OPEN_DRIVER_PARMS16;
 
 typedef struct {
     DWORD		dwCallback;

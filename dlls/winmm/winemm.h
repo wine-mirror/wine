@@ -23,6 +23,7 @@
  */
 
 #include "mmddk.h"
+#include "wine/mmsystem16.h"
 #include "wownt32.h"
 
 typedef DWORD (WINAPI *MessageProc16)(UINT16 wDevID, UINT16 wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);

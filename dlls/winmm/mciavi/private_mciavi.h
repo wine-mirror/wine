@@ -41,8 +41,7 @@ struct MMIOPos {
 typedef struct {
     UINT		wDevID;
     int			nUseCount;          	/* Incremented for each shared open          */
-    BOOL16  		fShareable;         	/* TRUE if first open was shareable 	     */
-    HANDLE16 		hCallback;         	/* Callback handle for pending notification  */
+    BOOL  		fShareable;         	/* TRUE if first open was shareable 	     */
     WORD		wCommandTable;		/* custom MCI command table */
     volatile DWORD	dwStatus;		/* One of MCI_MODE_XXX			     */
     MCI_OPEN_PARMSA 	openParms;

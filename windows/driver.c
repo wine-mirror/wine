@@ -29,6 +29,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
+#include "wine/mmsystem16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);

@@ -28,7 +28,6 @@
 
 #include "mmsystem.h"
 #include "winbase.h"
-#include "wine/mmsystem16.h"
 
 #define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
@@ -369,23 +368,7 @@ typedef struct {
 	DWORD   		dwInstance;
 	HMIDIOUT		hMidi;
 	DWORD   		dwFlags;
-} PORTALLOC16, *LPPORTALLOC16;
-
-typedef struct {
-	DWORD   		dwCallback;
-	DWORD   		dwInstance;
-	HMIDIOUT		hMidi;
-	DWORD   		dwFlags;
 } PORTALLOC, *LPPORTALLOC;
-
-typedef struct {
-	HWAVE16			hWave;
-	LPWAVEFORMATEX		lpFormat;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-	UINT16			uMappedDeviceID;
-        DWORD			dnDevNode;
-} WAVEOPENDESC16, *LPWAVEOPENDESC16;
 
 typedef struct {
 	HWAVE			hWave;
@@ -402,16 +385,6 @@ typedef struct {
 } MIDIOPENSTRMID;
 
 typedef struct {
-	HMIDI16			hMidi;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-        UINT16		        reserved;
-        DWORD          		dnDevNode;
-        DWORD          		cIds;
-        MIDIOPENSTRMID 		rgIds;
-} MIDIOPENDESC16, *LPMIDIOPENDESC16;
-
-typedef struct {
 	HMIDI			hMidi;
 	DWORD			dwCallback;
 	DWORD			dwInstance;
@@ -420,24 +393,6 @@ typedef struct {
         MIDIOPENSTRMID 		rgIds;
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
-#if 0
-typedef struct {
-	UINT16			wDelay;
-	UINT16			wResolution;
-	LPTIMECALLBACK16	lpFunction;
-	DWORD			dwUser;
-	UINT16			wFlags;
-} TIMEREVENT, *LPTIMEREVENT;
-#endif
-
-typedef struct tMIXEROPENDESC16
-{
-	HMIXEROBJ16		hmx;
-        LPVOID			pReserved0;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-} MIXEROPENDESC16, *LPMIXEROPENDESC16;
-
 typedef struct tMIXEROPENDESC
 {
 	HMIXEROBJ		hmx;
@@ -445,14 +400,6 @@ typedef struct tMIXEROPENDESC
 	DWORD			dwCallback;
 	DWORD			dwInstance;
 } MIXEROPENDESC, *LPMIXEROPENDESC;
-
-typedef struct {
-	UINT16			wDeviceID;		/* device ID */
-	SEGPTR			lpstrParams;		/* parameter string for entry in SYSTEM.INI */
-	UINT16			wCustomCommandTable;	/* custom command table (0xFFFF if none)
-							 * filled in by the driver */
-	UINT16			wType;			/* driver type (filled in by the driver) */
-} MCI_OPEN_DRIVER_PARMS16, *LPMCI_OPEN_DRIVER_PARMS16;
 
 typedef struct {
 	UINT			wDeviceID;		/* device ID */
@@ -470,40 +417,14 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OPEN_DRIVER_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OPEN_DRIVER_PARMS)
 
-DWORD 			WINAPI	mciGetDriverData16(UINT16 uDeviceID);
 DWORD 			WINAPI	mciGetDriverData(UINT uDeviceID);
-
-BOOL16			WINAPI	mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
 BOOL			WINAPI	mciSetDriverData(UINT uDeviceID, DWORD dwData);
-
-UINT16			WINAPI	mciDriverYield16(UINT16 uDeviceID);
 UINT			WINAPI	mciDriverYield(UINT uDeviceID);
-
-BOOL16			WINAPI	mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
-						  UINT16 uStatus);
 BOOL			WINAPI	mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
 						UINT uStatus);
-
-UINT16			WINAPI	mciLoadCommandResource16(HINSTANCE16 hInstance,
-						 LPCSTR lpResName, UINT16 uType);
 UINT			WINAPI	mciLoadCommandResource(HINSTANCE hInstance,
 					       LPCWSTR lpResName, UINT uType);
-
-BOOL16			WINAPI	mciFreeCommandResource16(UINT16 uTable);
 BOOL			WINAPI	mciFreeCommandResource(UINT uTable);
-
-HINSTANCE16		WINAPI	mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt);
-void    		WINAPI  mmTaskBlock16(HINSTANCE16 hInst);
-LRESULT 		WINAPI 	mmTaskSignal16(HTASK16 ht);
-void    		WINAPI  mmTaskYield16(void);
-
-LRESULT 		WINAPI 	mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl,
-						 DWORD dwPmt, DWORD dwFlags);
-void 			WINAPI 	mmThreadSignal16(HANDLE16 hndl);
-void    		WINAPI	mmThreadBlock16(HANDLE16 hndl);
-HANDLE16 		WINAPI	mmThreadGetTask16(HANDLE16 hndl);
-BOOL16   		WINAPI	mmThreadIsValid16(HANDLE16 hndl);
-BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 
 #define DCB_NULL		0x0000
 #define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
@@ -513,8 +434,6 @@ BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 #define DCB_TYPEMASK		0x0007
 #define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
 
-BOOL16			WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
-						 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 

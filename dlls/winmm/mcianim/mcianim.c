@@ -35,17 +35,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(mcianim);
 #define SECONDS_PERMIN	 	60
 
 typedef struct {
-        UINT16		wDevID;
+        UINT		wDevID;
         int     	nUseCount;          /* Incremented for each shared open */
-        BOOL16  	fShareable;         /* TRUE if first open was shareable */
+        BOOL		fShareable;         /* TRUE if first open was shareable */
         WORD    	wNotifyDeviceID;    /* MCI device ID with a pending notification */
-        HANDLE16 	hCallback;          /* Callback handle for pending notification */
 	MCI_OPEN_PARMSA openParms;
 	DWORD		dwTimeFormat;
 	int		mode;
-	UINT16		nCurTrack;
+	UINT		nCurTrack;
 	DWORD		dwCurFrame;
-	UINT16		nTracks;
+	UINT		nTracks;
 	DWORD		dwTotalLen;
 	LPDWORD		lpdwTrackLen;
 	LPDWORD		lpdwTrackPos;
