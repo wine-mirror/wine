@@ -778,7 +778,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     case IOCTL_CDROM_CURRENT_POSITION:
         size = sizeof(SUB_Q_CURRENT_POSITION);
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
-          data->CurrentPosition.FormatCode = sc.cdsc_format; 
+          data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
           data->CurrentPosition.Control = sc.cdsc_ctrl; 
           data->CurrentPosition.ADR = sc.cdsc_adr; 
           data->CurrentPosition.TrackNumber = sc.cdsc_trk; 
@@ -890,7 +890,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     case IOCTL_CDROM_CURRENT_POSITION:
         size = sizeof(SUB_Q_CURRENT_POSITION);
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
-          data->CurrentPosition.FormatCode = sc.what.position.data_format;
+          data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
           data->CurrentPosition.Control = sc.what.position.control;
           data->CurrentPosition.ADR = sc.what.position.addr_type;
           data->CurrentPosition.TrackNumber = sc.what.position.track_number;
@@ -914,12 +914,12 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     case IOCTL_CDROM_MEDIA_CATALOG:
         size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
-        data->MediaCatalog.FormatCode = sc.what.media_catalog.data_format;
         data->MediaCatalog.Mcval = sc.what.media_catalog.mc_valid;
         memcpy(data->MediaCatalog.MediaCatalog, sc.what.media_catalog.mc_number, 15);
         break;
     case IOCTL_CDROM_TRACK_ISRC:
         size = sizeof(SUB_Q_CURRENT_POSITION);
+        data->TrackIsrc.FormatCode = IOCTL_CDROM_TRACK_ISRC;
         data->TrackIsrc.Tcval = sc.what.track_info.ti_valid;
         memcpy(data->TrackIsrc.TrackIsrc, sc.what.track_info.ti_number, 15);
         break;
@@ -1045,7 +1045,7 @@ static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
     if (i <= toc.FirstTrack || i > toc.LastTrack+1)
       return STATUS_INVALID_PARAMETER;
     i--;
-    cp->FormatCode = CDROM_MSF; 
+    cp->FormatCode = IOCTL_CDROM_CURRENT_POSITION; 
     cp->Control = toc.TrackData[i-toc.FirstTrack].Control; 
     cp->ADR = toc.TrackData[i-toc.FirstTrack].Adr; 
     cp->TrackNumber = toc.TrackData[i-toc.FirstTrack].TrackNumber;
