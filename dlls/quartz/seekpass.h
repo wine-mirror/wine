@@ -12,6 +12,7 @@
 */
 
 #include "iunk.h"
+#include "ptimpl.h"
 
 typedef struct QUARTZ_ISeekingPassThruImpl
 {
@@ -25,6 +26,8 @@ typedef struct CSeekingPassThru
 	QUARTZ_ISeekingPassThruImpl	seekpass;
 
 	/* ISeekingPassThru fields. */
+	CRITICAL_SECTION	cs;
+	CPassThruImpl	passthru;
 } CSeekingPassThru;
 
 #define	CSeekingPassThru_THIS(iface,member)		CSeekingPassThru*	This = ((CSeekingPassThru*)(((char*)iface)-offsetof(CSeekingPassThru,member)))

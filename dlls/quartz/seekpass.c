@@ -13,6 +13,7 @@
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "strmif.h"
+#include "control.h"
 #include "uuids.h"
 
 #include "debugtools.h"
@@ -58,9 +59,21 @@ ISeekingPassThru_fnInit(ISeekingPassThru* iface,BOOL bRendering,IPin* pPin)
 {
 	CSeekingPassThru_THIS(iface,seekpass);
 
-	FIXME("(%p)->(%d,%p) stub!\n",This,bRendering,pPin);
+	FIXME("(%p)->(%d,%p) not tested!\n",This,bRendering,pPin);
 
-	return E_NOTIMPL;
+	if ( pPin == NULL )
+		return E_POINTER;
+
+	/* Why 'bRendering' is given as an argument?? */
+	EnterCriticalSection( &This->cs );
+
+	if ( This->passthru.pPin != NULL )
+		IPin_Release( This->passthru.pPin );
+	This->passthru.pPin = pPin; IPin_AddRef( pPin );
+
+	LeaveCriticalSection( &This->cs );
+
+	return NOERROR;
 }
 
 
@@ -80,6 +93,9 @@ HRESULT CSeekingPassThru_InitISeekingPassThru(CSeekingPassThru* This)
 {
 	TRACE("(%p)\n",This);
 	ICOM_VTBL(&This->seekpass) = &iseekingpassthru;
+	This->passthru.punk = This->unk.punkControl;
+	This->passthru.pPin = NULL;
+	InitializeCriticalSection( &This->cs );
 
 	return NOERROR;
 }
@@ -88,6 +104,12 @@ static
 void CSeekingPassThru_UninitISeekingPassThru(CSeekingPassThru* This)
 {
 	TRACE("(%p)\n",This);
+	if ( This->passthru.pPin != NULL )
+	{
+		IPin_Release( This->passthru.pPin );
+		This->passthru.pPin = NULL;
+	}
+	DeleteCriticalSection( &This->cs );
 }
 
 
@@ -95,6 +117,8 @@ void CSeekingPassThru_UninitISeekingPassThru(CSeekingPassThru* This)
 static QUARTZ_IFEntry IFEntries[] =
 {
   { &IID_ISeekingPassThru, offsetof(CSeekingPassThru,seekpass)-offsetof(CSeekingPassThru,unk) },
+  { &IID_IMediaPosition, offsetof(CSeekingPassThru,passthru.mpos)-offsetof(CSeekingPassThru,unk) },
+  { &IID_IMediaSeeking, offsetof(CSeekingPassThru,passthru.mseek)-offsetof(CSeekingPassThru,unk) },
 };
 
 

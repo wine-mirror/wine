@@ -40,6 +40,9 @@ C_SRCS = \
 	main.c \
 	memalloc.c \
 	monprop.c \
+	ptimpl.c \
+	ptmpos.c \
+	ptmseek.c \
 	regsvr.c \
 	sample.c \
 	seekpass.c \
