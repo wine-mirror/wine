@@ -334,7 +334,7 @@ static void setup_options(void)
 /***********************************************************************
  *           X11DRV process initialisation routine
  */
-static void process_attach(void)
+static BOOL process_attach(void)
 {
     Display *display;
 
@@ -343,12 +343,8 @@ static void process_attach(void)
 
     /* Open display */
 
-    if (!(display = XOpenDisplay( NULL )))
-    {
-        MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
-        MESSAGE( "Please ensure that your X server is running and that $DISPLAY is set correctly.\n" );
-        ExitProcess(1);
-    }
+    if (!(display = XOpenDisplay( NULL ))) return FALSE;
+
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
     screen = DefaultScreenOfDisplay( display );
     visual = DefaultVisual( display, DefaultScreen(display) );
@@ -365,12 +361,12 @@ static void process_attach(void)
             if (depth_list[i] == screen_depth) break;
         XFree( depth_list );
         if (i >= depth_count)
-	{
-            MESSAGE( "x11drv: Depth %d not supported on this screen.\n", screen_depth );
-            ExitProcess(1);
-	}
+        {
+            WARN( "invalid depth %d, using default\n", screen_depth );
+            screen_depth = 0;
+        }
     }
-    else screen_depth = DefaultDepthOfScreen( screen );
+    if (!screen_depth) screen_depth = DefaultDepthOfScreen( screen );
 
     /* Initialize OpenGL */
     X11DRV_OpenGL_Init(display);
@@ -397,11 +393,7 @@ static void process_attach(void)
     }
 
     /* initialize GDI */
-    if(!X11DRV_GDI_Initialize( display ))
-    {
-        ERR( "Couldn't Initialize GDI.\n" );
-        ExitProcess(1);
-    }
+    X11DRV_GDI_Initialize( display );
 
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */
@@ -415,6 +407,8 @@ static void process_attach(void)
     /* initialize DGA2 */
     X11DRV_XF86DGA2_Init();
 #endif
+
+    return TRUE;
 }
 
 
@@ -518,10 +512,12 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
+    BOOL ret = TRUE;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        process_attach();
+        ret = process_attach();
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
@@ -530,7 +526,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         process_detach();
         break;
     }
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************

@@ -48,13 +48,13 @@ unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
 /**********************************************************************
  *	     X11DRV_GDI_Initialize
  */
-BOOL X11DRV_GDI_Initialize( Display *display )
+void X11DRV_GDI_Initialize( Display *display )
 {
     gdi_display = display;
 
     palette_size = X11DRV_PALETTE_Init();
 
-    if (!X11DRV_BITMAP_Init()) return FALSE;
+    X11DRV_BITMAP_Init();
 
     /* Initialize XRender */
     X11DRV_XRender_Init();
@@ -65,7 +65,6 @@ BOOL X11DRV_GDI_Initialize( Display *display )
     X11DRV_FONT_Init( &log_pixels_x, &log_pixels_y );
     horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
-    return TRUE;
 }
 
 /**********************************************************************

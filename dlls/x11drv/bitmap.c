@@ -39,7 +39,7 @@ Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */
-BOOL X11DRV_BITMAP_Init(void)
+void X11DRV_BITMAP_Init(void)
 {
     Pixmap tmpPixmap;
 
@@ -62,7 +62,6 @@ BOOL X11DRV_BITMAP_Init(void)
         }
     }
     wine_tsx11_unlock();
-    return TRUE;
 }
 
 /***********************************************************************

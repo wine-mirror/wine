@@ -192,7 +192,7 @@ extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 
 /* X11 driver internal functions */
 
-extern BOOL X11DRV_BITMAP_Init(void);
+extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
 
 struct tagBITMAPOBJ;
@@ -303,8 +303,8 @@ extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lp
  * X11 GDI driver
  */
 
-BOOL X11DRV_GDI_Initialize( Display *display );
-void X11DRV_GDI_Finalize(void);
+extern void X11DRV_GDI_Initialize( Display *display );
+extern void X11DRV_GDI_Finalize(void);
 
 extern Display *gdi_display;  /* display to use for all GDI functions */
 
