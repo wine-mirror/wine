@@ -36,6 +36,10 @@ static PDB initial_pdb;
 
 static PDB *PROCESS_First = &initial_pdb;
 
+  /* Pointer to debugger callback routine */
+void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask ) = NULL;
+
+
 /***********************************************************************
  *           PROCESS_WalkProcess
  */
@@ -473,6 +477,10 @@ void PROCESS_Start(void)
         MODULE_DllProcessAttach( pdb->exe_modref, (LPVOID)1 );
         LeaveCriticalSection( &pdb->crit_section );
     }
+
+    /* If requested, add entry point breakpoint */
+    if ( TASK_AddTaskEntryBreakpoint )
+        TASK_AddTaskEntryBreakpoint( pdb->task );
 
     /* Now call the entry point */
     PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );

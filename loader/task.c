@@ -48,9 +48,6 @@ DECLARE_DEBUG_CHANNEL(toolhelp)
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
-  /* Pointer to debugger callback routine */
-void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask ) = NULL;
-
 static THHOOK DefaultThhook = { 0 };
 THHOOK *pThhook = &DefaultThhook;
 
@@ -387,11 +384,6 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow)
  
     pTask->teb->htask16 = pTask->teb->process->task = hTask;
     TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
-
-    /* If requested, add entry point breakpoint */
-
-    if ( TASK_AddTaskEntryBreakpoint )
-        TASK_AddTaskEntryBreakpoint( hTask );
 
     /* Add the task to the linked list */
 
