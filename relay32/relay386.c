@@ -69,12 +69,11 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
  */
 int RELAY_CallFrom32( int ret_addr, ... )
 {
-    int i, ret, show;
+    int i, ret;
     char buffer[80];
     FARPROC32 func;
     unsigned int mask, typemask;
     WORD fs;
-    DWORD deadbeef = 0xdeadbeef,*xdeadbeef = &deadbeef;
 
     int *args = &ret_addr;
     /* Relay addr is the return address for this function */
@@ -181,10 +180,8 @@ int RELAY_CallFrom32( int ret_addr, ... )
             assert(FALSE);
         }
     }
-    if(show)
-      DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-               buffer, ret, ret_addr, fs );
-    assert(*xdeadbeef==0xdeadbeef);
+    DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
+             buffer, ret, ret_addr, fs );
     return ret;
 }
 
