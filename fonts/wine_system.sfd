@@ -32,9 +32,9 @@ UnicodeInterp: none
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 702 18 7
+WinInfo: 198 18 7
 OnlyBitmaps: 1
-BeginChars: 65536 146
+BeginChars: 65536 224
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -627,11 +627,461 @@ Encoding: 176 176 117
 Width: 5
 Flags: H
 EndChar
+StartChar: plusminus
+Encoding: 177 177 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: uni00B2
+Encoding: 178 178 65535
+Width: 4
+Flags: H
+EndChar
+StartChar: uni00B3
+Encoding: 179 179 65535
+Width: 4
+Flags: H
+EndChar
+StartChar: acute
+Encoding: 180 180 65535
+Width: 5
+Flags: H
+Ligature: 0 1 'liga' space acutecomb
+EndChar
+StartChar: mu
+Encoding: 181 181 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: paragraph
+Encoding: 182 182 65535
+Width: 7
+Flags: H
+EndChar
+StartChar: periodcentered
+Encoding: 183 183 65535
+Width: 4
+Flags: H
+EndChar
+StartChar: cedilla
+Encoding: 184 184 65535
+Width: 5
+Flags: H
+Ligature: 0 1 'liga' space uni0327
+EndChar
+StartChar: uni00B9
+Encoding: 185 185 65535
+Width: 4
+Flags: H
+EndChar
+StartChar: ordmasculine
+Encoding: 186 186 65535
+Width: 5
+Flags: H
+EndChar
+StartChar: guillemotright
+Encoding: 187 187 65535
+Width: 7
+Flags: H
+EndChar
+StartChar: onequarter
+Encoding: 188 188 65535
+Width: 11
+Flags: H
+Ligature: 0 1 'frac' one slash four
+Ligature: 0 1 'frac' one fraction four
+EndChar
+StartChar: onehalf
+Encoding: 189 189 65535
+Width: 11
+Flags: H
+Ligature: 0 1 'frac' one slash two
+Ligature: 0 1 'frac' one fraction two
+EndChar
+StartChar: threequarters
+Encoding: 190 190 65535
+Width: 11
+Flags: H
+Ligature: 0 1 'frac' three slash four
+Ligature: 0 1 'frac' three fraction four
+EndChar
+StartChar: questiondown
+Encoding: 191 191 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: Agrave
+Encoding: 192 192 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' A gravecomb
+EndChar
+StartChar: Aacute
+Encoding: 193 193 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' A acutecomb
+EndChar
+StartChar: Acircumflex
+Encoding: 194 194 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' A uni0302
+EndChar
+StartChar: Atilde
+Encoding: 195 195 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' A tildecomb
+EndChar
+StartChar: Adieresis
+Encoding: 196 196 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' A uni0308
+EndChar
 StartChar: Aring
 Encoding: 197 197 96
 Width: 8
 Flags: H
 Ligature: 0 0 'liga' A uni030A
+EndChar
+StartChar: AE
+Encoding: 198 198 65535
+Width: 13
+Flags: H
+EndChar
+StartChar: Ccedilla
+Encoding: 199 199 65535
+Width: 9
+Flags: H
+Ligature: 0 0 'liga' C uni0327
+EndChar
+StartChar: Egrave
+Encoding: 200 200 65535
+Width: 9
+Flags: H
+Ligature: 0 0 'liga' E gravecomb
+EndChar
+StartChar: Eacute
+Encoding: 201 201 65535
+Width: 9
+Flags: H
+Ligature: 0 0 'liga' E acutecomb
+EndChar
+StartChar: Ecircumflex
+Encoding: 202 202 65535
+Width: 9
+Flags: H
+Ligature: 0 0 'liga' E uni0302
+EndChar
+StartChar: Edieresis
+Encoding: 203 203 65535
+Width: 9
+Flags: H
+Ligature: 0 0 'liga' E uni0308
+EndChar
+StartChar: Igrave
+Encoding: 204 204 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' I gravecomb
+EndChar
+StartChar: Iacute
+Encoding: 205 205 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' I acutecomb
+EndChar
+StartChar: Icircumflex
+Encoding: 206 206 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' I uni0302
+EndChar
+StartChar: Idieresis
+Encoding: 207 207 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' I uni0308
+EndChar
+StartChar: Eth
+Encoding: 208 208 65535
+Width: 10
+Flags: H
+EndChar
+StartChar: Ntilde
+Encoding: 209 209 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' N tildecomb
+EndChar
+StartChar: Ograve
+Encoding: 210 210 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' O gravecomb
+EndChar
+StartChar: Oacute
+Encoding: 211 211 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' O acutecomb
+EndChar
+StartChar: Ocircumflex
+Encoding: 212 212 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' O uni0302
+EndChar
+StartChar: Otilde
+Encoding: 213 213 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' O tildecomb
+EndChar
+StartChar: Odieresis
+Encoding: 214 214 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' O uni0308
+EndChar
+StartChar: multiply
+Encoding: 215 215 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: Oslash
+Encoding: 216 216 65535
+Width: 10
+Flags: H
+EndChar
+StartChar: Ugrave
+Encoding: 217 217 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' U gravecomb
+EndChar
+StartChar: Uacute
+Encoding: 218 218 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' U acutecomb
+EndChar
+StartChar: Ucircumflex
+Encoding: 219 219 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' U uni0302
+EndChar
+StartChar: Udieresis
+Encoding: 220 220 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' U uni0308
+EndChar
+StartChar: Yacute
+Encoding: 221 221 65535
+Width: 10
+Flags: H
+Ligature: 0 0 'liga' Y acutecomb
+EndChar
+StartChar: Thorn
+Encoding: 222 222 65535
+Width: 9
+Flags: H
+EndChar
+StartChar: germandbls
+Encoding: 223 223 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: agrave
+Encoding: 224 224 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a gravecomb
+EndChar
+StartChar: aacute
+Encoding: 225 225 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a acutecomb
+EndChar
+StartChar: acircumflex
+Encoding: 226 226 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a uni0302
+EndChar
+StartChar: atilde
+Encoding: 227 227 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a tildecomb
+EndChar
+StartChar: adieresis
+Encoding: 228 228 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a uni0308
+EndChar
+StartChar: aring
+Encoding: 229 229 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' a uni030A
+EndChar
+StartChar: ae
+Encoding: 230 230 65535
+Width: 12
+Flags: H
+EndChar
+StartChar: ccedilla
+Encoding: 231 231 65535
+Width: 7
+Flags: H
+Ligature: 0 0 'liga' c uni0327
+EndChar
+StartChar: egrave
+Encoding: 232 232 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' e gravecomb
+EndChar
+StartChar: eacute
+Encoding: 233 233 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' e acutecomb
+EndChar
+StartChar: ecircumflex
+Encoding: 234 234 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' e uni0302
+EndChar
+StartChar: edieresis
+Encoding: 235 235 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' e uni0308
+EndChar
+StartChar: igrave
+Encoding: 236 236 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' i gravecomb
+EndChar
+StartChar: iacute
+Encoding: 237 237 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' i acutecomb
+EndChar
+StartChar: icircumflex
+Encoding: 238 238 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' i uni0302
+EndChar
+StartChar: idieresis
+Encoding: 239 239 65535
+Width: 4
+Flags: H
+Ligature: 0 0 'liga' i uni0308
+EndChar
+StartChar: eth
+Encoding: 240 240 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: ntilde
+Encoding: 241 241 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' n tildecomb
+EndChar
+StartChar: ograve
+Encoding: 242 242 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' o gravecomb
+EndChar
+StartChar: oacute
+Encoding: 243 243 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' o acutecomb
+EndChar
+StartChar: ocircumflex
+Encoding: 244 244 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' o uni0302
+EndChar
+StartChar: otilde
+Encoding: 245 245 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' o tildecomb
+EndChar
+StartChar: odieresis
+Encoding: 246 246 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' o uni0308
+EndChar
+StartChar: divide
+Encoding: 247 247 65535
+Width: 6
+Flags: H
+EndChar
+StartChar: oslash
+Encoding: 248 248 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: ugrave
+Encoding: 249 249 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' u gravecomb
+EndChar
+StartChar: uacute
+Encoding: 250 250 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' u acutecomb
+EndChar
+StartChar: ucircumflex
+Encoding: 251 251 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' u uni0302
+EndChar
+StartChar: udieresis
+Encoding: 252 252 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' u uni0308
+EndChar
+StartChar: yacute
+Encoding: 253 253 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' y acutecomb
+EndChar
+StartChar: thorn
+Encoding: 254 254 65535
+Width: 8
+Flags: H
+EndChar
+StartChar: ydieresis
+Encoding: 255 255 65535
+Width: 8
+Flags: H
+Ligature: 0 0 'liga' y uni0308
 EndChar
 StartChar: OE
 Encoding: 338 338 97
@@ -778,6 +1228,36 @@ Ligature: 0 1 'liga' T M
 EndChar
 EndChars
 BitmapFont: 16 65536 13 3 1 
+BDFChar: 17 16 0 0 0 0
+z
+BDFChar: 18 16 0 0 0 0
+z
+BDFChar: 19 16 0 0 0 0
+z
+BDFChar: 20 16 0 0 0 0
+z
+BDFChar: 21 16 0 0 0 0
+z
+BDFChar: 22 16 0 0 0 0
+z
+BDFChar: 23 16 0 0 0 0
+z
+BDFChar: 24 16 0 0 0 0
+z
+BDFChar: 25 16 0 0 0 0
+z
+BDFChar: 26 16 0 0 0 0
+z
+BDFChar: 27 16 0 0 0 0
+z
+BDFChar: 28 16 0 0 0 0
+z
+BDFChar: 29 16 0 0 0 0
+z
+BDFChar: 30 16 0 0 0 0
+z
+BDFChar: 31 16 0 0 0 0
+z
 BDFChar: 32 4 14 14 0 0
 z
 BDFChar: 33 4 1 2 0 9
@@ -970,16 +1450,70 @@ BDFChar: 126 5 0 4 8 9
 kdUTm
 BDFChar: 127 4 1 2 0 8
 ^qdb$^qdb$^]4?7
-BDFChar: 129 4 0 2 0 8
-?smAM?smAM?iU0,
-BDFChar: 141 4 0 2 0 8
-?smAM?smAM?iU0,
-BDFChar: 143 4 0 2 0 8
-?smAM?smAM?iU0,
-BDFChar: 144 4 0 2 0 8
-?smAM?smAM?iU0,
-BDFChar: 157 4 0 2 0 8
-?smAM?smAM?iU0,
+BDFChar: 128 16 0 0 0 0
+z
+BDFChar: 129 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 130 16 0 0 0 0
+z
+BDFChar: 131 16 0 0 0 0
+z
+BDFChar: 132 16 0 0 0 0
+z
+BDFChar: 133 16 0 0 0 0
+z
+BDFChar: 134 16 0 0 0 0
+z
+BDFChar: 135 16 0 0 0 0
+z
+BDFChar: 136 16 0 0 0 0
+z
+BDFChar: 137 16 0 0 0 0
+z
+BDFChar: 138 16 0 0 0 0
+z
+BDFChar: 139 16 0 0 0 0
+z
+BDFChar: 140 16 0 0 0 0
+z
+BDFChar: 141 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 142 16 0 0 0 0
+z
+BDFChar: 143 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 144 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 145 16 0 0 0 0
+z
+BDFChar: 146 16 0 0 0 0
+z
+BDFChar: 147 16 0 0 0 0
+z
+BDFChar: 148 16 0 0 0 0
+z
+BDFChar: 149 16 0 0 0 0
+z
+BDFChar: 150 16 0 0 0 0
+z
+BDFChar: 151 16 0 0 0 0
+z
+BDFChar: 152 16 0 0 0 0
+z
+BDFChar: 153 16 0 0 0 0
+z
+BDFChar: 154 16 0 0 0 0
+z
+BDFChar: 155 16 0 0 0 0
+z
+BDFChar: 156 16 0 0 0 0
+z
+BDFChar: 157 4 1 2 0 8
+^qdb$^qdb$^]4?7
+BDFChar: 158 16 0 0 0 0
+z
+BDFChar: 159 16 0 0 0 0
+z
 BDFChar: 160 9 0 0 0 0
 z
 BDFChar: 161 4 1 2 0 9
@@ -988,8 +1522,8 @@ BDFChar: 162 8 1 6 -1 7
 &:!!Wd,=88+92BA
 BDFChar: 163 8 1 6 0 9
 Gg*s2@/+,;_#+04
-BDFChar: 164 8 0 6 0 10
-!+n>=,WoZ=z
+BDFChar: 164 8 1 6 4 9
+b]lZLGg$-f
 BDFChar: 165 8 0 7 0 9
 _o$(urttbQ(`35Q
 BDFChar: 166 4 1 2 -3 9
@@ -1014,8 +1548,164 @@ BDFChar: 175 8 0 7 11 11
 rr<$!
 BDFChar: 176 5 1 3 7 9
 i1T!.
+BDFChar: 177 8 1 6 0 6
+0JNDY0ED"N
+BDFChar: 178 4 0 3 5 9
+@'D=mn,NFg
+BDFChar: 179 4 0 3 5 9
+@'F%C?iU0,
+BDFChar: 180 5 1 4 8 10
+E+$H]
+BDFChar: 181 8 1 7 -3 7
+bfn;Tbfn<1^qd_c
+BDFChar: 182 7 1 5 -3 9
+Gkh(/pimVm(`4),(]XO9
+BDFChar: 183 4 1 2 4 5
+^q]pM
+BDFChar: 184 5 1 4 -3 -1
+?ngL=
+BDFChar: 185 4 0 2 5 9
+@,PF#?iU0,
+BDFChar: 186 5 1 3 3 9
+i1Qa9huM[8
+BDFChar: 187 7 0 6 1 5
+fPEH^fDkmO
+BDFChar: 188 11 0 10 0 9
+0OSk80n;%[2?40$)8J#CA&,mq
+BDFChar: 189 11 0 10 0 9
+0OSk80n;%[2?42:)Se&B@=Z82
+BDFChar: 190 11 0 10 0 9
+0OS"u0n<I.2?40$)8J#CA&,mq
+BDFChar: 191 8 1 6 0 9
+0JEJ\0OV]?b]j*f
+BDFChar: 192 8 0 7 0 12
+3#E&@(d'omAnHM0_Z0Z:
+BDFChar: 193 8 0 7 0 12
+*#L@H(d'omAnHM0_Z0Z:
+BDFChar: 194 8 0 7 0 12
+(d)CI(d'omAnHM0_Z0Z:
+BDFChar: 195 8 0 7 0 12
+H<pRg(d'omAnHM0_Z0Z:
+BDFChar: 196 8 0 7 0 12
+AnD#[(d'omAnHM0_Z0Z:
 BDFChar: 197 8 0 7 0 12
 (d&W8(`5AIAnHM0_Z0Z:
+BDFChar: 198 13 0 11 0 9
++7L<O2?5W82rJ9JAcR8[`W4'K
+BDFChar: 199 9 1 8 -3 9
+4D)LH^qdb'Aipn=2uipY
+BDFChar: 200 9 1 7 0 12
+E%i..^qdb`^qdb$rVuou
+BDFChar: 201 9 1 7 0 12
+*#LC/^qdb`^qdb$rVuou
+BDFChar: 202 9 1 7 0 12
+(d)F0^qdb`^qdb$rVuou
+BDFChar: 203 9 1 7 0 12
+AnD&B^qdb`^qdb$rVuou
+BDFChar: 204 4 0 2 0 12
+^gI.M?smAM?smAM?iU0,
+BDFChar: 205 4 1 3 0 12
+@))cX^qdb$^qdb$^]4?7
+BDFChar: 206 4 0 3 0 12
+@#t@r?smAM?smAM?iU0,
+BDFChar: 207 4 0 3 0 12
+O8o8g?smAM?smAM?iU0,
+BDFChar: 208 10 0 8 0 9
+IK3jX@=Vd:q1)n(@=Vd:@fUrX
+BDFChar: 209 10 1 8 0 12
+H<pThj5]acgX!p\_Z0Z:
+BDFChar: 210 10 1 8 0 12
+3#E&dB#DO(_o'B(49,?]
+BDFChar: 211 10 1 8 0 12
+*#L@lB#DO(_o'B(49,?]
+BDFChar: 212 10 1 8 0 12
+(d)CmB#DO(_o'B(49,?]
+BDFChar: 213 10 1 8 0 12
+H<pS6B#DO(_o'B(49,?]
+BDFChar: 214 10 1 8 0 12
+AnD$*B#DO(_o'B(49,?]
+BDFChar: 215 8 1 6 1 5
+b]kgdbQ%VC
+BDFChar: 216 10 1 8 0 9
+5A&6fgY;>kB)DW/
+BDFChar: 217 10 1 8 0 12
+3#E(A_o'C0_o'B(49,?]
+BDFChar: 218 10 1 8 0 12
+*#LBI_o'C0_o'B(49,?]
+BDFChar: 219 10 1 8 0 12
+(d)C1_o'C0_o'B(49,?]
+BDFChar: 220 10 1 8 0 12
+AnD%\_o'C0_o'B(49,?]
+BDFChar: 221 10 0 9 0 12
+#64r.$in)Y^qaB/1B8Hr$ig\9$ig\9$ig8-
+BDFChar: 222 9 1 7 0 9
+^qflf`l?$r^q]pM
+BDFChar: 223 8 1 6 0 9
+Gg+CUfZ_R`bh)mq
+BDFChar: 224 8 1 6 0 10
+E%i+/Gg$SDbfkG7
+BDFChar: 225 8 1 6 0 10
+3&"_?Gg$SDbfkG7
+BDFChar: 226 8 1 6 0 10
+0R1eAGg$SDbfkG7
+BDFChar: 227 8 1 6 0 9
+oXk0KbRAmCb^9Bj
+BDFChar: 228 8 1 6 0 9
+bfg'3bRAmCb^9Bj
+BDFChar: 229 8 1 6 0 10
+0R,8OGg$SDbfkG7
+BDFChar: 230 12 1 10 0 6
+It5bY%)@@CbQ,l&It.M!
+BDFChar: 231 7 1 6 -3 6
+Gg*t=^s%$W(iTHT
+BDFChar: 232 8 1 6 0 10
+E%i+/Gg+D,^s%$'
+BDFChar: 233 8 1 6 0 10
+3&"_?Gg+D,^s%$'
+BDFChar: 234 8 1 6 0 10
+0R1eAGg+D,^s%$'
+BDFChar: 235 8 1 6 0 9
+bfg'3bfojtb]j*f
+BDFChar: 236 4 0 3 0 10
+i*\5=?smAM?sm@B
+BDFChar: 237 4 0 3 0 10
+E+$H]?smAM?sm@B
+BDFChar: 238 4 0 3 0 9
+@.4/(?smAM?sis7
+BDFChar: 239 4 0 3 0 9
+OH9HM?smAM?sis7
+BDFChar: 240 8 1 6 0 9
+lnI'/I*BgYb]j*f
+BDFChar: 241 8 1 6 0 9
+oXk2!bfn;Tbfg%e
+BDFChar: 242 8 1 6 0 10
+E%i+/Gg+CUbfk;3
+BDFChar: 243 8 1 6 0 10
+3&"_?Gg+CUbfk;3
+BDFChar: 244 8 1 6 0 10
+0R1eAGg+CUbfk;3
+BDFChar: 245 8 1 6 0 9
+oXk0Kbfn;Tb]j*f
+BDFChar: 246 8 1 6 0 9
+bfg'3bfn;Tb]j*f
+BDFChar: 247 6 1 4 1 7
+?sj!(!+917
+BDFChar: 248 8 1 6 0 6
+I,*NTm-OKI
+BDFChar: 249 8 1 6 0 10
+E%i+/bfn;TbfkG7
+BDFChar: 250 8 1 6 0 10
+3&"_?bfn;TbfkG7
+BDFChar: 251 8 1 6 0 10
+0R1eAbfn;TbfkG7
+BDFChar: 252 8 1 6 0 9
+bfg(2bfn;Tb^9Bj
+BDFChar: 253 8 0 7 -3 10
+%La0S_o$(u4?OGt0OOk\
+BDFChar: 254 8 1 6 -3 9
+^qdb\bfn;TbkSuh^]4?7
+BDFChar: 255 8 0 7 -3 9
+AnD%\_e*LC4;\nh?iU0,
 BDFChar: 338 4 0 2 0 8
 ?smAM?smAM?iU0,
 BDFChar: 339 4 0 2 0 8
