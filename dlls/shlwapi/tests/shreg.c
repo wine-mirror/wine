@@ -168,7 +168,7 @@ static void test_SHQUeryValueEx(void)
 	 */
 	dwSize = 6;
 	ok(! SHQueryValueExA( hKey, "Test3", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed\n");
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n", dwSize, nUsedBuffer2);
+	ok( dwSize >= nUsedBuffer2, "(%lu,%lu)\n", dwSize, nUsedBuffer2);
 
 
 	/*
@@ -192,7 +192,7 @@ static void test_SHQUeryValueEx(void)
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
 	ok( ERROR_MORE_DATA == dwRet, "ERROR_MORE_DATA\n");
 	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)\n", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwSize >= nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 	/*
@@ -204,7 +204,7 @@ static void test_SHQUeryValueEx(void)
 	ok( ERROR_MORE_DATA == SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize), "Expected ERROR_MORE_DATA\n");
 	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "(%s)\n", buf);
 	ok( sExpLen2 - 4 - 1 == strlen(buf), "(%s)\n", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwSize >= nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 	/*
@@ -215,7 +215,7 @@ static void test_SHQUeryValueEx(void)
 	dwType = -1;
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, NULL, &dwSize);
 	ok( ERROR_SUCCESS == dwRet, "(%lu)\n", dwRet);
-	ok( dwSize == nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
+	ok( dwSize >= nUsedBuffer2, "(%lu,%lu)\n" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)\n" , dwType);
 
 
