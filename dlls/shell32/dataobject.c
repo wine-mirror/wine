@@ -12,6 +12,7 @@
 #include "winerror.h"
 #include "shell32_main.h"
 #include "debugtools.h"
+#include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
@@ -58,20 +59,25 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 	IEnumFORMATETCImpl* ef;
 	DWORD size=cfmt * sizeof(FORMATETC);
 	
-	ef=(IEnumFORMATETCImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IEnumFORMATETCImpl));
-	ef->ref=1;
-	ef->lpvtbl=&efvt;
+	ef=(IEnumFORMATETCImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumFORMATETCImpl));
 
-	ef->posFmt = 0;
-	ef->countFmt = cfmt;
-	ef->pFmt = SHAlloc (size);
+	if(ef)
+	{
+	  ef->ref=1;
+	  ef->lpvtbl=&efvt;
 
-	if (ef->pFmt)
-	{ memcpy(ef->pFmt, afmt, size);
+	  ef->countFmt = cfmt;
+	  ef->pFmt = SHAlloc (size);
+
+	  if (ef->pFmt)
+	  {
+	    memcpy(ef->pFmt, afmt, size);
+	  }
+
+	  shell32_ObjCount++;
 	}
 
 	TRACE("(%p)->()\n",ef);
-	shell32_ObjCount++;
 	return (LPENUMFORMATETC)ef;
 }
 static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPENUMFORMATETC iface, REFIID riid, LPVOID* ppvObj)
@@ -241,13 +247,15 @@ static IDLList_VTable idllvt =
 };
 
 LPIDLLIST IDLList_Constructor (UINT uStep)
-{	LPIDLLIST lpidll;
-	if (!(lpidll = (LPIDLLIST)HeapAlloc(GetProcessHeap(),0,sizeof(IDLList))))
-	  return NULL;
+{
+	LPIDLLIST lpidll;
+	lpidll = (LPIDLLIST)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDLList));
 
-	lpidll->lpvtbl=&idllvt;
-	lpidll->uStep=uStep;
-	lpidll->dpa=NULL;
+	if (lpidll)
+	{
+	  lpidll->lpvtbl=&idllvt;
+	  lpidll->uStep=uStep;
+	}
 
 	TRACE("(%p)\n",lpidll);
 	return lpidll;
@@ -261,11 +269,13 @@ static UINT WINAPI IDLList_GetState(LPIDLLIST this)
 {	TRACE("(%p)->(uStep=%u dpa=%p)\n",this, this->uStep, this->dpa);
 
 	if (this->uStep == 0)
-	{ if (this->dpa)
+	{
+	  if (this->dpa)
 	    return(State_Init);
-          return(State_OutOfMem);
-        }
-        return(State_UnInit);
+
+	  return(State_OutOfMem);
+	}
+	return(State_UnInit);
 }
 static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT nIndex)
 {	TRACE("(%p)->(index=%u)\n",this, nIndex);
@@ -344,7 +354,6 @@ typedef struct
     ICOM_VTABLE(IDataObject)* lpvtbl;
     DWORD                     ref;
     /* IDataObject fields */
-    LPSHELLFOLDER psf;
     LPIDLLIST     lpill;       /* the data of the dataobject */
     LPITEMIDLIST  pidl;     
 } IDataObjectImpl;
@@ -382,26 +391,29 @@ static struct ICOM_VTABLE(IDataObject) dtovt =
 /**************************************************************************
 *  IDataObject_Constructor
 */
-LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT cidl)
+LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITEMIDLIST * apidl, UINT cidl)
 {
 	IDataObjectImpl* dto;
-	if (!(dto = (IDataObjectImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDataObjectImpl))))
-	  return NULL;
-	  
-	dto->ref=1;
-	dto->lpvtbl=&dtovt;
-	dto->psf=psf;
-	dto->pidl=ILClone(((IGenericSFImpl*)psf)->pMyPidl); /* FIXME:add a reference and don't copy*/
 
-	/* fill the ItemID List List */
-	dto->lpill = IDLList_Constructor (8);
-	if (! dto->lpill )
-	  return NULL;
+	dto = (IDataObjectImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDataObjectImpl));
+
+	if (dto)
+	{
+	  dto->ref=1;
+	  dto->lpvtbl=&dtovt;
+	  dto->pidl=ILClone(pMyPidl);
+
+	  /* fill the ItemID List List */
+	  dto->lpill = IDLList_Constructor (8);
+	  if (! dto->lpill )
+	    return NULL;
 	  
-	dto->lpill->lpvtbl->fnAddItems(dto->lpill, apidl, cidl); 
+	  dto->lpill->lpvtbl->fnAddItems(dto->lpill, apidl, cidl); 
+
+	  shell32_ObjCount++;
+	}
 	
-	TRACE("(%p)->(sf=%p apidl=%p cidl=%u)\n",dto, psf, apidl, cidl);
-	shell32_ObjCount++;
+	TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
 	return (LPDATAOBJECT)dto;
 }
 /***************************************************************************
@@ -430,7 +442,7 @@ static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID ri
 	}
 	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
-}   
+}
 /**************************************************************************
 *  IDataObject_AddRef
 */
@@ -469,11 +481,11 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 */
 static BOOL DATAOBJECT_InitShellIDList(void)
 {	if (cfShellIDList)
-        { return(TRUE);
-        }
+	{ return(TRUE);
+	}
 
-        cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
-        return(cfShellIDList != 0);
+	cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+	return(cfShellIDList != 0);
 }
 
 /**************************************************************************
@@ -485,11 +497,11 @@ static BOOL DATAOBJECT_InitShellIDList(void)
 /* FIXME: DATAOBJECT_InitFileGroupDesc is not used (19981226)
 static BOOL32 DATAOBJECT_InitFileGroupDesc(void)
 {	if (cfFileGroupDesc)
-        { return(TRUE);
-        }
+	{ return(TRUE);
+	}
 
-        cfFileGroupDesc = RegisterClipboardFormatA(CFSTR_FILEDESCRIPTORA);
-        return(cfFileGroupDesc != 0);
+	cfFileGroupDesc = RegisterClipboardFormatA(CFSTR_FILEDESCRIPTORA);
+	return(cfFileGroupDesc != 0);
 }
 */
 /**************************************************************************
@@ -501,81 +513,94 @@ static BOOL32 DATAOBJECT_InitFileGroupDesc(void)
 /* FIXME: DATAOBJECT_InitFileContents is not used (19981226)
 static BOOL32 DATAOBJECT_InitFileContents(void)
 {	if (cfFileContents)
-        { return(TRUE);
-        }
+	{ return(TRUE);
+	}
 
-        cfFileContents = RegisterClipboardFormatA(CFSTR_FILECONTENTS);
-        return(cfFileContents != 0);
+	cfFileContents = RegisterClipboardFormatA(CFSTR_FILECONTENTS);
+	return(cfFileContents != 0);
 }
 */
 
 /**************************************************************************
-* interface implementation
+* IDataObject_fnGetData
 */
 static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
 {
 	ICOM_THIS(IDataObjectImpl,iface);
-	char	temp[256];
+
+	char	szTemp[256];
 	UINT	cItems;
-	DWORD	size, size1, size2;
-	LPITEMIDLIST pidl;
-	LPCIDA pcida;
-	HGLOBAL hmem;
+	DWORD	sizeCIDA, sizePidl, nOffset, nSize;
+	LPCIDA	pcida;
+	HGLOBAL	hmem;
+	int	i;
+	LPITEMIDLIST	pidl;
 	
-	GetClipboardFormatNameA (pformatetcIn->cfFormat, temp, 256);
-	WARN("(%p)->(%p %p format=%s)semi-stub\n", This, pformatetcIn, pmedium, temp);
+	GetClipboardFormatNameA (pformatetcIn->cfFormat, szTemp, 256);
+	TRACE("(%p)->(%p %p format=%s)\n", This, pformatetcIn, pmedium, szTemp);
 
-	if (!DATAOBJECT_InitShellIDList())	/* is the clipformat registred? */
-        { return(E_UNEXPECTED);
-        }
+	/* is the clipformat registred? */
+	if (!DATAOBJECT_InitShellIDList()) return(E_UNEXPECTED);
 	
-        if (pformatetcIn->cfFormat == cfShellIDList)
-        { if (pformatetcIn->ptd==NULL 
-		&& (pformatetcIn->dwAspect & DVASPECT_CONTENT) 
-		&& pformatetcIn->lindex==-1
-		&& (pformatetcIn->tymed&TYMED_HGLOBAL))
-	  { cItems = This->lpill->lpvtbl->fnGetCount(This->lpill);
-	    if (cItems < 1)
-	    { return(E_UNEXPECTED);
-	    }
-	    pidl = This->lpill->lpvtbl->fnGetElement(This->lpill, 0);
-
-	    pdump(This->pidl);
-	    pdump(pidl);
-	    
-	    /*hack consider only the first item*/
-	    cItems = 2;
-	    size = sizeof(CIDA) + sizeof (UINT)*(cItems-1);
-	    size1 = ILGetSize (This->pidl);
-	    size2 = ILGetSize (pidl);
-	    hmem = GlobalAlloc(GMEM_FIXED, size+size1+size2);
-	    pcida = GlobalLock (hmem);
-	    if (!pcida)
-	    { return(E_OUTOFMEMORY);
-	    }
-
-	    pcida->cidl = 1;
-	    pcida->aoffset[0] = size;
-	    pcida->aoffset[1] = size+size1;
-
-	    TRACE("-- %lu %lu %lu\n",size, size1, size2 );
-	    TRACE("-- %p %p\n",This->pidl, pidl);
-	    TRACE("-- %p %p %p\n",pcida, (LPBYTE)pcida+size,(LPBYTE)pcida+size+size1);
-	    
-	    memcpy ((LPBYTE)pcida+size, This->pidl, size1);
-	    memcpy ((LPBYTE)pcida+size+size1, pidl, size2);
-	    TRACE("-- after copy\n");
-
-	    GlobalUnlock(hmem);
-	    
-	    pmedium->tymed = TYMED_HGLOBAL;
-	    pmedium->u.hGlobal = (HGLOBAL)pcida;
-	    pmedium->pUnkForRelease = NULL;
-	    TRACE("-- ready\n");
-	    return(NOERROR);
-	  }
+	/* test expected format */
+	if (!(pformatetcIn->cfFormat == cfShellIDList))
+	{
+	  FIXME("-- clipformat not implemented\n");
+	  return (E_INVALIDARG);
 	}
-	FIXME("-- clipformat not implemented\n");
+
+	if (pformatetcIn->ptd==NULL 
+		&& (pformatetcIn->dwAspect & DVASPECT_CONTENT) 
+		&& pformatetcIn->lindex==-1 
+		&& (pformatetcIn->tymed&TYMED_HGLOBAL))
+	{
+	  cItems = This->lpill->lpvtbl->fnGetCount(This->lpill);
+	  if (cItems < 1) return(E_UNEXPECTED);
+	
+	  sizeCIDA = sizeof(CIDA) + sizeof (UINT)*(cItems);	/* without any pidl */
+	  sizePidl = ILGetSize (This->pidl);			/* add root pidl */
+
+	  nSize = sizeCIDA + sizePidl;
+	  hmem = GlobalAlloc(GHND|GMEM_SHARE, nSize);		
+	  if (!hmem) return(E_OUTOFMEMORY);
+	  pcida = GlobalLock (hmem);
+
+	  nOffset = sizeCIDA;				/* start after the CIDA */
+	  pcida->cidl = cItems;
+
+	  pcida->aoffset[0] = nOffset;			/* first element */
+	  memcpy(((LPBYTE)pcida)+nOffset, This->pidl, sizePidl);
+	  nOffset += sizePidl;
+	  pdump(This->pidl);
+
+	  for (i=0; i< cItems; i++)
+	  {
+	    pidl = This->lpill->lpvtbl->fnGetElement(This->lpill, i);
+	    sizePidl = ILGetSize (pidl);
+	    nSize += sizePidl;				/* size of the structure */
+	    pdump(pidl);
+
+	    GlobalUnlock(hmem);				/* grow memory */
+	    hmem = GlobalReAlloc(hmem, nSize, GHND|GMEM_SHARE);
+	    if (!hmem) return(E_OUTOFMEMORY);
+	    pcida = GlobalLock (hmem);
+
+	    pcida->aoffset[i+1] = nOffset;		/* copy element */
+	    memcpy(((LPBYTE)pcida)+nOffset, pidl, sizePidl);
+	    nOffset += sizePidl;
+	  }
+
+	  GlobalUnlock(hmem);
+
+	  pmedium->tymed = TYMED_HGLOBAL;
+	  pmedium->u.hGlobal = hmem;
+	  pmedium->pUnkForRelease = NULL;
+
+	  TRACE("(%p)->(cida at %p)\n", This, pcida);
+	  return hmem;
+	}
+
+	FIXME("-- can't serve format\n");
 	return (E_INVALIDARG);
 }
 static HRESULT WINAPI IDataObject_fnGetDataHere(LPDATAOBJECT iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium)
