@@ -308,7 +308,7 @@ RPC_STATUS WINAPI UuidCreateSequential(UUID *Uuid)
  *
  *  S_OK if successful.
  */
-RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
+RPC_STATUS WINAPI RpcStringFreeA(LPSTR* String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
@@ -342,7 +342,7 @@ unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
  *  S_OK if successful.
  *  S_OUT_OF_MEMORY if unsucessful.
  */
-RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
+RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
 {
   *StringUuid = HeapAlloc( GetProcessHeap(), 0, sizeof(char) * 37);
 
@@ -361,7 +361,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 /***********************************************************************
  *		UuidFromStringA (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringA(unsigned char *str, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringA(LPSTR str, UUID *uuid)
 {
     FIXME("%s %p\n",debugstr_a(str),uuid);
     return RPC_S_INVALID_STRING_UUID;
@@ -370,7 +370,7 @@ RPC_STATUS WINAPI UuidFromStringA(unsigned char *str, UUID *uuid)
 /***********************************************************************
  *		UuidFromStringW (RPCRT4.@)
  */
-RPC_STATUS WINAPI UuidFromStringW(unsigned short *str, UUID *uuid)
+RPC_STATUS WINAPI UuidFromStringW(LPWSTR str, UUID *uuid)
 {
     FIXME("%s %p\n",debugstr_w(str),uuid);
     return RPC_S_INVALID_STRING_UUID;

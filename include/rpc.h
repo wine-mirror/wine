@@ -25,6 +25,8 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
+#define __RPC_WIN32__
+
 #define __RPC_FAR
 #define __RPC_API  WINAPI
 #define __RPC_USER WINAPI

@@ -22,7 +22,10 @@
 #ifndef __RPCNDR_H_VERSION__
 /* FIXME: I'm not sure what version though */
 #define __RPCNDR_H_VERSION__
-#endif // __RPCNDR_H_VERSION__
+#endif
+
+#define TARGET_IS_NT40_OR_LATER 1
+#define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 
 typedef unsigned char byte;
 typedef __int64 hyper;
@@ -30,6 +33,9 @@ typedef __uint64 MIDL_uhyper;
 /* 'boolean' tend to conflict, let's call it _wine_boolean */
 typedef unsigned char _wine_boolean;
 /* typedef _wine_boolean boolean; */
+
+#define __RPC_CALLEE WINAPI
+#define RPC_VAR_ENTRY WINAPIV
 
 typedef struct
 {
@@ -195,6 +201,22 @@ typedef struct _MIDL_SERVER_INFO_
   const unsigned short *LocalFmtStringOffset;
 } MIDL_SERVER_INFO, *PMIDL_SERVER_INFO;
 
+typedef struct _MIDL_STUBLESS_PROXY_INFO
+{
+  PMIDL_STUB_DESC pStubDesc;
+  PFORMAT_STRING ProcFormatString;
+  const unsigned short *FormatStringOffset;
+  PFORMAT_STRING LocalFormatTypes;
+  PFORMAT_STRING LocalProcStrings;
+  const unsigned short *LocalFmtStringOffset;
+} MIDL_STUBLESS_PROXY_INFO, *PMIDL_STUBLESS_PROXY_INFO;
+
+typedef union _CLIENT_CALL_RETURN
+{
+  void *Pointer;
+  LONG_PTR Simple;
+} CLIENT_CALL_RETURN;
+
 typedef enum {
   STUB_UNMARSHAL,
   STUB_CALL_SERVER,
@@ -253,6 +275,21 @@ RPCRTAPI void RPC_ENTRY
   NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams );
 RPCRTAPI void RPC_ENTRY
   NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
+
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
+  NdrClientCall2( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
+  NdrClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
+
+RPCRTAPI void RPC_ENTRY
+  NdrServerCall2( PRPC_MESSAGE pRpcMsg );
+RPCRTAPI void RPC_ENTRY
+  NdrServerCall( PRPC_MESSAGE pRpcMsg );
+
+RPCRTAPI long RPC_ENTRY
+  NdrStubCall2( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, LPDWORD pdwStubPhase );
+RPCRTAPI long RPC_ENTRY
+  NdrStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, LPDWORD pdwStubPhase );
 
 RPCRTAPI void* RPC_ENTRY
   NdrOleAllocate( size_t Size );

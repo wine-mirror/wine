@@ -90,12 +90,24 @@ typedef struct _RPC_POLICY
   ULONG NICFlags;
 } RPC_POLICY,  *PRPC_POLICY;
 
+/* RpcServerRegisterIfEx Flags */
+#define RPC_IF_AUTOLISTEN               0x1
+#define RPC_IF_OLE                      0x2
+#define RPC_IF_ALLOW_UNKNOWN_AUTHORITY  0x4
+#define RPC_IF_ALLOW_SECURE_ONLY        0x8
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingCopy( RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFree( RPC_BINDING_HANDLE* Binding );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingInqObject( RPC_BINDING_HANDLE Binding, UUID* ObjectUuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingReset( RPC_BINDING_HANDLE Binding );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcBindingSetObject( RPC_BINDING_HANDLE Binding, UUID* ObjectUuid );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );
@@ -111,6 +123,45 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr,
+                            LPSTR Endpoint, LPSTR Options, LPSTR* StringBinding );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr,
+                            LPWSTR Endpoint, LPWSTR Options, LPWSTR* StringBinding );
+#define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcStringBindingParseA( LPSTR StringBinding, LPSTR* ObjUuid, LPSTR* Protseq,
+                          LPSTR* NetworkAddr, LPSTR* Endpoint, LPSTR* NetworkOptions );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcStringBindingParseW( LPWSTR StringBinding, LPWSTR* ObjUuid, LPWSTR* Protseq,
+                          LPWSTR* NetworkAddr, LPWSTR* Endpoint, LPWSTR* NetworkOptions );
+#define RpcStringBindingParse WINELIB_NAME_AW(RpcStringBindingParse)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE IfSpec );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
+                  UUID_VECTOR* UuidVector, LPSTR Annotation );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpRegisterW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
+                  UUID_VECTOR* UuidVector, LPWSTR Annotation );
+#define RpcEpRegister WINELIB_NAME_AW(RpcEpRegister)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpRegisterNoReplaceA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
+                           UUID_VECTOR* UuidVector, LPSTR Annotation );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpRegisterNoReplaceW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
+                           UUID_VECTOR* UuidVector, LPWSTR Annotation );
+#define RpcEpRegisterNoReplace WINELIB_NAME_AW(RpcEpRegisterNoReplace)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
+                   UUID_VECTOR* UuidVector );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector );
@@ -163,22 +214,37 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcStringBindingCompose WINELIB_NAME_AW(RpcStringBindingCompose)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringFreeA(unsigned char** String);
+  RpcStringFreeA(LPSTR* String);
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcStringFreeW(unsigned short** String);
+  RpcStringFreeW(LPWSTR* String);
 #define RpcStringFree WINELIB_NAME_AW(RpcStringFree)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidCreate( UUID* Uuid );
-
+  UuidToStringA( UUID* Uuid, LPSTR* StringUuid );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidToStringA( UUID* Uuid, unsigned char** StringUuid );
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  UuidToStringW( UUID* Uuid, unsigned short** StringUuid );
+  UuidToStringW( UUID* Uuid, LPWSTR* StringUuid );
 #define UuidToString WINELIB_NAME_AW(UuidToString)
 
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidFromStringA( LPSTR StringUuid, UUID* Uuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidFromStringW( LPWSTR StringUuid, UUID* Uuid );
+#define UuidFromString WINELIB_NAME_AW(UuidFromString)
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidCreate( UUID* Uuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidCreateSequential( UUID* Uuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  UuidCreateNil( UUID* Uuid );
+RPCRTAPI signed int RPC_ENTRY
+  UuidCompare( UUID* Uuid1, UUID* Uuid2, RPC_STATUS* Status_ );
+RPCRTAPI int RPC_ENTRY
+  UuidEqual( UUID* Uuid1, UUID* Uuid2, RPC_STATUS* Status_ );
 RPCRTAPI unsigned short RPC_ENTRY
   UuidHash(UUID* Uuid, RPC_STATUS* Status_ );
+RPCRTAPI int RPC_ENTRY
+  UuidIsNil( UUID* Uuid, RPC_STATUS* Status_ );
 
 #include "rpcdcep.h"
 
