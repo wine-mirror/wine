@@ -8,7 +8,7 @@
 
 #include "config.h"
 #include "module.h"
-#include "console.h"
+#include "dosexe.h"
 #include "wincon.h"
 #include "debugtools.h"
 #include "windef.h"
@@ -37,7 +37,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /* Returns: AH = Scan code
                   AL = ASCII character */   
       TRACE("Get Keystroke\n");
-      CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
+      INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
       break;
 
    case 0x01: /* Check for Keystroke */
@@ -45,7 +45,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Keystroke\n");
-      if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
+      if (!INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
       {
           SET_ZFLAG(context);
       }
@@ -95,7 +95,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       TRACE("Get Enhanced Keystroke - Partially supported\n");
       /* Returns: AH = Scan code
                   AL = ASCII character */   
-      CONSOLE_GetKeystroke(&AH_reg(context), &AL_reg(context));
+      INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
       break;
   
 
@@ -104,7 +104,7 @@ void WINAPI INT_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Enhanced Keystroke - Partially supported\n");
-      if (!CONSOLE_CheckForKeystroke(&AH_reg(context), &AL_reg(context)))
+      if (!INT_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
       {
           SET_ZFLAG(context);
       }
