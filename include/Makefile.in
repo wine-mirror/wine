@@ -36,6 +36,7 @@ INSTALLED_INCLUDES = \
 	dplobby.h \
 	dshow.h \
 	dsound.h \
+	dvdmedia.h \
 	errors.h \
 	evcode.h \
 	guiddef.h \
