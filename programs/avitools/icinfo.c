@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include "windows.h"
 #include "driver.h"
 #include "mmsystem.h"

@@ -9,7 +9,7 @@
 /* Only empty stubs for now */
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include "winbase.h"
 #include "winuser.h"
 #include "ddeml.h"

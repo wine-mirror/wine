@@ -2,7 +2,7 @@
  * Copyright 1998 Marcus Meissner
  */
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 #include "winbase.h"
 #include "winuser.h"

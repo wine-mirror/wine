@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
-#include <strings.h>
+#include <string.h>
 #include "windows.h"
 #include "wingdi.h"
 #include "mmsystem.h"

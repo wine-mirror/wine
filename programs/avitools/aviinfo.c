@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <strings.h>
+#include <string.h>
 #include "windef.h"
 #include "windows.h"
 #include "mmsystem.h"

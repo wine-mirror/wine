@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
