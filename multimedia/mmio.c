@@ -375,9 +375,12 @@ UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 u
 UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
                             LONG cchBuffer, UINT16 uFlags)
 {
-	FIXME(mmio, "(hmmio=%d, pchBuf=%p, cchBuf=%d, uFlags=%#08x): stub\n",
+	FIXME(mmio, "(hmmio=%d, pchBuf=%p, cchBuf=%ld, uFlags=%#08x): stub\n",
 	      hmmio, pchBuffer, cchBuffer, uFlags);
+	return (UINT16) 0;
+/*	stops Corel Draw 4 (16 bit) from working
 	return MMIOERR_OUTOFMEMORY;
+*/
 }
 
 /**************************************************************************

@@ -42,6 +42,8 @@ extern BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest,
 
 extern BOOL32 PATH_MoveTo(HDC32 hdc);
 extern BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y);
+extern BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1,
+   INT32 x2, INT32 y2);
 extern BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1,
    INT32 x2, INT32 y2);
 extern BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,

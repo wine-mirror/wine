@@ -183,8 +183,8 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                                         HRSRC16 hRsrc )
 {
     int  fd;
-    NE_MODULE* pModule = MODULE_GetPtr16( hModule );
-    if ( pModule && (fd = MODULE_OpenFile( hModule )) >= 0)
+    NE_MODULE* pModule = NE_GetPtr( hModule );
+    if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
     {
 	HGLOBAL16 handle;
 	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
@@ -215,7 +215,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
  */
 BOOL32 NE_InitResourceHandler( HMODULE16 hModule )
 {
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
     TRACE(resource,"InitResourceHandler[%04x]\n", hModule );
@@ -236,7 +236,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR typeId,
                                      FARPROC16 resourceHandler )
 {
     FARPROC16 prevHandler = NULL;
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
     if (!pModule || !pModule->res_table) return NULL;
@@ -264,7 +264,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     NE_TYPEINFO *pTypeInfo;
     HRSRC16 hRsrc;
 
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
 
     assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
@@ -333,7 +333,7 @@ HGLOBAL16 WINAPI AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
 
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return 0;
 
     TRACE( resource, "module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
@@ -361,7 +361,7 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
-        fprintf(stderr, "DirectResAlloc: wType = %x\n", wType);
+        TRACE(resource, "(wType=%x)\n", wType);
     return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, FALSE, FALSE, FALSE);
 }
 
@@ -373,7 +373,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 {
     HFILE32 fd;
 
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return -1;
 
     TRACE(resource, "module=%04x res=%04x\n", hModule, hRsrc );
@@ -398,7 +398,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
 
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
 
     TRACE(resource, "module=%04x res=%04x\n", hModule, hRsrc );
@@ -418,7 +418,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo = NULL;
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hModule );
     int d;
 
     TRACE( resource, "module=%04x res=%04x\n", hModule, hRsrc );
@@ -464,7 +464,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 	  	loader = (RESOURCEHANDLER16)pTypeInfo->resloader;
 	    else /* this is really bad */
 	    {
-		fprintf( stderr, "[%04x]: Missing resource handler!!!...\n", hModule);
+		ERR(resource, "[%04x]: Missing resource handler!\n", hModule);
 		loader = NE_DefResourceHandler;
 	    }
 
@@ -513,8 +513,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
     WORD count;
-    HMODULE16 hModule  = GetExePtr( handle );
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
+    NE_MODULE *pModule = NE_GetPtr( GetExePtr(handle) );
 
     if (!handle || !pModule || !pModule->res_table) return handle;
 
@@ -545,7 +544,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
     }
 
     TRACE(resource, "[%04x]: no intrinsic resource for %04x, assuming DirectResAlloc()!\n", 
-		 hModule, handle );
+          pModule->self, handle );
     GlobalFree16( handle ); 
     return handle;
 }

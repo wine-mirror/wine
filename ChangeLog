@@ -1,4 +1,253 @@
 ----------------------------------------------------------------------
+Sun May 17 16:23:56 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [file/profile.c]
+	Fix the return value of PROFILE_GetSection
+
+	* [misc/crtdll.c]
+	Do _getdrive, fix _chdrive.
+
+	* [misc/commdlg.c]
+	First cut at ChooseColor[WA].
+
+	* [misc/network.c]
+	Do something sensible for WNetGetDirectoryType16.
+
+Sun May 17 10:21:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [controls/menu.c]
+	Fixed disabled sub menus with MF_BYPOSITION that were not disabled.
+
+	* [misc/crtdll.c] [relay32/crtdll.spec] [include/winerror.h]
+	Implemented fscanf, fsetpos, _access, _fpreset (thanks to Uwe Bonnes),
+	and _ltoa. 
+
+	* [loader/task.c]
+	MakeProcInstance: must use CURRENT_DS if hInst == NULL.
+
+	* [misc/shell.c]
+	SHELL_GetResourceTable, InternalExtractIcon: fixed broken .ICO handling
+
+	* [windows/winpos.c]
+	DeferWindowPos: removed "same parent" requirement.
+	Which doc states that this is required ?
+
+Sat May 16 20:08:11 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/module.c] [loader/ne/module.c]
+	More NE module cleanups.
+
+	* [loader/task.c]
+	Fixed SwitchStackBack().
+
+Fri May 15 10:04:27 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [configure.in][inlcude/acconfig.h]
+	Fixed broken OSS check, added check for working sigaltstack,
+	fixed broken statfs checks on some linux systems.
+
+	* [files/directory.c][loader/pe_image.c][relay32/builtin.c]
+	  [loader/module.c]
+	Added handling of win32 module pathnames.
+
+	* [relay32/wnaspi32.spec]
+	New file.
+
+	* [misc/lzexpand.c]
+	LZCopy auto-decompresses LZ compressed files, even if they are not
+	specially flagged. Fixes some InstallShield problems.
+
+	* [misc/registry.c]
+	Some fixes for RegQueryInfoKey (reference program monkey.exe
+	from Win32 SDK works now better). Probably still has faults.
+
+Fri May 15 08:58:58 1998  Martin Boehme <boehme@informatik.mu-luebeck.de>
+
+	* [graphics/mapping.c] [include/dc.h] [include/gdi.h] [objects/dc.c]
+	Reworked the way world transformations and mapping modes are handled
+	so that both of these transformations can be computed in a single
+	step.
+
+	* [graphics/painting.c] [graphics/path.c] [include/path.h]
+	More GDI path support.
+
+	* [graphics/x11drv/graphics.c]
+	Fixed the return value of GRAPH_DrawArc for the zero height /
+	zero width case to reflect Windows' behaviour.
+
+	* [include/windows.h] [relay32/gdi32.spec] [objects/dc.c]
+	Implemented ModifyWorldTransform and CombineTransform.
+
+Tue May 14 18:03:46 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [controls/commctrl.c][relay32/comctl32.spec]
+	  [controls/*.c][include/*.h]
+	Implemented InitCommonControlsEx (dll version 4.72 compatible).
+	InitCommonControls calls ImageCommonControlsEx.
+	Registering code of the common controls had to be changed
+	(see XXXX_Register functions).
+
+	* [controls/status.c][include/commctrl.h][include/status.h]
+	Implemented most new features and fixed the look and feel.
+
+	* [contols/commctrl.c][include/commctrl.h][relay32/comctl32.spec]
+	Implemented MenuHelp (incomplete).
+
+	* [controls/status.c][controls/progress.c]
+	Changed allocation strategy for control specific memory.
+
+	* [controls/header.c][include/header.h][include/commctrl.h]
+	First implementation of header control.
+
+	* [windows/defwnd.c][windows/syscolors.c]
+	Fixed default control colors for Win95 look.
+
+	* [windows/nonclient.c]
+	Fixed off by one error for Win95 look. Top border of child windows
+	should be visible.
+
+	* [misc/imagelist.h]
+	Improved documentation and fixed some bugs.
+
+Thu May 14 15:42:21 1998  Robert Wilhelm  <robert@physiol.med.tu-muenchen.de>
+
+	* [relay32/crtdll.spec]
+	Added hypot,j0,j1,jn and ceil.
+
+Wed May 13 19:10:10 1998  Pascal Cuoq <pcuoq@ens-lyon.fr>
+
+	* [controls/listbox.c]
+	Item height is now exactly font height.
+	Wine listboxes now behave like Windows' when they are 
+	created without WS_VSCROLL but the program subsequently 
+	calls ShowScrollBar or SetScrollInfo.
+
+Wed May 13 18:33:01 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [relay32/relay386.c]
+	Restore ES also in the non-debug case.
+
+	* [windows/event.c]
+	Bugfix: Blocking TSXNextEvent could deadlock Wine.
+
+	* [win32/process.c] [windows/message.c]
+	Silly stubs for MsgWaitForMultipleObjects / PostThreadMessage
+	that make some programs run better.
+
+	* [windows/winproc.c]
+	WINPROC_MapMsg32Ato16/16To32A: added WM_NOTIFY.  
+
+        * [win32/kernel32.c]
+	Added 16->32 thunking and improved 32->16 thunking functions.
+
+	* [tools/build.c]
+	Added new variant of CallFrom16 stub for use with Win95 thunks.
+
+	* [if1632/kernel.spec] [if1632/builtin.c] [win32/kernel32.c]
+	Added a few undocumented KERNEL functions.
+
+	* [loader/ne/module.c] [loader/ne/segment.c]
+	Call DllEntryPoint for 16-bit DLLs with subsystem >= 4.0.
+
+	* [win32/kernel32.spec] [win32/wow32.spec] [win32/ordinals.c]
+	Use names from the Oct 94 beta release for undoc. functions.
+
+Wed May 13 14:18:26 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [misc/registry.c]
+	Code cleanup.
+
+	* [misc/cpu.c]
+	Commented out the registry puts temporarily.
+
+	* [programs/regtest/*]
+	New registry testing program.
+
+Tue May 12 22:54:03 1998  Michael Mess <michael@kawo2.rwth-aachen.de>
+
+	* [multimedia/audio.c]
+	ioctl's do not commute in /dev/dsp initialization.
+
+Tue May 12 20:11:42 1998  Karl Garrison <karlos@eznet.net>
+
+	* [win32/console.c]
+	Implemented SetConsoleTextAttribute, FillConsoleOutputCharacter.
+	Improved cursor positioning.
+	This allows for text colors in an xterm, rxvt, or console.
+
+Tue May 12 17:57:52 1998  Petter Reinholdtsen <pere@td.org.uit.no>
+
+	* [Makefile.in]
+	Create prefix/{bin|lib} directories if missing during install.
+
+Sun May 10 19:37:51 1998  Jan Willamowius <jan@janhh.shnet.org>
+
+	* [multimedia/mmio.c]
+	Have mmioSetBuffer return success (0), so Corel Draw 4
+	keeps working. (IO is still unbuffered)
+
+Wed May  6 16:57:55 1998  James Juran <jrj120@psu.edu>
+
+        * [Makefile.in] [Make.rules.in]
+	Changed "make clean" to remove `textedit` backup files (*%)
+
+	* [controls/menu.c][graphics/x11drv/xfont.c][include/libres.h]
+	  [loader/main.c][loader/ne/module.c][scheduler/synchro.c]
+	  [win32/time.c][windows/winpos.c][include/windows.h]
+	Fixed miscellaneous compilation warnings.
+
+	* [misc/main.c][miscemu/main.c][include/main.h]
+	Moved prototypes to new include file main.h, various cleanups.
+
+Tue May  5 21:05:06 1998  Morten Welinder  <terra@diku.dk>
+
+	* [misc/winsock.c]
+	Don't refer to __FreeBSD__ when HAVE_STRERROR is meant.
+
+	* [misc/debugstr.c]
+	For debug_dumpstrSend, send strings to stderr.
+
+Tue May  5 21:47:40 1998  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/region.c]
+	Fix for REGION_RegionOp() if newReg is one of the source regions.
+
+Tue May  5 18:27:32 1998  Jim Peterson <jspeter@roanoke.infi.net>
+
+	* [misc/main.c]
+	Add '-h/-help' option and print WINE_RELEASE_INFO with usage message.
+
+	* [misc/spy.c]
+	Realign trace messages.
+
+Tue May  5 15:46:47 1998  Donnie V. Savage <dsavage@cisco.com>
+
+	* [graphics/ddraw.c]
+	Fixed compile warnings
+
+	* [misc/winsock.c]
+	Warnings should not be errors.
+
+Tue May  5 13:40:42 1998  Jim Peterson <jspeter@roanoke.infi.net>
+
+	* [*/*]
+	Remove many warnings through explicit casts, added #include's,
+	and corrected printf formats.
+
+Tue May  5 05:18:12 1998  Insomnia (Stea Greene) <insomnia@core.binghamton.edu>
+
+	* [graphics/ddraw.c]
+	Kept unchanged portion of old palette when changing only a few
+	palette entries.  Really should only deallocate the changed cells.
+	This make StarCraft work almost perfectly (sound overflows still
+	cause static).
+
+Mon May  4 15:04:57 1998  Alexander V. Lukyanov <lav@long.yar.ru>
+
+	* [misc/lstr.c]
+	FormatMessage: terminate string on %0, undo linefeed strip.
+
+----------------------------------------------------------------------
 Thu Apr 30 16:28:12 1998  James Juran <jrj120@psu.edu>
 
 	* [scheduler/process.c]

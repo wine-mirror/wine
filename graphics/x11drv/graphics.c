@@ -91,7 +91,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     xend   = XLPTODP( dc, xend );
     yend   = YLPTODP( dc, yend );
 
-    if ((left == right) || (top == bottom)) return FALSE;
+    if ((left == right) || (top == bottom)) return TRUE;
 
     if (left > right) { tmp=left; left=right; right=tmp; }
     if (top > bottom) { tmp=top; top=bottom; bottom=tmp; } 

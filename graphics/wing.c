@@ -70,7 +70,7 @@ HDC16 WINAPI WinGCreateDC16(void)
   __initWinG();
 
   if( __WinGOK > 0 )
-	return CreateCompatibleDC16(NULL);
+	return CreateCompatibleDC16(0);
   return (HDC16)NULL;
 }
 

@@ -2,10 +2,11 @@
  * Interface code to StatusWindow widget/control
  *
  * Copyright 1996 Bruce Milner
+ * Copyright 1998 Eric Kohl
  */
 
 #include <stdio.h>
-#include <stdlib.h>
+
 #include "windows.h"
 #include "status.h"
 #include "commctrl.h"
@@ -20,44 +21,206 @@
 
 /*
  * Fixme/Todo
- * 1) Add size grip to status bar - SBARS_SIZEGRIP
- * 2) Don't hard code bar to bottom of window, allow CCS_TOP also
- * 3) Fix SBT_OWNERDRAW
- * 4) Add DrawStatusText32A funtion
+ * 1) Don't hard code bar to bottom of window, allow CCS_TOP also
+ * 2) Add 'non hack' version of icon drawing code
  */
+
+#define __GET_ICON_INFO_HACK__
+
+#ifdef __GET_ICON_INFO_HACK__
+#include "bitmap.h"
+#endif
+
+#define _MAX(a,b) (((a)>(b))?(a):(b))
+#define _MIN(a,b) (((a)>(b))?(b):(a))
+
+#define HORZ_BORDER 0
+#define VERT_BORDER 2
+#define HORZ_GAP    2
+
 
 static STATUSWINDOWINFO *GetStatusInfo(HWND32 hwnd)
 {
     WND *wndPtr;
 
     wndPtr = WIN_FindWndPtr(hwnd);
-    return ((STATUSWINDOWINFO *) &wndPtr->wExtra[0]);
+    return ((STATUSWINDOWINFO *) wndPtr->wExtra[0]);
 }
 
-static BOOL32 SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
+
+static void
+STATUS_DrawSizeGrip (HDC32 hdc, LPRECT32 lpRect)
 {
-	int	i;
+    HPEN32 hOldPen;
+    POINT32 pt;
+    INT32 i;
 
-	if (!IsWindowVisible32(hwnd)) {
-	    return (TRUE);
-	}
+    pt.x = lpRect->right - 1;
+    pt.y = lpRect->bottom - 1;
 
-	if (self->simple) {
-	    DrawStatusText32A(hdc,
-			      &self->part0.bound,
-			      self->part0.text,
-			      self->part0.style);
+    hOldPen = SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DFACE));
+    MoveToEx32 (hdc, pt.x - 12, pt.y, NULL);
+    LineTo32 (hdc, pt.x, pt.y);
+    LineTo32 (hdc, pt.x, pt.y - 12);
+
+    pt.x--;
+    pt.y--;
+
+    SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DSHADOW));
+    for (i = 1; i < 11; i += 4) {
+	MoveToEx32 (hdc, pt.x - i, pt.y, NULL);
+	LineTo32 (hdc, pt.x, pt.y - i);
+
+	MoveToEx32 (hdc, pt.x - i-1, pt.y, NULL);
+	LineTo32 (hdc, pt.x, pt.y - i-1);
+    }
+
+    SelectObject32 (hdc, GetSysColorPen32 (COLOR_3DHIGHLIGHT));
+    for (i = 3; i < 13; i += 4) {
+	MoveToEx32 (hdc, pt.x - i, pt.y, NULL);
+	LineTo32 (hdc, pt.x, pt.y - i);
+    }
+
+    SelectObject32 (hdc, hOldPen);
+}
+
+
+static void 
+SB_DrawPart( HDC32 hdc, LPRECT32 lprc, HICON32 hIcon,
+             LPCSTR text, UINT32 style )
+{
+    RECT32 r = *lprc;
+    UINT32 border = BDR_SUNKENOUTER;
+
+    if(style==SBT_POPOUT)
+      border = BDR_RAISEDOUTER;
+    else if(style==SBT_NOBORDERS)
+      border = 0;
+
+    DrawEdge32(hdc, &r, border, BF_RECT|BF_ADJUST);
+
+    /* draw the icon */
+    if (hIcon) {
+#ifdef __GET_ICON_INFO_HACK__
+        HBITMAP32 hbmImage;
+        HBITMAP32 hbmMask;
+        CURSORICONINFO *ptr;
+        HDC32 hdcSrc;
+	INT32 y, cy, ry, ty;
+
+        if (ptr = (CURSORICONINFO *)GlobalLock16(hIcon)) {
+        hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
+                                   (char *)(ptr + 1));
+        hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
+                                   ptr->bBitsPerPixel,
+                                   (char *)(ptr + 1) + ptr->nHeight * 
+                                   BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
+	r.left += 2;
+	ry = r.bottom - r.top;
+	if (ry >= ptr->nHeight) {
+	    /* full view of icon */
+	    y = 0;
+	    cy = ptr->nHeight;
+	    ty = r.top + (ry - ptr->nHeight) / 2;
 	}
 	else {
-	    for (i = 0; i < self->numParts; i++) {
-		DrawStatusText32A(hdc,
-				  &self->parts[i].bound,
-				  self->parts[i].text,
-				  self->parts[i].style);
-	    }
+	    /* partial view of icon */
+	    y = (ptr->nHeight - ry) / 2;
+	    cy = ry;
+	    ty = r.top;
 	}
 
-	return TRUE;
+	    hdcSrc = CreateCompatibleDC32 (hdc);
+	    SelectObject32 (hdcSrc, hbmMask);
+	    BitBlt32 (hdc, r.left, r.top, ptr->nWidth, cy,
+		      hdcSrc, 0, y, SRCAND);
+	    SelectObject32 (hdcSrc, hbmImage);
+	    BitBlt32 (hdc, r.left, r.top, ptr->nWidth, cy,
+		      hdcSrc, 0, y, SRCPAINT);
+	    DeleteDC32 (hdcSrc);
+
+	    r.left += ptr->nWidth;
+	    DeleteObject32 (hbmImage);
+	    DeleteObject32 (hbmMask);
+	    GlobalUnlock16 (hIcon);
+	}
+#else
+	/* FIXME: no "non hack" version available!!! */
+#endif
+    }
+
+    /* now draw text */
+    if (text) {
+      int oldbkmode = SetBkMode32(hdc, TRANSPARENT);
+      r.left += 3;
+      DrawText32A(hdc, text, lstrlen32A(text),
+		  &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
+      if (oldbkmode != TRANSPARENT)
+	SetBkMode32(hdc, oldbkmode);
+    }
+}
+
+
+static BOOL32
+SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
+{
+    int      i;
+    RECT32   rect;
+    HBRUSH32 hbrBk;
+    WND *wndPtr;
+
+    wndPtr = WIN_FindWndPtr(hwnd);
+
+    if (!IsWindowVisible32(hwnd)) {
+        return (TRUE);
+    }
+
+    GetClientRect32 (hwnd, &rect);
+
+    if (self->clrBk != CLR_DEFAULT)
+	hbrBk = CreateSolidBrush32 (self->clrBk);
+    else
+	hbrBk = GetSysColorBrush32 (COLOR_3DFACE);
+    FillRect32(hdc, &rect, hbrBk);
+
+    if (self->simple) {
+	SB_DrawPart (hdc,
+		     &self->part0.bound,
+		     self->part0.hIcon,
+		     self->part0.text,
+		     self->part0.style);
+    }
+    else {
+	for (i = 0; i < self->numParts; i++) {
+	    if (self->parts[i].style == SBT_OWNERDRAW) {
+		DRAWITEMSTRUCT32 dis;
+		WND *wndPtr = WIN_FindWndPtr(hwnd);
+
+		dis.CtlID = wndPtr->wIDmenu;
+		dis.itemID = -1;
+		dis.hwndItem = hwnd;
+		dis.hDC = hdc;
+		dis.rcItem = self->part0.bound;
+		dis.itemData = (INT32)self->part0.text;
+		SendMessage32A (GetParent32 (hwnd), WM_DRAWITEM, 
+				(WPARAM32)wndPtr->wIDmenu, (LPARAM)&dis);
+	    }
+	    else
+		SB_DrawPart (hdc,
+			     &self->parts[i].bound,
+			     self->parts[i].hIcon,
+			     self->parts[i].text,
+			     self->parts[i].style);
+	}
+    }
+
+    if (self->clrBk != CLR_DEFAULT)
+	DeleteObject32 (hbrBk);
+
+    if (wndPtr->dwStyle & SBARS_SIZEGRIP)
+	STATUS_DrawSizeGrip (hdc, &rect);
+
+    return TRUE;
 }
 
 
@@ -66,11 +229,10 @@ SW_GetBorders(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lPara
 {
     LPINT32	out;
 
-    /* FIXME for sizegrips */
     out = (LPINT32) lParam;
-    out[0] = 1; /* vertical border width */
-    out[1] = 1; /* horizontal border width */
-    out[2] = 1; /* width of border between rectangles */
+    out[0] = HORZ_BORDER; /* horizontal border width */
+    out[1] = VERT_BORDER; /* vertical border width */
+    out[2] = HORZ_GAP; /* width of border between rectangles */
     return TRUE;
 }
 
@@ -80,10 +242,11 @@ SW_SetPartBounds(HWND32 hwnd, STATUSWINDOWINFO *self)
     int	i;
     RECT32	rect, *r;
     STATUSWINDOWPART *part;
-    int	sep = 1;
 
     /* get our window size */
     GetClientRect32(hwnd, &rect);
+
+    rect.top += VERT_BORDER;
 
     /* set bounds for simple rectangle */
     self->part0.bound = rect;
@@ -97,7 +260,7 @@ SW_SetPartBounds(HWND32 hwnd, STATUSWINDOWINFO *self)
 	if (i == 0)
 	    r->left = 0;
 	else
-	    r->left = self->parts[i-1].bound.right+sep;
+	    r->left = self->parts[i-1].bound.right + HORZ_GAP;
 	if (part->x == -1)
 	    r->right = rect.right;
 	else
@@ -204,17 +367,26 @@ SW_GetParts(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 }
 
 static LRESULT
-SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
     RECT32	rect;
     LPCREATESTRUCT32A lpCreate = (LPCREATESTRUCT32A) lParam;
-    int	height, width;
+    int	height, width, len;
     HDC32	hdc;
     HWND32	parent;
+    WND *wndPtr;
+    STATUSWINDOWINFO *self;
 
-    self->numParts = 0;
+    wndPtr = WIN_FindWndPtr(hwnd);
+    wndPtr->wExtra[0] = HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+				   sizeof(STATUSWINDOWINFO));
+
+    self = (STATUSWINDOWINFO*)wndPtr->wExtra[0];
+    self->numParts = 1;
     self->parts = 0;
-    self->simple = TRUE;
+    self->simple = FALSE;
+    self->clrBk = CLR_DEFAULT;
+    self->hFont = 0;
     GetClientRect32(hwnd, &rect);
 
     /* initialize simple case */
@@ -222,8 +394,23 @@ SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     self->part0.text = 0;
     self->part0.x = 0;
     self->part0.style = 0;
+    self->part0.hIcon = 0;
 
-    height = 40;
+    /* initialize first part */
+    self->parts = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY,
+			    sizeof(STATUSWINDOWPART));
+    self->parts[0].bound = rect;
+    self->parts[0].text = 0;
+    self->parts[0].x = -1;
+    self->parts[0].style = 0;
+    self->parts[0].hIcon = 0;
+
+    if (len = lstrlen32A( lpCreate->lpszName ) ) {
+        self->parts[0].text = HeapAlloc( SystemHeap, 0, len + 1 );
+        lstrcpy32A( self->parts[0].text, lpCreate->lpszName );
+    }
+
+    height = 20;
     if ((hdc = GetDC32(0))) {
 	TEXTMETRIC32A tm;
 	GetTextMetrics32A(hdc, &tm);
@@ -234,8 +421,8 @@ SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     parent = GetParent32(hwnd);
     GetClientRect32(parent, &rect);
     width = rect.right - rect.left;
-    height = (self->textHeight * 3)/2;
-    MoveWindow32(hwnd, lpCreate->x, lpCreate->y-1, width, height, FALSE);
+    self->height = self->textHeight + 4 + VERT_BORDER;
+    MoveWindow32(hwnd, lpCreate->x, lpCreate->y-1, width, self->height, FALSE);
     SW_SetPartBounds(hwnd, self);
     return 0;
 }
@@ -308,24 +495,241 @@ SW_GetTextLength(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lP
 static LRESULT
 SW_SetMinHeight(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-    /* FIXME */
-    /* size is wParam | 2*pixels_of_horz_border */
+    INT32	width, height, x, y;
+    RECT32	parent_rect;
+    HWND32	parent;
+
+    if (IsWindowVisible32 (hwnd)) {
+	/* width and height don't apply */
+	parent = GetParent32(hwnd);
+	GetClientRect32(parent, &parent_rect);
+	self->height = (INT32)wParam + VERT_BORDER;
+	width = parent_rect.right - parent_rect.left;
+	x = parent_rect.left;
+	y = parent_rect.bottom - self->height;
+	MoveWindow32(hwnd, parent_rect.left, parent_rect.bottom - self->height,
+		     width, self->height, TRUE);
+	SW_SetPartBounds(hwnd, self);
+    }
+
     return TRUE;
+}
+
+static LRESULT
+SW_SetBkColor(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    COLORREF oldBkColor;
+    HDC32    hdc;
+
+    oldBkColor = self->clrBk;
+    self->clrBk = (COLORREF)lParam;
+    hdc = GetDC32(hwnd);
+    SW_Refresh(hwnd, hdc, self);
+    ReleaseDC32(hwnd, hdc);
+    return oldBkColor;
+}
+
+
+static LRESULT
+SW_SetIcon(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    HDC32    hdc;
+    INT32    nPart;
+
+    nPart = (INT32)wParam & 0x00ff;
+    if ((nPart < -1) || (nPart >= self->numParts)) return FALSE;
+
+    if (nPart == -1) {
+        self->part0.hIcon = (HICON32)lParam;
+        if (self->simple) 
+            InvalidateRect32(hwnd, &self->part0.bound, FALSE);
+    }
+    else {
+        self->parts[nPart].hIcon = (HICON32)lParam;
+        if (!(self->simple))
+            InvalidateRect32(hwnd, &self->parts[nPart].bound, FALSE);
+    }
+    return TRUE;
+}
+
+static LRESULT
+SW_GetIcon(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    INT32    nPart;
+
+    nPart = (INT32)wParam & 0x00ff;
+    if ((nPart < -1) || (nPart >= self->numParts)) return NULL;
+
+    if (nPart == -1)
+        return (self->part0.hIcon);
+    else
+        return (self->parts[nPart].hIcon);
 }
 
 static LRESULT
 SW_Simple(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
+    WND *wndPtr;
     BOOL32 simple;
-    HDC32	hdc;
+    HDC32  hdc;
+    NMHDR  nmhdr;
+
+    wndPtr = WIN_FindWndPtr(hwnd);
 
     simple = (BOOL32) wParam;
     self->simple = simple;
+
+    /* send notification */
+    nmhdr.hwndFrom = hwnd;
+    nmhdr.idFrom = wndPtr->wIDmenu;
+    nmhdr.code = SBN_SIMPLEMODECHANGE;
+    SendMessage32A (GetParent32 (hwnd), WM_NOTIFY, 0, (LPARAM)&nmhdr);
+
     hdc = GetDC32(hwnd);
     SW_Refresh(hwnd, hdc, self);
     ReleaseDC32(hwnd, hdc);
+
     return TRUE;
 }
+
+
+static LRESULT
+SW_Destroy(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    int	i;
+
+    for (i = 0; i < self->numParts; i++) {
+	if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
+	    HeapFree(SystemHeap, 0, self->parts[i].text);
+    }
+    if (self->part0.text && (self->part0.style != SBT_OWNERDRAW))
+	HeapFree(SystemHeap, 0, self->part0.text);
+    HeapFree(SystemHeap, 0, self->parts);
+    HeapFree(SystemHeap, 0, self);
+    return 0;
+}
+
+
+static LRESULT
+SW_WMGetText (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    INT32 len;
+
+    if (!(self->parts[0].text))
+        return 0;
+    len = lstrlen32A (self->parts[0].text);
+    if (wParam > len) {
+        lstrcpy32A ((LPSTR)lParam, self->parts[0].text);
+        return len;
+    }
+    else
+        return -1;
+}
+
+
+static LRESULT
+SW_WMGetTextLength (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    if (!(self->parts[0].text))
+        return 0;
+    return (lstrlen32A (self->parts[0].text));
+}
+
+
+static LRESULT
+SW_NcHitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    RECT32  rect;
+    POINT32 pt;
+
+    if (wndPtr->dwStyle & SBARS_SIZEGRIP) {
+	GetClientRect32 (wndPtr->hwndSelf, &rect);
+
+	pt.x = (INT32)LOWORD(lParam);
+	pt.y = (INT32)HIWORD(lParam);
+	ScreenToClient32 (wndPtr->hwndSelf, &pt);
+
+	rect.left = rect.right - 13;
+	rect.top += 2;
+
+	if (PtInRect32 (&rect, pt))
+	    return HTBOTTOMRIGHT;
+    }
+
+    return DefWindowProc32A (wndPtr->hwndSelf, WM_NCHITTEST, wParam, lParam);
+}
+
+
+static LRESULT
+SW_NcLButtonDown (HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+//    TRACE (status, "WM_NCLBUTTONDOWN\n");
+    PostMessage32A (GetParent32 (hwnd), WM_NCLBUTTONDOWN,
+		    wParam, lParam);
+    return 0;
+}
+
+
+static LRESULT
+SW_NcLButtonUp (HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+//    TRACE (status, "WM_NCLBUTTONUP\n");
+    PostMessage32A (GetParent32 (hwnd), WM_NCLBUTTONUP,
+		    wParam, lParam);
+    return 0;
+}
+
+
+static LRESULT
+SW_Paint(STATUSWINDOWINFO *self, HWND32 hwnd)
+{
+    HDC32 hdc;
+    PAINTSTRUCT32	ps;
+
+    hdc = BeginPaint32(hwnd, &ps);
+    SW_Refresh(hwnd, hdc, self);
+    EndPaint32(hwnd, &ps);
+    return 0;
+}
+
+
+static LRESULT
+SW_WMSetFont (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    HDC32 hdc;
+
+    self->hFont = (HFONT32)wParam;
+    if (LOWORD(lParam) == TRUE) {
+        hdc = GetDC32(hwnd);
+        SW_Refresh(hwnd, hdc, self);
+        ReleaseDC32(hwnd, hdc);
+    }
+    return 0;
+}
+
+
+static LRESULT
+SW_WMSetText (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
+{
+    int len;
+    STATUSWINDOWPART *part;
+
+    if (self->numParts == 0) return FALSE;
+
+    part = &self->parts[0];
+    /* duplicate string */
+    if (part->text)
+        HeapFree(SystemHeap, 0, part->text);
+    part->text = 0;
+    if (lParam && (len = lstrlen32A((LPCSTR)lParam))) {
+        part->text = HeapAlloc(SystemHeap, 0, len+1);
+        lstrcpy32A(part->text, (LPCSTR)lParam);
+    }
+    InvalidateRect32(hwnd, &part->bound, FALSE);
+
+    return TRUE;
+}
+
 
 static LRESULT
 SW_Size(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
@@ -347,56 +751,48 @@ SW_Size(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 	/* width and height don't apply */
 	parent = GetParent32(hwnd);
 	GetClientRect32(parent, &parent_rect);
-	height = (self->textHeight * 3)/2;
 	width = parent_rect.right - parent_rect.left;
 	x = parent_rect.left;
-	y = parent_rect.bottom - height;
-	MoveWindow32(hwnd, parent_rect.left, parent_rect.bottom - height - 1,
-		     width, height, TRUE);
+	y = parent_rect.bottom - self->height;
+	MoveWindow32(hwnd, parent_rect.left, parent_rect.bottom - self->height,
+		     width, self->height, TRUE);
 	SW_SetPartBounds(hwnd, self);
     }
     return 0;
 }
 
-static LRESULT
-SW_Destroy(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
-{
-    int	i;
 
-    for (i = 0; i < self->numParts; i++) {
-	if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
-	    HeapFree(SystemHeap, 0, self->parts[i].text);
-    }
-    if (self->part0.text && (self->part0.style != SBT_OWNERDRAW))
-	HeapFree(SystemHeap, 0, self->part0.text);
-    HeapFree(SystemHeap, 0, self->parts);
+static LRESULT
+SW_SendNotify (HWND32 hwnd, UINT32 code)
+{
+    WND    *wndPtr;
+    NMHDR  nmhdr;
+
+    wndPtr = WIN_FindWndPtr(hwnd);
+    nmhdr.hwndFrom = hwnd;
+    nmhdr.idFrom = wndPtr->wIDmenu;
+    nmhdr.code = code;
+    SendMessage32A (GetParent32 (hwnd), WM_NOTIFY, 0, (LPARAM)&nmhdr);
+
     return 0;
 }
 
 
 
-static LRESULT
-SW_Paint(STATUSWINDOWINFO *self, HWND32 hwnd)
-{
-    HDC32 hdc;
-    PAINTSTRUCT32	ps;
-
-    hdc = BeginPaint32(hwnd, &ps);
-    SW_Refresh(hwnd, hdc, self);
-    EndPaint32(hwnd, &ps);
-    return 0;
-}
-
-LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
-                                 WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI
+StatusWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *self;
+    WND *wndPtr;
 
+    wndPtr = WIN_FindWndPtr(hwnd);
     self = GetStatusInfo(hwnd);
 
     switch (msg) {
     case SB_GETBORDERS:
 	return SW_GetBorders(self, hwnd, wParam, lParam);
+    case SB_GETICON:
+        return SW_GetIcon(self, hwnd, wParam, lParam);
     case SB_GETPARTS:
 	return SW_GetParts(self, hwnd, wParam, lParam);
     case SB_GETRECT:
@@ -405,6 +801,12 @@ LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
 	return SW_GetText(self, hwnd, wParam, lParam);
     case SB_GETTEXTLENGTH32A:
 	return SW_GetTextLength(self, hwnd, wParam, lParam);
+    case SB_ISSIMPLE:
+        return self->simple;
+    case SB_SETBKCOLOR:
+        return SW_SetBkColor(self, hwnd, wParam, lParam);
+    case SB_SETICON:
+        return SW_SetIcon(self, hwnd, wParam, lParam);
     case SB_SETMINHEIGHT:
 	return SW_SetMinHeight(self, hwnd, wParam, lParam);
     case SB_SETPARTS:	
@@ -415,18 +817,70 @@ LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
 	return SW_Simple(self, hwnd, wParam, lParam);
 
     case WM_CREATE:
-	return SW_Create(self, hwnd, wParam, lParam);
+	return SW_Create(hwnd, wParam, lParam);
     case WM_DESTROY:
 	return SW_Destroy(self, hwnd, wParam, lParam);
+    case WM_GETFONT:
+        return self->hFont;
+    case WM_GETTEXT:
+        return SW_WMGetText(self, hwnd, wParam, lParam);
+    case WM_GETTEXTLENGTH:
+        return SW_WMGetTextLength(self, hwnd, wParam, lParam);
+
+    case WM_LBUTTONDBLCLK:
+        return SW_SendNotify (hwnd, NM_DBLCLK);
+
+    case WM_LBUTTONUP:
+	return SW_SendNotify (hwnd, NM_CLICK);
+
+    case WM_NCHITTEST:
+        return SW_NcHitTest (wndPtr, wParam, lParam);
+
+   case WM_NCLBUTTONDOWN:
+	return SW_NcLButtonDown (hwnd, wParam, lParam);
+
+    case WM_NCLBUTTONUP:
+	return SW_NcLButtonUp (hwnd, wParam, lParam);
+
     case WM_PAINT:
 	return SW_Paint(self, hwnd);
+    case WM_RBUTTONDBLCLK:
+        return SW_SendNotify (hwnd, NM_RDBLCLK);
+    case WM_RBUTTONUP:
+        return SW_SendNotify (hwnd, NM_RCLICK);
+    case WM_SETFONT:
+        return SW_WMSetFont(self, hwnd, wParam, lParam);
+    case WM_SETTEXT:
+        return SW_WMSetText(self, hwnd, wParam, lParam);
     case WM_SIZE:
 	return SW_Size(self, hwnd, wParam, lParam);
     default:
-	return DefWindowProc32A(hwnd, msg, wParam, lParam);
+	return DefWindowProc32A (hwnd, msg, wParam, lParam);
     }
     return 0;
 }
 
 
+/***********************************************************************
+ *           STATUS_Register [Internal]
+ *
+ * Registers the status window class.
+ */
+void STATUS_Register(void)
+{
+    WNDCLASS32A wndClass;
+
+    if( GlobalFindAtom32A( STATUSCLASSNAME32A ) ) return;
+
+    ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
+    wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
+    wndClass.lpfnWndProc   = (WNDPROC32)StatusWindowProc;
+    wndClass.cbClsExtra    = 0;
+    wndClass.cbWndExtra    = sizeof(STATUSWINDOWINFO *);
+    wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
+    wndClass.hbrBackground = (HBRUSH32)(COLOR_3DFACE + 1);
+    wndClass.lpszClassName = STATUSCLASSNAME32A;
+ 
+    RegisterClass32A( &wndClass );
+}
 

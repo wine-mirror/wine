@@ -107,6 +107,9 @@
 #define WNNC_ERR_GetError                       0x0001
 #define WNNC_ERR_GetErrorText                   0x0002
 
+#define WNDT_NORMAL                             0x0
+#define WNDT_NETWORK                            0x1
+
 #define WIN30X                                  0x0
 #define WIN31X                                  0x1
 #define WIN311X                                 0x2

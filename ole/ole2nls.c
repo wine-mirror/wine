@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
 #include "heap.h"
@@ -2318,24 +2317,25 @@ c=%c, n=%d\n", type, count);
    return outpos;
 }
 
-/*  OLE_GetFormatW  [internal]  */
-
+/**************************************************************
+ * OLE_GetFormatW  [internal]  
+ */
 INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags,
 			    LPSYSTEMTIME xtime,
 			    LPCWSTR format,
 			    LPWSTR output, INT32 outlen)
 {
    INT32   inpos, outpos;
-   int     count, type, inquote;
+   int     count, type=0, inquote;
    int     Overflow; /* loop check */
    int usedate, usetime;
    WCHAR   buf[40];
-   int     buflen;
+   int     buflen=0;
    char    abuf[40];
    WCHAR   arg0[] = {0}, arg1[] = {'%','d',0};
    WCHAR   arg2[] = {'%','0','2','d',0};
    WCHAR  *argarr[] = {arg0, arg1, arg2};
-   int     datevars, timevars;
+   int     datevars=0, timevars=0;
 
    /* make a debug report */
    lstrcpynWtoA(abuf, format, sizeof(format));
@@ -2716,7 +2716,7 @@ GetTimeFormat32W(LCID locale,DWORD flags,
 {
    char debugbuf[40];
    WCHAR buf[20];
-   LPCWSTR realformat;
+   LPCWSTR realformat=0;
    SYSTEMTIME t;
    LPSYSTEMTIME realtime;
    WCHAR * fmt_buf = NULL;

@@ -164,7 +164,7 @@ BOOL32 WINAPI PlayEnhMetaFileRecord(
     {
     case EMR_HEADER:
       {
-	ENHMETAHEADER *h = (LPENHMETAHEADER) mr;
+	/* ENHMETAHEADER *h = (LPENHMETAHEADER) mr; */
 	break;
       }
     case EMR_EOF:
@@ -418,7 +418,7 @@ BOOL32 WINAPI EnumEnhMetaFile32(
     if (p->iType == EMR_EOF) break;
     p = (void *) p + p->nSize;
   }
-  GlobalFree32(ht);
+  GlobalFree32((HGLOBAL32)ht);
   GlobalUnlock32(hmf);
   return ret;
 }
@@ -465,7 +465,8 @@ BOOL32 WINAPI PlayEnhMetaFile(
     p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
   }
   GlobalUnlock32(hmf);
-  return TRUE;
+  ret = TRUE; /* FIXME: calculate a more accurate return value */
+  return ret;
 }
 
 /*****************************************************************************

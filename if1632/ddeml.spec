@@ -4,7 +4,7 @@ type	win16
 2 pascal16 DdeInitialize(ptr segptr long long) DdeInitialize16
 3 pascal16 DdeUninitialize(long) DdeUninitialize16
 4 pascal DdeConnectList(long word word word ptr) DdeConnectList16
-5 pascal DdeQueryNextServer(word word) DdeQueryNextServer
+5 pascal DdeQueryNextServer(word word) DdeQueryNextServer16
 6 pascal DdeDisconnectList(word) DdeDisconnectList16
 7 pascal   DdeConnect(long long long ptr) DdeConnect16
 8 pascal16 DdeDisconnect(long) DdeDisconnect16

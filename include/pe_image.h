@@ -40,8 +40,8 @@ extern HRSRC32 PE_FindResourceEx32W(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource32(HMODULE32,HRSRC32);
 extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
 extern HGLOBAL32 PE_LoadResource32(struct _wine_modref *wm,HRSRC32);
-extern HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs,
-                                  LPCSTR cmd_line, LPCSTR env, UINT16 showCmd);
+extern HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
+                                  LPCSTR env, UINT16 showCmd );
 
 struct _PDB32; /* forward definition */
 struct _THDB; /* forward definition */

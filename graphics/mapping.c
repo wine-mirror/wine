@@ -56,35 +56,13 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL32 WINAPI DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
-    FLOAT determinant=1.0, x, y;
-    
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-    if (dc->w.UseWorldXform)
-    {
-        determinant = dc->w.WorldXform.eM11*dc->w.WorldXform.eM22 -
-            dc->w.WorldXform.eM12*dc->w.WorldXform.eM21;
-        if (determinant > -1e-12 && determinant < 1e-12)
-            return FALSE;
-    }
-
     while (count--)
     {
-	if (dc->w.UseWorldXform)
-	{
-            x = (FLOAT)XDPTOLP( dc, points->x ) - dc->w.WorldXform.eDx;
-	    y = (FLOAT)YDPTOLP( dc, points->y ) - dc->w.WorldXform.eDy;
-	    points->x = (INT32)( (x*dc->w.WorldXform.eM22 -
-	       y*dc->w.WorldXform.eM21) / determinant );
-	    points->y = (INT32)( (-x*dc->w.WorldXform.eM12 +
-	       y*dc->w.WorldXform.eM11) / determinant );
-	}
-	else
-	{
-	    points->x = XDPTOLP( dc, points->x );
-	    points->y = YDPTOLP( dc, points->y );
-	}
+        if (!INTERNAL_DPTOLP( dc, points ))
+	    return FALSE;
         points++;
     }
     return TRUE;
@@ -114,30 +92,12 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL32 WINAPI LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
-    FLOAT x, y;
-
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
     while (count--)
     {
-	if (dc->w.UseWorldXform)
-	{
-	    x = (FLOAT)points->x * dc->w.WorldXform.eM11 +
-	    	(FLOAT)points->y * dc->w.WorldXform.eM21 +
-		dc->w.WorldXform.eDx;
-	    y = (FLOAT)points->x * dc->w.WorldXform.eM12 +
-	        (FLOAT)points->y * dc->w.WorldXform.eM22 +
-		dc->w.WorldXform.eDy;
-	    points->x = XLPTODP( dc, (INT32)x );
-	    points->y = YLPTODP( dc, (INT32)y );
-	    
-	}
-	else
-	{
-	    points->x = XLPTODP( dc, points->x );
-	    points->y = YLPTODP( dc, points->y );
-	}
+	INTERNAL_LPTODP( dc, points );
         points++;
     }
     return TRUE;
@@ -230,6 +190,7 @@ INT32 WINAPI SetMapMode32( HDC32 hdc, INT32 mode )
 	  return prevMode;
     }
     dc->w.MapMode = mode;
+    DC_UpdateXforms( dc );
     return prevMode;
 }
 
@@ -277,6 +238,7 @@ BOOL32 WINAPI SetViewportExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
     dc->vportExtX = x;
     dc->vportExtY = y;
     if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -320,6 +282,7 @@ BOOL32 WINAPI SetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
     }
     dc->vportOrgX = x;
     dc->vportOrgY = y;
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -366,6 +329,7 @@ BOOL32 WINAPI SetWindowExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
     dc->wndExtX = x;
     dc->wndExtY = y;
     if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -408,6 +372,7 @@ BOOL32 WINAPI SetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
     }
     dc->wndOrgX = x;
     dc->wndOrgY = y;
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -451,6 +416,7 @@ BOOL32 WINAPI OffsetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt)
     }
     dc->vportOrgX += x;
     dc->vportOrgY += y;
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -494,6 +460,7 @@ BOOL32 WINAPI OffsetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
     }
     dc->wndOrgX += x;
     dc->wndOrgY += y;
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -548,6 +515,7 @@ BOOL32 WINAPI ScaleViewportExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
     if (dc->vportExtX == 0) dc->vportExtX = 1;
     if (dc->vportExtY == 0) dc->vportExtY = 1;
     if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    DC_UpdateXforms( dc );
     return TRUE;
 }
 
@@ -602,5 +570,6 @@ BOOL32 WINAPI ScaleWindowExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
     if (dc->wndExtX == 0) dc->wndExtX = 1;
     if (dc->wndExtY == 0) dc->wndExtY = 1;
     if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    DC_UpdateXforms( dc );
     return TRUE;
 }

@@ -33,6 +33,7 @@ DLLS = \
 	w32skrnl.spec \
 	winmm.spec \
 	winspool.spec \
+	wnaspi32.spec \
 	wow32.spec \
 	wsock32.spec
 

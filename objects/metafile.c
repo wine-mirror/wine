@@ -444,7 +444,7 @@ BOOL32 WINAPI EnumMetaFile32(
     HFONT32 hFont;
 
     TRACE(metafile,"(%08x,%08x,%p,%p)\n",
-		     hdc, hmf, lpEnumFunc, lpData);
+		     hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
 
     /* save the current pen, brush and font */
@@ -484,7 +484,7 @@ BOOL32 WINAPI EnumMetaFile32(
         DeleteObject32(*(ht->objectHandle + i));
 
     /* free handle table */
-    GlobalFree32(ht);
+    GlobalFree32((HGLOBAL32)ht);
     GlobalUnlock16(hmf);
     return result;
 }
@@ -968,7 +968,7 @@ BOOL32 WINAPI PlayMetaFileRecord32(
   PlayMetaFileRecord16(hdc, ht, metarecord, handles);
   for (i=0; i<handles; i++) 
     handletable->objectHandle[i] = ht->objectHandle[i];
-  GlobalFree32(ht);
+  GlobalFree32((HGLOBAL32)ht);
   return TRUE;
 }
 
@@ -1060,7 +1060,7 @@ UINT32 WINAPI GetMetaFileBitsEx(
   if (!h) return 0;  /* FIXME: error code */
   if (!buf) {
     GlobalUnlock16(hmf);
-    TRACE(metafile,"returning size %d\n", h->mtSize);
+    TRACE(metafile,"returning size %ld\n", h->mtSize);
     return h->mtSize;
   }
   memmove(buf, h, MIN(nSize, h->mtSize));

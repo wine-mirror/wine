@@ -43,7 +43,7 @@ QueryPathOfRegTypeLib16(
 		);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
-		FIXME(ole,"(%s,%d,%d,0x%04x,%p),can't handle non-string guids.\n",xguid,wMaj,wMin,lcid,path);
+		FIXME(ole,"(%s,%d,%d,0x%04x,%p),can't handle non-string guids.\n",xguid,wMaj,wMin,(DWORD)lcid,path);
 		return E_FAIL;
 	}
 	plen = sizeof(pathname);
@@ -80,7 +80,7 @@ QueryPathOfRegTypeLib32(
 		);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
-		FIXME(ole,"(%s,%d,%d,0x%04x,%p),stub!\n",xguid,wMaj,wMin,lcid,path);
+		FIXME(ole,"(%s,%d,%d,0x%04x,%p),stub!\n",xguid,wMaj,wMin,(DWORD)lcid,path);
 		return E_FAIL;
 	}
 	plen = sizeof(pathname);

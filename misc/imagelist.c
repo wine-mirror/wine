@@ -4,7 +4,6 @@
  *  Copyright 1998 Eric Kohl
  *
  *  TODO:
- *    - Improve the documentation.
  *    - Improve error checking in some functions.
  *    - Fix ILD_TRANSPARENT error in ImageList_DrawIndirect.
  *    - Fix offsets in ImageList_DrawIndirect.
@@ -38,7 +37,7 @@
 #define __WINE_IMAGELIST_C
  
 /* This must be defined until "GetIconInfo" is implemented completely.
- * To do that the Cursor and Icon code in objects/cursoricon.c must
+ * To do that the cursor and icon code in objects/cursoricon.c must
  * be rewritten.
  */
 #define __GET_ICON_INFO_HACK__ 
@@ -59,31 +58,37 @@
 #define MAX_OVERLAYIMAGE 15
 
 
-/*
- * internal ImageList data used for dragging
- */
+/* internal image list data used for Drag & Drop operations */
+
 static HIMAGELIST himlInternalDrag = NULL;
 static INT32      nInternalDragHotspotX = 0;
 static INT32      nInternalDragHotspotY = 0;
-static HCURSOR32  hcurInternal = 0;
 
 
 /*************************************************************************
- *	 		 IMAGELIST_InternalGrowBitmaps   [Internal]
+ * IMAGELIST_InternalExpandBitmaps [Internal] 
  *
- *  Grows the bitmaps of the given image list by the given number of 
- *  images. Can NOT be used to reduce the number of images.
+ * Expands the bitmaps of an image list by the given number of images.
+ *
+ * PARAMS
+ *     himl        [I] image list handle
+ *     nImageCount [I] Number of images to add.
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This function can NOT be used to reduce the number of images.
  */
 
-static void IMAGELIST_InternalGrowBitmaps (
-	HIMAGELIST himl,    /* image list handle */
-	INT32 nImageCount)  /* number of images to grow by */
+static VOID
+IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT32 nImageCount)
 {
     HDC32     hdcImageList, hdcBitmap;
     HBITMAP32 hbmNewBitmap;
     INT32     nNewWidth, nNewCount;
 
-    TRACE(imagelist, "Create grown bitmaps!\n");
+    TRACE(imagelist, "Create expanded bitmaps!\n");
 
     nNewCount = himl->cCurImage + nImageCount + himl->cGrow;
     nNewWidth = nNewCount * himl->cx;
@@ -94,7 +99,7 @@ static void IMAGELIST_InternalGrowBitmaps (
     hbmNewBitmap =
         CreateBitmap32 (nNewWidth, himl->cy, 1, himl->uBitsPixel, NULL);
     if (hbmNewBitmap == 0)
-        ERR (imagelist, "Error creating new image bitmap!\n");
+        ERR (imagelist, "creating new image bitmap!\n");
 
     SelectObject32 (hdcImageList, himl->hbmImage);
     SelectObject32 (hdcBitmap, hbmNewBitmap);
@@ -109,7 +114,7 @@ static void IMAGELIST_InternalGrowBitmaps (
             CreateBitmap32 (nNewWidth, himl->cy, 1, 1, NULL);
 
         if (hbmNewBitmap == 0)
-            ERR (imagelist, "Error creating new mask bitmap!");
+            ERR (imagelist, "creating new mask bitmap!");
 
         SelectObject32 (hdcImageList, himl->hbmMask);
         SelectObject32 (hdcBitmap, hbmNewBitmap);
@@ -127,97 +132,92 @@ static void IMAGELIST_InternalGrowBitmaps (
 
 
 /*************************************************************************
- *	 		 ImageList_Add   [COMCTL32.39]
+ * ImageList_Add [COMCTL32.39]
  *
- *  Add an image (and a mask) to an image list.
+ * Add an image or images to an image list.
  *
- *  RETURNS
- *    Index of the first image that was added.
- *    -1 if an error occurred.
+ * PARAMS
+ *     himl     [I] image list handle
+ *     hbmImage [I] image bitmap handle
+ *     hbmMask  [I] mask bitmap handle
+ *
+ * RETURNS
+ *     Success: Index of the first new image.
+ *     Failure: -1
  */
 
-INT32 WINAPI ImageList_Add (
-	HIMAGELIST himl,     /* imagelist handle */
-	HBITMAP32 hbmImage,  /* image bitmap */
-	HBITMAP32 hbmMask)   /* mask bitmap */
+INT32 WINAPI
+ImageList_Add (HIMAGELIST himl,	HBITMAP32 hbmImage, HBITMAP32 hbmMask)
 {
-    HDC32    hdcImageList, hdcImage, hdcMask;
+    HDC32    hdcSrc, hdcDst;
     INT32    nFirstIndex, nImageCount;
     INT32    nStartX, nRunX, nRunY;
     BITMAP32 bmp;
 
     if (himl == NULL) return (-1);
-
-    hdcMask = 0; /* to keep compiler happy ;-) */
+    if (hbmImage == 0) return (-1);
 
     GetObject32A (hbmImage, sizeof(BITMAP32), (LPVOID)&bmp);
     nImageCount = bmp.bmWidth / himl->cx;
 
     if (himl->cCurImage + nImageCount >= himl->cMaxImage)
-        IMAGELIST_InternalGrowBitmaps (himl, nImageCount);
+        IMAGELIST_InternalExpandBitmaps (himl, nImageCount);
 
-    hdcImageList = CreateCompatibleDC32 (0);
-    hdcImage = CreateCompatibleDC32 (0);
+    hdcSrc = CreateCompatibleDC32 (0);
+    hdcDst = CreateCompatibleDC32 (0);
 
-    SelectObject32 (hdcImageList, himl->hbmImage);
-    SelectObject32 (hdcImage, hbmImage);
+    SelectObject32 (hdcDst, himl->hbmImage);
+    SelectObject32 (hdcSrc, hbmImage);
 
-    BitBlt32 (hdcImageList, himl->cCurImage * himl->cx, 0,
-              bmp.bmWidth, himl->cy, hdcImage, 0, 0, SRCCOPY);
+    BitBlt32 (hdcDst, himl->cCurImage * himl->cx, 0,
+              bmp.bmWidth, himl->cy, hdcSrc, 0, 0, SRCCOPY);
           
-    if (himl->hbmMask)
-    {
-        if (hbmMask)
-        {
-            SelectObject32 (hdcImageList, himl->hbmMask);
-            SelectObject32 (hdcImage, hbmMask);
-            BitBlt32 (hdcImageList, himl->cCurImage * himl->cx, 0,
-                      bmp.bmWidth, himl->cy, hdcImage, 0, 0, SRCCOPY);
+    if (himl->hbmMask) {
+        if (hbmMask) {
+            SelectObject32 (hdcDst, himl->hbmMask);
+            SelectObject32 (hdcSrc, hbmMask);
+            BitBlt32 (hdcDst, himl->cCurImage * himl->cx, 0,
+                      bmp.bmWidth, himl->cy, hdcSrc, 0, 0, SRCCOPY);
 
             /* fix transparent areas of the image bitmap*/
-            SelectObject32 (hdcMask, himl->hbmMask);
-            SelectObject32 (hdcImage, himl->hbmImage);
+            SelectObject32 (hdcSrc, himl->hbmMask);
+            SelectObject32 (hdcDst, himl->hbmImage);
             nStartX = himl->cCurImage * himl->cx;
-            for (nRunY = 0; nRunY < himl->cy; nRunY++)
-            {
-                for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++)
-                {
-                    if (GetPixel32 (hdcMask, nStartX + nRunX, nRunY) ==
-                        RGB(255, 255, 255))
-                        SetPixel32 (hdcImage, nStartX + nRunX, nRunY, 
+
+            for (nRunY = 0; nRunY < himl->cy; nRunY++) {
+                for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++) {
+                    if (GetPixel32 (hdcSrc, nStartX + nRunX, nRunY) !=
+                        RGB(0, 0, 0))
+                        SetPixel32 (hdcDst, nStartX + nRunX, nRunY, 
                                     RGB(0, 0, 0));
                 }
             }
         }
-        else
-        {
+        else {
             /* create mask from the imagelist's background color */
-            hdcMask = CreateCompatibleDC32 (0);
-            SelectObject32 (hdcMask, himl->hbmMask);
+            SelectObject32 (hdcDst, himl->hbmMask);
+            SelectObject32 (hdcSrc, himl->hbmImage);
             nStartX = himl->cCurImage * himl->cx;
-            for (nRunY = 0; nRunY < himl->cy; nRunY++)
-            {
-                for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++)
-                {
-                    if (GetPixel32 (hdcImageList, nStartX + nRunX, nRunY) ==
+            for (nRunY = 0; nRunY < himl->cy; nRunY++) {
+                for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++) {
+                    if (GetPixel32 (hdcSrc, nStartX + nRunX, nRunY) ==
                         himl->clrBk)
                     {
-                        SetPixel32 (hdcImageList, nStartX + nRunX, nRunY, 
+                        SetPixel32 (hdcSrc, nStartX + nRunX, nRunY, 
                                     RGB(0, 0, 0));
-                        SetPixel32 (hdcMask, nStartX + nRunX, nRunY, 
+                        SetPixel32 (hdcDst, nStartX + nRunX, nRunY, 
                                     RGB(255, 255, 255));
                     }
                     else
-                        SetPixel32 (hdcMask, nStartX + nRunX, nRunY, 
+                        SetPixel32 (hdcDst, nStartX + nRunX, nRunY, 
                                     RGB(0, 0, 0));        
                 }
             }
-            DeleteDC32 (hdcMask);
         }
     }
 
-    DeleteDC32 (hdcImageList);
-    DeleteDC32 (hdcImage);
+    DeleteDC32 (hdcSrc);
+    DeleteDC32 (hdcDst);
 
     nFirstIndex = himl->cCurImage;
     himl->cCurImage += nImageCount;
@@ -227,33 +227,37 @@ INT32 WINAPI ImageList_Add (
 
 
 /*************************************************************************
- *	 		 ImageList_AddMasked   [COMCTL32.41]
+ * ImageList_AddMasked [COMCTL32.41] 
  *
- *  Adds an image to an imagelist and creates a mask from the given
- *  mask color.
+ * Adds an image or images to an image list and creates a mask from the
+ * specified bitmap using the mask color.
  *
- *  RETURNS
- *    Index of the first image that was added.
- *    -1 if an error occurred.
+ * PARAMS
+ *     himl     [I] image list handle.
+ *     hbmImage [I] image bitmap handle.
+ *     clrMask  [I] mask color.
+ *
+ * RETURNS
+ *     Success: Index of the first new image.
+ *     Failure: -1
  */
 
-INT32 WINAPI ImageList_AddMasked (
-	HIMAGELIST himl,    /* image list handle */
-	HBITMAP32 hbmImage, /* bitmap handle */
-	COLORREF clrMask)   /* backround color of the image */
+INT32 WINAPI
+ImageList_AddMasked (HIMAGELIST himl, HBITMAP32 hbmImage, COLORREF clrMask)
 {
     HDC32    hdcImageList, hdcImage, hdcMask;
     INT32    nIndex, nImageCount;
     BITMAP32 bmp;
     INT32    nStartX, nRunX, nRunY;
 
-    if (himl == NULL) return (-1);
+    if (himl == NULL)
+	return (-1);
 
     GetObject32A (hbmImage, sizeof(BITMAP32), &bmp);
     nImageCount = bmp.bmWidth / himl->cx;
 
     if (himl->cCurImage + nImageCount >= himl->cMaxImage)
-        IMAGELIST_InternalGrowBitmaps (himl, nImageCount);
+        IMAGELIST_InternalExpandBitmaps (himl, nImageCount);
 
     nIndex = himl->cCurImage;
     himl->cCurImage += nImageCount;
@@ -266,16 +270,13 @@ INT32 WINAPI ImageList_AddMasked (
     BitBlt32 (hdcImageList, nIndex * himl->cx, 0, bmp.bmWidth, himl->cy,
               hdcImage, 0, 0, SRCCOPY);
 
-    if (himl->hbmMask)
-    {
+    if (himl->hbmMask) {
         /* create Mask */
         hdcMask = CreateCompatibleDC32 (0);
         SelectObject32 (hdcMask, himl->hbmMask);
         nStartX = nIndex * himl->cx;
-        for (nRunY = 0; nRunY < himl->cy; nRunY++)
-        {
-            for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++)
-            {
+        for (nRunY = 0; nRunY < himl->cy; nRunY++) {
+            for (nRunX = 0; nRunX < bmp.bmWidth; nRunX++) {
                 if (GetPixel32 (hdcImageList, nStartX + nRunX, nRunY) ==
                     clrMask)
                 {
@@ -299,33 +300,40 @@ INT32 WINAPI ImageList_AddMasked (
 
 
 /*************************************************************************
- *	 		 ImageList_BeginDrag   [COMCTL32.42]
+ * ImageList_BeginDrag [COMCTL32.42] 
  *
- *  Creates a temporary imagelist with an image in it, which will be used
- *  as a drag image.
+ * Creates a temporary image list that contains one image. It will be used
+ * as a drag image.
  *
- *  RETURNS
- *    ...
+ * PARAMS
+ *     himlTrack [I] Handle of the source image list
+ *     iTrack    [I] Index of the drag image in the source image list
+ *     dxHotspot [I] X position of the hot spot of the drag image
+ *     dyHotspot [I] Y position of the hot spot of the drag image
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 
-BOOL32 WINAPI ImageList_BeginDrag (
-	HIMAGELIST himlTrack, /* Handle of the source imagelist */
-	INT32 iTrack,         /* Index of the image in the source imagelist */
-	INT32 dxHotspot,      /* Position of the hot spot of the */
-	INT32 dyHotspot)      /* drag image */
+BOOL32 WINAPI
+ImageList_BeginDrag (HIMAGELIST himlTrack, INT32 iTrack,
+	             INT32 dxHotspot, INT32 dyHotspot)
 {
     HDC32 hdcSrc, hdcDst;
 
-    FIXME(imagelist, "ImageList_BeginDrag: partially implemented!\n");
+    FIXME(imagelist, "partially implemented!\n");
 
-    if (himlTrack == NULL) return (FALSE);
+    if (himlTrack == NULL)
+	return (FALSE);
+
     if (himlInternalDrag)
         ImageList_EndDrag ();
 
-    himlInternalDrag = ImageList_Create (himlTrack->cx, himlTrack->cy,
-                                         himlTrack->flags, 1, 1);
-    if (himlInternalDrag == NULL)
-    {
+    himlInternalDrag =
+	ImageList_Create (himlTrack->cx, himlTrack->cy,
+			  himlTrack->flags, 1, 1);
+    if (himlInternalDrag == NULL) {
         ERR(imagelist, "Error creating drag image list!\n");
         return (FALSE);
     }
@@ -358,24 +366,31 @@ BOOL32 WINAPI ImageList_BeginDrag (
 
 
 /*************************************************************************
- *	 		 ImageList_Copy   [COMCTL32.43]
+ * ImageList_Copy [COMCTL32.43] 
  *
- *  Copies an image of the source imagelist to an image of the 
- *  destination imagelist. Images can be copied or swapped.
- *  Copying from one imagelist to another is allowed, in contrary to
- *  M$'s original implementation. They just allow copying or swapping
- *  within one imagelist (himlDst and himlSrc must be the same).
+ *  Copies an image of the source image list to an image of the 
+ *  destination image list. Images can be copied or swapped.
  *
- *  RETURNS
- *    ...
+ * PARAMS
+ *     himlDst [I] destination image list handle.
+ *     iDst    [I] destination image index.
+ *     himlSrc [I] source image list handle
+ *     iSrc    [I] source image index
+ *     uFlags  [I] flags for the copy operation
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Copying from one image list to another is possible. The original
+ *     implementation just copies or swapps within one image list.
+ *     Could this feature become a bug??? ;-)
  */
 
-BOOL32 WINAPI ImageList_Copy (
-	HIMAGELIST himlDst,  /* Handle of the destination imagelist */
-	INT32 iDst,          /* Index of the destination image */
-	HIMAGELIST himlSrc,  /* Handel od the source imagelist */
-	INT32 iSrc,          /* Index of the source image */
-	INT32 uFlags)        /* Flags used for the copy operation */
+BOOL32 WINAPI
+ImageList_Copy (HIMAGELIST himlDst, INT32 iDst,	HIMAGELIST himlSrc,
+		INT32 iSrc, INT32 uFlags)
 {
     HDC32 hdcSrc, hdcDst;    
 
@@ -391,8 +406,7 @@ BOOL32 WINAPI ImageList_Copy (
     else
         hdcDst = CreateCompatibleDC32 (0);
 
-    if (uFlags & ILCF_SWAP)
-    {
+    if (uFlags & ILCF_SWAP) {
         /* swap */
         HBITMAP32 hbmTempImage, hbmTempMask;
 
@@ -445,8 +459,7 @@ BOOL32 WINAPI ImageList_Copy (
         DeleteObject32 (hbmTempMask);
         DeleteObject32 (hbmTempImage);
     }
-    else
-    {
+    else {
         /* copy image */
         SelectObject32 (hdcSrc, himlSrc->hbmImage);
         if (himlSrc == himlDst)
@@ -477,22 +490,25 @@ BOOL32 WINAPI ImageList_Copy (
 
 
 /*************************************************************************
- *	 		 ImageList_Create   [COMCTL32.44]
+ * ImageList_Create [COMCTL32.44] 
  *
- *  Creates an imagelist of the given image size and number of images.
+ * Creates a new image list.
  *
- *  RETURNS
- *    Handle of the created image list.
- *    0 if an error occurred.
+ * PARAMS
+ *     cx       [I] image height
+ *     cy       [I] image width
+ *     flags    [I] creation flags
+ *     cInitial [I] initial number of images in the image list
+ *     cGrow    [I] number of images by which image list grows
+ *
+ * RETURNS
+ *     Success: Handle of the created image list
+ *     Failure: 0
  */
 
-HIMAGELIST WINAPI ImageList_Create (
-	INT32 cx,        /* Width of an image */
-	INT32 cy,        /* Height of an image */
-	UINT32 flags,    /* Flags for imagelist creation */
-	INT32 cInitial,  /* Initial number of images in the imaglist */
-	INT32 cGrow)     /* Number of images that is added to the */
-	                 /* imagelist when it grows */
+HIMAGELIST WINAPI
+ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
+		  INT32 cInitial, INT32 cGrow)
 {
     HIMAGELIST himl;
     HDC32      hdc;
@@ -531,18 +547,15 @@ HIMAGELIST WINAPI ImageList_Create (
     himl->hbmImage =
         CreateBitmap32 (himl->cx * himl->cMaxImage, himl->cy,
                         1, himl->uBitsPixel, NULL);
-    if (himl->hbmImage == 0)
-    {
+    if (himl->hbmImage == 0) {
         ERR(imagelist, "Error creating image bitmap!\n");
         return (0);
     }
 
-    if (himl->flags & ILC_MASK)
-    {
+    if (himl->flags & ILC_MASK) {
         himl->hbmMask = 
             CreateBitmap32 (himl->cx * himl->cMaxImage, himl->cy, 1, 1, NULL);
-        if (himl->hbmMask == 0)
-        {
+        if (himl->hbmMask == 0) {
             ERR(imagelist, "Error creating mask bitmap!\n");
             if (himl->hbmImage)
                 DeleteObject32 (himl->hbmImage);
@@ -566,17 +579,20 @@ HIMAGELIST WINAPI ImageList_Create (
 
 
 /*************************************************************************
- *	 		 ImageList_Destroy   [COMCTL32.45]
+ * ImageList_Destroy [COMCTL32.45] 
  *
- *  Destroy the given imagelist.
+ * Destroys an image list.
  *
- *  RETURNS
- *    TRUE if the image list was destroyed.
- *    FALSE if an error occurred.
+ * PARAMS
+ *     himl [I] image list handle
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 
-BOOL32 WINAPI ImageList_Destroy (
-	HIMAGELIST himl)  /* Handle of the imagelist */
+BOOL32 WINAPI
+ImageList_Destroy (HIMAGELIST himl)
 { 
     if (himl == NULL) return (FALSE);
 
@@ -591,68 +607,105 @@ BOOL32 WINAPI ImageList_Destroy (
 
 
 /*************************************************************************
- *	 		 ImageList_DragEnter   [COMCTL32.46]
+ * ImageList_DragEnter [COMCTL32.46] 
  *
- *  FIXME
- *    This is still an empty stub.
+ * Locks window update and displays the drag image at the given position.
+ *
+ * PARAMS
+ *     hwndLock [I] handle of the window that owns the drag image.
+ *     x        [I] X position of the drag image.
+ *     y        [I] Y position of the drag image.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * FIXME
+ *     This is still an empty stub.
+ *
+ * NOTES
+ *     The position of the drag image is relative to the window, not
+ *     the client area.
  */
 
-BOOL32 WINAPI ImageList_DragEnter (
-	HWND32 hwndLock, 
-	INT32 x, 
-	INT32 y)
+BOOL32 WINAPI
+ImageList_DragEnter (HWND32 hwndLock, INT32 x, INT32 y)
 {
     FIXME (imagelist, "empty stub!\n");
-
-    hcurInternal = GetCursor32 ();
-
-
-    ShowCursor32 (TRUE);
 
     return (FALSE);
 }
 
 
 /*************************************************************************
- *	 		 ImageList_DragLeave   [COMCTL32.47]
+ * ImageList_DragLeave [COMCTL32.47] 
+ *
+ * Unlocks window update and hides the drag image.
+ *
+ * PARAMS
+ *     hwndLock [I] handle of the window that owns the drag image.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * FIXME
+ *     This is still an empty stub.
  */
 
-BOOL32 WINAPI ImageList_DragLeave (
-	HWND32 hwndLock)
+BOOL32 WINAPI
+ImageList_DragLeave (HWND32 hwndLock)
 {
     FIXME (imagelist, "empty stub!\n");
-
-
-    SetCursor32 (hcurInternal);
-    hcurInternal = 0;
- 
-    ShowCursor32 (FALSE);
 
     return (FALSE);
 }
 
 
 /*************************************************************************
- *	 		 ImageList_DragMove   [COMCTL32.48]
+ * ImageList_DragMove [COMCTL32.48] 
+ *
+ * Moves the drag image.
+ *
+ * PARAMS
+ *     x [I] X position of the drag image.
+ *     y [I] Y position of the drag image.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     The position of the drag image is relative to the window, not
+ *     the client area.
+ *
+ * FIXME
+ *     This is still an empty stub.
  */
 
-BOOL32 WINAPI ImageList_DragMove (
-	INT32 x,
-	INT32 y)
+BOOL32 WINAPI
+ImageList_DragMove (INT32 x, INT32 y)
 {
     FIXME (imagelist, "empty stub!\n");
-
-//    if (hcurInternal)
-//        SetCursor32 (hcurInternal);
-//    ImageList_Draw (himlInternalDrag, 0, x, y, 0);
-
 
     return (FALSE);
 }
 
 
 /*************************************************************************
- *	 		 ImageList_DragShowNolock   [COMCTL32.49]
+ * ImageList_DragShowNolock [COMCTL32.49] 
+ *
+ * Shows or hides the drag image.
+ *
+ * PARAMS
+ *     bShow [I] TRUE shows the drag image, FALSE hides it.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * FIXME
+ *     This is still an empty stub.
  */
 
 BOOL32 WINAPI
@@ -665,16 +718,30 @@ ImageList_DragShowNolock (BOOL32 bShow)
 
 
 /*************************************************************************
- *	 		 ImageList_Draw   [COMCTL32.50]
+ * ImageList_Draw [COMCTL32.50] Draws an image.
+ *
+ * PARAMS
+ *     himl   [I] image list handle
+ *     i      [I] image index
+ *     hdc    [I] display context handle
+ *     x      [I] x position
+ *     y      [I] y position
+ *     fStyle [I] drawing flags
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Calls ImageList_DrawIndirect.
+ *
+ * SEE
+ *     ImageList_DrawIndirect.
  */
 
-BOOL32 WINAPI ImageList_Draw (
-	HIMAGELIST himl,
-	INT32 i,
-	HDC32 hdc, 
-	INT32 x,
-	INT32 y,
-	UINT32 fStyle)
+BOOL32 WINAPI
+ImageList_Draw (HIMAGELIST himl, INT32 i, HDC32 hdc,
+		INT32 x, INT32 y, UINT32 fStyle)
 {
     IMAGELISTDRAWPARAMS imldp;
 
@@ -698,20 +765,37 @@ BOOL32 WINAPI ImageList_Draw (
 
 
 /*************************************************************************
- *	 		 ImageList_DrawEx   [COMCTL32.51]
+ * ImageList_DrawEx [COMCTL32.51]
+ *
+ * Draws an image and allows to use extended drawing features.
+ *
+ * PARAMS
+ *     himl   [I] image list handle
+ *     i      [I] image index
+ *     hdc    [I] device context handle
+ *     x      [I] X position
+ *     y      [I] Y position
+ *     xOffs  [I] 
+ *     yOffs  [I]
+ *     rgbBk  [I] background color
+ *     rgbFg  [I] foreground color
+ *     fStyle [I] drawing flags
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     Calls ImageList_DrawIndirect.
+ *
+ * SEE
+ *     ImageList_DrawIndirect.
  */
 
-BOOL32 WINAPI ImageList_DrawEx (
-	HIMAGELIST himl,
-	INT32 i,
-	HDC32 hdc,
-	INT32 x,
-	INT32 y,
-	INT32 xOffs,
-	INT32 yOffs,
-	COLORREF rgbBk,
-	COLORREF rgbFg,
-	UINT32 fStyle)
+BOOL32 WINAPI
+ImageList_DrawEx (HIMAGELIST himl, INT32 i, HDC32 hdc, INT32 x, INT32 y,
+		  INT32 xOffs, INT32 yOffs, COLORREF rgbBk, COLORREF rgbFg,
+		  UINT32 fStyle)
 {
     IMAGELISTDRAWPARAMS imldp;
 
@@ -735,11 +819,20 @@ BOOL32 WINAPI ImageList_DrawEx (
 
 
 /*************************************************************************
- *	 		 ImageList_DrawIndirect   [COMCTL32.52]
+ * ImageList_DrawIndirect [COMCTL32.52] 
+ *
+ * Draws an image using ...
+ *
+ * PARAMS
+ *     pimldp [I] pointer to ...
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
-BOOL32 WINAPI ImageList_DrawIndirect (
-	IMAGELISTDRAWPARAMS *pimldp)
+BOOL32 WINAPI
+ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 {
     HIMAGELIST himlLocal;
     HDC32      hdcImageList, hdcTempImage;
@@ -756,6 +849,7 @@ BOOL32 WINAPI ImageList_DrawIndirect (
 
     if (pimldp == NULL) return (FALSE);
     if (pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS)) return (FALSE);
+    if (pimldp->himl == NULL) return (FALSE);
 
     himlLocal = pimldp->himl;
     
@@ -912,16 +1006,18 @@ BOOL32 WINAPI ImageList_DrawIndirect (
 
 
 /*************************************************************************
- *	 		 ImageList_Duplicate   [COMCTL32.53]
+ * ImageList_Duplicate [COMCTL32.53] Duplicates an image list.
  *
- *  Duplicates an image list.
+ * PARAMS
+ *     himlSrc [I] source image list handle
  *
- *  RETURNS
- *    Handle of duplicate image list, 0 if an error occurred.
+ * RETURNS
+ *     Success: Handle of duplicated image list.
+ *     Failure: 0
  */
 
-HIMAGELIST WINAPI ImageList_Duplicate (
-	HIMAGELIST himlSrc)
+HIMAGELIST WINAPI
+ImageList_Duplicate (HIMAGELIST himlSrc)
 {
     HIMAGELIST himlDst;
     HDC32 hdcSrc, hdcDst;
@@ -960,15 +1056,23 @@ HIMAGELIST WINAPI ImageList_Duplicate (
 
 
 /*************************************************************************
- *	 		 ImageList_EndDrag   [COMCTL32.54]
+ * ImageList_EndDrag [COMCTL32.54] Finishes a drag operation.
  *
- *  Finishes a drag operation.
+ * Finishes a drag operation.
  *
- *  FIXME
- *    semi-stub.
+ * PARAMS
+ *     no
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * BUGS
+ *     semi-stub.
  */
 
-BOOL32 WINAPI ImageList_EndDrag (VOID)
+BOOL32 WINAPI
+ImageList_EndDrag (VOID)
 {
     FIXME (imagelist, "partially implemented!\n");
 
@@ -988,33 +1092,46 @@ BOOL32 WINAPI ImageList_EndDrag (VOID)
 
 
 /*************************************************************************
- *	 		 ImageList_GetBkColor   [COMCTL32.55]
+ * ImageList_GetBkColor [COMCTL32.55]
  *
- *  Returns the background color of an image list.
+ * Returns the background color of an image list.
  *
- *  RETURNS
- *    Background color.
+ * PARAMS
+ *     himl [I] Image list handle.
+ *
+ * RETURNS
+ *     Background color.
  */
 
-COLORREF WINAPI ImageList_GetBkColor (
-	HIMAGELIST himl)
+COLORREF WINAPI
+ImageList_GetBkColor (HIMAGELIST himl)
 {
+//    if (himl == NULL)
+//	return CLR_NONE;
+
     return (himl->clrBk);
 }
 
 
 /*************************************************************************
- *	 		 ImageList_GetDragImage   [COMCTL32.56]
+ * ImageList_GetDragImage [COMCTL32.56]
  *
- *  Returns the handle to the internal drag image list.
+ * Returns the handle to the internal drag image list.
  *
- *  FIXME
- *    semi-stub.
+ * PARAMS
+ *     ppt        [O] Pointer to the drag position. Can be NULL.
+ *     pptHotspot [O] Pointer to the position of the hot spot. Can be NULL.
+ *
+ * RETURNS
+ *     Success: Handle of the drag image list.
+ *     Failure: NULL.
+ *
+ * BUGS
+ *     semi-stub.
  */
 
-HIMAGELIST WINAPI ImageList_GetDragImage (
-	POINT32 *ppt,
-	POINT32 *pptHotspot)
+HIMAGELIST WINAPI
+ImageList_GetDragImage (POINT32 *ppt, POINT32 *pptHotspot)
 {
     FIXME (imagelist, "partially imlemented!\n");
 
@@ -1026,13 +1143,22 @@ HIMAGELIST WINAPI ImageList_GetDragImage (
 
 
 /*************************************************************************
- *	 		 ImageList_GetIcon   [COMCTL32.57]
+ * ImageList_GetIcon [COMCTL32.57] 
+ *
+ * Creates an icon from a masked image of an image list.
+ *
+ * PARAMS
+ *     himl  [I] image list handle
+ *     i     [I] image index
+ *     flags [I] drawing style flags
+ *
+ * RETURNS
+ *     Success: icon handle
+ *     Failure: NULL
  */
 
-HICON32 WINAPI ImageList_GetIcon (
-	HIMAGELIST himl, 
-	INT32 i, 
-	UINT32 fStyle)
+HICON32 WINAPI
+ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
 {
     ICONINFO ii;
     HICON32  hIcon;
@@ -1071,13 +1197,25 @@ HICON32 WINAPI ImageList_GetIcon (
 
 
 /*************************************************************************
- *	 		 ImageList_GetIconSize   [COMCTL32.58]
+ * ImageList_GetIconSize [COMCTL32.58]
+ *
+ * Retrieves the size of an image in an image list.
+ *
+ * PARAMS
+ *     himl [I] image list handle
+ *     cx   [O] pointer to the image width.
+ *     cy   [O] pointer to the image height.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * NOTES
+ *     All images in an image list have the same size.
  */
 
-BOOL32 WINAPI ImageList_GetIconSize (
-	HIMAGELIST himl,
-	INT32 *cx,
-	INT32 *cy)
+BOOL32 WINAPI
+ImageList_GetIconSize (HIMAGELIST himl, INT32 *cx, INT32 *cy)
 {
 
     if (himl == NULL) return (FALSE);
@@ -1092,24 +1230,45 @@ BOOL32 WINAPI ImageList_GetIconSize (
 
 
 /*************************************************************************
- *	 		 ImageList_GetIconCount   [COMCTL32.59]
+ * ImageList_GetIconCount [COMCTL32.59]
+ *
+ * Returns the number of images in an image list.
+ *
+ * PARAMS
+ *     himl [I] image list handle.
+ *
+ * RETURNS
+ *     Success: Number of images.
+ *     Failure: ???? (Number of what...)
  */
 
-INT32 WINAPI ImageList_GetImageCount (
-	HIMAGELIST himl)
+INT32 WINAPI
+ImageList_GetImageCount (HIMAGELIST himl)
 {
+//    if (himl == NULL)
+//	return -1;
+
     return (himl->cCurImage);
 }
 
 
 /*************************************************************************
- *	 		 ImageList_GetImageInfo   [COMCTL32.60]
+ * ImageList_GetImageInfo [COMCTL32.60]
+ *
+ * Returns information about an image in an image list.
+ *
+ * PARAMS
+ *     himl       [I] image list handle.
+ *     i          [I] image index
+ *     pImageInfo [O] pointer to the image information.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 
-BOOL32 WINAPI ImageList_GetImageInfo (
-	HIMAGELIST himl,
-	INT32 i,
-	IMAGEINFO *pImageInfo)
+BOOL32 WINAPI
+ImageList_GetImageInfo (HIMAGELIST himl, INT32 i, IMAGEINFO *pImageInfo)
 {
     if ((himl == NULL) || (pImageInfo == NULL)) return (FALSE);
 
@@ -1126,16 +1285,28 @@ BOOL32 WINAPI ImageList_GetImageInfo (
 
 
 /*************************************************************************
- *	 		 ImageList_GetImageRect   [COMCTL32.61]
+ * ImageList_GetImageRect [COMCTL32.61] 
  *
- *  COMMENTS
+ * Retrieves the rectangle of the specified image in an image list.
+ *
+ * PARAMS
+ *     himl   [I] image list handle
+ *     i      [I] image index
+ *     lpRect [O] pointer to the image rectangle
+ *
+ * RETURNS
+ *    Success: TRUE ????
+ *    Failure: FALSE ????
+ *
+ * NOTES
+ *    This is an UNDOCUMENTED function!!!
+ *
+ * BUGS
  *    I don't know if it really returns a BOOL32 or something else!!!??
  */
 
-BOOL32 WINAPI ImageList_GetImageRect (
-	HIMAGELIST himl,
-	INT32 i,
-	LPRECT32 lpRect)
+BOOL32 WINAPI
+ImageList_GetImageRect (HIMAGELIST himl, INT32 i, LPRECT32 lpRect)
 {
     if (himl == NULL) return (FALSE);
     if ((i < 0) || (i >= himl->cCurImage)) return (FALSE);
@@ -1151,17 +1322,28 @@ BOOL32 WINAPI ImageList_GetImageRect (
 
 
 /*************************************************************************
- *	 		 ImageList_LoadImage32A   [COMCTL32.63]
+ * ImageList_LoadImage32A   [COMCTL32.63]
+ *
+ * Creates an image list from a bitmap, icon or cursor.
+ *
+ * PARAMS
+ *     hi      [I]
+ *     lpbmp   [I]
+ *     cx      [I]
+ *     cy      [I]
+ *     cGrow   [I]
+ *     clrMask [I]
+ *     uType   [I]
+ *     uFlags  [I]
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
-HIMAGELIST WINAPI ImageList_LoadImage32A (
-	HINSTANCE32 hi,
-	LPCSTR lpbmp,
-	INT32 cx,
-	INT32 cGrow, 
-	COLORREF clrMask,
-	UINT32 uType,
-	UINT32 uFlags)
+HIMAGELIST WINAPI
+ImageList_LoadImage32A (HINSTANCE32 hi, LPCSTR lpbmp, INT32 cx,	INT32 cGrow,
+			COLORREF clrMask, UINT32 uType,	UINT32 uFlags)
 {
     HIMAGELIST himl = NULL;
     HANDLE32   handle;
@@ -1217,17 +1399,28 @@ HIMAGELIST WINAPI ImageList_LoadImage32A (
 
 
 /*************************************************************************
- *	 		 ImageList_LoadImage32W   [COMCTL32.64]
+ * ImageList_LoadImage32W [COMCTL32.64]
+ *
+ * Creates an image list from a bitmap, icon or cursor.
+ *
+ * PARAMS
+ *     hi      [I]
+ *     lpbmp   [I]
+ *     cx      [I]
+ *     cy      [I]
+ *     cGrow   [I]
+ *     clrMask [I]
+ *     uType   [I]
+ *     uFlags  [I]
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
-HIMAGELIST WINAPI ImageList_LoadImage32W (
-	HINSTANCE32 hi,
-	LPCWSTR lpbmp,
-	INT32 cx,
-	INT32 cGrow,
-	COLORREF clrMask,
-	UINT32 uType,
-	UINT32 uFlags)
+HIMAGELIST WINAPI
+ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
+			COLORREF clrMask, UINT32 uType,	UINT32 uFlags)
 {
     HIMAGELIST himl = NULL;
     HANDLE32   handle;
@@ -1286,16 +1479,27 @@ HIMAGELIST WINAPI ImageList_LoadImage32W (
 
 
 /*************************************************************************
- *	 		 ImageList_Merge   [COMCTL32.65]
+ * ImageList_Merge [COMCTL32.65] 
+ *
+ * Creates a new image list that contains a merged image from the specified
+ * images of both source image lists.
+ *
+ * PARAMS
+ *     himl1 [I] first image list handle
+ *     i1    [I] first image index
+ *     himl2 [I] second image list handle
+ *     i2    [I] second image index
+ *     dx    [I] X offset of the second image relative to the first.
+ *     dy    [I] Y offset of the second image relative to the first.
+ *
+ * RETURNS
+ *     Success:
+ *     Failure:
  */
 
-HIMAGELIST WINAPI ImageList_Merge (
-	HIMAGELIST himl1,
-	INT32 i1,
-	HIMAGELIST himl2,
-	INT32 i2,
-	INT32 xOffs,
-	INT32 yOffs)
+HIMAGELIST WINAPI
+ImageList_Merge (HIMAGELIST himl1, INT32 i1, HIMAGELIST himl2, INT32 i2,
+		 INT32 dx, INT32 dy)
 {
     HIMAGELIST himlDst = NULL;
     HDC32      hdcSrcImage, hdcDstImage;
@@ -1316,34 +1520,34 @@ HIMAGELIST WINAPI ImageList_Merge (
         return (NULL);
     }
 
-    if (xOffs > 0) {
-        cxDst = _MAX (himl1->cx, xOffs + himl2->cx);
+    if (dx > 0) {
+        cxDst = _MAX (himl1->cx, dx + himl2->cx);
         xOff1 = 0;
-        xOff2 = xOffs;
+        xOff2 = dx;
     }
-    else if (xOffs < 0) {
-        cxDst = _MAX (himl2->cx, himl1->cx - xOffs);
-        xOff1 = -xOffs;
+    else if (dx < 0) {
+        cxDst = _MAX (himl2->cx, himl1->cx - dx);
+        xOff1 = -dx;
         xOff2 = 0;
     }
     else {
-        cxDst = 0;
+        cxDst = _MAX (himl1->cx, himl2->cx);
         xOff1 = 0;
         xOff2 = 0;
     }
 
-    if (yOffs > 0) {
-        cyDst = _MAX (himl1->cy, yOffs + himl2->cy);
+    if (dy > 0) {
+        cyDst = _MAX (himl1->cy, dy + himl2->cy);
         yOff1 = 0;
-        yOff2 = yOffs;
+        yOff2 = dy;
     }
-    else if (yOffs < 0) {
-        cyDst = _MAX (himl2->cy, himl1->cy - yOffs);
-        yOff1 = -yOffs;
+    else if (dy < 0) {
+        cyDst = _MAX (himl2->cy, himl1->cy - dy);
+        yOff1 = -dy;
         yOff2 = 0;
     }
     else {
-        cyDst = 0;
+        cyDst = _MAX (himl1->cy, himl2->cy);
         yOff1 = 0;
         yOff2 = 0;
     }
@@ -1392,10 +1596,22 @@ HIMAGELIST WINAPI ImageList_Merge (
 }
 
 
+/*************************************************************************
+ * ImageList_Read [COMCTL32.66]
+ *
+ * Reads an image list from a stream.
+ *
+ * PARAMS
+ *     pstm [I] pointer to a stream
+ *
+ * RETURNS
+ *     Success: image list handle
+ *     Failure: NULL
+ */
+
 #if 0
 #if __IStream_INTERFACE_DEFINED__
-HIMAGELIST WINAPI ImageList_Read (
-	LPSTREAM pstm)
+HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 {
     FIXME (imagelist, "empty stub!\n");
 
@@ -1406,9 +1622,20 @@ HIMAGELIST WINAPI ImageList_Read (
 #endif /* 0 */
 
 
-BOOL32 WINAPI ImageList_Remove (
-	HIMAGELIST himl,
-	INT32 i)
+/*************************************************************************
+ * ImageList_Remove [COMCTL32.67] Removes an image from an image list
+ *
+ * PARAMS
+ *     himl [I] image list handle
+ *     i    [I] image index
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ */
+
+BOOL32 WINAPI
+ImageList_Remove (HIMAGELIST himl, INT32 i)
 {
     HBITMAP32 hbmNewImage, hbmNewMask;
     HDC32     hdcSrc, hdcDst;
@@ -1521,11 +1748,25 @@ BOOL32 WINAPI ImageList_Remove (
 }
 
 
-BOOL32 WINAPI ImageList_Replace (
-	HIMAGELIST himl,
-	INT32 i,
-	HBITMAP32 hbmImage, 
-	HBITMAP32 hbmMask)
+/*************************************************************************
+ * ImageList_Replace [COMCTL32.68] 
+ *
+ * Replaces an image in an image list with a new image.
+ *
+ * PARAMS
+ *     himl     [I] image list handle
+ *     i        [I] image index
+ *     hbmImage [I] image bitmap handle
+ *     hbmMask  [I] mask bitmap handle. Can be NULL.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ */
+
+BOOL32 WINAPI
+ImageList_Replace (HIMAGELIST himl, INT32 i, HBITMAP32 hbmImage,
+		   HBITMAP32 hbmMask)
 {
     HDC32 hdcImageList, hdcImage;
     BITMAP32 bmp;
@@ -1568,10 +1809,23 @@ BOOL32 WINAPI ImageList_Replace (
 }
 
 
-INT32 WINAPI ImageList_ReplaceIcon (
-	HIMAGELIST himl,
-	INT32 i,
-	HICON32 hIcon)
+/*************************************************************************
+ * ImageList_ReplaceIcon [COMCTL32.69]
+ *
+ * Replaces an image in an image list using an icon.
+ *
+ * PARAMS
+ *     himl  [I] image list handle
+ *     i     [I] image index
+ *     hIcon [I] icon handle
+ *
+ * RETURNS
+ *     Success: index of the replaced image
+ *     Failure: -1
+ */
+
+INT32 WINAPI
+ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
 {
     HDC32     hdcImageList, hdcImage;
     INT32     nIndex;
@@ -1602,7 +1856,7 @@ INT32 WINAPI ImageList_ReplaceIcon (
 
     if (i == -1) {
         if (himl->cCurImage + 1 >= himl->cMaxImage)
-            IMAGELIST_InternalGrowBitmaps (himl, 1);
+            IMAGELIST_InternalExpandBitmaps (himl, 1);
 
         nIndex = himl->cCurImage;
         himl->cCurImage++;
@@ -1648,11 +1902,27 @@ INT32 WINAPI ImageList_ReplaceIcon (
 }
 
 
-COLORREF WINAPI ImageList_SetBkColor (
-	HIMAGELIST himl,
-	COLORREF clrBk)
+/*************************************************************************
+ * ImageList_SetBkColor [COMCTL32.70] 
+ *
+ * Sets the background color of an image list.
+ *
+ * PARAMS
+ *     himl  [I] image list handle
+ *     clrBk [I] background color
+ *
+ * RETURNS
+ *     Success: previous background color
+ *     Failure: CLR_NONE
+ */
+
+COLORREF WINAPI
+ImageList_SetBkColor (HIMAGELIST himl, COLORREF clrBk)
 {
     COLORREF clrOldBk;
+
+    if (himl == NULL)
+	return (CLR_NONE);
 
     clrOldBk = himl->clrBk;
     himl->clrBk = clrBk;
@@ -1660,23 +1930,73 @@ COLORREF WINAPI ImageList_SetBkColor (
 }
 
 
-BOOL32 WINAPI ImageList_SetDragCursorImage (
-	HIMAGELIST himlDrag,
-	INT32 iDrag,
-	INT32 dxHotspot,
-	INT32 dyHotspot)
+/*************************************************************************
+ * ImageList_SetDragCursorImage [COMCTL32.75]
+ *
+ * Combines the specified image with the current drag image
+ *
+ * PARAMS
+ *     himlDrag  [I] drag image list handle
+ *     iDrag     [I] drag image index
+ *     dxHotspot [I] X position of the hot spot
+ *     dyHotspot [I] Y position of the hot spot
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * BUGS
+ *     empty stub.
+ */
+
+BOOL32 WINAPI
+ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT32 iDrag,
+			      INT32 dxHotspot, INT32 dyHotspot)
 {
+    HIMAGELIST himlTemp;
+
     FIXME (imagelist, "empty stub!\n");
+
+    if (himlInternalDrag == NULL) return (FALSE);
+
+    TRACE (imagelist, " dxH=%d dyH=%d nX=%d nY=%d\n",
+	   dxHotspot, dyHotspot, nInternalDragHotspotX, nInternalDragHotspotY);
+
+    himlTemp = ImageList_Merge (himlInternalDrag, 0, himlDrag, iDrag,
+				dxHotspot, dyHotspot);
+
+    ImageList_Destroy (himlInternalDrag);
+    himlInternalDrag = himlTemp;
+
+    nInternalDragHotspotX = dxHotspot;
+    nInternalDragHotspotY = dyHotspot;
 
     return (FALSE);
 }
 
 
+/*************************************************************************
+ * ImageList_SetFilter [COMCTL32.76] 
+ *
+ * Sets a filter (or does something completely different)!!???
+ *
+ * PARAMS
+ *     himl     [I] ???
+ *     i        [I] ???
+ *     dwFilter [I] ???
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * BUGS
+ *     undocumented!!!!
+ *     empty stub.
+ */
+
 #if 0
-BOOL32 WINAPI ImageList_SetFilter (
-	HIMAGELIST himl, 
-	INT32 iIndex, 
-	INT32 iFilter)
+BOOL32 WINAPI
+ImageList_SetFilter (HIMAGELIST himl, INT32 i, DWORD dwFilter)
 {
     FIXME (imagelist, "empty stub!\n");
 
@@ -1685,10 +2005,23 @@ BOOL32 WINAPI ImageList_SetFilter (
 #endif /* 0 */
 
 
-BOOL32 WINAPI ImageList_SetIconSize (
-	HIMAGELIST himl, 
-	INT32 cx, 
-	INT32 cy)
+/*************************************************************************
+ * ImageList_SetIconSize [COMCTL32.77]
+ *
+ * Sets the image size of the bitmap and deletes all images.
+ *
+ * PARAMS
+ *     himl [I] image list handle
+ *     cx   [I] image width
+ *     cy   [I] image height
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ */
+
+BOOL32 WINAPI
+ImageList_SetIconSize (HIMAGELIST himl, INT32 cx, INT32 cy)
 {
     INT32 nCount;
 
@@ -1718,9 +2051,22 @@ BOOL32 WINAPI ImageList_SetIconSize (
 }
 
 
-BOOL32 WINAPI ImageList_SetImageCount (
-	HIMAGELIST himl, 
-	INT32 iImageCount)
+/*************************************************************************
+ * ImageList_SetImageCount [COMCTL32.78]
+ *
+ * Resizes an image list to the specified number of images.
+ *
+ * PARAMS
+ *     himl        [I] image list handle
+ *     iImageCount [I] number of images in the image list
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ */
+
+BOOL32 WINAPI
+ImageList_SetImageCount (HIMAGELIST himl, INT32 iImageCount)
 {
     HDC32     hdcImageList, hdcBitmap;
     HBITMAP32 hbmNewBitmap;
@@ -1783,10 +2129,23 @@ BOOL32 WINAPI ImageList_SetImageCount (
 }
 
 
-BOOL32 WINAPI ImageList_SetOverlayImage (
-	HIMAGELIST himl, 
-	INT32 iImage, 
-	INT32 iOverlay)
+/*************************************************************************
+ * ImageList_SetOverlayImage [COMCTL32.79]
+ *
+ * Assigns an overlay mask index to an existing image in an image list.
+ *
+ * PARAMS
+ *     himl     [I] image list handle
+ *     iImage   [I] image index
+ *     iOverlay [I] overlay mask index
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ */
+
+BOOL32 WINAPI
+ImageList_SetOverlayImage (HIMAGELIST himl, INT32 iImage, INT32 iOverlay)
 {
     if ((iOverlay < 1) || (iOverlay > MAX_OVERLAYIMAGE)) return (FALSE);
     if ((iImage < 0) || (iImage > himl->cCurImage)) return (FALSE);
@@ -1796,11 +2155,27 @@ BOOL32 WINAPI ImageList_SetOverlayImage (
 }
 
 
+/*************************************************************************
+ * ImageList_Write [COMCTL32.80]
+ *
+ * Writes an image list to a stream.
+ *
+ * PARAMS
+ *     himl [I] Image list handle.
+ *     pstm [O] Pointer to a stream.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
+ *
+ * BUGS
+ *     empty stub.
+ */
+
 #if 0
 #if __IStream_INTERFACE_DEFINED__
-BOOL32 WINAPI ImageList_Write (
-	HIMAGELIST himl, 
-	LPSTREAM pstm)
+BOOL32 WINAPI
+ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
 {
     FIXME (imagelist, "empty stub!\n");
 
@@ -1809,3 +2184,4 @@ BOOL32 WINAPI ImageList_Write (
 }
 #endif  /* __IStream_INTERFACE_DEFINED__ */
 #endif  /* 0 */
+

@@ -150,7 +150,7 @@ static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
             rect->top -= SYSMETRICS_CYCAPTION - SYSMETRICS_CYBORDER;
     }
     if (menu) rect->top -= SYSMETRICS_CYMENU + SYSMETRICS_CYBORDER + 2;
-    else rect->top += SYSMETRICS_CYBORDER;
+    else  if (!(style & WS_CHILD)) rect->top += SYSMETRICS_CYBORDER;
 
     if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
     if (style & WS_HSCROLL) rect->bottom += SYSMETRICS_CYHSCROLL;

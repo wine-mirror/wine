@@ -494,7 +494,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
         section = section->next;
     }
     buffer[0] = buffer[1] = '\0';
-    return 2;
+    return 0;
 }
 
 

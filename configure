@@ -2135,30 +2135,33 @@ EOF
 if { (eval echo configure:2136: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ac_cv_c_opensoundsystem="yes"
-	cat >> confdefs.h <<\EOF
-#define HAVE_OSS 1
-EOF
-
 else
   echo "configure: failed program was:" >&5
   cat conftest.$ac_ext >&5
   rm -rf conftest*
   ac_cv_c_opensoundsystem="no"
-
 fi
 rm -f conftest*
 fi
 
 echo "$ac_t""$ac_cv_c_opensoundsystem" 1>&6
 
+if test "$ac_cv_c_opensoundsystem" = "yes"
+then
+    cat >> confdefs.h <<\EOF
+#define HAVE_OSS 1
+EOF
+
+fi
+
 
 echo $ac_n "checking "for union semun"""... $ac_c" 1>&6
-echo "configure:2157: checking "for union semun"" >&5
+echo "configure:2160: checking "for union semun"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_union_semun'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2162 "configure"
+#line 2165 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/sem.h>
@@ -2166,7 +2169,7 @@ int main() {
 union semun foo
 ; return 0; }
 EOF
-if { (eval echo configure:2170: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:2173: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ac_cv_c_union_semun="yes"
 else
@@ -2194,7 +2197,7 @@ if test "x${GCC}" = "xyes"
 then
   CFLAGS="$CFLAGS -Wall"
   echo $ac_n "checking "for gcc strength-reduce bug"""... $ac_c" 1>&6
-echo "configure:2198: checking "for gcc strength-reduce bug"" >&5
+echo "configure:2201: checking "for gcc strength-reduce bug"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_gcc_strength_bug'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2202,7 +2205,7 @@ else
   ac_cv_c_gcc_strength_bug="yes"
 else
   cat > conftest.$ac_ext <<EOF
-#line 2206 "configure"
+#line 2209 "configure"
 #include "confdefs.h"
 
 int main(void) {
@@ -2213,7 +2216,7 @@ int main(void) {
   exit( Array[1] != -2 );
 }
 EOF
-if { (eval echo configure:2217: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:2220: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
   ac_cv_c_gcc_strength_bug="no"
 else
@@ -2236,7 +2239,7 @@ fi
 
 
 echo $ac_n "checking "whether external symbols need an underscore prefix"""... $ac_c" 1>&6
-echo "configure:2240: checking "whether external symbols need an underscore prefix"" >&5
+echo "configure:2243: checking "whether external symbols need an underscore prefix"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_extern_prefix'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2248,14 +2251,14 @@ _ac_test:
 	.long 0
 EOF
 cat > conftest.$ac_ext <<EOF
-#line 2252 "configure"
+#line 2255 "configure"
 #include "confdefs.h"
 extern int ac_test;
 int main() {
 if (ac_test) return 1
 ; return 0; }
 EOF
-if { (eval echo configure:2259: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:2262: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   ac_cv_c_extern_prefix="yes"
 else
@@ -2279,7 +2282,7 @@ fi
 
 
 echo $ac_n "checking "whether assembler accepts .string"""... $ac_c" 1>&6
-echo "configure:2283: checking "whether assembler accepts .string"" >&5
+echo "configure:2286: checking "whether assembler accepts .string"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_asm_string'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2289,14 +2292,14 @@ cat > conftest_asm.s <<EOF
 	.string "test"
 EOF
 cat > conftest.$ac_ext <<EOF
-#line 2293 "configure"
+#line 2296 "configure"
 #include "confdefs.h"
 
 int main() {
 
 ; return 0; }
 EOF
-if { (eval echo configure:2300: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:2303: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   ac_cv_c_asm_string="yes"
 else
@@ -2323,21 +2326,21 @@ DLLFLAGS=""
 if test "$LIB_TARGET" = "libwine.so.1.0"
 then
   echo $ac_n "checking "whether we can build a dll"""... $ac_c" 1>&6
-echo "configure:2327: checking "whether we can build a dll"" >&5
+echo "configure:2330: checking "whether we can build a dll"" >&5
 if eval "test \"`echo '$''{'ac_cv_c_dll'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0"
   cat > conftest.$ac_ext <<EOF
-#line 2334 "configure"
+#line 2337 "configure"
 #include "confdefs.h"
 
 int main() {
 return 1
 ; return 0; }
 EOF
-if { (eval echo configure:2341: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:2344: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   ac_cv_c_dll="yes"
 else
@@ -2363,7 +2366,7 @@ fi
 
 
 echo $ac_n "checking "for reentrant X libraries"""... $ac_c" 1>&6
-echo "configure:2367: checking "for reentrant X libraries"" >&5
+echo "configure:2370: checking "for reentrant X libraries"" >&5
 if eval "test \"`echo '$''{'wine_cv_x_reentrant'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2407,12 +2410,12 @@ fi
 for ac_func in clone getpagesize memmove sigaltstack strerror tcgetattr timegm usleep wait4 waitpid
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:2411: checking for $ac_func" >&5
+echo "configure:2414: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2416 "configure"
+#line 2419 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -2435,7 +2438,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:2439: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:2442: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -2463,17 +2466,17 @@ for ac_hdr in wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
-echo "configure:2467: checking for $ac_hdr" >&5
+echo "configure:2470: checking for $ac_hdr" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2472 "configure"
+#line 2475 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:2477: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:2480: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -2500,12 +2503,12 @@ fi
 done
 
 echo $ac_n "checking whether stat file-mode macros are broken""... $ac_c" 1>&6
-echo "configure:2504: checking whether stat file-mode macros are broken" >&5
+echo "configure:2507: checking whether stat file-mode macros are broken" >&5
 if eval "test \"`echo '$''{'ac_cv_header_stat_broken'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2509 "configure"
+#line 2512 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2556,12 +2559,12 @@ EOF
 fi
 
 echo $ac_n "checking for working const""... $ac_c" 1>&6
-echo "configure:2560: checking for working const" >&5
+echo "configure:2563: checking for working const" >&5
 if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2565 "configure"
+#line 2568 "configure"
 #include "confdefs.h"
 
 int main() {
@@ -2610,7 +2613,7 @@ ccp = (char const *const *) p;
 
 ; return 0; }
 EOF
-if { (eval echo configure:2614: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:2617: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   ac_cv_c_const=yes
 else
@@ -2631,12 +2634,12 @@ EOF
 fi
 
 echo $ac_n "checking for ANSI C header files""... $ac_c" 1>&6
-echo "configure:2635: checking for ANSI C header files" >&5
+echo "configure:2638: checking for ANSI C header files" >&5
 if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2640 "configure"
+#line 2643 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -2644,7 +2647,7 @@ else
 #include <float.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:2648: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:2651: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -2661,7 +2664,7 @@ rm -f conftest*
 if test $ac_cv_header_stdc = yes; then
   # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 2665 "configure"
+#line 2668 "configure"
 #include "confdefs.h"
 #include <string.h>
 EOF
@@ -2679,7 +2682,7 @@ fi
 if test $ac_cv_header_stdc = yes; then
   # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 2683 "configure"
+#line 2686 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 EOF
@@ -2700,7 +2703,7 @@ if test "$cross_compiling" = yes; then
   :
 else
   cat > conftest.$ac_ext <<EOF
-#line 2704 "configure"
+#line 2707 "configure"
 #include "confdefs.h"
 #include <ctype.h>
 #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
@@ -2711,7 +2714,7 @@ if (XOR (islower (i), ISLOWER (i)) || toupper (i) != TOUPPER (i)) exit(2);
 exit (0); }
 
 EOF
-if { (eval echo configure:2715: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:2718: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -2735,12 +2738,12 @@ EOF
 fi
 
 echo $ac_n "checking for size_t""... $ac_c" 1>&6
-echo "configure:2739: checking for size_t" >&5
+echo "configure:2742: checking for size_t" >&5
 if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2744 "configure"
+#line 2747 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -2768,7 +2771,7 @@ EOF
 fi
 
 echo $ac_n "checking size of long long""... $ac_c" 1>&6
-echo "configure:2772: checking size of long long" >&5
+echo "configure:2775: checking size of long long" >&5
 if eval "test \"`echo '$''{'ac_cv_sizeof_long_long'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2776,7 +2779,7 @@ else
   ac_cv_sizeof_long_long=0
 else
   cat > conftest.$ac_ext <<EOF
-#line 2780 "configure"
+#line 2783 "configure"
 #include "confdefs.h"
 #include <stdio.h>
 main()
@@ -2787,7 +2790,7 @@ main()
   exit(0);
 }
 EOF
-if { (eval echo configure:2791: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:2794: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
   ac_cv_sizeof_long_long=`cat conftestval`
 else
@@ -2807,8 +2810,213 @@ EOF
 
 
 
+
+if test "$ac_cv_header_sys_vfs_h" = "yes"
+then
+    echo $ac_n "checking "whether sys/vfs.h defines statfs"""... $ac_c" 1>&6
+echo "configure:2818: checking "whether sys/vfs.h defines statfs"" >&5
+if eval "test \"`echo '$''{'wine_cv_sys_vfs_has_statfs'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2823 "configure"
+#include "confdefs.h"
+
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/vfs.h>
+	
+int main() {
+
+		struct statfs stfs;
+
+		memset(&stfs,0,sizeof(stfs));
+	
+; return 0; }
+EOF
+if { (eval echo configure:2840: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  wine_cv_sys_vfs_has_statfs=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  wine_cv_sys_vfs_has_statfs=no
+	
+fi
+rm -f conftest*
+    
+fi
+
+echo "$ac_t""$wine_cv_sys_vfs_has_statfs" 1>&6
+    if test "$wine_cv_sys_vfs_has_statfs" = "yes"
+    then
+      cat >> confdefs.h <<\EOF
+#define STATFS_DEFINED_BY_SYS_VFS 1
+EOF
+
+    fi
+fi
+
+if test "$ac_cv_header_sys_statfs_h" = "yes"
+then
+    echo $ac_n "checking "whether sys/statfs.h defines statfs"""... $ac_c" 1>&6
+echo "configure:2867: checking "whether sys/statfs.h defines statfs"" >&5
+if eval "test \"`echo '$''{'wine_cv_sys_statfs_has_statfs'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2872 "configure"
+#include "confdefs.h"
+
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/statfs.h>
+	
+int main() {
+
+		struct statfs stfs;
+	
+; return 0; }
+EOF
+if { (eval echo configure:2887: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  wine_cv_sys_statfs_has_statfs=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  wine_cv_sys_statfs_has_statfs=no
+	
+fi
+rm -f conftest*
+    
+fi
+
+echo "$ac_t""$wine_cv_sys_statfs_has_statfs" 1>&6
+    if test "$wine_cv_sys_statfs_has_statfs" = "yes"
+    then
+      cat >> confdefs.h <<\EOF
+#define STATFS_DEFINED_BY_SYS_STATFS 1
+EOF
+
+    fi
+fi
+
+if test "$ac_cv_header_sys_mount_h" = "yes"
+then
+    echo $ac_n "checking "whether sys/mount.h defines statfs"""... $ac_c" 1>&6
+echo "configure:2914: checking "whether sys/mount.h defines statfs"" >&5
+if eval "test \"`echo '$''{'wine_cv_sys_mount_has_statfs'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 2919 "configure"
+#include "confdefs.h"
+
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/mount.h>
+	
+int main() {
+
+		struct statfs stfs;
+	
+; return 0; }
+EOF
+if { (eval echo configure:2934: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  wine_cv_sys_mount_has_statfs=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  wine_cv_sys_mount_has_statfs=no
+	
+fi
+rm -f conftest*
+    
+fi
+
+echo "$ac_t""$wine_cv_sys_mount_has_statfs" 1>&6
+    if test "$wine_cv_sys_mount_has_statfs" = "yes"
+    then
+      cat >> confdefs.h <<\EOF
+#define STATFS_DEFINED_BY_SYS_MOUNT 1
+EOF
+
+    fi
+fi
+
+
+echo $ac_n "checking "for statfs.f_bfree"""... $ac_c" 1>&6
+echo "configure:2960: checking "for statfs.f_bfree"" >&5
+if eval "test \"`echo '$''{'wine_cv_statfs_bfree'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+   if test "x$statfs_bfree" = "xno"
+    then
+        wine_cv_statfs_bfree=no
+    else
+    	cat > conftest.$ac_ext <<EOF
+#line 2969 "configure"
+#include "confdefs.h"
+
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+	# include <sys/mount.h>
+	#else
+	# ifdef STATFS_DEFINED_BY_SYS_VFS
+	#  include <sys/vfs.h>
+	# else
+	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+	#   include <sys/statfs.h>
+	#  endif
+	# endif
+	#endif
+	
+int main() {
+
+		struct statfs stfs;
+
+		stfs.f_bfree++;
+	
+; return 0; }
+EOF
+if { (eval echo configure:2996: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  wine_cv_statfs_bfree=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  wine_cv_statfs_bfree=no
+	
+fi
+rm -f conftest*
+    fi  
+fi
+
+echo "$ac_t""$wine_cv_statfs_bfree" 1>&6
+if test "$wine_cv_statfs_bfree" = "yes"
+then
+  cat >> confdefs.h <<\EOF
+#define STATFS_HAS_BFREE 1
+EOF
+
+fi
+
 echo $ac_n "checking "for statfs.f_bavail"""... $ac_c" 1>&6
-echo "configure:2812: checking "for statfs.f_bavail"" >&5
+echo "configure:3020: checking "for statfs.f_bavail"" >&5
 if eval "test \"`echo '$''{'wine_cv_statfs_bavail'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2817,21 +3025,23 @@ else
         wine_cv_statfs_bavail=no
     else
     	cat > conftest.$ac_ext <<EOF
-#line 2821 "configure"
+#line 3029 "configure"
 #include "confdefs.h"
 
 	#include <sys/types.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
-	#ifdef HAVE_SYS_STATFS_H
-	# include <sys/statfs.h>
-	#endif
-	#ifdef HAVE_SYS_MOUNT_H
+	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
 	# include <sys/mount.h>
-	#endif
-	#ifdef HAVE_SYS_VFS_H
-	# include <sys/vfs.h>
+	#else
+	# ifdef STATFS_DEFINED_BY_SYS_VFS
+	#  include <sys/vfs.h>
+	# else
+	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+	#   include <sys/statfs.h>
+	#  endif
+	# endif
 	#endif
 	
 int main() {
@@ -2842,7 +3052,7 @@ int main() {
 	
 ; return 0; }
 EOF
-if { (eval echo configure:2846: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:3056: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   wine_cv_statfs_bavail=yes
 else
@@ -2865,60 +3075,75 @@ EOF
 
 fi
 
-echo $ac_n "checking "for statfs.f_bfree"""... $ac_c" 1>&6
-echo "configure:2870: checking "for statfs.f_bfree"" >&5
-if eval "test \"`echo '$''{'wine_cv_statfs_bfree'+set}'`\" = set"; then
+
+echo $ac_n "checking "for working sigaltstack"""... $ac_c" 1>&6
+echo "configure:3081: checking "for working sigaltstack"" >&5
+if eval "test \"`echo '$''{'ac_cv_c_working_sigaltstack'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-   if test "x$statfs_bfree" = "xno"
-    then
-        wine_cv_statfs_bfree=no
-    else
-    	cat > conftest.$ac_ext <<EOF
-#line 2879 "configure"
+  if test "$cross_compiling" = yes; then
+  ac_cv_c_working_sigaltstack="no"
+
+else
+  cat > conftest.$ac_ext <<EOF
+#line 3090 "configure"
 #include "confdefs.h"
 
+	#include <stdio.h>
+	#include <time.h> /* <sys/time.h> ? bad magic without end */
 	#include <sys/types.h>
+	#include <sys/signal.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
-	#ifdef HAVE_SYS_STATFS_H
-	# include <sys/statfs.h>
-	#endif
-	#ifdef HAVE_SYS_MOUNT_H
-	# include <sys/mount.h>
-	#endif
-	#ifdef HAVE_SYS_VFS_H
-	# include <sys/vfs.h>
+	#ifdef HAVE_SYSCALL_H
+	# include <syscall.h>
+	#else
+	# ifdef HAVE_SYS_SYSCALL_H
+	#  include <sys/syscall.h>
+	# endif
 	#endif
 	
-int main() {
+	unsigned char *xaltstack;
 
-		struct statfs stfs;
+	int
+	main(int argc,char **argv) {
+	    struct sigaltstack	ss;
 
-		stfs.f_bfree++;
+	    xaltstack = malloc(16384);
+	    ss.ss_sp    = xaltstack;
+	    ss.ss_size  = 16384;
+	    ss.ss_flags = 0;
+	    if (sigaltstack(&ss, NULL) < 0) {
+	    	/* this catches the glibc case */
+		perror("sigaltstack");
+	    	return (1); /* aka exit(1) aka fail */
+	    }
+	    /* assume it works. */
+	    return 0; /* OK */
+	}
 	
-; return 0; }
 EOF
-if { (eval echo configure:2904: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
-  rm -rf conftest*
-  wine_cv_statfs_bfree=yes
+if { (eval echo configure:3128: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
+then
+  ac_cv_c_working_sigaltstack="yes"
 else
   echo "configure: failed program was:" >&5
   cat conftest.$ac_ext >&5
-  rm -rf conftest*
-  wine_cv_statfs_bfree=no
-	
+  rm -fr conftest*
+  ac_cv_c_working_sigaltstack="no"
 fi
-rm -f conftest*
-    fi  
+rm -fr conftest*
 fi
 
-echo "$ac_t""$wine_cv_statfs_bfree" 1>&6
-if test "$wine_cv_statfs_bfree" = "yes"
+fi
+
+echo "$ac_t""$ac_cv_c_working_sigaltstack" 1>&6
+
+if test "$ac_cv_c_working_sigaltstack" = "yes"
 then
-  cat >> confdefs.h <<\EOF
-#define STATFS_HAS_BFREE 1
+    cat >> confdefs.h <<\EOF
+#define HAVE_WORKING_SIGALTSTACK 1
 EOF
 
 fi
@@ -3057,6 +3282,7 @@ programs/Makefile
 programs/clock/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
+programs/regtest/Makefile
 programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
@@ -3187,6 +3413,7 @@ programs/Makefile
 programs/clock/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
+programs/regtest/Makefile
 programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile

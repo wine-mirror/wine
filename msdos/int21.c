@@ -1318,7 +1318,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         case 0x01:
             break;
 	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
-	    BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
+	    /*BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));*/
 	    int	drive = DOS_GET_DRIVE(BL_reg(context));
 
 	    FIXME(int21,"program tried to write to block device control channel of drive %d:\n",drive);

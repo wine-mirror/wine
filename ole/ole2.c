@@ -28,8 +28,14 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
     return S_OK;
 }
 
+/***********************************************************************
+ * CoGetCurrentProcess [OLE2.2][OLE32.108]
+ *
+ * NOTES
+ *   Is DWORD really the correct return type for this function?
+ */
 DWORD WINAPI CoGetCurrentProcess() {
-	return PROCESS_Current();
+	return (DWORD)PROCESS_Current();
 }
 
 /***********************************************************************

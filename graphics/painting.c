@@ -219,6 +219,10 @@ BOOL32 WINAPI Rectangle32( HDC32 hdc, INT32 left, INT32 top,
 {
     DC * dc = DC_GetDCPtr( hdc );
   
+    if(dc && PATH_IsPathOpen(dc->w.path))
+        if(!PATH_Rectangle(hdc, left, top, right, bottom))
+           return FALSE;
+
     return dc && dc->funcs->pRectangle &&
     	   dc->funcs->pRectangle(dc,left,top,right,bottom);
 }
@@ -959,7 +963,8 @@ static BOOL32 PAINTING_DrawState32(HDC32 hdc, HBRUSH32 hbr,
     /* before it is displayed */
     fg = SetTextColor32(hdc, RGB(0, 0, 0));
     bg = SetBkColor32(hdc, RGB(255, 255, 255));
-    hbm = NULL; hbmsave = NULL; memdc = NULL; memdc = NULL; hbsave = NULL;
+    hbm = (HBITMAP32)NULL; hbmsave = (HBITMAP32)NULL;
+    memdc = (HDC32)NULL; hbsave = (HBRUSH32)NULL;
     retval = FALSE; /* assume failure */
     
     /* From here on we must use "goto cleanup" when something goes wrong */

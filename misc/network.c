@@ -478,9 +478,14 @@ int WINAPI WNetPropertyDialog(HWND16 hwndParent,WORD iButton,
  */
 int WINAPI WNetGetDirectoryType16(LPSTR lpName, LPINT16 lpType)
 {
-	FIXME(wnet, "('%s',%p): stub\n",lpName,lpType);
-	*lpType = 0;
-	return WN_NO_NETWORK;
+        UINT32 type = GetDriveType32A(lpName);
+
+	if (type == DRIVE_DOESNOTEXIST)
+	  type = GetDriveType32A(NULL);
+	*lpType = (type==DRIVE_REMOTE)?WNDT_NETWORK:WNDT_NORMAL;
+	TRACE(wnet,"%s is %s\n",lpName,(*lpType==WNDT_NETWORK)?
+	      "WNDT_NETWORK":"WNDT_NORMAL");
+	return WN_SUCCESS;
 }
 
 /*****************************************************************

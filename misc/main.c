@@ -116,6 +116,7 @@ static XrmOptionDescRec optionsTable[] =
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
 
 #define USAGE \
+  "%s\n" \
   "Usage:  %s [options] \"program_name [arguments]\"\n" \
   "\n" \
   "Options:\n" \
@@ -128,6 +129,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -dll name       Enable or disable built-in DLLs\n" \
   "    -failreadonly   Read only files may not be opened in write mode\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
+  "    -help           Show this help message\n" \
   "    -iconic         Start as an icon\n" \
   "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po,Sw,Ca)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
@@ -146,7 +148,7 @@ static XrmOptionDescRec optionsTable[] =
  */
 void MAIN_Usage( char *name )
 {
-    MSG( USAGE, name );
+    MSG( USAGE, WINE_RELEASE_INFO, name );
     exit(1);
 }
 
@@ -199,12 +201,14 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
 
 
 /***********************************************************************
- *                    ParseDebugOptions
+ *          MAIN_ParseDebugOptions
  *
  *  Turns specific debug messages on or off, according to "options".
- *  Returns TRUE if parsing was successful
+ *  
+ *  RETURNS
+ *    TRUE if parsing was successful
  */
-BOOL32 ParseDebugOptions(char *options)
+static BOOL32 MAIN_ParseDebugOptions(char *options)
 {
   int l, cls;
   if (strlen(options)<3)
@@ -330,6 +334,11 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
             MSG( "%s\n", WINE_RELEASE_INFO );
             exit(0);
         }
+        if (!strcmp( argv[i], "-h" ) || !strcmp( argv[i], "-help" ))
+        {
+            MAIN_Usage(argv[0]);
+            exit(0);
+        }
     }
 
       /* Open display */
@@ -383,7 +392,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     if (MAIN_GetResource( db, ".mode", &value))
         MAIN_ParseModeOption( (char *)value.addr );
     if (MAIN_GetResource( db, ".debugoptions", &value))
-	ParseDebugOptions((char*)value.addr);
+	MAIN_ParseDebugOptions((char*)value.addr);
     if (MAIN_GetResource( db, ".debugmsg", &value))
       {
 #ifndef DEBUG_RUNTIME
@@ -392,7 +401,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	  argv[0]);
 	exit(1);
 #else
-	if (ParseDebugOptions((char*)value.addr)==FALSE)
+	if (MAIN_ParseDebugOptions((char*)value.addr)==FALSE)
 	  {
 	    int i;
 	    MSG("%s: Syntax: -debugmsg [class]+xxx,...  or "
@@ -531,6 +540,9 @@ static void MAIN_RestoreSetup(void)
 }
 
 
+/***********************************************************************
+ *           called_at_exit
+ */
 static void called_at_exit(void)
 {
     MAIN_RestoreSetup();

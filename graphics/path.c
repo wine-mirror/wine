@@ -62,15 +62,16 @@
 static BOOL32 PATH_PathToRegion(const GdiPath *pPath, INT32 nPolyFillMode,
    HRGN32 *pHrgn);
 static void   PATH_EmptyPath(GdiPath *pPath);
-static BOOL32 PATH_AddEntry(GdiPath *pPath, POINT32 point, BYTE flags);
+static BOOL32 PATH_AddEntry(GdiPath *pPath, const POINT32 *pPoint,
+   BYTE flags);
 static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries);
 static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath);
-static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
+static BOOL32 PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
    double angleStart, double angleEnd, BOOL32 addMoveTo);
-static void PATH_ScaleNormalizedPoint(POINT32 corners[], double x, double y,
-   POINT32 *pPoint);
-static void PATH_NormalizePoint(POINT32 corners[], const POINT32 *pPoint,
-   double *pX, double *pY);
+static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
+   double y, POINT32 *pPoint);
+static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
+   *pPoint, double *pX, double *pY);
 
 
 /***********************************************************************
@@ -217,6 +218,8 @@ BOOL32 WINAPI CloseFigure32(HDC32 hdc)
       SetLastError(ERROR_CAN_NOT_COMPLETE);
       return FALSE;
    }
+   
+   /* FIXME: Shouldn't we draw a line to the beginning of the figure? */
    
    /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
    if(pPath->numEntriesUsed)
@@ -436,7 +439,7 @@ BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
    if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgnPath))
    {
       hrgnClip=CreateRectRgn32(0, 0, 0, 0);
-      if(hrgnClip==NULL)
+      if(hrgnClip==(HRGN32)0)
          success=FALSE;
       else
       {
@@ -564,7 +567,6 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
    
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
-      /* FIXME: Do we have to call SetLastError? */
       return FALSE;
 
    /* Convert point to device coordinates */
@@ -580,12 +582,93 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
       if(!GetCurrentPositionEx32(hdc, &pointCurPos) ||
          !LPtoDP32(hdc, &pointCurPos, 1))
          return FALSE;
-      if(!PATH_AddEntry(pPath, pointCurPos, PT_MOVETO))
+      if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
          return FALSE;
    }
    
    /* Add a PT_LINETO entry */
-   return PATH_AddEntry(pPath, point, PT_LINETO);
+   return PATH_AddEntry(pPath, &point, PT_LINETO);
+}
+
+/* PATH_Rectangle
+ *
+ * Should be called when a call to Rectangle is performed on a DC that has
+ * an open path. Returns TRUE if successful, else FALSE.
+ */
+BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
+{
+   GdiPath *pPath;
+   POINT32 corners[2], pointTemp;
+   INT32   temp;
+
+   /* Get pointer to path */
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   /* Convert points to device coordinates */
+   corners[0].x=x1;
+   corners[0].y=y1;
+   corners[1].x=x2;
+   corners[1].y=y2;
+   if(!LPtoDP32(hdc, corners, 2))
+      return FALSE;
+   
+   /* Make sure first corner is top left and second corner is bottom right */
+   if(corners[0].x>corners[1].x)
+   {
+      temp=corners[0].x;
+      corners[0].x=corners[1].x;
+      corners[1].x=temp;
+   }
+   if(corners[0].y>corners[1].y)
+   {
+      temp=corners[0].y;
+      corners[0].y=corners[1].y;
+      corners[1].y=temp;
+   }
+   
+   /* In GM_COMPATIBLE, don't include bottom and right edges */
+   if(GetGraphicsMode(hdc)==GM_COMPATIBLE)
+   {
+      corners[1].x--;
+      corners[1].y--;
+   }
+
+   /* Close any previous figure */
+   if(!CloseFigure32(hdc))
+   {
+      /* The CloseFigure call shouldn't have failed */
+      assert(FALSE);
+      return FALSE;
+   }
+
+   /* Add four points to the path */
+   pointTemp.x=corners[1].x;
+   pointTemp.y=corners[0].y;
+   if(!PATH_AddEntry(pPath, &pointTemp, PT_MOVETO))
+      return FALSE;
+   if(!PATH_AddEntry(pPath, corners, PT_LINETO))
+      return FALSE;
+   pointTemp.x=corners[0].x;
+   pointTemp.y=corners[1].y;
+   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+      return FALSE;
+   if(!PATH_AddEntry(pPath, corners+1, PT_LINETO))
+      return FALSE;
+
+   /* Close the rectangle figure */
+   if(!CloseFigure32(hdc))
+   {
+      /* The CloseFigure call shouldn't have failed */
+      assert(FALSE);
+      return FALSE;
+   }
+
+   return TRUE;
 }
 
 /* PATH_Ellipse
@@ -596,7 +679,9 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
  */
 BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
 {
-   return PATH_Arc(hdc, x1, y1, x2, y2, x1, 0, x1, 0);
+   // TODO: This should probably be revised to call PATH_AngleArc
+   // (once it exists)
+   return PATH_Arc(hdc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2);
 }
 
 /* PATH_Arc
@@ -608,16 +693,23 @@ BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
 BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
    INT32 xStart, INT32 yStart, INT32 xEnd, INT32 yEnd)
 {
-   GdiPath *pPath;
-   double  angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
-           /* Initialize angleEndQuadrant to silence gcc's warning */
-   double  x, y;
-   POINT32 corners[2], pointStart, pointEnd;
-   BOOL32  start, end;
-   INT32   temp;
+   GdiPath     *pPath;
+   DC          *pDC;
+   double      angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
+               /* Initialize angleEndQuadrant to silence gcc's warning */
+   double      x, y;
+   FLOAT_POINT corners[2], pointStart, pointEnd;
+   BOOL32      start, end;
+   INT32       temp;
 
    /* FIXME: This function should check for all possible error returns */
+   /* FIXME: Do we have to respect newStroke? */
    
+   /* Get pointer to DC */
+   pDC=DC_GetDCPtr(hdc);
+   if(pDC==NULL)
+      return FALSE;
+
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
       return FALSE;
@@ -626,34 +718,28 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
    if(pPath->state!=PATH_Open)
       return FALSE;
 
+   /* FIXME: Do we have to close the current figure? */
+   
    /* Check for zero height / width */
-   /* FIXME: Should we do this before or after LPtoDP? */
+   /* FIXME: Only in GM_COMPATIBLE? */
    if(x1==x2 || y1==y2)
       return TRUE;
    
-   /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(GetGraphicsMode(hdc)==GM_COMPATIBLE)
-   {
-      /* FIXME: Should we do this before or after LPtoDP? */
-      x2--;
-      y2--;
-   }
-
    /* Convert points to device coordinates */
-   corners[0].x=x1;
-   corners[0].y=y1;
-   corners[1].x=x2;
-   corners[1].y=y2;
-   pointStart.x=xStart;
-   pointStart.y=yStart;
-   pointEnd.x=xEnd;
-   pointEnd.y=yEnd;
-   if(!LPtoDP32(hdc, corners, 2) || !LPtoDP32(hdc, &pointStart, 1) ||
-      !LPtoDP32(hdc, &pointEnd, 1))
-      return FALSE;
+   corners[0].x=(FLOAT)x1;
+   corners[0].y=(FLOAT)y1;
+   corners[1].x=(FLOAT)x2;
+   corners[1].y=(FLOAT)y2;
+   pointStart.x=(FLOAT)xStart;
+   pointStart.y=(FLOAT)yStart;
+   pointEnd.x=(FLOAT)xEnd;
+   pointEnd.y=(FLOAT)yEnd;
+   INTERNAL_LPTODP_FLOAT(pDC, corners);
+   INTERNAL_LPTODP_FLOAT(pDC, corners+1);
+   INTERNAL_LPTODP_FLOAT(pDC, &pointStart);
+   INTERNAL_LPTODP_FLOAT(pDC, &pointEnd);
 
-   /* Make sure first corner is top left and right corner is bottom right */
-   /* FIXME: Should we do this before or after LPtoDP? */
+   /* Make sure first corner is top left and second corner is bottom right */
    if(corners[0].x>corners[1].x)
    {
       temp=corners[0].x;
@@ -691,6 +777,13 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
       }
    }
 
+   /* In GM_COMPATIBLE, don't include bottom and right edges */
+   if(GetGraphicsMode(hdc)==GM_COMPATIBLE)
+   {
+      corners[1].x--;
+      corners[1].y--;
+   }
+   
    /* Add the arc to the path with one Bezier spline per quadrant that the
     * arc spans */
    start=TRUE;
@@ -717,9 +810,9 @@ BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
 
       /* Have we reached the last part of the arc? */
       if((GetArcDirection32(hdc)==AD_CLOCKWISE &&
-         angleEnd<=angleEndQuadrant) ||
+         angleEnd<angleEndQuadrant) ||
 	 (GetArcDirection32(hdc)==AD_COUNTERCLOCKWISE &&
-	 angleEnd>=angleEndQuadrant))
+	 angleEnd>angleEndQuadrant))
       {
 	 /* Adjust the end angle for this quadrant */
          angleEndQuadrant=angleEnd;
@@ -791,7 +884,7 @@ static BOOL32 PATH_PathToRegion(const GdiPath *pPath, INT32 nPolyFillMode,
    /* Create a region from the strokes */
    hrgn=CreatePolyPolygonRgn32(pPath->pPoints, pNumPointsInStroke,
       numStrokes, nPolyFillMode);
-   if(hrgn==NULL)
+   if(hrgn==(HRGN32)0)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;
@@ -823,10 +916,14 @@ static void PATH_EmptyPath(GdiPath *pPath)
  * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
  * successful, FALSE otherwise (e.g. if not enough memory was available).
  */
-BOOL32 PATH_AddEntry(GdiPath *pPath, POINT32 point, BYTE flags)
+BOOL32 PATH_AddEntry(GdiPath *pPath, const POINT32 *pPoint, BYTE flags)
 {
    assert(pPath!=NULL);
    
+   /* FIXME: If newStroke is true, perhaps we want to check that we're
+    * getting a PT_MOVETO
+    */
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
@@ -836,8 +933,12 @@ BOOL32 PATH_AddEntry(GdiPath *pPath, POINT32 point, BYTE flags)
       return FALSE;
 
    /* Store information in path entry */
-   pPath->pPoints[pPath->numEntriesUsed]=point;
+   pPath->pPoints[pPath->numEntriesUsed]=*pPoint;
    pPath->pFlags[pPath->numEntriesUsed]=flags;
+
+   /* If this is PT_CLOSEFIGURE, we have to start a new stroke next time */
+   if((flags & PT_CLOSEFIGURE) == PT_CLOSEFIGURE)
+      pPath->newStroke=TRUE;
 
    /* Increment entry count */
    pPath->numEntriesUsed++;
@@ -936,7 +1037,7 @@ static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath)
  * point is added to the path; otherwise, it is assumed that the current
  * position is equal to the first control point.
  */
-static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
+static BOOL32 PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
    double angleStart, double angleEnd, BOOL32 addMoveTo)
 {
    double  halfAngle, a;
@@ -950,21 +1051,30 @@ static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
 
    /* Compute control points */
    halfAngle=(angleEnd-angleStart)/2.0;
-   a=4.0/3.0*(1-cos(halfAngle))/sin(halfAngle);
-   xNorm[0]=cos(angleStart);
-   yNorm[0]=sin(angleStart);
-   xNorm[1]=xNorm[0] - a*yNorm[0];
-   yNorm[1]=yNorm[0] + a*xNorm[0];
-   xNorm[3]=cos(angleEnd);
-   yNorm[3]=sin(angleEnd);
-   xNorm[2]=xNorm[3] + a*yNorm[3];
-   yNorm[2]=yNorm[3] - a*xNorm[3];
+   if(fabs(halfAngle)>1e-8)
+   {
+      a=4.0/3.0*(1-cos(halfAngle))/sin(halfAngle);
+      xNorm[0]=cos(angleStart);
+      yNorm[0]=sin(angleStart);
+      xNorm[1]=xNorm[0] - a*yNorm[0];
+      yNorm[1]=yNorm[0] + a*xNorm[0];
+      xNorm[3]=cos(angleEnd);
+      yNorm[3]=sin(angleEnd);
+      xNorm[2]=xNorm[3] + a*yNorm[3];
+      yNorm[2]=yNorm[3] - a*xNorm[3];
+   }
+   else
+      for(i=0; i<4; i++)
+      {
+	 xNorm[i]=cos(angleStart);
+	 yNorm[i]=sin(angleStart);
+      }
    
    /* Add starting point to path if desired */
    if(addMoveTo)
    {
       PATH_ScaleNormalizedPoint(corners, xNorm[0], yNorm[0], &point);
-      if(!PATH_AddEntry(pPath, point, PT_MOVETO))
+      if(!PATH_AddEntry(pPath, &point, PT_MOVETO))
          return FALSE;
    }
 
@@ -972,7 +1082,7 @@ static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
    for(i=1; i<4; i++)
    {
       PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &point);
-      if(!PATH_AddEntry(pPath, point, PT_BEZIERTO))
+      if(!PATH_AddEntry(pPath, &point, PT_BEZIERTO))
          return FALSE;
    }
 
@@ -986,12 +1096,12 @@ static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
  * coordinates (-1.0, -1.0) correspond to corners[0], the coordinates
  * (1.0, 1.0) correspond to corners[1].
  */
-static void PATH_ScaleNormalizedPoint(POINT32 corners[], double x, double y,
-   POINT32 *pPoint)
+static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
+   double y, POINT32 *pPoint)
 {
-   pPoint->x=(INT32)floor( (double)corners[0].x +
+   pPoint->x=GDI_ROUND( (double)corners[0].x +
       (double)(corners[1].x-corners[0].x)*0.5*(x+1.0) );
-   pPoint->y=(INT32)floor( (double)corners[0].y +
+   pPoint->y=GDI_ROUND( (double)corners[0].y +
       (double)(corners[1].y-corners[0].y)*0.5*(y+1.0) );
 }
 
@@ -1000,7 +1110,8 @@ static void PATH_ScaleNormalizedPoint(POINT32 corners[], double x, double y,
  * Normalizes a point with respect to the box whose corners are passed in
  * "corners". The normalized coordinates are stored in "*pX" and "*pY".
  */
-static void PATH_NormalizePoint(POINT32 corners[], const POINT32 *pPoint,
+static void PATH_NormalizePoint(FLOAT_POINT corners[],
+   const FLOAT_POINT *pPoint,
    double *pX, double *pY)
 {
    *pX=(double)(pPoint->x-corners[0].x)/(double)(corners[1].x-corners[0].x) *

@@ -72,7 +72,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
-    fd = MODULE_OpenFile( pModule->self );
+    fd = NE_OpenFile( pModule );
     TRACE(module, "Loading segment %d, selector=%04x, flags=%04x\n",
                     segnum, pSeg->selector, pSeg->flags );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
@@ -118,8 +118,8 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  		   pSeg->minsize ? pSeg->minsize : 0x10000);
  	    FreeSelector(newselector);
  	    pSeg->selector = oldselector;
- 	    fprintf(stderr, "A new selector was allocated for the dgroup segment\n"
- 		    "Old selector is %d, new one is %d", oldselector, newselector);
+ 	    TRACE(module, "New selector allocated for dgroup segment:Old=%d,New=%d\n", 
+                oldselector, newselector);
  	  } else {
  	    FreeSelector(pSeg->selector);
  	    pSeg->selector = newselector;
@@ -201,22 +201,22 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             address = NE_GetEntryPoint( module, ordinal );
             if (!address)
             {
-                NE_MODULE *pTarget = MODULE_GetPtr16( module );
+                NE_MODULE *pTarget = NE_GetPtr( module );
                 if (!pTarget)
-                    fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
+                    WARN(module, "Module not found: %04x, reference %d of module %*.*s\n",
                              module, rep->target1, 
                              *((BYTE *)pModule + pModule->name_table),
                              *((BYTE *)pModule + pModule->name_table),
                              (char *)pModule + pModule->name_table + 1 );
                 else
-                    fprintf( stderr, "Warning: no handler for %.*s.%d, setting to 0:0\n",
+                    WARN(module, "No handler for %.*s.%d, setting to 0:0\n",
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
             }
             if (TRACE_ON(fixup))
             {
-                NE_MODULE *pTarget = MODULE_GetPtr16( module );
+                NE_MODULE *pTarget = NE_GetPtr( module );
                 TRACE( fixup, "%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
@@ -236,14 +236,14 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
             if (ERR_ON(fixup) && !address)
             {
-                NE_MODULE *pTarget = MODULE_GetPtr16( module );
+                NE_MODULE *pTarget = NE_GetPtr( module );
                 ERR(fixup, "Warning: no handler for %.*s.%s, setting to 0:0\n",
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
             if (TRACE_ON(fixup))
             {
-	        NE_MODULE *pTarget = MODULE_GetPtr16( module );
+	        NE_MODULE *pTarget = NE_GetPtr( module );
                 TRACE( fixup, "%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
@@ -288,8 +288,12 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         /* Apparently, high bit of address_type is sometimes set; */
         /* we ignore it for now */
 	if (rep->address_type > NE_RADDR_OFFSET32)
+        {
+            char module[10];
+            GetModuleName( pModule->self, module, sizeof(module) );
             ERR( fixup, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
-                 MODULE_GetModuleName(pModule->self), rep->address_type );
+                 module, rep->address_type );
+        }
 
         if (additive)
         {
@@ -405,7 +409,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         stack16Top->ip = 0;
         stack16Top->cs = 0;
 
-        hf = FILE_DupUnixHandle( MODULE_OpenFile( pModule->self ) );
+        hf = FILE_DupUnixHandle( NE_OpenFile( pModule ) );
         Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self, hf);
         _lclose32(hf);
         /* some BootApp procs overwrite the selector of dgroup */
@@ -490,7 +494,7 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 			if (pModule->flags & NE_FFLAGS_MULTIPLEDATA)
                         {
 			    /* can this happen? */
-			    fprintf( stderr, "FixupPrologs got confused\n" );
+			    ERR(fixup, "FixupPrologs got confused\n" );
 			}
                         else if (pModule->flags & NE_FFLAGS_SINGLEDATA)
                         {
@@ -523,9 +527,8 @@ void NE_FixupPrologs( NE_MODULE *pModule )
  *
  * Call the DLL initialization code
  */
-static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
+static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 {
-    NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     CONTEXT context;
 
@@ -536,7 +539,6 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
      * es:si  command line (always 0)
      */
 
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return FALSE;
     pSegTable = NE_SEG_TABLE( pModule );
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) ||
@@ -548,7 +550,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
 
     if (pTask && pTask->userhandler)
     {
-        pTask->userhandler( hModule, USIG_DLL_LOAD, 0, pTask->hInstance,
+        pTask->userhandler( pModule->self, USIG_DLL_LOAD, 0, pTask->hInstance,
                             pTask->hQueue );
     }
 
@@ -561,7 +563,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
         if (pModule->flags & NE_FFLAGS_MULTIPLEDATA || pModule->dgroup)
         {
             /* Not SINGLEDATA */
-            fprintf(stderr, "Library is not marked SINGLEDATA\n");
+            ERR(dll, "Library is not marked SINGLEDATA\n");
             exit(1);
         }
         else  /* DATA NONE DLL */
@@ -589,7 +591,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
     EIP_reg(&context) = pModule->ip;
     EBP_reg(&context) = OFFSETOF(THREAD_Current()->cur_stack)
                           + (WORD)&((STACK16FRAME*)0)->bp;
-    EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : hModule;
+    EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : pModule->self;
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
@@ -598,6 +600,44 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
                  DI_reg(&context), CX_reg(&context) );
     Callbacks->CallRegisterShortProc( &context, 0 );
     return TRUE;
+}
+
+/***********************************************************************
+ *           NE_CallDllEntryPoint
+ *
+ * Call the DllEntryPoint of DLLs with subsystem >= 4.0 
+ */
+
+static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
+{
+    FARPROC16 entryPoint;
+    WORD ordinal;
+    CONTEXT context;
+    THDB *thdb = THREAD_Current();
+    LPBYTE stack = (LPBYTE)THREAD_STACK16(thdb);
+
+    if (pModule->expected_version < 0x0400) return;
+    if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
+    if (!(entryPoint = NE_GetEntryPoint( pModule->self, ordinal ))) return;
+
+    memset( &context, 0, sizeof(context) );
+
+    CS_reg(&context) = HIWORD(entryPoint);
+    IP_reg(&context) = LOWORD(entryPoint);
+    EBP_reg(&context) =  OFFSETOF( thdb->cur_stack )
+                         + (WORD)&((STACK16FRAME*)0)->bp;
+
+    *(DWORD *)(stack -  4) = dwReason;      /* dwReason */
+    *(WORD *) (stack -  6) = pModule->self; /* hInst */
+    *(WORD *) (stack -  8) = 0;             /* wDS */
+    *(WORD *) (stack - 10) = 0;             /* wHeapSize */
+    *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
+    *(WORD *) (stack - 16) = 0;             /* wReserved2 */
+
+    TRACE(dll, "Calling DllEntryPoint, cs:ip=%04lx:%04x\n",
+          CS_reg(&context), IP_reg(&context));
+
+    Callbacks->CallRegisterShortProc( &context, 16 );
 }
 
 
@@ -613,8 +653,8 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     NE_MODULE *pModule;
     HMODULE16 *pDLL;
 
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return;
-    if (pModule->flags & NE_FFLAGS_WIN32) return;
+    if (!(pModule = NE_GetPtr( hModule ))) return;
+    assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
     if (pModule->dlls_to_init)
     {
@@ -626,7 +666,47 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         }
         GlobalFree16( to_init );
     }
-    NE_InitDLL( pTask, hModule );
+    NE_InitDLL( pTask, pModule );
+    NE_CallDllEntryPoint( pModule, DLL_PROCESS_ATTACH );
+}
+
+
+/***********************************************************************
+ *           NE_CreateInstance
+ *
+ * If lib_only is TRUE, handle the module like a library even if it is a .EXE
+ */
+HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
+                               BOOL32 lib_only )
+{
+    SEGTABLEENTRY *pSegment;
+    int minsize;
+    HINSTANCE16 hNewInstance;
+
+    if (pModule->dgroup == 0)
+    {
+        if (prev) *prev = pModule->self;
+        return pModule->self;
+    }
+
+    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+    if (prev) *prev = pSegment->selector;
+
+      /* if it's a library, create a new instance only the first time */
+    if (pSegment->selector)
+    {
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) return pSegment->selector;
+        if (lib_only) return pSegment->selector;
+    }
+
+    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
+    minsize += pModule->heap_size;
+    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED, minsize,
+                                 pModule->self, FALSE, FALSE, FALSE );
+    if (!hNewInstance) return 0;
+    pSegment->selector = hNewInstance;
+    return hNewInstance;
 }
 
 
@@ -639,7 +719,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 /* It does nothing */
 void WINAPI PatchCodeHandle(HANDLE16 hSel)
 {
-	fprintf(stderr,"PatchCodeHandle(%04x),stub!\n",hSel);
+    FIXME(module,"(%04x): stub.\n",hSel);
 }
 
 
@@ -682,13 +762,11 @@ DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
 /***********************************************************************
  *           NE_CreateSegments
  */
-BOOL32 NE_CreateSegments( HMODULE16 hModule )
+BOOL32 NE_CreateSegments( NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegment;
-    NE_MODULE *pModule;
     int i, minsize;
 
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return FALSE;
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
     pSegment = NE_SEG_TABLE( pModule );
@@ -696,10 +774,10 @@ BOOL32 NE_CreateSegments( HMODULE16 hModule )
     {
         minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
         if (i == pModule->ss) minsize += pModule->stack_size;
-	/* The DGROUP is allocated by MODULE_CreateInstance */
+	/* The DGROUP is allocated by NE_CreateInstance */
         if (i == pModule->dgroup) continue;
         pSegment->selector = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
-                                      minsize, hModule,
+                                      minsize, pModule->self,
                                       !(pSegment->flags & NE_SEGFLAGS_DATA),
                                       FALSE,
                             FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
@@ -709,4 +787,16 @@ BOOL32 NE_CreateSegments( HMODULE16 hModule )
     pModule->dgroup_entry = pModule->dgroup ? pModule->seg_table +
                             (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;
     return TRUE;
+}
+
+
+/**********************************************************************
+ *	    IsSharedSelector    (KERNEL.345)
+ */
+BOOL16 WINAPI IsSharedSelector( HANDLE16 selector )
+{
+    /* Check whether the selector belongs to a DLL */
+    NE_MODULE *pModule = NE_GetPtr( selector );
+    if (!pModule) return FALSE;
+    return (pModule->flags & NE_FFLAGS_LIBMODULE) != 0;
 }

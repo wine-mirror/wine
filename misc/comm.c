@@ -823,7 +823,7 @@ SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
         if ((act = GetCommPort(fd)) == -1) {
             WARN(comm," fd %d not comm port\n",act);
             return NULL;}
-        stol =  unknown[act];
+        stol = (unsigned char *)unknown[act];
         stol += msr;    
 	repid = ioctl(fd,TIOCMGET,&mstat);
 	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);

@@ -88,7 +88,6 @@ typedef struct
 #define NE_FFLAGS_MULTIPLEDATA	0x0002
 #define NE_FFLAGS_WIN32         0x0010
 #define NE_FFLAGS_BUILTIN       0x0020  /* Wine built-in module */
-#define NE_FFLAGS_IMPLICIT	0x0040
 #define NE_FFLAGS_FRAMEBUF	0x0100  /* OS/2 fullscreen app */
 #define NE_FFLAGS_CONSOLE	0x0200  /* OS/2 console app */
 #define NE_FFLAGS_GUI		0x0300	/* right, (NE_FFLAGS_FRAMEBUF | NE_FFLAGS_CONSOLE) */

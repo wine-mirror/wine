@@ -2581,11 +2581,10 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
 UINT16 wsaErrno(void)
 {
     int	loc_errno = errno; 
-#if defined(__FreeBSD__)
-       ERR(winsock, "errno %d, (%s).\n", 
-                			 errno, strerror(errno));
+#ifdef HAVE_STRERROR
+    WARN(winsock, "errno %d, (%s).\n", errno, strerror(errno));
 #else
-       ERR(winsock, "errno %d\n", errno);
+    WARN(winsock, "errno %d\n", errno);
 #endif
 
     switch(loc_errno)
@@ -2657,11 +2656,10 @@ UINT16 wsaHerrno(void)
 {
     int		loc_errno = h_errno;
 
-#if defined(__FreeBSD__)
-    ERR(winsock, "h_errno %d, (%s).\n", 
-               	    h_errno, strerror(h_errno));
+#ifdef HAVE_STRERROR
+    WARN(winsock, "h_errno %d, (%s).\n", h_errno, strerror(h_errno));
 #else
-    ERR(winsock, "h_errno %d.\n", h_errno);
+    WARN(winsock, "h_errno %d.\n", h_errno);
 #endif
 
     switch(loc_errno)

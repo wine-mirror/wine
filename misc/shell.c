@@ -794,9 +794,14 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
   _llseek32( hFile, 0, SEEK_SET );
   if (	(_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
   	(mz_header.e_magic != IMAGE_DOS_SIGNATURE)
-  )
-  	return 0;
-
+  ) { /* .ICO file ? */
+        if (mz_header.e_cblp == 1) { /* ICONHEADER.idType, must be 1 */
+	    *retptr = (LPBYTE)-1;
+  	    return 1;
+	}
+	else
+	    return 0; /* failed */
+  }
   _llseek32( hFile, mz_header.e_lfanew, SEEK_SET );
   if (_lread32( hFile, magic, sizeof(magic) ) != sizeof(magic))
 	return 0;
@@ -825,10 +830,9 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	    }
 	}
   	*retptr = pTypeInfo;
+        return IMAGE_OS2_SIGNATURE;
   } else
-  	*retptr = (LPBYTE)-1;
-  return IMAGE_OS2_SIGNATURE; /* handles .ICO too */
-
+  	return 0; /* failed */
 }
 
 /*************************************************************************
@@ -945,7 +949,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 
   sig = SHELL_GetResourceTable(hFile,&pData);
 
-  if(sig == IMAGE_OS2_SIGNATURE)
+  if((sig == IMAGE_OS2_SIGNATURE)
+  || (sig == 1)) /* .ICO file */
   {
     HICON16	 hIcon = 0;
     NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);

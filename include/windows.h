@@ -1259,6 +1259,11 @@ typedef struct
   FONTSIGNATURE	fs;
 } CHARSETINFO,*LPCHARSETINFO;
 
+/* Flags for ModifyWorldTransform */
+#define MWT_IDENTITY      1
+#define MWT_LEFTMULTIPLY  2
+#define MWT_RIGHTMULTIPLY 3
+
 typedef struct
 {
     FLOAT  eM11;
@@ -2212,14 +2217,45 @@ typedef struct
 #define DDL_DRIVES	0x4000
 #define DDL_EXCLUSIVE	0x8000
 
-/* The security attributes structure 
- */
+typedef struct _ACL {
+    BYTE AclRevision;
+    BYTE Sbz1;
+    WORD AclSize;
+    WORD AceCount;
+    WORD Sbz2;
+} ACL, *LPACL;
+
+typedef struct {
+    BYTE Value[6];
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+
+typedef struct _SID {
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[1];
+} SID,*PSID,*LPSID;
+
+/* The security attributes structure */
 typedef struct
 {
     DWORD   nLength;
     LPVOID  lpSecurityDescriptor;
     BOOL32  bInheritHandle;
 } SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+
+typedef WORD SECURITY_DESCRIPTOR_CONTROL;
+
+/* The security descriptor structure */
+typedef struct {
+    BYTE Revision;
+    BYTE Sbz1;
+    SECURITY_DESCRIPTOR_CONTROL Control;
+    LPSID Owner;
+    LPSID Group;
+    LPACL Sacl;
+    LPACL Dacl;
+} SECURITY_DESCRIPTOR, *LPSECURITY_DESCRIPTOR;
 
 typedef DWORD   SECURITY_INFORMATION;
 
@@ -6064,7 +6100,6 @@ DWORD       WINAPI SetViewportOrg(HDC16,INT16,INT16);
 BOOL16      WINAPI SetWinDebugInfo(LPWINDEBUGINFO);
 DWORD       WINAPI SetWindowExt(HDC16,INT16,INT16);
 DWORD       WINAPI SetWindowOrg(HDC16,INT16,INT16);
-VOID        WINAPI SwitchStackBack(void);
 VOID        WINAPI SwitchStackTo(WORD,WORD,WORD);
 VOID        WINAPI TileChildWindows(HWND16,WORD);
 INT16       WINAPI UngetCommChar(INT16,CHAR);
@@ -6083,6 +6118,7 @@ BOOL32      WINAPI Beep(DWORD,DWORD);
 BOOL32      WINAPI ClearCommError(INT32,LPDWORD,LPCOMSTAT);
 BOOL32      WINAPI CloseHandle(HANDLE32);
 BOOL32      WINAPI CloseServiceHandle(HANDLE32);
+BOOL32      WINAPI CombineTransform(LPXFORM,const XFORM *,const XFORM *);
 INT32       WINAPI CopyAcceleratorTable32A(HACCEL32,LPACCEL32,INT32);
 INT32       WINAPI CopyAcceleratorTable32W(HACCEL32,LPACCEL32,INT32);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
@@ -6215,6 +6251,9 @@ BOOL32      WINAPI GetHandleInformation(HANDLE32,LPDWORD);
 DWORD       WINAPI GetLargestConsoleWindowSize(HANDLE32);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
+DWORD       WINAPI GetLongPathName32A(LPCSTR,LPSTR,DWORD);
+DWORD       WINAPI GetLongPathName32W(LPCWSTR,LPWSTR,DWORD);
+#define     GetLongPathName WINELIB_NAME_AW(GetLongPathName)
 BOOL32      WINAPI GetMenuItemInfo32A(HMENU32,UINT32,BOOL32,MENUITEMINFO32A*);
 BOOL32      WINAPI GetMenuItemInfo32W(HMENU32,UINT32,BOOL32,MENUITEMINFO32W*);
 #define     GetMenuItemInfo WINELIB_NAME_AW(GetMenuItemInfo)
@@ -6239,6 +6278,7 @@ BOOL32      WINAPI GetStringTypeEx32W(LCID,DWORD,LPCWSTR,INT32,LPWORD);
 VOID        WINAPI GetSystemInfo(LPSYSTEM_INFO);
 BOOL32      WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID        WINAPI GetSystemTime(LPSYSTEMTIME);
+INT32       WINAPI GetTextCharsetInfo(HDC32,LPCHARSETINFO,DWORD);
 BOOL32      WINAPI GetTextExtentExPoint32A(HDC32,LPCSTR,INT32,INT32,
                                            LPINT32,LPINT32,LPSIZE32);
 BOOL32      WINAPI GetTextExtentExPoint32W(HDC32,LPCWSTR,INT32,INT32,
@@ -6286,6 +6326,7 @@ LPVOID      WINAPI MapViewOfFileEx(HANDLE32,DWORD,DWORD,DWORD,DWORD,LPVOID);
 INT32       WINAPI MessageBoxEx32A(HWND32,LPCSTR,LPCSTR,UINT32,WORD);
 INT32       WINAPI MessageBoxEx32W(HWND32,LPCWSTR,LPCWSTR,UINT32,WORD);
 #define     MessageBoxEx WINELIB_NAME_AW(MessageBoxEx)
+BOOL32      WINAPI ModifyWorldTransform(HDC32,const XFORM *, DWORD);
 BOOL32      WINAPI MoveFile32A(LPCSTR,LPCSTR);
 BOOL32      WINAPI MoveFile32W(LPCWSTR,LPCWSTR);
 #define     MoveFile WINELIB_NAME_AW(MoveFile)
@@ -6326,6 +6367,9 @@ BOOL32      WINAPI ReadConsole32A(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 BOOL32      WINAPI ReadConsole32W(HANDLE32,LPVOID,DWORD,LPDWORD,LPVOID);
 #define     ReadConsole WINELIB_NAME_AW(ReadConsole)
 BOOL32      WINAPI ReadFile(HANDLE32,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+LONG        WINAPI RegConnectRegistry32A(LPCSTR,HKEY,LPHKEY);
+LONG        WINAPI RegConnectRegistry32W(LPCWSTR,HKEY,LPHKEY);
+#define     RegConnectRegistry WINELIB_NAME_AW(RegConnectRegistry)
 DWORD       WINAPI RegCreateKeyEx32A(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
                                      LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
 DWORD       WINAPI RegCreateKeyEx32W(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
@@ -6336,10 +6380,14 @@ DWORD       WINAPI RegEnumKeyEx32A(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPSTR,
 DWORD       WINAPI RegEnumKeyEx32W(HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPWSTR,
                                    LPDWORD,LPFILETIME);
 #define     RegEnumKeyEx WINELIB_NAME_AW(RegEnumKeyEx)
-LONG        WINAPI RegGetKeySecurity(HKEY,SECURITY_INFORMATION,LPVOID,LPDWORD);
+LONG        WINAPI RegGetKeySecurity(HKEY,SECURITY_INFORMATION,LPSECURITY_DESCRIPTOR,LPDWORD);
 HANDLE32    WINAPI RegisterEventSource32A(LPCSTR,LPCSTR);
 HANDLE32    WINAPI RegisterEventSource32W(LPCWSTR,LPCWSTR);
 #define     RegisterEventSource WINELIB_NAME_AW(RegisterEventSource)
+LONG        WINAPI RegLoadKey32A(HKEY,LPCSTR,LPCSTR);
+LONG        WINAPI RegLoadKey32W(HKEY,LPCWSTR,LPCWSTR);
+#define     RegLoadKey WINELIB_NAME_AW(RegLoadKey)
+LONG        WINAPI RegNotifyChangeKeyValue(HKEY,BOOL32,DWORD,HANDLE32,BOOL32);
 DWORD       WINAPI RegOpenKeyEx32W(HKEY,LPCWSTR,DWORD,REGSAM,LPHKEY);
 DWORD       WINAPI RegOpenKeyEx32A(HKEY,LPCSTR,DWORD,REGSAM,LPHKEY);
 #define     RegOpenKeyEx WINELIB_NAME_AW(RegOpenKeyEx)
@@ -7553,6 +7601,9 @@ UINT32      WINAPI GetTextAlign32(HDC32);
 INT16       WINAPI GetTextCharacterExtra16(HDC16);
 INT32       WINAPI GetTextCharacterExtra32(HDC32);
 #define     GetTextCharacterExtra WINELIB_NAME(GetTextCharacterExtra)
+INT16       WINAPI GetTextCharset16(HDC16);
+INT32       WINAPI GetTextCharset32(HDC32);
+#define     GetTextCharset WINELIB_NAME(GetTextCharset)
 COLORREF    WINAPI GetTextColor16(HDC16);
 COLORREF    WINAPI GetTextColor32(HDC32);
 #define     GetTextColor WINELIB_NAME(GetTextColor)
@@ -8738,7 +8789,7 @@ HPEN32      WINAPI GetSysColorPen32(INT32);
 INT32       WINAPI LoadMessage32A(HMODULE32,UINT32,WORD,LPSTR,INT32);
 INT32       WINAPI LoadMessage32W(HMODULE32,UINT32,WORD,LPWSTR,INT32);
 SEGPTR      WINAPI WIN16_GlobalLock16(HGLOBAL16);
-SEGPTR      WINAPI WIN16_LockResource(HGLOBAL16);
+SEGPTR      WINAPI WIN16_LockResource16(HGLOBAL16);
 LONG        WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 INT32       WINAPI lstrncmp32A(LPCSTR,LPCSTR,INT32);
 INT32       WINAPI lstrncmp32W(LPCWSTR,LPCWSTR,INT32);

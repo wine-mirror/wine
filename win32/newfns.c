@@ -109,7 +109,7 @@ HANDLE32 WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
 				  DWORD nDafaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "(Name=%s, OpenMode=%#08x, dwPipeMode=%#08x, MaxInst=%d, OutBSize=%d, InBuffSize=%d, DefTimeOut=%d, SecAttr=%p): stub\n",
+  FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_a(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
 	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
 	 lpSecurityAttributes);
@@ -131,7 +131,7 @@ HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 				  DWORD nDafaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "(Name=%s, OpenMode=%#08x, dwPipeMode=%#08x, MaxInst=%d, OutBSize=%d, InBuffSize=%d, DefTimeOut=%d, SecAttr=%p): stub\n",
+  FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_w(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
 	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
 	 lpSecurityAttributes);

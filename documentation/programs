@@ -1,0 +1,12 @@
+
+May, 1998	Matthew Becker (mbecker@glasscity.net
+
+Help, this does not work!  What am I missing?
+
+How to add a new test program
+- create the directory under .../programs
+- add the directory to WINEROOT/programs/Makefile.in
+- add the directory to WINEROOT/configure.in
+- when creating the diff, use -N to force the entire text to be included in 
+  the diff
+

@@ -72,7 +72,7 @@ void WINAPI CoUnitialize()
 }
 
 /***********************************************************************
- *           CoGetMalloc    [COMPOBJ.4]
+ *           CoGetMalloc16    [COMPOBJ.4]
  * RETURNS
  *	The current win16 IMalloc
  */
@@ -87,7 +87,7 @@ HRESULT WINAPI CoGetMalloc16(
 }
 
 /***********************************************************************
- *           CoGetMalloc    (OLE32.4]
+ *           CoGetMalloc32    [OLE32.4]
  * RETURNS
  *	The current win32 IMalloc
  */

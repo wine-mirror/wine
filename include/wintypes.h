@@ -88,6 +88,7 @@ typedef UINT32          HANDLE32;
 typedef UINT16          WPARAM16;
 typedef UINT32          WPARAM32;
 typedef LONG            LPARAM;
+typedef LONG            HRESULT;
 typedef LONG            LRESULT;
 typedef WORD            ATOM;
 typedef WORD            CATCHBUF[9];

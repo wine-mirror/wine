@@ -12,6 +12,7 @@
 #include "local.h"
 #include "x11drv.h"
 #include "path.h"
+#include <math.h>
 
   /* GDI objects magic numbers */
 #define PEN_MAGIC             0x4f47
@@ -132,10 +133,10 @@ typedef struct
     INT32         CursPosX;          /* Current position */
     INT32         CursPosY;
     INT32         ArcDirection;
-    BOOL32        UseWorldXform;     /* Should we use the world transform? */
-                                     /* (i.e. is it not equal to the       */
-				     /* identity transformation?)          */
-    XFORM         WorldXform;        /* World transform */
+    XFORM         xformWorld2Wnd;    /* World-to-window transformation */
+    XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
+    XFORM         xformVport2World;  /* Inverse of the above transformation */
+    BOOL32        vport2WorldValid;  /* Is xformVport2World valid? */
 } WIN_DC_INFO;
 
 typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
@@ -282,6 +283,100 @@ typedef struct tagDC_FUNCS
 #define LAST_STOCK_HANDLE       ((DWORD)STOCK_DEFAULT_GUI_FONT)
 
   /* Device <-> logical coords conversion */
+
+/* A floating point version of the POINT structure */
+typedef struct tagFLOAT_POINT
+{
+   FLOAT x, y;
+} FLOAT_POINT;
+
+/* Rounds a floating point number to integer. The world-to-viewport
+ * transformation process is done in floating point internally. This function
+ * is then used to round these coordinates to integer values.
+ */
+static __inline__ INT32 GDI_ROUND(FLOAT val)
+{
+   return (int)floor(val + 0.5);
+}
+
+/* Performs a viewport-to-world transformation on the specified point (which
+ * is in floating point format). Returns TRUE if successful, else FALSE.
+ */
+static __inline__ BOOL32 INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
+{
+    FLOAT x, y;
+    
+    /* Check that the viewport-to-world transformation is valid */
+    if (!dc->w.vport2WorldValid)
+        return FALSE;
+
+    /* Perform the transformation */
+    x = point->x;
+    y = point->y;
+    point->x = x * dc->w.xformVport2World.eM11 +
+               y * dc->w.xformVport2World.eM21 +
+	       dc->w.xformVport2World.eDx;
+    point->y = x * dc->w.xformVport2World.eM12 +
+               y * dc->w.xformVport2World.eM22 +
+	       dc->w.xformVport2World.eDy;
+
+    return TRUE;
+}
+
+/* Performs a viewport-to-world transformation on the specified point (which
+ * is in integer format). Returns TRUE if successful, else FALSE.
+ */
+static __inline__ BOOL32 INTERNAL_DPTOLP(DC *dc, LPPOINT32 point)
+{
+    FLOAT_POINT floatPoint;
+    
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)point->x;
+    floatPoint.y=(FLOAT)point->y;
+    if (!INTERNAL_DPTOLP_FLOAT(dc, &floatPoint))
+        return FALSE;
+    
+    /* Round to integers */
+    point->x = GDI_ROUND(floatPoint.x);
+    point->y = GDI_ROUND(floatPoint.y);
+
+    return TRUE;
+}
+
+/* Performs a world-to-viewport transformation on the specified point (which
+ * is in floating point format).
+ */
+static __inline__ void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+{
+    FLOAT x, y;
+    
+    /* Perform the transformation */
+    x = point->x;
+    y = point->y;
+    point->x = x * dc->w.xformWorld2Vport.eM11 +
+               y * dc->w.xformWorld2Vport.eM21 +
+	       dc->w.xformWorld2Vport.eDx;
+    point->y = x * dc->w.xformWorld2Vport.eM12 +
+               y * dc->w.xformWorld2Vport.eM22 +
+	       dc->w.xformWorld2Vport.eDy;
+}
+
+/* Performs a world-to-viewport transformation on the specified point (which
+ * is in integer format).
+ */
+static __inline__ void INTERNAL_LPTODP(DC *dc, LPPOINT32 point)
+{
+    FLOAT_POINT floatPoint;
+    
+    /* Perform operation with floating point */
+    floatPoint.x=(FLOAT)point->x;
+    floatPoint.y=(FLOAT)point->y;
+    INTERNAL_LPTODP_FLOAT(dc, &floatPoint);
+    
+    /* Round to integers */
+    point->x = GDI_ROUND(floatPoint.x);
+    point->y = GDI_ROUND(floatPoint.y);
+}
 
 #define XDPTOLP(dc,x) \
     (((x)-(dc)->vportOrgX) * (dc)->wndExtX / (dc)->vportExtX+(dc)->wndOrgX)

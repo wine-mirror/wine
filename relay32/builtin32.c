@@ -66,6 +66,7 @@ extern const BUILTIN32_DESCRIPTOR VERSION_Descriptor;
 extern const BUILTIN32_DESCRIPTOR W32SKRNL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WINMM_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WINSPOOL_Descriptor;
+extern const BUILTIN32_DESCRIPTOR WNASPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WOW32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WSOCK32_Descriptor;
 
@@ -98,6 +99,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &W32SKRNL_Descriptor, NULL, TRUE  },
     { &WINMM_Descriptor,    NULL, TRUE  },
     { &WINSPOOL_Descriptor, NULL, TRUE  },
+    { &WNASPI32_Descriptor, NULL, TRUE  },
     { &WOW32_Descriptor,    NULL, TRUE  },
     { &WSOCK32_Descriptor,  NULL, TRUE  },
     /* Last entry */
@@ -289,6 +291,9 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     wm->next		= pdb->modref_list;
     pdb->modref_list	= wm;
     wm->modname		= HEAP_strdupA(pdb->heap,0,dll->descr->name);
+    /* FIXME: hmm ... probably add windows directory? don't know ... -MM */
+    wm->shortname	= HEAP_strdupA(pdb->heap,0,wm->modname);
+    wm->longname	= HEAP_strdupA(pdb->heap,0,wm->modname);
 
     pem->pe_export	= exp;
     pem->flags		= PE_MODREF_INTERNAL;

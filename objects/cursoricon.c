@@ -761,8 +761,7 @@ HCURSOR32 WINAPI CreateCursor32( HINSTANCE32 hInstance,
 
     TRACE(cursor, "%dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( MODULE_HANDLEtoHMODULE16( hInstance ),
-                                     &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect( 0, &info, lpANDbits, lpXORbits );
 }
 
 
@@ -792,8 +791,7 @@ HICON32 WINAPI CreateIcon32( HINSTANCE32 hInstance, INT32 nWidth,
 
     TRACE(icon, "%dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( MODULE_HANDLEtoHMODULE16( hInstance ),
-                                     &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect( 0, &info, lpANDbits, lpXORbits );
 }
 
 
@@ -810,13 +808,14 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect( HINSTANCE16 hInstance,
     int sizeAnd, sizeXor;
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
-    if (!hInstance || !lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
+    if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
     info->nWidthBytes = BITMAP_WIDTH_BYTES(info->nWidth,info->bBitsPerPixel);
     sizeXor = info->nHeight * info->nWidthBytes;
     sizeAnd = info->nHeight * BITMAP_WIDTH_BYTES( info->nWidth, 1 );
-    if (!(handle = DirectResAlloc(hInstance, 0x10,
+    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
+    if (hInstance) FarSetOwner( handle, hInstance );
     ptr = (char *)GlobalLock16( handle );
     memcpy( ptr, info, sizeof(*info) );
     memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );

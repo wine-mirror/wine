@@ -20,6 +20,7 @@ Unresolved issues Uwe Bonnes 970904:
 
 /* FIXME: all the file handling is hopelessly broken -- AJ */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -34,6 +35,7 @@ Unresolved issues Uwe Bonnes 970904:
 #include <setjmp.h>
 #include "win.h"
 #include "windows.h"
+#include "winerror.h"
 #include "debug.h"
 #include "module.h"
 #include "heap.h"
@@ -305,6 +307,20 @@ DWORD __cdecl CRTDLL_fread(LPVOID ptr, INT32 size, INT32 nmemb, LPVOID vfile)
 }
   
 /*********************************************************************
+ *                  fscanf     (CRTDLL.381)
+ */
+INT32 __cdecl CRTDLL_fscanf( LPVOID stream, LPSTR format, ... )
+{
+    va_list valist;
+    INT32 res;
+
+    va_start( valist, format );
+    res = vfscanf( xlat_file_ptr(stream), format, valist );
+    va_end( valist );
+    return res;
+}
+
+/*********************************************************************
  *                  fseek     (CRTDLL.382)
  */
 LONG __cdecl CRTDLL_fseek(LPVOID stream, LONG offset, INT32 whence)
@@ -322,6 +338,15 @@ LONG __cdecl CRTDLL_fseek(LPVOID stream, LONG offset, INT32 whence)
   return ret;
 }
   
+/*********************************************************************
+ *                  fsetpos     (CRTDLL.383)
+ */
+INT32 __cdecl CRTDLL_fsetpos(LPVOID stream, fpos_t *pos)
+{
+  TRACE(crtdll, "file %p\n", stream);
+  return fseek(xlat_file_ptr(stream), *pos, SEEK_SET);
+}
+
 /*********************************************************************
  *                  ftell     (CRTDLL.384)
  */
@@ -514,12 +539,38 @@ void __cdecl CRTDLL_exit(DWORD ret)
 
 
 /*********************************************************************
- *                  _abnormal_termination          (CRTDLL.36 )
+ *                  _abnormal_termination          (CRTDLL.36)
  */
 INT32 __cdecl CRTDLL__abnormal_termination(void)
 {
         TRACE(crtdll,"(void)\n");
 	return 0;
+}
+
+
+/*********************************************************************
+ *                  _access          (CRTDLL.37)
+ */
+INT32 __cdecl CRTDLL__access(LPCSTR filename, INT32 mode)
+{
+    DWORD attr = GetFileAttributes32A(filename);
+
+    if (attr == -1)
+    {
+        if (GetLastError() == ERROR_INVALID_ACCESS)
+            errno = EACCES;
+        else
+            errno = ENOENT;
+        return -1;
+    }
+
+    if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & W_OK))
+    {
+        errno = EACCES;
+        return -1;
+    }
+    else
+        return 0;
 }
 
 
@@ -1366,6 +1417,14 @@ INT32 __cdecl CRTDLL__setmode( INT32 fh,INT32 mode)
 }
 
 /*********************************************************************
+ *                  _fpreset           (CRTDLL.107)
+ */
+VOID __cdecl CRTDLL__fpreset(void)
+{
+       FIXME(crtdll," STUB.\n");
+}
+
+/*********************************************************************
  *                  atexit           (CRTDLL.345)
  */
 INT32 __cdecl CRTDLL_atexit(LPVOID x)
@@ -1475,11 +1534,14 @@ BOOL32 __cdecl CRTDLL__isctype(CHAR x,CHAR type)
 
 /*********************************************************************
  *                  _chdrive           (CRTDLL.52)
+ *
+ *  newdir      [I] drive to change to, A=1
+ *
  */
 BOOL32 __cdecl CRTDLL__chdrive(INT32 newdrive)
 {
 	/* FIXME: generates errnos */
-	return DRIVE_SetCurrentDrive(newdrive);
+	return DRIVE_SetCurrentDrive(newdrive-1);
 }
 
 /*********************************************************************
@@ -1488,7 +1550,7 @@ BOOL32 __cdecl CRTDLL__chdrive(INT32 newdrive)
 INT32 __cdecl CRTDLL__chdir(LPCSTR newdir)
 {
 	if (!SetCurrentDirectory32A(newdir))
-		return -1;
+		return 1;
 	return 0;
 }
 
@@ -1604,6 +1666,16 @@ CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT32 size)
 }
 
 /*********************************************************************
+ *                  _getdrive           (CRTDLL.124)
+ *
+ *  Return current drive, 1 for A, 2 for B
+ */
+INT32 __cdecl CRTDLL__getdrive(VOID)
+{
+    return DRIVE_GetCurrentDrive() + 1;
+}
+
+/*********************************************************************
  *                  _mkdir           (CRTDLL.234)
  */
 INT32 __cdecl CRTDLL__mkdir(LPCSTR newdir)
@@ -1701,6 +1773,25 @@ LPSTR  __cdecl CRTDLL__itoa(INT32 x,LPSTR buf,INT32 buflen)
     return buf;
 }
 
+/*********************************************************************
+ *                  _ltoa           (CRTDLL.180)
+ */
+LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT32 radix)
+{
+    switch(radix) {
+        case  2: FIXME(crtdll, "binary format not implemented !\n");
+                 break;
+        case  8: wsnprintf32A(buf,0x80,"%o",x);
+                 break;
+        case 10: wsnprintf32A(buf,0x80,"%d",x);
+                 break;
+        case 16: wsnprintf32A(buf,0x80,"%x",x);
+                 break;
+        default: FIXME(crtdll, "radix %d not implemented !\n", radix);
+    }
+    return buf;
+}
+
 typedef VOID (*sig_handler_type)(VOID);
 
 /*********************************************************************
@@ -1725,6 +1816,7 @@ VOID __cdecl CRTDLL__sleep(unsigned long timeout)
   TRACE(crtdll,"CRTDLL__sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
 }
+
 /*********************************************************************
  *                  getenv           (CRTDLL.437)
  */
@@ -1750,4 +1842,12 @@ LPSTR __cdecl CRTDLL_getenv(const char *name)
        }
      FreeEnvironmentStrings32A( environ );
      return pp;
+}
+
+/*********************************************************************
+ *                  _mbsrchr           (CRTDLL.223)
+ */
+LPSTR __cdecl CRTDLL__mbsrchr(LPSTR s,CHAR x) {
+	/* FIXME: handle multibyte strings */
+	return strrchr(s,x);
 }

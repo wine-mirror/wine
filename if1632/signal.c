@@ -86,6 +86,7 @@ static HANDLER_DEF(SIGNAL_fault)
  *
  * Set the register values from a sigcontext. 
  */
+#ifdef UNUSED_FUNCTIONS
 static void SIGNAL_SetSigContext( const SIGCONTEXT *sigcontext,
                                   CONTEXT *context )
 {
@@ -116,6 +117,7 @@ static void SIGNAL_SetSigContext( const SIGCONTEXT *sigcontext,
     GS_reg(context) &= 0xffff;
 #endif
 }
+#endif
 
 
 /***********************************************************************
@@ -123,6 +125,7 @@ static void SIGNAL_SetSigContext( const SIGCONTEXT *sigcontext,
  *
  * Build a sigcontext from the register values.
  */
+#ifdef UNUSED_FUNCTIONS
 static void SIGNAL_GetSigContext( SIGCONTEXT *sigcontext,
                                   const CONTEXT *context )
 {
@@ -151,6 +154,7 @@ static void SIGNAL_GetSigContext( SIGCONTEXT *sigcontext,
     SET_GS( GS_reg(&DEBUG_context) );
 #endif
 }
+#endif
 
 
 /***********************************************************************

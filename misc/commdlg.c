@@ -1589,7 +1589,7 @@ short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
 /***********************************************************************
  *           ChooseColor   (COMMDLG.5)
  */
-BOOL16 WINAPI ChooseColor(LPCHOOSECOLOR lpChCol)
+BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
 {
     HINSTANCE16 hInst;
     HANDLE16 hDlgTmpl = 0;
@@ -1662,7 +1662,7 @@ static const COLORREF predefcolors[6][8]=
 
 struct CCPRIVATE
 {
- LPCHOOSECOLOR lpcc;  /* points to public known data structure */
+ LPCHOOSECOLOR16 lpcc;  /* points to public known data structure */
  int nextuserdef;     /* next free place in user defined color array */
  HDC16 hdcMem;        /* color graph used for BitBlt() */
  HBITMAP16 hbmMem;    /* color graph bitmap */    
@@ -2342,7 +2342,7 @@ static void CC_PaintUserColorArray(HWND16 hDlg,int rows,int cols,COLORREF* lpcr)
 /***********************************************************************
  *                             CC_HookCallChk                 [internal]
  */
-static BOOL32 CC_HookCallChk(LPCHOOSECOLOR lpcc)
+static BOOL32 CC_HookCallChk(LPCHOOSECOLOR16 lpcc)
 {
  if (lpcc)
   if(lpcc->Flags & CC_ENABLEHOOK)
@@ -2364,8 +2364,8 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    
    TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
    lpp=calloc(1,sizeof(struct CCPRIVATE));
-   lpp->lpcc=(LPCHOOSECOLOR)lParam;
-   if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR))
+   lpp->lpcc=(LPCHOOSECOLOR16)lParam;
+   if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR16))
    {
       EndDialog32 (hDlg, 0) ;
       return FALSE;
@@ -3642,7 +3642,7 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (*dofunction)(),
 	ofn16->lStructSize = sizeof(*ofn16);
 	ofn16->hwndOwner = ofn->hwndOwner;
 	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */
-	ofn16->hInstance = MODULE_HANDLEtoHMODULE16(ofn->hInstance);
+	ofn16->hInstance = 0;
 	if (ofn->lpstrFilter) {
 		LPSTR	s,x;
 
@@ -3732,7 +3732,7 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (*dofunction)(),
 	ofn16->lStructSize = sizeof(*ofn16);
 	ofn16->hwndOwner = ofn->hwndOwner;
 	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */
-	ofn16->hInstance = MODULE_HANDLEtoHMODULE16(ofn->hInstance);
+	ofn16->hInstance = 0;
 	if (ofn->lpstrFilter) {
 		LPWSTR	s;
 		LPSTR	x,y;
@@ -3860,4 +3860,72 @@ BOOL32 WINAPI GetSaveFileName32W( LPOPENFILENAME32W ofn )
 {
    BOOL16 (WINAPI * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
    return Commdlg_GetFileName32W(dofunction,ofn);
+}
+
+/***********************************************************************
+ *            ChooseColorA  (COMDLG32.1)
+ */
+BOOL32 WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol )
+
+{
+  BOOL16 ret;
+  char *str = NULL;
+  COLORREF* ccref=SEGPTR_ALLOC(64);
+  LPCHOOSECOLOR16 lpcc16=SEGPTR_ALLOC(sizeof(CHOOSECOLOR16));
+
+  memset(lpcc16,'\0',sizeof(*lpcc16));
+  lpcc16->lStructSize=sizeof(*lpcc16);
+  lpcc16->hwndOwner=lpChCol->hwndOwner;
+  lpcc16->hInstance=0; /* FIXME:MODULE_HANDLEtoHMODULE16(lpChCol->hInstance)*/
+  lpcc16->rgbResult=lpChCol->rgbResult;
+  memcpy(ccref,lpChCol->lpCustColors,64);
+  lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);
+  lpcc16->Flags=lpChCol->Flags;
+  lpcc16->lCustData=lpChCol->lCustData;
+  lpcc16->lpfnHook=(WNDPROC16)lpChCol->lpfnHook;
+  if (lpChCol->lpTemplateName)
+    str = SEGPTR_STRDUP(lpChCol->lpTemplateName );
+  lpcc16->lpTemplateName=SEGPTR_GET(str);
+  
+  ret = ChooseColor16(lpcc16);
+  if(str)
+    SEGPTR_FREE(str);
+  memcpy(lpChCol->lpCustColors,ccref,64);
+  SEGPTR_FREE(ccref);
+  SEGPTR_FREE(lpcc16);
+  return (BOOL32)ret;
+}
+
+/***********************************************************************
+ *            ChooseColorW  (COMDLG32.2)
+ */
+BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
+
+{
+  BOOL16 ret;
+  char *str = NULL;
+  COLORREF* ccref=SEGPTR_ALLOC(64);
+  LPCHOOSECOLOR16 lpcc16=SEGPTR_ALLOC(sizeof(CHOOSECOLOR16));
+
+  memset(lpcc16,'\0',sizeof(*lpcc16));
+  lpcc16->lStructSize=sizeof(*lpcc16);
+  lpcc16->hwndOwner=lpChCol->hwndOwner;
+  lpcc16->hInstance=0; /*FIXME:MODULE_HANDLEtoHMODULE16(lpChCol->hInstance)*/
+  lpcc16->rgbResult=lpChCol->rgbResult;
+  memcpy(ccref,lpChCol->lpCustColors,64);
+  lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);
+  lpcc16->Flags=lpChCol->Flags;
+  lpcc16->lCustData=lpChCol->lCustData;
+  lpcc16->lpfnHook=(WNDPROC16)lpChCol->lpfnHook;
+  if (lpChCol->lpTemplateName)
+    str = SEGPTR_STRDUP_WtoA(lpChCol->lpTemplateName );
+  lpcc16->lpTemplateName=SEGPTR_GET(str);
+  
+  ret = ChooseColor16(lpcc16);
+  if(str)
+    SEGPTR_FREE(str);
+  memcpy(lpChCol->lpCustColors,ccref,64);
+  SEGPTR_FREE(ccref);
+  SEGPTR_FREE(lpcc16);
+  return (BOOL32)ret;
 }

@@ -193,11 +193,10 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
 
     /* Clear the saved 16-bit selector */
     frame = CURRENT_STACK16;
-    while (frame)
+    while (frame && frame->frame32)
     {
         if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
         if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
-        if (!frame->frame32) break;
         frame = PTR_SEG_TO_LIN( frame->frame32->frame16 );
     }
 }

@@ -16,6 +16,7 @@
 #include "sysmetrics.h"
 #include "debug.h"
 #include "spy.h"
+#include "tweak.h"
 
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
@@ -84,8 +85,18 @@ HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
         return hb;
     }
 
-    SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
     SetTextColor32( hDC, GetSysColor32(COLOR_WINDOWTEXT));
+
+    if (TWEAK_Win95Look) {
+	if ((ctlType == CTLCOLOR_EDIT) || (ctlType == CTLCOLOR_LISTBOX))
+	    SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
+	else {
+	    SetBkColor32( hDC, GetSysColor32(COLOR_3DFACE) );
+	    return GetSysColorBrush32(COLOR_3DFACE);
+	}
+    }
+    else
+	SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
     return GetSysColorBrush32(COLOR_WINDOW);
 }
 

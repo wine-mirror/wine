@@ -1412,7 +1412,7 @@ UINT16 mciLoadCommandResource16(HANDLE16 hinst,LPCSTR resname,UINT16 type)
       LPSTR           segstr;
       SEGPTR          xmem;
       LPBYTE          lmem;
-      static          mcidevtype = 0;
+      static UINT16   mcidevtype = 0;
 
       FIXME(mmsys,"(%04x,%s,%d): stub!\n",hinst,resname,type);
       if (!lstrcmpi32A(resname,"core")) {

@@ -202,7 +202,7 @@ file	krnl386.exe
 200 return ValidateFreeSpaces 0 0
 201 stub ReplaceInst
 202 stub RegisterPtrace
-203 register DebugBreak() DebugBreak16
+203 register DebugBreak() DebugBreak
 204 stub SwapRecording
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
@@ -277,9 +277,9 @@ file	krnl386.exe
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
-357 stub KERNEL_357
+357 pascal MapSL(segptr) MapSL
 358 pascal MapLS(long) MapLS
-359 pascal UnMapLS(ptr) UnMapLS
+359 pascal UnMapLS(segptr) UnMapLS
 360 stub OpenFileEx
 #361 PIGLET_361
 365 stub KERNEL_365
@@ -311,15 +311,15 @@ file	krnl386.exe
 447 stub KERNEL_447
 449 pascal KERNEL_449() KERNEL_449
 450 pascal16 KERNEL_450() stub_KERNEL_450
-454 stub KERNEL_454
-455 stub KERNEL_455
+454 equate __FLATCS 0   # initialized by BUILTIN_Init()
+455 equate __FLATDS 0   # initialized by BUILTIN_Init()
 471 pascal KERNEL_471() _KERNEL_471
 472 register KERNEL_472() _KERNEL_472
 473 stub KERNEL_473
-475 stub KERNEL_475
+475 return KERNEL_475 0 0
 480 stub KERNEL_480
 481 stub KERNEL_481
-482 stub KERNEL_482
+482 pascal LoadLibrary32(str) LoadLibrary32A
 485 stub KERNEL_485
 491 stub RegisterServiceProcess
 500 stub KERNEL_500
@@ -346,16 +346,16 @@ file	krnl386.exe
 604 stub KERNEL_604
 605 stub KERNEL_605
 606 stub KERNEL_606
-607 stub KERNEL_607
-608 stub KERNEL_608
-611 stub KERNEL_611
+607 pascal KERNEL_607(long long long) _KERNEL_607
+608 pascal KERNEL_608(long long long) _KERNEL_608
+611 pascal KERNEL_611(long long) _KERNEL_611
 612 stub KERNEL_612
 613 stub KERNEL_613
 614 stub KERNEL_614
 619 pascal KERNEL_619(word long long) _KERNEL_619
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
-630 stub KERNEL_630
-631 register FUNC004(word word word) FUNC004	#C16ThkSl01?
-651 stub KERNEL_651				#ThunkConnect16?
+630 register C16ThkSL() C16ThkSL
+631 register C16ThkSL01() C16ThkSL01
+651 pascal ThunkConnect16(str str word long ptr str word) ThunkConnect16
 700 pascal KERNEL_700() stub_KERNEL_700

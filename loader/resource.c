@@ -187,7 +187,7 @@ DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 	    break;
 	}
     if (__winelib)
-        fprintf(stderr,"SizeofResource32: not implemented for WINELIB\n");
+        FIXME(module,"Not implemented for WINELIB\n");
     return 0;
 }
 

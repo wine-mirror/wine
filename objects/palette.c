@@ -126,7 +126,7 @@ HPALETTE32 WINAPI CreateHalftonePalette(
     HDC32 hdc) /* [in] Handle to device context */
 {
     FIXME(palette,"(%x): stub\n", hdc);
-    return NULL;
+    return (HPALETTE32)NULL;
 }
 
 

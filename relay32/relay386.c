@@ -193,6 +193,8 @@ void RELAY_CallFrom32Regs( CONTEXT context )
     typedef void (CALLBACK *entry_point_t)(CONTEXT *);
     entry_point_t entry_point = *(entry_point_t*) (ESP_reg(&context) - 4);
 
+    __RESTORE_ES;
+
     if (!TRACE_ON(relay))
     {
         /* Simply call the entry point */
@@ -203,8 +205,6 @@ void RELAY_CallFrom32Regs( CONTEXT context )
         char buffer[80];
         unsigned int typemask;
 	BYTE *relay_addr;
-
-    	__RESTORE_ES;
 
         /*
 	 * Fixup the context structure because of the extra parameter

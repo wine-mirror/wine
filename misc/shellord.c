@@ -521,7 +521,7 @@ void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,
 		strcpy(buf,"Desktop");
 	LoadString32A(hmod,id,buf2,100);
 	/* FIXME: the varargs handling doesn't. */
-	FormatMessage32A(0x500,buf2,0,0,&buf3,256,&args);
+	FormatMessage32A(0x500,buf2,0,0,(LPSTR)&buf3,256,(LPDWORD)&args);
 
 	FIXME(shell,"(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p):stub.\n",
 		(DWORD)hmod,(DWORD)hwnd,id,buf2,x,buf,type,arglist
@@ -658,5 +658,16 @@ DWORD WINAPI SHELL32_155(LPVOID x) {
 	if (!x)
 		return 0;
 	return SHELL32_195(x);
+}
+
+/*************************************************************************
+ * SHELL32_85 [SHELL32.85]
+ * unknown
+ */
+DWORD WINAPI SHELL32_85(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
+    	x1,x2,x3,x4
+    );
+    return 0;
 }
 

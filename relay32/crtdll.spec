@@ -38,7 +38,7 @@ type	win32
  34 stub __threadid
  35 stub __toascii
  36 cdecl _abnormal_termination() CRTDLL__abnormal_termination
- 37 stub _access
+ 37 cdecl _access(str long) CRTDLL__access
  38 extern _acmdln_dll CRTDLL_acmdln_dll
  39 stub _aexit_rtn_dll
  40 stub _amsg_exit
@@ -108,7 +108,7 @@ type	win32
 104 extern _fmode_dll CRTDLL_fmode_dll
 105 stub _fpclass
 106 stub _fpieee_flt
-107 stub _fpreset
+107 cdecl _fpreset() CRTDLL__fpreset
 108 stub _fputchar
 109 stub _fputwchar
 110 stub _fsopen
@@ -125,7 +125,7 @@ type	win32
 121 stub _getdcwd
 122 stub _getdiskfree
 123 stub _getdllprocaddr
-124 stub _getdrive
+124 cdecl _getdrive() CRTDLL__getdrive
 125 stub _getdrives
 126 stub _getpid
 127 stub _getsystime
@@ -135,7 +135,7 @@ type	win32
 131 stub _heapmin
 132 stub _heapset
 133 stub _heapwalk
-134 stub _hypot
+134 cdecl _hypot(double double) hypot
 135 cdecl _initterm(ptr ptr) CRTDLL__initterm
 136 extern _iob CRTDLL_iob
 137 cdecl _isatty(long) CRTDLL__isatty
@@ -168,9 +168,9 @@ type	win32
 164 stub _isnan
 165 cdecl _itoa(long ptr long) CRTDLL__itoa
 166 stub _itow
-167 stub _j0
-168 stub _j1
-169 stub _jn
+167 cdecl _j0(double) j0
+168 cdecl _j1(double) j1
+169 cdecl _jn(long double) jn
 170 stub _kbhit
 171 stub _lfind
 172 stub _loaddll
@@ -181,7 +181,7 @@ type	win32
 177 stub _lrotr
 178 stub _lsearch
 179 stub _lseek
-180 stub _ltoa
+180 cdecl _ltoa(long str long) CRTDLL__ltoa
 181 stub _ltow
 182 stub _makepath
 183 stub _matherr
@@ -224,7 +224,7 @@ type	win32
 220 stub _mbsninc
 221 stub _mbsnset
 222 stub _mbspbrk
-223 stub _mbsrchr
+223 cdecl _mbsrchr(str long) CRTDLL__mbsrchr
 224 stub _mbsrev
 225 stub _mbsset
 226 stub _mbsspn
@@ -352,7 +352,7 @@ type	win32
 348 cdecl atol(str) atol
 349 stub bsearch
 350 cdecl calloc(long long) CRTDLL_calloc
-351 stub ceil
+351 cdecl ceil(double) ceil
 352 stub clearerr
 353 cdecl clock() CRTDLL_clock
 354 cdecl cos(double) cos
@@ -382,9 +382,9 @@ type	win32
 378 cdecl free(ptr) CRTDLL_free
 379 stub freopen
 380 cdecl frexp(double ptr) frexp
-381 stub fscanf
+381 varargs fscanf() CRTDLL_fscanf
 382 cdecl fseek(ptr long long) CRTDLL_fseek
-383 stub fsetpos
+383 cdecl fsetpos(ptr ptr) CRTDLL_fsetpos
 384 cdecl ftell(ptr) CRTDLL_ftell
 385 stub fwprintf
 386 cdecl fwrite(ptr long long ptr) CRTDLL_fwrite 

@@ -1406,6 +1406,9 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
             *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32));
         /* else nothing to do */
         return 0;
+    case WM_NOTIFY:
+	*plparam = MapLS( (NMHDR *)*plparam ); /* NMHDR is already 32-bit */
+	return 1;
     case WM_SETTEXT:
         {
             LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
@@ -1574,6 +1577,9 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
             SEGPTR_FREE(wp);
         }
         break;
+    case WM_NOTIFY:
+	UnMapLS(p16->lParam);
+	break;
     }
 }
 

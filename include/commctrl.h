@@ -9,6 +9,30 @@
 
 void WINAPI InitCommonControls(void);
 
+typedef struct tagINITCOMMONCONTROLSEX {
+    DWORD dwSize;
+    DWORD dwICC;
+} INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
+
+BOOL32 WINAPI InitCommonControlsEx(LPINITCOMMONCONTROLSEX);
+
+#define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
+#define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
+#define ICC_BAR_CLASSES        0x00000004  /* toolbar, statusbar, trackbar, tooltips */
+#define ICC_TAB_CLASSES        0x00000008  /* tab, tooltips */
+#define ICC_UPDOWN_CLASS       0x00000010  /* updown */
+#define ICC_PROGRESS_CLASS     0x00000020  /* progress */
+#define ICC_HOTKEY_CLASS       0x00000040  /* hotkey */
+#define ICC_ANIMATE_CLASS      0x00000080  /* animate */
+#define ICC_WIN95_CLASSES      0x000000FF
+#define ICC_DATE_CLASSES       0x00000100  /* month picker, date picker, time picker, updown */
+#define ICC_USEREX_CLASSES     0x00000200  /* comboex */
+#define ICC_COOL_CLASSES       0x00000400  /* rebar (coolbar) */
+#define ICC_INTERNET_CLASSES   0x00000800  /* IP address, ... */
+#define ICC_PAGESCROLLER_CLASS 0x00001000  /* page scroller */
+#define ICC_NATIVEFNTCTL_CLASS 0x00002000  /* native font control ???*/
+
+
 /* common control styles */
 
 #define CCS_TOP             0x00000001L
@@ -25,10 +49,31 @@ void WINAPI InitCommonControls(void);
 
 
 /* common control shared messages */
-
 #define CCM_FIRST           0x2000
 
-#define CCM_SETBKCOLOR      (CCM_FIRST+1)     // lParam = bkColor
+#define CCM_SETBKCOLOR      (CCM_FIRST+1)     /* lParam = bkColor */
+
+
+/* common notification codes */
+#define NM_FIRST             (0U-0U)
+#define NM_LAST              (0U-99U)
+
+#define NM_OUTOFMEMORY       (NM_FIRST-1)
+#define NM_CLICK             (NM_FIRST-2)
+#define NM_DBLCLK            (NM_FIRST-3)
+#define NM_RETURN            (NM_FIRST-4)
+#define NM_RCLICK            (NM_FIRST-5)
+#define NM_RDBLCLK           (NM_FIRST-6)
+#define NM_SETFOCUS          (NM_FIRST-7)
+#define NM_KILLFOCUS         (NM_FIRST-8)
+#define NM_CUSTOMDRAW        (NM_FIRST-12)
+#define NM_HOVER             (NM_FIRST-13)
+#define NM_NCHITTEST         (NM_FIRST-14)
+#define NM_KEYDOWN           (NM_FIRST-15)
+#define NM_RELEASEDCAPTURE   (NM_FIRST-16)
+#define NM_SETCURSOR         (NM_FIRST-17)
+#define NM_CHAR              (NM_FIRST-18)
+#define NM_TOOLTIPSCREATED   (NM_FIRST-19)
 
 
 /* StatusWindow */
@@ -54,13 +99,25 @@ void WINAPI InitCommonControls(void);
 #define SB_SETMINHEIGHT       (WM_USER+8)
 #define SB_SIMPLE             (WM_USER+9)
 #define SB_GETRECT            (WM_USER+10)
+#define SB_ISSIMPLE           (WM_USER+14)
+#define SB_SETICON            (WM_USER+15)
+#define SB_GETICON            (WM_USER+20)
+#define SB_SETBKCOLOR         CCM_SETBKCOLOR   /* lParam = bkColor */
 
 #define SBT_NOBORDERS         0x0100
 #define SBT_POPOUT            0x0200
-#define SBT_RTLREADING        0x0400
+#define SBT_RTLREADING        0x0400  /* not supported */
 #define SBT_OWNERDRAW         0x1000
 
 #define SBARS_SIZEGRIP        0x0100
+
+#define SBN_FIRST             (0U-880U)
+#define SBN_LAST              (0U-899U)
+#define SBN_SIMPLEMODECHANGE  (SBN_FIRST-0)
+
+void WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
+                      HINSTANCE32, HWND32, LPUINT32);
+
 
 /* UpDown */
 
@@ -200,22 +257,22 @@ typedef struct _IMAGEINFO
 
 
 typedef struct _IMAGELISTDRAWPARAMS
-{ 
-    DWORD       cbSize; 
-    HIMAGELIST  himl; 
-    INT32       i; 
-    HDC32       hdcDst; 
-    INT32       x; 
-    INT32       y; 
-    INT32       cx; 
-    INT32       cy; 
-    INT32       xBitmap;        // x offest from the upperleft of bitmap 
-    INT32       yBitmap;        // y offset from the upperleft of bitmap 
-    COLORREF    rgbBk; 
-    COLORREF    rgbFg; 
-    UINT32      fStyle; 
-    DWORD       dwRop; 
-} IMAGELISTDRAWPARAMS, *LPIMAGELISTDRAWPARAMS; 
+{
+    DWORD       cbSize;
+    HIMAGELIST  himl;
+    INT32       i;
+    HDC32       hdcDst;
+    INT32       x;
+    INT32       y;
+    INT32       cx;
+    INT32       cy;
+    INT32       xBitmap;  /* x offest from the upperleft of bitmap */
+    INT32       yBitmap;  /* y offset from the upperleft of bitmap */
+    COLORREF    rgbBk;
+    COLORREF    rgbFg;
+    UINT32      fStyle;
+    DWORD       dwRop;
+} IMAGELISTDRAWPARAMS, *LPIMAGELISTDRAWPARAMS;
 
  
 INT32      WINAPI ImageList_Add(HIMAGELIST,HBITMAP32,HBITMAP32);
@@ -263,6 +320,146 @@ BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
 #define ImageList_LoadBitmap(hi,lpbmp,cx,cGrow,crMask) \
   ImageList_LoadImage(hi,lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,0)
 #define ImageList_RemoveAll(himl) ImageList_Remove(himl,-1)
+
+
+/* Header control */
+
+#define WC_HEADER16    "SysHeader" 
+#define WC_HEADER32A   "SysHeader32" 
+#define WC_HEADER32W  L"SysHeader32" 
+
+#define WC_HEADER     WINELIB_NAME_AW(WC_HEADER)
+ 
+#define HDS_HORZ                0x0000 
+#define HDS_BUTTONS             0x0002 
+#define HDS_HOTTRACK            0x0004 
+#define HDS_HIDDEN              0x0008 
+#define HDS_DRAGDROP            0x0040 
+#define HDS_FULLDRAG            0x0080 
+
+#define HDI_WIDTH               0x0001
+#define HDI_HEIGHT              HDI_WIDTH
+#define HDI_TEXT                0x0002
+#define HDI_FORMAT              0x0004
+#define HDI_LPARAM              0x0008
+#define HDI_BITMAP              0x0010
+#define HDI_IMAGE               0x0020
+#define HDI_DI_SETITEM          0x0040
+#define HDI_ORDER               0x0080
+
+#define HDF_LEFT                0x0000
+#define HDF_RIGHT               0x0001
+#define HDF_CENTER              0x0002
+#define HDF_JUSTIFYMASK         0x0003
+
+#define HDF_IMAGE               0x0800
+#define HDF_BITMAP_ON_RIGHT     0x1000
+#define HDF_BITMAP              0x2000
+#define HDF_STRING              0x4000
+#define HDF_OWNERDRAW           0x8000
+
+#define HHT_NOWHERE             0x0001
+#define HHT_ONHEADER            0x0002
+#define HHT_ONDIVIDER           0x0004
+#define HHT_ONDIVOPEN           0x0008
+#define HHT_ABOVE               0x0100
+#define HHT_BELOW               0x0200
+#define HHT_TORIGHT             0x0400
+#define HHT_TOLEFT              0x0800
+
+#define HDM_FIRST               0x1200
+#define HDM_GETITEMCOUNT        (HDM_FIRST+0)
+#define HDM_INSERTITEM32A       (HDM_FIRST+1)
+#define HDM_INSERTITEM32W       (HDM_FIRST+10)
+#define HDM_INSERTITEM WINELIB_NAME_AW(HDM_INSERTITEM)
+#define HDM_DELETEITEM          (HDM_FIRST+2)
+#define HDM_GETITEM32A          (HDM_FIRST+3)
+#define HDM_GETITEM32W          (HDM_FIRST+11)
+#define HDM_GETITEM WINELIB_NAME_AW(HDM_GETITEM)
+#define HDM_SETITEM32A          (HDM_FIRST+4)
+#define HDM_SETITEM32W          (HDM_FIRST+12)
+#define HDM_SETITEM WINELIB_NAME_AW(HDM_SETITEM)
+#define HDM_LAYOUT              (HDM_FIRST+5)
+#define HDM_HITTEST             (HDM_FIRST+6)
+#define HDM_GETITEMRECT         (HDM_FIRST+7)
+#define HDM_SETIMAGELIST        (HDM_FIRST+8)
+#define HDM_GETIMAGELIST        (HDM_FIRST+9)
+
+
+#define HDM_ORDERTOINDEX        (HDM_FIRST+15)
+#define HDM_CREATEDRAGIMAGE     (HDM_FIRST+16)
+#define HDM_GETORDERARRAY       (HDM_FIRST+17)
+#define HDM_SETORDERARRAY       (HDM_FIRST+18)
+#define HDM_SETHOTDIVIDER       (HDM_FIRST+19)
+
+#define HDN_FIRST               (0U-300U)
+#define HDN_LAST                (0U-399U)
+#define HDN_ITEMCHANGING32A     (HDN_FIRST-0)
+#define HDN_ITEMCHANGING32W     (HDN_FIRST-20)
+#define HDN_ITEMCHANGED32A      (HDN_FIRST-1)
+#define HDN_ITEMCHANGED32W      (HDN_FIRST-21)
+#define HDN_ITEMCLICK32A        (HDN_FIRST-2)
+#define HDN_ITEMCLICK32W        (HDN_FIRST-22)
+#define HDN_ITEMDBLCLICK32A     (HDN_FIRST-3)
+#define HDN_ITEMDBLCLICK32W     (HDN_FIRST-23)
+#define HDN_DIVIDERDBLCLICK32A  (HDN_FIRST-5)
+#define HDN_DIVIDERDBLCLICK32W  (HDN_FIRST-25)
+#define HDN_BEGINTRACK32A       (HDN_FIRST-6)
+#define HDN_BEGINTRACK32W       (HDN_FIRST-26)
+#define HDN_ENDTRACK32A         (HDN_FIRST-7)
+#define HDN_ENDTRACK32W         (HDN_FIRST-27)
+#define HDN_TRACK32A            (HDN_FIRST-8)
+#define HDN_TRACK32W            (HDN_FIRST-28)
+#define HDN_GETDISPINFO32A      (HDN_FIRST-9)
+#define HDN_GETDISPINFO32W      (HDN_FIRST-29)
+#define HDN_BEGINDRACK          (HDN_FIRST-10)
+#define HDN_ENDDRACK            (HDN_FIRST-11)
+
+
+#define Header_Layout(hwndHD,playout) \
+  (BOOL32)SendMessage32A((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
+
+
+typedef struct _HD_LAYOUT
+{
+    RECT32      *prc;
+    WINDOWPOS32 *pwpos;
+} HDLAYOUT, *LPHDLAYOUT;
+
+#define HD_LAYOUT   HDLAYOUT
+
+
+typedef struct _HD_ITEMA
+{
+    UINT32    mask;
+    INT32     cxy;
+    LPSTR     pszText;
+    HBITMAP32 hbm;
+    INT32     cchTextMax;
+    INT32     fmt;
+    LPARAM    lParam;
+    INT32     iImage;
+    INT32     iOrder;
+} HD_ITEMA;
+
+
+typedef struct _HD_HITTESTINFO
+{
+    POINT32 pt;
+    UINT32  flags;
+    INT32   iItem;
+} HDHITTESTINFO, *LPHDHITTESTINFO;
+
+#define HD_HITTESTINFO   HDHITTESTINFO
+
+
+typedef struct tagNMHEADERA
+{
+    NMHDR    hdr;
+    INT32    iItem;
+    INT32    iButton;
+    HD_ITEMA *pitem;
+} NMHEADERA, *LPNMHEADERA;
 
 
 #endif  /* __WINE_COMMCTRL_H */

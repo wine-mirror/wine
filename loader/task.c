@@ -37,7 +37,6 @@
 #define MIN_THUNKS  32
 
 extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
-extern BOOL32 MODULE_FreeModule( HMODULE16 hModule, TDB* ptaskContext );
 
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
@@ -208,7 +207,7 @@ static void TASK_CallToStart(void)
 {
     int exit_code = 1;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
-    NE_MODULE *pModule = MODULE_GetPtr16( pTask->hModule );
+    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     SET_CUR_THREAD( pTask->thdb );
@@ -276,9 +275,10 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 {
     HTASK16 hTask;
     TDB *pTask;
-    LPSTR name, cmd_line;
+    LPSTR cmd_line;
     WORD sp;
     char *stack32Top;
+    char name[10];
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
     PDB32 *pdb32 = thdb->process;
@@ -319,7 +319,7 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
       /* Copy the module name */
 
-    name = MODULE_GetModuleName( pModule->self );
+    GetModuleName( pModule->self, name, sizeof(name) );
     strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
 
       /* Allocate a selector for the PDB */
@@ -432,7 +432,7 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     /* Free the task module */
 
-    MODULE_FreeModule( pTask->hModule, pTask );
+    FreeModule16( pTask->hModule );
 
     /* Free the selector aliases */
 
@@ -660,7 +660,7 @@ void WINAPI InitTask( CONTEXT *context )
 
     if (context) EAX_reg(context) = 0;
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
-    if (!(pModule = MODULE_GetPtr16( pTask->hModule ))) return;
+    if (!(pModule = NE_GetPtr( pTask->hModule ))) return;
 
     /* This is a hack to install task USER signal handler before 
      * implicitly loaded DLLs are initialized (see windows/user.c) */
@@ -855,7 +855,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     BYTE *thunk,*lfunc;
     SEGPTR thunkaddr;
 
-    if (!hInstance) return 0;
+    if (!hInstance) hInstance = CURRENT_DS;
     thunkaddr = TASK_AllocThunk( hCurrentTask );
     if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
@@ -995,12 +995,8 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
 /***********************************************************************
  *           SwitchStackBack   (KERNEL.109)
- *
- * Note: the function is declared as 'register' in the spec file in order
- * to make sure all registers are preserved, but we don't use them in any
- * way, so we don't need a CONTEXT* argument.
  */
-void WINAPI SwitchStackBack(void)
+void WINAPI SwitchStackBack( CONTEXT *context )
 {
     TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
@@ -1022,6 +1018,8 @@ void WINAPI SwitchStackBack(void)
     /* Switch back to the old stack */
 
     pTask->thdb->cur_stack = pData->old_ss_sp;
+    SS_reg(context)  = SELECTOROF(pData->old_ss_sp);
+    ESP_reg(context) = OFFSETOF(pData->old_ss_sp);
     pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */

@@ -75,11 +75,12 @@ AC_CACHE_CHECK("for Open Sound System",
 #if !defined(SNDCTL_DSP_STEREO)
 #error No open sound system
 #endif
-],
-	ac_cv_c_opensoundsystem="yes"
-	AC_DEFINE(HAVE_OSS),
-	ac_cv_c_opensoundsystem="no"
-))
+],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
+
+if test "$ac_cv_c_opensoundsystem" = "yes"
+then
+    AC_DEFINE(HAVE_OSS)
+fi
 
 dnl **** Check for union semun ****
 
@@ -220,7 +221,108 @@ AC_C_CONST()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
 
-dnl **** Dependent checks ****
+dnl **** statfs checks ****
+
+if test "$ac_cv_header_sys_vfs_h" = "yes"
+then
+    AC_CACHE_CHECK( "whether sys/vfs.h defines statfs",
+		    wine_cv_sys_vfs_has_statfs,
+	AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/vfs.h>
+	],[
+		struct statfs stfs;
+
+		memset(&stfs,0,sizeof(stfs));
+	],wine_cv_sys_vfs_has_statfs=yes,wine_cv_sys_vfs_has_statfs=no
+	)
+    )
+    if test "$wine_cv_sys_vfs_has_statfs" = "yes"
+    then
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_VFS)
+    fi
+fi
+
+if test "$ac_cv_header_sys_statfs_h" = "yes"
+then
+    AC_CACHE_CHECK( "whether sys/statfs.h defines statfs",
+		    wine_cv_sys_statfs_has_statfs,
+	AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/statfs.h>
+	],[
+		struct statfs stfs;
+	],wine_cv_sys_statfs_has_statfs=yes,wine_cv_sys_statfs_has_statfs=no
+	)
+    )
+    if test "$wine_cv_sys_statfs_has_statfs" = "yes"
+    then
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_STATFS)
+    fi
+fi
+
+if test "$ac_cv_header_sys_mount_h" = "yes"
+then
+    AC_CACHE_CHECK( "whether sys/mount.h defines statfs",
+		    wine_cv_sys_mount_has_statfs,
+	AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#include <sys/mount.h>
+	],[
+		struct statfs stfs;
+	],wine_cv_sys_mount_has_statfs=yes,wine_cv_sys_mount_has_statfs=no
+	)
+    )
+    if test "$wine_cv_sys_mount_has_statfs" = "yes"
+    then
+      AC_DEFINE(STATFS_DEFINED_BY_SYS_MOUNT)
+    fi
+fi
+
+dnl **** FIXME: what about mixed cases, where we need two of them? ***
+
+AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
+  [ if test "x$statfs_bfree" = "xno"
+    then
+        wine_cv_statfs_bfree=no
+    else
+    	AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
+	# include <sys/mount.h>
+	#else
+	# ifdef STATFS_DEFINED_BY_SYS_VFS
+	#  include <sys/vfs.h>
+	# else
+	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+	#   include <sys/statfs.h>
+	#  endif
+	# endif
+	#endif
+	],[
+		struct statfs stfs;
+
+		stfs.f_bfree++;
+	],wine_cv_statfs_bfree=yes,wine_cv_statfs_bfree=no
+	)
+    fi ] )
+if test "$wine_cv_statfs_bfree" = "yes"
+then
+  AC_DEFINE(STATFS_HAS_BFREE)
+fi
+
 AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
   [ if test "x$statfs_bavail" = "xno"
     then
@@ -231,14 +333,16 @@ AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
-	#ifdef HAVE_SYS_STATFS_H
-	# include <sys/statfs.h>
-	#endif
-	#ifdef HAVE_SYS_MOUNT_H
+	#ifdef STATFS_DEFINED_BY_SYS_MOUNT
 	# include <sys/mount.h>
-	#endif
-	#ifdef HAVE_SYS_VFS_H
-	# include <sys/vfs.h>
+	#else
+	# ifdef STATFS_DEFINED_BY_SYS_VFS
+	#  include <sys/vfs.h>
+	# else
+	#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+	#   include <sys/statfs.h>
+	#  endif
+	# endif
 	#endif
 	],[
 		struct statfs stfs;
@@ -252,35 +356,54 @@ then
   AC_DEFINE(STATFS_HAS_BAVAIL)
 fi
 
-AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
-  [ if test "x$statfs_bfree" = "xno"
-    then
-        wine_cv_statfs_bfree=no
-    else
-    	AC_TRY_COMPILE([
+dnl *** check for working sigaltstack
+dnl glibc 2.0x defines it, but it always fails... so it is useless for us.
+
+AC_CACHE_CHECK("for working sigaltstack",
+	ac_cv_c_working_sigaltstack,
+	AC_TRY_RUN([
+	#include <stdio.h>
+	#include <time.h> /* <sys/time.h> ? bad magic without end */
 	#include <sys/types.h>
+	#include <sys/signal.h>
 	#ifdef HAVE_SYS_PARAM_H
 	# include <sys/param.h>
 	#endif
-	#ifdef HAVE_SYS_STATFS_H
-	# include <sys/statfs.h>
+	#ifdef HAVE_SYSCALL_H
+	# include <syscall.h>
+	#else
+	# ifdef HAVE_SYS_SYSCALL_H
+	#  include <sys/syscall.h>
+	# endif
 	#endif
-	#ifdef HAVE_SYS_MOUNT_H
-	# include <sys/mount.h>
-	#endif
-	#ifdef HAVE_SYS_VFS_H
-	# include <sys/vfs.h>
-	#endif
-	],[
-		struct statfs stfs;
+	
+	unsigned char *xaltstack;
 
-		stfs.f_bfree++;
-	],wine_cv_statfs_bfree=yes,wine_cv_statfs_bfree=no
-	)
-    fi ] )
-if test "$wine_cv_statfs_bfree" = "yes"
+	int
+	main(int argc,char **argv) {
+	    struct sigaltstack	ss;
+
+	    xaltstack = malloc(16384);
+	    ss.ss_sp    = xaltstack;
+	    ss.ss_size  = 16384;
+	    ss.ss_flags = 0;
+	    if (sigaltstack(&ss, NULL) < 0) {
+	    	/* this catches the glibc case */
+		perror("sigaltstack");
+	    	return (1); /* aka exit(1) aka fail */
+	    }
+	    /* assume it works. */
+	    return 0; /* OK */
+	}
+	],
+	ac_cv_c_working_sigaltstack="yes",
+	ac_cv_c_working_sigaltstack="no",
+	ac_cv_c_working_sigaltstack="no"
+))
+
+if test "$ac_cv_c_working_sigaltstack" = "yes"
 then
-  AC_DEFINE(STATFS_HAS_BFREE)
+    AC_DEFINE(HAVE_WORKING_SIGALTSTACK)
 fi
 
 
@@ -317,6 +440,7 @@ programs/Makefile
 programs/clock/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
+programs/regtest/Makefile
 programs/view/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile

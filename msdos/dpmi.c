@@ -224,13 +224,14 @@ static void INT_DoRealModeInt( CONTEXT *context )
         break;
     }
 
-    if (EFL_reg(context)&1)
+    if (EFL_reg(context)&1) {
       FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
 	    BL_reg(context), EAX_reg(&realmode_ctx), EBX_reg(&realmode_ctx), 
 	    ECX_reg(&realmode_ctx), EDX_reg(&realmode_ctx));
       FIXME(int31,"      ESI=%08lx EDI=%08lx DS=%04lx ES=%04lx\n",
 	    ESI_reg(&realmode_ctx), EDI_reg(&realmode_ctx), 
 	    DS_reg(&realmode_ctx), ES_reg(&realmode_ctx) );
+    }
     INT_SetRealModeContext( call, &realmode_ctx );
 }
 

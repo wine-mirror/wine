@@ -18,9 +18,6 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
 
 #include "windows.h"
 #include "winerror.h"
@@ -619,7 +616,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 				break;
 			}
 		}
-		/* FIXME: the rest of the devices ... lptX, comX et.al. */
+		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i]);
     		return HFILE_ERROR32;
 	    }
         }
@@ -837,7 +834,7 @@ DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
 {
     DOS_FULL_NAME full_name;
 
-    /* FIXME: is it correct to always return a fully qualified short path? */
+    /* FIXME: Is it correct to return a UNIX style path here? */
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
     lstrcpyn32A( longpath, full_name.long_name, longlen );
     return strlen( full_name.long_name );

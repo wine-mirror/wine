@@ -14,6 +14,7 @@
 #include "bitmap.h"
 #include "comm.h"
 #include "win.h"
+#include "main.h"
 #include "menu.h"
 #include "atom.h"
 #include "dialog.h"

@@ -796,15 +796,10 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hConsoleOutput,
     TRACE(console, "%d (%d x %d)\n", hConsoleOutput, dwCursorPosition.x, 
           dwCursorPosition.y);
     /* x are columns, y rows */
-    if (!dwCursorPosition.y) {
     	fprintf(stderr,"\r");
-	if (dwCursorPosition.x)
             /* note: 0x1B == ESC */
-            fprintf(stderr,"%c[%dC", 0x1B, dwCursorPosition.x);
+    fprintf(stdout,"%c[%d;%dH", 0x1B, dwCursorPosition.y, dwCursorPosition.x);
 	return TRUE;
-    }
-    FIXME(console, "Unhandled case: y=%d\n", dwCursorPosition.y);
-    return FALSE;
 }
 
 
@@ -928,11 +923,103 @@ BOOL32 WINAPI SetConsoleWindowInfo(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI SetConsoleTextAttribute32(
-    HANDLE32 hcon,    /* [in] Handle to console screen buffer */
-    DWORD attributes) /* [in] Text and background colors */
+BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hConsoleOutput,WORD wAttr)
 {
-    FIXME(console, "(%x,%lx): stub\n", hcon, attributes);
+    int forecolor = 0;
+    int backcolor = 0;
+    int boldtext = 0;
+    unsigned int attrib;
+    
+    attrib = wAttr;
+    if( attrib >= BACKGROUND_INTENSITY )
+        attrib -= BACKGROUND_INTENSITY; /* Background intensity is ignored */
+    if( attrib >= BACKGROUND_RED )
+    {
+        attrib -= BACKGROUND_RED;
+        if( attrib >= BACKGROUND_GREEN )
+        {
+            attrib -= BACKGROUND_GREEN;
+            if( attrib >= BACKGROUND_BLUE )
+            {
+                attrib -= BACKGROUND_BLUE;
+                backcolor = 47; /* White background */
+            }
+            else
+                backcolor = 43; /* Yellow background */
+        }
+        else if( attrib >= BACKGROUND_BLUE )
+        {
+            attrib -= BACKGROUND_BLUE;
+            backcolor = 45; /* Magenta background */
+        }
+        else
+            backcolor = 41; /* Red Background */
+    }
+    else if( attrib >= BACKGROUND_GREEN )
+    {
+        attrib -= BACKGROUND_GREEN;
+        if( attrib >= BACKGROUND_BLUE )
+        {
+            attrib -= BACKGROUND_BLUE;
+            backcolor = 46; /* Cyan background */
+        }
+        else
+            backcolor = 42; /* Green background */
+    }
+    else if( attrib >= BACKGROUND_BLUE )
+    {
+        attrib -= BACKGROUND_BLUE;
+        backcolor = 44; /* Blue background */
+    }
+    else
+        backcolor = 40; /* Black background */
+    if( attrib >= FOREGROUND_INTENSITY )
+    {
+        attrib -= FOREGROUND_INTENSITY;
+        boldtext = 1;   /* Bold attribute is on */
+    }
+    if( attrib >= FOREGROUND_RED )
+    {
+        attrib -= FOREGROUND_RED;
+        if( attrib >= FOREGROUND_GREEN )
+        {
+            attrib -= FOREGROUND_GREEN;
+            if( attrib >= FOREGROUND_BLUE )
+            {
+                attrib -= FOREGROUND_BLUE;
+                forecolor = 37; /* White foreground */
+            }
+            else
+                forecolor = 33; /* Yellow foreground */
+        }
+        else if( attrib >= FOREGROUND_BLUE )
+        {
+            attrib -= FOREGROUND_BLUE;
+            forecolor = 35; /* Magenta foreground */
+        }
+        else
+            forecolor = 31; /* Red foreground */
+    }
+    else if( attrib >= FOREGROUND_GREEN )
+    {
+        attrib -= FOREGROUND_GREEN;
+        if( attrib >= FOREGROUND_BLUE )
+        {
+            attrib -= FOREGROUND_BLUE;
+            forecolor = 36; /* Cyan foreground */
+        }
+        else
+            forecolor = 32; /* Green foreground */
+    }
+    else if( attrib >= FOREGROUND_BLUE )
+    {
+        attrib -= FOREGROUND_BLUE;
+        forecolor = 34; /* Blue foreground */
+    }
+    else
+        forecolor = 30; /* Black foreground */
+
+    fprintf(stdout,"%c[%d;%d;%dm",0x1B,boldtext,forecolor,backcolor);
     return TRUE;
 }
 
@@ -958,17 +1045,30 @@ BOOL32 WINAPI SetConsoleScreenBufferSize( HANDLE32 hConsoleOutput,
 
 /******************************************************************************
  * FillConsoleOutputCharacterA [KERNEL32.242]
+ *
+ * PARAMS
+ *    hConsoleOutput    [I] Handle to screen buffer
+ *    cCharacter        [I] Character to write
+ *    nLength           [I] Number of cells to write to
+ *    dwCoord           [I] Coords of first cell
+ *    lpNumCharsWritten [O] Pointer to number of cells written
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL32 WINAPI FillConsoleOutputCharacterA(
     HANDLE32 hConsoleOutput,
-    CHAR cCharacter,
+    BYTE cCharacter,
     DWORD nLength,
-    COORD dwWriteCoord,
-    LPDWORD lpNumberOfCharsWritten)
+    COORD dwCoord,
+    LPDWORD lpNumCharsWritten)
 {
-    FIXME(console, "(%d,%c,%ld,%dx%d,%p): stub\n", hConsoleOutput,cCharacter,
-          nLength,dwWriteCoord.x,dwWriteCoord.y,lpNumberOfCharsWritten);
-    *lpNumberOfCharsWritten = 0;
+    long count;
+    SetConsoleCursorPosition(hConsoleOutput,dwCoord);
+    for(count=0;count<nLength;count++)
+        putc(cCharacter,stdout);
+    *lpNumCharsWritten = nLength;
     return TRUE;
 }
 
@@ -987,14 +1087,17 @@ BOOL32 WINAPI FillConsoleOutputCharacterA(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI FillConsoleOutputCharacterW( HANDLE32 hConsoleOutput,
-                                           WCHAR cCharacter, DWORD nLength,
+BOOL32 WINAPI FillConsoleOutputCharacterW(HANDLE32 hConsoleOutput,
+                                            WCHAR cCharacter,
+                                            DWORD nLength,
                                            COORD dwCoord, 
-                                           LPDWORD lpNumCharsWritten )
+                                            LPDWORD lpNumCharsWritten)
 {
-    FIXME(console, "(%d,%c,%ld,%dx%d,%p): stub\n", hConsoleOutput,
-          cCharacter,nLength,dwCoord.x,dwCoord.y,lpNumCharsWritten);
-    *lpNumCharsWritten = 0;
+    long count;
+    SetConsoleCursorPosition(hConsoleOutput,dwCoord);
+    for(count=0;count<nLength;count++)
+        putc(cCharacter,stdout);
+    *lpNumCharsWritten = nLength;
     return TRUE;
 }
 

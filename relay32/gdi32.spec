@@ -21,7 +21,7 @@ type	win32
  17 stdcall CloseMetaFile(long) CloseMetaFile32
  18 stub ColorMatchToTarget
  19 stdcall CombineRgn(long long long long) CombineRgn32
- 20 stub CombineTransform
+ 20 stdcall CombineTransform(ptr ptr ptr) CombineTransform
  21 stdcall CopyEnhMetaFileA(long str) CopyEnhMetaFile32A
  22 stub CopyEnhMetaFileW
  23 stdcall CopyMetaFileA(long str) CopyMetaFile32A
@@ -257,7 +257,7 @@ type	win32
 250 stub LoadImageColorMatcherA
 251 stub LoadImageColorMatcherW
 252 stub MaskBlt
-253 stub ModifyWorldTransform
+253 stdcall ModifyWorldTransform(long ptr long) ModifyWorldTransform
 254 stdcall MoveToEx(long long long ptr) MoveToEx32
 255 stdcall OffsetClipRgn(long long long) OffsetClipRgn32
 256 stdcall OffsetRgn(long long long) OffsetRgn32

@@ -1144,7 +1144,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
    */
   ehptr = (Elf32_Ehdr *) addr;
 
-  if( load_offset == NULL )
+  if( load_offset == 0 )
     {
       DEBUG_RegisterELFDebugInfo(ehptr->e_entry, statbuf.st_size, filename);
     }
@@ -1271,7 +1271,7 @@ DEBUG_ReadExecutableDbgInfo(void)
     }
 
   if(    (dynpnt->d_tag != DT_DEBUG)
-      || (dynpnt->d_un.d_ptr == NULL) )
+      || (dynpnt->d_un.d_ptr == 0) )
     {
       goto leave;
     }
@@ -1296,7 +1296,7 @@ DEBUG_ReadExecutableDbgInfo(void)
        * shared libraries which may be loaded.
        */
       ehdr = (Elf32_Ehdr *) lpnt->l_addr;
-      if( (lpnt->l_addr == NULL) || (ehdr->e_type != ET_DYN) )
+      if( (lpnt->l_addr == 0) || (ehdr->e_type != ET_DYN) )
 	{
 	  continue;
 	}

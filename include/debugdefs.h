@@ -4,9 +4,12 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 110
+#define DEBUG_CHANNEL_COUNT 113
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -133,6 +136,7 @@ const char* debug_ch_name[] = {
 "clipping",
 "combo",
 "comm",
+"commctrl",
 "commdlg",
 "console",
 "crtdll",
@@ -157,6 +161,7 @@ const char* debug_ch_name[] = {
 "gdi",
 "global",
 "graphics",
+"header",
 "heap",
 "hook",
 "icon",
@@ -206,6 +211,7 @@ const char* debug_ch_name[] = {
 "shm",
 "sound",
 "static",
+"status",
 "stress",
 "string",
 "system",

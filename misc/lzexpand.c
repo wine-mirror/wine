@@ -473,17 +473,25 @@ LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
  */
 LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 {
-	int	i,ret,wret;
+	int	usedlzinit=0,i,ret,wret;
 	LONG	len;
+	HFILE32	oldsrc = src;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
 	INT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
 
 	TRACE(file,"(%d,%d)\n",src,dest);
+	if (src<0x400) {
+		src = LZInit32(src);
+		if (src!=oldsrc)
+			usedlzinit=1;
+		if (src>0xfff0)
+			return 0;
+	}
+
 	for (i=0;i<nroflzstates;i++)
 		if (src==lzstates[i].lzfd)
 			break;
-
 	/* not compressed? just copy */
 	if (i==nroflzstates)
 		xread=(INT32(*)(HFILE32,LPVOID,UINT32))_lread32;
@@ -504,6 +512,8 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 		if (wret!=ret)
 			return LZERROR_WRITE;
 	}
+	if (usedlzinit)
+		LZClose32(src);
 	return len;
 #undef BUFLEN
 }

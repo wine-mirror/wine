@@ -84,7 +84,7 @@ type	win32
   82 stub ExtractAssociatedIconA
   83 stub SHELL32_83
   84 stub SHELL32_84
-  85 stub SHELL32_85
+  85 stdcall SHELL32_85(long long long long) SHELL32_85
   86 stub SHELL32_86
   87 stub SHELL32_87
   88 stub SHELL32_88

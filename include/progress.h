@@ -20,6 +20,6 @@ typedef struct
   COLORREF    ColorBk;      /* Background color */
 } PROGRESS_INFO;
 
-LRESULT WINAPI ProgressWindowProc(HWND32, UINT32, WPARAM32, LPARAM);
+extern void PROGRESS_Register (void);
 
 #endif  /* __WINE_PROGRESS_H */

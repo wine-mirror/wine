@@ -8,24 +8,11 @@
 #include "win.h"
 #include "heap.h"
 #include "commctrl.h"
+#include "header.h"
 #include "progress.h"
 #include "status.h"
 #include "updown.h"
-
-/* Win32 common controls */
-
-static WNDCLASS32A WIDGETS_CommonControls32[] =
-{
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, StatusWindowProc, 0,
-      sizeof(STATUSWINDOWINFO), 0, 0, 0, 0, 0, STATUSCLASSNAME32A },
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, UpDownWindowProc, 0,
-      sizeof(UPDOWN_INFO), 0, 0, 0, 0, 0, UPDOWN_CLASS32A },
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, ProgressWindowProc, 0,
-      sizeof(PROGRESS_INFO), 0, 0, 0, 0, 0, PROGRESS_CLASS32A }
-};
-
-#define NB_COMMON_CONTROLS32 \
-         (sizeof(WIDGETS_CommonControls32)/sizeof(WIDGETS_CommonControls32[0]))
+#include "debug.h"
 
 
 /***********************************************************************
@@ -36,8 +23,6 @@ void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
 {
     RECT32 r = *lprc;
     UINT32 border = BDR_SUNKENOUTER;
-
-    DrawEdge32(hdc, &r, BDR_RAISEDINNER, BF_RECT|BF_ADJUST|BF_FLAT);
 
     if(style==SBT_POPOUT)
       border = BDR_RAISEDOUTER;
@@ -59,7 +44,7 @@ void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
 }
 
 /***********************************************************************
- *           DrawStatusText32W   (COMCTL32.24)
+ *           DrawStatusText32W   (COMCTL32.28)
  */
 void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
                                UINT32 style )
@@ -70,7 +55,7 @@ void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
 }
 
 /***********************************************************************
- *           DrawStatusText16   (COMCTL32.23)
+ *           DrawStatusText16   (COMCTL32.27)
  */
 void WINAPI DrawStatusText16( HDC16 hdc, LPRECT16 lprc, LPCSTR text,
 			      UINT16 style )
@@ -97,7 +82,7 @@ HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
 }
 
 /***********************************************************************
- *           CreateStatusWindow16   (COMCTL32.18)
+ *           CreateStatusWindow16   (COMCTL32.21)
  */
 HWND16 WINAPI CreateStatusWindow16( INT16 style, LPCSTR text, HWND16 parent,
 				    UINT16 wid )
@@ -109,7 +94,7 @@ HWND16 WINAPI CreateStatusWindow16( INT16 style, LPCSTR text, HWND16 parent,
 }
 
 /***********************************************************************
- *           CreateStatusWindow32W   (COMCTL32.19)
+ *           CreateStatusWindow32W   (COMCTL32.22)
  */
 HWND32 WINAPI CreateStatusWindow32W( INT32 style, LPCWSTR text, HWND32 parent,
                                      UINT32 wid )
@@ -141,24 +126,165 @@ HWND32 WINAPI CreateUpDownControl( DWORD style, INT32 x, INT32 y,
 
 
 /***********************************************************************
- *           InitCommonControls   (COMCTL32.17)
+ * InitCommonControls [COMCTL32.17]
+ *
+ *
+ *
  */
-void WINAPI InitCommonControls(void)
-{
-    int i;
-    char name[30];
-    const char *old_name;
-    WNDCLASS32A *class32 = WIDGETS_CommonControls32;
 
-    for (i = 0; i < NB_COMMON_CONTROLS32; i++, class32++)
-    {
-        /* Just to make sure the string is > 0x10000 */
-        old_name = class32->lpszClassName;
-        strcpy( name, (char *)class32->lpszClassName );
-        class32->lpszClassName = name;
-        class32->hCursor = LoadCursor32A( 0, IDC_ARROW32A );
-        RegisterClass32A( class32 );
-        class32->lpszClassName = old_name;	
-    }
+VOID WINAPI
+InitCommonControls (VOID)
+{
+    INITCOMMONCONTROLSEX icc;
+
+    icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icc.dwICC = ICC_WIN95_CLASSES;
+
+    InitCommonControlsEx (&icc);
 }
 
+
+/***********************************************************************
+ * InitCommonControlsEx [COMCTL32.81]
+ *
+ *
+ *
+ */
+
+BOOL32 WINAPI
+InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
+{
+  INT32 cCount;
+  DWORD dwMask;
+
+  if (lpInitCtrls == NULL) return (FALSE);
+  if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return (FALSE);
+
+  for (cCount = 0; cCount <= 31; cCount++) {
+    dwMask = 1 << cCount;
+    if (!(lpInitCtrls->dwICC & dwMask))
+      continue;
+
+    switch (lpInitCtrls->dwICC & dwMask) {
+      case ICC_LISTVIEW_CLASSES:
+        TRACE (commctrl, "No listview class implemented!\n");
+        HEADER_Register();
+        break;
+
+      case ICC_TREEVIEW_CLASSES:
+        TRACE (commctrl, "No treeview class implemented!\n");
+        TRACE (commctrl, "No tooltip class implemented!\n");
+        break;
+
+      case ICC_BAR_CLASSES:
+        TRACE (commctrl, "No toolbar class implemented!\n");
+	STATUS_Register ();
+        TRACE (commctrl, "No trackbar class implemented!\n");
+        TRACE (commctrl, "No tooltip class implemented!\n");
+        break;
+
+      case ICC_TAB_CLASSES:
+        TRACE (commctrl, "No tab class implemented!\n");
+        TRACE (commctrl, "No tooltip class implemented!\n");
+        break;
+
+      case ICC_UPDOWN_CLASS:
+        UPDOWN_Register ();
+        break;
+
+      case ICC_PROGRESS_CLASS:
+        PROGRESS_Register ();
+        break;
+
+      case ICC_HOTKEY_CLASS:
+        TRACE (commctrl, "No hotkey class implemented!\n");
+        break;
+
+      case ICC_ANIMATE_CLASS:
+        TRACE (commctrl, "No animation class implemented!\n");
+        break;
+
+      case ICC_DATE_CLASSES:
+        TRACE (commctrl, "No month calendar class implemented!\n");
+        TRACE (commctrl, "No date picker class implemented!\n");
+        TRACE (commctrl, "No time picker class implemented!\n");
+        break;
+
+      case ICC_USEREX_CLASSES:
+        TRACE (commctrl, "No comboex class implemented!\n");
+        break;
+
+      case ICC_COOL_CLASSES:
+        TRACE (commctrl, "No rebar class implemented!\n");
+        break;
+
+      case ICC_INTERNET_CLASSES:
+        TRACE (commctrl, "No internet classes implemented!\n");
+        break;
+
+      case ICC_PAGESCROLLER_CLASS:
+        TRACE (commctrl, "No page scroller class implemented!\n");
+        break;
+
+      case ICC_NATIVEFNTCTL_CLASS:
+        TRACE (commctrl, "No native font class implemented!\n");
+        break;
+
+      default:
+        WARN (commctrl, "Unknown class! dwICC=0x%lX\n", dwMask);
+        break;
+    }
+  }
+
+  return (TRUE);
+}
+
+
+/***********************************************************************
+ * MenuHelp (COMCTL32.2)
+ *
+ *
+ *
+ *
+ */
+
+VOID WINAPI
+MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
+	  HINSTANCE32 hInst, HWND32 hwndStatus, LPUINT32 lpwIDs)
+{
+    char szStatusText[128];
+
+    if (!IsWindow32 (hwndStatus)) return;
+
+    switch (uMsg) {
+        case WM_MENUSELECT:
+            TRACE (commctrl, "WM_MENUSELECT wParam=0x%X lParam=0x%lX\n",
+                   wParam, lParam);
+
+            if ((HIWORD(wParam) == 0xFFFF) && (lParam == 0)) {
+                /* menu was closed */
+                SendMessage32A (hwndStatus, SB_SIMPLE, FALSE, 0);
+            }
+            else {
+                if (HIWORD(wParam) & MF_POPUP) {
+                    TRACE (commctrl, "Popup menu selected!\n");
+                    FIXME (commctrl, "No popup menu texts!\n");
+
+                    szStatusText[0] = 0;
+                }
+                else {
+                    TRACE (commctrl, "Menu item selected!\n");
+                    if (!LoadString32A (hInst, LOWORD(wParam), szStatusText, 128))
+                        szStatusText[0] = 0;
+                }
+                SendMessage32A (hwndStatus, SB_SETTEXT32A, 255 | SBT_NOBORDERS,
+                                (LPARAM)szStatusText);
+                SendMessage32A (hwndStatus, SB_SIMPLE, TRUE, 0);
+            }
+            break;
+
+        default:
+            WARN (commctrl, "Invalid Message!\n");
+            break;
+    }
+}

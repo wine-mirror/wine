@@ -6,7 +6,7 @@ type	win32
 #  import comctl32.dll by ordinal)
 #   This list was created from a comctl32.dll v4.72 (IE4.01).
 
-  2 stub MenuHelp
+  2 stdcall MenuHelp(long long long long long long ptr) MenuHelp
   3 stub ShowHideMenuCtl
   4 stub GetEffectiveClientRect
   5 stdcall DrawStatusTextA(long ptr ptr long) DrawStatusText32A
@@ -72,7 +72,6 @@ type	win32
  63 stdcall ImageList_LoadImageA(long ptr long long long long long) ImageList_LoadImage32A
  64 stdcall ImageList_LoadImageW(long ptr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
-# 66 stdcall ImageList_Read(ptr) ImageList_Read
  66 stub ImageList_Read
  67 stdcall ImageList_Remove(ptr long) ImageList_Remove
  68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
@@ -88,7 +87,7 @@ type	win32
  78 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
  79 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
  80 stub ImageList_Write
- 81 stub InitCommonControlsEx
+ 81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
  82 stub InitializeFlatSB
  83 stub PropertySheet
  84 stub PropertySheetA

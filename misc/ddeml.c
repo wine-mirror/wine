@@ -121,13 +121,23 @@ HCONVLIST WINAPI DdeConnectList32( DWORD idInst, HSZ hszService, HSZ hszTopic,
 
 
 /*****************************************************************
- *            DdeQueryNextServer (DDEML.5)
+ * DdeQueryNextServer16 [DDEML.5]
  */
-HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
+HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
 {
-    FIXME( ddeml, "empty stub\n" );
+    return DdeQueryNextServer32(hConvList, hConvPrev);
+}
+
+
+/*****************************************************************
+ * DdeQueryNextServer32 [USER32.112]
+ */
+HCONV WINAPI DdeQueryNextServer32( HCONVLIST hConvList, HCONV hConvPrev )
+{
+    FIXME(ddeml, "(%ld,%ld): stub\n",hConvList,hConvPrev);
     return 0;
 }
+
 
 /*****************************************************************
  *            DdeDisconnectList (DDEML.6)
@@ -273,7 +283,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  */
 BOOL32 WINAPI DdeFreeStringHandle32( DWORD idInst, HSZ hsz )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME( ddeml, "(%d,%d): stub\n",idInst, hsz );
     return TRUE;
 }
 
@@ -510,6 +520,4 @@ int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
      FIXME( ddeml, "empty stub\n" );
      return 0;
 }
-
-
 

@@ -5,8 +5,6 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
-typedef LONG HRESULT;
-
 /* to be implemented */
 typedef LPVOID LPMESSAGEFILTER;
 typedef LPVOID LPDROPTARGET;

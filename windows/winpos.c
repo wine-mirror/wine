@@ -5,6 +5,7 @@
  *                       1995, 1996 Alex Korobka
  */
 
+#include <string.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 #include <X11/Xatom.h>
@@ -1010,6 +1011,19 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 }
 
 /***********************************************************************
+ *           ShowWindowAsync32   (USER32.535)
+ *
+ * doesn't wait; returns immediately.
+ * used by threads to toggle windows in other (possibly hanging) threads
+ */
+BOOL32 WINAPI ShowWindowAsync32( HWND32 hwnd, INT32 cmd )
+{
+    /* FIXME: does ShowWindow32() return immediately ? */
+    return ShowWindow32(hwnd, cmd);
+}
+
+
+/***********************************************************************
  *           ShowWindow16   (USER.42)
  */
 BOOL16 WINAPI ShowWindow16( HWND16 hwnd, INT16 cmd ) 
@@ -1019,7 +1033,7 @@ BOOL16 WINAPI ShowWindow16( HWND16 hwnd, INT16 cmd )
 
 
 /***********************************************************************
- *           ShowWindow32   (USER.42)
+ *           ShowWindow32   (USER32.534)
  */
 BOOL32 WINAPI ShowWindow32( HWND32 hwnd, INT32 cmd ) 
 {    
@@ -2499,19 +2513,24 @@ HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
     DWP *pDWP;
     int i;
     HDWP32 newhdwp = hdwp;
-    HWND32 parent;
+    /* HWND32 parent; */
     WND *pWnd;
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
     if (hwnd == GetDesktopWindow32()) return 0;
 
-    /* All the windows of a DeferWindowPos() must have the same parent */
     if (!(pWnd=WIN_FindWndPtr( hwnd ))) {
         USER_HEAP_FREE( hdwp );
         return 0;
     }
     	
+/* Numega Bounds Checker Demo dislikes the following code.
+   In fact, I've not been able to find any "same parent" requirement in any docu
+   [AM 980509]
+ */
+#if 0
+    /* All the windows of a DeferWindowPos() must have the same parent */
     parent = pWnd->parent->hwndSelf;
     if (pDWP->actualCount == 0) pDWP->hwndParent = parent;
     else if (parent != pDWP->hwndParent)
@@ -2519,6 +2538,7 @@ HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
         USER_HEAP_FREE( hdwp );
         return 0;
     }
+#endif
 
     for (i = 0; i < pDWP->actualCount; i++)
     {

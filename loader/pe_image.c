@@ -241,18 +241,14 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	/* don't use MODULE_Load, Win32 creates new task differently */
 	res = PE_LoadLibraryEx32A( name, process, 0, 0 );
 	if (res <= (HMODULE32) 32) {
-	    char buffer[1024];
-
-	    /* Try with prepending the path of the current module */
-	    if (GetModuleFileName32A( wm->module, buffer, sizeof (buffer))) {
-	        char *p;
-
-		if (!(p = strrchr (buffer, '\\')))
-		    p = buffer;
-		strcpy (p + 1, name);
-		res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
-	    } else
-	    	ERR(win32,"cannot find the module just loaded!\n");
+	    char *p,buffer[2000];
+	    
+	    /* GetModuleFileName would use the wrong process, so don't use it */
+	    strcpy(buffer,wm->shortname);
+	    if (!(p = strrchr (buffer, '\\')))
+		p = buffer;
+	    strcpy (p + 1, name);
+	    res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
 	}
 	if (res <= (HMODULE32) 32) {
 	    WARN (module, "Module %s not found\n", name);
@@ -533,36 +529,32 @@ error:
 /**********************************************************************
  * This maps a loaded PE dll into the address space of the specified process.
  */
-static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
-                           OFSTRUCT *ofs, DWORD flags )
+static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD flags )
 {
-	WINE_MODREF		*wm;
 	PE_MODREF		*pem;
 	int			i, result;
 	DWORD			load_addr;
 	IMAGE_DATA_DIRECTORY	dir;
 	char			*modname;
 	int			vma_size;
-	HMODULE32		hModule = *phModule;
+	HMODULE32		hModule = wm->module;
 
         IMAGE_SECTION_HEADER *pe_seg;
         IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *)hModule;
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(hModule);
 	
-
-	wm = (WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,
-                                    sizeof(*wm));
-	wm->type= MODULE32_PE;
 	pem 	= &(wm->binfmt.pe);
 
-	/* NOTE: fixup_imports takes care of the correct order */
-	wm->next	= process->modref_list;
-	process->modref_list = wm;
+	result = GetLongPathName32A(ofs->szPathName,NULL,0);
+	wm->longname = (char*)HeapAlloc(process->heap,0,result+1);
+	GetLongPathName32A(ofs->szPathName,wm->longname,result+1);
+
+	wm->shortname = HEAP_strdupA(process->heap,0,ofs->szPathName);
 
 	if (!(nt_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
         {
 		if (process->exe_modref)
-			WARN(win32,"overwriting old exe_modref... arrgh\n");
+			FIXME(win32,"overwriting old exe_modref... arrgh\n");
 		process->exe_modref = wm;
 	}
 
@@ -577,10 +569,10 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 						 MEM_RESERVE | MEM_COMMIT,
 						 PAGE_EXECUTE_READWRITE );
 	}
-	/* *phModule is the module32 entry in the NE_MODULE. We need to
-	 * change it here, since it can get referenced by fixup_imports()
+	/* NOTE: this changes a value in the process modref chain, which can
+	 * be accessed independently from this function
 	 */
-	wm->module = *phModule = (HMODULE32)load_addr;
+	wm->module = (HMODULE32)load_addr;
 
 	TRACE(win32, "Load addr is really %lx, range %x\n",
                       load_addr, vma_size);
@@ -713,8 +705,6 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 		modname = s = ofs->szPathName;
 		while ((s=strchr(modname,'\\')))
 			modname = s+1;
-		if ((s=strchr(modname,'.')))
-			*s='\0';
 		wm->modname = HEAP_strdupA(process->heap,0,modname);
 	}
 	if(pem->pe_import)	{
@@ -760,13 +750,9 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 	WINE_MODREF	*wm;
 
 	if ((hModule = MODULE_FindModule32( process, name ))) {
-		
-		pModule = MODULE_GetPtr32(hModule);
 		for (wm= process->modref_list;wm;wm=wm->next)
-			if (wm->module == hModule) {
-				pModule->count++;
+			if (wm->module == hModule)
 				return hModule;
-			}
 		/* Since MODULE_FindModule32 uses the modref chain too, the
 		 * module MUST have been found above. If not, something has gone
 		 * terribly wrong.
@@ -781,31 +767,55 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 	if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
 		/* Now try the built-in even if disabled */
 		if ((hModule = BUILTIN32_LoadModule( name, TRUE, process ))) {
-			fprintf( stderr, "Warning: could not load external DLL '%s', using built-in module.\n", name );
-			return hModule;
+		    WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
+		    return hModule;
 		}
 		return 1;
 	}
+	/* will go away ... */
 	if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
 		_lclose32(hFile);
 		return hModule;
 	}
-	pModule		= (NE_MODULE *)GlobalLock16( hModule );
-	pModule->flags	= NE_FFLAGS_WIN32;
-	pModule->module32 = PE_LoadImage( hFile );
+	pModule         = (NE_MODULE *)GlobalLock16( hModule );
+	pModule->flags  = NE_FFLAGS_WIN32;
+	/* .. */
+
+	wm=(WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(*wm));
+	wm->type = MODULE32_PE;
+	/* NOTE: fixup_imports takes care of the correct order */
+	wm->next = process->modref_list;
+	process->modref_list = wm;
+
+	wm->module = pModule->module32 = PE_LoadImage( hFile );
+
 	CloseHandle( hFile );
-        if (pModule->module32 < 32) 
+        if (wm->module < 32) 
         {
-            FreeLibrary32( hModule);
+	    process->modref_list = wm->next;
+	    HeapFree(process->heap,0,wm);
+	    ERR(win32,"can't load %s\n",ofs.szPathName);
             return 21; /* FIXME: probably 0 */
         }
 
 	/* (possible) recursion */
-	if (!PE_MapImage( &(pModule->module32), process, &ofs,flags)) {
-		/* FIXME: should free this module and its referenced ones */
-		return 0;
+	if (!PE_MapImage(process,wm,&ofs,flags)) {
+	    /* ERROR cleanup ... */
+	    WINE_MODREF	**xwm;
+
+	    ERR(win32,"couldn't load %s\n",ofs.szPathName);
+	    /* unlink from process modref chain */
+	    for (    xwm=&(process->modref_list);
+		     *xwm && (*xwm!=wm);
+		     xwm=&((*xwm)->next)
+	    ) /* EMPTY */;
+	    if (*xwm)
+	    	*xwm=(*xwm)->next;
+	    	
+	    return 0;
 	}
-	return pModule->module32;
+        pModule->module32 = wm->module;
+	return wm->module;
 }
 
 /*****************************************************************************
@@ -813,23 +823,30 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
  * FIXME: this function should use PE_LoadLibraryEx32A, but currently can't
  * due to the PROCESS_Create stuff.
  */
-HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
+HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
                            LPCSTR env, UINT16 show_cmd )
 {
     HMODULE16 hModule16;
     HMODULE32 hModule32;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
+    HFILE32 hFile;
+    OFSTRUCT ofs;
     THDB *thdb = THREAD_Current();
-    
-    if ((hModule16 = MODULE_CreateDummyModule( ofs )) < 32) return hModule16;
+    PDB32 *process;
+    WINE_MODREF	*wm;
+
+    if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
+        return 2;  /* File not found */
+
+    if ((hModule16 = MODULE_CreateDummyModule( &ofs )) < 32) return hModule16;
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags = NE_FFLAGS_WIN32;
 
     pModule->module32 = hModule32 = PE_LoadImage( hFile );
     if (hModule32 < 32) return 21;
 
-    hInstance = MODULE_CreateInstance( hModule16, NULL, (cmd_line == NULL) );
+    hInstance = NE_CreateInstance( pModule, NULL, (cmd_line == NULL) );
     if (cmd_line &&
         !(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
@@ -838,11 +855,21 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
         TDB *pTask = (TDB *)GlobalLock16( pdb->task );
         thdb = pTask->thdb;
     }
-    if (!PE_MapImage( &(pModule->module32), thdb->process, ofs, 0 ))
+
+    process = thdb->process;
+
+    wm=(WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(*wm));
+    wm->type = MODULE32_PE;
+    /* NOTE: fixup_imports takes care of the correct order */
+    wm->next = process->modref_list;
+    wm->module = hModule32;
+    process->modref_list = wm;
+    if (!PE_MapImage( process, wm, &ofs, 0 ))
     {
      	/* FIXME: should destroy the task created and free referenced stuff */
         return 0;
     }
+    pModule->module32 = wm->module;
     /* FIXME: Yuck. Is there no other good place to do that? */
     PE_InitTls( thdb );
     return hInstance;

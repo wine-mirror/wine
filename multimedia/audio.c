@@ -780,9 +780,13 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
 	lpCaps->vDriverVersion = 0x0100;
 	lpCaps->dwFormats = 0x00000000;
 	lpCaps->dwSupport = WAVECAPS_VOLUME;
+
+	/* First bytespersampl, then stereo */
+	bytespersmpl = (IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize) != 0) ? 1 : 2;
+
 	lpCaps->wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
 	if (lpCaps->wChannels > 1) lpCaps->dwSupport |= WAVECAPS_LRVOLUME;
-	bytespersmpl = (IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize) != 0) ? 1 : 2;
+
 	smplrate = 44100;
 	if (IOCTL(audio, SNDCTL_DSP_SPEED, smplrate) == 0) {
 		lpCaps->dwFormats |= WAVE_FORMAT_4M08;
@@ -901,9 +905,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	samplesize = WOutDev[wDevID].Format.wBitsPerSample;
 	smplrate = WOutDev[wDevID].Format.wf.nSamplesPerSec;
 	dsp_stereo = (WOutDev[wDevID].Format.wf.nChannels > 1) ? TRUE : FALSE;
-	IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
+
+	/* First size and stereo then samplerate */
 	IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
 	IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
+	IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
+
 	TRACE(mciwave,"wBitsPerSample=%u !\n",
 		     WOutDev[wDevID].Format.wBitsPerSample);
 	TRACE(mciwave,"nAvgBytesPerSec=%lu !\n",

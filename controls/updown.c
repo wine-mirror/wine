@@ -785,3 +785,26 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     return 0;
 }
 
+/***********************************************************************
+ *           UPDOWN_Register [Internal]
+ *
+ * Registers the updown window class.
+ */
+void UPDOWN_Register(void)
+{
+    WNDCLASS32A wndClass;
+
+    if( GlobalFindAtom32A( UPDOWN_CLASS32A ) ) return;
+
+    ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
+    wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
+    wndClass.lpfnWndProc   = (WNDPROC32)UpDownWindowProc;
+    wndClass.cbClsExtra    = 0;
+    wndClass.cbWndExtra    = sizeof(UPDOWN_INFO);
+    wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
+    wndClass.hbrBackground = (HBRUSH32)(COLOR_3DFACE + 1);
+    wndClass.lpszClassName = UPDOWN_CLASS32A;
+ 
+    RegisterClass32A( &wndClass );
+}
+

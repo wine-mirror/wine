@@ -270,7 +270,7 @@ HMETAFILE32 WINAPI CloseMetaFile32(
 				   HDC32 hdc /* Metafile DC to close */
 )
 {
-  return CloseMetaFile32(hdc);
+  return CloseMetaFile16(hdc);
 }
 
 

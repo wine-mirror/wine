@@ -14,6 +14,7 @@
 
 #include "windows.h"
 #include "winerror.h"
+#include "process.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -454,13 +455,20 @@ done:
  */
 static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
 {
+    PDB32	*pdb = PROCESS_Current();
+
     /* FIXME: for now, GetModuleFileName32A can't return more */
     /* than OFS_MAXPATHNAME. This may change with Win32. */
+
     char buffer[OFS_MAXPATHNAME];
     LPSTR p;
 
-    if (!GetCurrentTask()) return FALSE;
-    GetModuleFileName32A( GetCurrentTask(), buffer, sizeof(buffer) );
+    if (pdb->flags & PDB32_WIN16_PROC) {
+	if (!GetCurrentTask()) return FALSE;
+	GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) );
+    } else {
+	GetModuleFileName32A( 0, buffer, sizeof(buffer) );
+    }
     if (!(p = strrchr( buffer, '\\' ))) return FALSE;
     if (sizeof(buffer) - (++p - buffer) <= strlen(name)) return FALSE;
     strcpy( p, name );

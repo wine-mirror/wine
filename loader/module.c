@@ -25,17 +25,10 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "task.h"
-#include "toolhelp.h"
 #include "debug.h"
 #include "callback.h"
 
 extern BOOL32 THREAD_InitDone;
-
-extern HMODULE16 hFirstModule;  /* FIXME */
-static HMODULE16 hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
-
-static HMODULE32 MODULE_LoadModule(LPCSTR name,BOOL32 force) { return 0; }
-HMODULE32 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL32 force) = MODULE_LoadModule;
 
 
 /*************************************************************************
@@ -56,116 +49,6 @@ MODULE32_LookupHMODULE(PDB32 *process,HMODULE32 hmod) {
 	if (wm->module == hmod)
 	    return wm;
     return NULL;
-}
-
-/***********************************************************************
- *           MODULE_GetPtr16
- */
-NE_MODULE *MODULE_GetPtr16( HMODULE16 hModule )
-{
-    return (NE_MODULE*)GlobalLock16( GetExePtr(hModule) );
-}
-
-
-/***********************************************************************
- *           MODULE_GetPtr32
- */
-NE_MODULE *MODULE_GetPtr32( HMODULE32 hModule )
-{
-    return (NE_MODULE*)GlobalLock16( MODULE_HANDLEtoHMODULE16(hModule) );
-}
-
-/***********************************************************************
- *           MODULE_HANDLEtoHMODULE16
- */
-HMODULE16
-MODULE_HANDLEtoHMODULE16(HANDLE32 handle) {
-    NE_MODULE	*pModule;
-
-    if (HIWORD(handle))
-    {
-        WARN(module,"looking up 0x%08x in win16 function!\n",handle);
-	/* this is a HMODULE32 */
-
-        /* walk the list looking for the correct startaddress */
-    	pModule = (NE_MODULE *)GlobalLock16( hFirstModule );
-	while (pModule)
-        {
-            if (pModule->module32 == handle) return pModule->self;
-            pModule = (NE_MODULE*)GlobalLock16(pModule->next);
-	}
-	return 0;
-    }
-    return GetExePtr(handle);
-}
-
-/***********************************************************************
- *           MODULE_OpenFile
- */
-int MODULE_OpenFile( HMODULE32 hModule )
-{
-    NE_MODULE *pModule;
-    DOS_FULL_NAME full_name;
-    char *name;
-
-    static int cachedfd = -1;
-
-    hModule = MODULE_HANDLEtoHMODULE16(hModule);
-    TRACE(module, "(%04x) cache: mod=%04x fd=%d\n",
-                    hModule, hCachedModule, cachedfd );
-    if (!(pModule = MODULE_GetPtr32( hModule ))) return -1;
-    if (hCachedModule == hModule) return cachedfd;
-    close( cachedfd );
-    hCachedModule = hModule;
-    name = NE_MODULE_NAME( pModule );
-    if (!DOSFS_GetFullName( name, TRUE, &full_name ) ||
-        (cachedfd = open( full_name.long_name, O_RDONLY )) == -1)
-        WARN( module, "Can't open file '%s' for module %04x\n",
-                 name, hModule );
-    TRACE(module, "opened '%s' -> %d\n",
-                    name, cachedfd );
-    return cachedfd;
-}
-
-
-/***********************************************************************
- *           MODULE_CreateInstance
- *
- * If lib_only is TRUE, handle the module like a library even if it is a .EXE
- */
-HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, HINSTANCE16 *prev,
-                                   BOOL32 lib_only )
-{
-    SEGTABLEENTRY *pSegment;
-    NE_MODULE *pModule;
-    int minsize;
-    HINSTANCE16 hNewInstance;
-
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return 0;
-    if (pModule->dgroup == 0)
-    {
-        if (prev) *prev = hModule;
-        return hModule;
-    }
-
-    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-    if (prev) *prev = pSegment->selector;
-
-      /* if it's a library, create a new instance only the first time */
-    if (pSegment->selector)
-    {
-        if (pModule->flags & NE_FFLAGS_LIBMODULE) return pSegment->selector;
-        if (lib_only) return pSegment->selector;
-    }
-
-    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
-    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
-    minsize += pModule->heap_size;
-    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
-                                 minsize, hModule, FALSE, FALSE, FALSE );
-    if (!hNewInstance) return 0;
-    pSegment->selector = hNewInstance;
-    return hNewInstance;
 }
 
 
@@ -312,63 +195,6 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
 }
 
 
-/***********************************************************************
- *           MODULE_GetModuleName
- */
-LPSTR MODULE_GetModuleName( HMODULE32 hModule )
-{
-    NE_MODULE *pModule;
-    BYTE *p, len;
-    static char buffer[10];
-
-    if (!(pModule = MODULE_GetPtr32( hModule ))) return NULL;
-    p = (BYTE *)pModule + pModule->name_table;
-    len = MIN( *p, 8 );
-    memcpy( buffer, p + 1, len );
-    buffer[len] = '\0';
-    return buffer;
-}
-
-
-/**********************************************************************
- *	    MODULE_FindModule
- *
- * Find a module from a path name.
- * RETURNS
- *	the win16 module handle if found
- * 	0 if not
- */
-HMODULE32 MODULE_FindModule16(
-	LPCSTR path	/* [in] path of the module to be found */
-) {
-    HMODULE32 hModule = hFirstModule;
-    LPCSTR	filename, dotptr, modulepath, modulename;
-    BYTE	len, *name_table;
-
-    if (!(filename = strrchr( path, '\\' ))) filename = path;
-    else filename++;
-    if ((dotptr = strrchr( filename, '.' )) != NULL)
-        len = (BYTE)(dotptr - filename);
-    else len = strlen( filename );
-
-    while(hModule)
-    {
-        NE_MODULE *pModule = MODULE_GetPtr16( hModule );
-        if (!pModule) break;
-        modulepath = NE_MODULE_NAME(pModule);
-        if (!(modulename = strrchr( modulepath, '\\' )))
-            modulename = modulepath;
-        else modulename++;
-        if (!lstrcmpi32A( modulename, filename )) return hModule;
-
-        name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !lstrncmpi32A(filename, name_table+1, len))
-            return hModule;
-        hModule = pModule->next;
-    }
-    return 0;
-}
-
 /**********************************************************************
  *	    MODULE_FindModule32
  *
@@ -427,105 +253,6 @@ HMODULE32 MODULE_FindModule32(
 
 
 /**********************************************************************
- *	    MODULE_CallWEP
- *
- * Call a DLL's WEP, allowing it to shut down.
- * FIXME: we always pass the WEP WEP_FREE_DLL, never WEP_SYSTEM_EXIT
- */
-static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
-{
-    FARPROC16 WEP = (FARPROC16)0;
-    WORD ordinal = NE_GetOrdinal( hModule, "WEP" );
-
-    if (ordinal) WEP = NE_GetEntryPoint( hModule, ordinal );
-    if (!WEP)
-    {
-	WARN(module, "module %04x doesn't have a WEP\n", hModule );
-	return FALSE;
-    }
-    return Callbacks->CallWindowsExitProc( WEP, WEP_FREE_DLL );
-}
-
-
-/**********************************************************************
- *	    MODULE_FreeModule
- *
- * Remove a module from memory.
- */
-BOOL16 MODULE_FreeModule( HMODULE32 hModule, TDB* pTaskContext )
-{
-    HMODULE16 *hPrevModule;
-    NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegment;
-    HMODULE16 *pModRef;
-    int i;
-
-    if (!(pModule = MODULE_GetPtr32( hModule ))) return FALSE;
-    hModule = pModule->self;
-
-    if (((INT16)(--pModule->count)) > 0 ) return TRUE;
-    else pModule->count = 0;
-
-    if (pModule->flags & NE_FFLAGS_BUILTIN)
-        return FALSE;  /* Can't free built-in module */
-
-    if (pModule->flags & NE_FFLAGS_LIBMODULE) 
-    {
-	MODULE_CallWEP( hModule );
-
-	/* Free the objects owned by the DLL module */
-
-	if( pTaskContext && pTaskContext->userhandler )
-	{
-            pTaskContext->userhandler( hModule, USIG_DLL_UNLOAD, 0,
-                                       pTaskContext->hInstance,
-                                       pTaskContext->hQueue );
-	}
-    }
-    /* Clear magic number just in case */
-
-    pModule->magic = pModule->self = 0;
-
-      /* Remove it from the linked list */
-
-    hPrevModule = &hFirstModule;
-    while (*hPrevModule && (*hPrevModule != hModule))
-    {
-        hPrevModule = &(MODULE_GetPtr16( *hPrevModule ))->next;
-    }
-    if (*hPrevModule) *hPrevModule = pModule->next;
-
-      /* Free all the segments */
-
-    pSegment = NE_SEG_TABLE( pModule );
-    for (i = 1; i <= pModule->seg_count; i++, pSegment++)
-    {
-        GlobalFree16( pSegment->selector );
-    }
-
-      /* Free the referenced modules */
-
-    pModRef = (HMODULE16*)NE_MODULE_TABLE( pModule );
-    for (i = 0; i < pModule->modref_count; i++, pModRef++)
-    {
-        FreeModule16( *pModRef );
-    }
-
-      /* Free the module storage */
-
-    if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
-    if (pModule->dlls_to_init) GlobalFree16( pModule->dlls_to_init );
-    GlobalFree16( hModule );
-
-      /* Remove module from cache */
-
-    if (hCachedModule == hModule) hCachedModule = 0;
-
-    return TRUE;
-}
-
-
-/**********************************************************************
  *	    MODULE_Load
  *
  * Implementation of LoadModule().
@@ -534,74 +261,34 @@ BOOL16 MODULE_FreeModule( HMODULE32 hModule, TDB* pTaskContext )
  * without a preceding length byte).
  * If cmd_line is NULL, the module is loaded as a library even if it is a .exe
  */
-HINSTANCE16 MODULE_Load( LPCSTR name, UINT16 uFlags,
+HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
                          LPCSTR cmd_line, LPCSTR env, UINT32 show_cmd )
 {
-    HMODULE32 hModule;
+    HMODULE16 hModule;
     HINSTANCE16 hInstance, hPrevInstance;
     NE_MODULE *pModule;
-    OFSTRUCT ofs;
-    HFILE32 hFile;
 
     if (__winelib)
     {
+        OFSTRUCT ofs;
         lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
         if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
         pModule = (NE_MODULE *)GlobalLock16( hModule );
-        hInstance = MODULE_CreateInstance( hModule, &hPrevInstance,
-                                           (cmd_line == NULL) );
+        hInstance = NE_CreateInstance( pModule, &hPrevInstance,
+                                       (cmd_line == NULL) );
     }
     else
     {
-        hModule = MODULE_FindModule16( name );
-
-        if (!hModule)  /* We have to load the module */
-        {
-            /* Try to load the built-in first if not disabled */
-            if ((hModule = fnBUILTIN_LoadModule( name, FALSE )))
-                return MODULE_HANDLEtoHMODULE16( hModule );
-            
-            if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
-            {
-                /* Now try the built-in even if disabled */
-                if ((hModule = fnBUILTIN_LoadModule( name, TRUE )))
-                {
-                    WARN(module, "Could not load Windows DLL '%s', using built-in module.\n", name );
-                    return MODULE_HANDLEtoHMODULE16( hModule );
-                }
-                return 2;  /* File not found */
-            }
-
-            /* Create the module structure */
-
-            hModule = NE_LoadModule( hFile, &ofs, uFlags, cmd_line,
-                                     env, show_cmd );
-            if (hModule < 32)
-            {
-                if ((hModule == 21) && cmd_line)
-                    hModule = PE_LoadModule( hFile, &ofs, cmd_line,
-                                             env, show_cmd );
-            }
-
-            if (hModule < 32)
-                fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
-                         name, hModule );
-            _lclose32( hFile );
-            return hModule;
-        }
-        else /* module is already loaded, just create a new data segment if it's a task */
-        {
-            pModule = MODULE_GetPtr32( hModule );
-            hInstance = MODULE_CreateInstance( hModule, &hPrevInstance,
-                                               (cmd_line == NULL) );
-            if (hInstance != hPrevInstance)  /* not a library */
-                NE_LoadSegment( pModule, pModule->dgroup );
-            pModule->count++;
-        }
-    } /* !winelib */
+        hInstance = NE_LoadModule( name, &hPrevInstance, implicit,
+                                 (cmd_line == NULL) );
+        if ((hInstance == 21) && cmd_line)
+            return PE_LoadModule( name, cmd_line, env, show_cmd );
+    }
 
     /* Create a task for this instance */
 
+    if (hInstance < 32) return hInstance;
+    pModule = NE_GetPtr( hInstance );
     if (cmd_line && !(pModule->flags & NE_FFLAGS_LIBMODULE))
     {
         PDB32 *pdb;
@@ -622,9 +309,8 @@ HINSTANCE16 MODULE_Load( LPCSTR name, UINT16 uFlags,
  */
 HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
-    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
-    LPSTR cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
-    LPSTR new_cmd_line;
+    LOADPARAMS *params;
+    LPSTR cmd_line, new_cmd_line;
     UINT16 show_cmd = 0;
     LPCVOID env = NULL;
     HINSTANCE16 hInstance;
@@ -649,7 +335,7 @@ HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
     strcat( new_cmd_line, cmd_line );
 
     if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
-    hInstance = MODULE_Load( name, 0, new_cmd_line, env, show_cmd );
+    hInstance = MODULE_Load( name, FALSE, new_cmd_line, env, show_cmd );
     if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return hInstance;
@@ -682,40 +368,11 @@ DWORD LoadModule32( LPCSTR name, LPVOID paramBlock )
   CloseHandle32(pi.hThread); 
 
 #else
-  return MODULE_Load( name, 0, params->lpCmdLine, params->lpEnvAddress, 
+  return MODULE_Load( name, FALSE, params->lpCmdLine, params->lpEnvAddress, 
                         *((UINT16 *)params->lpCmdShow + 1) );
 #endif
 }
 
-
-/**********************************************************************
- *	    FreeModule16    (KERNEL.46)
- */
-BOOL16 WINAPI FreeModule16( HMODULE16 hModule )
-{
-    NE_MODULE *pModule;
-
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return FALSE;
-    TRACE(module, "%s count %d\n", 
-		    MODULE_GetModuleName(hModule), pModule->count );
-
-    return MODULE_FreeModule( hModule, GlobalLock16(GetCurrentTask()) );
-}
-
-
-/**********************************************************************
- *	    GetModuleHandle16    (KERNEL.47)
- */
-HMODULE16 WINAPI WIN16_GetModuleHandle( SEGPTR name )
-{
-    if (HIWORD(name) == 0) return GetExePtr( (HINSTANCE16)name );
-    return MODULE_FindModule16( PTR_SEG_TO_LIN(name) );
-}
-
-HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
-{
-    return MODULE_FindModule16( name );
-}
 
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
@@ -740,52 +397,23 @@ HMODULE32 WINAPI GetModuleHandle32W(LPCWSTR module)
 }
 
 
-/**********************************************************************
- *	    GetModuleUsage    (KERNEL.48)
- */
-INT16 WINAPI GetModuleUsage( HINSTANCE16 hModule )
-{
-    NE_MODULE *pModule;
-
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return 0;
-    TRACE(module, "(%04x): returning %d\n",
-                    hModule, pModule->count );
-    return pModule->count;
-}
-
-
-/**********************************************************************
- *	    GetModuleFileName16    (KERNEL.49)
- */
-INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
-                                  INT16 nSize )
-{
-    NE_MODULE *pModule;
-
-    if (!hModule) hModule = GetCurrentTask();
-    if (!(pModule = MODULE_GetPtr16( hModule ))) return 0;
-    lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), nSize );
-    TRACE(module, "%s\n", lpFileName );
-    return strlen(lpFileName);
-}
-
-
 /***********************************************************************
  *              GetModuleFileName32A      (KERNEL32.235)
- * FIXME FIXME
  */
-DWORD WINAPI GetModuleFileName32A( HMODULE32 hModule, LPSTR lpFileName,
-                                   DWORD size )
-{                   
-    NE_MODULE *pModule;
-           
-    if (!hModule)
-    {
-        TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-        hModule = pTask->hInstance;
-    }
-    if (!(pModule = MODULE_GetPtr32( hModule ))) return 0;
-    lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), size );
+DWORD WINAPI GetModuleFileName32A( 
+	HMODULE32 hModule,	/* [in] module handle (32bit) */
+	LPSTR lpFileName,	/* [out] filenamebuffer */
+        DWORD size		/* [in] size of filenamebuffer */
+) {                   
+    WINE_MODREF *wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+
+    if (!wm) /* can happen on start up or the like */
+    	return 0;
+
+    /* FIXME: we should probably get a real long name, but wm->longname
+     * is currently a UNIX filename!
+     */
+    lstrcpyn32A( lpFileName, wm->shortname, size );
     TRACE(module, "%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
@@ -802,19 +430,6 @@ DWORD WINAPI GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName,
     lstrcpynAtoW( lpFileName, fnA, size );
     HeapFree( GetProcessHeap(), 0, fnA );
     return res;
-}
-
-
-/**********************************************************************
- *	    GetModuleName    (KERNEL.27)
- */
-BOOL16 WINAPI GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
-{
-    LPSTR name = MODULE_GetModuleName(hinst);
-
-    if (!name) return FALSE;
-    lstrcpyn32A( buf, name, nSize );
-    return TRUE;
 }
 
 
@@ -882,29 +497,8 @@ HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
  */
 BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
 {
-    TRACE(module,"hLibModule=%08x\n", hLibModule);
-    return MODULE_FreeModule(hLibModule,GlobalLock16(GetCurrentTask()) );
-}
-
-
-/***********************************************************************
- *           LoadLibrary   (KERNEL.95)
- */
-HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
-{
-    HINSTANCE16 handle;
-
-    TRACE(module, "(%08x) %s\n", (int)libname, libname);
-
-    handle = MODULE_Load( libname, 0, NULL, NULL, 0 );
-    if (handle == (HINSTANCE16)2)  /* file not found */
-    {
-        char buffer[256];
-        lstrcpyn32A( buffer, libname, 252 );
-        strcat( buffer, ".dll" );
-        handle = MODULE_Load( buffer, 0, NULL, NULL, 0 );
-    }
-    return handle;
+    WARN(module,"(%08x): stub\n", hLibModule);
+    return TRUE;  /* FIXME */
 }
 
 
@@ -918,15 +512,6 @@ HINSTANCE32 WINAPI PrivateLoadLibrary(LPCSTR libname)
         return (HINSTANCE32)LoadLibrary16(libname);
 }
 
-
-/***********************************************************************
- *           FreeLibrary16   (KERNEL.96)
- */
-void WINAPI FreeLibrary16( HINSTANCE16 handle )
-{
-    TRACE(module,"%04x\n", handle );
-    FreeModule16( handle );
-}
 
 
 /***********************************************************************
@@ -1001,7 +586,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	{
 	    /* Winelib: Use LoadModule() only for the program itself */
 	    if (__winelib) use_load_module = 0;
-            handle = MODULE_Load( filename, 0, lpCmdLine, NULL, nCmdShow );
+            handle = MODULE_Load( filename, FALSE, lpCmdLine, NULL, nCmdShow );
 	    if (handle == 2)  /* file not found */
 	    {
 		/* Check that the original file name did not have a suffix */
@@ -1011,7 +596,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		{
 		    p = filename + strlen(filename);
 		    strcpy( p, ".exe" );
-                    handle = MODULE_Load( filename, 0, lpCmdLine,
+                    handle = MODULE_Load( filename, FALSE, lpCmdLine,
                                           NULL, nCmdShow );
                     *p = '\0';  /* Remove extension */
 		}
@@ -1094,7 +679,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
  *           WIN32_GetProcAddress16   (KERNEL32.36)
  * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
  */
-FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hModule, LPSTR name )
+FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hModule, LPCSTR name )
 {
     WORD	ordinal;
     FARPROC16	ret;
@@ -1103,7 +688,12 @@ FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hModule, LPSTR name )
     	WARN(module,"hModule may not be 0!\n");
 	return (FARPROC16)0;
     }
-    hModule = MODULE_HANDLEtoHMODULE16(hModule);
+    if (HIWORD(hModule))
+    {
+    	WARN( module, "hModule is Win32 handle (%08x)\n", hModule );
+	return (FARPROC16)0;
+    }
+    hModule = GetExePtr( hModule );
     if (HIWORD(name)) {
         ordinal = NE_GetOrdinal( hModule, name );
         TRACE(module, "%04x '%s'\n",
@@ -1200,79 +790,4 @@ LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( PROCESS_Current(), hModule );
     if (!wm || (wm->type != MODULE32_PE)) return (LPIMAGE_NT_HEADERS)0;
     return PE_HEADER(wm->module);
-}
-
-
-/**********************************************************************
- *	    GetExpWinVer    (KERNEL.167)
- */
-WORD WINAPI GetExpWinVer( HMODULE16 hModule )
-{
-    NE_MODULE *pModule = MODULE_GetPtr16( hModule );
-    return pModule ? pModule->expected_version : 0;
-}
-
-
-/**********************************************************************
- *	    IsSharedSelector    (KERNEL.345)
- */
-BOOL16 WINAPI IsSharedSelector( HANDLE16 selector )
-{
-    /* Check whether the selector belongs to a DLL */
-    NE_MODULE *pModule = MODULE_GetPtr16( selector );
-    if (!pModule) return FALSE;
-    return (pModule->flags & NE_FFLAGS_LIBMODULE) != 0;
-}
-
-
-/**********************************************************************
- *	    ModuleFirst    (TOOLHELP.59)
- */
-BOOL16 WINAPI ModuleFirst( MODULEENTRY *lpme )
-{
-    lpme->wNext = hFirstModule;
-    return ModuleNext( lpme );
-}
-
-
-/**********************************************************************
- *	    ModuleNext    (TOOLHELP.60)
- */
-BOOL16 WINAPI ModuleNext( MODULEENTRY *lpme )
-{
-    NE_MODULE *pModule;
-    char *name;
-
-    if (!lpme->wNext) return FALSE;
-    if (!(pModule = MODULE_GetPtr16( lpme->wNext ))) return FALSE;
-    name = (char *)pModule + pModule->name_table;
-    memcpy( lpme->szModule, name + 1, *name );
-    lpme->szModule[(BYTE)*name] = '\0';
-    lpme->hModule = lpme->wNext;
-    lpme->wcUsage = pModule->count;
-    strncpy( lpme->szExePath, NE_MODULE_NAME(pModule), MAX_PATH );
-    lpme->szExePath[MAX_PATH] = '\0';
-    lpme->wNext = pModule->next;
-    return TRUE;
-}
-
-
-/**********************************************************************
- *	    ModuleFindName    (TOOLHELP.61)
- */
-BOOL16 WINAPI ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
-{
-    lpme->wNext = GetModuleHandle16( name );
-    return ModuleNext( lpme );
-}
-
-
-/**********************************************************************
- *	    ModuleFindHandle    (TOOLHELP.62)
- */
-BOOL16 WINAPI ModuleFindHandle( MODULEENTRY *lpme, HMODULE16 hModule )
-{
-    hModule = GetExePtr( hModule );
-    lpme->wNext = hModule;
-    return ModuleNext( lpme );
 }

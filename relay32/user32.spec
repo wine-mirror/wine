@@ -114,7 +114,7 @@ type	win32
 109 stdcall DdeNameService(long long long long) DdeNameService32
 110 stdcall DdePostAdvise(long long long) DdePostAdvise32
 111 stub DdeQueryConvInfo
-112 stub DdeQueryNextServer
+112 stdcall DdeQueryNextServer(long long) DdeQueryNextServer32
 113 stub DdeQueryStringA
 114 stub DdeQueryStringW
 115 stdcall DdeReconnect(long) DdeReconnect
@@ -537,7 +537,7 @@ type	win32
 532 stdcall ShowScrollBar(long long long) ShowScrollBar32
 533 stub ShowStartGlass
 534 stdcall ShowWindow(long long) ShowWindow32
-535 stub ShowWindowAsync
+535 stdcall ShowWindowAsync(long long) ShowWindowAsync32
 536 stdcall SubtractRect(ptr ptr ptr) SubtractRect32
 537 stdcall SwapMouseButton(long) SwapMouseButton32
 538 stub SwitchDesktop

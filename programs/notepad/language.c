@@ -16,12 +16,43 @@
 CHAR STRING_MENU_Xx[]      = "MENU_Xx";
 CHAR STRING_PAGESETUP_Xx[] = "DIALOG_PAGESETUP_Xx";
 
+void LANGUAGE_UpdateWindowCaption(void) {
+  /* Sets the caption of the main window according to Globals.szFileName:
+      Notepad - (untitled)      if no file is open
+      Notepad - [filename]      if a file is given
+  */
+  
+  CHAR szCaption[MAX_STRING_LEN];
+  CHAR szUntitled[MAX_STRING_LEN];
+
+  LoadString(Globals.hInstance, IDS_NOTEPAD, szCaption, sizeof(szCaption));
+  
+  if (strlen(Globals.szFileName)>0) {
+      lstrcat(szCaption, " - [");
+      lstrcat(szCaption, Globals.szFileName);
+      lstrcat(szCaption, "]");
+  }
+  else
+  {
+      LoadString(Globals.hInstance, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
+      lstrcat(szCaption, " - ");
+      lstrcat(szCaption, szUntitled);
+  }
+    
+  SetWindowText(Globals.hMainWnd, szCaption);
+  
+}
+
+
+
 static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
 {
   ids -= Globals.wStringTableOffset;
   ids += num * 0x100;
   return(LoadString(Globals.hInstance, ids, str, len));
 };
+
+
 
 VOID LANGUAGE_SelectByName(LPCSTR lang)
 {
@@ -30,18 +61,18 @@ VOID LANGUAGE_SelectByName(LPCSTR lang)
 
   for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
     if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)) &&
-	!lstrcmp(lang, newlang))
+        !lstrcmp(lang, newlang))
       {
         LANGUAGE_SelectByNumber(i);
-	return;
+        return;
       }
 
   /* Fallback */
     for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
     if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)))
       {
-	LANGUAGE_SelectByNumber(i);
-	return;
+        LANGUAGE_SelectByNumber(i);
+        return;
       }
 
   MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
@@ -52,7 +83,6 @@ VOID LANGUAGE_SelectByNumber(UINT num)
 {
   INT    i;
   CHAR   lang[3];
-  CHAR   caption[MAX_STRING_LEN];
   CHAR   item[MAX_STRING_LEN];
   HMENU  hMainMenu;
 
@@ -64,12 +94,11 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   Globals.lpszLanguage = lang;
 
   /* Set frame caption */
-  LoadString(Globals.hInstance, IDS_NOTEPAD, caption, sizeof(caption));
-  SetWindowText(Globals.hMainWnd, caption);
-
+  LANGUAGE_UpdateWindowCaption();
+  
   /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx    + sizeof(STRING_MENU_Xx)    - 3, lang, 3);
-  lstrcpyn(STRING_PAGESETUP_Xx    + sizeof(STRING_PAGESETUP_Xx)    - 3, lang, 3);
+  lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);
+  lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);
 
   /* Create menu */
   hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
@@ -85,7 +114,7 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
     if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_MENU_ITEM, item, sizeof(item)))
       AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
-		 NP_FIRST_LANGUAGE + i, item);
+                 NP_FIRST_LANGUAGE + i, item);
 
   SetMenu(Globals.hMainWnd, hMainMenu);
 
@@ -125,3 +154,4 @@ VOID LANGUAGE_Init(VOID)
 /* Local Variables:    */
 /* c-file-style: "GNU" */
 /* End:                */
+

@@ -16,17 +16,19 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
+#ifdef STATFS_DEFINED_BY_SYS_VFS
+# include <sys/vfs.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_MOUNT
+#  include <sys/mount.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
 #endif
 
 #include "windows.h"

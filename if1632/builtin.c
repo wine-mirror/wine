@@ -186,6 +186,7 @@ BOOL32 BUILTIN_Init(void)
     NE_MODULE *pModule;
     WORD vector;
     HMODULE16 hModule;
+    WORD cs, ds;
 
     fnBUILTIN_LoadModule = BUILTIN_LoadModule;
 
@@ -197,9 +198,9 @@ BOOL32 BUILTIN_Init(void)
 
     /* Set the USER and GDI heap selectors */
 
-    pModule      = MODULE_GetPtr16( GetModuleHandle16( "USER" ));
+    pModule      = NE_GetPtr( GetModuleHandle16( "USER" ));
     USER_HeapSel = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
-    pModule      = MODULE_GetPtr16( GetModuleHandle16( "GDI" ));
+    pModule      = NE_GetPtr( GetModuleHandle16( "GDI" ));
     GDI_HeapSel  = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
 
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
@@ -207,6 +208,12 @@ BOOL32 BUILTIN_Init(void)
     hModule = GetModuleHandle16( "KERNEL" );
     NE_SetEntryPoint( hModule, 178, GetWinFlags() );
 
+    /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
+
+    GET_CS(cs); GET_DS(ds);
+    NE_SetEntryPoint( hModule, 454, cs );
+    NE_SetEntryPoint( hModule, 455, ds );
+  
     /* Initialize the real-mode selector entry points */
 
 #define SET_ENTRY_POINT( num, addr ) \
@@ -247,7 +254,7 @@ BOOL32 BUILTIN_Init(void)
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
+HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 {
     BUILTIN16_DLL *table;
     char dllname[16], *p;
@@ -260,8 +267,7 @@ HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 
     for (table = BuiltinDLLs; table->descr; table++)
         if (!lstrcmpi32A( table->descr->name, dllname )) break;
-    if (!table->descr) return BUILTIN32_LoadModule( name, force,
-                                                    PROCESS_Current() );
+    if (!table->descr) return 0;
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
     return BUILTIN_DoLoadModule16( table->descr );
@@ -281,7 +287,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
     register BYTE *p;
     NE_MODULE *pModule;
 
-    if (!(pModule = MODULE_GetPtr16( FarGetOwner( GlobalHandle16(cs) ))))
+    if (!(pModule = NE_GetPtr( FarGetOwner( GlobalHandle16(cs) ))))
         return NULL;
 
     /* Search for the ordinal */

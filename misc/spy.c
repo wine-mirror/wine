@@ -669,8 +669,11 @@ void SPY_EnterMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg,
 
             if (hTask == GetCurrentTask()) strcpy( taskName, "self" );
             else if (!hTask) strcpy( taskName, "Wine" );
-            else sprintf( taskName, "task %04x %s",
-                          hTask, MODULE_GetModuleName(hTask) );
+            else
+            {
+                sprintf( taskName, "task %04x ???", hTask );
+                GetModuleName( hTask, taskName + 10, sizeof(taskName) - 10 );
+            }
 	    pname = SPY_GetWndName(hWnd);
 
             if (iFlag == SPY_SENDMESSAGE16)
@@ -718,39 +721,39 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
     switch(iFlag)
     {
     case SPY_RESULT_DEFWND16:
-	TRACE(message,"%*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
+	TRACE(message," %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_DEFWND32:
-	TRACE(message,"%*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
+	TRACE(message," %*s(%08x)  DefWindowProc32: %s [%04x] returned %08lx\n",
 			SPY_IndentLevel, "", hWnd, SPY_GetMsgName( msg ), msg, lReturn );
 	break;
 
     case SPY_RESULT_OK16:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message,"%*s(%04x) %-16s message [%04x] %s returned %08lx\n",
+        TRACE(message," %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break;
 
     case SPY_RESULT_OK32:
 	pname = SPY_GetWndName(hWnd);
-        TRACE(message,"%*s(%08x) %-16s message [%04x] %s returned %08lx\n",
+        TRACE(message," %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ), lReturn );
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
 	pname = SPY_GetWndName(hWnd);
-        WARN(message, "%*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        WARN(message, " %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;
 
     case SPY_RESULT_INVALIDHWND32:
 	pname = SPY_GetWndName(hWnd);
-        WARN(message, "%*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
+        WARN(message, " %*s(%08x) %-16s message [%04x] %s HAS INVALID HWND\n",
                         SPY_IndentLevel, "", hWnd, pname, msg,
                         SPY_GetMsgName( msg ) );
         break;

@@ -62,6 +62,9 @@
 #define REG_CREATED_NEW_KEY	0x00000001
 #define REG_OPENED_EXISTING_KEY	0x00000002
 
+/* For RegNotifyChangeKeyValue */
+#define REG_NOTIFY_CHANGE_NAME	0x1
+
 #define KEY_QUERY_VALUE         0x00000001
 #define KEY_SET_VALUE           0x00000002
 #define KEY_CREATE_SUB_KEY      0x00000004

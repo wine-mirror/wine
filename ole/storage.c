@@ -282,7 +282,8 @@ STORAGE_look_for_named_pps(HFILE32 hf,int n,LPOLESTR32 name) {
 	return -1;
 }
 
-static void
+/* FIXME: Function is unused */
+void
 STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 	char	name[33],xguid[50];
 
@@ -1102,7 +1103,7 @@ HRESULT WINAPI IStorage16_Stat(
 	TRACE(ole,"(%p)->(%p,0x%08lx)\n",
 		this,pstatstg,grfStatFlag
 	);
-	pstatstg->pwcsName=SEGPTR_GET(SEGPTR_STRDUP_WtoA(this->stde.pps_rawname));
+	pstatstg->pwcsName=(LPOLESTR16)SEGPTR_GET(SEGPTR_STRDUP_WtoA(this->stde.pps_rawname));
 	pstatstg->type = this->stde.pps_type;
 	pstatstg->cbSize.LowPart = this->stde.pps_size;
 	pstatstg->mtime = this->stde.pps_ft1; /* FIXME */ /* why? */

@@ -129,7 +129,7 @@ type	win32
 0125 stub ReadEventLogW
 0126 stdcall RegCloseKey(long) RegCloseKey
 0127 stdcall RegConnectRegistryA(str long ptr) RegConnectRegistry32A
-0128 stub RegConnectRegistryW
+0128 stdcall RegConnectRegistryW(wstr long ptr) RegConnectRegistry32W
 0129 stdcall RegCreateKeyA(long str ptr) RegCreateKey32A
 0130 stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) RegCreateKeyEx32A
 0131 stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) RegCreateKeyEx32W
@@ -146,9 +146,9 @@ type	win32
 0142 stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) RegEnumValue32W
 0143 stdcall RegFlushKey(long) RegFlushKey
 0144 stdcall RegGetKeySecurity(long long ptr ptr) RegGetKeySecurity
-0145 stub RegLoadKeyA
-0146 stub RegLoadKeyW
-0147 stub RegNotifyChangeKeyValue
+0145 stdcall RegLoadKeyA(long str str) RegLoadKey32A
+0146 stdcall RegLoadKeyW(long wstr wstr) RegLoadKey32W
+0147 stdcall RegNotifyChangeKeyValue(long long long long long) RegNotifyChangeKeyValue
 0148 stdcall RegOpenKeyA(long str ptr) RegOpenKey32A
 0149 stdcall RegOpenKeyExA(long str long long ptr) RegOpenKeyEx32A
 0150 stdcall RegOpenKeyExW(long wstr long long ptr) RegOpenKeyEx32W

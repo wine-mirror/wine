@@ -1151,9 +1151,15 @@ static void REGION_RegionOp(
     r1End = r1 + reg1->numRects;
     r2End = r2 + reg2->numRects;
     
+
+    /*
+     * newReg may be one of the src regions so we can't empty it. We keep a 
+     * note of its rects pointer (so that we can free them later), preserve its
+     * extents and simply set numRects to zero. 
+     */
+
     oldRects = newReg->rects;
-    
-    EMPTY_REGION(newReg);
+    newReg->numRects = 0;
 
     /*
      * Allocate a reasonable number of rectangles for the new region. The idea

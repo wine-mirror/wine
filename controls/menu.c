@@ -855,10 +855,10 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
         TRACE(menu, "Ownerdraw: itemID=%d, itemState=%d, itemAction=%d, "
-	      "hwndItem=%04x, hdc=%04x, rcItem={%d,%d,%d,%d}, rcItem=%p\n",dis.itemID,
+	      "hwndItem=%04x, hdc=%04x, rcItem={%d,%d,%d,%d}\n",dis.itemID,
 	      dis.itemState, dis.itemAction, dis.hwndItem, dis.hDC,
 	      dis.rcItem.left, dis.rcItem.top, dis.rcItem.right,
-	      dis.rcItem.bottom, dis.rcItem );
+	      dis.rcItem.bottom );
         SendMessage32A( GetWindow32(hwnd,GW_OWNER), WM_DRAWITEM, 0, (LPARAM)&dis );
         return;
     }
@@ -2799,7 +2799,7 @@ BOOL32 WINAPI EnableMenuItem32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
 
     while( (item = MENU_FindItem( &hMenu, &wItemID, wFlags )) )
     {
-      if( !(item->fType & MF_POPUP) )
+      if( (wFlags & MF_BYPOSITION) || !(item->fType & MF_POPUP) )
       {
            /* We can't have MF_GRAYED and MF_DISABLED together */
            if (wFlags & MF_GRAYED)

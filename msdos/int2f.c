@@ -72,6 +72,16 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             INT_BARF( context, 0x2f );
         }
         break;
+    case 0x56:  /* INTERLNK */
+	switch(AL_reg(context))
+	{
+	case 0x01:  /* check if redirected drive */
+	    AL_reg(context) = 0; /* not redirected */
+	    break;
+	default:
+	    INT_BARF( context, 0x2f );
+	}
+	break;
     case 0xb7:  /* append */
         AL_reg(context) = 0; /* not installed */
         break;
@@ -217,7 +227,7 @@ void do_mscdex( CONTEXT *context )
             break;
 
         default:
-            FIXME(int, "Unimplemented MSCDEX function 0x%02.2X.\n", AL_reg(context));
+            FIXME(int, "Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));
             break;
     }
 }

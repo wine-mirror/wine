@@ -144,7 +144,7 @@ static void _dump_DDBLTFAST(DWORD flagmask) {
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
-			DUMP("%s ",i,flags[i].name);
+			DUMP("%s ",flags[i].name);
 	DUMP("\n");
 }
 
@@ -184,7 +184,7 @@ static void _dump_DDBLT(DWORD flagmask) {
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
-			DUMP("%s ",i,flags[i].name);
+			DUMP("%s ",flags[i].name);
 }
 
 static void _dump_DDSCAPS(DWORD flagmask) {
@@ -231,7 +231,7 @@ static void _dump_DDSCAPS(DWORD flagmask) {
 	DUMP("\n");
 }
 
-static void _dump_DDCAPS(DWORD flagmask) {
+void _dump_DDCAPS(DWORD flagmask) {
 	int	i;
 	const struct {
 		DWORD	mask;
@@ -302,7 +302,7 @@ static void _dump_DDSD(DWORD flagmask) {
 	};
 	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
 		if (flags[i].mask & flagmask)
-			DUMP("%s ",i,flags[i].name);
+			DUMP("%s ",flags[i].name);
 	DUMP("\n");
 }
 
@@ -1031,6 +1031,29 @@ static HRESULT WINAPI IDirectDrawPalette_SetEntries(
 		this->palents[i].peBlue = palent[i-start].peBlue;
 		this->palents[i].peGreen = palent[i-start].peGreen;
 	}
+
+/* Insomnia's (Stea Greene's) Mods Start Here */
+/* FIXME: Still should free individual cells, but this fixes loss of */
+/*        unchange sections of old palette */
+
+	for (i=0;i<start;i++) {
+		xc.red = this->palents[i].peRed<<8;
+		xc.blue = this->palents[i].peBlue<<8;
+		xc.green = this->palents[i].peGreen<<8;
+		xc.flags = DoRed|DoBlue|DoGreen;
+		xc.pixel = i;
+		TSXStoreColor(display,this->cm,&xc);
+	}
+	for (i=end;i<256;i++) {
+		xc.red = this->palents[i].peRed<<8;
+		xc.blue = this->palents[i].peBlue<<8;
+		xc.green = this->palents[i].peGreen<<8;
+		xc.flags = DoRed|DoBlue|DoGreen;
+		xc.pixel = i;
+		TSXStoreColor(display,this->cm,&xc);
+	}
+/* End Insomnia's Mods */
+
 	XF86DGAInstallColormap(display,DefaultScreen(display),this->cm);
 	return 0;
 }
@@ -1248,7 +1271,6 @@ static HRESULT WINAPI IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
 	int	i,*depths,depcount;
-	char	buf[200];
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n",
 		      this, width, height, depth);

@@ -182,7 +182,7 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
       TRACE(prop, "%04x #%04x\n", hwnd, LOWORD(str));
 
 
-    if (!pWnd) return NULL;
+    if (!pWnd) return (HANDLE32)0;
     if (HIWORD(str))
     {
         atom = GlobalFindAtom32A( str );

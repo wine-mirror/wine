@@ -11,6 +11,7 @@ C_SRCS = \
 	commctrl.c \
 	desktop.c \
 	edit.c \
+	header.c \
 	icontitle.c \
 	listbox.c \
 	menu.c \

@@ -122,6 +122,8 @@ libwine.so.1.0: $(LIBOBJS)
 	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
 install_emu: install_lib
+	-mkdirhier $(bindir)
+	-mkdirhier $(libdir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 
@@ -157,7 +159,7 @@ htmlpages:
 
 clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in include; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
+	for i in include; do (cd $$i; $(RM) *.o \#*\# *~ *% *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
 
 distclean: clean

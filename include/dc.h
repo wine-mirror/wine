@@ -21,6 +21,7 @@ extern BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors );
 extern BOOL32 DC_SetupGCForBrush( DC * dc );
 extern BOOL32 DC_SetupGCForPen( DC * dc );
 extern BOOL32 DC_SetupGCForText( DC * dc );
+extern void DC_UpdateXforms( DC * dc );
 
 extern const int DC_XROPfunction[];
 

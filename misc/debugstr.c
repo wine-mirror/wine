@@ -173,7 +173,7 @@ void debug_dumpstr (LPCSTR s)
 	  break;
 	default:
 	  if (*s<' ')
-	    printf ("\\0x%02x", *s);
+	    fprintf (stderr, "\\0x%02x", *s);
 	  else
 	    fputc (*s, stderr);
 	}

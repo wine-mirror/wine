@@ -11,7 +11,12 @@
 #include "global.h"
 #include "windows.h"
 #include "winnt.h"
+#include "winerror.h"
 #include "winreg.h"
+#include "debug.h"
+
+/* Should this write to the registry? */
+#define DO_REG FALSE
 
 static BYTE PF[64] = {0,};
 
@@ -22,7 +27,7 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
-	HKEY	xhkey=0,hkey;
+	HKEY	hkey;
 	char	buf[20];
 
 	if (cache) {
@@ -52,6 +57,16 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 
 	/* hmm, reasonable processor feature defaults? */
 
+        /* The registry calls were removed because they were being called 
+           before the registries were loaded, and they were giving errors */
+        /* Create this registry key for all systems */
+
+#if DO_REG
+	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) {
+            WARN(reg,"Unable to register CPU information\n");
+        }
+#endif
+
 #ifdef linux
 	{
 	char line[200];
@@ -59,8 +74,7 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 
 	if (!f)
 		return;
-        xhkey = 0;
-	RegCreateKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey);
+        /*xhkey = 0;*/
 	while (fgets(line,200,f)!=NULL) {
 		char	*s,*value;
 
@@ -94,10 +108,12 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
+#if DO_REG
 			/* set the CPU type of the current processor */
 			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (xhkey)
-				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
+			if (hkey)
+				RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,buf,strlen(buf));
+#endif
 			continue;
 		}
 		/* old 2.0 method */
@@ -122,10 +138,12 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 					break;
 				}
 			}
+#if DO_REG
 			/* set the CPU type of the current processor */
 			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (xhkey)
-				RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
+			if (hkey)
+				RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,buf,strlen(buf));
+#endif
 			continue;
 		}
 		if (!lstrncmpi32A(line,"fdiv_bug",strlen("fdiv_bug"))) {
@@ -148,11 +166,14 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
 
+#if 0
 			/* create a new processor subkey */
+                        /* What exactly is trying to be done here? */
 			sprintf(buf,"%d",x);
 			if (xhkey)
 				RegCloseKey(xhkey);
 			RegCreateKey16(hkey,buf,&xhkey);
+#endif
 		}
 		if (!lstrncmpi32A(line,"stepping",strlen("stepping"))) {
 			int	x;
@@ -174,13 +195,23 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 #else  /* linux */
 	/* FIXME: how do we do this on other systems? */
 
-	RegCreateKey16(hkey,"0",&xhkey);
+#if 0
 	RegSetValueEx32A(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
+#endif
+
 #endif  /* !linux */
-	if (xhkey)
+
+#if 0
+	(xhkey)
 		RegCloseKey(xhkey);
-	RegCloseKey(hkey);
+#endif
+#if DO_REG
+    if (hkey)
+        RegCloseKey(hkey);
+#endif
+
 }
+
 
 /***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNELL32.880]

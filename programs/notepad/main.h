@@ -33,6 +33,12 @@ typedef struct
   BOOL    bWrapLongLines;
   CHAR    szFindText[MAX_PATHNAME_LEN];
   CHAR    szFileName[MAX_PATHNAME_LEN];
+  CHAR    szMarginTop[MAX_PATHNAME_LEN];
+  CHAR    szMarginBottom[MAX_PATHNAME_LEN];
+  CHAR    szMarginLeft[MAX_PATHNAME_LEN];
+  CHAR    szMarginRight[MAX_PATHNAME_LEN];
+  CHAR    szHeader[MAX_PATHNAME_LEN];
+  CHAR    szFooter[MAX_PATHNAME_LEN];
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;
@@ -54,18 +60,19 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #endif
 
 /* string table index */
-#define IDS_LANGUAGE_ID                	STRINGID(00)
-#define IDS_LANGUAGE_MENU_ITEM         	STRINGID(01)
-#define IDS_NOTEPAD                    	STRINGID(02)
-#define IDS_TEXT_FILES_TXT	       	STRINGID(03)
-#define IDS_ALL_FILES                  	STRINGID(04)
-#define IDS_ERROR			STRINGID(05)
-#define IDS_WARNING			STRINGID(06)
-#define IDS_INFO			STRINGID(07)
-#define IDS_TOOLARGE			STRINGID(08)
-#define IDS_NOTEXT			STRINGID(09)
-#define IDS_NOTFOUND			STRINGID(0A)
-#define IDS_OUT_OF_MEMORY		STRINGID(0B)
+#define IDS_LANGUAGE_ID                 STRINGID(00)
+#define IDS_LANGUAGE_MENU_ITEM          STRINGID(01)
+#define IDS_NOTEPAD                     STRINGID(02)
+#define IDS_TEXT_FILES_TXT              STRINGID(03)
+#define IDS_ALL_FILES                   STRINGID(04)
+#define IDS_ERROR                       STRINGID(05)
+#define IDS_WARNING                     STRINGID(06)
+#define IDS_INFO                        STRINGID(07)
+#define IDS_TOOLARGE                    STRINGID(08)
+#define IDS_NOTEXT                      STRINGID(09)
+#define IDS_NOTFOUND                    STRINGID(0A)
+#define IDS_OUT_OF_MEMORY               STRINGID(0B)
+#define IDS_UNTITLED                    STRINGID(0C)
 
 /* main menu */
 
@@ -103,20 +110,20 @@ extern CHAR STRING_PAGESETUP_Xx[];
 
 /* Dialog `Page Setup' */
 
-#define NP_PAGESETUP_HEAD	1000
-#define NP_PAGESETUP_HEAD_TXT	1001
-#define NP_PAGESETUP_TAIL	1002
-#define NP_PAGESETUP_TAIL_TXT	1003
+#define NP_PAGESETUP_HEAD       1000
+#define NP_PAGESETUP_HEAD_TXT   1001
+#define NP_PAGESETUP_TAIL       1002
+#define NP_PAGESETUP_TAIL_TXT   1003
 #define NP_PAGESETUP_LEFT       1005
-#define NP_PAGESETUP_LEFT_TXT	1006
-#define NP_PAGESETUP_RIGHT   	1007
-#define NP_PAGESETUP_RIGHT_TXT	1008
-#define NP_PAGESETUP_TOP      	1009
-#define NP_PAGESETUP_TOP_TXT	1010
+#define NP_PAGESETUP_LEFT_TXT   1006
+#define NP_PAGESETUP_RIGHT      1007
+#define NP_PAGESETUP_RIGHT_TXT  1008
+#define NP_PAGESETUP_TOP        1009
+#define NP_PAGESETUP_TOP_TXT    1010
 #define NP_PAGESETUP_BOTTOM     1011
-#define NP_PAGESETUP_BOTTOM_TXT	1012
-#define NP_HELP			1013
-#define NP_PAGESETUP_MARGIN 	1014
+#define NP_PAGESETUP_BOTTOM_TXT 1012
+#define NP_HELP                 1013
+#define NP_PAGESETUP_MARGIN     1014
 
 
 /* Local Variables:    */

@@ -343,7 +343,7 @@ void DEBUG_AddModuleBreakpoints(void)
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
-        if (!(pModule = MODULE_GetPtr16( entry.hModule ))) continue;
+        if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
         if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
 
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */

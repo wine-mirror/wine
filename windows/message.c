@@ -23,6 +23,8 @@
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
+#include "process.h"
+#include "thread.h"
 #include "options.h"
 #include "debug.h"
 
@@ -1136,8 +1138,11 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
 BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
                                    WPARAM32 wParam, LPARAM lParam )
 {
-   FIXME(sendmsg, "(...): Stub\n");
-   return FALSE;
+   THDB *thdb = THREAD_ID_TO_THDB(idThread);
+   if (!thdb || !thdb->process) return FALSE;
+
+   FIXME(sendmsg, "(...): Should use thread-local message queue!\n");
+   return PostAppMessage16(thdb->process->task, message, wParam, lParam);
 }
 
 /***********************************************************************

@@ -3,10 +3,10 @@
  *
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "callback.h"
 #include "debugger.h"
+#include "main.h"
 #include "miscemu.h"
 #include "module.h"
 #include "options.h"
@@ -18,8 +18,6 @@
  */
 BOOL32 MAIN_EmulatorInit(void)
 {
-    extern BOOL32 MAIN_KernelInit(void);
-    extern BOOL32 MAIN_UserInit(void);
     extern BOOL32 WIN16DRV_Init(void);
     extern BOOL32 RELAY_Init(void);
 
@@ -46,7 +44,6 @@ BOOL32 MAIN_EmulatorInit(void)
 int main( int argc, char *argv[] )
 {
     extern BOOL32 PROCESS_Init(void);
-    extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
     extern void *CALL32_Init(void);
     extern char * DEBUG_argv0;
 
@@ -107,7 +104,6 @@ int main( int argc, char *argv[] )
     }
 
     if (!loaded) { /* nothing loaded */
-    	extern void MAIN_Usage(char*);
     	MAIN_Usage(argv[0]);
 	return 1;
     }

@@ -460,8 +460,8 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
      char *s;
      sprintf(h_string, "[%+f%+f%+f%+f]", h_matrix[0], h_matrix[1], h_matrix[2], h_matrix[3]);
      sprintf(point_string, "[%+f%+f%+f%+f]", point_matrix[0], point_matrix[1], point_matrix[2], point_matrix[3]);
-     while (s = strchr(h_string, '-')) *s='~';
-     while (s = strchr(point_string, '-')) *s='~';
+     while ((s = strchr(h_string, '-'))) *s='~';
+     while ((s = strchr(point_string, '-'))) *s='~';
    } else {
      sprintf(h_string, "%d", h);
      sprintf(point_string, "%d", point);

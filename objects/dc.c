@@ -100,50 +100,52 @@ void DC_FillDevCaps( DeviceCaps * caps )
  */
 static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
 {
-    win_dc_info->flags           = 0;
-    win_dc_info->devCaps         = NULL;
-    win_dc_info->hClipRgn        = 0;
-    win_dc_info->hVisRgn         = 0;
-    win_dc_info->hGCClipRgn      = 0;
-    win_dc_info->hPen            = STOCK_BLACK_PEN;
-    win_dc_info->hBrush          = STOCK_WHITE_BRUSH;
-    win_dc_info->hFont           = STOCK_SYSTEM_FONT;
-    win_dc_info->hBitmap         = 0;
-    win_dc_info->hFirstBitmap    = 0;
-    win_dc_info->hDevice         = 0;
-    win_dc_info->hPalette        = STOCK_DEFAULT_PALETTE;
-    win_dc_info->ROPmode         = R2_COPYPEN;
-    win_dc_info->polyFillMode    = ALTERNATE;
-    win_dc_info->stretchBltMode  = BLACKONWHITE;
-    win_dc_info->relAbsMode      = ABSOLUTE;
-    win_dc_info->backgroundMode  = OPAQUE;
-    win_dc_info->backgroundColor = RGB( 255, 255, 255 );
-    win_dc_info->textColor       = RGB( 0, 0, 0 );
-    win_dc_info->backgroundPixel = 0;
-    win_dc_info->textPixel       = 0;
-    win_dc_info->brushOrgX       = 0;
-    win_dc_info->brushOrgY       = 0;
-    win_dc_info->textAlign       = TA_LEFT | TA_TOP | TA_NOUPDATECP;
-    win_dc_info->charExtra       = 0;
-    win_dc_info->breakTotalExtra = 0;
-    win_dc_info->breakCount      = 0;
-    win_dc_info->breakExtra      = 0;
-    win_dc_info->breakRem        = 0;
-    win_dc_info->bitsPerPixel    = 1;
-    win_dc_info->MapMode         = MM_TEXT;
-    win_dc_info->GraphicsMode    = GM_COMPATIBLE;
-    win_dc_info->DCOrgX          = 0;
-    win_dc_info->DCOrgY          = 0;
-    win_dc_info->CursPosX        = 0;
-    win_dc_info->CursPosY        = 0;
-    win_dc_info->ArcDirection    = AD_COUNTERCLOCKWISE;
-    win_dc_info->UseWorldXform   = FALSE;
-    win_dc_info->WorldXform.eM11 = 1.0f;
-    win_dc_info->WorldXform.eM12 = 0.0f;
-    win_dc_info->WorldXform.eM21 = 0.0f;
-    win_dc_info->WorldXform.eM22 = 1.0f;
-    win_dc_info->WorldXform.eDx  = 0.0f;
-    win_dc_info->WorldXform.eDy  = 0.0f;
+    win_dc_info->flags               = 0;
+    win_dc_info->devCaps             = NULL;
+    win_dc_info->hClipRgn            = 0;
+    win_dc_info->hVisRgn             = 0;
+    win_dc_info->hGCClipRgn          = 0;
+    win_dc_info->hPen                = STOCK_BLACK_PEN;
+    win_dc_info->hBrush              = STOCK_WHITE_BRUSH;
+    win_dc_info->hFont               = STOCK_SYSTEM_FONT;
+    win_dc_info->hBitmap             = 0;
+    win_dc_info->hFirstBitmap        = 0;
+    win_dc_info->hDevice             = 0;
+    win_dc_info->hPalette            = STOCK_DEFAULT_PALETTE;
+    win_dc_info->ROPmode             = R2_COPYPEN;
+    win_dc_info->polyFillMode        = ALTERNATE;
+    win_dc_info->stretchBltMode      = BLACKONWHITE;
+    win_dc_info->relAbsMode          = ABSOLUTE;
+    win_dc_info->backgroundMode      = OPAQUE;
+    win_dc_info->backgroundColor     = RGB( 255, 255, 255 );
+    win_dc_info->textColor           = RGB( 0, 0, 0 );
+    win_dc_info->backgroundPixel     = 0;
+    win_dc_info->textPixel           = 0;
+    win_dc_info->brushOrgX           = 0;
+    win_dc_info->brushOrgY           = 0;
+    win_dc_info->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
+    win_dc_info->charExtra           = 0;
+    win_dc_info->breakTotalExtra     = 0;
+    win_dc_info->breakCount          = 0;
+    win_dc_info->breakExtra          = 0;
+    win_dc_info->breakRem            = 0;
+    win_dc_info->bitsPerPixel        = 1;
+    win_dc_info->MapMode             = MM_TEXT;
+    win_dc_info->GraphicsMode        = GM_COMPATIBLE;
+    win_dc_info->DCOrgX              = 0;
+    win_dc_info->DCOrgY              = 0;
+    win_dc_info->CursPosX            = 0;
+    win_dc_info->CursPosY            = 0;
+    win_dc_info->ArcDirection        = AD_COUNTERCLOCKWISE;
+    win_dc_info->xformWorld2Wnd.eM11 = 1.0f;
+    win_dc_info->xformWorld2Wnd.eM12 = 0.0f;
+    win_dc_info->xformWorld2Wnd.eM21 = 0.0f;
+    win_dc_info->xformWorld2Wnd.eM22 = 1.0f;
+    win_dc_info->xformWorld2Wnd.eDx  = 0.0f;
+    win_dc_info->xformWorld2Wnd.eDy  = 0.0f;
+    win_dc_info->xformWorld2Vport    = win_dc_info->xformWorld2Wnd;
+    win_dc_info->xformVport2World    = win_dc_info->xformWorld2Wnd;
+    win_dc_info->vport2WorldValid    = TRUE;
 
     PATH_InitGdiPath(&win_dc_info->path);
 }
@@ -434,6 +436,72 @@ BOOL32 DC_SetupGCForText( DC * dc )
 
 
 /***********************************************************************
+ *           DC_InvertXform
+ *
+ * Computes the inverse of the transformation xformSrc and stores it to
+ * xformDest. Returns TRUE if successful or FALSE if the xformSrc matrix
+ * is singular.
+ */
+static BOOL32 DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
+{
+    FLOAT determinant;
+    
+    determinant = xformSrc->eM11*xformSrc->eM22 -
+        xformSrc->eM12*xformSrc->eM21;
+    if (determinant > -1e-12 && determinant < 1e-12)
+        return FALSE;
+
+    xformDest->eM11 =  xformSrc->eM22 / determinant;
+    xformDest->eM12 = -xformSrc->eM12 / determinant;
+    xformDest->eM21 = -xformSrc->eM21 / determinant;
+    xformDest->eM22 =  xformSrc->eM11 / determinant;
+    xformDest->eDx  = -xformSrc->eDx * xformDest->eM11 -
+                       xformSrc->eDy * xformDest->eM21;
+    xformDest->eDy  = -xformSrc->eDx * xformDest->eM12 -
+                       xformSrc->eDy * xformDest->eM22;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DC_UpdateXforms
+ *
+ * Updates the xformWorld2Vport, xformVport2World and vport2WorldValid
+ * fields of the specified DC by creating a transformation that
+ * represents the current mapping mode and combining it with the DC's
+ * world transform. This function should be called whenever the
+ * parameters associated with the mapping mode (window and viewport
+ * extents and origins) or the world transform change.
+ */
+void DC_UpdateXforms( DC *dc )
+{
+    XFORM xformWnd2Vport;
+    FLOAT scaleX, scaleY;
+    
+    /* Construct a transformation to do the window-to-viewport conversion */
+    scaleX = (FLOAT)dc->vportExtX / (FLOAT)dc->wndExtX;
+    scaleY = (FLOAT)dc->vportExtY / (FLOAT)dc->wndExtY;
+    xformWnd2Vport.eM11 = scaleX;
+    xformWnd2Vport.eM12 = 0.0;
+    xformWnd2Vport.eM21 = 0.0;
+    xformWnd2Vport.eM22 = scaleY;
+    xformWnd2Vport.eDx  = (FLOAT)dc->vportOrgX -
+        scaleX * (FLOAT)dc->wndOrgX;
+    xformWnd2Vport.eDy  = (FLOAT)dc->vportOrgY -
+        scaleY * (FLOAT)dc->wndOrgY;
+
+    /* Combine with the world transformation */
+    CombineTransform( &dc->w.xformWorld2Vport, &dc->w.xformWorld2Wnd,
+        &xformWnd2Vport );
+
+    /* Create inverse of world-to-viewport transformation */
+    dc->w.vport2WorldValid = DC_InvertXform( &dc->w.xformWorld2Vport,
+        &dc->w.xformVport2World );
+}
+
+
+/***********************************************************************
  *           GetDCState    (GDI.179)
  */
 HDC16 WINAPI GetDCState( HDC16 hdc )
@@ -452,50 +520,52 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     TRACE(dc, "(%04x): returning %04x\n", hdc, handle );
 
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
-    newdc->w.flags           = dc->w.flags | DC_SAVED;
-    newdc->w.devCaps         = dc->w.devCaps;
-    newdc->w.hPen            = dc->w.hPen;       
-    newdc->w.hBrush          = dc->w.hBrush;     
-    newdc->w.hFont           = dc->w.hFont;      
-    newdc->w.hBitmap         = dc->w.hBitmap;    
-    newdc->w.hFirstBitmap    = dc->w.hFirstBitmap;
-    newdc->w.hDevice         = dc->w.hDevice;
-    newdc->w.hPalette        = dc->w.hPalette;   
-    newdc->w.bitsPerPixel    = dc->w.bitsPerPixel;
-    newdc->w.ROPmode         = dc->w.ROPmode;
-    newdc->w.polyFillMode    = dc->w.polyFillMode;
-    newdc->w.stretchBltMode  = dc->w.stretchBltMode;
-    newdc->w.relAbsMode      = dc->w.relAbsMode;
-    newdc->w.backgroundMode  = dc->w.backgroundMode;
-    newdc->w.backgroundColor = dc->w.backgroundColor;
-    newdc->w.textColor       = dc->w.textColor;
-    newdc->w.backgroundPixel = dc->w.backgroundPixel;
-    newdc->w.textPixel       = dc->w.textPixel;
-    newdc->w.brushOrgX       = dc->w.brushOrgX;
-    newdc->w.brushOrgY       = dc->w.brushOrgY;
-    newdc->w.textAlign       = dc->w.textAlign;
-    newdc->w.charExtra       = dc->w.charExtra;
-    newdc->w.breakTotalExtra = dc->w.breakTotalExtra;
-    newdc->w.breakCount      = dc->w.breakCount;
-    newdc->w.breakExtra      = dc->w.breakExtra;
-    newdc->w.breakRem        = dc->w.breakRem;
-    newdc->w.MapMode         = dc->w.MapMode;
-    newdc->w.GraphicsMode    = dc->w.GraphicsMode;
-    newdc->w.DCOrgX          = dc->w.DCOrgX;
-    newdc->w.DCOrgY          = dc->w.DCOrgY;
-    newdc->w.CursPosX        = dc->w.CursPosX;
-    newdc->w.CursPosY        = dc->w.CursPosY;
-    newdc->w.ArcDirection    = dc->w.ArcDirection;
-    newdc->w.UseWorldXform   = dc->w.UseWorldXform;
-    newdc->w.WorldXform      = dc->w.WorldXform;
-    newdc->wndOrgX           = dc->wndOrgX;
-    newdc->wndOrgY           = dc->wndOrgY;
-    newdc->wndExtX           = dc->wndExtX;
-    newdc->wndExtY           = dc->wndExtY;
-    newdc->vportOrgX         = dc->vportOrgX;
-    newdc->vportOrgY         = dc->vportOrgY;
-    newdc->vportExtX         = dc->vportExtX;
-    newdc->vportExtY         = dc->vportExtY;
+    newdc->w.flags            = dc->w.flags | DC_SAVED;
+    newdc->w.devCaps          = dc->w.devCaps;
+    newdc->w.hPen             = dc->w.hPen;       
+    newdc->w.hBrush           = dc->w.hBrush;     
+    newdc->w.hFont            = dc->w.hFont;      
+    newdc->w.hBitmap          = dc->w.hBitmap;    
+    newdc->w.hFirstBitmap     = dc->w.hFirstBitmap;
+    newdc->w.hDevice          = dc->w.hDevice;
+    newdc->w.hPalette         = dc->w.hPalette;   
+    newdc->w.bitsPerPixel     = dc->w.bitsPerPixel;
+    newdc->w.ROPmode          = dc->w.ROPmode;
+    newdc->w.polyFillMode     = dc->w.polyFillMode;
+    newdc->w.stretchBltMode   = dc->w.stretchBltMode;
+    newdc->w.relAbsMode       = dc->w.relAbsMode;
+    newdc->w.backgroundMode   = dc->w.backgroundMode;
+    newdc->w.backgroundColor  = dc->w.backgroundColor;
+    newdc->w.textColor        = dc->w.textColor;
+    newdc->w.backgroundPixel  = dc->w.backgroundPixel;
+    newdc->w.textPixel        = dc->w.textPixel;
+    newdc->w.brushOrgX        = dc->w.brushOrgX;
+    newdc->w.brushOrgY        = dc->w.brushOrgY;
+    newdc->w.textAlign        = dc->w.textAlign;
+    newdc->w.charExtra        = dc->w.charExtra;
+    newdc->w.breakTotalExtra  = dc->w.breakTotalExtra;
+    newdc->w.breakCount       = dc->w.breakCount;
+    newdc->w.breakExtra       = dc->w.breakExtra;
+    newdc->w.breakRem         = dc->w.breakRem;
+    newdc->w.MapMode          = dc->w.MapMode;
+    newdc->w.GraphicsMode     = dc->w.GraphicsMode;
+    newdc->w.DCOrgX           = dc->w.DCOrgX;
+    newdc->w.DCOrgY           = dc->w.DCOrgY;
+    newdc->w.CursPosX         = dc->w.CursPosX;
+    newdc->w.CursPosY         = dc->w.CursPosY;
+    newdc->w.ArcDirection     = dc->w.ArcDirection;
+    newdc->w.xformWorld2Wnd   = dc->w.xformWorld2Wnd;
+    newdc->w.xformWorld2Vport = dc->w.xformWorld2Vport;
+    newdc->w.xformVport2World = dc->w.xformVport2World;
+    newdc->w.vport2WorldValid = dc->w.vport2WorldValid;
+    newdc->wndOrgX            = dc->wndOrgX;
+    newdc->wndOrgY            = dc->wndOrgY;
+    newdc->wndExtX            = dc->wndExtX;
+    newdc->wndExtY            = dc->wndExtY;
+    newdc->vportOrgX          = dc->vportOrgX;
+    newdc->vportOrgY          = dc->vportOrgY;
+    newdc->vportExtX          = dc->vportExtX;
+    newdc->vportExtY          = dc->vportExtY;
 
     newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
@@ -539,45 +609,47 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     }
     TRACE(dc, "%04x %04x\n", hdc, hdcs );
 
-    dc->w.flags           = dcs->w.flags & ~DC_SAVED;
-    dc->w.devCaps         = dcs->w.devCaps;
-    dc->w.hFirstBitmap    = dcs->w.hFirstBitmap;
-    dc->w.hDevice         = dcs->w.hDevice;
-    dc->w.ROPmode         = dcs->w.ROPmode;
-    dc->w.polyFillMode    = dcs->w.polyFillMode;
-    dc->w.stretchBltMode  = dcs->w.stretchBltMode;
-    dc->w.relAbsMode      = dcs->w.relAbsMode;
-    dc->w.backgroundMode  = dcs->w.backgroundMode;
-    dc->w.backgroundColor = dcs->w.backgroundColor;
-    dc->w.textColor       = dcs->w.textColor;
-    dc->w.backgroundPixel = dcs->w.backgroundPixel;
-    dc->w.textPixel       = dcs->w.textPixel;
-    dc->w.brushOrgX       = dcs->w.brushOrgX;
-    dc->w.brushOrgY       = dcs->w.brushOrgY;
-    dc->w.textAlign       = dcs->w.textAlign;
-    dc->w.charExtra       = dcs->w.charExtra;
-    dc->w.breakTotalExtra = dcs->w.breakTotalExtra;
-    dc->w.breakCount      = dcs->w.breakCount;
-    dc->w.breakExtra      = dcs->w.breakExtra;
-    dc->w.breakRem        = dcs->w.breakRem;
-    dc->w.MapMode         = dcs->w.MapMode;
-    dc->w.GraphicsMode    = dcs->w.GraphicsMode;
-    dc->w.DCOrgX          = dcs->w.DCOrgX;
-    dc->w.DCOrgY          = dcs->w.DCOrgY;
-    dc->w.CursPosX        = dcs->w.CursPosX;
-    dc->w.CursPosY        = dcs->w.CursPosY;
-    dc->w.ArcDirection    = dcs->w.ArcDirection;
-    dc->w.UseWorldXform   = dcs->w.UseWorldXform;
-    dc->w.WorldXform      = dcs->w.WorldXform;
+    dc->w.flags            = dcs->w.flags & ~DC_SAVED;
+    dc->w.devCaps          = dcs->w.devCaps;
+    dc->w.hFirstBitmap     = dcs->w.hFirstBitmap;
+    dc->w.hDevice          = dcs->w.hDevice;
+    dc->w.ROPmode          = dcs->w.ROPmode;
+    dc->w.polyFillMode     = dcs->w.polyFillMode;
+    dc->w.stretchBltMode   = dcs->w.stretchBltMode;
+    dc->w.relAbsMode       = dcs->w.relAbsMode;
+    dc->w.backgroundMode   = dcs->w.backgroundMode;
+    dc->w.backgroundColor  = dcs->w.backgroundColor;
+    dc->w.textColor        = dcs->w.textColor;
+    dc->w.backgroundPixel  = dcs->w.backgroundPixel;
+    dc->w.textPixel        = dcs->w.textPixel;
+    dc->w.brushOrgX        = dcs->w.brushOrgX;
+    dc->w.brushOrgY        = dcs->w.brushOrgY;
+    dc->w.textAlign        = dcs->w.textAlign;
+    dc->w.charExtra        = dcs->w.charExtra;
+    dc->w.breakTotalExtra  = dcs->w.breakTotalExtra;
+    dc->w.breakCount       = dcs->w.breakCount;
+    dc->w.breakExtra       = dcs->w.breakExtra;
+    dc->w.breakRem         = dcs->w.breakRem;
+    dc->w.MapMode          = dcs->w.MapMode;
+    dc->w.GraphicsMode     = dcs->w.GraphicsMode;
+    dc->w.DCOrgX           = dcs->w.DCOrgX;
+    dc->w.DCOrgY           = dcs->w.DCOrgY;
+    dc->w.CursPosX         = dcs->w.CursPosX;
+    dc->w.CursPosY         = dcs->w.CursPosY;
+    dc->w.ArcDirection     = dcs->w.ArcDirection;
+    dc->w.xformWorld2Wnd   = dcs->w.xformWorld2Wnd;
+    dc->w.xformWorld2Vport = dcs->w.xformWorld2Vport;
+    dc->w.xformVport2World = dcs->w.xformVport2World;
+    dc->w.vport2WorldValid = dcs->w.vport2WorldValid;
 
-    dc->wndOrgX           = dcs->wndOrgX;
-    dc->wndOrgY           = dcs->wndOrgY;
-    dc->wndExtX           = dcs->wndExtX;
-    dc->wndExtY           = dcs->wndExtY;
-    dc->vportOrgX         = dcs->vportOrgX;
-    dc->vportOrgY         = dcs->vportOrgY;
-    dc->vportExtX         = dcs->vportExtX;
-    dc->vportExtY         = dcs->vportExtY;
+    dc->wndOrgX            = dcs->wndOrgX;
+    dc->wndOrgY            = dcs->wndOrgY;
+    dc->wndExtX            = dcs->wndExtX;
+    dc->wndExtY            = dcs->wndExtY;
+    dc->vportOrgX          = dcs->vportOrgX;
+    dc->vportOrgY          = dcs->vportOrgY;
+    dc->vportExtX          = dcs->vportExtX;
+    dc->vportExtY          = dcs->vportExtY;
 
     if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
     SelectClipRgn32( hdc, dcs->w.hClipRgn );
@@ -1208,21 +1280,17 @@ INT32 WINAPI SetArcDirection32( HDC32 hdc, INT32 nDirection )
 
 /***********************************************************************
  *           GetWorldTransform    (GDI32.244)
- * FIXME
- *	Check that SetLastError is being called correctly
  */
 BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     
     if (!dc)
-        /* FIXME: Call SetLastError? */
         return FALSE;
     if (!xform)
-        /* FIXME: Call SetLastError? */
 	return FALSE;
 
-    *xform = dc->w.WorldXform;
+    *xform = dc->w.xformWorld2Wnd;
     
     return TRUE;
 }
@@ -1248,16 +1316,125 @@ BOOL32 WINAPI SetWorldTransform( HDC32 hdc, const XFORM *xform )
     if (dc->w.GraphicsMode!=GM_ADVANCED)
        return FALSE;
 
-    dc->w.WorldXform = *xform;
-
-    /* We only have to use the new world transform if it's not the
-     * identity transformation
-     */
-    dc->w.UseWorldXform=
-       (xform->eM11!=1.0f || xform->eM12!=0.0f ||
-        xform->eM21!=0.0f || xform->eM22!=1.0f ||
-        xform->eDx!=0.0f  || xform->eDy!=0.0f);
+    dc->w.xformWorld2Wnd = *xform;
     
+    DC_UpdateXforms( dc );
+
+    return TRUE;
+}
+
+
+/****************************************************************************
+ * ModifyWorldTransform [GDI32.253]
+ * Modifies the world transformation for a device context.
+ *
+ * PARAMS
+ *    hdc   [I] Handle to device context
+ *    xform [I] XFORM structure that will be used to modify the world
+ *              transformation
+ *    iMode [I] Specifies in what way to modify the world transformation
+ *              Possible values:
+ *              MWT_IDENTITY
+ *                 Resets the world transformation to the identity matrix.
+ *                 The parameter xform is ignored.
+ *              MWT_LEFTMULTIPLY
+ *                 Multiplies xform into the world transformation matrix from
+ *                 the left.
+ *              MWT_RIGHTMULTIPLY
+ *                 Multiplies xform into the world transformation matrix from
+ *                 the right.
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI ModifyWorldTransform( HDC32 hdc, const XFORM *xform,
+    DWORD iMode )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    
+    /* Check for illegal parameters */
+    if (!dc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (!xform)
+	return FALSE;
+    
+    /* Check that graphics mode is GM_ADVANCED */
+    if (dc->w.GraphicsMode!=GM_ADVANCED)
+       return FALSE;
+       
+    switch (iMode)
+    {
+        case MWT_IDENTITY:
+	    dc->w.xformWorld2Wnd.eM11 = 1.0f;
+	    dc->w.xformWorld2Wnd.eM12 = 0.0f;
+	    dc->w.xformWorld2Wnd.eM21 = 0.0f;
+	    dc->w.xformWorld2Wnd.eM22 = 1.0f;
+	    dc->w.xformWorld2Wnd.eDx  = 0.0f;
+	    dc->w.xformWorld2Wnd.eDy  = 0.0f;
+	    break;
+        case MWT_LEFTMULTIPLY:
+	    CombineTransform( &dc->w.xformWorld2Wnd, xform,
+	        &dc->w.xformWorld2Wnd );
+	    break;
+	case MWT_RIGHTMULTIPLY:
+	    CombineTransform( &dc->w.xformWorld2Wnd, &dc->w.xformWorld2Wnd,
+	        xform );
+	    break;
+        default:
+	    return FALSE;
+    }
+
+    DC_UpdateXforms( dc );
+
+    return TRUE;
+}
+
+
+/****************************************************************************
+ * CombineTransform [GDI32.20]
+ * Combines two transformation matrices.
+ *
+ * PARAMS
+ *    xformResult [O] Stores the result of combining the two matrices
+ *    xform1      [I] Specifies the first matrix to apply
+ *    xform2      [I] Specifies the second matrix to apply
+ *
+ * REMARKS
+ *    The same matrix can be passed in for more than one of the parameters.
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
+    const XFORM *xform2 )
+{
+    XFORM xformTemp;
+    
+    /* Check for illegal parameters */
+    if (!xformResult || !xform1 || !xform2)
+        return FALSE;
+
+    /* Create the result in a temporary XFORM, since xformResult may be
+     * equal to xform1 or xform2 */
+    xformTemp.eM11 = xform1->eM11 * xform2->eM11 +
+                     xform1->eM12 * xform2->eM21;
+    xformTemp.eM12 = xform1->eM11 * xform2->eM12 +
+                     xform1->eM12 * xform2->eM22;
+    xformTemp.eM21 = xform1->eM21 * xform2->eM11 +
+                     xform1->eM22 * xform2->eM21;
+    xformTemp.eM22 = xform1->eM21 * xform2->eM12 +
+                     xform1->eM22 * xform2->eM22;
+    xformTemp.eDx  = xform1->eDx  * xform2->eM11 +
+                     xform1->eDy  * xform2->eM21 +
+                     xform2->eDx;
+    xformTemp.eDy  = xform1->eDx  * xform2->eM12 +
+                     xform1->eDy  * xform2->eM22 +
+                     xform2->eDy;
+
+    /* Copy the result to xformResult */
+    *xformResult = xformTemp;
+
     return TRUE;
 }
 

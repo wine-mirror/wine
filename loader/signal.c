@@ -158,7 +158,7 @@ BOOL32 SIGNAL_Init(void)
 {
     extern void SYNC_SetupSignals(void);
 
-#ifdef HAVE_SIGALTSTACK
+#ifdef HAVE_WORKING_SIGALTSTACK
     struct sigaltstack ss;
     ss.ss_sp    = SIGNAL_Stack;
     ss.ss_size  = sizeof(SIGNAL_Stack);

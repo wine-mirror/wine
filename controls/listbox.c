@@ -171,6 +171,15 @@ static void LISTBOX_UpdateScroll( WND *wnd, LB_DESCR *descr )
 {
     SCROLLINFO info;
 
+    if (!(descr->style & WS_VSCROLL)) return; 
+    /*   It is important that we check descr->style, and not wnd->dwStyle, 
+       for WS_VSCROLL, as the former is exactly the one passed in 
+       argument to CreateWindow.  
+         In Windows (and from now on in Wine :) a listbox created 
+       with such a style (no WS_SCROLL) does not update 
+       the scrollbar with listbox-related data, thus letting 
+       the programmer use it for his/her own purposes. */
+
     if (descr->style & LBS_NOREDRAW) return;
     info.cbSize = sizeof(info);
 
@@ -1089,8 +1098,8 @@ static INT32 LISTBOX_SetFont( WND *wnd, LB_DESCR *descr, HFONT32 font )
     if (oldFont) SelectObject32( hdc, oldFont );
     ReleaseDC32( wnd->hwndSelf, hdc );
     if (!IS_OWNERDRAW(descr))
-        LISTBOX_SetItemHeight( wnd, descr, 0, tm.tmHeight + 2 );
-    return tm.tmHeight + 2;
+        LISTBOX_SetItemHeight( wnd, descr, 0, tm.tmHeight );
+    return tm.tmHeight ;
 }
 
 

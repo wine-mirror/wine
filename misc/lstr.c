@@ -152,15 +152,15 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
  */
 void WINAPI OutputDebugString16( LPCSTR str )
 {
-    char *module;
+    char module[10];
     char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+2 );
     /* Remove CRs */
     for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
     *p = '\0';
     if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
-    module = MODULE_GetModuleName( GetCurrentTask() );
-    TRACE(resource, "%s says '%s'\n",
-             module ? module : "???", buffer );
+    if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
+        strcpy( module, "???" );
+    TRACE(resource, "%s says '%s'\n", module, buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
@@ -553,7 +553,7 @@ DWORD WINAPI FormatMessage32A(
 
 	if (from) {
 		f=from;
-		while (*f) {
+		while (*f && !nolinefeed) {
 			if (*f=='%') {
 				int	insertnr;
 				char	*fmtstr,*sprintfbuf,*x,*lastf;
@@ -646,14 +646,7 @@ DWORD WINAPI FormatMessage32A(
 		}
 		*t='\0';
 	}
-	if (nolinefeed) {
-	    /* remove linefeed */
-	    if(t>target && t[-1]=='\n') {
-		*--t=0;
-		if(t>target && t[-1]=='\r')
-		    *--t=0;
-	    }
-	} else {
+	if (!nolinefeed) {
 	    /* add linefeed */
 	    if(t==target || t[-1]!='\n')
 		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */
@@ -732,7 +725,7 @@ DWORD WINAPI FormatMessage32W(
 
 	if (from) {
 		f=from;
-		while (*f) {
+		while (*f && !nolinefeed) {
 			if (*f=='%') {
 				int	insertnr;
 				char	*fmtstr,*sprintfbuf,*x;
@@ -826,14 +819,7 @@ DWORD WINAPI FormatMessage32W(
 		}
 		*t='\0';
 	}
-	if (nolinefeed) {
-	    /* remove linefeed */
-	    if(t>target && t[-1]=='\n') {
-		*--t=0;
-		if(t>target && t[-1]=='\r')
-		    *--t=0;
-	    }
-	} else {
+	if (!nolinefeed) {
 	    /* add linefeed */
 	    if(t==target || t[-1]!='\n')
 		ADD_TO_T('\n'); /* FIXME: perhaps add \r too? */

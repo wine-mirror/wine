@@ -121,6 +121,8 @@ LPVOID WINAPI IMalloc16_HeapMinimize(LPMALLOC16 this) {
 	return NULL;
 }
 
+#ifdef OLD_TABLE
+/* FIXME: This is unused */
 static IMalloc16_VTable mvt16 = {
 	IMalloc16_QueryInterface,
 	IMalloc16_AddRef,
@@ -132,6 +134,7 @@ static IMalloc16_VTable mvt16 = {
 	IMalloc16_DidAlloc,
 	IMalloc16_HeapMinimize,
 };
+#endif
 static IMalloc16_VTable *msegvt16 = NULL;
 
 LPMALLOC16

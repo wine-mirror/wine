@@ -132,7 +132,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc *-tmp.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) *.o \#*\# *~ *% *.bak *.orig *.rej *.flc *-tmp.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h) $(PROGRAMS)
 
 dummy:
 

@@ -200,8 +200,8 @@ BOOL32	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
  */
 
 
-WORD WINAPI WineEnumDFontCallback(LPLOGFONT16 lpLogFont,
-                                  LPTEXTMETRIC16 lpTextMetrics,
+WORD WINAPI WineEnumDFontCallback(LPENUMLOGFONT16 lpLogFont,
+                                  LPNEWTEXTMETRIC16 lpTextMetrics,
                                   WORD wFontType, LONG lpClientData) 
 {
     TRACE(win16drv, "In WineEnumDFontCallback plf=%p\n", lpLogFont);

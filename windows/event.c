@@ -391,7 +391,7 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 
     /* Process current X event (and possibly others that occurred in the meantime) */
 
-    do
+    while (TSXPending( display ))
     {
 
 #ifdef CONFIG_IPC
@@ -438,7 +438,6 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
         }
         else EVENT_ProcessEvent( &event );
     }
-    while (TSXPending( display ));
     return TRUE;
 }
 

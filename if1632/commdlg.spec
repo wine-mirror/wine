@@ -3,7 +3,7 @@ type	win16
 
 1   pascal16 GetOpenFileName(segptr) GetOpenFileName16
 2   pascal16 GetSaveFileName(segptr) GetSaveFileName16
-5   pascal16 ChooseColor(ptr) ChooseColor
+5   pascal16 ChooseColor(ptr) ChooseColor16
 6   pascal   FileOpenDlgProc(word word word long) FileOpenDlgProc
 7   pascal   FileSaveDlgProc(word word word long) FileSaveDlgProc
 8   pascal   ColorDlgProc(word word word long) ColorDlgProc

@@ -1,7 +1,7 @@
 name	wow32
 type	win32
 
-  1 stdcall WOW_1(long long) WOW32_1
+  1 stdcall WOWGetDescriptor(long long) WOWGetDescriptor
   2 stdcall WOWCallback16(long long) WOWCallback16
   3 stdcall WOWCallback16Ex(ptr long long ptr ptr) WOWCallback16Ex
   4 stub    WOWDirectedYield16

@@ -80,12 +80,12 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
 
        case WM_CREATE:
-   	break;
+        break;
 
        case WM_PAINT:
           BeginPaint(hWnd, &ps);
           EndPaint(hWnd, &ps);
-   	break;
+        break;
 
        case WM_COMMAND:
           NOTEPAD_MenuCommand(wParam);
@@ -136,38 +136,68 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     if (!Globals.hMainIcon) Globals.hMainIcon = 
                                   LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
-    lstrcpyn(Globals.szFindText, "\0", 1);
-    lstrcpyn(Globals.szFileName, "\0", 1);
+    lstrcpyn(Globals.szFindText,     "\0", 1);
+    lstrcpyn(Globals.szFileName,     "\0", 1);
+    lstrcpyn(Globals.szMarginTop,    "\0", 1);
+    lstrcpyn(Globals.szMarginBottom, "\0", 1);
+    lstrcpyn(Globals.szMarginLeft,   "\0", 1);
+    lstrcpyn(Globals.szMarginRight,  "\0", 1);
+    lstrcpyn(Globals.szHeader,       "\0", 1);
+    lstrcpyn(Globals.szFooter,       "\0", 1);
 
     if (!prev){
-	class.style         = CS_HREDRAW | CS_VREDRAW;
-	class.lpfnWndProc   = NOTEPAD_WndProc;
-	class.cbClsExtra    = 0;
-	class.cbWndExtra    = 0;
-	class.hInstance     = Globals.hInstance;
-	class.hIcon         = LoadIcon (0, IDI_APPLICATION);
-	class.hCursor       = LoadCursor (0, IDC_ARROW);
-	class.hbrBackground = GetStockObject (WHITE_BRUSH);
-	class.lpszMenuName  = 0;
-	class.lpszClassName = className;
+        class.style         = CS_HREDRAW | CS_VREDRAW;
+        class.lpfnWndProc   = NOTEPAD_WndProc;
+        class.cbClsExtra    = 0;
+        class.cbWndExtra    = 0;
+        class.hInstance     = Globals.hInstance;
+        class.hIcon         = LoadIcon (0, IDI_APPLICATION);
+        class.hCursor       = LoadCursor (0, IDC_ARROW);
+        class.hbrBackground = GetStockObject (WHITE_BRUSH);
+        class.lpszMenuName  = 0;
+        class.lpszClassName = className;
     }
 
     if (!RegisterClass (&class))
-	return FALSE;
+        return FALSE;
 
     Globals.hMainWnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
-			LoadMenu(Globals.hInstance, STRING_MENU_Xx),
-			Globals.hInstance, 0);
+                        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
+                        LoadMenu(Globals.hInstance, STRING_MENU_Xx),
+                        Globals.hInstance, 0);
 
     LANGUAGE_SelectByName(Globals.lpszLanguage);
 
-    SetMenu(Globals.hMainWnd, Globals.hMainMenu);		
-			
+    SetMenu(Globals.hMainWnd, Globals.hMainMenu);               
+                        
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 
+    // now handle command line
+    
+    while (*cmdline && (*cmdline == ' ' || *cmdline == '-')) 
+    
+    {
+        CHAR   option;
+        LPCSTR topic_id;
 
+        if (*cmdline++ == ' ') continue;
+
+        option = *cmdline;
+        if (option) cmdline++;
+        while (*cmdline && *cmdline == ' ') cmdline++;
+
+        switch(option)
+        {
+            case 'p':
+            case 'P': printf("Print file: ");
+                      // Not yet able to print a file
+                      break;
+        }
+    }
+
+    
+    
     while (GetMessage (&msg, 0, 0, 0)) {
         TranslateMessage (&msg);
         DispatchMessage (&msg);
@@ -178,3 +208,4 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 /* Local Variables:    */
 /* c-file-style: "GNU" */
 /* End:                */
+

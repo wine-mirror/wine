@@ -5,6 +5,7 @@
  * Copyright 1998 Karl Backström <karl_b@geocities.com>
  */
 
+VOID LANGUAGE_UpdateWindowCaption(VOID);
 VOID LANGUAGE_SelectByNumber(UINT num);
 VOID LANGUAGE_SelectByName(LPCSTR lang);
 VOID LANGUAGE_DefaultHandle(WPARAM wParam);

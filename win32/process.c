@@ -25,12 +25,17 @@ DWORD WINAPI MsgWaitForMultipleObjects(
 	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,
 	DWORD dwWakeMask
 ) {
+#if 0
 	int	i;
 	fprintf(stderr,"MsgWaitForMultipleObjects(%ld,[",nCount);
 	for (i=0;i<nCount;i++)
 		fprintf(stderr,"%ld,",(DWORD)pHandles[i]);
 	fprintf(stderr,"],%d,%ld,0x%08lx)\n",fWaitAll,dwMilliseconds,dwWakeMask);
 	return 0;
+#else
+	return WaitForMultipleObjectsEx(nCount, pHandles, fWaitAll, dwMilliseconds,
+					FALSE);
+#endif
 }
 
 /**********************************************************************

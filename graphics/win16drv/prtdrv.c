@@ -674,7 +674,7 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
     if (wStyle < 0) { /* Free extra memory of given object's structure */
 	switch ( -wStyle ) {
             case DRVOBJ_PEN:    {
-                                LPLOGPEN16 DeletePen = (LPLOGPEN16)lpInObj;
+                                /* LPLOGPEN16 DeletePen = (LPLOGPEN16)lpInObj; */
 
                                 fprintf(stderr, "DRVOBJ_PEN_delete\n");
 				break;
@@ -684,8 +684,8 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
                                 break;
 				}
             case DRVOBJ_FONT:	{
-				LPTEXTXFORM16 TextXForm
-					= (LPTEXTXFORM16)lpTextXForm;
+				/* LPTEXTXFORM16 TextXForm
+					= (LPTEXTXFORM16)lpTextXForm; */
 				fprintf(stderr, "DRVOBJ_FONT_delete\n");
                                 break;
 				}
@@ -720,7 +720,7 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 	    case DRVOBJ_BRUSH: {
 				LPLOGBRUSH16 InBrush  = (LPLOGBRUSH16)lpInObj;
 				LPLOGBRUSH16 OutBrush = (LPLOGBRUSH16)lpOutObj;
-                                LPPOINT16 Point = (LPPOINT16)lpTextXForm;
+                                /* LPPOINT16 Point = (LPPOINT16)lpTextXForm; */
 
 				fprintf(stderr, "DRVOBJ_BRUSH\n");
 				if (!lpOutObj) return sizeof(LOGBRUSH16);
@@ -734,8 +734,8 @@ int WINAPI dmRealizeObject(LPPDEVICE lpDestDev, INT16 wStyle, LPSTR lpInObj, LPS
 				}
 		               }
 	    case DRVOBJ_FONT: {
-                                LPTEXTXFORM16 TextXForm
-                                        = (LPTEXTXFORM16)lpTextXForm;
+                                /* LPTEXTXFORM16 TextXForm
+                                        = (LPTEXTXFORM16)lpTextXForm; */
                                 fprintf(stderr, "DRVOBJ_FONT\n");
 				return 0;/* DISPLAY.DRV doesn't realize fonts */
 			      }

@@ -6,6 +6,17 @@
  * December 21, 1997 - Kevin Cozens
  * Fixed bugs in the _w95_loadreg() function. Added extra information
  * regarding the format of the Windows '95 registry files.
+ *
+ * May 5, 1998 - Matthew Becker
+ * Changed optionflags to DWORD instead of int because it could be 0x8000000
+ * All error return values must come from winerror.h
+ *
+ * NOTES
+ *    When changing this file, please re-run the regtest program to ensure
+ *    the conditions are handled properly.
+ *
+ * TODO
+ *    Security access
  */
 
 #include <stdlib.h>
@@ -29,6 +40,9 @@
 #include "xmalloc.h"
 #include "winreg.h"
 
+void SHELL_StartupRegistry();
+
+/* This is not used anywhere */
 #define	DEBUG_W95_LOADREG	0
 
 /* FIXME: following defines should be configured global ... */
@@ -83,8 +97,12 @@ static KEYSTRUCT	*key_dyn_data=NULL;
 /* what valuetypes do we need to convert? */
 #define UNICONVMASK	((1<<REG_SZ)|(1<<REG_MULTI_SZ)|(1<<REG_EXPAND_SZ))
 
-extern LPWSTR __cdecl CRTDLL_wcschr(LPWSTR a,WCHAR c);
 
+/*
+ * FIXME
+ *   Are these doing the same as HEAP_strdupAtoW and HEAP_strdupWtoA?
+ *   If so, can we remove them?
+ */
 static LPWSTR strdupA2W(LPCSTR src)
 {
 	LPWSTR dest=xmalloc(2*strlen(src)+2);
@@ -111,61 +129,97 @@ static struct openhandle {
 static int	nrofopenhandles=0;
 static int	currenthandle=1;
 
-static void
-add_handle(HKEY hkey,LPKEYSTRUCT lpkey,REGSAM accessmask) {
-	int	i;
 
-	for (i=0;i<nrofopenhandles;i++) {
-		if (openhandles[i].lpkey==lpkey) {
-			WARN(reg, "Tried to add %p twice!\n",lpkey);
-		}
-		if (openhandles[i].hkey==hkey) {
-			WARN(reg, "Tried to add %lx twice!\n",(LONG)hkey);
-		}
-	}
-	openhandles=xrealloc(	openhandles,
-				sizeof(struct openhandle)*(nrofopenhandles+1)
-		);
-	openhandles[i].lpkey	= lpkey;
-	openhandles[i].hkey	= hkey;
-	openhandles[i].accessmask= accessmask;
-	nrofopenhandles++;
+/******************************************************************************
+ * add_handle [Internal]
+ */
+static void add_handle( HKEY hkey, LPKEYSTRUCT lpkey, REGSAM accessmask )
+{
+    int i;
+
+    TRACE(reg,"(%x,%p,%lx)\n",hkey,lpkey,accessmask);
+    if (lpkey)
+        TRACE(reg," (%s)\n",debugstr_w(lpkey->keyname));
+
+    /* Check for duplicates */
+    for (i=0;i<nrofopenhandles;i++) {
+        if (openhandles[i].lpkey==lpkey) {
+            /* This is not really an error - the user is allowed to create
+               two (or more) handles to the same key */
+            /*WARN(reg, "Adding key %p twice\n",lpkey);*/
+        }
+        if (openhandles[i].hkey==hkey) {
+            WARN(reg, "Adding handle %x twice\n",hkey);
+        }
+    }
+    openhandles=xrealloc( openhandles, 
+                          sizeof(struct openhandle)*(nrofopenhandles+1));
+
+    openhandles[i].lpkey = lpkey;
+    openhandles[i].hkey = hkey;
+    openhandles[i].accessmask = accessmask;
+    nrofopenhandles++;
 }
 
-static LPKEYSTRUCT
-get_handle(HKEY hkey) {
-	int	i;
 
-	for (i=0;i<nrofopenhandles;i++)
-		if (openhandles[i].hkey==hkey)
-			return openhandles[i].lpkey;
-	WARN(reg, "Didn't find handle %lx?\n",(LONG)hkey);
-	return NULL;
+/******************************************************************************
+ * get_handle [Internal]
+ *
+ * RETURNS
+ *    Success: Pointer to key
+ *    Failure: NULL
+ */
+static LPKEYSTRUCT get_handle( HKEY hkey )
+{
+    int i;
+
+    for (i=0; i<nrofopenhandles; i++)
+        if (openhandles[i].hkey == hkey)
+            return openhandles[i].lpkey;
+    WARN(reg, "Could not find handle %x\n",hkey);
+    return NULL;
 }
 
-static void
-remove_handle(HKEY hkey) {
-	int	i;
 
-	for (i=0;i<nrofopenhandles;i++)
-		if (openhandles[i].hkey==hkey)
-			break;
-	if (i==nrofopenhandles) {
-		WARN(reg, "Didn't find handle %08x?\n",hkey);
-		return;
-	}
-	memcpy(	openhandles+i,
-		openhandles+i+1,
-		sizeof(struct openhandle)*(nrofopenhandles-i-1)
-	);
-	openhandles=xrealloc(openhandles,sizeof(struct openhandle)*(nrofopenhandles-1));
-	nrofopenhandles--;
-	return;
+/******************************************************************************
+ * remove_handle [Internal]
+ *
+ * PARAMS
+ *    hkey [I] Handle of key to remove
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: ERROR_INVALID_HANDLE
+ */
+static DWORD remove_handle( HKEY hkey )
+{
+    int i;
+
+    for (i=0;i<nrofopenhandles;i++)
+        if (openhandles[i].hkey==hkey)
+            break;
+
+    if (i == nrofopenhandles) {
+        WARN(reg, "Could not find handle %x\n",hkey);
+        return ERROR_INVALID_HANDLE;
+    }
+
+    memcpy( openhandles+i,
+            openhandles+i+1,
+            sizeof(struct openhandle)*(nrofopenhandles-i-1)
+    );
+    openhandles=xrealloc(openhandles,sizeof(struct openhandle)*(nrofopenhandles-1));
+    nrofopenhandles--;
+    return ERROR_SUCCESS;
 }
 
 
 /* debug function, converts a unicode into a static memory area 
  * (sub for using two static strings, in case we need them in a single call)
+ *
+ * FIXME
+ *    This seems to be used the same as debugstr_w.
+ *    If so, can this one go away?
  */
 LPSTR
 W2C(LPCWSTR x,int sub) {
@@ -179,11 +233,20 @@ W2C(LPCWSTR x,int sub) {
 	return unicodedebug[sub];
 }
 
-static LPKEYSTRUCT
-lookup_hkey(HKEY hkey) {
+
+/******************************************************************************
+ * lookup_hkey [Internal]
+ *
+ * RETURNS
+ *    Success: Pointer to key structure
+ *    Failure: NULL
+ */
+static LPKEYSTRUCT lookup_hkey( HKEY hkey )
+{
 	switch (hkey) {
-	case 0x00000000:
-	case 0x00000001:
+    /* These seem erroneous */
+    /*	case 0x00000000: */
+    /*	case 0x00000001: */
 	case HKEY_CLASSES_ROOT:
 		return key_classes_root;
 	case HKEY_CURRENT_USER:
@@ -204,42 +267,65 @@ lookup_hkey(HKEY hkey) {
 	/*NOTREACHED*/
 }
 
-/* 
+
+/******************************************************************************
+ * split_keypath [Internal]
  * splits the unicode string 'wp' into an array of strings.
  * the array is allocated by this function. 
- * the number of components will be stored in 'wpc'
  * Free the array using FREE_KEY_PATH
+ *
+ * PARAMS
+ *    wp  [I] String to split up
+ *    wpv [O] Array of pointers to strings
+ *    wpc [O] Number of components
  */
-static void
-split_keypath(LPCWSTR wp,LPWSTR **wpv,int *wpc) {
-	int	i,j,len;
-	LPWSTR	ws;
+static void split_keypath( LPCWSTR wp, LPWSTR **wpv, int *wpc)
+{
+    int	i,j,len;
+    LPWSTR ws;
 
-	ws	= HEAP_strdupW( SystemHeap, 0, wp );
-	*wpc	= 1;
-	for (i=0;ws[i];i++) {
-		if (ws[i]=='\\') {
-			ws[i]=0;
-			(*wpc)++;
-		}
-	}
-	len	= i;
-	*wpv	= (LPWSTR*)HeapAlloc( SystemHeap, 0, sizeof(LPWSTR)*(*wpc+2));
-	(*wpv)[0]= ws;
-	j	= 1;
-	for (i=1;i<len;i++)
-		if (ws[i-1]==0)
-			(*wpv)[j++]=ws+i;
-	(*wpv)[j]=NULL;
+    TRACE(reg,"(%s,%p,%p)\n",debugstr_w(wp),wpv,wpc);
+
+    ws	= HEAP_strdupW( SystemHeap, 0, wp );
+
+    /* We know we have at least one substring */
+    *wpc = 1;
+
+    /* Replace each backslash with NULL, and increment the count */
+    for (i=0;ws[i];i++) {
+        if (ws[i]=='\\') {
+            ws[i]=0;
+            (*wpc)++;
+        }
+    }
+
+    len = i;
+
+    /* Allocate the space for the array of pointers, leaving room for the
+       NULL at the end */
+    *wpv = (LPWSTR*)HeapAlloc( SystemHeap, 0, sizeof(LPWSTR)*(*wpc+2));
+    (*wpv)[0]= ws;
+
+    /* Assign each pointer to the appropriate character in the string */
+    j = 1;
+    for (i=1;i<len;i++)
+        if (ws[i-1]==0) {
+            (*wpv)[j++]=ws+i;
+            /* TRACE(reg, " Subitem %d = %s\n",j-1,debugstr_w((*wpv)[j-1])); */
+        }
+
+    (*wpv)[j]=NULL;
 }
 #define FREE_KEY_PATH HeapFree(SystemHeap,0,wps[0]);HeapFree(SystemHeap,0,wps);
 
-/*
+
+
+
+/******************************************************************************
+ * SHELL_Init [Internal]
  * Shell initialisation, allocates keys. 
  */
-void SHELL_StartupRegistry();
-void
-SHELL_Init() {
+void SHELL_Init() {
 	struct	passwd	*pwd;
 
 	HKEY	cl_r_hkey,c_u_hkey;
@@ -249,8 +335,8 @@ SHELL_Init() {
 	xx->keyname= strdupA2W("<should_not_appear_anywhere>");
 
 	ADD_ROOT_KEY(key_local_machine);
-	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
-		ERR(reg,"couldn't create HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes. This is impossible.\n");
+	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"SOFTWARE\\Classes",&cl_r_hkey)!=ERROR_SUCCESS) {
+		ERR(reg,"Could not create HKLM\\SOFTWARE\\Classes. This is impossible.\n");
 		exit(1);
 	}
 	key_classes_root = lookup_hkey(cl_r_hkey);
@@ -283,17 +369,25 @@ SHELL_Init() {
 }
 
 
-void
-SHELL_StartupRegistry() {
+/******************************************************************************
+ * SHELL_StartupRegistry [Internal]
+ */
+void SHELL_StartupRegistry( void )
+{
 	HKEY	hkey;
 	char	buf[200];
 
-	RegCreateKey16(HKEY_DYN_DATA,"\\PerfStats\\StatData",&hkey);
+    TRACE(reg,"(void)\n");
+
+	RegCreateKey16(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
 	RegCloseKey(hkey);
 
-	RegOpenKey16(HKEY_LOCAL_MACHINE,"\\HARDWARE\\DESCRIPTION\\System",&hkey);
+        /* This was an Open, but since it is called before the real registries
+           are loaded, it was changed to a Create - MTB 980507*/
+	RegCreateKey16(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System",&hkey);
 	RegSetValueEx32A(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
 	RegCloseKey(hkey);
+
 	/* \\SOFTWARE\\Microsoft\\Window NT\\CurrentVersion
 	 *						CurrentVersion
 	 *						CurrentBuildNumber
@@ -313,6 +407,8 @@ SHELL_StartupRegistry() {
 		RegCloseKey(hkey);
 	}
 }
+
+
 /************************ SAVE Registry Function ****************************/
 
 #define REGISTRY_SAVE_VERSION	0x00000001
@@ -454,13 +550,19 @@ _savereg(LPKEYSTRUCT lpkey,char *fn,int all) {
         return TRUE;
 }
 
-void
-SHELL_SaveRegistry() {
+
+/******************************************************************************
+ * SHELL_SaveRegistry [Internal]
+ */
+void SHELL_SaveRegistry( void )
+{
 	char	*fn;
 	struct	passwd	*pwd;
 	char	buf[4];
 	HKEY	hkey;
 	int	all;
+
+    TRACE(reg,"(void)\n");
 
 	all=0;
 	if (RegOpenKey16(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)!=ERROR_SUCCESS) {
@@ -524,11 +626,15 @@ SHELL_SaveRegistry() {
 
 /************************ LOAD Registry Function ****************************/
 
-static LPKEYSTRUCT
-_find_or_add_key(LPKEYSTRUCT lpkey,LPWSTR keyname) {
+
+/******************************************************************************
+ * _find_or_add_key [Internal]
+ */
+static LPKEYSTRUCT _find_or_add_key( LPKEYSTRUCT lpkey, LPWSTR keyname )
+{
 	LPKEYSTRUCT	lpxkey,*lplpkey;
 
-	if (keyname[0]==0) {
+	if ((!keyname) || (keyname[0]==0)) {
 		free(keyname);
 		return lpkey;
 	}
@@ -695,33 +801,47 @@ _wine_read_USTRING(char *buf,LPWSTR *str) {
 	return s;
 }
 
-static int
-_wine_loadsubkey(
-	FILE *F,LPKEYSTRUCT lpkey,int level,char **buf,int *buflen,int optflag
-) {
+
+/******************************************************************************
+ * _wine_loadsubkey [Internal]
+ *
+ * NOTES
+ *    It seems like this is returning a boolean.  Should it?
+ *
+ * RETURNS
+ *    Success: 1
+ *    Failure: 0
+ */
+static int _wine_loadsubkey( FILE *F, LPKEYSTRUCT lpkey, int level, char **buf,
+                             int *buflen, DWORD optflag )
+{
 	LPKEYSTRUCT	lpxkey;
 	int		i;
 	char		*s;
 	LPWSTR		name;
 
-	lpkey->flags |= optflag;
+    TRACE(reg,"(%p,%p,%d,%s,%d,%lx)\n", F, lpkey, level, debugstr_a(*buf),
+          *buflen, optflag);
 
-	/* good. we already got a line here ... so parse it */
-	lpxkey	= NULL;
-	while (1) {
-		i=0;s=*buf;
-		while (*s=='\t') {
-			s++;
-			i++;
-		}
-		if (i>level) {
-			if (lpxkey==NULL) {
-				WARN(reg,"Got a subhierarchy without resp. key?\n");
-				return 0;
-			}
-			_wine_loadsubkey(F,lpxkey,level+1,buf,buflen,optflag);
-			continue;
-		}
+    lpkey->flags |= optflag;
+
+    /* Good.  We already got a line here ... so parse it */
+    lpxkey = NULL;
+    while (1) {
+        i=0;s=*buf;
+        while (*s=='\t') {
+            s++;
+            i++;
+        }
+        if (i>level) {
+            if (lpxkey==NULL) {
+                WARN(reg,"Got a subhierarchy without resp. key?\n");
+                return 0;
+            }
+            _wine_loadsubkey(F,lpxkey,level+1,buf,buflen,optflag);
+            continue;
+        }
+
 		/* let the caller handle this line */
 		if (i<level || **buf=='\0')
 			return 1;
@@ -783,12 +903,16 @@ _wine_loadsubkey(
 		/* read the next line */
 		if (!_wine_read_line(F,buf,buflen))
 			return 1;
-	}
-	return 1;
+    }
+    return 1;
 }
 
-static int
-_wine_loadsubreg(FILE *F,LPKEYSTRUCT lpkey,int optflag) {
+
+/******************************************************************************
+ * _wine_loadsubreg [Internal]
+ */
+static int _wine_loadsubreg( FILE *F, LPKEYSTRUCT lpkey, DWORD optflag )
+{
 	int	ver;
 	char	*buf;
 	int	buflen;
@@ -819,27 +943,35 @@ _wine_loadsubreg(FILE *F,LPKEYSTRUCT lpkey,int optflag) {
 	return 1;
 }
 
-static void
-_wine_loadreg(LPKEYSTRUCT lpkey,char *fn,int optflag) {
-	FILE	*F;
 
-	F=fopen(fn,"rb");
-	if (F==NULL) {
-		WARN(reg,"Couldn't open %s for reading: %s\n",
-		       fn,strerror(errno)
-		);
-		return;
-	}
-	if (!_wine_loadsubreg(F,lpkey,optflag)) {
-		fclose(F);
-		unlink(fn);
-		return;
-	}
-	fclose(F);
+/******************************************************************************
+ * _wine_loadreg [Internal]
+ */
+static void _wine_loadreg( LPKEYSTRUCT lpkey, char *fn, DWORD optflag )
+{
+    FILE *F;
+
+    TRACE(reg,"(%p,%s,%lx)\n",lpkey,debugstr_a(fn),optflag);
+
+    F = fopen(fn,"rb");
+    if (F==NULL) {
+        WARN(reg,"Couldn't open %s for reading: %s\n",fn,strerror(errno) );
+        return;
+    }
+    if (!_wine_loadsubreg(F,lpkey,optflag)) {
+        fclose(F);
+        unlink(fn);
+        return;
+    }
+    fclose(F);
 }
 
-static void
-_copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
+
+/******************************************************************************
+ * _copy_registry [Internal]
+ */
+static void _copy_registry( LPKEYSTRUCT from, LPKEYSTRUCT to )
+{
 	LPKEYSTRUCT	lpxkey;
 	int		j;
 	LPKEYVALUE	valfrom;
@@ -871,6 +1003,7 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
 		from = from->next;
 	}
 }
+
 
 /* WINDOWS 95 REGISTRY LOADER */
 /* 
@@ -998,6 +1131,10 @@ LPWSTR strcvtA2W(LPCSTR src, int nchars)
    return dest;
 }
 
+
+/******************************************************************************
+ * _w95_processKey [Internal]
+ */
 static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey, 
                                    int nrLS, int nrMS, struct _w95_info *info )
 
@@ -1222,6 +1359,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	free (info.rgknbuffer);
 }
 
+
 /* WINDOWS 31 REGISTRY LOADER, supplied by Tor Sjøwall, tor@sn.no */
 
 /*
@@ -1357,8 +1495,11 @@ __w31_dumptree(	unsigned short idx,
 	}
 }
 
-void
-_w31_loadreg() {
+
+/******************************************************************************
+ * _w31_loadreg [Internal]
+ */
+void _w31_loadreg() {
 	HFILE32			hf;
 	struct _w31_header	head;
 	struct _w31_tabent	*tab;
@@ -1369,6 +1510,8 @@ _w31_loadreg() {
 	time_t			lastmodified;
 	HKEY			hkey;
 	LPKEYSTRUCT		lpkey;
+
+    TRACE(reg,"(void)\n");
 
 	hf = OpenFile32("reg.dat",&ofs,OF_READ);
 	if (hf==HFILE_ERROR32)
@@ -1422,7 +1565,7 @@ _w31_loadreg() {
 	}
 	lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
 
-	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&hkey)!=ERROR_SUCCESS)
+	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"SOFTWARE\\Classes",&hkey)!=ERROR_SUCCESS)
 		return;
 	lpkey = lookup_hkey(hkey);
 	__w31_dumptree(tab[0].w1,txt,tab,&head,lpkey,lastmodified,0);
@@ -1432,13 +1575,18 @@ _w31_loadreg() {
 	return;
 }
 
-void
-SHELL_LoadRegistry() {
+
+/**********************************************************************************
+ * SHELL_LoadRegistry [Internal]
+ */
+void SHELL_LoadRegistry( void )
+{
 	char	*fn;
 	struct	passwd	*pwd;
 	LPKEYSTRUCT	lpkey;
 	HKEY		hkey;
 
+    TRACE(reg,"(void)\n");
 
 	if (key_classes_root==NULL)
 		SHELL_Init();
@@ -1453,6 +1601,8 @@ SHELL_LoadRegistry() {
 	/* the global user default is loaded under HKEY_USERS\\.Default */
 	RegCreateKey16(HKEY_USERS,".Default",&hkey);
 	lpkey = lookup_hkey(hkey);
+        if(!lpkey)
+            WARN(reg,"Could not create global user default key\n");
 	_wine_loadreg(lpkey,SAVE_USERS_DEFAULT,0);
 
 	/* HKEY_USERS\\.Default is copied to HKEY_CURRENT_USER */
@@ -1515,113 +1665,126 @@ SHELL_LoadRegistry() {
  *                                  RegOpenKey32W   -> RegOpenKeyEx32W 
  */
 
-/* RegOpenKeyExW		[ADVAPI32.150] */
-DWORD WINAPI RegOpenKeyEx32W(
-	HKEY	hkey,
-	LPCWSTR	lpszSubKey,
-	DWORD	dwReserved,
-	REGSAM	samDesired,
-	LPHKEY	retkey
-) {
+
+/******************************************************************************
+ * RegOpenKeyEx32W [ADVAPI32.150]
+ * Opens the specified key
+ *
+ * Unlike RegCreateKeyEx, this does not create the key if it does not exist.
+ *
+ * PARAMS
+ *    hkey       [I] Handle of open key
+ *    lpszSubKey [I] Name of subkey to open
+ *    dwReserved [I] Reserved - must be zero
+ *    samDesired [I] Security access mask
+ *    retkey     [O] Address of handle of open key
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegOpenKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey, DWORD dwReserved,
+                              REGSAM samDesired, LPHKEY retkey )
+{
 	LPKEYSTRUCT	lpNextKey,lpxkey;
 	LPWSTR		*wps;
 	int		wpc,i;
-	TRACE(reg,"(%lx,%s,%ld,%lx,%p)\n",
-		(LONG)hkey,W2C(lpszSubKey,0),dwReserved,samDesired,retkey
-	);
 
-	lpNextKey	= lookup_hkey(hkey);
-	if (!lpNextKey)
-		return SHELL_ERROR_BADKEY;
-	if (!lpszSubKey || !*lpszSubKey) {
-		add_handle(++currenthandle,lpNextKey,samDesired);
-		*retkey=currenthandle;
-		return SHELL_ERROR_SUCCESS;
-	}
+    TRACE(reg,"(%x,%s,%ld,%lx,%p)\n", hkey,debugstr_w(lpszSubKey),dwReserved,
+          samDesired,retkey);
+
+    lpNextKey = lookup_hkey(hkey);
+    if (!lpNextKey) {
+        WARN(reg,"Invalid handle: %x\n",hkey);
+        return ERROR_INVALID_HANDLE;
+    }
+
+    if (!lpszSubKey || !*lpszSubKey) {
+        /* Either NULL or pointer to empty string, so return a new handle
+           to the original hkey */
+        add_handle(++currenthandle,lpNextKey,samDesired);
+        *retkey=currenthandle;
+        return ERROR_SUCCESS;
+    }
+
 	split_keypath(lpszSubKey,&wps,&wpc);
-	i 	= 0;
+	i = 0;
 	while ((i<wpc) && (wps[i][0]=='\0')) i++;
-	lpxkey	= lpNextKey;
-	while (wps[i]) {
-		lpxkey=lpNextKey->nextsub;
-		while (lpxkey) {
-			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
-				break;
-			lpxkey=lpxkey->next;
-		}
-		if (!lpxkey) {
-			FREE_KEY_PATH;
-			return SHELL_ERROR_BADKEY;
-		}
-		i++;
-		lpNextKey	= lpxkey;
-	}
-	add_handle(++currenthandle,lpxkey,samDesired);
-	*retkey	= currenthandle;
-	FREE_KEY_PATH;
-	return	SHELL_ERROR_SUCCESS;
-}
+	lpxkey = lpNextKey;
 
-/* RegOpenKeyW			[ADVAPI32.151] */
-DWORD WINAPI RegOpenKey32W(
-	HKEY	hkey,
-	LPCWSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,W2C(lpszSubKey,0),retkey
-	);
-	return RegOpenKeyEx32W(hkey,lpszSubKey,0,KEY_ALL_ACCESS,retkey);
+    while (wps[i]) {
+        lpxkey=lpNextKey->nextsub;
+        while (lpxkey) {
+            if (!lstrcmpi32W(wps[i],lpxkey->keyname)) {
+                break;
+            }
+            lpxkey=lpxkey->next;
+        }
+
+        if (!lpxkey) {
+            TRACE(reg,"Could not find subkey %s\n",debugstr_w(wps[i]));
+            FREE_KEY_PATH;
+            return ERROR_BADKEY;
+        }
+        i++;
+        lpNextKey = lpxkey;
+    }
+
+    add_handle(++currenthandle,lpxkey,samDesired);
+    *retkey = currenthandle;
+    TRACE(reg,"  Returning %x\n", currenthandle);
+    FREE_KEY_PATH;
+    return ERROR_SUCCESS;
 }
 
 
-/* RegOpenKeyExA		[ADVAPI32.149] */
-DWORD WINAPI RegOpenKeyEx32A(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	DWORD	dwReserved,
-	REGSAM	samDesired,
-	LPHKEY	retkey
-) {
-	LPWSTR	lpszSubKeyW;
-	DWORD	ret;
-
-	TRACE(reg,"(%lx,%s,%ld,%lx,%p)\n",
-		(LONG)hkey,lpszSubKey,dwReserved,samDesired,retkey
-	);
-	if (lpszSubKey)
-		lpszSubKeyW=strdupA2W(lpszSubKey);
-	else
-		lpszSubKeyW=NULL;
-	ret=RegOpenKeyEx32W(hkey,lpszSubKeyW,dwReserved,samDesired,retkey);
-	if (lpszSubKeyW)
-		free(lpszSubKeyW);
-	return ret;
+/******************************************************************************
+ * RegOpenKey32W [ADVAPI32.151]
+ */
+DWORD WINAPI RegOpenKey32W( HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey )
+{
+    TRACE(reg,"(%x,%s,%p)\n",hkey,debugstr_w(lpszSubKey),retkey);
+    return RegOpenKeyEx32W(hkey,lpszSubKey,0,KEY_ALL_ACCESS,retkey);
 }
 
-/* RegOpenKeyA			[ADVAPI32.148] */
-DWORD WINAPI RegOpenKey32A(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,lpszSubKey,retkey
-	);
-	return	RegOpenKeyEx32A(hkey,lpszSubKey,0,KEY_ALL_ACCESS,retkey);
+
+/******************************************************************************
+ * RegOpenKeyEx32A [ADVAPI32.149]
+ */
+DWORD WINAPI RegOpenKeyEx32A( HKEY hkey, LPCSTR lpszSubKey, DWORD dwReserved,
+                              REGSAM samDesired, LPHKEY retkey )
+{
+    LPWSTR lpszSubKeyW = HEAP_strdupAtoW(GetProcessHeap(),0,lpszSubKey);
+    DWORD ret;
+
+    TRACE(reg,"(%x,%s,%ld,%lx,%p)\n",hkey,debugstr_a(lpszSubKey),dwReserved,
+          samDesired,retkey);
+
+    ret = RegOpenKeyEx32W(hkey,lpszSubKeyW,dwReserved,samDesired,retkey);
+    HeapFree(GetProcessHeap(),0,lpszSubKeyW);
+    return ret;
 }
 
-/* RegOpenKey			[SHELL.1] [KERNEL.217] */
-DWORD WINAPI RegOpenKey16(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,lpszSubKey,retkey
-	);
-	return RegOpenKey32A(hkey,lpszSubKey,retkey);
+
+/******************************************************************************
+ * RegOpenKey32A [ADVAPI32.148]
+ */
+DWORD WINAPI RegOpenKey32A( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
+{
+    TRACE(reg,"(%x,%s,%p)\n",hkey,debugstr_a(lpszSubKey),retkey);
+    return RegOpenKeyEx32A(hkey,lpszSubKey,0,KEY_ALL_ACCESS,retkey);
 }
+
+
+/******************************************************************************
+ * RegOpenKey16 [SHELL.1] [KERNEL.217]
+ */
+DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
+{
+    TRACE(reg,"(%x,%s,%p)\n",hkey,debugstr_a(lpszSubKey),retkey);
+    return RegOpenKey32A(hkey,lpszSubKey,retkey);
+}
+
 
 /* 
  * Create keys
@@ -1636,44 +1799,48 @@ DWORD WINAPI RegOpenKey16(
  *                                      RegCreateKey32W   -> RegCreateKeyEx32W
  */
 
-/* RegCreateKeyExW		[ADVAPI32.131] */
-DWORD WINAPI RegCreateKeyEx32W(
-	HKEY	hkey,
-	LPCWSTR	lpszSubKey,
-	DWORD	dwReserved,
-	LPWSTR	lpszClass,
-	DWORD	fdwOptions,
-	REGSAM	samDesired,
-	LPSECURITY_ATTRIBUTES lpSecAttribs,
-	LPHKEY	retkey,
-	LPDWORD	lpDispos
-) {
+
+/******************************************************************************
+ * RegCreateKeyEx32W [ADVAPI32.131]
+ *
+ * PARAMS
+ *    ...
+ *    retkey   [O] Address of buffer for opened handle
+ *    lpDispos [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
+ */
+DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey, 
+                                DWORD dwReserved, LPWSTR lpszClass, 
+                                DWORD fdwOptions, REGSAM samDesired,
+                                LPSECURITY_ATTRIBUTES lpSecAttribs, 
+                                LPHKEY retkey, LPDWORD lpDispos )
+{
 	LPKEYSTRUCT	*lplpPrevKey,lpNextKey,lpxkey;
 	LPWSTR		*wps;
 	int		wpc,i;
 
-/*FIXME: handle security/access/whatever */
-	TRACE(reg,"(%lx,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n",
-		(LONG)hkey,
-		W2C(lpszSubKey,0),
-		dwReserved,
-		W2C(lpszClass,1),
-		fdwOptions,
-		samDesired,
-		lpSecAttribs,
-		retkey,
-		lpDispos
-	);
+    /*FIXME: handle security/access/whatever */
 
-	lpNextKey	= lookup_hkey(hkey);
-	if (!lpNextKey)
-		return SHELL_ERROR_BADKEY;
+    TRACE(reg,"(%x,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n", hkey,
+		debugstr_w(lpszSubKey), dwReserved, debugstr_w(lpszClass),
+		fdwOptions, samDesired, lpSecAttribs, retkey, lpDispos);
+
+    lpNextKey = lookup_hkey(hkey);
+    if (!lpNextKey)
+        return ERROR_BADKEY;
+
+    if (lpszSubKey[0] == '\\') {
+        WARN(reg,"Subkey %s must not begin with backslash.\n",debugstr_w(lpszSubKey));
+        return ERROR_BAD_PATHNAME;
+    }
+
 	if (!lpszSubKey || !*lpszSubKey) {
 		add_handle(++currenthandle,lpNextKey,samDesired);
 		*retkey=currenthandle;
+                TRACE(reg, "Returning %x\n", currenthandle);
 		lpNextKey->flags|=REG_OPTION_TAINTED;
-		return SHELL_ERROR_SUCCESS;
+		return ERROR_SUCCESS;
 	}
+
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
 	while ((i<wpc) && (wps[i][0]=='\0')) i++;
@@ -1694,12 +1861,14 @@ DWORD WINAPI RegCreateKeyEx32W(
 		add_handle(++currenthandle,lpxkey,samDesired);
 		lpxkey->flags  |= REG_OPTION_TAINTED;
 		*retkey		= currenthandle;
+                TRACE(reg, "Returning %x\n", currenthandle);
 		if (lpDispos)
 			*lpDispos	= REG_OPENED_EXISTING_KEY;
 		FREE_KEY_PATH;
-		return	SHELL_ERROR_SUCCESS;
+		return ERROR_SUCCESS;
 	}
-	/* good. now the hard part */
+
+	/* Good.  Now the hard part */
 	while (wps[i]) {
 		lplpPrevKey	= &(lpNextKey->nextsub);
 		lpxkey		= *lplpPrevKey;
@@ -1710,9 +1879,11 @@ DWORD WINAPI RegCreateKeyEx32W(
 		*lplpPrevKey=malloc(sizeof(KEYSTRUCT));
 		if (!*lplpPrevKey) {
 			FREE_KEY_PATH;
-			return SHELL_ERROR_OUTOFMEMORY;
+                        TRACE(reg, "Returning OUTOFMEMORY\n");
+			return ERROR_OUTOFMEMORY;
 		}
 		memset(*lplpPrevKey,'\0',sizeof(KEYSTRUCT));
+                TRACE(reg,"Adding %s\n", debugstr_w(wps[i]));
 		(*lplpPrevKey)->keyname	= strdupW(wps[i]);
 		(*lplpPrevKey)->next	= NULL;
 		(*lplpPrevKey)->nextsub	= NULL;
@@ -1735,100 +1906,78 @@ DWORD WINAPI RegCreateKeyEx32W(
 	else
 		lpNextKey->class = NULL;
 	*retkey		= currenthandle;
+        TRACE(reg, "Returning %x\n", currenthandle);
 	if (lpDispos)
 		*lpDispos	= REG_CREATED_NEW_KEY;
 	FREE_KEY_PATH;
-	return SHELL_ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
 
-/* RegCreateKeyW		[ADVAPI32.132] */
-DWORD WINAPI RegCreateKey32W(
-	HKEY	hkey,
-	LPCWSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	DWORD	junk,ret;
 
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,W2C(lpszSubKey,0),retkey
-	);
-	ret=RegCreateKeyEx32W(
-		hkey,		/* key handle */
-		lpszSubKey,	/* subkey name */
-		0,		/* reserved = 0 */
-		NULL,		/* lpszClass? FIXME: ? */
-		REG_OPTION_NON_VOLATILE,	/* options */
-		KEY_ALL_ACCESS,	/* desired access attribs */
-		NULL,		/* lpsecurity attributes */
-		retkey,		/* lpretkey */
-		&junk		/* disposition value */
-	);
-	return	ret;
+/******************************************************************************
+ * RegCreateKey32W [ADVAPI32.132]
+ */
+DWORD WINAPI RegCreateKey32W( HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey )
+{
+    DWORD junk;
+
+    TRACE(reg,"(%x,%s,%p)\n", hkey,debugstr_w(lpszSubKey),retkey);
+    return RegCreateKeyEx32W( hkey, lpszSubKey, 0, NULL, 
+                              REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS,NULL,
+                              retkey, &junk);
 }
 
-/* RegCreateKeyExA		[ADVAPI32.130] */
-DWORD WINAPI RegCreateKeyEx32A(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	DWORD	dwReserved,
-	LPSTR	lpszClass,
-	DWORD	fdwOptions,
-	REGSAM	samDesired,
-	LPSECURITY_ATTRIBUTES lpSecAttribs,
-	LPHKEY	retkey,
-	LPDWORD	lpDispos
-) {
-	LPWSTR	lpszSubKeyW,lpszClassW;
-	DWORD	ret;
 
-	TRACE(reg,"(%lx,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n",
-		(LONG)hkey,
-		lpszSubKey,
-		dwReserved,
-		lpszClass,
-		fdwOptions,
-		samDesired,
-		lpSecAttribs,
-		retkey,
-		lpDispos
-	);
+/******************************************************************************
+ * RegCreateKeyEx32A [ADVAPI32.130]
+ */
+DWORD WINAPI RegCreateKeyEx32A( HKEY hkey, LPCSTR lpszSubKey, DWORD dwReserved,
+                                LPSTR lpszClass, DWORD fdwOptions, 
+                                REGSAM samDesired, 
+                                LPSECURITY_ATTRIBUTES lpSecAttribs, 
+                                LPHKEY retkey, LPDWORD lpDispos )
+{
+    LPWSTR lpszSubKeyW, lpszClassW;
+    DWORD  ret;
+
+    TRACE(reg,"(%x,%s,%ld,%s,%lx,%lx,%p,%p,%p)\n",hkey,debugstr_a(lpszSubKey),
+          dwReserved,debugstr_a(lpszClass),fdwOptions,samDesired,lpSecAttribs,
+          retkey,lpDispos);
+
+    lpszSubKeyW = HEAP_strdupAtoW(GetProcessHeap(),0,lpszSubKey);
+/*
 	if (lpszSubKey)
 		lpszSubKeyW=strdupA2W(lpszSubKey);
 	else
 		lpszSubKeyW=NULL;
+*/
 	if (lpszClass)
 		lpszClassW=strdupA2W(lpszClass);
 	else
 		lpszClassW=NULL;
-	ret=RegCreateKeyEx32W(
-		hkey,
-		lpszSubKeyW,
-		dwReserved,
-		lpszClassW,
-		fdwOptions,
-		samDesired,
-		lpSecAttribs,
-		retkey,
-		lpDispos
-	);
+    ret = RegCreateKeyEx32W( hkey, lpszSubKeyW, dwReserved, lpszClassW, 
+                             fdwOptions, samDesired, lpSecAttribs, retkey, 
+                             lpDispos );
+    HeapFree(GetProcessHeap(),0,lpszSubKeyW);
+/*
 	if (lpszSubKeyW)
 		free(lpszSubKeyW);
+*/
 	if (lpszClassW)
 		free(lpszClassW);
-	return ret;
+    return ret;
 }
 
-/* RegCreateKeyA		[ADVAPI32.129] */
-DWORD WINAPI RegCreateKey32A(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	DWORD	junk;
 
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,lpszSubKey,retkey
-	);
+/******************************************************************************
+ * RegCreateKey32A [ADVAPI32.129]
+ */
+DWORD WINAPI RegCreateKey32A( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
+{
+    DWORD junk;
+
+    TRACE(reg,"(%x,%s,%p)\n",hkey,debugstr_a(lpszSubKey),retkey);
+
 	return	RegCreateKeyEx32A(
 		hkey,		/* key handle */
 		lpszSubKey,	/* subkey name */
@@ -1842,17 +1991,16 @@ DWORD WINAPI RegCreateKey32A(
 	);
 }
 
-/* RegCreateKey			[SHELL.2] [KERNEL.218] */
-DWORD WINAPI RegCreateKey16(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	LPHKEY	retkey
-) {
-	TRACE(reg,"(%lx,%s,%p)\n",
-		(LONG)hkey,lpszSubKey,retkey
-	);
-	return RegCreateKey32A(hkey,lpszSubKey,retkey);
+
+/******************************************************************************
+ * RegCreateKey16 [SHELL.2] [KERNEL.218]
+ */
+DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
+{
+    TRACE(reg,"(%x,%s,%p)\n",hkey,debugstr_a(lpszSubKey),retkey);
+    return RegCreateKey32A( hkey, lpszSubKey, retkey );
 }
+
 
 /* 
  * Query Value Functions
@@ -1866,81 +2014,140 @@ DWORD WINAPI RegCreateKey16(
  *                                          RegQueryValue32W -> RegQueryValueEx32W
  */
 
-/* RegQueryValueExW		[ADVAPI32.158] */
-DWORD WINAPI RegQueryValueEx32W(
-	HKEY	hkey,
-	LPWSTR	lpszValueName,
-	LPDWORD	lpdwReserved,
-	LPDWORD	lpdwType,
-	LPBYTE	lpbData,
-	LPDWORD	lpcbData
-) {
+
+/******************************************************************************
+ * RegQueryValueEx32W [ADVAPI32.158]
+ * Retrieves type and data for a specified name associated with an open key
+ *
+ * PARAMS
+ *    hkey          [I]   Handle of key to query
+ *    lpValueName   [I]   Name of value to query
+ *    lpdwReserved  [I]   Reserved - must be NULL
+ *    lpdwType      [O]   Address of buffer for value type.  If NULL, the type
+ *                        is not required.
+ *    lpbData       [O]   Address of data buffer.  If NULL, the actual data is
+ *                        not required.
+ *    lpcbData      [I/O] Address of data buffer size
+ *
+ * RETURNS 
+ *    ERROR_SUCCESS:   Success
+ *    ERROR_MORE_DATA: The specified buffer is not big enough to hold the data
+ */
+DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
+                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
+                                 LPBYTE lpbData, LPDWORD lpcbData )
+{
 	LPKEYSTRUCT	lpkey;
 	int		i;
 
-	TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n",
-		     hkey,W2C(lpszValueName,0),lpdwReserved,lpdwType,lpbData,
-		     lpcbData?*lpcbData:0);
+    TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n", hkey, debugstr_w(lpValueName),
+          lpdwReserved, lpdwType, lpbData, lpcbData?*lpcbData:0);
 
-	lpkey	= lookup_hkey(hkey);
-	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
-	if (lpszValueName && !*lpszValueName)
-		lpszValueName = NULL;
-	if (lpszValueName==NULL) {
+    lpkey = lookup_hkey(hkey);
+    if (!lpkey) {
+        TRACE(reg, "Invalid handle(%x)\n",hkey);
+        return ERROR_INVALID_HANDLE;
+    }
+
+    /* An empty name string is equivalent to NULL */
+    if (lpValueName && !*lpValueName)
+        lpValueName = NULL;
+
+	if (lpValueName==NULL) {
+                /* Use key's unnamed or default value, if any */
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (lpkey->values[i].name==NULL)
 				break;
 	} else {
+                /* Search for the key name */
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (	lpkey->values[i].name &&
-				!lstrcmpi32W(lpszValueName,lpkey->values[i].name)
+				!lstrcmpi32W(lpValueName,lpkey->values[i].name)
 			)
 				break;
 	}
+
 	if (i==lpkey->nrofvalues) {
-		if (lpszValueName==NULL) {
+                TRACE(reg,"Key not found\n");
+		if (lpValueName==NULL) {
+                        /* Empty keyname not found */
 			if (lpbData) {
 				*(WCHAR*)lpbData = 0;
 				*lpcbData	= 2;
 			}
 			if (lpdwType)
 				*lpdwType	= REG_SZ;
-			return SHELL_ERROR_SUCCESS;
+                        TRACE(reg, "Returning an empty string\n");
+			return ERROR_SUCCESS;
 		}
-		return SHELL_ERROR_BADKEY;/*FIXME: correct return? */
+		return ERROR_BADKEY; /* FIXME */
 	}
-	if (lpdwType)
-		*lpdwType	= lpkey->values[i].type;
-	if (lpbData==NULL) {
-		if (lpcbData==NULL)
-			return SHELL_ERROR_SUCCESS;
-		*lpcbData	= lpkey->values[i].len;
-		return SHELL_ERROR_SUCCESS;
-	}
-	if (*lpcbData<lpkey->values[i].len) {
-		*(WCHAR*)lpbData= 0;
-		*lpcbData	= lpkey->values[i].len;
-		return ERROR_MORE_DATA;
-	}
-	memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
-	*lpcbData	= lpkey->values[i].len;
-	return SHELL_ERROR_SUCCESS;
+
+    if (lpdwType)
+        *lpdwType = lpkey->values[i].type;
+
+    if (lpbData==NULL) {
+        /* Data is not required */
+        if (lpcbData==NULL) {
+            /* And data size is not required */
+            /* So all that is returned is the type (set above) */
+            return ERROR_SUCCESS;
+        }
+        /* Set the size required and return success */
+        *lpcbData = lpkey->values[i].len;
+        return ERROR_SUCCESS;
+    }
+
+    if (*lpcbData<lpkey->values[i].len) {
+        /* The size was specified, but the data is too big for it */
+        /* Instead of setting it to NULL, fill in with as much as possible */
+        /* But the docs do not specify how to handle the lpbData here */
+        /* *(WCHAR*)lpbData= 0; */
+        memcpy(lpbData,lpkey->values[i].data,*lpcbData);
+        *lpcbData = lpkey->values[i].len;
+        return ERROR_MORE_DATA;
+    }
+
+    memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
+
+    /* Extra debugging output */
+    if (lpdwType) {
+        switch(*lpdwType){
+            case REG_SZ:
+                TRACE(reg," Data(sz)=%s\n",debugstr_w((LPCWSTR)lpbData));
+                break;
+            case REG_DWORD:
+                TRACE(reg," Data(dword)=%lx\n", (DWORD)*lpbData);
+                break;
+            case REG_BINARY:
+                TRACE(reg," Data(binary)\n");
+                /* Is there a way of printing this in readable form? */
+                break;
+            default:
+                TRACE(reg, "Unknown data type %ld\n", *lpdwType);
+        } /* switch */
+    } /* if */
+
+    /* Set the actual size */
+    *lpcbData = lpkey->values[i].len;
+    return ERROR_SUCCESS;
 }
 
-/* RegQueryValueW		[ADVAPI32.159] */
-DWORD WINAPI RegQueryValue32W(
-	HKEY	hkey,
-	LPWSTR	lpszSubKey,
-	LPWSTR	lpszData,
-	LPDWORD	lpcbData
-) {
+
+/******************************************************************************
+ * RegQueryValue32W [ADVAPI32.159]
+ *
+ * NOTES
+ *    Why is this calling RegOpenKey32W?
+ */
+DWORD WINAPI RegQueryValue32W( HKEY hkey, LPWSTR lpszSubKey, LPWSTR lpszData,
+                               LPDWORD lpcbData )
+{
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	TRACE(reg,"(%x,%s,%p,%ld)\n",
-		     hkey,W2C(lpszSubKey,0),lpszData,
-		     lpcbData?*lpcbData:0);
+    TRACE(reg,"(%x,%s,%p,%ld)\n",hkey,debugstr_w(lpszSubKey),lpszData,
+          lpcbData?*lpcbData:0);
 
 	/* only open subkey, if we really do descend */
 	if (lpszSubKey && *lpszSubKey) {
@@ -1964,37 +2171,38 @@ DWORD WINAPI RegQueryValue32W(
 	return ret;
 }
 
-/* RegQueryValueExA		[ADVAPI32.157] */
-DWORD WINAPI RegQueryValueEx32A(
-	HKEY	hkey,
-	LPSTR	lpszValueName,
-	LPDWORD	lpdwReserved,
-	LPDWORD	lpdwType,
-	LPBYTE	lpbData,
-	LPDWORD	lpcbData
-) {
+
+/******************************************************************************
+ * RegQueryValueEx32A [ADVAPI32.157]
+ *
+ * Can this use HEAP_strdupAtoW?
+ */
+DWORD WINAPI RegQueryValueEx32A( HKEY hkey, LPSTR lpszValueName,
+                                 LPDWORD lpdwReserved, LPDWORD lpdwType,
+                                 LPBYTE lpbData, LPDWORD lpcbData )
+{
 	LPWSTR	lpszValueNameW;
 	LPBYTE	buf;
 	DWORD	ret,myxlen;
 	DWORD	*mylen;
 	DWORD	type;
 
-	TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n",
-		     hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
-		     lpcbData?*lpcbData:0);
+    TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n", hkey,debugstr_a(lpszValueName),
+          lpdwReserved,lpdwType,lpbData,lpcbData?*lpcbData:0);
 
-	if (lpszValueName)
-		lpszValueNameW=strdupA2W(lpszValueName);
-	else 
-		lpszValueNameW=NULL;
+    if (lpszValueName)
+        lpszValueNameW=strdupA2W(lpszValueName);
+    else 
+        lpszValueNameW=NULL;
 
-	if (lpdwType)
-		type=*lpdwType;
+    if (lpdwType)
+        type=*lpdwType;
 
 	if (lpbData) {
 		myxlen  = 0;
 		mylen	= &myxlen;
 		buf	= xmalloc(4);
+                /* Only get the size for now */
 		ret=RegQueryValueEx32W(
 			hkey,
 			lpszValueNameW,
@@ -2018,6 +2226,7 @@ DWORD WINAPI RegQueryValueEx32A(
 		} else
 			mylen	= NULL;
 	}
+        /* Now get the data */
 	ret=RegQueryValueEx32W(
 		hkey,
 		lpszValueNameW,
@@ -2028,6 +2237,7 @@ DWORD WINAPI RegQueryValueEx32A(
 	);
 	if (lpdwType) 
 		*lpdwType=type;
+
 	if (ret==ERROR_SUCCESS) {
 		if (buf) {
 			if (UNICONVMASK & (1<<(type))) {
@@ -2052,33 +2262,31 @@ DWORD WINAPI RegQueryValueEx32A(
 	}
 	if (buf)
 		free(buf);
-	return ret;
+
+    return ret;
 }
 
-/* RegQueryValueEx		[KERNEL.225] */
-DWORD WINAPI RegQueryValueEx16(
-	HKEY	hkey,
-	LPSTR	lpszValueName,
-	LPDWORD	lpdwReserved,
-	LPDWORD	lpdwType,
-	LPBYTE	lpbData,
-	LPDWORD	lpcbData
-) {
-	TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n",
-		     hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
-		     lpcbData?*lpcbData:0);
 
-	return RegQueryValueEx32A(
-		hkey,
-		lpszValueName,
-		lpdwReserved,
-		lpdwType,
-		lpbData,
-		lpcbData
-	);
+/******************************************************************************
+ * RegQueryValueEx16 [KERNEL.225]
+ */
+DWORD WINAPI RegQueryValueEx16( HKEY hkey, LPSTR lpszValueName,
+                                LPDWORD lpdwReserved, LPDWORD lpdwType,
+                                LPBYTE lpbData, LPDWORD lpcbData )
+{
+    TRACE(reg,"(%x,%s,%p,%p,%p,%ld)\n",hkey,debugstr_a(lpszValueName),
+          lpdwReserved,lpdwType,lpbData,lpcbData?*lpcbData:0);
+    return RegQueryValueEx32A( hkey, lpszValueName, lpdwReserved, lpdwType,
+                               lpbData, lpcbData );
 }
 
-/* RegQueryValueA		[ADVAPI32.156] */
+
+/******************************************************************************
+ * RegQueryValue32A [ADVAPI32.156]
+ *
+ * NOTES
+ *    Why is this calling RegOpenKey16?
+ */
 DWORD WINAPI RegQueryValue32A(
 	HKEY	hkey,
 	LPSTR	lpszSubKey,
@@ -2088,13 +2296,12 @@ DWORD WINAPI RegQueryValue32A(
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	TRACE(reg,"(%x,%s,%p,%ld)\n",
-		     hkey,lpszSubKey,lpszData,
-		     lpcbData?*lpcbData:0);
+    TRACE(reg,"(%x,%s,%p,%ld)\n",hkey,debugstr_a(lpszSubKey),lpszData,
+          lpcbData?*lpcbData:0);
 
 	/* only open subkey, if we really do descend */
 	if (lpszSubKey && *lpszSubKey) {
-		ret	= RegOpenKey16(hkey,lpszSubKey,&xhkey);
+		ret = RegOpenKey16(hkey,lpszSubKey,&xhkey);
 		if (ret!=ERROR_SUCCESS)
 			return ret;
 	} else
@@ -2114,24 +2321,29 @@ DWORD WINAPI RegQueryValue32A(
 	return ret;
 }
 
-/* RegQueryValue		[SHELL.6] [KERNEL.224] */
-DWORD WINAPI RegQueryValue16(
-	HKEY	hkey,
-	LPSTR	lpszSubKey,
-	LPSTR	lpszData,
-	LPDWORD	lpcbData
-) {
-	TRACE(reg,"(%x,%s,%p,%ld)\n",
-		     hkey,lpszSubKey,lpszData,lpcbData?*lpcbData:0);
 
-	/* HACK: the 16bit RegQueryValue doesn't handle selectorblocks
-	 *       anyway, so we just mask out the high 16 bit.
-	 *       (this (not so much incidently;) hopefully fixes Aldus FH4)
-	 */
-	if (lpcbData)
-		*lpcbData &= 0xFFFF;
-	return RegQueryValue32A(hkey,lpszSubKey,lpszData,lpcbData);
+/******************************************************************************
+ * RegQueryValue16 [SHELL.6] [KERNEL.224]
+ *
+ * NOTES
+ *    Is this HACK still applicable?
+ *
+ * HACK
+ *    The 16bit RegQueryValue doesn't handle selectorblocks anyway, so we just
+ *    mask out the high 16 bit.  This (not so much incidently) hopefully fixes
+ *    Aldus FH4)
+ */
+DWORD WINAPI RegQueryValue16( HKEY hkey, LPSTR lpszSubKey, LPSTR lpszData,
+                              LPDWORD lpcbData )
+{
+    TRACE(reg,"(%x,%s,%p,%ld)\n",hkey,debugstr_a(lpszSubKey),lpszData,
+          lpcbData?*lpcbData:0);
+
+    if (lpcbData)
+        *lpcbData &= 0xFFFF;
+    return RegQueryValue32A(hkey,lpszSubKey,lpszData,lpcbData);
 }
+
 
 /*
  * Setting values of Registry keys
@@ -2141,29 +2353,57 @@ DWORD WINAPI RegQueryValue16(
  *                                    RegSetValue32W   -> RegSetValueEx32W
  */
 
-/* RegSetValueExW		[ADVAPI32.170] */
-DWORD WINAPI RegSetValueEx32W(
-	HKEY	hkey,
-	LPWSTR	lpszValueName,
-	DWORD	dwReserved,
-	DWORD	dwType,
-	LPBYTE	lpbData,
-	DWORD	cbData
-) {
-	LPKEYSTRUCT	lpkey;
-	int		i;
 
-	TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",
-		hkey,W2C(lpszValueName,0),dwReserved,dwType,lpbData,cbData
-	);
-	/* we no longer care about the lpbData type here... */
-	lpkey	= lookup_hkey(hkey);
-	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
+/******************************************************************************
+ * RegSetValueEx32W [ADVAPI32.170]
+ * Sets the data and type of a value under a register key
+ *
+ * PARAMS
+ *    hkey          [I] Handle of key to set value for
+ *    lpszValueName [I] Name of value to set
+ *    dwReserved    [I] Reserved - must be zero
+ *    dwType        [I] Flag for value type
+ *    lpbData       [I] Address of value data
+ *    cbData        [I] Size of value data
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName, 
+                               DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
+                               DWORD cbData)
+{
+    LPKEYSTRUCT lpkey;
+    int i;
+
+    TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_w(lpszValueName),
+          dwReserved, dwType, lpbData, cbData);
+
+    switch (dwType) {
+        case REG_SZ:
+            TRACE(reg," Data(sz)=%s\n", debugstr_w((LPCWSTR)lpbData));
+            break;
+        case REG_BINARY:
+            TRACE(reg," Data(binary)\n");
+            break;
+        case REG_DWORD:
+            TRACE(reg," Data(dword)=%lx\n", (DWORD)*lpbData);
+            break;
+        default:
+            TRACE(reg,"Unknown type: %ld\n", dwType);
+    }
+
+	lpkey = lookup_hkey(hkey);
+	if (!lpkey) {
+            WARN(reg,"Returning badkey\n");
+            return ERROR_INVALID_HANDLE;
+        }
 
 	lpkey->flags |= REG_OPTION_TAINTED;
 
 	if (lpszValueName==NULL) {
+             /* Sets type and name for key's unnamed or default value */
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (lpkey->values[i].name==NULL)
 				break;
@@ -2194,25 +2434,27 @@ DWORD WINAPI RegSetValueEx32W(
 	lpkey->values[i].data	= (LPBYTE)xmalloc(cbData);
 	lpkey->values[i].lastmodified = time(NULL);
 	memcpy(lpkey->values[i].data,lpbData,cbData);
-	return SHELL_ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
 
-/* RegSetValueExA		[ADVAPI32.169] */
-DWORD WINAPI RegSetValueEx32A(
-	HKEY	hkey,
-	LPSTR	lpszValueName,
-	DWORD	dwReserved,
-	DWORD	dwType,
-	LPBYTE	lpbData,
-	DWORD	cbData
-) {
+
+/******************************************************************************
+ * RegSetValueEx32A [ADVAPI32.169]
+ *
+ * NOTES
+ *    Can this use the standard HEAP_strdupAtoW instead?
+ */
+DWORD WINAPI RegSetValueEx32A( HKEY hkey, LPSTR lpszValueName,
+                               DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
+                               DWORD cbData )
+{
 	LPBYTE	buf;
 	LPWSTR	lpszValueNameW;
 	DWORD	ret;
 
-	TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",
-		hkey,lpszValueName,dwReserved,dwType,lpbData,cbData
-	);
+    TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",hkey,debugstr_a(lpszValueName),
+          dwReserved,dwType,lpbData,cbData);
+
 	if ((1<<dwType) & UNICONVMASK) {
 		buf=(LPBYTE)strdupA2W(lpbData);
 		cbData=2*strlen(lpbData)+2;
@@ -2230,22 +2472,23 @@ DWORD WINAPI RegSetValueEx32A(
 	return ret;
 }
 
-/* RegSetValueEx		[KERNEL.226] */
-DWORD WINAPI RegSetValueEx16(
-	HKEY	hkey,
-	LPSTR	lpszValueName,
-	DWORD	dwReserved,
-	DWORD	dwType,
-	LPBYTE	lpbData,
-	DWORD	cbData
-) {
-	TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",
-		hkey,lpszValueName,dwReserved,dwType,lpbData,cbData
-	);
-	return RegSetValueEx32A(hkey,lpszValueName,dwReserved,dwType,lpbData,cbData);
+
+/******************************************************************************
+ * RegSetValueEx16 [KERNEL.226]
+ */
+DWORD WINAPI RegSetValueEx16( HKEY hkey, LPSTR lpszValueName, DWORD dwReserved,
+                              DWORD dwType, LPBYTE lpbData, DWORD cbData )
+{
+    TRACE(reg,"(%x,%s,%ld,%ld,%p,%ld)\n",hkey,debugstr_a(lpszValueName),
+          dwReserved,dwType,lpbData,cbData);
+    return RegSetValueEx32A( hkey, lpszValueName, dwReserved, dwType, lpbData,
+                             cbData );
 }
 
-/* RegSetValueW			[ADVAPI32.171] */
+
+/******************************************************************************
+ * RegSetValue32W	[ADVAPI32.171]
+ */
 DWORD WINAPI RegSetValue32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
@@ -2279,9 +2522,15 @@ DWORD WINAPI RegSetValue32W(
 	if (hkey!=xhkey)
 		RegCloseKey(xhkey);
 	return ret;
-
 }
-/* RegSetValueA			[ADVAPI32.168] */
+
+
+/******************************************************************************
+ * RegSetValue32A [ADVAPI32.168]
+ *
+ * NOTES
+ *    Why is this calling RegCreateKey16?
+ */
 DWORD WINAPI RegSetValue32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
@@ -2314,21 +2563,18 @@ DWORD WINAPI RegSetValue32A(
 	return ret;
 }
 
-/* RegSetValue			[KERNEL.221] [SHELL.5] */
-DWORD WINAPI RegSetValue16(
-	HKEY	hkey,
-	LPCSTR	lpszSubKey,
-	DWORD	dwType,
-	LPCSTR	lpszData,
-	DWORD	cbData
-) {
-	DWORD	ret;
-	TRACE(reg,"(%x,%s,%ld,%s,%ld)\n",
-		hkey,lpszSubKey,dwType,lpszData,cbData
-	);
-	ret=RegSetValue32A(hkey,lpszSubKey,dwType,lpszData,cbData);
-	return ret;
+
+/******************************************************************************
+ * RegSetValue16 [KERNEL.221] [SHELL.5]
+ */
+DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR lpszSubKey, DWORD	dwType,
+                            LPCSTR lpszData, DWORD cbData )
+{
+    TRACE(reg,"(%x,%s,%ld,%s,%ld)\n",hkey,debugstr_a(lpszSubKey),dwType,
+          debugstr_a(lpszData),cbData);
+    return RegSetValue32A(hkey,lpszSubKey,dwType,lpszData,cbData);
 }
+
 
 /* 
  * Key Enumeration
@@ -2338,25 +2584,24 @@ DWORD WINAPI RegSetValue16(
  *                              RegEnumKey32W   -> RegEnumKeyEx32W
  */
 
-/* RegEnumKeyExW		[ADVAPI32.139] */
-DWORD WINAPI RegEnumKeyEx32W(
-	HKEY	hkey,
-	DWORD	iSubkey,
-	LPWSTR	lpszName,
-	LPDWORD	lpcchName,
-	LPDWORD	lpdwReserved,
-	LPWSTR	lpszClass,
-	LPDWORD	lpcchClass,
-	FILETIME	*ft
-) {
+
+/******************************************************************************
+ * RegEnumKeyEx32W [ADVAPI32.139]
+ */
+DWORD WINAPI RegEnumKeyEx32W( HKEY hkey, DWORD iSubkey, LPWSTR lpszName,
+                              LPDWORD lpcchName, LPDWORD lpdwReserved,
+                              LPWSTR lpszClass, LPDWORD lpcchClass, 
+                              FILETIME *ft )
+{
 	LPKEYSTRUCT	lpkey,lpxkey;
 
-	TRACE(reg,"(%x,%ld,%p,%ld,%p,%p,%p,%p)\n",
-		hkey,iSubkey,lpszName,*lpcchName,lpdwReserved,lpszClass,lpcchClass,ft
-	);
-	lpkey=lookup_hkey(hkey);
-	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
+    TRACE(reg,"(%x,%ld,%p,%ld,%p,%p,%p,%p)\n",hkey,iSubkey,lpszName,
+          *lpcchName,lpdwReserved,lpszClass,lpcchClass,ft);
+
+    lpkey = lookup_hkey(hkey);
+    if (!lpkey)
+        return ERROR_INVALID_HANDLE;
+
 	if (!lpkey->nextsub)
 		return ERROR_NO_MORE_ITEMS;
 	lpxkey=lpkey->nextsub;
@@ -2375,23 +2620,22 @@ DWORD WINAPI RegEnumKeyEx32W(
 		*lpcchClass	= 2;
 	}
 	return ERROR_SUCCESS;
-
 }
 
-/* RegEnumKeyW			[ADVAPI32.140] */
-DWORD WINAPI RegEnumKey32W(
-	HKEY	hkey,
-	DWORD	iSubkey,
-	LPWSTR	lpszName,
-	DWORD	lpcchName
-) {
-	FILETIME	ft;
 
-	TRACE(reg,"(%x,%ld,%p,%ld)\n",
-		hkey,iSubkey,lpszName,lpcchName
-	);
-	return RegEnumKeyEx32W(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,&ft);
+/******************************************************************************
+ * RegEnumKey32W [ADVAPI32.140]
+ */
+DWORD WINAPI RegEnumKey32W( HKEY hkey, DWORD iSubkey, LPWSTR lpszName, 
+                            DWORD lpcchName )
+{
+    FILETIME	ft;
+
+    TRACE(reg,"(%x,%ld,%p,%ld)\n",hkey,iSubkey,lpszName,lpcchName);
+    return RegEnumKeyEx32W(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,&ft);
 }
+
+
 /* RegEnumKeyExA		[ADVAPI32.138] */
 DWORD WINAPI RegEnumKeyEx32A(
 	HKEY	hkey,
@@ -2449,42 +2693,31 @@ DWORD WINAPI RegEnumKeyEx32A(
 	return ret;
 }
 
-/* RegEnumKeyA			[ADVAPI32.137] */
-DWORD WINAPI RegEnumKey32A(
-	HKEY	hkey,
-	DWORD	iSubkey,
-	LPSTR	lpszName,
-	DWORD	lpcchName
-) {
-	FILETIME	ft;
 
-	TRACE(reg,"(%x,%ld,%p,%ld)\n",
-		hkey,iSubkey,lpszName,lpcchName
-	);
-	return	RegEnumKeyEx32A(
-		hkey,
-		iSubkey,
-		lpszName,
-		&lpcchName,
-		NULL,
-		NULL,
-		NULL,
-		&ft
-	);
+/******************************************************************************
+ * RegEnumKey32A [ADVAPI32.137]
+ */
+DWORD WINAPI RegEnumKey32A( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
+                            DWORD lpcchName )
+{
+    FILETIME	ft;
+
+    TRACE(reg,"(%x,%ld,%p,%ld)\n",hkey,iSubkey,lpszName,lpcchName);
+    return RegEnumKeyEx32A( hkey, iSubkey, lpszName, &lpcchName, NULL, NULL, 
+                            NULL, &ft );
 }
 
-/* RegEnumKey			[SHELL.7] [KERNEL.216] */
-DWORD WINAPI RegEnumKey16(
-	HKEY	hkey,
-	DWORD	iSubkey,
-	LPSTR	lpszName,
-	DWORD	lpcchName
-) {
-	TRACE(reg,"(%x,%ld,%p,%ld)\n",
-		hkey,iSubkey,lpszName,lpcchName
-	);
-	return RegEnumKey32A(hkey,iSubkey,lpszName,lpcchName);
+
+/******************************************************************************
+ * RegEnumKey16 [SHELL.7] [KERNEL.216]
+ */
+DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
+                           DWORD lpcchName )
+{
+    TRACE(reg,"(%x,%ld,%p,%ld)\n",hkey,iSubkey,lpszName,lpcchName);
+    return RegEnumKey32A( hkey, iSubkey, lpszName, lpcchName);
 }
+
 
 /* 
  * Enumerate Registry Values
@@ -2493,11 +2726,14 @@ DWORD WINAPI RegEnumKey16(
  * RegEnumValue16 -> RegEnumValue32A -> RegEnumValue32W
  */
 
-/* RegEnumValueW		[ADVAPI32.142] */
+
+/******************************************************************************
+ * RegEnumValue32W [ADVAPI32.142]
+ */
 DWORD WINAPI RegEnumValue32W(
-	HKEY	hkey,
-	DWORD	iValue,
-	LPWSTR	lpszValue,
+	HKEY hkey,
+	DWORD iValue,
+	LPWSTR lpszValue,
 	LPDWORD	lpcchValue,
 	LPDWORD	lpdReserved,
 	LPDWORD	lpdwType,
@@ -2512,7 +2748,8 @@ DWORD WINAPI RegEnumValue32W(
 	);
 	lpkey = lookup_hkey(hkey);
 	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
+		return ERROR_INVALID_HANDLE;
+
 	if (lpkey->nrofvalues<=iValue)
 		return ERROR_NO_MORE_ITEMS;
 	val	= lpkey->values+iValue;
@@ -2536,8 +2773,9 @@ DWORD WINAPI RegEnumValue32W(
 		memcpy(lpbData,val->data,val->len);
 		*lpcbData = val->len;
 	}
-	return SHELL_ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
+
 
 /* RegEnumValueA		[ADVAPI32.141] */
 DWORD WINAPI RegEnumValue32A(
@@ -2596,65 +2834,77 @@ DWORD WINAPI RegEnumValue32A(
 	return ret;
 }
 
-/* RegEnumValue			[KERNEL.223] */
-DWORD WINAPI RegEnumValue16(
-	HKEY	hkey,
-	DWORD	iValue,
-	LPSTR	lpszValue,
-	LPDWORD	lpcchValue,
-	LPDWORD	lpdReserved,
-	LPDWORD	lpdwType,
-	LPBYTE	lpbData,
-	LPDWORD	lpcbData
-) {
-	TRACE(reg,"(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
-		hkey,iValue,lpszValue,lpcchValue,lpdReserved,lpdwType,lpbData,lpcbData
-	);
-	return RegEnumValue32A(
-		hkey,
-		iValue,
-		lpszValue,
-		lpcchValue,
-		lpdReserved,
-		lpdwType,
-		lpbData,
-		lpcbData
-	);
+
+/******************************************************************************
+ * RegEnumValue16 [KERNEL.223]
+ */
+DWORD WINAPI RegEnumValue16( HKEY hkey, DWORD iValue, LPSTR lpszValue, 
+                             LPDWORD lpcchValue, LPDWORD lpdReserved, 
+                             LPDWORD lpdwType, LPBYTE lpbData, 
+                             LPDWORD lpcbData )
+{
+    TRACE(reg,"(%x,%ld,%p,%p,%p,%p,%p,%p)\n",hkey,iValue,lpszValue,lpcchValue,
+          lpdReserved,lpdwType,lpbData,lpcbData);
+    return RegEnumValue32A( hkey, iValue, lpszValue, lpcchValue, lpdReserved, 
+                            lpdwType, lpbData, lpcbData );
 }
 
-/* 
- *  Close registry key
+
+/******************************************************************************
+ * RegCloseKey [SHELL.3] [KERNEL.220] [ADVAPI32.126]
+ * Releases the handle of the specified key
+ *
+ * PARAMS
+ *    hkey [I] Handle of key to close
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
  */
-/* RegCloseKey			[SHELL.3] [KERNEL.220] [ADVAPI32.126] */
-DWORD WINAPI RegCloseKey(HKEY hkey) {
-	TRACE(reg,"(%x)\n",hkey);
-	remove_handle(hkey);
-	return ERROR_SUCCESS;
+DWORD WINAPI RegCloseKey( HKEY hkey )
+{
+    TRACE(reg,"(%x)\n",hkey);
+    return remove_handle(hkey);
 }
+
+
 /* 
  * Delete registry key
  *
  * Callpath:
  * RegDeleteKey16 -> RegDeleteKey32A -> RegDeleteKey32W
  */
-/* RegDeleteKeyW		[ADVAPI32.134] */
-DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
+
+
+/******************************************************************************
+ * RegDeleteKey32W [ADVAPI32.134]
+ *
+ * PARAMS
+ *    hkey       [I]
+ *    lpszSubKey [I]
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegDeleteKey32W( HKEY hkey, LPWSTR lpszSubKey )
+{
 	LPKEYSTRUCT	*lplpPrevKey,lpNextKey,lpxkey;
 	LPWSTR		*wps;
 	int		wpc,i;
 
-	TRACE(reg,"(%x,%s)\n",
-		hkey,W2C(lpszSubKey,0)
-	);
-	lpNextKey	= lookup_hkey(hkey);
-	if (!lpNextKey) {
-		TRACE(reg, "  Badkey[1].\n");
-		return SHELL_ERROR_BADKEY;
-	}
+    TRACE(reg,"(%x,%s)\n",hkey,debugstr_w(lpszSubKey));
+
+    lpNextKey = lookup_hkey(hkey);
+    if (!lpNextKey) {
+        TRACE(reg, "  Invalid handle.\n");
+        return ERROR_INVALID_HANDLE;
+    }
+
 	/* we need to know the previous key in the hier. */
 	if (!lpszSubKey || !*lpszSubKey) {
 		TRACE(reg, "  Badkey[2].\n");
-		return SHELL_ERROR_BADKEY;
+		return ERROR_BADKEY;
 	}
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
@@ -2672,7 +2922,7 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 			FREE_KEY_PATH;
 			TRACE(reg, "  Not found.\n");
 			/* not found is success */
-			return SHELL_ERROR_SUCCESS;
+			return ERROR_SUCCESS;
 		}
 		i++;
 		lpNextKey	= lpxkey;
@@ -2687,15 +2937,17 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 		lplpPrevKey	= &(lpxkey->next);
 		lpxkey		= lpxkey->next;
 	}
+
 	if (!lpxkey) {
 		FREE_KEY_PATH;
 		WARN(reg , "  Not found.\n");
-		return SHELL_ERROR_BADKEY;
+		return ERROR_FILE_NOT_FOUND;
 	}
+
 	if (lpxkey->nextsub) {
 		FREE_KEY_PATH;
 		WARN(reg , "  Not empty.\n");
-		return SHELL_ERROR_CANTWRITE;
+		return ERROR_CANTWRITE;
 	}
 	*lplpPrevKey	= lpxkey->next;
 	free(lpxkey->keyname);
@@ -2706,30 +2958,35 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	free(lpxkey);
 	FREE_KEY_PATH;
 	TRACE(reg, "  Done.\n");
-	return	SHELL_ERROR_SUCCESS;
+	return	ERROR_SUCCESS;
 }
 
-/* RegDeleteKeyA		[ADVAPI32.133] */
-DWORD WINAPI RegDeleteKey32A(HKEY hkey,LPCSTR lpszSubKey) {
-	LPWSTR	lpszSubKeyW;
-	DWORD	ret;
 
-	TRACE(reg,"(%x,%s)\n",
-		hkey,lpszSubKey
-	);
-	lpszSubKeyW=HEAP_strdupAtoW(GetProcessHeap(),0,lpszSubKey);
-	ret=RegDeleteKey32W(hkey,lpszSubKeyW);
-	HeapFree(GetProcessHeap(),0,lpszSubKeyW);
-	return ret;
+/******************************************************************************
+ * RegDeleteKey32A [ADVAPI32.133]
+ */
+DWORD WINAPI RegDeleteKey32A( HKEY hkey, LPCSTR lpszSubKey )
+{
+    LPWSTR lpszSubKeyW;
+    DWORD  ret;
+
+    TRACE(reg,"(%x,%s)\n",hkey,lpszSubKey);
+    lpszSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpszSubKey );
+    ret = RegDeleteKey32W( hkey, lpszSubKeyW );
+    HeapFree( GetProcessHeap(), 0, lpszSubKeyW );
+    return ret;
 }
 
-/* RegDeleteKey			[SHELL.4] [KERNEL.219] */
-DWORD WINAPI RegDeleteKey16(HKEY hkey,LPCSTR lpszSubKey) {
-	TRACE(reg,"(%x,%s)\n",
-		hkey,lpszSubKey
-	);
-	return RegDeleteKey32A(hkey,lpszSubKey);
+
+/******************************************************************************
+ * RegDeleteKey16 [SHELL.4] [KERNEL.219]
+ */
+DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR lpszSubKey )
+{
+    TRACE(reg,"(%x,%s)\n",hkey,debugstr_a(lpszSubKey));
+    return RegDeleteKey32A( hkey, lpszSubKey );
 }
+
 
 /* 
  * Delete registry value
@@ -2737,19 +2994,29 @@ DWORD WINAPI RegDeleteKey16(HKEY hkey,LPCSTR lpszSubKey) {
  * Callpath:
  * RegDeleteValue16 -> RegDeleteValue32A -> RegDeleteValue32W
  */
-/* RegDeleteValueW		[ADVAPI32.136] */
-DWORD WINAPI RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue)
+
+
+/******************************************************************************
+ * RegDeleteValue32W [ADVAPI32.136]
+ *
+ * PARAMS
+ *    hkey      [I]
+ *    lpszValue [I]
+ *
+ * RETURNS
+ */
+DWORD WINAPI RegDeleteValue32W( HKEY hkey, LPWSTR lpszValue )
 {
 	DWORD		i;
 	LPKEYSTRUCT	lpkey;
 	LPKEYVALUE	val;
 
-	TRACE(reg,"(%x,%s)\n",
-		hkey,W2C(lpszValue,0)
-	);
-	lpkey=lookup_hkey(hkey);
-	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
+    TRACE(reg,"(%x,%s)\n",hkey,debugstr_w(lpszValue));
+
+    lpkey = lookup_hkey(hkey);
+    if (!lpkey)
+        return ERROR_INVALID_HANDLE;
+
 	if (lpszValue) {
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (	lpkey->values[i].name &&
@@ -2761,8 +3028,10 @@ DWORD WINAPI RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue)
 			if (lpkey->values[i].name==NULL)
 				break;
 	}
-	if (i==lpkey->nrofvalues)
-		return SHELL_ERROR_BADKEY;/*FIXME: correct errorcode? */
+
+    if (i == lpkey->nrofvalues)
+        return ERROR_FILE_NOT_FOUND;
+
 	val	= lpkey->values+i;
 	if (val->name) free(val->name);
 	if (val->data) free(val->data);
@@ -2776,27 +3045,33 @@ DWORD WINAPI RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue)
 				(lpkey->nrofvalues-1)*sizeof(KEYVALUE)
 			);
 	lpkey->nrofvalues--;
-	return SHELL_ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
 
-/* RegDeleteValueA		[ADVAPI32.135] */
-DWORD WINAPI RegDeleteValue32A(HKEY hkey,LPSTR lpszValue)
-{
-	LPWSTR	lpszValueW;
-	DWORD	ret;
 
-	TRACE(reg, "(%x,%s)\n", hkey,lpszValue );
-        lpszValueW=HEAP_strdupAtoW(GetProcessHeap(),0,lpszValue);
-	ret=RegDeleteValue32W(hkey,lpszValueW);
-        HeapFree(GetProcessHeap(),0,lpszValueW);
-	return ret;
+/******************************************************************************
+ * RegDeleteValue32A [ADVAPI32.135]
+ */
+DWORD WINAPI RegDeleteValue32A( HKEY hkey, LPSTR lpszValue )
+{
+    LPWSTR lpszValueW;
+    DWORD  ret;
+
+    TRACE(reg, "(%x,%s)\n",hkey,debugstr_a(lpszValue));
+    lpszValueW=HEAP_strdupAtoW(GetProcessHeap(),0,lpszValue);
+    ret = RegDeleteValue32W( hkey, lpszValueW );
+    HeapFree(GetProcessHeap(),0,lpszValueW);
+    return ret;
 }
 
-/* RegDeleteValue		[KERNEL.222] */
-DWORD WINAPI RegDeleteValue16(HKEY hkey,LPSTR lpszValue)
+
+/******************************************************************************
+ * RegDeleteValue16 [KERNEL.222]
+ */
+DWORD WINAPI RegDeleteValue16( HKEY hkey, LPSTR lpszValue )
 {
-	TRACE(reg,"(%x,%s)\n", hkey,lpszValue );
-	return RegDeleteValue32A(hkey,lpszValue);
+    TRACE(reg,"(%x,%s)\n", hkey,debugstr_a(lpszValue));
+    return RegDeleteValue32A(hkey,lpszValue);
 }
 
 
@@ -2820,7 +3095,9 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 
 /* FIXME: lpcchXXXX ... is this counting in WCHARS or in BYTEs ?? */
 
-/* RegQueryInfoKeyW		[ADVAPI32.153] */
+/******************************************************************************
+ * RegQueryInfoKey32W [ADVAPI32.153]
+ */
 DWORD WINAPI RegQueryInfoKey32W(
 	HKEY	hkey,
 	LPWSTR	lpszClass,
@@ -2836,13 +3113,13 @@ DWORD WINAPI RegQueryInfoKey32W(
 	FILETIME	*ft
 ) {
 	LPKEYSTRUCT	lpkey,lpxkey;
-	int		nrofkeys,maxsubkey,maxclass,maxvalues,maxvname,maxvdata;
+	int		nrofkeys,maxsubkey,maxclass,maxvname,maxvdata;
 	int		i;
 
 	TRACE(reg,"(%x,......)\n",hkey);
-	lpkey=lookup_hkey(hkey);
+	lpkey = lookup_hkey(hkey);
 	if (!lpkey)
-		return SHELL_ERROR_BADKEY;
+		return ERROR_INVALID_HANDLE;
 	if (lpszClass) {
 		if (lpkey->class) {
 			if (lstrlen32W(lpkey->class)*2+2>*lpcchClass) {
@@ -2860,41 +3137,40 @@ DWORD WINAPI RegQueryInfoKey32W(
 			*lpcchClass	= lstrlen32W(lpkey->class)*2;
 	}
 	lpxkey=lpkey->nextsub;
-	nrofkeys=maxsubkey=maxclass=maxvalues=maxvname=maxvdata=0;
+	nrofkeys=maxsubkey=maxclass=maxvname=maxvdata=0;
 	while (lpxkey) {
 		nrofkeys++;
 		if (lstrlen32W(lpxkey->keyname)>maxsubkey)
 			maxsubkey=lstrlen32W(lpxkey->keyname);
 		if (lpxkey->class && lstrlen32W(lpxkey->class)>maxclass)
 			maxclass=lstrlen32W(lpxkey->class);
-		if (lpxkey->nrofvalues>maxvalues)
-			maxvalues=lpxkey->nrofvalues;
-		for (i=0;i<lpxkey->nrofvalues;i++) {
-			LPKEYVALUE	val=lpxkey->values+i;
-
-			if (val->name && lstrlen32W(val->name)>maxvname)
-				maxvname=lstrlen32W(val->name);
-			if (val->len>maxvdata)
-				maxvdata=val->len;
-		}
 		lpxkey=lpxkey->next;
+	}
+	for (i=0;i<lpkey->nrofvalues;i++) {
+		LPKEYVALUE	val=lpkey->values+i;
+
+		if (val->name && lstrlen32W(val->name)>maxvname)
+			maxvname=lstrlen32W(val->name);
+		if (val->len>maxvdata)
+			maxvdata=val->len;
 	}
 	if (!maxclass) maxclass	= 1;
 	if (!maxvname) maxvname	= 1;
+	if (lpcValues)
+		*lpcValues	= lpkey->nrofvalues;
 	if (lpcSubKeys)
 		*lpcSubKeys	= nrofkeys;
 	if (lpcchMaxSubkey)
 		*lpcchMaxSubkey	= maxsubkey*2;
 	if (lpcchMaxClass)
 		*lpcchMaxClass	= maxclass*2;
-	if (lpcValues)
-		*lpcValues	= maxvalues;
 	if (lpcchMaxValueName)
 		*lpcchMaxValueName= maxvname;
 	if (lpccbMaxValueData)
 		*lpccbMaxValueData= maxvdata;
-	return SHELL_ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
+
 
 /* RegQueryInfoKeyA		[ADVAPI32.152] */
 DWORD WINAPI RegQueryInfoKey32A(
@@ -2949,11 +3225,28 @@ DWORD WINAPI RegQueryInfoKey32A(
 		free(lpszClassW);
 	return ret;
 }
-/* RegConnectRegistryA		[ADVAPI32.127] */
-DWORD WINAPI RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey)
+
+
+/******************************************************************************
+ * RegConnectRegistry32W [ADVAPI32.128]
+ */
+LONG WINAPI RegConnectRegistry32W( LPCWSTR machine, HKEY hkey, LPHKEY reskey )
 {
-	FIXME(reg,"(%s,%08x,%p):stub.\n",machine,hkey,reskey);
-	return ERROR_FILE_NOT_FOUND; /* FIXME */
+    FIXME(reg,"(%s,%x,%p): stub\n",debugstr_w(machine),hkey,reskey);
+    return ERROR_BAD_NETPATH; /* FIXME */
+}
+
+
+/******************************************************************************
+ * RegConnectRegistry32A [ADVAPI32.127]
+ */
+LONG WINAPI RegConnectRegistry32A( LPCSTR machine, HKEY hkey, LPHKEY reskey )
+{
+    DWORD ret;
+    LPWSTR machineW = HEAP_strdupAtoW(GetProcessHeap(),0,machine);
+    ret = RegConnectRegistry32W( machineW, hkey, reskey );
+    HeapFree(GetProcessHeap(),0,machineW);
+    return ret;
 }
 
 
@@ -2961,20 +3254,61 @@ DWORD WINAPI RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey)
  * RegGetKeySecurity [ADVAPI32.144]
  * Retrieves a copy of security descriptor protecting the registry key
  *
- * NOTES
- *    pSecurityDescriptor should be PSECURITY_DESCRIPTOR
- *
  * RETURNS
  *    Success: ERROR_SUCCESS
  *    Failure: Error code
  */
-LONG WINAPI RegGetKeySecurity( HKEY hKey, 
+LONG WINAPI RegGetKeySecurity( HKEY hkey, 
                                SECURITY_INFORMATION SecurityInformation,
-                               LPVOID pSecurityDescriptor,
+                               LPSECURITY_DESCRIPTOR pSecurityDescriptor,
                                LPDWORD lpcbSecurityDescriptor )
 {
-    FIXME(reg, "(%d,%ld,%p,%p): stub\n", hKey, SecurityInformation,
+    LPKEYSTRUCT	lpkey;
+    lpkey = lookup_hkey(hkey);
+    if (!lpkey)
+        return ERROR_INVALID_HANDLE;
+
+    FIXME(reg, "(%d,%ld,%p,%p): stub\n", hkey, SecurityInformation,
           pSecurityDescriptor, lpcbSecurityDescriptor);
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegLoadKey32W [ADVAPI32.???]
+ */
+LONG WINAPI RegLoadKey32W( HKEY hkey, LPCWSTR lpszSubKey, LPCWSTR lpszFile )
+{
+    FIXME(reg,"(%x,%s,%s): stub\n",hkey,debugstr_w(lpszSubKey),
+          debugstr_w(lpszFile));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegLoadKey32A [ADVAPI32.???]
+ */
+LONG WINAPI RegLoadKey32A( HKEY hkey, LPCSTR lpszSubKey, LPCSTR lpszFile )
+{
+    LONG ret;
+    LPWSTR lpszSubKeyW = HEAP_strdupAtoW(GetProcessHeap(),0,lpszSubKey);
+    LPWSTR lpszFileW = HEAP_strdupAtoW(GetProcessHeap(),0,lpszFile);
+    ret = RegLoadKey32W( hkey, lpszSubKeyW, lpszFileW );
+    HeapFree(GetProcessHeap(),0,lpszFileW);
+    HeapFree(GetProcessHeap(),0,lpszSubKeyW);
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegNotifyChangeKeyValue [ADVAPI32.???]
+ */
+LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL32 fWatchSubTree, 
+                                     DWORD fdwNotifyFilter, HANDLE32 hEvent,
+                                     BOOL32 fAsync )
+{
+    FIXME(reg,"(%x,%i,%ld,%d,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
+          hEvent,fAsync);
     return ERROR_SUCCESS;
 }
 

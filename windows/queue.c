@@ -72,6 +72,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
  */
 void QUEUE_WalkQueues(void)
 {
+    char module[10];
     HQUEUE16 hQueue = hFirstQueue;
 
     fprintf( stderr, "Queue Size Msgs Task\n" );
@@ -83,9 +84,10 @@ void QUEUE_WalkQueues(void)
             fprintf( stderr, "*** Bad queue handle %04x\n", hQueue );
             return;
         }
-        fprintf( stderr, "%04x %5d %4d %04x %s\n",
-                 hQueue, queue->msgSize, queue->msgCount, queue->hTask,
-                 MODULE_GetModuleName( queue->hTask ) );
+        if (!GetModuleName( queue->hTask, module, sizeof(module )))
+            strcpy( module, "???" );
+        fprintf( stderr, "%04x %5d %4d %04x %s\n", hQueue, queue->msgSize,
+                 queue->msgCount, queue->hTask, module );
         hQueue = queue->next;
     }
     fprintf( stderr, "\n" );
@@ -816,7 +818,7 @@ BOOL16 WINAPI GetInputState16(void)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
 {
-  FIXME (msg, "(hProcess=%d, dwTimeOut=%d): stub\n", hProcess, dwTimeOut);
+  FIXME (msg, "(hProcess=%d, dwTimeOut=%ld): stub\n", hProcess, dwTimeOut);
 
   return WAIT_TIMEOUT;
 }

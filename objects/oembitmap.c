@@ -335,7 +335,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmWidthBytes = BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmPlanes     = 1;
     bmpObjPtr->bitmap.bmBitsPixel  = bpp;
-    bmpObjPtr->bitmap.bmBits       = NULL;
+    bmpObjPtr->bitmap.bmBits       = (SEGPTR)NULL;
     GDI_HEAP_UNLOCK( hbitmap );
     return hbitmap;
 }

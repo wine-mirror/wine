@@ -548,24 +548,16 @@ static void DEBUG_Main( int signal )
 }
 
 
-/***********************************************************************
- *           DebugBreak32   (KERNEL32)
- */
-void DebugBreak32( CONTEXT *regs )
-{
-    const char *module = MODULE_GetModuleName( GetCurrentTask() );
-    fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
-    DEBUG_context = *regs;
-    DEBUG_Main( SIGTRAP );
-}
 
 /***********************************************************************
- *           DebugBreak16   (KERNEL.203)
+ *           DebugBreak   (KERNEL.203) (KERNEL32.181)
  */
-void DebugBreak16( CONTEXT *regs )
+void DebugBreak( CONTEXT *regs )
 {
-    const char *module = MODULE_GetModuleName( GetCurrentTask() );
-    fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
+    char module[10];
+    if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
+        strcpy( module, "???" );
+    fprintf( stderr, "%s called DebugBreak\n", module );
     DEBUG_context = *regs;
     DEBUG_Main( SIGTRAP );
 }

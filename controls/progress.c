@@ -7,15 +7,13 @@
  *   - I do not know what to to on WM_[SG]ET_FONT
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include "windows.h"
-#include "sysmetrics.h"
 #include "progress.h"
-#include "graphics.h"
+#include "commctrl.h"
 #include "heap.h"
 #include "win.h"
 #include "debug.h"
+
 
 /* Control configuration constants */
 
@@ -27,7 +25,7 @@
         "Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
-#define PROGRESS_GetInfoPtr(wndPtr) ((PROGRESS_INFO *)wndPtr->wExtra)
+#define PROGRESS_GetInfoPtr(wndPtr) ((PROGRESS_INFO *)wndPtr->wExtra[0])
 
 
 /***********************************************************************
@@ -57,25 +55,18 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
     hbrBar = CreateSolidBrush32 (infoPtr->ColorBar);
 
   /* get the required background brush */
-  if (infoPtr->ColorBk != CLR_DEFAULT)
-    hbrBk = CreateSolidBrush32 (infoPtr->ColorBk);
+  if (infoPtr->ColorBk == CLR_DEFAULT)
+    hbrBk = GetSysColorBrush32 (COLOR_3DFACE);
   else
-    hbrBk = 0; /* to keep the compiler happy ;-) */
+    hbrBk = CreateSolidBrush32 (infoPtr->ColorBk);
 
   /* get rect for the bar, adjusted for the border */
   GetClientRect32 (wndPtr->hwndSelf, &rect);
 
-  /* Hack because of missing top border */
-  rect.top++;
-
   /* draw the border */
-  if (infoPtr->ColorBk == CLR_DEFAULT)
-    DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST|BF_MIDDLE);
-  else
-  {
-    DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST);
-    FillRect32(hdc, &rect, hbrBk);
-  }
+  DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST);
+  FillRect32(hdc, &rect, hbrBk);
+
   rect.left++; rect.right--; rect.top++; rect.bottom--;
 
   /* compute extent of progress bar */
@@ -167,6 +158,10 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
   switch(message)
     {
     case WM_CREATE:
+      /* allocate memory for info struct */
+      wndPtr->wExtra[0] = HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+                                     sizeof(PROGRESS_INFO));
+      infoPtr = (PROGRESS_INFO *)wndPtr->wExtra[0];
       /* initialize the info struct */
       infoPtr->MinVal=0; 
       infoPtr->MaxVal=100;
@@ -179,6 +174,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     
     case WM_DESTROY:
       TRACE(updown, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      HeapFree (SystemHeap, 0, infoPtr);
       break;
 
     case WM_ERASEBKGND:
@@ -207,7 +203,6 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 	PROGRESS_CoercePos(wndPtr);
         InvalidateRect32 (hwnd, NULL, FALSE);
         UpdateWindow32 (hwnd);
-//	PROGRESS_Paint(wndPtr, 0);
       }
       return temp;
 
@@ -309,5 +304,29 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     } 
 
     return 0;
+}
+
+
+/***********************************************************************
+ *           PROGRESS_Register [Internal]
+ *
+ * Registers the progress bar window class.
+ * 
+ */
+void PROGRESS_Register(void)
+{
+    WNDCLASS32A wndClass;
+
+    if( GlobalFindAtom32A( PROGRESS_CLASS32A ) ) return;
+
+    ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
+    wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
+    wndClass.lpfnWndProc   = (WNDPROC32)ProgressWindowProc;
+    wndClass.cbClsExtra    = 0;
+    wndClass.cbWndExtra    = sizeof(PROGRESS_INFO *);
+    wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
+    wndClass.lpszClassName = PROGRESS_CLASS32A;
+
+    RegisterClass32A( &wndClass );
 }
 

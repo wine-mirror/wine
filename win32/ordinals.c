@@ -22,40 +22,52 @@ static SEGPTR segWin16Mutex = NULL;
 
 
 /***********************************************
- *           GetPWinLock    (KERNEL32.93)
+ *           GetpWin16Lock    (KERNEL32.93)
  * Return the infamous Win16Mutex.
  */
-VOID WINAPI GetPWinLock(CRITICAL_SECTION **lock)
+VOID WINAPI GetpWin16Lock(CRITICAL_SECTION **lock)
 {
     FIXME(win32, "(%p)\n",lock);
     *lock = &Win16Mutex;
 }
 
+/***********************************************
+ *           GetPK16SysVar    (KERNEL32.92)
+ * Return the infamous Win16Mutex.
+ */
+LPVOID WINAPI GetPK16SysVar(void)
+{
+    static BYTE PK16SysVar[128];
+
+    FIXME(win32, "()\n");
+    return PK16SysVar;
+}
+
 
 /**********************************************************************
- *           WOW32_1        (KERNEL32.88)
+ *           WOWGetDescriptor        (KERNEL32.88) (WOW32.1)
  */
-BOOL32 WINAPI WOW32_1(SEGPTR segptr,LPLDT_ENTRY ldtent)
+BOOL32 WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
 {
     return GetThreadSelectorEntry(GetCurrentThreadId(),segptr>>16,ldtent);
 }
 
 
 /***********************************************************************
- *           GetProcessDWORD    (KERNEL32.18)
+ *           GetProcessDword    (KERNEL32.18)
  * 'Of course you cannot directly access Windows internal structures'
  */
 
-DWORD WINAPI GetProcessDWORD(DWORD processid,DWORD action)
+DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 {
-	PDB32	*process;
+	PDB32	*process = processid? PROCESS_IdToPDB( processid )
+                                    : PROCESS_Current();
 	TDB	*pTask;
 
 	action+=56;
 	fprintf(stderr,"KERNEL32_18(%ld,%ld+0x38)\n",processid,action);
-	if (action>56)
+	if (!process || action>56)
 		return 0;
-        if (!(process = PROCESS_IdToPDB( processid ))) return 0;
 	switch (action) {
 	case 0:	/* return app compat flags */
 		pTask = (TDB*)GlobalLock16(process->task);

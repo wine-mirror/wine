@@ -342,7 +342,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
     if (start == 0) {
       /* Check if the segment is the DGROUP of a module */
 
-	if ((pModule = MODULE_GetPtr16( selector )))
+	if ((pModule = NE_GetPtr( selector )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
 	    if (pModule->dgroup && (pSeg->selector == selector)) {
@@ -1601,7 +1601,7 @@ DWORD WINAPI GetHeapSpaces( HMODULE16 module )
     NE_MODULE *pModule;
     WORD ds;
 
-    if (!(pModule = MODULE_GetPtr16( module ))) return 0;
+    if (!(pModule = NE_GetPtr( module ))) return 0;
     ds = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
 }

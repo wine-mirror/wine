@@ -1,14 +1,13 @@
-This is release 980503 of Wine, the MS Windows emulator.  This is still a
+This is release 980517 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-980503: (see ChangeLog for details)
-	- Module loading restructuration.
-	- Some rotated text support.
-	- Documentation for many more functions.
+WHAT'S NEW with Wine-980517: (see ChangeLog for details)
+	- Lots of common controls improvements.
+	- Better thunking support.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,10 +16,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980503.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980503.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980503.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980503.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980517.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980517.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980517.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980517.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

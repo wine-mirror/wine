@@ -2,8 +2,8 @@ name	comdlg32
 type	win32
 
  0 stub ArrowBtnWndProc
- 1 stub ChooseColorA
- 2 stub ChooseColorW
+ 1 stdcall ChooseColorA(ptr) ChooseColor32A
+ 2 stdcall ChooseColorW(ptr) ChooseColor32W
  3 stdcall ChooseFontA(ptr) ChooseFont32A
  4 stdcall ChooseFontW(ptr) ChooseFont32W
  5 stdcall CommDlgExtendedError() CommDlgExtendedError

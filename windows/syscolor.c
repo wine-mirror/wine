@@ -43,7 +43,7 @@ static const char * const DefSysColors[] =
 
 static const char * const DefSysColors95[] =
 {
-    "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */
+    "Scrollbar", "223 223 223",      /* COLOR_SCROLLBAR           */
     "Background", "192 192 192",     /* COLOR_BACKGROUND          */
     "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
     "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
@@ -56,7 +56,7 @@ static const char * const DefSysColors95[] =
     "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
     "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
     "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
-    "Hilight", "224 224 224",        /* COLOR_HIGHLIGHT           */
+    "Hilight", "223 223 223",        /* COLOR_HIGHLIGHT           */
     "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
@@ -64,8 +64,8 @@ static const char * const DefSysColors95[] =
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
-    "3DDarkShadow", "32 32 32",      /* COLOR_3DDKSHADOW          */
-    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
+    "3DDarkShadow", "0 0 0",         /* COLOR_3DDKSHADOW          */
+    "3DLight", "223 223 223",        /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
     "InfoBackground", "255 255 192"  /* COLOR_INFOBK              */
 };

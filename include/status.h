@@ -7,8 +7,7 @@
 #ifndef __WINE_STATUS_H
 #define __WINE_STATUS_H
 
-LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
-                                 WPARAM32 wParam, LPARAM lParam );
+extern void STATUS_Register(void);
 
 typedef struct
 {
@@ -16,13 +15,17 @@ typedef struct
     INT32	style;
     RECT32	bound;
     LPSTR	text;
+    HICON32     hIcon;
 } STATUSWINDOWPART;
 
 typedef struct
 {
     UINT16              numParts;
     UINT16              textHeight;
+    UINT32              height;
     BOOL32              simple;
+    HFONT32             hFont;
+    COLORREF            clrBk;  /* background color */
     STATUSWINDOWPART	part0;	/* simple window */
     STATUSWINDOWPART   *parts;
 } STATUSWINDOWINFO;

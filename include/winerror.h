@@ -30,11 +30,13 @@ extern int WIN32_LastError;
 #define ERROR_INVALID_HANDLE        6
 #define ERROR_NOT_ENOUGH_MEMORY     8
 #define ERROR_BAD_FORMAT            11
+#define ERROR_INVALID_ACCESS        12
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
 #define ERROR_SHARING_VIOLATION     32
 #define ERROR_LOCK_VIOLATION        33
 #define ERROR_DUP_NAME              52
+#define ERROR_BAD_NETPATH           53
 #define ERROR_FILE_EXISTS           80
 #define ERROR_CANNOT_MAKE           82
 #define ERROR_INVALID_PARAMETER     87
@@ -44,6 +46,7 @@ extern int WIN32_LastError;
 #define ERROR_INSUFFICIENT_BUFFER   122
 #define ERROR_SEEK_ON_DEVICE        132
 #define ERROR_DIR_NOT_EMPTY         145
+#define ERROR_BAD_PATHNAME          161
 #define ERROR_BUSY                  170
 #define ERROR_ALREADY_EXISTS        183
 #define ERROR_FILENAME_EXCED_RANGE  206
@@ -53,11 +56,14 @@ extern int WIN32_LastError;
 #define ERROR_TOO_MANY_POSTS        298
 #define ERROR_INVALID_ADDRESS       487
 #define ERROR_CAN_NOT_COMPLETE      1003
+#define ERROR_BADKEY                1010 /* Config reg key invalid */
+#define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
 #define ERROR_BAD_DEVICE            1200
 #define ERROR_NO_NETWORK            1222
 #define ERROR_ALREADY_INITIALIZED   1247
+#define ERROR_PRIVILEGE_NOT_HELD    1314
 #define ERROR_COMMITMENT_LIMIT      1455
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */

@@ -50,11 +50,6 @@ HMODULE16  GetExePtr(HANDLE16 h)
   exit(0);
 }
 
-LPSTR MODULE_GetModuleName( HMODULE16 hModule )
-{
-  exit(0);
-}
-
 int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len )
 {
@@ -103,7 +98,7 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
   exit(0);
 }
 
-NE_MODULE *MODULE_GetPtr16( HMODULE16 hModule )
+NE_MODULE *NE_GetPtr( HMODULE16 hModule )
 {
   exit(0);
 }

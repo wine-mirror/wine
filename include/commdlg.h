@@ -116,6 +116,8 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(OPENFILENAME);
 DECL_WINELIB_TYPE_AW(LPOPENFILENAME);
 
+typedef UINT32 (CALLBACK *LPCCHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
+
 typedef struct {
 	DWORD		lStructSize;
 	HWND16		hwndOwner;
@@ -126,8 +128,38 @@ typedef struct {
 	LPARAM		lCustData;
         WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;
-} CHOOSECOLOR;
-typedef CHOOSECOLOR *LPCHOOSECOLOR;
+} CHOOSECOLOR16;
+typedef CHOOSECOLOR16 *LPCHOOSECOLOR16;
+
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HWND32		hInstance;
+	DWORD	        rgbResult;
+	LPDWORD         lpCustColors;
+	DWORD 		Flags;
+	DWORD		lCustData;
+        LPCCHOOKPROC    lpfnHook;
+	LPCSTR 		lpTemplateName;
+} CHOOSECOLOR32A;
+typedef CHOOSECOLOR32A *LPCHOOSECOLOR32A;
+
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HWND32		hInstance;
+	DWORD	        rgbResult;
+	LPDWORD         *lpCustColors;
+	DWORD 		Flags;
+	DWORD		lCustData;
+        LPCCHOOKPROC    lpfnHook;
+	LPCWSTR 	lpTemplateName;
+} CHOOSECOLOR32W;
+typedef CHOOSECOLOR32W *LPCHOOSECOLOR32W;
+
+DECL_WINELIB_TYPE_AW(CHOOSECOLOR);
+DECL_WINELIB_TYPE_AW(LPCHOOSECOLOR);
+
 
 #define CC_RGBINIT               0x00000001
 #define CC_FULLOPEN              0x00000002
@@ -229,6 +261,7 @@ typedef struct
 	short			nSizeMax WINE_PACKED;   /* max pt size allowed if    */
 							/* CF_LIMITSIZE is used      */
 } CHOOSEFONT16, *LPCHOOSEFONT16;
+
 
 typedef struct
 {
@@ -452,7 +485,10 @@ typedef DEVNAMES * LPDEVNAMES;
 #define CDERR_NOHOOK           0x000B
 #define CDERR_REGISTERMSGFAIL  0x000C
 
-BOOL16  WINAPI ChooseColor(LPCHOOSECOLOR lpChCol);
+BOOL16  WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol);
+BOOL32  WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol);
+BOOL32  WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol);
+#define ChooseColor WINELIB_NAME_AW(ChooseColor)
 DWORD   WINAPI CommDlgExtendedError(void);
 HWND16  WINAPI FindText16( SEGPTR find);
 HWND32  WINAPI FindText32A(LPFINDREPLACE32A lpFind);

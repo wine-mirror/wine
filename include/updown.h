@@ -29,7 +29,6 @@ typedef struct tagNM_UPDOWN
   int iDelta;
 } NM_UPDOWN;
 
-LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                                LPARAM lParam);
+extern void UPDOWN_Register (void);
 
 #endif  /* __WINE_UPDOWN_H */
