@@ -115,7 +115,7 @@
 @ stdcall NtEnumerateValueKey (long long long long long long)
 @ stub NtExtendSection
 @ stdcall NtFlushBuffersFile(long ptr)
-@ stub NtFlushInstructionCache
+@ stdcall NtFlushInstructionCache(long ptr long)
 @ stdcall NtFlushKey(long)
 @ stdcall NtFlushVirtualMemory(long ptr ptr long)
 @ stub NtFlushWriteBuffer
@@ -698,7 +698,7 @@
 @ stdcall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
 @ stdcall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
-@ stub ZwFlushInstructionCache
+@ stdcall ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
 @ stdcall ZwFlushKey(long) NtFlushKey
 @ stdcall ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
 @ stub ZwFlushWriteBuffer

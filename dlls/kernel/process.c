@@ -2740,9 +2740,11 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZ
  */
 BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
 {
+    NTSTATUS status;
     if (GetVersion() & 0x80000000) return TRUE; /* not NT, always TRUE */
-    FIXME("(%p,%p,0x%08lx): stub\n",hProcess, lpBaseAddress, dwSize);
-    return TRUE;
+    status = NtFlushInstructionCache( hProcess, lpBaseAddress, dwSize );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

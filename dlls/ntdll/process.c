@@ -154,3 +154,20 @@ NTSTATUS WINAPI NtSetInformationProcess(
           ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength);
     return 0;
 }
+
+/******************************************************************************
+ * NtFlushInstructionCache [NTDLL.@]
+ * ZwFlushInstructionCache [NTDLL.@]
+ */
+NTSTATUS WINAPI NtFlushInstructionCache(
+        IN HANDLE ProcessHandle,
+        IN LPCVOID BaseAddress,
+        IN ULONG Size)
+{
+#ifdef __i386__
+    TRACE("%p %p %ld - no-op on x86\n", ProcessHandle, BaseAddress, Size );
+#else
+    FIXME("%p %p %ld\n", ProcessHandle, BaseAddress, Size );
+#endif
+    return STATUS_SUCCESS;
+}
