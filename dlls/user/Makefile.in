@@ -45,7 +45,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/rect.c \
 	$(TOPOBJDIR)/windows/scroll.c \
 	$(TOPOBJDIR)/windows/spy.c \
-	$(TOPOBJDIR)/windows/struct32.c \
 	$(TOPOBJDIR)/windows/syscolor.c \
 	$(TOPOBJDIR)/windows/sysmetrics.c \
 	$(TOPOBJDIR)/windows/sysparams.c \
