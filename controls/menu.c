@@ -2914,12 +2914,9 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
        if ((menu = MENU_GetMenu( hMenu )) && (!menu->Height))
        { /* app changed/recreated menu bar entries in WM_INITMENU
             Recalculate menu sizes else clicks will not work */
-           RECT r;
-           HDC hdc = GetDCEx( hWnd, 0, DCX_CACHE | DCX_WINDOW );
-           SelectObject( hdc, hMenuFont);
-           GetClientRect(hWnd, &r); /* probably too simple */
-           MENU_MenuBarCalcSize( hdc, &r, menu, hWnd );
-           ReleaseDC(hWnd, hdc);
+          SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+                                                        
        }
     }
     return TRUE;
