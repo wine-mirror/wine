@@ -70,7 +70,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
-        MENUITEM "&Unbenennen",                     ID_EDIT_RENAME
+        MENUITEM "&Umbenennen",                     ID_EDIT_RENAME
         MENUITEM SEPARATOR
         MENUITEM "Schlüsselname &kopieren",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR

@@ -111,3 +111,12 @@ STRINGTABLE {
 
 }
 /* End of Portuguese Resources */
+
+/* German Resources */
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Uninstaller"
+
+}
+/* End of German Resources */

@@ -31,10 +31,10 @@ CmdlgtstMenu MENU
  POPUP "&Commdlg"
  {
   MENUITEM "&Öffnen", CM_U_OPEN
-  MENUITEM "&Sichern", CM_U_SAVE
+  MENUITEM "&Speichern", CM_U_SAVE
   MENUITEM SEPARATOR
   MENUITEM "&Farbe", CM_U_COLOR
-  MENUITEM "S&chrift", CM_U_FONT
+  MENUITEM "S&chriftart", CM_U_FONT
   MENUITEM SEPARATOR
   MENUITEM "Suche &Text", CM_U_FIND
   MENUITEM "&Ersetze Text", CM_U_REPLACE

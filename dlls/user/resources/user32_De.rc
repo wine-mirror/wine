@@ -1,5 +1,6 @@
 /*
  * Copyright 1994 Martin von Loewis
+ * Copyright 2004 Henning Gerhardt
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,11 +56,28 @@ STYLE DS_SYSMODAL | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSM
 BEGIN
         ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
         LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP
-        PUSHBUTTON "&Ok", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Abbruch", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Abbruch", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&OK", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Abbrechen", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "Abbr&uch", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Wiederholen", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Ignorieren", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Ja", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Nein", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
+
+MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fenster auswählen"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
+    DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
+    PUSHBUTTON      "Abbrechen", IDCANCEL, 120, 100, 35, 14
+END
+
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "Fehler"
+    IDS_MDI_MOREWINDOWS "&Mehr Fenster..."
+}
