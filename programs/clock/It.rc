@@ -30,7 +30,7 @@ MAIN_MENU MENU
   MENUITEM SEPARATOR
   MENUITEM "&Font...", 0x103
   MENUITEM SEPARATOR
-  MENUITEM "&Senza la barra del titolo", 0x105
+  MENUITEM "&Nascondi la barra del titolo", 0x105
   MENUITEM SEPARATOR
   MENUITEM "&Secondi", 0x107
   MENUITEM "&Data", 0x108

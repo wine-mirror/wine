@@ -1,0 +1,64 @@
+/*
+ * Start
+ * Italian Language Support
+ *
+ * Copyright 2003 Dan Kegel
+ * Copyright 2003 Ivan Leo Murray-Smith
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+{
+STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i programmi con qull'estensione \n\
+Usage: \n\
+start [options] nome del programma [...] \n\
+start [options] nomde del documento \n\
+ \n\
+Options: \n\
+/M[inimized] Avvia il programma minimizzato. \n\
+/MAX[imized] Avvia il programma massimizato. \n\
+/R[estored]  Avvia il programma normalmente (nè minimizzato nè massimizato). \n\
+/W[ait]      Attendi l'uscita del programma, poi esci con il suo codice di uscita. \n\
+/L           Mostra l'accordo di licenza con l'utente finale. \n\
+ \n\
+start.exe versione 0.2 Copyright (C) 2003, Dan Kegel \n\
+Start è fornito senza nessuna garanzia, per ulteriori informazioni eseguire start con l'opzione /L. \n\
+Questo è software libero, e lo potete redistribuire \n\
+sotto alcune condizioni; eseguire 'start' con l'opzione /L per ulteriori infomazioni. \n\
+"
+
+STRING_LICENSE, "start.exe versione 0.2 Copyright (C) 2003, Dan Kegel \n\
+This program is free software; you can redistribute it and/or \n\
+modify it under the terms of the GNU Lesser Public License \n\
+as published by the Free Software Foundation; either version 2.1 \n\
+of the License, or (at your option) any later version. \n\
+ \n\
+This program is distributed in the hope that it will be useful, \n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
+GNU Lesser Public License for more details. \n\
+ \n\
+You should have received a copy of the GNU Lesser Public License \n\
+along with this program; if not, write to the Free Software \n\
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
+ \n\
+Vedere il file COPYING.LIB per informazioni sulla licenza. \n\
+"
+
+STRING_EXECFAIL "Non è stato possibile eseguire l'applicazione, o noessuna applicazione è associata con il file specificato.\nShellExecuteEx fallito"
+}
