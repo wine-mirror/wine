@@ -73,7 +73,7 @@ static const struct object_ops file_ops =
 static int get_name_hash( const char *name )
 {
     int hash = 0;
-    while (*name) hash ^= *name++;
+    while (*name) hash ^= (unsigned char)*name++;
     return hash % NAME_HASH_SIZE;
 }
 
