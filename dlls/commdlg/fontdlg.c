@@ -625,12 +625,12 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 	}
 	if (s.added) break;
 	if (lpcf->Flags & CF_FIXEDPITCHONLY) {
-	    FIXME("No founds found with fixed pitch only, dropping flag.\n");
+	    FIXME("No font found with fixed pitch only, dropping flag.\n");
 	    lpcf->Flags &= ~CF_FIXEDPITCHONLY;
 	    continue;
 	}
 	if (lpcf->Flags & CF_TTONLY) {
-	    FIXME("No founds found with truetype only, dropping flag.\n");
+	    FIXME("No font found with truetype only, dropping flag.\n");
 	    lpcf->Flags &= ~CF_TTONLY;
 	    continue;
 	}

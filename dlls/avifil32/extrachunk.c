@@ -140,7 +140,7 @@ HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
   return AVIERR_OK;
 }
 
-/* reads all non-junk chunks into the extrachunk-structure until it founds
+/* reads all non-junk chunks into the extrachunk-structure until it finds
  * the given chunk or the optional parent-chunk is at the end */
 HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
 			       MMCKINFO *lpckParent,UINT flags)
