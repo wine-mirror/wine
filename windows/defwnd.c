@@ -596,7 +596,8 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     case WM_SETTEXT:
 	DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(lParam) );
-	if( wndPtr->dwStyle & WS_CAPTION ) NC_HandleNCPaint( hwnd , (HRGN)1 );
+	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
+	    NC_HandleNCPaint( hwnd , (HRGN)1 );
         break;
 
     default:
@@ -659,7 +660,8 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 
     case WM_SETTEXT:
 	DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
-	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
+	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
     default:
@@ -692,6 +694,8 @@ LRESULT WINAPI DefWindowProcW(
     LRESULT result = 0;
 
     if (!wndPtr) return 0;
+    SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
+
     switch(msg)
     {
     case WM_NCCREATE:
@@ -711,8 +715,9 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     case WM_SETTEXT:
-        DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
-	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
+	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
+	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
     default:
@@ -720,5 +725,6 @@ LRESULT WINAPI DefWindowProcW(
         break;
     }
     WIN_ReleaseWndPtr(wndPtr);
+    SPY_ExitMessage( SPY_RESULT_DEFWND, hwnd, msg, result );
     return result;
 }
