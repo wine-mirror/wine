@@ -13,6 +13,7 @@ C_SRCS = \
 	graphics.c \
 	init.c \
 	objects.c \
+	ppd.c \
 	ps.c \
 	text.c
 

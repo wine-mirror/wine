@@ -5203,25 +5203,38 @@ typedef struct {
 
 /* Process startup information.
  */
+
+/* STARTUPINFO.dwFlags */
+#define	STARTF_USESHOWWINDOW	0x00000001
+#define	STARTF_USESIZE		0x00000002
+#define	STARTF_USEPOSITION	0x00000004
+#define	STARTF_USECOUNTCHARS	0x00000008
+#define	STARTF_USEFILLATTRIBUTE	0x00000010
+#define	STARTF_RUNFULLSCREEN	0x00000020
+#define	STARTF_FORCEONFEEDBACK	0x00000040
+#define	STARTF_FORCEOFFFEEDBACK	0x00000080
+#define	STARTF_USESTDHANDLES	0x00000100
+#define	STARTF_USEHOTKEY	0x00000200
+
 typedef struct {
-        DWORD cb;
-        LPSTR lpReserved;
-        LPSTR lpDesktop;
-        LPSTR lpTitle;
-        DWORD dwX;
-        DWORD dwY;
-        DWORD dwXSize;
-        DWORD dwYSize;
-        DWORD dwXCountChars;
-        DWORD dwYCountChars;
-        DWORD dwFillAttribute;
-        DWORD dwFlags;
-        WORD wShowWindow;
-        WORD cbReserved2;
-        BYTE *lpReserved2;
-        HANDLE32 hStdInput;
-        HANDLE32 hStdOutput;
-        HANDLE32 hStdError;
+        DWORD cb;		/* 00: size of struct */
+        LPSTR lpReserved;	/* 04: */
+        LPSTR lpDesktop;	/* 08: */
+        LPSTR lpTitle;		/* 0c: */
+        DWORD dwX;		/* 10: */
+        DWORD dwY;		/* 14: */
+        DWORD dwXSize;		/* 18: */
+        DWORD dwYSize;		/* 1c: */
+        DWORD dwXCountChars;	/* 20: */
+        DWORD dwYCountChars;	/* 24: */
+        DWORD dwFillAttribute;	/* 28: */
+        DWORD dwFlags;		/* 2c: */
+        WORD wShowWindow;	/* 30: */
+        WORD cbReserved2;	/* 32: */
+        BYTE *lpReserved2;	/* 34: */
+        HANDLE32 hStdInput;	/* 38: */
+        HANDLE32 hStdOutput;	/* 3c: */
+        HANDLE32 hStdError;	/* 40: */
 } STARTUPINFO32A, *LPSTARTUPINFO32A;
 
 typedef struct {
@@ -5504,6 +5517,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(DEVMODE)
 DECL_WINELIB_TYPE_AW(LPDEVMODE)
 
+
 #define DM_UPDATE	1
 #define DM_COPY		2
 #define DM_PROMPT	4
@@ -5519,7 +5533,8 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_PRINTQUALITY		0x00000400L
 #define DM_COLOR		0x00000800L
 #define DM_DUPLEX		0x00001000L
-
+#define DM_YRESOLUTION		0x00002000L
+#define DM_TTOPTION		0x00004000L
 #define DM_BITSPERPEL           0x00040000L
 #define DM_PELSWIDTH            0x00080000L
 #define DM_PELSHEIGHT           0x00100000L
@@ -5531,13 +5546,34 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DMORIENT_PORTRAIT	1
 #define DMORIENT_LANDSCAPE	2
 
-#define DMPAPER_LETTER	1
-#define DMPAPER_A3	8
-#define DMPAPER_A4	9
-#define DMPAPER_A5	11
+#define DMPAPER_LETTER		1
+#define DMPAPER_LEGAL		5
+#define DMPAPER_EXECUTIVE	7
+#define DMPAPER_A3		8
+#define DMPAPER_A4		9
+#define DMPAPER_A5		11
+#define DMPAPER_ENV_10		20
+#define DMPAPER_ENV_DL		27
+#define DMPAPER_ENV_C5		28
+#define DMPAPER_ENV_B5		34
+#define DMPAPER_ENV_MONARCH	37
 
-#define DMBIN_UPPER	1
-#define DMBIN_AUTO	7
+#define DMBIN_UPPER		1
+#define DMBIN_LOWER		2
+#define DMBIN_MIDDLE		3
+#define DMBIN_MANUAL		4
+#define DMBIN_ENVELOPE		5
+#define DMBIN_ENVMANUAL		6
+#define DMBIN_AUTO		7
+#define DMBIN_LARGECAPACITY	11
+
+#define DMCOLOR_MONOCHROME	1
+#define DMCOLOR_COLOR		2
+
+#define DMTT_BITMAP		1
+#define DMTT_DOWNLOAD		2
+#define DMTT_SUBDEV		3
+
 
 #define DC_FIELDS		1
 #define DC_PAPERS		2
@@ -5557,6 +5593,7 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DC_PAPERNAMES		16
 #define DC_ORIENTATION		17
 #define DC_COPIES		18
+
 
 typedef struct _PRINTER_DEFAULTS32A {
     LPSTR        pDatatype;
@@ -6705,6 +6742,7 @@ LONG        WINAPI RegUnLoadKey32W(HKEY,LPCWSTR);
 #define     RegUnLoadKey WINELIB_NAME_AW(RegUnLoadKey)
 BOOL32      WINAPI ReleaseSemaphore(HANDLE32,LONG,LPLONG);
 BOOL32      WINAPI ResetEvent(HANDLE32);
+DWORD       WINAPI ResumeThread(HANDLE32);
 VOID        WINAPI RtlFillMemory(LPVOID,UINT32,UINT32);
 VOID        WINAPI RtlMoveMemory(LPVOID,LPCVOID,UINT32);
 VOID        WINAPI RtlZeroMemory(LPVOID,UINT32);
@@ -6754,6 +6792,7 @@ DWORD       WINAPI SleepEx(DWORD,BOOL32);
 BOOL32      WINAPI StartService32A(HANDLE32,DWORD,LPCSTR*);
 BOOL32      WINAPI StartService32W(HANDLE32,DWORD,LPCWSTR*);
 #define     StartService WINELIB_NAME_AW(StartService)
+DWORD       WINAPI SuspendThread(HANDLE32);
 BOOL32      WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 WORD        WINAPI TileWindows (HWND32, UINT32, const LPRECT32,
                                 UINT32, const HWND32 *);
@@ -6990,7 +7029,7 @@ BOOL32      WINAPI CheckRadioButton32(HWND32,UINT32,UINT32,UINT32);
 HWND16      WINAPI ChildWindowFromPoint16(HWND16,POINT16);
 HWND32      WINAPI ChildWindowFromPoint32(HWND32,POINT32);
 #define     ChildWindowFromPoint WINELIB_NAME(ChildWindowFromPoint)
-INT32       ChoosePixelFormat(HDC32,PIXELFORMATDESCRIPTOR*);
+INT32       WINAPI ChoosePixelFormat(HDC32,PIXELFORMATDESCRIPTOR*);
 BOOL16      WINAPI Chord16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16);
 BOOL32      WINAPI Chord32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
 #define     Chord WINELIB_NAME(Chord)
@@ -8426,6 +8465,9 @@ BOOL32      WINAPI PlayMetaFileRecord32(HDC32,LPHANDLETABLE32,LPMETARECORD,UINT3
 BOOL16      WINAPI PolyBezier16(HDC16,LPPOINT16,INT16);
 BOOL32      WINAPI PolyBezier32(HDC32,LPPOINT32,DWORD);
 #define     PolyBezier WINELIB_NAME(PolyBezier)
+BOOL16      WINAPI PolyBezierTo16(HDC16,LPPOINT16,INT16);
+BOOL32      WINAPI PolyBezierTo32(HDC32,LPPOINT32,DWORD);
+#define     PolyBezierTo WINELIB_NAME(PolyBezierTo)
 BOOL16      WINAPI PolyPolygon16(HDC16,LPPOINT16,LPINT16,UINT16);
 BOOL32      WINAPI PolyPolygon32(HDC32,LPPOINT32,LPINT32,UINT32);
 #define     PolyPolygon WINELIB_NAME(PolyPolygon)

@@ -183,6 +183,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
  */
 INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 {
+    WARN(dialog,"Messagebox\n");
     return MessageBox32A( hwnd, text, title, type );
 }
 
@@ -193,7 +194,7 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 {
     MSGBOXPARAMS32A mbox;
-
+    WARN(dialog,"Messagebox\n");
     if (!text) text="<WINE-NULL>";
     if (!title)
       title="Error";
@@ -214,7 +215,11 @@ INT32 WINAPI MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title,
 {
     LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
-    INT32 ret = MessageBox32A( hwnd, textA, titleA, type );
+    INT32 ret;
+    
+    WARN(dialog,"Messagebox\n");
+
+    ret = MessageBox32A( hwnd, textA, titleA, type );
     HeapFree( GetProcessHeap(), 0, titleA );
     HeapFree( GetProcessHeap(), 0, textA );
     return ret;
@@ -227,6 +232,7 @@ INT32 WINAPI MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title,
 INT32 WINAPI MessageBoxEx32A( HWND32 hWnd, LPCSTR text, LPCSTR title,
                               UINT32 type, WORD langid )
 {
+    WARN(dialog,"Messagebox\n");
     /* ignore language id for now */
     return MessageBox32A(hWnd,text,title,type);
 }
@@ -237,6 +243,7 @@ INT32 WINAPI MessageBoxEx32A( HWND32 hWnd, LPCSTR text, LPCSTR title,
 INT32 WINAPI MessageBoxEx32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title,
                               UINT32 type, WORD langid )
 {
+    WARN(dialog,"Messagebox\n");
     /* ignore language id for now */
     return MessageBox32W(hWnd,text,title,type);
 }
@@ -247,6 +254,7 @@ INT32 WINAPI MessageBoxEx32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title,
 INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 {
     MSGBOXPARAMS32A msgbox32;
+    WARN(dialog,"Messagebox\n");    
     
     msgbox32.cbSize		= msgbox->cbSize;
     msgbox32.hwndOwner		= msgbox->hwndOwner;
@@ -270,6 +278,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
  */
 INT32 WINAPI MessageBoxIndirect32A( LPMSGBOXPARAMS32A msgbox )
 {
+    WARN(dialog,"Messagebox\n");
     return DialogBoxIndirectParam32A( msgbox->hInstance,
    				      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
                                       msgbox->hwndOwner, MSGBOX_DlgProc,
@@ -282,10 +291,13 @@ INT32 WINAPI MessageBoxIndirect32A( LPMSGBOXPARAMS32A msgbox )
 INT32 WINAPI MessageBoxIndirect32W( LPMSGBOXPARAMS32W msgbox )
 {
     MSGBOXPARAMS32A	msgboxa;
+    WARN(dialog,"Messagebox\n");
 
     memcpy(&msgboxa,msgbox,sizeof(msgboxa));
-    if (msgbox->lpszCaption)	lstrcpyWtoA(msgboxa.lpszCaption,msgbox->lpszCaption);
-    if (msgbox->lpszText)	lstrcpyWtoA(msgboxa.lpszText,msgbox->lpszText);
+    if (msgbox->lpszCaption)	
+      lstrcpyWtoA(msgboxa.lpszCaption,msgbox->lpszCaption);
+    if (msgbox->lpszText)	
+      lstrcpyWtoA(msgboxa.lpszText,msgbox->lpszText);
 
     return MessageBoxIndirect32A(&msgboxa);
 }
@@ -296,6 +308,7 @@ INT32 WINAPI MessageBoxIndirect32W( LPMSGBOXPARAMS32W msgbox )
  */
 void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 {
+    WARN(dialog,"AppExit\n");
     FatalAppExit32A( action, str );
 }
 
@@ -305,6 +318,7 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
  */
 void WINAPI FatalAppExit32A( UINT32 action, LPCSTR str )
 {
+    WARN(dialog,"AppExit\n");
     MessageBox32A( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     TASK_KillCurrentTask(0);
 }
@@ -315,6 +329,7 @@ void WINAPI FatalAppExit32A( UINT32 action, LPCSTR str )
  */
 void WINAPI FatalAppExit32W( UINT32 action, LPCWSTR str )
 {
+    WARN(dialog,"AppExit\n");
     MessageBox32W( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     TASK_KillCurrentTask(0);
 }

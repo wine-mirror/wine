@@ -16,78 +16,6 @@
 #include "callback.h"
 #include "debug.h"
 
-static CRITICAL_SECTION Win16Mutex;
-static SEGPTR segWin16Mutex = (SEGPTR)NULL;
-
-
-/***********************************************
- *           GetpWin16Lock    (KERNEL32.93)
- * Return the infamous Win16Mutex.
- */
-VOID WINAPI GetpWin16Lock(CRITICAL_SECTION **lock)
-{
-    FIXME(win32, "(%p)\n",lock);
-    *lock = &Win16Mutex;
-}
-
-/***********************************************
- *           _ConfirmWin16Lock    (KERNEL32.96)
- */
-DWORD WINAPI _ConfirmWin16Lock(void)
-{
-    FIXME(win32, "()\n");
-    return 1;
-}
-
-/***********************************************
- *           _EnterSysLevel    (KERNEL32.97)
- */
-VOID WINAPI _EnterSysLevel(CRITICAL_SECTION *lock)
-{
-    FIXME(win32, "(%p)\n", lock);
-}
-
-/***********************************************
- *           _EnterSysLevel    (KERNEL32.98)
- */
-VOID WINAPI _LeaveSysLevel(CRITICAL_SECTION *lock)
-{
-    FIXME(win32, "(%p)\n", lock);
-}
-
-/***********************************************
- *           ReleaseThunkLock    (KERNEL32.48)
- */
-VOID WINAPI ReleaseThunkLock(DWORD *mutex_count)
-{
-    _LeaveSysLevel(&Win16Mutex);
-
-    *mutex_count = (DWORD) NtCurrentTeb()->mutex_count;
-    NtCurrentTeb()->mutex_count = 0xFFFF;
-}
-
-/***********************************************
- *           RestoreThunkLock    (KERNEL32.49)
- */
-VOID WINAPI RestoreThunkLock(DWORD mutex_count)
-{
-    NtCurrentTeb()->mutex_count = (WORD)mutex_count;
-
-    _EnterSysLevel(&Win16Mutex);
-}
-
-/***********************************************
- *           GetPK16SysVar    (KERNEL32.92)
- */
-LPVOID WINAPI GetPK16SysVar(void)
-{
-    static BYTE PK16SysVar[128];
-
-    FIXME(win32, "()\n");
-    return PK16SysVar;
-}
-
-
 /**********************************************************************
  *           WOWGetDescriptor        (KERNEL32.88) (WOW32.1)
  */
@@ -180,6 +108,18 @@ DWORD WINAPI GetWin16DOSEnv()
 	return 0;
 }
 
+/**********************************************************************
+ *           GetPK16SysVar    (KERNEL32.92)
+ */
+LPVOID WINAPI GetPK16SysVar(void)
+{
+    static BYTE PK16SysVar[128];
+
+    FIXME(win32, "()\n");
+    return PK16SysVar;
+}
+
+
 BOOL32 WINAPI _KERNEL32_100(HANDLE32 threadid,DWORD exitcode,DWORD x) {
 	FIXME(thread,"(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
@@ -190,18 +130,3 @@ DWORD WINAPI _KERNEL32_99(DWORD x) {
 	return 1;
 }
 
-/************************************************************************
- *		KERNEL_449		(KERNEL.449)
- * This returns a segmented static pointer to a linear pointer to a critical
- * section in kernel32 address space. This is most likely the Win16 Lock,
- * but I am not sure.
- */
-SEGPTR WINAPI KERNEL_449(void) { 
-	if (!segWin16Mutex) {
-		LPDWORD	w16m = SEGPTR_ALLOC(4);
-		
-		*w16m = (DWORD)&Win16Mutex;
-		segWin16Mutex = SEGPTR_GET(w16m);
-	}
-	return segWin16Mutex;
-}

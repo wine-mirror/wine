@@ -970,7 +970,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_GETSCREENSAVETIMEOUT:
 			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
 			TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
-			*(INT16 *) lpvParam = timeout * 1000;
+			*(INT16 *) lpvParam = timeout;
 			break;
 
 		case SPI_ICONHORIZONTALSPACING:

@@ -94,7 +94,7 @@ HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_SEMAPHORE )) != NULL)
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
+        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -124,7 +124,7 @@ BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
     SYSTEM_LOCK();
     if (!(sem = (SEMAPHORE *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
                                                K32OBJ_SEMAPHORE,
-                                               SEMAPHORE_MODIFY_STATE )))
+                                               SEMAPHORE_MODIFY_STATE, NULL )))
     {
         SYSTEM_UNLOCK();
         return FALSE;

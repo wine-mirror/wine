@@ -1,15 +1,18 @@
 /*
- *	Postscript driver initialization functions
+ *	PostScript driver initialization functions
  *
  *	Copyright 1998 Huw D M Davies
  *
  */
 
-#include "windows.h"
-#include "gdi.h"
-#include "psdrv.h"
-#include "debug.h"
-#include "heap.h"
+#include <windows.h>
+#include <gdi.h>
+#include <psdrv.h>
+#include <debug.h>
+#include <heap.h>
+#include <winreg.h>
+#include <print.h>
+#include <winerror.h>
 
 static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -46,9 +49,9 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
-    NULL,                            /* pPolygon */
-    NULL,                            /* pPolyline */
-    NULL,                            /* pPolyBezier */
+    PSDRV_Polygon,                   /* pPolygon */
+    PSDRV_Polyline,                  /* pPolyline */
+    NULL,                            /* pPolyBezier */		     
     NULL,                            /* pRealizePalette */
     PSDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */
@@ -88,10 +91,10 @@ static const DC_FUNCTIONS PSDRV_Funcs =
 static DeviceCaps PSDRV_DevCaps = {
 /* version */		0, 
 /* technology */	DT_RASPRINTER,
-/* horzSize */		200,
-/* vertSize */		288,
-/* horzRes */		4733,
-/* vertRes */		6808, 
+/* horzSize */		210,
+/* vertSize */		297,
+/* horzRes */		4961,
+/* vertRes */		7016, 
 /* bitsPixel */		1,
 /* planes */		1,
 /* numBrushes */	-1,
@@ -108,7 +111,7 @@ static DeviceCaps PSDRV_DevCaps = {
 /* polygoalnCaps */	PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
 			PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED |
 			PC_INTERIORS,
-/* textCaps */		0, /* psdrv 0x59f7 */
+/* textCaps */		TC_CR_ANY, /* psdrv 0x59f7 */
 /* clipCaps */		CP_RECTANGLE,
 /* rasterCaps */	RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
 			RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT |
@@ -124,6 +127,48 @@ static DeviceCaps PSDRV_DevCaps = {
 /* palette size */	0,
 /* ..etc */		0, 0 };
 
+static PSDRV_DEVMODE16 DefaultDevmode = 
+{
+  { /* dmPublic */
+/* dmDeviceName */	"Wine PostScript Driver",
+/* dmSpecVersion */	0x30a,
+/* dmDriverVersion */	0x001,
+/* dmSize */		sizeof(DEVMODE16),
+/* dmDriverExtra */	0,
+/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH |
+			DM_PAPERWIDTH | DM_SCALE | DM_COPIES | 
+			DM_DEFAULTSOURCE | DM_COLOR | DM_DUPLEX | 
+			DM_YRESOLUTION | DM_TTOPTION,
+/* dmOrientation */	DMORIENT_PORTRAIT,
+/* dmPaperSize */	DMPAPER_A4,
+/* dmPaperLength */	2969,
+/* dmPaperWidth */      2101,
+/* dmScale */		100, /* ?? */
+/* dmCopies */		1,
+/* dmDefaultSource */	DMBIN_AUTO,
+/* dmPrintQuality */	0,
+/* dmColor */		DMCOLOR_MONOCHROME,
+/* dmDuplex */		0,
+/* dmYResolution */	0,
+/* dmTTOption */	DMTT_SUBDEV,
+/* dmCollate */		0,
+/* dmFormName */	"",
+/* dmUnusedPadding */   0,
+/* dmBitsPerPel */	0,
+/* dmPelsWidth */	0,
+/* dmPelsHeight */	0,
+/* dmDisplayFlags */	0,
+/* dmDisplayFrequency */ 0
+  },
+  { /* dmDocPrivate */
+  },
+  { /* dmDrvPrivate */
+/* ppdfilename */	"default.ppd"
+  }
+};
+
+HANDLE32 PSDRV_Heap = 0;
+
 /*********************************************************************
  *	     PSDRV_Init
  *
@@ -132,11 +177,11 @@ static DeviceCaps PSDRV_DevCaps = {
  */
 BOOL32 PSDRV_Init(void)
 {
-  TRACE(psdrv, "\n");
-  PSDRV_GetFontMetrics();
-  return DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
+    TRACE(psdrv, "\n");
+    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
+    PSDRV_GetFontMetrics();
+    return DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
 }
-
 
 /**********************************************************************
  *	     PSDRV_CreateDC
@@ -145,24 +190,69 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData )
 {
     PSDRV_PDEVICE *physDev;
+    PRINTERINFO *pi = PSDRV_FindPrinterInfo(device);
+    DeviceCaps *devCaps;
 
     TRACE(psdrv, "(%s %s %s %p)\n", driver, device, output, initData);
 
-    if(!PSDRV_AFMFontList) {
+    if(!pi->Fonts) {
         MSG("To use WINEPS you need to install some AFM files.\n");
 	return FALSE;
     }
 
-    dc->w.devCaps = &PSDRV_DevCaps;
-    dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes,
-    			    dc->w.devCaps->vertRes);
-    
-    physDev = (PSDRV_PDEVICE *)HeapAlloc( GetProcessHeap(), 0,
+    physDev = (PSDRV_PDEVICE *)HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
 					             sizeof(*physDev) );
     if (!physDev) return FALSE;
     dc->physDev = physDev;
-    physDev->job.output = HEAP_strdupA( GetProcessHeap(), 0, output );
-    if (!physDev->job.output) return FALSE;
+
+    physDev->pi = pi;
+
+    physDev->Devmode = (PSDRV_DEVMODE16 *)HeapAlloc( PSDRV_Heap, 0,
+						     sizeof(PSDRV_DEVMODE16) );
+    if(!physDev->Devmode) {
+        HeapFree( PSDRV_Heap, 0, physDev );
+	return FALSE;
+    }
+    
+    memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODE16) );
+
+    if(initData) {
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE16 *)initData, pi);
+    }
+
+    
+    devCaps = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DevCaps) );
+    memcpy(devCaps, &PSDRV_DevCaps, sizeof(PSDRV_DevCaps));
+
+    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
+        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperWidth;
+	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperLength;
+    } else {
+        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperLength;
+	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperWidth;
+    }
+
+    devCaps->horzRes = physDev->pi->ppd->DefaultResolution * 
+      devCaps->horzSize / 25.4;
+    devCaps->vertRes = physDev->pi->ppd->DefaultResolution * 
+      devCaps->vertSize / 25.4;
+
+    /* Are aspect[XY] and logPixels[XY] correct? */
+    /* Need to handle different res in x and y => fix ppd */
+    devCaps->aspectX = devCaps->logPixelsX = 
+				physDev->pi->ppd->DefaultResolution;
+    devCaps->aspectY = devCaps->logPixelsY = 
+				physDev->pi->ppd->DefaultResolution;
+    devCaps->aspectXY = (int)hypot( (double)devCaps->aspectX, 
+				    (double)devCaps->aspectY );
+    /* etc */
+
+    dc->w.devCaps = devCaps;
+
+    dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes,
+    			    dc->w.devCaps->vertRes);
+    
+    physDev->job.output = HEAP_strdupA( PSDRV_Heap, 0, output );
     physDev->job.hJob = 0;
     return TRUE;
 }
@@ -174,11 +264,71 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 static BOOL32 PSDRV_DeleteDC( DC *dc )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
+    
     TRACE(psdrv, "\n");
-    HeapFree( GetProcessHeap(), 0, physDev->job.output );
-    HeapFree( GetProcessHeap(), 0, physDev );
+
+    HeapFree( PSDRV_Heap, 0, physDev->Devmode );
+    HeapFree( PSDRV_Heap, 0, physDev->job.output );
+    HeapFree( PSDRV_Heap, 0, (void *)dc->w.devCaps );
+    HeapFree( PSDRV_Heap, 0, physDev );
     dc->physDev = NULL;
+
     return TRUE;
 }
 
+
+	
+
+/**********************************************************************
+ *		PSDRV_FindPrinterInfo
+ */
+PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name) 
+{
+    static PRINTERINFO *PSDRV_PrinterList;
+    DWORD type = REG_BINARY, needed, res;
+    PRINTERINFO *pi = PSDRV_PrinterList, **last = &PSDRV_PrinterList;
+    FONTNAME *font;
+    AFM *afm;
+
+    TRACE(psdrv, "'%s'\n", name);
+    
+    for( ; pi; last = &pi->next, pi = pi->next) {
+        if(!strcmp(pi->FriendlyName, name))
+	    return pi;
+    }
+
+    pi = *last = HeapAlloc( PSDRV_Heap, 0, sizeof(*pi) );
+    pi->FriendlyName = HEAP_strdupA( PSDRV_Heap, 0, name );
+    res = DrvGetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
+			    NULL, 0, &needed );
+
+    if(res == ERROR_INVALID_PRINTER_NAME) {
+        pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
+	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
+	DrvSetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,
+		 REG_BINARY, (LPBYTE)&DefaultDevmode, sizeof(DefaultDevmode) );
+
+	/* need to do something here AddPrinter?? */
+    } else {
+        pi->Devmode = HeapAlloc( PSDRV_Heap, 0, needed );
+	DrvGetPrinterData((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
+			  (LPBYTE)pi->Devmode, needed, &needed);
+    }
+
+    pi->ppd = PSDRV_ParsePPD(pi->Devmode->dmDrvPrivate.ppdFileName);
+    pi->next = NULL;
+    pi->Fonts = NULL;
+
+    for(font = pi->ppd->InstalledFonts; font; font = font->next) {
+        afm = PSDRV_FindAFMinList(PSDRV_AFMFontList, font->Name);
+	if(!afm) {
+	    MSG(
+	 "Couldn't find AFM file for installed printer font '%s' - ignoring\n",
+	 font->Name);
+	} else {
+	    PSDRV_AddAFMtoList(&pi->Fonts, afm);
+	}
+    }
+
+    return pi;
+}

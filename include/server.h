@@ -27,47 +27,115 @@ struct cmsg_fd
     int fd;    /* fd to pass */
 };
 
-/* request from client to server */
 
-enum request
-{
-    REQ_TIMEOUT,         /* internal timeout msg */
-    REQ_KILL_THREAD,     /* internal kill thread msg */
-    REQ_NEW_THREAD,      /* create a new thread (called from the creator) */
-    REQ_INIT_THREAD,     /* init a new thread (called by itself) */
-    REQ_NB_REQUESTS
-};
+/* Request structures */
 
-/* request structures */
+/* following are the definitions of all the client<->server  */
+/* communication format; requests are from client to server, */
+/* replies are from server to client. All requests must have */
+/* a corresponding structure; the replies can be empty in    */
+/* which case it isn't necessary to define a structure.      */
 
+
+/* Create a new thread from the context of the parent */
 struct new_thread_request
 {
-    void *pid;  /* process id for the new thread (or 0 if none yet) */
+    void*        pid;          /* process id for the new thread (or 0 if none yet) */
 };
-
 struct new_thread_reply
 {
-    void *tid;  /* thread id */
-    void *pid;  /* process id (created if necessary) */
+    void*        tid;          /* thread id */
+    int          thandle;      /* thread handle (in the current process) */
+    void*        pid;          /* process id (created if necessary) */
+    int          phandle;      /* process handle (in the current process) */
 };
 
+
+/* Initialize a thread; called from the child after fork()/clone() */
 struct init_thread_request
 {
-    int  pid;
-/*    char name[...];*/
+    int          unix_pid;     /* Unix pid of new thread */
 };
 
-/* server-side functions */
 
-extern void server_main_loop( int fd );
+/* Terminate a process */
+struct terminate_process_request
+{
+    int          handle;       /* process handle to terminate */
+    int          exit_code;    /* process exit code */
+};
+
+
+/* Terminate a thread */
+struct terminate_thread_request
+{
+    int          handle;       /* thread handle to terminate */
+    int          exit_code;    /* thread exit code */
+};
+
+
+/* Retrieve information about a process */
+struct get_process_info_request
+{
+    int          handle;       /* process handle */
+};
+struct get_process_info_reply
+{
+    void*        pid;          /* server process id */
+    int          exit_code;    /* process exit code */
+};
+
+
+/* Close a handle for the current process */
+struct close_handle_request
+{
+    int          handle;       /* handle to close */
+};
+
+
+/* Duplicate a handle */
+struct dup_handle_request
+{
+    int          src_process;  /* src process handle */
+    int          src_handle;   /* src handle to duplicate */
+    int          dst_process;  /* dst process handle */
+    int          dst_handle;   /* handle to duplicate to (or -1 for any) */
+    unsigned int access;       /* wanted access rights */
+    int          inherit;      /* inherit flag */
+    int          options;      /* duplicate options (see below) */
+};
+struct dup_handle_reply
+{
+    int          handle;       /* duplicated handle in dst process */
+};
+
+
+/* Open a handle to a process */
+struct open_process_request
+{
+    void*        pid;          /* process id to open */
+    unsigned int access;       /* wanted access rights */
+    int          inherit;      /* inherit flag */
+};
+struct open_process_reply
+{
+    int          handle;       /* handle to the process */
+};
 
 
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
 struct _THDB;
-extern int CLIENT_NewThread( struct _THDB *thdb );
+extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
 extern int CLIENT_InitThread(void);
+extern int CLIENT_TerminateProcess( int handle, int exit_code );
+extern int CLIENT_TerminateThread( int handle, int exit_code );
+extern int CLIENT_CloseHandle( int handle );
+extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
+                                   int dst_handle, DWORD access, BOOL32 inherit, DWORD options );
+extern int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply );
+extern int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit );
 #endif  /* __WINE_SERVER__ */
 
 #endif  /* __WINE_SERVER_H */

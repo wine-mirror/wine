@@ -59,7 +59,7 @@ DEVICE_Open(LPCSTR filename, DWORD access) {
 
 	handle = HANDLE_Alloc( PROCESS_Current(), &(dev->header),
 			       FILE_ALL_ACCESS | GENERIC_READ |
-			       GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE );
+			       GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE, -1 );
 	/* If the allocation failed, the object is already destroyed */
 	if (handle == INVALID_HANDLE_VALUE32) dev = NULL;
 	return handle;
@@ -86,7 +86,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 			      LPOVERLAPPED lpOverlapped)
 {
 	DEVICE_OBJECT	*dev = (DEVICE_OBJECT *)HANDLE_GetObjPtr(
-		PROCESS_Current(), hDevice, K32OBJ_DEVICE_IOCTL, 0 /*FIXME*/ );
+		PROCESS_Current(), hDevice, K32OBJ_DEVICE_IOCTL, 0 /*FIXME*/, NULL );
 
         FIXME(win32, "(%ld,%ld,%p,%ld,%p,%ld,%p,%p), stub\n",
 		hDevice,dwIoControlCode,lpvlnBuffer,cblnBuffer,

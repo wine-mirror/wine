@@ -41,31 +41,29 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
   return  Escape16(hdc, ENDDOC, 0, 0, 0);
 }
 
-WORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer, LPBYTE lpPrinterData, int cbData)
+DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer, LPBYTE lpPrinterData, int cbData)
 {
-    WORD res = -1;
+    DWORD res = -1;
     HKEY hkey;
     DWORD dwType, cbQueryData;
 
     if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
         if (cbData > 1) { /* "Default DevMode" */
             if (!(RegQueryValueEx32A(hkey, DefaultDevMode, 0, &dwType, 0, &cbQueryData))) {
-                if (!lpPrinterData) res = cbQueryData;
-		else
-		if ((cbQueryData) && (cbQueryData <= cbData)) {
+                if (!lpPrinterData)
+		    res = cbQueryData;
+		else if ((cbQueryData) && (cbQueryData <= cbData)) {
 		    cbQueryData = cbData;
 		    if (RegQueryValueEx32A(hkey, DefaultDevMode, 0,
 				&dwType, lpPrinterData, &cbQueryData))
 		        res = cbQueryData;
 		}
-            }
-            else /* "Printer Driver" */
-	    {
-		cbQueryData = 32;
-	        RegQueryValueEx32A(hkey, "Printer Driver", 0,
-			&dwType, lpPrinterData, &cbQueryData);
-		res = cbQueryData;
 	    }
+	} else { /* "Printer Driver" */
+	    cbQueryData = 32;
+	    RegQueryValueEx32A(hkey, "Printer Driver", 0,
+			&dwType, lpPrinterData, &cbQueryData);
+	    res = cbQueryData;
 	}
     }
     if (hkey) RegCloseKey(hkey);
@@ -192,20 +190,24 @@ DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 
     if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
-	if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ||
-	    (RegSetValueEx32A(hkey, DefaultDevMode, 0, REG_BINARY, lpPrinterData, dwSize)))
+	if ( RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey) 
+	     != ERROR_SUCCESS ||
+	     RegSetValueEx32A(hkey, DefaultDevMode, 0, REG_BINARY, 
+			      lpPrinterData, dwSize) != ERROR_SUCCESS )
 	        res = ERROR_INVALID_PRINTER_NAME;
     }
     else
     {
 	strcat(RegStr_Printer, "\\");
 
-	if (!(res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
+	if( (res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ==
+	    ERROR_SUCCESS ) {
 
 	    if (!lpPrinterData) 
 	        res = RegDeleteValue32A(hkey, lpProfile);
 	    else
-                res = RegSetValueEx32A(hkey, lpProfile, 0, lpType, lpPrinterData, dwSize);
+                res = RegSetValueEx32A(hkey, lpProfile, 0, lpType,
+				       lpPrinterData, dwSize);
 	}
     }
 

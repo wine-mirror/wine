@@ -6,11 +6,15 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "server.h"
-#include "object.h"
+
+#include "server/object.h"
+
+int debug_level = 0;
 
 struct object_name
 {
@@ -69,7 +73,16 @@ void init_object( struct object *obj, const struct object_ops *ops,
     else obj->name = add_name( obj, name );
 }
 
-/* release an object (i.e. decrement its refcount */
+/* grab an object (i.e. increment its refcount) and return the object */
+struct object *grab_object( void *ptr )
+{
+    struct object *obj = (struct object *)ptr;
+    assert( obj->refcount < INT_MAX );
+    obj->refcount++;
+    return obj;
+}
+
+/* release an object (i.e. decrement its refcount) */
 void release_object( void *ptr )
 {
     struct object *obj = (struct object *)ptr;
@@ -88,7 +101,6 @@ struct object *find_object( const char *name )
     struct object_name *ptr = names[hash];
     while (ptr && strcmp( ptr->name, name )) ptr = ptr->next;
     if (!ptr) return NULL;
-    ptr->obj->refcount++;
+    grab_object( ptr->obj );
     return ptr->obj;
 }
-

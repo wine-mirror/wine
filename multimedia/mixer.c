@@ -190,7 +190,7 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpmod, DWORD flags)
 /**************************************************************************
  * 				mixMessage			[sample driver]
  */
-DWORD mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	TRACE(mmaux,"(%04X, %04X, %08lX, %08lX, %08lX);\n", 

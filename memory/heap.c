@@ -1310,8 +1310,8 @@ LPVOID HEAP_xalloc( HANDLE32 heap, DWORD flags, DWORD size )
  */
 LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 {
-    LPSTR p = HEAP_xalloc( heap, flags, lstrlen32A(str) + 1 );
-    lstrcpy32A( p, str );
+    LPSTR p = HEAP_xalloc( heap, flags, strlen(str) + 1 );
+    strcpy( p, str );
     return p;
 }
 
@@ -1336,7 +1336,7 @@ LPWSTR HEAP_strdupAtoW( HANDLE32 heap, DWORD flags, LPCSTR str )
     LPWSTR ret;
 
     if (!str) return NULL;
-    ret = HEAP_xalloc( heap, flags, (lstrlen32A(str)+1) * sizeof(WCHAR) );
+    ret = HEAP_xalloc( heap, flags, (strlen(str)+1) * sizeof(WCHAR) );
     lstrcpyAtoW( ret, str );
     return ret;
 }

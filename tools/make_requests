@@ -1,0 +1,244 @@
+#! /usr/bin/perl
+#
+# Build the server/trace.c and include/server/request.h files
+# from the contents of include/server.h.
+#
+# Copyright (C) 1998 Alexandre Julliard
+#
+
+%formats =
+(
+    "int"          => "%d",
+    "unsigned int" => "%08x",
+    "void*"        => "%p"
+);
+
+my @requests = ();
+my %replies = ();
+
+open(SERVER,"include/server.h") or die "Can't open include/server.h";
+open(TRACE,">server/trace.c") or die "Can't create server/trace.c";
+open(REQUESTS,">include/server/request.h") or die "Can't create include/server/request.h";
+
+### Generate the header
+
+print TRACE <<EOF;
+/* File generated automatically by $0; DO NOT EDIT!! */
+
+#include <stdio.h>
+#include <sys/uio.h>
+#include "server.h"
+#include "server/thread.h"
+EOF
+
+### Parse server.h to find request/reply structure definitions
+
+while (<SERVER>)
+{
+    if (/^struct +(\w+)_request/) { &DO_REQUEST($1); }
+    if (/^struct +(\w+)_reply/)   { &DO_REPLY($1); }
+}
+
+### Output the dumping function tables
+
+print TRACE<<EOF;
+
+struct dumper
+{
+    void (*dump_req)();
+    void (*dump_reply)();
+    unsigned int size;
+};
+
+static const struct dumper dumpers[REQ_NB_REQUESTS] =
+{
+EOF
+
+foreach $req (@requests)
+{
+    $request = $req . "_request";
+    $reply = $replies{$req} ? "dump_${req}_reply" : "0";
+    print TRACE "    { (void(*)())dump_$request,\n";
+    print TRACE "      (void(*)())$reply,\n";
+    print TRACE "      sizeof(struct $request) },\n";
+}
+
+print TRACE <<EOF;
+};
+
+static const char * const req_names[REQ_NB_REQUESTS] =
+{
+EOF
+foreach $req (@requests)
+{
+    print TRACE "    \"$req\",\n";
+}
+
+### Output the tracing functions
+
+print TRACE <<EOF;
+};
+
+void trace_request( enum request req, void *data, int len, int fd )
+{
+    current->last_req = req;
+    printf( "%08x: %s(", (unsigned int)current, req_names[req] );
+    dumpers[req].dump_req( data );
+    if (len > dumpers[req].size)
+    {
+        unsigned char *ptr = (unsigned char *)data + dumpers[req].size;
+	len -= dumpers[req].size;
+        while (len--) printf( ", %02x", *ptr++ );
+    }
+    if (fd != -1) printf( " ) fd=%d\\n", fd );
+    else printf( " )\\n" );
+}
+
+void trace_timeout(void)
+{
+    printf( "%08x: *timeout*\\n", (unsigned int)current );
+}
+
+void trace_kill( int exit_code )
+{
+    printf( "%08x: *killed* exit_code=%d\\n",
+            (unsigned int)current, exit_code );
+}
+
+void trace_reply( struct thread *thread, int type, int pass_fd,
+                  struct iovec *vec, int veclen )
+{
+    if (!thread) return;
+    printf( "%08x: %s() = %d",
+            (unsigned int)thread, req_names[thread->last_req], type );
+    if (veclen)
+    {
+	printf( " {" );
+	if (dumpers[thread->last_req].dump_reply)
+	{
+	    dumpers[thread->last_req].dump_reply( vec->iov_base );
+	    vec++;
+	    veclen--;
+	}
+	for (; veclen; veclen--, vec++)
+	{
+	    unsigned char *ptr = vec->iov_base;
+	    int len = vec->iov_len;
+	    while (len--) printf( ", %02x", *ptr++ );
+	}
+	printf( " }" );
+    }
+    if (pass_fd != -1) printf( " fd=%d\\n", pass_fd );
+    else printf( "\\n" );
+}
+EOF
+
+### Output the requests list
+
+print REQUESTS <<EOF;
+/* File generated automatically by $0; DO NOT EDIT!! */
+
+#ifndef __WINE_SERVER_REQUEST_H
+#define __WINE_SERVER_REQUEST_H
+
+enum request
+{
+EOF
+
+foreach $req (@requests)
+{
+    print REQUESTS "    REQ_\U$req,\n";
+}
+
+print REQUESTS <<EOF;
+    REQ_NB_REQUESTS
+};
+
+#ifdef WANT_REQUEST_HANDLERS
+
+#define DECL_HANDLER(name) \\
+    static void req_##name( struct name##_request *req, void *data, int len, int fd )
+
+EOF
+
+foreach $req (@requests) { print REQUESTS "DECL_HANDLER($req);\n"; }
+
+print REQUESTS <<EOF;
+
+static const struct handler {
+    void       (*handler)();
+    unsigned int min_size;
+} req_handlers[REQ_NB_REQUESTS] = {
+EOF
+
+foreach $req (@requests)
+{
+    print REQUESTS "    { (void(*)())req_$req, sizeof(struct ${req}_request) },\n";
+}
+
+print REQUESTS <<EOF;
+};
+#endif  /* WANT_REQUEST_HANDLERS */
+
+#endif  /* __WINE_SERVER_REQUEST_H */
+EOF
+
+### Handle a request structure definition
+
+sub DO_REQUEST
+{
+    my $name = shift;
+    my @struct = ();
+    while (<SERVER>)
+    {
+	last if /^};$/;
+        next if /^{$/;
+	s!/\*.*\*/!!g;
+	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
+	my $type = $1;
+	my $var = $3;
+        die "Unrecognized type $type" unless defined($formats{$type});
+	push @struct, $type, $var;
+    }
+    push @requests, $name;
+    &DO_DUMP_FUNC( $name . "_request",@struct);
+}
+
+### Handle a reply structure definition
+
+sub DO_REPLY
+{
+    my $name = shift;
+    my @struct = ();
+    while (<SERVER>)
+    {
+	last if /^};$/;
+        next if /^{$/;
+	s!/\*.*\*/!!g;
+	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
+	my $type = $1;
+	my $var = $3;
+        die "Unrecognized type $type" unless defined($formats{$type});
+	push @struct, $type, $var;
+    }
+    $replies{$name} = 1;
+    &DO_DUMP_FUNC( $name . "_reply" ,@struct);
+}
+
+### Generate a dumping function
+
+sub DO_DUMP_FUNC
+{
+    my $name = shift;
+    print TRACE "\nstatic void dump_$name( struct $name *req )\n{\n";
+    while ($#_ >= 0)
+    {
+	my $type = shift;
+	my $var = shift;
+	print TRACE "    printf( \" $var=$formats{$type}";
+	print TRACE "," if ($#_ > 0);
+	print TRACE "\", req->$var );\n";
+	$size .= "+sizeof($type)";
+    }
+    print TRACE "}\n";
+}

@@ -24,6 +24,7 @@ typedef struct
     UINT16              textHeight;
     UINT32              height;
     BOOL32              simple;
+    HWND32              hwndToolTip;
     HFONT32             hFont;
     HFONT32             hDefaultFont;
     COLORREF            clrBk;  /* background color */

@@ -29,7 +29,7 @@ extern WORD USER_HeapSel;
 #define USUD_LOCALHEAP         0x0004
 #define USUD_FIRSTCLASS        0x0005
 
-void USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
+void WINAPI USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
 void USER_ExitWindows(void);
 HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 				       HRSRC16 hRsrc );

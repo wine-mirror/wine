@@ -25,6 +25,37 @@ extern void SHELL_Init();
 #define SHELL_ERROR_INVALID_PARAMETER 7L
 #define SHELL_ERROR_ACCESS_DENIED     8L
 
+/******************************
+* common shell file structures
+*/
+#define FO_MOVE           0x0001
+#define FO_COPY           0x0002
+#define FO_DELETE         0x0003
+#define FO_RENAME         0x0004
+
+#define FOF_MULTIDESTFILES         0x0001
+#define FOF_CONFIRMMOUSE           0x0002
+#define FOF_SILENT                 0x0004  
+#define FOF_RENAMEONCOLLISION      0x0008
+#define FOF_NOCONFIRMATION         0x0010  
+#define FOF_WANTMAPPINGHANDLE      0x0020  
+#define FOF_ALLOWUNDO              0x0040
+#define FOF_FILESONLY              0x0080  
+#define FOF_SIMPLEPROGRESS         0x0100  
+#define FOF_NOCONFIRMMKDIR         0x0200  
+#define FOF_NOERRORUI              0x0400  
+
+typedef WORD FILEOP_FLAGS;
+
+#define PO_DELETE       0x0013  
+#define PO_RENAME       0x0014  
+#define PO_PORTCHANGE   0x0020  
+
+typedef WORD PRINTEROP_FLAGS;
+
+/******************************
+* DROPFILESTRUCT
+*/
 typedef struct { 	   /* structure for dropped files */ 
 	WORD		wSize;
 	POINT16		ptMousePos;   
@@ -32,6 +63,9 @@ typedef struct { 	   /* structure for dropped files */
 	/* memory block with filenames follows */     
 } DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
+/******************************
+* NOTIFYICONDATA
+*/
 typedef struct _NOTIFYICONDATA {
 	DWORD cbSize;
 	HWND32 hWnd;
@@ -42,6 +76,29 @@ typedef struct _NOTIFYICONDATA {
 	CHAR szTip[64];
 } NOTIFYICONDATA, *PNOTIFYICONDATA;
 
+/*******************************
+* SHITEMID, ITEMIDLIST, PIDL API
+*/
+typedef struct 
+{ WORD		cb;	/* nr of bytes in this item */
+  BYTE		abID[1];/* first byte in this item */
+} SHITEMID,*LPSHITEMID;
+
+typedef struct 
+{ SHITEMID mkid; /* first itemid in list */
+} ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
+
+LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
+LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST iil1,LPCITEMIDLIST iil2);
+DWORD WINAPI ILGetSize(LPITEMIDLIST pidl);
+
+DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath);
+DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath);
+#define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
+
+/****************************************************************************
+* SHFILEINFO API
+*/
 typedef struct tagSHFILEINFO32A {
 	HICON32	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
@@ -60,6 +117,45 @@ typedef struct tagSHFILEINFO32W {
 
 DECL_WINELIB_TYPE_AW(SHFILEINFO)
 
+DWORD    WINAPI SHGetFileInfo32A(LPCSTR,DWORD,SHFILEINFO32A*,UINT32,UINT32);
+DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
+#define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
+
+/****************************************************************************
+* SHFILEOPSTRUCT API
+*/
+typedef struct _SHFILEOPSTRUCTA
+{ HWND32          hwnd;
+  UINT32          wFunc;
+  LPCSTR          pFrom;
+  LPCSTR          pTo;
+  FILEOP_FLAGS    fFlags;
+  BOOL32          fAnyOperationsAborted;
+  LPVOID          hNameMappings;
+  LPCSTR          lpszProgressTitle;
+} SHFILEOPSTRUCT32A, *LPSHFILEOPSTRUCT32A;
+
+typedef struct _SHFILEOPSTRUCTW
+{ HWND32          hwnd;
+  UINT32          wFunc;
+  LPCWSTR         pFrom;
+  LPCWSTR         pTo;
+  FILEOP_FLAGS    fFlags;
+  BOOL32          fAnyOperationsAborted;
+  LPVOID          hNameMappings;
+  LPCWSTR         lpszProgressTitle;
+} SHFILEOPSTRUCT32W, *LPSHFILEOPSTRUCT32W;
+
+typedef SHFILEOPSTRUCT32A SHFILEOPSTRUCT32;
+typedef LPSHFILEOPSTRUCT32A LPSHFILEOPSTRUCT32;
+
+DECL_WINELIB_TYPE_AW(SHFILEOPSTRUCT)
+
+DWORD WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32 lpFileOp);
+
+/****************
+* APPBARDATA 
+*/
 typedef struct _AppBarData {
 	DWORD	cbSize;
 	HWND32	hWnd;
@@ -84,9 +180,33 @@ typedef struct _AppBarData {
 #define SHGFI_SHELLICONSIZE     0x000000004     /* get shell size icon */
 #define SHGFI_PIDL              0x000000008     /* pszPath is a pidl */
 #define SHGFI_USEFILEATTRIBUTES 0x000000010     /* use passed dwFileAttribute */
-DWORD    WINAPI SHGetFileInfo32A(LPCSTR,DWORD,SHFILEINFO32A*,UINT32,UINT32);
-DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
-#define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
+
+/****************************************************************************
+* SHChangeNotifyRegister API
+*/
+typedef struct
+{ LPITEMIDLIST pidl;
+  DWORD unknown;
+} IDSTRUCT;
+DWORD WINAPI SHChangeNotifyRegister(HWND32 hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
+DWORD WINAPI SHChangeNotifyDeregister(LONG x1,LONG x2);
+
+/****************************************************************************
+* SHAddToRecentDocs API
+*/
+#define SHARD_PIDL      0x00000001L
+#define SHARD_PATH      0x00000002L
+
+DWORD WINAPI SHAddToRecentDocs(UINT32 uFlags, LPCVOID pv);
+
+/****************************************************************************
+*  other functions
+*/
+LPVOID WINAPI SHAlloc(DWORD len);
+DWORD WINAPI SHFree(LPVOID x);
+LPSTR WINAPI PathAddBackslash(LPSTR path);	
+LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2);
+LPSTR WINAPI PathRemoveBlanks(LPSTR str);
 
 #define SE_ERR_SHARE            26
 #define SE_ERR_ASSOCINCOMPLETE  27
@@ -112,5 +232,11 @@ DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
 #define	CSIDL_NETHOOD		0x0013
 #define	CSIDL_FONTS		0x0014
 #define	CSIDL_TEMPLATES		0x0015
+
+/*******************************************
+*  global SHELL32.DLL variables
+*/
+extern HINSTANCE32 shell32_hInstance;
+extern UINT32      shell32_DllRefCount;
 
 #endif  /* __WINE_SHELL_H */

@@ -175,10 +175,8 @@
       - Almost finished.
 
   Notes:
-      - Tool tips need to be added, but since they are not done yet...
-
-  Notes:
-      Have a look at controls/status.c for a list of bugs and missing features.
+      - Unicode support is still missing.
+      - Tooltip integration is almost complete.
 
 
 3.17 Tab Control
@@ -200,7 +198,7 @@
       - Development in progress.
       - Basic functionality is almost done. (dll version 4.0)
 
-  Notes
+  Notes:
       Bitmaps are not correctly displayed.
 
 
@@ -210,10 +208,11 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Development in progress. Almost done.
+      - Almost finished.
 
-  Notes
-      The control does not behave very well. This will be fixed
+  Notes:
+      - Unicode support is still missing.
+      - No subclassing.
 
 
 3.20 Trackbar Control
@@ -232,6 +231,7 @@
 ----------------------
   Author:
       Dummy written by Eric Kohl.
+      Alex Priem (alexp@sci.kun.nl)
 
   Status:
       - Dummy control. No functionality.

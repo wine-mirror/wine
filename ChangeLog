@@ -1,4 +1,261 @@
 ----------------------------------------------------------------------
+Sun Aug  9 13:21:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [loader/ne/module.c] [if1632/kernel.spec]
+	Added the undocumented HIWORD of GetModuleHandle (hFirstModule).
+
+	* [loader/ne/segment.c]
+	Wine forgot to set some NE_SEGFLAGS_*.
+	Combined with another loader change, this fixed the
+	"BLINKER -- error in loading module" or ghost MessageBox problem
+	that about 1% of all Windows programs have.
+	Some BLINKER programs still don't work, though.
+	But I'm working on it, with great help from Blinkinc.
+
+	* [loader/task.c]
+	InitTask needs to decrement the SP register by two as Win95 does.
+
+Sat Aug  8 19:11:46 1998  Marcus Meissner <marcus@jet.franken.de>
+
+ 	* [*/*]
+	Added some missing WINAPI and some missing prototypes for
+	functions.
+
+	* [controls/static.c]
+	Got rid of the MODULE32_LookupHMODULE error showing up for every
+	message box.
+
+	* [windows/winproc.c]
+	WM_NOTIFY 16->32 mapping (AOL Instant Messenger or however it is called).
+
+	* [misc/winsock.c]
+	hostent/servent/protoent should not use the same static buffers.
+	(has broken nt3.15 finger.exe which does hp=gethostbyname(), then
+	getservbyname("finger","tcp") and the references hp->h_addr_list[0]).
+
+Sat Aug  8 13:21:24 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [include/server.h] [tools/make_requests] [server/request.c]
+	  [server/trace.c]
+	Automated part of the client/server request code generation.
+	Added tracing of client/server communication.
+
+	* [scheduler/*.c] [server/process.c]
+	Added support for server-side handles.
+
+	* [scheduler/thread.c]
+	Added DLL_THREAD_ATTACH/DETACH notifications.
+
+	* [configure.in]
+	Added check for -lsocket.
+
+	* [windows/winproc.c]
+	Return the thunk address in WINPROC_GetProc if the function types
+	don't match.
+
+Sat Aug  8 02:44:04 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [windows/winproc.c][windows/win.c][windows/message.c]  
+	Documentation for CallWindowProc, SetWindowLong, DispatchMessage,
+	WaitMessage, GetMessage, and PeekMessage.
+
+Sat Aug  8 01:00:00 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [controls/commctrl.c][controls/widgets.c][include/builtin32.h]
+	  [include/commctrl.h][relay32/builtin32.c][relay32/comctl32.spec]
+	  [tools/build.c] [relay32/shell32.spec]
+	Added the functionality of the LibMain function. The common 
+	controls are properly initialized now.
+
+	* [controls/treeview.c][memory/atom.c][scheduler/thread.c][windows/class.c]
+	  [windows/msgbox.c][windows/win.c]
+	Put TRACE in, put SetLastError() in.
+
+	* [include/interfaces.h]
+	Added IClassFactory::LockServer.
+
+	* [include/ole2.h]
+	Added struct for LPOLEMENUGROUPWIDTHS32, HOLEMENU32.
+
+	* [include/shell.h][include/shlobj.h][misc/shell.c][ole/folders.c]
+	Reorganized and many structs and classes (IShellBrowser,IShellView)
+	added. shell32.dll should work in many cases now.
+	Started SHGetFileInfoA implementeation, rewrote SHGetPathFromIDList32A.
+	New Shell32LibMain started ShellIconCache Implementation.
+
+	* [misc/shellord.c]
+	Rewrote ILCombine, ILGetSize
+	New stubs SHFind_InitMenuPopup, FileMenu_Create, ShellExecuteEx,
+	SHSetInstanceExplorer, SHGetInstanceExplorer, SHFreeUnusedLibraries.
+
+	* [include/winerror.h]
+	Class and window related error codes added.
+
+	* [memory/heap.c]
+	Changed lstrlen32A to strlen to get rid of milions of TRACE lines.
+
+	* [misc/ddeml.c]
+	First lines for DdeCreateStringHandle32A / DdeFreeStringHandle32.
+
+	* [misc/network.c][relay32/mpr.spec]
+	Fixed some bugs, changed ordinals.
+
+	* [windows/class.c]
+	Workarounds for incorrect hInstance handling. Fixes parts of
+	MSWord95/Excel95 and Money95.
+
+Thu Aug  6 21:05:35 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [windows/nonclient.c][misc/tweak.c][include/tweak.h]
+	  [documentation/win95look]
+	Removed some tweak variables. They are no longer needed.
+
+	* [files/dos_fs.c]
+	Added check for null pointer in DOSFS_GetDevice().
+
+	* [controls/tooltips.c][include/commctrl.h]
+	Improved tooltips.
+
+	* [controls/status.c][include/commctrl.h]
+	Cleaned up code and added tooltip support.
+
+	* [controls/toolbar.c][include/commctrl.h]
+	Added tooltip support.
+
+	* [documentation/common_controls]
+	Updated.
+
+Thu Aug  6 00:05:22 1998  Uwe Bonnes  <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [include/ver.h] [misc/ver.c]
+	Write VIF_BUFFTOOSMALL, not VIF_BUFTOSMALL.
+
+	* [debugger/hash.c] [debugger/stabs.c]
+	Make debug output more friendly for posting.
+
+	* [files/file.c]
+	Partial implementation of OF_SHARE_EXCLUSIVE.
+	Needed for Quicklogic/QuickChip (InstallShield).
+
+	* [files/profile.c]
+	When a cached-only entry is found, return it.
+
+	* [graphics/x11drv/xfont.c]
+	Accept a space as delimiter for a fontname and inhibit overrun
+	(Make xplasim.ex from the Phillips Coolrunner CPLD suite proceed).
+
+	* [miscemu/main.c]
+	Delay setting IF1632_CallLargeStack after loading the executables.
+	Stops fpgaexp.exe from the Viewlogic FPGA suite from crashing when
+ 	showing the Blinker error Message Box.
+
+	* [misc/network.c]
+	Make WNetGetConnection16 recognise a CDROM as a local drive.
+
+	* [multimedia/mmsystem.c]
+	Preliminary check for MCI_ALL_DEVICE_ID in MCI_Close by a FIXME.
+
+
+Tue Aug 4 21:15:23 1998  James Juran <jrj120@psu.edu>
+
+	* [ole/ole2nls.c]
+	Fixed bug in CompareString32A.  strcmp() doesn't necessarily
+	return -1, 0, or 1, which the previous code depended on.
+	Changed name of is_punctuation to OLE2NLS_isPunctuation.
+	Made NORM_IGNOREWIDTH not print a FIXME message in 
+	LCMapString32A.
+	Other debugging messages, documentation, and code cleanups.
+
+	* [objects/font.c] [relay32/gdi32.spec] [include/winerror.h]
+	Added stub for GetFontData32, and added GDI_ERROR constant 
+	to winerror.h.
+
+Tue Aug  4 07:44:43 1998  Ove Kaaven <ovek@arcticnet.no>
+
+	* [multimedia/mmio.c]
+	Implemented mmioSetBuffer, mmioAdvance, mmioAscend, and
+	mmioCreateChunk to the best of my knowledge. But watch out,
+	there's bound to be bugs in there...
+
+	* [include/mmsystem.h] [multimedia/mmsystem.c]
+	Hacked in support for 32-bit multimedia function callbacks.
+
+	* [AUTHORS] [misc/shell.c]
+	Selfishly credited my authorship. Hopefully I'm excused.
+
+	* [include/dosexe.h] [include/module.h] [loader/dos/*]
+	  [loader/module.c] [loader/task.c] [Makefile.in]
+	  [configure.in] [Makefile.in]
+	Added DOS EXE (MZ) loader and virtual machine. Task
+	structure integration thanks to Ulrich Weigand.
+
+	* [files/dos_fs.c]
+	Work around a null pointer dereference if ioctlGetDeviceInfo-ing
+	a FILE_DupUnixHandle'd file (i.e. GetStdHandle'd).
+
+	* [include/miscemu.h] [include/winnt.h] [loader/main.c]
+	  [memory/global.c] [msdos/dpmi.c] [msdos/dosmem.c]
+	Added support for DOS memory images, and added
+	DOSMEM_ResizeBlock() and DOSMEM_Available().
+
+	* [msdos/int21.c]
+	Added support for the DOS virtual machine, tweaked handle
+	assignment to avoid stdio clashes, forced INT21_FindNext to exit
+	wildcardless searches after finding one entry, added AH=7, 8, 9,
+	C, 48, 49, 4A, and 7160 CL=1 (Get Short Filename), and made the
+	long filename calls only respond if running with with -winver
+	win95.
+
+	* [objects/cursoricon.c]
+	DestroyCursor32 and DestroyIcon32 should now free the objects
+	(hopefully) correctly.
+
+Sun Aug  2 21:42:09 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [graphics/psdrv/*] [include/psdrv.h]
+	Added PPD file parsing - at the moment it reads a file called
+	default.ppd from the directory in which you start Wine. Page sizes
+	other than A4 should now work (landscape may not). All fonts that are
+	present on your printer (according to the PPD) should be available,
+	providing you have the AFM files. Fonts should now be the correct size.
+	Graphics is still basically lines only. See graphics/psdrv/README .
+
+	* [misc/printdrv.c]
+	Yet more Drv[Get/Set]PrinterData fixes.
+
+Fri Jul 31 21:33:22 1998  Per Lindström <pelinstr@algonet.se>
+
+	* [relay32/crtdll.spec] [misc/crtdll.c]
+	Added stub for freopen, _findfirst, _findnext, _fstat and _read.
+
+	* [files/directory.c]
+	Modified warning message.
+
+Wed Jul 29 11:25:28 1998  Luiz Otavio L. Zorzella  <zorzella@nr.conexware.com>
+
+	* [objects/font.c]
+	Added stub for GetFontData.
+
+	* [multimedia/msvideo.c]
+	Created this file to hold the msvideo.dll calls (and maybe also
+	msvfw32.dll). 
+
+	* [objects/cursoricon.c]
+	Added search in Global Heap for cursor when trying to destroy it
+	with DestroyCursor16. This test should be done in many (all?)
+	other functions that use FreeResource.
+
+	* [controls/treeview.c] [include/commctrl.h]
+	Minor correction in name and addition of many placeholders for TVM
+	messages in TREEVIEW_WindowProc.
+
+	* [msdos/dpmi.c]
+	Fixed a bug in DPMI_xrealloc where in a copy of a memory region
+	"A" of size "a" to a region "B" of size "b", "b" bytes were being
+	copied, instead of "a", as the new version does. This both
+	increases speed, as well as avoids segfaults.
+
+----------------------------------------------------------------------
 Sat Jul 25 19:45:45 1998  Juergen Schmied <juergen.schmied@metronet.de>
 
 	* [include/shlobj.h][misc/shell.c][misc/shellord.c][ole/folders.c]

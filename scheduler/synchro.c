@@ -19,7 +19,8 @@
  *           SYNC_BuildWaitStruct
  */
 static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
-                                    BOOL32 wait_all, WAIT_STRUCT *wait )
+                                    BOOL32 wait_all, BOOL32 wait_msg, 
+                                    WAIT_STRUCT *wait )
 {
     DWORD i;
     K32OBJ **ptr;
@@ -27,15 +28,20 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     wait->count    = count;
     wait->signaled = WAIT_FAILED;
     wait->wait_all = wait_all;
+    wait->wait_msg = wait_msg;
     SYSTEM_LOCK();
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
         if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
-                                       K32OBJ_UNKNOWN, SYNCHRONIZE )))
-            break;
+                                       K32OBJ_UNKNOWN, SYNCHRONIZE, NULL )))
+        { 
+            ERR(win32, "Bad handle %08x\n", handles[i]); 
+            break; 
+        }
         if (!K32OBJ_OPS( *ptr )->signaled)
         {
             /* This object type cannot be waited upon */
+            ERR(win32, "Cannot wait on handle %08x\n", handles[i]); 
             K32OBJ_DecCount( *ptr );
             break;
         }
@@ -44,6 +50,7 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     if (i != count)
     {
         /* There was an error */
+        wait->wait_msg = FALSE;
         while (i--) K32OBJ_DecCount( wait->objs[i] );
     }
     SYSTEM_UNLOCK();
@@ -59,6 +66,7 @@ static void SYNC_FreeWaitStruct( WAIT_STRUCT *wait )
     DWORD i;
     K32OBJ **ptr;
     SYSTEM_LOCK();
+    wait->wait_msg = FALSE;
     for (i = 0, ptr = wait->objs; i < wait->count; i++, ptr++)
         K32OBJ_DecCount( *ptr );
     SYSTEM_UNLOCK();
@@ -256,42 +264,39 @@ void SYNC_WakeUp( THREAD_QUEUE *wait_queue, DWORD max )
     SYSTEM_UNLOCK();
 }
 
-
 /***********************************************************************
- *           WaitForSingleObject   (KERNEL32.723)
+ *           SYNC_MsgWakeUp
  */
-DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
+void SYNC_MsgWakeUp( THDB *thdb )
 {
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
+    SYSTEM_LOCK();
+
+    if (!thdb) 
+    {
+        SYSTEM_UNLOCK();
+        return;
+    }
+
+    if (thdb->wait_struct.wait_msg)
+    {
+        thdb->wait_struct.signaled = thdb->wait_struct.count;
+
+        TRACE(win32, "waking up %04x for message\n", thdb->teb_sel );
+        if (thdb->unix_pid)
+            kill( thdb->unix_pid, SIGUSR1 );
+        else
+            FIXME(win32,"have got unix_pid 0\n");
+    }
+
+    SYSTEM_UNLOCK();
 }
 
-
 /***********************************************************************
- *           WaitForSingleObjectEx   (KERNEL32.724)
+ *           SYNC_DoWait
  */
-DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
-                                    BOOL32 alertable )
-{
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
-}
-
-
-/***********************************************************************
- *           WaitForMultipleObjects   (KERNEL32.721)
- */
-DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
-                                     BOOL32 wait_all, DWORD timeout )
-{
-    return WaitForMultipleObjectsEx(count, handles, wait_all, timeout, FALSE);
-}
-
-
-/***********************************************************************
- *           WaitForMultipleObjectsEx   (KERNEL32.722)
- */
-DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
-                                       BOOL32 wait_all, DWORD timeout,
-                                       BOOL32 alertable )
+DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
+                   BOOL32 wait_all, DWORD timeout, 
+                   BOOL32 alertable, BOOL32 wait_msg )
 {
     WAIT_STRUCT *wait = &THREAD_Current()->wait_struct;
 
@@ -305,7 +310,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
         FIXME(win32, "alertable not implemented\n" );
 
     SYSTEM_LOCK();
-    if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait ))
+    if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait_msg, wait ))
         wait->signaled = WAIT_FAILED;
     else
     {
@@ -315,4 +320,43 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
     }
     SYSTEM_UNLOCK();
     return wait->signaled;
+}
+
+/***********************************************************************
+ *           WaitForSingleObject   (KERNEL32.723)
+ */
+DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
+{
+    return SYNC_DoWait( 1, &handle, FALSE, timeout, FALSE, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObjectEx   (KERNEL32.724)
+ */
+DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
+                                    BOOL32 alertable )
+{
+    return SYNC_DoWait( 1, &handle, FALSE, timeout, alertable, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjects   (KERNEL32.721)
+ */
+DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
+                                     BOOL32 wait_all, DWORD timeout )
+{
+    return SYNC_DoWait( count, handles, wait_all, timeout, FALSE, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjectsEx   (KERNEL32.722)
+ */
+DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
+                                       BOOL32 wait_all, DWORD timeout,
+                                       BOOL32 alertable )
+{
+    return SYNC_DoWait( count, handles, wait_all, timeout, alertable, FALSE );
 }

@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "process.h"
+#include "server.h"
 
 #define HTABLE_SIZE  0x30  /* Handle table initial size */
 #define HTABLE_INC   0x10  /* Handle table increment */
@@ -81,6 +82,7 @@ BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
                 {
                     dst->access = src->access;
                     dst->ptr    = src->ptr;
+                    dst->server = src->server;
                     K32OBJ_IncCount( dst->ptr );
                 }
             }
@@ -90,6 +92,7 @@ BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
         {
             pdb->handle_table->entries[1].ptr    = &pdb->header;
             pdb->handle_table->entries[1].access = PROCESS_ALL_ACCESS;
+            pdb->handle_table->entries[1].server = -1;  /* FIXME */
             K32OBJ_IncCount( &pdb->header );
         }
     }
@@ -103,7 +106,8 @@ BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
  *
  * Allocate a handle for a kernel object and increment its refcount.
  */
-HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access, BOOL32 inherit )
+HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
+                       BOOL32 inherit, int server_handle )
 {
     HANDLE32 h;
     HANDLE_ENTRY *entry;
@@ -125,11 +129,13 @@ HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access, BOOL32 inherit )
         entry = &pdb->handle_table->entries[h];
         entry->access = access;
         entry->ptr    = ptr;
+        entry->server = server_handle;
         SYSTEM_UNLOCK();
         return h;
     }
     K32OBJ_DecCount( ptr );
     SYSTEM_UNLOCK();
+    if (server_handle != -1) CLIENT_CloseHandle( server_handle );
     SetLastError( ERROR_OUTOFMEMORY );
     return INVALID_HANDLE_VALUE32;
 }
@@ -142,7 +148,8 @@ HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access, BOOL32 inherit )
  * The refcount must be decremented when the pointer is no longer used.
  */
 K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
-                          K32OBJ_TYPE type, DWORD access )
+                          K32OBJ_TYPE type, DWORD access,
+                          int *server_handle )
 {
     K32OBJ *ptr = NULL;
 
@@ -154,6 +161,7 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
             WARN(win32, "Handle %08x bad access (acc=%08lx req=%08lx)\n",
                      handle, entry->access, access );
         ptr = entry->ptr;
+        if (server_handle) *server_handle = entry->server;
         if (ptr && ((type == K32OBJ_UNKNOWN) || (ptr->type == type)))
             K32OBJ_IncCount( ptr );
         else
@@ -234,6 +242,8 @@ static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
             {
                 entry->access = 0;
                 entry->ptr    = NULL;
+                if (entry->server != -1)
+                    CLIENT_CloseHandle( entry->server );
                 K32OBJ_DecCount( ptr );
                 ret = TRUE;
             }
@@ -266,6 +276,7 @@ void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *obj )
         if (obj && (ptr != obj)) continue;  /* not the right object */
         entry->access = 0;
         entry->ptr    = NULL;
+        if (entry->server != -1) CLIENT_CloseHandle( entry->server );
         K32OBJ_DecCount( ptr );
     }
     SYSTEM_UNLOCK();
@@ -343,27 +354,35 @@ BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
     K32OBJ *obj = NULL;
     BOOL32 ret = FALSE;
     HANDLE32 handle;
+    int src_process, src_handle, dst_process, dst_handle;
 
     SYSTEM_LOCK();
 
-    if (!(src_pdb = PROCESS_GetPtr( source_process, PROCESS_DUP_HANDLE )))
+    if (!(src_pdb = PROCESS_GetPtr( source_process, PROCESS_DUP_HANDLE, &src_process )))
         goto done;
-    if (!(obj = HANDLE_GetObjPtr( src_pdb, source, K32OBJ_UNKNOWN, 0 )))
+    if (!(obj = HANDLE_GetObjPtr( src_pdb, source, K32OBJ_UNKNOWN, 0, &src_handle )))
         goto done;
 
     /* Now that we are sure the source is valid, handle the options */
 
-    if (options & DUPLICATE_CLOSE_SOURCE)
-        HANDLE_Close( src_pdb, source );
     if (options & DUPLICATE_SAME_ACCESS)
         HANDLE_GetAccess( src_pdb, source, &access );
+    if (options & DUPLICATE_CLOSE_SOURCE)
+        HANDLE_Close( src_pdb, source );
 
     /* And duplicate the handle in the dest process */
 
-    if (!(dst_pdb = PROCESS_GetPtr( dest_process, PROCESS_DUP_HANDLE )))
+    if (!(dst_pdb = PROCESS_GetPtr( dest_process, PROCESS_DUP_HANDLE, &dst_process )))
         goto done;
-    if ((handle = HANDLE_Alloc( dst_pdb, obj,
-                                access, inherit )) != INVALID_HANDLE_VALUE32)
+
+    if ((src_process != -1) && (src_handle != -1) && (dst_process != -1))
+        dst_handle = CLIENT_DuplicateHandle( src_process, src_handle, dst_process, -1,
+                                             access, inherit, options );
+    else
+        dst_handle = -1;
+
+    if ((handle = HANDLE_Alloc( dst_pdb, obj, access, inherit,
+                                dst_handle )) != INVALID_HANDLE_VALUE32)
     {
         if (dest) *dest = handle;
         ret = TRUE;

@@ -20,7 +20,8 @@
 
 #include "config.h"
 #include "server.h"
-#include "object.h"
+
+#include "server/object.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
@@ -67,6 +68,11 @@ static int initial_client_fd;               /* fd of the first client */
 static struct timeout *timeout_head;        /* sorted timeouts list head */
 static struct timeout *timeout_tail;        /* sorted timeouts list tail */
 
+/* exit code passed to remove_client */
+#define OUT_OF_MEMORY  -1
+#define BROKEN_PIPE    -2
+#define PROTOCOL_ERROR -3
+
 
 /* signal a client protocol error */
 static void protocol_error( int client_fd, const char *err, ... )
@@ -81,7 +87,7 @@ static void protocol_error( int client_fd, const char *err, ... )
 
 
 /* send a message to a client that is ready to receive something */
-static int do_write( int client_fd )
+static void do_write( int client_fd )
 {
     struct client *client = clients[client_fd];
     struct iovec vec[2];
@@ -124,14 +130,15 @@ static int do_write( int client_fd )
     if (ret == -1)
     {
         if (errno != EPIPE) perror("sendmsg");
-        return -1;
+        remove_client( client_fd, BROKEN_PIPE );
+        return;
     }
     if (client->pass_fd != -1)  /* We sent the fd, now we can close it */
     {
         close( client->pass_fd );
         client->pass_fd = -1;
     }
-    if ((client->count += ret) < client->head.len) return 0;
+    if ((client->count += ret) < client->head.len) return;
 
     /* we have finished with this message */
     if (client->data) free( client->data );
@@ -141,12 +148,11 @@ static int do_write( int client_fd )
     client->seq++;
     FD_CLR( client_fd, &write_set );
     FD_SET( client_fd, &read_set );
-    return 0;
 }
 
 
 /* read a message from a client that has something to say */
-static int do_read( int client_fd )
+static void do_read( int client_fd )
 {
     struct client *client = clients[client_fd];
     struct iovec vec;
@@ -171,7 +177,10 @@ static int do_read( int client_fd )
     {
         if (!client->data &&
             !(client->data = malloc(client->head.len-sizeof(client->head))))
-            return -1;
+        {
+            remove_client( client_fd, OUT_OF_MEMORY );
+            return;
+        }
         vec.iov_base = client->data + client->count - sizeof(client->head);
         vec.iov_len  = client->head.len - client->count;
     }
@@ -180,7 +189,8 @@ static int do_read( int client_fd )
     if (ret == -1)
     {
         perror("recvmsg");
-        return -1;
+        remove_client( client_fd, BROKEN_PIPE );
+        return;
     }
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     pass_fd = cmsg.fd;
@@ -191,26 +201,32 @@ static int do_read( int client_fd )
         if (client->pass_fd != -1) close( client->pass_fd );
         client->pass_fd = pass_fd;
     }
-    else if (!ret) return -1;  /* closed pipe */
+    else if (!ret)  /* closed pipe */
+    {
+        remove_client( client_fd, BROKEN_PIPE );
+        return;
+    }
 
     client->count += ret;
 
     /* received the complete header yet? */
-    if (client->count < sizeof(client->head)) return 0;
+    if (client->count < sizeof(client->head)) return;
 
     /* sanity checks */
     if (client->head.seq != client->seq)
     {
         protocol_error( client_fd, "bad sequence %08x instead of %08x\n",
                         client->head.seq, client->seq );
-        return -1;
+        remove_client( client_fd, PROTOCOL_ERROR );
+        return;
     }
     if ((client->head.len < sizeof(client->head)) ||
         (client->head.len > MAX_MSG_LENGTH + sizeof(client->head)))
     {
         protocol_error( client_fd, "bad header length %08x\n",
                         client->head.len );
-        return -1;
+        remove_client( client_fd, PROTOCOL_ERROR );
+        return;
     }
 
     /* received the whole message? */
@@ -218,17 +234,10 @@ static int do_read( int client_fd )
     {
         /* done reading the data, call the callback function */
 
+        int len = client->head.len - sizeof(client->head);
         char *data = client->data;
         int passed_fd = client->pass_fd;
-        unsigned short type = client->head.type;
-        unsigned short len  = client->head.len - sizeof(client->head);
-
-        if ((type >= REQ_NB_REQUESTS) || !req_handlers[client->head.type])
-        {
-            protocol_error( client_fd, "unknown request %08x\n",
-                            client->head.type );
-            return -1;
-        }
+        enum request type = client->head.type;
 
         /* clear the info now, as the client may be deleted by the callback */
         client->head.len  = 0;
@@ -239,57 +248,19 @@ static int do_read( int client_fd )
         client->state     = WAITING;
         client->seq++;
 
-        req_handlers[type]( data, len, passed_fd, client->self );
+        call_req_handler( client->self, type, data, len, passed_fd );
         if (passed_fd != -1) close( passed_fd );
         if (data) free( data );
     }
-    return 0;
 }
 
 
 /* handle a client timeout */
-static int do_timeout( int client_fd )
+static void do_timeout( int client_fd )
 {
     struct client *client = clients[client_fd];
     set_timeout( client_fd, 0 );  /* Remove the timeout */
-    req_handlers[REQ_TIMEOUT]( NULL, 0, -1, client->self );
-    return 0;
-}
-
-
-/* send a reply to a client */
-static int send_reply_v( int client_fd, int type, int pass_fd,
-                         struct iovec *vec, int veclen )
-{
-    int i;
-    unsigned int len;
-    char *p;
-    struct client *client = clients[client_fd];
-
-    assert( client );
-    assert( client->state == WAITING );
-    assert( !client->data );
-
-    for (i = len = 0; i < veclen; i++) len += vec[i].iov_len;
-    assert( len < MAX_MSG_LENGTH );
-
-    if (len && !(client->data = malloc( len ))) return -1;
-    client->count     = 0;
-    client->head.len  = len + sizeof(client->head);
-    client->head.type = type;
-    client->head.seq  = client->seq;
-    client->pass_fd   = pass_fd;
-
-    for (i = 0, p = client->data; i < veclen; i++)
-    {
-        memcpy( p, vec[i].iov_base, vec[i].iov_len );
-        p += vec[i].iov_len;
-    }
-
-    client->state = READING;
-    FD_CLR( client_fd, &read_set );
-    FD_SET( client_fd, &write_set );
-    return 0;
+    call_timeout_handler( client->self );
 }
 
 
@@ -317,8 +288,7 @@ void server_main_loop( int fd )
                 ((timeout_head->when.tv_sec == now.tv_sec) &&
                  (timeout_head->when.tv_usec < now.tv_usec)))
             {
-                int id = timeout_head->client;
-                if (do_timeout( id ) == -1) remove_client( id );
+                do_timeout( timeout_head->client );
                 continue;
             }
             tv.tv_sec = timeout_head->when.tv_sec - now.tv_sec;
@@ -341,13 +311,11 @@ void server_main_loop( int fd )
         {
             if (FD_ISSET( i, &write ))
             {
-                if (!clients[i]) continue;
-                if (do_write( i ) == -1) remove_client( i );
+                if (clients[i]) do_write( i );
             }
             else if (FD_ISSET( i, &read ))
             {
-                if (!clients[i]) continue;
-                if (do_read( i ) == -1) remove_client( i );
+                if (clients[i]) do_read( i );
             }
         }
     }
@@ -388,12 +356,12 @@ int add_client( int client_fd, struct thread *self )
 }
 
 /* remove a client */
-void remove_client( int client_fd )
+void remove_client( int client_fd, int exit_code )
 {
     struct client *client = clients[client_fd];
     assert( client );
 
-    req_handlers[REQ_KILL_THREAD]( NULL, 0, -1, client->self );
+    call_kill_handler( client->self, exit_code );
 
     set_timeout( client_fd, 0 );
     clients[client_fd] = NULL;
@@ -463,21 +431,40 @@ void set_timeout( int client_fd, struct timeval *when )
     }
 }
 
-/* send a reply to a client */
-int send_reply( int client_fd, int err_code, int pass_fd,
-                int n, ... /* arg_1, len_1, ..., arg_n, len_n */ )
-{
-    struct iovec vec[16];
-    va_list args;
-    int i;
 
-    assert( n < 16 );
-    va_start( args, n );
-    for (i = 0; i < n; i++)
+/* send a reply to a client */
+int send_reply_v( int client_fd, int type, int pass_fd,
+                  struct iovec *vec, int veclen )
+{
+    int i;
+    unsigned int len;
+    char *p;
+    struct client *client = clients[client_fd];
+
+    assert( client );
+    assert( client->state == WAITING );
+    assert( !client->data );
+
+    if (debug_level) trace_reply( client->self, type, pass_fd, vec, veclen );
+
+    for (i = len = 0; i < veclen; i++) len += vec[i].iov_len;
+    assert( len < MAX_MSG_LENGTH );
+
+    if (len && !(client->data = malloc( len ))) return -1;
+    client->count     = 0;
+    client->head.len  = len + sizeof(client->head);
+    client->head.type = type;
+    client->head.seq  = client->seq;
+    client->pass_fd   = pass_fd;
+
+    for (i = 0, p = client->data; i < veclen; i++)
     {
-        vec[i].iov_base = va_arg( args, void * );
-        vec[i].iov_len  = va_arg( args, int );
+        memcpy( p, vec[i].iov_base, vec[i].iov_len );
+        p += vec[i].iov_len;
     }
-    va_end( args );
-    return send_reply_v( client_fd, err_code, pass_fd, vec, n );
+
+    client->state = READING;
+    FD_CLR( client_fd, &read_set );
+    FD_SET( client_fd, &write_set );
+    return 0;
 }

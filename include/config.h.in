@@ -72,6 +72,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the sendmsg function.  */
+#undef HAVE_SENDMSG
+
 /* Define if you have the sigaltstack function.  */
 #undef HAVE_SIGALTSTACK
 
@@ -152,6 +155,9 @@
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
+
+/* Define if you have the socket library (-lsocket).  */
+#undef HAVE_LIBSOCKET
 
 /* Define if you have the w library (-lw).  */
 #undef HAVE_LIBW

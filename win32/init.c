@@ -26,6 +26,7 @@ VOID WINAPI GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
 
     lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
+    lpStartupInfo->dwFlags    = STARTF_USESTDHANDLES;
     lpStartupInfo->hStdInput  = (HANDLE32)0;
     lpStartupInfo->hStdOutput = (HANDLE32)1;
     lpStartupInfo->hStdError  = (HANDLE32)2;

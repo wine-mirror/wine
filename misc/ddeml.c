@@ -9,6 +9,7 @@
 
 #include "ddeml.h"
 #include "debug.h"
+#include "atom.h"
 
 /* FIXME: What are these values? */
 #define DMLERR_NO_ERROR		0
@@ -241,12 +242,18 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 
 /*****************************************************************
  * DdeCreateStringHandle32A [USER32.95]
+ *
+ * RETURNS
+ *    Success: String handle
+ *    Failure: 0
  */
 HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
-{
-    FIXME(ddeml, "(...): stub\n" );
-    DDE_current_handle++;
-    return DDE_current_handle;
+{ TRACE(ddeml, "(%ld,%s,%d): stub\n",idInst,debugstr_a(psz),codepage);
+  
+  if (codepage==1004)  /*fixme: should be CP_WINANSI*/
+    return GlobalAddAtom32A (psz);
+  else
+    return 0;  
 }
 
 
@@ -279,11 +286,12 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 
 /*****************************************************************
  *            DdeFreeStringHandle32   (USER32.101)
+ * RETURNS: success: nonzero
+ *          fail:    zero
  */
 BOOL32 WINAPI DdeFreeStringHandle32( DWORD idInst, HSZ hsz )
-{
-    FIXME( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
-    return TRUE;
+{   TRACE( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
+    return GlobalDeleteAtom (hsz) ? hsz : 0;
 }
 
 

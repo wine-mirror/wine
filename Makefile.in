@@ -34,6 +34,7 @@ LIBSUBDIRS = \
 	library \
 	loader \
 	loader/ne \
+	loader/dos \
 	memory \
 	misc \
 	msdos \
@@ -81,6 +82,7 @@ LIBOBJS = \
 	ipc/ipc.o \
 	loader/loader.o \
 	loader/ne/ne.o \
+	loader/dos/dos.o \
 	memory/memory.o \
 	misc/misc.o \
 	msdos/msdos.o \
@@ -131,6 +133,7 @@ install_emu: install_lib
 	-mkdirhier $(libdir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
+	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 
 install_lib: install_includes
 	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)

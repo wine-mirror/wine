@@ -6,6 +6,7 @@
 #define __WINE_COMMCTRL_H
 
 #include "windows.h"
+#include "imagelist.h"
 
 BOOL32 WINAPI ShowHideMenuCtl (HWND32, UINT32, LPINT32);
 VOID WINAPI GetEffectiveClientRect (HWND32, LPRECT32, LPINT32);
@@ -92,6 +93,13 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define ODT_TAB         101
 #define ODT_LISTVIEW    102
 
+/* common notification structures */
+typedef struct tagNMTOOLTIPSCREATED
+{
+    NMHDR  hdr;
+    HWND32 hwndToolTips;
+} NMTOOLTIPSCREATED, *LPNMTOOLTIPSCREATED;
+
 
 /* StatusWindow */
 
@@ -118,12 +126,19 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define SB_GETRECT            (WM_USER+10)
 #define SB_ISSIMPLE           (WM_USER+14)
 #define SB_SETICON            (WM_USER+15)
+#define SB_SETTIPTEXT32A      (WM_USER+16)
+#define SB_SETTIPTEXT32W      (WM_USER+17)
+#define SB_SETTIPTEXT WINELIB_NAME_AW(SB_SETTIPTEXT)
+#define SB_GETTIPTEXT32A      (WM_USER+18)
+#define SB_GETTIPTEXT32W      (WM_USER+19)
+#define SB_GETTIPTEXT WINELIB_NAME_AW(SB_GETTIPTEXT)
 #define SB_GETICON            (WM_USER+20)
 #define SB_SETBKCOLOR         CCM_SETBKCOLOR   /* lParam = bkColor */
 
 #define SBT_NOBORDERS         0x0100
 #define SBT_POPOUT            0x0200
 #define SBT_RTLREADING        0x0400  /* not supported */
+#define SBT_TOOLTIPS          0x0800
 #define SBT_OWNERDRAW         0x1000
 
 #define SBARS_SIZEGRIP        0x0100
@@ -132,7 +147,14 @@ BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define SBN_LAST              (0U-899U)
 #define SBN_SIMPLEMODECHANGE  (SBN_FIRST-0)
 
-void WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
+
+HWND32 WINAPI CreateStatusWindow32A (INT32, LPCSTR, HWND32, UINT32);
+HWND32 WINAPI CreateStatusWindow32W (INT32, LPCWSTR, HWND32, UINT32);
+#define    CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
+VOID WINAPI DrawStatusText32A (HDC32, LPRECT32, LPCSTR, UINT32);
+VOID WINAPI DrawStatusText32W (HDC32, LPRECT32, LPCWSTR, UINT32);
+#define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)
+VOID WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
                       HINSTANCE32, HWND32, LPUINT32);
 
 
@@ -145,8 +167,8 @@ void WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
 
 typedef struct tagUDACCEL
 {
-  UINT32 nSec;
-  UINT32 nInc;
+    UINT32 nSec;
+    UINT32 nInc;
 } UDACCEL;
 
 #define UD_MAXVAL          0x7fff
@@ -177,13 +199,15 @@ typedef struct tagUDACCEL
 #define UDM_SETRANGE32     (WM_USER+111)
 #define UDM_GETRANGE32     (WM_USER+112)
 
+HWND32 WINAPI CreateUpDownControl (DWORD, INT32, INT32, INT32, INT32,
+                                   HWND32, INT32, HINSTANCE32, HWND32,
+                                   INT32, INT32, INT32);
 
 /* Progress Bar */
 
 #define PROGRESS_CLASS32A   "msctls_progress32"
 #define PROGRESS_CLASS32W  L"msctls_progress32"
 #define PROGRESS_CLASS16    "msctls_progress"
-
 #define PROGRESS_CLASS      WINELIB_NAME_AW(PROGRESS_CLASS)
 
 #define PBM_SETRANGE        (WM_USER+1)
@@ -206,27 +230,14 @@ typedef struct
   INT32 iHigh;
 } PBRANGE, *PPBRANGE;
 
- 
-/* Functions prototypes */
-
-HWND32     WINAPI CreateStatusWindow32A(INT32,LPCSTR,HWND32,UINT32);
-HWND32     WINAPI CreateStatusWindow32W(INT32,LPCWSTR,HWND32,UINT32);
-#define    CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
-HWND32     WINAPI CreateUpDownControl(DWORD,INT32,INT32,INT32,INT32,
-                                      HWND32,INT32,HINSTANCE32,HWND32,
-                                      INT32,INT32,INT32);
-VOID       WINAPI DrawStatusText32A(HDC32,LPRECT32,LPCSTR,UINT32);
-VOID       WINAPI DrawStatusText32W(HDC32,LPRECT32,LPCWSTR,UINT32);
-#define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)
-
 
 /* ImageList */
-
+/*
 #if defined(__WINE__) && defined(__WINE_IMAGELIST_C)
 #else
 struct _IMAGELIST;
 typedef struct _IMAGELIST *HIMAGELIST;
-#endif  /* __WINE__ */
+#endif*/  /* __WINE__ */
 
 #define CLR_NONE         0xFFFFFFFF
 #define CLR_DEFAULT      0xFF000000
@@ -545,7 +556,24 @@ typedef struct tagNMHEADERA
 #define TBSTYLE_FLAT            0x0800 
 #define TBSTYLE_LIST            0x1000 
 #define TBSTYLE_CUSTOMERASE     0x2000 
+
+#define TBIF_IMAGE              0x00000001
+#define TBIF_TEXT               0x00000002
+#define TBIF_STATE              0x00000004
+#define TBIF_STYLE              0x00000008
+#define TBIF_LPARAM             0x00000010
+#define TBIF_COMMAND            0x00000020
+#define TBIF_SIZE               0x00000040
  
+#define TBN_FIRST               (0U-700U)
+#define TBN_LAST                (0U-720U)
+#define TBN_GETBUTTONINFO32A    (TBN_FIRST-0)
+#define TBN_GETBUTTONINFO32W    (TBN_FIRST-20)
+
+#define TBN_GETINFOTIP32A       (TBN_FIRST-18)
+#define TBN_GETINFOTIP32W       (TBN_FIRST-19)
+
+
 #define TB_ENABLEBUTTON          (WM_USER+1)
 #define TB_CHECKBUTTON           (WM_USER+2)
 #define TB_PRESSBUTTON           (WM_USER+3)
@@ -612,6 +640,12 @@ typedef struct tagNMHEADERA
 #define TB_SETMAXTEXTROWS        (WM_USER+60)
 #define TB_GETTEXTROWS           (WM_USER+61)
 #define TB_GETOBJECT             (WM_USER+62)
+#define TB_GETBUTTONINFO32W      (WM_USER+63)
+#define TB_GETBUTTONINFO32A      (WM_USER+65)
+#define TB_GETBUTTONINFO WINELIB_NAME_AW(TB_GETBUTTONINFO)
+#define TB_SETBUTTONINFO32W      (WM_USER+64)
+#define TB_SETBUTTONINFO32A      (WM_USER+66)
+#define TB_SETBUTTONINFO WINELIB_NAME_AW(TB_SETBUTTONINFO)
 #define TB_SETDRAWTEXTFLAGS      (WM_USER+70)
 #define TB_GETHOTITEM            (WM_USER+71)
 #define TB_SETHOTITEM            (WM_USER+72)
@@ -691,6 +725,58 @@ typedef struct tagTBSAVEPARAMSW {
 
 #define TBSAVEPARAMS   WINELIB_NAMEAW(TBSAVEPARAMS)
 #define LPTBSAVEPARAMS WINELIB_NAMEAW(LPTBSAVEPARAMS)
+
+typedef struct
+{
+    UINT32 cbSize;
+    DWORD  dwMask;
+    INT32  idCommand;
+    INT32  iImage;
+    BYTE   fsState;
+    BYTE   fsStyle;
+    WORD   cx;
+    DWORD  lParam;
+    LPSTR  pszText;
+    INT32  cchText;
+} TBBUTTONINFO32A, *LPTBBUTTONINFO32A;
+
+typedef struct
+{
+    UINT32 cbSize;
+    DWORD  dwMask;
+    INT32  idCommand;
+    INT32  iImage;
+    BYTE   fsState;
+    BYTE   fsStyle;
+    WORD   cx;
+    DWORD  lParam;
+    LPWSTR pszText;
+    INT32  cchText;
+} TBBUTTONINFO32W, *LPTBBUTTONINFO32W;
+
+#define TBBUTTONINFO   WINELIB_NAMEAW(TBBUTTONINFO)
+#define LPTBBUTTONINFO WINELIB_NAMEAW(LPTBBUTTONINFO)
+
+typedef struct tagNMTBGETINFOTIPA
+{
+    NMHDR  hdr;
+    LPSTR  pszText;
+    INT32  cchTextMax;
+    INT32  iItem;
+    LPARAM lParam;
+} NMTBGETINFOTIP32A, *LPNMTBGETINFOTIP32A;
+
+typedef struct tagNMTBGETINFOTIPW
+{
+    NMHDR  hdr;
+    LPWSTR pszText;
+    INT32  cchTextMax;
+    INT32  iItem;
+    LPARAM lParam;
+} NMTBGETINFOTIP32W, *LPNMTBGETINFOTIP32W;
+
+#define NMTBGETINFOTIP   WINELIB_NAMEAW(NMTBGETINFOFTIP)
+#define LPNMTBGETINFOTIP WINELIB_NAMEAW(LPNMTBGETINFOTIP)
 
 
 HWND32 WINAPI
@@ -786,11 +872,11 @@ CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32);
 
 #define TTN_FIRST               (0U-520U)
 #define TTN_LAST                (0U-549U)
-#define TTN_GETDISPINFOA        (TTN_FIRST-0)
-#define TTN_GETDISPINFOW        (TTN_FIRST-10)
+#define TTN_GETDISPINFO32A      (TTN_FIRST-0)
+#define TTN_GETDISPINFO32W      (TTN_FIRST-10)
+#define TTN_GETDISPINFO WINELIB_NAME_AW(TTN_GETDISPINFO)
 #define TTN_SHOW                (TTN_FIRST-1)
 #define TTN_POP                 (TTN_FIRST-2)
-
 
 typedef struct tagTOOLINFOA {
     UINT32 cbSize;
@@ -801,7 +887,7 @@ typedef struct tagTOOLINFOA {
     HINSTANCE32 hinst;
     LPSTR lpszText;
     LPARAM lParam;
-} TTTOOLINFOA, *PTOOLINFOA, *LPTTTOOLINFOA;
+} TTTOOLINFO32A, *PTOOLINFO32A, *LPTTTOOLINFO32A;
 
 typedef struct tagTOOLINFOW {
     UINT32 cbSize;
@@ -812,21 +898,28 @@ typedef struct tagTOOLINFOW {
     HINSTANCE32 hinst;
     LPWSTR lpszText;
     LPARAM lParam;
-} TTTOOLINFOW, *PTOOLINFOW, *LPTTTOOLINFOW;
+} TTTOOLINFO32W, *PTOOLINFO32W, *LPTTTOOLINFO32W;
+
+#define TTTOOLINFO WINELIB_NAME_AW(TTTOOLINFO)
+#define PTOOLINFO WINELIB_NAME_AW(PTOOLINFO)
+#define LPTTTOOLINFO WINELIB_NAME_AW(LPTTTOOLINFO)
 
 typedef struct _TT_HITTESTINFOA
 {
-    HWND32      hwnd;
-    POINT32     pt;
-    TTTOOLINFOA ti;
-} TTHITTESTINFOA, *LPTTHITTESTINFOA;
+    HWND32        hwnd;
+    POINT32       pt;
+    TTTOOLINFO32A ti;
+} TTHITTESTINFO32A, *LPTTHITTESTINFO32A;
 
 typedef struct _TT_HITTESTINFOW
 {
-    HWND32      hwnd;
-    POINT32     pt;
-    TTTOOLINFOW ti;
-} TTHITTESTINFOW, *LPTTHITTESTINFOW;
+    HWND32        hwnd;
+    POINT32       pt;
+    TTTOOLINFO32W ti;
+} TTHITTESTINFO32W, *LPTTHITTESTINFO32W;
+
+#define TTHITTESTINFO WINELIB_NAME_AW(TTHITTESTINFO)
+#define LPTTHITTESTINFO WINELIB_NAME_AW(LPTTHITTESTINFO)
 
 typedef struct tagNMTTDISPINFOA
 {
@@ -836,7 +929,7 @@ typedef struct tagNMTTDISPINFOA
     HINSTANCE32 hinst;
     UINT32      uFlags;
     LPARAM      lParam;
-} NMTTDISPINFOA, *LPNMTTDISPINFOA;
+} NMTTDISPINFO32A, *LPNMTTDISPINFO32A;
 
 typedef struct tagNMTTDISPINFOW
 {
@@ -846,8 +939,10 @@ typedef struct tagNMTTDISPINFOW
     HINSTANCE32 hinst;
     UINT32      uFlags;
     LPARAM      lParam;
-} NMTTDISPINFOW, *LPNMTTDISPINFOW;
+} NMTTDISPINFO32W, *LPNMTTDISPINFO32W;
 
+#define NMTTDISPINFO WINELIB_NAME_AW(NMTTDISPINFO)
+#define LPNMTTDISPINFO WINELIB_NAME_AW(LPNMTTDISPINFO)
 
 
 /* Rebar control */
@@ -879,13 +974,41 @@ typedef struct tagNMTTDISPINFOW
 #define TBS_NOTHUMB             0x0080
 #define TBS_TOOLTIPS            0x0100
 
+#define TBTS_TOP                0
+#define TBTS_LEFT               1
+#define TBTS_BOTTOM             2
+#define TBTS_RIGHT              3
+
+#define TB_LINEUP               0
+#define TB_LINEDOWN             1
+#define TB_PAGEUP               2
+#define TB_PAGEDOWN             3
+#define TB_THUMBPOSITION        4
+#define TB_THUMBTRACK           5
+#define TB_TOP                  6
+#define TB_BOTTOM               7
+#define TB_ENDTRACK             8
+
+#define TBCD_TICS               0x0001
+#define TBCD_THUMB              0x0002
+#define TBCD_CHANNEL            0x0003
+
 #define TBM_GETPOS              (WM_USER)
 #define TBM_GETRANGEMIN         (WM_USER+1)
 #define TBM_GETRANGEMAX         (WM_USER+2)
 #define TBM_GETTIC              (WM_USER+3)
 #define TBM_SETTIC              (WM_USER+4)
 #define TBM_SETPOS              (WM_USER+5)
-
+#define TBM_SETRANGE            (WM_USER+6)
+#define TBM_SETRANGEMIN         (WM_USER+7)
+#define TBM_SETRANGEMAX         (WM_USER+8)
+#define TBM_CLEARTICS           (WM_USER+9)
+#define TBM_SETSEL              (WM_USER+10)
+#define TBM_SETSELSTART         (WM_USER+11)
+#define TBM_SETSELEND           (WM_USER+12)
+#define TBM_GETPTICS            (WM_USER+14)
+#define TBM_GETTICPOS           (WM_USER+15)
+#define TBM_GETNUMTICS          (WM_USER+16)
 #define TBM_GETSELSTART         (WM_USER+17)
 #define TBM_GETSELEND           (WM_USER+18)
 #define TBM_CLEARSEL            (WM_USER+19)
@@ -898,6 +1021,13 @@ typedef struct tagNMTTDISPINFOW
 #define TBM_GETCHANNELRECT      (WM_USER+26)
 #define TBM_SETTHUMBLENGTH      (WM_USER+27)
 #define TBM_GETTHUMBLENGTH      (WM_USER+28)
+#define TBM_SETTOOLTIPS         (WM_USER+29)
+#define TBM_GETTOOLTIPS         (WM_USER+30)
+#define TBM_SETTIPSIDE          (WM_USER+31)
+#define TBM_SETBUDDY            (WM_USER+32)
+#define TBM_GETBUDDY            (WM_USER+33)
+#define TBM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
+#define TBM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
 
 
 /* Pager control */
@@ -949,11 +1079,36 @@ typedef struct tagNMTTDISPINFOW
 
 #define TV_FIRST                0x1100
 
-
+#define TVM_INSERTITEMA         (TV_FIRST+0)
+#define TVM_INSERTITEMW         (TV_FIRST+50)
+#define TVM_DELETEITEM          (TV_FIRST+1)
+#define TVM_EXPAND              (TV_FIRST+2)
+#define TVM_GETITEMRECT         (TV_FIRST+4)
+#define TVM_GETCOUNT            (TV_FIRST+5)
+#define TVM_GETINDENT           (TV_FIRST+6)
+#define TVM_SETINDENT           (TV_FIRST+7)
 #define TVM_GETIMAGELIST        (TV_FIRST+8)
 #define TVM_SETIMAGELIST        (TV_FIRST+9)
-
-
+#define TVM_GETNEXTITEM         (TV_FIRST+10)
+#define TVM_SELECTITEM          (TV_FIRST+11)
+#define TVM_GETITEMA            (TV_FIRST+12)
+#define TVM_GETITEMW            (TV_FIRST+62)
+#define TVM_SETITEMA            (TV_FIRST+13)
+#define TVM_SETITEMW            (TV_FIRST+63)
+#define TVM_EDITLABELA          (TV_FIRST+14)
+#define TVM_EDITLABELW          (TV_FIRST+65)
+#define TVM_GETEDITCONTROL      (TV_FIRST+15)
+#define TVM_GETVISIBLECOUNT     (TV_FIRST+16)
+#define TVM_HITTEST             (TV_FIRST+17)
+#define TVM_CREATEDRAGIMAGE     (TV_FIRST+18)
+#define TVM_SORTCHILDREN        (TV_FIRST+19)
+#define TVM_ENSUREVISIBLE       (TV_FIRST+20)
+#define TVM_SORTCHILDRENCB      (TV_FIRST+21)
+#define TVM_ENDEDITLABELNOW     (TV_FIRST+22)
+#define TVM_GETISEARCHSTRINGA   (TV_FIRST+23)
+#define TVM_GETISEARCHSTRINGW   (TV_FIRST+64)
+#define TVM_SETTOOLTIPS         (TV_FIRST+24)
+#define TVM_GETTOOLTIPS         (TV_FIRST+25)
 
 /* Listview control */
 

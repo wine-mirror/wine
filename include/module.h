@@ -10,6 +10,8 @@
 #include "wintypes.h"
 #include "pe_image.h"
 
+struct _DOSTASK;
+
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
 {
@@ -49,6 +51,7 @@ typedef struct _NE_MODULE
     HMODULE32  module32;      /* 40 PE module handle for Win32 modules */
     HMODULE16  self;          /* 44 Handle for this module */
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
+    struct _DOSTASK *lpDosTask;
 } NE_MODULE;
 
 

@@ -126,7 +126,7 @@ DPMI_xrealloc(LPVOID ptr,int newsize) {
 		 */
 		if (newsize<=mbi.RegionSize)
 			return ptr;
-		memcpy(newptr,ptr,newsize);
+		memcpy(newptr,ptr,mbi.RegionSize);
 		DPMI_xfree(ptr);
 	}
 	return newptr;
@@ -417,7 +417,7 @@ static void AllocRMCB( CONTEXT *context )
 
     if (NewRMCB)
     {
-	LPVOID RMCBmem = DOSMEM_GetBlock(20, &uParagraph);
+	LPVOID RMCBmem = DOSMEM_GetBlock(0, 20, &uParagraph);
 	LPBYTE p = RMCBmem;
 
 	*p++ = 0x68; /* pushl */
@@ -467,7 +467,7 @@ static void FreeRMCB( CONTEXT *context )
 	PrevRMCB->next = CurrRMCB->next;
 	    else
 	FirstRMCB = CurrRMCB->next;
-	DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(CurrRMCB->address));
+	DOSMEM_FreeBlock(0, DOSMEM_MapRealToLinear(CurrRMCB->address));
 	HeapFree(GetProcessHeap(), 0, CurrRMCB);
     }
     else

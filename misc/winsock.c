@@ -514,6 +514,33 @@ char* _check_buffer(LPWSINFO pwsi, int size)
     return pwsi->buffer;
 }
 
+struct ws_hostent* _check_buffer_he(LPWSINFO pwsi, int size)
+{
+    if( pwsi->he && pwsi->helen >= size ) return pwsi->he;
+    else SEGPTR_FREE(pwsi->he);
+
+    pwsi->he = (struct ws_hostent*)SEGPTR_ALLOC((pwsi->helen = size)); 
+    return pwsi->he;
+}
+
+struct ws_servent* _check_buffer_se(LPWSINFO pwsi, int size)
+{
+    if( pwsi->se && pwsi->selen >= size ) return pwsi->se;
+    else SEGPTR_FREE(pwsi->se);
+
+    pwsi->se = (struct ws_servent*)SEGPTR_ALLOC((pwsi->selen = size)); 
+    return pwsi->se;
+}
+
+struct ws_protoent* _check_buffer_pe(LPWSINFO pwsi, int size)
+{
+    if( pwsi->pe && pwsi->pelen >= size ) return pwsi->pe;
+    else SEGPTR_FREE(pwsi->pe);
+
+    pwsi->pe = (struct ws_protoent*)SEGPTR_ALLOC((pwsi->pelen = size)); 
+    return pwsi->pe;
+}
+
 /* ----------------------------------- i/o APIs */
 
 /***********************************************************************
@@ -1430,7 +1457,7 @@ static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int typ
 	struct hostent*	host;
 	if( (host = gethostbyaddr(addr, len, type)) != NULL )
 	    if( WS_dup_he(pwsi, host, dup_flag) )
-		return (struct WIN_hostent*)(pwsi->buffer);
+		return (struct WIN_hostent*)(pwsi->he);
 	    else 
 		pwsi->err = WSAENOBUFS;
 	else 
@@ -1468,7 +1495,7 @@ static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 	struct hostent*     host;
 	if( (host = gethostbyname(name)) != NULL )
 	     if( WS_dup_he(pwsi, host, dup_flag) )
-		 return (struct WIN_hostent*)(pwsi->buffer);
+		 return (struct WIN_hostent*)(pwsi->he);
 	     else pwsi->err = WSAENOBUFS;
 	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
@@ -1502,7 +1529,7 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 	struct protoent*     proto;
 	if( (proto = getprotobyname(name)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (struct WIN_protoent*)(pwsi->buffer);
+		return (struct WIN_protoent*)(pwsi->pe);
 	    else pwsi->err = WSAENOBUFS;
 	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
@@ -1536,7 +1563,7 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 	struct protoent*     proto;
 	if( (proto = getprotobynumber(number)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (struct WIN_protoent*)(pwsi->buffer);
+		return (struct WIN_protoent*)(pwsi->pe);
 	    else pwsi->err = WSAENOBUFS;
 	else pwsi->err = WSANO_DATA;
     }
@@ -1573,7 +1600,7 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 	if( i )
 	    if( (serv = getservbyname(pwsi->buffer, pwsi->buffer + i)) != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (struct WIN_servent*)(pwsi->buffer);
+		    return (struct WIN_servent*)(pwsi->se);
 		else pwsi->err = WSAENOBUFS;
 	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
 	else pwsi->err = WSAENOBUFS;
@@ -1613,7 +1640,7 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 	if( i )
 	    if( (serv = getservbyport(port, pwsi->buffer)) != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (struct WIN_servent*)(pwsi->buffer);
+		    return (struct WIN_servent*)(pwsi->se);
 		else pwsi->err = WSAENOBUFS;
 	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
 	else pwsi->err = WSAENOBUFS;
@@ -2450,29 +2477,30 @@ int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag)
     */
 
    int size = hostent_size(p_he);
+
    if( size )
    {
      struct ws_hostent* p_to;
      char* p_name,*p_aliases,*p_addr,*p_base,*p;
 
-     _check_buffer(pwsi, size);
-     p_to = (struct ws_hostent*)pwsi->buffer;
-     p = pwsi->buffer;
+     _check_buffer_he(pwsi, size);
+     p_to = (struct ws_hostent*)pwsi->he;
+     p = (char*)pwsi->he;
      p_base = (flag & WS_DUP_OFFSET) ? NULL
 				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
      p += sizeof(struct ws_hostent);
      p_name = p;
      strcpy(p, p_he->h_name); p += strlen(p) + 1;
      p_aliases = p;
-     p += list_dup(p_he->h_aliases, p, p_base + (p - pwsi->buffer), 0);
+     p += list_dup(p_he->h_aliases, p, p_base + (p - (char*)pwsi->he), 0);
      p_addr = p;
-     list_dup(p_he->h_addr_list, p, p_base + (p - pwsi->buffer), p_he->h_length);
+     list_dup(p_he->h_addr_list, p, p_base + (p - (char*)pwsi->he), p_he->h_length);
 
      p_to->h_addrtype = (INT16)p_he->h_addrtype; 
      p_to->h_length = (INT16)p_he->h_length;
-     p_to->h_name = (SEGPTR)(p_base + (p_name - pwsi->buffer));
-     p_to->h_aliases = (SEGPTR)(p_base + (p_aliases - pwsi->buffer));
-     p_to->h_addr_list = (SEGPTR)(p_base + (p_addr - pwsi->buffer));
+     p_to->h_name = (SEGPTR)(p_base + (p_name - (char*)pwsi->he));
+     p_to->h_aliases = (SEGPTR)(p_base + (p_aliases - (char*)pwsi->he));
+     p_to->h_addr_list = (SEGPTR)(p_base + (p_addr - (char*)pwsi->he));
 
      size += (sizeof(struct ws_hostent) - sizeof(struct hostent));
    }
@@ -2499,20 +2527,20 @@ int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag)
      struct ws_protoent* p_to;
      char* p_name,*p_aliases,*p_base,*p;
 
-     _check_buffer(pwsi, size);
-     p_to = (struct ws_protoent*)pwsi->buffer;
-     p = pwsi->buffer; 
+     _check_buffer_pe(pwsi, size);
+     p_to = (struct ws_protoent*)pwsi->pe;
+     p = (char*)pwsi->pe; 
      p_base = (flag & WS_DUP_OFFSET) ? NULL
 				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
      p += sizeof(struct ws_protoent);
      p_name = p;
      strcpy(p, p_pe->p_name); p += strlen(p) + 1;
      p_aliases = p;
-     list_dup(p_pe->p_aliases, p, p_base + (p - pwsi->buffer), 0);
+     list_dup(p_pe->p_aliases, p, p_base + (p - (char*)pwsi->pe), 0);
 
      p_to->p_proto = (INT16)p_pe->p_proto;
-     p_to->p_name = (SEGPTR)(p_base) + (p_name - pwsi->buffer);
-     p_to->p_aliases = (SEGPTR)((p_base) + (p_aliases - pwsi->buffer)); 
+     p_to->p_name = (SEGPTR)(p_base) + (p_name - (char*)pwsi->pe);
+     p_to->p_aliases = (SEGPTR)((p_base) + (p_aliases - (char*)pwsi->pe)); 
 
      size += (sizeof(struct ws_protoent) - sizeof(struct protoent));
    }
@@ -2539,9 +2567,9 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
      struct ws_servent* p_to;
      char* p_name,*p_aliases,*p_proto,*p_base,*p;
 
-     _check_buffer(pwsi, size);
-     p_to = (struct ws_servent*)pwsi->buffer;
-     p = pwsi->buffer;
+     _check_buffer_se(pwsi, size);
+     p_to = (struct ws_servent*)pwsi->se;
+     p = (char*)pwsi->se;
      p_base = (flag & WS_DUP_OFFSET) ? NULL 
 				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
      p += sizeof(struct ws_servent);
@@ -2550,12 +2578,12 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
      p_proto = p;
      strcpy(p, p_se->s_proto); p += strlen(p) + 1;
      p_aliases = p;
-     list_dup(p_se->s_aliases, p, p_base + (p - pwsi->buffer), 0);
+     list_dup(p_se->s_aliases, p, p_base + (p - (char*)pwsi->se), 0);
 
      p_to->s_port = (INT16)p_se->s_port;
-     p_to->s_name = (SEGPTR)(p_base + (p_name - pwsi->buffer));
-     p_to->s_proto = (SEGPTR)(p_base + (p_proto - pwsi->buffer));
-     p_to->s_aliases = (SEGPTR)(p_base + (p_aliases - pwsi->buffer)); 
+     p_to->s_name = (SEGPTR)(p_base + (p_name - (char*)pwsi->se));
+     p_to->s_proto = (SEGPTR)(p_base + (p_proto - (char*)pwsi->se));
+     p_to->s_aliases = (SEGPTR)(p_base + (p_aliases - (char*)pwsi->se)); 
 
      size += (sizeof(struct ws_servent) - sizeof(struct servent));
    }

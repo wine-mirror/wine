@@ -165,7 +165,7 @@ static UINT16   __lfCheckSum( LPLOGFONT16 plf )
 #undef ptr
    i = 0;
 #define ptr ((CHAR*)plf)
-   do { font[i++] = tolower(*ptr); } while (*ptr++);
+   do { font[i++] = tolower(*ptr++); } while (( i < LF_FACESIZE) && (*ptr) && (*ptr!=' '));
    for( ptr = font, i >>= 1; i > 0; i-- ) 
 #undef ptr
 #define ptr ((UINT16*)plf)
@@ -2240,6 +2240,7 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     }
     else
 	for( ; pfr ; pfr = pfr->next )
+          if(pfr->fi)
 	    if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
 		       XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
 		 bRet = b;

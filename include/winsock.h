@@ -557,6 +557,12 @@ typedef struct _WSINFO
   INT16			last_free;		/* entry in the socket table */
   UINT16		buflen;
   char*			buffer;			/* allocated from SEGPTR heap */
+  struct ws_hostent	*he;
+  int			helen;
+  struct ws_servent	*se;
+  int			selen;
+  struct ws_protoent	*pe;
+  int			pelen;
   char*			dbuffer;		/* buffer for dummies (32 bytes) */
 
   ws_socket		sock[WS_MAX_SOCKETS_PER_PROCESS];

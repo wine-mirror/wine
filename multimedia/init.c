@@ -81,6 +81,7 @@ BOOL32 MULTIMEDIA_Init (void)
   
   if (status == -1) {
     ERR (midi, "ioctl failed.\n");
+    close(fd);
     return TRUE;
   }
 
@@ -91,6 +92,7 @@ BOOL32 MULTIMEDIA_Init (void)
     status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
     if (status == -1) {
       ERR(midi, "ioctl failed.\n");
+      close(fd);
       return TRUE;
     }
 
@@ -133,6 +135,7 @@ BOOL32 MULTIMEDIA_Init (void)
   status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &nummididevs);
   if (status == -1) {
     ERR(midi, "ioctl failed.\n");
+    close(fd);
     return TRUE;
   }
 
@@ -151,6 +154,7 @@ BOOL32 MULTIMEDIA_Init (void)
     status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
     if (status == -1) {
       ERR(midi, "ioctl failed.\n");
+      close(fd);
       return TRUE;
     }
 

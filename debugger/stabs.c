@@ -1077,8 +1077,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 	free(fn);
 	if (t) s = t+1;
       }
-      if (!s || !*s)
-      	fprintf(stderr," %s not found",filename);
+      if (!s || !*s) fprintf(stderr," not found");
       free(paths);
       goto leave;
     }
@@ -1098,12 +1097,6 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 	      MAP_PRIVATE, fd, 0);
   if( addr == (char *) 0xffffffff )
       goto leave;
-
-  /*
-   * Give a nice status message here...
-   * Well not, just print the name.
-   */
-  fprintf(stderr, " %s", filename);
 
   /*
    * Next, we need to find a few of the internal ELF headers within
@@ -1182,6 +1175,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   struct link_map     * lpnt = NULL;
   extern Elf32_Dyn      _DYNAMIC[];
   int			rtn = FALSE;
+  int                   rowcount;
 
   exe_name = DEBUG_argv0;
 
@@ -1191,6 +1185,8 @@ DEBUG_ReadExecutableDbgInfo(void)
   if( exe_name == NULL )
       goto leave;
 
+  fprintf( stderr, "Loading symbols: %s", exe_name );
+  rowcount = 17 + strlen(exe_name);
   DEBUG_ProcessElfObject(exe_name, 0);
 
   /*
@@ -1238,13 +1234,22 @@ DEBUG_ReadExecutableDbgInfo(void)
 	  continue;
 
       if( lpnt->l_name != NULL )
+      {
+          if (rowcount + strlen(lpnt->l_name) > 76)
+          {
+              fprintf( stderr, "\n   " );
+              rowcount = 3;
+          }
+          fprintf( stderr, " %s", lpnt->l_name );
+          rowcount += strlen(lpnt->l_name) + 1;
 	  DEBUG_ProcessElfObject(lpnt->l_name, lpnt->l_addr);
+      }
     }
 
   rtn = TRUE;
 
 leave:
-
+  fprintf( stderr, "\n" );
   return (rtn);
 
 }
@@ -1309,7 +1314,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   /*
    * Give a nice status message here...
    */
-  fprintf(stderr, " %s", exe_name);
+  fprintf( stderr, "Loading symbols: %s", exe_name );
 
   rtn = TRUE;
 

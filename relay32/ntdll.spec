@@ -972,3 +972,16 @@ type	win32
 967 stub RtlLookupAtomInAtomTable
 968 stub RtlQueryAtomInAtomTable
 969 stdcall RtlTryEnterCriticalSection(ptr) TryEnterCriticalSection
+970 stub RtlEnumerateProperties
+971 stub RtlSetPropertyClassId
+972 stub RtlSetPropertyNames
+973 stub RtlQueryPropertyNames
+974 stub RtlFlushPropertySet
+975 stub RtlSetProperties
+976 stub RtlQueryProperties
+977 stub RtlQueryPropertySet
+978 stub RtlSetUnicodeCallouts
+979 stub RtlPropertySetNameToGuid
+980 stub RtlGuidToPropertySetName
+981 stub RtlClosePropertySet
+982 stub RtlCreatePropertySet

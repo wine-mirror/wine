@@ -6,96 +6,91 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
+#include "winnt.h"
 #include "winerror.h"
 #include "server.h"
-#include "object.h"
+#include "server/thread.h"
 
-
-/* request handling */
-
-static void handle_timeout( void *data, int len, int fd,
-                            struct thread *self );
-static void handle_kill_thread( void *data, int len, int fd,
-                                struct thread *self );
-static void handle_new_thread( void *data, int len, int fd,
-                               struct thread *self );
-static void handle_init_thread( void *data, int len, int fd,
-                                struct thread *self );
-
-const req_handler req_handlers[REQ_NB_REQUESTS] =
-{
-    handle_timeout,        /* REQ_TIMEOUT */
-    handle_kill_thread,    /* REQ_KILL_THREAD */
-    handle_new_thread,     /* REQ_NEW_THREAD */
-    handle_init_thread     /* REQ_INIT_THREAD */
-};
-
-
-/* thread structure; not much for now... */
-
-struct thread
-{
-    struct object   obj;       /* object header */
-    struct thread  *next;      /* system-wide thread list */
-    struct thread  *prev;
-    struct process *process;
-    int             client_fd; /* client fd for socket communications */
-    int             unix_pid;
-    char           *name;
-};
-
-static struct thread *first_thread;
 
 /* thread operations */
 
+static void dump_thread( struct object *obj, int verbose );
 static void destroy_thread( struct object *obj );
 
 static const struct object_ops thread_ops =
 {
+    dump_thread,
     destroy_thread
 };
 
+static struct thread *first_thread;
+
 
 /* create a new thread */
-static struct thread *create_thread( int fd, void *pid )
+struct thread *create_thread( int fd, void *pid, int *thread_handle,
+                              int *process_handle )
 {
     struct thread *thread;
     struct process *process;
 
-    if (pid)
+    if (!(thread = malloc( sizeof(*thread) ))) return NULL;
+
+    if (pid) process = get_process_from_id( pid );
+    else process = create_process();
+    if (!process)
     {
-        if (!(process = get_process_from_id( pid ))) return NULL;
-    }
-    else
-    {
-        if (!(process = create_process())) return NULL;
-    }
-    if (!(thread = malloc( sizeof(*thread) )))
-    {
-        release_object( process );
+        free( thread );
         return NULL;
     }
+
     init_object( &thread->obj, &thread_ops, NULL );
     thread->client_fd = fd;
     thread->process   = process;
     thread->unix_pid  = 0;  /* not known yet */
     thread->name      = NULL;
+    thread->error     = 0;
+    thread->exit_code = 0x103;  /* STILL_ACTIVE */
+    thread->next      = first_thread;
+    thread->prev      = NULL;
 
-    thread->next = first_thread;
-    thread->prev = NULL;
+    if (first_thread) first_thread->prev = thread;
     first_thread = thread;
+    add_process_thread( process, thread );
 
-    if (add_client( fd, thread ) == -1)
+    *thread_handle = *process_handle = -1;
+    if (current)
     {
-        release_object( thread );
-        return NULL;
+        if ((*thread_handle = alloc_handle( current->process, thread,
+                                            THREAD_ALL_ACCESS, 0 )) == -1)
+            goto error;
     }
+    if (current && !pid)
+    {
+        if ((*process_handle = alloc_handle( current->process, process,
+                                             PROCESS_ALL_ACCESS, 0 )) == -1)
+            goto error;
+    }
+
+    if (add_client( fd, thread ) == -1) goto error;
+
     return thread;
+
+ error:
+    if (current)
+    {
+        close_handle( current->process, *thread_handle );
+        close_handle( current->process, *process_handle );
+    }
+    remove_process_thread( process, thread );
+    release_object( thread );
+    return NULL;
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -112,93 +107,62 @@ static void destroy_thread( struct object *obj )
     free( thread );
 }
 
+/* dump a thread on stdout for debugging purposes */
+static void dump_thread( struct object *obj, int verbose )
+{
+    struct thread *thread = (struct thread *)obj;
+    assert( obj->ops == &thread_ops );
+
+    printf( "Thread pid=%d fd=%d name='%s'\n",
+            thread->unix_pid, thread->client_fd, thread->name );
+}
+
+/* get a thread pointer from a thread id (and increment the refcount) */
 struct thread *get_thread_from_id( void *id )
 {
     struct thread *t = first_thread;
     while (t && (t != id)) t = t->next;
+    if (t) grab_object( t );
     return t;
 }
 
-/* handle a client timeout (unused for now) */
-static void handle_timeout( void *data, int len, int fd, struct thread *self )
+/* get a thread from a handle (and increment the refcount) */
+struct thread *get_thread_from_handle( int handle, unsigned int access )
 {
-/*    fprintf( stderr, "Server: got timeout for %s\n", self->name );*/
-    send_reply( self->client_fd, 0, -1, 0 );
+    return (struct thread *)get_handle_obj( current->process, handle,
+                                            access, &thread_ops );
+}
+
+/* send a reply to a thread */
+int send_reply( struct thread *thread, int pass_fd, int n,
+                ... /* arg_1, len_1, ..., arg_n, len_n */ )
+{
+    struct iovec vec[16];
+    va_list args;
+    int i;
+
+    assert( n < 16 );
+    va_start( args, n );
+    for (i = 0; i < n; i++)
+    {
+        vec[i].iov_base = va_arg( args, void * );
+        vec[i].iov_len  = va_arg( args, int );
+    }
+    va_end( args );
+    return send_reply_v( thread->client_fd, thread->error, pass_fd, vec, n );
+}
+
+/* kill a thread on the spot */
+void kill_thread( struct thread *thread, int exit_code )
+{
+    if (thread->unix_pid) kill( thread->unix_pid, SIGTERM );
+    remove_client( thread->client_fd, exit_code ); /* this will call thread_killed */
 }
 
 /* a thread has been killed */
-static void handle_kill_thread( void *data, int len, int fd,
-                                struct thread *self )
+void thread_killed( struct thread *thread, int exit_code )
 {
-    if (!self) return;  /* initial client being killed */
-/*    fprintf( stderr, "Server: thread '%s' killed\n",
-               self->name ? self->name : "???" );
-*/
-    release_object( &self->obj );
-}
-
-/* create a new thread */
-static void handle_new_thread( void *data, int len, int fd,
-                               struct thread *self )
-{
-    struct new_thread_request *req = (struct new_thread_request *)data;
-    struct new_thread_reply reply;
-    struct thread *new_thread;
-    int new_fd, err;
-
-    if ((new_fd = dup(fd)) == -1)
-    {
-        new_thread = NULL;
-        err = ERROR_TOO_MANY_OPEN_FILES;
-        goto done;
-    }
-    if (len != sizeof(*req))
-    {
-        err = ERROR_INVALID_PARAMETER;
-        goto done;
-    }
-    if (!(new_thread = create_thread( new_fd, req->pid )))
-    {
-        err = ERROR_NOT_ENOUGH_MEMORY;
-        close( new_fd );
-        goto done;
-    }
-    reply.tid = new_thread;
-    reply.pid = new_thread->process;
-    err = ERROR_SUCCESS;
- done:
-    send_reply( self ? self->client_fd : get_initial_client_fd(),
-                err, -1, 1, &reply, sizeof(reply) );
-}
-
-/* create a new thread */
-static void handle_init_thread( void *data, int len, int fd,
-                                struct thread *self )
-{
-    struct init_thread_request *req = (struct init_thread_request *)data;
-    int err;
-
-    if (len < sizeof(*req))
-    {
-        err = ERROR_INVALID_PARAMETER;
-        goto done;
-    }
-    len -= sizeof(*req);
-    self->unix_pid = req->pid;
-    if (!(self->name = malloc( len + 1 )))
-    {
-        err = ERROR_NOT_ENOUGH_MEMORY;
-        goto done;
-    }
-    memcpy( self->name, (char *)data + sizeof(*req), len );
-    self->name[len] = '\0';
-    
-/*    fprintf( stderr,
-             "Server: init thread '%s' pid=%08x tid=%08x unix_pid=%d\n",
-             self->name, (int)self->process, (int)self, self->unix_pid );
-*/
-
-    err = ERROR_SUCCESS;
- done:
-    send_reply( self->client_fd, err, -1, 0 );
+    thread->exit_code = exit_code;
+    remove_process_thread( thread->process, thread );
+    release_object( thread );
 }

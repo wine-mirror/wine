@@ -13,6 +13,7 @@
 #include "win.h"
 #include "clipboard.h"
 #include "hook.h"
+#include "heap.h"
 #include "thread.h"
 #include "process.h"
 #include "debug.h"
@@ -235,6 +236,27 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
     {
         queue->wakeMask = 0;
         PostEvent( queue->hTask );
+
+        /* Wake up thread waiting for message */
+        /* NOTE: This should really wake up *the* thread that owns
+                 the queue. Since we dont't have thread-local message
+                 queues yet, we wake up all waiting threads ... */
+        SYSTEM_LOCK();
+        {
+            TDB *pTask = (TDB *)GlobalLock16( queue->hTask );
+            PDB32 *pdb = pTask? pTask->thdb->process : NULL;
+            THREAD_ENTRY *entry = pdb? pdb->thread_list->next : NULL;
+
+            if (entry)
+                for (;;)
+                {
+                    if (entry->thread->wait_struct.wait_msg)
+                        SYNC_MsgWakeUp( entry->thread );
+                    if (entry == pdb->thread_list) break;
+                    entry = entry->next;
+                }
+        }
+        SYSTEM_UNLOCK();
     }
 }
 

@@ -9,6 +9,7 @@
 
 #include "k32obj.h"
 #include "windows.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "selectors.h"  /* for SET_FS */
 
@@ -41,6 +42,7 @@ typedef struct
     DWORD         count;     /* Count of valid objects */
     DWORD         signaled;  /* Index of signaled object (or WAIT_FAILED)*/
     BOOL32        wait_all;  /* Wait for all objects flag */
+    BOOL32        wait_msg;  /* Wait for message flag */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
 } WAIT_STRUCT;
 
@@ -70,7 +72,7 @@ typedef struct _THDB
     DWORD          cur_stack;      /*  80 Current stack (was: unknown) */
     DWORD          unknown3[2];    /*  84 Unknown */
     WORD           current_ss;     /*  8c Another 16-bit stack selector */
-    WORD           saved_fs;       /*  8e Saved 16-bit FS (was: pad2) */
+    WORD           pad2;           /*  8e */
     void          *ss_table;       /*  90 Pointer to info about 16-bit stack */
     WORD           thunk_ss;       /*  94 Yet another 16-bit stack selector */
     WORD           pad3;           /*  96 */
@@ -82,12 +84,10 @@ typedef struct _THDB
     void          *entry_point;    /* 1c0 Thread entry point (was: unknown) */
     void          *entry_arg;      /* 1c4 Entry point arg (was: unknown) */
     int            unix_pid;       /* 1c8 Unix thread pid (was: unknown) */
-    DWORD          unknown5[6];    /* 1cc Unknown */
-    K32OBJ        *crit_section;   /* 1e4 Some critical section */
-    K32OBJ        *win16_mutex;    /* 1e8 Pointer to Win16 mutex */
-    K32OBJ        *win32_mutex;    /* 1ec Pointer to KERNEL32 mutex */
-    K32OBJ        *crit_section2;  /* 1f0 Another critical section */
-    K32OBJ        *mutex_list;     /* 1f4 List of owned mutex (was: unknown)*/
+    K32OBJ        *mutex_list;     /* 1cc List of owned mutex (was: unknown)*/
+    DWORD          unknown5[2];    /* 1d0 Unknown */
+    DWORD          sys_count[4];   /* 1d8 Syslevel mutex entry counters */
+    CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
     CONTEXT        context;        /* 200 Thread context */
@@ -125,9 +125,11 @@ extern THDB *pCurrentThread;
 /* scheduler/thread.c */
 extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
                             BOOL32 alloc_stack16,
+                            int *server_thandle, int *server_phandle,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
-extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access );
+extern void THREAD_Start( THDB *thdb );
+extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 extern DWORD THREAD_TlsAlloc( THDB *thread );
@@ -142,7 +144,12 @@ extern void MUTEX_Abandon( K32OBJ *obj );
 /* scheduler/synchro.c */
 extern void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout );
 extern void SYNC_WakeUp( THREAD_QUEUE *queue, DWORD max );
+extern void SYNC_MsgWakeUp( THDB *thdb );
 extern void SYNC_SetupSignals(void);
+extern DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
+                          BOOL32 wait_all, DWORD timeout,
+                          BOOL32 alertable, BOOL32 wait_msg );
+
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( THDB *thread );

@@ -1,5 +1,6 @@
+
 /*
- *	Postscript driver definitions
+ *	PostScript driver definitions
  *
  *	Copyright 1998  Huw D M Davies
  */
@@ -39,19 +40,126 @@ typedef struct _tagAFM {
     float		XHeight;
     float		Ascender;
     float		Descender;
+    float		FullAscender;		/* Ascent of Aring character */
     float		CharWidths[256];
     int			NumofMetrics;
     AFMMETRICS		*Metrics;
-    struct _tagAFM	*next;
 } AFM; /* CharWidths is a shortcut to the WX values of numbered glyphs */
 
-typedef struct _tagFontFamily {
-    char			*FamilyName; /* family name */
-    AFM				*afm;	     /* list of afms for this family */
-    struct _tagFontFamily	*next;       /* next family */
-} FontFamily;
+/* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than
+   one list to exist without having to reallocate the entire AFM structure. We
+   keep a global list of all afms (PSDRV_AFMFontList) plus a list of available
+   fonts for each DC (dc->physDev->Fonts) */
 
-extern FontFamily *PSDRV_AFMFontList;
+typedef struct _tagAFMLISTENTRY {
+    AFM				*afm;
+    struct _tagAFMLISTENTRY	*next;
+} AFMLISTENTRY;
+
+typedef struct _tagFONTFAMILY {
+    char			*FamilyName; /* family name */
+    AFMLISTENTRY		*afmlist;    /* list of afms for this family */
+    struct _tagFONTFAMILY	*next;       /* next family */
+} FONTFAMILY;
+
+extern FONTFAMILY *PSDRV_AFMFontList;
+
+typedef struct _tagFONTNAME {
+    char		*Name;
+    struct _tagFONTNAME *next;
+} FONTNAME;
+
+typedef struct {
+    float	llx, lly, urx, ury;
+} IMAGEABLEAREA;
+
+typedef struct {
+    float	x, y;
+} PAPERDIMENSION;
+
+typedef struct _tagPAGESIZE {
+    char		*Name;
+    char		*FullName;
+    char		*InvocationString;
+    IMAGEABLEAREA	*ImageableArea;
+    PAPERDIMENSION	*PaperDimension;
+    WORD		WinPage; /*eg DMPAPER_A4. Doesn't really belong here */
+    struct _tagPAGESIZE *next;
+} PAGESIZE;
+
+
+typedef struct _tagOPTIONENTRY {
+    char			*Name;		/* eg "True" */
+    char			*FullName;	/* eg "Installed" */
+    char			*InvocationString; /* Often NULL */
+    struct _tagOPTIONENTRY	*next;
+} OPTIONENTRY;
+
+typedef struct _tagOPTION { /* Treat bool as a special case of pickone */
+    char			*OptionName;	/* eg "*Option1" */
+    char			*FullName;	/* eg "Envelope Feeder" */
+    char			*DefaultOption; /* eg "False" */
+    OPTIONENTRY			*Options;
+    struct _tagOPTION		*next;
+} OPTION;
+
+typedef struct _tagCONSTRAINT {
+    char			*Feature1;
+    char			*Value1;
+    char			*Feature2;
+    char			*Value2;
+    struct _tagCONSTRAINT	*next;
+} CONSTRAINT;
+
+typedef struct _tagINPUTSLOT {
+    char			*Name;
+    char			*FullName;
+    char			*InvocationString;
+    WORD			WinBin; /* eg DMBIN_LOWER */
+    struct _tagINPUTSLOT	*next;
+} INPUTSLOT;
+
+typedef struct {
+    char		*NickName;
+    int			LanguageLevel;
+    BOOL32		ColorDevice;
+    int			DefaultResolution;
+    int			LandscapeOrientation;
+    char		*JCLBegin;
+    char		*JCLToPSInterpreter;
+    char		*JCLEnd;
+    char		*DefaultFont;
+    FONTNAME		*InstalledFonts; /* ptr to a list of FontNames */
+    PAGESIZE		*PageSizes;
+    OPTION		*InstalledOptions;
+    CONSTRAINT		*Constraints;
+    INPUTSLOT		*InputSlots;
+} PPD;
+
+typedef struct {
+    DEVMODE16			dmPublic;
+    struct _tagdocprivate {
+    }				dmDocPrivate;
+    struct _tagdrvprivate {
+      char	ppdFileName[100]; /* Hack */
+      UINT32	numInstalledOptions; /* Options at end of struct */
+    }				dmDrvPrivate;
+
+/* Now comes:
+
+numInstalledOptions of OPTIONs
+
+*/
+
+} PSDRV_DEVMODE16;
+
+typedef struct _tagPI {
+    char		*FriendlyName;
+    PPD			*ppd;
+    PSDRV_DEVMODE16	*Devmode;
+    FONTFAMILY		*Fonts;
+    struct _tagPI	*next;
+} PRINTERINFO;
 
 typedef struct {
     AFM			*afm;
@@ -74,10 +182,20 @@ typedef struct
 {
     PSFONT		font;		/* Current PS font */
     JOB			job;
+    PSDRV_DEVMODE16	*Devmode;
+    PRINTERINFO		*pi;
 } PSDRV_PDEVICE;
 
+extern HANDLE32 PSDRV_Heap;
 
+extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
+			 PRINTERINFO *pi);
 extern BOOL32 PSDRV_GetFontMetrics(void);
+extern PPD *PSDRV_ParsePPD(char *fname);
+extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
+extern AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
+extern void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
+extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL32 PSDRV_Init(void);
 extern HFONT16 PSDRV_FONT_SelectObject( DC *dc, HFONT16 hfont, FONTOBJ *font);
@@ -115,6 +233,8 @@ extern BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 extern BOOL32 PSDRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 extern BOOL32 PSDRV_LineTo( DC *dc, INT32 x, INT32 y );
 extern BOOL32 PSDRV_MoveToEx( DC *dc, INT32 x, INT32 y, LPPOINT32 pt );
+extern BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count );
+extern BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count );
 extern HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 
 extern BOOL32 PSDRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right,

@@ -179,8 +179,6 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
             WARN(selector, "Freeing %%fs selector (%04x), not good.\n", fs );
             SET_FS( 0 );
         }
-        fs = THREAD_Current()->saved_fs;
-        if ((fs >= sel) && (fs < nextsel)) THREAD_Current()->saved_fs = 0;
         GET_GS(gs);
         if ((gs >= sel) && (gs < nextsel)) SET_GS( 0 );
     }
@@ -199,6 +197,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     {
         if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
         if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
+        if ((frame->fs >= sel) && (frame->fs < nextsel)) frame->fs = 0;
         frame = PTR_SEG_TO_LIN( frame->frame32->frame16 );
     }
 }

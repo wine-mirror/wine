@@ -250,7 +250,8 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     THDB *thdb = THREAD_Current();
 
     /* Window procedures want ax = hInstance, ds = es = ss */
-
+    
+    memset(&context, '\0', sizeof(context));
     DS_reg(&context)  = SELECTOROF(thdb->cur_stack);
     ES_reg(&context)  = DS_reg(&context);
     EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
@@ -892,8 +893,6 @@ void WINAPI C16ThkSL01(CONTEXT *context)
             CS_reg(context) = stack[3];
             SP_reg(context) += td->apiDB[targetNr].nrArgBytes + 4;
 
-            /* Win95 allows delayed loading of the 32-bit DLL.
-               We don't do that at the moment. */
             ERR(thunk, "Process %08lx did not ThunkConnect32 %s to %s\n",
                        (DWORD)PROCESS_Current(), td->pszDll32, td->pszDll16);
         }

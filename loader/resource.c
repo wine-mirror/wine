@@ -550,7 +550,7 @@ INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
 /**********************************************************************
  *	LoadMessage32A		(internal)
  */
-INT32 LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
+INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
                       LPSTR buffer, INT32 buflen )
 {
     HGLOBAL32	hmem;
@@ -617,7 +617,7 @@ INT32 LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
 /**********************************************************************
  *	LoadMessage32W	(internal)
  */
-INT32 LoadMessage32W( HMODULE32 instance, UINT32 id, WORD lang,
+INT32 WINAPI LoadMessage32W( HMODULE32 instance, UINT32 id, WORD lang,
                       LPWSTR buffer, INT32 buflen )
 {
     INT32 retval;

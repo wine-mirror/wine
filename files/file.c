@@ -90,7 +90,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
 
     handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
                            FILE_ALL_ACCESS | GENERIC_READ |
-                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE );
+                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE, -1 );
     /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
@@ -188,7 +188,7 @@ static void FILE_Destroy( K32OBJ *ptr )
 FILE_OBJECT *FILE_GetFile( HFILE32 handle )
 {
     return (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                            K32OBJ_FILE, 0 /*FIXME*/ );
+                                            K32OBJ_FILE, 0 /*FIXME*/, NULL );
 }
 
 
@@ -508,7 +508,7 @@ DWORD WINAPI GetFileAttributes32A( LPCSTR name )
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
 
-    if (name == NULL) return -1;
+    if (name == NULL || *name=='\0') return -1;
 
     if (!DOSFS_GetFullName( name, TRUE, &full_name )) return -1;
     if (!FILE_Stat( full_name.long_name, &info )) return -1;
@@ -796,6 +796,22 @@ found:
     lstrcpyn32A( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
 
+    if (mode & OF_SHARE_EXCLUSIVE)
+      {
+	char *last = strrchr(full_name.long_name,'/');
+	if (!last)
+	  last = full_name.long_name - 1;
+	/* Some InstallShield version uses OF_SHARE_EXCLUSIVE 
+	 on the file <tempdir>/_ins0432._mp to determine how
+	 far installation has proceeded*/
+	if (GetModuleHandle16(last+1))
+	  {
+	    TRACE(file,"Denying shared open for %s\n",full_name.long_name);
+	    return HFILE_ERROR32;
+	  }
+	FIXME(file,"OF_SHARE_EXCLUSIVE only partial implemented\n");
+      }
+
     if (mode & OF_DELETE)
     {
         if (unlink( full_name.long_name ) == -1) goto not_found;
@@ -925,7 +941,7 @@ UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
 
     TRACE( file, "%d %p %d\n", handle, buffer, count);
     if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                  K32OBJ_UNKNOWN, 0))) return -1;
+                                  K32OBJ_UNKNOWN, 0, NULL))) return -1;
     if (K32OBJ_OPS(ptr)->read)
         result = K32OBJ_OPS(ptr)->read(ptr, buffer, count, &numWritten, NULL);
     K32OBJ_DecCount( ptr );
@@ -1147,7 +1163,7 @@ LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
 	}
 	
 	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                        K32OBJ_UNKNOWN, 0 )))
+                                        K32OBJ_UNKNOWN, 0, NULL )))
             return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->write)
             status = K32OBJ_OPS(ioptr)->write(ioptr, buffer, count, &result, NULL);

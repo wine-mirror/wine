@@ -33,7 +33,7 @@ static LPSTR	lpInstallNames = NULL;
 
 struct LINUX_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
-UINT16 midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
+UINT16 WINAPI midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 LONG WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
                              DWORD dwParam1, DWORD dwParam2);
@@ -333,6 +333,11 @@ BOOL16 WINAPI DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
                                                        hDev, wMsg, dwUser,
                                                        dwParam1, dwParam2 );
 			break;
+		case DCB_FUNC32:
+			TRACE(mmsys, "CALLBACK_FUNCTION !\n");
+			((LPDRVCALLBACK32)dwCallBack)( hDev, wMsg, dwUser,
+                                                       dwParam1, dwParam2 );
+			break;
 		}
 	return TRUE;
 }
@@ -499,7 +504,7 @@ UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix,LPUINT16 lpid,DWORD fdwID) {
 /**************************************************************************
  * 				mixerGetControlDetailsA	[WINMM.99]
  */
-UINT32 mixerGetControlDetails32A(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
+UINT32 WINAPI mixerGetControlDetails32A(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
 	FIXME(mmsys,"(%04x,%p,%08lx): stub!\n",hmix,lpmcd,fdwDetails);
 	return MMSYSERR_NOTENABLED;
 }
@@ -507,7 +512,7 @@ UINT32 mixerGetControlDetails32A(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,
 /**************************************************************************
  * 				mixerGetControlDetailsW	[WINMM.100]
  */
-UINT32 mixerGetControlDetails32W(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
+UINT32 WINAPI mixerGetControlDetails32W(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
 	FIXME(mmsys,"(%04x,%p,%08lx): stub!\n",	hmix,lpmcd,fdwDetails);
 	return MMSYSERR_NOTENABLED;
 }
@@ -515,7 +520,7 @@ UINT32 mixerGetControlDetails32W(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,
 /**************************************************************************
  * 				mixerGetControlDetails	[MMSYSTEM.808]
  */
-UINT16 mixerGetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,DWORD fdwDetails) {
+UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,DWORD fdwDetails) {
 	FIXME(mmsys,"(%04x,%p,%08lx): stub!\n",hmix,lpmcd,fdwDetails);
 	return MMSYSERR_NOTENABLED;
 }
@@ -1316,6 +1321,10 @@ DWORD mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 	DWORD	dwRet = MCIERR_INTERNAL;
 
 	TRACE(mmsys, "(%04x, %08lX, %p)\n", wDevID, dwParam, lpParms);
+	if(wDevID==MCI_ALL_DEVICE_ID) {
+	  FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
+	  return MCIERR_CANNOT_USE_ALL;
+	}
 	switch(GetDrv(wDevID)->modp.wType) {
 	case MCI_DEVTYPE_CD_AUDIO:
 		dwRet = CDAUDIO_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,
@@ -1799,7 +1808,8 @@ UINT32 WINAPI midiOutOpen32(HMIDIOUT32 * lphMidiOut, UINT32 uDeviceID,
 	HMIDIOUT16	hmo16;
 	UINT32		ret;
 
-	ret = midiOutOpen16(&hmo16,uDeviceID,dwCallback,dwInstance,dwFlags);
+	ret = midiOutOpen16(&hmo16,uDeviceID,dwCallback,dwInstance,
+			    CALLBACK32CONV(dwFlags));
 	if (lphMidiOut) *lphMidiOut = hmo16;
 	return ret;
 }
@@ -2688,7 +2698,8 @@ UINT32 WINAPI waveOutOpen32(HWAVEOUT32 * lphWaveOut, UINT32 uDeviceID,
                             DWORD dwInstance, DWORD dwFlags)
 {
 	HWAVEOUT16	hwo16;
-	UINT32	ret=waveOutOpen16(&hwo16,uDeviceID,lpFormat,dwCallback,dwInstance,dwFlags);
+	UINT32	ret=waveOutOpen16(&hwo16,uDeviceID,lpFormat,dwCallback,dwInstance,
+				  CALLBACK32CONV(dwFlags));
 	if (lphWaveOut) *lphWaveOut=hwo16;
 	return ret;
 }

@@ -15,6 +15,7 @@
 #include "miscemu.h"
 #include "winnt.h"
 #include "server.h"
+#include "stackframe.h"
 #include "debug.h"
 
 #ifndef __i386__
@@ -50,17 +51,18 @@ BOOL32 THREAD_InitDone = FALSE;
  * Return a pointer to a thread object. The object count must be decremented
  * when no longer used.
  */
-THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access )
+THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
 {
     THDB *thread;
 
     if (handle == CURRENT_THREAD_PSEUDOHANDLE)  /* Self-thread handle */
     {
         thread = THREAD_Current();
+        if (server_handle) *server_handle = CURRENT_THREAD_PSEUDOHANDLE;
         K32OBJ_IncCount( &thread->header );
     }
     else thread = (THDB *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                            K32OBJ_THREAD, access );
+                                            K32OBJ_THREAD, access, server_handle );
     return thread;
 }
 
@@ -134,6 +136,7 @@ void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread )
  *           THREAD_Create
  */
 THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
+                     int *server_thandle, int *server_phandle,
                      LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
     DWORD old_prot;
@@ -194,7 +197,8 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
                                                    0x10000, SEGMENT_DATA,
                                                    FALSE, FALSE );
         if (!thdb->teb.stack_sel) goto error;
-        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( thdb->teb.stack_sel, 0xfffc );
+        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( thdb->teb.stack_sel, 
+                                                 0x10000 - sizeof(STACK16FRAME) );
     }
 
     /* Allocate the event */
@@ -203,7 +207,11 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
 
     /* Create the thread socket */
 
-    if (CLIENT_NewThread( thdb )) goto error;
+    if (CLIENT_NewThread( thdb, server_thandle, server_phandle )) goto error;
+
+    /* Add thread to process's list of threads */
+
+    THREAD_AddQueue( &pdb->thread_list, thdb );
 
     /* Initialize the thread context */
 
@@ -316,20 +324,36 @@ static void THREAD_Destroy( K32OBJ *ptr )
 
 
 /***********************************************************************
+ *           THREAD_Start
+ *
+ * Start execution of a newly created thread. Does not return.
+ */
+void THREAD_Start( THDB *thdb )
+{
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
+    assert( THREAD_Current() == thdb );
+    CLIENT_InitThread();
+    PE_InitializeDLLs( thdb->process, DLL_THREAD_ATTACH, NULL );
+    ExitThread( func( thdb->entry_arg ) );
+}
+
+
+/***********************************************************************
  *           CreateThread   (KERNEL32.63)
  */
 HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
+    int server_handle = -1;
     HANDLE32 handle = INVALID_HANDLE_VALUE32;
     BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     THDB *thread = THREAD_Create( PROCESS_Current(), stack,
-                                  TRUE, start, param );
+                                  TRUE, &server_handle, NULL, start, param );
     if (!thread) return INVALID_HANDLE_VALUE32;
     handle = HANDLE_Alloc( PROCESS_Current(), &thread->header,
-                           THREAD_ALL_ACCESS, inherit );
+                           THREAD_ALL_ACCESS, inherit, server_handle );
     if (handle == INVALID_HANDLE_VALUE32) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
     *id = THDB_TO_THREAD_ID( thread );
@@ -353,6 +377,11 @@ void WINAPI ExitThread(
 {
     THDB *thdb = THREAD_Current();
     LONG count;
+
+    /* Remove thread from process's list */
+    THREAD_RemoveQueue( &thdb->process->thread_list, thdb );
+
+    PE_InitializeDLLs( thdb->process, DLL_THREAD_DETACH, NULL );
 
     SYSTEM_LOCK();
     thdb->exit_code = code;
@@ -407,7 +436,9 @@ DWORD WINAPI GetCurrentThreadId(void)
 DWORD WINAPI GetLastError(void)
 {
     THDB *thread = THREAD_Current();
-    return thread->last_error;
+    DWORD ret = thread->last_error;
+    TRACE(thread,"0x%lx\n",ret);
+    return ret;
 }
 
 
@@ -422,7 +453,11 @@ void WINAPI SetLastError(
 {
     THDB *thread = THREAD_Current();
     /* This one must work before we have a thread (FIXME) */
-    if (thread) thread->last_error = error;
+
+    TRACE(thread,"%p error=0x%lx\n",thread,error);
+
+    if (thread)
+      thread->last_error = error;
 }
 
 
@@ -436,7 +471,7 @@ void WINAPI SetLastErrorEx(
     DWORD error, /* [in] Per-thread error code */
     DWORD type)  /* [in] Error type */
 {
-    TRACE(thread, "(%08lx, %08lx)\n", error,type);
+    TRACE(thread, "(0x%08lx, 0x%08lx)\n", error,type);
     switch(type) {
         case 0:
             break;
@@ -584,7 +619,7 @@ BOOL32 WINAPI SetThreadContext(
     HANDLE32 handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
-    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT );
+    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT, NULL );
     if (!thread) return FALSE;
     *context = thread->context;
     K32OBJ_DecCount( &thread->header );
@@ -602,7 +637,7 @@ BOOL32 WINAPI GetThreadContext(
     HANDLE32 handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
-    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT );
+    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT, NULL );
     if (!thread) return FALSE;
     *context = thread->context;
     K32OBJ_DecCount( &thread->header );
@@ -623,7 +658,7 @@ INT32 WINAPI GetThreadPriority(
     THDB *thread;
     INT32 ret;
     
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
         return THREAD_PRIORITY_ERROR_RETURN;
     ret = thread->delta_priority;
     K32OBJ_DecCount( &thread->header );
@@ -644,7 +679,7 @@ BOOL32 WINAPI SetThreadPriority(
 {
     THDB *thread;
     
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_SET_INFORMATION )))
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_SET_INFORMATION, NULL )))
         return FALSE;
     thread->delta_priority = priority;
     K32OBJ_DecCount( &thread->header );
@@ -682,7 +717,7 @@ BOOL32 WINAPI GetExitCodeThread(
 {
     THDB *thread;
     
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
         return FALSE;
     if (exitcode) *exitcode = thread->exit_code;
     K32OBJ_DecCount( &thread->header );
@@ -708,7 +743,7 @@ DWORD WINAPI ResumeThread(
     DWORD oldcount;
 
     SYSTEM_LOCK();
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
     {
         SYSTEM_UNLOCK();
         WARN(thread, "Invalid thread handle\n");
@@ -746,7 +781,7 @@ DWORD WINAPI SuspendThread(
     DWORD oldcount;
 
     SYSTEM_LOCK();
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
     {
         SYSTEM_UNLOCK();
         WARN(thread, "Invalid thread handle\n");

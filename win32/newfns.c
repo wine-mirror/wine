@@ -55,28 +55,6 @@ BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
     return TRUE;
 }
 
-HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
-	FIXME(file,"(%s,%d,%08lx): stub\n",
-	      lpPathName,bWatchSubtree,dwNotifyFilter);
-	return 0xcafebabe;
-}
-
-HANDLE32 WINAPI FindFirstChangeNotification32W(LPCWSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
-	FIXME(file,"(%s,%d,%08lx): stub\n",
-	      debugstr_w(lpPathName),bWatchSubtree,dwNotifyFilter);
-	return 0xcafebabe;
-}
-
-BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
-	FIXME(file,"(%08x): stub!\n",fcnhandle);
-	return FALSE;
-}
-
-BOOL32 WINAPI FindCloseChangeNotification(HANDLE32 fcnhandle) {
-	FIXME(file,"(%08x): stub!\n",fcnhandle);
-	return FALSE;
-}
-
 /****************************************************************************
  *		QueryPerformanceFrequency (KERNEL32.565)
  */

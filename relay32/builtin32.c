@@ -170,7 +170,9 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     nt->OptionalHeader.SizeOfImage                 = size;
     nt->OptionalHeader.SizeOfHeaders               = (BYTE *)exp - addr;
     nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
-
+    if (dll->descr->dllentrypoint) 
+        nt->OptionalHeader.AddressOfEntryPoint = (DWORD)dll->descr->dllentrypoint - (DWORD)addr;
+    
     /* Build the export directory */
 
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];

@@ -23,6 +23,7 @@
 #include "dde.h"
 #include "queue.h"
 #include "winproc.h"
+#include "task.h"
 #include "process.h"
 #include "thread.h"
 #include "options.h"
@@ -943,11 +944,39 @@ BOOL32 WINAPI PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
 }
 
 /***********************************************************************
- *         PeekMessageW
+ *         PeekMessageW             Check queue for messages
+ *
+ * Checks for a message in the thread's queue, filtered as for
+ * GetMessage(). Returns immediately whether a message is available
+ * or not.
+ *
+ * Whether a retrieved message is removed from the queue is set by the
+ * _wRemoveMsg_ flags, which should be one of the following values:
+ *
+ *    PM_NOREMOVE    Do not remove the message from the queue. 
+ *
+ *    PM_REMOVE      Remove the message from the queue.
+ *
+ * In addition, PM_NOYIELD may be combined into _wRemoveMsg_ to
+ * request that the system not yield control during PeekMessage();
+ * however applications may not rely on scheduling behavior.
+ * 
+ * RETURNS
+ *
+ *  Nonzero if a message is available and is retrieved, zero otherwise.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ *
  */
-BOOL32 WINAPI PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
-                              UINT32 min,UINT32 max,UINT32 wRemoveMsg)
-{
+BOOL32 WINAPI PeekMessage32W( 
+  LPMSG32 lpmsg,    /* buffer to receive message */
+  HWND32 hwnd,      /* restrict to messages for hwnd */
+  UINT32 min,       /* minimum message to receive */
+  UINT32 max,       /* maximum message to receive */
+  UINT32 wRemoveMsg /* removal flags */ 
+) {
 	/* FIXME: Should perform Unicode translation on specific messages */
 	return PeekMessage32A(lpmsg,hwnd,min,max,wRemoveMsg);
 }
@@ -983,10 +1012,38 @@ BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 }
 
 /***********************************************************************
- *          GetMessage32W   (USER32.274)
+ *          GetMessage32W   (USER32.274) Retrieve next message
+ *
+ * GetMessage retrieves the next event from the calling thread's
+ * queue and deposits it in *lpmsg.
+ *
+ * If _hwnd_ is not NULL, only messages for window _hwnd_ and its
+ * children as specified by IsChild() are retrieved. If _hwnd_ is NULL
+ * all application messages are retrieved.
+ *
+ * _min_ and _max_ specify the range of messages of interest. If
+ * min==max==0, no filtering is performed. Useful examples are
+ * WM_KEYFIRST and WM_KEYLAST to retrieve keyboard input, and
+ * WM_MOUSEFIRST and WM_MOUSELAST to retrieve mouse input.
+ *
+ * WM_PAINT messages are not removed from the queue; they remain until
+ * processed. Other messages are removed from the queue.
+ *
+ * RETURNS
+ *
+ * -1 on error, 0 if message is WM_QUIT, nonzero otherwise.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ * 
  */
-BOOL32 WINAPI GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
-{
+BOOL32 WINAPI GetMessage32W(
+  MSG32* lpmsg, /* buffer to receive message */
+  HWND32 hwnd,  /* restrict to messages for hwnd */
+  UINT32 min,   /* minimum message to receive */
+  UINT32 max    /* maximum message to receive */
+) {
     BOOL32 ret;
     MSG16 *msg = SEGPTR_NEW(MSG16);
     if (!msg) return 0;
@@ -1335,12 +1392,47 @@ LRESULT WINAPI SendMessageTimeout32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           WaitMessage    (USER.112) (USER32.578)
+ *  WaitMessage    (USER.112) (USER32.578)  Suspend thread pending messages
+ *
+ * WaitMessage() suspends a thread until events appear in the thread's
+ * queue.
+ *
+ * BUGS
+ *
+ * Is supposed to return BOOL under Win32.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ * 
  */
 void WINAPI WaitMessage( void )
 {
     QUEUE_WaitBits( QS_ALLINPUT );
 }
+
+/***********************************************************************
+ *           MsgWaitForMultipleObjects    (USER32.400)
+ */
+DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
+                                        BOOL32 fWaitAll, DWORD dwMilliseconds,
+                                        DWORD dwWakeMask )
+{
+    DWORD retv;
+
+    TDB *currTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    HQUEUE16 hQueue = currTask? currTask->hQueue : 0;
+    MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+    if (!msgQueue) return 0xFFFFFFFF;
+
+    msgQueue->changeBits = 0;
+    msgQueue->wakeMask = dwWakeMask;
+
+    retv = SYNC_DoWait( nCount, pHandles, fWaitAll, dwMilliseconds, FALSE, TRUE );
+
+    return retv;
+}
+
 
 
 struct accent_char
@@ -1649,6 +1741,24 @@ LONG WINAPI DispatchMessage32A( const MSG32* msg )
 
 /***********************************************************************
  *           DispatchMessage32W   (USER32.142)
+ *
+ * Process the message specified in the structure *_msg_.
+ *
+ * If the lpMsg parameter points to a WM_TIMER message and the
+ * parameter of the WM_TIMER message is not NULL, the lParam parameter
+ * points to the function that is called instead of the window
+ * procedure.
+ *  
+ * The message must be valid.
+ *
+ * RETURNS
+ *
+ *   DispatchMessage() returns the result of the window procedure invoked.
+ *
+ * CONFORMANCE
+ *
+ *   ECMA-234, Win32 
+ *
  */
 LONG WINAPI DispatchMessage32W( const MSG32* msg )
 {

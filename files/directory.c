@@ -85,7 +85,7 @@ int DIR_Init(void)
     if (-1 == access( tmp_dir.long_name, W_OK ))
     {
     	if (errno==EACCES)
-		MSG("Warning: The Temporary Directory (as specified in wine.conf) is NOT writeable. Please check your configuration.\n");
+		MSG("Warning: The Temporary Directory (as specified in wine.conf or ~/.winerc) is NOT writeable. Please check your configuration.\n");
 	else
 		MSG("Warning: Access to Temporary Directory failed (%s).\n",
 		    strerror(errno));

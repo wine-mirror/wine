@@ -1,5 +1,5 @@
 /*
- *	Postscript driver Escape function
+ *	PostScript driver Escape function
  *
  *	Copyright 1998  Huw D M Davies
  */

@@ -1,20 +1,21 @@
 /*
- *	Postscript output functions
+ *	PostScript output functions
  *
  *	Copyright 1998  Huw D M Davies
  *
  */
 
-#include "windows.h"
-#include "psdrv.h"
-#include "print.h"
-#include "debug.h"
+#include <windows.h>
+#include <psdrv.h>
+#include <print.h>
+#include <debug.h>
+#include <ctype.h>
 
-char psheader[] = /* title */
+char psheader[] = /* title llx lly urx ury */
 "%%!PS-Adobe-3.0 (not quite)\n"
-"%%%%Creator: Wine Postscript Driver\n"
+"%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
-"%%%%BoundingBox: 0 0 595 842\n"
+"%%%%BoundingBox: %d %d %d %d\n"
 "%%%%Pages: (atend)\n"
 "%%%%EndComments\n"
 "%%%%BeginProlog\n"
@@ -27,9 +28,21 @@ char psheader[] = /* title */
 "end\n"
 "definefont pop\n"
 "} bind def\n"
-"%%%%EndProlog\n"
-"%%%%BeginSetup\n"
-"%%%%EndSetup\n";
+"%%%%EndProlog\n";
+
+char psbeginsetup[] =
+"%%BeginSetup\n";
+
+char psendsetup[] =
+"%%EndSetup\n";
+
+char psbeginfeature[] = /* feature, value */
+"mark {\n"
+"%%%%BeginFeature: %s %s\n";
+
+char psendfeature[] =
+"\n%%EndFeature\n"
+"} stopped cleartomark\n";
 
 char psnewpage[] = /* name, number */
 "%%%%Page: %s %d\n"
@@ -73,7 +86,7 @@ char psshow[] = /* string */
 
 char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
 "/%s findfont\n"
-"[%d 0 0 %d 0 %d]\n"
+"[%d 0 0 %d 0 0]\n"
 "%d 10 div matrix rotate\n"
 "matrix concatmatrix\n"
 "makefont setfont\n";
@@ -96,13 +109,35 @@ int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch)
 }
 
 
+INT32 PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
+			 char *invocation)
+{
+
+    char *buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
+			     strlen(feature) + strlen(value));
+
+
+    wsprintf32A(buf, psbeginfeature, feature, value);
+    WriteSpool( hJob, buf, strlen(buf) );
+
+    WriteSpool( hJob, invocation, strlen(invocation) );
+
+    WriteSpool( hJob, psendfeature, strlen(psendfeature) );
+    
+    HeapFree( PSDRV_Heap, 0, buf );
+    return 1;
+}
+
+
+
 INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf, *titlebuf;
+    INPUTSLOT *slot;
+    PAGESIZE *page;
 
-
-    titlebuf = (char *)HeapAlloc( GetProcessHeap(), 0, len+1 );
+    titlebuf = (char *)HeapAlloc( PSDRV_Heap, 0, len+1 );
     if(!titlebuf) {
         WARN(psdrv, "HeapAlloc failed\n");
         return 0;
@@ -110,24 +145,54 @@ INT32 PSDRV_WriteHeader( DC *dc, char *title, int len )
     memcpy(titlebuf, title, len);
     titlebuf[len] = '\0';
 
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0, sizeof(psheader) + len);
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) + len + 20);
     if(!buf) {
         WARN(psdrv, "HeapAlloc failed\n");
-	HeapFree( GetProcessHeap(), 0, titlebuf );
+	HeapFree( PSDRV_Heap, 0, titlebuf );
         return 0;
     }
 
-    wsprintf32A(buf, psheader, title);
+    wsprintf32A(buf, psheader, title, 0, 0, 
+		(int) (dc->w.devCaps->horzSize * 72.0 / 25.4),
+		(int) (dc->w.devCaps->vertSize * 72.0 / 25.4) );
 
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
         WARN(psdrv, "WriteSpool error\n");
-	HeapFree( GetProcessHeap(), 0, titlebuf );
-	HeapFree( GetProcessHeap(), 0, buf );
+	HeapFree( PSDRV_Heap, 0, titlebuf );
+	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
-    HeapFree( GetProcessHeap(), 0, titlebuf );
-    HeapFree( GetProcessHeap(), 0, buf );
+    HeapFree( PSDRV_Heap, 0, titlebuf );
+    HeapFree( PSDRV_Heap, 0, buf );
+
+
+    WriteSpool( physDev->job.hJob, psbeginsetup, strlen(psbeginsetup) );
+
+    for(slot = physDev->pi->ppd->InputSlots; slot; slot = slot->next) {
+        if(slot->WinBin == physDev->Devmode->dmPublic.dmDefaultSource) {
+	    if(slot->InvocationString) {
+	        PSDRV_WriteFeature(physDev->job.hJob, "*InputSlot", slot->Name,
+			     slot->InvocationString);
+		break;
+	    }
+	}
+    }
+
+    for(page = physDev->pi->ppd->PageSizes; page; page = page->next) {
+        if(page->WinPage == physDev->Devmode->dmPublic.dmPaperSize) {
+	    if(page->InvocationString) {
+	        PSDRV_WriteFeature(physDev->job.hJob, "*PageSize", page->Name,
+			     page->InvocationString);
+		break;
+	    }
+	}
+    }
+
+
+    WriteSpool( physDev->job.hJob, psendsetup, strlen(psendsetup) );
+
+
     return 1;
 }
 
@@ -137,7 +202,7 @@ INT32 PSDRV_WriteFooter( DC *dc )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf;
 
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0, sizeof(psfooter) + 100 );
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psfooter) + 100 );
     if(!buf) {
         WARN(psdrv, "HeapAlloc failed\n");
         return 0;
@@ -148,10 +213,10 @@ INT32 PSDRV_WriteFooter( DC *dc )
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
         WARN(psdrv, "WriteSpool error\n");
-	HeapFree( GetProcessHeap(), 0, buf );
+	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
-    HeapFree( GetProcessHeap(), 0, buf );
+    HeapFree( PSDRV_Heap, 0, buf );
     return 1;
 }
 
@@ -180,7 +245,7 @@ INT32 PSDRV_WriteNewPage( DC *dc )
     
     wsprintf32A(name, "%d", physDev->job.PageNo);
 
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0, sizeof(psnewpage) + 100 );
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psnewpage) + 100 );
     if(!buf) {
         WARN(psdrv, "HeapAlloc failed\n");
         return 0;
@@ -190,10 +255,10 @@ INT32 PSDRV_WriteNewPage( DC *dc )
     if( WriteSpool( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
         WARN(psdrv, "WriteSpool error\n");
-	HeapFree( GetProcessHeap(), 0, buf );
+	HeapFree( PSDRV_Heap, 0, buf );
 	return 0;
     }
-    HeapFree( GetProcessHeap(), 0, buf );
+    HeapFree( PSDRV_Heap, 0, buf );
     return 1;
 }
 
@@ -238,7 +303,7 @@ BOOL32 PSDRV_WriteSetFont(DC *dc)
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf, *newbuf;
 
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0,
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0,
 	     sizeof(pssetfont) + strlen(physDev->font.afm->FontName) + 40);
 
     if(!buf) {
@@ -246,23 +311,23 @@ BOOL32 PSDRV_WriteSetFont(DC *dc)
         return FALSE;
     }
 
-    newbuf = (char *)HeapAlloc( GetProcessHeap(), 0,
+    newbuf = (char *)HeapAlloc( PSDRV_Heap, 0,
 	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
 
     if(!newbuf) {
         WARN(psdrv, "HeapAlloc failed\n");
-	HeapFree(GetProcessHeap(), 0, buf);
+	HeapFree(PSDRV_Heap, 0, buf);
         return FALSE;
     }
 
     wsprintf32A(newbuf, "%s%s", physDev->font.afm->FontName, encodingext);
 
     wsprintf32A(buf, pssetfont, newbuf, 
-		physDev->font.tm.tmHeight, -physDev->font.tm.tmHeight,
-		physDev->font.tm.tmAscent, -physDev->font.escapement);
+		physDev->font.size, -physDev->font.size,
+	        -physDev->font.escapement);
 
     PSDRV_WriteSpool(dc, buf, strlen(buf));
-    HeapFree(GetProcessHeap(), 0, buf);
+    HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }    
 
@@ -271,7 +336,7 @@ BOOL32 PSDRV_WriteReencodeFont(DC *dc)
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *buf, *newbuf;
  
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0,
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0,
 	     sizeof(psreencodefont) + 2 * strlen(physDev->font.afm->FontName) 
 			     + sizeof(encodingext));
 
@@ -280,12 +345,12 @@ BOOL32 PSDRV_WriteReencodeFont(DC *dc)
         return FALSE;
     }
 
-    newbuf = (char *)HeapAlloc( GetProcessHeap(), 0,
+    newbuf = (char *)HeapAlloc( PSDRV_Heap, 0,
 	      strlen(physDev->font.afm->FontName) + sizeof(encodingext));
 
     if(!newbuf) {
         WARN(psdrv, "HeapAlloc failed\n");
-	HeapFree(GetProcessHeap(), 0, buf);
+	HeapFree(PSDRV_Heap, 0, buf);
         return FALSE;
     }
 
@@ -294,26 +359,45 @@ BOOL32 PSDRV_WriteReencodeFont(DC *dc)
 
     PSDRV_WriteSpool(dc, buf, strlen(buf));
 
-    HeapFree(GetProcessHeap(), 0, newbuf);
-    HeapFree(GetProcessHeap(), 0, buf);
+    HeapFree(PSDRV_Heap, 0, newbuf);
+    HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }    
 
 BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count)
 {
-    char *buf;
+    char *buf, *buf1;
+    INT32 buflen = count + 10, i, done;
 
-    buf = (char *)HeapAlloc( GetProcessHeap(), 0, sizeof(psshow) + count);
-
-    if(!buf) {
-        WARN(psdrv, "HeapAlloc failed\n");
-        return FALSE;
+    buf = (char *)HeapAlloc( PSDRV_Heap, 0, buflen );
+    
+    for(i = done = 0; i < count; i++) {
+        if(!isprint(str[i])) {
+	    if(done + 4 >= buflen)
+	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
+	    sprintf(buf + done, "\\%03o", (int)(unsigned char)str[i] );
+	    done += 4;
+	} else if(str[i] == '\\' || str[i] == '(' || str[i] == ')' ) {
+	    if(done + 2 >= buflen)
+	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
+	    buf[done++] = '\\';
+	    buf[done++] = str[i];
+	} else {
+	    if(done + 1 >= buflen)
+	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
+	    buf[done++] = str[i];
+	}
     }
+    buf[done] = '\0';
 
-    wsprintf32A(buf, psshow, str);
+    buf1 = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psshow) + done);
 
-    PSDRV_WriteSpool(dc, buf, strlen(buf));
-    HeapFree(GetProcessHeap(), 0, buf);
+    wsprintf32A(buf1, psshow, buf);
+
+    PSDRV_WriteSpool(dc, buf1, strlen(buf1));
+    HeapFree(PSDRV_Heap, 0, buf);
+    HeapFree(PSDRV_Heap, 0, buf1);
+
     return TRUE;
 }    
 

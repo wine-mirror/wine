@@ -42,9 +42,6 @@ typedef struct _DPA_DATA
 } DPA_DATA, *LPDPA_DATA;
 
 
-DWORD WINAPI DSA_Create (DWORD, DWORD);
-
-
 DWORD WINAPI DPA_Create (DWORD);
 DWORD WINAPI DPA_GetPtr (DWORD, DWORD);
 DWORD WINAPI DPA_InsertPtr (DWORD, DWORD, DWORD);
@@ -255,24 +252,24 @@ DSA_GetItemPtr (DWORD dwParam1, DWORD dwParam2)
 
 
 DWORD WINAPI
-DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, LPSTR lpString)
 {
     LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
     DWORD dwIndex;
     INT32 len;
 
     TRACE (commctrl, "(0x%08lx 0x%08lx \"%s\"):semi-stub!\n",
-	   dwParam1, dwParam2, (LPSTR)dwParam3);
+	   dwParam1, dwParam2, lpString);
 
     if (dsaPtr->ptrs == NULL) {
 	dsaPtr->ptrs = (LPSTR*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
 					  dsaPtr->dwInitial * sizeof(LPVOID));
 	dsaPtr->dwMaxCount = dsaPtr->dwInitial;
         dwIndex = 0;
-	len = lstrlen32A ((LPSTR)dwParam3);
+	len = lstrlen32A (lpString);
 	dsaPtr->ptrs[dwIndex] =
 	    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-	lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
+	lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
     }
     else {
 	TRACE (commctrl, "(0x%08lx 0x%08lx)\n",
@@ -280,10 +277,10 @@ DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 	if (dwParam2 >= dsaPtr->dwEntryCount) {
 	    if (dsaPtr->dwEntryCount < dsaPtr->dwMaxCount) {
 		dwIndex = dsaPtr->dwEntryCount;
-		len = lstrlen32A ((LPSTR)dwParam3);
+		len = lstrlen32A (lpString);
 		dsaPtr->ptrs[dwIndex] =
 		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-		lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
+		lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
 	    }
 	    else {
 		/* allocate new pointer list and copy all pointers */
@@ -298,10 +295,10 @@ DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 
 		/* add new string */
 		dwIndex = dsaPtr->dwEntryCount;
-		len = lstrlen32A ((LPSTR)dwParam3);
+		len = lstrlen32A (lpString);
 		dsaPtr->ptrs[dwIndex] =
 		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-		lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
+		lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
 	    }
 	}
 	else {

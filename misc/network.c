@@ -115,7 +115,7 @@ UINT32 WINAPI WNetAddConnection3_32W(HWND32 owner,
 /*******************************************************************
  * WNetConnectionDialog1_32A [MPR.59]
  */
-UINT32 WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
+UINT32 WINAPI WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
 { FIXME(wnet,"%p stub\n", lpConnDlgStruct);   
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
@@ -123,16 +123,16 @@ UINT32 WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
 /*******************************************************************
  * WNetConnectionDialog1_32W [MPR.60]
  */ 
-UINT32 WNetConnectionDialog1_32W (LPCONNECTDLGSTRUCT32W lpConnDlgStruct)
+UINT32 WINAPI WNetConnectionDialog1_32W (LPCONNECTDLGSTRUCT32W lpConnDlgStruct)
 { FIXME(wnet,"%p stub\n", lpConnDlgStruct);
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
 }
  
 /*******************************************************************
- * WNetConnectionDialog1_32 [MPR.61]
+ * WNetConnectionDialog_32 [MPR.61]
  */ 
-UINT32 WNetConnectionDialog1_32(HWND32 owner, DWORD flags  )
+UINT32 WINAPI WNetConnectionDialog_32(HWND32 owner, DWORD flags  )
 { FIXME(wnet,"owner = 0x%x, flags=0x%lx stub\n", owner,flags);
   SetLastError(WN_NO_NETWORK);
   return ERROR_NO_NETWORK;
@@ -275,15 +275,11 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
     if (lpLocalName[1] == ':')
     {
         int drive = toupper(lpLocalName[0]) - 'A';
-        switch(GetDriveType16(drive))
+        switch(DRIVE_GetType(drive))
         {
-        case DRIVE_CANNOTDETERMINE:
-        case DRIVE_DOESNOTEXIST:
+        case TYPE_INVALID:
             return WN_BAD_LOCALNAME;
-        case DRIVE_REMOVABLE:
-        case DRIVE_FIXED:
-            return WN_NOT_CONNECTED;
-        case DRIVE_REMOTE:
+        case TYPE_NETWORK:
             path = DRIVE_GetLabel(drive);
             if (strlen(path) + 1 > *cbRemoteName)
             {
@@ -293,6 +289,8 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
             strcpy( lpRemoteName, path );
             *cbRemoteName = strlen(lpRemoteName) + 1;
             return WN_SUCCESS;
+	default:
+	    return WN_BAD_LOCALNAME;
         }
     }
     return WN_BAD_LOCALNAME;
@@ -689,15 +687,6 @@ DWORD WINAPI _MPR_22(DWORD x)
 	return 0;
 }
 
-/*****************************************************************
- *  [MPR.25]
- */
-
-DWORD WINAPI _MPR_25(DWORD x, DWORD y)
-{
-	FIXME(mpr,"(%lx,%lx): stub\n",x,y);
-	return 1;
-}
 /*****************************************************************
  *  MultinetGetErrorTextA [MPR.28]
  */

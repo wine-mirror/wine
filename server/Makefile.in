@@ -8,8 +8,10 @@ MODULE    = server
 C_SRCS = \
 	object.c \
 	process.c \
+	request.c \
 	socket.c \
-	thread.c
+	thread.c \
+	trace.c
 
 EXTRA_SRCS = main.c
 MAIN_OBJS = main.o
@@ -21,6 +23,6 @@ all: $(MODULE).o $(PROGRAMS)
 @MAKE_RULES@
 
 wineserver: $(OBJS) $(MAIN_OBJS)
-	gcc -o $(PROGRAMS) $(OBJS) $(MAIN_OBJS)
+	$(CC) -o $(PROGRAMS) $(OBJS) $(MAIN_OBJS) $(LIBS)
 
 ### Dependencies:

@@ -10,7 +10,7 @@
  *   - Notifications.
  *   - Fix TB_GETBITMAPFLAGS.
  *   - Fix TB_GETROWS and TB_SETROWS.
- *   - Tooltip support (partially).
+ *   - Tooltip support (under contruction).
  *   - Unicode suppport.
  *   - Internal COMMCTL32 bitmaps.
  *   - Fix TOOLBAR_Customize. (Customize dialog.)
@@ -249,8 +249,6 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
     BOOL32 bVertical;
     SIZE32  sizeString;
 
-
-    /* test */
     TOOLBAR_CalcStrings (wndPtr, &sizeString);
 
     if (sizeString.cy > 0)
@@ -300,6 +298,18 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
 	btnPtr->rect.top    = y;
 	btnPtr->rect.right  = x + cx;
 	btnPtr->rect.bottom = y + cy;
+
+	if (infoPtr->hwndToolTip) {
+	    TTTOOLINFO32A ti;
+
+	    ZeroMemory (&ti, sizeof(TTTOOLINFO32A));
+	    ti.cbSize = sizeof(TTTOOLINFO32A);
+	    ti.hwnd = wndPtr->hwndSelf;
+	    ti.uId = btnPtr->idCommand;
+	    ti.rect = btnPtr->rect;
+	    SendMessage32A (infoPtr->hwndToolTip, TTM_NEWTOOLRECT32A,
+			    0, (LPARAM)&ti);
+	}
 
 	if (bVertical) {
 	    x = 0;
@@ -411,6 +421,24 @@ TOOLBAR_GetCheckedGroupButtonIndex (TOOLBAR_INFO *infoPtr, INT32 nIndex)
 }
 
 
+static VOID
+TOOLBAR_RelayEvent (HWND32 hwndTip, HWND32 hwndMsg, UINT32 uMsg,
+		    WPARAM32 wParam, LPARAM lParam)
+{
+    MSG32 msg;
+
+    msg.hwnd = hwndMsg;
+    msg.message = uMsg;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.time = GetMessageTime ();
+    msg.pt.x = LOWORD(GetMessagePos ());
+    msg.pt.y = HIWORD(GetMessagePos ());
+
+    SendMessage32A (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+
 static LRESULT
 TOOLBAR_AddBitmap (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
@@ -512,6 +540,20 @@ TOOLBAR_AddButtons32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	infoPtr->buttons[nOldButtons+nCount].fsStyle   = lpTbb[nCount].fsStyle;
 	infoPtr->buttons[nOldButtons+nCount].dwData    = lpTbb[nCount].dwData;
 	infoPtr->buttons[nOldButtons+nCount].iString   = lpTbb[nCount].iString;
+
+	if (infoPtr->hwndToolTip) {
+	    TTTOOLINFO32A ti;
+
+	    ZeroMemory (&ti, sizeof(TTTOOLINFO32A));
+	    ti.cbSize   = sizeof (TTTOOLINFO32A);
+	    ti.hwnd     = wndPtr->hwndSelf;
+	    ti.uId      = (LPSTR)lpTbb[nCount].idCommand;
+	    ti.hinst    = 0;
+	    ti.lpszText = LPSTR_TEXTCALLBACK32A;
+
+	    SendMessage32A (infoPtr->hwndToolTip, TTM_ADDTOOL32A,
+			    0, (LPARAM)&ti);
+	}
     }
 
     TOOLBAR_CalcToolbar (wndPtr);
@@ -636,8 +678,8 @@ TOOLBAR_AutoSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	cy += 2;
 
     infoPtr->bAutoSize = TRUE;
-    SetWindowPos32 (wndPtr->hwndSelf, 0, parent_rect.left, parent_rect.top,
-		    cx, cy, uPosFlags | SWP_NOZORDER);
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, parent_rect.left, parent_rect.top,
+		    cx, cy, uPosFlags);
 
     return 0;
 }
@@ -763,6 +805,17 @@ TOOLBAR_DeleteButton (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if ((nIndex < 0) || (nIndex >= infoPtr->nNumButtons))
 	return FALSE;
 
+    if (infoPtr->hwndToolTip) {
+	TTTOOLINFO32A ti;
+
+	ZeroMemory (&ti, sizeof(TTTOOLINFO32A));
+	ti.cbSize   = sizeof (TTTOOLINFO32A);
+	ti.hwnd     = wndPtr->hwndSelf;
+	ti.uId      = infoPtr->buttons[nIndex].idCommand;
+
+	SendMessage32A (infoPtr->hwndToolTip, TTM_DELTOOL32A, 0, (LPARAM)&ti);
+    }
+
     if (infoPtr->nNumButtons == 1) {
 	TRACE (toolbar, " simple delete!\n");
 	HeapFree (GetProcessHeap (), 0, infoPtr->buttons);
@@ -875,7 +928,55 @@ TOOLBAR_GetButton (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << TOOLBAR_GetButtonInfo >>
+static LRESULT
+TOOLBAR_GetButtonInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
+    LPTBBUTTONINFO32A lpTbInfo = (LPTBBUTTONINFO32A)lParam;
+    TBUTTON_INFO *btnPtr;
+    INT32 nIndex;
+
+    if (infoPtr == NULL) return -1;
+    if (lpTbInfo == NULL) return -1;
+    if (lpTbInfo->cbSize < sizeof(LPTBBUTTONINFO32A)) return -1;
+
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT32)wParam);
+
+    if (nIndex == -1)
+	return -1;
+
+    btnPtr = &infoPtr->buttons[nIndex];
+
+    if (lpTbInfo->dwMask & TBIF_COMMAND)
+	lpTbInfo->idCommand = btnPtr->idCommand;
+
+    if (lpTbInfo->dwMask & TBIF_IMAGE)
+	lpTbInfo->iImage = btnPtr->iBitmap;
+
+    if (lpTbInfo->dwMask & TBIF_LPARAM)
+	lpTbInfo->lParam = btnPtr->dwData;
+
+    if (lpTbInfo->dwMask & TBIF_SIZE)
+	lpTbInfo->cx = (WORD)(btnPtr->rect.right - btnPtr->rect.left);
+
+    if (lpTbInfo->dwMask & TBIF_STATE)
+	lpTbInfo->fsState = btnPtr->fsState;
+
+    if (lpTbInfo->dwMask & TBIF_STYLE)
+	lpTbInfo->fsStyle = btnPtr->fsStyle;
+
+    if (lpTbInfo->dwMask & TBIF_TEXT) {
+	if ((btnPtr->iString >= 0) || (btnPtr->iString < infoPtr->nNumStrings))
+	    lstrcpyn32A (lpTbInfo->pszText, 
+			 (LPSTR)infoPtr->strings[btnPtr->iString],
+			 lpTbInfo->cchText);
+    }
+
+    return nIndex;
+}
+
+
+// << TOOLBAR_GetButtonInfo32W >>
 
 
 static LRESULT
@@ -929,7 +1030,13 @@ TOOLBAR_GetDisabledImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << TOOLBAR_GetExtendedStyle >>
+__inline__ static LRESULT
+TOOLBAR_GetExtendedStyle (WND *wndPtr)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
+
+    return infoPtr->dwExStyle;
+}
 
 
 static LRESULT
@@ -995,7 +1102,7 @@ TOOLBAR_GetMaxSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
     LPSIZE32 lpSize = (LPSIZE32)lParam;
 
-
+    FIXME (toolbar, "empty stub!\n");
 
     return TRUE;
 }
@@ -1154,6 +1261,20 @@ TOOLBAR_InsertButton32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->buttons[nIndex].fsStyle   = lpTbb->fsStyle;
     infoPtr->buttons[nIndex].dwData    = lpTbb->dwData;
     infoPtr->buttons[nIndex].iString   = lpTbb->iString;
+
+    if (infoPtr->hwndToolTip) {
+	TTTOOLINFO32A ti;
+
+	ZeroMemory (&ti, sizeof(TTTOOLINFO32A));
+	ti.cbSize   = sizeof (TTTOOLINFO32A);
+	ti.hwnd     = wndPtr->hwndSelf;
+	ti.uId      = lpTbb->idCommand;
+	ti.hinst    = 0;
+	ti.lpszText = LPSTR_TEXTCALLBACK32A;
+
+	SendMessage32A (infoPtr->hwndToolTip, TTM_ADDTOOL32A,
+			0, (LPARAM)&ti);
+    }
 
     /* post insert copy */
     if (nIndex < infoPtr->nNumButtons - 1) {
@@ -1612,10 +1733,25 @@ TOOLBAR_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
     if (wndPtr->dwStyle & TBSTYLE_TOOLTIPS) {
 	/* Create tooltip control */
-//	infoPtr->hwndToolTip = CreateWindowEx32A (....);
+	infoPtr->hwndToolTip =
+	    CreateWindowEx32A (0, TOOLTIPS_CLASS32A, NULL, TTS_ALWAYSTIP,
+			       CW_USEDEFAULT32, CW_USEDEFAULT32,
+			       CW_USEDEFAULT32, CW_USEDEFAULT32,
+			       wndPtr->hwndSelf, 0,
+			       wndPtr->hInstance, 0);
 
 	/* Send NM_TOOLTIPSCREATED notification */
+	if (infoPtr->hwndToolTip) {
+	    NMTOOLTIPSCREATED nmttc;
 
+	    nmttc.hdr.hwndFrom = wndPtr->hwndSelf;
+	    nmttc.hdr.idFrom = wndPtr->wIDmenu;
+	    nmttc.hdr.code = NM_TOOLTIPSCREATED;
+	    nmttc.hwndToolTips = infoPtr->hwndToolTip;
+
+	    SendMessage32A (infoPtr->hwndNotify, WM_NOTIFY,
+			    (WPARAM32)wndPtr->wIDmenu, (LPARAM)&nmttc);
+	}
     }
 
     return 0;
@@ -1724,6 +1860,10 @@ TOOLBAR_LButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     INT32   nHit;
     HDC32   hdc;
 
+    if (infoPtr->hwndToolTip)
+	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+			    WM_LBUTTONDOWN, wParam, lParam);
+
     pt.x = (INT32)LOWORD(lParam);
     pt.y = (INT32)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (wndPtr, &pt);
@@ -1760,6 +1900,10 @@ TOOLBAR_LButtonUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     INT32   nOldIndex = -1;
     HDC32   hdc;
     BOOL32  bSendMessage = TRUE;
+
+    if (infoPtr->hwndToolTip)
+	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+			    WM_LBUTTONUP, wParam, lParam);
 
     pt.x = (INT32)LOWORD(lParam);
     pt.y = (INT32)HIWORD(lParam);
@@ -1821,6 +1965,10 @@ TOOLBAR_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     POINT32 pt;
     INT32   nHit;
     HDC32   hdc;
+
+    if (infoPtr->hwndToolTip)
+	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+			    WM_MOUSEMOVE, wParam, lParam);
 
     pt.x = (INT32)LOWORD(lParam);
     pt.y = (INT32)HIWORD(lParam);
@@ -1885,8 +2033,12 @@ TOOLBAR_NCCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	return 0;
     }
 
-    /* this is just for security (reliable??)*/
+    /* paranoid!! */
     infoPtr->dwStructSize = sizeof(TBBUTTON);
+
+    /* fix instance handle, if the toolbar was created by CreateToolbarEx() */
+    if (!wndPtr->hInstance)
+	wndPtr->hInstance = wndPtr->parent->hInstance;
 
     return DefWindowProc32A (wndPtr->hwndSelf, WM_NCCREATE, wParam, lParam);
 }
@@ -1910,8 +2062,7 @@ TOOLBAR_NCPaint (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
-	== NULLREGION)
-    {
+	== NULLREGION){
 	ReleaseDC32( hwnd, hdc );
 	return 0;
     }
@@ -1934,6 +2085,23 @@ TOOLBAR_NCPaint (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     }
 
     ReleaseDC32( hwnd, hdc );
+
+    return 0;
+}
+
+
+__inline__ static LRESULT
+TOOLBAR_Notify (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
+    LPNMHDR lpnmh = (LPNMHDR)lParam;
+
+    if ((infoPtr->hwndToolTip) && ((lpnmh->code == TTN_GETDISPINFO32A) ||
+	(lpnmh->code == TTN_GETDISPINFO32W))) {
+
+	SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
+			wParam, lParam);
+    }
 
     return 0;
 }
@@ -2079,7 +2247,10 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TB_GETBUTTON:
 	    return TOOLBAR_GetButton (wndPtr, wParam, lParam);
 
-//	case TB_GETBUTTONINFO:			/* 4.71 */
+	case TB_GETBUTTONINFO32A:
+	    return TOOLBAR_GetButtonInfo32A (wndPtr, wParam, lParam);
+
+//	case TB_GETBUTTONINFO32W:		/* 4.71 */
 
 	case TB_GETBUTTONSIZE:
 	    return TOOLBAR_GetButtonSize (wndPtr);
@@ -2093,7 +2264,8 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TB_GETDISABLEDIMAGELIST:
 	    return TOOLBAR_GetDisabledImageList (wndPtr, wParam, lParam);
 
-//	case TB_GETEXTENDEDSTYLE:		/* 4.71 */
+	case TB_GETEXTENDEDSTYLE:
+	    return TOOLBAR_GetExtendedStyle (wndPtr);
 
 	case TB_GETHOTIMAGELIST:
 	    return TOOLBAR_GetHotImageList (wndPtr, wParam, lParam);
@@ -2185,7 +2357,8 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TB_SETBITMAPSIZE:
 	    return TOOLBAR_SetBitmapSize (wndPtr, wParam, lParam);
 
-//	case TB_SETBUTTONINFO:			/* 4.71 */
+//	case TB_SETBUTTONINFO32A:		/* 4.71 */
+//	case TB_SETBUTTONINFO32W:		/* 4.71 */
 
 	case TB_SETBUTTONSIZE:
 	    return TOOLBAR_SetButtonSize (wndPtr, wParam, lParam);
@@ -2243,14 +2416,22 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    return TOOLBAR_SetUnicodeFormat (wndPtr, wParam, lParam);
 
 
+//	case WM_CHAR:
+
 	case WM_CREATE:
 	    return TOOLBAR_Create (wndPtr, wParam, lParam);
+
+//	case WM_COMMAND:
 
 	case WM_DESTROY:
 	    return TOOLBAR_Destroy (wndPtr, wParam, lParam);
 
 	case WM_ERASEBKGND:
 	    return TOOLBAR_EraseBackground (wndPtr, wParam, lParam);
+
+//	case WM_GETFONT:
+//	case WM_KEYDOWN:
+//	case WM_KILLFOCUS:
 
 	case WM_LBUTTONDBLCLK:
 	    return TOOLBAR_LButtonDblClk (wndPtr, wParam, lParam);
@@ -2276,8 +2457,10 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_NCPAINT:
 	    return TOOLBAR_NCPaint (wndPtr, wParam, lParam);
 
-//	case WM_NOTIFY:
-//	    SendMessage32A (GetParent32 (hwnd), uMsg, wParam, lParam);
+	case WM_NOTIFY:
+	    return TOOLBAR_Notify (wndPtr, wParam, lParam);
+
+//	case WM_NOTIFYFORMAT:
 
 	case WM_PAINT:
 	    return TOOLBAR_Paint (wndPtr, wParam);
@@ -2306,8 +2489,7 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-TOOLBAR_Register (void)
+void TOOLBAR_Register (void)
 {
     WNDCLASS32A wndClass;
 
@@ -2324,4 +2506,3 @@ TOOLBAR_Register (void)
  
     RegisterClass32A (&wndClass);
 }
-

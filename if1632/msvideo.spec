@@ -1,7 +1,7 @@
 name msvideo
 type win16
 
-2 stub VIDEOFORWINDOWSVERSION
+2 pascal VideoForWindowsVersion() VideoForWindowsVersion
 20 stub VIDEOGETNUMDEVS
 21 stub VIDEOGETERRORTEXT
 22 stub VIDEOCAPDRIVERDESCANDVER

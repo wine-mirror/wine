@@ -25,6 +25,11 @@
 #define PRINTER_ATTRIBUTE_WORK_OFFLINE   0x00000400
 #define PRINTER_ATTRIBUTE_ENABLE_BIDI    0x00000800
 
+
+DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+	  LPDWORD lpType, LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded);
+DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+          DWORD lpType, LPBYTE lpPrinterData, DWORD dwSize);
 HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC);
 int WINAPI CloseJob(HANDLE16 hJob);
 int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch);
@@ -35,3 +40,4 @@ DWORD WINAPI GetSpoolJob(int nOption, LONG param);
 int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg);
 
 #endif  /* __WINE_PRINT_H */
+

@@ -19,7 +19,7 @@
  *     write (rwflag == 0)
  ************************************************************/
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 {
   FILE *fp;
@@ -28,6 +28,7 @@ BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
   char *start, *end;
   int ret = TRUE;
 
+#ifdef linux
   /* 
      The entries in /proc/self/maps are of the form:
      08000000-08002000 r-xp 00000000 03:41 2361
@@ -41,12 +42,34 @@ BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 
      Only permissions start and end are used here
      */
+#else
+/*
+    % cat /proc/curproc/map
+    start      end         resident   private perm    type
+    0x1000     0xe000            12         0 r-x COW vnode
+    0xe000     0x10000            2         2 rwx COW vnode
+    0x10000    0x27000            4         4 rwx     default
+    0x800e000  0x800f000          1         1 rw-     default
+    0xefbde000 0xefbfe000         1         1 rwx     default
+    
+    COW = "copy on write"
+*/
+#endif
+
   
+#ifdef linux
   if (!(fp = fopen("/proc/self/maps", "r")))
+#else
+  if (!(fp = fopen("/proc/curproc/map", "r")))
+#endif
     return FALSE; 
 
   while (fgets( buf, 79, fp)) {
+#ifdef linux
     sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
+#else
+    sscanf(buf, "%x %x %*d %*d %3s", (int *) &start, (int *) &end, prot);
+#endif
     if ( end <= addr)
       continue;
     if (start <= addr && addr+size < end) {
@@ -60,13 +83,13 @@ BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
   fclose( fp);
   return ret;
 }
-#else  /* linux */
+#else  /* linux || FreeBSD */
 /* FIXME: code needed for BSD et al. */
 BOOL32 DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
 {
     return FALSE;
 }
-#endif  /* linux */
+#endif  /* linux || FreeBSD */
 
 
 /***********************************************************************

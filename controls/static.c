@@ -115,18 +115,22 @@ static HICON16 STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
 
     if (wndPtr->flags & WIN_ISWIN32)
     {
-        hicon = LoadIcon32A( wndPtr->hInstance, name );
-        if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-            hicon = LoadIcon32A( 0, name );
-    }
-    else
-    {
+	if (!HIWORD(wndPtr->hInstance)) {
+	    LPSTR segname = SEGPTR_STRDUP(name);
+	    hicon = LoadIcon16( wndPtr->hInstance, SEGPTR_GET(segname) );
+	    SEGPTR_FREE(segname);
+	} else
+	    hicon = LoadIcon32A( wndPtr->hInstance, name );
+    } else {
         LPSTR segname = SEGPTR_STRDUP(name);
+
+	if (HIWORD(wndPtr->hInstance))
+		FIXME(static,"win16 window class, but win32 hinstance??\n");
         hicon = LoadIcon16( wndPtr->hInstance, SEGPTR_GET(segname) );
-        if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-            hicon = LoadIcon32A( 0, segname );
         SEGPTR_FREE(segname);
     }
+    if (!hicon)
+	hicon = LoadIcon32A( 0, name );
     return hicon;
 }
 

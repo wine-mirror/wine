@@ -240,12 +240,18 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
+AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
 AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
+
+dnl **** Check for sendmsg in -lsocket if not found above ****
+
+if test $ac_cv_func_sendmsg = no; then
+    AC_CHECK_LIB(socket,sendmsg)
+fi
 
 dnl **** statfs checks ****
 
@@ -467,6 +473,7 @@ library/Makefile
 libtest/Makefile
 loader/Makefile
 loader/ne/Makefile
+loader/dos/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile

@@ -80,11 +80,9 @@ int *__h_errno_location()
  */
 static void SYSDEPS_StartThread( THDB *thdb )
 {
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
     thdb->unix_pid = getpid();
     SET_FS( thdb->teb_sel );
-    CLIENT_InitThread();
-    ExitThread( func( thdb->entry_arg ) );
+    THREAD_Start( thdb );
 }
 #endif  /* __linux__ */
 

@@ -22,6 +22,9 @@
  *        03-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
  *             Original implementation.
  *
+ *        05-Aug-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
+ *             Removed some unused code.
+ *
  *****************************************************************************/
 
 #include <malloc.h>
@@ -35,10 +38,6 @@
 #include "tweak.h"
 #include "windows.h"
 
-/* Parameters for windows/nonclient.c */
-extern int  NC_MaxControlNudge;
-extern int  NC_MinControlNudge;
-extern UINT32  NC_CaptionTextFlags;
 
 /* Parameters for controls/menu.c */
 extern UINT32  MENU_BarItemTopNudge;
@@ -50,13 +49,8 @@ extern UINT32  MENU_HighlightLeftNudge;
 extern UINT32  MENU_HighlightBottomNudge;
 extern UINT32  MENU_HighlightRightNudge;
 
-/* General options */
-HPEN32  TWEAK_PenFF95;
-HPEN32  TWEAK_PenE095;
-HPEN32  TWEAK_PenC095;
-HPEN32  TWEAK_Pen8095;
-HPEN32  TWEAK_Pen0095;
 
+/* General options */
 #if defined(WIN_95_LOOK)
 int  TWEAK_Win95Look = 1;
 #else
@@ -104,53 +98,6 @@ static int  TWEAK_MenuInit()
 
 /******************************************************************************
  *
- *   int  TWEAK_NonClientInit()
- *
- *   Initializes the Win95 tweaks to the non-client drawing functions.  See
- *   windows/nonclient.c.  Return value indicates success (non-zero) or
- *   failure.
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- *
- *****************************************************************************/
-
-static int  TWEAK_NonClientInit()
-{
-    char  key_value[2];
-
-    NC_MaxControlNudge =
-	PROFILE_GetWineIniInt("Tweak.Layout", "MaxControlNudge", 0);
-    NC_MinControlNudge =
-	PROFILE_GetWineIniInt("Tweak.Layout", "MinControlNudge", 0);
-
-    NC_CaptionTextFlags = DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX;
-
-    PROFILE_GetWineIniString("Tweak.Layout", "CaptionAlignment", 
-			     TWEAK_Win95Look ? "l" : "c", key_value, 2);
-
-    switch(key_value[0]) {
-    case 'l':
-    case 'L':
-	NC_CaptionTextFlags |= DT_LEFT;
-	break;
-
-    case 'r':
-    case 'R':
-	NC_CaptionTextFlags |= DT_RIGHT;
-	break;
-
-    default:
-	NC_CaptionTextFlags |= DT_CENTER;
-    }
-
-    return 1;
-}
-
-
-/******************************************************************************
- *
  *   int  TWEAK_VarInit()
  *
  *   Initializes the miscellaneous variables which are used in the tweak
@@ -165,35 +112,6 @@ static int  TWEAK_NonClientInit()
 static int  TWEAK_VarInit()
 {
     TWEAK_Win95Look = PROFILE_GetWineIniBool("Tweak.Layout", "Win95Look", 0);
-
-    /* FIXME: Each color should really occupy a single entry in the wine.conf
-       file, but I couldn't settle on a good (intuitive!) format. */
-
-    TWEAK_PenFF95 = CreatePen32(
-	PS_SOLID, 1,
-	RGB(PROFILE_GetWineIniInt("Tweak.Colors", "PenFF95.Red", 0xff),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenFF95.Grn", 0xff),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenFF95.Blu", 0xff)));
-    TWEAK_PenE095 = CreatePen32(
-	PS_SOLID, 1,
-	RGB(PROFILE_GetWineIniInt("Tweak.Colors", "PenE095.Red", 0xe0),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenE095.Grn", 0xe0),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenE095.Blu", 0xe0)));
-    TWEAK_PenC095 = CreatePen32(
-	PS_SOLID, 1,
-	RGB(PROFILE_GetWineIniInt("Tweak.Colors", "PenC095.Red", 0xc0),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenC095.Grn", 0xc0),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "PenC095.Blu", 0xc0)));
-    TWEAK_Pen8095 = CreatePen32(
-	PS_SOLID, 1,
-	RGB(PROFILE_GetWineIniInt("Tweak.Colors", "Pen8095.Red", 0x80),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen8095.Grn", 0x80),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen8095.Blu", 0x80)));
-    TWEAK_Pen0095 = CreatePen32(
-	PS_SOLID, 1,
-	RGB(PROFILE_GetWineIniInt("Tweak.Colors", "Pen0095.Red", 0x00),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen0095.Grn", 0x00),
-	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen0095.Blu", 0x00)));
 
     TRACE(tweak, "Using %s look and feel.\n",
 		 TWEAK_Win95Look ? "Win95" : "Win3.1");
@@ -217,7 +135,6 @@ static int  TWEAK_VarInit()
 int  TWEAK_Init()
 {
     TWEAK_VarInit();
-    TWEAK_NonClientInit();
     TWEAK_MenuInit();
     return 1;
 }
@@ -279,14 +196,14 @@ void  TWEAK_DrawReliefRect95(
     if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
 
 	/* Draw the top/left lines first */
-	prevpen = SelectObject32(hdc, TWEAK_PenE095);
+	prevpen = SelectObject32(hdc, GetSysColorPen32(COLOR_3DLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->right - 1, rect->top);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->left, rect->bottom - 1);
 
-	SelectObject32(hdc, TWEAK_PenFF95);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DHIGHLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->right - 2, rect->top + 1);
@@ -295,14 +212,14 @@ void  TWEAK_DrawReliefRect95(
 
 
 	/* Now the bottom/right lines */
-	SelectObject32(hdc, TWEAK_Pen0095);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DDKSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
 		  rect->bottom - 1, rect->right - 1, rect->bottom - 1);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
 		  rect->top, rect->right - 1, rect->bottom - 1);
 
-	SelectObject32(hdc, TWEAK_Pen8095);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->bottom - 2, rect->right - 2, rect->bottom - 2);
@@ -348,14 +265,14 @@ void  TWEAK_DrawRevReliefRect95(
     if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
 
 	/* Draw the top/left lines first */
-	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
+	prevpen = SelectObject32(hdc, GetSysColorPen32(COLOR_3DSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->right - 1, rect->top);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->left, rect->bottom - 1);
 
-	SelectObject32(hdc, TWEAK_Pen0095);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DDKSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->right - 2, rect->top + 1);
@@ -364,14 +281,14 @@ void  TWEAK_DrawRevReliefRect95(
 
 
 	/* Now the bottom/right lines */
-	SelectObject32(hdc, TWEAK_PenFF95);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DHIGHLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
 		  rect->bottom - 1, rect->right - 1, rect->bottom - 1);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
 		  rect->top, rect->right - 1, rect->bottom - 1);
 
-	SelectObject32(hdc, TWEAK_PenE095);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->bottom - 2, rect->right - 2, rect->bottom - 2);
@@ -419,13 +336,13 @@ void  TWEAK_DrawMenuSeparatorHoriz95(
     if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
 
 	/* Draw the top line */
-	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
+	prevpen = SelectObject32(hdc, GetSysColorPen32(COLOR_3DSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc - 1, xc2,
 		  yc - 1);
 
 	/* And the bottom line */
-	SelectObject32(hdc, TWEAK_PenFF95);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DHIGHLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc, xc2, yc);
 
@@ -467,13 +384,13 @@ void  TWEAK_DrawMenuSeparatorVert95(
     if((dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC))) {
 
 	/* Draw the top line */
-	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
+	prevpen = SelectObject32(hdc, GetSysColorPen32(COLOR_3DSHADOW));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc, yc1, xc,
 		  yc2);
 
 	/* And the bottom line */
-	SelectObject32(hdc, TWEAK_PenFF95);
+	SelectObject32(hdc, GetSysColorPen32(COLOR_3DHIGHLIGHT));
 	DC_SetupGCForPen(dc);
 	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc + 1, yc1, xc + 1,
 		  yc2);

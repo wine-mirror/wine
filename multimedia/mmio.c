@@ -2,9 +2,9 @@
  * MMIO functions
  *
  * Copyright 1998 Andrew Taylor
+ * Copyright 1998 Ove Kåven
  *
- * NOTES:  I/O is still unbuffered;  mmioSetBuffer must be implemented
- * and mmio{Read,Write,Seek,others?} need buffer support.
+ * Buffering is not guaranteed to work properly yet, but if it does...
  * Buffering should almost give us memory files for free.
  */
 
@@ -232,6 +232,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16 * lpmmioinfo,
 		}
 	}
 
+	lpmminfo->dwFlags = dwOpenFlags;
 	lpmminfo->hmmio = hmmio;
 
 	/* call IO proc to actually open file */
@@ -301,7 +302,37 @@ LONG WINAPI mmioRead32(HMMIO32 hmmio, HPSTR pch, LONG cch)
 	if (lpmminfo == NULL)
 		return -1;
 
-	count = mmioSendMessage(hmmio, MMIOM_READ, (LPARAM) pch, (LPARAM) cch);
+	if (lpmminfo->pchNext != lpmminfo->pchEndRead) {
+		count = lpmminfo->pchEndRead - lpmminfo->pchNext;
+		if (count > cch) count = cch;
+		memcpy(pch, lpmminfo->pchNext, count);
+		lpmminfo->pchNext += count;
+		pch += count;
+		cch -= count;
+	} else
+		count = 0;
+
+	if (cch) {
+		if (lpmminfo->cchBuffer) {
+			mmioFlush32(hmmio, MMIO_EMPTYBUF);
+
+			while (cch) {
+				LONG size = mmioSendMessage(hmmio, MMIOM_READ,
+						(LPARAM) lpmminfo->pchBuffer,
+						(LPARAM) lpmminfo->cchBuffer);
+				lpmminfo->pchNext = lpmminfo->pchBuffer;
+				lpmminfo->pchEndRead = lpmminfo->pchBuffer + size;
+				if (size > cch) size = cch;
+				memcpy(pch, lpmminfo->pchNext, size);
+				lpmminfo->pchNext += size;
+				pch += size;
+				cch -= size;
+				count += size;
+			}
+		} else {
+			count += mmioSendMessage(hmmio, MMIOM_READ, (LPARAM) pch, (LPARAM) cch);
+		}
+	}
 
 	GlobalUnlock16(hmmio);
 	TRACE(mmio, "count=%ld\n", count);
@@ -330,7 +361,25 @@ LONG WINAPI mmioWrite32(HMMIO32 hmmio, HPCSTR pch, LONG cch)
 	if (lpmminfo == NULL)
 		return -1;
 
-	count = mmioSendMessage(hmmio, MMIOM_WRITE, (LPARAM) pch, (LPARAM) cch);
+	if (lpmminfo->cchBuffer) {
+		count = 0;
+		while (cch) {
+			if (lpmminfo->pchNext != lpmminfo->pchEndWrite) {
+				count = lpmminfo->pchEndWrite - lpmminfo->pchNext;
+				if (count > cch) count = cch;
+				memcpy(lpmminfo->pchNext, pch, count);
+				lpmminfo->pchNext += count;
+				pch += count;
+				cch -= count;
+				lpmminfo->dwFlags |= MMIO_DIRTY;
+			}
+
+			if (lpmminfo->pchNext == lpmminfo->pchEndWrite
+				&& mmioFlush32(hmmio, MMIO_EMPTYBUF)) break;
+		}
+	} else {
+		count = mmioSendMessage(hmmio, MMIOM_WRITE, (LPARAM) pch, (LPARAM) cch);
+	}
 
 	GlobalUnlock16(hmmio);
 	TRACE(mmio, "count=%ld\n", count);
@@ -355,11 +404,14 @@ LONG WINAPI mmioSeek32(HMMIO32 hmmio, LONG lOffset, INT32 iOrigin)
 
 	TRACE(mmio, "(%04X, %08lX, %d);\n", hmmio, lOffset, iOrigin);
 
+	if (mmioFlush32(hmmio, MMIO_EMPTYBUF))
+		return -1;
+
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL)
 		return 0;
 
-    offset = mmioSendMessage(hmmio, MMIOM_SEEK, (LPARAM) lOffset, (LPARAM) iOrigin);
+	offset = mmioSendMessage(hmmio, MMIOM_SEEK, (LPARAM) lOffset, (LPARAM) iOrigin);
 
 	GlobalUnlock16(hmmio);
 	return offset;
@@ -428,6 +480,8 @@ UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 u
 	TRACE(mmio, "mmioSetInfo\n");
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
+	lpmminfo->pchNext	= lpmmioinfo->pchNext;
+	lpmminfo->pchEndRead	= lpmmioinfo->pchEndRead;
 	GlobalUnlock16(hmmio);
 	return 0;
 }
@@ -438,12 +492,56 @@ UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 u
 UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
                             LONG cchBuffer, UINT16 uFlags)
 {
-	FIXME(mmio, "(hmmio=%d, pchBuf=%p, cchBuf=%ld, uFlags=%#08x): stub\n",
+	LPMMIOINFO16	lpmminfo;
+
+	if (mmioFlush32(hmmio, MMIO_EMPTYBUF) != 0)
+		return MMIOERR_CANNOTWRITE;
+
+	TRACE(mmio, "(hmmio=%04x, pchBuf=%p, cchBuf=%ld, uFlags=%#08x)\n",
 	      hmmio, pchBuffer, cchBuffer, uFlags);
+
+	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
+	if (lpmminfo == NULL) return 0;
+	if ((!cchBuffer || pchBuffer) && lpmminfo->dwFlags&MMIO_ALLOCBUF) {
+		GlobalUnlock16(lpmminfo->dwReserved1);
+		GlobalFree16(lpmminfo->dwReserved1);
+		lpmminfo->dwFlags &= ~MMIO_ALLOCBUF;
+	}
+	if (pchBuffer) {
+		lpmminfo->pchBuffer = pchBuffer;
+	} else
+	if (lpmminfo->dwFlags&MMIO_ALLOCBUF) {
+		HGLOBAL16 hNewBuf;
+		GlobalUnlock16(lpmminfo->dwReserved1);
+		hNewBuf = GlobalReAlloc16(lpmminfo->dwReserved1, cchBuffer, 0);
+		if (!hNewBuf) {
+			/* FIXME: this assumes the memory block didn't move */
+			GlobalLock16(lpmminfo->dwReserved1);
+			GlobalUnlock16(hmmio);
+			return MMIOERR_OUTOFMEMORY;
+		}
+		lpmminfo->dwReserved1 = hNewBuf;
+		lpmminfo->pchBuffer = GlobalLock16(hNewBuf);
+	} else
+	if (cchBuffer) {
+		HGLOBAL16 hNewBuf = GlobalAlloc16(GMEM_MOVEABLE, cchBuffer);
+		if (!hNewBuf) {
+			GlobalUnlock16(hmmio);
+			return MMIOERR_OUTOFMEMORY;
+		}
+		lpmminfo->dwReserved1 = hNewBuf;
+		lpmminfo->pchBuffer = GlobalLock16(hNewBuf);
+		lpmminfo->dwFlags |= MMIO_ALLOCBUF;
+	} else
+		lpmminfo->pchBuffer = NULL;
+	lpmminfo->cchBuffer = cchBuffer;
+	lpmminfo->pchNext = lpmminfo->pchBuffer;
+	lpmminfo->pchEndRead = lpmminfo->pchBuffer;
+	lpmminfo->pchEndWrite = lpmminfo->pchBuffer + cchBuffer;
+	lpmminfo->lBufOffset = 0;
+
+	GlobalUnlock16(hmmio);
 	return (UINT16) 0;
-/*	stops Corel Draw 4 (16 bit) from working
-	return MMIOERR_OUTOFMEMORY;
-*/
 }
 
 /**************************************************************************
@@ -455,6 +553,27 @@ UINT32 WINAPI mmioFlush32(HMMIO32 hmmio, UINT32 uFlags)
 	TRACE(mmio, "(%04X, %04X)\n", hmmio, uFlags);
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
+
+	/* not quite sure what to do here, but I'll guess */
+	if (lpmminfo->dwFlags&MMIO_DIRTY) {
+		if (lpmminfo->pchNext != (lpmminfo->pchBuffer + lpmminfo->lBufOffset)) {
+			if (lpmminfo->dwFlags&MMIO_READWRITE)
+				mmioSendMessage(hmmio, MMIOM_SEEK,
+					(LPARAM) (lpmminfo->pchBuffer - lpmminfo->pchEndRead) + lpmminfo->lBufOffset,
+					(LPARAM) SEEK_CUR );
+			mmioSendMessage(hmmio, MMIOM_WRITE,
+				(LPARAM) lpmminfo->pchBuffer + lpmminfo->lBufOffset,
+				(LPARAM) (lpmminfo->pchNext - lpmminfo->pchBuffer) - lpmminfo->lBufOffset );
+		}
+		lpmminfo->lBufOffset = lpmminfo->pchNext - lpmminfo->pchBuffer;
+		lpmminfo->dwFlags &= ~MMIO_DIRTY;
+	}
+	if (uFlags & MMIO_EMPTYBUF) {
+		lpmminfo->pchNext = lpmminfo->pchBuffer;
+		lpmminfo->pchEndRead = lpmminfo->pchBuffer;
+		lpmminfo->lBufOffset = 0;
+	}
+
 	GlobalUnlock16(hmmio);
 	return 0;
 }
@@ -472,20 +591,21 @@ UINT16 WINAPI mmioFlush16(HMMIO16 hmmio, UINT16 uFlags)
  */
 UINT32 WINAPI mmioAdvance32(HMMIO32 hmmio,MMIOINFO32*lpmmioinfo,UINT32 uFlags)
 {
-	int		count = 0;
 	LPMMIOINFO16	lpmminfo;
 	TRACE(mmio, "mmioAdvance\n");
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	if (uFlags == MMIO_READ)
-		count = _lread32(LOWORD(lpmminfo->adwInfo[0]), 
-			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
+	        lpmmioinfo->pchEndRead = lpmmioinfo->pchBuffer +
+	            mmioSendMessage(hmmio, MMIOM_READ,
+	                (LPARAM) lpmmioinfo->pchBuffer,
+	                (LPARAM) lpmmioinfo->cchBuffer);
 	if (uFlags == MMIO_WRITE)
-		count = _lwrite32(LOWORD(lpmminfo->adwInfo[0]),
-			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
-	lpmmioinfo->pchNext	+= count;
+	            mmioSendMessage(hmmio, MMIOM_WRITE,
+	                (LPARAM) lpmmioinfo->pchBuffer,
+	                (LPARAM) lpmmioinfo->cchBuffer);
+	lpmmioinfo->pchNext = lpmmioinfo->pchBuffer;
 	GlobalUnlock16(hmmio);
-	lpmminfo->lDiskOffset = _llseek32((HFILE32)lpmminfo->adwInfo[0], 0, SEEK_CUR);
 	return 0;
 }
 
@@ -494,20 +614,21 @@ UINT32 WINAPI mmioAdvance32(HMMIO32 hmmio,MMIOINFO32*lpmmioinfo,UINT32 uFlags)
  */
 UINT16 WINAPI mmioAdvance16(HMMIO16 hmmio,MMIOINFO16*lpmmioinfo,UINT16 uFlags)
 {
-	int		count = 0;
 	LPMMIOINFO16	lpmminfo;
 	TRACE(mmio, "mmioAdvance\n");
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	if (uFlags == MMIO_READ)
-		count = _lread32(LOWORD(lpmminfo->adwInfo[0]), 
-			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
+	        lpmmioinfo->pchEndRead = lpmmioinfo->pchBuffer +
+	            mmioSendMessage(hmmio, MMIOM_READ,
+	                (LPARAM) lpmmioinfo->pchBuffer,
+	                (LPARAM) lpmmioinfo->cchBuffer);
 	if (uFlags == MMIO_WRITE)
-		count = _lwrite32(LOWORD(lpmminfo->adwInfo[0]),
-			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
-	lpmmioinfo->pchNext	+= count;
+	            mmioSendMessage(hmmio, MMIOM_WRITE,
+	                (LPARAM) lpmmioinfo->pchBuffer,
+	                (LPARAM) lpmmioinfo->cchBuffer);
+	lpmmioinfo->pchNext = lpmmioinfo->pchBuffer;
 	GlobalUnlock16(hmmio);
-	lpmminfo->lDiskOffset = _llseek32((HFILE32)lpmminfo->adwInfo[0], 0, SEEK_CUR);
 	return 0;
 }
 
@@ -708,7 +829,29 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
  */
 UINT32 WINAPI mmioAscend32(HMMIO32 hmmio, MMCKINFO * lpck, UINT32 uFlags)
 {
-	FIXME(mmio, "empty stub !\n");
+	TRACE(mmio, "(%04X, %p, %04X);\n", 
+				hmmio, lpck, uFlags);
+	if (lpck->dwFlags&MMIO_DIRTY) {
+		DWORD	dwOldPos, dwNewSize, dwSizePos;
+		
+		dwOldPos = mmioSeek32(hmmio, 0, SEEK_CUR);
+		TRACE(mmio, "dwOldPos=%ld\n", dwOldPos);
+		dwNewSize = dwOldPos - lpck->dwDataOffset;
+		if (dwNewSize != lpck->cksize) {
+			TRACE(mmio, "dwNewSize=%ld\n", dwNewSize);
+			lpck->cksize = dwNewSize;
+
+			dwSizePos = lpck->dwDataOffset - sizeof(DWORD);
+			if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
+				dwSizePos -= sizeof(DWORD);
+			TRACE(mmio, "dwSizePos=%ld\n", dwSizePos);
+
+			mmioSeek32(hmmio, dwSizePos, SEEK_SET);
+			mmioWrite32(hmmio, (LPSTR)&dwNewSize, sizeof(DWORD));
+		}
+	}
+	mmioSeek32(hmmio,lpck->dwDataOffset+lpck->cksize,SEEK_SET);
+
 	return 0;
 }
 
@@ -725,7 +868,34 @@ UINT16 WINAPI mmioAscend16(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
  */
 UINT16 WINAPI mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
-	FIXME(mmio, "empty stub \n");
+	DWORD	dwOldPos;
+	LONG ix;
+
+	TRACE(mmio, "(%04X, %p, %04X);\n", 
+				hmmio, lpck, uFlags);
+
+	dwOldPos = mmioSeek32(hmmio, 0, SEEK_CUR);
+	TRACE(mmio, "dwOldPos=%ld\n", dwOldPos);
+
+	if (uFlags == MMIO_CREATELIST)
+		lpck->ckid = FOURCC_LIST;
+	else if (uFlags == MMIO_CREATERIFF)
+		lpck->ckid = FOURCC_RIFF;
+
+	lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
+	if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
+		lpck->dwDataOffset += sizeof(DWORD);
+	lpck->dwFlags = MMIO_DIRTY;
+
+	ix = mmioWrite32(hmmio, (LPSTR)lpck, lpck->dwDataOffset - dwOldPos);
+	TRACE(mmio, "after _lwrite32 ix = %ld req = %ld, errno = %d\n",ix,lpck->dwDataOffset - dwOldPos,errno);
+	if (ix < lpck->dwDataOffset - dwOldPos) {
+
+		mmioSeek32(hmmio, dwOldPos, SEEK_SET);
+		WARN(mmio, "return CannotWrite\n");
+		return MMIOERR_CANNOTWRITE;
+	}
+
 	return 0;
 }
 

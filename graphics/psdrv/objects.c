@@ -1,5 +1,5 @@
 /*
- *	Postscript driver object handling
+ *	PostScript driver object handling
  *
  *	Copyright 1998  Huw D M Davies
  *

@@ -1195,7 +1195,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 /**************************************************************************
  * 				wodMessage			[sample driver]
  */
-DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
   int audio;
@@ -1660,7 +1660,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 /**************************************************************************
  * 				widMessage			[sample driver]
  */
-DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
   int audio;
@@ -1810,7 +1810,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
  * 				wodMessage			[sample driver]
  */
-DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	FIXME(mciwave,"(%u, %04X, %08lX, %08lX, %08lX):stub\n",
@@ -1821,7 +1821,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /**************************************************************************
  * 				widMessage			[sample driver]
  */
-DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	FIXME(mciwave,"(%u, %04X, %08lX, %08lX, %08lX):stub\n",

@@ -14,11 +14,13 @@
 extern HANDLE16 DOSMEM_BiosSeg;
 extern DWORD DOSMEM_CollateTable;
 
-extern BOOL32 DOSMEM_Init(void);
+extern BOOL32 DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(void);
 extern WORD   DOSMEM_AllocSelector(WORD);
-extern LPVOID DOSMEM_GetBlock(UINT32 size, UINT16* p);
-extern BOOL32 DOSMEM_FreeBlock(void* ptr);
+extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* p);
+extern BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr);
+extern LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* p);
+extern UINT32 DOSMEM_Available(HMODULE16 hModule);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT32); /* linear DOS to Wine */
 extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
@@ -45,6 +47,10 @@ extern BOOL32 SIGNAL_InitEmulator(void);
 
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT *context);
+
+#define CTX_SEG_OFF_TO_LIN(context,seg,off) \
+    (ISV86(context) ? (void*)(V86BASE(context)+((seg)<<4)+off) \
+                    : PTR_SEG_OFF_TO_LIN(seg,off))
 
 #define INT_BARF(context,num) \
     fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \

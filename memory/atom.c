@@ -21,6 +21,7 @@
 #include "ldt.h"
 #include "stackframe.h"
 #include "user.h"
+#include "debug.h"
 
 #ifdef CONFIG_IPC
 #include "dde_atom.h"
@@ -136,6 +137,8 @@ static WORD ATOM_Hash(
 ) {
     WORD i, hash = 0;
 
+    TRACE(atom,"%x, %s, %x\n", entries, str, len);
+    
     for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
     return hash % entries;
 }
@@ -163,6 +166,8 @@ static ATOM ATOM_AddAtom(
     ATOMTABLE * table;
     int len, ae_len;
 
+    TRACE(atom,"0x%x, %s\n", selector, str);
+    
     if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
     if ((len = strlen( str )) > MAX_ATOM_LEN) len = MAX_ATOM_LEN;
     if (!(table = ATOM_GetTable( selector, TRUE ))) return 0;
@@ -175,6 +180,7 @@ static ATOM ATOM_AddAtom(
 	    (!lstrncmpi32A( entryPtr->str, str, len )))
 	{
 	    entryPtr->refCount++;
+        TRACE(atom,"-- existing 0x%x\n", entry);
 	    return HANDLETOATOM( entry );
 	}
 	entry = entryPtr->next;
@@ -191,6 +197,7 @@ static ATOM ATOM_AddAtom(
     entryPtr->length = len;
     strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1); /* always use strncpy ('\0's padding) */
     table->entries[hash] = entry;
+    TRACE(atom,"-- new 0x%x\n", entry);
     return HANDLETOATOM( entry );
 }
 
@@ -209,6 +216,8 @@ static ATOM ATOM_DeleteAtom(
     ATOMTABLE * table;
     HANDLE16 entry, *prevEntry;
     WORD hash;
+
+    TRACE(atom,"0x%x, 0x%x\n", selector, atom);
     
     if (atom < MIN_STR_ATOM) return 0;  /* Integer atom */
 
@@ -251,6 +260,8 @@ static ATOM ATOM_FindAtom(
     HANDLE16 entry;
     int len;
 
+    TRACE(atom,"%x, %s\n", selector, str);
+
     if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
     if ((len = strlen( str )) > 255) len = 255;
     if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
@@ -261,9 +272,12 @@ static ATOM ATOM_FindAtom(
 	ATOMENTRY * entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
 	    (!lstrncmpi32A( entryPtr->str, str, len )))
+    {    TRACE(atom,"-- found %x\n", entry);
 	    return HANDLETOATOM( entry );
+    }
 	entry = entryPtr->next;
     }
+    TRACE(atom,"-- not found\n");
     return 0;
 }
 
@@ -287,6 +301,8 @@ static UINT32 ATOM_GetAtomName(
     UINT32 len;
     char text[8];
     
+    TRACE(atom,"%x, %x\n", selector, atom);
+    
     if (!count) return 0;
     if (atom < MIN_STR_ATOM)
     {
@@ -296,7 +312,7 @@ static UINT32 ATOM_GetAtomName(
     }
     else
     {
-        if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
+       if (!(table = ATOM_GetTable( selector, FALSE ))) return 0;
 	entry = ATOMTOHANDLE( atom );
 	entryPtr = ATOM_MakePtr( selector, entry );
 	len = entryPtr->length;

@@ -4,9 +4,11 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 132
+#define DEBUG_CHANNEL_COUNT 134
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -217,6 +219,7 @@ const char* debug_ch_name[] = {
 "module",
 "mpr",
 "msg",
+"msvideo",
 "nonclient",
 "ntdll",
 "ole",
@@ -245,6 +248,7 @@ const char* debug_ch_name[] = {
 "snoop",
 "sound",
 "static",
+"statusbar",
 "stress",
 "string",
 "syscolor",

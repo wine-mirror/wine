@@ -20,6 +20,7 @@
 #include "win.h"
 #include "debug.h"
 #include "flatthunk.h"
+#include "syslevel.h"
 
 
 /***********************************************************************
@@ -1049,7 +1050,7 @@ _KERNEL_472(CONTEXT *context) {
  */
 VOID WINAPI _KERNEL_475(CONTEXT *context) 
 {
-    GET_FS( THREAD_Current()->saved_fs );
+    GET_FS( FS_reg(context) );
 }
 
 /**********************************************************************
@@ -1165,6 +1166,8 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
       TRACE(thunk, "after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
    }
+
+   SYSLEVEL_ReleaseWin16Lock();
 }
 
 /***********************************************************************
@@ -1173,6 +1176,8 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
 REGS_ENTRYPOINT(K32Thk1632Epilog)
 {
    LPBYTE code = (LPBYTE)EIP_reg(context) - 13;
+
+   SYSLEVEL_RestoreWin16Lock();
 
    /* We undo the SYSTHUNK hack if necessary. See K32Thk1632Prolog. */
 

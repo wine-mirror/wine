@@ -12,6 +12,7 @@
 #include "metafile.h"
 #include "options.h"
 #include "debug.h"
+#include "winerror.h"
 
 #define ENUM_UNICODE	0x00000001
 
@@ -1260,6 +1261,30 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
 	return 0;
 }
 
+/*************************************************************************
+ * GetFontData32 [GDI32.181] Retrieve data for TrueType font
+ *
+ * RETURNS
+ *
+ * success: Number of bytes returned 
+ * failure: GDI_ERROR
+ *
+ * NOTES
+ *
+ * Calls SetLastError()  
+ *
+ * BUGS
+ *
+ * Unimplemented
+ */
+DWORD WINAPI GetFontData32(HDC32 hdc, DWORD table, DWORD offset, 
+    LPVOID buffer, DWORD length)
+{
+    FIXME(font, "(%x,%ld,%ld,%p,%ld): stub\n", 
+        hdc, table, offset, buffer, length);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return GDI_ERROR;
+}
 
 /*************************************************************************
  * GetCharacterPlacement32A [GDI32.160]

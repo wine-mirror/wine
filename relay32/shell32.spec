@@ -1,5 +1,6 @@
 name	shell32
 type	win32
+init	Shell32LibMain
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 
@@ -7,10 +8,10 @@ type	win32
 # This list was updated to dll version 4.72
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
-   3 stub CheckEscapesA@8   # exported by name
+   3 stub CheckEscapesA   # exported by name
    4 stdcall SHChangeNotifyDeregister (long long) SHChangeNotifyDeregister
    5 stub SHChangeNotifyUpdateEntryList@16
-   6 stub CheckEscapesW@8   # exported by name
+   6 stub CheckEscapesW   # exported by name
    7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW   # exported by name
    8 stub Control_FillCache_RunDLL@16   # exported by name
    9 stub PifMgr_OpenProperties@16
@@ -118,16 +119,16 @@ type	win32
  111 stub FileMenu_Invalidate
  112 stub FileMenu_MeasureItem
  113 stub FileMenu_ReplaceUsingPidl
- 114 stub FileMenu_Create
+ 114 stdcall FileMenu_Create (long long long long long) FileMenu_Create
  115 stub FileMenu_AppendItem
  116 stub FileMenu_TrackPopupMenuEx
  117 stub FileMenu_DeleteItemByCmd
  118 stub FileMenu_Destroy
- 119 stdcall IsLFNDrive(ptr) IsLFNDrive
+ 119 stdcall IsLFNDrive(str) IsLFNDrive
  120 stub FileMenu_AbortInitMenu
  121 stub SHFlushClipboard
  122 stub RunDLL_CallEntry16
- 123 stub SHFreeUnusedLibraries
+ 123 stdcall SHFreeUnusedLibraries (long) SHFreeUnusedLibraries
  124 stub FileMenu_AppendFilesForPidl
  125 stub FileMenu_AddFilesForPidl
  126 stub SHOutOfMemoryMessageBox
@@ -153,7 +154,7 @@ type	win32
  146 stub RLBuildListOfPaths
  147 stdcall SHCLSIDFromString(long long) SHCLSIDFromString
  148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A   # exported by name
- 149 stub SHFind_InitMenuPopup
+ 149 stdcall SHFind_InitMenuPopup(long long long long) SHFind_InitMenuPopup
  150 stub ExtractAssociatedIconExA   # exported by name
  151 stub SHLoadOLE
  152 stdcall ILGetSize(ptr) ILGetSize
@@ -180,14 +181,14 @@ type	win32
  173 stub SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx32
  175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
- 176 stub SHSetInstanceExplorer
+ 176 stdcall SHSetInstanceExplorer (long) SHSetInstanceExplorer
  177 stub DAD_SetDragImageFromListView
  178 stub SHObjectProperties
  179 stub SHGetNewLinkInfoA
  180 stub SHGetNewLinkInfoW
  181 stdcall RegisterShellHook(long long) RegisterShellHook32
  182 stub ShellMessageBoxW
- 183 cdecl ShellMessageBoxA(long long long long long long) ShellMessageBoxA
+ 183 cdecl ShellMessageBoxA(long long long str long long) ShellMessageBoxA
  184 stdcall ArrangeWindows(long long long long long) ArrangeWindows
  185 stub SHHandleDiskFull
  186 stub ExtractAssociatedIconExW   # exported by name
@@ -237,7 +238,7 @@ type	win32
  230 stub RealShellExecuteExA   # exported by name
  231 stub RealShellExecuteExW   # exported by name
  232 stub RealShellExecuteW   # exported by name
- 233 stub RegenerateUserEnvironment@8   # exported by name
+ 233 stub RegenerateUserEnvironment   # exported by name
  234 stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs32  # exported by name
  235 stdcall SHAppBarMessage(long ptr) SHAppBarMessage32   # exported by name
  236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolder32A   # exported by name
@@ -260,10 +261,10 @@ type	win32
  253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A   # exported by name
  254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A   # exported by name
  255 stub SHGetFileInfoW@20 # exported by name
- 256 stub SHGetInstanceExplorer   # exported by name
+ 256 stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
  257 stdcall SHGetMalloc(ptr) SHGetMalloc   # exported by name
  258 stub SHGetNewLinkInfo@20   # exported by name
- 259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList   # exported by name
+ 259 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList32   # exported by name
  260 stub SHGetPathFromIDList@8 # exported by name
  261 stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDList32A # exported by name
  262 stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDList32W # exported by name
@@ -296,7 +297,7 @@ type	win32
  288 stdcall ShellAboutA(long str str long) ShellAbout32A
  289 stdcall ShellAboutW(long wstr wstr long) ShellAbout32W
  290 stdcall ShellExecuteA(long str str str str long) ShellExecute32A
- 291 stub ShellExecuteEx
+ 291 stdcall ShellExecuteEx (long) ShellExecuteEx
  292 stub ShellExecuteExA
  293 stub ShellExecuteExW
  294 stub ShellExecuteW

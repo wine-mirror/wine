@@ -383,7 +383,7 @@ HFILE32 CONSOLE_GetConsoleHandle(VOID)
 	SYSTEM_LOCK();
 	if (pdb->console != NULL) {
 		CONSOLE *console = (CONSOLE *)pdb->console;
-		handle = (HFILE32)HANDLE_Alloc(pdb, &console->header, 0, TRUE);
+		handle = (HFILE32)HANDLE_Alloc(pdb, &console->header, 0, TRUE, -1);
 	}
 	SYSTEM_UNLOCK();
 	return handle;
@@ -440,14 +440,14 @@ BOOL32 WINAPI AllocConsole(VOID)
 	console->slave = slave;
 	console->pid = pid;
 
-	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
+	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
         {
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
 	}
 
-	if ((hOut = HANDLE_Alloc(pdb,&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
+	if ((hOut = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             K32OBJ_DecCount(&console->header);
@@ -456,7 +456,7 @@ BOOL32 WINAPI AllocConsole(VOID)
 	}
 
 
-	if ((hErr = HANDLE_Alloc(pdb,&console->header, 0, TRUE)) == INVALID_HANDLE_VALUE32)
+	if ((hErr = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             CloseHandle(hOut);

@@ -894,7 +894,7 @@ static DWORD midStop(WORD wDevID)
 /**************************************************************************
  * 			midMessage				[sample driver]
  */
-DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	TRACE(midi, "(%04X, %04X, %08lX, %08lX, %08lX);\n", 
@@ -1150,7 +1150,7 @@ static DWORD modReset(WORD wDevID)
 /**************************************************************************
  * 				modMessage			[sample driver]
  */
-DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	TRACE(midi, "(%04X, %04X, %08lX, %08lX, %08lX);\n", 

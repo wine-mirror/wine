@@ -924,7 +924,7 @@ void VXD_Win32s( CONTEXT *context )
         TRACE(vxd, "NtDupSection(%lx)\n", (DWORD)handle);
  
         /* Handle is 'duplicated' by incrementing RefCount */
-        HANDLE_GetObjPtr(PROCESS_Current(), handle, K32OBJ_MEM_MAPPED_FILE, 0);
+        HANDLE_GetObjPtr(PROCESS_Current(), handle, K32OBJ_MEM_MAPPED_FILE, 0,NULL);
 
         EAX_reg(context) = STATUS_SUCCESS;
     }

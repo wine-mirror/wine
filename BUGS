@@ -73,6 +73,10 @@ Miscellaneous:
 
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
+ 
+ * Some programs expect that menu window handles stay the same all the time.
+   (chemdraw). This implies that the menu popupwindows are just hidden, not
+   destroyed in real Windows.
 
 Where to look in source files:
 

@@ -17,4 +17,13 @@ typedef LPVOID LPMONIKER;
 #define rmm             23
 #define rup            639
 
+/* FIXME should be in oleidl.h*/
+typedef struct  tagOleMenuGroupWidths
+{ LONG width[ 6 ];
+} OLEMENUGROUPWIDTHS32;
+
+typedef struct tagOleMenuGroupWidths *LPOLEMENUGROUPWIDTHS32;
+
+typedef HGLOBAL32 HOLEMENU32;
+
 #endif  /* __WINE_OLE2_H */

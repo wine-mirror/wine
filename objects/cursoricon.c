@@ -874,7 +874,9 @@ BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
 {
     TRACE(icon, "%04x\n", hIcon );
     /* FIXME: should check for OEM/global heap icon here */
-    return (FreeResource32( hIcon ) == 0);
+    /* Unlike DestroyIcon16, only icons created with CreateIcon32
+       are valid for DestroyIcon32, so don't use FreeResource32 */
+    return (GlobalFree16( hIcon ) == 0);
 }
 
 
@@ -884,8 +886,21 @@ BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
 BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 {
     TRACE(cursor, "%04x\n", hCursor );
-    /* FIXME: should check for OEM/global heap cursor here */
-    return (FreeResource16( hCursor ) == 0);
+    if (FreeResource16( hCursor ) == 0)
+      return TRUE;
+    else
+      /* I believe this very same line should be added for every function
+	 where appears the comment:
+
+	 "FIXME: should check for OEM/global heap cursor here"
+
+	 which are most (all?) the ones that call FreeResource, at least
+	 in this module. Maybe this should go to a wrapper to avoid
+	 repetition. Or: couldn't it go to FreeResoutce itself?
+	 
+	 I'll let this to someone savvy on the subject.
+	 */
+      return (GlobalFree16 (hCursor) == 0);
 }
 
 
@@ -896,7 +911,9 @@ BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
 {
     TRACE(cursor, "%04x\n", hCursor );
     /* FIXME: should check for OEM/global heap cursor here */
-    return (FreeResource32( hCursor ) == 0);
+    /* Unlike DestroyCursor16, only cursors created with CreateCursor32
+       are valid for DestroyCursor32, so don't use FreeResource32 */
+    return (GlobalFree16( hCursor ) == 0);
 }
 
 
@@ -1540,7 +1557,8 @@ BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
-                                BITMAP_WIDTH_BYTES(ciconinfo->nWidth,1) );
+                                BITMAP_GetBitsWidth (ciconinfo->nWidth,1) );
+//                                BITMAP_WIDTH_BYTES(ciconinfo->nWidth,1) );
     iconinfo->hbmMask = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 1, 1, (char *)(ciconinfo + 1));
 

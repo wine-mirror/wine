@@ -1,5 +1,5 @@
 /*
- *	Postscript driver graphics functions
+ *	PostScript driver graphics functions
  *
  *	Copyright 1998  Huw D M Davies
  *
@@ -71,3 +71,41 @@ BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
     
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           PSDRV_Polyline
+ */
+BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
+{
+    INT32 i;
+    TRACE(psdrv, "count = %d\n", count);
+    
+    PSDRV_WriteMoveTo(dc, XLPTODP(dc, pt[0].x), YLPTODP(dc, pt[0].y));
+    for(i = 1; i < count; i++)
+        PSDRV_WriteLineTo(dc, XLPTODP(dc, pt[i].x), YLPTODP(dc, pt[i].y));
+    PSDRV_WriteStroke(dc);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PSDRV_Polygon
+ */
+BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
+{
+    INT32 i;
+    TRACE(psdrv, "count = %d\n", count);
+    FIXME(psdrv, "Hack!\n");
+    PSDRV_WriteMoveTo(dc, XLPTODP(dc, pt[0].x), YLPTODP(dc, pt[0].y));
+    for(i = 1; i < count; i++)
+        PSDRV_WriteLineTo(dc, XLPTODP(dc, pt[i].x), YLPTODP(dc, pt[i].y));
+
+    if(pt[0].x != pt[count-1].x || pt[0].y != pt[count-1].y)
+        PSDRV_WriteLineTo(dc, XLPTODP(dc, pt[0].x), YLPTODP(dc, pt[0].y));
+
+    PSDRV_WriteStroke(dc);
+    return TRUE;
+}
+
+

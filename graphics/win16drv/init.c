@@ -613,7 +613,8 @@ HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 	    memset(pPrintJob, 0, sizeof(PRINTJOB));
 
 	    pPrintJob->pszOutput = strdup(lpOutput);
-	    pPrintJob->pszTitle = strdup(lpTitle);
+	    if(lpTitle)
+	        pPrintJob->pszTitle = strdup(lpTitle);
 	    pPrintJob->hDC = hDC;
 	    pPrintJob->fd = fd;
 	    pPrintJob->nIndex = 0;

@@ -103,8 +103,6 @@ BOOL32 WIDGETS_Init(void)
         if (!(bicAtomTable[i] = RegisterClass32A( cls ))) return FALSE;
     }
 
-    /* FIXME: hack to enable using built-in controls with Windows COMCTL32 */
-    InitCommonControls();
     return TRUE;
 }
 

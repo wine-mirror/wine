@@ -44,7 +44,7 @@ file	krnl386.exe
 42  return DisableDos 0 0
 45  pascal16 LoadModule(str ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
-47  pascal16 GetModuleHandle(segstr) WIN16_GetModuleHandle
+47  pascal   GetModuleHandle(segstr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName16
 50  pascal GetProcAddress(word segstr) GetProcAddress16
@@ -309,7 +309,7 @@ file	krnl386.exe
 445 stub KERNEL_445
 446 stub KERNEL_446
 447 stub KERNEL_447
-449 pascal KERNEL_449() KERNEL_449
+449 pascal GetpWin16Lock() GetpWin16Lock16
 450 pascal16 KERNEL_450() stub_KERNEL_450
 452 stub KERNEL_452
 453 stub KERNEL_453

@@ -18,13 +18,13 @@
 typedef struct _STACK32FRAME
 {
     SEGPTR  frame16;        /* 00 16-bit frame from last CallFrom16() */
-    DWORD   edi;            /* 04 saved registers */
-    DWORD   esi;            /* 08 */
-    DWORD   edx;            /* 0c */
-    DWORD   ecx;            /* 10 */
-    DWORD   ebx;            /* 14 */
-    DWORD   restore_addr;   /* 18 return address for restoring code selector */
-    DWORD   codeselector;   /* 1c code selector to restore */
+    DWORD   restore_addr;   /* 04 return address for restoring code selector */
+    DWORD   codeselector;   /* 08 code selector to restore */
+    DWORD   edi;            /* 0c saved registers */
+    DWORD   esi;            /* 10 */
+    DWORD   edx;            /* 14 */
+    DWORD   ecx;            /* 18 */
+    DWORD   ebx;            /* 1c */
     DWORD   ebp;            /* 20 saved 32-bit frame pointer */
     DWORD   retaddr;        /* 24 actual return address */
     DWORD   args[1];        /* 28 arguments to 16-bit function */
@@ -35,14 +35,16 @@ typedef struct
 {
     STACK32FRAME *frame32;        /* 00 32-bit frame from last CallTo16() */
     DWORD         ebp;            /* 04 full 32-bit content of ebp */
-    WORD          entry_ip;       /* 08 ip of entry point */
-    WORD          ds;             /* 0a ds */
-    WORD          entry_cs;       /* 0c cs of entry point */
-    WORD          es;             /* 0e es */
-    DWORD         entry_point;    /* 10 32-bit entry point to call */
-    WORD          bp;             /* 14 16-bit bp */
-    WORD          ip;             /* 16 return address */
-    WORD          cs;             /* 18 */
+    WORD          mutex_count;    /* 08 Win16Mutex recursion count */
+    WORD          fs;             /* 0a fs */
+    WORD          entry_ip;       /* 0c ip of entry point */
+    WORD          ds;             /* 0e ds */
+    WORD          entry_cs;       /* 10 cs of entry point */
+    WORD          es;             /* 12 es */
+    DWORD         entry_point;    /* 14 32-bit entry point to call */
+    WORD          bp;             /* 18 16-bit bp */
+    WORD          ip;             /* 1a return address */
+    WORD          cs;             /* 1c */
 } STACK16FRAME;
 
 #pragma pack(4)

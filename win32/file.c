@@ -41,7 +41,7 @@ BOOL32 WINAPI WriteFile(HANDLE32 hFile, LPCVOID lpBuffer,
 		     numberOfBytesToWrite);
 	
 	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                        K32OBJ_UNKNOWN, 0 ))) 
+                                        K32OBJ_UNKNOWN, 0, NULL ))) 
 		return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->write)
             status = K32OBJ_OPS(ioptr)->write(ioptr, lpBuffer, numberOfBytesToWrite, 
@@ -63,7 +63,7 @@ BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRea
 		     numberOfBytesToRead);
 	
 	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                        K32OBJ_UNKNOWN, 0 ))) 
+                                        K32OBJ_UNKNOWN, 0, NULL ))) 
 		return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->read)
             status = K32OBJ_OPS(ioptr)->read(ioptr, lpBuffer, numberOfBytesToRead, 
@@ -78,7 +78,7 @@ BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRea
  */
 typedef
 VOID
-(WINAPI *LPOVERLAPPED_COMPLETION_ROUTINE)(
+(CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(
     DWORD dwErrorCode,
     DWORD dwNumberOfBytesTransfered,
     LPOVERLAPPED lpOverlapped

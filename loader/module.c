@@ -18,6 +18,7 @@
 #include "module.h"
 #include "neexe.h"
 #include "pe_image.h"
+#include "dosexe.h"
 #include "process.h"
 #include "thread.h"
 #include "resource.h"
@@ -313,6 +314,10 @@ HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
                                  (cmd_line == NULL) );
         if ((hInstance == 21) && cmd_line)
             return PE_LoadModule( name, cmd_line, env, show_cmd );
+#ifdef linux
+        if (hInstance == 11)
+            return MZ_LoadModule(name, cmd_line, env, show_cmd );
+#endif
     }
 
     /* Create a task for this instance */
@@ -322,11 +327,15 @@ HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
     if (cmd_line && !(pModule->flags & NE_FFLAGS_LIBMODULE))
     {
         PDB32 *pdb;
+        PROCESS_INFORMATION info;
 
 	pModule->flags |= NE_FFLAGS_GUI;
 
         pdb = PROCESS_Create( pModule, cmd_line, env, hInstance,
-                              hPrevInstance, show_cmd );
+                              hPrevInstance, show_cmd, &info );
+        /* we don't need the handles for now */
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
         if (pdb && (GetNumTasks() > 1)) Yield16();
     }
 
@@ -337,7 +346,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
 /**********************************************************************
  *	    LoadModule16    (KERNEL.45)
  */
-HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
+HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
     LOADPARAMS *params;
     LPSTR cmd_line, new_cmd_line;
@@ -379,7 +388,7 @@ HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
  *  This should get implemented via CreateProcess -- MODULE_Load
  *  is resolutely 16-bit.
  */
-DWORD LoadModule32( LPCSTR name, LPVOID paramBlock ) 
+DWORD WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock ) 
 {
     LOADPARAMS32 *params = (LOADPARAMS32 *)paramBlock;
 #if 0

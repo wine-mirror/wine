@@ -30,7 +30,9 @@
 #include "winnt.h"
 #include "winsock.h"
 #include "thread.h"
+#include "syslevel.h"
 #include "debug.h"
+#include "dosexe.h"
 #include "dde_proc.h"
 #include "server.h"
 
@@ -227,8 +229,10 @@ static void TASK_CallToStart(void)
 
     SET_CUR_THREAD( pTask->thdb );
     CLIENT_InitThread();
-    /* Terminate the stack frame */
-    THREAD_STACK16(pTask->thdb)->frame32 = NULL;
+
+    /* Terminate the stack frame chain */
+    memset(THREAD_STACK16( pTask->thdb ), '\0', sizeof(STACK16FRAME));
+
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         /* FIXME: all this is an ugly hack */
@@ -245,6 +249,19 @@ static void TASK_CallToStart(void)
         exit_code = entry();
         TASK_KillCurrentTask( exit_code );
     }
+#ifdef linux
+    else if (pModule->lpDosTask)
+    {
+        int stat;
+
+        while ((stat = MZ_RunModule(pModule->lpDosTask)) >= 0)
+            if (stat > 0 && DOSVM_Process(pModule->lpDosTask) < 0)
+                break;
+
+        MZ_KillModule(pModule->lpDosTask);
+        TASK_KillCurrentTask( 0 );
+    }
+#endif
     else
     {
         /* Registers at initialization must be:
@@ -315,6 +332,8 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     if (pModule->flags & NE_FFLAGS_WIN32)
     	pTask->flags 	|= TDBF_WIN32;
+    if (pModule->lpDosTask)
+    	pTask->flags 	|= TDBF_WINOLDAP;
 
     pTask->version       = pModule->expected_version;
     pTask->hInstance     = hInstance;
@@ -393,13 +412,15 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
         sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
     sp &= ~1;
     pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( pTask->hInstance, sp );
-    pTask->thdb->cur_stack -= sizeof(STACK16FRAME) + sizeof(STACK32FRAME *);
+    pTask->thdb->cur_stack -= 2*sizeof(STACK16FRAME);
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
     frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
     frame16->bp = LOWORD(frame16->ebp);
     frame16->ds = frame16->es = pTask->hInstance;
+    frame16->fs = 0;
     frame16->entry_point = 0;
     frame16->entry_cs = 0;
+    frame16->mutex_count = 1; /* TASK_Reschedule is called from 16-bit code */
     /* The remaining fields will be initialized in TASK_Reschedule */
 
     /* Create the 32-bit stack frame */
@@ -546,6 +567,8 @@ void TASK_Reschedule(void)
     HTASK16 hTask = 0;
     STACK16FRAME *newframe16;
 
+    SYSLEVEL_ReleaseWin16Lock();
+
 #ifdef CONFIG_IPC
     dde_reschedule();
 #endif
@@ -599,6 +622,7 @@ void TASK_Reschedule(void)
     if (hTask == hCurrentTask) 
     {
        TRACE(task, "returning to the current task(%04x)\n", hTask );
+       SYSLEVEL_RestoreWin16Lock();
        return;  /* Nothing to do */
     }
     pNewTask = (TDB *)GlobalLock16( hTask );
@@ -634,6 +658,8 @@ void TASK_Reschedule(void)
     hCurrentTask = hTask;
     SET_CUR_THREAD( pNewTask->thdb );
     pNewTask->ss_sp = pNewTask->thdb->cur_stack;
+
+    SYSLEVEL_RestoreWin16Lock();
 }
 
 
@@ -696,7 +722,13 @@ void WINAPI InitTask( CONTEXT *context )
          * si     instance handle of the previous instance
          * di     instance handle of the new task
          * es:bx  pointer to command-line inside PSP
+         *
+         * 0 (=%bp) is pushed on the stack
          */
+        SEGPTR ptr = STACK16_PUSH( pTask->thdb, sizeof(WORD) );
+        *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
+        SP_reg(context) -= 2;
+
         EAX_reg(context) = 1;
         
 	if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;

@@ -270,10 +270,10 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 	}
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
-        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x FS=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
-                BP_reg(context), (WORD)ES_reg(context) );
+                BP_reg(context), (WORD)ES_reg(context), (WORD)FS_reg(context) );
     }
     else
     {
@@ -288,6 +288,21 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
     }
+}
+
+
+/***********************************************************************
+ *           RELAY_DebugCallTo16Ret
+ */
+void RELAY_DebugCallTo16Ret( int ret_val )
+{
+    THDB *thdb;
+
+    if (!TRACE_ON(relay)) return;
+    thdb = THREAD_Current();
+
+    DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
+            SELECTOROF(thdb->cur_stack), OFFSETOF(thdb->cur_stack), ret_val);
 }
 
 

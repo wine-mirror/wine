@@ -84,7 +84,6 @@ int main( int argc, char *argv[] )
 
     /* Initialize CALL32 routines */
     /* This needs to be done just before task-switching starts */
-    IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
 
     loaded=0;
     for (i = 1; i < argc; i++)
@@ -117,6 +116,7 @@ int main( int argc, char *argv[] )
 
     if (Options.debug) DEBUG_AddModuleBreakpoints();
 
+    IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
     Yield16();  /* Start the first task */
     MSG("WinMain: Should never happen: returned from Yield16()\n" );
     return 0;

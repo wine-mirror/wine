@@ -8,6 +8,7 @@
  * They are just here so that explorer.exe and iexplore.exe can be tested.
  *
  * Copyright 1997 Marcus Meissner
+ *           1998 Jürgen Schmied
  */
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,18 @@
 #include "debug.h"
 #include "winreg.h"
 
+void pdump (LPCITEMIDLIST pidl)
+{ DWORD type;
+  CHAR * szData;
+  LPITEMIDLIST pidltemp = pidl;
+  TRACE(shell,"---------- pidl=%p \n", pidl);
+  do
+  { szData = ((LPPIDLDATA )(pidltemp->mkid.abID))->szText;
+    type   = ((LPPIDLDATA )(pidltemp->mkid.abID))->type;
+    TRACE (shell,"---- pidl=%p size=%u type=%lx %s\n",pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData));
+    pidltemp = (LPITEMIDLIST)(((BYTE*)pidltemp)+pidltemp->mkid.cb);
+  } while (pidltemp->mkid.cb);
+}
 /*************************************************************************
  * SHChangeNotifyRegister [SHELL32.2]
  * NOTES
@@ -85,9 +98,12 @@ LPSHITEMID WINAPI ILFindLastID(LPITEMIDLIST iil) {
 /*************************************************************************
  * ILFindLastID [SHELL32.17]
  * NOTES
- *  Creates a new list with the last tiem removed
+ *  Creates a new list with the last item removed
  */
- LPITEMIDLIST WINAPI ILRemoveLastID(LPCITEMIDLIST);
+LPITEMIDLIST WINAPI ILRemoveLastID(LPCITEMIDLIST pidl)
+{ TRACE(shell,"pidl=%p\n",pidl);
+  return NULL;
+}
 
 
 /*************************************************************************
@@ -96,15 +112,20 @@ LPSHITEMID WINAPI ILFindLastID(LPITEMIDLIST iil) {
  * NOTES
  *    dupicate an idlist
  */
-LPITEMIDLIST WINAPI ILClone (LPITEMIDLIST iil) {
-	DWORD		len;
-	LPITEMIDLIST	newiil;
-  TRACE(shell,"%p\n",iil);
-	len = ILGetSize(iil);
-	newiil = (LPITEMIDLIST)SHAlloc(len);
-	if (newiil)
-		memcpy(newiil,iil,len);
-	return newiil;
+LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
+{ DWORD    len;
+  LPITEMIDLIST  newpidl;
+
+  TRACE(shell,"%p\n",pidl);
+
+  if (!pidl)
+    return NULL;
+    
+  len = ILGetSize(pidl);
+  newpidl = (LPITEMIDLIST)SHAlloc(len);
+  if (newpidl)
+    memcpy(newpidl,pidl,len);
+  return newpidl;
 }
 
 /*************************************************************************
@@ -113,7 +134,10 @@ LPITEMIDLIST WINAPI ILClone (LPITEMIDLIST iil) {
  * NOTES
  *  duplicates the first idlist of a complex pidl
  */
-LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl);
+LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
+{ FIXME(shell,"pidl=%p\n",pidl);
+  return NULL;
+}
 
 /*************************************************************************
  * ILCombine [SHELL32.25]
@@ -123,16 +147,37 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl);
  *  The pidl is the first one, pidlsub the next one
  *  Does not destroy the passed in idlists!
  */
-LPITEMIDLIST WINAPI ILCombine(LPITEMIDLIST iil1,LPITEMIDLIST iil2) {
-	DWORD		len1,len2;
-	LPITEMIDLIST	newiil;
-	TRACE(shell,"%p %p\n",iil1,iil2);
-	len1 	= ILGetSize(iil1)-2;
-	len2	= ILGetSize(iil2);
-	newiil	= SHAlloc(len1+len2);
-	memcpy(newiil,iil1,len1);
-	memcpy(((char*)newiil)+len1,iil2,len2);
-	return newiil;
+LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
+{ DWORD    len1,len2;
+  LPITEMIDLIST  pidlNew;
+  
+  TRACE(shell,"pidl=%p pidl=%p\n",pidl1,pidl2);
+
+  if(!pidl1 && !pidl2)
+  {  return NULL;
+  }
+ 
+  if(!pidl1)
+  { pidlNew = ILClone(pidl2);
+    return pidlNew;
+  }
+
+  if(!pidl2)
+  { pidlNew = ILClone(pidl1);
+    return pidlNew;
+  }
+
+  len1  = ILGetSize(pidl1)-2;
+  len2  = ILGetSize(pidl2);
+  pidlNew  = SHAlloc(len1+len2);
+  
+  if (pidlNew)
+  { memcpy(pidlNew,pidl1,len1);
+    memcpy(((BYTE *)pidlNew)+len1,pidl2,len2);
+  }
+
+/*  TRACE(shell,"--new pidl=%p\n",pidlNew);*/
+  return pidlNew;
 }
 
 /*************************************************************************
@@ -291,6 +336,19 @@ DWORD WINAPI PathRemoveFileSpec(LPSTR fn) {
 }
 
 /*************************************************************************
+ * PathAppend [SHELL32.36]
+ * 
+ * NOTES
+ *     concat_paths(char*target,const char*add);
+ *     concats "target\\add" and writes them to target
+ */
+LPSTR WINAPI PathAppend(LPSTR x1,LPSTR x2) {
+  TRACE(shell,"%s %s\n",x1,x2);
+  while (x2[0]=='\\') x2++;
+  return PathCombine(x1,x1,x2);
+}
+
+/*************************************************************************
  * PathCombine [SHELL32.37]
  * 
  * NOTES
@@ -309,19 +367,6 @@ LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2) {
 	lstrcat32A(buf,x2);
 	lstrcpy32A(target,buf);
 	return target;
-}
-
-/*************************************************************************
- * PathAppend [SHELL32.36]
- * 
- * NOTES
- *     concat_paths(char*target,const char*add);
- *     concats "target\\add" and writes them to target
- */
-LPSTR WINAPI PathAppend(LPSTR x1,LPSTR x2) {
-  TRACE(shell,"%s %s\n",x1,x2);
-	while (x2[0]=='\\') x2++;
-	return PathCombine(x1,x1,x2);
 }
 
 /*************************************************************************
@@ -457,69 +502,28 @@ BOOL32 WINAPI Shell_GetImageList(LPDWORD x,LPDWORD y) {
  * Shell_GetCachedImageIndex [SHELL32.72]
  *
  */
-void WINAPI Shell_GetCachedImageIndex(LPSTR x,DWORD y,DWORD z) {
-	FIXME(shell,"(%s,%08lx,%08lx):stub.\n",x,y,z);
+void WINAPI Shell_GetCachedImageIndex(LPSTR x,DWORD y,DWORD z) 
+{ FIXME(shell,"(%s,%08lx,%08lx):stub.\n",x,y,z);
 }
+
 /*************************************************************************
  * SHShellFolderView_Message [SHELL32.73]
+ *
+ * PARAMETERS
+ *  hwndCabinet defines the explorer cabinet window that contains the 
+ *              shellview you need to communicate with
+ *  uMsg        identifying the SFVM enum to perform
+ *  lParam
+ *
  * NOTES
  *  Message SFVM_REARRANGE = 1
  *    This message gets sent when a column gets clicked to instruct the
  *    shell view to re-sort the item list. lParam identifies the column
  *    that was clicked.
  */
-int WINAPI SHShellFolderView_Message(
-    HWND32 hwndCabinet, /* This hwnd defines the explorer cabinet window that contains the 
-                         shellview you need to communicate with*/
-		UINT32 uMsg,        /* A parameter identifying the SFVM enum to perform */
-		LPARAM lParam);
-/*************************************************************************
- * SHCloneSpecialIDList [SHELL32.89]
- * 
- * NOTES
- *     exported by ordinal
- */
-DWORD WINAPI SHCloneSpecialIDList(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx):stub.\n",
-		x1,x2,x3
-	);
-	return 0;
-}
-
-/*************************************************************************
- * IsLFNDrive [SHELL32.119]
- * 
- * NOTES
- *     exported by ordinal Name
- */
-void WINAPI IsLFNDrive(LPVOID x) {
-    FIXME(shell,"(%p(%s)):stub.\n",x,(char *)x);
-}
-
-/*************************************************************************
- * SHGetSpecialFolderPath [SHELL32.175]
- * 
- * NOTES
- *     exported by ordinal
- */
-void WINAPI SHGetSpecialFolderPath(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
-    	x1,x2,x3,x4
-    );
-}
-
-/*************************************************************************
- * RegisterShellHook [SHELL32.181]
- *
- * PARAMS
- *      hwnd [I]  window handle
- *      y    [I]  flag ????
- *
- * NOTES
- *     exported by ordinal
- */
-void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
-    FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
+int WINAPI SHShellFolderView_Message(HWND32 hwndCabinet,UINT32 uMsg,LPARAM lParam)
+{ FIXME(shell,"%04x %08ux %08lx stub\n",hwndCabinet,uMsg,lParam);
+  return 0;
 }
 
 /*************************************************************************
@@ -535,22 +539,22 @@ BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
 
 /*************************************************************************
  * SHMapPIDLToSystemImageListIndex [SHELL32.77]
+ *
+ * PARAMETERS
+ * x  pointer to an instance of IShellFolder 
  * 
  * NOTES
  *     exported by ordinal
  *
  */
 DWORD WINAPI
-SHMapPIDLToSystemImageListIndex(
-    DWORD x,	/* pointer to an instance of IShellFolder */
-		DWORD y,
-		DWORD z)
-{	FIXME(shell,"(%08lx,%08lx,%08lx):stub.\n",x,y,z);
-	return 0;
+SHMapPIDLToSystemImageListIndex(DWORD x,DWORD y,DWORD z)
+{ FIXME(shell,"(%08lx,%08lx,%08lx):stub.\n",x,y,z);
+  return 0;
 }
 
 /*************************************************************************
- * OleStrToStrN	[SHELL32.78]
+ * OleStrToStrN  [SHELL32.78]
  * 
  * NOTES
  *     exported by ordinal
@@ -558,12 +562,12 @@ SHMapPIDLToSystemImageListIndex(
 BOOL32 WINAPI
 OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
     return WideCharToMultiByte (0, 0, lpWide, nWide,
-				lpMulti, nMulti, NULL, NULL);
+        lpMulti, nMulti, NULL, NULL);
 }
 
 /*************************************************************************
- * StrToOleStrN	[SHELL32.79]
- * 
+ * StrToOleStrN  [SHELL32.79]
+ *
  * NOTES
  *     exported by ordinal
  */
@@ -573,14 +577,68 @@ StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
 }
 
 /*************************************************************************
+ * SHCloneSpecialIDList [SHELL32.89]
+ * 
+ * PARAMETERS
+ *  hwnd 
+ * NOTES
+ *     exported by ordinal
+ */
+DWORD WINAPI SHCloneSpecialIDList(HWND32 hwnd,DWORD x2,DWORD x3) {
+  FIXME(shell,"(hwnd=0x%x,0x%lx,0x%lx):stub.\n",
+    hwnd,x2,x3
+  );
+  return S_OK;
+}
+
+/*************************************************************************
+ * IsLFNDrive [SHELL32.119]
+ * 
+ * NOTES
+ *     exported by ordinal Name
+ */
+BOOL32 WINAPI IsLFNDrive(LPCSTR path) {
+    DWORD	fnlen;
+
+    if (!GetVolumeInformation32A(path,NULL,0,NULL,&fnlen,NULL,NULL,0))
+	return FALSE;
+    return fnlen>12;
+}
+
+/*************************************************************************
+ * SHGetSpecialFolderPath [SHELL32.175]
+ * 
+ * NOTES
+ *     exported by ordinal
+ */
+void WINAPI SHGetSpecialFolderPath(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
+      x1,x2,x3,x4
+    );
+}
+
+/*************************************************************************
+ * RegisterShellHook [SHELL32.181]
+ *
+ * PARAMS
+ *      hwnd [I]  window handle
+ *      y    [I]  flag ????
+ * 
+ * NOTES
+ *     exported by ordinal
+ */
+void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
+    FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
+}
+
+/*************************************************************************
  *
  */
 typedef DWORD (* WINAPI GetClassPtr)(REFCLSID,REFIID,LPVOID);
 
 static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,
                                       LPSTR name)
-{
-	HMODULE32	hmod;
+{ HMODULE32  hmod;
 	FARPROC32	dllunload,nameproc;
 
 	if (xhmod) *xhmod = 0;
@@ -760,23 +818,31 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 
 /*************************************************************************
  * ILGetSize [SHELL32.152]
+ *  gets the byte size of an idlist including zero terminator (pidl)
+ *
+ * PARAMETERS
+ *  pidl ITEMIDLIST
+ *
+ * RETURNS
+ *  size of pidl
  *
  * NOTES
  *  exported by ordinal
- *  Gets the byte size of an idlist including zero terminator
  */
-DWORD WINAPI ILGetSize(LPITEMIDLIST iil) {
-	LPSHITEMID	si;
-	DWORD		len;
-	TRACE(shell,"%p\n",iil);
-	if (!iil)
-		return 0;
-	si = &(iil->mkid);
-	len = 2;
-	while (si->cb) {
-		len	+= si->cb;
-		si	 = (LPSHITEMID)(((char*)si)+si->cb);
+DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
+{ LPSHITEMID si = &(pidl->mkid);
+  DWORD  len=0;
+
+  TRACE(shell,"pidl=%p\n",pidl);
+
+  if (pidl)
+  { while (si->cb) 
+    { len += si->cb;
+      si  = (LPSHITEMID)(((LPBYTE)si)+si->cb);
+    }
+    len += 2;
 	}
+/*  TRACE(shell,"-- size=%lu\n",len);*/
 	return len;
 }
 /*************************************************************************
@@ -788,7 +854,10 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST iil) {
  *  otherwise adds the item to the end.
  *  Destroys the passed in idlist!
  */
-LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd);
+LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
+{ TRACE(shell,"(pidl=%p,pidl=%p,%08u)\n",pidl,item,bEnd);
+  return NULL;
+}
 
 /*************************************************************************
  * PathGetExtension [SHELL32.158]
@@ -796,8 +865,8 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd);
  * NOTES
  *     exported by ordinal
  */
-LPSTR WINAPI PathGetExtension(LPSTR path,DWORD y,DWORD z) {
-    TRACE(shell,"(%s,%08lx,%08lx)\n",path,y,z);
+LPSTR WINAPI PathGetExtension(LPSTR path,DWORD y,DWORD z)
+{ TRACE(shell,"(%s,%08lx,%08lx)\n",path,y,z);
     path = PathFindExtension(path);
     return *path?(path+1):path;
 }
@@ -831,7 +900,8 @@ DWORD WINAPI SHCreateDirectory(DWORD x,LPCSTR path) {
  */
 DWORD WINAPI SHFree(LPVOID x) {
   TRACE(shell,"%p\n",x);
-	return LocalFree32((HANDLE32)x);
+  /*return LocalFree32((HANDLE32)x);*/ /* crashes */
+  return HeapFree(GetProcessHeap(),0,x);
 }
 
 /*************************************************************************
@@ -842,8 +912,10 @@ DWORD WINAPI SHFree(LPVOID x) {
  *     exported by ordinal
  */
 LPVOID WINAPI SHAlloc(DWORD len) {
-  TRACE(shell,"%lu\n",len);
-	return (LPVOID)LocalAlloc32(len,LMEM_ZEROINIT); /* FIXME */
+ /* void * ret = (LPVOID)LocalAlloc32(len,LMEM_ZEROINIT);*/ /* chrashes */
+ void * ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
+  TRACE(shell,"%lu bytes at %p\n",len, ret);
+  return ret;
 }
 
 
@@ -855,11 +927,11 @@ LPVOID WINAPI SHAlloc(DWORD len) {
  *     allocated by SHMalloc allocator
  *     exported by ordinal
  */
-DWORD WINAPI ILFree(LPVOID x) {
-	FIXME (shell,"(0x%08lx):stub.\n", (DWORD)x);
-	if (!x)
+DWORD WINAPI ILFree(LPVOID pidl) 
+{ TRACE (shell,"(pidl=0x%08lx)\n",(DWORD)pidl);
+  if (!pidl)
 		return 0;
-	return SHFree(x);
+  return SHFree(pidl);
 }
 
 /*************************************************************************
@@ -976,12 +1048,14 @@ SignalFileOpen (DWORD dwParam1)
 /*************************************************************************
  * SHAddToRecentDocs [SHELL32.234]
  *
+ * PARAMETERS
+ *   uFlags  [IN] SHARD_PATH or SHARD_PIDL
+ *   pv      [IN] string or pidl, NULL clears the list
+ *
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHAddToRecentDocs32 (
-    UINT32 uFlags,  /* [IN] SHARD_PATH or SHARD_PIDL */
-		LPCVOID pv)     /* [IN] string or pidl, NULL clears the list */
+DWORD WINAPI SHAddToRecentDocs32 (UINT32 uFlags,LPCVOID pv)   
 { if (SHARD_PIDL==uFlags)
   { FIXME (shell,"(0x%08x,pidl=%p):stub.\n", uFlags,pv);
 	}
@@ -1020,10 +1094,64 @@ DWORD WINAPI SHChangeNotify32 (
 /*************************************************************************
  * SHCreateShellFolderViewEx [SHELL32.174]
  *
+ * NOTES
+ *  see IShellFolder::CreateViewObject
  */
 HRESULT WINAPI SHCreateShellFolderViewEx32(
   LPSHELLVIEWDATA psvcbi, /*[in ] shelltemplate struct*/
   LPVOID* ppv)            /*[out] IShellView pointer*/
 { FIXME (shell,"(%p,%p):stub.\n", psvcbi,ppv);
+  return 0;
+}
+/*************************************************************************
+ * SHFind_InitMenuPopup [SHELL32.149]
+ *
+ */
+HRESULT WINAPI SHFind_InitMenuPopup (DWORD u, DWORD v, DWORD w, DWORD x)
+{ FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x);
+  return 0;
+}
+/*************************************************************************
+ * FileMenu_Create [SHELL32.114]
+ *
+ */
+HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
+{ FIXME(shell,"0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,z);
+  return 0;
+}
+/*************************************************************************
+ * ShellExecuteEx [SHELL32.291]
+ *
+ */
+HRESULT WINAPI ShellExecuteEx (DWORD u)
+{ FIXME(shell,"0x%08lx stub\n",u);
+  return 0;
+}
+/*************************************************************************
+ * SHSetInstanceExplorer [SHELL32.176]
+ *
+ */
+HRESULT WINAPI SHSetInstanceExplorer (DWORD u)
+{ FIXME(shell,"0x%08lx stub\n",u);
+  return 0;
+}
+/*************************************************************************
+ * SHGetInstanceExplorer [SHELL32.256]
+ *
+ * NOTES
+ *  exported by name
+ */
+HRESULT WINAPI SHGetInstanceExplorer (DWORD u)
+{ FIXME(shell,"0x%08lx stub\n",u);
+  return 0;
+}
+/*************************************************************************
+ * SHFreeUnusedLibraries [SHELL32.123]
+ *
+ * NOTES
+ *  exported by name
+ */
+HRESULT WINAPI SHFreeUnusedLibraries (DWORD u)
+{ FIXME(shell,"0x%08lx stub\n",u);
   return 0;
 }

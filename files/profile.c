@@ -452,13 +452,12 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
              CurProfile=tempProfile;
             }
           if(!stat(CurProfile->unix_name,&buf) && CurProfile->mtime==buf.st_mtime)
-            {
              TRACE(profile, "(%s): already opened (mru=%d)\n",
                               filename, i );
-             return TRUE;
-            }
-          TRACE(profile, "(%s): already opened, needs refreshing (mru=%d)\n",
-                           filename, i );
+          else
+              TRACE(profile, "(%s): already opened, needs refreshing (mru=%d)\n",
+                             filename, i );
+	  return TRUE;
          }
       }
 

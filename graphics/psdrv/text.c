@@ -1,5 +1,5 @@
 /*
- *	Postscript driver text functions
+ *	PostScript driver text functions
  *
  *	Copyright 1998  Huw D M Davies
  *
@@ -24,7 +24,7 @@ BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     TRACE(psdrv, "(x=%d, y=%d, flags=0x%08x, str='%s', count=%d)\n", x, y,
 	  flags, str, count);
 
-    strbuf = (char *)HeapAlloc( GetProcessHeap(), 0, count + 1);
+    strbuf = (char *)HeapAlloc( PSDRV_Heap, 0, count + 1);
     if(!strbuf) {
         WARN(psdrv, "HeapAlloc failed\n");
         return FALSE;
@@ -61,14 +61,14 @@ BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     switch(dc->w.textAlign & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
     case TA_TOP:
+        y += physDev->font.tm.tmAscent;
 	break;
 
     case TA_BASELINE:
-	y -= physDev->font.tm.tmAscent;
 	break;
 
     case TA_BOTTOM:
-        y -= sz.cy;
+        y -= physDev->font.tm.tmDescent;
 	break;
     }
 
@@ -80,6 +80,6 @@ BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     PSDRV_WriteMoveTo(dc, x, y);
     PSDRV_WriteShow(dc, strbuf, strlen(strbuf));
 
-    HeapFree(GetProcessHeap(), 0, strbuf);
+    HeapFree(PSDRV_Heap, 0, strbuf);
     return TRUE;
 }

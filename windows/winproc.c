@@ -249,8 +249,10 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
     {
         if (((WINDOWPROC *)proc)->type == WIN_PROC_16)
             return (WNDPROC16)&((WINDOWPROC *)proc)->thunk;
+        else if (type != ((WINDOWPROC *)proc)->type)
+            /* Have to return the jmp address if types don't match */
+            return (WNDPROC16)&((WINDOWPROC *)proc)->jmp;
         else
-            /* return (WNDPROC16)&((WINDOWPROC *)proc)->jmp; */
             /* Some Win16 programs want to get back the proc they set */
             return (WNDPROC16)((WINDOWPROC *)proc)->thunk.t_from16.proc;
     }
@@ -803,12 +805,15 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
             *plparam = (LPARAM)wp;
         }
         return 1;
+    case WM_NOTIFY:
+    	*plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
+    	return 1;
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        WARN( msg, "message %04x needs translation\n",msg16 );
+        FIXME( msg, "message %04x needs translation\n",msg16 );
         return -1;
 
     default:  /* No translation needed */
@@ -1858,11 +1863,36 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 
 
 /**********************************************************************
- *	     CallWindowProc32A    (USER32.18)
+ *	     CallWindowProc32A    (USER32.18) 
+ *
+ * The CallWindowProc() function invokes the windows procedure _func_,
+ * with _hwnd_ as the target window, the message specified by _msg_, and
+ * the message parameters _wParam_ and _lParam_.
+ *
+ * Some kinds of argument conversion may be done, I'm not sure what.
+ *
+ * CallWindowProc() may be used for windows subclassing. Use
+ * SetWindowLong() to set a new windows procedure for windows of the
+ * subclass, and handle subclassed messages in the new windows
+ * procedure. The new windows procedure may then use CallWindowProc()
+ * with _func_ set to the parent class's windows procedure to dispatch
+ * the message to the superclass.
+ *
+ * RETURNS
+ *
+ *    The return value is message dependent.
+ *
+ * CONFORMANCE
+ *
+ *   ECMA-234, Win32 
  */
-LRESULT WINAPI CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
-                                  WPARAM32 wParam, LPARAM lParam )
-{
+LRESULT WINAPI CallWindowProc32A( 
+    WNDPROC32 func, /* window procedure */
+    HWND32 hwnd, /* target window */
+    UINT32 msg,  /* message */
+    WPARAM32 wParam, /* message dependent parameter */
+    LPARAM lParam    /* message dependent parameter */
+) {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
     if (!proc) return WINPROC_CallWndProc32( func, hwnd, msg, wParam, lParam );

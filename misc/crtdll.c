@@ -140,6 +140,45 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 
 typedef void (*_INITTERMFUN)();
 
+ /*********************************************************************
+ *                  _findfirst    (CRTDLL.099)
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,struct find_t* x2)
+{
+  FIXME(crtdll, ":(%s,%p): stub\n",fname,x2);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/*********************************************************************
+ *                  _findnext     (CRTDLL.100)
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+INT32 __cdecl CRTDLL__findnext(DWORD hand,struct find_t* x2)
+{
+  FIXME(crtdll, ":(%d,%p): stub\n",hand,x2);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/*********************************************************************
+ *                  _fstat        (CRTDLL.111)
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+int __cdecl CRTDLL__fstat(int file, struct stat* buf)
+{
+  FIXME(crtdll, ":(%d,%p): stub\n",file,buf);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
 /*********************************************************************
  *                  _initterm     (CRTDLL.135)
  */
@@ -208,6 +247,18 @@ void __cdecl CRTDLL__global_unwind2( PEXCEPTION_FRAME frame )
 void __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr )
 {
     TRACE(crtdll,"(%p,%ld)\n",endframe,nr);
+}
+/*********************************************************************
+ *                  _read     (CRTDLL.256)
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+INT32 __cdecl CRTDLL__read(INT32 fd, LPVOID buf, UINT32 count)
+{
+  FIXME(crtdll,":(%d,%p,%d): stub\n",fd,buf,count);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
 }
 
 /*********************************************************************
@@ -296,7 +347,19 @@ DWORD __cdecl CRTDLL_fread(LPVOID ptr, INT32 size, INT32 nmemb, LPVOID vfile)
   return ret;
 #endif
 }
-  
+/*********************************************************************
+ *                  freopen    (CRTDLL.379)
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+DWORD __cdecl CRTDLL_freopen(LPCSTR path, LPCSTR mode, LPVOID stream)
+{
+  FIXME(crtdll, ":(%s,%s,%p): stub\n", path, mode, stream);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
 /*********************************************************************
  *                  fscanf     (CRTDLL.381)
  */

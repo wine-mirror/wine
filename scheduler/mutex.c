@@ -140,7 +140,7 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_MUTEX )) != NULL)
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
+        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -168,7 +168,7 @@ BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
     MUTEX *mutex;
     SYSTEM_LOCK();
     if (!(mutex = (MUTEX *)HANDLE_GetObjPtr(PROCESS_Current(), handle,
-                                            K32OBJ_MUTEX, MUTEX_MODIFY_STATE)))
+                                            K32OBJ_MUTEX, MUTEX_MODIFY_STATE, NULL)))
     {
         SYSTEM_UNLOCK();
         return FALSE;

@@ -226,7 +226,7 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 /**************************************************************************
  * 				auxMessage			[sample driver]
  */
-DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
+DWORD WINAPI auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	TRACE(mmaux,"(%04X, %04X, %08lX, %08lX, %08lX);\n", 

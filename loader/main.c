@@ -35,6 +35,7 @@
 #include "dce.h"
 #include "shell.h"
 #include "winproc.h"
+#include "syslevel.h"
 #include "debug.h"
 
 
@@ -45,6 +46,9 @@ int __winelib = 1;  /* Winelib run-time flag */
  */
 BOOL32 MAIN_KernelInit(void)
 {
+    /* Initialize syslevel handling */
+    SYSLEVEL_Init();
+
     /* Initialize signal handling */
     if (!SIGNAL_Init()) return FALSE;
 
@@ -52,7 +56,7 @@ BOOL32 MAIN_KernelInit(void)
     if (!PROFILE_LoadWineIni()) return FALSE;
 
       /* Initialize DOS memory */
-    if (!DOSMEM_Init()) return FALSE;
+    if (!DOSMEM_Init(0)) return FALSE;
 
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return FALSE;

@@ -470,7 +470,7 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
 		     ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
-      async_ctl.buffer = pwsi->buffer;
+      async_ctl.buffer = (char*)pwsi->he;
       async_ctl.ilength = (unsigned)WSAMAKEASYNCREPLY( (UINT16)size, 0 );
      _async_notify( flag );
   }
@@ -494,7 +494,7 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
 		     ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
-      async_ctl.buffer = pwsi->buffer;
+      async_ctl.buffer = (char*)pwsi->pe;
       async_ctl.ilength = (unsigned)WSAMAKEASYNCREPLY( (UINT16)size, 0 );
      _async_notify( flag );
   } 
@@ -516,7 +516,7 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
 		      ((flag & WSMSG_WIN32_AOP) ? WS_DUP_LINEAR : WS_DUP_SEGPTR) );
   if( size )
   {
-      async_ctl.buffer = pwsi->buffer;
+      async_ctl.buffer = (char*)pwsi->se;
       async_ctl.ilength = (unsigned)WSAMAKEASYNCREPLY( (UINT16)size, 0 );
      _async_notify( flag );
   }
@@ -569,4 +569,3 @@ void fixup_wsse(struct ws_servent* p_wsse, void* base)
    ((p_wsse->s_aliases)) += (unsigned)base;
    for(i=0;p_aliases[i];i++) p_aliases[i] += (unsigned)base;
 }
-

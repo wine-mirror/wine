@@ -30,6 +30,7 @@
 #include "winproc.h"
 #include "thread.h"
 #include "debug.h"
+#include "winerror.h"
 
 /* Desktop window */
 static WND *pWndDesktop = NULL;
@@ -458,13 +459,13 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     WND *wndPtr;
     HWND16 hwnd, hwndLinkAfter;
     POINT32 maxSize, maxPos, minTrack, maxTrack;
-    LRESULT (WINAPI *localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
+    LRESULT (CALLBACK *localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
-    TRACE(win, "%s %s %08lx %08lx %d,%d %dx%d "
-		 "%04x %04x %08x %p\n", debugres_a(cs->lpszName), 
-		 debugres_a(cs->lpszClass), cs->dwExStyle, 
-		 cs->style, cs->x, cs->y, cs->cx, cs->cy,
-		 cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
+    TRACE(win, "%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
+          unicode ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
+          unicode ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
+          cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
+          cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
 
     /* Find the parent window */
 
@@ -563,10 +564,13 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     if (HOOK_IsHooked( WH_CBT ))
     {
 	CBT_CREATEWND32A cbtc;
+        LRESULT ret;
 
 	cbtc.lpcs = cs;
 	cbtc.hwndInsertAfter = hwndLinkAfter;
-	if ( HOOK_CallHooks32A(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc) )
+        ret = unicode ? HOOK_CallHooks32W(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc)
+                      : HOOK_CallHooks32A(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc);
+        if (ret)
 	{
 	    TRACE(win, "CBT-hook returned 0\n");
 	    USER_HEAP_FREE( hwnd );
@@ -1209,7 +1213,9 @@ HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child,
  */
 HWND32 WINAPI FindWindow32A( LPCSTR className, LPCSTR title )
 {
-    return FindWindowEx32A( 0, 0, className, title );
+    HWND32 ret = FindWindowEx32A( 0, 0, className, title );
+    if (!ret) SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
+    return ret;
 }
 
 
@@ -1225,7 +1231,11 @@ HWND32 WINAPI FindWindowEx32A( HWND32 parent, HWND32 child,
     {
         /* If the atom doesn't exist, then no class */
         /* with this name exists either. */
-        if (!(atom = GlobalFindAtom32A( className ))) return 0;
+        if (!(atom = GlobalFindAtom32A( className ))) 
+        {
+            SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
+            return 0;
+        }
     }
     return WIN_FindWindow( parent, child, atom, title );
 }
@@ -1245,7 +1255,11 @@ HWND32 WINAPI FindWindowEx32W( HWND32 parent, HWND32 child,
     {
         /* If the atom doesn't exist, then no class */
         /* with this name exists either. */
-        if (!(atom = GlobalFindAtom32W( className ))) return 0;
+        if (!(atom = GlobalFindAtom32W( className )))
+        {
+            SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
+            return 0;
+        }
     }
     buffer = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     hwnd = WIN_FindWindow( parent, child, atom, buffer );
@@ -1625,10 +1639,79 @@ LONG WINAPI SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 
 
 /**********************************************************************
- *	     SetWindowLong32W    (USER32.518)
+ *	     SetWindowLong32W    (USER32.518) Set window attribute
+ *
+ * SetWindowLong() alters one of a window's attributes or sets a 32-bit (long)
+ * value in a window's extra memory. 
+ *
+ * The _hwnd_ parameter specifies the window.  is the handle to a
+ * window that has extra memory. The _newval_ parameter contains the
+ * new attribute or extra memory value.  If positive, the _offset_
+ * parameter is the byte-addressed location in the window's extra
+ * memory to set.  If negative, _offset_ specifies the window
+ * attribute to set, and should be one of the following values:
+ *
+ * GWL_EXSTYLE      The window's extended window style
+ *
+ * GWL_STYLE        The window's window style. 
+ *
+ * GWL_WNDPROC      Pointer to the window's window procedure. 
+ *
+ * GWL_HINSTANCE    The window's pplication instance handle.
+ *
+ * GWL_ID           The window's identifier.
+ *
+ * GWL_USERDATA     The window's user-specified data. 
+ *
+ * If the window is a dialog box, the _offset_ parameter can be one of 
+ * the following values:
+ *
+ * DWL_DLGPROC      The address of the window's dialog box procedure.
+ *
+ * DWL_MSGRESULT    The return value of a message 
+ *                  that the dialog box procedure processed.
+ *
+ * DWL_USER         Application specific information.
+ *
+ * RETURNS
+ *
+ * If successful, returns the previous value located at _offset_. Otherwise,
+ * returns 0.
+ *
+ * NOTES
+ *
+ * Extra memory for a window class is specified by a nonzero cbWndExtra 
+ * parameter of the WNDCLASS structure passed to RegisterClass() at the
+ * time of class creation.
+ *  
+ * Using GWL_WNDPROC to set a new window procedure effectively creates
+ * a window subclass. Use CallWindowProc() in the new windows procedure
+ * to pass messages to the superclass's window procedure.
+ *
+ * The user data is reserved for use by the application which created
+ * the window.
+ *
+ * Do not use GWL_STYLE to change the window's WS_DISABLE style;
+ * instead, call the EnableWindow() function to change the window's
+ * disabled state.
+ *
+ * Do not use GWL_HWNDPARENT to reset the window's parent, use
+ * SetParent() instead.
+ *
+ * BUGS
+ *
+ * GWL_STYLE does not dispatch WM_STYLE_... messages.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32 
+ *
  */
-LONG WINAPI SetWindowLong32W( HWND32 hwnd, INT32 offset, LONG newval )
-{
+LONG WINAPI SetWindowLong32W( 
+    HWND32 hwnd, /* window to alter */
+    INT32 offset, /* offset, in bytes, of location to alter */
+    LONG newval  /* new value of location */
+) {
     return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32W );
 }
 
@@ -1656,8 +1739,8 @@ INT32 WINAPI GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
  */
 INT32 WINAPI InternalGetWindowText(HWND32 hwnd,LPWSTR lpString,INT32 nMaxCount )
 {
-	FIXME(win,"(0x%08lx,0x%08lx,%ld),stub!\n",hwnd,lpString,nMaxCount);
-	return GetWindowText32W(hwnd,lpString,nMaxCount);
+    FIXME(win,"(0x%08x,%s,0x%x),stub!\n",hwnd,debugstr_w(lpString),nMaxCount);
+    return GetWindowText32W(hwnd,lpString,nMaxCount);
 }
 
 

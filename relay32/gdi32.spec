@@ -182,7 +182,7 @@ type	win32
 178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
 179 stub GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
-181 stub GetFontData
+181 stdcall GetFontData(long long long ptr long) GetFontData32
 182 stdcall GetFontLanguageInfo(long) GetFontLanguageInfo32
 183 stub GetFontResourceInfo
 184 stub GetFontResourceInfoW

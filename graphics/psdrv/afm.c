@@ -16,7 +16,7 @@
 #include <ctype.h>
 
 /* ptr to fonts for which we have afm files */
-FontFamily *PSDRV_AFMFontList = NULL;
+FONTFAMILY *PSDRV_AFMFontList = NULL;
 
 
 /***********************************************************
@@ -35,6 +35,8 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
     int i, charno;
 
     for(i = 0; i < afm->NumofMetrics; i++) {
+        char *name = NULL;
+
         if(!fgets(buf, sizeof(buf), fp)) {
 	   ERR(psdrv, "Unexpected EOF\n");
 	   return;
@@ -71,6 +73,22 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    }
 	    /* would carry on here to scan in BBox, name and ligs */
 
+	    /* Carry on to find BBox (or actually just ascent) of Aring. This
+	       will provide something like the lfHeight value */
+
+	    else if(!strncmp("N ", item, 2)) {
+	        name = value; /* may end in space */
+	    }
+
+	    else if(!strncmp("B ", item, 2)) {
+	        if(name && !strncmp("Aring", name, 5)) {
+		    float llx, lly, urx, ury;
+		    llx = lly = urx = ury = 0.0;
+		    sscanf(value, "%f%f%f%f", &llx, &lly, &urx, &ury);
+		    afm->FullAscender = ury;
+		}
+	    }
+
 	}
     }
 
@@ -100,7 +118,7 @@ static AFM *PSDRV_AFMParse(char const *file)
         return NULL;
     }
 
-    afm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AFM));
+    afm = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(AFM));
     if(!afm) {
         fclose(fp);
         return NULL;
@@ -118,17 +136,17 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    value++;
 
 	if(!strncmp("FontName", buf, 8)) {
-	    afm->FontName = HEAP_strdupA(GetProcessHeap(), 0, value);
+	    afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, value);
 	    continue;
 	}
 
 	if(!strncmp("FullName", buf, 8)) {
-	    afm->FullName = HEAP_strdupA(GetProcessHeap(), 0, value);
+	    afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, value);
 	    continue;
 	}
 
 	if(!strncmp("FamilyName", buf, 10)) {
-	    afm->FamilyName = HEAP_strdupA(GetProcessHeap(), 0, value);
+	    afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, value);
 	    continue;
 	}
 	
@@ -205,24 +223,81 @@ static AFM *PSDRV_AFMParse(char const *file)
 	    continue;
 	}
 
-    }
 
+
+
+    }
     fclose(fp);
-    if(afm->Ascender == 0.0) afm->Ascender = 1000.0;
+
+    if(afm->Ascender == 0.0)
+        afm->Ascender = afm->FontBBox.ury;
+    if(afm->Descender == 0.0)
+        afm->Descender = afm->FontBBox.lly;
+    if(afm->FullAscender == 0.0)
+        afm->FullAscender = afm->Ascender;
+
     return afm;
+}
+
+/***********************************************************
+ *
+ *	PSDRV_FreeAFMList
+ *
+ * Frees the family and afmlistentry structures in list head
+ */
+void PSDRV_FreeAFMList( FONTFAMILY *head )
+{
+    AFMLISTENTRY *afmle, *nexta;
+    FONTFAMILY *family, *nextf;
+
+    for(nextf = family = head; nextf; family = nextf) {
+        for(nexta = afmle = family->afmlist; nexta; afmle = nexta) {
+	    nexta = afmle->next;
+	    HeapFree( PSDRV_Heap, 0, afmle );
+	}
+        nextf = family->next;
+	HeapFree( PSDRV_Heap, 0, family );
+    }
+    return;
+}
+
+
+/***********************************************************
+ *
+ *	PSDRV_FindAFMinList
+ * Returns ptr to an AFM if name (which is a PS font name) exists in list
+ * headed by head.
+ */
+AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
+{
+    FONTFAMILY *family;
+    AFMLISTENTRY *afmle;
+
+    for(family = head; family; family = family->next) {
+        for(afmle = family->afmlist; afmle; afmle = afmle->next) {
+	    if(!strcmp(afmle->afm->FontName, name))
+	        return afmle->afm;
+	}
+    }
+    return NULL;
 }
 
 /***********************************************************
  *
  *	PSDRV_AddAFMtoList
  *
- * Adds an afm to the current font list. Creates new family node if necessary.
+ * Adds an afm to the list whose head is pointed to by head. Creates new
+ * family node if necessary and always creates a new AFMLISTENTRY.
  */
-static void PSDRV_AddAFMtoList(AFM *afm)
+void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 {
-    FontFamily *family = PSDRV_AFMFontList;
-    FontFamily **insert = &PSDRV_AFMFontList;
-    AFM *tmpafm;
+    FONTFAMILY *family = *head;
+    FONTFAMILY **insert = head;
+    AFMLISTENTRY *tmpafmle, *newafmle;
+
+    newafmle = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY,
+			   sizeof(*newafmle));
+    newafmle->afm = afm;
 
     while(family) {
         if(!strcmp(family->FamilyName, afm->FamilyName))
@@ -230,22 +305,22 @@ static void PSDRV_AddAFMtoList(AFM *afm)
 	insert = &(family->next);
 	family = family->next;
     }
-    
+ 
     if(!family) {
-        family = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+        family = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY,
 			   sizeof(*family));
 	*insert = family;
-	family->FamilyName = HEAP_strdupA(GetProcessHeap(), 0,
+	family->FamilyName = HEAP_strdupA(PSDRV_Heap, 0,
 					  afm->FamilyName);
-	family->afm = afm;
+	family->afmlist = newafmle;
 	return;
     }
     
-    tmpafm = family->afm;
-    while(tmpafm->next)
-        tmpafm = tmpafm->next;
+    tmpafmle = family->afmlist;
+    while(tmpafmle->next)
+        tmpafmle = tmpafmle->next;
 
-    tmpafm->next = afm;
+    tmpafmle->next = newafmle;
 
     return;
 }
@@ -263,7 +338,7 @@ void *user)
 
     afm = PSDRV_AFMParse(value);
     if(afm)
-        PSDRV_AddAFMtoList(afm);
+        PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
     return;
 }
 
@@ -275,13 +350,13 @@ void *user)
  */
 static void PSDRV_DumpFontList(void)
 {
-    FontFamily *family;
-    AFM *afm;
+    FONTFAMILY *family;
+    AFMLISTENTRY *afmle;
 
     for(family = PSDRV_AFMFontList; family; family = family->next) {
         TRACE(psdrv, "Family '%s'\n", family->FamilyName);
-	for(afm = family->afm; afm; afm = afm->next) {
-	    TRACE(psdrv, "\tFontName '%s'\n", afm->FontName);
+	for(afmle = family->afmlist; afmle; afmle = afmle->next) {
+	    TRACE(psdrv, "\tFontName '%s'\n", afmle->afm->FontName);
 	}
     }
     return;

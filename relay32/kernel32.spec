@@ -97,16 +97,16 @@ type	win32
  83 stub K32RtlLargeIntegerSubtract
  84 stub K32RtlConvertLongToLargeInteger
  85 stub K32RtlConvertUlongToLargeInteger
- 86 stub _KERNEL32_86
+ 86 stdcall _KERNEL32_86(ptr) _KERNEL32_86
  87 stdcall SSOnBigStack() SSOnBigStack
  88 varargs SSCall() SSCall
  89 register FT_PrologPrime() FT_PrologPrime
  90 register QT_ThunkPrime() QT_ThunkPrime
  91 stub PK16FNF
  92 stdcall GetPK16SysVar() GetPK16SysVar
- 93 stdcall GetpWin16Lock(ptr) GetpWin16Lock
- 94 stub _CheckNotSysLevel
- 95 stub _ConfirmSysLevel
+ 93 stdcall GetpWin16Lock(ptr) GetpWin16Lock32
+ 94 stdcall _CheckNotSysLevel(ptr) _CheckNotSysLevel
+ 95 stdcall _ConfirmSysLevel(ptr) _ConfirmSysLevel
  96 stdcall _ConfirmWin16Lock() _ConfirmWin16Lock
  97 stdcall _EnterSysLevel(ptr) _EnterSysLevel
  98 stdcall _LeaveSysLevel(ptr) _LeaveSysLevel

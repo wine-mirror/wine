@@ -14,12 +14,14 @@
 #include "k32obj.h"
 
 struct _NE_MODULE;
+struct _THREAD_ENTRY;
 
 /* Process handle entry */
 typedef struct
 {
     DWORD    access;  /* Access flags */
     K32OBJ  *ptr;     /* Object ptr */
+    int      server;  /* Server handle (FIXME: tmp hack) */
 } HANDLE_ENTRY;
 
 /* Process handle table */
@@ -78,7 +80,7 @@ typedef struct _PDB32
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
     struct _PDB32   *parent;           /* 48 Parent process */
     WINE_MODREF     *modref_list;      /* 4c MODREF list */
-    void            *thread_list;      /* 50 List of threads */
+    struct _THREAD_ENTRY *thread_list; /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
     void            *local_heap_free;  /* 58 Head of local heap free list */
     DWORD            unknown4;         /* 5c Unknown */
@@ -125,9 +127,10 @@ extern void ENV_FreeEnvironment( PDB32 *pdb );
 /* scheduler/handle.c */
 extern BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit );
 extern HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
-                              BOOL32 inherit );
+                              BOOL32 inherit, int server_handle );
 extern K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
-                                 K32OBJ_TYPE type, DWORD access );
+                                 K32OBJ_TYPE type, DWORD access,
+                                 int *server_handle );
 extern BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle,
                                 K32OBJ *ptr, DWORD access );
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
@@ -135,10 +138,13 @@ extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
 /* scheduler/process.c */
 extern BOOL32 PROCESS_Init( void );
 extern PDB32 *PROCESS_Current(void);
-extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access );
+extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
                               LPCSTR env, HINSTANCE16 hInstance,
-                              HINSTANCE16 hPrevInstance, UINT32 cmdShow );
+                              HINSTANCE16 hPrevInstance, UINT32 cmdShow,
+                              PROCESS_INFORMATION *info );
+extern void PROCESS_SuspendOtherThreads(void);
+extern void PROCESS_ResumeOtherThreads(void);
 
 #endif  /* __WINE_PROCESS_H */

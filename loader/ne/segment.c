@@ -425,8 +425,13 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         /* some BootApp procs overwrite the selector of dgroup */
         pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
         thdb->cur_stack = oldstack;
-        for (i = 2; i <= pModule->seg_count; i++)
-            if (!NE_LoadSegment( pModule, i )) return FALSE;
+
+	/* FIXME
+	commented out by Andreas Mohr;
+	some self-loading exe ("BLINKER") relies on non-primary segs not loaded.
+	contact me if you experience problems */
+        /*for (i = 2; i <= pModule->seg_count; i++)
+            if (!NE_LoadSegment( pModule, i )) return FALSE;*/
     }
     else
     {
@@ -580,7 +585,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
 static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegTable;
-    WORD hInst, ds, heap, fs;
+    WORD hInst, ds, heap;
     CONTEXT context;
 
     pSegTable = NE_SEG_TABLE( pModule );
@@ -611,13 +616,11 @@ static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
     memset( &context, 0, sizeof(context) );
 
     NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
-    GET_FS( fs );
 
     ECX_reg(&context) = heap;
     EDI_reg(&context) = hInst;
     DS_reg(&context)  = ds;
     ES_reg(&context)  = ds;   /* who knows ... */
-    FS_reg(&context)  = fs;
 
     CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
     EIP_reg(&context) = pModule->ip;
@@ -641,7 +644,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
 static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 {
-    WORD hInst, ds, heap, fs;
+    WORD hInst, ds, heap;
     FARPROC16 entryPoint;
     WORD ordinal;
     CONTEXT context;
@@ -655,11 +658,9 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     memset( &context, 0, sizeof(context) );
 
     NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
-    GET_FS( fs );
 
     DS_reg(&context) = ds;
     ES_reg(&context) = ds;   /* who knows ... */
-    FS_reg(&context) = fs;
 
     CS_reg(&context) = HIWORD(entryPoint);
     IP_reg(&context) = LOWORD(entryPoint);
@@ -745,6 +746,7 @@ HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
                                  pModule->self, FALSE, FALSE, FALSE );
     if (!hNewInstance) return 0;
     pSegment->selector = hNewInstance;
+    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
     return hNewInstance;
 }
 
@@ -821,6 +823,7 @@ BOOL32 NE_CreateSegments( NE_MODULE *pModule )
                                       FALSE,
                             FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
         if (!pSegment->selector) return FALSE;
+	pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
     }
 
     pModule->dgroup_entry = pModule->dgroup ? pModule->seg_table +

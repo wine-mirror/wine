@@ -1977,12 +1977,6 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
 	  bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
 	  bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
-    if (bi->biCompression)
-    {
-	FIXME(bitmap, "Compression not implemented!\n");
-	return 0;
-    }
-
     bm.bmType = 0;
     bm.bmWidth = bi->biWidth;
     bm.bmHeight = bi->biHeight;
@@ -2005,11 +1999,12 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
     /* Create Color Map */
     if (bm.bmBits && bm.bmBitsPixel <= 8)
     {
-        DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
-        if (!dc) dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+        DC *dc = hdc? (DC *)GDI_GetObjPtr(hdc, DC_MAGIC) : NULL;
+        if (hdc && !dc) dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 
-        if (dc) colorMap = DIB_BuildColorMap( dc, usage, bm.bmBitsPixel,
-                                              bmi, &nColorMap );
+        if (!hdc || dc)
+            colorMap = DIB_BuildColorMap( dc, usage, bm.bmBitsPixel,
+                                          bmi, &nColorMap );
         GDI_HEAP_UNLOCK(hdc);
     }
 

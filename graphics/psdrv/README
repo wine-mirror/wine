@@ -39,6 +39,13 @@ file=/unix/path/name/filename.afm
 
 for each AFM file that you wish to use. [This might change in the future]
 
+You also require a ppd file for your printer. This describes certain
+characteristics of the printer such as which fonts are installed, how to select
+manual feed etc. Adobe also has many of these on its website, have a look in
+ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/
+Put the ppd in the directory from which you start wine and call it default.ppd
+[this will definitely change soon].
+
 Note that you need not set printer=on in the [wine] section of wine.conf, this
 enables printing via external printer drivers and does not affect wineps.
 
@@ -51,9 +58,12 @@ the right place.
 TODO / Bugs
 -----------
 
-Driver doesn't read PPD files - it should.
+Driver does read PPD files, but ignores all constraints and doesn't let you
+specify whether you have optional extras such as envelope feeders. You will
+therefore find a larger than normal selection of input bins in the print setup
+dialog box. I've only really tested ppd parsing on the hp4m6_v1.ppd file.
 
-A4 portrait mode is hard coded in at the moment.
+Landscape mode probably doesn't quite work yet (this is easy to fix).
 
 Graphics are basically non-existent. Only MoveTo/LineTo/Rectangle with a thin
 black pen.
@@ -64,12 +74,13 @@ AFM parsing is not finished (or ideal).
 
 No TrueType download.
 
-Many partial-implemented functions.
+Many partially implemented functions.
+
+ps.c is becoming messy.
 
 Probably many more...
 
-
-Since the driver is very very alpha, things are likely to change quickly.
+Since the driver is very alpha, things are likely to change quickly.
 Please contact me if you want to help so that we can avoid duplication.
 
 Huw Davies <h.davies1@physics.ox.ac.uk>

@@ -854,10 +854,14 @@ HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
     if (cmd_line &&
         !(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
+        PROCESS_INFORMATION info;
         PDB32 *pdb = PROCESS_Create( pModule, cmd_line, env,
-                                     hInstance, 0, show_cmd );
+                                     hInstance, 0, show_cmd, &info );
         TDB *pTask = (TDB *)GlobalLock16( pdb->task );
         thdb = pTask->thdb;
+        /* we don't need the handles for now */
+        CloseHandle( info.hThread );
+        CloseHandle( info.hProcess );
     }
 
     process = thdb->process;

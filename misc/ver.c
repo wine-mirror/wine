@@ -1069,7 +1069,7 @@ DWORD WINAPI VerInstallFile32A(
     }
     if (xret) {
 	if (*tmpfilelen<strlen(tmpfn+tmplast)) {
-	    xret|=VIF_BUFTOSMALL;
+	    xret|=VIF_BUFFTOOSMALL;
 	    DeleteFile32A(tmpfn);
 	} else {
 	    strcpy(tmpfile,tmpfn+tmplast);

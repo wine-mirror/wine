@@ -577,6 +577,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
     int	i;
     const char *p;
 
+    if (!name) return NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
@@ -604,6 +605,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
     FILE_OBJECT *file;
     HFILE32 handle;
 
+    if (!name) return NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;

@@ -53,7 +53,8 @@ BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
 const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name )
 {
     GRAPHICS_DRIVER *driver = firstDriver;
-    while (driver)
+
+    while (driver && name)
     {
         if (!strcasecmp( driver->name, name )) return driver->funcs;
         driver = driver->next;

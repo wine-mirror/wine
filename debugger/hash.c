@@ -874,19 +874,35 @@ void DEBUG_LoadEntryPoints(void)
     NE_MODULE *pModule;
     BOOL32 ok;
     WINE_MODREF	*wm;
+    int rowcount = 3;
 
+    fprintf( stderr, "   " );
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
         if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
+	if ((rowcount + strlen(entry.szModule)) > 76)
+        {
+	    fprintf( stderr,"\n   ");
+	    rowcount = 3;
+        }
         fprintf( stderr, " %s", entry.szModule );
+        rowcount += strlen(entry.szModule) + 1;
 
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
             DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }
-    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next) {
+    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
+    {
+        if ((rowcount + strlen(wm->modname)) > 76)
+        {
+            fprintf( stderr,"\n   ");
+            rowcount = 3;
+        }
         fprintf( stderr, " %s", wm->modname );
+        rowcount += strlen(wm->modname) + 1;
 	DEBUG_LoadEntryPoints32( wm->module, wm->modname );
     }
+    fprintf( stderr, "\n" );
 }
 
 

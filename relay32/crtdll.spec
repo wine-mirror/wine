@@ -100,8 +100,8 @@ type	win32
  96 stub _filelength
  97 stub _fileno
  98 stub _findclose
- 99 stub _findfirst
-100 stub _findnext
+ 99 cdecl _findfirst(str ptr) CRTDLL__findfirst
+100 cdecl _findnext(long ptr) CRTDLL__findnext
 101 stub _finite
 102 stub _flsbuf
 103 stub _flushall
@@ -112,7 +112,7 @@ type	win32
 108 stub _fputchar
 109 stub _fputwchar
 110 stub _fsopen
-111 stub _fstat
+111 cdecl _fstat(long ptr) CRTDLL__fstat
 112 stub _ftime
 113 cdecl _ftol(double) CRTDLL__ftol
 114 cdecl _fullpath(ptr str long) CRTDLL__fullpath
@@ -257,7 +257,7 @@ type	win32
 253 stub _putenv
 254 stub _putw
 255 stub _pwctype_dll
-256 stub _read
+256 cdecl _read(long ptr long) CRTDLL__read
 257 stub _rmdir
 258 stub _rmtmp
 259 cdecl _rotl (long long) CRTDLL__rotl
@@ -380,7 +380,7 @@ type	win32
 376 stub fputwc
 377 cdecl fread(ptr long long ptr) CRTDLL_fread
 378 cdecl free(ptr) CRTDLL_free
-379 stub freopen
+379 cdecl freopen(str str ptr) CRTDLL_freopen
 380 cdecl frexp(double ptr) frexp
 381 varargs fscanf() CRTDLL_fscanf
 382 cdecl fseek(ptr long long) CRTDLL_fseek

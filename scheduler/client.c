@@ -16,12 +16,33 @@
 #include "process.h"
 #include "thread.h"
 #include "server.h"
+#include "server/request.h"
 #include "winerror.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
 #define SCM_RIGHTS 1
 #endif
+
+#define CHECK_LEN(len,wanted) \
+  if ((len) == (wanted)) ; \
+  else CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
+
+/***********************************************************************
+ *           CLIENT_ProtocolError
+ */
+static void CLIENT_ProtocolError( const char *err, ... )
+{
+    THDB *thdb = THREAD_Current();
+    va_list args;
+
+    va_start( args, err );
+    fprintf( stderr, "Client protocol error:%p: ", thdb->server_tid );
+    vfprintf( stderr, err, args );
+    va_end( args );
+    ExitThread(1);
+}
+
 
 /***********************************************************************
  *           CLIENT_SendRequest_v
@@ -62,10 +83,8 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
 
     if ((ret = sendmsg( thdb->socket, &msghdr, 0 )) < len)
     {
-        fprintf( stderr, "Fatal protocol error: " );
         if (ret == -1) perror( "sendmsg" );
-        else fprintf( stderr, "partial msg sent %d/%d\n", ret, len );
-        ExitThread(1);
+        CLIENT_ProtocolError( "partial msg sent %d/%d\n", ret, len );
     }
     /* we passed the fd now we can close it */
     if (pass_fd != -1) close( pass_fd );
@@ -123,30 +142,21 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 
     if ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
     {
-        fprintf( stderr, "Fatal protocol error: " );
         perror("recvmsg");
-        ExitThread(1);
+        CLIENT_ProtocolError( "recvmsg\n" );
     }
+    if (!ret) ExitThread(1); /* the server closed the connection; time to die... */
+
+    /* sanity checks */
+
     if (ret < sizeof(head))
-    {
-        fprintf( stderr,
-                 "Fatal protocol error: partial header received %d/%d\n",
-                 ret, sizeof(head));
-        ExitThread(1);
-    }
+        CLIENT_ProtocolError( "partial header received %d/%d\n", ret, sizeof(head) );
+
     if ((head.len < sizeof(head)) || (head.len > MAX_MSG_LENGTH))
-    {
-        fprintf( stderr, "Fatal protocol error: header length %d\n",
-                 head.len );
-        ExitThread(1);
-    }
+        CLIENT_ProtocolError( "header length %d\n", head.len );
+
     if (head.seq != thdb->seq++)
-    {
-        fprintf( stderr,
-                 "Fatal protocol error: sequence %08x instead of %08x\n",
-                 head.seq, thdb->seq - 1 );
-        ExitThread(1);
-    }
+        CLIENT_ProtocolError( "sequence %08x instead of %08x\n", head.seq, thdb->seq - 1 );
 
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     pass_fd = cmsg.fd;
@@ -171,10 +181,10 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
         int len = remaining < sizeof(buffer) ? remaining : sizeof(buffer);
         if ((len = recv( thdb->socket, buffer, len, 0 )) == -1)
         {
-            fprintf( stderr, "Fatal protocol error: " );
             perror( "recv" );
-            ExitThread(1);
+            CLIENT_ProtocolError( "recv\n" );
         }
+        if (!len) ExitThread(1); /* the server closed the connection; time to die... */
         remaining -= len;
     }
 
@@ -208,48 +218,17 @@ static unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
 
 
 /***********************************************************************
- *           send_new_thread
- *
- * Send a new thread request. Helper function for CLIENT_NewThread.
- */
-static int send_new_thread( THDB *thdb )
-{
-    struct new_thread_request request;
-    struct new_thread_reply reply;
-    int len, fd[2];
-
-    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
-    {
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
-        return -1;
-    }
-
-    request.pid = thdb->process->server_pid;
-    CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
-
-    if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) goto error;
-    if (len < sizeof(reply)) goto error;
-    thdb->server_tid = reply.tid;
-    thdb->process->server_pid = reply.pid;
-    if (thdb->socket != -1) close( thdb->socket );
-    thdb->socket = fd[0];
-    thdb->seq = 0;  /* reset the sequence number for the new fd */
-    return 0;
-
- error:
-    close( fd[0] );
-    return -1;
-}
-
-
-/***********************************************************************
  *           CLIENT_NewThread
  *
  * Send a new thread request.
  */
-int CLIENT_NewThread( THDB *thdb )
+int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
 {
+    struct new_thread_request request;
+    struct new_thread_reply reply;
+    int len, fd[2];
     extern BOOL32 THREAD_InitDone;
+    extern void server_main_loop( int fd );
 
     if (!THREAD_InitDone)  /* first thread -> start the server */
     {
@@ -285,7 +264,33 @@ int CLIENT_NewThread( THDB *thdb )
         }
     }
 
-    return send_new_thread( thdb );
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
+    {
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
+        return -1;
+    }
+
+    request.pid = thdb->process->server_pid;
+    CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
+
+    if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) goto error;
+    if (len < sizeof(reply)) goto error;
+    thdb->server_tid = reply.tid;
+    thdb->process->server_pid = reply.pid;
+    if (thdb->socket != -1) close( thdb->socket );
+    thdb->socket = fd[0];
+    thdb->seq = 0;  /* reset the sequence number for the new fd */
+
+    /* we don't need the handles for now */
+    if (thandle) *thandle = reply.thandle;
+    else if (reply.thandle != -1) CLIENT_CloseHandle( reply.thandle );
+    if (phandle) *phandle = reply.phandle;
+    else if (reply.phandle != -1) CLIENT_CloseHandle( reply.phandle );
+    return 0;
+
+ error:
+    close( fd[0] );
+    return -1;
 }
 
 
@@ -300,11 +305,112 @@ int CLIENT_InitThread(void)
     struct init_thread_request init;
     int len = strlen( thdb->process->env_db->cmd_line );
 
-    init.pid = getpid();
+    init.unix_pid = getpid();
     len = MIN( len, MAX_MSG_LENGTH - sizeof(init) );
 
     CLIENT_SendRequest( REQ_INIT_THREAD, -1, 2,
                         &init, sizeof(init),
                         thdb->process->env_db->cmd_line, len );
-    return CLIENT_WaitReply( NULL, NULL, NULL, 0 );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+
+/***********************************************************************
+ *           CLIENT_TerminateProcess
+ *
+ * Send a terminate process request. Return 0 if OK.
+ */
+int CLIENT_TerminateProcess( int handle, int exit_code )
+{
+    CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 2,
+                        &handle, sizeof(handle),
+                        &exit_code, sizeof(exit_code) );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+/***********************************************************************
+ *           CLIENT_TerminateThread
+ *
+ * Send a terminate thread request. Return 0 if OK.
+ */
+int CLIENT_TerminateThread( int handle, int exit_code )
+{
+    CLIENT_SendRequest( REQ_TERMINATE_THREAD, -1, 2,
+                        &handle, sizeof(handle),
+                        &exit_code, sizeof(exit_code) );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+/***********************************************************************
+ *           CLIENT_CloseHandle
+ *
+ * Send a close handle request. Return 0 if OK.
+ */
+int CLIENT_CloseHandle( int handle )
+{
+    CLIENT_SendRequest( REQ_CLOSE_HANDLE, -1, 1, &handle, sizeof(handle) );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+/***********************************************************************
+ *           CLIENT_DuplicateHandle
+ *
+ * Send a duplicate handle request. Return 0 if OK.
+ */
+int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, int dst_handle,
+                            DWORD access, BOOL32 inherit, DWORD options )
+{
+    struct dup_handle_request req;
+    struct dup_handle_reply reply;
+    int len;
+
+    req.src_process = src_process;
+    req.src_handle  = src_handle;
+    req.dst_process = dst_process;
+    req.dst_handle  = dst_handle;
+    req.access      = access;
+    req.inherit     = inherit;
+    req.options     = options;
+
+    CLIENT_SendRequest( REQ_DUP_HANDLE, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    return reply.handle;
+}
+
+/***********************************************************************
+ *           CLIENT_GetProcessInfo
+ *
+ * Send a get process info request. Return 0 if OK.
+ */
+int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply )
+{
+    int len, err;
+
+    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &handle, sizeof(handle) );
+    err = CLIENT_WaitReply( &len, NULL, 1, reply, sizeof(*reply) );
+    CHECK_LEN( len, sizeof(*reply) );
+    return err;
+}
+
+
+/***********************************************************************
+ *           CLIENT_OpenProcess
+ *
+ * Open a handle to a process.
+ */
+int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit )
+{
+    struct open_process_request req;
+    struct open_process_reply reply;
+    int len;
+
+    req.pid     = pid;
+    req.access  = access;
+    req.inherit = inherit;
+
+    CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    return reply.handle;
 }

@@ -57,16 +57,18 @@ PDB32 *PROCESS_Current(void)
  *
  * Get a process from a handle, incrementing the PDB refcount.
  */
-PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access )
+PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
 {
     PDB32 *pdb = PROCESS_Current();
 
     if (handle == PROCESS_SELF)
     {
+        if (server_handle) *server_handle = PROCESS_SELF;
         K32OBJ_IncCount( &pdb->header );
         return pdb;
     }
-    return (PDB32 *)HANDLE_GetObjPtr( pdb, handle, K32OBJ_PROCESS, access );
+    return (PDB32 *)HANDLE_GetObjPtr( pdb, handle, K32OBJ_PROCESS, access,
+                                      server_handle );
 }
 
 
@@ -227,7 +229,7 @@ BOOL32 PROCESS_Init(void)
 
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
-    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL ))) return FALSE;
+    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
 
     /* Create the environment DB of the first process */
@@ -247,14 +249,16 @@ BOOL32 PROCESS_Init(void)
  */
 PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                        HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                       UINT32 cmdShow )
+                       UINT32 cmdShow, PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
+    int server_thandle, server_phandle;
     THDB *thdb = NULL;
     PDB32 *parent = PROCESS_Current();
     PDB32 *pdb = PROCESS_CreatePDB( parent );
 
     if (!pdb) return NULL;
+    info->hThread = info->hProcess = INVALID_HANDLE_VALUE32;
 
     /* Create the heap */
 
@@ -282,7 +286,16 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
     else
         size = 0;
-    if (!(thdb = THREAD_Create( pdb, size, FALSE, NULL, NULL ))) goto error;
+    if (!(thdb = THREAD_Create( pdb, size, FALSE, &server_thandle, &server_phandle,
+                                NULL, NULL ))) goto error;
+    if ((info->hThread = HANDLE_Alloc( parent, &thdb->header, THREAD_ALL_ACCESS,
+                                       FALSE, server_thandle )) == INVALID_HANDLE_VALUE32)
+        goto error;
+    if ((info->hProcess = HANDLE_Alloc( parent, &pdb->header, PROCESS_ALL_ACCESS,
+                                        FALSE, server_phandle )) == INVALID_HANDLE_VALUE32)
+        goto error;
+    info->dwProcessId = PDB_TO_PROCESS_ID(pdb);
+    info->dwProcessId = THDB_TO_THREAD_ID(thdb);
 
     thdb->unix_pid = getpid(); /* FIXME: wrong here ... */
 
@@ -294,6 +307,8 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     return pdb;
 
 error:
+    if (info->hThread != INVALID_HANDLE_VALUE32) CloseHandle( info->hThread );
+    if (info->hProcess != INVALID_HANDLE_VALUE32) CloseHandle( info->hProcess );
     if (thdb) K32OBJ_DecCount( &thdb->header );
     PROCESS_FreePDB( pdb );
     return NULL;
@@ -398,13 +413,20 @@ HANDLE32 WINAPI GetCurrentProcess(void)
  */
 HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
 {
+    int server_handle;
     PDB32 *pdb = PROCESS_ID_TO_PDB(id);
     if (!K32OBJ_IsValid( &pdb->header, K32OBJ_PROCESS ))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
-    return HANDLE_Alloc( PROCESS_Current(), &pdb->header, access, inherit );
+    if ((server_handle = CLIENT_OpenProcess( pdb->server_pid, access, inherit )) == -1)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
+    return HANDLE_Alloc( PROCESS_Current(), &pdb->header, access,
+                         inherit, server_handle );
 }			      
 
 
@@ -442,7 +464,7 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 {
-    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_SET_INFORMATION );
+    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_SET_INFORMATION, NULL );
     if (!pdb) return FALSE;
     switch (priorityclass)
     {
@@ -472,7 +494,7 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
  */
 DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 {
-    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_QUERY_INFORMATION );
+    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_QUERY_INFORMATION, NULL );
     DWORD ret = 0;
     if (pdb)
     {
@@ -689,10 +711,18 @@ BOOL32 WINAPI GetExitCodeProcess(
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
     PDB32 *process;
+    int server_handle;
+    struct get_process_info_reply info;
 
-    if (!(process = PROCESS_GetPtr( hProcess, PROCESS_QUERY_INFORMATION )))
+    if (!(process = PROCESS_GetPtr( hProcess, PROCESS_QUERY_INFORMATION,
+                                    &server_handle )))
         return FALSE;
-    if (lpExitCode) *lpExitCode = process->exit_code;
+    if (server_handle != -1)
+    {
+        CLIENT_GetProcessInfo( server_handle, &info );
+        if (lpExitCode) *lpExitCode = info.exit_code;
+    }
+    else if (lpExitCode) *lpExitCode = process->exit_code;
     K32OBJ_DecCount( &process->header );
     return TRUE;
 }
@@ -711,3 +741,64 @@ DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE32 *heaps) {
 	/* number of available heaps */
 	return 1;
 }
+
+/***********************************************************************
+ * PROCESS_SuspendOtherThreads
+ */
+
+void PROCESS_SuspendOtherThreads(void)
+{
+    PDB32 *pdb;
+    THREAD_ENTRY *entry;
+
+    SYSTEM_LOCK();
+
+    pdb = PROCESS_Current();
+    entry = pdb->thread_list->next;
+    for (;;)
+    {
+         if (entry->thread != THREAD_Current())
+         {
+             HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
+                                             &entry->thread->header,
+                                             THREAD_ALL_ACCESS, FALSE, -1 );
+             SuspendThread(handle);
+             CloseHandle(handle);
+         }
+         if (entry == pdb->thread_list) break;
+         entry = entry->next;
+    }
+
+    SYSTEM_UNLOCK();
+}
+
+/***********************************************************************
+ * PROCESS_ResumeOtherThreads
+ */
+
+void PROCESS_ResumeOtherThreads(void)
+{
+    PDB32 *pdb;
+    THREAD_ENTRY *entry;
+
+    SYSTEM_LOCK();
+
+    pdb = PROCESS_Current();
+    entry = pdb->thread_list->next;
+    for (;;)
+    {
+         if (entry->thread != THREAD_Current())
+         {
+             HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
+                                             &entry->thread->header,
+                                             THREAD_ALL_ACCESS, FALSE, -1 );
+             ResumeThread(handle);
+             CloseHandle(handle);
+         }
+         if (entry == pdb->thread_list) break;
+         entry = entry->next;
+    }
+
+    SYSTEM_UNLOCK();
+}
+

@@ -715,7 +715,7 @@ DWORD WINAPI GlobalDOSAlloc(
              DWORD size /* [in] Number of bytes to be allocated */
 ) {
    UINT16    uParagraph;
-   LPVOID    lpBlock = DOSMEM_GetBlock( size, &uParagraph );
+   LPVOID    lpBlock = DOSMEM_GetBlock( 0, size, &uParagraph );
 
    if( lpBlock )
    {
@@ -744,7 +744,7 @@ WORD WINAPI GlobalDOSFree(
    if( block && block < 0x100000 ) 
    {
        LPVOID lpBlock = DOSMEM_MapDosToLinear( block );
-       if( DOSMEM_FreeBlock( lpBlock ) )
+       if( DOSMEM_FreeBlock( 0, lpBlock ) )
 	   GLOBAL_FreeBlock( sel );
        sel = 0;
    }

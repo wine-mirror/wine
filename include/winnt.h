@@ -148,6 +148,9 @@ typedef HANDLE32 *PHANDLE;
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
 
+#define ISV86(context)       (EFL_reg(context) & 0x00020000)
+#define V86BASE(context)     ((context)->Dr7) /* ugly */
+
 #endif  /* __WINE__ */
 
 /*

@@ -1611,7 +1611,7 @@ static const unsigned char LCM_Diacritic_LUT[] = {
  19,  /* ÿ - 255 */
 } ;
 
-static int is_punctuation(unsigned char c) 
+static int OLE2NLS_isPunctuation(unsigned char c) 
 {
   /* "punctuation character" in this context is a character which is 
      considered "less important" during word sort comparison.
@@ -1639,17 +1639,24 @@ static int identity(int c)
  *    Error : 0.
  *    Success : length of the result string.
  *
- * REMARKS
+ * NOTES
  *    If called with scrlen = -1, the function will compute the length
  *      of the 0-terminated string strsrc by itself.      
  * 
  *    If called with dstlen = 0, returns the buffer length that 
  *      would be required.
+ *
+ *    NORM_IGNOREWIDTH means to compare ASCII and Unicode characters
+ *    as if they are equal.  Since Wine separates ASCII and Unicode into
+ *    separate functions, we shouldn't have to do anything for this flag.
+ *    I added it to the list of flags that don't need a fixme message
+ *    to make MS Word 95 not print several thousand fixme messages for 
+ *    this function.
  */
 INT32 WINAPI LCMapString32A(
 	LCID lcid /* locale identifier created with MAKELCID; 
-		     LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are predefined
-		     values. */,
+		     LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are 
+                     predefined values. */,
 	DWORD mapflags /* flags */,
 	LPCSTR srcstr  /* source buffer */,
 	INT32 srclen   /* source length */,
@@ -1663,20 +1670,22 @@ INT32 WINAPI LCMapString32A(
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
+    ERR(ole, "(src=%s,dest=%s): Invalid NULL string\n", srcstr, dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
-  if (srclen==-1) 
+  if (srclen == -1) 
     srclen = lstrlen32A(srcstr) + 1 ;    /* (include final '\0') */
 
   if (mapflags & ~ ( LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
-		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT) )
+		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT |
+		     NORM_IGNOREWIDTH) )
   {
     FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
 	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
   }
-  
+
   if ( !(mapflags & LCMAP_SORTKEY) )
   {
     int (*f)(int)=identity; 
@@ -1714,7 +1723,7 @@ INT32 WINAPI LCMapString32A(
       unsigned char source_char = srcstr[i];
       if (source_char!='\0') 
       {
-	if (flag_stringsort || !is_punctuation(source_char))
+	if (flag_stringsort || !OLE2NLS_isPunctuation(source_char))
 	{
 	  unicode_len++;
 	  if ( LCM_Unicode_LUT[-2+2*source_char] & ~15 )
@@ -1780,7 +1789,7 @@ INT32 WINAPI LCMapString32A(
 	type = LCM_Unicode_LUT[-2+2*source_char];
 	longcode = type >> 4;
 	type &= 15;
-	if (!flag_stringsort && is_punctuation(source_char)) 
+	if (!flag_stringsort && OLE2NLS_isPunctuation(source_char)) 
 	{
 	  UINT16 encrypted_location = (1<<15) + 7 + 4*count;
 	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location>>8);
@@ -1829,6 +1838,15 @@ INT32 WINAPI LCMapString32A(
   }
 }
 		     
+/*************************************************************************
+ *              LCMapString32W                [KERNEL32.493]
+ *
+ * Convert a string, or generate a sort key from it.
+ *
+ * NOTE
+ *
+ * See LCMapString32A for documentation
+ */
 INT32 WINAPI LCMapString32W(
 	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT32 srclen,LPWSTR dststr,
 	INT32 dstlen)
@@ -1840,6 +1858,7 @@ INT32 WINAPI LCMapString32W(
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
+    ERR(ole, "(src=%p,dst=%p): Invalid NULL string\n", srcstr, dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -1880,13 +1899,34 @@ UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
 }
 
 /***********************************************************************
- *           CompareString32A   (KERNEL32.29)
+ * CompareString32A [KERNEL32.29] Compares two strings using locale
+ *
+ * RETURNS
+ *
+ * success: CSTR_LESS_THAN, CSTR_EQUAL, CSTR_GREATER_THAN
+ * failure: 0
+ *
+ * NOTES
+ *
+ * Defaults to a word sort, but uses a string sort if
+ * SORT_STRINGSORT is set.
+ * Calls SetLastError for ERROR_INVALID_FLAGS, ERROR_INVALID_PARAMETER.
+ * 
+ * BUGS
+ *
  * This implementation ignores the locale
+ *
  * FIXME
- * Moreover it is quite inefficient. FIXME too!
+ * 
+ * Quite inefficient.
  */
-UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle, 
-                               LPCSTR s1, DWORD l1, LPCSTR s2,DWORD l2)
+UINT32 WINAPI CompareString32A(
+    DWORD lcid,     /* locale ID */
+    DWORD fdwStyle, /* comparison-style options */
+    LPCSTR s1,      /* first string */
+    DWORD l1,       /* length of first string */
+    LPCSTR s2,      /* second string */
+    DWORD l2)       /* length of second string */
 {
   int mapstring_flags;
   int len1,len2;
@@ -1897,6 +1937,7 @@ UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle,
 
   if ( (s1==NULL) || (s2==NULL) )
   {    
+    ERR(ole, "(s1=%s,s2=%s): Invalid NULL string\n", s1, s2);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -1915,15 +1956,25 @@ UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle,
   sk2 = (LPSTR)HeapAlloc(GetProcessHeap(),0,len2);
   if ( (!LCMapString32A(lcid,mapstring_flags,s1,l1,sk1,len1))
 	 || (!LCMapString32A(lcid,mapstring_flags,s2,l2,sk2,len2)) )
-  { ERR(ole,"Bug in LCmapString32A.\n");
+  {
+    ERR(ole,"Bug in LCmapString32A.\n");
     result = 0;
   }
   else
-  { result = strcmp(sk1,sk2)+2;
+  {
+    /* strcmp doesn't necessarily return -1, 0, or 1 */
+    result = strcmp(sk1,sk2);
   }
   HeapFree(GetProcessHeap(),0,sk1);
   HeapFree(GetProcessHeap(),0,sk2);
-  return result;
+
+  if (result < 0)
+    return 1;
+  if (result == 0)
+    return 2;
+
+  /* must be greater, if we reach this point */
+  return 3;
 }
 
 /***********************************************************************

@@ -15,7 +15,7 @@ To compile the emulator, you must have one of:
 
 	Linux version 0.99.13 or above
 	NetBSD-current
-	FreeBSD-current or FreeBSD 1.1
+	FreeBSD-current or FreeBSD 1.1 or later
 	OpenBSD/i386 2.1 or later
 	Solaris x86 2.5 or later
 

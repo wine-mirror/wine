@@ -1,0 +1,19 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dos
+
+C_SRCS = \
+	module.c \
+	dosvm.c
+
+all: $(MODULE).o dosmod
+
+dosmod: dosmod.c
+	$(CC) $(ALLCFLAGS) -o dosmod $<
+
+@MAKE_RULES@
+
+### Dependencies:

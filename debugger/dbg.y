@@ -19,6 +19,7 @@
 #include "winnt.h"
 #include "debugger.h"
 #include "neexe.h"
+#include "process.h"
 
 #include "expr.h"
 
@@ -436,7 +437,6 @@ static void DEBUG_Main( int signal )
 	 * don't grok that yet, and in this case we fall back to using
 	 * the wine.sym file.
 	 */
-	fprintf(stderr,"Loading symbols: ");
 	if( DEBUG_ReadExecutableDbgInfo() == FALSE )
         {
 	    char *symfilename = "wine.sym";
@@ -451,7 +451,6 @@ static void DEBUG_Main( int signal )
 
         DEBUG_LoadEntryPoints();
 	DEBUG_ProcessDeferredDebug();
-	fprintf(stderr,"\n");
     }
 
 #if 0
@@ -480,6 +479,8 @@ static void DEBUG_Main( int signal )
         newmode = IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
+
+        PROCESS_SuspendOtherThreads();
 
 	DEBUG_DoDisplay();
 
@@ -542,6 +543,7 @@ static void DEBUG_Main( int signal )
     if( dbg_exec_mode == EXEC_CONT )
       {
 	dbg_exec_count = 0;
+        PROCESS_ResumeOtherThreads();
       }
 
     in_debugger = FALSE;

@@ -998,7 +998,12 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     /* Set the filesystem information */
     /* Note: we only emulate a FAT fs at the present */
 
-    if (filename_len) *filename_len = 12;
+    if (filename_len) {
+    	if (DOSDrives[drive].flags & DRIVE_SHORT_NAMES)
+	    *filename_len = 12;
+	else
+	    *filename_len = 255;
+    }
     if (flags) *flags = 0;
     if (fsname) {
     	/* Diablo checks that return code ... */

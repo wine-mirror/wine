@@ -66,6 +66,11 @@ extern int WIN32_LastError;
 #define ERROR_NO_NETWORK            1222
 #define ERROR_ALREADY_INITIALIZED   1247
 #define ERROR_PRIVILEGE_NOT_HELD    1314
+#define ERROR_CANNOT_FIND_WND_CLASS 1407
+#define ERROR_WINDOW_OF_OTHER_THREAD 1408
+#define ERROR_CLASS_ALREADY_EXISTS  1410
+#define ERROR_CLASS_DOES_NOT_EXIST  1411
+#define ERROR_CLASS_HAS_WINDOWS     1412
 #define ERROR_COMMITMENT_LIMIT      1455
 #define ERROR_INVALID_PRINTER_NAME  1801
 
@@ -154,5 +159,8 @@ extern int WIN32_LastError;
 #define E_ABORT				0x80000007
 #define	E_FAIL				0x80000008
 #define E_ACCESSDENIED			0x80000009 */
+
+/* Obtained from lcc-win32 include files */
+#define GDI_ERROR			0xffffffff
 
 #endif  /* __WINE_WINERROR_H */

@@ -1020,13 +1020,17 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
  * Find a module from a path name.
  *
  * RETURNS
+ *   LOWORD:
  *	the win16 module handle if found
  * 	0 if not
+ *   HIWORD (undocumented, see "Undocumented Windows", chapter 5):
+ *	Always hFirstModule
  */
-HMODULE16 WINAPI WIN16_GetModuleHandle( SEGPTR name )
+DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 {
-    if (HIWORD(name) == 0) return GetExePtr( (HINSTANCE16)name );
-    return GetModuleHandle16( PTR_SEG_TO_LIN(name) );
+    if (HIWORD(name) == 0)
+	return MAKELONG(GetExePtr( (HINSTANCE16)name), hFirstModule );
+    return MAKELONG(GetModuleHandle16( PTR_SEG_TO_LIN(name)), hFirstModule );
 }
 
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )

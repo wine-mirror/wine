@@ -1,5 +1,5 @@
 /*
- *	Postscript driver font functions
+ *	PostScript driver font functions
  *
  *	Copyright 1998  Huw D M Davies
  *
@@ -22,8 +22,9 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     LOGFONT16 *lf = &(font->logfont);
     BOOL32 bd = FALSE, it = FALSE;
+    AFMLISTENTRY *afmle;
     AFM *afm;
-    FontFamily *family;
+    FONTFAMILY *family;
     char FaceName[LF_FACESIZE];
 
 
@@ -69,39 +70,42 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 	}
     }
 
-    for(family = PSDRV_AFMFontList; family; family = family->next) {
+    for(family = physDev->pi->Fonts; family; family = family->next) {
         if(!lstrncmp32A(FaceName, family->FamilyName, 
 			                         strlen(family->FamilyName)))
 	    break;
     }
     if(!family)
-        family = PSDRV_AFMFontList;
+        family = physDev->pi->Fonts;
 
     
-    for(afm = family->afm; afm; afm = afm->next) {
-        if( (bd == (afm->Weight == FW_BOLD)) && 
-	    (it == (afm->ItalicAngle != 0.0)) )
+    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
+        if( (bd == (afmle->afm->Weight == FW_BOLD)) && 
+	    (it == (afmle->afm->ItalicAngle != 0.0)) )
 	        break;
     }
-    if(!afm)
-        afm = family->afm; /* not ideal */
+    if(!afmle)
+        afmle = family->afmlist; /* not ideal */
     
-    physDev->font.afm = afm;
-    physDev->font.size = YLSTODS(dc, lf->lfHeight);
-    if(physDev->font.size < 0) {
-        TRACE(psdrv, "physDev->font.size < 0\n");
-        physDev->font.size = abs(physDev->font.size);
-        TRACE(psdrv, "physDev->font.size now %d\n", physDev->font.size);
-    }
-    physDev->font.scale = physDev->font.size / 
-                                    (afm->Ascender - afm->Descender);
+    afm = afmle->afm;
 
+    physDev->font.afm = afm;
+    physDev->font.tm.tmHeight = YLSTODS(dc, lf->lfHeight);
+    if(physDev->font.tm.tmHeight < 0) {
+        physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
+				       (afm->Ascender - afm->Descender);
+	TRACE(psdrv, "Fixed -ve height to %d\n", physDev->font.tm.tmHeight);
+    }
+    physDev->font.size = physDev->font.tm.tmHeight * 1000.0 /
+				(afm->FullAscender - afm->Descender);
+    physDev->font.scale = physDev->font.size / 1000.0;
     physDev->font.escapement = lf->lfEscapement;
-    physDev->font.tm.tmHeight = physDev->font.size;
-    physDev->font.tm.tmAscent = afm->Ascender * physDev->font.scale;
+    physDev->font.tm.tmAscent = afm->FullAscender * physDev->font.scale;
     physDev->font.tm.tmDescent = -afm->Descender * physDev->font.scale;
-    physDev->font.tm.tmInternalLeading = physDev->font.tm.tmHeight * 0.2;
-    physDev->font.tm.tmExternalLeading = physDev->font.tm.tmHeight * 0.2;
+    physDev->font.tm.tmInternalLeading = (afm->FullAscender - afm->Ascender)
+						* physDev->font.scale;
+    physDev->font.tm.tmExternalLeading = (1000.0 - afm->FullAscender)
+						* physDev->font.scale; /* ?? */
     physDev->font.tm.tmAveCharWidth = afm->CharWidths[120] * /* x */
                                                    physDev->font.scale;
     physDev->font.tm.tmMaxCharWidth = afm->CharWidths[77] * /* M */
@@ -124,10 +128,14 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 
     physDev->font.set = FALSE;
 
-    TRACE(psdrv, "Selected PS font '%s' size %d weight %d\n", 
+    TRACE(psdrv, "Selected PS font '%s' size %d weight %d.\n", 
 	  physDev->font.afm->FontName, physDev->font.size,
 	  physDev->font.tm.tmWeight );
-    
+    TRACE(psdrv, "H = %d As = %d Des = %d IL = %d EL = %d\n",
+	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
+	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
+	  physDev->font.tm.tmExternalLeading);
+
     return prevfont;
 }
 
@@ -156,10 +164,12 @@ BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
     size->cy = YDSTOLS(dc, physDev->font.tm.tmHeight);
     width = 0.0;
 
-    for(i = 0; i < count && str[i]; i++)
+    for(i = 0; i < count && str[i]; i++) {
         width += physDev->font.afm->CharWidths[ (UINT32)str[i] ];
-    
+	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);
+    }
     width *= physDev->font.scale;
+    TRACE(psdrv, "Width after scale (%f) is %f\n", physDev->font.scale, width);
     size->cx = XDSTOLS(dc, width);
 
     return TRUE;
@@ -189,12 +199,13 @@ static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
               ENUMLOGFONTEX16 *pLF, INT16 size)
 
 {
+    float scale = size / (pafm->FullAscender - pafm->Descender);
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );
 
 #define plf ((LPLOGFONT16)pLF)
     plf->lfHeight    = pTM->tmHeight       = size;
-    plf->lfWidth     = pTM->tmAveCharWidth = size * 0.7;
+    plf->lfWidth     = pTM->tmAveCharWidth = pafm->CharWidths[120] * scale;
     plf->lfWeight    = pTM->tmWeight       = pafm->Weight;
     plf->lfItalic    = pTM->tmItalic       = pafm->ItalicAngle != 0.0;
     plf->lfUnderline = pTM->tmUnderlined   = 0;
@@ -210,10 +221,10 @@ static UINT32 PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     lstrcpyn32A( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
 #undef plf
 
-    pTM->tmAscent = pTM->tmHeight * 0.2;
-    pTM->tmDescent = pTM->tmHeight - pTM->tmAscent;
-    pTM->tmInternalLeading = pTM->tmHeight * 0.2;
-    pTM->tmMaxCharWidth = pTM->tmHeight * 0.7;
+    pTM->tmAscent = pafm->FullAscender * scale;
+    pTM->tmDescent = -pafm->Descender * scale;
+    pTM->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
+    pTM->tmMaxCharWidth = pafm->CharWidths[77] * scale;
     pTM->tmDigitizedAspectX = dc->w.devCaps->logPixelsY;
     pTM->tmDigitizedAspectY = dc->w.devCaps->logPixelsX;
 
@@ -234,21 +245,23 @@ BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     ENUMLOGFONTEX16	lf;
     NEWTEXTMETRIC16	tm;
     BOOL32	  	b, bRet = 0;
-    AFM			*afm;
-    FontFamily		*family;
+    AFMLISTENTRY	*afmle;
+    FONTFAMILY		*family;
+    PSDRV_PDEVICE	*physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     if( plf->lfFaceName[0] ) {
         TRACE(psdrv, "lfFaceName = '%s'\n", plf->lfFaceName);
-        for(family = PSDRV_AFMFontList; family; family = family->next) {
+        for(family = physDev->pi->Fonts; family; family = family->next) {
             if(!lstrncmp32A(plf->lfFaceName, family->FamilyName, 
 			strlen(family->FamilyName)))
 	        break;
 	}
 	if(family) {
-	    for(afm = family->afm; afm; afm = afm->next) {
-	        TRACE(psdrv, "Got '%s'\n", afm->FontName);
+	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
+	        TRACE(psdrv, "Got '%s'\n", afmle->afm->FontName);
 		if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
-			PSDRV_GetFontMetric( dc, afm, &tm, &lf, 200 ), lp )) )
+			PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ),
+				  lp )) )
 		     bRet = b;
 		else break;
 	    }
@@ -256,11 +269,12 @@ BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     } else {
 
         TRACE(psdrv, "lfFaceName = NULL\n");
-        for(family = PSDRV_AFMFontList; family; family = family->next) {
-	    afm = family->afm;
-	    TRACE(psdrv, "Got '%s'\n", afm->FontName);
+        for(family = physDev->pi->Fonts; family; family = family->next) {
+	    afmle = family->afmlist;
+	    TRACE(psdrv, "Got '%s'\n", afmle->afm->FontName);
 	    if( (b = (*proc)( (LPENUMLOGFONT16)&lf, &tm, 
-		   PSDRV_GetFontMetric( dc, afm, &tm, &lf, 200 ), lp )) )
+		   PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ), 
+			      lp )) )
 	        bRet = b;
 	    else break;
 	}

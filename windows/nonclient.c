@@ -26,10 +26,6 @@
 #include "options.h"
 
 
-int  NC_MaxControlNudge;
-int  NC_MinControlNudge;
-UINT32  NC_CaptionTextFlags;
-
 static HBITMAP16 hbitmapClose = 0;
 static HBITMAP16 hbitmapCloseD = 0;
 static HBITMAP16 hbitmapMinimize = 0;
@@ -921,7 +917,7 @@ static void  NC_DrawMaxButton95(
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 	
-	GRAPH_DrawBitmap( hdc, bm, rect.right + NC_MinControlNudge -
+	GRAPH_DrawBitmap( hdc, bm, rect.right -
 			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
 			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
 			  0, 0, bmsz.cx, bmsz.cy, FALSE );
@@ -970,10 +966,10 @@ static void  NC_DrawMinButton95(
 	    rect.right -= sysMetrics[SM_CYCAPTION] + 1;
 
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-	    rect.right += -1 + NC_MaxControlNudge -
+	    rect.right += -1 -
 		(sysMetrics[SM_CXSIZE] + bmsz.cx) / 2;
 
-	GRAPH_DrawBitmap( hdc, bm, rect.right + NC_MinControlNudge -
+	GRAPH_DrawBitmap( hdc, bm, rect.right -
 			  (sysMetrics[SM_CXSIZE] + bmsz.cx) / 2,
 			  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmsz.cy) / 2,
 			  0, 0, bmsz.cx, bmsz.cy, FALSE );
@@ -1266,7 +1262,7 @@ static void  NC_DrawCaption95(
 
     if (wndPtr->flags & WIN_MANAGED) return;
 
-    GRAPH_DrawLines( hdc, sep, 1, TWEAK_PenC095 );
+    GRAPH_DrawLines( hdc, sep, 1, GetSysColorPen32(COLOR_3DFACE) );
     r.bottom--;
 
     FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
@@ -1309,7 +1305,8 @@ static void  NC_DrawCaption95(
 	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode32( hdc, TRANSPARENT );
 	r.left += 2;
-	DrawText32A( hdc, buffer, -1, &r, NC_CaptionTextFlags );
+	DrawText32A( hdc, buffer, -1, &r,
+		     DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT );
 	DeleteObject32 (SelectObject32 (hdc, hOldFont));
     }
 }

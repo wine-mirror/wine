@@ -817,7 +817,7 @@ BOOL32 WINAPI VirtualProtectEx(
 ) {
     BOOL32 ret = FALSE;
 
-    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_VM_OPERATION );
+    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_VM_OPERATION, NULL );
     if (pdb)
     {
         if (pdb == PROCESS_Current())
@@ -914,7 +914,7 @@ DWORD WINAPI VirtualQueryEx(
 ) {
     DWORD ret = len;
 
-    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_QUERY_INFORMATION );
+    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_QUERY_INFORMATION, NULL );
     if (pdb)
     {
         if (pdb == PROCESS_Current())
@@ -1089,13 +1089,15 @@ HANDLE32 WINAPI CreateFileMapping32A(
     /* First search for an object with the same name */
 
     K32OBJ *obj = K32OBJ_FindName( name );
+
+    SetLastError(0); /* Win95 does that for some functions, like CFM */
     if (obj)
     {
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
             handle = HANDLE_Alloc( PROCESS_Current(), obj,
-                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit );
+                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, -1 );
         }
         else
         {
@@ -1145,7 +1147,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
             ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
                 access |= GENERIC_WRITE;
         if (!(obj = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
-                                      K32OBJ_FILE, access )))
+                                      K32OBJ_FILE, access, NULL )))
             goto error;
 
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
@@ -1177,7 +1179,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
     else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
-                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit );
+                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, -1 );
     K32OBJ_DecCount( &mapping->header );
     return handle;
 
@@ -1222,7 +1224,7 @@ HANDLE32 WINAPI OpenFileMapping32A(
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
+        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -1312,7 +1314,7 @@ LPVOID WINAPI MapViewOfFileEx(
     if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( PROCESS_Current(),
                                                       handle,
                                                       K32OBJ_MEM_MAPPED_FILE,
-                                                      0  /* FIXME */ )))
+                                                      0  /* FIXME */, NULL )))
         return NULL;
 
     if (mapping->size_high || offset_high)

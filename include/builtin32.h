@@ -20,6 +20,7 @@ typedef struct
     const unsigned short *ordinals;     /* Pointer to ordinals table */
     const unsigned char  *args;         /* Pointer to argument lengths */
     const unsigned int   *argtypes;     /* Pointer to argument types bitmask */
+    const ENTRYPOINT32    dllentrypoint;/* Pointer to LibMain function */
 } BUILTIN32_DESCRIPTOR;
 
 extern ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,

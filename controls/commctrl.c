@@ -22,7 +22,18 @@
 #include "updown.h"
 #include "debug.h"
 
+/***********************************************************************
+ * ComCtl32LibMain
+ */
 
+BOOL32 WINAPI ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{ TRACE(commctrl,"%x,%lx,%p\n",hinstDLL,fdwReason,lpvReserved);
+  if ( fdwReason == DLL_PROCESS_ATTACH)
+  { InitCommonControls();
+  }
+  return TRUE;
+
+}
 /***********************************************************************
  * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
  *
@@ -157,6 +168,8 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
   INT32 cCount;
   DWORD dwMask;
 
+  TRACE(commctrl,"\n");
+  
   if (lpInitCtrls == NULL) return FALSE;
   if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return FALSE;
 
@@ -544,4 +557,3 @@ ShowHideMenuCtl (HWND32 hwnd, UINT32 uFlags, LPINT32 lpInfo)
 
     return FALSE;
 }
-

@@ -19,6 +19,7 @@ extern const K32OBJ_OPS CRITICAL_SECTION_Ops;
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
 extern const K32OBJ_OPS FILE_Ops;
+extern const K32OBJ_OPS CHANGE_Ops;
 extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
 extern const K32OBJ_OPS CONSOLE_Ops;
 
@@ -43,7 +44,7 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &PROCESS_Ops,           /* K32OBJ_PROCESS */
     &THREAD_Ops,            /* K32OBJ_THREAD */
     &FILE_Ops,              /* K32OBJ_FILE */
-    &K32OBJ_NullOps,        /* K32OBJ_CHANGE */
+    &CHANGE_Ops,            /* K32OBJ_CHANGE */
     &CONSOLE_Ops,           /* K32OBJ_CONSOLE */
     &K32OBJ_NullOps,        /* K32OBJ_SCREEN_BUFFER */
     &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
@@ -175,7 +176,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
         if (obj->type == type)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
+            *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
         }
         else
         {
@@ -212,7 +213,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
 
     /* Allocate a handle */
 
-    *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
+    *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
     SYSTEM_UNLOCK();
     return obj;
 }
