@@ -1293,7 +1293,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 	CBM_INIT,
 	xbuf+bfh->bfOffBits,
 	bi,
-	(bi->bmiHeader.biBitCount<=8)?DIB_PAL_COLORS:DIB_RGB_COLORS
+       DIB_RGB_COLORS
     );
     DeleteDC(hdcref);
     This->desc.picType = PICTYPE_BITMAP;
