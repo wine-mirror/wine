@@ -1,6 +1,32 @@
 How To Report A Bug
 -------------------
 
+There are two ways for you to make a bug report. One uses a simple perl
+script, and is recommended if you don't want to spend a lot of time
+producing the report. It is designed for use by just about anyone, from
+the newest of newbies to advanced developers. You can also make a bug
+report the hard way -- advanced developers will probably prefer this.
+
+A. The Easy Way
+1) Your computer *must* have perl on it for this method to work. To
+find out if you have perl, run:
+which perl
+If it returns something like "/usr/bin/perl", you're in business.
+Otherwise, skip on down to "The Hard Way". 
+If you aren't sure, just keep on going. When you try to run the script, it
+will become *very* apparent if you don't have perl.
+
+2) Change directory to <dirs to wine>/tools
+
+3) Type in "./bug_report.pl" and follow the directions.
+
+4) Post a message to the comp.emulators.ms-windows.wine newsgroup with the
+"Nice Formatted Report" attatched. If possible, upload the full debug
+output to a web/ftp server and provide the address in your message.
+
+
+B. The Hard Way:
+
 Some simple advice on making your bug report more useful (and thus more
 likely to get answered and fixed):
 
@@ -32,6 +58,12 @@ likely to get answered and fixed):
 
 	To accomplish this, use the following commands:
 
+	all shells:
+	    echo quit|wine -debugmsg +relay,+snoop [other_options] program_name >& filename.out; tail -n 100 filename.out > report_file
+	(This will print wine's debug msgs only to the file and then
+	auto-quit. It's probably a good idea to use this command, since wine
+	prints out so many debug msgs that they flood the terminal, eating CPU.)
+	
 	tcsh and other csh-like shells:
 
 	    wine -debugmsg +relay,+snoop [other_options] program_name |& tee filename.out
