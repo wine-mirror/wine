@@ -272,6 +272,8 @@ extern BOOL PSDRV_WriteLineTo(DC *dc, INT x, INT y);
 extern BOOL PSDRV_WriteStroke(DC *dc);
 extern BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width, 
 			INT height);
+extern BOOL PSDRV_WriteRRectangle(DC *dc, INT x, INT y, INT width, 
+			INT height);
 extern BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI);
 extern BOOL PSDRV_WriteShow(DC *dc, char *str, INT count);
 extern BOOL PSDRV_WriteReencodeFont(DC *dc);

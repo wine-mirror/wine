@@ -104,6 +104,13 @@ static char psrectangle[] = /* x, y, width, height, -width */
 "%d 0 rlineto\n"
 "closepath\n";
 
+static char psrrectangle[] = /* x, y, width, height, -width */
+"%d %d rmoveto\n"
+"%d 0 rlineto\n"
+"0 %d rlineto\n"
+"%d 0 rlineto\n"
+"closepath\n";
+
 static char psshow[] = /* string */
 "(%s) show\n";
 
@@ -479,6 +486,15 @@ BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width,
     char buf[100];
 
     sprintf(buf, psrectangle, x, y, width, height, -width);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
+
+BOOL PSDRV_WriteRRectangle(DC *dc, INT x, INT y, INT width,
+      INT height)
+{
+    char buf[100];
+
+    sprintf(buf, psrrectangle, x, y, width, height, -width);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 

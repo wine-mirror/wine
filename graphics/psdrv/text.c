@@ -81,6 +81,76 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     PSDRV_WriteMoveTo(dc, x, y);
     PSDRV_WriteShow(dc, strbuf, strlen(strbuf));
 
+    /*
+     * Underline and strikeout attributes.
+     */
+    if ((physDev->font.tm.tmUnderlined) || (physDev->font.tm.tmStruckOut)) {
+
+        /* Get the thickness and the position for the underline attribute */
+        /* We'll use the same thickness for the strikeout attribute       */
+
+        float thick = physDev->font.afm->UnderlineThickness * physDev->font.scale;
+        float pos   = -physDev->font.afm->UnderlinePosition * physDev->font.scale;
+        SIZE size;
+        INT escapement =  physDev->font.escapement;
+
+        TRACE(psdrv, "Position = %f Thickness %f Escapement %d\n",
+              pos, thick, escapement);
+
+        /* Get the width of the text */
+
+        PSDRV_GetTextExtentPoint(dc, strbuf, strlen(strbuf), &size);
+        size.cx = XLSTODS(dc, size.cx);
+
+        /* Do the underline */
+
+        if (physDev->font.tm.tmUnderlined) {
+            if (escapement != 0)  /* rotated text */
+            {
+                PSDRV_WriteGSave(dc);  /* save the graphics state */
+                PSDRV_WriteMoveTo(dc, x, y); /* move to the start */
+
+                /* temporarily rotate the coord system */
+                PSDRV_WriteRotate(dc, -escapement/10); 
+                
+                /* draw the underline relative to the starting point */
+                PSDRV_WriteRRectangle(dc, 0, (INT)pos, size.cx, (INT)thick);
+            }
+            else
+                PSDRV_WriteRectangle(dc, x, y + (INT)pos, size.cx, (INT)thick);
+
+            PSDRV_WriteFill(dc);
+
+            if (escapement != 0)  /* rotated text */
+                PSDRV_WriteGRestore(dc);  /* restore the graphics state */
+        }
+
+        /* Do the strikeout */
+
+        if (physDev->font.tm.tmStruckOut) {
+            pos = -physDev->font.tm.tmAscent / 2;
+
+            if (escapement != 0)  /* rotated text */
+            {
+                PSDRV_WriteGSave(dc);  /* save the graphics state */
+                PSDRV_WriteMoveTo(dc, x, y); /* move to the start */
+
+                /* temporarily rotate the coord system */
+                PSDRV_WriteRotate(dc, -escapement/10);
+
+                /* draw the underline relative to the starting point */
+                PSDRV_WriteRRectangle(dc, 0, (INT)pos, size.cx, (INT)thick);
+            }
+            else
+                PSDRV_WriteRectangle(dc, x, y + (INT)pos, size.cx, (INT)thick);
+
+            PSDRV_WriteFill(dc);
+
+            if (escapement != 0)  /* rotated text */
+                PSDRV_WriteGRestore(dc);  /* restore the graphics state */
+        }
+    }
+
     HeapFree(PSDRV_Heap, 0, strbuf);
     return TRUE;
 }
