@@ -45,6 +45,8 @@ typedef struct _var_t var_t;
 typedef struct _func_t func_t;
 typedef struct _ifref_t ifref_t;
 typedef struct _class_t class_t;
+typedef struct _typelib_entry_t typelib_entry_t;
+typedef struct _typelib_t typelib_t;
 
 #define DECL_LINK(type) \
   type *l_next; \
@@ -126,6 +128,19 @@ enum expr_type
     EXPR_COND,
 };
 
+enum type_kind
+{
+    TKIND_ENUM = 0,
+    TKIND_RECORD,
+    TKIND_MODULE,
+    TKIND_INTERFACE,
+    TKIND_DISPATCH,
+    TKIND_COCLASS,
+    TKIND_ALIAS,
+    TKIND_UNION,
+    TKIND_MAX
+};
+   
 struct _attr_t {
   enum attr_type type;
   union {
@@ -212,6 +227,24 @@ struct _class_t {
 
   /* parser-internal */
   DECL_LINK(class_t)
+};
+
+struct _typelib_entry_t {
+    enum type_kind kind;
+    union {
+        class_t *class;
+        type_t *interface;
+        type_t *module;
+        type_t *structure;
+    } u;
+    DECL_LINK(typelib_entry_t)
+};
+
+struct _typelib_t {
+    char *name;
+    char *filename;
+    attr_t *attrs;
+    typelib_entry_t *entry;
 };
 
 #endif

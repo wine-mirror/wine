@@ -713,7 +713,9 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, ts
 						  $$->type = get_struct_type( $4 );
 						  $$->fields = $4;
 						  $$->defined = TRUE;
-						}
+                                                  if(in_typelib)
+                                                      add_struct($$);
+                                                }
 	;
 
 type:	  tVOID					{ $$ = make_tref(NULL, make_type(0, NULL)); }

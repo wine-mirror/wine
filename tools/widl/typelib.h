@@ -27,5 +27,6 @@ extern void end_typelib(void);
 extern void add_interface(type_t *iface);
 extern void add_coclass(class_t *cls);
 extern void add_module(type_t *module);
+extern void add_struct(type_t *structure);
 
 #endif
