@@ -738,7 +738,7 @@ then
 	wine_cv_linux_joystick_22_api=no
 	)
    )
-   if test "$wine_cv_linux_joystick_22_api"
+   if test "$wine_cv_linux_joystick_22_api" = "yes"
    then
       AC_DEFINE(HAVE_LINUX_22_JOYSTICK_API)
    fi

@@ -5672,7 +5672,7 @@ rm -f conftest*
 fi
 
 echo "$ac_t""$wine_cv_linux_joystick_22_api" 1>&6
-   if test "$wine_cv_linux_joystick_22_api"
+   if test "$wine_cv_linux_joystick_22_api" = "yes"
    then
       cat >> confdefs.h <<\EOF
 #define HAVE_LINUX_22_JOYSTICK_API 1
