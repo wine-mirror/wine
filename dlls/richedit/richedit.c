@@ -114,7 +114,6 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    LPARAM lParam)
 {
     LONG newstyle = 0;
-    LONG style = 0;
     RTFControl_Info *info;
     CHARRANGE *cr;
 
@@ -141,11 +140,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 	    /* remove SCROLLBARS from the current window style */
 	    info->hwndParent = ((LPCREATESTRUCTA) lParam)->hwndParent;
 
-	    newstyle = style = ((LPCREATESTRUCTA) lParam)->style;
-            newstyle &= ~WS_HSCROLL;
-            newstyle &= ~WS_VSCROLL;
-            newstyle &= ~ES_AUTOHSCROLL;
-            newstyle &= ~ES_AUTOVSCROLL;
+            newstyle = ((LPCREATESTRUCTA) lParam)->style;
             newstyle &= ~ES_NUMBER;  /* Reused as ES_DISABLENOSCROLL */
 	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
 
