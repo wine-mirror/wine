@@ -32,7 +32,10 @@
 
 /** define  GL_GLEXT_PROTOTYPES for having extensions prototypes defined */
 /*#define GL_GLEXT_PROTOTYPES*/
+/*#undef  GLX_GLXEXT_LEGACY*/
 #include "d3d8_private.h"
+#include <GL/glext.h>
+#include <GL/glxext.h>
 
 /** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
 #undef GL_VERSION_1_4
@@ -595,13 +598,10 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 		    glColor4fv((float*) &vertex_shader->output.oD[0]);
 		    
 		    /* Requires secondary color extensions to compile... */
-#if defined(GL_VERSION_1_4)
-		    glSecondaryColor3fv((float*) &vertex_shader->output.oD[1]);
-		    checkGLcall("glSecondaryColor3fv");
-#elif defined(GL_EXT_secondary_color)
+#if defined(GL_EXT_secondary_color)
 		    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
 		      /*specularColor = D3DCOLORTOCOLORVALUE(vertex_shader->output.oD[1]);*/
-		      glSecondaryColor3fvEXT((float*) &vertex_shader->output.oD[1]);
+		      GL_EXTCALL(glSecondaryColor3fvEXT)((float*) &vertex_shader->output.oD[1]);
 		      checkGLcall("glSecondaryColor3fvEXT");
 		    }
 #endif
@@ -815,34 +815,26 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
 	    /* Requires secondary color extensions to compile... */
             if (isSpecular) {
-#if defined(GL_VERSION_1_4)
-                glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, skip, curPos);
-                checkGLcall("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, skip, curPos)");
-                glEnableClientState(GL_SECONDARY_COLOR_ARRAY);
-                checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY)");
-#elif defined(GL_EXT_secondary_color)
+#if defined(GL_EXT_secondary_color)
                 /* FIXME: check for GL_EXT_secondary_color */
 		if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-		  glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, skip, curPos);
-		  checkGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, skip, curPos)");
+		  GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE, skip, curPos);
+		  vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, skip, curPos)");
 		  glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-		  checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+		  vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
 		}
 #endif
                 curPos += sizeof(DWORD);
             } else {
-#if defined(GL_VERSION_1_4)
-                glDisableClientState(GL_SECONDARY_COLOR_ARRAY);
-                checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY)");
-                glSecondaryColor3f(0, 0, 0);
-                checkGLcall("glSecondaryColor3f(0, 0, 0)");
-#else
-#if 0
+#if defined(GL_EXT_secondary_color)
+	      if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
                 glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-                checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-                glSecondaryColor3fEXT(0, 0, 0);
-                checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
+                vcheckGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+#if 0
+                GL_EXTCALL(glSecondaryColor3fEXT)(0.0f, 0.0f, 0.0f);
+                vcheckGLcall("glSecondaryColor3fEXT(0, 0, 0)");
 #endif
+	      }
 #endif
             }
 
@@ -1256,13 +1248,23 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetRasterStatus(LPDIRECT3DDEVICE8 iface, D
     return D3D_OK;
 }
 void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Flags, CONST D3DGAMMARAMP* pRamp) {
+    HDC hDC;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);
+
+    FIXME("(%p) : pRamp@%p\n", This, pRamp);
+    hDC = GetDC(This->win_handle);
+    SetDeviceGammaRamp(hDC, (LPVOID) pRamp);
+    ReleaseDC(This->win_handle, hDC);
     return;
 }
 void     WINAPI  IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DGAMMARAMP* pRamp) {
+    HDC hDC;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);
+
+    FIXME("(%p) : pRamp@%p\n", This, pRamp);
+    hDC = GetDC(This->win_handle);
+    GetDeviceGammaRamp(hDC, pRamp);
+    ReleaseDC(This->win_handle, hDC);
     return;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, UINT Levels, DWORD Usage,
@@ -1979,7 +1981,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
 	/** always dirtify for now. we must find a better way to see that surface have been modified */
 	IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
 	IDirect3DBaseTexture8_PreLoad(cont);
-	IDirect3DBaseTexture8_Release(cont);
+	IDirect3DBaseTexture8Impl_Release(cont);
 	cont = NULL;
       }
     }
@@ -2033,10 +2035,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     if (Flags & D3DCLEAR_TARGET) {
         TRACE("Clearing screen with glClear to color %lx\n", Color);
         glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
-        glClearColor(((Color >> 16) & 0xFF) / 255.0, 
-         ((Color >>  8) & 0xFF) / 255.0,
-                     ((Color >>  0) & 0xFF) / 255.0, 
-         ((Color >> 24) & 0xFF) / 255.0);
+        glClearColor(((Color >> 16) & 0xFF) / 255.0f, 
+		     ((Color >>  8) & 0xFF) / 255.0f,
+                     ((Color >>  0) & 0xFF) / 255.0f, 
+		     ((Color >> 24) & 0xFF) / 255.0f);
         checkGLcall("glClearColor");
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
@@ -3094,34 +3096,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
               if (Value) {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
                 checkGLcall("glMaterialfv");
-#if defined(GL_VERSION_1_4)
-                glEnable(GL_COLOR_SUM);
-#elif defined(GL_EXT_secondary_color)
-                glEnable(GL_COLOR_SUM_EXT);
-#elif defined(GL_ARB_vertex_program)
-                glEnable(GL_COLOR_SUM_ARB);
-#else
-                TRACE("Specular colors cannot be enabled in this version of opengl\n");
-#endif
-                checkGLcall("glEnable(GL_COLOR_)\n");
+		if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+		  glEnable(GL_COLOR_SUM_EXT);
+		} else {
+		  TRACE("Specular colors cannot be enabled in this version of opengl\n");
+		}
+                checkGLcall("glEnable(GL_COLOR_SUM)\n");
               } else {
-                float black[4] = {0.0, 0.0, 0.0, 0.0};
+                float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
                 /* for the case of enabled lighting: */
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
                 checkGLcall("glMaterialfv");
 
                 /* for the case of disabled lighting: */
-#if defined(GL_VERSION_1_4)
-                glDisable(GL_COLOR_SUM);
-#elif defined(GL_EXT_secondary_color)
-                glDisable(GL_COLOR_SUM_EXT);
-#elif defined(GL_ARB_vertex_program)
-                glDisable(GL_COLOR_SUM_ARB);
-#else
-                TRACE("Specular colors cannot be disabled in this version of opengl\n");
-#endif
-                checkGLcall("glDisable(GL_COLOR_)\n");
+		if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+		  glDisable(GL_COLOR_SUM_EXT);
+		} else {
+		  TRACE("Specular colors cannot be disabled in this version of opengl\n");
+		}
+                checkGLcall("glDisable(GL_COLOR_SUM)\n");
 	      }
         }
         break;
@@ -3434,33 +3428,21 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
 
     case D3DRS_POINTSIZE_MIN             :
-#if defined(GL_VERSION_1_4)
-        glPointParameterf(GL_POINT_SIZE_MIN, *((float*)&Value));
-        checkGLcall("glPointParameterf(...);\n");
-#elif defined(GL_EXT_point_parameters)
-        glPointParameterfEXT(GL_POINT_SIZE_MIN_EXT, *((float*)&Value));
-        checkGLcall("glPointParameterfEXT(...);\n");
-#elif defined(GL_ARB_point_parameters)
-        glPointParameterfARB(GL_POINT_SIZE_MIN_ARB, *((float*)&Value));
-        checkGLcall("glPointParameterfARB(...);\n");
-#else
-        FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
-#endif
+        if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, *((float*)&Value));
+	  checkGLcall("glPointParameterfEXT(...);\n");
+	} else {
+	  FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
+	}
         break;
 
     case D3DRS_POINTSIZE_MAX             :
-#if defined(GL_VERSION_1_4)
-        glPointParameterf(GL_POINT_SIZE_MAX, *((float*)&Value));
-        checkGLcall("glPointParameterf(...);\n");
-#elif defined(GL_EXT_point_parameters)
-        glPointParameterfEXT(GL_POINT_SIZE_MAX_EXT, *((float*)&Value));
-        checkGLcall("glPointParameterfEXT(...);\n");
-#elif defined(GL_ARB_point_parameters)
-        glPointParameterfARB(GL_POINT_SIZE_MAX_ARB, *((float*)&Value));
-        checkGLcall("glPointParameterfARB(...);\n");
-#else
-        FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
-#endif
+        if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, *((float*)&Value));
+	  checkGLcall("glPointParameterfEXT(...);\n");
+	} else {
+	  FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
+	}
         break;
 
     case D3DRS_POINTSCALE_A              :
@@ -3470,38 +3452,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         {
             /* If enabled, supply the parameters, otherwise fall back to defaults */
             if (This->StateBlock->renderstate[D3DRS_POINTSCALEENABLE]) {
-                GLfloat att[3] = {1.0, 0.0, 0.0};
+                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
                 att[0] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_A]);
                 att[1] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_B]);
                 att[2] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_C]);
 
-#if defined(GL_VERSION_1_4)
-                glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, att);
-                checkGLcall("glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, ...);\n");
-#elif defined(GL_EXT_point_parameters)
-                glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, att);
-                checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
-#elif defined(GL_ARB_point_parameters)
-                glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);        
-                checkGLcall("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, ...);\n");
-#else
-                TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
-#endif
+		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+                  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+		} else {
+		  TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
+		}
             } else {
-                GLfloat att[3] = {1.0, 0.0, 0.0};
-#if defined(GL_VERSION_1_4)
-                glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, att);
-                checkGLcall("glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, ...);\n");
-#elif defined(GL_EXT_point_parameters)
-                glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, att);
-                checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
-#elif defined(GL_ARB_point_parameters)
-                glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);        
-                checkGLcall("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, ...);\n");
-#else
-                TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
-#endif
-            }
+                GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+		if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+		  GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+		  checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+		} else {
+		  TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
+		}
+	    }
             break;
         }
 
@@ -4197,12 +4167,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8
     This->currentPalette = PaletteNumber;
 #if defined(GL_EXT_paletted_texture)
     if (GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
-      glColorTableEXT(GL_TEXTURE_2D,    /* target */
-		      GL_RGBA,          /* internal format */
-		      256,              /* table size */
-		      GL_RGBA,          /* table format */
-		      GL_UNSIGNED_BYTE, /* table type */
-		      This->palettes[PaletteNumber]);
+      GL_EXTCALL(glColorTableEXT)(GL_TEXTURE_2D,    /* target */
+				  GL_RGBA,          /* internal format */
+				  256,              /* table size */
+				  GL_RGBA,          /* table format */
+				  GL_UNSIGNED_BYTE, /* table type */
+				  This->palettes[PaletteNumber]);
       checkGLcall("glColorTableEXT");
     } else {
       /* Delayed palette handling ... waiting for software emulation into preload code */

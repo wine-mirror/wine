@@ -646,6 +646,10 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     This->gl_info.vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
     This->gl_info.vs_ati_version = VS_VERSION_NOT_SUPPORTED;
 
+#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = NULL;
+    GL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
     This->gl_info.max_clipplanes = min(MAX_CLIPPLANES, gl_max);
@@ -758,6 +762,10 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         if (*GL_Extensions == ' ') GL_Extensions++;
       }
     }
+
+#define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB(#pfn);
+    GL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
 
     GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
     FIXME("GLX_Extensions reported:\n");  

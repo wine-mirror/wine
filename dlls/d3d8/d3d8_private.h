@@ -153,12 +153,6 @@ typedef struct PSHADEROUTPUTDATA8 {
 
 
 /*
- * External prototypes
- */
-/*BOOL D3DRAW_HAL_Init(HINSTANCE, DWORD, LPVOID); */
-void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
-
-/*
  * Macros
  */
 #define checkGLcall(A) \
@@ -180,58 +174,9 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
     } \
 }
 
-typedef enum _GL_SupportedExt {
-  /* ARB */
-  ARB_FRAGMENT_PROGRAM,
-  ARB_MULTISAMPLE,
-  ARB_MULTITEXTURE,
-  ARB_POINT_PARAMETERS,
-  ARB_TEXTURE_COMPRESSION,
-  ARB_TEXTURE_CUBE_MAP,
-  ARB_TEXTURE_ENV_DOT3,
-  ARB_VERTEX_PROGRAM,
-  ARB_VERTEX_BLEND,
-  /* EXT */
-  EXT_FOG_COORD,
-  EXT_PALETTED_TEXTURE,
-  EXT_SECONDARY_COLOR,
-  EXT_TEXTURE_COMPRESSION_S3TC,
-  EXT_TEXTURE_FILTER_ANISOTROPIC,
-  EXT_TEXTURE_LOD,
-  EXT_TEXTURE_LOD_BIAS,
-  EXT_VERTEX_WEIGHTING,
-  /* NVIDIA */
-  NV_FRAGMENT_PROGRAM,
-  NV_VERTEX_PROGRAM,
-  /* ATI */
-  EXT_VERTEX_SHADER,
+#include "d3dcore_gl.h"
 
-  OPENGL_SUPPORTED_EXT_END
-} GL_SupportedExt;
-
-typedef enum _GL_VSVersion {
-  VS_VERSION_NOT_SUPPORTED = 0x0,
-  VS_VERSION_10 = 0x10,
-  VS_VERSION_11 = 0x11,
-  VS_VERSION_20 = 0x20,
-  VS_VERSION_30 = 0x30,
-  /*Force 32-bits*/
-  VS_VERSION_FORCE_DWORD = 0x7FFFFFFF
-} GL_VSVersion;
-
-typedef enum _GL_PSVersion {
-  PS_VERSION_NOT_SUPPORTED = 0x0,
-  PS_VERSION_10 = 0x10,
-  PS_VERSION_11 = 0x11,
-  PS_VERSION_12 = 0x12,
-  PS_VERSION_13 = 0x13,
-  PS_VERSION_14 = 0x14,
-  PS_VERSION_20 = 0x20,
-  PS_VERSION_30 = 0x30,
-  /*Force 32-bits*/
-  PS_VERSION_FORCE_DWORD = 0x7FFFFFFF
-} GL_PSVersion;
-
+#define USE_GL_FUNC(type, pfn) type pfn;
 typedef struct _GL_Info {
   /** 
    * CAPS Constants 
@@ -248,12 +193,17 @@ typedef struct _GL_Info {
   GL_VSVersion vs_ati_version;
   
   BOOL supported[30];
-} GL_Info;
 
-#define GL_LIMITS(ExtName)     (This->direct3d8->gl_info.max_##ExtName)
-#define GL_SUPPORT(ExtName)    (TRUE == This->direct3d8->gl_info.supported[ExtName])
-#define GL_SUPPORT_DEV(ExtName, dev)    (TRUE == (dev)->direct3d8->gl_info.supported[ExtName])
-#define GLExtCall(FuncName)    /*(This->direct3d8->glInfo.FuncName)*/
+  /** ext functions ptr */
+  GL_EXT_FUNCS_GEN;
+  /**/
+} GL_Info;
+#undef USE_GL_FUNC
+
+#define GL_LIMITS(ExtName)            (This->direct3d8->gl_info.max_##ExtName)
+#define GL_SUPPORT(ExtName)           (TRUE == This->direct3d8->gl_info.supported[ExtName])
+#define GL_SUPPORT_DEV(ExtName, dev)  (TRUE == (dev)->direct3d8->gl_info.supported[ExtName])
+#define GL_EXTCALL(FuncName)          (This->direct3d8->gl_info.FuncName)
 
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
@@ -1282,7 +1232,6 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreatePixelShader(IDirect3DDevice8Impl
 void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
 void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
 void   set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
-
 
 SHORT  D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
 GLint  D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
