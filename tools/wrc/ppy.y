@@ -252,7 +252,7 @@ preprocessor
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
 		add_macro($1, macro_args, nmacro_args, $5);
 		}
-	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppout, "# %d %s\n", $2 - 1, $3); free($3); }
+	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tNL	
 		{ fprintf(ppout, "# %d %s %d\n", $2, $3, $4); free($3); }
@@ -261,7 +261,7 @@ preprocessor
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL	
 		{ fprintf(ppout, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
 	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL	
-		{ fprintf(ppout, "# %d %s %d %d %d %d \n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
+		{ fprintf(ppout, "# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ pperror("#error directive: '%s'", $2); if($2) free($2); }
 	| tWARNING opt_text tNL	{ ppwarning("#warning directive: '%s'", $2); if($2) free($2); }
