@@ -181,36 +181,36 @@ static GdiFont GdiFontList = NULL;
 
 static Family *FontList = NULL;
 
-static WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ',
+static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ',
 			   'R','o','m','a','n','\0'};
-static WCHAR defSans[] = {'A','r','i','a','l','\0'};
-static WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
+static const WCHAR defSans[] = {'A','r','i','a','l','\0'};
+static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
 
-static WCHAR defSystem[] = {'A','r','i','a','l','\0'};
-static WCHAR SystemW[] = {'S','y','s','t','e','m','\0'};
-static WCHAR MSSansSerifW[] = {'M','S',' ','S','a','n','s',' ',
+static const WCHAR defSystem[] = {'A','r','i','a','l','\0'};
+static const WCHAR SystemW[] = {'S','y','s','t','e','m','\0'};
+static const WCHAR MSSansSerifW[] = {'M','S',' ','S','a','n','s',' ',
 			       'S','e','r','i','f','\0'};
-static WCHAR HelvW[] = {'H','e','l','v','\0'};
+static const WCHAR HelvW[] = {'H','e','l','v','\0'};
 
-static WCHAR ArabicW[] = {'A','r','a','b','i','c','\0'};
-static WCHAR BalticW[] = {'B','a','l','t','i','c','\0'};
-static WCHAR CHINESE_BIG5W[] = {'C','H','I','N','E','S','E','_','B','I','G','5','\0'};
-static WCHAR CHINESE_GB2312W[] = {'C','H','I','N','E','S','E','_','G','B','2','3','1','2','\0'};
-static WCHAR Central_EuropeanW[] = {'C','e','n','t','r','a','l',' ',
+static const WCHAR ArabicW[] = {'A','r','a','b','i','c','\0'};
+static const WCHAR BalticW[] = {'B','a','l','t','i','c','\0'};
+static const WCHAR CHINESE_BIG5W[] = {'C','H','I','N','E','S','E','_','B','I','G','5','\0'};
+static const WCHAR CHINESE_GB2312W[] = {'C','H','I','N','E','S','E','_','G','B','2','3','1','2','\0'};
+static const WCHAR Central_EuropeanW[] = {'C','e','n','t','r','a','l',' ',
 				    'E','u','r','o','p','e','a','n','\0'};
-static WCHAR CyrillicW[] = {'C','y','r','i','l','l','i','c','\0'};
-static WCHAR GreekW[] = {'G','r','e','e','k','\0'};
-static WCHAR HangulW[] = {'H','a','n','g','u','l','\0'};
-static WCHAR Hangul_Johab_W[] = {'H','a','n','g','u','l','(','J','o','h','a','b',')','\0'};
-static WCHAR HebrewW[] = {'H','e','b','r','e','w','\0'};
-static WCHAR JapaneseW[] = {'J','a','p','a','n','e','s','e','\0'};
-static WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
-static WCHAR ThaiW[] = {'T','h','a','i','\0'};
-static WCHAR TurkishW[] = {'T','u','r','k','i','s','h','\0'};
-static WCHAR VietnameseW[] = {'V','i','e','t','n','a','m','e','s','e','\0'};
-static WCHAR WesternW[] = {'W','e','s','t','e','r','n','\0'};
+static const WCHAR CyrillicW[] = {'C','y','r','i','l','l','i','c','\0'};
+static const WCHAR GreekW[] = {'G','r','e','e','k','\0'};
+static const WCHAR HangulW[] = {'H','a','n','g','u','l','\0'};
+static const WCHAR Hangul_Johab_W[] = {'H','a','n','g','u','l','(','J','o','h','a','b',')','\0'};
+static const WCHAR HebrewW[] = {'H','e','b','r','e','w','\0'};
+static const WCHAR JapaneseW[] = {'J','a','p','a','n','e','s','e','\0'};
+static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
+static const WCHAR ThaiW[] = {'T','h','a','i','\0'};
+static const WCHAR TurkishW[] = {'T','u','r','k','i','s','h','\0'};
+static const WCHAR VietnameseW[] = {'V','i','e','t','n','a','m','e','s','e','\0'};
+static const WCHAR WesternW[] = {'W','e','s','t','e','r','n','\0'};
 
-static WCHAR *ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits */
+static const WCHAR *ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits */
     WesternW, /*00*/
     Central_EuropeanW,
     CyrillicW,
