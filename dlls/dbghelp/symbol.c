@@ -612,7 +612,10 @@ int symt_find_nearest(struct module* module, DWORD addr)
     int         mid, high, low;
     DWORD       ref_addr, ref_size;
 
-    if (!module->sortlist_valid && !resort_symbols(module)) return -1;
+    if (!module->sortlist_valid || !module->addr_sorttab)
+    {
+        if (!resort_symbols(module)) return -1;
+    }
 
     /*
      * Binary search to find closest symbol.
