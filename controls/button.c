@@ -254,7 +254,6 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		break;
 	}
 
-	GlobalUnlock(hWnd);
 	return lResult;
 }
 
@@ -522,7 +521,6 @@ static LONG CB_Paint(HWND hWnd)
 
     SelectObject(hDC, hOldPen);
     USER_HEAP_FREE(hText);
-    GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
 }
 
@@ -604,7 +602,6 @@ static LONG CB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
 	}
 	NOTIFY_PARENT(hWnd, BN_CLICKED);
     }
-    GlobalUnlock(hWnd);
     InvalidateRect(hWnd, NULL, FALSE);
     UpdateWindow(hWnd);
 }
@@ -644,7 +641,6 @@ static LONG CB_SetCheck(HWND hWnd, WORD wParam)
 	InvalidateRect(hWnd, NULL, FALSE);
 	UpdateWindow(hWnd);
     }
-    GlobalUnlock(hWnd);
 }
 
 static LONG CB_GetCheck(HWND hWnd)
@@ -653,7 +649,6 @@ static LONG CB_GetCheck(HWND hWnd)
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
     wResult = (WORD)(*(wndPtr->wExtra));
-    GlobalUnlock(hWnd);
     return (LONG)wResult;
 }
 
@@ -723,7 +718,6 @@ static LONG RB_Paint(HWND hWnd)
 
     SelectObject(hDC, hOldPen );
     USER_HEAP_FREE(hText);
-    GlobalUnlock(hWnd);
     EndPaint(hWnd, &ps);
 }
 
@@ -777,7 +771,6 @@ static LONG RB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
 	    (WORD)(*(wndPtr->wExtra)) = 1;
 	NOTIFY_PARENT(hWnd, BN_CLICKED);
     }
-    GlobalUnlock(hWnd);
     InvalidateRect(hWnd, NULL, FALSE);
     UpdateWindow(hWnd);
 }
@@ -817,7 +810,6 @@ static LONG RB_SetCheck(HWND hWnd, WORD wParam)
 	InvalidateRect(hWnd, NULL, FALSE);
 	UpdateWindow(hWnd);
     }
-    GlobalUnlock(hWnd);
 }
 
 static LONG RB_GetCheck(HWND hWnd)
@@ -826,7 +818,6 @@ static LONG RB_GetCheck(HWND hWnd)
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
     wResult = (WORD)(*(wndPtr->wExtra));
-    GlobalUnlock(hWnd);
     return (LONG)wResult;
 }
 

@@ -23,12 +23,27 @@
 #include <unistd.h>
 #include <time.h>
 #include <windows.h>
+#include <sys/stat.h>
 #include "prototypes.h"
+#include "regfunc.h"
+#include "windows.h"
+#include "wine.h"
+#include "msdos.h"
+#include "registers.h"
+#include "options.h"
+
+#define MAX_PATH 255
 
 /* #define DEBUG_FILE /* */
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 extern char WindowsPath[256];
+
+extern char WindowsPath[];
+extern WORD ExtendedError;
+
+
+char *GetDosFileName(char *unixfilename);
 
 /***************************************************************************
  _lopen 
@@ -116,83 +131,153 @@ INT _lclose (INT hFile)
 
 /**************************************************************************
  OpenFile
-
- Warning:  This is nearly totally untested.  It compiles, that's it...
-                                            -SL 9/13/93
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
-    int 	base, flags;
-    int		handle;
-	char	buf[256];
-
-#ifdef DEBUG_FILE
-    fprintf(stderr,"OpenFile(%s,<struct>,%04X)\n",lpFileName,wStyle);
-#endif
-
-    base   = wStyle & 0xF;
-    flags  = wStyle & 0xFFF0;
+    int		              handle;
+    struct sigcontext_struct  ccontext;
+                              /* To make macros like EAX happy */
+    struct sigcontext_struct *context=&ccontext; 
+    char                      filename[MAX_PATH+1];
+    int                       action;
+    struct stat               s;
+    struct tm                 *now;
+    int                       res;
+    int                       verify_time;
   
-    flags &= 0xFF0F;  /* strip SHARE bits for now */
-    flags &= 0xD7FF;  /* strip PROMPT & CANCEL bits for now */
-    flags &= 0x7FFF;  /* strip REOPEN bit for now */
-    flags &= 0xFBFF;  /* strib VERIFY bit for now */
+  #ifdef DEBUG_FILE
+      fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
+  #endif
   
-    if (flags & OF_CREATE) 
-    { 
-	base  |= O_CREAT; 
-	flags &= 0xEFFF; 
-    }
+    action = wStyle & 0xff00;
+  
+  
+    /* OF_CREATE is completly different from all other options, so
+       handle it first */
 
-#ifdef DEBUG_FILE
-    fprintf(stderr,"now %d,%d\n",base,flags);
-#endif
+    if (action & OF_CREATE)
+      {
+      int handle;
+      char *unixfilename;
 
-    if (flags & OF_EXIST) 
-    {
-	printf("OpenFile // OF_EXIST '%s' !\n", lpFileName);
-	handle = _lopen (lpFileName, wStyle);
-	if (handle == -1) {
-		/* Try again with WindowsPath */
-		if (FindFile(buf, sizeof(buf), lpFileName, NULL, WindowsPath) != NULL) {
-			handle = _lopen (buf, wStyle);
-			}
-		}
-	close(handle);
-	return handle;
-    }
-    if (flags & OF_DELETE) 
-    {
-	printf("OpenFile // OF_DELETE '%s' !\n", lpFileName);
-	return unlink(lpFileName);
-    }
-    else 
-    {
-	int  	handle;
-	char 	*UnixFileName;
-	if ((UnixFileName = GetUnixFileName(lpFileName)) == NULL)
-	    return HFILE_ERROR;
-	handle = open(UnixFileName, base, 0666);
-	if (handle == -1) {
-		/* Try again with WindowsPath */
-		if (FindFile(buf, sizeof(buf), lpFileName, NULL, WindowsPath) != NULL) {
-#ifdef DEBUG_FILE
-			printf("OpenFile // file '%s' found !\n", buf);
-#endif
-			UnixFileName = buf;
-			handle = open(UnixFileName, base, 0666);
-			}
-		}
+      if (!(action & OF_REOPEN))
+        strcpy(ofs->szPathName, lpFileName);
+      ofs->cBytes = sizeof(OFSTRUCT);
+      ofs->fFixedDisk = FALSE;
+      ofs->nErrCode = 0;
+      *((int*)ofs->reserved) = 0;
 
-#ifdef DEBUG_FILE
-	fprintf(stderr, "OpenFile: returning %04.4x\n", handle);
-#endif
+      if ((unixfilename = GetUnixFileName (ofs->szPathName)) == NULL)
+      {
+        errno_to_doserr();
+	ofs->nErrCode = ExtendedError;
+        return -1;
+      }
+      handle = open (ofs->szPathName, (wStyle & 0x0003) | O_CREAT, 0x666);
+      if (handle == -1)
+      {
+	errno_to_doserr();
+	ofs->nErrCode = ExtendedError;
+      }   
+      return handle;
+      }
 
-	if (handle == -1)
-	    return HFILE_ERROR;
+
+    /* If path isn't given, try to find the file. */
+
+    if (!(action & OF_REOPEN))
+      {
+	if( !( index(lpFileName,'\\') || index(lpFileName,'/') || 
+	      index(lpFileName,':')))
+	while(1)
+	{
+	  char temp[MAX_PATH+1];
+	  strcpy (filename, lpFileName);
+	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	    break;
+	  GetWindowsDirectory (filename,MAX_PATH);
+	  if (filename[1] != ':')
+	    strcat(filename,'\\');
+	  strcat (filename, lpFileName);
+	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	    break;
+	  GetSystemDirectory (filename,MAX_PATH);
+	  if (filename[1] != ':')
+	    strcat(filename,'\\');
+	  strcat (filename, lpFileName);
+	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	    break;
+	  if (!FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
+	    {
+	      strcpy(filename, GetDosFileName(temp));
+	      break;
+	    }
+	  strcpy (filename, lpFileName);
+	  break;
+	}
 	else
-	    return handle;
+	  strcpy (filename,lpFileName);
+
+	ofs->cBytes = sizeof(OFSTRUCT);
+	ofs->fFixedDisk = FALSE;
+	strcpy(ofs->szPathName, filename);
+	ofs->nErrCode = 0;
+        if (!(action & OF_VERIFY))
+          *((int*)ofs->reserved) = 0;
     }
+    
+
+    if (action & OF_PARSE)
+      return 0;
+
+    if (action & OF_DELETE)
+      return unlink(ofs->szPathName);
+
+
+    /* Now on to getting some information about that file */
+
+    if (res = stat(GetUnixFileName(ofs->szPathName), &s))
+      {
+      errno_to_doserr();
+      ofs->nErrCode = ExtendedError;
+      return -1;
+    }
+    
+    now = localtime (&s.st_mtime);
+  
+    if (action & OF_VERIFY)
+      verify_time = *((int*)ofs->reserved);
+  
+    *((WORD*)(&ofs->reserved[2]))=
+         ((now->tm_hour * 0x2000) + (now->tm_min * 0x20) + (now->tm_sec / 2));
+    *((WORD*)(&ofs->reserved[0]))=
+         ((now->tm_year * 0x200) + (now->tm_mon * 0x20) + now->tm_mday);
+    
+    if (action & OF_EXIST)
+      return 0;
+
+    if (action & OF_VERIFY)
+      return (verify_time != *((int*)ofs->reserved));
+    
+    
+   /* Now we are actually going to open the file. According to Microsoft's
+       Knowledge Basis, this is done by calling int 21h, ax=3dh. */    
+
+    EAX = 0x00003d00;
+    EAX = (EAX & 0xffffff0f) | (wStyle & 0x0070); /* Handle OF_SHARE_xxx etc. */
+    EAX = (EAX & 0xfffffff0) | (wStyle & 0x0003); /* Handle OF_READ etc. */
+    DS = segment (ofs->szPathName);
+    EDX = (EDX & 0xffff0000) | offset (ofs->szPathName);
+  
+    OpenExistingFile (context);
+
+    if (EFL & 0x00000001)     /* Cflag */
+    {
+      ofs->nErrCode = (AX & 0x00ff);
+      return -1;
+      }
+
+    return AX;
 }
 
 /**************************************************************************

@@ -12,7 +12,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "sysmetrics.h"
 #include "user.h"
 #include "scroll.h"
-#include "menu.h"
 #include "syscolor.h"
 
 static HBITMAP hbitmapClose = 0;
@@ -24,11 +23,19 @@ static HBITMAP hbitmapMaximizeD = 0;
 static HBITMAP hbitmapRestore = 0;
 static HBITMAP hbitmapRestoreD = 0;
 
+#define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
+extern HINSTANCE hSysRes;
+extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
+
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
 extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
 				   int orgX, int orgY );         /* menu.c */
+extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
+extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
+extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+			      HMENU hmenu, BOOL suppress_draw ); /* menu.c */
 
 
   /* Some useful macros */
@@ -70,8 +77,8 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
     }
 
     if ((style & WS_CAPTION) == WS_CAPTION)
-	rect->top -= SYSMETRICS_CYCAPTION - 1;
-    if (menu) rect->top -= SYSMETRICS_CYMENU + 1;
+	rect->top -= SYSMETRICS_CYCAPTION - SYSMETRICS_CYBORDER;
+    if (menu) rect->top -= SYSMETRICS_CYMENU + SYSMETRICS_CYBORDER;
 
     if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
     if (style & WS_HSCROLL) rect->bottom += SYSMETRICS_CYHSCROLL;
@@ -237,8 +244,9 @@ static LONG NC_InternalNCHitTest( HWND hwnd, POINT pt )
 	if (!PtInRect( &rect, pt ))
 	{
 	      /* Check system menu */
-	    if ((wndPtr->dwStyle & WS_SYSMENU) && (pt.x <= SYSMETRICS_CXSIZE))
-		return HTSYSMENU;
+	    if (wndPtr->dwStyle & WS_SYSMENU)
+		rect.left += SYSMETRICS_CXSIZE;
+	    if (pt.x <= rect.left) return HTSYSMENU;
 	      /* Check maximize box */
 	    if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
 		rect.right -= SYSMETRICS_CXSIZE + 1;
@@ -311,7 +319,7 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 /***********************************************************************
  *           NC_DrawSysButton
  */
-static void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
+void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -611,19 +619,17 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
     {
 	RECT r = rect;
-	rect.top += SYSMETRICS_CYSIZE + 1;
-	r.bottom = rect.top - 1;
+	r.bottom = rect.top + SYSMETRICS_CYSIZE;
+	rect.top += SYSMETRICS_CYSIZE + SYSMETRICS_CYBORDER;
 	NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
     }
 
     if (HAS_MENU(wndPtr))
     {
-	LPPOPUPMENU lpMenu = (LPPOPUPMENU) GlobalLock( wndPtr->wIDmenu );
 	RECT r = rect;
-	r.bottom = rect.top + lpMenu->Height;
-	rect.top += lpMenu->Height;
-	StdDrawMenuBar( hdc, &r, lpMenu, suppress_menupaint );
-	GlobalUnlock( wndPtr->wIDmenu );
+	r.bottom = rect.top + SYSMETRICS_CYMENU;  /* default height */
+	rect.top += MENU_DrawMenuBar( hdc, &r, (HMENU)wndPtr->wIDmenu,
+				      suppress_menupaint );
     }
 
     if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
@@ -1111,27 +1117,33 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
     ReleaseCapture();
 }
 
-
 /***********************************************************************
- *           NC_TrackMouseMenuBar
+ *           NC_TrackSysMenu
  *
- * Track a mouse events for the MenuBar.
+ * Track a mouse button press on the system menu.
  */
-static void NC_TrackMouseMenuBar( HWND hwnd, WORD wParam, POINT pt )
+static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 {
-    WND		*wndPtr;
-    LPPOPUPMENU lppop;
-    MSG 	msg;
-    wndPtr = WIN_FindWndPtr(hwnd);
-    lppop = (LPPOPUPMENU)GlobalLock(wndPtr->wIDmenu);
-#ifdef DEBUG_MENU
-    printf("NC_TrackMouseMenuBar // wndPtr=%08X lppop=%08X !\n", wndPtr, lppop);
-#endif
-    ScreenToClient(hwnd, &pt);
-    pt.y += lppop->rect.bottom;
-    SetCapture(hwnd);
-    MenuButtonDown(hwnd, lppop, pt.x, pt.y);
-    GlobalUnlock(wndPtr->wIDmenu);
+    RECT rect;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
+      /* If window has a menu, track the menu bar normally */
+    if (HAS_MENU(wndPtr)) MENU_TrackMouseMenuBar( hwnd, pt );
+    else
+    {
+	  /* Otherwise track the system menu like a normal popup menu */
+	NC_GetInsideRect( hwnd, &rect );
+	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
+	if (wndPtr->dwStyle & WS_CHILD)
+	    ClientToScreen( wndPtr->hwndParent, (POINT *)&rect );
+	rect.right = rect.left + SYSMETRICS_CXSIZE;
+	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
+	NC_DrawSysButton( hwnd, hdc, TRUE );
+	TrackPopupMenu( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+		        rect.left, rect.bottom, 0, hwnd, &rect );
+	NC_DrawSysButton( hwnd, hdc, FALSE );
+    }
 }
 
 
@@ -1151,8 +1163,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
 	break;
 
     case HTSYSMENU:
-	NC_DrawSysButton( hwnd, hdc, TRUE );
-	NC_TrackSysMenu(hwnd);
+	NC_TrackSysMenu( hwnd, hdc, MAKEPOINT(lParam) );
 	break;
 
     case HTMENU:
@@ -1263,22 +1274,28 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_MOUSEMENU:
-	NC_TrackMouseMenuBar( hwnd, wParam, pt );
+	MENU_TrackMouseMenuBar( hwnd, pt );
 	break;
 
     case SC_KEYMENU:
-/*	NC_KeyMenuBar( hwnd, wParam, pt ); */
+	MENU_TrackKbdMenuBar( hwnd, wParam );
 	break;
 	
     case SC_ARRANGE:
 	break;
 
     case SC_TASKLIST:
-    case SC_SCREENSAVE:
+	/* WinExec( "taskman.exe", SW_SHOWNORMAL ); */
+	break;
+
     case SC_HOTKEY:
+	break;
+
+    case SC_SCREENSAVE:
+	if (wParam == SC_ABOUTWINE)
+	    DialogBox( hSysRes, MAKEINTRESOURCE(2), 
+		       hwnd, (FARPROC)AboutWine_Proc );
 	break;
     }
     return 0;
 }
-
-

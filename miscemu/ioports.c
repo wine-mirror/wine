@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "msdos.h"
+#include "registers.h"
 #include "wine.h"
 
 static BYTE cmosaddress;
@@ -18,15 +18,14 @@ static BYTE cmosimage[64] = {
 
 void inportb(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: inb (%x)\n", EDX & 0xffff);
+	fprintf(stderr, "IO: inb (%x)\n", DX);
 
-	switch(EDX & 0xffff)
-	{
+	switch(DX) {
 		case 0x70:
-			EAX = (EAX & 0xffffff00L) | cmosaddress;
+			AL = cmosaddress;
 			break;
 		case 0x71:
-			EAX = (EAX & 0xffffff00L) | cmosimage[cmosaddress & 0x3f];
+			AL = cmosimage[cmosaddress & 0x3f];
 			break;
 		default:
 	}
@@ -34,22 +33,22 @@ void inportb(struct sigcontext_struct *context)
 
 void inport(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: in (%x)\n", EDX & 0xffff);
+	fprintf(stderr, "IO: in (%x)\n", DX);
 
-	EAX = (EAX & 0xffff0000L) | 0xffff;
+	AX = 0xffff;
 }
 
 void outportb(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: outb (%x), %x\n", EDX & 0xffff, EAX & 0xff);
+	fprintf(stderr, "IO: outb (%x), %x\n", DX, AX);
 
 	switch (EDX & 0xffff)
 	{
 		case 0x70:
-			cmosaddress = EAX & 0x7f;
+			cmosaddress = AL & 0x7f;
 			break;
 		case 0x71:
-			cmosimage[cmosaddress & 0x3f] = EAX & 0xff;
+			cmosimage[cmosaddress & 0x3f] = AL;
 			break;
 		default:
 	}
@@ -57,5 +56,5 @@ void outportb(struct sigcontext_struct *context)
 
 void outport(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: out (%x), %x\n", EDX & 0xffff, EAX & 0xffff);
+	fprintf(stderr, "IO: out (%x), %x\n", DX, AX);
 }

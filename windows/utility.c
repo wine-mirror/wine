@@ -382,21 +382,14 @@ int wsprintf(LPSTR lpOutput, LPSTR lpFormat, ...)
 
 int wvsprintf(LPSTR buf, LPSTR format, LPSTR args)
 {
-	char qualified_fmt[1536];
 	char *newargs;
 	int result;
 
-	/* 1.5K is a safe value as wvsprintf can only handle buffers up to
-	1K and in a worst case such a buffer would look like "%i%i%i..." */
-
 	if(!buf || !format) return 0;
-
-	/* Change the format string so that ints are handled as short by
-	   default */
 
 	/* Convert agruments to 32-bit values */
 	newargs = UTILITY_convertArgs(format, args);
-	result = vsprintf(buf, qualified_fmt, newargs);
+	result = vsprintf(buf, format, newargs);
 
 	free(newargs);
 	return result;

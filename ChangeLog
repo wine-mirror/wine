@@ -1,4 +1,119 @@
 ----------------------------------------------------------------------
+Tue Aug  9 23:58:29 MET DST 1994	<erik@hacktic.nl>
+
+	* [misc/file.c]
+	OpenFile(): Completly rewritten.
+
+	* [miscemu/int21.c]
+	CreateFile(): Fixed wrong mode in call to open.
+	OpenExistingFile(): Implemented file sharing.
+	FindNext(): Fixed.
+	CreateNewFile(): Fixed wrong mode in call to open.
+	fLock(): Added to handle record locking.
+	GetFileAttribute(): Added.
+	As a result, AH = 0x5c, 0x09, and 0x0b were changed.
+
+	* [miscemu/int2f.c]
+	AH = 0x10: SHARE installation check
+ 
+	* [loader/resource.c]
+	AccessResource(): Fixed. A new file descriptor will be returned by
+	every call to AccessResource().
+
+	* [windows/utility.c]
+	wvsprintf(): Fixed.
+
+	* [controls/menu.c]
+	FindMenuItem(): Fixed (handling for nPos == -1 added).	
+
+	* [windows/win.c]
+	CreateWindowEx(): Added call to WINPOS_GetMinMaxInfo.
+
+	* [Configure]
+	Added two options for a processor emulator that might be
+	plugged in later..
+
+	* [loader/task.c] [include/toolhelp.h] [if1632/toolhelp.spec]
+	CreateNewTask() stores real modulename instead of 'TASKxxxx'.
+	Added TaskFirst(), TaskNext(), TaskFindHandle().
+
+	* [memory/global.c]
+	Added stub for MemManInfo().
+
+	* [objects/text.c]
+	Added stub for GetTabbedTextExt().
+
+	* [miscemu/*]
+	Changed all references to registers. Please don't access
+ 	the context structure.
+	fix for GetSystemTime() by <jspeter@birch.ee.vt.edu> added.
+
+	* [misc/lstr.c]
+	Fixed bug in AnsiUpper() & AnsiLower().
+
+	* [misc/winsocket.c]
+	bugfix in getsockopt()/setsockopt(): winsock uses different values
+	than unix.
+
+	* [objects/dib.c]
+	Added DIB_SetImageBits_RLE[48] to support compressed bitmaps.
+
+Mon Aug  8 21:12:33 1994  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/edit.c]
+	Added support for WM_COPY, WM_CUT and WM_PASTE messages.
+
+	* [windows/dialog.c] [windows/defdlg.c] [include/dialog.h]
+	Modified dialog code to create new heap for edit controls
+	unless DS_LOCALEDIT style is set.
+
+Thu Aug  4 18:50:56 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/button.c] [controls/edit.c] [controls/static.c]
+	Removed unneeded GlobalUnlock() calls.
+
+	* [controls/menu.c] [include/menu.h]
+	Lots of changes, fixed a lot of old bugs and introduced a lot of
+	new ones :-)
+	- Changed message loop to use MSG_GetInternalMessage().
+	- Fixed a bug that caused the main window to lose activation when
+	  displaying a menu.
+	- Correctly send initialisation messages (WM_INITMENUPOPUP).
+	- Implemented EndMenu() and LookupMenuHandle().
+	- Changed internal structures to be as compatible as possible with
+	  MS-Windows.
+	- Allocated everything on the USER heap instead of the global heap.
+	- Prefixed all internal function names with MENU_ and declared
+	  them static.
+	- Moved "About Wine..." handling to NC_HandleSysCommand().
+	- Multi-line menus should now work correctly.
+
+	* [loader/resource.c] [objects/bitmap.c]
+	Added the possibility to create OEM bitmaps directly as X bitmaps.
+
+	* [objects/dcvalues.c] [windows/dc.c]
+	Fixed GetDCOrg() to return screen coordinates.
+
+	* [windows/message.c]
+	Fixed double-click checks when the message is not removed from the
+	queue.
+	Fixed MSG_GetInternalMessage() to send WM_ENTERIDLE messages.
+
+	* [windows/nonclient.c]
+	Bug fix in system menu hit-test calculation.
+	A few changes for new menu functions.
+
+Thu Aug 11 17:51:02 1994  Thomas Sandford <t.d.g.sandford@bradford.ac.uk>
+
+        * [controls/edit.c]
+        Bug fix in Edit_NCCreateMessage
+        es->textlen was being used before being set
+
+        * [controls/menu.c]
+        Bug fix in MENU_DrawMenuItem
+        don't try to write text if NULL pointer passed
+
+----------------------------------------------------------------------
 Thu Aug  4 07:18:02 1994  Michael Patra  <micky@marie.physik.tu-berlin.de>
 
         * [windows/message.c]

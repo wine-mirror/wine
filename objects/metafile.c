@@ -103,8 +103,8 @@ HMETAFILE CloseMetaFile(HDC hdc)
     mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
     mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
 
-    /* Construct the end of metafile record - this is undocumented
-     * but is created by MS Windows 3.1.
+    /* Construct the end of metafile record - this is documented
+     * in SDK Knowledgebase Q99334.
      */
     if (!MF_MetaParam0(dc, META_EOF))
     {

@@ -17,29 +17,6 @@ struct dosdirent {
 #define DOSVERSION 0x0330;
 #define MAX_DOS_DRIVES	26
 
-#define EAX context->sc_eax
-#define EBX context->sc_ebx
-#define ECX context->sc_ecx
-#define EDX context->sc_edx
-
-#define AX (context->sc_eax & 0x0000ffffL)
-#define BX (context->sc_ebx & 0x0000ffffL)
-#define CX (context->sc_ecx & 0x0000ffffL)
-#define DX (context->sc_edx & 0x0000ffffL)
-
-#define CS context->sc_cs
-#define DS context->sc_ds
-#define ES context->sc_es
-#define SS context->sc_ss
-
-#define DI context->sc_edi
-#define SI context->sc_esi
-#define SP context->sc_esp
-#define EFL context->sc_efl
-
-#define SetCflag	(EFL |= 0x00000001L)
-#define ResetCflag	(EFL &= 0xfffffffeL)
-
 #define pointer(a,b) 	(BYTE*)(((WORD) a << 16) | b)
 #define segment(a) 	((DWORD)a >> 16)
 #define offset(a)	((DWORD)a & 0xffff)

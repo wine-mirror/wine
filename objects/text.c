@@ -451,4 +451,15 @@ BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
 	return FALSE;
 }
 
+/***********************************************************************
+ *			GetTabbedTextExtent		[USER.197]
+ */
+DWORD GetTabbedTextExtent(HDC hDC, LPSTR lpString, int nCount, 
+	int nTabPositions, LPINT lpnTabStopPositions)
+{
+	printf("EMPTY STUB !!! GetTabbedTextExtent(); !\n");
+
+	return (18 << 16) | (nCount * 18);
+}
+
 

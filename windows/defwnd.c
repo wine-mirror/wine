@@ -26,9 +26,6 @@ extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos ); /* winpos.c */
-extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
-extern BOOL ActivateMenuBarFocus(HWND hWnd); /* menu.c */
-
 
 
 /***********************************************************************
@@ -229,12 +226,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT(lParam) );
 
     case WM_SYSKEYDOWN:
-		if (wParam == VK_MENU) ActivateMenuBarFocus(hwnd);
-		break;    	
+	if (wParam == VK_MENU)
+	    SendMessage( hwnd, WM_SYSCOMMAND, SC_KEYMENU, 0L );
+	break;
+
     case WM_SYSKEYUP:
-		break;    	
-    case WM_MENUCHAR:
-		MessageBeep(0);
 		break;    	
     case WM_MEASUREITEM:
 		measure = (MEASUREITEMSTRUCT *)lParam;

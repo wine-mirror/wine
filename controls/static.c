@@ -127,7 +127,6 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		break;
 	}
 
-	GlobalUnlock(hWnd);
 	return lResult;
 }
 
@@ -187,7 +186,6 @@ static LONG PaintTextfn(HWND hwnd)
     DrawText(hdc, text, textlen, &rc, wFormat);
 
     USER_HEAP_FREE(hText);
-    GlobalUnlock(hwnd);
     EndPaint(hwnd, &ps);
 }
 
@@ -231,7 +229,6 @@ static LONG PaintRectfn(HWND hwnd)
     DeleteObject((HANDLE)hPen);
     DeleteObject((HANDLE)hBrush);
 
-    GlobalUnlock(hwnd);
     EndPaint(hwnd, &ps);
 }
 
@@ -273,7 +270,6 @@ static LONG PaintFramefn(HWND hwnd)
     DeleteObject((HANDLE)hPen);
     DeleteObject((HANDLE)hBrush);
 
-    GlobalUnlock(hwnd);
     EndPaint(hwnd, &ps);
 }
 
@@ -304,7 +300,6 @@ static LONG PaintIconfn(HWND hwnd)
     hIcon = LoadIcon(wndPtr->hInstance, textPtr);
     DrawIcon(hdc, rc.left, rc.top, hIcon);
     EndPaint(hwnd, &ps);
-    GlobalUnlock(hwnd);
 }
 
 

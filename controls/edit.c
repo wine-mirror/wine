@@ -17,12 +17,6 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "user.h"
 #include "scroll.h"
 
-#define EDIT_HEAP_ALLOC(size)          USER_HEAP_ALLOC(GMEM_MOVEABLE,size)
-#define EDIT_HEAP_REALLOC(handle,size) USER_HEAP_REALLOC(handle,size,\
-							 GMEM_MOVEABLE)
-#define EDIT_HEAP_ADDR(handle)         USER_HEAP_ADDR(handle)
-#define EDIT_HEAP_FREE(handle)         USER_HEAP_FREE(handle)
-
 /* #define DEBUG_EDIT /* */
 
 #define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
@@ -36,7 +30,6 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 
 #define HSCROLLDIM (ClientWidth(wndPtr) / 3)
                            /* "line" dimension for horizontal scroll */
-
 
 typedef struct
 {
@@ -172,6 +165,8 @@ void EDIT_HeapFree(HWND hwnd, unsigned int handle);
 unsigned int EDIT_HeapSize(HWND hwnd, unsigned int handle);
 void EDIT_SetHandleMsg(HWND hwnd, WORD wParam);
 LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam);
+void EDIT_CopyToClipboard(HWND hwnd);
+void EDIT_PasteMsg(HWND hwnd);
 void swap(int *a, int *b);
 
 
@@ -326,8 +321,18 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	EDIT_CharMsg(hwnd, wParam);
 	break;
 
+    case WM_COPY:
+	EDIT_CopyToClipboard(hwnd);
+	EDIT_ClearSel(hwnd);
+	break;
+
     case WM_CREATE:
 	lResult = EDIT_CreateMsg(hwnd, lParam);
+	break;
+
+    case WM_CUT:
+	EDIT_CopyToClipboard(hwnd);
+	EDIT_DeleteSel(hwnd);
 	break;
 
     case WM_DESTROY:
@@ -403,6 +408,10 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	EDIT_PaintMsg(hwnd);
 	break;
 
+    case WM_PASTE:
+	EDIT_PasteMsg(hwnd);
+	break;
+
     case WM_SETFOCUS:
 	CreateCaret(hwnd, 0, 2, es->txtht);
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
@@ -435,7 +444,6 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
     }
 
-    GlobalUnlock(hwnd);
     return lResult;
 }
 
@@ -479,11 +487,11 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
     {
 	if (strlen(createStruct->lpszName) < EditBufLen(wndPtr))
 	{
+	    es->textlen = EditBufLen(wndPtr) + 1;
 	    es->hText = EDIT_HeapAlloc(hwnd, EditBufLen(wndPtr) + 2);
 	    text = EDIT_HeapAddr(hwnd, es->hText);
 	    strcpy(text, createStruct->lpszName);
 	    *(text + es->textlen) = '\0';
-	    es->textlen = EditBufLen(wndPtr) + 1;
 	}
 	else
 	{
@@ -3142,6 +3150,65 @@ LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam)
 	memcpy(tabstops, (unsigned short *)lParam, wParam);
     }
     return 0L;
+}
+
+
+/*********************************************************************
+ *  EDIT_CopyToClipboard
+ *
+ *  Copy the specified text to the clipboard.
+ */
+
+void EDIT_CopyToClipboard(HWND hwnd)
+{
+    HANDLE hMem;
+    char *lpMem;
+    int i, len;
+    char *bbl, *bel;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = 
+	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
+
+    bbl = EDIT_TextLine(hwnd, es->SelBegLine) + es->SelBegCol;
+    bel = EDIT_TextLine(hwnd, es->SelEndLine) + es->SelEndCol;
+    len = (int)(bel - bbl);
+
+    hMem = GlobalAlloc(GHND, (DWORD)(len + 1));
+    lpMem = GlobalLock(hMem);
+
+    for (i = 0; i < len; i++)
+	*lpMem++ = *bbl++;
+
+    GlobalUnlock(hMem);
+    OpenClipboard(hwnd);
+    EmptyClipboard();
+    SetClipboardData(CF_TEXT, hMem);
+    CloseClipboard();
+}
+
+
+/*********************************************************************
+ *  WM_PASTE message function
+ */
+
+void EDIT_PasteMsg(HWND hwnd)
+{
+    HANDLE hClipMem;
+    char *lpClipMem;
+
+    OpenClipboard(hwnd);
+    if (!(hClipMem = GetClipboardData(CF_TEXT)))
+    {
+	/* no text in clipboard */
+	CloseClipboard();
+	return;
+    }
+    lpClipMem = GlobalLock(hClipMem);
+    EDIT_InsertText(hwnd, lpClipMem, strlen(lpClipMem));
+    GlobalUnlock(hClipMem);
+    CloseClipboard();
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
 }
 
 

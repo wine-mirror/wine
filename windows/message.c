@@ -205,7 +205,7 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
  *   the coordinates to client coordinates.
  * - Send the WM_SETCURSOR message.
  */
-static BOOL MSG_TranslateMouseMsg( MSG *msg )
+static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 {
     BOOL eatMsg = FALSE;
     static DWORD lastClickTime = 0;
@@ -280,9 +280,12 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg )
 	    case WM_MBUTTONDOWN: msg->message = WM_MBUTTONDBLCLK; break;
 	}
 
-	lastClickTime = msg->time;
-	lastClickMsg  = msg->message;
-	lastClickPos  = msg->pt;
+	if (remove)
+	{
+	    lastClickTime = msg->time;
+	    lastClickMsg  = msg->message;
+	    lastClickPos  = msg->pt;
+	}
     }
 
       /* Build the translated message */
@@ -631,7 +634,7 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 
 	    if ((msg->message >= WM_MOUSEFIRST) &&
 		(msg->message <= WM_MOUSELAST))
-		if (!MSG_TranslateMouseMsg( msg )) 
+		if (!MSG_TranslateMouseMsg( msg, flags & PM_REMOVE )) 
 		{
 		    MSG_RemoveMsg( sysMsgQueue, pos );
 		    continue;
@@ -690,20 +693,30 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, short code, BOOL sendIdle ) 
+BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+			     WORD flags, BOOL sendIdle ) 
 {
-    do
+    for (;;)
     {
 	if (sendIdle)
 	{
-	    if (MSG_PeekMessage(appMsgQueue, msg, 0, 0, 0, PM_REMOVE, TRUE))
-		continue;
-	    /* FIXME: to which window should we send this? */
-	    /* SendMessage( hwnd, WM_ENTERIDLE, code, (LPARAM)hwnd ); */
+	    if (!MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, TRUE ))
+	    {
+		  /* No message present -> send ENTERIDLE and wait */
+		SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
+		MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, FALSE );
+	    }
 	}
-	MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, PM_REMOVE, FALSE );
-    } while (CallMsgFilter( msg, code ) != 0);
-    return (msg->message != WM_QUIT);
+	else  /* Always wait for a message */
+	    MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, FALSE );
+
+	if (!CallMsgFilter( msg, code )) return (msg->message != WM_QUIT);
+
+	  /* Message filtered -> remove it from the queue */
+	  /* if it's still there. */
+	if (!(flags & PM_REMOVE))
+	    MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, PM_REMOVE, TRUE );
+    }
 }
 
 

@@ -28,19 +28,19 @@ WIN87_fpmath()
 
 }
 
-int
+void
 WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS, int cbWin87EmInfoStruct)
 {
   printf( "__WinEm87Info(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
 }
 
-int
+void
 WIN87_WinEm87Restore(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
   printf( "__WinEm87Restore(%p,%d)\n",pWin87EmSaveArea,cbWin87EmSaveArea);
 }
 
-int
+void
 WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
   printf( "__WinEm87Save(%p,%d)\n",pWin87EmSaveArea,cbWin87EmSaveArea);

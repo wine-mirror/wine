@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "msdos.h"
+#include "registers.h"
 #include "wine.h"
 
 int do_int2f_16(struct sigcontext_struct *context);
@@ -10,8 +10,8 @@ int do_int2f(struct sigcontext_struct *context)
 {
 	switch((context->sc_eax >> 8) & 0xff)
 	{
-	case 0x10: /* share isn't installed */
-	        EAX = (EAX & 0xffffff00) | 0x01;
+	case 0x10: /* share is installed */
+	        EAX = (EAX & 0xffffff00) | 0xff;
 		break;
 
 	case 0x15: /* mscdex */

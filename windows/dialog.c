@@ -15,6 +15,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "dialog.h"
 #include "win.h"
 #include "user.h"
+#include "message.h"
+#include "heap.h"
 
 
   /* Dialog base units */
@@ -208,6 +210,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     DWORD exStyle = 0;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
+    void *dlgHeapBase;
+    MDESC *dlgHeap;
 
       /* Parse dialog template */
 
@@ -278,14 +282,15 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	return 0;
     }
 
-    ShowWindow(hwnd, SW_SHOWNORMAL);
-    UpdateWindow(hwnd);
-
       /* Create control windows */
 
 #ifdef DEBUG_DIALOG
     printf( " BEGIN\n" );
 #endif	
+
+    wndPtr = WIN_FindWndPtr( hwnd );
+    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    dlgInfo->hDialogHeap = 0;
 
     for (i = 0; i < template.header->nbItems; i++)
     {
@@ -303,16 +308,39 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	printf(" %d, %d, %d, %d, %d, %08x\n", header->id, header->x, header->y, 
 		header->cx, header->cy, header->style );
 #endif
-	if ((strcmp(class, "STATIC") == 0) & ((header->style & SS_ICON) == SS_ICON)) {
-	    header->cx = 32;
-	    header->cy = 32;
+
+	if ((strcmp(class, "EDIT") == 0) &&
+	            ((header->style & DS_LOCALEDIT) != DS_LOCALEDIT)) {
+	    if (!dlgInfo->hDialogHeap) {
+		dlgInfo->hDialogHeap = GlobalAlloc(GMEM_FIXED, 0x10000);
+		if (!dlgInfo->hDialogHeap) {
+		    printf("CreateDialogIndirectParam: Insufficient memory ",
+			   "to create heap for edit control\n");
+		    continue;
+		}
+		dlgHeapBase = GlobalLock(dlgInfo->hDialogHeap);
+		HEAP_Init(&dlgHeap, dlgHeapBase, 0x10000);
 	    }
-	header->style |= WS_CHILD;
-	CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
-		       class, text, header->style,
-		       header->x * xUnit / 4, header->y * yUnit / 8,
-		       header->cx * xUnit / 4, header->cy * yUnit / 8,
-		       hwnd, header->id, hInst, NULL );
+	    header->style |= WS_CHILD;
+	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
+			   class, text, header->style,
+			   header->x * xUnit / 4, header->y * yUnit / 8,
+			   header->cx * xUnit / 4, header->cy * yUnit / 8,
+			   hwnd, header->id, HIWORD((LONG)dlgHeapBase), NULL );
+	}
+	else {
+	    if ((strcmp(class, "STATIC") == 0) & 
+		((header->style & SS_ICON) == SS_ICON)) {
+		header->cx = 32;
+		header->cy = 32;
+	    }
+	    header->style |= WS_CHILD;
+	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
+			   class, text, header->style,
+			   header->x * xUnit / 4, header->y * yUnit / 8,
+			   header->cx * xUnit / 4, header->cy * yUnit / 8,
+			   hwnd, header->id, hInst, NULL );
+	}
 	header = next_header;
     }    
 
@@ -322,8 +350,6 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     
       /* Initialise dialog extra data */
 
-    wndPtr = WIN_FindWndPtr( hwnd );
-    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->dlgProc   = dlgProc;
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
@@ -346,7 +372,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-static int DIALOG_DoDialogBox( HWND hwnd )
+static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
@@ -360,7 +386,8 @@ static int DIALOG_DoDialogBox( HWND hwnd )
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( lpmsg, hwnd, MSGF_DIALOGBOX, TRUE ))
+    while (MSG_InternalGetMessage( lpmsg, hwnd, owner, MSGF_DIALOGBOX,
+				   PM_REMOVE, TRUE ))
     {
 	if (!IsDialogMessage( hwnd, lpmsg))
 	{
@@ -399,7 +426,7 @@ int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    hInst, dlgTemplate, owner, dlgProc, param );
 #endif
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
 
@@ -426,7 +453,7 @@ int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
     if (!(ptr = GlobalLock( dlgTemplate ))) return -1;
     hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
     GlobalUnlock( dlgTemplate );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
 

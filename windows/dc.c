@@ -532,6 +532,23 @@ COLORREF SetTextColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
+ *           GetDCOrg    (GDI.79)
+ */
+DWORD GetDCOrg( HDC hdc )
+{
+    Window root;
+    int x, y, w, h, border, depth;
+
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return 0;
+    if (dc->w.flags & DC_MEMORY) return 0;
+    XGetGeometry( display, dc->u.x.drawable, &root,
+		  &x, &y, &w, &h, &border, &depth );
+    return MAKELONG( dc->w.DCOrgX + (WORD)x, dc->w.DCOrgY + (WORD)y );
+}
+
+
+/***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
 DWORD SetDCOrg( HDC hdc, short x, short y )

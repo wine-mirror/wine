@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "msdos.h"
+#include "registers.h"
 #include "wine.h"
 
 typedef struct {

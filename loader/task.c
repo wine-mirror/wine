@@ -10,13 +10,14 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "windows.h"
 #include "wine.h"
 #include "task.h"
 
 static LPWINETASKENTRY lpTaskList = NULL;
 static int nTaskCount = 0;
-
 
 /**********************************************************************
  *				GetCurrentTask	[KERNEL.36]
@@ -122,9 +123,14 @@ BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
  */
 HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
 {
-    HANDLE hTask;
+	HANDLE hTask;
 	LPWINETASKENTRY lpTask = lpTaskList;
 	LPWINETASKENTRY lpNewTask;
+	MODULEENTRY module;
+
+	module.dwSize = sizeof(module);
+	ModuleFindHandle(&module, hInst);
+
 	if (lpTask != NULL) {
 		while (TRUE) {
 			if (lpTask->lpNextTask == NULL) break;
@@ -160,7 +166,7 @@ HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
 	lpNewTask->te.wStackBottom = 0;
 	lpNewTask->te.wcEvents = 0;
 	lpNewTask->te.hQueue = 0;
-	sprintf(lpNewTask->te.szModule, "TASK%04X", hInst);
+	strcpy(lpNewTask->te.szModule, module.szModule);
 	lpNewTask->te.wPSPOffset = 0;
 	lpNewTask->unix_pid = getpid();
 	lpNewTask->lpWndList = (HWND *) malloc(MAXWIN_PER_TASK * sizeof(HWND));
@@ -245,4 +251,55 @@ BOOL RemoveWindowFromTask(HTASK hTask, HWND hWnd)
 	return TRUE;
 }
 
+BOOL TaskFirst(LPTASKENTRY lpTask)
+{
+	printf("TaskFirst(%8x)\n", (int) lpTask);
 
+	if (lpTaskList) {
+		memcpy(lpTask, &lpTaskList->te, lpTask->dwSize);
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+BOOL TaskNext(LPTASKENTRY lpTask)
+{
+	LPWINETASKENTRY list;
+	
+	printf("TaskNext(%8x)\n", (int) lpTask);
+
+	list = lpTaskList;
+	while (list) {
+		if (list->te.hTask == lpTask->hTask) {
+			list = list->lpNextTask;
+			if (list) {
+				memcpy(lpTask, &list->te, lpTask->dwSize);
+				return TRUE;
+			} else
+				return FALSE;
+		}
+		list = list->lpNextTask;
+	}
+	return FALSE;
+}
+
+BOOL TaskFindHandle(LPTASKENTRY lpTask, HTASK hTask)
+{
+	static LPWINETASKENTRY list;
+	
+	printf("TaskFindHandle(%8x,%4x)\n", (int) lpTask, hTask);
+
+	list = lpTaskList;
+	while (list) {
+		if (list->te.hTask == hTask) {
+			list = list->lpNextTask;
+			if (list) {
+				memcpy(lpTask, &list->te, lpTask->dwSize);
+				return TRUE;
+			} else
+				return FALSE;
+		}
+		list = list->lpNextTask;
+	}
+	return FALSE;
+}

@@ -17,6 +17,7 @@ MDESC *USER_Heap = NULL;
 extern BOOL ATOM_Init();
 extern BOOL GDI_Init();
 extern void SYSMETRICS_Init();
+extern BOOL MENU_Init();
 extern BOOL WIN_CreateDesktopWindow();
 
 #ifndef WINELIB
@@ -68,6 +69,9 @@ USER_InitApp(int hInstance)
 
       /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
+
+      /* Initialize menus */
+    if (!MENU_Init()) return 0;
 
       /* Create system message queue */
     queueSize = GetProfileInt( "windows", "TypeAhead", 120 );

@@ -1,7 +1,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "msdos.h"
+#include "registers.h"
 #include "wine.h"
 #include "options.h"
 
@@ -23,13 +23,13 @@ int do_int1A(struct sigcontext_struct * context){
 	       AX, BX, CX, DX, SI, DI, DS, ES);
     }
 
-	switch((context->sc_eax >> 8) & 0xff){
+	switch(AH) {
 	case 0:
 		ltime = time(NULL);
 		ticks = (int) (ltime * HZ);
-		context->sc_ecx = ticks >> 16;
-		context->sc_edx = ticks & 0x0000FFFF;
-		context->sc_eax = 0;  /* No midnight rollover */
+		CX = ticks >> 16;
+		DX = ticks & 0x0000FFFF;
+		AX = 0;  /* No midnight rollover */
 		printf("int1a_00 // ltime=%ld ticks=%ld\n", ltime, ticks);
 		break;
 		
@@ -37,14 +37,14 @@ int do_int1A(struct sigcontext_struct * context){
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 		
-		context->sc_ecx = (BIN_TO_BCD(bdtime->tm_hour)<<8) | BIN_TO_BCD(bdtime->tm_min);
-		context->sc_edx = (BIN_TO_BCD(bdtime->tm_sec)<<8);
+		CX = (BIN_TO_BCD(bdtime->tm_hour)<<8) | BIN_TO_BCD(bdtime->tm_min);
+		DX = (BIN_TO_BCD(bdtime->tm_sec)<<8);
 
 	case 4:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
-		context->sc_ecx = (BIN_TO_BCD(bdtime->tm_year/100)<<8) | BIN_TO_BCD((bdtime->tm_year-1900)%100);
-		context->sc_edx = (BIN_TO_BCD(bdtime->tm_mon)<<8) | BIN_TO_BCD(bdtime->tm_mday);
+		CX = (BIN_TO_BCD(bdtime->tm_year/100)<<8) | BIN_TO_BCD((bdtime->tm_year-1900)%100);
+		DX = (BIN_TO_BCD(bdtime->tm_mon)<<8) | BIN_TO_BCD(bdtime->tm_mday);
 		break;
 
 		/* setting the time,date or RTC is not allow -EB */

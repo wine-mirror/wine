@@ -73,7 +73,7 @@ func_type func_name( HDC hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
-    return dc->w.ret_x | (dc->w.ret_y << 16); \
+    return MAKELONG( dc->w.ret_x, dc->w.ret_y << 16 ); \
 }
 
 #define DC_GET_VAL_EX( func_name, ret_x, ret_y ) \
@@ -127,7 +127,6 @@ DC_SET_MODE( SetStretchBltMode, stretchBltMode,
 DC_GET_VAL( COLORREF, GetBkColor, backgroundColor )               /* GDI.75 */
 DC_GET_VAL( WORD, GetBkMode, backgroundMode )                     /* GDI.76 */
 DC_GET_X_Y( DWORD, GetCurrentPosition, CursPosX, CursPosY )       /* GDI.78 */
-DC_GET_X_Y( DWORD, GetDCOrg, DCOrgX, DCOrgY )                     /* GDI.79 */
 DC_GET_VAL( WORD, GetMapMode, MapMode )                           /* GDI.81 */
 DC_GET_VAL( WORD, GetPolyFillMode, polyFillMode )                 /* GDI.84 */
 DC_GET_VAL( WORD, GetROP2, ROPmode )                              /* GDI.85 */

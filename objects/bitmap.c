@@ -12,6 +12,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "bitmap.h"
 
+  /* Include OEM bitmaps */
+#include "bitmaps/check_mark"
+#include "bitmaps/menu_arrow"
 
   /* Handle of the bitmap selected by default in a memory DC */
 HBITMAP BITMAP_hbitmapMemDC = 0;
@@ -70,6 +73,59 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
     image->bitmap_unit = 16;
     _XInitImageFuncPtrs(image);
     return image;
+}
+
+
+/***********************************************************************
+ *           BITMAP_LoadOEMBitmap
+ */
+HBITMAP BITMAP_LoadOEMBitmap( WORD id )
+{
+    BITMAPOBJ * bmpObjPtr;
+    HBITMAP hbitmap;
+    WORD width, height;
+    char *data;
+
+    switch(id)
+    {
+    case OBM_MNARROW:
+	width  = menu_arrow_width;
+	height = menu_arrow_height;
+	data   = menu_arrow_bits;
+	break;
+
+    case OBM_CHECK:
+	width  = check_mark_width;
+	height = check_mark_height;
+	data   = check_mark_bits;
+	break;
+
+    default:
+	return 0;
+    }
+    
+      /* Create the BITMAPOBJ */
+    if (!(hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC )))
+	return 0;
+    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_ADDR( hbitmap );
+    bmpObjPtr->size.cx = 0;
+    bmpObjPtr->size.cy = 0;
+    bmpObjPtr->bitmap.bmType       = 0;
+    bmpObjPtr->bitmap.bmWidth      = width;
+    bmpObjPtr->bitmap.bmHeight     = height;
+    bmpObjPtr->bitmap.bmWidthBytes = (width + 15) / 16 * 2;
+    bmpObjPtr->bitmap.bmPlanes     = 1;
+    bmpObjPtr->bitmap.bmBitsPixel  = 1;
+    bmpObjPtr->bitmap.bmBits       = NULL;
+
+      /* Create the pixmap */
+    if (!(bmpObjPtr->pixmap = XCreateBitmapFromData( display, rootWindow,
+						     data, width, height )))
+    {
+	GDI_HEAP_FREE( hbitmap );
+	return 0;
+    }
+    return hbitmap;
 }
 
 

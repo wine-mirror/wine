@@ -50,6 +50,14 @@ LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
 	case WM_NCDESTROY:
 
+	      /* Free dialog heap (if created) */
+	    if (dlgInfo->hDialogHeap)
+	    {
+		GlobalUnlock(dlgInfo->hDialogHeap);
+		GlobalFree(dlgInfo->hDialogHeap);
+		dlgInfo->hDialogHeap = 0;
+	    }
+
 	      /* Delete font */
 	    if (dlgInfo->hUserFont)
 	    {

@@ -11,8 +11,23 @@ then
     ALLDEFINES="$ALLDEFINES -DWINELIB"
 else
     WINELIB=''
+    echo -n 'Use processor emulator (*DOES*NOT*WORK*YET*) (Y/N) [N]? '
+    read input
+    if [ "$input" = 'y' -o "$input" = 'Y' ]
+    then
+	PROCEMU='#define PROCEMU'
+	echo -n 'bochs directory [/usr/src/bochs]? '
+	read input
+	if [ "$input" = '' ]
+	then
+		ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR=/usr/src/bochs"
+	else
+		ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR="$input
+	fi
+    fi
 fi
 
+echo
 echo -n 'Short filenames (Y/N) [N]? '
 read input
 if [ "$input" = 'y' -o "$input" = 'Y' ]
@@ -47,17 +62,13 @@ else
     NEWBUILD=''
 fi
 
+NEWLINUXLDT=''
 if [ -f /usr/include/linux/ldt.h ]
 then
-	if grep -q seg_not_present /usr/include/linux/ldt.h
+	if grep seg_not_present /usr/include/linux/ldt.h
 	then
-		NEWLINUXLDT='#define NewLinuxLdt -DNEW_LDT_STRUCT'
-		ALLDEFINES="$ALLDEFINES -DNEW_LDT_STRUCT"
-	else
-		NEWLINUXLDT=''
+		NEWLINUXLDT='#define NEW_LDT_STRUCT'
 	fi
-else
-	NEWLINUXLDT=''
 fi
 
 echo '/* autoconf.h generated automatically.  Run Configure. */' > autoconf.h
@@ -66,6 +77,9 @@ echo $SHORTNAMES >> autoconf.h
 echo $NEWBUILD >> autoconf.h
 echo $WINE_INI_GLOBAL >> autoconf.h
 echo $NEWLINUXLDT >> autoconf.h
+echo $ENDIAN >> autoconf.h
+echo $PROCEMU >> autoconf.h
+echo $PROCEMUDIR >> autoconf.h
 echo "#define AutoDefines  $ALLDEFINES" >> autoconf.h
 
 xmkmf -a

@@ -12,8 +12,10 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 #include "regfunc.h"
 #include "windows.h"
 
+#define ToUpper(c)	toupper(c)
+#define ToLower(c)	tolower(c)
 
-  /* Funny to divide them between user and kernel. */
+/* Funny to divide them between user and kernel. */
 
 /* KERNEL.89 */
 LPSTR lstrcat(LPSTR target,LPCSTR source)
@@ -58,44 +60,50 @@ INT lstrlen(LPCSTR str)
   return strlen(str);
 }
 
-
-/* AnsiUpper USER.431 */
-char FAR* AnsiUpper(char FAR* strOrChar)
+/* IsCharAlpha USER 433 */
+BOOL IsCharAlpha(char ch)
 {
-  /* I am not sure if the locale stuff works with toupper, but then again 
-     I am not sure if the Linux libc locale stuffs works at all */
-/*  if((int)strOrChar<256)
-    return (char FAR*) toupper((int)strOrChar);
-  else { 
-    int i;
-    for(i=0;(i<65536) && strOrChar[i];i++) 
-      strOrChar[i]=toupper(strOrChar[i]); 
-    return strOrChar;	
-  } */
-    int i;
-	for (i = 0; (i < 65536 && strOrChar[i]);i++) 
-		strOrChar[i] = (strOrChar[i] >= 'a' && strOrChar[i] <= 'z') ?
-						strOrChar[i] - ('a' - 'A') : strOrChar[i];
-	return strOrChar;	
+  return isalpha(ch);   /* This is probably not right for NLS */
 }
 
-/* AnsiLower USER.432 */
-char FAR* AnsiLower(char FAR* strOrChar)
+/* IsCharAlphanumeric USER 434 */
+BOOL IsCharAlphanumeric(char ch)
 {
-  /* I am not sure if the locale stuff works with tolower, but then again 
+  return (ch<'0')?0:(ch<'9');
+}
+
+/* IsCharUpper USER 435 */
+BOOL IsCharUpper(char ch)
+{
+  return isupper(ch);
+}
+
+/* IsCharLower USER 436 */
+BOOL IsCharLower(char ch)
+{
+  return islower(ch);
+}
+
+/* AnsiUpper USER.431 */
+LPSTR AnsiUpper(LPSTR strOrChar)
+{
+	char *s = strOrChar;
+  /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
-/*  if((int)strOrChar<256)
-    return (char FAR*)tolower((int)strOrChar);
-  else {
-    int i;
-    for(i=0;(i<65536)&&strOrChar[i];i++)
-      strOrChar[i]=tolower(strOrChar[i]);
-    return strOrChar;	
-   }*/
-    int i;
-	for (i = 0; (i < 65536 && strOrChar[i]);i++) 
-		strOrChar[i] = (strOrChar[i] >= 'A' && strOrChar[i] <= 'Z') ?
-						strOrChar[i] + ('a' - 'A') : strOrChar[i];
+
+	/* uppercase only one char if strOrChar < 0x10000 */
+	if(HIWORD((DWORD)strOrChar)) {
+		while (*s) {
+			if (IsCharLower(*s))
+				*s = ToUpper(*s);
+			s++;
+		}
+		return strOrChar;
+	} else
+		if (IsCharLower((char) strOrChar))
+			return (LPSTR) ToUpper(strOrChar);
+		else 
+			return (LPSTR) strOrChar;
 }
 
 /* AnsiUpperBuff USER.437 */
@@ -107,6 +115,28 @@ UINT AnsiUpperBuff(LPSTR str,UINT len)
   for(i=0;i<len;i++)
     str[i]=toupper(str[i]);
   return i;	
+}
+
+/* AnsiLower USER.432 */
+LPSTR AnsiLower(LPSTR strOrChar)
+{
+	char *s = strOrChar;
+  /* I am not sure if the locale stuff works with toupper, but then again 
+     I am not sure if the Linux libc locale stuffs works at all */
+
+	/* lowercase only one char if strOrChar < 0x10000 */
+	if(HIWORD((DWORD)strOrChar)) {
+		while (*s) {
+			if (IsCharUpper(*s))
+				*s = ToLower(*s);
+			s++;
+		}
+		return strOrChar;
+	} else
+		if (IsCharUpper((char) strOrChar))
+			return (LPSTR) ToLower(strOrChar);
+		else 
+			return (LPSTR) strOrChar;
 }
 
 /* AnsiLowerBuff USER.438 */
@@ -132,29 +162,6 @@ LPSTR AnsiNext(LPSTR current)
 char FAR*  AnsiPrev(/*const*/ char FAR* start,char FAR* current)
 {
   return (current==start)?start:current-1;
-}
-
-/* IsCharAlpha USER 433 */
-BOOL IsCharAlpha(char ch)
-{
-  return isalpha(ch);   /* This is probably not right for NLS */
-}
-/* IsCharAlphanumeric USER 434 */
-BOOL IsCharAlphanumeric(char ch)
-{
-  return (ch<'0')?0:(ch<'9');
-}
-
-/* IsCharUpper USER 435 */
-BOOL IsCharUpper(char ch)
-{
-  return isupper(ch);
-}
-
-/* IsCharUpper USER 436 */
-BOOL IsCharLower(char ch)
-{
-  return islower(ch);
 }
 
 static char Oem2Ansi[256];

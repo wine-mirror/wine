@@ -12,9 +12,11 @@
 #include "mdi.h"
 #include "user.h"
 #include "sysmetrics.h"
-#include "menu.h"
 
 #define DEBUG_MDI /* */
+
+extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+			      HMENU hmenu, BOOL suppress_draw );  /* menu.c */
 
 /**********************************************************************
  *					MDIRecreateMenuList
@@ -80,7 +82,7 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPMDICREATESTRUCT cs)
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
 			  cs->x, cs->y, cs->cx, cs->cy, parent, (HMENU) 0,
-			  w->hInstance, (LPSTR) cs->lParam);
+			  w->hInstance, (LPSTR) cs);
 
     if (hwnd)
     {
@@ -569,9 +571,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	rect.right -= SYSMETRICS_CXSIZE;
 	rect.bottom = rect.top + SYSMETRICS_CYMENU;
 
-	StdDrawMenuBar(hdc, &rect, (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu), 
-		       FALSE);
-	GlobalUnlock(wndPtr->wIDmenu);
+	MENU_DrawMenuBar(hdc, &rect, wndPtr->wIDmenu, FALSE);
 	
 	DeleteDC(hdcMem);
 	ReleaseDC(hwndFrame, hdc);

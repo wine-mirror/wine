@@ -128,6 +128,71 @@ static void DIB_SetImageBits_4( WORD lines, BYTE *bits, WORD width,
     }
 }
 
+#define check_xy(x,y) \
+	if (x > width) { \
+		x = 0; \
+		if (lines) \
+			lines--; \
+	}
+
+/***********************************************************************
+ *           DIB_SetImageBits_RLE4
+ *
+ * SetDIBits for a 4-bit deep compressed DIB.
+ */
+static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
+			        WORD *colors, XImage *bmpImage )
+{
+	int x = 0, c, length;
+	BYTE *begin = bits;
+	
+	lines--;
+	while (1) {
+		length = *bits++;
+		if (length) {	/* encoded */
+			c = *bits++;
+			while (length--) {
+				XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
+				check_xy(x, y);
+				if (length) {
+					length--;
+					XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+					check_xy(x, y);
+				}
+			}
+		} else {
+			length = *bits++;
+			switch (length) {
+				case 0: /* eol */
+					x = 0;
+					lines--;
+					continue;
+
+				case 1: /* eopicture */
+					return;
+
+				case 2:	/* delta */
+					x += *bits++;
+					lines -= *bits++;
+					continue;
+
+				default: /* absolute */
+					while (length--) {
+						c = *bits++;
+						XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
+						check_xy(x, y);
+						if (length) {
+							length--;
+							XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+							check_xy(x, y);
+						}
+					}
+					if ((bits - begin) & 1)
+						bits++;
+			}
+		}
+	}
+}
 
 /***********************************************************************
  *           DIB_SetImageBits_8
@@ -148,6 +213,62 @@ static void DIB_SetImageBits_8( WORD lines, BYTE *bits, WORD width,
     }
 }
 
+/***********************************************************************
+ *           DIB_SetImageBits_RLE8
+ *
+ * SetDIBits for an 8-bit deep compressed DIB.
+ */
+static void DIB_SetImageBits_RLE8( WORD lines, BYTE *bits, WORD width,
+			        WORD *colors, XImage *bmpImage )
+{
+	int x = 0, i, length;
+	BYTE *begin = bits;
+
+	lines--;
+	while (1) {
+		length = *bits++;
+		if (length) {	/* encoded */
+			while (length--) {
+				XPutPixel(bmpImage, x++, lines, colors[*bits]);
+				if (x > width) {
+					x = 0;
+					if (lines)
+						lines--;
+				}
+			}
+			bits++;
+		} else {
+			length = *bits++;
+			switch (length) {
+				case 0: /* eol */
+					x = 0;
+					lines--;
+					continue;
+
+				case 1: /* eopicture */
+					return;
+
+				case 2:	/* delta */
+					x += *bits++;
+					lines -= *bits++;
+					continue;
+
+				default: /* absolute */
+					for (i = length; i ; i--) {
+						XPutPixel(bmpImage, x++, lines,
+						colors[*bits++]);
+						if (x > width) {
+							x = 0;
+							if (lines)
+								lines--;
+						}
+					}
+					if ((bits - begin) & 1)
+						bits++;
+			}
+		}
+	}
+}
 
 /***********************************************************************
  *           DIB_SetImageBits_24
@@ -228,11 +349,19 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 			    colorMapping, bmpImage );
 	break;
     case 4:
-	DIB_SetImageBits_4( lines, bits, info->bmiHeader.biWidth,
+	if (info->bmiHeader.biCompression)
+		DIB_SetImageBits_RLE4( lines, bits, info->bmiHeader.biWidth,
+			    colorMapping, bmpImage );
+	else	
+		DIB_SetImageBits_4( lines, bits, info->bmiHeader.biWidth,
 			    colorMapping, bmpImage );
 	break;
     case 8:
-	DIB_SetImageBits_8( lines, bits, info->bmiHeader.biWidth,
+	if (info->bmiHeader.biCompression)
+		DIB_SetImageBits_RLE8( lines, bits, info->bmiHeader.biWidth,
+			    colorMapping, bmpImage );
+	else
+		DIB_SetImageBits_8( lines, bits, info->bmiHeader.biWidth,
 			    colorMapping, bmpImage );
 	break;
     case 24:

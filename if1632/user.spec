@@ -190,7 +190,7 @@ length	540
 185 pascal GrayString(word word ptr ptr word word word word word)
 	   GrayString(1 2 3 4 5 6 7 8 9)
 186 pascal SwapMouseButton(word) SwapMouseButton(1)
-#187 ENDMENU
+187 pascal EndMenu() EndMenu()
 188 pascal SetSysModalWindow(word) SetSysModalWindow(1)
 189 pascal GetSysModalWindow() GetSysModalWindow()
 190 pascal GetUpdateRect(word ptr word) GetUpdateRect(1 2 3)
@@ -201,7 +201,8 @@ length	540
 195 pascal DlgDirListComboBox(word ptr word word word) DlgDirListComboBox(1 2 3 4 5)
 196 pascal TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
 		TabbedTextOut(1 2 3 4 5 6 7 8)
-#197 GETTABBEDTEXTEXTENT
+197 pascal GETTABBEDTEXTEXTENT(word ptr word word ptr)
+	   GetTabbedTextExtent(1 2 3 4 5)
 #198 CASCADECHILDWINDOWS
 #199 TILECHILDWINDOWS
 200 pascal OpenComm(ptr word word) OpenComm(1 2 3)
@@ -221,7 +222,7 @@ length	540
 214 pascal EscapeCommFunction(word word) EscapeCommFunction(1 2)
 215 pascal FlushComm(word word) FlushComm(1 2)
 #216 USERSEEUSERDO
-#217 LOOKUPMENUHANDLE
+217 pascal LookupMenuHandle(word s_word) LookupMenuHandle(1 2)
 218 pascal DialogBoxIndirect(word word word ptr) DialogBoxIndirect(1 2 3 4)
 219 pascal CreateDialogIndirect(word ptr word ptr)
 	   CreateDialogIndirect(1 2 3 4)

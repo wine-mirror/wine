@@ -7,30 +7,9 @@
 
 #include "toolhelp.h"
 
-typedef HANDLE HGLOBAL;
-
-typedef struct {
-	DWORD		dwSize;
-	HTASK		hTask;
-	HTASK		hTaskParent;
-	HINSTANCE	hInst;
-	HMODULE		hModule;
-	WORD		wSS;
-	WORD		wSP;
-	WORD		wStackTop;
-	WORD		wStackMinimum;
-	WORD		wStackBottom;
-	WORD		wcEvents;
-	HGLOBAL		hQueue;
-	char		szModule[MAX_MODULE_NAME + 1];
-	WORD		wPSPOffset;
-	HANDLE		hNext;
-} TASKENTRY;
-typedef TASKENTRY *LPTASKENTRY;
-
 typedef struct {
 	TASKENTRY	te;
-	int			unix_pid;
+	int		unix_pid;
 	HICON		hIcon;
 	HWND		*lpWndList;
 	void		*lpPrevTask;

@@ -1496,6 +1496,8 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_HSCROLL          0x0114
 #define WM_VSCROLL          0x0115
 
+#define WM_ENTERIDLE        0x0121
+
   /* Mouse messages */
 #define WM_MOUSEMOVE	    0x0200
 #define WM_LBUTTONDOWN	    0x0201
@@ -2714,6 +2716,7 @@ Fb(HPALETTE,GDISelectPalette,HDC,a,HPALETTE,b)
 Fb(HMENU,GetSubMenu,HMENU,a,short,b)
 Fb(HMENU,GetSystemMenu,HWND,a,BOOL,b)
 Fb(HMENU,LoadMenu,HANDLE,a,LPSTR,b)
+Fb(HMENU,LookupMenuHandle,HMENU,a,INT,b)
 Fb(HWND,ChildWindowFromPoint,HWND,a,POINT,b)
 Fb(HWND,FindWindow,LPSTR,a,LPSTR,b)
 Fb(HWND,GetDlgItem,HWND,a,WORD,b)

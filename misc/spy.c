@@ -153,7 +153,8 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_TIMER",			/* 0x0113 */
     "WM_HSCROLL",		/* 0x0114 */
     "WM_VSCROLL",		/* 0x0115 */
-    NULL, NULL,
+    "WM_INITMENU",              /* 0x0116 */
+    "WM_INITMENUPOPUP",         /* 0x0117 */
     "WM_SYSTIMER",		/* 0x0118 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 

@@ -290,7 +290,7 @@ void winestat(){
 			    used++;
 			    if (table[j].handler) implemented++;
 			    else 
-				    printf("%s.%d\n",
+				    printf("%s.%d not implemented\n",
 					   dll_builtin_table[i].dll_name,
 					   j);
 		    };
@@ -301,10 +301,11 @@ void winestat(){
 		    perc = implemented * 100.00 / used;
 	    else
 		    perc = 0.0;
-	    printf("%s: %d of %d (%3.1f %%)\n", dll_builtin_table[i].dll_name, implemented, used, perc);
+	    if (used)
+		    printf("%s: %d of %d (%3.1f %%)\n", dll_builtin_table[i].dll_name, implemented, used, perc);
     };
 	perc = timplemented * 100.00 / tused;
-	printf("TOTAL: %d of %d implemented (%3.1f %%)\n",timplemented, tused, perc);
+	printf("TOTAL: %d of %d winapi functions implemented (%3.1f %%)\n",timplemented, tused, perc);
 }
 #endif /* WINESTAT */
 #endif /* !WINELIB */

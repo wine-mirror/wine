@@ -37,6 +37,8 @@ static struct w_files *ResourceFileInfo = NULL;
 static RESOURCE *Top = NULL;
 extern HINSTANCE hSysRes;
 
+extern HBITMAP BITMAP_LoadOEMBitmap( WORD id );  /* objects/bitmap.c */
+
 HANDLE RSC_LoadResource(int instance, char *rsc_name, int type, 
 			int *image_size_ret);
 void RSC_LoadNameTable(void);
@@ -1153,8 +1155,14 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     printf("LoadBitmap: instance = %04x, name = %08x\n",
 	   instance, bmp_name);
 #endif
-    if (instance == (HANDLE)NULL)  instance = hSysRes;
-    if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
+    if (!instance)
+    {
+	  /* Try to create an OEM bitmap */
+	hbitmap = BITMAP_LoadOEMBitmap( ((int)bmp_name) & 0xffff );
+	if (hbitmap) return hbitmap;
+	  /* Failed -> load it from sysres.dll */
+	instance = hSysRes;
+    }
 
     rsc_mem = RSC_LoadResource(instance, bmp_name, NE_RSCTYPE_BITMAP, 
 			       &image_size);
@@ -1163,6 +1171,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	return 0;
 	}
     lp = (long *) GlobalLinearLock(rsc_mem);
+    if (!(hdc = GetDC(0))) lp = NULL;
     if (lp == NULL)
     {
 	GlobalFree(rsc_mem);

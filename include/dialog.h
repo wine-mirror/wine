@@ -25,6 +25,7 @@ typedef struct
     WORD      xBaseUnit;
     WORD      yBaseUnit;
     WORD      fEnd;
+    HANDLE    hDialogHeap;
 } DIALOGINFO;
 
 

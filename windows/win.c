@@ -247,6 +247,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     HANDLE class, hwnd;
     CLASS *classPtr;
     WND *wndPtr, *parentPtr = NULL;
+    POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
@@ -379,6 +380,19 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     win_attr.save_under = ((classPtr->wc.style & CS_SAVEBITS) != 0);
 
+    WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
+
+    if ( maxSize.x < width)
+      {
+	width = maxSize.x;
+	wndPtr->rectWindow.right = x + width;
+      }
+    if ( maxSize.y < height)
+      {
+	height = maxSize.y;
+	wndPtr->rectWindow.bottom = y + height;
+      }
+    
     wndPtr->window = XCreateWindow( display, parentPtr->window,
 		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
 		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,

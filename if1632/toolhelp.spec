@@ -15,16 +15,16 @@ length	83
 60 pascal ModuleNext(ptr) ModuleNext(1)
 61 pascal ModuleFindName(ptr ptr) ModuleFindName(1 2)
 62 pascal ModuleFindHandle(ptr word) ModuleFindHandle(1 2)
-# 63   1  0caa  TASKFIRST exported, shared data
-# 64   1  0ced  TASKNEXT exported, shared data
-# 65   1  0d2e  TASKFINDHANDLE exported, shared data
+63 pascal16 TaskFirst(ptr) TaskFirst(1)
+64 pascal16 TaskNext(ptr) TaskNext(1)
+65 pascal16 TaskFindHandle(ptr word) TaskFindHandle(1 2)
 # 66   1  0f1c  STACKTRACEFIRST exported, shared data
 # 67   1  0f67  STACKTRACECSIPFIRST exported, shared data
 # 68   1  0fca  STACKTRACENEXT exported, shared data
 # 69   1  28b0  CLASSFIRST exported, shared data
 # 70   1  2925  CLASSNEXT exported, shared data
 # 71   1  11ce  SYSTEMHEAPINFO exported, shared data
-# 72   1  13f4  MEMMANINFO exported, shared data
+72 pascal16 MemManInfo(ptr) MemManInfo(1)
 # 73   1  1b72  NOTIFYREGISTER exported, shared data
 # 74   1  1c29  NOTIFYUNREGISTER exported, shared data
 # 75   1  2060  INTERRUPTREGISTER exported, shared data

@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdlib.h>
 #include <string.h>
 #include "prototypes.h"
+#include "toolhelp.h"
 #include "heap.h"
 #include "segmem.h"
 
@@ -806,4 +807,12 @@ DWORD GetFreeSpace(UINT wFlags)
     
     printf("GetFreeSpace // return %ld !\n", total_free << 16);
     return total_free << 16;
+}
+
+/**********************************************************************
+ *                      MemManInfo (toolhelp.72)
+ */
+BOOL MemManInfo(LPMEMMANINFO lpmmi)
+{
+	return 1;
 }
