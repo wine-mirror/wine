@@ -196,6 +196,18 @@ HDESK WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 }
 
 /******************************************************************************
+ * OpenInputDesktop [USER32.@]
+ *
+ *    Not supported on Win9x - returns NULL and calls SetLastError.
+ */
+HDESK WINAPI OpenInputDesktop( DWORD dwFlags, BOOL fInherit, ACCESS_MASK dwDesiredAccess )
+{
+    FIXME("(%lx,%i,%lx): stub\n",dwFlags, fInherit,dwDesiredAccess);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
  *              EnumDesktopsA [USER32.@]
  */
 BOOL WINAPI EnumDesktopsA( HWINSTA hwinsta, DESKTOPENUMPROCA lpEnumFunc,

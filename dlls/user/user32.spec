@@ -437,7 +437,7 @@
 @ stdcall OpenDesktopA(str long long long)
 @ stub OpenDesktopW
 @ stdcall OpenIcon(long)
-@ stub OpenInputDesktop
+@ stdcall OpenInputDesktop(long long long)
 @ stub OpenWindowStationA
 @ stub OpenWindowStationW
 @ stdcall PackDDElParam(long long long)
