@@ -23,8 +23,8 @@ debug_channels (ole)
 @ stub MqGetContext # win9x
 @ stub MqRegisterQueue # win9x
 
-@ stub NdrDllCanUnloadNow
-@ stub NdrDllGetClassObject
+@ stdcall NdrDllCanUnloadNow(ptr) NdrDllCanUnloadNow
+@ stdcall NdrDllGetClassObject() NdrDllGetClassObject
 @ stdcall NdrDllRegisterProxy(long ptr ptr) NdrDllRegisterProxy
 @ stub NdrDllUnregisterProxy
 
@@ -36,7 +36,7 @@ debug_channels (ole)
 @ stub RpcAsyncInitializeHandle
 @ stub RpcAsyncRegisterInfo
 @ stub RpcBindingCopy
-@ stub RpcBindingFree
+@ stdcall RpcBindingFree(ptr) RpcBindingFree
 @ stdcall RpcBindingFromStringBindingA(str  ptr) RpcBindingFromStringBindingA
 @ stdcall RpcBindingFromStringBindingW(wstr ptr) RpcBindingFromStringBindingW
 @ stub RpcBindingInqAuthClientA

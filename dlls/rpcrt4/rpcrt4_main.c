@@ -18,6 +18,10 @@
 #include "winbase.h"
 #include "rpc.h"
 
+#include "ole2.h"
+#include "rpcndr.h"
+#include "rpcproxy.h"
+
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
 #endif
@@ -342,7 +346,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
  */
 HRESULT WINAPI NdrDllRegisterProxy(
   HMODULE hDll,          /* [in] */
-  void **pProxyFileList, /* [???] FIXME: const ProxyFileInfo ** */
+  const ProxyFileInfo **pProxyFileList, /* [in] */
   const CLSID *pclsid    /* [in] */
 ) 
 {
@@ -504,6 +508,14 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWS
 }
 
 /***********************************************************************
+ *		RpcBindingFree (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcBindingFree(/*RPC_BINDING_HANDLE* */ void * Binding)
+{
+  FIXME("(%p): stub\n", Binding);
+  return RPC_S_OK;
+}
+/***********************************************************************
  *		RpcBindingFromStringBindingA (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
@@ -522,3 +534,24 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDIN
 
   return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
 }
+
+/***********************************************************************
+ *		NdrDllCanUnloadNow (RPCRT4.@)
+ */
+HRESULT WINAPI NdrDllCanUnloadNow(CStdPSFactoryBuffer *pPSFactoryBuffer)
+{
+    FIXME("%p\n",pPSFactoryBuffer);
+    return FALSE;
+}
+
+HRESULT WINAPI NdrDllGetClassObject(
+    REFCLSID rclsid, REFIID riid , LPVOID *ppv, 
+    const ProxyFileInfo **   pProxyFileList,
+    const CLSID *            pclsid,
+    CStdPSFactoryBuffer *    pPSFactoryBuffer)
+{
+    if(ppv)  
+        *ppv = NULL;
+    return RPC_S_UNKNOWN_IF;
+}
+
