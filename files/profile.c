@@ -1321,24 +1321,36 @@ BOOL16 WINAPI WritePrivateProfileSection16( LPCSTR section,
 }
 
 /***********************************************************************
- *           WritePrivateProfileSection32A   (KERNEL32)
+ *           WritePrivateProfileSectionA   (KERNEL32)
  */
 BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section, 
 					 LPCSTR string, LPCSTR filename )
 {
-    char *p =(char*)string;
+    BOOL ret = FALSE;
+    LPSTR p ;
 
-    FIXME("WritePrivateProfileSection32A empty stub\n");
-    if (TRACE_ON(profile)) {
-      TRACE("(%s) => [%s]\n", filename, section);
-      while (*(p+1)) {
-	TRACE("%s\n", p);
-        p += strlen(p);
-	p += 1;
-      }
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (PROFILE_Open( filename )) {
+        if (!section && !string && !filename)
+            PROFILE_ReleaseFile();  /* always return FALSE in this case */
+        else {
+            while(*string){
+                LPSTR buf=HEAP_strdupA( GetProcessHeap(), 0, string );
+                if((p=strchr( buf, '='))){
+                    *p='\0';
+                    ret = PROFILE_SetString( section, buf, p+1 );
+                    
+                }
+                HeapFree( GetProcessHeap(), 0, buf );
+                string += strlen(string)+1;
+            }
+            
+        }
     }
-    
-    return FALSE;
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+    return ret;
 }
 
 /***********************************************************************
