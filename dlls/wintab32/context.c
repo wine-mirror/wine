@@ -233,6 +233,14 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
     return ptr;
 }
 
+/*
+ * Flushes all packets from the queue.
+ */
+static void inline TABLET_FlushQueue(LPOPENCONTEXT context)
+{
+    context->PacketsQueued = 0;
+}
+
 int static inline CopyTabletData(LPVOID target, LPVOID src, INT size)
 {
     memcpy(target,src,size);
@@ -584,6 +592,8 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if(!fEnable)
+        TABLET_FlushQueue(context);
     context->enabled = fEnable;
     LeaveCriticalSection(&csTablet);
 
