@@ -31,11 +31,6 @@
 # include <sys/mman.h>
 #endif
 
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -193,19 +188,17 @@ static BIOSDATA * DOSMEM_BiosData(void)
  */
 static DWORD DOSMEM_GetTicksSinceMidnight(void)
 {
-    struct tm *bdtime;
-    struct timeval tvs;
-    time_t seconds;
+    SYSTEMTIME time;
 
     /* This should give us the (approximately) correct
      * 18.206 clock ticks per second since midnight.
      */
-    gettimeofday( &tvs, NULL );
-    seconds = tvs.tv_sec;
-    bdtime = localtime( &seconds );
-    return (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
-              bdtime->tm_sec) * 18206) / 1000) +
-                  (tvs.tv_usec / 54927);
+
+    GetLocalTime( &time );
+
+    return (((time.wHour * 3600 + time.wMinute * 60 +
+              time.wSecond) * 18206) / 1000) +
+             (time.wMilliseconds * 1000 / 54927);
 }
 
 /***********************************************************************
