@@ -405,7 +405,6 @@ STRINGTABLE DISCARDABLE
 
     PD32_DEFAULT_PRINTER                  "Domyœlna Drukarka; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "W kolejce znajduj¹ siê %d dokumenty"
-    PD32_PRINT_ALL_X_PAGES                "&Wszystkie %d strony"
     PD32_MARGINS_IN_INCHES                "Marginesy [cale]"
     PD32_MARGINS_IN_MILIMETERS            "Marginesy [mm]"
     PD32_MILIMETERS                       "mm"

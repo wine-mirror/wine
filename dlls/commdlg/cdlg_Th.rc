@@ -402,7 +402,6 @@ supported by your printer.\nPlease enter a value between 1 and %d."
 
     PD32_DEFAULT_PRINTER                  "เครื่องพิมพ์ปกติ; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "มี %d แฟ้มรออยู่"
-    PD32_PRINT_ALL_X_PAGES                "ทุก %d หน้า"
     PD32_MARGINS_IN_INCHES                "ขอบกระดาษ [นิ้ว]"
     PD32_MARGINS_IN_MILIMETERS            "ขอบกระดาษ [มม.]"
     PD32_MILIMETERS                       "มม."

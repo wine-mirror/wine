@@ -405,7 +405,6 @@ Vnesite število med %d in %d."
 
     PD32_DEFAULT_PRINTER                  "Privzeti tiskalnik; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "%d èakajoèih dok."
-    PD32_PRINT_ALL_X_PAGES                "&Vse strani -- %d"
     PD32_MARGINS_IN_INCHES                "Robovi [palci]"
     PD32_MARGINS_IN_MILIMETERS            "Robovi [mm]"
     PD32_MILIMETERS                       "mm"

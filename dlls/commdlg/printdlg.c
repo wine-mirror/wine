@@ -928,15 +928,6 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 	    if (lppd->Flags & PD_PAGENUMS)
 	        CheckRadioButton(hDlg, rad1, rad3, rad3);
 	}
-	/* "All xxx pages"... */
-	{
-	    char        resourcestr[64];
-	    char        result[64];
-	    LoadStringA(COMDLG32_hInstance, PD32_PRINT_ALL_X_PAGES,
-			resourcestr, 49);
-	    sprintf(result,resourcestr,lppd->nMaxPage - lppd->nMinPage + 1);
-	    SendDlgItemMessageA(hDlg, rad1, WM_SETTEXT, 0, (LPARAM) result);
-	}
 
 	/* Collate pages
 	 *
@@ -1089,15 +1080,6 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 	} else {
 	    if (lppd->Flags & PD_PAGENUMS)
 	        CheckRadioButton(hDlg, rad1, rad3, rad3);
-	}
-	/* "All xxx pages"... */
-	{
-	    WCHAR        resourcestr[64];
-	    WCHAR        result[64];
-	    LoadStringW(COMDLG32_hInstance, PD32_PRINT_ALL_X_PAGES,
-			resourcestr, 49);
-	    wsprintfW(result,resourcestr,lppd->nMaxPage - lppd->nMinPage + 1);
-	    SendDlgItemMessageW(hDlg, rad1, WM_SETTEXT, 0, (LPARAM) result);
 	}
 
 	/* Collate pages

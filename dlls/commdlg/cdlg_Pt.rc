@@ -407,7 +407,6 @@ pela sua impressora.\nPor favor entre um valor entre 1 e %d."
 
     PD32_DEFAULT_PRINTER			"Impressora Padrão; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE		"Existem %d documentos na fila"
-    PD32_PRINT_ALL_X_PAGES			"&Todas %d páginas"
     PD32_MARGINS_IN_INCHES			"Margens [polegadas]"
     PD32_MARGINS_IN_MILIMETERS			"Margens [mm]"
     PD32_MILIMETERS				"mm"

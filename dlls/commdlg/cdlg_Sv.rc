@@ -398,7 +398,6 @@ pappersgränserna.\nVar god skriv in marginallerna igen."
 
  PD32_DEFAULT_PRINTER                  "Standardskrivare; "
  PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Det är %d dokument i kön"
- PD32_PRINT_ALL_X_PAGES                "&Alla %d sidor"
  PD32_MARGINS_IN_INCHES                "Marginaler [inches]"
  PD32_MARGINS_IN_MILIMETERS            "Marginaler [millimeter]"
  PD32_MILIMETERS                       "millimeter"

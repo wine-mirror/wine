@@ -409,7 +409,6 @@ desconocido."
 
     PD32_DEFAULT_PRINTER                  "Impresora por defecto; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Hay %d documentos en la cola"
-    PD32_PRINT_ALL_X_PAGES                "&Todas las %d páginas"
     PD32_MARGINS_IN_INCHES                "Márgenes [pulgadas]"
     PD32_MARGINS_IN_MILIMETERS            "Márgenes [mm]"
     PD32_MILIMETERS                       "mm"

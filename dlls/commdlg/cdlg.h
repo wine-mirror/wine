@@ -93,7 +93,7 @@ typedef struct {
 
 #define PD32_DEFAULT_PRINTER                  1582
 #define PD32_NR_OF_DOCUMENTS_IN_QUEUE         1583
-#define PD32_PRINT_ALL_X_PAGES                1584
+
 #define PD32_MARGINS_IN_INCHES                1585
 #define PD32_MARGINS_IN_MILIMETERS            1586
 #define PD32_MILIMETERS                       1587

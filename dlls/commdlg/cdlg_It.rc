@@ -407,7 +407,6 @@ supportato dalla stampante.\nInserire un valore compreso tra 1 e %d"
 
     PD32_DEFAULT_PRINTER                  "Stampante predefinita; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Ci sono %d documenti nella coda di stampa"
-    PD32_PRINT_ALL_X_PAGES                "&Tutte le %d pagine"
     PD32_MARGINS_IN_INCHES                "Margini [pollici]"
     PD32_MARGINS_IN_MILIMETERS            "Margini [mm]"
     PD32_MILIMETERS                       "mm"
