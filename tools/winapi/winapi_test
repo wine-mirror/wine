@@ -465,7 +465,7 @@ sub output_header {
     foreach my $test (@tests) {
 	my @includes = $tests->get_section($test_dir, $test, "include");
 	foreach my $include (@includes) {
-	    print OUT "#include \"$include\"\n";
+	    print OUT "#include $include\n";
 	}
     }
     print OUT "\n";

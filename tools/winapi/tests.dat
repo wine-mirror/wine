@@ -15,7 +15,7 @@ wingdi.h
 
 %include
 
-windows.h
+"windows.h"
 
 %type
 
@@ -454,7 +454,7 @@ winbase.h
 
 %include
 
-windows.h
+"windows.h"
 
 %type
 
@@ -584,8 +584,8 @@ windef.h
 
 %include
 
-ntstatus.h
-windows.h
+"ntstatus.h"
+"windows.h"
 
 %type
 
@@ -869,14 +869,14 @@ shlobj.h
 
 %include
 
-stdarg.h
-windef.h
-winbase.h
-wtypes.h
-shellapi.h
-winuser.h
-wingdi.h
-shlobj.h
+<stdarg.h>
+"windef.h"
+"winbase.h"
+"wtypes.h"
+"shellapi.h"
+"winuser.h"
+"wingdi.h"
+"shlobj.h"
 
 %type
 
@@ -945,12 +945,12 @@ shlwapi.h
 
 %include
 
-stdarg.h
-windef.h
-winbase.h
-wtypes.h
-winreg.h
-shlwapi.h
+<stdarg.h>
+"windef.h"
+"winbase.h"
+"wtypes.h"
+"winreg.h"
+"shlwapi.h"
 
 %type
 
@@ -979,10 +979,10 @@ urlmon.h
 
 %include
 
-stdarg.h
-windef.h
-winbase.h
-urlmon.h
+<stdarg.h>
+"windef.h"
+"winbase.h"
+"urlmon.h"
 
 %type
 
@@ -1012,7 +1012,7 @@ winuser.h
 
 %include
 
-windows.h
+"windows.h"
 
 %type
 
@@ -1278,10 +1278,10 @@ wininet.h
 
 %include
 
-stdarg.h
-windef.h
-winbase.h
-wininet.h
+<stdarg.h>
+"windef.h"
+"winbase.h"
+"wininet.h"
 
 %type
 
