@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h"
+
 #include <wine/debug.h>
 #include <wine/library.h>
 
@@ -52,12 +54,27 @@ static char *ignored_fstypes[] = {
     NULL
 };
 
+static char *ignored_mnt_dirs[] = {
+    "/boot",
+    NULL
+};
+
 static BOOL should_ignore_fstype(char *type)
 {
     char **s;
     
     for (s = ignored_fstypes; *s; s++)
         if (!strcmp(*s, type)) return TRUE;
+
+    return FALSE;
+}
+
+static BOOL should_ignore_mnt_dir(char *dir)
+{
+    char **s;
+
+    for (s = ignored_mnt_dirs; *s; s++)
+        if (!strcmp(*s, dir)) return TRUE;
 
     return FALSE;
 }
@@ -88,6 +105,7 @@ static char allocate_letter()
 #define NO_MORE_LETTERS 2
 #define NO_ROOT 3
 #define NO_DRIVE_C 4
+#define NO_HOME 5
 
 static void report_error(int code)
 {
@@ -108,13 +126,13 @@ static void report_error(int code)
             }
             else
             {
-                fprintf(stderr, "winecfg: could not open fstab: %s", strerror(errno));
+                fprintf(stderr, "winecfg: could not open fstab: %s\n", strerror(errno));
             }
             break;
 
         case NO_MORE_LETTERS:
             if (gui_mode) MessageBox(NULL, "No more letters are available to auto-detect available drives with.", "", MB_OK | MB_ICONEXCLAMATION);
-            fprintf(stderr, "winecfg: no more available letters while scanning /etc/fstab");
+            fprintf(stderr, "winecfg: no more available letters while scanning /etc/fstab\n");
             break;
 
         case NO_ROOT:
@@ -132,8 +150,17 @@ static void report_error(int code)
                 MessageBox(NULL, "No virtual drive C mapped\n\nTry running wineprefixcreate", "", MB_OK | MB_ICONEXCLAMATION);
             else
                 fprintf(stderr, "winecfg: no drive_c directory\n");
+
+        case NO_HOME:
+            if (gui_mode)
+                MessageBox(NULL, "Could not ensure that your home directory was mapped.\n\n"
+                                 "This can happen if you run out of drive letters. "
+                                 "Try unmapping a drive letter then try again.", "",
+                                 MB_OK | MB_ICONEXCLAMATION);
+            else 
+                fprintf(stderr, "winecfg: unable to map home drive\n");
+            break;
     }
-    
 }
 
 static void ensure_root_is_mapped()
@@ -161,6 +188,34 @@ static void ensure_root_is_mapped()
 
         if (letter == ('A' - 1)) report_error(NO_ROOT);
     }
+}
+
+static void ensure_home_is_mapped()
+{
+    int i;
+    BOOL mapped = FALSE;
+    char *home = getenv("HOME");
+
+    if (!home) return;
+
+    for (i = 0; i < 26; i++)
+        if (drives[i].in_use && !strcmp(drives[i].unixpath, home)) mapped = TRUE;
+
+    if (!mapped)
+    {
+        char letter;
+
+        for (letter = 'H'; letter <= 'Z'; letter++)
+        {
+            if (!drives[letter - 'A'].in_use)
+            {
+                add_drive(letter, home, "Home", "0", DRIVE_FIXED);
+                WINE_TRACE("allocated drive %c as the user's home directory\n", letter);
+                break;
+            }
+        }
+        if (letter == ('Z' + 1)) report_error(NO_HOME);
+    }        
 }
 
 static void ensure_drive_c_is_mapped()
@@ -222,6 +277,7 @@ int autodetect_drives()
         WINE_TRACE("ent->mnt_dir=%s\n", ent->mnt_dir);
 
         if (should_ignore_fstype(ent->mnt_type)) continue;
+        if (should_ignore_mnt_dir(ent->mnt_dir)) continue;
         if (is_drive_defined(ent->mnt_dir)) continue;
 
         /* allocate a drive for it */
@@ -249,7 +305,8 @@ int autodetect_drives()
         
         add_drive(letter, ent->mnt_dir, label, "0", type);
         
-        working_mask |= DRIVE_MASK_BIT(letter);
+        /* working_mask is a map of the drive letters still available. */
+        working_mask &= ~DRIVE_MASK_BIT(letter);
     }
 
     fclose(fstab);
@@ -258,6 +315,8 @@ int autodetect_drives()
     ensure_root_is_mapped();
 
     ensure_drive_c_is_mapped();
+
+    ensure_home_is_mapped();
 
     return TRUE;
 }
