@@ -9,6 +9,49 @@ ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
 LDIMPORTS = gdi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
+	$(TOPOBJDIR)/controls/button.c \
+	$(TOPOBJDIR)/controls/combo.c \
+	$(TOPOBJDIR)/controls/desktop.c \
+	$(TOPOBJDIR)/controls/edit.c \
+	$(TOPOBJDIR)/controls/icontitle.c \
+	$(TOPOBJDIR)/controls/listbox.c \
+	$(TOPOBJDIR)/controls/menu.c \
+	$(TOPOBJDIR)/controls/scroll.c \
+	$(TOPOBJDIR)/controls/static.c \
+	$(TOPOBJDIR)/controls/uitools.c \
+	$(TOPOBJDIR)/windows/caret.c \
+	$(TOPOBJDIR)/windows/class.c \
+	$(TOPOBJDIR)/windows/clipboard.c \
+	$(TOPOBJDIR)/windows/cursoricon.c \
+	$(TOPOBJDIR)/windows/dce.c \
+	$(TOPOBJDIR)/windows/defdlg.c \
+	$(TOPOBJDIR)/windows/defwnd.c \
+	$(TOPOBJDIR)/windows/dialog.c \
+	$(TOPOBJDIR)/windows/driver.c \
+	$(TOPOBJDIR)/windows/focus.c \
+	$(TOPOBJDIR)/windows/hook.c \
+	$(TOPOBJDIR)/windows/input.c \
+	$(TOPOBJDIR)/windows/keyboard.c \
+	$(TOPOBJDIR)/windows/mdi.c \
+	$(TOPOBJDIR)/windows/message.c \
+	$(TOPOBJDIR)/windows/msgbox.c \
+	$(TOPOBJDIR)/windows/multimon.c \
+	$(TOPOBJDIR)/windows/nonclient.c \
+	$(TOPOBJDIR)/windows/painting.c \
+	$(TOPOBJDIR)/windows/queue.c \
+	$(TOPOBJDIR)/windows/rect.c \
+	$(TOPOBJDIR)/windows/scroll.c \
+	$(TOPOBJDIR)/windows/spy.c \
+	$(TOPOBJDIR)/windows/struct32.c \
+	$(TOPOBJDIR)/windows/syscolor.c \
+	$(TOPOBJDIR)/windows/sysmetrics.c \
+	$(TOPOBJDIR)/windows/sysparams.c \
+	$(TOPOBJDIR)/windows/timer.c \
+	$(TOPOBJDIR)/windows/user.c \
+	$(TOPOBJDIR)/windows/win.c \
+	$(TOPOBJDIR)/windows/winhelp.c \
+	$(TOPOBJDIR)/windows/winpos.c \
+	$(TOPOBJDIR)/windows/winproc.c \
 	bidi16.c \
 	cache.c \
 	comm16.c \
@@ -40,20 +83,18 @@ RC_SRCS16 = \
 	resources/version16.rc
 
 GLUE = \
+	$(TOPOBJDIR)/controls/edit.c \
+	$(TOPOBJDIR)/windows/driver.c \
+	$(TOPOBJDIR)/windows/hook.c \
+	$(TOPOBJDIR)/windows/painting.c \
 	dde/ddeml16.c \
 	property.c \
 	text.c \
 	wnd16.c
 
-EXTRA_OBJS = \
-	$(TOPOBJDIR)/controls/controls.o \
-	$(TOPOBJDIR)/windows/windows.o
-
-SUBDIRS = \
-	$(TOPOBJDIR)/controls \
-	$(TOPOBJDIR)/windows
-
 EXTRASUBDIRS = \
+	$(TOPOBJDIR)/controls \
+	$(TOPOBJDIR)/windows \
 	dde \
 	resources \
 	tests
@@ -64,9 +105,6 @@ CTESTS = \
 	tests/wsprintf.c
 
 @MAKE_DLL_RULES@
-
-$(EXTRA_OBJS): dummy
-	@cd `dirname $@` && $(MAKE) `basename $@`
 
 # Special rules for 16-bit resource files
 

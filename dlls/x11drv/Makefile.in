@@ -9,6 +9,20 @@ EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
 LDIMPORTS = user32.dll gdi32.dll kernel32.dll
 
 C_SRCS = \
+	$(TOPOBJDIR)/graphics/x11drv/bitblt.c \
+	$(TOPOBJDIR)/graphics/x11drv/bitmap.c \
+	$(TOPOBJDIR)/graphics/x11drv/brush.c \
+	$(TOPOBJDIR)/graphics/x11drv/clipping.c \
+	$(TOPOBJDIR)/graphics/x11drv/codepage.c \
+	$(TOPOBJDIR)/graphics/x11drv/dib.c \
+	$(TOPOBJDIR)/graphics/x11drv/graphics.c \
+	$(TOPOBJDIR)/graphics/x11drv/init.c \
+	$(TOPOBJDIR)/graphics/x11drv/objects.c \
+	$(TOPOBJDIR)/graphics/x11drv/opengl.c \
+	$(TOPOBJDIR)/graphics/x11drv/palette.c \
+	$(TOPOBJDIR)/graphics/x11drv/pen.c \
+	$(TOPOBJDIR)/graphics/x11drv/text.c \
+	$(TOPOBJDIR)/graphics/x11drv/xfont.c \
 	desktop.c \
 	clipboard.c \
 	dga2.c \
@@ -25,10 +39,7 @@ C_SRCS = \
 
 PROGRAMS = wineclipsrv
 
-EXTRA_OBJS = \
-	$(TOPOBJDIR)/graphics/x11drv/x11drv.o
-
-SUBDIRS = \
+EXTRASUBDIRS = \
 	$(TOPOBJDIR)/graphics/x11drv
 
 @MAKE_DLL_RULES@
@@ -37,9 +48,6 @@ all: $(PROGRAMS)
 
 wineclipsrv: wineclipsrv.c
 	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(X_LIBS) $(XLIB) $(LIBS)
-
-$(EXTRA_OBJS): dummy
-	@cd `dirname $@` && $(MAKE) `basename $@`
 
 install:: $(PROGRAMS) install_libdir
 	$(MKINSTALLDIRS) $(bindir)

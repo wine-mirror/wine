@@ -3,18 +3,14 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = ole
+MODULE    = none
 
 C_SRCS = \
-	ole2nls.c \
 	uuid.c
 
-all: $(MODULE).o libwine_uuid.a
+all: libwine_uuid.a
 
 @MAKE_RULES@
-
-$(MODULE).o: ole2nls.o Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) ole2nls.o -o $@
 
 libwine_uuid.a: uuid.o
 	$(RM) $@

@@ -1,3 +1,4 @@
 Makefile
 ntdll.spec.c
+relay16.s
 relay32.s

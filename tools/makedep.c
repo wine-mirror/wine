@@ -231,12 +231,12 @@ static FILE *open_include_file( INCL_FILE *pFile )
     /* try in src file directory */
     if (!file)
     {
-        char *p = strrchr(pFile->included_by->name, '/');
+        char *p = strrchr(pFile->included_by->filename, '/');
         if (p)
         {
-            int l = p - pFile->included_by->name + 1;
+            int l = p - pFile->included_by->filename + 1;
             char *filename = xmalloc(l + strlen(pFile->name) + 1);
-            memcpy( filename, pFile->included_by->name, l );
+            memcpy( filename, pFile->included_by->filename, l );
             strcpy( filename + l, pFile->name );
             if ((file = fopen( filename, "r" ))) pFile->filename = filename;
             else free( filename );

@@ -101,10 +101,11 @@ bindir          = @bindir@
 libdir          = @libdir@
 infodir         = @infodir@
 mandir          = @mandir@
+sysconfdir      = @sysconfdir@
+includedir      = @includedir@/wine
 dlldir          = @libdir@/wine
 prog_manext     = 1
 conf_manext     = 5
-includedir      = @includedir@/wine
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 

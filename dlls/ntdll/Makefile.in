@@ -1,4 +1,4 @@
-EXTRADEFS = -D_NTSYSTEM_
+EXTRADEFS = -D_NTSYSTEM_  -DBINDIR="\"$(bindir)\""  -DETCDIR="\"$(sysconfdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -7,6 +7,92 @@ MODULE    = ntdll.dll
 EXTRALIBS = $(LIBUNICODE)
 
 C_SRCS = \
+	$(TOPOBJDIR)/files/change.c \
+	$(TOPOBJDIR)/files/directory.c \
+	$(TOPOBJDIR)/files/dos_fs.c \
+	$(TOPOBJDIR)/files/drive.c \
+	$(TOPOBJDIR)/files/file.c \
+	$(TOPOBJDIR)/files/profile.c \
+	$(TOPOBJDIR)/files/smb.c \
+	$(TOPOBJDIR)/files/tape.c \
+	$(TOPOBJDIR)/if1632/builtin.c \
+	$(TOPOBJDIR)/if1632/relay.c \
+	$(TOPOBJDIR)/if1632/snoop.c \
+	$(TOPOBJDIR)/loader/elf.c \
+	$(TOPOBJDIR)/loader/loadorder.c \
+	$(TOPOBJDIR)/loader/main.c \
+	$(TOPOBJDIR)/loader/module.c \
+	$(TOPOBJDIR)/loader/pe_image.c \
+	$(TOPOBJDIR)/loader/pe_resource.c \
+	$(TOPOBJDIR)/loader/resource.c \
+	$(TOPOBJDIR)/loader/task.c \
+	$(TOPOBJDIR)/loader/ne/convert.c \
+	$(TOPOBJDIR)/loader/ne/module.c \
+	$(TOPOBJDIR)/loader/ne/resource.c \
+	$(TOPOBJDIR)/loader/ne/segment.c \
+	$(TOPOBJDIR)/memory/atom.c \
+	$(TOPOBJDIR)/memory/codepage.c \
+	$(TOPOBJDIR)/memory/environ.c \
+	$(TOPOBJDIR)/memory/global.c \
+	$(TOPOBJDIR)/memory/heap.c \
+	$(TOPOBJDIR)/memory/instr.c \
+	$(TOPOBJDIR)/memory/local.c \
+	$(TOPOBJDIR)/memory/registry.c \
+	$(TOPOBJDIR)/memory/selector.c \
+	$(TOPOBJDIR)/memory/string.c \
+	$(TOPOBJDIR)/memory/virtual.c \
+	$(TOPOBJDIR)/misc/cpu.c \
+	$(TOPOBJDIR)/misc/error.c \
+	$(TOPOBJDIR)/misc/main.c \
+	$(TOPOBJDIR)/misc/options.c \
+	$(TOPOBJDIR)/misc/registry.c \
+	$(TOPOBJDIR)/misc/system.c \
+	$(TOPOBJDIR)/misc/version.c \
+	$(TOPOBJDIR)/msdos/dosconf.c \
+	$(TOPOBJDIR)/msdos/dosmem.c \
+	$(TOPOBJDIR)/msdos/dpmi.c \
+	$(TOPOBJDIR)/msdos/int11.c \
+	$(TOPOBJDIR)/msdos/int12.c \
+	$(TOPOBJDIR)/msdos/int13.c \
+	$(TOPOBJDIR)/msdos/int15.c \
+	$(TOPOBJDIR)/msdos/int1a.c \
+	$(TOPOBJDIR)/msdos/int20.c \
+	$(TOPOBJDIR)/msdos/int21.c \
+	$(TOPOBJDIR)/msdos/int25.c \
+	$(TOPOBJDIR)/msdos/int26.c \
+	$(TOPOBJDIR)/msdos/int2a.c \
+	$(TOPOBJDIR)/msdos/int2f.c \
+	$(TOPOBJDIR)/msdos/int3d.c \
+	$(TOPOBJDIR)/msdos/int41.c \
+	$(TOPOBJDIR)/msdos/int4b.c \
+	$(TOPOBJDIR)/msdos/int5c.c \
+	$(TOPOBJDIR)/msdos/interrupts.c \
+	$(TOPOBJDIR)/msdos/ioports.c \
+	$(TOPOBJDIR)/msdos/ppdev.c \
+	$(TOPOBJDIR)/msdos/vxd.c \
+	$(TOPOBJDIR)/ole/ole2nls.c \
+	$(TOPOBJDIR)/relay32/builtin32.c \
+	$(TOPOBJDIR)/relay32/relay386.c \
+	$(TOPOBJDIR)/relay32/snoop.c \
+	$(TOPOBJDIR)/scheduler/client.c \
+	$(TOPOBJDIR)/scheduler/critsection.c \
+	$(TOPOBJDIR)/scheduler/handle.c \
+	$(TOPOBJDIR)/scheduler/pipe.c \
+	$(TOPOBJDIR)/scheduler/process.c \
+	$(TOPOBJDIR)/scheduler/pthread.c \
+	$(TOPOBJDIR)/scheduler/synchro.c \
+	$(TOPOBJDIR)/scheduler/sysdeps.c \
+	$(TOPOBJDIR)/scheduler/syslevel.c \
+	$(TOPOBJDIR)/scheduler/thread.c \
+	$(TOPOBJDIR)/scheduler/timer.c \
+	$(TOPOBJDIR)/win32/console.c \
+	$(TOPOBJDIR)/win32/device.c \
+	$(TOPOBJDIR)/win32/editline.c \
+	$(TOPOBJDIR)/win32/except.c \
+	$(TOPOBJDIR)/win32/init.c \
+	$(TOPOBJDIR)/win32/kernel32.c \
+	$(TOPOBJDIR)/win32/newfns.c \
+	$(TOPOBJDIR)/win32/time.c \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
@@ -31,22 +117,16 @@ C_SRCS = \
 	wcstring.c
 
 GEN_ASM_SRCS = \
+	relay16.s \
 	relay32.s
 
-EXTRA_OBJS = \
-	$(TOPOBJDIR)/files/files.o \
-	$(TOPOBJDIR)/if1632/if1632.o \
-	$(TOPOBJDIR)/loader/loader.o \
-	$(TOPOBJDIR)/loader/ne/ne.o \
-	$(TOPOBJDIR)/memory/memory.o \
-	$(TOPOBJDIR)/misc/misc.o \
-	$(TOPOBJDIR)/msdos/msdos.o \
-	$(TOPOBJDIR)/ole/ole.o \
-	$(TOPOBJDIR)/relay32/relay32.o \
-	$(TOPOBJDIR)/scheduler/scheduler.o \
-	$(TOPOBJDIR)/win32/win32.o
+GLUE = \
+	$(TOPOBJDIR)/loader/task.c \
+	$(TOPOBJDIR)/loader/ne/module.c \
+	$(TOPOBJDIR)/loader/ne/segment.c \
+	$(TOPOBJDIR)/memory/local.c
 
-SUBDIRS = \
+EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \
 	$(TOPOBJDIR)/if1632 \
 	$(TOPOBJDIR)/loader \
@@ -61,8 +141,8 @@ SUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-$(EXTRA_OBJS): dummy
-	@cd `dirname $@` && $(MAKE) `basename $@`
+relay16.s: $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay16
 
 relay32.s: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay32

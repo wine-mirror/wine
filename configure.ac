@@ -1243,6 +1243,7 @@ AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 
 AH_TOP([#define __WINE_CONFIG_H])
 
+WINE_CONFIG_EXTRA_DIR(controls)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/d3ddevice)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dclipper)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/ddraw)
@@ -1264,9 +1265,23 @@ WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/user/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
 WINE_CONFIG_EXTRA_DIR(dlls/winsock/tests)
+WINE_CONFIG_EXTRA_DIR(files)
+WINE_CONFIG_EXTRA_DIR(graphics)
+WINE_CONFIG_EXTRA_DIR(graphics/x11drv)
+WINE_CONFIG_EXTRA_DIR(if1632)
 WINE_CONFIG_EXTRA_DIR(include/wine)
+WINE_CONFIG_EXTRA_DIR(loader)
+WINE_CONFIG_EXTRA_DIR(loader/ne)
+WINE_CONFIG_EXTRA_DIR(memory)
+WINE_CONFIG_EXTRA_DIR(misc)
+WINE_CONFIG_EXTRA_DIR(msdos)
+WINE_CONFIG_EXTRA_DIR(objects)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/winetest/tests)
+WINE_CONFIG_EXTRA_DIR(relay32)
+WINE_CONFIG_EXTRA_DIR(scheduler)
+WINE_CONFIG_EXTRA_DIR(win32)
+WINE_CONFIG_EXTRA_DIR(windows)
 
 MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
@@ -1282,7 +1297,6 @@ Make.rules
 dlls/Makedll.rules
 programs/Makeprog.rules
 Makefile
-controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
@@ -1374,20 +1388,10 @@ dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
-files/Makefile
-graphics/Makefile
-graphics/x11drv/Makefile
-if1632/Makefile
 include/Makefile
 library/Makefile
 libtest/Makefile
-loader/Makefile
-loader/ne/Makefile
-memory/Makefile
-misc/Makefile
 miscemu/Makefile
-msdos/Makefile
-objects/Makefile
 ole/Makefile
 programs/Makefile
 programs/avitools/Makefile
@@ -1410,8 +1414,6 @@ programs/winepath/Makefile
 programs/winetest/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
-relay32/Makefile
-scheduler/Makefile
 server/Makefile
 tools/Makefile
 tools/winapi/Makefile
@@ -1420,9 +1422,7 @@ tools/winedump/Makefile
 tools/wmc/Makefile
 tools/wrc/Makefile
 tsx11/Makefile
-unicode/Makefile
-win32/Makefile
-windows/Makefile])
+unicode/Makefile])
 
 AC_OUTPUT
 
