@@ -1043,8 +1043,9 @@
 @ stdcall SetThreadExecutionState(long)
 
 # Windows 2000, Terminal Server 4.0 SP4 functions
-@ stub AssignProcessToJobObject
-@ stub CreateJobObjectW
+@ stdcall AssignProcessToJobObject(ptr ptr)
+@ stdcall CreateJobObjectA(ptr str)
+@ stdcall CreateJobObjectW(ptr wstr)
 @ stdcall CreateTimerQueue ()
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall DeleteTimerQueueEx (long long)

@@ -1553,6 +1553,56 @@ BOOL WINAPI GetQueuedCompletionStatus( HANDLE CompletionPort, LPDWORD lpNumberOf
     return FALSE;
 }
 
+/******************************************************************************
+ *		CreateJobObjectW (KERNEL32.@)
+ */
+HANDLE WINAPI CreateJobObjectW( LPSECURITY_ATTRIBUTES attr, LPCWSTR name )
+{
+    FIXME("%p %s\n", attr, debugstr_w(name) );
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ *		CreateJobObjectA (KERNEL32.@)
+ */
+HANDLE WINAPI CreateJobObjectA( LPSECURITY_ATTRIBUTES attr, LPCSTR name )
+{
+    LPWSTR str = NULL;
+    UINT len;
+    HANDLE r;
+
+    TRACE("%p %s\n", attr, debugstr_a(name) );
+
+    if( name )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !str )
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+        len = MultiByteToWideChar( CP_ACP, 0, name, -1, str, len );
+    }
+
+    r = CreateJobObjectW( attr, str );
+
+    if( str )
+        HeapFree( GetProcessHeap(), 0, str );
+
+    return r;
+}
+
+/******************************************************************************
+ *		AssignProcessToJobObject (KERNEL32.@)
+ */
+BOOL WINAPI AssignProcessToJobObject( HANDLE hJob, HANDLE hProcess )
+{
+    FIXME("%p %p\n", hJob, hProcess);
+    return TRUE;
+}
+
 #ifdef __i386__
 
 /***********************************************************************
