@@ -176,6 +176,13 @@ inline static void sort_symbols( char **table, int size )
         qsort( table, size, sizeof(*table), name_cmp );
 }
 
+inline static void output_function_size( FILE *outfile, const char *name )
+{
+#ifdef HAVE_ASM_DOT_SIZE
+    fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", name, name);
+#endif
+}
+
 /* free an import structure */
 static void free_imports( struct import *imp )
 {
@@ -533,6 +540,8 @@ static const char *ldcombine_files( char **argv )
 /* read in the list of undefined symbols */
 void read_undef_symbols( char **argv )
 {
+    static const char name_prefix[] = __ASM_NAME("");
+    static const int prefix_len = sizeof(name_prefix) - 1;
     FILE *f;
     char buffer[1024];
     int err;
@@ -558,6 +567,7 @@ void read_undef_symbols( char **argv )
         p = buffer;
         while (*p == ' ') p++;
         if (p[0] == 'U' && p[1] == ' ' && p[2]) p += 2;
+        if (prefix_len && !strncmp( p, name_prefix, prefix_len )) p += prefix_len;
         add_undef_symbol( p );
     }
     if ((err = pclose( f ))) warning( "nm -u %s error %d\n", name, err );
@@ -740,11 +750,11 @@ static int output_immediate_imports( FILE *outfile )
 #error You need to define import thunks for your architecture!
 #endif
             fprintf( outfile, "\"\n" );
-            fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", name, name);
+            output_function_size( outfile, name );
         }
         pos += 4;
     }
-    fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", import_thunks, import_thunks);
+    output_function_size( outfile, import_thunks );
     fprintf( outfile, "    \".text\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
@@ -936,7 +946,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
-    fprintf( outfile, "    \"\\t.size " __ASM_NAME("__wine_delay_load_asm") ", . - " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+    output_function_size( outfile, "__wine_delay_load_asm" );
 
     for (i = idx = 0; i < nb_imports; i++)
     {
@@ -965,11 +975,11 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
-            fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", name, name);
+            output_function_size( outfile, name );
         }
         idx++;
     }
-    fprintf( outfile, "\n    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", delayed_import_loaders, delayed_import_loaders);
+    output_function_size( outfile, delayed_import_loaders );
 
     fprintf( outfile, "\n    \".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_thunks);
@@ -1032,10 +1042,10 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 #error You need to define delayed import thunks for your architecture!
 #endif
             fprintf( outfile, "\n" );
-            fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", name, name);
+            output_function_size( outfile, name );
         }
     }
-    fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", delayed_import_thunks, delayed_import_thunks);
+    output_function_size( outfile, delayed_import_thunks );
     fprintf( outfile, "\".text\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );

@@ -828,6 +828,17 @@ AC_CACHE_CHECK([for assembler keyword for word values], ac_cv_c_asm_short,
 AC_DEFINE_UNQUOTED(__ASM_SHORT, ["$ac_cv_c_asm_short"],
                    [Define to the assembler keyword used to specify a word value])
 
+dnl **** Check for .size in assembler ****
+
+AC_CACHE_CHECK([for .size in assembler], ac_cv_c_asm_size,
+    WINE_TRY_ASM_LINK([".globl _ac_test\n.size _ac_test, . - _ac_test"],,,
+                      ac_cv_c_asm_size="yes",ac_cv_c_asm_size="no"))
+
+if test "$ac_cv_c_asm_size" = "yes"
+then
+  AC_DEFINE(HAVE_ASM_DOT_SIZE, 1, [Define if the assembler keyword .size is accepted])
+fi
+
 dnl **** Check for working dll ****
 
 AC_SUBST(DLLEXT,"")
