@@ -5,7 +5,7 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include <stdlib.h>
+#include <string.h>
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
