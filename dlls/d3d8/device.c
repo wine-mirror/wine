@@ -2088,23 +2088,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, curRect->y2, curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, curRect->y2, curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
+                  curRect->x1, (This->PresentParms.BackBufferHeight - curRect->y2), 
+                  curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
+            glScissor(curRect->x1, (This->PresentParms.BackBufferHeight - curRect->y2), 
+                      curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         }
 
         /* Clear the whole screen */
         if (Flags & D3DCLEAR_STENCIL) {	
-	    glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
+            glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
             glClearStencil(Stencil);
             checkGLcall("glClearStencil");
             glMask = glMask | GL_STENCIL_BUFFER_BIT;
         }
 
         if (Flags & D3DCLEAR_ZBUFFER) {
-	    glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
-	    glDepthMask(GL_TRUE); 
-	    glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
+            glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
+            glDepthMask(GL_TRUE); 
+            glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
             glClearDepth(Z);
             checkGLcall("glClearDepth");
             glMask = glMask | GL_DEPTH_BUFFER_BIT;
@@ -2112,7 +2114,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 
         if (Flags & D3DCLEAR_TARGET) {
             TRACE("Clearing screen with glClear to color %lx\n", Color);
-	    glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
+            glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
             glClearColor(((Color >> 16) & 0xFF) / 255.0, 
 			 ((Color >>  8) & 0xFF) / 255.0,
                          ((Color >>  0) & 0xFF) / 255.0, 
@@ -2124,19 +2126,19 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         glClear(glMask);
         checkGLcall("glClear");
 
-	if (Flags & D3DCLEAR_STENCIL) {
-	  glClearStencil(old_stencil_clear_value);
-	}    
-	if (Flags & D3DCLEAR_ZBUFFER) {
-	  glDepthMask(old_ztest);
-	  glClearDepth(old_z_clear_value);
-	}
-	if (Flags & D3DCLEAR_TARGET) {
-	  glClearColor(old_color_clear_value[0], 
-		       old_color_clear_value[1],
-		       old_color_clear_value[2], 
-		       old_color_clear_value[3]);
-	}
+        if (Flags & D3DCLEAR_STENCIL) {
+            glClearStencil(old_stencil_clear_value);
+        }    
+        if (Flags & D3DCLEAR_ZBUFFER) {
+            glDepthMask(old_ztest);
+            glClearDepth(old_z_clear_value);
+        }
+        if (Flags & D3DCLEAR_TARGET) {
+            glClearColor(old_color_clear_value[0], 
+                         old_color_clear_value[1],
+                         old_color_clear_value[2], 
+                         old_color_clear_value[3]);
+        }
 
         if (curRect) curRect = curRect + sizeof(D3DRECT);
     }
