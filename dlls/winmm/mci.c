@@ -198,13 +198,13 @@ static	DWORD	MCI_GetDevTypeFromFileName(LPCSTR fileName, LPSTR buf, UINT len)
 #define MCI_COMMAND_TABLE_NOT_LOADED	0xFFFE
 
 typedef struct tagWINE_MCICMDTABLE {
-    HANDLE		hMem;
     UINT		uDevType;
     LPCSTR		lpTable;
     UINT		nVerbs;		/* number of verbs in command table */
     LPCSTR*		aVerbs;		/* array of verbs to speed up the verb look up process */
 } WINE_MCICMDTABLE, *LPWINE_MCICMDTABLE;
-WINE_MCICMDTABLE	S_MciCmdTable[MAX_MCICMDTABLE];
+
+static WINE_MCICMDTABLE S_MciCmdTable[MAX_MCICMDTABLE];
 
 /**************************************************************************
  * 				MCI_IsCommandTableValid		[internal]
@@ -217,10 +217,10 @@ static	BOOL		MCI_IsCommandTableValid(UINT uTbl)
     int		idx = 0;
     BOOL	inCst = FALSE;
 
-    TRACE("Dumping cmdTbl=%d [hMem=%p devType=%d]\n",
-	  uTbl, S_MciCmdTable[uTbl].hMem, S_MciCmdTable[uTbl].uDevType);
+    TRACE("Dumping cmdTbl=%d [lpTable=%p devType=%d]\n",
+	  uTbl, S_MciCmdTable[uTbl].lpTable, S_MciCmdTable[uTbl].uDevType);
 
-    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem || !S_MciCmdTable[uTbl].lpTable)
+    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].lpTable)
 	return FALSE;
 
     lmem = S_MciCmdTable[uTbl].lpTable;
@@ -281,7 +281,6 @@ static	BOOL		MCI_DumpCommandTable(UINT uTbl)
     return TRUE;
 }
 
-static	UINT		MCI_SetCommandTable(HANDLE hMem, UINT uDevType);
 
 /**************************************************************************
  * 				MCI_GetCommandTable		[internal]
@@ -294,7 +293,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 
     /* first look up existing for existing devType */
     for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {
-	if (S_MciCmdTable[uTbl].hMem && S_MciCmdTable[uTbl].uDevType == uDevType)
+	if (S_MciCmdTable[uTbl].lpTable && S_MciCmdTable[uTbl].uDevType == uDevType)
 	    return uTbl;
     }
 
@@ -313,7 +312,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 
 	if (hRsrc) hMem = LoadResource(WINMM_IData->hWinMM32Instance, hRsrc);
 	if (hMem) {
-	    uTbl = MCI_SetCommandTable(hMem, uDevType);
+	    uTbl = MCI_SetCommandTable(LockResource(hMem), uDevType);
 	} else {
 	    WARN("No command table found in resource %p[%s]\n",
 		 WINMM_IData->hWinMM32Instance, str);
@@ -326,7 +325,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
 /**************************************************************************
  * 				MCI_SetCommandTable		[internal]
  */
-static	UINT		MCI_SetCommandTable(HANDLE hMem, UINT uDevType)
+UINT MCI_SetCommandTable(void *table, UINT uDevType)
 {
     int		        uTbl;
     static	BOOL	bInitDone = FALSE;
@@ -338,21 +337,17 @@ static	UINT		MCI_SetCommandTable(HANDLE hMem, UINT uDevType)
      */
     if (!bInitDone) {
 	bInitDone = TRUE;
-	for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {
-	    S_MciCmdTable[uTbl].hMem = 0;
-	}
 	MCI_GetCommandTable(0);
     }
 
     for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {
-	if (S_MciCmdTable[uTbl].hMem == 0) {
+	if (!S_MciCmdTable[uTbl].lpTable) {
 	    LPCSTR 	lmem, str;
 	    WORD	eid;
 	    WORD	count;
 
-	    S_MciCmdTable[uTbl].hMem = hMem;
 	    S_MciCmdTable[uTbl].uDevType = uDevType;
-	    S_MciCmdTable[uTbl].lpTable = LockResource(hMem);
+	    S_MciCmdTable[uTbl].lpTable = table;
 
 	    if (TRACE_ON(mci)) {
 		MCI_DumpCommandTable(uTbl);
@@ -396,11 +391,10 @@ static	UINT		MCI_SetCommandTable(HANDLE hMem, UINT uDevType)
  */
 static	BOOL	MCI_DeleteCommandTable(UINT uTbl)
 {
-    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem)
+    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].lpTable)
 	return FALSE;
 
-    FreeResource(S_MciCmdTable[uTbl].hMem);
-    S_MciCmdTable[uTbl].hMem = 0;
+    S_MciCmdTable[uTbl].lpTable = NULL;
     if (S_MciCmdTable[uTbl].aVerbs) {
 	HeapFree(GetProcessHeap(), 0, S_MciCmdTable[uTbl].aVerbs);
 	S_MciCmdTable[uTbl].aVerbs = 0;
@@ -584,7 +578,7 @@ static	LPCSTR		MCI_FindCommand(UINT uTbl, LPCSTR verb)
 {
     UINT	idx;
 
-    if (uTbl >= MAX_MCICMDTABLE || S_MciCmdTable[uTbl].hMem == 0)
+    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].lpTable)
 	return NULL;
 
     /* another improvement would be to have the aVerbs array sorted,
@@ -1123,10 +1117,10 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 	}
 #endif
     }
-    if (!(hRsrc = FindResourceW(hInst, resNameW, (LPCWSTR)RT_RCDATAA))) {
+    if (!(hRsrc = FindResourceW(hInst, resNameW, RT_RCDATAW))) {
 	WARN("No command table found in resource\n");
     } else if ((hMem = LoadResource(hInst, hRsrc))) {
-	ret = MCI_SetCommandTable(hMem, type);
+	ret = MCI_SetCommandTable(LockResource(hMem), type);
     } else {
 	WARN("Couldn't load resource.\n");
     }

@@ -53,8 +53,6 @@ static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
-#define HMODULE_32(h16) ((HMODULE)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16) ((HMODULE)(ULONG_PTR)(h16))
 
 /* ###################################################
  * #                  LIBRARY                        #
@@ -130,8 +128,20 @@ BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
     BOOL16	retv;
     DWORD	lc;
 
+    if ((fdwSound & SND_RESOURCE) == SND_RESOURCE)
+    {
+        HGLOBAL16 handle;
+        HRSRC16 res;
+
+        if (!(res = FindResource16( hmod, pszSound, "WAVE" ))) return FALSE;
+        if (!(handle = LoadResource16( hmod, res ))) return FALSE;
+        pszSound = LockResource16(handle);
+        fdwSound = (fdwSound & ~SND_RESOURCE) | SND_MEMORY;
+        /* FIXME: FreeResource16 */
+    }
+
     ReleaseThunkLock(&lc);
-    retv = PlaySoundA(pszSound, HMODULE_32(hmod), fdwSound);
+    retv = PlaySoundA(pszSound, 0, fdwSound);
     RestoreThunkLock(lc);
 
     return retv;
@@ -2550,12 +2560,15 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
  */
 UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16 type)
 {
-    UNICODE_STRING ptr;
-    UINT          ret;
-    RtlCreateUnicodeStringFromAsciiz(&ptr, resname);
-    ret = mciLoadCommandResource(HINSTANCE_32(hInst), ptr.Buffer, type);
-    RtlFreeUnicodeString(&ptr);
-    return ret;
+    HRSRC16 res;
+    HGLOBAL16 handle;
+    void *ptr;
+
+    if (!(res = FindResource16( hInst, resname, RT_RCDATAA))) return MCI_NO_COMMAND_TABLE;
+    if (!(handle = LoadResource16( hInst, res ))) return MCI_NO_COMMAND_TABLE;
+    ptr = LockResource16(handle);
+    return MCI_SetCommandTable(ptr, type);
+    /* FIXME: FreeResource */
 }
 
 /**************************************************************************
