@@ -422,6 +422,9 @@
 #endif
 
 
+/* FIXME: compobj.h seems to be obsolete (replaced by objbase.h!) but it still contains REFIID */
+#include "compobj.h"
+
 typedef struct IUnknown      IUnknown ,*LPUNKNOWN;
 
 
