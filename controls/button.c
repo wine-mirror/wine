@@ -862,6 +862,12 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
         rbox.right = checkBoxWidth;
     }
 
+    /* Draw label */
+    client = rtext;
+    dtFlags = BUTTON_CalcLabelRect(hwnd, hDC, &rtext);
+    
+    rbox.top = rtext.top;
+    rbox.bottom = rtext.bottom;
     /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     {
@@ -871,29 +877,29 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
         if( TWEAK_WineLook == WIN31_LOOK )
         {
-        HDC hMemDC = CreateCompatibleDC( hDC );
-        int x = 0, y = 0;
-        delta = (rbox.bottom - rbox.top - checkBoxHeight) / 2;
-
-	/* Check in case the client area is smaller than the checkbox bitmap */
-	if (delta < 0) delta = 0;
-
-        if (state & BUTTON_HIGHLIGHTED) x += 2 * checkBoxWidth;
-        if (state & (BUTTON_CHECKED | BUTTON_3STATE)) x += checkBoxWidth;
-        if ((get_button_type(style) == BS_RADIOBUTTON) ||
-            (get_button_type(style) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
-        else if (state & BUTTON_3STATE) y += 2 * checkBoxHeight;
-
-	/* The bitmap for the radio button is not aligned with the
-	 * left of the window, it is 1 pixel off. */
-        if ((get_button_type(style) == BS_RADIOBUTTON) ||
-            (get_button_type(style) == BS_AUTORADIOBUTTON))
-	  rbox.left += 1;
-
-	SelectObject( hMemDC, hbitmapCheckBoxes );
-	BitBlt( hDC, rbox.left, rbox.top + delta, checkBoxWidth,
-		  checkBoxHeight, hMemDC, x, y, SRCCOPY );
-	DeleteDC( hMemDC );
+	    HDC hMemDC = CreateCompatibleDC( hDC );
+	    int x = 0, y = 0;
+	    delta = (rbox.bottom - rbox.top - checkBoxHeight) / 2;
+	    
+	    /* Check in case the client area is smaller than the checkbox bitmap */
+	    if (delta < 0) delta = 0;
+	    
+	    if (state & BUTTON_HIGHLIGHTED) x += 2 * checkBoxWidth;
+	    if (state & (BUTTON_CHECKED | BUTTON_3STATE)) x += checkBoxWidth;
+	    if ((get_button_type(style) == BS_RADIOBUTTON) ||
+		(get_button_type(style) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
+	    else if (state & BUTTON_3STATE) y += 2 * checkBoxHeight;
+	    
+	    /* The bitmap for the radio button is not aligned with the
+	     * left of the window, it is 1 pixel off. */
+	    if ((get_button_type(style) == BS_RADIOBUTTON) ||
+		(get_button_type(style) == BS_AUTORADIOBUTTON))
+	      rbox.left += 1;
+	    
+	    SelectObject( hMemDC, hbitmapCheckBoxes );
+	    BitBlt( hDC, rbox.left, rbox.top + delta, checkBoxWidth,
+		    checkBoxHeight, hMemDC, x, y, SRCCOPY );
+	    DeleteDC( hMemDC );
         }
         else
         {
@@ -910,27 +916,40 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 	    if (style & WS_DISABLED) flags |= DFCS_INACTIVE;
 
 	    /* rbox must have the correct height */
- 	    delta = rbox.bottom - rbox.top - checkBoxHeight;
-	    if (delta > 0)
-	    {
-		int ofs = (abs(delta) / 2);
-		rbox.bottom -= ofs + 1;
-		rbox.top = rbox.bottom - checkBoxHeight;
-	    }
-	    else if (delta < 0)
-	    {
-		int ofs = (abs(delta) / 2);
-		rbox.top -= ofs + 1;
+	    delta = rbox.bottom - rbox.top - checkBoxHeight;
+	    
+	    if (style & BS_TOP) {
+	      if (delta > 0) {
 		rbox.bottom = rbox.top + checkBoxHeight;
+	      } else {
+		rbox.top -= -delta/2 + 1;
+		rbox.bottom += rbox.top + checkBoxHeight;
+	      }
+	    } else if (style & BS_BOTTOM) {
+	      if (delta > 0) {
+		rbox.top = rbox.bottom - checkBoxHeight;
+	      } else {
+		rbox.bottom += -delta/2 + 1;
+		rbox.top = rbox.bottom -= checkBoxHeight;
+	      }
+	    } else { /* Default */
+	      if (delta > 0)
+		{
+		  int ofs = (delta / 2);
+		  rbox.bottom -= ofs + 1;
+		  rbox.top = rbox.bottom - checkBoxHeight;
+		}
+	      else if (delta < 0)
+		{
+		  int ofs = (-delta / 2);
+		  rbox.top -= ofs + 1;
+		  rbox.bottom = rbox.top + checkBoxHeight;
+		}
 	    }
 
 	    DrawFrameControl( hDC, &rbox, DFC_BUTTON, flags );
         }
     }
-
-    /* Draw label */
-    client = rtext;
-    dtFlags = BUTTON_CalcLabelRect(hwnd, hDC, &rtext);
 
     if (dtFlags == (UINT)-1L) /* Noting to draw */
 	return;
