@@ -444,8 +444,8 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTA *lplf)
         char stname[20];
     };
     static struct FONTSTYLE fontstyles[FSTYLES]={
-        { 0,FW_NORMAL,"Regular"},{0,FW_BOLD,"Bold"},
-        { 1,FW_NORMAL,"Italic"}, {1,FW_BOLD,"Bold Italic"}
+        { 0,FW_NORMAL,"Regular"}, { 1,FW_NORMAL,"Italic"},
+        { 0,FW_BOLD,"Bold"}, { 1,FW_BOLD,"Bold Italic"}
     };
     HFONT hf;
     TEXTMETRICA tm;
@@ -463,9 +463,9 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTA *lplf)
         GetTextMetricsA(hdc,&tm);
         hf=SelectObject(hdc,hf);
         DeleteObject(hf);
-
+                /* font successful created ? */
         if (tm.tmWeight==fontstyles[i].weight &&
-            tm.tmItalic==fontstyles[i].italic)    /* font successful created ? */
+            ((tm.tmItalic != 0)==fontstyles[i].italic))
         {
             j=SendMessageA(hwnd,CB_ADDSTRING,0,(LPARAM)fontstyles[i].stname );
             if (j==CB_ERR) return 1;
