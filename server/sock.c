@@ -83,6 +83,14 @@ static void sock_reselect( struct sock *sock )
 
     if (debug_level)
         fprintf(stderr,"sock_reselect(%d): new mask %x\n", sock->obj.fd, ev);
+
+    if (sock->obj.select == -1) {
+        /* previously unconnected socket, is this reselect supposed to connect it? */
+        if (!sock->state) return;
+        /* ok, it is, attach it to the wineserver's main poll loop */
+        add_select_user( &sock->obj );
+    }
+    /* update condition mask */
     set_select_events( &sock->obj, ev );
 
     /* check whether condition is satisfied already */
@@ -288,8 +296,9 @@ static struct object *create_socket( int family, int type, int protocol )
         return NULL;
     }
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
-    if (!(sock = alloc_object( &sock_ops, sockfd ))) return NULL;
-    sock->state = (type!=SOCK_STREAM) ? WS_FD_READ|WS_FD_WRITE : 0;
+    if (!(sock = alloc_object( &sock_ops, -1 ))) return NULL;
+    sock->obj.fd = sockfd;
+    sock->state = (type != SOCK_STREAM) ? (WS_FD_READ|WS_FD_WRITE) : 0;
     sock->mask  = 0;
     sock->hmask = 0;
     sock->pmask = 0;
@@ -323,12 +332,13 @@ static struct object *accept_socket( int handle )
         release_object( sock );
 	return NULL;
     }
-    if (!(acceptsock = alloc_object( &sock_ops, acceptfd )))
+    if (!(acceptsock = alloc_object( &sock_ops, -1 )))
     {
         release_object( sock );
         return NULL;
     }
 
+    acceptsock->obj.fd = acceptfd;
     acceptsock->state  = WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE;
     acceptsock->mask   = sock->mask;
     acceptsock->hmask  = 0;
