@@ -925,7 +925,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl memcpy(ptr ptr long) memcpy
 @ cdecl memmove(ptr ptr long) memmove
 @ cdecl memset(ptr long long) memset
-@ stub pow
+@ cdecl pow(double double) pow
 @ stub qsort
 @ stub sin
 @ varargs sprintf(str str) sprintf
