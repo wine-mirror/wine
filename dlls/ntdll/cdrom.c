@@ -302,11 +302,13 @@ static int CDROM_Open(HANDLE hDevice, DWORD clientID)
     if (!cdrom_cache[dev].count)
     {
         char root[4];
+        const char *device;
 
         strcpy(root, "A:\\");
         root[0] += dev;
         if (GetDriveTypeA(root) != DRIVE_CDROM) return -1;
-        cdrom_cache[dev].fd = open(DRIVE_GetDevice(dev), O_RDONLY|O_NONBLOCK);
+        if (!(device = DRIVE_GetDevice(dev))) return -1;
+        cdrom_cache[dev].fd = open(device, O_RDONLY|O_NONBLOCK);
         if (cdrom_cache[dev].fd == -1)
         {
             FIXME("Can't open configured CD-ROM drive at %s (device %s): %s\n", root, DRIVE_GetDevice(dev), strerror(errno));
