@@ -92,6 +92,7 @@
       </para>
     </sect1>
 
+
     <sect1 id="testing-what">
       <title>What to test for?</title>
       <para>
@@ -128,14 +129,9 @@
       </para>
     </sect1>
 
-    <sect1 id="testing-perl-vs-c">
-      <title>Why have both Perl and C tests?</title>
-      <para>
-      </para>
-    </sect1>
 
-    <sect1 id="testing-running">
-      <title>Running the tests on Windows</title>
+    <sect1 id="testing-wine">
+      <title>Running the tests in Wine</title>
       <para>
         The simplest way to run the tests in Wine is to type 'make test' in
         the Wine sources top level directory. This will run all the Wine
@@ -144,18 +140,16 @@
       <para>
         The tests for a specific Wine library are located in a 'tests'
         directory in that library's directory. Each test is contained in a
-        file, either a '.pl' file (e.g. <filename>dlls/kernel/tests/atom.pl</>)
-        for a test written in perl, or a '.c' file (e.g.
-        <filename>dlls/kernel/tests/thread.c</>) for a test written in C. Each
+        file (e.g. <filename>dlls/kernel/tests/thread.c</>). Each
         file itself contains many checks concerning one or more related APIs.
       </para>
       <para>
         So to run all the tests related to a given Wine library, go to the
         corresponding 'tests' directory and type 'make test'. This will
-        compile the C tests, run the tests, and create an
-        '<replaceable>xxx</>.ok' file for each test that passes successfully.
-        And if you only want to run the tests contained in the
-        <filename>thread.c</> file of the kernel library, you would do:
+        compile the tests, run them, and create an '<replaceable>xxx</>.ok'
+        file for each test that passes successfully. And if you only want to
+        run the tests contained in the <filename>thread.c</> file of the
+        kernel library, you would do:
 <screen>
 <prompt>$ </>cd dlls/kernel/tests
 <prompt>$ </>make thread.ok
@@ -172,19 +166,114 @@
         You can also run tests manually using a command similar to the
         following:
 <screen>
-<prompt>$ </>runtest -q -M kernel32.dll -p kernel32_test.exe.so thread.c
-<prompt>$ </>runtest -p kernel32_test.exe.so thread.c
+<prompt>$ </>../../../tools/runtest -q -M kernel32.dll -p kernel32_test.exe.so thread.c
+<prompt>$ </>../../../tools/runtest -p kernel32_test.exe.so thread.c
 thread.c: 86 tests executed, 5 marked as todo, 0 failures.
 </screen>
         The '-P wine' options defines the platform that is currently being
-        tested; the '-q' option causes the testing framework not to report
-        statistics about the number of successfull and failed tests. Run
-        <command>runtest -h</> for more details.
+        tested. Remove the '-q' option if you want the testing framework
+        to report statistics about the number of successful and failed tests.
+        Run <command>runtest -h</> for more details.
       </para>
     </sect1>
 
-    <sect1 id="testing-c-test">
-      <title>Inside a C test</title>
+
+    <sect1 id="testing-windows">
+      <title>Building and running the tests on Windows</title>
+      <sect2>
+        <title>Using pre-compiled binaries</title>
+        <para>
+          Unfortunately there are no pre-compiled binaries yet. However if
+          send an email to the Wine development list you can probably get
+          someone to send them to you, and maybe motivate some kind soul to
+          put in place a mechanism for publishing such binaries on a regular
+          basis.
+        </para>
+      </sect2>
+      <sect2>
+        <title>With Visual C++</title>
+        <itemizedlist>
+          <listitem><para>
+            get the Wine sources
+          </para></listitem>
+          <listitem><para>
+            Run msvcmaker to generate Visual C++ project files for the tests.
+            'msvcmaker' is a perl script so you may be able to run it on
+            Windows.
+<screen>
+<prompt>$ </>./tools/winapi/msvcmaker --no-wine
+</screen>
+          </para></listitem>
+          <listitem><para>
+            If the previous steps were done on your Linux development
+            machine, make the Wine sources accessible to the Windows machine
+            on which you are going to compile them. Typically you would do
+            this using Samba but copying them altogether would work too.
+          </para></listitem>
+          <listitem><para>
+            On the Windows machine, open the <filename>winetest.dsw</>
+            workspace. This will load each test's project. For each test there
+            are two configurations: one compiles the test with the Wine
+            headers, and the other uses the Visual C++ headers. Some tests
+            will compile fine with the former, but most will require the
+            latter.
+          </para></listitem>
+          <listitem><para>
+            Open the <menuchoice><guimenu>Build</> <guimenu>Batch
+            build...</></> menu and select the tests and build configurations
+            you want to build. Then click on <guibutton>Build</>.
+          </para></listitem>
+          <listitem><para>
+            To run a specific test from Visual C++, go to
+            <menuchoice><guimenu>Project</> <guimenu>Settings...</></>. There
+            select that test's project and build configuration and go to the
+            <guilabel>Debug</> tab. There type the name of the specific test
+            to run (e.g. 'thread') in the <guilabel>Program arguments</>
+            field. Validate your change by clicking on <guibutton>Ok</> and
+            start the test by clicking the red exclamation mark (or hitting
+            'F5' or any other usual method).
+          </para></listitem>
+          <listitem><para>
+            You can also run the tests from the command line. You will find
+            them in either <filename>Output\Win32_Wine_Headers</> or
+            <filename>Output\Win32_MSVC_Headers</> depending on the build
+            method. So to run the kernel 'path' tests you would do:
+<screen>
+<prompt>C:\&gt;</>cd dlls\kernel\tests\Output\Win32_MSVC_Headers
+<prompt>C:\dlls\kernel\tests\Output\Win32_MSVC_Headers&gt;</>kernel32_test thread
+</screen>
+          </para></listitem>
+        </itemizedlist>
+      </sect2>
+      <sect2>
+        <title>With MinGW</title>
+        <para>
+          This needs to be documented. The best may be to ask on the Wine
+          development mailing list and update this documentation with the
+          result of your inquiry.
+        </para>
+      </sect2>
+      <sect2>
+        <title>Cross compiling with MinGW on Linux</title>
+        <para>
+          Details are still pretty sketchy but it would go something like
+          this on a Debian machine:
+<screen>
+<prompt>$ </>apt-get install mingw32
+<prompt>$ </>cd ~/wine
+<prompt>$ </>./configure
+<prompt>$ </>make crosstest
+</screen>
+        </para>
+        <para>
+          You should then have Windows executables for the tests.
+        </para>
+      </sect2>
+    </sect1>
+
+
+    <sect1 id="testing-test">
+      <title>Inside a test</title>
 
       <para>
         When writing new checks you can either modify an existing test file or
@@ -233,7 +322,6 @@ START_TEST(paths)
   trace("testing GlobalAddAtomA");
   trace("foo=%d",foo);
 </screen>
-        <!-- FIXME: Make sure trace supports %d... -->
       </para>
       <para>
         Then just call functions and use <function>ok</> to make sure that
@@ -269,6 +357,7 @@ eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
          Note
        </para>
     </sect1>
+
 
     <sect1 id="testing-platforms">
       <title>Handling platform issues</title>
