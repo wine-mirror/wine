@@ -1137,15 +1137,19 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		*(INT32 *)lpvParam = GetSystemMetrics32( SM_CXFRAME );
 		break;
 
+	case SPI_GETDRAGFULLWINDOWS:
+		*(BOOL32 *) lpvParam = FALSE;
+		break;
+
+	case SPI_SETDRAGFULLWINDOWS:
+		break;
+
 	case SPI_GETFASTTASKSWITCH:
 		if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
 			*(BOOL32 *) lpvParam = TRUE;
 		else
 			*(BOOL32 *) lpvParam = FALSE;
 		break;
-
-	case SPI_GETDRAGFULLWINDOWS:
-	  *(BOOL32 *) lpvParam = FALSE;
 		
 	case SPI_GETGRIDGRANULARITY:
 		*(INT32*)lpvParam=GetProfileInt32A("desktop","GridGranularity",1);
