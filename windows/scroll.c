@@ -61,29 +61,32 @@ static HWND fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
 }
 
 /*************************************************************************
- *		scroll_window
+ *		ScrollWindowEx (USER32.@)
  *
  * Note: contrary to what the doc says, pixels that are scrolled from the
  *      outside of clipRect to the inside are NOT painted.
  *
- * Parameter are the same as in ScrollWindowEx, with the additional
- * requirement that rect and clipRect are _valid_ pointers, to
- * rectangles _within_ the client are. Moreover, there is something
- * to scroll.
  */
-static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect,
-                          const RECT *clipRect, HRGN hrgnUpdate, LPRECT rcUpdate, UINT flags )
+INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
+                               const RECT *rect, const RECT *clipRect,
+                               HRGN hrgnUpdate, LPRECT rcUpdate,
+                               UINT flags )
 {
-    INT   retVal;
+    INT   retVal = NULLREGION;
     BOOL  bOwnRgn = TRUE;
     BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
     HRGN  hrgnTemp;
     HDC   hDC;
     RECT  rc, cliprc;
+    RECT caretrc;
+    HWND hwndCaret = NULL;
 
     TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p %s %04x\n",
            hwnd, dx, dy, hrgnUpdate, rcUpdate, wine_dbgstr_rect(rect), flags );
     TRACE( "clipRect = %s\n", wine_dbgstr_rect(clipRect));
+
+    if (!WIN_IsWindowDrawable( hwnd, TRUE )) return ERROR;
+    hwnd = WIN_GetFullHandle( hwnd );
 
     GetClientRect(hwnd, &rc);
     if (rect) IntersectRect(&rc, &rc, rect);
@@ -94,29 +97,40 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect,
     if( hrgnUpdate ) bOwnRgn = FALSE;
     else if( bUpdate ) hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
 
-    hDC = GetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
-    if (hDC)
-    {
-        ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
+    if( !IsRectEmpty(&cliprc) && (dx || dy)) {
+        caretrc = rc;
+        hwndCaret = fix_caret(hwnd, &caretrc, flags);
 
-        ReleaseDC( hwnd, hDC );
+        hDC = GetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
+        if (hDC)
+        {
+            ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
 
-        if (!bUpdate)
-            RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE );
+            ReleaseDC( hwnd, hDC );
+
+            if (!bUpdate)
+                RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE );
+        }
+
+        /* Take into account the fact that some damage may have occurred during
+         * the scroll */
+        hrgnTemp = CreateRectRgn( 0, 0, 0, 0 );
+        retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
+        if (retVal != NULLREGION)
+        {
+            HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);
+            OffsetRgn( hrgnTemp, dx, dy );
+            CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
+            RedrawWindow( hwnd, NULL, hrgnTemp, RDW_INVALIDATE | RDW_ERASE );
+            DeleteObject( hrgnClip );
+        }
+        DeleteObject( hrgnTemp );
+    } else {
+        /* nothing was scrolled */
+        if( !bOwnRgn) 
+            SetRectRgn( hrgnUpdate, 0, 0, 0, 0 );
+        SetRectEmpty( rcUpdate);
     }
-
-    /* Take into account the fact that some damage may have occurred during the scroll */
-    hrgnTemp = CreateRectRgn( 0, 0, 0, 0 );
-    retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
-    if (retVal != NULLREGION)
-    {
-        HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);
-        OffsetRgn( hrgnTemp, dx, dy );
-        CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
-        RedrawWindow( hwnd, NULL, hrgnTemp, RDW_INVALIDATE | RDW_ERASE );
-        DeleteObject( hrgnClip );
-    }
-    DeleteObject( hrgnTemp );
 
     if( flags & SW_SCROLLCHILDREN )
     {
@@ -129,7 +143,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect,
             {
                 GetWindowRect( list[i], &r );
                 MapWindowPoints( 0, hwnd, (POINT *)&r, 2 );
-                if (!rect || IntersectRect(&dummy, &r, &rc))
+                if (!rect || IntersectRect(&dummy, &r, rect))
                     SetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
                                   SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
                                   SWP_NOREDRAW | SWP_DEFERERASE );
@@ -143,6 +157,11 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect,
                       ((flags & SW_ERASE) ? RDW_ERASENOW : 0) |
                       ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
 
+    if( hwndCaret ) {
+        SetCaretPos( caretrc.left + dx, caretrc.top + dy );
+        ShowCaret(hwndCaret);
+    }
+    
     if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
 
     return retVal;
@@ -248,47 +267,4 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
         DeleteObject( hrgn2 );
     }
     return TRUE;
-}
-
-
-/*************************************************************************
- *		ScrollWindowEx (USER32.@)
- *
- * NOTE: Use this function instead of ScrollWindow32
- */
-INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
-                               const RECT *rect, const RECT *clipRect,
-                               HRGN hrgnUpdate, LPRECT rcUpdate,
-                               UINT flags )
-{
-    RECT rc, cliprc;
-    INT result;
-    
-    if (!WIN_IsWindowDrawable( hwnd, TRUE )) return ERROR;
-    hwnd = WIN_GetFullHandle( hwnd );
-
-    GetClientRect(hwnd, &rc);
-    if (rect) IntersectRect(&rc, &rc, rect);
-
-    if (clipRect) IntersectRect(&cliprc,&rc,clipRect);
-    else cliprc = rc;
-
-    if (!IsRectEmpty(&cliprc) && (dx || dy))
-    {
-        RECT caretrc = rc;
-        HWND hwndCaret = fix_caret(hwnd, &caretrc, flags);
-
-        result = scroll_window( hwnd, dx, dy, rect, clipRect,
-                hrgnUpdate, rcUpdate, flags );
-
-        if( hwndCaret )
-        {
-            SetCaretPos( caretrc.left + dx, caretrc.top + dy );
-            ShowCaret(hwndCaret);
-        }
-    }
-    else 
-	result = NULLREGION;
-    
-    return result;
 }
