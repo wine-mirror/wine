@@ -22,7 +22,6 @@
 #include "d3d.h"
 #include "debugtools.h"
 #include "message.h"
-#include "monitor.h"
 
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"

@@ -13,7 +13,6 @@
 
 #include "winerror.h"
 #include "options.h"
-#include "monitor.h"
 #include "debugtools.h"
 #include "ddraw.h"
 
@@ -80,8 +79,8 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     case 0: MESSAGE("Conversion needed from %d.\n",depth); break;
     }
 
-    ddraw->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    ddraw->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    ddraw->d->height = GetSystemMetrics(SM_CYSCREEN);
+    ddraw->d->width = GetSystemMetrics(SM_CXSCREEN);
 #ifdef HAVE_LIBXXSHM
     /* Test if XShm is available. */
     if ((x11priv->xshm_active = DDRAW_XSHM_Available())) {

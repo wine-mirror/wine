@@ -15,11 +15,10 @@
 #include "debugtools.h"
 #include "ldt.h"
 #include "local.h"
-#include "monitor.h"
 #include "winnt.h"
 #include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11drv)
+DEFAULT_DEBUG_CHANNEL(x11drv);
 
 static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODEA* initData );
@@ -189,12 +188,12 @@ BOOL X11DRV_GDI_Initialize(void)
 	  WidthOfScreen(X11DRV_GetXScreen()), WidthMMOfScreen(X11DRV_GetXScreen()) );
 #endif
 
-    X11DRV_DevCaps.version = 0x300;
-    X11DRV_DevCaps.horzSize = WidthMMOfScreen(X11DRV_GetXScreen()) * MONITOR_GetWidth(&MONITOR_PrimaryMonitor) / WidthOfScreen(X11DRV_GetXScreen());
-    X11DRV_DevCaps.vertSize = HeightMMOfScreen(X11DRV_GetXScreen()) * MONITOR_GetHeight(&MONITOR_PrimaryMonitor) / HeightOfScreen(X11DRV_GetXScreen());
-    X11DRV_DevCaps.horzRes = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-    X11DRV_DevCaps.vertRes = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    X11DRV_DevCaps.bitsPixel = X11DRV_GetDepth();
+    X11DRV_DevCaps.version   = 0x300;
+    X11DRV_DevCaps.horzSize  = WidthMMOfScreen(screen) * screen_width / WidthOfScreen(screen);
+    X11DRV_DevCaps.vertSize  = HeightMMOfScreen(screen) * screen_height / HeightOfScreen(screen);
+    X11DRV_DevCaps.horzRes   = screen_width;
+    X11DRV_DevCaps.vertRes   = screen_height;
+    X11DRV_DevCaps.bitsPixel = screen_depth;
  
     /* Resolution will be adjusted during the font init */
 
@@ -261,12 +260,12 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     {
         physDev->drawable  = X11DRV_GetXRootWindow();
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
-        dc->w.bitsPerPixel = X11DRV_GetDepth();
+        dc->w.bitsPerPixel = screen_depth;
 
         dc->w.totalExtent.left   = 0;
         dc->w.totalExtent.top    = 0;
-        dc->w.totalExtent.right  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-        dc->w.totalExtent.bottom = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+        dc->w.totalExtent.right  = screen_width;
+        dc->w.totalExtent.bottom = screen_height;
         dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
     }
 

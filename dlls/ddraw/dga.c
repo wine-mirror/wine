@@ -37,7 +37,6 @@
 #include "spy.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 #include "dga_private.h"
 
@@ -147,8 +146,8 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
      * In that case, it may be better to ignore the -desktop mode and
      * return the real screen size => print a warning
      */
-    ddraw->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    ddraw->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    ddraw->d->height = GetSystemMetrics(SM_CYSCREEN);
+    ddraw->d->width = GetSystemMetrics(SM_CXSCREEN);
     if ((ddraw->d->height != height) || (ddraw->d->width  != width))
       WARN("You seem to be running in -desktop mode. This may prove dangerous in DGA mode...\n");
     dgpriv->fb_addr		= addr;

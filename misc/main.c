@@ -28,7 +28,6 @@
 #include "version.h"
 #include "winnls.h"
 #include "console.h"
-#include "monitor.h"
 #include "gdi.h"
 #include "user.h"
 #include "windef.h"

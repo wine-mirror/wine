@@ -123,9 +123,8 @@ extern BOOL TTYDRV_PALETTE_IsDark(int pixel);
 
 extern int cell_width;
 extern int cell_height;
-static inline int TTYDRV_GetCellWidth(void)  { return cell_width; }
-static inline int TTYDRV_GetCellHeight(void) { return cell_height; }
-
+extern int screen_rows;
+extern int screen_cols;
 extern WINDOW *root_window;
 static inline WINDOW *TTYDRV_GetRootWindow(void) { return root_window; }
 

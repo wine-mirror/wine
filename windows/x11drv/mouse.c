@@ -11,7 +11,6 @@
 #include "callback.h"
 #include "debugtools.h"
 #include "mouse.h"
-#include "monitor.h"
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
@@ -274,8 +273,8 @@ void X11DRV_MOUSE_Init( LPMOUSE_EVENT_PROC proc )
 void X11DRV_MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                              DWORD keyState, DWORD time, HWND hWnd )
 {
-    int width  = MONITOR_GetWidth (&MONITOR_PrimaryMonitor);
-    int height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    int width  = GetSystemMetrics( SM_CXSCREEN );
+    int height = GetSystemMetrics( SM_CYSCREEN );
     int iWndsLocks;
     WINE_MOUSEEVENT wme;
 

@@ -19,7 +19,6 @@
 #include "debugtools.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -89,8 +88,8 @@ void _DGA2_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
     /* Get the screen dimensions as seen by Wine.
      * In that case, it may be better to ignore the -desktop mode and return the
      * real screen size => print a warning */
-    This->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    This->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    This->d->height = GetSystemMetrics(SM_CYSCREEN);
+    This->d->width = GetSystemMetrics(SM_CXSCREEN);
     ddpriv->DGA.fb_addr = ddpriv->dev->data;
     ddpriv->DGA.fb_memsize = (ddpriv->dev->mode.imageWidth *
 			      ddpriv->dev->mode.imageHeight *

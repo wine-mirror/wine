@@ -23,7 +23,6 @@
 #include "clipboard.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "monitor.h"
 #include "options.h"
 #include "user.h"
 #include "win.h"
@@ -69,7 +68,9 @@ static XKeyboardState keyboard_state;
 Display *display;
 Screen *screen;
 Visual *visual;
-int screen_depth;
+unsigned int screen_width;
+unsigned int screen_height;
+unsigned int screen_depth;
 Window root_window;
 
 /***********************************************************************
@@ -176,8 +177,8 @@ static void create_desktop( const char *geometry )
 #endif /* HAVE_OPENGL */    
 
     flags = TSXParseGeometry( geometry, &x, &y, &width, &height );
-    MONITOR_PrimaryMonitor.rect.right  = width;
-    MONITOR_PrimaryMonitor.rect.bottom = height;
+    screen_width  = width;
+    screen_height = height;
 
     /* Create window */
     win_attr.background_pixel = BlackPixel(display, 0);
@@ -292,11 +293,8 @@ static void process_attach(void)
 
     if (Options.synchronous) XSetErrorHandler( error_handler );
 
-    MONITOR_PrimaryMonitor.rect.left   = 0;
-    MONITOR_PrimaryMonitor.rect.top    = 0;
-    MONITOR_PrimaryMonitor.rect.right  = WidthOfScreen( screen );
-    MONITOR_PrimaryMonitor.rect.bottom = HeightOfScreen( screen );
-    MONITOR_PrimaryMonitor.depth       = screen_depth;
+    screen_width  = WidthOfScreen( screen );
+    screen_height = HeightOfScreen( screen );
 
     if (Options.desktopGeometry)
     {

@@ -23,7 +23,6 @@
 #include "debugtools.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -676,8 +675,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
     ddsfd.dwFlags |= DDSD_REFRESHRATE;
     ddsfd.u.dwRefreshRate = 60;
   }
-  maxWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-  maxHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+  maxWidth = GetSystemMetrics(SM_CXSCREEN);
+  maxHeight = GetSystemMetrics(SM_CYSCREEN);
   
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
   pf = TSXListPixmapFormats(display, &npixmap);

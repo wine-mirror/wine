@@ -45,7 +45,6 @@
 #include "user.h"
 #include "message.h"
 #include "mouse.h"
-#include "sysmetrics.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"

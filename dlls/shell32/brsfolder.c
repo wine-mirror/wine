@@ -5,7 +5,6 @@
 #include "heap.h"
 #include "dlgs.h"
 #include "win.h"
-#include "sysmetrics.h"
 #include "debugtools.h"
 #include "winreg.h"
 #include "authors.h"
@@ -22,7 +21,7 @@
 #include "shell32_main.h"
 #include "shellapi.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 #define		IDD_TREEVIEW 99
 

@@ -24,19 +24,19 @@
 #include "toolhelp.h"
 #include "message.h"
 #include "module.h"
-#include "monitor.h"
 #include "miscemu.h"
 #include "shell.h"
+#include "sysmetrics.h"
 #include "callback.h"
 #include "local.h"
 #include "process.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(hook)
-DECLARE_DEBUG_CHANNEL(local)
-DECLARE_DEBUG_CHANNEL(system)
-DECLARE_DEBUG_CHANNEL(win)
-DECLARE_DEBUG_CHANNEL(win32)
+DECLARE_DEBUG_CHANNEL(hook);
+DECLARE_DEBUG_CHANNEL(local);
+DECLARE_DEBUG_CHANNEL(system);
+DECLARE_DEBUG_CHANNEL(win);
+DECLARE_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -333,9 +333,9 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) 
-	    || (devmode->dmPelsHeight != MONITOR_GetHeight(&MONITOR_PrimaryMonitor))
-	    || (devmode->dmPelsWidth != MONITOR_GetWidth(&MONITOR_PrimaryMonitor)) )
+  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP)) 
+	    || (devmode->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
+	    || (devmode->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN)) )
 
   {
 
@@ -363,9 +363,9 @@ LONG WINAPI ChangeDisplaySettingsExA(
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) 
-	    || (devmode->dmPelsHeight != MONITOR_GetHeight(&MONITOR_PrimaryMonitor))
-	    || (devmode->dmPelsWidth != MONITOR_GetWidth(&MONITOR_PrimaryMonitor)) )
+  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP))
+	    || (devmode->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
+	    || (devmode->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN)) )
 
   {
 
@@ -404,9 +404,9 @@ BOOL WINAPI EnumDisplaySettingsA(
 
 	TRACE_(system)("(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
-		devmode->dmBitsPerPel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
-		devmode->dmPelsHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-		devmode->dmPelsWidth  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+		devmode->dmBitsPerPel = GetSystemMetrics(SM_WINE_BPP);
+		devmode->dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+		devmode->dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
 		return TRUE;
 	}
 	if ((n-1)<NRMODES*NRDEPTHS) {

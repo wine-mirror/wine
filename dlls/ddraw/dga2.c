@@ -26,7 +26,6 @@
 #include "spy.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 #include "dga2_private.h"
 
@@ -140,9 +139,9 @@ DGA2_Create( LPDIRECTDRAW *lplpDD ) {
 #undef XX
 	DPRINTF("\n");
       }
-      if ((MONITOR_GetHeight(&MONITOR_PrimaryMonitor) == modes[i].viewportHeight) &&
-	  (MONITOR_GetWidth(&MONITOR_PrimaryMonitor) == modes[i].viewportWidth) &&
-	  (MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == modes[i].depth)
+      if ((GetSystemMetrics(SM_CYSCREEN) == modes[i].viewportHeight) &&
+	  (GetSystemMetrics(SM_CXSCREEN) == modes[i].viewportWidth) &&
+	  (X11DRV_GetDepth() == modes[i].depth)
 	  ) {
 	mode_to_use = modes[i].num;
       }

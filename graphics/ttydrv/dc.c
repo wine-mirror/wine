@@ -9,12 +9,11 @@
 #include "gdi.h"
 #include "bitmap.h"
 #include "dc.h"
-#include "monitor.h"
 #include "ttydrv.h"
 #include "winbase.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ttydrv)
+DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
@@ -62,15 +61,14 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     GDI_HEAP_UNLOCK( dc->w.hBitmap );
   } else {
     physDev->window = TTYDRV_GetRootWindow();
-    physDev->cellWidth = TTYDRV_GetCellWidth();
-    physDev->cellHeight = TTYDRV_GetCellHeight();
+    physDev->cellWidth = cell_width;
+    physDev->cellHeight = cell_height;
     
-    dc->w.bitsPerPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
-    
+    dc->w.bitsPerPixel       = 1;
     dc->w.totalExtent.left   = 0;
     dc->w.totalExtent.top    = 0;
-    dc->w.totalExtent.right  = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-    dc->w.totalExtent.bottom = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    dc->w.totalExtent.right  = cell_width * screen_cols;
+    dc->w.totalExtent.bottom = cell_height * screen_rows;
     dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );    
   }
 

@@ -5,7 +5,6 @@
  */
 
 #include "clipboard.h"
-#include "monitor.h"
 #include "user.h"
 #include "win.h"
 #include "x11drv.h"

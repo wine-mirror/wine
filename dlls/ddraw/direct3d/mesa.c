@@ -11,7 +11,6 @@
 #include "d3d.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 #include "debugtools.h"
 
 #include "mesa_private.h"

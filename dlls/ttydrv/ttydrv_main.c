@@ -11,7 +11,6 @@
 #include "clipboard.h"
 #include "gdi.h"
 #include "message.h"
-#include "monitor.h"
 #include "user.h"
 #include "win.h"
 #include "debugtools.h"
@@ -53,6 +52,8 @@ static USER_DRIVER user_driver =
 
 int cell_width = 8;
 int cell_height = 8;
+int screen_rows = 50;  /* default value */
+int screen_cols = 80;  /* default value */
 WINDOW *root_window;
 
 
@@ -61,8 +62,6 @@ WINDOW *root_window;
  */
 static void process_attach(void)
 {
-    int rows, cols;
-
     USER_Driver      = &user_driver;
     CLIPBOARD_Driver = &TTYDRV_CLIPBOARD_Driver;
     WND_Driver       = &TTYDRV_WND_Driver;
@@ -73,17 +72,8 @@ static void process_attach(void)
         werase(root_window);
         wrefresh(root_window);
     }
-    getmaxyx(root_window, rows, cols);
-#else  /* WINE_CURSES */
-    rows = 60; /* FIXME: Hardcoded */
-    cols = 80; /* FIXME: Hardcoded */
+    getmaxyx(root_window, screen_rows, screen_cols);
 #endif  /* WINE_CURSES */
-
-    MONITOR_PrimaryMonitor.rect.left   = 0;
-    MONITOR_PrimaryMonitor.rect.top    = 0;
-    MONITOR_PrimaryMonitor.rect.right  = cell_width * cols;
-    MONITOR_PrimaryMonitor.rect.bottom = cell_height * rows;
-    MONITOR_PrimaryMonitor.depth       = 1;
 
     TTYDRV_GDI_Initialize();
 

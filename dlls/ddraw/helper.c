@@ -26,7 +26,6 @@
 #include "spy.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 

@@ -323,12 +323,14 @@ extern Display *display;
 extern Screen *screen;
 extern Visual *visual;
 extern Window root_window;
-extern int screen_depth;
+extern unsigned int screen_width;
+extern unsigned int screen_height;
+extern unsigned int screen_depth;
 
 static inline Screen *X11DRV_GetXScreen(void)    { return screen; }
 static inline Visual *X11DRV_GetVisual(void)     { return visual; }
 static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
-static inline int X11DRV_GetDepth(void)          { return screen_depth; }
+static inline unsigned int X11DRV_GetDepth(void) { return screen_depth; }
 
 extern BOOL X11DRV_GetScreenSaveActive(void);
 extern void X11DRV_SetScreenSaveActive(BOOL bActivate);

@@ -14,11 +14,10 @@
 #include "bitmap.h"
 #include "debugtools.h"
 #include "ldt.h"
-#include "monitor.h"
 #include "palette.h"
 #include "windef.h"
 
-DEFAULT_DEBUG_CHANNEL(wing)
+DEFAULT_DEBUG_CHANNEL(wing);
 
 
 typedef enum WING_DITHER_TYPE
@@ -53,24 +52,26 @@ HDC16 WINAPI WinGCreateDC16(void)
  */
 BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
+    HDC hdc;
     TRACE("(%p)\n", bmpi);
     if (!bmpi)
 	return FALSE;
 
+    hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
     bmpi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmpi->bmiHeader.biWidth = 320;
     bmpi->bmiHeader.biHeight = -1;
-    bmpi->bmiHeader.biPlanes = 1;
-    bmpi->bmiHeader.biBitCount = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
+    bmpi->bmiHeader.biPlanes = GetDeviceCaps( hdc, PLANES );
+    bmpi->bmiHeader.biBitCount = GetDeviceCaps( hdc, BITSPIXEL );
     bmpi->bmiHeader.biCompression = BI_RGB;
     bmpi->bmiHeader.biSizeImage = 0;
     bmpi->bmiHeader.biXPelsPerMeter = 0;
     bmpi->bmiHeader.biYPelsPerMeter = 0;
     bmpi->bmiHeader.biClrUsed = 0;
     bmpi->bmiHeader.biClrImportant = 0;
-
+    DeleteDC(hdc);
     return TRUE;
-  }
+}
 
 /***********************************************************************
  *        WinGCreateBitmap16    (WING.1003)
@@ -82,7 +83,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
     TRACE(": create %ldx%ldx%d bitmap\n", bmpi->bmiHeader.biWidth,
 	  bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
     return CreateDIBSection16(hdc, bmpi, 0, bits, 0, 0);
-		} 
+}
 
 /***********************************************************************
  *  WinGGetDIBPointer   (WING.1004)
@@ -129,8 +130,11 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
+    HDC hdc = CreateCompatibleDC(0);
+    HPALETTE16 ret = CreateHalftonePalette16(hdc);
     TRACE("(void)\n");
-    return CreateHalftonePalette16(GetDC16(0));
+    DeleteDC(hdc);
+    return ret;
 }
 
 /***********************************************************************

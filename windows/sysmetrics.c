@@ -6,18 +6,18 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "monitor.h"
 #include "options.h"
 #include "sysmetrics.h"
 #include "tweak.h"
 
-static short sysMetrics[SM_CMETRICS+1];
+static int sysMetrics[SM_WINE_CMETRICS+1];
 
 /***********************************************************************
  *           SYSMETRICS_Init
@@ -38,10 +38,14 @@ static short sysMetrics[SM_CMETRICS+1];
  */
 void SYSMETRICS_Init(void)
 {
+    HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    assert(hdc);
+
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
-    sysMetrics[SM_CXSCREEN] = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-    sysMetrics[SM_CYSCREEN] =  MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    sysMetrics[SM_CXSCREEN] = GetDeviceCaps( hdc, HORZRES );
+    sysMetrics[SM_CYSCREEN] = GetDeviceCaps( hdc, VERTRES );
+    sysMetrics[SM_WINE_BPP] = GetDeviceCaps( hdc, BITSPIXEL );
     if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CXVSCROLL] =
 	    PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16);
@@ -168,6 +172,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CMONITORS] = 1;
     sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
+
+    DeleteDC( hdc );
 }
 
 
@@ -185,6 +191,6 @@ INT16 WINAPI GetSystemMetrics16( INT16 index )
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
-    if ((index < 0) || (index > SM_CMETRICS)) return 0;
+    if ((index < 0) || (index > SM_WINE_CMETRICS)) return 0;
     else return sysMetrics[index];    
 }

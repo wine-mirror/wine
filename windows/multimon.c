@@ -4,7 +4,6 @@
  * Copyright 1998 Turchanov Sergey
  */
 
-#include "monitor.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "winbase.h"
@@ -13,8 +12,6 @@
 /**********************************************************************/
 
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
-
-MONITOR MONITOR_PrimaryMonitor;
 
 /***********************************************************************
  *		MonitorFromPoint
@@ -80,7 +77,9 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
         SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
-        lpMonitorInfo->rcMonitor = MONITOR_PrimaryMonitor.rect;
+        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
+                 GetSystemMetrics(SM_CXSCREEN),
+                 GetSystemMetrics(SM_CYSCREEN) );
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 	
@@ -105,7 +104,9 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
         (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
         SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcWork, 0))
     {
-        lpMonitorInfo->rcMonitor = MONITOR_PrimaryMonitor.rect;
+        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
+                 GetSystemMetrics(SM_CXSCREEN),
+                 GetSystemMetrics(SM_CYSCREEN) );
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
 
@@ -127,7 +128,9 @@ BOOL WINAPI EnumDisplayMonitors(
         MONITORENUMPROC lpfnEnumProc,
         LPARAM          dwData)
 {
-    RECT rcLimit = MONITOR_PrimaryMonitor.rect;
+    RECT rcLimit;
+    SetRect( &rcLimit, 0, 0, GetSystemMetrics(SM_CXSCREEN),
+             GetSystemMetrics(SM_CYSCREEN) );
 
     if (!lpfnEnumProc)
         return FALSE;

@@ -20,7 +20,6 @@
 #include "hook.h"
 #include "menu.h"
 #include "message.h"
-#include "monitor.h"
 #include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"

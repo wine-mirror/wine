@@ -35,7 +35,6 @@
 #include "debugtools.h"
 #include "message.h"
 #include "options.h"
-#include "monitor.h"
 
 #define RESTORE_SIGNALS
 
@@ -550,8 +549,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 	}
       }
       
-      ddsfd.dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-      ddsfd.dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+      ddsfd.dwWidth = GetSystemMetrics(SM_CXSCREEN);
+      ddsfd.dwHeight = GetSystemMetrics(SM_CYSCREEN);
       TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
       if (!modescb(&ddsfd,context)) return DD_OK;
       

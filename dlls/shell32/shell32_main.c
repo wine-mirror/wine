@@ -15,7 +15,6 @@
 #include "heap.h"
 #include "dlgs.h"
 #include "ldt.h"
-#include "sysmetrics.h"
 #include "debugtools.h"
 #include "winreg.h"
 #include "authors.h"
