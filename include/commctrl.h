@@ -2896,8 +2896,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVIF_DI_SETITEM         0x1000
 
 #define LVIR_BOUNDS             0x0000
-#define LVIR_LABEL              0x0002
 #define LVIR_ICON               0x0001
+#define LVIR_LABEL              0x0002
 #define LVIR_SELECTBOUNDS       0x0003
 
 #define LVIS_FOCUSED            0x0001
