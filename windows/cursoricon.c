@@ -56,6 +56,7 @@
 #include "module.h"
 #include "wine/debug.h"
 #include "user.h"
+#include "queue.h"
 #include "input.h"
 #include "message.h"
 #include "winerror.h"
@@ -65,8 +66,6 @@ WINE_DECLARE_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
-static HCURSOR hActiveCursor = 0;  /* Active cursor */
-static INT CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
 static HDC screen_dc;
@@ -1220,7 +1219,7 @@ WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
 
     /* Check whether destroying active cursor */
 
-    if ( hActiveCursor == handle )
+    if ( QUEUE_Current()->cursor == handle )
     {
         WARN_(cursor)("Destroying active cursor!\n" );
         SetCursor( 0 );
@@ -1368,20 +1367,20 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
  * RETURNS:
  *	A handle to the previous cursor shape.
  */
-HCURSOR WINAPI SetCursor(
-	         HCURSOR hCursor /* [in] Handle of cursor to show */
-) {
+HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
+{
+    MESSAGEQUEUE *queue = QUEUE_Current();
     HCURSOR hOldCursor;
 
-    if (hCursor == hActiveCursor) return hActiveCursor;  /* No change */
+    if (hCursor == queue->cursor) return hCursor;  /* No change */
     TRACE_(cursor)("%04x\n", hCursor );
-    hOldCursor = hActiveCursor;
-    hActiveCursor = hCursor;
+    hOldCursor = queue->cursor;
+    queue->cursor = hCursor;
     /* Change the cursor shape only if it is visible */
-    if (CURSOR_ShowCount >= 0)
+    if (queue->cursor_count >= 0)
     {
-        USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
-        GlobalUnlock16( hActiveCursor );
+        USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( hCursor ) );
+        GlobalUnlock16( hCursor );
     }
     return hOldCursor;
 }
@@ -1401,23 +1400,24 @@ INT16 WINAPI ShowCursor16( BOOL16 bShow )
  */
 INT WINAPI ShowCursor( BOOL bShow )
 {
-    TRACE_(cursor)("%d, count=%d\n",
-                    bShow, CURSOR_ShowCount );
+    MESSAGEQUEUE *queue = QUEUE_Current();
+
+    TRACE_(cursor)("%d, count=%d\n", bShow, queue->cursor_count );
 
     if (bShow)
     {
-        if (++CURSOR_ShowCount == 0)  /* Show it */
+        if (++queue->cursor_count == 0)  /* Show it */
         {
-            USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
-            GlobalUnlock16( hActiveCursor );
+            USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16( queue->cursor ) );
+            GlobalUnlock16( queue->cursor );
         }
     }
     else
     {
-        if (--CURSOR_ShowCount == -1)  /* Hide it */
+        if (--queue->cursor_count == -1)  /* Hide it */
             USER_Driver.pSetCursor( NULL );
     }
-    return CURSOR_ShowCount;
+    return queue->cursor_count;
 }
 
 
@@ -1426,7 +1426,7 @@ INT WINAPI ShowCursor( BOOL bShow )
  */
 HCURSOR16 WINAPI GetCursor16(void)
 {
-    return hActiveCursor;
+    return GetCursor();
 }
 
 
@@ -1435,7 +1435,7 @@ HCURSOR16 WINAPI GetCursor16(void)
  */
 HCURSOR WINAPI GetCursor(void)
 {
-    return hActiveCursor;
+    return QUEUE_Current()->cursor;
 }
 
 

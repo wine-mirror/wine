@@ -62,6 +62,9 @@ typedef struct tagMESSAGEQUEUE
   DWORD     GetMessagePosVal;       /* Value for GetMessagePos */
   DWORD     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
 
+  HCURSOR   cursor;                 /* current cursor */
+  INT       cursor_count;           /* cursor show count */
+
   HANDLE16  hCurHook;               /* Current hook */
   HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
 
