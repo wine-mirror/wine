@@ -1120,7 +1120,7 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
     	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
  
         for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
-        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max+1) )))
+        if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * max )))
         {
             WARN("No memory to convert POINTs to XPoints!\n");
             return FALSE;
@@ -1133,9 +1133,8 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
                 points[j].y = dc->w.DCOrgY + YLPTODP( dc, pt->y );
                 pt++;
             }
-            points[j] = points[0];
             TSXDrawLines( display, physDev->drawable, physDev->gc,
-                        points, j + 1, CoordModeOrigin );
+			  points, j, CoordModeOrigin );
         }
 	
 	/* Update the DIBSection of the dc's bitmap */
