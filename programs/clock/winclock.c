@@ -205,7 +205,6 @@ void AnalogClock(HDC dc) {
   GetLocalTime(&st);
 
   S = st.wSecond;
-  if (nLastSecond==S) { exit; }
   nLastSecond = S;
   H = st.wHour;
   M = st.wMinute;

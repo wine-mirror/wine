@@ -33,6 +33,10 @@
 #include "winclock.h"
 #include "commdlg.h"
 
+#define INITIAL_WINDOW_SIZE 200
+#define TIMER_ID 1
+#define TIMER_PERIOD 50 /* milliseconds */
+
 CLOCK_GLOBALS Globals;
 
 /***********************************************************************
@@ -153,18 +157,13 @@ VOID MAIN_FileChooseFont(VOID) {
 
 LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    PAINTSTRUCT ps;
-    HDC context;
-
     switch (msg) {
 
         case WM_CREATE: {
-            printf("WM_CREATE\n");
    	    break;
         }
 
         case WM_RBUTTONUP: {
-	    printf("WM_RBUTTONUP\n");
             Globals.bWithoutTitle = !Globals.bWithoutTitle;
             LANGUAGE_UpdateMenuCheckmarks();
             LANGUAGE_UpdateWindowCaption();
@@ -173,7 +172,9 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 
 	case WM_PAINT: {
-            printf("WM_PAINT\n");
+            PAINTSTRUCT ps;
+            HDC context;
+
             context = BeginPaint(hWnd, &ps);
 	    if(Globals.bAnalog) {
 	        DrawFace(context);
@@ -188,7 +189,6 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_SIZE: {
-            printf("WM_SIZE\n");
 	    Globals.MaxX = LOWORD(lParam);
 	    Globals.MaxY = HIWORD(lParam);
             OldHour.DontRedraw   = TRUE;
@@ -202,8 +202,12 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         }
 
+        case WM_TIMER: {
+	    Idle(0);
+	    break;
+	}
+
         case WM_DESTROY: {
-            printf("WM_DESTROY\n");
             PostQuitMessage (0);
             break;
         }
@@ -211,7 +215,7 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         default:
           return DefWindowProc (hWnd, msg, wParam, lParam);
     }
-    return 0l;
+    return 0;
 }
 
 
@@ -257,9 +261,16 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     if (!RegisterClass (&class)) return FALSE;
 
+    Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
     Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 0,
-        LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        Globals.MaxX, Globals.MaxY, 0,
+        0, Globals.hInstance, 0);
+
+    if (!SetTimer (Globals.hMainWnd, TIMER_ID, TIMER_PERIOD, NULL)) {
+        MessageBox(0, "No available timers", szWinName, MB_ICONEXCLAMATION | MB_OK);
+        return FALSE;
+    }
 
     LANGUAGE_LoadMenus();
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
@@ -269,18 +280,10 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 
-    while (TRUE) {
-        Sleep(1);
-        if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
-                if (msg.message == WM_QUIT) return msg.wParam;
-	        TranslateMessage(&msg);
-	        DispatchMessage(&msg);
-	        Idle(NULL);
-        }
-          else Idle(NULL);
+    while (GetMessage(&msg, 0, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
-    /* We will never reach the following statement !   */
     return 0;
 }
-

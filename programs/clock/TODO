@@ -8,9 +8,6 @@ Some ideas for improvements:
 - Font Handling of Digital Clock.
   (Does not work probably due to Winelib)
 
-- Implement Timer Mechanism instead Polling.
-  Clock does not run if menu is being selected (?).
-
 - Complete translation for the following languages : Pt,Sk
 
 - Add new .rc resources for all languages you know. That's in fact very easy. 

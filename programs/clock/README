@@ -3,13 +3,6 @@
  ==============
  
  This is a first attempt to realize a desktop clock for Wine as done in 
- Windows. It'a an early release and most of the code is still broken.
+ Windows. It's an early release and some of the code is still broken.
 
- Please see file TODO for things to do and keep the file ChangeLog
- up to date.
-
- Code is currently under heavy construction. Please direct patches and
- additions to my personal email address <mbaur@g26.ethz.ch>
-
- If you think that the compiled binary is too big, you can reduce its size
- with the command 'strip clock' (please don't try this on libraries).
+ Originally contributed by <mbaur@g26.ethz.ch>

@@ -33,11 +33,11 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
 
         /* analog clock */
 
-        CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x100,
                        MF_BYCOMMAND | MF_CHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x101,
                        MF_BYCOMMAND | MF_UNCHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
+        EnableMenuItem(Globals.hPropertiesMenu, 0x103,
                        MF_BYCOMMAND | MF_GRAYED);
     }
         else
@@ -45,22 +45,22 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
 
         /* digital clock */
 
-        CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x100,
                        MF_BYCOMMAND | MF_UNCHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x101,
                        MF_BYCOMMAND | MF_CHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
+        EnableMenuItem(Globals.hPropertiesMenu, 0x103,
                        MF_BYCOMMAND);
 
     }
 
-    CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND |
                  (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hSystemMenu, 0x10D, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hSystemMenu, 0x10D, MF_BYCOMMAND |
                  (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, 0x107, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x107, MF_BYCOMMAND |
                  (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, 0x108, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x108, MF_BYCOMMAND |
                  (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
 }
 
