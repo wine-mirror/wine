@@ -69,6 +69,11 @@
 #include "options.h"
 #include "debug.h"
 
+#include "server/request.h"
+#include "server.h"
+#include "process.h"
+#include "winerror.h"
+
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
 #endif
@@ -803,17 +808,49 @@ INT16 WINAPI FlushComm16(INT16 fd,INT16 fnQueue)
 /********************************************************************
  *      PurgeComm        (KERNEL32.557)
  */
-BOOL WINAPI PurgeComm( HANDLE hFile, DWORD flags) 
+BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags) 
 {
-    FIXME(comm, "(%08x %08lx) unimplemented stub\n",
-                 hFile, flags);
-    return 0;
+     int fd;
+     struct get_write_fd_request req;
+
+     TRACE(comm,"handle %d, flags %lx\n", handle, flags);
+
+     req.handle = handle;
+     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
+     CLIENT_WaitReply( NULL, &fd, 0 );
+
+     if(fd<0)
+         return FALSE;
+
+     /*
+     ** not exactly sure how these are different
+     ** Perhaps if we had our own internal queues, one flushes them
+     ** and the other flushes the kernel's buffers.
+     */
+     if(flags&PURGE_TXABORT)
+     {
+         tcflush(fd,TCOFLUSH);
+     }
+     if(flags&PURGE_RXABORT)
+     {
+         tcflush(fd,TCIFLUSH);
+     }
+     if(flags&PURGE_TXCLEAR)
+     {
+         tcflush(fd,TCOFLUSH);
+     }
+     if(flags&PURGE_RXCLEAR)
+     {
+         tcflush(fd,TCIFLUSH);
+     }
+
+     return 1;
 }
 
 /********************************************************************
  *	GetCommError	(USER.203)
  */
-INT16 WINAPI GetCommError16(INT16 fd,LPCOMSTAT lpStat)
+INT16 WINAPI GetCommError16(INT16 fd,LPCOMSTAT16 lpStat)
 {
 	int		temperror;
 	unsigned long	cnt;
@@ -862,17 +899,76 @@ INT16 WINAPI GetCommError16(INT16 fd,LPCOMSTAT lpStat)
 }
 
 /*****************************************************************************
+ *      COMM_Handle2fd
+ *  returns a file descriptor for reading from or writing to
+ *  mode is GENERIC_READ or GENERIC_WRITE. Make sure to close
+ *  the handle afterwards!
+ */
+int COMM_Handle2fd(HANDLE handle, int mode) {
+    struct get_read_fd_request r_req;
+    struct get_write_fd_request w_req;
+    int fd;
+
+    w_req.handle = r_req.handle = handle;
+
+    switch(mode) {
+    case GENERIC_WRITE:
+        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
+        break;
+    case GENERIC_READ:
+        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
+        break;
+    default:
+        ERR(comm,"COMM_Handle2fd: Don't know what type of fd is required.\n");
+        return -1;
+    }
+    CLIENT_WaitReply( NULL, &fd, 0 );
+
+    return fd;
+}
+
+/*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
  */
-BOOL WINAPI ClearCommError(INT fd,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
 {
-	int temperror;
+    int fd;
 
-    	TRACE(comm, "fd %d (current error %d)\n", 
-	       fd, commerror);
-	temperror = commerror;
-	commerror = 0;
-	return TRUE;
+    fd=COMM_Handle2fd(handle,GENERIC_READ);
+    if(0>fd) 
+    {
+        return FALSE;
+    }
+
+    if (lpStat) 
+    {
+	lpStat->status = 0;
+
+	if(ioctl(fd, TIOCOUTQ, &lpStat->cbOutQue))
+	    WARN(comm, "ioctl returned error\n");
+
+	if(ioctl(fd, TIOCINQ, &lpStat->cbInQue))
+	    WARN(comm, "ioctl returned error\n");
+    }
+
+    close(fd);
+
+    TRACE(comm,"handle %d cbInQue = %ld cbOutQue = %ld\n",
+                handle,
+                lpStat->cbInQue,
+                lpStat->cbOutQue);
+
+    if(errors)
+        *errors = 0;
+
+    /*
+    ** After an asynchronous write opperation, the
+    ** app will call ClearCommError to see if the
+    ** results are ready yet. It waits for ERROR_IO_PENDING
+    */
+    commerror = ERROR_IO_PENDING;
+
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -944,30 +1040,51 @@ UINT16 WINAPI GetCommEventMask16(INT16 fd,UINT16 fnEvtClear)
 /*****************************************************************************
  *      SetupComm       (KERNEL32.676)
  */
-BOOL WINAPI SetupComm( HANDLE hFile, DWORD insize, DWORD outsize)
+BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
 {
-        FIXME(comm, "insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-       return FALSE;
+    int fd;
+
+    FIXME(comm, "insize %ld outsize %ld unimplemented stub\n", insize, outsize);
+    fd=COMM_Handle2fd(handle,GENERIC_WRITE);
+    if(0>fd)
+    {
+        return FALSE;
+    }
+    close(fd);
+    return TRUE;
 } 
 
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
  */
-BOOL WINAPI GetCommMask(HANDLE fd,LPDWORD evtmask)
+BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
 {
-    	TRACE(comm, "fd %d, mask %p\n", fd, evtmask);
-	*evtmask = eventmask;
-	return TRUE;
+    int fd;
+
+    TRACE(comm, "handle %d, mask %p\n", handle, evtmask);
+    if(0>(fd=COMM_Handle2fd(handle,GENERIC_READ))) 
+    {
+        return FALSE;
+    }
+    close(fd);
+    *evtmask = eventmask;
+    return TRUE;
 }
 
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
  */
-BOOL WINAPI SetCommMask(INT fd,DWORD evtmask)
+BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
 {
-    	TRACE(comm, "fd %d, mask %lx\n", fd, evtmask);
-	eventmask = evtmask;
-	return TRUE;
+    int fd;
+
+    TRACE(comm, "handle %d, mask %lx\n", handle, evtmask);
+    if(0>(fd=COMM_Handle2fd(handle,GENERIC_WRITE))) {
+        return FALSE;
+    }
+    close(fd);
+    eventmask = evtmask;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -1187,18 +1304,27 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 }
 
 /*****************************************************************************
- *	SetCommState32	(KERNEL32.452)
+ *	SetCommState    (KERNEL32.452)
  */
-BOOL WINAPI SetCommState(INT fd,LPDCB lpdcb)
+BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 {
-	struct termios port;
-	struct DosDeviceStruct *ptr;
+     struct termios port;
+     int fd;
+     struct get_write_fd_request req;
 
-    	TRACE(comm,"fd %d, ptr %p\n",fd,lpdcb);
-	if (tcgetattr(fd,&port) == -1) {
-		commerror = WinError();	
-		return FALSE;
-	}
+     TRACE(comm,"handle %d, ptr %p\n", handle, lpdcb);
+
+     req.handle = handle;
+     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
+     CLIENT_WaitReply( NULL, &fd, 0 );
+
+     if(fd<0)
+         return FALSE;
+
+     if (tcgetattr(fd,&port) == -1) {
+         commerror = WinError();	
+         return FALSE;
+     }
 
 	port.c_cc[VMIN] = 0;
 	port.c_cc[VTIME] = 1;
@@ -1218,13 +1344,10 @@ BOOL WINAPI SetCommState(INT fd,LPDCB lpdcb)
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
-	if ((ptr = GetDeviceStruct(fd)) == NULL) {
-		commerror = IE_BADID;
-		return FALSE;
-	}
-	if (ptr->baudrate > 0)
-	  	lpdcb->BaudRate = ptr->baudrate;
-    	TRACE(comm,"baudrate %ld\n",lpdcb->BaudRate);
+     /*
+     ** MJM - removed default baudrate settings
+     ** TRACE(comm,"baudrate %ld\n",lpdcb->BaudRate);
+     */
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
@@ -1529,13 +1652,22 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
-BOOL WINAPI GetCommState(INT fd, LPDCB lpdcb)
+BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 {
-	struct termios	port;
+     struct termios port;
+     int fd;
+     struct get_read_fd_request req;
 
-    	TRACE(comm,"fd %d, ptr %p\n", fd, lpdcb);
-        if (GetDeviceStruct(fd) == NULL) return FALSE;
-	if (tcgetattr(fd, &port) == -1) {
+     TRACE(comm,"handle %d, ptr %p\n", handle, lpdcb);
+     req.handle = handle;
+     CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
+     CLIENT_WaitReply( NULL, &fd, 0 );
+
+     if(fd<0)
+         return FALSE;
+
+     if (tcgetattr(fd, &port) == -1) {
+        TRACE(comm,"tcgetattr(%d, ...) returned -1",fd);
 		commerror = WinError();	
 		return FALSE;
 	}
@@ -1642,6 +1774,9 @@ BOOL WINAPI GetCommState(INT fd, LPDCB lpdcb)
 	lpdcb->XoffLim = 10;
 
 	commerror = 0;
+
+     TRACE(comm,"OK\n");
+ 
 	return TRUE;
 }
 
@@ -1842,5 +1977,23 @@ BOOL WINAPI WaitCommEvent(HANDLE hFile,LPDWORD eventmask ,LPOVERLAPPED overlappe
 {
 	FIXME(comm, "(%d %p %p )\n",hFile, eventmask,overlapped);
 	return TRUE;
+}
+
+/***********************************************************************
+ *           GetCommProperties   (KERNEL32.???)
+ */
+BOOL WINAPI GetCommProperties(HANDLE hFile, LPDCB *dcb)
+{
+    FIXME(comm, "(%d %p )\n",hFile,dcb);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           SetCommProperties   (KERNEL32.???)
+ */
+BOOL WINAPI SetCommProperties(HANDLE hFile, LPDCB dcb)
+{
+    FIXME(comm, "(%d %p )\n",hFile,dcb);
+    return TRUE;
 }
 

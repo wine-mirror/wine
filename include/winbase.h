@@ -1175,11 +1175,18 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #define VER_PLATFORM_WIN32_NT           2
 
-typedef struct tagCOMSTAT
+typedef struct tagCOMSTAT16
 {
     BYTE   status;
     UINT16 cbInQue WINE_PACKED;
     UINT16 cbOutQue WINE_PACKED;
+} COMSTAT16,*LPCOMSTAT16;
+
+typedef struct tagCOMSTAT
+{
+    DWORD status;
+    DWORD cbInQue;
+    DWORD cbOutQue;
 } COMSTAT,*LPCOMSTAT;
 
 typedef struct tagDCB16

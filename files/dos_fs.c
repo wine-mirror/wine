@@ -673,6 +673,23 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                 {
                     return FILE_CreateDevice( i, access, NULL );
 		}
+		{
+		    HFILE r;
+		    char devname[40];
+		    PROFILE_GetWineIniString("serialports",name,"",devname,sizeof devname);
+
+		    if(devname[0])
+		    {
+			TRACE(file,"DOSFS_OpenDevice %s is %s\n",
+				DOSFS_Devices[i].name,devname);
+			r =  FILE_CreateFile( devname, access,
+				FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+				OPEN_EXISTING, 0, -1 );
+			TRACE(file,"Create_File return %08X\n",r);
+			return r;
+		    }
+		}
+
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR;
 	    }
