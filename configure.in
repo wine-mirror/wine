@@ -107,7 +107,8 @@ then
     dnl Check for XFree86 VMODE extension
     AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
     dnl Check for the presence of Mesa
-    AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_MESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+    AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+    AC_CHECK_HEADERS(GL/osmesa.h)
 else
     XLIB=""
     X_CFLAGS=""

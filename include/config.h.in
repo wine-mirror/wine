@@ -79,7 +79,7 @@
 #undef HAVE_IPX_LINUX
 
 /* Define if Mesa is present on the system or not */
-#undef HAVE_MESAGL
+#undef HAVE_LIBMESAGL
 
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
@@ -125,6 +125,9 @@
 
 /* Define if you have the waitpid function.  */
 #undef HAVE_WAITPID
+
+/* Define if you have the <GL/osmesa.h> header file.  */
+#undef HAVE_GL_OSMESA_H
 
 /* Define if you have the <curses.h> header file.  */
 #undef HAVE_CURSES_H

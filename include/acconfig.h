@@ -76,4 +76,4 @@
 #undef HAVE_IPX_LINUX
 
 /* Define if Mesa is present on the system or not */
-#undef HAVE_MESAGL
+#undef HAVE_LIBMESAGL

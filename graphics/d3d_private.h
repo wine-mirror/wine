@@ -7,10 +7,11 @@
 #ifndef _WINE_D3D_PRIVATE_H
 #define _WINE_D3D_PRIVATE_H
 
+#include "wine_gl.h"
+
 #ifdef HAVE_MESAGL
 
 #include "d3d.h"
-#include "wine_gl.h"
 
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\

@@ -4,9 +4,7 @@
 #include "ddraw.h"
 
 /* This is needed for GL_LIGHT */
-#ifdef HAVE_MESAGL
 #include "wine_gl.h"
-#endif
 
 typedef BOOL32 *LPBOOL;
 typedef BOOL32 BOOL;

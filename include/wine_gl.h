@@ -7,7 +7,11 @@
 #ifndef __WINE_GL_H
 #define __WINE_GL_H
 
-#ifdef HAVE_MESAGL
+#include "config.h"
+
+#if defined(HAVE_LIBMESAGL) && defined(HAVE_GL_OSMESA_H)
+
+#define HAVE_MESAGL
 
 #undef APIENTRY
 #undef CALLBACK
@@ -27,6 +31,10 @@
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
-#endif /* HAVE_MESAGL */
+#else /* HAVE_LIBMESAGL */
+
+#undef HAVE_MESAGL
+
+#endif /* HAVE_LIBMESAGL */
 
 #endif /* __WINE_GL_H */
