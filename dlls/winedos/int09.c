@@ -206,7 +206,8 @@ void WINAPI DOSVM_Int09Handler( CONTEXT86 *context )
       DOSVM_Int16AddChar(0, scan);
     }
   }
-  DOSVM_PIC_ioport_out( 0x20, 0x20 ); /* send EOI */
+
+  DOSVM_AcknowledgeIRQ( context );
 }
 
 static void KbdRelay( CONTEXT86 *context, void *data )

@@ -105,6 +105,8 @@ extern void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
 extern BOOL DOSVM_IsWin16(void);
 
 /* dosvm.c */
+extern void DOSVM_SendQueuedEvents( CONTEXT86 * );
+extern void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 * );
 extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
 extern void WINAPI DOSVM_Wait( CONTEXT86 * );
 extern DWORD WINAPI DOSVM_Loop( HANDLE hThread );

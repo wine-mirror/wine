@@ -31,8 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 #define RELAY_MAGIC 0xabcdef00
 
 /*
- * Memory block for temporary 16-bit stacks used when
- * 32-bit code calls relay.
+ * Memory block for temporary 16-bit stacks used with relay calls.
  */
 typedef struct {
     DWORD inuse;          /* non-zero if stack block is in use */
@@ -62,9 +61,8 @@ static RELAY_Stack16 *RELAY_GetPointer( DWORD offset )
 /**********************************************************************
  *          RELAY_MakeShortContext
  *
- * If context is using 32-bit stack or code segment, allocate
- * 16-bit stack, make stack pointer point to this stack and
- * make code pointer point to stub that restores everything.
+ * Allocate separate 16-bit stack, make stack pointer point to this 
+ * stack and make code pointer point to stub that restores everything.
  * So, after this routine, SS and CS are guaranteed to be 16-bit.
  *
  * Note: This might be called from signal handler, so the stack
@@ -72,33 +70,30 @@ static RELAY_Stack16 *RELAY_GetPointer( DWORD offset )
  */
 static void RELAY_MakeShortContext( CONTEXT86 *context )
 {
-    if (IS_SELECTOR_32BIT(context->SegCs) || IS_SELECTOR_32BIT(context->SegSs))
-    {
-        DWORD offset = offsetof(RELAY_Stack16, stack_top);
-        RELAY_Stack16 *stack = RELAY_GetPointer( 0 );
+    DWORD offset = offsetof(RELAY_Stack16, stack_top);
+    RELAY_Stack16 *stack = RELAY_GetPointer( 0 );
 
-        while (stack->inuse && offset < DOSVM_RELAY_DATA_SIZE) {
-            stack++;
-            offset += sizeof(RELAY_Stack16);
-        }
-
-        if (offset >= DOSVM_RELAY_DATA_SIZE)
-            ERR( "Too many nested interrupts!\n" );
-        
-        stack->inuse = 1;
-        stack->eip = context->Eip;
-        stack->seg_cs = context->SegCs;
-        stack->esp = context->Esp;
-        stack->seg_ss = context->SegSs;
-
-        stack->stack_bottom = RELAY_MAGIC;
-        stack->stack_top = RELAY_MAGIC;
-
-        context->SegSs = DOSVM_dpmi_segments->relay_data_sel;
-        context->Esp = offset;
-        context->SegCs = DOSVM_dpmi_segments->relay_code_sel;
-        context->Eip = 3;
+    while (stack->inuse && offset < DOSVM_RELAY_DATA_SIZE) {
+        stack++;
+        offset += sizeof(RELAY_Stack16);
     }
+
+    if (offset >= DOSVM_RELAY_DATA_SIZE)
+        ERR( "Too many nested interrupts!\n" );
+        
+    stack->inuse = 1;
+    stack->eip = context->Eip;
+    stack->seg_cs = context->SegCs;
+    stack->esp = context->Esp;
+    stack->seg_ss = context->SegSs;
+
+    stack->stack_bottom = RELAY_MAGIC;
+    stack->stack_top = RELAY_MAGIC;
+
+    context->SegSs = DOSVM_dpmi_segments->relay_data_sel;
+    context->Esp = offset;
+    context->SegCs = DOSVM_dpmi_segments->relay_code_sel;
+    context->Eip = 3;
 }
 
 
@@ -112,7 +107,8 @@ static void __stdcall RELAY_RelayStub( DOSRELAY proc,
                                        unsigned char *args, 
                                        void *context )
 {
-    proc( (CONTEXT86*)context, *(LPVOID *)args );
+    if (proc)
+        proc( (CONTEXT86*)context, *(LPVOID *)args );
 }
 
 
@@ -136,6 +132,17 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
         ERR( "Stack corrupted!\n" );
 
     stack->inuse = 0;
+
+    /*
+     * We have now restored original stack and instruction pointers.
+     * Because signals are blocked here, this is a safe place to
+     * check for pending events before we return to application context.
+     */
+    if (NtCurrentTeb()->vm86_pending && NtCurrentTeb()->dpmi_vif)
+    {
+        NtCurrentTeb()->vm86_pending = 0;
+        DOSVM_SendQueuedEvents( context );
+    }
 }
 
 
@@ -182,7 +189,7 @@ void DOSVM_SaveCallFrame( CONTEXT86 *context, STACK16FRAME *frame )
 void DOSVM_RestoreCallFrame( CONTEXT86 *context, STACK16FRAME *frame )
 {
     /*
-     * Make sure that CS and SS are 16-bit.
+     * Allocate separate stack for relay call.
      */
     RELAY_MakeShortContext( context );
 
@@ -226,7 +233,7 @@ void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
     WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
 
     /*
-     * Make sure that CS and SS are 16-bit.
+     * Allocate separate stack for relay call.
      */
     RELAY_MakeShortContext( context );
 

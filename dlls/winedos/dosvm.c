@@ -159,9 +159,23 @@ static void DOSVM_SendOneEvent( CONTEXT86 *context )
         /* Callback event. */
         TRACE( "Dispatching callback event.\n" );
 
-        LeaveCriticalSection(&qcrit);
-        (*event->relay)( context, event->data );
-        EnterCriticalSection(&qcrit);
+        if (ISV86(context))
+        {
+            /*
+             * Call relay immediately in real mode.
+             */
+            LeaveCriticalSection(&qcrit);
+            (*event->relay)( context, event->data );
+            EnterCriticalSection(&qcrit);
+        }
+        else
+        {
+            /*
+             * Force return to relay code. We do not want to
+             * call relay directly because we may be inside a signal handler.
+             */
+            DOSVM_BuildCallFrame( context, event->relay, event->data );
+        }
 
         free(event);
     }
@@ -171,23 +185,30 @@ static void DOSVM_SendOneEvent( CONTEXT86 *context )
 /***********************************************************************
  *              DOSVM_SendQueuedEvents
  *
- * As long as interrupts are enabled, process all pending events 
- * that are not blocked by currently active event.
+ * As long as context instruction pointer stays unmodified,
+ * process all pending events that are not blocked by currently
+ * active event.
+ *
+ * This routine assumes that caller has already cleared TEB.vm86_pending 
+ * and checked that interrupts are enabled.
  */
-static void DOSVM_SendQueuedEvents( CONTEXT86 *context )
-{
+void DOSVM_SendQueuedEvents( CONTEXT86 *context )
+{   
+    DWORD old_cs = context->SegCs;
+    DWORD old_ip = context->Eip;
+
     EnterCriticalSection(&qcrit);
 
     TRACE( "Called in %s mode %s events pending (time=%ld)\n",
            ISV86(context) ? "real" : "protected",
            DOSVM_HasPendingEvents() ? "with" : "without",
            GetTickCount() );
-    TRACE( "cs:ip=%04lx:%08lx, ss:sp=%04lx:%08lx\n", 
+    TRACE( "cs:ip=%04lx:%08lx, ss:sp=%04lx:%08lx\n",
            context->SegCs, context->Eip, context->SegSs, context->Esp);
 
-    while (DOSVM_HasPendingEvents() && 
-           (ISV86(context) ? 
-            (context->EFlags & VIF_MASK) : NtCurrentTeb()->dpmi_vif))
+    while (context->SegCs == old_cs &&
+           context->Eip == old_ip &&
+           DOSVM_HasPendingEvents())
     {
         DOSVM_SendOneEvent(context);
 
@@ -197,6 +218,17 @@ static void DOSVM_SendQueuedEvents( CONTEXT86 *context )
          * unnecessary calls to this function.
          */
         NtCurrentTeb()->vm86_pending = 0;
+    }
+
+    if (!ISV86(context) && context->SegCs == old_cs && context->Eip == old_ip)
+    {
+        /*
+         * Routine was called from DPMI but there was nothing to do.
+         * We force a dummy relay call here so that we don't get a race
+         * if signals are unblocked when we return to DPMI application.
+         */
+        TRACE( "Called but there was nothing to do, calling NULL relay.\n" );
+        DOSVM_BuildCallFrame( context, NULL, NULL );
     }
 
     if (DOSVM_HasPendingEvents())
@@ -617,6 +649,27 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 }
 
 #endif
+
+
+/**********************************************************************
+ *         DOSVM_AcknowledgeIRQ
+ *
+ * This routine should be called by all internal IRQ handlers.
+ */
+void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT86 *context )
+{
+    /*
+     * Send EOI to PIC.
+     */
+    DOSVM_PIC_ioport_out( 0x20, 0x20 );
+
+    /*
+     * Protected mode IRQ handlers are supposed
+     * to turn VIF flag on before they return.
+     */
+    if (!ISV86(context))
+        NtCurrentTeb()->dpmi_vif = 1;
+}
 
 
 /**********************************************************************
