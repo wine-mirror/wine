@@ -1028,8 +1028,8 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   }
 
   if (oflags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
-                |_O_CREAT|_O_RDWR|_O_TEMPORARY|_O_NOINHERIT))
-    TRACE(":unsupported oflags 0x%04x\n",oflags);
+                |_O_CREAT|_O_RDWR|_O_WRONLY|_O_TEMPORARY|_O_NOINHERIT))
+    ERR(":unsupported oflags 0x%04x\n",oflags);
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
@@ -1908,7 +1908,7 @@ MSVCRT_FILE* MSVCRT_fopen(const char *path, const char *mode)
       FIXME(":unknown flag %c not supported\n",mode[-1]);
     }
 
-  fd = _open(path, flags);
+  fd = _open(path, flags, _S_IREAD | _S_IWRITE);
 
   if (fd < 0)
     return NULL;
