@@ -356,18 +356,33 @@ static HWND32 MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND32 parent,
 	    ShowWindow32( hwnd, SW_SHOWMINNOACTIVE );
 	else
 	{
-	    SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
+            /* WS_VISIBLE is clear if a) the MDI client has
+             * MDIS_ALLCHILDSTYLES style and 2) the flag is cleared in the
+             * MDICreateStruct. If so the created window is not shown nor 
+             * activated.
+             */
+            int showflag=wnd->dwStyle & WS_VISIBLE;
+            /* clear visible flag, otherwise SetWindoPos32 ignores
+             * the SWP_SHOWWINDOW command.
+             */
+            wnd->dwStyle &= ~WS_VISIBLE;
+            if(showflag){
+                SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
 
-	    /* Set maximized state here in case hwnd didn't receive WM_SIZE
-	     * during CreateWindow - bad!
-	     */
+                /* Set maximized state here in case hwnd didn't receive WM_SIZE
+                 * during CreateWindow - bad!
+                 */
 
-            if((wnd->dwStyle & WS_MAXIMIZE) && !ci->hwndChildMaximized )
-            {
-                ci->hwndChildMaximized = wnd->hwndSelf;
-                MDI_AugmentFrameMenu( ci, w->parent, hwnd );
-                MDI_UpdateFrameText( w->parent, ci->self, MDI_REPAINTFRAME, NULL ); 
-	    }
+                if((wnd->dwStyle & WS_MAXIMIZE) && !ci->hwndChildMaximized )
+                {
+                    ci->hwndChildMaximized = wnd->hwndSelf;
+                    MDI_AugmentFrameMenu( ci, w->parent, hwnd );
+                    MDI_UpdateFrameText( w->parent, ci->self, MDI_REPAINTFRAME, NULL ); 
+                }
+            }else
+                /* needed, harmless ? */
+                SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE );
+
 	}
         TRACE(mdi, "created child - %04x\n",hwnd);
     }
