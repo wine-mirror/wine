@@ -845,6 +845,9 @@ void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
     unsigned short revents;
 
+    if (snd_pcm_state(handle) != SND_PCM_STATE_RUNNING)
+	return;
+
     while (1) {
 	poll(ufds, count, -1);
 	snd_pcm_poll_descriptors_revents(handle, ufds, count, &revents);
