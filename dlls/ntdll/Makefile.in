@@ -1,4 +1,4 @@
-EXTRADEFS = -D_NTSYSTEM_ -DBINDIR="\"$(bindir)\""
+EXTRADEFS = -D_NTSYSTEM_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

@@ -1065,54 +1065,6 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
 
 
 /***********************************************************************
- *           exec_wine_binary
- *
- * Locate the Wine binary to exec for a new Win32 process.
- */
-static void exec_wine_binary( char **argv, char **envp )
-{
-    const char *path, *pos, *ptr;
-
-    /* first, try for a WINELOADER environment variable */
-    argv[0] = getenv("WINELOADER");
-    if (argv[0])
-        execve( argv[0], argv, envp );
-
-    /* next, try bin directory */
-    argv[0] = BINDIR "/wine";
-    execve( argv[0], argv, envp );
-
-    /* now try the path of argv0 of the current binary */
-    if ((path = wine_get_argv0_path()))
-    {
-        if (!(argv[0] = malloc( strlen(path) + sizeof("wine") ))) return;
-        strcpy( argv[0], path );
-        strcat( argv[0], "wine" );
-        execve( argv[0], argv, envp );
-        free( argv[0] );
-    }
-
-    /* now search in the Unix path */
-    if ((path = getenv( "PATH" )))
-    {
-        if (!(argv[0] = malloc( strlen(path) + 6 ))) return;
-        pos = path;
-        for (;;)
-        {
-            while (*pos == ':') pos++;
-            if (!*pos) break;
-            if (!(ptr = strchr( pos, ':' ))) ptr = pos + strlen(pos);
-            memcpy( argv[0], pos, ptr - pos );
-            strcpy( argv[0] + (ptr - pos), "/wine" );
-            execve( argv[0], argv, envp );
-            pos = ptr;
-        }
-    }
-    free( argv[0] );
-}
-
-
-/***********************************************************************
  *           fork_and_exec
  *
  * Fork and exec a new Unix binary, checking for errors.
@@ -1280,8 +1232,14 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
         if (unixdir) chdir(unixdir);
 
-        if (argv && envp) exec_wine_binary( argv, envp );
-
+        if (argv && envp)
+        {
+            /* first, try for a WINELOADER environment variable */
+            argv[0] = getenv("WINELOADER");
+            if (argv[0]) execve( argv[0], argv, envp );
+            /* now use the standard search strategy */
+            wine_exec_wine_binary( NULL, argv, envp );
+        }
         err = errno;
         write( execfd[1], &err, sizeof(err) );
         _exit(1);

@@ -30,7 +30,7 @@ EXPORTS
     wine_dll_unload
     wine_dlopen
     wine_dlsym
-    wine_get_argv0_path
+    wine_exec_wine_binary
     wine_get_config_dir
     wine_get_cs
     wine_get_ds
@@ -41,6 +41,7 @@ EXPORTS
     wine_get_ss
     wine_get_user_name
     wine_init
+    wine_init_argv0_path
     wine_ldt_alloc_entries
     wine_ldt_alloc_fs
     wine_ldt_copy

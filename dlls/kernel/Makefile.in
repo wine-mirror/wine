@@ -1,4 +1,4 @@
-EXTRADEFS = -D_KERNEL32_ -DBINDIR="\"$(bindir)\"" -DETCDIR="\"$(sysconfdir)\""
+EXTRADEFS = -D_KERNEL32_ -DETCDIR="\"$(sysconfdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

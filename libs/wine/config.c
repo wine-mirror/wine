@@ -42,6 +42,7 @@ static char *config_dir;
 static char *server_dir;
 static char *user_name;
 static char *argv0_path;
+static char *argv0_name;
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
@@ -181,14 +182,18 @@ static void init_paths(void)
 }
 
 /* initialize the argv0 path */
-void init_argv0_path( const char *argv0 )
+void wine_init_argv0_path( const char *argv0 )
 {
     size_t size, len;
     const char *p;
     char *cwd;
 
     if (!(p = strrchr( argv0, '/' )))
-        return;  /* if argv0 doesn't contain a path, don't do anything */
+    {
+        argv0_name = xstrdup( argv0 );
+        return;  /* if argv0 doesn't contain a path, don't store any path */
+    }
+    else argv0_name = xstrdup( p + 1 );
 
     len = p - argv0 + 1;
     if (argv0[0] == '/')  /* absolute path */
@@ -238,8 +243,49 @@ const char *wine_get_user_name(void)
     return user_name;
 }
 
-/* return the path of argv[0], including a trailing slash */
-const char *wine_get_argv0_path(void)
+/* exec a wine internal binary (either the wine loader or the wine server) */
+/* if name is null, default to the name of the current binary */
+void wine_exec_wine_binary( const char *name, char **argv, char **envp )
 {
-    return argv0_path;
+    const char *path, *pos, *ptr;
+    extern char **environ;
+
+    if (!envp) envp = environ;
+    if (!name) name = argv0_name;
+
+    /* first, try bin directory */
+    argv[0] = xmalloc( sizeof(BINDIR "/") + strlen(name) );
+    strcpy( argv[0], BINDIR "/" );
+    strcat( argv[0], name );
+    execve( argv[0], argv, envp );
+    free( argv[0] );
+
+    /* now try the path of argv0 of the current binary */
+    if (argv0_path)
+    {
+        argv[0] = xmalloc( strlen(argv0_path) + strlen(name) + 1 );
+        strcpy( argv[0], argv0_path );
+        strcat( argv[0], name );
+        execve( argv[0], argv, envp );
+        free( argv[0] );
+    }
+
+    /* now search in the Unix path */
+    if ((path = getenv( "PATH" )))
+    {
+        argv[0] = xmalloc( strlen(path) + strlen(name) + 2 );
+        pos = path;
+        for (;;)
+        {
+            while (*pos == ':') pos++;
+            if (!*pos) break;
+            if (!(ptr = strchr( pos, ':' ))) ptr = pos + strlen(pos);
+            memcpy( argv[0], pos, ptr - pos );
+            strcpy( argv[0] + (ptr - pos), "/" );
+            strcat( argv[0] + (ptr - pos), name );
+            execve( argv[0], argv, envp );
+            pos = ptr;
+        }
+        free( argv[0] );
+    }
 }

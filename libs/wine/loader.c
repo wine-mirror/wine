@@ -47,8 +47,6 @@ char **__wine_main_argv = NULL;
 WCHAR **__wine_main_wargv = NULL;
 char **__wine_main_environ = NULL;
 
-extern void init_argv0_path( const char *argv0 );  /* config.c */
-
 #define MAX_DLLS 100
 
 static struct
@@ -426,7 +424,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     void (*init_func)(void);
 
     build_dll_path();
-    init_argv0_path( argv[0] );
+    wine_init_argv0_path( argv[0] );
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_environ = environ;

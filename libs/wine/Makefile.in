@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBRARY   = wine
 SOVERSION = 1
-EXTRADEFS = -D__WINESRC__ -DDLLDIR="\"$(dlldir)\""
+EXTRADEFS = -D__WINESRC__ -DBINDIR="\"$(bindir)\"" -DDLLDIR="\"$(dlldir)\""
 EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
 
 C_SRCS = \

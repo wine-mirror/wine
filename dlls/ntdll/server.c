@@ -466,7 +466,8 @@ static void start_server( const char *oldcwd )
 {
     static int started;  /* we only try once */
     char *path, *p;
-    const char *argv0_path;
+    char *argv[2];
+
     if (!started)
     {
         int status;
@@ -488,23 +489,10 @@ static void start_server( const char *oldcwd )
                 fatal_perror( "could not exec the server '%s'\n"
                               "    specified in the WINESERVER environment variable", p );
             }
-
-            /* first try the installation dir */
-            execl( BINDIR "/wineserver", "wineserver", NULL );
-
-            /* now try the dir we were launched from */
-            if ((argv0_path = wine_get_argv0_path()))
-            {
-                if (!(path = malloc( strlen(argv0_path) + sizeof("wineserver") )))
-                    fatal_error( "out of memory\n" );
-                strcpy( path, argv0_path );
-                strcat( path, "wineserver" );
-                execl( path, path, NULL );
-                free(path);
-            }
-
-            /* finally try the path */
-            execlp( "wineserver", "wineserver", NULL );
+            /* now use the standard search strategy */
+            argv[0] = "wineserver";
+            argv[1] = NULL;
+            wine_exec_wine_binary( "wineserver", argv, NULL );
             fatal_error( "could not exec wineserver\n" );
         }
         waitpid( pid, &status, 0 );
