@@ -2954,7 +2954,7 @@ Pos:  /* -----------------------------------------------------------------------
  
 	    /*  Use PAINT_RedrawWindow to explicitly force an invalidation of the window,
 		its parent and sibling and so on, and then erase the parent window 
-		back ground if the parent is either a top-level window or its parent's parent  
+		background if the parent is either a top-level window or its parent's parent  
 		is top-level window. Rely on the system to repaint other affected 
 		windows later on.  */ 
 	    if( uFlags & SWP_EX_PAINTSELF )

@@ -6403,7 +6403,7 @@ HRESULT OLECONVERT_CreateCompObjStream(LPSTORAGE pStorage, LPCSTR strOleTypeName
         strcpy(IStorageCompObj.strOleTypeName, strOleTypeName);
 
         /* copy the OleTypeName to the compobj struct */
-        /* Note: in the test made, these where Identical      */
+        /* Note: in the test made, these were Identical      */
         IStorageCompObj.dwProgIDNameLength = strlen(strOleTypeName)+1;
         strcpy(IStorageCompObj.strProgIDName, strOleTypeName);
 

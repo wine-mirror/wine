@@ -3979,11 +3979,11 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* call _TrackMouseEvent to see if we are currently tracking for this hwnd */
     _TrackMouseEvent(&trackinfo);
 
-    /* Make sure tracking is enabled so we recieve a WM_MOUSELEAVE message */
+    /* Make sure tracking is enabled so we receive a WM_MOUSELEAVE message */
     if(!(trackinfo.dwFlags & TME_LEAVE)) {
         trackinfo.dwFlags = TME_LEAVE; /* notify upon leaving */
  
-        /* call TRACKMOUSEEVENT so we recieve a WM_MOUSELEAVE message */
+        /* call TRACKMOUSEEVENT so we receive a WM_MOUSELEAVE message */
         /* and can properly deactivate the hot toolbar button */
         _TrackMouseEvent(&trackinfo);
    }

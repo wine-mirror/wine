@@ -88,7 +88,7 @@ int     WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** tabStr);
 
 
 /********************************************************************************/
-/* Virtual function table for the FileMonikerImpl class witch  include Ipersist,*/
+/* Virtual function table for the FileMonikerImpl class which  include IPersist,*/
 /* IPersistStream and IMoniker functions.                                       */
 static ICOM_VTABLE(IMoniker) VT_FileMonikerImpl =
 {
@@ -318,7 +318,7 @@ HRESULT WINAPI FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
  *        FileMoniker_Save
  ******************************************************************************/
 HRESULT WINAPI FileMonikerImpl_Save(IMoniker* iface,
-                                    IStream* pStm,/* poniter to the stream where the object is to be saved */
+                                    IStream* pStm,/* pointer to the stream where the object is to be saved */
                                     BOOL fClearDirty)/* Specifies whether to clear the dirty flag */
 {
     /* this function saves data of this object. In the begining I thougth that I have just to write

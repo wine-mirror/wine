@@ -1688,7 +1688,7 @@ BOOL WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser)
 }
 
 /******************************************************************************
- * DdeGetData [USER32.@]  Copies data from DDE object ot local buffer
+ * DdeGetData [USER32.@]  Copies data from DDE object to local buffer
  *
  * RETURNS
  *    Size of memory object associated with handle

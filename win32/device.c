@@ -692,7 +692,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	  ERR("Can't reserve ring 1 memory\n");
 	  return -1;
 	}
-	/* FIXME: This has to be handled seperatly, when we have seperate
+	/* FIXME: This has to be handled separately, when we have separate
 	   address-spaces */
 	if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
 	/* FIXME: Handle flags in some way */

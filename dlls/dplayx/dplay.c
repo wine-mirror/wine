@@ -4015,7 +4015,7 @@ static HRESULT WINAPI DP_IF_InitializeConnection
 
   TRACE( "Calling %s (SP entry point)\n", bIsDpSp ? "SPInit" : "DPLSPInit" );
   
-  /* FIXME: Need to break this out into a seperate routine for DP SP and
+  /* FIXME: Need to break this out into a separate routine for DP SP and
    *        DPL SP as they actually use different stuff... 
    */
   hr = (*SPInit)( &This->dp2->spData );

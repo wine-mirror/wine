@@ -81,7 +81,7 @@ HRESULT WINAPI AntiMonikerImpl_Construct(AntiMonikerImpl* iface);
 HRESULT WINAPI AntiMonikerImpl_Destroy(AntiMonikerImpl* iface);
 
 /********************************************************************************/
-/* Virtual function table for the AntiMonikerImpl class witch  include Ipersist,*/
+/* Virtual function table for the AntiMonikerImpl class which  include IPersist,*/
 /* IPersistStream and IMoniker functions.                                       */
 static ICOM_VTABLE(IMoniker) VT_AntiMonikerImpl =
 {

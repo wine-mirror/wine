@@ -87,7 +87,7 @@ static ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface);
 static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparaisonData(IROTData* iface,BYTE* pbData,ULONG cbMax,ULONG* pcbData);
 
 /********************************************************************************/
-/* Virtual function table for the ItemMonikerImpl class witch  include Ipersist,*/
+/* Virtual function table for the ItemMonikerImpl class which  include IPersist,*/
 /* IPersistStream and IMoniker functions.                                       */
 static ICOM_VTABLE(IMoniker) VT_ItemMonikerImpl =
     {
@@ -342,9 +342,9 @@ HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface,
 
     /* for more details see ItemMonikerImpl_Save coments */
     
-    pcbSize->s.LowPart =  sizeof(DWORD) + /* DWORD witch contains delimiter length */
+    pcbSize->s.LowPart =  sizeof(DWORD) + /* DWORD which contains delimiter length */
                         delimiterLength + /* item delimiter string */
-                        sizeof(DWORD) + /* DWORD witch contains item name length */
+                        sizeof(DWORD) + /* DWORD which contains item name length */
                         nameLength + /* item name string */
                         34; /* this constant was added ! because when I tested this function it usually */
                             /*  returns 34 bytes more than the number of bytes used by IMoniker::Save function */

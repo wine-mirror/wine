@@ -1368,7 +1368,7 @@ ITypeInfoImpl * TLB_DoTypeInfo(
     ptiRet = (ITypeInfoImpl*) ITypeInfo_Constructor();
     TLB_Read(&tiBase, sizeof(tiBase) ,pcx ,
         pcx->pTblDir->pTypeInfoTab.offset+count*sizeof(tiBase));
-/* this where we are coming from */
+/* this is where we are coming from */
     ptiRet->pTypeLib = pLibInfo;
     ptiRet->index=count;
 /* fill in the typeattr fields */

@@ -342,12 +342,12 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 
 		memset(pTm,0,sizeof(*pTm));
 	
-		/* Because of the nature of DATE format witch
+		/* Because of the nature of DATE format which
 		 * associates 2.0 to January 1, 1900. We will
 		 * remove 1.0 from the whole part of the DATE
 		 * so that in the following code 1.0
 		 * will correspond to January 1, 1900.
-		 * This simplyfies the processing of the DATE value.
+		 * This simplifies the processing of the DATE value.
 		 */
 		dateIn -= 1.0;
 
@@ -359,7 +359,7 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 			int nDay = 0;
 			int leapYear = 0;
 			double yearsSince1900 = 0;
-			/* Start at 1900, this where the DATE time 0.0 starts.
+			/* Start at 1900, this is where the DATE time 0.0 starts.
 			 */
 			pTm->tm_year = 1900;
 			/* find in what year the day in the "wholePart" falls into.
@@ -375,12 +375,12 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 				wholePart++;
 			}
 
-			/* find what day of that year does the "wholePart" corresponds to.
+			/* find what day of that year the "wholePart" corresponds to.
 			 * Note: nDay is in [1-366] format
 			 */
 			nDay = (int) ( wholePart - floor( yearsSince1900 * DAYS_IN_ONE_YEAR ) );
 			/* Set the tm_yday value.
-			 * Note: The day is must be converted from [1-366] to [0-365]
+			 * Note: The day must be converted from [1-366] to [0-365]
 			 */
 			/*pTm->tm_yday = nDay - 1;*/
 			/* find which mount this day corresponds to.

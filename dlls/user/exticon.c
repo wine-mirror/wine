@@ -374,7 +374,7 @@ static HRESULT ICO_ExtractIconExW(
 	      );
 	      goto end;
 	    }
-	    /* FIXME: doesn't work when the resources are not in a seperate section */
+	    /* FIXME: doesn't work when the resources are not in a separate section */
 	    if (pe_sections[i].VirtualAddress == pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress) 
 	    {
 	      rootresdir = (PIMAGE_RESOURCE_DIRECTORY)(peimage+pe_sections[i].PointerToRawData);

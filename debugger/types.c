@@ -4,7 +4,7 @@
  * Copyright (C) 1997, Eric Youngdale.
  *
  * This really doesn't do much at the moment, but it forms the framework
- * upon which full support for datatype handling will eventually be hung.
+ * upon which full support for datatype handling will eventually be built.
  */
 
 #include "config.h"
@@ -723,7 +723,7 @@ int DEBUG_GetObjectSize(struct datatype * dt)
 	* DEBUG_GetObjectSize(dt->un.array.basictype);
     case DT_BITFIELD:
       /*
-       * Bitfields have to be handled seperately later on
+       * Bitfields have to be handled separately later on
        * when we insert the element into the structure.
        */
       return 0;

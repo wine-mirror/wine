@@ -338,7 +338,7 @@ static void SF_RegisterClipFmt (IGenericSFImpl * This)
 }
 
 /**************************************************************************
-*	we need a seperate IUnknown to handle aggregation
+*	we need a separate IUnknown to handle aggregation
 *	(inner IUnknown)
 */
 static HRESULT WINAPI IUnknown_fnQueryInterface(

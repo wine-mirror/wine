@@ -1571,7 +1571,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
   TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
   /*
-   * Since enumerators are seperate objects from the parent data object
+   * Since enumerators are separate objects from the parent data object
    * we only need to support the IUnknown and IEnumFORMATETC interfaces
    */
   

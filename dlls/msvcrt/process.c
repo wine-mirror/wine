@@ -82,7 +82,7 @@ static int __MSVCRT__spawn(int flags, const char *exe, char * args, char *env)
   return -1; /* can't reach here */
 }
 
-/* INTERNAL: Convert argv list to a single 'delim'-seperated string */
+/* INTERNAL: Convert argv list to a single 'delim'-separated string */
 static char * __MSVCRT__argvtos(const char * *arg, char delim)
 {
   const char **search = arg;

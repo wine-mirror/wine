@@ -283,7 +283,7 @@ typedef struct IDirectDrawGammaControl IDirectDrawGammaControl,*LPDIRECTDRAWGAMM
 #define DDSCAPS_RESERVED2		0x00800000
 /* memory allocation delayed until Load() */
 #define DDSCAPS_ALLOCONLOAD		0x04000000
-/* Indicates that the surface will recieve data from a video port */
+/* Indicates that the surface will receive data from a video port */
 #define DDSCAPS_VIDEOPORT		0x08000000
 /* surface is in local videomemory */
 #define DDSCAPS_LOCALVIDMEM		0x10000000

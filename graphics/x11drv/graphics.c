@@ -429,12 +429,12 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
             points[1].y = (int) floor(dc->DCOrgY + (top+bottom)/2.0 -
                     sin(end_angle) * (bottom-top-width*2+2) / 2. + 0.5);
                     
-            /* OK this stuff is optimized for Xfree86 
-             * which is probably the most used server by
+            /* OK, this stuff is optimized for Xfree86 
+             * which is probably the server most used by
              * wine users. Other X servers will not 
              * display correctly. (eXceed for instance)
-             * so if you feel you must change make sure that
-             * you either use Xfree86 or seperate your changes 
+             * so if you feel you must make changes, make sure that
+             * you either use Xfree86 or separate your changes 
              * from these (compile switch or whatever)
              */
             if (lines == 2) {

@@ -40,11 +40,11 @@ typedef struct BindCtxImpl{
                                      
     ULONG ref; /* reference counter for this object */
 
-    BindCtxObject* bindCtxTable; /* this is a table in witch all bounded objects are stored*/
+    BindCtxObject* bindCtxTable; /* this is a table in which all bounded objects are stored*/
     DWORD          bindCtxTableLastIndex;  /* first free index in the table */
     DWORD          bindCtxTableSize;   /* size table */
 
-    BIND_OPTS2 bindOption2; /* a structure witch contains the bind options*/
+    BIND_OPTS2 bindOption2; /* a structure which contains the bind options*/
 
 } BindCtxImpl;
 

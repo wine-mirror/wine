@@ -1355,7 +1355,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
  *	 2		Looks like a handle? - not constant
  *	 3		0 or 1 ??
  *	 4		Total number of bytes
- *	 5		No. of seperate bands = n [see below]
+ *	 5		No. of separate bands = n [see below]
  *	 6		Largest number of x co-ords in a band
  *	 7-10		Bounding box x1 y1 x2 y2
  *	 11-...		n bands

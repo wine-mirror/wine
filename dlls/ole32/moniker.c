@@ -203,10 +203,10 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
 
     /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
     /* the ROT refered many times  not in the same time (all the objects in the ROT will  */
-    /* be removed evry time the ROT is removed ) */
+    /* be removed every time the ROT is removed ) */
     runningObjectTableInstance->ref = 1;
 
-    /* allocate space memory for the table witch contains all the running objects */
+    /* allocate space memory for the table which contains all the running objects */
     runningObjectTableInstance->runObjTab = HeapAlloc(GetProcessHeap(), 0, sizeof(RunObject[BLOCK_TAB_SIZE]));
 
     if (runningObjectTableInstance->runObjTab == NULL)
@@ -250,7 +250,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
 
     TRACE("(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
-    /* there's only tow types of register : strong and or weak registration (only one must be passed on parameter) */
+    /* there's only two types of register : strong and or weak registration (only one must be passed on parameter) */
     if ( ( (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) || !(grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (!(grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ||  (grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (grfFlags) )

@@ -16,7 +16,7 @@
  *  - free unused memory
  *  - solve Open problems
  *  - smoother scrolling
- *  - seperate view code and document code
+ *  - separate view code and document code
  *
  * This program is intended as a testbed for winelib as much as
  * a useful application.

@@ -1872,7 +1872,7 @@ static LRESULT LISTVIEW_MouseHover(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 /***
  * DESCRIPTION:
- * Called whenever WM_MOUSEMOVE is recieved.
+ * Called whenever WM_MOUSEMOVE is received.
  *
  * PARAMETER(S):
  * [I] HWND : window handle
@@ -1901,7 +1901,7 @@ static LRESULT LISTVIEW_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
      if(!(trackinfo.dwFlags & TME_HOVER)) {
        trackinfo.dwFlags = TME_HOVER;
 
-       /* call TRACKMOUSEEVENT so we recieve WM_MOUSEHOVER messages */
+       /* call TRACKMOUSEEVENT so we receive WM_MOUSEHOVER messages */
        _TrackMouseEvent(&trackinfo);
     }
   }

@@ -123,8 +123,8 @@ static HRESULT WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface,IEnumMoniker** p
 HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,ULONG tabSize,ULONG currentPos,BOOL leftToRigth,IEnumMoniker ** ppmk);
 
 /********************************************************************************/
-/* Virtual function table for the CompositeMonikerImpl class witch  include     */
-/* Ipersist, IPersistStream and IMoniker functions.                             */
+/* Virtual function table for the CompositeMonikerImpl class which includes     */
+/* IPersist, IPersistStream and IMoniker functions.                             */
 
 static ICOM_VTABLE(IMoniker) VT_CompositeMonikerImpl =
 {
