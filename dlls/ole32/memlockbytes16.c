@@ -1,5 +1,4 @@
-/******************************************************************************
- *
+/*
  * Global memory implementation of ILockBytes.
  *
  * Copyright 1999 Thuy Nguyen
@@ -40,251 +39,181 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /******************************************************************************
- * HGLOBALLockBytesImpl definition.
+ * HGLOBALLockBytesImpl16 definition.
  *
  * This class imlements the ILockBytes inteface and represents a byte array
  * object supported by an HGLOBAL pointer.
  */
-struct HGLOBALLockBytesImpl
+struct HGLOBALLockBytesImpl16
 {
   /*
    * Needs to be the first item in the stuct
    * since we want to cast this in an ILockBytes pointer
    */
-  ICOM_VFIELD(ILockBytes);
-
-  /*
-   * Reference count
-   */
+  ICOM_VFIELD(ILockBytes16);
   ULONG        ref;
 
   /*
    * Support for the LockBytes object
    */
-  HGLOBAL supportHandle;
+  HGLOBAL16 supportHandle;
 
   /*
    * This flag is TRUE if the HGLOBAL is destroyed when the object
    * is finally released.
    */
   BOOL    deleteOnRelease;
-
   /*
    * Helper variable that contains the size of the byte array
    */
   ULARGE_INTEGER     byteArraySize;
 };
 
-typedef struct HGLOBALLockBytesImpl HGLOBALLockBytesImpl;
+typedef struct HGLOBALLockBytesImpl16 HGLOBALLockBytesImpl16;
 
-/*
- * Method definition for the HGLOBALLockBytesImpl class.
- */
-HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(
-    HGLOBAL  hGlobal,
-    BOOL     fDeleteOnRelease);
+HGLOBALLockBytesImpl16* HGLOBALLockBytesImpl16_Construct(
+    HGLOBAL16  hGlobal,
+    BOOL16     fDeleteOnRelease);
 
-void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This);
+void HGLOBALLockBytesImpl16_Destroy(HGLOBALLockBytesImpl16* This);
 
-HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
-    ILockBytes*   iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_QueryInterface(
+    ILockBytes16* iface,
     REFIID        riid,        /* [in] */
     void**        ppvObject);  /* [iid_is][out] */
 
-ULONG WINAPI HGLOBALLockBytesImpl_AddRef(
-    ILockBytes*   iface);
+ULONG WINAPI HGLOBALLockBytesImpl16_AddRef(
+    ILockBytes16* iface);
 
-ULONG WINAPI HGLOBALLockBytesImpl_Release(
-    ILockBytes*   iface);
+ULONG WINAPI HGLOBALLockBytesImpl16_Release(
+    ILockBytes16* iface);
 
-HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
-    ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_ReadAt(
+    ILockBytes16*  iface,
     ULARGE_INTEGER ulOffset,  /* [in] */
     void*          pv,        /* [length_is][size_is][out] */
     ULONG          cb,        /* [in] */
     ULONG*         pcbRead);  /* [out] */
 
-HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
-    ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_WriteAt(
+    ILockBytes16*  iface,
     ULARGE_INTEGER ulOffset,    /* [in] */
     const void*    pv,          /* [size_is][in] */
     ULONG          cb,          /* [in] */
     ULONG*         pcbWritten); /* [out] */
 
-HRESULT WINAPI HGLOBALLockBytesImpl_Flush(
-    ILockBytes*     iface);
+HRESULT WINAPI HGLOBALLockBytesImpl16_Flush(
+    ILockBytes16*   iface);
 
-HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
-    ILockBytes*     iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_SetSize(
+    ILockBytes16*   iface,
     ULARGE_INTEGER  libNewSize);  /* [in] */
 
-HRESULT WINAPI HGLOBALLockBytesImpl_LockRegion(
-    ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_LockRegion(
+    ILockBytes16*  iface,
     ULARGE_INTEGER libOffset,   /* [in] */
     ULARGE_INTEGER cb,          /* [in] */
     DWORD          dwLockType); /* [in] */
 
-HRESULT WINAPI HGLOBALLockBytesImpl_UnlockRegion(
-    ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_UnlockRegion(
+    ILockBytes16*  iface,
     ULARGE_INTEGER libOffset,   /* [in] */
     ULARGE_INTEGER cb,          /* [in] */
     DWORD          dwLockType); /* [in] */
 
-HRESULT WINAPI HGLOBALLockBytesImpl_Stat(
-    ILockBytes*    iface,
-    STATSTG*       pstatstg,     /* [out] */
+HRESULT WINAPI HGLOBALLockBytesImpl16_Stat(
+    ILockBytes16*  iface,
+    STATSTG16*     pstatstg,     /* [out] */
     DWORD          grfStatFlag); /* [in]  */
 
-/*
- * Virtual function table for the HGLOBALLockBytesImpl class.
- */
-static ICOM_VTABLE(ILockBytes) HGLOBALLockBytesImpl_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    HGLOBALLockBytesImpl_QueryInterface,
-    HGLOBALLockBytesImpl_AddRef,
-    HGLOBALLockBytesImpl_Release,
-    HGLOBALLockBytesImpl_ReadAt,
-    HGLOBALLockBytesImpl_WriteAt,
-    HGLOBALLockBytesImpl_Flush,
-    HGLOBALLockBytesImpl_SetSize,
-    HGLOBALLockBytesImpl_LockRegion,
-    HGLOBALLockBytesImpl_UnlockRegion,
-    HGLOBALLockBytesImpl_Stat,
-};
-
-/******************************************************************************
- *           CreateILockBytesOnHGlobal     [OLE32.57]
- */
-HRESULT WINAPI CreateILockBytesOnHGlobal(HGLOBAL      hGlobal,
-                                         BOOL         fDeleteOnRelease,
-                                         LPLOCKBYTES* ppLkbyt)
-{
-  HGLOBALLockBytesImpl* newLockBytes;
-
-  newLockBytes = HGLOBALLockBytesImpl_Construct(hGlobal, fDeleteOnRelease);
-
-  if (newLockBytes != NULL)
-  {
-    return IUnknown_QueryInterface((IUnknown*)newLockBytes,
-                                   &IID_ILockBytes,
-                                   (void**)ppLkbyt);
-  }
-
-  return E_OUTOFMEMORY;
-}
-
-/******************************************************************************
- *           GetHGlobalFromILockBytes     [OLE32.70]
- */
-HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
-{
-  HGLOBALLockBytesImpl* const pMemLockBytes = (HGLOBALLockBytesImpl*)plkbyt;
-  STATSTG stbuf;
-  HRESULT hres;
-  ULARGE_INTEGER start;
-  ULONG xread;
-
-  *phglobal = 0;
-  if (pMemLockBytes->lpVtbl == &HGLOBALLockBytesImpl_Vtbl) {
-    *phglobal = pMemLockBytes->supportHandle;
-    if (*phglobal == 0)
-      return E_INVALIDARG;
-    return S_OK;
-  }
-  /* It is not our lockbytes implementation, so use a more generic way */
-  hres = ILockBytes_Stat(plkbyt,&stbuf,0);
-  if (hres != S_OK) {
-     ERR("Cannot ILockBytes_Stat, %lx\n",hres);
-     return hres;
-  }
-  FIXME("cbSize is %ld\n",stbuf.cbSize.s.LowPart);
-  *phglobal = GlobalAlloc( GMEM_MOVEABLE|GMEM_SHARE, stbuf.cbSize.s.LowPart);
-  if (!*phglobal)
-    return E_INVALIDARG;
-  memset(&start,0,sizeof(start));
-  hres = ILockBytes_ReadAt(plkbyt, start, GlobalLock(*phglobal), stbuf.cbSize.s.LowPart, &xread);
-  GlobalUnlock(*phglobal);
-  if (hres != S_OK) {
-    FIXME("%p->ReadAt failed with %lx\n",plkbyt,hres);
-    return hres;
-  }
-  if (stbuf.cbSize.s.LowPart != xread) {
-    FIXME("Read size is not requested size %ld vs %ld?\n",stbuf.cbSize.s.LowPart, xread);
-  }
-  return S_OK;
-}
-
 /******************************************************************************
  *
- * HGLOBALLockBytesImpl implementation
+ * HGLOBALLockBytesImpl16 implementation
  *
  */
 
 /******************************************************************************
- * This is the constructor for the HGLOBALLockBytesImpl class.
+ * This is the constructor for the HGLOBALLockBytesImpl16 class.
  *
  * Params:
  *    hGlobal          - Handle that will support the stream. can be NULL.
- *    fDeleteOnRelease - Flag set to TRUE if the HGLOBAL will be released
+ *    fDeleteOnRelease - Flag set to TRUE if the HGLOBAL16 will be released
  *                       when the IStream object is destroyed.
  */
-HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
-                                                     BOOL    fDeleteOnRelease)
+HGLOBALLockBytesImpl16*
+HGLOBALLockBytesImpl16_Construct(HGLOBAL16 hGlobal,
+				 BOOL16 fDeleteOnRelease)
 {
-  HGLOBALLockBytesImpl* newLockBytes;
-  newLockBytes = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALLockBytesImpl));
+  HGLOBALLockBytesImpl16* newLockBytes;
 
-  if (newLockBytes!=0)
+  static ICOM_VTABLE(ILockBytes16) vt16;
+  static SEGPTR msegvt16;
+  HMODULE16 hcomp = GetModuleHandle16("OLE2");
+
+
+  TRACE("(%x,%d)\n",hGlobal,fDeleteOnRelease);
+  newLockBytes = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALLockBytesImpl16));
+  if (newLockBytes == NULL)
+    return NULL;
+
+  /*
+   * Set up the virtual function table and reference count.
+   */
+  if (!msegvt16)
   {
-    /*
-     * Set up the virtual function table and reference count.
-     */
-    newLockBytes->lpVtbl = &HGLOBALLockBytesImpl_Vtbl;
-    newLockBytes->ref    = 0;
-
-    /*
-     * Initialize the support.
-     */
-    newLockBytes->supportHandle = hGlobal;
-    newLockBytes->deleteOnRelease = fDeleteOnRelease;
-
-    /*
-     * This method will allocate a handle if one is not supplied.
-     */
-    if (newLockBytes->supportHandle == 0)
-    {
-      newLockBytes->supportHandle = GlobalAlloc(GMEM_MOVEABLE |
-                                                GMEM_NODISCARD,
-                                                0);
-    }
-
-    /*
-     * Initialize the size of the array to the size of the handle.
-     */
-    newLockBytes->byteArraySize.s.HighPart = 0;
-    newLockBytes->byteArraySize.s.LowPart  = GlobalSize(
-                                              newLockBytes->supportHandle);
+#define VTENT(x) vt16.x = (void*)GetProcAddress16(hcomp,"HGLOBALLockBytesImpl16_"#x);assert(vt16.x)
+      VTENT(QueryInterface);
+      VTENT(AddRef);
+      VTENT(Release);
+      VTENT(ReadAt);
+      VTENT(WriteAt);
+      VTENT(Flush);
+      VTENT(SetSize);
+      VTENT(LockRegion);
+      VTENT(UnlockRegion);
+#undef VTENT
+      msegvt16 = MapLS( &vt16 );
   }
+  newLockBytes->lpVtbl	= (ICOM_VTABLE(ILockBytes16)*)msegvt16;
+  newLockBytes->ref	= 0;
+  /*
+   * Initialize the support.
+   */
+  newLockBytes->supportHandle = hGlobal;
+  newLockBytes->deleteOnRelease = fDeleteOnRelease;
 
-  return newLockBytes;
+  /*
+   * This method will allocate a handle if one is not supplied.
+   */
+  if (newLockBytes->supportHandle == 0)
+    newLockBytes->supportHandle = GlobalAlloc16(GMEM_MOVEABLE | GMEM_NODISCARD, 0);
+
+  /*
+   * Initialize the size of the array to the size of the handle.
+   */
+  newLockBytes->byteArraySize.s.HighPart = 0;
+  newLockBytes->byteArraySize.s.LowPart  = GlobalSize16(
+					    newLockBytes->supportHandle);
+
+  return (HGLOBALLockBytesImpl16*)MapLS(newLockBytes);
 }
 
 /******************************************************************************
  * This is the destructor of the HGLOBALStreamImpl class.
  *
  * This method will clean-up all the resources used-up by the given
- * HGLOBALLockBytesImpl class. The pointer passed-in to this function will be
+ * HGLOBALLockBytesImpl16 class. The pointer passed-in to this function will be
  * freed and will not be valid anymore.
  */
-void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This)
+void HGLOBALLockBytesImpl16_Destroy(HGLOBALLockBytesImpl16* This)
 {
+  TRACE("()\n");
   /*
    * Release the HGlobal if the constructor asked for that.
    */
   if (This->deleteOnRelease)
   {
-    GlobalFree(This->supportHandle);
+    GlobalFree16(This->supportHandle);
     This->supportHandle = 0;
   }
 
@@ -298,13 +227,14 @@ void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This)
  * This implements the IUnknown method QueryInterface for this
  * class
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
-      ILockBytes*  iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_QueryInterface(
+      ILockBytes16*  iface,	/* [in] SEGPTR */
       REFIID       riid,        /* [in] */
-      void**       ppvObject)   /* [iid_is][out] */
+      void**       ppvObject)   /* [iid_is][out] (ptr to SEGPTR!) */
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)MapSL((SEGPTR)iface);
 
+  TRACE("(%p,%s,%p)\n",iface,debugstr_guid(riid),ppvObject);
   /*
    * Perform a sanity check on the parameters.
    */
@@ -315,18 +245,13 @@ HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
    * Initialize the return parameter.
    */
   *ppvObject = 0;
-
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
-  {
-    *ppvObject = (ILockBytes*)This;
-  }
-  else if (memcmp(&IID_ILockBytes, riid, sizeof(IID_ILockBytes)) == 0)
-  {
-    *ppvObject = (ILockBytes*)This;
-  }
+  if (	!memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) ||
+        !memcmp(&IID_ILockBytes, riid, sizeof(IID_ILockBytes))
+  )
+    *ppvObject = (void*)iface;
 
   /*
    * Check that we obtained an interface.
@@ -338,7 +263,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  HGLOBALLockBytesImpl_AddRef(iface);
+  HGLOBALLockBytesImpl16_AddRef((ILockBytes16*)This);
 
   return S_OK;
 }
@@ -347,9 +272,11 @@ HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
  * This implements the IUnknown method AddRef for this
  * class
  */
-ULONG WINAPI HGLOBALLockBytesImpl_AddRef(ILockBytes* iface)
+ULONG WINAPI HGLOBALLockBytesImpl16_AddRef(ILockBytes16* iface)
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
+
+  TRACE("(%p)\n",This);
 
   This->ref++;
 
@@ -360,11 +287,12 @@ ULONG WINAPI HGLOBALLockBytesImpl_AddRef(ILockBytes* iface)
  * This implements the IUnknown method Release for this
  * class
  */
-ULONG WINAPI HGLOBALLockBytesImpl_Release(ILockBytes* iface)
+ULONG WINAPI HGLOBALLockBytesImpl16_Release(ILockBytes16* iface)
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
 
   ULONG newRef;
+  TRACE("(%p)\n",This);
 
   This->ref--;
 
@@ -374,10 +302,7 @@ ULONG WINAPI HGLOBALLockBytesImpl_Release(ILockBytes* iface)
    * If the reference count goes down to 0, perform suicide.
    */
   if (newRef==0)
-  {
-    HGLOBALLockBytesImpl_Destroy(This);
-  }
-
+    HGLOBALLockBytesImpl16_Destroy(This);
   return newRef;
 }
 
@@ -389,19 +314,20 @@ ULONG WINAPI HGLOBALLockBytesImpl_Release(ILockBytes* iface)
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
-      ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_ReadAt(
+      ILockBytes16*  iface,
       ULARGE_INTEGER ulOffset,  /* [in] */
       void*          pv,        /* [length_is][size_is][out] */
       ULONG          cb,        /* [in] */
       ULONG*         pcbRead)   /* [out] */
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
 
   void* supportBuffer;
   ULONG bytesReadBuffer = 0;
   ULONG bytesToReadFromBuffer;
 
+  TRACE("(%p,%ld,%p,%ld,%p)\n",This,ulOffset.s.LowPart,pv,cb,pcbRead);
   /*
    * If the caller is not interested in the number of bytes read,
    * we use another buffer to avoid "if" statements in the code.
@@ -425,7 +351,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   /*
    * Lock the buffer in position and copy the data.
    */
-  supportBuffer = GlobalLock(This->supportHandle);
+  supportBuffer = GlobalLock16(This->supportHandle);
 
   memcpy(pv,
          (char *) supportBuffer + ulOffset.s.LowPart,
@@ -439,7 +365,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   /*
    * Cleanup
    */
-  GlobalUnlock(This->supportHandle);
+  GlobalUnlock16(This->supportHandle);
 
   /*
    * The function returns S_OK if the specified number of bytes were read
@@ -461,19 +387,20 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
-      ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_WriteAt(
+      ILockBytes16*  iface,
       ULARGE_INTEGER ulOffset,    /* [in] */
       const void*    pv,          /* [size_is][in] */
       ULONG          cb,          /* [in] */
       ULONG*         pcbWritten)  /* [out] */
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
 
   void*          supportBuffer;
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
 
+  TRACE("(%p,%ld,%p,%ld,%p)\n",This,ulOffset.s.LowPart,pv,cb,pcbWritten);
   /*
    * If the caller is not interested in the number of bytes written,
    * we use another buffer to avoid "if" statements in the code.
@@ -482,14 +409,10 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
     pcbWritten = &bytesWritten;
 
   if (cb == 0)
-  {
     return S_OK;
-  }
-  else
-  {
-    newSize.s.HighPart = 0;
-    newSize.s.LowPart = ulOffset.s.LowPart + cb;
-  }
+
+  newSize.s.HighPart = 0;
+  newSize.s.LowPart = ulOffset.s.LowPart + cb;
 
   /*
    * Verify if we need to grow the stream
@@ -497,14 +420,14 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
   if (newSize.s.LowPart > This->byteArraySize.s.LowPart)
   {
     /* grow stream */
-    if (HGLOBALLockBytesImpl_SetSize(iface, newSize) == STG_E_MEDIUMFULL)
+    if (HGLOBALLockBytesImpl16_SetSize(iface, newSize) == STG_E_MEDIUMFULL)
       return STG_E_MEDIUMFULL;
   }
 
   /*
    * Lock the buffer in position and copy the data.
    */
-  supportBuffer = GlobalLock(This->supportHandle);
+  supportBuffer = GlobalLock16(This->supportHandle);
 
   memcpy((char *) supportBuffer + ulOffset.s.LowPart, pv, cb);
 
@@ -516,7 +439,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
   /*
    * Cleanup
    */
-  GlobalUnlock(This->supportHandle);
+  GlobalUnlock16(This->supportHandle);
 
   return S_OK;
 }
@@ -526,8 +449,9 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_Flush(ILockBytes* iface)
+HRESULT WINAPI HGLOBALLockBytesImpl16_Flush(ILockBytes16* iface)
 {
+  TRACE("(%p)\n",iface);
   return S_OK;
 }
 
@@ -538,12 +462,13 @@ HRESULT WINAPI HGLOBALLockBytesImpl_Flush(ILockBytes* iface)
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
-      ILockBytes*     iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_SetSize(
+      ILockBytes16*   iface,
       ULARGE_INTEGER  libNewSize)   /* [in] */
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
 
+  TRACE("(%p,%ld)\n",This,libNewSize.s.LowPart);
   /*
    * As documented.
    */
@@ -556,7 +481,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  This->supportHandle = GlobalReAlloc(This->supportHandle,
+  This->supportHandle = GlobalReAlloc16(This->supportHandle,
                                       libNewSize.s.LowPart,
                                       0);
 
@@ -575,8 +500,8 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_LockRegion(
-      ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_LockRegion(
+      ILockBytes16*  iface,
       ULARGE_INTEGER libOffset,   /* [in] */
       ULARGE_INTEGER cb,          /* [in] */
       DWORD          dwLockType)  /* [in] */
@@ -591,8 +516,8 @@ HRESULT WINAPI HGLOBALLockBytesImpl_LockRegion(
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_UnlockRegion(
-      ILockBytes*    iface,
+HRESULT WINAPI HGLOBALLockBytesImpl16_UnlockRegion(
+      ILockBytes16*  iface,
       ULARGE_INTEGER libOffset,   /* [in] */
       ULARGE_INTEGER cb,          /* [in] */
       DWORD          dwLockType)  /* [in] */
@@ -608,18 +533,47 @@ HRESULT WINAPI HGLOBALLockBytesImpl_UnlockRegion(
  *
  * See the documentation of ILockBytes for more info.
  */
-HRESULT WINAPI HGLOBALLockBytesImpl_Stat(
-      ILockBytes*  iface,
-      STATSTG*     pstatstg,     /* [out] */
+HRESULT WINAPI HGLOBALLockBytesImpl16_Stat(
+      ILockBytes16*iface,
+      STATSTG16*   pstatstg,     /* [out] */
       DWORD        grfStatFlag)  /* [in] */
 {
-  HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBALLockBytesImpl16* const This=(HGLOBALLockBytesImpl16*)iface;
 
-  memset(pstatstg, 0, sizeof(STATSTG));
+  memset(pstatstg, 0, sizeof(STATSTG16));
 
   pstatstg->pwcsName = NULL;
   pstatstg->type     = STGTY_LOCKBYTES;
   pstatstg->cbSize   = This->byteArraySize;
 
   return S_OK;
+}
+
+/******************************************************************************
+ *           CreateILockBytesOnHGlobal     [OLE2.54]
+ * 
+ * Creates an ILockBytes interface for a HGLOBAL handle.
+ *
+ * Params:
+ * 	hGlobal			the global handle (16bit)
+ *	fDeleteOnRelease	delete handle on release.
+ *	ppLkbyt			pointer to ILockBytes interface.
+ *
+ * Returns:
+ *	Staddard OLE error return codes.
+ *
+ */
+HRESULT WINAPI CreateILockBytesOnHGlobal16(HGLOBAL16      hGlobal,
+                                           BOOL16         fDeleteOnRelease,
+                                           /*SEGPTR**/	LPLOCKBYTES16* ppLkbyt)
+{
+  HGLOBALLockBytesImpl16* newLockBytes; /* SEGPTR */
+
+  newLockBytes = HGLOBALLockBytesImpl16_Construct(hGlobal, fDeleteOnRelease);
+
+  if (newLockBytes != NULL)
+    return HGLOBALLockBytesImpl16_QueryInterface((ILockBytes16*)newLockBytes,
+                                   &IID_ILockBytes,
+                                   (void**)ppLkbyt);
+  return E_OUTOFMEMORY;
 }

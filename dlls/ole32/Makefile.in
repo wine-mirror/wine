@@ -45,7 +45,9 @@ C_SRCS = \
 	storage.c \
 	storage32.c
 
-C_SRCS16 = ole2nls.c
+C_SRCS16 = \
+	memlockbytes16.c \
+	ole2nls.c
 
 RC_SRCS = ole32res.rc version.rc
 
