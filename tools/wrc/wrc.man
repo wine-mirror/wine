@@ -111,7 +111,7 @@ below.
 .I \fB\-\-use\-temp\-file\fR
 Ignored for compatibility with \fIwindres\fR.
 .TP
-.I \fB\-v\fR
+.I \fB\-v\fR, \fB\-\-verbose\fR
 Turns on verbose mode (equivalent to -d 1).
 .TP
 .I \fB\-\-version\fR
