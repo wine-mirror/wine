@@ -1060,8 +1060,8 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
 /*****************************************************************************
  *             CoGetPSClsid [OLE32.@]
  *
- * This function returns the CLSID of the proxy/stub factory that
- * implements IPSFactoryBuffer for the specified interface.
+ * Retrieves the CLSID of the proxy/stub factory that implements
+ * IPSFactoryBuffer for the specified interface.
  *
  * PARAMS
  *  riid   [I] Interface whose proxy/stub CLSID is to be returned.
@@ -1070,7 +1070,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
  * RETURNS
  *   S_OK
  *   E_OUTOFMEMORY
- *   E_INVALIDARG if no PSFactoryBuffer is associated with the IID, or it could not be parsed
+ *   REGDB_E_IIDNOTREG if no PSFactoryBuffer is associated with the IID, or it could not be parsed
  *
  * NOTES
  *
@@ -1088,6 +1088,9 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
  *
  * We only search the registry, not ids registered with
  * CoRegisterPSClsid.
+ * Also, native returns S_OK for interfaces with an key in HKCR\Interface, but
+ * without a ProxyStubClsid32 key and leaves garbage in pclsid. This should be
+ * considered a bug in native unless an application depends on this (unlikely).
  */
 HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
 {
@@ -1103,9 +1106,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
        (length of iid string plus constant length of static text */
     buf = HeapAlloc(GetProcessHeap(), 0, strlen(buf2)+27);
     if (buf == NULL)
-    {
-       return (E_OUTOFMEMORY);
-    }
+        return E_OUTOFMEMORY;
 
     /* Construct the registry key we want */
     sprintf(buf,"Interface\\%s\\ProxyStubClsid32", buf2);
@@ -1113,9 +1114,9 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     /* Open the key.. */
     if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
     {
-       WARN("No PSFactoryBuffer object is registered for this IID\n");
-       HeapFree(GetProcessHeap(),0,buf);
-       return (E_INVALIDARG);
+        WARN("No PSFactoryBuffer object is registered for IID %s\n", debugstr_guid(riid));
+        HeapFree(GetProcessHeap(),0,buf);
+        return REGDB_E_IIDNOTREG;
     }
     HeapFree(GetProcessHeap(),0,buf);
 
@@ -1125,19 +1126,18 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     buf2len = sizeof(buf2);
     if ( (RegQueryValueA(xhkey,NULL,buf2,&buf2len)) )
     {
-       RegCloseKey(xhkey);
-       return E_INVALIDARG;
+        RegCloseKey(xhkey);
+        return REGDB_E_IIDNOTREG;
     }
     RegCloseKey(xhkey);
 
     /* We have the CLSid we want back from the registry as a string, so
        lets convert it into a CLSID structure */
-    if ( (__CLSIDFromStringA(buf2,pclsid)) != NOERROR) {
-       return E_INVALIDARG;
-    }
+    if ( (__CLSIDFromStringA(buf2,pclsid)) != NOERROR)
+        return REGDB_E_IIDNOTREG;
 
     TRACE ("() Returning CLSID=%s\n", debugstr_guid(pclsid));
-    return (S_OK);
+    return S_OK;
 }
 
 

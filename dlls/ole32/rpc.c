@@ -991,8 +991,6 @@ static DWORD WINAPI local_server_thread(LPVOID param)
             return hres;
         }
         
-        IStream_Release(pStm);
-
         WriteFile(hPipe,buffer,buflen,&res,NULL);
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
@@ -1000,6 +998,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         TRACE("done marshalling IClassFactory\n");
     }
     CloseHandle(hPipe);
+    IStream_Release(pStm);
     return 0;
 }
 

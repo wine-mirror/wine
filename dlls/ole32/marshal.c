@@ -423,13 +423,19 @@ static HRESULT proxy_manager_construct(
      * should store the STDOBJREF flags in the proxy manager. */
     This->sorflags = sorflags;
 
+    assert(channel);
     This->chan = channel; /* FIXME: we should take the binding strings and construct the channel in this function */
 
     /* we create the IRemUnknown proxy on demand */
     This->remunk = NULL;
 
     EnterCriticalSection(&apt->cs);
-    list_add_head(&apt->proxies, &This->entry);
+    /* FIXME: we are dependent on the ordering in here to make sure a proxy's
+     * IRemUnknown proxy doesn't get destroyed before the regual proxy does
+     * because we need the IRemUnknown proxy during the destruction of the
+     * regular proxy. Ideally, we should maintain a separate list for the
+     * IRemUnknown proxies that need late destruction */
+    list_add_tail(&apt->proxies, &This->entry);
     LeaveCriticalSection(&apt->cs);
 
     TRACE("%p created for OXID %s, OID %s\n", This,
@@ -790,7 +796,13 @@ StdMarshalImpl_MarshalInterface(
   start_apartment_listener_thread(); /* just to be sure we have one running. */
   start_apartment_remote_unknown();
 
-  IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
+  hres = IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
+  if (hres != S_OK)
+  {
+      ERR("object doesn't expose interface %s, failing with error 0x%08lx\n",
+        debugstr_guid(riid), hres);
+      return E_NOINTERFACE;
+  }
 
   if ((manager = get_stub_manager_from_object(apt, pUnk)))
   {

@@ -37,6 +37,26 @@ HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 #define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %ld\n", cLocks)
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 
+static void test_CoGetPSClsid()
+{
+	HRESULT hr;
+	CLSID clsid;
+	static const CLSID IID_IWineTest = {
+	    0x5201163f,
+	    0x8164,
+	    0x4fd0,
+	    {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+	}; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+
+	hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
+	ok_ole_success(hr, CoGetPSClsid);
+
+	hr = CoGetPSClsid(&IID_IWineTest, &clsid);
+	ok(hr == REGDB_E_IIDNOTREG,
+	   "CoGetPSClsid for random IID returned 0x%08lx instead of REGDB_E_IIDNOTREG\n",
+	   hr);
+}
+
 static const LARGE_INTEGER ullZero;
 static LONG cLocks;
 
@@ -251,6 +271,27 @@ static void end_host_object(DWORD tid, HANDLE thread)
     CloseHandle(thread);
 }
 
+/* tests failure case of interface not having a marshaler specified in the
+ * registry */
+static void test_no_marshaler()
+{
+    IStream *pStream;
+    HRESULT hr;
+    static const CLSID IID_IWineTest = {
+        0x5201163f,
+        0x8164,
+        0x4fd0,
+        {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+    }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IWineTest, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == E_NOINTERFACE, "CoMarshalInterface should have returned E_NOINTERFACE instead of 0x%08lx\n", hr);
+
+    IStream_Release(pStream);
+}
+
 /* tests normal marshal and then release without unmarshaling */
 static void test_normal_marshal_and_release()
 {
@@ -300,6 +341,49 @@ static void test_normal_marshal_and_unmarshal()
     IUnknown_Release(pProxy);
 
     ok_no_locks();
+}
+
+/* tests failure case of a unmarshaling an freed object */
+static void test_marshal_and_unmarshal_invalid()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IClassFactory *pProxy = NULL;
+    DWORD tid;
+    void * dummy;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+	
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+
+    ok_no_locks();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+
+    ok_no_locks();
+
+    if (pProxy)
+    {
+        hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IUnknown, &dummy);
+        ok(hr == RPC_E_DISCONNECTED, "Remote call should have returned RPC_E_DISCONNECTED, instead of 0x%08lx\n", hr);
+
+        IClassFactory_Release(pProxy);
+    }
+
+    IStream_Release(pStream);
+
+    end_host_object(tid, thread);
 }
 
 /* tests success case of an interthread marshal */
@@ -403,6 +487,118 @@ static void test_marshal_proxy_apartment_shutdown()
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
+/* tests that proxies are released when the containing mta apartment is destroyed */
+static void test_marshal_proxy_mta_apartment_shutdown()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    CoUninitialize();
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+	
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    CoUninitialize();
+
+    ok_no_locks();
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+}
+
+struct ncu_params
+{
+	LPSTREAM stream;
+	HANDLE marshal_event;
+	HANDLE unmarshal_event;
+};
+
+/* helper for test_proxy_used_in_wrong_thread */
+static DWORD CALLBACK no_couninitialize_proc(LPVOID p)
+{
+	struct ncu_params *ncu_params = (struct ncu_params *)p;
+	HRESULT hr;
+
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+	hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+	ok_ole_success(hr, CoMarshalInterface);
+
+	SetEvent(ncu_params->marshal_event);
+
+	WaitForSingleObject(ncu_params->unmarshal_event, INFINITE);
+
+	/* die without calling CoUninitialize */
+
+	return 0;
+}
+
+/* tests apartment that an apartment is released if the owning thread exits */
+static void test_no_couninitialize()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+    struct ncu_params ncu_params;
+
+    cLocks = 0;
+
+    ncu_params.marshal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ncu_params.unmarshal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    ncu_params.stream = pStream;
+
+    thread = CreateThread(NULL, 0, no_couninitialize_proc, &ncu_params, 0, &tid);
+
+    WaitForSingleObject(ncu_params.marshal_event, INFINITE);
+    ok_more_than_one_lock();
+	
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    SetEvent(ncu_params.unmarshal_event);
+    WaitForSingleObject(thread, INFINITE);
+
+    todo_wine { ok_no_locks(); }
+
+    CloseHandle(thread);
+    CloseHandle(ncu_params.marshal_event);
+    CloseHandle(ncu_params.unmarshal_event);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+}
+
 /* tests success case of a same-thread table-weak marshal, unmarshal, unmarshal */
 static void test_tableweak_marshal_and_unmarshal_twice()
 {
@@ -440,6 +636,96 @@ static void test_tableweak_marshal_and_unmarshal_twice()
      *  weak has cLocks == 0
      *  strong has cLocks > 0 */
     ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+/* tests releasing after unmarshaling one object */
+static void test_tableweak_marshal_releasedata1()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy1 = NULL;
+    IUnknown *pProxy2 = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_TABLEWEAK, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    /* release the remaining reference on the object by calling
+     * CoReleaseMarshalData in the hosting thread */
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid);
+
+    todo_wine { ok_more_than_one_lock(); }
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+    IStream_Release(pStream);
+
+    todo_wine { ok_more_than_one_lock(); }
+
+    IUnknown_Release(pProxy1);
+    if (pProxy2)
+        IUnknown_Release(pProxy2);
+
+    /* this line is shows the difference between weak and strong table marshaling:
+     *  weak has cLocks == 0
+     *  strong has cLocks > 0 */
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+/* tests releasing after unmarshaling one object */
+static void test_tableweak_marshal_releasedata2()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_TABLEWEAK, &thread);
+
+    ok_more_than_one_lock();
+
+    /* release the remaining reference on the object by calling
+     * CoReleaseMarshalData in the hosting thread */
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid);
+
+    todo_wine
+    {
+
+    ok_no_locks();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok(hr == CO_E_OBJNOTREG,
+       "CoUnmarshalInterface should have failed with CO_E_OBJNOTREG, but returned 0x%08lx instead\n",
+       hr);
+    IStream_Release(pStream);
+
+    ok_no_locks();
+    }
 
     end_host_object(tid, thread);
 }
@@ -892,6 +1178,40 @@ static void test_proxy_interfaces()
     end_host_object(tid, thread);
 }
 
+static void test_stubbuffer(REFIID riid)
+{
+    HRESULT hr;
+    IPSFactoryBuffer *psfb;
+    IRpcStubBuffer *stub;
+    ULONG refs;
+    CLSID clsid;
+
+    cLocks = 0;
+
+    hr = CoGetPSClsid(riid, &clsid);
+    ok_ole_success(hr, CoGetPSClsid);
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IPSFactoryBuffer, (LPVOID*)&psfb);
+    ok_ole_success(hr, CoGetClassObject);
+
+    hr = IPSFactoryBuffer_CreateStub(psfb, riid, (IUnknown*)&Test_ClassFactory, &stub);
+    ok_ole_success(hr, IPSFactoryBuffer_CreateStub);
+
+    refs = IPSFactoryBuffer_Release(psfb);
+#if 0 /* not reliable on native. maybe it leaks references */
+    ok(refs == 0, "Ref-count leak of %ld on IPSFactoryBuffer\n", refs);
+#endif
+
+    ok_more_than_one_lock();
+
+    IRpcStubBuffer_Disconnect(stub);
+
+    ok_no_locks();
+
+    refs = IRpcStubBuffer_Release(stub);
+    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
+}
+
 
 /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
 #if 0
@@ -1056,13 +1376,22 @@ START_TEST(marshal)
 
     /* FIXME: test CoCreateInstanceEx */
 
+    /* helper function tests */
+    test_CoGetPSClsid();
+
     /* lifecycle management and marshaling tests */
+    test_no_marshaler();
     test_normal_marshal_and_release();
     test_normal_marshal_and_unmarshal();
+    test_marshal_and_unmarshal_invalid();
     test_interthread_marshal_and_unmarshal();
     test_marshal_stub_apartment_shutdown();
     test_marshal_proxy_apartment_shutdown();
+    test_marshal_proxy_mta_apartment_shutdown();
+    test_no_couninitialize();
     test_tableweak_marshal_and_unmarshal_twice();
+    test_tableweak_marshal_releasedata1();
+    test_tableweak_marshal_releasedata2();
     test_tablestrong_marshal_and_unmarshal_twice();
     test_lock_object_external();
     test_disconnect_stub();
@@ -1072,7 +1401,7 @@ START_TEST(marshal)
     test_message_filter();
     test_bad_marshal_stream();
     test_proxy_interfaces();
-    /* FIXME: test custom marshaling */
+    test_stubbuffer(&IID_IClassFactory);
     /* FIXME: test GIT */
     /* FIXME: test COM re-entrancy */
 
