@@ -68,15 +68,12 @@ wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || $(RM) $@
 
 install:: $(MAN_TARGETS)
-	$(INSTALL) -d $(mandir)/man$(prog_manext)
-	$(INSTALL) -d $(mandir)/man$(conf_manext)
+	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext)
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
-	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 uninstall::
 	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
-	$(RM) $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 clean::

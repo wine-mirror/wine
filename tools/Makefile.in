@@ -4,7 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = makedep fnt2bdf bin2res winelauncher
+PROGRAMS = makedep fnt2bdf bin2res
 MODULE   = none
 
 C_SRCS = makedep.c fnt2bdf.c bin2res.c
@@ -15,11 +15,7 @@ SUBDIRS = \
 	wmc \
 	wrc
 
-INSTALLSUBDIRS = \
-	winebuild \
-	winedump \
-	wmc \
-	wrc
+INSTALLSUBDIRS = $(SUBDIRS)
 
 EXTRASUBDIRS = \
 	winapi_check \
@@ -27,7 +23,7 @@ EXTRASUBDIRS = \
 	winapi_check/win32 \
 	wineconf.libs
 
-all: $(PROGRAMS) winebuild winedump wmc wrc
+all: $(PROGRAMS) $(SUBDIRS)
 
 @MAKE_RULES@
 
@@ -40,17 +36,12 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
-winelauncher: winelauncher.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || $(RM) $@
-
-install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
-	$(INSTALL_SCRIPT) winelauncher $(bindir)/winelauncher
+install::
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_SCRIPT) $(SRCDIR)/wineshelllink $(bindir)/wineshelllink
+	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
-uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
-	$(RM) $(bindir)/fnt2bdf $(bindir)/winelauncher $(bindir)/winemaker $(bindir)/wineshelllink
+uninstall::
+	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 ### Dependencies:

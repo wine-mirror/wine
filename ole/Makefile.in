@@ -17,7 +17,7 @@ libwine_uuid.a: uuid.o
 	$(AR) $@ uuid.o
 	$(RANLIB) $@
 
-install: libwine_uuid.a
+install:: libwine_uuid.a
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_uuid.a $(libdir)/libwine_uuid.a
 

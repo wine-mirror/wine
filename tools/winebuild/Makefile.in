@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = winebuild
+PROGRAMS = winebuild$(EXEEXT)
 MODULE   = none
 
 C_SRCS = \
@@ -22,14 +22,14 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-winebuild: $(OBJS)
-	$(CC) $(CFLAGS) -o winebuild $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LDFLAGS)
+winebuild$(EXEEXT): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) winebuild $(bindir)/winebuild
+	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(bindir)/winebuild$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/winebuild
+	$(RM) $(bindir)/winebuild$(EXEEXT)
 
 ### Dependencies:

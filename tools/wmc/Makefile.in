@@ -40,9 +40,9 @@ clean::
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
-	$(INSTALL_PROGRAM) wmc $(bindir)/wmc
+	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(bindir)/wmc$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/wmc $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(RM) $(bindir)/wmc$(EXEEXT) $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 
 ### Dependencies:

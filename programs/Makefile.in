@@ -29,10 +29,12 @@ SUBDIRS = \
 	winhelp \
 	winver
 
+# Sub-directories to run make install into
+INSTALLSUBDIRS = $(SUBDIRS)
+
 # Programs to install in bin directory
 # We don't install everything to avoid polluting /usr/bin too much
 INSTALLPROGS = \
-	expand \
 	notepad \
 	progman \
 	regedit \
@@ -54,10 +56,13 @@ SYMLINKS = \
 
 @MAKE_RULES@
 
-all: wineapploader $(SUBDIRS) $(SYMLINKS:%=%$(DLLEXT))
+all: wineapploader winelauncher $(SUBDIRS) $(SYMLINKS:%=%$(DLLEXT))
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || $(RM) $@
+
+winelauncher: winelauncher.in
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || $(RM) $@
 
 # Rules for installation
 
@@ -75,14 +80,16 @@ install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
 
 install-progs: # nothing to do here
 
-install:: $(SUBDIRS:%=%/__install__) install-progs$(DLLEXT)
+install:: winelauncher install-progs$(DLLEXT)
+	$(MKINSTALLDIRS) $(bindir)
+	$(INSTALL_SCRIPT) winelauncher $(bindir)/winelauncher
 
-uninstall:: $(SUBDIRS:%=%/__uninstall__)
-	$(RM) $(bindir)/wineapploader $(INSTALLPROGS:%=$(bindir)/%)
+uninstall::
+	$(RM) $(bindir)/wineapploader $(bindir)/winelauncher $(INSTALLPROGS:%=$(bindir)/%)
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) wineapploader $(SYMLINKS)
+	$(RM) wineapploader winelauncher $(SYMLINKS)
 
 # Rules for testing
 

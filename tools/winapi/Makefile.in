@@ -3,15 +3,11 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-
-PROGRAMS =
-MODULE   = none
-
-all: $(PROGRAMS)
+MODULE    = none
 
 @MAKE_RULES@
 
-install:: $(PROGRAMS)
+install::
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/make_filter
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_check

@@ -55,11 +55,11 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 .PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
 
-install_prog.so: $(MODULE).so
+install_prog.so: $(MODULE).so dummy
 	$(MKINSTALLDIRS) $(dlldir)
 	$(INSTALL_PROGRAM) $(MODULE).so $(dlldir)/$(MODULE).so
 
-install_prog: $(MODULE)
+install_prog: $(MODULE) dummy
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE) $(bindir)/$(MODULE)
 

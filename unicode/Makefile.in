@@ -99,16 +99,18 @@ libwine_unicode.a: $(OBJS)
 libwine_unicode.dll: $(OBJS) wine_unicode.def
 	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
 
-install_so: libwine_unicode.so.$(SOVERSION)
+.PHONY: install_so install_a install_dll
+
+install_so: libwine_unicode.so.$(SOVERSION) dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_PROGRAM) libwine_unicode.so.$(SOVERSION) $(libdir)/libwine_unicode.so.$(SOVERSION)
 	cd $(libdir) && $(RM) libwine_unicode.so && $(LN_S) libwine_unicode.so.$(SOVERSION) libwine_unicode.so
 
-install_a: libwine_unicode.a
+install_a: libwine_unicode.a dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_unicode.a $(libdir)/libwine_unicode.a
 
-install_dll: libwine_unicode.dll
+install_dll: libwine_unicode.dll dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_unicode.dll $(libdir)/libwine_unicode.dll
 

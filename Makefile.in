@@ -5,6 +5,8 @@
 # distclean:       also remove all files created by configure
 # test:            run tests
 # testclean:       clean test results to force running all tests again
+# install-lib:     install libraries needed to run applications
+# install-dev:     install development environment
 # install:         install everything
 # uninstall:       uninstall everything
 # depend:          create the dependencies
@@ -23,31 +25,38 @@ LDCONFIG  = @LDCONFIG@
 LDD       = @LDD@
 MODULE    = none
 
-# Sub-directories containing stand-alone programs
-PROGSUBDIRS = \
-	server
-
-# Sub-directories containing programs that use some Wine dlls
-LIBPROGSUBDIRS = \
-	miscemu \
-	programs
-
-# Sub-directories containing libraries (not dlls) to build
-LIBSUBDIRS = \
-	library \
-	ole \
-	tsx11 \
-	unicode
-
-# Sub-directories to run make depend/clean/install into
+# Sub-directories to run make depend/clean into
 SUBDIRS = \
-	$(LIBPROGSUBDIRS) \
-	$(LIBSUBDIRS) \
-	$(PROGSUBDIRS) \
 	dlls \
 	documentation \
 	include \
+	library \
+	miscemu \
+	ole \
+	programs \
+	server \
+	tools \
+	tsx11 \
+	unicode
+
+# Sub-directories to install for install-lib
+INSTALLLIBSUBDIRS = \
+	dlls \
+	documentation \
+	library \
+	miscemu \
+	programs \
+	server \
+	tsx11 \
+	unicode
+
+# Sub-directories to install for install-dev
+INSTALLDEVSUBDIRS = \
+	include \
+	ole \
 	tools
+
+INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 
 # Sub-directories to run make test into
 TESTSUBDIRS = \
@@ -57,7 +66,7 @@ TESTSUBDIRS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
-all: Make.rules $(PROGSUBDIRS) $(LIBPROGSUBDIRS) wine
+all: Make.rules wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -71,7 +80,13 @@ Make.rules: Make.rules.in configure
 wine: $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
-install:: all $(SUBDIRS:%=%/__install__)
+# Installation rules
+
+install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__)
+
+install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__)
+
+install::
 	-$(LDCONFIG)
 	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
 	then								\
@@ -85,17 +100,25 @@ install:: all $(SUBDIRS:%=%/__install__)
 		echo "*************************************************" ; \
 	fi
 
-uninstall:: $(SUBDIRS:%=%/__uninstall__)
+.PHONY: install-lib install-dev
 
 # Dependencies between directories
 
-$(LIBPROGSUBDIRS): tools dlls $(LIBSUBDIRS)
+all: dlls library miscemu ole programs server tools tsx11 unicode
+dlls: library ole tools tsx11 unicode
+server: library tools unicode
+miscemu programs: dlls library ole tools tsx11 unicode
+tools: library unicode
 
-$(PROGSUBDIRS): tools $(LIBSUBDIRS)
+dlls/__install__: library ole tools tsx11 unicode
+server/__install__: library tools unicode
+miscemu/__install__ programs/__install__: library ole tools tsx11 unicode dlls/__install__
+library/__install__: library
+ole/__install__: ole
+tools/__install__: tools
+unicode/__install__: unicode
 
-dlls: tools $(LIBSUBDIRS)
-
-tools: $(LIBSUBDIRS)
+# Test rules
 
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
@@ -110,6 +133,10 @@ test_environment: dummy
 $(TESTSUBDIRS:%=%/__test__): test_environment
 
 check test:: $(TESTSUBDIRS:%=%/__test__)
+
+.PHONY: checklink test_environment
+
+# Misc rules
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
@@ -129,5 +156,7 @@ distclean: clean
 	$(RM) config.* TAGS Make.rules dlls/Makedll.rules programs/Makeprog.rules include/config.h
 	$(RM) -r autom4te.cache
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
+
+.PHONY: manpages htmlpages distclean
 
 ### Dependencies:

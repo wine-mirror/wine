@@ -20,6 +20,7 @@
 # DELAYIMPORTS : dlls to import in delayed mode
 # SUBDIRS      : subdirectories that contain a Makefile
 # EXTRASUBDIRS : subdirectories that do not contain a Makefile
+# INSTALLSUBDIRS : subdirectories to run make install/uninstall into
 # PLTESTS      : Perl test scripts
 # CTESTS       : C test sources
 
@@ -94,10 +95,10 @@ TESTMAIN     = $(TOPOBJDIR)/programs/winetest/wtmain.o
 
 # Installation infos
 
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_SCRIPT  = @INSTALL_SCRIPT@
-INSTALL_DATA    = @INSTALL_DATA@
+INSTALL         = @INSTALL@ $(INSTALL_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(INSTALL_PROGRAM_FLAGS)
+INSTALL_SCRIPT  = @INSTALL_SCRIPT@ $(INSTALL_SCRIPT_FLAGS)
+INSTALL_DATA    = @INSTALL_DATA@ $(INSTALL_DATA_FLAGS)
 prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 bindir          = @bindir@
@@ -157,14 +158,14 @@ LINTS = $(C_SRCS:.c=.ln)
 .pl.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
-.PHONY: all install uninstall clean distclean depend dummy check test testclean
-
 # 'all' target first in case the enclosing Makefile didn't define any target
 
 all: Makefile
 
 filter:
 	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
+
+.PHONY: all filter
 
 # Rule for main module intermediate object
 
@@ -217,6 +218,8 @@ $(SUBDIRS:%=%/__doc_html__): dummy
 doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
 	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done; fi
 
+.PHONY: man doc-html $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__)
+
 # Rule for linting
 
 $(MODULE).ln : $(LINTS)
@@ -232,8 +235,10 @@ lint:: $(MODULE).ln
 
 # Rules for Windows API checking
 
-winapi_check::
+winapi_check:: dummy
 	$(WINAPI_CHECK) $(WINAPI_CHECK_FLAGS) $(WINAPI_CHECK_EXTRA_FLAGS) .
+
+.PHONY: winapi_check
 
 # Rules for dependencies
 
@@ -242,6 +247,8 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 
 depend: $(MAKEDEP) $(SUBDIRS:%=%/__depend__)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS) $(CTESTS)
+
+.PHONY: depend $(SUBDIRS:%=%/__depend__)
 
 # Rules for cleaning
 
@@ -260,13 +267,21 @@ testclean:: $(SUBDIRS:%=%/__testclean__)
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(TESTLIST) $(TESTPROGRAM) $(PROGRAMS)
 
+.PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
+
 # Rules for installing
 
-$(SUBDIRS:%=%/__install__): dummy
+$(INSTALLSUBDIRS:%=%/__install__): dummy
 	cd `dirname $@` && $(MAKE) install
 
-$(SUBDIRS:%=%/__uninstall__): dummy
+$(INSTALLSUBDIRS:%=%/__uninstall__): dummy
 	cd `dirname $@` && $(MAKE) uninstall
+
+install:: $(INSTALLSUBDIRS:%=%/__install__)
+
+uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
+
+.PHONY: install uninstall $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__)
 
 # Rules for testing
 
@@ -274,6 +289,8 @@ check test:: $(TESTRESULTS)
 
 $(SUBDIRS:%=%/__test__): dummy
 	@cd `dirname $@` && $(MAKE) test
+
+.PHONY: check test $(SUBDIRS:%=%/__test__)
 
 $(PLTESTS:.c=.ok): $(WINETEST)
 $(CTESTS:.c=.ok): $(TESTPROGRAM)$(DLLEXT)
@@ -316,5 +333,7 @@ $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
 
 dummy:
+
+.PHONY: dummy $(SUBDIRS)
 
 # End of global rules

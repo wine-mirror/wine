@@ -52,9 +52,9 @@ clean::
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
-	$(INSTALL_PROGRAM) wrc $(bindir)/wrc
+	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(bindir)/wrc$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/wrc $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(RM) $(bindir)/wrc$(EXEEXT) $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 
 ### Dependencies:

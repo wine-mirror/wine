@@ -134,6 +134,8 @@ printf NEWMAKE <<EOF;
 
 
 BUILDSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS)
+
+INSTALLSUBDIRS = \$(BUILDSUBDIRS)
 EOF
 
 ################################################################
@@ -198,6 +200,13 @@ foreach my $mod (sort keys %directories)
     printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
 
+print NEWMAKE "\n# Install dependencies\n\n";
+
+foreach my $mod (sort keys %directories)
+{
+    printf NEWMAKE "%s/__install__: %s\$(DLLEXT)\n", $directories{$mod}, $mod;
+}
+
 print NEWMAKE "\n# Inter-dll dependencies\n\n";
 
 my @depends = ();
@@ -249,10 +258,11 @@ foreach my $mod (keys %linkable_dlls)
 }
 
 print NEWMAKE <<EOF;
-uninstall-links: dummy
+uninstall::
 	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 
-install-links: uninstall-links dummy
+install::
+	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 	cd \$(libdir) && if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
 	then \\
 EOF
@@ -276,14 +286,16 @@ print NEWMAKE <<EOF;
 \$(BUILDSUBDIRS:%=%/__checklink__): dummy
 	\@cd `dirname \$\@` && \$(MAKE) checklink
 
-install:: \$(BUILDSUBDIRS:%=%/__install__) install-links
-
-uninstall:: \$(BUILDSUBDIRS:%=%/__uninstall__) uninstall-links
+uninstall::
 	-rmdir \$(dlldir)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 
 checklink:: \$(BUILDSUBDIRS:%=%/__checklink__)
+
+.PHONY: checklink \$(BUILDSUBDIRS:%=%/__checklink__)
+
+### Dependencies:
 EOF
 
 close NEWMAKE;

@@ -39,16 +39,18 @@ libwine_tsx11.a: $(OBJS)
 libwine_tsx11.dll: $(OBJS)
 	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine_tsx11.a -o libwine_tsx11.dll $(OBJS)
 
-install_so: libwine_tsx11.so.$(SOVERSION)
+.PHONY: install_so install_a
+
+install_so: libwine_tsx11.so.$(SOVERSION) dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_PROGRAM) libwine_tsx11.so.$(SOVERSION) $(libdir)/libwine_tsx11.so.$(SOVERSION)
 	cd $(libdir) && $(RM) libwine_tsx11.so && $(LN_S) libwine_tsx11.so.$(SOVERSION) libwine_tsx11.so
 
-install_a: libwine_tsx11.a
+install_a: libwine_tsx11.a dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_tsx11.a $(libdir)/libwine_tsx11.a
 
-install:: all $(LIBEXT:%=install_%)
+install:: $(LIBEXT:%=install_%)
 
 uninstall::
 	$(RM) $(libdir)/libwine_tsx11.a $(libdir)/libwine_tsx11.so $(libdir)/libwine_tsx11.so.$(SOVERSION)

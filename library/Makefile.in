@@ -34,16 +34,18 @@ libwine.a: $(OBJS)
 libwine.dll: $(OBJS)
 	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS) -lmsvcrt
 
-install_so: libwine.so.$(SOVERSION)
+.PHONY: install_so install_a install_dll
+
+install_so: libwine.so.$(SOVERSION) dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
 	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
 
-install_a: libwine.a
+install_a: libwine.a dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
 
-install_dll: libwine.dll
+install_dll: libwine.dll dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine.dll $(libdir)/libwine.dll
 
