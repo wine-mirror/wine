@@ -1491,10 +1491,10 @@ UINT		WINAPI	mixerSetControlDetails(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 
 typedef DWORD           FOURCC;         /* a four character code */
-typedef LONG CALLBACK (*LPMMIOPROC16)(LPSTR lpmmioinfo, UINT16 uMessage,
-                                      LPARAM lParam1, LPARAM lParam2);
-typedef LONG CALLBACK (*LPMMIOPROC)(LPSTR lpmmioinfo, UINT uMessage,
-				    LPARAM lParam1, LPARAM lParam2);
+typedef LRESULT CALLBACK (*LPMMIOPROC16)(LPSTR lpmmioinfo, UINT16 uMessage,
+					 LPARAM lParam1, LPARAM lParam2);
+typedef LRESULT CALLBACK (*LPMMIOPROC)  (LPSTR lpmmioinfo, UINT uMessage,
+					 LPARAM lParam1, LPARAM lParam2);
 
 typedef struct {
         DWORD		dwFlags;	/* general status flags */

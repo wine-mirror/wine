@@ -37,8 +37,8 @@ DEFAULT_DEBUG_CHANNEL(mmio);
 /**************************************************************************
  *               	mmioDosIOProc           		[internal]
  */
-static LRESULT mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage, 
-			     LPARAM lParam1, LPARAM lParam2) 
+static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage, 
+				      LPARAM lParam1, LPARAM lParam2) 
 {
     LRESULT	ret = MMSYSERR_NOERROR;
 
@@ -130,9 +130,11 @@ static LRESULT mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	 * lParam2 = new name
 	 * Returns: zero on success, non-zero on failure
 	 */
-	FIXME("MMIOM_RENAME unimplemented\n");
-	return MMIOERR_FILENOTFOUND;
-    
+	 FIXME("MMIOM_RENAME incomplete\n");
+ 	 if (!MoveFileA((const char*)lParam1, (const char*)lParam2))
+	     ret = MMIOERR_FILENOTFOUND;
+	 break;
+
     default:
 	FIXME("unexpected message %u\n", uMessage);
 	return 0;
@@ -144,8 +146,8 @@ static LRESULT mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 /**************************************************************************
  *               	mmioMemIOProc           		[internal]
  */
-static LRESULT mmioMemIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage, 
-			     LPARAM lParam1, LPARAM lParam2) 
+static LRESULT CALLBACK mmioMemIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage, 
+				      LPARAM lParam1, LPARAM lParam2) 
 {
     TRACE("(%p,0x%04x,0x%08lx,0x%08lx)\n", lpmmioinfo, uMessage, lParam1, lParam2);
 
@@ -277,7 +279,8 @@ static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 	    pListNode->fourCC = fccIOProc;
 	    pListNode->pIOProc = pIOProc;
 	    pListNode->type = type;
-	    
+	    pListNode->count = 0;
+
 	    /* Stick it on the end of the list */
 	    pListNode->pNext = pIOProcListAnchor;
 	    pIOProcListAnchor = pListNode;
@@ -651,6 +654,7 @@ static LONG	MMIO_GrabNextBuffer(LPWINE_MMIO wm, int for_read)
 	if (size > 0)
 	    wm->info.pchEndRead += size;
     }
+    wm->bBufferLoaded = TRUE;
     return size;
 }
 
@@ -715,6 +719,7 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + cchBuffer;
     wm->info.lBufOffset = 0;
+    wm->bBufferLoaded = FALSE;
 
     return 0;
 }
@@ -772,7 +777,9 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
 	wm->bTmpIOProc = TRUE;
     }
     
+    wm->bBufferLoaded = FALSE;
     wm->ioProc->count++;
+
     if (dwOpenFlags & MMIO_ALLOCBUF) {
 	if ((refmminfo->wErrorRet = mmioSetBuffer(wm->info.hmmio, NULL, 
 						  MMIO_DEFAULTBUFFER, 0)))
@@ -792,7 +799,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     /* call IO proc to actually open file */
     refmminfo->wErrorRet = MMIO_SendMessage(wm, MMIOM_OPEN, (LPARAM)szFileName, 
 					    type == MMIO_PROC_16, MMIO_PROC_32A);
-    
+
     if (refmminfo->wErrorRet == 0)
 	return wm->info.hmmio;
  error1:
@@ -1053,6 +1060,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
     if ((wm = MMIO_Get(NULL, hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
+    /* not buffered, direct seek on file */
     if (!wm->info.pchBuffer)
 	return MMIO_SendMessage(wm, MMIOM_SEEK, lOffset, iOrigin, MMIO_PROC_32A);
 
@@ -1071,7 +1079,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 	    offset = MMIO_SendMessage(wm, MMIOM_SEEK, 0, SEEK_END, MMIO_PROC_32A);
 	    MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset, SEEK_SET, MMIO_PROC_32A);
 	}
-	offset += lOffset;
+	offset -= lOffset;
 	break;
     default:
 	return -1;
@@ -1081,7 +1089,8 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
     /* some memory mapped buffers are defined with -1 as a size */
     if ((wm->info.cchBuffer > 0) &&
 	((offset < wm->info.lBufOffset) ||
-	 (offset >= wm->info.lBufOffset + wm->info.cchBuffer))) {
+	 (offset >= wm->info.lBufOffset + wm->info.cchBuffer) ||
+	 !wm->bBufferLoaded)) {
 
 	/* condition to change buffer */
 	if ((wm->info.fccIOProc == FOURCC_MEM) || 
@@ -1670,11 +1679,11 @@ UINT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
 	  szFileName, szNewFileName, lpmmioinfo, dwRenameFlags);
     
     /* If both params are NULL, then parse the file name */
-    if (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
+    if (lpmmioinfo && lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
 	lpmmioinfo->fccIOProc = MMIO_ParseExt(szFileName);
 
     /* Handle any unhandled/error case from above. Assume DOS file */
-    if (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
+    if (!lpmmioinfo || (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL))
 	ioProc = (LPMMIOPROC16)mmioDosIOProc;
     /* if just the four character code is present, look up IO proc */
     else if (lpmmioinfo->pIOProc == NULL)
@@ -1704,19 +1713,19 @@ UINT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
 
     TRACE("('%s', '%s', %p, %08lX);\n",
 	  szFileName, szNewFileName, lpmmioinfo, dwRenameFlags);
-    
+
     /* If both params are NULL, then parse the file name */
-    if (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
+    if (lpmmioinfo && lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
 	lpmmioinfo->fccIOProc = MMIO_ParseExt(szFileName);
 
     /* Handle any unhandled/error case from above. Assume DOS file */
-    if (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
+    if (!lpmmioinfo || (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL))
 	ioProc = (LPMMIOPROC)mmioDosIOProc;
     /* if just the four character code is present, look up IO proc */
     else if (lpmmioinfo->pIOProc == NULL)
 	ioProc = MMIO_InstallIOProc(lpmmioinfo->fccIOProc, NULL, 
 				    MMIO_FINDPROC, MMIO_PROC_32A);
-    else
+    else /* use relevant ioProc */
  	ioProc = lpmmioinfo->pIOProc;
 
     if (ioProc) 
