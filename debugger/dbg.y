@@ -12,50 +12,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
-#include "winbase.h"
-#include "module.h"
-#include "task.h"
-#include "options.h"
-#include "queue.h"
-#include "wine/winbase16.h"
-#include "winnt.h"
-#include "x11drv.h"
-#include "win.h"
 #include "debugger.h"
-#include "neexe.h"
-#include "process.h"
-#include "server.h"
-#include "main.h"
 #include "expr.h"
-#include "user.h"
+#include "wine/exception.h"
 
 extern FILE * yyin;
-unsigned int dbg_mode = 0;
-HANDLE dbg_heap = 0;
 int curr_frame = 0;
-
-static enum exec_mode dbg_exec_mode = EXEC_CONT;
-static int dbg_exec_count = 0;
 
 void issue_prompt(void);
 void mode_command(int);
 void flush_symbols(void);
 int yylex(void);
 int yyerror(char *);
-
-#ifdef DBG_need_heap
-#define malloc(x) DBG_alloc(x)
-#define realloc(x,y) DBG_realloc(x,y)
-#define free(x) DBG_free(x)
-#endif
-
-extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
 
 %}
 
@@ -126,41 +96,41 @@ command:
       tQUIT tEOL               { DEBUG_Exit(0); }
     | tHELP tEOL               { DEBUG_Help(); }
     | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
-    | tCONT tEOL               { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_CONT; return 0; }
-    | tPASS tEOL               { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_PASS; return 0; }
-    | tCONT tNUM tEOL          { dbg_exec_count = $2; 
-				 dbg_exec_mode = EXEC_CONT; return 0; }
-    | tSTEP tEOL               { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-    | tNEXT tEOL               { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-    | tSTEP tNUM tEOL          { dbg_exec_count = $2; 
-				 dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-    | tNEXT tNUM tEOL          { dbg_exec_count = $2; 
-				 dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-    | tSTEPI tEOL              { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
-    | tNEXTI tEOL              { dbg_exec_count = 1; 
-				 dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
-    | tSTEPI tNUM tEOL         { dbg_exec_count = $2; 
-				 dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
-    | tNEXTI tNUM tEOL         { dbg_exec_count = $2; 
-				 dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
+    | tCONT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return 0; }
+    | tPASS tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_PASS; return 0; }
+    | tCONT tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return 0; }
+    | tSTEP tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+    | tNEXT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+    | tSTEP tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+    | tNEXT tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+    | tSTEPI tEOL              { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
+    | tNEXTI tEOL              { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
+    | tSTEPI tNUM tEOL         { DEBUG_CurrThread->dbg_exec_count = $2; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
+    | tNEXTI tNUM tEOL         { DEBUG_CurrThread->dbg_exec_count = $2; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
     | tABORT tEOL              { kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          { mode_command($2); }
     | tENABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, TRUE ); }
     | tDISABLE tNUM tEOL       { DEBUG_EnableBreakpoint( $2, FALSE ); }
     | tDELETE tBREAK tNUM tEOL { DEBUG_DelBreakpoint( $3 ); }
-    | tBACKTRACE tEOL	       { DEBUG_BackTrace(); }
+    | tBACKTRACE tEOL	       { DEBUG_BackTrace(TRUE); }
     | tUP tEOL		       { DEBUG_SetFrame( curr_frame + 1 );  }
     | tUP tNUM tEOL	       { DEBUG_SetFrame( curr_frame + $2 ); }
     | tDOWN tEOL	       { DEBUG_SetFrame( curr_frame - 1 );  }
     | tDOWN tNUM tEOL	       { DEBUG_SetFrame( curr_frame - $2 ); }
     | tFRAME tNUM tEOL         { DEBUG_SetFrame( $2 ); }
-    | tFINISH tEOL	       { dbg_exec_count = 0;
-				 dbg_exec_mode = EXEC_FINISH; return 0; }
+    | tFINISH tEOL	       { DEBUG_CurrThread->dbg_exec_count = 0;
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_FINISH; return 0; }
     | tSHOW tDIR tEOL	       { DEBUG_ShowDir(); }
     | tDIR pathname tEOL       { DEBUG_AddPath( $2 ); }
     | tDIR tEOL		       { DEBUG_NukePath(); }
@@ -173,7 +143,6 @@ command:
     | tUNDISPLAY tEOL          { DEBUG_DelDisplay( -1 ); }
     | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
-    | tDEBUGMSG tDEBUGSTR tEOL { MAIN_ParseDebugOptions($2); }
     | tSYMBOLFILE pathname tEOL{ DEBUG_ReadSymbolTable($2); }
     | list_command
     | disassemble_command
@@ -274,32 +243,30 @@ break_command:
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS expr_value tEOL    { CLASS_DumpClass( (struct tagCLASS *)$3 ); 
- 					     DEBUG_FreeExprMem(); }
+    | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
-    | tINFO tMODULE expr_value tEOL   { NE_DumpModule( $3 ); 
+    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); 
  					     DEBUG_FreeExprMem(); }
-    | tINFO tQUEUE expr_value tEOL    { QUEUE_DumpQueue( $3 ); 
+    | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
-    | tINFO tSEGMENTS expr_value tEOL { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); 
- 					     DEBUG_FreeExprMem(); }
-    | tINFO tSEGMENTS tEOL      { LDT_Print( 0, -1 ); }
+    | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
+    | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
-    | tINFO tMAPS tEOL          { VIRTUAL_Dump(); }
-    | tINFO tWND expr_value tEOL      { WIN_DumpWindow( $3 ); 
+    | tINFO tMAPS tEOL          { DEBUG_InfoVirtual(); }
+    | tINFO tWND expr_value tEOL      { DEBUG_InfoWindow( (HWND)$3 ); 
  					     DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
     | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
 
 walk_command:
-      tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
-    | tWALK tMODULE tEOL        { NE_WalkModules(); }
-    | tWALK tQUEUE tEOL         { QUEUE_WalkQueues(); }
-    | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
-    | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
-    | tWALK tPROCESS tEOL       { PROCESS_WalkProcess(); }
-    | tWALK tMODREF expr_value tEOL   { MODULE_WalkModref( $3 ); }
+      tWALK tCLASS tEOL         { DEBUG_WalkClasses(); }
+    | tWALK tMODULE tEOL        { DEBUG_WalkModules(); }
+    | tWALK tQUEUE tEOL         { DEBUG_WalkQueues(); }
+    | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
+    | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( $3, 0 ); }
+    | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
+    | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); }
 
 
 type_cast: 
@@ -326,11 +293,13 @@ type_expr:
     | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(DT_ENUM, $2); }
 
 expr_addr:
-    expr			 { $$ = DEBUG_EvalExpr($1); }
+      expr			{ $$ = DEBUG_EvalExpr($1); }
 
 expr_value:
-      expr        { DBG_ADDR addr  = DEBUG_EvalExpr($1);
-		    $$ = addr.off ? *(unsigned int *) addr.off : 0; }
+      expr        { DBG_ADDR addr = DEBUG_EvalExpr($1); 
+                    /* expr_value is typed as an integer */
+		    if (!addr.off || !DEBUG_READ_MEM((void*)addr.off, &$$, sizeof($$)))
+		       $$ = 0; }
 /*
  * The expr rule builds an expression tree.  When we are done, we call
  * EvalExpr to evaluate the value of the expression.  The advantage of
@@ -410,50 +379,27 @@ issue_prompt(){
 
 void mode_command(int newmode)
 {
-    if ((newmode == 16) || (newmode == 32)) dbg_mode = newmode;
+    if ((newmode == 16) || (newmode == 32)) DEBUG_CurrThread->dbg_mode = newmode;
     else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
 }
 
-/***********************************************************************
- *           DEBUG_Freeze
- */
-static void DEBUG_Freeze( BOOL freeze )
+static WINE_EXCEPTION_FILTER(no_symbol)
 {
-    static BOOL frozen = FALSE;
-
-    if ( freeze && !frozen )
-    {
-        if ( X11DRV_CritSection.LockSemaphore )
-        {
-            /* Don't freeze thread currently holding the X crst! */
-            EnterCriticalSection( &X11DRV_CritSection );
-            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
-            LeaveCriticalSection( &X11DRV_CritSection );
-        }
-        else
-            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
-
-        frozen = TRUE;
-    }
-
-    if ( !freeze && frozen )
-    {
-        CLIENT_DebuggerRequest( DEBUGGER_UNFREEZE_ALL );
-        frozen = FALSE;
-    }
+    if (GetExceptionCode() == DEBUG_STATUS_NO_SYMBOL)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 /***********************************************************************
  *           DEBUG_Exit
  *
  * Kill current process.
+ *
  */
 void DEBUG_Exit( DWORD exit_code )
 {
-    DEBUG_Freeze( FALSE );
-
-    TASK_KillTask( 0 );  /* FIXME: should not be necessary */
-    TerminateProcess( GetCurrentProcess(), exit_code );
+    TASK_KillTask( 0 ); /* FIXME: should not be necessary */
+    TerminateProcess( DEBUG_CurrProcess->handle, exit_code );
 }
 
 /***********************************************************************
@@ -461,261 +407,131 @@ void DEBUG_Exit( DWORD exit_code )
  *
  * Debugger main loop.
  */
-static void DEBUG_Main( BOOL is_debug )
+BOOL DEBUG_Main( BOOL is_debug, BOOL force )
 {
-    static int loaded_symbols = 0;
-    static BOOL in_debugger = FALSE;
-    char SymbolTableFile[256];
     int newmode;
     BOOL ret_ok;
+    char ch;
+
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
 
-    if (in_debugger)
-    {
-        fprintf( stderr, " inside debugger, trying to invoke external debugger.\n" );
-        DEBUG_ExternalDebugger();
-        DEBUG_Exit(1);
-    }
-    in_debugger = TRUE;
     yyin = stdin;
 
-    DEBUG_SetBreakpoints( FALSE );
+    DEBUG_SuspendExecution();
 
     if (!is_debug)
     {
 #ifdef __i386__
-        if (IS_SELECTOR_SYSTEM(CS_reg(&DEBUG_context)))
-            fprintf( stderr, " in 32-bit code (0x%08lx).\n", EIP_reg(&DEBUG_context));
+        if (DEBUG_IsSelectorSystem(DEBUG_context.SegCs))
+            fprintf( stderr, " in 32-bit code (0x%08lx).\n", DEBUG_context.Eip );
         else
             fprintf( stderr, " in 16-bit code (%04x:%04lx).\n",
-                     (WORD)CS_reg(&DEBUG_context), EIP_reg(&DEBUG_context) );
+                     (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
 #else
-        fprintf( stderr, " (%p).\n", GET_IP(&DEBUG_context) );
+        fprintf( stderr, " (%p).\n", GET_IP(DEBUG_CurrThread->context) );
 #endif
     }
 
-    if (!loaded_symbols)
-    {
-        loaded_symbols++;
+    if (DEBUG_LoadEntryPoints("Loading new modules symbols:\n"))
+       DEBUG_ProcessDeferredDebug();
 
-        DEBUG_Freeze( TRUE );
-
-#ifdef DBG_need_heap
-	/*
-	 * Initialize the debugger heap.
-	 */
-	dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
-#endif
-
-	/*
-	 * Initialize the type handling stuff.
-	 */
-	DEBUG_InitTypes();
-	DEBUG_InitCVDataTypes();
-
-	/*
-	 * In some cases we can read the stabs information directly
-	 * from the executable.  If this is the case, we don't need
-	 * to bother with trying to read a symbol file, as the stabs
-	 * also have line number and local variable information.
-	 * As long as gcc is used for the compiler, stabs will
-	 * be the default.  On SVr4, DWARF could be used, but we
-	 * don't grok that yet, and in this case we fall back to using
-	 * the wine.sym file.
-	 */
-	if( DEBUG_ReadExecutableDbgInfo() == FALSE )
-        {
-	    char *symfilename = "wine.sym";
-	    struct stat statbuf;
-	    if (-1 == stat(symfilename, &statbuf) )
-                symfilename = LIBDIR "wine.sym";
-
-	    PROFILE_GetWineIniString( "wine", "SymbolTableFile", symfilename,
-                                     SymbolTableFile, sizeof(SymbolTableFile));
-	    DEBUG_ReadSymbolTable( SymbolTableFile );
-        }
-	DEBUG_LoadEntryPoints(NULL);
-	DEBUG_ProcessDeferredDebug();
-    }
-    else 
-    {
-        if (DEBUG_LoadEntryPoints("Loading new modules symbols:\n"))
-	    DEBUG_ProcessDeferredDebug();
-    }
-
-#if 0
-    fprintf(stderr, "Entering debugger 	PC=%x, mode=%d, count=%d\n",
-	    EIP_reg(&DEBUG_context),
-	    dbg_exec_mode, dbg_exec_count);
-    
-    sleep(1);
-#endif
-
-    if (!is_debug || !DEBUG_ShouldContinue( dbg_exec_mode, &dbg_exec_count ))
+    if (force || !(is_debug && DEBUG_ShouldContinue( DEBUG_CurrThread->dbg_exec_mode, &DEBUG_CurrThread->dbg_exec_count )))
     {
         DBG_ADDR addr;
         DEBUG_GetCurrentAddress( &addr );
 
-        DEBUG_Freeze( TRUE );
-
-        /* Put the display in a correct state */
-	if (USER_Driver) USER_Driver->pBeginDebugging();
+/* EPP 	if (USER_Driver) USER_Driver->pBeginDebugging(); */
 
 #ifdef __i386__
-        newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
+        switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
+	case 16: case 32: break;
+	default: fprintf(stderr, "Bad CS (%ld)\n", addr.seg); newmode = 32;
+	}
 #else
         newmode = 32;
 #endif
-        if (newmode != dbg_mode)
-            fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
+        if (newmode != DEBUG_CurrThread->dbg_mode)
+            fprintf(stderr,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
 
 	DEBUG_DoDisplay();
 
-        if (!is_debug)  /* This is a real crash, dump some info */
-        {
-            DEBUG_InfoRegisters();
-            DEBUG_InfoStack();
-#ifdef __i386__
-            if (dbg_mode == 16)
-            {
-                LDT_Print( SELECTOR_TO_ENTRY(DS_reg(&DEBUG_context)), 1 );
-                if (ES_reg(&DEBUG_context) != DS_reg(&DEBUG_context))
-                    LDT_Print( SELECTOR_TO_ENTRY(ES_reg(&DEBUG_context)), 1 );
-            }
-            LDT_Print( SELECTOR_TO_ENTRY(FS_reg(&DEBUG_context)), 1 );
-#endif
-            DEBUG_BackTrace();
-        }
-	else
+        if (is_debug || force)
 	{
 	  /*
 	   * Do a quiet backtrace so that we have an idea of what the situation
 	   * is WRT the source files.
 	   */
-	    DEBUG_SilentBackTrace();
+	    DEBUG_BackTrace(FALSE);
 	}
+	else
+        {
+	    /* This is a real crash, dump some info */
+            DEBUG_InfoRegisters();
+            DEBUG_InfoStack();
+#ifdef __i386__
+            if (DEBUG_CurrThread->dbg_mode == 16)
+            {
+	        DEBUG_InfoSegments( DEBUG_context.SegDs >> 3, 1 );
+                if (DEBUG_context.SegEs != DEBUG_context.SegDs)
+                    DEBUG_InfoSegments( DEBUG_context.SegEs >> 3, 1 );
+            }
+            DEBUG_InfoSegments( DEBUG_context.SegFs >> 3, 1 );
+#endif
+            DEBUG_BackTrace(TRUE);
+        }
 
 	if (!is_debug ||
-            (dbg_exec_mode == EXEC_STEPI_OVER) ||
-            (dbg_exec_mode == EXEC_STEPI_INSTR))
+            (DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_OVER) ||
+            (DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_INSTR))
         {
 	    /* Show where we crashed */
 	    curr_frame = 0;
-	    DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
+	    DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
 	    fprintf(stderr,":  ");
-	    if (DBG_CHECK_READ_PTR( &addr, 1 ))
-	      {
-		DEBUG_Disasm( &addr, TRUE );
-		fprintf(stderr,"\n");
-	      }
+	    DEBUG_Disasm( &addr, TRUE );
+	    fprintf( stderr, "\n" );
         }
 
         ret_ok = 0;
         do
         {
-            issue_prompt();
-            yyparse();
-            flush_symbols();
+	    __TRY 
+	    {
+	       issue_prompt();
+	       yyparse();
+	       flush_symbols();
 
-            DEBUG_GetCurrentAddress( &addr );
-            ret_ok = DEBUG_ValidateRegisters();
-            if (ret_ok) ret_ok = DBG_CHECK_READ_PTR( &addr, 1 );
+	       DEBUG_GetCurrentAddress( &addr );
+	       if ((ret_ok = DEBUG_ValidateRegisters()))
+		  ret_ok = DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &addr ), &ch, 1 );
+	    } 
+	    __EXCEPT(no_symbol)
+	    {
+	       fprintf(stderr, "Undefined symbol\n");
+	       ret_ok = 0;
+	    }
+	    __ENDTRY;
+
         } while (!ret_ok);
     }
 
-    dbg_exec_mode = DEBUG_RestartExecution( dbg_exec_mode, dbg_exec_count );
+    DEBUG_CurrThread->dbg_exec_mode = DEBUG_RestartExecution( DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count );
     /*
      * This will have gotten absorbed into the breakpoint info
      * if it was used.  Otherwise it would have been ignored.
      * In any case, we don't mess with it any more.
      */
-    if ((dbg_exec_mode == EXEC_CONT) || (dbg_exec_mode == EXEC_PASS))
-      {
-	dbg_exec_count = 0;
+    if ((DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT) || (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS))
+	DEBUG_CurrThread->dbg_exec_count = 0;
 
-        DEBUG_Freeze( FALSE );
-      }
-
-    in_debugger = FALSE;
-
-    if (USER_Driver) USER_Driver->pEndDebugging();
+/* EPP     if (USER_Driver) USER_Driver->pEndDebugging(); */
+    
+    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;
 }
 
-
-DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
-{
-    BOOL is_debug = FALSE;
-
-    if (first_chance && !Options.debug) return 0;  /* pass to app first */
-
-    switch(rec->ExceptionCode)
-    {
-    case EXCEPTION_BREAKPOINT:
-    case EXCEPTION_SINGLE_STEP:
-        is_debug = TRUE;
-        break;
-    case CONTROL_C_EXIT:
-        if (!Options.debug) DEBUG_Exit(0);
-        break;
-    }
-
-    if (!is_debug)
-    {
-        /* print some infos */
-        fprintf( stderr, "%s: ",
-                 first_chance ? "First chance exception" : "Unhandled exception" );
-        switch(rec->ExceptionCode)
-        {
-        case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            fprintf( stderr, "divide by zero" );
-            break;
-        case EXCEPTION_INT_OVERFLOW:
-            fprintf( stderr, "overflow" );
-            break;
-        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            fprintf( stderr, "array bounds " );
-            break;
-        case EXCEPTION_ILLEGAL_INSTRUCTION:
-            fprintf( stderr, "illegal instruction" );
-            break;
-        case EXCEPTION_STACK_OVERFLOW:
-            fprintf( stderr, "stack overflow" );
-            break;
-        case EXCEPTION_PRIV_INSTRUCTION:
-            fprintf( stderr, "priviledged instruction" );
-            break;
-        case EXCEPTION_ACCESS_VIOLATION:
-            if (rec->NumberParameters == 2)
-                fprintf( stderr, "page fault on %s access to 0x%08lx", 
-                         rec->ExceptionInformation[0] ? "write" : "read",
-                         rec->ExceptionInformation[1] );
-            else
-                fprintf( stderr, "page fault" );
-            break;
-        case EXCEPTION_DATATYPE_MISALIGNMENT:
-            fprintf( stderr, "Alignment" );
-            break;
-        case CONTROL_C_EXIT:
-            fprintf( stderr, "^C" );
-            break;
-        case EXCEPTION_CRITICAL_SECTION_WAIT:
-            fprintf( stderr, "critical section %08lx wait failed", rec->ExceptionInformation[0] );
-            break;
-        default:
-            fprintf( stderr, "%08lx", rec->ExceptionCode );
-            break;
-        }
-    }
-
-    DEBUG_context = *context;
-    DEBUG_Main( is_debug );
-    *context = DEBUG_context;
-    return (dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;
-}
-
-int yyerror(char * s)
+int yyerror(char* s)
 {
 	fprintf(stderr,"%s\n", s);
         return 0;

@@ -8,147 +8,126 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "wine/winbase16.h"
+#include <string.h>
 #include "debugger.h"
-#include "miscemu.h"
+#include "winbase.h"
 
-
-/************************************************************
- *   
- *  Check if linear pointer in [addr, addr+size[
- *     read  (rwflag == 1)
- *   or
- *     write (rwflag == 0)
- ************************************************************/
-
-BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
-{
-  FILE *fp;
-  char buf[200];      /* temporary line buffer */
-  char prot[5];      /* protection string */
-  char *start, *end;
-  int ret = TRUE;
-
-#ifdef linux
-  /* 
-     The entries in /proc/self/maps are of the form:
-     08000000-08002000 r-xp 00000000 03:41 2361
-     08002000-08003000 rw-p 00001000 03:41 2361
-     08003000-08005000 rwxp 00000000 00:00 0
-     40000000-40005000 r-xp 00000000 03:41 67219
-     40005000-40006000 rw-p 00004000 03:41 67219
-     40006000-40007000 rw-p 00000000 00:00 0
-     ...
-      start    end     perm   ???    major:minor inode
-
-     Only permissions start and end are used here
-     */
-#else
-/*
-    % cat /proc/curproc/map
-    start      end         resident   private perm    type
-    0x1000     0xe000            12         0 r-x COW vnode
-    0xe000     0x10000            2         2 rwx COW vnode
-    0x10000    0x27000            4         4 rwx     default
-    0x800e000  0x800f000          1         1 rw-     default
-    0xefbde000 0xefbfe000         1         1 rwx     default
-    
-    COW = "copy on write"
-
-
-    % cat /proc/curproc/map on FreeBSD 3.0
-    start     end       ?  ?  ?      prot ? ? ?   ?   ?  ?
-    0x8048000 0x8054000 12 14 114770 r-x  2 1 0x0 COW NC vnode
-    0x8054000 0x8055000 1 0 166664 rwx 1 0 0x2180 COW NNC vnode
-    0x8055000 0x806a000 5 0 166662 rwx 1 0 0x2180 NCOW NNC default
-    0x28054000 0x28055000 1 0 166666 rwx 1 0 0x2180 NCOW NNC default
-    0xefbde000 0xefbfe000 1 0 166663 rwx 1 0 0x2180 NCOW NNC default
-
-*/
-#endif
-
-  
-  if (!(fp = fopen("/proc/self/maps","r")) && 
-      !(fp = fopen("/proc/curproc/map","r"))
-  )
-    return FALSE; 
-
-#ifdef __FreeBSD__
-  /*
-   * *FOO*  read(2) less than length of /proc/.../map fails with EFBIG
-   *
-   * $ dd bs=256 </proc/curproc/map 
-   * dd: stdin: File too large
-   * 0+0 records in
-   * 0+0 records out
-   * 0 bytes transferred in 0.001595 secs (0 bytes/sec)
-   */
-  setvbuf(fp, (char *)NULL, _IOFBF, 0x4000);
-#endif
-  while (fgets( buf, sizeof(buf)-1, fp)) {
-#ifdef linux
-    sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
-#else
-    sscanf(buf, "%x %x %*d %*d %3s", (int *) &start, (int *) &end, prot);
-    if (prot[0]!='r' && prot[0]!='-') /* FreeBSD 3.0 format */
-       sscanf(buf, "%x %x %*d %*d %*d %3s", (int *) &start, (int *) &end, prot);
-#endif
-    if ( end <= addr)
-      continue;
-    if (start <= addr && addr+size <= end) {
-      if (rwflag) 
-	ret = (prot[0] != 'r'); /* test for reading */
-      else
-	ret = (prot[1] != 'w'); /* test for writing */
-    }
-    break;
-  }
-  fclose( fp);
-  return ret;
-}
-
-
-/***********************************************************************
- *           DEBUG_IsBadReadPtr
- *
- * Check if we are allowed to read memory at 'address'.
- */
-BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
-{
 #ifdef __i386__
-    if (!IS_SELECTOR_V86(address->seg))
-    if (address->seg)  /* segmented addr */
-    {
-        if (IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
-                                              (WORD)address->seg ), size ))
-            return TRUE;
-    }
-#endif
-    return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 1);
-}
+#include "wine/winbase16.h"
 
+#define DBG_V86_MODULE(seg) ((seg)>>16)
+#define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
 
-/***********************************************************************
- *           DEBUG_IsBadWritePtr
- *
- * Check if we are allowed to write memory at 'address'.
- */
-BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
+static	void	DEBUG_Die(const char* msg)
 {
-#ifdef __i386__
-    if (!IS_SELECTOR_V86(address->seg))
-    if (address->seg)  /* segmented addr */
-    {
-        /* Note: we use IsBadReadPtr here because we are */
-        /* always allowed to write to read-only segments */
-        if (IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
-                                              (WORD)address->seg ), size ))
-            return TRUE;
-    }
-#endif
-    return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 0);
+   fprintf(stderr, msg);
+   exit(1);
 }
 
+void*	DEBUG_XMalloc(size_t size)
+{
+   void *res = malloc(size ? size : 1);
+   if (res == NULL)
+      DEBUG_Die("Memory exhausted.\n");
+   memset(res, 0, size);
+   return res;
+}
+
+void* DEBUG_XReAlloc(void *ptr, size_t size)
+{
+   void* res = realloc(ptr, size);
+   if ((res == NULL) && size)
+      DEBUG_Die("Memory exhausted.\n");
+   return res;
+}
+
+char*	DEBUG_XStrDup(const char *str)
+{
+   char *res = strdup(str);
+   if (!res)
+      DEBUG_Die("Memory exhausted.\n");
+   return res;
+}
+
+void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def) 
+{
+   if (addr->seg == 0xffffffff) addr->seg = def;
+   if (!IS_SELECTOR_V86(addr->seg) && DEBUG_IsSelectorSystem(addr->seg)) addr->seg = 0;
+}
+
+BOOL  DEBUG_FixSegment( DBG_ADDR* addr )
+{
+   /* V86 mode ? */
+   if (DEBUG_context.EFlags & V86_FLAG) {
+      addr->seg |= (DWORD)(GetExePtr(GetCurrentTask())) << 16;
+      return TRUE;
+   }
+   return FALSE;
+}
+
+DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
+{
+   LDT_ENTRY	le;
+   
+   if (IS_SELECTOR_V86(addr->seg))
+      return DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
+   if (DEBUG_IsSelectorSystem(addr->seg))
+      return addr->off;
+   
+   if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, addr->seg, &le)) {
+      return (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->off;
+   }
+   return 0;
+}
+
+int	DEBUG_GetSelectorType( WORD sel )
+{
+    LDT_ENTRY	le;
+
+    if (sel == 0)
+        return 32;
+    if (IS_SELECTOR_V86(sel))
+        return 16;
+    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le)) 
+        return le.HighWord.Bits.Default_Big ? 32 : 16;
+	 /* selector doesn't exist */
+    return 0;
+}
+
+/* Determine if sel is a system selector (i.e. not managed by Wine) */
+BOOL	DEBUG_IsSelectorSystem(WORD sel)
+{
+   return !(sel & 4) || (((sel & 0xFFFF) >> 3) < 17);
+}
+#endif /* __i386__ */
+
+void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
+{
+    addr->type = NULL;
+#ifdef __i386__
+    addr->seg  = DEBUG_context.SegCs;
+
+    if (!DEBUG_FixSegment( addr ) && DEBUG_IsSelectorSystem(addr->seg)) 
+       addr->seg = 0;
+    addr->off  = DEBUG_context.Eip;
+#else
+    addr->seg  = 0;
+    addr->off  = 0;
+#endif
+}
+
+void	DEBUG_InvalLinAddr( void* addr )
+{
+   DBG_ADDR address;
+
+   address.type = NULL;
+   address.seg = 0;
+   address.off = (unsigned long)addr;
+
+   fprintf(stderr,"*** Invalid address ");
+   DEBUG_PrintAddress(&address, DEBUG_CurrThread->dbg_mode, FALSE);
+   fprintf(stderr,"\n");
+}
 
 /***********************************************************************
  *           DEBUG_ReadMemory
@@ -157,11 +136,15 @@ BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
  */
 int DEBUG_ReadMemory( const DBG_ADDR *address )
 {
-    DBG_ADDR addr = *address;
-
-    DBG_FIX_ADDR_SEG( &addr, DS_reg(&DEBUG_context) );
-    if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return 0;
-    return *(int *)DBG_ADDR_TO_LIN( &addr );
+    DBG_ADDR	addr = *address;
+    void*	lin;
+    int		value;
+	
+    DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+    lin = (void*)DEBUG_ToLinear( &addr );
+    if (!DEBUG_READ_MEM_VERBOSE(lin, &value, sizeof(value)))
+       value = 0;
+    return value;
 }
 
 
@@ -172,11 +155,12 @@ int DEBUG_ReadMemory( const DBG_ADDR *address )
  */
 void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
 {
-    DBG_ADDR addr = *address;
+    DBG_ADDR 	addr = *address;
+    void*	lin;
 
-    DBG_FIX_ADDR_SEG( &addr, DS_reg(&DEBUG_context) );
-    if (!DBG_CHECK_WRITE_PTR( &addr, sizeof(int) )) return;
-    *(int *)DBG_ADDR_TO_LIN( &addr ) = value;
+    DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+    lin = (void*)DEBUG_ToLinear( &addr );
+    DEBUG_WRITE_MEM_VERBOSE(lin, &value, sizeof(value));
 }
 
 
@@ -188,15 +172,14 @@ void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
 void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 {
     DBG_ADDR addr =	* address;
-    unsigned int	* dump;
     int			  i;
     unsigned char	* pnt;
-    unsigned int	  seg2;
     struct datatype	* testtype;
-    unsigned short int	* wdump;
 
-    DBG_FIX_ADDR_SEG( &addr, (format == 'i') ?
-                             CS_reg(&DEBUG_context) : DS_reg(&DEBUG_context) );
+    DEBUG_FixAddress( &addr, 
+		      (format == 'i') ?
+		      DEBUG_context.SegCs : 
+		      DEBUG_context.SegDs );
 
     /*
      * Dereference pointer to get actual memory address we need to be
@@ -212,15 +195,15 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 	     * else in 32-bit space.  Grab it, and we
 	     * should be all set.
 	     */
-	    seg2 = addr.seg;
+	    unsigned int  seg2 = addr.seg;
 	    addr.seg = 0;
 	    addr.off = DEBUG_GetExprValue(&addr, NULL);
 	    addr.seg = seg2;
 	  }
 	else
 	  {
-	    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
-	    DEBUG_TypeDerefPointer(&addr, &testtype);
+	    if (DEBUG_TypeDerefPointer(&addr, &testtype) == 0)
+	      return;
 	    if( testtype != NULL || addr.type == DEBUG_TypeIntConst )
 	      {
 		addr.off = DEBUG_GetExprValue(&addr, NULL);
@@ -235,135 +218,71 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 
     if (format != 'i' && count > 1)
     {
-        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
+        DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, FALSE );
         fprintf(stderr,": ");
     }
 
-    pnt = DBG_ADDR_TO_LIN( &addr );
+    pnt = (void*)DEBUG_ToLinear( &addr );
 
     switch(format)
     {
 	case 'u': {
-		WCHAR *ptr = (WCHAR*)pnt;
+		WCHAR wch;
 		if (count == 1) count = 256;
                 while (count--)
                 {
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(WCHAR) )) return;
-                    if (!*ptr) break;
-                    addr.off++;
-                    fputc( (char)*ptr++, stderr );
+		    if (!DEBUG_READ_MEM_VERBOSE(pnt, &wch, sizeof(wch)))
+		       break;
+                    pnt += sizeof(wch);
+                    fputc( (char)wch, stderr );
                 }
 		fprintf(stderr,"\n");
 		return;
 	    }
-	case 's':
+          case 's': {
+	        char ch;
+
 		if (count == 1) count = 256;
                 while (count--)
                 {
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(char) )) return;
-                    if (!*pnt) break;
-                    addr.off++;
-                    fputc( *pnt++, stderr );
+                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &ch, sizeof(ch)))
+		       break;
+                    pnt++;
+                    fputc( ch, stderr );
                 }
 		fprintf(stderr,"\n");
 		return;
-
+	  }
 	case 'i':
 		while (count--)
                 {
-                    DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
+                    DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
                     fprintf(stderr,": ");
-                    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
                     DEBUG_Disasm( &addr, TRUE );
                     fprintf(stderr,"\n");
 		}
 		return;
-	case 'x':
-		dump = (unsigned int *)pnt;
-		for(i=0; i<count; i++) 
-		{
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return;
-                    fprintf(stderr," %8.8x", *dump++);
-                    addr.off += sizeof(int);
-                    if ((i % 4) == 3)
-                    {
-                        fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
-                        fprintf(stderr,": ");
-                    }
-		}
-		fprintf(stderr,"\n");
-		return;
-	
-	case 'd':
-		dump = (unsigned int *)pnt;
-		for(i=0; i<count; i++) 
-		{
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return;
-                    fprintf(stderr," %10d", *dump++);
-                    addr.off += sizeof(int);
-                    if ((i % 4) == 3)
-                    {
-                        fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
-                        fprintf(stderr,": ");
-                    }
-		}
-		fprintf(stderr,"\n");
-		return;
-	
-	case 'w':
-		wdump = (unsigned short *)pnt;
-		for(i=0; i<count; i++) 
-		{
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(short) )) return;
-                    fprintf(stderr," %04x", *wdump++);
-                    addr.off += sizeof(short);
-                    if ((i % 8) == 7)
-                    {
-                        fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
-                        fprintf(stderr,": ");
-                    }
-		}
-		fprintf(stderr,"\n");
-		return;
-	
-	case 'c':
-		for(i=0; i<count; i++) 
-		{
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(char) )) return;
-                    if(*pnt < 0x20)
-                    {
-                        fprintf(stderr,"  ");
-                        pnt++;
-                    }
-                    else fprintf(stderr," %c", *pnt++);
-                    addr.off++;
-                    if ((i % 32) == 31)
-                    {
-                        fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
-                        fprintf(stderr,": ");
-                    }
-		}
-		fprintf(stderr,"\n");
-		return;
-	
-	case 'b':
-		for(i=0; i<count; i++) 
-		{
-                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(char) )) return;
-                    fprintf(stderr," %02x", (*pnt++) & 0xff);
-                    addr.off++;
-                    if ((i % 16) == 15)
-                    {
-                        fprintf(stderr,"\n");
-                        DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
-                        fprintf(stderr,": ");
-                    }
-		}
-		fprintf(stderr,"\n");
-		return;
+#define DO_DUMP2(_t,_l,_f,_vv) { \
+	        _t _v; \
+		for(i=0; i<count; i++) { \
+                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &_v, sizeof(_t))) break; \
+                    fprintf(stderr,_f,(_vv)); \
+                    pnt += sizeof(_t); addr.off += sizeof(_t); \
+                    if ((i % (_l)) == (_l)-1) { \
+                        fprintf(stderr,"\n"); \
+                        DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, FALSE );\
+                        fprintf(stderr,": ");\
+                    } \
+		} \
+		fprintf(stderr,"\n"); \
+        } \
+	return
+#define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v) 
+
+        case 'x': DO_DUMP(int, 4, " %8.8x");
+	case 'd': DO_DUMP(unsigned int, 4, " %10d");	
+	case 'w': DO_DUMP(unsigned short, 8, " %04x");
+        case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
+	case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);
 	}
 }

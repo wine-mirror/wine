@@ -163,6 +163,7 @@ char dbch_wave[] = "\003wave";
 char dbch_win[] = "\003win";
 char dbch_win16drv[] = "\003win16drv";
 char dbch_win32[] = "\003win32";
+char dbch_winedbg[] = "\003winedbg";
 char dbch_wing[] = "\003wing";
 char dbch_winsock[] = "\003winsock";
 char dbch_winspool[] = "\003winspool";
@@ -170,7 +171,7 @@ char dbch_wnet[] = "\003wnet";
 char dbch_x11[] = "\003x11";
 char dbch_x11drv[] = "\003x11drv";
 
-#define DEBUG_CHANNEL_COUNT 163
+#define DEBUG_CHANNEL_COUNT 164
 
 static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_accel,
@@ -330,6 +331,7 @@ static char * const debug_channels[DEBUG_CHANNEL_COUNT] = {
     dbch_win,
     dbch_win16drv,
     dbch_win32,
+    dbch_winedbg,
     dbch_wing,
     dbch_winsock,
     dbch_winspool,

@@ -20,7 +20,8 @@ C_SRCS = \
 	source.c \
 	stabs.c	\
 	stack.c \
-	types.c
+	types.c \
+	winedbg.c
 
 EXTRA_SRCS = dbg.y debug.l
 EXTRA_OBJS = y.tab.o lex.yy.o

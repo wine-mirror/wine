@@ -345,7 +345,7 @@ DEBUG_InitTypes()
 }
 
 long long int
-DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
+DEBUG_GetExprValue(const DBG_ADDR * addr, char ** format)
 {
   DBG_ADDR address = *addr;
   unsigned int rtn;
@@ -360,12 +360,10 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
   switch(addr->type->type)
     {
     case DT_BASIC:
-      if (!DBG_CHECK_READ_PTR( &address,  addr->type->un.basic.basic_size)) 
-	{
-	  return 0;
-	}
+       
+      if (!DEBUG_READ_MEM_VERBOSE((void*)addr->off, &rtn, addr->type->un.basic.basic_size))
+	 return 0;
 
-      memcpy(&rtn, (char *) addr->off, addr->type->un.basic.basic_size);
       if(    (addr->type->un.basic.b_signed)
 	  && ((addr->type->un.basic.basic_size & 3) != 0)
 	  && ((rtn >> (addr->type->un.basic.basic_size * 8 - 1)) != 0) )
@@ -388,8 +386,9 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 	}
       break;
     case DT_POINTER:
-      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
-      rtn = (unsigned int)  *((unsigned char **)addr->off);
+      if (!DEBUG_READ_MEM_VERBOSE((void*)addr->off, &rtn, sizeof(void*)))
+	 return 0;
+
       type2 = addr->type->un.pointer.pointsto;
 
       if (!type2)
@@ -402,9 +401,8 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
       if( type2->type == DT_BASIC && type2->un.basic.basic_size == 1 )
 	{
 	  def_format = "\"%s\"";
-	  address.off = rtn;
-	  address.seg = 0;
-	  if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
+	  if (!DEBUG_READ_MEM_VERBOSE((void*)rtn, &rtn, 1))
+	     return 0;
 	  break;
 	}
       else
@@ -414,13 +412,13 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
       break;
     case DT_ARRAY:
     case DT_STRUCT:
-      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
-      rtn = (unsigned int)  *((unsigned char **)addr->off);
+      if (!DEBUG_READ_MEM_VERBOSE((void*)addr->off, &rtn, sizeof(rtn)))
+	 return 0;
       def_format = "0x%8.8x";
       break;
     case DT_ENUM:
-      if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
-      rtn = (unsigned int)  *((unsigned char **)addr->off);
+      if (!DEBUG_READ_MEM_VERBOSE((void*)addr->off, &rtn, sizeof(rtn)))
+	 return 0;
       for(e = addr->type->un.enumeration.members; e; e = e->next )
 	{
 	  if( e->value == rtn )
@@ -452,22 +450,23 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 }
 
 unsigned int
-DEBUG_TypeDerefPointer(DBG_ADDR * addr, struct datatype ** newtype)
+DEBUG_TypeDerefPointer(const DBG_ADDR * addr, struct datatype ** newtype)
 {
   DBG_ADDR address = *addr;
+  unsigned int val;
 
   /*
    * Make sure that this really makes sense.
    */
-  if( addr->type->type != DT_POINTER )
+  if( addr->type->type != DT_POINTER || !DEBUG_READ_MEM((void*)addr->off, &val, sizeof(val)))
     {
       *newtype = NULL;
       return 0;
     }
 
   *newtype = addr->type->un.pointer.pointsto;
-  address.off = *(unsigned int*) (addr->off);
-  return (unsigned int)DBG_ADDR_TO_LIN(&address); /* FIXME: is this right (or "better") ? */
+  address.off = val;
+  return DEBUG_ToLinear(&address); /* FIXME: is this right (or "better") ? */
 }
 
 unsigned int
@@ -718,7 +717,7 @@ int DEBUG_GetObjectSize(struct datatype * dt)
 }
 
 unsigned int
-DEBUG_ArrayIndex(DBG_ADDR * addr, DBG_ADDR * result, int index)
+DEBUG_ArrayIndex(const DBG_ADDR * addr, DBG_ADDR * result, int index)
 {
   int size;
 

@@ -7,7 +7,6 @@
 #include <assert.h>
 #include "wine/winbase16.h"
 #include "callback.h"
-#include "debugger.h"
 #include "main.h"
 #include "miscemu.h"
 #include "module.h"
@@ -22,6 +21,7 @@
 static int MAIN_argc;
 static char **MAIN_argv;
 
+extern void DEBUG_StartDebugger(DWORD);
 
 /***********************************************************************
  *           Main loop of initial task
@@ -29,7 +29,6 @@ static char **MAIN_argv;
 void MAIN_EmulatorRun( void )
 {
     char startProg[256], defProg[256];
-    HINSTANCE handle;
     int i, tasks = 0;
     MSG msg;
     BOOL err_msg = FALSE;
@@ -71,18 +70,31 @@ void MAIN_EmulatorRun( void )
     /* Load and run executables given on command line */
     for (i = 1; i < MAIN_argc; i++)
     {
-        if ((handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL )) < 32)
-        {
+        PROCESS_INFORMATION info;
+	STARTUPINFOA startup;
+
+	memset(&startup, 0, sizeof(startup));
+	startup.cb = sizeof(startup);
+	startup.dwFlags = STARTF_USESHOWWINDOW;
+	startup.wShowWindow = SW_SHOWNORMAL;
+	
+        if (!CreateProcessA(NULL, MAIN_argv[i], NULL, NULL, FALSE, 0,
+			    NULL, NULL, &startup, &info)) {
 	    err_msg = TRUE;
-            MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
-            switch (handle)
-            {
-            case 2: MESSAGE("main executable or required DLL not found\n" ); break;
-            case 11: MESSAGE("invalid exe file\n" ); break;
-            default: MESSAGE("error=%d\n", handle ); break;
-            }
+	    MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
+	    switch (GetLastError()) 
+	    {
+	    case  2: MESSAGE("file not found\n" ); break;
+	    case 11: MESSAGE("invalid exe file\n" ); break;
+	    default: MESSAGE("error=%ld\n", GetLastError() ); break;
+	    }
         }
-        else tasks++;
+	else 
+	{
+	   tasks++;
+	   /* hack until wine debugger can be moved to a separate process */
+	   DEBUG_StartDebugger(info.dwProcessId);
+	}
     }
 
     if (!tasks)

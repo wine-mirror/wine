@@ -22,11 +22,7 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
-#include "wine/winbase16.h"
-#include "pe_image.h"
-#include "peexe.h"
 #include "debugger.h"
-#include "task.h"
 
 struct searchlist
 {
@@ -428,36 +424,17 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 
 DBG_ADDR DEBUG_LastDisassemble={NULL,0,0};
 
-void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
-{
-#ifdef __i386__
-    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-
-    addr->type = NULL;
-    addr->seg  = CS_reg(&DEBUG_context);
-    addr->off  = EIP_reg(&DEBUG_context);
-
-    if (ISV86(&DEBUG_context)) addr->seg |= (DWORD)(pTask? pTask->hModule : 0) << 16; 
-    else if (IS_SELECTOR_SYSTEM(addr->seg)) addr->seg = 0;
-
-    GlobalUnlock16( GetCurrentTask() );
-#else
-    addr->type = NULL;
-    addr->seg  = 0;
-    addr->off  = (DWORD)GET_IP(&DEBUG_context);
-#endif
-}
-
-
 static int
 _disassemble(DBG_ADDR *addr)
 {
-	DEBUG_PrintAddress( addr, dbg_mode, TRUE );
-	fprintf(stderr,": ");
-	if (!DBG_CHECK_READ_PTR( addr, 1 )) return 0;
-	DEBUG_Disasm( addr, TRUE );
-	fprintf(stderr,"\n");
-	return 1;
+   char	ch;
+
+   DEBUG_PrintAddress( addr, DEBUG_CurrThread->dbg_mode, TRUE );
+   fprintf(stderr,": ");
+   if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) return 0;
+   DEBUG_Disasm( addr, TRUE );
+   fprintf(stderr,"\n");
+   return 1;
 }
 
 void
@@ -465,7 +442,7 @@ _disassemble_fixaddr(DBG_ADDR *addr) {
     DWORD seg2;
     struct datatype *testtype;
 
-    DBG_FIX_ADDR_SEG(addr,CS_reg(&DEBUG_context));
+    DEBUG_FixAddress(addr, DEBUG_context.SegCs);
     if( addr->type != NULL )
       {
         if( addr->type == DEBUG_TypeIntConst )
@@ -482,7 +459,6 @@ _disassemble_fixaddr(DBG_ADDR *addr) {
           }
         else
           {
-            if (!DBG_CHECK_READ_PTR( addr, 1 )) return;
             DEBUG_TypeDerefPointer(addr, &testtype);
             if( testtype != NULL || addr->type == DEBUG_TypeIntConst )
                 addr->off = DEBUG_GetExprValue(addr, NULL);

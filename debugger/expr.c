@@ -299,7 +299,6 @@ DEBUG_EvalExpr(struct expr * exp)
   DBG_ADDR	exp1;
   DBG_ADDR	exp2;
   unsigned int	cexp[5];
-  int		(*fptr)();
   int		    scale1;
   int		    scale2;
   int		    scale3;
@@ -332,12 +331,20 @@ DEBUG_EvalExpr(struct expr * exp)
       rtn.seg = 0;
       break;
     case EXPR_TYPE_SYMBOL:
-      if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE ) )
-	{
-	  rtn.type = NULL;
-	  rtn.off = 0;
-	  rtn.seg = 0;
-	};
+      if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
+	{    
+#if 1
+	   RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
+#else
+	   static        char    ret[128];
+
+	   /* FIXME: this is an ugly hack... but at least we know
+	    * the symbol is not defined
+	    */
+	   sprintf(ret, "\"Symbol %s is not defined.\"", exp->un.symbol.name);
+	   rtn = DEBUG_EvalExpr(DEBUG_StringExpr(ret));
+#endif
+	}
       break;
     case EXPR_TYPE_PSTRUCT:
       exp1 =  DEBUG_EvalExpr(exp->un.structure.exp1);
@@ -388,6 +395,13 @@ DEBUG_EvalExpr(struct expr * exp)
 	  break;
 	}
 
+#if 0
+      /* FIXME: NEWDBG NIY */
+      /* Anyway, I wonder how this could work depending on the calling order of
+       * the function (cdecl vs pascal for example)
+       */
+      int		(*fptr)();
+
       fptr = (int (*)()) rtn.off;
       switch(exp->un.call.nargs)
 	{
@@ -410,8 +424,16 @@ DEBUG_EvalExpr(struct expr * exp)
 	  exp->un.call.result = (*fptr)(cexp[0], cexp[1], cexp[2], cexp[3], cexp[4]);
 	  break;
 	}
+#else
+      fprintf(stderr, "Function call no longer implemented\n");
+      /* would need to set up a call to this function, and then restore the current
+       * context afterwards...
+       */
+      exp->un.call.result = 0;
+#endif
       rtn.type = DEBUG_TypeInt;
       rtn.off = (unsigned int) &exp->un.call.result;
+
       break;
     case EXPR_TYPE_REGISTER:
       rtn.type = DEBUG_TypeIntConst;
@@ -419,11 +441,11 @@ DEBUG_EvalExpr(struct expr * exp)
       rtn.off = (unsigned int) &exp->un.rgister.result;
 #ifdef __i386__
       if( exp->un.rgister.reg == REG_EIP )
-	  rtn.seg = CS_reg(&DEBUG_context);
+	  rtn.seg = DEBUG_context.SegCs;
       else
-	  rtn.seg = DS_reg(&DEBUG_context);
+	  rtn.seg = DEBUG_context.SegDs;
 #endif
-      DBG_FIX_ADDR_SEG( &rtn, 0 );
+      DEBUG_FixAddress( &rtn, 0 );
       break;
     case EXPR_TYPE_BINOP:
       exp1 = DEBUG_EvalExpr(exp->un.binop.exp1);
@@ -497,11 +519,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	  rtn.seg = VAL(exp1);
           exp->un.binop.result = VAL(exp2);
 #ifdef __i386__
-          if (ISV86(&DEBUG_context)) {
-            TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-            rtn.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
-            GlobalUnlock16( GetCurrentTask() );
-          }
+	  DEBUG_FixSegment(&rtn);
 #endif
 	  break;
 	case EXP_OP_LOR:
@@ -623,12 +641,12 @@ DEBUG_EvalExpr(struct expr * exp)
 	  exp->un.unop.result = ~VAL(exp1);
 	  break;
 	case EXP_OP_DEREF:
-	  rtn.seg = 0;
+ 	  rtn.seg = 0;
 	  rtn.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
 	  break;
 	case EXP_OP_FORCE_DEREF:
 	  rtn.seg = exp1.seg;
-	  rtn.off = *(unsigned int *) exp1.off;
+	  rtn.off = DEBUG_READ_MEM((void*)exp1.off, &rtn.off, sizeof(rtn.off));
 	  break;
 	case EXP_OP_ADDR:
 	  rtn.seg = 0;
@@ -686,10 +704,6 @@ DEBUG_DisplayExpr(struct expr * exp)
       fprintf(stderr, ".%s", exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
-      /*
-       * First, evaluate all of the arguments.  If any of them are not
-       * evaluable, then bail.
-       */
       fprintf(stderr, "%s(",exp->un.call.funcname);
       for(i=0; i < exp->un.call.nargs; i++)
 	{
@@ -841,10 +855,6 @@ DEBUG_CloneExpr(struct expr * exp)
       rtn->un.structure.element_name = DBG_strdup(exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
-      /*
-       * First, evaluate all of the arguments.  If any of them are not
-       * evaluable, then bail.
-       */
       for(i=0; i < exp->un.call.nargs; i++)
 	{
 	  rtn->un.call.arg[i]  = DEBUG_CloneExpr(exp->un.call.arg[i]);
@@ -898,10 +908,6 @@ DEBUG_FreeExpr(struct expr * exp)
       DBG_free((char *) exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
-      /*
-       * First, evaluate all of the arguments.  If any of them are not
-       * evaluable, then bail.
-       */
       for(i=0; i < exp->un.call.nargs; i++)
 	{
 	  DEBUG_FreeExpr(exp->un.call.arg[i]);

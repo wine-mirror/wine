@@ -11,9 +11,6 @@
 #include <limits.h>
 #include <sys/types.h>
 
-#include "neexe.h"
-#include "module.h"
-#include "selectors.h"
 #include "debugger.h"
 
 #include <stdarg.h>

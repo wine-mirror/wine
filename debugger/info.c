@@ -8,6 +8,10 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "toolhelp.h"
 #include "debugger.h"
 #include "expr.h"
 
@@ -28,7 +32,7 @@ void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
     }
   
   default_format = NULL;
-  value = DEBUG_GetExprValue((DBG_ADDR *) addr, &default_format);
+  value = DEBUG_GetExprValue(addr, &default_format);
 
   switch(format)
     {
@@ -187,4 +191,265 @@ NULL
 };
 
     while(infotext[i]) fprintf(stderr,"%s\n", infotext[i++]);
+}
+
+/* FIXME: merge InfoClass and InfoClass2 */
+void DEBUG_InfoClass(const char* name)
+{
+   WNDCLASSEXA	wca;
+
+   if (!GetClassInfoExA(0, name, &wca)) {
+      fprintf(stderr, "Cannot find class '%s'\n", name);
+      return;
+   }
+
+   fprintf(stderr,  "Class '%s':\n", name);
+   fprintf(stderr,  
+	   "style=%08x  wndProc=%08lx\n"
+	   "inst=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+	   "clsExtra=%d  winExtra=%d\n",
+	   wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
+	   wca.hIcon, wca.hCursor, wca.hbrBackground,
+	   wca.cbClsExtra, wca.cbWndExtra);
+
+   /* FIXME: 
+    * + print #windows (or even list of windows...)
+    * + print extra bytes => this requires a window handle on this very class...
+    */
+}
+
+static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
+{
+   WNDCLASSEXA	wca;
+
+   if (!GetClassInfoExA(GetWindowLongA(hWnd, GWL_HINSTANCE), name, &wca)) {
+      fprintf(stderr, "Cannot find class '%s'\n", name);
+      return;
+   }
+
+   fprintf(stderr,  "Class '%s':\n", name);
+   fprintf(stderr,  
+	   "style=%08x  wndProc=%08lx\n"
+	   "inst=%04x  icon=%04x  cursor=%04x  bkgnd=%04x\n"
+	   "clsExtra=%d  winExtra=%d\n",
+	   wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
+	   wca.hIcon, wca.hCursor, wca.hbrBackground,
+	   wca.cbClsExtra, wca.cbWndExtra);
+
+   if (wca.cbClsExtra) {
+      int		i;
+      WORD		w;
+
+      fprintf(stderr,  "Extra bytes:" );
+      for (i = 0; i < wca.cbClsExtra / 2; i++) {
+	 w = GetClassWord(hWnd, i * 2);
+	 /* FIXME: depends on i386 endian-ity */
+	 fprintf(stderr,  " %02x", HIBYTE(w));
+	 fprintf(stderr,  " %02x", LOBYTE(w));
+      }
+      fprintf(stderr,  "\n" );
+    }
+    fprintf(stderr,  "\n" );
+}
+
+struct class_walker {
+   ATOM*	table;
+   int		used;
+   int		alloc;
+};
+
+static	void DEBUG_WalkClassesHelper(HWND hWnd, struct class_walker* cw)
+{
+   char	clsName[128];
+   int	i;
+   ATOM	atom;
+   HWND	child;
+
+   if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
+      return;
+   if ((atom = FindAtomA(clsName)) == 0)
+      return;
+
+   for (i = 0; i < cw->used; i++) {
+      if (cw->table[i] == atom)
+	 break;
+   }
+   if (i == cw->used) {
+      if (cw->used >= cw->alloc) {
+	 cw->alloc += 16;
+	 cw->table = DBG_realloc(cw->table, cw->alloc * sizeof(ATOM));
+      }
+      cw->table[cw->used++] = atom;
+      DEBUG_InfoClass2(hWnd, clsName);
+   }
+   do {
+      if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
+	 DEBUG_WalkClassesHelper(child, cw);
+   } while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != 0);
+}
+
+void DEBUG_WalkClasses(void)
+{
+   struct class_walker cw;
+
+   cw.table = NULL;
+   cw.used = cw.alloc = 0;
+   DEBUG_WalkClassesHelper(GetDesktopWindow(), &cw);
+   DBG_free(cw.table);
+}
+
+void DEBUG_DumpModule(DWORD mod)
+{
+   fprintf(stderr, "No longer doing info module '0x%08lx'\n", mod);
+}
+
+void DEBUG_WalkModules(void)
+{
+   fprintf(stderr, "No longer walking modules list\n");
+}
+
+void DEBUG_DumpQueue(DWORD q)
+{
+   fprintf(stderr, "No longer doing info queue '0x%08lx'\n", q);
+}
+
+void DEBUG_WalkQueues(void)
+{
+   fprintf(stderr, "No longer walking queues list\n");
+}
+
+void DEBUG_InfoWindow(HWND hWnd)
+{
+   char	clsName[128];
+   char	wndName[128];
+   RECT	clientRect;
+   RECT	windowRect;
+   int	i;
+   WORD	w;
+
+   if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
+       strcpy(clsName, "-- Unknown --");
+   if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
+      strcpy(wndName, "-- Empty --");
+   if (!GetClientRect(hWnd, &clientRect))
+      SetRectEmpty(&clientRect);
+   if (!GetWindowRect(hWnd, &windowRect))
+      SetRectEmpty(&windowRect);
+
+   /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
+   fprintf(stderr,
+	   "next=0x%04x  child=0x%04x  parent=0x%04x  owner=0x%04x  class='%s'\n"
+	   "inst=%08lx  active=%04x  idmenu=%08lx\n"
+	   "style=%08lx  exstyle=%08lx  wndproc=%08lx  text='%s'\n"
+	   "client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%04x\n",
+	   GetWindow(hWnd, GW_HWNDNEXT), 
+	   GetWindow(hWnd, GW_CHILD),
+	   GetParent(hWnd), 
+	   GetWindow(hWnd, GW_OWNER),
+	   clsName,
+	   GetWindowLongA(hWnd, GWL_HINSTANCE), 
+	   GetLastActivePopup(hWnd),
+	   GetWindowLongA(hWnd, GWL_ID),
+	   GetWindowLongA(hWnd, GWL_STYLE),
+	   GetWindowLongA(hWnd, GWL_EXSTYLE),
+	   GetWindowLongA(hWnd, GWL_WNDPROC),
+	   wndName, 
+	   clientRect.left, clientRect.top, clientRect.right, clientRect.bottom, 
+	   windowRect.left, windowRect.top, windowRect.right, windowRect.bottom, 
+	   GetSystemMenu(hWnd, FALSE));
+
+    if (GetClassLongA(hWnd, GCL_CBWNDEXTRA)) {
+        fprintf(stderr,  "Extra bytes:" );
+        for (i = 0; i < GetClassLongA(hWnd, GCL_CBWNDEXTRA) / 2; i++) {
+	   w = GetWindowWord(hWnd, i * 2);
+	   /* FIXME: depends on i386 endian-ity */
+	   fprintf(stderr,  " %02x", HIBYTE(w));
+	   fprintf(stderr,  " %02x", LOBYTE(w));
+	}
+        fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "\n");
+}
+
+void DEBUG_WalkWindows(HWND hWnd, int indent)
+{
+   char	clsName[128];
+   char	wndName[128];
+   HWND	child;
+
+   if (!IsWindow(hWnd))
+      hWnd = GetDesktopWindow();
+
+    if (!indent)  /* first time around */
+       fprintf(stderr,  
+	       "%-16.16s %-17.17s %-8.8s %s\n",
+	       "hwnd", "Class Name", " Style", " WndProc Text");
+
+    do {
+       if (!GetClassNameA(hWnd, clsName, sizeof(clsName)))
+	  strcpy(clsName, "-- Unknown --");
+       if (!GetWindowTextA(hWnd, wndName, sizeof(wndName)))
+	  strcpy(wndName, "-- Empty --");
+       
+       /* FIXME: missing hmemTaskQ */
+       fprintf(stderr, "%*s%04x%*s", indent, "", hWnd, 13-indent,"");
+       fprintf(stderr, "%-17.17s %08lx %08lx %.14s\n",
+	       clsName, GetWindowLongA(hWnd, GWL_STYLE),
+	       GetWindowLongA(hWnd, GWL_WNDPROC), wndName);
+
+       if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
+	  DEBUG_WalkWindows(child, indent + 1 );
+    } while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != 0);
+}
+
+void DEBUG_WalkProcess(void)
+{
+   fprintf(stderr, "No longer walking processes list\n");
+}
+
+void DEBUG_WalkModref(DWORD p)
+{
+   fprintf(stderr, "No longer walking module references list\n");
+}
+
+void DEBUG_InfoSegments(DWORD start, int length)
+{
+    char 	flags[3];
+    DWORD 	i;
+    LDT_ENTRY	le;
+
+    if (length == -1) length = (8192 - start);
+
+    for (i = start; i < start + length; i++)
+    {
+       if (!GetThreadSelectorEntry(DEBUG_CurrThread->handle, (i << 3)|7, &le))
+	  continue;
+
+        if (le.HighWord.Bits.Type & 0x08) 
+        {
+            flags[0] = (le.HighWord.Bits.Type & 0x2) ? 'r' : '-';
+            flags[1] = '-';
+            flags[2] = 'x';
+        }
+        else
+        {
+            flags[0] = 'r';
+            flags[1] = (le.HighWord.Bits.Type & 0x2) ? 'w' : '-';
+            flags[2] = '-';
+        }
+        fprintf(stderr, 
+		"%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
+		i, (i<<3)|7, 
+		(le.HighWord.Bits.BaseHi << 24) + 
+		    (le.HighWord.Bits.BaseMid << 16) + le.BaseLow,
+		((le.HighWord.Bits.LimitHi << 8) + le.LimitLow) << 
+		    (le.HighWord.Bits.Granularity ? 12 : 0),
+		le.HighWord.Bits.Default_Big ? 32 : 16,
+		flags[0], flags[1], flags[2] );
+    }
+}
+
+void DEBUG_InfoVirtual(void)
+{
+   fprintf(stderr, "No longer providing virtual mapping information\n");
 }

@@ -12,7 +12,7 @@
 #include "debugger.h"
 #include "stackframe.h"
 
-
+#ifdef __i386__
 /*
  * We keep this info for each frame, so that we can
  * find local variable information correctly.
@@ -43,7 +43,7 @@ typedef struct
     DWORD ip;
     WORD cs;
 } FRAME32;
-
+#endif
 
 
 /***********************************************************************
@@ -57,18 +57,20 @@ void DEBUG_InfoStack(void)
     DBG_ADDR addr;
 
     addr.type = NULL;
-    addr.seg = SS_reg(&DEBUG_context);
-    addr.off = ESP_reg(&DEBUG_context);
+    addr.seg = DEBUG_context.SegSs;
+    addr.off = DEBUG_context.Esp;
 
     fprintf(stderr,"Stack dump:\n");
-    if (IS_SELECTOR_32BIT(addr.seg))
-    {  /* 32-bit mode */
-        DEBUG_ExamineMemory( &addr, 24, 'x' );
-    }
-    else  /* 16-bit mode */
-    {
+    switch (DEBUG_GetSelectorType(addr.seg)) {
+    case 32: /* 32-bit mode */
+       DEBUG_ExamineMemory( &addr, 24, 'x' );
+       break;
+    case 16:  /* 16-bit mode */
         addr.off &= 0xffff;
         DEBUG_ExamineMemory( &addr, 24, 'w' );
+	break;
+    default:
+       fprintf(stderr, "Bad segment (%ld)\n", addr.seg);
     }
     fprintf(stderr,"\n");
 #endif
@@ -79,7 +81,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
 {
     int theframe = nframe++;
     frames = (struct bt_info *)DBG_realloc(frames,
-                                        nframe*sizeof(struct bt_info));
+					   nframe*sizeof(struct bt_info));
     if (noisy)
       fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
               frameno);
@@ -87,7 +89,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames[theframe].eip = code->off;
     if (noisy)
       frames[theframe].frame = DEBUG_PrintAddressAndArgs( code, bits, 
-						stack->off, TRUE );
+							  stack->off, TRUE );
     else
       DEBUG_FindNearestSymbol( code, TRUE, 
 			       &frames[theframe].frame.sym, stack->off, 
@@ -101,242 +103,106 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
 
 static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
 {
-    unsigned int ss = addr->seg, possible_cs = 0;
-    FRAME16 *frame = (FRAME16 *)DBG_ADDR_TO_LIN(addr);
-    int theframe = nframe;
-
-    if (DEBUG_IsBadReadPtr( addr, sizeof(FRAME16) )) {
-       if (noisy) {
-	  fprintf(stderr,"*** Invalid address ");
-	  DEBUG_PrintAddress(addr, dbg_mode, FALSE);
-	  fprintf(stderr,"\n");
-       }
-       return FALSE;
+    unsigned int	ss = addr->seg, possible_cs = 0;
+    FRAME16 		frame;
+    int 		theframe = nframe;
+    void*		p = (void*)DEBUG_ToLinear(addr);
+    
+    if (!p) return FALSE;
+    
+    if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
+        if (noisy) {
+	    fprintf(stderr,"*** Invalid address ");
+	    DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
+	    fprintf(stderr,"\n");
+	}
+	return FALSE;
     }
-    if (!frame->bp) return FALSE;
+    if (!frame.bp) return FALSE;
     nframe++;
     frames = (struct bt_info *)DBG_realloc(frames,
-                                        nframe*sizeof(struct bt_info));
+					   nframe*sizeof(struct bt_info));
     if (noisy)
-      fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-              frameno);
-    if (frame->bp & 1) *cs = frame->cs;
+        fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+		frameno);
+    if (frame.bp & 1) *cs = frame.cs;
     else {
-      /* not explicitly marked as far call,
-       * but check whether it could be anyway */
-      if (((frame->cs&7)==7) && (frame->cs != *cs) && !IS_SELECTOR_FREE(frame->cs)) {
-        ldt_entry tcs;
-        LDT_GetEntry( SELECTOR_TO_ENTRY(frame->cs), &tcs );
-        if ( tcs.type == SEGMENT_CODE ) {
-          /* it is very uncommon to push a code segment cs as
-           * a parameter, so this should work in most cases */
-          *cs = possible_cs = frame->cs;
-        }
-      }
+        /* not explicitly marked as far call,
+	 * but check whether it could be anyway */
+        if (((frame.cs&7)==7) && (frame.cs != *cs)) {
+	    LDT_ENTRY	le;
+	 
+	    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, frame.cs, &le) &&
+		(le.HighWord.Bits.Type & 0x08)) { /* code segment */
+	        /* it is very uncommon to push a code segment cs as
+		 * a parameter, so this should work in most cases */
+	        *cs = possible_cs = frame.cs;
+	    }
+	}
     }
     frames[theframe].cs = addr->seg = *cs;
-    frames[theframe].eip = addr->off = frame->ip;
+    frames[theframe].eip = addr->off = frame.ip;
     if (noisy)
-      frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 16, 
-						frame->bp, TRUE );
+        frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 16, 
+							    frame.bp, TRUE );
     else
-      DEBUG_FindNearestSymbol( addr, TRUE, 
-			       &frames[theframe].frame.sym, frame->bp, 
-			       &frames[theframe].frame.list);
+        DEBUG_FindNearestSymbol( addr, TRUE, 
+				 &frames[theframe].frame.sym, frame.bp, 
+				 &frames[theframe].frame.list);
     frames[theframe].ss = addr->seg = ss;
-    frames[theframe].ebp = addr->off = frame->bp & ~1;
+    frames[theframe].ebp = addr->off = frame.bp & ~1;
     if (noisy) {
-      fprintf( stderr, " (bp=%04lx", addr->off );
-      if (possible_cs) {
-        fprintf( stderr, ", far call assumed" );
-      }
-      fprintf( stderr, ")\n" );
+        fprintf( stderr, " (bp=%04lx", addr->off );
+        if (possible_cs) {
+	    fprintf( stderr, ", far call assumed" );
+	}
+	fprintf( stderr, ")\n" );
     }
     return TRUE;
 }
 
 static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
 {
-    unsigned int ss = addr->seg;
-    FRAME32 *frame = (FRAME32 *)DBG_ADDR_TO_LIN(addr);
-    int theframe = nframe;
-
-    if (DEBUG_IsBadReadPtr( addr, sizeof(FRAME32) )) {
+    unsigned int 	ss = addr->seg;
+    FRAME32 		frame;
+    int 		theframe = nframe;
+    void*		p = (void*)DEBUG_ToLinear(addr);
+    
+    if (!p) return FALSE;
+    
+    if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
        if (noisy) {
 	  fprintf(stderr,"*** Invalid address ");
-	  DEBUG_PrintAddress(addr, dbg_mode, FALSE);
+	  DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
 	  fprintf(stderr,"\n");
        }
        return FALSE;
     }
-    if (!frame->ip) return FALSE;
+    if (!frame.ip) return FALSE;
+    
     nframe++;
     frames = (struct bt_info *)DBG_realloc(frames,
-                                        nframe*sizeof(struct bt_info));
+					   nframe*sizeof(struct bt_info));
     if (noisy)
-      fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-              frameno);
+       fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+	       frameno);
     frames[theframe].cs = addr->seg = *cs;
-    frames[theframe].eip = addr->off = frame->ip;
+    frames[theframe].eip = addr->off = frame.ip;
     if (noisy)
-      frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 32, 
-						frame->bp, TRUE );
+        frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 32, 
+							    frame.bp, TRUE );
     else
-      DEBUG_FindNearestSymbol( addr, TRUE, 
-			       &frames[theframe].frame.sym, frame->bp, 
-			       &frames[theframe].frame.list);
-    if (noisy) fprintf( stderr, " (ebp=%08lx)\n", frame->bp );
+        DEBUG_FindNearestSymbol( addr, TRUE, 
+				 &frames[theframe].frame.sym, frame.bp, 
+				 &frames[theframe].frame.list);
+    if (noisy) fprintf( stderr, " (ebp=%08lx)\n", frame.bp );
     frames[theframe].ss = addr->seg = ss;
-    frames[theframe].ebp = frame->bp;
-    if (addr->off == frame->bp) return FALSE;
-    addr->off = frame->bp;
+    frames[theframe].ebp = frame.bp;
+    if (addr->off == frame.bp) return FALSE;
+    addr->off = frame.bp;
     return TRUE;
 }
-
-static void DEBUG_DoBackTrace(int noisy)
-{
-    DBG_ADDR addr, sw_addr;
-    unsigned int ss = SS_reg(&DEBUG_context), cs = CS_reg(&DEBUG_context);
-    int frameno = 0, is16, ok;
-    DWORD next_switch, cur_switch;
-
-    if (noisy) fprintf( stderr, "Backtrace:\n" );
-
-    nframe = 1;
-    if (frames) DBG_free( frames );
-    frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
-    if (noisy)
-      fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
-
-    if (IS_SELECTOR_SYSTEM(ss)) ss = 0;
-    if (IS_SELECTOR_SYSTEM(cs)) cs = 0;
-
-    /* first stack frame from registers */
-    if (IS_SELECTOR_32BIT(ss))
-    {
-        frames[0].cs = addr.seg = cs;
-        frames[0].eip = addr.off = EIP_reg(&DEBUG_context);
-        if (noisy)
-          frames[0].frame = DEBUG_PrintAddress( &addr, 32, TRUE );
-        else
-	  DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
-						&frames[0].frame.list);
-        frames[0].ss = addr.seg = ss;
-	frames[0].ebp = addr.off = EBP_reg(&DEBUG_context);
-        if (noisy) fprintf( stderr, " (ebp=%08x)\n", frames[0].ebp );
-        is16 = FALSE;
-    } else {
-        frames[0].cs = addr.seg = cs;
-        frames[0].eip = addr.off = LOWORD(EIP_reg(&DEBUG_context));
-        if (noisy)
-          frames[0].frame = DEBUG_PrintAddress( &addr, 16, TRUE );
-        else
-	  DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
-						&frames[0].frame.list);
-        frames[0].ss = addr.seg = ss;
-	frames[0].ebp = addr.off = BP_reg(&DEBUG_context);
-        if (noisy) fprintf( stderr, " (bp=%04x)\n", frames[0].ebp );
-        is16 = TRUE;
-    }
-
-    next_switch = NtCurrentTeb()->cur_stack;
-    if (is16) {
-      if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
-	 if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
-	 return;
-      }
-      cur_switch = (DWORD)((STACK32FRAME*)next_switch)->frame16;
-      sw_addr.seg = SELECTOROF(cur_switch);
-      sw_addr.off = OFFSETOF(cur_switch);
-    } else {
-      if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
-	 if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
-	 return;
-      }
-      cur_switch = (DWORD)((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch))->frame32;
-      sw_addr.seg = ss;
-      sw_addr.off = cur_switch;
-    }
-    if (DEBUG_IsBadReadPtr(&sw_addr,1)) {
-      sw_addr.seg = (DWORD)-1;
-      sw_addr.off = (DWORD)-1;
-    }
-
-    for (ok = TRUE; ok;) {
-      if ((frames[frameno].ss == sw_addr.seg) &&
-          (frames[frameno].ebp >= sw_addr.off)) {
-        /* 16<->32 switch...
-         * yes, I know this is confusing, it gave me a headache too */
-        if (is16) {
-          STACK32FRAME *frame = (STACK32FRAME*)next_switch;
-          DBG_ADDR code;
-
-	  if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
-	    return;
-	  }
-	  code.type = NULL;
-	  code.seg  = 0;
-	  code.off  = frame->retaddr;
-
-          cs = 0;
-          addr.seg = 0;
-          addr.off = frame->ebp;
-          DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy );
-
-          next_switch = cur_switch;
-	  if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
-	    return;
-	  }
-          cur_switch = (DWORD)((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch))->frame32;
-          sw_addr.seg = 0;
-          sw_addr.off = cur_switch;
-
-          is16 = FALSE;
-        } else {
-          STACK16FRAME *frame = (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch);
-          DBG_ADDR code;
-
-	  if (IsBadReadPtr((STACK16FRAME*)PTR_SEG_TO_LIN(next_switch), sizeof(STACK16FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)PTR_SEG_TO_LIN(next_switch) );
-	    return;
-	  }
-
-	  code.type = NULL;
-	  code.seg  = frame->cs;
-	  code.off  = frame->ip;
-
-          cs = frame->cs;
-          addr.seg = SELECTOROF(next_switch);
-          addr.off = frame->bp;
-          DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy );
-
-          next_switch = cur_switch;
-	  if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
-	    return;
-	  }
-          cur_switch = (DWORD)((STACK32FRAME*)next_switch)->frame16;
-          sw_addr.seg = SELECTOROF(cur_switch);
-          sw_addr.off = OFFSETOF(cur_switch);
-
-          is16 = TRUE;
-        }
-        if (DEBUG_IsBadReadPtr(&sw_addr,1)) {
-          sw_addr.seg = (DWORD)-1;
-          sw_addr.off = (DWORD)-1;
-        }
-      } else {
-        /* ordinary stack frame */
-        ok = is16 ? DEBUG_Frame16( &addr, &cs, ++frameno, noisy)
-                  : DEBUG_Frame32( &addr, &cs, ++frameno, noisy);
-      }
-    }
-    if (noisy) fprintf( stderr, "\n" );
-}
 #endif
-
 
 
 /***********************************************************************
@@ -344,22 +210,177 @@ static void DEBUG_DoBackTrace(int noisy)
  *
  * Display a stack back-trace.
  */
-void DEBUG_BackTrace(void)
+void DEBUG_BackTrace(BOOL noisy)
 {
-#ifdef __i386__
-    DEBUG_DoBackTrace( TRUE );
-#endif
-}
+#ifdef __i386
+    DBG_ADDR 		addr, sw_addr, code, tmp;
+    unsigned int 	ss = DEBUG_context.SegSs;
+    unsigned int	cs = DEBUG_context.SegCs;
+    int 		frameno = 0, is16, ok;
+    DWORD 		next_switch, cur_switch, p;
+    STACK16FRAME       	frame16;
+    STACK32FRAME       	frame32;
+    char		ch;
 
-/***********************************************************************
- *           DEBUG_SilentBackTrace
- *
- * Display a stack back-trace.
- */
-void DEBUG_SilentBackTrace(void)
-{
-#ifdef __i386__
-    DEBUG_DoBackTrace( FALSE );
+    if (noisy) fprintf( stderr, "Backtrace:\n" );
+
+    nframe = 1;
+    if (frames) DBG_free( frames );
+    frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
+    if (noisy)
+        fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
+
+    if (DEBUG_IsSelectorSystem(ss)) ss = 0;
+    if (DEBUG_IsSelectorSystem(cs)) cs = 0;
+
+    /* first stack frame from registers */
+    switch (DEBUG_GetSelectorType(ss))
+    {
+    case 32:
+        frames[0].cs = addr.seg = cs;
+        frames[0].eip = addr.off = DEBUG_context.Eip;
+        if (noisy)
+            frames[0].frame = DEBUG_PrintAddress( &addr, 32, TRUE );
+        else
+	    DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
+				     &frames[0].frame.list);
+        frames[0].ss = addr.seg = ss;
+	frames[0].ebp = addr.off = DEBUG_context.Ebp;
+        if (noisy) fprintf( stderr, " (ebp=%08x)\n", frames[0].ebp );
+        is16 = FALSE;
+	break;
+    case 16:
+        frames[0].cs = addr.seg = cs;
+        frames[0].eip = addr.off = LOWORD(DEBUG_context.Eip);
+        if (noisy)
+	    frames[0].frame = DEBUG_PrintAddress( &addr, 16, TRUE );
+        else
+	    DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
+				     &frames[0].frame.list);
+        frames[0].ss = addr.seg = ss;
+	frames[0].ebp = addr.off = LOWORD(DEBUG_context.Ebp);
+        if (noisy) fprintf( stderr, " (bp=%04x)\n", frames[0].ebp );
+        is16 = TRUE;
+	break;
+    default:
+        if (noisy) fprintf( stderr, "Bad segment '%u'\n", ss);
+	return;
+    }
+
+    /* cur_switch holds address of curr_stack's field in TEB in debuggee 
+     * address space 
+     */
+    cur_switch = (DWORD)DEBUG_CurrThread->teb + OFFSET_OF(TEB, cur_stack);
+    if (!DEBUG_READ_MEM((void*)cur_switch, &next_switch, sizeof(next_switch))) {
+        if (noisy) fprintf( stderr, "Can't read TEB:cur_stack\n");
+	return;
+    }
+
+    if (is16) {
+        if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
+	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
+				(STACK32FRAME*)next_switch );
+	    return;
+	}
+	cur_switch = (DWORD)frame32.frame16;
+	sw_addr.seg = SELECTOROF(cur_switch);
+	sw_addr.off = OFFSETOF(cur_switch);
+    } else {
+        tmp.seg = SELECTOROF(next_switch);
+	tmp.off = OFFSETOF(next_switch);
+	p = DEBUG_ToLinear(&tmp);
+	
+	if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
+	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)p );
+	    return;
+	}
+	cur_switch = (DWORD)frame16.frame32;
+	sw_addr.seg = ss;
+	sw_addr.off = cur_switch;
+    }
+    if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear(&sw_addr), &ch, sizeof(ch))) {
+        sw_addr.seg = (DWORD)-1;
+	sw_addr.off = (DWORD)-1;
+    }
+    
+    for (ok = TRUE; ok;) {
+        if ((frames[frameno].ss == sw_addr.seg) &&
+	    (frames[frameno].ebp >= sw_addr.off)) {
+	   /* 16<->32 switch...
+	    * yes, I know this is confusing, it gave me a headache too */
+	   if (is16) {
+	      
+	       if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
+		  if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+		  return;
+	       }
+	       code.type = NULL;
+	       code.seg  = 0;
+	       code.off  = frame32.retaddr;
+	       
+	       cs = 0;
+	       addr.seg = 0;
+	       addr.off = frame32.ebp;
+	       DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy );
+	       
+	       next_switch = cur_switch;
+	       tmp.seg = SELECTOROF(next_switch);
+	       tmp.off = OFFSETOF(next_switch);
+	       p = DEBUG_ToLinear(&tmp);
+	       
+	       if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
+		   if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
+				       (STACK16FRAME*)p );
+		   return;
+	       }
+	       cur_switch = (DWORD)frame16.frame32;
+	       sw_addr.seg = 0;
+	       sw_addr.off = cur_switch;
+	       
+	       is16 = FALSE;
+	   } else {
+	      tmp.seg = SELECTOROF(next_switch);
+	      tmp.off = OFFSETOF(next_switch);
+	      p = DEBUG_ToLinear(&tmp);
+	      
+	      if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
+		  if (noisy) fprintf( stderr, "Bad stack frame %p\n",
+				      (STACK16FRAME*)p );
+		  return;
+	      }
+	      
+	      code.type = NULL;
+	      code.seg  = frame16.cs;
+	      code.off  = frame16.ip;
+	      
+	      cs = frame16.cs;
+	      addr.seg = SELECTOROF(next_switch);
+	      addr.off = frame16.bp;
+	      DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy );
+	      
+	      next_switch = cur_switch;
+	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
+		 if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
+				     (STACK32FRAME*)next_switch );
+		 return;
+	      }
+	      cur_switch = (DWORD)frame32.frame16;
+	      sw_addr.seg = SELECTOROF(cur_switch);
+	      sw_addr.off = OFFSETOF(cur_switch);
+	      
+	      is16 = TRUE;
+	   }
+	   if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear(&sw_addr), &ch, sizeof(ch))) {
+	      sw_addr.seg = (DWORD)-1;
+	      sw_addr.off = (DWORD)-1;
+	   }
+	} else {
+	    /* ordinary stack frame */
+	   ok = is16 ? DEBUG_Frame16( &addr, &cs, ++frameno, noisy)
+	      : DEBUG_Frame32( &addr, &cs, ++frameno, noisy);
+	}
+    }
+    if (noisy) fprintf( stderr, "\n" );
 #endif
 }
 

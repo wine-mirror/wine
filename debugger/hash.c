@@ -14,7 +14,6 @@
 #include "neexe.h"
 #include "module.h"
 #include "process.h"
-#include "selectors.h"
 #include "debugger.h"
 #include "toolhelp.h"
 
@@ -335,7 +334,7 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  * Get the address of a named symbol.
  */
 BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
-			     DBG_ADDR *addr, int bp_flag )
+			   DBG_ADDR *addr, int bp_flag )
 {
     char buffer[256];
     struct name_hash *nh;
@@ -450,7 +449,7 @@ BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
     if (!nh) return FALSE;
     nh->addr = *addr;
     nh->flags &= SYM_INVALID;
-    DBG_FIX_ADDR_SEG( &nh->addr, DS_reg(&DEBUG_context) );
+    DEBUG_FixAddress( &nh->addr, DEBUG_context.SegDs );
     return TRUE;
 }
 
@@ -477,6 +476,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
     char * lineinfo, *sourcefile;
     int i;
     char linebuff[16];
+    unsigned val;
 
     if( rtn != NULL )
       {
@@ -637,9 +637,9 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 	      {
 		strcat(arglist, ", ");
 	      }
+	    DEBUG_READ_MEM_VERBOSE(ptr, &val, sizeof(val));
+	    sprintf(argtmp, "%s=0x%x", nearest->local_vars[i].name, val);
 
-	    sprintf(argtmp, "%s=0x%x", nearest->local_vars[i].name,
-		    *ptr);
 	    strcat(arglist, argtmp);
 	  }
 	if( arglist[0] == '(' )
@@ -1367,13 +1367,26 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
 	  /* FIXME: what if regno == 0 ($eax) */
 	  if( curr_func->local_vars[i].regno != 0 )
 	    {
+#if 0
+	       /* FIXME: NEWDBG NIY */
+	       /* this is a hack: addr points to the current processor context
+		* (as defined while entering the debugger), and uses a pointer
+		* to main memory (thus sharing the process address space *AND*
+		* the debugger address space, which is not good with address
+		* space separation in place)
+		*/
 	      /*
 	       * Register variable.  Point to DEBUG_context field.
 	       */
 	      addr->seg = 0;
-	      addr->off = ((DWORD)&DEBUG_context) + reg_ofs[curr_func->local_vars[i].regno];
+	      addr->off = ((DWORD)DEBUG_context) + reg_ofs[curr_func->local_vars[i].regno];
 	      addr->type = curr_func->local_vars[i].type;
-	      
+#else
+	      fprintf(stderr, "No longer supported: value of register variable\n");
+	      addr->seg = 0;
+	      addr->off = 0;
+	      addr->type = NULL;
+#endif	      
 	      return TRUE;
 	    }
 
@@ -1395,7 +1408,7 @@ DEBUG_InfoLocals()
   unsigned int	      eip;
   int		      i;
   unsigned int      * ptr;
-  int		      rtn = FALSE;
+  unsigned int	      val;
 
   if( DEBUG_GetCurrentFrame(&curr_func, &eip, &ebp) == FALSE )
     {
@@ -1433,16 +1446,14 @@ DEBUG_InfoLocals()
 	}
       else
 	{
-	  ptr = (unsigned int *) (ebp + curr_func->local_vars[i].offset);
+	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset), 
+				 &val, sizeof(val));
 	  fprintf(stderr, "%s:%s == 0x%8.8x\n",
-		  curr_func->name, curr_func->local_vars[i].name,
-		  *ptr);
+		  curr_func->name, curr_func->local_vars[i].name, val);
 	}
     }
 
-  rtn = TRUE;
-
-  return (rtn);
+  return TRUE;
 }
 
 int

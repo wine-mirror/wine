@@ -892,27 +892,29 @@ static const int db_lengths[] = {
 static unsigned int db_get_task_value( const DBG_ADDR *addr,
                                        int size, int is_signed )
 {
-    unsigned int result;
-    unsigned char *p = DBG_ADDR_TO_LIN( addr );
+    unsigned int 	result = 0;
+    char       		buffer[4];
 
-    switch(size)
-    {
-    case 4:
-        if (is_signed) result = (unsigned int) *(int *)p;
-        else result = *(unsigned int *)p;
-        break;
-    case 2:
-        if (is_signed) result = (unsigned int) *(short int *)p;
-        else result = *(unsigned short int *)p;
-        break;
-    case 1:
-        if (is_signed) result = (unsigned int) *(char *)p;
-        else result = *(unsigned char *)p;
-        break;
-    default:
+    if (size != 1 && size != 2 && size != 4) {
         fprintf(stderr, "Illegal size specified\n");
-        result = 0;
-        break;
+    } else {
+       DEBUG_READ_MEM((void*)DEBUG_ToLinear( addr ), buffer, size);
+
+       switch(size)
+       {
+       case 4:
+	   if (is_signed) result = (unsigned int) *(int *)buffer;
+	   else result = *(unsigned int *)buffer;
+	   break;
+       case 2:
+	   if (is_signed) result = (unsigned int) *(short int *)buffer;
+	   else result = *(unsigned short int *)buffer;
+	   break;
+       case 1:
+	   if (is_signed) result = (unsigned int) *(char *)buffer;
+	   else result = *(unsigned char *)buffer;
+	   break;
+       }
     }
     return result;
 }
@@ -1041,18 +1043,16 @@ void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
 	    /* try to get destination of indirect call
 	       does not work for segmented adresses */	
 	    if (!seg && byref) {
-               DBG_ADDR dbg_addr = {NULL, 0, 0};
+	       void*	a1;
+	       void*	a2;
 
-               dbg_addr.off = addrp->disp;
                fprintf(stderr,"0x%x -> ", addrp->disp);
-               if (DEBUG_IsBadReadPtr( &dbg_addr, sizeof(LPDWORD))) {
-                   fprintf(stderr, "(invalid source)");
-               } else {
-                  dbg_addr.off = *(LPDWORD)(addrp->disp);
-                  if (DEBUG_IsBadReadPtr( &dbg_addr, sizeof(DWORD)))
-                     fprintf(stderr, "(invalid destination)");
-                  else
-                     db_task_printsym(dbg_addr.off, 0);
+	       if (!DEBUG_READ_MEM((void*)addrp->disp, &a1, sizeof(a1))) {
+		   fprintf(stderr, "(invalid source)");
+	       } else if (!DEBUG_READ_MEM(a1, &a2, sizeof(a2))) {
+		  fprintf(stderr, "(invalid destination)");
+	       } else {
+		  db_task_printsym((unsigned long)a1, 0);
                }
 	    }
 	    else
@@ -1172,7 +1172,11 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	 * Set this so we get can supress the printout if we need to.
 	 */
 	db_display = display;
-        db_disasm_16 = IS_SELECTOR_V86(addr->seg) || !IS_SELECTOR_32BIT(addr->seg);
+        switch (DEBUG_GetSelectorType(addr->seg)) {
+	case 16: db_disasm_16 = 1; break;
+	case 32: db_disasm_16 = 0; break;
+	default: fprintf(stderr, "Bad selector %ld\n", addr->seg); return;
+	}
 
 	get_value_inc( inst, addr, 1, FALSE );
 

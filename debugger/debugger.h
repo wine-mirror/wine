@@ -9,9 +9,12 @@
 
 #include <sys/types.h> /* u_long ... */
 #include "windef.h"
-#include "miscemu.h"
+#include "winbase.h"
 
+#ifdef __i386__
 #define STEP_FLAG 0x100 /* single step flag */
+#define V86_FLAG  0x00020000
+#endif
 
 #define SYM_FUNC	 0x0
 #define SYM_DATA	 0x1
@@ -83,43 +86,73 @@ struct  wine_locals {
 
 typedef struct wine_locals WineLocals;
 
+enum exec_mode
+{
+    EXEC_CONT,       		/* Continuous execution */
+    EXEC_PASS,       		/* Continue, passing exception to app */
+    EXEC_STEP_OVER,  		/* Stepping over a call to next source line */
+    EXEC_STEP_INSTR,  		/* Step to next source line, stepping in if needed */
+    EXEC_STEPI_OVER,  		/* Stepping over a call */
+    EXEC_STEPI_INSTR,  		/* Single-stepping an instruction */
+    EXEC_FINISH,		/* Step until we exit current frame */
+    EXEC_STEP_OVER_TRAMPOLINE  	/* Step over trampoline.  Requires that
+				 * we dig the real return value off the stack
+				 * and set breakpoint there - not at the
+				 * instr just after the call.
+				 */
+};
+ 
+typedef struct
+{
+    DBG_ADDR      addr;
+    BYTE          addrlen;
+    BYTE          opcode;
+    WORD	  skipcount;
+    WORD	  enabled : 1, 
+                  refcount;
+    struct expr * condition;
+} BREAKPOINT;
+
+typedef struct tagWINE_DBG_THREAD {
+    struct tagWINE_DBG_PROCESS*	process;
+    HANDLE			handle;
+    DWORD			tid;
+    LPVOID			start;
+    LPVOID			teb;
+    int				wait_for_first_exception;
+    int				dbg_mode;
+    enum exec_mode 		dbg_exec_mode;
+    int 			dbg_exec_count;
+    BREAKPOINT			stepOverBP;
+    struct tagWINE_DBG_THREAD* 	next;
+    struct tagWINE_DBG_THREAD* 	prev;
+} WINE_DBG_THREAD;
+
+typedef struct tagWINE_DBG_PROCESS {
+    HANDLE			handle;
+    DWORD			pid;
+    WINE_DBG_THREAD*		threads;
+    struct tagWINE_DBG_PROCESS*	next;
+    struct tagWINE_DBG_PROCESS*	prev;
+} WINE_DBG_PROCESS;
+
+extern	WINE_DBG_PROCESS* DEBUG_CurrProcess;
+extern	WINE_DBG_THREAD*  DEBUG_CurrThread;
+extern  CONTEXT		  DEBUG_context;
+
+#define DEBUG_READ_MEM(addr, buf, len) \
+      (ReadProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
+
+#define DEBUG_WRITE_MEM(addr, buf, len) \
+      (WriteProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
+
+#define DEBUG_READ_MEM_VERBOSE(addr, buf, len) \
+      (DEBUG_READ_MEM((addr), (buf), (len)) || (DEBUG_InvalLinAddr( addr ),0))
+
+#define DEBUG_WRITE_MEM_VERBOSE(addr, buf, len) \
+      (DEBUG_WRITE_MEM((addr), (buf), (len)) || (DEBUG_InvalLinAddr( addr ),0))
 
 #ifdef __i386__
-
-#define DBG_V86_MODULE(seg) ((seg)>>16)
-#define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
-
-#define DBG_FIX_ADDR_SEG(addr,default) { \
-      if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
-      if (!IS_SELECTOR_V86((addr)->seg)) \
-      if (IS_SELECTOR_SYSTEM((addr)->seg)) (addr)->seg = 0; }
-
-#define DBG_ADDR_TO_LIN(addr) \
-    (IS_SELECTOR_V86((addr)->seg) \
-      ? (char*)(DOSMEM_MemoryBase(DBG_V86_MODULE((addr)->seg)) + \
-         ((((addr)->seg)&0xFFFF)<<4)+(addr)->off) : \
-    (IS_SELECTOR_SYSTEM((addr)->seg) ? (char *)(addr)->off \
-      : (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off)))
-
-#else /* __i386__ */
-
-#define DBG_FIX_ADDR_SEG(addr,default)
-#define DBG_ADDR_TO_LIN(addr) ((char *)(addr)->off)
-
-#endif /* __386__ */
-
-#define DBG_CHECK_READ_PTR(addr,len) \
-    (!DEBUG_IsBadReadPtr((addr),(len)) || \
-     (fprintf(stderr,"*** Invalid address "), \
-      DEBUG_PrintAddress((addr),dbg_mode, FALSE), \
-      fprintf(stderr,"\n"),0))
-
-#define DBG_CHECK_WRITE_PTR(addr,len) \
-    (!DEBUG_IsBadWritePtr((addr),(len)) || \
-     (fprintf(stderr,"*** Invalid address "), \
-      DEBUG_PrintAddress(addr,dbg_mode, FALSE), \
-      fprintf(stderr,"\n"),0))
-
 #ifdef REG_SP  /* Some Sun includes define this */
 #undef REG_SP
 #endif
@@ -128,42 +161,24 @@ enum debug_regs
 {
     REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_ESI,
     REG_EDI, REG_EBP, REG_EFL, REG_EIP, REG_ESP,
-    REG_AX, REG_BX, REG_CX, REG_DX, REG_SI,
-    REG_DI, REG_BP, REG_FL, REG_IP, REG_SP,
-    REG_CS, REG_DS, REG_ES, REG_SS, REG_FS, REG_GS
+    REG_AX,  REG_BX,  REG_CX,  REG_DX,  REG_SI,
+    REG_DI,  REG_BP,  REG_FL,  REG_IP,  REG_SP,
+    REG_CS,  REG_DS,  REG_ES,  REG_SS,  REG_FS, REG_GS
 };
+#endif
 
-
-enum exec_mode
-{
-    EXEC_CONT,       /* Continuous execution */
-    EXEC_PASS,       /* Continue, passing exception to app */
-    EXEC_STEP_OVER,  /* Stepping over a call to next source line */
-    EXEC_STEP_INSTR,  /* Step to next source line, stepping in if needed */
-    EXEC_STEPI_OVER,  /* Stepping over a call */
-    EXEC_STEPI_INSTR,  /* Single-stepping an instruction */
-    EXEC_FINISH,		/* Step until we exit current frame */
-    EXEC_STEP_OVER_TRAMPOLINE  /* Step over trampoline.  Requires that
-				* we dig the real return value off the stack
-				* and set breakpoint there - not at the
-				* instr just after the call.
-				*/
-};
-
-extern CONTEXT DEBUG_context;  /* debugger/registers.c */
-extern unsigned int dbg_mode;
-extern HANDLE dbg_heap;
+#define	OFFSET_OF(__c,__f)		((int)(((char*)&(((__c*)0)->__f))-((char*)0)))
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
-extern int DEBUG_FindBreakpoint( const DBG_ADDR *addr );
+extern int  DEBUG_FindBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
-extern void DEBUG_AddTaskEntryBreakpoint( HTASK16 hTask );
 extern BOOL DEBUG_HandleTrap(void);
 extern BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count );
+extern void DEBUG_SuspendExecution( void );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
 extern BOOL DEBUG_IsFctReturn(void);
 
@@ -185,8 +200,8 @@ struct expr * DEBUG_StructExpr(struct expr *, const char * element);
 struct expr * DEBUG_ArrayExpr(struct expr *, struct expr * index);
 struct expr * DEBUG_CallExpr(const char *, int nargs, ...);
 struct expr * DEBUG_TypeCastExpr(struct datatype *, struct expr *);
-extern   int  DEBUG_ExprValue(DBG_ADDR *, unsigned int *);
-DBG_ADDR DEBUG_EvalExpr(struct expr *);
+extern int  DEBUG_ExprValue(const DBG_ADDR *, unsigned int *);
+extern DBG_ADDR DEBUG_EvalExpr(struct expr *);
 extern int DEBUG_DelDisplay(int displaynum);
 extern struct expr * DEBUG_CloneExpr(struct expr * exp);
 extern int DEBUG_FreeExpr(struct expr * exp);
@@ -211,7 +226,7 @@ extern struct name_hash * DEBUG_AddInvSymbol( const char *name,
 					   const DBG_ADDR *addr,
 					   const char * sourcefile);
 extern BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
-				    DBG_ADDR *addr, int );
+				     DBG_ADDR *addr, int );
 extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
@@ -251,13 +266,32 @@ extern struct symbol_info DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr,
 						     int addrlen, 
 						     unsigned int ebp, 
 						     int flag );
+extern void DEBUG_InfoClass(const char* clsName);
+extern void DEBUG_WalkClasses(void);
+extern void DEBUG_WalkModref(DWORD p);
+extern void DEBUG_DumpModule(DWORD mod);
+extern void DEBUG_WalkModules(void);
+extern void DEBUG_WalkProcess(void);
+extern void DEBUG_DumpQueue(DWORD q);
+extern void DEBUG_WalkQueues(void);
+extern void DEBUG_InfoSegments(DWORD s, int v);
+extern void DEBUG_InfoVirtual(void);
+extern void DEBUG_InfoWindow(HWND hWnd);
+extern void DEBUG_WalkWindows(HWND hWnd, int indent);
 
   /* debugger/memory.c */
-extern BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
-extern BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
 extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
+extern void DEBUG_InvalLinAddr( void* addr );
+#ifdef __i386__
+extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
+extern DWORD DEBUG_ToLinear( const DBG_ADDR *address );
+extern void DEBUG_FixAddress( DBG_ADDR *address, DWORD def );
+extern BOOL DEBUG_FixSegment( DBG_ADDR* addr );
+extern int  DEBUG_GetSelectorType( WORD sel );
+extern int  DEBUG_IsSelectorSystem( WORD sel );
+#endif
 
   /* debugger/registers.c */
 extern void DEBUG_SetRegister( enum debug_regs reg, int val );
@@ -268,8 +302,7 @@ extern int DEBUG_PrintRegister(enum debug_regs reg);
 
   /* debugger/stack.c */
 extern void DEBUG_InfoStack(void);
-extern void DEBUG_BackTrace(void);
-extern void DEBUG_SilentBackTrace(void);
+extern void DEBUG_BackTrace(BOOL noisy);
 extern int  DEBUG_InfoLocals(void);
 extern int  DEBUG_SetFrame(int newframe);
 extern int  DEBUG_GetCurrentFrame(struct name_hash ** name, 
@@ -293,7 +326,7 @@ extern void DEBUG_InitTypes(void);
 extern struct datatype * DEBUG_NewDataType(enum debug_type xtype, 
 					   const char * typename);
 extern unsigned int 
-DEBUG_TypeDerefPointer(DBG_ADDR * addr, struct datatype ** newtype);
+DEBUG_TypeDerefPointer(const DBG_ADDR * addr, struct datatype ** newtype);
 extern int DEBUG_AddStructElement(struct datatype * dt, 
 				  char * name, struct datatype * type, 
 				  int offset, int size);
@@ -306,9 +339,9 @@ extern unsigned int DEBUG_FindStructElement(DBG_ADDR * addr,
 					    const char * ele_name, int * tmpbuf);
 extern struct datatype * DEBUG_GetPointerType(struct datatype * dt);
 extern int DEBUG_GetObjectSize(struct datatype * dt);
-extern unsigned int DEBUG_ArrayIndex(DBG_ADDR * addr, DBG_ADDR * result, int index);
+extern unsigned int DEBUG_ArrayIndex(const DBG_ADDR * addr, DBG_ADDR * result, int index);
 extern struct datatype * DEBUG_FindOrMakePointerType(struct datatype * reftype);
-extern long long int DEBUG_GetExprValue(DBG_ADDR * addr, char ** format);
+extern long long int DEBUG_GetExprValue(const DBG_ADDR * addr, char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset, 
 				   int nbits, struct datatype * dt2);
 extern int DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2);
@@ -322,24 +355,26 @@ extern void DEBUG_AddPath(const char * path);
 extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
 		       int delta);
 extern void DEBUG_NukePath(void);
-extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
 extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/external.c */
 extern void DEBUG_ExternalDebugger(void);
 
   /* debugger/dbg.y */
-extern DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
 extern void DEBUG_Exit( DWORD exit_code );
+extern BOOL DEBUG_Main( BOOL is_debug, BOOL force );
 
   /* Choose your allocator! */
 #if 1
 /* this one is libc's fast one */
-#include "xmalloc.h"
-#define DBG_alloc(x) xmalloc(x)
-#define DBG_realloc(x,y) xrealloc(x,y)
-#define DBG_free(x) free(x)
-#define DBG_strdup(x) xstrdup(x)
+extern void*	DEBUG_XMalloc(size_t size);
+extern void*	DEBUG_XReAlloc(void *ptr, size_t size);
+extern char*	DEBUG_XStrDup(const char *str);
+
+#define DBG_alloc(x)		DEBUG_XMalloc(x)
+#define DBG_realloc(x,y) 	DEBUG_XReAlloc(x,y)
+#define DBG_free(x) 		free(x)
+#define DBG_strdup(x) 		DEBUG_XStrDup(x)
 #else
 /* this one is slow (takes 5 minutes to load the debugger on my machine),
    but is pretty crash-proof (can step through malloc() without problems,
@@ -352,6 +387,9 @@ extern void DEBUG_Exit( DWORD exit_code );
 #define DBG_free(x) HeapFree(dbg_heap,0,x)
 #define DBG_strdup(x) HEAP_strdupA(dbg_heap,0,x)
 #define DBG_need_heap
+extern HANDLE dbg_heap;
 #endif
+
+#define		DEBUG_STATUS_NO_SYMBOL	0x80003000
 
 #endif  /* __WINE_DEBUGGER_H */

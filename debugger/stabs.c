@@ -134,8 +134,6 @@ static void stab_strcpy(char * dest, const char * source)
   *dest++ = '\0';
 }
 
-extern void DEBUG_PrintAType(struct datatype*, int);
-
 typedef struct {
    char*		name;
    unsigned long	value;
