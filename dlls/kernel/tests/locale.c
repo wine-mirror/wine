@@ -51,6 +51,9 @@ char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 	ok (lcid == 0x409, "wrong LCID calculated");
 
+        /* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
+         * partially fill the buffer even if it is too short. See bug 637.
+         */
 	strcpy(Expected, "xxxxx");
 	memset( buffer, 'x', sizeof(buffer) );
 	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 0);
