@@ -13,7 +13,7 @@ all: $(MODULE)
 
 LDEXECFLAGS = @LDEXECFLAGS@
 
-$(MODULE): $(OBJS)
+$(MODULE): $(OBJS) Makefile.in $(DLLDIR)/libntdll.dll.$(LIBEXT)
 	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) -L$(DLLDIR) -lntdll.dll $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS)
 
 install:: $(MODULE)
