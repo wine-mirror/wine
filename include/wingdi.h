@@ -420,9 +420,9 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define PALETTERGB(r,g,b)   (0x02000000 | RGB(r,g,b))
 #define PALETTEINDEX(i)     ((COLORREF)(0x01000000 | (WORD)(i)))
 
-#define GetRValue(rgb)	    ((rgb) & 0xff)
-#define GetGValue(rgb)      (((rgb) >> 8) & 0xff)
-#define GetBValue(rgb)	    (((rgb) >> 16) & 0xff)
+#define GetRValue(rgb)      ((BYTE)  (rgb) )
+#define GetGValue(rgb)      ((BYTE) ((rgb) >> 8))
+#define GetBValue(rgb)      ((BYTE) ((rgb) >> 16))
 
 #define GetKValue(cmyk)     ((BYTE)  (cmyk) )
 #define GetYValue(cmyk)     ((BYTE) ((cmyk) >> 8))
