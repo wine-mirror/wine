@@ -97,9 +97,9 @@ type	win32
  94 stub OleCreateLink
  95 stub OleCreateLinkFromData
  96 stub OleCreateLinkToFile
- 97 stub OleCreateMenuDescriptor
+ 97 stdcall OleCreateMenuDescriptor(long ptr) OleCreateMenuDescriptor
  98 stub OleCreateStaticFromData
- 99 stub OleDestroyMenuDescriptor
+ 99 stdcall OleDestroyMenuDescriptor(long) OleDestroyMenuDescriptor
 100 stub OleDoAutoConvert
 101 stub OleDraw
 102 stub OleDuplicateData
@@ -129,7 +129,7 @@ type	win32
 126 stub OleSetAutoConvert
 127 stdcall OleSetClipboard(ptr) OleSetClipboard
 128 stub OleSetContainedObject
-129 stub OleSetMenuDescriptor
+129 stdcall OleSetMenuDescriptor(long long long ptr ptr) OleSetMenuDescriptor
 130 stub OleTranslateAccelerator
 131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream

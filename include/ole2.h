@@ -17,9 +17,9 @@ typedef struct  tagOleMenuGroupWidths
 { LONG width[ 6 ];
 } OLEMENUGROUPWIDTHS32, OLEMENUGROUPWIDTHS;
 
-
-
 typedef struct tagOleMenuGroupWidths *LPOLEMENUGROUPWIDTHS32;
+typedef struct IOleInPlaceFrame        *LPOLEINPLACEFRAME;
+typedef struct IOleInPlaceActiveObject *LPOLEINPLACEACTIVEOBJECT;
 
 typedef HGLOBAL32 HOLEMENU32;
 
@@ -42,4 +42,15 @@ HRESULT     WINAPI DoDragDrop32(LPDATAOBJECT,
 				DWORD*);
 #define     DoDragDrop WINELIB_NAME(DoDragDrop)
 
+HOLEMENU32  WINAPI OleCreateMenuDescriptor(HMENU32              hmenuCombined,
+					   LPOLEMENUGROUPWIDTHS32 lpMenuWidths);
+void        WINAPI OleDestroyMenuDescriptor(HOLEMENU32 hmenuDescriptor);
+HRESULT     WINAPI OleSetMenuDescriptor(HOLEMENU32               hmenuDescriptor,
+					HWND32                   hwndFrame,
+					HWND32                   hwndActiveObject,
+					LPOLEINPLACEFRAME        lpFrame,
+					LPOLEINPLACEACTIVEOBJECT lpActiveObject);
+
+
 #endif  /* __WINE_OLE2_H */
+

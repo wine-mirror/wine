@@ -464,6 +464,47 @@ HRESULT WINAPI OleGetClipboard32(
   return E_FAIL;
 }
 
+/***********************************************************************
+ * OleCreateMenuDescriptor [OLE32.97]
+ */
+HOLEMENU32 WINAPI OleCreateMenuDescriptor(
+  HMENU32                hmenuCombined,
+  LPOLEMENUGROUPWIDTHS32 lpMenuWidths)
+{
+  FIXME(ole,"(%x,%p),stub!\n", hmenuCombined, lpMenuWidths);
+
+  return NULL;
+}
+
+/***********************************************************************
+ * OleDestroyMenuDescriptor [OLE32.99]
+ */
+void WINAPI OleDestroyMenuDescriptor(
+  HOLEMENU32 hmenuDescriptor)
+{
+  FIXME(ole,"(%x),stub!\n", (unsigned int)hmenuDescriptor);
+}
+
+/***********************************************************************
+ * OleSetMenuDescriptor [OLE32.129]
+ */
+HRESULT WINAPI OleSetMenuDescriptor(
+  HOLEMENU32               hmenuDescriptor,
+  HWND32                   hwndFrame,
+  HWND32                   hwndActiveObject,
+  LPOLEINPLACEFRAME        lpFrame,
+  LPOLEINPLACEACTIVEOBJECT lpActiveObject)
+{
+  FIXME(ole,"(%x, %x, %x, %p, %p),stub!\n", 
+	(unsigned int)hmenuDescriptor,
+	hwndFrame,
+	hwndActiveObject,
+	lpFrame,
+	lpActiveObject);
+
+  return E_FAIL;
+}
+
 /***
  * OLEDD_Initialize()
  *
