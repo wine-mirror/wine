@@ -767,7 +767,7 @@ static void write_ne_segment(FILE *fp, resource_t *top)
 				alignment_pwr);
 			/* Length */
 			fprintf(fp, "\t.short\t%d\n",
-				rcp->rscarray[j]->binres->size - rcp->rscarray[j]->binres->dataidx);
+				(rcp->rscarray[j]->binres->size - rcp->rscarray[j]->binres->dataidx + alignment - 1) >> alignment_pwr);
 			/* Flags */
 			fprintf(fp, "\t.short\t0x%04x\n", (WORD)rcp->rscarray[j]->memopt);
 			/* Id */
