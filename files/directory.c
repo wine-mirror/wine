@@ -84,7 +84,7 @@ static int DIR_GetPath( LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_nam
         (!(GetLongPathNameW(full_name->short_name, longname, longname_len))) )
     {
         if (warn)
-            MESSAGE("Invalid path %s for %s directory: %s\n",
+            MESSAGE("Invalid path %s for %s directory: %s.\n",
                     debugstr_w(path), debugstr_w(keyname), mess);
         return 0;
     }
