@@ -59,6 +59,17 @@ XImage * TSXGetImage(Display* a0, Drawable a1, int a2, int a3, unsigned int a4, 
   return r;
 }
 
+XImage * TSXGetSubImage(Display* a0, Drawable a1, int a2, int a3, unsigned int a4, unsigned int a5, unsigned long a6, int a7, XImage* a8, int a9, int a10)
+{
+  XImage * r;
+  TRACE("Call XGetSubImage\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XGetSubImage(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XGetSubImage\n");
+  return r;
+}
+
 Display * TSXOpenDisplay(const  char* a0)
 {
   Display * r;

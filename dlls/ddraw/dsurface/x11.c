@@ -147,7 +147,15 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 	  int dest_x = wndPtr->rectClient.left;
 	  int dest_y = wndPtr->rectClient.top;
 
-	  XGetSubImage(display, drawable, 0, 0, width, height, 0xFFFFFFFF,
+	  if (!drawable) { /* we are running in -desktop mode */
+	      drawable = X11DRV_WND_GetXWindow(WIN_GetDesktop());
+	      /* FIXME: not sure whether these are the right offsets */
+	      dest_x+=wndPtr->rectWindow.left;
+	      dest_y+=wndPtr->rectWindow.top;
+	      WIN_ReleaseDesktop();
+	  }
+
+	  TSXGetSubImage(display, drawable, 0, 0, width, height, 0xFFFFFFFF,
 		       ZPixmap, dspriv->image, dest_x, dest_y);
 	  
 	  WIN_ReleaseWndPtr(wndPtr);
@@ -191,6 +199,20 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 	  adjust[1].x,adjust[1].y);
     
     WIN_ReleaseWndPtr(wndPtr);
+  }
+
+  if (!drawable) {
+    WND *tmpWnd = WIN_FindWndPtr(This->s.ddraw->d->window);
+    drawable = X11DRV_WND_GetXWindow(tmpWnd);
+    WIN_ReleaseWndPtr(tmpWnd);
+
+    /* We don't have a context for this window. Host off the desktop */
+    if( !drawable ) {
+	FIXME("Have to use Desktop Root Window??? Bummer.\n");
+	drawable = X11DRV_WND_GetXWindow(WIN_GetDesktop());
+	WIN_ReleaseDesktop();
+    }
+    ddpriv->drawable = drawable;
   }
   
   if (This->s.ddraw->d->pixel_convert != NULL)

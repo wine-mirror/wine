@@ -18,6 +18,7 @@ extern XFontStruct * TSXLoadQueryFont(Display*, const  char*);
 extern XModifierKeymap	* TSXGetModifierMapping(Display*);
 extern XImage * TSXCreateImage(Display*, Visual*, unsigned int, int, int, char*, unsigned int, unsigned int, int, int);
 extern XImage * TSXGetImage(Display*, Drawable, int, int, unsigned int, unsigned int, unsigned long, int);
+extern XImage * TSXGetSubImage(Display*, Drawable, int, int, unsigned int, unsigned int, unsigned long, int, XImage*, int, int);
 extern Display * TSXOpenDisplay(const  char*);
 extern void  TSXrmInitialize(void);
 extern char * TSXGetAtomName(Display*, Atom);

@@ -74,6 +74,7 @@ XGetKeyboardMapping
 XGetModifierMapping
 XGetScreenSaver
 XGetSelectionOwner
+XGetSubImage
 XGetVisualInfo
 XGetWMHints
 XGetWMSizeHints
