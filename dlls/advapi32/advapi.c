@@ -53,21 +53,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 BOOL WINAPI
 GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 {
-  size_t len;
-  const char *name = wine_get_user_name();
+    WCHAR *buffer;
+    BOOL ret;
 
-  /* We need to include the null character when determining the size of the buffer. */
-  len = strlen(name) + 1;
-  if (len > *lpSize)
-  {
-    SetLastError(ERROR_MORE_DATA);
-    *lpSize = len;
-    return 0;
-  }
-
-  *lpSize = len;
-  strcpy(lpszName, name);
-  return 1;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, *lpSize * 2 * sizeof(WCHAR) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    ret = GetUserNameW( buffer, *lpSize * 2 );
+    if (ret)
+    {
+        if (!(*lpSize = WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpszName, *lpSize, NULL, NULL )))
+        {
+            *lpSize = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
+            SetLastError( ERROR_MORE_DATA );
+            ret = FALSE;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
 }
 
 /******************************************************************************
@@ -79,7 +84,7 @@ BOOL WINAPI
 GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 {
     const char *name = wine_get_user_name();
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
 
     if (len > *lpSize)
     {
@@ -89,7 +94,7 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
     }
 
     *lpSize = len;
-    MultiByteToWideChar( CP_ACP, 0, name, -1, lpszName, len );
+    MultiByteToWideChar( CP_UNIXCP, 0, name, -1, lpszName, len );
     return TRUE;
 }
 

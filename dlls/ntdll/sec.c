@@ -1178,17 +1178,22 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
        PSID Sid,
        BOOLEAN AllocateString)
 {
-        const char *p = wine_get_user_name();
-        NTSTATUS status;
-        ANSI_STRING AnsiStr;
+    const char *user = wine_get_user_name();
+    int len = ntdll_umbstowcs( 0, user, strlen(user)+1, NULL, 0 ) * sizeof(WCHAR);
 
-	FIXME("(%p %p %u)\n", String, Sid, AllocateString);
+    FIXME("(%p %p %u)\n", String, Sid, AllocateString);
 
-        RtlInitAnsiString(&AnsiStr, p);
-        status = RtlAnsiStringToUnicodeString(String, &AnsiStr, AllocateString);
+    String->Length = len - sizeof(WCHAR);
+    if (AllocateString)
+    {
+        String->MaximumLength = len;
+        if (!(String->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            return STATUS_NO_MEMORY;
+    }
+    else if (len > String->MaximumLength) return STATUS_BUFFER_OVERFLOW;
 
-        TRACE("%s (%u %u)\n",debugstr_w(String->Buffer),String->Length,String->MaximumLength);
-        return status;
+    ntdll_umbstowcs( 0, user, strlen(user)+1, String->Buffer, len/sizeof(WCHAR) );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

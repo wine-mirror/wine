@@ -728,20 +728,17 @@ NTSTATUS WINAPI NtUnloadKey(
  */
 NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
 {
+    static const WCHAR pathW[] = {'\\','R','e','g','i','s','t','r','y','\\','U','s','e','r','\\'};
     const char *user = wine_get_user_name();
-    char *buffer;
-    ANSI_STRING AnsiPath;
-    NTSTATUS ret;
+    int len = ntdll_umbstowcs( 0, user, strlen(user)+1, NULL, 0 );
 
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(user)+16 )))
+    KeyPath->MaximumLength = sizeof(pathW) + len * sizeof(WCHAR);
+    KeyPath->Length = KeyPath->MaximumLength - sizeof(WCHAR);
+    if (!(KeyPath->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, KeyPath->MaximumLength )))
         return STATUS_NO_MEMORY;
-
-    strcpy( buffer, "\\Registry\\User\\" );
-    strcat( buffer, user );
-    RtlInitAnsiString( &AnsiPath, buffer );
-    ret = RtlAnsiStringToUnicodeString(KeyPath, &AnsiPath, TRUE);
-    RtlFreeAnsiString( &AnsiPath );
-    return ret;
+    memcpy( KeyPath->Buffer, pathW, sizeof(pathW) );
+    ntdll_umbstowcs( 0, user, strlen(user)+1, KeyPath->Buffer + sizeof(pathW)/sizeof(WCHAR), len );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
