@@ -289,13 +289,14 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 
     if( ! read_scm_lock_data( service_name ) )
     {
-        /* FIXME: Instead of exiting we fall through and allow
+        /* FIXME: Instead of exiting we allow
            service to be executed as ordinary program.
            This behaviour was specially introduced in the patch
            submitted against revision 1.45 and so preserved here.
          */
         FIXME("should fail with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT\n");
-        goto run_service;
+        servent->lpServiceProc( 0, NULL );
+        return TRUE;
     }
 
     seb = open_seb_shmem( service_name, &hServiceShmem );
@@ -315,17 +316,12 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     for(i=0; i<dwNumServiceArgs; i++)
         lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
 
-run_service:
-    /* FIXME: should we blindly start all services? */
-    while (servent->lpServiceName) {
-        TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
-        fpMain = servent->lpServiceProc;
+    /* FIXME: find service entry by name if SERVICE_WIN32_SHARE_PROCESS */
+    TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
+    fpMain = servent->lpServiceProc;
 
-        /* try to start the service */
-        fpMain( dwNumServiceArgs, lpArgVecA);
-
-        servent++;
-    }
+    /* try to start the service */
+    fpMain( dwNumServiceArgs, lpArgVecA);
 
 done:
     if(dwNumServiceArgs)
@@ -377,16 +373,12 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
     lpServiceArgVectors[0] = service_name;
     dwNumServiceArgs = seb->argc + 1;
 
-    /* FIXME: should we blindly start all services? */
-    while (servent->lpServiceName) {
-        TRACE("%s at %p)\n", debugstr_w(servent->lpServiceName),servent);
-        fpMain = servent->lpServiceProc;
+    /* FIXME: find service entry by name if SERVICE_WIN32_SHARE_PROCESS */
+    TRACE("%s at %p)\n", debugstr_w(servent->lpServiceName),servent);
+    fpMain = servent->lpServiceProc;
 
-        /* try to start the service */
-        fpMain( dwNumServiceArgs, lpServiceArgVectors);
-
-        servent++;
-    }
+    /* try to start the service */
+    fpMain( dwNumServiceArgs, lpServiceArgVectors);
 
     HeapFree( GetProcessHeap(), 0, lpServiceArgVectors );
     UnmapViewOfFile( seb );
