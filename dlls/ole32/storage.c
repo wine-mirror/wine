@@ -89,7 +89,7 @@ static const BYTE STORAGE_magic[8]   ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
 
 #define SMALLBLOCKS_PER_BIGBLOCK	(BIGSIZE/SMALLSIZE)
 
-#define READ_HEADER	assert(STORAGE_get_big_block(hf,-1,(LPBYTE)&sth));assert(!memcmp(STORAGE_magic,sth.magic,sizeof(STORAGE_magic)));
+#define READ_HEADER	STORAGE_get_big_block(hf,-1,(LPBYTE)&sth);assert(!memcmp(STORAGE_magic,sth.magic,sizeof(STORAGE_magic)));
 static ICOM_VTABLE(IStorage16) stvt16;
 static ICOM_VTABLE(IStorage16) *segstvt16 = NULL;
 static ICOM_VTABLE(IStream16) strvt16;
@@ -187,7 +187,8 @@ STORAGE_get_nth_next_big_blocknr(HANDLE hf,int blocknr,int nr) {
 
 		/* simple caching... */
 		if (lastblock!=sth.bbd_list[blocknr>>7]) {
-			assert(STORAGE_get_big_block(hf,sth.bbd_list[blocknr>>7],(LPBYTE)bbs));
+			BOOL ret = STORAGE_get_big_block(hf,sth.bbd_list[blocknr>>7],(LPBYTE)bbs);
+			assert(ret);
 			lastblock = sth.bbd_list[blocknr>>7];
 		}
 		blocknr = bbs[blocknr&0x7f];
@@ -208,7 +209,8 @@ STORAGE_get_root_pps_entry(HANDLE hf,struct storage_pps_entry *pstde) {
 	READ_HEADER;
 	blocknr = sth.root_startblock;
 	while (blocknr>=0) {
-		assert(STORAGE_get_big_block(hf,blocknr,block));
+		BOOL ret = STORAGE_get_big_block(hf,blocknr,block);
+		assert(ret);
 		for (i=0;i<4;i++) {
 			if (!stde[i].pps_sizeofname)
 				continue;
@@ -230,12 +232,15 @@ STORAGE_get_small_block(HANDLE hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
 	int				bigblocknr;
 	struct storage_pps_entry	root;
+	BOOL ret;
 
 	assert(blocknr>=0);
-	assert(STORAGE_get_root_pps_entry(hf,&root));
+	ret = STORAGE_get_root_pps_entry(hf,&root);
+	assert(ret);
 	bigblocknr = STORAGE_get_nth_next_big_blocknr(hf,root.pps_sb,blocknr/SMALLBLOCKS_PER_BIGBLOCK);
 	assert(bigblocknr>=0);
-	assert(STORAGE_get_big_block(hf,bigblocknr,block));
+	ret = STORAGE_get_big_block(hf,bigblocknr,block);
+	assert(ret);
 
 	memcpy(sblock,((LPBYTE)block)+SMALLSIZE*(blocknr&(SMALLBLOCKS_PER_BIGBLOCK-1)),SMALLSIZE);
 	return TRUE;
@@ -249,16 +254,20 @@ STORAGE_put_small_block(HANDLE hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
 	int				bigblocknr;
 	struct storage_pps_entry	root;
+	BOOL ret;
 
 	assert(blocknr>=0);
 
-	assert(STORAGE_get_root_pps_entry(hf,&root));
+	ret = STORAGE_get_root_pps_entry(hf,&root);
+	assert(ret);
 	bigblocknr = STORAGE_get_nth_next_big_blocknr(hf,root.pps_sb,blocknr/SMALLBLOCKS_PER_BIGBLOCK);
 	assert(bigblocknr>=0);
-	assert(STORAGE_get_big_block(hf,bigblocknr,block));
+	ret = STORAGE_get_big_block(hf,bigblocknr,block);
+	assert(ret);
 
 	memcpy(((LPBYTE)block)+SMALLSIZE*(blocknr&(SMALLBLOCKS_PER_BIGBLOCK-1)),sblock,SMALLSIZE);
-	assert(STORAGE_put_big_block(hf,bigblocknr,block));
+	ret = STORAGE_put_big_block(hf,bigblocknr,block);
+	assert(ret);
 	return TRUE;
 }
 
@@ -271,12 +280,14 @@ STORAGE_get_next_small_blocknr(HANDLE hf,int blocknr) {
 	LPINT				sbd = (LPINT)block;
 	int				bigblocknr;
 	struct storage_header		sth;
+	BOOL ret;
 
 	READ_HEADER;
 	assert(blocknr>=0);
 	bigblocknr = STORAGE_get_nth_next_big_blocknr(hf,sth.sbd_startblock,blocknr/128);
 	assert(bigblocknr>=0);
-	assert(STORAGE_get_big_block(hf,bigblocknr,block));
+	ret = STORAGE_get_big_block(hf,bigblocknr,block);
+	assert(ret);
 	assert(sbd[blocknr & 127]!=STORAGE_CHAINENTRY_FREE);
 	return sbd[blocknr & (128-1)];
 }
@@ -290,6 +301,7 @@ STORAGE_get_nth_next_small_blocknr(HANDLE hf,int blocknr,int nr) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 	assert(blocknr>=0);
@@ -298,7 +310,8 @@ STORAGE_get_nth_next_small_blocknr(HANDLE hf,int blocknr,int nr) {
 			int	bigblocknr;
 			bigblocknr = STORAGE_get_nth_next_big_blocknr(hf,sth.sbd_startblock,blocknr/128);
 			assert(bigblocknr>=0);
-			assert(STORAGE_get_big_block(hf,bigblocknr,block));
+			ret = STORAGE_get_big_block(hf,bigblocknr,block);
+			assert(ret);
 			lastblocknr = blocknr;
 		}
 		assert(lastblocknr>=0);
@@ -318,12 +331,14 @@ STORAGE_get_pps_entry(HANDLE hf,int n,struct storage_pps_entry *pstde) {
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)(((LPBYTE)block)+128*(n&3));
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 	/* we have 4 pps entries per big block */
 	blocknr = STORAGE_get_nth_next_big_blocknr(hf,sth.root_startblock,n/4);
 	assert(blocknr>=0);
-	assert(STORAGE_get_big_block(hf,blocknr,block));
+	ret = STORAGE_get_big_block(hf,blocknr,block);
+	assert(ret);
 
 	*pstde=*stde;
 	return 1;
@@ -338,15 +353,18 @@ STORAGE_put_pps_entry(HANDLE hf,int n,struct storage_pps_entry *pstde) {
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)(((LPBYTE)block)+128*(n&3));
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 
 	/* we have 4 pps entries per big block */
 	blocknr = STORAGE_get_nth_next_big_blocknr(hf,sth.root_startblock,n/4);
 	assert(blocknr>=0);
-	assert(STORAGE_get_big_block(hf,blocknr,block));
+	ret = STORAGE_get_big_block(hf,blocknr,block);
+	assert(ret);
 	*stde=*pstde;
-	assert(STORAGE_put_big_block(hf,blocknr,block));
+	ret = STORAGE_put_big_block(hf,blocknr,block);
+	assert(ret);
 	return 1;
 }
 
@@ -465,19 +483,22 @@ STORAGE_set_big_chain(HANDLE hf,int blocknr,INT type) {
 	LPINT	bbd = (LPINT)block;
 	int	nextblocknr,bigblocknr;
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 	assert(blocknr!=type);
 	while (blocknr>=0) {
 		bigblocknr = sth.bbd_list[blocknr/128];
 		assert(bigblocknr>=0);
-		assert(STORAGE_get_big_block(hf,bigblocknr,block));
+		ret = STORAGE_get_big_block(hf,bigblocknr,block);
+		assert(ret);
 
 		nextblocknr = bbd[blocknr&(128-1)];
 		bbd[blocknr&(128-1)] = type;
 		if (type>=0)
 			return TRUE;
-		assert(STORAGE_put_big_block(hf,bigblocknr,block));
+		ret = STORAGE_put_big_block(hf,bigblocknr,block);
+		assert(ret);
 		type = STORAGE_CHAINENTRY_FREE;
 		blocknr = nextblocknr;
 	}
@@ -493,6 +514,7 @@ STORAGE_set_small_chain(HANDLE hf,int blocknr,INT type) {
 	LPINT	sbd = (LPINT)block;
 	int	lastblocknr,nextsmallblocknr,bigblocknr;
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 
@@ -503,12 +525,14 @@ STORAGE_set_small_chain(HANDLE hf,int blocknr,INT type) {
 		if (lastblocknr/128!=blocknr/128) {
 			bigblocknr = STORAGE_get_nth_next_big_blocknr(hf,sth.sbd_startblock,blocknr/128);
 			assert(bigblocknr>=0);
-			assert(STORAGE_get_big_block(hf,bigblocknr,block));
+			ret = STORAGE_get_big_block(hf,bigblocknr,block);
+			assert(ret);
 		}
 		lastblocknr = blocknr;
 		nextsmallblocknr = sbd[blocknr&(128-1)];
 		sbd[blocknr&(128-1)] = type;
-		assert(STORAGE_put_big_block(hf,bigblocknr,block));
+		ret = STORAGE_put_big_block(hf,bigblocknr,block);
+		assert(ret);
 		if (type>=0)
 			return TRUE;
 		type = STORAGE_CHAINENTRY_FREE;
@@ -526,6 +550,7 @@ STORAGE_get_free_big_blocknr(HANDLE hf) {
 	LPINT	sbd = (LPINT)block;
 	int	lastbigblocknr,i,curblock,bigblocknr;
 	struct storage_header sth;
+	BOOL ret;
 
 	READ_HEADER;
 	curblock	= 0;
@@ -533,13 +558,16 @@ STORAGE_get_free_big_blocknr(HANDLE hf) {
 	bigblocknr	= sth.bbd_list[curblock];
 	while (curblock<sth.num_of_bbd_blocks) {
 		assert(bigblocknr>=0);
-		assert(STORAGE_get_big_block(hf,bigblocknr,block));
+		ret = STORAGE_get_big_block(hf,bigblocknr,block);
+		assert(ret);
 		for (i=0;i<128;i++)
 			if (sbd[i]==STORAGE_CHAINENTRY_FREE) {
 				sbd[i] = STORAGE_CHAINENTRY_ENDOFCHAIN;
-				assert(STORAGE_put_big_block(hf,bigblocknr,block));
+				ret = STORAGE_put_big_block(hf,bigblocknr,block);
+				assert(ret);
 				memset(block,0x42,sizeof(block));
-				assert(STORAGE_put_big_block(hf,i+curblock*128,block));
+				ret = STORAGE_put_big_block(hf,i+curblock*128,block);
+				assert(ret);
 				return i+curblock*128;
 			}
 		lastbigblocknr = bigblocknr;
@@ -553,25 +581,31 @@ STORAGE_get_free_big_blocknr(HANDLE hf) {
 	memset(block,0xff,sizeof(block));
 	/* mark the block allocated and returned by this function */
 	sbd[1] = STORAGE_CHAINENTRY_ENDOFCHAIN;
-	assert(STORAGE_put_big_block(hf,bigblocknr,block));
+	ret = STORAGE_put_big_block(hf,bigblocknr,block);
+	assert(ret);
 
 	/* if we had a bbd block already (mostlikely) we need
 	 * to link the new one into the chain
 	 */
-	if (lastbigblocknr!=-1)
-		assert(STORAGE_set_big_chain(hf,lastbigblocknr,bigblocknr));
+	if (lastbigblocknr!=-1) {
+		ret = STORAGE_set_big_chain(hf,lastbigblocknr,bigblocknr);
+		assert(ret);
+	}
 	sth.bbd_list[curblock]=bigblocknr;
 	sth.num_of_bbd_blocks++;
 	assert(sth.num_of_bbd_blocks==curblock+1);
-	assert(STORAGE_put_big_block(hf,-1,(LPBYTE)&sth));
+	ret = STORAGE_put_big_block(hf,-1,(LPBYTE)&sth);
+	assert(ret);
 
 	/* Set the end of the chain for the bigblockdepots */
-	assert(STORAGE_set_big_chain(hf,bigblocknr,STORAGE_CHAINENTRY_ENDOFCHAIN));
+	ret = STORAGE_set_big_chain(hf,bigblocknr,STORAGE_CHAINENTRY_ENDOFCHAIN);
+	assert(ret);
 	/* add 1, for the first entry is used for the additional big block
 	 * depot. (means we already used bigblocknr) */
 	memset(block,0x42,sizeof(block));
 	/* allocate this block (filled with 0x42) */
-	assert(STORAGE_put_big_block(hf,bigblocknr+1,block));
+	ret = STORAGE_put_big_block(hf,bigblocknr+1,block);
+	assert(ret);
 	return bigblocknr+1;
 }
 
@@ -1360,6 +1394,8 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 	struct storage_pps_entry	stde;
 	struct storage_header sth;
 	HANDLE		hf=This->hf;
+	BOOL ret;
+	int	 nPPSEntries;
 
 	READ_HEADER;
 
@@ -1391,8 +1427,10 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 		}
 		stde.pps_next = ppsent;
 	}
-	assert(STORAGE_put_pps_entry(lpstg->hf,x,&stde));
-	assert(1==STORAGE_get_pps_entry(lpstg->hf,ppsent,&(lpstg->stde)));
+	ret = STORAGE_put_pps_entry(lpstg->hf,x,&stde);
+	assert(ret);
+	nPPSEntries = STORAGE_get_pps_entry(lpstg->hf,ppsent,&(lpstg->stde));
+	assert(nPPSEntries == 1);
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, lpstg->stde.pps_rawname,
                              sizeof(lpstg->stde.pps_rawname)/sizeof(WCHAR));
 	lpstg->stde.pps_sizeofname = (strlenW(lpstg->stde.pps_rawname)+1)*sizeof(WCHAR);
@@ -1419,6 +1457,8 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	IStream16Impl*	lpstr;
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
+	BOOL ret;
+	int	 nPPSEntries;
 
 	TRACE("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
 		This,pwcsName,grfMode,reserved1,reserved2,ppstm
@@ -1445,8 +1485,10 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 				return E_FAIL;
 		}
 	stde.pps_next = ppsent;
-	assert(STORAGE_put_pps_entry(lpstr->hf,x,&stde));
-	assert(1==STORAGE_get_pps_entry(lpstr->hf,ppsent,&(lpstr->stde)));
+	ret = STORAGE_put_pps_entry(lpstr->hf,x,&stde);
+	assert(ret);
+	nPPSEntries = STORAGE_get_pps_entry(lpstr->hf,ppsent,&(lpstr->stde));
+	assert(nPPSEntries == 1);
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, lpstr->stde.pps_rawname,
                              sizeof(lpstr->stde.pps_rawname)/sizeof(WCHAR));
 	lpstr->stde.pps_sizeofname = (strlenW(lpstr->stde.pps_rawname)+1) * sizeof(WCHAR);
