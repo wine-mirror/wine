@@ -1261,7 +1261,12 @@ static HRESULT WINAPI IShellLinkA_fnSetShowCmd(IShellLinkA * iface, INT iShowCmd
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 
-	FIXME("(%p)->(showcmd=%x)\n",This, iShowCmd);
+	/* SW_SHOWNORMAL is the default ... The others would have 
+	 * to be somehow passed through the link file ... We can't 
+	 * do that currently.
+	 */
+	if (iShowCmd != SW_SHOWNORMAL)
+		FIXME("(%p)->(showcmd=%x)\n",This, iShowCmd);
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA * iface, LPSTR pszIconPath,INT cchIconPath,INT *piIcon)
