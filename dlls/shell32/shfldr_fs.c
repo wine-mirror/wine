@@ -325,7 +325,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
 
-    HRESULT hr = E_OUTOFMEMORY;
+    HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
     CHAR szPath[MAX_PATH];
@@ -583,7 +583,7 @@ IShellFolder_fnGetUIObjectOf (IShellFolder2 * iface,
 	    hr = E_NOINTERFACE;
 	}
 
-	if (!pObj)
+	if (SUCCEEDED(hr) && !pObj)
 	    hr = E_OUTOFMEMORY;
 
 	*ppvOut = pObj;
@@ -652,9 +652,11 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl, DWOR
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
 
-    CHAR szPath[MAX_PATH] = "";
+    CHAR szPath[MAX_PATH];
     int len = 0;
     BOOL bSimplePidl;
+
+    *szPath = '\0';
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
