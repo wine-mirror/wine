@@ -1142,6 +1142,8 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBN_GETINFOTIPA       (TBN_FIRST-18)
 #define TBN_GETINFOTIPW       (TBN_FIRST-19)
 #define TBN_GETINFOTIP WINELIB_NAME_AW(TBN_GETINFOTIP)
+#define TBN_INITCUSTOMIZE	(TBN_FIRST-23)
+#define TBNRF_HIDEHELP		0x00000001
 
 
 /* Return values from TBN_DROPDOWN */
