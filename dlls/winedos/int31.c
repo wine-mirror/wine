@@ -29,6 +29,8 @@
 #include "dosexe.h"
 
 #include "wine/debug.h"
+#include "stackframe.h"
+#include "toolhelp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -63,6 +65,7 @@ typedef struct tagRMCB {
 
 static RMCB *FirstRMCB = NULL;
 static WORD dpmi_flag;
+static void* lastvalloced = NULL;
 
 /**********************************************************************
  *          DOSVM_IsDos32
@@ -120,6 +123,107 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
     call->fs  = context->SegFs;
     call->gs  = context->SegGs;
     call->ss  = context->SegSs;
+}
+
+/**********************************************************************
+ *          DPMI_xalloc
+ * special virtualalloc, allocates lineary monoton growing memory.
+ * (the usual VirtualAlloc does not satisfy that restriction)
+ */
+static LPVOID DPMI_xalloc( DWORD len ) 
+{
+    LPVOID  ret;
+    LPVOID  oldlastv = lastvalloced;
+
+    if (lastvalloced) 
+    {
+        int xflag = 0;
+
+        ret = NULL;
+        while (!ret) 
+        {
+            ret = VirtualAlloc( lastvalloced, len,
+                                MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+            if (!ret)
+                lastvalloced = (char *) lastvalloced + 0x10000;
+
+            /* we failed to allocate one in the first round.
+             * try non-linear
+             */
+            if (!xflag && (lastvalloced<oldlastv)) 
+            { 
+                /* wrapped */
+                FIXME( "failed to allocate linearly growing memory (%ld bytes), "
+                       "using non-linear growing...\n", len );
+                xflag++;
+            }
+
+            /* if we even fail to allocate something in the next
+             * round, return NULL
+             */
+            if ((xflag==1) && (lastvalloced >= oldlastv))
+                xflag++;
+
+            if ((xflag==2) && (lastvalloced < oldlastv)) {
+                FIXME( "failed to allocate any memory of %ld bytes!\n", len );
+                return NULL;
+            }
+        }
+    } 
+    else
+    {
+        ret = VirtualAlloc( NULL, len, 
+                            MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+    }
+
+    lastvalloced = (LPVOID)(((DWORD)ret+len+0xffff)&~0xffff);
+    return ret;
+}
+
+/**********************************************************************
+ *          DPMI_xfree
+ */
+static void DPMI_xfree( LPVOID ptr ) 
+{
+    VirtualFree( ptr, 0, MEM_RELEASE );
+}
+
+/**********************************************************************
+ *          DPMI_xrealloc
+ *
+ * FIXME: perhaps we could grow this mapped area... 
+ */
+static LPVOID DPMI_xrealloc( LPVOID ptr, DWORD newsize ) 
+{
+    MEMORY_BASIC_INFORMATION        mbi;
+    LPVOID                          newptr;
+
+    newptr = DPMI_xalloc( newsize );
+    if (ptr) 
+    {
+        if (!VirtualQuery(ptr,&mbi,sizeof(mbi))) 
+        {
+            FIXME( "realloc of DPMI_xallocd region %p?\n", ptr );
+            return NULL;
+        }
+
+        if (mbi.State == MEM_FREE) 
+        {
+            FIXME( "realloc of DPMI_xallocd region %p?\n", ptr );
+            return NULL;
+        }
+
+        /* We do not shrink allocated memory. most reallocs
+         * only do grows anyway
+         */
+        if (newsize <= mbi.RegionSize)
+            return ptr;
+
+        memcpy( newptr, ptr, mbi.RegionSize );
+        DPMI_xfree( ptr );
+    }
+
+    return newptr;
 }
 
 
@@ -619,6 +723,55 @@ void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
 }
 
 /**********************************************************************
+ *          DOSVM_RawModeSwitchWrapper
+ *
+ * DPMI Raw Mode Switch wrapper.
+ * This routine does all the stack manipulation tricks needed
+ * to return from protected mode interrupt using modified 
+ * code and stack pointers.
+ */
+static void DOSVM_RawModeSwitchWrapper( CONTEXT86 *context )
+{
+    /*
+     * FIXME: This routine will not work if it is called
+     *        from 32 bit DPMI program and the program returns
+     *        to protected mode while ESP or EIP is over 0xffff.
+     * FIXME: This routine will not work if it is not called
+     *        using 16-bit-to-Wine callback glue function.
+     */
+    STACK16FRAME frame = *CURRENT_STACK16;
+  
+    DOSVM_RawModeSwitch( context );
+
+    /*
+     * After this function returns to relay code, protected mode
+     * 16 bit stack will contain STACK16FRAME and single WORD
+     * (EFlags, see next comment).
+     */
+    NtCurrentTeb()->cur_stack =
+        MAKESEGPTR( context->SegSs,
+                    context->Esp - sizeof(STACK16FRAME) - sizeof(WORD) );
+  
+    /*
+     * After relay code returns to glue function, protected
+     * mode 16 bit stack will contain interrupt return record:
+     * IP, CS and EFlags. Since EFlags is ignored, it won't
+     * need to be initialized.
+     */
+    context->Esp -= 3 * sizeof(WORD);
+
+    /*
+     * Restore stack frame so that relay code won't be confused.
+     * It should be noted that relay code overwrites IP and CS
+     * in STACK16FRAME with values taken from current CONTEXT86.
+     * These values are what is returned to glue function
+     * (see previous comment).
+     */
+    *CURRENT_STACK16 = frame;
+}
+
+
+/**********************************************************************
  *         DOSVM_CheckWrappers
  *
  * Check if this was really a wrapper call instead of an interrupt.
@@ -631,10 +784,10 @@ static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
     /* Handle protected mode interrupts. */
     if (!ISV86(context)) {
         if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel) {
-           INT_Int31Handler( context ); /* FIXME: Call RawModeSwitch */
-           return TRUE;
-       }
-       return FALSE;
+            DOSVM_RawModeSwitchWrapper( context );
+            return TRUE;
+        }
+        return FALSE;
     }
 
     /* check if it's our wrapper */
@@ -718,13 +871,78 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0002:  /* Real mode segment to descriptor */
+        TRACE( "real mode segment to descriptor (0x%04x)\n", BX_reg(context) );
+        {
+            WORD entryPoint = 0;  /* KERNEL entry point for descriptor */
+            switch(BX_reg(context))
+            {
+            case 0x0000: entryPoint = 183; break;  /* __0000H */
+            case 0x0040: entryPoint = 193; break;  /* __0040H */
+            case 0xa000: entryPoint = 174; break;  /* __A000H */
+            case 0xb000: entryPoint = 181; break;  /* __B000H */
+            case 0xb800: entryPoint = 182; break;  /* __B800H */
+            case 0xc000: entryPoint = 195; break;  /* __C000H */
+            case 0xd000: entryPoint = 179; break;  /* __D000H */
+            case 0xe000: entryPoint = 190; break;  /* __E000H */
+            case 0xf000: entryPoint = 194; break;  /* __F000H */
+            default:
+                SET_AX( context, DOSMEM_AllocSelector(BX_reg(context)) );
+                break;
+            }
+            if (entryPoint)
+            {
+                FARPROC16 proc = GetProcAddress16( GetModuleHandle16( "KERNEL" ),
+                                                   (LPCSTR)(ULONG_PTR)entryPoint );
+                SET_AX( context, LOWORD(proc) );
+            }
+        }
+        break;
+
     case 0x0003:  /* Get next selector increment */
+        TRACE("get selector increment (__AHINCR)\n");
+        context->Eax = __AHINCR;
+        break;
+
     case 0x0004:  /* Lock selector (not supported) */
+        FIXME("lock selector not supported\n");
+        context->Eax = 0;  /* FIXME: is this a correct return value? */
+        break;
+
     case 0x0005:  /* Unlock selector (not supported) */
+        FIXME("unlock selector not supported\n");
+        context->Eax = 0;  /* FIXME: is this a correct return value? */
+        break;
+
     case 0x0006:  /* Get selector base address */
+        TRACE( "get selector base address (0x%04x)\n", BX_reg(context) );
+        {
+            WORD sel = BX_reg(context);
+            if (IS_SELECTOR_SYSTEM(sel) || IS_SELECTOR_FREE(sel))
+            {
+                context->Eax = 0x8022;  /* invalid selector */
+                SET_CFLAG(context);
+            }
+            else
+            {
+                DWORD base = GetSelectorBase( sel );
+                SET_CX( context, HIWORD(base) );
+                SET_DX( context, LOWORD(base) );
+            }
+        }
+        break;
+
     case 0x0007:  /* Set selector base address */
-        /* chain to protected mode handler */
-        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        {
+            DWORD base = MAKELONG( DX_reg(context), CX_reg(context) );
+            WORD  sel = BX_reg(context);
+            TRACE( "set selector base address (0x%04x,0x%08lx)\n", sel, base );
+
+            /* check if Win16 app wants to access lower 64K of DOS memory */
+            if (base < 0x10000 && DOSVM_IsWin16())
+                DOSMEM_Init(TRUE);
+
+            SetSelectorBase( sel, base );
+        }
         break;
 
     case 0x0008:  /* Set selector limit */
@@ -737,14 +955,83 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0009:  /* Set selector access rights */
+        TRACE( "set selector access rights(0x%04x,0x%04x)\n",
+               BX_reg(context), CX_reg(context) );
+        SelectorAccessRights16( BX_reg(context), 1, CX_reg(context) );
+        break;
+
     case 0x000a:  /* Allocate selector alias */
+        TRACE( "allocate selector alias (0x%04x)\n", BX_reg(context) );
+        if (!SET_AX( context, AllocCStoDSAlias16( BX_reg(context) )))
+        {
+            SET_AX( context, 0x8011 );  /* descriptor unavailable */
+            SET_CFLAG(context);
+        }
+        break;
+
     case 0x000b:  /* Get descriptor */
+        TRACE( "get descriptor (0x%04x)\n", BX_reg(context) );
+        {
+            LDT_ENTRY *entry = (LDT_ENTRY*)CTX_SEG_OFF_TO_LIN( context,
+                                                               context->SegEs, 
+                                                               context->Edi );
+            wine_ldt_get_entry( BX_reg(context), entry );
+        }
+        break;
+
     case 0x000c:  /* Set descriptor */
+        TRACE( "set descriptor (0x%04x)\n", BX_reg(context) );
+        {
+            LDT_ENTRY *entry = (LDT_ENTRY*)CTX_SEG_OFF_TO_LIN( context,
+                                                               context->SegEs, 
+                                                               context->Edi );
+            wine_ldt_set_entry( BX_reg(context), entry );
+        }
+        break;
+
     case 0x000d:  /* Allocate specific LDT descriptor */
+        FIXME( "allocate descriptor (0x%04x), stub!\n", BX_reg(context) );
+        SET_AX( context, 0x8011 ); /* descriptor unavailable */
+        SET_CFLAG( context );
+        break;
+
+    case 0x000e:  /* Get Multiple Descriptors (1.0) */
+        FIXME( "get multiple descriptors - unimplemented\n" );
+        break;
+
+    case 0x000f:  /* Set Multiple Descriptors (1.0) */
+        FIXME( "set multiple descriptors - unimplemented\n" );
+        break;
+
     case 0x0100:  /* Allocate DOS memory block */
+        TRACE( "allocate DOS memory block (0x%x paragraphs)\n", BX_reg(context) );
+        {
+            DWORD dw = GlobalDOSAlloc16( (DWORD)BX_reg(context) << 4 );
+            if (dw) {
+                SET_AX( context, HIWORD(dw) );
+                SET_DX( context, LOWORD(dw) );
+            } else {
+                SET_AX( context, 0x0008 ); /* insufficient memory */
+                SET_BX( context, DOSMEM_Available() >> 4 );
+                SET_CFLAG(context);
+            }
+            break;
+        }
+
     case 0x0101:  /* Free DOS memory block */
-        /* chain to protected mode handler */
-        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        TRACE( "free DOS memory block (0x%04x)\n", DX_reg(context) );
+        {
+            WORD error = GlobalDOSFree16( DX_reg(context) );
+            if (error) {
+                SET_AX( context, 0x0009 ); /* memory block address invalid */
+                SET_CFLAG( context );
+            }
+        }
+        break;
+
+    case 0x0102: /* Resize DOS Memory Block */
+        FIXME( "resize DOS memory block (0x%04x, 0x%x paragraphs) - unimplemented\n", 
+               DX_reg(context), BX_reg(context) );
         break;
 
     case 0x0200: /* get real mode interrupt vector */
@@ -882,12 +1169,79 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         }
         break;
 
+    case 0x0401:  /* Get DPMI Capabilities (1.0) */
+        FIXME( "get dpmi capabilities - unimplemented\n");
+        break;
+
     case 0x0500:  /* Get free memory information */
+        TRACE("get free memory information\n");
+        {
+            MEMMANINFO mmi;
+            void *ptr = CTX_SEG_OFF_TO_LIN( context,
+                                            context->SegEs, 
+                                            context->Edi );
+
+            mmi.dwSize = sizeof( mmi );
+            MemManInfo16( &mmi );
+
+            /* the layout is just the same as MEMMANINFO, but without
+             * the dwSize entry.
+             */
+            memcpy( ptr, ((char*)&mmi)+4, sizeof(mmi)-4 );
+            break;
+        }
+
     case 0x0501:  /* Allocate memory block */
+        {
+            DWORD size = MAKELONG( CX_reg(context), BX_reg(context) );
+            BYTE *ptr;
+
+            TRACE( "allocate memory block (%ld bytes)\n", size );
+
+            ptr = (BYTE *)DPMI_xalloc( size );
+            if (!ptr)
+            {
+                SET_AX( context, 0x8012 );  /* linear memory not available */
+                SET_CFLAG(context);
+            } 
+            else 
+            {
+                SET_BX( context, HIWORD(ptr) );
+                SET_CX( context, LOWORD(ptr) );
+                SET_SI( context, HIWORD(ptr) );
+                SET_DI( context, LOWORD(ptr) );
+            }
+            break;
+        }
+
     case 0x0502:  /* Free memory block */
+        {
+            DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
+            TRACE( "free memory block (0x%08lx)\n", handle );
+            DPMI_xfree( (void *)handle );
+        }
+        break;
+
     case 0x0503:  /* Resize memory block */
-        /* chain to protected mode handler */
-        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        {
+            DWORD size = MAKELONG( CX_reg(context), BX_reg(context) );
+            DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
+            BYTE *ptr;
+
+            TRACE( "resize memory block (0x%08lx, %ld bytes)\n", handle, size );
+
+            ptr = (BYTE *)DPMI_xrealloc( (void *)handle, size );
+            if (!ptr)
+            {
+                SET_AX( context, 0x8012 );  /* linear memory not available */
+                SET_CFLAG(context);
+            } else {
+                SET_BX( context, HIWORD(ptr) );
+                SET_CX( context, LOWORD(ptr) );
+                SET_SI( context, HIWORD(ptr) );
+                SET_DI( context, LOWORD(ptr) );
+            }
+        }
         break;
 
     case 0x0507:  /* Set page attributes (1.0) */
@@ -925,8 +1279,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;  /* Just ignore it */
 
     case 0x0800:  /* Physical address mapping */
-        /* chain to protected mode handler */
-        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        FIXME( "physical address mapping (0x%08lx) - unimplemented\n", 
+               MAKELONG(CX_reg(context),BX_reg(context)) );
         break;
 
     default:

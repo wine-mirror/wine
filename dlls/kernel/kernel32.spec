@@ -975,6 +975,7 @@
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
+@ stdcall AllocCStoDSAlias16(long) AllocCStoDSAlias16
 @ stdcall AllocSelectorArray16(long) AllocSelectorArray16
 @ stdcall ConvertDialog32To16(ptr long ptr) ConvertDialog32To16
 @ stdcall DOS3Call(ptr) DOS3Call
@@ -992,9 +993,11 @@
 @ stdcall GetModuleHandle16(str) GetModuleHandle16
 @ stdcall GetModuleName16(long ptr long) GetModuleName16
 @ stdcall GetModuleUsage16(long) GetModuleUsage16
+@ stdcall GetSelectorBase(long) GetSelectorBase
 @ stdcall GetSelectorLimit16(long) GetSelectorLimit16
 @ stdcall GetThreadQueue16(long) GetThreadQueue16
 @ stdcall GlobalDOSAlloc16(long) GlobalDOSAlloc16
+@ stdcall GlobalDOSFree16(long) GlobalDOSFree16
 @ stdcall GlobalFlags16(long) GlobalFlags16
 @ stdcall GlobalReAlloc16(long long long) GlobalReAlloc16
 @ stdcall IsBadReadPtr16(long long) IsBadReadPtr16
@@ -1006,6 +1009,8 @@
 @ stdcall LocalLock16(long) LocalLock16
 @ stdcall LocalUnlock16(long) LocalUnlock16
 @ stdcall LockResource16(long) LockResource16
+@ stdcall MemManInfo16(ptr) MemManInfo16
+@ stdcall SelectorAccessRights16(long long long) SelectorAccessRights16
 @ stdcall SetSelectorBase(long long) SetSelectorBase
 @ stdcall SetSelectorLimit16(long long) SetSelectorLimit16
 @ stdcall SetThreadQueue16(long long) SetThreadQueue16
@@ -1035,6 +1040,7 @@
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl DOSFS_GetDeviceByHandle(long) DOSFS_GetDeviceByHandle
+@ cdecl DOSMEM_AllocSelector(long) DOSMEM_AllocSelector
 @ cdecl DOSMEM_Available() DOSMEM_Available
 @ cdecl DOSMEM_FreeBlock(ptr) DOSMEM_FreeBlock
 @ cdecl DOSMEM_GetBlock(long ptr) DOSMEM_GetBlock
