@@ -197,9 +197,11 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 
 void start_apartment_listener_thread(void);
 
-extern HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
-void RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
+HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
 HRESULT RPC_ExecuteCall(RPCOLEMESSAGE *msg, IRpcStubBuffer *stub);
+HRESULT RPC_RegisterInterface(REFIID riid);
+void RPC_UnregisterInterface(REFIID riid);
+void RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize(void);

@@ -418,8 +418,10 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
 static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *ifstub)
 {
     TRACE("m=%p, m->oid=%s, ipid=%s\n", m, wine_dbgstr_longlong(m->oid), debugstr_guid(&ifstub->ipid));
-    
+
     list_remove(&ifstub->entry);
+
+    RPC_UnregisterInterface(&ifstub->iid);
         
     IUnknown_Release(ifstub->stubbuffer);
     IUnknown_Release(ifstub->iface);

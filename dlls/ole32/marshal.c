@@ -153,6 +153,9 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
             stub_manager_ext_addref(manager, 1);
     }
 
+    /* FIXME: check return value */
+    RPC_RegisterInterface(riid);
+
     stdobjref->ipid = ifstub->ipid;
 
     stub_manager_int_release(manager);

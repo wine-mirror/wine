@@ -32,8 +32,6 @@
  *     of registered class objects: ISCM::ServerRegisterClsid et al
  *   - Implement the OXID resolver so we don't need magic pipe names for
  *     clients and servers to meet up
- *   - Flip our marshalling on top of the RPC runtime transport API,
- *     so we no longer use named pipes to communicate
  *
  *   - Make all ole interface marshaling use NDR to be wire compatible with
  *     native DCOM
