@@ -55,7 +55,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
     switch(reason)
     {
       case DLL_PROCESS_ATTACH:
-        keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, 0, 0 );
+        keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, inst, 0 );
         break;
       case DLL_PROCESS_DETACH:
         UnhookWindowsHookEx(keyboard_hook);
