@@ -968,6 +968,7 @@ BOOL WINAPI VirtualProtect(
     FILE_VIEW *view;
     UINT base, i;
     BYTE vprot, *p;
+    DWORD prot;
 
     TRACE("%08x %08lx %08lx\n",
                      (UINT)addr, size, new_prot );
@@ -987,6 +988,7 @@ BOOL WINAPI VirtualProtect(
     /* Make sure all the pages are committed */
 
     p = view->prot + ((base - view->base) >> page_shift);
+    VIRTUAL_GetWin32Prot( *p, &prot, NULL );
     for (i = size >> page_shift; i; i--, p++)
     {
         if (!(*p & VPROT_COMMITTED))
@@ -996,7 +998,7 @@ BOOL WINAPI VirtualProtect(
         }
     }
 
-    if (old_prot) VIRTUAL_GetWin32Prot( view->prot[0], old_prot, NULL );
+    if (old_prot) *old_prot = prot;
     vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
     return VIRTUAL_SetProt( view, base, size, vprot );
 }
