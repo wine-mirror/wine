@@ -827,18 +827,28 @@ START_TEST(rtl)
 {
     InitFunctionPtrs();
 
-    test_RtlCompareMemory();
-    test_RtlCompareMemoryUlong();
-    test_RtlMoveMemory();
-    test_RtlFillMemory();
-    test_RtlFillMemoryUlong();
-    test_RtlZeroMemory();
-    if (pRtlUlonglongByteSwap) {
-	test_RtlUlonglongByteSwap();
-    } /* if */
-    test_RtlUniform();
-    test_RtlRandom();
-    test_RtlAreAllAccessesGranted();
-    test_RtlAreAnyAccessesGranted();
-    test_RtlComputeCrc32();
+    if (pRtlCompareMemory)
+        test_RtlCompareMemory();
+    if (pRtlCompareMemoryUlong)
+        test_RtlCompareMemoryUlong();
+    if (pRtlMoveMemory)
+        test_RtlMoveMemory();
+    if (pRtlFillMemory)
+        test_RtlFillMemory();
+    if (pRtlFillMemoryUlong)
+        test_RtlFillMemoryUlong();
+    if (pRtlZeroMemory)
+        test_RtlZeroMemory();
+    if (pRtlUlonglongByteSwap)
+        test_RtlUlonglongByteSwap();
+    if (pRtlUniform)
+        test_RtlUniform();
+    if (pRtlRandom)
+        test_RtlRandom();
+    if (pRtlAreAllAccessesGranted)
+        test_RtlAreAllAccessesGranted();
+    if (pRtlAreAnyAccessesGranted)
+        test_RtlAreAnyAccessesGranted();
+    if (pRtlComputeCrc32)
+        test_RtlComputeCrc32();
 }

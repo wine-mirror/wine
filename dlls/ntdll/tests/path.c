@@ -234,7 +234,10 @@ START_TEST(path)
     pRtlIsDosDeviceName_U = (void *)GetProcAddress(mod,"RtlIsDosDeviceName_U");
     pRtlOemStringToUnicodeString = (void *)GetProcAddress(mod,"RtlOemStringToUnicodeString");
     pRtlIsNameLegalDOS8Dot3 = (void *)GetProcAddress(mod,"RtlIsNameLegalDOS8Dot3");
-    test_RtlDetermineDosPathNameType();
-    test_RtlIsDosDeviceName();
-    test_RtlIsNameLegalDOS8Dot3();
+    if (pRtlDetermineDosPathNameType_U)
+        test_RtlDetermineDosPathNameType();
+    if (pRtlIsDosDeviceName_U)
+        test_RtlIsDosDeviceName();
+    if (pRtlIsNameLegalDOS8Dot3)
+        test_RtlIsNameLegalDOS8Dot3();
 }

@@ -421,9 +421,10 @@ START_TEST(large_int)
 {
     InitFunctionPtrs();
 
-    test_RtlExtendedMagicDivide();
-    if (pRtlInt64ToUnicodeString != NULL) {
-	test_RtlInt64ToUnicodeString();
-    } /* if */
-    test_RtlLargeIntegerToChar();
+    if (pRtlExtendedMagicDivide)
+        test_RtlExtendedMagicDivide();
+    if (pRtlInt64ToUnicodeString)
+	    test_RtlInt64ToUnicodeString();
+    if (pRtlLargeIntegerToChar)
+        test_RtlLargeIntegerToChar();
 }

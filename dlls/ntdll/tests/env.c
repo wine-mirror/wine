@@ -295,7 +295,10 @@ START_TEST(env)
     pRtlSetEnvironmentVariable = (void*)GetProcAddress(mod, "RtlSetEnvironmentVariable");
     pRtlExpandEnvironmentStrings_U = (void*)GetProcAddress(mod, "RtlExpandEnvironmentStrings_U");
 
-    testQuery();
-    testSet();
-    testExpand();
+    if (pRtlQueryEnvironmentVariable_U)
+        testQuery();
+    if (pRtlSetEnvironmentVariable)
+        testSet();
+    if (pRtlExpandEnvironmentStrings_U)
+        testExpand();
 }

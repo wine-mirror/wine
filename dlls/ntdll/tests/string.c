@@ -1075,13 +1075,20 @@ START_TEST(string)
 {
     InitFunctionPtrs();
 
-    test_ulongtoa();
-    test_ulonglongtoa();
-    test_atoi64();
-
-    test_ulongtow();
-    test_ulonglongtow();
-    test_wtoi();
-    test_wtol();
-    test_wtoi64();
+    if (p_ultoa)
+        test_ulongtoa();
+    if (p_ui64toa)
+        test_ulonglongtoa();
+    if (p_atoi64)
+        test_atoi64();
+    if (p_ultow)
+        test_ulongtow();
+    if (p_ui64tow)
+        test_ulonglongtow();
+    if (p_wtoi)
+        test_wtoi();
+    if (p_wtol)
+        test_wtol();
+    if (p_wtoi64)
+        test_wtoi64();
 }
