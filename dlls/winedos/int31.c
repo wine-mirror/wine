@@ -590,8 +590,8 @@ static void StartPM( CONTEXT86 *context )
     pm_ctx.Edx   = cs;
     pm_ctx.SegDs = ds;
     pm_ctx.SegEs = es;
-    pm_ctx.SegFs = 0;
-    pm_ctx.SegGs = 0;
+    pm_ctx.SegFs = wine_get_fs();
+    pm_ctx.SegGs = wine_get_gs();
     pm_ctx.EFlags &= ~V86_FLAG;
 
     TRACE("DOS program is now entering %d-bit protected mode\n", 

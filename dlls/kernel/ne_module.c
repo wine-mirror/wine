@@ -1463,6 +1463,8 @@ DWORD NE_StartTask(void)
         context.SegCs  = GlobalHandleToSel16(pSegTable[pModule->cs - 1].hSeg);
         context.SegDs  = GlobalHandleToSel16(pTask->hInstance);
         context.SegEs  = pTask->hPDB;
+        context.SegFs  = wine_get_fs();
+        context.SegGs  = wine_get_gs();
         context.Eip    = pModule->ip;
         context.Ebx    = pModule->stack_size;
         context.Ecx    = pModule->heap_size;

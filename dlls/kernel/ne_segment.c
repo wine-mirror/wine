@@ -670,13 +670,13 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
 
     context.Ecx = heap;
     context.Edi = hInst;
-    context.SegDs  = ds;
-    context.SegEs  = ds;   /* who knows ... */
-
-    context.SegCs  = SEL(pSegTable[pModule->cs-1].hSeg);
+    context.SegDs = ds;
+    context.SegEs = ds;   /* who knows ... */
+    context.SegFs = wine_get_fs();
+    context.SegGs = wine_get_gs();
+    context.SegCs = SEL(pSegTable[pModule->cs-1].hSeg);
     context.Eip = pModule->ip;
     context.Ebp = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
-
 
     pModule->cs = 0;  /* Don't initialize it twice */
     TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
@@ -775,7 +775,8 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         memset( &context, 0, sizeof(context) );
         context.SegDs = ds;
         context.SegEs = ds;   /* who knows ... */
-
+        context.SegFs = wine_get_fs();
+        context.SegGs = wine_get_gs();
         context.SegCs = HIWORD(entryPoint);
         context.Eip = LOWORD(entryPoint);
         context.Ebp =  OFFSETOF( NtCurrentTeb()->cur_stack )

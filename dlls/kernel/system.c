@@ -169,8 +169,10 @@ static void call_timer_proc16( WORD timer )
     CONTEXT86 context;
     FARPROC16 proc = SYS_Timers[timer-1].callback16;
 
-    memset( &context, '\0', sizeof(context) );
+    memset( &context, 0, sizeof(context) );
 
+    context.SegFs = wine_get_fs();
+    context.SegGs = wine_get_gs();
     context.SegCs = SELECTOROF( proc );
     context.Eip   = OFFSETOF( proc );
     context.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
