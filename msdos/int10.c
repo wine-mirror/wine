@@ -62,15 +62,25 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             0x07 - 80x25
         */
 
+        /* We may or may not want to do a refresh between the resize and
+           the clear... */
+
         switch (AL_reg(context)) {
-            case 0x00:
+            case 0x00: /* 40x25 */
             case 0x01:
+                VGA_Exit();
+                TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
+                   AL_reg(context));
+                CONSOLE_ResizeScreen(40, 25);
+                CONSOLE_ClearScreen();
+                break;                
             case 0x02:
             case 0x03:
             case 0x07:
                 VGA_Exit();
                 TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
+                CONSOLE_ResizeScreen(80, 25);
                 CONSOLE_ClearScreen();
                 break;
             case 0x13:
