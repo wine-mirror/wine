@@ -325,21 +325,19 @@ typedef struct
 #define IE_BYTESIZE	-11
 #define IE_BAUDRATE	-12
 
-#define EV_RXCHAR	0x0001
-#define EV_RXFLAG	0x0002
-#define EV_TXEMPTY	0x0004
-#define EV_CTS		0x0008
-#define EV_DSR		0x0010
-#define EV_RLSD	0x0020
-#define EV_BREAK	0x0040
-#define EV_ERR		0x0080
-#define EV_RING	0x0100
-#define EV_PERR	0x0200
-#define EV_CTSS	0x0400
-#define EV_DSRS	0x0800
-#define EV_RLSDS	0x1000
-#define EV_RINGTE	0x2000
-#define EV_RingTe	EV_RINGTE
+#define EV_RXCHAR    0x0001
+#define EV_RXFLAG    0x0002
+#define EV_TXEMPT    0x0004
+#define EV_CTS       0x0008
+#define EV_DSR       0x0010
+#define EV_RLSD      0x0020
+#define EV_BREAK     0x0040
+#define EV_ERR       0x0080
+#define EV_RING      0x0100
+#define EV_PERR      0x0200
+#define EV_RX80FULL  0x0400
+#define EV_EVENT1    0x0800
+#define EV_EVENT2    0x1000
 
 #define SETXOFF	1
 #define SETXON		2
@@ -350,8 +348,6 @@ typedef struct
 #define RESETDEV	7
 #define SETBREAK	8
 #define CLRBREAK	9
-
-#define GETBASEIRQ	10
 
 /* Purge functions for Comm Port */
 #define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the 
@@ -377,13 +373,6 @@ typedef struct
 #define	DTR_CONTROL_ENABLE	1
 #define	DTR_CONTROL_HANDSHAKE	2
 
-#define CSTF_CTSHOLD	0x01
-#define CSTF_DSRHOLD	0x02
-#define CSTF_RLSDHOLD	0x04
-#define CSTF_XOFFHOLD	0x08
-#define CSTF_XOFFSENT	0x10
-#define CSTF_EOF	0x20
-#define CSTF_TXIM	0x40
 
 #define MAKEINTRESOURCEA(i) (LPSTR)((DWORD)((WORD)(i)))
 #define MAKEINTRESOURCEW(i) (LPWSTR)((DWORD)((WORD)(i)))

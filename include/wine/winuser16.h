@@ -414,6 +414,7 @@ typedef struct
 
 #define GETMAXLPT	8
 #define GETMAXCOM	9
+#define GETBASEIRQ	10
 
 /* GetFreeSystemResources() parameters */
 
