@@ -1254,8 +1254,8 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     oldFrame = THREAD_STACK16( pTask->thdb );
     /* pop frame + args and push bp */
-    pData->old_ss_sp   = pTask->thdb->cur_stack - sizeof(STACK16FRAME)
-                           - 2 * sizeof(WORD);
+    pData->old_ss_sp   = pTask->thdb->cur_stack + sizeof(STACK16FRAME)
+                           + 2 * sizeof(WORD);
     *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp) = oldFrame->bp;
     pData->stacktop    = top;
     pData->stackmin    = ptr;
