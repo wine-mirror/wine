@@ -271,7 +271,7 @@ static void TASK_CallToStart(void)
         THDB *thdb;
 
         CreateThread( NULL, size, entry, NULL, 0, &id );
-        thdb = THREAD_ID_TO_THDB( id );
+        thdb = THREAD_IdToTHDB( id );
 
         while ( thdb->exit_code == 0x103 )
         {

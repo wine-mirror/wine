@@ -3,7 +3,7 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
@@ -1363,8 +1363,8 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     htask=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
     tdb = (TDB*)GlobalLock16(htask);
     if (!tdb || !tdb->thdb) return 0;
-    if (process) *process = PDB_TO_PROCESS_ID( tdb->thdb->process );
-    return THDB_TO_THREAD_ID( tdb->thdb );
+    if (process) *process = (DWORD)tdb->thdb->process->server_pid;
+    return tdb->thdb->server_tid;
 }
 
 

@@ -100,14 +100,8 @@ typedef struct _THDB
     int            socket;         /* 200 Socket for server communication */
     unsigned int   seq;            /*     Server sequence number */
     void          *server_tid;     /*     Server id for this thread */
+    struct _THDB  *next;           /*     Global thread list */
 } THDB;
-
-
-
-/* THDB <-> Thread id conversion macros */
-#define THREAD_OBFUSCATOR       ((DWORD)0xdeadbeef)
-#define THREAD_ID_TO_THDB(id)   ((THDB *)((id) ^ THREAD_OBFUSCATOR))
-#define THDB_TO_THREAD_ID(thdb) ((DWORD)(thdb) ^ THREAD_OBFUSCATOR)
 
 /* The pseudo handle value returned by GetCurrentThread */
 #define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe

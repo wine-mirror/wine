@@ -64,8 +64,8 @@ typedef struct _PDB
     K32OBJ          *event;            /* 0c Pointer to an event object (unused) */
     DWORD            exit_code;        /* 10 Process exit code */
     DWORD            unknown2;         /* 14 Unknown */
-    HANDLE         heap;             /* 18 Default process heap */
-    HANDLE         mem_context;      /* 1c Process memory context */
+    HANDLE           heap;             /* 18 Default process heap */
+    HANDLE           mem_context;      /* 1c Process memory context */
     DWORD            flags;            /* 20 Flags */
     void            *pdb16;            /* 24 DOS PSP */
     WORD             PSP_sel;          /* 28 Selector to DOS PSP */
@@ -74,12 +74,12 @@ typedef struct _PDB
     WORD             running_threads;  /* 2e Number of running threads */
     WORD             unknown3;         /* 30 Unknown */
     WORD             ring0_threads;    /* 32 Number of ring 0 threads */
-    HANDLE         system_heap;      /* 34 System heap to allocate handles */
-    HTASK          task;             /* 38 Win16 task */
+    HANDLE           system_heap;      /* 34 System heap to allocate handles */
+    HTASK            task;             /* 38 Win16 task */
     void            *mem_map_files;    /* 3c Pointer to mem-mapped files */
     ENVDB           *env_db;           /* 40 Environment database */
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
-    struct _PDB   *parent;           /* 48 Parent process */
+    struct _PDB     *parent;           /* 48 Parent process */
     WINE_MODREF     *modref_list;      /* 4c MODREF list */
     void            *thread_list;      /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
@@ -90,25 +90,24 @@ typedef struct _PDB
     K32OBJ          *console;          /* 84 Console */
     DWORD            tls_bits[2];      /* 88 TLS in-use bits */
     DWORD            process_dword;    /* 90 Unknown */
-    struct _PDB   *group;            /* 94 Process group */
+    struct _PDB     *group;            /* 94 Process group */
     WINE_MODREF     *exe_modref;       /* 98 MODREF for the process EXE */
     LPTOP_LEVEL_EXCEPTION_FILTER top_filter; /* 9c Top exception filter */
     DWORD            priority;         /* a0 Priority level */
-    HANDLE         heap_list;        /* a4 Head of process heap list */
+    HANDLE           heap_list;        /* a4 Head of process heap list */
     void            *heap_handles;     /* a8 Head of heap handles list */
     DWORD            unknown6;         /* ac Unknown */
     K32OBJ          *console_provider; /* b0 Console provider (??) */
     WORD             env_selector;     /* b4 Selector to process environment */
     WORD             error_mode;       /* b6 Error mode */
-    HANDLE         load_done_evt;    /* b8 Event for process loading done */
+    HANDLE           load_done_evt;    /* b8 Event for process loading done */
     DWORD            unknown7;         /* bc Unknown */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */
     void            *server_pid;       /*    Server id for this process */
-    HANDLE        *dos_handles;      /*    Handles mapping DOS -> Win32 */
-    struct _PDB   *list_next;        /*    List reference - list of PDB's */
-    struct _PDB   *list_prev;        /*    List reference - list of PDB's */
+    HANDLE          *dos_handles;      /*    Handles mapping DOS -> Win32 */
+    struct _PDB     *next;             /*    List reference - list of PDB's */
 } PDB;
 
 /* Process flags */
@@ -117,11 +116,6 @@ typedef struct _PDB
 #define PDB32_CONSOLE_PROC  0x0020  /* Console process */
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
-
-/* PDB <-> Process id conversion macros */
-#define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)
-#define PROCESS_ID_TO_PDB(id)  ((PDB *)((id) ^ PROCESS_OBFUSCATOR))
-#define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
 
 /* scheduler/environ.c */
 extern BOOL ENV_BuildEnvironment( PDB *pdb );

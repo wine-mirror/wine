@@ -34,8 +34,7 @@ const K32OBJ_OPS PROCESS_Ops =
 /* The initial process PDB */
 static PDB initial_pdb;
 
-static PDB *PROCESS_PDBList = NULL;
-static DWORD PROCESS_PDBList_Size = 0;
+static PDB *PROCESS_First = &initial_pdb;
 
 /***********************************************************************
  *           PROCESS_Current
@@ -96,13 +95,14 @@ PDB *PROCESS_IdToPDB( DWORD id )
     PDB *pdb;
 
     if (!id) return PROCESS_Current();
-    pdb = PROCESS_ID_TO_PDB( id );
-    if (!K32OBJ_IsValid( &pdb->header, K32OBJ_PROCESS ))
+    pdb = PROCESS_First;
+    while (pdb)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
+        if ((DWORD)pdb->server_pid == id) return pdb;
+        pdb = pdb->next;
     }
-    return pdb;
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return NULL;
 }
 
 
@@ -184,105 +184,6 @@ static BOOL PROCESS_InheritEnvDB( PDB *pdb, LPCSTR cmd_line, LPCSTR env,
     return TRUE;
 }
 
-/***********************************************************************
- *	     PROCESS_PDBList_Insert
- * Insert this PDB into the global PDB list
- */
-
-static void PROCESS_PDBList_Insert (PDB *pdb)
-{
-  TRACE (process, "Inserting PDB 0x%0lx, #%ld current\n", 
-	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
-
-  SYSTEM_LOCK (); 	/* FIXME: Do I need to worry about this ?
-			 * I.e., could more than one process be
-			 * created at once ?
-			 */
-  if (PROCESS_PDBList == NULL)
-    {
-      PROCESS_PDBList = pdb;
-      pdb->list_next = NULL;
-      pdb->list_prev = NULL;
-    }
-  else
-    {
-      PDB *first = PROCESS_PDBList, *last = PROCESS_PDBList;
-      if (first->list_prev) last = first->list_prev;
-
-      PROCESS_PDBList = pdb;
-      pdb->list_next = first;
-      pdb->list_prev = last;
-      last->list_next = pdb;
-      first->list_prev = pdb;
-    }
-  PROCESS_PDBList_Size ++;
-  SYSTEM_UNLOCK ();
-}
-
-/***********************************************************************
- *	     PROCESS_PDBList_Remove
- * Remove this PDB from the global PDB list
- */
-
-static void PROCESS_PDBList_Remove (PDB *pdb)
-{
-  PDB *next = pdb->list_next, *prev = pdb->list_prev;
-  
-  TRACE (process, "Removing PDB 0x%0lx, #%ld current\n", 
-	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
-
-  SYSTEM_LOCK ();
-
-  if (prev == next)
-    {
-      next->list_prev = NULL;
-      next->list_next = NULL;
-    }
-  else
-    {
-      if (next) next->list_prev = prev;
-      if (prev) prev->list_next = next;
-    }
-  
-  if (pdb == PROCESS_PDBList)
-    {
-      PROCESS_PDBList = next ? next : prev;
-    }
-  PROCESS_PDBList_Size --;
-
-  SYSTEM_UNLOCK ();
-}
-
-/***********************************************************************
- *	     PROCESS_PDBList_Getsize
- * Return the number of items in the global PDB list
- */
-
-int	PROCESS_PDBList_Getsize ()
-{
-  return PROCESS_PDBList_Size;
-}
-
-/***********************************************************************
- * 	     PROCESS_PDBList_Getfirst
- * Return the head of the PDB list
- */
-
-PDB*	PROCESS_PDBList_Getfirst ()
-{
-  return PROCESS_PDBList;
-}
-
-/***********************************************************************
- * 	     PROCESS_PDBList_Getnext
- * Return the "next" pdb as referenced from the argument.
- * If at the end of the list, return NULL.
- */
-
-PDB*	PROCESS_PDBList_Getnext (PDB *pdb)
-{
-  return (pdb->list_next != PROCESS_PDBList) ? pdb->list_next : NULL;
-}
 
 /***********************************************************************
  *           PROCESS_FreePDB
@@ -291,16 +192,13 @@ PDB*	PROCESS_PDBList_Getnext (PDB *pdb)
  */
 static void PROCESS_FreePDB( PDB *pdb )
 {
-    /*
-     * FIXME: 
-     * If this routine is called because PROCESS_CreatePDB fails, the
-     * following call to PROCESS_PDBList_Remove will probably screw
-     * up.  
-     */
-    PROCESS_PDBList_Remove (pdb);
+    PDB **pptr = &PROCESS_First;
+
     pdb->header.type = K32OBJ_UNKNOWN;
     if (pdb->handle_table) HANDLE_CloseAll( pdb, NULL );
     ENV_FreeEnvironment( pdb );
+    while (*pptr && (*pptr != pdb)) pptr = &(*pptr)->next;
+    if (*pptr) *pptr = pdb->next;
     if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
     DeleteCriticalSection( &pdb->crit_section );
     HeapFree( SystemHeap, 0, pdb );
@@ -329,12 +227,12 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
     pdb->heap            = pdb->system_heap;  /* will be changed later on */
+    pdb->next            = PROCESS_First;
+    PROCESS_First = pdb;
 
     /* Create the handle table */
 
     if (!HANDLE_CreateTable( pdb, inherit )) goto error;
-
-    PROCESS_PDBList_Insert (pdb);
     return pdb;
 
 error:
@@ -390,7 +288,6 @@ BOOL PROCESS_Init(void)
     SYSLEVEL_EmergencyTeb = thdb->teb_sel;
 
     /* Create the environment DB of the first process */
-    PROCESS_PDBList_Insert( &initial_pdb );
     if (!PROCESS_BuildEnvDB( &initial_pdb )) return FALSE;
 
     /* Initialize the first thread */
@@ -460,8 +357,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     if ((info->hProcess = HANDLE_Alloc( parent, &pdb->header, PROCESS_ALL_ACCESS,
                                         FALSE, server_phandle )) == INVALID_HANDLE_VALUE)
         goto error;
-    info->dwProcessId = PDB_TO_PROCESS_ID(pdb);
-    info->dwThreadId  = THDB_TO_THREAD_ID(thdb);
+    info->dwProcessId = (DWORD)pdb->server_pid;
+    info->dwThreadId  = (DWORD)thdb->server_tid;
 
     /* Duplicate the standard handles */
 
@@ -566,20 +463,18 @@ HANDLE WINAPI GetCurrentProcess(void)
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
-    int server_handle;
-    PDB *pdb = PROCESS_ID_TO_PDB(id);
-    if (!K32OBJ_IsValid( &pdb->header, K32OBJ_PROCESS ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
-    if ((server_handle = CLIENT_OpenProcess( pdb->server_pid, access, inherit )) == -1)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
+    PDB *pdb;
+    struct open_process_request req;
+    struct open_process_reply reply;
+
+    if (!(pdb = PROCESS_IdToPDB( id ))) return 0;
+    req.pid     = (void *)id;
+    req.access  = access;
+    req.inherit = inherit;
+    CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0;
     return HANDLE_Alloc( PROCESS_Current(), &pdb->header, access,
-                         inherit, server_handle );
+                         inherit, reply.handle );
 }			      
 
 
@@ -588,8 +483,7 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
-    PDB *pdb = PROCESS_Current();
-    return PDB_TO_PROCESS_ID( pdb );
+    return (DWORD)PROCESS_Current()->server_pid;
 }
 
 

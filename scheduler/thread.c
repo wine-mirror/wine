@@ -41,6 +41,8 @@ BOOL THREAD_InitDone = FALSE;
 /* THDB of the initial thread */
 static THDB initial_thdb;
 
+/* Global thread list (FIXME: not thread-safe) */
+THDB *THREAD_First = &initial_thdb;
 
 /***********************************************************************
  *           THREAD_Current
@@ -74,23 +76,22 @@ BOOL THREAD_IsWin16( THDB *thdb )
  */
 THDB *THREAD_IdToTHDB( DWORD id )
 {
-    THDB *thdb;
+    THDB *thdb = THREAD_First;
 
     if (!id) return THREAD_Current();
-    thdb = THREAD_ID_TO_THDB( id );
-    if (!K32OBJ_IsValid( &thdb->header, K32OBJ_THREAD ))
+    while (thdb)
     {
-        /* Allow task handles to be used; convert to main thread */
-        if ( IsTask16( id ) )
-        {
-            TDB *pTask = (TDB *)GlobalLock16( id );
-            if (pTask) return pTask->thdb;
-        }
-        
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
+        if ((DWORD)thdb->server_tid == id) return thdb;
+        thdb = thdb->next;
     }
-    return thdb;
+    /* Allow task handles to be used; convert to main thread */
+    if ( IsTask16( id ) )
+    {
+        TDB *pTask = (TDB *)GlobalLock16( id );
+        if (pTask) return pTask->thdb;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return NULL;
 }
 
 
@@ -264,6 +265,8 @@ THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
 
     if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, server_thandle, server_phandle ))
         goto error;
+    thdb->next = THREAD_First;
+    THREAD_First = thdb;
     PE_InitTls( thdb );
     return thdb;
 
@@ -280,9 +283,13 @@ error:
 static void THREAD_Destroy( K32OBJ *ptr )
 {
     THDB *thdb = (THDB *)ptr;
+    THDB **pptr = &THREAD_First;
 
     assert( ptr->type == K32OBJ_THREAD );
     ptr->type = K32OBJ_UNKNOWN;
+
+    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
+    if (*pptr) *pptr = thdb->next;
 
     /* Free the associated memory */
 
@@ -340,7 +347,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                            THREAD_ALL_ACCESS, inherit, server_handle );
     if (handle == INVALID_HANDLE_VALUE) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
-    if (id) *id = THDB_TO_THREAD_ID( thread );
+    if (id) *id = (DWORD)thread->server_tid;
     return handle;
 
 error:
@@ -404,7 +411,9 @@ HANDLE WINAPI GetCurrentThread(void)
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    return THDB_TO_THREAD_ID( THREAD_Current() );
+    THDB *thdb = THREAD_Current();
+    /* FIXME: should not get here without a thread */
+    return thdb ? (DWORD)thdb->server_tid : 0x12345678;
 }
 
 
