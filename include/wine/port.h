@@ -28,9 +28,17 @@
 #define _GNU_SOURCE  /* for pread/pwrite */
 #include <fcntl.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#ifdef HAVE_DIRECT_H
+# include <direct.h>
+#endif
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
+#include <string.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 /* Types */
 
@@ -117,16 +125,16 @@ size_t getpagesize(void);
 unsigned long inet_network(const char *cp);
 #endif /* !defined(HAVE_INET_NETWORK) */
 
-#ifndef HAVE_SETTIMEOFDAY
-int settimeofday(struct timeval *tp, void *reserved);
-#endif /* !defined(HAVE_SETTIMEOFDAY) */
-
 #ifndef HAVE_STATFS
 int statfs(const char *name, struct statfs *info);
 #endif /* !defined(HAVE_STATFS) */
 
 #ifndef HAVE_STRNCASECMP
+# ifndef HAVE__STRNICMP
 int strncasecmp(const char *str1, const char *str2, size_t n);
+# else
+# define strncasecmp _strnicmp
+# endif
 #endif /* !defined(HAVE_STRNCASECMP) */
 
 #ifndef HAVE_OPENPTY
@@ -140,7 +148,11 @@ const char *strerror(int err);
 #endif /* !defined(HAVE_STRERROR) */
 
 #ifndef HAVE_STRCASECMP
+# ifndef HAVE__STRICMP
 int strcasecmp(const char *str1, const char *str2);
+# else
+# define strcasecmp _stricmp
+# endif
 #endif /* !defined(HAVE_STRCASECMP) */
 
 #ifndef HAVE_USLEEP
@@ -150,6 +162,14 @@ int usleep (unsigned int useconds);
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
+
+#if !defined(HAVE_POPEN) && defined(HAVE__POPEN)
+#define popen _popen
+#endif
+
+#if !defined(HAVE_PCLOSE) && defined(HAVE__PCLOSE)
+#define pclose _pclose
+#endif
 
 #ifndef HAVE_PREAD
 ssize_t pread( int fd, void *buf, size_t count, off_t offset );

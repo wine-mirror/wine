@@ -33,7 +33,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_h
+# include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -331,20 +333,6 @@ unsigned long inet_network(const char *cp)
     return 0;
 }
 #endif /* defined(HAVE_INET_NETWORK) */
-
-/***********************************************************************
- *		settimeofday
- */
-#ifndef HAVE_SETTIMEOFDAY
-int settimeofday(struct timeval *tp, void *reserved)
-{
-    tp->tv_sec = 0;
-    tp->tv_usec = 0;
-
-    errno = ENOSYS;
-    return -1;
-}
-#endif /* HAVE_SETTIMEOFDAY */
 
 /***********************************************************************
  *		statfs

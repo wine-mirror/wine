@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -319,10 +321,15 @@ BOOL WINAPI SetLocalTime(
         err = 1;
         SetLastError(ERROR_INVALID_PARAMETER);
     } else {
+#ifdef HAVE_SETTIMEOFDAY
         err=settimeofday(&tv, NULL); /* 0 is OK, -1 is error */
         if(err == 0)
             return TRUE;
         SetLastError(ERROR_PRIVILEGE_NOT_HELD);
+#else
+	err = 1;
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+#endif
     }
     ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
             systime->wYear, systime->wMonth, systime->wDay, systime->wHour,
@@ -407,10 +414,15 @@ BOOL WINAPI SetSystemTime(
         err = 1;
         SetLastError(ERROR_INVALID_PARAMETER);
     } else {
+#ifdef HAVE_SETTIMEOFDAY
         err=settimeofday(&tv, NULL); /* 0 is OK, -1 is error */
         if(err == 0)
             return TRUE;
         SetLastError(ERROR_PRIVILEGE_NOT_HELD);
+#else
+	err = 1;
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+#endif
     }
     ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
             systime->wYear, systime->wMonth, systime->wDay, systime->wHour,
