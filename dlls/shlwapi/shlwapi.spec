@@ -398,8 +398,8 @@ init SHLWAPI_LibMain
 396 stub @
 397 stub @
 398 stub @
-399 stub @
-400 stub @
+399 stdcall @(str str long) SHLWAPI_399
+400 stdcall @(wstr wstr long) SHLWAPI_400
 401 stdcall @(ptr) SHLWAPI_401
 402 stdcall @(ptr) SHLWAPI_402
 403 stdcall @(ptr) SHLWAPI_403
@@ -603,15 +603,15 @@ init SHLWAPI_LibMain
 @ stdcall SHSetValueA (long  str  str long ptr long) SHSetValueA
 @ stdcall SHSetValueW (long wstr wstr long ptr long) SHSetValueW
 @ stdcall StrCSpnA (str str) StrCSpnA
-@ stub    StrCSpnIA
-@ stub    StrCSpnIW
+@ stdcall StrCSpnIA (str str) StrCSpnIA
+@ stdcall StrCSpnIW (wstr wstr) StrCSpnIW
 @ stdcall StrCSpnW (wstr wstr) StrCSpnW
 @ stdcall StrCatBuffA (str str long) StrCatBuffA
 @ stdcall StrCatBuffW (wstr wstr long) StrCatBuffW
 @ stdcall StrCatW (ptr wstr) StrCatW
 @ stdcall StrChrA (str long) StrChrA
-@ stub    StrChrIA
-@ stub    StrChrIW
+@ stdcall StrChrIA (str long) StrChrIA
+@ stdcall StrChrIW (wstr long) StrChrIW
 @ stdcall StrChrW (wstr long) StrChrW
 @ stdcall StrCmpIW (wstr wstr) StrCmpIW
 @ stdcall StrCmpNA (str str long) StrCmpNA
@@ -625,22 +625,22 @@ init SHLWAPI_LibMain
 @ stdcall StrDupW (wstr) StrDupW
 @ stdcall StrFormatByteSizeA(long str long) StrFormatByteSizeA
 @ stdcall StrFormatByteSizeW(long wstr long) StrFormatByteSizeW
-@ stub    StrFromTimeIntervalA
-@ stub    StrFromTimeIntervalW
-@ stub    StrIsIntlEqualA
-@ stub    StrIsIntlEqualW
+@ stdcall StrFromTimeIntervalA(str long long long) StrFromTimeIntervalA
+@ stdcall StrFromTimeIntervalW(wstr long long long) StrFromTimeIntervalW
+@ stdcall StrIsIntlEqualA(long str str long) StrIsIntlEqualA
+@ stdcall StrIsIntlEqualW(long wstr wstr long) StrIsIntlEqualW
 @ stdcall StrNCatA(str str long) StrNCatA
 @ stdcall StrNCatW(wstr wstr long) StrNCatW
-@ stub    StrPBrkA
-@ stub    StrPBrkW
+@ stdcall StrPBrkA(str str) StrPBrkA
+@ stdcall StrPBrkW(wstr wstr) StrPBrkW
 @ stdcall StrRChrA (str str long) StrRChrA
 @ stdcall StrRChrIA (str str long) StrRChrIA
 @ stdcall StrRChrIW (str str long) StrRChrIW
 @ stdcall StrRChrW (wstr wstr long) StrRChrW
-@ stub    StrRStrIA
-@ stub    StrRStrIW
-@ stub    StrSpnA
-@ stub    StrSpnW
+@ stdcall StrRStrIA (str str) StrRStrIA
+@ stdcall StrRStrIW (wstr wstr) StrRStrIW
+@ stdcall StrSpnA (str str) StrSpnA
+@ stdcall StrSpnW (wstr wstr) StrSpnW
 @ stdcall StrStrA(str str)StrStrA
 @ stdcall StrStrIA(str str)StrStrIA
 @ stdcall StrStrIW(wstr wstr)StrStrIW
@@ -650,7 +650,7 @@ init SHLWAPI_LibMain
 @ stdcall StrToIntExW(wstr long ptr) StrToIntExW
 @ stdcall StrToIntW(wstr)StrToIntW
 @ stdcall StrTrimA(str str) StrTrimA
-@ stub    StrTrimW
+@ stdcall StrTrimW(wstr wstr) StrTrimW
 @ stdcall UrlApplySchemeA(str ptr ptr long) UrlApplySchemeA
 @ stdcall UrlApplySchemeW(wstr ptr ptr long) UrlApplySchemeW
 @ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
@@ -723,5 +723,5 @@ init SHLWAPI_LibMain
 @ stdcall SHStrDupA (str ptr) SHStrDupA
 @ stdcall SHStrDupW (wstr ptr) SHStrDupW
 @ stub    StrFormatByteSize64A
-@ stub    StrFormatKBSizeA
-@ stub    StrFormatKBSizeW
+@ stdcall StrFormatKBSizeA(long long str long) StrFormatKBSizeA
+@ stdcall StrFormatKBSizeW(long long wstr long) StrFormatKBSizeW
