@@ -1515,18 +1515,20 @@ VOID WINAPI GlobalMemoryStatus(
             lpmem->dwAvailVirtual = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
             lpmem->dwMemoryLoad = (lpmem->dwTotalVirtual-lpmem->dwAvailVirtual)
                                       / (lpmem->dwTotalVirtual / 100);
-            return;
         }
-    }
+    } else
 #endif
-    /* FIXME: should do something for other systems */
-    lpmem->dwMemoryLoad    = 0;
-    lpmem->dwTotalPhys     = 16*1024*1024;
-    lpmem->dwAvailPhys     = 16*1024*1024;
-    lpmem->dwTotalPageFile = 16*1024*1024;
-    lpmem->dwAvailPageFile = 16*1024*1024;
-    lpmem->dwTotalVirtual  = 32*1024*1024;
-    lpmem->dwAvailVirtual  = 32*1024*1024;
+    {
+	/* FIXME: should do something for other systems */
+	lpmem->dwMemoryLoad    = 0;
+	lpmem->dwTotalPhys     = 16*1024*1024;
+	lpmem->dwAvailPhys     = 16*1024*1024;
+	lpmem->dwTotalPageFile = 16*1024*1024;
+	lpmem->dwAvailPageFile = 16*1024*1024;
+	lpmem->dwTotalVirtual  = 32*1024*1024;
+	lpmem->dwAvailVirtual  = 32*1024*1024;
+    }
+    memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));
 }
 
 /***********************************************************************
