@@ -237,6 +237,8 @@ typedef struct
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
 #define INVALID_HANDLE_VALUE  ((HANDLE) -1)
 
+#define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
+
 /* comm */
 
 #define CBR_110	0xFF10
@@ -1269,13 +1271,12 @@ UINT      WINAPI GetConsoleOutputCP(void);
 DWORD       WINAPI GetConsoleTitleA(LPSTR,DWORD);
 DWORD       WINAPI GetConsoleTitleW(LPWSTR,DWORD);
 #define     GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
-BOOL      WINAPI GetCommMask(HANDLE, LPDWORD);
-BOOL      WINAPI GetCommModemStatus(HANDLE, LPDWORD);
-HANDLE    WINAPI GetCurrentProcess(void);
-DWORD       WINAPI GetCurrentProcessId(void);
-HANDLE    WINAPI GetCurrentThread(void);
-INT       WINAPI GetDateFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
-INT       WINAPI GetDateFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
+BOOL        WINAPI GetCommMask(HANDLE, LPDWORD);
+BOOL        WINAPI GetCommModemStatus(HANDLE, LPDWORD);
+HANDLE      WINAPI GetCurrentProcess(void);
+HANDLE      WINAPI GetCurrentThread(void);
+INT         WINAPI GetDateFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
+INT         WINAPI GetDateFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
 #define     GetDateFormat WINELIB_NAME_AW(GetDateFormat)
 LPSTR       WINAPI GetEnvironmentStringsA(void);
 LPWSTR      WINAPI GetEnvironmentStringsW(void);
@@ -1310,7 +1311,6 @@ BOOL        WINAPI GetNumberOfEventLogRecords(HANDLE,PDWORD);
 UINT      WINAPI GetOEMCP(void);
 BOOL        WINAPI GetOldestEventLogRecord(HANDLE,PDWORD);
 DWORD       WINAPI GetPriorityClass(HANDLE);
-HANDLE    WINAPI GetProcessHeap(void);
 DWORD       WINAPI GetProcessVersion(DWORD);
 BOOL        WINAPI GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR_CONTROL,LPDWORD);
 BOOL        WINAPI GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR,LPBOOL,PACL *,LPBOOL);
@@ -1816,6 +1816,14 @@ extern inline DWORD WINAPI GetLastError(void)
     return ret;
 }
 
+extern inline DWORD WINAPI GetCurrentProcessId(void);
+extern inline DWORD WINAPI GetCurrentProcessId(void)
+{
+    DWORD ret;
+    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x20,%0" : "=r" (ret) );
+    return ret;
+}
+
 extern inline DWORD WINAPI GetCurrentThreadId(void);
 extern inline DWORD WINAPI GetCurrentThreadId(void)
 {
@@ -1830,9 +1838,19 @@ extern inline void WINAPI SetLastError( DWORD err )
     __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x60" : : "r" (err) : "memory" );
 }
 
+extern inline HANDLE WINAPI GetProcessHeap(void);
+extern inline HANDLE WINAPI GetProcessHeap(void)
+{
+    DWORD *pdb;
+    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x30,%0" : "=r" (pdb) );
+    return pdb[0x18 / sizeof(DWORD)];  /* get dword at offset 0x18 in pdb */
+}
+
 #else  /* __i386__ && __GNUC__ */
+DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
 DWORD       WINAPI GetLastError(void);
+HANDLE      WINAPI GetProcessHeap(void);
 PVOID       WINAPI InterlockedCompareExchange(PVOID*,PVOID,PVOID);
 LONG        WINAPI InterlockedDecrement(PLONG);
 LONG        WINAPI InterlockedExchange(PLONG,LONG);
@@ -1841,6 +1859,10 @@ LONG        WINAPI InterlockedIncrement(PLONG);
 VOID        WINAPI SetLastError(DWORD);
 #endif  /* __i386__ && __GNUC__ */
 
+#ifdef __WINE__
+#define GetCurrentProcess() ((HANDLE)0xffffffff)
+#define GetCurrentThread()  ((HANDLE)0xfffffffe)
+#endif
 
 #ifdef __cplusplus
 }

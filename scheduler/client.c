@@ -499,6 +499,7 @@ int CLIENT_InitThread(void)
     if (teb->buffer == (void*)-1) server_perror( "mmap" );
     first_req = teb->buffer;
     teb->process->server_pid = first_req->pid;
+    teb->pid = first_req->pid;
     teb->tid = first_req->tid;
     if (first_req->version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"

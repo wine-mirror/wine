@@ -15,9 +15,6 @@ struct _NE_MODULE;
 struct _THREAD_ENTRY;
 struct _UTINFO;
 
-/* Current Process pseudo-handle - Returned by GetCurrentProcess*/
-#define CURRENT_PROCESS_PSEUDOHANDLE ((HANDLE)0x7fffffff)
-
 /* Win32 process environment database */
 typedef struct
 {

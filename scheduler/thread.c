@@ -195,7 +195,7 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
  *	allocate in this area and don't support a granularity of 4kb
  *	yet we leave it to VirtualAlloc to choose an address.
  */
-TEB *THREAD_Create( PDB *pdb, void *tid, int fd, DWORD flags,
+TEB *THREAD_Create( PDB *pdb, void *pid, void *tid, int fd, DWORD flags,
                     DWORD stack_size, BOOL alloc_stack16 )
 {
     TEB *teb = VirtualAlloc(0, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -208,6 +208,7 @@ TEB *THREAD_Create( PDB *pdb, void *tid, int fd, DWORD flags,
     teb->process     = pdb;
     teb->exit_code   = STILL_ACTIVE;
     teb->socket      = fd;
+    teb->pid         = pid;
     teb->tid         = tid;
     fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
 
@@ -270,7 +271,8 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
     handle = req->handle;
 
-    if (!(teb = THREAD_Create( PROCESS_Current(), req->tid, socket, flags, stack, TRUE )))
+    if (!(teb = THREAD_Create( PROCESS_Current(), (void *)GetCurrentProcessId(),
+                               req->tid, socket, flags, stack, TRUE )))
     {
         close( socket );
         return 0;
@@ -339,18 +341,6 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
         SYSDEPS_ExitThread( code );
     }
-}
-
-
-/***********************************************************************
- * GetCurrentThread [KERNEL32.200]  Gets pseudohandle for current thread
- *
- * RETURNS
- *    Pseudohandle for the current thread
- */
-HANDLE WINAPI GetCurrentThread(void)
-{
-    return CURRENT_THREAD_PSEUDOHANDLE;
 }
 
 
@@ -824,6 +814,19 @@ BOOL WINAPI SetThreadLocale(
 }
 
 
+/***********************************************************************
+ * GetCurrentThread [KERNEL32.200]  Gets pseudohandle for current thread
+ *
+ * RETURNS
+ *    Pseudohandle for the current thread
+ */
+#undef GetCurrentThread
+HANDLE WINAPI GetCurrentThread(void)
+{
+    return 0xfffffffe;
+}
+
+
 #ifdef __i386__
 
 /* void WINAPI SetLastError( DWORD error ); */
@@ -836,6 +839,9 @@ __ASM_GLOBAL_FUNC( SetLastError,
 /* DWORD WINAPI GetLastError(void); */
 __ASM_GLOBAL_FUNC( GetLastError, ".byte 0x64\n\tmovl 0x60,%eax\n\tret" );
 
+/* DWORD WINAPI GetCurrentProcessId(void) */
+__ASM_GLOBAL_FUNC( GetCurrentProcessId, ".byte 0x64\n\tmovl 0x20,%eax\n\tret" );
+                   
 /* DWORD WINAPI GetCurrentThreadId(void) */
 __ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" );
                    
@@ -855,6 +861,14 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 DWORD WINAPI GetLastError(void)
 {
     return NtCurrentTeb()->last_error;
+}
+
+/***********************************************************************
+ * GetCurrentProcessId [KERNEL32.199]  Returns process identifier.
+ */
+DWORD WINAPI GetCurrentProcessId(void)
+{
+    return (DWORD)NtCurrentTeb()->pid;
 }
 
 /***********************************************************************

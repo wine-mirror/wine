@@ -277,6 +277,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 
     if (!pdb) return NULL;
     pdb->exit_code       = STILL_ACTIVE;
+    pdb->heap            = GetProcessHeap();
     pdb->threads         = 1;
     pdb->running_threads = 1;
     pdb->ring0_threads   = 1;
@@ -364,8 +365,6 @@ void PROCESS_Start(void)
     PDB *pdb = PROCESS_Current();
     NE_MODULE *pModule = NE_GetPtr( pdb->module );
     LPCSTR filename = ((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName;
-    IMAGE_OPTIONAL_HEADER *header = !pModule->module32? NULL :
-                                    &PE_HEADER(pModule->module32)->OptionalHeader;
 
     /* Get process type */
     enum { PROC_DOS, PROC_WIN16, PROC_WIN32 } type;
@@ -378,15 +377,6 @@ void PROCESS_Start(void)
 
     /* Initialize the critical section */
     InitializeCriticalSection( &pdb->crit_section );
-
-    /* Create the heap */
-    if (!(pdb->heap = GetProcessHeap()))
-    {
-        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 
-                                      header? header->SizeOfHeapReserve : 0x10000,
-                                      header? header->SizeOfHeapCommit  : 0 ))) 
-            goto error;
-    }
 
     /* Create the environment db */
     if (!PROCESS_CreateEnvDB()) goto error;
@@ -567,9 +557,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, req->tid, fd, flags & CREATE_SUSPENDED,
+    if (!(teb = THREAD_Create( pdb, req->pid, req->tid, fd, flags & CREATE_SUSPENDED,
                                size, alloc_stack16 ))) goto error;
-    teb->tid = (void *)info->dwThreadId;
     teb->startup = PROCESS_Start;
     fd = -1;  /* don't close it */
 
@@ -783,15 +772,6 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 }
 
 
-/***********************************************************************
- *           GetCurrentProcess   (KERNEL32.198)
- */
-HANDLE WINAPI GetCurrentProcess(void)
-{
-    return CURRENT_PROCESS_PSEUDOHANDLE;
-}
-
-
 /*********************************************************************
  *           OpenProcess   (KERNEL32.543)
  */
@@ -818,15 +798,6 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
     if (!server_call( REQ_GET_PROCESS_INFO )) ret = (DWORD)req->pid;
     return ret;
 }
-
-/***********************************************************************
- *           GetCurrentProcessId   (KERNEL32.199)
- */
-DWORD WINAPI GetCurrentProcessId(void)
-{
-    return (DWORD)PROCESS_Current()->server_pid;
-}
-
 
 /***********************************************************************
  *           GetThreadLocale    (KERNEL32.295)
@@ -1210,4 +1181,13 @@ UINT WINAPI SetErrorMode( UINT mode )
     UINT old = PROCESS_Current()->error_mode;
     PROCESS_Current()->error_mode = mode;
     return old;
+}
+
+/***********************************************************************
+ *           GetCurrentProcess   (KERNEL32.198)
+ */
+#undef GetCurrentProcess
+HANDLE WINAPI GetCurrentProcess(void)
+{
+    return 0xffffffff;
 }

@@ -1403,7 +1403,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 
     if (!queue) return 0;
 
-    if ( process ) *process = (DWORD)queue->teb->process->server_pid;
+    if ( process ) *process = (DWORD)queue->teb->pid;
     retvalue = (DWORD)queue->teb->tid;
 
     QUEUE_Unlock( queue );

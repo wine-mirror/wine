@@ -44,7 +44,7 @@ typedef struct _TEB
     struct _TEB *self;           /* 12-  18 Pointer to this structure */
     WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
     WORD         mutex_count;    /* 1-n  1e Win16 mutex count */
-    DWORD        debug_context;  /* 1!n  20 Debug context (NT: PVOID UniqueProcess) */
+    void        *pid;            /* !2-  20 Process id (win95: debug context) */
     void        *tid;            /* -2-  24 Thread id */
     HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
     WORD         pad1;           /* --n  2a */
@@ -113,16 +113,13 @@ typedef struct _TEB
 #define TEBF_WIN32  0x0001
 #define TEBF_TRAP   0x0002
 
-/* The pseudo handle value returned by GetCurrentThread */
-#define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe
-
 /* The per-thread signal stack size */
 #define SIGNAL_STACK_SIZE  16384
 
 
 /* scheduler/thread.c */
 extern TEB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
-extern TEB *THREAD_Create( struct _PDB *pdb, void *tid, int fd, DWORD flags, 
+extern TEB *THREAD_Create( struct _PDB *pdb, void *pid, void *tid, int fd, DWORD flags, 
                            DWORD stack_size, BOOL alloc_stack16 );
 extern BOOL THREAD_IsWin16( TEB *thdb );
 extern TEB *THREAD_IdToTEB( DWORD id );
