@@ -355,18 +355,32 @@ static void wave_out_test_device(int device)
 
     rc=waveOutGetDevCapsA(device,&caps,sizeof(caps));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
-       "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%s\n",device,wave_out_error(rc));
+       "waveOutGetDevCapsA: failed to get capabilities of device %s: rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
+
+    rc=waveOutGetDevCapsA(device,0,sizeof(caps));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+
+#if 0 /* FIXME: this works on windows but crashes wine */
+    rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPS)1,sizeof(caps));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+#endif
+
+    rc=waveOutGetDevCapsA(device,&caps,4);
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",wave_out_error(rc));
 
     name=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutMessage: failed to get interface size for device: %d rc=%s\n",device,wave_out_error(rc));
+       "waveOutMessage: failed to get interface size for device: %s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         wname = (WCHAR *)malloc(size);
         rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
-        ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %d rc=%s\n",device,wave_out_error(rc));
+        ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device: %s rc=%s\n",dev_name(device),wave_out_error(rc));
         ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
         if (rc==MMSYSERR_NOERROR) {
             name = malloc(size/sizeof(WCHAR));
@@ -378,8 +392,8 @@ static void wave_out_test_device(int device)
         name=strdup("not supported");
     }
 
-    trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx(%s)\n",
-          device,caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
+    trace("  %s: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx(%s)\n",
+          dev_name(device),caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
           caps.vDriverVersion & 0xff,
           caps.wMid,caps.wPid,
           caps.wChannels,caps.dwFormats,caps.dwSupport,wave_out_caps(caps.dwSupport));
@@ -448,7 +462,7 @@ static void wave_out_test_device(int device)
     oformat=format;
     rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-       "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%s\n",device,wave_out_error(rc));
+       "waveOutOpen: opening the device in 11 bits mode should fail %s: rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,
@@ -469,7 +483,7 @@ static void wave_out_test_device(int device)
     oformat=format;
     rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-       "waveOutOpen: opening the device at 2 MHz sample rate should fail %d: rc=%s\n",device,wave_out_error(rc));
+       "waveOutOpen: opening the device at 2 MHz sample rate should fail %s: rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,

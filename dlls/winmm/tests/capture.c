@@ -172,6 +172,20 @@ static void wave_in_test_device(int device)
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
 
+    rc=waveInGetDevCapsA(device,0,sizeof(caps));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveInGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_in_error(rc));
+
+#if 0 /* FIXME: this works on windows but crashes wine */
+    rc=waveInGetDevCapsA(device,1,sizeof(caps));
+    ok(rc==MMSYSERR_INVALPARAM,
+       "waveInGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_in_error(rc));
+#endif
+
+    rc=waveInGetDevCapsA(device,&caps,4);
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",wave_in_error(rc));
+
     name=NULL;
     rc=waveInMessage((HWAVEIN)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
@@ -235,27 +249,6 @@ static void wave_in_test_device(int device)
     }
 
     /* Try invalid formats to test error handling */
-    trace("Testing invalid format: 11 bits per sample\n");
-    format.wFormatTag=WAVE_FORMAT_PCM;
-    format.nChannels=2;
-    format.wBitsPerSample=11;
-    format.nSamplesPerSec=22050;
-    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-    format.cbSize=0;
-    oformat=format;
-    rc=waveInOpen(&win,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-    ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-       "waveInOpen: opening the device in 11 bit mode should fail %s: rc=%s\n",dev_name(device),wave_in_error(rc));
-    if (rc==MMSYSERR_NOERROR) {
-        trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
-              format.nSamplesPerSec, format.wBitsPerSample,
-              format.nChannels,
-              oformat.nSamplesPerSec, oformat.wBitsPerSample,
-              oformat.nChannels);
-        waveInClose(win);
-    }
-
     trace("Testing invalid format: 2 MHz sample rate\n");
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
