@@ -219,7 +219,9 @@ BOOL X11DRV_SetupGCForPen( DC * dc )
     }
     val.background = physDev->backgroundPixel;
     val.fill_style = FillSolid;
-    if ((physDev->pen.style!=PS_SOLID) && (physDev->pen.style!=PS_INSIDEFRAME))
+    if ((physDev->pen.width <= 1) &&
+        (physDev->pen.style != PS_SOLID) &&
+        (physDev->pen.style != PS_INSIDEFRAME))
     {
 	TSXSetDashes( display, physDev->gc, 0, physDev->pen.dashes,
 		      physDev->pen.dash_len );
