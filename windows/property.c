@@ -24,6 +24,8 @@ typedef struct tagPROPERTY
 } PROPERTY;
 
 
+#define MAX_ATOM_LEN 255
+
 /***********************************************************************
  *           PROP_FindProp
  */
@@ -300,8 +302,27 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 }
 
 
-#define MAX_ATOM_LEN              255
-static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL ex )
+/* relay to call the EnumProps callback function from EnumPropsEx */
+static BOOL CALLBACK EnumPropsA_relay( HWND hwnd, LPCSTR str, HANDLE handle, ULONG_PTR lparam )
+{
+    PROPENUMPROCA func = (PROPENUMPROCA)lparam;
+    return func( hwnd, str, handle );
+}
+
+
+/***********************************************************************
+ *		EnumPropsA (USER32.@)
+ */
+INT WINAPI EnumPropsA( HWND hwnd, PROPENUMPROCA func )
+{
+    return EnumPropsExA( hwnd, EnumPropsA_relay, (LPARAM)func );
+}
+
+
+/***********************************************************************
+ *		EnumPropsExA (USER32.@)
+ */
+INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
 {
     PROPERTY *prop, *next;
     WND *pWnd;
@@ -309,8 +330,7 @@ static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL 
     char atomStr[MAX_ATOM_LEN+1];
     char *pStr;
 
-    TRACE("%04x %08x %08lx%s\n",
-                  hwnd, (UINT)func, lParam, ex ? " [Ex]" : "" );
+    TRACE("%04x %p %08lx\n", hwnd, func, lParam);
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -323,8 +343,7 @@ static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL 
 	   * This seems to be done for Win32 only */
             if (!(GlobalGetAtomNameA((ATOM)LOWORD(prop->string), atomStr, MAX_ATOM_LEN+1)))
             {
-                ERR("huh ? Atom %04x not an atom ??\n",
-                    (ATOM)LOWORD(prop->string));
+                ERR("huh ? Atom %04x not an atom ??\n", LOWORD(prop->string));
                 atomStr[0] = '\0';
             }
             pStr = atomStr;
@@ -335,10 +354,7 @@ static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL 
         TRACE("  Callback: handle=%08x str='%s'\n",
             prop->handle, prop->string );
 
-        if (ex) /* EnumPropsEx has an additional lParam !! */
-            ret = func( hwnd, pStr, prop->handle, lParam );
-        else
-            ret = func( hwnd, pStr, prop->handle );
+        ret = func( hwnd, pStr, prop->handle, lParam );
         if (!ret) break;
     }
     WIN_ReleaseWndPtr(pWnd);
@@ -346,25 +362,25 @@ static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL 
 }
 
 
-/***********************************************************************
- *		EnumPropsA (USER32.@)
- */
-INT WINAPI EnumPropsA( HWND hwnd, PROPENUMPROCA func )
+/* relay to call the EnumProps callback function from EnumPropsEx */
+static BOOL CALLBACK EnumPropsW_relay( HWND hwnd, LPCWSTR str, HANDLE handle, ULONG_PTR lparam )
 {
-    return PROPS_EnumPropsA(hwnd, func, 0, FALSE);
+    PROPENUMPROCW func = (PROPENUMPROCW)lparam;
+    return func( hwnd, str, handle );
 }
 
-
 /***********************************************************************
- *		EnumPropsExA (USER32.@)
+ *		EnumPropsW (USER32.@)
  */
-INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
+INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
 {
-    return PROPS_EnumPropsA(hwnd, (PROPENUMPROCA)func, lParam, TRUE);
+    return EnumPropsExW( hwnd, EnumPropsW_relay, (LPARAM)func );
 }
 
-
-static INT PROPS_EnumPropsW( HWND hwnd, PROPENUMPROCW func, LPARAM lParam, BOOL ex )
+/***********************************************************************
+ *		EnumPropsExW (USER32.@)
+ */
+INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
 {
     PROPERTY *prop, *next;
     WND *pWnd;
@@ -373,8 +389,7 @@ static INT PROPS_EnumPropsW( HWND hwnd, PROPENUMPROCW func, LPARAM lParam, BOOL 
     char *pStr;
     LPWSTR strW;
 
-    TRACE("%04x %08x %08lx%s\n",
-                  hwnd, (UINT)func, lParam, ex ? " [Ex]" : "" );
+    TRACE("%04x %p %08lx\n", hwnd, func, lParam);
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -401,30 +416,10 @@ static INT PROPS_EnumPropsW( HWND hwnd, PROPENUMPROCW func, LPARAM lParam, BOOL 
 
         strW = HEAP_strdupAtoW( GetProcessHeap(), 0, pStr );
 
-        if (ex) /* EnumPropsEx has an additional lParam !! */
-            ret = func( hwnd, strW, prop->handle, lParam );
-        else
-            ret = func( hwnd, strW, prop->handle );
+        ret = func( hwnd, strW, prop->handle, lParam );
         HeapFree( GetProcessHeap(), 0, strW );
         if (!ret) break;
     }
     WIN_ReleaseWndPtr(pWnd);
     return ret;
-}
-
-
-/***********************************************************************
- *		EnumPropsW (USER32.@)
- */
-INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
-{
-    return PROPS_EnumPropsW(hwnd, func, 0, FALSE);
-}
-
-/***********************************************************************
- *		EnumPropsExW (USER32.@)
- */
-INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
-{
-    return PROPS_EnumPropsW(hwnd, (PROPENUMPROCW)func, 0, TRUE);
 }
