@@ -150,6 +150,8 @@ void            __RPC_USER LPSAFEARRAY_UserFree     (unsigned long *, LPSAFEARRA
 
 #define FADF_RESERVED (0xf008)
 
+#define FADF_DATADELETED (0x1000)
+
 #define FADF_CREATEVECTOR (0x2000)
 
 #if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
@@ -179,7 +181,7 @@ struct tagVARIANT {
             WORD wReserved2;
             WORD wReserved3;
             union {
-                CHAR cVal;
+                signed char cVal;
                 USHORT uiVal;
                 ULONG ulVal;
                 INT intVal;
@@ -197,7 +199,9 @@ struct tagVARIANT {
                 IUnknown *punkVal;
                 IDispatch *pdispVal;
                 SAFEARRAY *parray;
-                CHAR *pcVal;
+                LONGLONG llVal;
+                ULONGLONG ullVal;
+                signed char *pcVal;
                 USHORT *puiVal;
                 ULONG *pulVal;
                 INT *pintVal;
@@ -218,6 +222,8 @@ struct tagVARIANT {
                 IUnknown **ppunkVal;
                 IDispatch **ppdispVal;
                 SAFEARRAY **pparray;
+                LONGLONG *pllVal;
+                ULONGLONG *pullVal;
                 struct __tagBRECORD {
                     PVOID pvRecord;
                     IRecordInfo *pRecInfo;
@@ -249,7 +255,7 @@ struct _wireVARIANT {
     USHORT wReserved2;
     USHORT wReserved3;
     union {
-        CHAR cVal;
+        signed char cVal;
         USHORT uiVal;
         ULONG ulVal;
         INT intVal;
@@ -268,7 +274,7 @@ struct _wireVARIANT {
         IUnknown *punkVal;
         IDispatch *pdispVal;
         wireSAFEARRAY parray;
-        CHAR *pcVal;
+        signed char *pcVal;
         USHORT *puiVal;
         ULONG *pulVal;
         INT *pintVal;
