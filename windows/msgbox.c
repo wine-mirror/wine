@@ -261,8 +261,6 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	    /* at least MB_TASKMODAL seems to imply a ShowWindow */
 	    ShowWindow(hwnd, SW_SHOW);
     }
-    if (lpmb->dwStyle & MB_APPLMODAL)
-	FIXME("app modal msgbox ! Not modal yet.\n");
 
     return hFont;
 }
