@@ -397,6 +397,37 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				    GL_RGBA,
 				    GL_UNSIGNED_SHORT_4_4_4_4,
 				    src_d->lpSurface);
+	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000F000) {
+	        /* Move the four Alpha bits... */
+	        WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		DWORD i;
+		WORD *src = (WORD *) src_d->lpSurface, *dst = surface;
+		
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    *dst++ = (((*src & 0xFFF0) >>  4) |
+			      ((*src & 0x000F) << 12));
+		    src++;
+		}
+		
+		if (init_upload)
+		    glTexImage2D(GL_TEXTURE_2D,
+				 glThis->mipmap_level,
+				 GL_RGBA,
+				 src_d->dwWidth, src_d->dwHeight,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_SHORT_4_4_4_4,
+				 surface);
+		else
+		    glTexSubImage2D(GL_TEXTURE_2D,
+				    glThis->mipmap_level,
+				    0, 0,
+				    src_d->dwWidth, src_d->dwHeight,
+				    GL_RGBA,
+				    GL_UNSIGNED_SHORT_4_4_4_4,
+				    surface);
+		
+		HeapFree(GetProcessHeap(), 0, surface);
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00008000) {
 	        /* Converting the 1555 format in 5551 packed */
 	        WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
@@ -779,17 +810,6 @@ ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
     XCAST(Load) GL_IDirect3DTextureImpl_2_1T_Load,
 };
 
-ICOM_VTABLE(IDirect3DTexture2) STUB_VTABLE_IDirect3DTexture2 =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
-    XCAST(AddRef) Thunk_IDirect3DTextureImpl_2_AddRef,
-    XCAST(Release) Thunk_IDirect3DTextureImpl_2_Release,
-    XCAST(GetHandle) Main_IDirect3DTextureImpl_2_1T_GetHandle,
-    XCAST(PaletteChanged) Main_IDirect3DTextureImpl_2_1T_PaletteChanged,
-    XCAST(Load) Main_IDirect3DTextureImpl_2_1T_Load,
-};
-
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 #undef XCAST
 #endif
@@ -823,14 +843,6 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 {
     IDirect3DTextureGLImpl *private;
 
-    if ((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN|DDSCAPS_SYSTEMMEMORY)) != 0) {
-        /* If it is an offscreen texture, only create stub implementations.
-	   Only the IUnknown interfaces should be used anyway. */
-        ICOM_INIT_INTERFACE(surf, IDirect3DTexture,  VTABLE_IDirect3DTexture); /* No special STUB one here as all functions are stubs */
-	ICOM_INIT_INTERFACE(surf, IDirect3DTexture2, STUB_VTABLE_IDirect3DTexture2);
-        return DD_OK;
-    }
-    
     private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
     if (private == NULL) return DDERR_OUTOFMEMORY;
 

@@ -83,6 +83,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		}
 	    } break;
 
+	      
 	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
 	    case D3DRENDERSTATE_TEXTUREADDRESSV:  /* 45 */
 	    case D3DRENDERSTATE_TEXTUREADDRESS: { /*  3 */
@@ -268,7 +269,34 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		else
 		    glDisable(GL_BLEND);
 	        break;
+	      
+	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
+	        if (dwRenderState)
+		    glEnable(GL_FOG);
+		else
+		    glDisable(GL_FOG);
+	        break;
 
+	    case D3DRENDERSTATE_SPECULARENABLE: /* 29 */
+	        if (dwRenderState)
+		    ERR(" Specular Lighting not supported yet.\n");
+	        break;
+	      
+	    case D3DRENDERSTATE_SUBPIXEL:  /* 31 */
+	    case D3DRENDERSTATE_SUBPIXELX: /* 32 */
+	        /* We do not support this anyway, so why protest :-) */
+	        break;
+
+	    case D3DRENDERSTATE_FOGCOLOR: { /* 34 */
+	        GLint color[4];
+		color[0] = (dwRenderState >> 16) & 0xFF;
+		color[1] = (dwRenderState >>  8) & 0xFF;
+		color[2] = (dwRenderState >>  0) & 0xFF;
+		color[3] = (dwRenderState >> 24) & 0xFF;
+		glFogiv(GL_FOG_COLOR, color);
+	    } break;
+
+	      
 	    case D3DRENDERSTATE_COLORKEYENABLE:     /* 41 */
 	        if (dwRenderState)
 		    glEnable(GL_BLEND);
@@ -276,6 +304,20 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		    glDisable(GL_BLEND);
 	        break;
 
+	    case D3DRENDERSTATE_ZBIAS: /* 47 */
+	        /* This is a tad bit hacky.. But well, no idea how to do it better in OpenGL :-/ */
+	        if (dwRenderState == 0) {
+		    glDisable(GL_POLYGON_OFFSET_FILL);
+		    glDisable(GL_POLYGON_OFFSET_LINE);
+		    glDisable(GL_POLYGON_OFFSET_POINT);
+		} else {
+		    glEnable(GL_POLYGON_OFFSET_FILL);
+		    glEnable(GL_POLYGON_OFFSET_LINE);
+		    glEnable(GL_POLYGON_OFFSET_POINT);
+		    glPolygonOffset(1.0, dwRenderState * 1.0);
+		}
+	        break;
+	      
 	    case D3DRENDERSTATE_FLUSHBATCH:         /* 50 */
 	        break;
 

@@ -733,23 +733,24 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
 	        D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
 		DWORD col = vx->u4.color;
 
-		glColor3f(((col >> 16) & 0xFF) / 255.0,
-			  ((col >>  8) & 0xFF) / 255.0,
-			  ((col >>  0) & 0xFF) / 255.0);
+		glColor4ub((col >> 16) & 0xFF,
+			   (col >>  8) & 0xFF,
+			   (col >>  0) & 0xFF,
+			   (col >> 24) & 0xFF);
 		glVertex3f(vx->u1.x, vx->u2.y, vx->u3.z);
-		TRACE("  LV: %f %f %f (%02lx %02lx %02lx)\n",
+		TRACE("  LV: %f %f %f (%02lx %02lx %02lx %02lx)\n",
 		      vx->u1.x, vx->u2.y, vx->u3.z,
-		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));
+		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF), ((col >> 24) & 0xFF));
 	    } break;
 
 	    case D3DVT_TLVERTEX: {
 	        D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
 		DWORD col = vx->u5.color;
 
-		glColor4ub((col >> 24) & 0xFF,
-			   (col >> 16) & 0xFF,
+		glColor4ub((col >> 16) & 0xFF,
 			   (col >>  8) & 0xFF,
-			   (col >>  0) & 0xFF);
+			   (col >>  0) & 0xFF,
+			   (col >> 24) & 0xFF);
 		glTexCoord2f(vx->u7.tu, vx->u8.tv);
 		if (vx->u4.rhw < 0.01)
 		    glVertex3f(vx->u1.sx,
@@ -760,9 +761,9 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
 			       vx->u2.sy / vx->u4.rhw,
 			       vx->u3.sz / vx->u4.rhw,
 			       1.0 / vx->u4.rhw);
-		TRACE(" TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",
+		TRACE(" TLV: %f %f %f (%02lx %02lx %02lx %02lx) (%f %f) (%f)\n",
 		      vx->u1.sx, vx->u2.sy, vx->u3.sz,
-		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),
+		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF), ((col >> 24) & 0xFF),
 		      vx->u7.tu, vx->u8.tv, vx->u4.rhw);
 	    } break;
 
@@ -926,10 +927,10 @@ static void handle_specular(char *vertex, int offset, int extra) {
 }
 static void handle_diffuse(char *vertex, int offset, int extra) {
     DWORD color = *((DWORD *) (vertex + offset));
-    glColor4ub((color >> 24) & 0xFF,
-	       (color >> 16) & 0xFF,
+    glColor4ub((color >> 16) & 0xFF,
 	       (color >>  8) & 0xFF,
-	       (color >>  0) & 0xFF);
+	       (color >>  0) & 0xFF,
+	       (color >> 24) & 0xFF);
 }
 static void handle_texture(char *vertex, int offset, int extra) {
     if (extra == 0xFF) {
@@ -983,10 +984,10 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 	    
-	    glColor4ub((vertices[i].diffuse >> 24) & 0xFF,
-		       (vertices[i].diffuse >> 16) & 0xFF,
+	    glColor4ub((vertices[i].diffuse >> 16) & 0xFF,
 		       (vertices[i].diffuse >>  8) & 0xFF,
-		       (vertices[i].diffuse >>  0) & 0xFF);
+		       (vertices[i].diffuse >>  0) & 0xFF,
+		       (vertices[i].diffuse >> 24) & 0xFF);
 	    /* Todo : handle specular... */
 	    glTexCoord2fv(&(vertices[i].tu1));
 	    if (vertices[i].rhw < 0.00001)
@@ -998,14 +999,14 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 			   1.0 / vertices[i].rhw);
 	    TRACE(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
 		  vertices[i].x, vertices[i].y, vertices[i].z, vertices[i].rhw,
-		  (vertices[i].diffuse >> 24) & 0xFF,
 		  (vertices[i].diffuse >> 16) & 0xFF,
 		  (vertices[i].diffuse >>  8) & 0xFF,
 		  (vertices[i].diffuse >>  0) & 0xFF,
-		  (vertices[i].specular >> 24) & 0xFF,
+		  (vertices[i].diffuse >> 24) & 0xFF,
 		  (vertices[i].specular >> 16) & 0xFF,
 		  (vertices[i].specular >>  8) & 0xFF,
 		  (vertices[i].specular >>  0) & 0xFF,
+		  (vertices[i].specular >> 24) & 0xFF,
 		  vertices[i].tu1, vertices[i].tv1);
 	} 
     } else if (((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) ||
@@ -1144,23 +1145,23 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 	    
-	    glColor4ub((CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF,
-		       (CPNT(diffuse,i,0,DWORD) >> 16) & 0xFF,
+	    glColor4ub((CPNT(diffuse,i,0,DWORD) >> 16) & 0xFF,
 		       (CPNT(diffuse,i,0,DWORD) >>  8) & 0xFF,
-		       (CPNT(diffuse,i,0,DWORD) >>  0) & 0xFF);
+		       (CPNT(diffuse,i,0,DWORD) >>  0) & 0xFF,
+		       (CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF);
 	    /* Todo : handle specular... */
 	    glTexCoord2f(CPNT(textureCoords[1],i,0,D3DVALUE),CPNT(textureCoords[1],i,1,D3DVALUE));
 	    glVertex3f(CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE));
 	    TRACE(" %f %f %f  / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
 		  CPNT(position,i,0,D3DVALUE),CPNT(position,i,1,D3DVALUE),CPNT(position,i,2,D3DVALUE),
-		  (CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF,
 		  (CPNT(diffuse,i,0,DWORD) >> 16) & 0xFF,
 		  (CPNT(diffuse,i,0,DWORD) >>  8) & 0xFF,
 		  (CPNT(diffuse,i,0,DWORD) >>  0) & 0xFF,
-		  (CPNT(specular,i,0,DWORD) >> 24) & 0xFF,
+		  (CPNT(diffuse,i,0,DWORD) >> 24) & 0xFF,
 		  (CPNT(specular,i,0,DWORD) >> 16) & 0xFF,
 		  (CPNT(specular,i,0,DWORD) >>  8) & 0xFF,
 		  (CPNT(specular,i,0,DWORD) >>  0) & 0xFF,
+		  (CPNT(specular,i,0,DWORD) >> 24) & 0xFF,
 		  CPNT(textureCoords[0],i,0,D3DVALUE),CPNT(textureCoords[0],i,1,D3DVALUE));
 	} 
     }

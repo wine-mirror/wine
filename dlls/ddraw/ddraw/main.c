@@ -557,6 +557,11 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
        /* create backbuffer surface */
        hr = This->create_backbuffer(This, pDDSD, ppSurf, pUnkOuter, NULL);
     }
+    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    {
+	/* create texture */
+	hr = create_texture(This, pDDSD, ppSurf, pUnkOuter);
+    }
     else if ((pDDSD->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN) ||
 	     (pDDSD->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)) /* No difference in Wine right now */
     {
@@ -567,11 +572,6 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     {
 	/* create z-buffer */
 	hr = This->create_zbuffer(This, pDDSD, ppSurf, pUnkOuter);
-    }
-    else if (pDDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-    {
-	/* create texture */
-	hr = create_texture(This, pDDSD, ppSurf, pUnkOuter);
     }
     else
     {
