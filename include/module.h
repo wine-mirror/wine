@@ -139,8 +139,6 @@ typedef struct _wine_modref
 	int			nDeps;
 	struct _wine_modref	**deps;
 
-	int			flags;
-
 	char			*filename;
 	char			*modname;
 	char			*short_filename;
@@ -148,12 +146,6 @@ typedef struct _wine_modref
 
     char data[1];  /* space for storing filename and short_filename */
 } WINE_MODREF;
-
-#define WINE_MODREF_INTERNAL              0x00000001
-#define WINE_MODREF_NO_DLL_CALLS          0x00000002
-#define WINE_MODREF_PROCESS_ATTACHED      0x00000004
-#define WINE_MODREF_DONT_RESOLVE_REFS     0x00000020
-#define WINE_MODREF_MARKER                0x80000000
 
 extern WINE_MODREF *MODULE_modref_list;
 

@@ -238,7 +238,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     for (wm = MODULE_modref_list; wm; wm = wm->next)
     {
-        if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
+        if (!(wm->ldr.Flags & LDR_WINE_INTERNAL)) continue;
         exp = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
         if (!exp) continue;
         debug = (DEBUG_ENTRY_POINT *)((char *)exp + size);

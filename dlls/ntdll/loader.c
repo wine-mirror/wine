@@ -134,6 +134,7 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
             if (!exe_modref) exe_modref = wm;
             else FIXME( "Trying to load second .EXE file: %s\n", filename );
         }
+        else wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
     }
     return wm;
 }
@@ -149,7 +150,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 
     /* Skip calls for modules loaded with special load flags */
 
-    if (wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) return TRUE;
+    if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
 
     TRACE("(%s,%s,%p) - CALL\n", wm->modname, typeName[type], lpReserved );
 
@@ -209,14 +210,14 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     assert( wm );
 
     /* prevent infinite recursion in case of cyclical dependencies */
-    if (    ( wm->flags & WINE_MODREF_MARKER )
-         || ( wm->flags & WINE_MODREF_PROCESS_ATTACHED ) )
+    if (    ( wm->ldr.Flags & LDR_LOAD_IN_PROGRESS )
+         || ( wm->ldr.Flags & LDR_PROCESS_ATTACHED ) )
         goto done;
 
     TRACE("(%s,%p) - START\n", wm->modname, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
-    wm->flags |= WINE_MODREF_MARKER;
+    wm->ldr.Flags |= LDR_LOAD_IN_PROGRESS;
 
     /* Recursively attach all DLLs this one depends on */
     for ( i = 0; retv && i < wm->nDeps; i++ )
@@ -228,7 +229,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     {
         retv = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
         if ( retv )
-            wm->flags |= WINE_MODREF_PROCESS_ATTACHED;
+            wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
     }
 
     /* Re-insert MODREF at head of list */
@@ -243,9 +244,10 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     }
 
     /* Remove recursion flag */
-    wm->flags &= ~WINE_MODREF_MARKER;
+    wm->ldr.Flags &= ~LDR_LOAD_IN_PROGRESS;
 
     TRACE("(%s,%p) - END\n", wm->modname, lpReserved );
+
 
  done:
     RtlLeaveCriticalSection( &loader_section );
@@ -270,13 +272,13 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
         for ( wm = MODULE_modref_list; wm; wm = wm->next )
         {
             /* Check whether to detach this DLL */
-            if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+            if ( !(wm->ldr.Flags & LDR_PROCESS_ATTACHED) )
                 continue;
             if ( wm->ldr.LoadCount > 0 && !bForceDetach )
                 continue;
 
             /* Call detach notification */
-            wm->flags &= ~WINE_MODREF_PROCESS_ATTACHED;
+            wm->ldr.Flags &= ~LDR_PROCESS_ATTACHED;
             MODULE_InitDLL( wm, DLL_PROCESS_DETACH, lpReserved );
 
             /* Restart at head of WINE_MODREF list, as entries might have
@@ -313,9 +315,9 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
 
     for ( ; wm; wm = wm->prev )
     {
-        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+        if ( !(wm->ldr.Flags & LDR_PROCESS_ATTACHED) )
             continue;
-        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+        if ( wm->ldr.Flags & LDR_NO_DLL_CALLS )
             continue;
 
         MODULE_InitDLL( wm, DLL_THREAD_ATTACH, lpReserved );
@@ -339,7 +341,7 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     if ( !wm )
         ret = STATUS_DLL_NOT_FOUND;
     else
-        wm->flags |= WINE_MODREF_NO_DLL_CALLS;
+        wm->ldr.Flags |= LDR_NO_DLL_CALLS;
 
     RtlLeaveCriticalSection( &loader_section );
 
@@ -634,10 +636,10 @@ NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
     {
         (*pwm)->ldr.LoadCount++;
         
-        if (((*pwm)->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
+        if (((*pwm)->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
             !(flags & DONT_RESOLVE_DLL_REFERENCES))
         {
-            (*pwm)->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
+            (*pwm)->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
             PE_fixup_imports( *pwm );
         }
         TRACE("Already loaded module '%s' at %p, count=%d\n", filename, (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
@@ -784,9 +786,9 @@ NTSTATUS WINAPI LdrShutdownThread(void)
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
     {
-        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+        if ( !(wm->ldr.Flags & LDR_PROCESS_ATTACHED) )
             continue;
-        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+        if ( wm->ldr.Flags & LDR_NO_DLL_CALLS )
             continue;
 
         MODULE_InitDLL( wm, DLL_THREAD_DETACH, NULL );
@@ -852,7 +854,7 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
 {
     int i;
 
-    if ( wm->flags & WINE_MODREF_MARKER )
+    if ( wm->ldr.Flags & LDR_UNLOAD_IN_PROGRESS )
         return;
 
     if ( wm->ldr.LoadCount <= 0 )
@@ -863,13 +865,13 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
 
     if ( wm->ldr.LoadCount == 0 )
     {
-        wm->flags |= WINE_MODREF_MARKER;
+        wm->ldr.Flags |= LDR_UNLOAD_IN_PROGRESS;
 
         for ( i = 0; i < wm->nDeps; i++ )
             if ( wm->deps[i] )
                 MODULE_DecRefCount( wm->deps[i] );
 
-        wm->flags &= ~WINE_MODREF_MARKER;
+        wm->ldr.Flags &= ~LDR_UNLOAD_IN_PROGRESS;
     }
 }
 

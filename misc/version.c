@@ -464,7 +464,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
 	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
 
 	  /* test if it is an external (native) dll */
-	  if (!(wm->flags & WINE_MODREF_INTERNAL))
+	  if (!(wm->ldr.Flags & LDR_WINE_INTERNAL))
 	  {
 	    int i;
 	    for (i = 0; special_dlls[i]; i++)

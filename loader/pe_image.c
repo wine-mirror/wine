@@ -508,10 +508,10 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     {
         NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule16 );
         pModule->flags |= NE_FFLAGS_BUILTIN;
-        wm->flags |= WINE_MODREF_INTERNAL;
+        wm->ldr.Flags |= LDR_WINE_INTERNAL;
     }
     else if ( flags & DONT_RESOLVE_DLL_REFERENCES )
-        wm->flags |= WINE_MODREF_DONT_RESOLVE_REFS;
+        wm->ldr.Flags |= LDR_DONT_RESOLVE_REFS;
 
     wm->find_export = PE_FindExportedFunction;
 
@@ -522,7 +522,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     /* Fixup Imports */
 
-    if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
+    if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
         PE_fixup_imports( wm ))
     {
         /* remove entry from modref chain */

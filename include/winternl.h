@@ -1174,6 +1174,18 @@ typedef struct _LDR_MODULE
     ULONG               TimeDateStamp;
 } LDR_MODULE, *PLDR_MODULE;
 
+/* those defines are (some of the) regular LDR_MODULE.Flags values */
+#define LDR_IMAGE_IS_DLL                0x00000004
+#define LDR_LOAD_IN_PROGRESS            0x00001000
+#define LDR_UNLOAD_IN_PROGRESS          0x00002000
+#define LDR_NO_DLL_CALLS                0x00040000
+#define LDR_PROCESS_ATTACHED            0x00080000
+#define LDR_MODULE_REBASED              0x00200000
+
+/* these ones is Wine specific */
+#define LDR_DONT_RESOLVE_REFS           0x40000000
+#define LDR_WINE_INTERNAL               0x80000000
+
 /* FIXME: to be checked */
 #define MAXIMUM_FILENAME_LENGTH 256
 
