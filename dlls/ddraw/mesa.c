@@ -221,6 +221,17 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		    case D3DBLEND_INVDESTCOLOR:
 		          rs->src = GL_ONE_MINUS_DST_COLOR;
 			  break;
+		    case D3DBLEND_BOTHSRCALPHA:
+		          rs->src = GL_SRC_ALPHA;
+			  rs->dst = GL_SRC_ALPHA;
+			  break;
+		    case D3DBLEND_BOTHINVSRCALPHA:
+		          rs->src = GL_ONE_MINUS_SRC_ALPHA;
+			  rs->dst = GL_ONE_MINUS_SRC_ALPHA;
+			  break;
+		    case D3DBLEND_SRCALPHASAT:
+		          rs->src = GL_SRC_ALPHA_SATURATE;
+			  break;
 		    case D3DBLEND_SRCCOLOR:
 		    case D3DBLEND_INVSRCCOLOR:
 		          /* Cannot be supported with OpenGL */
