@@ -74,11 +74,13 @@ typedef struct {
     DWORD		dwEventCount;		/* for synchronization */
     /* data for play back */
     HWND               hWnd, hWndPaint;
+    DWORD               dwCachedFrame; /* buffered frame */
     DWORD		dwCurrVideoFrame;	/* video frame to display and current position */
     DWORD		dwCurrAudioBlock;	/* current audio block being played */
     RECT                source, dest;
     /* data for the background mechanism */
     CRITICAL_SECTION	cs;
+    HANDLE              hStopEvent;
 } WINE_MCIAVI;
 
 extern HINSTANCE MCIAVI_hInstance;
@@ -96,7 +98,6 @@ BOOL	MCIAVI_GetInfo(WINE_MCIAVI* wma);
 DWORD	MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr);
 BOOL	MCIAVI_OpenVideo(WINE_MCIAVI* wma);
 void	MCIAVI_PlayAudioBlocks(WINE_MCIAVI* wma, unsigned nHdr, LPWAVEHDR waveHdr);
-LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma);
 LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC);
 
 /* mciavi.c */

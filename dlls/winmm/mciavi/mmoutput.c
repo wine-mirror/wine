@@ -406,20 +406,22 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
 
 BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
 {
+    HDC hDC;
     DWORD	outSize;
     FOURCC	fcc = wma->ash_video.fccHandler;
 
     TRACE("fcc %4.4s\n", (LPSTR)&fcc);
 
+    wma->dwCachedFrame = -1;
+
     /* check for builtin DIB compressions */
     if ((fcc == mmioFOURCC('D','I','B',' ')) ||
-   (fcc == mmioFOURCC('R','L','E',' ')) ||
+        (fcc == mmioFOURCC('R','L','E',' ')) ||
         (fcc == BI_RGB) || (fcc == BI_RLE8) ||
         (fcc == BI_RLE4) || (fcc == BI_BITFIELDS))
     {
 	wma->hic = 0;
-	MCIAVI_DrawFrame(wma);
-	return TRUE;
+        goto paint_frame;
     }
 
     /* get the right handle */
@@ -469,8 +471,13 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
 	return FALSE;
     }
 
-    MCIAVI_DrawFrame(wma);
-
+paint_frame:
+    hDC = wma->hWndPaint ? GetDC(wma->hWndPaint) : 0;
+    if (hDC)
+    {
+        MCIAVI_PaintFrame(wma, hDC);
+        ReleaseDC(wma->hWndPaint, hDC);
+    }
     return TRUE;
 }
 
@@ -590,7 +597,31 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
     if (!hDC || !wma->inbih)
 	return TRUE;
 
-    TRACE("Painting frame %lu\n", wma->dwCurrVideoFrame);
+    TRACE("Painting frame %lu (cached %lu)\n", wma->dwCurrVideoFrame, wma->dwCachedFrame);
+
+    if (wma->dwCurrVideoFrame != wma->dwCachedFrame)
+    {
+        if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset)
+	    return FALSE;
+
+        if (wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize)
+        {
+            mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
+            mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
+
+            /* FIXME ? */
+            wma->inbih->biSizeImage = wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize;
+
+            if (wma->hic && ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
+                                         wma->outbih, wma->outdata) != ICERR_OK)
+            {
+                WARN("Decompression error\n");
+                return FALSE;
+            }
+        }
+
+        wma->dwCachedFrame = wma->dwCurrVideoFrame;
+    }
 
     if (wma->hic) {
         pBitmapData = wma->outdata;
@@ -622,36 +653,5 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
 
     SelectObject(hdcMem, hbmOld);
     DeleteDC(hdcMem);
-    return TRUE;
-}
-
-LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
-{
-    HDC		hDC;
-
-    TRACE("Drawing frame %lu\n", wma->dwCurrVideoFrame);
-
-    if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset ||
-        !wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize)
-	return FALSE;
-
-    mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
-    mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
-
-    /* FIXME ? */
-    wma->inbih->biSizeImage = wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize;
-
-    if (wma->hic &&
-	ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
-		     wma->outbih, wma->outdata) != ICERR_OK) {
-	WARN("Decompression error\n");
-	return FALSE;
-    }
-
-    if (IsWindowVisible(wma->hWndPaint) && (hDC = GetDC(wma->hWndPaint)) != 0) {
-	MCIAVI_PaintFrame(wma, hDC);
-       ReleaseDC(wma->hWndPaint, hDC);
-    }
-
     return TRUE;
 }

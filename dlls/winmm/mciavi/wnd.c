@@ -73,8 +73,8 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
             else
             {
 	        PAINTSTRUCT ps;
- 	        HDC hDC = BeginPaint(hWnd, &ps);
-                MCIAVI_PaintFrame(wma, hDC);
+                BeginPaint(hWnd, &ps);
+                MCIAVI_PaintFrame(wma, ps.hdc);
 	        EndPaint(hWnd, &ps);
 	    }
 
@@ -261,12 +261,11 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
             TRACE("Setting hWnd to %p\n", lpParms->hWnd);
             if (wma->hWnd) ShowWindow(wma->hWnd, SW_HIDE);
             wma->hWndPaint = (lpParms->hWnd == MCI_DGV_WINDOW_DEFAULT) ? wma->hWnd : lpParms->hWnd;
-            InvalidateRect(wma->hWndPaint, NULL, FALSE);
         }
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
 	TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
-       ShowWindow(wma->hWndPaint, lpParms->nCmdShow);
+        ShowWindow(wma->hWndPaint, lpParms->nCmdShow);
     }
     if (dwFlags & MCI_DGV_WINDOW_TEXT) {
 	TRACE("Setting caption to '%s'\n", lpParms->lpstrText);

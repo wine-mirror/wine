@@ -152,6 +152,7 @@ static	DWORD	MCIAVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 	return 0;
 
     InitializeCriticalSection(&wma->cs);
+    wma->hStopEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
     wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
     modp->wCustomCommandTable = wma->wCommandTable;
@@ -182,6 +183,8 @@ static	DWORD	MCIAVI_drvClose(DWORD dwDevID)
 
 	mciSetDriverData(dwDevID, 0);
 	mciFreeCommandResource(wma->wCommandTable);
+
+        CloseHandle(wma->hStopEvent);
 
         LeaveCriticalSection(&wma->cs);
         DeleteCriticalSection(&wma->cs);
@@ -263,6 +266,7 @@ static void MCIAVI_CleanUp(WINE_MCIAVI* wma)
 	memset(&wma->ash_video, 0, sizeof(wma->ash_video));
 	memset(&wma->ash_audio, 0, sizeof(wma->ash_audio));
 	wma->dwCurrVideoFrame = wma->dwCurrAudioBlock = 0;
+        wma->dwCachedFrame = -1;
     }
 }
 
@@ -477,28 +481,44 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     while (wma->dwStatus == MCI_MODE_PLAY)
     {
+        HDC hDC;
+
 	tc = GetTickCount();
 
-	MCIAVI_DrawFrame(wma);
+        hDC = wma->hWndPaint ? GetDC(wma->hWndPaint) : 0;
+        if (hDC)
+        {
+            MCIAVI_PaintFrame(wma, hDC);
+            ReleaseDC(wma->hWndPaint, hDC);
+        }
 
 	if (wma->lpWaveFormat) {
+            HANDLE events[2];
+            DWORD ret;
+
+            events[0] = wma->hStopEvent;
+            events[1] = wma->hEvent;
+
 	    MCIAVI_PlayAudioBlocks(wma, nHdr, waveHdr);
 	    delta = GetTickCount() - tc;
 
             LeaveCriticalSection(&wma->cs);
-           MsgWaitForMultipleObjects(1, &wma->hEvent, FALSE,
+            ret = MsgWaitForMultipleObjects(2, events, FALSE,
                 (delta >= frameTime) ? 0 : frameTime - delta, MWMO_INPUTAVAILABLE);
             EnterCriticalSection(&wma->cs);
 
-            if (wma->dwStatus != MCI_MODE_PLAY) break;
+            if (ret == WAIT_OBJECT_0 || wma->dwStatus != MCI_MODE_PLAY) break;
 	}
 
 	delta = GetTickCount() - tc;
 	if (delta < frameTime)
         {
+            DWORD ret;
+
             LeaveCriticalSection(&wma->cs);
-            MsgWaitForMultipleObjects(0, NULL, FALSE, frameTime - delta, MWMO_INPUTAVAILABLE);
+            ret = MsgWaitForMultipleObjects(1, &wma->hStopEvent, FALSE, frameTime - delta, MWMO_INPUTAVAILABLE);
             EnterCriticalSection(&wma->cs);
+            if (ret == WAIT_OBJECT_0) break;
         }
 
        if (wma->dwCurrVideoFrame < dwToFrame)
@@ -584,21 +604,18 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     EnterCriticalSection(&wma->cs);
 
     switch (wma->dwStatus) {
-    case MCI_MODE_PAUSE:
     case MCI_MODE_PLAY:
     case MCI_MODE_RECORD:
-	{
-	    int oldStat = wma->dwStatus;
-	    wma->dwStatus = MCI_MODE_NOT_READY;
-	    if (oldStat == MCI_MODE_PAUSE)
-		dwRet = waveOutReset(wma->hWave);
-	}
-    /* fall through */
+        SetEvent(wma->hStopEvent);
+        /* fall through */
+    case MCI_MODE_PAUSE:
+        dwRet = waveOutReset(wma->hWave);
+        /* fall through */
     default:
         do /* one more chance for an async thread to finish */
         {
             LeaveCriticalSection(&wma->cs);
-           Sleep(10);
+            Sleep(10);
             EnterCriticalSection(&wma->cs);
         } while (wma->dwStatus != MCI_MODE_STOP);
 
@@ -685,6 +702,8 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     } else if (dwFlags & MCI_SEEK_TO_END) {
 	wma->dwCurrVideoFrame = wma->dwPlayableVideoFrames - 1;
     } else if (dwFlags & MCI_TO) {
+        if (lpParms->dwTo > wma->dwPlayableVideoFrames - 1)
+            lpParms->dwTo = wma->dwPlayableVideoFrames - 1;
 	wma->dwCurrVideoFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
     } else {
 	WARN("dwFlag doesn't tell where to seek to...\n");
@@ -804,14 +823,19 @@ static	DWORD	MCIAVI_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
 {
     WINE_MCIAVI *wma;
 
-    FIXME("(%04x, %08lx, %p) : stub\n", wDevID, dwFlags, lpParms);
-
-    MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
+    TRACE("%04x, %08lx, %p\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
+
+    EnterCriticalSection(&wma->cs);
+
+    if (dwFlags & MCI_DGV_UPDATE_HDC)
+        MCIAVI_PaintFrame(wma, lpParms->hDC);
+
+    LeaveCriticalSection(&wma->cs);
 
     return 0;
 }
