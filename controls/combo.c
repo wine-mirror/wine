@@ -47,6 +47,8 @@ static UINT	CBitHeight, CBitWidth;
 /*
  * Look and feel dependant "constants"
  */
+
+#define COMBO_YBORDERGAP         5
 #define COMBO_XBORDERSIZE()      ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 2 )
 #define COMBO_YBORDERSIZE()      ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 2 )
 #define COMBO_EDITBUTTONSPACE()  ( (TWEAK_WineLook == WIN31_LOOK) ? 8 : 0 )
@@ -1076,6 +1078,10 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
 static void CBDropDown( LPHEADCOMBO lphc )
 {
    RECT	rect;
+   int nItems = 0;
+   int i;
+   int nHeight;
+   int nDroppedHeight;
 
    TRACE("[%04x]: drop down\n", CB_HWND(lphc));
 
@@ -1105,16 +1111,33 @@ static void CBDropDown( LPHEADCOMBO lphc )
    /* now set popup position */
    GetWindowRect( lphc->self->hwndSelf, &rect );
    
-
    /*
     * If it's a dropdown, the listbox is offset
     */
    if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
      rect.left += COMBO_EDITBUTTONSPACE();
 
+  /* if the dropped height is greater than the total height of the dropped
+     items list, then force the drop down list height to be the total height
+     of the items in the dropped list */
+
+   nDroppedHeight = lphc->droppedRect.bottom - lphc->droppedRect.top;
+   nItems = (int)SendMessageA (lphc->hWndLBox, LB_GETCOUNT, 0, 0);
+   nHeight = COMBO_YBORDERGAP;
+   for (i = 0; i < nItems; i++)
+   {
+     nHeight += (int)SendMessageA (lphc->hWndLBox, LB_GETITEMHEIGHT, i, 0);
+
+     if (nHeight >= nDroppedHeight)
+       break;
+   }
+
+   if (nHeight < nDroppedHeight)
+      nDroppedHeight = nHeight;
+
    SetWindowPos( lphc->hWndLBox, HWND_TOP, rect.left, rect.bottom, 
 		 lphc->droppedRect.right - lphc->droppedRect.left,
-		 lphc->droppedRect.bottom - lphc->droppedRect.top, 
+      nDroppedHeight,
 		 SWP_NOACTIVATE | SWP_NOREDRAW);
 
    if( !(lphc->wState & CBF_NOREDRAW) )
