@@ -3090,6 +3090,14 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     return midMessage(0, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
 }
 
+/**************************************************************************
+ * 				midiStreamOpen		[MMSYSTEM.91]
+ */
+MMRESULT32 WINAPI midiStreamOpen32(HMIDISTRM32 *phms,LPUINT32 devid,DWORD cMidi,DWORD dwCallback,DWORD dwInstance,DWORD fdwOpen) {
+	FIXME(midi,"(%p,%p,%d,%p,%p,0x%08lx),stub!\n",phms,devid,cMidi,dwCallback,dwInstance,fdwOpen);
+	return MMSYSERR_NOTSUPPORTED;
+}
+
 
 /**************************************************************************
  * 				waveOutGetNumDevs		[MMSYSTEM.401]

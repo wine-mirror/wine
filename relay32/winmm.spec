@@ -91,7 +91,7 @@ type win32
  88 stdcall midiOutShortMsg(long long) midiOutShortMsg32
  89 stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader32
  90 stub midiStreamClose
- 91 stub midiStreamOpen
+ 91 stdcall midiStreamOpen(ptr ptr long long long long) midiStreamOpen32
  92 stub midiStreamOut
  93 stub midiStreamPause
  94 stub midiStreamPosition
