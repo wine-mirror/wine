@@ -792,9 +792,10 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
  *                   (logical coordinates)
  *   str        [in] The text of the line segment
  *   offset     [in] The offset of the underscored character within str
+ *   rect       [in] Clipping rectangle (if not NULL)
  */
 
-static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int offset)
+static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int offset, const RECT *rect)
 {
     int prefix_x;
     int prefix_end;
@@ -808,6 +809,15 @@ static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int of
     prefix_end = x + size.cx - 1;
     /* The above method may eventually be slightly wrong due to kerning etc. */
 
+    /* Check for clipping */
+    if (rect){
+	if (prefix_x > rect->right || prefix_end < rect->left || y < rect->top || y > rect->bottom)
+	    return; /* Completely outside */
+	/* Partially outside */
+	if (prefix_x   < rect->left ) prefix_x   = rect->left;
+	if (prefix_end > rect->right) prefix_end = rect->right;
+    }
+    
     hpen = CreatePen (PS_SOLID, 1, GetTextColor (hdc));
     oldPen = SelectObject (hdc, hpen);
     MoveToEx (hdc, prefix_x, y, NULL);
@@ -939,7 +949,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                                  rect, str, len_seg, NULL ))  return 0;
                 if (prefix_offset != -1 && prefix_offset < len_seg)
                 {
-                    TEXT_DrawUnderscore (hdc, xseg, y + tm.tmAscent + 1, str, prefix_offset);
+                    TEXT_DrawUnderscore (hdc, xseg, y + tm.tmAscent + 1, str, prefix_offset, (flags & DT_NOCLIP) ? NULL : rect);
                 }
                 len -= len_seg;
                 str += len_seg;
