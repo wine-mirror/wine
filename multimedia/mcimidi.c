@@ -554,7 +554,10 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
     if (wDevID >= MAX_MCIMIDIDRV) {
 	WARN(mcimidi, "Invalid wDevID=%u\n", wDevID);
 	return MCIERR_INVALID_DEVICE_ID;
-    }
+    }	
+    if (dwFlags & MCI_OPEN_SHAREABLE)
+	return MCIERR_HARDWARE;
+
     wmm = &MCIMidiDev[wDevID];
     
     if (wmm->nUseCount > 0) {
@@ -765,7 +768,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     
     if (!(dwFlags & MCI_WAIT)) {	
 	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return MCI_SendCommandAsync32(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms);
+	return MCI_SendCommandAsync32(wmm->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms, sizeof(LPMCI_PLAY_PARMS));
     }
     
     if (lpParms && (dwFlags & MCI_FROM)) {

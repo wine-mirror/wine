@@ -155,21 +155,18 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A
 	WARN(mciwave, "Invalid wDevID=%u\n", wDevID);
 	return MCIERR_INVALID_DEVICE_ID;
     }
-    
+    if (dwFlags & MCI_OPEN_SHAREABLE)
+	return MCIERR_HARDWARE;
+
     wmw = &MCIWaveDev[wDevID];
     
     if (wmw->nUseCount > 0) {
-	/* The driver already open on this channel */
-	/* If the driver was opened shareable before and this open specifies */
-	/* shareable then increment the use count */
-	if (wmw->fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
-	    ++wmw->nUseCount;
-	else
-	    return MCIERR_MUST_USE_SHAREABLE;
-    } else {
-	wmw->nUseCount = 1;
-	wmw->fShareable = dwFlags & MCI_OPEN_SHAREABLE;
+	/* The driver is already opened on this channel
+	 * Wave driver cannot be shared
+	 */
+	return MCIERR_DEVICE_OPEN;
     }
+    wmw->nUseCount++;
     
     dwDeviceID = lpOpenParms->wDeviceID;
     
@@ -189,7 +186,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS32A
 	    /*FIXME : what should be done id wmw->hFile is already != 0, or the driver is playin' */
 	    TRACE(mciwave,"MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	    if (lpstrElementName && (strlen(lpstrElementName) > 0)) {
-		wmw->hFile = mmioOpen32A(lpstrElementName, NULL, 
+		wmw->hFile = mmioOpen32A((LPSTR)lpstrElementName, NULL, 
 					 MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 		if (wmw->hFile == 0) {
 		    WARN(mciwave, "can't find file='%s' !\n", lpstrElementName);
@@ -327,35 +324,38 @@ static DWORD WAVE_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
  */
 static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    DWORD		dwRet;
+    DWORD		dwRet = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     
     TRACE(mciwave, "(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (wmw == NULL)	return MCIERR_INVALID_DEVICE_ID;
-    
+    if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+
     if (wmw->dwStatus != MCI_MODE_STOP) {
-	WAVE_mciStop(wDevID, MCI_WAIT, lpParms);
+	dwRet = WAVE_mciStop(wDevID, MCI_WAIT, lpParms);
     }
     
     wmw->dwStatus = MCI_MODE_STOP;
     wmw->nUseCount--;
 
     if (wmw->nUseCount == 0) {
+	DWORD	mmRet;
 	if (wmw->hFile != 0) {
 	    mmioClose32(wmw->hFile, 0);
 	    wmw->hFile = 0;
 	}
-	if (wmw->fInput)	dwRet = widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L);
-	else			dwRet = wodMessage(wDevID, WODM_CLOSE, 0, 0L, 0L);
+	mmRet = (wmw->fInput) ? widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L) :
+	    wodMessage(wDevID, WODM_CLOSE, 0, 0L, 0L);
 	
-	if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
+	if (mmRet != MMSYSERR_NOERROR) dwRet = MCIERR_INTERNAL;
     }
 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
+    if (dwFlags & MCI_NOTIFY) {
 	TRACE(mciwave, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			  wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			  wmw->wNotifyDeviceID,
+			  (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
     }
     return 0;
 }
@@ -370,10 +370,11 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     HGLOBAL16		hData;
     DWORD		dwRet;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
-    
+
     TRACE(mciwave, "(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (wmw == NULL)	return MCIERR_INVALID_DEVICE_ID;
+    if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (wmw->fInput) {
 	WARN(mciwave, "cannot play on input device\n");
@@ -385,9 +386,9 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	return MCIERR_FILE_NOT_FOUND;
     }
 
-    if (!(dwFlags & MCI_WAIT)) {	
-	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return MCI_SendCommandAsync32(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms);
+    if (!(dwFlags & MCI_WAIT)) {
+	return MCI_SendCommandAsync32(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
+				      (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
     end = 0xFFFFFFFF;
@@ -462,7 +463,8 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 
     TRACE(mciwave, "(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (wmw == NULL)	return MCIERR_INVALID_DEVICE_ID;
+    if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (!wmw->fInput) {
 	WARN(mciwave, "cannot record on output device\n");
@@ -599,7 +601,7 @@ static DWORD WAVE_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 	if (dwFlags & MCI_NOTIFY) {
 	    TRACE(mciwave, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	    mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			    wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			      wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
     }
     return ret;	
@@ -613,6 +615,7 @@ static DWORD WAVE_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
 
     TRACE(mciwave, "(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
 

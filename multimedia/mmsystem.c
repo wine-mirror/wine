@@ -1114,6 +1114,9 @@ BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer,UINT16 uLength
     lpstrBuffer[0] = '\0';
 
     switch (wError) {
+    case 0:
+	msgptr = "The specified command has been executed.";
+	break;
     case MCIERR_INVALID_DEVICE_ID:
 	msgptr = "Invalid MCI device ID. Use the ID returned when opening the MCI device.";
 	break;
@@ -1384,11 +1387,14 @@ BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer,UINT16 uLength
  */
 BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStatus)
 {
-    TRACE(mmsys, "(%04X, %u, %04X)\n", hWndCallBack, wDevID, wStatus);
+    TRACE(mmsys, "(%04X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    if (!IsWindow32(hWndCallBack)) return FALSE;
+    if (!IsWindow32(hWndCallBack)) {
+	WARN(mmsys, "bad hWnd for call back\n");
+	return FALSE;
+    }
     TRACE(mmsys, "before PostMessage\n");
-    PostMessage32A(hWndCallBack, MM_MCINOTIFY, wStatus, MAKELONG(wDevID, 0));
+    PostMessage32A(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
     return TRUE;
 }
 
@@ -1397,9 +1403,15 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
  */
 BOOL32 WINAPI mciDriverNotify32(HWND32 hWndCallBack, UINT32 wDevID, UINT32 wStatus)
 {
-    FIXME(mmsys, "stub(%04X, %u, %04X)\n", hWndCallBack, wDevID, wStatus);
+    FIXME(mmsys, "(%08X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    return FALSE;
+    if (!IsWindow32(hWndCallBack)) {
+	WARN(mmsys, "bad hWnd for call back\n");
+	return FALSE;
+    }
+    TRACE(mmsys, "before PostMessage\n");
+    PostMessage32A(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1407,9 +1419,7 @@ BOOL32 WINAPI mciDriverNotify32(HWND32 hWndCallBack, UINT32 wDevID, UINT32 wStat
  */
 DWORD WINAPI mciGetDriverData16(HDRVR16 hdrv) 
 {
-    FIXME(mmsys,"(%04x): stub!\n", hdrv);
-
-    return 0x42;
+    return mciGetDriverData32(hdrv);
 }
 
 /**************************************************************************
@@ -1417,9 +1427,12 @@ DWORD WINAPI mciGetDriverData16(HDRVR16 hdrv)
  */
 DWORD WINAPI mciGetDriverData32(HDRVR32 hdrv) 
 {
-    FIXME(mmsys,"(%04x): stub!\n", hdrv);
-
-    return 0x42;
+    TRACE(mmsys,"(%04x)\n", hdrv);
+    if (!MCI_DevIDValid(hdrv) || MCI_GetDrv(hdrv)->modp.wType == 0) {
+	return 0L;
+    }
+    
+    return MCI_GetDrv(hdrv)->dwPrivate;
 }
 
 /**************************************************************************
@@ -1427,9 +1440,7 @@ DWORD WINAPI mciGetDriverData32(HDRVR32 hdrv)
  */
 BOOL16 WINAPI mciSetDriverData16(HDRVR16 hdrv, DWORD data) 
 {
-    FIXME(mmsys,"(%04x,%08lx): stub!\n", hdrv, data);
-
-    return 0;
+    return mciSetDriverData32(hdrv, data);
 }
 
 /**************************************************************************
@@ -1437,9 +1448,13 @@ BOOL16 WINAPI mciSetDriverData16(HDRVR16 hdrv, DWORD data)
  */
 BOOL32 WINAPI mciSetDriverData32(HDRVR32 hdrv, DWORD data) 
 {
-    FIXME(mmsys,"(%04x,%08lx): stub!\n", hdrv, data);
-
-    return 0;
+    TRACE(mmsys,"(%04x,%08lx)\n", hdrv, data);
+    if (!MCI_DevIDValid(hdrv) || MCI_GetDrv(hdrv)->modp.wType == 0) {
+	return FALSE;
+    }
+    
+    MCI_GetDrv(hdrv)->dwPrivate = data;
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1577,20 +1592,20 @@ DWORD MCI_SendCommand32(UINT32 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPara
 	dwRet = MCIERR_INVALID_DEVICE_ID;
     } else {
 	MCIPROC32		proc = MCI_GetProc32(MCI_GetDrv(wDevID)->modp.wType);
-    
-    if (proc) {
-	dwRet = (*proc)(MCI_GetDrv(wDevID)->modp.wDeviceID, 
-			MCI_GetDrv(wDevID)->hDrv, 
-			wMsg, dwParam1, dwParam2);
-    } else if (MCI_GetDrv(wDevID)->driverProc) {
-	FIXME(mmsys, "is that correct ?\n");
-	dwRet = Callbacks->CallDriverProc(MCI_GetDrv(wDevID)->driverProc,
-					  MCI_GetDrv(wDevID)->modp.wDeviceID,
-					  MCI_GetDrv(wDevID)->hDrv, 
-					  wMsg, dwParam1, dwParam2);
-    } else {
-	WARN(mmsys, "unknown device type=%04X !\n", MCI_GetDrv(wDevID)->modp.wType);
-    }
+	
+	if (proc) {
+	    dwRet = (*proc)(MCI_GetDrv(wDevID)->modp.wDeviceID, 
+			    MCI_GetDrv(wDevID)->hDrv, 
+			    wMsg, dwParam1, dwParam2);
+	} else if (MCI_GetDrv(wDevID)->driverProc) {
+	    FIXME(mmsys, "is that correct ?\n");
+	    dwRet = Callbacks->CallDriverProc(MCI_GetDrv(wDevID)->driverProc,
+					      MCI_GetDrv(wDevID)->modp.wDeviceID,
+					      MCI_GetDrv(wDevID)->hDrv, 
+					      wMsg, dwParam1, dwParam2);
+	} else {
+	    WARN(mmsys, "unknown device type=%04X !\n", MCI_GetDrv(wDevID)->modp.wType);
+	}
     }
     return dwRet;
 }
@@ -1642,18 +1657,18 @@ static DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMS32A lpParms)
 #if testing32
 		/* FIXME has to be re-written, seems to be experimental 16 bit code anyway */
 		else  {
-		HDRVR16 hdrv = OpenDriver32(str, "mci", NULL);
-		if (hdrv) {
-		    HMODULE16	hmod;
-		    
-		    hmod = GetDriverModuleHandle(hdrv);
+		    HDRVR16 hdrv = OpenDriver32(str, "mci", NULL);
+		    if (hdrv) {
+			HMODULE16	hmod;
+			
+			hmod = GetDriverModuleHandle(hdrv);
 			MCI_GetDrv(wDevID)->hDrv = hdrv;
-			MCI_GetDrv(wDevID)->driverProc = GetProcAddress32(hmod,oouch SEGPTR_GET(SEGPTR_STRDUP("DriverProc")));
-		    uDevTyp = MCI_DEVTYPE_OTHER;
-		} else {
-		    FIXME(mmsys, "[mci extensions] entry %s for %s not supported.\n", str, t);
-		    return MCIERR_DEVICE_NOT_INSTALLED;
-		}
+			MCI_GetDrv(wDevID)->driverProc = GetProcAddress32(hmod,oouch SEGPTR_GET(SEGPTR_STRDUP("DRIVERPROC")));
+			uDevTyp = MCI_DEVTYPE_OTHER;
+		    } else {
+			FIXME(mmsys, "[mci extensions] entry %s for %s not supported.\n", str, t);
+			return MCIERR_DEVICE_NOT_INSTALLED;
+		    }
 		}
 #endif
 	    }
@@ -1706,6 +1721,7 @@ static DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMS32A lpParms)
     }
     MCI_GetDrv(wDevID)->modp.wType = uDevTyp;
     MCI_GetDrv(wDevID)->modp.wDeviceID = 0;  /* FIXME? for multiple devices */
+    MCI_GetDrv(wDevID)->dwPrivate = 0;
     lpParms->wDeviceID = wDevID;
     TRACE(mmsys, "mcidev=%d, uDevTyp=%04X wDeviceID=%04X !\n", 
 	  wDevID, uDevTyp, lpParms->wDeviceID);
@@ -1850,6 +1866,7 @@ struct SCA32 {
     UINT32 	wMsg;
     DWORD 	dwParam1;
     DWORD 	dwParam2;
+    BOOL32	allocatedCopy;
 };
 
 DWORD WINAPI mciSendCommand32A(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2);
@@ -1867,7 +1884,9 @@ static DWORD WINAPI MCI_SCAStarter32(LPVOID arg)
     ret = mciSendCommand32A(sca->wDevID, sca->wMsg, sca->dwParam1 | MCI_WAIT, sca->dwParam2);
     TRACE(mci, "In thread after async command (%08x,%s,%08lx,%08lx)\n",
 	  sca->wDevID, MCI_CommandToString(sca->wMsg), sca->dwParam1, sca->dwParam2);
-    free(sca);
+    if (sca->allocatedCopy)
+	HeapFree(GetProcessHeap(), 0, (LPVOID)sca->dwParam2);
+    HeapFree(GetProcessHeap(), 0, sca);
     ExitThread(ret);
     WARN(mci, "Should not happen ? what's wrong \n");
     /* should not go after this point */
@@ -1877,17 +1896,33 @@ static DWORD WINAPI MCI_SCAStarter32(LPVOID arg)
 /**************************************************************************
  * 				MCI_SendCommandAsync32		[internal]
  */
-DWORD MCI_SendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD MCI_SendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2, UINT32 size)
 {
-    struct SCA32*	sca = malloc(sizeof(struct SCA32));
+    struct SCA32*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA32));
 
-    if (sca == 0)	return MCIERR_OUT_OF_MEMORY;
+    if (sca == 0)
+	return MCIERR_OUT_OF_MEMORY;
 
     sca->wDevID   = wDevID;
     sca->wMsg     = wMsg;
     sca->dwParam1 = dwParam1;
-    sca->dwParam2 = dwParam2;
     
+    if (size) {
+	sca->dwParam2 = (DWORD)HeapAlloc(GetProcessHeap(), 0, size);
+	if (sca->dwParam2 == 0) {
+	    HeapFree(GetProcessHeap(), 0, sca);
+	    return MCIERR_OUT_OF_MEMORY;
+	}
+	sca->allocatedCopy = TRUE;
+	/* copy structure passed by program in dwParam2 to be sure 
+	 * we can still use it whatever the program does 
+	 */
+	memcpy((LPVOID)sca->dwParam2, (LPVOID)dwParam2, size);
+    } else {
+	sca->dwParam2 = dwParam2;
+	sca->allocatedCopy = FALSE;
+    }
+
     if (CreateThread(NULL, 0, MCI_SCAStarter32, sca, 0, NULL) == 0) {
 	WARN(mci, "Couldn't allocate thread for async command handling, sending synchonously\n");
 	return MCI_SCAStarter32(&sca);
@@ -2200,6 +2235,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
 	}
 	break;
+    /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
     default:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
 	    FIXME(mci, "unhandled MCI_ALL_DEVICE_ID\n");
@@ -2233,7 +2269,6 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 UINT16 WINAPI mciGetDeviceID16(LPCSTR lpstrName)
 {
     UINT16	wDevID;
-    
     TRACE(mmsys, "(\"%s\")\n", lpstrName);
 
     if (!lpstrName)
@@ -2242,18 +2277,21 @@ UINT16 WINAPI mciGetDeviceID16(LPCSTR lpstrName)
     if (!lstrcmpi32A(lpstrName, "ALL"))
 	return MCI_ALL_DEVICE_ID;
     
-    wDevID = MCI_FirstDevID();
-    while (MCI_DevIDValid(wDevID) && MCI_GetDrv(wDevID)->modp.wType) {
-	if (MCI_GetOpenDrv(wDevID)->lpstrDeviceType && 
-	    strcmp(MCI_GetOpenDrv(wDevID)->lpstrDeviceType, lpstrName) == 0)
-	    return wDevID;
+    for (wDevID = MCI_FirstDevID(); MCI_DevIDValid(wDevID); wDevID = MCI_NextDevID(wDevID)) {
+	if (MCI_GetDrv(wDevID)->modp.wType) {
+	    FIXME(mmsys, "This is wrong for compound devices\n");
+	    /* FIXME: for compound devices, lpstrName is matched against 
+	     * the name of the file, not the name of the device... 
+	     */
+	    if (MCI_GetOpenDrv(wDevID)->lpstrDeviceType && 
+		strcmp(MCI_GetOpenDrv(wDevID)->lpstrDeviceType, lpstrName) == 0)
+		return wDevID;
     
-	if (MCI_GetOpenDrv(wDevID)->lpstrAlias && 
-	    strcmp(MCI_GetOpenDrv(wDevID)->lpstrAlias, lpstrName) == 0)
-	    return wDevID;
-	
-	wDevID = MCI_NextDevID(wDevID);
-	    }
+	    if (MCI_GetOpenDrv(wDevID)->lpstrAlias && 
+		strcmp(MCI_GetOpenDrv(wDevID)->lpstrAlias, lpstrName) == 0)
+		return wDevID;
+	}
+    }
     
     return 0;
 }
@@ -2306,7 +2344,7 @@ BOOL32 WINAPI mciSetYieldProc32(UINT32 uDeviceID,
 UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD dwElementID, LPCSTR lpstrType)
 {
     FIXME(mci, "(%lu, %s) stub\n", dwElementID, lpstrType);
-	return 0;
+    return 0;
 }
 	
 /**************************************************************************

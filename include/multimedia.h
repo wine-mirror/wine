@@ -70,7 +70,7 @@ extern const char* MCI_CommandToString(UINT16 wMsg);
 
 
 extern DWORD MCI_SendCommand32(UINT32 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
-extern DWORD MCI_SendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2);
+extern DWORD MCI_SendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2, UINT32 size);
 
 LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			  DWORD dwParam1, DWORD dwParam2);
