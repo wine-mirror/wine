@@ -345,19 +345,24 @@ LONG WINAPI DispatchMessage32_16( const MSG32_16 *msg16, BOOL16 wHaveParamHigh )
 BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, MSG16 *msg16 )
 {
     MSG msg;
+    HWND hwndDlg32;
+
+    msg.hwnd  = WIN_Handle32(msg16->hwnd);
+    hwndDlg32 = WIN_Handle32(hwndDlg);
 
     switch(msg16->message)
     {
     case WM_KEYDOWN:
     case WM_CHAR:
     case WM_SYSCHAR:
-        msg.hwnd   = WIN_Handle32(msg16->hwnd);
         msg.lParam = msg16->lParam;
         WINPROC_MapMsg16To32W( msg.hwnd, msg16->message, msg16->wParam,
                                &msg.message, &msg.wParam, &msg.lParam );
         /* these messages don't need an unmap */
-        return IsDialogMessageW( WIN_Handle32(hwndDlg), &msg );
+        return IsDialogMessageW( hwndDlg32, &msg );
     }
+
+    if ((hwndDlg32 != msg.hwnd) && !IsChild( hwndDlg32, msg.hwnd )) return FALSE;
     TranslateMessage16( msg16 );
     DispatchMessage16( msg16 );
     return TRUE;
