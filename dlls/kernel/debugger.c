@@ -210,7 +210,7 @@ BOOL WINAPI DebugActiveProcessStop(
 /***********************************************************************
  *           OutputDebugStringA   (KERNEL32.@)
  *
- *  Output by an application of a unicode string to a debugger (if attached)
+ *  Output by an application of an ascii string to a debugger (if attached)
  *  and program log.
  */
 void WINAPI OutputDebugStringA(
@@ -231,7 +231,7 @@ void WINAPI OutputDebugStringA(
 /***********************************************************************
  *           OutputDebugStringW   (KERNEL32.@)
  *
- *  Output by an appliccation of a unicode string to a debugger (if attached)
+ *  Output by an application of a unicode string to a debugger (if attached)
  *  and program log.
  */
 void WINAPI OutputDebugStringW(
@@ -359,7 +359,7 @@ void WINAPIV _DebugOutput( WORD flags, LPCSTR spec, VA_LIST16 valist )
 /***********************************************************************
  *           DebugSetProcessKillOnExit                    (KERNEL32.@)
  *
- * Let a debugger decide wether a debuggee will be killed upon debugger
+ * Let a debugger decide whether a debuggee will be killed upon debugger
  * termination
  */
 BOOL WINAPI DebugSetProcessKillOnExit(BOOL kill)
