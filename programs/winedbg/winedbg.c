@@ -92,8 +92,28 @@ static HANDLE                   dbg_houtput;
 
 void	dbg_outputA(const char* buffer, int len)
 {
-    DWORD w;
-    WriteFile(dbg_houtput, buffer, len, &w, NULL);
+    static char line_buff[4096];
+    static unsigned int line_pos;
+
+    DWORD w, i;
+
+    while (len > 0)
+    {
+        unsigned int count = min( len, sizeof(line_buff) - line_pos );
+        memcpy( line_buff + line_pos, buffer, count );
+        buffer += count;
+        len -= count;
+        line_pos += count;
+        for (i = line_pos; i > 0; i--) if (line_buff[i-1] == '\n') break;
+        if (!i)  /* no newline found */
+        {
+            if (len > 0) i = line_pos;  /* buffer is full, flush anyway */
+            else break;
+        }
+        WriteFile(dbg_houtput, line_buff, i, &w, NULL);
+        memmove( line_buff, line_buff + i, line_pos - i );
+        line_pos -= i;
+    }
 }
 
 void	dbg_outputW(const WCHAR* buffer, int len)
