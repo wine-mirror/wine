@@ -37,7 +37,7 @@ typedef struct
     INT   maxVal;   /* Maximum scroll-bar value */
     INT   page;     /* Page size of scroll bar (Win32) */
     UINT  flags;    /* EnableScrollBar flags */
-} SCROLLBAR_INFO;
+} SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
 
 
 static HBITMAP hUpArrow;
@@ -80,6 +80,12 @@ static HBITMAP hRgArrowI;
 
   /* Scroll timer id */
 #define SCROLL_TIMER   0
+
+/* Determine if the info is valid */
+#define SCROLL_INFO_INVALID(info) \
+    ((info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) || \
+    ((info->cbSize != sizeof(*info)) && \
+    (info->cbSize != sizeof(*info) - sizeof(info->nTrackPos))))
 
   /* Scroll-bar hit testing */
 enum SCROLL_HITTEST
@@ -159,9 +165,9 @@ static void SCROLL_LoadBitmaps(void)
 
 
 /***********************************************************************
- *           SCROLL_GetScrollInfo
+ *           SCROLL_GetScrollBarInfo
  */
-static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, INT nBar )
+static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
 {
     SCROLLBAR_INFO *infoPtr;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -267,7 +273,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     }
     else
     {
-        SCROLLBAR_INFO *info = SCROLL_GetScrollInfo( hwnd, nBar );
+        SCROLLBAR_INFO *info = SCROLL_GetScrollBarInfo( hwnd, nBar );
 
         *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
         pixels -= (2 * (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP));
@@ -802,7 +808,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     RECT rect;
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar );
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
 
     if (!wndPtr || !infoPtr ||
@@ -930,7 +936,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     RECT rect;
     HDC hdc;
 
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar );
     if (!infoPtr) return;
     if ((SCROLL_trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
 		  return;
@@ -1192,6 +1198,75 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
 }
 
 
+/*************************************************************************
+ *           SCROLL_GetScrollInfo
+ *
+ *  Internal helper for the API function
+ */
+static BOOL SCROLL_GetScrollInfo(
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */,
+LPSCROLLINFO info /* [in/out] (fMask specifies which values to retrieve) */)
+{
+    LPSCROLLBAR_INFO infoPtr;
+
+    /* handle invalid data structure */
+    if (SCROLL_INFO_INVALID(info)
+        || (!(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar))))
+            return FALSE;
+
+    /* fill in the desired scroll info structure */
+    if (info->fMask & SIF_PAGE) info->nPage = infoPtr->page;
+    if (info->fMask & SIF_POS) info->nPos = infoPtr->curVal;
+    if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
+        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->curVal;
+    if (info->fMask & SIF_RANGE)
+    {
+        info->nMin = infoPtr->minVal;
+        info->nMax = infoPtr->maxVal;
+    }
+
+    return (info->fMask & SIF_ALL) != 0;
+}
+
+
+/*************************************************************************
+ *           SCROLL_GetScrollPos
+ *
+ *  Internal helper for the API function
+ */
+static INT SCROLL_GetScrollPos(
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
+{
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+    return infoPtr ? infoPtr->curVal: 0;
+}
+
+
+/*************************************************************************
+ *           SCROLL_GetScrollRange
+ *
+ *  Internal helper for the API function
+ *
+ * RETURNS STD
+ */
+static BOOL SCROLL_GetScrollRange(
+HWND hwnd, /* [in] Handle of window */
+INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL  */
+LPINT lpMin, /* [out] Where to store minimum value */
+LPINT lpMax /* [out] Where to store maximum value */)
+{
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+
+    if (lpMin) *lpMin = infoPtr ? infoPtr->minVal : 0;
+    if (lpMax) *lpMax = infoPtr ? infoPtr->maxVal : 0;
+
+    return infoPtr ? TRUE : FALSE;
+}
+
+
+
 /***********************************************************************
  *           ScrollBarWndProc
  */
@@ -1206,7 +1281,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 	    SCROLLBAR_INFO *infoPtr;
             CREATESTRUCTW *lpCreat = (CREATESTRUCTW *)lParam;
 
-	    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, SB_CTL ))) return -1;
+	    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_CTL ))) return -1;
 	    if (lpCreat->style & WS_DISABLED)
 	    {
 		TRACE("Created WS_DISABLED scrollbar\n");
@@ -1243,7 +1318,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_ENABLE:
         {
 	    SCROLLBAR_INFO *infoPtr;
-	    if ((infoPtr = SCROLL_GetScrollInfo( hwnd, SB_CTL )))
+	    if ((infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_CTL )))
 	    {
 		infoPtr->flags = wParam ? ESB_ENABLE_BOTH : ESB_DISABLE_BOTH;
 		SCROLL_RefreshScrollBar(hwnd, SB_CTL, TRUE, TRUE);
@@ -1347,7 +1422,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
     case SBM_GETPOS16:
     case SBM_GETPOS:
-        return GetScrollPos( hwnd, SB_CTL );
+       return SCROLL_GetScrollPos(hwnd, SB_CTL);
 
     case SBM_SETRANGE16:
         SetScrollRange( hwnd, SB_CTL, LOWORD(lParam), HIWORD(lParam),
@@ -1356,9 +1431,9 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
     case SBM_SETRANGE:
         {
-            INT oldPos = GetScrollPos( hwnd, SB_CTL );
+            INT oldPos = SCROLL_GetScrollPos( hwnd, SB_CTL );
             SetScrollRange( hwnd, SB_CTL, wParam, lParam, FALSE );
-            if (oldPos != GetScrollPos( hwnd, SB_CTL )) return oldPos;
+            if (oldPos != SCROLL_GetScrollPos( hwnd, SB_CTL )) return oldPos;
         }
         return 0;
 
@@ -1367,8 +1442,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return 0;
 
     case SBM_GETRANGE:
-        GetScrollRange( hwnd, SB_CTL, (LPINT)wParam, (LPINT)lParam );
-        return 0;
+        return SCROLL_GetScrollRange(hwnd, SB_CTL, (LPINT)wParam, (LPINT)lParam);
 
     case SBM_ENABLE_ARROWS16:
     case SBM_ENABLE_ARROWS:
@@ -1376,9 +1450,9 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
     case SBM_SETRANGEREDRAW:
         {
-            INT oldPos = GetScrollPos( hwnd, SB_CTL );
+            INT oldPos = SCROLL_GetScrollPos( hwnd, SB_CTL );
             SetScrollRange( hwnd, SB_CTL, wParam, lParam, TRUE );
-            if (oldPos != GetScrollPos( hwnd, SB_CTL )) return oldPos;
+            if (oldPos != SCROLL_GetScrollPos( hwnd, SB_CTL )) return oldPos;
         }
         return 0;
 
@@ -1386,7 +1460,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return SetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
 
     case SBM_GETSCROLLINFO:
-        return GetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam );
+        return SCROLL_GetScrollInfo(hwnd, SB_CTL, (SCROLLINFO *)lParam);
 
     case 0x00e5:
     case 0x00e7:
@@ -1461,7 +1535,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
    *action = 0;
 
-    if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
+    if (!(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar))) return 0;
     if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return 0;
     if ((info->cbSize != sizeof(*info)) &&
         (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return 0;
@@ -1587,33 +1661,24 @@ done:
 
 /*************************************************************************
  *           GetScrollInfo   (USER32.@)
+ *
  * GetScrollInfo can be used to retrieve the position, upper bound,
  * lower bound, and page size of a scrollbar control.
  *
  * RETURNS STD
  */
 BOOL WINAPI GetScrollInfo(
-  HWND hwnd /* [in] Handle of window */ ,
-  INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */,
-  LPSCROLLINFO info /* [in/out] (info.fMask [in] specifies which values are to retrieve) */)
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */,
+LPSCROLLINFO info /* [in/out] (fMask specifies which values to retrieve) */)
 {
-    SCROLLBAR_INFO *infoPtr;
+    TRACE("hwnd=%p nBar=%d info=%p\n", hwnd, nBar, info);
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
-    if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return FALSE;
-    if ((info->cbSize != sizeof(*info)) &&
-        (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return FALSE;
-
-    if (info->fMask & SIF_PAGE) info->nPage = infoPtr->page;
-    if (info->fMask & SIF_POS) info->nPos = infoPtr->curVal;
-    if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
-        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->curVal;
-    if (info->fMask & SIF_RANGE)
-    {
-	info->nMin = infoPtr->minVal;
-	info->nMax = infoPtr->maxVal;
-    }
-    return (info->fMask & SIF_ALL) != 0;
+    /* Refer SB_CTL requests to the window */
+    if (nBar == SB_CTL)
+        return SendMessageA(hwnd, SBM_GETSCROLLINFO, (WPARAM)0, (LPARAM)info);
+    else
+        return SCROLL_GetScrollInfo(hwnd, nBar, info);
 }
 
 
@@ -1638,7 +1703,7 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */ )
     SCROLLBAR_INFO *infoPtr;
     INT oldPos;
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
+    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar ))) return 0;
     oldPos      = infoPtr->curVal;
     info.cbSize = sizeof(info);
     info.nPos   = nPos;
@@ -1656,17 +1721,20 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */ )
  *    Failure: 0
  *
  * REMARKS
- *    Note the ambiguity when 0 is returned.  Use GetLastError
+ *    There is ambiguity when 0 is returned.  Use GetLastError
  *    to make sure there was an error (and to know which one).
  */
 INT WINAPI GetScrollPos(
-HWND hwnd, /* [in] Handle of window */
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
 INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
 {
-    SCROLLBAR_INFO *infoPtr;
+    TRACE("hwnd=%p nBar=%d\n", hwnd, nBar);
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
-    return infoPtr->curVal;
+    /* Refer SB_CTL requests to the window */
+    if (nBar == SB_CTL)
+        return SendMessageA(hwnd, SBM_GETPOS, (WPARAM)0, (LPARAM)0);
+    else
+        return SCROLL_GetScrollPos(hwnd, nBar);
 }
 
 
@@ -1736,22 +1804,18 @@ INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
  * RETURNS STD
  */
 BOOL WINAPI GetScrollRange(
-HWND hwnd, /* [in] Handle of window */
-INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL  */
-LPINT lpMin, /* [out] Where to store minimum value */
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL  */,
+LPINT lpMin /* [out] Where to store minimum value */,
 LPINT lpMax /* [out] Where to store maximum value */)
 {
-    SCROLLBAR_INFO *infoPtr;
+    TRACE("hwnd=%p nBar=%d lpMin=%p lpMax=%p\n", hwnd, nBar, lpMin, lpMax);
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar )))
-    {
-        if (lpMin) lpMin = 0;
-        if (lpMax) lpMax = 0;
-        return FALSE;
-    }
-    if (lpMin) *lpMin = infoPtr->minVal;
-    if (lpMax) *lpMax = infoPtr->maxVal;
-    return TRUE;
+    /* Refer SB_CTL requests to the window */
+    if (nBar == SB_CTL)
+        return SendMessageA(hwnd, SBM_GETRANGE, (WPARAM)lpMin, (LPARAM)lpMax);
+    else
+        return SCROLL_GetScrollRange(hwnd, nBar, lpMin, lpMax);
 }
 
 
@@ -1851,7 +1915,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
 
     if (nBar == SB_BOTH)
     {
-	if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, SB_VERT ))) return FALSE;
+	if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_VERT ))) return FALSE;
 	if (!(bFineWithMe = (infoPtr->flags == flags)) )
 	{
 	    infoPtr->flags = flags;
@@ -1862,7 +1926,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
     else
 	bFineWithMe = TRUE;
 
-    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
+    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar ))) return FALSE;
     if (bFineWithMe && infoPtr->flags == flags) return FALSE;
     infoPtr->flags = flags;
 
