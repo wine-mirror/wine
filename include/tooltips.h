@@ -54,6 +54,7 @@ typedef struct tagTOOLTIPS_INFO
 } TOOLTIPS_INFO;
 
 
-extern void TOOLTIPS_Register (void);
+extern VOID TOOLTIPS_Register (VOID);
+extern VOID TOOLTIPS_Unregister (VOID);
 
 #endif  /* __WINE_TOOLTIPS_H */

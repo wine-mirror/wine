@@ -4,7 +4,8 @@
  * Copyright 1998 Eric Kohl
  *
  * TODO:
- *   - Tracking tooltips (under construction).
+ *   - Tracking tooltips (finished, except smart placement).
+ *   - Transparent tooltips (under construction).
  *   - TTS_ALWAYSTIP (undefined).
  *   - Unicode support.
  *   - Custom draw support.
@@ -68,11 +69,11 @@ TOOLTIPS_Refresh (WND *wndPtr, HDC32 hdc)
 
 
 static VOID
-TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
+TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr, INT32 nTool)
 {
-    TTTOOL_INFO *toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
+    TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
 
-    if (toolPtr->hinst) {
+    if ((toolPtr->hinst) && (HIWORD((UINT32)toolPtr->lpszText) == 0)) {
 	TRACE (tooltips, "get res string %x %x\n",
 	       toolPtr->hinst, (int)toolPtr->lpszText);
 	LoadString32A (toolPtr->hinst, (UINT32)toolPtr->lpszText,
@@ -94,7 +95,7 @@ TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 	    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
 			    (WPARAM32)toolPtr->uId, (LPARAM)&ttnmdi);
 
-	    if (ttnmdi.hinst) {
+	    if ((ttnmdi.hinst) && (HIWORD((UINT32)ttnmdi.szText) == 0)) {
 		LoadString32A (ttnmdi.hinst, (UINT32)ttnmdi.szText,
 			       infoPtr->szTipText, INFOTIPSIZE);
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
@@ -126,8 +127,10 @@ TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 		    lstrcpy32A (toolPtr->lpszText, ttnmdi.lpszText);
 		}
 	    }
-	    else
+	    else {
 		ERR (tooltips, "recursive text callback!\n");
+		infoPtr->szTipText[0] = '\0';
+	    }
 	}
 	else
 	    lstrcpyn32A (infoPtr->szTipText, toolPtr->lpszText, INFOTIPSIZE);
@@ -187,7 +190,7 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 
     TRACE (tooltips, "Show tooltip pre %d!\n", infoPtr->nTool);
 
-    TOOLTIPS_GetTipText (wndPtr, infoPtr);
+    TOOLTIPS_GetTipText (wndPtr, infoPtr, infoPtr->nCurrentTool);
 
     if (infoPtr->szTipText[0] == '\0') {
 	infoPtr->nCurrentTool = -1;
@@ -208,11 +211,7 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
     TOOLTIPS_CalcTipSize (wndPtr, infoPtr, &size);
     TRACE (tooltips, "size %d - %d\n", size.cx, size.cy);
 
-    if ((toolPtr->uFlags & TTF_TRACK) && (toolPtr->uFlags & TTF_ABSOLUTE)) {
-	rect.left = infoPtr->xTrackPos;
-	rect.top  = infoPtr->yTrackPos;
-    }
-    else if (toolPtr->uFlags & TTF_CENTERTIP) {
+    if (toolPtr->uFlags & TTF_CENTERTIP) {
 	RECT32 rc;
 
 	if (toolPtr->uFlags & TTF_IDISHWND)
@@ -236,7 +235,6 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 
     AdjustWindowRectEx32 (&rect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle);
 
-//    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 1, 1,
     SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, rect.left, rect.top,
 		    rect.right - rect.left, rect.bottom - rect.top,
 		    SWP_SHOWWINDOW);
@@ -265,6 +263,117 @@ TOOLTIPS_Hide (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 		    (WPARAM32)toolPtr->uId, (LPARAM)&hdr);
 
     infoPtr->nCurrentTool = -1;
+
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0,
+		    SWP_NOZORDER | SWP_HIDEWINDOW);
+}
+
+
+static VOID
+TOOLTIPS_TrackShow (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
+{
+    TTTOOL_INFO *toolPtr;
+    RECT32 rect;
+    SIZE32 size;
+    NMHDR hdr;
+
+    if (infoPtr->nTrackTool == -1) {
+	TRACE (tooltips, "invalid tracking tool (-1)!\n");
+	return;
+    }
+
+    TRACE (tooltips, "show tracking tooltip pre %d!\n", infoPtr->nTrackTool);
+
+    TOOLTIPS_GetTipText (wndPtr, infoPtr, infoPtr->nTrackTool);
+
+    if (infoPtr->szTipText[0] == '\0') {
+	infoPtr->nTrackTool = -1;
+	return;
+    }
+
+    TRACE (tooltips, "show tracking tooltip %d!\n", infoPtr->nTrackTool);
+    toolPtr = &infoPtr->tools[infoPtr->nTrackTool];
+
+    hdr.hwndFrom = wndPtr->hwndSelf;
+    hdr.idFrom = toolPtr->uId;
+    hdr.code = TTN_SHOW;
+    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
+		    (WPARAM32)toolPtr->uId, (LPARAM)&hdr);
+
+    TRACE (tooltips, "\"%s\"\n", infoPtr->szTipText);
+
+    TOOLTIPS_CalcTipSize (wndPtr, infoPtr, &size);
+    TRACE (tooltips, "size %d - %d\n", size.cx, size.cy);
+
+    if (toolPtr->uFlags & TTF_ABSOLUTE) {
+	rect.left = infoPtr->xTrackPos;
+	rect.top  = infoPtr->yTrackPos;
+
+	if (toolPtr->uFlags & TTF_CENTERTIP) {
+	    rect.left -= (size.cx / 2);
+	    rect.top  -= (size.cy / 2);
+	}
+    }
+    else {
+#if 0
+	/* FIXME: do smart placement */
+	RECT32 rcTool;
+
+	if (toolPtr->uFlags & TTF_IDISHWND)
+	    GetWindowRect32 ((HWND32)toolPtr->uId, &rcTool);
+	else {
+	    rcTool = toolPtr->rect;
+	    MapWindowPoints32 (toolPtr->hwnd, (HWND32)0, (LPPOINT32)&rcTool, 2);
+	}
+#endif
+	GetCursorPos32 ((LPPOINT32)&rect);
+	rect.top += 20;
+#if 0
+	/* smart placement */
+	if ((rect.left + size.cx > rcTool.left) && (rect.left < rcTool.right))
+	    rect.left = rcTool.right;
+
+	if ((rect.top + size.cy > rcTool.top) &&
+	    (rect.top < rcTool.bottom))
+	    rect.top = rcTool.bottom;
+
+
+	if (toolPtr->uFlags & TTF_CENTERTIP) {
+
+	}
+#endif
+    }
+
+    TRACE (tooltips, "pos %d - %d\n", rect.left, rect.top);
+
+    rect.right = rect.left + size.cx;
+    rect.bottom = rect.top + size.cy;
+
+    AdjustWindowRectEx32 (&rect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle);
+
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, rect.left, rect.top,
+		    rect.right - rect.left, rect.bottom - rect.top,
+		    SWP_SHOWWINDOW);
+}
+
+
+static VOID
+TOOLTIPS_TrackHide (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
+{
+    TTTOOL_INFO *toolPtr;
+    NMHDR hdr;
+
+    if (infoPtr->nTrackTool == -1)
+	return;
+
+    toolPtr = &infoPtr->tools[infoPtr->nTrackTool];
+    TRACE (tooltips, "hide tracking tooltip %d!\n", infoPtr->nTrackTool);
+
+    hdr.hwndFrom = wndPtr->hwndSelf;
+    hdr.idFrom = toolPtr->uId;
+    hdr.code = TTN_POP;
+    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
+		    (WPARAM32)toolPtr->uId, (LPARAM)&hdr);
 
     SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0,
 		    SWP_NOZORDER | SWP_HIDEWINDOW);
@@ -387,7 +496,7 @@ TOOLTIPS_Activate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	TRACE (tooltips, "activate!\n");
 
     if (!(infoPtr->bActive) && (infoPtr->nCurrentTool != -1)) 
-	    TOOLTIPS_Hide (wndPtr, infoPtr);
+	TOOLTIPS_Hide (wndPtr, infoPtr);
 
     return 0;
 }
@@ -432,7 +541,7 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     toolPtr->rect   = lpToolInfo->rect;
     toolPtr->hinst  = lpToolInfo->hinst;
 
-    if (lpToolInfo->hinst) {
+    if ((lpToolInfo->hinst) && (HIWORD((INT32)lpToolInfo->lpszText) == 0)) {
 	TRACE (tooltips, "add string id %x!\n", (int)lpToolInfo->lpszText);
 	toolPtr->lpszText = lpToolInfo->lpszText;
     }
@@ -1042,7 +1151,8 @@ TOOLTIPS_SetToolInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     toolPtr->rect   = lpToolInfo->rect;
     toolPtr->hinst  = lpToolInfo->hinst;
 
-    if (lpToolInfo->hinst) {
+    if ((lpToolInfo->hinst) && (HIWORD((INT32)lpToolInfo->lpszText) == 0)) {
+	TRACE (tooltips, "set string id %x!\n", (INT32)lpToolInfo->lpszText);
 	toolPtr->lpszText = lpToolInfo->lpszText;
     }
     else if (lpToolInfo->lpszText) {
@@ -1081,17 +1191,19 @@ TOOLTIPS_TrackActivate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	/* activate */
 	infoPtr->nTrackTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpToolInfo);
 	if (infoPtr->nTrackTool != -1) {
+	    TRACE (tooltips, "activated!\n");
 	    infoPtr->bTrackActive = TRUE;
-
-	    /* FIXME : show tool tip ??? */
+	    TOOLTIPS_TrackShow (wndPtr, infoPtr);
 	}
     }
     else {
 	/* deactivate */
-	/* FIXME : hide tool tip ??? */
+	TOOLTIPS_TrackHide (wndPtr, infoPtr);
 
 	infoPtr->bTrackActive = FALSE;
 	infoPtr->nTrackTool = -1;
+
+	TRACE (tooltips, "deactivated!\n");
     }
 
     return 0;
@@ -1107,8 +1219,10 @@ TOOLTIPS_TrackPosition (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->yTrackPos = (INT32)HIWORD(lParam);
 
     if (infoPtr->bTrackActive) {
+	TRACE (tooltips, "[%d %d]\n",
+	       infoPtr->xTrackPos, infoPtr->yTrackPos);
 
-	FIXME (tooltips, "set position!\n");
+	TOOLTIPS_TrackShow (wndPtr, infoPtr);
     }
 
     return 0;
@@ -1150,7 +1264,7 @@ TOOLTIPS_UpdateTipText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     /* copy tool text */
     toolPtr->hinst  = lpToolInfo->hinst;
 
-    if (lpToolInfo->hinst) {
+    if ((lpToolInfo->hinst) && (HIWORD((INT32)lpToolInfo->lpszText) == 0)){
 	toolPtr->lpszText = lpToolInfo->lpszText;
     }
     else if (lpToolInfo->lpszText) {
@@ -1294,12 +1408,13 @@ TOOLTIPS_GetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLTIPS_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+TOOLTIPS_MouseMessage (WND *wndPtr, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr(wndPtr);
     TTTOOL_INFO *toolPtr = &infoPtr->tools[infoPtr->nTool];
 
     if (toolPtr->uFlags & TTF_TRANSPARENT) {
+	FIXME (tooltips, "transparent tooltips not implemented yet!\n");
 #if 0
 	POINT32 pt;
 	RECT32  rc;
@@ -1310,7 +1425,7 @@ TOOLTIPS_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	GetClientRect32 (toolPtr->hwnd, &rc);
 	ScreenToClient32 (toolPtr->hwnd, &pt);
 	if (PtInRect32 (&rc, pt))
-	    SendMessage32A (toolPtr->hwnd, WM_MOUSEMOVE, wParam, lParam);
+	    SendMessage32A (toolPtr->hwnd, uMsg, wParam, lParam);
 #endif
     }
     else
@@ -1326,9 +1441,6 @@ TOOLTIPS_NcCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     wndPtr->dwStyle &= 0x0000FFFF;
     wndPtr->dwStyle |= (WS_POPUP | WS_BORDER | WS_CLIPSIBLINGS);
 
-//    FIXME (tooltips, "style 0x%08x\n", wndPtr->dwStyle);
-//    SetParent32 (wndPtr->hwndSelf, NULL);
-
     return TRUE;
 }
 
@@ -1339,7 +1451,7 @@ TOOLTIPS_Paint (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     HDC32 hdc;
     PAINTSTRUCT32 ps;
 
-    hdc = wParam==0 ? BeginPaint32 (wndPtr->hwndSelf, &ps) : (HDC32)wParam;
+    hdc = (wParam == 0) ? BeginPaint32 (wndPtr->hwndSelf, &ps) : (HDC32)wParam;
     TOOLTIPS_Refresh (wndPtr, hdc);
     if (!wParam)
 	EndPaint32 (wndPtr->hwndSelf, &ps);
@@ -1602,11 +1714,15 @@ TOOLTIPS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 //	case WM_GETTEXT:
 //	case WM_GETTEXTLENGTH:
-//	case WM_LBUTTONDOWN:
-//	case WM_MBUTTONDOWN:
 
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
 	case WM_MOUSEMOVE:
-	    return TOOLTIPS_MouseMove (wndPtr, wParam, lParam);
+	    return TOOLTIPS_MouseMessage (wndPtr, uMsg, wParam, lParam);
 
 	case WM_NCCREATE:
 	    return TOOLTIPS_NcCreate (wndPtr, wParam, lParam);
@@ -1618,7 +1734,6 @@ TOOLTIPS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	    return TOOLTIPS_Paint (wndPtr, wParam, lParam);
 
 //	case WM_PRINTCLIENT:
-//	case WM_RBUTTONDOWN:
 
 	case WM_SETFONT:
 	    return TOOLTIPS_SetFont (wndPtr, wParam, lParam);
@@ -1641,8 +1756,8 @@ TOOLTIPS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-TOOLTIPS_Register (void)
+VOID
+TOOLTIPS_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1659,3 +1774,12 @@ TOOLTIPS_Register (void)
  
     RegisterClass32A (&wndClass);
 }
+
+
+VOID
+TOOLTIPS_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (TOOLTIPS_CLASS32A))
+	UnregisterClass32A (TOOLTIPS_CLASS32A, (HINSTANCE32)NULL);
+}
+
