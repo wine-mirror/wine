@@ -298,6 +298,12 @@ static const int MonthLengths[2][MONSPERYEAR] =
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
+static const int YearDays[2][MONSPERYEAR+1] =
+{
+	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
+	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
+};
+
 static inline int IsLeapYear(int Year)
 {
 	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
@@ -359,7 +365,6 @@ VOID WINAPI RtlTimeToTimeFields(
 	const LARGE_INTEGER *liTime,
 	PTIME_FIELDS TimeFields)
 {
-	const int *Months;
 	int SecondsInDay, DeltaYear;
 	int LeapYear, CurMonth;
 	long int Days;
@@ -404,11 +409,10 @@ VOID WINAPI RtlTimeToTimeFields(
         LeapYear = IsLeapYear(TimeFields->Year);
 
 	/* Compute month of year */
-	Months = MonthLengths[LeapYear];
-	for (CurMonth = 0; Days >= (long) Months[CurMonth]; CurMonth++)
-	  Days = Days - (long) Months[CurMonth];
-	TimeFields->Month = (CSHORT) (CurMonth + 1);
-	TimeFields->Day = (CSHORT) (Days + 1);
+        CurMonth = 1;
+        while (Days >= YearDays[LeapYear][CurMonth]) CurMonth++;
+        TimeFields->Day = Days - YearDays[LeapYear][CurMonth-1] + 1;
+        TimeFields->Month = CurMonth;
 }
 
 /******************************************************************************
@@ -428,7 +432,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PTIME_FIELDS tfTimeFields,
 	PLARGE_INTEGER Time)
 {
-	int CurYear, CurMonth, DeltaYear;
+	int CurYear, DeltaYear;
 	LONGLONG rcTime;
 	TIME_FIELDS TimeFields = *tfTimeFields;
 
@@ -445,7 +449,8 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	{ NormalizeTimeFields(&TimeFields.Hour, &TimeFields.Day, HOURSPERDAY);
 	}
 	while (TimeFields.Day > MonthLengths[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1])
-	{ NormalizeTimeFields(&TimeFields.Day, &TimeFields.Month, SECSPERMIN);
+	{ NormalizeTimeFields(&TimeFields.Day, &TimeFields.Month,
+                              MonthLengths[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1]);
 	}
 	while (TimeFields.Month > MONSPERYEAR)
 	{ NormalizeTimeFields(&TimeFields.Month, &TimeFields.Year, MONSPERYEAR);
@@ -463,10 +468,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
         CurYear -= DeltaYear * 4;
         rcTime += DeltaYear * DAYSPERNORMALQUADRENNIUM;
         rcTime += CurYear * DAYSPERNORMALYEAR;
-
-	for (CurMonth = 1; CurMonth < TimeFields.Month; CurMonth++)
-	{ rcTime += MonthLengths[IsLeapYear(TimeFields.Year)][CurMonth - 1];
-	}
+        rcTime += YearDays[IsLeapYear(TimeFields.Year)][TimeFields.Month - 1];
 	rcTime += TimeFields.Day - 1;
 	rcTime *= SECSPERDAY;
 	rcTime += TimeFields.Hour * SECSPERHOUR + TimeFields.Minute * SECSPERMIN + TimeFields.Second;
