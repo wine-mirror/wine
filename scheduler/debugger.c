@@ -40,43 +40,6 @@ DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEX
 }
 
 
-/**********************************************************************
- *           DEBUG_SendLoadDLLEvent
- *
- * Send an LOAD_DLL_DEBUG_EVENT event to the current process debugger.
- */
-DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name )
-{
-    struct send_debug_event_request *req = get_req_buffer();
-
-    req->event.code = LOAD_DLL_DEBUG_EVENT;
-    req->event.info.load_dll.handle     = file;
-    req->event.info.load_dll.base       = (void *)module;
-    req->event.info.load_dll.dbg_offset = 0;  /* FIXME */
-    req->event.info.load_dll.dbg_size   = 0;  /* FIXME */
-    req->event.info.load_dll.name       = name;
-    req->event.info.load_dll.unicode    = 0;
-    server_call_noerr( REQ_SEND_DEBUG_EVENT );
-    return req->status;
-}
-
-
-/**********************************************************************
- *           DEBUG_SendUnloadDLLEvent
- *
- * Send an UNLOAD_DLL_DEBUG_EVENT event to the current process debugger.
- */
-DWORD DEBUG_SendUnloadDLLEvent( HMODULE module )
-{
-    struct send_debug_event_request *req = get_req_buffer();
-
-    req->event.code = UNLOAD_DLL_DEBUG_EVENT;
-    req->event.info.unload_dll.base = (void *)module;
-    server_call_noerr( REQ_SEND_DEBUG_EVENT );
-    return req->status;
-}
-
-
 /******************************************************************************
  *           WaitForDebugEvent   (KERNEL32.720)
  *

@@ -271,13 +271,22 @@ struct resume_thread_request
 };
 
 
-/* Debugger support: freeze / unfreeze */
-struct debugger_request
+/* Notify the server that a dll has been loaded */
+struct load_dll_request
 {
-    IN  int          op;           /* operation type */
+    IN  int          handle;       /* file handle */
+    IN  void*        base;         /* base address */
+    IN  int          dbg_offset;   /* debug info offset */
+    IN  int          dbg_size;     /* debug info size */
+    IN  void*        name;         /* ptr to ptr to name (in process addr space) */
 };
 
-enum debugger_op { DEBUGGER_FREEZE_ALL, DEBUGGER_UNFREEZE_ALL };
+
+/* Notify the server that a dll is being unloaded */
+struct unload_dll_request
+{
+    IN  void*        base;         /* base address */
+};
 
 
 /* Queue an APC for a thread */
@@ -1101,7 +1110,8 @@ enum request
     REQ_SET_THREAD_INFO,
     REQ_SUSPEND_THREAD,
     REQ_RESUME_THREAD,
-    REQ_DEBUGGER,
+    REQ_LOAD_DLL,
+    REQ_UNLOAD_DLL,
     REQ_QUEUE_APC,
     REQ_GET_APCS,
     REQ_CLOSE_HANDLE,
@@ -1186,7 +1196,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 1
+#define SERVER_PROTOCOL_VERSION 2
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1250,7 +1260,6 @@ static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
 extern int CLIENT_InitServer(void);
 extern int CLIENT_BootDone( int debug_level );
 extern int CLIENT_IsBootThread(void);
-extern int CLIENT_DebuggerRequest( int op );
 extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */
 

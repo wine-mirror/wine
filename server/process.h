@@ -15,6 +15,17 @@
 
 /* process structures */
 
+struct process_dll
+{
+    struct process_dll  *next;            /* per-process dll list */
+    struct process_dll  *prev;
+    struct file         *file;            /* dll file */
+    void                *base;            /* dll base address (in process addr space) */
+    void                *name;            /* ptr to ptr to name (in process addr space) */
+    int                  dbg_offset;      /* debug info offset */
+    int                  dbg_size;        /* debug info size */
+};
+
 struct process
 {
     struct object        obj;             /* object header */
@@ -22,7 +33,6 @@ struct process
     struct process      *prev;
     struct thread       *thread_list;     /* head of the thread list */
     struct thread       *debugger;        /* thread debugging this process */
-    struct file         *exe_file;        /* main exe file */
     struct object       *handles;         /* handle entries */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */
@@ -35,9 +45,9 @@ struct process
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
     struct event        *init_event;      /* event for init done */
+    struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
-    void                *module;          /* main module base address */
     struct new_process_request *info;     /* startup info (freed after startup) */
 };
 

@@ -18,6 +18,7 @@
 #include "main.h"
 #include "snoop.h"
 #include "winerror.h"
+#include "server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
@@ -331,8 +332,9 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
  * Partly copied from the original PE_ version.
  *
  */
-WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
+WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 {
+    struct load_dll_request *req = get_req_buffer();
     HMODULE16      hModule16;
     NE_MODULE     *pModule;
     WINE_MODREF   *wm;
@@ -352,25 +354,21 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 
     if (i == nb_dlls)
     {
-        *err = ERROR_FILE_NOT_FOUND;
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return NULL;
     }
 
     /* Load built-in module */
     if (!dll_modules[i])
     {
-        if (!(dll_modules[i] = BUILTIN32_DoLoadImage( builtin_dlls[i] )))
-        {
-            *err = ERROR_FILE_NOT_FOUND;
-            return NULL;
-        }
+        if (!(dll_modules[i] = BUILTIN32_DoLoadImage( builtin_dlls[i] ))) return NULL;
     }
     else BUILTIN32_WarnSecondInstance( builtin_dlls[i]->name );
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( dllname, 0 )) < 32)
     {
-        *err = (DWORD)hModule16;
+        SetLastError( (DWORD)hModule16 );
         return NULL;	/* FIXME: Should unload the builtin module */
     }
 
@@ -383,14 +381,19 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
     {
         ERR( "can't load %s\n", path );
         FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
-        *err = ERROR_OUTOFMEMORY;
+        SetLastError( ERROR_OUTOFMEMORY );
         return NULL;
     }
 
     if (wm->binfmt.pe.pe_export)
         SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
 
-    *err = 0;
+    req->handle     = -1;
+    req->base       = (void *)pModule->module32;
+    req->dbg_offset = 0;
+    req->dbg_size   = 0;
+    req->name       = &wm->modname;
+    server_call_noerr( REQ_LOAD_DLL );
     return wm;
 }
 

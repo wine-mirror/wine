@@ -157,7 +157,6 @@ typedef struct _wine_modref
 #define WINE_MODREF_PROCESS_ATTACHED      0x00000004
 #define WINE_MODREF_LOAD_AS_DATAFILE      0x00000010
 #define WINE_MODREF_DONT_RESOLVE_REFS     0x00000020
-#define WINE_MODREF_DEBUG_EVENT_SENT      0x00000040
 #define WINE_MODREF_MARKER                0x80000000
 
 
@@ -182,7 +181,6 @@ extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );
 extern void MODULE_DllThreadDetach( LPVOID lpReserved );
-extern void MODULE_SendLoadDLLEvents( void );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags );
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
@@ -235,7 +233,7 @@ extern void NE_DllProcessAttach( HMODULE16 hModule );
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
 
 /* relay32/builtin.c */
-extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags, DWORD *err);
+extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
 extern HMODULE16 BUILTIN32_LoadExeModule(void);
 extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 

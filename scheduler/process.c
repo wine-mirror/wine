@@ -458,14 +458,6 @@ void PROCESS_Start(void)
     server_call( REQ_INIT_PROCESS_DONE );
     debugged = req->debugged;
 
-    /* Send all required start-up debugger events */
-    if (type == PROC_WIN32 && debugged)
-    {
-        EnterCriticalSection( &pdb->crit_section );
-        MODULE_SendLoadDLLEvents();
-        LeaveCriticalSection( &pdb->crit_section );
-    }
-
     if ( (pdb->flags & PDB32_CONSOLE_PROC) || (pdb->flags & PDB32_DOS_PROC) )
         AllocConsole();
 

@@ -4,7 +4,7 @@
 #include "module.h"
 #include "windef.h"
 
-WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR libname, DWORD flags, DWORD *err);
+WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR libname, DWORD flags);
 HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname);
 void ELFDLL_UnloadLibrary(WINE_MODREF *wm);
 

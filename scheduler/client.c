@@ -505,15 +505,3 @@ int CLIENT_IsBootThread(void)
 {
     return (GetCurrentThreadId() == (DWORD)boot_thread_id);
 }
-
-/***********************************************************************
- *           CLIENT_DebuggerRequest
- *
- * Send a debugger support request. Return 0 if OK.
- */
-int CLIENT_DebuggerRequest( int op )
-{
-    struct debugger_request *req = get_req_buffer();
-    req->op = op;
-    return server_call( REQ_DEBUGGER );
-}

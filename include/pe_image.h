@@ -25,7 +25,7 @@ extern BOOL PE_EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LON
 extern BOOL PE_EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG);
 extern HRSRC PE_FindResourceExW(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource(HMODULE,HRSRC);
-extern struct _wine_modref *PE_LoadLibraryExA(LPCSTR, DWORD, DWORD *);
+extern struct _wine_modref *PE_LoadLibraryExA(LPCSTR, DWORD);
 extern void PE_UnloadLibrary(struct _wine_modref *);
 extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
 extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version );
@@ -64,7 +64,7 @@ typedef struct {
 	ELF_STDCALL_STUB	*stubs;
 } ELF_MODREF;
 
-extern struct _wine_modref *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err);
+extern struct _wine_modref *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags);
 extern void ELF_UnloadLibrary(struct _wine_modref *);
 extern FARPROC ELF_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName);
 

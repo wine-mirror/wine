@@ -34,9 +34,10 @@
 #include "callback.h"
 #include "loadorder.h"
 #include "elfdll.h"
+#include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(module)
-DECLARE_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(module);
+DECLARE_DEBUG_CHANNEL(win32);
 
 /*************************************************************************
  *		MODULE_WalkModref
@@ -326,29 +327,6 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     return retval;
-}
-
-/*************************************************************************
- *		MODULE_SendLoadDLLEvents
- * 
- * Sends DEBUG_DLL_LOAD events for all outstanding modules.
- *
- * NOTE: Assumes that the process critical section is held!
- *
- */
-void MODULE_SendLoadDLLEvents( void )
-{
-    WINE_MODREF *wm;
-
-    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-    {
-        if ( wm->type != MODULE32_PE ) continue;
-        if ( wm == PROCESS_Current()->exe_modref ) continue;
-        if ( wm->flags & WINE_MODREF_DEBUG_EVENT_SENT ) continue;
-
-        DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, wm->module, &wm->modname );
-        wm->flags |= WINE_MODREF_DEBUG_EVENT_SENT;
-    }
 }
 
 
@@ -1352,8 +1330,6 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
 	if ( wm )
 	{
-                MODULE_SendLoadDLLEvents();
-                        
 		if ( !MODULE_DllProcessAttach( wm, NULL ) )
 		{
 			WARN_(module)("Attach failed for module '%s', \n", libname);
@@ -1381,7 +1357,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
  */
 WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 {
-	DWORD err;
+	DWORD err = GetLastError();
 	WINE_MODREF *pwm;
 	int i;
 	module_loadorder_t *plo;
@@ -1402,26 +1378,27 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
 	{
+                SetLastError( ERROR_FILE_NOT_FOUND );
 		switch(plo->loadorder[i])
 		{
 		case MODULE_LOADORDER_DLL:
 			TRACE("Trying native dll '%s'\n", libname);
-			pwm = PE_LoadLibraryExA(libname, flags, &err);
+			pwm = PE_LoadLibraryExA(libname, flags);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
 			TRACE("Trying elfdll '%s'\n", libname);
-			pwm = ELFDLL_LoadLibraryExA(libname, flags, &err);
+			pwm = ELFDLL_LoadLibraryExA(libname, flags);
 			break;
 
 		case MODULE_LOADORDER_SO:
 			TRACE("Trying so-library '%s'\n", libname);
-			pwm = ELF_LoadLibraryExA(libname, flags, &err);
+			pwm = ELF_LoadLibraryExA(libname, flags);
 			break;
 
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
-			pwm = BUILTIN32_LoadLibraryExA(libname, flags, &err);
+			pwm = BUILTIN32_LoadLibraryExA(libname, flags);
 			break;
 
 		default:
@@ -1443,16 +1420,15 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			pwm->refCount++;
 
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
-
+                        SetLastError( err );  /* restore last error */
 			return pwm;
 		}
 
-		if(err != ERROR_FILE_NOT_FOUND)
+		if(GetLastError() != ERROR_FILE_NOT_FOUND)
 			break;
 	}
 
-	WARN("Failed to load module '%s'; error=0x%08lx, \n", libname, err);
-	SetLastError(err);
+	WARN("Failed to load module '%s'; error=0x%08lx, \n", libname, GetLastError());
 	LeaveCriticalSection(&PROCESS_Current()->crit_section);
 	return NULL;
 }
@@ -1610,8 +1586,11 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     /* Call process detach notifications */
     if ( PROCESS_Current()->free_lib_count <= 1 )
     {
+        struct unload_dll_request *req = get_req_buffer();
+
         MODULE_DllProcessDetach( FALSE, NULL );
-        DEBUG_SendUnloadDLLEvent( wm->module );
+        req->base = (void *)wm->module;
+        server_call_noerr( REQ_UNLOAD_DLL );
     }
 
     TRACE("END\n");

@@ -120,14 +120,19 @@ static int attach_thread( struct thread *thread )
 void detach_thread( struct thread *thread )
 {
     if (!thread->unix_pid) return;
-    kill( thread->unix_pid, SIGTERM );
-    if (thread->suspend + thread->process->suspend) continue_thread( thread );
     if (thread->attached)
     {
-        wait4_thread( thread, SIGTERM );
+        /* make sure it is stopped */
+        if (!(thread->suspend + thread->process->suspend)) stop_thread( thread );
+        kill( thread->unix_pid, SIGTERM );
         if (debug_level) fprintf( stderr, "%08x: *detached*\n", (unsigned int)thread );
         ptrace( PTRACE_DETACH, thread->unix_pid, 1, SIGTERM );
         thread->attached = 0;
+    }
+    else
+    {
+        kill( thread->unix_pid, SIGTERM );
+        if (thread->suspend + thread->process->suspend) continue_thread( thread );
     }
 }
 

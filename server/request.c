@@ -383,18 +383,3 @@ void lock_master_socket( int locked )
 {
     set_select_events( &master_socket->obj, locked ? 0 : POLLIN );
 }
-
-/* debugger support operations */
-DECL_HANDLER(debugger)
-{
-    switch ( req->op )
-    {
-    case DEBUGGER_FREEZE_ALL:
-        suspend_all_threads();
-        break;
-
-    case DEBUGGER_UNFREEZE_ALL:
-        resume_all_threads();
-        break;
-    }
-}

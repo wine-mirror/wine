@@ -102,7 +102,7 @@ static WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	return wm;
 }
 
-WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
+WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 {
 	WINE_MODREF	*wm;
 	char		*modname,*s,*t,*x;
@@ -146,7 +146,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 	dlhandle = ELFDLL_dlopen(t,RTLD_NOW);
 	if (!dlhandle) {
 		HeapFree( GetProcessHeap(), 0, t );
-		*err = ERROR_FILE_NOT_FOUND;
+		SetLastError( ERROR_FILE_NOT_FOUND );
 		return NULL;
 	}
 
@@ -154,7 +154,6 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 	wm->binfmt.elf.dlhandle = dlhandle;
 
 	SNOOP_RegisterDLL(wm->module,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
-	*err = 0;
 	return wm;
 }
 
@@ -271,7 +270,7 @@ void ELF_UnloadLibrary(WINE_MODREF *wm)
 
 #else
 
-WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
+WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 {
 	return NULL;
 }

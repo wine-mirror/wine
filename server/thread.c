@@ -563,10 +563,9 @@ void kill_thread( struct thread *thread, int exit_code )
     thread->state = TERMINATED;
     thread->exit_code = exit_code;
     if (current == thread) current = NULL;
-    if (debug_level) trace_kill( thread );
+    if (debug_level)
+        fprintf( stderr,"%08x: *killed* exit_code=%d\n", (unsigned int)thread, exit_code );
     if (thread->wait) end_wait( thread );
-    generate_debug_event( thread, (thread->process->running_threads == 1) ?
-                          EXIT_PROCESS_DEBUG_EVENT : EXIT_THREAD_DEBUG_EVENT );
     debug_exit_thread( thread );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
@@ -633,7 +632,7 @@ DECL_HANDLER(init_thread)
     current->entry    = req->entry;
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     if (current->process->running_threads > 1)
-        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT );
+        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, current );
 }
 
 /* terminate a thread */

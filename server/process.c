@@ -143,7 +143,6 @@ struct thread *create_process( int fd, struct process *parent,
     process->prev            = NULL;
     process->thread_list     = NULL;
     process->debugger        = NULL;
-    process->exe_file        = NULL;
     process->handles         = NULL;
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
@@ -157,6 +156,11 @@ struct thread *create_process( int fd, struct process *parent,
     process->info            = NULL;
     process->ldt_copy        = NULL;
     process->ldt_flags       = NULL;
+    process->exe.next        = NULL;
+    process->exe.prev        = NULL;
+    process->exe.file        = NULL;
+    process->exe.dbg_offset  = 0;
+    process->exe.dbg_size    = 0;
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
@@ -176,7 +180,7 @@ struct thread *create_process( int fd, struct process *parent,
     /* retrieve the main exe file */
     if (process->info->exe_file != -1)
     {
-        if (!(process->exe_file = get_file_obj( parent, process->info->exe_file,
+        if (!(process->exe.file = get_file_obj( parent, process->info->exe_file,
                                                 GENERIC_READ ))) goto error;
         process->info->exe_file = -1;
     }
@@ -225,7 +229,7 @@ static void process_destroy( struct object *obj )
     else first_process = process->next;
     if (process->info) free( process->info );
     if (process->init_event) release_object( process->init_event );
-    if (process->exe_file) release_object( process->exe_file );
+    if (process->exe.file) release_object( process->exe.file );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -263,17 +267,68 @@ struct process *get_process_from_handle( int handle, unsigned int access )
                                              access, &process_ops );
 }
 
+/* add a dll to a process list */
+static struct process_dll *process_load_dll( struct process *process, struct file *file,
+                                             void *base )
+{
+    struct process_dll *dll;
+
+    /* make sure we don't already have one with the same base address */
+    for (dll = process->exe.next; dll; dll = dll->next) if (dll->base == base)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if ((dll = mem_alloc( sizeof(*dll) )))
+    {
+        dll->prev = &process->exe;
+        dll->file = NULL;
+        dll->base = base;
+        if (file) dll->file = (struct file *)grab_object( file );
+        if ((dll->next = process->exe.next)) dll->next->prev = dll;
+        process->exe.next = dll;
+    }
+    return dll;
+}
+
+/* remove a dll from a process list */
+static void process_unload_dll( struct process *process, void *base )
+{
+    struct process_dll *dll;
+
+    for (dll = process->exe.next; dll; dll = dll->next)
+    {
+        if (dll->base == base)
+        {
+            if (dll->file) release_object( dll->file );
+            if (dll->next) dll->next->prev = dll->prev;
+            if (dll->prev) dll->prev->next = dll->next;
+            free( dll );
+            generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, base );
+            return;
+        }
+    }
+    set_error( STATUS_INVALID_PARAMETER );
+}
+
 /* a process has been killed (i.e. its last thread died) */
-static void process_killed( struct process *process, int exit_code )
+static void process_killed( struct process *process )
 {
     assert( !process->thread_list );
-    process->exit_code = exit_code;
     gettimeofday( &process->end_time, NULL );
     release_object( process->handles );
     process->handles = NULL;
     free_console( process );
-    if (process->exe_file) release_object( process->exe_file );
-    process->exe_file = NULL;
+    while (process->exe.next)
+    {
+        struct process_dll *dll = process->exe.next;
+        process->exe.next = dll->next;
+        if (dll->file) release_object( dll->file );
+        free( dll );
+    }
+    if (process->exe.file) release_object( process->exe.file );
+    process->exe.file = NULL;
     wake_up( &process->obj, 0 );
     if (!--running_processes)
     {
@@ -308,8 +363,11 @@ void remove_process_thread( struct process *process, struct thread *thread )
     if (!--process->running_threads)
     {
         /* we have removed the last running thread, exit the process */
-        process_killed( process, thread->exit_code );
+        process->exit_code = thread->exit_code;
+        generate_debug_event( thread, EXIT_PROCESS_DEBUG_EVENT, process );
+        process_killed( process );
     }
+    else generate_debug_event( thread, EXIT_THREAD_DEBUG_EVENT, thread );
     release_object( thread );
 }
 
@@ -580,8 +638,8 @@ DECL_HANDLER(init_process)
     req->cmd_show    = info->cmd_show;
     req->env_ptr     = info->env_ptr;
     strcpy( req->cmdline, info->cmdline );
-    if (current->process->exe_file)
-        req->exe_file = alloc_handle( current->process, current->process->exe_file,
+    if (current->process->exe.file)
+        req->exe_file = alloc_handle( current->process, current->process->exe.file,
                                       GENERIC_READ, 0 );
     free( info );
 }
@@ -595,9 +653,9 @@ DECL_HANDLER(init_process_done)
         fatal_protocol_error( current, "init_process_done: no event\n" );
         return;
     }
-    current->entry  = req->entry;
-    process->module = req->module;
-    generate_debug_event( current, CREATE_PROCESS_DEBUG_EVENT );
+    current->entry    = req->entry;
+    process->exe.base = req->module;
+    generate_startup_debug_events( current->process );
     set_event( process->init_event );
     release_object( process->init_event );
     process->init_event = NULL;
@@ -677,4 +735,31 @@ DECL_HANDLER(write_process_memory)
                               req->first_mask, req->last_mask, req->data );
         release_object( process );
     }
+}
+
+/* notify the server that a dll has been loaded */
+DECL_HANDLER(load_dll)
+{
+    struct process_dll *dll;
+    struct file *file = NULL;
+
+    if ((req->handle != -1) &&
+        !(file = get_file_obj( current->process, req->handle, GENERIC_READ ))) return;
+    
+    if ((dll = process_load_dll( current->process, file, req->base )))
+    {
+        dll->dbg_offset = req->dbg_offset;
+        dll->dbg_size   = req->dbg_size;
+        dll->name       = req->name;
+        /* only generate event if initialization is done */
+        if (!current->process->init_event)
+            generate_debug_event( current, LOAD_DLL_DEBUG_EVENT, dll );
+    }
+    if (file) release_object( file );
+}
+
+/* notify the server that a dll is being unloaded */
+DECL_HANDLER(unload_dll)
+{
+    process_unload_dll( current->process, req->base );
 }

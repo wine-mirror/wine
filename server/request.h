@@ -36,7 +36,6 @@ extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
 
 extern void trace_request( enum request req, int fd );
-extern void trace_kill( struct thread *thread );
 extern void trace_reply( struct thread *thread );
 
 /* get the request buffer */
@@ -85,7 +84,8 @@ DECL_HANDLER(get_thread_info);
 DECL_HANDLER(set_thread_info);
 DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
-DECL_HANDLER(debugger);
+DECL_HANDLER(load_dll);
+DECL_HANDLER(unload_dll);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(get_apcs);
 DECL_HANDLER(close_handle);
@@ -189,7 +189,8 @@ static const struct handler {
     { (void(*)())req_set_thread_info, sizeof(struct set_thread_info_request) },
     { (void(*)())req_suspend_thread, sizeof(struct suspend_thread_request) },
     { (void(*)())req_resume_thread, sizeof(struct resume_thread_request) },
-    { (void(*)())req_debugger, sizeof(struct debugger_request) },
+    { (void(*)())req_load_dll, sizeof(struct load_dll_request) },
+    { (void(*)())req_unload_dll, sizeof(struct unload_dll_request) },
     { (void(*)())req_queue_apc, sizeof(struct queue_apc_request) },
     { (void(*)())req_get_apcs, sizeof(struct get_apcs_request) },
     { (void(*)())req_close_handle, sizeof(struct close_handle_request) },

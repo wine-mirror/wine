@@ -361,9 +361,18 @@ static void dump_resume_thread_reply( const struct resume_thread_request *req )
     fprintf( stderr, " count=%d", req->count );
 }
 
-static void dump_debugger_request( const struct debugger_request *req )
+static void dump_load_dll_request( const struct load_dll_request *req )
 {
-    fprintf( stderr, " op=%d", req->op );
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " dbg_offset=%d,", req->dbg_offset );
+    fprintf( stderr, " dbg_size=%d,", req->dbg_size );
+    fprintf( stderr, " name=%p", req->name );
+}
+
+static void dump_unload_dll_request( const struct unload_dll_request *req )
+{
+    fprintf( stderr, " base=%p", req->base );
 }
 
 static void dump_queue_apc_request( const struct queue_apc_request *req )
@@ -1247,7 +1256,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_thread_info_request,
     (dump_func)dump_suspend_thread_request,
     (dump_func)dump_resume_thread_request,
-    (dump_func)dump_debugger_request,
+    (dump_func)dump_load_dll_request,
+    (dump_func)dump_unload_dll_request,
     (dump_func)dump_queue_apc_request,
     (dump_func)dump_get_apcs_request,
     (dump_func)dump_close_handle_request,
@@ -1349,6 +1359,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_resume_thread_reply,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)0,
     (dump_func)dump_get_apcs_reply,
     (dump_func)0,
     (dump_func)dump_get_handle_info_reply,
@@ -1447,7 +1458,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_thread_info",
     "suspend_thread",
     "resume_thread",
-    "debugger",
+    "load_dll",
+    "unload_dll",
     "queue_apc",
     "get_apcs",
     "close_handle",
@@ -1546,12 +1558,6 @@ void trace_request( enum request req, int fd )
         fprintf( stderr, "%08x: %d(", (unsigned int)current, req );
     if (fd != -1) fprintf( stderr, " ) fd=%d\n", fd );
     else fprintf( stderr, " )\n" );
-}
-
-void trace_kill( struct thread *thread )
-{
-    fprintf( stderr,"%08x: *killed* exit_code=%d\n",
-             (unsigned int)thread, thread->exit_code );
 }
 
 void trace_reply( struct thread *thread )

@@ -284,7 +284,7 @@ static HMODULE16 ELFDLL_CreateNEModule(NE_MODULE *ne_image, DWORD size)
  *
  * Implementation of elf-dll loading for PE modules
  */
-WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
+WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags)
 {
 	LPVOID dlhandle;
 	struct elfdll_image *image;
@@ -302,7 +302,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	if(!dlhandle)
 	{
 		WARN("Could not load %s (%s)\n", soname, dlerror());
-		*err = ERROR_FILE_NOT_FOUND;
+		SetLastError( ERROR_FILE_NOT_FOUND );
 		return NULL;
 	}
 
@@ -314,7 +314,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	{
 		ERR("Could not get elfdll image descriptor %s (%s)\n", soname, dlerror());
 		dlclose(dlhandle);
-		*err = ERROR_BAD_FORMAT;
+		SetLastError( ERROR_BAD_FORMAT );
 		return NULL;
 	}
 
@@ -324,7 +324,7 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	{
 		ERR("Could not create win16 dummy module for %s\n", path);
 		dlclose(dlhandle);
-		*err = ERROR_OUTOFMEMORY;
+		SetLastError( ERROR_OUTOFMEMORY );
 		return NULL;
 	}
 
@@ -336,13 +336,11 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 		ERR("Could not create WINE_MODREF for %s\n", path);
 		GLOBAL_FreeBlock((HGLOBAL16)hmod16);
 		dlclose(dlhandle);
-		*err = ERROR_OUTOFMEMORY;
+		SetLastError( ERROR_OUTOFMEMORY );
 		return NULL;
 	}
 
 	dump_exports(image->pe_module_start);
-
-	*err = 0;
 	return wm;
 }
 
@@ -374,9 +372,9 @@ HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname)
  * Just put stubs in here.
  */
 
-WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR libname, DWORD flags, DWORD *err)
+WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR libname, DWORD flags)
 {
-	*err = ERROR_FILE_NOT_FOUND;
+        SetLastError( ERROR_FILE_NOT_FOUND );
 	return NULL;
 }
 

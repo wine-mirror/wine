@@ -60,6 +60,7 @@
 #include "global.h"
 #include "task.h"
 #include "snoop.h"
+#include "server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
@@ -886,8 +887,9 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
  */
-WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
+WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 {
+        struct load_dll_request *req = get_req_buffer();
 	HMODULE		hModule32;
 	HMODULE16	hModule16;
 	NE_MODULE	*pModule;
@@ -898,33 +900,26 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 
 	/* Search for and open PE file */
 	if ( SearchPathA( NULL, name, ".DLL", 
-	                  sizeof(filename), filename, NULL ) == 0 )
-	{
-		*err = ERROR_FILE_NOT_FOUND;
-		return NULL;
-	}
+	                  sizeof(filename), filename, NULL ) == 0 ) return NULL;
        
 	hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
                              NULL, OPEN_EXISTING, 0, -1 );
-	if ( hFile == INVALID_HANDLE_VALUE )
-	{
-		*err = ERROR_FILE_NOT_FOUND;
-		return NULL;
-	}
+	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 	
 	/* Load PE module */
 	hModule32 = PE_LoadImage( hFile, filename, &version );
-	CloseHandle( hFile );
 	if (!hModule32)
 	{
-		*err = ERROR_OUTOFMEMORY;	/* Not entirely right, but good enough */
+                CloseHandle( hFile );
+		SetLastError( ERROR_OUTOFMEMORY );	/* Not entirely right, but good enough */
 		return NULL;
 	}
 
 	/* Create 16-bit dummy module */
 	if ((hModule16 = MODULE_CreateDummyModule( filename, version )) < 32)
 	{
-		*err = (DWORD)hModule16;	/* This should give the correct error */
+                CloseHandle( hFile );
+		SetLastError( (DWORD)hModule16 );	/* This should give the correct error */
 		return NULL;
 	}
 	pModule = (NE_MODULE *)GlobalLock16( hModule16 );
@@ -936,14 +931,20 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	{
 		ERR( "can't load %s\n", filename );
 		FreeLibrary16( hModule16 );
-		*err = ERROR_OUTOFMEMORY;
+                CloseHandle( hFile );
+		SetLastError( ERROR_OUTOFMEMORY );
 		return NULL;
 	}
 
 	if (wm->binfmt.pe.pe_export)
 		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
-
-	*err = 0;
+        req->handle     = hFile;
+        req->base       = (void *)hModule32;
+        req->dbg_offset = 0;
+        req->dbg_size   = 0;
+        req->name       = &wm->modname;
+        server_call_noerr( REQ_LOAD_DLL );
+        CloseHandle( hFile );
 	return wm;
 }
 
