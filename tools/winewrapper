@@ -73,6 +73,12 @@ WINESERVER="$topdir/server/wineserver"
 WINELOADER="$topdir/miscemu/wine"
 export LD_LIBRARY_PATH WINEDLLPATH WINESERVER WINELOADER
 
+# any local settings ?
+if [ -f "$topdir/.winewrapper" ]
+then
+    . $topdir/.winewrapper
+fi
+
 # and run the application
 
 case "$0" in
