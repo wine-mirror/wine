@@ -2105,6 +2105,21 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             bSetDOSExtendedError = (!CreateDirectoryA( 
 					CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),
                                                   EDX_reg(context) ), NULL));
+	    /* FIXME: CreateDirectory's LastErrors will clash with the ones
+	     * used by dos. AH=39 only returns 3 (path not found) and 5 (access
+	     * denied), while CreateDirectory return several ones. remap some of
+	     * them. -Marcus
+	     */
+	    if (bSetDOSExtendedError) {
+		    switch (GetLastError()) {
+		    case ERROR_ALREADY_EXISTS:
+		    case ERROR_FILENAME_EXCED_RANGE:
+		    case ERROR_DISK_FULL:
+			    SetLastError(ERROR_ACCESS_DENIED);
+			    break;
+		    default: break;
+		    }
+	    }
             break;
         case 0x3a:  /* Remove directory */
 	    TRACE("LONG FILENAME - REMOVE DIRECTORY %s\n",
