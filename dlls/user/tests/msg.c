@@ -4342,6 +4342,7 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     {
 	case WM_NCDESTROY:
 	    ok(!GetWindow(hwnd, GW_CHILD), "children should be unlinked at this point\n");
+	    ok(GetCapture() != hwnd, "capture should be released at this point\n");
 	/* fall through */
 	case WM_DESTROY:
             if (pGetAncestor)
@@ -5504,6 +5505,10 @@ static void test_DestroyWindow(void)
     trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
 	   parent, child1, child2, child3, child4);
 
+    SetCapture(child3);
+    test = GetCapture();
+    ok(test == child3, "wrong capture window %p\n", test);
+
     test_DestroyWindow_flag = TRUE;
     ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
     test_DestroyWindow_flag = FALSE;
@@ -5514,6 +5519,9 @@ static void test_DestroyWindow(void)
     ok(!IsWindow(child2), "child2 still exists");
     ok(!IsWindow(child3), "child3 still exists");
     ok(!IsWindow(child4), "child4 still exists");
+
+    test = GetCapture();
+    ok(!test, "wrong capture window %p\n", test);
 }
 
 
