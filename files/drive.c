@@ -861,12 +861,18 @@ failure:
  */
 static DWORD CDROM_GetLabel(int drive, WCHAR *label)
 {
-    HANDLE              h = CDROM_Open(drive);
+    HANDLE              h;
     CDROM_DISK_DATA     cdd;
-    DWORD               br;
-    DWORD               ret = 1;
+    DWORD               br, ret = 1;
+    BOOL                r;
 
-    if (!h || !DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 0, &cdd, sizeof(cdd), &br, 0))
+    h = CDROM_Open(drive);
+    if( !h ) 
+        return 0;
+    r = DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 
+                        0, &cdd, sizeof(cdd), &br, 0);
+    CloseHandle( h );
+    if( !r )
         return 0;
 
     switch (cdd.DiskData & 0x03)
@@ -1032,12 +1038,23 @@ static DWORD CDROM_Data_GetSerial(int drive)
 static DWORD CDROM_GetSerial(int drive)
 {
     DWORD               serial = 0;
-    HANDLE              h = CDROM_Open(drive);
+    HANDLE              h;
     CDROM_DISK_DATA     cdd;
     DWORD               br;
+    BOOL                r;
 
-    if (!h || ! !DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 0, &cdd, sizeof(cdd), &br, 0))
+    TRACE("%d\n", drive);
+
+    h = CDROM_Open(drive);
+    if( !h ) 
         return 0;
+    r = DeviceIoControl(h, IOCTL_CDROM_DISK_TYPE, NULL, 
+                        0, &cdd, sizeof(cdd), &br, 0);
+    if (!r)
+    {
+        CloseHandle(h);
+        return 0;
+    }
 
     switch (cdd.DiskData & 0x03)
     {
