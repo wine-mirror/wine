@@ -1892,11 +1892,12 @@ INT WINAPI LCMapStringA(
   int i;
 
   TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
-	lcid,mapflags,srcstr,srclen,dststr,dstlen);
+	lcid,mapflags,debugstr_an(srcstr,srclen),srclen,dststr,dstlen);
 
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
-    ERR("(src=%s,dest=%s): Invalid NULL string\n", srcstr, dststr);
+    ERR("(src=%s,dest=%s): Invalid NULL string\n",
+	debugstr_an(srcstr,srclen), dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -2470,11 +2471,12 @@ UINT WINAPI CompareStringA(
   int result;
   LPSTR sk1,sk2;
   TRACE("%s and %s\n",
-	debugstr_a (s1), debugstr_a (s2));
+	debugstr_an (s1,l1), debugstr_an (s2,l2));
 
   if ( (s1==NULL) || (s2==NULL) )
   {    
-    ERR("(s1=%s,s2=%s): Invalid NULL string\n", s1, s2);
+    ERR("(s1=%s,s2=%s): Invalid NULL string\n",
+	debugstr_an(s1,l1), debugstr_an(s2,l2));
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
@@ -3074,10 +3076,10 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
   if (xtime == NULL) {
      GetSystemTime(&t);
   } else {
-      /* Silently correct wDayOfWeek by tranforming to FileTime and back again*/
+      /* Silently correct wDayOfWeek by transforming to FileTime and back again */
       res=SystemTimeToFileTime(xtime,&ft);
-      /* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error*/
-      /*FIXME: SystemTimeToFileTime doesn't yet do that ckeck*/
+      /* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
+      /*FIXME: SystemTimeToFileTime doesn't yet do that check */
       if(!res)
 	{
 	  SetLastError(ERROR_INVALID_PARAMETER);
@@ -3575,7 +3577,7 @@ BOOL	bInDecimal = FALSE;
  *  Description: A number could be formatted using different numbers 
  *               of "digits in group" (example: 4;3;2;0).
  *               The first parameter of this function is an array
- *               containing the rule to be used. It's format is the following:
+ *               containing the rule to be used. Its format is the following:
  *               |NDG|DG1|DG2|...|0|
  *               where NDG is the number of used "digits in group" and DG1, DG2,
  *               are the corresponding "digits in group".
@@ -3860,7 +3862,7 @@ INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
 			       LPCWSTR lpvalue,  const NUMBERFMTW * lpFormat,
 			       LPWSTR lpNumberStr, int cchNumber)
 {
- FIXME("%s: stub, no reformating done\n",debugstr_w(lpvalue));
+ FIXME("%s: stub, no reformatting done\n",debugstr_w(lpvalue));
 
  lstrcpynW( lpNumberStr, lpvalue, cchNumber );
  return cchNumber? strlenW( lpNumberStr ) : 0;
@@ -3910,7 +3912,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     switch(used_operation)
     {
     case USE_LOCALEINFO:        
-        /* Specific to CURRENCYFMTA*/
+        /* Specific to CURRENCYFMTA */
         GetLocaleInfoA(locale, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
         GetLocaleInfoA(locale, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
         GetLocaleInfoA(locale, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
@@ -3919,14 +3921,14 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
         nNegOrder = atoi(sNegOrder);
         break;
     case USE_PARAMETER:        
-        /* Specific to CURRENCYFMTA*/
+        /* Specific to CURRENCYFMTA */
         nNegOrder = lpFormat->NegativeOrder;
         nPosOrder = lpFormat->PositiveOrder;
         strcpy(sCurrencySymbol, lpFormat->lpCurrencySymbol);
         break;
     case USE_SYSTEMDEFAULT:
         systemDefaultLCID = GetSystemDefaultLCID();        
-        /* Specific to CURRENCYFMTA*/
+        /* Specific to CURRENCYFMTA */
         GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
         GetLocaleInfoA(systemDefaultLCID, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
         GetLocaleInfoA(systemDefaultLCID, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
@@ -4168,7 +4170,7 @@ GetTimeFormatA(LCID locale,        /* [in]  */
   SYSTEMTIME t;
   LPSYSTEMTIME thistime;
   LCID thislocale=0;
-  DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */
+  DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
   INT ret;
     
   TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
@@ -4176,7 +4178,7 @@ GetTimeFormatA(LCID locale,        /* [in]  */
   thislocale = OLE2NLS_CheckLocale ( locale );
 
   if (format == NULL) 
-  { if (flags & LOCALE_NOUSEROVERRIDE)  /*use system default*/
+  { if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
     { thislocale = GetSystemDefaultLCID();
     }
     GetLocaleInfoA(thislocale, thisflags, format_buf, sizeof(format_buf));
@@ -4186,7 +4188,7 @@ GetTimeFormatA(LCID locale,        /* [in]  */
   { thisformat = format;
   }
   
-  if (xtime == NULL) /* NULL means use the current local time*/
+  if (xtime == NULL) /* NULL means use the current local time */
   { GetLocalTime(&t);
     thistime = &t;
   } 
@@ -4216,7 +4218,7 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	SYSTEMTIME t;
 	LPSYSTEMTIME thistime;
 	LCID thislocale=0;
-	DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */
+	DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
 	INT ret;
 	    
 	TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,
@@ -4225,7 +4227,7 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	thislocale = OLE2NLS_CheckLocale ( locale );
 
 	if (format == NULL) 
-	{ if (flags & LOCALE_NOUSEROVERRIDE)  /*use system default*/
+	{ if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
 	  { thislocale = GetSystemDefaultLCID();
 	  }
 	  GetLocaleInfoW(thislocale, thisflags, format_buf, 40);
@@ -4235,7 +4237,7 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	{ thisformat = format;
 	}
  
-	if (xtime == NULL) /* NULL means use the current local time*/
+	if (xtime == NULL) /* NULL means use the current local time */
 	{ GetLocalTime(&t);
 	  thistime = &t;
 	} 

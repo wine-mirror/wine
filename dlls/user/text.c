@@ -747,7 +747,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )
 {
-    TRACE("%04x '%.*s' %d\n", hdc, count, lpstr, count );
+    TRACE("%04x %s %d\n", hdc, debugstr_an(lpstr,count), count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                NULL, lpTabPos, 0, FALSE );
 }
