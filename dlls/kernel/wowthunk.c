@@ -88,6 +88,8 @@ extern SEGPTR CALL32_CBClientEx_RetAddr;
 extern BYTE Call16_Start;
 extern BYTE Call16_End;
 
+extern void RELAY16_InitDebugLists(void);
+
 static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
 
 /***********************************************************************
@@ -109,6 +111,8 @@ BOOL WOWTHUNK_Init(void)
         MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClientEx_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
+
+    if (TRACE_ON(relay)) RELAY16_InitDebugLists();
     return TRUE;
 }
 

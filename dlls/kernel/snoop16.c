@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
 #include "pshpack1.h"
 
-extern int SNOOP_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);  /* FIXME */
+extern int SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
 
 void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);
@@ -218,7 +218,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	else
             fun->name = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,1); /* empty string */
 
-	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name))
+	if (!SNOOP16_ShowDebugmsgSnoop(dll->name, ordinal, fun->name))
 		return origfun;
 
 	/* more magic. do not try to snoop thunk data entries (MMSYSTEM) */

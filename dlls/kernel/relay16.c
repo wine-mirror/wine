@@ -40,42 +40,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-/*
- * Stubs for the CallTo16/CallFrom16 routines on non-Intel architectures
- * (these will never be called but need to be present to satisfy the linker ...)
- */
-#ifndef __i386__
-/***********************************************************************
- *		__wine_call_from_16_word (KERNEL32.@)
- */
-WORD __wine_call_from_16_word()
-{
-    assert( FALSE );
-}
+#ifdef __i386__
 
-/***********************************************************************
- *		__wine_call_from_16_long (KERNEL32.@)
- */
-LONG __wine_call_from_16_long()
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
- *		__wine_call_from_16_regs (KERNEL32.@)
- */
-void __wine_call_from_16_regs()
-{
-    assert( FALSE );
-}
-
-DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi )
-{ assert( FALSE ); }
-
-DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArgs )
-{ assert( FALSE ); }
-#endif
-
+static const WCHAR **debug_relay_excludelist;
+static const WCHAR **debug_relay_includelist;
+static const WCHAR **debug_snoop_excludelist;
+static const WCHAR **debug_snoop_includelist;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
 inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
@@ -87,6 +57,105 @@ inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
 }
 
 /***********************************************************************
+ *           build_list
+ *
+ * Build a function list from a ';'-separated string.
+ */
+static const WCHAR **build_list( const WCHAR *buffer )
+{
+    int count = 1;
+    const WCHAR *p = buffer;
+    const WCHAR **ret;
+
+    while ((p = strchrW( p, ';' )))
+    {
+        count++;
+        p++;
+    }
+    /* allocate count+1 pointers, plus the space for a copy of the string */
+    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
+                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
+    {
+        WCHAR *str = (WCHAR *)(ret + count + 1);
+        WCHAR *p = str;
+
+        strcpyW( str, buffer );
+        count = 0;
+        for (;;)
+        {
+            ret[count++] = p;
+            if (!(p = strchrW( p, ';' ))) break;
+            *p++ = 0;
+        }
+        ret[count++] = NULL;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RELAY16_InitDebugLists
+ *
+ * Build the relay include/exclude function lists.
+ */
+void RELAY16_InitDebugLists(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    char buffer[1024];
+    HKEY hkey;
+    DWORD count;
+    WCHAR *str;
+    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
+                                    'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\',
+                                    'W','i','n','e','\\',
+                                    'C','o','n','f','i','g','\\',
+                                    'D','e','b','u','g',0};
+    static const WCHAR RelayIncludeW[] = {'R','e','l','a','y','I','n','c','l','u','d','e',0};
+    static const WCHAR RelayExcludeW[] = {'R','e','l','a','y','E','x','c','l','u','d','e',0};
+    static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
+    static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &name, configW );
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return;
+
+    str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
+    RtlInitUnicodeString( &name, RelayIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        debug_relay_includelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, RelayExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        debug_relay_excludelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, SnoopIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        debug_snoop_includelist = build_list( str );
+    }
+
+    RtlInitUnicodeString( &name, SnoopExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    {
+        debug_snoop_excludelist = build_list( str );
+    }
+    NtClose( hkey );
+}
+
+
+/***********************************************************************
  *           RELAY_ShowDebugmsgRelay
  *
  * Simple function to decide if a particular debugging message is
@@ -94,9 +163,6 @@ inline static int strncmpiAW( const char *strA, const WCHAR *strW, int n )
  */
 static int RELAY_ShowDebugmsgRelay(const char *func)
 {
-  /* from dlls/ntdll/relay.c (FIXME) */
-  extern const WCHAR **debug_relay_excludelist,**debug_relay_includelist;
-
   if(debug_relay_excludelist || debug_relay_includelist) {
     const char *term = strchr(func, ':');
     const WCHAR **listitem;
@@ -121,6 +187,43 @@ static int RELAY_ShowDebugmsgRelay(const char *func)
         if (itemlen == len && !strncmpiAW(func, *listitem, len)) return !show;
         if (itemlen == len2 && !strncmpiAW(func, *listitem, len2)) return !show;
         if (!strncmpiAW(term, *listitem, itemlen) && !term[itemlen]) return !show;
+    }
+    return show;
+  }
+  return 1;
+}
+
+
+/***********************************************************************
+ *          SNOOP16_ShowDebugmsgSnoop
+ *
+ * Simple function to decide if a particular debugging message is
+ * wanted.
+ */
+int SNOOP16_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
+{
+  if(debug_snoop_excludelist || debug_snoop_includelist) {
+    const WCHAR **listitem;
+    char buf[80];
+    int len, len2, itemlen, show;
+
+    if(debug_snoop_excludelist) {
+      show = 1;
+      listitem = debug_snoop_excludelist;
+    } else {
+      show = 0;
+      listitem = debug_snoop_includelist;
+    }
+    len = strlen(dll);
+    assert(len < 64);
+    sprintf(buf, "%s.%d", dll, ord);
+    len2 = strlen(buf);
+    for(; *listitem; listitem++)
+    {
+        itemlen = strlenW(*listitem);
+        if (itemlen == len && !strncmpiAW( buf, *listitem, len)) return !show;
+        if (itemlen == len2 && !strncmpiAW(buf, *listitem, len2)) return !show;
+        if (fname && !strncmpiAW(fname, *listitem, itemlen) && !fname[itemlen]) return !show;
     }
     return show;
   }
@@ -335,3 +438,42 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
     }
     SYSLEVEL_CheckNotLevel( 2 );
 }
+
+#else /* __i386__ */
+
+/*
+ * Stubs for the CallTo16/CallFrom16 routines on non-Intel architectures
+ * (these will never be called but need to be present to satisfy the linker ...)
+ */
+
+/***********************************************************************
+ *		__wine_call_from_16_word (KERNEL32.@)
+ */
+WORD __wine_call_from_16_word()
+{
+    assert( FALSE );
+}
+
+/***********************************************************************
+ *		__wine_call_from_16_long (KERNEL32.@)
+ */
+LONG __wine_call_from_16_long()
+{
+    assert( FALSE );
+}
+
+/***********************************************************************
+ *		__wine_call_from_16_regs (KERNEL32.@)
+ */
+void __wine_call_from_16_regs()
+{
+    assert( FALSE );
+}
+
+DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi )
+{ assert( FALSE ); }
+
+DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArgs )
+{ assert( FALSE ); }
+
+#endif  /* __i386__ */

@@ -41,11 +41,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
-const WCHAR **debug_relay_excludelist = NULL;
-const WCHAR **debug_relay_includelist = NULL;
-const WCHAR **debug_snoop_excludelist = NULL;
-const WCHAR **debug_snoop_includelist = NULL;
-
+static const WCHAR **debug_relay_excludelist;
+static const WCHAR **debug_relay_includelist;
+static const WCHAR **debug_snoop_excludelist;
+static const WCHAR **debug_snoop_includelist;
 static const WCHAR **debug_from_relay_excludelist;
 static const WCHAR **debug_from_relay_includelist;
 
@@ -764,7 +763,7 @@ void RELAY_SetupDLL( HMODULE module )
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
+static int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname)
 {
   if(debug_snoop_excludelist || debug_snoop_includelist) {
     const WCHAR **listitem;
