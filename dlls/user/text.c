@@ -76,8 +76,13 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 static const WCHAR ELLIPSISW[] = {'.','.','.', 0};
 
+/* These will have to go into a structure to be passed around rather than
+ * sitting in static memory
+ */
 static int tabwidth;
 static int prefix_offset;
+static int len_before_ellipsis, len_ellipsis, len_under_ellipsis,
+           len_after_ellipsis;
 
 /*********************************************************************
  *                      TEXT_Ellipsify (static)
@@ -165,6 +170,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  *                    the modified string is not required.
  *   len_before [out] The number of characters before the ellipsis.
  *   len_ellip  [out] The number of characters in the ellipsis.
+ *   len_under  [out] The number of characters replaced by the ellipsis.
  *   len_after  [out] The number of characters after the ellipsis.
  *
  * For now we will simply use three dots rather than worrying about whether
@@ -190,7 +196,8 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
 static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
                                 unsigned int *len_str, int width, SIZE *size,
                                 WCHAR *modstr,
-                                int *len_before, int *len_ellip, int *len_after)
+                                int *len_before, int *len_ellip, int *len_under,
+                                int *len_after)
 {
     int len_ellipsis;
     int len_trailing;
@@ -220,6 +227,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
      * of the last slash and len_trailing includes the ellipsis
      */
 
+    *len_under = 0;
     for ( ; ; )
     {
         if (!GetTextExtentExPointW (hdc, str, *len_str + len_ellipsis, width,
@@ -230,6 +238,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
         /* overlap-safe movement to the left */
         memmove (lastSlash-1, lastSlash, len_trailing * sizeof(WCHAR));
         lastSlash--;
+        (*len_under)++;
         
         assert (*len_str);
         (*len_str)--;
@@ -533,6 +542,8 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     int max_seg_width;
     int num_fit;
     int word_broken;
+    int line_fits;
+    int j_in_seg;
 
 
     /* For each text segment in the line */
@@ -573,10 +584,14 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                     /* Swallow it before we see it again */
 		    (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
                 }
-		else
+		else if (prefix_offset == -1 || prefix_offset >= seg_j)
                 {
                     prefix_offset = j;
                 }
+                /* else the previous prefix was in an earlier segment of the
+                 * line; we will leave it to the drawing code to catch this
+                 * one.
+                 */
 	    }
             else
             {
@@ -587,24 +602,27 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 
         /* Measure the whole text segment and possibly WordBreak it */
 
+        j_in_seg = j - seg_j;
         max_seg_width = width - plen;
-        GetTextExtentExPointW (hdc, dest + seg_j, j - seg_j, max_seg_width, &num_fit, NULL, &size);
+        GetTextExtentExPointW (hdc, dest + seg_j, j_in_seg, max_seg_width, &num_fit, NULL, &size);
 
         word_broken = 0;
-        if (num_fit < j-seg_j && (format & DT_WORDBREAK))
+        line_fits = (num_fit >= j_in_seg);
+        if (!line_fits && (format & DT_WORDBREAK))
         {
             const WCHAR *s;
             int chars_used;
-            int j_in_seg = j-seg_j;
             TEXT_WordBreak (hdc, dest+seg_j, maxl-seg_j, &j_in_seg,
                             max_seg_width, format, num_fit, &chars_used, &size);
+            line_fits = (size.cx <= max_seg_width);
             /* and correct the counts */
-            j = seg_j + j_in_seg;
             TEXT_SkipChars (count, &s, seg_count, str+seg_i, i-seg_i,
                             chars_used, !(format & DT_NOPREFIX));
             i = s - str;
             word_broken = 1;
         }
+
+        j = seg_j + j_in_seg;
 
         plen += size.cx;
         if (size.cy > retsize->cy)
@@ -616,10 +634,10 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
             break;
         else if (str[i] == CR || str[i] == LF)
         {
-            count--, i++;
-            if (count && (str[i] == CR || str[i] == LF) && str[i] != str[i-1])
+            (*count)--, i++;
+            if (*count && (str[i] == CR || str[i] == LF) && str[i] != str[i-1])
             {
-                count--, i++;
+                (*count)--, i++;
             }
             break;
         }
@@ -687,6 +705,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 {
     SIZE size;
     const WCHAR *strPtr;
+    WCHAR *retstr, *p_retstr;
+    size_t size_retstr;
     static WCHAR line[MAX_STATIC_BUFFER];
     int len, lh, count=i_count;
     TEXTMETRICW tm;
@@ -694,6 +714,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
     int max_width = 0;
+    int last_line;
 
     TRACE("%s, %d , [(%d,%d),(%d,%d)]\n", debugstr_wn (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
@@ -732,10 +753,25 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     if (flags & DT_CALCRECT) flags |= DT_NOCLIP;
 
+    if (flags & DT_MODIFYSTRING)
+    {
+        size_retstr = (count + 4) * sizeof (WCHAR);
+        retstr = HeapAlloc(GetProcessHeap(), 0, size_retstr);
+        if (!retstr) return 0;
+        memcpy (retstr, str, size_retstr);
+    }
+    else
+    {
+        size_retstr = 0;
+        retstr = NULL;
+    }
+    p_retstr = retstr;
+
     do
     {
 	prefix_offset = -1;
 	len = MAX_STATIC_BUFFER;
+        last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size);
 
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
@@ -752,11 +788,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         if ((flags & DT_SINGLELINE) && size.cx > width &&
 	    (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS)))
         {
-            WCHAR tmpstr[countof(line)];
-            int len_before_ellipsis;
-            int len_ellipsis;
-            int len_after_ellipsis;
-
             if ((flags & DT_EXPANDTABS))
             {
                 /* If there are tabs then we must only ellipsify the last
@@ -778,23 +809,20 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                 /* We may need to remeasure the string because it was clipped */
                 if ((flags & DT_WORDBREAK) || !(flags & DT_NOCLIP))
                     TEXT_CopySansPrefix ((flags & DT_NOPREFIX), line, &len, str, i_count >= 0 ? i_count : strlenW(str));
-                TEXT_PathEllipsify (hdc, line, countof(line), &len, width, &size, tmpstr, &len_before_ellipsis, &len_ellipsis, &len_after_ellipsis);
+                TEXT_PathEllipsify (hdc, line, countof(line), &len, width, &size, retstr, &len_before_ellipsis, &len_ellipsis, &len_under_ellipsis, &len_after_ellipsis);
             }
             else
             {
-                TEXT_Ellipsify (hdc, line, countof(line), &len, width, &size, tmpstr, &len_before_ellipsis, &len_ellipsis);
+                TEXT_Ellipsify (hdc, line, countof(line), &len, width, &size, retstr, &len_before_ellipsis, &len_ellipsis);
                 len_after_ellipsis = 0;
+                len_under_ellipsis = 0; /* It is under the path ellipsis */
             }
 
             strPtr = NULL; 
 
             if (prefix_offset >= 0 &&
                 prefix_offset >= len_before_ellipsis)
-                prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, strlenW(str)-len_ellipsis-len_before_ellipsis-len_after_ellipsis, len_ellipsis, len_after_ellipsis);
-
-            if (flags & DT_MODIFYSTRING)
-                strcpyW(str, tmpstr);
-
+                prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, len_under_ellipsis, len_ellipsis, len_after_ellipsis);
 
 	}
 	if (!(flags & DT_CALCRECT))
@@ -852,18 +880,10 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	    max_width = size.cx;
 
 	y += lh;
-	if (strPtr)
-	{
-	    if (!(flags & DT_NOCLIP))
-	    {
-		if (y > rect->bottom - lh)
-		    break;
-	    }
-	}
         if (dtp)
             dtp->uiLengthDrawn += len;
     }
-    while (strPtr);
+    while (strPtr && !last_line);
 
     if (flags & DT_CALCRECT)
     {
@@ -871,6 +891,11 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	rect->bottom = y;
         if (dtp)
             rect->right += lmargin + rmargin;
+    }
+    if (retstr)
+    {
+        memcpy (str, retstr, size_retstr);
+        HeapFree (GetProcessHeap(), 0, retstr);
     }
     return y - rect->top;
 }
