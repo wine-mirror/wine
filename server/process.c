@@ -539,9 +539,11 @@ void suspend_process( struct process *process )
     if (!process->suspend++)
     {
         struct thread *thread = process->thread_list;
-        for (; thread; thread = thread->proc_next)
+        while (thread)
         {
+            struct thread *next = thread->proc_next;
             if (!thread->suspend) stop_thread( thread );
+            thread = next;
         }
     }
 }
@@ -553,9 +555,11 @@ void resume_process( struct process *process )
     if (!--process->suspend)
     {
         struct thread *thread = process->thread_list;
-        for (; thread; thread = thread->proc_next)
+        while (thread)
         {
+            struct thread *next = thread->proc_next;
             if (!thread->suspend) continue_thread( thread );
+            thread = next;
         }
     }
 }
