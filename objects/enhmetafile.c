@@ -8,8 +8,8 @@
  *
  *    A header 
  *    A table of handles to GDI objects 
- *    A private palette 
  *    An array of metafile records 
+ *    A private palette 
  *
  * 
  *  The standard format consists of a header and an array of metafile records. 
@@ -357,8 +357,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_EOF:
       break;
     case EMR_GDICOMMENT:
-      /* application defined and processed */
-      break;
+      {
+        PEMRGDICOMMENT lpGdiComment = (PEMRGDICOMMENT)mr;
+        /* In an enhanced metafile, there can be both public and private GDI comments */
+        GdiComment( hdc, lpGdiComment->cbData, lpGdiComment->Data );
+        break;
+      } 
     case EMR_SETMAPMODE:
       {
 	DWORD mode = mr->dParm[0];
@@ -534,14 +538,16 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	Polyline16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
-
 #if 0
     case EMR_POLYPOLYGON16:
       {
-	INT polygons = mr->dParm[z];
-	LPPOINT16 pts = (LPPOINT16) &mr->dParm[x];
-	LPINT16 counts = (LPINT16) &mr->dParm[y];
-	PolyPolygon16(hdc, pts, counts, polygons);
+        PEMRPOLYPOLYGON16 lpPolyPoly16 = (PEMRPOLYPOLYGON16)mr;
+
+	PolyPolygon16( hdc, 
+                       lpPolyPoly16->apts, 
+                       lpPolyPoly16->aPolyCounts,
+                       lpPolyPoly16->nPolys );
+
 	break;
       }
 #endif
@@ -566,7 +572,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 			    (const BITMAPINFO *)(((char *)mr)+offBmiSrc),
 			    iUsageSrc,dwRop);
 	break;
-    }
+      }
     case EMR_EXTTEXTOUTW:
       {
 	/* 0-3: ??? */
@@ -582,7 +588,119 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 		      str, count, /* lpDx */ NULL); 
 	break;
       }
+ 
+    case EMR_CREATEPALETTE:
+      {
+	PEMRCREATEPALETTE lpCreatePal = (PEMRCREATEPALETTE)mr;
 
+	(handletable->objectHandle)[ lpCreatePal->ihPal ] = 
+		CreatePalette( &lpCreatePal->lgpl );
+
+	break;
+      }
+
+    case EMR_SELECTPALETTE:
+      {
+	PEMRSELECTPALETTE lpSelectPal = (PEMRSELECTPALETTE)mr;
+
+	/* FIXME: Should this be forcing background mode? */
+	(handletable->objectHandle)[ lpSelectPal->ihPal ] = 
+		SelectPalette( hdc, lpSelectPal->ihPal, FALSE );
+	break;
+      }
+
+    case EMR_REALIZEPALETTE:
+      {
+	RealizePalette( hdc );
+	break;
+      }
+
+#if 0
+    case EMR_EXTSELECTCLIPRGN:
+      {
+	PEMREXTSELECTCLIPRGN lpRgn = (PEMREXTSELECTCLIPRGN)mr;
+
+	/* Need to make a region out of the RGNDATA we have */
+	ExtSelectClipRgn( hdc, ..., (INT)(lpRgn->iMode) );
+
+      }
+#endif
+    case EMR_SETMETARGN:
+      {
+        SetMetaRgn( hdc );
+        break;
+      }
+    case EMR_SETWORLDTRANSFORM:
+      {
+        PEMRSETWORLDTRANSFORM lpXfrm = (PEMRSETWORLDTRANSFORM)mr;
+        SetWorldTransform( hdc, &lpXfrm->xform );
+        break;
+      }
+    case EMR_POLYBEZIER:
+    case EMR_POLYGON:
+    case EMR_POLYLINE:
+    case EMR_POLYBEZIERTO:
+    case EMR_POLYLINETO:
+    case EMR_POLYPOLYLINE:
+    case EMR_POLYPOLYGON:
+    case EMR_SETBRUSHORGEX:
+    case EMR_SETPIXELV:
+    case EMR_SETMAPPERFLAGS:
+    case EMR_SETCOLORADJUSTMENT:
+    case EMR_OFFSETCLIPRGN:
+    case EMR_EXCLUDECLIPRECT:
+    case EMR_SCALEVIEWPORTEXTEX:
+    case EMR_SCALEWINDOWEXTEX:
+    case EMR_MODIFYWORLDTRANSFORM:
+    case EMR_ANGLEARC:
+    case EMR_ROUNDRECT: 
+    case EMR_ARC:
+    case EMR_CHORD:
+    case EMR_PIE:
+    case EMR_SETPALETTEENTRIES:  
+    case EMR_RESIZEPALETTE:
+    case EMR_EXTFLOODFILL:
+    case EMR_ARCTO: 
+    case EMR_POLYDRAW:
+    case EMR_SETARCDIRECTION:
+    case EMR_SETMITERLIMIT:
+    case EMR_BEGINPATH:
+    case EMR_ENDPATH: 
+    case EMR_CLOSEFIGURE:
+    case EMR_FILLPATH:
+    case EMR_STROKEANDFILLPATH:
+    case EMR_STROKEPATH:
+    case EMR_FLATTENPATH:
+    case EMR_WIDENPATH:
+    case EMR_SELECTCLIPPATH:
+    case EMR_ABORTPATH:
+    case EMR_FILLRGN:
+    case EMR_FRAMERGN:
+    case EMR_INVERTRGN:
+    case EMR_PAINTRGN:
+    case EMR_BITBLT:
+    case EMR_STRETCHBLT:
+    case EMR_MASKBLT:
+    case EMR_PLGBLT:
+    case EMR_SETDIBITSTODEVICE:
+    case EMR_EXTTEXTOUTA:
+    case EMR_POLYBEZIER16:
+    case EMR_POLYBEZIERTO16:
+    case EMR_POLYLINETO16:
+    case EMR_POLYPOLYLINE16:
+    case EMR_POLYPOLYGON16:
+    case EMR_POLYDRAW16:
+    case EMR_CREATEMONOBRUSH:
+    case EMR_CREATEDIBPATTERNBRUSHPT:
+    case EMR_POLYTEXTOUTA:
+    case EMR_POLYTEXTOUTW:
+    case EMR_SETICMMODE:
+    case EMR_CREATECOLORSPACE:
+    case EMR_SETCOLORSPACE:
+    case EMR_DELETECOLORSPACE:
+    case EMR_GLSRECORD:
+    case EMR_GLSBOUNDEDRECORD:
+    case EMR_PIXELFORMAT: 
     default:
       FIXME("type %d is unimplemented\n", type);
       /*  SetLastError(E_NOTIMPL); */
@@ -734,18 +852,109 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 }
 
 
+/* Struct to be used to be passed in the LPVOID parameter for cbEnhPaletteCopy */
+typedef struct tagEMF_PaletteCopy
+{
+   UINT cEntries;
+   LPPALETTEENTRY lpPe;
+} EMF_PaletteCopy;
+
+/***************************************************************  
+ * Find the EMR_EOF record and then use it to find the
+ * palette entries for this enhanced metafile. 
+ * The lpData is actually a pointer to a EMF_PaletteCopy struct  
+ * which contains the max number of elements to copy and where
+ * to copy them to.
+ *
+ * NOTE: To be used by GetEnhMetaFilePaletteEntries only!
+ */
+INT CALLBACK cbEnhPaletteCopy( HDC a,
+                               LPHANDLETABLE b,
+                               LPENHMETARECORD lpEMR,
+                               INT c,
+                               LPVOID lpData )
+{
+ 
+  if ( lpEMR->iType == EMR_EOF )
+  {
+    PEMREOF lpEof = (PEMREOF)lpEMR;
+    EMF_PaletteCopy* info = (EMF_PaletteCopy*)lpData;
+    DWORD dwNumPalToCopy = MIN( lpEof->nPalEntries, info->cEntries );
+
+    TRACE( "copying 0x%08lx palettes\n", dwNumPalToCopy );
+
+    memcpy( (LPVOID)info->lpPe, 
+            (LPVOID)(((LPSTR)lpEof) + lpEof->offPalEntries), 
+            sizeof( *(info->lpPe) ) * dwNumPalToCopy );
+
+    /* Update the passed data as a return code */
+    info->lpPe     = NULL; /* Palettes were copied! */
+    info->cEntries = (UINT)dwNumPalToCopy;  
+
+    return FALSE; /* That's all we need */
+  }
+  
+  return TRUE;
+}
+
 /*****************************************************************************
  *  GetEnhMetaFilePaletteEntries (GDI32.179)  
  * 
  *  Copy the palette and report size  
+ * 
+ *  BUGS: Error codes (SetLastError) are not set on failures
  */
-
-UINT WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE hemf,
-					     UINT cEntries,
-					     LPPALETTEENTRY lppe)
+UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
+					  UINT cEntries,
+					  LPPALETTEENTRY lpPe )
 {
-    FIXME( "(%04x,%d,%p):stub\n", hemf, cEntries, lppe ); 
-    return 0;
+  ENHMETAHEADER* enhHeader = EMF_GetEnhMetaHeader( hEmf );
+  UINT uReturnValue = GDI_ERROR;
+  EMF_PaletteCopy infoForCallBack; 
+
+  TRACE( "(%04x,%d,%p)\n", hEmf, cEntries, lpPe ); 
+
+  /* First check if there are any palettes associated with
+     this metafile. */
+  if ( enhHeader->nPalEntries == 0 )
+  {
+    /* No palette associated with this enhanced metafile */
+    uReturnValue = 0;
+    goto done; 
+  }
+
+  /* Is the user requesting the number of palettes? */
+  if ( lpPe == NULL )
+  {
+     uReturnValue = (UINT)enhHeader->nPalEntries;
+     goto done;
+  } 
+
+  /* Copy cEntries worth of PALETTEENTRY structs into the buffer */
+  infoForCallBack.cEntries = cEntries;
+  infoForCallBack.lpPe     = lpPe; 
+
+  if ( !EnumEnhMetaFile( 0, hEmf, cbEnhPaletteCopy, 
+                         &infoForCallBack, NULL ) )
+  {
+     goto done; 
+  }
+
+  /* Verify that the callback executed correctly */
+  if ( infoForCallBack.lpPe != NULL )
+  {
+     /* Callback proc had error! */
+     ERR( "cbEnhPaletteCopy didn't execute correctly\n" );
+     goto done;
+  }
+
+  uReturnValue = infoForCallBack.cEntries;
+
+done:
+  
+  EMF_ReleaseEnhMetaHeader( hEmf );
+
+  return uReturnValue;
 }
 
 /******************************************************************
@@ -906,7 +1115,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
              EMF_ReAllocAndAdjustPointers(PEMRPOLYGON16,uRecord);
 
              /* FIXME: This is mostly all wrong */
-             lpRecord->emr.iType = 
+             lpRecord->emr.iType = EMR_POLYGON16;
              lpRecord->emr.nSize = sizeof( *lpRecord );
 
              lpRecord->rclBounds.left   = 0;

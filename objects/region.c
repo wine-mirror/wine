@@ -2868,3 +2868,23 @@ done:
     return 0;
 }
 
+/***********************************************************************
+ *           GetMetaRgn    (GDI.328)
+ */
+INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
+{
+  FIXME( "stub\n" );
+
+  return 0;
+}
+
+
+/***********************************************************************
+ *           SetMetaRgn    (GDI.455)
+ */
+INT WINAPI SetMetaRgn( HDC hdc )
+{
+  FIXME( "stub\n" );
+
+  return ERROR;
+}

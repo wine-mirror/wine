@@ -230,7 +230,7 @@ init    MAIN_GdiInit
 325 stdcall GetMetaFileA(str) GetMetaFileA
 326 stdcall GetMetaFileBitsEx(long long ptr) GetMetaFileBitsEx
 327 stdcall GetMetaFileW(wstr) GetMetaFileW
-328 stub GetMetaRgn
+328 stdcall GetMetaRgn(long long) GetMetaRgn
 329 stdcall GetMiterLimit(long ptr) GetMiterLimit
 330 stdcall GetNearestColor(long long) GetNearestColor
 331 stdcall GetNearestPaletteIndex(long long) GetNearestPaletteIndex
@@ -357,7 +357,7 @@ init    MAIN_GdiInit
 452 stdcall SetMapMode(long long) SetMapMode
 453 stdcall SetMapperFlags(long long) SetMapperFlags
 454 stdcall SetMetaFileBitsEx(long ptr) SetMetaFileBitsEx
-455 stub SetMetaRgn
+455 stdcall SetMetaRgn(long) SetMetaRgn
 456 stdcall SetMiterLimit(long long ptr) SetMiterLimit
 457 stdcall SetObjectOwner(long long) SetObjectOwner
 458 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries
