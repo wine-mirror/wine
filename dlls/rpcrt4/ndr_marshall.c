@@ -59,8 +59,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
   #define LITTLE_ENDIAN_32_READ(pchar) \
     (MAKELONG( \
-      MAKEWORD(*(pchar), *((pchar)+1)) \
-      MAKEWORD(*((pchar)+2), *((pchar)+3)))
+      MAKEWORD(*(pchar), *((pchar)+1)), \
+      MAKEWORD(*((pchar)+2), *((pchar)+3))))
 #endif
 
 /*
