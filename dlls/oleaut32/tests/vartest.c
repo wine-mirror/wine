@@ -4087,6 +4087,7 @@ static HRESULT (WINAPI *pVarAbs)(LPVARIANT,LPVARIANT);
 static void test_VarAbs(void)
 {
     static const WCHAR szNum[] = {'-','1','.','1','\0' };
+    char buff[8];
     HRESULT hres;
     VARIANT v, vDst;
     size_t i;
@@ -4144,6 +4145,12 @@ static void test_VarAbs(void)
     VARABS(R4,-1,R4,1);
     VARABS(R8,1,R8,1);
     VARABS(R8,-1,R8,1);
+    GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
+    if (buff[0] != '.' || buff[1])
+    { 
+        trace("Skipping VarAbs(BSTR) as decimal seperator is '%s'\n", buff);
+        return;
+    }
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = (BSTR)szNum;
     memset(&vDst,0,sizeof(vDst));
@@ -4190,13 +4197,20 @@ static void test_VarNot(void)
             {
             case VT_I1:  case VT_UI1: case VT_I2:  case VT_UI2:
             case VT_INT: case VT_UINT: case VT_I4:  case VT_UI4:
-            case VT_I8:  case VT_UI8: case VT_R4:  case VT_R8:
+            case VT_R4:  case VT_R8:
             case VT_DECIMAL: case VT_BOOL: case VT_NULL: case VT_EMPTY:
             case VT_DATE: case VT_CY:
                 hExpected = S_OK;
                 break;
-            case VT_UNKNOWN: case VT_BSTR: case VT_DISPATCH: case VT_ERROR:
+            case VT_I8: case VT_UI8:
+                if (HAVE_OLEAUT32_I8)
+                    hExpected = S_OK;
+                break;
             case VT_RECORD:
+                if (HAVE_OLEAUT32_RECORD)
+                    hExpected = DISP_E_TYPEMISMATCH;
+                break;
+            case VT_UNKNOWN: case VT_BSTR: case VT_DISPATCH: case VT_ERROR:
                 hExpected = DISP_E_TYPEMISMATCH;
                 break;
             default:
