@@ -74,7 +74,7 @@ DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswx]
 IDENTIFIER [_a-zA-Z~][_a-zA-Z0-9~@]*
-PATHNAME   [/_a-zA-Z\.~][/_a-zA-Z0-9\.~@]*
+PATHNAME   [-/_a-zA-Z\.~][-/_a-zA-Z0-9\.~@]*
 STRING     \"[^\n"]+\"
 
 %s FORMAT_EXPECTED
@@ -97,6 +97,11 @@ STRING     \"[^\n"]+\"
 <<EOF>>                                 { return tEOF; }
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
                                         /* Indicates end of command. Reset state. */
+
+                                        /* This rule must precede the ones below, */
+                                        /* otherwise paths like '/' or '0x9' would */
+                                        /* get parsed as an operator or tNUM */
+<PATH_EXPECTED>{PATHNAME}		{ yylval.string = lexeme_alloc(yytext); return tPATH; }
 
 "||"					{ return OP_LOR; }
 "&&"					{ return OP_LAND; }
@@ -204,8 +209,6 @@ all                                     { return tALL; }
 
 {IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
 "$"{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext+1); return tINTVAR; }
-
-<PATH_EXPECTED>{PATHNAME}		{ yylval.string = lexeme_alloc(yytext); return tPATH; }
 
 <*>[ \t\r]+                             /* Eat up whitespace and DOS LF */
 
