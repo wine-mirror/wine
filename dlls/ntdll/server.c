@@ -236,6 +236,23 @@ inline static void wait_reply( struct __server_request_info *req )
  *           wine_server_call (NTDLL.@)
  *
  * Perform a server call.
+ *
+ * PARAMS
+ *     req_ptr [I/O] Function dependent data
+ *
+ * RETURNS
+ *     Depends on server function being called, but usually an NTSTATUS code.
+ *
+ * NOTES
+ *     Use the SERVER_START_REQ and SERVER_END_REQ to help you fill out the
+ *     server request structure for the particular call. E.g:
+ *|     SERVER_START_REQ( event_op )
+ *|     {
+ *|         req->handle = handle;
+ *|         req->op     = SET_EVENT;
+ *|         ret = wine_server_call( req );
+ *|     }
+ *|     SERVER_END_REQ;
  */
 unsigned int wine_server_call( void *req_ptr )
 {
@@ -251,9 +268,15 @@ unsigned int wine_server_call( void *req_ptr )
 
 
 /***********************************************************************
- *           wine_server_send_fd
+ *           wine_server_send_fd   (NTDLL.@)
  *
  * Send a file descriptor to the server.
+ *
+ * PARAMS
+ *     fd [I] file descriptor to send
+ *
+ * RETURNS
+ *     nothing
  */
 void wine_server_send_fd( int fd )
 {
@@ -397,7 +420,16 @@ inline static int store_cached_fd( int *fd, obj_handle_t handle )
 /***********************************************************************
  *           wine_server_fd_to_handle   (NTDLL.@)
  *
- * Allocate a file handle for a Unix fd.
+ * Allocate a file handle for a Unix file descriptor.
+ *
+ * PARAMS
+ *     fd      [I] Unix file descriptor.
+ *     access  [I] Win32 access flags.
+ *     inherit [I] Indicates whether this handle is inherited by child processes.
+ *     handle  [O] Address where Wine file handle will be stored.
+ *
+ * RETURNS
+ *     NTSTATUS code
  */
 int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_handle_t *handle )
 {
@@ -421,7 +453,17 @@ int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_hand
 /***********************************************************************
  *           wine_server_handle_to_fd   (NTDLL.@)
  *
- * Retrieve the Unix fd corresponding to a file handle.
+ * Retrieve the file descriptor corresponding to a file handle.
+ *
+ * PARAMS
+ *     handle  [I] Wine file handle.
+ *     access  [I] Win32 file access rights requested.
+ *     unix_fd [O] Address where Unix file descriptor will be stored.
+ *     type    [O] Address where the file type will be stored. Optional.
+ *     flags   [O] Address where the Unix flags associated with file will be stored. Optional.
+ *
+ * RETURNS
+ *     NTSTATUS code
  */
 int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                               enum fd_type *type, int *flags )
@@ -467,7 +509,14 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
 /***********************************************************************
  *           wine_server_release_fd   (NTDLL.@)
  *
- * Release the Unix fd returned by wine_server_handle_to_fd.
+ * Release the Unix file descriptor returned by wine_server_handle_to_fd.
+ *
+ * PARAMS
+ *     handle  [I] Wine file handle.
+ *     unix_fd [I] Unix file descriptor to release.
+ *
+ * RETURNS
+ *     nothing
  */
 void wine_server_release_fd( obj_handle_t handle, int unix_fd )
 {
