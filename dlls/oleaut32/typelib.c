@@ -468,10 +468,36 @@ HRESULT WINAPI RegisterTypeLib(
 		TYPEATTR *tattr = NULL;
 		ITypeInfo_GetTypeAttr(tinfo, &tattr);
 		if (tattr) {
-		    TRACE_(typelib)("guid=%s, flags=%04x\n",
+		    TRACE_(typelib)("guid=%s, flags=%04x (",
 				    debugstr_guid(&tattr->guid),
 				    tattr->wTypeFlags);
-		    if (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION) {
+		    if (TRACE_ON(typelib)) {
+#define XX(x) if (TYPEFLAG_##x & tattr->wTypeFlags) MESSAGE(#x"|");
+			XX(FAPPOBJECT);
+			XX(FCANCREATE);
+			XX(FLICENSED);
+			XX(FPREDECLID);
+			XX(FHIDDEN);
+			XX(FCONTROL);
+			XX(FDUAL);
+			XX(FNONEXTENSIBLE);
+			XX(FOLEAUTOMATION);
+			XX(FRESTRICTED);
+			XX(FAGGREGATABLE);
+			XX(FREPLACEABLE);
+			XX(FDISPATCHABLE);
+			XX(FREVERSEBIND);
+			XX(FPROXY);
+#undef XX
+			MESSAGE("\n");
+		    }
+		    /*
+		     * FIXME: The 1 is just here until we implement rpcrt4
+		     *        stub/proxy handling. Until then it helps IShield
+		     *        v6 to work.
+		     */
+		    if (1 || (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION))
+		    {
 			/* register interface<->typelib coupling */
 			StringFromGUID2(&tattr->guid, guid, 80);
 			guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
