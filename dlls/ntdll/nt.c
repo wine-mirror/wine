@@ -166,6 +166,15 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 		else
 			ret = STATUS_INFO_LENGTH_MISMATCH;
 		break;
+	case ProcessWow64Information:
+		if (ProcessInformationLength == 4)
+		{
+			memset(ProcessInformation,0,ProcessInformationLength);
+			len = 4;
+		}
+		else
+			ret = STATUS_INFO_LENGTH_MISMATCH;
+		break;
 	default:
 		FIXME("(%p,0x%08x,%p,0x%08lx,%p),stub!\n",
 			ProcessHandle,ProcessInformationClass,
