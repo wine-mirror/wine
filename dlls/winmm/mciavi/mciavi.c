@@ -427,7 +427,6 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_NO_WINDOW;
     }
 
-    wma->dwStatus = MCI_MODE_PLAY;
     LeaveCriticalSection(&wma->cs);
 
     if (!(dwFlags & MCI_WAIT)) {
@@ -435,7 +434,8 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
                                    (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
-    ShowWindow(wma->hWndPaint, SW_SHOWNA);
+    if (!(GetWindowLongW(wma->hWndPaint, GWL_STYLE) & WS_VISIBLE))
+        ShowWindow(wma->hWndPaint, SW_SHOWNA);
 
     EnterCriticalSection(&wma->cs);
 
@@ -454,12 +454,22 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     TRACE("Playing from frame=%lu to frame=%lu\n", dwFromFrame, dwToFrame);
 
     wma->dwCurrVideoFrame = dwFromFrame;
+    wma->dwToVideoFrame = dwToFrame;
 
-    if (dwToFrame <= wma->dwCurrVideoFrame)
+    /* if already playing exit */
+    if (wma->dwStatus == MCI_MODE_PLAY)
+    {
+        LeaveCriticalSection(&wma->cs);
+        return 0;
+    }
+
+    if (wma->dwToVideoFrame <= wma->dwCurrVideoFrame)
     {
         dwRet = 0;
         goto mci_play_done;
     }
+
+    wma->dwStatus = MCI_MODE_PLAY;
 
     if (dwFlags & (MCI_DGV_PLAY_REPEAT|MCI_DGV_PLAY_REVERSE|MCI_MCIAVI_PLAY_WINDOW|MCI_MCIAVI_PLAY_FULLSCREEN))
 	FIXME("Unsupported flag %08lx\n", dwFlags);
@@ -610,7 +620,9 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     switch (wma->dwStatus) {
     case MCI_MODE_PLAY:
     case MCI_MODE_RECORD:
+        LeaveCriticalSection(&wma->cs);
         SetEvent(wma->hStopEvent);
+        EnterCriticalSection(&wma->cs);
         /* fall through */
     case MCI_MODE_PAUSE:
 	/* Since our wave notification callback takes the lock,
@@ -648,6 +660,8 @@ static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 {
     WINE_MCIAVI *wma;
 
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
+
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
@@ -660,7 +674,7 @@ static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     	LeaveCriticalSection(&wma->cs);
 	return waveOutPause(wma->hWave);
     }
-       
+
     LeaveCriticalSection(&wma->cs);
     return 0;
 }

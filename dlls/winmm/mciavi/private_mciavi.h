@@ -76,6 +76,7 @@ typedef struct {
     HWND               hWnd, hWndPaint;
     DWORD               dwCachedFrame; /* buffered frame */
     DWORD		dwCurrVideoFrame;	/* video frame to display and current position */
+    DWORD               dwToVideoFrame; /* play to */
     DWORD		dwCurrAudioBlock;	/* current audio block being played */
     RECT                source, dest;
     /* data for the background mechanism */
