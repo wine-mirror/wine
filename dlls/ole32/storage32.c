@@ -5615,7 +5615,7 @@ HRESULT WINAPI StgOpenStorage(
   /* prepare the file name string given in lieu of the root property name */
   GetFullPathNameW(pwcsName, MAX_PATH, fullname, NULL);
   memcpy(newStorage->filename, fullname, PROPERTY_NAME_BUFFER_LEN);
-  newStorage->filename[PROPERTY_NAME_BUFFER_LEN] = '\0';
+  newStorage->filename[PROPERTY_NAME_BUFFER_LEN-1] = '\0';
 
   /*
    * Get an "out" pointer for the caller.
