@@ -127,8 +127,8 @@
 127 stub MsiReinstallFeatureFromDescriptorA
 128 stub MsiReinstallFeatureFromDescriptorW
 129 stub MsiReinstallFeatureW
-130 stub MsiReinstallProductA
-131 stub MsiReinstallProductW
+130 stdcall MsiReinstallProductA(str long)
+131 stdcall MsiReinstallProductW(wstr long)
 132 stub MsiSequenceA
 133 stub MsiSequenceW
 134 stub MsiSetComponentStateA

@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
 {
 	int i;
 	BOOL FunctionInstall = FALSE;
+	BOOL FunctionRepair = FALSE;
 	BOOL FunctionDllRegisterServer = FALSE;
 	BOOL FunctionDllUnregisterServer = FALSE;
 
@@ -131,6 +132,8 @@ int main(int argc, char *argv[])
 	LPGUID ProductCode = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
 	LPSTR Properties = HeapAlloc(GetProcessHeap(), 0, 1);
 	LPSTR TempStr = NULL;
+
+	DWORD RepairMode = 0;
 
 	LPSTR DllName = NULL;
 
@@ -172,11 +175,68 @@ int main(int argc, char *argv[])
 		}
 		else if(!strncasecmp(argv[i], "/f", 2))
 		{
+			int j;
+			int len = strlen(argv[i]);
+			FunctionRepair = TRUE;
+			for(j = 2; j < len; j++)
+			{
+				switch(argv[i][j])
+				{
+					case 'P':
+					case 'p':
+						RepairMode |= REINSTALLMODE_FILEMISSING;
+						break;
+					case 'O':
+					case 'o':
+						RepairMode |= REINSTALLMODE_FILEOLDERVERSION;
+						break;
+					case 'E':
+					case 'e':
+						RepairMode |= REINSTALLMODE_FILEEQUALVERSION;
+						break;
+					case 'D':
+					case 'd':
+						RepairMode |= REINSTALLMODE_FILEEXACT;
+						break;
+					case 'C':
+					case 'c':
+						RepairMode |= REINSTALLMODE_FILEVERIFY;
+						break;
+					case 'A':
+					case 'a':
+						RepairMode |= REINSTALLMODE_FILEREPLACE;
+						break;
+					case 'U':
+					case 'u':
+						RepairMode |= REINSTALLMODE_USERDATA;
+						break;
+					case 'M':
+					case 'm':
+						RepairMode |= REINSTALLMODE_MACHINEDATA;
+						break;
+					case 'S':
+					case 's':
+						RepairMode |= REINSTALLMODE_SHORTCUT;
+						break;
+					case 'V':
+					case 'v':
+						RepairMode |= REINSTALLMODE_PACKAGE;
+						break;
+					default:
+						fprintf(stderr, "Unknown option \"%c\" in Repair mode\n", argv[i][j]);
+						break;
+				}
+			}
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
-			WINE_FIXME("Repair not implemented yet\n");
-			ExitProcess(1);
+			GotProductCode = GetProductCode(argv[i], ProductCode);
+			if(!GotProductCode)
+			{
+				HeapFree(GetProcessHeap(), 0, ProductCode);
+				ProductCode = NULL;
+				PackageName = argv[i];
+			}
 		}
 		else if(!strcasecmp(argv[i], "/x"))
 		{
@@ -307,6 +367,22 @@ int main(int argc, char *argv[])
 			if(MsiInstallProductA(PackageName, Properties) != ERROR_SUCCESS)
 			{
 				fprintf(stderr, "Installation of %s (%s) failed.\n", PackageName, Properties);
+				ExitProcess(1);
+			}
+		}
+	}
+	else if(FunctionRepair)
+	{
+		if(GotProductCode)
+		{
+			WINE_FIXME("Product code treatment not implemented yet\n");
+			ExitProcess(1);
+		}
+		else
+		{
+			if(MsiReinstallProductA(PackageName, RepairMode) != ERROR_SUCCESS)
+			{
+				fprintf(stderr, "Repair of %s (0x%08lx) failed.\n", PackageName, RepairMode);
 				ExitProcess(1);
 			}
 		}

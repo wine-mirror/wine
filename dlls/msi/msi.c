@@ -561,6 +561,18 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     return rc;
 }
 
+UINT WINAPI MsiReinstallProductA(LPCSTR szProduct, DWORD dwReinstallMode)
+{
+	FIXME("%s 0x%08lx\n", debugstr_a(szProduct), dwReinstallMode);
+	return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiReinstallProductW(LPCWSTR szProduct, DWORD dwReinstallMode)
+{
+	FIXME("%s 0x%08lx\n", debugstr_w(szProduct), dwReinstallMode);
+	return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
 {
     LPWSTR szwProduct = NULL;
