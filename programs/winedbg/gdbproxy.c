@@ -122,20 +122,22 @@ static inline unsigned char hex_to0(int x)
 
 static void hex_from(void* dst, const char* src, size_t len)
 {
+    unsigned char *p = dst;
     while (len--)
     {
-        *(unsigned char*)dst++ = (hex_from0(src[0]) << 4) | hex_from0(src[1]);
+        *p++ = (hex_from0(src[0]) << 4) | hex_from0(src[1]);
         src += 2;
     }
 }
 
 static void hex_to(char* dst, const void* src, size_t len)
 {
+    const unsigned char *p = src;
     while (len--)
     {
-        *dst++ = hex_to0(*(const unsigned char*)src >> 4);
-        *dst++ = hex_to0(*(const unsigned char*)src & 0x0F);
-        src++;
+        *dst++ = hex_to0(*p >> 4);
+        *dst++ = hex_to0(*p & 0x0F);
+        p++;
     }
 }
 

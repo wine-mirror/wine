@@ -957,7 +957,7 @@ void vshader_fill_input(VERTEXSHADER8* vshader,
   /*DWORD tokenlen;*/
   DWORD tokentype;
   /** for input readers */
-  const void* curPos = NULL;
+  const char* curPos = NULL;
   FLOAT x, y, z, w;
   SHORT u, v, r, t;
   DWORD dw;
@@ -970,7 +970,7 @@ void vshader_fill_input(VERTEXSHADER8* vshader,
     /** FVF generation block */
     if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
       IDirect3DVertexBuffer8* pVB;
-      const void* startVtx = NULL;
+      const char* startVtx = NULL;
       int skip = 0;
 
       ++pToken;
@@ -982,7 +982,7 @@ void vshader_fill_input(VERTEXSHADER8* vshader,
 
       if (0 == stream) {
 	skip = device->StateBlock.stream_stride[0];
-	startVtx = vertexFirstStream + (StartVertexIndex * skip);
+	startVtx = (const char *)vertexFirstStream + (StartVertexIndex * skip);
 	curPos = startVtx + idxDecal;
 	/*TRACE(" using stream[%lu] with %lu decal => curPos %p\n", stream, idxDecal, curPos);*/
       } else {

@@ -76,7 +76,7 @@ static int   vga_fb_depth;
 static int   vga_fb_pitch;
 static int   vga_fb_offset;
 static int   vga_fb_size = 0;
-static void *vga_fb_data = 0;
+static char *vga_fb_data = 0;
 static int   vga_fb_window = 0;
 
 /*

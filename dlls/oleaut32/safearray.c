@@ -165,7 +165,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 {
   SAFEARRAYBOUND *sab;
   LONG allocSize = 0;
-  LPVOID ptr;
+  char *ptr;
 
   if (!cDims || cDims >= 0x10000) /* 65536 appears to be the limit */
     return E_INVALIDARG;
@@ -181,7 +181,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
   ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, allocSize);
   if (!ptr)
     return E_OUTOFMEMORY;
-  *ppsaOut = ptr+sizeof(GUID);
+  *ppsaOut = (SAFEARRAY *)(ptr + sizeof(GUID));
   (*ppsaOut)->cDims	= cDims;
   TRACE("(%d): %lu bytes allocated for descriptor.\n", cDims, allocSize);
 

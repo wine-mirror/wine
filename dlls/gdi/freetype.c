@@ -1597,7 +1597,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
         for(contour = 0; contour < outline->n_contours; contour++) {
 	    pph_start = needed;
-	    pph = buf + needed;
+	    pph = (TTPOLYGONHEADER *)((char *)buf + needed);
 	    first_pt = point;
 	    if(buf) {
 	        pph->dwType = TT_POLYGON_TYPE;
@@ -1606,7 +1606,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	    needed += sizeof(*pph);
 	    point++;
 	    while(point <= outline->contours[contour]) {
-	        ppc = buf + needed;
+	        ppc = (TTPOLYCURVE *)((char *)buf + needed);
 		type = (outline->tags[point] & FT_Curve_Tag_On) ?
 		  TT_PRIM_LINE : TT_PRIM_QSPLINE;
 		cpfx = 0;
@@ -1673,7 +1673,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
         for(contour = 0; contour < outline->n_contours; contour++) {
 	    pph_start = needed;
-	    pph = buf + needed;
+	    pph = (TTPOLYGONHEADER *)((char *)buf + needed);
 	    first_pt = point;
 	    if(buf) {
 	        pph->dwType = TT_POLYGON_TYPE;
@@ -1682,7 +1682,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	    needed += sizeof(*pph);
 	    point++;
 	    while(point <= outline->contours[contour]) {
-	        ppc = buf + needed;
+	        ppc = (TTPOLYCURVE *)((char *)buf + needed);
 		type = (outline->tags[point] & FT_Curve_Tag_On) ?
 		  TT_PRIM_LINE : TT_PRIM_CSPLINE;
 		cpfx = 0;

@@ -290,21 +290,21 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 			    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32)
 {
     LPWINE_MLD	mld;
+    UINT i;
 
     mld = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (!mld)	return NULL;
 
     /* find an empty slot in MM_MLDrvs table */
-    for (*hndl = 0; (DWORD)*hndl < MAX_MM_MLDRVS; (*hndl)++) {
-	if (!MM_MLDrvs[(UINT)*hndl]) break;
-    }
-    if ((DWORD)*hndl == MAX_MM_MLDRVS) {
+    for (i = 0; i < MAX_MM_MLDRVS; i++) if (!MM_MLDrvs[i]) break;
+
+    if (i == MAX_MM_MLDRVS) {
 	/* the MM_MLDrvs table could be made growable in the future if needed */
 	ERR("Too many open drivers\n");
 	return NULL;
     }
-    MM_MLDrvs[(UINT)*hndl] = mld;
-    *hndl = (HANDLE)((UINT)*hndl | 0x8000);
+    MM_MLDrvs[i] = mld;
+    *hndl = (HANDLE)(i | 0x8000);
 
     mld->type = type;
     if ((UINT)*hndl < MMDRV_GetNum(type) || HIWORD(*hndl) != 0) {

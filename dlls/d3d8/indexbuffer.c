@@ -107,7 +107,7 @@ HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFFER8 ifa
     } else {
         FIXME("(%p) : stub, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
     }
-    *ppbData = This->allocatedMemory + OffsetToLock;
+    *ppbData = (BYTE *)This->allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
 

@@ -143,10 +143,10 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         BOOL                        isLastUByte4;
         int                         numTextures;
         int                         textureNo;
-        const void                 *curVtx = NULL;
+        const char                 *curVtx = NULL;
         const short                *pIdxBufS = NULL;
         const long                 *pIdxBufL = NULL;
-        const void                 *curPos;
+        const char                 *curPos;
         BOOL                        isLightingOn = FALSE;
         BOOL                        enableTexture = FALSE;
         int                         vx_index;
@@ -286,7 +286,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             glBegin(primType);
 
             /* Draw the primitives */
-            curVtx = vertexBufData + (StartVertexIndex * skip);
+            curVtx = (const char *)vertexBufData + (StartVertexIndex * skip);
 
             for (vx_index = 0; vx_index < NumVertexes; vx_index++) {
 
@@ -580,7 +580,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
             /* Faster version, harder to debug */
             /* Shuffle to the beginning of the vertexes to render and index from there */
-            curVtx = vertexBufData + (StartVertexIndex * skip);
+            curVtx = (const char *)vertexBufData + (StartVertexIndex * skip);
             curPos = curVtx;
 
             /* Set up the vertex pointers */
@@ -727,17 +727,19 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 TRACE("glElements(%x, %d, %d, ...)\n", primType, NumVertexes, minIndex);
                 if (idxBytes==2) {
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_SHORT, idxData+(2 * StartIdx)); 
+                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_SHORT,
+                                   (char *)idxData+(2 * StartIdx));
 #else
                     glDrawRangeElements(primType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
-                                        GL_UNSIGNED_SHORT, idxData+(2 * StartIdx));      
+                                        GL_UNSIGNED_SHORT, (char *)idxData+(2 * StartIdx));
 #endif
                 } else {
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_INT, idxData+(4 * StartIdx)); 
+                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_INT,
+                                   (char *)idxData+(4 * StartIdx));
 #else
                     glDrawRangeElements(primType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
-                                        GL_UNSIGNED_INT, idxData+(2 * StartIdx));
+                                        GL_UNSIGNED_INT, (char *)idxData+(2 * StartIdx));
 #endif
                 }
                 checkGLcall("glDrawRangeElements");
@@ -1436,15 +1438,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
         int pitchFrom     = ((IDirect3DSurface8Impl *)pSourceSurface)->myDesc.Width * bytesPerPixel;
         int pitchTo       = ((IDirect3DSurface8Impl *)pDestinationSurface)->myDesc.Width * bytesPerPixel;
 
-        void *copyfrom = ((IDirect3DSurface8Impl *)pSourceSurface)->allocatedMemory;
-        void *copyto   = ((IDirect3DSurface8Impl *)pDestinationSurface)->allocatedMemory;
+        char *copyfrom = ((IDirect3DSurface8Impl *)pSourceSurface)->allocatedMemory;
+        char *copyto   = ((IDirect3DSurface8Impl *)pDestinationSurface)->allocatedMemory;
 
         /* Copy rect by rect */
         for (i=0; i<cRects; i++) {
             CONST RECT *r = &pSourceRectsArray[i];
             CONST POINT *p = &pDestPointsArray[i];
-            void *from;
-            void *to;
+            char *from;
+            char *to;
             int   copyperline   = (r->right - r->left) * bytesPerPixel;
             int j;
 

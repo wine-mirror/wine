@@ -2257,7 +2257,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     DWORD		dwSleepTime;
     DWORD		bytesRead;
     LPVOID		buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, wwi->dwFragmentSize);
-    LPVOID		pOffset = buffer;
+    char               *pOffset = buffer;
     audio_buf_info 	info;
     int 		xs;
     enum win_wm_message msg;

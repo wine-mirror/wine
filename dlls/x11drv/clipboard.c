@@ -1363,10 +1363,10 @@ HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes,
             h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
             if (h)
             {
-                LPVOID pdata = GlobalLock(h);
+                METAFILEPICT *pdata = GlobalLock(h);
 
                 memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
-                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
+                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + 1);
 
                 GlobalUnlock(h);
             }
@@ -1397,7 +1397,7 @@ HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes,
 
                 memcpy(pmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
                 pmfp->hMF = SetMetaFileBitsEx(cbytes - sizeof(METAFILEPICT),
-                                              (LPVOID)hdata + sizeof(METAFILEPICT));
+                                              (char *)hdata + sizeof(METAFILEPICT));
 
                 GlobalUnlock(h);
             }

@@ -638,7 +638,7 @@ dnl **** Check for gcc strength-reduce bug ****
 
 if test "x${GCC}" = "xyes"
 then
-  CFLAGS="$CFLAGS -Wall"
+  CFLAGS="$CFLAGS -Wall -Wpointer-arith"
   AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
                   AC_TRY_RUN([
 int	L[[4]] = {0,1,2,3};

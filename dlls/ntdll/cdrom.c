@@ -1172,7 +1172,7 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
     }
     else
     {
-        cmd.buffer     = ((void*)pPacket) + pPacket->DataBufferOffset;
+        cmd.buffer     = (char*)pPacket + pPacket->DataBufferOffset;
     }
     cmd.buflen         = pPacket->DataTransferLength;
     cmd.sense          = &sense;

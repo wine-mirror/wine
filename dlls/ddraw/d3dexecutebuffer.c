@@ -192,8 +192,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
     /* DWORD vc = This->data.dwVertexCount; */
     DWORD is = This->data.dwInstructionOffset;
     /* DWORD il = This->data.dwInstructionLength; */
-    
-    void *instr = This->desc.lpData + is;
+
+    char *instr = (char *)This->desc.lpData + is;
 
     /* Should check if the viewport was added or not to the device */
 
@@ -504,7 +504,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    /* Enough for the moment */
 		    if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
 		        int nb;
-			D3DVERTEX  *src = ((LPD3DVERTEX)  (This->desc.lpData + vs)) + ci->wStart;
+			D3DVERTEX  *src = ((LPD3DVERTEX)  ((char *)This->desc.lpData + vs)) + ci->wStart;
 			OGL_Vertex *dst = ((OGL_Vertex *) (This->vertex_data)) + ci->wDest;
 			D3DMATRIX *mat = lpDevice->world_mat;
 			
@@ -533,7 +533,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
 		        int nb;
-			D3DLVERTEX *src  = ((LPD3DLVERTEX) (This->desc.lpData + vs)) + ci->wStart;
+			D3DLVERTEX *src  = ((LPD3DLVERTEX) ((char *)This->desc.lpData + vs)) + ci->wStart;
 			OGL_LVertex *dst = ((OGL_LVertex *) (This->vertex_data)) + ci->wDest;
 			D3DMATRIX *mat = lpDevice->world_mat;
 			
@@ -558,7 +558,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			    dst++;
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_COPY) {
-		        D3DTLVERTEX *src = ((LPD3DTLVERTEX) (This->desc.lpData + vs)) + ci->wStart;
+		        D3DTLVERTEX *src = ((LPD3DTLVERTEX) ((char *)This->desc.lpData + vs)) + ci->wStart;
 			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
 			
 			This->vertex_type = D3DVT_TLVERTEX;
