@@ -82,18 +82,6 @@ DDRAW_DGA_Available(void)
 	return 0;
     }
 
-#ifdef HAVE_LIBXXF86DGA2
-    if (majver >= 2) {
-	/* We have DGA 2.0 available ! */
-	if (TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
-	    TSXDGACloseFramebuffer(display, DefaultScreen(display));
-	    return_value = 2;
-	} else
-	    return_value = 0;
-	return return_value;
-    }
-#endif /* defined(HAVE_LIBXXF86DGA2) */
-
     /* You don't have to be root to use DGA extensions. Simply having access
      * to /dev/mem will do the trick
      * This can be achieved by adding the user to the "kmem" group on
@@ -139,105 +127,47 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
     ddraw->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(dga_dd_private));
 
     dgpriv = (dga_dd_private*)ddraw->private;
-#ifdef HAVE_LIBXXF86DGA2
-    if (dga_version == 1) {
-	dgpriv->version = 1;
-#endif /* defined(HAVE_LIBXXF86DGA2) */
-	TSXF86DGAQueryVersion(display,&major,&minor);
-	TRACE("XF86DGA is version %d.%d\n",major,minor);
 
-	TSXF86DGAQueryDirectVideo(display,DefaultScreen(display),&flags);
-	if (!(flags & XF86DGADirectPresent))
-	    MESSAGE("direct video is NOT PRESENT.\n");
-	TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
-	dgpriv->fb_width = width;
-	TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
-	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
-	dgpriv->fb_height = height;
-	TRACE("video framebuffer: begin %p, width %d,banksize %d,memsize %d\n",
-	    addr,width,banksize,memsize
-	);
-	TRACE("viewport height: %d\n",height);
-	/* Get the screen dimensions as seen by Wine.
-	 * In that case, it may be better to ignore the -desktop mode and
-	 * return the real screen size => print a warning
-	 */
-	ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-	ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-	if ((ddraw->d.height != height) || (ddraw->d.width  != width))
-		WARN("You seem to be running in -desktop mode. This may prove dangerous in DGA mode...\n");
-	dgpriv->fb_addr		= addr;
-	dgpriv->fb_memsize	= memsize;
-	dgpriv->vpmask		= 0;
+    TSXF86DGAQueryVersion(display,&major,&minor);
+    TRACE("XF86DGA is version %d.%d\n",major,minor);
+    
+    TSXF86DGAQueryDirectVideo(display,DefaultScreen(display),&flags);
+    if (!(flags & XF86DGADirectPresent))
+      MESSAGE("direct video is NOT PRESENT.\n");
+    TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
+    dgpriv->fb_width = width;
+    TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
+    TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
+    dgpriv->fb_height = height;
+    TRACE("video framebuffer: begin %p, width %d,banksize %d,memsize %d\n",
+	  addr,width,banksize,memsize
+	  );
+    TRACE("viewport height: %d\n",height);
+    /* Get the screen dimensions as seen by Wine.
+     * In that case, it may be better to ignore the -desktop mode and
+     * return the real screen size => print a warning
+     */
+    ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    if ((ddraw->d.height != height) || (ddraw->d.width  != width))
+      WARN("You seem to be running in -desktop mode. This may prove dangerous in DGA mode...\n");
+    dgpriv->fb_addr		= addr;
+    dgpriv->fb_memsize	= memsize;
+    dgpriv->vpmask		= 0;
 
-	/* just assume the default depth is the DGA depth too */
-	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-
-	_common_depth_to_pixelformat(depth, &(ddraw->d.directdraw_pixelformat), &(ddraw->d.screen_pixelformat), NULL);
-
+    /* The cast is because DGA2's install colormap does not return a value whereas
+       DGA1 version does */
+    dgpriv->InstallColormap = (void (*)(Display *, int, Colormap)) TSXF86DGAInstallColormap;
+    
+    /* just assume the default depth is the DGA depth too */
+    depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+    
+    _common_depth_to_pixelformat(depth, &(ddraw->d.directdraw_pixelformat), &(ddraw->d.screen_pixelformat), NULL);
+    
 #ifdef RESTORE_SIGNALS
-	SIGNAL_Init();
+    SIGNAL_Init();
 #endif
-#ifdef HAVE_LIBXXF86DGA2
-    } else {
-	XDGAMode *modes;
-	int i, num_modes;
-	int mode_to_use = 0;
 
-	dgpriv->version = 2;
-
-	TSXDGAQueryVersion(display,&major,&minor);
-	TRACE("XDGA is version %d.%d\n",major,minor);
-
-	TRACE("Opening the frame buffer.\n");
-	if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
-	    ERR("Error opening the frame buffer !!!\n");
-	    return DDERR_GENERIC;
-	}
-
-	/* List all available modes */
-	modes = TSXDGAQueryModes(display, DefaultScreen(display), &num_modes);
-	dgpriv->modes		= modes;
-	dgpriv->num_modes	= num_modes;
-
-	TRACE("Available modes :\n");
-	for (i = 0; i < num_modes; i++) {
-	    if (TRACE_ON(ddraw)) {
-		DPRINTF("   %d) - %s (FB: %dx%d / VP: %dx%d) - depth %d -",
-		    modes[i].num,
-		    modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
-		    modes[i].viewportWidth, modes[i].viewportHeight,
-		    modes[i].depth
-		);
-#define XX(x) if (modes[i].flags & x) DPRINTF(" "#x" ");
-		XX(XDGAConcurrentAccess);
-		XX(XDGASolidFillRect);
-		XX(XDGABlitRect);
-		XX(XDGABlitTransRect);
-		XX(XDGAPixmap);
-#undef XX
-		DPRINTF("\n");
-	    }
-	    if ((MONITOR_GetHeight(&MONITOR_PrimaryMonitor) == modes[i].viewportHeight) &&
-		(MONITOR_GetWidth(&MONITOR_PrimaryMonitor) == modes[i].viewportWidth) &&
-		(MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == modes[i].depth)
-	    ) {
-		mode_to_use = modes[i].num;
-	    }
-	}
-	if (mode_to_use == 0) {
-	    ERR("Could not find mode !\n");
-	    mode_to_use = 1;
-	} else {
-	    DPRINTF("Using mode number %d\n", mode_to_use);
-	}
-
-	/* Initialize the frame buffer */
-	_DGA_Initialize_FrameBuffer(*lplpDD, mode_to_use);
-	/* Set the input handling for relative mouse movements */
-	X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
-    }
-#endif /* defined(HAVE_LIBXXF86DGA2) */
     return DD_OK;
 }
 

@@ -57,7 +57,10 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 /*******************************************************************************
  *				IDirectDraw
  */
-static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
+
+/* This function is used both by DGA and DGA2 drivers, thus the virtual function table
+   is not set here, but in the calling function */
+HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(
     LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
     IUnknown *lpunk
 ) {
@@ -85,12 +88,6 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     IDirectDraw2_AddRef(iface);
 
     dsurf->ref = 1;
-#ifdef HAVE_LIBXXF86DGA2
-    if (ddpriv->version == 2)
-      ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga2_dds4vt;
-    else
-#endif /* defined(HAVE_LIBXXF86DGA2) */
-      ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
     dsurf->s.ddraw = This;
     dsurf->s.palette = NULL;
     dspriv->fb_height = -1; /* This is to have non-on screen surfaces freed */
@@ -194,84 +191,21 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     return DD_OK;
 }
 
-#ifdef HAVE_LIBXXF86DGA2
-static HRESULT WINAPI DGA_IDirectDraw2Impl_SetCooperativeLevel(
-    LPDIRECTDRAW2 iface,HWND hwnd,DWORD cooplevel
+static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
+    LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
+    IUnknown *lpunk
 ) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    DDPRIVATE(This);
-    HRESULT ret;
-    int evbase, erbase;
+  HRESULT ret;
+  IDirectDrawSurfaceImpl* dsurf;
 
-    ret = IDirectDraw2Impl_SetCooperativeLevel(iface, hwnd, cooplevel);
+  ret = DGA_IDirectDraw2Impl_CreateSurface_no_VT(iface, lpddsd, lpdsf, lpunk);
 
-    if (ddpriv->version != 2) {
-	return ret;
-    } else {
-	if (ret != DD_OK)
-	  return ret;
+  dsurf = *(IDirectDrawSurfaceImpl**)lpdsf;
+  ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
 
-	TSXDGAQueryExtension(display, &evbase, &erbase);
-
-	/* Now, start handling of DGA events giving the handle to the DDraw window
-	   as the window for which the event will be reported */
-	TSXDGASelectInput(display, DefaultScreen(display),
-			  KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
-	X11DRV_EVENT_SetDGAStatus(hwnd, evbase);
-	return DD_OK;
-    }
+  return ret;
 }
-#endif
 
-#ifdef HAVE_LIBXXF86DGA2
-void _DGA_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
-    DDPIXELFORMAT *pf = &(This->d.directdraw_pixelformat);
-    DDPRIVATE(This);
-
-    /* Now, get the device / mode description */
-    ddpriv->dev = TSXDGASetMode(display, DefaultScreen(display), mode);
-
-    ddpriv->fb_width = ddpriv->dev->mode.imageWidth;
-    TSXDGASetViewport(display,DefaultScreen(display),0,0, XDGAFlipImmediate);
-    ddpriv->fb_height = ddpriv->dev->mode.viewportHeight;
-    TRACE("video framebuffer: begin %p, width %d, memsize %d\n",
-	ddpriv->dev->data,
-	ddpriv->dev->mode.imageWidth,
-	(ddpriv->dev->mode.imageWidth *
-	 ddpriv->dev->mode.imageHeight *
-	 (ddpriv->dev->mode.bitsPerPixel / 8))
-    );
-    TRACE("viewport height: %d\n", ddpriv->dev->mode.viewportHeight);
-    /* Get the screen dimensions as seen by Wine.
-     * In that case, it may be better to ignore the -desktop mode and return the
-     * real screen size => print a warning */
-    This->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    This->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-    ddpriv->fb_addr = ddpriv->dev->data;
-    ddpriv->fb_memsize = (ddpriv->dev->mode.imageWidth *
-			      ddpriv->dev->mode.imageHeight *
-			      (ddpriv->dev->mode.bitsPerPixel / 8));
-    ddpriv->vpmask = 0;
-
-    /* Fill the screen pixelformat */
-    pf->dwSize = sizeof(DDPIXELFORMAT);
-    pf->dwFourCC = 0;
-    pf->u.dwRGBBitCount = ddpriv->dev->mode.bitsPerPixel;
-    if (ddpriv->dev->mode.depth == 8) {
-	pf->dwFlags = DDPF_PALETTEINDEXED8|DDPF_RGB;
-	pf->u1.dwRBitMask = 0;
-	pf->u2.dwGBitMask = 0;
-	pf->u3.dwBBitMask = 0;
-    } else {
-	pf->dwFlags = DDPF_RGB;
-	pf->u1.dwRBitMask = ddpriv->dev->mode.redMask;
-	pf->u2.dwGBitMask = ddpriv->dev->mode.greenMask;
-	pf->u3.dwBBitMask = ddpriv->dev->mode.blueMask;
-    }
-    pf->u4.dwRGBAlphaBitMask= 0;
-    This->d.screen_pixelformat = *pf; 
-}
-#endif /* defined(HAVE_LIBXXF86DGA2) */
 
 static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
     LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
@@ -281,45 +215,6 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
     int	i,mode_count;
 
     TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
-
-#ifdef HAVE_LIBXXF86DGA2
-    if (ddpriv->version == 2) {
-	XDGAMode *modes = ddpriv->modes;
-	int mode_to_use = -1;
-
-	/* Search in the list a display mode that corresponds to what is requested */
-	for (i = 0; i < ddpriv->num_modes; i++) {
-	    if ((height == modes[i].viewportHeight) &&
-		(width == modes[i].viewportWidth) &&
-		(depth == modes[i].depth)
-	    )
-		mode_to_use = modes[i].num;
-	}
-
-	if (mode_to_use < 0) {
-	    ERR("Could not find matching mode !!!\n");
-	    return DDERR_UNSUPPORTEDMODE;
-	} else {
-	    TRACE("Using mode number %d\n", mode_to_use);
-
-	    TSXDGACloseFramebuffer(display, DefaultScreen(display));
-
-	    if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
-		ERR("Error opening the frame buffer !!!\n");
-		return DDERR_GENERIC;
-	    }
-
-	    /* Initialize the frame buffer */
-	    _DGA_Initialize_FrameBuffer(This, mode_to_use);
-
-	    /* Re-get (if necessary) the DGA events */
-	    TSXDGASelectInput(display, DefaultScreen(display),
-		KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask );
-	}
-
-	return DD_OK;
-    }
-#endif /* defined(HAVE_LIBXXF86DGA2) */
 
     /* We hope getting the asked for depth */
     if (_common_depth_to_pixelformat(depth, &(This->d.directdraw_pixelformat), &(This->d.screen_pixelformat), NULL) != -1) {
@@ -341,9 +236,6 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
     _common_IDirectDrawImpl_SetDisplayMode(This);
 
 #ifdef HAVE_LIBXXF86VM
-#ifdef HAVE_LIBXXF86DGA2
-    if (ddpriv->version == 1) /* Only for DGA 1.0, it crashes with DGA 2.0 */
-#endif /* defined(HAVE_LIBXXF86DGA2) */
     {
 	XF86VidModeModeInfo **all_modes, *vidmode = NULL;
 	XF86VidModeModeLine mod_tmp;
@@ -403,7 +295,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
     return DD_OK;
 }
 
-static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
+HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
     LPDIRECTDRAW2 iface,LPDDCAPS caps1,LPDDCAPS caps2
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
@@ -425,6 +317,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
     return DD_OK;
 }
 
+#if 0 /* Not used as of now.... */
 static void fill_caps(LPDDCAPS caps) {
     /* This function tries to fill the capabilities of Wine's DDraw
      * implementation. Needs to be fixed, though.. */
@@ -458,6 +351,7 @@ static void fill_caps(LPDDCAPS caps) {
     caps->ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
 #endif
 }
+#endif
 
 static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
     LPDIRECTDRAW2 iface,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
@@ -515,42 +409,24 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 
 static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     ICOM_THIS(IDirectDraw2Impl,iface);
-    DDPRIVATE(This);
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
-#ifdef HAVE_LIBXXF86DGA2
-       if (ddpriv->version == 2) {
-	    TRACE("Closing access to the FrameBuffer\n");
-	    TSXDGACloseFramebuffer(display, DefaultScreen(display));
-	    TRACE("Going back to normal X mode of operation\n");
-	    TSXDGASetMode(display, DefaultScreen(display), 0);
-
-	    /* Set the input handling back to absolute */
-	    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
-
-	    /* Remove the handling of DGA2 events */
-	    X11DRV_EVENT_SetDGAStatus(0, -1);
-
-	    /* Free the modes list */
-	    TSXFree(ddpriv->modes);
-       } else
-#endif /* defined(HAVE_LIBXXF86DGA2) */
-	 TSXF86DGADirectVideo(display,DefaultScreen(display),0);
-	 if (This->d.window && GetPropA(This->d.window,ddProp))
-	    DestroyWindow(This->d.window);
+      TSXF86DGADirectVideo(display,DefaultScreen(display),0);
+      if (This->d.window && GetPropA(This->d.window,ddProp))
+	DestroyWindow(This->d.window);
 #ifdef HAVE_LIBXXF86VM
-	if (orig_mode) {
-	    TSXF86VidModeSwitchToMode(
-		display,
-		DefaultScreen(display),
-		orig_mode
-	    );
-	    if (orig_mode->privsize)
+      if (orig_mode) {
+	TSXF86VidModeSwitchToMode(
+				  display,
+				  DefaultScreen(display),
+				  orig_mode
+				  );
+	if (orig_mode->privsize)
 		TSXFree(orig_mode->private);		
-	    free(orig_mode);
-	    orig_mode = NULL;
-	}
+	free(orig_mode);
+	orig_mode = NULL;
+      }
 #endif
 	
 #ifdef RESTORE_SIGNALS
@@ -562,7 +438,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     return This->ref;
 }
 
-static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
+HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
     LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
@@ -612,7 +488,6 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
     DDSURFACEDESC	ddsfd;
-    DDPRIVATE(This);
     static struct {
 	    int w,h;
     } modes[5] = { /* some usual modes */
@@ -635,116 +510,68 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
     ddsfd.ddsCaps.dwCaps = 0;
     ddsfd.dwBackBufferCount = 1;
 
-#ifdef HAVE_LIBXXF86DGA2
-    if (ddpriv->version == 2) {
-      XDGAMode *modes = ddpriv->modes;
-
-      ddsfd.dwFlags |= DDSD_PITCH;
-      for (i = 0; i < ddpriv->num_modes; i++) {
-	    if (TRACE_ON(ddraw)) {
-	      DPRINTF("  Enumerating mode %d : %s (FB: %dx%d / VP: %dx%d) - depth %d -",
-		      modes[i].num,
-		      modes[i].name, modes[i].imageWidth, modes[i].imageHeight,
-		      modes[i].viewportWidth, modes[i].viewportHeight,
-		      modes[i].depth);
-	      if (modes[i].flags & XDGAConcurrentAccess) DPRINTF(" XDGAConcurrentAccess ");
-	      if (modes[i].flags & XDGASolidFillRect) DPRINTF(" XDGASolidFillRect ");
-	      if (modes[i].flags & XDGABlitRect) DPRINTF(" XDGABlitRect ");
-	      if (modes[i].flags & XDGABlitTransRect) DPRINTF(" XDGABlitTransRect ");
-	      if (modes[i].flags & XDGAPixmap) DPRINTF(" XDGAPixmap ");
-	      DPRINTF("\n");
-	    }
-	    /* Fill the pixel format */
-	    ddsfd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-	    ddsfd.ddpfPixelFormat.dwFourCC = 0;
-	    ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-	    ddsfd.ddpfPixelFormat.u.dwRGBBitCount = modes[i].bitsPerPixel;
-	    if (modes[i].depth == 8) {
-	      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB|DDPF_PALETTEINDEXED8;
-	      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
-	      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
-	      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
-	      ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
-	    } else {
-	      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-	      ddsfd.ddpfPixelFormat.u1.dwRBitMask = modes[i].redMask;
-	      ddsfd.ddpfPixelFormat.u2.dwGBitMask = modes[i].greenMask;
-	      ddsfd.ddpfPixelFormat.u3.dwBBitMask = modes[i].blueMask;
-	    }
-	    
-	    ddsfd.dwWidth = modes[i].viewportWidth;
-	    ddsfd.dwHeight = modes[i].viewportHeight;
-	    ddsfd.lPitch = modes[i].imageWidth;
-	      
-	    /* Send mode to the application */
-	    if (!modescb(&ddsfd,context)) return DD_OK;
-	  }
-	} else {
-#endif
-	for (i=0;i<sizeof(depths)/sizeof(depths[0]);i++) {
-		ddsfd.dwBackBufferCount = 1;
-		ddsfd.ddpfPixelFormat.dwFourCC	= 0;
-		ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
-		ddsfd.ddpfPixelFormat.u.dwRGBBitCount	= depths[i];
-		/* FIXME: those masks would have to be set in depth > 8 */
-		if (depths[i]==8) {
-		  ddsfd.ddpfPixelFormat.u1.dwRBitMask  	= 0;
-		  ddsfd.ddpfPixelFormat.u2.dwGBitMask  	= 0;
-		  ddsfd.ddpfPixelFormat.u3.dwBBitMask 	= 0;
-		  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-		  ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
-		  ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
-		} else {
-		  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-		  
-		  /* FIXME: We should query those from X itself */
-		  switch (depths[i]) {
-		  case 16:
-		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0xF800;
-		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x07E0;
-		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x001F;
-		    break;
-		  case 24:
-		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
-		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
-		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
-		    break;
-		  case 32:
-		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
-		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
-		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
-		    break;
-		  }
-		}
-
-		ddsfd.dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-		ddsfd.dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-		TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-		if (!modescb(&ddsfd,context)) return DD_OK;
-
-		for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
-			ddsfd.dwWidth	= modes[j].w;
-			ddsfd.dwHeight	= modes[j].h;
-			TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
-			if (!modescb(&ddsfd,context)) return DD_OK;
-		}
-
-		if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
-			/* modeX is not standard VGA */
-
-			ddsfd.dwHeight = 200;
-			ddsfd.dwWidth = 320;
-			TRACE(" enumerating (320x200x%d)\n",depths[i]);
-			if (!modescb(&ddsfd,context)) return DD_OK;
-		}
+    for (i=0;i<sizeof(depths)/sizeof(depths[0]);i++) {
+      ddsfd.dwBackBufferCount = 1;
+      ddsfd.ddpfPixelFormat.dwFourCC	= 0;
+      ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
+      ddsfd.ddpfPixelFormat.u.dwRGBBitCount	= depths[i];
+      /* FIXME: those masks would have to be set in depth > 8 */
+      if (depths[i]==8) {
+	ddsfd.ddpfPixelFormat.u1.dwRBitMask  	= 0;
+	ddsfd.ddpfPixelFormat.u2.dwGBitMask  	= 0;
+	ddsfd.ddpfPixelFormat.u3.dwBBitMask 	= 0;
+	ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
+	ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
+	ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
+      } else {
+	ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
+	
+	/* FIXME: We should query those from X itself */
+	switch (depths[i]) {
+	case 16:
+	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0xF800;
+	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x07E0;
+	  ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x001F;
+	  break;
+	case 24:
+	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
+	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
+	  ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
+	  break;
+	case 32:
+	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
+	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
+	  ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
+	  break;
 	}
-#ifdef HAVE_LIBXXF86DGA2
       }
-#endif
-	return DD_OK;
+      
+      ddsfd.dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+      ddsfd.dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+      TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
+      if (!modescb(&ddsfd,context)) return DD_OK;
+      
+      for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
+	ddsfd.dwWidth	= modes[j].w;
+	ddsfd.dwHeight	= modes[j].h;
+	TRACE(" enumerating (%ldx%ldx%d)\n",ddsfd.dwWidth,ddsfd.dwHeight,depths[i]);
+	if (!modescb(&ddsfd,context)) return DD_OK;
+      }
+      
+      if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
+	/* modeX is not standard VGA */
+	
+	ddsfd.dwHeight = 200;
+	ddsfd.dwWidth = 320;
+	TRACE(" enumerating (320x200x%d)\n",depths[i]);
+	if (!modescb(&ddsfd,context)) return DD_OK;
+      }
+    }
+
+    return DD_OK;
 }
 
-static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
+HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsfd
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
@@ -794,11 +621,7 @@ struct ICOM_VTABLE(IDirectDraw) dga_ddvt =
     XCAST(GetVerticalBlankStatus)IDirectDraw2Impl_GetVerticalBlankStatus,
     XCAST(Initialize)IDirectDraw2Impl_Initialize,
     XCAST(RestoreDisplayMode)DGA_IDirectDraw2Impl_RestoreDisplayMode,
-#ifdef HAVE_LIBXXF86DGA2
-    XCAST(SetCooperativeLevel)DGA_IDirectDraw2Impl_SetCooperativeLevel,
-#else
     XCAST(SetCooperativeLevel)IDirectDraw2Impl_SetCooperativeLevel,
-#endif
     DGA_IDirectDrawImpl_SetDisplayMode,
     XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
 };
@@ -816,7 +639,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_SetDisplayMode(
     return DGA_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
 }
 
-static HRESULT WINAPI DGA_IDirectDraw2Impl_GetAvailableVidMem(
+HRESULT WINAPI DGA_IDirectDraw2Impl_GetAvailableVidMem(
     LPDIRECTDRAW2 iface,LPDDSCAPS ddscaps,LPDWORD total,LPDWORD free
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);

@@ -55,12 +55,7 @@ HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 	This->palents[start+i].peGreen = palent[i].peGreen;
 	This->palents[start+i].peFlags = palent[i].peFlags;
     }
-#ifdef HAVE_LIBXXF86DGA2
-    if (ddpriv->version == 2) {
-	TSXDGAInstallColormap(display,DefaultScreen(display),dppriv->cm);
-    } else
-#endif /* defined(HAVE_LIBXXF86DGA2) */
-	TSXF86DGAInstallColormap(display,DefaultScreen(display),dppriv->cm);
+    ddpriv->InstallColormap(display,DefaultScreen(display),dppriv->cm);
     return DD_OK;
 }
 ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = 

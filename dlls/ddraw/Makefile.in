@@ -26,9 +26,15 @@ DGA_SRCS = \
 	dsurface/dga.c \
 	dga.c
 
+DGA2_SRCS= \
+	dga2.c \
+	dsurface/dga2.c \
+	ddraw/dga2.c
+
 XFILES = \
 	@DGA_SRCS@ \
 	@MESA_SRCS@ \
+	@DGA2_SRCS@ \
 	ddraw/x11.c \
 	dpalette/x11.c \
 	dsurface/x11.c \
