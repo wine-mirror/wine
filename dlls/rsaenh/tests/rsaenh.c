@@ -83,7 +83,7 @@ static void clean_up_environment(void)
 
     result = CryptReleaseContext(hProv, 1);
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%08lx\n", GetLastError());
-		
+        
     CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
@@ -1085,6 +1085,40 @@ static void test_verify_signature() {
     if (!result) return;
 }
 
+void test_rsa_encrypt()
+{
+    HCRYPTKEY hRSAKey;
+    BYTE abData[2048] = "Wine rocks!";
+    BOOL result;
+    DWORD dwLen;
+
+    /* It is allowed to use the key exchange key for encryption/decryption */
+    result = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &hRSAKey);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    dwLen = 12;
+    result = CryptEncrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen, (DWORD)sizeof(abData));
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    result = CryptDecrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen);
+    ok (result && dwLen == 12 && !memcmp(abData, "Wine rocks!", 12), "%08lx\n", GetLastError());
+    
+    CryptDestroyKey(hRSAKey);
+
+    /* It is not allowed to use the signature key for encryption/decryption */
+    result = CryptGetUserKey(hProv, AT_SIGNATURE, &hRSAKey);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    dwLen = 12;
+    result = CryptEncrypt(hRSAKey, 0, TRUE, 0, abData, &dwLen, (DWORD)sizeof(abData));
+    ok (!result && GetLastError() == NTE_BAD_KEY, "%08lx\n", GetLastError());
+
+    CryptDestroyKey(hRSAKey);
+}
+        
 void test_schannel_provider()
 {
     HCRYPTPROV hProv;
@@ -1349,6 +1383,7 @@ START_TEST(rsaenh)
     test_block_cipher_modes();
     test_import_private();
     test_verify_signature();
+    test_rsa_encrypt();
     clean_up_environment();
     test_schannel_provider();
 }

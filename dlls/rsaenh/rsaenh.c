@@ -744,6 +744,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
     DWORD dwKeyLen = HIWORD(dwFlags);
     const PROV_ENUMALGS_EX *peaAlgidInfo;
 
+    *ppCryptKey = NULL;
+    
     /* 
      * Retrieve the CSP's capabilities for the given ALG_ID value
      */
@@ -1275,6 +1277,84 @@ exit:
 }
 
 /******************************************************************************
+ * pad_data [Internal]
+ *
+ * Helper function for data padding according to PKCS1 #2
+ *
+ * PARAMS
+ *  abData      [I] The data to be padded
+ *  dwDataLen   [I] Length of the data 
+ *  abBuffer    [O] Padded data will be stored here
+ *  dwBufferLen [I] Length of the buffer (also length of padded data)
+ *  dwFlags     [I] Padding format (CRYPT_SSL2_FALLBACK)
+ *
+ * RETURN
+ *  Success: TRUE
+ *  Failure: FALSE (NTE_BAD_LEN, too much data to pad)
+ */
+static BOOL pad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD dwBufferLen, 
+                     DWORD dwFlags)
+{
+    DWORD i;
+    
+    /* Ensure there is enough space for PKCS1 #2 padding */
+    if (dwDataLen > dwBufferLen-11) {
+        SetLastError(NTE_BAD_LEN);
+        return FALSE;
+    }
+
+    memmove(abBuffer + dwBufferLen - dwDataLen, abData, dwDataLen);            
+    
+    abBuffer[0] = 0x00;
+    abBuffer[1] = RSAENH_PKC_BLOCKTYPE; 
+    for (i=2; i < dwBufferLen - dwDataLen - 1; i++) 
+        do gen_rand_impl(&abBuffer[i], 1); while (!abBuffer[i]);
+    if (dwFlags & CRYPT_SSL2_FALLBACK) 
+        for (i-=8; i < dwBufferLen - dwDataLen - 1; i++) 
+            abBuffer[i] = 0x03;
+    abBuffer[i] = 0x00;
+    
+    return TRUE; 
+}
+
+/******************************************************************************
+ * unpad_data [Internal]
+ *
+ * Remove the PKCS1 padding from RSA decrypted data
+ *
+ * PARAMS
+ *  abData      [I]   The padded data
+ *  dwDataLen   [I]   Length of the padded data
+ *  abBuffer    [O]   Data without padding will be stored here
+ *  dwBufferLen [I/O] I: Length of the buffer, O: Length of unpadded data
+ *  dwFlags     [I]   Currently none defined
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE, (NTE_BAD_DATA, no valid PKCS1 padding or buffer too small)
+ */
+static BOOL unpad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWORD *dwBufferLen, 
+                       DWORD dwFlags)
+{
+    DWORD i;
+    
+    for (i=2; i<dwDataLen; i++)
+        if (!abData[i])
+            break;
+
+    if ((i == dwDataLen) || (*dwBufferLen < dwDataLen - i - 1) ||
+        (abData[0] != 0x00) || (abData[1] != RSAENH_PKC_BLOCKTYPE))
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+
+    *dwBufferLen = dwDataLen - i - 1;
+    memmove(abBuffer, abData + i + 1, *dwBufferLen);
+    return TRUE;
+}
+
+/******************************************************************************
  * CPAcquireContext (RSAENH.@)
  *
  * Acquire a handle to the key container specified by pszContainer
@@ -1719,11 +1799,6 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
-    if (GET_ALG_CLASS(pCryptKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT) {
-        SetLastError(NTE_BAD_TYPE);
-        return FALSE;
-    }    
-    
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
         pCryptKey->dwState = RSAENH_KEYSTATE_ENCRYPTING;
 
@@ -1786,6 +1861,22 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         }
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
+    } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_RSA) {
+		if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
+			SetLastError(NTE_BAD_KEY);
+			return FALSE;
+		}
+        if (dwBufLen < pCryptKey->dwBlockLen) {
+            SetLastError(ERROR_MORE_DATA);
+            return FALSE;
+        }
+        if (!pad_data(pbData, *pdwDataLen, pbData, pCryptKey->dwBlockLen, dwFlags)) return FALSE;
+        encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, pbData, RSAENH_ENCRYPT);
+        *pdwDataLen = pCryptKey->dwBlockLen;
+        Final = TRUE;
+    } else {
+        SetLastError(NTE_BAD_TYPE);
+        return FALSE;
     }
 
     if (Final) setup_key(pCryptKey);
@@ -1845,11 +1936,6 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
-    if (GET_ALG_CLASS(pCryptKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT) {
-        SetLastError(NTE_BAD_TYPE);
-        return FALSE;
-    } 
-    
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
         pCryptKey->dwState = RSAENH_KEYSTATE_DECRYPTING;
 
@@ -1896,8 +1982,18 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         encrypt_stream_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, *pdwDataLen);
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_RSA) {
+		if (pCryptKey->aiAlgid == CALG_RSA_SIGN) {
+			SetLastError(NTE_BAD_KEY);
+			return FALSE;
+		}
         encrypt_block_impl(pCryptKey->aiAlgid, &pCryptKey->context, pbData, pbData, RSAENH_DECRYPT);
-    }
+        if (!unpad_data(pbData, pCryptKey->dwBlockLen, pbData, pdwDataLen, dwFlags)) return FALSE;
+        Final = TRUE;
+    } else {
+        SetLastError(NTE_BAD_TYPE);
+        return FALSE;
+    } 
+    
     if (Final) setup_key(pCryptKey);
 
     if (is_valid_handle(&handle_table, hHash, RSAENH_MAGIC_HASH)) {
@@ -1932,8 +2028,7 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
     BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
     RSAPUBKEY *pRSAPubKey = (RSAPUBKEY*)(pBlobHeader+1);
     ALG_ID *pAlgid = (ALG_ID*)(pBlobHeader+1);
-    DWORD dwDataLen, i;
-    BYTE *pbRawData;
+    DWORD dwDataLen;
     
     TRACE("(hProv=%08lx, hKey=%08lx, hPubKey=%08lx, dwBlobType=%08lx, dwFlags=%08lx, pbData=%p,"
           "pdwDataLen=%p)\n", hProv, hKey, hPubKey, dwBlobType, dwFlags, pbData, pdwDataLen);
@@ -1984,22 +2079,15 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
                 pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
 
                 *pAlgid = pPubKey->aiAlgid;
-        
-                pbRawData = (BYTE*)(pAlgid+1);
-                pbRawData[0] = 0x00;
-                pbRawData[1] = RSAENH_PKC_BLOCKTYPE; 
-                for (i=2; i < pPubKey->dwBlockLen - pCryptKey->dwKeyLen - 1; i++) 
-                    do gen_rand_impl(&pbRawData[i], 1); while (!pbRawData[i]);
-                if (dwFlags & CRYPT_SSL2_FALLBACK) 
-                    for (i-=8; i < pPubKey->dwBlockLen - pCryptKey->dwKeyLen - 1; i++) 
-                        pbRawData[i] = 0x03;
-                pbRawData[i] = 0x00;
-                for (i=0; i<pCryptKey->dwKeyLen; i++) 
-                    pbRawData[pPubKey->dwBlockLen - pCryptKey->dwKeyLen + i] = 
-                        pCryptKey->abKeyValue[i];
-    
-                encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, pbRawData, pbRawData, 
-                                   RSAENH_ENCRYPT); 
+       
+                if (!pad_data(pCryptKey->abKeyValue, pCryptKey->dwKeyLen, (BYTE*)(pAlgid+1), 
+                              pPubKey->dwBlockLen, dwFlags))
+                {
+                    return FALSE;
+                }
+                
+                encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, (BYTE*)(pAlgid+1), 
+                                   (BYTE*)(pAlgid+1), RSAENH_ENCRYPT); 
             }
             *pdwDataLen = dwDataLen;
             return TRUE;
@@ -2098,7 +2186,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     CONST ALG_ID *pAlgid = (CONST ALG_ID*)(pBlobHeader+1);
     CONST BYTE *pbKeyStream = (CONST BYTE*)(pAlgid + 1);
     BYTE *pbDecrypted;
-    DWORD dwKeyLen, i;
+    DWORD dwKeyLen;
 
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%ld, hPubKey=%08lx, dwFlags=%08lx, phKey=%p)\n", 
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
@@ -2169,24 +2257,19 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
             encrypt_block_impl(pPubKey->aiAlgid, &pPubKey->context, pbKeyStream, pbDecrypted, 
                                RSAENH_DECRYPT);
 
-            for (i=2; i<pPubKey->dwBlockLen && pbDecrypted[i]; i++); 
-            if ((i==pPubKey->dwBlockLen) ||
-                (pbDecrypted[0] != 0x00) ||
-                (pbDecrypted[1] != RSAENH_PKC_BLOCKTYPE))
-            {
+            dwKeyLen = RSAENH_MAX_KEY_SIZE;
+            if (!unpad_data(pbDecrypted, pPubKey->dwBlockLen, pbDecrypted, &dwKeyLen, dwFlags)) {
                 HeapFree(GetProcessHeap(), 0, pbDecrypted);
-                SetLastError(NTE_BAD_DATA); /* FIXME: error code */
                 return FALSE;
             }
-
-            dwKeyLen = pPubKey->dwBlockLen-i-1;
+            
             *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
             {
                 HeapFree(GetProcessHeap(), 0, pbDecrypted);
                 return FALSE;
             }
-            memcpy(pCryptKey->abKeyValue, pbDecrypted+i+1, dwKeyLen);
+            memcpy(pCryptKey->abKeyValue, pbDecrypted, dwKeyLen);
             HeapFree(GetProcessHeap(), 0, pbDecrypted);
             setup_key(pCryptKey);
             return TRUE;
