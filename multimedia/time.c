@@ -14,13 +14,12 @@
 #include "callback.h"
 #include "mmsystem.h"
 #include "xmalloc.h"
+#include "services.h"
 #include "options.h"
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(mmsys)
 DECLARE_DEBUG_CHANNEL(mmtime)
-
-#define USE_FAKE_MM_TIMERS
 
 static MMTIME16 mmSysTimeMS;
 static MMTIME16 mmSysTimeSMPTE;
@@ -39,12 +38,7 @@ typedef struct tagTIMERENTRY {
 } TIMERENTRY, *LPTIMERENTRY;
 
 static LPTIMERENTRY lpTimerList = NULL;
-
-#ifdef USE_FAKE_MM_TIMERS
-static DWORD dwLastCBTick = 0;
-static BOOL bUseFakeTimers = FALSE;
-static WORD wInCallBackLoop = 0;
-#endif
+static HANDLE hMMTimer;
 
 /*
  * FIXME
@@ -52,7 +46,7 @@ static WORD wInCallBackLoop = 0;
  * as Windows 95 does, according to the docs. Maybe it should
  * depend on the computers resources!
  */
-#define MMSYSTIME_MININTERVAL (1)
+#define MMSYSTIME_MININTERVAL /* (1) */ (10)
 #define MMSYSTIME_MAXINTERVAL (65535)
 
 static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
@@ -99,30 +93,20 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static VOID WINAPI TIME_MMSysTimeCallback( HWND hwnd, UINT msg,
-                                    UINT id, DWORD dwTime )
+static VOID CALLBACK TIME_MMSysTimeCallback( ULONG_PTR dummy )
 {
     LPTIMERENTRY lpTimer;
     
     mmSysTimeMS.u.ms += MMSYSTIME_MININTERVAL;
     mmSysTimeSMPTE.u.smpte.frame++;
     
-#ifdef USE_FAKE_MM_TIMERS
-    if (bUseFakeTimers)
-	dwLastCBTick = GetTickCount();
-
-    if (!wInCallBackLoop++)
-#endif
-	for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->Next) {
-	    if (lpTimer->wCurTime < MMSYSTIME_MININTERVAL) {
-		TIME_TriggerCallBack(lpTimer, dwTime);			
-	    } else {
-		lpTimer->wCurTime -= MMSYSTIME_MININTERVAL;
-	    }
+    for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->Next) {
+	if (lpTimer->wCurTime < MMSYSTIME_MININTERVAL) {
+	    TIME_TriggerCallBack(lpTimer, mmSysTimeMS.u.ms);
+	} else {
+	    lpTimer->wCurTime -= MMSYSTIME_MININTERVAL;
 	}
-#ifdef USE_FAKE_MM_TIMERS
-    wInCallBackLoop--;
-#endif
+    }
 }
 
 /**************************************************************************
@@ -135,7 +119,7 @@ static void StartMMTime()
     if (!mmTimeStarted) {
 	mmTimeStarted = TRUE;
 	mmSysTimeMS.wType = TIME_MS;
-	mmSysTimeMS.u.ms = 0;
+	mmSysTimeMS.u.ms = GetTickCount();
 	mmSysTimeSMPTE.wType = TIME_SMPTE;
 	mmSysTimeSMPTE.u.smpte.hour = 0;
 	mmSysTimeSMPTE.u.smpte.min = 0;
@@ -143,13 +127,7 @@ static void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer( 0, 0, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
-#ifdef USE_FAKE_MM_TIMERS
-	bUseFakeTimers = PROFILE_GetWineIniBool("options", "MMFakeTimers", TRUE);
-	TRACE_(mmtime)("FakeTimer=%c\n", bUseFakeTimers ? 'Y' : 'N');
-	if (bUseFakeTimers)
-	    dwLastCBTick = GetTickCount();
-#endif
+	hMMTimer = SERVICE_AddTimer( MMSYSTIME_MININTERVAL*1000L, TIME_MMSysTimeCallback, 0 );
     }
 }
 
@@ -336,36 +314,6 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
  */
 DWORD WINAPI timeGetTime()
 {
-    DWORD	dwNewTick = GetTickCount();
-
     StartMMTime();
-#ifdef USE_FAKE_MM_TIMERS
-    if (bUseFakeTimers) {
-	if (!wInCallBackLoop++) { 
-	    DWORD		dwDelta;
-	    
-	    
-	    if (dwNewTick < dwLastCBTick) {
-		ERR_(mmtime)("dwNewTick(%lu) < dwLastCBTick(%lu)\n", dwNewTick, dwLastCBTick);
-	    }
-	    dwDelta = dwNewTick - dwLastCBTick;
-	    if (dwDelta > MMSYSTIME_MININTERVAL) {
-		LPTIMERENTRY lpTimer;
-		
-		mmSysTimeMS.u.ms += dwDelta; /* FIXME: faked timer */
-		dwLastCBTick = dwNewTick;
-		for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->Next) {
-		    if (lpTimer->wCurTime < dwDelta) {
-			TIME_TriggerCallBack(lpTimer, dwNewTick);
-		    } else {
-			lpTimer->wCurTime -= dwDelta;
-		    }
-		}
-	    }
-	}
-	dwNewTick = mmSysTimeMS.u.ms;
-	wInCallBackLoop--;
-    }
-#endif
-    return dwNewTick;
+    return mmSysTimeMS.u.ms;
 }
