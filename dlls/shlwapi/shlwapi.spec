@@ -4,7 +4,7 @@
 4   stdcall -noname PathFileExistsDefExtW(wstr long)
 5   stdcall -noname PathFindOnPathExA(str ptr long)
 6   stdcall -noname PathFindOnPathExW(wstr ptr long)
-7   stdcall -noname SHAllocShared(long long ptr)
+7   stdcall -noname SHAllocShared(ptr long long)
 8   stdcall -noname SHLockShared(long long)
 9   stdcall -noname SHUnlockShared(ptr)
 10  stdcall -noname SHFreeShared(long long)

@@ -278,10 +278,10 @@
  511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr)
  512 stdcall SHRegDeleteKeyW (long wstr)
 
- 520 stdcall SHAllocShared (long long long)
- 521 stdcall SHLockShared (long long)
- 522 stdcall SHUnlockShared (long)
- 523 stdcall SHFreeShared (long long)
+ 520 stdcall -noname SHAllocShared (ptr long long)
+ 521 stdcall -noname SHLockShared (long long)
+ 522 stdcall -noname SHUnlockShared (ptr)
+ 523 stdcall -noname SHFreeShared (long long)
  524 stdcall RealDriveType (long long)
  525 stub RealDriveTypeFlags
 

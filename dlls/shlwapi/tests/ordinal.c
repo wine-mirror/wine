@@ -35,6 +35,11 @@ static HMODULE hShlwapi;
 static int (WINAPI *pSHSearchMapInt)(const int*,const int*,int,int);
 static HRESULT (WINAPI *pGetAcceptLanguagesA)(LPSTR,LPDWORD);
 
+static HANDLE (WINAPI *pSHAllocShared)(LPCVOID,DWORD,DWORD);
+static LPVOID (WINAPI *pSHLockShared)(HANDLE,DWORD);
+static BOOL   (WINAPI *pSHUnlockShared)(LPVOID);
+static BOOL   (WINAPI *pSHFreeShared)(HANDLE,DWORD);
+
 static void test_GetAcceptLanguagesA(void)
 {   HRESULT retval;
     DWORD buffersize, buffersize2, exactsize;
@@ -154,6 +159,32 @@ static void test_SHSearchMapInt(void)
   ok(i == values[0], "Len 3, expected %d, got %d\n", values[0], i);
 }
 
+static void test_alloc_shared()
+{
+    DWORD procid;
+    HANDLE hmem;
+    int val;
+    int* p;
+
+    procid=GetCurrentProcessId();
+    hmem=pSHAllocShared(NULL,10,procid);
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %ld\n", GetLastError());
+    ok(pSHFreeShared(hmem, procid),
+       "SHFreeShared failed: %ld\n", GetLastError());
+
+    val=0x12345678;
+    hmem=pSHAllocShared(&val,4,procid);
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %ld\n", GetLastError());
+
+    p=(int*)pSHLockShared(hmem,procid);
+    ok(p!=NULL,"SHLockShared failed: %ld\n", GetLastError());
+    if (p!=NULL)
+        ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);
+    ok(pSHUnlockShared(p),"SHUnlockShared failed: %ld\n", GetLastError());
+
+    ok(pSHFreeShared(hmem, procid),
+       "SHFreeShared failed: %ld\n", GetLastError());
+}
 
 START_TEST(ordinal)
 {
@@ -164,8 +195,13 @@ START_TEST(ordinal)
 
   pGetAcceptLanguagesA = (void*)GetProcAddress(hShlwapi, (LPSTR)14);
   pSHSearchMapInt = (void*)GetProcAddress(hShlwapi, (LPSTR)198);
+  pSHAllocShared=(void*)GetProcAddress(hShlwapi,(char*)7);
+  pSHLockShared=(void*)GetProcAddress(hShlwapi,(char*)8);
+  pSHUnlockShared=(void*)GetProcAddress(hShlwapi,(char*)9);
+  pSHFreeShared=(void*)GetProcAddress(hShlwapi,(char*)10);
 
   test_GetAcceptLanguagesA();
   test_SHSearchMapInt();
+  test_alloc_shared();
   FreeLibrary(hShlwapi);
 }
