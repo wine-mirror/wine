@@ -2942,14 +2942,6 @@ Pos:  /* -----------------------------------------------------------------------
     if (wndPtr->flags & WIN_NATIVE)
         EVENT_Synchronize();  /* Synchronize with the host window system */
 
-    if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
-    {
-        /* Simulate a mouse event to set the cursor */
-	int iWndsLocks = WIN_SuspendWndsLock();
-        mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
-	WIN_RestoreWndsLock(iWndsLocks);
-    }
-
     wndTemp = WIN_GetDesktop();
 
     /* repaint invalidated region (if any) 
