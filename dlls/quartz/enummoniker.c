@@ -106,12 +106,15 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(
 static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
-
-    TRACE("\n");
+    ULONG ref;
 
     if (This == NULL) return E_POINTER;
 
-    return InterlockedIncrement(&This->ref);
+    ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
+
+    return ref;
 }
 
 /**********************************************************************
@@ -122,7 +125,7 @@ static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("\n");
+    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
 
     if (!ref)
     {
@@ -139,7 +142,7 @@ static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMon
     ULONG fetched;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%ld, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     for (fetched = 0; (This->index + fetched < This->nMonikerCount) && (fetched < celt); fetched++)
     {
@@ -148,6 +151,8 @@ static HRESULT WINAPI EnumMonikerImpl_Next(LPENUMMONIKER iface, ULONG celt, IMon
     }
 
     This->index += fetched;
+
+    TRACE("-- fetched %ld\n", fetched);
 
     if (pceltFetched)
         *pceltFetched = fetched;
@@ -162,7 +167,7 @@ static HRESULT WINAPI EnumMonikerImpl_Skip(LPENUMMONIKER iface, ULONG celt)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%ld)\n", celt);
+    TRACE("(%p)->(%ld)\n", iface, celt);
 
     This->index += celt;
 
@@ -173,7 +178,7 @@ static HRESULT WINAPI EnumMonikerImpl_Reset(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     This->index = 0;
 
@@ -182,7 +187,7 @@ static HRESULT WINAPI EnumMonikerImpl_Reset(LPENUMMONIKER iface)
 
 static HRESULT WINAPI EnumMonikerImpl_Clone(LPENUMMONIKER iface, IEnumMoniker ** ppenum)
 {
-    FIXME("(%p): stub\n", ppenum);
+    FIXME("(%p)->(%p): stub\n", iface, ppenum);
 
     return E_NOTIMPL;
 }

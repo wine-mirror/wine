@@ -950,6 +950,15 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
 
                     hrSub = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBag);
 
+                    if (TRACE_ON(quartz))
+                    {
+                        VARIANT temp;
+                        V_VT(&temp) = VT_EMPTY;
+                        IPropertyBag_Read(pPropBag, wszFriendlyName, &temp, NULL);
+                        TRACE("Considering filter %s\n", debugstr_w(V_UNION(&temp, bstrVal)));
+                        VariantClear(&temp);
+                    }
+
                     if (SUCCEEDED(hrSub))
                         hrSub = FM2_ReadFilterData(pPropBag, &rf2);
 

@@ -717,10 +717,11 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_QueryInterface(
 static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("\n");
+    TRACE("(%p)->() AddRef from %ld\n", iface, ref - 1);
 
-    return InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 /**********************************************************************
@@ -729,17 +730,18 @@ static ULONG WINAPI DEVENUM_IEnumMoniker_AddRef(LPENUMMONIKER iface)
 static ULONG WINAPI DEVENUM_IEnumMoniker_Release(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("\n");
+    TRACE("(%p)->() Release from %ld\n", iface, ref + 1);
 
-    if (!InterlockedDecrement(&This->ref))
+    if (!ref)
     {
         RegCloseKey(This->hkey);
         CoTaskMemFree(This);
         DEVENUM_UnlockModule();
         return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(LPENUMMONIKER iface, ULONG celt, IMoniker ** rgelt, ULONG * pceltFetched)
@@ -750,7 +752,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(LPENUMMONIKER iface, ULONG celt,
     MediaCatMoniker * pMoniker;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
+    TRACE("(%p)->(%ld, %p, %p)\n", iface, celt, rgelt, pceltFetched);
 
     while (fetched < celt)
     {
@@ -789,7 +791,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Skip(LPENUMMONIKER iface, ULONG celt)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("(%ld)\n", celt);
+    TRACE("(%p)->(%ld)\n", iface, celt);
 
     This->index += celt;
 
@@ -800,7 +802,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Reset(LPENUMMONIKER iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     This->index = 0;
 
@@ -809,7 +811,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Reset(LPENUMMONIKER iface)
 
 static HRESULT WINAPI DEVENUM_IEnumMoniker_Clone(LPENUMMONIKER iface, IEnumMoniker ** ppenum)
 {
-    FIXME("(%p): stub\n", ppenum);
+    FIXME("(%p)->(%p): stub\n", iface, ppenum);
 
     return E_NOTIMPL;
 }

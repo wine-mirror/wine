@@ -875,7 +875,10 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
         tab[0] = mt.majortype;
         tab[1] = mt.subtype;
         hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
-    } else {
+    }
+
+    if (FAILED(hr))
+    {
         if (preader) {
              IGraphBuilder_RemoveFilter(iface, preader);
              IBaseFilter_Release(preader);
@@ -883,6 +886,7 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
         return hr;
     }
 
+    hr = E_FAIL;
     while(IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
     {
         VARIANT var;
