@@ -67,6 +67,7 @@ typedef struct _THEME_FILE {
     LPWSTR pszSelectedSize;
 
     PTHEME_CLASS classes;
+    PTHEME_PROPERTY metrics;
 } THEME_FILE, *PTHEME_FILE;
 
 typedef void* PUXINI_FILE;
@@ -83,7 +84,18 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf);
 PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext);
 PTHEME_CLASS MSSTYLES_FindClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWSTR pszClassName);
 PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId);
+PTHEME_PROPERTY MSSTYLES_FindMetric(int iPropertyPrimitive, int iPropertyId);
 HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename);
+
+HRESULT MSSTYLES_GetPropertyBool(PTHEME_PROPERTY tp, BOOL *pfVal);
+HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor);
+HRESULT MSSTYLES_GetPropertyFont(PTHEME_PROPERTY tp, HDC hdc, LOGFONTW *pFont);
+HRESULT MSSTYLES_GetPropertyInt(PTHEME_PROPERTY tp, int *piVal);
+HRESULT MSSTYLES_GetPropertyIntList(PTHEME_PROPERTY tp, INTLIST *pIntList);
+HRESULT MSSTYLES_GetPropertyPosition(PTHEME_PROPERTY tp, POINT *pPoint);
+HRESULT MSSTYLES_GetPropertyString(PTHEME_PROPERTY tp, LPWSTR pszBuff, int cchMaxBuffChars);
+HRESULT MSSTYLES_GetPropertyRect(PTHEME_PROPERTY tp, RECT *pRect);
+HRESULT MSSTYLES_GetPropertyMargins(PTHEME_PROPERTY tp, RECT *prc, MARGINS *pMargins);
 
 PUXINI_FILE UXINI_LoadINI(HMODULE hTheme, LPCWSTR lpName);
 void UXINI_CloseINI(PUXINI_FILE uf);

@@ -43,7 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
  * Defines and global variables
  */
 
-BOOL UXTHEME_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
+BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
+BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
 
 extern HINSTANCE hDllInst;
 
@@ -489,21 +490,21 @@ PTHEME_PARTSTATE MSSTYLES_AddPartState(PTHEME_CLASS tc, int iPartId, int iStateI
 }
 
 /***********************************************************************
- *      MSSTYLES_PSFindProperty
+ *      MSSTYLES_LFindProperty
  *
- * Find a value within a part/state
+ * Find a property within a property list
  *
  * PARAMS
- *     ps                  Part/state to search
+ *     tp                  property list to scan
  *     iPropertyPrimitive  Type of value expected
  *     iPropertyId         ID of the required value
  *
  * RETURNS
  *  The property found, or NULL
  */
-PTHEME_PROPERTY MSSTYLES_PSFindProperty(PTHEME_PARTSTATE ps, int iPropertyPrimitive, int iPropertyId)
+PTHEME_PROPERTY MSSTYLES_LFindProperty(PTHEME_PROPERTY tp, int iPropertyPrimitive, int iPropertyId)
 {
-    PTHEME_PROPERTY cur = ps->properties;
+    PTHEME_PROPERTY cur = tp;
     while(cur) {
         if(cur->iPropertyId == iPropertyId) {
             if(cur->iPrimitiveType == iPropertyPrimitive) {
@@ -518,6 +519,61 @@ PTHEME_PROPERTY MSSTYLES_PSFindProperty(PTHEME_PARTSTATE ps, int iPropertyPrimit
         cur = cur->next;
     }
     return NULL;
+}
+
+/***********************************************************************
+ *      MSSTYLES_PSFindProperty
+ *
+ * Find a value within a part/state
+ *
+ * PARAMS
+ *     ps                  Part/state to search
+ *     iPropertyPrimitive  Type of value expected
+ *     iPropertyId         ID of the required value
+ *
+ * RETURNS
+ *  The property found, or NULL
+ */
+static inline PTHEME_PROPERTY MSSTYLES_PSFindProperty(PTHEME_PARTSTATE ps, int iPropertyPrimitive, int iPropertyId)
+{
+    return MSSTYLES_LFindProperty(ps->properties, iPropertyPrimitive, iPropertyId);
+}
+
+/***********************************************************************
+ *      MSSTYLES_FFindMetric
+ *
+ * Find a metric property for a theme file
+ *
+ * PARAMS
+ *     tf                  Theme file
+ *     iPropertyPrimitive  Type of value expected
+ *     iPropertyId         ID of the required value
+ *
+ * RETURNS
+ *  The property found, or NULL
+ */
+static inline PTHEME_PROPERTY MSSTYLES_FFindMetric(PTHEME_FILE tf, int iPropertyPrimitive, int iPropertyId)
+{
+    return MSSTYLES_LFindProperty(tf->metrics, iPropertyPrimitive, iPropertyId);
+}
+
+/***********************************************************************
+ *      MSSTYLES_FindMetric
+ *
+ * Find a metric property for the current installed theme
+ *
+ * PARAMS
+ *     tf                  Theme file
+ *     iPropertyPrimitive  Type of value expected
+ *     iPropertyId         ID of the required value
+ *
+ * RETURNS
+ *  The property found, or NULL
+ */
+PTHEME_PROPERTY MSSTYLES_FindMetric(int iPropertyPrimitive, int iPropertyId)
+{
+    if(!tfActiveTheme) return NULL;
+    return MSSTYLES_FFindMetric(tfActiveTheme, iPropertyPrimitive, iPropertyId);
 }
 
 /***********************************************************************
@@ -558,6 +614,40 @@ PTHEME_PROPERTY MSSTYLES_AddProperty(PTHEME_PARTSTATE ps, int iPropertyPrimitive
 
     cur->next = ps->properties;
     ps->properties = cur;
+    return cur;
+}
+
+/***********************************************************************
+ *      MSSTYLES_AddMetric
+ *
+ * Add a property to a part/state
+ *
+ * PARAMS
+ *     tf                  Theme file
+ *     iPropertyPrimitive  Primitive type of the property
+ *     iPropertyId         ID of the property
+ *     lpValue             Raw value (non-NULL terminated)
+ *     dwValueLen          Length of the value
+ *
+ * RETURNS
+ *  The property added, or a property previously added with the same IDs
+ */
+PTHEME_PROPERTY MSSTYLES_AddMetric(PTHEME_FILE tf, int iPropertyPrimitive, int iPropertyId, LPCWSTR lpValue, DWORD dwValueLen)
+{
+    PTHEME_PROPERTY cur = MSSTYLES_FFindMetric(tf, iPropertyPrimitive, iPropertyId);
+    /* Should duplicate properties overwrite the original, or be ignored? */
+    if(cur) return cur;
+
+    cur = HeapAlloc(GetProcessHeap(), 0, sizeof(THEME_PROPERTY));
+    cur->iPrimitiveType = iPropertyPrimitive;
+    cur->iPropertyId = iPropertyId;
+    cur->lpValue = lpValue;
+    cur->dwValueLen = dwValueLen;
+
+    cur->origin = PO_GLOBAL;
+
+    cur->next = tf->metrics;
+    tf->metrics = cur;
     return cur;
 }
 
@@ -604,9 +694,9 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
                     if(iPropertyId >= TMT_FIRSTCOLOR && iPropertyId <= TMT_LASTCOLOR) {
                         int r,g,b;
                         lpValueEnd = lpValue + dwValueLen;
-                        UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &r);
-                        UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &g);
-                        if(UXTHEME_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
+                        MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &r);
+                        MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &g);
+                        if(MSSTYLES_GetNextInteger(lpValue, lpValueEnd, &lpValue, &b)) {
                             colorElements[colorCount] = iPropertyId - TMT_FIRSTCOLOR;
                             colorRgb[colorCount++] = RGB(r,g,b);
                         }
@@ -614,9 +704,8 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
                             FIXME("Invalid color value for %s\n", debugstr_w(szPropertyName));
                         }
                     }
-                    else {
-                        /* FIXME: Handle non-color metrics */
-                    }
+                    /* Catch all metrics, including colors */
+                    MSSTYLES_AddMetric(tf, iPropertyPrimitive, iPropertyId, lpValue, dwValueLen);
                 }
                 else {
                     TRACE("Unknown system metric %s\n", debugstr_w(szPropertyName));
@@ -781,4 +870,228 @@ HBITMAP MSSTYLES_LoadBitmap(HDC hdc, PTHEME_CLASS tc, LPCWSTR lpFilename)
         if(*tmp == '.') *tmp = '_';
     } while(*tmp++);
     return LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_SHARED|LR_CREATEDIBSECTION);
+}
+
+BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value)
+{
+    LPCWSTR cur = lpStringStart;
+    int total = 0;
+    BOOL gotNeg = FALSE;
+
+    while(cur < lpStringEnd && (*cur < '0' || *cur > '9' || *cur == '-')) cur++;
+    if(cur >= lpStringEnd) {
+        return FALSE;
+    }
+    if(*cur == '-') {
+        cur++;
+        gotNeg = TRUE;
+    }
+    while(cur < lpStringEnd && (*cur >= '0' && *cur <= '9')) {
+        total = total * 10 + (*cur - '0');
+        cur++;
+    }
+    if(gotNeg) total = -total;
+    *value = total;
+    if(lpValEnd) *lpValEnd = cur;
+    return TRUE;
+}
+
+BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize) {
+    LPCWSTR cur = lpStringStart;
+    LPCWSTR start;
+    LPCWSTR end;
+
+    while(cur < lpStringEnd && (isspace(*cur) || *cur == ',')) cur++;
+    if(cur >= lpStringEnd) {
+        return FALSE;
+    }
+    start = cur;
+    while(cur < lpStringEnd && *cur != ',') cur++;
+    end = cur;
+    while(isspace(*end)) end--;
+
+    lstrcpynW(lpBuff, start, min(buffSize, end-start+1));
+
+    if(lpValEnd) *lpValEnd = cur;
+    return TRUE;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyBool
+ *
+ * Retrieve a color value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyBool(PTHEME_PROPERTY tp, BOOL *pfVal)
+{
+    *pfVal = FALSE;
+    if(*tp->lpValue == 't' || *tp->lpValue == 'T')
+        *pfVal = TRUE;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyColor
+ *
+ * Retrieve a color value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor)
+{
+    LPCWSTR lpEnd;
+    LPCWSTR lpCur;
+    int red, green, blue;
+
+    lpCur = tp->lpValue;
+    lpEnd = tp->lpValue + tp->dwValueLen;
+
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &red);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &green);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &blue)) {
+        TRACE("Could not parse color property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    *pColor = RGB(red,green,blue);
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyColor
+ *
+ * Retrieve a color value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyFont(PTHEME_PROPERTY tp, HDC hdc, LOGFONTW *pFont)
+{
+    const WCHAR szBold[] = {'b','o','l','d','\0'};
+    const WCHAR szItalic[] = {'i','t','a','l','i','c','\0'};
+    const WCHAR szUnderline[] = {'u','n','d','e','r','l','i','n','e','\0'};
+    const WCHAR szStrikeOut[] = {'s','t','r','i','k','e','o','u','t','\0'};
+    int pointSize;
+    WCHAR attr[32];
+    LPCWSTR lpCur = tp->lpValue;
+    LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
+
+    ZeroMemory(pFont, sizeof(LOGFONTW));
+
+    if(!MSSTYLES_GetNextToken(lpCur, lpEnd, &lpCur, pFont->lfFaceName, LF_FACESIZE)) {
+        TRACE("Property is there, but failed to get face name\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pointSize)) {
+        TRACE("Property is there, but failed to get point size\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    pFont->lfHeight = -MulDiv(pointSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    pFont->lfWeight = FW_REGULAR;
+    pFont->lfCharSet = DEFAULT_CHARSET;
+    while(MSSTYLES_GetNextToken(lpCur, lpEnd, &lpCur, attr, sizeof(attr)/sizeof(attr[0]))) {
+        if(!lstrcmpiW(szBold, attr)) pFont->lfWeight = FW_BOLD;
+        else if(!!lstrcmpiW(szItalic, attr)) pFont->lfItalic = TRUE;
+        else if(!!lstrcmpiW(szUnderline, attr)) pFont->lfUnderline = TRUE;
+        else if(!!lstrcmpiW(szStrikeOut, attr)) pFont->lfStrikeOut = TRUE;
+    }
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyInt
+ *
+ * Retrieve an int value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyInt(PTHEME_PROPERTY tp, int *piVal)
+{
+    if(!MSSTYLES_GetNextInteger(tp->lpValue, (tp->lpValue + tp->dwValueLen), NULL, piVal)) {
+        TRACE("Could not parse int property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyIntList
+ *
+ * Retrieve an int list value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyIntList(PTHEME_PROPERTY tp, INTLIST *pIntList)
+{
+    int i;
+    LPCWSTR lpCur = tp->lpValue;
+    LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
+
+    for(i=0; i < MAX_INTLIST_COUNT; i++) {
+        if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pIntList->iValues[i]))
+            break;
+    }
+    pIntList->iValueCount = i;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyPosition
+ *
+ * Retrieve a position value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyPosition(PTHEME_PROPERTY tp, POINT *pPoint)
+{
+    int x,y;
+    LPCWSTR lpCur = tp->lpValue;
+    LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
+
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &x);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &y)) {
+        TRACE("Could not parse position property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    pPoint->x = x;
+    pPoint->y = y;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyString
+ *
+ * Retrieve a string value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyString(PTHEME_PROPERTY tp, LPWSTR pszBuff, int cchMaxBuffChars)
+{
+    lstrcpynW(pszBuff, tp->lpValue, min(tp->dwValueLen+1, cchMaxBuffChars));
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyRect
+ *
+ * Retrieve a rect value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyRect(PTHEME_PROPERTY tp, RECT *pRect)
+{
+    LPCWSTR lpCur = tp->lpValue;
+    LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
+
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->left);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->top);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->right);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, (int*)&pRect->bottom)) {
+        TRACE("Could not parse rect property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MSSTYLES_GetPropertyMargins
+ *
+ * Retrieve a margins value for a property 
+ */
+HRESULT MSSTYLES_GetPropertyMargins(PTHEME_PROPERTY tp, RECT *prc, MARGINS *pMargins)
+{
+    LPCWSTR lpCur = tp->lpValue;
+    LPCWSTR lpEnd = tp->lpValue + tp->dwValueLen;
+
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cxLeftWidth);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cxRightWidth);
+    MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cyTopHeight);
+    if(!MSSTYLES_GetNextInteger(lpCur, lpEnd, &lpCur, &pMargins->cyBottomHeight)) {
+        TRACE("Could not parse margins property\n");
+        return E_PROP_ID_UNSUPPORTED;
+    }
+    return S_OK;
 }

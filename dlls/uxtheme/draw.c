@@ -620,7 +620,6 @@ HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
     if(filltype == FT_SOLID) {
         HBRUSH hBrush;
         COLORREF fillcolor = RGB(255,255,255);
-        FIXME("Solid\n");
 
         GetThemeColor(hTheme, iPartId, iStateId, TMT_FILLCOLOR, &fillcolor);
         hBrush = CreateSolidBrush(fillcolor);
@@ -640,7 +639,7 @@ HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
         TRIVERTEX vert[2];
         GRADIENT_RECT gRect;
 
-        FIXME("Gradient\n");
+        FIXME("Gradient implementation not complete\n");
 
         GetThemeColor(hTheme, iPartId, iStateId, TMT_GRADIENTCOLOR1, &gradient1);
         GetThemeColor(hTheme, iPartId, iStateId, TMT_GRADIENTCOLOR2, &gradient2);
