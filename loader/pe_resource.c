@@ -98,6 +98,24 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 }
 
 /**********************************************************************
+ *	    GetResDirEntryA
+ */
+PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
+					   LPCSTR name, DWORD root,
+					   BOOL32 allowdefault )
+{
+    PIMAGE_RESOURCE_DIRECTORY retv;
+    LPWSTR nameW = HIWORD(name)? HEAP_strdupAtoW( GetProcessHeap(), 0, name ) 
+                               : (LPWSTR)name;
+
+    retv = GetResDirEntryW( resdirptr, nameW, root, allowdefault );
+
+    if ( HIWORD(name) ) HeapFree( GetProcessHeap(), 0, nameW );
+
+    return retv;
+}
+
+/**********************************************************************
  *	    PE_FindResourceEx32W
  */
 HANDLE32 PE_FindResourceEx32W(

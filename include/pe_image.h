@@ -46,6 +46,7 @@ struct _THDB; /* forward definition */
 extern void PE_InitTls(struct _THDB*);
 extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL32);
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
 
 typedef DWORD (CALLBACK*DLLENTRYPROC32)(HMODULE32,DWORD,LPVOID);
