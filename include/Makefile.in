@@ -48,12 +48,16 @@ INSTALLED_INCLUDES = \
 	msacm.h \
 	msacmdlg.h \
 	msvcrt/conio.h \
+	msvcrt/crtdbg.h \
 	msvcrt/ctype.h \
 	msvcrt/direct.h \
 	msvcrt/dos.h \
+	msvcrt/eh.h \
 	msvcrt/fcntl.h \
 	msvcrt/io.h \
+	msvcrt/malloc.h \
 	msvcrt/process.h \
+	msvcrt/search.h \
 	msvcrt/stddef.h \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
@@ -64,6 +68,7 @@ INSTALLED_INCLUDES = \
 	msvcrt/sys/utime.h \
 	msvcrt/time.h \
 	msvcrt/wchar.h \
+	msvcrt/wctype.h \
 	nspapi.h \
 	ntsecapi.h \
 	oaidl.h \
@@ -146,12 +151,14 @@ INSTALLED_INCLUDES = \
 	wine/obj_property.h \
 	wine/obj_propertystorage.h \
 	wine/obj_queryassociations.h \
+	wine/obj_serviceprovider.h \
 	wine/obj_shellbrowser.h \
 	wine/obj_shellextinit.h \
 	wine/obj_shellfolder.h \
 	wine/obj_shelllink.h \
 	wine/obj_shellview.h \
 	wine/obj_storage.h \
+	wine/obj_webbrowser.h \
 	wine/unicode.h \
 	winerror.h \
 	wingdi.h \
@@ -161,6 +168,7 @@ INSTALLED_INCLUDES = \
 	winnls.h \
 	winnt.h \
 	winreg.h \
+	winres.h \
 	winresrc.h \
 	winsock.h \
 	winsock2.h \
