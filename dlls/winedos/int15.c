@@ -35,6 +35,20 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
 {
     switch(AH_reg(context))
     {
+    case 0x4f: /*catch keyboard*/
+      FIXME("INT15: catch keyboard not handled yet\n");
+       break;
+    case 0x83: /* start timer*/
+        switch(AL_reg(context))
+        {
+        case 0x00: /* Start Timer*/
+            FIXME("INT15: Start Timer not handled yet\n");
+            break;
+        case 0x01: /* stop  timer*/
+            FIXME("INT15: Stop Timer not handled yet\n");
+            break;
+        }
+        break;
     case 0x84: /* read joystick information */
         FIXME("Read joystick information not implemented\n");
 
@@ -56,6 +70,16 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
         }
 
         RESET_CFLAG(context);
+        break;
+    case 0x85: /* sysreq - key  used*/
+        FIXME("INT15: SysReq - Key not handled yet\n");
+        break;
+    case 0x86: /* wait*/
+        FIXME("INT15: Wait not correctly handled yet\n");
+        if ( AL_reg( context ) != 0x00 ) ERR("Invalid Input to Int15 function 0x86h AL != 0x00 \n");
+        break;
+    case 0x87: /* move memory regions*/
+        FIXME("INT15: Move memory regions not implemented\n");
         break;
 
     case 0x88: /* get size of memory above 1 M */
