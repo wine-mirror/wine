@@ -1103,31 +1103,39 @@ LPVOID WINAPI GlobalLock(
 BOOL WINAPI GlobalUnlock(
               HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
-   PGLOBAL32_INTERN       pintern;
-   BOOL                 locked;
+    PGLOBAL32_INTERN pintern;
+    BOOL locked;
 
-   if(ISPOINTER(hmem))
-      return FALSE;
+    if (ISPOINTER(hmem)) return FALSE;
 
-   /* HeapLock(GetProcessHeap()); */
-   pintern=HANDLE_TO_INTERN(hmem);
-   
-   if(pintern->Magic==MAGIC_GLOBAL_USED)
-   {
-      if((pintern->LockCount<GLOBAL_LOCK_MAX)&&(pintern->LockCount>0))
-	 pintern->LockCount--;
+    __TRY
+    {
+        /* HeapLock(GetProcessHeap()); */
+        pintern=HANDLE_TO_INTERN(hmem);
+        if(pintern->Magic==MAGIC_GLOBAL_USED)
+        {
+            if((pintern->LockCount<GLOBAL_LOCK_MAX)&&(pintern->LockCount>0))
+                pintern->LockCount--;
 
-      locked = (pintern->LockCount != 0);
-      if (!locked) SetLastError(NO_ERROR);
-   }
-   else
-   {
-      WARN("invalid handle\n");
-      SetLastError(ERROR_INVALID_HANDLE);
-      locked=FALSE;
-   }
-   /* HeapUnlock(GetProcessHeap()); */
-   return locked;
+            locked = (pintern->LockCount != 0);
+            if (!locked) SetLastError(NO_ERROR);
+        }
+        else
+        {
+            WARN("invalid handle\n");
+            SetLastError(ERROR_INVALID_HANDLE);
+            locked=FALSE;
+        }
+        /* HeapUnlock(GetProcessHeap()); */
+    }
+    __EXCEPT(page_fault)
+    {
+        ERR("page fault occurred ! Caused by bug ?\n");
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    __ENDTRY
+    return locked;
 }
 
 
@@ -1305,35 +1313,46 @@ HGLOBAL WINAPI GlobalReAlloc(
 HGLOBAL WINAPI GlobalFree(
                  HGLOBAL hmem /* [in] Handle of global memory object */
 ) {
-   PGLOBAL32_INTERN pintern;
-   HGLOBAL        hreturned = 0;
+    PGLOBAL32_INTERN pintern;
+    HGLOBAL hreturned;
 
-   if(ISPOINTER(hmem)) /* POINTER */
-   {
-      if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem)) hmem = 0;
-   }
-   else  /* HANDLE */
-   {
-      /* HeapLock(heap); */
-      pintern=HANDLE_TO_INTERN(hmem);
-      
-      if(pintern->Magic==MAGIC_GLOBAL_USED)
-      {	 
+    __TRY
+    {
+        hreturned = 0;
+        if(ISPOINTER(hmem)) /* POINTER */
+        {
+            if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem)) hmem = 0;
+        }
+        else  /* HANDLE */
+        {
+            /* HeapLock(heap); */
+            pintern=HANDLE_TO_INTERN(hmem);
 
-/* WIN98 does not make this test. That is you can free a */
-/* block you have not unlocked. Go figure!!              */
-      /* if(pintern->LockCount!=0)  */
-      /*    SetLastError(ERROR_INVALID_HANDLE);  */
+            if(pintern->Magic==MAGIC_GLOBAL_USED)
+            {
 
-	 if(pintern->Pointer)
-	    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
-	       hreturned=hmem;
-	 if(!HeapFree(GetProcessHeap(), 0, pintern))
-	    hreturned=hmem;
-      }      
-      /* HeapUnlock(heap); */
-   }
-   return hreturned;
+                /* WIN98 does not make this test. That is you can free a */
+                /* block you have not unlocked. Go figure!!              */
+                /* if(pintern->LockCount!=0)  */
+                /*    SetLastError(ERROR_INVALID_HANDLE);  */
+
+                if(pintern->Pointer)
+                    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
+                        hreturned=hmem;
+                if(!HeapFree(GetProcessHeap(), 0, pintern))
+                    hreturned=hmem;
+            }
+            /* HeapUnlock(heap); */
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+        ERR("page fault occurred ! Caused by bug ?\n");
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return hmem;
+    }
+    __ENDTRY
+    return hreturned;
 }
 
 
