@@ -109,7 +109,7 @@ for i in "${FONTS[@]}"; do
 done;
 
 for i in *.bdf; do
-    if [ "$i" == "*.bdf" ]; then
+    if [ "$i" = "*.bdf" ]; then
        echo "No fonts extracted"; rm -rf "$TMPDIR"; exit 0; 
     fi;
     bdftopcf "$i" | gzip -c > ${i%.???}.pcf.gz;

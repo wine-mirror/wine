@@ -1,6 +1,6 @@
 #!/bin/sh
 name="$1"
-if [ "$name" == "" ] ; then
+if [ "$name" = "" ] ; then
     echo -n 'Function: '
     read name;
 fi
