@@ -955,7 +955,14 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             ShowCaret(winpos->hwnd);
     }
 
-    if (!(winpos->flags & SWP_NOACTIVATE)) SetActiveWindow( winpos->hwnd );
+    if (!(winpos->flags & SWP_NOACTIVATE))
+    {
+        /* child windows get WM_CHILDACTIVATE message */
+        if ((GetWindowLongW( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
+            SendMessageA( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
+        else
+            SetActiveWindow( winpos->hwnd );
+    }
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
