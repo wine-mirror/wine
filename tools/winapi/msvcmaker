@@ -343,16 +343,21 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{imports} = [];
 }
 
-$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{files} = [
-  '../../include/wine/exception.h',
-  '../../include/wine/test.h',
-  '../../include/wine/unicode.h'
+$wine_test_dsp_files{"wineruntests.dsp"}{files} = ["runtests.c"];
+$wine_test_dsp_files{"wineruntests.dsp"}{imports} = [];
+
+$wine_test_dsp_files{"winetest.dsp"}{files} = [
+  'include/wine/exception.h',
+  'include/wine/test.h',
+  'include/wine/unicode.h'
 ];
-$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{imports} = [];
+$wine_test_dsp_files{"winetest.dsp"}{imports} = [];
+
+my %runtests = ();
 
 foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     my $project = $dsp_file;
-    $project =~ s%^.*?/([^/]+)\.dsp$%$1%;
+    $project =~ s%^(?:.*?/)?([^/]+)\.dsp$%$1%;
 
     my @files = @{$wine_test_dsp_files{$dsp_file}{files}};
     my @imports = @{$wine_test_dsp_files{$dsp_file}{imports}};
@@ -367,6 +372,12 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
 
     if ($project eq "winetest") {
 	$type = "lib";
+	$c_srcs = [@files];
+	$source_files = [@files];
+	$header_files = [];
+	$resource_files = [];
+    } elsif ($project eq "wineruntests") {
+	$type = "exe";
 	$c_srcs = [@files];
 	$source_files = [@files];
 	$header_files = [];
@@ -386,6 +397,8 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
 		$_;
 	    }
 	} @files;
+
+	$runtests{$dsp_file} = [@tests];
     }
     my $module = "$project.$type";
 
@@ -463,7 +476,7 @@ sub _generate_dsp {
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
 
-    if ($project !~ /^(?:wine(?:_unicode)?|wine(?:build|test))$/ &&
+    if ($project !~ /^(?:wine(?:_unicode)?|wine(?:build|runtests|test))$/ &&
         $project !~ /^(?:gdi32|ntdll|user32)_.+?$/ &&
         $project !~ /_test$/)
     {
@@ -474,7 +487,7 @@ sub _generate_dsp {
 
     my $no_cpp = 1;
     my $no_msvc_headers = 1;
-    if ($project =~ /^(?:winetest)$/ || $project =~ /_test$/) {
+    if ($project =~ /^(?:wine(?:runtests|test))$/ || $project =~ /_test$/) {
 	$no_msvc_headers = 0;
     }
 
@@ -660,9 +673,12 @@ sub _generate_dsp {
 	my @includes = ();
 	if($wine) {
 	    push @defines2, "_\U${project}\E_";
-	    push @defines2, "__WINE__" if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
+	    push @defines2, qw(__WINE__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
+	    push @defines2, qw(__WINE_USE_MSVCRT);
+	    my $output_dir2 = $output_dir;
+	    $output_dir =~ s/\\/\\\\/g;
+	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir\\\"";
 	    push @defines2, qw(__i386__ _X86_);
-
 
 	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv|win16drv)$/) {
 		push @includes, "..";
@@ -677,7 +693,7 @@ sub _generate_dsp {
 	    }
 
 	    if ($project =~ /_test$/) {
-		push @includes, "$msvc_wine_dir\\programs\\winetest\\$output_dir";
+		push @includes, "$msvc_wine_dir\\$output_dir";
 	    } 
 
 	    if (!$msvc_headers || $project =~ /^winetest$/) {
@@ -687,12 +703,20 @@ sub _generate_dsp {
 
 	if($wine) {
 	    foreach my $include (@includes) {
-		print OUT " /I \"$include\"";
+		if ($include !~ /[\\\"]/) {
+		    print OUT " /I \"$include\"";
+		} else {
+		    print OUT " /I $include";
+		}
 	    }
 	}
 
 	foreach my $define (@defines2) {
-	    print OUT " /D \"$define\"";
+	    if ($define !~ /[\\\"]/) {
+		print OUT " /D \"$define\"";
+	    } else {
+		print OUT " /D $define";
+	    }
 	}
 	print OUT " /D inline=__inline" if $wine;
 	print OUT " /D \"__STDC__\"" if 0 && $wine;
@@ -788,24 +812,6 @@ sub _generate_dsp {
 	print OUT "PostBuild_Cmds=";
 	print OUT "copy ..\\..\\library\\$output_dir\\wine.dll \$(OutDir)\t";
 	print OUT "copy ..\\..\\unicode\\$output_dir\\wine_unicode.dll \$(OutDir)\r\n";
-	print OUT "# End Special Build Tool\r\n";
-    } elsif (0 && $project eq "winetest") {
-	print OUT "# Begin Special Build Tool\r\n";
-	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
-	
-	my @includes = qw(exception.h test.h unicode.h);
-        print OUT "PostBuild_Desc=Copying ";
-	foreach my $include (@includes) {
-	    print OUT "wine\\$include ";
-	}
-	print OUT "...\r\n";
-	print OUT "PostBuild_Cmds=";
-	print OUT "mkdir \$(OutDir)\\wine\t";
-	foreach my $include (@includes) {
-	    print OUT "\t";
-	    print OUT "copy $msvc_wine_dir\\include\\wine\\$include \$(OutDir)\\wine";
-	}
-	print OUT "\r\n";
 	print OUT "# End Special Build Tool\r\n";
     }
     print OUT "# Begin Target\r\n";
@@ -1028,7 +1034,7 @@ sub _generate_wine_dsw {
 
     _generate_dsw_header(\*OUT);
     foreach my $module (sort(keys(%modules))) {
-	next if $module =~ /(?:winetest\.lib|_test\.exe)$/;
+	next if $module =~ /(?:winetest\.lib|wineruntests\.exe|_test\.exe)$/;
 
 	my $project = $modules{$module}{project};
 	my $dsp_file = $modules{$module}{dsp_file};
@@ -1088,8 +1094,18 @@ sub _generate_winetest_dsw {
 
     _generate_dsw_header(\*OUT);
 
+    my @runtests_dependencies = ();
     foreach my $module (sort(keys(%modules))) {
-	next if $module !~ /(?:winetest\.lib|_test\.exe)$/;
+	next if $module !~ /(?:winetest\.lib|wineruntests\.exe|_test\.exe)$/;
+	next if $module eq "wineruntests";
+
+	my $project = $modules{$module}{project};
+
+	push @runtests_dependencies, $project;
+    }
+
+    foreach my $module (sort(keys(%modules))) {
+	next if $module !~ /(?:winetest\.lib|wineruntests\.exe|_test\.exe)$/;
 
 	my $project = $modules{$module}{project};
 	my $dsp_file = $modules{$module}{dsp_file};
@@ -1097,6 +1113,8 @@ sub _generate_winetest_dsw {
 	my @dependencies;
 	if($project =~ /^winetest$/) {
 	    @dependencies = ();
+	} elsif($project =~ /^wineruntests$/) {
+	    @dependencies = @runtests_dependencies;
 	} else {
 	    @dependencies = ("winetest");
 	}
@@ -1155,6 +1173,44 @@ sub _generate_testlist_c {
     print OUT "#define WINETEST_WANT_MAIN\n";
     print OUT "#include \"wine/test.h\"\n";
 }
+
+if ($options->winetest) {
+    replace_file("$wine_dir/runtests.c", \&_generate_runtests_c);
+}
+
+sub _generate_runtests_c {
+    local *OUT = shift;
+
+    print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
+
+    print OUT "\n";
+    print OUT "#include <stdio.h>\n";
+    print OUT "#include <stdlib.h>\n";
+    print OUT "\n";
+
+    print OUT "int main(int argc, char *argv[])\n";
+    print OUT "{\n";
+    print OUT "    char output_dir[] = __WINETEST_OUTPUT_DIR;\n";
+    print OUT "    char command[4096];\n";
+    print OUT "\n";
+    foreach my $dsp_file (keys(%runtests)) {
+	my @tests =  @{$runtests{$dsp_file}};
+
+	my $project = $dsp_file;
+	$project =~ s%^(.*?)/?([^/]+)\.dsp$%$2%;
+	my $dir = $1;
+	$dir =~ s%/%\\\\%g; 
+
+	foreach my $test (@tests) {
+	    print OUT "    sprintf(command, \"$dir\\\\%s\\\\$project.exe $test\", output_dir);\n";
+	    print OUT "    system(command);\n";
+	    print OUT "\n";
+	}
+    }
+    print OUT "    return 0;\n";
+    print OUT "}\n";
+}
+
 
 if ($options->wine) {
     my $config_h = "include/config.h";
