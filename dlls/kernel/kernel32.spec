@@ -940,7 +940,7 @@ debug_channels (comm console debugstr dll int resource stress thunk toolhelp
 @ stdcall SetConsoleInputExeNameW(ptr) SetConsoleInputExeNameW
 @ stdcall SetProcessAffinityMask(long long) SetProcessAffinityMask
 @ stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
-@ stub SetThreadIdealProcessor
+@ stdcall SetThreadIdealProcessor(long long) SetThreadIdealProcessor
 @ stdcall SetThreadPriorityBoost(long long) SetThreadPriorityBoost
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long) SetWaitableTimer
 @ stub SignalObjectAndWait

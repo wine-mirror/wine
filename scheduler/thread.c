@@ -549,6 +549,21 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
     return ret;
 }
 
+/**********************************************************************
+ * SetThreadIdealProcessor [KERNEL32.@]  Obtains timing information.
+ *
+ * RETURNS
+ *    Success: Value of last call to SetThreadIdealProcessor
+ *    Failure: -1
+ */
+DWORD WINAPI SetThreadIdealProcessor( 
+    HANDLE hThread,          /* [in] Specifies the thread of interest */
+    DWORD dwIdealProcessor)  /* [in] Specifies the new preferred processor */
+{
+    FIXME("(0x%08x): stub\n",hThread);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return -1L;
+}
 
 /**********************************************************************
  * TerminateThread [KERNEL32.@]  Terminates a thread

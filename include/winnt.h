@@ -460,6 +460,7 @@ typedef HANDLE         *PHANDLE,    *LPHANDLE;
 #define PROCESSOR_ARM920         2336    /* 0x920 */
 #define PROCESSOR_ARM_7TDMI      70001
 
+#define MAXIMUM_PROCESSORS       32
 typedef struct _MEMORY_BASIC_INFORMATION
 {
     LPVOID   BaseAddress;
