@@ -3402,8 +3402,11 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 	if (lprbbi->lpText) {
             INT len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
-            lpBand->lpText = (LPWSTR)Alloc (len*sizeof(WCHAR));
-            MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
+            if (len > 1)
+            {
+                lpBand->lpText = (LPWSTR)Alloc (len*sizeof(WCHAR));
+                MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
+            }
 	}
     }
 
@@ -3447,8 +3450,11 @@ REBAR_SetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 	if (lprbbi->lpText) {
 	    INT len = lstrlenW (lprbbi->lpText);
-	    lpBand->lpText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
-	    strcpyW (lpBand->lpText, lprbbi->lpText);
+	    if (len > 0)
+	    {
+	        lpBand->lpText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+	        strcpyW (lpBand->lpText, lprbbi->lpText);
+	    }
 	}
     }
 
