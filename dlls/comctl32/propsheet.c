@@ -108,6 +108,7 @@ static void PROPSHEET_UnChanged(HWND hwndDlg, HWND hwndCleanPage);
 static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID);
 static void PROPSHEET_SetFinishTextA(HWND hwndDlg, LPCSTR lpszText);
 static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText);
+static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg);
 static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
                                 int index,
                                 HPROPSHEETPAGE hpage);
@@ -1022,7 +1023,11 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
   if (SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr) == -1)
     return FALSE;
 
-  res = PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page - 1, 0);
+  res = PROPSHEET_CanSetCurSel(hwndDlg);
+  if(res != FALSE)
+  {
+    res = PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page - 1, 0);
+  }
 
   /* if we went to page 0, disable Back button */
   if (res && (psInfo->active_page == 0))
@@ -1053,7 +1058,10 @@ static BOOL PROPSHEET_Next(HWND hwndDlg)
   if (msgResult == -1)
     return FALSE;
 
-  PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page + 1, 0);
+  if(PROPSHEET_CanSetCurSel(hwndDlg) != FALSE)
+  {
+    PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page + 1, 0);
+  }
 
   return TRUE;
 }
@@ -1261,6 +1269,37 @@ static void PROPSHEET_PressButton(HWND hwndDlg, int buttonID)
     default:
       FIXME("Invalid button index %d\n", buttonID);
   }
+}
+
+
+/*************************************************************************
+ * BOOL PROPSHEET_CanSetCurSel [Internal] 
+ *
+ * Test weither the current page can be change by sending a PSN_KILLACTIVE
+ *
+ * PARAMS
+ *     hwndDlg        [I] handle to a Dialog hWnd
+ *
+ * RETURNS
+ *     TRUE if Current Selection can change
+ *
+ * NOTES
+ */
+static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
+{
+  PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
+                                                    PropSheetInfoStr);
+  HWND hwndPage;
+  NMHDR hdr;
+  /*
+   * Notify the current page.
+   */
+  hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
+
+  hdr.hwndFrom = hwndDlg;
+  hdr.code = PSN_KILLACTIVE;
+
+  return !SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &hdr);
 }
 
 /******************************************************************************
@@ -1895,6 +1934,14 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         PROPSHEET_SetCurSel(hwnd, index, 0);
       }
 
+      if(pnmh->code == TCN_SELCHANGING)
+      {
+        BOOL bRet = PROPSHEET_CanSetCurSel(hwnd);
+        SetWindowLongA(hwnd, DWL_MSGRESULT, !bRet);
+        return TRUE;
+      }
+
+
       return 0;
     }
 
@@ -1933,9 +1980,13 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       BOOL msgResult;
 
-      msgResult = PROPSHEET_SetCurSel(hwnd,
-                                      (int)wParam,
-                                      (HPROPSHEETPAGE)lParam);
+      msgResult = PROPSHEET_CanSetCurSel(hwnd);
+      if(msgResult != FALSE)
+      {
+        msgResult = PROPSHEET_SetCurSel(hwnd,
+                                       (int)wParam,
+                                       (HPROPSHEETPAGE)lParam);
+      }
 
       SetWindowLongA(hwnd, DWL_MSGRESULT, msgResult);
 

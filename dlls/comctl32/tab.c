@@ -371,6 +371,8 @@ static LRESULT
 TAB_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  POINT pt;
+  INT newItem,dummy;
 
   if (infoPtr->hwndToolTip)
     TAB_RelayEvent (infoPtr->hwndToolTip, hwnd,
@@ -379,16 +381,7 @@ TAB_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_FOCUSONBUTTONDOWN ) {
     SetFocus (hwnd);
   }
-  return 0;
-}
 
-static LRESULT
-TAB_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
-{
-  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
-  POINT pt;
-  INT newItem,dummy;
-  
   if (infoPtr->hwndToolTip)
     TAB_RelayEvent (infoPtr->hwndToolTip, hwnd,
 		    WM_LBUTTONDOWN, wParam, lParam);
@@ -414,6 +407,12 @@ TAB_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
       TAB_InvalidateTabArea(hwnd, infoPtr);
     }
   }
+  return 0;
+}
+
+static LRESULT
+TAB_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
   TAB_SendSimpleNotify(hwnd, NM_CLICK);
 
   return 0;
