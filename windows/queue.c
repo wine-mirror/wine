@@ -305,17 +305,16 @@ MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    SYSTEM_LOCK();
+    HeapLock( SystemHeap );  /* FIXME: a bit overkill */
     queue = GlobalLock16( hQueue );
     if ( !queue || (queue->magic != QUEUE_MAGIC) )
     {
-        SYSTEM_UNLOCK();
+        HeapUnlock( SystemHeap );
         return NULL;
     }
 
     queue->lockCount++;
-    SYSTEM_UNLOCK();
-
+    HeapUnlock( SystemHeap );
     return queue;
 }
 
@@ -330,7 +329,7 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
 {
     if (queue)
     {
-        SYSTEM_LOCK();
+        HeapLock( SystemHeap );  /* FIXME: a bit overkill */
 
         if ( --queue->lockCount == 0 )
         {
@@ -340,7 +339,7 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
             GlobalFree16( queue->self );
         }
     
-        SYSTEM_UNLOCK();
+        HeapUnlock( SystemHeap );
     }
 }
 
@@ -547,7 +546,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     /* flush sent messages */
     QUEUE_FlushMessages( msgQueue );
 
-    SYSTEM_LOCK();
+    HeapLock( SystemHeap );  /* FIXME: a bit overkill */
 
     /* Release per queue data if present */
     if ( msgQueue->pQData )
@@ -575,7 +574,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     if (pPrev && *pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
 
-    SYSTEM_UNLOCK();
+    HeapUnlock( SystemHeap );
 
     /* free up resource used by MESSAGEQUEUE strcture */
     msgQueue->lockCount--;
@@ -1401,13 +1400,13 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         queuePtr = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         queuePtr->thdb = THREAD_Current();
 
-        SYSTEM_LOCK();
+        HeapLock( SystemHeap );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );
         thdb->teb.queue = hQueue;
             
         queuePtr->next  = hFirstQueue;
         hFirstQueue = hQueue;
-        SYSTEM_UNLOCK();
+        HeapUnlock( SystemHeap );
         
         QUEUE_Unlock( queuePtr );
     }

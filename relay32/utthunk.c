@@ -216,12 +216,12 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 
     /* Allocate UTINFO struct */
 
-    SYSTEM_LOCK();
+    HeapLock( SegptrHeap );  /* FIXME: a bit overkill */
     if ( (ut = UTFind( hModule )) != NULL )
         ut = NULL;
     else
         ut = UTAlloc( hModule, hModule16, target16, pfnUT32CallBack );
-    SYSTEM_UNLOCK();
+    HeapUnlock( SegptrHeap );
 
     if ( !ut )
     {
@@ -261,14 +261,14 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
     UTINFO *ut;
     HMODULE16 hModule16 = 0;
 
-    SYSTEM_LOCK();
+    HeapLock( SegptrHeap );  /* FIXME: a bit overkill */
     ut = UTFind( hModule );
     if ( !ut )
     {
         hModule16 = ut->hModule16;
         UTFree( ut );
     }
-    SYSTEM_UNLOCK();
+    HeapUnlock( SegptrHeap );
 
     if ( hModule16 ) 
         FreeLibrary16( hModule16 );

@@ -11,7 +11,6 @@
 
 extern HANDLE SystemHeap;
 extern HANDLE SegptrHeap;
-extern CRITICAL_SECTION *HEAP_SystemLock;
 
 extern int HEAP_IsInsideHeap( HANDLE heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
@@ -38,14 +37,6 @@ static __inline__ SEGPTR WINE_UNUSED SEGPTR_Get(LPCVOID ptr) {
 #define SEGPTR_GET(ptr) SEGPTR_Get(ptr)
 #define SEGPTR_FREE(ptr) \
          (HIWORD(ptr) ? HeapFree( SegptrHeap, 0, (ptr) ) : 0)
-
-/* System heap locking macros */
-
-#define SYSTEM_LOCK()       (EnterCriticalSection(HEAP_SystemLock))
-#define SYSTEM_UNLOCK()     (LeaveCriticalSection(HEAP_SystemLock))
-/* Use this one only when you own the lock! */
-#define SYSTEM_LOCK_COUNT() (HEAP_SystemLock->RecursionCount)
-
 
 typedef struct
 {

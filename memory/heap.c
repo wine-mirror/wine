@@ -97,7 +97,6 @@ typedef struct tagHEAP
 
 HANDLE SystemHeap = 0;
 HANDLE SegptrHeap = 0;
-CRITICAL_SECTION *HEAP_SystemLock = NULL;
 
 
 /***********************************************************************
@@ -508,12 +507,8 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         /* Initialize critical section */
 
         InitializeCriticalSection( &heap->critSection );
-        if (!SystemHeap)
-        {
-            HEAP_SystemLock = &heap->critSection;
-            /* System heap critical section has to be global */
+        if (!SystemHeap) /* System heap critical section has to be global */
             MakeCriticalSectionGlobal( &heap->critSection );
-        }
     }
  
     /* Create the first free block */
