@@ -46,6 +46,9 @@
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 
+#include "wine/exception.h"
+#include "msvcrt/excpt.h"
+
 #include "internet.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
@@ -56,6 +59,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
 (LPWININETAPPINFOA)(((LPWININETFTPSESSIONA)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 typedef struct
 {
@@ -448,44 +460,51 @@ VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
  */
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
-    BOOL retval = FALSE;
+    BOOL retval;
     LPWININETHANDLEHEADER lpwh = (LPWININETHANDLEHEADER) hInternet;
 
     TRACE("%p\n",hInternet);
     if (NULL == lpwh)
         return FALSE;
 
-    /* Clear any error information */
-    INTERNET_SetLastError(0);
+    __TRY {
+	/* Clear any error information */
+	INTERNET_SetLastError(0);
+        retval = FALSE;
 
-    switch (lpwh->htype)
-    {
-        case WH_HINIT:
-            INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
-	    retval = TRUE;
-            break;
+	switch (lpwh->htype)
+	{
+	    case WH_HINIT:
+		INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
+		retval = TRUE;
+		break;
 
-        case WH_HHTTPSESSION:
-	    HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
-	    retval = TRUE;
-	    break;
+	    case WH_HHTTPSESSION:
+		HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
+		retval = TRUE;
+		break;
 
-        case WH_HHTTPREQ:
-            HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQA) lpwh);
-	    retval = TRUE;
-            break;
+	    case WH_HHTTPREQ:
+		HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQA) lpwh);
+		retval = TRUE;
+		break;
 
-        case WH_HFTPSESSION:
-            retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONA) lpwh);
-            break;
+	    case WH_HFTPSESSION:
+		retval = FTP_CloseSessionHandle((LPWININETFTPSESSIONA) lpwh);
+		break;
 
-        case WH_HFINDNEXT:
-            retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTA) lpwh);
-            break;
+	    case WH_HFINDNEXT:
+		retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTA) lpwh);
+		break;
 
-        default:
-            break;
+	    default:
+		break;
+	}
+    } __EXCEPT(page_fault) {
+	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
     }
+    __ENDTRY
 
     return retval;
 }
