@@ -447,9 +447,9 @@ extern BOOL PSDRV_WriteRotate(PSDRV_PDEVICE *physDev, float ang);
 extern BOOL PSDRV_WriteIndexColorSpaceBegin(PSDRV_PDEVICE *physDev, int size);
 extern BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number);
-extern BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
-				 INT widthDst, INT heightDst, INT widthSrc,
-				 INT heightSrc, char *bits, BOOL mask);
+extern BOOL PSDRV_WriteImage(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
+			     INT widthDst, INT heightDst, INT widthSrc,
+			     INT heightSrc, BOOL mask);
 extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, DWORD number);
 extern BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *byte, DWORD number);
 extern DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch);

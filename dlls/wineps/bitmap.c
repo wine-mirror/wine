@@ -149,8 +149,8 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
 	break;
     }
 
-    PSDRV_WriteImageDict(physDev, info->bmiHeader.biBitCount, xDst, yDst,
-			  widthDst, heightDst, widthSrc, heightSrc, NULL, FALSE);
+    PSDRV_WriteImage(physDev, info->bmiHeader.biBitCount, xDst, yDst,
+		     widthDst, heightDst, widthSrc, heightSrc, FALSE);
     return TRUE;
 }
 
@@ -198,8 +198,8 @@ static BOOL PSDRV_WriteImageMaskHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO 
     PSDRV_WriteGRestore(physDev);
 
     PSDRV_WriteSetColor(physDev, &foregnd);
-    PSDRV_WriteImageDict(physDev, 1, xDst, yDst, widthDst, heightDst,
-                         widthSrc, heightSrc, NULL, TRUE);
+    PSDRV_WriteImage(physDev, 1, xDst, yDst, widthDst, heightDst,
+		     widthSrc, heightSrc, TRUE);
 
     return TRUE;
 }

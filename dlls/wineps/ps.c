@@ -647,26 +647,22 @@ BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number)
     return TRUE;
 }
 
-
-BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
-			  INT widthDst, INT heightDst, INT widthSrc,
-			  INT heightSrc, char *bits, BOOL mask)
+static BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth,
+				 INT widthSrc, INT heightSrc, char *bits)
 {
-    static const char start[] = "%d %d translate\n%d %d scale\n<<\n"
+    static const char start[] = "<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
       " /ImageMatrix [%d 0 0 %d 0 %d]\n";
 
     static const char decode1[] = " /Decode [0 %d]\n";
     static const char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
-    static const char end[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> image\n";
-    static const char endmask[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> imagemask\n";
-
-    static const char endbits[] = " /DataSource <%s>\n>> image\n";
+    static const char end[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>>\n";
+    static const char endbits[] = " /DataSource <%s>\n>>\n";
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
 
-    sprintf(buf, start, xDst, yDst, widthDst, heightDst, widthSrc, heightSrc,
+    sprintf(buf, start, widthSrc, heightSrc,
 	    (depth < 8) ? depth : 8, widthSrc, -heightSrc, heightSrc);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
@@ -692,16 +688,32 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     if(!bits) {
-        if(!mask)
-            PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
-        else
-            PSDRV_WriteSpool(physDev, endmask, sizeof(endmask) - 1);
+        PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
     } else {
         sprintf(buf, endbits, bits);
         PSDRV_WriteSpool(physDev, buf, strlen(buf));
     }
 
     HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteImage(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
+		      INT widthDst, INT heightDst, INT widthSrc,
+		      INT heightSrc, BOOL mask)
+{
+    static const char start[] = "%d %d translate\n%d %d scale\n";
+    static const char image[] = "image\n";
+    static const char imagemask[] = "imagemask\n";
+    char buf[100];
+
+    sprintf(buf, start, xDst, yDst, widthDst, heightDst);
+    PSDRV_WriteSpool(physDev, buf, strlen(buf));
+    PSDRV_WriteImageDict(physDev, depth, widthSrc, heightSrc, NULL);
+    if(mask)
+        PSDRV_WriteSpool(physDev, imagemask, sizeof(imagemask) - 1);
+    else
+        PSDRV_WriteSpool(physDev, image, sizeof(image) - 1);
     return TRUE;
 }
 
@@ -784,25 +796,19 @@ BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName)
 
 BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 {
-    static const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
-      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
+    static const char mypat[] = "/mypat\n";
+    static const char do_pattern[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n  0 0 translate\n"
+      "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
 
-    static const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
-    INT w, h, x, y;
+    INT w, h, x, y, w_mult, h_mult;
     COLORREF map[2];
 
     w = bm->bmWidth & ~0x7;
     h = bm->bmHeight & ~0x7;
 
-    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(start) + 100);
-    sprintf(buf, start, w, h, w, h);
-    PSDRV_WriteSpool(physDev,  buf, strlen(buf));
-    PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
-    map[0] = GetTextColor( physDev->hdc );
-    map[1] = GetBkColor( physDev->hdc );
-    PSDRV_WriteRGB(physDev, map, 2);
-    PSDRV_WriteIndexColorSpaceEnd(physDev);
+    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(do_pattern) + 100);
     ptr = buf;
     for(y = h-1; y >= 0; y--) {
         for(x = 0; x < w/8; x++) {
@@ -810,21 +816,35 @@ BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 	    ptr += 2;
 	}
     }
-    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf, FALSE);
-    PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
+    PSDRV_WriteSpool(physDev, mypat, sizeof(mypat) - 1);
+    PSDRV_WriteImageDict(physDev, 1, 8, 8, buf);
+    PSDRV_WriteSpool(physDev, "def\n", 4);
+
+    PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
+    map[0] = GetTextColor( physDev->hdc );
+    map[1] = GetBkColor( physDev->hdc );
+    PSDRV_WriteRGB(physDev, map, 2);
+    PSDRV_WriteIndexColorSpaceEnd(physDev);
+
+    /* Windows seems to scale patterns so that a one pixel corresponds to 1/300" */
+    w_mult = (physDev->logPixelsX + 150) / 300;
+    h_mult = (physDev->logPixelsY + 150) / 300;
+    sprintf(buf, do_pattern, w * w_mult, h * h_mult, w * w_mult, h * h_mult, w * w_mult, h * h_mult);
+    PSDRV_WriteSpool(physDev,  buf, strlen(buf));
+
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
 
 BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage)
 {
-    static const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
-      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
-
-    static const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    static const char mypat[] = "/mypat\n";
+    static const char do_pattern[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n  0 0 translate\n"
+      "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
     BYTE *bits;
-    INT w, h, x, y, colours;
+    INT w, h, x, y, colours, w_mult, h_mult;
     COLORREF map[2];
 
     if(bmi->bmiHeader.biBitCount != 1) {
@@ -842,14 +862,7 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
     w = bmi->bmiHeader.biWidth & ~0x7;
     h = bmi->bmiHeader.biHeight & ~0x7;
 
-    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(start) + 100);
-    sprintf(buf, start, w, h, w, h);
-    PSDRV_WriteSpool(physDev,  buf, strlen(buf));
-    PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
-    map[0] = GetTextColor( physDev->hdc );
-    map[1] = GetBkColor( physDev->hdc );
-    PSDRV_WriteRGB(physDev, map, 2);
-    PSDRV_WriteIndexColorSpaceEnd(physDev);
+    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(do_pattern) + 100);
     ptr = buf;
     for(y = h-1; y >= 0; y--) {
         for(x = 0; x < w/8; x++) {
@@ -858,8 +871,21 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
 	    ptr += 2;
 	}
     }
-    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf, FALSE);
-    PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
+    PSDRV_WriteSpool(physDev, mypat, sizeof(mypat) - 1);
+    PSDRV_WriteImageDict(physDev, 1, 8, 8, buf);
+    PSDRV_WriteSpool(physDev, "def\n", 4);
+
+    PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
+    map[0] = GetTextColor( physDev->hdc );
+    map[1] = GetBkColor( physDev->hdc );
+    PSDRV_WriteRGB(physDev, map, 2);
+    PSDRV_WriteIndexColorSpaceEnd(physDev);
+
+    /* Windows seems to scale patterns so that a one pixel corresponds to 1/300" */
+    w_mult = (physDev->logPixelsX + 150) / 300;
+    h_mult = (physDev->logPixelsY + 150) / 300;
+    sprintf(buf, do_pattern, w * w_mult, h * h_mult, w * w_mult, h * h_mult, w * w_mult, h * h_mult);
+    PSDRV_WriteSpool(physDev,  buf, strlen(buf));
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
