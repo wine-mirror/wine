@@ -59,32 +59,6 @@ extern "C" {
 #endif
 
 
-#ifndef NONAMELESSSTRUCT
-#define LISet32(li, v)   ((li).HighPart = (v) < 0 ? -1 : 0, (li).LowPart = (v))
-#define ULISet32(li, v)  ((li).HighPart = 0, (li).LowPart = (v))
-#else
-#define LISet32(li, v)   ((li).s.HighPart = (v) < 0 ? -1 : 0, (li).s.LowPart = (v))
-#define ULISet32(li, v)  ((li).s.HighPart = 0, (li).s.LowPart = (v))
-#endif
-
-/*****************************************************************************
- * GUID API
- */
-HRESULT WINAPI StringFromCLSID16(REFCLSID id, LPOLESTR16*);
-HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR*);
-
-HRESULT WINAPI CLSIDFromString16(LPCOLESTR16, CLSID *);
-HRESULT WINAPI CLSIDFromString(LPCOLESTR, CLSID *);
-
-HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid);
-HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
-
-HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
-
-
-INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
-
-
 /*****************************************************************************
  * Macros to define a COM interface
  */
@@ -695,64 +669,6 @@ ICOM_DEFINE(IClassFactory,IUnknown)
 #define IClassFactory_CreateInstance(p,a,b,c) ICOM_CALL3(CreateInstance,p,a,b,c)
 #define IClassFactory_LockServer(p,a)         ICOM_CALL1(LockServer,p,a)
 
-
-/*****************************************************************************
- * Additional API
- */
-
-HRESULT WINAPI CoCreateGuid(GUID* pguid);
-
-HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
-
-void WINAPI CoFreeAllLibraries(void);
-
-void WINAPI CoFreeLibrary(HINSTANCE hLibrary);
-
-void WINAPI CoFreeUnusedLibraries(void);
-
-HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID iid, LPVOID *ppv);
-
-HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo, REFIID iid, LPVOID *ppv);
-
-HRESULT WINAPI CoInitialize(LPVOID lpReserved);
-HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
-
-void WINAPI CoUninitialize(void);
-
-typedef enum tagCOINIT
-{
-    COINIT_APARTMENTTHREADED  = 0x2, /* Apartment model */
-    COINIT_MULTITHREADED      = 0x0, /* OLE calls objects on any thread */
-    COINIT_DISABLE_OLE1DDE    = 0x4, /* Don't use DDE for Ole1 support */
-    COINIT_SPEED_OVER_MEMORY  = 0x8  /* Trade memory for speed */
-} COINIT;
-
-
-/* FIXME: not implemented */
-BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
-
-HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
-
-/* class registration flags; passed to CoRegisterClassObject */
-typedef enum tagREGCLS
-{
-    REGCLS_SINGLEUSE = 0,
-    REGCLS_MULTIPLEUSE = 1,
-    REGCLS_MULTI_SEPARATE = 2,
-    REGCLS_SUSPENDED = 4
-} REGCLS;
-
-HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
-
-HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
-
-HRESULT WINAPI CoGetPSClsid(REFIID riid,CLSID *pclsid);
-
-/*****************************************************************************
- *	COM Server dll - exports
- */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
-HRESULT WINAPI DllCanUnloadNow(void);
 
 #ifdef __cplusplus
 } /* extern "C" */
