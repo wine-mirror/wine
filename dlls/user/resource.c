@@ -37,11 +37,10 @@ WINE_DECLARE_DEBUG_CHANNEL(accel);
 /* this is the 8 byte accel struct used in Win32 resources (internal only) */
 typedef struct
 {
-    BYTE   fVirt;
-    BYTE   pad0;
+    WORD   fVirt;
     WORD   key;
     WORD   cmd;
-    WORD   pad1;
+    WORD   pad;
 } PE_ACCEL, *LPPE_ACCEL;
 
 /**********************************************************************
@@ -65,8 +64,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 /**********************************************************************
  *			LoadAcceleratorsW	(USER32.@)
  * The image layout seems to look like this (not 100% sure):
- * 00:	BYTE	type		type of accelerator
- * 01:	BYTE	pad		(to WORD boundary)
+ * 00:	WORD	type		type of accelerator
  * 02:	WORD	event
  * 04:	WORD	IDval
  * 06:	WORD	pad		(to DWORD boundary)
