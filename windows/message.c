@@ -681,124 +681,6 @@ void WINAPI UserYield16(void)
 }
 
 
-struct accent_char
-{
-    BYTE ac_accent;
-    BYTE ac_char;
-    BYTE ac_result;
-};
-
-static const struct accent_char accent_chars[] =
-{
-/* A good idea should be to read /usr/X11/lib/X11/locale/iso8859-x/Compose */
-    {'`', 'A', '\300'},  {'`', 'a', '\340'},
-    {'\'', 'A', '\301'}, {'\'', 'a', '\341'},
-    {'^', 'A', '\302'},  {'^', 'a', '\342'},
-    {'~', 'A', '\303'},  {'~', 'a', '\343'},
-    {'"', 'A', '\304'},  {'"', 'a', '\344'},
-    {'O', 'A', '\305'},  {'o', 'a', '\345'},
-    {'0', 'A', '\305'},  {'0', 'a', '\345'},
-    {'A', 'A', '\305'},  {'a', 'a', '\345'},
-    {'A', 'E', '\306'},  {'a', 'e', '\346'},
-    {',', 'C', '\307'},  {',', 'c', '\347'},
-    {'`', 'E', '\310'},  {'`', 'e', '\350'},
-    {'\'', 'E', '\311'}, {'\'', 'e', '\351'},
-    {'^', 'E', '\312'},  {'^', 'e', '\352'},
-    {'"', 'E', '\313'},  {'"', 'e', '\353'},
-    {'`', 'I', '\314'},  {'`', 'i', '\354'},
-    {'\'', 'I', '\315'}, {'\'', 'i', '\355'},
-    {'^', 'I', '\316'},  {'^', 'i', '\356'},
-    {'"', 'I', '\317'},  {'"', 'i', '\357'},
-    {'-', 'D', '\320'},  {'-', 'd', '\360'},
-    {'~', 'N', '\321'},  {'~', 'n', '\361'},
-    {'`', 'O', '\322'},  {'`', 'o', '\362'},
-    {'\'', 'O', '\323'}, {'\'', 'o', '\363'},
-    {'^', 'O', '\324'},  {'^', 'o', '\364'},
-    {'~', 'O', '\325'},  {'~', 'o', '\365'},
-    {'"', 'O', '\326'},  {'"', 'o', '\366'},
-    {'/', 'O', '\330'},  {'/', 'o', '\370'},
-    {'`', 'U', '\331'},  {'`', 'u', '\371'},
-    {'\'', 'U', '\332'}, {'\'', 'u', '\372'},
-    {'^', 'U', '\333'},  {'^', 'u', '\373'},
-    {'"', 'U', '\334'},  {'"', 'u', '\374'},
-    {'\'', 'Y', '\335'}, {'\'', 'y', '\375'},
-    {'T', 'H', '\336'},  {'t', 'h', '\376'},
-    {'s', 's', '\337'},  {'"', 'y', '\377'},
-    {'s', 'z', '\337'},  {'i', 'j', '\377'},
-	/* iso-8859-2 uses this */
-    {'<', 'L', '\245'},  {'<', 'l', '\265'},	/* caron */
-    {'<', 'S', '\251'},  {'<', 's', '\271'},
-    {'<', 'T', '\253'},  {'<', 't', '\273'},
-    {'<', 'Z', '\256'},  {'<', 'z', '\276'},
-    {'<', 'C', '\310'},  {'<', 'c', '\350'},
-    {'<', 'E', '\314'},  {'<', 'e', '\354'},
-    {'<', 'D', '\317'},  {'<', 'd', '\357'},
-    {'<', 'N', '\322'},  {'<', 'n', '\362'},
-    {'<', 'R', '\330'},  {'<', 'r', '\370'},
-    {';', 'A', '\241'},  {';', 'a', '\261'},	/* ogonek */
-    {';', 'E', '\312'},  {';', 'e', '\332'},
-    {'\'', 'Z', '\254'}, {'\'', 'z', '\274'},	/* acute */
-    {'\'', 'R', '\300'}, {'\'', 'r', '\340'},
-    {'\'', 'L', '\305'}, {'\'', 'l', '\345'},
-    {'\'', 'C', '\306'}, {'\'', 'c', '\346'},
-    {'\'', 'N', '\321'}, {'\'', 'n', '\361'},
-/*  collision whith S, from iso-8859-9 !!! */
-    {',', 'S', '\252'},  {',', 's', '\272'},	/* cedilla */
-    {',', 'T', '\336'},  {',', 't', '\376'},
-    {'.', 'Z', '\257'},  {'.', 'z', '\277'},	/* dot above */
-    {'/', 'L', '\243'},  {'/', 'l', '\263'},	/* slash */
-    {'/', 'D', '\320'},  {'/', 'd', '\360'},
-    {'(', 'A', '\303'},  {'(', 'a', '\343'},	/* breve */
-    {'\275', 'O', '\325'}, {'\275', 'o', '\365'},	/* double acute */
-    {'\275', 'U', '\334'}, {'\275', 'u', '\374'},
-    {'0', 'U', '\332'},  {'0', 'u', '\372'},	/* ring above */
-	/* iso-8859-3 uses this */
-    {'/', 'H', '\241'},  {'/', 'h', '\261'},	/* slash */
-    {'>', 'H', '\246'},  {'>', 'h', '\266'},	/* circumflex */
-    {'>', 'J', '\254'},  {'>', 'j', '\274'},
-    {'>', 'C', '\306'},  {'>', 'c', '\346'},
-    {'>', 'G', '\330'},  {'>', 'g', '\370'},
-    {'>', 'S', '\336'},  {'>', 's', '\376'},
-/*  collision whith G( from iso-8859-9 !!!   */
-    {'(', 'G', '\253'},  {'(', 'g', '\273'},	/* breve */
-    {'(', 'U', '\335'},  {'(', 'u', '\375'},
-/*  collision whith I. from iso-8859-3 !!!   */
-    {'.', 'I', '\251'},  {'.', 'i', '\271'},	/* dot above */
-    {'.', 'C', '\305'},  {'.', 'c', '\345'},
-    {'.', 'G', '\325'},  {'.', 'g', '\365'},
-	/* iso-8859-4 uses this */
-    {',', 'R', '\243'},  {',', 'r', '\263'},	/* cedilla */
-    {',', 'L', '\246'},  {',', 'l', '\266'},
-    {',', 'G', '\253'},  {',', 'g', '\273'},
-    {',', 'N', '\321'},  {',', 'n', '\361'},
-    {',', 'K', '\323'},  {',', 'k', '\363'},
-    {'~', 'I', '\245'},  {'~', 'i', '\265'},	/* tilde */
-    {'-', 'E', '\252'},  {'-', 'e', '\272'},	/* macron */
-    {'-', 'A', '\300'},  {'-', 'a', '\340'},
-    {'-', 'I', '\317'},  {'-', 'i', '\357'},
-    {'-', 'O', '\322'},  {'-', 'o', '\362'},
-    {'-', 'U', '\336'},  {'-', 'u', '\376'},
-    {'/', 'T', '\254'},  {'/', 't', '\274'},	/* slash */
-    {'.', 'E', '\314'},  {'.', 'e', '\344'},	/* dot above */
-    {';', 'I', '\307'},  {';', 'i', '\347'},	/* ogonek */
-    {';', 'U', '\331'},  {';', 'u', '\371'},
-	/* iso-8859-9 uses this */
-	/* iso-8859-9 has really bad choosen G( S, and I. as they collide
-	 * whith the same letters on other iso-8859-x (that is they are on
-	 * different places :-( ), if you use turkish uncomment these and
-	 * comment out the lines in iso-8859-2 and iso-8859-3 sections
-	 * FIXME: should be dynamic according to chosen language
-	 *	  if/when Wine has turkish support.
-	 */
-/*  collision whith G( from iso-8859-3 !!!   */
-/*  {'(', 'G', '\320'},  {'(', 'g', '\360'}, */	/* breve */
-/*  collision whith S, from iso-8859-2 !!! */
-/*  {',', 'S', '\336'},  {',', 's', '\376'}, */	/* cedilla */
-/*  collision whith I. from iso-8859-3 !!!   */
-/*  {'.', 'I', '\335'},  {'.', 'i', '\375'}, */	/* dot above */
-};
-
-
 /***********************************************************************
  *		TranslateMessage (USER32.@)
  *
@@ -817,7 +699,6 @@ static const struct accent_char accent_chars[] =
  */
 BOOL WINAPI TranslateMessage( const MSG *msg )
 {
-    static int dead_char;
     UINT message;
     WCHAR wp[2];
     BOOL rc = FALSE;
@@ -843,35 +724,12 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     {
     case 1:
         message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
-        /* Should dead chars handling go in ToAscii ? */
-        if (dead_char)
-        {
-            int i;
-
-            if (wp[0] == ' ') wp[0] =  dead_char;
-            if (dead_char == 0xa2) dead_char = '(';
-            else if (dead_char == 0xa8) dead_char = '"';
-	    else if (dead_char == 0xb2) dead_char = ';';
-            else if (dead_char == 0xb4) dead_char = '\'';
-            else if (dead_char == 0xb7) dead_char = '<';
-            else if (dead_char == 0xb8) dead_char = ',';
-            else if (dead_char == 0xff) dead_char = '.';
-            for (i = 0; i < sizeof(accent_chars)/sizeof(accent_chars[0]); i++)
-                if ((accent_chars[i].ac_accent == dead_char) &&
-                    (accent_chars[i].ac_char == wp[0]))
-                {
-                    wp[0] = accent_chars[i].ac_result;
-                    break;
-                }
-            dead_char = 0;
-        }
         TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         break;
 
     case -1:
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
-        dead_char = wp[0];
         TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         return TRUE;

@@ -840,11 +840,14 @@ static const WORD nonchar_key_scan[256] =
 
 /* Returns the Windows virtual key code associated with the X event <e> */
 /* x11 lock must be held */
-static WORD EVENT_event_to_vkey( XKeyEvent *e)
+static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 {
     KeySym keysym;
 
-    XLookupString(e, NULL, 0, &keysym, NULL);
+    if (xic)
+        XmbLookupString(xic, e, NULL, 0, &keysym, NULL);
+    else
+        XLookupString(e, NULL, 0, &keysym, NULL);
 
     if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF)
 	&& (e->state & NumLockMask))
@@ -988,7 +991,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     WORD vkey = 0, bScan;
     DWORD dwFlags;
     int ascii_chars;
-
+    XIC xic = X11DRV_get_ic( hwnd );
     DWORD event_time = event->time - X11DRV_server_startticks;
 
     /* this allows support for dead keys */
@@ -996,17 +999,11 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 	event->keycode=(event->keycode & 0xff);
 
     wine_tsx11_lock();
-    ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
+    if (xic)
+        ascii_chars = XmbLookupString(xic, event, Str, sizeof(Str), &keysym, NULL);
+    else
+        ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
     wine_tsx11_unlock();
-
-    /* Ignore some unwanted events */
-    if (keysym == XK_ISO_Prev_Group ||
-	keysym == XK_ISO_Next_Group ||
-	keysym == XK_Mode_switch)
-    {
-	TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
-	return;
-    }
 
     TRACE_(key)("state = %X\n", event->state);
 
@@ -1034,7 +1031,9 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     }
 
     wine_tsx11_lock();
-    vkey = EVENT_event_to_vkey(event);
+    vkey = EVENT_event_to_vkey(xic,event);
+    /* X returns keycode 0 for composed characters */
+    if (!vkey && ascii_chars) vkey = VK_NONAME;
     wine_tsx11_unlock();
 
     TRACE_(key)("keycode 0x%x converted to vkey 0x%x\n",
@@ -1123,7 +1122,19 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	keysym = XKeycodeToKeysym (display, keyc, i);
 	/* Allow both one-byte and two-byte national keysyms */
 	if ((keysym < 0x8000) && (keysym != ' '))
-	  ckey[i] = keysym & 0xFF;
+        {
+#ifdef HAVE_XKB
+            if (!is_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
+#endif
+            {
+                TRACE("XKB could not translate keysym %ld\n", keysym);
+                /* FIXME: query what keysym is used as Mode_switch, fill XKeyEvent
+                 * with appropriate ShiftMask and Mode_switch, use XLookupString
+                 * to get character in the local encoding.
+                 */
+                ckey[i] = keysym & 0xFF;
+            }
+        }
 	else {
 	  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
 	}
@@ -1277,8 +1288,18 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
 		keysym = XKeycodeToKeysym(display, keyc, i);
-		if ((keysym<0x800) && (keysym!=' ')) {
-		  ckey[i] = keysym & 0xFF;
+		if ((keysym<0x800) && (keysym!=' '))
+                {
+#ifdef HAVE_XKB
+                    if (!is_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
+#endif
+                    {
+                        /* FIXME: query what keysym is used as Mode_switch, fill XKeyEvent
+                         * with appropriate ShiftMask and Mode_switch, use XLookupString
+                         * to get character in the local encoding.
+                         */
+                        ckey[i] = keysym & 0xFF;
+                    }
 		} else {
 		  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
 		}
@@ -1507,7 +1528,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 			    if  ((keyc2vkey[keyc] & 0xFF) == wCode)
 			    { /* We filter the extended bit, we don't know it */
 			        e.keycode = keyc; /* Store it temporarily */
-				if ((EVENT_event_to_vkey(&e) & 0xFF) != wCode) {
+				if ((EVENT_event_to_vkey(0,&e) & 0xFF) != wCode) {
 				    e.keycode = 0; /* Wrong one (ex: because of the NumLock
 					 state), so set it to 0, we'll find another one */
 				}
@@ -1751,16 +1772,27 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     KeySym keysym;
     INT ret;
     int keyc;
-    BYTE lpChar[2];
+    char lpChar[2];
+    HWND focus;
+    XIC xic;
 
     if (scanCode & 0x8000)
     {
         TRACE("Key UP, doing nothing\n" );
         return 0;
     }
+
     e.display = display;
     e.keycode = 0;
     e.state = 0;
+    e.type = KeyPress;
+
+    focus = GetFocus();
+    if (focus) focus = GetAncestor( focus, GA_ROOT );
+    if (!focus) focus = GetActiveWindow();
+    e.window = X11DRV_get_whole_window( focus );
+    xic = X11DRV_get_ic( focus );
+
     if (lpKeyState[VK_SHIFT] & 0x80)
     {
 	TRACE("ShiftMask = %04x\n", ShiftMask);
@@ -1795,7 +1827,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
           if  ((keyc2vkey[keyc] & 0xFF) == virtKey)
           { /* We filter the extended bit, we don't know it */
               e.keycode = keyc; /* Store it temporarily */
-              if ((EVENT_event_to_vkey(&e) & 0xFF) != virtKey) {
+              if ((EVENT_event_to_vkey(xic,&e) & 0xFF) != virtKey) {
                   e.keycode = 0; /* Wrong one (ex: because of the NumLock
                          state), so set it to 0, we'll find another one */
               }
@@ -1808,7 +1840,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     if (virtKey==VK_DECIMAL)
         e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
 
-    if (!e.keycode)
+    if (!e.keycode && virtKey != VK_NONAME)
       {
 	WARN("Unknown virtual key %X !!! \n",virtKey);
         wine_tsx11_unlock();
@@ -1816,7 +1848,10 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
       }
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
-    ret = XLookupString(&e, (LPVOID)lpChar, 2, &keysym, NULL);
+    if (xic)
+        ret = XmbLookupString(xic, &e, lpChar, 2, &keysym, NULL);
+    else
+        ret = XLookupString(&e, lpChar, 2, &keysym, NULL);
     wine_tsx11_unlock();
 
     if (ret == 0)
@@ -1852,7 +1887,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             && (e.state & ShiftMask) /* Shift is pressed */
             && (keysym>=XK_KP_0) && (keysym<=XK_KP_9))
         {
-            *(char*)lpChar = 0;
+            lpChar[0] = 0;
             ret = 0;
         }
 
@@ -1863,7 +1898,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             if (((keysym>=33) && (keysym < 'A')) ||
                 ((keysym > 'Z') && (keysym < 'a')))
             {
-                *(char*)lpChar = 0;
+                lpChar[0] = 0;
                 ret = 0;
             }
         }
@@ -1872,13 +1907,13 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
          extended keyboard. X returns a char for it, but Windows doesn't */
         if (keysym == XK_Delete)
         {
-            *(char*)lpChar = 0;
+            lpChar[0] = 0;
             ret = 0;
         }
 	else if((lpKeyState[VK_SHIFT] & 0x80) /* Shift is pressed */
 		&& (keysym == XK_KP_Decimal))
         {
-            *(char*)lpChar = 0;
+            lpChar[0] = 0;
             ret = 0;
         }
 
@@ -1887,7 +1922,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	{
 	    TRACE_(key)("Translating char 0x%02x from code page %d to unicode\n",
 		*(BYTE *)lpChar, main_key_tab[kbd_layout].layout_cp);
-	    ret = MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, (LPCSTR)lpChar, ret, bufW, bufW_size);
+	    ret = MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, lpChar, ret, bufW, bufW_size);
 	}
     }
 

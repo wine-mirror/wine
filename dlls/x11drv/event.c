@@ -136,9 +136,12 @@ static int process_events( struct x11drv_thread_data *data )
     wine_tsx11_lock();
     while ( XPending( data->display ) )
     {
+        Bool ignore;
+
         XNextEvent( data->display, &event );
+        ignore = XFilterEvent( &event, None );
         wine_tsx11_unlock();
-        EVENT_ProcessEvent( &event );
+        if (!ignore) EVENT_ProcessEvent( &event );
         count++;
         wine_tsx11_lock();
     }
@@ -478,12 +481,21 @@ static const char * const focus_details[] =
  */
 static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
 {
+    XIC xic;
+
     if (!hwnd) return;
 
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
-    if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
     if (event->detail == NotifyPointer) return;
+
+    if ((xic = X11DRV_get_ic( hwnd )))
+    {
+        wine_tsx11_lock();
+        XSetICFocus( xic );
+        wine_tsx11_unlock();
+    }
+    if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
 
     if (!can_activate_window(hwnd))
     {
@@ -507,11 +519,18 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     HWND hwnd_tmp;
     Window focus_win;
     int revert;
+    XIC xic;
 
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
     x11drv_thread_data()->last_focus = hwnd;
+    if ((xic = X11DRV_get_ic( hwnd )))
+    {
+        wine_tsx11_lock();
+        XUnsetICFocus( xic );
+        wine_tsx11_unlock();
+    }
     if (hwnd != GetForegroundWindow()) return;
     SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
 
