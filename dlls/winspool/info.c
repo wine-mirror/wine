@@ -78,6 +78,18 @@ static const WCHAR DriversW[] = { 'S','y','s','t','e','m','\\',
                                   'E','n','v','i','r','o','n','m','e','n','t','s','\\',
                                   '%','s','\\','D','r','i','v','e','r','s','\\',0 };
 
+static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
+                                              'M','i','c','r','o','s','o','f','t','\\',
+                                              'W','i','n','d','o','w','s',' ','N','T','\\',
+                                              'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                              'W','i','n','d','o','w','s',0};
+
+static const WCHAR user_printers_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
+                                               'M','i','c','r','o','s','o','f','t','\\',
+                                               'W','i','n','d','o','w','s',' ','N','T','\\',
+                                               'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                               'D','e','v','i','c','e','s',0};
+
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 
 static const WCHAR Configuration_FileW[] = {'C','o','n','f','i','g','u','r','a','t',
@@ -148,9 +160,14 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
 	!strstr(qbuf,"WINEPS")
     ) {
     	char *buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS,LPR:")+1);
+        HKEY hkey;
 
 	sprintf(buf,"%s,WINEPS,LPR:%s",devname,name);
 	WriteProfileStringA("windows","device",buf);
+        if(RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey) == ERROR_SUCCESS) {
+            RegSetValueExA(hkey, "Device", 0, REG_SZ, buf, strlen(buf) + 1);
+            RegCloseKey(hkey);
+        }
 	HeapFree(GetProcessHeap(),0,buf);
     }
 }
@@ -166,7 +183,7 @@ static BOOL CUPS_LoadPrinters(void)
     PRINTER_INFO_2A       pinfo2a;
     void *cupshandle = NULL;
     char   *port,*devline;
-    HKEY hkeyPrinter, hkeyPrinters;
+    HKEY hkeyPrinter, hkeyPrinters, hkey;
 
     cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
     if (!cupshandle) 
@@ -195,6 +212,10 @@ static BOOL CUPS_LoadPrinters(void)
 	devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
 	sprintf(devline,"WINEPS,%s",port);
 	WriteProfileStringA("devices",dests[i].name,devline);
+        if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
+            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, devline, strlen(devline) + 1);
+            RegCloseKey(hkey);
+        }
 	HeapFree(GetProcessHeap(),0,devline);
 
         TRACE("Printer %d: %s\n", i, dests[i].name);
@@ -240,7 +261,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     char		*e,*s,*name,*prettyname,*devname;
     BOOL		ret = FALSE, set_default = FALSE;
     char                *port,*devline,*env_default;
-    HKEY                hkeyPrinter, hkeyPrinters;
+    HKEY                hkeyPrinter, hkeyPrinters, hkey;
 
     while (isspace(*pent)) pent++;
     s = strchr(pent,':');
@@ -301,6 +322,10 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
     sprintf(devline,"WINEPS,%s",port);
     WriteProfileStringA("devices",devname,devline);
+    if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
+        RegSetValueExA(hkey, devname, 0, REG_SZ, devline, strlen(devline) + 1);
+        RegCloseKey(hkey);
+    }
     HeapFree(GetProcessHeap(),0,devline);
     
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
@@ -1491,7 +1516,7 @@ static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
     LPCWSTR lpNameW = WINSPOOL_GetOpenedPrinter(hPrinter);
-    HKEY hkeyPrinters;
+    HKEY hkeyPrinters, hkey;
 
     if(!lpNameW) return FALSE;
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) == ERROR_SUCCESS) {
@@ -1499,6 +1524,10 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         RegCloseKey(hkeyPrinters);
     }
     WriteProfileStringW(devicesW, lpNameW, NULL);
+    if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
+        RegDeleteValueW(hkey, lpNameW);
+        RegCloseKey(hkey);
+    }
     return TRUE;
 }
 
