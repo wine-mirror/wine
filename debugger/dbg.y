@@ -145,7 +145,8 @@ command:
     | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
     | tCOND tNUM tEOL          	{ DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
-    | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2); }
+    | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2, 0); }
+    | tSYMBOLFILE pathname tNUM tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
     | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE); }
     | tDETACH tEOL              { return DEBUG_Detach(); /* FIXME: we shouldn't return, but since we cannot simply clean the symbol table, exit debugger for now */ }

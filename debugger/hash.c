@@ -797,7 +797,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
  *
  * Read a symbol file into the hash table.
  */
-void DEBUG_ReadSymbolTable( const char* filename )
+void DEBUG_ReadSymbolTable( const char* filename, unsigned long offset )
 {
     FILE * symbolfile;
     DBG_VALUE value;
@@ -839,7 +839,12 @@ void DEBUG_ReadSymbolTable( const char* filename )
         if (!(*cpnt) || *cpnt == '\n') continue;
 
         if (sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name) == 3)
+        {
+           if (value.addr.off + offset < value.addr.off)
+              DEBUG_Printf( DBG_CHN_WARN, "Address wrap around\n");
+           value.addr.off += offset;
 	   DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
+        }
     }
     fclose(symbolfile);
 }

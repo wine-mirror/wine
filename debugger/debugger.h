@@ -358,7 +358,7 @@ extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
 					     unsigned int ebp,
 					     struct list_id * source);
-extern void DEBUG_ReadSymbolTable( const char * filename );
+extern void DEBUG_ReadSymbolTable( const char * filename, unsigned long offset );
 extern void DEBUG_AddLineNumber( struct name_hash * func, int line_num,
 				 unsigned long offset );
 extern struct wine_locals *
