@@ -3637,7 +3637,11 @@ HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
  *		VarBstrFromDec		[OLEAUT32.@]
  */
 HRESULT WINAPI VarBstrFromDec(DECIMAL* pDecIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
-{	FIXME("%c%08lx%08lx%08lx E%02x stub\n",
+{
+	if(!pDecIn->u.s.sign && !pDecIn->u.s.scale &&
+	   !pDecIn->Hi32 && !pDecIn->u1.s1.Mid32)
+	    return VarBstrFromUI4(pDecIn->u1.s1.Lo32, lcid, dwFlags, pbstrOut);
+	FIXME("%c%08lx%08lx%08lx E%02x stub\n",
 	(pDecIn->u.s.sign == DECIMAL_NEG) ? '-' :
 	(pDecIn->u.s.sign == 0) ? '+' : '?',
 	pDecIn->Hi32, pDecIn->u1.s1.Mid32, pDecIn->u1.s1.Lo32,
