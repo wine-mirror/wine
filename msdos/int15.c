@@ -30,6 +30,38 @@ void WINAPI INT_Int15Handler( CONTEXT *context )
         AH_reg(context) = 0x0;
         RESET_CFLAG(context);
         break;
+    case 0xc2:
+	switch(AL_reg(context))
+	{
+	case 0x00: /* Enable-Disable Pointing Device (mouse) */
+	    /* BH = newstate, 00h = disabled 01h = enabled */
+	    switch(BH_reg(context))	    
+	    {
+	        case 0x00:
+	    	    FIXME(int, "Disable Pointing Device - not implemented\n");
+		    break;
+	    	case 0x01:
+	    	    FIXME(int, "Enable Pointing Device - not implemented\n");
+		    break;
+	    	default:
+		    INT_BARF( context, 0x15 );
+		    break;
+	    }
+	    AH_reg(context) = 0x00; /* successful */
+	    break;
+	case 0x02: /* Set Sampling Rate */
+	    /* BH = sampling rate */
+	    FIXME(int, "Set Sampling Rate - not implemented\n");
+	    AH_reg(context) = 0x00; /* successful */
+	    break;
+	case 0x04: /* Get Pointing Device Type */
+	    FIXME(int, "Get Pointing Device Type - not implemented\n");
+	    BH_reg(context) = 0x01;/*Device id FIXME what is it suposed to be?*/
+	    break;
+	default:
+	    INT_BARF( context, 0x15 );
+	}
+        break;
 
     default:
         INT_BARF( context, 0x15 );
