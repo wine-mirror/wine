@@ -106,7 +106,7 @@ static const unsigned int message_pointer_flags[] =
     /* 0xc0 - 0xdf */
     SET(EM_REPLACESEL) | SET(EM_GETLINE) | SET(EM_SETTABSTOPS),
     /* 0xe0 - 0xff */
-    SET(SBM_GETRANGE) | SET(SBM_SETSCROLLINFO) | SET(SBM_GETSCROLLINFO),
+    SET(SBM_GETRANGE) | SET(SBM_SETSCROLLINFO) | SET(SBM_GETSCROLLINFO) | SET(SBM_GETSCROLLBARINFO),
     /* 0x100 - 0x11f */
     0,
     /* 0x120 - 0x13f */
@@ -499,6 +499,13 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case SBM_GETSCROLLINFO:
         push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
         return sizeof(SCROLLINFO);
+    case SBM_GETSCROLLBARINFO:
+    {
+        const SCROLLBARINFO *info = (const SCROLLBARINFO *)lparam;
+        size_t size = min( info->cbSize, sizeof(SCROLLBARINFO) );
+        push_data( data, info, size );
+        return size;
+    }
     case EM_GETSEL:
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
@@ -723,6 +730,9 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case SBM_GETSCROLLINFO:
         if (!get_buffer_space( buffer, sizeof(SCROLLINFO ))) return FALSE;
+        break;
+    case SBM_GETSCROLLBARINFO:
+        if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO ))) return FALSE;
         break;
     case EM_GETSEL:
     case SBM_GETRANGE:
@@ -998,6 +1008,9 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         break;
     case SBM_GETSCROLLINFO:
         memcpy( (SCROLLINFO *)lparam, buffer, min( sizeof(SCROLLINFO), size ));
+        break;
+    case SBM_GETSCROLLBARINFO:
+        memcpy( (SCROLLBARINFO *)lparam, buffer, min( sizeof(SCROLLBARINFO), size ));
         break;
     case EM_GETRECT:
     case CB_GETDROPPEDCONTROLRECT:

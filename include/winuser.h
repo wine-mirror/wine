@@ -2118,6 +2118,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define SBM_SETRANGEREDRAW     0x00e6
 #define SBM_SETSCROLLINFO      0x00e9
 #define SBM_GETSCROLLINFO      0x00ea
+#define SBM_GETSCROLLBARINFO   0x00eb
 
 /* Scrollbar info */
 typedef struct tagSCROLLINFO
@@ -2132,6 +2133,19 @@ typedef struct tagSCROLLINFO
 } SCROLLINFO, *LPSCROLLINFO;
 
 typedef const SCROLLINFO *LPCSCROLLINFO;
+
+#define CCHILDREN_SCROLLBAR 5
+
+typedef struct tagSCROLLBARINFO
+{
+    DWORD   cbSize;             /* Size of SCROLLBARINFO struct */
+    RECT    rcScrollBar;        /* Coordinates of the scroll bar */
+    INT     dxyLineButton;      /* Height or width */
+    INT     xyThumbTop;         /* Position of the top or the left */
+    INT     xyThumbBottom;      /* Position of the bottom or the right */
+    INT     reserved;
+    DWORD   rgstate[CCHILDREN_SCROLLBAR+1];
+} SCROLLBARINFO, *PSCROLLBARINFO, *LPSCROLLBARINFO;
 
 /* GetScrollInfo() flags */
 #define SIF_RANGE           0x0001
@@ -4239,6 +4253,7 @@ HANDLE    WINAPI GetPropW(HWND,LPCWSTR);
 #define     GetProp WINELIB_NAME_AW(GetProp)
 DWORD       WINAPI GetQueueStatus(UINT);
 BOOL      WINAPI GetScrollInfo(HWND,INT,LPSCROLLINFO);
+BOOL      WINAPI GetScrollBarInfo(HWND,LONG,LPSCROLLBARINFO);
 INT       WINAPI GetScrollPos(HWND,INT);
 BOOL      WINAPI GetScrollRange(HWND,INT,LPINT,LPINT);
 HWND      WINAPI GetShellWindow(void);
