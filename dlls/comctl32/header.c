@@ -845,13 +845,15 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMA   *phdi = (HDITEMA*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    INT       len;
+    INT       len, i, iOrder;
 
     if ((phdi == NULL) || (nItem < 0))
 	return -1;
 
     if (nItem > infoPtr->uNumItem)
         nItem = infoPtr->uNumItem;
+
+    iOrder = (phdi->mask & HDI_ORDER) ? phdi->iOrder : nItem;
 
     if (infoPtr->uNumItem == 0) {
         infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM));
@@ -882,6 +884,12 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
 
         COMCTL32_Free (oldItems);
+    }
+
+    for (i=0; i < infoPtr->uNumItem; i++)
+    {
+        if (infoPtr->items[i].iOrder >= iOrder)
+            infoPtr->items[i].iOrder++;
     }
 
     lpItem = &infoPtr->items[nItem];
@@ -921,13 +929,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_IMAGE)
         lpItem->iImage = phdi->iImage;
 
-    if (phdi->mask & HDI_ORDER)
-      {
-        lpItem->iOrder = phdi->iOrder;
-      }
-    else
-      lpItem->iOrder=nItem;
-
+    lpItem->iOrder = iOrder;
 
     HEADER_SetItemBounds (hwnd);
 
@@ -944,13 +946,15 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMW   *phdi = (HDITEMW*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    INT       len;
+    INT       len, i, iOrder;
 
     if ((phdi == NULL) || (nItem < 0))
 	return -1;
 
     if (nItem > infoPtr->uNumItem)
         nItem = infoPtr->uNumItem;
+
+    iOrder = (phdi->mask & HDI_ORDER) ? phdi->iOrder : nItem;
 
     if (infoPtr->uNumItem == 0) {
         infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM));
@@ -981,6 +985,12 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
 
         COMCTL32_Free (oldItems);
+    }
+
+    for (i=0; i < infoPtr->uNumItem; i++)
+    {
+        if (infoPtr->items[i].iOrder >= iOrder)
+            infoPtr->items[i].iOrder++;
     }
 
     lpItem = &infoPtr->items[nItem];
@@ -1021,12 +1031,7 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_IMAGE)
         lpItem->iImage = phdi->iImage;
 
-    if (phdi->mask & HDI_ORDER)
-      {
-        lpItem->iOrder = phdi->iOrder;
-      }
-    else
-      lpItem->iOrder = nItem;
+    lpItem->iOrder = iOrder;
 
     HEADER_SetItemBounds (hwnd);
 
