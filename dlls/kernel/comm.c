@@ -1606,6 +1606,7 @@ static BOOL COMM_WaitCommEvent(
         close(fd);
         return FALSE;
     }
+    ovp->event = lpOverlapped->hEvent;
     ovp->lpOverlapped = lpOverlapped;
     ovp->func = COMM_WaitCommEventService;
     ovp->buffer = (char *)lpdwEvents;

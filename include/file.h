@@ -52,6 +52,7 @@ typedef struct async_private
 {
      LPOVERLAPPED  lpOverlapped;
      HANDLE        handle;
+     HANDLE        event;
      int           fd;
      char         *buffer;
      async_handler func;

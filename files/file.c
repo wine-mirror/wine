@@ -1370,7 +1370,8 @@ async_end:
  */
 static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 			 LPOVERLAPPED overlapped, 
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
+                         HANDLE hEvent)
 {
     async_private *ovp;
     int fd;
@@ -1400,6 +1401,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         close(fd);
         return FALSE;
     }
+    ovp->event = hEvent;
     ovp->lpOverlapped = overlapped;
     ovp->count = bytesToRead;
     ovp->completion_func = lpCompletionRoutine;
@@ -1435,12 +1437,7 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 {
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
-    return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine);
-}
-
-static VOID CALLBACK FILE_OverlappedComplete(DWORD status, DWORD count, LPOVERLAPPED ov)
-{
-    NtSetEvent(ov->hEvent,NULL);
+    return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine, INVALID_HANDLE_VALUE);
 }
 
 static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead)
@@ -1453,7 +1450,7 @@ static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPD
     ZeroMemory(&ov, sizeof (OVERLAPPED));
     if(STATUS_SUCCESS==NtCreateEvent(&ov.hEvent, SYNCHRONIZE, NULL, 0, 0))
     {
-        if(ReadFileEx(hFile, buffer, bytesToRead, &ov, FILE_OverlappedComplete))
+        if(FILE_ReadFileEx(hFile, buffer, bytesToRead, &ov, NULL, ov.hEvent))
         {
             r = GetOverlappedResult(hFile, &ov, bytesRead, TRUE);
         }
@@ -1520,7 +1517,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         overlapped->Internal     = STATUS_PENDING;
         overlapped->InternalHigh = result;
         
-        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, FILE_OverlappedComplete))
+        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL, overlapped->hEvent))
             return FALSE;
 
         /* fail on return, with ERROR_IO_PENDING */
@@ -1617,7 +1614,8 @@ async_end:
  */
 static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                              LPOVERLAPPED overlapped,
-                             LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+                             LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
+                             HANDLE hEvent)
 {
     async_private *ovp;
 
@@ -1647,6 +1645,7 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         return FALSE;
     }
     ovp->lpOverlapped = overlapped;
+    ovp->event = hEvent;
     ovp->func = FILE_AsyncWriteService;
     ovp->buffer = (LPVOID) buffer;
     ovp->count = bytesToWrite;
@@ -1681,7 +1680,7 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
  
-    return FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
+    return FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, INVALID_HANDLE_VALUE);
 }
 
 /***********************************************************************
@@ -1744,7 +1743,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         overlapped->Internal     = STATUS_PENDING;
         overlapped->InternalHigh = result;
         
-        if(!FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, FILE_OverlappedComplete))
+        if(!FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL, overlapped->hEvent))
             return FALSE;
 
         /* fail on return, with ERROR_IO_PENDING */
