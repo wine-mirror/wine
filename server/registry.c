@@ -1509,7 +1509,7 @@ DECL_HANDLER(create_key)
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     req->hkey = -1;
-    if ((parent = get_hkey_obj( req->parent, KEY_CREATE_SUB_KEY )))
+    if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
         if ((class = req_strdupW( req, req->class )))
         {
@@ -1549,7 +1549,7 @@ DECL_HANDLER(delete_key)
 {
     struct key *key;
 
-    if ((key = get_hkey_obj( req->hkey, KEY_CREATE_SUB_KEY /*FIXME*/ )))
+    if ((key = get_hkey_obj( req->hkey, 0 /*FIXME*/ )))
     {
         delete_key( key, req->name, sizeof(req->name) );
         release_object( key );
