@@ -974,7 +974,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     if ((SCROLL_trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
 		  return;
 
-    if (GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX))
+    if (nBar == SB_CTL && (GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX)))
     {
         switch(msg)
         {
@@ -1278,17 +1278,16 @@ LPCREATESTRUCTW lpCreate /* [in] The style and place of the scroll bar */)
     }
 
 
-    if (lpCreate->style & SBS_SIZEBOXTOPLEFTALIGN)
+    if (lpCreate->style & (SBS_SIZEGRIP | SBS_SIZEBOX))
     {
-        MoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
-                    GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-    }
-    else if(lpCreate->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
-    {
-        MoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1, 
-                    lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                    GetSystemMetrics(SM_CXVSCROLL)+1,
-                    GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+        if (lpCreate->style & SBS_SIZEBOXTOPLEFTALIGN)
+            MoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
+                        GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+        else if(lpCreate->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
+            MoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1, 
+                        lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                        GetSystemMetrics(SM_CXVSCROLL)+1,
+                        GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
     }
     else if (lpCreate->style & SBS_VERT)
     {
