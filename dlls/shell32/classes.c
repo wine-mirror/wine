@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "winreg.h"
 
+#include "wine/obj_queryassociations.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "shlguid.h"
@@ -193,3 +194,155 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 	return TRUE;
 }
 
+typedef struct 
+{	ICOM_VFIELD(IQueryAssociations);
+	DWORD	ref;
+} IQueryAssociationsImpl;
+
+static struct ICOM_VTABLE(IQueryAssociations) qavt;
+
+/**************************************************************************
+*  IQueryAssociations_Constructor
+*/
+IQueryAssociations* IQueryAssociations_Constructor(void)
+{
+	IQueryAssociationsImpl* ei;
+
+	ei=(IQueryAssociationsImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IQueryAssociationsImpl));
+	ei->ref=1;
+	ICOM_VTBL(ei) = &qavt;
+
+	TRACE("(%p)\n",ei);
+	shell32_ObjCount++;
+	return (IQueryAssociations *)ei;
+}
+/**************************************************************************
+ *  IQueryAssociations_QueryInterface
+ */
+static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
+	IQueryAssociations * iface,
+	REFIID riid,
+	LPVOID *ppvObj)
+{
+	ICOM_THIS(IQueryAssociationsImpl,iface);
+
+	 TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
+
+	*ppvObj = NULL;
+
+	if(IsEqualIID(riid, &IID_IUnknown))		/*IUnknown*/
+	{
+	  *ppvObj = This; 
+	}
+	else if(IsEqualIID(riid, &IID_IQueryAssociations))	/*IExtractIcon*/
+	{
+	  *ppvObj = (IQueryAssociations*)This;
+	}
+
+	if(*ppvObj)
+	{
+	  IQueryAssociations_AddRef((IQueryAssociations*) *ppvObj);  	
+	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
+	  return S_OK;
+	}
+	TRACE("-- Interface: E_NOINTERFACE\n");
+	return E_NOINTERFACE;
+}
+
+/**************************************************************************
+*  IQueryAssociations_AddRef
+*/
+static ULONG WINAPI IQueryAssociations_fnAddRef(IQueryAssociations * iface)
+{
+	ICOM_THIS(IQueryAssociationsImpl,iface);
+
+	TRACE("(%p)->(count=%lu)\n",This, This->ref );
+
+	shell32_ObjCount++;
+
+	return ++(This->ref);
+}
+/**************************************************************************
+*  IQueryAssociations_Release
+*/
+static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations * iface)
+{
+	ICOM_THIS(IQueryAssociationsImpl,iface);
+
+	TRACE("(%p)->()\n",This);
+
+	shell32_ObjCount--;
+
+	if (!--(This->ref)) 
+	{
+	  TRACE(" destroying IExtractIcon(%p)\n",This);
+	  HeapFree(GetProcessHeap(),0,This);
+	  return 0;
+	}
+	return This->ref;
+}
+
+static HRESULT WINAPI IQueryAssociations_fnInit(
+	IQueryAssociations * iface,
+	ASSOCF flags,
+	LPCWSTR pszAssoc,
+	HKEY hkProgid,
+	HWND hwnd)
+{
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IQueryAssociations_fnGetString(
+	IQueryAssociations * iface,
+	ASSOCF flags,
+	ASSOCSTR str,
+	LPCWSTR pszExtra,
+	LPWSTR pszOut,
+	DWORD *pcchOut)
+{
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IQueryAssociations_fnGetKey(
+	IQueryAssociations * iface,
+	ASSOCF flags,
+	ASSOCKEY key,
+	LPCWSTR pszExtra,
+	HKEY *phkeyOut)
+{
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IQueryAssociations_fnGetData(
+	IQueryAssociations * iface,
+	ASSOCF flags,
+	ASSOCDATA data,
+	LPCWSTR pszExtra,
+	LPVOID pvOut,
+	DWORD *pcbOut)
+{
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI IQueryAssociations_fnGetEnum(
+	IQueryAssociations * iface,
+	ASSOCF flags,
+	ASSOCENUM assocenum,
+	LPCWSTR pszExtra,
+	REFIID riid,
+	LPVOID *ppvOut)
+{
+	return E_NOTIMPL;
+}
+
+static struct ICOM_VTABLE(IQueryAssociations) qavt = 
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IQueryAssociations_fnQueryInterface,
+	IQueryAssociations_fnAddRef,
+	IQueryAssociations_fnRelease,
+	IQueryAssociations_fnInit,
+	IQueryAssociations_fnGetString,	
+	IQueryAssociations_fnGetKey,
+	IQueryAssociations_fnGetData,
+	IQueryAssociations_fnGetEnum
+};
