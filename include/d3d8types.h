@@ -152,30 +152,54 @@
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
 
 
-/** VertexShader Declaration */
+/**************************** 
+ * Vertex Shaders Declaration
+ */
+
 typedef enum _D3DVSD_TOKENTYPE {
-  D3DVSD_TOKEN_NOP,
-  D3DVSD_TOKEN_STREAM,
-  D3DVSD_TOKEN_STREAMDATA,
-  D3DVSD_TOKEN_TESSELLATOR,
-  D3DVSD_TOKEN_CONSTMEM,
-  D3DVSD_TOKEN_EXT,
-  D3DVSD_TOKEN_END,
-  D3DVSD_FORCE_DWORD = 0x7FFFFFFF
+  D3DVSD_TOKEN_NOP         = 0,
+  D3DVSD_TOKEN_STREAM      = 1,
+  D3DVSD_TOKEN_STREAMDATA  = 2,
+  D3DVSD_TOKEN_TESSELLATOR = 3,
+  D3DVSD_TOKEN_CONSTMEM    = 4,
+  D3DVSD_TOKEN_EXT         = 5,
+  /* RESERVED              = 6 */
+  D3DVSD_TOKEN_END         = 7,
+  D3DVSD_FORCE_DWORD       = 0x7FFFFFFF
 } D3DVSD_TOKENTYPE;
 
-/* Address of the vertex register. 0 - 16 */
+/** input registers for vertes shaders functions */
+/*
+#define D3DVSDE_POSITION      0
+#define D3DVSDE_BLENDWEIGHT   1
+#define D3DVSDE_BLENDINDICES  2
+#define D3DVSDE_NORMAL        3
+#define D3DVSDE_PSIZE         4
+#define D3DVSDE_DIFFUSE       5
+#define D3DVSDE_SPECULAR      6
+#define D3DVSDE_TEXCOORD0     7
+#define D3DVSDE_TEXCOORD1     8
+#define D3DVSDE_TEXCOORD2     9
+#define D3DVSDE_TEXCOORD3    10
+#define D3DVSDE_TEXCOORD4    11
+#define D3DVSDE_TEXCOORD5    12
+#define D3DVSDE_TEXCOORD6    13
+#define D3DVSDE_TEXCOORD7    14
+#define D3DVSDE_POSITION2    15
+#define D3DVSDE_NORMAL2      16
+*/
+/** Address of the vertex register. 0 - 16 */
 typedef enum _D3DVSDE_REGISTER {
-  D3DVSDE_POSITION     = 0,
-  D3DVSDE_BLENDWEIGHT  = 1,
-  D3DVSDE_BLENDINDICES = 2,
-  D3DVSDE_NORMAL       = 3,
-  D3DVSDE_PSIZE        = 4,
-  D3DVSDE_DIFFUSE      = 5,
-  D3DVSDE_SPECULAR     = 6,
-  D3DVSDE_TEXCOORD0    = 7,
-  D3DVSDE_TEXCOORD1    = 8,
-  D3DVSDE_TEXCOORD2    = 9,
+  D3DVSDE_POSITION     =  0,
+  D3DVSDE_BLENDWEIGHT  =  1,
+  D3DVSDE_BLENDINDICES =  2,
+  D3DVSDE_NORMAL       =  3,
+  D3DVSDE_PSIZE        =  4,
+  D3DVSDE_DIFFUSE      =  5,
+  D3DVSDE_SPECULAR     =  6,
+  D3DVSDE_TEXCOORD0    =  7,
+  D3DVSDE_TEXCOORD1    =  8,
+  D3DVSDE_TEXCOORD2    =  9,
   D3DVSDE_TEXCOORD3    = 10,
   D3DVSDE_TEXCOORD4    = 11,
   D3DVSDE_TEXCOORD5    = 12,
@@ -185,6 +209,17 @@ typedef enum _D3DVSDE_REGISTER {
   D3DVSDE_NORMAL2      = 16
 } D3DVSDE_REGISTER;
 
+/** bit-field declaration for VertexRegister Type */
+/*
+#define D3DVSDT_FLOAT1      0x00
+#define D3DVSDT_FLOAT2      0x01
+#define D3DVSDT_FLOAT3      0x02
+#define D3DVSDT_FLOAT4      0x03
+#define D3DVSDT_D3DCOLOR    0x04
+#define D3DVSDT_UBYTE4      0x05
+#define D3DVSDT_SHORT2      0x06
+#define D3DVSDT_SHORT4      0x07
+*/
 typedef enum _D3DVSDT_TYPE {
   D3DVSDT_FLOAT1   = 0x00,
   D3DVSDT_FLOAT2   = 0x01,
@@ -196,9 +231,35 @@ typedef enum _D3DVSDT_TYPE {
   D3DVSDT_SHORT4   = 0x07
 } D3DVSDT_TYPE;
 
-#define D3DVSD_DATATYPESHIFT    16
-#define D3DVSD_CONSTCOUNTSHIFT  25
-#define D3DVSD_TOKENTYPESHIFT   26
+
+#define D3DVSD_CONSTADDRESSSHIFT  0
+#define D3DVSD_EXTINFOSHIFT       0
+#define D3DVSD_STREAMNUMBERSHIFT  0
+#define D3DVSD_VERTEXREGSHIFT     0
+#define D3DVSD_CONSTRSSHIFT      16
+#define D3DVSD_DATATYPESHIFT     16
+#define D3DVSD_SKIPCOUNTSHIFT    16
+#define D3DVSD_VERTEXREGINSHIFT  20
+#define D3DVSD_EXTCOUNTSHIFT     24
+#define D3DVSD_CONSTCOUNTSHIFT   25
+#define D3DVSD_DATALOADTYPESHIFT 28
+#define D3DVSD_STREAMTESSSHIFT   28
+#define D3DVSD_TOKENTYPESHIFT    29
+
+#define D3DVSD_CONSTADDRESSMASK  (0x7F     << D3DVSD_CONSTADDRESSSHIFT)
+#define D3DVSD_EXTINFOMASK       (0xFFFFFF << D3DVSD_EXTINFOSHIFT)
+#define D3DVSD_STREAMNUMBERMASK  (0xF      << D3DVSD_STREAMNUMBERSHIFT)
+#define D3DVSD_VERTEXREGMASK     (0x1F     << D3DVSD_VERTEXREGSHIFT)
+#define D3DVSD_CONSTRSMASK       (0x1FFF   << D3DVSD_CONSTREGSHIFT)
+#define D3DVSD_DATATYPEMASK      (0xF      << D3DVSD_DATATYPESHIFT)
+#define D3DVSD_SKIPCOUNTMASK     (0xF      << D3DVSD_SKIPCOUNTSHIFT)
+#define D3DVSD_EXTCOUNTMASK      (0x1F     << D3DVSD_EXTCOUNTSHIFT)
+#define D3DVSD_VERTEXREGINMASK   (0xF      << D3DVSD_VERTEXREGINSHIFT)
+#define D3DVSD_CONSTCOUNTMASK    (0xF      << D3DVSD_CONSTCOUNTSHIFT)
+#define D3DVSD_DATALOADTYPEMASK  (0x1      << D3DVSD_DATALOADTYPESHIFT)
+#define D3DVSD_STREAMTESSMASK    (0x1      << D3DVSD_STREAMTESSSHIFT)
+#define D3DVSD_TOKENTYPEMASK     (0x7      << D3DVSD_TOKENTYPESHIFT)
+
 
 #define D3DVSD_MAKETOKENTYPE(TokenType) \
   ((TokenType << D3DVSD_TOKENTYPESHIFT) & D3DVSD_TOKENTYPEMASK)
@@ -222,11 +283,203 @@ typedef enum _D3DVSDT_TYPE {
 #define D3DVSD_STREAM_TESS() \
   (D3DVSD_MAKETOKENTYPE(D3DVSD_TOKEN_STREAM) | (D3DVSD_STREAMTESSMASK))
 
-#define D3DVSD_TESSNORMAL(VertexRegisterIn, VertexRegisterOut) \
-  (D3DVSD_MAKETOKENTYPE(D3DVSD_TOKEN_TESSELLATOR) | ((VertexRegisterIn) << D3DVSD_VERTEXREGINSHIFT) | ((0x02) << D3DVSD_DATATYPESHIFT) | (VertexRegisterOut))
+#define D3DVSD_TESSNORMAL(RegisterIn, RegisterOut) \
+  (D3DVSD_MAKETOKENTYPE(D3DVSD_TOKEN_TESSELLATOR) | ((RegisterIn) << D3DVSD_VERTEXREGINSHIFT) | ((0x02) << D3DVSD_DATATYPESHIFT) | (RegisterOut))
 
-#define D3DVSD_TESSUV(VertexRegister) \
-  (D3DVSD_MAKETOKENTYPE(D3DVSD_TOKEN_TESSELLATOR) | 0x10000000 | ((0x01) << D3DVSD_DATATYPESHIFT) | (_VertexRegister))
+#define D3DVSD_TESSUV(Register) \
+  (D3DVSD_MAKETOKENTYPE(D3DVSD_TOKEN_TESSELLATOR) | 0x10000000 | ((0x01) << D3DVSD_DATATYPESHIFT) | (Register))
+
+
+/********************************
+ * Pixel/Vertex Shaders Functions
+ */
+
+/** Maximum number of supported texture coordinates sets operation */
+#define D3DDP_MAXTEXCOORD   8
+
+/** opcode token mask */
+#define D3DSI_OPCODE_MASK 0x0000FFFF
+
+/** opcodes types for PS and VS */
+typedef enum _D3DSHADER_INSTRUCTION_OPCODE_TYPE {
+  D3DSIO_NOP          =  0,
+  D3DSIO_MOV          =  1,
+  D3DSIO_ADD          =  2,
+  D3DSIO_SUB          =  3,
+  D3DSIO_MAD          =  4,
+  D3DSIO_MUL          =  5,
+  D3DSIO_RCP          =  6,
+  D3DSIO_RSQ          =  7,
+  D3DSIO_DP3          =  8,
+  D3DSIO_DP4          =  9,
+  D3DSIO_MIN          = 10,
+  D3DSIO_MAX          = 11,
+  D3DSIO_SLT          = 12,
+  D3DSIO_SGE          = 13,
+  D3DSIO_EXP          = 14,
+  D3DSIO_LOG          = 15,
+  D3DSIO_LIT          = 16,
+  D3DSIO_DST          = 17,
+  D3DSIO_LRP          = 18,
+  D3DSIO_FRC          = 19,
+  D3DSIO_M4x4         = 20,
+  D3DSIO_M4x3         = 21,
+  D3DSIO_M3x4         = 22,
+  D3DSIO_M3x3         = 23,
+  D3DSIO_M3x2         = 24,
+
+  D3DSIO_TEXCOORD     = 64,
+  D3DSIO_TEXKILL      = 65,
+  D3DSIO_TEX          = 66,
+  D3DSIO_TEXBEM       = 67,
+  D3DSIO_TEXBEML      = 68,
+  D3DSIO_TEXREG2AR    = 69,
+  D3DSIO_TEXREG2GB    = 70,
+  D3DSIO_TEXM3x2PAD   = 71,
+  D3DSIO_TEXM3x2TEX   = 72,
+  D3DSIO_TEXM3x3PAD   = 73,
+  D3DSIO_TEXM3x3TEX   = 74,
+  D3DSIO_TEXM3x3DIFF  = 75,
+  D3DSIO_TEXM3x3SPEC  = 76,
+  D3DSIO_TEXM3x3VSPEC = 77,
+  D3DSIO_EXPP         = 78,
+  D3DSIO_LOGP         = 79,
+  D3DSIO_CND          = 80,
+  D3DSIO_DEF          = 81,
+  D3DSIO_TEXREG2RGB   = 82,
+  D3DSIO_TEXDP3TEX    = 83,
+  D3DSIO_TEXM3x2DEPTH = 84,
+  D3DSIO_TEXDP3       = 85,
+  D3DSIO_TEXM3x3      = 86,
+  D3DSIO_TEXDEPTH     = 87,
+  D3DSIO_CMP          = 88,
+  D3DSIO_BEM          = 89,
+
+  D3DSIO_PHASE        = 0xFFFD,
+  D3DSIO_COMMENT      = 0xFFFE,
+  D3DSIO_END          = 0XFFFF,
+
+  D3DSIO_FORCE_DWORD  = 0X7FFFFFFF /** for 32-bit alignment */
+} D3DSHADER_INSTRUCTION_OPCODE_TYPE;
+
+/** for parallelism */
+#define D3DSI_COISSUE 0x40000000
+
+/** destination parameter modifiers (.xyzw) */
+#define D3DSP_WRITEMASK_0       0x00010000 /* .x r */
+#define D3DSP_WRITEMASK_1       0x00020000 /* .y g */
+#define D3DSP_WRITEMASK_2       0x00040000 /* .z b */
+#define D3DSP_WRITEMASK_3       0x00080000 /* .w a */
+#define D3DSP_WRITEMASK_ALL     0x000F0000 /* all */
+
+#define D3DSP_DSTMOD_SHIFT      20
+#define D3DSP_DSTMOD_MASK       (0xF << D3DSP_DSTMOD_SHIFT)
+
+typedef enum _D3DSHADER_PARAM_DSTMOD_TYPE {
+  D3DSPDM_NONE         = 0 << D3DSP_DSTMOD_SHIFT,
+  D3DSPDM_SATURATE     = 1 << D3DSP_DSTMOD_SHIFT,
+  D3DSPDM_FORCE_DWORD  = 0X7FFFFFFF
+} D3DSHADER_PARAM_DSTMOD_TYPE;
+
+/** destination param */
+#define D3DSP_DSTSHIFT_SHIFT     24
+#define D3DSP_DSTSHIFT_MASK      (0xF << D3DSP_DSTSHIFT_SHIFT)
+
+/** destination/source reg type */
+#define D3DSP_REGTYPE_SHIFT      28
+#define D3DSP_REGTYPE_MASK       (0x7 << D3DSP_REGTYPE_SHIFT)
+
+typedef enum _D3DSHADER_PARAM_REGISTER_TYPE {
+  D3DSPR_TEMP         = 0 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_INPUT        = 1 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_CONST        = 2 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_ADDR         = 3 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_TEXTURE      = 3 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_RASTOUT      = 4 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_ATTROUT      = 5 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_TEXCRDOUT    = 6 << D3DSP_REGTYPE_SHIFT,
+  D3DSPR_FORCE_DWORD  = 0x7FFFFFFF
+} D3DSHADER_PARAM_REGISTER_TYPE;
+
+typedef enum _D3DVS_RASTOUT_OFFSETS {
+  D3DSRO_POSITION     = 0,
+  D3DSRO_FOG          = 1,
+  D3DSRO_POINT_SIZE   = 2,
+  D3DSRO_FORCE_DWORD  = 0x7FFFFFFF
+} D3DVS_RASTOUT_OFFSETS;
+
+#define D3DVS_ADDRESSMODE_SHIFT  13
+#define D3DVS_ADDRESSMODE_MASK   (0x1 << D3DVS_ADDRESSMODE_SHIFT)
+
+typedef enum _D3DVS_ADDRESSMODE_TYPE {
+  D3DVS_ADDRMODE_ABSOLUTE     = 0 << D3DVS_ADDRESSMODE_SHIFT,
+  D3DVS_ADDRMODE_RELATIVE     = 1 << D3DVS_ADDRESSMODE_SHIFT,
+  D3DVS_ADDRMODE_FORCE_DWORD  = 0x7FFFFFFF
+} D3DVS_ADDRESSMODE_TYPE;
+
+#define D3DVS_SWIZZLE_SHIFT      16
+#define D3DVS_SWIZZLE_MASK       (0xFF << D3DVS_SWIZZLE_SHIFT)
+
+#define D3DSP_SWIZZLE_SHIFT      16
+#define D3DSP_SWIZZLE_MASK       (0xFF << D3DSP_SWIZZLE_SHIFT)
+
+#define D3DVS_X_X       (0 << D3DVS_SWIZZLE_SHIFT)
+#define D3DVS_X_Y       (1 << D3DVS_SWIZZLE_SHIFT)
+#define D3DVS_X_Z       (2 << D3DVS_SWIZZLE_SHIFT)
+#define D3DVS_X_W       (3 << D3DVS_SWIZZLE_SHIFT)
+
+#define D3DVS_Y_X       (0 << (D3DVS_SWIZZLE_SHIFT + 2))
+#define D3DVS_Y_Y       (1 << (D3DVS_SWIZZLE_SHIFT + 2))
+#define D3DVS_Y_Z       (2 << (D3DVS_SWIZZLE_SHIFT + 2))
+#define D3DVS_Y_W       (3 << (D3DVS_SWIZZLE_SHIFT + 2))
+
+#define D3DVS_Z_X       (0 << (D3DVS_SWIZZLE_SHIFT + 4))
+#define D3DVS_Z_Y       (1 << (D3DVS_SWIZZLE_SHIFT + 4))
+#define D3DVS_Z_Z       (2 << (D3DVS_SWIZZLE_SHIFT + 4))
+#define D3DVS_Z_W       (3 << (D3DVS_SWIZZLE_SHIFT + 4))
+
+#define D3DVS_W_X       (0 << (D3DVS_SWIZZLE_SHIFT + 6))
+#define D3DVS_W_Y       (1 << (D3DVS_SWIZZLE_SHIFT + 6))
+#define D3DVS_W_Z       (2 << (D3DVS_SWIZZLE_SHIFT + 6))
+#define D3DVS_W_W       (3 << (D3DVS_SWIZZLE_SHIFT + 6))
+
+#define D3DVS_NOSWIZZLE (D3DVS_X_X | D3DVS_Y_Y | D3DVS_Z_Z | D3DVS_W_W)
+
+#define D3DSP_NOSWIZZLE \
+    ((0 << (D3DSP_SWIZZLE_SHIFT + 0)) | (1 << (D3DSP_SWIZZLE_SHIFT + 2)) | (2 << (D3DSP_SWIZZLE_SHIFT + 4)) | (3 << (D3DSP_SWIZZLE_SHIFT + 6)))
+
+#define D3DSP_SRCMOD_SHIFT      24
+#define D3DSP_SRCMOD_MASK       (0xF << D3DSP_SRCMOD_SHIFT)
+
+typedef enum _D3DSHADER_PARAM_SRCMOD_TYPE {
+  D3DSPSM_NONE         =  0 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_NEG          =  1 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_BIAS         =  2 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_BIASNEG      =  3 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_SIGN         =  4 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_SIGNNEG      =  5 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_COMP         =  6 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_X2           =  7 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_X2NEG        =  8 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_DZ           =  9 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_DW           = 10 << D3DSP_SRCMOD_SHIFT,
+  D3DSPSM_FORCE_DWORD  = 0x7FFFFFFF
+} D3DSHADER_PARAM_SRCMOD_TYPE;
+
+#define D3DPS_VERSION(major, minor) (0xFFFF0000 | ((major) << 8) | (minor))
+#define D3DVS_VERSION(major, minor) (0xFFFE0000 | ((major) << 8) | (minor))
+#define D3DSHADER_VERSION_MAJOR(version) (((version) >> 8) & 0xFF)
+#define D3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xFF)
+
+#define D3DSI_COMMENTSIZE_SHIFT 16
+#define D3DSI_COMMENTSIZE_MASK (0x7FFF << D3DSI_COMMENTSIZE_SHIFT)
+
+#define D3DSHADER_COMMENT(commentSize) \
+  ((((commentSize) << D3DSI_COMMENTSIZE_SHIFT) & D3DSI_COMMENTSIZE_MASK) | D3DSIO_COMMENT)
+
+#define D3DPS_END() 0x0000FFFF
+#define D3DVS_END() 0x0000FFFF
+
 
 /*****************************************************************************
  * Direct 3D v8 enumerated types
