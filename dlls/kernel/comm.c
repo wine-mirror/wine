@@ -2071,10 +2071,9 @@ BOOL WINAPI GetCommConfig(
 
     if(lpCommConfig == NULL)
         return FALSE;
-
-    r = *lpdwSize < sizeof(COMMCONFIG);
+    r = *lpdwSize < sizeof(COMMCONFIG); /* TRUE if not enough space */
     *lpdwSize = sizeof(COMMCONFIG);
-    if(!r)
+    if(r)
         return FALSE;
 
     lpCommConfig->dwSize = sizeof(COMMCONFIG);
