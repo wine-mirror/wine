@@ -179,6 +179,19 @@ static WCHAR *ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits
     SymbolW /*31*/
 };
 
+typedef struct {
+  WCHAR *name;
+  INT charset;
+} NameCs;
+
+typedef struct tagFontSubst {
+  NameCs from;
+  NameCs to;
+  struct tagFontSubst *next;
+} FontSubst;
+
+static FontSubst *substlist = NULL;
+
 static BOOL AddFontFileToList(char *file)
 {
     FT_Face ft_face;
@@ -288,6 +301,98 @@ static void DumpFontList(void)
 	}
     }
     return;
+}
+
+static void DumpSubstList(void)
+{
+    FontSubst *psub;
+
+    for(psub = substlist; psub; psub = psub->next)
+        if(psub->from.charset != -1 || psub->to.charset != -1)
+	    TRACE("%s:%d -> %s:%d\n", debugstr_w(psub->from.name),
+	      psub->from.charset, debugstr_w(psub->to.name), psub->to.charset);
+	else
+	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
+		  debugstr_w(psub->to.name));
+    return;
+}
+
+static void split_subst_info(NameCs *nc, LPSTR str)
+{
+    CHAR *p = strrchr(str, ',');
+    DWORD len;
+
+    nc->charset = -1;
+    if(p && *(p+1)) {
+        nc->charset = strtol(p+1, NULL, 10);
+	*p = '\0';
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    nc->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, nc->name, len);
+}
+  
+static void LoadSubstList(void)
+{
+    FontSubst *psub, **ppsub;
+    HKEY hkey;
+    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
+    LPSTR value;
+    LPVOID data;
+
+    if(substlist) {
+        for(psub = substlist; psub;) {
+	    FontSubst *ptmp;
+	    HeapFree(GetProcessHeap(), 0, psub->to.name);
+	    HeapFree(GetProcessHeap(), 0, psub->from.name);
+	    ptmp = psub;
+	    psub = psub->next;
+	    HeapFree(GetProcessHeap(), 0, ptmp);
+	}
+	substlist = NULL;
+    }
+
+    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
+		   "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
+		   &hkey) == ERROR_SUCCESS) {
+
+        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			 &valuelen, &datalen, NULL, NULL);
+
+	valuelen++; /* returned value doesn't include room for '\0' */
+	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(CHAR));
+	data = HeapAlloc(GetProcessHeap(), 0, datalen);
+
+	dlen = datalen;
+	vlen = valuelen;
+	ppsub = &substlist;
+	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
+			    &dlen) == ERROR_SUCCESS) {
+	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
+
+	    *ppsub = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppsub));
+	    (*ppsub)->next = NULL;
+	    split_subst_info(&((*ppsub)->from), value);
+	    split_subst_info(&((*ppsub)->to), data);
+
+	    /* Win 2000 doesn't allow mapping between different charsets
+	       or mapping of DEFAULT_CHARSET */
+	    if(((*ppsub)->to.charset != (*ppsub)->from.charset) ||
+	       (*ppsub)->to.charset == DEFAULT_CHARSET) {
+	        HeapFree(GetProcessHeap(), 0, (*ppsub)->to.name);
+		HeapFree(GetProcessHeap(), 0, (*ppsub)->from.name);
+		HeapFree(GetProcessHeap(), 0, *ppsub);
+	    } else {
+	        ppsub = &((*ppsub)->next);
+	    }
+	    /* reset dlen and vlen */
+	    dlen = datalen;
+	    vlen = valuelen;
+	}
+	HeapFree(GetProcessHeap(), 0, data);
+	HeapFree(GetProcessHeap(), 0, value);
+	RegCloseKey(hkey);
+    }
 }
 
 static BOOL ReadFontDir(char *dirname)
@@ -421,6 +526,8 @@ BOOL WineEngInit(void)
     }
 
     DumpFontList();
+    LoadSubstList();
+    DumpSubstList();
     return TRUE;
 sym_not_found:
     WINE_MESSAGE(
@@ -713,6 +820,18 @@ GdiFont WineEngCreateFontInstance(HFONT hfont)
     strcpyW(FaceName, plf->lfFaceName);
 
     if(FaceName[0] != '\0') {
+        FontSubst *psub;
+	for(psub = substlist; psub; psub = psub->next)
+	    if(!strcmpiW(FaceName, psub->from.name) &&
+	       (psub->from.charset == -1 ||
+		psub->from.charset == plf->lfCharSet))
+	      break;
+	if(psub) {
+	    TRACE("substituting %s -> %s\n", debugstr_w(FaceName),
+		  debugstr_w(psub->to.name));
+	    strcpyW(FaceName, psub->to.name);
+	}
+
         for(family = FontList; family; family = family->next) {
 	    if(!strcmpiW(family->FamilyName, FaceName))
 	         break;
@@ -743,6 +862,8 @@ not_found:
 	else if(plf->lfPitchAndFamily & FF_ROMAN)
 	  strcpyW(FaceName, defSerif);
 	else if(plf->lfPitchAndFamily & FF_SWISS)
+	  strcpyW(FaceName, defSans);
+	else
 	  strcpyW(FaceName, defSans);
 	for(family = FontList; family; family = family->next) {
 	    if(!strcmpiW(family->FamilyName, FaceName))

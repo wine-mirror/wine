@@ -690,3 +690,23 @@
 [HKEY_LOCAL_MACHINE\TypeLib\{1339B53E-3453-11D2-93B9-000000000000}\1.0\0\win32]
 @="C:\mozilla\bin\mozctl.dll"
 
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes]
+"Arial CE,238"="Arial,238"
+"Arial CYR,204"="Arial,204"
+"Arial Greek,161"="Arial,161"
+"Arial TUR,162"="Arial,162"
+"Courier New CE,238"="Courier New,238"
+"Courier New CYR,204"="Courier New,204"
+"Courier New Greek,161"="Courier New,161"
+"Courier New TUR,162"="Courier New,162"
+"Helv"="Arial"
+"Helvetica"="Arial"
+"MS Shell Dlg"="Tahoma"
+"MS Shell Dlg 2"="Tahoma"
+"Times"="Times New Roman"
+"Times New Roman CE,238"="Times New Roman,238"
+"Times New Roman CYR,204"="Times New Roman,204"
+"Times New Roman Greek,161"="Times New Roman,161"
+"Times New Roman TUR,162"="Times New Roman,162"
+"Tms Rmn"="Times New Roman"
+
