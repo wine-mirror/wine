@@ -1237,7 +1237,7 @@ static BOOL extract_cabinet_file( const WCHAR *cabinet, const WCHAR *root)
         char  directory[0x104]; /* 0x01c */
         char  lastfile[0x20c];  /* 0x120 */
     } EXTRACTdest;
-    extern HRESULT Extract(EXTRACTdest*, LPCSTR);
+    extern HRESULT WINAPI Extract(EXTRACTdest*, LPCSTR);
 
     char *cab_path, *src_path;
     int len = strlenW( cabinet );
