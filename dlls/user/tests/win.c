@@ -23,6 +23,9 @@
 /* To get ICON_SMALL2 with the MSVC headers */
 #define _WIN32_WINNT 0x0501
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1590,16 +1593,22 @@ static void test_icons(void)
 
 static void test_SetWindowPos(HWND hwnd)
 {
+    RECT orig_win_rc;
     BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
 
     /* Win9x truncates coordinates to 16-bit irrespectively */
     if (is_win9x) return;
+
+    GetWindowRect(hwnd, &orig_win_rc);
 
     SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
     SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
 
     SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
     SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
+
+    SetWindowPos(hwnd, 0, orig_win_rc.left, orig_win_rc.top,
+                 orig_win_rc.right, orig_win_rc.bottom, 0);
 }
 
 static void test_SetMenu(HWND parent)
@@ -1972,6 +1981,81 @@ static void test_capture_3(HWND hwnd1, HWND hwnd2)
 
     ShowWindow(hwnd1, SW_SHOW);
     check_wnd_state(hwnd1, hwnd1, hwnd1, hwnd2);
+
+    ReleaseCapture();
+}
+
+static void test_keyboard_input(HWND hwnd)
+{
+    MSG msg;
+    INPUT input;
+    FARPROC pSendInput = GetProcAddress(GetModuleHandleA("user32.dll"), "SendInput");
+
+    input.type = INPUT_KEYBOARD;
+    input.u.ki.wVk = VK_SPACE;
+    input.u.ki.wScan = 0;
+    input.u.ki.dwFlags = 0;
+    input.u.ki.time = 0;
+    input.u.ki.dwExtraInfo = 0;
+
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+
+    ok(GetActiveWindow() == hwnd, "wrong active window %p\n", GetActiveWindow());
+
+    SetFocus(hwnd);
+    ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
+
+    PostThreadMessageA(GetCurrentThreadId(), WM_KEYDOWN, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(!msg.hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
+
+    if (pSendInput)
+    {
+	ok(pSendInput(1, &input, sizeof(input)) == 1, "SendInput failed\n");
+	ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+	ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+	ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    }
+
+    SetFocus(0);
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+
+    PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    PostThreadMessageA(GetCurrentThreadId(), WM_KEYDOWN, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(!msg.hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    if (pSendInput)
+    {
+	ok(pSendInput(1, &input, sizeof(input)) == 1, "SendInput failed\n");
+	ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+	ok(msg.hwnd == hwnd && msg.message == WM_SYSKEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+	ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    }
 }
 
 START_TEST(win)
@@ -2027,6 +2111,7 @@ START_TEST(win)
     test_SetActiveWindow(hwndMain);
 
     test_children_zorder(hwndMain);
+    test_keyboard_input(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
